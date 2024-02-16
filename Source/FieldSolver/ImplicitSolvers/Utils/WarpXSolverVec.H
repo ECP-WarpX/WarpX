@@ -68,6 +68,8 @@ class WarpXSolverVec
             const amrex::MultiFab& mf_model = *a_solver_vec[lev][dir];
             m_field_vec[lev][dir] = std::make_unique<amrex::MultiFab>(mf_model.boxArray(), mf_model.DistributionMap(),
                                                                       mf_model.nComp(), amrex::IntVect::Zero);
+            //amrex::Print() << "mf_model.boxArray() = " << mf_model.boxArray() << std::endl;
+            //amrex::Print() << "m_field_.boxArray() = " << m_field_vec[lev][dir]->boxArray() << std::endl;
         }
         m_is_defined = true;
         return;

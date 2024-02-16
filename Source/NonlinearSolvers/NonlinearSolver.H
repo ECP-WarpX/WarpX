@@ -28,24 +28,22 @@ class NonlinearSolver
         NonlinearSolver<Vec,Ops>() { }
         virtual ~NonlinearSolver<Vec,Ops>() { }
 
-        virtual void define(  const Vec&,
-                              Ops* const,
-                              //NonlinearFunction<Vec,Ops>* const,
-                              const amrex::Real ) = 0;
+        virtual void Define(  const Vec&,
+                              Ops* const ) = 0;
+                              //NonlinearFunction<Vec,Ops>* const ) = 0;
 
-        virtual void solve( Vec&,
-                            const Vec&,
-                            const amrex::Real,
-                            const amrex::Real ) const = 0;
+        virtual void Solve( Vec&,
+                      const Vec&,
+                      const amrex::Real,
+                      const amrex::Real ) const = 0;
 
-        virtual bool isDefined() const = 0;
-        virtual void printParams() const = 0;
-        virtual void getParams(double&, double&, int&) = 0;
+        virtual bool IsDefined() const = 0;
+        virtual void PrintParams() const = 0;
+        virtual void GetParams(amrex::Real&, amrex::Real&, int&) = 0;
 
-        virtual void verbose( const bool ) { }
-        virtual void setOutputIndent( const std::string& ) { }
+        virtual void Verbose( const bool ) { }
 
-        virtual void getConvergenceParams(  int& a_l_exit_status, int& a_l_last_iter, int& a_l_total_iter,
+        virtual void GetConvergenceParams(  int& a_l_exit_status, int& a_l_last_iter, int& a_l_total_iter,
                                             int& a_nl_exit_status, int& a_nl_iter, int& a_nl_total_iter,
                                          double& a_nl_abs_res, double& a_nl_rel_res ) const
         {

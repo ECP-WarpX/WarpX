@@ -13,9 +13,7 @@ void ImplicitSolverEM::Define( WarpX* const  a_WarpX )
     
     // Define E vectors
     m_E.Define( m_WarpX->Efield_fp );
-    m_Erhs  = m_E;
     m_Eold  = m_E;
-    m_Esave = m_E;
     
     if (m_WarpX->evolve_scheme == EvolveScheme::ThetaImplicit) { 
         // Define Bold vector
@@ -30,8 +28,8 @@ void ImplicitSolverEM::Define( WarpX* const  a_WarpX )
         }
     }
     
-    // parse implicit solver parameters
-    amrex::ParmParse pp("algo.implicit");
+    // Parse implicit solver parameters
+    amrex::ParmParse pp("implicit_evolve");
     pp.query("verbose", m_verbose);
     if (m_WarpX->evolve_scheme == EvolveScheme::ThetaImplicit) { 
         pp.query("theta", m_theta);
@@ -49,16 +47,11 @@ void ImplicitSolverEM::Define( WarpX* const  a_WarpX )
         m_nlsolver_type = NonlinearSolverType::Newton;
     }
 
-    // parse picard solver parameters
-    amrex::ParmParse pp_picard("algo.picard");
-    pp_picard.query("require_convergence", m_require_convergence);
-    pp_picard.query("relative_tolerance", m_rtol);
-    pp_picard.query("max_iterations", m_max_iter);
-
-    //if (m_nlsolver_type == NonlinearSolverType::Picard) {
-    //    m_nlsolver = new PicardSolver<ODEVector<EMFields>, PICTimeIntegrator>;
-    //    m_nlsolver->define(m_U, this, m_func, m_theta);
-    //}
+    // Define the nonlinear solver
+    if (m_nlsolver_type == NonlinearSolverType::Picard) {
+        m_nlsolver = std::make_unique<PicardSolver<WarpXSolverVec,ImplicitSolverEM>>();
+        m_nlsolver->Define(m_E, this);
+    }
 
     if (m_verbose) { PrintParams(); }
     m_is_defined = true;
@@ -67,7 +60,7 @@ void ImplicitSolverEM::Define( WarpX* const  a_WarpX )
 void ImplicitSolverEM::PrintParams() const
 {
     amrex::Print() << std::endl;
-    amrex::Print() << "================== Implicit Solver ==================" << std::endl;
+    amrex::Print() << "================== Implicit EM Solver ==================" << std::endl;
     amrex::Print()     << "time-bias parameter theta:  " << m_theta << std::endl;
     if (m_nlsolver_type==NonlinearSolverType::Picard) {
         amrex::Print() << "nonlinear solver type:      Picard" << std::endl;
@@ -75,12 +68,8 @@ void ImplicitSolverEM::PrintParams() const
     else if (m_nlsolver_type==NonlinearSolverType::Newton) {
         amrex::Print() << "nonlinear solver type:      Newton" << std::endl;
     }
-    amrex::Print()     << "picard require convergence: " << (m_require_convergence?"true":"false") << std::endl;
-    amrex::Print()     << "picard relative tolerance:  " << m_rtol << std::endl;
-    amrex::Print()     << "picard max iterations:      " << m_max_iter << std::endl;
-    //cout << "solver_type = " << m_nlsolver_type << endl;
-    //m_nlsolver->printParams();
-    amrex::Print() << "=====================================================" << std::endl;
+    m_nlsolver->PrintParams();
+    amrex::Print() << "========================================================" << std::endl;
     amrex::Print() << std::endl;
 }
 
@@ -125,65 +114,12 @@ void ImplicitSolverEM::OneStep( const amrex::Real  a_old_time,
         m_WarpX->ApplyMagneticFieldBCs( true );
     }
 
-    // Start the iterations
-    amrex::Real norm, norm0;
-    int iteration_count = 0;
-    while (iteration_count < m_max_iter) {
-        
-        // Save E from the previous iteration to compute step norm
-        m_Esave = m_E;
-        
-        // Particles are updated in PreRHSOp, and J is computed
-        PreRHSOp( m_E, a_old_time, a_dt, iteration_count );
-        
-        // Compute Efield at time n+theta
-        ComputeRHS( m_Erhs, m_E, a_old_time, a_dt );
-        m_E = m_Eold + m_Erhs;
+    // Solve nonlinear system for E at t_{n+theta}
+    // B will also be advanced to t_{n+theta}
+    // Particles will be advanced to t_{n+1/2}
+    m_nlsolver->Solve( m_E, m_Eold, a_old_time, a_dt );
 
-        // Update the physical state of E owned by WarpX
-        UpdateState( m_E, a_old_time, a_dt ); 
-        
-        // advance B owned by WarpX
-        PostUpdateState( m_E, a_old_time, a_dt );
-
-        // Compute the step norm of E
-        m_Esave -= m_E;
-        norm = m_Esave.norm();
-        if (iteration_count==0) { 
-            if (norm > 0.) { norm0 = norm; }
-            else { norm0 = 1._rt; }
-        }
-        iteration_count++;
-            
-        amrex::Real rnorm_E = norm/norm0;
-        if (m_verbose || iteration_count == m_max_iter) {
-            amrex::Print() << "Picard: iter = " << std::setw(3) << iteration_count <<  ", norm = " 
-                           << std::scientific << std::setprecision(5) << norm << " (abs.), " 
-                           << std::scientific << std::setprecision(5) << rnorm_E << " (rel.)" << "\n";
-        }
-
-        if (rnorm_E < m_rtol) {
-            amrex::Print() << "Picard: exiting at iter = " << std::setw(3) << iteration_count 
-                           << ". Satisified relative tolerance " << m_rtol << std::endl;
-            break;
-        }
-
-    }
-
-    if (m_rtol > 0. && iteration_count == m_max_iter) {
-       std::stringstream convergenceMsg;
-       convergenceMsg << "Picard solver failed to converge after " << iteration_count << 
-                         " iterations. Relative norm is " << norm/norm0 << 
-                         " and the relative tolerance is " << m_rtol;
-       if (m_verbose) { amrex::Print() << convergenceMsg.str() << std::endl; }
-       if (m_require_convergence) {
-           WARPX_ABORT_WITH_MESSAGE(convergenceMsg.str());
-       } else {
-           ablastr::warn_manager::WMRecordWarning("PicardSolver", convergenceMsg.str());
-       }
-    }
-
-    // update field boundary probes, and then advance fields to new time
+    // Update field boundary probes prior to updating fields to t_{n+1}
     //m_fields->updateBoundaryProbes( a_dt );
     
     // Advance particles to step n+1
@@ -207,7 +143,6 @@ void ImplicitSolverEM::PreRHSOp( const WarpXSolverVec&  a_E,
     amrex::ignore_unused(a_E);
     
     if (m_nlsolver_type!=NonlinearSolverType::Picard) {
-        m_WarpX->UpdateElectricField( a_E, true );
         PostUpdateState( a_E, a_time, a_dt );
     }
 
@@ -228,21 +163,17 @@ void ImplicitSolverEM::ComputeRHS( WarpXSolverVec&  a_Erhs,
 
 }
 
-void ImplicitSolverEM::UpdateState( WarpXSolverVec&  a_E,
-                              const amrex::Real      a_time,
-                              const amrex::Real      a_dt )
-{
-    amrex::ignore_unused(a_time,a_dt);
-    m_WarpX->UpdateElectricField( a_E, true );
-}
-
-void ImplicitSolverEM::PostUpdateState( const WarpXSolverVec&  a_solver_vec,
+void ImplicitSolverEM::PostUpdateState( const WarpXSolverVec&  a_E,
                                         const amrex::Real      a_time,
                                         const amrex::Real      a_dt )
 {
     using namespace amrex::literals;
-    amrex::ignore_unused(a_solver_vec, a_time);
+    amrex::ignore_unused(a_time);
 
+    // Update Efield_fp owned by WarpX
+    m_WarpX->UpdateElectricField( a_E, true );
+
+    // Update Bfield_fp owned by WarpX
     if (m_WarpX->evolve_scheme == EvolveScheme::ThetaImplicit) {
         // Compute Bfield at time n+theta
         const int lev = 0;

@@ -17,7 +17,6 @@ class ImplicitSolverEM
     ImplicitSolverEM() 
     {
         m_nlsolver_type = NonlinearSolverType::Picard;
-        //m_nlsolver = nullptr;
         //m_func = nullptr;
 
         m_theta = 0.5;
@@ -25,9 +24,6 @@ class ImplicitSolverEM
         m_semi_implicit = false;
         m_verbose = false;
 
-        m_require_convergence = true;
-        m_rtol = 1.0e-8;
-        m_max_iter = 11;
     }
 
     ~ImplicitSolverEM() = default;
@@ -57,10 +53,6 @@ class ImplicitSolverEM
                const amrex::Real      a_time,
                const amrex::Real      a_dt );
 
-    void UpdateState( WarpXSolverVec&  a_E,
-                const amrex::Real      a_time,
-                const amrex::Real      a_dt );
-
     void PostUpdateState( const WarpXSolverVec&  a_E,
                           const amrex::Real      a_time,
                           const amrex::Real      a_dt );
@@ -76,14 +68,10 @@ class ImplicitSolverEM
     amrex::Real m_theta;
     
     NonlinearSolverType m_nlsolver_type;
+    std::unique_ptr<NonlinearSolver<WarpXSolverVec,ImplicitSolverEM>> m_nlsolver;
 
-    WarpXSolverVec m_E, m_Eold, m_Esave, m_Erhs;
+    WarpXSolverVec m_E, m_Eold;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_Bold;
-
-    // picard solver parameters
-    bool m_require_convergence;
-    amrex::Real m_rtol;
-    int m_max_iter;
 
 };
 
