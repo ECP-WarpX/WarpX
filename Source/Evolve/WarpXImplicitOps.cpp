@@ -72,15 +72,14 @@ WarpX::PreRHSOpFromNonlinearIter ( const amrex::Real  a_cur_time,
 }
 
 void
-WarpX::UpdateElectricField( WarpXFieldVec&  a_Efield_vec ) 
+WarpX::UpdateElectricField( const WarpXFieldVec&  a_Efield_vec, const bool a_apply ) 
 {
     const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Evec = a_Efield_vec.getVec();
     amrex::MultiFab::Copy(*Efield_fp[0][0], *Evec[0][0], 0, 0, ncomps, Evec[0][0]->nGrowVect());
     amrex::MultiFab::Copy(*Efield_fp[0][1], *Evec[0][1], 0, 0, ncomps, Evec[0][1]->nGrowVect());
     amrex::MultiFab::Copy(*Efield_fp[0][2], *Evec[0][2], 0, 0, ncomps, Evec[0][2]->nGrowVect());
-    ApplyElectricFieldBCs( );
-
-    a_Efield_vec.Copy(Efield_fp);
+    ApplyElectricFieldBCs(a_apply);
+    //a_Efield_vec.Copy(Efield_fp);
 }
 
 void
@@ -91,15 +90,14 @@ WarpX::ApplyElectricFieldBCs( const bool  a_apply )
 }
 
 void
-WarpX::UpdateMagneticField( WarpXFieldVec&  a_Bfield_vec ) 
+WarpX::UpdateMagneticField( const WarpXFieldVec&  a_Bfield_vec, const bool  a_apply ) 
 {
     const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Bvec = a_Bfield_vec.getVec();
     amrex::MultiFab::Copy(*Bfield_fp[0][0], *Bvec[0][0], 0, 0, ncomps, Bvec[0][0]->nGrowVect());
     amrex::MultiFab::Copy(*Bfield_fp[0][1], *Bvec[0][1], 0, 0, ncomps, Bvec[0][1]->nGrowVect());
     amrex::MultiFab::Copy(*Bfield_fp[0][2], *Bvec[0][2], 0, 0, ncomps, Bvec[0][2]->nGrowVect());
-    ApplyMagneticFieldBCs( );
-
-    a_Bfield_vec.Copy(Bfield_fp);
+    ApplyMagneticFieldBCs(a_apply);
+    //a_Bfield_vec.Copy(Bfield_fp);
 }
 
 void
@@ -238,8 +236,9 @@ WarpX::FinishImplicitParticleUpdate ()
 }
 
 void
-WarpX::FinishImplicitFieldUpdate(amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_fp,
-                                 amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_n)
+WarpX::FinishImplicitFieldUpdate( amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_fp,
+                                  amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_n,
+                                  const amrex::Real theta )
 {
     using namespace amrex::literals;
 
@@ -263,18 +262,21 @@ WarpX::FinishImplicitFieldUpdate(amrex::Vector<std::array< std::unique_ptr<amrex
             amrex::Box tby = mfi.tilebox(Field_fp[lev][1]->ixType().toIntVect());
             amrex::Box tbz = mfi.tilebox(Field_fp[lev][2]->ixType().toIntVect());
 
+            amrex::Real c0 = 1._rt/theta;
+            amrex::Real c1 = 1._rt - c0;
+
             amrex::ParallelFor(
             tbx, ncomps, [=] AMREX_GPU_DEVICE (int i, int j, int k, int n)
             {
-                Fx(i,j,k,n) = 2._rt*Fx(i,j,k,n) - Fx_n(i,j,k,n);
+                Fx(i,j,k,n) = c0*Fx(i,j,k,n) + c1*Fx_n(i,j,k,n);
             },
             tby, ncomps, [=] AMREX_GPU_DEVICE (int i, int j, int k, int n)
             {
-                Fy(i,j,k,n) = 2._rt*Fy(i,j,k,n) - Fy_n(i,j,k,n);
+                Fy(i,j,k,n) = c0*Fy(i,j,k,n) + c1*Fy_n(i,j,k,n);
             },
             tbz, ncomps, [=] AMREX_GPU_DEVICE (int i, int j, int k, int n)
             {
-                Fz(i,j,k,n) = 2._rt*Fz(i,j,k,n) - Fz_n(i,j,k,n);
+                Fz(i,j,k,n) = c0*Fz(i,j,k,n) + c1*Fz_n(i,j,k,n);
             });
         }
     }

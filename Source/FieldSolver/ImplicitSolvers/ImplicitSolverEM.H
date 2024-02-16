@@ -43,17 +43,26 @@ class ImplicitSolverEM
 
     void Initialize();
     
-    void OneStep( const amrex::Real  a_cur_time,
+    void OneStep( const amrex::Real  a_time,
                   const amrex::Real  a_dt,
                   const int          a_step );
+
+    void PreRHSOp( const WarpXFieldVec&  a_Efield_vec,
+                   const amrex::Real     a_time,
+                   const amrex::Real     a_dt,
+                   const int             a_nl_iter );
 
     void ComputeRHS( WarpXFieldVec&  a_Erhs_vec,
                const WarpXFieldVec&  a_Efield_vec,
                const amrex::Real     a_time,
                const amrex::Real     a_dt );
 
-    void UpdatePhysicalState( WarpXFieldVec&  a_Efield_vec,
-                        const amrex::Real     a_time );
+    void UpdateState( WarpXFieldVec&  a_Efield_vec,
+                const amrex::Real     a_time );
+
+    void PostUpdateState( const WarpXFieldVec&  a_field_vec,
+                          const amrex::Real     a_time,
+                          const amrex::Real     a_dt );
 
     private:
 
@@ -68,7 +77,7 @@ class ImplicitSolverEM
     NonlinearSolverType m_nlsolver_type;
 
     WarpXFieldVec m_E, m_Eold, m_Esave, m_Erhs;
-    WarpXFieldVec m_B, m_Bold, m_Brhs;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_Bold;
 
     // picard solver parameters
     bool m_require_convergence;
