@@ -117,7 +117,7 @@ void ImplicitSolverEM::OneStep( const amrex::Real  a_old_time,
         for (int n=0; n<3; n++) {
             const amrex::MultiFab& Bfp  = *(m_WarpX->Bfield_fp[lev][n]);
             amrex::MultiFab& Bold = *m_Bold[lev][n];
-            amrex::MultiFab::Copy(Bold, Bfp, 0, 0, 1, m_Bold[lev][n]->nGrowVect());
+            amrex::MultiFab::Copy(Bold, Bfp, 0, 0, 1, Bold.nGrowVect());
         }
     } else if (m_WarpX->evolve_scheme == EvolveScheme::SemiImplicit) {
         // Compute Bfield at time n+1/2
@@ -244,7 +244,7 @@ void ImplicitSolverEM::PostUpdateState( const WarpXSolverVec&  a_solver_vec,
         for (int n=0; n<3; n++) {
             amrex::MultiFab& Bfp  = *(m_WarpX->Bfield_fp[lev][n]);
             const amrex::MultiFab& Bold = *m_Bold[lev][n];
-            amrex::MultiFab::Copy(Bfp, Bold, 0, 0, 1, m_Bold[lev][n]->nGrowVect());
+            amrex::MultiFab::Copy(Bfp, Bold, 0, 0, 1, Bold.nGrowVect());
         }
         m_WarpX->EvolveB(m_theta*a_dt, DtType::Full);
         m_WarpX->ApplyMagneticFieldBCs( true );

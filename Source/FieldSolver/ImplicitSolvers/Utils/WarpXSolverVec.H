@@ -62,22 +62,13 @@ class WarpXSolverVec
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             !IsDefined(),
             "WarpXSolverVec::Define() called on undefined WarpXSolverVec");
-        //for (int lev = 0; lev <= finest_level; ++lev) {
         const int lev = 0;
         m_field_vec.resize(1); // size is number of levels
         for (int dir=0; dir<3; dir++) {
             const amrex::MultiFab& mf_model = *a_solver_vec[lev][dir];
-            //amrex::Print(0) << "mf_model.nComp() = " << mf_model.nComp() << std::endl;
-            //amrex::Print(0) << "mf_model.boxArray() = " << mf_model.boxArray() << std::endl;
-            //amrex::Print(0) << "mf_model.DistributionMap() = " << mf_model.DistributionMap() << std::endl;
-            //amrex::Print(0) << "mf_model.nGrowVect() = " << mf_model.nGrowVect() << std::endl;
             m_field_vec[lev][dir] = std::make_unique<amrex::MultiFab>(mf_model.boxArray(), mf_model.DistributionMap(),
-                                                                      mf_model.nComp(), mf_model.nGrowVect());
+                                                                      mf_model.nComp(), amrex::IntVect::Zero);
         }
-        //WarpX::AllocInitMultiFabFromModel(m_field_vec[lev][0], *a_solver_vec[0][0], lev, "Efield_n[0]");
-        //WarpX::AllocInitMultiFabFromModel(m_field_vec[lev][1], *a_solver_vec[0][1], lev, "Efield_n[1]");
-        //WarpX::AllocInitMultiFabFromModel(m_field_vec[lev][2], *a_solver_vec[0][2], lev, "Efield_n[2]");
-        //}
         m_is_defined = true;
         return;
     }
@@ -91,9 +82,9 @@ class WarpXSolverVec
         //CH_assert(a_vec.getVectorSize() == m_size);
         // NEED A WAY TO ASSSERT A_VEC IS SAME TYPE AS THIS VEC
         const int ncomps = 1;
-        amrex::MultiFab::Copy(*m_field_vec[0][0], *a_solver_vec[0][0], 0, 0, ncomps, a_solver_vec[0][0]->nGrowVect());
-        amrex::MultiFab::Copy(*m_field_vec[0][1], *a_solver_vec[0][1], 0, 0, ncomps, a_solver_vec[0][1]->nGrowVect());
-        amrex::MultiFab::Copy(*m_field_vec[0][2], *a_solver_vec[0][2], 0, 0, ncomps, a_solver_vec[0][2]->nGrowVect());
+        amrex::MultiFab::Copy(*m_field_vec[0][0], *a_solver_vec[0][0], 0, 0, ncomps, amrex::IntVect::Zero);
+        amrex::MultiFab::Copy(*m_field_vec[0][1], *a_solver_vec[0][1], 0, 0, ncomps, amrex::IntVect::Zero);
+        amrex::MultiFab::Copy(*m_field_vec[0][2], *a_solver_vec[0][2], 0, 0, ncomps, amrex::IntVect::Zero);
     }
 
     inline 

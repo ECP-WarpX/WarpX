@@ -79,7 +79,6 @@ WarpX::UpdateElectricField( const WarpXSolverVec&  a_Efield_vec, const bool a_ap
     amrex::MultiFab::Copy(*Efield_fp[0][1], *Evec[0][1], 0, 0, ncomps, Evec[0][1]->nGrowVect());
     amrex::MultiFab::Copy(*Efield_fp[0][2], *Evec[0][2], 0, 0, ncomps, Evec[0][2]->nGrowVect());
     ApplyElectricFieldBCs(a_apply);
-    //a_Efield_vec.Copy(Efield_fp);
 }
 
 void
@@ -87,17 +86,6 @@ WarpX::ApplyElectricFieldBCs( const bool  a_apply )
 {
     FillBoundaryE(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
     if (a_apply) { ApplyEfieldBoundary(0, PatchType::fine); }
-}
-
-void
-WarpX::UpdateMagneticField( const WarpXSolverVec&  a_Bfield_vec, const bool  a_apply ) 
-{
-    const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Bvec = a_Bfield_vec.getVec();
-    amrex::MultiFab::Copy(*Bfield_fp[0][0], *Bvec[0][0], 0, 0, ncomps, Bvec[0][0]->nGrowVect());
-    amrex::MultiFab::Copy(*Bfield_fp[0][1], *Bvec[0][1], 0, 0, ncomps, Bvec[0][1]->nGrowVect());
-    amrex::MultiFab::Copy(*Bfield_fp[0][2], *Bvec[0][2], 0, 0, ncomps, Bvec[0][2]->nGrowVect());
-    ApplyMagneticFieldBCs(a_apply);
-    //a_Bfield_vec.Copy(Bfield_fp);
 }
 
 void
@@ -237,8 +225,8 @@ WarpX::FinishImplicitParticleUpdate ()
 
 void
 WarpX::FinishImplicitFieldUpdate( amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_fp,
-                                  amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_n,
-                                  const amrex::Real theta )
+                            const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_n,
+                            const amrex::Real theta )
 {
     using namespace amrex::literals;
 
@@ -258,12 +246,12 @@ WarpX::FinishImplicitFieldUpdate( amrex::Vector<std::array< std::unique_ptr<amre
             amrex::Array4<amrex::Real> const& Fy_n = Field_n[lev][1]->array(mfi);
             amrex::Array4<amrex::Real> const& Fz_n = Field_n[lev][2]->array(mfi);
 
-            amrex::Box tbx = mfi.tilebox(Field_fp[lev][0]->ixType().toIntVect());
-            amrex::Box tby = mfi.tilebox(Field_fp[lev][1]->ixType().toIntVect());
-            amrex::Box tbz = mfi.tilebox(Field_fp[lev][2]->ixType().toIntVect());
+            amrex::Box tbx = mfi.tilebox(Field_n[lev][0]->ixType().toIntVect());
+            amrex::Box tby = mfi.tilebox(Field_n[lev][1]->ixType().toIntVect());
+            amrex::Box tbz = mfi.tilebox(Field_n[lev][2]->ixType().toIntVect());
 
-            amrex::Real c0 = 1._rt/theta;
-            amrex::Real c1 = 1._rt - c0;
+            const amrex::Real c0 = 1._rt/theta;
+            const amrex::Real c1 = 1._rt - c0;
 
             amrex::ParallelFor(
             tbx, ncomps, [=] AMREX_GPU_DEVICE (int i, int j, int k, int n)
@@ -280,58 +268,6 @@ WarpX::FinishImplicitFieldUpdate( amrex::Vector<std::array< std::unique_ptr<amre
             });
         }
     }
-}
-
-void
-WarpX::ComputeRHSB (amrex::Real a_dt, WarpXSolverVec&  a_RHSB_vec)
-{
-    for (int lev = 0; lev <= finest_level; ++lev) {
-        ComputeRHSB(lev, a_dt, a_RHSB_vec);
-    }
-}
-
-void
-WarpX::ComputeRHSB (int lev, amrex::Real a_dt, WarpXSolverVec& a_RHSB_vec)
-{
-    WARPX_PROFILE("WarpX::ComputeRHSB()");
-    ComputeRHSB(lev, PatchType::fine, a_dt, a_RHSB_vec);
-    if (lev > 0)
-    {
-        ComputeRHSB(lev, PatchType::coarse, a_dt, a_RHSB_vec);
-    }
-}
-
-void
-WarpX::ComputeRHSB (int lev, PatchType patch_type, amrex::Real a_dt, WarpXSolverVec& a_RHSB_vec)
-{
-
-    // set RHS to zero value
-    a_RHSB_vec.getVec()[lev][0]->setVal(0.0);
-    a_RHSB_vec.getVec()[lev][1]->setVal(0.0);
-    a_RHSB_vec.getVec()[lev][2]->setVal(0.0);
-
-    // Compute Bfield_rhs in regular cells by calling EvolveB
-    if (patch_type == PatchType::fine) {
-        m_fdtd_solver_fp[lev]->EvolveB(a_RHSB_vec.getVec()[lev], Efield_fp[lev], G_fp[lev],
-                                       m_face_areas[lev], m_area_mod[lev], ECTRhofield[lev], Venl[lev],
-                                       m_flag_info_face[lev], m_borrowing[lev], lev, a_dt);
-    } else {
-        m_fdtd_solver_cp[lev]->EvolveB(a_RHSB_vec.getVec()[lev], Efield_cp[lev], G_cp[lev],
-                                       m_face_areas[lev], m_area_mod[lev], ECTRhofield[lev], Venl[lev],
-                                       m_flag_info_face[lev], m_borrowing[lev], lev, a_dt);
-    }
-
-    // Compute Bfield_rhs in PML cells by calling EvolveBPML
-    if (do_pml && pml[lev]->ok()) {
-        if (patch_type == PatchType::fine) {
-            //m_fdtd_solver_fp[lev]->EvolveBPML(
-            //    pml[lev]->GetRHSB_fp(), pml[lev]->GetE_fp(), a_dt, WarpX::do_dive_cleaning);
-        } else {
-            //m_fdtd_solver_cp[lev]->EvolveBPML(
-            //    pml[lev]->GetRHSB_cp(), pml[lev]->GetE_cp(), a_dt, WarpX::do_dive_cleaning);
-        }
-    }
-
 }
 
 void
