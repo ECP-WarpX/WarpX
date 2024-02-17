@@ -2,7 +2,7 @@
 #define _NONLINEAR_SOLVER_LIBRARY_H_
 
 #include "PicardSolver.H"
-//#include "NewtonSolver.H"
+#include "NewtonSolver.H"
 
 /**
   * \brief struct to select the nonlinear solver for implicit schemes
