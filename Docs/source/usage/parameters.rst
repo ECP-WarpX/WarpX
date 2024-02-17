@@ -2752,7 +2752,7 @@ The data collected at each boundary is written out to a subdirectory of the diag
 By default, all of the collected particle data is written out at the end of the simulation. Optionally, the ``<diag_name>.intervals`` parameter can be given to specify writing out the data more often.
 This can be important if a large number of particles are lost, avoiding filling up memory with the accumulated lost particle data.
 
-In addition to their usual attributes, the saved particles have 
+In addition to their usual attributes, the saved particles have
    an integer attribute ``step_scraped``, which indicates the PIC iteration at which each particle was absorbed at the boundary,
    a real attribute ``time_scraped``, which indicates the exact time calculated when each particle hit the boundary,
    3 real attributes ``nx``, ``ny``, ``nz``, which represents the three components of the normal to the EB on the point of contact of the particles (not saved if they reach grid boundaries)

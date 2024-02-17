@@ -108,7 +108,7 @@ struct FindEmbeddedBoundaryIntersection {
         // Save the corresponding position of the particle at the boundary
         amrex::ParticleReal x_temp=xp, y_temp=yp, z_temp=zp;
         UpdatePosition(x_temp, y_temp, z_temp, ux, uy, uz, -dt_fraction*m_dt);
-        
+
         // record the components of the normal on the destination
         int i, j, k;
         amrex::Real W[AMREX_SPACEDIM][2];
