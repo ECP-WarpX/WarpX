@@ -62,7 +62,7 @@ JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buff
     if (hybrid_pic_model) {
         // Index type required for interpolating Jext from their respective
         // staggering (nodal) to the Jx_displacement, Jy_displacement, Jz_displacement
-        // locations. The staggering of J_displacement is the same as the 
+        // locations. The staggering of J_displacement is the same as the
         // staggering for J, so we use J_stag as the interpolation map.
         amrex::GpuArray<int, 3> Jext_IndexType;
         amrex::GpuArray<int, 3> J_IndexType;
@@ -77,7 +77,7 @@ JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buff
         // The "coarsening is just 1 i.e. no coarsening"
         amrex::GpuArray<int, 3> const& coarsen = {1, 1, 1};
 
-        // Loop through the grids, and over the tiles within each grid to 
+        // Loop through the grids, and over the tiles within each grid to
         // subtract interpolate Jext from J_displacement.
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
