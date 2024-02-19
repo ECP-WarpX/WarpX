@@ -1792,6 +1792,12 @@ void doGatherShapeNImplicit (
                                                       ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                                       ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                                       dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+        } else if (nox == 4) {
+            doGatherShapeNEsirkepovStencilImplicit<4>(xp_n, yp_n, zp_n, xp_nph, yp_nph, zp_nph,
+                                                      Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                                                      ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                                      ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                                      dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         }
     }
     else if (depos_type==3) { // CurrentDepositionAlgo::Villasenor
@@ -1834,6 +1840,11 @@ void doGatherShapeNImplicit (
                                 dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         } else if (nox == 3) {
             doGatherShapeN<3,0>(xp_nph, yp_nph, zp_nph, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                                ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+        } else if (nox == 4) {
+            doGatherShapeN<4,0>(xp_nph, yp_nph, zp_nph, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                 ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                 dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);

@@ -1112,7 +1112,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
                                               WarpX::shared_tilesize);
         } else if (WarpX::nox == 4){
             doChargeDepositionSharedShapeN<4>(GetPosition, wp.dataPtr()+offset, ion_lev,
-                                              rho_fab, ix_type, np_to_depose, dx, xyzmin, lo, q,
+                                              rho_fab, ix_type, np_to_deposit, dx, xyzmin, lo, q,
                                               WarpX::n_rz_azimuthal_modes, cost,
                                               WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size,
                                               WarpX::shared_tilesize);
