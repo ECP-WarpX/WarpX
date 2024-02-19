@@ -441,7 +441,7 @@ WarpX::WarpX ()
                     costs_heuristic_particles_wt = 0.750_rt;
                     break;
                 case 4:
-		    // temporary
+                    // this is only a guess
                     costs_heuristic_cells_wt = 0.200_rt;
                     costs_heuristic_particles_wt = 0.800_rt;
                     break;
@@ -462,7 +462,7 @@ WarpX::WarpX ()
                     costs_heuristic_particles_wt = 0.855_rt;
                     break;
                 case 4:
-		    // temporary
+                    // this is only a guess
                     costs_heuristic_cells_wt = 0.100_rt;
                     costs_heuristic_particles_wt = 0.900_rt;
                     break;
