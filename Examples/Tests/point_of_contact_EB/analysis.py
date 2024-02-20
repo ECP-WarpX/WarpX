@@ -27,7 +27,7 @@ ts_scraping = OpenPMDTimeSeries('./diags/diag2/particles_at_eb/')
 
 it=ts_scraping.iterations
 step_scraped, delta, x, y, z=ts_scraping.get_particle( ['stepScraped','delta','x','y','z'], species='electron', iteration=it )
-delta_reduced=time_scraped[0]*1e10
+delta_reduced=delta[0]*1e10
 
 # Analytical results calculated
 x_analytic=-0.1983
