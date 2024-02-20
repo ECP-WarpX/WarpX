@@ -774,7 +774,7 @@ class ParticleBoundaryBufferWrapper(object):
             comp_name      : str
                 The component of the array data that will be returned.
                 "x", "y", "z", "ux", "uy", "uz", "w"
-                "step_scraped","time_scraped", "nx", "ny", "nz"
+                "stepScraped","delta", "nx", "ny", "nz"
 
             level          : int
                 Which AMR level to retrieve scraped particle data from.
