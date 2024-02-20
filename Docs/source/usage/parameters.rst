@@ -416,9 +416,9 @@ Domain Boundary Conditions
 
 * ``boundary.verboncoeur_axis_correction`` (`bool`) optional (default `true`)
     Whether to apply the Verboncoeur correction on the charge and current density on axis when using RZ.
-    For nodal values (rho and Jz), the cell volume for values on axis is calculated as :math:`\pi*\Delta r^2/4`.
+    For nodal values (rho and Jz), the cell volume for values on axis is calculated as :math:`\pi*\ r^2/4`.
     In :cite:t:`param-VerboncoeurJCP2001`, it is shown that using
-    :math:`\pi*\Delta r^2/3` instead will give a uniform density if the particle density is uniform.
+    :math:`\pi*\ r^2/3` instead will give a uniform density if the particle density is uniform.
 
 Additional PML parameters
 -------------------------
@@ -430,7 +430,7 @@ Additional PML parameters
     Whether or not to use an amrex::DistributionMapping for the PML grids that is `similar` to the mother grids, meaning that the
     mapping will be computed to minimize the communication costs between the PML and the mother grids.
 
-* ``warpx.pml_delta`` (`int`; default: 10)
+* ``warpx.pml_`` (`int`; default: 10)
     The characteristic depth, in number of cells, over which
     the absorption coefficients of the PML increases.
 
@@ -1453,8 +1453,8 @@ Laser initialization
 
 * ``<laser_name>.phi2`` (`float`; in seconds**2) optional (default `0.`)
     The amount of temporal chirp :math:`\phi^{(2)}` at focus (in the lab frame). Namely, a wave packet
-    centered on the frequency :math:`(\omega_0 + \delta \omega)` will reach its peak intensity
-    at :math:`z(\delta \omega) = z_0 - c \phi^{(2)} \, \delta \omega`. Thus, a positive
+    centered on the frequency :math:`(\omega_0 + \ \omega)` will reach its peak intensity
+    at :math:`z(\ \omega) = z_0 - c \phi^{(2)} \, \ \omega`. Thus, a positive
     :math:`\phi^{(2)}` corresponds to positive chirp, i.e. red part of the spectrum in the
     front of the pulse and blue part of the spectrum in the back. More specifically, the electric
     field in the focal plane is of the form:
@@ -1539,8 +1539,8 @@ are applied to the grid directly. In particular, these fields can be seen in the
     ``warpx.Bz_external_grid_function(x,y,z)`` to initialize the external
     magnetic field for each of the three components on the grid.
     Constants required in the expression can be set using ``my_constants``.
-    For example, if ``warpx.Bx_external_grid_function(x,y,z)=Bo*x + delta*(y + z)``
-    then the constants `Bo` and `delta` required in the above equation
+    For example, if ``warpx.Bx_external_grid_function(x,y,z)=Bo*x + *(y + z)``
+    then the constants `Bo` and `` required in the above equation
     can be set using ``my_constants.Bo=`` and ``my_constants.delta=`` in the
     input file. For a two-dimensional simulation, it is assumed that the first dimension
     is `x` and the second dimension is `z`, and the value of `y` is set to zero.
@@ -2754,7 +2754,7 @@ This can be important if a large number of particles are lost, avoiding filling 
 
 In addition to their usual attributes, the saved particles have an integer attribute ``stepScraped``, which
 indicates the PIC iteration at which each particle was absorbed at the boundary,
-and a real attribute ``delta``, which indicates the fraction of time between the time associated to the last step
+and a real attribute ``deltaTimeScraped``, which indicates the fraction of time between the time associated to the last step
 and the exact time when each particle hits the boundary. ``delta`` is a real between 0 and dt.
 
 ``BoundaryScrapingDiagnostics`` can be used with ``<diag_name>.<species>.random_fraction``, ``<diag_name>.<species>.uniform_stride``, and ``<diag_name>.<species>.plot_filter_function``, which have the same behavior as for ``FullDiagnostics``. For ``BoundaryScrapingDiagnostics``, these filters are applied at the time the data is written to file. An implication of this is that more particles may initially be accumulated in memory than are ultimately written. ``t`` in ``plot_filter_function`` refers to the time the diagnostic is written rather than the time the particle crossed the boundary.
