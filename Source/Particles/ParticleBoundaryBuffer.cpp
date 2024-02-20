@@ -101,7 +101,7 @@ struct FindEmbeddedBoundaryIntersection {
 
         // Also record the real time on the destination
         dst.m_runtime_idata[m_step_index][dst_i] = m_step;
-        dst.m_runtime_rdata[m_time_index][dst_i] = (1- dt_fraction)*m_dt;
+        dst.m_runtime_rdata[m_delta_index][dst_i] = (1- dt_fraction)*m_dt;
 
         // Now that dt_fraction has be obtained (with bisect)
         // Save the corresponding position of the particle at the boundary
