@@ -1539,7 +1539,7 @@ are applied to the grid directly. In particular, these fields can be seen in the
     ``warpx.Bz_external_grid_function(x,y,z)`` to initialize the external
     magnetic field for each of the three components on the grid.
     Constants required in the expression can be set using ``my_constants``.
-    For example, if ``warpx.Bx_external_grid_function(x,y,z)=Bo*x + *(y + z)``
+    For example, if ``warpx.Bx_external_grid_function(x,y,z)=Bo*x + delta*(y + z)``
     then the constants `Bo` and `` required in the above equation
     can be set using ``my_constants.Bo=`` and ``my_constants.delta=`` in the
     input file. For a two-dimensional simulation, it is assumed that the first dimension
