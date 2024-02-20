@@ -2,7 +2,9 @@
 #define _NEWTON_SOLVER_H_
 
 #include "NonlinearSolver.H"
+#include "JacobianFunctionJFNK.H"
 
+#include <AMReX_GMRES.H>
 #include <AMReX_ParmParse.H>
 #include "Utils/TextMsg.H"
 
@@ -65,6 +67,9 @@ class NewtonSolver : public NonlinearSolver<Vec,Ops>
 
     private:
 
+        std::unique_ptr<JacobianFunctionJFNK<Vec,Ops>> m_linear_function;
+        std::unique_ptr<amrex::GMRES<Vec,JacobianFunctionJFNK<Vec,Ops>>> m_linear_solver;
+
         void ParseParameters( );
 
 };
@@ -91,6 +96,39 @@ void NewtonSolver<Vec,Ops>::Define( const Vec&  a_U,
     m_F.Define(a_U);
   
     m_ops = a_ops;
+
+    //
+    // JRA, below is used to test GMRES, and linOp functions defined in JacobianFunctionJFNK
+    //
+    
+    m_linear_function = std::make_unique<JacobianFunctionJFNK<Vec,Ops>>();
+    m_linear_function->define(m_F, m_ops);
+    
+    m_linear_solver = std::make_unique<amrex::GMRES<Vec,JacobianFunctionJFNK<Vec,Ops>>>();
+    m_linear_solver->define(*m_linear_function);
+    m_linear_solver->solve(m_dU,m_F,m_rtol,m_atol,m_maxits);
+    
+    JacobianFunctionJFNK<Vec,Ops> linOp;
+    linOp.define(m_F,m_ops);
+    m_F.setVal(1.0);
+    m_dU.setVal(1.0);
+    //const amrex::Real dotProd = linOp.dotProduct(m_F,m_dU);
+    const amrex::Real dotProd = m_ops->dotProduct(m_F,m_dU);
+    amrex::Print() << " JRA: dotProduct = " << dotProd << std::endl;
+    m_dU.setVal(1.0);
+    linOp.increment(m_F,m_dU,2.0);
+    const amrex::Real dotProd2 = linOp.dotProduct(m_F,m_dU);
+    amrex::Print() << " JRA: dotProduct2 = " << dotProd2 << std::endl;
+
+    int gmres_iter, gmres_stat;
+    gmres_iter = m_linear_solver->getNumIters();
+    gmres_stat = m_linear_solver->getStatus();
+    amrex::Print() << "JRA: gmres_iter = " << gmres_iter << std::endl;
+    amrex::Print() << "JRA: gmres_stat = " << gmres_stat << std::endl;
+
+    //
+    //
+    //
 
     m_is_defined = true;
 

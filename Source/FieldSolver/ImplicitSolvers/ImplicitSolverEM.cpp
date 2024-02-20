@@ -63,6 +63,13 @@ void ImplicitSolverEM::Define( WarpX* const  a_WarpX )
         m_nlsolver->Define(m_E, this);
     }
 
+    //
+    //  TESTING NEWTON SOLVER
+    //
+    std::unique_ptr<NonlinearSolver<WarpXSolverVec,ImplicitSolverEM>> newton_solver;
+    newton_solver = std::make_unique<NewtonSolver<WarpXSolverVec,ImplicitSolverEM>>();
+    newton_solver->Define(m_E, this);
+
     //if (m_verbose) { PrintParameters(); }
     m_is_defined = true;
 }

@@ -6,9 +6,6 @@
 #include <AMReX_ParmParse.H>
 #include "Utils/TextMsg.H"
 
-#include <AMReX_GMRES.H>
-#include "JacobianFunctionJFNK.H"
-
 #include <vector>
 
 template<class Vec, class Ops>
@@ -63,9 +60,6 @@ class PicardSolver : public NonlinearSolver<Vec,Ops>
         mutable Vec m_Usave, m_F;
         mutable Ops* m_ops;
 
-        std::unique_ptr<JacobianFunctionJFNK<Vec,Ops>> m_linear_function;
-        std::unique_ptr<amrex::GMRES<Vec,JacobianFunctionJFNK<Vec,Ops>>> m_linear_solver;
-
         amrex::Real m_atol, m_rtol;
         int    m_maxits;
 
@@ -98,39 +92,6 @@ void PicardSolver<Vec,Ops>::Define( const Vec&  a_U,
   
     m_ops = a_ops;
     
-    //
-    // JRA, below is used to test GMRES, and linOp functions defined in JacobianFunctionJFNK
-    //
-    
-    m_linear_function = std::make_unique<JacobianFunctionJFNK<Vec,Ops>>();
-    m_linear_function->define(m_F, m_ops);
-    
-    m_linear_solver = std::make_unique<amrex::GMRES<Vec,JacobianFunctionJFNK<Vec,Ops>>>();
-    m_linear_solver->define(*m_linear_function);
-    m_linear_solver->solve(m_Usave,m_F,m_rtol,m_atol,m_maxits);
-    
-    JacobianFunctionJFNK<Vec,Ops> linOp;
-    linOp.define(m_F,m_ops);
-    m_F.setVal(1.0);
-    m_Usave.setVal(1.0);
-    //const amrex::Real dotProd = linOp.dotProduct(m_F,m_Usave);
-    const amrex::Real dotProd = m_ops->dotProduct(m_F,m_Usave);
-    amrex::Print() << " JRA: dotProduct = " << dotProd << std::endl;
-    m_Usave.setVal(1.0);
-    linOp.increment(m_F,m_Usave,2.0);
-    const amrex::Real dotProd2 = linOp.dotProduct(m_F,m_Usave);
-    amrex::Print() << " JRA: dotProduct2 = " << dotProd2 << std::endl;
-
-    int gmres_iter, gmres_stat;
-    gmres_iter = m_linear_solver->getNumIters();
-    gmres_stat = m_linear_solver->getStatus();
-    amrex::Print() << "JRA: gmres_iter = " << gmres_iter << std::endl;
-    amrex::Print() << "JRA: gmres_stat = " << gmres_stat << std::endl;
-
-    //
-    //
-    //
-
     m_is_defined = true;
 
 }
@@ -182,7 +143,8 @@ void PicardSolver<Vec,Ops>::Solve( Vec&         a_U,
 
         // Compute the step norm and update iter
         m_Usave -= a_U;
-        norm_abs = m_Usave.norm();
+        //norm_abs = m_Usave.norm();
+        norm_abs = m_ops->norm(m_Usave);
         if (iter == 0) {
             if (norm_abs > 0.) { norm0 = norm_abs; }
             else { norm0 = 1._rt; }
