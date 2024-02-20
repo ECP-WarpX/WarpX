@@ -152,7 +152,6 @@ struct CopyAndTimestamp {
         }
         dst.m_runtime_idata[m_step_index][dst_i] = m_step;
         dst.m_runtime_idata[m_delta_index][dst_i] = 0*m_dt; //delta_fraction is putted as zero, we need to calculate it
-        \\\\\\\\\\\\\\\\\\\TO DO\\\\\\\\\\\\\\\\\\\\\\\\\\
     }
 };
 
