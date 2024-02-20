@@ -45,7 +45,8 @@ struct IsOutsideDomainBoundary {
 };
 
 struct FindEmbeddedBoundaryIntersection {
-    const int m_index;
+    const int m_step_index;
+    const int m_time_index;
     const int m_step;
     const amrex::Real m_dt;
     amrex::Array4<const amrex::Real> m_phiarr;
@@ -69,9 +70,6 @@ struct FindEmbeddedBoundaryIntersection {
             dst.m_runtime_idata[j][dst_i] = src.m_runtime_idata[j][src_i];
         }
 
-        // Also record the integer timestep on the destination
-        dst.m_runtime_idata[m_index][dst_i] = m_step;
-
         // Modify the position of the destination particle:
         // Move it to the point of intersection with the embedded boundary
         // (which is found by using a bisection algorithm)
@@ -90,7 +88,6 @@ struct FindEmbeddedBoundaryIntersection {
         amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> plo = m_plo;
 
         // Bisection algorithm to find the point where phi(x,y,z)=0 (i.e. on the embedded boundary)
-
         amrex::Real dt_fraction = amrex::bisect( 0.0, 1.0,
             [=] (amrex::Real dt_frac) {
                 int i, j, k;
@@ -101,6 +98,10 @@ struct FindEmbeddedBoundaryIntersection {
                 amrex::Real phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, phiarr);
                 return phi_value;
             } );
+
+        // Also record the real time on the destination
+        dst.m_runtime_idata[m_step_index][dst_i] = m_step;
+        dst.m_runtime_rdata[m_time_index][dst_i] = m_step*m_dt + (1- dt_fraction)*m_dt;
 
         // Now that dt_fraction has be obtained (with bisect)
         // Save the corresponding position of the particle at the boundary
@@ -129,8 +130,10 @@ struct FindEmbeddedBoundaryIntersection {
 };
 
 struct CopyAndTimestamp {
-    int m_index;
+    int m_step_index;
+    int m_time_index;
     int m_step;
+    const amrex::Real m_dt;
 
     template <typename DstData, typename SrcData>
     AMREX_GPU_HOST_DEVICE
@@ -147,9 +150,11 @@ struct CopyAndTimestamp {
         for (int j = 0; j < src.m_num_runtime_int; ++j) {
             dst.m_runtime_idata[j][dst_i] = src.m_runtime_idata[j][src_i];
         }
-        dst.m_runtime_idata[m_index][dst_i] = m_step;
+        dst.m_runtime_idata[m_step_index][dst_i] = m_step;
+        dst.m_runtime_rdata[m_time_index][dst_i] = m_step*m_dt;
     }
 };
+
 
 ParticleBoundaryBuffer::ParticleBoundaryBuffer ()
 {
@@ -328,7 +333,8 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 if (!buffer[i].isDefined())
                 {
                     buffer[i] = pc.make_alike<amrex::PinnedArenaAllocator>();
-                    buffer[i].AddIntComp("timestamp", false);
+                    buffer[i].AddIntComp("step_scraped", false);
+                    buffer[i].AddRealComp("time_scraped", false);
                 }
                 auto& species_buffer = buffer[i];
                 for (int lev = 0; lev < pc.numLevels(); ++lev)
@@ -368,12 +374,17 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                         }
                         {
                           WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::filterAndTransform");
-                          const int timestamp_index = ptile_buffer.NumRuntimeIntComps()-1;
-                          const int timestep = warpx_instance.getistep(0);
+                          auto& warpx = WarpX::GetInstance();
+                          const auto dt = warpx.getdt(pti.GetLevel());
+                          auto string_to_index_intcomp = buffer[i].getParticleRuntimeiComps();
+                          const int step_scraped_index = string_to_index_intcomp.at("step_scraped");
+                          auto string_to_index_realcomp = buffer[i].getParticleRuntimeComps();
+                          const int time_scraped_index = string_to_index_realcomp.at("time_scraped");
+                          const int step = warpx_instance.getistep(0);
 
                           amrex::filterAndTransformParticles(ptile_buffer, ptile,
                                                              predicate,
-                                                             CopyAndTimestamp{timestamp_index, timestep},
+                                                             CopyAndTimestamp{step_scraped_index,time_scraped_index, step,dt},
                                                              0, dst_index);
                         }
                     }
@@ -393,7 +404,8 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
         if (!buffer[i].isDefined())
         {
             buffer[i] = pc.make_alike<amrex::PinnedArenaAllocator>();
-            buffer[i].AddIntComp("timestamp", false);
+            buffer[i].AddIntComp("step_scraped", false);
+            buffer[i].AddRealComp("time_scraped", false);
         }
         auto& species_buffer = buffer[i];
         for (int lev = 0; lev < pc.numLevels(); ++lev)
@@ -444,16 +456,18 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                   WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::resize_eb");
                   ptile_buffer.resize(dst_index + amrex::get<0>(reduce_data.value()));
                 }
-
-                const int timestamp_index = ptile_buffer.NumRuntimeIntComps()-1;
-                const int timestep = warpx_instance.getistep(0);
                 auto& warpx = WarpX::GetInstance();
                 const auto dt = warpx.getdt(pti.GetLevel());
+                auto string_to_index_intcomp = buffer[i].getParticleRuntimeiComps();
+                const int step_scraped_index = string_to_index_intcomp.at("step_scraped");
+                auto string_to_index_realcomp = buffer[i].getParticleRuntimeComps();
+                const int time_scraped_index = string_to_index_realcomp.at("time_scraped");
+                const int step = warpx_instance.getistep(0);
 
                 {
                   WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::filterTransformEB");
                   amrex::filterAndTransformParticles(ptile_buffer, ptile, predicate,
-                                                     FindEmbeddedBoundaryIntersection{timestamp_index, timestep, dt, phiarr, dxi, plo}, 0, dst_index);
+                                                     FindEmbeddedBoundaryIntersection{step_scraped_index,time_scraped_index, step, dt, phiarr, dxi, plo}, 0, dst_index);
                 }
             }
         }

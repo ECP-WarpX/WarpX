@@ -50,8 +50,8 @@ def n_remaining_particles( iteration ):
     w, = ts_full.get_particle(['w'], iteration=iteration)
     return len(w)
 def n_scraped_particles( iteration ):
-    timestamp = ts_scraping.get_particle( ['timestamp'], iteration=ts_scraping.iterations[0] )
-    return (timestamp <= iteration).sum()
+    step_scraped = ts_scraping.get_particle( ['stepScraped'], iteration=ts_scraping.iterations[0] )
+    return (step_scraped <= iteration).sum()
 def n_scraped_z_leq_zero( iteration ):
     z_pos, = ts_scraping.get_particle( ['z'], iteration=ts_scraping.iterations[0] )
     return (z_pos <= 0).sum()
