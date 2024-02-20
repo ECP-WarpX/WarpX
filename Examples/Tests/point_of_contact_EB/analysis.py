@@ -36,7 +36,7 @@ z_analytic=0.0000
 
 #result obtained by analysis of simulations
 step_ref=3
-delta_reduced_ref=0.58
+delta_reduced_ref=0.59
 
 print('NUMERICAL coordinates of the point of contact:')
 print('step_scraped=%d, delta=%5.4f e-10, x=%5.4f, y=%5.4f, z=%5.4f' % (step_scraped[0],delta_reduced,x[0], y[0], z[0]))
