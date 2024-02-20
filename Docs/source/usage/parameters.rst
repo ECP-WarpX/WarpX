@@ -430,7 +430,7 @@ Additional PML parameters
     Whether or not to use an amrex::DistributionMapping for the PML grids that is `similar` to the mother grids, meaning that the
     mapping will be computed to minimize the communication costs between the PML and the mother grids.
 
-* ``warpx.pml_`` (`int`; default: 10)
+* ``warpx.pml_delta`` (`int`; default: 10)
     The characteristic depth, in number of cells, over which
     the absorption coefficients of the PML increases.
 
