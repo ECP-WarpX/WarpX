@@ -57,6 +57,8 @@ class ImplicitSolverEM
                           const amrex::Real      a_time,
                           const amrex::Real      a_dt );
 
+    const amrex::Vector<amrex::Geometry>& getGeomVec() const { return m_geom_vec; }
+
     private:
 
     bool m_is_defined;
@@ -66,7 +68,8 @@ class ImplicitSolverEM
     WarpX* m_WarpX;
 
     amrex::Real m_theta;
-    
+    amrex::Vector<amrex::Geometry> m_geom_vec;
+
     NonlinearSolverType m_nlsolver_type;
     std::unique_ptr<NonlinearSolver<WarpXSolverVec,ImplicitSolverEM>> m_nlsolver;
 

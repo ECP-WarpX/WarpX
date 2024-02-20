@@ -11,6 +11,11 @@ void ImplicitSolverEM::Define( WarpX* const  a_WarpX )
     // Retain a pointer back to main WarpX class
     m_WarpX = a_WarpX;
     
+    // This is needed for the dotProduct operator in GMRES, which
+    // needs to know about the periodicity of the geometry.
+    // Should not live here. Figure out better way.
+    m_geom_vec = m_WarpX->Geom();
+   
     // Define E vectors
     m_E.Define( m_WarpX->Efield_fp );
     m_Eold  = m_E;
