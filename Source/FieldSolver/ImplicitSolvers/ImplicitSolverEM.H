@@ -6,11 +6,12 @@
 
 #include <AMReX_Array.H>
 #include <AMReX_MultiFab.H>
-#include <AMReX_MLMG.H>
+#include <AMReX_iMultiFab.H>
 #include <AMReX_REAL.H>
 
-class WarpX;
-class ImplicitSolverEM
+#include "ImplicitSolver.H"
+
+class ImplicitSolverEM : public ImplicitSolver
 {
     public:
 
@@ -26,38 +27,41 @@ class ImplicitSolverEM
 
     }
 
-    ~ImplicitSolverEM() = default;
+    virtual ~ImplicitSolverEM() = default;
     
-    //void Define();
-    void Define( WarpX* const  a_WarpX );
+    virtual void Define( WarpX* const  a_WarpX );
     
-    bool IsDefined() const { return m_is_defined; }
+    virtual bool isDefined() const { return m_is_defined; }
     
+    virtual void PrintParameters() const;
+
+    virtual void Initialize();
+    
+    virtual void OneStep( const amrex::Real  a_time,
+                          const amrex::Real  a_dt,
+                          const int          a_step );
+
+    virtual void PreRHSOp( const WarpXSolverVec&  a_E,
+                           const amrex::Real      a_time,
+                           const amrex::Real      a_dt,
+                           const int              a_nl_iter );
+
+    virtual void ComputeRHS( WarpXSolverVec&  a_Erhs,
+                       const WarpXSolverVec&  a_E,
+                       const amrex::Real      a_time,
+                       const amrex::Real      a_dt );
+
+    virtual void PostUpdateState( const WarpXSolverVec&  a_E,
+                                  const amrex::Real      a_time,
+                                  const amrex::Real      a_dt );
+
     amrex::Real theta() const { return m_theta; }
-    
-    void PrintParameters() const;
-
-    void Initialize();
-    
-    void OneStep( const amrex::Real  a_time,
-                  const amrex::Real  a_dt,
-                  const int          a_step );
-
-    void PreRHSOp( const WarpXSolverVec&  a_E,
-                   const amrex::Real      a_time,
-                   const amrex::Real      a_dt,
-                   const int              a_nl_iter );
-
-    void ComputeRHS( WarpXSolverVec&  a_Erhs,
-               const WarpXSolverVec&  a_E,
-               const amrex::Real      a_time,
-               const amrex::Real      a_dt );
-
-    void PostUpdateState( const WarpXSolverVec&  a_E,
-                          const amrex::Real      a_time,
-                          const amrex::Real      a_dt );
-
     const amrex::Vector<amrex::Geometry>& getGeomVec() const { return m_geom_vec; }
+
+    amrex::Real dotProduct( const WarpXSolverVec& a_X, 
+                            const WarpXSolverVec& a_Y ) const;
+
+    amrex::Real norm( const WarpXSolverVec& a_X ) const; 
 
     private:
 
@@ -75,6 +79,11 @@ class ImplicitSolverEM
 
     WarpXSolverVec m_E, m_Eold;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_Bold;
+    
+    bool m_dot_mask_defined = false;
+    amrex::Vector<std::array<std::unique_ptr<amrex::iMultiFab>,3>> m_dotMask;
+    
+    void setDotMask( const WarpXSolverVec&  a_E );
 
 };
 

@@ -105,13 +105,14 @@ class JacobianFunctionJFNK
     }
 
     inline 
-    RT dotProduct( const T& a_X, const T& a_U)
+    RT dotProduct( const T& a_X, const T& a_Y)
     { 
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            isDefined(),
-            "JacobianFunction::dotProduct() called on undefined JacobianFunction");
-        const amrex::Vector<amrex::Geometry>& geom_vec(m_ops->getGeomVec());
-        return( a_X.dotProduct(a_U, geom_vec) ); 
+        //WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        //    isDefined(),
+        //    "JacobianFunction::dotProduct() called on undefined JacobianFunction");
+        //const amrex::Vector<amrex::Geometry>& geom_vec(m_ops->getGeomVec());
+        //return( a_X.dotProduct(a_U, geom_vec) ); 
+        return( m_ops->dotProduct(a_X, a_Y) ); 
     }
 
     inline 
@@ -119,7 +120,6 @@ class JacobianFunctionJFNK
     { 
         auto r = dotProduct(a_U,a_U);
         return std::sqrt(r); 
-        //return( a_U.norm() ); 
     }
     
     inline 
