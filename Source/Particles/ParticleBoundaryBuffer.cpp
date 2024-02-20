@@ -133,7 +133,7 @@ struct CopyAndTimestamp {
     int m_step_index;
     int m_delta_index;
     int m_step;
-    int m_dt;
+    const amrex::Real m_dt;
 
     template <typename DstData, typename SrcData>
     AMREX_GPU_HOST_DEVICE
