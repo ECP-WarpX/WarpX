@@ -416,9 +416,9 @@ Domain Boundary Conditions
 
 * ``boundary.verboncoeur_axis_correction`` (`bool`) optional (default `true`)
     Whether to apply the Verboncoeur correction on the charge and current density on axis when using RZ.
-    For nodal values (rho and Jz), the cell volume for values on axis is calculated as :math:`\pi*\ r^2/4`.
+    For nodal values (rho and Jz), the cell volume for values on axis is calculated as :math:`\pi*\Delta r^2/4`.
     In :cite:t:`param-VerboncoeurJCP2001`, it is shown that using
-    :math:`\pi*\ r^2/3` instead will give a uniform density if the particle density is uniform.
+    :math:`\pi*\Delta r^2/3` instead will give a uniform density if the particle density is uniform.
 
 Additional PML parameters
 -------------------------
