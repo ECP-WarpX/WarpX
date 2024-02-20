@@ -593,9 +593,10 @@ PhysicalParticleContainer::AddGaussianBeam (
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
                 Real v_bulk_x = u_bulk.x / gamma_bulk * PhysConst::c;
                 Real v_bulk_y = u_bulk.y / gamma_bulk * PhysConst::c;
-                x = x - (v_x - v_bulk_x) * t;
-                y = y - (v_y - v_bulk_y) * t;
-                z = z - (v_z - v_bulk_z) * t;
+                Real v_dot_n = v_x * n_x + v_y * n_y + v_z * n_z;
+                x = x - (v_x - v_dot_n*n_x) * t;
+                y = y - (v_y - v_dot_n*n_y) * t;
+                z = z - (v_z - v_dot_n*n_z) * t;
 #elif defined(WARPX_DIM_XZ)
                 Real v_bulk_x = u_bulk.x / gamma_bulk * PhysConst::c;
                 x = x - (v_x - v_bulk_x) * t;
