@@ -44,6 +44,7 @@ struct IsOutsideDomainBoundary {
     }
 };
 
+#ifdef AMREX_USE_EB
 struct FindEmbeddedBoundaryIntersection {
     const int m_step_index;
     const int m_time_index;
@@ -157,6 +158,7 @@ struct FindEmbeddedBoundaryIntersection {
 #endif
     }
 };
+#endif
 
 struct CopyAndTimestamp {
     int m_step_index;
