@@ -45,9 +45,9 @@ void compute_weights (const amrex::ParticleReal xp,
 #endif
 
 #if (defined WARPX_DIM_3D)
-    const amrex::Real x = (xp - plo[0]) * dxi[0] + (nodal-1)*0.5;
-    const amrex::Real y = (yp - plo[1]) * dxi[1] + (nodal-1)*0.5;
-    const amrex::Real z = (zp - plo[2]) * dxi[2] + (nodal-1)*0.5;
+    const amrex::ParticleReal x = (xp - plo[0]) * dxi[0] + (nodal-1)*0.5;
+    const amrex::ParticleReal y = (yp - plo[1]) * dxi[1] + (nodal-1)*0.5;
+    const amrex::ParticleReal z = (zp - plo[2]) * dxi[2] + (nodal-1)*0.5;
 
     i = static_cast<int>(amrex::Math::floor(x));
     j = static_cast<int>(amrex::Math::floor(y));
