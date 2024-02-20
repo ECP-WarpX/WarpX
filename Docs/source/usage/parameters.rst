@@ -2754,7 +2754,7 @@ This can be important if a large number of particles are lost, avoiding filling 
 
 In addition to their usual attributes, the saved particles have an integer attribute ``stepScraped``, which
 indicates the PIC iteration at which each particle was absorbed at the boundary,
-and a real attribute ``delta``, which indicates the fraction of time between the time associated to the last step 
+and a real attribute ``delta``, which indicates the fraction of time between the time associated to the last step
 and the exact time when each particle hits the boundary. ``delta`` is a real between 0 and dt.
 
 ``BoundaryScrapingDiagnostics`` can be used with ``<diag_name>.<species>.random_fraction``, ``<diag_name>.<species>.uniform_stride``, and ``<diag_name>.<species>.plot_filter_function``, which have the same behavior as for ``FullDiagnostics``. For ``BoundaryScrapingDiagnostics``, these filters are applied at the time the data is written to file. An implication of this is that more particles may initially be accumulated in memory than are ultimately written. ``t`` in ``plot_filter_function`` refers to the time the diagnostic is written rather than the time the particle crossed the boundary.
