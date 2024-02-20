@@ -397,7 +397,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
         {
             buffer[i] = pc.make_alike<amrex::PinnedArenaAllocator>();
             buffer[i].AddIntComp("stepScraped", false);
-            buffer[i].AddRealComp("delta", false);
+            buffer[i].AddRealComp("deltaTimeScraped", false);
         }
         auto& species_buffer = buffer[i];
         for (int lev = 0; lev < pc.numLevels(); ++lev)
@@ -453,7 +453,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 auto string_to_index_intcomp = buffer[i].getParticleRuntimeiComps();
                 const int step_scraped_index = string_to_index_intcomp.at("stepScraped");
                 auto string_to_index_realcomp = buffer[i].getParticleRuntimeComps();
-                const int delta_index = string_to_index_realcomp.at("delta");
+                const int delta_index = string_to_index_realcomp.at("deltaTimeScraped");
                 const int step = warpx_instance.getistep(0);
 
                 {
