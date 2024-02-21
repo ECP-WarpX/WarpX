@@ -3475,4 +3475,3 @@ WarpX::get_field_pointer (const FieldType field_type, const int lev, const int d
 
     return field_pointer;
 }
-
