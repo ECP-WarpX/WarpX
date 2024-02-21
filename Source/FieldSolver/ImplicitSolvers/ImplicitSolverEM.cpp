@@ -160,16 +160,15 @@ void ImplicitSolverEM::PreRHSOp( const WarpXSolverVec&  a_E,
                                  const int              a_nl_iter,
                                  const bool             a_from_jacobian )
 {  
-    amrex::ignore_unused(a_E,a_from_jacobian);
+    amrex::ignore_unused(a_E);
     
-    if (m_nlsolver_type!=NonlinearSolverType::Picard) {
-        PostUpdateState( a_E, a_time, a_dt );
-    }
+    // WarpX owned Efield_fp and Bfield_fp used in PreRHSOp() are updated
+    // in PostUpdateState();
 
     // Advance the particle positions by 1/2 dt,
     // particle velocities by dt, then take average of old and new v,
     // deposit currents, giving J at n+1/2 used in ComputeRHSE below
-    m_WarpX->PreRHSOpFromNonlinearIter( a_time, a_dt, a_nl_iter );
+    m_WarpX->PreRHSOp( a_time, a_dt, a_nl_iter, a_from_jacobian );
 
 }
 

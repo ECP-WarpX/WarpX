@@ -125,9 +125,10 @@ public:
     //
     // Functions used by implicit solvers
     //
-    void PreRHSOpFromNonlinearIter ( const amrex::Real  cur_time, 
-                                     const amrex::Real  a_full_dt,
-                                     const int          a_nl_iter );
+    void PreRHSOp ( const amrex::Real  cur_time, 
+                    const amrex::Real  a_full_dt,
+                    const int          a_nl_iter,
+                    const bool         a_from_jacobian );
     void SaveParticlesAtImplicitStepStart ( );
     void FinishImplicitParticleUpdate ( );
     void UpdateElectricField( const WarpXSolverVec&  a_E, const bool a_apply );

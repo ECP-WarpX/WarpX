@@ -52,12 +52,13 @@
 #include <vector>
 
 void
-WarpX::PreRHSOpFromNonlinearIter ( const amrex::Real  a_cur_time, 
-                                   const amrex::Real  a_full_dt, 
-                                   const int          a_nl_iter )
+WarpX::PreRHSOp ( const amrex::Real  a_cur_time, 
+                  const amrex::Real  a_full_dt, 
+                  const int          a_nl_iter,
+                  const bool         a_from_jacobian )
 {
     using namespace amrex::literals;
-    amrex::ignore_unused(a_full_dt,a_nl_iter);
+    amrex::ignore_unused( a_full_dt, a_nl_iter, a_from_jacobian );
 
     // Advance the particle positions by 1/2 dt,
     // particle velocities by dt, then take average of old and new v,
