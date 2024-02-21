@@ -41,6 +41,7 @@ class JacobianFunctionJFNK
     inline 
     void precond (T& a_U, const T& a_X)     
     { 
+        amrex::Print() << "JRA: call to precond() from GMRES " << std::endl;
         if (m_usePreCond) {
             a_U.zero();
             //m_precond->apply(a_U, a_X);
@@ -68,7 +69,10 @@ class JacobianFunctionJFNK
     T makeVecRHS () const;
 
     inline 
-    void assign(T& a_Z, const T& a_U) { a_Z = a_U; }
+    void assign(T& a_Z, const T& a_U) { 
+        amrex::Print() << "JRA: call to assign() from GMRES" << std::endl;
+        a_Z = a_U; 
+    }
 
     inline 
     void increment(T& a_Z, const T& a_U, const RT a_scale)
@@ -80,6 +84,7 @@ class JacobianFunctionJFNK
     inline 
     void scale (T& a_U, const RT a_scale)
     { 
+        amrex::Print() << "JRA: call to scale() from GMRES " << std::endl;
         a_U.scale(a_scale); 
     }
     
@@ -99,17 +104,13 @@ class JacobianFunctionJFNK
     inline 
     void setVal (T& a_U, const RT a_val)
     { 
+        amrex::Print() << "JRA: call to setVal() from GMRES" << std::endl;
         a_U.setVal(a_val);
     }
 
     inline 
     RT dotProduct( const T& a_X, const T& a_Y)
     { 
-        //WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        //    isDefined(),
-        //    "JacobianFunction::dotProduct() called on undefined JacobianFunction");
-        //const amrex::Vector<amrex::Geometry>& geom_vec(m_ops->getGeomVec());
-        //return( a_X.dotProduct(a_U, geom_vec) ); 
         return( m_ops->dotProduct(a_X, a_Y) ); 
     }
 
@@ -117,6 +118,7 @@ class JacobianFunctionJFNK
     RT norm2(const T& a_U) 
     { 
         auto r = dotProduct(a_U,a_U);
+        amrex::Print() << "JRA: call to norm2() from GMRES: norm2 = " << std::sqrt(r) << std::endl;
         return std::sqrt(r); 
     }
     
@@ -224,6 +226,7 @@ void JacobianFunctionJFNK<T,Ops>::define ( const T&     a_U,
 template <class T, class Ops>
 auto JacobianFunctionJFNK<T,Ops>::makeVecRHS () const -> T
 {
+    amrex::Print() << "JRA: call to makeVecRHS() from GMRES" << std::endl;
     T Vec;
     Vec.Define (m_F);
     return Vec;
@@ -233,6 +236,7 @@ auto JacobianFunctionJFNK<T,Ops>::makeVecRHS () const -> T
 template <class T, class Ops>
 auto JacobianFunctionJFNK<T,Ops>::makeVecLHS () const -> T
 {
+    amrex::Print() << "JRA: call to makeVecLHS() from GMRES" << std::endl;
     T Vec;
     Vec.Define (m_F);
     return Vec;
@@ -247,6 +251,7 @@ void JacobianFunctionJFNK<T,Ops>::apply (T& a_F, const T& a_U)
     BL_PROFILE("JacobianFunctionJFNK::apply()");
     RT normY = norm2(a_U);
         
+    amrex::Print() << "JRA: call to apply() from GMRES " << std::endl;
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         isDefined(),
         "JacobianFunction::apply() called on undefined JacobianFunction");

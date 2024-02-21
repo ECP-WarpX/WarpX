@@ -121,15 +121,17 @@ void NewtonSolver<Vec,Ops>::Define ( const Vec&  a_U,
   
     m_ops = a_ops;
 
-    //
-    // JRA, below is used to test GMRES, and linOp functions defined in JacobianFunctionJFNK
-    //
-
     m_linear_function = std::make_unique<JacobianFunctionJFNK<Vec,Ops>>();
     m_linear_function->define(m_F, m_ops);
     
     m_linear_solver = std::make_unique<amrex::GMRES<Vec,JacobianFunctionJFNK<Vec,Ops>>>();
     m_linear_solver->define(*m_linear_function);
+    m_linear_solver->setVerbose( 2 );
+
+    //
+    // JRA, below is used to test GMRES, and linOp functions defined in JacobianFunctionJFNK
+    //
+
     m_linear_solver->solve(m_dU,m_R,m_rtol,m_atol,m_maxits);
     
     JacobianFunctionJFNK<Vec,Ops> linOp;

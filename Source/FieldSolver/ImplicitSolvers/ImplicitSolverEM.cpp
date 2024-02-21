@@ -2,7 +2,7 @@
 #include "ImplicitSolverEM.H"
 #include "WarpX.H"
 
-void ImplicitSolverEM::Define( WarpX* const  a_WarpX )
+void ImplicitSolverEM::Define ( WarpX* const  a_WarpX )
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !m_is_defined,
@@ -11,11 +11,6 @@ void ImplicitSolverEM::Define( WarpX* const  a_WarpX )
     // Retain a pointer back to main WarpX class
     m_WarpX = a_WarpX;
  
-    // This is needed for the dotProduct operator in GMRES, which
-    // needs to know about the periodicity of the geometry.
-    // Should not live here. Figure out better way.
-    m_geom_vec = m_WarpX->Geom();
-   
     // Define E vectors
     m_E.Define( m_WarpX->Efield_fp );
     m_Eold  = m_E;
@@ -74,7 +69,7 @@ void ImplicitSolverEM::Define( WarpX* const  a_WarpX )
     m_is_defined = true;
 }
 
-void ImplicitSolverEM::PrintParameters() const
+void ImplicitSolverEM::PrintParameters () const
 {
     if (!m_verbose) { return; }
     amrex::Print() << std::endl;
@@ -93,7 +88,7 @@ void ImplicitSolverEM::PrintParameters() const
     amrex::Print() << std::endl;
 }
 
-void ImplicitSolverEM::Initialize( )
+void ImplicitSolverEM::Initialize ()
 {
 
     // initialize E vectors
@@ -102,9 +97,9 @@ void ImplicitSolverEM::Initialize( )
     
 }
 
-void ImplicitSolverEM::OneStep( const amrex::Real  a_old_time,
-                                const amrex::Real  a_dt,
-                                const int          a_step )
+void ImplicitSolverEM::OneStep ( const amrex::Real  a_old_time,
+                                 const amrex::Real  a_dt,
+                                 const int          a_step )
 {  
     using namespace amrex::literals;
     amrex::ignore_unused(a_step);
@@ -154,11 +149,11 @@ void ImplicitSolverEM::OneStep( const amrex::Real  a_old_time,
   
 }
 
-void ImplicitSolverEM::PreRHSOp( const WarpXSolverVec&  a_E,
-                                 const amrex::Real      a_time,
-                                 const amrex::Real      a_dt,
-                                 const int              a_nl_iter,
-                                 const bool             a_from_jacobian )
+void ImplicitSolverEM::PreRHSOp ( const WarpXSolverVec&  a_E,
+                                  const amrex::Real      a_time,
+                                  const amrex::Real      a_dt,
+                                  const int              a_nl_iter,
+                                  const bool             a_from_jacobian )
 {  
     amrex::ignore_unused(a_E);
     
@@ -172,18 +167,18 @@ void ImplicitSolverEM::PreRHSOp( const WarpXSolverVec&  a_E,
 
 }
 
-void ImplicitSolverEM::ComputeRHS( WarpXSolverVec&  a_Erhs,
-                             const WarpXSolverVec&  a_E,
-                             const amrex::Real      a_time,
-                             const amrex::Real      a_dt )
+void ImplicitSolverEM::ComputeRHS ( WarpXSolverVec&  a_Erhs,
+                              const WarpXSolverVec&  a_E,
+                              const amrex::Real      a_time,
+                              const amrex::Real      a_dt )
 {  
     amrex::ignore_unused(a_E, a_time);
     m_WarpX->ComputeRHSE(m_theta*a_dt, a_Erhs);
 }
 
-void ImplicitSolverEM::PostUpdateState( const WarpXSolverVec&  a_E,
-                                        const amrex::Real      a_time,
-                                        const amrex::Real      a_dt )
+void ImplicitSolverEM::PostUpdateState ( const WarpXSolverVec&  a_E,
+                                         const amrex::Real      a_time,
+                                         const amrex::Real      a_dt )
 {
     using namespace amrex::literals;
     amrex::ignore_unused(a_time);
@@ -205,11 +200,11 @@ void ImplicitSolverEM::PostUpdateState( const WarpXSolverVec&  a_E,
 
 }
 
-void ImplicitSolverEM::setDotMask( const WarpXSolverVec&  a_E ) {
+void ImplicitSolverEM::setDotMask ( const WarpXSolverVec&  a_E ) {
     
     if (m_dot_mask_defined) { return; }
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        a_E.isDefined(),
+        a_E.IsDefined(),
         "ImplicitSolverEM::setDotMask(a_E) called with undefined a_E");
 
     const amrex::Vector<amrex::Geometry>& Geom = m_WarpX->Geom();
@@ -227,8 +222,8 @@ void ImplicitSolverEM::setDotMask( const WarpXSolverVec&  a_E ) {
 
 }
 
-amrex::Real ImplicitSolverEM::dotProduct( const WarpXSolverVec& a_X, 
-                                          const WarpXSolverVec& a_Y ) const
+amrex::Real ImplicitSolverEM::dotProduct ( const WarpXSolverVec& a_X, 
+                                           const WarpXSolverVec& a_Y ) const
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_dot_mask_defined,
@@ -246,7 +241,7 @@ amrex::Real ImplicitSolverEM::dotProduct( const WarpXSolverVec& a_X,
     return result;
 }
 
-amrex::Real ImplicitSolverEM::norm( const WarpXSolverVec& a_X ) const 
+amrex::Real ImplicitSolverEM::norm ( const WarpXSolverVec& a_X ) const 
 {
    amrex::Real result = dotProduct(a_X,a_X);
    return std::sqrt(result);

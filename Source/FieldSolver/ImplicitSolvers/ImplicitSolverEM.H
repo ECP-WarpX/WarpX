@@ -11,6 +11,10 @@
 
 #include "ImplicitSolver.H"
 
+/*
+ * theta-implicit electromagnetic time solver class.
+ */
+
 class ImplicitSolverEM : public ImplicitSolver
 {
     public:
@@ -29,40 +33,39 @@ class ImplicitSolverEM : public ImplicitSolver
 
     virtual ~ImplicitSolverEM() = default;
     
-    virtual void Define( WarpX* const  a_WarpX );
+    virtual void Define ( WarpX* const  a_WarpX );
     
-    virtual bool isDefined() const { return m_is_defined; }
+    virtual bool IsDefined () const { return m_is_defined; }
     
-    virtual void PrintParameters() const;
+    virtual void PrintParameters () const;
 
-    virtual void Initialize();
+    virtual void Initialize ();
     
-    virtual void OneStep( const amrex::Real  a_time,
-                          const amrex::Real  a_dt,
-                          const int          a_step );
+    virtual void OneStep ( const amrex::Real  a_time,
+                           const amrex::Real  a_dt,
+                           const int          a_step );
 
-    virtual void PreRHSOp( const WarpXSolverVec&  a_E,
-                           const amrex::Real      a_time,
-                           const amrex::Real      a_dt,
-                           const int              a_nl_iter,
-                           const bool             a_from_jacobian );
+    virtual void PreRHSOp ( const WarpXSolverVec&  a_E,
+                            const amrex::Real      a_time,
+                            const amrex::Real      a_dt,
+                            const int              a_nl_iter,
+                            const bool             a_from_jacobian );
 
-    virtual void ComputeRHS( WarpXSolverVec&  a_Erhs,
-                       const WarpXSolverVec&  a_E,
-                       const amrex::Real      a_time,
-                       const amrex::Real      a_dt );
+    virtual void ComputeRHS ( WarpXSolverVec&  a_Erhs,
+                        const WarpXSolverVec&  a_E,
+                        const amrex::Real      a_time,
+                        const amrex::Real      a_dt );
 
-    virtual void PostUpdateState( const WarpXSolverVec&  a_E,
-                                  const amrex::Real      a_time,
-                                  const amrex::Real      a_dt );
+    virtual void PostUpdateState ( const WarpXSolverVec&  a_E,
+                                   const amrex::Real      a_time,
+                                   const amrex::Real      a_dt );
 
-    amrex::Real theta() const { return m_theta; }
-    const amrex::Vector<amrex::Geometry>& getGeomVec() const { return m_geom_vec; }
+    amrex::Real theta () const { return m_theta; }
 
-    amrex::Real dotProduct( const WarpXSolverVec& a_X, 
-                            const WarpXSolverVec& a_Y ) const;
+    amrex::Real dotProduct ( const WarpXSolverVec& a_X, 
+                             const WarpXSolverVec& a_Y ) const;
 
-    amrex::Real norm( const WarpXSolverVec& a_X ) const; 
+    amrex::Real norm ( const WarpXSolverVec& a_X ) const; 
 
     private:
 
@@ -73,7 +76,6 @@ class ImplicitSolverEM : public ImplicitSolver
     WarpX* m_WarpX;
 
     amrex::Real m_theta;
-    amrex::Vector<amrex::Geometry> m_geom_vec;
 
     NonlinearSolverType m_nlsolver_type;
     std::unique_ptr<NonlinearSolver<WarpXSolverVec,ImplicitSolverEM>> m_nlsolver;

@@ -19,13 +19,23 @@
 #include <AMReX_Utility.H>
 #include <AMReX_Vector.H>
 
-#include <AMReX_iMultiFab.H>
-
 #include <algorithm>
 #include <array>
 #include <memory>
 #include <ostream>
 #include <vector>
+
+/*
+ *   This is a wrapper class around a Vector of array of pointers to MultiFabs that contains 
+ *   basic math operators and functionality needed to interact with linear solvers in 
+ *   AMReX, such as GMRES.
+ *
+ *   The size of the Vector is the number of amr levels. Hardcoded for 1 right now. The size of 
+ *   the array is the number of MultiFabs. It is hardcoded for 3 right now as it is only 
+ *   used for the electric field in the electromagnetic implicit time solver. In the future, 
+ *   the array size can be made a template parameter so that this class can be used for other 
+ *   solver vectors, such as electrostatic (array size 1) or Darwin (array size 4). 
+ */
 
 class WarpXSolverVec
 {
@@ -48,13 +58,13 @@ class WarpXSolverVec
     using RT = value_type;
 
     inline
-    bool isDefined() const { return m_is_defined; }
+    bool IsDefined () const { return m_is_defined; }
 
     inline
     void Define (const WarpXSolverVec& a_vec)
     {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            a_vec.isDefined(),
+            a_vec.IsDefined(),
             "WarpXSolverVec::Define(a_vec) called with undefined a_vec");
         Define( a_vec.getVec() );
         return;
@@ -64,10 +74,9 @@ class WarpXSolverVec
     void Define ( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& a_solver_vec )
     {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            !isDefined(),
+            !IsDefined(),
             "WarpXSolverVec::Define() called on undefined WarpXSolverVec");
         m_field_vec.resize(m_num_amr_levels);
-        m_dotmask.resize(m_num_amr_levels);
         const int lev = 0;
         for (int n=0; n<3; n++) {
             const amrex::MultiFab& mf_model = *a_solver_vec[lev][n];
@@ -95,8 +104,8 @@ class WarpXSolverVec
     
     [[nodiscard]] std::unique_ptr<amrex::MultiFab> make (int amrlev, int idim, amrex::IntVect const& ng) const
     {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            isDefined(),
+        AMREX_ASSERT_WITH_MESSAGE(
+            IsDefined(),
             "WarpXSolverVec::make () called on undefined WarpXSolverVec");
         const amrex::BoxArray& grids = m_field_vec[amrlev][idim]->boxArray();
         const amrex::DistributionMapping& dmap = m_field_vec[amrlev][idim]->DistributionMap();
@@ -107,8 +116,8 @@ class WarpXSolverVec
     inline 
     void Copy ( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& a_solver_vec )
     {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            isDefined(),
+        AMREX_ASSERT_WITH_MESSAGE(
+            IsDefined(),
             "WarpXSolverVec::Copy() called on undefined WarpXSolverVec");
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
             for (int n = 0; n < 3; ++n) {
@@ -120,10 +129,10 @@ class WarpXSolverVec
     inline 
     void Copy (const WarpXSolverVec& a_vec)
     {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            a_vec.isDefined(),
+        AMREX_ASSERT_WITH_MESSAGE(
+            a_vec.IsDefined(),
             "WarpXSolverVec::Copy(a_vec) called with undefined a_vec");
-        if (!isDefined()) {
+        if (!IsDefined()) {
             Define(a_vec);
         } 
         const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& field_vec = a_vec.getVec();
@@ -197,8 +206,8 @@ class WarpXSolverVec
     inline
     void zero ()
     {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            isDefined(),
+        AMREX_ASSERT_WITH_MESSAGE(
+            IsDefined(),
             "WarpXSolverVec::zero() called on undefined WarpXSolverVec");
         const int lev = 0;
         m_field_vec[lev][0]->setVal(0.0);
@@ -209,8 +218,8 @@ class WarpXSolverVec
     inline
     void ones ()
     {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            isDefined(),
+        AMREX_ASSERT_WITH_MESSAGE(
+            IsDefined(),
             "WarpXSolverVec::ones() called on undefined WarpXSolverVec");
         const int lev = 0;
         m_field_vec[lev][0]->setVal(1.0);
@@ -221,8 +230,8 @@ class WarpXSolverVec
     inline
     void setVal ( const RT a_val )
     {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            isDefined(),
+        AMREX_ASSERT_WITH_MESSAGE(
+            IsDefined(),
             "WarpXSolverVec::ones() called on undefined WarpXSolverVec");
         const int lev = 0;
         m_field_vec[lev][0]->setVal(a_val);
@@ -231,10 +240,10 @@ class WarpXSolverVec
     }
 
     inline
-    amrex::Real norm() const
+    amrex::Real norm () const
     {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            isDefined(),
+        AMREX_ASSERT_WITH_MESSAGE(
+            IsDefined(),
             "WarpXSolverVec::norm() called on undefined WarpXSolverVec");
         amrex::Real nF0 = m_field_vec[0][0]->norm0(0, 0);
         amrex::Real nF1 = m_field_vec[0][1]->norm0(0, 0);
@@ -244,24 +253,6 @@ class WarpXSolverVec
         return normF;
     }
     
-    inline
-    amrex::Real dotProduct( const WarpXSolverVec& a_Y, const amrex::Vector<amrex::Geometry>& a_geom) const
-    {
-        // See GMRESMLMGT<M>::dotProduct()in amrex/Src/LinearSolvers/AMReX_GMRES_MLMG.H 
-        // See MLCurlCurl::xdoty() in amrex/Src/LinearSolvers/MLMG/AMReX_MLCurlCurl.cpp 
-        RT result = 0.0;
-        const int lev = 0;
-        const bool local = true;
-        for (int n = 0; n < 3; ++n) {
-            auto rtmp = amrex::MultiFab::Dot(getDotMask(lev,n,a_geom[lev]),
-                                             *m_field_vec[lev][n], 0, 
-                                             *a_Y.getVec()[lev][n], 0, 1, 0, local);
-            result += rtmp;
-        }
-        amrex::ParallelAllReduce::Sum(result, amrex::ParallelContext::CommunicatorSub());
-        return result;
-    }
-
     const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& getVec() const {return m_field_vec;}
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& getVec() {return m_field_vec;}
 
@@ -269,26 +260,9 @@ class WarpXSolverVec
 
     bool  m_is_defined;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_field_vec;
-    mutable amrex::Vector<std::array<std::unique_ptr<amrex::iMultiFab>,3 > > m_dotmask;
     static constexpr int m_ncomp = 1;
     static constexpr int m_num_amr_levels = 1;
 
-    [[nodiscard]] const amrex::iMultiFab& getDotMask (int amrlev, int idim, const amrex::Geometry&  a_geom) const
-    {
-        // See MLCurlCurl::getDotMask() in amrex/Src/LinearSolvers/MLMG/AMReX_MLCurlCurl.cpp
-        if (m_dotmask[amrlev][idim] == nullptr) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            isDefined(),
-            "WarpXSolverVec::getDotMask() called on undefined WarpXSolverVec");
-            const amrex::BoxArray& grids = m_field_vec[0][idim]->boxArray();
-            amrex::MultiFab tmp(grids, m_field_vec[0][idim]->DistributionMap(),
-                                1, 0, amrex::MFInfo().SetAlloc(false));
-            const amrex::Periodicity& period = a_geom.periodicity();
-            m_dotmask[amrlev][idim] = tmp.OwnerMask(period);
-        }
-        return *m_dotmask[amrlev][idim];
-    }
- 
 };
 
 template <typename T>
