@@ -37,7 +37,7 @@ void HybridPICModel::ReadParameters ()
         Abort("hybrid_pic_model.n0_ref should be specified if hybrid_pic_model.gamma != 1");
     }
 
-    pp_hybrid.query("plasma_resistivity(rho)", m_eta_expression);
+    pp_hybrid.query("plasma_resistivity(rho,J)", m_eta_expression);
     utils::parser::queryWithParser(pp_hybrid, "n_floor", m_n_floor);
 
     // convert electron temperature from eV to J
@@ -123,8 +123,10 @@ void HybridPICModel::ClearLevel (int lev)
 void HybridPICModel::InitData ()
 {
     m_resistivity_parser = std::make_unique<amrex::Parser>(
-        utils::parser::makeParser(m_eta_expression, {"rho"}));
-    m_eta = m_resistivity_parser->compile<1>();
+        utils::parser::makeParser(m_eta_expression, {"rho","J"}));
+    m_eta = m_resistivity_parser->compile<2>();
+    const std::set<std::string> resistivity_symbols = m_resistivity_parser->symbols();
+    m_resistivity_has_J_dependence += resistivity_symbols.count("J");
 
     m_J_external_parser[0] = std::make_unique<amrex::Parser>(
         utils::parser::makeParser(m_Jx_ext_grid_function,{"x","y","z","t"}));

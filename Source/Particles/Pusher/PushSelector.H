@@ -57,7 +57,7 @@ void doParticleMomentumPush(amrex::ParticleReal& ux,
                             const amrex::Real dt)
 {
     amrex::ParticleReal qp = a_q;
-    if (ion_lev) { qp *= ion_lev; }
+    qp *= ion_lev;
 
     if (do_crr) {
 #ifdef WARPX_QED
