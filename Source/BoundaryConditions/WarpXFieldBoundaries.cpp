@@ -22,9 +22,9 @@ void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
 {
     if (PEC::isAnyBoundaryPEC()) {
         if (patch_type == PatchType::fine) {
-            PEC::ApplyPECtoEfield( { get_pointer_Efield_fp(lev, 0),
-                                     get_pointer_Efield_fp(lev, 1),
-                                     get_pointer_Efield_fp(lev, 2) }, lev, patch_type);
+            PEC::ApplyPECtoEfield( { get_field_pointer(FieldType::Efield_fp, lev, 0),
+                                     get_field_pointer(FieldType::Efield_fp, lev, 1),
+                                     get_field_pointer(FieldType::Efield_fp, lev, 2) }, lev, patch_type);
             if (WarpX::isAnyBoundaryPML()) {
                 // apply pec on split E-fields in PML region
                 const bool split_pml_field = true;
@@ -44,9 +44,9 @@ void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
 
 #ifdef WARPX_DIM_RZ
     if (patch_type == PatchType::fine) {
-        ApplyFieldBoundaryOnAxis(get_pointer_Efield_fp(lev, 0),
-                                 get_pointer_Efield_fp(lev, 1),
-                                 get_pointer_Efield_fp(lev, 2), lev);
+        ApplyFieldBoundaryOnAxis(get_field_pointer(FieldType::Efield_fp, lev, 0),
+                                 get_field_pointer(FieldType::Efield_fp, lev, 1),
+                                 get_field_pointer(FieldType::Efield_fp, lev, 2), lev);
     } else {
         ApplyFieldBoundaryOnAxis(get_pointer_Efield_cp(lev, 0),
                                  get_pointer_Efield_cp(lev, 1),
@@ -59,9 +59,9 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
 {
     if (PEC::isAnyBoundaryPEC()) {
         if (patch_type == PatchType::fine) {
-            PEC::ApplyPECtoBfield( { get_pointer_Bfield_fp(lev, 0),
-                                     get_pointer_Bfield_fp(lev, 1),
-                                     get_pointer_Bfield_fp(lev, 2) }, lev, patch_type);
+            PEC::ApplyPECtoBfield( { get_field_pointer(FieldType::Bfield_fp, lev, 0),
+                                     get_field_pointer(FieldType::Bfield_fp, lev, 1),
+                                     get_field_pointer(FieldType::Bfield_fp, lev, 2) }, lev, patch_type);
         } else {
             PEC::ApplyPECtoBfield( { get_pointer_Bfield_cp(lev, 0),
                                      get_pointer_Bfield_cp(lev, 1),
@@ -92,9 +92,9 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
 
 #ifdef WARPX_DIM_RZ
     if (patch_type == PatchType::fine) {
-        ApplyFieldBoundaryOnAxis(get_pointer_Bfield_fp(lev, 0),
-                                 get_pointer_Bfield_fp(lev, 1),
-                                 get_pointer_Bfield_fp(lev, 2), lev);
+        ApplyFieldBoundaryOnAxis(get_field_pointer(FieldType::Bfield_fp, lev, 0),
+                                 get_field_pointer(FieldType::Bfield_fp, lev, 1),
+                                 get_field_pointer(FieldType::Bfield_fp, lev, 2), lev);
     } else {
         ApplyFieldBoundaryOnAxis(get_pointer_Bfield_cp(lev, 0),
                                  get_pointer_Bfield_cp(lev, 1),

@@ -191,7 +191,7 @@ SignalHandling::WaitSignals ()
     }
 
 #if defined(AMREX_USE_MPI)
-    BL_MPI_REQUIRE(MPI_Wait(&signal_mpi_ibcast_request, MPI_STATUS_IGNORE)); // NOLINT(clang-analyzer-optin.mpi.MPI-Checker)
+    BL_MPI_REQUIRE(MPI_Wait(&signal_mpi_ibcast_request, MPI_STATUS_IGNORE));
 #endif
 }
 

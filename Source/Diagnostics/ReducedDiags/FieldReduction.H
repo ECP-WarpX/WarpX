@@ -167,7 +167,7 @@ public:
             const auto& arrjz = jz[mfi].array();
 
             reduce_op.eval(box, reduce_data,
-            [=] AMREX_GPU_DEVICE (int i, int j, int k) -> ReduceTuple  //NOLINT(clang-analyzer-optin.performance.Padding)
+            [=] AMREX_GPU_DEVICE (int i, int j, int k) -> ReduceTuple
             {
                  // 0.5 is here because position are computed on the cell centers
 
