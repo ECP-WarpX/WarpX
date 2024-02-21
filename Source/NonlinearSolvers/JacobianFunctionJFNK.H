@@ -1,8 +1,6 @@
 #ifndef _JacobianFunctionJFNK_H_
 #define _JacobianFunctionJFNK_H_
 
-//#include "PreconditionerLibrary.H"
-
 template <class T, class Ops>
 class JacobianFunctionJFNK
 {
@@ -116,7 +114,7 @@ class JacobianFunctionJFNK
     }
 
     inline 
-    RT norm2(T& a_U) 
+    RT norm2(const T& a_U) 
     { 
         auto r = dotProduct(a_U,a_U);
         return std::sqrt(r); 
@@ -129,7 +127,7 @@ class JacobianFunctionJFNK
     void setBaseSolution (const T& a_U)
     { 
         m_Y0.Copy(a_U); 
-        m_normY0 = m_Y0.norm(); 
+        m_normY0 = norm2(m_Y0); 
         //if (m_usePreCond) m_preCond->setBaseSolution(a_U);
     }
 
@@ -192,13 +190,13 @@ class JacobianFunctionJFNK
 };
 
 template <class T, class Ops>
-void JacobianFunctionJFNK<T,Ops>::define( const T&     a_U, 
+void JacobianFunctionJFNK<T,Ops>::define ( const T&     a_U, 
                                       Ops* const   a_ops )
 {
-    m_Z.Define  (a_U);
-    m_Y0.Define (a_U);
-    m_F0.Define (a_U);
-    m_F.Define  (a_U);
+    m_Z.Define(a_U);
+    m_Y0.Define(a_U);
+    m_F0.Define(a_U);
+    m_F.Define(a_U);
 
     m_ops = a_ops;
 
@@ -247,7 +245,7 @@ template <class T, class Ops>
 void JacobianFunctionJFNK<T,Ops>::apply (T& a_F, const T& a_U)
 {
     BL_PROFILE("JacobianFunctionJFNK::apply()");
-    RT normY = a_U.norm();
+    RT normY = norm2(a_U);
         
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         isDefined(),
@@ -268,8 +266,8 @@ void JacobianFunctionJFNK<T,Ops>::apply (T& a_F, const T& a_U)
         }
 
         m_Z = m_Y0 + eps*a_U;
-        //m_ops->preRHSOp( m_Z, m_cur_time, m_dt, -1, true );
-        //m_ops->computeRHS(m_F, m_Z, m_cur_time, m_dt );
+        m_ops->PreRHSOp( m_Z, m_cur_time, m_dt, -1, true );
+        m_ops->ComputeRHS(m_F, m_Z, m_cur_time, m_dt );
 
         a_F = a_U - (1.0/eps)*(m_F-m_F0);
     }

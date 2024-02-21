@@ -30,7 +30,8 @@ class ImplicitSolver
     virtual void PreRHSOp( const WarpXSolverVec&  a_E,
                            const amrex::Real      a_time,
                            const amrex::Real      a_dt,
-                           const int              a_nl_iter ) = 0;
+                           const int              a_nl_iter,
+                           const bool             a_from_jacobian ) = 0;
 
     virtual void ComputeRHS( WarpXSolverVec&  a_Erhs,
                        const WarpXSolverVec&  a_E,

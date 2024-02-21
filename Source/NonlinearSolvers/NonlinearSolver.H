@@ -1,10 +1,3 @@
-/* Copyright 2020 Remi Lehe
- *
- * This file is part of WarpX.
- *
- * License: BSD-3-Clause-LBNL
- */
-
 #ifndef WARPX_NONLINEAR_SOLVER_H_
 #define WARPX_NONLINEAR_SOLVER_H_
 
@@ -28,24 +21,23 @@ class NonlinearSolver
         NonlinearSolver<Vec,Ops>() { }
         virtual ~NonlinearSolver<Vec,Ops>() { }
 
-        virtual void Define(  const Vec&,
+        virtual void Define ( const Vec&,
                               Ops* const ) = 0;
-                              //NonlinearFunction<Vec,Ops>* const ) = 0;
 
-        virtual void Solve( Vec&,
-                      const Vec&,
-                      const amrex::Real,
-                      const amrex::Real ) const = 0;
+        virtual void Solve ( Vec&,
+                       const Vec&,
+                       const amrex::Real,
+                       const amrex::Real ) const = 0;
 
-        virtual bool IsDefined() const = 0;
-        virtual void PrintParams() const = 0;
-        virtual void GetParams(amrex::Real&, amrex::Real&, int&) = 0;
+        virtual bool IsDefined () const = 0;
+        virtual void PrintParams () const = 0;
+        virtual void GetParams (amrex::Real&, amrex::Real&, int&) = 0;
 
-        virtual void Verbose( const bool ) { }
+        virtual void Verbose ( const bool ) { }
 
-        virtual void GetConvergenceParams(  int& a_l_exit_status, int& a_l_last_iter, int& a_l_total_iter,
-                                            int& a_nl_exit_status, int& a_nl_iter, int& a_nl_total_iter,
-                                         double& a_nl_abs_res, double& a_nl_rel_res ) const
+        virtual void GetConvergenceParams (  int& a_l_exit_status, int& a_l_last_iter, int& a_l_total_iter,
+                                             int& a_nl_exit_status, int& a_nl_iter, int& a_nl_total_iter,
+                                          double& a_nl_abs_res, double& a_nl_rel_res ) const
         {
             a_l_exit_status = 0;
             a_l_last_iter = 0;
@@ -61,4 +53,4 @@ class NonlinearSolver
 
 };
 
-#endif // WARPX_NONLINEAR_SOLVER_H_
+#endif

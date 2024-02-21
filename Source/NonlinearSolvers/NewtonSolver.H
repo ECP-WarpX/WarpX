@@ -18,36 +18,49 @@ class NewtonSolver : public NonlinearSolver<Vec,Ops>
         NewtonSolver<Vec,Ops>() 
         {
             m_ops = nullptr;
+            m_update_pc = true;
+            m_update_pc_init = true;
             m_is_defined = false;
         }
 
         virtual ~NewtonSolver<Vec,Ops>() { }
 
-        virtual void Define( const Vec&  a_U, 
-                             Ops* const  a_ops );
-                              //NonlinearFunction<Vec,Ops>* const )
+        virtual void Define ( const Vec&  a_U, 
+                              Ops* const  a_ops );
 
-        virtual void Solve( Vec&         a_U,
-                      const Vec&         a_R,
-                      const amrex::Real  a_time,
-                      const amrex::Real  a_dt ) const;
+        virtual void Solve ( Vec&         a_U,
+                       const Vec&         a_R,
+                       const amrex::Real  a_time,
+                       const amrex::Real  a_dt ) const;
 
-        inline bool IsDefined() const { return m_is_defined; }
+        inline bool IsDefined () const { return m_is_defined; }
 
-        inline void GetParams( amrex::Real&  a_rtol,
-                               amrex::Real&  a_atol,
-                               int&          a_maxits )
+        inline void GetParams ( amrex::Real&  a_rtol,
+                                amrex::Real&  a_atol,
+                                int&          a_maxits )
         {
             a_rtol = m_rtol;
             a_atol = m_atol;
             a_maxits = m_maxits;
         }
     
-        void PrintParams( ) const
+        inline void CurTime ( const amrex::Real  a_time ) const
+        {
+            m_cur_time = a_time;
+            m_linear_function->curTime( a_time );
+        }
+
+        inline void CurTimeStep ( const amrex::Real  a_dt ) const
+        {
+            m_dt = a_dt;
+            m_linear_function->curTimeStep( a_dt );
+        }
+    
+        void PrintParams () const
         {
             amrex::Print()     << "Newton absolute tolerance:  " << m_atol << std::endl;
             amrex::Print()     << "Newton relative tolerance:  " << m_rtol << std::endl;
-            amrex::Print()     << "Newton max itsations:      " << m_maxits << std::endl;
+            amrex::Print()     << "Newton max iterations:      " << m_maxits << std::endl;
             amrex::Print()     << "Newton require convergence: " << (m_require_convergence?"true":"false") << std::endl;
         }
 
@@ -59,25 +72,35 @@ class NewtonSolver : public NonlinearSolver<Vec,Ops>
         bool m_verbose;
         bool m_require_convergence;
 
-        mutable Vec m_dU, m_F;
+        mutable Vec m_dU, m_F, m_R;
         mutable Ops* m_ops;
 
         amrex::Real m_atol, m_rtol;
-        int    m_maxits;
+        int m_maxits;
+    
+        mutable amrex::Real m_cur_time, m_dt;
+        mutable bool m_update_pc;
+        mutable bool m_update_pc_init;
 
     private:
 
         std::unique_ptr<JacobianFunctionJFNK<Vec,Ops>> m_linear_function;
         std::unique_ptr<amrex::GMRES<Vec,JacobianFunctionJFNK<Vec,Ops>>> m_linear_solver;
 
-        void ParseParameters( );
+        void ParseParameters ();
+
+        void evalResidual( Vec&         a_R, 
+                     const Vec&         a_U,
+                     const Vec&         a_b,
+                     const amrex::Real  a_time,
+                     const amrex::Real  a_dt,
+                     const int          a_iter ) const;
 
 };
 
 template <class Vec, class Ops>
-void NewtonSolver<Vec,Ops>::Define( const Vec&  a_U,
-                                    Ops* const  a_ops )
-                                    //NonlinearFunction<Vec,Ops>* const )
+void NewtonSolver<Vec,Ops>::Define ( const Vec&  a_U,
+                                     Ops* const  a_ops )
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !m_is_defined,
@@ -93,20 +116,21 @@ void NewtonSolver<Vec,Ops>::Define( const Vec&  a_U,
     ParseParameters();
   
     m_dU.Define(a_U);
-    m_F.Define(a_U);
+    m_F.Define(a_U); // residual function F(U) = U - (b + R(U)) = 0
+    m_R.Define(a_U);
   
     m_ops = a_ops;
 
     //
     // JRA, below is used to test GMRES, and linOp functions defined in JacobianFunctionJFNK
     //
-    
+
     m_linear_function = std::make_unique<JacobianFunctionJFNK<Vec,Ops>>();
     m_linear_function->define(m_F, m_ops);
     
     m_linear_solver = std::make_unique<amrex::GMRES<Vec,JacobianFunctionJFNK<Vec,Ops>>>();
     m_linear_solver->define(*m_linear_function);
-    m_linear_solver->solve(m_dU,m_F,m_rtol,m_atol,m_maxits);
+    m_linear_solver->solve(m_dU,m_R,m_rtol,m_atol,m_maxits);
     
     JacobianFunctionJFNK<Vec,Ops> linOp;
     linOp.define(m_F,m_ops);
@@ -141,16 +165,16 @@ void NewtonSolver<Vec,Ops>::ParseParameters( )
     pp_newton.query("verbose",             m_verbose);
     pp_newton.query("absolute_tolerance",  m_atol);
     pp_newton.query("relative_tolerance",  m_rtol);
-    pp_newton.query("max_itsations",      m_maxits);
+    pp_newton.query("max_iterations",      m_maxits);
     pp_newton.query("require_convergence", m_require_convergence);
 
 }
 
 template <class Vec, class Ops>
-void NewtonSolver<Vec,Ops>::Solve( Vec&         a_U,
-                             const Vec&         a_b,
-                             const amrex::Real  a_time,
-                             const amrex::Real  a_dt ) const
+void NewtonSolver<Vec,Ops>::Solve ( Vec&         a_U,
+                              const Vec&         a_b,
+                              const amrex::Real  a_time,
+                              const amrex::Real  a_dt ) const
 {
     BL_PROFILE("NewtonSolver::Solve()");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -159,19 +183,21 @@ void NewtonSolver<Vec,Ops>::Solve( Vec&         a_U,
     using namespace amrex::literals;
 
     //
-    // Newton routine to solve nonlinear
-    // equation of form: m_F(a_U) = (a_U - G(a_U)) - a_b = 0
+    // Newton routine to solve nonlinear equation of form:
+    // F(U) = (U - R(U) - b) = 0
     //
     
-    amrex::Real norm_abs, norm0, norm_rel;
+    CurTime(a_time);
+    CurTimeStep(a_dt);
 
+    amrex::Real norm_abs, norm0, norm_rel;
     int its;
     for (its=0; its < m_maxits;) {
 
-        //m_func->evalFunction(m_F, a_U, a_b, its);
-
+        evalResidual(m_F, a_U, a_b, a_time, a_dt, its);
+        
         // Compute norm of the residual
-        norm_abs = m_F.norm();
+        norm_abs = m_ops->norm(m_F);
         if (its == 0) {
             if (norm_abs > 0.) { norm0 = norm_abs; }
             else { norm0 = 1._rt; }
@@ -214,7 +240,7 @@ void NewtonSolver<Vec,Ops>::Solve( Vec&         a_U,
 
         if (its >= m_maxits) {
             amrex::Print() << "Newton: exiting at its = " << std::setw(3) << its 
-                           << ". Maximum itsation reached: its = " << m_maxits << std::endl;
+                           << ". Maximum iteration reached: its = " << m_maxits << std::endl;
             break;
         }
 
@@ -223,7 +249,7 @@ void NewtonSolver<Vec,Ops>::Solve( Vec&         a_U,
     if (m_rtol > 0. && m_atol > 0. && its == m_maxits) {
        std::stringstream convergenceMsg;
        convergenceMsg << "Newton solver failed to converge after " << its <<
-                         " itsations. Relative norm is " << norm_rel <<
+                         " iterations. Relative norm is " << norm_rel <<
                          " and the relative tolerance is " << m_rtol <<
                          ". Absolute norm is " << norm_abs << 
                          " and the absolute tolerance is " << m_atol;
@@ -236,6 +262,33 @@ void NewtonSolver<Vec,Ops>::Solve( Vec&         a_U,
     }
  
     return;
+
+}
+
+template <class Vec, class Ops>
+void NewtonSolver<Vec,Ops>::evalResidual( Vec&         a_F,
+                                    const Vec&         a_U,
+                                    const Vec&         a_b,
+                                    const amrex::Real  a_time,
+                                    const amrex::Real  a_dt,
+                                    const int          a_iter ) const
+{
+
+    m_ops->PreRHSOp( a_U, a_time, a_dt, a_iter, false );
+    m_ops->ComputeRHS( m_F, a_U, a_time, a_dt );
+
+    // set base Y and R(Y) for Jacobian //
+    m_linear_function->setBaseSolution(a_U);
+    m_linear_function->setBaseRHS(m_R);
+  
+    // update preconditioner //
+    if (m_update_pc || m_update_pc_init) {
+        m_linear_function->updatePreCondMat(a_U);
+    }
+    m_update_pc_init = false;
+
+    // Compute ([Y - R(Y)] - b) //
+    a_F = a_U - (m_R + a_b);
 
 }
 

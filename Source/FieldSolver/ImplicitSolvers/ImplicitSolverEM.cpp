@@ -157,9 +157,10 @@ void ImplicitSolverEM::OneStep( const amrex::Real  a_old_time,
 void ImplicitSolverEM::PreRHSOp( const WarpXSolverVec&  a_E,
                                  const amrex::Real      a_time,
                                  const amrex::Real      a_dt,
-                                 const int              a_nl_iter )
+                                 const int              a_nl_iter,
+                                 const bool             a_from_jacobian )
 {  
-    amrex::ignore_unused(a_E);
+    amrex::ignore_unused(a_E,a_from_jacobian);
     
     if (m_nlsolver_type!=NonlinearSolverType::Picard) {
         PostUpdateState( a_E, a_time, a_dt );
