@@ -33,7 +33,7 @@ emity = 20*nano
 focal_distance = 4*sigmaz
 
 def s(z, sigma0, emit):
-    '''The theoretical size of a focusing beam (in the absence of space charge), 
+    '''The theoretical size of a focusing beam (in the absence of space charge),
     at position z, given its emittance and size at focus.'''
     return np.sqrt(sigma0**2 + emit**2 * (z - focal_distance)**2 / sigma0**2)
 
