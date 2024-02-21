@@ -1022,8 +1022,8 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                           overlap_realbox.lo(2))};
 
         // count the number of particles that each cell in overlap_box could add
-        Gpu::DeviceVector<int> counts(overlap_box.numPts(), 0);
-        Gpu::DeviceVector<int> offset(overlap_box.numPts());
+        Gpu::DeviceVector<amrex::Long> counts(overlap_box.numPts(), 0);
+        Gpu::DeviceVector<amrex::Long> offset(overlap_box.numPts());
         auto *pcounts = counts.data();
         const amrex::IntVect lrrfac = rrfac;
         Box fine_overlap_box; // default Box is NOT ok().
@@ -1042,7 +1042,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
             if (inj_pos->overlapsWith(lo, hi))
             {
                 auto index = overlap_box.index(iv);
-                const int r = (fine_overlap_box.ok() && fine_overlap_box.contains(iv))?
+                const amrex::Long r = (fine_overlap_box.ok() && fine_overlap_box.contains(iv))?
                     (AMREX_D_TERM(lrrfac[0],*lrrfac[1],*lrrfac[2])) : (1);
                 pcounts[index] = num_ppc*r;
                 // update pcount by checking if cell-corners or cell-center
@@ -1080,10 +1080,10 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
 
         // Max number of new particles. All of them are created,
         // and invalid ones are then discarded
-        const int max_new_particles = Scan::ExclusiveSum(counts.size(), counts.data(), offset.data());
+        const amrex::Long max_new_particles = Scan::ExclusiveSum(counts.size(), counts.data(), offset.data());
 
         // Update NextID to include particles created in this function
-        int pid;
+        amrex::Long pid;
 #ifdef AMREX_USE_OMP
 #pragma omp critical (add_plasma_nextid)
 #endif
@@ -1092,7 +1092,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
             ParticleType::NextID(pid+max_new_particles);
         }
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            static_cast<amrex::Long>(pid) + static_cast<amrex::Long>(max_new_particles) < LongParticleIds::LastParticleID,
+            pid + max_new_particles < LongParticleIds::LastParticleID,
             "ERROR: overflow on particle id numbers");
 
         const int cpuid = ParallelDescriptor::MyProc();
@@ -1103,8 +1103,8 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
             DefineAndReturnParticleTile(lev, grid_id, tile_id);
         }
 
-        auto old_size = particle_tile.size();
-        auto new_size = old_size + max_new_particles;
+        auto const old_size = static_cast<amrex::Long>(particle_tile.size());
+        auto const new_size = old_size + max_new_particles;
         particle_tile.resize(new_size);
 
         auto& soa = particle_tile.GetStructOfArrays();
@@ -1639,10 +1639,10 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 
         // Max number of new particles. All of them are created,
         // and invalid ones are then discarded
-        const int max_new_particles = Scan::ExclusiveSum(counts.size(), counts.data(), offset.data());
+        const amrex::Long max_new_particles = Scan::ExclusiveSum(counts.size(), counts.data(), offset.data());
 
         // Update NextID to include particles created in this function
-        int pid;
+        amrex::Long pid;
 #ifdef AMREX_USE_OMP
 #pragma omp critical (add_plasma_nextid)
 #endif
@@ -1651,15 +1651,15 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
             ParticleType::NextID(pid+max_new_particles);
         }
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            static_cast<amrex::Long>(pid) + static_cast<amrex::Long>(max_new_particles) < LongParticleIds::LastParticleID,
+            pid + max_new_particles < LongParticleIds::LastParticleID,
             "overflow on particle id numbers");
 
         const int cpuid = ParallelDescriptor::MyProc();
 
         auto& particle_tile = tmp_pc.DefineAndReturnParticleTile(0, grid_id, tile_id);
 
-        auto old_size = particle_tile.size();
-        auto new_size = old_size + max_new_particles;
+        auto const old_size = static_cast<amrex::Long>(particle_tile.size());
+        auto const new_size = old_size + max_new_particles;
         particle_tile.resize(new_size);
 
         auto& soa = particle_tile.GetStructOfArrays();
