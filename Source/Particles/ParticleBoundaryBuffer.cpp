@@ -22,6 +22,7 @@
 #include <AMReX_Tuple.H>
 #include <AMReX.H>
 #include <AMReX_Algorithm.H>
+using namespace amrex::literals;
 
 struct IsOutsideDomainBoundary {
     amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> m_plo;
