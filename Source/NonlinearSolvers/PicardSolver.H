@@ -11,68 +11,66 @@
 template<class Vec, class Ops>
 class PicardSolver : public NonlinearSolver<Vec,Ops>
 {
-    public:
+public:
 
-        PicardSolver<Vec,Ops>() 
-        {
-            m_ops = nullptr;
-            m_is_defined = false;
-        }
+    PicardSolver<Vec,Ops>() 
+    {
+        m_ops = nullptr;
+        m_is_defined = false;
+    }
 
-        virtual ~PicardSolver<Vec,Ops>() { }
+    virtual ~PicardSolver<Vec,Ops>() { }
 
-        virtual void Define( const Vec&  a_U, 
-                             Ops* const  a_ops );
-                              //NonlinearFunction<Vec,Ops>* const )
+    virtual void Define ( const Vec&  a_U, 
+                          Ops* const  a_ops );
 
-        virtual void Solve( Vec&         a_U,
-                      const Vec&         a_R,
-                      const amrex::Real  a_time,
-                      const amrex::Real  a_dt ) const;
+    virtual void Solve ( Vec&         a_U,
+                   const Vec&         a_R,
+                   const amrex::Real  a_time,
+                   const amrex::Real  a_dt ) const;
 
-        inline bool IsDefined() const { return m_is_defined; }
+    inline bool IsDefined () const { return m_is_defined; }
 
-        inline void GetParams( amrex::Real&  a_rtol,
-                               amrex::Real&  a_atol,
-                               int&          a_maxits )
-        {
-            a_rtol = m_rtol;
-            a_atol = m_atol;
-            a_maxits = m_maxits;
-        }
+    inline void GetParams ( amrex::Real&  a_rtol,
+                            amrex::Real&  a_atol,
+                            int&          a_maxits )
+    {
+        a_rtol = m_rtol;
+        a_atol = m_atol;
+        a_maxits = m_maxits;
+    }
     
-        void PrintParams( ) const
-        {
-            amrex::Print()     << "Picard absolute tolerance:  " << m_atol << std::endl;
-            amrex::Print()     << "Picard relative tolerance:  " << m_rtol << std::endl;
-            amrex::Print()     << "Picard max iterations:      " << m_maxits << std::endl;
-            amrex::Print()     << "Picard require convergence: " << (m_require_convergence?"true":"false") << std::endl;
-        }
+    void PrintParams () const
+    {
+        amrex::Print()     << "Picard max iterations:      " << m_maxits << std::endl;
+        amrex::Print()     << "Picard relative tolerance:  " << m_rtol << std::endl;
+        amrex::Print()     << "Picard absolute tolerance:  " << m_atol << std::endl;
+        amrex::Print()     << "Picard require convergence: " << (m_require_convergence?"true":"false") << std::endl;
+    }
 
-        virtual void Verbose( const bool  a_verbose ) { m_verbose = a_verbose; }
+    virtual void Verbose ( const bool  a_verbose ) { m_verbose = a_verbose; }
 
-    protected:
+protected:
 
-        bool m_is_defined;
-        bool m_verbose;
-        bool m_require_convergence;
+    bool m_is_defined;
+    bool m_verbose;
+    bool m_require_convergence;
 
-        mutable Vec m_Usave, m_F;
-        mutable Ops* m_ops;
+    mutable Vec m_Usave, m_F;
+    Ops* m_ops;
 
-        amrex::Real m_atol, m_rtol;
-        int    m_maxits;
+    amrex::Real m_atol, m_rtol;
+    int m_maxits;
 
-    private:
+private:
 
-        void ParseParameters( );
+    void ParseParameters( );
 
 };
 
 template <class Vec, class Ops>
-void PicardSolver<Vec,Ops>::Define( const Vec&  a_U,
-                                    Ops* const  a_ops )
-                                    //NonlinearFunction<Vec,Ops>* const )
+void PicardSolver<Vec,Ops>::Define ( const Vec&  a_U,
+                                     Ops* const  a_ops )
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !m_is_defined,
@@ -97,7 +95,7 @@ void PicardSolver<Vec,Ops>::Define( const Vec&  a_U,
 }
 
 template <class Vec, class Ops>
-void PicardSolver<Vec,Ops>::ParseParameters( )
+void PicardSolver<Vec,Ops>::ParseParameters ()
 {
     const amrex::ParmParse pp_picard("picard");
     pp_picard.query("verbose",             m_verbose);
@@ -109,10 +107,10 @@ void PicardSolver<Vec,Ops>::ParseParameters( )
 }
 
 template <class Vec, class Ops>
-void PicardSolver<Vec,Ops>::Solve( Vec&         a_U,
-                             const Vec&         a_R,
-                             const amrex::Real  a_time,
-                             const amrex::Real  a_dt ) const
+void PicardSolver<Vec,Ops>::Solve ( Vec&         a_U,
+                              const Vec&         a_R,
+                              const amrex::Real  a_time,
+                              const amrex::Real  a_dt ) const
 {
     BL_PROFILE("PicardSolver::Solve()");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -122,7 +120,7 @@ void PicardSolver<Vec,Ops>::Solve( Vec&         a_U,
 
     //
     // Picard routine to solve nonlinear
-    // equation of form: a_U = a_R + m_F(a_U)
+    // equation of form: U = R + F(U)
     //
 
     amrex::Real norm_abs, norm0, norm_rel;
@@ -141,7 +139,6 @@ void PicardSolver<Vec,Ops>::Solve( Vec&         a_U,
         
         // Compute the step norm and update iter
         m_Usave -= a_U;
-        //norm_abs = m_Usave.norm();
         norm_abs = m_ops->norm(m_Usave);
         if (iter == 0) {
             if (norm_abs > 0.) { norm0 = norm_abs; }

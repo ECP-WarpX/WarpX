@@ -17,7 +17,7 @@
 
 class ImplicitSolverEM : public ImplicitSolver
 {
-    public:
+public:
 
     ImplicitSolverEM() 
     {
@@ -67,7 +67,7 @@ class ImplicitSolverEM : public ImplicitSolver
 
     amrex::Real norm ( const WarpXSolverVec& a_X ) const; 
 
-    private:
+private:
 
     bool m_is_defined;
     bool m_semi_implicit;     

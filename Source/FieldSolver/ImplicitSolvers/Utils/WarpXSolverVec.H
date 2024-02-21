@@ -39,7 +39,7 @@
 
 class WarpXSolverVec
 {
-    public:
+public:
 
     WarpXSolverVec() 
     { 
@@ -256,7 +256,7 @@ class WarpXSolverVec
     const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& getVec() const {return m_field_vec;}
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& getVec() {return m_field_vec;}
 
-  private:
+private:
 
     bool  m_is_defined;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_field_vec;

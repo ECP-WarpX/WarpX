@@ -57,15 +57,22 @@ void ImplicitSolverEM::Define ( WarpX* const  a_WarpX )
         m_nlsolver = std::make_unique<PicardSolver<WarpXSolverVec,ImplicitSolverEM>>();
         m_nlsolver->Define(m_E, this);
     }
+    else if (m_nlsolver_type == NonlinearSolverType::Newton) {
+        m_nlsolver = std::make_unique<NewtonSolver<WarpXSolverVec,ImplicitSolverEM>>();
+        m_nlsolver->Define(m_E, this);
+    }
 
     //
     //  TESTING NEWTON SOLVER
     //
-    std::unique_ptr<NonlinearSolver<WarpXSolverVec,ImplicitSolverEM>> newton_solver;
-    newton_solver = std::make_unique<NewtonSolver<WarpXSolverVec,ImplicitSolverEM>>();
-    newton_solver->Define(m_E, this);
+    //std::unique_ptr<NonlinearSolver<WarpXSolverVec,ImplicitSolverEM>> newton_solver;
+    //newton_solver = std::make_unique<NewtonSolver<WarpXSolverVec,ImplicitSolverEM>>();
+    //newton_solver->Define(m_E, this);
+    //newton_solver->PrintParams();
+    //
+    //
+    //
 
-    //if (m_verbose) { PrintParameters(); }
     m_is_defined = true;
 }
 

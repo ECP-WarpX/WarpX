@@ -23,7 +23,7 @@ class JacobianFunctionJFNK
         return;
     }
 
-    void apply (T& a_F, const T& a_U);
+    void apply (T& a_dF, const T& a_dU);
 
     inline 
     void residual (T& a_R, const T& a_U, const T& a_b)
@@ -41,7 +41,7 @@ class JacobianFunctionJFNK
     inline 
     void precond (T& a_U, const T& a_X)     
     { 
-        amrex::Print() << "JRA: call to precond() from GMRES " << std::endl;
+        //amrex::Print() << "JRA: call to precond() from GMRES " << std::endl;
         if (m_usePreCond) {
             a_U.zero();
             //m_precond->apply(a_U, a_X);
@@ -70,7 +70,7 @@ class JacobianFunctionJFNK
 
     inline 
     void assign(T& a_Z, const T& a_U) { 
-        amrex::Print() << "JRA: call to assign() from GMRES" << std::endl;
+        //amrex::Print() << "JRA: call to assign() from GMRES" << std::endl;
         a_Z = a_U; 
     }
 
@@ -84,7 +84,7 @@ class JacobianFunctionJFNK
     inline 
     void scale (T& a_U, const RT a_scale)
     { 
-        amrex::Print() << "JRA: call to scale() from GMRES " << std::endl;
+        //amrex::Print() << "JRA: call to scale() from GMRES " << std::endl;
         a_U.scale(a_scale); 
     }
     
@@ -104,7 +104,7 @@ class JacobianFunctionJFNK
     inline 
     void setVal (T& a_U, const RT a_val)
     { 
-        amrex::Print() << "JRA: call to setVal() from GMRES" << std::endl;
+        //amrex::Print() << "JRA: call to setVal() from GMRES" << std::endl;
         a_U.setVal(a_val);
     }
 
@@ -118,7 +118,7 @@ class JacobianFunctionJFNK
     RT norm2(const T& a_U) 
     { 
         auto r = dotProduct(a_U,a_U);
-        amrex::Print() << "JRA: call to norm2() from GMRES: norm2 = " << std::sqrt(r) << std::endl;
+        //amrex::Print() << "JRA: call to norm2() from GMRES: norm2 = " << std::sqrt(r) << std::endl;
         return std::sqrt(r); 
     }
     
@@ -134,10 +134,10 @@ class JacobianFunctionJFNK
     }
 
     inline 
-    void setBaseRHS (const T& a_F)
+    void setBaseRHS (const T& a_R)
     { 
-        m_F0.Copy(a_F); 
-        //if (m_usePreCond) m_preCond->setBaseRHS(a_F);
+        m_R0.Copy(a_R); 
+        //if (m_usePreCond) m_preCond->setBaseRHS(a_R);
     }
 
     inline 
@@ -177,12 +177,13 @@ class JacobianFunctionJFNK
     RT m_cur_time, m_dt;
     std::string m_pc_type;
 
-    T m_Z, m_Y0, m_F0, m_F;
+    T m_Z, m_Y0, m_R0, m_R;
     Ops* m_ops;
     //Preconditioner<T,Ops>* m_preCond;
     
-    //void parseParameters( ParmParse& a_pp )
+    //void ParseParameters ()
     //{
+    //    ParmParse pp_jac( "jacobian" );
     //    a_pp.query("jfnk_eps", m_epsJFNK);
     //    a_pp.query("with_pc",  m_usePreCond);
     //    if (m_usePreCond) {
@@ -197,13 +198,12 @@ void JacobianFunctionJFNK<T,Ops>::define ( const T&     a_U,
 {
     m_Z.Define(a_U);
     m_Y0.Define(a_U);
-    m_F0.Define(a_U);
-    m_F.Define(a_U);
+    m_R0.Define(a_U);
+    m_R.Define(a_U);
 
     m_ops = a_ops;
 
-    //ParmParse ppIJac( "jacobian" );
-    //parseParameters( ppIJac );
+    //ParseParameters();
 
     //m_preCond = nullptr;
     //if (m_usePreCond) {
@@ -226,9 +226,9 @@ void JacobianFunctionJFNK<T,Ops>::define ( const T&     a_U,
 template <class T, class Ops>
 auto JacobianFunctionJFNK<T,Ops>::makeVecRHS () const -> T
 {
-    amrex::Print() << "JRA: call to makeVecRHS() from GMRES" << std::endl;
+    //amrex::Print() << "JRA: call to makeVecRHS() from GMRES" << std::endl;
     T Vec;
-    Vec.Define (m_F);
+    Vec.Define(m_R);
     return Vec;
     //return m_linop.make(0, 0, IntVect(0));
 }
@@ -236,9 +236,9 @@ auto JacobianFunctionJFNK<T,Ops>::makeVecRHS () const -> T
 template <class T, class Ops>
 auto JacobianFunctionJFNK<T,Ops>::makeVecLHS () const -> T
 {
-    amrex::Print() << "JRA: call to makeVecLHS() from GMRES" << std::endl;
+    //amrex::Print() << "JRA: call to makeVecLHS() from GMRES" << std::endl;
     T Vec;
-    Vec.Define (m_F);
+    Vec.Define(m_R);
     return Vec;
     //auto mf = m_linop.make(0, 0, IntVect(1));
     //mf.setBndry(0);
@@ -246,17 +246,17 @@ auto JacobianFunctionJFNK<T,Ops>::makeVecLHS () const -> T
 }
 
 template <class T, class Ops>
-void JacobianFunctionJFNK<T,Ops>::apply (T& a_F, const T& a_U)
+void JacobianFunctionJFNK<T,Ops>::apply (T& a_dF, const T& a_dU)
 {
     BL_PROFILE("JacobianFunctionJFNK::apply()");
-    RT normY = norm2(a_U);
+    RT normY = norm2(a_dU);
         
-    amrex::Print() << "JRA: call to apply() from GMRES " << std::endl;
+    //amrex::Print() << "JRA: call to apply() from GMRES " << std::endl;
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         isDefined(),
         "JacobianFunction::apply() called on undefined JacobianFunction");
 
-    if (normY < 1e-15) { a_F.zero(); }
+    if (normY < 1e-15) { a_dF.zero(); }
     else {
 
         RT eps;
@@ -270,12 +270,15 @@ void JacobianFunctionJFNK<T,Ops>::apply (T& a_F, const T& a_U)
             eps = m_epsJFNK * std::sqrt(1 + m_normY0) / normY;
         }
 
-        m_Z = m_Y0 + eps*a_U;
+        m_Z = m_Y0 + eps*a_dU;
         m_ops->PostUpdateState( m_Z, m_cur_time, m_dt );
         m_ops->PreRHSOp( m_Z, m_cur_time, m_dt, -1, true );
-        m_ops->ComputeRHS(m_F, m_Z, m_cur_time, m_dt );
+        m_ops->ComputeRHS(m_R, m_Z, m_cur_time, m_dt );
 
-        a_F = a_U - (1.0/eps)*(m_F-m_F0);
+        // F(Y) = Y - b - R(Y)
+        // dF = dF/dY*dU = [1 - dR/dY]*dU 
+        //    = dU - (R(Y0+eps*dU)-R(Y0))/eps
+        a_dF = a_dU - (1.0/eps)*(m_R-m_R0);
     }
 
 }
