@@ -575,8 +575,8 @@ PhysicalParticleContainer::AddGaussianBeam (
                 Real u_bulk_norm = std::sqrt( u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z );
                 Real gamma_bulk = std::sqrt(1._rt + u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z );
 
-// Compute the position of the focal plane
-// (it is located at a distance `focal_distance` from the beam centroid, in the direction of the bulk velocity)
+                // Compute the position of the focal plane
+                // (it is located at a distance `focal_distance` from the beam centroid, in the direction of the bulk velocity)
                 Real x_f = x_m + focal_distance * u_bulk.x/u_bulk_norm;
                 Real y_f = y_m + focal_distance * u_bulk.y/u_bulk_norm;
                 Real z_f = z_m + focal_distance * u_bulk.z/u_bulk_norm;
@@ -585,24 +585,21 @@ PhysicalParticleContainer::AddGaussianBeam (
                 Real v_x = u.x / gamma * PhysConst::c;
                 Real v_y = u.y / gamma * PhysConst::c;
                 Real v_z = u.z / gamma * PhysConst::c;
-// Compute the time at which the particle will cross the focal plane
+                
+                // Compute the time at which the particle will cross the focal plane
                 Real n_x = u_bulk.x/u_bulk_norm, n_y = u_bulk.y/u_bulk_norm, n_z = u_bulk.z/u_bulk_norm;
                 Real t = ((x_f-x)*n_x + (y_f-y)*n_y + (z_f-z)*n_z) / (v_x*n_x + v_y*n_y + v_z*n_z);
 
-                amrex::Real v_bulk_z = u_bulk.z / gamma_bulk * PhysConst::c;
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
-                Real v_bulk_x = u_bulk.x / gamma_bulk * PhysConst::c;
-                Real v_bulk_y = u_bulk.y / gamma_bulk * PhysConst::c;
                 Real v_dot_n = v_x * n_x + v_y * n_y + v_z * n_z;
                 x = x - (v_x - v_dot_n*n_x) * t;
                 y = y - (v_y - v_dot_n*n_y) * t;
                 z = z - (v_z - v_dot_n*n_z) * t;
 #elif defined(WARPX_DIM_XZ)
-                Real v_bulk_x = u_bulk.x / gamma_bulk * PhysConst::c;
-                x = x - (v_x - v_bulk_x) * t;
-                z = z - (v_z - v_bulk_z) * t;
+                x = x - (v_x - v_dot_n*n_x) * t;
+                z = z - (v_z - v_dot_n*n_z) * t;
 #elif defined(WARPX_DIM_1D_Z)
-                z = z - (v_z - v_bulk_z) * t;
+                z = z - (v_z - v_dot_n*n_z) * t;
 #endif
             }
                 u.x *= PhysConst::c;

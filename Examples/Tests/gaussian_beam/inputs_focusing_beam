@@ -25,8 +25,8 @@ my_constants.ux = 0.0
 my_constants.uy = 0.0
 my_constants.uz = gamma
 
-my_constants.emitx = 5*micro
-my_constants.emity = 35*nano
+my_constants.emitx = 50*micro
+my_constants.emity = 20*nano
 my_constants.emitz = 0.
 
 my_constants.dux = emitx / sigmax

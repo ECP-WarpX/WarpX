@@ -28,12 +28,13 @@ nz = 256
 Lz = 20*sigmaz
 gridz = np.linspace(-0.5*Lz, 0.5*Lz, nz)
 tol = gridz[1] - gridz[0]
-emitx = 5*micro
-emity = 35*nano
+emitx = 50*micro
+emity = 20*nano
 focal_distance = 4*sigmaz
 
-
 def s(z, sigma0, emit):
+    '''The theoretical size of a focusing beam (in the absence of space charge), 
+    at position z, given its emittance and size at focus.'''
     return np.sqrt(sigma0**2 + emit**2 * (z - focal_distance)**2 / sigma0**2)
 
 filename = sys.argv[1]
@@ -41,7 +42,6 @@ filename = sys.argv[1]
 ts = OpenPMDTimeSeries('./diags/openpmd/')
 
 x, y, z, w, = ts.get_particle( ['x', 'y', 'z', 'w'], species='beam1', iteration=0, plot=False)
-
 
 imin = np.argmin(np.sqrt((gridz+0.8*focal_distance)**2))
 imax = np.argmin(np.sqrt((gridz-0.8*focal_distance)**2))
@@ -61,8 +61,8 @@ for d in subgrid:
 sx_theory = s(subgrid, sigmax, emitx/gamma)
 sy_theory = s(subgrid, sigmay, emity/gamma)
 
-assert(np.allclose(sx, sx_theory, rtol=0.06, atol=0))
-assert(np.allclose(sy, sy_theory, rtol=0.17, atol=0))
+assert(np.allclose(sx, sx_theory, rtol=0.051, atol=0))
+assert(np.allclose(sy, sy_theory, rtol=0.038, atol=0))
 
 test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)
