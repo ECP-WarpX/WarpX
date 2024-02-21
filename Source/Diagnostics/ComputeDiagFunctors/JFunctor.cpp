@@ -27,7 +27,7 @@ JFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/
 {
     auto& warpx = WarpX::GetInstance();
     /** pointer to source multifab (can be multi-component) */
-    amrex::MultiFab* m_mf_src = warpx.get_pointer_current_fp(m_lev, m_dir);
+    amrex::MultiFab* m_mf_src = warpx.get_field_pointer(FieldType::current_fp, m_lev, m_dir);
 
     // Deposit current if no solver or the electrostatic solver is being used
     if (m_deposit_current)

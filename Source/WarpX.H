@@ -82,6 +82,29 @@ enum struct PatchType : int
     coarse
 };
 
+enum struct FieldType : int
+{
+    Efield_aux,
+    Bfield_aux,
+    Efield_fp,
+    Bfield_fp,
+    current_fp,
+    current_fp_nodal,
+    rho_fp,
+    F_fp,
+    G_fp,
+    phi_fp,
+    vector_potential_fp,
+    Efield_cp,
+    Bfield_cp,
+    current_cp,
+    rho_cp,
+    F_cp,
+    G_cp,
+    edge_lengths,
+    face_areas
+};
+
 class WARPX_EXPORT WarpX
     : public amrex::AmrCore
 {
@@ -463,30 +486,11 @@ public:
     static std::map<std::string, amrex::iMultiFab *> imultifab_map;
 
     [[nodiscard]] std::array<const amrex::MultiFab* const, 3>
-    get_array_Bfield_aux  (const int lev) const {
-        return {
-            Bfield_aux[lev][0].get(),
-            Bfield_aux[lev][1].get(),
-            Bfield_aux[lev][2].get()
-        };
-    }
+    get_field_pointer_array (FieldType field_type, int lev) const;
 
-    [[nodiscard]] std::array<const amrex::MultiFab* const, 3>
-    get_array_Efield_aux  (const int lev) const {
-        return {
-            Efield_aux[lev][0].get(),
-            Efield_aux[lev][1].get(),
-            Efield_aux[lev][2].get()
-        };
-    }
+    [[nodiscard]] amrex::MultiFab*
+    get_field_pointer (FieldType field_type, int lev, int direction = 0) const;
 
-    [[nodiscard]] amrex::MultiFab * get_pointer_Efield_aux  (int lev, int direction) const { return Efield_aux[lev][direction].get(); }
-    [[nodiscard]] amrex::MultiFab * get_pointer_Bfield_aux  (int lev, int direction) const { return Bfield_aux[lev][direction].get(); }
-
-    [[nodiscard]] amrex::MultiFab * get_pointer_Efield_fp  (int lev, int direction) const { return Efield_fp[lev][direction].get(); }
-    [[nodiscard]] amrex::MultiFab * get_pointer_Bfield_fp  (int lev, int direction) const { return Bfield_fp[lev][direction].get(); }
-    [[nodiscard]] amrex::MultiFab * get_pointer_current_fp  (int lev, int direction) const { return current_fp[lev][direction].get(); }
-    [[nodiscard]] amrex::MultiFab * get_pointer_current_fp_nodal  (int lev, int direction) const { return current_fp_nodal[lev][direction].get(); }
     [[nodiscard]] amrex::MultiFab * get_pointer_rho_fp  (int lev) const { return rho_fp[lev].get(); }
     [[nodiscard]] amrex::MultiFab * get_pointer_F_fp  (int lev) const { return F_fp[lev].get(); }
     [[nodiscard]] amrex::MultiFab * get_pointer_G_fp  (int lev) const { return G_fp[lev].get(); }

@@ -3349,3 +3349,130 @@ WarpX::AllocInitMultiFabFromModel (
     }
     multifab_map[name_with_suffix] = mf.get();
 }
+
+std::array<const amrex::MultiFab* const, 3>
+WarpX::get_field_pointer_array (const FieldType field_type, const int lev) const
+{
+    if (field_type == FieldType::Efield_aux){
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            (Efield_aux[lev][0] != nullptr) &&
+            (Efield_aux[lev][1] != nullptr) &&
+            (Efield_aux[lev][2] != nullptr),
+            "Efield_aux is not initialized.");
+        return {
+            Efield_aux[lev][0].get(),
+            Efield_aux[lev][1].get(),
+            Efield_aux[lev][2].get()};
+    }
+    else if (field_type == FieldType::Bfield_aux){
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            (Bfield_aux[lev][0] != nullptr) &&
+            (Bfield_aux[lev][1] != nullptr) &&
+            (Bfield_aux[lev][2] != nullptr),
+            "Bfield_aux is not initialized.");
+        return {
+            Bfield_aux[lev][0].get(),
+            Bfield_aux[lev][1].get(),
+            Bfield_aux[lev][2].get()};
+    }
+
+    WARPX_ABORT_WITH_MESSAGE("Invalid field type");
+
+    return {nullptr, nullptr, nullptr};
+}
+
+[[nodiscard]] amrex::MultiFab*
+WarpX::get_field_pointer (const FieldType field_type, const int lev, const int direction) const
+{
+    amrex::MultiFab* field_pointer = nullptr;
+
+    switch(field_type)
+    {
+        case FieldType::Efield_aux :
+            field_pointer = Efield_aux[lev][direction].get();
+            break;
+
+       case FieldType::Bfield_aux :
+            field_pointer = Bfield_aux[lev][direction].get();
+            break;
+
+       case FieldType::Efield_fp :
+            field_pointer = Efield_fp[lev][direction].get();
+            break;
+
+       case FieldType::Bfield_fp :
+            field_pointer = Bfield_fp[lev][direction].get();
+            break;
+
+       case FieldType::current_fp :
+            field_pointer = current_fp[lev][direction].get();
+            break;
+
+       case FieldType::current_fp_nodal :
+            field_pointer = current_fp_nodal[lev][direction].get();
+            break;
+
+       case FieldType::rho_fp :
+            field_pointer = rho_fp[lev].get();
+            break;
+
+       case FieldType::F_fp :
+            field_pointer = F_fp[lev].get();
+            break;
+
+       case FieldType::G_fp :
+            field_pointer = G_fp[lev].get();
+            break;
+
+       case FieldType::phi_fp :
+            field_pointer = phi_fp[lev].get();
+            break;
+
+       case FieldType::vector_potential_fp :
+            field_pointer = vector_potential_fp_nodal[lev][direction].get();
+            break;
+
+       case FieldType::Efield_cp :
+            field_pointer = Efield_cp[lev][direction].get();
+            break;
+
+       case FieldType::Bfield_cp :
+            field_pointer = Bfield_cp[lev][direction].get();
+            break;
+
+       case FieldType::current_cp :
+            field_pointer = current_cp[lev][direction].get();
+            break;
+
+       case FieldType::rho_cp :
+            field_pointer = rho_cp[lev].get();
+            break;
+
+       case FieldType::F_cp :
+            field_pointer = F_cp[lev].get();
+            break;
+
+       case FieldType::G_cp :
+            field_pointer = G_cp[lev].get();
+            break;
+
+       case FieldType::edge_lengths :
+            field_pointer = m_edge_lengths[lev][direction].get();
+            break;
+
+       case FieldType::face_areas :
+            field_pointer = m_face_areas[lev][direction].get();
+            break;
+
+        default:
+            WARPX_ABORT_WITH_MESSAGE("Invalid field type");
+            break;
+    }
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        field_pointer != nullptr,
+        "Requested field is not initialized.");
+
+    return field_pointer;
+}
+

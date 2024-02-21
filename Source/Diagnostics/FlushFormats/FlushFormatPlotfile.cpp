@@ -621,15 +621,15 @@ FlushFormatPlotfile::WriteAllRawFields(
         if (lev > 0) {
             WriteCoarseVector( "E",
                                warpx.get_pointer_Efield_cp(lev, 0), warpx.get_pointer_Efield_cp(lev, 1), warpx.get_pointer_Efield_cp(lev, 2),
-                               warpx.get_pointer_Efield_fp(lev, 0), warpx.get_pointer_Efield_fp(lev, 1), warpx.get_pointer_Efield_fp(lev, 2),
+                               warpx.get_field_pointer(FieldType::Efield_fp, lev, 0), warpx.get_field_pointer(FieldType::Efield_fp, lev, 1), warpx.get_field_pointer(FieldType::Efield_fp, lev, 2),
                                dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards);
             WriteCoarseVector( "B",
                                warpx.get_pointer_Bfield_cp(lev, 0), warpx.get_pointer_Bfield_cp(lev, 1), warpx.get_pointer_Bfield_cp(lev, 2),
-                               warpx.get_pointer_Bfield_fp(lev, 0), warpx.get_pointer_Bfield_fp(lev, 1), warpx.get_pointer_Bfield_fp(lev, 2),
+                               warpx.get_field_pointer(FieldType::Bfield_fp, lev, 0), warpx.get_field_pointer(FieldType::Bfield_fp, lev, 1), warpx.get_field_pointer(FieldType::Bfield_fp, lev, 2),
                                dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards);
             WriteCoarseVector( "j",
                                warpx.get_pointer_current_cp(lev, 0), warpx.get_pointer_current_cp(lev, 1), warpx.get_pointer_current_cp(lev, 2),
-                               warpx.get_pointer_current_fp(lev, 0), warpx.get_pointer_current_fp(lev, 1), warpx.get_pointer_current_fp(lev, 2),
+                               warpx.get_field_pointer(FieldType::current_fp, lev, 0), warpx.get_field_pointer(FieldType::current_fp, lev, 1), warpx.get_field_pointer(FieldType::current_fp, lev, 2),
                                dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards);
             if (warpx.get_pointer_F_fp(lev) && warpx.get_pointer_F_cp(lev))
             {
