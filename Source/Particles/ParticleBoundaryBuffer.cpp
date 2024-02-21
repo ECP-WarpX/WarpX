@@ -152,7 +152,7 @@ struct CopyAndTimestamp {
             dst.m_runtime_idata[j][dst_i] = src.m_runtime_idata[j][src_i];
         }
         dst.m_runtime_idata[m_step_index][dst_i] = m_step;
-        dst.m_runtime_idata[m_delta_index][dst_i] = 0._rt; //delta_fraction is initialized to zero
+        dst.m_runtime_rdata[m_delta_index][dst_i] = 0._rt; //delta_fraction is initialized to zero
     }
 };
 
