@@ -491,8 +491,6 @@ public:
     [[nodiscard]] amrex::MultiFab*
     get_field_pointer (FieldType field_type, int lev, int direction = 0) const;
 
-    [[nodiscard]] amrex::MultiFab * get_pointer_rho_fp  (int lev) const { return rho_fp[lev].get(); }
-    [[nodiscard]] amrex::MultiFab * get_pointer_F_fp  (int lev) const { return F_fp[lev].get(); }
     [[nodiscard]] amrex::MultiFab * get_pointer_G_fp  (int lev) const { return G_fp[lev].get(); }
     [[nodiscard]] amrex::MultiFab * get_pointer_phi_fp  (int lev) const { return phi_fp[lev].get(); }
     [[nodiscard]] amrex::MultiFab * get_pointer_vector_potential_fp  (int lev, int direction) const { return vector_potential_fp_nodal[lev][direction].get(); }

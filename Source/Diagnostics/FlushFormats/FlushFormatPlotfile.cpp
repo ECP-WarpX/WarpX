@@ -579,11 +579,11 @@ FlushFormatPlotfile::WriteAllRawFields(
         WriteRawMF( warpx.getBfield_fp(lev, 0), dm, raw_pltname, default_level_prefix, "Bx_fp", lev, plot_raw_fields_guards);
         WriteRawMF( warpx.getBfield_fp(lev, 1), dm, raw_pltname, default_level_prefix, "By_fp", lev, plot_raw_fields_guards);
         WriteRawMF( warpx.getBfield_fp(lev, 2), dm, raw_pltname, default_level_prefix, "Bz_fp", lev, plot_raw_fields_guards);
-        if (warpx.get_pointer_F_fp(lev))
+        if (warpx.get_field_pointer(FieldType::F_fp, lev))
         {
             WriteRawMF(warpx.getF_fp(lev), dm, raw_pltname, default_level_prefix, "F_fp", lev, plot_raw_fields_guards);
         }
-        if (warpx.get_pointer_rho_fp(lev))
+        if (warpx.get_field_pointer(FieldType::rho_fp, lev))
         {
             // rho_fp will have either ncomps or 2*ncomps (2 being the old and new). When 2, return the new so
             // there is time synchronization.
@@ -631,15 +631,15 @@ FlushFormatPlotfile::WriteAllRawFields(
                                warpx.get_pointer_current_cp(lev, 0), warpx.get_pointer_current_cp(lev, 1), warpx.get_pointer_current_cp(lev, 2),
                                warpx.get_field_pointer(FieldType::current_fp, lev, 0), warpx.get_field_pointer(FieldType::current_fp, lev, 1), warpx.get_field_pointer(FieldType::current_fp, lev, 2),
                                dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards);
-            if (warpx.get_pointer_F_fp(lev) && warpx.get_pointer_F_cp(lev))
+            if (warpx.get_field_pointer(FieldType::F_fp, lev) && warpx.get_pointer_F_cp(lev))
             {
-                WriteCoarseScalar("F", warpx.get_pointer_F_cp(lev), warpx.get_pointer_F_fp(lev),
+                WriteCoarseScalar("F", warpx.get_pointer_F_cp(lev), warpx.get_field_pointer(FieldType::F_fp, lev),
                     dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards, 0);
             }
-            if (warpx.get_pointer_rho_fp(lev) && warpx.get_pointer_rho_cp(lev))
+            if (warpx.get_field_pointer(FieldType::rho_fp, lev) && warpx.get_pointer_rho_cp(lev))
             {
                 // Use the component 1 of `rho_cp`, i.e. rho_new for time synchronization
-                WriteCoarseScalar("rho", warpx.get_pointer_rho_cp(lev), warpx.get_pointer_rho_fp(lev),
+                WriteCoarseScalar("rho", warpx.get_pointer_rho_cp(lev), warpx.get_field_pointer(FieldType::rho_fp, lev),
                     dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards, 1);
             }
         }

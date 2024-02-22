@@ -3354,22 +3354,12 @@ std::array<const amrex::MultiFab* const, 3>
 WarpX::get_field_pointer_array (const FieldType field_type, const int lev) const
 {
     if (field_type == FieldType::Efield_aux){
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            (Efield_aux[lev][0] != nullptr) &&
-            (Efield_aux[lev][1] != nullptr) &&
-            (Efield_aux[lev][2] != nullptr),
-            "Efield_aux is not initialized.");
         return {
             Efield_aux[lev][0].get(),
             Efield_aux[lev][1].get(),
             Efield_aux[lev][2].get()};
     }
     else if (field_type == FieldType::Bfield_aux){
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            (Bfield_aux[lev][0] != nullptr) &&
-            (Bfield_aux[lev][1] != nullptr) &&
-            (Bfield_aux[lev][2] != nullptr),
-            "Bfield_aux is not initialized.");
         return {
             Bfield_aux[lev][0].get(),
             Bfield_aux[lev][1].get(),
@@ -3468,10 +3458,6 @@ WarpX::get_field_pointer (const FieldType field_type, const int lev, const int d
             WARPX_ABORT_WITH_MESSAGE("Invalid field type");
             break;
     }
-
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        field_pointer != nullptr,
-        "Requested field is not initialized.");
 
     return field_pointer;
 }

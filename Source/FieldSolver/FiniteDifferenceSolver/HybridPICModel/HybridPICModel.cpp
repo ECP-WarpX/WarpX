@@ -497,7 +497,7 @@ void HybridPICModel::CalculateElectronPressure(const int lev, DtType a_dt_type)
     // charge density.
     if (a_dt_type == DtType::Full) {
         FillElectronPressureMF(
-            electron_pressure_fp[lev], warpx.get_pointer_rho_fp(lev)
+            electron_pressure_fp[lev], warpx.get_field_pointer(FieldType::rho_fp, lev)
         );
     } else {
         FillElectronPressureMF(

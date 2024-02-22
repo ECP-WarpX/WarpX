@@ -282,7 +282,7 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
             }
             i++;
         } else if ( m_varnames_fields[comp] == "F" ){
-            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_F_fp(lev), lev, m_crse_ratio,
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_field_pointer(FieldType::F_fp, lev), lev, m_crse_ratio,
                                                         false, ncomp);
             if (update_varnames) {
                 AddRZModesToOutputNames(std::string("F"), ncomp);
@@ -643,7 +643,7 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, true, m_rho_per_species_index[i]);
             i++;
         } else if ( m_varnames[comp] == "F" ){
-            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_F_fp(lev), lev, m_crse_ratio);
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_field_pointer(FieldType::F_fp, lev), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "G" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_G_fp(lev), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "phi" ){
