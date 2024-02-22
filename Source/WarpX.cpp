@@ -288,26 +288,29 @@ WarpX::WarpX ()
     t_old.resize(nlevs_max, std::numeric_limits<Real>::lowest());
     dt.resize(nlevs_max, std::numeric_limits<Real>::max());
 
+    mypc = std::make_unique<MultiParticleContainer>(this);
+
     // Loop over species (particles and lasers)
     // and set current injection position per species
-    mypc = std::make_unique<MultiParticleContainer>(this);
-    const int n_containers = mypc->nContainers();
-    for (int i=0; i<n_containers; i++)
-    {
-        WarpXParticleContainer& pc = mypc->GetParticleContainer(i);
+     if (do_moving_window){
+        const int n_containers = mypc->nContainers();
+        for (int i=0; i<n_containers; i++)
+        {
+            WarpXParticleContainer& pc = mypc->GetParticleContainer(i);
 
-        // Storing injection position for all species, regardless of whether
-        // they are continuously injected, since it makes looping over the
-        // elements of current_injection_position easier elsewhere in the code.
-        if (moving_window_v > 0._rt)
-        {
-            // Inject particles continuously from the right end of the box
-            pc.m_current_injection_position = geom[0].ProbHi(moving_window_dir);
-        }
-        else if (moving_window_v < 0._rt)
-        {
-            // Inject particles continuously from the left end of the box
-            pc.m_current_injection_position = geom[0].ProbLo(moving_window_dir);
+            // Storing injection position for all species, regardless of whether
+            // they are continuously injected, since it makes looping over the
+            // elements of current_injection_position easier elsewhere in the code.
+            if (moving_window_v > 0._rt)
+            {
+                // Inject particles continuously from the right end of the box
+                pc.m_current_injection_position = geom[0].ProbHi(moving_window_dir);
+            }
+            else if (moving_window_v < 0._rt)
+            {
+                // Inject particles continuously from the left end of the box
+                pc.m_current_injection_position = geom[0].ProbLo(moving_window_dir);
+            }
         }
     }
 
@@ -437,6 +440,11 @@ WarpX::WarpX ()
                     costs_heuristic_cells_wt = 0.250_rt;
                     costs_heuristic_particles_wt = 0.750_rt;
                     break;
+                case 4:
+                    // this is only a guess
+                    costs_heuristic_cells_wt = 0.200_rt;
+                    costs_heuristic_particles_wt = 0.800_rt;
+                    break;
             }
         } else { // FDTD
             switch (WarpX::nox)
@@ -452,6 +460,11 @@ WarpX::WarpX ()
                 case 3:
                     costs_heuristic_cells_wt = 0.145_rt;
                     costs_heuristic_particles_wt = 0.855_rt;
+                    break;
+                case 4:
+                    // this is only a guess
+                    costs_heuristic_cells_wt = 0.100_rt;
+                    costs_heuristic_particles_wt = 0.900_rt;
                     break;
             }
         }
@@ -1155,6 +1168,12 @@ WarpX::ReadParameters ()
             "Please set warpx.do_current_centering = 0 or algo.current_deposition = direct.");
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            current_deposition_algo != CurrentDepositionAlgo::Villasenor ||
+            !do_current_centering,
+            "Current centering (nodal deposition) cannot be used with Villasenor deposition."
+            "Please set warpx.do_current_centering = 0 or algo.current_deposition = direct.");
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             WarpX::current_deposition_algo != CurrentDepositionAlgo::Vay ||
             !do_current_centering,
             "Vay deposition not implemented with current centering");
@@ -1174,6 +1193,14 @@ WarpX::ReadParameters ()
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 do_multi_J == false,
                 "Vay deposition not implemented with multi-J algorithm");
+        }
+
+        if (current_deposition_algo == CurrentDepositionAlgo::Villasenor) {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                evolve_scheme == EvolveScheme::ImplicitPicard ||
+                evolve_scheme == EvolveScheme::SemiImplicitPicard,
+                "Villasenor current deposition can only"
+                "be used with Implicit evolve schemes.");
         }
 
         // Query algo.field_gathering from input, set field_gathering_algo to
@@ -1210,6 +1237,11 @@ WarpX::ReadParameters ()
         // Use same shape factors in all directions, for gathering
         if (field_gathering_algo == GatheringAlgo::MomentumConserving) { galerkin_interpolation = false; }
 
+        {
+            const ParmParse pp_interpolation("interpolation");
+            pp_interpolation.query("galerkin_scheme",galerkin_interpolation);
+        }
+
         // With the PSATD solver, momentum-conserving field gathering
         // combined with mesh refinement does not seem to work correctly
         // TODO Needs debugging
@@ -1235,8 +1267,9 @@ WarpX::ReadParameters ()
 
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 current_deposition_algo == CurrentDepositionAlgo::Esirkepov ||
+                current_deposition_algo == CurrentDepositionAlgo::Villasenor ||
                 current_deposition_algo == CurrentDepositionAlgo::Direct,
-                "Only Esirkepov or Direct current deposition supported with the implicit and semi-implicit schemes");
+                "Only Esirkepov, Villasenor, or Direct current deposition supported with the implicit and semi-implicit schemes");
 
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
@@ -1251,18 +1284,6 @@ WarpX::ReadParameters ()
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 field_gathering_algo != GatheringAlgo::MomentumConserving,
                     "With implicit and semi-implicit schemes, the momentum conserving field gather is not supported as it would not conserve energy");
-
-            if (current_deposition_algo == CurrentDepositionAlgo::Direct) {
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                    !galerkin_interpolation,
-                    "With implicit and semi-implicit schemes and direct deposition, the Galerkin field gathering must be turned off in order to conserve energy");
-            }
-
-            if (current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                    galerkin_interpolation,
-                    "With implicit and semi-implicit schemes and Esirkepov deposition, the Galerkin field gathering must be turned on in order to conserve energy");
-            }
         }
 
         // Load balancing parameters
@@ -1316,10 +1337,9 @@ WarpX::ReadParameters ()
         int particle_shape;
         if (!species_names.empty() || !lasers_names.empty()) {
             if (utils::parser::queryWithParser(pp_algo, "particle_shape", particle_shape)){
-
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                    (particle_shape >= 1) && (particle_shape <=3),
-                    "algo.particle_shape can be only 1, 2, or 3"
+                    (particle_shape >= 1) && (particle_shape <=4),
+                    "algo.particle_shape can be only 1, 2, 3, or 4"
                 );
 
                 nox = particle_shape;
@@ -1329,7 +1349,7 @@ WarpX::ReadParameters ()
             else{
                 WARPX_ABORT_WITH_MESSAGE(
                     "algo.particle_shape must be set in the input file:"
-                    " please set algo.particle_shape to 1, 2, or 3");
+                    " please set algo.particle_shape to 1, 2, 3, or 4");
             }
 
             if ((maxLevel() > 0) && (particle_shape > 1) && (do_pml_j_damping == 1))
@@ -1375,12 +1395,6 @@ WarpX::ReadParameters ()
             }
         }
 
-    }
-
-    {
-        const ParmParse pp_interpolation("interpolation");
-
-        pp_interpolation.query("galerkin_scheme",galerkin_interpolation);
     }
 
     {
@@ -1479,6 +1493,7 @@ WarpX::ReadParameters ()
         // are used
         current_correction = true;
         if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov ||
+            WarpX::current_deposition_algo == CurrentDepositionAlgo::Villasenor ||
             WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay ||
             WarpX::do_dive_cleaning)
         {
@@ -1493,6 +1508,7 @@ WarpX::ReadParameters ()
 
         if (!current_correction &&
             current_deposition_algo != CurrentDepositionAlgo::Esirkepov &&
+            current_deposition_algo != CurrentDepositionAlgo::Villasenor &&
             current_deposition_algo != CurrentDepositionAlgo::Vay)
         {
             ablastr::warn_manager::WMRecordWarning(
@@ -1583,14 +1599,15 @@ WarpX::ReadParameters ()
         );
 
 
-        if (current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
+        if (current_deposition_algo == CurrentDepositionAlgo::Esirkepov ||
+            current_deposition_algo == CurrentDepositionAlgo::Villasenor) {
 
             // The comoving PSATD algorithm is not implemented nor tested with Esirkepov current deposition
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(v_comoving_is_zero,
-                "Esirkepov current deposition cannot be used with the comoving PSATD algorithm");
+                "charge-conserving current depositions (Esirkepov and Villasenor) cannot be used with the comoving PSATD algorithm");
 
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(v_galilean_is_zero,
-                "Esirkepov current deposition cannot be used with the Galilean algorithm.");
+                "charge-conserving current depositions (Esirkepov and Villasenor) cannot be used with the Galilean algorithm.");
         }
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(

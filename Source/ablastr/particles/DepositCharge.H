@@ -195,13 +195,18 @@ deposit_charge (typename T_PC::ParIterType& pti,
                                     rho_fab, np_to_deposit.value(), dx, xyzmin, lo, charge,
                                     n_rz_azimuthal_modes, cost,
                                     load_balance_costs_update_algo);
+    } else if (nox == 4){
+        doChargeDepositionShapeN<4>(GetPosition, wp.dataPtr()+offset, ion_lev,
+                                    rho_fab, np_to_deposit.value(), dx, xyzmin, lo, charge,
+                                    n_rz_azimuthal_modes, cost,
+                                    load_balance_costs_update_algo);
     }
     ABLASTR_PROFILE_VAR_STOP(blp_ppc_chd, do_device_synchronize);
 
 #ifndef AMREX_USE_GPU
     // CPU, tiling: atomicAdd local_rho into rho
     ABLASTR_PROFILE_VAR_START(blp_accumulate, do_device_synchronize);
-    (*rho)[pti].atomicAdd(local_rho, tb, tb, 0, icomp*nc, nc);
+    (*rho)[pti].lockAdd(local_rho, tb, tb, 0, icomp*nc, nc);
     ABLASTR_PROFILE_VAR_STOP(blp_accumulate, do_device_synchronize);
 #endif
 }

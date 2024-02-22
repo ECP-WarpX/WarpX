@@ -119,7 +119,7 @@ void WarpX::ApplyJfieldBoundary (const int lev, amrex::MultiFab* Jx,
 #ifdef WARPX_DIM_RZ
 // Applies the boundary conditions that are specific to the axis when in RZ.
 void
-WarpX::ApplyFieldBoundaryOnAxis (amrex::MultiFab* Er, amrex::MultiFab* Et, amrex::MultiFab* Ez, int lev)
+WarpX::ApplyFieldBoundaryOnAxis (amrex::MultiFab* Er, amrex::MultiFab* Et, amrex::MultiFab* Ez, int lev) const
 {
     const amrex::IntVect ngE = get_ng_fieldgather();
 

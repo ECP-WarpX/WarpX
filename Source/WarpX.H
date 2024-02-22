@@ -132,7 +132,9 @@ public:
     MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
     HybridPICModel& GetHybridPICModel () { return *m_hybrid_pic_model; }
     MultiDiagnostics& GetMultiDiags () {return *multi_diags;}
-
+#ifdef AMREX_USE_EB
+    amrex::Vector<std::unique_ptr<amrex::MultiFab> >& GetDistanceToEB () {return m_distance_to_eb;}
+#endif
     ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_boundary_buffer; }
 
     static void shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
@@ -154,7 +156,7 @@ public:
     int maxlevel_extEMfield_init;
 
     // Algorithms
-    //! Integer that corresponds to the current deposition algorithm (Esirkepov, direct, Vay)
+    //! Integer that corresponds to the current deposition algorithm (Esirkepov, direct, Vay, Villasenor)
     static short current_deposition_algo;
     //! Integer that corresponds to the charge deposition algorithm (only standard deposition)
     static short charge_deposition_algo;
@@ -727,7 +729,7 @@ public:
 
 #ifdef WARPX_DIM_RZ
     // Applies the boundary conditions that are specific to the axis when in RZ.
-    void ApplyFieldBoundaryOnAxis (amrex::MultiFab* Er, amrex::MultiFab* Et, amrex::MultiFab* Ez, int lev);
+    void ApplyFieldBoundaryOnAxis (amrex::MultiFab* Er, amrex::MultiFab* Et, amrex::MultiFab* Ez, int lev) const;
 #endif
 
     /**

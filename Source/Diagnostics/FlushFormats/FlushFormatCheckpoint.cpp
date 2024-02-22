@@ -39,7 +39,7 @@ FlushFormatCheckpoint::WriteToFile (
         bool /*isBTD*/, int /*snapshotID*/,
         int /*bufferID*/, int /*numBuffers*/,
         const amrex::Geometry& /*full_BTD_snapshot*/,
-        bool /*isLastBTDFlush*/, const amrex::Vector<int>& /* totalParticlesFlushedAlready*/) const
+        bool /*isLastBTDFlush*/) const
 {
     WARPX_PROFILE("FlushFormatCheckpoint::WriteToFile()");
 
@@ -178,8 +178,8 @@ FlushFormatCheckpoint::CheckpointParticles (
         Vector<std::string> real_names;
         Vector<std::string> int_names;
 
+        // note: positions skipped here, since we reconstruct a plotfile SoA from them
         real_names.push_back("weight");
-
         real_names.push_back("momentum_x");
         real_names.push_back("momentum_y");
         real_names.push_back("momentum_z");
@@ -189,9 +189,12 @@ FlushFormatCheckpoint::CheckpointParticles (
 #endif
 
         // get the names of the real comps
-        real_names.resize(pc->NumRealComps());
+        //   note: skips the mandatory AMREX_SPACEDIM positions for pure SoA
+        real_names.resize(pc->NumRealComps() - AMREX_SPACEDIM);
         auto runtime_rnames = pc->getParticleRuntimeComps();
-        for (auto const& x : runtime_rnames) { real_names[x.second+PIdx::nattribs] = x.first; }
+        for (auto const& x : runtime_rnames) {
+            real_names[x.second + PIdx::nattribs - AMREX_SPACEDIM] = x.first;
+        }
 
         // and the int comps
         int_names.resize(pc->NumIntComps());
