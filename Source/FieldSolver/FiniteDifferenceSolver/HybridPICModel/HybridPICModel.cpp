@@ -224,15 +224,15 @@ void HybridPICModel::InitData ()
     for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
     {
 #ifdef AMREX_USE_EB
-        auto& edge_lengths_x = warpx.getField(FieldType::getedgelengths, lev, 0);
+        auto& edge_lengths_x = warpx.getField(FieldType::edgelengths, lev, 0);
         edge_lengths[0] = std::make_unique<amrex::MultiFab>(
             edge_lengths_x, amrex::make_alias, 0, edge_lengths_x.nComp()
         );
-        auto& edge_lengths_y = warpx.getField(FieldType::getedgelengths, lev, 1);
+        auto& edge_lengths_y = warpx.getField(FieldType::edgelengths, lev, 1);
         edge_lengths[1] = std::make_unique<amrex::MultiFab>(
             edge_lengths_y, amrex::make_alias, 0, edge_lengths_y.nComp()
         );
-        auto& edge_lengths_z = warpx.getField(FieldType::getedgelengths, lev, 2);
+        auto& edge_lengths_z = warpx.getField(FieldType::edgelengths, lev, 2);
         edge_lengths[2] = std::make_unique<amrex::MultiFab>(
             edge_lengths_z, amrex::make_alias, 0, edge_lengths_z.nComp()
         );
