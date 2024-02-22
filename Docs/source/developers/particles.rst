@@ -119,7 +119,7 @@ Attribute name        ``int``/``real``  Description                         Wher
 ``cpu``               ``int``           CPU index where the particle        SoA   CT   Last 24 bytes of idcpu
                                         was created.
 ``deltaTimeScraped``   ``real``         Fraction of time between the last   SoA   RT   Added when there is
-                                        step and when the particle hits                particle-boundary 
+                                        step and when the particle hits                particle-boundary
                                         the boundary.                                  interaction.
 ``n_x/y/z``            ``real``         Normal components to the boundary   SoA   RT   Added when there is
                                         on the position where the particle             particle-boundary
