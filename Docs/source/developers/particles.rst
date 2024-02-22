@@ -118,6 +118,12 @@ Attribute name        ``int``/``real``  Description                         Wher
                                         where the particle was created.                idcpu
 ``cpu``               ``int``           CPU index where the particle        SoA   CT   Last 24 bytes of idcpu
                                         was created.
+``deltaTimeScraped``   ``real``         Fraction of time between the last   SoA   RT   Added when there is
+                                        step and when the particle hits                particle-boundary 
+                                        the boundary.                                  interaction.
+``n_x/y/z``            ``real``         Normal components to the boundary   SoA   RT   Added when there is
+                                        on the position where the particle             particle-boundary
+                                        hits the boundary.                             interaction.
 ``ionizationLevel``   ``int``           Ion ionization level                SoA   RT   Added when ionization
                                                                                        physics is used.
 ``opticalDepthQSR``   ``real``          QED: optical depth of the Quantum-  SoA   RT   Added when PICSAR QED
