@@ -34,6 +34,12 @@ void normalize (amrex::RealVect& a) noexcept
                  a[2] *= inv_norm);
 }
 
+'''
+    i,j,k are the index of the nearest node to the left of the point at which we interpolate. 
+    W are the interpolation weight for the left and right nodes (for the 0th component and 1st component respectively)
+    ic,jc,kc are the index of the nearest cell-center to the left of the point at which we interpolate. 
+    Wc are the corresponding interpolation weights.
+'''
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 amrex::RealVect interp_normal (int i, int j, int k, const amrex::Real W[AMREX_SPACEDIM][2],
                                int ic, int jc, int kc, const amrex::Real Wc[AMREX_SPACEDIM][2],
