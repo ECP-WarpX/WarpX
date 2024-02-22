@@ -34,7 +34,7 @@ void normalize (amrex::RealVect& a) noexcept
                  a[2] *= inv_norm);
 }
 
- 
+
 
 // This function calculates the normal vector using the nodes and cell-centered nodes
 // i,j,k are the index of the nearest node to the left of the point at which we interpolate.
