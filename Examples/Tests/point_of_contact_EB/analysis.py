@@ -26,8 +26,8 @@ checksumAPI.evaluate_checksum(test_name, filename, output_format='openpmd')
 ts_scraping = OpenPMDTimeSeries('./diags/diag2/particles_at_eb/')
 
 it=ts_scraping.iterations
-step_scraped, time_scraped, x, y, z, nx, ny, nz=ts_scraping.get_particle( ['stepScraped','timeScraped','x','y','z', 'nx', 'ny', 'nz'], species='electron', iteration=it )
-time_scraped_reduced=time_scraped[0]*1e10
+step_scraped, delta, x, y, z, nx, ny, nz=ts_scraping.get_particle( ['stepScraped','deltaTimeScraped','x','y','z', 'nx', 'ny', 'nz'], species='electron', iteration=it )
+delta_reduced=delta[0]*1e10
 
 # Analytical results calculated
 x_analytic=-0.1983
