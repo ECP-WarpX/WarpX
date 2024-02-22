@@ -2442,8 +2442,9 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         if self.data_list is not None:
             for dataname in self.data_list:
                 if dataname == 'position':
-                    # --- The positions are alway written out anyway
-                    pass
+                    variables.add('x')
+                    variables.add('y')
+                    variables.add('z')
                 elif dataname == 'momentum':
                     variables.add('ux')
                     variables.add('uy')
@@ -2457,7 +2458,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
                     variables.add('Bx')
                     variables.add('By')
                     variables.add('Bz')
-                elif dataname in ['ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz']:
+                elif dataname in ['x', 'y', 'z', 'ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'Er', 'Et', 'Br', 'Bt']:
                     variables.add(dataname)
 
             # --- Convert the set to a sorted list so that the order
@@ -2669,8 +2670,9 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
         if self.data_list is not None:
             for dataname in self.data_list:
                 if dataname == 'position':
-                    # --- The positions are alway written out anyway
-                    pass
+                    variables.add('x')
+                    variables.add('y')
+                    variables.add('z')
                 elif dataname == 'momentum':
                     variables.add('ux')
                     variables.add('uy')
@@ -2684,7 +2686,7 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
                     variables.add('Bx')
                     variables.add('By')
                     variables.add('Bz')
-                elif dataname in ['ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'Er', 'Et', 'Br', 'Bt']:
+                elif dataname in ['x', 'y', 'z', 'ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'Er', 'Et', 'Br', 'Bt']:
                     variables.add(dataname)
 
             # --- Convert the set to a sorted list so that the order
