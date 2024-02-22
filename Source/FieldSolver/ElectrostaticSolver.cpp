@@ -319,18 +319,18 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
             e_field.push_back(
 #   if defined(WARPX_DIM_1D_Z)
                 amrex::Array<amrex::MultiFab*, 1>{
-                    get_field_pointer(FieldType::Efield_fp, lev, 2)
+                    getFieldPointer(FieldType::Efield_fp, lev, 2)
                 }
 #   elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 amrex::Array<amrex::MultiFab*, 2>{
-                    get_field_pointer(FieldType::Efield_fp, lev, 0),
-                    get_field_pointer(FieldType::Efield_fp, lev, 2)
+                    getFieldPointer(FieldType::Efield_fp, lev, 0),
+                    getFieldPointer(FieldType::Efield_fp, lev, 2)
                 }
 #   elif defined(WARPX_DIM_3D)
                 amrex::Array<amrex::MultiFab *, 3>{
-                    get_field_pointer(FieldType::Efield_fp, lev, 0),
-                    get_field_pointer(FieldType::Efield_fp, lev, 1),
-                    get_field_pointer(FieldType::Efield_fp, lev, 2)
+                    getFieldPointer(FieldType::Efield_fp, lev, 0),
+                    getFieldPointer(FieldType::Efield_fp, lev, 1),
+                    getFieldPointer(FieldType::Efield_fp, lev, 2)
                 }
 #   endif
             );

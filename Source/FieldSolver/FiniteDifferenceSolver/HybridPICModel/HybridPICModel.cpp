@@ -147,15 +147,15 @@ void HybridPICModel::InitData ()
     auto & warpx = WarpX::GetInstance();
 
     // Get the grid staggering of the fields involved in calculating E
-    amrex::IntVect Jx_stag = warpx.getcurrent_fp(0,0).ixType().toIntVect();
-    amrex::IntVect Jy_stag = warpx.getcurrent_fp(0,1).ixType().toIntVect();
-    amrex::IntVect Jz_stag = warpx.getcurrent_fp(0,2).ixType().toIntVect();
-    amrex::IntVect Bx_stag = warpx.getBfield_fp(0,0).ixType().toIntVect();
-    amrex::IntVect By_stag = warpx.getBfield_fp(0,1).ixType().toIntVect();
-    amrex::IntVect Bz_stag = warpx.getBfield_fp(0,2).ixType().toIntVect();
-    amrex::IntVect Ex_stag = warpx.getEfield_fp(0,0).ixType().toIntVect();
-    amrex::IntVect Ey_stag = warpx.getEfield_fp(0,1).ixType().toIntVect();
-    amrex::IntVect Ez_stag = warpx.getEfield_fp(0,2).ixType().toIntVect();
+    amrex::IntVect Jx_stag = warpx.getField(FieldType::current_fp, 0,0).ixType().toIntVect();
+    amrex::IntVect Jy_stag = warpx.getField(FieldType::current_fp, 0,1).ixType().toIntVect();
+    amrex::IntVect Jz_stag = warpx.getField(FieldType::current_fp, 0,2).ixType().toIntVect();
+    amrex::IntVect Bx_stag = warpx.getField(FieldType::Bfield_fp, 0,0).ixType().toIntVect();
+    amrex::IntVect By_stag = warpx.getField(FieldType::Bfield_fp, 0,1).ixType().toIntVect();
+    amrex::IntVect Bz_stag = warpx.getField(FieldType::Bfield_fp, 0,2).ixType().toIntVect();
+    amrex::IntVect Ex_stag = warpx.getField(FieldType::Efield_fp, 0,0).ixType().toIntVect();
+    amrex::IntVect Ey_stag = warpx.getField(FieldType::Efield_fp, 0,1).ixType().toIntVect();
+    amrex::IntVect Ez_stag = warpx.getField(FieldType::Efield_fp, 0,2).ixType().toIntVect();
 
     // Check that the grid types are appropriate
     const bool appropriate_grids = (
@@ -224,15 +224,15 @@ void HybridPICModel::InitData ()
     for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
     {
 #ifdef AMREX_USE_EB
-        auto& edge_lengths_x = warpx.getedgelengths(lev, 0);
+        auto& edge_lengths_x = warpx.getField(FieldType::getedgelengths, lev, 0);
         edge_lengths[0] = std::make_unique<amrex::MultiFab>(
             edge_lengths_x, amrex::make_alias, 0, edge_lengths_x.nComp()
         );
-        auto& edge_lengths_y = warpx.getedgelengths(lev, 1);
+        auto& edge_lengths_y = warpx.getField(FieldType::getedgelengths, lev, 1);
         edge_lengths[1] = std::make_unique<amrex::MultiFab>(
             edge_lengths_y, amrex::make_alias, 0, edge_lengths_y.nComp()
         );
-        auto& edge_lengths_z = warpx.getedgelengths(lev, 2);
+        auto& edge_lengths_z = warpx.getField(FieldType::getedgelengths, lev, 2);
         edge_lengths[2] = std::make_unique<amrex::MultiFab>(
             edge_lengths_z, amrex::make_alias, 0, edge_lengths_z.nComp()
         );
@@ -497,7 +497,7 @@ void HybridPICModel::CalculateElectronPressure(const int lev, DtType a_dt_type)
     // charge density.
     if (a_dt_type == DtType::Full) {
         FillElectronPressureMF(
-            electron_pressure_fp[lev], warpx.get_field_pointer(FieldType::rho_fp, lev)
+            electron_pressure_fp[lev], warpx.getFieldPointer(FieldType::rho_fp, lev)
         );
     } else {
         FillElectronPressureMF(

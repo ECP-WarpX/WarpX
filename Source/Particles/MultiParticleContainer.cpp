@@ -1344,12 +1344,12 @@ MultiParticleContainer::doQEDSchwinger ()
     pc_product_ele->defineAllParticleTiles();
     pc_product_pos->defineAllParticleTiles();
 
-    const MultiFab & Ex = warpx.getEfield(level_0,0);
-    const MultiFab & Ey = warpx.getEfield(level_0,1);
-    const MultiFab & Ez = warpx.getEfield(level_0,2);
-    const MultiFab & Bx = warpx.getBfield(level_0,0);
-    const MultiFab & By = warpx.getBfield(level_0,1);
-    const MultiFab & Bz = warpx.getBfield(level_0,2);
+    const MultiFab & Ex = warpx.getField(FieldType::Efield_aux, level_0,0);
+    const MultiFab & Ey = warpx.getField(FieldType::Efield_aux, level_0,1);
+    const MultiFab & Ez = warpx.getField(FieldType::Efield_aux, level_0,2);
+    const MultiFab & Bx = warpx.getField(FieldType::Bfield_aux, level_0,0);
+    const MultiFab & By = warpx.getField(FieldType::Bfield_aux, level_0,1);
+    const MultiFab & Bz = warpx.getField(FieldType::Bfield_aux, level_0,2);
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())

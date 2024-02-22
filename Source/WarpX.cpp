@@ -3351,7 +3351,7 @@ WarpX::AllocInitMultiFabFromModel (
 }
 
 [[nodiscard]] amrex::MultiFab*
-WarpX::internal_get_field_pointer (const FieldType field_type, const int lev, const int direction) const
+WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, const int direction) const
 {
     amrex::MultiFab* field_pointer = nullptr;
 
@@ -3433,6 +3433,22 @@ WarpX::internal_get_field_pointer (const FieldType field_type, const int lev, co
             field_pointer = m_face_areas[lev][direction].get();
             break;
 
+       case FieldType::Efield_avg_fp :
+            field_pointer = Efield_avg_fp[lev][direction].get();
+            break;
+
+       case FieldType::Bfield_avg_fp :
+            field_pointer = Bfield_avg_fp[lev][direction].get();
+            break;
+
+       case FieldType::Efield_avg_cp :
+            field_pointer = Efield_avg_cp[lev][direction].get();
+            break;
+
+       case FieldType::Bfield_avg_cp :
+            field_pointer = Bfield_avg_cp[lev][direction].get();
+            break;
+
         default:
             WARPX_ABORT_WITH_MESSAGE("Invalid field type");
             break;
@@ -3441,33 +3457,40 @@ WarpX::internal_get_field_pointer (const FieldType field_type, const int lev, co
     return field_pointer;
 }
 
-[[nodiscard]] amrex::MultiFab*
-WarpX::get_field_pointer (const FieldType field_type, const int lev, const int direction) const
+[[nodiscard]] bool
+WarpX::isFieldInitialized (const FieldType field_type, const int lev, const int direction) const
 {
-    const auto field_pointer = internal_get_field_pointer(field_type, lev, direction);
+    const bool is_field_init = (getFieldPointerUnchecked(field_type, lev, direction) != nullptr);
+    return is_field_init;
+}
+
+[[nodiscard]] amrex::MultiFab*
+WarpX::getFieldPointer (const FieldType field_type, const int lev, const int direction) const
+{
+    const auto field_pointer = getFieldPointerUnchecked(field_type, lev, direction);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         field_pointer != nullptr, "Requested field is not initialized!");
     return field_pointer;
 }
 
 std::array<const amrex::MultiFab* const, 3>
-WarpX::get_field_pointer_array (const FieldType field_type, const int lev) const
+WarpX::getFieldPointerArray (const FieldType field_type, const int lev) const
 {
-    if (field_type == FieldType::Efield_aux){
-        return {
-            get_field_pointer(FieldType::Efield_aux, lev, 0),
-            get_field_pointer(FieldType::Efield_aux, lev, 1),
-            get_field_pointer(FieldType::Efield_aux, lev, 2)};
-    }
-    else if (field_type == FieldType::Bfield_aux){
-        return {
-            get_field_pointer(FieldType::Efield_aux, lev, 0),
-            get_field_pointer(FieldType::Efield_aux, lev, 1),
-            get_field_pointer(FieldType::Efield_aux, lev, 2)};
-    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        (field_type == FieldType::Efield_aux) || (field_type == FieldType::Bfield_aux) ||
+        (field_type == FieldType::Efield_fp) || (field_type == FieldType::Bfield_fp) ||
+        (field_type == FieldType::current_fp) || (field_type == FieldType::current_fp_nodal) ||
+        (field_type == FieldType::Efield_cp) || (field_type == FieldType::Bfield_cp) ||
+        (field_type == FieldType::current_cp), "Requested field type is not a vector.");
 
-    WARPX_ABORT_WITH_MESSAGE("Invalid field type");
-
-    return {nullptr, nullptr, nullptr};
+    return std::array<const amrex::MultiFab* const, 3>{
+        getFieldPointer(field_type, lev, 0),
+        getFieldPointer(field_type, lev, 1),
+        getFieldPointer(field_type, lev, 2)};
 }
 
+const amrex::MultiFab&
+WarpX::getField(FieldType field_type, const int lev, const int direction) const
+{
+    return *getFieldPointer(field_type, lev, direction);
+}

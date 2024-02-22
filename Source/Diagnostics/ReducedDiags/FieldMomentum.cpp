@@ -106,12 +106,12 @@ void FieldMomentum::ComputeDiags (int step)
     for (int lev = 0; lev < nLevel; ++lev)
     {
         // Get MultiFab data at given refinement level
-        const amrex::MultiFab & Ex = warpx.getEfield(lev, 0);
-        const amrex::MultiFab & Ey = warpx.getEfield(lev, 1);
-        const amrex::MultiFab & Ez = warpx.getEfield(lev, 2);
-        const amrex::MultiFab & Bx = warpx.getBfield(lev, 0);
-        const amrex::MultiFab & By = warpx.getBfield(lev, 1);
-        const amrex::MultiFab & Bz = warpx.getBfield(lev, 2);
+        const amrex::MultiFab & Ex = warpx.getField(FieldType::Efield_aux, lev, 0);
+        const amrex::MultiFab & Ey = warpx.getField(FieldType::Efield_aux, lev, 1);
+        const amrex::MultiFab & Ez = warpx.getField(FieldType::Efield_aux, lev, 2);
+        const amrex::MultiFab & Bx = warpx.getField(FieldType::Bfield_aux, lev, 0);
+        const amrex::MultiFab & By = warpx.getField(FieldType::Bfield_aux, lev, 1);
+        const amrex::MultiFab & Bz = warpx.getField(FieldType::Bfield_aux, lev, 2);
 
         // Cell-centered index type
         const amrex::GpuArray<int,3> cc{0,0,0};

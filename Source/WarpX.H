@@ -101,7 +101,11 @@ enum struct FieldType : int
     F_cp,
     G_cp,
     edge_lengths,
-    face_areas
+    face_areas,
+    Efield_avg_fp,
+    Bfield_avg_fp,
+    Efield_avg_cp,
+    Bfield_avg_cp
 };
 
 class WARPX_EXPORT WarpX
@@ -484,37 +488,56 @@ public:
     static std::map<std::string, amrex::MultiFab *> multifab_map;
     static std::map<std::string, amrex::iMultiFab *> imultifab_map;
 
-    [[nodiscard]] std::array<const amrex::MultiFab* const, 3>
-    get_field_pointer_array (FieldType field_type, int lev) const;
+    /**
+     * \brief
+     * Check if a field is initialized.
+     *
+     * \param field_type[in] the field type
+     * \param lev[in] the mesh refinement level
+     * \param direction[in] the field component (0 by default)
+     *
+     * \return true if the field is initialized, false otherwise
+     */
+    [[nodiscard]] bool
+    isFieldInitialized (FieldType field_type, int lev, int direction = 0) const;
 
+    /**
+     * \brief
+     * Get a pointer to the field data.
+     *
+     * \param field_type[in] the field type
+     * \param lev[in] the mesh refinement level
+     * \param direction[in] the field component (0 by default)
+     *
+     * \return the pointer to an amrex::MultiFab containing the field data
+     */
     [[nodiscard]] amrex::MultiFab*
-    get_field_pointer (FieldType field_type, int lev, int direction = 0) const;
+    getFieldPointer (FieldType field_type, int lev, int direction = 0) const;
 
-    const amrex::MultiFab& getEfield  (int lev, int direction) {return *Efield_aux[lev][direction];}
-    const amrex::MultiFab& getBfield  (int lev, int direction) {return *Bfield_aux[lev][direction];}
+    /**
+     * \brief
+     * For vector fields, get an array of three pointers to the field data.
+     *
+     * \param field_type[in] the field type
+     * \param lev[in] the mesh refinement level
+     *
+     * \return an array of three pointers amrex::MultiFab* containing the field data
+     */
+    [[nodiscard]] std::array<const amrex::MultiFab* const, 3>
+    getFieldPointerArray (FieldType field_type, int lev) const;
 
-    const amrex::MultiFab& getcurrent_cp (int lev, int direction) {return *current_cp[lev][direction];}
-    const amrex::MultiFab& getEfield_cp  (int lev, int direction) {return  *Efield_cp[lev][direction];}
-    const amrex::MultiFab& getBfield_cp  (int lev, int direction) {return  *Bfield_cp[lev][direction];}
-    const amrex::MultiFab& getrho_cp (int lev) {return  *rho_cp[lev];}
-    const amrex::MultiFab& getF_cp (int lev) {return *F_cp[lev];}
-    const amrex::MultiFab& getG_cp (int lev) {return *G_cp[lev];}
-
-    const amrex::MultiFab& getcurrent_fp (int lev, int direction) {return *current_fp[lev][direction];}
-    const amrex::MultiFab& getEfield_fp  (int lev, int direction) {return *Efield_fp[lev][direction];}
-    const amrex::MultiFab& getBfield_fp  (int lev, int direction) {return *Bfield_fp[lev][direction];}
-    const amrex::MultiFab& getrho_fp (int lev) {return *rho_fp[lev];}
-    const amrex::MultiFab& getphi_fp (int lev) {return *phi_fp[lev];}
-    const amrex::MultiFab& getF_fp (int lev) {return *F_fp[lev];}
-    const amrex::MultiFab& getG_fp (int lev) {return *G_fp[lev];}
-
-    const amrex::MultiFab& getEfield_avg_fp (int lev, int direction) {return *Efield_avg_fp[lev][direction];}
-    const amrex::MultiFab& getBfield_avg_fp (int lev, int direction) {return *Bfield_avg_fp[lev][direction];}
-    const amrex::MultiFab& getEfield_avg_cp (int lev, int direction) {return *Efield_avg_cp[lev][direction];}
-    const amrex::MultiFab& getBfield_avg_cp (int lev, int direction) {return *Bfield_avg_cp[lev][direction];}
-
-    const amrex::MultiFab& getedgelengths (int lev, int direction) {return *m_edge_lengths[lev][direction];}
-    const amrex::MultiFab& getfaceareas  (int lev, int direction) {return *m_face_areas[lev][direction];}
+    /**
+     * \brief
+     * Get a constant reference to the field data.
+     *
+     * \param field_type[in] the field type
+     * \param lev[in] the mesh refinement level
+     * \param direction[in] the field component (0 by default)
+     *
+     * \return a constant refernce to an amrex::MultiFab containing the field data
+     */
+    const amrex::MultiFab&
+    getField(FieldType field_type, int lev, int direction = 0) const;
 
     [[nodiscard]] bool DoPML () const {return do_pml;}
     [[nodiscard]] bool DoFluidSpecies () const {return do_fluid_species;}
@@ -1556,8 +1579,19 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_buf;
     amrex::Vector<std::unique_ptr<amrex::MultiFab> > charge_buf;
 
+    /**
+     * \brief
+     * Get a pointer to the field data. Does not check if the pointer
+     * is not nullptr.
+     *
+     * \param field_type[in] the field type
+     * \param lev[in] the mesh refinement level
+     * \param direction[in] the field component (0 by default)
+     *
+     * \return the pointer to an amrex::MultiFab containing the field data
+     */
     [[nodiscard]] amrex::MultiFab*
-    internal_get_field_pointer (FieldType field_type, int lev, int direction = 0) const;
+    getFieldPointerUnchecked (FieldType field_type, int lev, int direction = 0) const;
 
     // PML
     int do_pml = 0;
