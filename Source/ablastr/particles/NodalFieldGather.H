@@ -64,7 +64,7 @@ void compute_weights (const amrex::ParticleReal xp,
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
 #   if (defined WARPX_DIM_XZ)
-    const amrex::Real x = (xp - plo[0]) * dxi[0] + static_cast<amrex::Real>((nodal-1)*0.5);
+    const amrex::Real x = (xp - plo[0]) * dxi[0] + static_cast<amrex::Real>(nodal-1)*0.5_rt;
     amrex::ignore_unused(yp);
     i = static_cast<int>(amrex::Math::floor(x));
     W[0][1] = x - i;
