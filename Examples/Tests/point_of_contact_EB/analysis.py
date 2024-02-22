@@ -67,4 +67,4 @@ print("percentage error for nx = %5.2f %%" %(diff_nx *100))
 print("percentage error for ny = %5.2f %%" %(diff_ny *100))
 print("nz = %5.2f " %(nz[0]))
 
-assert (diff_x < tolerance) and (diff_y < tolerance) and (np.abs(z[0]) < 1e-8) and (diff_step < 1e-8) and (diff_time < tolerance_t) and (diff_nx < tolerance_n) and (diff_ny < tolerance_n) and (np.abs(nz) < 1e-8) , 'Test point_of_contact did not pass'
+assert (diff_x < tolerance) and (diff_y < tolerance) and (np.abs(z[0]) < 1e-8) and (diff_step < 1e-8) and (diff_delta < tolerance_t) and (diff_nx < tolerance_n) and (diff_ny < tolerance_n) and (np.abs(nz) < 1e-8) , 'Test point_of_contact did not pass'
