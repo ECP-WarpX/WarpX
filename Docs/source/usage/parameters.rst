@@ -2032,8 +2032,8 @@ Particle push, charge and current deposition, field gathering
 
      If ``algo.particle_pusher`` is not specified, ``boris`` is the default.
 
-* ``algo.particle_shape`` (`integer`; `1`, `2`, or `3`)
-    The order of the shape factors (splines) for the macro-particles along all spatial directions: `1` for linear, `2` for quadratic, `3` for cubic.
+* ``algo.particle_shape`` (`integer`; `1`, `2`, `3`, or `4`)
+    The order of the shape factors (splines) for the macro-particles along all spatial directions: `1` for linear, `2` for quadratic, `3` for cubic, `4` for quartic.
     Low-order shape factors result in faster simulations, but may lead to more noisy results.
     High-order shape factors are computationally more expensive, but may increase the overall accuracy of the results. For production runs it is generally safer to use high-order shape factors, such as cubic order.
 
@@ -2752,10 +2752,11 @@ The data collected at each boundary is written out to a subdirectory of the diag
 By default, all of the collected particle data is written out at the end of the simulation. Optionally, the ``<diag_name>.intervals`` parameter can be given to specify writing out the data more often.
 This can be important if a large number of particles are lost, avoiding filling up memory with the accumulated lost particle data.
 
-In addition to their usual attributes, the saved particles have an integer attribute ``stepScraped``, which
-indicates the PIC iteration at which each particle was absorbed at the boundary,
-and a real attribute ``deltaTimeScraped``, which indicates the fraction of time between the time associated to the last step
-and the exact time when each particle hits the boundary. ``deltaTimeScraped`` is a real between ``0`` and ``dt``.
+In addition to their usual attributes, the saved particles have
+   an integer attribute ``stepScraped``, which indicates the PIC iteration at which each particle was absorbed at the boundary,
+   a real attribute ``deltaTimeScraped``, which indicates the time between the time associated to `stepScraped`
+   and the exact time when each particle hits the boundary.
+   3 real attributes ``nx``, ``ny``, ``nz``, which represents the three components of the normal to the boundary on the point of contact of the particles (not saved if they reach non-EB boundaries)
 
 ``BoundaryScrapingDiagnostics`` can be used with ``<diag_name>.<species>.random_fraction``, ``<diag_name>.<species>.uniform_stride``, and ``<diag_name>.<species>.plot_filter_function``, which have the same behavior as for ``FullDiagnostics``. For ``BoundaryScrapingDiagnostics``, these filters are applied at the time the data is written to file. An implication of this is that more particles may initially be accumulated in memory than are ultimately written. ``t`` in ``plot_filter_function`` refers to the time the diagnostic is written rather than the time the particle crossed the boundary.
 

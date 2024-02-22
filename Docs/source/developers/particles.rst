@@ -36,17 +36,14 @@ A typical loop over particles reads:
       }
   }
 
-The innermost step ``[MY INNER LOOP]`` typically calls ``amrex::ParallelFor`` to perform operations on all particles in a portable way. For this reasons, the particle data needs to be converted in plain-old-data structures. The innermost loop in the code snippet above could look like:
+The innermost step ``[MY INNER LOOP]`` typically calls ``amrex::ParallelFor`` to perform operations on all particles in a portable way. The innermost loop in the code snippet above could look like:
 
 .. code-block:: cpp
 
-  // Get Array-Of-Struct particle data, also called data
-  // (x, y, z, id, cpu)
-  const auto& particles = pti.GetArrayOfStructs();
   // Get Struct-Of-Array particle data, also called attribs
-  // (ux, uy, uz, w, Exp, Ey, Ez, Bx, By, Bz)
+  // (x, y, z, ux, uy, uz, w)
   auto& attribs = pti.GetAttribs();
-  auto& Exp = attribs[PIdx::Ex];
+  auto& x = attribs[PIdx::x];
   // [...]
   // Number of particles in this box
   const long np = pti.numParticles();
@@ -66,7 +63,6 @@ On a loop over boxes in a ``MultiFab`` (``MFIter``), it can be useful to access 
   const int tile_id = mfi.LocalTileIndex();
   // Get GPU-friendly arrays of particle data
   auto& ptile = GetParticles(lev)[std::make_pair(grid_id,tile_id)];
-  ParticleType* pp = particle_tile.GetArrayOfStructs()().data();
   // Only need attribs (i.e., SoA data)
   auto& soa = ptile.GetStructOfArrays();
   // As an example, let's get the ux momentum
