@@ -26,19 +26,6 @@ class JacobianFunctionJFNK
     void apply (T& a_dF, const T& a_dU);
 
     inline 
-    void residual (T& a_R, const T& a_U, const T& a_b)
-    {
-        apply(a_R, a_U);
-        a_R -= a_b;
-    }
-
-    inline 
-    void axby (T& a_Z, const T& a_X, const T& a_Y, const RT a_a, const RT a_b)
-    {
-        a_Z = a_a*a_X + a_b*a_Y;
-    }
-
-    inline 
     void precond (T& a_U, const T& a_X)     
     { 
         //amrex::Print() << "JRA: call to precond() from GMRES " << std::endl;
@@ -249,6 +236,7 @@ template <class T, class Ops>
 void JacobianFunctionJFNK<T,Ops>::apply (T& a_dF, const T& a_dU)
 {
     BL_PROFILE("JacobianFunctionJFNK::apply()");
+    using namespace amrex::literals;
     RT normY = norm2(a_dU);
         
     //amrex::Print() << "JRA: call to apply() from GMRES " << std::endl;
@@ -256,19 +244,20 @@ void JacobianFunctionJFNK<T,Ops>::apply (T& a_dF, const T& a_dU)
         isDefined(),
         "JacobianFunction::apply() called on undefined JacobianFunction");
 
-    if (normY < 1e-15) { a_dF.zero(); }
+    if (normY < 1.0e-15) { a_dF.zero(); }
     else {
 
         RT eps;
         if (m_is_linear) {
-            eps = 1.0;
+            eps = 1.0_rt;
         } else {
             /* eps = error_rel * sqrt(1 + ||U||) / ||a||
              * M. Pernice and H. F. Walker, "NITSOL: A Newton Iterative Solver for 
              * Nonlinear Systems", SIAM J. Sci. Stat. Comput., 1998, vol 19, 
              * pp. 302--318. */
-            eps = m_epsJFNK * std::sqrt(1 + m_normY0) / normY;
+            eps = m_epsJFNK * std::sqrt(1.0_rt + m_normY0) / normY;
         }
+        const RT eps_inv = 1.0_rt/eps;
 
         m_Z = m_Y0 + eps*a_dU;
         m_ops->PostUpdateState( m_Z, m_cur_time, m_dt );
@@ -278,7 +267,8 @@ void JacobianFunctionJFNK<T,Ops>::apply (T& a_dF, const T& a_dU)
         // F(Y) = Y - b - R(Y)
         // dF = dF/dY*dU = [1 - dR/dY]*dU 
         //    = dU - (R(Y0+eps*dU)-R(Y0))/eps
-        a_dF = a_dU - (1.0/eps)*(m_R-m_R0);
+        a_dF = a_dU - eps_inv*(m_R - m_R0);
+
     }
 
 }

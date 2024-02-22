@@ -13,7 +13,7 @@ void ImplicitSolverEM::Define ( WarpX* const  a_WarpX )
  
     // Define E vectors
     m_E.Define( m_WarpX->Efield_fp );
-    m_Eold  = m_E;
+    m_Eold.Define( m_WarpX->Efield_fp );
     setDotMask(m_E);
     
     if (m_WarpX->evolve_scheme == EvolveScheme::ThetaImplicit) { 

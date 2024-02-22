@@ -127,26 +127,24 @@ public:
     }
 
     inline 
-    void Copy (const WarpXSolverVec& a_vec)
+    void Copy ( const WarpXSolverVec&  a_vec )
     {
         AMREX_ASSERT_WITH_MESSAGE(
             a_vec.IsDefined(),
             "WarpXSolverVec::Copy(a_vec) called with undefined a_vec");
-        if (!IsDefined()) {
-            Define(a_vec);
-        } 
+        if (!IsDefined()) { Define(a_vec); } 
         const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& field_vec = a_vec.getVec();
         Copy(field_vec);
     }
 
     inline 
-    void operator= (const WarpXSolverVec& a_vec)
+    void operator= ( const WarpXSolverVec&  a_vec )
     {
       Copy(a_vec);
     }
 
     inline
-    void operator+= (const WarpXSolverVec& a_vec)
+    void operator+= ( const WarpXSolverVec&  a_vec )
     {
         m_field_vec[0][0]->plus(*(a_vec.getVec()[0][0]), 0, 1, 0);
         m_field_vec[0][1]->plus(*(a_vec.getVec()[0][1]), 0, 1, 0);
@@ -154,7 +152,7 @@ public:
     }
 
     inline
-    WarpXSolverVec operator+ ( const WarpXSolverVec& a_vec ) const
+    WarpXSolverVec operator+ ( const WarpXSolverVec&  a_vec ) const
     {
         WarpXSolverVec retval(*this);
         retval = *this;
@@ -180,11 +178,11 @@ public:
     }
     
     inline 
-    void linComb (const RT a, const WarpXSolverVec& rhs_a, const RT b, const WarpXSolverVec& rhs_b)
+    void linComb (const RT a, const WarpXSolverVec& X, const RT b, const WarpXSolverVec& Y)
     { 
         for (int n=0; n<3; n++) {
-            amrex::MultiFab::LinComb(*m_field_vec[0][n], a, *rhs_a.getVec()[0][n], 0, 
-                                                         b, *rhs_b.getVec()[0][n], 0, 
+            amrex::MultiFab::LinComb(*m_field_vec[0][n], a, *X.getVec()[0][n], 0, 
+                                                         b, *Y.getVec()[0][n], 0, 
                                                          0, 1, 0);
         }
     }
@@ -204,31 +202,13 @@ public:
     }
 
     inline
-    void zero ()
-    {
-        AMREX_ASSERT_WITH_MESSAGE(
-            IsDefined(),
-            "WarpXSolverVec::zero() called on undefined WarpXSolverVec");
-        const int lev = 0;
-        m_field_vec[lev][0]->setVal(0.0);
-        m_field_vec[lev][1]->setVal(0.0);
-        m_field_vec[lev][2]->setVal(0.0);
-    }
+    void zero () { setVal(0.0); }
 
     inline
-    void ones ()
-    {
-        AMREX_ASSERT_WITH_MESSAGE(
-            IsDefined(),
-            "WarpXSolverVec::ones() called on undefined WarpXSolverVec");
-        const int lev = 0;
-        m_field_vec[lev][0]->setVal(1.0);
-        m_field_vec[lev][1]->setVal(1.0);
-        m_field_vec[lev][2]->setVal(1.0);
-    }
+    void ones () { setVal(RT(1.0)); }
     
     inline
-    void setVal ( const RT a_val )
+    void setVal ( const RT  a_val )
     {
         AMREX_ASSERT_WITH_MESSAGE(
             IsDefined(),
