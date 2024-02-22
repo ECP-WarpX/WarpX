@@ -322,9 +322,7 @@ namespace detail
             return {{openPMD::UnitDimension::L,  -2.}};
 #elif defined(WARPX_DIM_XZ)
             return {{openPMD::UnitDimension::L,  -1.}};
-#elif defined(WARPX_DIM_RZ)
-            return {};
-#else
+#else  // 3D and RZ
             return {};
 #endif
         } else if( record_name == "E" ) {
