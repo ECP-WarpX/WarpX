@@ -30,7 +30,6 @@
 #include <AMReX_FabArray.H>
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_IntVect.H>
-#include <AMReX_Math.H>
 #include <AMReX_MFIter.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_PODVector.H>
