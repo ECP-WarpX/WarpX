@@ -74,7 +74,7 @@ void compute_weights (const amrex::ParticleReal xp,
     W[0][1] = r - i;
 #   endif
 
-    const amrex::Real z = (zp - plo[1]) * dxi[1] + static_cast<amrex::Real>((nodal-1)*0.5);
+    const amrex::Real z = (zp - plo[1]) * dxi[1] + static_cast<amrex::Real>(nodal-1)*0.5_rt;
     j = static_cast<int>(amrex::Math::floor(z));
     W[1][1] = z - j;
 
