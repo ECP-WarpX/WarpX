@@ -69,12 +69,11 @@
 #include <array>
 #include <iostream>
 #include <limits>
+#include <map>
 #include <memory>
 #include <optional>
 #include <string>
 #include <vector>
-#include <map>
-
 
 enum struct PatchType : int
 {
@@ -490,20 +489,6 @@ public:
 
     [[nodiscard]] amrex::MultiFab*
     get_field_pointer (FieldType field_type, int lev, int direction = 0) const;
-
-    [[nodiscard]] amrex::MultiFab * get_pointer_G_fp  (int lev) const { return G_fp[lev].get(); }
-    [[nodiscard]] amrex::MultiFab * get_pointer_phi_fp  (int lev) const { return phi_fp[lev].get(); }
-    [[nodiscard]] amrex::MultiFab * get_pointer_vector_potential_fp  (int lev, int direction) const { return vector_potential_fp_nodal[lev][direction].get(); }
-
-    [[nodiscard]] amrex::MultiFab * get_pointer_Efield_cp  (int lev, int direction) const { return Efield_cp[lev][direction].get(); }
-    [[nodiscard]] amrex::MultiFab * get_pointer_Bfield_cp  (int lev, int direction) const { return Bfield_cp[lev][direction].get(); }
-    [[nodiscard]] amrex::MultiFab * get_pointer_current_cp  (int lev, int direction) const { return current_cp[lev][direction].get(); }
-    [[nodiscard]] amrex::MultiFab * get_pointer_rho_cp  (int lev) const { return rho_cp[lev].get(); }
-    [[nodiscard]] amrex::MultiFab * get_pointer_F_cp  (int lev) const { return F_cp[lev].get(); }
-    [[nodiscard]] amrex::MultiFab * get_pointer_G_cp  (int lev) const { return G_cp[lev].get(); }
-
-    [[nodiscard]] amrex::MultiFab * get_pointer_edge_lengths  (int lev, int direction) const { return m_edge_lengths[lev][direction].get(); }
-    [[nodiscard]] amrex::MultiFab * get_pointer_face_areas  (int lev, int direction) const { return m_face_areas[lev][direction].get(); }
 
     const amrex::MultiFab& getEfield  (int lev, int direction) {return *Efield_aux[lev][direction];}
     const amrex::MultiFab& getBfield  (int lev, int direction) {return *Bfield_aux[lev][direction];}
@@ -1570,6 +1555,9 @@ private:
     // If charge/current deposition buffers are used
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_buf;
     amrex::Vector<std::unique_ptr<amrex::MultiFab> > charge_buf;
+
+    [[nodiscard]] amrex::MultiFab*
+    internal_get_field_pointer (FieldType field_type, int lev, int direction = 0) const;
 
     // PML
     int do_pml = 0;

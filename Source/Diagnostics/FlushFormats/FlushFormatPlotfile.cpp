@@ -591,7 +591,7 @@ FlushFormatPlotfile::WriteAllRawFields(
             const MultiFab rho_new(warpx.getrho_fp(lev), amrex::make_alias, nstart, WarpX::ncomps);
             WriteRawMF(rho_new, dm, raw_pltname, default_level_prefix, "rho_fp", lev, plot_raw_fields_guards);
         }
-        if (warpx.get_pointer_phi_fp(lev) != nullptr) {
+        if (warpx.get_field_pointer(FieldType::phi_fp, lev) != nullptr) {
             WriteRawMF(warpx.getphi_fp(lev), dm, raw_pltname, default_level_prefix, "phi_fp", lev, plot_raw_fields_guards);
         }
 
@@ -620,26 +620,26 @@ FlushFormatPlotfile::WriteAllRawFields(
         // Coarse path
         if (lev > 0) {
             WriteCoarseVector( "E",
-                               warpx.get_pointer_Efield_cp(lev, 0), warpx.get_pointer_Efield_cp(lev, 1), warpx.get_pointer_Efield_cp(lev, 2),
+                               warpx.get_field_pointer(FieldType::Efield_cp, lev, 0), warpx.get_field_pointer(FieldType::Efield_cp, lev, 1), warpx.get_field_pointer(FieldType::Efield_cp, lev, 2),
                                warpx.get_field_pointer(FieldType::Efield_fp, lev, 0), warpx.get_field_pointer(FieldType::Efield_fp, lev, 1), warpx.get_field_pointer(FieldType::Efield_fp, lev, 2),
                                dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards);
             WriteCoarseVector( "B",
-                               warpx.get_pointer_Bfield_cp(lev, 0), warpx.get_pointer_Bfield_cp(lev, 1), warpx.get_pointer_Bfield_cp(lev, 2),
+                               warpx.get_field_pointer(FieldType::Bfield_cp, lev, 0), warpx.get_field_pointer(FieldType::Bfield_cp, lev, 1), warpx.get_field_pointer(FieldType::Bfield_cp, lev, 2),
                                warpx.get_field_pointer(FieldType::Bfield_fp, lev, 0), warpx.get_field_pointer(FieldType::Bfield_fp, lev, 1), warpx.get_field_pointer(FieldType::Bfield_fp, lev, 2),
                                dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards);
             WriteCoarseVector( "j",
-                               warpx.get_pointer_current_cp(lev, 0), warpx.get_pointer_current_cp(lev, 1), warpx.get_pointer_current_cp(lev, 2),
+                               warpx.get_field_pointer(FieldType::current_cp, lev, 0), warpx.get_field_pointer(FieldType::current_cp, lev, 1), warpx.get_field_pointer(FieldType::current_cp, lev, 2),
                                warpx.get_field_pointer(FieldType::current_fp, lev, 0), warpx.get_field_pointer(FieldType::current_fp, lev, 1), warpx.get_field_pointer(FieldType::current_fp, lev, 2),
                                dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards);
-            if (warpx.get_field_pointer(FieldType::F_fp, lev) && warpx.get_pointer_F_cp(lev))
+            if (warpx.get_field_pointer(FieldType::F_fp, lev) && warpx.get_field_pointer(FieldType::F_cp, lev))
             {
-                WriteCoarseScalar("F", warpx.get_pointer_F_cp(lev), warpx.get_field_pointer(FieldType::F_fp, lev),
+                WriteCoarseScalar("F", warpx.get_field_pointer(FieldType::F_cp, lev), warpx.get_field_pointer(FieldType::F_fp, lev),
                     dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards, 0);
             }
-            if (warpx.get_field_pointer(FieldType::rho_fp, lev) && warpx.get_pointer_rho_cp(lev))
+            if (warpx.get_field_pointer(FieldType::rho_fp, lev) && warpx.get_field_pointer(FieldType::rho_cp, lev))
             {
                 // Use the component 1 of `rho_cp`, i.e. rho_new for time synchronization
-                WriteCoarseScalar("rho", warpx.get_pointer_rho_cp(lev), warpx.get_field_pointer(FieldType::rho_fp, lev),
+                WriteCoarseScalar("rho", warpx.get_field_pointer(FieldType::rho_cp, lev), warpx.get_field_pointer(FieldType::rho_fp, lev),
                     dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards, 1);
             }
         }

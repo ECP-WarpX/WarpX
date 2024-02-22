@@ -3350,29 +3350,8 @@ WarpX::AllocInitMultiFabFromModel (
     multifab_map[name_with_suffix] = mf.get();
 }
 
-std::array<const amrex::MultiFab* const, 3>
-WarpX::get_field_pointer_array (const FieldType field_type, const int lev) const
-{
-    if (field_type == FieldType::Efield_aux){
-        return {
-            Efield_aux[lev][0].get(),
-            Efield_aux[lev][1].get(),
-            Efield_aux[lev][2].get()};
-    }
-    else if (field_type == FieldType::Bfield_aux){
-        return {
-            Bfield_aux[lev][0].get(),
-            Bfield_aux[lev][1].get(),
-            Bfield_aux[lev][2].get()};
-    }
-
-    WARPX_ABORT_WITH_MESSAGE("Invalid field type");
-
-    return {nullptr, nullptr, nullptr};
-}
-
 [[nodiscard]] amrex::MultiFab*
-WarpX::get_field_pointer (const FieldType field_type, const int lev, const int direction) const
+WarpX::internal_get_field_pointer (const FieldType field_type, const int lev, const int direction) const
 {
     amrex::MultiFab* field_pointer = nullptr;
 
@@ -3461,3 +3440,34 @@ WarpX::get_field_pointer (const FieldType field_type, const int lev, const int d
 
     return field_pointer;
 }
+
+[[nodiscard]] amrex::MultiFab*
+WarpX::get_field_pointer (const FieldType field_type, const int lev, const int direction) const
+{
+    const auto field_pointer = internal_get_field_pointer(field_type, lev, direction);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        field_pointer != nullptr, "Requested field is not initialized!");
+    return field_pointer;
+}
+
+std::array<const amrex::MultiFab* const, 3>
+WarpX::get_field_pointer_array (const FieldType field_type, const int lev) const
+{
+    if (field_type == FieldType::Efield_aux){
+        return {
+            get_field_pointer(FieldType::Efield_aux, lev, 0),
+            get_field_pointer(FieldType::Efield_aux, lev, 1),
+            get_field_pointer(FieldType::Efield_aux, lev, 2)};
+    }
+    else if (field_type == FieldType::Bfield_aux){
+        return {
+            get_field_pointer(FieldType::Efield_aux, lev, 0),
+            get_field_pointer(FieldType::Efield_aux, lev, 1),
+            get_field_pointer(FieldType::Efield_aux, lev, 2)};
+    }
+
+    WARPX_ABORT_WITH_MESSAGE("Invalid field type");
+
+    return {nullptr, nullptr, nullptr};
+}
+
