@@ -1,0 +1,29 @@
+{
+  "electrons": {
+    "particle_momentum_x": 7.261458159320679e-22,
+    "particle_momentum_y": 7.291814341196144e-22,
+    "particle_momentum_z": 7.597118915907896e-22,
+    "particle_position_x": 6.622192192980071e-06,
+    "particle_position_y": 6.725927457001655e-06,
+    "particle_weight": 2823958719279159.5
+  },
+  "lev=0": {
+    "Bx": 0.0,
+    "By": 0.0,
+    "Bz": 0.0,
+    "Ex": 15799365073529.691,
+    "Ey": 0.0,
+    "Ez": 15104394248696.58,
+    "jx": 5.334685437804499e+18,
+    "jy": 4.0836522633767813e+18,
+    "jz": 5.896189440230493e+18
+  },
+  "protons": {
+    "particle_momentum_x": 3.211480673491126e-20,
+    "particle_momentum_y": 3.410019236383268e-20,
+    "particle_momentum_z": 3.06565056891683e-20,
+    "particle_position_x": 6.802704662084178e-06,
+    "particle_position_y": 6.798505413146967e-06,
+    "particle_weight": 2823958719279159.5
+  }
+}
