@@ -102,10 +102,6 @@ amrex::RealVect interp_normal (int i, int j, int k, const amrex::Real W[AMREX_SP
                 int wccomp = static_cast<int>(iic%2);
                 int w1comp = static_cast<int>(jj%2);
                 normal[0] += sign * phi(icstart + ii, j + jj, k) * dxi[0] * Wc[0][wccomp] * W[1][w1comp];
-                std::cout << phi(icstart + ii, j + jj, k) * dxi[0] * Wc[0][wccomp] * W[1][w1comp] << std::endl;
-                std::cout << "i=" << i << ", j=" << j << ", k=" << k << std::endl;
-                std::cout << "normal[0]" << sign << "=phi(ic+" << iic + ii << ", j+" << jj << ", k) * dxi[0] * Wc[0][" << wccomp << "] * W[1][" <<  w1comp << "]; \n" << std::endl;
-
             }
         }
     }
@@ -117,9 +113,6 @@ amrex::RealVect interp_normal (int i, int j, int k, const amrex::Real W[AMREX_SP
                 int wccomp = static_cast<int>(iic%2);
                 int w1comp = static_cast<int>(ii%2);
                 normal[1] += sign * phi(i + ii, jcstart + jj, k) * dxi[1] * W[0][w1comp] * Wc[1][wccomp];
-                std::cout << phi(i + ii, jcstart + jj, k) * dxi[1] * W[0][w1comp] * Wc[1][wccomp] << std::endl;
-                std::cout << "i=" << i << ", j=" << j << ", k=" << k << std::endl;
-                std::cout << "normal[1]" << sign << "=phi(i+" << ii << ",jc+" << iic + jj << ", k) * dxi[1] * W[0][" << w1comp << "] * Wc[1][" <<  wccomp << "]; \n" << std::endl;
             }
         }
     }
