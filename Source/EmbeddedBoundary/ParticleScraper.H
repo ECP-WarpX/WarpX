@@ -208,7 +208,7 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
 #elif (defined WARPX_DIM_1D_Z)
                     pos[0] = zp;
 #endif
-                f(ptd, ip, pos, normal, engine);
+                    f(ptd, ip, pos, normal, engine);
 
                 }
             });
