@@ -20,6 +20,7 @@ import yt
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
+
 # this will be the name of the plot file
 fn = sys.argv[1]
 
