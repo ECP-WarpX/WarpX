@@ -46,7 +46,7 @@ amrex::RealVect interp_normal (int i, int j, int k, const amrex::Real W[AMREX_SP
     W are the interpolation weight for the left and right nodes (for the 0th component and 1st component respectively)
     ic,jc,kc are the index of the nearest cell-center to the left of the point at which we interpolate.
     Wc are the corresponding interpolation weights.
-'''  
+'''
 
 #if (defined WARPX_DIM_3D)
     amrex::RealVect normal{0.0, 0.0, 0.0};
@@ -77,7 +77,7 @@ amrex::RealVect interp_normal (int i, int j, int k, const amrex::Real W[AMREX_SP
                 }
             }
         }
-    }    
+    }
     for (int iic = 0; iic < 2; ++iic) {
         for (int jj = 0; jj < 2; ++jj) {
             for (int ii=0; ii< 2; ++ii) {
@@ -91,7 +91,7 @@ amrex::RealVect interp_normal (int i, int j, int k, const amrex::Real W[AMREX_SP
                 }
             }
         }
-    }     
+    }
 
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     amrex::RealVect normal{0.0, 0.0};
