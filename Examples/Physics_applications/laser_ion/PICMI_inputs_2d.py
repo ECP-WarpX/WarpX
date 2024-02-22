@@ -140,10 +140,10 @@ particle_diag = picmi.ParticleDiagnostic(
     name='Python_LaserIonAcc2d_plt',
     period=100,
     write_dir='./diags',
-    species=[electrons],
     warpx_format='openpmd',
     warpx_openpmd_backend='h5',
-    warpx_plot_filter_function='(x<1.0e-6) * (x>-1.0e-6)'
+    # demonstration of a spatial and momentum filter
+    warpx_plot_filter_function='(uz>=0) * (x<1.0e-6) * (x>-1.0e-6)'
 )
 # reduce resolution of output fields
 coarsening_ratio = [4, 4]
@@ -165,7 +165,6 @@ particle_fw_diag = picmi.ParticleDiagnostic(
     name='openPMDfw',
     period=100,
     write_dir='./diags',
-    species=[hydrogen],
     warpx_format='openpmd',
     warpx_openpmd_backend='h5',
     warpx_plot_filter_function='(uz>=0) * (x<1.0e-6) * (x>-1.0e-6)'
@@ -175,7 +174,6 @@ particle_bw_diag = picmi.ParticleDiagnostic(
     name='openPMDbw',
     period=100,
     write_dir='./diags',
-    species=[hydrogen, electrons],
     warpx_format='openpmd',
     warpx_openpmd_backend='h5',
     warpx_plot_filter_function='(uz<0)'

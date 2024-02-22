@@ -220,7 +220,6 @@ openPMDfw.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho rho_electrons rho_hydr
 openPMDfw.coarsening_ratio = 4 4
 openPMDfw.format = openpmd
 openPMDfw.openpmd_backend = h5
-openPMDfw.species = electrons hydrogen
 # demonstration of a spatial and momentum filter
 openPMDfw.electrons.plot_filter_function(t,x,y,z,ux,uy,uz) = (uz>=0) * (x<1.0e-6) * (x>-1.0e-6)
 openPMDfw.hydrogen.plot_filter_function(t,x,y,z,ux,uy,uz) = (uz>=0) * (x<1.0e-6) * (x>-1.0e-6)
@@ -232,7 +231,6 @@ openPMDbw.fields_to_plot = rho_hydrogen
 openPMDbw.coarsening_ratio = 4 4
 openPMDbw.format = openpmd
 openPMDbw.openpmd_backend = h5
-openPMDbw.species = electrons hydrogen
 # demonstration of a momentum filter
 openPMDbw.electrons.plot_filter_function(t,x,y,z,ux,uy,uz) = (uz<0)
 openPMDbw.hydrogen.plot_filter_function(t,x,y,z,ux,uy,uz) = (uz<0)
