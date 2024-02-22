@@ -319,9 +319,9 @@ namespace detail
             return {{openPMD::UnitDimension::M, 1.}};
         } else if( record_name == "weighting" ) {
 #if defined(WARPX_DIM_1D_Z)
-            return {{openPMD::UnitDimension::L,  -2.}};
+            return {{openPMD::UnitDimension::L, -2.}};
 #elif defined(WARPX_DIM_XZ)
-            return {{openPMD::UnitDimension::L,  -1.}};
+            return {{openPMD::UnitDimension::L, -1.}};
 #else  // 3D and RZ
             return {};
 #endif
