@@ -3470,4 +3470,3 @@ WarpX::get_field_pointer_array (const FieldType field_type, const int lev) const
 
     return {nullptr, nullptr, nullptr};
 }
-
