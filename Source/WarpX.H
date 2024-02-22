@@ -536,7 +536,7 @@ public:
      *
      * \return a constant refernce to an amrex::MultiFab containing the field data
      */
-    const amrex::MultiFab&
+    [[nodiscard]] const amrex::MultiFab&
     getField(FieldType field_type, int lev, int direction = 0) const;
 
     [[nodiscard]] bool DoPML () const {return do_pml;}

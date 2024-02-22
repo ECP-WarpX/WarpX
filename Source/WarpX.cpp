@@ -3350,7 +3350,7 @@ WarpX::AllocInitMultiFabFromModel (
     multifab_map[name_with_suffix] = mf.get();
 }
 
-[[nodiscard]] amrex::MultiFab*
+amrex::MultiFab*
 WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, const int direction) const
 {
     // This function does *not* check if the returned field pointer is != nullptr
@@ -3436,14 +3436,14 @@ WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, cons
     return field_pointer;
 }
 
-[[nodiscard]] bool
+bool
 WarpX::isFieldInitialized (const FieldType field_type, const int lev, const int direction) const
 {
     const bool is_field_init = (getFieldPointerUnchecked(field_type, lev, direction) != nullptr);
     return is_field_init;
 }
 
-[[nodiscard]] amrex::MultiFab*
+amrex::MultiFab*
 WarpX::getFieldPointer (const FieldType field_type, const int lev, const int direction) const
 {
     const auto field_pointer = getFieldPointerUnchecked(field_type, lev, direction);
