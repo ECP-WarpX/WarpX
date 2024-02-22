@@ -3353,6 +3353,8 @@ WarpX::AllocInitMultiFabFromModel (
 [[nodiscard]] amrex::MultiFab*
 WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, const int direction) const
 {
+    // This function does *not* check if the returned field pointer is != nullptr
+
     amrex::MultiFab* field_pointer = nullptr;
 
     switch(field_type)
@@ -3360,95 +3362,72 @@ WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, cons
         case FieldType::Efield_aux :
             field_pointer = Efield_aux[lev][direction].get();
             break;
-
        case FieldType::Bfield_aux :
             field_pointer = Bfield_aux[lev][direction].get();
             break;
-
        case FieldType::Efield_fp :
             field_pointer = Efield_fp[lev][direction].get();
             break;
-
        case FieldType::Bfield_fp :
             field_pointer = Bfield_fp[lev][direction].get();
             break;
-
        case FieldType::current_fp :
             field_pointer = current_fp[lev][direction].get();
             break;
-
        case FieldType::current_fp_nodal :
             field_pointer = current_fp_nodal[lev][direction].get();
             break;
-
        case FieldType::rho_fp :
             field_pointer = rho_fp[lev].get();
             break;
-
        case FieldType::F_fp :
             field_pointer = F_fp[lev].get();
             break;
-
        case FieldType::G_fp :
             field_pointer = G_fp[lev].get();
             break;
-
        case FieldType::phi_fp :
             field_pointer = phi_fp[lev].get();
             break;
-
        case FieldType::vector_potential_fp :
             field_pointer = vector_potential_fp_nodal[lev][direction].get();
             break;
-
        case FieldType::Efield_cp :
             field_pointer = Efield_cp[lev][direction].get();
             break;
-
        case FieldType::Bfield_cp :
             field_pointer = Bfield_cp[lev][direction].get();
             break;
-
        case FieldType::current_cp :
             field_pointer = current_cp[lev][direction].get();
             break;
-
        case FieldType::rho_cp :
             field_pointer = rho_cp[lev].get();
             break;
-
        case FieldType::F_cp :
             field_pointer = F_cp[lev].get();
             break;
-
        case FieldType::G_cp :
             field_pointer = G_cp[lev].get();
             break;
-
        case FieldType::edge_lengths :
             field_pointer = m_edge_lengths[lev][direction].get();
             break;
-
        case FieldType::face_areas :
             field_pointer = m_face_areas[lev][direction].get();
             break;
-
        case FieldType::Efield_avg_fp :
             field_pointer = Efield_avg_fp[lev][direction].get();
             break;
-
        case FieldType::Bfield_avg_fp :
             field_pointer = Bfield_avg_fp[lev][direction].get();
             break;
-
        case FieldType::Efield_avg_cp :
             field_pointer = Efield_avg_cp[lev][direction].get();
             break;
-
        case FieldType::Bfield_avg_cp :
             field_pointer = Bfield_avg_cp[lev][direction].get();
             break;
-
         default:
             WARPX_ABORT_WITH_MESSAGE("Invalid field type");
             break;
