@@ -2404,7 +2404,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
     def init(self, kw):
 
         self.format = kw.pop('warpx_format', 'plotfile')
-        self.type = kw.pop('warpx_diag_type', None)
+        self.type = kw.pop('warpx_diag_type', 'Full')
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
         self.file_min_digits = kw.pop('warpx_file_min_digits', None)
