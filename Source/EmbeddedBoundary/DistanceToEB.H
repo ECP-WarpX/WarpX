@@ -36,7 +36,7 @@ void normalize (amrex::RealVect& a) noexcept
 
 
 
-// This function calculates the normal vector using the nodes and cell-centered nodes
+// This function calculates the normal vector using the nodal and cell-centered data.
 // i,j,k are the index of the nearest node to the left of the point at which we interpolate.
 // W are the interpolation weight for the left and right nodes (for the 0th component and 1st component respectively)
 // ic,jc,kc are the index of the nearest cell-center to the left of the point at which we interpolate.
