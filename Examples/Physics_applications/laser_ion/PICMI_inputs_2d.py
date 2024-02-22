@@ -136,13 +136,11 @@ solver = picmi.ElectromagneticSolver(
 )
 
 # Diagnostics
-diag_field_list = ['B', 'E', 'J', 'rho', 'rho_electrons', 'rho_hydrogen']
 particle_diag = picmi.ParticleDiagnostic(
     name='Python_LaserIonAcc2d_plt',
     period=100,
     write_dir='./diags',
     species=[electrons],
-    data_list=['weighting', 'position', 'momentum'],
     warpx_format='openpmd',
     warpx_openpmd_backend='h5',
     warpx_plot_filter_function='(x<1.0e-6) * (x>-1.0e-6)'
@@ -157,7 +155,7 @@ field_diag = picmi.FieldDiagnostic(
     grid=grid,
     period=100,
     number_of_cells=ncell_field,
-    data_list=diag_field_list,
+    data_list=['B', 'E', 'J', 'rho', 'rho_electrons', 'rho_hydrogen'],
     write_dir='./diags',
     warpx_format='openpmd',
     warpx_openpmd_backend='h5'
@@ -168,7 +166,6 @@ particle_fw_diag = picmi.ParticleDiagnostic(
     period=100,
     write_dir='./diags',
     species=[hydrogen],
-    data_list=['weighting', 'position', 'momentum'],
     warpx_format='openpmd',
     warpx_openpmd_backend='h5',
     warpx_plot_filter_function='(uz>=0) * (x<1.0e-6) * (x>-1.0e-6)'
@@ -179,7 +176,6 @@ particle_bw_diag = picmi.ParticleDiagnostic(
     period=100,
     write_dir='./diags',
     species=[hydrogen, electrons],
-    data_list=['weighting', 'position', 'momentum'],
     warpx_format='openpmd',
     warpx_openpmd_backend='h5',
     warpx_plot_filter_function='(uz<0)'
