@@ -779,7 +779,7 @@ Particle initialization
 
       * ``<species_name>.q_tot`` (beam charge),
 
-      * ``<species_name>.npart`` (number of particles in the beam),
+      * ``<species_name>.npart`` (number of macroparticles in the beam),
 
       * ``<species_name>.x/y/z_m`` (average position in `x/y/z`),
 
@@ -796,6 +796,10 @@ Particle initialization
       then the beam is symmetrized according to the value of ``<species_name>.symmetrization_order``.
       If set to 4, symmetrization is in the x and y direction, (x,y) (-x,y) (x,-y) (-x,-y).
       If set to 8, symmetrization is also done with x and y exchanged, (y,x), (-y,x), (y,-x), (-y,-x)).
+
+      * ``<species_name>.focal_distance`` (optional, distance between the beam centroid and the position of the focal plane of the beam, along the direction of the beam mean velocity; space charge is ignored in the initialization of the particles)
+
+      If ``<species_name>.focal_distance`` is specified, ``x_rms``, ``y_rms`` and ``z_rms`` are the size of the beam in the focal plane. Since the beam is not necessarily initialized close to its focal plane, the initial size of the beam will differ from ``x_rms``, ``y_rms``, ``z_rms``.
 
     * ``external_file``: Inject macroparticles with properties (mass, charge, position, and momentum - :math:`\gamma \beta m c`) read from an external openPMD file.
       With it users can specify the additional arguments:
