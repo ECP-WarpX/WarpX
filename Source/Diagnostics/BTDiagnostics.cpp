@@ -1018,12 +1018,12 @@ BTDiagnostics::Flush (int i_buffer, bool force_flush)
     amrex::Vector< amrex::MultiFab > out;
     out.resize(nlev_output);
     for(int lev = 0; lev < nlev_output; ++lev) {
-        if (!force_flush) {
-        out[lev] = amrex::MultiFab(m_mf_output[i_buffer][lev].boxArray(),
-                 m_mf_output[i_buffer][lev].DistributionMap(),
-                 m_mf_output[i_buffer][lev].nComp(), 0);
-        out[lev].ParallelCopy( m_mf_output[i_buffer][lev], 0, 0, m_mf_output[i_buffer][lev].nComp() );
-        } else {
+        //if (!force_flush) {
+        //out[lev] = amrex::MultiFab(m_mf_output[i_buffer][lev].boxArray(),
+        //         m_mf_output[i_buffer][lev].DistributionMap(),
+        //         m_mf_output[i_buffer][lev].nComp(), 0);
+        //out[lev].ParallelCopy( m_mf_output[i_buffer][lev], 0, 0, m_mf_output[i_buffer][lev].nComp() );
+        //} else {
             auto const& ba = m_mf_output[i_buffer][lev].boxArray();
             auto const& dm = m_mf_output[i_buffer][lev].DistributionMap();
             amrex::BoxList bl(ba.ixType());
@@ -1066,13 +1066,15 @@ BTDiagnostics::Flush (int i_buffer, bool force_flush)
             const amrex::Real new_zlo = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir) -
                                  (currentncells + ncellsflushed) *
                                  dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
+            amrex::Print() << " old z lo : " << m_snapshot_domain_lab[i_buffer].lo(m_moving_window_dir) << " \n";
             m_snapshot_domain_lab[i_buffer].setLo(m_moving_window_dir, new_zlo);
+            amrex::Print() << " new z lo : " << m_snapshot_domain_lab[i_buffer].lo(m_moving_window_dir) << " \n";
             amrex::Vector<int> BTdiag_periodicity(AMREX_SPACEDIM, 0);
             m_geom_snapshot[i_buffer][lev].define( m_snapshot_box[i_buffer],
                                                &m_snapshot_domain_lab[i_buffer],
                                                amrex::CoordSys::cartesian,
                                                BTdiag_periodicity.data() );
-        }
+        //}
     }
 
     amrex::Vector<amrex::BoxArray> vba;
@@ -1123,6 +1125,7 @@ BTDiagnostics::Flush (int i_buffer, bool force_flush)
             }
         }
     }
+    amrex::Print() << " m_buffer_flush_counter : " << m_buffer_flush_counter[i_buffer] << "\n";
     m_flush_format->WriteToFile(
         m_varnames, out, m_geom_output.at(i_buffer), warpx.getistep(),
         labtime,
