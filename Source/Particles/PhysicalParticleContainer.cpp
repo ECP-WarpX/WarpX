@@ -528,7 +528,7 @@ PhysicalParticleContainer::AddGaussianBeam (
     const Real x_cut, const Real y_cut, const Real z_cut,
     const Real q_tot, long npart,
     const int do_symmetrize,
-    const int symmetrization_order) {
+    const int symmetrization_order, const Real focal_distance) {
 
     // Declare temporary vectors on the CPU
     Gpu::HostVector<ParticleReal> particle_x;
@@ -549,28 +549,65 @@ PhysicalParticleContainer::AddGaussianBeam (
         for (long i = 0; i < npart; ++i) {
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
             const Real weight = q_tot/(npart*charge);
-            const Real x = amrex::RandomNormal(x_m, x_rms);
-            const Real y = amrex::RandomNormal(y_m, y_rms);
-            const Real z = amrex::RandomNormal(z_m, z_rms);
+            Real x = amrex::RandomNormal(x_m, x_rms);
+            Real y = amrex::RandomNormal(y_m, y_rms);
+            Real z = amrex::RandomNormal(z_m, z_rms);
 #elif defined(WARPX_DIM_XZ)
             const Real weight = q_tot/(npart*charge*y_rms);
-            const Real x = amrex::RandomNormal(x_m, x_rms);
+            Real x = amrex::RandomNormal(x_m, x_rms);
             constexpr Real y = 0._prt;
-            const Real z = amrex::RandomNormal(z_m, z_rms);
+            Real z = amrex::RandomNormal(z_m, z_rms);
 #elif defined(WARPX_DIM_1D_Z)
             const Real weight = q_tot/(npart*charge*x_rms*y_rms);
             constexpr Real x = 0._prt;
             constexpr Real y = 0._prt;
-            const Real z = amrex::RandomNormal(z_m, z_rms);
+            Real z = amrex::RandomNormal(z_m, z_rms);
 #endif
             if (plasma_injector.insideBounds(x, y, z)  &&
                 std::abs( x - x_m ) <= x_cut * x_rms     &&
                 std::abs( y - y_m ) <= y_cut * y_rms     &&
                 std::abs( z - z_m ) <= z_cut * z_rms   ) {
                 XDim3 u = plasma_injector.getMomentum(x, y, z);
+
+            if (plasma_injector.do_focusing){
+                XDim3 u_bulk = plasma_injector.getInjectorMomentumHost()->getBulkMomentum(x,y,z);
+                Real u_bulk_norm = std::sqrt( u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z );
+
+                // Compute the position of the focal plane
+                // (it is located at a distance `focal_distance` from the beam centroid, in the direction of the bulk velocity)
+                Real n_x = u_bulk.x/u_bulk_norm;
+                Real n_y = u_bulk.y/u_bulk_norm;
+                Real n_z = u_bulk.z/u_bulk_norm;
+                Real x_f = x_m + focal_distance * n_x;
+                Real y_f = y_m + focal_distance * n_y;
+                Real z_f = z_m + focal_distance * n_z;
+                Real gamma = std::sqrt( 1._rt + (u.x*u.x+u.y*u.y+u.z*u.z) );
+
+                Real v_x = u.x / gamma * PhysConst::c;
+                Real v_y = u.y / gamma * PhysConst::c;
+                Real v_z = u.z / gamma * PhysConst::c;
+
+                // Compute the time at which the particle will cross the focal plane
+                Real v_dot_n = v_x * n_x + v_y * n_y + v_z * n_z;
+                Real t = ((x_f-x)*n_x + (y_f-y)*n_y + (z_f-z)*n_z) / v_dot_n;
+
+                // Displace particles in the direction orthogonal to the beam bulk momentum
+                // i.e. orthogonal to (n_x, n_y, n_z)
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+                x = x - (v_x - v_dot_n*n_x) * t;
+                y = y - (v_y - v_dot_n*n_y) * t;
+                z = z - (v_z - v_dot_n*n_z) * t;
+#elif defined(WARPX_DIM_XZ)
+                x = x - (v_x - v_dot_n*n_x) * t;
+                z = z - (v_z - v_dot_n*n_z) * t;
+#elif defined(WARPX_DIM_1D_Z)
+                z = z - (v_z - v_dot_n*n_z) * t;
+#endif
+            }
                 u.x *= PhysConst::c;
                 u.y *= PhysConst::c;
                 u.z *= PhysConst::c;
+
                 if (do_symmetrize && symmetrization_order == 8){
                     // Add eight particles to the beam:
                     CheckAndAddParticle(x, y, z, u.x, u.y, u.z, weight/8._rt,
@@ -634,6 +671,7 @@ PhysicalParticleContainer::AddGaussianBeam (
     }
     // Add the temporary CPU vectors to the particle structure
     auto const np = static_cast<long>(particle_z.size());
+
     amrex::Vector<ParticleReal> xp(particle_x.data(), particle_x.data() + np);
     amrex::Vector<ParticleReal> yp(particle_y.data(), particle_y.data() + np);
     amrex::Vector<ParticleReal> zp(particle_z.data(), particle_z.data() + np);
@@ -893,7 +931,8 @@ PhysicalParticleContainer::AddParticles (int lev)
                             plasma_injector->q_tot,
                             plasma_injector->npart,
                             plasma_injector->do_symmetrize,
-                            plasma_injector->symmetrization_order);
+                            plasma_injector->symmetrization_order,
+                            plasma_injector->focal_distance);
         }
 
         if (plasma_injector->external_file) {
