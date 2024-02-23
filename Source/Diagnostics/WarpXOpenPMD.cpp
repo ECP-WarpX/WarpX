@@ -727,7 +727,6 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
 
             contributed_particles = true;
 
-
             //  save particle properties
             SaveRealProperty(pti,
                              currSpecies,
