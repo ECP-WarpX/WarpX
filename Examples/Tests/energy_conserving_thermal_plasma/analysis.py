@@ -35,4 +35,4 @@ assert np.all( abs(E-E[0])/E[0] < 0.003 )
 
 # Checksum test
 test_name = os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, fn, rtol=checksum_rtol)
+checksumAPI.evaluate_checksum(test_name, fn)
