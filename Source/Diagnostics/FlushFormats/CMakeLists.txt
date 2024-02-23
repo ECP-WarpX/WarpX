@@ -6,6 +6,8 @@ foreach(D IN LISTS WarpX_DIMS)
         FlushFormatCheckpoint.cpp
         FlushFormatPlotfile.cpp
         FlushFormatSensei.cpp
+        # may need to put a flag and ifdef for PlotPlus
+        FlushFormatPlotPlus.cpp
     )
 
     if(WarpX_HAVE_OPENPMD)
