@@ -1017,6 +1017,7 @@ BTDiagnostics::Flush (int i_buffer, bool force_flush)
 
     amrex::Vector< amrex::MultiFab > out;
     out.resize(nlev_output);
+    amrex::Vector<amrex::Geometry> new_geom(nlev_output);
     for(int lev = 0; lev < nlev_output; ++lev) {
         //if (!force_flush) {
         //out[lev] = amrex::MultiFab(m_mf_output[i_buffer][lev].boxArray(),
@@ -1060,21 +1061,28 @@ BTDiagnostics::Flush (int i_buffer, bool force_flush)
             int ncellsflushed = m_buffer_flush_counter[i_buffer]*m_buffer_size;
             int currentncells = newbbox.bigEnd(m_moving_window_dir) - newbbox.smallEnd(m_moving_window_dir);
             int new_small = newbbox.smallEnd(m_moving_window_dir);
-            m_snapshot_box[i_buffer].setSmall(m_moving_window_dir, new_small);
+            amrex::Box new_snapshot_box = m_snapshot_box[i_buffer];
+            new_snapshot_box.setSmall(m_moving_window_dir, new_small);
             auto ref_ratio = amrex::IntVect(1);
             if (lev > 0 ) { ref_ratio = WarpX::RefRatio(lev-1); }
             const amrex::Real new_zlo = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir) -
                                  (currentncells + ncellsflushed) *
                                  dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
             amrex::Print() << " old z lo : " << m_snapshot_domain_lab[i_buffer].lo(m_moving_window_dir) << " \n";
-            m_snapshot_domain_lab[i_buffer].setLo(m_moving_window_dir, new_zlo);
+//            m_snapshot_domain_lab[i_buffer].setLo(m_moving_window_dir, new_zlo);
+            amrex::RealBox new_snapshot_lab = m_snapshot_domain_lab[i_buffer];
+            new_snapshot_lab.setLo(m_moving_window_dir, new_zlo);
             amrex::Print() << " new z lo : " << m_snapshot_domain_lab[i_buffer].lo(m_moving_window_dir) << " \n";
             amrex::Vector<int> BTdiag_periodicity(AMREX_SPACEDIM, 0);
-            m_geom_snapshot[i_buffer][lev].define( m_snapshot_box[i_buffer],
-                                               &m_snapshot_domain_lab[i_buffer],
-                                               amrex::CoordSys::cartesian,
-                                               BTdiag_periodicity.data() );
-        //}
+//            m_geom_snapshot[i_buffer][lev].define( new_snapshot_box,
+//                                               &m_snapshot_domain_lab[i_buffer],
+//                                               amrex::CoordSys::cartesian,
+//                                               BTdiag_periodicity.data() );
+            new_geom[lev].define( new_snapshot_box,
+                                  &m_snapshot_domain_lab[i_buffer],
+                                  amrex::CoordSys::cartesian,
+                                  BTdiag_periodicity.data() );
+         //}
     }
 
     amrex::Vector<amrex::BoxArray> vba;
@@ -1132,7 +1140,7 @@ BTDiagnostics::Flush (int i_buffer, bool force_flush)
         m_output_species.at(i_buffer), nlev_output, file_name, m_file_min_digits,
         m_plot_raw_fields, m_plot_raw_fields_guards,
         use_pinned_pc, isBTD, i_buffer, m_buffer_flush_counter.at(i_buffer),
-        m_max_buffer_multifabs.at(i_buffer), m_geom_snapshot.at(i_buffer).at(0), isLastBTDFlush);
+        m_max_buffer_multifabs.at(i_buffer), new_geom.at(0), isLastBTDFlush);
 
     // Rescaling the box for plotfile after WriteToFile. This is because, for plotfiles, when writing particles, amrex checks if the particles are within the bounds defined by the box. However, in BTD, particles can be (at max) 1 cell outside the bounds of the geometry. So we keep a one-cell bigger box for plotfile when writing out the particle data and rescale after.
     if (m_format == "plotfile") {
