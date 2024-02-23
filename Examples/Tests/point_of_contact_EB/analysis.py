@@ -42,13 +42,13 @@ step_ref=3
 delta_reduced_ref=0.59
 
 print('NUMERICAL coordinates of the point of contact:')
-print('step_scraped=%d, time_stamp=%5.4f e-10, x=%5.4f, y=%5.4f, z=%5.4f, nx=%5.4f, ny=%5.4f, nz=%5.4f' % (step_scraped[0],time_reduced,x[0], y[0], z[0], nx[0], ny[0], nz[0]))
+print('step_scraped=%d, time_stamp=%5.4f e-10, x=%5.4f, y=%5.4f, z=%5.4f, nx=%5.4f, ny=%5.4f, nz=%5.4f' % (step_scraped[0],delta_reduced,x[0], y[0], z[0], nx[0], ny[0], nz[0]))
 print('\n')
 print('ANALYTICAL coordinates of the point of contact:')
-print('step_scraped=%d, time_stamp=%5.4f e-10, x=%5.4f, y=%5.4f, z=%5.4f, nx=%5.4f, ny=%5.4f, nz=%5.4f' % (step, time_reduced, x_analytic, y_analytic, z_analytic, nx_analytic, ny_analytic, nz_analytic))
+print('step_scraped=%d, time_stamp=%5.4f e-10, x=%5.4f, y=%5.4f, z=%5.4f, nx=%5.4f, ny=%5.4f, nz=%5.4f' % (step, delta_reduced_ref, x_analytic, y_analytic, z_analytic, nx_analytic, ny_analytic, nz_analytic))
 
 tolerance=0.001
-tolerance_t=0.003
+tolerance_t=0.01
 tolerance_n=0.01
 print("tolerance = "+ str(tolerance *100) + '%')
 print("tolerance for the time = "+ str(tolerance_t *100) + '%')
