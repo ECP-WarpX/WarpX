@@ -1019,12 +1019,13 @@ BTDiagnostics::Flush (int i_buffer, bool force_flush)
     out.resize(nlev_output);
     amrex::Vector<amrex::Geometry> new_geom(nlev_output);
     for(int lev = 0; lev < nlev_output; ++lev) {
-        //if (!force_flush) {
-        //out[lev] = amrex::MultiFab(m_mf_output[i_buffer][lev].boxArray(),
-        //         m_mf_output[i_buffer][lev].DistributionMap(),
-        //         m_mf_output[i_buffer][lev].nComp(), 0);
-        //out[lev].ParallelCopy( m_mf_output[i_buffer][lev], 0, 0, m_mf_output[i_buffer][lev].nComp() );
-        //} else {
+        if (!force_flush) {
+            out[lev] = amrex::MultiFab(m_mf_output[i_buffer][lev].boxArray(),
+                     m_mf_output[i_buffer][lev].DistributionMap(),
+                     m_mf_output[i_buffer][lev].nComp(), 0);
+            out[lev].ParallelCopy( m_mf_output[i_buffer][lev], 0, 0, m_mf_output[i_buffer][lev].nComp() );
+            new_geom[lev] = m_geom_snapshot[i_buffer][lev];
+        } else {
             auto const& ba = m_mf_output[i_buffer][lev].boxArray();
             auto const& dm = m_mf_output[i_buffer][lev].DistributionMap();
             amrex::BoxList bl(ba.ixType());
@@ -1082,7 +1083,7 @@ BTDiagnostics::Flush (int i_buffer, bool force_flush)
                                   &m_snapshot_domain_lab[i_buffer],
                                   amrex::CoordSys::cartesian,
                                   BTdiag_periodicity.data() );
-         //}
+         }
     }
 
     amrex::Vector<amrex::BoxArray> vba;
