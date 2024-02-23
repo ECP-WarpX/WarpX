@@ -118,6 +118,21 @@ Attribute name        ``int``/``real``  Description                         Wher
                                         where the particle was created.                idcpu
 ``cpu``               ``int``           CPU index where the particle        SoA   CT   Last 24 bytes of idcpu
                                         was created.
+``stepScraped``        ``int``          PIC iteration of the last step      SoA   RT   Added when there is
+                                        before the particle hits the                   particle-boundary
+                                        boundary.                                      interaction.
+                                                                                       Saved in the boundary
+                                                                                       buffers.
+``deltaTimeScraped``   ``real``         Difference of time between the      SoA   RT   Added when there is
+                                        ``stepScraped`` and the exact time             particle-boundary
+                                        when the particle hits the                     interaction.
+                                        boundary.                                      Saved in the boundary
+                                                                                       buffers.
+``n_x/y/z``            ``real``         Normal components to the boundary   SoA   RT   Added when there is
+                                        on the position where the particle             particle-boundary
+                                        hits the boundary.                             interaction.
+                                                                                       Saved in the boundary
+                                                                                       buffers.
 ``ionizationLevel``   ``int``           Ion ionization level                SoA   RT   Added when ionization
                                                                                        physics is used.
 ``opticalDepthQSR``   ``real``          QED: optical depth of the Quantum-  SoA   RT   Added when PICSAR QED
