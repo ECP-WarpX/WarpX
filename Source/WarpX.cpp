@@ -3446,7 +3446,7 @@ WarpX::isFieldInitialized (const FieldType field_type, const int lev, const int 
 amrex::MultiFab*
 WarpX::getFieldPointer (const FieldType field_type, const int lev, const int direction) const
 {
-    const auto field_pointer = getFieldPointerUnchecked(field_type, lev, direction);
+    auto* const field_pointer = getFieldPointerUnchecked(field_type, lev, direction);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         field_pointer != nullptr, "Requested field is not initialized!");
     return field_pointer;
