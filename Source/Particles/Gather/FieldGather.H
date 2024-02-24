@@ -1591,8 +1591,8 @@ void doGatherShapeN(const GetParticlePosition<PIdx>& getPosition,
                     const int n_rz_azimuthal_modes)
 {
 
-    amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
-    amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
+    const amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
+    const amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
 
     amrex::Array4<const amrex::Real> const& ex_arr = exfab->array();
     amrex::Array4<const amrex::Real> const& ey_arr = eyfab->array();

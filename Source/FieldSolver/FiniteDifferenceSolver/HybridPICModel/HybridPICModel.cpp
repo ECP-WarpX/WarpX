@@ -222,26 +222,22 @@ void HybridPICModel::InitData ()
     for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
     {
 #ifdef AMREX_USE_EB
-        std::array< std::unique_ptr<amrex::MultiFab>, 3 > edge_lengths;
-
         auto& edge_lengths_x = warpx.getedgelengths(lev, 0);
-        edge_lengths[0] = std::make_unique<amrex::MultiFab>(
-            edge_lengths_x, amrex::make_alias, 0, edge_lengths_x.nComp()
-        );
         auto& edge_lengths_y = warpx.getedgelengths(lev, 1);
-        edge_lengths[1] = std::make_unique<amrex::MultiFab>(
-            edge_lengths_y, amrex::make_alias, 0, edge_lengths_y.nComp()
-        );
         auto& edge_lengths_z = warpx.getedgelengths(lev, 2);
-        edge_lengths[2] = std::make_unique<amrex::MultiFab>(
-            edge_lengths_z, amrex::make_alias, 0, edge_lengths_z.nComp()
-        );
 
-        GetCurrentExternal(edge_lengths, lev);
+        const auto edge_lengths = std::array< std::unique_ptr<amrex::MultiFab>, 3 >{
+            std::make_unique<amrex::MultiFab>(
+                edge_lengths_x, amrex::make_alias, 0, edge_lengths_x.nComp()),
+            std::make_unique<amrex::MultiFab>(
+                edge_lengths_y, amrex::make_alias, 0, edge_lengths_y.nComp()),
+            std::make_unique<amrex::MultiFab>(
+                edge_lengths_z, amrex::make_alias, 0, edge_lengths_z.nComp())
+        };
 #else
-        const std::array< std::unique_ptr<amrex::MultiFab>, 3 > edge_lengths;
-        GetCurrentExternal(edge_lengths, lev);
+        const auto edge_lengths = std::array< std::unique_ptr<amrex::MultiFab>, 3 >();
 #endif
+        GetCurrentExternal(edge_lengths, lev);
     }
 }
 
