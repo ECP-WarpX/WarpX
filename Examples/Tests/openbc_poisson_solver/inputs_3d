@@ -1,4 +1,4 @@
-max_step = 2
+max_step = 1
 amr.n_cell = 128 128 128
 amr.max_level = 0
 amr.max_grid_size = 128
@@ -34,8 +34,14 @@ electron.ux = 0.0
 electron.uy = 0.0
 electron.uz = 25000
 
-diagnostics.diags_names = diag1
+diagnostics.diags_names = diag1 diag2
+
 diag1.intervals = 1
 diag1.diag_type = Full
-diag1.fields_to_plot = Ex Ey Ez rho
-diag1.format = openpmd
+diag1.fields_to_plot = Ex Ey Ez Bx By Bz rho 
+diag1.format = plotfile
+
+diag2.intervals = 1
+diag2.diag_type = Full
+diag2.fields_to_plot = Ex Ey
+diag2.format = openpmd
