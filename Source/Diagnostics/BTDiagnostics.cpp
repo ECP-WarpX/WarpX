@@ -1299,7 +1299,7 @@ BTDiagnostics::InterleaveBufferAndSnapshotHeader ( std::string buffer_Header_pat
     BTDPlotfileHeaderImpl buffer_HeaderImpl(buffer_Header_path);
     buffer_HeaderImpl.ReadHeaderData();
 
-    // Update timestamp of snapshot with recently flushed buffer
+    // Update step_scraped of snapshot with recently flushed buffer
     snapshot_HeaderImpl.set_time( buffer_HeaderImpl.time() );
     snapshot_HeaderImpl.set_timestep( buffer_HeaderImpl.timestep() );
 

@@ -440,6 +440,11 @@ WarpX::WarpX ()
                     costs_heuristic_cells_wt = 0.250_rt;
                     costs_heuristic_particles_wt = 0.750_rt;
                     break;
+                case 4:
+                    // this is only a guess
+                    costs_heuristic_cells_wt = 0.200_rt;
+                    costs_heuristic_particles_wt = 0.800_rt;
+                    break;
             }
         } else { // FDTD
             switch (WarpX::nox)
@@ -455,6 +460,11 @@ WarpX::WarpX ()
                 case 3:
                     costs_heuristic_cells_wt = 0.145_rt;
                     costs_heuristic_particles_wt = 0.855_rt;
+                    break;
+                case 4:
+                    // this is only a guess
+                    costs_heuristic_cells_wt = 0.100_rt;
+                    costs_heuristic_particles_wt = 0.900_rt;
                     break;
             }
         }
@@ -1327,19 +1337,10 @@ WarpX::ReadParameters ()
         int particle_shape;
         if (!species_names.empty() || !lasers_names.empty()) {
             if (utils::parser::queryWithParser(pp_algo, "particle_shape", particle_shape)){
-
-                if(current_deposition_algo == CurrentDepositionAlgo::Villasenor) {
-                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                        (particle_shape >= 1) && (particle_shape <=4),
-                        "algo.particle_shape can be only 1, 2, 3, or 4 with villasenor deposition"
-                    );
-                }
-                else {
-                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                        (particle_shape >= 1) && (particle_shape <=3),
-                        "algo.particle_shape can be only 1, 2, or 3"
-                    );
-                }
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    (particle_shape >= 1) && (particle_shape <=4),
+                    "algo.particle_shape can be only 1, 2, 3, or 4"
+                );
 
                 nox = particle_shape;
                 noy = particle_shape;
@@ -1348,8 +1349,7 @@ WarpX::ReadParameters ()
             else{
                 WARPX_ABORT_WITH_MESSAGE(
                     "algo.particle_shape must be set in the input file:"
-                    " please set algo.particle_shape to 1, 2, or 3."
-                    " if using the villasenor deposition, can use 4 also.");
+                    " please set algo.particle_shape to 1, 2, 3, or 4");
             }
 
             if ((maxLevel() > 0) && (particle_shape > 1) && (do_pml_j_damping == 1))

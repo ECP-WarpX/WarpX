@@ -18,30 +18,36 @@
 namespace ablastr::particles
 {
 /**
- * \brief Compute weight of each surrounding node in interpolating a nodal field
- *        to the given coordinates.
+ * \brief Compute weight of each surrounding node (or cell-centered nodes) in interpolating a nodal ((or a cell-centered node) field
+ *        to the given coordinates. If nodal=1, then the calculations will be done with respect to the nodes (default). If nodal=0, then the calculations will be done with respect to the cell-centered nodal)
  *
  * This currently only does linear order.
  *
  * \param xp,yp,zp Particle position coordinates
  * \param plo      Index lower bounds of domain.
  * \param dxi      inverse 3D cell spacing
- * \param i,j,k    Variables to store indices of position on grid
- * \param W        2D array of weights to store each neighbouring node
+ * \param i,j,k    Variables to store indices of position on grid (nodal or cell-centered, depending of the value of `nodal`)
+ * \param W        2D array of weights to store each neighbouring node (or cell-centered node)
+ * \param nodal    Int that tells if the weights are calculated in respect to the nodes (nodal=1) of the cell-centered nodes (nodal=0)
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
-void compute_weights_nodal (const amrex::ParticleReal xp,
+void compute_weights (const amrex::ParticleReal xp,
                             const amrex::ParticleReal yp,
                             const amrex::ParticleReal zp,
                             amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const& plo,
                             amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const& dxi,
-                            int& i, int& j, int& k, amrex::Real W[AMREX_SPACEDIM][2]) noexcept
+                            int& i, int& j, int& k, amrex::Real W[AMREX_SPACEDIM][2], int nodal=1) noexcept
 {
     using namespace amrex::literals;
+
+#if !((nodal==0)||(nodal==1))
+    ABLASTR_ABORT_WITH_MESSAGE("Error: 'nodal' has to be equal to 0 or 1");
+#endif
+
 #if (defined WARPX_DIM_3D)
-    const amrex::Real x = (xp - plo[0]) * dxi[0];
-    const amrex::Real y = (yp - plo[1]) * dxi[1];
-    const amrex::Real z = (zp - plo[2]) * dxi[2];
+    const amrex::Real x = (xp - plo[0]) * dxi[0] + static_cast<amrex::Real>(nodal-1)*0.5_rt;
+    const amrex::Real y = (yp - plo[1]) * dxi[1] + static_cast<amrex::Real>(nodal-1)*0.5_rt;
+    const amrex::Real z = (zp - plo[2]) * dxi[2] + static_cast<amrex::Real>(nodal-1)*0.5_rt;
 
     i = static_cast<int>(amrex::Math::floor(x));
     j = static_cast<int>(amrex::Math::floor(y));
@@ -58,17 +64,17 @@ void compute_weights_nodal (const amrex::ParticleReal xp,
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
 #   if (defined WARPX_DIM_XZ)
-    const amrex::Real x = (xp - plo[0]) * dxi[0];
+    const amrex::Real x = (xp - plo[0]) * dxi[0] + static_cast<amrex::Real>(nodal-1)*0.5_rt;
     amrex::ignore_unused(yp);
     i = static_cast<int>(amrex::Math::floor(x));
     W[0][1] = x - i;
 #   elif (defined WARPX_DIM_RZ)
-    const amrex::Real r = (std::sqrt(xp*xp+yp*yp) - plo[0]) * dxi[0];
+    const amrex::Real r = (std::sqrt(xp*xp+yp*yp) - plo[0]) * dxi[0] + static_cast<amrex::Real>(nodal-1)*0.5_rt;
     i = static_cast<int>(amrex::Math::floor(r));
     W[0][1] = r - i;
 #   endif
 
-    const amrex::Real z = (zp - plo[1]) * dxi[1];
+    const amrex::Real z = (zp - plo[1]) * dxi[1] + static_cast<amrex::Real>(nodal-1)*0.5_rt;
     j = static_cast<int>(amrex::Math::floor(z));
     W[1][1] = z - j;
 
@@ -77,7 +83,7 @@ void compute_weights_nodal (const amrex::ParticleReal xp,
 
     k = 0;
 #else
-    amrex::ignore_unused(xp, yp, zp, plo, dxi, i, j, k, W);
+    amrex::ignore_unused(xp, yp, zp, plo, dxi, i, j, k, W, nodal);
     ABLASTR_ABORT_WITH_MESSAGE("Error: compute_weights not yet implemented in 1D");
 #endif
 }
@@ -138,7 +144,7 @@ amrex::Real doGatherScalarFieldNodal (const amrex::ParticleReal xp,
     // first find the weight of surrounding nodes to use during interpolation
     int ii, jj, kk;
     amrex::Real W[AMREX_SPACEDIM][2];
-    compute_weights_nodal(xp, yp, zp, lo, dxi, ii, jj, kk, W);
+    compute_weights(xp, yp, zp, lo, dxi, ii, jj, kk, W);
 
     return interp_field_nodal(ii, jj, kk, W, scalar_field);
 }
@@ -166,7 +172,7 @@ doGatherVectorFieldNodal (const amrex::ParticleReal xp,
     // first find the weight of surrounding nodes to use during interpolation
     int ii, jj, kk;
     amrex::Real W[AMREX_SPACEDIM][2];
-    compute_weights_nodal(xp, yp, zp, lo, dxi, ii, jj, kk, W);
+    compute_weights(xp, yp, zp, lo, dxi, ii, jj, kk, W);
 
     amrex::GpuArray<amrex::Real, 3> const field_interp = {
         interp_field_nodal(ii, jj, kk, W, vector_field_x),
