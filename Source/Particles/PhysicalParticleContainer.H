@@ -231,7 +231,8 @@ public:
         amrex::Real x_m, amrex::Real y_m, amrex::Real z_m,
         amrex::Real x_rms, amrex::Real y_rms, amrex::Real z_rms,
         amrex::Real x_cut, amrex::Real y_cut, amrex::Real z_cut,
-        amrex::Real q_tot, long npart, int do_symmetrize, int symmetrization_order);
+        amrex::Real q_tot, long npart, int do_symmetrize, int symmetrization_order,
+        amrex::Real focal_distance);
 
     /** Load a particle beam from an external file
      * @param[in] the PlasmaInjector instance holding the input parameters
@@ -268,11 +269,9 @@ public:
      * @param[in] engine the random engine, used in initialization of QED optical depths
      */
     void DefaultInitializeRuntimeAttributes (
-                    amrex::ParticleTile<amrex::Particle<NStructReal, NStructInt>,
-                                        NArrayReal, NArrayInt,
-                                        amrex::PinnedArenaAllocator>& pinned_tile,
-                    int n_external_attr_real,
-                    int n_external_attr_int) final;
+        typename ContainerLike<amrex::PinnedArenaAllocator>::ParticleTileType& pinned_tile,
+        int n_external_attr_real,
+        int n_external_attr_int) final;
 
 /**
  * \brief Apply NCI Godfrey filter to all components of E and B before gather

@@ -35,8 +35,7 @@ public:
         bool isBTD = false, int snapshotID = -1,
         int bufferID = 1, int numBuffers = 1,
         const amrex::Geometry& full_BTD_snapshot = amrex::Geometry(),
-        bool isLastBTDFlush = false,
-        const amrex::Vector<int>& totalParticlesFlushedAlready = amrex::Vector<int>() ) const override;
+        bool isLastBTDFlush = false) const override;
 
     /** Write general info of the run into the plotfile */
     void WriteJobInfo(const std::string& dir) const;
