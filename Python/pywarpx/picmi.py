@@ -2469,7 +2469,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         if self.species is None:
             species_names = pywarpx.particles.species_names
         elif np.iterable(self.species):
-            species_names = [specie.name for specie in self.species]
+            species_names = [species.name for species in self.species]
         else:
             species_names = [self.species.name]
 
@@ -2696,9 +2696,9 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
         if self.species is None:
             species_names = pywarpx.particles.species_names
         elif np.iterable(self.species):
-            species_names = [specie.name for specie in self.species]
+            species_names = [species.name for species in self.species]
         else:
-            species_names = [species.name]
+            species_names = [self.species.name]
 
         for name in species_names:
             diag = pywarpx.Bucket.Bucket(self.name + '.' + name,

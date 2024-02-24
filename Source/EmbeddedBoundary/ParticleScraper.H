@@ -10,6 +10,7 @@
 #include "EmbeddedBoundary/DistanceToEB.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 
+
 #include <ablastr/particles/NodalFieldGather.H>
 
 #include <AMReX.H>
@@ -182,32 +183,33 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
 
                 int i, j, k;
                 amrex::Real W[AMREX_SPACEDIM][2];
-                ablastr::particles::compute_weights_nodal(xp, yp, zp, plo, dxi, i, j, k, W);
-
+                ablastr::particles::compute_weights(xp, yp, zp, plo, dxi, i, j, k, W);
                 amrex::Real phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, phi);
 
                 if (phi_value < 0.0)
                 {
-                    amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, phi, dxi);
-
-                    // the closest point on the surface to pos is pos - grad phi(pos) * phi(pos)
+                    int ic, jc, kc; // Cell-centered indices
+                    int nodal;
+                    amrex::Real Wc[AMREX_SPACEDIM][2]; // Cell-centered weights
+                    ablastr::particles::compute_weights(xp, yp, zp, plo, dxi, ic, jc, kc, Wc, nodal=0);
+                    amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, ic, jc, kc, Wc, phi, dxi);
+                    DistanceToEB::normalize(normal);
                     amrex::RealVect pos;
 #if (defined WARPX_DIM_3D)
-                    pos[0] = xp - normal[0]*phi_value;
-                    pos[1] = yp - normal[1]*phi_value;
-                    pos[2] = zp - normal[2]*phi_value;
+                    pos[0] = xp;
+                    pos[1] = yp;
+                    pos[2] = zp;
 #elif (defined WARPX_DIM_XZ)
-                    pos[0] = xp - normal[0]*phi_value;
-                    pos[1] = zp - normal[1]*phi_value;
+                    pos[0] = xp;
+                    pos[1] = zp;
 #elif (defined WARPX_DIM_RZ)
-                    pos[0] = std::sqrt(xp*xp + yp*yp) - normal[0]*phi_value;
-                    pos[1] = zp - normal[1]*phi_value;
+                    pos[0] = std::sqrt(xp*xp + yp*yp);
+                    pos[1] = zp;
 #elif (defined WARPX_DIM_1D_Z)
-                    pos[0] = zp - normal[0]*phi_value;
+                    pos[0] = zp;
 #endif
-                    DistanceToEB::normalize(normal);
-
                     f(ptd, ip, pos, normal, engine);
+
                 }
             });
         }

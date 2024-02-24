@@ -51,7 +51,6 @@
 #include <AMReX_Algorithm.H>
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
-#include <AMReX_ArrayOfStructs.H>
 #include <AMReX_BLassert.H>
 #include <AMReX_Box.H>
 #include <AMReX_BoxArray.H>
@@ -529,7 +528,7 @@ PhysicalParticleContainer::AddGaussianBeam (
     const Real x_cut, const Real y_cut, const Real z_cut,
     const Real q_tot, long npart,
     const int do_symmetrize,
-    const int symmetrization_order) {
+    const int symmetrization_order, const Real focal_distance) {
 
     // Declare temporary vectors on the CPU
     Gpu::HostVector<ParticleReal> particle_x;
@@ -550,28 +549,65 @@ PhysicalParticleContainer::AddGaussianBeam (
         for (long i = 0; i < npart; ++i) {
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
             const Real weight = q_tot/(npart*charge);
-            const Real x = amrex::RandomNormal(x_m, x_rms);
-            const Real y = amrex::RandomNormal(y_m, y_rms);
-            const Real z = amrex::RandomNormal(z_m, z_rms);
+            Real x = amrex::RandomNormal(x_m, x_rms);
+            Real y = amrex::RandomNormal(y_m, y_rms);
+            Real z = amrex::RandomNormal(z_m, z_rms);
 #elif defined(WARPX_DIM_XZ)
             const Real weight = q_tot/(npart*charge*y_rms);
-            const Real x = amrex::RandomNormal(x_m, x_rms);
+            Real x = amrex::RandomNormal(x_m, x_rms);
             constexpr Real y = 0._prt;
-            const Real z = amrex::RandomNormal(z_m, z_rms);
+            Real z = amrex::RandomNormal(z_m, z_rms);
 #elif defined(WARPX_DIM_1D_Z)
             const Real weight = q_tot/(npart*charge*x_rms*y_rms);
             constexpr Real x = 0._prt;
             constexpr Real y = 0._prt;
-            const Real z = amrex::RandomNormal(z_m, z_rms);
+            Real z = amrex::RandomNormal(z_m, z_rms);
 #endif
             if (plasma_injector.insideBounds(x, y, z)  &&
                 std::abs( x - x_m ) <= x_cut * x_rms     &&
                 std::abs( y - y_m ) <= y_cut * y_rms     &&
                 std::abs( z - z_m ) <= z_cut * z_rms   ) {
                 XDim3 u = plasma_injector.getMomentum(x, y, z);
+
+            if (plasma_injector.do_focusing){
+                XDim3 u_bulk = plasma_injector.getInjectorMomentumHost()->getBulkMomentum(x,y,z);
+                Real u_bulk_norm = std::sqrt( u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z );
+
+                // Compute the position of the focal plane
+                // (it is located at a distance `focal_distance` from the beam centroid, in the direction of the bulk velocity)
+                Real n_x = u_bulk.x/u_bulk_norm;
+                Real n_y = u_bulk.y/u_bulk_norm;
+                Real n_z = u_bulk.z/u_bulk_norm;
+                Real x_f = x_m + focal_distance * n_x;
+                Real y_f = y_m + focal_distance * n_y;
+                Real z_f = z_m + focal_distance * n_z;
+                Real gamma = std::sqrt( 1._rt + (u.x*u.x+u.y*u.y+u.z*u.z) );
+
+                Real v_x = u.x / gamma * PhysConst::c;
+                Real v_y = u.y / gamma * PhysConst::c;
+                Real v_z = u.z / gamma * PhysConst::c;
+
+                // Compute the time at which the particle will cross the focal plane
+                Real v_dot_n = v_x * n_x + v_y * n_y + v_z * n_z;
+                Real t = ((x_f-x)*n_x + (y_f-y)*n_y + (z_f-z)*n_z) / v_dot_n;
+
+                // Displace particles in the direction orthogonal to the beam bulk momentum
+                // i.e. orthogonal to (n_x, n_y, n_z)
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+                x = x - (v_x - v_dot_n*n_x) * t;
+                y = y - (v_y - v_dot_n*n_y) * t;
+                z = z - (v_z - v_dot_n*n_z) * t;
+#elif defined(WARPX_DIM_XZ)
+                x = x - (v_x - v_dot_n*n_x) * t;
+                z = z - (v_z - v_dot_n*n_z) * t;
+#elif defined(WARPX_DIM_1D_Z)
+                z = z - (v_z - v_dot_n*n_z) * t;
+#endif
+            }
                 u.x *= PhysConst::c;
                 u.y *= PhysConst::c;
                 u.z *= PhysConst::c;
+
                 if (do_symmetrize && symmetrization_order == 8){
                     // Add eight particles to the beam:
                     CheckAndAddParticle(x, y, z, u.x, u.y, u.z, weight/8._rt,
@@ -635,6 +671,7 @@ PhysicalParticleContainer::AddGaussianBeam (
     }
     // Add the temporary CPU vectors to the particle structure
     auto const np = static_cast<long>(particle_z.size());
+
     const amrex::Vector<ParticleReal> xp(particle_x.data(), particle_x.data() + np);
     const amrex::Vector<ParticleReal> yp(particle_y.data(), particle_y.data() + np);
     const amrex::Vector<ParticleReal> zp(particle_z.data(), particle_z.data() + np);
@@ -894,7 +931,8 @@ PhysicalParticleContainer::AddParticles (int lev)
                             plasma_injector->q_tot,
                             plasma_injector->npart,
                             plasma_injector->do_symmetrize,
-                            plasma_injector->symmetrization_order);
+                            plasma_injector->symmetrization_order,
+                            plasma_injector->focal_distance);
         }
 
         if (plasma_injector->external_file) {
@@ -1022,8 +1060,8 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                           overlap_realbox.lo(2))};
 
         // count the number of particles that each cell in overlap_box could add
-        Gpu::DeviceVector<int> counts(overlap_box.numPts(), 0);
-        Gpu::DeviceVector<int> offset(overlap_box.numPts());
+        Gpu::DeviceVector<amrex::Long> counts(overlap_box.numPts(), 0);
+        Gpu::DeviceVector<amrex::Long> offset(overlap_box.numPts());
         auto *pcounts = counts.data();
         const amrex::IntVect lrrfac = rrfac;
         Box fine_overlap_box; // default Box is NOT ok().
@@ -1042,7 +1080,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
             if (inj_pos->overlapsWith(lo, hi))
             {
                 auto index = overlap_box.index(iv);
-                const int r = (fine_overlap_box.ok() && fine_overlap_box.contains(iv))?
+                const amrex::Long r = (fine_overlap_box.ok() && fine_overlap_box.contains(iv))?
                     (AMREX_D_TERM(lrrfac[0],*lrrfac[1],*lrrfac[2])) : (1);
                 pcounts[index] = num_ppc*r;
                 // update pcount by checking if cell-corners or cell-center
@@ -1080,10 +1118,10 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
 
         // Max number of new particles. All of them are created,
         // and invalid ones are then discarded
-        const int max_new_particles = Scan::ExclusiveSum(counts.size(), counts.data(), offset.data());
+        const amrex::Long max_new_particles = Scan::ExclusiveSum(counts.size(), counts.data(), offset.data());
 
         // Update NextID to include particles created in this function
-        int pid;
+        amrex::Long pid;
 #ifdef AMREX_USE_OMP
 #pragma omp critical (add_plasma_nextid)
 #endif
@@ -1092,7 +1130,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
             ParticleType::NextID(pid+max_new_particles);
         }
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            static_cast<amrex::Long>(pid) + static_cast<amrex::Long>(max_new_particles) < LongParticleIds::LastParticleID,
+            pid + max_new_particles < LongParticleIds::LastParticleID,
             "ERROR: overflow on particle id numbers");
 
         const int cpuid = ParallelDescriptor::MyProc();
@@ -1103,8 +1141,8 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
             DefineAndReturnParticleTile(lev, grid_id, tile_id);
         }
 
-        auto old_size = particle_tile.size();
-        auto new_size = old_size + max_new_particles;
+        auto const old_size = static_cast<amrex::Long>(particle_tile.size());
+        auto const new_size = old_size + max_new_particles;
         particle_tile.resize(new_size);
 
         auto& soa = particle_tile.GetStructOfArrays();
@@ -1639,10 +1677,10 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 
         // Max number of new particles. All of them are created,
         // and invalid ones are then discarded
-        const int max_new_particles = Scan::ExclusiveSum(counts.size(), counts.data(), offset.data());
+        const amrex::Long max_new_particles = Scan::ExclusiveSum(counts.size(), counts.data(), offset.data());
 
         // Update NextID to include particles created in this function
-        int pid;
+        amrex::Long pid;
 #ifdef AMREX_USE_OMP
 #pragma omp critical (add_plasma_nextid)
 #endif
@@ -1651,15 +1689,15 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
             ParticleType::NextID(pid+max_new_particles);
         }
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            static_cast<amrex::Long>(pid) + static_cast<amrex::Long>(max_new_particles) < LongParticleIds::LastParticleID,
+            pid + max_new_particles < LongParticleIds::LastParticleID,
             "overflow on particle id numbers");
 
         const int cpuid = ParallelDescriptor::MyProc();
 
         auto& particle_tile = tmp_pc.DefineAndReturnParticleTile(0, grid_id, tile_id);
 
-        auto old_size = particle_tile.size();
-        auto new_size = old_size + max_new_particles;
+        auto const old_size = static_cast<amrex::Long>(particle_tile.size());
+        auto const new_size = old_size + max_new_particles;
         particle_tile.resize(new_size);
 
         auto& soa = particle_tile.GetStructOfArrays();

@@ -90,6 +90,8 @@ Diagnostics
 
 .. autoclass:: pywarpx.picmi.Checkpoint
 
+.. autoclass:: pywarpx.picmi.ReducedDiagnostic
+
 Lab-frame diagnostics diagnostics are used when running boosted-frame simulations.
 
 .. autoclass:: pywarpx.picmi.LabFrameFieldDiagnostic
