@@ -610,7 +610,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                 auto& uyp_n = pti.GetAttribs(particle_comps["uy_n"]);
                 auto& uzp_n = pti.GetAttribs(particle_comps["uz_n"]);
                 if        (WarpX::nox == 1){
-                    doChargeConservingDepositionShapeNImplicit<1>(
+                    doEsirkepovDepositionShapeNImplicit<1>(
                         xp_n_data, yp_n_data, zp_n_data,
                         GetPosition, wp.dataPtr() + offset,
                         uxp_n.dataPtr() + offset, uyp_n.dataPtr() + offset, uzp_n.dataPtr() + offset,
@@ -619,7 +619,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                         WarpX::n_rz_azimuthal_modes, cost,
                         WarpX::load_balance_costs_update_algo);
                 } else if (WarpX::nox == 2){
-                    doChargeConservingDepositionShapeNImplicit<2>(
+                    doEsirkepovDepositionShapeNImplicit<2>(
                         xp_n_data, yp_n_data, zp_n_data,
                         GetPosition, wp.dataPtr() + offset,
                         uxp_n.dataPtr() + offset, uyp_n.dataPtr() + offset, uzp_n.dataPtr() + offset,
@@ -628,7 +628,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                         WarpX::n_rz_azimuthal_modes, cost,
                         WarpX::load_balance_costs_update_algo);
                 } else if (WarpX::nox == 3){
-                    doChargeConservingDepositionShapeNImplicit<3>(
+                    doEsirkepovDepositionShapeNImplicit<3>(
                         xp_n_data, yp_n_data, zp_n_data,
                         GetPosition, wp.dataPtr() + offset,
                         uxp_n.dataPtr() + offset, uyp_n.dataPtr() + offset, uzp_n.dataPtr() + offset,
