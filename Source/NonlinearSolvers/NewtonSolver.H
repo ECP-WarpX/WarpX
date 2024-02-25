@@ -234,13 +234,13 @@ void NewtonSolver<Vec,Ops>::Solve ( Vec&         a_U,
 
         if (norm_abs < m_rtol) {
             amrex::Print() << "Newton: exiting at iteration = " << std::setw(3) << its 
-                           << ". Satisified absolute tolerance " << m_atol << std::endl;
+                           << ". Satisfied absolute tolerance " << m_atol << std::endl;
             break;
         }
     
         if (norm_rel < m_rtol) {
             amrex::Print() << "Newton: exiting at iteration = " << std::setw(3) << its 
-                           << ". Satisified relative tolerance " << m_rtol << std::endl;
+                           << ". Satisfied relative tolerance " << m_rtol << std::endl;
             break;
         }
         
