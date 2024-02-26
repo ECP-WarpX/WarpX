@@ -560,18 +560,23 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
       m_geom(geom),
       m_cgeom(cgeom)
 {
-    // When `do_pml_in_domain` is true, the PML overlap with the last `ncell` of the physical domain
-    // (instead of extending `ncell` outside of the physical domain)
-    // In order to implement this, a reduced domain is created here (decreased by ncells in all direction)
-    // and passed to `MakeBoxArray`, which surrounds it by PML boxes
-    // (thus creating the PML boxes at the right position, where they overlap with the original domain)
+    // When `do_pml_in_domain` is true, the PML overlap with the last `ncell` of the physical domain or fine patch(es)
+    // (instead of extending `ncell` outside of the physical domain or fine patch(es))
+    // In order to implement this, we define a new reduced Box Array ensuring that it does not
+    // include ncells from the edges of the physical domain or fine patch. 
+    // (thus creating the PML boxes at the right position, where they overlap with the original domain or fine patch(es))
 
     BoxArray grid_ba_reduced = grid_ba;
     if (do_pml_in_domain) {
         BoxList bl = grid_ba.boxList();
+        // Here we loop over all the boxes in the original grid_ba BoxArray
+        // For each box, we find if its in the edge (or boundary), and the size of those boxes are decreased by ncell
         for (auto& b : bl) {
             for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
                 if (do_pml_Lo[idim]) {
+                    // Get neighboring box on lower side in direction idim and check if it intersects with any of the boxes
+                    // in grid_ba. If no intersection, then the box, b, in the boxlist, is in the edge and we decrase
+                    // the size by ncells using growLo(idim,-ncell)
                     Box const& bb = amrex::adjCellLo(b, idim);
                     if ( ! grid_ba.intersects(bb) ) {
                         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(b.length(idim) > ncell, " box length must be greater that pml size");
@@ -579,6 +584,9 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
                     }
                 }
                 if (do_pml_Hi[idim]) {
+                    // Get neighboring box on higher side in direction idim and check if it intersects with any of the boxes
+                    // in grid_ba. If no intersection, then the box, b, in the boxlist, is in the edge and we decrase
+                    // the size by ncells using growHi(idim,-ncell)
                     Box const& bb = amrex::adjCellHi(b, idim);
                     if ( ! grid_ba.intersects(bb) ) {
                         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(b.length(idim) > ncell, " box length must be greater that pml size");
