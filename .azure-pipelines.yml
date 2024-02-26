@@ -41,7 +41,7 @@ jobs:
         WARPX_CI_EB: 'TRUE'
 
   # default: 60; maximum: 360
-  timeoutInMinutes: 180
+  timeoutInMinutes: 240
 
   steps:
   # set up caches:
