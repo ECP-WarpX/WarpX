@@ -666,7 +666,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
                     // RZ sources:
                     const amrex::Real N_source =
-                        (i != domain.smallEnd(0)) ? N_arr(i,j,k)*Vx/r : 0.0;
+                        (i != domain.smallEnd(0)) ? N_arr(i,j,k)*Vx/r : 0.0_rt;
 #else
                     // Have no RZ-inertial source for primitive vars if in XZ
                     const amrex::Real N_source = 0.0;
