@@ -84,4 +84,53 @@ void UpdatePositionImplicit(amrex::ParticleReal& x, amrex::ParticleReal& y, amre
     z += uz * inv_gamma * dt;
 }
 
+/** \brief Check particle position for convergence. This is used by the theta-implicit
+ *    and semi-implicit time solvers to obtain a self-consistent time-centered update 
+ *    of the particles for given electric and magnetic fields on the grid.
+ */
+AMREX_GPU_HOST_DEVICE AMREX_INLINE
+bool ParticleIsConverged( amrex::ParticleReal& dxp, amrex::ParticleReal& dyp, amrex::ParticleReal& dzp,
+                          amrex::ParticleReal& dxp_save, amrex::ParticleReal& dyp_save, amrex::ParticleReal& dzp_save, 
+                          amrex::ParticleReal& dxp0, amrex::ParticleReal& dyp0, amrex::ParticleReal& dzp0, 
+                    const amrex::ParticleReal tolerance, const int iter )
+{
+
+    amrex::ignore_unused(dxp, dxp_save, dxp0);
+    amrex::ignore_unused(dyp, dyp_save, dyp0);
+    bool is_converged = false;
+
+    if(iter==0) {
+#if !defined(WARPX_DIM_1D_Z)
+        if(dxp!=0.0) { dxp0 = std::abs(dxp); }
+#endif
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+        if(dyp!=0.0) { dyp0 = std::abs(dyp); }
+#endif
+        if(dzp!=0.0) { dzp0 = std::abs(dzp); }
+    }
+    else { // check for convergence
+        amrex::ParticleReal error_dzp = std::abs(dzp_save - dzp)/dzp0;
+        amrex::ParticleReal error_max = error_dzp;
+#if !defined(WARPX_DIM_1D_Z)
+        amrex::Real error_dxp = std::abs(dxp_save - dxp)/dxp0;
+        error_max = std::max(error_max,error_dxp);
+#endif
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+        amrex::Real error_dyp = std::abs(dyp_save - dyp)/dyp0;
+        error_max = std::max(error_max,error_dyp);
+#endif
+        if (error_max < tolerance) { is_converged = true; }
+    }
+#if !defined(WARPX_DIM_1D_Z)
+    dxp_save = dxp;
+#endif
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+    dyp_save = dyp;
+#endif
+    dzp_save = dzp;
+
+    return is_converged;
+
+}
+
 #endif // WARPX_PARTICLES_PUSHER_UPDATEPOSITION_H_
