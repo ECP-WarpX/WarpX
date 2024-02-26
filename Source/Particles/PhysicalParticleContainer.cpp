@@ -3078,9 +3078,11 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
     {
         // Position advance starts from the position at the start of the step
         // but uses the most recent velocity.
+
 #if (AMREX_SPACEDIM >= 2)
         amrex::ParticleReal xp = x_n[ip];
         amrex::ParticleReal xp_n = x_n[ip];
+        amrex::ParticleReal dxp0, dxp_save;
 #else
         amrex::ParticleReal xp = 0._rt;
         amrex::ParticleReal xp_n = 0._rt;
@@ -3088,95 +3090,153 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
         amrex::ParticleReal yp = y_n[ip];
         amrex::ParticleReal yp_n = y_n[ip];
+        amrex::ParticleReal dyp0, dyp_save;
 #else
         amrex::ParticleReal yp = 0._rt;
         amrex::ParticleReal yp_n = 0._rt;
 #endif
         amrex::ParticleReal zp = z_n[ip];
         amrex::ParticleReal zp_n = z_n[ip];
+        amrex::ParticleReal dzp0, dzp_save;
+        
+        amrex::ParticleReal dxp = 0.0;
+        amrex::ParticleReal dyp = 0.0;
+        amrex::ParticleReal dzp = 0.0;
 
-        UpdatePositionImplicit(xp, yp, zp, ux_n[ip], uy_n[ip], uz_n[ip], ux[ip], uy[ip], uz[ip], 0.5_rt*dt);
-        setPosition(ip, xp, yp, zp);
-
-        amrex::ParticleReal Exp = Ex_external_particle;
-        amrex::ParticleReal Eyp = Ey_external_particle;
-        amrex::ParticleReal Ezp = Ez_external_particle;
-        amrex::ParticleReal Bxp = Bx_external_particle;
-        amrex::ParticleReal Byp = By_external_particle;
-        amrex::ParticleReal Bzp = Bz_external_particle;
-
-        if(!t_do_not_gather){
-            // first gather E and B to the particle positions
-            doGatherShapeNImplicit(xp_n, yp_n, zp_n, xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                                   ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                                   ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                   dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes, nox,
-                                   depos_type );
-        }
-
-        // Externally applied E and B-field in Cartesian co-ordinates
-        [[maybe_unused]] const auto& getExternalEB_tmp = getExternalEB;
-        if constexpr (exteb_control == has_exteb) {
-            getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
-        }
-
-        scaleFields(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
-
-        if (do_copy) {
-            //  Copy the old x and u for the BTD
-            copyAttribs(ip);
-        }
-
-        // The momentum push starts with the velocity at the start of the step
-        ux[ip] = ux_n[ip];
-        uy[ip] = uy_n[ip];
-        uz[ip] = uz_n[ip];
-
-#ifdef WARPX_QED
-        if (!do_sync)
+        for (int iter=0; iter<WarpX::max_particle_iterations; iter++) {
+        
+            dxp = 0.0;
+            dyp = 0.0;
+            dzp = 0.0;
+            UpdatePositionImplicit(dxp, dyp, dzp, ux_n[ip], uy_n[ip], uz_n[ip], ux[ip], uy[ip], uz[ip], 0.5_rt*dt);
+#if !defined(WARPX_DIM_1D_Z)
+            xp = xp_n + dxp;
 #endif
-        {
-            doParticleMomentumPush<0>(ux[ip], uy[ip], uz[ip],
-                                      Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                                      ion_lev ? ion_lev[ip] : 1,
-                                      m, q, pusher_algo, do_crr,
-#ifdef WARPX_QED
-                                      t_chi_max,
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+            yp = yp_n + dyp;
 #endif
-                                      dt);
-        }
+            zp = zp_n + dzp;
+            setPosition(ip, xp, yp, zp);
+        
+            if(iter==0) {
+#if !defined(WARPX_DIM_1D_Z)
+                if(dxp==0.0) { dxp0 = static_cast<amrex::ParticleReal>(dx[0]); }
+                else { dxp0 = std::abs(dxp); }
+#endif
+#if defined(WARPX_DIM_3D)
+                if(dyp==0.0) { dyp0 = static_cast<amrex::ParticleReal>(dx[1]); }
+                else { dyp0 = std::abs(dyp); }
+#endif
+                if(dzp==0.0) { dzp0 = static_cast<amrex::ParticleReal>(dx[2]); }
+                else { dzp0 = std::abs(dzp); }
+            }
+            else { // check for convergence
+                amrex::ParticleReal error_dzp = std::abs(dzp_save - dzp)/dzp0;
+                amrex::ParticleReal error_max = error_dzp;
+#if !defined(WARPX_DIM_1D_Z)
+                amrex::Real error_dxp = std::abs(dxp_save - dxp)/dxp0;
+                error_max = std::max(error_max,error_dxp);
+#endif
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+                amrex::Real error_dyp = std::abs(dyp_save - dyp)/dyp0;
+                error_max = std::max(error_max,error_dyp);
+#endif
+                if (error_max < WarpX::particle_tolerance) {
+                    //if (iter>5) {
+                    //    amrex::Print() << "JRA: particle converged at iter = " << iter << std::endl;
+                    //} 
+                    break; 
+                }
+            }
+#if !defined(WARPX_DIM_1D_Z)
+            dxp_save = dxp;
+#endif
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+            dyp_save = dyp;
+#endif
+            dzp_save = dzp;
+        
+            amrex::ParticleReal Exp = Ex_external_particle;
+            amrex::ParticleReal Eyp = Ey_external_particle;
+            amrex::ParticleReal Ezp = Ez_external_particle;
+            amrex::ParticleReal Bxp = Bx_external_particle;
+            amrex::ParticleReal Byp = By_external_particle;
+            amrex::ParticleReal Bzp = Bz_external_particle;
+
+            if(!t_do_not_gather){
+                // first gather E and B to the particle positions
+                doGatherShapeNImplicit(xp_n, yp_n, zp_n, xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                                       ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                       ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                       dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes, nox,
+                                       depos_type );
+            }
+
+            // Externally applied E and B-field in Cartesian co-ordinates
+            [[maybe_unused]] const auto& getExternalEB_tmp = getExternalEB;
+            if constexpr (exteb_control == has_exteb) {
+                getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
+            }
+
+            scaleFields(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
+
+            if (do_copy) {
+                //  Copy the old x and u for the BTD
+                copyAttribs(ip);
+            }
+
+            // The momentum push starts with the velocity at the start of the step
+            ux[ip] = ux_n[ip];
+            uy[ip] = uy_n[ip];
+            uz[ip] = uz_n[ip];
+
 #ifdef WARPX_QED
-        else {
-            if constexpr (qed_control == has_qed) {
-                doParticleMomentumPush<1>(ux[ip], uy[ip], uz[ip],
+            if (!do_sync)
+#endif
+            {
+                doParticleMomentumPush<0>(ux[ip], uy[ip], uz[ip],
                                           Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                           ion_lev ? ion_lev[ip] : 1,
                                           m, q, pusher_algo, do_crr,
+#ifdef WARPX_QED
                                           t_chi_max,
+#endif
                                           dt);
             }
-        }
+#ifdef WARPX_QED
+            else {
+                if constexpr (qed_control == has_qed) {
+                    doParticleMomentumPush<1>(ux[ip], uy[ip], uz[ip],
+                                              Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                                              ion_lev ? ion_lev[ip] : 1,
+                                              m, q, pusher_algo, do_crr,
+                                              t_chi_max,
+                                              dt);
+                }
+            }
 #endif
 
 #ifdef WARPX_QED
-        [[maybe_unused]] auto foo_local_has_quantum_sync = local_has_quantum_sync;
-        [[maybe_unused]] auto *foo_podq = p_optical_depth_QSR;
-        [[maybe_unused]] const auto& foo_evolve_opt = evolve_opt; // have to do all these for nvcc
-        if constexpr (qed_control == has_qed) {
-            if (local_has_quantum_sync) {
-                evolve_opt(ux[ip], uy[ip], uz[ip],
-                           Exp, Eyp, Ezp,Bxp, Byp, Bzp,
-                           dt, p_optical_depth_QSR[ip]);
+            [[maybe_unused]] auto foo_local_has_quantum_sync = local_has_quantum_sync;
+            [[maybe_unused]] auto *foo_podq = p_optical_depth_QSR;
+            [[maybe_unused]] const auto& foo_evolve_opt = evolve_opt; // have to do all these for nvcc
+            if constexpr (qed_control == has_qed) {
+                if (local_has_quantum_sync) {
+                    evolve_opt(ux[ip], uy[ip], uz[ip],
+                               Exp, Eyp, Ezp,Bxp, Byp, Bzp,
+                               dt, p_optical_depth_QSR[ip]);
+                }
             }
-        }
 #else
             amrex::ignore_unused(qed_control);
 #endif
 
-        // Take average to get the time centered value
-        ux[ip] = 0.5_rt*(ux[ip] + ux_n[ip]);
-        uy[ip] = 0.5_rt*(uy[ip] + uy_n[ip]);
-        uz[ip] = 0.5_rt*(uz[ip] + uz_n[ip]);
+            // Take average to get the time centered value
+            ux[ip] = 0.5_rt*(ux[ip] + ux_n[ip]);
+            uy[ip] = 0.5_rt*(uy[ip] + uy_n[ip]);
+            uz[ip] = 0.5_rt*(uz[ip] + uz_n[ip]);
+        
+        } // end Picard iterations
 
     });
 }

@@ -186,6 +186,10 @@ public:
     static short electromagnetic_solver_id;
     //! Integer that corresponds to the evolve scheme (explicit, theta_implicit, semi_implicit)
     static short evolve_scheme;
+    //! The maximum number of iterations used for self-consistent particle update in implicit evolve schemes
+    static int max_particle_iterations;
+    //! The relative tolerance used for self-consistent particle update in implicit evolve schemes
+    static amrex::ParticleReal particle_tolerance;
     /** Records a number corresponding to the load balance cost update strategy
      *  being used (0, 1, 2 corresponding to timers, heuristic, or gpuclock).
      */

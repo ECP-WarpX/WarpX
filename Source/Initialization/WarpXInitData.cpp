@@ -542,7 +542,7 @@ WarpX::InitFromScratch ()
         evolve_scheme == EvolveScheme::SemiImplicit) {
 
         m_implicit_solver->Define(this);
-        m_implicit_solver->Initialize(); 
+        m_implicit_solver->GetParticleSolverParams(max_particle_iterations,particle_tolerance);
 
         // Add space to save the positions and velocities at the start of the time steps
         for (auto const& pc : *mypc) {

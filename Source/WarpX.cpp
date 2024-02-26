@@ -112,6 +112,8 @@ short WarpX::field_gathering_algo;
 short WarpX::particle_pusher_algo;
 short WarpX::electromagnetic_solver_id;
 short WarpX::evolve_scheme;
+int WarpX::max_particle_iterations = 21;
+ParticleReal WarpX::particle_tolerance = 1.e-10;
 short WarpX::psatd_solution_type;
 short WarpX::J_in_time;
 short WarpX::rho_in_time;
