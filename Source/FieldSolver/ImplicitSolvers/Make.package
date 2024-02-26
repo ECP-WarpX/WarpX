@@ -1,4 +1,5 @@
 CEXE_sources += ImplicitSolverEM.cpp
+CEXE_sources += WarpXImplicitOps.cpp
 
 include $(WARPX_HOME)/Source/FieldSolver/ImplicitSolvers/Utils/Make.package
 
