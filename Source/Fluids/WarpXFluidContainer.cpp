@@ -640,9 +640,6 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
 #elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
 
-                    // Have no RZ-inertial source for primitive vars if in XZ
-                    const amrex::Real N_source = 0.0;
-
 #if defined(WARPX_DIM_RZ)
                     const amrex::Real dr = dx[0];
                     const amrex::Real r = problo[0] + i * dr;
@@ -668,9 +665,11 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     }
 
                     // RZ sources:
-                    if  (i != domain.smallEnd(0)) {
-                        N_source = N_arr(i,j,k)*Vx/r;
-                    }
+                    const amrex::Real N_source =
+                        (i != domain.smallEnd(0)) ? N_arr(i,j,k)*Vx/r : 0.0;
+#else
+                    // Have no RZ-inertial source for primitive vars if in XZ
+                    const amrex::Real N_source = 0.0;
 #endif
 
                     // Compute U ([ N, U]) at the halfsteps (U_tilde) using the slopes (dU)
