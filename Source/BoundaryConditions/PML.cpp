@@ -563,7 +563,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     // When `do_pml_in_domain` is true, the PML overlap with the last `ncell` of the physical domain or fine patch(es)
     // (instead of extending `ncell` outside of the physical domain or fine patch(es))
     // In order to implement this, we define a new reduced Box Array ensuring that it does not
-    // include ncells from the edges of the physical domain or fine patch. 
+    // include ncells from the edges of the physical domain or fine patch.
     // (thus creating the PML boxes at the right position, where they overlap with the original domain or fine patch(es))
 
     BoxArray grid_ba_reduced = grid_ba;
