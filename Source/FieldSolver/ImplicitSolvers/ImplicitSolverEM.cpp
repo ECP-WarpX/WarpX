@@ -43,9 +43,13 @@ void ImplicitSolverEM::Define ( WarpX* const  a_WarpX )
     pp.query("nonlinear_solver", nlsolver_type_str);
     if (nlsolver_type_str=="picard") {
         m_nlsolver_type = NonlinearSolverType::Picard;
+        m_max_particle_iterations = 1;
+        m_particle_tolerance = 0.0;
     }
     else if (nlsolver_type_str=="newton") {
         m_nlsolver_type = NonlinearSolverType::Newton;
+        pp.query("max_particle_iterations", m_max_particle_iterations);
+        pp.query("particle_tolerance", m_particle_tolerance);
     }
     else {
         WARPX_ABORT_WITH_MESSAGE(
@@ -62,17 +66,6 @@ void ImplicitSolverEM::Define ( WarpX* const  a_WarpX )
         m_nlsolver->Define(m_E, this);
     }
 
-    //
-    //  TESTING NEWTON SOLVER
-    //
-    //std::unique_ptr<NonlinearSolver<WarpXSolverVec,ImplicitSolverEM>> newton_solver;
-    //newton_solver = std::make_unique<NewtonSolver<WarpXSolverVec,ImplicitSolverEM>>();
-    //newton_solver->Define(m_E, this);
-    //newton_solver->PrintParams();
-    //
-    //
-    //
-
     m_is_defined = true;
 }
 
@@ -83,7 +76,9 @@ void ImplicitSolverEM::PrintParameters () const
     amrex::Print() << "-----------------------------------------------------------" << std::endl;
     amrex::Print() << "-------------- IMPLICIT EM SOLVER PARAMETERS --------------" << std::endl;
     amrex::Print() << "-----------------------------------------------------------" << std::endl;
-    amrex::Print()     << "Time-bias parameter theta:  " << m_theta << std::endl;
+    amrex::Print() << "Time-bias parameter theta:  " << m_theta << std::endl;
+    amrex::Print() << "max particle iterations:    " << m_max_particle_iterations << std::endl;
+    amrex::Print() << "particle tolerance:         " << m_particle_tolerance << std::endl;
     if (m_nlsolver_type==NonlinearSolverType::Picard) {
         amrex::Print() << "Nonlinear solver type:      Picard" << std::endl;
     }
@@ -93,15 +88,6 @@ void ImplicitSolverEM::PrintParameters () const
     m_nlsolver->PrintParams();
     amrex::Print() << "-----------------------------------------------------------" << std::endl;
     amrex::Print() << std::endl;
-}
-
-void ImplicitSolverEM::Initialize ()
-{
-
-    // initialize E vectors
-    m_E.Copy( m_WarpX->Efield_fp );
-    m_Eold = m_E;
-    
 }
 
 void ImplicitSolverEM::OneStep ( const amrex::Real  a_old_time,
@@ -137,9 +123,11 @@ void ImplicitSolverEM::OneStep ( const amrex::Real  a_old_time,
     }
 
     // Solve nonlinear system for E at t_{n+theta}
-    // B will also be advanced to t_{n+theta}
     // Particles will be advanced to t_{n+1/2}
     m_nlsolver->Solve( m_E, m_Eold, a_old_time, a_dt );
+    
+    // update derived variable B to t_{n+theta}
+    PostUpdateState( m_E, a_old_time, a_dt );
 
     // Update field boundary probes prior to updating fields to t_{n+1}
     //m_fields->updateBoundaryProbes( a_dt );
@@ -164,8 +152,8 @@ void ImplicitSolverEM::PreRHSOp ( const WarpXSolverVec&  a_E,
 {  
     amrex::ignore_unused(a_E);
     
-    // WarpX owned Efield_fp and Bfield_fp used in PreRHSOp() are updated
-    // in PostUpdateState();
+    // update derived variable B and then update WarpX owned Efield_fp and Bfield_fp
+    PostUpdateState( a_E, a_time, a_dt );
 
     // Advance the particle positions by 1/2 dt,
     // particle velocities by dt, then take average of old and new v,

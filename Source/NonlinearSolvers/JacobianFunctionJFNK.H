@@ -12,7 +12,7 @@ class JacobianFunctionJFNK
     {
         m_is_defined = false; 
         m_is_linear = false;
-        m_epsJFNK = 1e-6;
+        m_epsJFNK = 1.0e-6;
         m_usePreCond = false;
         //m_pc_type = _EM_MATRIX_PC_;
     }
@@ -237,9 +237,8 @@ void JacobianFunctionJFNK<T,Ops>::apply (T& a_dF, const T& a_dU)
 {
     BL_PROFILE("JacobianFunctionJFNK::apply()");
     using namespace amrex::literals;
-    RT normY = norm2(a_dU);
+    RT normY = norm2(a_dU); // JRA, this is always 1. dU vectors in GMRES are scaled by norm2
         
-    //amrex::Print() << "JRA: call to apply() from GMRES " << std::endl;
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         isDefined(),
         "JacobianFunction::apply() called on undefined JacobianFunction");
@@ -255,14 +254,31 @@ void JacobianFunctionJFNK<T,Ops>::apply (T& a_dF, const T& a_dU)
              * M. Pernice and H. F. Walker, "NITSOL: A Newton Iterative Solver for 
              * Nonlinear Systems", SIAM J. Sci. Stat. Comput., 1998, vol 19, 
              * pp. 302--318. */
-            eps = m_epsJFNK * std::sqrt(1.0_rt + m_normY0) / normY;
+            if (m_normY0==0.0) { eps = m_epsJFNK*norm2(m_R0); }
+            else {
+                //eps = m_epsJFNK * std::sqrt(1.0_rt + m_normY0) / normY;
+                eps = m_epsJFNK * m_normY0 / normY;
+                //eps = 1.0e6;
+            }
+            //amrex::Print() << "JRA: m_normY0 = " << m_normY0 << std::endl;
+            //amrex::Print() << "JRA: normY    = " << normY << std::endl;
+            //amrex::Print() << "JRA: eps      = " << eps << std::endl;
         }
         const RT eps_inv = 1.0_rt/eps;
 
         m_Z = m_Y0 + eps*a_dU;
-        m_ops->PostUpdateState( m_Z, m_cur_time, m_dt );
+        //m_ops->PostUpdateState( m_Z, m_cur_time, m_dt );
         m_ops->PreRHSOp( m_Z, m_cur_time, m_dt, -1, true );
         m_ops->ComputeRHS(m_R, m_Z, m_cur_time, m_dt );
+
+        //double normZ = norm2(m_Z);
+        //double normR0 = norm2(m_R0);
+        //double normR = norm2(m_R);
+        //double normdR = norm2(m_R-m_R0);
+        //amrex::Print() << "JRA: normZ    = " << normZ << std::endl;
+        //amrex::Print() << "JRA: normR0   = " << normR0 << std::endl;
+        //amrex::Print() << "JRA: normR    = " << normR << std::endl;
+        //amrex::Print() << "JRA: norm(R-R0)    = " << normdR << std::endl;
 
         // F(Y) = Y - b - R(Y)
         // dF = dF/dY*dU = [1 - dR/dY]*dU 

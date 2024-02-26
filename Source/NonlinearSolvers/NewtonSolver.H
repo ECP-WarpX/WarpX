@@ -260,7 +260,7 @@ void NewtonSolver<Vec,Ops>::Solve ( Vec&         a_U,
     
         // Update solution
         a_U -= m_dU;
-        m_ops->PostUpdateState( a_U, a_time, a_dt );
+        //m_ops->PostUpdateState( a_U, a_time, a_dt );
 
         if (its >= m_maxits) {
             amrex::Print() << "Newton: exiting at its = " << std::setw(3) << its 

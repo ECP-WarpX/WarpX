@@ -30,6 +30,9 @@ public:
 
     virtual void Initialize () = 0;
     
+    virtual void GetParticleSolverParams (int&  a_max_particle_iter,
+                                          amrex::ParticleReal&  a_particle_tol ) = 0;
+    
     virtual void OneStep ( const amrex::Real  a_time,
                            const amrex::Real  a_dt,
                            const int          a_step ) = 0;

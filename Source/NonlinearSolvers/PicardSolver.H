@@ -135,7 +135,7 @@ void PicardSolver<Vec,Ops>::Solve ( Vec&         a_U,
         m_ops->PreRHSOp( a_U, a_time, a_dt, iter, false );
         m_ops->ComputeRHS( m_F, a_U, a_time, a_dt );
         a_U = a_R + m_F;
-        m_ops->PostUpdateState( a_U, a_time, a_dt );
+        //m_ops->PostUpdateState( a_U, a_time, a_dt );
         
         // Compute the step norm and update iter
         m_Usave -= a_U;
