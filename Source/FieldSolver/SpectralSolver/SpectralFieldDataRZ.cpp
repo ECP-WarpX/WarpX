@@ -665,7 +665,7 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
     bool do_costs = WarpXUtilLoadBalance::doCosts(cost, field_mf_r.boxArray(), field_mf_r.DistributionMap());
 
     // Check field index type, in order to apply proper shift in spectral space.
-    bool const is_nodal_z = field_mf_r.is_nodal(1);
+    const bool const is_nodal_z = field_mf_r.is_nodal(1);
 
     // Full multifabs are created for the temps so that each GPU stream has its own temp space.
     amrex::MultiFab tempHTransformedSplit_p(tempHTransformed.boxArray(), tempHTransformed.DistributionMap(), 2*n_rz_azimuthal_modes, 0);

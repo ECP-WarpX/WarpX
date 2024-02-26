@@ -262,7 +262,7 @@ DSMC::doCollisionsWithinTile(
             ShuffleFisherYates(indices_1, cell_start_1, cell_stop_1, engine);
             ShuffleFisherYates(indices_2, cell_start_2, cell_stop_2, engine);
 #if defined WARPX_DIM_RZ
-            int ri = (i_cell - i_cell%nz) / nz;
+            const int ri = (i_cell - i_cell%nz) / nz;
             auto dV = MathConst::pi*(2.0_prt*ri+1.0_prt)*dr*dr*dz;
 #endif
             // Call the function in order to perform collisions

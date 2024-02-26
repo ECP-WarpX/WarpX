@@ -641,7 +641,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 #elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
 
                     // Have no RZ-inertial source for primitive vars if in XZ
-                    amrex::Real N_source = 0.0;
+                    const amrex::Real N_source = 0.0;
 
 #if defined(WARPX_DIM_RZ)
                     const amrex::Real dr = dx[0];

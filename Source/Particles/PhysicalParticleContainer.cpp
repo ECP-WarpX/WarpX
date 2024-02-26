@@ -570,26 +570,26 @@ PhysicalParticleContainer::AddGaussianBeam (
                 XDim3 u = plasma_injector.getMomentum(x, y, z);
 
             if (plasma_injector.do_focusing){
-                XDim3 u_bulk = plasma_injector.getInjectorMomentumHost()->getBulkMomentum(x,y,z);
-                Real u_bulk_norm = std::sqrt( u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z );
+                const XDim3 u_bulk = plasma_injector.getInjectorMomentumHost()->getBulkMomentum(x,y,z);
+                const Real u_bulk_norm = std::sqrt( u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z );
 
                 // Compute the position of the focal plane
                 // (it is located at a distance `focal_distance` from the beam centroid, in the direction of the bulk velocity)
-                Real n_x = u_bulk.x/u_bulk_norm;
-                Real n_y = u_bulk.y/u_bulk_norm;
-                Real n_z = u_bulk.z/u_bulk_norm;
-                Real x_f = x_m + focal_distance * n_x;
-                Real y_f = y_m + focal_distance * n_y;
-                Real z_f = z_m + focal_distance * n_z;
-                Real gamma = std::sqrt( 1._rt + (u.x*u.x+u.y*u.y+u.z*u.z) );
+                const Real n_x = u_bulk.x/u_bulk_norm;
+                const Real n_y = u_bulk.y/u_bulk_norm;
+                const Real n_z = u_bulk.z/u_bulk_norm;
+                const Real x_f = x_m + focal_distance * n_x;
+                const Real y_f = y_m + focal_distance * n_y;
+                const Real z_f = z_m + focal_distance * n_z;
+                const Real gamma = std::sqrt( 1._rt + (u.x*u.x+u.y*u.y+u.z*u.z) );
 
-                Real v_x = u.x / gamma * PhysConst::c;
-                Real v_y = u.y / gamma * PhysConst::c;
-                Real v_z = u.z / gamma * PhysConst::c;
+                const Real v_x = u.x / gamma * PhysConst::c;
+                const Real v_y = u.y / gamma * PhysConst::c;
+                const Real v_z = u.z / gamma * PhysConst::c;
 
                 // Compute the time at which the particle will cross the focal plane
-                Real v_dot_n = v_x * n_x + v_y * n_y + v_z * n_z;
-                Real t = ((x_f-x)*n_x + (y_f-y)*n_y + (z_f-z)*n_z) / v_dot_n;
+                const Real v_dot_n = v_x * n_x + v_y * n_y + v_z * n_z;
+                const Real t = ((x_f-x)*n_x + (y_f-y)*n_y + (z_f-z)*n_z) / v_dot_n;
 
                 // Displace particles in the direction orthogonal to the beam bulk momentum
                 // i.e. orthogonal to (n_x, n_y, n_z)
@@ -958,7 +958,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
 
     const int num_ppc = plasma_injector.num_particles_per_cell;
 #ifdef WARPX_DIM_RZ
-    Real rmax = std::min(plasma_injector.xmax, part_realbox.hi(0));
+    const Real rmax = std::min(plasma_injector.xmax, part_realbox.hi(0));
 #endif
 
     const auto dx = geom.CellSizeArray();
@@ -996,7 +996,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
 
 #ifdef WARPX_DIM_RZ
     const int nmodes = WarpX::n_rz_azimuthal_modes;
-    bool radially_weighted = plasma_injector.radially_weighted;
+    const bool radially_weighted = plasma_injector.radially_weighted;
 #endif
 
     MFItInfo info;
@@ -1488,7 +1488,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 
     const amrex::Real num_ppc_real = plasma_injector.num_particles_per_cell_real;
 #ifdef WARPX_DIM_RZ
-    Real rmax = std::min(plasma_injector.xmax, geom.ProbDomain().hi(0));
+    const Real rmax = std::min(plasma_injector.xmax, geom.ProbDomain().hi(0));
 #endif
 
     const auto dx = geom.CellSizeArray();
@@ -1546,7 +1546,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 #ifdef WARPX_DIM_RZ
     const int nmodes = WarpX::n_rz_azimuthal_modes;
     const bool rz_random_theta = m_rz_random_theta;
-    bool radially_weighted = plasma_injector.radially_weighted;
+    const bool radially_weighted = plasma_injector.radially_weighted;
 #endif
 
     MFItInfo info;
@@ -1864,7 +1864,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 Real const cos_theta = std::cos(theta);
                 Real const sin_theta = std::sin(theta);
                 // Rotate the position
-                amrex::Real radial_position = ppos.x;
+                const amrex::Real radial_position = ppos.x;
                 ppos.x = radial_position*cos_theta;
                 ppos.y = radial_position*sin_theta;
                 if (loc_flux_normal_axis != 2) {
