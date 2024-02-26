@@ -267,7 +267,6 @@ void JacobianFunctionJFNK<T,Ops>::apply (T& a_dF, const T& a_dU)
         const RT eps_inv = 1.0_rt/eps;
 
         m_Z = m_Y0 + eps*a_dU;
-        //m_ops->PostUpdateState( m_Z, m_cur_time, m_dt );
         m_ops->PreRHSOp( m_Z, m_cur_time, m_dt, -1, true );
         m_ops->ComputeRHS(m_R, m_Z, m_cur_time, m_dt );
 

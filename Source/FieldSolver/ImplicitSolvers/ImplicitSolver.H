@@ -48,10 +48,6 @@ public:
                         const amrex::Real      a_time,
                         const amrex::Real      a_dt ) = 0;
 
-    virtual void PostUpdateState ( const WarpXSolverVec&  a_E,
-                                   const amrex::Real      a_time,
-                                   const amrex::Real      a_dt ) = 0;
-
 private:
 
 };

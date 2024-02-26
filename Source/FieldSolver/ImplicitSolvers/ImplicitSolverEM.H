@@ -65,10 +65,6 @@ public:
                         const amrex::Real      a_time,
                         const amrex::Real      a_dt );
 
-    virtual void PostUpdateState ( const WarpXSolverVec&  a_E,
-                                   const amrex::Real      a_time,
-                                   const amrex::Real      a_dt );
-
     amrex::Real theta () const { return m_theta; }
 
     amrex::Real dotProduct ( const WarpXSolverVec& a_X, 
@@ -97,7 +93,11 @@ private:
     bool m_dot_mask_defined = false;
     amrex::Vector<std::array<std::unique_ptr<amrex::iMultiFab>,3>> m_dotMask;
     
-    void setDotMask( const WarpXSolverVec&  a_E );
+    void SetDotMask( const WarpXSolverVec&  a_E );
+    
+    void UpdateWarpXState ( const WarpXSolverVec&  a_E,
+                            const amrex::Real      a_time,
+                            const amrex::Real      a_dt );
 
 };
 

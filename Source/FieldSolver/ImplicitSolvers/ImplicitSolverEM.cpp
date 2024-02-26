@@ -14,7 +14,7 @@ void ImplicitSolverEM::Define ( WarpX* const  a_WarpX )
     // Define E vectors
     m_E.Define( m_WarpX->Efield_fp );
     m_Eold.Define( m_WarpX->Efield_fp );
-    setDotMask(m_E);
+    SetDotMask(m_E);
     
     if (m_WarpX->evolve_scheme == EvolveScheme::ThetaImplicit) { 
         // Define Bold vector
@@ -99,8 +99,8 @@ void ImplicitSolverEM::OneStep ( const amrex::Real  a_old_time,
 
     // We have E^{n}.
     // Particles have p^{n} and x^{n}.
-    // With full implicit, B^{n}
-    // With semi-implicit, B^{n-1/2}
+    // With theta implicit, B^{n}
+    // With semi implicit, B^{n-1/2}
 
     // Save the values at the start of the time step,
     m_WarpX->SaveParticlesAtImplicitStepStart ( );
@@ -126,8 +126,8 @@ void ImplicitSolverEM::OneStep ( const amrex::Real  a_old_time,
     // Particles will be advanced to t_{n+1/2}
     m_nlsolver->Solve( m_E, m_Eold, a_old_time, a_dt );
     
-    // update derived variable B to t_{n+theta}
-    PostUpdateState( m_E, a_old_time, a_dt );
+    // update WarpX owned Efield_fp and Bfield_fp to t_{n+theta}
+    UpdateWarpXState( m_E, a_old_time, a_dt );
 
     // Update field boundary probes prior to updating fields to t_{n+1}
     //m_fields->updateBoundaryProbes( a_dt );
@@ -153,7 +153,7 @@ void ImplicitSolverEM::PreRHSOp ( const WarpXSolverVec&  a_E,
     amrex::ignore_unused(a_E);
     
     // update derived variable B and then update WarpX owned Efield_fp and Bfield_fp
-    PostUpdateState( a_E, a_time, a_dt );
+    UpdateWarpXState( a_E, a_time, a_dt );
 
     // Advance the particle positions by 1/2 dt,
     // particle velocities by dt, then take average of old and new v,
@@ -171,9 +171,9 @@ void ImplicitSolverEM::ComputeRHS ( WarpXSolverVec&  a_Erhs,
     m_WarpX->ComputeRHSE(m_theta*a_dt, a_Erhs);
 }
 
-void ImplicitSolverEM::PostUpdateState ( const WarpXSolverVec&  a_E,
-                                         const amrex::Real      a_time,
-                                         const amrex::Real      a_dt )
+void ImplicitSolverEM::UpdateWarpXState ( const WarpXSolverVec&  a_E,
+                                          const amrex::Real      a_time,
+                                          const amrex::Real      a_dt )
 {
     using namespace amrex::literals;
     amrex::ignore_unused(a_time);
@@ -195,12 +195,12 @@ void ImplicitSolverEM::PostUpdateState ( const WarpXSolverVec&  a_E,
 
 }
 
-void ImplicitSolverEM::setDotMask ( const WarpXSolverVec&  a_E ) {
+void ImplicitSolverEM::SetDotMask ( const WarpXSolverVec&  a_E ) {
     
     if (m_dot_mask_defined) { return; }
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         a_E.IsDefined(),
-        "ImplicitSolverEM::setDotMask(a_E) called with undefined a_E");
+        "ImplicitSolverEM::SetDotMask(a_E) called with undefined a_E");
 
     const amrex::Vector<amrex::Geometry>& Geom = m_WarpX->Geom();
     const int num_levels = a_E.getVec().size();
