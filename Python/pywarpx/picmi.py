@@ -2383,6 +2383,9 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
     warpx_format: {plotfile, checkpoint, openpmd, ascent, sensei}, optional
         Diagnostic file format
 
+    warpx_diag_type: {Full, BoundaryScraping, BackTransformed}, 'Full' by default, optional
+        Diagnostic type
+
     warpx_openpmd_backend: {bp, h5, json}, optional
         Openpmd backend file format
 
