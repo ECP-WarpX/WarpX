@@ -86,8 +86,7 @@ field_diag = picmi.FieldDiagnostic(
     name = 'diag1',
     grid = grid,
     period = diagnostic_interval,
-    data_list = ['Er', 'Ez', 'phi', 'rho',
-                 'rho_electrons'],
+    data_list = ['Er', 'Ez', 'phi', 'rho','rho_electrons'],
     warpx_format = 'openpmd',
     write_dir = '.',
     warpx_file_prefix = 'particle_boundary_interaction_plt'
@@ -120,6 +119,7 @@ sim.add_species(
     )
 )
 sim.add_diagnostic(part_diag)
+sim.add_diagnostic(field_diag)
 
 sim.initialize_inputs()
 sim.initialize_warpx()
