@@ -317,7 +317,7 @@ namespace detail
                     {openPMD::UnitDimension::I,  1.}};
         } else if( record_name == "mass" ) {
             return {{openPMD::UnitDimension::M, 1.}};
-        } else if( record_name == "weighting" ) {
+        } else if( record_name == "weighting" ) {  // NOLINT(bugprone-branch-clone)
 #if defined(WARPX_DIM_1D_Z)
             return {{openPMD::UnitDimension::L, -2.}};
 #elif defined(WARPX_DIM_XZ)
@@ -334,7 +334,7 @@ namespace detail
             return {{openPMD::UnitDimension::M,  1.},
                     {openPMD::UnitDimension::I, -1.},
                     {openPMD::UnitDimension::T, -2.}};
-        } else {
+        } else {  // NOLINT(bugprone-branch-clone)
             return {};
         }
     }
