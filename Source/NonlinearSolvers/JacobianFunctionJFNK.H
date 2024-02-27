@@ -62,7 +62,8 @@ class JacobianFunctionJFNK
     inline 
     void increment(T& a_Z, const T& a_U, const RT a_scale)
     { 
-        //a_Z.increment(a_U,a_scale);
+        //a_Z.increment( a_U, a_scale ); // this change things at machine precision
+        //a_Z.linComb( RT(1.0), a_Z, a_scale, a_U );
         a_Z += a_scale*a_U;
     } 
 
@@ -75,7 +76,6 @@ class JacobianFunctionJFNK
     inline 
     void linComb (T& a_U, RT a, const T& X, RT b, const T& Y)
     { 
-        // a_U = a*X + b*Y;
         a_U.linComb( a, X, b, Y ); 
     }
 

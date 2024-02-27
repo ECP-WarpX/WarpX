@@ -223,7 +223,6 @@ void NewtonSolver<Vec,Ops>::Solve ( Vec&         a_U,
             else { norm0 = 1._rt; }
         }
         norm_rel = norm_abs/norm0;
-        its++;      
  
         // Check for convergence critsia
         if (m_verbose || its == m_maxits) {
@@ -261,6 +260,7 @@ void NewtonSolver<Vec,Ops>::Solve ( Vec&         a_U,
         // Update solution
         a_U -= m_dU;
 
+        its++;
         if (its >= m_maxits) {
             amrex::Print() << "Newton: exiting at its = " << std::setw(3) << its 
                            << ". Maximum iteration reached: its = " << m_maxits << std::endl;
@@ -269,7 +269,7 @@ void NewtonSolver<Vec,Ops>::Solve ( Vec&         a_U,
 
     }
 
-    if (m_rtol > 0. && m_atol > 0. && its == m_maxits) {
+    if (m_rtol > 0. && its == m_maxits) {
        std::stringstream convergenceMsg;
        convergenceMsg << "Newton solver failed to converge after " << its <<
                          " iterations. Relative norm is " << norm_rel <<

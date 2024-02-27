@@ -173,7 +173,7 @@ void PicardSolver<Vec,Ops>::Solve ( Vec&         a_U,
 
     }
 
-    if (m_rtol > 0. && m_atol > 0. && iter == m_maxits) {
+    if (m_rtol > 0. && iter == m_maxits) {
        std::stringstream convergenceMsg;
        convergenceMsg << "Picard solver failed to converge after " << iter <<
                          " iterations. Relative norm is " << norm_rel <<

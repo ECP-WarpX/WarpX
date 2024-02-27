@@ -188,16 +188,16 @@ public:
     }
     
     inline
-    void increment (const WarpXSolverVec& X, const amrex::Real a)
+    void increment (const WarpXSolverVec& a_X, const RT a_a)
     {
         for (int n=0; n<3; n++) {
-            amrex::MultiFab::Saxpy( *m_field_vec[0][n], a, *X.getVec()[0][n], 
-                                    0, 0, m_ncomp, amrex::IntVect(0) );
+            amrex::MultiFab::Saxpy( *m_field_vec[0][n], a_a, *a_X.getVec()[0][n], 
+                                    0, 0, 1, amrex::IntVect::Zero );
         }
     }
     
     inline
-    void scale (amrex::Real a_a)
+    void scale (RT a_a)
     {
         m_field_vec[0][0]->mult(a_a, 0, 1);
         m_field_vec[0][1]->mult(a_a, 0, 1);
@@ -205,7 +205,7 @@ public:
     }
 
     inline
-    void operator*= (amrex::Real a_a)
+    void operator*= (RT a_a)
     {
       scale(a_a);
     }
@@ -229,16 +229,15 @@ public:
     }
 
     inline
-    amrex::Real norm () const
+    RT norm () const
     {
         AMREX_ASSERT_WITH_MESSAGE(
             IsDefined(),
             "WarpXSolverVec::norm() called on undefined WarpXSolverVec");
-        amrex::Real nF0 = m_field_vec[0][0]->norm0(0, 0);
-        amrex::Real nF1 = m_field_vec[0][1]->norm0(0, 0);
-        amrex::Real nF2 = m_field_vec[0][2]->norm0(0, 0);
-        amrex::Real normF = std::sqrt(nF0*nF0 + nF1*nF1 + nF2*nF2);
-        //amrex::Real normF = std::max(nF0, std::max(nF1,nF2));
+        RT nF0 = m_field_vec[0][0]->norm0(0, 0);
+        RT nF1 = m_field_vec[0][1]->norm0(0, 0);
+        RT nF2 = m_field_vec[0][2]->norm0(0, 0);
+        RT normF = std::sqrt(nF0*nF0 + nF1*nF1 + nF2*nF2);
         return normF;
     }
     
