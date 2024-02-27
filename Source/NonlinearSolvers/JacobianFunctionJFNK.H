@@ -28,7 +28,6 @@ class JacobianFunctionJFNK
     inline 
     void precond (T& a_U, const T& a_X)     
     { 
-        //amrex::Print() << "JRA: call to precond() from GMRES " << std::endl;
         if (m_usePreCond) {
             a_U.zero();
             //m_precond->apply(a_U, a_X);
@@ -57,21 +56,19 @@ class JacobianFunctionJFNK
 
     inline 
     void assign(T& a_Z, const T& a_U) { 
-        //amrex::Print() << "JRA: call to assign() from GMRES" << std::endl;
         a_Z = a_U; 
     }
 
     inline 
     void increment(T& a_Z, const T& a_U, const RT a_scale)
     { 
-        //a_Z.increment(a_U,a_scale); 
+        //a_Z.increment(a_U,a_scale);
         a_Z += a_scale*a_U;
     } 
 
     inline 
     void scale (T& a_U, const RT a_scale)
     { 
-        //amrex::Print() << "JRA: call to scale() from GMRES " << std::endl;
         a_U.scale(a_scale); 
     }
     
@@ -91,7 +88,6 @@ class JacobianFunctionJFNK
     inline 
     void setVal (T& a_U, const RT a_val)
     { 
-        //amrex::Print() << "JRA: call to setVal() from GMRES" << std::endl;
         a_U.setVal(a_val);
     }
 
@@ -105,7 +101,6 @@ class JacobianFunctionJFNK
     RT norm2(const T& a_U) 
     { 
         auto r = dotProduct(a_U,a_U);
-        //amrex::Print() << "JRA: call to norm2() from GMRES: norm2 = " << std::sqrt(r) << std::endl;
         return std::sqrt(r); 
     }
     
@@ -213,23 +208,17 @@ void JacobianFunctionJFNK<T,Ops>::define ( const T&     a_U,
 template <class T, class Ops>
 auto JacobianFunctionJFNK<T,Ops>::makeVecRHS () const -> T
 {
-    //amrex::Print() << "JRA: call to makeVecRHS() from GMRES" << std::endl;
     T Vec;
     Vec.Define(m_R);
     return Vec;
-    //return m_linop.make(0, 0, IntVect(0));
 }
 
 template <class T, class Ops>
 auto JacobianFunctionJFNK<T,Ops>::makeVecLHS () const -> T
 {
-    //amrex::Print() << "JRA: call to makeVecLHS() from GMRES" << std::endl;
     T Vec;
     Vec.Define(m_R);
     return Vec;
-    //auto mf = m_linop.make(0, 0, IntVect(1));
-    //mf.setBndry(0);
-    //return mf;
 }
 
 template <class T, class Ops>
@@ -237,7 +226,7 @@ void JacobianFunctionJFNK<T,Ops>::apply (T& a_dF, const T& a_dU)
 {
     BL_PROFILE("JacobianFunctionJFNK::apply()");
     using namespace amrex::literals;
-    RT normY = norm2(a_dU); // JRA, this is always 1. dU vectors in GMRES are scaled by norm2
+    RT normY = norm2(a_dU); // always 1 when called from GMRES
         
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         isDefined(),
@@ -258,26 +247,13 @@ void JacobianFunctionJFNK<T,Ops>::apply (T& a_dF, const T& a_dU)
             else {
                 //eps = m_epsJFNK * std::sqrt(1.0_rt + m_normY0) / normY;
                 eps = m_epsJFNK * m_normY0 / normY;
-                //eps = 1.0e6;
             }
-            //amrex::Print() << "JRA: m_normY0 = " << m_normY0 << std::endl;
-            //amrex::Print() << "JRA: normY    = " << normY << std::endl;
-            //amrex::Print() << "JRA: eps      = " << eps << std::endl;
         }
         const RT eps_inv = 1.0_rt/eps;
 
         m_Z = m_Y0 + eps*a_dU;
         m_ops->PreRHSOp( m_Z, m_cur_time, m_dt, -1, true );
         m_ops->ComputeRHS(m_R, m_Z, m_cur_time, m_dt );
-
-        //double normZ = norm2(m_Z);
-        //double normR0 = norm2(m_R0);
-        //double normR = norm2(m_R);
-        //double normdR = norm2(m_R-m_R0);
-        //amrex::Print() << "JRA: normZ    = " << normZ << std::endl;
-        //amrex::Print() << "JRA: normR0   = " << normR0 << std::endl;
-        //amrex::Print() << "JRA: normR    = " << normR << std::endl;
-        //amrex::Print() << "JRA: norm(R-R0)    = " << normdR << std::endl;
 
         // F(Y) = Y - b - R(Y)
         // dF = dF/dY*dU = [1 - dR/dY]*dU 
