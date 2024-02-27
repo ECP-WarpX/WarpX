@@ -188,6 +188,15 @@ public:
     }
     
     inline
+    void increment (const WarpXSolverVec& X, const amrex::Real a)
+    {
+        for (int n=0; n<3; n++) {
+            amrex::MultiFab::Saxpy( *m_field_vec[0][n], a, *X.getVec()[0][n], 
+                                    0, 0, m_ncomp, amrex::IntVect(0) );
+        }
+    }
+    
+    inline
     void scale (amrex::Real a_a)
     {
         m_field_vec[0][0]->mult(a_a, 0, 1);
