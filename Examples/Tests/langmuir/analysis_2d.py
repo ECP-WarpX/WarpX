@@ -38,6 +38,9 @@ current_correction = True if re.search( 'current_correction', fn ) else False
 # Parse test name and check if Vay current deposition (algo.current_deposition=vay) is used
 vay_deposition = True if re.search( 'Vay_deposition', fn ) else False
 
+# Parse test name and check if particle_shape = 4 is used
+particle_shape_4 = True if re.search('particle_shape_4', fn) else False
+
 # Parameters (these parameters must match the parameters in `inputs.multi.rt`)
 epsilon = 0.01
 n = 4.e24
@@ -114,7 +117,11 @@ ax2.set_title(r'$E_z$ (theory)')
 fig.tight_layout()
 fig.savefig('Langmuir_multi_2d_analysis.png', dpi = 200)
 
-tolerance_rel = 0.05
+if particle_shape_4:
+# lower fidelity, due to smoothing
+    tolerance_rel = 0.07
+else:
+    tolerance_rel = 0.05
 
 print("error_rel    : " + str(error_rel))
 print("tolerance_rel: " + str(tolerance_rel))
