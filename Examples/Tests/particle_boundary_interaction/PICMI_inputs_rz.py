@@ -98,7 +98,7 @@ part_diag = picmi.ParticleDiagnostic(name = 'diag1',
     species = [electrons],
     warpx_format = 'openpmd',
     write_dir = '.',
-    warpx_file_prefix = 'spacecraft_charging_plt'
+    warpx_file_prefix = 'particle_boundary_interaction_plt'
 )
 
 ##########################
