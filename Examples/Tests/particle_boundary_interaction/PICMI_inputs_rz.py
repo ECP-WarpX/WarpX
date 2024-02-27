@@ -130,7 +130,7 @@ sim.initialize_warpx()
 
 def mirror_reflection():
     buffer = particle_containers.ParticleBoundaryBufferWrapper()
-    if (buffer.get_particle_boundary_buffer_size("electrons", 'eb', False)>0): #otherwise np.concatenate doesnt work
+    if (len(buffer.get_particle_boundary_buffer("electrons", 'eb', 'deltaTimeScraped', 0))>0): #otherwise np.concatenate doesnt work
         delta_t = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'deltaTimeScraped', 0))
 
         #step 1: extract the different parameters of the scraping buffer (normal, time, position)
