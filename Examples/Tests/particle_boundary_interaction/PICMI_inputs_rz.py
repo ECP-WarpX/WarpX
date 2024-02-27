@@ -158,6 +158,7 @@ def mirror_reflection():
             w=w,
             unique_particles=args.unique
             )
+        buffer.clear_buffer()
 
 callbacks.installafterstep(mirror_reflection)
 
