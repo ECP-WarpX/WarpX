@@ -473,6 +473,60 @@ MultiParticleContainer::Evolve (int lev,
                    rho, crho, cEx, cEy, cEz, cBx, cBy, cBz, t, dt, a_dt_type, skip_deposition, push_type);
     }
 }
+void
+MultiParticleContainer::Evolve1 (int lev,
+                                const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
+                                const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
+                                MultiFab& jx, MultiFab& jy, MultiFab& jz,
+                                MultiFab* cjx,  MultiFab* cjy, MultiFab* cjz,
+                                MultiFab* rho, MultiFab* crho,
+                                const MultiFab* cEx, const MultiFab* cEy, const MultiFab* cEz,
+                                const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
+                                Real t, Real dt, DtType a_dt_type, bool skip_deposition,
+                                PushType push_type)
+{
+    if (! skip_deposition) {
+        jx.setVal(0.0);
+        jy.setVal(0.0);
+        jz.setVal(0.0);
+        if (cjx) { cjx->setVal(0.0); }
+        if (cjy) { cjy->setVal(0.0); }
+        if (cjz) { cjz->setVal(0.0); }
+        if (rho) { rho->setVal(0.0); }
+        if (crho) { crho->setVal(0.0); }
+    }
+    for (auto& pc : allcontainers) {
+        pc->Evolve1(lev, Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, cjx, cjy, cjz,
+                   rho, crho, cEx, cEy, cEz, cBx, cBy, cBz, t, dt, a_dt_type, skip_deposition, push_type);
+    }
+}
+void
+MultiParticleContainer::Evolve2 (int lev,
+                                const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
+                                const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
+                                MultiFab& jx, MultiFab& jy, MultiFab& jz,
+                                MultiFab* cjx,  MultiFab* cjy, MultiFab* cjz,
+                                MultiFab* rho, MultiFab* crho,
+                                const MultiFab* cEx, const MultiFab* cEy, const MultiFab* cEz,
+                                const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
+                                Real t, Real dt, DtType a_dt_type, bool skip_deposition,
+                                PushType push_type)
+{
+    if (! skip_deposition) {
+        jx.setVal(0.0);
+        jy.setVal(0.0);
+        jz.setVal(0.0);
+        if (cjx) { cjx->setVal(0.0); }
+        if (cjy) { cjy->setVal(0.0); }
+        if (cjz) { cjz->setVal(0.0); }
+        if (rho) { rho->setVal(0.0); }
+        if (crho) { crho->setVal(0.0); }
+    }
+    for (auto& pc : allcontainers) {
+        pc->Evolve2(lev, Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, cjx, cjy, cjz,
+                   rho, crho, cEx, cEy, cEz, cBx, cBy, cBz, t, dt, a_dt_type, skip_deposition, push_type);
+    }
+}
 
 void
 MultiParticleContainer::PushX (Real dt)

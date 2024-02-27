@@ -140,13 +140,13 @@ WarpX::Evolve (int numsteps)
                 is_synchronized = false;
 
             } else {
+                // E and B are up-to-date inside the domain only
+                FillBoundaryE(guard_cells.ng_FieldGather);
+                FillBoundaryB(guard_cells.ng_FieldGather);
                 if (electrostatic_solver_id == ElectrostaticSolverAlgo::None) {
                     // Beyond one step, we have E^{n} and B^{n}.
                     // Particles have p^{n-1/2} and x^{n}.
 
-                    // E and B are up-to-date inside the domain only
-                    FillBoundaryE(guard_cells.ng_FieldGather);
-                    FillBoundaryB(guard_cells.ng_FieldGather);
                     // E and B: enough guard cells to update Aux or call Field Gather in fp and cp
                     // Need to update Aux on lower levels, to interpolate to higher levels.
                     if (fft_do_time_averaging)
@@ -173,9 +173,11 @@ WarpX::Evolve (int numsteps)
         // Run multi-physics modules:
         // ionization, Coulomb collisions, QED
         doFieldIonization();
+        /*
         ExecutePythonCallback("beforecollisions");
         mypc->doCollisions( cur_time, dt[0] );
         ExecutePythonCallback("aftercollisions");
+        */
 #ifdef WARPX_QED
         doQEDEvents();
         mypc->doQEDSchwinger();
@@ -196,7 +198,11 @@ WarpX::Evolve (int numsteps)
             // Electrostatic or hybrid-PIC case: only gather fields and push
             // particles, deposition and calculation of fields done further below
             const bool skip_deposition = true;
-            PushParticlesandDeposit(cur_time, skip_deposition);
+            PushParticlesandDeposit1(cur_time, skip_deposition);
+            ExecutePythonCallback("beforecollisions");
+            mypc->doCollisions( cur_time, dt[0] );
+            ExecutePythonCallback("aftercollisions");
+            PushParticlesandDeposit2(cur_time, skip_deposition);
         }
         // Electromagnetic case: multi-J algorithm
         else if (do_multi_J)
@@ -206,7 +212,12 @@ WarpX::Evolve (int numsteps)
         // Electromagnetic case: no subcycling or no mesh refinement
         else if (do_subcycling == 0 || finest_level == 0)
         {
-            OneStep_nosub(cur_time);
+            /*OneStep_nosub(cur_time);*/
+            OneStep_nosub1(cur_time);
+            ExecutePythonCallback("beforecollisions");
+            mypc->doCollisions( cur_time, dt[0] );
+            ExecutePythonCallback("aftercollisions");
+            OneStep_nosub2(cur_time);
             // E: guard cells are up-to-date
             // B: guard cells are NOT up-to-date
             // F: guard cells are NOT up-to-date
@@ -436,6 +447,132 @@ WarpX::OneStep_nosub (Real cur_time)
     ExecutePythonCallback("beforedeposition");
 
     PushParticlesandDeposit(cur_time);
+
+    ExecutePythonCallback("afterdeposition");
+
+    // Synchronize J and rho:
+    // filter (if used), exchange guard cells, interpolate across MR levels
+    // and apply boundary conditions
+    SyncCurrentAndRho();
+
+    // At this point, J is up-to-date inside the domain, and E and B are
+    // up-to-date including enough guard cells for first step of the field
+    // solve.
+
+    // For extended PML: copy J from regular grid to PML, and damp J in PML
+    if (do_pml && pml_has_particles) { CopyJPML(); }
+    if (do_pml && do_pml_j_damping) { DampJPML(); }
+
+    ExecutePythonCallback("beforeEsolve");
+
+    // Push E and B from {n} to {n+1}
+    // (And update guard cells immediately afterwards)
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
+        if (use_hybrid_QED)
+        {
+            WarpX::Hybrid_QED_Push(dt);
+            FillBoundaryE(guard_cells.ng_alloc_EB);
+        }
+        PushPSATD();
+
+        if (do_pml) {
+            DampPML();
+        }
+
+        if (use_hybrid_QED) {
+            FillBoundaryE(guard_cells.ng_alloc_EB);
+            FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+            WarpX::Hybrid_QED_Push(dt);
+            FillBoundaryE(guard_cells.ng_afterPushPSATD, WarpX::sync_nodal_points);
+        }
+        else {
+            FillBoundaryE(guard_cells.ng_afterPushPSATD, WarpX::sync_nodal_points);
+            FillBoundaryB(guard_cells.ng_afterPushPSATD, WarpX::sync_nodal_points);
+            if (WarpX::do_dive_cleaning || WarpX::do_pml_dive_cleaning) {
+                FillBoundaryF(guard_cells.ng_alloc_F, WarpX::sync_nodal_points);
+            }
+            if (WarpX::do_divb_cleaning || WarpX::do_pml_divb_cleaning) {
+                FillBoundaryG(guard_cells.ng_alloc_G, WarpX::sync_nodal_points);
+            }
+        }
+    } else {
+        EvolveF(0.5_rt * dt[0], DtType::FirstHalf);
+        EvolveG(0.5_rt * dt[0], DtType::FirstHalf);
+        FillBoundaryF(guard_cells.ng_FieldSolverF);
+        FillBoundaryG(guard_cells.ng_FieldSolverG);
+
+        EvolveB(0.5_rt * dt[0], DtType::FirstHalf); // We now have B^{n+1/2}
+        FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+
+        if (WarpX::em_solver_medium == MediumForEM::Vacuum) {
+            // vacuum medium
+            EvolveE(dt[0]); // We now have E^{n+1}
+        } else if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
+            // macroscopic medium
+            MacroscopicEvolveE(dt[0]); // We now have E^{n+1}
+        } else {
+            WARPX_ABORT_WITH_MESSAGE("Medium for EM is unknown");
+        }
+        FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+
+        EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
+        EvolveG(0.5_rt * dt[0], DtType::SecondHalf);
+        EvolveB(0.5_rt * dt[0], DtType::SecondHalf); // We now have B^{n+1}
+
+        if (do_pml) {
+            DampPML();
+            FillBoundaryE(guard_cells.ng_MovingWindow, WarpX::sync_nodal_points);
+            FillBoundaryB(guard_cells.ng_MovingWindow, WarpX::sync_nodal_points);
+            FillBoundaryF(guard_cells.ng_MovingWindow, WarpX::sync_nodal_points);
+            FillBoundaryG(guard_cells.ng_MovingWindow, WarpX::sync_nodal_points);
+        }
+
+        // E and B are up-to-date in the domain, but all guard cells are
+        // outdated.
+        if (safe_guard_cells) {
+            FillBoundaryB(guard_cells.ng_alloc_EB);
+        }
+    } // !PSATD
+
+    ExecutePythonCallback("afterEsolve");
+}
+
+/* /brief Perform one PIC iteration, without subcycling
+*  i.e. all levels/patches use the same timestep (that of the finest level)
+*  for the field advance and particle pusher.
+*/
+void
+WarpX::OneStep_nosub1 (Real cur_time)
+{
+    WARPX_PROFILE("WarpX::OneStep_nosub()");
+
+    // Push particle from x^{n} to x^{n+1}
+    //               from p^{n-1/2} to p^{n+1/2}
+    // Deposit current j^{n+1/2}
+    // Deposit charge density rho^{n}
+
+    ExecutePythonCallback("particlescraper");
+    ExecutePythonCallback("beforedeposition");
+
+    PushParticlesandDeposit1(cur_time);
+
+}
+
+/* /brief Perform one PIC iteration, without subcycling
+*  i.e. all levels/patches use the same timestep (that of the finest level)
+*  for the field advance and particle pusher.
+*/
+void
+WarpX::OneStep_nosub2 (Real cur_time)
+{
+    WARPX_PROFILE("WarpX::OneStep_nosub()");
+
+    // Push particle from x^{n} to x^{n+1}
+    //               from p^{n-1/2} to p^{n+1/2}
+    // Deposit current j^{n+1/2}
+    // Deposit charge density rho^{n}
+
+    PushParticlesandDeposit2(cur_time);
 
     ExecutePythonCallback("afterdeposition");
 
@@ -980,6 +1117,24 @@ WarpX::PushParticlesandDeposit (amrex::Real cur_time, bool skip_current, PushTyp
         PushParticlesandDeposit(lev, cur_time, DtType::Full, skip_current, push_type);
     }
 }
+void
+WarpX::PushParticlesandDeposit1 (amrex::Real cur_time, bool skip_current, PushType push_type)
+{
+    // Evolve particles to p^{n+1/2} and x^{n+1}
+    // Deposit current, j^{n+1/2}
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        PushParticlesandDeposit1(lev, cur_time, DtType::Full, skip_current, push_type);
+    }
+}
+void
+WarpX::PushParticlesandDeposit2 (amrex::Real cur_time, bool skip_current, PushType push_type)
+{
+    // Evolve particles to p^{n+1/2} and x^{n+1}
+    // Deposit current, j^{n+1/2}
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        PushParticlesandDeposit2(lev, cur_time, DtType::Full, skip_current, push_type);
+    }
+}
 
 void
 WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type, bool skip_current,
@@ -1046,6 +1201,82 @@ WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type,
                          rho_fp[lev].get(), *current_x, *current_y, *current_z, cur_time, skip_current);
         }
     }
+}
+void
+WarpX::PushParticlesandDeposit1 (int lev, amrex::Real cur_time, DtType a_dt_type, bool skip_current,
+                               PushType push_type)
+{
+    amrex::MultiFab* current_x = nullptr;
+    amrex::MultiFab* current_y = nullptr;
+    amrex::MultiFab* current_z = nullptr;
+
+    if (WarpX::do_current_centering)
+    {
+        current_x = current_fp_nodal[lev][0].get();
+        current_y = current_fp_nodal[lev][1].get();
+        current_z = current_fp_nodal[lev][2].get();
+    }
+    else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
+    {
+        // Note that Vay deposition is supported only for PSATD and the code currently aborts otherwise
+        current_x = current_fp_vay[lev][0].get();
+        current_y = current_fp_vay[lev][1].get();
+        current_z = current_fp_vay[lev][2].get();
+    }
+    else
+    {
+        current_x = current_fp[lev][0].get();
+        current_y = current_fp[lev][1].get();
+        current_z = current_fp[lev][2].get();
+    }
+
+    mypc->Evolve1(lev,
+                 *Efield_aux[lev][0], *Efield_aux[lev][1], *Efield_aux[lev][2],
+                 *Bfield_aux[lev][0], *Bfield_aux[lev][1], *Bfield_aux[lev][2],
+                 *current_x, *current_y, *current_z,
+                 current_buf[lev][0].get(), current_buf[lev][1].get(), current_buf[lev][2].get(),
+                 rho_fp[lev].get(), charge_buf[lev].get(),
+                 Efield_cax[lev][0].get(), Efield_cax[lev][1].get(), Efield_cax[lev][2].get(),
+                 Bfield_cax[lev][0].get(), Bfield_cax[lev][1].get(), Bfield_cax[lev][2].get(),
+                 cur_time, dt[lev], a_dt_type, skip_current, push_type);
+}
+void
+WarpX::PushParticlesandDeposit2 (int lev, amrex::Real cur_time, DtType a_dt_type, bool skip_current,
+                               PushType push_type)
+{
+    amrex::MultiFab* current_x = nullptr;
+    amrex::MultiFab* current_y = nullptr;
+    amrex::MultiFab* current_z = nullptr;
+
+    if (WarpX::do_current_centering)
+    {
+        current_x = current_fp_nodal[lev][0].get();
+        current_y = current_fp_nodal[lev][1].get();
+        current_z = current_fp_nodal[lev][2].get();
+    }
+    else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
+    {
+        // Note that Vay deposition is supported only for PSATD and the code currently aborts otherwise
+        current_x = current_fp_vay[lev][0].get();
+        current_y = current_fp_vay[lev][1].get();
+        current_z = current_fp_vay[lev][2].get();
+    }
+    else
+    {
+        current_x = current_fp[lev][0].get();
+        current_y = current_fp[lev][1].get();
+        current_z = current_fp[lev][2].get();
+    }
+
+    mypc->Evolve2(lev,
+                 *Efield_aux[lev][0], *Efield_aux[lev][1], *Efield_aux[lev][2],
+                 *Bfield_aux[lev][0], *Bfield_aux[lev][1], *Bfield_aux[lev][2],
+                 *current_x, *current_y, *current_z,
+                 current_buf[lev][0].get(), current_buf[lev][1].get(), current_buf[lev][2].get(),
+                 rho_fp[lev].get(), charge_buf[lev].get(),
+                 Efield_cax[lev][0].get(), Efield_cax[lev][1].get(), Efield_cax[lev][2].get(),
+                 Bfield_cax[lev][0].get(), Bfield_cax[lev][1].get(), Bfield_cax[lev][2].get(),
+                 cur_time, dt[lev], a_dt_type, skip_current, push_type);
 }
 
 /* \brief Apply perfect mirror condition inside the box (not at a boundary).

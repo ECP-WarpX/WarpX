@@ -700,6 +700,299 @@ LaserParticleContainer::Evolve (int lev,
 }
 
 void
+LaserParticleContainer::Evolve1 (int lev,
+                                const MultiFab&, const MultiFab&, const MultiFab&,
+                                const MultiFab&, const MultiFab&, const MultiFab&,
+                                MultiFab& jx, MultiFab& jy, MultiFab& jz,
+                                MultiFab* cjx, MultiFab* cjy, MultiFab* cjz,
+                                MultiFab* rho, MultiFab* crho,
+                                const MultiFab*, const MultiFab*, const MultiFab*,
+                                const MultiFab*, const MultiFab*, const MultiFab*,
+                                Real t, Real dt, DtType /*a_dt_type*/, bool skip_deposition, PushType push_type)
+{
+    WARPX_PROFILE("LaserParticleContainer::Evolve()");
+    WARPX_PROFILE_VAR_NS("LaserParticleContainer::Evolve::ParticlePush", blp_pp);
+
+    if (!m_enabled) { return; }
+
+    Real t_lab = t;
+    if (WarpX::gamma_boost > 1) {
+        // Convert time from the boosted to the lab-frame
+        // (in order to later calculate the amplitude of the field,
+        // at the position of the antenna, in the lab-frame)
+        t_lab = 1._rt/WarpX::gamma_boost*t + WarpX::beta_boost*m_Z0_lab/PhysConst::c;
+    }
+
+    // Update laser profile
+    m_up_laser_profile->update(t_lab);
+
+    BL_ASSERT(OnSameGrids(lev,jx));
+
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+
+    const bool has_buffer = cjx;
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    {
+#ifdef AMREX_USE_OMP
+        int const thread_num = omp_get_thread_num();
+#else
+        int const thread_num = 0;
+#endif
+
+        Gpu::DeviceVector<Real> plane_Xp, plane_Yp, amplitude_E;
+
+        for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
+        {
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+            }
+            Real wt = static_cast<Real>(amrex::second());
+
+            auto& attribs = pti.GetAttribs();
+
+            auto&  wp = attribs[PIdx::w ];
+            auto& uxp = attribs[PIdx::ux];
+            auto& uyp = attribs[PIdx::uy];
+            auto& uzp = attribs[PIdx::uz];
+
+            const long np  = pti.numParticles();
+            plane_Xp.resize(np);
+            plane_Yp.resize(np);
+            amplitude_E.resize(np);
+
+            // Determine whether particles will deposit on the fine or coarse level
+            long np_current = np;
+            if (lev > 0 && m_deposit_on_main_grid && has_buffer) {
+                np_current = 0;
+            }
+
+            if (rho && ! skip_deposition && ! do_not_deposit) {
+                int* AMREX_RESTRICT ion_lev = nullptr;
+                DepositCharge(pti, wp, ion_lev, rho, 0, 0,
+                              np_current, thread_num, lev, lev);
+                if (has_buffer) {
+                    DepositCharge(pti, wp, ion_lev, crho, 0, np_current,
+                                  np-np_current, thread_num, lev, lev-1);
+                }
+            }
+
+            //
+            // Particle Push
+            //
+            WARPX_PROFILE_VAR_START(blp_pp);
+            // Find the coordinates of the particles in the emission plane
+            calculate_laser_plane_coordinates(pti, static_cast<int>(np),
+                                              plane_Xp.dataPtr(),
+                                              plane_Yp.dataPtr());
+
+            // Calculate the laser amplitude to be emitted,
+            // at the position of the emission plane
+            m_up_laser_profile->fill_amplitude(
+                static_cast<int>(np), plane_Xp.dataPtr(), plane_Yp.dataPtr(),
+                t_lab, amplitude_E.dataPtr());
+
+            // Calculate the corresponding momentum and position for the particles
+            update_laser_particle(pti, static_cast<int>(np), uxp.dataPtr(), uyp.dataPtr(),
+                                  uzp.dataPtr(), wp.dataPtr(),
+                                  amplitude_E.dataPtr(), dt);
+            WARPX_PROFILE_VAR_STOP(blp_pp);
+
+            // Current Deposition
+            if (!skip_deposition)
+            {
+                // Deposit at t_{n+1/2}
+                const amrex::Real relative_time = -0.5_rt * dt;
+
+                int* ion_lev = nullptr;
+                // Deposit inside domains
+                DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
+                               0, np_current, thread_num,
+                               lev, lev, dt, relative_time, push_type);
+
+                if (has_buffer)
+                {
+                    // Deposit in buffers
+                    DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
+                                   np_current, np-np_current, thread_num,
+                                   lev, lev-1, dt, relative_time, push_type);
+                }
+            }
+
+
+            if (rho && ! skip_deposition && ! do_not_deposit) {
+                int* AMREX_RESTRICT ion_lev = nullptr;
+                DepositCharge(pti, wp, ion_lev, rho, 1, 0,
+                              np_current, thread_num, lev, lev);
+                if (has_buffer) {
+                    DepositCharge(pti, wp, ion_lev, crho, 1, np_current,
+                                  np-np_current, thread_num, lev, lev-1);
+                }
+            }
+
+            // This is necessary because of plane_Xp, plane_Yp and amplitude_E
+            amrex::Gpu::synchronize();
+
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                wt = static_cast<Real>(amrex::second()) - wt;
+                amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
+            }
+        }
+    }
+}
+
+void
+LaserParticleContainer::Evolve2 (int lev,
+                                const MultiFab&, const MultiFab&, const MultiFab&,
+                                const MultiFab&, const MultiFab&, const MultiFab&,
+                                MultiFab& jx, MultiFab& jy, MultiFab& jz,
+                                MultiFab* cjx, MultiFab* cjy, MultiFab* cjz,
+                                MultiFab* rho, MultiFab* crho,
+                                const MultiFab*, const MultiFab*, const MultiFab*,
+                                const MultiFab*, const MultiFab*, const MultiFab*,
+                                Real t, Real dt, DtType /*a_dt_type*/, bool skip_deposition, PushType push_type)
+{
+    WARPX_PROFILE("LaserParticleContainer::Evolve()");
+    WARPX_PROFILE_VAR_NS("LaserParticleContainer::Evolve::ParticlePush", blp_pp);
+
+    if (!m_enabled) { return; }
+
+    Real t_lab = t;
+    if (WarpX::gamma_boost > 1) {
+        // Convert time from the boosted to the lab-frame
+        // (in order to later calculate the amplitude of the field,
+        // at the position of the antenna, in the lab-frame)
+        t_lab = 1._rt/WarpX::gamma_boost*t + WarpX::beta_boost*m_Z0_lab/PhysConst::c;
+    }
+
+    // Update laser profile
+    m_up_laser_profile->update(t_lab);
+
+    BL_ASSERT(OnSameGrids(lev,jx));
+
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+
+    const bool has_buffer = cjx;
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    {
+#ifdef AMREX_USE_OMP
+        int const thread_num = omp_get_thread_num();
+#else
+        int const thread_num = 0;
+#endif
+
+        Gpu::DeviceVector<Real> plane_Xp, plane_Yp, amplitude_E;
+
+        for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
+        {
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+            }
+            Real wt = static_cast<Real>(amrex::second());
+
+            auto& attribs = pti.GetAttribs();
+
+            auto&  wp = attribs[PIdx::w ];
+            auto& uxp = attribs[PIdx::ux];
+            auto& uyp = attribs[PIdx::uy];
+            auto& uzp = attribs[PIdx::uz];
+
+            const long np  = pti.numParticles();
+            plane_Xp.resize(np);
+            plane_Yp.resize(np);
+            amplitude_E.resize(np);
+
+            // Determine whether particles will deposit on the fine or coarse level
+            long np_current = np;
+            if (lev > 0 && m_deposit_on_main_grid && has_buffer) {
+                np_current = 0;
+            }
+
+            if (rho && ! skip_deposition && ! do_not_deposit) {
+                int* AMREX_RESTRICT ion_lev = nullptr;
+                DepositCharge(pti, wp, ion_lev, rho, 0, 0,
+                              np_current, thread_num, lev, lev);
+                if (has_buffer) {
+                    DepositCharge(pti, wp, ion_lev, crho, 0, np_current,
+                                  np-np_current, thread_num, lev, lev-1);
+                }
+            }
+
+            //
+            // Particle Push
+            //
+            WARPX_PROFILE_VAR_START(blp_pp);
+            // Find the coordinates of the particles in the emission plane
+            calculate_laser_plane_coordinates(pti, static_cast<int>(np),
+                                              plane_Xp.dataPtr(),
+                                              plane_Yp.dataPtr());
+
+            // Calculate the laser amplitude to be emitted,
+            // at the position of the emission plane
+            m_up_laser_profile->fill_amplitude(
+                static_cast<int>(np), plane_Xp.dataPtr(), plane_Yp.dataPtr(),
+                t_lab, amplitude_E.dataPtr());
+
+            // Calculate the corresponding momentum and position for the particles
+            update_laser_particle(pti, static_cast<int>(np), uxp.dataPtr(), uyp.dataPtr(),
+                                  uzp.dataPtr(), wp.dataPtr(),
+                                  amplitude_E.dataPtr(), dt);
+            WARPX_PROFILE_VAR_STOP(blp_pp);
+
+            // Current Deposition
+            if (!skip_deposition)
+            {
+                // Deposit at t_{n+1/2}
+                const amrex::Real relative_time = -0.5_rt * dt;
+
+                int* ion_lev = nullptr;
+                // Deposit inside domains
+                DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
+                               0, np_current, thread_num,
+                               lev, lev, dt, relative_time, push_type);
+
+                if (has_buffer)
+                {
+                    // Deposit in buffers
+                    DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
+                                   np_current, np-np_current, thread_num,
+                                   lev, lev-1, dt, relative_time, push_type);
+                }
+            }
+
+
+            if (rho && ! skip_deposition && ! do_not_deposit) {
+                int* AMREX_RESTRICT ion_lev = nullptr;
+                DepositCharge(pti, wp, ion_lev, rho, 1, 0,
+                              np_current, thread_num, lev, lev);
+                if (has_buffer) {
+                    DepositCharge(pti, wp, ion_lev, crho, 1, np_current,
+                                  np-np_current, thread_num, lev, lev-1);
+                }
+            }
+
+            // This is necessary because of plane_Xp, plane_Yp and amplitude_E
+            amrex::Gpu::synchronize();
+
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                wt = static_cast<Real>(amrex::second()) - wt;
+                amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
+            }
+        }
+    }
+}
+
+
+void
 LaserParticleContainer::PostRestart ()
 {
     if (!m_enabled) { return; }
