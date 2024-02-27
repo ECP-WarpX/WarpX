@@ -15,7 +15,7 @@ warpx.use_filter = 0
 ############ CONSTANTS #############
 #################################
 
-my_constants.n0 = 1.e30          # plasma densirty, m^-3
+my_constants.n0 = 1.e30          # plasma density, m^-3
 my_constants.Ti = 100.           # ion temperature, eV
 my_constants.Te = 100.           # electron temperature, eV
 my_constants.wpe = q_e*sqrt(n0/(m_e*epsilon0))  # electron plasma frequency, radians/s
@@ -29,16 +29,14 @@ warpx.const_dt = dt
 geometry.dims = 2
 geometry.prob_lo = 0.0 0.0
 geometry.prob_hi = 10.*de0 10.*de0
+
+#################################
+###### BOUNDARY CONDITIONS ######
+#################################
 boundary.field_lo = periodic periodic
 boundary.field_hi = periodic periodic
 boundary.particle_lo = periodic periodic
 boundary.particle_hi = periodic periodic
-
-#################################
-####### Boundary condition ######
-#################################
-boundary.field_lo = periodic periodic
-boundary.field_hi = periodic periodic
 
 #################################
 ############ NUMERICS ###########
