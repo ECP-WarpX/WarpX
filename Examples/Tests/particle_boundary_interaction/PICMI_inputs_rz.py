@@ -5,7 +5,9 @@
 # --- of one electron on the surface of a sphere.
 
 import argparse
+
 import numpy as np
+
 from pywarpx import callbacks, particle_containers, picmi
 
 # Create the parser and add the argument
@@ -130,7 +132,7 @@ def mirror_reflection():
     buffer = particle_containers.ParticleBoundaryBufferWrapper()
     if (buffer.get_particle_boundary_buffer_size("electrons", 'eb', False)>0): #otherwise np.concatenate doesnt work
         delta_t = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'deltaTimeScraped', 0))
-      
+
         #step 1: extract the different parameters of the scraping buffer (normal, time, position)
         r = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'x', 0))
         theta = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'theta', 0))
@@ -147,12 +149,12 @@ def mirror_reflection():
 
         #step 2: use these parameters to inject from the same position electrons in the plasma
         elect_pc = particle_containers.ParticleContainerWrapper('electrons')
-        un=ux*nx+uy*ny+uz*nz 
+        un=ux*nx+uy*ny+uz*nz
         ux_reflect=-2*un*nx+ux #for a "mirror reflection" u(sym)=-2(u.n)n+u
         uy_reflect=-2*un*ny+uy
         uz_reflect=-2*un*nz+uz
         elect_pc.add_particles(
-            x=x + (dt-delta_t)*ux_reflect, y=y + (dt-delta_t)*uy_reflect, z=z + (dt-delta_t)*uz_reflect, ux=ux_reflect, uy=uy_reflect, uz=uz_reflect, 
+            x=x + (dt-delta_t)*ux_reflect, y=y + (dt-delta_t)*uy_reflect, z=z + (dt-delta_t)*uz_reflect, ux=ux_reflect, uy=uy_reflect, uz=uz_reflect,
             w=w,
             unique_particles=args.unique
             )
