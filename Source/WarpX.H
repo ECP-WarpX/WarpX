@@ -124,8 +124,8 @@ public:
     void EvolveImplicitPicardInit (int lev);
     void SaveParticlesAtImplicitStepStart (WarpXParticleContainer& pc, int lev);
     void FinishImplicitParticleUpdate (WarpXParticleContainer& pc, int lev);
-    void FinishImplicitFieldUpdate(amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Efield_fp,
-                                   amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Efield_n);
+    void FinishImplicitFieldUpdate (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Efield_fp,
+                                    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Efield_n);
 
     MultiParticleContainer& GetPartContainer () { return *mypc; }
     MultiFluidContainer& GetFluidContainer () { return *myfl; }
