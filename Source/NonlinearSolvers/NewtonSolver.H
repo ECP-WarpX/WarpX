@@ -115,15 +115,15 @@ void NewtonSolver<Vec,Ops>::Define ( const Vec&  a_U,
         "Newton nonlinear solver object is already defined!");
 
     /* default */
-    m_rtol = 1e-6;
-    m_atol = 1e-12;
-    m_maxits = 11;
+    m_rtol = 1.0e-6;
+    m_atol = 0.0;
+    m_maxits = 100;
     m_verbose = true;
     m_require_convergence = true;
     
     m_gmres_verbose_int = 0;
-    m_gmres_rtol = 1e-4;
-    m_gmres_atol = 1e-8;
+    m_gmres_rtol = 1.0e-4;
+    m_gmres_atol = 0.0;
     m_gmres_maxits = 1000;
   
     ParseParameters();

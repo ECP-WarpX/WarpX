@@ -77,9 +77,9 @@ void PicardSolver<Vec,Ops>::Define ( const Vec&  a_U,
         "Picard nonlinear solver object is already defined!");
 
     /* default */
-    m_rtol = 1e-6;
-    m_atol = 1e-12;
-    m_maxits = 11;
+    m_rtol = 1.0e-6;
+    m_atol = 0.0;
+    m_maxits = 100;
     m_verbose = true;
     m_require_convergence = true;
   
@@ -153,7 +153,7 @@ void PicardSolver<Vec,Ops>::Solve ( Vec&         a_U,
                            << std::scientific << std::setprecision(5) << norm_rel << " (rel.)" << "\n";
         }
 
-        if (norm_abs < m_rtol) {
+        if (norm_abs < m_atol) {
             amrex::Print() << "Picard: exiting at iter = " << std::setw(3) << iter 
                            << ". Satisfied absolute tolerance " << m_atol << std::endl;
             break;
