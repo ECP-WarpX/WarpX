@@ -52,7 +52,7 @@ proton.single_particle_weight = 1.
 algo.particle_shape = 1
 
 # Diagnostics
-diagnostics.diags_names = plt
-plt.intervals = 300
-plt.diag_type = Full
-plt.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz
+diagnostics.diags_names = diag1
+diag1.intervals = 300
+diag1.diag_type = Full
+diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz
