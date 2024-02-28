@@ -1,6 +1,27 @@
-
 #include "SemiImplicitEM.H"
 #include "WarpX.H"
+
+/*
+ *  Electromagnetic semi-implicit time solver class. The electric field and the
+ *  particles are implicitly coupled in this algorithm, but the magnetic field
+ *  is advanced in the standard explicit leap-frog manner (hence semi-implicit).
+ *
+ *  The time stencil is
+ *  Eg^{n+1} = Eg^{n} + c^2*dt*( curlBg^{n+1/2} - mu0*Jg^{n+1/2} )
+ *  Bg^{n+3/2} = Bg^{n+1/2} - dt*curlEg^{n+1}
+ *  xp^{n+1} = xp^n + dt*up^{n+1/2}/(gammap^n + gammap^{n+1})
+ *  up^{n+1} = up^n + dt*qp/mp*(Ep^{n+1/2} + up^{n+1/2}/gammap^{n+1/2} x Bp^{n+1/2})
+ *  where f^{n+1/2} = (f^{n} + f^{n+1})/2.0, for all but Bg, which lives at half steps
+ *  
+ *  This algorithm is approximately energy conserving. The violation in energy conservation
+ *  is typically negligible. The advantage of this method over the exactly energy-conserving 
+ *  theta-implicit EM method is that light wave dispersion is captured much better. However, 
+ *  the CFL condition for light waves does have to be satisifed for numerical stability.
+ *
+ *  See G. Chen, L. Chacon, L. Yin, B.J. Albright, D.J. Stark, R.F. Bird, 
+ *  "A semi-implicit energy- and charge-conserving particle-in-cell algorithm for the
+ *  relativistic Vlasov-Maxwell equations.", JCP 407 (2020).
+ */
 
 void SemiImplicitEM::Define ( WarpX* const  a_WarpX )
 {

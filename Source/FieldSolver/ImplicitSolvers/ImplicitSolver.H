@@ -8,9 +8,8 @@
 
 /*
  * Base class for implicit solvers. The base functions are those
- * needed by an implicit solver to be used in WarpX::Evolve()
- * and to be able to use the nonlinear solvers, such as Picard 
- * or Newton.
+ * needed by an implicit solver to be used through WarpX and those
+ * needed to use the nonlinear solvers, such as Picard or Newton.
  */
 
 class WarpX;
