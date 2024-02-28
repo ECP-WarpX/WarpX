@@ -3067,6 +3067,9 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
     int qed_runtime_flag = no_qed;
 #endif
 
+    const int max_iterations = WarpX::max_particle_iterations;
+    const amrex::ParticleReal particle_tolerance = WarpX::particle_tolerance;
+
     // Using this version of ParallelFor with compile time options
     // improves performance when qed or external EB are not used by reducing
     // register pressure.
@@ -3099,12 +3102,12 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
         amrex::ParticleReal dxp, dxp_save;
         amrex::ParticleReal dyp, dyp_save;
         amrex::ParticleReal dzp, dzp_save;
-        amrex::ParticleReal dxp0 = static_cast<amrex::ParticleReal>(dx[0]);
-        amrex::ParticleReal dyp0 = static_cast<amrex::ParticleReal>(dx[1]);
-        amrex::ParticleReal dzp0 = static_cast<amrex::ParticleReal>(dx[2]);
+        const amrex::ParticleReal dxg = static_cast<amrex::ParticleReal>(dx[0]);
+        const amrex::ParticleReal dyg = static_cast<amrex::ParticleReal>(dx[1]);
+        const amrex::ParticleReal dzg = static_cast<amrex::ParticleReal>(dx[2]);
 
-        bool converged = false;
-        for (int iter=0; iter<WarpX::max_particle_iterations; iter++) {
+        amrex::ParticleReal step_norm = 1._prt;
+        for (int iter=0; iter<max_iterations;) {
         
             dxp = 0.0;
             dyp = 0.0;
@@ -3119,10 +3122,10 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
             zp = zp_n + dzp;
             setPosition(ip, xp, yp, zp);
             
-            converged = ParticleIsConverged( dxp, dyp, dzp, dxp_save, dyp_save, dzp_save, 
-                                             dxp0, dyp0, dzp0, WarpX::particle_tolerance, iter );
-            if(converged) { break; }
-        
+            PositionNorm( dxp, dyp, dzp, dxp_save, dyp_save, dzp_save,
+                          dxg, dyg, dzg, step_norm, iter );
+            if( step_norm < particle_tolerance ) { break; }
+ 
             amrex::ParticleReal Exp = Ex_external_particle;
             amrex::ParticleReal Eyp = Ey_external_particle;
             amrex::ParticleReal Ezp = Ez_external_particle;
@@ -3202,6 +3205,18 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
             ux[ip] = 0.5_rt*(ux[ip] + ux_n[ip]);
             uy[ip] = 0.5_rt*(uy[ip] + uy_n[ip]);
             uz[ip] = 0.5_rt*(uz[ip] + uz_n[ip]);
+ 
+            iter++;
+            if ( iter > 1 && iter == max_iterations ) { // does this work on GPU?
+                std::stringstream convergenceMsg;
+                convergenceMsg << "Picard solver for particle failed to converge after " <<
+                          iter << " iterations. " << std::endl;
+                convergenceMsg << "Position step norm is " << step_norm <<
+                         " and the tolerance is " << particle_tolerance << std::endl;
+                convergenceMsg << " ux = " << ux[ip] << ", uy = " << uy[ip] << ", uz = " << uz[ip] << std::endl;
+                convergenceMsg << " xp = " << xp     << ", yp = " << yp     << ", zp = " << zp;
+                ablastr::warn_manager::WMRecordWarning("ImplicitPushXP", convergenceMsg.str());
+            }
 
         } // end Picard iterations
 
