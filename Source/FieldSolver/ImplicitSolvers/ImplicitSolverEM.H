@@ -6,7 +6,6 @@
 
 #include <AMReX_Array.H>
 #include <AMReX_MultiFab.H>
-#include <AMReX_iMultiFab.H>
 #include <AMReX_REAL.H>
 
 #include "ImplicitSolver.H"
@@ -67,11 +66,6 @@ public:
 
     amrex::Real theta () const { return m_theta; }
 
-    amrex::Real dotProduct ( const WarpXSolverVec& a_X, 
-                             const WarpXSolverVec& a_Y ) const;
-
-    amrex::Real norm ( const WarpXSolverVec& a_X ) const; 
-
 private:
 
     bool m_is_defined;
@@ -89,11 +83,6 @@ private:
 
     WarpXSolverVec m_E, m_Eold;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_Bold;
-    
-    bool m_dot_mask_defined = false;
-    amrex::Vector<std::array<std::unique_ptr<amrex::iMultiFab>,3>> m_dotMask;
-    
-    void SetDotMask( const WarpXSolverVec&  a_E );
     
     void UpdateWarpXState ( const WarpXSolverVec&  a_E,
                             const amrex::Real      a_time,

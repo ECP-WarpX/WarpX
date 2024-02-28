@@ -94,14 +94,13 @@ class JacobianFunctionJFNK
     inline 
     RT dotProduct( const T& a_X, const T& a_Y)
     { 
-        return( m_ops->dotProduct(a_X, a_Y) ); 
+        return( a_X.dotProduct(a_Y) ); 
     }
 
     inline 
     RT norm2(const T& a_U) 
     { 
-        auto r = dotProduct(a_U,a_U);
-        return std::sqrt(r); 
+        return ( a_U.norm2() ); 
     }
     
     inline 

@@ -141,34 +141,6 @@ void NewtonSolver<Vec,Ops>::Define ( const Vec&  a_U,
     m_linear_solver->define(*m_linear_function);
     m_linear_solver->setVerbose( m_gmres_verbose_int );
 
-    //
-    // JRA, below is used to test GMRES, and linOp functions defined in JacobianFunctionJFNK
-    //
-    /*
-    m_linear_solver->solve(m_dU,m_F,m_gmres_rtol,m_gmres_atol,m_gmres_maxits);
-    
-    JacobianFunctionJFNK<Vec,Ops> linOp;
-    linOp.define(m_F,m_ops);
-    m_F.setVal(1.0);
-    m_dU.setVal(1.0);
-    //const amrex::Real dotProd = linOp.dotProduct(m_F,m_dU);
-    const amrex::Real dotProd = m_ops->dotProduct(m_F,m_dU);
-    amrex::Print() << " JRA: dotProduct = " << dotProd << std::endl;
-    m_dU.setVal(1.0);
-    linOp.increment(m_F,m_dU,2.0);
-    const amrex::Real dotProd2 = linOp.dotProduct(m_F,m_dU);
-    amrex::Print() << " JRA: dotProduct2 = " << dotProd2 << std::endl;
-
-    int gmres_iter, gmres_stat;
-    gmres_iter = m_linear_solver->getNumIters();
-    gmres_stat = m_linear_solver->getStatus();
-    amrex::Print() << "JRA: gmres_iter = " << gmres_iter << std::endl;
-    amrex::Print() << "JRA: gmres_stat = " << gmres_stat << std::endl;
-    */
-    //
-    //
-    //
-
     m_is_defined = true;
 
 }
@@ -217,7 +189,7 @@ void NewtonSolver<Vec,Ops>::Solve ( Vec&         a_U,
         EvalResidual(m_F, a_U, a_b, a_time, a_dt, its);
         
         // Compute norm of the residual
-        norm_abs = m_ops->norm(m_F);
+        norm_abs = m_F.norm2();
         if (its == 0) {
             if (norm_abs > 0.) { norm0 = norm_abs; }
             else { norm0 = 1._rt; }

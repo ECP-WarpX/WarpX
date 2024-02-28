@@ -138,7 +138,7 @@ void PicardSolver<Vec,Ops>::Solve ( Vec&         a_U,
         
         // Compute the step norm and update iter
         m_Usave -= a_U;
-        norm_abs = m_ops->norm(m_Usave);
+        norm_abs = m_Usave.norm2();
         if (iter == 0) {
             if (norm_abs > 0.) { norm0 = norm_abs; }
             else { norm0 = 1._rt; }

@@ -14,7 +14,11 @@ void ImplicitSolverEM::Define ( WarpX* const  a_WarpX )
     // Define E vectors
     m_E.Define( m_WarpX->Efield_fp );
     m_Eold.Define( m_WarpX->Efield_fp );
-    SetDotMask(m_E);
+    
+    // Need to define the WarpXSolverVec owned dot_mask to do dot
+    // product correctly for linear and nonlinear solvers
+    const amrex::Vector<amrex::Geometry>& Geom = m_WarpX->Geom();
+    m_E.SetDotMask(Geom);
     
     if (m_WarpX->evolve_scheme == EvolveScheme::ThetaImplicit) { 
         // Define Bold vector
@@ -193,51 +197,4 @@ void ImplicitSolverEM::UpdateWarpXState ( const WarpXSolverVec&  a_E,
         // B : guard cells are NOT up-to-date from the mirrors
     }
 
-}
-
-void ImplicitSolverEM::SetDotMask ( const WarpXSolverVec&  a_E ) {
-    
-    if (m_dot_mask_defined) { return; }
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        a_E.IsDefined(),
-        "ImplicitSolverEM::SetDotMask(a_E) called with undefined a_E");
-
-    const amrex::Vector<amrex::Geometry>& Geom = m_WarpX->Geom();
-    const int num_levels = a_E.getVec().size();
-    m_dotMask.resize(num_levels);
-    const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& solver_vec = a_E.getVec();
-    for ( int n = 0; n < 3; n++) {
-        const amrex::BoxArray& grids = solver_vec[0][n]->boxArray();
-        amrex::MultiFab tmp( grids, solver_vec[0][n]->DistributionMap(),
-                             1, 0, amrex::MFInfo().SetAlloc(false) );
-        const amrex::Periodicity& period = Geom[0].periodicity();
-        m_dotMask[0][n] = tmp.OwnerMask(period);
-    }
-    m_dot_mask_defined = true;
-
-}
-
-amrex::Real ImplicitSolverEM::dotProduct ( const WarpXSolverVec& a_X, 
-                                           const WarpXSolverVec& a_Y ) const
-{
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        m_dot_mask_defined,
-        "ImplicitSolverEM::dotProduct called with m_dotMask not yet defined");
-    amrex::Real result = 0.0;
-    const int lev = 0;
-    const bool local = true;
-    for (int n = 0; n < 3; ++n) {
-        auto rtmp = amrex::MultiFab::Dot( *m_dotMask[lev][n],
-                                          *a_X.getVec()[lev][n], 0,
-                                          *a_Y.getVec()[lev][n], 0, 1, 0, local);
-        result += rtmp;
-    }
-    amrex::ParallelAllReduce::Sum(result, amrex::ParallelContext::CommunicatorSub());
-    return result;
-}
-
-amrex::Real ImplicitSolverEM::norm ( const WarpXSolverVec& a_X ) const 
-{
-   amrex::Real result = dotProduct(a_X,a_X);
-   return std::sqrt(result);
 }

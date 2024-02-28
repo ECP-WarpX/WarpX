@@ -13,6 +13,7 @@
 #include <AMReX_IntVect.H>
 #include <AMReX_LayoutData.H>
 #include <AMReX_MultiFab.H>
+#include <AMReX_iMultiFab.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_Print.H>
 #include <AMReX_REAL.H>
@@ -86,6 +87,9 @@ public:
         m_is_defined = true;
         return;
     }
+    
+    void SetDotMask( const amrex::Vector<amrex::Geometry>&  a_Geom );
+    RT dotProduct( const WarpXSolverVec&  a_X ) const;
 
     //
     // JRA: make functions below are derived over from amrex/Src/LinearSolvers/MLMG/AMReX_MLLinOp.H
@@ -229,27 +233,25 @@ public:
     }
 
     inline
-    RT norm () const
+    RT norm2 () const
     {
-        AMREX_ASSERT_WITH_MESSAGE(
-            IsDefined(),
-            "WarpXSolverVec::norm() called on undefined WarpXSolverVec");
-        RT nF0 = m_field_vec[0][0]->norm0(0, 0);
-        RT nF1 = m_field_vec[0][1]->norm0(0, 0);
-        RT nF2 = m_field_vec[0][2]->norm0(0, 0);
-        RT normF = std::sqrt(nF0*nF0 + nF1*nF1 + nF2*nF2);
-        return normF;
+        RT norm = dotProduct(*this);
+        return std::sqrt(norm);
     }
     
     const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& getVec() const {return m_field_vec;}
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& getVec() {return m_field_vec;}
-
+    
+    
 private:
 
     bool  m_is_defined;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_field_vec;
     static constexpr int m_ncomp = 1;
     static constexpr int m_num_amr_levels = 1;
+    
+    static bool m_dot_mask_defined;
+    static amrex::Vector<std::array<std::unique_ptr<amrex::iMultiFab>,3>> m_dotMask;
 
 };
 
