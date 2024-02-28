@@ -88,16 +88,16 @@ field_diag = picmi.FieldDiagnostic(
     period = diagnostic_interval,
     data_list = ['Er', 'Ez', 'phi', 'rho','rho_electrons'],
     warpx_format = 'openpmd',
-    write_dir = '.',
-    warpx_file_prefix = 'particle_boundary_interaction_plt'
+    #write_dir = '.',
+    #warpx_file_prefix = 'particle_boundary_interaction_plt'
 )
 
 part_diag = picmi.ParticleDiagnostic(name = 'diag1',
     period = diagnostic_interval,
     species = [electrons],
     warpx_format = 'openpmd',
-    write_dir = '.',
-    warpx_file_prefix = 'particle_boundary_interaction_plt'
+    #write_dir = '.',
+    #warpx_file_prefix = 'particle_boundary_interaction_plt'
 )
 
 ##########################
@@ -129,11 +129,14 @@ sim.initialize_warpx()
 ##########################
 
 def mirror_reflection():
-    buffer = particle_containers.ParticleBoundaryBufferWrapper()
-    if (len(buffer.get_particle_boundary_buffer("electrons", 'eb', 'deltaTimeScraped', 0))>0): #otherwise np.concatenate doesnt work
+    buffer = particle_containers.ParticleBoundaryBufferWrapper() #boundary buffer
+    scraping=(len(buffer.get_particle_boundary_buffer("electrons", 'eb', 'deltaTimeScraped', 0))>0) #bouleen saying if particles where scraped
+
+    if scraping: #otherwise np.concatenate doesnt work
         delta_t = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'deltaTimeScraped', 0))
 
-        #step 1: extract the different parameters of the scraping buffer (normal, time, position)
+
+        #STEP 1: extract the different parameters of the boundary buffer (normal, time, position)
         r = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'x', 0))
         theta = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'theta', 0))
         z = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'z', 0))
@@ -147,23 +150,30 @@ def mirror_reflection():
         ny = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'ny', 0))
         nz = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'nz', 0))
 
-        #step 2: use these parameters to inject from the same position electrons in the plasma
-        elect_pc = particle_containers.ParticleContainerWrapper('electrons')
+
+        #STEP 2: use these parameters to inject particle from the same position in the plasma
+        elect_pc = particle_containers.ParticleContainerWrapper('electrons') #general particle container
+
+          ####this part is specific to the case of simple reflection. 
         un=ux*nx+uy*ny+uz*nz
         ux_reflect=-2*un*nx+ux #for a "mirror reflection" u(sym)=-2(u.n)n+u
         uy_reflect=-2*un*ny+uy
         uz_reflect=-2*un*nz+uz
-        elect_pc.add_particles(
-            x=x + (dt-delta_t)*ux_reflect, y=y + (dt-delta_t)*uy_reflect, z=z + (dt-delta_t)*uz_reflect, ux=ux_reflect, uy=uy_reflect, uz=uz_reflect,
+        elect_pc.add_particles( 
+            x=x + (dt-delta_t)*ux_reflect, y=y + (dt-delta_t)*uy_reflect, z=z + (dt-delta_t)*uz_reflect, 
+            ux=ux_reflect, uy=uy_reflect, uz=uz_reflect,
             w=w,
             unique_particles=args.unique
-            )
-        buffer.clear_buffer()
+            ) #adds the particle in the general particle container at the next step
+          #### Can be modified depending to the model of interaction.
+        
+        buffer.clear_buffer() #reinitialise the boundary buffer
 
-callbacks.installafterstep(mirror_reflection)
+callbacks.installafterstep(mirror_reflection) #mirror_reflection is called at the next step 
+                                              # using the new particle container modified at the last step
 
 ##########################
 # simulation run
 ##########################
 
-sim.step(max_steps)
+sim.step(max_steps) #the whole process is done "max_steps" times
