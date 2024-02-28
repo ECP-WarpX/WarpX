@@ -154,22 +154,22 @@ def mirror_reflection():
         #STEP 2: use these parameters to inject particle from the same position in the plasma
         elect_pc = particle_containers.ParticleContainerWrapper('electrons') #general particle container
 
-          ####this part is specific to the case of simple reflection. 
+          ####this part is specific to the case of simple reflection.
         un=ux*nx+uy*ny+uz*nz
         ux_reflect=-2*un*nx+ux #for a "mirror reflection" u(sym)=-2(u.n)n+u
         uy_reflect=-2*un*ny+uy
         uz_reflect=-2*un*nz+uz
-        elect_pc.add_particles( 
-            x=x + (dt-delta_t)*ux_reflect, y=y + (dt-delta_t)*uy_reflect, z=z + (dt-delta_t)*uz_reflect, 
+        elect_pc.add_particles(
+            x=x + (dt-delta_t)*ux_reflect, y=y + (dt-delta_t)*uy_reflect, z=z + (dt-delta_t)*uz_reflect,
             ux=ux_reflect, uy=uy_reflect, uz=uz_reflect,
             w=w,
             unique_particles=args.unique
             ) #adds the particle in the general particle container at the next step
           #### Can be modified depending to the model of interaction.
-        
+
         buffer.clear_buffer() #reinitialise the boundary buffer
 
-callbacks.installafterstep(mirror_reflection) #mirror_reflection is called at the next step 
+callbacks.installafterstep(mirror_reflection) #mirror_reflection is called at the next step
                                               # using the new particle container modified at the last step
 
 ##########################
