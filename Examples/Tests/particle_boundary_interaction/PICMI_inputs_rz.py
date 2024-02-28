@@ -3,22 +3,8 @@
 # --- Input file for particle-boundary interaction testing in RZ.
 # --- This input is a simple case of reflection
 # --- of one electron on the surface of a sphere.
-
-import argparse
-
 import numpy as np
-
 from pywarpx import callbacks, particle_containers, picmi
-
-# Create the parser and add the argument
-parser = argparse.ArgumentParser()
-parser.add_argument(
-    '-u', '--unique', action='store_true',
-    help="Whether injected particles should be treated as unique"
-)
-
-# Parse the input
-args, left = parser.parse_known_args()
 
 ##########################
 # numerics parameters
@@ -88,16 +74,16 @@ field_diag = picmi.FieldDiagnostic(
     period = diagnostic_interval,
     data_list = ['Er', 'Ez', 'phi', 'rho','rho_electrons'],
     warpx_format = 'openpmd',
-    #write_dir = '.',
-    #warpx_file_prefix = 'particle_boundary_interaction_plt'
+    write_dir = '.',
+    warpx_file_prefix = 'particle_boundary_interaction_plt'
 )
 
 part_diag = picmi.ParticleDiagnostic(name = 'diag1',
     period = diagnostic_interval,
     species = [electrons],
     warpx_format = 'openpmd',
-    #write_dir = '.',
-    #warpx_file_prefix = 'particle_boundary_interaction_plt'
+    write_dir = '.',
+    warpx_file_prefix = 'particle_boundary_interaction_plt'
 )
 
 ##########################
@@ -162,8 +148,7 @@ def mirror_reflection():
         elect_pc.add_particles(
             x=x + (dt-delta_t)*ux_reflect, y=y + (dt-delta_t)*uy_reflect, z=z + (dt-delta_t)*uz_reflect,
             ux=ux_reflect, uy=uy_reflect, uz=uz_reflect,
-            w=w,
-            unique_particles=args.unique
+            w=w
             ) #adds the particle in the general particle container at the next step
           #### Can be modified depending to the model of interaction.
 
