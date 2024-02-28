@@ -31,12 +31,19 @@ filename = sys.argv[1]
 ds = yt.load( filename )
 
 # Check that the field is low enough
-ad0 = ds.covering_grid(level=1, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
-Ex_array = ad0[('mesh','Ex')].to_ndarray()
-Ey_array = ad0[('mesh','Ey')].to_ndarray()
-Ez_array = ad0[('mesh','Ez')].to_ndarray()
-max_Efield = max(Ex_array.max(), Ey_array.max(), Ez_array.max())
-print( "max_Efield = %s" %max_Efield )
+ad0 = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
+Ex_array_lev0 = ad0[('mesh','Ex')].to_ndarray()
+Ey_array_lev0 = ad0[('mesh','Ey')].to_ndarray()
+Ez_array_lev0 = ad0[('mesh','Ez')].to_ndarray()
+max_Efield_lev0 = max(Ex_array_lev0.max(), Ey_array_lev0.max(), Ez_array_lev0.max())
+print( "max_Efield level0 = %s" %max_Efield_lev0 )
+
+ad1 = ds.covering_grid(level=1, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
+Ex_array_lev1 = ad1[('mesh','Ex')].to_ndarray()
+Ey_array_lev1 = ad1[('mesh','Ey')].to_ndarray()
+Ez_array_lev1 = ad1[('mesh','Ez')].to_ndarray()
+max_Efield_lev1 = max(Ex_array_lev1.max(), Ey_array_lev1.max(), Ez_array_lev1.max())
+print( "max_Efield level1 = %s" %max_Efield_lev1 )
 
 # The field associated with the particle does not have
 # the same amplitude in 2d and 3d
@@ -54,7 +61,8 @@ else:
     raise ValueError("Unknown dimensionality")
 
 print("tolerance_abs: " + str(tolerance_abs))
-assert max_Efield < tolerance_abs
+assert max_Efield_lev0 < tolerance_abs
+assert max_Efield_lev1 < tolerance_abs
 
 test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)
