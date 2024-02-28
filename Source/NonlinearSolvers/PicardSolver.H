@@ -25,7 +25,7 @@ public:
                           Ops* const  a_ops );
 
     virtual void Solve ( Vec&         a_U,
-                   const Vec&         a_R,
+                   const Vec&         a_b,
                    const amrex::Real  a_time,
                    const amrex::Real  a_dt ) const;
 
@@ -42,10 +42,10 @@ public:
     
     void PrintParams () const
     {
-        amrex::Print()     << "Picard max iterations:      " << m_maxits << std::endl;
-        amrex::Print()     << "Picard relative tolerance:  " << m_rtol << std::endl;
-        amrex::Print()     << "Picard absolute tolerance:  " << m_atol << std::endl;
-        amrex::Print()     << "Picard require convergence: " << (m_require_convergence?"true":"false") << std::endl;
+        amrex::Print() << "Picard max iterations:      " << m_maxits << std::endl;
+        amrex::Print() << "Picard relative tolerance:  " << m_rtol << std::endl;
+        amrex::Print() << "Picard absolute tolerance:  " << m_atol << std::endl;
+        amrex::Print() << "Picard require convergence: " << (m_require_convergence?"true":"false") << std::endl;
     }
 
     virtual void Verbose ( const bool  a_verbose ) { m_verbose = a_verbose; }
@@ -108,7 +108,7 @@ void PicardSolver<Vec,Ops>::ParseParameters ()
 
 template <class Vec, class Ops>
 void PicardSolver<Vec,Ops>::Solve ( Vec&         a_U,
-                              const Vec&         a_R,
+                              const Vec&         a_b,
                               const amrex::Real  a_time,
                               const amrex::Real  a_dt ) const
 {
@@ -120,7 +120,7 @@ void PicardSolver<Vec,Ops>::Solve ( Vec&         a_U,
 
     //
     // Picard routine to solve nonlinear
-    // equation of form: U = R + F(U)
+    // equation of form: U = b + F(U)
     //
 
     amrex::Real norm_abs, norm0, norm_rel;
@@ -134,7 +134,7 @@ void PicardSolver<Vec,Ops>::Solve ( Vec&         a_U,
         // Update the solver state
         m_ops->PreRHSOp( a_U, a_time, a_dt, iter, false );
         m_ops->ComputeRHS( m_F, a_U, a_time, a_dt );
-        a_U = a_R + m_F;
+        a_U = a_b + m_F;
         
         // Compute the step norm and update iter
         m_Usave -= a_U;

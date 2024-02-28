@@ -544,6 +544,9 @@ public:
 
     const amrex::MultiFab& getedgelengths (int lev, int direction) {return *m_edge_lengths[lev][direction];}
     const amrex::MultiFab& getfaceareas  (int lev, int direction) {return *m_face_areas[lev][direction];}
+    
+    const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>,3>>& getEfield_fp_vec() const {return Efield_fp;}
+    const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>,3>>& getBfield_fp_vec() const {return Bfield_fp;}
 
     [[nodiscard]] bool DoPML () const {return do_pml;}
     [[nodiscard]] bool DoFluidSpecies () const {return do_fluid_species;}
@@ -1273,8 +1276,6 @@ private:
 
     // Singleton is used when the code is run from python
     static WarpX* m_instance;
-
-    friend class ImplicitSolverEM;
 
     //! Complete the asynchronous broadcast of signal flags, and initiate a checkpoint if requested
     void HandleSignals ();

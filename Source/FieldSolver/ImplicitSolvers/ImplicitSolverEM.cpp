@@ -12,8 +12,8 @@ void ImplicitSolverEM::Define ( WarpX* const  a_WarpX )
     m_WarpX = a_WarpX;
  
     // Define E vectors
-    m_E.Define( m_WarpX->Efield_fp );
-    m_Eold.Define( m_WarpX->Efield_fp );
+    m_E.Define( m_WarpX->getEfield_fp_vec() );
+    m_Eold.Define( m_WarpX->getEfield_fp_vec() );
     
     // Need to define the WarpXSolverVec owned dot_mask to do dot
     // product correctly for linear and nonlinear solvers
@@ -25,7 +25,7 @@ void ImplicitSolverEM::Define ( WarpX* const  a_WarpX )
         const int lev = 0;
         m_Bold.resize(1); // size is number of levels
         for (int n=0; n<3; n++) {
-            const amrex::MultiFab& Bfp = *(m_WarpX->Bfield_fp[lev][n]);
+            const amrex::MultiFab& Bfp = m_WarpX->getBfield_fp(lev,n);
             m_Bold[lev][n] = std::make_unique<amrex::MultiFab>( Bfp.boxArray(), 
                                                                 Bfp.DistributionMap(),
                                                                 Bfp.nComp(), 
@@ -110,13 +110,13 @@ void ImplicitSolverEM::OneStep ( const amrex::Real  a_old_time,
     m_WarpX->SaveParticlesAtImplicitStepStart ( );
 
     // Save the fields at the start of the step
-    m_Eold.Copy(m_WarpX->Efield_fp);
+    m_Eold.Copy( m_WarpX->getEfield_fp_vec() );
     m_E = m_Eold; // initial guess for E
 
     if (m_WarpX->evolve_scheme == EvolveScheme::ThetaImplicit) {
         const int lev = 0;
         for (int n=0; n<3; n++) {
-            const amrex::MultiFab& Bfp  = *(m_WarpX->Bfield_fp[lev][n]);
+            const amrex::MultiFab& Bfp = m_WarpX->getBfield_fp(lev,n);
             amrex::MultiFab& Bold = *m_Bold[lev][n];
             amrex::MultiFab::Copy(Bold, Bfp, 0, 0, 1, Bold.nGrowVect());
         }
