@@ -40,7 +40,7 @@
 #include "Evolve/WarpXPushType.H"
 #include "FieldSolver/ElectrostaticSolver.H"
 #include "FieldSolver/MagnetostaticSolver/MagnetostaticSolver.H"
-#include "FieldSolver/ImplicitSolvers/ImplicitSolverEM.H"
+#include "FieldSolver/ImplicitSolvers/ImplicitSolverLibrary.H"
 #include "Filter/BilinearFilter.H"
 #include "Parallelization/GuardCellManager.H"
 #include "Utils/Parser/IntervalsParser.H"
@@ -184,7 +184,7 @@ public:
     static short particle_pusher_algo;
     //! Integer that corresponds to the type of Maxwell solver (Yee, CKC, PSATD, ECT)
     static short electromagnetic_solver_id;
-    //! Integer that corresponds to the evolve scheme (explicit, theta_implicit, semi_implicit)
+    //! Integer that corresponds to the evolve scheme (explicit, semi_implicit_em, theta_implicit_em)
     static short evolve_scheme;
     //! The maximum number of iterations used for self-consistent particle update in implicit evolve schemes
     static int max_particle_iterations;
@@ -1908,7 +1908,7 @@ private:
     amrex::Vector<std::unique_ptr<FiniteDifferenceSolver>> m_fdtd_solver_cp;
     
     // implicit solver object
-    std::unique_ptr<ImplicitSolverEM> m_implicit_solver;
+    std::unique_ptr<ImplicitSolver> m_implicit_solver;
 
 };
 

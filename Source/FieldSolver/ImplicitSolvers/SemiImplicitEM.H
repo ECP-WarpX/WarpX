@@ -1,5 +1,5 @@
-#ifndef _IMPLICIT_SOLVER_EM_H_
-#define _IMPLICIT_SOLVER_EM_H_
+#ifndef _SEMI_IMPLICIT_EM_H_
+#define _SEMI_IMPLICIT_EM_H_
 
 #include "FieldSolver/ImplicitSolvers/Utils/WarpXSolverVec.H"
 #include "NonlinearSolvers/NonlinearSolverLibrary.H"
@@ -11,28 +11,23 @@
 #include "ImplicitSolver.H"
 
 /*
- * theta-implicit electromagnetic time solver class.
+ *  semi-implicit electromagnetic time solver class.
  */
 
-class ImplicitSolverEM : public ImplicitSolver
+class SemiImplicitEM : public ImplicitSolver
 {
 public:
 
-    ImplicitSolverEM() 
+    SemiImplicitEM() 
     {
         m_nlsolver_type = NonlinearSolverType::Picard;
-        //m_func = nullptr;
-
-        m_theta = 0.5;
         m_max_particle_iterations = 21;
         m_particle_tolerance = 1.0e-10;
         m_is_defined = false;
-        m_semi_implicit = false;
         m_verbose = false;
-
     }
 
-    virtual ~ImplicitSolverEM() = default;
+    virtual ~SemiImplicitEM() = default;
     
     virtual void Define ( WarpX* const  a_WarpX );
     
@@ -64,25 +59,20 @@ public:
                         const amrex::Real      a_time,
                         const amrex::Real      a_dt );
 
-    amrex::Real theta () const { return m_theta; }
-
 private:
 
     bool m_is_defined;
-    bool m_semi_implicit;     
     bool m_verbose;
 
     WarpX* m_WarpX;
-
-    amrex::Real m_theta;
+    
     amrex::ParticleReal m_particle_tolerance;
     int m_max_particle_iterations;
 
     NonlinearSolverType m_nlsolver_type;
-    std::unique_ptr<NonlinearSolver<WarpXSolverVec,ImplicitSolverEM>> m_nlsolver;
+    std::unique_ptr<NonlinearSolver<WarpXSolverVec,SemiImplicitEM>> m_nlsolver;
 
     WarpXSolverVec m_E, m_Eold;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_Bold;
     
     void UpdateWarpXState ( const WarpXSolverVec&  a_E,
                             const amrex::Real      a_time,

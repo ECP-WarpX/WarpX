@@ -25,8 +25,8 @@
 
 const std::map<std::string, int> evolve_scheme_to_int = {
     {"explicit",       EvolveScheme::Explicit },
-    {"theta_implicit", EvolveScheme::ThetaImplicit },
-    {"semi_implicit",  EvolveScheme::SemiImplicit },
+    {"theta_implicit_em", EvolveScheme::ThetaImplicitEM },
+    {"semi_implicit_em",  EvolveScheme::SemiImplicitEM },
     {"default",        EvolveScheme::Explicit }
 };
 

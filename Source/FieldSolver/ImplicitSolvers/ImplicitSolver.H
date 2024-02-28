@@ -21,7 +21,11 @@ public:
     ImplicitSolver() {}
 
     virtual ~ImplicitSolver() = default;
-    
+
+    //
+    // the following routines are called by WarpX
+    //
+
     virtual void Define ( WarpX* const  a_WarpX ) = 0;
     
     virtual bool IsDefined () const = 0;
@@ -36,6 +40,10 @@ public:
     virtual void OneStep ( const amrex::Real  a_time,
                            const amrex::Real  a_dt,
                            const int          a_step ) = 0;
+
+    //
+    // the following routines are called by the linear and nonlinear solvers
+    //
 
     virtual void PreRHSOp ( const WarpXSolverVec&  a_E,
                             const amrex::Real      a_time,

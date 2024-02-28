@@ -1,12 +1,12 @@
 
-#include "ImplicitSolverEM.H"
+#include "ThetaImplicitEM.H"
 #include "WarpX.H"
 
-void ImplicitSolverEM::Define ( WarpX* const  a_WarpX )
+void ThetaImplicitEM::Define ( WarpX* const  a_WarpX )
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !m_is_defined,
-        "ImplicitSolverEM object is already defined!");
+        "ThetaImplicitEM object is already defined!");
     
     // Retain a pointer back to main WarpX class
     m_WarpX = a_WarpX;
@@ -20,28 +20,24 @@ void ImplicitSolverEM::Define ( WarpX* const  a_WarpX )
     const amrex::Vector<amrex::Geometry>& Geom = m_WarpX->Geom();
     m_E.SetDotMask(Geom);
     
-    if (m_WarpX->evolve_scheme == EvolveScheme::ThetaImplicit) { 
-        // Define Bold vector
-        const int lev = 0;
-        m_Bold.resize(1); // size is number of levels
-        for (int n=0; n<3; n++) {
-            const amrex::MultiFab& Bfp = m_WarpX->getBfield_fp(lev,n);
-            m_Bold[lev][n] = std::make_unique<amrex::MultiFab>( Bfp.boxArray(), 
-                                                                Bfp.DistributionMap(),
-                                                                Bfp.nComp(), 
-                                                                Bfp.nGrowVect() );
-        }
+    // Define Bold vector
+    const int lev = 0;
+    m_Bold.resize(1); // size is number of levels
+    for (int n=0; n<3; n++) {
+        const amrex::MultiFab& Bfp = m_WarpX->getBfield_fp(lev,n);
+        m_Bold[lev][n] = std::make_unique<amrex::MultiFab>( Bfp.boxArray(), 
+                                                            Bfp.DistributionMap(),
+                                                            Bfp.nComp(), 
+                                                            Bfp.nGrowVect() );
     }
     
     // Parse implicit solver parameters
     amrex::ParmParse pp("implicit_evolve");
     pp.query("verbose", m_verbose);
-    if (m_WarpX->evolve_scheme == EvolveScheme::ThetaImplicit) { 
-        pp.query("theta", m_theta);
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            m_theta>=0.5 && m_theta<=1.0,
-            "theta parameter for theta implicit time solver must be between 0.5 and 1.0");
-    }
+    pp.query("theta", m_theta);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        m_theta>=0.5 && m_theta<=1.0,
+        "theta parameter for theta implicit time solver must be between 0.5 and 1.0");
 
     std::string nlsolver_type_str;
     pp.query("nonlinear_solver", nlsolver_type_str);
@@ -62,23 +58,23 @@ void ImplicitSolverEM::Define ( WarpX* const  a_WarpX )
 
     // Define the nonlinear solver
     if (m_nlsolver_type == NonlinearSolverType::Picard) {
-        m_nlsolver = std::make_unique<PicardSolver<WarpXSolverVec,ImplicitSolverEM>>();
+        m_nlsolver = std::make_unique<PicardSolver<WarpXSolverVec,ThetaImplicitEM>>();
         m_nlsolver->Define(m_E, this);
     }
     else if (m_nlsolver_type == NonlinearSolverType::Newton) {
-        m_nlsolver = std::make_unique<NewtonSolver<WarpXSolverVec,ImplicitSolverEM>>();
+        m_nlsolver = std::make_unique<NewtonSolver<WarpXSolverVec,ThetaImplicitEM>>();
         m_nlsolver->Define(m_E, this);
     }
 
     m_is_defined = true;
 }
 
-void ImplicitSolverEM::PrintParameters () const
+void ThetaImplicitEM::PrintParameters () const
 {
     if (!m_verbose) { return; }
     amrex::Print() << std::endl;
     amrex::Print() << "-----------------------------------------------------------" << std::endl;
-    amrex::Print() << "-------------- IMPLICIT EM SOLVER PARAMETERS --------------" << std::endl;
+    amrex::Print() << "----------- THETA IMPLICIT EM SOLVER PARAMETERS -----------" << std::endl;
     amrex::Print() << "-----------------------------------------------------------" << std::endl;
     amrex::Print() << "Time-bias parameter theta:  " << m_theta << std::endl;
     amrex::Print() << "max particle iterations:    " << m_max_particle_iterations << std::endl;
@@ -94,17 +90,15 @@ void ImplicitSolverEM::PrintParameters () const
     amrex::Print() << std::endl;
 }
 
-void ImplicitSolverEM::OneStep ( const amrex::Real  a_old_time,
-                                 const amrex::Real  a_dt,
-                                 const int          a_step )
+void ThetaImplicitEM::OneStep ( const amrex::Real  a_old_time,
+                                const amrex::Real  a_dt,
+                                const int          a_step )
 {  
     using namespace amrex::literals;
     amrex::ignore_unused(a_step);
 
-    // We have E^{n}.
+    // Fields have E^{n} and B^{n}
     // Particles have p^{n} and x^{n}.
-    // With theta implicit, B^{n}
-    // With semi implicit, B^{n-1/2}
 
     // Save the values at the start of the time step,
     m_WarpX->SaveParticlesAtImplicitStepStart ( );
@@ -113,17 +107,11 @@ void ImplicitSolverEM::OneStep ( const amrex::Real  a_old_time,
     m_Eold.Copy( m_WarpX->getEfield_fp_vec() );
     m_E = m_Eold; // initial guess for E
 
-    if (m_WarpX->evolve_scheme == EvolveScheme::ThetaImplicit) {
-        const int lev = 0;
-        for (int n=0; n<3; n++) {
-            const amrex::MultiFab& Bfp = m_WarpX->getBfield_fp(lev,n);
-            amrex::MultiFab& Bold = *m_Bold[lev][n];
-            amrex::MultiFab::Copy(Bold, Bfp, 0, 0, 1, Bold.nGrowVect());
-        }
-    } else if (m_WarpX->evolve_scheme == EvolveScheme::SemiImplicit) {
-        // Compute Bfield at time n+1/2
-        m_WarpX->EvolveB(a_dt, DtType::Full);
-        m_WarpX->ApplyMagneticFieldBCs( true );
+    const int lev = 0;
+    for (int n=0; n<3; n++) {
+        const amrex::MultiFab& Bfp = m_WarpX->getBfield_fp(lev,n);
+        amrex::MultiFab& Bold = *m_Bold[lev][n];
+        amrex::MultiFab::Copy(Bold, Bfp, 0, 0, 1, Bold.nGrowVect());
     }
 
     // Solve nonlinear system for E at t_{n+theta}
@@ -142,17 +130,15 @@ void ImplicitSolverEM::OneStep ( const amrex::Real  a_old_time,
     // Advance fields to step n+1
     m_WarpX->FinishImplicitField(m_E.getVec(), m_Eold.getVec(), m_theta);
     m_WarpX->UpdateElectricField( m_E, false ); // JRA not sure about false here. is what DG had.
-    if (m_WarpX->evolve_scheme == EvolveScheme::ThetaImplicit) {
-        m_WarpX->FinishMagneticField( m_Bold, m_theta );
-    }
+    m_WarpX->FinishMagneticField( m_Bold, m_theta );
   
 }
 
-void ImplicitSolverEM::PreRHSOp ( const WarpXSolverVec&  a_E,
-                                  const amrex::Real      a_time,
-                                  const amrex::Real      a_dt,
-                                  const int              a_nl_iter,
-                                  const bool             a_from_jacobian )
+void ThetaImplicitEM::PreRHSOp ( const WarpXSolverVec&  a_E,
+                                 const amrex::Real      a_time,
+                                 const amrex::Real      a_dt,
+                                 const int              a_nl_iter,
+                                 const bool             a_from_jacobian )
 {  
     amrex::ignore_unused(a_E);
     
@@ -166,18 +152,18 @@ void ImplicitSolverEM::PreRHSOp ( const WarpXSolverVec&  a_E,
 
 }
 
-void ImplicitSolverEM::ComputeRHS ( WarpXSolverVec&  a_Erhs,
-                              const WarpXSolverVec&  a_E,
-                              const amrex::Real      a_time,
-                              const amrex::Real      a_dt )
+void ThetaImplicitEM::ComputeRHS ( WarpXSolverVec&  a_Erhs,
+                             const WarpXSolverVec&  a_E,
+                             const amrex::Real      a_time,
+                             const amrex::Real      a_dt )
 {  
     amrex::ignore_unused(a_E, a_time);
     m_WarpX->ComputeRHSE(m_theta*a_dt, a_Erhs);
 }
 
-void ImplicitSolverEM::UpdateWarpXState ( const WarpXSolverVec&  a_E,
-                                          const amrex::Real      a_time,
-                                          const amrex::Real      a_dt )
+void ThetaImplicitEM::UpdateWarpXState ( const WarpXSolverVec&  a_E,
+                                         const amrex::Real      a_time,
+                                         const amrex::Real      a_dt )
 {
     using namespace amrex::literals;
     amrex::ignore_unused(a_time);
@@ -186,9 +172,7 @@ void ImplicitSolverEM::UpdateWarpXState ( const WarpXSolverVec&  a_E,
     m_WarpX->UpdateElectricField( a_E, true );
 
     // Update Bfield owned by WarpX
-    if (m_WarpX->evolve_scheme == EvolveScheme::ThetaImplicit) {
-        m_WarpX->UpdateMagneticField( m_Bold, m_theta*a_dt );
-    }
+    m_WarpX->UpdateMagneticField( m_Bold, m_theta*a_dt );
 
     // The B field update needs. Talk to DG about this. Only needed when B updates?
     if (m_WarpX->num_mirrors>0){

@@ -538,8 +538,8 @@ WarpX::InitFromScratch ()
 
     AmrCore::InitFromScratch(time);  // This will call MakeNewLevelFromScratch
 
-    if (evolve_scheme == EvolveScheme::ThetaImplicit ||
-        evolve_scheme == EvolveScheme::SemiImplicit) {
+    if (evolve_scheme == EvolveScheme::ThetaImplicitEM ||
+        evolve_scheme == EvolveScheme::SemiImplicitEM) {
 
         m_implicit_solver->Define(this);
         m_implicit_solver->GetParticleSolverParams(max_particle_iterations,particle_tolerance);
