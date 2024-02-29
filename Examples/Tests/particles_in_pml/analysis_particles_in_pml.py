@@ -30,8 +30,16 @@ import checksumAPI
 filename = sys.argv[1]
 ds = yt.load( filename )
 
+# When extracting the fields, choose the right dimensions
+dimensions = [ n_pts for n_pts in ds.domain_dimensions ]
+if ds.max_level == 1:
+    dimensions[0] *= 2
+    dimensions[1] *= 2
+    if ds.dimensionality == 3:
+        dimensions[2] *= 2
+
 # Check that the field is low enough
-ad0 = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
+ad0 = ds.covering_grid(level=ds.max_level, left_edge=ds.domain_left_edge, dims=dimensions)
 Ex_array = ad0[('mesh','Ex')].to_ndarray()
 Ey_array = ad0[('mesh','Ey')].to_ndarray()
 Ez_array = ad0[('mesh','Ez')].to_ndarray()
