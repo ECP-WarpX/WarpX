@@ -11,10 +11,7 @@ export OMP_NUM_THREADS=2
 
 #
 # DEBUG
-pwd
-ls
-ls ./build
-ls ./build/bin
+ls ./bin
 # DEBUG
 #
 
