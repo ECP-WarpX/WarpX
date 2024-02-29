@@ -17,7 +17,7 @@ rejection methods implemented in WarpX, which depend on the u_m/u_th ratio.)
 
 After the particles are emitted with flux injection, this script produces
 histograms of the velocity distribution and compares it with the expected
-velocity distibution (Gaussian or Gaussian-flux depending on the direction
+velocity distribution (Gaussian or Gaussian-flux depending on the direction
 of space)
 """
 import os
@@ -57,11 +57,8 @@ def gaussian_dist(u, u_th):
     return 1./((2*np.pi)**.5*u_th) * np.exp(-u**2/(2*u_th**2) )
 
 def gaussian_flux_dist(u, u_th, u_m):
-    au_m = np.abs(u_m)
-    normalization_factor = u_th**2 * np.exp(-au_m**2/(2*u_th**2)) + (np.pi/2)**.5*au_m*u_th * (1 + erf(au_m/(2**.5*u_th)))
-    result = 1./normalization_factor * np.where( u>0, u * np.exp(-(u-au_m)**2/(2*u_th**2)), 0 )
-    if u_m < 0.:
-        result = result[::-1]
+    normalization_factor = u_th**2 * np.exp(-u_m**2/(2*u_th**2)) + (np.pi/2)**.5*u_m*u_th * (1 + erf(u_m/(2**.5*u_th)))
+    result = 1./normalization_factor * np.where( u>0, u * np.exp(-(u-u_m)**2/(2*u_th**2)), 0 )
     return result
 
 def compare_gaussian(u, w, u_th, label=''):
@@ -84,10 +81,10 @@ def compare_gaussian_flux(u, w, u_th, u_m, label=''):
 
 # Load data and perform check
 
-plt.figure(figsize=(5,7))
+plt.figure(figsize=(8,7))
 
-plt.subplot(211)
-plt.title('Electrons')
+plt.subplot(221)
+plt.title('Electrons u_m=0.07')
 
 ux = ad['electron','particle_momentum_x'].to_ndarray()/(m_e*c)
 uy = ad['electron','particle_momentum_y'].to_ndarray()/(m_e*c)
@@ -97,21 +94,46 @@ w = ad['electron', 'particle_weight'].to_ndarray()
 compare_gaussian(ux, w, u_th=0.1, label='u_x')
 compare_gaussian_flux(uy, w, u_th=0.1, u_m=0.07, label='u_y')
 compare_gaussian(uz, w, u_th=0.1, label='u_z')
-plt.legend(loc=0)
 
-plt.subplot(212)
-plt.title('Protons')
+plt.subplot(223)
+plt.title('Protons u_m=0.05')
 
 ux = ad['proton','particle_momentum_x'].to_ndarray()/(m_p*c)
 uy = ad['proton','particle_momentum_y'].to_ndarray()/(m_p*c)
 uz = ad['proton','particle_momentum_z'].to_ndarray()/(m_p*c)
 w = ad['proton', 'particle_weight'].to_ndarray()
 
-compare_gaussian_flux(ux, w, u_th=0.1, u_m=-0.05, label='u_x')
+compare_gaussian_flux(-ux, w, u_th=0.1, u_m=0.05, label='u_x')
 compare_gaussian(uy, w, u_th=0.1, label='u_y')
 compare_gaussian(uz, w, u_th=0.1, label='u_z')
-plt.legend(loc=0)
 
+plt.subplot(222)
+plt.title('Electrons u_m=-0.07')
+
+ux = ad['electron_negative','particle_momentum_x'].to_ndarray()/(m_e*c)
+uy = ad['electron_negative','particle_momentum_y'].to_ndarray()/(m_e*c)
+uz = ad['electron_negative','particle_momentum_z'].to_ndarray()/(m_e*c)
+w = ad['electron_negative', 'particle_weight'].to_ndarray()
+
+compare_gaussian(ux, w, u_th=0.1, label='u_x')
+compare_gaussian(uy, w, u_th=0.1, label='u_y')
+compare_gaussian_flux(uz, w, u_th=0.1, u_m=-0.07, label='u_z')
+plt.legend(loc=(1.02, 0.5))
+
+plt.subplot(224)
+plt.title('Protons u_m=-0.05')
+
+ux = ad['proton_negative','particle_momentum_x'].to_ndarray()/(m_p*c)
+uy = ad['proton_negative','particle_momentum_y'].to_ndarray()/(m_p*c)
+uz = ad['proton_negative','particle_momentum_z'].to_ndarray()/(m_p*c)
+w = ad['proton_negative', 'particle_weight'].to_ndarray()
+
+compare_gaussian(ux, w, u_th=0.1, label='u_x')
+compare_gaussian(uy, w, u_th=0.1, label='u_y')
+compare_gaussian_flux(-uz, w, u_th=0.1, u_m=-0.05, label='u_z')
+#plt.legend(loc=0)
+
+plt.tight_layout()
 plt.savefig('Distribution.png')
 
 # Verify checksum

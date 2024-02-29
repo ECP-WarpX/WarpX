@@ -22,7 +22,7 @@ struct CopyParticleAttribs
 {
     using TmpParticles = WarpXParticleContainer::TmpParticles;
 
-    GetParticlePosition m_get_position;
+    GetParticlePosition<PIdx> m_get_position;
 
     const amrex::ParticleReal* AMREX_RESTRICT uxp = nullptr;
     const amrex::ParticleReal* AMREX_RESTRICT uyp = nullptr;
@@ -49,9 +49,9 @@ struct CopyParticleAttribs
     CopyParticleAttribs (const WarpXParIter& a_pti, TmpParticles& tmp_particle_data,
                          long a_offset = 0) noexcept
     {
-        if (tmp_particle_data.empty()) return;
+        if (tmp_particle_data.empty()) { return; }
 
-        auto& attribs = a_pti.GetAttribs();
+        const auto& attribs = a_pti.GetAttribs();
 
         uxp = attribs[PIdx::ux].dataPtr() + a_offset;
         uyp = attribs[PIdx::uy].dataPtr() + a_offset;
@@ -66,7 +66,7 @@ struct CopyParticleAttribs
         uypold = tmp_particle_data[lev].at(index)[TmpIdx::uyold].dataPtr() + a_offset;
         uzpold = tmp_particle_data[lev].at(index)[TmpIdx::uzold].dataPtr() + a_offset;
 
-        m_get_position = GetParticlePosition(a_pti, a_offset);
+        m_get_position = GetParticlePosition<PIdx>(a_pti, a_offset);
     }
 
     /** \brief copy the position and momentum of particle i to the

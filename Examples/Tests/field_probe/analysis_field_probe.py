@@ -9,9 +9,9 @@
 """
 This script tests the accuracy of the FieldProbe diagnostic by observing a plane
 wave undergoing single slit diffraction. The input file inputs_2d is used. This
-file defines the simulation box, laser pulse, embeded boundary with single slit,
+file defines the simulation box, laser pulse, embedded boundary with single slit,
 and line of detector points. The plane wave initializes near the negative Z end
-of the simulation box. The wave interacts with the embeded boundary at Z=0. The
+of the simulation box. The wave interacts with the embedded boundary at Z=0. The
 wave undergoes diffraction at the slit. The electromagnetic flux is calculated
 at the line detector which is placed perpendicular to Z beyond the slit. This
 test will check if the detected EM flux matches expected values,
@@ -39,7 +39,7 @@ def I_envelope (x, lam = 0.2e-6, a = 0.3e-6, D = 1.7e-6):
     arg = np.pi * a / lam * np.sin(np.arctan(x / D))
     return np.sinc( arg / np.pi )**2
 
-# Count non-outlyer values away from simulation boundaries
+# Count non-outlier values away from simulation boundaries
 counter = np.arange(60, 140, 2)
 
 # Count average error from expected values

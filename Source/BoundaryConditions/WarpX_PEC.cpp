@@ -18,8 +18,8 @@ using namespace amrex::literals;
 bool
 PEC::isAnyBoundaryPEC() {
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-        if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC) return true;
-        if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC) return true;
+        if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC) { return true; }
+        if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC) { return true; }
     }
     return false;
 }
@@ -250,8 +250,8 @@ PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev, PatchType patch_ty
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
         is_pec[idim][0] = WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC;
         is_pec[idim][1] = WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC;
-        if (!is_pec[idim][0]) grown_domain_box.growLo(idim, ng_fieldgather[idim]);
-        if (!is_pec[idim][1]) grown_domain_box.growHi(idim, ng_fieldgather[idim]);
+        if (!is_pec[idim][0]) { grown_domain_box.growLo(idim, ng_fieldgather[idim]); }
+        if (!is_pec[idim][1]) { grown_domain_box.growHi(idim, ng_fieldgather[idim]); }
 
         // rho values inside guard cells are updated the same as tangential
         // components of the current density
@@ -266,16 +266,6 @@ PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev, PatchType patch_ty
     }
     const int nComp = rho->nComp();
 
-#ifdef WARPX_DIM_RZ
-    if (is_pec[0][1]) {
-        ablastr::warn_manager::WMRecordWarning(
-          "PEC",
-          "PEC boundary handling is not yet properly implemented for r_max so it is skipped in PEC::ApplyPECtoRhofield",
-          ablastr::warn_manager::WarnPriority::medium);
-          is_pec[0][1] = false;
-    }
-#endif
-
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
@@ -286,7 +276,7 @@ PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev, PatchType patch_ty
 
         // If grown_domain_box contains fabbox it means there are no PEC
         // boundaries to handle so continue to next box
-        if (grown_domain_box.contains(fabbox)) continue;
+        if (grown_domain_box.contains(fabbox)) { continue; }
 
         // Extract field data
         auto const& rho_array = rho->array(mfi);
@@ -352,8 +342,8 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
         is_pec[idim][0] = WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC;
         is_pec[idim][1] = WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC;
-        if (!is_pec[idim][0]) grown_domain_box.growLo(idim, ng_fieldgather[idim]);
-        if (!is_pec[idim][1]) grown_domain_box.growHi(idim, ng_fieldgather[idim]);
+        if (!is_pec[idim][0]) { grown_domain_box.growLo(idim, ng_fieldgather[idim]); }
+        if (!is_pec[idim][1]) { grown_domain_box.growHi(idim, ng_fieldgather[idim]); }
 
         for (int icomp=0; icomp < 3; ++icomp) {
             // Set the psign value correctly for each current component for each
@@ -396,16 +386,6 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
         mirrorfac[2][idim][1] = 2*domain_hi[idim] - (1 - Jz_nodal[idim]);
     }
 
-#ifdef WARPX_DIM_RZ
-    if (is_pec[0][1]) {
-        ablastr::warn_manager::WMRecordWarning(
-          "PEC",
-          "PEC boundary handling is not yet properly implemented for r_max so it is skipped in PEC::ApplyPECtoJfield",
-          ablastr::warn_manager::WarnPriority::medium);
-          is_pec[0][1] = false;
-    }
-#endif
-
     // Each current component is handled separately below, starting with Jx.
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -418,7 +398,7 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
         // If grown_domain_box contains fabbox it means there are no PEC
         // boundaries to handle so continue to next box
         grown_domain_box.convert(Jx_nodal);
-        if (grown_domain_box.contains(fabbox)) continue;
+        if (grown_domain_box.contains(fabbox)) { continue; }
 
         // Extract field data
         auto const& Jx_array = Jx->array(mfi);
@@ -453,7 +433,7 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
         // If grown_domain_box contains fabbox it means there are no PEC
         // boundaries to handle so continue to next box
         grown_domain_box.convert(Jy_nodal);
-        if (grown_domain_box.contains(fabbox)) continue;
+        if (grown_domain_box.contains(fabbox)) { continue; }
 
         // Extract field data
         auto const& Jy_array = Jy->array(mfi);
@@ -488,7 +468,7 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
         // If grown_domain_box contains fabbox it means there are no PEC
         // boundaries to handle so continue to next box
         grown_domain_box.convert(Jz_nodal);
-        if (grown_domain_box.contains(fabbox)) continue;
+        if (grown_domain_box.contains(fabbox)) { continue; }
 
         // Extract field data
         auto const& Jz_array = Jz->array(mfi);
@@ -540,23 +520,13 @@ PEC::ApplyPECtoElectronPressure (amrex::MultiFab* Pefield, const int lev,
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
         is_pec[idim][0] = WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC;
         is_pec[idim][1] = WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC;
-        if (!is_pec[idim][0]) grown_domain_box.growLo(idim, ng_fieldgather[idim]);
-        if (!is_pec[idim][1]) grown_domain_box.growHi(idim, ng_fieldgather[idim]);
+        if (!is_pec[idim][0]) { grown_domain_box.growLo(idim, ng_fieldgather[idim]); }
+        if (!is_pec[idim][1]) { grown_domain_box.growHi(idim, ng_fieldgather[idim]); }
 
         mirrorfac[idim][0] = 2*domain_lo[idim] - (1 - Pe_nodal[idim]);
         mirrorfac[idim][1] = 2*domain_hi[idim] + (1 - Pe_nodal[idim]);
     }
     const int nComp = Pefield->nComp();
-
-#ifdef WARPX_DIM_RZ
-    if (is_pec[0][1]) {
-        ablastr::warn_manager::WMRecordWarning(
-          "PEC",
-          "PEC boundary handling is not yet properly implemented for r_max so it is skipped in PEC::ApplyPECtoPefield",
-          ablastr::warn_manager::WarnPriority::medium);
-          is_pec[0][1] = false;
-    }
-#endif
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -568,7 +538,7 @@ PEC::ApplyPECtoElectronPressure (amrex::MultiFab* Pefield, const int lev,
 
         // If grown_domain_box contains fabbox it means there are no PEC
         // boundaries to handle so continue to next box
-        if (grown_domain_box.contains(fabbox)) continue;
+        if (grown_domain_box.contains(fabbox)) { continue; }
 
         // Extract field data
         auto const& Pe_array = Pefield->array(mfi);

@@ -4,8 +4,8 @@
 # --- treated as kinetic particles and electrons as an isothermal, inertialess
 # --- background fluid. The script is set up to produce either parallel or
 # --- perpendicular (Bernstein) EM modes and can be run in 1d, 2d or 3d
-# --- Cartesian geometries. See Section 4.2 and 4.3 of Munoz et al. (2018) As a
-# --- CI test only a small number of steps are taken using the 1d version.
+# --- Cartesian geometries. See Section 4.2 and 4.3 of Munoz et al. (2018).
+# --- As a CI test only a small number of steps are taken using the 1d version.
 
 import argparse
 import os
@@ -58,7 +58,7 @@ class EMModes(object):
     # Plasma resistivity - used to dampen the mode excitation
     eta = [[1e-7, 1e-7], [1e-7, 1e-5], [1e-7, 1e-4]]
     # Number of substeps used to update B
-    substeps = [[250, 500], [250, 750], [250, 1000]]
+    substeps = 20
 
     def __init__(self, test, dim, B_dir, verbose):
         """Get input parameters for the specific case desired."""
@@ -149,7 +149,6 @@ class EMModes(object):
 
         self.NPPC = self.NPPC[self.dim-1]
         self.eta = self.eta[self.dim-1][idx]
-        self.substeps = self.substeps[self.dim-1][idx]
 
     def get_plasma_quantities(self):
         """Calculate various plasma parameters based on the simulation input."""
@@ -322,7 +321,7 @@ class EMModes(object):
             return
 
         Bx_warpx = fields.BxWrapper()[...]
-        By_warpx = fields.BxWrapper()[...]
+        By_warpx = fields.ByWrapper()[...]
         Ez_warpx = fields.EzWrapper()[...]
 
         if libwarpx.amr.ParallelDescriptor.MyProc() != 0:

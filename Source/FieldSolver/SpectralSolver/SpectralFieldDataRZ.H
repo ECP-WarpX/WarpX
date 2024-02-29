@@ -11,7 +11,8 @@
 #include "SpectralFieldData.H"
 #include "SpectralHankelTransform/SpectralHankelTransformer.H"
 #include "SpectralKSpaceRZ.H"
-#include "FieldSolver/SpectralSolver/AnyFFT.H"
+
+#include <ablastr/math/fft/AnyFFT.H>
 
 #include <AMReX_MultiFab.H>
 
@@ -26,7 +27,7 @@ class SpectralFieldDataRZ
         // Define the FFTplans type, which holds one fft plan per box
         // (plans are only initialized for the boxes that are owned by
         // the local MPI rank)
-        using FFTplans = amrex::LayoutData<AnyFFT::VendorFFTPlan>;
+        using FFTplans = amrex::LayoutData<ablastr::math::anyfft::VendorFFTPlan>;
 
         // Similarly, define the Hankel transformers and filter for each box.
         using MultiSpectralHankelTransformer = amrex::LayoutData<SpectralHankelTransformer>;
@@ -40,8 +41,17 @@ class SpectralFieldDataRZ
                              int n_field_required,
                              int n_modes);
         SpectralFieldDataRZ () = default; // Default constructor
-        SpectralFieldDataRZ& operator=(SpectralFieldDataRZ&& field_data) = default;
         ~SpectralFieldDataRZ ();
+
+        /** Delete Copy constructor */
+        SpectralFieldDataRZ ( SpectralFieldDataRZ const &) = delete;
+        /** Delete Copy operator */
+        SpectralFieldDataRZ& operator= ( SpectralFieldDataRZ const & ) = delete;
+        /** Default Move constructor */
+        SpectralFieldDataRZ ( SpectralFieldDataRZ&& ) = default;
+        /** Default Move operator */
+        SpectralFieldDataRZ& operator=(SpectralFieldDataRZ&& field_data) = default;
+
 
         void ForwardTransform (int lev, const amrex::MultiFab& mf, int field_index,
                                int i_comp=0);

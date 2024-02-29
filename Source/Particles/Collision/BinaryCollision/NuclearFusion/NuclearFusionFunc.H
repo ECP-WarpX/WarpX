@@ -33,10 +33,13 @@
  *  creation functor.
  *  This functor also reads and contains the fusion multiplier.
  */
-class NuclearFusionFunc{
+class NuclearFusionFunc
+{
     // Define shortcuts for frequently-used type names
     using ParticleType = WarpXParticleContainer::ParticleType;
-    using ParticleBins = amrex::DenseBins<ParticleType>;
+    using ParticleTileType = WarpXParticleContainer::ParticleTileType;
+    using ParticleTileDataType = ParticleTileType::ParticleTileDataType;
+    using ParticleBins = amrex::DenseBins<ParticleTileDataType>;
     using index_type = ParticleBins::index_type;
     using SoaData_type = WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
 
@@ -54,9 +57,12 @@ public:
      * @param[in] isSameSpecies whether the two colliding species are the same
      */
     NuclearFusionFunc (const std::string collision_name, MultiParticleContainer const * const mypc,
-                       const bool isSameSpecies) : m_isSameSpecies(isSameSpecies)
+                       const bool isSameSpecies):
+        m_fusion_multiplier{amrex::ParticleReal{1.0}}, // default fusion multiplier
+        m_probability_threshold{amrex::ParticleReal{0.02}}, // default fusion probability threshold
+        m_probability_target_value{amrex::ParticleReal{0.002}}, // default fusion probability target_value
+        m_isSameSpecies{isSameSpecies}
     {
-        using namespace amrex::literals;
 
 #ifdef AMREX_SINGLE_PRECISION_PARTICLES
         WARPX_ABORT_WITH_MESSAGE("Nuclear fusion module does not currently work with single precision");
@@ -65,16 +71,10 @@ public:
         m_fusion_type = BinaryCollisionUtils::get_nuclear_fusion_type(collision_name, mypc);
 
         const amrex::ParmParse pp_collision_name(collision_name);
-        // default fusion multiplier
-        m_fusion_multiplier = 1.0_prt;
         utils::parser::queryWithParser(
             pp_collision_name, "fusion_multiplier", m_fusion_multiplier);
-        // default fusion probability threshold
-        m_probability_threshold = 0.02_prt;
         utils::parser::queryWithParser(
             pp_collision_name, "fusion_probability_threshold", m_probability_threshold);
-        // default fusion probability target_value
-        m_probability_target_value = 0.002_prt;
         utils::parser::queryWithParser(
             pp_collision_name, "fusion_probability_target_value",
             m_probability_target_value);
@@ -123,7 +123,7 @@ public:
         index_type const* AMREX_RESTRICT I1,
         index_type const* AMREX_RESTRICT I2,
         SoaData_type soa_1, SoaData_type soa_2,
-        GetParticlePosition /*get_position_1*/, GetParticlePosition /*get_position_2*/,
+        GetParticlePosition<PIdx> /*get_position_1*/, GetParticlePosition<PIdx> /*get_position_2*/,
         amrex::ParticleReal const  /*q1*/, amrex::ParticleReal const  /*q2*/,
         amrex::ParticleReal const  m1, amrex::ParticleReal const  m2,
         amrex::Real const  dt, amrex::Real const dV,
@@ -157,12 +157,13 @@ public:
             // other species and we need to decrease their weight accordingly.
             // c1 corresponds to the minimum number of times a particle of species 1 will be paired
             // with a particle of species 2. Same for c2.
-            const index_type c1 = amrex::max(NI2/NI1,1u);
-            const index_type c2 = amrex::max(NI1/NI2,1u);
+            // index_type(1): https://github.com/AMReX-Codes/amrex/pull/3684
+            const index_type c1 = amrex::max(NI2/NI1, index_type(1));
+            const index_type c2 = amrex::max(NI1/NI2, index_type(1));
 
             // multiplier ratio to take into account unsampled pairs
             const auto multiplier_ratio = static_cast<int>(
-                (m_isSameSpecies)?(2u*max_N - 1):(max_N));
+                m_isSameSpecies ? 2*max_N - 1 : max_N);
 
 #if (defined WARPX_DIM_RZ)
             amrex::ParticleReal * const AMREX_RESTRICT theta1 = soa_1.m_rdata[PIdx::theta];

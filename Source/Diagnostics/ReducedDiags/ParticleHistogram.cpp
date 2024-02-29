@@ -50,8 +50,8 @@ struct NormalizationType {
 };
 
 // constructor
-ParticleHistogram::ParticleHistogram (std::string rd_name)
-: ReducedDiags{rd_name}
+ParticleHistogram::ParticleHistogram (std::string rd_name):
+    ReducedDiags{rd_name}
 {
     const ParmParse pp_rd_name(rd_name);
 
@@ -60,10 +60,15 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     pp_rd_name.get("species",selected_species_name);
 
     // read bin parameters
-    utils::parser::getWithParser(pp_rd_name, "bin_number",m_bin_num);
-    utils::parser::getWithParser(pp_rd_name, "bin_max",   m_bin_max);
-    utils::parser::getWithParser(pp_rd_name, "bin_min",   m_bin_min);
-    m_bin_size = (m_bin_max - m_bin_min) / m_bin_num;
+    int bin_num = 0;
+    amrex::Real bin_max = 0.0_rt, bin_min = 0.0_rt;
+    utils::parser::getWithParser(pp_rd_name, "bin_number", bin_num);
+    utils::parser::getWithParser(pp_rd_name, "bin_max",    bin_max);
+    utils::parser::getWithParser(pp_rd_name, "bin_min",    bin_min);
+    m_bin_num = bin_num;
+    m_bin_max = bin_max;
+    m_bin_min = bin_min;
+    m_bin_size = (bin_max - bin_min) / bin_num;
 
     // read histogram function
     std::string function_string;
@@ -153,7 +158,7 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
 void ParticleHistogram::ComputeDiags (int step)
 {
     // Judge if the diags should be done
-    if (!m_intervals.contains(step+1)) return;
+    if (!m_intervals.contains(step+1)) { return; }
 
     // get a reference to WarpX instance
     auto & warpx = WarpX::GetInstance();
@@ -196,7 +201,7 @@ void ParticleHistogram::ComputeDiags (int step)
         {
             for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti)
             {
-                auto const GetPosition = GetParticlePosition(pti);
+                auto const GetPosition = GetParticlePosition<PIdx>(pti);
 
                 auto & attribs = pti.GetAttribs();
                 ParticleReal* const AMREX_RESTRICT d_w = attribs[PIdx::w].dataPtr();
@@ -218,14 +223,16 @@ void ParticleHistogram::ComputeDiags (int step)
                     auto const uz = d_uz[i] / PhysConst::c;
 
                     // don't count a particle if it is filtered out
-                    if (do_parser_filter)
-                        if (fun_filterparser(t, x, y, z, ux, uy, uz) == 0._rt)
+                    if (do_parser_filter) {
+                        if (fun_filterparser(t, x, y, z, ux, uy, uz) == 0._rt) {
                             return;
+                        }
+                    }
                     // continue function if particle is not filtered out
                     auto const f = fun_partparser(t, x, y, z, ux, uy, uz);
                     // determine particle bin
                     int const bin = int(Math::floor((f-bin_min)/bin_size));
-                    if ( bin<0 || bin>=num_bins ) return; // discard if out-of-range
+                    if ( bin<0 || bin>=num_bins ) { return; } // discard if out-of-range
 
                     // add particle to histogram bin
                     //! @todo performance: on CPU, we are probably faster by
@@ -255,11 +262,11 @@ void ParticleHistogram::ComputeDiags (int step)
         Real f_max = 0.0_rt;
         for ( int i = 0; i < m_bin_num; ++i )
         {
-            if ( m_data[i] > f_max ) f_max = m_data[i];
+            if ( m_data[i] > f_max ) { f_max = m_data[i]; }
         }
         for ( int i = 0; i < m_bin_num; ++i )
         {
-            if ( f_max > std::numeric_limits<Real>::min() ) m_data[i] /= f_max;
+            if ( f_max > std::numeric_limits<Real>::min() ) { m_data[i] /= f_max; }
         }
         return;
     }
@@ -274,7 +281,7 @@ void ParticleHistogram::ComputeDiags (int step)
         }
         for ( int i = 0; i < m_bin_num; ++i )
         {
-            if ( f_area > std::numeric_limits<Real>::min() ) m_data[i] /= f_area;
+            if ( f_area > std::numeric_limits<Real>::min() ) { m_data[i] /= f_area; }
         }
         return;
     }

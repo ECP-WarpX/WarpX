@@ -33,17 +33,25 @@ grid = picmi.Cartesian3DGrid(number_of_cells = [nx, ny, nz],
 
 # Particles
 vel_z = 0.5*c
-multiparticles_distribution = picmi.ParticleListDistribution(x = [0.05, 0.],
-                                                             y = [0., 0.04],
-                                                             z = [0.05, 0.05],
-                                                             ux = [0., 0.],
-                                                             uy = [0., 0.],
-                                                             uz = [vel_z, vel_z],
-                                                             weight = [1., 1.])
+offset_x_particle = picmi.ParticleListDistribution(x = [0.05],
+                                                   y = [0.],
+                                                   z = [0.05],
+                                                   ux = [0.],
+                                                   uy = [0.],
+                                                   uz = [vel_z],
+                                                   weight = [1.])
+
+offset_y_particle = picmi.ParticleListDistribution(x = [0.],
+                                                   y = [0.04],
+                                                   z = [0.05],
+                                                   ux = [0.],
+                                                   uy = [0.],
+                                                   uz = [vel_z],
+                                                   weight = [1.])
 
 electrons = picmi.Species(particle_type = 'electron',
                           name = 'electrons',
-                          initial_distribution = multiparticles_distribution)
+                          initial_distribution = [offset_x_particle, offset_y_particle])
 
 # Plasma lenses
 plasma_lenses = picmi.PlasmaLens(period = 0.5,

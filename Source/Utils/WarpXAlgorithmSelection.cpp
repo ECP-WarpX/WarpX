@@ -20,8 +20,15 @@
 #include <map>
 #include <utility>
 
-// Define dictionary with correspondance between user-input strings,
+// Define dictionary with correspondence between user-input strings,
 // and corresponding integer for use inside the code
+
+const std::map<std::string, int> evolve_scheme_to_int = {
+    {"explicit",             EvolveScheme::Explicit },
+    {"implicit_picard",      EvolveScheme::ImplicitPicard },
+    {"semi_implicit_picard", EvolveScheme::SemiImplicitPicard },
+    {"default",              EvolveScheme::Explicit }
+};
 
 const std::map<std::string, int> grid_to_int = {
     {"collocated", GridType::Collocated},
@@ -56,10 +63,11 @@ const std::map<std::string, int> particle_pusher_algo_to_int = {
 };
 
 const std::map<std::string, int> current_deposition_algo_to_int = {
-    {"esirkepov", CurrentDepositionAlgo::Esirkepov },
-    {"direct",    CurrentDepositionAlgo::Direct },
-    {"vay",       CurrentDepositionAlgo::Vay },
-    {"default",   CurrentDepositionAlgo::Esirkepov } // NOTE: overwritten for PSATD and Hybrid-PIC below
+    {"esirkepov",  CurrentDepositionAlgo::Esirkepov },
+    {"direct",     CurrentDepositionAlgo::Direct },
+    {"vay",        CurrentDepositionAlgo::Vay },
+    {"villasenor", CurrentDepositionAlgo::Villasenor },
+    {"default",    CurrentDepositionAlgo::Esirkepov } // NOTE: overwritten for PSATD and Hybrid-PIC below
 };
 
 const std::map<std::string, int> charge_deposition_algo_to_int = {
@@ -147,7 +155,9 @@ GetAlgorithmInteger(const amrex::ParmParse& pp, const char* pp_search_key ){
 
     // Pick the right dictionary
     std::map<std::string, int> algo_to_int;
-    if (0 == std::strcmp(pp_search_key, "maxwell_solver")) {
+    if (0 == std::strcmp(pp_search_key, "evolve_scheme")) {
+        algo_to_int = evolve_scheme_to_int;
+    } else if (0 == std::strcmp(pp_search_key, "maxwell_solver")) {
         algo_to_int = electromagnetic_solver_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "grid_type")) {
         algo_to_int = grid_to_int;
@@ -159,8 +169,9 @@ GetAlgorithmInteger(const amrex::ParmParse& pp, const char* pp_search_key ){
         algo_to_int = current_deposition_algo_to_int;
         if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD ||
             WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC ||
-            WarpX::electrostatic_solver_id != ElectrostaticSolverAlgo::None)
+            WarpX::electrostatic_solver_id != ElectrostaticSolverAlgo::None) {
             algo_to_int["default"] = CurrentDepositionAlgo::Direct;
+        }
     } else if (0 == std::strcmp(pp_search_key, "charge_deposition")) {
         algo_to_int = charge_deposition_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "field_gathering")) {

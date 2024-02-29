@@ -9,6 +9,7 @@
 #include "LaserParticleContainer.H"
 
 #include "Evolve/WarpXDtType.H"
+#include "Evolve/WarpXPushType.H"
 #include "Laser/LaserProfiles.H"
 #include "Particles/LaserParticleContainer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
@@ -46,7 +47,6 @@
 #include <AMReX_REAL.H>
 #include <AMReX_RealBox.H>
 #include <AMReX_StructOfArrays.H>
-#include <AMReX_TinyProfiler.H>
 #include <AMReX_Utility.H>
 #include <AMReX_Vector.H>
 
@@ -280,7 +280,7 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
 void
 LaserParticleContainer::ContinuousInjection (const RealBox& injection_box)
 {
-    if (!m_enabled) return;
+    if (!m_enabled) { return; }
 
     // Input parameter injection_box contains small box where injection
     // should occur.
@@ -322,7 +322,7 @@ LaserParticleContainer::ContinuousInjection (const RealBox& injection_box)
 void
 LaserParticleContainer::UpdateAntennaPosition (const amrex::Real dt)
 {
-    if (!m_enabled) return;
+    if (!m_enabled) { return; }
 
     const int dir = WarpX::moving_window_dir;
     if (do_continuous_injection and (WarpX::gamma_boost > 1)){
@@ -351,7 +351,7 @@ LaserParticleContainer::UpdateAntennaPosition (const amrex::Real dt)
 void
 LaserParticleContainer::InitData ()
 {
-    if (!m_enabled) return;
+    if (!m_enabled) { return; }
 
     // Call InitData on max level to inject one laser particle per
     // finest cell.
@@ -368,7 +368,7 @@ LaserParticleContainer::InitData ()
 void
 LaserParticleContainer::InitData (int lev)
 {
-    if (!m_enabled) return;
+    if (!m_enabled) { return; }
 
     // spacing of laser particles in the laser plane.
     // has to be done after geometry is set up.
@@ -542,7 +542,7 @@ LaserParticleContainer::InitData (int lev)
     amrex::Vector<amrex::ParticleReal> particle_uy(np, 0.0);
     amrex::Vector<amrex::ParticleReal> particle_uz(np, 0.0);
 
-    if (Verbose()) amrex::Print() << Utils::TextMsg::Info("Adding laser particles");
+    if (Verbose()) { amrex::Print() << Utils::TextMsg::Info("Adding laser particles"); }
     amrex::Vector<amrex::Vector<ParticleReal>> attr;
     attr.push_back(particle_w);
     amrex::Vector<amrex::Vector<int>> attr_int;
@@ -562,12 +562,12 @@ LaserParticleContainer::Evolve (int lev,
                                 MultiFab* rho, MultiFab* crho,
                                 const MultiFab*, const MultiFab*, const MultiFab*,
                                 const MultiFab*, const MultiFab*, const MultiFab*,
-                                Real t, Real dt, DtType /*a_dt_type*/, bool skip_deposition)
+                                Real t, Real dt, DtType /*a_dt_type*/, bool skip_deposition, PushType push_type)
 {
     WARPX_PROFILE("LaserParticleContainer::Evolve()");
     WARPX_PROFILE_VAR_NS("LaserParticleContainer::Evolve::ParticlePush", blp_pp);
 
-    if (!m_enabled) return;
+    if (!m_enabled) { return; }
 
     Real t_lab = t;
     if (WarpX::gamma_boost > 1) {
@@ -665,14 +665,14 @@ LaserParticleContainer::Evolve (int lev,
                 // Deposit inside domains
                 DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
                                0, np_current, thread_num,
-                               lev, lev, dt, relative_time);
+                               lev, lev, dt, relative_time, push_type);
 
                 if (has_buffer)
                 {
                     // Deposit in buffers
                     DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
                                    np_current, np-np_current, thread_num,
-                                   lev, lev-1, dt, relative_time);
+                                   lev, lev-1, dt, relative_time, push_type);
                 }
             }
 
@@ -702,7 +702,7 @@ LaserParticleContainer::Evolve (int lev,
 void
 LaserParticleContainer::PostRestart ()
 {
-    if (!m_enabled) return;
+    if (!m_enabled) { return; }
 
     Real Sx, Sy;
     const int lev = finestLevel();
@@ -790,7 +790,7 @@ LaserParticleContainer::calculate_laser_plane_coordinates (const WarpXParIter& p
                                                            Real * AMREX_RESTRICT const pplane_Xp,
                                                            Real * AMREX_RESTRICT const pplane_Yp)
 {
-    const auto GetPosition = GetParticlePosition(pti);
+    const auto GetPosition = GetParticlePosition<PIdx>(pti);
 
 #if (AMREX_SPACEDIM >= 2)
     const Real tmp_u_X_0 = m_u_X[0];
@@ -852,8 +852,8 @@ LaserParticleContainer::update_laser_particle (WarpXParIter& pti,
                                                Real const * AMREX_RESTRICT const amplitude,
                                                const Real dt)
 {
-    const auto GetPosition = GetParticlePosition(pti);
-    auto       SetPosition = SetParticlePosition(pti);
+    const auto GetPosition = GetParticlePosition<PIdx>(pti);
+    auto       SetPosition = SetParticlePosition<PIdx>(pti);
 
     const Real tmp_p_X_0 = m_p_X[0];
     const Real tmp_p_X_1 = m_p_X[1];
@@ -870,7 +870,7 @@ LaserParticleContainer::update_laser_particle (WarpXParIter& pti,
         np,
         [=] AMREX_GPU_DEVICE (int i) {
             // Calculate the velocity according to the amplitude of E
-            const Real sign_charge = (pwp[i]>0) ? 1 : -1;
+            const Real sign_charge = (pwp[i]>0) ? -1 : 1;
             const Real v_over_c = sign_charge * tmp_mobility * amplitude[i];
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(amrex::Math::abs(v_over_c) < amrex::Real(1.),
                             "Error: calculated laser particle velocity greater than c."
