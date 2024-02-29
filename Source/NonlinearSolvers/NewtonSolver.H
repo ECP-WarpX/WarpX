@@ -2,7 +2,7 @@
 #define _NEWTON_SOLVER_H_
 
 #include "NonlinearSolver.H"
-#include "JacobianFunctionJFNK.H"
+#include "JacobianFunctionMF.H"
 
 #include <AMReX_GMRES.H>
 #include <AMReX_ParmParse.H>
@@ -92,8 +92,8 @@ protected:
 
 private:
 
-    std::unique_ptr<JacobianFunctionJFNK<Vec,Ops>> m_linear_function;
-    std::unique_ptr<amrex::GMRES<Vec,JacobianFunctionJFNK<Vec,Ops>>> m_linear_solver;
+    std::unique_ptr<JacobianFunctionMF<Vec,Ops>> m_linear_function;
+    std::unique_ptr<amrex::GMRES<Vec,JacobianFunctionMF<Vec,Ops>>> m_linear_solver;
 
     void ParseParameters ();
 
@@ -134,10 +134,10 @@ void NewtonSolver<Vec,Ops>::Define ( const Vec&  a_U,
   
     m_ops = a_ops;
 
-    m_linear_function = std::make_unique<JacobianFunctionJFNK<Vec,Ops>>();
+    m_linear_function = std::make_unique<JacobianFunctionMF<Vec,Ops>>();
     m_linear_function->define(m_F, m_ops);
     
-    m_linear_solver = std::make_unique<amrex::GMRES<Vec,JacobianFunctionJFNK<Vec,Ops>>>();
+    m_linear_solver = std::make_unique<amrex::GMRES<Vec,JacobianFunctionMF<Vec,Ops>>>();
     m_linear_solver->define(*m_linear_function);
     m_linear_solver->setVerbose( m_gmres_verbose_int );
 

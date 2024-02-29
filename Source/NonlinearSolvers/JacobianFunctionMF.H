@@ -1,25 +1,29 @@
-#ifndef _JacobianFunctionJFNK_H_
-#define _JacobianFunctionJFNK_H_
+#ifndef _JacobianFunctionMF_H_
+#define _JacobianFunctionMF_H_
+
+/*
+ *   This is a linear function class for computing the action of a Jacobian on a vector using
+ *   a matrix-free finite-difference method. This class has all of the required functions to be 
+ *   used as the linear operator template parameter in AMReX_GMRES.
+ */
 
 template <class T, class Ops>
-class JacobianFunctionJFNK
+class JacobianFunctionMF
 {
     public:
 
     using RT = typename T::value_type;
 
-    JacobianFunctionJFNK<T,Ops>()
+    JacobianFunctionMF<T,Ops>()
     {
         m_is_defined = false; 
         m_is_linear = false;
-        m_epsJFNK = 1.0e-6;
+        m_epsJFNK = RT(1.0e-6);
         m_usePreCond = false;
-        //m_pc_type = _EM_MATRIX_PC_;
     }
 
-    ~JacobianFunctionJFNK<T,Ops>() 
+    ~JacobianFunctionMF<T,Ops>() 
     {
-        //delete m_preCond;
         return;
     }
 
@@ -30,7 +34,6 @@ class JacobianFunctionJFNK
     { 
         if (m_usePreCond) {
             a_U.zero();
-            //m_precond->apply(a_U, a_X);
         } else {
             a_U.Copy(a_X);
         }
@@ -41,7 +44,6 @@ class JacobianFunctionJFNK
     void updatePreCondMat ( const T&  a_X )
     {
         amrex::ignore_unused(a_X);
-        //if (m_usePreCond) { m_preCond->update( a_X ); }
         return;
     }
 
@@ -111,42 +113,36 @@ class JacobianFunctionJFNK
     { 
         m_Y0.Copy(a_U); 
         m_normY0 = norm2(m_Y0); 
-        //if (m_usePreCond) m_preCond->setBaseSolution(a_U);
     }
 
     inline 
     void setBaseRHS (const T& a_R)
     { 
         m_R0.Copy(a_R); 
-        //if (m_usePreCond) m_preCond->setBaseRHS(a_R);
     }
 
     inline 
     void setJFNKEps (const RT a_eps)
     { 
         m_epsJFNK = a_eps; 
-        //if (m_usePreCond) m_preCond->setJFNKEps(a_eps);
     }
 
     inline 
     void setIsLinear (bool a_isLinear) 
     { 
         m_is_linear = a_isLinear; 
-        //if (m_usePreCond) m_preCond->setIsLinear(true);
     }
 
     inline 
     void curTime ( const RT a_time )
     {
         m_cur_time = a_time;
-        //if (m_usePreCond) m_preCond->curTime( a_time );
     }
 
     inline 
     void curTimeStep ( const RT a_dt )
     {
         m_dt = a_dt;
-        //if (m_usePreCond) m_preCond->curTimeStep( a_dt );
     }
 
     void define(const T&, Ops* const);
@@ -160,21 +156,11 @@ class JacobianFunctionJFNK
 
     T m_Z, m_Y0, m_R0, m_R;
     Ops* m_ops;
-    //Preconditioner<T,Ops>* m_preCond;
     
-    //void ParseParameters ()
-    //{
-    //    ParmParse pp_jac( "jacobian" );
-    //    a_pp.query("jfnk_eps", m_epsJFNK);
-    //    a_pp.query("with_pc",  m_usePreCond);
-    //    if (m_usePreCond) {
-    //      a_pp.query("pc_type",  m_pc_type);
-    //    }
-    //}
 };
 
 template <class T, class Ops>
-void JacobianFunctionJFNK<T,Ops>::define ( const T&     a_U, 
+void JacobianFunctionMF<T,Ops>::define ( const T&     a_U, 
                                       Ops* const   a_ops )
 {
     m_Z.Define(a_U);
@@ -184,28 +170,12 @@ void JacobianFunctionJFNK<T,Ops>::define ( const T&     a_U,
 
     m_ops = a_ops;
 
-    //ParseParameters();
-
-    //m_preCond = nullptr;
-    //if (m_usePreCond) {
-    //if (m_pc_type == _EM_MATRIX_PC_) {
-        //m_preCond = new EMMatrixPreconditioner<T,Ops>;
-    //} else {
-        //MayDay::Error("Invalid choice of preconditioner type");
-    //}
-    //if (!procID()) {
-        //printf("JacobianFunctionJFNK: preconditioner type is %s.\n", m_pc_type.c_str());
-    //}
-    //m_preCond->define(a_U, a_ops, a_dtfac);
-    //m_preCond->setJFNKEps( m_epsJFNK );
-    //}
-
     m_is_defined = true;
     return;
 }
 
 template <class T, class Ops>
-auto JacobianFunctionJFNK<T,Ops>::makeVecRHS () const -> T
+auto JacobianFunctionMF<T,Ops>::makeVecRHS () const -> T
 {
     T Vec;
     Vec.Define(m_R);
@@ -213,7 +183,7 @@ auto JacobianFunctionJFNK<T,Ops>::makeVecRHS () const -> T
 }
 
 template <class T, class Ops>
-auto JacobianFunctionJFNK<T,Ops>::makeVecLHS () const -> T
+auto JacobianFunctionMF<T,Ops>::makeVecLHS () const -> T
 {
     T Vec;
     Vec.Define(m_R);
@@ -221,9 +191,9 @@ auto JacobianFunctionJFNK<T,Ops>::makeVecLHS () const -> T
 }
 
 template <class T, class Ops>
-void JacobianFunctionJFNK<T,Ops>::apply (T& a_dF, const T& a_dU)
+void JacobianFunctionMF<T,Ops>::apply (T& a_dF, const T& a_dU)
 {
-    BL_PROFILE("JacobianFunctionJFNK::apply()");
+    BL_PROFILE("JacobianFunctionMF::apply()");
     using namespace amrex::literals;
     RT normY = norm2(a_dU); // always 1 when called from GMRES
         
