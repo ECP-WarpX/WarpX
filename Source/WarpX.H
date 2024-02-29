@@ -125,16 +125,16 @@ public:
     //
     // Functions used by implicit solvers
     //
-    void PreRHSOp ( const amrex::Real  cur_time, 
+    void PreRHSOp ( const amrex::Real  cur_time,
                     const amrex::Real  a_full_dt,
                     const int          a_nl_iter,
                     const bool         a_from_jacobian );
     void SaveParticlesAtImplicitStepStart ( );
     void FinishImplicitParticleUpdate ( );
     void UpdateElectricField( const WarpXSolverVec&  a_E, const bool a_apply );
-    void UpdateMagneticField( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& a_Bn, 
+    void UpdateMagneticField( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& a_Bn,
                               const amrex::Real a_thetadt );
-    void FinishMagneticField( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& a_Bn, 
+    void FinishMagneticField( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& a_Bn,
                               const amrex::Real a_theta );
     void ApplyElectricFieldBCs( const bool a_apply );
     void ApplyMagneticFieldBCs( const bool a_apply );
@@ -544,7 +544,7 @@ public:
 
     const amrex::MultiFab& getedgelengths (int lev, int direction) {return *m_edge_lengths[lev][direction];}
     const amrex::MultiFab& getfaceareas  (int lev, int direction) {return *m_face_areas[lev][direction];}
-    
+
     const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>,3>>& getEfield_fp_vec() const {return Efield_fp;}
     const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>,3>>& getBfield_fp_vec() const {return Bfield_fp;}
 
@@ -582,7 +582,7 @@ public:
 
     /// object with all reduced diagnostics, similar to MultiParticleContainer for species.
     std::unique_ptr<MultiReducedDiags> reduced_diags;
-    
+
     void applyMirrors(amrex::Real time);
 
     /** Determine the timestep of the simulation. */
@@ -638,7 +638,7 @@ public:
     void EvolveE (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveF (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
     void EvolveG (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
-    
+
     void MacroscopicEvolveE (         amrex::Real dt);
     void MacroscopicEvolveE (int lev, amrex::Real dt);
     void MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real dt);
@@ -1906,7 +1906,7 @@ private:
 
     amrex::Vector<std::unique_ptr<FiniteDifferenceSolver>> m_fdtd_solver_fp;
     amrex::Vector<std::unique_ptr<FiniteDifferenceSolver>> m_fdtd_solver_cp;
-    
+
     // implicit solver object
     std::unique_ptr<ImplicitSolver> m_implicit_solver;
 

@@ -86,13 +86,13 @@ void UpdatePositionImplicit(amrex::ParticleReal& x, amrex::ParticleReal& y, amre
 }
 
 /** \brief Check particle position for convergence. This is used by the theta-implicit
- *    and semi-implicit time solvers to obtain a self-consistent time-centered update 
+ *    and semi-implicit time solvers to obtain a self-consistent time-centered update
  *    of the particles for given electric and magnetic fields on the grid.
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void PositionNorm( const amrex::ParticleReal dxp, const amrex::ParticleReal dyp, const amrex::ParticleReal dzp,
-                   amrex::ParticleReal& dxp_save, amrex::ParticleReal& dyp_save, amrex::ParticleReal& dzp_save, 
-                   const amrex::ParticleReal dxg, const amrex::ParticleReal dyg, const amrex::ParticleReal dzg, 
+                   amrex::ParticleReal& dxp_save, amrex::ParticleReal& dyp_save, amrex::ParticleReal& dzp_save,
+                   const amrex::ParticleReal dxg, const amrex::ParticleReal dyg, const amrex::ParticleReal dzg,
                    amrex::ParticleReal& step_norm, const int iter )
 {
     using namespace amrex::literals;

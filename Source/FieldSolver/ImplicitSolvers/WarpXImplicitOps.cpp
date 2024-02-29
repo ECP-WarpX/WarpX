@@ -52,8 +52,8 @@
 #include <vector>
 
 void
-WarpX::PreRHSOp ( const amrex::Real  a_cur_time, 
-                  const amrex::Real  a_full_dt, 
+WarpX::PreRHSOp ( const amrex::Real  a_cur_time,
+                  const amrex::Real  a_full_dt,
                   const int          a_nl_iter,
                   const bool         a_from_jacobian )
 {
@@ -73,7 +73,7 @@ WarpX::PreRHSOp ( const amrex::Real  a_cur_time,
 }
 
 void
-WarpX::UpdateElectricField( const WarpXSolverVec&  a_Efield_vec, const bool a_apply ) 
+WarpX::UpdateElectricField( const WarpXSolverVec&  a_Efield_vec, const bool a_apply )
 {
     const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Evec = a_Efield_vec.getVec();
     amrex::MultiFab::Copy(*Efield_fp[0][0], *Evec[0][0], 0, 0, ncomps, Evec[0][0]->nGrowVect());
@@ -109,7 +109,7 @@ WarpX::FinishMagneticField( const amrex::Vector<std::array< std::unique_ptr<amre
 }
 
 void
-WarpX::ApplyMagneticFieldBCs( const bool  a_apply ) 
+WarpX::ApplyMagneticFieldBCs( const bool  a_apply )
 {
     FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
     if (a_apply) { ApplyBfieldBoundary(0, PatchType::fine, DtType::Full); }

@@ -564,7 +564,7 @@ WarpX::InitFromScratch ()
     mypc->InitData();
 
     InitPML();
-    
+
 }
 
 void

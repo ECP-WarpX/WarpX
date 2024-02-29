@@ -15,7 +15,7 @@ class NewtonSolver : public NonlinearSolver<Vec,Ops>
 {
 public:
 
-    NewtonSolver<Vec,Ops>() 
+    NewtonSolver<Vec,Ops>()
     {
         m_ops = nullptr;
         m_update_pc = true;
@@ -25,7 +25,7 @@ public:
 
     virtual ~NewtonSolver<Vec,Ops>() { }
 
-    virtual void Define ( const Vec&  a_U, 
+    virtual void Define ( const Vec&  a_U,
                           Ops* const  a_ops );
 
     virtual void Solve ( Vec&         a_U,
@@ -43,7 +43,7 @@ public:
         a_atol = m_atol;
         a_maxits = m_maxits;
     }
-    
+
     inline void CurTime ( const amrex::Real  a_time ) const
     {
         m_cur_time = a_time;
@@ -55,7 +55,7 @@ public:
         m_dt = a_dt;
         m_linear_function->curTimeStep( a_dt );
     }
-    
+
     void PrintParams () const
     {
         amrex::Print()     << "Newton verbose:             " << (m_verbose?"true":"false") << std::endl;
@@ -82,10 +82,10 @@ protected:
 
     amrex::Real m_atol, m_rtol;
     int m_maxits;
-    
+
     amrex::Real m_gmres_atol, m_gmres_rtol;
     int m_gmres_verbose_int, m_gmres_maxits;
-    
+
     mutable amrex::Real m_cur_time, m_dt;
     mutable bool m_update_pc;
     mutable bool m_update_pc_init;
@@ -97,7 +97,7 @@ private:
 
     void ParseParameters ();
 
-    void EvalResidual ( Vec&         a_R, 
+    void EvalResidual ( Vec&         a_R,
                   const Vec&         a_U,
                   const Vec&         a_b,
                   const amrex::Real  a_time,
@@ -120,23 +120,23 @@ void NewtonSolver<Vec,Ops>::Define ( const Vec&  a_U,
     m_maxits = 100;
     m_verbose = true;
     m_require_convergence = true;
-    
+
     m_gmres_verbose_int = 0;
     m_gmres_rtol = 1.0e-4;
     m_gmres_atol = 0.0;
     m_gmres_maxits = 1000;
-  
+
     ParseParameters();
-  
+
     m_dU.Define(a_U);
     m_F.Define(a_U); // residual function F(U) = U - b - R(U) = 0
     m_R.Define(a_U);
-  
+
     m_ops = a_ops;
 
     m_linear_function = std::make_unique<JacobianFunctionMF<Vec,Ops>>();
     m_linear_function->define(m_F, m_ops);
-    
+
     m_linear_solver = std::make_unique<amrex::GMRES<Vec,JacobianFunctionMF<Vec,Ops>>>();
     m_linear_solver->define(*m_linear_function);
     m_linear_solver->setVerbose( m_gmres_verbose_int );
@@ -154,7 +154,7 @@ void NewtonSolver<Vec,Ops>::ParseParameters ()
     pp_newton.query("relative_tolerance",  m_rtol);
     pp_newton.query("max_iterations",      m_maxits);
     pp_newton.query("require_convergence", m_require_convergence);
-    
+
     const amrex::ParmParse pp_gmres("gmres");
     pp_gmres.query("verbose_int",         m_gmres_verbose_int);
     pp_gmres.query("absolute_tolerance",  m_gmres_atol);
@@ -178,7 +178,7 @@ void NewtonSolver<Vec,Ops>::Solve ( Vec&         a_U,
     // Newton routine to solve nonlinear equation of form:
     // F(U) = U - b - R(U) = 0
     //
-    
+
     CurTime(a_time);
     CurTimeStep(a_dt);
 
@@ -187,7 +187,7 @@ void NewtonSolver<Vec,Ops>::Solve ( Vec&         a_U,
     for (its=0; its < m_maxits;) {
 
         EvalResidual(m_F, a_U, a_b, a_time, a_dt, its);
-        
+
         // Compute norm of the residual
         norm_abs = m_F.norm2();
         if (its == 0) {
@@ -195,28 +195,28 @@ void NewtonSolver<Vec,Ops>::Solve ( Vec&         a_U,
             else { norm0 = 1._rt; }
         }
         norm_rel = norm_abs/norm0;
- 
+
         // Check for convergence critsia
         if (m_verbose || its == m_maxits) {
-            amrex::Print() << "Newton: iteration = " << std::setw(3) << its <<  ", norm = " 
-                           << std::scientific << std::setprecision(5) << norm_abs << " (abs.), " 
+            amrex::Print() << "Newton: iteration = " << std::setw(3) << its <<  ", norm = "
+                           << std::scientific << std::setprecision(5) << norm_abs << " (abs.), "
                            << std::scientific << std::setprecision(5) << norm_rel << " (rel.)" << "\n";
         }
 
         if (norm_abs < m_rtol) {
-            amrex::Print() << "Newton: exiting at iteration = " << std::setw(3) << its 
+            amrex::Print() << "Newton: exiting at iteration = " << std::setw(3) << its
                            << ". Satisfied absolute tolerance " << m_atol << std::endl;
             break;
         }
-    
+
         if (norm_rel < m_rtol) {
-            amrex::Print() << "Newton: exiting at iteration = " << std::setw(3) << its 
+            amrex::Print() << "Newton: exiting at iteration = " << std::setw(3) << its
                            << ". Satisfied relative tolerance " << m_rtol << std::endl;
             break;
         }
-        
+
         if (norm_abs > 100._rt*norm0) {
-            amrex::Print() << "Newton: exiting at iteration = " << std::setw(3) << its 
+            amrex::Print() << "Newton: exiting at iteration = " << std::setw(3) << its
                            << ". SOLVER DIVERGED! relative tolerance = " << m_rtol << std::endl;
             std::stringstream convergenceMsg;
             convergenceMsg << "Newton: exiting at iteration " << std::setw(3) << its <<
@@ -228,13 +228,13 @@ void NewtonSolver<Vec,Ops>::Solve ( Vec&         a_U,
         // Solve linear system for Newton step [Jac]*dU = F
         m_dU.zero();
         m_linear_solver->solve(m_dU,m_F,m_gmres_rtol,m_gmres_atol,m_gmres_maxits);
-    
+
         // Update solution
         a_U -= m_dU;
 
         its++;
         if (its >= m_maxits) {
-            amrex::Print() << "Newton: exiting at its = " << std::setw(3) << its 
+            amrex::Print() << "Newton: exiting at its = " << std::setw(3) << its
                            << ". Maximum iteration reached: its = " << m_maxits << std::endl;
             break;
         }
@@ -246,7 +246,7 @@ void NewtonSolver<Vec,Ops>::Solve ( Vec&         a_U,
        convergenceMsg << "Newton solver failed to converge after " << its <<
                          " iterations. Relative norm is " << norm_rel <<
                          " and the relative tolerance is " << m_rtol <<
-                         ". Absolute norm is " << norm_abs << 
+                         ". Absolute norm is " << norm_abs <<
                          " and the absolute tolerance is " << m_atol;
        if (m_verbose) { amrex::Print() << convergenceMsg.str() << std::endl; }
        if (m_require_convergence) {
@@ -255,7 +255,7 @@ void NewtonSolver<Vec,Ops>::Solve ( Vec&         a_U,
            ablastr::warn_manager::WMRecordWarning("NewtonSolver", convergenceMsg.str());
        }
     }
- 
+
     return;
 
 }
@@ -275,7 +275,7 @@ void NewtonSolver<Vec,Ops>::EvalResidual ( Vec&         a_F,
     // set base Y and R(Y) for Jacobian //
     m_linear_function->setBaseSolution(a_U);
     m_linear_function->setBaseRHS(m_R);
-  
+
     // update preconditioner //
     if (m_update_pc || m_update_pc_init) {
         m_linear_function->updatePreCondMat(a_U);

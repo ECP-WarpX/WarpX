@@ -18,7 +18,7 @@ class ThetaImplicitEM : public ImplicitSolver
 {
 public:
 
-    ThetaImplicitEM() 
+    ThetaImplicitEM()
     {
         m_nlsolver_type = NonlinearSolverType::Picard;
 
@@ -31,15 +31,15 @@ public:
     }
 
     virtual ~ThetaImplicitEM() = default;
-    
+
     virtual void Define ( WarpX* const  a_WarpX );
-    
+
     virtual bool IsDefined () const { return m_is_defined; }
-    
+
     virtual void PrintParameters () const;
 
     virtual void Initialize () {;}
-    
+
     virtual void GetParticleSolverParams (int&  a_max_particle_iterations,
                                           amrex::ParticleReal&  a_particle_tolerance )
     {
@@ -80,7 +80,7 @@ private:
 
     WarpXSolverVec m_E, m_Eold;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_Bold;
-    
+
     void UpdateWarpXState ( const WarpXSolverVec&  a_E,
                             const amrex::Real      a_time,
                             const amrex::Real      a_dt );

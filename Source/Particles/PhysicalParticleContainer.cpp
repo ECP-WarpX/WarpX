@@ -3136,7 +3136,7 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
 #endif
         amrex::ParticleReal zp = z_n[ip];
         amrex::ParticleReal zp_n = z_n[ip];
-        
+
         amrex::ParticleReal dxp, dxp_save;
         amrex::ParticleReal dyp, dyp_save;
         amrex::ParticleReal dzp, dzp_save;
@@ -3146,7 +3146,7 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
 
         amrex::ParticleReal step_norm = 1._prt;
         for (int iter=0; iter<max_iterations;) {
-        
+
             dxp = 0.0;
             dyp = 0.0;
             dzp = 0.0;
@@ -3159,11 +3159,11 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
 #endif
             zp = zp_n + dzp;
             setPosition(ip, xp, yp, zp);
-            
+
             PositionNorm( dxp, dyp, dzp, dxp_save, dyp_save, dzp_save,
                           dxg, dyg, dzg, step_norm, iter );
             if( step_norm < particle_tolerance ) { break; }
- 
+
             amrex::ParticleReal Exp = Ex_external_particle;
             amrex::ParticleReal Eyp = Ey_external_particle;
             amrex::ParticleReal Ezp = Ez_external_particle;
@@ -3243,7 +3243,7 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
             ux[ip] = 0.5_rt*(ux[ip] + ux_n[ip]);
             uy[ip] = 0.5_rt*(uy[ip] + uy_n[ip]);
             uz[ip] = 0.5_rt*(uz[ip] + uz_n[ip]);
- 
+
             iter++;
             if ( iter > 1 && iter == max_iterations ) { // does this work on GPU?
                 std::stringstream convergenceMsg;

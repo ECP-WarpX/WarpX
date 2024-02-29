@@ -12,13 +12,13 @@
  *  xp^{n+1} = xp^n + dt*up^{n+1/2}/(gammap^n + gammap^{n+1})
  *  up^{n+1} = up^n + dt*qp/mp*(Ep^{n+1/2} + up^{n+1/2}/gammap^{n+1/2} x Bp^{n+1/2})
  *  where f^{n+1/2} = (f^{n} + f^{n+1})/2.0, for all but Bg, which lives at half steps
- *  
+ *
  *  This algorithm is approximately energy conserving. The violation in energy conservation
- *  is typically negligible. The advantage of this method over the exactly energy-conserving 
- *  theta-implicit EM method is that light wave dispersion is captured much better. However, 
+ *  is typically negligible. The advantage of this method over the exactly energy-conserving
+ *  theta-implicit EM method is that light wave dispersion is captured much better. However,
  *  the CFL condition for light waves does have to be satisifed for numerical stability.
  *
- *  See G. Chen, L. Chacon, L. Yin, B.J. Albright, D.J. Stark, R.F. Bird, 
+ *  See G. Chen, L. Chacon, L. Yin, B.J. Albright, D.J. Stark, R.F. Bird,
  *  "A semi-implicit energy- and charge-conserving particle-in-cell algorithm for the
  *  relativistic Vlasov-Maxwell equations.", JCP 407 (2020).
  */
@@ -28,19 +28,19 @@ void SemiImplicitEM::Define ( WarpX* const  a_WarpX )
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !m_is_defined,
         "SemiImplicitEM object is already defined!");
-    
+
     // Retain a pointer back to main WarpX class
     m_WarpX = a_WarpX;
- 
+
     // Define E vectors
     m_E.Define( m_WarpX->getEfield_fp_vec() );
     m_Eold.Define( m_WarpX->getEfield_fp_vec() );
-    
+
     // Need to define the WarpXSolverVec owned dot_mask to do dot
     // product correctly for linear and nonlinear solvers
     const amrex::Vector<amrex::Geometry>& Geom = m_WarpX->Geom();
     m_E.SetDotMask(Geom);
-    
+
     // Parse implicit solver parameters
     amrex::ParmParse pp("implicit_evolve");
     pp.query("verbose", m_verbose);
@@ -93,7 +93,7 @@ void SemiImplicitEM::PrintParameters () const
 void SemiImplicitEM::OneStep ( const amrex::Real  a_old_time,
                                const amrex::Real  a_dt,
                                const int          a_step )
-{  
+{
     using namespace amrex::literals;
     amrex::ignore_unused(a_step);
 
@@ -114,20 +114,20 @@ void SemiImplicitEM::OneStep ( const amrex::Real  a_old_time,
     // Solve nonlinear system for E at t_{n+1/2}
     // Particles will be advanced to t_{n+1/2}
     m_nlsolver->Solve( m_E, m_Eold, a_old_time, a_dt );
-    
+
     // update WarpX owned Efield_fp and Bfield_fp to t_{n+1/2}
     UpdateWarpXState( m_E, a_old_time, a_dt );
 
     // Update field boundary probes prior to updating fields to t_{n+1}
     //m_fields->updateBoundaryProbes( a_dt );
-    
+
     // Advance particles to step n+1
     m_WarpX->FinishImplicitParticleUpdate();
 
     // Advance fields to step n+1
     m_WarpX->FinishImplicitField(m_E.getVec(), m_Eold.getVec(), 0.5);
     m_WarpX->UpdateElectricField( m_E, false ); // JRA not sure about false here. is what DG had.
-  
+
 }
 
 void SemiImplicitEM::PreRHSOp ( const WarpXSolverVec&  a_E,
@@ -135,9 +135,9 @@ void SemiImplicitEM::PreRHSOp ( const WarpXSolverVec&  a_E,
                                 const amrex::Real      a_dt,
                                 const int              a_nl_iter,
                                 const bool             a_from_jacobian )
-{  
+{
     amrex::ignore_unused(a_E);
-    
+
     // update derived variable B and then update WarpX owned Efield_fp and Bfield_fp
     UpdateWarpXState( a_E, a_time, a_dt );
 
@@ -152,7 +152,7 @@ void SemiImplicitEM::ComputeRHS ( WarpXSolverVec&  a_Erhs,
                             const WarpXSolverVec&  a_E,
                             const amrex::Real      a_time,
                             const amrex::Real      a_dt )
-{  
+{
     amrex::ignore_unused(a_E, a_time);
     m_WarpX->ComputeRHSE(0.5*a_dt, a_Erhs);
 }

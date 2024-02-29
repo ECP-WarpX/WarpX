@@ -27,23 +27,23 @@
 #include <vector>
 
 /*
- *   This is a wrapper class around a Vector of array of pointers to MultiFabs that contains 
- *   basic math operators and functionality needed to interact with linear solvers in 
+ *   This is a wrapper class around a Vector of array of pointers to MultiFabs that contains
+ *   basic math operators and functionality needed to interact with linear solvers in
  *   AMReX, such as GMRES.
  *
- *   The size of the Vector is the number of amr levels. Hardcoded for 1 right now. The size of 
- *   the array is the number of MultiFabs. It is hardcoded for 3 right now as it is only 
- *   used for the electric field in the electromagnetic implicit time solver. In the future, 
- *   the array size can be made a template parameter so that this class can be used for other 
- *   solver vectors, such as electrostatic (array size 1) or Darwin (array size 4). 
+ *   The size of the Vector is the number of amr levels. Hardcoded for 1 right now. The size of
+ *   the array is the number of MultiFabs. It is hardcoded for 3 right now as it is only
+ *   used for the electric field in the electromagnetic implicit time solver. In the future,
+ *   the array size can be made a template parameter so that this class can be used for other
+ *   solver vectors, such as electrostatic (array size 1) or Darwin (array size 4).
  */
 
 class WarpXSolverVec
 {
 public:
 
-    WarpXSolverVec() 
-    { 
+    WarpXSolverVec()
+    {
         m_is_defined = false;
     }
 
@@ -87,7 +87,7 @@ public:
         m_is_defined = true;
         return;
     }
-    
+
     void SetDotMask( const amrex::Vector<amrex::Geometry>&  a_Geom );
     RT dotProduct( const WarpXSolverVec&  a_X ) const;
 
@@ -105,7 +105,7 @@ public:
             }
         }
     }
-    
+
     [[nodiscard]] std::unique_ptr<amrex::MultiFab> make (int amrlev, int idim, amrex::IntVect const& ng) const
     {
         AMREX_ASSERT_WITH_MESSAGE(
@@ -117,7 +117,7 @@ public:
         return std::make_unique<amrex::MultiFab>( grids, dmap, m_ncomp, ng, amrex::MFInfo(), factory );
     }
 
-    inline 
+    inline
     void Copy ( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& a_solver_vec )
     {
         AMREX_ASSERT_WITH_MESSAGE(
@@ -130,18 +130,18 @@ public:
         }
     }
 
-    inline 
+    inline
     void Copy ( const WarpXSolverVec&  a_vec )
     {
         AMREX_ASSERT_WITH_MESSAGE(
             a_vec.IsDefined(),
             "WarpXSolverVec::Copy(a_vec) called with undefined a_vec");
-        if (!IsDefined()) { Define(a_vec); } 
+        if (!IsDefined()) { Define(a_vec); }
         const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& field_vec = a_vec.getVec();
         Copy(field_vec);
     }
 
-    inline 
+    inline
     void operator= ( const WarpXSolverVec&  a_vec )
     {
       Copy(a_vec);
@@ -180,26 +180,26 @@ public:
         retval -= a_vec;
         return retval;
     }
-    
-    inline 
+
+    inline
     void linComb (const RT a, const WarpXSolverVec& X, const RT b, const WarpXSolverVec& Y)
-    { 
+    {
         for (int n=0; n<3; n++) {
-            amrex::MultiFab::LinComb(*m_field_vec[0][n], a, *X.getVec()[0][n], 0, 
-                                                         b, *Y.getVec()[0][n], 0, 
+            amrex::MultiFab::LinComb(*m_field_vec[0][n], a, *X.getVec()[0][n], 0,
+                                                         b, *Y.getVec()[0][n], 0,
                                                          0, 1, 0);
         }
     }
-    
+
     inline
     void increment (const WarpXSolverVec& a_X, const RT a_a)
     {
         for (int n=0; n<3; n++) {
-            amrex::MultiFab::Saxpy( *m_field_vec[0][n], a_a, *a_X.getVec()[0][n], 
+            amrex::MultiFab::Saxpy( *m_field_vec[0][n], a_a, *a_X.getVec()[0][n],
                                     0, 0, 1, amrex::IntVect::Zero );
         }
     }
-    
+
     inline
     void scale (RT a_a)
     {
@@ -219,7 +219,7 @@ public:
 
     inline
     void ones () { setVal(RT(1.0)); }
-    
+
     inline
     void setVal ( const RT  a_val )
     {
@@ -238,18 +238,18 @@ public:
         RT norm = dotProduct(*this);
         return std::sqrt(norm);
     }
-    
+
     const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& getVec() const {return m_field_vec;}
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& getVec() {return m_field_vec;}
-    
-    
+
+
 private:
 
     bool  m_is_defined;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_field_vec;
     static constexpr int m_ncomp = 1;
     static constexpr int m_num_amr_levels = 1;
-    
+
     static bool m_dot_mask_defined;
     static amrex::Vector<std::array<std::unique_ptr<amrex::iMultiFab>,3>> m_dotMask;
 

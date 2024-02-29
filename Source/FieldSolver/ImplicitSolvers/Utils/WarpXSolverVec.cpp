@@ -3,7 +3,7 @@
 
 bool WarpXSolverVec::m_dot_mask_defined = false;
 amrex::Vector<std::array<std::unique_ptr<amrex::iMultiFab>,3>> WarpXSolverVec::m_dotMask;
-    
+
 void WarpXSolverVec::SetDotMask( const amrex::Vector<amrex::Geometry>&  a_Geom )
 {
     if (m_dot_mask_defined) { return; }
@@ -22,7 +22,7 @@ void WarpXSolverVec::SetDotMask( const amrex::Vector<amrex::Geometry>&  a_Geom )
     m_dot_mask_defined = true;
 }
 
-amrex::Real WarpXSolverVec::dotProduct ( const WarpXSolverVec&  a_X ) const 
+amrex::Real WarpXSolverVec::dotProduct ( const WarpXSolverVec&  a_X ) const
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_dot_mask_defined,

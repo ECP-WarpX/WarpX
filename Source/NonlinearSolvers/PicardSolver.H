@@ -13,7 +13,7 @@ class PicardSolver : public NonlinearSolver<Vec,Ops>
 {
 public:
 
-    PicardSolver<Vec,Ops>() 
+    PicardSolver<Vec,Ops>()
     {
         m_ops = nullptr;
         m_is_defined = false;
@@ -21,7 +21,7 @@ public:
 
     virtual ~PicardSolver<Vec,Ops>() { }
 
-    virtual void Define ( const Vec&  a_U, 
+    virtual void Define ( const Vec&  a_U,
                           Ops* const  a_ops );
 
     virtual void Solve ( Vec&         a_U,
@@ -39,7 +39,7 @@ public:
         a_atol = m_atol;
         a_maxits = m_maxits;
     }
-    
+
     void PrintParams () const
     {
         amrex::Print() << "Picard max iterations:      " << m_maxits << std::endl;
@@ -82,14 +82,14 @@ void PicardSolver<Vec,Ops>::Define ( const Vec&  a_U,
     m_maxits = 100;
     m_verbose = true;
     m_require_convergence = true;
-  
+
     ParseParameters();
-  
+
     m_Usave.Define(a_U);
     m_F.Define(a_U);
-  
+
     m_ops = a_ops;
-    
+
     m_is_defined = true;
 
 }
@@ -135,7 +135,7 @@ void PicardSolver<Vec,Ops>::Solve ( Vec&         a_U,
         m_ops->PreRHSOp( a_U, a_time, a_dt, iter, false );
         m_ops->ComputeRHS( m_F, a_U, a_time, a_dt );
         a_U = a_b + m_F;
-        
+
         // Compute the step norm and update iter
         m_Usave -= a_U;
         norm_abs = m_Usave.norm2();
@@ -145,28 +145,28 @@ void PicardSolver<Vec,Ops>::Solve ( Vec&         a_U,
         }
         norm_rel = norm_abs/norm0;
         iter++;
-        
+
         // Check for convergence criteria
         if (m_verbose || iter == m_maxits) {
-            amrex::Print() << "Picard: iter = " << std::setw(3) << iter <<  ", norm = " 
-                           << std::scientific << std::setprecision(5) << norm_abs << " (abs.), " 
+            amrex::Print() << "Picard: iter = " << std::setw(3) << iter <<  ", norm = "
+                           << std::scientific << std::setprecision(5) << norm_abs << " (abs.), "
                            << std::scientific << std::setprecision(5) << norm_rel << " (rel.)" << "\n";
         }
 
         if (norm_abs < m_atol) {
-            amrex::Print() << "Picard: exiting at iter = " << std::setw(3) << iter 
+            amrex::Print() << "Picard: exiting at iter = " << std::setw(3) << iter
                            << ". Satisfied absolute tolerance " << m_atol << std::endl;
             break;
         }
-    
+
         if (norm_rel < m_rtol) {
-            amrex::Print() << "Picard: exiting at iter = " << std::setw(3) << iter 
+            amrex::Print() << "Picard: exiting at iter = " << std::setw(3) << iter
                            << ". Satisfied relative tolerance " << m_rtol << std::endl;
             break;
         }
 
         if (iter >= m_maxits) {
-            amrex::Print() << "Picard: exiting at iter = " << std::setw(3) << iter 
+            amrex::Print() << "Picard: exiting at iter = " << std::setw(3) << iter
                            << ". Maximum iteration reached: iter = " << m_maxits << std::endl;
             break;
         }
@@ -178,7 +178,7 @@ void PicardSolver<Vec,Ops>::Solve ( Vec&         a_U,
        convergenceMsg << "Picard solver failed to converge after " << iter <<
                          " iterations. Relative norm is " << norm_rel <<
                          " and the relative tolerance is " << m_rtol <<
-                         ". Absolute norm is " << norm_abs << 
+                         ". Absolute norm is " << norm_abs <<
                          " and the absolute tolerance is " << m_atol;
        if (m_verbose) { amrex::Print() << convergenceMsg.str() << std::endl; }
        if (m_require_convergence) {
