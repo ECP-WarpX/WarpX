@@ -1,7 +1,7 @@
 #ifndef _SEMI_IMPLICIT_EM_H_
 #define _SEMI_IMPLICIT_EM_H_
 
-#include "FieldSolver/ImplicitSolvers/Utils/WarpXSolverVec.H"
+#include "FieldSolver/ImplicitSolvers/WarpXSolverVec.H"
 #include "NonlinearSolvers/NonlinearSolverLibrary.H"
 
 #include <AMReX_Array.H>

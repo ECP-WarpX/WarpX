@@ -1,7 +1,7 @@
 #ifndef _IMPLICIT_SOLVER_H_
 #define _IMPLICIT_SOLVER_H_
 
-#include "FieldSolver/ImplicitSolvers/Utils/WarpXSolverVec.H"
+#include "FieldSolver/ImplicitSolvers/WarpXSolverVec.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_REAL.H>

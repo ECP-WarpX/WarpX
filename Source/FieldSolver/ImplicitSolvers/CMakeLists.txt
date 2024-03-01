@@ -5,7 +5,6 @@ foreach(D IN LISTS WarpX_DIMS)
         SemiImplicitEM.cpp
         ThetaImplicitEM.cpp
         WarpXImplicitOps.cpp
+        WarpXSolverVec.cpp
     )
 endforeach()
-
-add_subdirectory(Utils)

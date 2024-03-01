@@ -1,2 +1,0 @@
-CEXE_sources += WarpXSolverVec.cpp
-VPATH_LOCATIONS   += $(WARPX_HOME)/Source/FieldSover/ImplicitSolvers/Utils

@@ -1,5 +1,5 @@
 
-#include "FieldSolver/ImplicitSolvers/Utils/WarpXSolverVec.H"
+#include "FieldSolver/ImplicitSolvers/WarpXSolverVec.H"
 
 bool WarpXSolverVec::m_dot_mask_defined = false;
 amrex::Vector<std::array<std::unique_ptr<amrex::iMultiFab>,3>> WarpXSolverVec::m_dotMask;

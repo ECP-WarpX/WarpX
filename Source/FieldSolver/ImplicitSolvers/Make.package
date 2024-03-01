@@ -1,7 +1,6 @@
 CEXE_sources += SemiImplicitEM.cpp
 CEXE_sources += ThetaImplicitEM.cpp
 CEXE_sources += WarpXImplicitOps.cpp
-
-include $(WARPX_HOME)/Source/FieldSolver/ImplicitSolvers/Utils/Make.package
+CEXE_sources += WarpXSolverVec.cpp
 
 VPATH_LOCATIONS   += $(WARPX_HOME)/Source/FieldSolver/ImplicitSolvers
