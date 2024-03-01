@@ -170,6 +170,34 @@ The physical fields in WarpX have the following naming:
             "Get the current physical time step size on mesh-refinement level ``lev``."
         )
 
+        .def("set_potential_on_domain_boundary",
+            [](WarpX& wx,
+               std::string potential_xlo, std::string potential_xhi,
+               std::string potential_ylo, std::string potential_yhi,
+               std::string potential_zlo, std::string potential_zhi)
+            {
+                if (potential_xlo != "")
+                    wx.m_poisson_boundary_handler.potential_xlo_str = potential_xlo;
+                if (potential_xhi != "")
+                    wx.m_poisson_boundary_handler.potential_xhi_str = potential_xhi;
+                if (potential_ylo != "")
+                    wx.m_poisson_boundary_handler.potential_ylo_str = potential_ylo;
+                if (potential_yhi != "")
+                    wx.m_poisson_boundary_handler.potential_yhi_str = potential_yhi;
+                if (potential_zlo != "")
+                    wx.m_poisson_boundary_handler.potential_zlo_str = potential_zlo;
+                if (potential_zhi != "")
+                    wx.m_poisson_boundary_handler.potential_zhi_str = potential_zhi;
+                wx.m_poisson_boundary_handler.buildParsers();
+            },
+            py::arg("potential_xlo") = "",
+            py::arg("potential_xhi") = "",
+            py::arg("potential_ylo") = "",
+            py::arg("potential_yhi") = "",
+            py::arg("potential_zlo") = "",
+            py::arg("potential_zhi") = "",
+            "Sets the domain boundary potential string(s) and updates the function parser."
+        )
         .def("set_potential_on_eb",
             [](WarpX& wx, std::string potential) {
                 wx.m_poisson_boundary_handler.setPotentialEB(potential);
