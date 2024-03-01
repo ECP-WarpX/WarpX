@@ -23,7 +23,7 @@ filename = sys.argv[1]
 test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename, output_format='openpmd')
 
-ts = OpenPMDTimeSeries('./diags/diag1/')
+ts = OpenPMDTimeSeries('./particle_boundary_interaction_plt')
 
 it=ts.iterations
 x,y,z=ts.get_particle(['x','y','z'], species='electrons', iteration=it[-1])
