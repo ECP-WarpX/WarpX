@@ -4,7 +4,6 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_FDTD_H_
 #ifndef _THETA_IMPLICIT_EM_H_
 #define _THETA_IMPLICIT_EM_H_
 
