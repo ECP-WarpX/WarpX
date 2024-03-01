@@ -761,6 +761,9 @@ class ParticleBoundaryBufferWrapper(object):
         The data for the arrays are not copied, but share the underlying
         memory buffer with WarpX. The arrays are fully writeable.
 
+        Here an example of a simple case of particle-boundary interaction (reflection):
+        https://warpx.readthedocs.io/en/latest/usage/workflows/python_extend.html
+
         Parameters
         ----------
 
