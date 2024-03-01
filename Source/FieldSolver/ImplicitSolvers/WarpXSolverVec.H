@@ -196,7 +196,7 @@ public:
     {
         for (int n=0; n<3; n++) {
             amrex::MultiFab::Saxpy( *m_field_vec[0][n], a_a, *a_X.getVec()[0][n],
-                                    0, 0, 1, amrex::IntVect::Zero );
+                                    0, 0, 1, amrex::IntVect::TheZeroVector() );
         }
     }
 
