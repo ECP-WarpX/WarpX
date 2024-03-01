@@ -49,7 +49,7 @@ void SemiImplicitEM::Define ( WarpX* const  a_WarpX )
 
     // Parse implicit solver parameters
     amrex::ParmParse pp("implicit_evolve");
-    pp.query("verbose", m_verbose);
+    m_verbose = m_WarpX->Verbose();
 
     std::string nlsolver_type_str;
     pp.query("nonlinear_solver", nlsolver_type_str);
