@@ -82,7 +82,7 @@ public:
         for (int n=0; n<3; n++) {
             const amrex::MultiFab& mf_model = *a_solver_vec[lev][n];
             m_field_vec[lev][n] = std::make_unique<amrex::MultiFab>(mf_model.boxArray(), mf_model.DistributionMap(),
-                                                                      mf_model.nComp(), amrex::IntVect::Zero);
+                                                                      mf_model.nComp(), amrex::IntVect::TheZeroVector() );
         }
         m_is_defined = true;
         return;
@@ -125,7 +125,7 @@ public:
             "WarpXSolverVec::Copy() called on undefined WarpXSolverVec");
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
             for (int n = 0; n < 3; ++n) {
-                amrex::MultiFab::Copy(*m_field_vec[lev][n], *a_solver_vec[lev][n], 0, 0, m_ncomp, amrex::IntVect::Zero);
+                amrex::MultiFab::Copy(*m_field_vec[lev][n], *a_solver_vec[lev][n], 0, 0, m_ncomp, amrex::IntVect::TheZeroVector() );
             }
         }
     }
