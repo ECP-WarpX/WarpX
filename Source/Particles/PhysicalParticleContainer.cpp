@@ -3264,7 +3264,7 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
                 ))
 
                 // write signaling flag: how many particles did not converge?
-                amrex::HostDevice::Atomic::Add(unconverged_particles_ptr, 1L);
+                amrex::Gpu::Atomic::Add(unconverged_particles_ptr, amrex::Long(1));
             }
 
         } // end Picard iterations
