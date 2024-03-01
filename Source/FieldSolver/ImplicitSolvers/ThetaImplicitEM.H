@@ -30,7 +30,12 @@ public:
 
     }
 
-    virtual ~ThetaImplicitEM() = default;
+    virtual ~ThetaImplicitEM() {
+        // If we don't call the function below, then we get the 
+        // following error message after the simulation finishes:
+        // malloc_consolidate(): unaligned fastbin chunk detected
+        WarpXSolverVec::clearDotMask();
+    }
 
     virtual void Define ( WarpX* const  a_WarpX );
 

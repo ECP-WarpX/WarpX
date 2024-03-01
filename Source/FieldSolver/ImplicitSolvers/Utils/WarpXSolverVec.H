@@ -242,6 +242,11 @@ public:
     const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& getVec() const {return m_field_vec;}
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& getVec() {return m_field_vec;}
 
+    // clearDotMask() must be called by the highest class that owns WarpXSovlerVec()
+    // after it is done being used ( typically in the destructor ) to avoid the
+    // following error message after the simulation finishes:
+    // malloc_consolidate(): unaligned fastbin chunk detected
+    static void clearDotMask() { m_dotMask.clear(); }
 
 private:
 
