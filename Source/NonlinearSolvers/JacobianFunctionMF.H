@@ -1,3 +1,9 @@
+/* Copyright 2024 Justin Angus
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef _JacobianFunctionMF_H_
 #define _JacobianFunctionMF_H_
 
@@ -64,8 +70,6 @@ class JacobianFunctionMF
     inline
     void increment(T& a_Z, const T& a_U, const RT a_scale)
     {
-        //a_Z.increment( a_U, a_scale ); // this change things at machine precision
-        //a_Z.linComb( RT(1.0), a_Z, a_scale, a_U );
         a_Z += a_scale*a_U;
     }
 
@@ -214,7 +218,8 @@ void JacobianFunctionMF<T,Ops>::apply (T& a_dF, const T& a_dU)
              * pp. 302--318. */
             if (m_normY0==0.0) { eps = m_epsJFNK*norm2(m_R0); }
             else {
-                //eps = m_epsJFNK * std::sqrt(1.0_rt + m_normY0) / normY;
+                // m_epsJFNK * sqrt(1.0 + m_normY0) / normY
+                // above commonly used form not recommend for poorly scaled Y0
                 eps = m_epsJFNK * m_normY0 / normY;
             }
         }

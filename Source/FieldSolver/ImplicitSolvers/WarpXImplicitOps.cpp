@@ -333,14 +333,7 @@ WarpX::ComputeRHSE (int lev, PatchType patch_type, amrex::Real a_dt, WarpXSolver
 
     // Compute Efield_rhs in PML cells by calling EvolveEPML
     if (do_pml && pml[lev]->ok()) {
-        if (patch_type == PatchType::fine) {
-            //m_fdtd_solver_fp[lev]->EvolveEPML(
-            //    pml[lev]->GetRHSE_fp(), pml[lev]->GetB_fp(),
-            //    pml[lev]->Getj_fp(), pml[lev]->Get_edge_lengths(),
-            //    pml[lev]->GetF_fp(),
-            //    pml[lev]->GetMultiSigmaBox_fp(),
-            //    a_dt, pml_has_particles );
-        }
+        amrex::Abort("PML not yet implemented with implicit solvers.");
     }
 
 }
