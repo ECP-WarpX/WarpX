@@ -1,4 +1,9 @@
-
+/* Copyright 2024 Justin Angus
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include "FieldSolver/ImplicitSolvers/WarpXSolverVec.H"
 
 bool WarpXSolverVec::m_dot_mask_defined = false;

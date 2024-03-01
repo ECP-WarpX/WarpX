@@ -1,3 +1,9 @@
+/* Copyright 2024 Justin Angus
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef _SEMI_IMPLICIT_EM_H_
 #define _SEMI_IMPLICIT_EM_H_
 

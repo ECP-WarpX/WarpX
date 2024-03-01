@@ -1,3 +1,9 @@
+/* Copyright 2024 Justin Angus
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef _WarpXSolverVec_H_
 #define _WarpXSolverVec_H_
 

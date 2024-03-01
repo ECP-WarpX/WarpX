@@ -1,3 +1,9 @@
+/* Copyright 2024 Justin Angus
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef _PICARD_SOLVER_H_
 #define _PICARD_SOLVER_H_
 
