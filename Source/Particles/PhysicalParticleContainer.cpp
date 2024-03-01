@@ -61,6 +61,7 @@
 #include <AMReX_FabArray.H>
 #include <AMReX_Geometry.H>
 #include <AMReX_GpuAtomic.H>
+#include <AMReX_GpuBuffer.H>
 #include <AMReX_GpuControl.H>
 #include <AMReX_GpuDevice.H>
 #include <AMReX_GpuElixir.H>
@@ -3108,6 +3109,9 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
     const int max_iterations = WarpX::max_particle_iterations;
     const amrex::ParticleReal particle_tolerance = WarpX::particle_tolerance;
 
+    amrex::Gpu::Buffer<amrex::Long> unconverged_particles({0});
+    amrex::Long* unconverged_particles_ptr = unconverged_particles.data();
+
     // Using this version of ParallelFor with compile time options
     // improves performance when qed or external EB are not used by reducing
     // register pressure.
@@ -3245,20 +3249,37 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
             uz[ip] = 0.5_rt*(uz[ip] + uz_n[ip]);
 
             iter++;
-            if ( iter > 1 && iter == max_iterations ) { // does this work on GPU?
-                std::stringstream convergenceMsg;
-                convergenceMsg << "Picard solver for particle failed to converge after " <<
-                          iter << " iterations. " << std::endl;
-                convergenceMsg << "Position step norm is " << step_norm <<
-                         " and the tolerance is " << particle_tolerance << std::endl;
-                convergenceMsg << " ux = " << ux[ip] << ", uy = " << uy[ip] << ", uz = " << uz[ip] << std::endl;
-                convergenceMsg << " xp = " << xp     << ", yp = " << yp     << ", zp = " << zp;
-                ablastr::warn_manager::WMRecordWarning("ImplicitPushXP", convergenceMsg.str());
+
+            // particle did not converge
+            if ( iter > 1 && iter == max_iterations ) {
+                AMREX_IF_ON_HOST((
+                    std::stringstream convergenceMsg;
+                    convergenceMsg << "Picard solver for particle failed to converge after " <<
+                              iter << " iterations. " << std::endl;
+                    convergenceMsg << "Position step norm is " << step_norm <<
+                             " and the tolerance is " << particle_tolerance << std::endl;
+                    convergenceMsg << " ux = " << ux[ip] << ", uy = " << uy[ip] << ", uz = " << uz[ip] << std::endl;
+                    convergenceMsg << " xp = " << xp     << ", yp = " << yp     << ", zp = " << zp;
+                    ablastr::warn_manager::WMRecordWarning("ImplicitPushXP", convergenceMsg.str());
+                ))
+
+                // write signaling flag: how many particles did not converge?
+                amrex::HostDevice::Atomic::Add(unconverged_particles_ptr, 1L);
             }
 
         } // end Picard iterations
 
     });
+
+    auto const num_unconverged_particles = *(unconverged_particles.hostData());
+    if (num_unconverged_particles > 0) {
+        ablastr::warn_manager::WMRecordWarning("ImplicitPushXP",
+            "Picard solver for " +
+            std::to_string(num_unconverged_particles) +
+            " particles failed to converge after " +
+            std::to_string(max_iterations) + " iterations."
+         );
+    }
 }
 
 void
