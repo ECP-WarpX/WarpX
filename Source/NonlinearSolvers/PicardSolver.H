@@ -123,7 +123,9 @@ void PicardSolver<Vec,Ops>::Solve ( Vec&         a_U,
     // equation of form: U = b + F(U)
     //
 
-    amrex::Real norm_abs, norm0, norm_rel;
+    amrex::Real norm_abs = 0.;
+    amrex::Real norm0 = 1._rt;
+    amrex::Real norm_rel = 0.;
 
     int iter(0);
     while(1) {

@@ -182,7 +182,10 @@ void NewtonSolver<Vec,Ops>::Solve ( Vec&         a_U,
     CurTime(a_time);
     CurTimeStep(a_dt);
 
-    amrex::Real norm_abs, norm0, norm_rel;
+    amrex::Real norm_abs = 0.;
+    amrex::Real norm0 = 1._rt;
+    amrex::Real norm_rel = 0.;
+
     int its;
     for (its=0; its < m_maxits;) {
 

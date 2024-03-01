@@ -102,14 +102,14 @@ void PositionNorm( const amrex::ParticleReal dxp, const amrex::ParticleReal dyp,
 
     if (iter==0) { step_norm = 1.0_prt; }
     else {
-        step_norm = (dzp - dzp_save)*(dzp - dzp_save)/dzg/dzg;
+        step_norm = (dzp - dzp_save)*(dzp - dzp_save)/(dzg*dzg);
 #if !defined(WARPX_DIM_1D_Z)
-        step_norm += (dxp - dxp_save)*(dxp - dxp_save)/dxg/dxg;
+        step_norm += (dxp - dxp_save)*(dxp - dxp_save)/(dxg*dxg);
 #endif
 #if defined(WARPX_DIM_3D)
-        step_norm += (dyp - dyp_save)*(dyp - dyp_save)/dyg/dyg;
+        step_norm += (dyp - dyp_save)*(dyp - dyp_save)/(dyg*dyg);
 #elif defined(WARPX_DIM_RZ)
-        step_norm += (dyp - dyp_save)*(dyp - dyp_save)/dxg/dxg;
+        step_norm += (dyp - dyp_save)*(dyp - dyp_save)/(dxg*dxg);
 #endif
         step_norm = std::sqrt(step_norm);
     }
