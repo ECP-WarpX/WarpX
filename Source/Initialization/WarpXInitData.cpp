@@ -470,7 +470,9 @@ WarpX::InitData ()
     CheckGuardCells();
 
     PrintMainPICparameters();
-    m_implicit_solver->PrintParameters();
+    if (m_implicit_solver) {
+        m_implicit_solver->PrintParameters();
+    }
     WriteUsedInputsFile();
 
     if (restart_chkfile.empty())
