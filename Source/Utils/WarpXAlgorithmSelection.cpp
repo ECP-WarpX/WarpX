@@ -171,7 +171,7 @@ GetAlgorithmInteger(const amrex::ParmParse& pp, const char* pp_search_key ){
     } else if (0 == std::strcmp(pp_search_key, "do_electrostatic")) {
         algo_to_int = electrostatic_solver_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "poisson_solver")) {
-        algo_to_int = poisson_solver_algo_to_int; 
+        algo_to_int = poisson_solver_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "particle_pusher")) {
         algo_to_int = particle_pusher_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "current_deposition")) {

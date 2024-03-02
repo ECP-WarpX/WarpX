@@ -187,7 +187,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 #endif
 
         if(WarpX::poisson_solver_id==PoissonSolverAlgo::IntegratedGreenFunction && lev==0){
-        // IGS SOLVER 
+        // IGS SOLVER
         amrex::Array<amrex::Real,AMREX_SPACEDIM> dx_igf
                 {AMREX_D_DECL(geom[lev].CellSize(0)/std::sqrt(1._rt-beta_solver[0]*beta_solver[0]),
                               geom[lev].CellSize(1)/std::sqrt(1._rt-beta_solver[1]*beta_solver[1]),
@@ -200,7 +200,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 
         }
         else{
-            
+
 #if !(defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ))
         // Determine whether to use semi-coarsening
         amrex::Array<amrex::Real,AMREX_SPACEDIM> dx_scaled
