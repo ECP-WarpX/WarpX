@@ -20,7 +20,7 @@ class NonlinearSolver
 
         NonlinearSolver<Vec,Ops>() = default;
         virtual ~NonlinearSolver<Vec,Ops>() = default;
-    
+
         // Default move and copy operations
         NonlinearSolver(const NonlinearSolver&) = default;
         NonlinearSolver& operator=(const NonlinearSolver&) = default;

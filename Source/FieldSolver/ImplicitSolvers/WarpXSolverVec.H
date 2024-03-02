@@ -120,7 +120,7 @@ public:
         if (this != &a_vec) { Copy(a_vec); }
         return *this;
     }
-    
+
     // Move assignment operator
     WarpXSolverVec& operator= ( WarpXSolverVec&&  a_vec ) noexcept
     {

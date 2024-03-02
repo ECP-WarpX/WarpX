@@ -22,7 +22,7 @@ class JacobianFunctionMF
 
     JacobianFunctionMF<T,Ops>() = default;
     ~JacobianFunctionMF<T,Ops>() = default;
-       
+
     // Default move and copy operations
     JacobianFunctionMF(const JacobianFunctionMF&) = default;
     JacobianFunctionMF& operator=(const JacobianFunctionMF&) = default;
