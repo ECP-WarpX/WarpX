@@ -26,42 +26,42 @@ public:
 
     SemiImplicitEM() = default;
 
-    virtual ~SemiImplicitEM() {
+    ~SemiImplicitEM() override {
         // If we don't call the function below, then we get the
         // following error message after the simulation finishes:
         // malloc_consolidate(): unaligned fastbin chunk detected
         WarpXSolverVec::clearDotMask();
     }
 
-    virtual void Define ( WarpX*  a_WarpX );
+    void Define ( WarpX*  a_WarpX ) override;
 
-    virtual bool IsDefined () const { return m_is_defined; }
+    [[nodiscard]] bool IsDefined () const override { return m_is_defined; }
 
-    virtual void PrintParameters () const;
+    void PrintParameters () const override;
 
-    virtual void Initialize () {;}
+    void Initialize () override {;}
 
-    virtual void GetParticleSolverParams (int&  a_max_particle_iterations,
-                                          amrex::ParticleReal&  a_particle_tolerance )
+    void GetParticleSolverParams ( int&  a_max_particle_iterations,
+                                   amrex::ParticleReal&  a_particle_tolerance ) override
     {
         a_max_particle_iterations = m_max_particle_iterations;
         a_particle_tolerance = m_particle_tolerance;
     }
 
-    virtual void OneStep ( amrex::Real  a_time,
-                           amrex::Real  a_dt,
-                           int          a_step );
+    void OneStep ( amrex::Real  a_time,
+                   amrex::Real  a_dt,
+                   int          a_step ) override;
 
-    virtual void PreRHSOp ( const WarpXSolverVec&  a_E,
-                            amrex::Real            a_time,
-                            amrex::Real            a_dt,
-                            int                    a_nl_iter,
-                            bool                   a_from_jacobian );
+    void PreRHSOp ( const WarpXSolverVec&  a_E,
+                    amrex::Real            a_time,
+                    amrex::Real            a_dt,
+                    int                    a_nl_iter,
+                    bool                   a_from_jacobian ) override;
 
-    virtual void ComputeRHS ( WarpXSolverVec&  a_Erhs,
-                        const WarpXSolverVec&  a_E,
-                              amrex::Real      a_time,
-                              amrex::Real      a_dt );
+    void ComputeRHS ( WarpXSolverVec&  a_Erhs,
+                const WarpXSolverVec&  a_E,
+                      amrex::Real      a_time,
+                      amrex::Real      a_dt ) override;
 
 private:
 

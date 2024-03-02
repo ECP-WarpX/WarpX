@@ -21,28 +21,28 @@ public:
 
     PicardSolver<Vec,Ops>() = default;
 
-    virtual ~PicardSolver<Vec,Ops>() = default;
+    ~PicardSolver<Vec,Ops>() = default;
 
-    virtual void Define ( const Vec&  a_U,
-                          Ops*        a_ops );
+    void Define ( const Vec&  a_U,
+                        Ops*  a_ops ) override;
 
-    virtual void Solve ( Vec&         a_U,
-                   const Vec&         a_b,
-                         amrex::Real  a_time,
-                         amrex::Real  a_dt ) const;
+    void Solve ( Vec&   a_U,
+           const Vec&   a_b,
+           amrex::Real  a_time,
+           amrex::Real  a_dt ) const override;
 
-    inline bool IsDefined () const { return m_is_defined; }
+    [[nodiscard]] bool IsDefined () const override { return m_is_defined; }
 
-    inline void GetParams ( amrex::Real&  a_rtol,
-                            amrex::Real&  a_atol,
-                            int&          a_maxits )
+    void GetParams ( amrex::Real&  a_rtol,
+                     amrex::Real&  a_atol,
+                     int&          a_maxits ) override
     {
         a_rtol = m_rtol;
         a_atol = m_atol;
         a_maxits = m_maxits;
     }
 
-    void PrintParams () const
+    void PrintParams () const override
     {
         amrex::Print() << "Picard max iterations:      " << m_maxits << std::endl;
         amrex::Print() << "Picard relative tolerance:  " << m_rtol << std::endl;
@@ -50,7 +50,7 @@ public:
         amrex::Print() << "Picard require convergence: " << (m_require_convergence?"true":"false") << std::endl;
     }
 
-    virtual void Verbose ( bool  a_verbose ) { m_verbose = a_verbose; }
+    void Verbose ( bool  a_verbose ) override { m_verbose = a_verbose; }
 
 protected:
 

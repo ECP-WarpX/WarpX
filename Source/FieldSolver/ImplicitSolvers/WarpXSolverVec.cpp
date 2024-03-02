@@ -27,7 +27,7 @@ void WarpXSolverVec::SetDotMask( const amrex::Vector<amrex::Geometry>&  a_Geom )
     m_dot_mask_defined = true;
 }
 
-amrex::Real WarpXSolverVec::dotProduct ( const WarpXSolverVec&  a_X ) const
+[[nodiscard]] amrex::Real WarpXSolverVec::dotProduct ( const WarpXSolverVec&  a_X ) const
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_dot_mask_defined,

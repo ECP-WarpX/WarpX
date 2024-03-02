@@ -26,21 +26,21 @@ public:
         m_ops = nullptr;
     }
 
-    virtual ~NewtonSolver<Vec,Ops>() = default;
+    ~NewtonSolver<Vec,Ops>() override = default;
 
-    virtual void Define ( const Vec&  a_U,
-                          Ops*        a_ops );
+    void Define ( const Vec&  a_U,
+                        Ops*  a_ops ) override;
 
-    virtual void Solve ( Vec&         a_U,
-                   const Vec&         a_R,
-                         amrex::Real  a_time,
-                         amrex::Real  a_dt ) const;
+    void Solve ( Vec&   a_U,
+           const Vec&   a_R,
+           amrex::Real  a_time,
+           amrex::Real  a_dt ) const override;
 
-    inline bool IsDefined () const { return m_is_defined; }
+    [[nodiscard]] bool IsDefined () const override { return m_is_defined; }
 
-    inline void GetParams ( amrex::Real&  a_rtol,
-                            amrex::Real&  a_atol,
-                            int&          a_maxits )
+    void GetParams ( amrex::Real&  a_rtol,
+                     amrex::Real&  a_atol,
+                     int&          a_maxits ) override
     {
         a_rtol = m_rtol;
         a_atol = m_atol;
@@ -59,7 +59,7 @@ public:
         m_linear_function->curTimeStep( a_dt );
     }
 
-    void PrintParams () const
+    void PrintParams () const override
     {
         amrex::Print()     << "Newton verbose:             " << (m_verbose?"true":"false") << std::endl;
         amrex::Print()     << "Newton max iterations:      " << m_maxits << std::endl;
@@ -72,7 +72,7 @@ public:
         amrex::Print()     << "GMRES absolute tolerance: " << m_gmres_atol << std::endl;
     }
 
-    virtual void Verbose ( bool  a_verbose ) { m_verbose = a_verbose; }
+    void Verbose ( bool  a_verbose ) override { m_verbose = a_verbose; }
 
 protected:
 

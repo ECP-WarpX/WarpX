@@ -50,12 +50,10 @@ public:
 
     WarpXSolverVec()
     {
-        m_is_defined = false;
     }
 
     WarpXSolverVec(const WarpXSolverVec& a_vec)
     {
-        m_is_defined = false;
         Define(a_vec);
     }
 
@@ -64,8 +62,7 @@ public:
     using value_type = amrex::Real;
     using RT = value_type;
 
-    inline
-    bool IsDefined () const { return m_is_defined; }
+    [[nodiscard]] inline bool IsDefined () const { return m_is_defined; }
 
     inline
     void Define (const WarpXSolverVec& a_vec)
@@ -74,7 +71,6 @@ public:
             a_vec.IsDefined(),
             "WarpXSolverVec::Define(a_vec) called with undefined a_vec");
         Define( a_vec.getVec() );
-        return;
     }
 
     inline
@@ -91,37 +87,10 @@ public:
                                                                       mf_model.nComp(), amrex::IntVect::TheZeroVector() );
         }
         m_is_defined = true;
-        return;
     }
 
     void SetDotMask( const amrex::Vector<amrex::Geometry>&  a_Geom );
-    RT dotProduct( const WarpXSolverVec&  a_X ) const;
-
-    //
-    // JRA: make functions below are derived over from amrex/Src/LinearSolvers/MLMG/AMReX_MLLinOp.H
-    //
-    inline
-    void make ( amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& mf, amrex::IntVect const& ng) const
-    {
-        mf.clear();
-        mf.resize(m_num_amr_levels);
-        for (int lev = 0; lev < m_num_amr_levels; ++lev) {
-            for (int idim = 0; idim < 3; ++idim) {
-                mf[lev][idim] = make(lev, idim, ng);
-            }
-        }
-    }
-
-    [[nodiscard]] std::unique_ptr<amrex::MultiFab> make (int amrlev, int idim, amrex::IntVect const& ng) const
-    {
-        AMREX_ASSERT_WITH_MESSAGE(
-            IsDefined(),
-            "WarpXSolverVec::make () called on undefined WarpXSolverVec");
-        const amrex::BoxArray& grids = m_field_vec[amrlev][idim]->boxArray();
-        const amrex::DistributionMapping& dmap = m_field_vec[amrlev][idim]->DistributionMap();
-        const amrex::FabFactory<amrex::FArrayBox>& factory = m_field_vec[amrlev][idim]->Factory();
-        return std::make_unique<amrex::MultiFab>( grids, dmap, m_ncomp, ng, amrex::MFInfo(), factory );
-    }
+    [[nodiscard]] RT dotProduct( const WarpXSolverVec&  a_X ) const;
 
     inline
     void Copy ( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& a_solver_vec )
@@ -238,14 +207,13 @@ public:
         m_field_vec[lev][2]->setVal(a_val);
     }
 
-    inline
-    RT norm2 () const
+    [[nodiscard]] inline RT norm2 () const
     {
         RT norm = dotProduct(*this);
         return std::sqrt(norm);
     }
 
-    const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& getVec() const {return m_field_vec;}
+    [[nodiscard]] const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& getVec() const {return m_field_vec;}
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& getVec() {return m_field_vec;}
 
     // clearDotMask() must be called by the highest class that owns WarpXSovlerVec()
@@ -256,7 +224,7 @@ public:
 
 private:
 
-    bool  m_is_defined;
+    bool  m_is_defined = false;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_field_vec;
     static constexpr int m_ncomp = 1;
     static constexpr int m_num_amr_levels = 1;

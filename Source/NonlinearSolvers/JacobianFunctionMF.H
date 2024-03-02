@@ -22,35 +22,23 @@ class JacobianFunctionMF
 
     JacobianFunctionMF<T,Ops>()
     {
-        m_is_defined = false;
-        m_is_linear = false;
-        m_epsJFNK = RT(1.0e-6);
-        m_usePreCond = false;
     }
 
-    ~JacobianFunctionMF<T,Ops>()
-    {
-        return;
-    }
+    ~JacobianFunctionMF<T,Ops>() = default;
 
     void apply ( T& a_dF, const T& a_dU );
 
     inline
     void precond ( T& a_U, const T& a_X )
     {
-        if (m_usePreCond) {
-            a_U.zero();
-        } else {
-            a_U.Copy(a_X);
-        }
-        return;
+        if (m_usePreCond) { a_U.zero(); } 
+        else { a_U.Copy(a_X); }
     }
 
     inline
     void updatePreCondMat ( const T&  a_X )
     {
         amrex::ignore_unused(a_X);
-        return;
     }
 
     inline
@@ -109,7 +97,7 @@ class JacobianFunctionMF
         return ( a_U.norm2() );
     }
 
-    inline
+    [[nodiscard]] inline 
     bool isDefined() const { return m_is_defined;  }
 
     inline
@@ -153,8 +141,11 @@ class JacobianFunctionMF
 
     private:
 
-    bool m_is_defined, m_is_linear, m_usePreCond;
-    RT m_epsJFNK, m_normY0;
+    bool m_is_defined = false;
+    bool m_is_linear = false;
+    bool m_usePreCond = false;
+    RT m_epsJFNK = RT(1.0e-6);
+    RT m_normY0;
     RT m_cur_time, m_dt;
     std::string m_pc_type;
 
@@ -175,7 +166,6 @@ void JacobianFunctionMF<T,Ops>::define ( const T&  a_U,
     m_ops = a_ops;
 
     m_is_defined = true;
-    return;
 }
 
 template <class T, class Ops>
