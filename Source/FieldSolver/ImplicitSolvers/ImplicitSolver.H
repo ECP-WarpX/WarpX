@@ -23,7 +23,7 @@ class ImplicitSolver
 {
 public:
 
-    ImplicitSolver() {}
+    ImplicitSolver() = default;
 
     virtual ~ImplicitSolver() = default;
 
@@ -31,7 +31,7 @@ public:
     // the following routines are called by WarpX
     //
 
-    virtual void Define ( WarpX* const  a_WarpX ) = 0;
+    virtual void Define ( WarpX*  a_WarpX ) = 0;
 
     virtual bool IsDefined () const = 0;
 
@@ -42,24 +42,24 @@ public:
     virtual void GetParticleSolverParams (int&  a_max_particle_iter,
                                           amrex::ParticleReal&  a_particle_tol ) = 0;
 
-    virtual void OneStep ( const amrex::Real  a_time,
-                           const amrex::Real  a_dt,
-                           const int          a_step ) = 0;
+    virtual void OneStep ( amrex::Real  a_time,
+                           amrex::Real  a_dt,
+                           int          a_step ) = 0;
 
     //
     // the following routines are called by the linear and nonlinear solvers
     //
 
     virtual void PreRHSOp ( const WarpXSolverVec&  a_E,
-                            const amrex::Real      a_time,
-                            const amrex::Real      a_dt,
-                            const int              a_nl_iter,
-                            const bool             a_from_jacobian ) = 0;
+                            amrex::Real            a_time,
+                            amrex::Real            a_dt,
+                            int                    a_nl_iter,
+                            bool                   a_from_jacobian ) = 0;
 
     virtual void ComputeRHS ( WarpXSolverVec&  a_Erhs,
                         const WarpXSolverVec&  a_E,
-                        const amrex::Real      a_time,
-                        const amrex::Real      a_dt ) = 0;
+                              amrex::Real      a_time,
+                              amrex::Real      a_dt ) = 0;
 
 private:
 

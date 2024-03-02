@@ -24,20 +24,17 @@ public:
     NewtonSolver<Vec,Ops>()
     {
         m_ops = nullptr;
-        m_update_pc = true;
-        m_update_pc_init = true;
-        m_is_defined = false;
     }
 
-    virtual ~NewtonSolver<Vec,Ops>() { }
+    virtual ~NewtonSolver<Vec,Ops>() = default;
 
     virtual void Define ( const Vec&  a_U,
-                          Ops* const  a_ops );
+                          Ops*        a_ops );
 
     virtual void Solve ( Vec&         a_U,
                    const Vec&         a_R,
-                   const amrex::Real  a_time,
-                   const amrex::Real  a_dt ) const;
+                         amrex::Real  a_time,
+                         amrex::Real  a_dt ) const;
 
     inline bool IsDefined () const { return m_is_defined; }
 
@@ -50,13 +47,13 @@ public:
         a_maxits = m_maxits;
     }
 
-    inline void CurTime ( const amrex::Real  a_time ) const
+    inline void CurTime ( amrex::Real  a_time ) const
     {
         m_cur_time = a_time;
         m_linear_function->curTime( a_time );
     }
 
-    inline void CurTimeStep ( const amrex::Real  a_dt ) const
+    inline void CurTimeStep ( amrex::Real  a_dt ) const
     {
         m_dt = a_dt;
         m_linear_function->curTimeStep( a_dt );
@@ -75,13 +72,13 @@ public:
         amrex::Print()     << "GMRES absolute tolerance: " << m_gmres_atol << std::endl;
     }
 
-    virtual void Verbose ( const bool  a_verbose ) { m_verbose = a_verbose; }
+    virtual void Verbose ( bool  a_verbose ) { m_verbose = a_verbose; }
 
 protected:
 
-    bool m_is_defined;
-    bool m_verbose;
-    bool m_require_convergence;
+    bool m_is_defined = false;
+    bool m_verbose = true;
+    bool m_require_convergence = true;
 
     mutable Vec m_dU, m_F, m_R;
     Ops* m_ops;
@@ -93,8 +90,8 @@ protected:
     int m_gmres_verbose_int, m_gmres_maxits;
 
     mutable amrex::Real m_cur_time, m_dt;
-    mutable bool m_update_pc;
-    mutable bool m_update_pc_init;
+    mutable bool m_update_pc = false;
+    mutable bool m_update_pc_init = false;
 
 private:
 
@@ -103,18 +100,18 @@ private:
 
     void ParseParameters ();
 
-    void EvalResidual ( Vec&         a_R,
+    void EvalResidual ( Vec&         a_F,
                   const Vec&         a_U,
                   const Vec&         a_b,
-                  const amrex::Real  a_time,
-                  const amrex::Real  a_dt,
-                  const int          a_iter ) const;
+                        amrex::Real  a_time,
+                        amrex::Real  a_dt,
+                        int          a_iter ) const;
 
 };
 
 template <class Vec, class Ops>
 void NewtonSolver<Vec,Ops>::Define ( const Vec&  a_U,
-                                     Ops* const  a_ops )
+                                     Ops*        a_ops )
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !m_is_defined,
@@ -171,8 +168,8 @@ void NewtonSolver<Vec,Ops>::ParseParameters ()
 template <class Vec, class Ops>
 void NewtonSolver<Vec,Ops>::Solve ( Vec&         a_U,
                               const Vec&         a_b,
-                              const amrex::Real  a_time,
-                              const amrex::Real  a_dt ) const
+                                    amrex::Real  a_time,
+                                    amrex::Real  a_dt ) const
 {
     BL_PROFILE("NewtonSolver::Solve()");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -192,43 +189,43 @@ void NewtonSolver<Vec,Ops>::Solve ( Vec&         a_U,
     amrex::Real norm0 = 1._rt;
     amrex::Real norm_rel = 0.;
 
-    int its;
-    for (its=0; its < m_maxits;) {
+    int iter;
+    for (iter = 0; iter < m_maxits;) {
 
-        EvalResidual(m_F, a_U, a_b, a_time, a_dt, its);
+        EvalResidual(m_F, a_U, a_b, a_time, a_dt, iter);
 
         // Compute norm of the residual
         norm_abs = m_F.norm2();
-        if (its == 0) {
+        if (iter == 0) {
             if (norm_abs > 0.) { norm0 = norm_abs; }
             else { norm0 = 1._rt; }
         }
         norm_rel = norm_abs/norm0;
 
-        // Check for convergence critsia
-        if (m_verbose || its == m_maxits) {
-            amrex::Print() << "Newton: iteration = " << std::setw(3) << its <<  ", norm = "
+        // Check for convergence criteria
+        if (m_verbose || iter == m_maxits) {
+            amrex::Print() << "Newton: iteration = " << std::setw(3) << iter <<  ", norm = "
                            << std::scientific << std::setprecision(5) << norm_abs << " (abs.), "
                            << std::scientific << std::setprecision(5) << norm_rel << " (rel.)" << "\n";
         }
 
         if (norm_abs < m_rtol) {
-            amrex::Print() << "Newton: exiting at iteration = " << std::setw(3) << its
+            amrex::Print() << "Newton: exiting at iteration = " << std::setw(3) << iter
                            << ". Satisfied absolute tolerance " << m_atol << std::endl;
             break;
         }
 
         if (norm_rel < m_rtol) {
-            amrex::Print() << "Newton: exiting at iteration = " << std::setw(3) << its
+            amrex::Print() << "Newton: exiting at iteration = " << std::setw(3) << iter
                            << ". Satisfied relative tolerance " << m_rtol << std::endl;
             break;
         }
 
         if (norm_abs > 100._rt*norm0) {
-            amrex::Print() << "Newton: exiting at iteration = " << std::setw(3) << its
+            amrex::Print() << "Newton: exiting at iteration = " << std::setw(3) << iter
                            << ". SOLVER DIVERGED! relative tolerance = " << m_rtol << std::endl;
             std::stringstream convergenceMsg;
-            convergenceMsg << "Newton: exiting at iteration " << std::setw(3) << its <<
+            convergenceMsg << "Newton: exiting at iteration " << std::setw(3) << iter <<
                               ". SOLVER DIVERGED! absolute norm = " << norm_abs <<
                               " has increased by 100X from that after first iteration.";
             WARPX_ABORT_WITH_MESSAGE(convergenceMsg.str());
@@ -241,18 +238,18 @@ void NewtonSolver<Vec,Ops>::Solve ( Vec&         a_U,
         // Update solution
         a_U -= m_dU;
 
-        its++;
-        if (its >= m_maxits) {
-            amrex::Print() << "Newton: exiting at its = " << std::setw(3) << its
-                           << ". Maximum iteration reached: its = " << m_maxits << std::endl;
+        iter++;
+        if (iter >= m_maxits) {
+            amrex::Print() << "Newton: exiting at iter = " << std::setw(3) << iter
+                           << ". Maximum iteration reached: iter = " << m_maxits << std::endl;
             break;
         }
 
     }
 
-    if (m_rtol > 0. && its == m_maxits) {
+    if (m_rtol > 0. && iter == m_maxits) {
        std::stringstream convergenceMsg;
-       convergenceMsg << "Newton solver failed to converge after " << its <<
+       convergenceMsg << "Newton solver failed to converge after " << iter <<
                          " iterations. Relative norm is " << norm_rel <<
                          " and the relative tolerance is " << m_rtol <<
                          ". Absolute norm is " << norm_abs <<
@@ -265,17 +262,15 @@ void NewtonSolver<Vec,Ops>::Solve ( Vec&         a_U,
        }
     }
 
-    return;
-
 }
 
 template <class Vec, class Ops>
 void NewtonSolver<Vec,Ops>::EvalResidual ( Vec&         a_F,
                                      const Vec&         a_U,
                                      const Vec&         a_b,
-                                     const amrex::Real  a_time,
-                                     const amrex::Real  a_dt,
-                                     const int          a_iter ) const
+                                           amrex::Real  a_time,
+                                           amrex::Real  a_dt,
+                                           int          a_iter ) const
 {
 
     m_ops->PreRHSOp( a_U, a_time, a_dt, a_iter, false );

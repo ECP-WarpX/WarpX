@@ -125,21 +125,21 @@ public:
     //
     // Functions used by implicit solvers
     //
-    void PreRHSOp ( const amrex::Real  cur_time,
-                    const amrex::Real  a_full_dt,
-                    const int          a_nl_iter,
-                    const bool         a_from_jacobian );
+    void PreRHSOp ( amrex::Real  cur_time,
+                    amrex::Real  a_full_dt,
+                    int          a_nl_iter,
+                    bool         a_from_jacobian );
     void SaveParticlesAtImplicitStepStart ( );
     void FinishImplicitParticleUpdate ( );
     void UpdateElectricField( const WarpXSolverVec&  a_E );
     void UpdateMagneticField( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& a_Bn,
-                              const amrex::Real a_thetadt );
+                              amrex::Real a_thetadt );
     void ApplyMagneticFieldBCs();
     void FinishMagneticField( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& a_Bn,
-                              const amrex::Real a_theta );
+                              amrex::Real a_theta );
     void FinishImplicitField( amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Fnew,
                         const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Fold,
-                        const amrex::Real theta );
+                        amrex::Real theta );
     void ComputeRHSE (         amrex::Real dt, WarpXSolverVec& a_rhs_vec);
     void ComputeRHSE (int lev, amrex::Real dt, WarpXSolverVec& a_rhs_vec);
     void ComputeRHSE (int lev, PatchType patch_type, amrex::Real dt, WarpXSolverVec& a_rhs_vec);
@@ -544,8 +544,8 @@ public:
     const amrex::MultiFab& getedgelengths (int lev, int direction) {return *m_edge_lengths[lev][direction];}
     const amrex::MultiFab& getfaceareas  (int lev, int direction) {return *m_face_areas[lev][direction];}
 
-    const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>,3>>& getEfield_fp_vec() const {return Efield_fp;}
-    const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>,3>>& getBfield_fp_vec() const {return Bfield_fp;}
+    [[nodiscard]] const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>,3>>& getEfield_fp_vec() const {return Efield_fp;}
+    [[nodiscard]] const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>,3>>& getBfield_fp_vec() const {return Bfield_fp;}
 
     [[nodiscard]] bool DoPML () const {return do_pml;}
     [[nodiscard]] bool DoFluidSpecies () const {return do_fluid_species;}

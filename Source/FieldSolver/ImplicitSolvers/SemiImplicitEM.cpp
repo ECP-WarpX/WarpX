@@ -29,7 +29,7 @@
  *  relativistic Vlasov-Maxwell equations.", JCP 407 (2020).
  */
 
-void SemiImplicitEM::Define ( WarpX* const  a_WarpX )
+void SemiImplicitEM::Define ( WarpX*  a_WarpX )
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !m_is_defined,
@@ -95,9 +95,9 @@ void SemiImplicitEM::PrintParameters () const
     amrex::Print() << std::endl;
 }
 
-void SemiImplicitEM::OneStep ( const amrex::Real  a_old_time,
-                               const amrex::Real  a_dt,
-                               const int          a_step )
+void SemiImplicitEM::OneStep ( amrex::Real  a_old_time,
+                               amrex::Real  a_dt,
+                               int          a_step )
 {
     using namespace amrex::literals;
     amrex::ignore_unused(a_step);
@@ -136,10 +136,10 @@ void SemiImplicitEM::OneStep ( const amrex::Real  a_old_time,
 }
 
 void SemiImplicitEM::PreRHSOp ( const WarpXSolverVec&  a_E,
-                                const amrex::Real      a_time,
-                                const amrex::Real      a_dt,
-                                const int              a_nl_iter,
-                                const bool             a_from_jacobian )
+                                amrex::Real            a_time,
+                                amrex::Real            a_dt,
+                                int                    a_nl_iter,
+                                bool                   a_from_jacobian )
 {
     amrex::ignore_unused(a_E);
 
@@ -155,16 +155,16 @@ void SemiImplicitEM::PreRHSOp ( const WarpXSolverVec&  a_E,
 
 void SemiImplicitEM::ComputeRHS ( WarpXSolverVec&  a_Erhs,
                             const WarpXSolverVec&  a_E,
-                            const amrex::Real      a_time,
-                            const amrex::Real      a_dt )
+                                  amrex::Real      a_time,
+                                  amrex::Real      a_dt )
 {
     amrex::ignore_unused(a_E, a_time);
     m_WarpX->ComputeRHSE(0.5*a_dt, a_Erhs);
 }
 
 void SemiImplicitEM::UpdateWarpXState ( const WarpXSolverVec&  a_E,
-                                        const amrex::Real      a_time,
-                                        const amrex::Real      a_dt )
+                                        amrex::Real            a_time,
+                                        amrex::Real            a_dt )
 {
     using namespace amrex::literals;
     amrex::ignore_unused(a_time,a_dt);

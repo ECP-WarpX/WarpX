@@ -19,21 +19,17 @@ class PicardSolver : public NonlinearSolver<Vec,Ops>
 {
 public:
 
-    PicardSolver<Vec,Ops>()
-    {
-        m_ops = nullptr;
-        m_is_defined = false;
-    }
+    PicardSolver<Vec,Ops>() = default;
 
-    virtual ~PicardSolver<Vec,Ops>() { }
+    virtual ~PicardSolver<Vec,Ops>() = default;
 
     virtual void Define ( const Vec&  a_U,
-                          Ops* const  a_ops );
+                          Ops*        a_ops );
 
     virtual void Solve ( Vec&         a_U,
                    const Vec&         a_b,
-                   const amrex::Real  a_time,
-                   const amrex::Real  a_dt ) const;
+                         amrex::Real  a_time,
+                         amrex::Real  a_dt ) const;
 
     inline bool IsDefined () const { return m_is_defined; }
 
@@ -54,15 +50,15 @@ public:
         amrex::Print() << "Picard require convergence: " << (m_require_convergence?"true":"false") << std::endl;
     }
 
-    virtual void Verbose ( const bool  a_verbose ) { m_verbose = a_verbose; }
+    virtual void Verbose ( bool  a_verbose ) { m_verbose = a_verbose; }
 
 protected:
 
-    bool m_is_defined;
-    bool m_verbose;
-    bool m_require_convergence;
+    bool m_is_defined = false;
+    bool m_verbose = true;
+    bool m_require_convergence = true;
 
-    mutable Vec m_Usave, m_F;
+    mutable Vec m_Usave, m_R;
     Ops* m_ops;
 
     amrex::Real m_atol, m_rtol;
@@ -76,7 +72,7 @@ private:
 
 template <class Vec, class Ops>
 void PicardSolver<Vec,Ops>::Define ( const Vec&  a_U,
-                                     Ops* const  a_ops )
+                                     Ops*        a_ops )
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !m_is_defined,
@@ -86,13 +82,12 @@ void PicardSolver<Vec,Ops>::Define ( const Vec&  a_U,
     m_rtol = 1.0e-6;
     m_atol = 0.0;
     m_maxits = 100;
-    m_verbose = true;
-    m_require_convergence = true;
+    m_ops = nullptr;
 
     ParseParameters();
 
     m_Usave.Define(a_U);
-    m_F.Define(a_U);
+    m_R.Define(a_U);
 
     m_ops = a_ops;
 
@@ -115,8 +110,8 @@ void PicardSolver<Vec,Ops>::ParseParameters ()
 template <class Vec, class Ops>
 void PicardSolver<Vec,Ops>::Solve ( Vec&         a_U,
                               const Vec&         a_b,
-                              const amrex::Real  a_time,
-                              const amrex::Real  a_dt ) const
+                                    amrex::Real  a_time,
+                                    amrex::Real  a_dt ) const
 {
     BL_PROFILE("PicardSolver::Solve()");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -126,23 +121,23 @@ void PicardSolver<Vec,Ops>::Solve ( Vec&         a_U,
 
     //
     // Picard routine to solve nonlinear
-    // equation of form: U = b + F(U)
+    // equation of form: U = b + R(U)
     //
 
     amrex::Real norm_abs = 0.;
     amrex::Real norm0 = 1._rt;
     amrex::Real norm_rel = 0.;
 
-    int iter(0);
-    while(1) {
+    int iter;
+    for (iter = 0; iter < m_maxits;) {
 
         // Save previous state for norm calculation
         m_Usave = a_U;
 
         // Update the solver state
         m_ops->PreRHSOp( a_U, a_time, a_dt, iter, false );
-        m_ops->ComputeRHS( m_F, a_U, a_time, a_dt );
-        a_U = a_b + m_F;
+        m_ops->ComputeRHS( m_R, a_U, a_time, a_dt );
+        a_U = a_b + m_R;
 
         // Compute the step norm and update iter
         m_Usave -= a_U;
@@ -195,8 +190,6 @@ void PicardSolver<Vec,Ops>::Solve ( Vec&         a_U,
            ablastr::warn_manager::WMRecordWarning("PicardSolver", convergenceMsg.str());
        }
     }
-
-    return;
 
 }
 

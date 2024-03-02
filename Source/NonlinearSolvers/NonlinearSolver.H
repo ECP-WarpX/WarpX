@@ -18,22 +18,22 @@ class NonlinearSolver
 {
     public:
 
-        NonlinearSolver<Vec,Ops>() { }
-        virtual ~NonlinearSolver<Vec,Ops>() { }
+        NonlinearSolver<Vec,Ops>() = default;
+        virtual ~NonlinearSolver<Vec,Ops>() = default;
 
         virtual void Define ( const Vec&,
-                              Ops* const ) = 0;
+                              Ops* ) = 0;
 
         virtual void Solve ( Vec&,
                        const Vec&,
-                       const amrex::Real,
-                       const amrex::Real ) const = 0;
+                             amrex::Real,
+                             amrex::Real ) const = 0;
 
         virtual bool IsDefined () const = 0;
         virtual void PrintParams () const = 0;
         virtual void GetParams (amrex::Real&, amrex::Real&, int&) = 0;
 
-        virtual void Verbose ( const bool ) { }
+        virtual void Verbose ( bool ) { }
 
         virtual void GetConvergenceParams (  int& a_l_exit_status, int& a_l_last_iter, int& a_l_total_iter,
                                              int& a_nl_exit_status, int& a_nl_iter, int& a_nl_total_iter,

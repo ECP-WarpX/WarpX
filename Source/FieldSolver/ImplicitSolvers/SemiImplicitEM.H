@@ -24,14 +24,7 @@ class SemiImplicitEM : public ImplicitSolver
 {
 public:
 
-    SemiImplicitEM()
-    {
-        m_nlsolver_type = NonlinearSolverType::Picard;
-        m_max_particle_iterations = 21;
-        m_particle_tolerance = 1.0e-10;
-        m_is_defined = false;
-        m_verbose = false;
-    }
+    SemiImplicitEM() = default;
 
     virtual ~SemiImplicitEM() {
         // If we don't call the function below, then we get the
@@ -40,7 +33,7 @@ public:
         WarpXSolverVec::clearDotMask();
     }
 
-    virtual void Define ( WarpX* const  a_WarpX );
+    virtual void Define ( WarpX*  a_WarpX );
 
     virtual bool IsDefined () const { return m_is_defined; }
 
@@ -55,39 +48,38 @@ public:
         a_particle_tolerance = m_particle_tolerance;
     }
 
-    virtual void OneStep ( const amrex::Real  a_time,
-                           const amrex::Real  a_dt,
-                           const int          a_step );
+    virtual void OneStep ( amrex::Real  a_time,
+                           amrex::Real  a_dt,
+                           int          a_step );
 
     virtual void PreRHSOp ( const WarpXSolverVec&  a_E,
-                            const amrex::Real      a_time,
-                            const amrex::Real      a_dt,
-                            const int              a_nl_iter,
-                            const bool             a_from_jacobian );
+                            amrex::Real            a_time,
+                            amrex::Real            a_dt,
+                            int                    a_nl_iter,
+                            bool                   a_from_jacobian );
 
     virtual void ComputeRHS ( WarpXSolverVec&  a_Erhs,
                         const WarpXSolverVec&  a_E,
-                        const amrex::Real      a_time,
-                        const amrex::Real      a_dt );
+                              amrex::Real      a_time,
+                              amrex::Real      a_dt );
 
 private:
 
-    bool m_is_defined;
-    bool m_verbose;
+    bool m_is_defined = false;
 
     WarpX* m_WarpX;
 
-    amrex::ParticleReal m_particle_tolerance;
-    int m_max_particle_iterations;
+    amrex::ParticleReal m_particle_tolerance = 1.0e-10;
+    int m_max_particle_iterations = 20;
 
-    NonlinearSolverType m_nlsolver_type;
+    NonlinearSolverType m_nlsolver_type = NonlinearSolverType::Picard;
     std::unique_ptr<NonlinearSolver<WarpXSolverVec,SemiImplicitEM>> m_nlsolver;
 
     WarpXSolverVec m_E, m_Eold;
 
     void UpdateWarpXState ( const WarpXSolverVec&  a_E,
-                            const amrex::Real      a_time,
-                            const amrex::Real      a_dt );
+                            amrex::Real            a_time,
+                            amrex::Real            a_dt );
 
 };
 

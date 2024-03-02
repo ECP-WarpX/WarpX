@@ -52,10 +52,10 @@
 #include <vector>
 
 void
-WarpX::PreRHSOp ( const amrex::Real  a_cur_time,
-                  const amrex::Real  a_full_dt,
-                  const int          a_nl_iter,
-                  const bool         a_from_jacobian )
+WarpX::PreRHSOp ( amrex::Real  a_cur_time,
+                  amrex::Real  a_full_dt,
+                  int          a_nl_iter,
+                  bool         a_from_jacobian )
 {
     using namespace amrex::literals;
     amrex::ignore_unused( a_full_dt, a_nl_iter, a_from_jacobian );
@@ -85,7 +85,7 @@ WarpX::UpdateElectricField( const WarpXSolverVec&  a_Efield_vec )
 
 void
 WarpX::UpdateMagneticField( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >&  a_Bn,
-                            const amrex::Real                                                         a_thetadt )
+                            amrex::Real                                                         a_thetadt )
 {
     amrex::MultiFab::Copy(*Bfield_fp[0][0], *a_Bn[0][0], 0, 0, ncomps, a_Bn[0][0]->nGrowVect());
     amrex::MultiFab::Copy(*Bfield_fp[0][1], *a_Bn[0][1], 0, 0, ncomps, a_Bn[0][1]->nGrowVect());
@@ -96,7 +96,7 @@ WarpX::UpdateMagneticField( const amrex::Vector<std::array< std::unique_ptr<amre
 
 void
 WarpX::FinishMagneticField( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >&  a_Bn,
-                            const amrex::Real                                                         a_theta )
+                            amrex::Real                                                         a_theta )
 {
     FinishImplicitField(Bfield_fp, a_Bn, a_theta);
     ApplyMagneticFieldBCs();
@@ -240,7 +240,7 @@ WarpX::FinishImplicitParticleUpdate ()
 void
 WarpX::FinishImplicitField( amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_fp,
                       const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_n,
-                      const amrex::Real theta )
+                      amrex::Real theta )
 {
     using namespace amrex::literals;
 

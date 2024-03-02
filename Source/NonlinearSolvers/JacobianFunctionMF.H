@@ -33,10 +33,10 @@ class JacobianFunctionMF
         return;
     }
 
-    void apply (T& a_dF, const T& a_dU);
+    void apply ( T& a_dF, const T& a_dU );
 
     inline
-    void precond (T& a_U, const T& a_X)
+    void precond ( T& a_U, const T& a_X )
     {
         if (m_usePreCond) {
             a_U.zero();
@@ -54,7 +54,7 @@ class JacobianFunctionMF
     }
 
     inline
-    void create (T& a_Z, const T& a_U)
+    void create ( T& a_Z, const T& a_U )
     {
         a_Z.define(a_U);
     }
@@ -63,48 +63,48 @@ class JacobianFunctionMF
     T makeVecRHS () const;
 
     inline
-    void assign(T& a_Z, const T& a_U) {
+    void assign( T& a_Z, const T& a_U ) {
         a_Z = a_U;
     }
 
     inline
-    void increment(T& a_Z, const T& a_U, const RT a_scale)
+    void increment( T& a_Z, const T& a_U, RT a_scale )
     {
         a_Z += a_scale*a_U;
     }
 
     inline
-    void scale (T& a_U, const RT a_scale)
+    void scale ( T& a_U, RT a_scale )
     {
         a_U.scale(a_scale);
     }
 
     inline
-    void linComb (T& a_U, RT a, const T& X, RT b, const T& Y)
+    void linComb ( T& a_U, RT a, const T& X, RT b, const T& Y )
     {
         a_U.linComb( a, X, b, Y );
     }
 
     inline
-    void setToZero (T& a_U)
+    void setToZero ( T& a_U )
     {
         a_U.zero();
     }
 
     inline
-    void setVal (T& a_U, const RT a_val)
+    void setVal ( T& a_U, RT a_val )
     {
         a_U.setVal(a_val);
     }
 
     inline
-    RT dotProduct( const T& a_X, const T& a_Y)
+    RT dotProduct( const T& a_X, const T& a_Y )
     {
         return( a_X.dotProduct(a_Y) );
     }
 
     inline
-    RT norm2(const T& a_U)
+    RT norm2( const T& a_U )
     {
         return ( a_U.norm2() );
     }
@@ -113,43 +113,43 @@ class JacobianFunctionMF
     bool isDefined() const { return m_is_defined;  }
 
     inline
-    void setBaseSolution (const T& a_U)
+    void setBaseSolution ( const T&  a_U )
     {
         m_Y0.Copy(a_U);
         m_normY0 = norm2(m_Y0);
     }
 
     inline
-    void setBaseRHS (const T& a_R)
+    void setBaseRHS ( const T&  a_R )
     {
         m_R0.Copy(a_R);
     }
 
     inline
-    void setJFNKEps (const RT a_eps)
+    void setJFNKEps ( RT a_eps )
     {
         m_epsJFNK = a_eps;
     }
 
     inline
-    void setIsLinear (bool a_isLinear)
+    void setIsLinear ( bool a_isLinear )
     {
         m_is_linear = a_isLinear;
     }
 
     inline
-    void curTime ( const RT a_time )
+    void curTime ( RT a_time )
     {
         m_cur_time = a_time;
     }
 
     inline
-    void curTimeStep ( const RT a_dt )
+    void curTimeStep ( RT a_dt )
     {
         m_dt = a_dt;
     }
 
-    void define(const T&, Ops* const);
+    void define( const T&, Ops* );
 
     private:
 
@@ -164,8 +164,8 @@ class JacobianFunctionMF
 };
 
 template <class T, class Ops>
-void JacobianFunctionMF<T,Ops>::define ( const T&     a_U,
-                                      Ops* const   a_ops )
+void JacobianFunctionMF<T,Ops>::define ( const T&  a_U,
+                                         Ops*      a_ops )
 {
     m_Z.Define(a_U);
     m_Y0.Define(a_U);
