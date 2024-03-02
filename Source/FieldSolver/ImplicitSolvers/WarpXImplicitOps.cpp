@@ -73,20 +73,14 @@ WarpX::PreRHSOp ( const amrex::Real  a_cur_time,
 }
 
 void
-WarpX::UpdateElectricField( const WarpXSolverVec&  a_Efield_vec, const bool a_apply )
+WarpX::UpdateElectricField( const WarpXSolverVec&  a_Efield_vec )
 {
     const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Evec = a_Efield_vec.getVec();
     amrex::MultiFab::Copy(*Efield_fp[0][0], *Evec[0][0], 0, 0, ncomps, Evec[0][0]->nGrowVect());
     amrex::MultiFab::Copy(*Efield_fp[0][1], *Evec[0][1], 0, 0, ncomps, Evec[0][1]->nGrowVect());
     amrex::MultiFab::Copy(*Efield_fp[0][2], *Evec[0][2], 0, 0, ncomps, Evec[0][2]->nGrowVect());
-    ApplyElectricFieldBCs(a_apply);
-}
-
-void
-WarpX::ApplyElectricFieldBCs( const bool  a_apply )
-{
     FillBoundaryE(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
-    if (a_apply) { ApplyEfieldBoundary(0, PatchType::fine); }
+    ApplyEfieldBoundary(0, PatchType::fine);
 }
 
 void
@@ -97,7 +91,7 @@ WarpX::UpdateMagneticField( const amrex::Vector<std::array< std::unique_ptr<amre
     amrex::MultiFab::Copy(*Bfield_fp[0][1], *a_Bn[0][1], 0, 0, ncomps, a_Bn[0][1]->nGrowVect());
     amrex::MultiFab::Copy(*Bfield_fp[0][2], *a_Bn[0][2], 0, 0, ncomps, a_Bn[0][2]->nGrowVect());
     EvolveB(a_thetadt, DtType::Full);
-    ApplyMagneticFieldBCs( true );
+    ApplyMagneticFieldBCs();
 }
 
 void
@@ -105,14 +99,14 @@ WarpX::FinishMagneticField( const amrex::Vector<std::array< std::unique_ptr<amre
                             const amrex::Real                                                         a_theta )
 {
     FinishImplicitField(Bfield_fp, a_Bn, a_theta);
-    ApplyMagneticFieldBCs( false );
+    ApplyMagneticFieldBCs();
 }
 
 void
-WarpX::ApplyMagneticFieldBCs( const bool  a_apply )
+WarpX::ApplyMagneticFieldBCs()
 {
     FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
-    if (a_apply) { ApplyBfieldBoundary(0, PatchType::fine, DtType::Full); }
+    ApplyBfieldBoundary(0, PatchType::fine, DtType::Full);
 }
 
 void

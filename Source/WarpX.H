@@ -131,13 +131,12 @@ public:
                     const bool         a_from_jacobian );
     void SaveParticlesAtImplicitStepStart ( );
     void FinishImplicitParticleUpdate ( );
-    void UpdateElectricField( const WarpXSolverVec&  a_E, const bool a_apply );
+    void UpdateElectricField( const WarpXSolverVec&  a_E );
     void UpdateMagneticField( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& a_Bn,
                               const amrex::Real a_thetadt );
+    void ApplyMagneticFieldBCs();
     void FinishMagneticField( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& a_Bn,
                               const amrex::Real a_theta );
-    void ApplyElectricFieldBCs( const bool a_apply );
-    void ApplyMagneticFieldBCs( const bool a_apply );
     void FinishImplicitField( amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Fnew,
                         const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Fold,
                         const amrex::Real theta );

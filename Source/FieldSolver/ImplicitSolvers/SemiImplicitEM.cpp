@@ -115,7 +115,7 @@ void SemiImplicitEM::OneStep ( const amrex::Real  a_old_time,
 
     // Compute Bfield at time n+1/2
     m_WarpX->EvolveB(a_dt, DtType::Full);
-    m_WarpX->ApplyMagneticFieldBCs( true );
+    m_WarpX->ApplyMagneticFieldBCs();
 
     // Solve nonlinear system for E at t_{n+1/2}
     // Particles will be advanced to t_{n+1/2}
@@ -132,7 +132,7 @@ void SemiImplicitEM::OneStep ( const amrex::Real  a_old_time,
 
     // Advance fields to step n+1
     m_WarpX->FinishImplicitField(m_E.getVec(), m_Eold.getVec(), 0.5);
-    m_WarpX->UpdateElectricField( m_E, false ); // JRA not sure about false here. is what DG had.
+    m_WarpX->UpdateElectricField( m_E );
 
 }
 
@@ -171,7 +171,7 @@ void SemiImplicitEM::UpdateWarpXState ( const WarpXSolverVec&  a_E,
     amrex::ignore_unused(a_time,a_dt);
 
     // Update Efield_fp owned by WarpX
-    m_WarpX->UpdateElectricField( a_E, true );
+    m_WarpX->UpdateElectricField( a_E );
 
     // The B field update needs. Talk to DG about this. Only needed when B updates?
     if (m_WarpX->num_mirrors>0){
