@@ -41,7 +41,6 @@ algo.maxwell_solver = Yee
 algo.evolve_scheme = "theta_implicit_em"
 #algo.evolve_scheme = "semi_implicit_em"
 
-implicit_evolve.verbose = true
 implicit_evolve.theta = 0.5
 implicit_evolve.max_particle_iterations = 21
 implicit_evolve.particle_tolerance = 1.0e-12
