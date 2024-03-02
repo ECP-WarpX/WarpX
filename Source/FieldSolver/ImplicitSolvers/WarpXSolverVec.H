@@ -48,9 +48,7 @@ class WarpXSolverVec
 {
 public:
 
-    WarpXSolverVec()
-    {
-    }
+    WarpXSolverVec() = default;
 
     WarpXSolverVec(const WarpXSolverVec& a_vec)
     {
@@ -116,11 +114,23 @@ public:
         Copy(field_vec);
     }
 
-    inline
-    void operator= ( const WarpXSolverVec&  a_vec )
+    // Copy assignment operator
+    WarpXSolverVec& operator= ( const WarpXSolverVec&  a_vec )
     {
-      Copy(a_vec);
+        if (this != &a_vec) { Copy(a_vec); }
+        return *this;
     }
+    
+    // Move assignment operator
+    WarpXSolverVec& operator= ( WarpXSolverVec&&  a_vec ) noexcept
+    {
+        if (this != &a_vec) {
+            m_is_defined = std::move(a_vec.m_is_defined);
+            m_field_vec = std::move(a_vec.m_field_vec);
+        }
+        return *this;
+    }
+
 
     inline
     void operator+= ( const WarpXSolverVec&  a_vec )
@@ -226,6 +236,7 @@ private:
 
     bool  m_is_defined = false;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_field_vec;
+
     static constexpr int m_ncomp = 1;
     static constexpr int m_num_amr_levels = 1;
 

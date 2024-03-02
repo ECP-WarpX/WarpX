@@ -31,7 +31,7 @@ public:
                         Ops*  a_ops ) override;
 
     void Solve ( Vec&   a_U,
-           const Vec&   a_R,
+           const Vec&   a_b,
            amrex::Real  a_time,
            amrex::Real  a_dt ) const override;
 

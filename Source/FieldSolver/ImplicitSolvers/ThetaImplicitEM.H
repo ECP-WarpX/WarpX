@@ -63,7 +63,7 @@ public:
         // malloc_consolidate(): unaligned fastbin chunk detected
         WarpXSolverVec::clearDotMask();
     }
-
+    
     void Define ( WarpX*  a_WarpX ) override;
 
     [[nodiscard]] bool IsDefined () const override { return m_is_defined; }
@@ -113,8 +113,8 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_Bold;
 
     void UpdateWarpXState ( const WarpXSolverVec&  a_E,
-                            const amrex::Real      a_time,
-                            const amrex::Real      a_dt );
+                            amrex::Real            a_time,
+                            amrex::Real            a_dt );
 
 };
 

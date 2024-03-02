@@ -20,6 +20,12 @@ class NonlinearSolver
 
         NonlinearSolver<Vec,Ops>() = default;
         virtual ~NonlinearSolver<Vec,Ops>() = default;
+    
+        // Default move and copy operations
+        NonlinearSolver(const NonlinearSolver&) = default;
+        NonlinearSolver& operator=(const NonlinearSolver&) = default;
+        NonlinearSolver(NonlinearSolver&&) = default;
+        NonlinearSolver& operator=(NonlinearSolver&&) = default;
 
         virtual void Define ( const Vec&,
                               Ops* ) = 0;
@@ -29,7 +35,7 @@ class NonlinearSolver
                              amrex::Real,
                              amrex::Real ) const = 0;
 
-        virtual bool IsDefined () const = 0;
+        [[nodiscard]] virtual bool IsDefined () const = 0;
         virtual void PrintParams () const = 0;
         virtual void GetParams (amrex::Real&, amrex::Real&, int&) = 0;
 
