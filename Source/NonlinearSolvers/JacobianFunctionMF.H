@@ -31,7 +31,7 @@ class JacobianFunctionMF
     inline
     void precond ( T& a_U, const T& a_X )
     {
-        if (m_usePreCond) { a_U.zero(); } 
+        if (m_usePreCond) { a_U.zero(); }
         else { a_U.Copy(a_X); }
     }
 
@@ -97,7 +97,7 @@ class JacobianFunctionMF
         return ( a_U.norm2() );
     }
 
-    [[nodiscard]] inline 
+    [[nodiscard]] inline
     bool isDefined() const { return m_is_defined;  }
 
     inline
