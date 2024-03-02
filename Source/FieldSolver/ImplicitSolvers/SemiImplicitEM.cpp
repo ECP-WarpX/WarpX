@@ -131,7 +131,7 @@ void SemiImplicitEM::OneStep ( amrex::Real  a_old_time,
 
     // Advance fields to step n+1
     m_WarpX->FinishImplicitField(m_E.getVec(), m_Eold.getVec(), 0.5);
-    m_WarpX->UpdateElectricField( m_E );
+    m_WarpX->SetElectricFieldAndApplyBCs( m_E );
 
 }
 
@@ -170,7 +170,7 @@ void SemiImplicitEM::UpdateWarpXState ( const WarpXSolverVec&  a_E,
     amrex::ignore_unused(a_time,a_dt);
 
     // Update Efield_fp owned by WarpX
-    m_WarpX->UpdateElectricField( a_E );
+    m_WarpX->SetElectricFieldAndApplyBCs( a_E );
 
     // The B field update needs. Talk to DG about this. Only needed when B updates?
     if (m_WarpX->num_mirrors>0){

@@ -73,9 +73,9 @@ WarpX::PreRHSOp ( amrex::Real  a_cur_time,
 }
 
 void
-WarpX::UpdateElectricField( const WarpXSolverVec&  a_Efield_vec )
+WarpX::SetElectricFieldAndApplyBCs ( const WarpXSolverVec&  a_E )
 {
-    const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Evec = a_Efield_vec.getVec();
+    const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Evec = a_E.getVec();
     amrex::MultiFab::Copy(*Efield_fp[0][0], *Evec[0][0], 0, 0, ncomps, Evec[0][0]->nGrowVect());
     amrex::MultiFab::Copy(*Efield_fp[0][1], *Evec[0][1], 0, 0, ncomps, Evec[0][1]->nGrowVect());
     amrex::MultiFab::Copy(*Efield_fp[0][2], *Evec[0][2], 0, 0, ncomps, Evec[0][2]->nGrowVect());

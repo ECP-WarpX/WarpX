@@ -133,7 +133,7 @@ void ThetaImplicitEM::OneStep ( const amrex::Real  a_old_time,
 
     // Advance fields to step n+1
     m_WarpX->FinishImplicitField(m_E.getVec(), m_Eold.getVec(), m_theta);
-    m_WarpX->UpdateElectricField( m_E );
+    m_WarpX->SetElectricFieldAndApplyBCs( m_E );
     m_WarpX->FinishMagneticField( m_Bold, m_theta );
 
 }
@@ -173,7 +173,7 @@ void ThetaImplicitEM::UpdateWarpXState ( const WarpXSolverVec&  a_E,
     amrex::ignore_unused(a_time);
 
     // Update Efield_fp owned by WarpX
-    m_WarpX->UpdateElectricField( a_E );
+    m_WarpX->SetElectricFieldAndApplyBCs( a_E );
 
     // Update Bfield owned by WarpX
     m_WarpX->UpdateMagneticField( m_Bold, m_theta*a_dt );
