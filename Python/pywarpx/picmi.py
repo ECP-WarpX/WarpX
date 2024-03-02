@@ -2471,8 +2471,13 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         if self.data_list is not None:
             for dataname in self.data_list:
                 if dataname == 'position':
-                    # --- The positions are alway written out anyway
-                    pass
+                    if pywarpx.geometry.dims != '1':  # because then it's WARPX_DIM_1D_Z
+                        variables.add('x')
+                    if pywarpx.geometry.dims == '3':
+                        variables.add('y')
+                    variables.add('z')
+                    if pywarpx.geometry.dims == 'RZ':
+                        variables.add('theta')
                 elif dataname == 'momentum':
                     variables.add('ux')
                     variables.add('uy')
@@ -2486,8 +2491,24 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
                     variables.add('Bx')
                     variables.add('By')
                     variables.add('Bz')
-                elif dataname in ['ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz']:
-                    variables.add(dataname)
+                elif dataname in ['x', 'y', 'z', 'theta', 'ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'Er', 'Et', 'Br', 'Bt']:
+                    if pywarpx.geometry.dims == '1' and (dataname == 'x' or dataname == 'y'):
+                        raise RuntimeError(
+                            f"The attribute {dataname} is not available in mode WARPX_DIM_1D_Z"
+                            f"chosen by dim={pywarpx.geometry.dims} in pywarpx."
+                        )
+                    elif pywarpx.geometry.dims != '3' and dataname == 'y':
+                        raise RuntimeError(
+                            f"The attribute {dataname} is not available outside of mode WARPX_DIM_3D"
+                            f"The chosen value was dim={pywarpx.geometry.dims} in pywarpx."
+                        )
+                    elif pywarpx.geometry.dims != 'RZ' and dataname == 'theta':
+                        raise RuntimeError(
+                            f"The attribute {dataname} is not available outside of mode WARPX_DIM_RZ."
+                            f"The chosen value was dim={pywarpx.geometry.dims} in pywarpx."
+                        )
+                    else:
+                        variables.add(dataname)
 
             # --- Convert the set to a sorted list so that the order
             # --- is the same on all processors.
@@ -2695,25 +2716,46 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
         # --- Use a set to ensure that fields don't get repeated.
         variables = set()
 
-        if self.data_list is not None:
-            for dataname in self.data_list:
-                if dataname == 'position':
-                    # --- The positions are alway written out anyway
-                    pass
-                elif dataname == 'momentum':
-                    variables.add('ux')
-                    variables.add('uy')
-                    variables.add('uz')
-                elif dataname == 'weighting':
-                    variables.add('w')
-                elif dataname == 'fields':
-                    variables.add('Ex')
-                    variables.add('Ey')
-                    variables.add('Ez')
-                    variables.add('Bx')
-                    variables.add('By')
-                    variables.add('Bz')
-                elif dataname in ['ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'Er', 'Et', 'Br', 'Bt']:
+
+        for dataname in self.data_list:
+            if dataname == 'position':
+                if pywarpx.geometry.dims != '1':  # because then it's WARPX_DIM_1D_Z
+                    variables.add('x')
+                if pywarpx.geometry.dims == '3':
+                    variables.add('y')
+                variables.add('z')
+                if pywarpx.geometry.dims == 'RZ':
+                    variables.add('theta')
+            elif dataname == 'momentum':
+                variables.add('ux')
+                variables.add('uy')
+                variables.add('uz')
+            elif dataname == 'weighting':
+                variables.add('w')
+            elif dataname == 'fields':
+                variables.add('Ex')
+                variables.add('Ey')
+                variables.add('Ez')
+                variables.add('Bx')
+                variables.add('By')
+                variables.add('Bz')
+            elif dataname in ['x', 'y', 'z', 'theta', 'ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'Er', 'Et', 'Br', 'Bt']:
+                if pywarpx.geometry.dims == '1' and (dataname == 'x' or dataname == 'y'):
+                    raise RuntimeError(
+                        f"The attribute {dataname} is not available in mode WARPX_DIM_1D_Z"
+                        f"chosen by dim={pywarpx.geometry.dims} in pywarpx."
+                    )
+                elif pywarpx.geometry.dims != '3' and dataname == 'y':
+                    raise RuntimeError(
+                        f"The attribute {dataname} is not available outside of mode WARPX_DIM_3D"
+                        f"The chosen value was dim={pywarpx.geometry.dims} in pywarpx."
+                    )
+                elif pywarpx.geometry.dims != 'RZ' and dataname == 'theta':
+                    raise RuntimeError(
+                        f"The attribute {dataname} is not available outside of mode WARPX_DIM_RZ."
+                        f"The chosen value was dim={pywarpx.geometry.dims} in pywarpx."
+                    )
+                else:
                     variables.add(dataname)
 
             # --- Convert the set to a sorted list so that the order
