@@ -1,5 +1,5 @@
 /* Copyright 2021 Andrew Myers
- *
+ * modified by Remi Lehe, Eya Dammak 2023
  * This file is part of WarpX.
  *
  * License: BSD-3-Clause-LBNL
@@ -22,6 +22,7 @@
 #include <AMReX_Tuple.H>
 #include <AMReX.H>
 #include <AMReX_Algorithm.H>
+#include <AMReX_RealVect.H>
 using namespace amrex::literals;
 
 struct IsOutsideDomainBoundary {
@@ -164,8 +165,14 @@ struct FindEmbeddedBoundaryIntersection {
 struct CopyAndTimestamp {
     int m_step_index;
     int m_delta_index;
+    int m_normal_index;
     int m_step;
     const amrex::Real m_dt;
+    amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> m_plo;
+    amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> m_phi;
+    int m_idim;
+    int m_iside;
+    
 
     template <typename DstData, typename SrcData>
     AMREX_GPU_HOST_DEVICE
@@ -182,8 +189,59 @@ struct CopyAndTimestamp {
         for (int j = 0; j < src.m_num_runtime_int; ++j) {
             dst.m_runtime_idata[j][dst_i] = src.m_runtime_idata[j][src_i];
         }
+        
+        amrex::ParticleReal const ux = dst.m_rdata[PIdx::ux][dst_i];
+        amrex::ParticleReal const uy = dst.m_rdata[PIdx::uy][dst_i];
+        amrex::ParticleReal const uz = dst.m_rdata[PIdx::uz][dst_i];
+
         dst.m_runtime_idata[m_step_index][dst_i] = m_step;
-        dst.m_runtime_rdata[m_delta_index][dst_i] = 0._rt; //delta_fraction is initialized to zero
+        amrex::Real delta_t;
+        amrex::Real exit_velocity = 0;
+        if (m_idim == 0) {
+            exit_velocity = ux;
+        } else if (m_idim == 1) {
+            exit_velocity = uy;
+        } else {
+            exit_velocity = uz;
+        }
+
+        if (m_iside==1){ //iside=1, we are in the right side
+            delta_t = std::abs(dst.m_rdata[PIdx::z][dst_i]-m_phi[m_idim])/exit_velocity; 
+            dst.m_runtime_rdata[m_delta_index][dst_i] = delta_t;
+        } else{
+            delta_t = std::abs(dst.m_rdata[PIdx::z][dst_i]-m_plo[m_idim])/exit_velocity; 
+            dst.m_runtime_rdata[m_delta_index][dst_i] = delta_t; 
+        }
+    }
+        //calculation of the normal to the boundary
+        std::array<double, 3> n = {0.0, 0.0, 0.0}; 
+        n[m_idim]=1-2*m_iside;
+        dst.m_runtime_rdata[m_normal_index][dst_i]= n[0];
+        dst.m_runtime_rdata[m_normal_index+1][dst_i]= n[1];
+        dst.m_runtime_rdata[m_normal_index+2][dst_i]= n[2];
+
+#if (defined WARPX_DIM_3D)
+        [dst_i]-=(m_dt-delta_t)*ux;
+        dst.m_rdata[PIdx::y][dst_i]-=(m_dt-dedst.m_rdata[PIdx::x]lta_t)*uy;
+        dst.m_rdata[PIdx::z][dst_i]-=(m_dt-delta_t)*uz;
+#elif (defined WARPX_DIM_XZ)
+        dst.m_rdata[PIdx::x][dst_i]-=(m_dt-delta_t)*ux;
+        dst.m_rdata[PIdx::z][dst_i]-=(m_dt-delta_t)*uz;
+#elif (defined WARPX_DIM_RZ)
+        amrex::ParticleReal theta_temp=dst.m_rdata[PIdx::theta][dst_i];
+        amrex::ParticleReal x_temp=dst.m_rdata[PIdx::x][dst_i]*std::cos(theta_temp);
+        amrex::ParticleReal y_temp=dst.m_rdata[PIdx::y][dst_i]*std::sin(theta);
+        amrex::ParticleReal z_temp=dst.m_rdata[PIdx::z][dst_i];
+        x_temp -=(m_dt-delta_t)*ux;
+        y_temp -=(m_dt-delta_t)*uy;
+        z_temp -=(m_dt-delta_t)*uz;
+        theta_temp= std::atan2(y_temp, x_temp);
+        dst.m_rdata[PIdx::theta][dst_i] = theta_temp;
+        dst.m_rdata[PIdx::x][dst_i] =x_temp/std::cos(theta_temp);
+        dst.m_rdata[PIdx::z][dst_i] =z_temp/std::sin(theta_temp);
+#else (defined WARPX_DIM_1D_Z)
+        dst.m_rdata[PIdx::z][dst_i] -=(m_dt-delta_t)*uz;
+#endif
     }
 };
 
@@ -351,7 +409,6 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
     const amrex::Geometry& geom = warpx_instance.Geom(0);
     auto plo = geom.ProbLoArray();
     auto phi = geom.ProbHiArray();
-
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
     {
         if (geom.isPeriodic(idim)) { continue; }
@@ -367,6 +424,9 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                     buffer[i] = pc.make_alike<amrex::PinnedArenaAllocator>();
                     buffer[i].AddIntComp("stepScraped", false);
                     buffer[i].AddRealComp("deltaTimeScraped", false);
+                    buffer[i].AddRealComp("nx", false);
+                    buffer[i].AddRealComp("ny", false);
+                    buffer[i].AddRealComp("nz", false);
                 }
                 auto& species_buffer = buffer[i];
                 for (int lev = 0; lev < pc.numLevels(); ++lev)
@@ -387,7 +447,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                         if (np == 0) { continue; }
 
                         auto predicate = IsOutsideDomainBoundary{plo, phi, idim, iside};
-
+				
                         const auto ptile_data = ptile.getConstParticleTileData();
 
                         amrex::ReduceOps<amrex::ReduceOpSum> reduce_op;
@@ -412,11 +472,12 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                           const int step_scraped_index = string_to_index_intcomp.at("stepScraped");
                           auto string_to_index_realcomp = buffer[i].getParticleRuntimeComps();
                           const int delta_index = string_to_index_realcomp.at("deltaTimeScraped");
+                          const int normal_index = string_to_index_realcomp.at("nx");
                           const int step = warpx_instance.getistep(0);
 
                           amrex::filterAndTransformParticles(ptile_buffer, ptile,
                                                              predicate,
-                                                             CopyAndTimestamp{step_scraped_index, delta_index, step, dt},
+                                                             CopyAndTimestamp{step_scraped_index, delta_index, normal_index, step, dt, plo, phi, idim, iside},
                                                              0, dst_index);
                         }
                     }
