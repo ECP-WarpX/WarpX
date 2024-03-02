@@ -59,7 +59,7 @@ protected:
     bool m_require_convergence = true;
 
     mutable Vec m_Usave, m_R;
-    Ops* m_ops;
+    Ops* m_ops = nullptr;
 
     amrex::Real m_atol, m_rtol;
     int m_maxits;

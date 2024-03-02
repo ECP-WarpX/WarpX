@@ -23,7 +23,6 @@ public:
 
     NewtonSolver<Vec,Ops>()
     {
-        m_ops = nullptr;
     }
 
     ~NewtonSolver<Vec,Ops>() override = default;
@@ -79,9 +78,9 @@ protected:
     bool m_is_defined = false;
     bool m_verbose = true;
     bool m_require_convergence = true;
+    Ops* m_ops = nullptr;
 
     mutable Vec m_dU, m_F, m_R;
-    Ops* m_ops;
 
     amrex::Real m_atol, m_rtol;
     int m_maxits;
