@@ -75,6 +75,13 @@ struct ElectrostaticSolverAlgo {
     };
 };
 
+struct PoissonSolverAlgo {
+    enum {
+        Multigrid = 1,
+        IntegratedGreenFunction = 2,
+    };
+};
+
 struct ParticlePusherAlgo {
     enum {
         Boris = 0,
@@ -150,8 +157,9 @@ struct FieldBoundaryType {
                      //in the moving window direction
         Absorbing_SilverMueller = 5, // Silver-Mueller boundary condition
         Neumann = 6, // For electrostatic, the normal E is set to zero
-        None = 7     // The fields values at the boundary are not updated. This is
+        None = 7,    // The fields values at the boundary are not updated. This is
                      // useful for RZ simulations, at r=0.
+        Open = 8
     };
 };
 

@@ -1002,6 +1002,10 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs (const amrex::Geo
     amrex::ignore_unused(geom);
 #endif
     for (int idim=dim_start; idim<AMREX_SPACEDIM; idim++){
+
+
+        if(WarpX::poisson_solver_id == PoissonSolverAlgo::Multigrid){
+
         if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Periodic
              && WarpX::field_boundary_hi[idim] == FieldBoundaryType::Periodic ) {
             lobc[idim] = LinOpBCType::Periodic;
@@ -1040,6 +1044,17 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs (const amrex::Geo
                     "when using the electrostatic solver"
                 );
             }
+        }
+        } else if (WarpX::poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction){
+
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Open &&
+                                              WarpX::field_boundary_hi[idim] == FieldBoundaryType::Open,
+            "fft-based Poisson solver only works with field open boundary conditions and \
+             field open boundary conditions are only implemented for the fft-based Poisson solver"
+            );
+
+
+
         }
     }
     bcs_set = true;

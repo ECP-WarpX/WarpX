@@ -404,6 +404,7 @@ void ReadBCParams ()
     const ParmParse pp_warpx("warpx");
     const ParmParse pp_algo("algo");
     const int electromagnetic_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
+    const int poisson_solver_id = GetAlgorithmInteger(pp_algo, "poisson_solver");
 
     if (pp_geometry.queryarr("is_periodic", geom_periodicity))
     {
@@ -468,6 +469,16 @@ void ReadBCParams ()
                 WarpX::field_boundary_hi[idim] != FieldBoundaryType::PEC
             ),
             "PEC boundary not implemented for PSATD, yet!"
+        );
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            (poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction) ||
+            (
+                WarpX::field_boundary_lo[idim] == FieldBoundaryType::Open &&
+                WarpX::field_boundary_hi[idim] == FieldBoundaryType::Open
+            ),
+            "fft-based Poisson solver only works with field open boundary conditions and \
+             field open boundary conditions are only implemented for the fft-based Poisson solver"
         );
     }
 

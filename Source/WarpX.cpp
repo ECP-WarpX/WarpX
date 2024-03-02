@@ -190,6 +190,7 @@ amrex::IntVect WarpX::sort_idx_type(AMREX_D_DECL(0,0,0));
 bool WarpX::do_dynamic_scheduling = true;
 
 int WarpX::electrostatic_solver_id;
+int WarpX::poisson_solver_id;
 Real WarpX::self_fields_required_precision = 1.e-11_rt;
 Real WarpX::self_fields_absolute_tolerance = 0.0_rt;
 int WarpX::self_fields_max_iters = 200;
@@ -745,6 +746,8 @@ WarpX::ReadParameters ()
         pp_warpx.query("maxlevel_extEMfield_init", maxlevel_extEMfield_init);
 
         electrostatic_solver_id = GetAlgorithmInteger(pp_warpx, "do_electrostatic");
+        poisson_solver_id = GetAlgorithmInteger(pp_warpx, "poisson_solver");
+
         // if an electrostatic solver is used, set the Maxwell solver to None
         if (electrostatic_solver_id != ElectrostaticSolverAlgo::None) {
             electromagnetic_solver_id = ElectromagneticSolverAlgo::None;
