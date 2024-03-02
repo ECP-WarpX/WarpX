@@ -1,5 +1,5 @@
-#ifndef _NONLINEAR_SOLVER_LIBRARY_H_
-#define _NONLINEAR_SOLVER_LIBRARY_H_
+#ifndef NONLINEAR_SOLVER_LIBRARY_H_
+#define NONLINEAR_SOLVER_LIBRARY_H_
 
 #include "PicardSolver.H"
 #include "NewtonSolver.H"

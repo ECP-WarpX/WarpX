@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef _NEWTON_SOLVER_H_
-#define _NEWTON_SOLVER_H_
+#ifndef NEWTON_SOLVER_H_
+#define NEWTON_SOLVER_H_
 
 #include "NonlinearSolver.H"
 #include "JacobianFunctionMF.H"

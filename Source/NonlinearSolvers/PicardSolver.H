@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef _PICARD_SOLVER_H_
-#define _PICARD_SOLVER_H_
+#ifndef PICARD_SOLVER_H_
+#define PICARD_SOLVER_H_
 
 #include "NonlinearSolver.H"
 

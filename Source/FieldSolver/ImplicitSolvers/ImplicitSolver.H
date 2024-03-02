@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef _IMPLICIT_SOLVER_H_
-#define _IMPLICIT_SOLVER_H_
+#ifndef Implicit_Solver_H_
+#define Implicit_Solver_H_
 
 #include "FieldSolver/ImplicitSolvers/WarpXSolverVec.H"
 

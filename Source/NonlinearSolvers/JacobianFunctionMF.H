@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef _JacobianFunctionMF_H_
-#define _JacobianFunctionMF_H_
+#ifndef JacobianFunctionMF_H_
+#define JacobianFunctionMF_H_
 
 /*
  *   This is a linear function class for computing the action of a Jacobian on a vector using

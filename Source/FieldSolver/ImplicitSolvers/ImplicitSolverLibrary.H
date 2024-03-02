@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef _IMPLICIT_SOLVER_LIBRARY_H_
-#define _IMPLICIT_SOLVER_LIBRARY_H_
+#ifndef IMPLICIT_SOLVER_LIBRARY_H_
+#define IMPLICIT_SOLVER_LIBRARY_H_
 
 #include "SemiImplicitEM.H"
 #include "ThetaImplicitEM.H"

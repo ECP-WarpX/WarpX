@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef _THETA_IMPLICIT_EM_H_
-#define _THETA_IMPLICIT_EM_H_
+#ifndef THETA_IMPLICIT_EM_H_
+#define THETA_IMPLICIT_EM_H_
 
 #include "FieldSolver/ImplicitSolvers/WarpXSolverVec.H"
 #include "NonlinearSolvers/NonlinearSolverLibrary.H"

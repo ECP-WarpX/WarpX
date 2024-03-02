@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef _WarpXSolverVec_H_
-#define _WarpXSolverVec_H_
+#ifndef WarpXSolverVec_H_
+#define WarpXSolverVec_H_
 
 #include "Utils/TextMsg.H"
 

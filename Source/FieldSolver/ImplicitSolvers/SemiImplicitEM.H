@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef _SEMI_IMPLICIT_EM_H_
-#define _SEMI_IMPLICIT_EM_H_
+#ifndef SEMI_IMPLICIT_EM_H_
+#define SEMI_IMPLICIT_EM_H_
 
 #include "FieldSolver/ImplicitSolvers/WarpXSolverVec.H"
 #include "NonlinearSolvers/NonlinearSolverLibrary.H"
