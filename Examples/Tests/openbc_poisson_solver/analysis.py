@@ -35,7 +35,7 @@ def evaluate_E(x, y, z):
 
 fn = sys.argv[1]
 
-path=os.path.join(sys.argv[1], 'diags', 'diag1')
+path=os.path.join(sys.argv[1], 'diags', 'diag2')
 ts = OpenPMDTimeSeries(path)
 
 Ex, info = ts.get_field(field='E', coord='x', iteration=0, plot=False)
