@@ -8,6 +8,7 @@
 #define WARPX_PARTICLES_COLLISION_BINARYCOLLISION_H_
 
 #include "Particles/Collision/BinaryCollision/Coulomb/PairWiseCoulombCollisionFunc.H"
+#include "Particles/Collision/BinaryCollision/DSMC/DSMCFunc.H"
 #include "Particles/Collision/BinaryCollision/NuclearFusion/NuclearFusionFunc.H"
 #include "Particles/Collision/BinaryCollision/ParticleCreationFunc.H"
 #include "Particles/Collision/BinaryCollision/ShuffleFisherYates.H"
@@ -58,14 +59,14 @@
 /**
  * \brief This class performs generic binary collisions.
  *
- * \tparam CollisionFunctorType the type of the specific binary collision functor that acts on a
+ * \tparam CollisionFunctor the the specific binary collision functor that acts on a
  *         single cell
- * \tparam CopyTransformFunctorType the type of the second functor used in the case of
+ * \tparam CopyTransformFunctor the the second functor used in the case of
  *         particle creation
  *
  */
-template <typename CollisionFunctorType,
-          typename CopyTransformFunctorType = NoParticleCreationFunc>
+template <typename CollisionFunctor,
+          typename CopyTransformFunctor = NoParticleCreationFunc>
 class BinaryCollision final
     : public CollisionBase
 {
@@ -92,18 +93,36 @@ public:
             WARPX_ABORT_WITH_MESSAGE("Binary collision " + collision_name + " must have exactly two species.");
         }
 
+        CollisionType collision_type = BinaryCollisionUtils::get_collision_type(collision_name, mypc);
+
         m_isSameSpecies = (m_species_names[0] == m_species_names[1]);
 
-        m_binary_collision_functor = CollisionFunctorType(collision_name, mypc, m_isSameSpecies);
+        m_binary_collision_functor = CollisionFunctor(collision_name, mypc, m_isSameSpecies);
 
         const amrex::ParmParse pp_collision_name(collision_name);
         pp_collision_name.queryarr("product_species", m_product_species);
+
+        // if DSMC the colliding species are also product species
+        if (collision_type == CollisionType::DSMC) {
+            m_product_species.push_back(m_species_names[0]);
+            if (!m_isSameSpecies) {
+                m_product_species.push_back(m_species_names[1]);
+            }
+            // rotate to have the colliding species first
+            std::rotate(
+                m_product_species.rbegin(),
+                m_product_species.rbegin() + 1 + (!m_isSameSpecies),
+                m_product_species.rend()
+            );
+        }
+
         m_have_product_species = !m_product_species.empty();
-        if ((std::is_same<CopyTransformFunctorType, NoParticleCreationFunc>::value) & (m_have_product_species)) {
+
+        if ((std::is_same<CopyTransformFunctor, NoParticleCreationFunc>::value) & (m_have_product_species)) {
             WARPX_ABORT_WITH_MESSAGE( "Binary collision " + collision_name +
                 " does not produce species. Thus, `product_species` should not be specified in the input script." );
         }
-        m_copy_transform_functor = CopyTransformFunctorType(collision_name, mypc);
+        m_copy_transform_functor = CopyTransformFunctor(collision_name, mypc);
     }
 
     ~BinaryCollision () override = default;
@@ -199,6 +218,10 @@ public:
                     amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
                 }
             }
+
+            // Call redistribute to remove particles with negative ids
+            species1.Redistribute(lev, lev, 0, true, true);
+            species2.Redistribute(lev, lev, 0, true, true);
         }
     }
 
@@ -224,7 +247,7 @@ public:
         using namespace ParticleUtils;
         using namespace amrex::literals;
 
-        CollisionFunctorType binary_collision_functor = m_binary_collision_functor;
+        CollisionFunctor binary_collision_functor = m_binary_collision_functor;
         const bool have_product_species = m_have_product_species;
 
         // Store product species data in vectors
@@ -550,9 +573,9 @@ private:
     bool m_have_product_species;
     amrex::Vector<std::string> m_product_species;
     // functor that performs collisions within a cell
-    CollisionFunctorType m_binary_collision_functor;
+    CollisionFunctor m_binary_collision_functor;
     // functor that creates new particles and initializes their parameters
-    CopyTransformFunctorType m_copy_transform_functor;
+    CopyTransformFunctor m_copy_transform_functor;
 
 };
 
