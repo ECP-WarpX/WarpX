@@ -115,23 +115,27 @@ void SemiImplicitEM::OneStep ( amrex::Real  a_time,
     // Compute Bfield at time n+1/2
     m_WarpX->EvolveB(a_dt, DtType::Full);
     m_WarpX->ApplyMagneticFieldBCs();
+    
+    const amrex::Real half_time = a_time + 0.5_rt*a_dt;
 
     // Solve nonlinear system for E at t_{n+1/2}
     // Particles will be advanced to t_{n+1/2}
-    m_nlsolver->Solve( m_E, m_Eold, a_time, a_dt );
+    m_nlsolver->Solve( m_E, m_Eold, half_time, a_dt );
 
     // update WarpX owned Efield_fp and Bfield_fp to t_{n+1/2}
-    UpdateWarpXState( m_E, a_time, a_dt );
+    UpdateWarpXState( m_E, half_time, a_dt );
 
     // Update field boundary probes prior to updating fields to t_{n+1}
-    //m_fields->updateBoundaryProbes( a_dt );
+    //m_fields->updateBoundaryProbes( a_dt )
 
-    // Advance particles to step n+1
+    // Advance particles from time n+1/2 to time n+1
     m_WarpX->FinishImplicitParticleUpdate();
 
-    // Advance fields to step n+1
-    m_WarpX->FinishImplicitField(m_E.getVec(), m_Eold.getVec(), 0.5_rt);
-    m_WarpX->SetElectricFieldAndApplyBCs( m_E );
+    // Advance E fields from time n+1/2 to time n+1
+    // Eg^{n+1} = 2.0*E_g^{n+1/2} - E_g^n
+    m_E.linComb( 2._rt, m_E, -1._rt, m_Eold );
+    const amrex::Real new_time = a_time + a_dt;
+    UpdateWarpXState( m_E, new_time, a_dt );
 
 }
 
