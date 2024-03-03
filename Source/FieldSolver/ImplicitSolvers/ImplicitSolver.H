@@ -27,11 +27,11 @@ public:
 
     virtual ~ImplicitSolver() = default;
 
-    // Default move and copy operations
-    ImplicitSolver(const ImplicitSolver&) = default;
-    ImplicitSolver& operator=(const ImplicitSolver&) = default;
-    ImplicitSolver(ImplicitSolver&&) = default;
-    ImplicitSolver& operator=(ImplicitSolver&&) = default;
+    // Prohibit Move and Copy operations
+    ImplicitSolver(const ImplicitSolver&) = delete;
+    ImplicitSolver& operator=(const ImplicitSolver&) = delete;
+    ImplicitSolver(ImplicitSolver&&) = delete;
+    ImplicitSolver& operator=(ImplicitSolver&&) = delete;
 
     //
     // the following routines are called by WarpX

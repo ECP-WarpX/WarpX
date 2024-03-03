@@ -64,6 +64,12 @@ public:
         WarpXSolverVec::clearDotMask();
     }
 
+    // Prohibit Move and Copy operations
+    ThetaImplicitEM(const ThetaImplicitEM&) = delete;
+    ThetaImplicitEM& operator=(const ThetaImplicitEM&) = delete;
+    ThetaImplicitEM(ThetaImplicitEM&&) = delete;
+    ThetaImplicitEM& operator=(ThetaImplicitEM&&) = delete;
+
     void Define ( WarpX*  a_WarpX ) override;
 
     [[nodiscard]] bool IsDefined () const override { return m_is_defined; }

@@ -32,6 +32,12 @@ public:
         // malloc_consolidate(): unaligned fastbin chunk detected
         WarpXSolverVec::clearDotMask();
     }
+    
+    // Prohibit Move and Copy operations
+    SemiImplicitEM(const SemiImplicitEM&) = delete;
+    SemiImplicitEM& operator=(const SemiImplicitEM&) = delete;
+    SemiImplicitEM(SemiImplicitEM&&) = delete;
+    SemiImplicitEM& operator=(SemiImplicitEM&&) = delete;
 
     void Define ( WarpX*  a_WarpX ) override;
 

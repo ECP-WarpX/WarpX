@@ -25,11 +25,11 @@ public:
 
     ~NewtonSolver<Vec,Ops>() override = default;
 
-    // Default move and copy operations
-    NewtonSolver(const NewtonSolver&) = default;
-    NewtonSolver& operator=(const NewtonSolver&) = default;
-    NewtonSolver(NewtonSolver&&) noexcept = default;
-    NewtonSolver& operator=(NewtonSolver&&) noexcept = default;
+    // Prohibit Move and Copy operations
+    NewtonSolver(const NewtonSolver&) = delete;
+    NewtonSolver& operator=(const NewtonSolver&) = delete;
+    NewtonSolver(NewtonSolver&&) noexcept = delete;
+    NewtonSolver& operator=(NewtonSolver&&) noexcept = delete;
 
     void Define ( const Vec&  a_U,
                         Ops*  a_ops ) override;

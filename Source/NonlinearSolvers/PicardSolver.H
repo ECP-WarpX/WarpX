@@ -23,11 +23,11 @@ public:
 
     ~PicardSolver<Vec,Ops>() override = default;
 
-    // Default move and copy operations
-    PicardSolver(const PicardSolver&) = default;
-    PicardSolver& operator=(const PicardSolver&) = default;
-    PicardSolver(PicardSolver&&) noexcept = default;
-    PicardSolver& operator=(PicardSolver&&) noexcept = default;
+    // Prohibit Move and Copy operations
+    PicardSolver(const PicardSolver&) = delete;
+    PicardSolver& operator=(const PicardSolver&) = delete;
+    PicardSolver(PicardSolver&&) noexcept = delete;
+    PicardSolver& operator=(PicardSolver&&) noexcept = delete;
 
     void Define ( const Vec&  a_U,
                         Ops*  a_ops ) override;

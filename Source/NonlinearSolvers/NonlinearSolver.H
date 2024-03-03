@@ -16,46 +16,46 @@
 template<class Vec, class Ops>
 class NonlinearSolver
 {
-    public:
+public:
 
-        NonlinearSolver<Vec,Ops>() = default;
-        virtual ~NonlinearSolver<Vec,Ops>() = default;
+    NonlinearSolver<Vec,Ops>() = default;
+    virtual ~NonlinearSolver<Vec,Ops>() = default;
 
-        // Default move and copy operations
-        NonlinearSolver(const NonlinearSolver&) = default;
-        NonlinearSolver& operator=(const NonlinearSolver&) = default;
-        NonlinearSolver(NonlinearSolver&&) noexcept = default;
-        NonlinearSolver& operator=(NonlinearSolver&&) noexcept = default;
+    // Prohibit Move and Copy operations
+    NonlinearSolver(const NonlinearSolver&) = delete;
+    NonlinearSolver& operator=(const NonlinearSolver&) = delete;
+    NonlinearSolver(NonlinearSolver&&) noexcept = delete;
+    NonlinearSolver& operator=(NonlinearSolver&&) noexcept = delete;
 
-        virtual void Define ( const Vec&,
-                              Ops* ) = 0;
+    virtual void Define ( const Vec&,
+                          Ops* ) = 0;
 
-        virtual void Solve ( Vec&,
-                       const Vec&,
-                             amrex::Real,
-                             amrex::Real ) const = 0;
+    virtual void Solve ( Vec&,
+                   const Vec&,
+                         amrex::Real,
+                         amrex::Real ) const = 0;
 
-        [[nodiscard]] virtual bool IsDefined () const = 0;
-        virtual void PrintParams () const = 0;
-        virtual void GetParams (amrex::Real&, amrex::Real&, int&) = 0;
+    [[nodiscard]] virtual bool IsDefined () const = 0;
+    virtual void PrintParams () const = 0;
+    virtual void GetParams (amrex::Real&, amrex::Real&, int&) = 0;
 
-        virtual void Verbose ( bool ) { }
+    virtual void Verbose ( bool ) { }
 
-        virtual void GetConvergenceParams (  int& a_l_exit_status, int& a_l_last_iter, int& a_l_total_iter,
-                                             int& a_nl_exit_status, int& a_nl_iter, int& a_nl_total_iter,
-                                          double& a_nl_abs_res, double& a_nl_rel_res ) const
-        {
-            a_l_exit_status = 0;
-            a_l_last_iter = 0;
-            a_l_total_iter = 0;
-            a_nl_exit_status = 0;
-            a_nl_iter = 0;
-            a_nl_total_iter = 0;
-            a_nl_abs_res = 0.0;
-            a_nl_rel_res = 0.0;
-        }
+    virtual void GetConvergenceParams ( int& a_l_exit_status, int& a_l_last_iter, int& a_l_total_iter,
+                                        int& a_nl_exit_status, int& a_nl_iter, int& a_nl_total_iter,
+                                        double& a_nl_abs_res, double& a_nl_rel_res ) const
+    {
+        a_l_exit_status = 0;
+        a_l_last_iter = 0;
+        a_l_total_iter = 0;
+        a_nl_exit_status = 0;
+        a_nl_iter = 0;
+        a_nl_total_iter = 0;
+        a_nl_abs_res = 0.0;
+        a_nl_rel_res = 0.0;
+    }
 
-    private:
+private:
 
 };
 
