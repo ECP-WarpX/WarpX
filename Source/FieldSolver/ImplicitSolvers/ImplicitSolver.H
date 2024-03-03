@@ -39,7 +39,7 @@ public:
 
     virtual void Define ( WarpX*  a_WarpX ) = 0;
 
-    virtual bool IsDefined () const = 0;
+    [[nodiscard]] virtual bool IsDefined () const = 0;
 
     virtual void PrintParameters () const = 0;
 

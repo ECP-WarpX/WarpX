@@ -26,8 +26,8 @@ class JacobianFunctionMF
     // Default move and copy operations
     JacobianFunctionMF(const JacobianFunctionMF&) = default;
     JacobianFunctionMF& operator=(const JacobianFunctionMF&) = default;
-    JacobianFunctionMF(JacobianFunctionMF&&) = default;
-    JacobianFunctionMF& operator=(JacobianFunctionMF&&) = default;
+    JacobianFunctionMF(JacobianFunctionMF&&) noexcept = default;
+    JacobianFunctionMF& operator=(JacobianFunctionMF&&) noexcept = default;
 
     void apply ( T& a_dF, const T& a_dU );
 

@@ -125,7 +125,6 @@ public:
     WarpXSolverVec& operator= ( WarpXSolverVec&&  a_vec ) noexcept
     {
         if (this != &a_vec) {
-            m_is_defined = std::move(a_vec.m_is_defined);
             m_field_vec = std::move(a_vec.m_field_vec);
         }
         return *this;

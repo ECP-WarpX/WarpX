@@ -24,8 +24,8 @@ class NonlinearSolver
         // Default move and copy operations
         NonlinearSolver(const NonlinearSolver&) = default;
         NonlinearSolver& operator=(const NonlinearSolver&) = default;
-        NonlinearSolver(NonlinearSolver&&) = default;
-        NonlinearSolver& operator=(NonlinearSolver&&) = default;
+        NonlinearSolver(NonlinearSolver&&) noexcept = default;
+        NonlinearSolver& operator=(NonlinearSolver&&) noexcept = default;
 
         virtual void Define ( const Vec&,
                               Ops* ) = 0;
