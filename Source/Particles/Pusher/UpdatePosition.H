@@ -90,26 +90,30 @@ void UpdatePositionImplicit(amrex::ParticleReal& x, amrex::ParticleReal& y, amre
  *    of the particles for given electric and magnetic fields on the grid.
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
-void PositionNorm( const amrex::ParticleReal dxp, const amrex::ParticleReal dyp, const amrex::ParticleReal dzp,
+void PositionNorm( amrex::ParticleReal dxp, amrex::ParticleReal dyp, amrex::ParticleReal dzp,
                    amrex::ParticleReal& dxp_save, amrex::ParticleReal& dyp_save, amrex::ParticleReal& dzp_save,
-                   const amrex::ParticleReal dxg, const amrex::ParticleReal dyg, const amrex::ParticleReal dzg,
+                   amrex::ParticleReal idxg2, amrex::ParticleReal idyg2, amrex::ParticleReal idzg2,
                    amrex::ParticleReal& step_norm, const int iter )
 {
     using namespace amrex::literals;
 
-    amrex::ignore_unused(dxp, dxp_save, dxg);
-    amrex::ignore_unused(dyp, dyp_save, dyg);
+#if defined(WARPX_DIM_1D_Z)
+    amrex::ignore_unused(dxp, dxp_save, idxg2);
+#endif
+#if !defined(WARPX_DIM_3D)
+    amrex::ignore_unused(dyp, dyp_save, idyg2);
+#endif
 
     if (iter==0) { step_norm = 1.0_prt; }
     else {
-        step_norm = (dzp - dzp_save)*(dzp - dzp_save)/(dzg*dzg);
+        step_norm = (dzp - dzp_save)*(dzp - dzp_save)*idzg2;
 #if !defined(WARPX_DIM_1D_Z)
-        step_norm += (dxp - dxp_save)*(dxp - dxp_save)/(dxg*dxg);
+        step_norm += (dxp - dxp_save)*(dxp - dxp_save)*idxg2;
 #endif
 #if defined(WARPX_DIM_3D)
-        step_norm += (dyp - dyp_save)*(dyp - dyp_save)/(dyg*dyg);
+        step_norm += (dyp - dyp_save)*(dyp - dyp_save)*idyg2;
 #elif defined(WARPX_DIM_RZ)
-        step_norm += (dyp - dyp_save)*(dyp - dyp_save)/(dxg*dxg);
+        step_norm += (dyp - dyp_save)*(dyp - dyp_save)*idxg2;
 #endif
         step_norm = std::sqrt(step_norm);
     }

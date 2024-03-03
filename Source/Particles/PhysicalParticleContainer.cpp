@@ -3144,9 +3144,9 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
         amrex::ParticleReal dxp, dxp_save;
         amrex::ParticleReal dyp, dyp_save;
         amrex::ParticleReal dzp, dzp_save;
-        const amrex::ParticleReal dxg = static_cast<amrex::ParticleReal>(dx[0]);
-        const amrex::ParticleReal dyg = static_cast<amrex::ParticleReal>(dx[1]);
-        const amrex::ParticleReal dzg = static_cast<amrex::ParticleReal>(dx[2]);
+        auto idxg2 = static_cast<amrex::ParticleReal>(1._rt/(dx[0]*dx[0]));
+        auto idyg2 = static_cast<amrex::ParticleReal>(1._rt/(dx[1]*dx[1]));
+        auto idzg2 = static_cast<amrex::ParticleReal>(1._rt/(dx[2]*dx[2]));
 
         amrex::ParticleReal step_norm = 1._prt;
         for (int iter=0; iter<max_iterations;) {
@@ -3165,7 +3165,7 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
             setPosition(ip, xp, yp, zp);
 
             PositionNorm( dxp, dyp, dzp, dxp_save, dyp_save, dzp_save,
-                          dxg, dyg, dzg, step_norm, iter );
+                          idxg2, idyg2, idzg2, step_norm, iter );
             if( step_norm < particle_tolerance ) { break; }
 
             amrex::ParticleReal Exp = Ex_external_particle;
