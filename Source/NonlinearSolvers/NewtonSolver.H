@@ -24,7 +24,7 @@ public:
     NewtonSolver<Vec,Ops>() = default;
 
     ~NewtonSolver<Vec,Ops>() override = default;
-        
+
     // Default move and copy operations
     NewtonSolver(const NewtonSolver&) = default;
     NewtonSolver& operator=(const NewtonSolver&) = default;

@@ -130,7 +130,7 @@ public:
         }
         return *this;
     }
-    
+
     inline
     void operator+= ( const WarpXSolverVec&  a_vec )
     {

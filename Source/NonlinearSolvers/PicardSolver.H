@@ -22,7 +22,7 @@ public:
     PicardSolver<Vec,Ops>() = default;
 
     ~PicardSolver<Vec,Ops>() override = default;
-    
+
     // Default move and copy operations
     PicardSolver(const PicardSolver&) = default;
     PicardSolver& operator=(const PicardSolver&) = default;
