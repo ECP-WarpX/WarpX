@@ -21,7 +21,13 @@ public:
 
     PicardSolver<Vec,Ops>() = default;
 
-    ~PicardSolver<Vec,Ops>() = default;
+    ~PicardSolver<Vec,Ops>() override = default;
+    
+    // Default move and copy operations
+    PicardSolver(const PicardSolver&) = default;
+    PicardSolver& operator=(const PicardSolver&) = default;
+    PicardSolver(PicardSolver&&) noexcept = default;
+    PicardSolver& operator=(PicardSolver&&) noexcept = default;
 
     void Define ( const Vec&  a_U,
                         Ops*  a_ops ) override;

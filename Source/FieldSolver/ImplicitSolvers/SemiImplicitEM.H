@@ -32,7 +32,7 @@ public:
         // malloc_consolidate(): unaligned fastbin chunk detected
         WarpXSolverVec::clearDotMask();
     }
-
+    
     void Define ( WarpX*  a_WarpX ) override;
 
     [[nodiscard]] bool IsDefined () const override { return m_is_defined; }

@@ -95,7 +95,7 @@ void SemiImplicitEM::PrintParameters () const
     amrex::Print() << std::endl;
 }
 
-void SemiImplicitEM::OneStep ( amrex::Real  a_old_time,
+void SemiImplicitEM::OneStep ( amrex::Real  a_time,
                                amrex::Real  a_dt,
                                int          a_step )
 {
@@ -118,10 +118,10 @@ void SemiImplicitEM::OneStep ( amrex::Real  a_old_time,
 
     // Solve nonlinear system for E at t_{n+1/2}
     // Particles will be advanced to t_{n+1/2}
-    m_nlsolver->Solve( m_E, m_Eold, a_old_time, a_dt );
+    m_nlsolver->Solve( m_E, m_Eold, a_time, a_dt );
 
     // update WarpX owned Efield_fp and Bfield_fp to t_{n+1/2}
-    UpdateWarpXState( m_E, a_old_time, a_dt );
+    UpdateWarpXState( m_E, a_time, a_dt );
 
     // Update field boundary probes prior to updating fields to t_{n+1}
     //m_fields->updateBoundaryProbes( a_dt );
@@ -130,7 +130,7 @@ void SemiImplicitEM::OneStep ( amrex::Real  a_old_time,
     m_WarpX->FinishImplicitParticleUpdate();
 
     // Advance fields to step n+1
-    m_WarpX->FinishImplicitField(m_E.getVec(), m_Eold.getVec(), 0.5);
+    m_WarpX->FinishImplicitField(m_E.getVec(), m_Eold.getVec(), 0.5_rt);
     m_WarpX->SetElectricFieldAndApplyBCs( m_E );
 
 }
@@ -159,7 +159,8 @@ void SemiImplicitEM::ComputeRHS ( WarpXSolverVec&  a_Erhs,
                                   amrex::Real      a_dt )
 {
     amrex::ignore_unused(a_E, a_time);
-    m_WarpX->ComputeRHSE(0.5*a_dt, a_Erhs);
+    using namespace amrex::literals;
+    m_WarpX->ComputeRHSE(0.5_rt*a_dt, a_Erhs);
 }
 
 void SemiImplicitEM::UpdateWarpXState ( const WarpXSolverVec&  a_E,
@@ -173,7 +174,7 @@ void SemiImplicitEM::UpdateWarpXState ( const WarpXSolverVec&  a_E,
     m_WarpX->SetElectricFieldAndApplyBCs( a_E );
 
     // The B field update needs. Talk to DG about this. Only needed when B updates?
-    if (m_WarpX->num_mirrors>0){
+    if (WarpX::num_mirrors>0){
         m_WarpX->applyMirrors(a_time);
         // E : guard cells are NOT up-to-date from the mirrors
         // B : guard cells are NOT up-to-date from the mirrors

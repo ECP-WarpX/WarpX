@@ -94,7 +94,7 @@ void ThetaImplicitEM::PrintParameters () const
     amrex::Print() << std::endl;
 }
 
-void ThetaImplicitEM::OneStep ( const amrex::Real  a_old_time,
+void ThetaImplicitEM::OneStep ( const amrex::Real  a_time,
                                 const amrex::Real  a_dt,
                                 const int          a_step )
 {
@@ -120,10 +120,10 @@ void ThetaImplicitEM::OneStep ( const amrex::Real  a_old_time,
 
     // Solve nonlinear system for E at t_{n+theta}
     // Particles will be advanced to t_{n+1/2}
-    m_nlsolver->Solve( m_E, m_Eold, a_old_time, a_dt );
+    m_nlsolver->Solve( m_E, m_Eold, a_time, a_dt );
 
     // update WarpX owned Efield_fp and Bfield_fp to t_{n+theta}
-    UpdateWarpXState( m_E, a_old_time, a_dt );
+    UpdateWarpXState( m_E, a_time, a_dt );
 
     // Update field boundary probes prior to updating fields to t_{n+1}
     //m_fields->updateBoundaryProbes( a_dt );

@@ -122,6 +122,7 @@ public:
     }
 
     // Move assignment operator
+    WarpXSolverVec(WarpXSolverVec&&) noexcept = default;
     WarpXSolverVec& operator= ( WarpXSolverVec&&  a_vec ) noexcept
     {
         if (this != &a_vec) {
@@ -129,8 +130,7 @@ public:
         }
         return *this;
     }
-
-
+    
     inline
     void operator+= ( const WarpXSolverVec&  a_vec )
     {
