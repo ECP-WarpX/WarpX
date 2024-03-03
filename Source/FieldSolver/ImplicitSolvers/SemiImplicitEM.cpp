@@ -115,7 +115,7 @@ void SemiImplicitEM::OneStep ( amrex::Real  a_time,
     // Compute Bfield at time n+1/2
     m_WarpX->EvolveB(a_dt, DtType::Full);
     m_WarpX->ApplyMagneticFieldBCs();
-    
+
     const amrex::Real half_time = a_time + 0.5_rt*a_dt;
 
     // Solve nonlinear system for E at t_{n+1/2}
