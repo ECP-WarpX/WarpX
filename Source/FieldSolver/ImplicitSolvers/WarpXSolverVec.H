@@ -127,6 +127,7 @@ public:
     {
         if (this != &a_vec) {
             m_field_vec = std::move(a_vec.m_field_vec);
+            m_is_defined = true;
         }
         return *this;
     }
