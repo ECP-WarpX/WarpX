@@ -84,7 +84,7 @@ WarpX::SetElectricFieldAndApplyBCs ( const WarpXSolverVec&  a_E )
 }
 
 void
-WarpX::UpdateMagneticField( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >&  a_Bn,
+WarpX::UpdateMagneticFieldAndApplyBCs( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >&  a_Bn,
                             amrex::Real                                                         a_thetadt )
 {
     amrex::MultiFab::Copy(*Bfield_fp[0][0], *a_Bn[0][0], 0, 0, ncomps, a_Bn[0][0]->nGrowVect());
@@ -95,7 +95,7 @@ WarpX::UpdateMagneticField( const amrex::Vector<std::array< std::unique_ptr<amre
 }
 
 void
-WarpX::FinishMagneticField( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >&  a_Bn,
+WarpX::FinishMagneticFieldAndApplyBCs( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >&  a_Bn,
                             amrex::Real                                                         a_theta )
 {
     FinishImplicitField(Bfield_fp, a_Bn, a_theta);

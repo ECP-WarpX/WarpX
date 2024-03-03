@@ -122,6 +122,8 @@ private:
                             amrex::Real            a_time,
                             amrex::Real            a_dt );
 
+    void FinishFieldUpdate ( amrex::Real  a_new_time );
+
 };
 
 #endif

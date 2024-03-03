@@ -118,23 +118,24 @@ void ThetaImplicitEM::OneStep ( const amrex::Real  a_time,
         amrex::MultiFab::Copy(Bold, Bfp, 0, 0, 1, Bold.nGrowVect());
     }
 
+    const amrex::Real theta_time = a_time + m_theta*a_dt;
+
     // Solve nonlinear system for E at t_{n+theta}
     // Particles will be advanced to t_{n+1/2}
-    m_nlsolver->Solve( m_E, m_Eold, a_time, a_dt );
+    m_nlsolver->Solve( m_E, m_Eold, theta_time, a_dt );
 
     // update WarpX owned Efield_fp and Bfield_fp to t_{n+theta}
-    UpdateWarpXState( m_E, a_time, a_dt );
+    UpdateWarpXState( m_E, theta_time, a_dt );
 
     // Update field boundary probes prior to updating fields to t_{n+1}
-    //m_fields->updateBoundaryProbes( a_dt );
+    //UpdateBoundaryProbes( a_dt )
 
-    // Advance particles to step n+1
+    // Advance particles from time n+1/2 to time n+1
     m_WarpX->FinishImplicitParticleUpdate();
 
-    // Advance fields to step n+1
-    m_WarpX->FinishImplicitField(m_E.getVec(), m_Eold.getVec(), m_theta);
-    m_WarpX->SetElectricFieldAndApplyBCs( m_E );
-    m_WarpX->FinishMagneticField( m_Bold, m_theta );
+    // Advance E and B fields from time n+theta to time n+1
+    const amrex::Real new_time = a_time + a_dt;
+    FinishFieldUpdate( new_time );
 
 }
 
@@ -176,11 +177,33 @@ void ThetaImplicitEM::UpdateWarpXState ( const WarpXSolverVec&  a_E,
     m_WarpX->SetElectricFieldAndApplyBCs( a_E );
 
     // Update Bfield owned by WarpX
-    m_WarpX->UpdateMagneticField( m_Bold, m_theta*a_dt );
+    m_WarpX->UpdateMagneticFieldAndApplyBCs( m_Bold, m_theta*a_dt );
 
-    // The B field update needs. Talk to DG about this. Only needed when B updates?
-    if (m_WarpX->num_mirrors>0){
+    if (WarpX::num_mirrors>0){
         m_WarpX->applyMirrors(a_time);
+        // E : guard cells are NOT up-to-date from the mirrors
+        // B : guard cells are NOT up-to-date from the mirrors
+    }
+
+}
+
+void ThetaImplicitEM::FinishFieldUpdate ( amrex::Real  a_new_time )
+{
+    using namespace amrex::literals;
+    amrex::ignore_unused(a_new_time);
+
+    // Eg^{n+1} = (1/theta)*E_g^{n_theta} + (1-1/theta)*E_g^n
+    // Bg^{n+1} = (1/theta)*B_g^{n_theta} + (1-1/theta)*B_g^n
+
+    //m_WarpX->FinishImplicitField(m_E.getVec(), m_Eold.getVec(), m_theta);
+    const amrex::Real c0 = 1._rt/m_theta;
+    const amrex::Real c1 = 1._rt - c0;
+    m_E.linComb( c0, m_E, c1, m_Eold );
+    m_WarpX->SetElectricFieldAndApplyBCs( m_E );
+    m_WarpX->FinishMagneticFieldAndApplyBCs( m_Bold, m_theta );
+
+    if (WarpX::num_mirrors>0){
+        m_WarpX->applyMirrors(a_new_time);
         // E : guard cells are NOT up-to-date from the mirrors
         // B : guard cells are NOT up-to-date from the mirrors
     }
