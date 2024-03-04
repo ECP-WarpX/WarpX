@@ -58,12 +58,16 @@ void CollisionPairFilter (const amrex::ParticleReal& u1x, const amrex::ParticleR
     const amrex::ParticleReal w_min = amrex::min(w1, w2);
     const amrex::ParticleReal w_max = amrex::max(w1, w2);
 
-    // convert E_coll to eV
+    // convert E_coll from Joule to eV
     E_coll /= PhysConst::q_e;
 
-    // evaluate the cross-section for each scattering process to determine
-    // the total collision probability.
-    std::vector<amrex::ParticleReal> sigma_sums(process_count);
+    // Evaluate the cross-section for each scattering process to determine
+    // the total collision probability. We use 10 as the array length assuming
+    // that process_count < 10.
+    AMREX_ASSERT_WITH_MESSAGE(
+        (process_count < 10), "Too many scattering processes in DSMC routine."
+    );
+    amrex::ParticleReal sigma_sums[10];
     for (int ii = 0; ii < process_count; ii++) {
         auto const& scattering_process = *(scattering_processes + ii);
         auto sigma = scattering_process.getCrossSection(E_coll);
