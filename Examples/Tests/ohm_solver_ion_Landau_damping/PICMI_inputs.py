@@ -56,7 +56,7 @@ class IonLandauDamping(object):
     # Plasma resistivity - used to dampen the mode excitation
     eta = 1e-7
     # Number of substeps used to update B
-    substeps = 100
+    substeps = 10
 
 
     def __init__(self, test, dim, m, T_ratio, verbose):
@@ -222,7 +222,7 @@ class IonLandauDamping(object):
                 period=100,
                 write_dir='.',
                 species=[self.ions],
-                data_list = ['ux', 'uy', 'uz', 'x', 'y', 'weighting'],
+                data_list = ['ux', 'uy', 'uz', 'x', 'z', 'weighting'],
                 warpx_file_prefix=f'Python_ohms_law_solver_landau_damping_{self.dim}d_plt',
             )
             simulation.add_diagnostic(particle_diag)

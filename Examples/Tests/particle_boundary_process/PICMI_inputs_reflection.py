@@ -131,12 +131,12 @@ n = buffer.get_particle_boundary_buffer_size("electrons", 'z_lo')
 print("Number of electrons in lower buffer:", n)
 assert n == 67
 
-scraped_steps = buffer.get_particle_boundary_buffer("electrons", 'z_hi', 'step_scraped', 0)
+scraped_steps = buffer.get_particle_boundary_buffer("electrons", 'z_hi', 'stepScraped', 0)
 for arr in scraped_steps:
     # print(arr)
     assert all(arr == 4)
 
-scraped_steps = buffer.get_particle_boundary_buffer("electrons", 'z_lo', 'step_scraped', 0)
+scraped_steps = buffer.get_particle_boundary_buffer("electrons", 'z_lo', 'stepScraped', 0)
 for arr in scraped_steps:
     # print(arr)
     assert all(arr == 8)

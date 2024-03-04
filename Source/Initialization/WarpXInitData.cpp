@@ -229,6 +229,9 @@ WarpX::PrintMainPICparameters ()
     else if (current_deposition_algo == CurrentDepositionAlgo::Esirkepov){
       amrex::Print() << "Current Deposition:   | Esirkepov \n";
     }
+    else if (current_deposition_algo == CurrentDepositionAlgo::Villasenor){
+      amrex::Print() << "Current Deposition:   | Villasenor \n";
+    }
     // Print type of particle pusher
     if (particle_pusher_algo == ParticlePusherAlgo::Vay){
       amrex::Print() << "Particle Pusher:      | Vay \n";

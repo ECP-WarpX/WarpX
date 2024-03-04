@@ -53,8 +53,8 @@ def n_remaining_particles( iteration ):
     w, = ts_full.get_particle(['w'], iteration=iteration)
     return len(w)
 def n_scraped_particles( iteration ):
-    timestamp = ts_scraping.get_particle( ['timestamp'], iteration=ts_scraping.iterations[0] )
-    return (timestamp <= iteration).sum()
+    step_scraped = ts_scraping.get_particle( ['stepScraped'], iteration=ts_scraping.iterations[0] )
+    return (step_scraped <= iteration).sum()
 n_remaining = np.array([ n_remaining_particles(iteration) for iteration in ts_full.iterations ])
 n_scraped = np.array([ n_scraped_particles(iteration) for iteration in ts_full.iterations ])
 n_total = n_remaining[0]

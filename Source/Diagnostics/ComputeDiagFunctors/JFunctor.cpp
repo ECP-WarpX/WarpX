@@ -52,6 +52,12 @@ JFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/
 
         auto& mypc = warpx.GetPartContainer();
         mypc.DepositCurrent(current_fp_temp, warpx.getdt(m_lev), 0.0);
+
+        // sum values in guard cells - note that this does not filter the
+        // current density.
+        for (int idim = 0; idim < 3; ++idim) {
+            current_fp_temp[0][idim]->FillBoundary(warpx.Geom(m_lev).periodicity());
+        }
     }
 
     InterpolateMFForDiag(mf_dst, *m_mf_src, dcomp, warpx.DistributionMap(m_lev),

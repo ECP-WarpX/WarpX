@@ -116,7 +116,7 @@ By default, the most important dependencies of WarpX are automatically downloade
 CMake Option                  Default & Values                               Description
 ============================= ============================================== ===========================================================
 ``BUILD_SHARED_LIBS``         ON/**OFF**                                     `Build shared libraries for dependencies <https://cmake.org/cmake/help/latest/variable/BUILD_SHARED_LIBS.html>`__
-``CCACHE_PROGRAM``            First found ``ccache`` executable.             Set to ``-DCCACHE_PROGRAM=NO`` to disable CCache.
+``WarpX_CCACHE``              **ON**/OFF                                     Search and use CCache to speed up rebuilds.
 ``AMReX_CUDA_PTX_VERBOSE``    ON/**OFF**                                     Print CUDA code generation statistics from ``ptxas``.
 ``WarpX_amrex_src``           *None*                                         Path to AMReX source directory (preferred if set)
 ``WarpX_amrex_repo``          ``https://github.com/AMReX-Codes/amrex.git``   Repository URI to pull and build AMReX from
@@ -147,10 +147,12 @@ Relative paths are also supported, e.g. ``-DWarpX_amrex_src=../amrex``.
 
 Or build against an AMReX feature branch of a colleague.
 Assuming your colleague pushed AMReX to ``https://github.com/WeiqunZhang/amrex/`` in a branch ``new-feature`` then pass to ``cmake`` the arguments: ``-DWarpX_amrex_repo=https://github.com/WeiqunZhang/amrex.git -DWarpX_amrex_branch=new-feature``.
+More details on this :ref:`workflow are described here <developers-local-compile-src>`.
 
 You can speed up the install further if you pre-install these dependencies, e.g. with a package manager.
 Set ``-DWarpX_<dependency-name>_internal=OFF`` and add installation prefix of the dependency to the environment variable `CMAKE_PREFIX_PATH <https://cmake.org/cmake/help/latest/envvar/CMAKE_PREFIX_PATH.html>`__.
 Please see the :ref:`introduction to CMake <building-cmake-intro>` if this sounds new to you.
+More details on this :ref:`workflow are described here <developers-local-compile-findpackage>`.
 
 If you re-compile often, consider installing the `Ninja <https://github.com/ninja-build/ninja/wiki/Pre-built-Ninja-packages>`__ build system.
 Pass ``-G Ninja`` to the CMake configuration call to speed up parallel compiles.
@@ -221,11 +223,11 @@ For PICMI Python bindings, configure WarpX to produce a library and call our ``p
 .. code-block:: bash
 
    # find dependencies & configure for all WarpX dimensionalities
-   cmake -S . -B build -DWarpX_DIMS="1;2;RZ;3" -DWarpX_PYTHON=ON
+   cmake -S . -B build_py -DWarpX_DIMS="1;2;RZ;3" -DWarpX_PYTHON=ON
 
 
    # build and then call "python3 -m pip install ..."
-   cmake --build build --target pip_install -j 4
+   cmake --build build_py --target pip_install -j 4
 
 **That's it!**
 You can now :ref:`run a first 3D PICMI script <usage-picmi>` from our :ref:`examples <usage-examples>`.
@@ -322,11 +324,12 @@ This is the workflow most developers will prefer as it allows rapid re-compiles:
 .. code-block:: bash
 
    # build WarpX executables and libraries
-   cmake -S . -B build -DWarpX_DIMS="1;2;RZ;3" -DWarpX_PYTHON=ON
+   cmake -S . -B build_py -DWarpX_DIMS="1;2;RZ;3" -DWarpX_PYTHON=ON
 
    # build & install Python only
-   cmake --build build -j 4 --target pip_install
+   cmake --build build_py -j 4 --target pip_install
 
+There is also a ``--target pip_install_nodeps`` option that :ref:`skips pip-based dependency checks <developers-local-compile-pylto>`.
 
 WarpX release managers might also want to generate a self-contained source package that can be distributed to exotic architectures:
 
