@@ -189,7 +189,7 @@ struct CopyAndTimestamp {
         }
 
         dst.m_runtime_idata[m_step_index][dst_i] = m_step;
-        dst.m_runtime_rdata[m_delta_index][dst_i] = 0._rt;
+        dst.m_runtime_rdata[m_delta_index][dst_i] = 0._rt; //delta_fraction is initialized to zero
 
         //calculation of the normal to the boundary
         std::array<double, 3> n = {0.0, 0.0, 0.0};
