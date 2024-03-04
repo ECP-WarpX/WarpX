@@ -3,7 +3,7 @@ name: 🧹 clang-tidy-RZ
 on: [push, pull_request]
 
 concurrency:
-  group: ${{ github.ref }}-${{ github.head_ref }}-clangtidy
+  group: ${{ github.ref }}-${{ github.head_ref }}-clangtidy-RZ
   cancel-in-progress: true
 
 jobs:
