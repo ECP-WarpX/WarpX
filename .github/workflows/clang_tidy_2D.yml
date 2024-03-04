@@ -37,7 +37,7 @@ jobs:
 
         cmake -S . -B build_clang_tidy \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
-          -DWarpX_DIMS="1;2;RZ;3"      \
+          -DWarpX_DIMS="2"             \
           -DWarpX_MPI=ON               \
           -DWarpX_COMPUTE=OMP          \
           -DWarpX_PSATD=ON             \
