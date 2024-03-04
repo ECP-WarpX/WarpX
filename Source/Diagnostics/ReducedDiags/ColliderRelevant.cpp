@@ -63,7 +63,7 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
 : ReducedDiags{std::move(rd_name)}
 {
     // read colliding species names - must be 2
-    amrex::ParmParse pp_rd_name(m_rd_name);
+    const amrex::ParmParse pp_rd_name(m_rd_name);
     pp_rd_name.getarr("species", m_beam_name);
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -203,7 +203,7 @@ void ColliderRelevant::ComputeDiags (int step)
 
     // get cell volume
     amrex::Geometry const & geom = warpx.Geom(0);
-    amrex::Real dV = AMREX_D_TERM(geom.CellSize(0), *geom.CellSize(1), *geom.CellSize(2));
+    const amrex::Real dV = AMREX_D_TERM(geom.CellSize(0), *geom.CellSize(1), *geom.CellSize(2));
 
     const auto get_idx = [&](const std::string& name){
         return m_headers_indices.at(name).idx;
@@ -544,7 +544,7 @@ void ColliderRelevant::ComputeDiags (int step)
 
     // make density MultiFabs from nodal to cell centered
     amrex::BoxArray ba = warpx.boxArray(0);
-    amrex::DistributionMapping dmap = warpx.DistributionMap(0);
+    const amrex::DistributionMapping dmap = warpx.DistributionMap(0);
     constexpr int ncomp = 1;
     constexpr int ngrow = 0;
     amrex::MultiFab mf_dst1(ba.convert(amrex::IntVect::TheCellVector()), dmap, ncomp, ngrow);

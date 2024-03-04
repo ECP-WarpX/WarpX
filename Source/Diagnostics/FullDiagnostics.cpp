@@ -43,8 +43,8 @@ using namespace amrex::literals;
 FullDiagnostics::FullDiagnostics (int i, std::string name):
     Diagnostics{i, name},
     m_solver_deposits_current{
-        !(WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::None &&
-        WarpX::electrostatic_solver_id != ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)}
+        (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::None) ||
+        (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)}
 {
     ReadParameters();
     BackwardCompatibility();

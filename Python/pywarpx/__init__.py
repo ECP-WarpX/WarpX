@@ -19,8 +19,9 @@ if os.name == "nt":
     # add anything in PATH
     paths = os.environ.get("PATH", "")
     for p in paths.split(";"):
-        if os.path.exists(p):
-            os.add_dll_directory(p)
+        p_abs = os.path.abspath(os.path.expanduser(os.path.expandvars(p)))
+        if os.path.exists(p_abs):
+            os.add_dll_directory(p_abs)
 
 from .Algo import algo
 from .Amr import amr

@@ -500,7 +500,7 @@ PEC::ApplyPECtoElectronPressure (amrex::MultiFab* Pefield, const int lev,
 
     amrex::Box domain_box = warpx.Geom(lev).Domain();
     if (patch_type == PatchType::coarse) {
-        amrex::IntVect ref_ratio = ( (lev > 0) ? WarpX::RefRatio(lev-1) : amrex::IntVect(1) );
+        const amrex::IntVect ref_ratio = ( (lev > 0) ? WarpX::RefRatio(lev-1) : amrex::IntVect(1) );
         domain_box.coarsen(ref_ratio);
     }
     domain_box.convert(Pefield->ixType());
@@ -552,7 +552,7 @@ PEC::ApplyPECtoElectronPressure (amrex::MultiFab* Pefield, const int lev,
             amrex::ignore_unused(j,k);
 #endif
             // Store the array index
-            amrex::IntVect iv(AMREX_D_DECL(i,j,k));
+            const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 
             PEC::SetNeumannOnPEC(n, iv, Pe_array, mirrorfac, is_pec, fabbox);
         });
