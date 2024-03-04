@@ -51,11 +51,6 @@ public:
      */
     DSMCFunc () = default;
 
-    // DSMCFunc (DSMCFunc const&)            = delete;
-    // DSMCFunc& operator= (DSMCFunc const&) = delete;
-    // DSMCFunc (DSMCFunc &&)                = default;
-    // DSMCFunc& operator= (DSMCFunc &&)     = default;
-
     /**
      * \brief Constructor of the DSMCFunc class
      *
@@ -159,7 +154,7 @@ public:
         amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight,
         amrex::RandomEngine const& engine) const
     {
-        auto *scattering_processes = m_scattering_processes_exe.data();
+        auto* scattering_processes = m_scattering_processes_exe.data();
 
         amrex::ParticleReal * const AMREX_RESTRICT w1 = soa_1.m_rdata[PIdx::w];
         amrex::ParticleReal * const AMREX_RESTRICT u1x = soa_1.m_rdata[PIdx::ux];
@@ -190,8 +185,8 @@ public:
         const index_type c2 = amrex::max(NI1/NI2, index_type(1));
 
 #if (defined WARPX_DIM_RZ)
-        amrex::ParticleReal * const AMREX_RESTRICT theta1 = ptd_1.m_rdata[PIdx::theta];
-        amrex::ParticleReal * const AMREX_RESTRICT theta2 = ptd_2.m_rdata[PIdx::theta];
+        amrex::ParticleReal * const AMREX_RESTRICT theta1 = soa_1.m_rdata[PIdx::theta];
+        amrex::ParticleReal * const AMREX_RESTRICT theta2 = soa_2.m_rdata[PIdx::theta];
 #endif
 
         for (index_type k = 0; k < max_N; ++k)
