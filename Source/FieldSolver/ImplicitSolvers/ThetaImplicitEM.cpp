@@ -195,7 +195,6 @@ void ThetaImplicitEM::FinishFieldUpdate ( amrex::Real  a_new_time )
     // Eg^{n+1} = (1/theta)*E_g^{n+theta} + (1-1/theta)*E_g^n
     // Bg^{n+1} = (1/theta)*B_g^{n+theta} + (1-1/theta)*B_g^n
 
-    //m_WarpX->FinishImplicitField(m_E.getVec(), m_Eold.getVec(), m_theta);
     const amrex::Real c0 = 1._rt/m_theta;
     const amrex::Real c1 = 1._rt - c0;
     m_E.linComb( c0, m_E, c1, m_Eold );
