@@ -169,7 +169,7 @@ struct CopyAndTimestamp {
     int m_step;
     int m_idim;
     int m_iside;
-    
+
 
     template <typename DstData, typename SrcData>
     AMREX_GPU_HOST_DEVICE
@@ -188,10 +188,10 @@ struct CopyAndTimestamp {
         }
 
         dst.m_runtime_idata[m_step_index][dst_i] = m_step;
-        dst.m_runtime_rdata[m_delta_index][dst_i] = 0._rt; 
+        dst.m_runtime_rdata[m_delta_index][dst_i] = 0._rt;
 
         //calculation of the normal to the boundary
-        std::array<double, 3> n = {0.0, 0.0, 0.0}; 
+        std::array<double, 3> n = {0.0, 0.0, 0.0};
         n[m_idim]=1-2*m_iside;
         dst.m_runtime_rdata[m_normal_index][dst_i]= n[0];
         dst.m_runtime_rdata[m_normal_index+1][dst_i]= n[1];
@@ -401,7 +401,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                         if (np == 0) { continue; }
 
                         auto predicate = IsOutsideDomainBoundary{plo, phi, idim, iside};
-				
+
                         const auto ptile_data = ptile.getConstParticleTileData();
 
                         amrex::ReduceOps<amrex::ReduceOpSum> reduce_op;
