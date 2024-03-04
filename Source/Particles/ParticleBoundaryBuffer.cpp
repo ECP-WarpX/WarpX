@@ -167,6 +167,7 @@ struct CopyAndTimestamp {
     int m_delta_index;
     int m_normal_index;
     int m_step;
+    const amrex::Real m_dt;
     int m_idim;
     int m_iside;
 
@@ -421,6 +422,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                         {
                           WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::filterAndTransform");
                           auto& warpx = WarpX::GetInstance();
+                          const auto dt = warpx.getdt(pti.GetLevel());
                           auto string_to_index_intcomp = buffer[i].getParticleRuntimeiComps();
                           const int step_scraped_index = string_to_index_intcomp.at("stepScraped");
                           auto string_to_index_realcomp = buffer[i].getParticleRuntimeComps();
@@ -429,7 +431,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                           const int step = warpx_instance.getistep(0);
                           amrex::filterAndTransformParticles(ptile_buffer, ptile,
                                                              predicate,
-                                                             CopyAndTimestamp{step_scraped_index, delta_index, normal_index, step, idim, iside},
+                                                             CopyAndTimestamp{step_scraped_index, delta_index, normal_index, step, dt, idim, iside},
                                                              0, dst_index);
                         }
                     }
