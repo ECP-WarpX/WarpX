@@ -16,6 +16,11 @@
 
 #include <vector>
 
+/**
+ * \brief Newton method to solve nonlinear 
+ *  equation of form: F(U) = U - b - R(U) = 0
+ */
+
 template<class Vec, class Ops>
 class NewtonSolver : public NonlinearSolver<Vec,Ops>
 {
@@ -41,9 +46,9 @@ public:
 
     [[nodiscard]] bool IsDefined () const override { return m_is_defined; }
 
-    void GetParams ( amrex::Real&  a_rtol,
-                     amrex::Real&  a_atol,
-                     int&          a_maxits ) override
+    void GetSolverParams ( amrex::Real&  a_rtol,
+                           amrex::Real&  a_atol,
+                           int&          a_maxits ) override
     {
         a_rtol = m_rtol;
         a_atol = m_atol;
@@ -86,11 +91,37 @@ protected:
 
     mutable Vec m_dU, m_F, m_R;
 
-    amrex::Real m_atol, m_rtol;
-    int m_maxits;
+/**
+ * \brief relative tolerance for the Newton nonlinear solver
+ */
+    amrex::Real m_rtol = 1.0e-6;
 
-    amrex::Real m_gmres_atol, m_gmres_rtol;
-    int m_gmres_verbose_int, m_gmres_maxits;
+/**
+ * \brief absolute tolerance for the Newton nonlinear solver
+ */
+    amrex::Real m_atol = 0.;
+
+/**
+ * \brief maximum iterations for the Newton nonlinear solver
+ */
+    int m_maxits = 100;
+
+/**
+ * \brief relative tolerance for the GMRES linear solver
+ */
+    amrex::Real m_gmres_rtol = 1.0e-4;
+
+/**
+ * \brief absolute tolerance for the GMRES linear solver
+ */
+    amrex::Real m_gmres_atol = 0.;
+
+/**
+ * \brief maximum iterations for the GMRES linear solver
+ */
+    int m_gmres_maxits = 1000;
+
+    int m_gmres_verbose_int = 2;
 
     mutable amrex::Real m_cur_time, m_dt;
     mutable bool m_update_pc = false;
@@ -120,17 +151,8 @@ void NewtonSolver<Vec,Ops>::Define ( const Vec&  a_U,
         !m_is_defined,
         "Newton nonlinear solver object is already defined!");
 
-    /* default */
-    m_rtol = 1.0e-6;
-    m_atol = 0.0;
-    m_maxits = 100;
     m_verbose = true;
     m_require_convergence = true;
-
-    m_gmres_verbose_int = 0;
-    m_gmres_rtol = 1.0e-4;
-    m_gmres_atol = 0.0;
-    m_gmres_maxits = 1000;
 
     ParseParameters();
 

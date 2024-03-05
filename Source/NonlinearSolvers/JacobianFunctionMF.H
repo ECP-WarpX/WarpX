@@ -7,10 +7,11 @@
 #ifndef JacobianFunctionMF_H_
 #define JacobianFunctionMF_H_
 
-/*
- *   This is a linear function class for computing the action of a Jacobian on a vector using
- *   a matrix-free finite-difference method. This class has all of the required functions to be
- *   used as the linear operator template parameter in AMReX_GMRES.
+/**
+ * \brief This is a linear function class for computing the action of a 
+ *  Jacobian on a vector using a matrix-free finite-difference method. 
+ *  This class has all of the required functions to be used as the 
+ *  linear operator template parameter in AMReX_GMRES.
  */
 
 template <class T, class Ops>

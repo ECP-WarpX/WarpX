@@ -13,6 +13,7 @@
 /**
  * \brief Top-level class for the nonlinear solver
  */
+
 template<class Vec, class Ops>
 class NonlinearSolver
 {
@@ -37,7 +38,7 @@ public:
 
     [[nodiscard]] virtual bool IsDefined () const = 0;
     virtual void PrintParams () const = 0;
-    virtual void GetParams (amrex::Real&, amrex::Real&, int&) = 0;
+    virtual void GetSolverParams (amrex::Real&, amrex::Real&, int&) = 0;
 
     virtual void Verbose ( bool ) { }
 
