@@ -471,15 +471,25 @@ void ReadBCParams ()
             "PEC boundary not implemented for PSATD, yet!"
         );
 
+        if(poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction){
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            (poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction) ||
             (
                 WarpX::field_boundary_lo[idim] == FieldBoundaryType::Open &&
                 WarpX::field_boundary_hi[idim] == FieldBoundaryType::Open
             ),
-            "fft-based Poisson solver only works with field open boundary conditions and \
-             field open boundary conditions are only implemented for the fft-based Poisson solver"
+            "fft-based Poisson solver only works with field open boundary conditions"
         );
+        }
+
+        if(WarpX::field_boundary_lo[idim] == FieldBoundaryType::Open &&
+           WarpX::field_boundary_hi[idim] == FieldBoundaryType::Open){
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction,
+            "field open boundary conditions are only implemented for the fft-based Poisson solver"
+        );
+        }
+
     }
 
     // Appending periodicity information to input so that it can be used by amrex
