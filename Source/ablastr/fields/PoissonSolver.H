@@ -201,6 +201,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         } else {
             computePhiIGF( *rho[lev], *phi[lev], dx_igf, grids[lev] );
         }
+
         }
         continue;
 #endif
@@ -333,6 +334,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
             if (post_phi_calculation.has_value()) {
                 post_phi_calculation.value()(mlmg, lev);
             }
+        }
         }
 
     } // loop over lev(els)
