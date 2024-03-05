@@ -32,16 +32,16 @@
 #include <ostream>
 #include <vector>
 
-/*
- *   This is a wrapper class around a Vector of array of pointers to MultiFabs that contains
- *   basic math operators and functionality needed to interact with linear solvers in
- *   AMReX, such as GMRES.
+/**
+ * \brief This is a wrapper class around a Vector of array of pointers to MultiFabs that
+ *  contains basic math operators and functionality needed to interact with nonlinear
+ *  solvers in WarpX and linear solvers in AMReX, such as GMRES.
  *
- *   The size of the Vector is the number of amr levels. Hardcoded for 1 right now. The size of
- *   the array is the number of MultiFabs. It is hardcoded for 3 right now as it is only
- *   used for the electric field in the electromagnetic implicit time solver. In the future,
- *   the array size can be made a template parameter so that this class can be used for other
- *   solver vectors, such as electrostatic (array size 1) or Darwin (array size 4).
+ *  The size of the Vector is the number of amr levels. Hardcoded for 1 right now. The 
+ *  size of the array is the number of MultiFabs. It is hardcoded for 3 right now as it 
+ *  is only used for the electric field in the electromagnetic implicit time solver. In 
+ *  the future, the array size can be made a template parameter so that this class can 
+ *  be used for other solver vectors, such as electrostatic (array size 1) or Darwin (array size 4).
  */
 
 class WarpXSolverVec

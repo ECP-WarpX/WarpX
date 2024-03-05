@@ -14,6 +14,11 @@
 
 #include <vector>
 
+/**
+ * \brief Picard fixed-point iteration method to solve nonlinear 
+ *  equation of form: U = b + R(U)
+ */
+
 template<class Vec, class Ops>
 class PicardSolver : public NonlinearSolver<Vec,Ops>
 {
@@ -39,9 +44,9 @@ public:
 
     [[nodiscard]] bool IsDefined () const override { return m_is_defined; }
 
-    void GetParams ( amrex::Real&  a_rtol,
-                     amrex::Real&  a_atol,
-                     int&          a_maxits ) override
+    void GetSolverParams ( amrex::Real&  a_rtol,
+                           amrex::Real&  a_atol,
+                           int&          a_maxits ) override
     {
         a_rtol = m_rtol;
         a_atol = m_atol;
@@ -67,8 +72,20 @@ protected:
     mutable Vec m_Usave, m_R;
     Ops* m_ops = nullptr;
 
-    amrex::Real m_atol, m_rtol;
-    int m_maxits;
+/**
+ * \brief relative tolerance for the Picard nonlinear solver
+ */
+    amrex::Real m_rtol = 1.0e-6;
+
+/**
+ * \brief absolute tolerance for the Picard nonlinear solver
+ */
+    amrex::Real m_atol = 0.;
+
+/**
+ * \brief maximum iterations for the Picard nonlinear solver
+ */
+    int m_maxits = 100;
 
 private:
 
@@ -83,12 +100,6 @@ void PicardSolver<Vec,Ops>::Define ( const Vec&  a_U,
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !m_is_defined,
         "Picard nonlinear solver object is already defined!");
-
-    /* default */
-    m_rtol = 1.0e-6;
-    m_atol = 0.0;
-    m_maxits = 100;
-    m_ops = nullptr;
 
     ParseParameters();
 
@@ -126,7 +137,7 @@ void PicardSolver<Vec,Ops>::Solve ( Vec&         a_U,
     using namespace amrex::literals;
 
     //
-    // Picard routine to solve nonlinear
+    // Picard fixed-point iteration method to solve nonlinear
     // equation of form: U = b + R(U)
     //
 

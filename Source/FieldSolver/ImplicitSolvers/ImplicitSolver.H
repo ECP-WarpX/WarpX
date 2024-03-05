@@ -12,10 +12,10 @@
 #include <AMReX_Array.H>
 #include <AMReX_REAL.H>
 
-/*
- * Base class for implicit solvers. The base functions are those
- * needed by an implicit solver to be used through WarpX and those
- * needed to use the nonlinear solvers, such as Picard or Newton.
+/**
+ * \brief Base class for implicit time solvers. The base functions are those
+ *  needed by an implicit solver to be used through WarpX and those needed
+ *  to use the nonlinear solvers, such as Picard or Newton (i.e., JFNK).
  */
 
 class WarpX;
