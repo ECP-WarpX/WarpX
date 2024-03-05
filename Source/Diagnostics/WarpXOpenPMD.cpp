@@ -18,7 +18,6 @@
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 #include "OpenPMDHelpFunction.H"
-#include "ablastr/particles/NodalFieldGather.H"
 
 #include <ablastr/warn_manager/WarnManager.H>
 
@@ -652,37 +651,10 @@ for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
             const amrex::Geometry& geom = warpx.Geom(lev);
             auto plo = geom.ProbLoArray();
             auto dxi = geom.InvCellSizeArray();
+            amrex::MultiFab const& phi = warpx.getphi_fp(lev);
 
-            for (amrex::ParIter<0,0,PIdx::nattribs,0,amrex::PinnedArenaAllocator> pti(tmp, lev); pti.isValid(); ++pti) {
+            storeFieldOnParticles( tmp, plo, dxi, phi, phi_index, lev );
 
-                auto phi_grid = warpx.getphi_fp(lev)[pti].array();
-                const auto &aos = pti.GetArrayOfStructs();
-                amrex::Real* phi_particle = pti.GetStructOfArrays().GetRealData(phi_index).dataPtr();
-
-                // Loop over the particles and update their position
-                amrex::ParallelFor( pti.numParticles(),
-                    [=] AMREX_GPU_DEVICE (long ip) {
-
-#if (defined WARPX_DIM_3D)
-                        amrex::ParticleReal xp = aos[ip].pos(0);
-                        amrex::ParticleReal yp = aos[ip].pos(1);
-                        amrex::ParticleReal zp = aos[ip].pos(2);
-#elif ((defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ))
-                        amrex::ParticleReal xp = aos[ip].pos(0);
-                        amrex::ParticleReal yp = 0;
-                        amrex::ParticleReal zp = aos[ip].pos(1);
-#elif (defined WARPX_DIM_1D_Z)
-                        amrex::ParticleReal xp = 0, yp = 0;
-                        amrex::ParticleReal zp = aos[ip].pos(0);
-#endif
-                        int i, j, k;
-                        amrex::Real W[AMREX_SPACEDIM][2];
-                        ablastr::particles::compute_weights_nodal(xp, yp, zp, plo, dxi, i, j, k, W);
-                        amrex::Real phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, phi_grid);
-                        phi_particle[ip] = phi_value;
-                    }
-                );
-            }
         }
     }
 
