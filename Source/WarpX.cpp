@@ -746,8 +746,6 @@ WarpX::ReadParameters ()
         pp_warpx.query("maxlevel_extEMfield_init", maxlevel_extEMfield_init);
 
         electrostatic_solver_id = GetAlgorithmInteger(pp_warpx, "do_electrostatic");
-        poisson_solver_id = GetAlgorithmInteger(pp_warpx, "poisson_solver");
-
         // if an electrostatic solver is used, set the Maxwell solver to None
         if (electrostatic_solver_id != ElectrostaticSolverAlgo::None) {
             electromagnetic_solver_id = ElectromagneticSolverAlgo::None;
@@ -772,6 +770,19 @@ WarpX::ReadParameters ()
                 pp_warpx, "self_fields_max_iters", self_fields_max_iters);
             pp_warpx.query("self_fields_verbosity", self_fields_verbosity);
         }
+
+        poisson_solver_id = GetAlgorithmInteger(pp_warpx, "poisson_solver");
+#ifndef WARPX_DIM_3D
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        poisson_solver_id!=PoissonSolverAlgo::IntegratedGreenFunction,
+        "The fft-based poisson solver only works in 3D.");
+#endif
+#ifndef WARPX_USE_PSATD
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        poisson_solver_id!=PoissonSolverAlgo::IntegratedGreenFunction,
+        "To use the fft-based poisson solver, compile with WARPX_USE_PSATD=ON.");
+#endif
+
         // Parse the input file for domain boundary potentials
         const ParmParse pp_boundary("boundary");
         pp_boundary.query("potential_lo_x", m_poisson_boundary_handler.potential_xlo_str);
