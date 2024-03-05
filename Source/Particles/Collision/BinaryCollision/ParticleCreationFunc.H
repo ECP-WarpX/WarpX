@@ -267,8 +267,8 @@ public:
         // Initialize the user runtime components
         for (int i = 0; i < m_num_product_species; i++)
         {
-            int start_index = int(products_np[i]);
-            int stop_index  = int(products_np[i] + num_added_vec[i]);
+            const auto start_index = int(products_np[i]);
+            const auto stop_index  = int(products_np[i] + num_added_vec[i]);
             ParticleCreation::DefaultInitializeRuntimeAttributes(*tile_products[i],
                                        0, 0,
                                        pc_products[i]->getUserRealAttribs(), pc_products[i]->getUserIntAttribs(),

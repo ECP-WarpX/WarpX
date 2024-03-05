@@ -15,7 +15,7 @@ DSMC::DSMC (const std::string collision_name)
     : CollisionBase(collision_name)
 {
     using namespace amrex::literals;
-    amrex::ParmParse pp_collision_name(collision_name);
+    const amrex::ParmParse pp_collision_name(collision_name);
 
 #if defined WARPX_DIM_RZ
     amrex::Abort("DSMC collisions are only implemented for Cartesian coordinates.");
@@ -34,7 +34,7 @@ DSMC::DSMC (const std::string collision_name)
     // create a vector of ScatteringProcess objects from each scattering
     // process name
     for (const auto& scattering_process : scattering_process_names) {
-        std::string kw_cross_section = scattering_process + "_cross_section";
+        const std::string kw_cross_section = scattering_process + "_cross_section";
         std::string cross_section_file;
         pp_collision_name.query(kw_cross_section.c_str(), cross_section_file);
 
@@ -43,7 +43,7 @@ DSMC::DSMC (const std::string collision_name)
         amrex::ParticleReal energy = 0._prt;
         if (scattering_process.find("excitation") != std::string::npos ||
             scattering_process.find("ionization") != std::string::npos) {
-            std::string kw_energy = scattering_process + "_energy";
+            const std::string kw_energy = scattering_process + "_energy";
             utils::parser::getWithParser(
                 pp_collision_name, kw_energy.c_str(), energy);
         }
@@ -83,8 +83,8 @@ DSMC::doCollisions (amrex::Real /*cur_time*/, amrex::Real dt, MultiParticleConta
     // SmartCopy objects are created that will facilitate the particle splitting
     // operation involved in DSMC collisions between particles with arbitrary
     // weights.
-    SmartCopyFactory copy_factory_species1(species1, species1);
-    SmartCopyFactory copy_factory_species2(species2, species2);
+    const auto copy_factory_species1 = SmartCopyFactory{species1, species1};
+    const auto copy_factory_species2 = SmartCopyFactory{species2, species2};
     auto copy_species1 = copy_factory_species1.getSmartCopy();
     auto copy_species2 = copy_factory_species2.getSmartCopy();
 
@@ -158,13 +158,13 @@ DSMC::doCollisionsWithinTile(
     // - Species 1
     index_type* AMREX_RESTRICT indices_1 = bins_1.permutationPtr();
     index_type const* AMREX_RESTRICT cell_offsets_1 = bins_1.offsetsPtr();
-    amrex::ParticleReal m1 = species_1.getMass();
+    const amrex::ParticleReal m1 = species_1.getMass();
     const auto ptd_1 = ptile_1.getParticleTileData();
 
     // - Species 2
     index_type* AMREX_RESTRICT indices_2 = bins_2.permutationPtr();
     index_type const* AMREX_RESTRICT cell_offsets_2 = bins_2.offsetsPtr();
-    amrex::ParticleReal m2 = species_2.getMass();
+    const amrex::ParticleReal m2 = species_2.getMass();
     const auto ptd_2 = ptile_2.getParticleTileData();
 
     amrex::Geometry const& geom = WarpX::GetInstance().Geom(lev);
@@ -176,7 +176,7 @@ DSMC::doCollisionsWithinTile(
     amrex::Box const& cbx = mfi.tilebox(amrex::IntVect::TheZeroVector()); //Cell-centered box
     const auto lo = lbound(cbx);
     const auto hi = ubound(cbx);
-    int nz = hi.y-lo.y+1;
+    const int nz = hi.y-lo.y+1;
     auto dr = geom.CellSize(0);
     auto dz = geom.CellSize(1);
 #elif defined(WARPX_DIM_3D)
@@ -262,7 +262,7 @@ DSMC::doCollisionsWithinTile(
             ShuffleFisherYates(indices_1, cell_start_1, cell_stop_1, engine);
             ShuffleFisherYates(indices_2, cell_start_2, cell_stop_2, engine);
 #if defined WARPX_DIM_RZ
-            int ri = (i_cell - i_cell%nz) / nz;
+            const int ri = (i_cell - i_cell%nz) / nz;
             auto dV = MathConst::pi*(2.0_prt*ri+1.0_prt)*dr*dr*dz;
 #endif
             // Call the function in order to perform collisions
