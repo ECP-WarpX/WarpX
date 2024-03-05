@@ -12,7 +12,10 @@
 #include <ablastr/utils/TextMsg.H>
 #include <ablastr/warn_manager/WarnManager.H>
 #include <ablastr/math/fft/AnyFFT.H>
+
+#if defined(WARPX_USE_PSATD)  && defined(WARPX_DIM_3D)
 #include <ablastr/fields/IntegratedGreenFunctionSolver.H>
+#endif
 
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
@@ -186,8 +189,9 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
                 {{ beta[0], beta[1], beta[2] }};
 #endif
 
+#if defined(WARPX_USE_PSATD)  && defined(WARPX_DIM_3D)
         if(WarpX::poisson_solver_id==PoissonSolverAlgo::IntegratedGreenFunction && lev==0){
-        // IGS SOLVER 
+        // IGF SOLVER 
         amrex::Array<amrex::Real,AMREX_SPACEDIM> dx_igf
                 {AMREX_D_DECL(geom[lev].CellSize(0)/std::sqrt(1._rt-beta_solver[0]*beta_solver[0]),
                               geom[lev].CellSize(1)/std::sqrt(1._rt-beta_solver[1]*beta_solver[1]),
@@ -197,10 +201,10 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         } else {
             computePhiIGF( *rho[lev], *phi[lev], dx_igf, grids[lev] );
         }
-
         }
-        else{
-            
+        continue;
+#endif
+      
 #if !(defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ))
         // Determine whether to use semi-coarsening
         amrex::Array<amrex::Real,AMREX_SPACEDIM> dx_scaled
@@ -329,7 +333,6 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
             if (post_phi_calculation.has_value()) {
                 post_phi_calculation.value()(mlmg, lev);
             }
-        }
         }
 
     } // loop over lev(els)
