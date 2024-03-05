@@ -218,7 +218,7 @@ WarpX::PrintMainPICparameters ()
             (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::BackwardEuler)){
       amrex::Print() << "                      |  - Backward Euler algorithm\n";
     }
-    if(electrostatic_solver_id != ElectromagneticSolverAlgo::None){
+    if(electrostatic_solver_id != ElectrostaticSolverAlgo::None){
         if(poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction){
             amrex::Print() << "Poisson solver:       | fft-based" << "\n";
         }
