@@ -775,13 +775,21 @@ WarpX::ReadParameters ()
 #ifndef WARPX_DIM_3D
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         poisson_solver_id!=PoissonSolverAlgo::IntegratedGreenFunction,
-        "The fft-based poisson solver only works in 3D.");
+        "The fft-based Poisson solver only works in 3D.");
 #endif
 #ifndef WARPX_USE_PSATD
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         poisson_solver_id!=PoissonSolverAlgo::IntegratedGreenFunction,
-        "To use the fft-based poisson solver, compile with WARPX_USE_PSATD=ON.");
+        "To use the fft-based Poisson solver, compile with WARPX_USE_PSATD=ON.");
 #endif
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        (
+            electrostatic_solver_id!=ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic ||
+            poisson_solver_id!=PoissonSolverAlgo::IntegratedGreenFunction
+        ),
+        "The fft-based Poisson solver is not implemented in labframe-electromagnetostatic mode yet."
+        );
 
         // Parse the input file for domain boundary potentials
         const ParmParse pp_boundary("boundary");
