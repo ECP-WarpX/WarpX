@@ -335,9 +335,8 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
                 post_phi_calculation.value()(mlmg, lev);
             }
         }
-        }
-
     } // loop over lev(els)
+
 }
 
 } // namespace ablastr::fields
