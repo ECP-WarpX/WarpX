@@ -91,28 +91,15 @@ storeFieldOnParticles ( T_ParticleContainer& tmp,
     for (PinnedParIter pti(tmp, lev); pti.isValid(); ++pti) {
 
         auto phi_grid = phi[pti].array();
-        auto &soa = pti.GetStructOfArrays();
-        amrex::Real const* x_arr = soa.GetRealData(PIdx::x).dataPtr();
-        amrex::Real const* y_arr = soa.GetRealData(PIdx::y).dataPtr();
-        amrex::Real const* z_arr = soa.GetRealData(PIdx::z).dataPtr();
-        amrex::Real* phi_particle_arr = soa.GetRealData(phi_index).dataPtr();
+        const auto getPosition = GetParticlePosition<PIdx>(pti);
+        amrex::Real* phi_particle_arr = pti.GetStructOfArrays().GetRealData(phi_index).dataPtr();
 
         // Loop over the particles and update their position
         amrex::ParallelFor( pti.numParticles(),
             [=] AMREX_GPU_DEVICE (long ip) {
 
-#if (defined WARPX_DIM_3D)
-                amrex::ParticleReal xp = x_arr[ip];
-                amrex::ParticleReal yp = y_arr[ip];
-                amrex::ParticleReal zp = z_arr[ip];
-#elif ((defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ))
-                amrex::ParticleReal xp = x_arr[ip];
-                amrex::ParticleReal yp = 0;
-                amrex::ParticleReal zp = z_arr[ip];
-#elif (defined WARPX_DIM_1D_Z)
-                amrex::ParticleReal xp = 0, yp = 0;
-                amrex::ParticleReal zp = z_arr[ip];
-#endif
+                amrex::ParticleReal xp, yp, zp;
+                getPosition(ip, xp, yp, zp);
                 int i, j, k;
                 amrex::Real W[AMREX_SPACEDIM][2];
                 ablastr::particles::compute_weights(xp, yp, zp, plo, dxi, i, j, k, W);
