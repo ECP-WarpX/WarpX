@@ -172,30 +172,24 @@ The physical fields in WarpX have the following naming:
 
         .def("set_potential_on_domain_boundary",
             [](WarpX& wx,
-               std::string potential_xlo, std::string potential_xhi,
-               std::string potential_ylo, std::string potential_yhi,
-               std::string potential_zlo, std::string potential_zhi)
+               std::string potential_lo_x, std::string potential_hi_x,
+               std::string potential_lo_y, std::string potential_hi_y,
+               std::string potential_lo_z, std::string potential_hi_z)
             {
-                if (potential_xlo != "")
-                    wx.m_poisson_boundary_handler.potential_xlo_str = potential_xlo;
-                if (potential_xhi != "")
-                    wx.m_poisson_boundary_handler.potential_xhi_str = potential_xhi;
-                if (potential_ylo != "")
-                    wx.m_poisson_boundary_handler.potential_ylo_str = potential_ylo;
-                if (potential_yhi != "")
-                    wx.m_poisson_boundary_handler.potential_yhi_str = potential_yhi;
-                if (potential_zlo != "")
-                    wx.m_poisson_boundary_handler.potential_zlo_str = potential_zlo;
-                if (potential_zhi != "")
-                    wx.m_poisson_boundary_handler.potential_zhi_str = potential_zhi;
+                if (potential_lo_x != "") wx.m_poisson_boundary_handler.potential_xlo_str = potential_lo_x;
+                if (potential_hi_x != "") wx.m_poisson_boundary_handler.potential_xhi_str = potential_hi_x;
+                if (potential_lo_y != "") wx.m_poisson_boundary_handler.potential_ylo_str = potential_lo_y;
+                if (potential_hi_y != "") wx.m_poisson_boundary_handler.potential_yhi_str = potential_hi_y;
+                if (potential_lo_z != "") wx.m_poisson_boundary_handler.potential_zlo_str = potential_lo_z;
+                if (potential_hi_z != "") wx.m_poisson_boundary_handler.potential_zhi_str = potential_hi_z;
                 wx.m_poisson_boundary_handler.buildParsers();
             },
-            py::arg("potential_xlo") = "",
-            py::arg("potential_xhi") = "",
-            py::arg("potential_ylo") = "",
-            py::arg("potential_yhi") = "",
-            py::arg("potential_zlo") = "",
-            py::arg("potential_zhi") = "",
+            py::arg("potential_lo_x") = "",
+            py::arg("potential_hi_x") = "",
+            py::arg("potential_lo_y") = "",
+            py::arg("potential_hi_y") = "",
+            py::arg("potential_lo_z") = "",
+            py::arg("potential_hi_z") = "",
             "Sets the domain boundary potential string(s) and updates the function parser."
         )
         .def("set_potential_on_eb",
