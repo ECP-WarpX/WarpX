@@ -8,6 +8,7 @@
 #define PARTICLEIO_H_
 
 #include "Particles/WarpXParticleContainer.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
 #include "ablastr/particles/NodalFieldGather.H"
 
 #include <AMReX_AmrParticles.H>
