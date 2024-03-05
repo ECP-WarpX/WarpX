@@ -79,6 +79,7 @@ particlesConvertUnits (ConvertDirection convert_direction, T_ParticleContainer* 
     }
 }
 
+/** TODO: Add docstring */
 template< typename T_ParticleContainer >
 void
 storeFieldOnParticles ( T_ParticleContainer& tmp,
@@ -104,7 +105,7 @@ storeFieldOnParticles ( T_ParticleContainer& tmp,
                 int i, j, k;
                 amrex::Real W[AMREX_SPACEDIM][2];
                 ablastr::particles::compute_weights(xp, yp, zp, plo, dxi, i, j, k, W);
-                amrex::Real phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, phi_grid);
+                amrex::Real const phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, phi_grid);
                 phi_particle_arr[ip] = phi_value;
             }
         );
