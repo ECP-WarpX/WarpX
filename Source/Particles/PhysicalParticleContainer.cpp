@@ -3252,16 +3252,16 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
 
             // particle did not converge
             if ( iter > 1 && iter == max_iterations ) {
-                AMREX_IF_ON_HOST((
-                    std::stringstream convergenceMsg;
-                    convergenceMsg << "Picard solver for particle failed to converge after " <<
-                              iter << " iterations. " << std::endl;
-                    convergenceMsg << "Position step norm is " << step_norm <<
-                             " and the tolerance is " << particle_tolerance << std::endl;
-                    convergenceMsg << " ux = " << ux[ip] << ", uy = " << uy[ip] << ", uz = " << uz[ip] << std::endl;
-                    convergenceMsg << " xp = " << xp     << ", yp = " << yp     << ", zp = " << zp;
-                    ablastr::warn_manager::WMRecordWarning("ImplicitPushXP", convergenceMsg.str());
-                ))
+#if !defined(AMREX_USE_GPU)
+                std::stringstream convergenceMsg;
+                convergenceMsg << "Picard solver for particle failed to converge after " <<
+                    iter << " iterations. " << std::endl;
+                convergenceMsg << "Position step norm is " << step_norm <<
+                    " and the tolerance is " << particle_tolerance << std::endl;
+                convergenceMsg << " ux = " << ux[ip] << ", uy = " << uy[ip] << ", uz = " << uz[ip] << std::endl;
+                convergenceMsg << " xp = " << xp     << ", yp = " << yp     << ", zp = " << zp;
+                ablastr::warn_manager::WMRecordWarning("ImplicitPushXP", convergenceMsg.str());
+#endif
 
                 // write signaling flag: how many particles did not converge?
                 amrex::Gpu::Atomic::Add(unconverged_particles_ptr, amrex::Long(1));
@@ -3271,7 +3271,7 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
 
     });
 
-    auto const num_unconverged_particles = *(unconverged_particles.hostData());
+    auto const num_unconverged_particles = *(unconverged_particles.copyToHost());
     if (num_unconverged_particles > 0) {
         ablastr::warn_manager::WMRecordWarning("ImplicitPushXP",
             "Picard solver for " +
