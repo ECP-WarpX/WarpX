@@ -487,11 +487,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                           const int step = warpx_instance.getistep(0);
                           amrex::filterAndTransformParticles(ptile_buffer, ptile,
                                                              predicate,
-<<<<<<< HEAD
-                                                             CopyAndTimestamp{step_scraped_index, delta_index, normal_index, step, dt, idim, iside},
-=======
                                                              CopyAndTimestamp{step_scraped_index, delta_index, normal_index, step, dt, plo, phi, idim, iside},
->>>>>>> b0b635458 (draft)
                                                              0, dst_index);
                         }
                     }
