@@ -54,7 +54,7 @@ HankelTransform::HankelTransform (int const hankel_order,
 
     // Calculate the spatial grid (Uniform grid with a half-cell offset)
     amrex::Vector<amrex::Real> rmesh(m_nr);
-    amrex::Real dr = rmax/m_nr;
+    const amrex::Real dr = rmax/m_nr;
     for (int ir=0 ; ir < m_nr ; ir++) {
         rmesh[ir] = dr*(ir + 0.5_rt);
     }

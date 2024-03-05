@@ -255,7 +255,7 @@ class ForceFreeSheetReconnection(object):
                 period=self.total_steps,
                 write_dir='.',
                 species=[self.ions],
-                data_list=['ux', 'uy', 'uz', 'x', 'y', 'weighting'],
+                data_list=['ux', 'uy', 'uz', 'x', 'z', 'weighting'],
                 warpx_file_prefix='Python_ohms_law_solver_magnetic_reconnection_2d_plt',
                 # warpx_format='openpmd',
                 # warpx_openpmd_backend='h5',

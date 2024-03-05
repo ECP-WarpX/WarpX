@@ -176,7 +176,12 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         );
     }
 
+#if !(defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ))
     amrex::LPInfo info;
+#else
+    const amrex::LPInfo info;
+#endif
+
     for (int lev=0; lev<=finest_level; lev++) {
 
         // Set the value of beta

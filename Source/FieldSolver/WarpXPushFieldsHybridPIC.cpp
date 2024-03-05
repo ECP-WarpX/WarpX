@@ -54,7 +54,7 @@ void WarpX::HybridPICEvolveFields ()
     }
 
     // Get requested number of substeps to use
-    int sub_steps = m_hybrid_pic_model->m_substeps;
+    const int sub_steps = m_hybrid_pic_model->m_substeps;
 
     // Get the external current
     m_hybrid_pic_model->GetCurrentExternal(m_edge_lengths);
