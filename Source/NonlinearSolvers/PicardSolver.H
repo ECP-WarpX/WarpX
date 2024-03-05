@@ -15,7 +15,7 @@
 #include <vector>
 
 /**
- * \brief Picard fixed-point iteration method to solve nonlinear 
+ * \brief Picard fixed-point iteration method to solve nonlinear
  *  equation of form: U = b + R(U)
  */
 

@@ -17,7 +17,7 @@
 #include <vector>
 
 /**
- * \brief Newton method to solve nonlinear 
+ * \brief Newton method to solve nonlinear
  *  equation of form: F(U) = U - b - R(U) = 0
  */
 

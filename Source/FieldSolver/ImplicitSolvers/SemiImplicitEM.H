@@ -29,9 +29,9 @@
  *  where f^{n+1/2} = (f^{n+1} + f^n)/2.0, for all but Bg, which lives at half steps
  *
  *  This algorithm is approximately energy conserving. It is exactly energy conserving
- *  using a non-standard definition for the magnetic field energy. The advantage of 
- *  this method over the exactly energy-conserving theta-implicit EM method is that 
- *  light wave dispersion is captured much better. However, the CFL condition for light 
+ *  using a non-standard definition for the magnetic field energy. The advantage of
+ *  this method over the exactly energy-conserving theta-implicit EM method is that
+ *  light wave dispersion is captured much better. However, the CFL condition for light
  *  waves has to be satisifed for numerical stability.
  *
  *  See G. Chen, L. Chacon, L. Yin, B.J. Albright, D.J. Stark, R.F. Bird,
