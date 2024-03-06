@@ -171,6 +171,11 @@ ExternalFieldParams::ExternalFieldParams(const amrex::ParmParse& pp_warpx)
     // provided in the input file.
     if (E_ext_grid_type == ExternalFieldType::parse_ext_grid_function) {
 
+        //! Strings storing parser function to initialize the components of the magnetic field on the grid
+        std::string str_Ex_ext_grid_function;
+        std::string str_Ey_ext_grid_function;
+        std::string str_Ez_ext_grid_function;
+
 #if defined(WARPX_DIM_1D_Z)
         utils::parser::Store_parserString(pp_warpx, "Ex_external_grid_function(z)",
           str_Ex_ext_grid_function);
