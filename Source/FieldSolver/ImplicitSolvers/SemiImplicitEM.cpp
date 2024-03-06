@@ -26,7 +26,7 @@ void SemiImplicitEM::Define ( WarpX*  a_WarpX )
     m_E.SetDotMask(Geom);
 
     // Parse implicit solver parameters
-    amrex::ParmParse pp("implicit_evolve");
+    const amrex::ParmParse pp("implicit_evolve");
 
     std::string nlsolver_type_str;
     pp.query("nonlinear_solver", nlsolver_type_str);

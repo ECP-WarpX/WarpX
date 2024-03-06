@@ -19,8 +19,8 @@ void WarpXSolverVec::SetDotMask( const amrex::Vector<amrex::Geometry>&  a_Geom )
     m_dotMask.resize(m_num_amr_levels);
     for ( int n = 0; n < 3; n++) {
         const amrex::BoxArray& grids = m_field_vec[0][n]->boxArray();
-        amrex::MultiFab tmp( grids, m_field_vec[0][n]->DistributionMap(),
-                             1, 0, amrex::MFInfo().SetAlloc(false) );
+        const amrex::MultiFab tmp( grids, m_field_vec[0][n]->DistributionMap(),
+                                   1, 0, amrex::MFInfo().SetAlloc(false) );
         const amrex::Periodicity& period = a_Geom[0].periodicity();
         m_dotMask[0][n] = tmp.OwnerMask(period);
     }

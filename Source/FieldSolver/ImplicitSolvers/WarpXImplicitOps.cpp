@@ -64,8 +64,8 @@ WarpX::PreRHSOp ( amrex::Real  a_cur_time,
     // particle velocities by dt, then take average of old and new v,
     // deposit currents, giving J at n+1/2
     // This uses Efield_fp and Bfield_fp, the field at n+1/2 from the previous iteration.
-    bool skip_current = false;
-    PushType push_type = PushType::Implicit;
+    const bool skip_current = false;
+    const PushType push_type = PushType::Implicit;
     PushParticlesandDeposit(a_cur_time, skip_current, push_type);
 
     SyncCurrentAndRho();
@@ -260,9 +260,9 @@ WarpX::FinishImplicitField( amrex::Vector<std::array< std::unique_ptr<amrex::Mul
             amrex::Array4<amrex::Real> const& Fy_n = Field_n[lev][1]->array(mfi);
             amrex::Array4<amrex::Real> const& Fz_n = Field_n[lev][2]->array(mfi);
 
-            amrex::Box tbx = mfi.tilebox(Field_n[lev][0]->ixType().toIntVect());
-            amrex::Box tby = mfi.tilebox(Field_n[lev][1]->ixType().toIntVect());
-            amrex::Box tbz = mfi.tilebox(Field_n[lev][2]->ixType().toIntVect());
+            amrex::Box const& tbx = mfi.tilebox(Field_n[lev][0]->ixType().toIntVect());
+            amrex::Box const& tby = mfi.tilebox(Field_n[lev][1]->ixType().toIntVect());
+            amrex::Box const& tbz = mfi.tilebox(Field_n[lev][2]->ixType().toIntVect());
 
             const amrex::Real c0 = 1._rt/theta;
             const amrex::Real c1 = 1._rt - c0;

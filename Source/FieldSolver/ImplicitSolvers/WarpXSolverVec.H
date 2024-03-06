@@ -219,7 +219,7 @@ public:
 
     [[nodiscard]] inline RT norm2 () const
     {
-        RT norm = dotProduct(*this);
+        auto const norm = dotProduct(*this);
         return std::sqrt(norm);
     }
 

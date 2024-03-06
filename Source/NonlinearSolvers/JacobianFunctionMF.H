@@ -193,7 +193,7 @@ void JacobianFunctionMF<T,Ops>::apply (T& a_dF, const T& a_dU)
 {
     BL_PROFILE("JacobianFunctionMF::apply()");
     using namespace amrex::literals;
-    RT normY = norm2(a_dU); // always 1 when called from GMRES
+    RT const normY = norm2(a_dU); // always 1 when called from GMRES
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         isDefined(),

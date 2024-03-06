@@ -37,7 +37,7 @@ void ThetaImplicitEM::Define ( WarpX* const  a_WarpX )
     }
 
     // Parse implicit solver parameters
-    amrex::ParmParse pp("implicit_evolve");
+    const amrex::ParmParse pp("implicit_evolve");
     pp.query("theta", m_theta);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_theta>=0.5 && m_theta<=1.0,

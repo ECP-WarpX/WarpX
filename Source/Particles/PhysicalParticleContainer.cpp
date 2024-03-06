@@ -3128,14 +3128,14 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
         amrex::ParticleReal xp = x_n[ip];
         const amrex::ParticleReal xp_n = x_n[ip];
 #else
-        amrex::ParticleReal xp = 0._rt;
+        const amrex::ParticleReal xp = 0._rt;
         const amrex::ParticleReal xp_n = 0._rt;
 #endif
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
         amrex::ParticleReal yp = y_n[ip];
         const amrex::ParticleReal yp_n = y_n[ip];
 #else
-        amrex::ParticleReal yp = 0._rt;
+        const amrex::ParticleReal yp = 0._rt;
         const amrex::ParticleReal yp_n = 0._rt;
 #endif
         amrex::ParticleReal zp = z_n[ip];
