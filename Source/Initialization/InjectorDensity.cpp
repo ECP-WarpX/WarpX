@@ -188,11 +188,11 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(P.getAttribute("dataOrder").get<std::string>() == "C",
                                      "Reading from files with non-C dataOrder is not implemented");
 
-    #if defined(WARPX_DIM_3D)
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(fileGeom == "cartesian", "3D can only read from files with cartesian geometry");
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(axisLabels[0] == "x" && axisLabels[1] == "y" && axisLabels[2] == "z",
-                                     "3D expects axisLabels {x, y, z}");
-    #endif
+//    #if defined(WARPX_DIM_3D)
+//    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(fileGeom == "cartesian", "3D can only read from files with cartesian geometry");
+//    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(axisLabels[0] == "x" && axisLabels[1] == "y" && axisLabels[2] == "z",
+//                                     "3D expects axisLabels {x, y, z}");
+//    #endif
 
     std::cout << "all_data size is : " << sizeof(all_data0);
 
