@@ -131,7 +131,7 @@ ExternalFieldParams::ExternalFieldParams(const amrex::ParmParse& pp_warpx)
             utils::parser::makeParser(str_By_ext_grid_function,{"x","z"}));
         Bzfield_parser = std::make_unique<amrex::Parser>(
             utils::parser::makeParser(str_Bz_ext_grid_function,{"x","z"}));
-#ifdef WARPX_DIM_RZ
+#elif WARPX_DIM_RZ
         utils::parser::Store_parserString(pp_warpx, "Br_external_grid_function(r,z)",
           str_Bx_ext_grid_function);
         utils::parser::Store_parserString(pp_warpx, "Bt_external_grid_function(r,z)",
@@ -197,7 +197,7 @@ ExternalFieldParams::ExternalFieldParams(const amrex::ParmParse& pp_warpx)
             utils::parser::makeParser(str_Ey_ext_grid_function,{"x","z"}));
         Ezfield_parser = std::make_unique<amrex::Parser>(
             utils::parser::makeParser(str_Ez_ext_grid_function,{"x","z"}));
-#ifdef WARPX_DIM_RZ
+#elif WARPX_DIM_RZ
         utils::parser::Store_parserString(pp_warpx, "Er_external_grid_function(r,z)",
           str_Ex_ext_grid_function);
         utils::parser::Store_parserString(pp_warpx, "Et_external_grid_function(r,z)",
