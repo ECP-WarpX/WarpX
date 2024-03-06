@@ -10,6 +10,7 @@
 #include "Particles/Collision/BackgroundStopping/BackgroundStopping.H"
 #include "Particles/Collision/BinaryCollision/Coulomb/PairWiseCoulombCollisionFunc.H"
 #include "Particles/Collision/BinaryCollision/BinaryCollision.H"
+#include "Particles/Collision/BinaryCollision/DSMC/DSMC.H"
 #include "Particles/Collision/BinaryCollision/NuclearFusion/NuclearFusionFunc.H"
 #include "Particles/Collision/BinaryCollision/ParticleCreationFunc.H"
 #include "Utils/TextMsg.H"
@@ -22,7 +23,7 @@ CollisionHandler::CollisionHandler(MultiParticleContainer const * const mypc)
 {
 
     // Read in collision input
-    amrex::ParmParse pp_collisions("collisions");
+    const amrex::ParmParse pp_collisions("collisions");
     pp_collisions.queryarr("collision_names", collision_names);
 
     // Create instances based on the collision type
@@ -30,7 +31,7 @@ CollisionHandler::CollisionHandler(MultiParticleContainer const * const mypc)
     collision_types.resize(ncollisions);
     allcollisions.resize(ncollisions);
     for (int i = 0; i < static_cast<int>(ncollisions); ++i) {
-        amrex::ParmParse pp_collision_name(collision_names[i]);
+        const amrex::ParmParse pp_collision_name(collision_names[i]);
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::n_rz_azimuthal_modes==1,
         "RZ mode `warpx.n_rz_azimuthal_modes` must be 1 when using the binary collision module.");
@@ -52,13 +53,16 @@ CollisionHandler::CollisionHandler(MultiParticleContainer const * const mypc)
         else if (type == "background_stopping") {
             allcollisions[i] = std::make_unique<BackgroundStopping>(collision_names[i]);
         }
+        else if (type == "dsmc") {
+            allcollisions[i] = std::make_unique<DSMC>(collision_names[i]);
+        }
         else if (type == "nuclearfusion") {
             allcollisions[i] =
                std::make_unique<BinaryCollision<NuclearFusionFunc, ParticleCreationFunc>>(
                                                                         collision_names[i], mypc);
         }
         else{
-            amrex::Abort("Unknown collision type.");
+            WARPX_ABORT_WITH_MESSAGE("Unknown collision type.");
         }
 
     }

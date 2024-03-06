@@ -33,8 +33,19 @@ void
 WarpX::ComputeDt ()
 {
     // Handle cases where the timestep is not limited by the speed of light
-    if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_const_dt.has_value(), "warpx.const_dt must be specified with the electrostatic solver.");
+    if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
+        electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
+
+        std::stringstream errorMsg;
+        if (electrostatic_solver_id != ElectrostaticSolverAlgo::None) {
+            errorMsg << "warpx.const_dt must be specified with the electrostatic solver.";
+        } else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
+            errorMsg << "warpx.const_dt must be specified with the hybrid-PIC solver.";
+        } else {
+            errorMsg << "warpx.const_dt must be specified when not using a field solver.";
+        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_const_dt.has_value(), errorMsg.str());
+
         for (int lev=0; lev<=max_level; lev++) {
             dt[lev] = m_const_dt.value();
         }

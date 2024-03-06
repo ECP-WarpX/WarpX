@@ -24,6 +24,17 @@ struct MediumForEM {
 };
 
 /**
+  * \brief struct to select the overall evolve scheme
+  */
+struct EvolveScheme {
+    enum {
+        Explicit = 0,
+        ImplicitPicard = 1,
+        SemiImplicitPicard = 2
+    };
+};
+
+/**
   * \brief struct to select algorithm for macroscopic Maxwell solver
            LaxWendroff (semi-implicit) represents sigma*E = sigma*0.5*(E^(n) + E^(n+1))
            Backward Euler (fully-implicit) represents sigma*E = sigma*E^(n+1)
@@ -50,7 +61,8 @@ struct ElectromagneticSolverAlgo {
         Yee = 1,
         CKC = 2,
         PSATD = 3,
-        ECT = 4
+        ECT = 4,
+        HybridPIC = 5
     };
 };
 
@@ -73,23 +85,24 @@ struct ParticlePusherAlgo {
 
 struct CurrentDepositionAlgo {
     enum {
-         Esirkepov = 0,
-         Direct = 1,
-         Vay = 2
+        Esirkepov = 0,
+        Direct = 1,
+        Vay = 2,
+        Villasenor = 3
     };
 };
 
 struct ChargeDepositionAlgo {
     // Only the Standard algorithm is implemented
     enum {
-         Standard = 0
+        Standard = 0
     };
 };
 
 struct GatheringAlgo {
     enum {
-         EnergyConserving = 0,
-         MomentumConserving
+        EnergyConserving = 0,
+        MomentumConserving
     };
 };
 
@@ -162,7 +175,7 @@ struct ReductionType {
 };
 
 int
-GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key );
+GetAlgorithmInteger(const amrex::ParmParse& pp, const char* pp_search_key );
 
 /** Select BC Type for fields, if field=true
  *  else select BCType for particles.

@@ -33,5 +33,5 @@ eb_charge.type = ChargeOnEB
 eb_charge.intervals = 1
 eb_charge_one_eighth.type = ChargeOnEB
 eb_charge_one_eighth.intervals = 1
-// Select only one eighth of the sphere
+# Select only one eighth of the sphere
 eb_charge_one_eighth.weighting_function(x,y,z) = (x>0)*(y<0)*(z>0)

@@ -18,20 +18,34 @@ We slightly modify this file in ``Regression/prepare_file_ci.py``.
 
 For example, if you like to change the compiler to compilation to build on Nvidia GPUs, modify this block to add ``-DWarpX_COMPUTE=CUDA``:
 
-.. code-block:: toml
+.. code-block:: ini
 
    [source]
    dir = /home/regtester/AMReX_RegTesting/warpx
    branch = development
    cmakeSetupOpts = -DAMReX_ASSERTIONS=ON -DAMReX_TESTING=ON -DWarpX_COMPUTE=CUDA
 
-We also support changing compilation options via the usual :ref:`build enviroment variables <building-cmake-envvars>`.
+We also support changing compilation options via the usual :ref:`build environment variables <building-cmake-envvars>`.
 For instance, compiling with ``clang++ -Werror`` would be:
 
 .. code-block:: sh
 
    export CXX=$(which clang++)
    export CXXFLAGS="-Werror"
+
+
+Run Pre-Commit Tests Locally
+----------------------------
+
+When proposing code changes to Warpx, we perform a couple of automated stylistic and correctness checks on the code change.
+You can run those locally before you push to save some time, install them once like this:
+
+.. code-block:: sh
+
+   python -m pip install -U pre-commit
+   pre-commit install
+
+See `pre-commit.com <https://pre-commit.com>`__ and our ``.pre-commit-config.yaml`` file in the repository for more details.
 
 
 Run the test suite locally

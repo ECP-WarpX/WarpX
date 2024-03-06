@@ -17,11 +17,15 @@ the correct speed and that the electric field is accurately modeled against a
 known analytic solution. While the radius r(t) is not analytically known, its
 inverse t(r) can be solved for exactly.
 """
+import os
 import sys
 
 import numpy as np
 from scipy.optimize import fsolve
 import yt
+
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
 yt.funcs.mylog.setLevel(0)
 
@@ -132,3 +136,7 @@ print("L2 error along z-axis = %s" %L2_error_z)
 assert L2_error_x < 0.05
 assert L2_error_y < 0.05
 assert L2_error_z < 0.05
+
+# Checksum regression analysis
+test_name = os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, filename)

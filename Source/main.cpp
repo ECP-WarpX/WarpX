@@ -9,32 +9,23 @@
 #include "WarpX.H"
 
 #include "Initialization/WarpXAMReXInit.H"
-#include "Utils/MPIInitHelpers.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#include "Utils/WarpXrocfftUtil.H"
-#include "Utils/WarpXUtil.H"
 
-#include <ablastr/warn_manager/WarnManager.H>
+#include <ablastr/math/fft/AnyFFT.H>
+#include <ablastr/parallelization/MPIInitHelpers.H>
 #include <ablastr/utils/timer/Timer.H>
+#include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX_Print.H>
 
+
 int main(int argc, char* argv[])
 {
-    utils::warpx_mpi_init(argc, argv);
+    ablastr::parallelization::mpi_init(argc, argv);
 
-    warpx_amrex_init(argc, argv);
+    warpx::initialization::amrex_init(argc, argv);
 
-    utils::rocfft::setup();
-
-    ParseGeometryInput();
-
-    ConvertLabParamsToBoost();
-    ReadBCParams();
-
-#ifdef WARPX_DIM_RZ
-    CheckGriddingForRZSpectral();
-#endif
+    ablastr::math::anyfft::setup();
 
     {
         WARPX_PROFILE_VAR("main()", pmain);
@@ -42,27 +33,30 @@ int main(int argc, char* argv[])
         auto timer = ablastr::utils::timer::Timer{};
         timer.record_start_time();
 
-        WarpX warpx;
+        auto& warpx = WarpX::GetInstance();
 
         warpx.InitData();
 
         warpx.Evolve();
 
-        //Print warning messages at the end of the simulation
-        ablastr::warn_manager::GetWMInstance().PrintGlobalWarnings("THE END");
+        amrex::Print() <<
+            ablastr::warn_manager::GetWMInstance().PrintGlobalWarnings("THE END");
 
         timer.record_stop_time();
-        if (warpx.Verbose()) {
+        if (warpx.Verbose())
+        {
             amrex::Print() << "Total Time                     : "
-                    << timer.get_global_duration() << '\n';
+                           << timer.get_global_duration() << '\n';
         }
 
         WARPX_PROFILE_VAR_STOP(pmain);
+
+        WarpX::Finalize();
     }
 
-    utils::rocfft::cleanup();
+    ablastr::math::anyfft::cleanup();
 
     amrex::Finalize();
 
-    utils::warpx_mpi_finalize ();
+    ablastr::parallelization::mpi_finalize ();
 }

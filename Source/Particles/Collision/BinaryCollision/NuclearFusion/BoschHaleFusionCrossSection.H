@@ -100,7 +100,7 @@ amrex::ParticleReal BoschHaleFusionCrossSection (
         B4 = 0_prt;
     }
 
-    amrex::ParticleReal astrophysical_factor =
+    const amrex::ParticleReal astrophysical_factor =
         (A1 + E_keV*(A2 + E_keV*(A3 + E_keV*(A4 + E_keV*A5)))) /
         (1_prt + E_keV*(B1 + E_keV*(B2 + E_keV*(B3 + E_keV*B4))));
 

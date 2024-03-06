@@ -58,6 +58,12 @@ embedded_boundary = picmi.EmbeddedBoundary(
 # diagnostics
 ##########################
 
+particle_diag = picmi.ParticleDiagnostic(
+    name = 'diag1',
+    period = 1,
+    write_dir = '.',
+    warpx_file_prefix = "embedded_boundary_python_API_plt"
+)
 field_diag = picmi.FieldDiagnostic(
     name = 'diag1',
     grid = grid,
@@ -78,105 +84,29 @@ sim = picmi.Simulation(
     verbose = 1
 )
 
+sim.add_diagnostic(particle_diag)
 sim.add_diagnostic(field_diag)
 
 sim.initialize_inputs()
 
 sim.step(1)
 
-print("======== Testing sim.extension.get_mesh_edge_lengths =========")
-
-ly_slice_x = np.array(sim.extension.get_mesh_edge_lengths(0,1,include_ghosts=False)[0])[int(nx/2),:,:]
-lz_slice_x = np.array(sim.extension.get_mesh_edge_lengths(0,2,include_ghosts=False)[0])[int(nx/2),:,:]
-
-n_edge_y_lo = int((ny - 30)/2)
-n_edge_y_hi = int(ny - (ny - 30)/2)
-n_edge_z_lo = int((nz - 30)/2)
-n_edge_z_hi = int(nz - (nz - 30)/2)
-
-perimeter_slice_x = (np.sum(ly_slice_x[n_edge_y_lo:n_edge_y_hi, n_edge_z_lo+1]) +
-                     np.sum(ly_slice_x[n_edge_y_lo:n_edge_y_hi, n_edge_z_hi-1]) +
-                     np.sum(lz_slice_x[n_edge_y_lo+1, n_edge_z_lo:n_edge_z_hi]) +
-                     np.sum(lz_slice_x[n_edge_y_hi-1, n_edge_z_lo:n_edge_z_hi]))
-
-perimeter_slice_x_true = L_cavity*4
-
-print("Perimeter of the middle x-slice:", perimeter_slice_x)
-assert np.isclose(perimeter_slice_x, perimeter_slice_x_true, rtol=1e-05, atol=1e-08)
-
-
-lx_slice_y = np.array(sim.extension.get_mesh_edge_lengths(0,0,include_ghosts=False)[0])[:,int(ny/2),:]
-lz_slice_y = np.array(sim.extension.get_mesh_edge_lengths(0,2,include_ghosts=False)[0])[:,int(ny/2),:]
-
-n_edge_x_lo = int((nx - 30)/2)
-n_edge_x_hi = int(nx - (nx - 30)/2)
-n_edge_z_lo = int((nz - 30)/2)
-n_edge_z_hi = int(nz - (nz - 30)/2)
-
-perimeter_slice_y = (np.sum(lx_slice_y[n_edge_x_lo:n_edge_x_hi, n_edge_z_lo+1]) +
-                     np.sum(lx_slice_y[n_edge_x_lo:n_edge_x_hi, n_edge_z_hi-1]) +
-                     np.sum(lz_slice_y[n_edge_x_lo+1, n_edge_z_lo:n_edge_z_hi]) +
-                     np.sum(lz_slice_y[n_edge_x_hi-1, n_edge_z_lo:n_edge_z_hi]))
-
-perimeter_slice_y_true = L_cavity*4
-
-
-print("Perimeter of the middle y-slice:", perimeter_slice_y)
-assert np.isclose(perimeter_slice_y, perimeter_slice_y_true, rtol=1e-05, atol=1e-08)
-
-
-lx_slice_z = np.array(sim.extension.get_mesh_edge_lengths(0,0,include_ghosts=False)[0])[:,:,int(nz/2)]
-ly_slice_z = np.array(sim.extension.get_mesh_edge_lengths(0,1,include_ghosts=False)[0])[:,:,int(nz/2)]
-
-n_edge_x_lo = int((nx - 30)/2)
-n_edge_x_hi = int(nx - (nx - 30)/2)
-n_edge_y_lo = int((ny - 30)/2)
-n_edge_y_hi = int(ny - (ny - 30)/2)
-
-perimeter_slice_z = (np.sum(lx_slice_z[n_edge_x_lo:n_edge_x_hi, n_edge_y_lo+1]) +
-                     np.sum(lx_slice_z[n_edge_x_lo:n_edge_x_hi, n_edge_y_hi-1]) +
-                     np.sum(ly_slice_z[n_edge_x_lo+1, n_edge_y_lo:n_edge_y_hi]) +
-                     np.sum(ly_slice_z[n_edge_x_hi-1, n_edge_y_lo:n_edge_y_hi]))
-
-perimeter_slice_z_true = L_cavity*4
-
-print("Perimeter of the middle z-slice:", perimeter_slice_z)
-assert np.isclose(perimeter_slice_z, perimeter_slice_z_true, rtol=1e-05, atol=1e-08)
-
-print("======== Testing sim.extension.get_mesh_face_areas =========")
-
-Sx_slice = np.sum(np.array(sim.extension.get_mesh_face_areas(0,0,include_ghosts=False)[0])[int(nx/2),:,:])
-dx = (xmax-xmin)/nx
-Ax = dx*dx
-Sx_slice_true = L_cavity*L_cavity - 2*Ax
-print("Area of the middle x-slice:", Sx_slice)
-assert np.isclose(Sx_slice, Sx_slice_true, rtol=1e-05, atol=1e-08)
-
-
-Sy_slice = np.sum(np.array(sim.extension.get_mesh_face_areas(0,1,include_ghosts=False)[0])[:,int(ny/2),:])
-dy = (ymax-ymin)/ny
-Ay = dy*dy
-Sy_slice_true = L_cavity*L_cavity - 2*Ay
-print("Area of the middle y-slice:", Sx_slice)
-assert np.isclose(Sy_slice, Sy_slice_true, rtol=1e-05, atol=1e-08)
-
-
-Sz_slice = np.sum(np.array(sim.extension.get_mesh_face_areas(0,2,include_ghosts=False)[0])[:,:,int(nz/2)])
-dz = (zmax-zmin)/nz
-Az = dz*dz
-Sz_slice_true = L_cavity*L_cavity - 2*Az
-print("Area of the middle z-slice:", Sz_slice)
-assert np.isclose(Sz_slice, Sz_slice_true, rtol=1e-05, atol=1e-08)
+edge_lengths_x = fields.EdgeLengthsxWrapper()
+edge_lengths_y = fields.EdgeLengthsyWrapper()
+edge_lengths_z = fields.EdgeLengthszWrapper()
+face_areas_x = fields.FaceAreasxWrapper()
+face_areas_y = fields.FaceAreasyWrapper()
+face_areas_z = fields.FaceAreaszWrapper()
 
 print("======== Testing the wrappers of m_edge_lengths =========")
 
-ly_slice_x = np.array(fields.EdgeLengthsyWrapper().get_fabs(0,1,include_ghosts=False)[0])[int(nx/2),:,:]
-lz_slice_x = np.array(fields.EdgeLengthszWrapper().get_fabs(0,2,include_ghosts=False)[0])[int(nx/2),:,:]
+ly_slice_x = edge_lengths_y[nx//2,:,:]
+lz_slice_x = edge_lengths_z[nx//2,:,:]
 
-n_edge_y_lo = int((ny - 30)/2)
-n_edge_y_hi = int(ny - (ny - 30)/2)
-n_edge_z_lo = int((nz - 30)/2)
-n_edge_z_hi = int(nz - (nz - 30)/2)
+n_edge_y_lo = (ny - 30)//2
+n_edge_y_hi = ny - (ny - 30)//2
+n_edge_z_lo = (nz - 30)//2
+n_edge_z_hi = nz - (nz - 30)//2
 
 perimeter_slice_x = (np.sum(ly_slice_x[n_edge_y_lo:n_edge_y_hi, n_edge_z_lo+1]) +
                      np.sum(ly_slice_x[n_edge_y_lo:n_edge_y_hi, n_edge_z_hi-1]) +
@@ -189,13 +119,13 @@ print("Perimeter of the middle x-slice:", perimeter_slice_x)
 assert np.isclose(perimeter_slice_x, perimeter_slice_x_true, rtol=1e-05, atol=1e-08)
 
 
-lx_slice_y = np.array(fields.EdgeLengthsxWrapper().get_fabs(0,0,include_ghosts=False)[0])[:,int(ny/2),:]
-lz_slice_y = np.array(fields.EdgeLengthszWrapper().get_fabs(0,2,include_ghosts=False)[0])[:,int(ny/2),:]
+lx_slice_y = edge_lengths_x[:,ny//2,:]
+lz_slice_y = edge_lengths_z[:,ny//2,:]
 
-n_edge_x_lo = int((nx - 30)/2)
-n_edge_x_hi = int(nx - (nx - 30)/2)
-n_edge_z_lo = int((nz - 30)/2)
-n_edge_z_hi = int(nz - (nz - 30)/2)
+n_edge_x_lo = (nx - 30)//2
+n_edge_x_hi = nx - (nx - 30)//2
+n_edge_z_lo = (nz - 30)//2
+n_edge_z_hi = nz - (nz - 30)//2
 
 perimeter_slice_y = (np.sum(lx_slice_y[n_edge_x_lo:n_edge_x_hi, n_edge_z_lo+1]) +
                      np.sum(lx_slice_y[n_edge_x_lo:n_edge_x_hi, n_edge_z_hi-1]) +
@@ -209,13 +139,13 @@ print("Perimeter of the middle y-slice:", perimeter_slice_y)
 assert np.isclose(perimeter_slice_y, perimeter_slice_y_true, rtol=1e-05, atol=1e-08)
 
 
-lx_slice_z = np.array(fields.EdgeLengthsxWrapper().get_fabs(0,0,include_ghosts=False)[0])[:,:,int(nz/2)]
-ly_slice_z = np.array(fields.EdgeLengthsyWrapper().get_fabs(0,1,include_ghosts=False)[0])[:,:,int(nz/2)]
+lx_slice_z = edge_lengths_x[:,:,nz//2]
+ly_slice_z = edge_lengths_y[:,:,nz//2]
 
-n_edge_x_lo = int((nx - 30)/2)
-n_edge_x_hi = int(nx - (nx - 30)/2)
-n_edge_y_lo = int((ny - 30)/2)
-n_edge_y_hi = int(ny - (ny - 30)/2)
+n_edge_x_lo = (nx - 30)//2
+n_edge_x_hi = nx - (nx - 30)//2
+n_edge_y_lo = (ny - 30)//2
+n_edge_y_hi = ny - (ny - 30)//2
 
 perimeter_slice_z = (np.sum(lx_slice_z[n_edge_x_lo:n_edge_x_hi, n_edge_y_lo+1]) +
                      np.sum(lx_slice_z[n_edge_x_lo:n_edge_x_hi, n_edge_y_hi-1]) +
@@ -229,21 +159,21 @@ assert np.isclose(perimeter_slice_z, perimeter_slice_z_true, rtol=1e-05, atol=1e
 
 print("======== Testing the wrappers of m_face_areas =========")
 
-Sx_slice = np.sum(np.array(fields.FaceAreasxWrapper().get_fabs(0,0,include_ghosts=False)[0])[int(nx/2),:,:])
+Sx_slice = np.sum(face_areas_x[nx//2,:,:])
 dx = (xmax-xmin)/nx
 Ax = dx*dx
 Sx_slice_true = L_cavity*L_cavity - 2*Ax
 print("Area of the middle x-slice:", Sx_slice)
 assert np.isclose(Sx_slice, Sx_slice_true, rtol=1e-05, atol=1e-08)
 
-Sy_slice = np.sum(np.array(fields.FaceAreasyWrapper().get_fabs(0,1,include_ghosts=False)[0])[:,int(ny/2),:])
+Sy_slice = np.sum(face_areas_y[:,ny//2,:])
 dy = (ymax-ymin)/ny
 Ay = dy*dy
 Sy_slice_true = L_cavity*L_cavity - 2*Ay
 print("Area of the middle y-slice:", Sx_slice)
 assert np.isclose(Sy_slice, Sy_slice_true, rtol=1e-05, atol=1e-08)
 
-Sz_slice = np.sum(np.array(fields.FaceAreaszWrapper().get_fabs(0,2,include_ghosts=False)[0])[:,:,int(nz/2)])
+Sz_slice = np.sum(face_areas_z[:,:,nz//2])
 dz = (zmax-zmin)/nz
 Az = dz*dz
 Sz_slice_true = L_cavity*L_cavity - 2*Az

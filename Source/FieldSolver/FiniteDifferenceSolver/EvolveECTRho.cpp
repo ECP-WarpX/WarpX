@@ -88,7 +88,7 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
             amrex::Gpu::synchronize();
         }
-        amrex::Real wt = amrex::second();
+        auto wt = static_cast<amrex::Real>(amrex::second());
 
         // Extract field data for this grid/tile
         amrex::Array4<amrex::Real> const &Ex = Efield[0]->array(mfi);
@@ -131,7 +131,7 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
                 Rhoy(i, j, k) = (Ez(i, j, k) * lz(i, j, k) - Ez(i + 1, j, k) * lz(i + 1, j, k) +
                     Ex(i, j, k + 1) * lx(i, j, k + 1) - Ex(i, j, k) * lx(i, j, k)) / Sy(i, j, k);
 #else
-                amrex::Abort("EvolveRhoCartesianECT: Embedded Boundaries are only implemented in 3D and XZ");
+                WARPX_ABORT_WITH_MESSAGE("EvolveRhoCartesianECT: Embedded Boundaries are only implemented in 3D and XZ");
 #endif
             },
 
@@ -149,7 +149,7 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
-            wt = amrex::second() - wt;
+            wt = static_cast<amrex::Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
 #ifdef WARPX_DIM_XZ

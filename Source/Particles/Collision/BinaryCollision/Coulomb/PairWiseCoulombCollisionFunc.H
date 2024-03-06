@@ -23,10 +23,13 @@
  * \brief This functor performs pairwise Coulomb collision on a single cell by calling the function
  *        ElasticCollisionPerez. It also reads and contains the Coulomb logarithm.
  */
-class PairWiseCoulombCollisionFunc{
+class PairWiseCoulombCollisionFunc
+{
     // Define shortcuts for frequently-used type names
     using ParticleType = WarpXParticleContainer::ParticleType;
-    using ParticleBins = amrex::DenseBins<ParticleType>;
+    using ParticleTileType = WarpXParticleContainer::ParticleTileType;
+    using ParticleTileDataType = ParticleTileType::ParticleTileDataType;
+    using ParticleBins = amrex::DenseBins<ParticleTileDataType>;
     using index_type = ParticleBins::index_type;
     using SoaData_type = WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
 
@@ -45,15 +48,16 @@ public:
      */
     PairWiseCoulombCollisionFunc (const std::string collision_name,
                                   [[maybe_unused]] MultiParticleContainer const * const mypc,
-                                  const bool isSameSpecies)
+                                  const bool isSameSpecies):
+        m_isSameSpecies{isSameSpecies}
     {
         using namespace amrex::literals;
-        amrex::ParmParse pp_collision_name(collision_name);
+        const amrex::ParmParse pp_collision_name(collision_name);
         // default Coulomb log, if < 0, will be computed automatically
-        m_CoulombLog = -1.0_prt;
+        amrex::ParticleReal CoulombLog = -1.0_prt;
         utils::parser::queryWithParser(
-            pp_collision_name, "CoulombLog", m_CoulombLog);
-        m_isSameSpecies = isSameSpecies;
+            pp_collision_name, "CoulombLog", CoulombLog);
+        m_CoulombLog = CoulombLog;
     }
 
     /**
@@ -77,7 +81,7 @@ public:
         index_type const* AMREX_RESTRICT I1,
         index_type const* AMREX_RESTRICT I2,
         SoaData_type soa_1, SoaData_type soa_2,
-        GetParticlePosition /*get_position_1*/, GetParticlePosition /*get_position_2*/,
+        GetParticlePosition<PIdx> /*get_position_1*/, GetParticlePosition<PIdx> /*get_position_2*/,
         amrex::ParticleReal const  q1, amrex::ParticleReal const  q2,
         amrex::ParticleReal const  m1, amrex::ParticleReal const  m2,
         amrex::Real const  dt, amrex::Real const dV,
@@ -86,6 +90,8 @@ public:
         amrex::ParticleReal* /*p_pair_reaction_weight*/,
         amrex::RandomEngine const& engine) const
         {
+            using namespace amrex::literals;
+
             ElasticCollisionPerez(
                     I1s, I1e, I2s, I2e, I1, I2,
                     soa_1, soa_2,

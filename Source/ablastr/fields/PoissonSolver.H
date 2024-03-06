@@ -12,21 +12,6 @@
 #include <ablastr/utils/TextMsg.H>
 #include <ablastr/warn_manager/WarnManager.H>
 
-#include <AMReX_MultiFab.H>
-#include <AMReX_REAL.H>
-#include <AMReX_MLLinOp.H>
-#include <AMReX_Vector.H>
-#include <AMReX_Array.H>
-#include <AMReX_MLNodeTensorLaplacian.H>
-#if defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ)
-#   include <AMReX_MLEBNodeFDLaplacian.H>
-#endif
-#ifdef AMREX_USE_EB
-#   include <AMReX_EBFabFactory.H>
-#endif
-#include <AMReX_Parser.H>
-#include <AMReX_REAL.H>
-#include <AMReX_MFInterp_C.H>
 
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
@@ -45,12 +30,21 @@
 #include <AMReX_IntVect.H>
 #include <AMReX_LO_BCTYPES.H>
 #include <AMReX_MFIter.H>
+#include <AMReX_MFInterp_C.H>
 #include <AMReX_MLMG.H>
+#include <AMReX_MLLinOp.H>
+#include <AMReX_MLNodeTensorLaplacian.H>
 #include <AMReX_MultiFab.H>
+#include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
 #include <AMReX_SPACE.H>
 #include <AMReX_Vector.H>
-#include <AMReX_MFInterp_C.H>
+#if defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ)
+#   include <AMReX_MLEBNodeFDLaplacian.H>
+#endif
+#ifdef AMREX_USE_EB
+#   include <AMReX_EBFabFactory.H>
+#endif
 
 #include <array>
 #include <optional>
@@ -81,7 +75,7 @@ namespace details
 
         AMREX_GPU_DEVICE AMREX_FORCE_INLINE
         void
-        operator() (long i, long j, long k) const noexcept
+        operator() (int i, int j, int k) const noexcept
         {
             amrex::mf_nodebilin_interp(i, j, k, 0, m_phi_fp_arr, 0, m_phi_cp_arr,
                                        0, m_refratio);
@@ -155,19 +149,20 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         rel_ref_ratio = amrex::Vector<amrex::IntVect>{{amrex::IntVect(AMREX_D_DECL(1, 1, 1))}};
     }
 
-    int const finest_level = rho.size() - 1u;
+    auto const finest_level = static_cast<int>(rho.size() - 1);
 
     // scale rho appropriately; also determine if rho is zero everywhere
     amrex::Real max_norm_b = 0.0;
     for (int lev=0; lev<=finest_level; lev++) {
-        rho[lev]->mult(-1._rt/PhysConst::ep0); // TODO: when do we "un-multiply" this? We need to document this side-effect!
+        using namespace ablastr::constant::SI;
+        rho[lev]->mult(-1._rt/ep0);  // TODO: when do we "un-multiply" this? We need to document this side-effect!
         max_norm_b = amrex::max(max_norm_b, rho[lev]->norm0());
     }
     amrex::ParallelDescriptor::ReduceRealMax(max_norm_b);
 
-    bool always_use_bnorm = (max_norm_b > 0);
+    const bool always_use_bnorm = (max_norm_b > 0);
     if (!always_use_bnorm) {
-        if (absolute_tolerance == 0.0) absolute_tolerance = amrex::Real(1e-6);
+        if (absolute_tolerance == 0.0) { absolute_tolerance = amrex::Real(1e-6); }
         ablastr::warn_manager::WMRecordWarning(
                 "ElectrostaticSolver",
                 "Max norm of rho is 0",
@@ -175,7 +170,12 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         );
     }
 
+#if !(defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ))
     amrex::LPInfo info;
+#else
+    const amrex::LPInfo info;
+#endif
+
     for (int lev=0; lev<=finest_level; lev++) {
         // Set the value of beta
         amrex::Array<amrex::Real,AMREX_SPACEDIM> beta_solver =
@@ -195,10 +195,10 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
                               geom[lev].CellSize(2)/std::sqrt(1._rt-beta_solver[2]*beta_solver[2]))};
         int max_semicoarsening_level = 0;
         int semicoarsening_direction = -1;
-        int min_dir = std::distance(dx_scaled.begin(),
-                                    std::min_element(dx_scaled.begin(),dx_scaled.end()));
-        int max_dir = std::distance(dx_scaled.begin(),
-                                    std::max_element(dx_scaled.begin(),dx_scaled.end()));
+        const auto min_dir = static_cast<int>(std::distance(dx_scaled.begin(),
+                                    std::min_element(dx_scaled.begin(),dx_scaled.end())));
+        const auto max_dir = static_cast<int>(std::distance(dx_scaled.begin(),
+                                    std::max_element(dx_scaled.begin(),dx_scaled.end())));
         if (dx_scaled[max_dir] > dx_scaled[min_dir]) {
             semicoarsening_direction = max_dir;
             max_semicoarsening_level = static_cast<int>
@@ -311,9 +311,11 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         }
 
         // Run additional operations, such as calculation of the E field for embedded boundaries
-        if constexpr (!std::is_same<T_PostPhiCalculationFunctor, std::nullopt_t>::value)
-            if (post_phi_calculation.has_value())
+        if constexpr (!std::is_same<T_PostPhiCalculationFunctor, std::nullopt_t>::value) {
+            if (post_phi_calculation.has_value()) {
                 post_phi_calculation.value()(mlmg, lev);
+            }
+        }
 
     } // loop over lev(els)
 }

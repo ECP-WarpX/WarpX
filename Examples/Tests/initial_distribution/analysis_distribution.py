@@ -14,6 +14,8 @@
 # 5 denotes maxwell-juttner distribution w/ spatially varying temperature
 # 6 denotes maxwell-boltzmann distribution w/ constant velocity
 # 7 denotes maxwell-boltzmann distribution w/ spatially-varying velocity
+# 8 denotes uniform distribution
+# 9 denotes gaussian_parser distribution w/ spatially-varying mean and thermal velocity
 # The distribution is obtained through reduced diagnostic ParticleHistogram.
 
 import os
@@ -259,6 +261,114 @@ f7_error = np.sum(np.abs(f_g - bin_data_g) + np.abs(f_uy_pos - bin_data_uy_pos) 
 print('Maxwell-Boltzmann parser velocity difference:', f7_error)
 
 assert(f7_error < tolerance)
+
+
+#============================================
+# Cuboid distribution in momentum space
+#============================================
+
+bin_value_x, h8x = read_reduced_diags_histogram("h8x.txt")[2:]
+bin_value_y, h8y = read_reduced_diags_histogram("h8y.txt")[2:]
+bin_value_z, h8z = read_reduced_diags_histogram("h8z.txt")[2:]
+
+# Analytical distribution
+ux_min = -0.2
+ux_max = 0.3
+uy_min = -0.1
+uy_max = 0.1
+uz_min = 10
+uz_max = 11.2
+
+N0 = n * V
+
+# Distributions along the three momentum axes are independent:
+# we can test them separately
+
+# This counts the number of bins where we expect the distribution to be nonzero
+def nonzero_bins(bins, low, high):
+    # Bin with nonzero distribution is defined when b_{i+1} > u_min & b_i < u_max
+    # `bins` contains the bin centers
+
+    db = bins[1] - bins[0]
+    loweredges = bins - 0.5 * db
+    upperedges = bins + 0.5 * db
+    return ((upperedges > low) & (loweredges < high))
+
+# Function that checks the validity of the histogram.
+# We have to call it for each of the axis
+def check_validity_uniform(bins, histogram, u_min, u_max, Ntrials=1000):
+    """
+    - `bins` contains the bin centers
+    - `histogram` contains the normalized histogram (i.e. np.sum(histogram) = 1)
+    - `u_min` is the minimum of the histogram domain
+    - `u_max` is the maximum of the histogram domain
+    """
+    nzbins = nonzero_bins(bins, u_min, u_max)
+    Nbins = np.count_nonzero(nzbins)
+    db = bins[1] - bins[0]
+    loweredges = bins - 0.5 * db
+    upperedges = bins + 0.5 * db
+
+    # First we check if Nbins = 1 because this covers the case
+    # u_max = u_min (i.e. a delta distribution)
+    if Nbins == 1:
+        # In this case the result should be exact
+        assert( (histogram[nzbins].item() - 1) < 1e-8 )
+
+        return
+
+    # The probability of filling a given bin is proportional to the bin width.
+    # We normalize it to the "full bin" value (i.e. every bin except from the edges
+    # is expected to have the same p in a uniform distribution).
+    # The fill ratio is therefore 1 for a bin fully included in the domain and < 1 else.
+    # Filling a given bin is a binomial process, so we basically test each histogram with the
+    # expected average value to be (x - mu) < 3 sigma
+
+    probability = (np.clip(upperedges, u_min, u_max) - np.clip(loweredges, u_min, u_max)) / (u_max - u_min)
+    variance = probability * (1 - probability)
+    nzprob = probability[nzbins]
+    nzhist = histogram[nzbins]
+    nzvar = variance[nzbins]
+    samplesigma = 1 / np.sqrt(Ntrials)
+
+    normalizedvariable = np.abs(nzhist - nzprob) / np.sqrt(nzvar)
+
+    assert np.all(normalizedvariable < 3 * samplesigma)
+
+# Test the distribution at every time step
+# (this assumes that no interaction is happening)
+for timestep in range(len(h8x)):
+    check_validity_uniform(bin_value_x, h8x[timestep] / N0, ux_min, ux_max)
+    check_validity_uniform(bin_value_y, h8y[timestep] / N0, uy_min, uy_max)
+    check_validity_uniform(bin_value_z, h8z[timestep] / N0, uz_min, uz_max)
+
+#=================================================
+# Gaussian with parser mean and standard deviation
+#=================================================
+
+# load data
+bin_value_ux, bin_data_ux = read_reduced_diags_histogram("h9x.txt")[2:]
+bin_value_uy, bin_data_uy = read_reduced_diags_histogram("h9y.txt")[2:]
+bin_value_uz, bin_data_uz = read_reduced_diags_histogram("h9z.txt")[2:]
+
+def Gaussian(mean, sigma, u):
+    V = 8.0 # volume in m^3
+    n = 1.0e21 # number density in 1/m^3
+    return (n*V/(sigma*np.sqrt(2.*np.pi)))*np.exp(-(u - mean)**2/(2.*sigma**2))
+
+du = 2./50
+f_ux = Gaussian(0.1 , 0.2 , bin_value_ux)*du
+f_uy = Gaussian(0.12, 0.21, bin_value_uy)*du
+f_uz = Gaussian(0.14, 0.22, bin_value_uz)*du
+
+f9_error = np.sum(np.abs(f_ux - bin_data_ux)/f_ux.max()
+                 +np.abs(f_uy - bin_data_uy)/f_ux.max()
+                 +np.abs(f_uz - bin_data_uz)/f_uz.max()) / bin_value_ux.size
+
+print('gaussian_parse_momentum_function velocity difference:', f9_error)
+
+assert(f9_error < tolerance)
+
 
 test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)

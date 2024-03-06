@@ -14,10 +14,25 @@ Plasma-Based Acceleration
 
 Scientific works in laser-plasma and beam-plasma acceleration.
 
+#. Peng, H. and Huang, T. W. and Jiang, K. and Li, R. and Wu, C. N. and Yu, M. Y. and Riconda, C. and Weber, S. and Zhou, C. T. and Ruan, S. C.
+   **Coherent Subcycle Optical Shock from a Superluminal Plasma Wake**.
+   Phys. Rev. Lett. **131**, 145003, 2023
+   `DOI:10.1103/PhysRevLett.131.145003 <https://doi.org/10.1103/PhysRevLett.131.145003>`__
+
+#. Mewes SM, Boyle GJ, Ferran Pousa A, Shalloo RJ, Osterhoff J, Arran C, Corner L, Walczak R, Hooker SM, Thévenet M.
+   **Demonstration of tunability of HOFI waveguides via start-to-end simulations**.
+   Phys. Rev. Research **5**, 033112, 2023
+   `DOI:10.1103/PhysRevResearch.5.033112 <https://doi.org/10.1103/PhysRevResearch.5.033112>`__
+
+#. Sandberg R T, Lehe R, Mitchell C E, Garten M, Qiang J, Vay J-L and Huebl A.
+   **Hybrid Beamline Element ML-Training for Surrogates in the ImpactX Beam-Dynamics Code**.
+   14th International Particle Accelerator Conference (IPAC'23), WEPA101, 2023.
+   `DOI:10.18429/JACoW-IPAC2023-WEPA101 <https://doi.org/10.18429/JACoW-IPAC2023-WEPA101>`__
+
 #. Wang J, Zeng M, Li D, Wang X, Gao J.
    **High quality beam produced by tightly focused laser driven wakefield accelerators**.
-   arXiv pre-print, 2023.
-   `DOI:10.48550/arXiv.2304.10730 <https://doi.org/10.48550/arXiv.2304.10730>`__
+   Phys. Rev. Accel. Beams, **26**, 091303, 2023.
+   `DOI:10.1103/PhysRevAccelBeams.26.091303 <https://doi.org/10.1103/PhysRevAccelBeams.26.091303>`__
 
 #. Fedeli L, Huebl A, Boillod-Cerneux F, Clark T, Gott K, Hillairet C, Jaure S, Leblanc A, Lehe R, Myers A, Piechurski C, Sato M, Zaim N, Zhang W, Vay J-L, Vincenti H.
    **Pushing the Frontier in the Design of Laser-Based Electron Accelerators with Groundbreaking Mesh-Refined Particle-In-Cell Simulations on Exascale-Class Supercomputers**.
@@ -55,6 +70,11 @@ Laser-Plasma Interaction
 
 Scientific works in laser-ion acceleration and laser-matter interaction.
 
+#. Knight B, Gautam C, Stoner C, Egner B, Smith J, Orban C, Manfredi J, Frische K, Dexter M, Chowdhury E, Patnaik A (2023).
+   **Detailed Characterization of a kHz-rate Laser-Driven Fusion at a Thin Liquid Sheet with a Neutron Detection Suite**.
+   High Power Laser Science and Engineering, 1-13, 2023.
+   `DOI:10.1017/hpl.2023.84 <https://doi.org/10.1017/hpl.2023.84>`__
+
 #. Fedeli L, Huebl A, Boillod-Cerneux F, Clark T, Gott K, Hillairet C, Jaure S, Leblanc A, Lehe R, Myers A, Piechurski C, Sato M, Zaim N, Zhang W, Vay J-L, Vincenti H.
    **Pushing the Frontier in the Design of Laser-Based Electron Accelerators with Groundbreaking Mesh-Refined Particle-In-Cell Simulations on Exascale-Class Supercomputers**.
    *SC22: International Conference for High Performance Computing, Networking, Storage and Analysis (SC)*. ISSN:2167-4337, pp. 25-36, Dallas, TX, US, 2022.
@@ -76,6 +96,18 @@ Particle Accelerator & Beam Physics
 
 Scientific works in particle and beam modeling.
 
+#. Sandberg R T, Lehe R, Mitchell C E, Garten M, Qiang J, Vay J-L, Huebl A.
+   **Hybrid Beamline Element ML-Training for Surrogates in the ImpactX Beam-Dynamics Code**.
+   14th International Particle Accelerator Conference (IPAC'23), WEPA101, *in print*, 2023.
+   `preprint <https://www.ipac23.org/preproc/pdf/WEPA101.pdf>`__,
+   `DOI:10.18429/JACoW-IPAC-23-WEPA101 <https://doi.org/10.18429/JACoW-IPAC-23-WEPA101>`__
+
+#. Tan W H, Piot P, Myers A, Zhang W, Rheaume T, Jambunathan R, Huebl A, Lehe R, Vay J-L.
+   **Simulation studies of drive-beam instability in a dielectric wakefield accelerator**.
+   13th International Particle Accelerator Conference (IPAC'22), MOPOMS012, 2022.
+   `DOI:10.18429/JACoW-IPAC2022-MOPOMS012 <https://doi.org/10.18429/JACoW-IPAC2022-MOPOMS012>`__
+
+
 High Energy Astrophysical Plasma Physics
 ****************************************
 
@@ -85,6 +117,7 @@ Scientific works in astrophysical plasma modeling.
    **Particle-in-Cell simulations of relativistic magnetic reconnection with advanced Maxwell solver algorithms**.
    arXiv pre-print, 2023.
    `DOI:10.48550/arXiv.2304.10566 <https://doi.org/10.48550/arXiv.2304.10566>`__
+
 
 Microelectronics
 ****************
@@ -112,3 +145,16 @@ High-Performance Computing and Numerics
 Scientific works in High-Performance Computing, applied mathematics and numerics.
 
 Please see :ref:`this section <acknowledge_warpx_all_refs>`.
+
+Nuclear Fusion - Magnetically Confined Plasmas
+**********************************************
+
+#. Nicks B. S., Putvinski S. and Tajima T.
+   **Stabilization of the Alfvén-ion cyclotron instability through short plasmas: Fully kinetic simulations in a high-beta regime**.
+   Physics of Plasmas **30**, 102108, 2023.
+   `DOI:10.1063/5.0163889 <https://doi.org/10.1063/5.0163889>`__
+
+#. Groenewald R. E., Veksler A., Ceccherini F., Necas A., Nicks B. S., Barnes D. C., Tajima T. and Dettrick S. A.
+   **Accelerated kinetic model for global macro stability studies of high-beta fusion reactors**.
+   Physics of Plasmas **30**, 122508, 2023.
+   `DOI:10.1063/5.0178288 <https://doi.org/10.1063/5.0178288>`__
