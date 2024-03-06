@@ -17,10 +17,8 @@
 #include <optional>
 
 
-namespace ablastr::fields {
+namespace ablastr::fields::details {
 
-namespace details
-{
     /** Local interpolation from phi_cp to phi[lev+1]
      *
      * This is needed to work-around an NVCC limitation in downstream code (ImpactX),
@@ -52,7 +50,6 @@ namespace details
         amrex::Array4<amrex::Real const> const m_phi_cp_arr;
         amrex::IntVect const m_refratio;
     };
-}
-} // namespace ablastr::fields
+} // namespace ablastr::fields::details
 
 #endif // ABLASTR_INTERPOLATE_H
