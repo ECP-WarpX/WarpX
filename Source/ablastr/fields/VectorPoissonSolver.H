@@ -8,7 +8,7 @@
 #define ABLASTR_VECTOR_POISSON_SOLVER_H
 
 #include <ablastr/constant.H>
-#include <ablastr/fields/PoissonSolver.H>
+#include <ablastr/fields/Interpolate.H>
 #include <ablastr/utils/Communication.H>
 #include <ablastr/utils/TextMsg.H>
 #include <ablastr/warn_manager/WarnManager.H>
