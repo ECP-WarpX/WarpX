@@ -11,15 +11,51 @@
 
 #include "Utils/WarpXConst.H"
 
+
 #include <AMReX.H>
+//include <WarpX.H>
+#include <AMReX_AmrCore.H>
 #include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_BoxList.H>
+#include <AMReX_Config.H>
+#include <AMReX_Geometry.H>
 #include <AMReX_GpuQualifiers.H>
-#include <AMReX_Math.H>
+#include <AMReX_INT.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_LayoutData.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_SPACE.H>
+#include <AMReX_Vector.H>
 
 #include <cmath>
 #include <string>
+
+#ifdef WARPX_USE_OPENPMD
+#   include <openPMD/openPMD.hpp>
+namespace io = openPMD;
+#endif
+
+#include <algorithm>
+#include <array>
+#include <cctype>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <utility>
+
+//using namespace amrex;
+//namespace
 
 // struct whose getDensity returns constant density.
 struct InjectorDensityConstant
@@ -118,12 +154,85 @@ private:
     amrex::GpuArray<amrex::Real,6> p;
 };
 
+struct InjectorDensityFromFile
+{
+    InjectorDensityFromFile (std::string const& a_species_name);
+
+    //~InjectorDensityFromFile() = default;
+
+    void clear();
+
+
+    [[nodiscard]]
+    AMREX_GPU_HOST_DEVICE
+    amrex::Real
+    getDensity (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    {
+
+//
+//        auto series = io::Series(file_path, io::Access::READ_ONLY);
+//        auto iseries  = series.iterations.begin()->second;
+//        auto P = iseries.meshes[dens];
+//        auto p_scalar = P[io::RecordComponent::SCALAR];
+//        auto particle = iseries.particles[species];
+//
+//        std::shared_ptr<double> charge = particle["charge"][openPMD::RecordComponent::SCALAR].loadChunk<double>();
+//        series.flush();
+//
+//        auto fileGeom = P.getAttribute("geometry").get< std::string >();
+//        const auto offset = P.gridGlobalOffset();
+//        const auto spacing = P.gridSpacing< long double >();
+//        const auto extent = p_scalar.getExtent();
+//
+//        const io::Offset chunk_offset = {0,0,0};
+//        const io::Extent chunk_extent = {extent[0], extent[1], extent[2]};
+//
+//        auto P_chunk_data = p_scalar.loadChunk< double > (chunk_offset, chunk_extent);
+//        series.flush();
+//
+//          WarpX& warpx = WarpX::GetInstance();
+//          amrex::Geometry const& geom0 = warpx.Geom(0);
+//          const amrex::RealBox& real_box = geom0.ProbDomain();
+//        const auto dx = geom0.CellSizeArray();
+//        //const amrex::IntVect nodal_flag = mf->ixType().toIntVect();
+
+        //convert x,y,z to corresponding i,j,k to call the correct index
+//        auto series = io::Series(external_density_path, io::Access::READ_ONLY);
+//        auto iseries  = series.iterations.begin()->second;
+//        auto P = iseries.meshes[density];
+//        auto p_scalar = P[io::RecordComponent::SCALAR];
+//        auto particle = iseries.particles[species];
+
+        int i = std::floor((x-real_box.lo(0))/spacing[0]);
+        int j = std::floor((y-real_box.lo(1))/spacing[1]);
+        int k = std::floor((z-real_box.lo(2))/spacing[2]);
+
+        double val = mffab(i, j, k);
+//        double val = 3.3e26;
+
+        return static_cast<amrex::Real>(val);
+    }
+//private:
+    std::string external_density_path;
+    std::string density;
+    amrex::Array4<double> mffab;
+    amrex::RealBox real_box;
+    std::vector<long double> spacing;
+    std::vector<int> n_cell;
+    int max_grid_size;
+};
+
+
+
+
+
 // Base struct for density injector.
 // InjectorDensity contains a union (called Object) that holds any one
 // instance of:
 // - InjectorDensityConstant  : to generate constant density;
 // - InjectorDensityParser    : to generate density from parser;
 // - InjectorDensityPredefined: to generate density from predefined profile;
+// - InjectorDensityFromFile  : to read density from an external file;
 // The choice is made at runtime, depending in the constructor called.
 // This mimics virtual functions.
 struct InjectorDensity
@@ -145,6 +254,11 @@ struct InjectorDensity
         : type(Type::predefined),
           object(t,a_species_name)
     { }
+    //This constructor stores a InjectorDensityFromFile in union object
+    InjectorDensity (InjectorDensityFromFile* t, std::string const& a_species_name)
+            : type(Type::fromfile),
+              object(t, a_species_name)
+    { }
 
     // Explicitly prevent the compiler from generating copy constructors
     // and copy assignment operators.
@@ -154,6 +268,11 @@ struct InjectorDensity
     void operator= (InjectorDensity &&) = delete;
 
     // Default destructor
+//    ~InjectorDensity ()
+//    {
+//        // TODO: clean up fromfile
+//    }
+
     ~InjectorDensity () = default;
 
     void clear ();
@@ -179,6 +298,10 @@ struct InjectorDensity
         {
             return object.predefined.getDensity(x,y,z);
         }
+        case Type::fromfile:
+        {
+            return object.fromfile.getDensity(x,y,z);
+        }
         default:
         {
             amrex::Abort("InjectorDensity: unknown type");
@@ -188,11 +311,11 @@ struct InjectorDensity
     }
 
 private:
-    enum struct Type { constant, predefined, parser };
+    enum struct Type { constant, predefined, parser, fromfile };
     Type type;
 
     // An instance of union Object constructs and stores any one of
-    // the objects declared (constant or parser or predefined).
+    // the objects declared (constant or parser or predefined or fromfile).
     union Object {
         Object (InjectorDensityConstant*, amrex::Real a_rho) noexcept
             : constant(a_rho) {}
@@ -200,9 +323,13 @@ private:
             : parser(a_parser) {}
         Object (InjectorDensityPredefined*, std::string const& a_species_name) noexcept
             : predefined(a_species_name) {}
+        Object (InjectorDensityFromFile*, std::string const& a_species_name) noexcept
+            : fromfile(a_species_name) {}
+        ~Object() { }
         InjectorDensityConstant   constant;
         InjectorDensityParser     parser;
         InjectorDensityPredefined predefined;
+        InjectorDensityFromFile   fromfile;
     };
     Object object;
 };
@@ -215,6 +342,19 @@ struct InjectorDensityDeleter {
             p->clear();
             delete p;
         }
+//        if (external_density_path) {
+//            external_density_path->clear();
+//            density->clear();
+//            mffab->clear();
+//            real_box->clear();
+//            spacing->clear();
+//
+//            delete external_density_path;
+//            delete density;
+//            delete mffab;
+//            delete real_box;
+//            delete spacing;
+//        }
     }
 };
 
