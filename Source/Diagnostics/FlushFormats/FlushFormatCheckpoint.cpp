@@ -27,7 +27,7 @@ namespace
 
 void
 FlushFormatCheckpoint::WriteToFile (
-        const amrex::Vector<std::string> /*varnames*/,
+        const amrex::Vector<std::string>& /*varnames*/,
         const amrex::Vector<amrex::MultiFab>& /*mf*/,
         amrex::Vector<amrex::Geometry>& geom,
         const amrex::Vector<int> iteration, const double /*time*/,
@@ -35,15 +35,17 @@ FlushFormatCheckpoint::WriteToFile (
         const std::string prefix, int file_min_digits,
         bool /*plot_raw_fields*/,
         bool /*plot_raw_fields_guards*/,
+        const bool /*use_pinned_pc*/,
         bool /*isBTD*/, int /*snapshotID*/,
+        int /*bufferID*/, int /*numBuffers*/,
         const amrex::Geometry& /*full_BTD_snapshot*/,
-        bool /*isLastBTDFlush*/, const amrex::Vector<int>& /* totalParticlesFlushedAlready*/) const
+        bool /*isLastBTDFlush*/) const
 {
     WARPX_PROFILE("FlushFormatCheckpoint::WriteToFile()");
 
     auto & warpx = WarpX::GetInstance();
 
-    VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
+    const VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
     VisMF::SetHeaderVersion(amrex::VisMF::Header::NoFabHeader_v1);
 
     const std::string& checkpointname = amrex::Concatenate(prefix, iteration[0], file_min_digits);
@@ -170,16 +172,14 @@ FlushFormatCheckpoint::CheckpointParticles (
     const std::string& dir,
     const amrex::Vector<ParticleDiag>& particle_diags) const
 {
-    for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
-        WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
+    for (const auto& part_diag: particle_diags) {
+        WarpXParticleContainer* pc = part_diag.getParticleContainer();
 
         Vector<std::string> real_names;
         Vector<std::string> int_names;
-        Vector<int> int_flags;
-        Vector<int> real_flags;
 
+        // note: positions skipped here, since we reconstruct a plotfile SoA from them
         real_names.push_back("weight");
-
         real_names.push_back("momentum_x");
         real_names.push_back("momentum_y");
         real_names.push_back("momentum_z");
@@ -189,16 +189,19 @@ FlushFormatCheckpoint::CheckpointParticles (
 #endif
 
         // get the names of the real comps
-        real_names.resize(pc->NumRealComps());
+        //   note: skips the mandatory AMREX_SPACEDIM positions for pure SoA
+        real_names.resize(pc->NumRealComps() - AMREX_SPACEDIM);
         auto runtime_rnames = pc->getParticleRuntimeComps();
-        for (auto const& x : runtime_rnames) { real_names[x.second+PIdx::nattribs] = x.first; }
+        for (auto const& x : runtime_rnames) {
+            real_names[x.second + PIdx::nattribs - AMREX_SPACEDIM] = x.first;
+        }
 
         // and the int comps
         int_names.resize(pc->NumIntComps());
         auto runtime_inames = pc->getParticleRuntimeiComps();
         for (auto const& x : runtime_inames) { int_names[x.second+0] = x.first; }
 
-        pc->Checkpoint(dir, particle_diags[i].getSpeciesName(), true,
+        pc->Checkpoint(dir, part_diag.getSpeciesName(), true,
                        real_names, int_names);
     }
 }
@@ -211,7 +214,7 @@ FlushFormatCheckpoint::WriteDMaps (const std::string& dir, int nlev) const
         for (int lev = 0; lev < nlev; ++lev) {
             std::string DMFileName = dir;
             if (!DMFileName.empty() && DMFileName[DMFileName.size()-1] != '/') {DMFileName += '/';}
-            DMFileName = amrex::Concatenate(DMFileName + "Level_", lev, 1);
+            DMFileName = amrex::Concatenate(DMFileName.append("Level_"), lev, 1);
             DMFileName += "/DM";
 
             std::ofstream DMFile;
@@ -224,9 +227,10 @@ FlushFormatCheckpoint::WriteDMaps (const std::string& dir, int nlev) const
 
             DMFile.flush();
             DMFile.close();
-            if (!DMFile.good()) {
-                amrex::Abort("FlushFormatCheckpoint::WriteDMaps: problem writing DMFile");
-            }
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                DMFile.good(),
+                "FlushFormatCheckpoint::WriteDMaps: problem writing DMFile"
+            );
         }
     }
 }

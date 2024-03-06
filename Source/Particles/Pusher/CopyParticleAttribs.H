@@ -22,7 +22,7 @@ struct CopyParticleAttribs
 {
     using TmpParticles = WarpXParticleContainer::TmpParticles;
 
-    GetParticlePosition m_get_position;
+    GetParticlePosition<PIdx> m_get_position;
 
     const amrex::ParticleReal* AMREX_RESTRICT uxp = nullptr;
     const amrex::ParticleReal* AMREX_RESTRICT uyp = nullptr;
@@ -36,6 +36,8 @@ struct CopyParticleAttribs
     amrex::ParticleReal* AMREX_RESTRICT uypold = nullptr;
     amrex::ParticleReal* AMREX_RESTRICT uzpold = nullptr;
 
+    CopyParticleAttribs () = default;
+
     /** \brief Construct a new functor
      *
      * \param a_pti iterator to the tile containing the macroparticles
@@ -45,11 +47,11 @@ struct CopyParticleAttribs
      *        always start at the particle with index 0.
      */
     CopyParticleAttribs (const WarpXParIter& a_pti, TmpParticles& tmp_particle_data,
-                         int a_offset = 0) noexcept
+                         long a_offset = 0) noexcept
     {
-        if (tmp_particle_data.size() == 0) return;
+        if (tmp_particle_data.empty()) { return; }
 
-        auto& attribs = a_pti.GetAttribs();
+        const auto& attribs = a_pti.GetAttribs();
 
         uxp = attribs[PIdx::ux].dataPtr() + a_offset;
         uyp = attribs[PIdx::uy].dataPtr() + a_offset;
@@ -64,14 +66,14 @@ struct CopyParticleAttribs
         uypold = tmp_particle_data[lev].at(index)[TmpIdx::uyold].dataPtr() + a_offset;
         uzpold = tmp_particle_data[lev].at(index)[TmpIdx::uzold].dataPtr() + a_offset;
 
-        m_get_position = GetParticlePosition(a_pti, a_offset);
+        m_get_position = GetParticlePosition<PIdx>(a_pti, a_offset);
     }
 
     /** \brief copy the position and momentum of particle i to the
      *         temporary data holder
      */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    void operator() (const int i) const noexcept
+    void operator() (const long i) const noexcept
     {
         AMREX_ASSERT(uxp != nullptr);
         AMREX_ASSERT(uyp != nullptr);

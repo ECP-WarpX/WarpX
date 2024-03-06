@@ -17,49 +17,49 @@
  * \brief Push the particle's positions over one timestep,
  * given the value of its momenta `ux`, `uy`, `uz`
  */
-
+template <typename T>
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void UpdateMomentumHigueraCary(
-    amrex::ParticleReal& ux, amrex::ParticleReal& uy, amrex::ParticleReal& uz,
-    const amrex::ParticleReal Ex, const amrex::ParticleReal Ey, const amrex::ParticleReal Ez,
-    const amrex::ParticleReal Bx, const amrex::ParticleReal By, const amrex::ParticleReal Bz,
-    const amrex::Real q, const amrex::Real m, const amrex::Real dt )
+    T& ux, T& uy, T& uz,
+    const T Ex, const T Ey, const T Ez,
+    const T Bx, const T By, const T Bz,
+    const T q, const T m, const amrex::Real dt )
 {
     using namespace amrex::literals;
 
     // Constants
-    const amrex::Real qmt = 0.5_rt*q*dt/m;
-    constexpr amrex::Real invclight = 1._rt/PhysConst::c;
-    constexpr amrex::Real invclightsq = 1._rt/(PhysConst::c*PhysConst::c);
+    const T qmt = 0.5_prt*q*dt/m;
+    constexpr T invclight = 1._prt/PhysConst::c;
+    constexpr T invclightsq = 1._prt/(PhysConst::c*PhysConst::c);
     // Compute u_minus
-    const amrex::Real umx = ux + qmt*Ex;
-    const amrex::Real umy = uy + qmt*Ey;
-    const amrex::Real umz = uz + qmt*Ez;
+    const T umx = ux + qmt*Ex;
+    const T umy = uy + qmt*Ey;
+    const T umz = uz + qmt*Ez;
     // Compute gamma squared of u_minus
-    amrex::Real gamma = 1._rt + (umx*umx + umy*umy + umz*umz)*invclightsq;
+    T gamma = 1._prt + (umx*umx + umy*umy + umz*umz)*invclightsq;
     // Compute beta and betam squared
-    const amrex::Real betax = qmt*Bx;
-    const amrex::Real betay = qmt*By;
-    const amrex::Real betaz = qmt*Bz;
-    const amrex::Real betam = betax*betax + betay*betay + betaz*betaz;
+    const T betax = qmt*Bx;
+    const T betay = qmt*By;
+    const T betaz = qmt*Bz;
+    const T betam = betax*betax + betay*betay + betaz*betaz;
     // Compute sigma
-    const amrex::Real sigma = gamma - betam;
+    const T sigma = gamma - betam;
     // Get u*
-    const amrex::Real ust = (umx*betax + umy*betay + umz*betaz)*invclight;
-    // Get new gamma inversed
-    gamma = 1._rt/std::sqrt(0.5_rt*(sigma + std::sqrt(sigma*sigma + 4._rt*(betam + ust*ust)) ));
+    const T ust = (umx*betax + umy*betay + umz*betaz)*invclight;
+    // Get new gamma inverse
+    gamma = 1._prt/std::sqrt(0.5_prt*(sigma + std::sqrt(sigma*sigma + 4._prt*(betam + ust*ust)) ));
     // Compute t
-    const amrex::Real tx = gamma*betax;
-    const amrex::Real ty = gamma*betay;
-    const amrex::Real tz = gamma*betaz;
+    const T tx = gamma*betax;
+    const T ty = gamma*betay;
+    const T tz = gamma*betaz;
     // Compute s
-    const amrex::Real s = 1._rt/(1._rt+(tx*tx + ty*ty + tz*tz));
+    const T s = 1._prt/(1._prt+(tx*tx + ty*ty + tz*tz));
     // Compute um dot t
-    const amrex::Real umt = umx*tx + umy*ty + umz*tz;
+    const T umt = umx*tx + umy*ty + umz*tz;
     // Compute u_plus
-    const amrex::Real upx = s*( umx + umt*tx + umy*tz - umz*ty );
-    const amrex::Real upy = s*( umy + umt*ty + umz*tx - umx*tz );
-    const amrex::Real upz = s*( umz + umt*tz + umx*ty - umy*tx );
+    const T upx = s*( umx + umt*tx + umy*tz - umz*ty );
+    const T upy = s*( umy + umt*ty + umz*tx - umx*tz );
+    const T upz = s*( umz + umt*tz + umx*ty - umy*tx );
     // Get new u
     ux = upx + qmt*Ex + upy*tz - upz*ty;
     uy = upy + qmt*Ey + upz*tx - upx*tz;

@@ -12,7 +12,7 @@
 #include <vector>
 
 /** All types of diagnostics. */
-enum struct DiagTypes {Full, BackTransformed};
+enum struct DiagTypes {Full, BackTransformed, BoundaryScraping};
 
 /**
  * \brief This class contains a vector of all diagnostics in the simulation.
@@ -37,6 +37,9 @@ public:
     void InitializeFieldFunctors (int lev);
     /** Start a new iteration, i.e., dump has not been done yet. */
     void NewIteration ();
+    Diagnostics& GetDiag(int idiag) {return *alldiags[idiag]; }
+    [[nodiscard]] int GetTotalDiags() const {return ndiags;}
+    DiagTypes diagstypes(int idiag) {return diags_types[idiag];}
 private:
     /** Vector of pointers to all diagnostics */
     amrex::Vector<std::unique_ptr<Diagnostics> > alldiags;

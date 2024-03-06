@@ -2,8 +2,9 @@
 
 #include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include "Particles/MultiParticleContainer.H"
-#include "Utils/CoarsenIO.H"
 #include "WarpX.H"
+
+#include <ablastr/coarsen/sample.H>
 
 #include <AMReX_BLassert.H>
 #include <AMReX_Config.H>
@@ -44,9 +45,9 @@ PartPerGridFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp, const i
 #pragma omp parallel
 #endif
     for (amrex::MFIter mfi(ppg_mf); mfi.isValid(); ++mfi) {
-        ppg_mf[mfi].setVal<amrex::RunOn::Host>(static_cast<amrex::Real>(npart_in_grid[mfi.index()]));
+        ppg_mf[mfi].setVal<amrex::RunOn::Device>(static_cast<amrex::Real>(npart_in_grid[mfi.index()]));
     }
 
     // Coarsen and interpolate from ppg_mf to the output diagnostic MultiFab, mf_dst.
-    CoarsenIO::Coarsen(mf_dst, ppg_mf, dcomp, 0, nComp(), 0, m_crse_ratio);
+    ablastr::coarsen::sample::Coarsen(mf_dst, ppg_mf, dcomp, 0, nComp(), 0, m_crse_ratio);
 }

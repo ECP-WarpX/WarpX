@@ -17,7 +17,6 @@ boundary.field_hi = periodic damped
 algo.maxwell_solver = psatd
 algo.current_deposition = direct
 algo.charge_deposition = standard
-algo.field_gathering = momentum-conserving
 algo.particle_pusher = vay
 
 # Order of particle shape factors
@@ -27,7 +26,8 @@ psatd.use_default_v_comoving = 1
 
 warpx.cfl = 1.
 
-warpx.do_nodal = 0
+warpx.grid_type = hybrid
+warpx.do_current_centering = 0
 
 warpx.gamma_boost = 13.
 warpx.boost_direction = z
@@ -40,9 +40,6 @@ warpx.use_filter = 1
 
 warpx.serialize_initial_conditions = 1
 warpx.verbose = 1
-
-interpolation.field_centering_nox = 8
-interpolation.field_centering_noz = 8
 
 particles.species_names = electrons ions beam
 particles.use_fdtd_nci_corr = 0

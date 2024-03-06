@@ -7,12 +7,24 @@
 #ifndef PARTICLESCRAPER_H_
 #define PARTICLESCRAPER_H_
 
-#include <AMReX.H>
-#include <AMReX_Vector.H>
-#include <AMReX_MultiFab.H>
+#include "EmbeddedBoundary/DistanceToEB.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
 
-#include <EmbeddedBoundary/DistanceToEB.H>
-#include "Particles/Gather/ScalarFieldGather.H"
+
+#include <ablastr/particles/NodalFieldGather.H>
+
+#include <AMReX.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_Particle.H>
+#include <AMReX_RandomEngine.H>
+#include <AMReX_REAL.H>
+#include <AMReX_TypeTraits.H>
+#include <AMReX_Vector.H>
+
+#include <type_traits>
+#include <utility>
+
+
 
 /**
  * \brief Interact particles with the embedded boundary walls.
@@ -27,7 +39,7 @@
  *  passed in to this function as an argument. This function can access the
  *  position at which the particle hit the boundary, and also the associated
  *  normal vector. Particles can be `absorbed` by setting their ids to negative
- *  to flag them for removal. Likewise, the can be reflected back into the domain
+ *  to flag them for removal. Likewise, they can be reflected back into the domain
  *  by modifying their data appropriately and leaving their ids alone.
  *
  *  This version operates only at the specified level.
@@ -71,7 +83,7 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
  *  passed in to this function as an argument. This function can access the
  *  position at which the particle hit the boundary, and also the associated
  *  normal vector. Particles can be `absorbed` by setting their ids to negative
- *  to flag them for removal. Likewise, the can be reflected back into the domain
+ *  to flag them for removal. Likewise, they can be reflected back into the domain
  *  by modifying their data appropriately and leaving their ids alone.
  *
  *  This version operates over all the levels in the pc.
@@ -150,9 +162,12 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
     {
         const auto plo = pc.Geom(lev).ProbLoArray();
         const auto dxi = pc.Geom(lev).InvCellSizeArray();
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
         for(WarpXParIter pti(pc, lev); pti.isValid(); ++pti)
         {
-            const auto getPosition = GetParticlePosition(pti);
+            const auto getPosition = GetParticlePosition<PIdx>(pti);
             auto& tile = pti.GetParticleTile();
             auto ptd = tile.getParticleTileData();
             const auto np = tile.numParticles();
@@ -160,37 +175,41 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
             amrex::ParallelForRNG( np,
             [=] AMREX_GPU_DEVICE (const int ip, amrex::RandomEngine const& engine) noexcept
             {
+                // skip particles that are already flagged for removal
+                if (!amrex::ParticleIDWrapper{ptd.m_idcpu[ip]}.is_valid()) return;
+
                 amrex::ParticleReal xp, yp, zp;
                 getPosition(ip, xp, yp, zp);
 
                 int i, j, k;
                 amrex::Real W[AMREX_SPACEDIM][2];
-                compute_weights_nodal(xp, yp, zp, plo, dxi, i, j, k, W);
-
-                amrex::Real phi_value  = interp_field_nodal(i, j, k, W, phi);
+                ablastr::particles::compute_weights(xp, yp, zp, plo, dxi, i, j, k, W);
+                amrex::Real phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, phi);
 
                 if (phi_value < 0.0)
                 {
-                    amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, phi, dxi);
-
-                    // the closest point on the surface to pos is pos - grad phi(pos) * phi(pos)
+                    int ic, jc, kc; // Cell-centered indices
+                    int nodal;
+                    amrex::Real Wc[AMREX_SPACEDIM][2]; // Cell-centered weights
+                    ablastr::particles::compute_weights(xp, yp, zp, plo, dxi, ic, jc, kc, Wc, nodal=0);
+                    amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, ic, jc, kc, Wc, phi, dxi);
+                    DistanceToEB::normalize(normal);
                     amrex::RealVect pos;
 #if (defined WARPX_DIM_3D)
-                    pos[0] = xp - normal[0]*phi_value;
-                    pos[1] = yp - normal[1]*phi_value;
-                    pos[2] = zp - normal[2]*phi_value;
+                    pos[0] = xp;
+                    pos[1] = yp;
+                    pos[2] = zp;
 #elif (defined WARPX_DIM_XZ)
-                    pos[0] = xp - normal[0]*phi_value;
-                    pos[1] = zp - normal[1]*phi_value;
+                    pos[0] = xp;
+                    pos[1] = zp;
 #elif (defined WARPX_DIM_RZ)
-                    pos[0] = std::sqrt(xp*xp + yp*yp) - normal[0]*phi_value;
-                    pos[1] = zp - normal[1]*phi_value;
+                    pos[0] = std::sqrt(xp*xp + yp*yp);
+                    pos[1] = zp;
 #elif (defined WARPX_DIM_1D_Z)
-                    pos[0] = zp - normal[0]*phi_value;
+                    pos[0] = zp;
 #endif
-                    DistanceToEB::normalize(normal);
-
                     f(ptd, ip, pos, normal, engine);
+
                 }
             });
         }

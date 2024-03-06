@@ -14,8 +14,8 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
 #include <AMReX_Algorithm.H>
@@ -33,10 +33,13 @@
  *  creation functor.
  *  This functor also reads and contains the fusion multiplier.
  */
-class NuclearFusionFunc{
+class NuclearFusionFunc
+{
     // Define shortcuts for frequently-used type names
     using ParticleType = WarpXParticleContainer::ParticleType;
-    using ParticleBins = amrex::DenseBins<ParticleType>;
+    using ParticleTileType = WarpXParticleContainer::ParticleTileType;
+    using ParticleTileDataType = ParticleTileType::ParticleTileDataType;
+    using ParticleBins = amrex::DenseBins<ParticleTileDataType>;
     using index_type = ParticleBins::index_type;
     using SoaData_type = WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
 
@@ -54,42 +57,27 @@ public:
      * @param[in] isSameSpecies whether the two colliding species are the same
      */
     NuclearFusionFunc (const std::string collision_name, MultiParticleContainer const * const mypc,
-                       const bool isSameSpecies) : m_isSameSpecies(isSameSpecies)
+                       const bool isSameSpecies):
+        m_fusion_multiplier{amrex::ParticleReal{1.0}}, // default fusion multiplier
+        m_probability_threshold{amrex::ParticleReal{0.02}}, // default fusion probability threshold
+        m_probability_target_value{amrex::ParticleReal{0.002}}, // default fusion probability target_value
+        m_isSameSpecies{isSameSpecies}
     {
-        using namespace amrex::literals;
 
 #ifdef AMREX_SINGLE_PRECISION_PARTICLES
-        amrex::Abort("Nuclear fusion module does not currently work with single precision");
+        WARPX_ABORT_WITH_MESSAGE("Nuclear fusion module does not currently work with single precision");
 #endif
 
         m_fusion_type = BinaryCollisionUtils::get_nuclear_fusion_type(collision_name, mypc);
 
-        amrex::ParmParse pp_collision_name(collision_name);
-        amrex::Vector<std::string> product_species_name;
-        pp_collision_name.getarr("product_species", product_species_name);
-
-        if (m_fusion_type == NuclearFusionType::ProtonBoron)
-        {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                product_species_name.size() == 1,
-                "ERROR: Proton-boron must contain exactly one product species");
-            auto& product_species = mypc->GetParticleContainerFromName(product_species_name[0]);
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                product_species.AmIA<PhysicalSpecies::helium>(),
-                "ERROR: Product species of proton-boron fusion must be of type helium");
-        }
-
-        // default fusion multiplier
-        m_fusion_multiplier = 1.0_rt;
-        queryWithParser(pp_collision_name, "fusion_multiplier", m_fusion_multiplier);
-        // default fusion probability threshold
-        m_probability_threshold = 0.02_rt;
-        queryWithParser(pp_collision_name, "fusion_probability_threshold",
-                                            m_probability_threshold);
-        // default fusion probability target_value
-        m_probability_target_value = 0.002_rt;
-        queryWithParser(pp_collision_name, "fusion_probability_target_value",
-                                            m_probability_target_value);
+        const amrex::ParmParse pp_collision_name(collision_name);
+        utils::parser::queryWithParser(
+            pp_collision_name, "fusion_multiplier", m_fusion_multiplier);
+        utils::parser::queryWithParser(
+            pp_collision_name, "fusion_probability_threshold", m_probability_threshold);
+        utils::parser::queryWithParser(
+            pp_collision_name, "fusion_probability_target_value",
+            m_probability_target_value);
     }
 
     /**
@@ -135,7 +123,7 @@ public:
         index_type const* AMREX_RESTRICT I1,
         index_type const* AMREX_RESTRICT I2,
         SoaData_type soa_1, SoaData_type soa_2,
-        GetParticlePosition /*get_position_1*/, GetParticlePosition /*get_position_2*/,
+        GetParticlePosition<PIdx> /*get_position_1*/, GetParticlePosition<PIdx> /*get_position_2*/,
         amrex::ParticleReal const  /*q1*/, amrex::ParticleReal const  /*q2*/,
         amrex::ParticleReal const  m1, amrex::ParticleReal const  m2,
         amrex::Real const  dt, amrex::Real const dV,
@@ -156,52 +144,74 @@ public:
             amrex::ParticleReal * const AMREX_RESTRICT u2z = soa_2.m_rdata[PIdx::uz];
 
             // Number of macroparticles of each species
-            const int NI1 = I1e - I1s;
-            const int NI2 = I2e - I2s;
-            const int max_N = amrex::max(NI1,NI2);
+            const index_type NI1 = I1e - I1s;
+            const index_type NI2 = I2e - I2s;
+            const index_type max_N = amrex::max(NI1,NI2);
 
-            int i1 = I1s;
-            int i2 = I2s;
-            int pair_index = cell_start_pair;
+            index_type i1 = I1s;
+            index_type i2 = I2s;
+            index_type pair_index = cell_start_pair;
 
             // Because the number of particles of each species is not always equal (NI1 != NI2
             // in general), some macroparticles will be paired with multiple macroparticles of the
             // other species and we need to decrease their weight accordingly.
             // c1 corresponds to the minimum number of times a particle of species 1 will be paired
             // with a particle of species 2. Same for c2.
-            const int c1 = amrex::max(NI2/NI1,1);
-            const int c2 = amrex::max(NI1/NI2,1);
+            // index_type(1): https://github.com/AMReX-Codes/amrex/pull/3684
+            const index_type c1 = amrex::max(NI2/NI1, index_type(1));
+            const index_type c2 = amrex::max(NI1/NI2, index_type(1));
 
             // multiplier ratio to take into account unsampled pairs
-            int multiplier_ratio;
-            if (m_isSameSpecies)
-            {
-                multiplier_ratio = 2*max_N - 1;
-            }
-            else
-            {
-                multiplier_ratio = max_N;
-            }
+            const auto multiplier_ratio = static_cast<int>(
+                m_isSameSpecies ? 2*max_N - 1 : max_N);
 
-            for (int k = 0; k < max_N; ++k)
+#if (defined WARPX_DIM_RZ)
+            amrex::ParticleReal * const AMREX_RESTRICT theta1 = soa_1.m_rdata[PIdx::theta];
+            amrex::ParticleReal * const AMREX_RESTRICT theta2 = soa_2.m_rdata[PIdx::theta];
+#endif
+
+            for (index_type k = 0; k < max_N; ++k)
             {
                 // c1k : how many times the current particle of species 1 is paired with a particle
                 // of species 2. Same for c2k.
-                const int c1k = (k%NI1 < max_N%NI1) ? c1 + 1: c1;
-                const int c2k = (k%NI2 < max_N%NI2) ? c2 + 1: c2;
+                const index_type c1k = (k%NI1 < max_N%NI1) ? c1 + 1: c1;
+                const index_type c2k = (k%NI2 < max_N%NI2) ? c2 + 1: c2;
+
+#if (defined WARPX_DIM_RZ)
+                /* In RZ geometry, macroparticles can collide with other macroparticles
+                 * in the same *cylindrical* cell. For this reason, collisions between macroparticles
+                 * are actually not local in space. In this case, the underlying assumption is that
+                 * particles within the same cylindrical cell represent a cylindrically-symmetry
+                 * momentum distribution function. Therefore, here, we temporarily rotate the
+                 * momentum of one of the macroparticles in agreement with this cylindrical symmetry.
+                 * (This is technically only valid if we use only the m=0 azimuthal mode in the simulation;
+                 * there is a corresponding assert statement at initialization.) */
+                amrex::ParticleReal const theta = theta2[I2[i2]]-theta1[I1[i1]];
+                amrex::ParticleReal const u1xbuf = u1x[I1[i1]];
+                u1x[I1[i1]] = u1xbuf*std::cos(theta) - u1y[I1[i1]]*std::sin(theta);
+                u1y[I1[i1]] = u1xbuf*std::sin(theta) + u1y[I1[i1]]*std::cos(theta);
+#endif
+
                 SingleNuclearFusionEvent(
                     u1x[ I1[i1] ], u1y[ I1[i1] ], u1z[ I1[i1] ],
                     u2x[ I2[i2] ], u2y[ I2[i2] ], u2z[ I2[i2] ],
                     m1, m2, w1[ I1[i1] ]/c1k, w2[ I2[i2] ]/c2k,
-                    dt, dV, pair_index, p_mask, p_pair_reaction_weight,
+                    dt, dV, static_cast<int>(pair_index), p_mask, p_pair_reaction_weight,
                     m_fusion_multiplier, multiplier_ratio,
                     m_probability_threshold,
                     m_probability_target_value,
                     m_fusion_type, engine);
+
+#if (defined WARPX_DIM_RZ)
+                amrex::ParticleReal const u1xbuf_new = u1x[I1[i1]];
+                u1x[I1[i1]] = u1xbuf_new*std::cos(-theta) - u1y[I1[i1]]*std::sin(-theta);
+                u1y[I1[i1]] = u1xbuf_new*std::sin(-theta) + u1y[I1[i1]]*std::cos(-theta);
+#endif
+
                 p_pair_indices_1[pair_index] = I1[i1];
                 p_pair_indices_2[pair_index] = I2[i2];
-                ++i1; if ( i1 == static_cast<int>(I1e) ) { i1 = I1s; }
-                ++i2; if ( i2 == static_cast<int>(I2e) ) { i2 = I2s; }
+                ++i1; if ( i1 == I1e ) { i1 = I1s; }
+                ++i2; if ( i2 == I2e ) { i2 = I2s; }
                 ++pair_index;
             }
 
@@ -210,15 +220,15 @@ public:
 private:
     // Factor used to increase the number of fusion reaction by decreasing the weight of the
     // produced particles
-    amrex::Real m_fusion_multiplier;
+    amrex::ParticleReal m_fusion_multiplier;
     // If the fusion multiplier is too high and results in a fusion probability that approaches
     // 1, there is a risk of underestimating the total fusion yield. In these cases, we reduce
     // the fusion multiplier used in a given collision. m_probability_threshold is the fusion
     // probability threshold above which we reduce the fusion multiplier.
     // m_probability_target_value is the target probability used to determine by how much
     // the fusion multiplier should be reduced.
-    amrex::Real m_probability_threshold;
-    amrex::Real m_probability_target_value;
+    amrex::ParticleReal m_probability_threshold;
+    amrex::ParticleReal m_probability_target_value;
     NuclearFusionType m_fusion_type;
     bool m_isSameSpecies;
 };

@@ -10,6 +10,7 @@
 
 #include "Utils/WarpXConst.H"
 
+#include <AMReX_Math.H>
 #include <AMReX_REAL.H>
 
 #include <cmath>
@@ -29,6 +30,7 @@ AMREX_GPU_HOST_DEVICE AMREX_INLINE
 amrex::ParticleReal ProtonBoronFusionCrossSectionNevins (const amrex::ParticleReal& E_keV)
 {
     using namespace amrex::literals;
+    using namespace amrex::Math;
 
     // If kinetic energy is 0, return a 0 cross section and avoid later division by 0.
     if (E_keV == 0._prt) {return 0._prt;}
@@ -40,8 +42,9 @@ amrex::ParticleReal ProtonBoronFusionCrossSectionNevins (const amrex::ParticleRe
     // Compute Gamow factor, in MeV
     constexpr auto one_pr = 1._prt;
     constexpr auto Z_boron = 5._prt;
-    constexpr amrex::ParticleReal m_boron = 10.7319_prt * PhysConst::m_p;
-    constexpr amrex::ParticleReal m_reduced = m_boron / (one_pr + m_boron/PhysConst::m_p);
+    constexpr amrex::ParticleReal m_boron = 11.00930536_prt * PhysConst::m_u;
+    constexpr amrex::ParticleReal m_hydrogen = 1.00782503223 * PhysConst::m_u;
+    constexpr amrex::ParticleReal m_reduced = m_boron / (one_pr + m_boron/m_hydrogen);
     constexpr amrex::ParticleReal gamow_factor = m_reduced / 2._prt *
                         (PhysConst::q_e*PhysConst::q_e * Z_boron /
                            (2._prt*PhysConst::ep0*PhysConst::hbar)) *
@@ -61,7 +64,7 @@ amrex::ParticleReal ProtonBoronFusionCrossSectionNevins (const amrex::ParticleRe
         constexpr auto AL = 1.82e4_prt;
         constexpr auto EL = 148._prt;
         constexpr auto dEL_sq = 2.35_prt*2.35_prt;
-        astrophysical_factor = C0 + C1*E_keV + C2*E_keV*E_keV +
+        astrophysical_factor = C0 + C1*E_keV + C2*powi<2>(E_keV) +
                                                AL/((E_keV - EL)*(E_keV - EL) + dEL_sq);
     }
     else if (E_keV < E_lim2)
@@ -71,7 +74,7 @@ amrex::ParticleReal ProtonBoronFusionCrossSectionNevins (const amrex::ParticleRe
         constexpr auto D2 = -20.3_prt;
         constexpr auto D5 = -1.58_prt;
         const amrex::ParticleReal E_norm = (E_keV-400._prt) * 1.e-2_prt;
-        astrophysical_factor = D0 + D1*E_norm + D2*E_norm*E_norm + D5*std::pow(E_norm, 5_prt);
+        astrophysical_factor = D0 + D1*E_norm + D2*powi<2>(E_norm) + D5*powi<5>(E_norm);
     }
     else
     {

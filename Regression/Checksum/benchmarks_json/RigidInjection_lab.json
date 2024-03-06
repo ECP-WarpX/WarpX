@@ -1,10 +1,10 @@
 {
   "beam": {
-    "particle_cpu": 0.0,
-    "particle_id": 2001000.0,
+    "particle_center": 776.0,
     "particle_momentum_x": 4.368290868012154e-17,
     "particle_momentum_y": 4.438068704747877e-17,
     "particle_momentum_z": 5.461849061470348e-16,
+    "particle_orig_z": 0.010011399181766063,
     "particle_position_x": 0.003457868696205348,
     "particle_position_y": 0.07921343233374142,
     "particle_weight": 62415.090744607616

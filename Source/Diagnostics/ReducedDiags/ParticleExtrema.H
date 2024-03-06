@@ -10,6 +10,7 @@
 
 #include "ReducedDiags.H"
 
+#include <map>
 #include <string>
 
 /**
@@ -30,12 +31,22 @@ public:
     std::string m_species_name;
 
     /**
-     * This funciton computes the particle extrema
+     * This function computes the particle extrema
      *
      * @param[in] step current time step
      */
-    void ComputeDiags(int step) override final;
+    void ComputeDiags(int step) final;
 
+private:
+    /// auxiliary structure to store headers and indices of the reduced diagnostics
+    struct aux_header_index
+    {
+        std::string header;
+        int idx;
+    };
+
+    /// map to store header texts and indices of the reduced diagnostics
+    std::map<std::string, aux_header_index> m_headers_indices;
 };
 
 #endif

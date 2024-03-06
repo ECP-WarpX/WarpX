@@ -1,0 +1,82 @@
+#################################
+# Domain, Resolution & Numerics
+#
+
+# time-scale
+stop_time = 0.016e-12            # [s]
+
+# Coarse resolution with cell size = lambda/16 allows for quick CI tests
+amr.n_cell = 320 192
+
+# simulation box, no MR
+#   note: increase z (space & cells) for converging ion energy
+amr.max_level = 0
+geometry.dims = 2
+geometry.prob_lo = -2e-6 -.4e-6            # [m]
+geometry.prob_hi = 2e-6 2e-6
+
+# Boundary condition
+boundary.field_lo = absorbing_silver_mueller absorbing_silver_mueller
+boundary.field_hi = absorbing_silver_mueller absorbing_silver_mueller
+
+# Order of particle shape factors
+algo.particle_shape = 1
+
+# numerical tuning
+warpx.cfl = 0.999
+warpx.use_filter = 1          # bilinear current/charge filter
+
+# field solver yee (default) ckc psatd (fft)
+algo.maxwell_solver = yee
+
+##################################
+## Embedded Boundary
+
+my_constants.sheetRadius = 6.25e-9      # [m] 1/2 cell
+my_constants.slitWidth   = 0.3e-6       # [m] width of slit = lambda * 2
+warpx.eb_implicit_function = "(
+    if(abs(z)<=sheetRadius and abs(x)>=(slitWidth/2.0), 1.0, -1.0) )"
+
+#################################
+## Laser Pulse Profile
+#
+# Note: we make the beam really wide so it behaves like a plane wave
+##
+lasers.names        = laser1
+laser1.position     = 0. 0. -.35e-6     # point the laser plane (antenna)
+laser1.direction    = 0. 0. 1.          # the plane's (antenna's) normal direction
+laser1.polarization = 1. 0. 0.          # the main polarization vector
+laser1.a0           = 0.001             # maximum amplitude of the laser field [V/m]
+laser1.wavelength   = .2e-6            # central wavelength of the laser pulse [m]
+laser1.profile      = Gaussian
+laser1.profile_waist = 2.2e-5          # beam waist (E(w_0)=E_0/e) [m]
+laser1.profile_duration = 5.e-15       # pulse length (E(tau)=E_0/e; tau=tau_E=FWHM_I/1.17741) [s]
+laser1.profile_t_peak = 5.e-15         # time until peak intensity reached at the laser plane [s]
+laser1.profile_focal_distance = .35e-6  # focal distance from the antenna [m]
+
+#################################
+## Diagnostics
+##
+diagnostics.diags_names = diag1
+diag1.intervals = 100
+diag1.diag_type = Full
+#diag1.format = openpmd
+diag1.fields_to_plot = Ex Ey Ez Bx By Bz
+diag1.write_species = 0
+
+#################################
+## Reduced Diagnostics
+##
+#
+warpx.reduced_diags_names = FP_line
+FP_line.type = FieldProbe
+FP_line.intervals = 100
+FP_line.integrate = 1
+FP_line.probe_geometry = Line
+FP_line.x_probe = -1.5e-6
+FP_line.z_probe = 1.7e-6
+FP_line.x1_probe = 1.5e-6
+FP_line.z1_probe = 1.7e-6
+FP_line.resolution = 201
+
+authors = "Elisa Rheaume <tiberiusrheaume@lbl.gov>, Axel Huebl <axelhuebl@lbl.gov>"

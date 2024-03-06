@@ -13,6 +13,7 @@
 #else
 #   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "WarpX.H"
@@ -53,7 +54,7 @@ void FiniteDifferenceSolver::EvolveECTRho (
     const int lev) {
 
 #if !defined(WARPX_DIM_RZ) and defined(AMREX_USE_EB)
-    if (m_fdtd_algo == MaxwellSolverAlgo::ECT) {
+    if (m_fdtd_algo == ElectromagneticSolverAlgo::ECT) {
 
         EvolveRhoCartesianECT(Efield, edge_lengths, face_areas, ECTRhofield, lev);
 
@@ -73,7 +74,8 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
 #ifdef AMREX_USE_EB
 
 #if !(defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ))
-    amrex::Abort("EvolveRhoCartesianECT: Embedded Boundaries are only implemented in 3D and XZ");
+    WARPX_ABORT_WITH_MESSAGE(
+        "EvolveRhoCartesianECT: Embedded Boundaries are only implemented in 3D and XZ");
 #endif
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
@@ -86,7 +88,7 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
             amrex::Gpu::synchronize();
         }
-        amrex::Real wt = amrex::second();
+        auto wt = static_cast<amrex::Real>(amrex::second());
 
         // Extract field data for this grid/tile
         amrex::Array4<amrex::Real> const &Ex = Efield[0]->array(mfi);
@@ -129,7 +131,7 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
                 Rhoy(i, j, k) = (Ez(i, j, k) * lz(i, j, k) - Ez(i + 1, j, k) * lz(i + 1, j, k) +
                     Ex(i, j, k + 1) * lx(i, j, k + 1) - Ex(i, j, k) * lx(i, j, k)) / Sy(i, j, k);
 #else
-                amrex::Abort("EvolveRhoCartesianECT: Embedded Boundaries are only implemented in 3D and XZ");
+                WARPX_ABORT_WITH_MESSAGE("EvolveRhoCartesianECT: Embedded Boundaries are only implemented in 3D and XZ");
 #endif
             },
 
@@ -147,7 +149,7 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
-            wt = amrex::second() - wt;
+            wt = static_cast<amrex::Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
 #ifdef WARPX_DIM_XZ

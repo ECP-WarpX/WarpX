@@ -7,9 +7,8 @@
  */
 #include "InjectorDensity.H"
 
-#include "Initialization/CustomDensityProb.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXUtil.H"
 
 #include <AMReX_BLassert.H>
 #include <AMReX_ParmParse.H>
@@ -28,11 +27,6 @@ void InjectorDensity::clear ()
     {
         break;
     }
-    case Type::custom:
-    {
-        object.custom.clear();
-        break;
-    }
     case Type::predefined:
     {
         object.predefined.clear();
@@ -45,13 +39,13 @@ void InjectorDensity::clear ()
 
 InjectorDensityPredefined::InjectorDensityPredefined (
     std::string const& a_species_name) noexcept
-    : profile(Profile::null)
 {
-    ParmParse pp_species_name(a_species_name);
+    const ParmParse pp_species_name(a_species_name);
 
     std::vector<amrex::Real> v;
     // Read parameters for the predefined plasma profile.
-    getArrWithParser(pp_species_name, "predefined_profile_params", v);
+    utils::parser::getArrWithParser(
+        pp_species_name, "predefined_profile_params", v);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(v.size() <= 6,
                                      "Too many parameters for InjectorDensityPredefined");
     for (int i = 0; i < static_cast<int>(v.size()); ++i) {

@@ -21,40 +21,40 @@ void UpdateMomentumVay(
     amrex::ParticleReal& ux, amrex::ParticleReal& uy, amrex::ParticleReal& uz,
     const amrex::ParticleReal Ex, const amrex::ParticleReal Ey, const amrex::ParticleReal Ez,
     const amrex::ParticleReal Bx, const amrex::ParticleReal By, const amrex::ParticleReal Bz,
-    const amrex::Real q, const amrex::Real m, const amrex::Real dt )
+    const amrex::ParticleReal q, const amrex::ParticleReal m, const amrex::Real dt )
 {
     using namespace amrex::literals;
 
     // Constants
-    const amrex::Real econst = q*dt/m;
-    const amrex::Real bconst = 0.5_rt*q*dt/m;
-    constexpr amrex::Real invclight = 1._rt/PhysConst::c;
-    constexpr amrex::Real invclightsq = 1._rt/(PhysConst::c*PhysConst::c);
+    const amrex::ParticleReal econst = q*dt/m;
+    const amrex::ParticleReal bconst = 0.5_prt*q*dt/m;
+    constexpr amrex::ParticleReal invclight = 1._prt/PhysConst::c;
+    constexpr amrex::ParticleReal invclightsq = 1._prt/(PhysConst::c*PhysConst::c);
     // Compute initial gamma
-    const amrex::Real inv_gamma = 1._rt/std::sqrt(1._rt + (ux*ux + uy*uy + uz*uz)*invclightsq);
+    const amrex::ParticleReal inv_gamma = 1._prt/std::sqrt(1._prt + (ux*ux + uy*uy + uz*uz)*invclightsq);
     // Get tau
-    const amrex::Real taux = bconst*Bx;
-    const amrex::Real tauy = bconst*By;
-    const amrex::Real tauz = bconst*Bz;
-    const amrex::Real tausq = taux*taux+tauy*tauy+tauz*tauz;
+    const amrex::ParticleReal taux = bconst*Bx;
+    const amrex::ParticleReal tauy = bconst*By;
+    const amrex::ParticleReal tauz = bconst*Bz;
+    const amrex::ParticleReal tausq = taux*taux+tauy*tauy+tauz*tauz;
     // Get U', gamma'^2
-    const amrex::Real uxpr = ux + econst*Ex + (uy*tauz-uz*tauy)*inv_gamma;
-    const amrex::Real uypr = uy + econst*Ey + (uz*taux-ux*tauz)*inv_gamma;
-    const amrex::Real uzpr = uz + econst*Ez + (ux*tauy-uy*taux)*inv_gamma;
-    const amrex::Real gprsq = (1._rt + (uxpr*uxpr + uypr*uypr + uzpr*uzpr)*invclightsq);
+    const amrex::ParticleReal uxpr = ux + econst*Ex + (uy*tauz-uz*tauy)*inv_gamma;
+    const amrex::ParticleReal uypr = uy + econst*Ey + (uz*taux-ux*tauz)*inv_gamma;
+    const amrex::ParticleReal uzpr = uz + econst*Ez + (ux*tauy-uy*taux)*inv_gamma;
+    const amrex::ParticleReal gprsq = (1._prt + (uxpr*uxpr + uypr*uypr + uzpr*uzpr)*invclightsq);
     // Get u*
-    const amrex::Real ust = (uxpr*taux + uypr*tauy + uzpr*tauz)*invclight;
+    const amrex::ParticleReal ust = (uxpr*taux + uypr*tauy + uzpr*tauz)*invclight;
     // Get new gamma
-    const amrex::Real sigma = gprsq-tausq;
-    const amrex::Real gisq = 2._rt/(sigma + std::sqrt(sigma*sigma + 4._rt*(tausq + ust*ust)) );
+    const amrex::ParticleReal sigma = gprsq-tausq;
+    const amrex::ParticleReal gisq = 2._prt/(sigma + std::sqrt(sigma*sigma + 4._prt*(tausq + ust*ust)) );
     // Get t, s
-    const amrex::Real bg = bconst*std::sqrt(gisq);
-    const amrex::Real tx = bg*Bx;
-    const amrex::Real ty = bg*By;
-    const amrex::Real tz = bg*Bz;
-    const amrex::Real s = 1._rt/(1._rt+tausq*gisq);
+    const amrex::ParticleReal bg = bconst*std::sqrt(gisq);
+    const amrex::ParticleReal tx = bg*Bx;
+    const amrex::ParticleReal ty = bg*By;
+    const amrex::ParticleReal tz = bg*Bz;
+    const amrex::ParticleReal s = 1._prt/(1._prt+tausq*gisq);
     // Get t.u'
-    const amrex::Real tu = tx*uxpr + ty*uypr + tz*uzpr;
+    const amrex::ParticleReal tu = tx*uxpr + ty*uypr + tz*uzpr;
     // Get new U
     ux = s*(uxpr+tx*tu+uypr*tz-uzpr*ty);
     uy = s*(uypr+ty*tu+uzpr*tx-uxpr*tz);

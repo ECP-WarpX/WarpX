@@ -21,7 +21,8 @@
 # For MR applications only the cases sc=sf=0 and sc=sf=1 are considered. Terms
 # multiplied by (1-sf)*(1-sc) are ON for cell-centered data and OFF for nodal data,
 # while terms multiplied by sf*sc are ON for nodal data and OFF for cell-centered
-# data. C++ implementation in Source/Utils/CoarsenMR.H/.cpp and Source/Utils/CoarsenIO.H/.cpp
+# data. C++ implementation in Source/ablastr/coarsen/average.(H/.cpp) and
+# Source/ablastr/coarsen/sample.(H/.cpp)
 #-------------------------------------------------------------------------------
 
 import sys
@@ -99,8 +100,8 @@ def refinement_points_and_weights( ii, sc, sf, cr ):
 # Input coarsening ratio
 cr = int( input( "\n Select coarsening ratio (cr=1,2,4): cr=" ) )
 if ( cr!=1 and cr!=2 and cr!=4 ):
-   print()
-   sys.exit( 'coarsening ratio cr={} is not valid'.format( cr ) )
+    print()
+    sys.exit( 'coarsening ratio cr={} is not valid'.format( cr ) )
 
 # Loop over possible staggering of coarse and fine grid (cell-centered or nodal)
 for sc in [0,1]:

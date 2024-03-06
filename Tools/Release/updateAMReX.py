@@ -123,9 +123,9 @@ ci_gnumake_path = str(REPO_DIR.joinpath(".github/workflows/cuda.yml"))
 with open(ci_gnumake_path, encoding='utf-8') as f:
     ci_gnumake_content = f.read()
     #   branch/commit/tag (git fetcher) version
-    #     cd amrex && git checkout COMMIT_TAG_OR_BRANCH && cd -
+    #     cd ../amrex && git checkout COMMIT_TAG_OR_BRANCH && cd -
     ci_gnumake_content = re.sub(
-        r'(.*cd\s+amrex.+git checkout\s+--detach\s+)(.+)(\s+&&\s.*)',
+        r'(.*cd\s+\.\./amrex.+git checkout\s+--detach\s+)(.+)(\s+&&\s.*)',
         r'\g<1>{}\g<3>'.format(amrex_new_branch),
         ci_gnumake_content, flags = re.MULTILINE)
 

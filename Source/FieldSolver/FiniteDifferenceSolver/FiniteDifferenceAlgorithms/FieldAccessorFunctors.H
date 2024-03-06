@@ -9,10 +9,10 @@
 #define WARPX_FIELD_ACCESSOR_FUNCTORS_H
 
 #include "WarpX.H"
-#include "Utils/CoarsenIO.H"
-#include "Utils/WarpXUtil.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
+
 #include <AMReX_Array.H>
+
 
 /**
  * \brief Functor that returns the division of the source m_field Array4 value

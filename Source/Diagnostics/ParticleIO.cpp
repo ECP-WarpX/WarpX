@@ -17,7 +17,8 @@
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#include "WarpX.H"
+
+#include <ablastr/utils/text/StreamUtils.H>
 
 #include <AMReX_BLassert.H>
 #include <AMReX_Config.H>
@@ -48,7 +49,7 @@ LaserParticleContainer::ReadHeader (std::istream& is)
         m_updated_position.resize(3);
         for (int i = 0; i < 3; ++i) {
             is >> m_updated_position[i];
-            WarpX::GotoNextLine(is);
+            ablastr::utils::text::goto_next_line(is);
         }
     }
 }
@@ -72,7 +73,7 @@ RigidInjectedParticleContainer::ReadHeader (std::istream& is)
     // Read quantities that are specific to rigid-injected species
     int nlevs;
     is >> nlevs;
-    WarpX::GotoNextLine(is);
+    ablastr::utils::text::goto_next_line(is);
 
     AMREX_ASSERT(zinject_plane_levels.size() == 0);
 
@@ -81,10 +82,10 @@ RigidInjectedParticleContainer::ReadHeader (std::istream& is)
         amrex::Real zinject_plane_tmp;
         is >> zinject_plane_tmp;
         zinject_plane_levels.push_back(zinject_plane_tmp);
-        WarpX::GotoNextLine(is);
+        ablastr::utils::text::goto_next_line(is);
     }
     is >> vzbeam_ave_boosted;
-    WarpX::GotoNextLine(is);
+    ablastr::utils::text::goto_next_line(is);
 }
 
 void
@@ -94,7 +95,7 @@ RigidInjectedParticleContainer::WriteHeader (std::ostream& os) const
     PhysicalParticleContainer::WriteHeader( os );
 
     // Write quantities that are specific to the rigid-injected species
-    int nlevs = zinject_plane_levels.size();
+    const auto nlevs = static_cast<int>(zinject_plane_levels.size());
     os << nlevs << "\n";
     for (int i = 0; i < nlevs; ++i)
     {
@@ -107,7 +108,7 @@ void
 PhysicalParticleContainer::ReadHeader (std::istream& is)
 {
     is >> charge >> mass;
-    WarpX::GotoNextLine(is);
+    ablastr::utils::text::goto_next_line(is);
 }
 
 void
@@ -126,11 +127,11 @@ MultiParticleContainer::Restart (const std::string& dir)
     // we don't need to read back the laser particle charge/mass
     for (unsigned i = 0, n = species_names.size(); i < n; ++i) {
         WarpXParticleContainer* pc = allcontainers.at(i).get();
-        std::string header_fn = dir + "/" + species_names[i] + "/Header";
+        const std::string header_fn = dir + "/" + species_names[i] + "/Header";
 
         Vector<char> fileCharPtr;
         ParallelDescriptor::ReadAndBcastFile(header_fn, fileCharPtr);
-        std::string fileCharPtrString(fileCharPtr.dataPtr());
+        const std::string fileCharPtrString(fileCharPtr.dataPtr());
         std::istringstream is(fileCharPtrString, std::istringstream::in);
         is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
@@ -151,16 +152,15 @@ MultiParticleContainer::Restart (const std::string& dir)
 
         for (auto const& comp : pc->getParticleRuntimeComps()) {
             auto search = std::find(real_comp_names.begin(), real_comp_names.end(), comp.first);
-            if (search == real_comp_names.end()) {
-                amrex::Abort(Utils::TextMsg::Err(
-                    "Species " + species_names[i]
-                    + "needs runtime real component " +  comp.first
-                    + ", but it was not found in the checkpoint file."
-                ));
-            }
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                search != real_comp_names.end(),
+                "Species " + species_names[i]
+                + "needs runtime real component " +  comp.first
+                + ", but it was not found in the checkpoint file."
+            );
         }
 
-        for (int j = PIdx::nattribs; j < nr; ++j) {
+        for (int j = PIdx::nattribs-AMREX_SPACEDIM; j < nr; ++j) {
             const auto& comp_name = real_comp_names[j];
             auto current_comp_names = pc->getParticleComps();
             auto search = current_comp_names.find(comp_name);
@@ -186,12 +186,11 @@ MultiParticleContainer::Restart (const std::string& dir)
 
         for (auto const& comp : pc->getParticleRuntimeiComps()) {
             auto search = std::find(int_comp_names.begin(), int_comp_names.end(), comp.first);
-            if (search == int_comp_names.end()) {
-                std::stringstream ss;
-                ss << "Species " << species_names[i] << "needs runtime int component " << comp.first;
-                ss << ", but it was not found in the checkpoint file. \n";
-                amrex::Abort(ss.str());
-            }
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                search != int_comp_names.end(),
+                "Species " + species_names[i] + "needs runtime int component " + comp.first
+                + ", but it was not found in the checkpoint file."
+            );
         }
 
         for (int j = 0; j < ni; ++j) {
@@ -235,16 +234,4 @@ MultiParticleContainer::WriteHeader (std::ostream& os) const
     for (unsigned i = 0, n = species_names.size()+lasers_names.size(); i < n; ++i) {
         allcontainers.at(i)->WriteHeader(os);
     }
-}
-
-void
-PhysicalParticleContainer::ConvertUnits (ConvertDirection convert_direction)
-{
-    WARPX_PROFILE("PhysicalParticleContainer::ConvertUnits()");
-
-    // Account for the special case of photons
-    const auto t_mass =
-        this->AmIA<PhysicalSpecies::photon>() ? PhysConst::m_e : this->getMass();
-
-    particlesConvertUnits(convert_direction, this, t_mass);
 }

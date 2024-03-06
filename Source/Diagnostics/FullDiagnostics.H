@@ -2,12 +2,11 @@
 #define WARPX_FULLDIAGNOSTICS_H_
 
 #include "Diagnostics.H"
-#include "Utils/IntervalsParser.H"
+#include "Utils/Parser/IntervalsParser.H"
 
 #include <string>
 
-class
-FullDiagnostics final : public Diagnostics
+class FullDiagnostics final : public Diagnostics
 {
 public:
     FullDiagnostics (int i, std::string name);
@@ -15,13 +14,19 @@ private:
     /** Read user-requested parameters for full diagnostics */
     void ReadParameters ();
     /** Determines timesteps at which full diagnostics are written to file */
-    IntervalsParser m_intervals;
+    utils::parser::IntervalsParser m_intervals;
     /** Whether to plot raw (i.e., NOT cell-centered) fields */
     bool m_plot_raw_fields = false;
     /** Whether to plot guard cells of raw fields */
     bool m_plot_raw_fields_guards = false;
+    /** Whether to dump the RZ modes */
+    bool m_dump_rz_modes = false;
+    /** Whether the field solver deposits current density, if not it will be done
+     * before writing the diagnostic.
+     */
+    bool m_solver_deposits_current = true;
     /** Flush m_mf_output and particles to file for the i^th buffer */
-    void Flush (int i_buffer) override;
+    void Flush (int i_buffer, bool /* force_flush */) override;
     /** Flush raw data */
     void FlushRaw ();
     /** whether to compute and pack cell-centered data in m_mf_output
@@ -43,13 +48,6 @@ private:
      * \param[in] ncomp number of components (modes, real and imag)
      */
     void AddRZModesToOutputNames (const std::string& field, int ncomp);
-    /** Append m_all_field_functors[lev] with all modes of all components of E B and j
-     * and add name to varnames.
-     * \param[in] lev level on which source multifabs are defined.
-     */
-    void AddRZModesToDiags (int lev);
-    /** Whether to dump the RZ modes */
-    bool m_dump_rz_modes = false;
     /** Define the cell-centered multifab m_mf_output depending on user-defined
       * lo and hi and coarsening ratio. This MultiFab may have a different BoxArray and
       * DistributionMap than field MultiFabs in the simulation.
@@ -57,7 +55,16 @@ private:
       * \param[in] i_buffer index of a back-transformed snapshot
       * \param[in] lev level on which source multifabs are defined
       */
-    void InitializeBufferData ( int i_buffer, int lev ) override;
+    void InitializeBufferData ( int i_buffer, int lev, bool restart=false ) override;
+    /** Initialize functors that store pointers to the RZ fields requested by the user.
+     * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
+     */
+    void InitializeFieldFunctorsRZopenPMD (int lev) override;
+    /** Append m_all_field_functors[lev] with all modes of all components of E B and j
+     * and add name to varnames.
+     * \param[in] lev level on which source multifabs are defined.
+     */
+    void AddRZModesToDiags (int lev);
     /** Initialize functors that store pointers to the fields requested by the user.
       * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
       */

@@ -1,22 +1,18 @@
-target_sources(WarpX
-  PRIVATE
-    CoarsenIO.cpp
-    CoarsenMR.cpp
-    TextMsg.cpp
-    Interpolate.cpp
-    IntervalsParser.cpp
-    ParticleUtils.cpp
-    RelativeCellPosition.cpp
-    WarnManager.cpp
-    WarpXAlgorithmSelection.cpp
-    WarpXMovingWindow.cpp
-    WarpXTagging.cpp
-    WarpXUtil.cpp
-)
+foreach(D IN LISTS WarpX_DIMS)
+    warpx_set_suffix_dims(SD ${D})
+    target_sources(lib_${SD}
+      PRIVATE
+        Interpolate.cpp
+        ParticleUtils.cpp
+        SpeciesUtils.cpp
+        RelativeCellPosition.cpp
+        WarpXAlgorithmSelection.cpp
+        WarpXMovingWindow.cpp
+        WarpXTagging.cpp
+        WarpXUtil.cpp
+        WarpXVersion.cpp
+    )
+endforeach()
 
-add_subdirectory(MsgLogger)
-
-target_sources(ablastr
-  PRIVATE
-    MPIInitHelpers.cpp
-)
+add_subdirectory(Logo)
+add_subdirectory(Parser)

@@ -40,6 +40,6 @@ pairs created.
 At most one macroparticle is created per cell per timestep per species, with a weight corresponding to
 the total number of physical pairs created.
 
-So far the Schwinger module requires using ``warpx.do_nodal=1`` or
-``algo.field_gathering=momentum-conserving`` (so that the auxiliary fields are calculated on the nodes)
+So far the Schwinger module requires using ``warpx.grid_type = collocated`` or
+``algo.field_gathering = momentum-conserving`` (so that the auxiliary fields are calculated on the nodes)
 and is not compatible with either mesh refinement, RZ coordinates or single precision.

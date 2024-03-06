@@ -48,7 +48,7 @@ Then, in ``$AUTOMATED_PERF_TESTS``, create a file ``run_automated_performance_te
    module load lapackpp/2021.04.00
    module load boost/1.76.0
    module load adios2/2.7.1
-   module load hdf5/1.10.7
+   module load hdf5/1.12.2
 
    module unload darshan-runtime
 
@@ -75,6 +75,7 @@ Then, in ``$AUTOMATED_PERF_TESTS``, create a file ``run_automated_performance_te
    # lines below this comment once, before submission.
    # The commented lines take too long for the job script.
    #python3 -m pip install --upgrade pip
+   #python3 -m pip install --upgrade build packaging setuptools wheel
    #python3 -m pip install --upgrade cython
    #python3 -m pip install --upgrade numpy
    #python3 -m pip install --upgrade markupsafe

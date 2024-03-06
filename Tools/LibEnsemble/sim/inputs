@@ -48,10 +48,6 @@ warpx.moving_window_v = 1.0 # in units of the speed of light
 #################################
 warpx.gamma_boost = 30.0
 warpx.boost_direction = z
-warpx.do_back_transformed_diagnostics=0 # 1
-warpx.do_back_transformed_fields=0
-warpx.num_snapshots_lab=20
-warpx.dt_snapshots_lab=1.6678204759907604e-10
 
 #################################
 ############ PLASMA #############
@@ -77,7 +73,6 @@ electrons.predefined_profile_name = "parabolic_channel"
 #         predefined_profile_params = z_start   ramp_up   plateau   ramp_down   rc       n0
 electrons.predefined_profile_params = 0.0       .02       .297      .003        40.e-6   1.7e23
 electrons.do_continuous_injection = 1
-electrons.do_back_transformed_diagnostics=0
 
 ions.charge = q_e
 ions.mass = m_p
@@ -95,7 +90,6 @@ ions.predefined_profile_name = "parabolic_channel"
 #    predefined_profile_params = z_start   ramp_up   plateau   ramp_down   rc       n0
 ions.predefined_profile_params = 0.0       .02       .297      .003        40.e-6   1.7e23
 ions.do_continuous_injection = 1
-ions.do_back_transformed_diagnostics=0
 
 electrons2.charge = -q_e
 electrons2.mass = m_e
@@ -113,7 +107,6 @@ electrons2.predefined_profile_name = "parabolic_channel"
 #         predefined_profile_params = z_start   ramp_up   plateau   ramp_down   rc       n0
 electrons2.predefined_profile_params = 0.3485       .02       .297       .003        40.e-6   1.7e23
 electrons2.do_continuous_injection = 1
-electrons2.do_back_transformed_diagnostics=0
 
 ions2.charge = q_e
 ions2.mass = m_p
@@ -131,7 +124,6 @@ ions2.predefined_profile_name = "parabolic_channel"
 #    predefined_profile_params = z_start   ramp_up   plateau   ramp_down   rc       n0
 ions2.predefined_profile_params = 0.3485       .02       .297       .003        40.e-6   1.7e23
 ions2.do_continuous_injection = 1
-ions2.do_back_transformed_diagnostics=0
 
 beam.charge = -q_e
 beam.mass = m_e
@@ -156,7 +148,6 @@ beam.uy_th = 0.
 beam.uz_th = 39.138943248532286
 beam.zinject_plane = 0.02
 beam.rigid_advance = true
-beam.do_back_transformed_diagnostics=1
 
 #################################
 ######### Lens Mirror ###########

@@ -190,7 +190,7 @@ def generate():
             f.write('{}.injection_style = "SingleParticle"\n'.format(cc.name))
             f.write("{}.single_particle_pos = {} {} {}\n".
                 format(cc.name, init_pos[0], init_pos[1], init_pos[2]))
-            f.write("{}.single_particle_vel = {} {} {}\n".
+            f.write("{}.single_particle_u = {} {} {}\n".
                 format(cc.name, cc.init_mom[0], cc.init_mom[1], cc.init_mom[2]))
             f.write("{}.single_particle_weight = {}\n".format(cc.name, very_small_weight))
             f.write("{}.do_classical_radiation_reaction = 1\n".format(cc.name))

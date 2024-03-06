@@ -6,6 +6,7 @@
  */
 #include "WarpX.H"
 
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX_QED_K.H"
@@ -22,7 +23,6 @@
 #include <AMReX_GpuControl.H>
 #include <AMReX_GpuDevice.H>
 #include <AMReX_GpuElixir.H>
-#include <AMReX_GpuLaunch.H>
 #include <AMReX_GpuLaunch.H>
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_IndexType.H>
@@ -45,10 +45,11 @@ using namespace amrex;
 void
 WarpX::Hybrid_QED_Push (amrex::Vector<amrex::Real> a_dt)
 {
-    if (WarpX::do_nodal == 0) {
-        amrex::Abort("Error: The Hybrid QED method is "
-            "currently only compatible with the nodal scheme.");
-    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WarpX::grid_type == GridType::Collocated,
+        "Error: The Hybrid QED method is "
+        "currently only implemented on a collocated grid."
+    );
     for (int lev = 0; lev <= finest_level; ++lev) {
         Hybrid_QED_Push(lev, a_dt[lev]);
     }
@@ -140,15 +141,15 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, amrex::Real a_dt)
 
         // Temporary arrays for electric field, protected by Elixir on GPU
         FArrayBox tmpEx_fab(gex,1);
-        Elixir tmpEx_eli = tmpEx_fab.elixir();
+        const Elixir tmpEx_eli = tmpEx_fab.elixir();
         auto const& tmpEx = tmpEx_fab.array();
 
         FArrayBox tmpEy_fab(gey,1);
-        Elixir tmpEy_eli = tmpEy_fab.elixir();
+        const Elixir tmpEy_eli = tmpEy_fab.elixir();
         auto const& tmpEy = tmpEy_fab.array();
 
         FArrayBox tmpEz_fab(gez,1);
-        Elixir tmpEz_eli = tmpEz_fab.elixir();
+        const Elixir tmpEz_eli = tmpEz_fab.elixir();
         auto const& tmpEz = tmpEz_fab.array();
 
         // Copy electric field to temporary arrays

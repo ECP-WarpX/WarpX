@@ -1,0 +1,8 @@
+add_subdirectory(coarsen)
+add_subdirectory(math)
+#add_subdirectory(fields)
+add_subdirectory(parallelization)
+#add_subdirectory(particles)
+#add_subdirectory(profiler)
+add_subdirectory(utils)
+add_subdirectory(warn_manager)

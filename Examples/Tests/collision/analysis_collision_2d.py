@@ -12,9 +12,9 @@
 # (gaussian) distributions, but have different temperatures.
 # Relaxation occurs to bring the two temperatures to the
 # same final temperature through collisions.
-# The code was tested to be valid, more detailed results
-# were used to obtain an exponential fit with
-# coefficients a and b.
+# The coefficients a and b of the exponential fit used to validate
+# the test were obtained using the 'curve_fit' function (with initial guesses)
+# imported from scipy.optimize on the data produced by running this test case.
 # This automated test compares the results with the fit.
 # Unrelated to the collision module, we also test the plotfile
 # particle filter function in this analysis script.
@@ -51,8 +51,8 @@ mi = me * 5.0
 ## fit.
 
 # exponential fit coefficients
-a =  0.041817463099883
-b = -0.083851393560288
+a =  0.04330638981264072
+b = -0.11588277796546632
 
 last_fn = sys.argv[1]
 # Remove trailing '/' from file name, if necessary

@@ -1,7 +1,5 @@
 {
   "beam": {
-    "particle_cpu": 0.0,
-    "particle_id": 1290816.0,
     "particle_momentum_x": 5.708397145757236e-20,
     "particle_momentum_y": 5.708397145757229e-20,
     "particle_momentum_z": 7.574215683313995e-19,
@@ -20,8 +18,6 @@
     "part_per_cell": 590976.0
   },
   "plasma": {
-    "particle_cpu": 589824.0,
-    "particle_id": 185196642304.0,
     "particle_momentum_x": 0.0,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 0.0,

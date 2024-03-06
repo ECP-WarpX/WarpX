@@ -8,7 +8,6 @@
 #define PARTICLEBOUNDARIES_H_
 
 #include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXUtil.H"
 
 #include <AMReX_AmrCore.H>
 #include <AMReX_Parser.H>
@@ -28,7 +27,7 @@ struct ParticleBoundaries
     void SetBoundsY (ParticleBoundaryType bc_lo, ParticleBoundaryType bc_hi);
     void SetBoundsZ (ParticleBoundaryType bc_lo, ParticleBoundaryType bc_hi);
 
-    bool CheckAll (ParticleBoundaryType bc);
+    [[nodiscard]] bool CheckAll (ParticleBoundaryType bc) const;
 
     void BuildReflectionModelParsers ();
 

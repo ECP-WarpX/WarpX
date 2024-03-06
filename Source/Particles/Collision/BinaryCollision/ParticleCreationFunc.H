@@ -10,11 +10,11 @@
 
 #include "BinaryCollisionUtils.H"
 
+#include "Particles/Collision/BinaryCollision/NuclearFusion/TwoProductFusionInitializeMomentum.H"
 #include "Particles/Collision/BinaryCollision/NuclearFusion/ProtonBoronFusionInitializeMomentum.H"
 #include "Particles/ParticleCreation/SmartCopy.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
 #include <AMReX_DenseBins.H>
@@ -30,13 +30,15 @@
  * \brief This functor creates particles produced from a binary collision and sets their initial
  * properties (position, momentum, weight).
  */
-class ParticleCreationFunc{
+class ParticleCreationFunc
+{
     // Define shortcuts for frequently-used type names
-    using ParticleType = WarpXParticleContainer::ParticleType;
-    using ParticleTileType = WarpXParticleContainer::ParticleTileType;
-    using ParticleBins = amrex::DenseBins<ParticleType>;
-    using index_type = ParticleBins::index_type;
-    using SoaData_type = WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
+    using ParticleType = typename WarpXParticleContainer::ParticleType;
+    using ParticleTileType = typename WarpXParticleContainer::ParticleTileType;
+    using ParticleTileDataType = typename ParticleTileType::ParticleTileDataType;
+    using ParticleBins = amrex::DenseBins<ParticleTileDataType>;
+    using index_type = typename ParticleBins::index_type;
+    using SoaData_type = typename WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
 
 public:
     /**
@@ -50,7 +52,7 @@ public:
      * @param[in] collision_name the name of the collision
      * @param[in] mypc pointer to the MultiParticleContainer
      */
-    ParticleCreationFunc (const std::string collision_name, MultiParticleContainer const * const mypc);
+    ParticleCreationFunc (std::string collision_name, MultiParticleContainer const * mypc);
 
     /**
      * \brief operator() of the ParticleCreationFunc class. It creates new particles from binary
@@ -69,14 +71,9 @@ public:
      * @param[in, out] soa_1 struct of array data of the first colliding particle species
      * @param[in, out] soa_2 struct of array data of the second colliding particle species
      * @param[out] tile_products array containing tile data of the product particles.
-     * @param[out] particle_ptr_1 pointer to data of the first colliding particle species. Is
-     *             needed to set the id of a particle to -1 in order to delete it when its weight
-     *             reaches 0.
-     * @param[out] particle_ptr_2 pointer to data of the second colliding particle species. Is
-     *             needed to set the id of a particle to -1 in order to delete it when its weight
-     *             reaches 0.
      * @param[in] m1 mass of the first colliding particle species
      * @param[in] m2 mass of the second colliding particle species
+     * @param[in] products_mass array storing the mass of product particles
      * @param[in] p_mask a mask that is 1 if binary collision has resulted in particle creation
      *            event, 0 otherwise.
      * @param[in] products_np array storing the number of existing product particles in that tile
@@ -98,10 +95,11 @@ public:
     AMREX_INLINE
     amrex::Vector<int> operator() (
                     const index_type& n_total_pairs,
-                    const SoaData_type soa_1, const SoaData_type soa_2,
+                    const SoaData_type& soa_1, const SoaData_type& soa_2,
+                    const amrex::Vector<WarpXParticleContainer*>& pc_products,
                     ParticleTileType** AMREX_RESTRICT tile_products,
-                    ParticleType* particle_ptr_1, ParticleType*  particle_ptr_2,
                     const amrex::ParticleReal& m1, const amrex::ParticleReal& m2,
+                    const amrex::Vector<amrex::ParticleReal>& products_mass,
                     const index_type* AMREX_RESTRICT p_mask,
                     const amrex::Vector<index_type>& products_np,
                     const SmartCopy* AMREX_RESTRICT copy_species1,
@@ -111,7 +109,9 @@ public:
                     const amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight
                     ) const
     {
-        if (n_total_pairs == 0) return amrex::Vector<int>(m_num_product_species, 0);
+        using namespace amrex::literals;
+
+        if (n_total_pairs == 0) { return amrex::Vector<int>(m_num_product_species, 0); }
 
         // Compute offset array and allocate memory for the produced species
         amrex::Gpu::DeviceVector<index_type> offsets(n_total_pairs);
@@ -126,12 +126,14 @@ public:
             // one electron, we create two electrons, one at the position of each particle that
             // collided. This allows for exact charge conservation.
             const index_type num_added = total * m_num_products_host[i] * 2;
-            num_added_vec[i] = num_added;
+            num_added_vec[i] = static_cast<int>(num_added);
             tile_products[i]->resize(products_np[i] + num_added);
         }
 
         amrex::ParticleReal* AMREX_RESTRICT w1 = soa_1.m_rdata[PIdx::w];
         amrex::ParticleReal* AMREX_RESTRICT w2 = soa_2.m_rdata[PIdx::w];
+        uint64_t* AMREX_RESTRICT idcpu1 = soa_1.m_idcpu;
+        uint64_t* AMREX_RESTRICT idcpu2 = soa_2.m_idcpu;
 
         // Create necessary GPU vectors, that will be used in the kernel below
         amrex::Vector<SoaData_type> soa_products;
@@ -142,18 +144,24 @@ public:
 #ifdef AMREX_USE_GPU
         amrex::Gpu::DeviceVector<SoaData_type> device_soa_products(m_num_product_species);
         amrex::Gpu::DeviceVector<index_type> device_products_np(m_num_product_species);
+        amrex::Gpu::DeviceVector<amrex::ParticleReal> device_products_mass(m_num_product_species);
         amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, soa_products.begin(),
                               soa_products.end(),
                               device_soa_products.begin());
         amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, products_np.begin(),
                               products_np.end(),
                               device_products_np.begin());
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, products_mass.begin(),
+                              products_mass.end(),
+                              device_products_mass.begin());
         amrex::Gpu::streamSynchronize();
         SoaData_type* AMREX_RESTRICT soa_products_data = device_soa_products.data();
         const index_type* AMREX_RESTRICT products_np_data = device_products_np.data();
+        const amrex::ParticleReal* AMREX_RESTRICT products_mass_data = device_products_mass.data();
 #else
         SoaData_type* AMREX_RESTRICT soa_products_data = soa_products.data();
         const index_type* AMREX_RESTRICT products_np_data = products_np.data();
+        const amrex::ParticleReal* AMREX_RESTRICT products_mass_data = products_mass.data();
 #endif
 
         const int t_num_product_species = m_num_product_species;
@@ -174,11 +182,11 @@ public:
                         const auto product_index = products_np_data[j] +
                                                    2*(p_offsets[i]*p_num_products_device[j] + k);
                         // Create product particle at position of particle 1
-                        copy_species1[j](soa_products_data[j], soa_1, p_pair_indices_1[i],
-                                      product_index, engine);
+                        copy_species1[j](soa_products_data[j], soa_1, static_cast<int>(p_pair_indices_1[i]),
+                                      static_cast<int>(product_index), engine);
                         // Create another product particle at position of particle 2
-                        copy_species2[j](soa_products_data[j], soa_2, p_pair_indices_2[i],
-                                      product_index + 1, engine);
+                        copy_species2[j](soa_products_data[j], soa_2, static_cast<int>(p_pair_indices_2[i]),
+                                      static_cast<int>(product_index + 1), engine);
 
                         // Set the weight of the new particles to p_pair_reaction_weight[i]/2
                         soa_products_data[j].m_rdata[PIdx::w][product_index] =
@@ -194,21 +202,36 @@ public:
                 amrex::Gpu::Atomic::AddNoRet(&w2[p_pair_indices_2[i]],
                                                 -p_pair_reaction_weight[i]);
 
+                // Note: Particle::atomicSetID should also be provided as a standalone helper function in AMReX
+                //       to replace the following lambda.
+                auto const atomicSetIdMinus = [] AMREX_GPU_DEVICE (uint64_t & idcpu)
+                {
+#if defined(AMREX_USE_OMP)
+#pragma omp atomic write
+                    idcpu = amrex::ParticleIdCpus::Invalid;
+#else
+                    amrex::Gpu::Atomic::Exch(
+                        (unsigned long long *)&idcpu,
+                        (unsigned long long)amrex::ParticleIdCpus::Invalid
+                    );
+#endif
+                };
+
                 // If the colliding particle weight decreases to zero, remove particle by
                 // setting its id to -1
-                constexpr amrex::Long minus_one_long = -1;
                 if (w1[p_pair_indices_1[i]] <= amrex::ParticleReal(0.))
                 {
-                    particle_ptr_1[p_pair_indices_1[i]].atomicSetID(minus_one_long);
+                    atomicSetIdMinus(idcpu1[p_pair_indices_1[i]]);
+
                 }
                 if (w2[p_pair_indices_2[i]] <= amrex::ParticleReal(0.))
                 {
-                    particle_ptr_2[p_pair_indices_2[i]].atomicSetID(minus_one_long);
+                    atomicSetIdMinus(idcpu2[p_pair_indices_2[i]]);
                 }
 
                 // Initialize the product particles' momentum, using a function depending on the
                 // specific collision type
-                if (t_collision_type == CollisionType::ProtonBoronFusion)
+                if (t_collision_type == CollisionType::ProtonBoronToAlphasFusion)
                 {
                     const index_type product_start_index = products_np_data[0] + 2*p_offsets[i]*
                                                            p_num_products_device[0];
@@ -216,8 +239,51 @@ public:
                                                         p_pair_indices_1[i], p_pair_indices_2[i],
                                                         product_start_index, m1, m2, engine);
                 }
+                else if ((t_collision_type == CollisionType::DeuteriumTritiumToNeutronHeliumFusion)
+                      || (t_collision_type == CollisionType::DeuteriumDeuteriumToProtonTritiumFusion)
+                      || (t_collision_type == CollisionType::DeuteriumDeuteriumToNeutronHeliumFusion))
+                {
+                    amrex::ParticleReal fusion_energy = 0.0_prt;
+                    if (t_collision_type == CollisionType::DeuteriumTritiumToNeutronHeliumFusion) {
+                        fusion_energy = 17.5893e6_prt * PhysConst::q_e;
+                    }
+                    else if (t_collision_type == CollisionType::DeuteriumDeuteriumToProtonTritiumFusion) {
+                        fusion_energy = 4.032667e6_prt * PhysConst::q_e;
+                    }
+                    else if (t_collision_type == CollisionType::DeuteriumDeuteriumToNeutronHeliumFusion) {
+                        fusion_energy = 3.268911e6_prt * PhysConst::q_e;
+                    }
+                    TwoProductFusionInitializeMomentum(soa_1, soa_2,
+                        soa_products_data[0], soa_products_data[1],
+                        p_pair_indices_1[i], p_pair_indices_2[i],
+                        products_np_data[0] + 2*p_offsets[i]*p_num_products_device[0],
+                        products_np_data[1] + 2*p_offsets[i]*p_num_products_device[1],
+                        m1, m2, products_mass_data[0], products_mass_data[1], fusion_energy, engine);
+                }
+
             }
         });
+
+        // Initialize the user runtime components
+        for (int i = 0; i < m_num_product_species; i++)
+        {
+            const auto start_index = int(products_np[i]);
+            const auto stop_index  = int(products_np[i] + num_added_vec[i]);
+            ParticleCreation::DefaultInitializeRuntimeAttributes(*tile_products[i],
+                                       0, 0,
+                                       pc_products[i]->getUserRealAttribs(), pc_products[i]->getUserIntAttribs(),
+                                       pc_products[i]->getParticleComps(), pc_products[i]->getParticleiComps(),
+                                       pc_products[i]->getUserRealAttribParser(),
+                                       pc_products[i]->getUserIntAttribParser(),
+#ifdef WARPX_QED
+                                       false, // do not initialize QED quantities, since they were initialized
+                                              // when calling the SmartCopy functors
+                                       pc_products[i]->get_breit_wheeler_engine_ptr(),
+                                       pc_products[i]->get_quantum_sync_engine_ptr(),
+#endif
+                                       pc_products[i]->getIonizationInitialLevel(),
+                                       start_index, stop_index);
+        }
 
         amrex::Gpu::synchronize();
 
@@ -240,12 +306,14 @@ private:
  * \brief This class does nothing and is used as second template parameter for binary collisions
  * that do not create particles.
  */
-class NoParticleCreationFunc{
-    using ParticleType = WarpXParticleContainer::ParticleType;
-    using ParticleTileType = WarpXParticleContainer::ParticleTileType;
-    using ParticleBins = amrex::DenseBins<ParticleType>;
-    using index_type = ParticleBins::index_type;
-    using SoaData_type = WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
+class NoParticleCreationFunc
+{
+    using ParticleType = typename WarpXParticleContainer::ParticleType;
+    using ParticleTileType = typename WarpXParticleContainer::ParticleTileType;
+    using ParticleTileDataType = typename ParticleTileType::ParticleTileDataType;
+    using ParticleBins = amrex::DenseBins<ParticleTileDataType>;
+    using index_type = typename ParticleBins::index_type;
+    using SoaData_type = typename WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
 
 public:
     NoParticleCreationFunc () = default;
@@ -256,17 +324,18 @@ public:
     AMREX_INLINE
     amrex::Vector<int> operator() (
                     const index_type& /*n_total_pairs*/,
-                    const SoaData_type /*soa_1*/, const SoaData_type /*soa_2*/,
+                    const SoaData_type& /*soa_1*/, const SoaData_type& /*soa_2*/,
+                    amrex::Vector<WarpXParticleContainer*>& /*pc_products*/,
                     ParticleTileType** /*tile_products*/,
-                    ParticleType* /*particle_ptr_1*/, ParticleType* /*particle_ptr_2*/,
                     const amrex::ParticleReal& /*m1*/, const amrex::ParticleReal& /*m2*/,
+                    const amrex::Vector<amrex::ParticleReal>& /*products_mass*/,
                     const index_type* /*p_mask*/, const amrex::Vector<index_type>& /*products_np*/,
                     const SmartCopy* /*copy_species1*/, const SmartCopy* /*copy_species2*/,
                     const index_type* /*p_pair_indices_1*/, const index_type* /*p_pair_indices_2*/,
                     const amrex::ParticleReal* /*p_pair_reaction_weight*/
                     ) const
     {
-        return amrex::Vector<int>();
+        return {};
     }
 };
 
