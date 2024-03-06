@@ -58,8 +58,8 @@ public:
     ThetaImplicitEM() = default;
 
     ~ThetaImplicitEM() override {
-        // If we don't call the function below, then we get the
-        // following error message after the simulation finishes:
+        // If the function below is not called, then the following
+        // error message occurs after the simulation finishes:
         // malloc_consolidate(): unaligned fastbin chunk detected
         WarpXSolverVec::clearDotMask();
     }

@@ -39,7 +39,7 @@
  *
  *  The size of the Vector is the number of amr levels. Hardcoded for 1 right now. The
  *  size of the array is the number of MultiFabs. It is hardcoded for 3 right now as it
- *  is only used for the electric field in the electromagnetic implicit time solver. In
+ *  is only used for the electric field in the implicit electromagnetic time solvers. In
  *  the future, the array size can be made a template parameter so that this class can
  *  be used for other solver vectors, such as electrostatic (array size 1) or Darwin (array size 4).
  */
@@ -81,8 +81,8 @@ public:
         const int lev = 0;
         for (int n=0; n<3; n++) {
             const amrex::MultiFab& mf_model = *a_solver_vec[lev][n];
-            m_field_vec[lev][n] = std::make_unique<amrex::MultiFab>(mf_model.boxArray(), mf_model.DistributionMap(),
-                                                                      mf_model.nComp(), amrex::IntVect::TheZeroVector() );
+            m_field_vec[lev][n] = std::make_unique<amrex::MultiFab>( mf_model.boxArray(), mf_model.DistributionMap(),
+                                                                     mf_model.nComp(), amrex::IntVect::TheZeroVector() );
         }
         m_is_defined = true;
     }
@@ -226,7 +226,7 @@ public:
     [[nodiscard]] const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& getVec() const {return m_field_vec;}
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& getVec() {return m_field_vec;}
 
-    // clearDotMask() must be called by the highest class that owns WarpXSovlerVec()
+    // clearDotMask() must be called by the highest class that owns WarpXSolverVec()
     // after it is done being used ( typically in the destructor ) to avoid the
     // following error message after the simulation finishes:
     // malloc_consolidate(): unaligned fastbin chunk detected
@@ -248,10 +248,10 @@ private:
 template <typename T>
 WarpXSolverVec operator* (T a_a, const WarpXSolverVec& a_vec)
 {
-  WarpXSolverVec retval(a_vec);
-  retval = a_vec;
-  retval.scale(a_a);
-  return retval;
+    WarpXSolverVec retval(a_vec);
+    retval = a_vec;
+    retval.scale(a_a);
+    return retval;
 }
 
 #endif

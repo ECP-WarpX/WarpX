@@ -124,7 +124,7 @@ void ThetaImplicitEM::OneStep ( const amrex::Real  a_time,
     // Particles will be advanced to t_{n+1/2}
     m_nlsolver->Solve( m_E, m_Eold, theta_time, a_dt );
 
-    // update WarpX owned Efield_fp and Bfield_fp to t_{n+theta}
+    // Update WarpX owned Efield_fp and Bfield_fp to t_{n+theta}
     UpdateWarpXState( m_E, theta_time, a_dt );
 
     // Update field boundary probes prior to updating fields to t_{n+1}

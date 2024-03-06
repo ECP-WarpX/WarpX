@@ -32,7 +32,8 @@
  *  using a non-standard definition for the magnetic field energy. The advantage of
  *  this method over the exactly energy-conserving theta-implicit EM method is that
  *  light wave dispersion is captured much better. However, the CFL condition for light
- *  waves has to be satisifed for numerical stability.
+ *  waves has to be satisifed for numerical stability (and for the modified definition
+ *  of the magnetic field energy to be well-posed).
  *
  *  See G. Chen, L. Chacon, L. Yin, B.J. Albright, D.J. Stark, R.F. Bird,
  *  "A semi-implicit energy- and charge-conserving particle-in-cell algorithm for the
@@ -46,8 +47,8 @@ public:
     SemiImplicitEM() = default;
 
     ~SemiImplicitEM() override {
-        // If we don't call the function below, then we get the
-        // following error message after the simulation finishes:
+        // If the function below is not called, then the following
+        // error message occurs after the simulation finishes:
         // malloc_consolidate(): unaligned fastbin chunk detected
         WarpXSolverVec::clearDotMask();
     }

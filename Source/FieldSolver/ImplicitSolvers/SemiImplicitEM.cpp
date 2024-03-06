@@ -100,7 +100,7 @@ void SemiImplicitEM::OneStep ( amrex::Real  a_time,
     // Particles will be advanced to t_{n+1/2}
     m_nlsolver->Solve( m_E, m_Eold, half_time, a_dt );
 
-    // update WarpX owned Efield_fp and Bfield_fp to t_{n+1/2}
+    // Update WarpX owned Efield_fp and Bfield_fp to t_{n+1/2}
     UpdateWarpXState( m_E, half_time, a_dt );
 
     // Update field boundary probes prior to updating fields to t_{n+1}
