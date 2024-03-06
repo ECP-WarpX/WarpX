@@ -752,8 +752,9 @@ WarpX::ReadParameters ()
 
 #if defined(AMREX_USE_EB) && defined(WARPX_DIM_RZ)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        electromagnetic_solver_id==ElectromagneticSolverAlgo::None,
-        "Currently, the embedded boundary in RZ only works for electrostatic solvers (or no solver).");
+        electromagnetic_solver_id==ElectromagneticSolverAlgo::None
+        || electromagnetic_solver_id==ElectromagneticSolverAlgo::HybridPIC,
+        "Currently, the embedded boundary in RZ only works for electrostatic solvers, the Ohm's law solver or with no solver installed.");
 #endif
 
         if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
