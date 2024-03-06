@@ -33,12 +33,11 @@ def evaluate_E(x, y, z):
 
 fn = sys.argv[1]
 
-path=os.path.join(sys.argv[1], 'diags', 'diag2')
+path=os.path.join('diags', 'diag2')
 ts = OpenPMDTimeSeries(path)
 
 Ex, info = ts.get_field(field='E', coord='x', iteration=0, plot=False)
 Ey, info = ts.get_field(field='E', coord='y', iteration=0, plot=False)
-Ez, info = ts.get_field(field='E', coord='z', iteration=0, plot=False)
 
 grid_x = info.x[1:-1]
 grid_y = info.y[1:-1]
