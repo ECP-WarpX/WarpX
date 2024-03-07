@@ -348,6 +348,8 @@ public:
     static bool do_multi_J;
     static int do_multi_J_n_depositions;
 
+    static int collisions_placement;
+
     static bool do_device_synchronize;
     static bool safe_guard_cells;
 

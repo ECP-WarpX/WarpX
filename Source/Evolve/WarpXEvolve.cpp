@@ -173,11 +173,11 @@ WarpX::Evolve (int numsteps)
         // Run multi-physics modules:
         // ionization, Coulomb collisions, QED
         doFieldIonization();
-        /*
+        if (collisions_placement == 0){
         ExecutePythonCallback("beforecollisions");
         mypc->doCollisions( cur_time, dt[0] );
         ExecutePythonCallback("aftercollisions");
-        */
+        }
 #ifdef WARPX_QED
         doQEDEvents();
         mypc->doQEDSchwinger();
@@ -199,9 +199,11 @@ WarpX::Evolve (int numsteps)
             // particles, deposition and calculation of fields done further below
             const bool skip_deposition = true;
             PushParticlesandDeposit1(cur_time, skip_deposition);
-            ExecutePythonCallback("beforecollisions");
-            mypc->doCollisions( cur_time, dt[0] );
-            ExecutePythonCallback("aftercollisions");
+            if (collisions_placement == 1){
+                ExecutePythonCallback("beforecollisions");
+                mypc->doCollisions( cur_time, dt[0] );
+                ExecutePythonCallback("aftercollisions");
+            }
             PushParticlesandDeposit2(cur_time, skip_deposition);
         }
         // Electromagnetic case: multi-J algorithm
@@ -214,9 +216,11 @@ WarpX::Evolve (int numsteps)
         {
             /*OneStep_nosub(cur_time);*/
             OneStep_nosub1(cur_time);
-            ExecutePythonCallback("beforecollisions");
-            mypc->doCollisions( cur_time, dt[0] );
-            ExecutePythonCallback("aftercollisions");
+            if (collisions_placement == 1){
+                ExecutePythonCallback("beforecollisions");
+                mypc->doCollisions( cur_time, dt[0] );
+                ExecutePythonCallback("aftercollisions");
+            }
             OneStep_nosub2(cur_time);
             // E: guard cells are up-to-date
             // B: guard cells are NOT up-to-date

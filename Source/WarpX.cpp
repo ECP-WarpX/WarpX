@@ -200,6 +200,8 @@ bool WarpX::do_multi_J = false;
 int WarpX::do_multi_J_n_depositions;
 bool WarpX::safe_guard_cells = false;
 
+int WarpX::collisions_placement = 1;
+
 std::map<std::string, amrex::MultiFab *> WarpX::multifab_map;
 std::map<std::string, amrex::iMultiFab *> WarpX::imultifab_map;
 
@@ -673,6 +675,7 @@ WarpX::ReadParameters ()
             utils::parser::getWithParser(
                 pp_warpx, "do_multi_J_n_depositions", do_multi_J_n_depositions);
         }
+        pp_warpx.query("collisions_placement", collisions_placement);
         pp_warpx.query("use_hybrid_QED", use_hybrid_QED);
         pp_warpx.query("safe_guard_cells", safe_guard_cells);
         std::vector<std::string> override_sync_intervals_string_vec = {"1"};
