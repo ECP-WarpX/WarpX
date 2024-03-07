@@ -105,23 +105,13 @@ ExternalFieldParams::ExternalFieldParams(const amrex::ParmParse& pp_warpx)
         std::string str_By_ext_grid_function;
         std::string str_Bz_ext_grid_function;
 
-#ifdef WARPX_DIM_RZ
-        std::stringstream warnMsg;
-        warnMsg << "Parser for external B (r and theta) fields does not work with RZ\n"
-            << "The initial Br and Bt fields are currently hardcoded to 0.\n"
-            << "The initial Bz field should only be a function of z.\n";
-        ablastr::warn_manager::WMRecordWarning(
-          "Inputs", warnMsg.str(), ablastr::warn_manager::WarnPriority::high);
-        str_Bx_ext_grid_function = "0";
-        str_By_ext_grid_function = "0";
-#else
         utils::parser::Store_parserString(pp_warpx, "Bx_external_grid_function(x,y,z)",
           str_Bx_ext_grid_function);
         utils::parser::Store_parserString(pp_warpx, "By_external_grid_function(x,y,z)",
           str_By_ext_grid_function);
-#endif
         utils::parser::Store_parserString(pp_warpx, "Bz_external_grid_function(x,y,z)",
             str_Bz_ext_grid_function);
+        // TODO: add warning message in RZ to say that Bx, By correspond to Br, Bt
 
         Bxfield_parser = std::make_unique<amrex::Parser>(
             utils::parser::makeParser(str_Bx_ext_grid_function,{"x","y","z"}));
@@ -142,11 +132,6 @@ ExternalFieldParams::ExternalFieldParams(const amrex::ParmParse& pp_warpx)
     // provided in the input file.
     if (E_ext_grid_type == ExternalFieldType::parse_ext_grid_function) {
 
-#ifdef WARPX_DIM_RZ
-        WARPX_ABORT_WITH_MESSAGE(
-            "E parser for external fields does not work with RZ -- TO DO");
-#endif
-
         //! Strings storing parser function to initialize the components of the electric field on the grid
         std::string str_Ex_ext_grid_function;
         std::string str_Ey_ext_grid_function;
@@ -158,6 +143,7 @@ ExternalFieldParams::ExternalFieldParams(const amrex::ParmParse& pp_warpx)
            str_Ey_ext_grid_function);
         utils::parser::Store_parserString(pp_warpx, "Ez_external_grid_function(x,y,z)",
            str_Ez_ext_grid_function);
+        // TODO: add warning message in RZ to say that Ex, Ey correspond to Er, Et
 
         Exfield_parser = std::make_unique<amrex::Parser>(
            utils::parser::makeParser(str_Ex_ext_grid_function,{"x","y","z"}));

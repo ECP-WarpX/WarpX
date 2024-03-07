@@ -26,12 +26,11 @@ my_constants.p = 1
 my_constants.Lx = 1
 my_constants.Lz = 1
 
-warpx.Bx_external_grid_function(x,y,z) = - (p * pi * Lx) / (m * 2 * Lz) * jn(1,
-m * 2 / Lx * x) * cos(p * pi / Lz * (z - Lz / 2))
+warpx.Bx_external_grid_function(x,y,z) = - (p * pi * Lx) / (m * 2 * Lz) * jn(1, m * 2 / Lx * x) * cos(p * pi / Lz * (z - Lz / 2))
 warpx.By_external_grid_function(x,y,z) = 0
 warpx.Bz_external_grid_function(x,y,z) = jn(0,m * 2 / Lx * x) * sin(p * pi / Lz * (z - Lz / 2))
 
 diagnostics.diags_names = diag1
 diag1.intervals = 1
 diag1.diag_type = Full
-diag1.fields_to_plot = Ex Ey Ez Bx By Bz
+diag1.fields_to_plot = Er Et Ez Br Bt Bz
