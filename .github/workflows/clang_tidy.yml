@@ -1,14 +1,17 @@
-name: 🧹 clang-tidy-2D
+name: 🧹 clang-tidy
 
 on: [push, pull_request]
 
 concurrency:
-  group: ${{ github.ref }}-${{ github.head_ref }}-clangtidy-2D
+  group: ${{ github.ref }}-${{ github.head_ref }}-clangtidy
   cancel-in-progress: true
 
 jobs:
   run_clang_tidy:
-    name: clang-tidy-2D
+    strategy:
+      matrix:
+        dim: [1, 2, RZ, 3]
+    name: clang-tidy-${{ matrix.dim }}D
     runs-on: ubuntu-22.04
     if: github.event.pull_request.draft == false
     steps:
@@ -35,19 +38,19 @@ jobs:
         export CXX=$(which clang++-15)
         export CC=$(which clang-15)
 
-        cmake -S . -B build_clang_tidy_2D \
-          -DCMAKE_VERBOSE_MAKEFILE=ON     \
-          -DWarpX_DIMS="2"                \
-          -DWarpX_MPI=ON                  \
-          -DWarpX_COMPUTE=OMP             \
-          -DWarpX_PSATD=ON                \
-          -DWarpX_QED=ON                  \
-          -DWarpX_QED_TABLE_GEN=ON        \
-          -DWarpX_OPENPMD=ON              \
-          -DWarpX_PRECISION=SINGLE        \
+        cmake -S . -B build_clang_tidy      \
+          -DCMAKE_VERBOSE_MAKEFILE=ON       \
+          -DWarpX_DIMS="${{ matrix.dim }}"  \
+          -DWarpX_MPI=ON                    \
+          -DWarpX_COMPUTE=OMP               \
+          -DWarpX_PSATD=ON                  \
+          -DWarpX_QED=ON                    \
+          -DWarpX_QED_TABLE_GEN=ON          \
+          -DWarpX_OPENPMD=ON                \
+          -DWarpX_PRECISION=SINGLE          \
           -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
-        cmake --build build_clang_tidy_2D -j 4
+        cmake --build build_clang_tidy -j 4
 
         ${{github.workspace}}/.github/workflows/source/makeMakefileForClangTidy.py --input ${{github.workspace}}/ccache.log.txt
         make -j4 --keep-going -f clang-tidy-ccache-misses.mak \
