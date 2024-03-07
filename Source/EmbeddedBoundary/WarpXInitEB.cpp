@@ -114,16 +114,15 @@ WarpX::InitEB ()
 void
 WarpX::ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
                            const amrex::EBFArrayBoxFactory& eb_fact) {
-#ifndef WARPX_DIM_RZ
     BL_PROFILE("ComputeEdgeLengths");
 
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
     auto const &edge_centroid = eb_fact.getEdgeCent();
-#ifdef WARPX_DIM_XZ
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     edge_lengths[1]->setVal(0.);
 #endif
     for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi){
-#ifdef WARPX_DIM_XZ
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         for (int idim = 0; idim < 3; ++idim){
             if(idim == 1) continue;
 #elif defined(WARPX_DIM_3D)
@@ -148,7 +147,7 @@ WarpX::ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ed
                     edge_lengths_dim(i, j, k) = 0.;
                 });
             } else {
-#ifdef WARPX_DIM_XZ
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 int idim_amrex = idim;
                 if(idim == 2) idim_amrex = 1;
                 auto const &edge_cent = edge_centroid[idim_amrex]->const_array(mfi);
@@ -175,7 +174,6 @@ WarpX::ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ed
             }
         }
     }
-#endif
 }
 
 
@@ -246,11 +244,10 @@ WarpX::ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face
 void
 WarpX::ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
                    const std::array<amrex::Real,3>& cell_size) {
-#ifndef WARPX_DIM_RZ
     BL_PROFILE("ScaleEdges");
 
     for (amrex::MFIter mfi(*edge_lengths[0]); mfi.isValid(); ++mfi) {
-#ifdef WARPX_DIM_XZ
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         for (int idim = 0; idim < 3; ++idim){
             if(idim == 1) continue;
 #elif defined(WARPX_DIM_3D)
@@ -267,7 +264,6 @@ WarpX::ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengt
             });
         }
     }
-#endif
 }
 
 void

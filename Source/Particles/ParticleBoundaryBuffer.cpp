@@ -1,5 +1,5 @@
 /* Copyright 2021 Andrew Myers
- *
+ * modified by Remi Lehe, Eya Dammak 2023
  * This file is part of WarpX.
  *
  * License: BSD-3-Clause-LBNL
@@ -22,6 +22,7 @@
 #include <AMReX_Tuple.H>
 #include <AMReX.H>
 #include <AMReX_Algorithm.H>
+#include <AMReX_RealVect.H>
 using namespace amrex::literals;
 
 struct IsOutsideDomainBoundary {
@@ -164,8 +165,12 @@ struct FindEmbeddedBoundaryIntersection {
 struct CopyAndTimestamp {
     int m_step_index;
     int m_delta_index;
+    int m_normal_index;
     int m_step;
     const amrex::Real m_dt;
+    int m_idim;
+    int m_iside;
+
 
     template <typename DstData, typename SrcData>
     AMREX_GPU_HOST_DEVICE
@@ -182,8 +187,16 @@ struct CopyAndTimestamp {
         for (int j = 0; j < src.m_num_runtime_int; ++j) {
             dst.m_runtime_idata[j][dst_i] = src.m_runtime_idata[j][src_i];
         }
+
         dst.m_runtime_idata[m_step_index][dst_i] = m_step;
         dst.m_runtime_rdata[m_delta_index][dst_i] = 0._rt; //delta_fraction is initialized to zero
+
+        //calculation of the normal to the boundary
+        std::array<double, 3> n = {0.0, 0.0, 0.0};
+        n[m_idim]=1-2*m_iside;
+        dst.m_runtime_rdata[m_normal_index][dst_i]= n[0];
+        dst.m_runtime_rdata[m_normal_index+1][dst_i]= n[1];
+        dst.m_runtime_rdata[m_normal_index+2][dst_i]= n[2];
     }
 };
 
@@ -351,7 +364,6 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
     const amrex::Geometry& geom = warpx_instance.Geom(0);
     auto plo = geom.ProbLoArray();
     auto phi = geom.ProbHiArray();
-
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
     {
         if (geom.isPeriodic(idim)) { continue; }
@@ -367,6 +379,9 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                     buffer[i] = pc.make_alike<amrex::PinnedArenaAllocator>();
                     buffer[i].AddIntComp("stepScraped", false);
                     buffer[i].AddRealComp("deltaTimeScraped", false);
+                    buffer[i].AddRealComp("nx", false);
+                    buffer[i].AddRealComp("ny", false);
+                    buffer[i].AddRealComp("nz", false);
                 }
                 auto& species_buffer = buffer[i];
                 for (int lev = 0; lev < pc.numLevels(); ++lev)
@@ -412,11 +427,11 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                           const int step_scraped_index = string_to_index_intcomp.at("stepScraped");
                           auto string_to_index_realcomp = buffer[i].getParticleRuntimeComps();
                           const int delta_index = string_to_index_realcomp.at("deltaTimeScraped");
+                          const int normal_index = string_to_index_realcomp.at("nx");
                           const int step = warpx_instance.getistep(0);
-
                           amrex::filterAndTransformParticles(ptile_buffer, ptile,
                                                              predicate,
-                                                             CopyAndTimestamp{step_scraped_index, delta_index, step, dt},
+                                                             CopyAndTimestamp{step_scraped_index, delta_index, normal_index, step, dt, idim, iside},
                                                              0, dst_index);
                         }
                     }
