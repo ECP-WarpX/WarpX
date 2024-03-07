@@ -517,6 +517,12 @@ class _MultiFABWrapper(object):
             if not isinstance(ic   , slice) or len(global_shape) < 4: global_shape[3:3] = [1]
             value3d.shape = global_shape
 
+            if libwarpx.libwarpx_so.Config.have_gpu:
+                # check if cupy is available for use
+                xp, cupy_status = load_cupy()
+                if cupy_status is not None:
+                    libwarpx.amr.Print(cupy_status)
+
         starts = [ixstart, iystart, izstart]
         stops = [ixstop, iystop, izstop]
         for mfi in self.mf:
@@ -526,11 +532,8 @@ class _MultiFABWrapper(object):
                 if isinstance(value, np.ndarray):
                     slice_value = value3d[global_slices]
                     if libwarpx.libwarpx_so.Config.have_gpu:
-                        xp, cupy_status = load_cupy()
                         # Copy data from host to device
                         slice_value = xp.asarray(slice_value)
-                        if cupy_status is not None:
-                            libwarpx.amr.Print(cupy_status)
                     mf_arr[block_slices] = slice_value
                 else:
                     mf_arr[block_slices] = value
