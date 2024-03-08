@@ -1046,11 +1046,11 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs (const amrex::Geo
                     "when using the electrostatic multigrid solver"
                 );
             }
-        
 
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE( 
+
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 (WarpX::field_boundary_lo[idim] != FieldBoundaryType::Open &&
-                WarpX::field_boundary_hi[idim] != FieldBoundaryType::Open && 
+                WarpX::field_boundary_hi[idim] != FieldBoundaryType::Open &&
                 WarpX::field_boundary_lo[idim] != FieldBoundaryType::PML &&
                 WarpX::field_boundary_hi[idim] != FieldBoundaryType::PML) ,
                 "Open or PML field boundary conditions only work with "
@@ -1061,7 +1061,7 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs (const amrex::Geo
         } else if (WarpX::poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction){
 
             if (electrostatic_solver_id != ElectrostaticSolverAlgo::None){
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE( 
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                     (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Open &&
                      WarpX::field_boundary_hi[idim] == FieldBoundaryType::Open),
                     "The fft-based Poisson solver only works with field open boundary conditions "
@@ -1069,13 +1069,13 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs (const amrex::Geo
                 )
             }
             else{ // if electromagnetic mode on with species.initialize_self_fields = 1
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE( 
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                     (WarpX::field_boundary_lo[idim] == FieldBoundaryType::PML &&
                      WarpX::field_boundary_hi[idim] == FieldBoundaryType::PML),
                     "The fft-based Poisson solver only works with field pml boundary conditions "
                     "to initialize the species self-fields in electromagnetic mode."
                 )
-            } 
+            }
 
         }
     }
