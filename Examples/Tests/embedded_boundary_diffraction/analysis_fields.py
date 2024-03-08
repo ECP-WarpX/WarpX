@@ -10,8 +10,8 @@ import os
 import sys
 
 import numpy as np
-from scipy.ndimage import gaussian_filter1d
 from openpmd_viewer import OpenPMDTimeSeries
+from scipy.ndimage import gaussian_filter1d
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
