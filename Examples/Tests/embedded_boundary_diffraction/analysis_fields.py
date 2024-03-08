@@ -11,18 +11,17 @@ import re
 import sys
 
 import numpy as np
-from scipy.constants import c, mu_0, pi
-import yt
+from scipy.ndimage import gaussian_filter1d
+from openpmd_viewer import OpenPMDTimeSeries
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
-ts = OpenPMDTimeSeries('./diags/diag1/')
+ts = OpenPMDTimeSeries('./EmbeddedBoundaryDiffraction_plt/')
 
 # Extract the intensity as a function of r and z
 Ex, info = ts.get_field('E', 'x', iteration=300)
-I = gaussian_filter1d(Ex**2, sigma=5, axis=0)
-plt.imshow( I, extent=info.imshow_extent, origin='lower')
+I = gaussian_filter1d(Ex**2, sigma=5, axis=0) # Extract intensity by averaging E^2 over wavelength
 irmax = np.argmax( I, axis=-1)
 
 # Find the radius of the first minimum, as a function of z
@@ -37,5 +36,7 @@ r = np.array([ r_first_minimum(iz) for iz in range(len(info.z)) ])
 theta_diffraction = np.arcsin(1.22*0.1/0.4)/2
 assert np.all( abs(r[50:] - theta_diffraction*info.z[50:]) < 0.03 )
 
+# Open the right plot file
+filename = sys.argv[1]
 test_name = os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, filename, )
+checksumAPI.evaluate_checksum(test_name, filename, output_format='openpmd')
