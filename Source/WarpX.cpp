@@ -782,6 +782,15 @@ WarpX::ReadParameters ()
         potential_specified |= pp_warpx.query("eb_potential(x,y,z,t)", m_poisson_boundary_handler.potential_eb_str);
 #endif
         m_boundary_potential_specified = potential_specified;
+        if (potential_specified & (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)) {
+            ablastr::warn_manager::WMRecordWarning(
+                "Algorithms",
+                "The input script specifies the electric potential (phi) at the boundary, but \
+                also uses the hybrid PIC solver based on Ohm’s law. When using this solver, the \
+                electric potential does not have any impact on the simulation.",
+                ablastr::warn_manager::WarnPriority::low);
+        }
+
         m_poisson_boundary_handler.buildParsers();
 #ifdef WARPX_DIM_RZ
         pp_boundary.query("verboncoeur_axis_correction", verboncoeur_axis_correction);
