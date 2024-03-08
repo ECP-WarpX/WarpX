@@ -10,7 +10,7 @@ Git workflow
 ------------
 
 The WarpX project uses `git <https://git-scm.com>`_ for version control.
-If you are new to git, you can follow `this tutorial <https://swcarpentry.github.io/git-novice/>`_.
+If you are new to git, you can follow `this tutorial <https://swcarpentry.github.io/git-novice/>`__.
 
 Configure your GitHub Account & Development Machine
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
