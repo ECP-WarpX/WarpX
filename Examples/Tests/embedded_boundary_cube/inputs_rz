@@ -1,36 +1,42 @@
-stop_time = 1.3342563807926085e-08
-amr.n_cell = 32 32
-amr.max_grid_size = 128
+# This script tests the diffraction of a laser by
+# a cylindrical object, represented by an embedded boundary here
+
+max_step = 300
+amr.n_cell = 128 256
+amr.max_grid_size = 256
 amr.max_level = 0
 
 geometry.dims = RZ
-geometry.prob_lo     =  0. -0.8
-geometry.prob_hi     =  0.8  0.8
-warpx.cfl = 1
+geometry.prob_lo     =  0. -0.2
+geometry.prob_hi     =  2   1.4
+warpx.cfl = 0.99
+algo.particle_shape = 1
 
-boundary.field_lo = none pec
-boundary.field_hi = pec pec
+boundary.field_lo = none absorbing_silver_mueller
+boundary.field_hi = pec absorbing_silver_mueller
 
-my_constants.xmin = -0.5
-my_constants.zmin = -0.5
-my_constants.xmax = 0.5
-my_constants.zmax = 0.5
-# Alternatively one could use parser to build EB
-# Note that for amrex EB implicit function, >0 is covered, =0 is boundary and <0 is regular.
-warpx.eb_implicit_function = "max(max(x+xmin,-(x+xmax)), max(z+zmin,-(z+zmax)))"
+# Make the cylindrical object that the laser will diffract on
+my_constants.aperture_l = 0.01
+my_constants.aperture_r = 0.2
+warpx.eb_implicit_function = "if( (abs(z)<0.5*aperture_l) and (x<aperture_r), 1, -1 )"
 
-warpx.B_ext_grid_init_style = parse_B_ext_grid_function
+warpx.n_rz_azimuthal_modes = 2
 
-my_constants.m = 2.40482556 # First zero of the Bessel function J0
-my_constants.p = 1
-my_constants.Lx = 1
-my_constants.Lz = 1
-
-warpx.Bx_external_grid_function(x,y,z) = - (p * pi * Lx) / (m * 2 * Lz) * jn(1, m * 2 / Lx * x) * cos(p * pi / Lz * (z - Lz / 2))
-warpx.By_external_grid_function(x,y,z) = 0
-warpx.Bz_external_grid_function(x,y,z) = jn(0,m * 2 / Lx * x) * sin(p * pi / Lz * (z - Lz / 2))
+# Laser
+lasers.names        = laser1
+laser1.profile      = Gaussian
+laser1.position     = 0. 0. -0.1
+laser1.direction    = 0. 0. 1.
+laser1.polarization = 1. 0. 0.
+laser1.profile_waist = 1.
+laser1.profile_duration = 100
+laser1.profile_t_peak = 0
+laser1.profile_focal_distance = 0
+laser1.e_max        = 1.
+laser1.wavelength   = 0.1
 
 diagnostics.diags_names = diag1
-diag1.intervals = 1
+diag1.intervals = 100
 diag1.diag_type = Full
 diag1.fields_to_plot = Er Et Ez Br Bt Bz
+diag1.format = openpmd

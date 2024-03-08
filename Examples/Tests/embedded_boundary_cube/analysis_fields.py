@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-
+"""
+This test checks the implementation of the embedded boundary in cylindrical geometry,
+by checking the diffraction of a laser by an embedded boundary here.
+We then check that the first minimum of the diffracted intensity pattern
+occurs along the angle given by the theoretical Airy pattern, i.e.
+theta_diffraction = 1.22 * lambda / d
+"""
 import os
 import re
 import sys
@@ -11,90 +17,25 @@ import yt
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
-# This is a script that analyses the simulation results from
-# the script `inputs_3d`. This simulates a TMmnp mode in a PEC cubic resonator.
-# The magnetic field in the simulation is given (in theory) by:
-# $$ B_x = \frac{-2\mu}{h^2}\, k_x k_z \sin(k_x x)\cos(k_y y)\cos(k_z z)\cos( \omega_p t)$$
-# $$ B_y = \frac{-2\mu}{h^2}\, k_y k_z \cos(k_x x)\sin(k_y y)\cos(k_z z)\cos( \omega_p t)$$
-# $$ B_z = \cos(k_x x)\cos(k_y y)\sin(k_z z)\sin( \omega_p t)$$
-# with
-# $$ h^2 = k_x^2 + k_y^2 + k_z^2$$
-# $$ k_x = \frac{m\pi}{L}$$
-# $$ k_y = \frac{n\pi}{L}$$
-# $$ k_z = \frac{p\pi}{L}$$
+ts = OpenPMDTimeSeries('./diags/diag1/')
 
-hi = [0.8, 0.8, 0.8]
-lo = [-0.8, -0.8, -0.8]
-ncells = [48, 48, 48]
-dx = (hi[0] - lo[0])/ncells[0]
-dy = (hi[1] - lo[1])/ncells[1]
-dz = (hi[2] - lo[2])/ncells[2]
-m = 0
-n = 1
-p = 1
-Lx = 1
-Ly = 1
-Lz = 1
-h_2 = (m * pi / Lx) ** 2 + (n * pi / Ly) ** 2 + (p * pi / Lz) ** 2
+# Extract the intensity as a function of r and z
+Ex, info = ts.get_field('E', 'x', iteration=300)
+I = gaussian_filter1d(Ex**2, sigma=5, axis=0)
+plt.imshow( I, extent=info.imshow_extent, origin='lower')
+irmax = np.argmax( I, axis=-1)
 
-# Open the right plot file
-filename = sys.argv[1]
-ds = yt.load(filename)
-data = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
+# Find the radius of the first minimum, as a function of z
+def r_first_minimum(iz):
+    ir = len(info.r)//2
+    while I[iz, ir+1] < I[iz, ir]:
+        ir += 1
+    return info.r[ir]
+r = np.array([ r_first_minimum(iz) for iz in range(len(info.z)) ])
 
-# Parse test name and check whether this use the macroscopic solver
-# (i.e. solving the equation in a dielectric)
-macroscopic = True if re.search( 'macroscopic', filename ) else False
-
-# Calculate frequency of the mode oscillation
-omega = np.sqrt( h_2 ) * c
-if macroscopic:
-    # Relative permittivity used in this test: epsilon_r = 1.5
-    omega *= 1./np.sqrt(1.5)
-
-t = ds.current_time.to_value()
-
-# Compute the analytic solution
-Bx_th = np.zeros(ncells)
-By_th = np.zeros(ncells)
-Bz_th = np.zeros(ncells)
-for i in range(ncells[0]):
-    for j in range(ncells[1]):
-        for k in range(ncells[2]):
-            x = i*dx + lo[0]
-            y = (j+0.5)*dy + lo[1]
-            z = k*dz + lo[2]
-
-            By_th[i, j, k] = -2/h_2*mu_0*(n * pi/Ly)*(p * pi/Lz) * (np.cos(m * pi/Lx * (x - Lx/2)) *
-                                                                    np.sin(n * pi/Ly * (y - Ly/2)) *
-                                                                    np.cos(p * pi/Lz * (z - Lz/2)) *
-                                                                    (-Lx/2 <= x < Lx/2) *
-                                                                    (-Ly/2 <= y < Ly/2) *
-                                                                    (-Lz/2 <= z < Lz/2) *
-                                                                    np.cos(omega * t))
-
-            x = i*dx + lo[0]
-            y = j*dy + lo[1]
-            z = (k+0.5)*dz + lo[2]
-            Bz_th[i, j, k] = mu_0*(np.cos(m * pi/Lx * (x - Lx/2)) *
-                                   np.cos(n * pi/Ly * (y - Ly/2)) *
-                                   np.sin(p * pi/Lz * (z - Lz/2)) *
-                                   (-Lx/2 <= x < Lx/2) *
-                                   (-Ly/2 <= y < Ly/2) *
-                                   (-Lz/2 <= z < Lz/2) *
-                                   np.cos(omega * t))
-
-rel_tol_err = 1e-1
-
-# Compute relative l^2 error on By
-By_sim = data[('mesh','By')].to_ndarray()
-rel_err_y = np.sqrt( np.sum(np.square(By_sim - By_th)) / np.sum(np.square(By_th)))
-assert(rel_err_y < rel_tol_err)
-# Compute relative l^2 error on Bz
-Bz_sim = data[('mesh','Bz')].to_ndarray()
-rel_err_z = np.sqrt( np.sum(np.square(Bz_sim - Bz_th)) / np.sum(np.square(Bz_th)))
-assert(rel_err_z < rel_tol_err)
+# Check that this corresponds to the prediction from the Airy pattern
+theta_diffraction = np.arcsin(1.22*0.1/0.4)/2
+assert np.all( abs(r[50:] - theta_diffraction*info.z[50:]) < 0.03 )
 
 test_name = os.path.split(os.getcwd())[1]
-
-checksumAPI.evaluate_checksum(test_name, filename)
+checksumAPI.evaluate_checksum(test_name, filename, )
