@@ -797,7 +797,7 @@ BTDiagnostics::PrepareFieldDataForOutput ()
             // Call all the cell-center functors in m_cell_center_functors.
             // Each of them computes cell-centered data for a field and
             // stores it in cell-centered MultiFab, m_cell_centered_data[lev].
-            m_cell_center_functors[lev][icomp]->operator()(*m_cell_centered_data[lev], icomp_dst);
+            m_cell_center_functors[lev][icomp]->operator()(*m_cell_centered_data[lev], icomp_dst, 0);
             icomp_dst += m_cell_center_functors[lev][icomp]->nComp();
         }
         // Check that the proper number of user-requested components are cell-centered

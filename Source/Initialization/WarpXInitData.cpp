@@ -184,10 +184,10 @@ WarpX::PrintMainPICparameters ()
       amrex::Print() << "Geometry:             | 2D (RZ)" << "\n";
     }
 
-    #ifdef WARPX_DIM_RZ
+#ifdef WARPX_DIM_RZ
       amrex::Print() << "                      | - n_rz_azimuthal_modes = " <<
                      WarpX::n_rz_azimuthal_modes << "\n";
-    #endif // WARPX_USE_RZ
+#endif // WARPX_USE_RZ
     //Print solver's operation mode (e.g., EM or electrostatic)
     if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) {
       amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
@@ -269,7 +269,7 @@ WarpX::PrintMainPICparameters ()
     else if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC){
       amrex::Print() << "Maxwell Solver:       | Hybrid-PIC (Ohm's law) \n";
     }
-  #ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_PSATD
     // Print PSATD solver's configuration
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD){
       amrex::Print() << "Maxwell Solver:       | PSATD \n";
@@ -304,12 +304,12 @@ WarpX::PrintMainPICparameters ()
     if (fft_do_time_averaging == 1){
       amrex::Print()<<"                      | - time-averaged is ON \n";
     }
-  #endif // WARPX_USE_PSATD
+#endif // WARPX_USE_PSATD
 
   if (grid_type == GridType::Collocated){
     amrex::Print() << "                      | - collocated grid \n";
   }
-  #ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_PSATD
     if ( (grid_type == GridType::Staggered) && (field_gathering_algo == GatheringAlgo::EnergyConserving) ){
       amrex::Print()<<"                      | - staggered grid " << "\n";
     }
@@ -362,7 +362,7 @@ WarpX::PrintMainPICparameters ()
     amrex::Print() << "Guard cells           | - ng_alloc_EB = " << guard_cells.ng_alloc_EB << "\n";
     amrex::Print() << " (allocated for E/B)  | \n";
 
-    #endif // WARPX_USE_PSATD
+#endif // WARPX_USE_PSATD
     amrex::Print() << "-------------------------------------------------------------------------------" << "\n";
     //Print main boosted frame algorithm's parameters
     if (WarpX::gamma_boost!=1){
@@ -378,11 +378,11 @@ WarpX::PrintMainPICparameters ()
       if (WarpX::moving_window_dir == 0){
         amrex::Print() << "                      |  - moving_window_dir = x \n";
       }
-      #if defined(WARPX_DIM_3D)
+#if defined(WARPX_DIM_3D)
       else if (WarpX::moving_window_dir == 1){
         amrex::Print() << "                      |  - moving_window_dir = y \n";
       }
-      #endif
+#endif
       else if (WarpX::moving_window_dir == WARPX_ZINDEX) {
         amrex::Print() << "                      |  - moving_window_dir = z \n";
       }

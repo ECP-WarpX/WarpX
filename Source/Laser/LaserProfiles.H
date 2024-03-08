@@ -10,10 +10,8 @@
 #include <AMReX_Gpu.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_Parser.H>
-#include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
-#include <AMReX_Box.H>
-#include <AMReX_FArrayBox.H>
+#include <AMReX_MultiFab.H>
 
 #include <functional>
 #include <limits>
@@ -383,6 +381,31 @@ private:
     CommonLaserParameters m_common_params;
 };
 
+class StationFieldLaserProfile : public ILaserProfile
+{
+public:
+
+    void init (const amrex::ParmParse& ppl, CommonLaserParameters params) override;
+
+    void update (amrex::Real t) override;
+
+    void fill_amplitude (int np,
+                         amrex::Real const * AMREX_RESTRICT Xp,
+                         amrex::Real const * AMREX_RESTRICT Yp,
+                         amrex::Real t,
+                         amrex::Real * AMREX_RESTRICT amplitude) const override;
+
+private:
+    CommonLaserParameters m_common_params;
+    int m_xy = -1;
+    std::string m_station_file;
+    int m_ibuffer = -1;
+    amrex::Vector<std::pair<amrex::Real,amrex::Real>> m_times;
+    std::unique_ptr<amrex::MultiFab> m_station_mf;
+    std::unique_ptr<amrex::FArrayBox> m_slice_fab;
+    amrex::Box m_station_domain;
+};
+
 /**
  * Maps laser profile names to lambdas returing unique pointers
  * to the corresponding laser profile objects.
@@ -399,7 +422,9 @@ laser_profiles_dictionary =
     {"parse_field_function",
         [] () {return std::make_unique<FieldFunctionLaserProfile>();} },
     {"from_file",
-        [] () {return std::make_unique<FromFileLaserProfile>();} }
+        [] () {return std::make_unique<FromFileLaserProfile>();} },
+    {"station_field",
+        [] () {return std::make_unique<StationFieldLaserProfile>();} }
 };
 
 } //WarpXLaserProfiles

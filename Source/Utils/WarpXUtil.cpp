@@ -29,6 +29,7 @@
 #include <AMReX_MFIter.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_ParmParse.H>
+#include <AMReX_ParallelDescriptor.H>
 #include <AMReX_Parser.H>
 
 #include <algorithm>
@@ -37,6 +38,7 @@
 #include <cstring>
 #include <fstream>
 #include <set>
+#include <sstream>
 #include <string>
 #include <limits>
 
@@ -138,7 +140,7 @@ void ReadBoostedFrameParameters(Real& gamma_boost, Real& beta_boost,
     }
 }
 
-void ConvertLabParamsToBoost()
+void ConvertLabParamsToBoost ()
 {
     Real gamma_boost = 1., beta_boost = 0.;
     int max_level = 0;
@@ -146,7 +148,7 @@ void ConvertLabParamsToBoost()
 
     ReadBoostedFrameParameters(gamma_boost, beta_boost, boost_direction);
 
-    if (gamma_boost <= 1.) { return; }
+    if (gamma_boost < 1.) { return; }
 
     Vector<Real> prob_lo(AMREX_SPACEDIM);
     Vector<Real> prob_hi(AMREX_SPACEDIM);
@@ -190,21 +192,51 @@ void ConvertLabParamsToBoost()
     Vector<int> dim_map {2};
 #endif
 
-    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
-    {
-        if (boost_direction[dim_map[idim]]) {
-            amrex::Real convert_factor;
-            // Assume that the window travels with speed +c
-            convert_factor = 1._rt/( gamma_boost * ( 1 - beta_boost ) );
-            prob_lo[idim] *= convert_factor;
-            prob_hi[idim] *= convert_factor;
-            if (max_level > 0){
-              fine_tag_lo[idim] *= convert_factor;
-              fine_tag_hi[idim] *= convert_factor;
+    pp_warpx.query("impose_field_file_path", WarpX::m_impose_field_file_path);
+    if ( ! WarpX::m_impose_field_file_path.empty() ) {
+        Real zstation;
+        Real tmin = std::numeric_limits<Real>::max();
+        Real tmax = std::numeric_limits<Real>::lowest();
+        {
+            Vector<char> headerfile;
+            ParallelDescriptor::ReadAndBcastFile(WarpX::m_impose_field_file_path+"/StationHeader", headerfile);
+            std::istringstream is(std::string(headerfile.data()));
+            is >> zstation;
+            std::string tt;
+            std::getline(is,tt); // eat \n
+            while (std::getline(is, tt)) {
+                std::istringstream istt(tt);
+                Real t0, t1;
+                istt >> t0;
+                istt >> t1;
+                tmin = std::min(tmin, t0);
+                tmax = std::max(tmax, t1);
             }
-            slice_lo[idim] *= convert_factor;
-            slice_hi[idim] *= convert_factor;
-            break;
+        }
+        int const zdir = AMREX_SPACEDIM-1;
+        prob_hi[zdir] = gamma_boost * (zstation - beta_boost*PhysConst::c*tmin);
+        prob_lo[zdir] = prob_hi[zdir] - gamma_boost*(1._rt+beta_boost)*PhysConst::c*(tmax-tmin);
+        auto const dz = (prob_hi[zdir]-prob_lo[zdir])/Real(1.e6);
+        prob_hi[zdir] += dz; // Shift the domain in z-direction a little. Might not be needed.
+        prob_lo[zdir] += dz;
+        WarpX::m_t_boost_offset = gamma_boost*(tmin - beta_boost*zstation/PhysConst::c);
+    } else {
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
+        {
+            if (boost_direction[dim_map[idim]]) {
+                amrex::Real convert_factor;
+                // Assume that the window travels with speed +c
+                convert_factor = 1._rt/( gamma_boost * ( 1 - beta_boost ) );
+                prob_lo[idim] *= convert_factor;
+                prob_hi[idim] *= convert_factor;
+                if (max_level > 0){
+                    fine_tag_lo[idim] *= convert_factor;
+                    fine_tag_hi[idim] *= convert_factor;
+                }
+                slice_lo[idim] *= convert_factor;
+                slice_hi[idim] *= convert_factor;
+                break;
+            }
         }
     }
 

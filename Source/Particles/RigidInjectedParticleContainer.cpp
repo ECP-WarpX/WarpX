@@ -97,7 +97,19 @@ RigidInjectedParticleContainer::RemapParticles()
 
         // For now, start with the assumption that this will only happen
         // at the start of the simulation.
-        const ParticleReal t_lab = 0._prt;
+        ParticleReal t_lab = 0._prt;
+        { // unless particles are injected from recording plane
+            const ParmParse pp_species_name(species_name);
+            std::string injection_style;
+            bool injection_from_recording_plane = false;
+            pp_species_name.query("injection_style", injection_style);
+            pp_species_name.query("injection_from_recording_plane", injection_from_recording_plane);
+            if (injection_style == "external_file" && injection_from_recording_plane) {
+                const amrex::Real t_boost = WarpX::GetInstance().gett_new(0);
+                const amrex::Real zmax_boost = WarpX::GetInstance().Geom(0).ProbHi(WARPX_ZINDEX);
+                t_lab = WarpX::gamma_boost*(t_boost + WarpX::beta_boost*zmax_boost/PhysConst::c);
+            }
+        }
 
         const ParticleReal uz_boost = WarpX::gamma_boost*WarpX::beta_boost*PhysConst::c;
         const ParticleReal csqi = 1._prt/(PhysConst::c*PhysConst::c);
