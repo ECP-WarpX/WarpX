@@ -102,6 +102,6 @@ AcceleratorLattice::UpdateElementFinder (int const lev) // NOLINT(readability-ma
 LatticeElementFinderDevice
 AcceleratorLattice::GetFinderDeviceInstance (WarpXParIter const& a_pti, int const a_offset) const
 {
-    LatticeElementFinder & finder = (*m_element_finder)[a_pti];
+    const LatticeElementFinder & finder = (*m_element_finder)[a_pti];
     return finder.GetFinderDeviceInstance(a_pti, a_offset, *this);
 }

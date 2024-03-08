@@ -577,9 +577,9 @@ bool PlasmaInjector::insideBounds (amrex::Real x, amrex::Real y, amrex::Real z) 
 bool PlasmaInjector::overlapsWith (const amrex::XDim3& lo,
                                    const amrex::XDim3& hi) const noexcept
 {
-    return ! (   (xmin > hi.x) || (xmax < lo.x)
-              || (ymin > hi.y) || (ymax < lo.y)
-              || (zmin > hi.z) || (zmax < lo.z) );
+    return  (    (xmin <= hi.x) && (xmax >= lo.x)
+              && (ymin <= hi.y) && (ymax >= lo.y)
+              && (zmin <= hi.z) && (zmax >= lo.z) );
 }
 
 bool
