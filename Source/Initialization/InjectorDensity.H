@@ -203,11 +203,15 @@ struct InjectorDensityFromFile
 //        auto p_scalar = P[io::RecordComponent::SCALAR];
 //        auto particle = iseries.particles[species];
 
-        int i = std::floor((x-real_box.lo(0))/spacing[0]);
-        int j = std::floor((y-real_box.lo(1))/spacing[1]);
-        int k = std::floor((z-real_box.lo(2))/spacing[2]);
+//        int i = std::floor((x-real_box.lo(0))/spacing[0]);
+//        int j = std::floor((y-real_box.lo(1))/spacing[1]);
+//        int k = std::floor((z-real_box.lo(2))/spacing[2]);
+        int i = std::floor((x-offset[0])/spacing[0]);
+        int j = std::floor((y-offset[1])/spacing[1]);
+        int k = std::floor((z-offset[2])/spacing[2]);
 
-        double val = mffab(i, j, k);
+        //double val = mffab(i, j, k);
+        double val = P_chunk_data.get()[(i*extent[1]*extent[2]) + j*extent[2] + k] /charge.get()[0];
 //        double val = 3.3e26;
 
         return static_cast<amrex::Real>(val);
@@ -220,6 +224,10 @@ struct InjectorDensityFromFile
     std::vector<long double> spacing;
     std::vector<int> n_cell;
     int max_grid_size;
+    std::vector<double> offset;
+    std::shared_ptr<double> P_chunk_data;
+    std::vector<std::uint64_t> extent;
+    std::shared_ptr<double> charge;
 };
 
 
