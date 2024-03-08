@@ -42,7 +42,10 @@
 #include <array>
 #include <optional>
 
+
 namespace {
+
+using namespace amrex::literals;
 
 // Implements equation 2 in https://journals.aps.org/prab/pdf/10.1103/PhysRevSTAB.10.129901 with some modification to symmetrize the function
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
