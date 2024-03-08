@@ -7,7 +7,6 @@ occurs along the angle given by the theoretical Airy pattern, i.e.
 theta_diffraction = 1.22 * lambda / d
 """
 import os
-import re
 import sys
 
 import numpy as np
