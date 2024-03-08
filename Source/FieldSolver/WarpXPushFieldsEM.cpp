@@ -818,14 +818,12 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
     // Evolve B field in regular cells
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->EvolveB(Bfield_fp[lev], Efield_fp[lev], G_fp[lev],
-                                       m_face_areas[lev], m_area_mod[lev],
-                                       ECTRhofield[lev], Venl[lev], m_flag_info_face[lev],
-                                       m_borrowing[lev], lev, a_dt);
+                                       m_face_areas[lev], m_area_mod[lev], ECTRhofield[lev], Venl[lev],
+                                       m_flag_info_face[lev], m_borrowing[lev], lev, a_dt);
     } else {
         m_fdtd_solver_cp[lev]->EvolveB(Bfield_cp[lev], Efield_cp[lev], G_cp[lev],
-                                       m_face_areas[lev], m_area_mod[lev],
-                                       ECTRhofield[lev], Venl[lev], m_flag_info_face[lev],
-                                       m_borrowing[lev], lev, a_dt);
+                                       m_face_areas[lev], m_area_mod[lev], ECTRhofield[lev], Venl[lev],
+                                       m_flag_info_face[lev], m_borrowing[lev], lev, a_dt);
     }
 
     // Evolve B field in PML cells
