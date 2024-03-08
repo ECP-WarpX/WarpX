@@ -164,7 +164,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         if(WarpX::poisson_solver_id==PoissonSolverAlgo::IntegratedGreenFunction && lev==0){
         // IGF SOLVER
         rho[lev]->mult(-PhysConst::ep0);
-        amrex::Array<amrex::Real,AMREX_SPACEDIM> dx_igf
+        amrex::Array<amrex::Real,AMREX_SPACEDIM> const dx_igf
                 {AMREX_D_DECL(geom[lev].CellSize(0)/std::sqrt(1._rt-beta_solver[0]*beta_solver[0]),
                               geom[lev].CellSize(1)/std::sqrt(1._rt-beta_solver[1]*beta_solver[1]),
                               geom[lev].CellSize(2)/std::sqrt(1._rt-beta_solver[2]*beta_solver[2]))};

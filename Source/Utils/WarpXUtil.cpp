@@ -474,8 +474,10 @@ void ReadBCParams ()
         if(poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction){
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             (
-                WarpX::field_boundary_lo[idim] == FieldBoundaryType::Open &&
-                WarpX::field_boundary_hi[idim] == FieldBoundaryType::Open
+                (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Open &&
+                 WarpX::field_boundary_hi[idim] == FieldBoundaryType::Open) ||
+                (WarpX::field_boundary_lo[idim] == FieldBoundaryType::PML &&
+                 WarpX::field_boundary_hi[idim] == FieldBoundaryType::PML)
             ),
             "fft-based Poisson solver only works with field open boundary conditions"
         );
@@ -488,7 +490,6 @@ void ReadBCParams ()
             "field open boundary conditions are only implemented for the fft-based Poisson solver"
         );
         }
-
     }
 
     // Appending periodicity information to input so that it can be used by amrex

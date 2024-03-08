@@ -145,7 +145,9 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
 {
     WARPX_PROFILE("WarpX::AddSpaceChargeField");
 
-    if (pc.getCharge() == 0) return;
+    if (pc.getCharge() == 0) {
+        return;
+    }
 
     // Store the boundary conditions for the field solver if they haven't been
     // stored yet
