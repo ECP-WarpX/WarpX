@@ -1047,7 +1047,6 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs (const amrex::Geo
                 );
             }
 
-
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 (WarpX::field_boundary_lo[idim] != FieldBoundaryType::Open &&
                 WarpX::field_boundary_hi[idim] != FieldBoundaryType::Open &&
@@ -1066,7 +1065,7 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs (const amrex::Geo
                      WarpX::field_boundary_hi[idim] == FieldBoundaryType::Open),
                     "The fft-based Poisson solver only works with field open boundary conditions "
                     "in electrostatic mode."
-                )
+                );
             }
             else{ // if electromagnetic mode on with species.initialize_self_fields = 1
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -1074,7 +1073,7 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs (const amrex::Geo
                      WarpX::field_boundary_hi[idim] == FieldBoundaryType::PML),
                     "The fft-based Poisson solver only works with field pml boundary conditions "
                     "to initialize the species self-fields in electromagnetic mode."
-                )
+                );
             }
 
         }
