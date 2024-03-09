@@ -159,7 +159,9 @@ struct FieldBoundaryType {
         Neumann = 6, // For electrostatic, the normal E is set to zero
         None = 7,    // The fields values at the boundary are not updated. This is
                      // useful for RZ simulations, at r=0.
-        Open = 8
+        Open = 8     // Used in the Integrated Green Function Poisson solver 
+                     // Note that the solver implicitely assumes open BCs: 
+                     // no need to enforce them separately 
     };
 };
 

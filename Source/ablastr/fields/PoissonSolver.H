@@ -161,19 +161,19 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 #endif
 
 #if (defined(WARPX_USE_PSATD)  && defined(WARPX_DIM_3D))
+        // Use the Integrated Green Function solver (fft-based) on the coarsest level if it was selected 
         if(WarpX::poisson_solver_id==PoissonSolverAlgo::IntegratedGreenFunction && lev==0){
-        // IGF SOLVER
-        rho[lev]->mult(-PhysConst::ep0);
-        amrex::Array<amrex::Real,AMREX_SPACEDIM> const dx_igf
-                {AMREX_D_DECL(geom[lev].CellSize(0)/std::sqrt(1._rt-beta_solver[0]*beta_solver[0]),
-                              geom[lev].CellSize(1)/std::sqrt(1._rt-beta_solver[1]*beta_solver[1]),
-                              geom[lev].CellSize(2)/std::sqrt(1._rt-beta_solver[2]*beta_solver[2]))};
-        if ( max_norm_b == 0 ) {
-            phi[lev]->setVal(0);
-        } else {
-            computePhiIGF( *rho[lev], *phi[lev], dx_igf, grids[lev] );
-        }
-        continue;
+            rho[lev]->mult(-PhysConst::ep0);
+            amrex::Array<amrex::Real,AMREX_SPACEDIM> const dx_igf
+                    {AMREX_D_DECL(geom[lev].CellSize(0)/std::sqrt(1._rt-beta_solver[0]*beta_solver[0]),
+                                geom[lev].CellSize(1)/std::sqrt(1._rt-beta_solver[1]*beta_solver[1]),
+                                geom[lev].CellSize(2)/std::sqrt(1._rt-beta_solver[2]*beta_solver[2]))};
+            if ( max_norm_b == 0 ) {
+                phi[lev]->setVal(0);
+            } else {
+                computePhiIGF( *rho[lev], *phi[lev], dx_igf, grids[lev] );
+            }
+            continue;
         }
 #endif
 
