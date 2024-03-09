@@ -266,7 +266,7 @@ void FiniteDifferenceSolver::EvolveECylindrical (
         Array4<Real> const& jz = Jfield[2]->array(mfi);
 
 #ifdef AMREX_USE_EB
-        amrex::Array4<amrex::Real> const& lx = edge_lengths[0]->array(mfi);
+        amrex::Array4<amrex::Real> const& lr = edge_lengths[0]->array(mfi);
         amrex::Array4<amrex::Real> const& lz = edge_lengths[2]->array(mfi);
 #endif
 
@@ -294,7 +294,7 @@ void FiniteDifferenceSolver::EvolveECylindrical (
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
 #ifdef AMREX_USE_EB
                 // Skip field push if this cell is fully covered by embedded boundaries
-                if (lx(i, j, 0) <= 0) return;
+                if (lr(i, j, 0) <= 0) return;
 #endif
                 Real const r = rmin + (i + 0.5_rt)*dr; // r on cell-centered point (Er is cell-centered in r)
                 Er(i, j, 0, 0) +=  c2 * dt*(
@@ -316,7 +316,7 @@ void FiniteDifferenceSolver::EvolveECylindrical (
 #ifdef AMREX_USE_EB
                 // Skip field push if this cell is fully covered by embedded boundaries
                 // The Et field is at a node, so we need to check if the node is covered
-                if (lx(i, j, 0)<=0 || lx(i-1, j, 0)<=0 || lz(i, j-1, 0)<=0 || lz(i, j, 0)<=0) return;
+                if (lr(i, j, 0)<=0 || lr(i-1, j, 0)<=0 || lz(i, j-1, 0)<=0 || lz(i, j, 0)<=0) return;
 #endif
                 Real const r = rmin + i*dr; // r on a nodal grid (Et is nodal in r)
                 if (r != 0) { // Off-axis, regular Maxwell equations
