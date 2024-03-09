@@ -1053,7 +1053,7 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs (const amrex::Geo
                     WarpX::field_boundary_hi[idim] != FieldBoundaryType::PML) ,
                     "Open and PML field boundary conditions only work with "
                     "warpx.poisson_solver = fft-based."
-                )
+                );
             }
 
         } else if (WarpX::poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction){
