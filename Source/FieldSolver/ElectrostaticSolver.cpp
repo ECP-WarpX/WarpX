@@ -1074,7 +1074,7 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs (const amrex::Geo
                     "to initialize the self-fields of the species in electromagnetic mode."
                 );
             }
-        }   
+        }
     }
     bcs_set = true;
 }

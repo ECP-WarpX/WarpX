@@ -161,7 +161,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 #endif
 
 #if (defined(WARPX_USE_PSATD)  && defined(WARPX_DIM_3D))
-        // Use the Integrated Green Function solver (fft-based) on the coarsest level if it was selected 
+        // Use the Integrated Green Function solver (fft-based) on the coarsest level if it was selected
         if(WarpX::poisson_solver_id==PoissonSolverAlgo::IntegratedGreenFunction && lev==0){
             rho[lev]->mult(-PhysConst::ep0);
             amrex::Array<amrex::Real,AMREX_SPACEDIM> const dx_igf

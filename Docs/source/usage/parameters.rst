@@ -158,8 +158,8 @@ Overall simulation parameters
       See, e.g., :cite:t:`param-Vaypop2008` for more information.
 
 * ``warpx.poisson_solver`` (`string`) optional (default `multigrid`)
-    
-    * ``multigrid``: Poisson's equation is solved using an iterative multigrid (MLMG) solver.    
+
+    * ``multigrid``: Poisson's equation is solved using an iterative multigrid (MLMG) solver.
         See the `AMReX documentation <https://amrex-codes.github.io/amrex/docs_html/LinearSolvers.html#>`_
         for details of the MLMG solver (the default solver used with electrostatic
         simulations). The default behavior of the code is to check whether there is
@@ -171,14 +171,14 @@ Overall simulation parameters
         non-zero value is specified by the user via
         ``warpx.self_fields_absolute_tolerance``).
 
-    * ``fft-based``: Poisson's equation is solved using an Integrated Green Function method (which requires FFT calculations). 
+    * ``fft-based``: Poisson's equation is solved using an Integrated Green Function method (which requires FFT calculations).
         See these references for more details :cite:t:`QiangPhysRevSTAB2006`, :cite:t:`QiangPhysRevSTAB2006err`.
         It only works in 3D and it requires the compilation flag ``-DWarpX_PSATD=ON``.
         If mesh refinement is enabled, this solver only works on the coarsest level.
-        On the refined patches, the Poisson equation is solved with the multigrid solver. 
+        On the refined patches, the Poisson equation is solved with the multigrid solver.
         In electrostatic mode, this solver requires open field boundary conditions (``boundary.field_lo,hi = open``).
-        In electromagnetic mode, this solver can be used to initialize the species' self fields 
-        (``<species_name>.initialize_self_fields=1``) provided that the field BCs are PML (``boundary.field_lo,hi = PML``). 
+        In electromagnetic mode, this solver can be used to initialize the species' self fields
+        (``<species_name>.initialize_self_fields=1``) provided that the field BCs are PML (``boundary.field_lo,hi = PML``).
 
 * ``warpx.self_fields_required_precision`` (`float`, default: 1.e-11)
     The relative precision with which the electrostatic space-charge fields should
@@ -413,7 +413,7 @@ Domain Boundary Conditions
 
     * ``neumann``: For the electrostatic multigrid solver, a Neumann boundary condition (with gradient of the potential equal to 0) will be applied on the specified boundary.
 
-    * ``open``: For the electrostatic Poisson solver based on a Integrated Green Function method. 
+    * ``open``: For the electrostatic Poisson solver based on a Integrated Green Function method.
 
 * ``boundary.particle_lo`` and ``boundary.particle_hi`` (`2 strings` for 2D, `3 strings` for 3D, `absorbing` by default)
     Options are:

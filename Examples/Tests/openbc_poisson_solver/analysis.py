@@ -46,7 +46,7 @@ grid_z = info.z[1:-1]
 hnx = int(0.5*len(grid_x))
 hny = int(0.5*len(grid_y))
 
-# Compare theoretical and WarpX Ex, Ey fields for every z 
+# Compare theoretical and WarpX Ex, Ey fields for every z
 for k, z in enumerate(grid_z,start=1):
     Ex_warpx = Ex[k,hny,1:-1]
     Ey_warpx = Ey[k,1:-1,hnx]
