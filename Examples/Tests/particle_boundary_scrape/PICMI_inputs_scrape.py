@@ -133,7 +133,7 @@ n = particle_buffer.get_particle_boundary_buffer_size("electrons", 'eb')
 print(f"Number of electrons in buffer (proc #{my_id}): {n}")
 assert n == 612
 
-scraped_steps = particle_buffer.get_particle_boundary_buffer("electrons", 'eb', 'step_scraped', 0)
+scraped_steps = particle_buffer.get_particle_boundary_buffer("electrons", 'eb', 'stepScraped', 0)
 for arr in scraped_steps:
     assert all(np.array(arr, copy=False) > 40)
 
