@@ -116,7 +116,7 @@ public:
     amrex::Real focal_distance;
     bool do_rotation = false;
     amrex::Real rotation_angle;
-    amrex::Vector<amrex::Real> rotation_axis; 
+    amrex::Vector<amrex::Real> rotation_axis;
 
     bool external_file = false; //! initialize from an openPMD file
     amrex::Real z_shift = 0.0; //! additional z offset for particle positions

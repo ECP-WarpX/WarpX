@@ -539,8 +539,8 @@ PhysicalParticleContainer::AddGaussianBeam (PlasmaInjector const& plasma_injecto
     const Real focal_distance = plasma_injector.focal_distance;
 
     const int do_rotation = plasma_injector.do_rotation; // 1;
-    const Vector<Real> rotation_axis = plasma_injector.rotation_axis ; // {0,1,0}; // normalize it if necessary 
-    const Real rotation_angle = plasma_injector.rotation_angle; //45.*MathConst::pi/180.; 
+    const Vector<Real> rotation_axis = plasma_injector.rotation_axis ; // {0,1,0}; // normalize it if necessary
+    const Real rotation_angle = plasma_injector.rotation_angle; //45.*MathConst::pi/180.;
 
     // Declare temporary vectors on the CPU
     Gpu::HostVector<ParticleReal> particle_x;
