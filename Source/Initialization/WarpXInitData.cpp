@@ -1216,35 +1216,33 @@ void WarpX::CheckGuardCells()
 void WarpX::InitializeEBGridData (int lev)
 {
 #ifdef AMREX_USE_EB
-    if (lev == maxLevel()) {
+    // Throw a warning if EB is on and particle_shape > 1
+    bool flag_eb_on = not fieldEBFactory(lev).isAllRegular();
 
-        // Throw a warning if EB is on and particle_shape > 1
-        bool flag_eb_on = not fieldEBFactory(lev).isAllRegular();
+    if ((nox > 1 or noy > 1 or noz > 1) and flag_eb_on)
+    {
+        ablastr::warn_manager::WMRecordWarning("Particles",
+            "when algo.particle_shape > 1, numerical artifacts will be present when\n"
+            "particles are close to embedded boundaries");
+    }
 
-        if ((nox > 1 or noy > 1 or noz > 1) and flag_eb_on)
-        {
-            ablastr::warn_manager::WMRecordWarning("Particles",
-              "when algo.particle_shape > 1, numerical artifacts will be present when\n"
-              "particles are close to embedded boundaries");
-        }
+    if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD ) {
 
-        if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD ) {
+        auto const eb_fact = fieldEBFactory(lev);
 
-            auto const eb_fact = fieldEBFactory(lev);
+        ComputeEdgeLengths(m_edge_lengths[lev], eb_fact);
+        ScaleEdges(m_edge_lengths[lev], CellSize(lev));
+        ComputeFaceAreas(m_face_areas[lev], eb_fact);
+        ScaleAreas(m_face_areas[lev], CellSize(lev));
 
-            ComputeEdgeLengths(m_edge_lengths[lev], eb_fact);
-            ScaleEdges(m_edge_lengths[lev], CellSize(lev));
-            ComputeFaceAreas(m_face_areas[lev], eb_fact);
-            ScaleAreas(m_face_areas[lev], CellSize(lev));
-
-            if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
+        if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
+            if (lev == maxLevel()) {
                 MarkCells();
                 ComputeFaceExtensions();
-            }
         }
-
+    }
+    if (lev == maxLevel()) {
         ComputeDistanceToEB();
-
     }
 #else
     amrex::ignore_unused(lev);

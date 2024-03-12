@@ -2360,44 +2360,40 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     amrex::IntVect ng_ls(2);
     AllocInitMultiFab(m_distance_to_eb[lev], amrex::convert(ba, IntVect::TheNodeVector()), dm, nc_ls, ng_ls, lev, "m_distance_to_eb");
 
-    // EB info are needed only at the finest level
-    if (lev == maxLevel())
-    {
-        if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) {
-            AllocInitMultiFab(m_edge_lengths[lev][0], amrex::convert(ba, Ex_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_edge_lengths[x]");
-            AllocInitMultiFab(m_edge_lengths[lev][1], amrex::convert(ba, Ey_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_edge_lengths[y]");
-            AllocInitMultiFab(m_edge_lengths[lev][2], amrex::convert(ba, Ez_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_edge_lengths[z]");
-            AllocInitMultiFab(m_face_areas[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_face_areas[x]");
-            AllocInitMultiFab(m_face_areas[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_face_areas[y]");
-            AllocInitMultiFab(m_face_areas[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_face_areas[z]");
-        }
-        if(WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
-            AllocInitMultiFab(m_edge_lengths[lev][0], amrex::convert(ba, Ex_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_edge_lengths[x]");
-            AllocInitMultiFab(m_edge_lengths[lev][1], amrex::convert(ba, Ey_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_edge_lengths[y]");
-            AllocInitMultiFab(m_edge_lengths[lev][2], amrex::convert(ba, Ez_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_edge_lengths[z]");
-            AllocInitMultiFab(m_face_areas[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_face_areas[x]");
-            AllocInitMultiFab(m_face_areas[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_face_areas[y]");
-            AllocInitMultiFab(m_face_areas[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_face_areas[z]");
-            AllocInitMultiFab(m_flag_info_face[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_flag_info_face[x]");
-            AllocInitMultiFab(m_flag_info_face[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_flag_info_face[y]");
-            AllocInitMultiFab(m_flag_info_face[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_flag_info_face[z]");
-            AllocInitMultiFab(m_flag_ext_face[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_flag_ext_face[x]");
-            AllocInitMultiFab(m_flag_ext_face[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_flag_ext_face[y]");
-            AllocInitMultiFab(m_flag_ext_face[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_flag_ext_face[z]");
-            AllocInitMultiFab(m_area_mod[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_area_mod[x]");
-            AllocInitMultiFab(m_area_mod[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_area_mod[y]");
-            AllocInitMultiFab(m_area_mod[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_area_mod[z]");
-            m_borrowing[lev][0] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(ba, Bx_nodal_flag), dm);
-            m_borrowing[lev][1] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(ba, By_nodal_flag), dm);
-            m_borrowing[lev][2] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(ba, Bz_nodal_flag), dm);
-            AllocInitMultiFab(Venl[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "Venl[x]");
-            AllocInitMultiFab(Venl[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "Venl[y]");
-            AllocInitMultiFab(Venl[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "Venl[z]");
+    if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) {
+        AllocInitMultiFab(m_edge_lengths[lev][0], amrex::convert(ba, Ex_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_edge_lengths[x]");
+        AllocInitMultiFab(m_edge_lengths[lev][1], amrex::convert(ba, Ey_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_edge_lengths[y]");
+        AllocInitMultiFab(m_edge_lengths[lev][2], amrex::convert(ba, Ez_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_edge_lengths[z]");
+        AllocInitMultiFab(m_face_areas[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_face_areas[x]");
+        AllocInitMultiFab(m_face_areas[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_face_areas[y]");
+        AllocInitMultiFab(m_face_areas[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_face_areas[z]");
+    }
+    if(WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
+        AllocInitMultiFab(m_edge_lengths[lev][0], amrex::convert(ba, Ex_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_edge_lengths[x]");
+        AllocInitMultiFab(m_edge_lengths[lev][1], amrex::convert(ba, Ey_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_edge_lengths[y]");
+        AllocInitMultiFab(m_edge_lengths[lev][2], amrex::convert(ba, Ez_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_edge_lengths[z]");
+        AllocInitMultiFab(m_face_areas[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_face_areas[x]");
+        AllocInitMultiFab(m_face_areas[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_face_areas[y]");
+        AllocInitMultiFab(m_face_areas[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_face_areas[z]");
+        AllocInitMultiFab(m_flag_info_face[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_flag_info_face[x]");
+        AllocInitMultiFab(m_flag_info_face[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_flag_info_face[y]");
+        AllocInitMultiFab(m_flag_info_face[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_flag_info_face[z]");
+        AllocInitMultiFab(m_flag_ext_face[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_flag_ext_face[x]");
+        AllocInitMultiFab(m_flag_ext_face[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_flag_ext_face[y]");
+        AllocInitMultiFab(m_flag_ext_face[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_flag_ext_face[z]");
+        AllocInitMultiFab(m_area_mod[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_area_mod[x]");
+        AllocInitMultiFab(m_area_mod[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_area_mod[y]");
+        AllocInitMultiFab(m_area_mod[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "m_area_mod[z]");
+        m_borrowing[lev][0] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(ba, Bx_nodal_flag), dm);
+        m_borrowing[lev][1] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(ba, By_nodal_flag), dm);
+        m_borrowing[lev][2] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(ba, Bz_nodal_flag), dm);
+        AllocInitMultiFab(Venl[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "Venl[x]");
+        AllocInitMultiFab(Venl[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "Venl[y]");
+        AllocInitMultiFab(Venl[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "Venl[z]");
 
-            AllocInitMultiFab(ECTRhofield[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "ECTRhofield[x]", 0.0_rt);
-            AllocInitMultiFab(ECTRhofield[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "ECTRhofield[y]", 0.0_rt);
-            AllocInitMultiFab(ECTRhofield[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "ECTRhofield[z]", 0.0_rt);
-        }
+        AllocInitMultiFab(ECTRhofield[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "ECTRhofield[x]", 0.0_rt);
+        AllocInitMultiFab(ECTRhofield[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "ECTRhofield[y]", 0.0_rt);
+        AllocInitMultiFab(ECTRhofield[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, lev, "ECTRhofield[z]", 0.0_rt);
     }
 #endif
 

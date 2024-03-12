@@ -102,7 +102,7 @@ WarpX::InitEB ()
          // level has only 1/8 of the cells on the fine level, the memory usage should
          // not be an issue.
         amrex::EB2::Build(gshop, Geom(maxLevel()), maxLevel(), maxLevel()+20);
-    } else if(!wkt_file.empty()) {         
+    } else if(!wkt_file.empty()) {
         std::ifstream wkt_multipolygon_file(wkt_file);
         std::string wkt_multipolygon(std::istreambuf_iterator<char>{wkt_multipolygon_file}, {});
 
@@ -127,7 +127,7 @@ WarpX::InitEB ()
 #else
         r_data = r_vec.data();
         z_data = z_vec.data();
-        jump_data = z_vec.data();
+        jump_data = jump_vec.data();
 #endif
 
         PolygonXYIF polygonXY(r_data, z_data, r_vec.size(), jump_data, jump_vec.size());
