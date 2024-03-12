@@ -522,14 +522,22 @@ void PhysicalParticleContainer::MapParticletoBoostedFrame (
 }
 
 void
-PhysicalParticleContainer::AddGaussianBeam (
-    PlasmaInjector const& plasma_injector,
-    const Real x_m, const Real y_m, const Real z_m,
-    const Real x_rms, const Real y_rms, const Real z_rms,
-    const Real x_cut, const Real y_cut, const Real z_cut,
-    const Real q_tot, long npart,
-    const int do_symmetrize,
-    const int symmetrization_order, const Real focal_distance) {
+PhysicalParticleContainer::AddGaussianBeam (PlasmaInjector const& plasma_injector){
+
+    const Real x_m = plasma_injector.x_m;
+    const Real y_m = plasma_injector.y_m;
+    const Real z_m = plasma_injector.z_m;
+    const Real x_rms = plasma_injector.x_rms;
+    const Real y_rms = plasma_injector.y_rms;
+    const Real z_rms = plasma_injector.z_rms;
+    const Real x_cut = plasma_injector.x_cut;
+    const Real y_cut = plasma_injector.y_cut;
+    const Real z_cut = plasma_injector.z_cut;
+    const Real q_tot = plasma_injector.q_tot;
+    long npart = plasma_injector.npart;
+    const int do_symmetrize = plasma_injector.do_symmetrize;
+    const int symmetrization_order = plasma_injector.symmetrization_order;
+    const Real focal_distance = plasma_injector.focal_distance;
 
     // Declare temporary vectors on the CPU
     Gpu::HostVector<ParticleReal> particle_x;
@@ -919,21 +927,7 @@ PhysicalParticleContainer::AddParticles (int lev)
         }
 
         if (plasma_injector->gaussian_beam) {
-            AddGaussianBeam(*plasma_injector,
-                            plasma_injector->x_m,
-                            plasma_injector->y_m,
-                            plasma_injector->z_m,
-                            plasma_injector->x_rms,
-                            plasma_injector->y_rms,
-                            plasma_injector->z_rms,
-                            plasma_injector->x_cut,
-                            plasma_injector->y_cut,
-                            plasma_injector->z_cut,
-                            plasma_injector->q_tot,
-                            plasma_injector->npart,
-                            plasma_injector->do_symmetrize,
-                            plasma_injector->symmetrization_order,
-                            plasma_injector->focal_distance);
+            AddGaussianBeam(*plasma_injector);
         }
 
         if (plasma_injector->external_file) {
