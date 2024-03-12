@@ -750,7 +750,7 @@ WarpX::ReadParameters ()
             electromagnetic_solver_id = ElectromagneticSolverAlgo::None;
         }
 
-      if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
+        if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
             electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
         {
             // Note that with the relativistic version, these parameters would be
