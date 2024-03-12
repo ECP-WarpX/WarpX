@@ -76,8 +76,9 @@ void CollisionPairFilter (const amrex::ParticleReal& u1x, const amrex::ParticleR
     auto sigma_tot = sigma_sums[process_count];
 
     // calculate total collision probability
-    amrex::ParticleReal exponent = (
-        lab_to_COM_factor * multiplier * w_max * sigma_tot * v_coll * dt / dV
+    const amrex::ParticleReal exponent = (
+        lab_to_COM_factor * multiplier_ratio * w_max
+        * sigma_tot * v_coll * dt / dV
     );
 
     // Compute actual collision probability that is always between zero and one
