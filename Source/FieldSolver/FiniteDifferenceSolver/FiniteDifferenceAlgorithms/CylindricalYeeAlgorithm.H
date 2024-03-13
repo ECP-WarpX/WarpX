@@ -149,7 +149,7 @@ struct CylindricalYeeAlgorithm {
         ignore_unused(n_coefs_r);
 
         Real const inv_dr2 = coefs_r[0]*coefs_r[0];
-        return 1._rt/r * inv_dr2*( (r+0.5_rt*dr)*(F(i+1,j,k,comp) - F(i,j,k,comp)) 
+        return 1._rt/r * inv_dr2*( (r+0.5_rt*dr)*(F(i+1,j,k,comp) - F(i,j,k,comp))
                                  - (r-0.5_rt*dr)*(F(i,j,k,comp) - F(i-1,j,k,comp)) );
     }
 

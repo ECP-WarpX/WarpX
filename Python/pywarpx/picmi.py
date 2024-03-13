@@ -1142,7 +1142,7 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         Function of space and time specifying external (non-plasma) currents.
     """
     def __init__(self, grid, Te=None, n0=None, gamma=None,
-                 n_floor=None, plasma_resistivity=None, 
+                 n_floor=None, plasma_resistivity=None,
                  plasma_hyper_resistivity=None, substeps=None,
                  Jx_external_function=None, Jy_external_function=None,
                  Jz_external_function=None, **kw):
