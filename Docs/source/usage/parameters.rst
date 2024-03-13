@@ -1260,10 +1260,10 @@ Particle initialization
     averaged over the whole simulation domain exceeds this parameter.
 
 * ``<species>.do_supercycling`` (`0` or `1`) optional (default `0`)
-    Whether this species should be super-cycled. This means that field gathering, particle advancement, 
+    Whether this species should be super-cycled. This means that field gathering, particle advancement,
     and charge deposition only occur every few iterations. This is useful to speed up cases where the dynamics are dominated
-    by a less massive species with a more strict timestep restriction (e.g. electrons in an low-temperature electron-ion plasma). 
-    In these cases, the electrons can be advanced at the simulation timestep, while ions are advanced at a much larger timestep. 
+    by a less massive species with a more strict timestep restriction (e.g. electrons in an low-temperature electron-ion plasma).
+    In these cases, the electrons can be advanced at the simulation timestep, while ions are advanced at a much larger timestep.
     The interval at which this occurs is determined by `<species>.supercycling_interval`, and the timestep for the supercycled
     species is given by `warpx.const_dt * <species.supercycling_interval>`.
 

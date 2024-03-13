@@ -144,7 +144,7 @@ class Species(picmistandard.PICMI_Species):
         Whether particles will be super-cycled
 
     warpx_supercycling_interval: integer, default=1
-        How many iterations elapse between subsequent pushes 
+        How many iterations elapse between subsequent pushes
         if supercycling is enabled
     """
     def init(self, kw):
