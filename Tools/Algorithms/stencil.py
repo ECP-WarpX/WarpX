@@ -16,9 +16,9 @@ import os
 import sys
 
 sys.path.append('../Parser/')
-from input_file_parser import parse_input_file
 import matplotlib.pyplot as plt
 import numpy as np
+from input_file_parser import parse_input_file
 from scipy.constants import c
 
 plt.style.use('tableau-colorblind10')

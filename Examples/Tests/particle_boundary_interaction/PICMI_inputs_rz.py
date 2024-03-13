@@ -4,7 +4,6 @@
 # --- This input is a simple case of reflection
 # --- of one electron on the surface of a sphere.
 import numpy as np
-
 from pywarpx import callbacks, particle_containers, picmi
 
 ##########################

@@ -11,8 +11,8 @@ import os
 import sys
 
 import numpy as np
-from openpmd_viewer import OpenPMDTimeSeries
 import yt
+from openpmd_viewer import OpenPMDTimeSeries
 
 yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')

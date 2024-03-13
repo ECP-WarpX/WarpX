@@ -13,8 +13,8 @@ import os
 import sys
 
 import numpy as np
-from scipy.special import erf
 import yt
+from scipy.special import erf
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
