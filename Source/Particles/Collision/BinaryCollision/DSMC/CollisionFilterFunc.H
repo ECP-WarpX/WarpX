@@ -44,7 +44,7 @@ void CollisionPairFilter (const amrex::ParticleReal& u1x, const amrex::ParticleR
                           amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight,
                           const int& multiplier,
                           int const process_count,
-                          const ScatteringProcess::Executor* scattering_processes,
+                          const ScatteringProcess::Executor* AMREX_RESTRICT scattering_processes,
                           const amrex::RandomEngine& engine)
 {
     amrex::ParticleReal E_coll, v_coll, lab_to_COM_factor;
@@ -71,7 +71,7 @@ void CollisionPairFilter (const amrex::ParticleReal& u1x, const amrex::ParticleR
     for (int ii = 0; ii < 10; ii++) {
         if (ii < process_count)
         {
-            auto const& scattering_process = *(scattering_processes + ii);
+            auto const& scattering_process = scattering_processes[ii];
             auto sigma = scattering_process.getCrossSection(E_coll);
             sigma_sums[ii] = sigma + ((ii == 0) ? 0._prt : sigma_sums[ii-1]);
         }
@@ -99,7 +99,7 @@ void CollisionPairFilter (const amrex::ParticleReal& u1x, const amrex::ParticleR
         for (int ii = 0; ii < process_count; ii++) {
             if (random_number <= sigma_sums[ii] / sigma_tot)
             {
-                auto const& scattering_process = *(scattering_processes + ii);
+                auto const& scattering_process = scattering_processes[ii];
                 p_mask[pair_index] = int(scattering_process.m_type);
                 p_pair_reaction_weight[pair_index] = w_min;
                 break;

@@ -61,7 +61,6 @@ public:
     DSMCFunc (const std::string collision_name,
               [[maybe_unused]] MultiParticleContainer const * const mypc,
               [[maybe_unused]] const bool isSameSpecies)
-        //   : m_isSameSpecies{isSameSpecies}
     {
         using namespace amrex::literals;
 
@@ -98,21 +97,24 @@ public:
             scattering_processes.push_back(std::move(process));
         }
 
+        // copy ScatteringProcess Executor to device (if needed)
+        amrex::Gpu::DeviceVector<ScatteringProcess::Executor> scattering_processes_exe;
 #ifdef AMREX_USE_GPU
         amrex::Gpu::HostVector<ScatteringProcess::Executor> h_scattering_processes_exe;
         for (auto const& p : scattering_processes) {
             h_scattering_processes_exe.push_back(p.executor());
         }
-        m_scattering_processes_exe.resize(h_scattering_processes_exe.size());
+        scattering_processes_exe.resize(h_scattering_processes_exe.size());
         amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_scattering_processes_exe.begin(),
-                            h_scattering_processes_exe.end(), m_scattering_processes_exe.begin());
+                            h_scattering_processes_exe.end(), scattering_processes_exe.begin());
         amrex::Gpu::streamSynchronize();
 #else
         for (auto const& p : scattering_processes) {
-            m_scattering_processes_exe.push_back(p.executor());
+            scattering_processes_exe.push_back(p.executor());
         }
 #endif
-        m_process_count = static_cast<int>(m_scattering_processes_exe.size());
+        m_scattering_processes = scattering_processes_exe.data();
+        m_process_count = static_cast<int>(scattering_processes_exe.size());
     }
 
     /**
@@ -155,8 +157,6 @@ public:
         amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight,
         amrex::RandomEngine const& engine) const
     {
-        auto* scattering_processes = m_scattering_processes_exe.data();
-
         amrex::ParticleReal * const AMREX_RESTRICT w1 = soa_1.m_rdata[PIdx::w];
         amrex::ParticleReal * const AMREX_RESTRICT u1x = soa_1.m_rdata[PIdx::ux];
         amrex::ParticleReal * const AMREX_RESTRICT u1y = soa_1.m_rdata[PIdx::uy];
@@ -217,7 +217,7 @@ public:
                 u2x[ I2[i2] ], u2y[ I2[i2] ], u2z[ I2[i2] ],
                 m1, m2, w1[ I1[i1] ]/c1k, w2[ I2[i2] ]/c2k,
                 dt, dV, pair_index, p_mask, p_pair_reaction_weight,
-                max_N, m_process_count, scattering_processes, engine);
+                max_N, m_process_count, m_scattering_processes, engine);
 
 #if (defined WARPX_DIM_RZ)
             amrex::ParticleReal const u1xbuf_new = u1x[I1[i1]];
@@ -234,7 +234,7 @@ public:
     }
 
 private:
-    amrex::Gpu::DeviceVector<ScatteringProcess::Executor> m_scattering_processes_exe;
+    ScatteringProcess::Executor* m_scattering_processes;
     int m_process_count;
 };
 
