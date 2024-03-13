@@ -538,9 +538,9 @@ PhysicalParticleContainer::AddGaussianBeam (PlasmaInjector const& plasma_injecto
     const int symmetrization_order = plasma_injector.symmetrization_order;
     const Real focal_distance = plasma_injector.focal_distance;
 
-    const int do_rotation = plasma_injector.do_rotation; // 1;
-    const Vector<Real> rotation_axis = plasma_injector.rotation_axis ; // {0,1,0}; // normalize it if necessary
-    const Real rotation_angle = plasma_injector.rotation_angle; //45.*MathConst::pi/180.;
+    const int do_rotation = plasma_injector.do_rotation; 
+    Vector<Real> rotation_axis = plasma_injector.rotation_axis ; 
+    const Real rotation_angle = plasma_injector.rotation_angle;
 
     // Declare temporary vectors on the CPU
     Gpu::HostVector<ParticleReal> particle_x;
@@ -583,30 +583,40 @@ PhysicalParticleContainer::AddGaussianBeam (PlasmaInjector const& plasma_injecto
 
                 if (do_rotation){
 
-                    // put this into a function like rotate(XDim3 k, Real angle)
-                    Real Kx = -rotation_axis[2]*(y-y_m) + rotation_axis[1]*(z-z_m);
-                    Real Ky =  rotation_axis[2]*(x-x_m) - rotation_axis[0]*(z-z_m);
-                    Real Kz = -rotation_axis[1]*(x-x_m) + rotation_axis[0]*(y-y_m);
+                    // normalize the rotation axis 
+                    Real k_norm = std::sqrt(rotation_axis[0]*rotation_axis[0] + rotation_axis[1]*rotation_axis[1] + rotation_axis[2]*rotation_axis[2]);
+                    Real kx = rotation_axis[0]/k_norm;
+                    Real ky = rotation_axis[1]/k_norm;
+                    Real kz = rotation_axis[2]/k_norm;
+                
+                    // compute rotated vector: v_rot = v + sin(theta) * Kv + (1-cos(theta)) K^2v
+                    // where K is the rotation matrix = cross-product matrix associated to the rotation axis vector k = (kx, ky, kz)
+                    //     [  0 -kx  ky]
+                    // K = [ kz  0  -kx]
+                    //     [-ky  kz   0]
 
-                    Real K2x = -rotation_axis[2]*Ky + rotation_axis[1]*Kz;
-                    Real K2y =  rotation_axis[2]*Kx - rotation_axis[0]*Kz;
-                    Real K2z = -rotation_axis[1]*Kx + rotation_axis[0]*Ky;
+                    // rotate positions 
+                    Real Kx = -kz*(y-y_m) + ky*(z-z_m);
+                    Real Ky =  kz*(x-x_m) - kx*(z-z_m);
+                    Real Kz = -ky*(x-x_m) + kx*(y-y_m);
+                    Real K2x = -kz*Ky + ky*Kz;
+                    Real K2y =  kz*Kx - kx*Kz;
+                    Real K2z = -ky*Kx + kx*Ky;
+                    x = x - x_m + std::sin(rotation_angle) * Kx + (1._rt - std::cos(rotation_angle)) * K2x;
+                    y = y - y_m + std::sin(rotation_angle) * Ky + (1._rt - std::cos(rotation_angle)) * K2y;
+                    z = z - z_m + std::sin(rotation_angle) * Kz + (1._rt - std::cos(rotation_angle)) * K2z;
 
-                    x = x - x_m + sin(rotation_angle) * Kx + (1. - cos(rotation_angle)) * K2x;
-                    y = y - y_m + sin(rotation_angle) * Ky + (1. - cos(rotation_angle)) * K2y;
-                    z = z - z_m + sin(rotation_angle) * Kz + (1. - cos(rotation_angle)) * K2z;
+                    // rotate momenta                   
+                    Real Kux = -kz*u.y + ky*u.z;
+                    Real Kuy =  kz*u.x - kx*u.z;
+                    Real Kuz = -ky*u.x + kx*u.y;
+                    Real K2ux = -kz*Kuy + ky*Kuz;
+                    Real K2uy =  kz*Kux - kx*Kuz;
+                    Real K2uz = -ky*Kux + kx*Kuy;
+                    u.x = u.x + std::sin(rotation_angle) * Kux + (1._rt - std::cos(rotation_angle)) * K2ux;
+                    u.y = u.y + std::sin(rotation_angle) * Kuy + (1._rt - std::cos(rotation_angle)) * K2uy;
+                    u.z = u.z + std::sin(rotation_angle) * Kuz + (1._rt - std::cos(rotation_angle)) * K2uz;
 
-                    Real Kux = -rotation_axis[2]*u.y + rotation_axis[1]*u.z;
-                    Real Kuy =  rotation_axis[2]*u.x - rotation_axis[0]*u.z;
-                    Real Kuz = -rotation_axis[1]*u.x + rotation_axis[0]*u.y;
-
-                    Real K2ux = -rotation_axis[2]*Kuy + rotation_axis[1]*Kuz;
-                    Real K2uy =  rotation_axis[2]*Kux - rotation_axis[0]*Kuz;
-                    Real K2uz = -rotation_axis[1]*Kux + rotation_axis[0]*Kuy;
-
-                    u.x = u.x + sin(rotation_angle) * Kux + (1. - cos(rotation_angle)) * K2ux;
-                    u.y = u.y + sin(rotation_angle) * Kuy + (1. - cos(rotation_angle)) * K2uy;
-                    u.z = u.z + sin(rotation_angle) * Kuz + (1. - cos(rotation_angle)) * K2uz;
                 }
 
             if (plasma_injector.do_focusing){
