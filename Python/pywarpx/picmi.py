@@ -139,6 +139,13 @@ class Species(picmistandard.PICMI_Species):
     warpx_resampling_trigger_max_avg_ppc: int, default=infinity
         Resampling will be done when the average number of
         particles per cell exceeds this number
+
+    warpx_do_supercycling: bool, default=False
+        Whether particles will be super-cycled
+
+    warpx_supercycling_interval: integer, default=1
+        How many iterations elapse between subsequent pushes 
+        if supercycling is enabled
     """
     def init(self, kw):
 
@@ -219,6 +226,10 @@ class Species(picmistandard.PICMI_Species):
         self.resampling_trigger_intervals = kw.pop('warpx_resampling_trigger_intervals', None)
         self.resampling_triggering_max_avg_ppc = kw.pop('warpx_resampling_trigger_max_avg_ppc', None)
 
+        # Supercycling settings
+        self.do_supercycling = kw.pop('warpx_do_supercycling', None)
+        self.supercycling_interval = kw.pop('warpx_supercycling_interval', None)
+
     def species_initialize_inputs(self, layout,
                                   initialize_self_fields = False,
                                   injection_plane_position = None,
@@ -257,7 +268,13 @@ class Species(picmistandard.PICMI_Species):
                                              random_theta = self.random_theta,
                                              do_resampling=self.do_resampling,
                                              resampling_trigger_intervals=self.resampling_trigger_intervals,
-                                             resampling_trigger_max_avg_ppc=self.resampling_triggering_max_avg_ppc)
+                                             resampling_trigger_max_avg_ppc=self.resampling_triggering_max_avg_ppc,
+                                             do_supercycling = self.do_supercycling,
+                                             supercycling_interval=self.supercycling_interval
+                                             )
+
+        print("Do supercycling", self.do_supercycling)
+        print("Supercycling interval", self.supercycling_interval)
 
         # add reflection models
         self.species.add_new_attr("reflection_model_xlo(E)", self.reflection_model_xlo)
