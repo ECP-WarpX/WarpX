@@ -340,6 +340,9 @@ public:
     amrex::Real self_fields_absolute_tolerance = amrex::Real(0.0);
     int self_fields_max_iters = 200;
     int self_fields_verbosity = 2;
+    
+    // Supercycling
+    int do_supercycling = 0;
 
     // External fields added to particle fields.
     amrex::Vector<amrex::ParticleReal> m_B_external_particle;
@@ -460,7 +463,6 @@ protected:
     int do_resampling = 0;
 
     // Supercycling options
-    int do_supercycling = 0;
     int supercycling_interval = 1;
 
     /** Whether back-transformed diagnostics is turned on for the corresponding species.*/

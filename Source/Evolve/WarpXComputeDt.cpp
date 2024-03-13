@@ -5,6 +5,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpX.H"
+#include "Particles/MultiParticleContainer.H"
 
 #ifndef WARPX_DIM_RZ
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
@@ -31,16 +32,27 @@
  * Determine the timestep of the simulation. */
 void
 WarpX::ComputeDt ()
-{
+{   
+    // Check if any species is using supercycling
+    bool do_supercycling = false;
+    int nSpecies = mypc->nSpecies();
+    for (int i = 0; i < nSpecies; i++) {
+        auto& pc = mypc->GetParticleContainer(i);
+        do_supercycling = do_supercycling || pc.do_supercycling;
+    }
+
     // Handle cases where the timestep is not limited by the speed of light
     if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
-        electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
+        electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC ||
+        do_supercycling) {
 
         std::stringstream errorMsg;
         if (electrostatic_solver_id != ElectrostaticSolverAlgo::None) {
             errorMsg << "warpx.const_dt must be specified with the electrostatic solver.";
         } else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
             errorMsg << "warpx.const_dt must be specified with the hybrid-PIC solver.";
+        } else if (do_supercycling) {
+            errorMsg << "warpx.const_dt must be specified when using species supercycling.";
         } else {
             errorMsg << "warpx.const_dt must be specified when not using a field solver.";
         }
