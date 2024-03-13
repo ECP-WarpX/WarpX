@@ -172,21 +172,16 @@ struct CartesianYeeAlgorithm {
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real Dyy (
         T_Field const& F,
-        amrex::Real const * const coefs_y, int const n_coefs_y,
+        amrex::Real const * const coefs_y, int const /*n_coefs_y*/,
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
 #if defined WARPX_DIM_3D
         Real const inv_dy2 = coefs_y[0]*coefs_y[0];
-        amrex::ignore_unused(n_coefs_y);
         return inv_dy2*( F(i,j-1,k,ncomp) - 2._rt*F(i,j,k,ncomp) + F(i,j+1,k,ncomp) );
 #elif (defined WARPX_DIM_XZ || WARPX_DIM_1D_Z)
-        amrex::ignore_unused(F, coefs_y, n_coefs_y,
-            i, j, k, ncomp);
+        amrex::ignore_unused(F, coefs_y, i, j, k, ncomp);
         return 0._rt; // 1D and 2D Cartesian: derivative along y is 0
-#else
-        amrex::ignore_unused(F, coefs_y, n_coefs_y,
-            i, j, k, ncomp);
 #endif
     }
 

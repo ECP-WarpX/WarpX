@@ -142,11 +142,10 @@ struct CylindricalYeeAlgorithm {
     static amrex::Real Dr_rDr_over_r (
         T_Field const& F,
         amrex::Real const r, amrex::Real const dr,
-        amrex::Real const * const coefs_r, int const n_coefs_r,
+        amrex::Real const * const coefs_r, int const /*n_coefs_r*/,
         int const i, int const j, int const k, int const comp ) {
 
         using namespace amrex;
-        ignore_unused(n_coefs_r);
 
         Real const inv_dr2 = coefs_r[0]*coefs_r[0];
         return 1._rt/r * inv_dr2*( (r+0.5_rt*dr)*(F(i+1,j,k,comp) - F(i,j,k,comp))
