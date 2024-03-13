@@ -155,7 +155,7 @@ void WarpX::HybridPICEvolveFields ()
     m_hybrid_pic_model->CalculateCurrentAmpere(Bfield_fp, m_edge_lengths);
     m_hybrid_pic_model->HybridPICSolveE(
         Efield_fp, current_fp_temp, Bfield_fp, rho_fp, m_edge_lengths,
-        false
+        false, false
     );
     FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
