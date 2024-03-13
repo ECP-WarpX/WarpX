@@ -22,32 +22,21 @@ This assumes you have an up-to-date environment with PyTorch and openPMD.
 Data Cleaning
 -------------
 
-It is important to inspect the data for artifacts to
+It is important to inspect the data for artifacts, to
 check that input/output data make sense.
-If we plot the final phase space for beams 1-8,
-the particle data is distributed in a single blob,
-as shown by :numref:`fig_phase_space_beam_1` for beam 1.
-This is as we expect and what is optimal for training neural networks.
+If we plot the final phase space of the particle beam,
+shown in :numref:`fig_phase_space`,
+we see a halo of outlying particles.
+Looking closer at the z-pz space, we see that some particles were not trapped in the accelerating region of the wake and have much less energy than the rest of the beam.
+To assist our neural network in learning dynamics of interest, we filter out these particles.
 
-.. _fig_phase_space_beam_1:
-
-.. figure:: https://user-images.githubusercontent.com/10621396/290010209-c55baf1c-dd98-4d56-a675-ad3729481eee.png
-   :alt: Plot showing the final phase space projections for beam 1 of the training data, for a surrogate to stage 1.
-
-   The final phase space projections for beam 1 of the training data, for a surrogate to stage 1.
-
-.. _fig_phase_space_beam_0:
+.. _fig_phase_space:
 
 .. figure:: https://user-images.githubusercontent.com/10621396/290010282-40560ac4-8509-4599-82ca-167bb1739cff.png
-   :alt: Plot showing the final phase space projections for beam 0 of the training data, for a surrogate to stage 0.
+   :alt: Plot showing the final phase space projections of a particle beam through a laser-plasma acceleration element.
 
-   The final phase space projections for beam 0 of the training data, for a surrogate to stage 0
+   The final phase space projections of a particle beam through a laser-plasma acceleration element.
 
-On the other hand, the final phase space for beam 0, shown in :numref:`fig_phase_space_beam_1`,
-has a halo of outlying particles.
-Looking closer at the z-pz space, we see that some particles got caught in a decelerating
-region of the wake, have slipped back and are much slower than the rest of the beam.
-To assist our neural network in learning dynamics of interest, we filter out these particles.
 It is sufficient for our purposes to select particles that are not too far back, setting
 ``particle_selection={'z':[0.28002, None]}``. Then a particle tracker is set up to make sure
 we consistently filter out these particles from both the initial and final data.
@@ -57,6 +46,10 @@ we consistently filter out these particles from both the initial and final data.
    :dedent: 4
    :start-after: # Manual: Particle tracking START
    :end-before: # Manual: Particle tracking END
+
+
+This data cleaning ensures that the particle data is distributed in a single blob,
+as is optimal for training neural networks.
 
 Create Normalized Dataset
 -------------------------
@@ -119,8 +112,13 @@ This data are converted to an :math:`N\times 6` numpy array and then to a PyTorc
 Save Normalizations and Normalized Data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-With the data properly normalized, it and the normalizations are saved to file for
-use in training and inference.
+The data is split into training and testing subsets.  
+We take most of the data (70%) for training, meaning that data is used to update
+the neural network parameters.
+The testing data is reserved to determine how well the neural network generalizes;
+that is, how well the neural network performs on data that wasn't used to update the neural network parameters.
+With the data split and properly normalized, it and the normalizations are saved to file for
+use in training and inference. 
 
 .. literalinclude:: ml_materials/create_dataset.py
    :language: python
@@ -131,9 +129,8 @@ use in training and inference.
 Neural Network Structure
 ------------------------
 
-It was found in :cite:t:`ml-SandbergPASC24` that reasonable surrogate models are obtained with
-shallow feedforward neural networks consisting of fewer than 10 hidden layers and
-just under 1000 nodes per layer.
+It was found in :cite:t:`ml-SandbergPASC24` that a reasonable surrogate model is obtained with
+shallow feedforward neural networks consisting of about 5 hidden layers and 700-900 nodes per layer.
 The example shown here uses 3 hidden layers and 20 nodes per layer
 and is trained for 10 epochs.
 
@@ -188,8 +185,8 @@ which is later divided by the size of the dataset in the training loop.
    :start-after: # Manual: Test function START
    :end-before: # Manual: Test function END
 
-Train Loop
-^^^^^^^^^^
+Training Loop
+^^^^^^^^^^^^^
 
 The full training loop performs ``n_epochs`` number of iterations.
 At each iteration the training and testing functions are called,
@@ -243,7 +240,7 @@ When the test-loss starts to trend flat or even upward, the neural network is no
 A visual inspection of the model prediction can be seen in :numref:`fig_train_evaluation`.
 This plot compares the model prediction, with dots colored by mean-square error, on the testing data with the actual simulation output in black.
 The model obtained with the hyperparameters chosen here trains quickly but is not very accurate.
-A more accurate model is obtained with 5 hidden layers and 800 nodes per layer,
+A more accurate model is obtained with 5 hidden layers and 900 nodes per layer,
 as discussed in :cite:t:`ml-SandbergPASC24`.
 
 These figures can be generated with the following Python script.
@@ -261,7 +258,7 @@ Surrogate Usage in Accelerator Physics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A neural network such as the one we trained here can be incorporated in other BLAST codes.
-`Consider the example using neural networks in ImpactX <https://impactx.readthedocs.io/en/latest/usage/examples/pytorch_surrogate_model/README.html>`__.
+Consider `this <https://impactx.readthedocs.io/en/latest/usage/examples/pytorch_surrogate_model/README.html>`__ example using neural networks in ImpactX.
 
 .. bibliography::
    :keyprefix: ml-
