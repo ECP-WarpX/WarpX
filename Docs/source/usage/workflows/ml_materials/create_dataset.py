@@ -8,12 +8,13 @@
 # License: BSD-3-Clause-LBNL
 #
 
-import numpy as np
-from openpmd_viewer import OpenPMDTimeSeries, ParticleTracker
 import os
-import torch
 from urllib import request
 import zipfile
+
+import numpy as np
+from openpmd_viewer import OpenPMDTimeSeries, ParticleTracker
+import torch
 
 c = 2.998e8
 ###############

@@ -121,13 +121,13 @@ This data are converted to an :math:`N\times 6` numpy array and then to a PyTorc
 Save Normalizations and Normalized Data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The data is split into training and testing subsets.  
+The data is split into training and testing subsets.
 We take most of the data (70%) for training, meaning that data is used to update
 the neural network parameters.
 The testing data is reserved to determine how well the neural network generalizes;
 that is, how well the neural network performs on data that wasn't used to update the neural network parameters.
 With the data split and properly normalized, it and the normalizations are saved to file for
-use in training and inference. 
+use in training and inference.
 
 .. literalinclude:: ml_materials/create_dataset.py
    :language: python

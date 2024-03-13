@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import math
+
+from mpi4py import MPI as mpi
 import numpy as np
 from pywarpx import picmi
 
