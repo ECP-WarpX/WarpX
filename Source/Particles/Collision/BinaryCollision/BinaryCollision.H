@@ -247,6 +247,7 @@ public:
         using namespace ParticleUtils;
         using namespace amrex::literals;
 
+        auto &binary_collision_functor = m_binary_collision_functor;
         const bool have_product_species = m_have_product_species;
 
         // Store product species data in vectors
@@ -376,7 +377,7 @@ public:
                     // Call the function in order to perform collisions
                     // If there are product species, mask, p_pair_indices_1/2, and
                     // p_pair_reaction_weight are filled here
-                    this->m_binary_collision_functor(
+                    binary_collision_functor(
                         cell_start_1, cell_half_1,
                         cell_half_1, cell_stop_1,
                         indices_1, indices_1,
@@ -534,7 +535,7 @@ public:
                     // Call the function in order to perform collisions
                     // If there are product species, p_mask, p_pair_indices_1/2, and
                     // p_pair_reaction_weight are filled here
-                    this->m_binary_collision_functor(
+                    binary_collision_functor(
                         cell_start_1, cell_stop_1, cell_start_2, cell_stop_2,
                         indices_1, indices_2,
                         soa_1, soa_2, get_position_1, get_position_2,

@@ -68,10 +68,14 @@ void CollisionPairFilter (const amrex::ParticleReal& u1x, const amrex::ParticleR
         (process_count < 10), "Too many scattering processes in DSMC routine."
     );
     amrex::ParticleReal sigma_sums[10];
-    for (int ii = 0; ii < process_count; ii++) {
-        auto const& scattering_process = *(scattering_processes + ii);
-        auto sigma = scattering_process.getCrossSection(E_coll);
-        sigma_sums[ii] = sigma + ((ii == 0) ? 0._prt : sigma_sums[ii-1]);
+    for (int ii = 0; ii < 10; ii++) {
+        if (ii < process_count)
+        {
+            auto const& scattering_process = *(scattering_processes + ii);
+            auto sigma = scattering_process.getCrossSection(E_coll);
+            sigma_sums[ii] = sigma + ((ii == 0) ? 0._prt : sigma_sums[ii-1]);
+        }
+        else sigma_sums[ii] = 0._prt;
     }
     auto sigma_tot = sigma_sums[process_count];
 

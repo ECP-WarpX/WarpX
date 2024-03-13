@@ -74,6 +74,7 @@ public:
 
         // create a vector of ScatteringProcess objects from each scattering
         // process name
+        amrex::Vector<ScatteringProcess> scattering_processes;
         for (const auto& scattering_process : scattering_process_names) {
             std::string kw_cross_section = scattering_process + "_cross_section";
             std::string cross_section_file;
@@ -94,12 +95,12 @@ public:
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(process.type() != ScatteringProcessType::INVALID,
                                             "Cannot add an unknown scattering process type");
 
-            m_scattering_processes.push_back(std::move(process));
+            scattering_processes.push_back(std::move(process));
         }
 
 #ifdef AMREX_USE_GPU
         amrex::Gpu::HostVector<ScatteringProcess::Executor> h_scattering_processes_exe;
-        for (auto const& p : m_scattering_processes) {
+        for (auto const& p : scattering_processes) {
             h_scattering_processes_exe.push_back(p.executor());
         }
         m_scattering_processes_exe.resize(h_scattering_processes_exe.size());
@@ -107,7 +108,7 @@ public:
                             h_scattering_processes_exe.end(), m_scattering_processes_exe.begin());
         amrex::Gpu::streamSynchronize();
 #else
-        for (auto const& p : m_scattering_processes) {
+        for (auto const& p : scattering_processes) {
             m_scattering_processes_exe.push_back(p.executor());
         }
 #endif
@@ -233,10 +234,8 @@ public:
     }
 
 private:
-    amrex::Vector<ScatteringProcess> m_scattering_processes;
     amrex::Gpu::DeviceVector<ScatteringProcess::Executor> m_scattering_processes_exe;
     int m_process_count;
-    // bool m_isSameSpecies;
 };
 
 #endif // DSMC_FUNC_H_
