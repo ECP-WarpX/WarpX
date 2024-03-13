@@ -340,7 +340,7 @@ public:
     amrex::Real self_fields_absolute_tolerance = amrex::Real(0.0);
     int self_fields_max_iters = 200;
     int self_fields_verbosity = 2;
-    
+
     // Supercycling
     int do_supercycling = 0;
 
