@@ -354,6 +354,10 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp_species_name.query("do_supercycling", do_supercycling);
     pp_species_name.query("supercycling_interval", supercycling_interval);
 
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        supercycling_interval > 0,
+        "Supercycling interval for '" + species_name + "' must be greater than 0");
+
     //check if Radiation Reaction is enabled and do consistency checks
     pp_species_name.query("do_classical_radiation_reaction", do_classical_radiation_reaction);
     //if the species is not a lepton, do_classical_radiation_reaction

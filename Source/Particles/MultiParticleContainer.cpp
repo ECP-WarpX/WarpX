@@ -469,8 +469,25 @@ MultiParticleContainer::Evolve (int lev,
         if (crho) { crho->setVal(0.0); }
     }
     for (auto& pc : allcontainers) {
-        pc->Evolve(lev, Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, cjx, cjy, cjz,
-                   rho, crho, cEx, cEy, cEz, cBx, cBy, cBz, t, dt, a_dt_type, skip_deposition, push_type);
+        if (pc->do_supercycling) {
+            int iter = round(t / dt + 0.5);
+            if (iter % pc->supercycling_interval == 0) {
+                pc->Evolve(lev, Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, cjx, cjy, cjz,
+                    rho, crho, cEx, cEy, cEz, cBx, cBy, cBz, t, dt * pc->supercycling_interval,
+                    a_dt_type, skip_deposition, push_type);
+
+                std::cout << "Supercycled step (" << 
+                    iter << ", " << 
+                    pc -> supercycling_interval << ", " <<
+                    iter % (pc->supercycling_interval) <<
+                    ")" << "\n";
+            }
+      
+        } else {
+            pc->Evolve(lev, Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, cjx, cjy, cjz,
+                    rho, crho, cEx, cEy, cEz, cBx, cBy, cBz, t, dt, a_dt_type, skip_deposition, push_type);
+            std::cout << "Non-supercycled step" << "\n";
+        } 
     }
 }
 
