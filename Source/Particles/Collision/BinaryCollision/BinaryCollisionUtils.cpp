@@ -21,16 +21,19 @@ namespace BinaryCollisionUtils{
                                       MultiParticleContainer const * const mypc)
     {
         const amrex::ParmParse pp_collision_name(collision_name);
-        std::string type;
-        pp_collision_name.get("type", type);
-        if (type == "nuclearfusion") {
+        // For legacy, pairwisecoulomb is the default
+        std::string type = "pairwisecoulomb";
+        pp_collision_name.query("type", type);
+        if (type == "pairwisecoulomb") {
+            return CollisionType::PairwiseCoulomb;
+        }
+        else if (type == "nuclearfusion") {
             const NuclearFusionType fusion_type = get_nuclear_fusion_type(collision_name, mypc);
             return nuclear_fusion_type_to_collision_type(fusion_type);
         }
         else if (type == "dsmc") {
             return CollisionType::DSMC;
         }
-        WARPX_ABORT_WITH_MESSAGE(type + " is not a valid type of collision that creates new particles");
         return CollisionType::Undefined;
     }
 
