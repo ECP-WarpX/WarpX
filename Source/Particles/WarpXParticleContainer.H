@@ -458,7 +458,7 @@ protected:
     std::string physical_element;
 
     int do_resampling = 0;
-    
+
     // Supercycling options
     int do_supercycling = 0;
     int supercycling_interval = 1;

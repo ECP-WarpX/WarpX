@@ -476,13 +476,13 @@ MultiParticleContainer::Evolve (int lev,
     for (auto& pc : allcontainers) {
         auto dt_species = dt * pc->supercycling_interval;
 
-        if ((pc->do_supercycling && (iter % pc->supercycling_interval == 0)) || 
+        if ((pc->do_supercycling && (iter % pc->supercycling_interval == 0)) ||
             !pc->do_supercycling) {
 
             pc->Evolve(lev, Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, cjx, cjy, cjz,
                 rho, crho, cEx, cEy, cEz, cBx, cBy, cBz, t, dt_species,
                 a_dt_type, skip_deposition, push_type);
-        } 
+        }
     }
 }
 
