@@ -354,6 +354,12 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp_species_name.query("do_supercycling", do_supercycling);
     pp_species_name.query("supercycling_interval", supercycling_interval);
 
+    auto & warpx = WarpX::GetInstance();
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        (do_supercycling > 0 && warpx.m_const_dt.has_value()) || do_supercycling == 0,
+        "warpx.const_dt must be set when using species supercycling.");
+
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         supercycling_interval > 0,
         "Supercycling interval for '" + species_name + "' must be greater than 0");

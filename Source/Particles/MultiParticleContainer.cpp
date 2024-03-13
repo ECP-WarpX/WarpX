@@ -468,25 +468,20 @@ MultiParticleContainer::Evolve (int lev,
         if (rho) { rho->setVal(0.0); }
         if (crho) { crho->setVal(0.0); }
     }
-    for (auto& pc : allcontainers) {
-        if (pc->do_supercycling) {
-            int iter = round(t / dt + 0.5);
-            if (iter % pc->supercycling_interval == 0) {
-                pc->Evolve(lev, Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, cjx, cjy, cjz,
-                    rho, crho, cEx, cEy, cEz, cBx, cBy, cBz, t, dt * pc->supercycling_interval,
-                    a_dt_type, skip_deposition, push_type);
 
-                std::cout << "Supercycled step (" << 
-                    iter << ", " << 
-                    pc -> supercycling_interval << ", " <<
-                    iter % (pc->supercycling_interval) <<
-                    ")" << "\n";
-            }
-      
-        } else {
+    // Get current iteration for use in supercycling
+    auto& warpx = WarpX::GetInstance();
+    int iter = warpx.getistep(0);
+
+    for (auto& pc : allcontainers) {
+        auto dt_species = dt * pc->supercycling_interval;
+
+        if ((pc->do_supercycling && (iter % pc->supercycling_interval == 0)) || 
+            !pc->do_supercycling) {
+
             pc->Evolve(lev, Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, cjx, cjy, cjz,
-                    rho, crho, cEx, cEy, cEz, cBx, cBy, cBz, t, dt, a_dt_type, skip_deposition, push_type);
-            std::cout << "Non-supercycled step" << "\n";
+                rho, crho, cEx, cEy, cEz, cBx, cBy, cBz, t, dt_species,
+                a_dt_type, skip_deposition, push_type);
         } 
     }
 }

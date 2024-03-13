@@ -156,6 +156,8 @@ public:
     int maxlevel_extEMfield_init;
 
     // Algorithms
+    //! Whether a constant timestep has been set
+    std::optional<amrex::Real> m_const_dt;
     //! Integer that corresponds to the current deposition algorithm (Esirkepov, direct, Vay, Villasenor)
     static short current_deposition_algo;
     //! Integer that corresponds to the charge deposition algorithm (only standard deposition)
@@ -1597,8 +1599,6 @@ private:
     int warpx_do_continuous_injection = 0;
     int num_injected_species = -1;
     amrex::Vector<int> injected_plasma_species;
-
-    std::optional<amrex::Real> m_const_dt;
 
     // Macroscopic properties
     std::unique_ptr<MacroscopicProperties> m_macroscopic_properties;
