@@ -75,7 +75,7 @@ public:
         // process name
         amrex::Vector<ScatteringProcess> scattering_processes;
         for (const auto& scattering_process : scattering_process_names) {
-            std::string kw_cross_section = scattering_process + "_cross_section";
+            const std::string kw_cross_section = scattering_process + "_cross_section";
             std::string cross_section_file;
             pp_collision_name.query(kw_cross_section.c_str(), cross_section_file);
 
@@ -84,7 +84,7 @@ public:
             amrex::ParticleReal energy = 0._prt;
             if (scattering_process.find("excitation") != std::string::npos ||
                 scattering_process.find("ionization") != std::string::npos) {
-                std::string kw_energy = scattering_process + "_energy";
+                const std::string kw_energy = scattering_process + "_energy";
                 utils::parser::getWithParser(
                     pp_collision_name, kw_energy.c_str(), energy);
             }
@@ -216,8 +216,9 @@ public:
                 u1x[ I1[i1] ], u1y[ I1[i1] ], u1z[ I1[i1] ],
                 u2x[ I2[i2] ], u2y[ I2[i2] ], u2z[ I2[i2] ],
                 m1, m2, w1[ I1[i1] ]/c1k, w2[ I2[i2] ]/c2k,
-                dt, dV, pair_index, p_mask, p_pair_reaction_weight,
-                max_N, m_process_count, m_scattering_processes, engine);
+                dt, dV, static_cast<int>(pair_index), p_mask,
+                p_pair_reaction_weight, static_cast<int>(max_N),
+                m_process_count, m_scattering_processes, engine);
 
 #if (defined WARPX_DIM_RZ)
             amrex::ParticleReal const u1xbuf_new = u1x[I1[i1]];

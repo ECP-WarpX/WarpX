@@ -39,11 +39,11 @@ void CollisionPairFilter (const amrex::ParticleReal& u1x, const amrex::ParticleR
                           const amrex::ParticleReal& u2y, const amrex::ParticleReal& u2z,
                           const amrex::ParticleReal& m1, const amrex::ParticleReal& m2,
                           amrex::ParticleReal w1, amrex::ParticleReal w2,
-                          const amrex::Real& dt, const amrex::ParticleReal& dV, const int& pair_index,
+                          const amrex::Real dt, const amrex::ParticleReal dV, const int pair_index,
                           index_type* AMREX_RESTRICT p_mask,
                           amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight,
-                          const int& multiplier,
-                          int const process_count,
+                          const int multiplier,
+                          const int process_count,
                           const ScatteringProcess::Executor* AMREX_RESTRICT scattering_processes,
                           const amrex::RandomEngine& engine)
 {
@@ -75,7 +75,7 @@ void CollisionPairFilter (const amrex::ParticleReal& u1x, const amrex::ParticleR
             auto sigma = scattering_process.getCrossSection(E_coll);
             sigma_sums[ii] = sigma + ((ii == 0) ? 0._prt : sigma_sums[ii-1]);
         }
-        else sigma_sums[ii] = 0._prt;
+        else { sigma_sums[ii] = 0._prt; }
     }
     auto sigma_tot = sigma_sums[process_count];
 

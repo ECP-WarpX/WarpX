@@ -237,15 +237,6 @@ public:
                         ux2 = temp_ux;
                         uy2 = temp_uy;
                         uz2 = temp_uz;
-
-                        // also swap positions of the product species
-                        // auto& x1 = soa_1.m_rdata[PIdx::x][idx1_out];
-                        // auto& y1 = soa_1.m_rdata[PIdx::y][idx1_out];
-                        // auto& z1 = soa_1.m_rdata[PIdx::z][idx1_out];
-                        // auto& x2 = soa_2.m_rdata[PIdx::x][idx2_out];
-                        // auto& y2 = soa_2.m_rdata[PIdx::y][idx2_out];
-                        // auto& z2 = soa_2.m_rdata[PIdx::z][idx2_out];
-
                     }
                     else {
                         amrex::Abort("Uneven mass charge-exchange not implemented yet.");
@@ -267,8 +258,8 @@ public:
         // Initialize the user runtime components
         for (int i = 0; i < m_num_product_species; i++)
         {
-            int start_index = int(products_np[i]);
-            int stop_index  = int(products_np[i] + num_added_vec[i]);
+            const int start_index = int(products_np[i]);
+            const int stop_index  = int(products_np[i] + num_added_vec[i]);
             ParticleCreation::DefaultInitializeRuntimeAttributes(*tile_products[i],
                                        0, 0,
                                        pc_products[i]->getUserRealAttribs(), pc_products[i]->getUserIntAttribs(),

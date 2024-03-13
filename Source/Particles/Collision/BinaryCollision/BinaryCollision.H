@@ -93,7 +93,7 @@ public:
             WARPX_ABORT_WITH_MESSAGE("Binary collision " + collision_name + " must have exactly two species.");
         }
 
-        CollisionType collision_type = BinaryCollisionUtils::get_collision_type(collision_name, mypc);
+        const CollisionType collision_type = BinaryCollisionUtils::get_collision_type(collision_name, mypc);
 
         m_isSameSpecies = (m_species_names[0] == m_species_names[1]);
 
