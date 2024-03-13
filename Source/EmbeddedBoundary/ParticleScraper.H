@@ -10,6 +10,7 @@
 #include "EmbeddedBoundary/DistanceToEB.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 
+
 #include <ablastr/particles/NodalFieldGather.H>
 
 #include <AMReX.H>
@@ -182,16 +183,17 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
 
                 int i, j, k;
                 amrex::Real W[AMREX_SPACEDIM][2];
-                ablastr::particles::compute_weights_nodal(xp, yp, zp, plo, dxi, i, j, k, W);
-
+                ablastr::particles::compute_weights(xp, yp, zp, plo, dxi, i, j, k, W);
                 amrex::Real phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, phi);
 
                 if (phi_value < 0.0)
                 {
-
-                    amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, phi, dxi);
+                    int ic, jc, kc; // Cell-centered indices
+                    int nodal;
+                    amrex::Real Wc[AMREX_SPACEDIM][2]; // Cell-centered weights
+                    ablastr::particles::compute_weights(xp, yp, zp, plo, dxi, ic, jc, kc, Wc, nodal=0);
+                    amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, ic, jc, kc, Wc, phi, dxi);
                     DistanceToEB::normalize(normal);
-
                     amrex::RealVect pos;
 #if (defined WARPX_DIM_3D)
                     pos[0] = xp;

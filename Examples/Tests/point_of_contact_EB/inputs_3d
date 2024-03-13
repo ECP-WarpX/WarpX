@@ -19,7 +19,7 @@ boundary.potential_hi_y = 0
 boundary.potential_lo_z = 0
 boundary.potential_hi_z = 0
 
-warpx.const_dt = 1.216119097e-10
+warpx.const_dt = 1e-10
 warpx.eb_implicit_function = "-(x**2+y**2+z**2-0.2**2)"
 
 # Do not evolve the E and B fields

@@ -227,9 +227,9 @@ struct InjectorPosition
     bool
     overlapsWith (const amrex::XDim3& lo, const amrex::XDim3& hi) const noexcept
     {
-        return ! (   (xmin > hi.x) || (xmax < lo.x)
-                  || (ymin > hi.y) || (ymax < lo.y)
-                  || (zmin > hi.z) || (zmax < lo.z) );
+        return (     (xmin <= hi.x) && (xmax >= lo.x)
+                  && (ymin <= hi.y) && (ymax >= lo.y)
+                  && (zmin <= hi.z) && (zmax >= lo.z) );
     }
 
 private:

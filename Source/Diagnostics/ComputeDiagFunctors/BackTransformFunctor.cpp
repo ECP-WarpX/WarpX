@@ -81,7 +81,7 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
         slice_box.setBig(moving_window_dir, i_boost);
 
         // Make it a BoxArray
-        amrex::BoxArray slice_ba(slice_box);
+        const amrex::BoxArray slice_ba(slice_box);
         // Define MultiFab with the distribution map of the destination multifab and
         // containing all ten components that were in the slice generated from m_mf_src.
         std::unique_ptr< amrex::MultiFab > tmp_slice_ptr = nullptr;

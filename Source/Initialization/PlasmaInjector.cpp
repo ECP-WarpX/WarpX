@@ -232,6 +232,11 @@ void PlasmaInjector::setupGaussianBeam (amrex::ParmParse const& pp_species)
     utils::parser::getWithParser(pp_species, source_name, "npart", npart);
     utils::parser::queryWithParser(pp_species, source_name, "do_symmetrize", do_symmetrize);
     utils::parser::queryWithParser(pp_species, source_name, "symmetrization_order", symmetrization_order);
+    const bool focusing_is_specified = pp_species.contains("focal_distance");
+    if(focusing_is_specified){
+        do_focusing = true;
+        utils::parser::queryWithParser(pp_species, source_name, "focal_distance", focal_distance);
+    }
     const std::set<int> valid_symmetries = {4,8};
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( valid_symmetries.count(symmetrization_order),
         "Error: Symmetrization only supported to orders 4 or 8 ");
@@ -240,6 +245,7 @@ void PlasmaInjector::setupGaussianBeam (amrex::ParmParse const& pp_species)
                                 ux_parser, uy_parser, uz_parser,
                                 ux_th_parser, uy_th_parser, uz_th_parser,
                                 h_mom_temp, h_mom_vel);
+
 #if defined(WARPX_DIM_XZ)
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( y_rms > 0._rt,
         "Error: Gaussian beam y_rms must be strictly greater than 0 in 2D "
@@ -571,9 +577,9 @@ bool PlasmaInjector::insideBounds (amrex::Real x, amrex::Real y, amrex::Real z) 
 bool PlasmaInjector::overlapsWith (const amrex::XDim3& lo,
                                    const amrex::XDim3& hi) const noexcept
 {
-    return ! (   (xmin > hi.x) || (xmax < lo.x)
-              || (ymin > hi.y) || (ymax < lo.y)
-              || (zmin > hi.z) || (zmax < lo.z) );
+    return  (    (xmin <= hi.x) && (xmax >= lo.x)
+              && (ymin <= hi.y) && (ymax >= lo.y)
+              && (zmin <= hi.z) && (zmax >= lo.z) );
 }
 
 bool

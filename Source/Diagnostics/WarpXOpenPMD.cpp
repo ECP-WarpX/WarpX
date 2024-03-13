@@ -316,7 +316,15 @@ namespace detail
             return {{openPMD::UnitDimension::T,  1.},
                     {openPMD::UnitDimension::I,  1.}};
         } else if( record_name == "mass" ) {
-            return {{openPMD::UnitDimension::M,  1.}};
+            return {{openPMD::UnitDimension::M, 1.}};
+        } else if( record_name == "weighting" ) {  // NOLINT(bugprone-branch-clone)
+#if defined(WARPX_DIM_1D_Z)
+            return {{openPMD::UnitDimension::L, -2.}};
+#elif defined(WARPX_DIM_XZ)
+            return {{openPMD::UnitDimension::L, -1.}};
+#else  // 3D and RZ
+            return {};
+#endif
         } else if( record_name == "E" ) {
             return {{openPMD::UnitDimension::L,  1.},
                     {openPMD::UnitDimension::M,  1.},
@@ -326,7 +334,7 @@ namespace detail
             return {{openPMD::UnitDimension::M,  1.},
                     {openPMD::UnitDimension::I, -1.},
                     {openPMD::UnitDimension::T, -2.}};
-        } else {
+        } else {  // NOLINT(bugprone-branch-clone)
             return {};
         }
     }
@@ -665,7 +673,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
     openPMD::ParticleSpecies currSpecies = currIteration.particles[name];
 
     // only BTD writes multiple times into the same step, zero for other methods
-    unsigned long ParticleFlushOffset = isBTD ? num_already_flushed(currSpecies) : 0;
+    const unsigned long ParticleFlushOffset = isBTD ? num_already_flushed(currSpecies) : 0;
 
     // prepare data structures the first time BTD has non-zero particles
     //   we set some of them to zero extent, so we need to time that well
