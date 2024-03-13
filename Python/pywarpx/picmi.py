@@ -273,9 +273,6 @@ class Species(picmistandard.PICMI_Species):
                                              supercycling_interval=self.supercycling_interval
                                              )
 
-        print("Do supercycling", self.do_supercycling)
-        print("Supercycling interval", self.supercycling_interval)
-
         # add reflection models
         self.species.add_new_attr("reflection_model_xlo(E)", self.reflection_model_xlo)
         self.species.add_new_attr("reflection_model_xhi(E)", self.reflection_model_xhi)

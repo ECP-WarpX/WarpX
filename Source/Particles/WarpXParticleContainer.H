@@ -458,6 +458,10 @@ protected:
     std::string physical_element;
 
     int do_resampling = 0;
+    
+    // Supercycling options
+    int do_supercycling = 0;
+    int supercycling_interval = 1;
 
     /** Whether back-transformed diagnostics is turned on for the corresponding species.*/
     bool m_do_back_transformed_particles = false;
