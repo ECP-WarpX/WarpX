@@ -55,6 +55,12 @@ struct GridType {
     };
 };
 
+enum struct PatchType
+{
+    fine,
+    coarse
+};
+
 struct ElectromagneticSolverAlgo {
     enum {
         None = 0,

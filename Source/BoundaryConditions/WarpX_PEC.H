@@ -1,11 +1,11 @@
 #ifndef WARPX_PEC_KERNELS_H_
 #define WARPX_PEC_KERNELS_H_
 
-#include "WarpX.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
+#include <AMReX_Box.H>
 #include <AMReX_Config.H>
 #include <AMReX_Extension.H>
 #include <AMReX_GpuQualifiers.H>
@@ -19,33 +19,6 @@
 
 namespace PEC {
 using namespace amrex;
-    /**
-     * \brief Determines if the field boundary condition stored in fboundary
-     *        in direction, dir, is PEC.
-     *
-     * \param[in] fboundary  Value containing boundary type
-     * \param[in] dir        direction
-     *
-     * \returns 1 if the boundary type is PEC else 0
-     */
-    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-    bool is_boundary_PEC (amrex::GpuArray<int, 3> const& fboundary, int dir) {
-        return ( fboundary[dir] == FieldBoundaryType::PEC );
-    }
-
-    /**
-     * \brief Determines if the particle boundary condition stored in pboundary
-     *        in direction, dir, is reflecting.
-     *
-     * \param[in] pboundary  Value containing boundary type
-     * \param[in] dir        direction
-     *
-     * \returns 1 if the boundary type is reflecting else 0
-     */
-    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-    bool is_boundary_reflecting (amrex::GpuArray<ParticleBoundaryType, 3> const& pboundary, int dir) {
-        return ( pboundary[dir] == ParticleBoundaryType::Reflecting );
-    }
 
     /**
      * \brief Calculates the number of grid points the given index is pass the
@@ -160,8 +133,8 @@ using namespace amrex;
             // Loop over sides, iside = 0 (lo), iside = 1 (hi)
             for (int iside = 0; iside < 2; ++iside) {
                 const bool isPECBoundary = ( (iside == 0)
-                                        ? is_boundary_PEC(fbndry_lo, idim)
-                                        : is_boundary_PEC(fbndry_hi, idim) );
+                    ? fbndry_lo[idim] == FieldBoundaryType::PEC
+                    : fbndry_hi[idim] == FieldBoundaryType::PEC );
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
                 // For 2D : for icomp==1, (Ey in XZ, Etheta in RZ),
                 //          icomp=1 is tangential to both x and z boundaries
@@ -294,9 +267,9 @@ using namespace amrex;
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             // Loop over sides, iside = 0 (lo), iside = 1 (hi)
             for (int iside = 0; iside < 2; ++iside) {
-                const bool isPECBoundary = ( (iside == 0 )
-                                        ? is_boundary_PEC(fbndry_lo, idim)
-                                        : is_boundary_PEC(fbndry_hi, idim) );
+                const bool isPECBoundary = ( (iside == 0)
+                    ? fbndry_lo[idim] == FieldBoundaryType::PEC
+                    : fbndry_hi[idim] == FieldBoundaryType::PEC );
                 if (isPECBoundary) {
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
                     // For 2D : for icomp==1, (By in XZ, Btheta in RZ),
@@ -476,23 +449,25 @@ using namespace amrex;
         }
     }
 
-
-    /** Returns 1 if any domain boundary is set to PEC, else returns 0.*/
-    bool isAnyBoundaryPEC();
     /**
      * \brief Sets the tangential electric field at the PEC boundary to zero.
      *        The guard cell values are set equal and opposite to the valid cell
      *        field value at the respective mirror locations.
      *
+     * \param[in] field_boundary_lo   Boundary types of the "low" boundaries
+     * \param[in] field_boundary_hi   Boundary types of the "high" boundaries
      * \param[in,out] Efield          Boundary values of tangential Efield are set to zero
      * \param[in]     lev             level of the Multifab
      * \param[in]     patch_type      coarse or fine
      * \param[in]     split_pml_field whether pml the multifab is the regular Efield or
      *                                split pml field
      */
-    void ApplyPECtoEfield ( std::array<amrex::MultiFab*, 3> Efield,
-                            int lev, PatchType patch_type,
-                            bool split_pml_field = false);
+    void ApplyPECtoEfield (
+                        const amrex::Vector<int>& field_boundary_lo,
+                        const amrex::Vector<int>& field_boundary_hi,
+                        std::array<amrex::MultiFab*, 3> Efield,
+                        int lev, PatchType patch_type,
+                        bool split_pml_field = false);
     /**
      * \brief Sets the normal component of the magnetic field at the PEC boundary to zero.
      *        The guard cell values are set equal and opposite to the valid cell

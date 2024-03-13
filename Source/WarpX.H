@@ -75,13 +75,6 @@
 #include <vector>
 #include <map>
 
-
-enum struct PatchType : int
-{
-    fine,
-    coarse
-};
-
 class WARPX_EXPORT WarpX
     : public amrex::AmrCore
 {

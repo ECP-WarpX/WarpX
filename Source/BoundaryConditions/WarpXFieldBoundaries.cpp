@@ -18,26 +18,51 @@
 using namespace amrex::literals;
 using namespace amrex;
 
+namespace
+{
+    [[nodiscard]]
+    bool isAnyBoundaryPEC (
+        const amrex::Vector<int>& field_boundary_lo,
+        const amrex::Vector<int>& field_boundary_hi)
+    {
+        const auto isPEC = [](const auto& b){
+            return b == FieldBoundaryType::PEC;};
+
+        return std::any_of(field_boundary_lo.begin(), field_boundary_lo.end(), isPEC) ||
+               std::any_of(field_boundary_hi.begin(), field_boundary_hi.end(), isPEC);
+    }
+}
+
 void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
 {
-    if (PEC::isAnyBoundaryPEC()) {
+    if (::isAnyBoundaryPEC(field_boundary_lo, field_boundary_hi)) {
         if (patch_type == PatchType::fine) {
-            PEC::ApplyPECtoEfield( { get_pointer_Efield_fp(lev, 0),
-                                     get_pointer_Efield_fp(lev, 1),
-                                     get_pointer_Efield_fp(lev, 2) }, lev, patch_type);
+            PEC::ApplyPECtoEfield(
+                    field_boundary_lo, field_boundary_hi,
+                    {get_pointer_Efield_fp(lev, 0),
+                    get_pointer_Efield_fp(lev, 1),
+                    get_pointer_Efield_fp(lev, 2)},
+                    lev, patch_type);
             if (WarpX::isAnyBoundaryPML()) {
                 // apply pec on split E-fields in PML region
                 const bool split_pml_field = true;
-                PEC::ApplyPECtoEfield( pml[lev]->GetE_fp(), lev, patch_type, split_pml_field);
+                PEC::ApplyPECtoEfield(
+                    field_boundary_lo, field_boundary_hi,
+                    pml[lev]->GetE_fp(), lev, patch_type, split_pml_field);
             }
         } else {
-            PEC::ApplyPECtoEfield( { get_pointer_Efield_cp(lev, 0),
-                                     get_pointer_Efield_cp(lev, 1),
-                                     get_pointer_Efield_cp(lev, 2) }, lev, patch_type);
+            PEC::ApplyPECtoEfield(
+                field_boundary_lo, field_boundary_hi,
+                {get_pointer_Efield_cp(lev, 0),
+                get_pointer_Efield_cp(lev, 1),
+                get_pointer_Efield_cp(lev, 2)},
+                lev, patch_type);
             if (WarpX::isAnyBoundaryPML()) {
                 // apply pec on split E-fields in PML region
                 const bool split_pml_field = true;
-                PEC::ApplyPECtoEfield( pml[lev]->GetE_cp(), lev, patch_type, split_pml_field);
+                PEC::ApplyPECtoEfield(
+                    field_boundary_lo, field_boundary_hi,
+                    pml[lev]->GetE_cp(), lev, patch_type, split_pml_field);
             }
         }
     }
@@ -57,7 +82,7 @@ void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
 
 void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_dt_type)
 {
-    if (PEC::isAnyBoundaryPEC()) {
+    if (::isAnyBoundaryPEC(field_boundary_lo, field_boundary_hi)) {
         if (patch_type == PatchType::fine) {
             PEC::ApplyPECtoBfield( { get_pointer_Bfield_fp(lev, 0),
                                      get_pointer_Bfield_fp(lev, 1),
@@ -106,14 +131,14 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
 void WarpX::ApplyRhofieldBoundary (const int lev, MultiFab* rho,
                                    PatchType patch_type)
 {
-    if (PEC::isAnyBoundaryPEC()) { PEC::ApplyPECtoRhofield(rho, lev, patch_type); }
+    if (::isAnyBoundaryPEC(field_boundary_lo, field_boundary_hi)) { PEC::ApplyPECtoRhofield(rho, lev, patch_type); }
 }
 
 void WarpX::ApplyJfieldBoundary (const int lev, amrex::MultiFab* Jx,
                                  amrex::MultiFab* Jy, amrex::MultiFab* Jz,
                                  PatchType patch_type)
 {
-    if (PEC::isAnyBoundaryPEC()) { PEC::ApplyPECtoJfield(Jx, Jy, Jz, lev, patch_type); }
+    if (::isAnyBoundaryPEC(field_boundary_lo, field_boundary_hi)) { PEC::ApplyPECtoJfield(Jx, Jy, Jz, lev, patch_type); }
 }
 
 #ifdef WARPX_DIM_RZ
@@ -201,7 +226,7 @@ WarpX::ApplyFieldBoundaryOnAxis (amrex::MultiFab* Er, amrex::MultiFab* Et, amrex
 
 void WarpX::ApplyElectronPressureBoundary (const int lev, PatchType patch_type)
 {
-    if (PEC::isAnyBoundaryPEC()) {
+    if (::isAnyBoundaryPEC(field_boundary_lo, field_boundary_hi)) {
         if (patch_type == PatchType::fine) {
             PEC::ApplyPECtoElectronPressure(
                 m_hybrid_pic_model->get_pointer_electron_pressure_fp(lev), lev, patch_type

@@ -15,18 +15,11 @@
 
 using namespace amrex::literals;
 
-bool
-PEC::isAnyBoundaryPEC() {
-    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-        if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC) { return true; }
-        if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC) { return true; }
-    }
-    return false;
-}
-
 void
-PEC::ApplyPECtoEfield (std::array<amrex::MultiFab*, 3> Efield, const int lev,
-                       PatchType patch_type, const bool split_pml_field)
+PEC::ApplyPECtoEfield (
+    const amrex::Vector<int>& field_boundary_lo, const amrex::Vector<int>& field_boundary_hi,
+    std::array<amrex::MultiFab*, 3> Efield, const int lev,
+    PatchType patch_type, const bool split_pml_field)
 {
     auto& warpx = WarpX::GetInstance();
     amrex::Box domain_box = warpx.Geom(lev).Domain();
@@ -39,8 +32,8 @@ PEC::ApplyPECtoEfield (std::array<amrex::MultiFab*, 3> Efield, const int lev,
     amrex::GpuArray<int, 3> fbndry_lo;
     amrex::GpuArray<int, 3> fbndry_hi;
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
-        fbndry_lo[idim] = WarpX::field_boundary_lo[idim];
-        fbndry_hi[idim] = WarpX::field_boundary_hi[idim];
+        fbndry_lo[idim] = field_boundary_lo[idim];
+        fbndry_hi[idim] = field_boundary_hi[idim];
     }
     const amrex::IntVect Ex_nodal = Efield[0]->ixType().toIntVect();
     const amrex::IntVect Ey_nodal = Efield[1]->ixType().toIntVect();
