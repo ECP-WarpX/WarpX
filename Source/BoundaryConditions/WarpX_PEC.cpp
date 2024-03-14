@@ -609,7 +609,7 @@ PEC::ApplyPECtoBfield (
 #endif
                 const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 0;
-                SetBfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
+                ::SetBfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
                                      Bx, Bx_nodal, fbndry_lo, fbndry_hi);
             },
             tby, nComp_y,
@@ -622,7 +622,7 @@ PEC::ApplyPECtoBfield (
 #endif
                 const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 1;
-                SetBfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
+                ::SetBfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
                                      By, By_nodal, fbndry_lo, fbndry_hi);
             },
             tbz, nComp_z,
@@ -635,7 +635,7 @@ PEC::ApplyPECtoBfield (
 #endif
                 const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 2;
-                SetBfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
+                ::SetBfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
                                      Bz, Bz_nodal, fbndry_lo, fbndry_hi);
             }
         );
