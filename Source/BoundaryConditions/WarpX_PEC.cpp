@@ -1,5 +1,4 @@
 #include "BoundaryConditions/WarpX_PEC.H"
-#include "WarpX.H"
 
 #include <ablastr/warn_manager/WarnManager.H>
 
@@ -459,13 +458,13 @@ PEC::ApplyPECtoEfield (
     std::array<amrex::MultiFab*, 3> Efield,
     const amrex::Vector<FieldBoundaryType>& field_boundary_lo,
     const amrex::Vector<FieldBoundaryType>& field_boundary_hi,
-    const int lev, PatchType patch_type, const bool split_pml_field)
+    const amrex::IntVect& ng_fieldgather, const amrex::Geometry& geom,
+    const int lev, PatchType patch_type, const amrex::Vector<amrex::IntVect>& ref_ratios,
+    const bool split_pml_field)
 {
-    auto& warpx = WarpX::GetInstance();
-    amrex::Box domain_box = warpx.Geom(lev).Domain();
-    if (patch_type == PatchType::coarse) {
-        const amrex::IntVect ref_ratio = ( (lev > 0) ? WarpX::RefRatio(lev-1) : amrex::IntVect(1) );
-        domain_box.coarsen(ref_ratio);
+    amrex::Box domain_box = geom.Domain();
+    if (patch_type == PatchType::coarse && (lev > 0)) {
+        domain_box.coarsen(ref_ratios[lev-1]);
     }
     const amrex::IntVect domain_lo = domain_box.smallEnd();
     const amrex::IntVect domain_hi = domain_box.bigEnd();
@@ -478,7 +477,6 @@ PEC::ApplyPECtoEfield (
     const amrex::IntVect Ex_nodal = Efield[0]->ixType().toIntVect();
     const amrex::IntVect Ey_nodal = Efield[1]->ixType().toIntVect();
     const amrex::IntVect Ez_nodal = Efield[2]->ixType().toIntVect();
-    const amrex::IntVect ng_fieldgather = warpx.get_ng_fieldgather();
     // For each Efield multifab, apply PEC boundary condition to ncomponents
     // If not split E-field, the PEC is applied to the regular Efield used in Maxwell's eq.
     // If split_pml_field is true, then PEC is applied to all the split field components of the tangential field.
@@ -558,13 +556,12 @@ PEC::ApplyPECtoBfield (
     std::array<amrex::MultiFab*, 3> Bfield,
     const amrex::Vector<FieldBoundaryType>& field_boundary_lo,
     const amrex::Vector<FieldBoundaryType>& field_boundary_hi,
-    const int lev, PatchType patch_type)
+    const amrex::IntVect& ng_fieldgather, const amrex::Geometry& geom,
+    const int lev, PatchType patch_type, const amrex::Vector<amrex::IntVect>& ref_ratios)
 {
-    auto& warpx = WarpX::GetInstance();
-    amrex::Box domain_box = warpx.Geom(lev).Domain();
-    if (patch_type == PatchType::coarse) {
-        const amrex::IntVect ref_ratio = ( (lev > 0) ? WarpX::RefRatio(lev-1) : amrex::IntVect(1) );
-        domain_box.coarsen(ref_ratio);
+    amrex::Box domain_box = geom.Domain();
+    if (patch_type == PatchType::coarse && (lev > 0)) {
+        domain_box.coarsen(ref_ratios[lev-1]);
     }
     const amrex::IntVect domain_lo = domain_box.smallEnd();
     const amrex::IntVect domain_hi = domain_box.bigEnd();
@@ -577,7 +574,6 @@ PEC::ApplyPECtoBfield (
     const amrex::IntVect Bx_nodal = Bfield[0]->ixType().toIntVect();
     const amrex::IntVect By_nodal = Bfield[1]->ixType().toIntVect();
     const amrex::IntVect Bz_nodal = Bfield[2]->ixType().toIntVect();
-    const amrex::IntVect ng_fieldgather = warpx.get_ng_fieldgather();
     const int nComp_x = Bfield[0]->nComp();
     const int nComp_y = Bfield[1]->nComp();
     const int nComp_z = Bfield[2]->nComp();
@@ -664,14 +660,12 @@ PEC::ApplyPECtoRhofield (
     const amrex::Vector<FieldBoundaryType>& field_boundary_hi,
     const amrex::Vector<ParticleBoundaryType>& particle_boundary_lo,
     const amrex::Vector<ParticleBoundaryType>& particle_boundary_hi,
-    const int lev, PatchType patch_type)
+    const amrex::Geometry& geom,
+    const int lev, PatchType patch_type, const amrex::Vector<amrex::IntVect>& ref_ratios)
 {
-    auto& warpx = WarpX::GetInstance();
-
-    amrex::Box domain_box = warpx.Geom(lev).Domain();
-    if (patch_type == PatchType::coarse) {
-        const amrex::IntVect ref_ratio = ( (lev > 0) ? WarpX::RefRatio(lev-1) : amrex::IntVect(1) );
-        domain_box.coarsen(ref_ratio);
+    amrex::Box domain_box = geom.Domain();
+    if (patch_type == PatchType::coarse && (lev > 0)) {
+        domain_box.coarsen(ref_ratios[lev-1]);
     }
     domain_box.convert(rho->ixType());
 
@@ -750,14 +744,12 @@ PEC::ApplyPECtoJfield(
     const amrex::Vector<FieldBoundaryType>& field_boundary_hi,
     const amrex::Vector<ParticleBoundaryType>& particle_boundary_lo,
     const amrex::Vector<ParticleBoundaryType>& particle_boundary_hi,
-    const int lev, PatchType patch_type)
+    const amrex::Geometry& geom,
+    const int lev, PatchType patch_type, const amrex::Vector<amrex::IntVect>& ref_ratios)
 {
-    auto& warpx = WarpX::GetInstance();
-
-    amrex::Box domain_box = warpx.Geom(lev).Domain();
-    if (patch_type == PatchType::coarse) {
-        const amrex::IntVect ref_ratio = ( (lev > 0) ? WarpX::RefRatio(lev-1) : amrex::IntVect(1) );
-        domain_box.coarsen(ref_ratio);
+    amrex::Box domain_box = geom.Domain();
+    if (patch_type == PatchType::coarse && (lev > 0)) {
+        domain_box.coarsen(ref_ratios[lev-1]);
     }
 
     // Note: force domain box to be nodal to simplify the mirror cell
@@ -943,14 +935,12 @@ PEC::ApplyPECtoElectronPressure (
     amrex::MultiFab* Pefield,
     const amrex::Vector<FieldBoundaryType>& field_boundary_lo,
     const amrex::Vector<FieldBoundaryType>& field_boundary_hi,
-    const int lev, PatchType patch_type)
+    const amrex::Geometry& geom,
+    const int lev, PatchType patch_type, const amrex::Vector<amrex::IntVect>& ref_ratios)
 {
-    auto& warpx = WarpX::GetInstance();
-
-    amrex::Box domain_box = warpx.Geom(lev).Domain();
-    if (patch_type == PatchType::coarse) {
-        const amrex::IntVect ref_ratio = ( (lev > 0) ? WarpX::RefRatio(lev-1) : amrex::IntVect(1) );
-        domain_box.coarsen(ref_ratio);
+    amrex::Box domain_box = geom.Domain();
+    if (patch_type == PatchType::coarse && (lev > 0)) {
+        domain_box.coarsen(ref_ratios[lev-1]);
     }
     domain_box.convert(Pefield->ixType());
 

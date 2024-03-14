@@ -42,14 +42,17 @@ void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
                     get_pointer_Efield_fp(lev, 1),
                     get_pointer_Efield_fp(lev, 2)},
                     field_boundary_lo, field_boundary_hi,
-                    lev, patch_type);
+                    get_ng_fieldgather(), Geom(lev),
+                    lev, patch_type, ref_ratio);
             if (WarpX::isAnyBoundaryPML()) {
                 // apply pec on split E-fields in PML region
                 const bool split_pml_field = true;
                 PEC::ApplyPECtoEfield(
                     pml[lev]->GetE_fp(),
                     field_boundary_lo, field_boundary_hi,
-                    lev, patch_type, split_pml_field);
+                    get_ng_fieldgather(), Geom(lev),
+                    lev, patch_type, ref_ratio,
+                    split_pml_field);
             }
         } else {
             PEC::ApplyPECtoEfield(
@@ -57,14 +60,17 @@ void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
                 get_pointer_Efield_cp(lev, 1),
                 get_pointer_Efield_cp(lev, 2)},
                 field_boundary_lo, field_boundary_hi,
-                lev, patch_type);
+                get_ng_fieldgather(), Geom(lev),
+                lev, patch_type, ref_ratio);
             if (WarpX::isAnyBoundaryPML()) {
                 // apply pec on split E-fields in PML region
                 const bool split_pml_field = true;
                 PEC::ApplyPECtoEfield(
                     pml[lev]->GetE_cp(),
                     field_boundary_lo, field_boundary_hi,
-                    lev, patch_type, split_pml_field);
+                    get_ng_fieldgather(), Geom(lev),
+                    lev, patch_type, ref_ratio,
+                    split_pml_field);
             }
         }
     }
@@ -91,14 +97,16 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
                 get_pointer_Bfield_fp(lev, 1),
                 get_pointer_Bfield_fp(lev, 2) },
                 field_boundary_lo, field_boundary_hi,
-                lev, patch_type);
+                get_ng_fieldgather(), Geom(lev),
+                lev, patch_type, ref_ratio);
         } else {
             PEC::ApplyPECtoBfield( {
                 get_pointer_Bfield_cp(lev, 0),
                 get_pointer_Bfield_cp(lev, 1),
                 get_pointer_Bfield_cp(lev, 2) },
                 field_boundary_lo, field_boundary_hi,
-                lev, patch_type);
+                get_ng_fieldgather(), Geom(lev),
+                lev, patch_type, ref_ratio);
         }
     }
 
@@ -143,7 +151,7 @@ void WarpX::ApplyRhofieldBoundary (const int lev, MultiFab* rho,
         PEC::ApplyPECtoRhofield(rho,
             field_boundary_lo, field_boundary_hi,
             particle_boundary_lo, particle_boundary_hi,
-            lev, patch_type);
+            Geom(lev), lev, patch_type, ref_ratio);
     }
 }
 
@@ -155,7 +163,7 @@ void WarpX::ApplyJfieldBoundary (const int lev, amrex::MultiFab* Jx,
         PEC::ApplyPECtoJfield(Jx, Jy, Jz,
             field_boundary_lo, field_boundary_hi,
             particle_boundary_lo, particle_boundary_hi,
-            lev, patch_type);
+            Geom(lev), lev, patch_type, ref_ratio);
     }
 }
 
@@ -249,8 +257,7 @@ void WarpX::ApplyElectronPressureBoundary (const int lev, PatchType patch_type)
             PEC::ApplyPECtoElectronPressure(
                 m_hybrid_pic_model->get_pointer_electron_pressure_fp(lev),
                 field_boundary_lo, field_boundary_hi,
-                lev, patch_type
-            );
+                Geom(lev), lev, patch_type, ref_ratio);
         } else {
             amrex::Abort(Utils::TextMsg::Err(
             "ApplyElectronPressureBoundary: Only one level implemented for hybrid solver."));

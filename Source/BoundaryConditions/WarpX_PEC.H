@@ -4,6 +4,7 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 
 #include <AMReX_Array.H>
+#include <AMReX_Geometry.H>
 #include <AMReX_Vector.H>
 
 #include <AMReX_BaseFwd.H>
@@ -12,8 +13,6 @@
 #include <memory>
 
 namespace PEC {
-using namespace amrex;
-
     /**
      * \brief Sets the tangential electric field at the PEC boundary to zero.
      *        The guard cell values are set equal and opposite to the valid cell
@@ -24,6 +23,7 @@ using namespace amrex;
      * \param[in]     field_boundary_hi   Boundary types of the "high" boundaries
      * \param[in]     lev                 level of the Multifab
      * \param[in]     patch_type          coarse or fine
+     *
      * \param[in]     split_pml_field     whether pml the multifab is the regular Efield or
      *                                        split pml field
      */
@@ -31,7 +31,8 @@ using namespace amrex;
                         std::array<amrex::MultiFab*, 3> Efield,
                         const amrex::Vector<FieldBoundaryType>& field_boundary_lo,
                         const amrex::Vector<FieldBoundaryType>& field_boundary_hi,
-                        int lev, PatchType patch_type,
+                        const amrex::IntVect& ng_fieldgather, const amrex::Geometry& geom,
+                        int lev, PatchType patch_type, const amrex::Vector<amrex::IntVect>& ref_ratios,
                         bool split_pml_field = false);
     /**
      * \brief Sets the normal component of the magnetic field at the PEC boundary to zero.
@@ -48,7 +49,8 @@ using namespace amrex;
                         std::array<amrex::MultiFab*, 3> Bfield,
                         const amrex::Vector<FieldBoundaryType>& field_boundary_lo,
                         const amrex::Vector<FieldBoundaryType>& field_boundary_hi,
-                        int lev, PatchType patch_type);
+                        const amrex::IntVect& ng_fieldgather, const amrex::Geometry& geom,
+                        int lev, PatchType patch_type, const amrex::Vector<amrex::IntVect>& ref_ratios);
 
     /**
      * \brief Reflects charge density deposited over the PEC boundary back into
@@ -68,7 +70,8 @@ using namespace amrex;
                         const amrex::Vector<FieldBoundaryType>& field_boundary_hi,
                         const amrex::Vector<ParticleBoundaryType>& particle_boundary_lo,
                         const amrex::Vector<ParticleBoundaryType>& particle_boundary_hi,
-                        int lev, PatchType patch_type);
+                        const amrex::Geometry& geom,
+                        int lev, PatchType patch_type, const amrex::Vector<amrex::IntVect>& ref_ratios);
 
     /**
      * \brief Reflects current density deposited over the PEC boundary back into
@@ -89,7 +92,8 @@ using namespace amrex;
                         const amrex::Vector<FieldBoundaryType>& field_boundary_hi,
                         const amrex::Vector<ParticleBoundaryType>& particle_boundary_lo,
                         const amrex::Vector<ParticleBoundaryType>& particle_boundary_hi,
-                        int lev, PatchType patch_type);
+                        const amrex::Geometry& geom,
+                        int lev, PatchType patch_type, const amrex::Vector<amrex::IntVect>& ref_ratios);
 
     /**
      * \brief Apply the PEC boundary to the electron pressure field.
@@ -104,6 +108,7 @@ using namespace amrex;
                                 amrex::MultiFab* Pefield,
                                 const amrex::Vector<FieldBoundaryType>& field_boundary_lo,
                                 const amrex::Vector<FieldBoundaryType>& field_boundary_hi,
-                                int lev, PatchType patch_type);
+                                const amrex::Geometry& geom,
+                                int lev, PatchType patch_type, const amrex::Vector<amrex::IntVect>& ref_ratios);
 }
 #endif // WarpX_PEC_KERNELS_H_
