@@ -1019,9 +1019,9 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs (const amrex::Geo
                 dirichlet_flag[idim*2] = false;
             }
             else {
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+                WARPX_ABORT_WITH_MESSAGE(
                     "Field boundary conditions have to be either periodic, PEC or neumann "
-                    "when using the electrostatic solver"
+                    "when using the electrostatic solver,  but they are " + GetFieldBCTypeString(WarpX::field_boundary_lo[idim])
                 );
             }
 
@@ -1034,9 +1034,9 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs (const amrex::Geo
                 dirichlet_flag[idim*2+1] = false;
             }
             else {
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+                WARPX_ABORT_WITH_MESSAGE(
                     "Field boundary conditions have to be either periodic, PEC or neumann "
-                    "when using the electrostatic solver"
+                    "when using the electrostatic solver,  but they are " + GetFieldBCTypeString(WarpX::field_boundary_hi[idim])
                 );
             }
         }
