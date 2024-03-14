@@ -351,7 +351,6 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     if (do_resampling) { m_resampler = Resampling(species_name); }
 
     // Parse supercycling options
-    pp_species_name.query("do_supercycling", do_supercycling);
     pp_species_name.query("supercycling_interval", supercycling_interval);
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(

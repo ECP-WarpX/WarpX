@@ -140,12 +140,8 @@ class Species(picmistandard.PICMI_Species):
         Resampling will be done when the average number of
         particles per cell exceeds this number
 
-    warpx_do_supercycling: bool, default=False
-        Whether particles will be super-cycled
-
     warpx_supercycling_interval: integer, default=1
-        How many iterations elapse between subsequent pushes
-        if supercycling is enabled
+        How many iterations elapse between subsequent iterations of this species
     """
     def init(self, kw):
 
@@ -227,7 +223,6 @@ class Species(picmistandard.PICMI_Species):
         self.resampling_triggering_max_avg_ppc = kw.pop('warpx_resampling_trigger_max_avg_ppc', None)
 
         # Supercycling settings
-        self.do_supercycling = kw.pop('warpx_do_supercycling', None)
         self.supercycling_interval = kw.pop('warpx_supercycling_interval', None)
 
     def species_initialize_inputs(self, layout,
@@ -269,7 +264,6 @@ class Species(picmistandard.PICMI_Species):
                                              do_resampling=self.do_resampling,
                                              resampling_trigger_intervals=self.resampling_trigger_intervals,
                                              resampling_trigger_max_avg_ppc=self.resampling_triggering_max_avg_ppc,
-                                             do_supercycling = self.do_supercycling,
                                              supercycling_interval=self.supercycling_interval
                                              )
 

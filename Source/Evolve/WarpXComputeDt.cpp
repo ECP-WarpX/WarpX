@@ -38,8 +38,13 @@ WarpX::ComputeDt ()
     int nSpecies = mypc->nSpecies();
     for (int i = 0; i < nSpecies; i++) {
         auto& pc = mypc->GetParticleContainer(i);
-        do_supercycling = do_supercycling || pc.do_supercycling;
+        do_supercycling = do_supercycling || (pc.supercycling_interval > 1);
     }
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        (!do_supercycling || (do_supercycling && electromagnetic_solver_id == ElectromagneticSolverAlgo::None)),
+        "Species supercycling not supported when using the electromagnetic solver."
+    );
 
     // Handle cases where the timestep is not limited by the speed of light
     if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||

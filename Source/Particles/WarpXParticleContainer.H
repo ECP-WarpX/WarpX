@@ -342,7 +342,7 @@ public:
     int self_fields_verbosity = 2;
     
     // Supercycling
-    int do_supercycling = 0;
+    int supercycling_interval = 1;
 
     // External fields added to particle fields.
     amrex::Vector<amrex::ParticleReal> m_B_external_particle;
@@ -461,9 +461,6 @@ protected:
     std::string physical_element;
 
     int do_resampling = 0;
-
-    // Supercycling options
-    int supercycling_interval = 1;
 
     /** Whether back-transformed diagnostics is turned on for the corresponding species.*/
     bool m_do_back_transformed_particles = false;
