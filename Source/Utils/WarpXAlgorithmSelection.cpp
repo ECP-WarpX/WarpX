@@ -118,7 +118,7 @@ const std::map<std::string, int> MacroscopicSolver_algo_to_int = {
     {"default", MacroscopicSolverAlgo::BackwardEuler}
 };
 
-const std::map<std::string, int> FieldBCType_algo_to_int = {
+const std::map<std::string, FieldBoundaryType> FieldBCType_algo_to_enum = {
     {"pml",      FieldBoundaryType::PML},
     {"periodic", FieldBoundaryType::Periodic},
     {"pec",      FieldBoundaryType::PEC},
@@ -213,21 +213,21 @@ GetAlgorithmInteger(const amrex::ParmParse& pp, const char* pp_search_key ){
     return algo_to_int[algo];
 }
 
-int
+FieldBoundaryType
 GetFieldBCTypeInteger( std::string BCType ){
     std::transform(BCType.begin(), BCType.end(), BCType.begin(), ::tolower);
 
-    if (FieldBCType_algo_to_int.count(BCType) == 0) {
+    if (FieldBCType_algo_to_enum.count(BCType) == 0) {
         std::string error_message = "Invalid string for field/particle BC. : " + BCType                         + "\nThe valid values are : \n";
-        for (const auto &valid_pair : FieldBCType_algo_to_int) {
+        for (const auto &valid_pair : FieldBCType_algo_to_enum) {
             if (valid_pair.first != "default"){
                 error_message += " - " + valid_pair.first + "\n";
             }
         }
         WARPX_ABORT_WITH_MESSAGE(error_message);
     }
-    // return FieldBCType_algo_to_int[BCType]; // This operator cannot be used for a const map
-    return FieldBCType_algo_to_int.at(BCType);
+    // return FieldBCType_algo_to_enum[BCType]; // This operator cannot be used for a const map
+    return FieldBCType_algo_to_enum.at(BCType);
 }
 
 ParticleBoundaryType
