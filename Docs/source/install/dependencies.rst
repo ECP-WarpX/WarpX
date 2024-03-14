@@ -65,7 +65,7 @@ Conda (Linux/macOS/Windows)
 
       conda update -y -n base conda
       conda install -y -n base conda-libmamba-solver
-      conda config --set experimental_solver libmamba
+      conda config --set solver libmamba
 
    We recommend to deactivate that conda self-activates its ``base`` environment.
    This `avoids interference with the system and other package managers <https://collegeville.github.io/CW20/WorkshopResources/WhitePapers/huebl-working-with-multiple-pkg-mgrs.pdf>`__.
