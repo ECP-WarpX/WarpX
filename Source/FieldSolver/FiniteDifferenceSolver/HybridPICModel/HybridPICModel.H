@@ -89,7 +89,7 @@ public:
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Bfield,
         amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
-        bool include_resistivity_term, bool include_hyper_resistivity_term);
+        bool include_resistivity_term);
 
     void HybridPICSolveE (
         std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
@@ -97,7 +97,7 @@ public:
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
         std::unique_ptr<amrex::MultiFab> const& rhofield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
-        int lev, bool include_resistivity_term, bool include_hyper_resistivity_term);
+        int lev, bool include_resistivity_term);
 
     void HybridPICSolveE (
         std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
@@ -105,8 +105,7 @@ public:
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
         std::unique_ptr<amrex::MultiFab> const& rhofield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
-        int lev, PatchType patch_type, bool include_resistivity_term,
-        bool include_hyper_resistivity_term);
+        int lev, PatchType patch_type, bool include_resistivity_term);
 
     void BfieldEvolveRK (
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,

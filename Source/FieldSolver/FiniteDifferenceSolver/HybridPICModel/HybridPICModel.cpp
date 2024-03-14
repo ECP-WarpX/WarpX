@@ -427,16 +427,14 @@ void HybridPICModel::HybridPICSolveE (
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Bfield,
     amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
-    const bool include_resistivity_term,
-    const bool include_hyper_resistivity_term)
+    const bool include_resistivity_term)
 {
     auto& warpx = WarpX::GetInstance();
     for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
     {
         HybridPICSolveE(
             Efield[lev], Jfield[lev], Bfield[lev], rhofield[lev],
-            edge_lengths[lev], lev, include_resistivity_term,
-            include_hyper_resistivity_term
+            edge_lengths[lev], lev, include_resistivity_term
         );
     }
 }
@@ -447,15 +445,13 @@ void HybridPICModel::HybridPICSolveE (
     std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
     std::unique_ptr<amrex::MultiFab> const& rhofield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
-    const int lev, const bool include_resistivity_term,
-    const bool include_hyper_resistivity_term)
+    const int lev, const bool include_resistivity_term)
 {
     WARPX_PROFILE("WarpX::HybridPICSolveE()");
 
     HybridPICSolveE(
         Efield, Jfield, Bfield, rhofield, edge_lengths, lev,
-        PatchType::fine, include_resistivity_term,
-        include_hyper_resistivity_term
+        PatchType::fine, include_resistivity_term
     );
     if (lev > 0)
     {
@@ -471,8 +467,7 @@ void HybridPICModel::HybridPICSolveE (
     std::unique_ptr<amrex::MultiFab> const& rhofield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
     const int lev, PatchType patch_type,
-    const bool include_resistivity_term,
-    const bool include_hyper_resistivity_term)
+    const bool include_resistivity_term)
 {
     auto& warpx = WarpX::GetInstance();
 
@@ -481,8 +476,7 @@ void HybridPICModel::HybridPICSolveE (
         Efield, current_fp_ampere[lev], Jfield, current_fp_external[lev],
         Bfield, rhofield,
         electron_pressure_fp[lev],
-        edge_lengths, lev, this, include_resistivity_term,
-        include_hyper_resistivity_term
+        edge_lengths, lev, this, include_resistivity_term
     );
     warpx.ApplyEfieldBoundary(lev, patch_type);
 }
@@ -688,12 +682,10 @@ void HybridPICModel::FieldPush (
 {
     auto& warpx = WarpX::GetInstance();
 
-    bool do_hyper_resisitivity = (m_eta_h > 0.0);
-
     // Calculate J = curl x B / mu0
     CalculateCurrentAmpere(Bfield, edge_lengths);
     // Calculate the E-field from Ohm's law
-    HybridPICSolveE(Efield, Jfield, Bfield, rhofield, edge_lengths, true, do_hyper_resisitivity);
+    HybridPICSolveE(Efield, Jfield, Bfield, rhofield, edge_lengths, true);
     warpx.FillBoundaryE(ng, nodal_sync);
     // Push forward the B-field using Faraday's law
     warpx.EvolveB(dt, dt_type);
