@@ -286,7 +286,7 @@ Create your own Conda environment and `Jupyter kernel <https://docs.nersc.gov/se
    rm -rf $HOME/.conda/envs/warpx-pm-postproc
    conda create --yes -n warpx-pm-postproc -c conda-forge mamba conda-libmamba-solver
    conda activate warpx-pm-postproc
-   conda config --set solver libmamba
+   conda config --set experimental_solver libmamba
    mamba install --yes -c conda-forge python ipykernel ipympl matplotlib numpy pandas yt openpmd-viewer openpmd-api h5py fast-histogram dask dask-jobqueue pyarrow
 
    # create Jupyter kernel
