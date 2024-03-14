@@ -785,7 +785,14 @@ WarpX::ReadParameters ()
                 electric potential does not have any impact on the simulation.",
                 ablastr::warn_manager::WarnPriority::low);
         }
-
+        else if (potential_specified & (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::None)) {
+            ablastr::warn_manager::WMRecordWarning(
+                "Algorithms",
+                "The input script specifies the electric potential (phi) at the boundary so \
+                an initial Poisson solve will be performed.",
+                ablastr::warn_manager::WarnPriority::low);
+        }
+        
         m_poisson_boundary_handler.buildParsers();
 #ifdef WARPX_DIM_RZ
         pp_boundary.query("verboncoeur_axis_correction", verboncoeur_axis_correction);
