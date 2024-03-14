@@ -792,7 +792,7 @@ WarpX::ReadParameters ()
                 an initial Poisson solve will be performed.",
                 ablastr::warn_manager::WarnPriority::low);
         }
-        
+
         m_poisson_boundary_handler.buildParsers();
 #ifdef WARPX_DIM_RZ
         pp_boundary.query("verboncoeur_axis_correction", verboncoeur_axis_correction);
