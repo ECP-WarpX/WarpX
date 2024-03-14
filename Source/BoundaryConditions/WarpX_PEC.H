@@ -21,9 +21,11 @@ namespace PEC {
      * \param[in,out] Efield              Boundary values of tangential Efield are set to zero
      * \param[in]     field_boundary_lo   Boundary types of the "low" boundaries
      * \param[in]     field_boundary_hi   Boundary types of the "high" boundaries
+     * \param[in]     ng_fieldgather      number of guard cells used by field gather
+     * \param[in]     geom                geometry object of level "lev"
      * \param[in]     lev                 level of the Multifab
      * \param[in]     patch_type          coarse or fine
-     *
+     * \param[in]     ref_ratios          vector containing the refinement ratios of the refinement levels
      * \param[in]     split_pml_field     whether pml the multifab is the regular Efield or
      *                                        split pml field
      */
@@ -42,8 +44,11 @@ namespace PEC {
      * \param[in,out] Bfield              Boundary values of normal Bfield are set to zero.
      * \param[in]     field_boundary_lo   Boundary types of the "low" field boundaries
      * \param[in]     field_boundary_hi   Boundary types of the "high" field boundaries
+     * \param[in]     ng_fieldgather      number of guard cells used by field gather
+     * \param[in]     geom                geometry object of level "lev"
      * \param[in]     lev                 level of the Multifab
      * \param[in]     patch_type          coarse or fine
+     * \param[in]     ref_ratios          vector containing the refinement ratios of the refinement levels
      */
     void ApplyPECtoBfield (
                         std::array<amrex::MultiFab*, 3> Bfield,
@@ -56,13 +61,15 @@ namespace PEC {
      * \brief Reflects charge density deposited over the PEC boundary back into
      * the simulation domain.
      *
-     * \param[in,out] rho                 Multifab containing the charge density
-     * \param[in]     field_boundary_lo   Boundary types of the "low" field boundaries
-     * \param[in]     field_boundary_hi   Boundary types of the "high" field boundaries
+     * \param[in,out] rho                    Multifab containing the charge density
+     * \param[in]     field_boundary_lo      Boundary types of the "low" field boundaries
+     * \param[in]     field_boundary_hi      Boundary types of the "high" field boundaries
      * \param[in]     particle_boundary_lo   Boundary types of the "low" particle boundaries
      * \param[in]     particle_boundary_hi   Boundary types of the "high" particle boundaries
-     * \param[in]     lev                 level of the Multifab
-     * \param[in]     patch_type          coarse or fine
+     * \param[in]     geom                   geometry object of level "lev"
+     * \param[in]     lev                    level of the Multifab
+     * \param[in]     patch_type             coarse or fine
+     * \param[in]     ref_ratios             vector containing the refinement ratios of the refinement levels
      */
     void ApplyPECtoRhofield(
                         amrex::MultiFab* rho,
@@ -82,8 +89,10 @@ namespace PEC {
      * \param[in]     field_boundary_hi      Boundary types of the "high" field boundaries
      * \param[in]     particle_boundary_lo   Boundary types of the "low" particle boundaries
      * \param[in]     particle_boundary_hi   Boundary types of the "high" particle boundaries
+     * \param[in]     geom                   geometry object of level "lev"
      * \param[in]     lev                    level of the Multifab
      * \param[in]     patch_type             coarse or fine
+     * \param[in]     ref_ratios             vector containing the refinement ratios of the refinement levels
      */
     void ApplyPECtoJfield(
                         amrex::MultiFab* Jx, amrex::MultiFab* Jy,
@@ -101,8 +110,10 @@ namespace PEC {
      * \param[in,out] Pefield             Multifab containing the electron pressure
      * \param[in]     field_boundary_lo   Boundary types of the "low" field boundaries
      * \param[in]     field_boundary_hi   Boundary types of the "high" field boundaries
+     * \param[in]     geom                geometry object of level "lev"
      * \param[in]     lev                 level of the Multifab
      * \param[in]     patch_type          coarse or fine
+     * \param[in]     ref_ratios          vector containing the refinement ratios of the refinement levels
      */
     void ApplyPECtoElectronPressure (
                                 amrex::MultiFab* Pefield,
