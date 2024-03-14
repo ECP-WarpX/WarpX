@@ -146,19 +146,17 @@ struct LoadBalanceCostsUpdateAlgo {
 
 /** Field boundary conditions at the domain boundary
  */
-struct FieldBoundaryType {
-    enum {
+enum struct FieldBoundaryType {
         PML = 0,
         Periodic = 1,
-        PEC = 2,     //!< perfect electric conductor (PEC) with E_tangential=0
+        PEC = 2,      //!< perfect electric conductor (PEC) with E_tangential=0
         PMC = 3,      //!< perfect magnetic conductor (PMC) with B_tangential=0
         Damped = 4,   // Fields in the guard cells are damped for PSATD
-                     //in the moving window direction
+                      //in the moving window direction
         Absorbing_SilverMueller = 5, // Silver-Mueller boundary condition
         Neumann = 6, // For electrostatic, the normal E is set to zero
         None = 7     // The fields values at the boundary are not updated. This is
                      // useful for RZ simulations, at r=0.
-    };
 };
 
 /** Particle boundary conditions at the domain boundary
@@ -166,7 +164,7 @@ struct FieldBoundaryType {
 enum struct ParticleBoundaryType {
         Absorbing = 0,     //!< particles crossing domain boundary are removed
         Open = 1,          //!< particles cross domain boundary leave with damped j
-        Reflecting = 2,     //!< particles are reflected
+        Reflecting = 2,    //!< particles are reflected
         Periodic = 3
 };
 
