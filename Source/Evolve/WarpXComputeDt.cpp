@@ -32,7 +32,7 @@
  * Determine the timestep of the simulation. */
 void
 WarpX::ComputeDt ()
-{   
+{
     // Check if any species is using supercycling
     bool do_supercycling = false;
     int nSpecies = mypc->nSpecies();
