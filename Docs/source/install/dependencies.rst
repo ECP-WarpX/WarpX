@@ -63,8 +63,8 @@ Conda (Linux/macOS/Windows)
 
    .. code-block:: bash
 
-      conda update -n base conda
-      conda install -n base conda-libmamba-solver
+      conda update -y -n base conda
+      conda install -y -n base conda-libmamba-solver
       conda config --set solver libmamba
 
    We recommend to deactivate that conda self-activates its ``base`` environment.

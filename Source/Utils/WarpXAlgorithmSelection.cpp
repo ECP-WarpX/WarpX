@@ -246,3 +246,15 @@ GetParticleBCTypeInteger( std::string BCType ){
     // return ParticleBCType_algo_to_enum[BCType]; // This operator cannot be used for a const map
     return ParticleBCType_algo_to_enum.at(BCType);
 }
+
+std::string
+GetFieldBCTypeString( int fb_type ) {
+    std::string boundary_name;
+    for (const auto &valid_pair : FieldBCType_algo_to_int) {
+        if ((valid_pair.second == fb_type)&&(valid_pair.first != "default")){
+            boundary_name = valid_pair.first;
+            break;
+        }
+    }
+    return boundary_name;
+}

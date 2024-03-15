@@ -192,4 +192,9 @@ GetFieldBCTypeInteger( std::string BCType );
 ParticleBoundaryType
 GetParticleBCTypeInteger( std::string BCType );
 
+/** Find the name associated with a BC type
+ */
+std::string
+GetFieldBCTypeString( int fb_type );
+
 #endif // UTILS_WARPXALGORITHMSELECTION_H_

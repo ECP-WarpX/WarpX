@@ -26,9 +26,9 @@ import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
+import yt
 from scipy.constants import c, m_e, m_p
 from scipy.special import erf
-import yt
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
