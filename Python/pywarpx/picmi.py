@@ -1142,7 +1142,8 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         Function of space and time specifying external (non-plasma) currents.
     """
     def __init__(self, grid, Te=None, n0=None, gamma=None,
-                 n_floor=None, plasma_resistivity=None, substeps=None,
+                 n_floor=None, plasma_resistivity=None,
+                 plasma_hyper_resistivity=None, substeps=None,
                  Jx_external_function=None, Jy_external_function=None,
                  Jz_external_function=None, **kw):
         self.grid = grid
@@ -1153,6 +1154,7 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         self.gamma = gamma
         self.n_floor = n_floor
         self.plasma_resistivity = plasma_resistivity
+        self.plasma_hyper_resistivity = plasma_hyper_resistivity
 
         self.substeps = substeps
 
@@ -1187,6 +1189,7 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
             'plasma_resistivity(rho,J)',
             pywarpx.my_constants.mangle_expression(self.plasma_resistivity, self.mangle_dict)
         )
+        pywarpx.hybridpicmodel.plasma_hyper_resistivity = self.plasma_hyper_resistivity
         pywarpx.hybridpicmodel.substeps = self.substeps
         pywarpx.hybridpicmodel.__setattr__(
             'Jx_external_grid_function(x,y,z,t)',
@@ -2442,8 +2445,13 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         if self.data_list is not None:
             for dataname in self.data_list:
                 if dataname == 'position':
-                    # --- The positions are alway written out anyway
-                    pass
+                    if pywarpx.geometry.dims != '1':  # because then it's WARPX_DIM_1D_Z
+                        variables.add('x')
+                    if pywarpx.geometry.dims == '3':
+                        variables.add('y')
+                    variables.add('z')
+                    if pywarpx.geometry.dims == 'RZ':
+                        variables.add('theta')
                 elif dataname == 'momentum':
                     variables.add('ux')
                     variables.add('uy')
@@ -2457,8 +2465,24 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
                     variables.add('Bx')
                     variables.add('By')
                     variables.add('Bz')
-                elif dataname in ['ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz']:
-                    variables.add(dataname)
+                elif dataname in ['x', 'y', 'z', 'theta', 'ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'Er', 'Et', 'Br', 'Bt']:
+                    if pywarpx.geometry.dims == '1' and (dataname == 'x' or dataname == 'y'):
+                        raise RuntimeError(
+                            f"The attribute {dataname} is not available in mode WARPX_DIM_1D_Z"
+                            f"chosen by dim={pywarpx.geometry.dims} in pywarpx."
+                        )
+                    elif pywarpx.geometry.dims != '3' and dataname == 'y':
+                        raise RuntimeError(
+                            f"The attribute {dataname} is not available outside of mode WARPX_DIM_3D"
+                            f"The chosen value was dim={pywarpx.geometry.dims} in pywarpx."
+                        )
+                    elif pywarpx.geometry.dims != 'RZ' and dataname == 'theta':
+                        raise RuntimeError(
+                            f"The attribute {dataname} is not available outside of mode WARPX_DIM_RZ."
+                            f"The chosen value was dim={pywarpx.geometry.dims} in pywarpx."
+                        )
+                    else:
+                        variables.add(dataname)
 
             # --- Convert the set to a sorted list so that the order
             # --- is the same on all processors.
@@ -2469,7 +2493,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         if self.species is None:
             species_names = pywarpx.particles.species_names
         elif np.iterable(self.species):
-            species_names = [specie.name for specie in self.species]
+            species_names = [species.name for species in self.species]
         else:
             species_names = [self.species.name]
 
@@ -2666,25 +2690,46 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
         # --- Use a set to ensure that fields don't get repeated.
         variables = set()
 
-        if self.data_list is not None:
-            for dataname in self.data_list:
-                if dataname == 'position':
-                    # --- The positions are alway written out anyway
-                    pass
-                elif dataname == 'momentum':
-                    variables.add('ux')
-                    variables.add('uy')
-                    variables.add('uz')
-                elif dataname == 'weighting':
-                    variables.add('w')
-                elif dataname == 'fields':
-                    variables.add('Ex')
-                    variables.add('Ey')
-                    variables.add('Ez')
-                    variables.add('Bx')
-                    variables.add('By')
-                    variables.add('Bz')
-                elif dataname in ['ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'Er', 'Et', 'Br', 'Bt']:
+
+        for dataname in self.data_list:
+            if dataname == 'position':
+                if pywarpx.geometry.dims != '1':  # because then it's WARPX_DIM_1D_Z
+                    variables.add('x')
+                if pywarpx.geometry.dims == '3':
+                    variables.add('y')
+                variables.add('z')
+                if pywarpx.geometry.dims == 'RZ':
+                    variables.add('theta')
+            elif dataname == 'momentum':
+                variables.add('ux')
+                variables.add('uy')
+                variables.add('uz')
+            elif dataname == 'weighting':
+                variables.add('w')
+            elif dataname == 'fields':
+                variables.add('Ex')
+                variables.add('Ey')
+                variables.add('Ez')
+                variables.add('Bx')
+                variables.add('By')
+                variables.add('Bz')
+            elif dataname in ['x', 'y', 'z', 'theta', 'ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'Er', 'Et', 'Br', 'Bt']:
+                if pywarpx.geometry.dims == '1' and (dataname == 'x' or dataname == 'y'):
+                    raise RuntimeError(
+                        f"The attribute {dataname} is not available in mode WARPX_DIM_1D_Z"
+                        f"chosen by dim={pywarpx.geometry.dims} in pywarpx."
+                    )
+                elif pywarpx.geometry.dims != '3' and dataname == 'y':
+                    raise RuntimeError(
+                        f"The attribute {dataname} is not available outside of mode WARPX_DIM_3D"
+                        f"The chosen value was dim={pywarpx.geometry.dims} in pywarpx."
+                    )
+                elif pywarpx.geometry.dims != 'RZ' and dataname == 'theta':
+                    raise RuntimeError(
+                        f"The attribute {dataname} is not available outside of mode WARPX_DIM_RZ."
+                        f"The chosen value was dim={pywarpx.geometry.dims} in pywarpx."
+                    )
+                else:
                     variables.add(dataname)
 
             # --- Convert the set to a sorted list so that the order
@@ -2696,9 +2741,9 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
         if self.species is None:
             species_names = pywarpx.particles.species_names
         elif np.iterable(self.species):
-            species_names = [specie.name for specie in self.species]
+            species_names = [species.name for species in self.species]
         else:
-            species_names = [species.name]
+            species_names = [self.species.name]
 
         for name in species_names:
             diag = pywarpx.Bucket.Bucket(self.name + '.' + name,

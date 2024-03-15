@@ -127,9 +127,9 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
         amrex::ParallelFor(bx, modes,
         [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept
         {
-            int idx_jx = (J_linear) ? static_cast<int>(Idx.Jx_old) : static_cast<int>(Idx.Jx_mid);
-            int idx_jy = (J_linear) ? static_cast<int>(Idx.Jy_old) : static_cast<int>(Idx.Jy_mid);
-            int idx_jz = (J_linear) ? static_cast<int>(Idx.Jz_old) : static_cast<int>(Idx.Jz_mid);
+            const int idx_jx = (J_linear) ? static_cast<int>(Idx.Jx_old) : static_cast<int>(Idx.Jx_mid);
+            const int idx_jy = (J_linear) ? static_cast<int>(Idx.Jy_old) : static_cast<int>(Idx.Jy_mid);
+            const int idx_jz = (J_linear) ? static_cast<int>(Idx.Jz_old) : static_cast<int>(Idx.Jz_mid);
 
             // All of the fields of each mode are grouped together
             int const Ep_m = Idx.Ex + Idx.n_fields*mode;
@@ -432,7 +432,7 @@ PsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data)
         amrex::Box const & bx = field_data.fields[mfi].box();
 
         // Extract arrays for the fields to be updated
-        amrex::Array4<Complex> fields = field_data.fields[mfi].array();
+        const amrex::Array4<Complex> fields = field_data.fields[mfi].array();
 
         // Extract pointers for the k vectors
         auto const & kr_modes = field_data.getKrArray(mfi);
