@@ -251,7 +251,7 @@ public:
         const bool have_product_species = m_have_product_species;
 
         // Store product species data in vectors
-        const int n_product_species = product_species_vector.size();
+        const int n_product_species = m_product_species.size();
         amrex::Vector<ParticleTileType*> tile_products;
         amrex::Vector<GetParticlePosition<PIdx>> get_position_products;
         amrex::Vector<index_type> products_np;
@@ -561,7 +561,9 @@ public:
             {
                 setNewParticleIDs(*(tile_products_data[i]), static_cast<int>(products_np[i]), num_added[i]);
             }
+
         } // end if ( m_isSameSpecies)
+
     }
 
 private:

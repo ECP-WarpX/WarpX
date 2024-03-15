@@ -72,7 +72,7 @@ void CollisionPairFilter (const amrex::ParticleReal u1x, const amrex::ParticleRe
     for (int ii = 0; ii < process_count; ii++) {
         auto const& scattering_process = scattering_processes[ii];
         coll_type[ii] = int(scattering_process.m_type);
-        amrex::ParticleReal sigma = scattering_process.getCrossSection(E_coll);
+        const amrex::ParticleReal sigma = scattering_process.getCrossSection(E_coll);
         sigma_sums[ii] = sigma + ((ii == 0) ? 0._prt : sigma_sums[ii-1]);
     }
     const auto sigma_tot = sigma_sums[process_count-1];
