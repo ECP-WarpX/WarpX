@@ -27,7 +27,6 @@ matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.constants as con
-
 from pywarpx import fields, picmi
 
 ##########################

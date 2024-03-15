@@ -9,11 +9,11 @@
 import json
 import sys
 
-from benchmark import Benchmark
 import numpy as np
+import yt
+from benchmark import Benchmark
 from openpmd_viewer import OpenPMDTimeSeries
 from scipy.constants import c
-import yt
 
 yt.funcs.mylog.setLevel(50)
 
