@@ -21,7 +21,7 @@ See: `GitHub team <https://github.com/orgs/ECP-WarpX/teams/warpx-admins>`__
 Role
 ^^^^
 
-The steering committee (SC) can change organizational settings, do administrative operations such as rename/move/archive repositories, change branch protection rules, etc.
+Members of the steering committee (SC) can change organizational settings, do administrative operations such as rename/move/archive repositories, change branch protection rules, etc.
 SC members can call votes for decisions (technical or governance).
 
 The SC can veto decisions of the technical committee (TC) by voting in the SC.
