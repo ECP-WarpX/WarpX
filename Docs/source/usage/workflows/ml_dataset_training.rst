@@ -25,20 +25,30 @@ Data Cleaning
 It is important to inspect the data for artifacts, to
 check that input/output data make sense.
 If we plot the final phase space of the particle beam,
-shown in :numref:`fig_phase_space`,
-we see a halo of outlying particles.
+shown in :numref:`fig_unclean_phase_space`.
+we see outlying particles.
 Looking closer at the z-pz space, we see that some particles were not trapped in the accelerating region of the wake and have much less energy than the rest of the beam.
+
+.. _fig_unclean_phase_space:
+
+.. figure:: https://gist.githubusercontent.com/RTSandberg/649a81cc0e7926684f103729483eff90/raw/095ac2daccbcf197fa4e18a8f8505711b27e807a/unclean_stage_0.png
+   :alt: Plot showing the final phase space projections of a particle beam through a laser-plasma acceleration element where some beam particles were not accelerated.
+
+   The final phase space projections of a particle beam through a laser-plasma acceleration element where some beam particles were not accelerated.
+
 To assist our neural network in learning dynamics of interest, we filter out these particles.
-
-.. _fig_phase_space:
-
-.. figure:: https://user-images.githubusercontent.com/10621396/290010282-40560ac4-8509-4599-82ca-167bb1739cff.png
-   :alt: Plot showing the final phase space projections of a particle beam through a laser-plasma acceleration element.
-
-   The final phase space projections of a particle beam through a laser-plasma acceleration element.
-
 It is sufficient for our purposes to select particles that are not too far back, setting
-``particle_selection={'z':[0.28002, None]}``. Then a particle tracker is set up to make sure
+``particle_selection={'z':[0.280025, None]}``. 
+After filtering, we can see in :numref:`fig_clean_phase_space` that the beam phase space projections are much cleaner -- this is the beam we want to train on.
+
+.. _fig_clean_phase_space: 
+
+.. figure:: https://gist.githubusercontent.com/RTSandberg/649a81cc0e7926684f103729483eff90/raw/095ac2daccbcf197fa4e18a8f8505711b27e807a/clean_stage_0.png
+   :alt: Plot showing the final phase space projections of a particle beam through a laser-plasma acceleration element after filtering out outlying particles.
+
+   The final phase space projections of a particle beam through a laser-plasma acceleration element after filtering out outlying particles.
+
+A particle tracker is set up to make sure
 we consistently filter out these particles from both the initial and final data.
 
 .. literalinclude:: ml_materials/create_dataset.py
@@ -46,7 +56,6 @@ we consistently filter out these particles from both the initial and final data.
    :dedent: 4
    :start-after: # Manual: Particle tracking START
    :end-before: # Manual: Particle tracking END
-
 
 This data cleaning ensures that the particle data is distributed in a single blob,
 as is optimal for training neural networks.
@@ -134,7 +143,17 @@ shallow feedforward neural networks consisting of about 5 hidden layers and 700-
 The example shown here uses 3 hidden layers and 20 nodes per layer
 and is trained for 10 epochs.
 
+Some utility functions for creating neural networks are provided in the script below.
+These are mostly convenience wrappers and utilities for working with `PyTorch <https://pytorch.org/>`__ neural network objects.
+This script is imported in the training scripts shown later.
 
+.. dropdown:: Python neural network class definitions
+   :color: light
+   :icon: info
+   :animate: fade-in-slide-down
+
+    .. literalinclude:: ml_materials/neural_network_classes.py
+       :language: python3
 
 Train and Save Neural Network
 -----------------------------
@@ -225,14 +244,14 @@ When the test-loss starts to trend flat or even upward, the neural network is no
 
 .. _fig_train_test_loss:
 
-.. figure:: https://user-images.githubusercontent.com/10621396/290010428-f83725ab-a08f-494c-b075-314b0d26cb9a.png
+.. figure:: https://gist.githubusercontent.com/RTSandberg/649a81cc0e7926684f103729483eff90/raw/095ac2daccbcf197fa4e18a8f8505711b27e807a/beam_stage_0_training_testing_error.png
    :alt: Plot of training and testing loss curves versus number of training epochs.
 
    Training (in blue) and testing (in green) loss curves versus number of training epochs.
 
 .. _fig_train_evaluation:
 
-.. figure:: https://user-images.githubusercontent.com/10621396/290010486-4a3541e7-e0be-4cf1-b33b-57d5e5985196.png
+.. figure:: https://gist.githubusercontent.com/RTSandberg/649a81cc0e7926684f103729483eff90/raw/095ac2daccbcf197fa4e18a8f8505711b27e807a/beam_stage_0_model_evaluation.png
    :alt: Plot comparing model prediction with simulation output.
 
    A comparison of model prediction (yellow-red dots, colored by mean-squared error) with simulation output (black dots).
