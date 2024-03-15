@@ -51,6 +51,7 @@ JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buff
     }
     // A Jdisp multifab is generated to hold displacement current.
     amrex::MultiFab Jdisp( m_mf_j->boxArray(), m_mf_j->DistributionMap(), 1, m_mf_j->nGrowVect() );
+    Jdisp.setVal(0);
 
     // J_displacement = curl x B / mu0 - J
     amrex::MultiFab::LinComb(
@@ -73,29 +74,26 @@ JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buff
             J_IndexType[idim] = J_stag[idim];
         }
         // Parameters for `interp` that maps from Jext to cc.
-        // amrex::GpuArray<int, 3> const& cc = {0, 0, 0};
         // The "coarsening is just 1 i.e. no coarsening"
         amrex::GpuArray<int, 3> const& coarsen = {1, 1, 1};
 
         // Loop through the grids, and over the tiles within each grid to
-        // subtract interpolate Jext from J_displacement.
+        // subtract the interpolated Jext from J_displacement.
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
         for ( MFIter mfi(Jdisp, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
 
-
             Array4<Real> const& Jdisp_arr = Jdisp.array(mfi);
             Array4<Real const> const& Jext = m_mf_j_external->const_array(mfi);
 
-            //  Loop over the cells and update the Jdisp MultiFab
+            //  Loop over cells and update the Jdisp MultiFab
             amrex::ParallelFor(mfi.tilebox(), [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                // Interpolate the Jext to the staggering of J
+                // Interpolate Jext to the staggering of J
                 auto const jext_interp = ablastr::coarsen::sample::Interp(Jext, Jext_IndexType, J_IndexType, coarsen, i, j, k, 0);
                 Jdisp_arr(i, j, k, 0) -= jext_interp;
             });
         }
-        // amrex::MultiFab::Subtract(Jdisp, *m_mf_j_external, 0, 0, 1, Jdisp.nGrowVect());
     }
 
     InterpolateMFForDiag(mf_dst, Jdisp, dcomp, warpx.DistributionMap(m_lev),
