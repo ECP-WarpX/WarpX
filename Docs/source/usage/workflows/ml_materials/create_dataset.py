@@ -15,8 +15,8 @@ import numpy as np
 
 c = 2.998e8
 
-from openpmd_viewer import OpenPMDTimeSeries, ParticleTracker
 import torch
+from openpmd_viewer import OpenPMDTimeSeries, ParticleTracker
 
 ###############
 

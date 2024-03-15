@@ -80,6 +80,7 @@ repos:
   hooks:
   - id: isort
     name: isort (python)
+    args: ['--profile black']
 
 # Python: Flake8 (checks only, does this support auto-fixes?)
 #- repo: https://github.com/PyCQA/flake8
