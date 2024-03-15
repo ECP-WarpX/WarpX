@@ -149,7 +149,6 @@ public:
         return tmp;
     }
 
-    using PCSoA = amrex::ParticleContainerPureSoA<PIdx::nattribs,0,T_Allocator>;
     using amrex::ParticleContainerPureSoA<PIdx::nattribs,0,T_Allocator>::NumRealComps;
     using amrex::ParticleContainerPureSoA<PIdx::nattribs,0,T_Allocator>::NumIntComps;
     using amrex::ParticleContainerPureSoA<PIdx::nattribs,0,T_Allocator>::AddRealComp;
@@ -193,13 +192,13 @@ public:
 
     void defineAllParticleTiles () noexcept
     {
-        for (int lev = 0; lev <= PCSoA::finestLevel(); ++lev)
+        for (int lev = 0; lev <= amrex::ParticleContainerPureSoA<PIdx::nattribs,0,T_Allocator>::finestLevel(); ++lev)
         {
-            for (auto mfi = PCSoA::MakeMFIter(lev); mfi.isValid(); ++mfi)
+            for (auto mfi = amrex::ParticleContainerPureSoA<PIdx::nattribs,0,T_Allocator>::MakeMFIter(lev); mfi.isValid(); ++mfi)
             {
                 const int grid_id = mfi.index();
                 const int tile_id = mfi.LocalTileIndex();
-                PCSoA::DefineAndReturnParticleTile(lev, grid_id, tile_id);
+                amrex::ParticleContainerPureSoA<PIdx::nattribs,0,T_Allocator>::DefineAndReturnParticleTile(lev, grid_id, tile_id);
             }
         }
     }
