@@ -9,12 +9,12 @@
 #
 
 import os
-from urllib import request
 import zipfile
+from urllib import request
 
 import numpy as np
-from openpmd_viewer import OpenPMDTimeSeries, ParticleTracker
 import torch
+from openpmd_viewer import OpenPMDTimeSeries, ParticleTracker
 
 c = 2.998e8
 ###############

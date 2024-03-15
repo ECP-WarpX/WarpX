@@ -38,10 +38,10 @@ Looking closer at the z-pz space, we see that some particles were not trapped in
 
 To assist our neural network in learning dynamics of interest, we filter out these particles.
 It is sufficient for our purposes to select particles that are not too far back, setting
-``particle_selection={'z':[0.280025, None]}``. 
+``particle_selection={'z':[0.280025, None]}``.
 After filtering, we can see in :numref:`fig_clean_phase_space` that the beam phase space projections are much cleaner -- this is the beam we want to train on.
 
-.. _fig_clean_phase_space: 
+.. _fig_clean_phase_space:
 
 .. figure:: https://gist.githubusercontent.com/RTSandberg/649a81cc0e7926684f103729483eff90/raw/095ac2daccbcf197fa4e18a8f8505711b27e807a/clean_stage_0.png
    :alt: Plot showing the final phase space projections of a particle beam through a laser-plasma acceleration element after filtering out outlying particles.
