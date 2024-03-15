@@ -594,6 +594,7 @@ for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
         // TODO: raise error when BTD and boundary buffer are used
         // (because then phi is gathered at the wrong time)
         tmp.AddRealComp("phi");
+        tmp.defineAllParticleTiles();
         int const phi_index = tmp.getParticleComps().at("phi");
         auto& warpx = WarpX::GetInstance();
 #ifdef AMREX_USE_OMP
