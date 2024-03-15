@@ -1269,8 +1269,8 @@ Particle initialization
     advanced at a much larger timestep given by `warpx.const_dt * <species.supercycling_interval>`.
 
     .. note::
-        You must specify `warpx.const_dt` in order to use supercycling. At present, supercyling is only compatible with the
-        electrostatic solver.
+        You must specify `warpx.const_dt` in order to use supercycling.
+        At present, supercyling is only compatible with the electrostatic solver.
 
 
 .. _running-cpp-parameters-fluids:
