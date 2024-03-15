@@ -14,10 +14,11 @@ For example, a simulation determined by the following input script
     .. literalinclude:: ml_materials/run_warpx_training.py
        :language: python
 
-In this section we walk through a workflow for data processing and model training.
+In this section we walk through a workflow for data processing and model training, using data from this input script as an example.
+The simulation output is stored in an online `Zenodo archive <https://zenodo.org/records/10368972>`__, in the ``lab_particle_diags`` directory.
+In the example scripts provided here, the data is downloaded from the Zenodo archive, properly formatted, and used to train a neural network.
 This workflow was developed and first presented in :cite:t:`ml-SandbergIPAC23,ml-SandbergPASC24`.
-
-This assumes you have an up-to-date environment with PyTorch and openPMD.
+It assumes you have an up-to-date environment with PyTorch and openPMD.
 
 Data Cleaning
 -------------
@@ -277,7 +278,7 @@ Surrogate Usage in Accelerator Physics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A neural network such as the one we trained here can be incorporated in other BLAST codes.
-Consider `this <https://impactx.readthedocs.io/en/latest/usage/examples/pytorch_surrogate_model/README.html>`__ example using neural networks in ImpactX.
+Consider this `example using neural network surrogates of WarpX simulations in ImpactX <https://impactx.readthedocs.io/en/latest/usage/examples/pytorch_surrogate_model/README.html>`__.
 
 .. bibliography::
    :keyprefix: ml-
