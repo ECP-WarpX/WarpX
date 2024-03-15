@@ -15,9 +15,13 @@ my_constants.xmin = -0.5
 my_constants.zmin = -0.5
 my_constants.xmax = 0.5
 my_constants.zmax = 0.5
-# Alternatively one could use parser to build EB
 # Note that for amrex EB implicit function, >0 is covered, =0 is boundary and <0 is regular.
 warpx.eb_implicit_function = "max(max(x+xmin,-(x+xmax)), max(z+zmin,-(z+zmax)))"
+
+# To test the initial electrostatic solver, we also add uniform potential
+# Since, the potential is uniform here, it should not modify the fields, so this mainly
+# tests that calling the electrostatic solver does not raise any error/crash
+warpx.eb_potential(x,y,z,t) = "1"
 
 warpx.B_ext_grid_init_style = parse_B_ext_grid_function
 warpx.E_ext_grid_init_style = parse_E_ext_grid_function

@@ -14,12 +14,12 @@ import argparse
 import os
 import re
 
-from matplotlib.colors import TwoSlopeNorm
 import matplotlib.pyplot as plt
 import numpy as np
-from openpmd_viewer import OpenPMDTimeSeries
 import pandas as pd
 import scipy.constants as sc
+from matplotlib.colors import TwoSlopeNorm
+from openpmd_viewer import OpenPMDTimeSeries
 
 plt.rcParams.update({'font.size':16})
 
