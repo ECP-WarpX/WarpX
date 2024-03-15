@@ -35,7 +35,7 @@ WarpX::ComputeDt ()
 {
     // Check if any species is using supercycling
     bool do_supercycling = false;
-    int nSpecies = mypc->nSpecies();
+    const int nSpecies = mypc->nSpecies();
     for (int i = 0; i < nSpecies; i++) {
         auto& pc = mypc->GetParticleContainer(i);
         do_supercycling = do_supercycling || (pc.supercycling_interval > 1);

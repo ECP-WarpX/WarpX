@@ -1261,14 +1261,16 @@ Particle initialization
 
 * ``<species>.supercycling_interval`` (`int`) optional (default `1`)
     The interval at which supercycling occurs for this species.
-    A value greater than one means  that field gathering, particle advancement,
-    and charge deposition only occur every few iterations for this particle. This is useful to speed up cases where the dynamics are dominated
-    by a less massive species with a more strict timestep restriction (e.g. electrons in an low-temperature electron-ion plasma).
-    In these cases, the electrons can be advanced at the simulation timestep, while ions are advanced at a much larger timestep.
-    The effective timestep for the supercycled species is given by `warpx.const_dt * <species.supercycling_interval>`.
+    A value greater than one means that field gathering and particle advancement
+    only occur every `supercycling_interval` iterations for this particle.
+    This is useful to speed up cases where the dynamics are dominated by a less massive species
+    with a more strict timestep restriction (e.g. electrons in an low-temperature electron-ion plasma).
+    In these cases, the electrons can be advanced at the simulation timestep, while ions are
+    advanced at a much larger timestep given by `warpx.const_dt * <species.supercycling_interval>`.
 
     .. note::
-        You must specify `warpx.const_dt` in order to use supercycling.
+        You must specify `warpx.const_dt` in order to use supercycling. At present, supercyling is only compatible with the
+        electrostatic solver.
 
 
 .. _running-cpp-parameters-fluids:
