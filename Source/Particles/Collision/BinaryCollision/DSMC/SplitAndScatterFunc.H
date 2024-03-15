@@ -53,7 +53,8 @@ public:
     AMREX_INLINE
     amrex::Vector<int> operator() (
         const index_type& n_total_pairs,
-        const SoaData_type& soa_1, const SoaData_type& soa_2,
+        // Tile& ptile1, Tile& ptile2,
+        const SoaData_type& /*soa_1*/, const SoaData_type& /*soa_2*/,
         const amrex::Vector<WarpXParticleContainer*>& pc_products,
         ParticleTileType** AMREX_RESTRICT tile_products,
         const amrex::ParticleReal m1, const amrex::ParticleReal m2,
@@ -71,16 +72,18 @@ public:
         if (n_total_pairs == 0) { return amrex::Vector<int>(m_num_product_species, 0); }
 
         amrex::Gpu::DeviceVector<index_type> offsets(n_total_pairs);
-        index_type* AMREX_RESTRICT p_offsets = offsets.dataPtr();
+        index_type* AMREX_RESTRICT offsets_data = offsets.data();
+        const index_type* AMREX_RESTRICT p_offsets = offsets.dataPtr();
 
         // The following is used to calculate the appropriate offsets. Note that
         // a standard cummulative sum is not appropriate since the mask is also
         // used to specify the type of collision and can therefore have values >1
         auto const total = amrex::Scan::PrefixSum<index_type>(n_total_pairs,
             [=] AMREX_GPU_DEVICE (index_type i) -> index_type { return mask[i] ? 1 : 0; },
-            [=] AMREX_GPU_DEVICE (index_type i, index_type s) { p_offsets[i] = s; },
+            [=] AMREX_GPU_DEVICE (index_type i, index_type s) { offsets_data[i] = s; },
             amrex::Scan::Type::exclusive, amrex::Scan::retSum
         );
+
         amrex::Vector<int> num_added_vec(m_num_product_species);
         for (int i = 0; i < m_num_product_species; i++)
         {
@@ -89,6 +92,10 @@ public:
             num_added_vec[i] = static_cast<int>(num_added);
             tile_products[i]->resize(products_np[i] + num_added);
         }
+
+        // this works for DSMC since the colliding particles are also products
+        const auto soa_1 = tile_products[0]->getParticleTileData();
+        const auto soa_2 = tile_products[1]->getParticleTileData();
 
         amrex::ParticleReal* AMREX_RESTRICT w1 = soa_1.m_rdata[PIdx::w];
         amrex::ParticleReal* AMREX_RESTRICT w2 = soa_2.m_rdata[PIdx::w];
@@ -104,27 +111,22 @@ public:
 #ifdef AMREX_USE_GPU
         amrex::Gpu::DeviceVector<SoaData_type> device_soa_products(m_num_product_species);
         amrex::Gpu::DeviceVector<index_type> device_products_np(m_num_product_species);
-        // amrex::Gpu::DeviceVector<amrex::ParticleReal> device_products_mass(m_num_product_species);
+
         amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, soa_products.begin(),
                               soa_products.end(),
                               device_soa_products.begin());
         amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, products_np.begin(),
                               products_np.end(),
                               device_products_np.begin());
-        // amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, products_mass.begin(),
-        //                       products_mass.end(),
-        //                       device_products_mass.begin());
+
         amrex::Gpu::streamSynchronize();
         SoaData_type* AMREX_RESTRICT soa_products_data = device_soa_products.data();
         const index_type* AMREX_RESTRICT products_np_data = device_products_np.data();
-        // const amrex::ParticleReal* AMREX_RESTRICT products_mass_data = device_products_mass.data();
 #else
         SoaData_type* AMREX_RESTRICT soa_products_data = soa_products.data();
         const index_type* AMREX_RESTRICT products_np_data = products_np.data();
-        // const amrex::ParticleReal* AMREX_RESTRICT products_mass_data = products_mass.data();
 #endif
 
-        // const int t_num_product_species = m_num_product_species;
         const int* AMREX_RESTRICT p_num_products_device = m_num_products_device.data();
 
         amrex::ParallelForRNG(n_total_pairs,
@@ -138,7 +140,7 @@ public:
 
                 const auto product1_index = products_np_data[0] +
                                            (p_offsets[i]*p_num_products_device[0] + 0);
-                // Make a copy of the particle from species 2
+                // Make a copy of the particle from species 1
                 copy_species1[0](soa_products_data[0], soa_1, static_cast<int>(p_pair_indices_1[i]),
                                 static_cast<int>(product1_index), engine);
                 // Set the weight of the new particles to p_pair_reaction_weight[i]

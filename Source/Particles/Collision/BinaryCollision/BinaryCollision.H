@@ -176,8 +176,8 @@ public:
         amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, copy_species2.begin(),
                               copy_species2.end(), device_copy_species2.begin());
         amrex::Gpu::streamSynchronize();
-        auto copy_species1_data = device_copy_species1.data();
-        auto copy_species2_data = device_copy_species2.data();
+        auto *copy_species1_data = device_copy_species1.data();
+        auto *copy_species2_data = device_copy_species2.data();
 #else
         auto *copy_species1_data = copy_species1.data();
         auto *copy_species2_data = copy_species2.data();
@@ -209,7 +209,7 @@ public:
                 auto wt = static_cast<amrex::Real>(amrex::second());
 
                 doCollisionsWithinTile( dt, lev, mfi, species1, species2, product_species_vector,
-                                         copy_species1_data, copy_species2_data);
+                                        copy_species1_data, copy_species2_data);
 
                 if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
                 {
@@ -251,7 +251,7 @@ public:
         const bool have_product_species = m_have_product_species;
 
         // Store product species data in vectors
-        const int n_product_species = m_product_species.size();
+        const int n_product_species = product_species_vector.size();
         amrex::Vector<ParticleTileType*> tile_products;
         amrex::Vector<GetParticlePosition<PIdx>> get_position_products;
         amrex::Vector<index_type> products_np;

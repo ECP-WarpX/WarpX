@@ -34,17 +34,17 @@
  */
 template <typename index_type>
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
-void CollisionPairFilter (const amrex::ParticleReal& u1x, const amrex::ParticleReal& u1y,
-                          const amrex::ParticleReal& u1z, const amrex::ParticleReal& u2x,
-                          const amrex::ParticleReal& u2y, const amrex::ParticleReal& u2z,
-                          const amrex::ParticleReal& m1, const amrex::ParticleReal& m2,
-                          amrex::ParticleReal w1, amrex::ParticleReal w2,
+void CollisionPairFilter (const amrex::ParticleReal u1x, const amrex::ParticleReal u1y,
+                          const amrex::ParticleReal u1z, const amrex::ParticleReal u2x,
+                          const amrex::ParticleReal u2y, const amrex::ParticleReal u2z,
+                          const amrex::ParticleReal m1, const amrex::ParticleReal m2,
+                          const amrex::ParticleReal w1, const amrex::ParticleReal w2,
                           const amrex::Real dt, const amrex::ParticleReal dV, const int pair_index,
                           index_type* AMREX_RESTRICT p_mask,
                           amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight,
                           const int multiplier,
                           const int process_count,
-                          const ScatteringProcess::Executor* AMREX_RESTRICT scattering_processes,
+                          const ScatteringProcess::Executor* scattering_processes,
                           const amrex::RandomEngine& engine)
 {
     amrex::ParticleReal E_coll, v_coll, lab_to_COM_factor;
@@ -62,27 +62,24 @@ void CollisionPairFilter (const amrex::ParticleReal& u1x, const amrex::ParticleR
     E_coll /= PhysConst::q_e;
 
     // Evaluate the cross-section for each scattering process to determine
-    // the total collision probability. We use 10 as the array length assuming
-    // that process_count < 10.
+    // the total collision probability. We use 5 as the array length assuming
+    // that process_count is less than that.
     AMREX_ASSERT_WITH_MESSAGE(
-        (process_count < 10), "Too many scattering processes in DSMC routine."
+        (process_count < 5), "Too many scattering processes in DSMC routine."
     );
-    amrex::ParticleReal sigma_sums[10];
-    for (int ii = 0; ii < 10; ii++) {
-        if (ii < process_count)
-        {
-            auto const& scattering_process = scattering_processes[ii];
-            auto sigma = scattering_process.getCrossSection(E_coll);
-            sigma_sums[ii] = sigma + ((ii == 0) ? 0._prt : sigma_sums[ii-1]);
-        }
-        else { sigma_sums[ii] = 0._prt; }
+    amrex::ParticleReal sigma_sums[5] = {0._prt, 0._prt, 0._prt, 0._prt, 0._prt};
+    int coll_type[5] = {0, 0, 0, 0, 0};
+    for (int ii = 0; ii < process_count; ii++) {
+        auto const& scattering_process = scattering_processes[ii];
+        coll_type[ii] = int(scattering_process.m_type);
+        amrex::ParticleReal sigma = scattering_process.getCrossSection(E_coll);
+        sigma_sums[ii] = sigma + ((ii == 0) ? 0._prt : sigma_sums[ii-1]);
     }
-    auto sigma_tot = sigma_sums[process_count];
+    const auto sigma_tot = sigma_sums[process_count-1];
 
     // calculate total collision probability
     const amrex::ParticleReal exponent = (
-        lab_to_COM_factor * multiplier * w_max
-        * sigma_tot * v_coll * dt / dV
+        lab_to_COM_factor * multiplier * w_max * sigma_tot * v_coll * dt / dV
     );
 
     // Compute actual collision probability that is always between zero and one
@@ -99,8 +96,7 @@ void CollisionPairFilter (const amrex::ParticleReal& u1x, const amrex::ParticleR
         for (int ii = 0; ii < process_count; ii++) {
             if (random_number <= sigma_sums[ii] / sigma_tot)
             {
-                auto const& scattering_process = scattering_processes[ii];
-                p_mask[pair_index] = int(scattering_process.m_type);
+                p_mask[pair_index] = coll_type[ii];
                 p_pair_reaction_weight[pair_index] = w_min;
                 break;
             }

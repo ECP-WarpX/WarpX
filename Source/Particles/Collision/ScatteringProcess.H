@@ -125,6 +125,8 @@ public:
 
     [[nodiscard]] ScatteringProcessType type () const { return m_exe_h.m_type; }
 
+    [[nodiscard]] amrex::Gpu::HostVector<amrex::ParticleReal> getSigmaArray () const { return m_sigmas_h; }
+
 private:
 
     static

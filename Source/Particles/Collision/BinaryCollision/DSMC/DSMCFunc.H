@@ -97,24 +97,40 @@ public:
             scattering_processes.push_back(std::move(process));
         }
 
-        // copy ScatteringProcess Executor to device (if needed)
-        amrex::Gpu::DeviceVector<ScatteringProcess::Executor> scattering_processes_exe;
+        m_process_count = static_cast<int>(scattering_processes.size());
+
+        // Store ScatteringProcess::Executor(s) and cross-section array(s).
+        // Note that it is necessary to copy over the cross-section array since
+        // ScatteringProcess cannot be copied and the cross-section array
+        // cannot be stored in the Executor struct as PODVectors can only
+        // contain trivially copyable objects.
 #ifdef AMREX_USE_GPU
         amrex::Gpu::HostVector<ScatteringProcess::Executor> h_scattering_processes_exe;
         for (auto const& p : scattering_processes) {
             h_scattering_processes_exe.push_back(p.executor());
+            m_sigmas_h.push_back(p.getSigmaArray());
         }
-        scattering_processes_exe.resize(h_scattering_processes_exe.size());
+        m_scattering_processes_exe.resize(m_process_count);
         amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_scattering_processes_exe.begin(),
-                            h_scattering_processes_exe.end(), scattering_processes_exe.begin());
+                            h_scattering_processes_exe.end(), m_scattering_processes_exe.begin());
+        m_sigmas_d.resize(m_process_count);
+        for (int ii = 0; ii < m_process_count; ii++) {
+            m_sigmas_d[ii].resize(m_sigmas_h[ii].size());
+            amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, m_sigmas_h[ii].begin(),
+                                m_sigmas_h[ii].end(), m_sigmas_d[ii].begin());
+            m_scattering_processes_exe[ii].m_sigmas_data = m_sigmas_d[ii].data();
+        }
         amrex::Gpu::streamSynchronize();
 #else
         for (auto const& p : scattering_processes) {
-            scattering_processes_exe.push_back(p.executor());
+            m_scattering_processes_exe.push_back(p.executor());
+            m_sigmas_h.push_back(p.getSigmaArray());
+        }
+        for (int ii = 0; ii < m_process_count; ii++) {
+            m_scattering_processes_exe[ii].m_sigmas_data = m_sigmas_h[ii].data();
         }
 #endif
-        m_scattering_processes = scattering_processes_exe.data();
-        m_process_count = static_cast<int>(scattering_processes_exe.size());
+        m_scattering_processes_data = m_scattering_processes_exe.data();
     }
 
     /**
@@ -199,13 +215,14 @@ public:
 
 #if (defined WARPX_DIM_RZ)
             /* In RZ geometry, macroparticles can collide with other macroparticles
-                * in the same *cylindrical* cell. For this reason, collisions between macroparticles
-                * are actually not local in space. In this case, the underlying assumption is that
-                * particles within the same cylindrical cell represent a cylindrically-symmetry
-                * momentum distribution function. Therefore, here, we temporarily rotate the
-                * momentum of one of the macroparticles in agreement with this cylindrical symmetry.
-                * (This is technically only valid if we use only the m=0 azimuthal mode in the simulation;
-                * there is a corresponding assert statement at initialization.) */
+             * in the same *cylindrical* cell. For this reason, collisions between macroparticles
+             * are actually not local in space. In this case, the underlying assumption is that
+             * particles within the same cylindrical cell represent a cylindrically-symmetry
+             * momentum distribution function. Therefore, here, we temporarily rotate the
+             * momentum of one of the macroparticles in agreement with this cylindrical symmetry.
+             * (This is technically only valid if we use only the m=0 azimuthal mode in the simulation;
+             * there is a corresponding assert statement at initialization.)
+             */
             amrex::ParticleReal const theta = theta2[I2[i2]]-theta1[I1[i1]];
             amrex::ParticleReal const u1xbuf = u1x[I1[i1]];
             u1x[I1[i1]] = u1xbuf*std::cos(theta) - u1y[I1[i1]]*std::sin(theta);
@@ -218,7 +235,7 @@ public:
                 m1, m2, w1[ I1[i1] ]/c1k, w2[ I2[i2] ]/c2k,
                 dt, dV, static_cast<int>(pair_index), p_mask,
                 p_pair_reaction_weight, static_cast<int>(max_N),
-                m_process_count, m_scattering_processes, engine);
+                m_process_count, m_scattering_processes_data, engine);
 
 #if (defined WARPX_DIM_RZ)
             amrex::ParticleReal const u1xbuf_new = u1x[I1[i1]];
@@ -235,7 +252,12 @@ public:
     }
 
 private:
-    ScatteringProcess::Executor* m_scattering_processes;
+    amrex::Gpu::DeviceVector<ScatteringProcess::Executor> m_scattering_processes_exe;
+    ScatteringProcess::Executor * m_scattering_processes_data;
+#ifdef AMREX_USE_GPU
+    amrex::Vector< amrex::Gpu::DeviceVector<amrex::ParticleReal> > m_sigmas_d;
+#endif
+    amrex::Vector< amrex::Gpu::HostVector<amrex::ParticleReal> > m_sigmas_h;
     int m_process_count;
 };
 
