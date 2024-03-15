@@ -253,7 +253,7 @@ public:
 
 private:
     amrex::Gpu::DeviceVector<ScatteringProcess::Executor> m_scattering_processes_exe;
-    ScatteringProcess::Executor * m_scattering_processes_data;
+    ScatteringProcess::Executor* m_scattering_processes_data;
 #ifdef AMREX_USE_GPU
     amrex::Vector< amrex::Gpu::DeviceVector<amrex::ParticleReal> > m_sigmas_d;
 #endif

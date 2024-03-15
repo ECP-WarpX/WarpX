@@ -247,7 +247,7 @@ public:
         using namespace ParticleUtils;
         using namespace amrex::literals;
 
-        auto &binary_collision_functor = m_binary_collision_functor;
+        const CollisionFunctor& binary_collision_functor = m_binary_collision_functor;
         const bool have_product_species = m_have_product_species;
 
         // Store product species data in vectors
@@ -545,7 +545,6 @@ public:
                 }
             );
 
-
             // Create the new product particles and define their initial values
             // num_added: how many particles of each product species have been created
             const amrex::Vector<int> num_added = m_copy_transform_functor(n_total_pairs,
@@ -562,7 +561,6 @@ public:
             {
                 setNewParticleIDs(*(tile_products_data[i]), static_cast<int>(products_np[i]), num_added[i]);
             }
-
         } // end if ( m_isSameSpecies)
     }
 
