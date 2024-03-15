@@ -149,6 +149,7 @@ public:
         return tmp;
     }
 
+    using PCSoA = amrex::ParticleContainerPureSoA<PIdx::nattribs,0,T_Allocator>;
     using amrex::ParticleContainerPureSoA<PIdx::nattribs,0,T_Allocator>::NumRealComps;
     using amrex::ParticleContainerPureSoA<PIdx::nattribs,0,T_Allocator>::NumIntComps;
     using amrex::ParticleContainerPureSoA<PIdx::nattribs,0,T_Allocator>::AddRealComp;
@@ -187,6 +188,19 @@ public:
         } else {
             amrex::Print() << Utils::TextMsg::Info(
                 name + " already exists in particle_icomps, not adding.");
+        }
+    }
+
+    void defineAllParticleTiles () noexcept
+    {
+        for (int lev = 0; lev <= PCSoA::finestLevel(); ++lev)
+        {
+            for (auto mfi = PCSoA::MakeMFIter(lev); mfi.isValid(); ++mfi)
+            {
+                const int grid_id = mfi.index();
+                const int tile_id = mfi.LocalTileIndex();
+                PCSoA::DefineAndReturnParticleTile(lev, grid_id, tile_id);
+            }
         }
     }
 
