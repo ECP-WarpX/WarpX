@@ -175,6 +175,9 @@ public:
     amrex::ParserExecutor<2> m_eta;
     bool m_resistivity_has_J_dependence = false;
 
+    /** Plasma hyper-resisitivity */
+    amrex::Real m_eta_h = 0.0;
+
     /** External current */
     std::string m_Jx_ext_grid_function = "0.0";
     std::string m_Jy_ext_grid_function = "0.0";

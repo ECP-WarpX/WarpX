@@ -1142,7 +1142,8 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         Function of space and time specifying external (non-plasma) currents.
     """
     def __init__(self, grid, Te=None, n0=None, gamma=None,
-                 n_floor=None, plasma_resistivity=None, substeps=None,
+                 n_floor=None, plasma_resistivity=None,
+                 plasma_hyper_resistivity=None, substeps=None,
                  Jx_external_function=None, Jy_external_function=None,
                  Jz_external_function=None, **kw):
         self.grid = grid
@@ -1153,6 +1154,7 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         self.gamma = gamma
         self.n_floor = n_floor
         self.plasma_resistivity = plasma_resistivity
+        self.plasma_hyper_resistivity = plasma_hyper_resistivity
 
         self.substeps = substeps
 
@@ -1187,6 +1189,7 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
             'plasma_resistivity(rho,J)',
             pywarpx.my_constants.mangle_expression(self.plasma_resistivity, self.mangle_dict)
         )
+        pywarpx.hybridpicmodel.plasma_hyper_resistivity = self.plasma_hyper_resistivity
         pywarpx.hybridpicmodel.substeps = self.substeps
         pywarpx.hybridpicmodel.__setattr__(
             'Jx_external_grid_function(x,y,z,t)',
