@@ -58,37 +58,41 @@ public:
         utils::parser::queryWithParser(
             pp_collision_name, "CoulombLog", CoulombLog);
         m_CoulombLog = CoulombLog;
+
+        m_exe.m_CoulombLog = m_CoulombLog;
+        m_exe.m_isSameSpecies = m_isSameSpecies;
     }
 
-    /**
-     * \brief operator() of the PairWiseCoulombCollisionFunc class. Performs Coulomb collisions
-     * at the cell level by calling ElasticCollisionPerez.
-     *
-     * @param[in] I1s,I2s is the start index for I1,I2 (inclusive).
-     * @param[in] I1e,I2e is the stop index for I1,I2 (exclusive).
-     * @param[in] I1,I2 index arrays. They determine all elements that will be used.
-     * @param[in,out] soa_1,soa_2 contain the struct of array data of the two species.
-     * @param[in] q1,q2 are charges.
-     * @param[in] m1,m2 are masses.
-     * @param[in] dt is the time step length between two collision calls.
-     * @param[in] dV is the volume of the corresponding cell.
-     * @param[in] engine the random engine.
-     */
-    AMREX_GPU_HOST_DEVICE AMREX_INLINE
-    void operator() (
-        index_type const I1s, index_type const I1e,
-        index_type const I2s, index_type const I2e,
-        index_type const* AMREX_RESTRICT I1,
-        index_type const* AMREX_RESTRICT I2,
-        SoaData_type soa_1, SoaData_type soa_2,
-        GetParticlePosition<PIdx> /*get_position_1*/, GetParticlePosition<PIdx> /*get_position_2*/,
-        amrex::ParticleReal const  q1, amrex::ParticleReal const  q2,
-        amrex::ParticleReal const  m1, amrex::ParticleReal const  m2,
-        amrex::Real const  dt, amrex::Real const dV,
-        index_type const /*cell_start_pair*/, index_type* /*p_mask*/,
-        index_type* /*p_pair_indices_1*/, index_type* /*p_pair_indices_2*/,
-        amrex::ParticleReal* /*p_pair_reaction_weight*/,
-        amrex::RandomEngine const& engine) const
+    struct Executor {
+        /**
+         * \brief Executor of the PairWiseCoulombCollisionFunc class. Performs Coulomb collisions
+         * at the cell level by calling ElasticCollisionPerez.
+         *
+         * @param[in] I1s,I2s is the start index for I1,I2 (inclusive).
+         * @param[in] I1e,I2e is the stop index for I1,I2 (exclusive).
+         * @param[in] I1,I2 index arrays. They determine all elements that will be used.
+         * @param[in,out] soa_1,soa_2 contain the struct of array data of the two species.
+         * @param[in] q1,q2 are charges.
+         * @param[in] m1,m2 are masses.
+         * @param[in] dt is the time step length between two collision calls.
+         * @param[in] dV is the volume of the corresponding cell.
+         * @param[in] engine the random engine.
+         */
+        AMREX_GPU_HOST_DEVICE AMREX_INLINE
+        void operator() (
+            index_type const I1s, index_type const I1e,
+            index_type const I2s, index_type const I2e,
+            index_type const* AMREX_RESTRICT I1,
+            index_type const* AMREX_RESTRICT I2,
+            SoaData_type soa_1, SoaData_type soa_2,
+            GetParticlePosition<PIdx> /*get_position_1*/, GetParticlePosition<PIdx> /*get_position_2*/,
+            amrex::ParticleReal const  q1, amrex::ParticleReal const  q2,
+            amrex::ParticleReal const  m1, amrex::ParticleReal const  m2,
+            amrex::Real const  dt, amrex::Real const dV,
+            index_type const /*cell_start_pair*/, index_type* /*p_mask*/,
+            index_type* /*p_pair_indices_1*/, index_type* /*p_pair_indices_2*/,
+            amrex::ParticleReal* /*p_pair_reaction_weight*/,
+            amrex::RandomEngine const& engine) const
         {
             using namespace amrex::literals;
 
@@ -99,9 +103,17 @@ public:
                     dt, m_CoulombLog, dV, engine, m_isSameSpecies);
         }
 
+        amrex::ParticleReal m_CoulombLog;
+        bool m_isSameSpecies;
+    };
+
+    [[nodiscard]] Executor const& executor () const { return m_exe; }
+
 private:
     amrex::ParticleReal m_CoulombLog;
     bool m_isSameSpecies;
+
+    Executor m_exe;
 };
 
 #endif // PAIRWISE_COULOMB_COLLISION_FUNC_H_

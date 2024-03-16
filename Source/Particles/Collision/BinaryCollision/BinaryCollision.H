@@ -247,7 +247,7 @@ public:
         using namespace ParticleUtils;
         using namespace amrex::literals;
 
-        const CollisionFunctor& binary_collision_functor = m_binary_collision_functor;
+        const auto& binary_collision_functor = m_binary_collision_functor.executor();
         const bool have_product_species = m_have_product_species;
 
         // Store product species data in vectors

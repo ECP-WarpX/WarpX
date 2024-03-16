@@ -31,7 +31,6 @@ DSMCFunc::DSMCFunc (
 
     // create a vector of ScatteringProcess objects from each scattering
     // process name
-    amrex::Vector<ScatteringProcess> scattering_processes;
     for (const auto& scattering_process : scattering_process_names) {
         const std::string kw_cross_section = scattering_process + "_cross_section";
         std::string cross_section_file;
@@ -52,43 +51,28 @@ DSMCFunc::DSMCFunc (
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(process.type() != ScatteringProcessType::INVALID,
                                         "Cannot add an unknown scattering process type");
 
-        scattering_processes.push_back(std::move(process));
+        m_scattering_processes.push_back(std::move(process));
     }
 
-    m_process_count = static_cast<int>(scattering_processes.size());
+    m_process_count = static_cast<int>(m_scattering_processes.size());
 
-    // Store ScatteringProcess::Executor(s) and cross-section array(s).
-    // Note that it is necessary to copy over the cross-section array since
-    // ScatteringProcess cannot be copied and the cross-section array
-    // cannot be stored in the Executor struct as PODVectors can only
-    // contain trivially copyable objects.
+    // Store ScatteringProcess::Executor(s).
 #ifdef AMREX_USE_GPU
     amrex::Gpu::HostVector<ScatteringProcess::Executor> h_scattering_processes_exe;
-    amrex::Vector< amrex::Gpu::HostVector<amrex::ParticleReal> > h_sigmas;
-    for (auto const& p : scattering_processes) {
+    for (auto const& p : m_scattering_processes) {
         h_scattering_processes_exe.push_back(p.executor());
-        h_sigmas.push_back(p.getSigmaArray());
     }
     m_scattering_processes_exe.resize(m_process_count);
     amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_scattering_processes_exe.begin(),
                         h_scattering_processes_exe.end(), m_scattering_processes_exe.begin());
-    m_sigmas_d.resize(m_process_count);
-    for (int ii = 0; ii < m_process_count; ii++) {
-        m_sigmas_d[ii].resize(h_sigmas[ii].size());
-        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_sigmas[ii].begin(),
-                            h_sigmas[ii].end(), m_sigmas[ii].begin());
-    }
     amrex::Gpu::streamSynchronize();
 #else
-    for (auto const& p : scattering_processes) {
+    for (auto const& p : m_scattering_processes) {
         m_scattering_processes_exe.push_back(p.executor());
-        m_sigmas.push_back(p.getSigmaArray());
     }
 #endif
-    // Point the cross-section interpolator to the cross-section data stored
-    // in this class.
-    for (int ii = 0; ii < m_process_count; ii++) {
-        m_scattering_processes_exe[ii].m_sigmas_data = m_sigmas[ii].data();
-    }
-    m_scattering_processes_data = m_scattering_processes_exe.data();
+
+    // Link executor to appropriate ScatteringProcess executors
+    m_exe.m_scattering_processes_data = m_scattering_processes_exe.data();
+    m_exe.m_process_count = m_process_count;
 }
