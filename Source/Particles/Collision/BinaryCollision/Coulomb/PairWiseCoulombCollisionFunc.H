@@ -84,7 +84,7 @@ public:
             index_type const I2s, index_type const I2e,
             index_type const* AMREX_RESTRICT I1,
             index_type const* AMREX_RESTRICT I2,
-            SoaData_type soa_1, SoaData_type soa_2,
+            const SoaData_type& soa_1, const SoaData_type& soa_2,
             GetParticlePosition<PIdx> /*get_position_1*/, GetParticlePosition<PIdx> /*get_position_2*/,
             amrex::ParticleReal const  q1, amrex::ParticleReal const  q2,
             amrex::ParticleReal const  m1, amrex::ParticleReal const  m2,

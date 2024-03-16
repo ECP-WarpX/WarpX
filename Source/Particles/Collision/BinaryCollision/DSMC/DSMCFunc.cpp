@@ -54,7 +54,7 @@ DSMCFunc::DSMCFunc (
         m_scattering_processes.push_back(std::move(process));
     }
 
-    m_process_count = static_cast<int>(m_scattering_processes.size());
+    int process_count = static_cast<int>(m_scattering_processes.size());
 
     // Store ScatteringProcess::Executor(s).
 #ifdef AMREX_USE_GPU
@@ -62,7 +62,7 @@ DSMCFunc::DSMCFunc (
     for (auto const& p : m_scattering_processes) {
         h_scattering_processes_exe.push_back(p.executor());
     }
-    m_scattering_processes_exe.resize(m_process_count);
+    m_scattering_processes_exe.resize(process_count);
     amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_scattering_processes_exe.begin(),
                         h_scattering_processes_exe.end(), m_scattering_processes_exe.begin());
     amrex::Gpu::streamSynchronize();
@@ -74,5 +74,5 @@ DSMCFunc::DSMCFunc (
 
     // Link executor to appropriate ScatteringProcess executors
     m_exe.m_scattering_processes_data = m_scattering_processes_exe.data();
-    m_exe.m_process_count = m_process_count;
+    m_exe.m_process_count = process_count;
 }

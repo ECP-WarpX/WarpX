@@ -58,9 +58,9 @@ public:
      * @param[in] mypc pointer to the MultiParticleContainer
      * @param[in] isSameSpecies whether the two colliding species are the same
      */
-    DSMCFunc ( const std::string collision_name,
-               MultiParticleContainer const * const mypc,
-               const bool isSameSpecies );
+    DSMCFunc ( std::string collision_name,
+               MultiParticleContainer const * mypc,
+               bool isSameSpecies );
 
     struct Executor {
         /**
@@ -93,7 +93,7 @@ public:
             index_type const I2s, index_type const I2e,
             index_type const* AMREX_RESTRICT I1,
             index_type const* AMREX_RESTRICT I2,
-            SoaData_type soa_1, SoaData_type soa_2,
+            const SoaData_type& soa_1, const SoaData_type& soa_2,
             GetParticlePosition<PIdx> /*get_position_1*/, GetParticlePosition<PIdx> /*get_position_2*/,
             amrex::ParticleReal const  /*q1*/, amrex::ParticleReal const  /*q2*/,
             amrex::ParticleReal const  m1, amrex::ParticleReal const  m2,
@@ -190,7 +190,6 @@ public:
 private:
     amrex::Vector<ScatteringProcess> m_scattering_processes;
     amrex::Gpu::DeviceVector<ScatteringProcess::Executor> m_scattering_processes_exe;
-    int m_process_count;
 
     Executor m_exe;
 };
