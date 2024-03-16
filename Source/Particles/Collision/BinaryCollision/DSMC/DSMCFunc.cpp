@@ -54,7 +54,7 @@ DSMCFunc::DSMCFunc (
         m_scattering_processes.push_back(std::move(process));
     }
 
-    int process_count = static_cast<int>(m_scattering_processes.size());
+    const int process_count = static_cast<int>(m_scattering_processes.size());
 
     // Store ScatteringProcess::Executor(s).
 #ifdef AMREX_USE_GPU

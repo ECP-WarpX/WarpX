@@ -63,13 +63,16 @@ void CollisionPairFilter (const amrex::ParticleReal u1x, const amrex::ParticleRe
 
     // Evaluate the cross-section for each scattering process to determine
     // the total collision probability.
-    amrex::Gpu::DeviceVector<int> coll_type;
-    amrex::Gpu::DeviceVector<amrex::ParticleReal> sigma_sums;
+    AMREX_ASSERT_WITH_MESSAGE(
+        (process_count < 4), "Too many scattering processes in DSMC routine."
+    );
+    int coll_type[4] = {0, 0, 0, 0};
+    amrex::ParticleReal sigma_sums[4] = {0._prt, 0._prt, 0._prt, 0._prt};
     for (int ii = 0; ii < process_count; ii++) {
         auto const& scattering_process = scattering_processes[ii];
-        coll_type.push_back(int(scattering_process.m_type));
+        coll_type[ii] = int(scattering_process.m_type);
         const amrex::ParticleReal sigma = scattering_process.getCrossSection(E_coll);
-        sigma_sums.push_back(sigma + ((ii == 0) ? 0._prt : sigma_sums[ii-1]));
+        sigma_sums[ii] = sigma + ((ii == 0) ? 0._prt : sigma_sums[ii-1]);
     }
     const auto sigma_tot = sigma_sums[process_count-1];
 
