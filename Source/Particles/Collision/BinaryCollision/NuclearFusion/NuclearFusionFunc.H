@@ -111,6 +111,7 @@ public:
          * @param[in] m1,m2 are masses.
          * @param[in] dt is the time step length between two collision calls.
          * @param[in] dV is the volume of the corresponding cell.
+         * @param[in] coll_idx is the collision index offset.
          * @param[in] cell_start_pair is the start index of the pairs in that cell.
          * @param[out] p_mask is a mask that will be set to true if a fusion event occurs for a given
          * pair. It is only needed here to store information that will be used later on when actually

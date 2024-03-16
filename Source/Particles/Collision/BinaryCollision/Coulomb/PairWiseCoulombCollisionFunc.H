@@ -76,6 +76,7 @@ public:
          * @param[in] m1,m2 are masses.
          * @param[in] dt is the time step length between two collision calls.
          * @param[in] dV is the volume of the corresponding cell.
+         * @param[in] coll_idx is the collision index offset.
          * @param[in] engine the random engine.
          */
         AMREX_GPU_HOST_DEVICE AMREX_INLINE
