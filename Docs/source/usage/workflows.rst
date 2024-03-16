@@ -12,6 +12,7 @@ This section collects typical user workflows and best practices for WarpX.
    workflows/domain_decomposition
    workflows/plot_distribution_mapping
    workflows/debugging
+   workflows/estimate_simulation_memory
    workflows/libensemble
    workflows/plot_timestep_duration
    workflows/psatd_stencil
