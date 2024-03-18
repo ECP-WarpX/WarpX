@@ -23,8 +23,8 @@
 import sys
 
 import numpy as np
-from openpmd_viewer import OpenPMDTimeSeries
 import yt
+from openpmd_viewer import OpenPMDTimeSeries
 
 tolerance = 0
 
