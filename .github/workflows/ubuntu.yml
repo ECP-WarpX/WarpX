@@ -218,7 +218,7 @@ jobs:
         export OMP_NUM_THREADS=1
         mpirun -n 2 Examples/Physics_applications/laser_acceleration/PICMI_inputs_3d.py
 
-  build_sanitizers:
+  build_UB_sanitizer:
     name: Clang UB sanitizer
     runs-on: ubuntu-22.04
     if: github.event.pull_request.draft == false
@@ -263,7 +263,7 @@ jobs:
         ccache -s
         du -hs ~/.cache/ccache
 
-    - name: run with sanitizers
+    - name: run with UB sanitizer
       run: |
         export OMP_NUM_THREADS=2
         mpirun -n 2 ./build/bin/warpx.rz Examples/Physics_applications/laser_acceleration/inputs_rz
