@@ -901,7 +901,7 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
     const int hi_k_lab = m_buffer_k_index_hi[i_buffer];
     m_buffer_box[i_buffer].setSmall( m_moving_window_dir, hi_k_lab - m_buffer_size + 1);
     m_buffer_box[i_buffer].setBig( m_moving_window_dir, hi_k_lab );
-    amrex::BoxArray buffer_ba( m_buffer_box[i_buffer] );
+    const amrex::BoxArray buffer_ba( m_buffer_box[i_buffer] );
     // Generate a new distribution map for the back-transformed buffer multifab
     const amrex::DistributionMapping buffer_dmap(buffer_ba);
     // Number of guard cells for the output buffer is zero.
@@ -1040,7 +1040,7 @@ BTDiagnostics::Flush (int i_buffer, bool force_flush)
         m_buffer_box[i_buffer].setSmall(m_moving_window_dir, (m_buffer_box[i_buffer].smallEnd(m_moving_window_dir) - 1) );
         m_buffer_box[i_buffer].setBig(m_moving_window_dir, (m_buffer_box[i_buffer].bigEnd(m_moving_window_dir) + 1) );
         const amrex::Box particle_buffer_box = m_buffer_box[i_buffer];
-        amrex::BoxArray buffer_ba( particle_buffer_box );
+        const amrex::BoxArray buffer_ba( particle_buffer_box );
         m_particles_buffer[i_buffer][0]->SetParticleBoxArray(0, buffer_ba);
         for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
             // BTD output is single level. Setting particle geometry, dmap, boxarray to level0
@@ -1299,7 +1299,7 @@ BTDiagnostics::InterleaveBufferAndSnapshotHeader ( std::string buffer_Header_pat
     BTDPlotfileHeaderImpl buffer_HeaderImpl(buffer_Header_path);
     buffer_HeaderImpl.ReadHeaderData();
 
-    // Update timestamp of snapshot with recently flushed buffer
+    // Update step_scraped of snapshot with recently flushed buffer
     snapshot_HeaderImpl.set_time( buffer_HeaderImpl.time() );
     snapshot_HeaderImpl.set_timestep( buffer_HeaderImpl.timestep() );
 
@@ -1467,7 +1467,7 @@ BTDiagnostics::PrepareParticleDataForOutput()
                             DefineFieldBufferMultiFab(i_buffer, lev);
                         }
                         const amrex::Box particle_buffer_box = m_buffer_box[i_buffer];
-                        amrex::BoxArray buffer_ba( particle_buffer_box );
+                        const amrex::BoxArray buffer_ba( particle_buffer_box );
                         const amrex::DistributionMapping buffer_dmap(buffer_ba);
                         m_particles_buffer[i_buffer][i]->SetParticleBoxArray(lev, buffer_ba);
                         m_particles_buffer[i_buffer][i]->SetParticleDistributionMap(lev, buffer_dmap);

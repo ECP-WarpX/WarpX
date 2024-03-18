@@ -440,6 +440,11 @@ WarpX::WarpX ()
                     costs_heuristic_cells_wt = 0.250_rt;
                     costs_heuristic_particles_wt = 0.750_rt;
                     break;
+                case 4:
+                    // this is only a guess
+                    costs_heuristic_cells_wt = 0.200_rt;
+                    costs_heuristic_particles_wt = 0.800_rt;
+                    break;
             }
         } else { // FDTD
             switch (WarpX::nox)
@@ -455,6 +460,11 @@ WarpX::WarpX ()
                 case 3:
                     costs_heuristic_cells_wt = 0.145_rt;
                     costs_heuristic_particles_wt = 0.855_rt;
+                    break;
+                case 4:
+                    // this is only a guess
+                    costs_heuristic_cells_wt = 0.100_rt;
+                    costs_heuristic_particles_wt = 0.900_rt;
                     break;
             }
         }
@@ -740,12 +750,6 @@ WarpX::ReadParameters ()
             electromagnetic_solver_id = ElectromagneticSolverAlgo::None;
         }
 
-#if defined(AMREX_USE_EB) && defined(WARPX_DIM_RZ)
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        electromagnetic_solver_id==ElectromagneticSolverAlgo::None,
-        "Currently, the embedded boundary in RZ only works for electrostatic solvers (or no solver).");
-#endif
-
         if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
             electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
         {
@@ -998,10 +1002,10 @@ WarpX::ReadParameters ()
 
         if (maxLevel() > 0) {
             Vector<Real> lo, hi;
-            bool fine_tag_lo_specified = utils::parser::queryArrWithParser(pp_warpx, "fine_tag_lo", lo);
-            bool fine_tag_hi_specified = utils::parser::queryArrWithParser(pp_warpx, "fine_tag_hi", hi);
+            const bool fine_tag_lo_specified = utils::parser::queryArrWithParser(pp_warpx, "fine_tag_lo", lo);
+            const bool fine_tag_hi_specified = utils::parser::queryArrWithParser(pp_warpx, "fine_tag_hi", hi);
             std::string ref_patch_function;
-            bool parser_specified = pp_warpx.query("ref_patch_function(x,y,z)",ref_patch_function);
+            const bool parser_specified = pp_warpx.query("ref_patch_function(x,y,z)",ref_patch_function);
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE( ((fine_tag_lo_specified && fine_tag_hi_specified) ||
                                                 parser_specified ),
                                                 "For max_level > 0, you need to either set\
@@ -1327,19 +1331,10 @@ WarpX::ReadParameters ()
         int particle_shape;
         if (!species_names.empty() || !lasers_names.empty()) {
             if (utils::parser::queryWithParser(pp_algo, "particle_shape", particle_shape)){
-
-                if(current_deposition_algo == CurrentDepositionAlgo::Villasenor) {
-                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                        (particle_shape >= 1) && (particle_shape <=4),
-                        "algo.particle_shape can be only 1, 2, 3, or 4 with villasenor deposition"
-                    );
-                }
-                else {
-                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                        (particle_shape >= 1) && (particle_shape <=3),
-                        "algo.particle_shape can be only 1, 2, or 3"
-                    );
-                }
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    (particle_shape >= 1) && (particle_shape <=4),
+                    "algo.particle_shape can be only 1, 2, 3, or 4"
+                );
 
                 nox = particle_shape;
                 noy = particle_shape;
@@ -1348,8 +1343,7 @@ WarpX::ReadParameters ()
             else{
                 WARPX_ABORT_WITH_MESSAGE(
                     "algo.particle_shape must be set in the input file:"
-                    " please set algo.particle_shape to 1, 2, or 3."
-                    " if using the villasenor deposition, can use 4 also.");
+                    " please set algo.particle_shape to 1, 2, 3, or 4");
             }
 
             if ((maxLevel() > 0) && (particle_shape > 1) && (do_pml_j_damping == 1))

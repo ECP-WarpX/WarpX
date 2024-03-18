@@ -333,7 +333,7 @@ ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
     for (int i_n = -1; i_n < 2; i_n++) {
         for (int j_n = -1; j_n < 2; j_n++) {
             //This if makes sure that we don't visit the "diagonal neighbours"
-            if (!(i_n == j_n || i_n == -j_n)) {
+            if ((i_n != j_n) && (i_n != -j_n)) {
                 // Here a face is available if it doesn't need to be extended itself and if its
                 // area exceeds Sz_ext. Here we need to take into account if the intruded face
                 // has given away already some area, so we use Sz_red rather than Sz.

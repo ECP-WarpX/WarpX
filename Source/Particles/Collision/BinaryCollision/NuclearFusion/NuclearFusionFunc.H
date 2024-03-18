@@ -78,62 +78,68 @@ public:
         utils::parser::queryWithParser(
             pp_collision_name, "fusion_probability_target_value",
             m_probability_target_value);
+
+        m_exe.m_fusion_multiplier = m_fusion_multiplier;
+        m_exe.m_probability_threshold = m_probability_threshold;
+        m_exe.m_probability_target_value = m_probability_target_value;
+        m_exe.m_fusion_type = m_fusion_type;
+        m_exe.m_isSameSpecies = m_isSameSpecies;
     }
 
-    /**
-     * \brief operator() of the NuclearFusionFunc class. Performs nuclear fusions at the cell level
-     * using the algorithm described in Higginson et al., Journal of Computational Physics 388,
-     * 439-453 (2019). Note that this function does not yet create the product particles, but
-     * instead fills an array p_mask that stores which collisions result in a fusion event.
-     *
-     * Also note that there are three main differences between this implementation and the
-     * algorithm described in Higginson's paper:
-     * - 1) The transformation from the lab frame to the center of mass frame is nonrelativistic
-     * in Higginson's paper. Here, we implement a relativistic generalization.
-     * - 2) The behaviour when the estimated fusion probability is greater than one is not
-     * specified in Higginson's paper. Here, we provide an implementation using two runtime
-     * dependent parameters (fusion probability threshold and fusion probability target value). See
-     * documentation for more details.
-     * - 3) Here, we divide the weight of a particle by the number of times it is paired with other
-     * particles. This was not explicitly specified in Higginson's paper.
-     *
-     * @param[in] I1s,I2s is the start index for I1,I2 (inclusive).
-     * @param[in] I1e,I2e is the stop index for I1,I2 (exclusive).
-     * @param[in] I1,I2 index arrays. They determine all elements that will be used.
-     * @param[in] soa_1,soa_2 contain the struct of array data of the two species
-     * @param[in] m1,m2 are masses.
-     * @param[in] dt is the time step length between two collision calls.
-     * @param[in] dV is the volume of the corresponding cell.
-     * @param[in] coll_idx is the collision index offset.
-     * @param[in] cell_start_pair is the start index of the pairs in that cell.
-     * @param[out] p_mask is a mask that will be set to true if a fusion event occurs for a given
-     * pair. It is only needed here to store information that will be used later on when actually
-     * creating the product particles.
-     * @param[out] p_pair_indices_1,p_pair_indices_2 arrays that store the indices of the
-     * particles of a given pair. They are only needed here to store information that will be used
-     * later on when actually creating the product particles.
-     * @param[out] p_pair_reaction_weight stores the weight of the product particles. It is only
-     * needed here to store information that will be used later on when actually creating the
-     * product particles.
-     * @param[in] engine the random engine.
-     */
-    AMREX_GPU_HOST_DEVICE AMREX_INLINE
-    void operator() (
-        index_type const I1s, index_type const I1e,
-        index_type const I2s, index_type const I2e,
-        index_type const* AMREX_RESTRICT I1,
-        index_type const* AMREX_RESTRICT I2,
-        SoaData_type soa_1, SoaData_type soa_2,
-        GetParticlePosition<PIdx> /*get_position_1*/, GetParticlePosition<PIdx> /*get_position_2*/,
-        amrex::ParticleReal const  /*q1*/, amrex::ParticleReal const  /*q2*/,
-        amrex::ParticleReal const  m1, amrex::ParticleReal const  m2,
-        amrex::Real const  dt, amrex::Real const dV, index_type coll_idx,
-        index_type const cell_start_pair, index_type* AMREX_RESTRICT p_mask,
-        index_type* AMREX_RESTRICT p_pair_indices_1, index_type* AMREX_RESTRICT p_pair_indices_2,
-        amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight,
-        amrex::RandomEngine const& engine) const
+    struct Executor {
+        /**
+         * \brief Executor of the NuclearFusionFunc class. Performs nuclear fusions at the cell level
+         * using the algorithm described in Higginson et al., Journal of Computational Physics 388,
+         * 439-453 (2019). Note that this function does not yet create the product particles, but
+         * instead fills an array p_mask that stores which collisions result in a fusion event.
+         *
+         * Also note that there are three main differences between this implementation and the
+         * algorithm described in Higginson's paper:
+         * - 1) The transformation from the lab frame to the center of mass frame is nonrelativistic
+         * in Higginson's paper. Here, we implement a relativistic generalization.
+         * - 2) The behaviour when the estimated fusion probability is greater than one is not
+         * specified in Higginson's paper. Here, we provide an implementation using two runtime
+         * dependent parameters (fusion probability threshold and fusion probability target value). See
+         * documentation for more details.
+         * - 3) Here, we divide the weight of a particle by the number of times it is paired with other
+         * particles. This was not explicitly specified in Higginson's paper.
+         *
+         * @param[in] I1s,I2s is the start index for I1,I2 (inclusive).
+         * @param[in] I1e,I2e is the stop index for I1,I2 (exclusive).
+         * @param[in] I1,I2 index arrays. They determine all elements that will be used.
+         * @param[in] soa_1,soa_2 contain the struct of array data of the two species
+         * @param[in] m1,m2 are masses.
+         * @param[in] dt is the time step length between two collision calls.
+         * @param[in] dV is the volume of the corresponding cell.
+         * @param[in] coll_idx is the collision index offset.
+         * @param[in] cell_start_pair is the start index of the pairs in that cell.
+         * @param[out] p_mask is a mask that will be set to true if a fusion event occurs for a given
+         * pair. It is only needed here to store information that will be used later on when actually
+         * creating the product particles.
+         * @param[out] p_pair_indices_1,p_pair_indices_2 arrays that store the indices of the
+         * particles of a given pair. They are only needed here to store information that will be used
+         * later on when actually creating the product particles.
+         * @param[out] p_pair_reaction_weight stores the weight of the product particles. It is only
+         * needed here to store information that will be used later on when actually creating the
+         * product particles.
+         * @param[in] engine the random engine.
+         */
+        AMREX_GPU_HOST_DEVICE AMREX_INLINE
+        void operator() (
+            index_type const I1s, index_type const I1e,
+            index_type const I2s, index_type const I2e,
+            index_type const* AMREX_RESTRICT I1,
+            index_type const* AMREX_RESTRICT I2,
+            const SoaData_type& soa_1, const SoaData_type& soa_2,
+            GetParticlePosition<PIdx> /*get_position_1*/, GetParticlePosition<PIdx> /*get_position_2*/,
+            amrex::ParticleReal const  /*q1*/, amrex::ParticleReal const  /*q2*/,
+            amrex::ParticleReal const  m1, amrex::ParticleReal const  m2,
+            amrex::Real const  dt, amrex::Real const dV, index_type coll_idx,
+            index_type const cell_start_pair, index_type* AMREX_RESTRICT p_mask,
+            index_type* AMREX_RESTRICT p_pair_indices_1, index_type* AMREX_RESTRICT p_pair_indices_2,
+            amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight,
+            amrex::RandomEngine const& engine) const
         {
-
             amrex::ParticleReal * const AMREX_RESTRICT w1 = soa_1.m_rdata[PIdx::w];
             amrex::ParticleReal * const AMREX_RESTRICT u1x = soa_1.m_rdata[PIdx::ux];
             amrex::ParticleReal * const AMREX_RESTRICT u1y = soa_1.m_rdata[PIdx::uy];
@@ -225,6 +231,15 @@ public:
             }
         }
 
+        amrex::ParticleReal m_fusion_multiplier;
+        amrex::ParticleReal m_probability_threshold;
+        amrex::ParticleReal m_probability_target_value;
+        NuclearFusionType m_fusion_type;
+        bool m_isSameSpecies;
+    };
+
+    [[nodiscard]] Executor const& executor () const { return m_exe; }
+
 private:
     // Factor used to increase the number of fusion reaction by decreasing the weight of the
     // produced particles
@@ -239,6 +254,8 @@ private:
     amrex::ParticleReal m_probability_target_value;
     NuclearFusionType m_fusion_type;
     bool m_isSameSpecies;
+
+    Executor m_exe;
 };
 
 #endif // NUCLEAR_FUSION_FUNC_H_
