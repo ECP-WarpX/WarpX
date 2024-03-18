@@ -64,6 +64,12 @@ ParticleBoundaries::CheckAll (ParticleBoundaryType bc) const
 }
 
 void
+ParticleBoundaries::SetThermalVelocity (amrex::Real u_th)
+{
+    data.u_th = u_th;
+}
+
+void
 ParticleBoundaries::BuildReflectionModelParsers ()
 {
     reflection_model_xlo_parser = std::make_unique<amrex::Parser>(

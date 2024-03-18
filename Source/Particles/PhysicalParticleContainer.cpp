@@ -444,6 +444,10 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp_boundary.query("reflect_all_velocities", flag);
     m_boundary_conditions.Set_reflect_all_velocities(flag);
 
+    amrex::Real boundary_uth=0;
+    utils::parser::queryWithParser(pp_species_name, "boundary_uth", boundary_uth);
+    amrex::Print() << "Thermal velocity " << boundary_uth << std::endl;
+    m_boundary_conditions.SetThermalVelocity(boundary_uth);
 }
 
 PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core)

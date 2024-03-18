@@ -22,6 +22,7 @@ struct ParticleBoundaries
 
     void Set_reflect_all_velocities (bool flag);
     void SetAll (ParticleBoundaryType bc);
+    void SetThermalVelocity (amrex::Real u_th);
 
     void SetBoundsX (ParticleBoundaryType bc_lo, ParticleBoundaryType bc_hi);
     void SetBoundsY (ParticleBoundaryType bc_lo, ParticleBoundaryType bc_hi);
@@ -54,6 +55,7 @@ struct ParticleBoundaries
         ParticleBoundaryType ymax_bc;
         ParticleBoundaryType zmin_bc;
         ParticleBoundaryType zmax_bc;
+        amrex::Real u_th; // For thermal boundary
 
         amrex::ParserExecutor<1> reflection_model_xlo;
         amrex::ParserExecutor<1> reflection_model_xhi;
