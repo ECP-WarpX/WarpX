@@ -479,6 +479,9 @@ using namespace amrex;
 
     /** Returns 1 if any domain boundary is set to PEC, else returns 0.*/
     bool isAnyBoundaryPEC();
+
+    /** Return true if any particle boundary is set to reflecting, else returns false*/
+    bool isAnyParticleBoundaryReflecting ();
     /**
      * \brief Sets the tangential electric field at the PEC boundary to zero.
      *        The guard cell values are set equal and opposite to the valid cell

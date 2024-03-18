@@ -24,6 +24,15 @@ PEC::isAnyBoundaryPEC() {
     return false;
 }
 
+bool
+PEC::isAnyParticleBoundaryReflecting () {
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        if (WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Reflecting) {return true;}
+        if (WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Reflecting) {return true;}
+    }
+    return false;
+}
+
 void
 PEC::ApplyPECtoEfield (std::array<amrex::MultiFab*, 3> Efield, const int lev,
                        PatchType patch_type, const bool split_pml_field)
@@ -248,8 +257,10 @@ PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev, PatchType patch_ty
     amrex::GpuArray<GpuArray<amrex::Real,2>, AMREX_SPACEDIM> psign;
     amrex::GpuArray<GpuArray<int,2>, AMREX_SPACEDIM> mirrorfac;
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
-        is_pec[idim][0] = WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC;
-        is_pec[idim][1] = WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC;
+        is_pec[idim][0] = (  WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC
+                          || WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Reflecting);
+        is_pec[idim][1] = (  WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC
+                          || WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Reflecting);
         if (!is_pec[idim][0]) { grown_domain_box.growLo(idim, ng_fieldgather[idim]); }
         if (!is_pec[idim][1]) { grown_domain_box.growHi(idim, ng_fieldgather[idim]); }
 
@@ -340,8 +351,10 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
     amrex::GpuArray<GpuArray<GpuArray<amrex::Real, 2>, AMREX_SPACEDIM>, 3> psign;
     amrex::GpuArray<GpuArray<GpuArray<int, 2>, AMREX_SPACEDIM>, 3> mirrorfac;
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
-        is_pec[idim][0] = WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC;
-        is_pec[idim][1] = WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC;
+        is_pec[idim][0] = (  WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC
+                          || WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Reflecting);
+        is_pec[idim][1] = (  WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC
+                          || WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Reflecting);
         if (!is_pec[idim][0]) { grown_domain_box.growLo(idim, ng_fieldgather[idim]); }
         if (!is_pec[idim][1]) { grown_domain_box.growHi(idim, ng_fieldgather[idim]); }
 
