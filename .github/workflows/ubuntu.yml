@@ -254,10 +254,12 @@ jobs:
           -GNinja                           \
           -DCMAKE_VERBOSE_MAKEFILE=ON       \
           -DWarpX_DIMS="RZ;1;2;3"           \
-          -DWarpX_EB=OFF                    \
+          -DWarpX_PSATD=ON                  \
+          -DWarpX_QED=ON                    \
+          -DWarpX_QED_TABLE_GEN=ON          \
+          -DWarpX_OPENPMD=ON                \
           -DWarpX_PRECISION=SINGLE          \
-          -DWarpX_PARTICLE_PRECISION=SINGLE \
-          -DWarpX_QED_TABLE_GEN=ON
+          -DWarpX_PARTICLE_PRECISION=SINGLE
         cmake --build build -j 4
 
         ccache -s
