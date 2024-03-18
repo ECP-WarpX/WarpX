@@ -355,12 +355,12 @@ using namespace amrex;
 
 
     /**
-     * \brief Sets the rho or J field value in cells close to and on a PEC boundary. The
+     * \brief Sets the rho or J field value in cells close to and on reflecting particle boundary. The
      *        charge/current density deposited in the guard cells are either reflected
      *        back into the simulation domain (if a reflecting particle
      *        boundary is used), or the opposite charge/current density is deposited
      *        back in the domain to capture the effect of an image charge.
-     *        The charge/current density on the PEC boundary is set to 0 while values
+     *        The charge/current density on the reflecting boundary is set to 0 while values
      *        in the guard cells are set equal (and opposite) to their mirror
      *        location inside the domain - representing image charges - in the
      *        normal (tangential) direction.
@@ -370,7 +370,7 @@ using namespace amrex;
      * \param[in out] field    field data to be updated
      * \param[in] mirrorfac    mirror cell is given by mirrorfac - ijk_vec
      * \param[in] psign        Whether the field value should be flipped across the boundary
-     * \param[in] is_pec       Whether the given boundary is PEC
+     * \param[in] is_reflective      Whether the given particle boundary is reflecting
      * \param[in] tangent_to_bndy    Whether a given direction is perpendicular to the boundary
      * \param[in] fabbox       multifab box including ghost cells
      */
@@ -380,7 +380,7 @@ using namespace amrex;
                                 amrex::Array4<amrex::Real> const& field,
                                 amrex::GpuArray<GpuArray<int, 2>, AMREX_SPACEDIM> const& mirrorfac,
                                 amrex::GpuArray<GpuArray<amrex::Real, 2>, AMREX_SPACEDIM> const& psign,
-                                amrex::GpuArray<GpuArray<bool, 2>, AMREX_SPACEDIM> const& is_pec,
+                                amrex::GpuArray<GpuArray<bool, 2>, AMREX_SPACEDIM> const& is_reflective,
                                 amrex::GpuArray<bool, AMREX_SPACEDIM> const& tangent_to_bndy,
                                 amrex::Box const& fabbox)
     {
@@ -391,7 +391,7 @@ using namespace amrex;
         {
             for (int iside = 0; iside < 2; ++iside)
             {
-                if (!is_pec[idim][iside]) { continue; }
+                if (!is_reflective[idim][iside]) { continue; }
 
                 // Get the mirror guard cell index
                 amrex::IntVect iv_mirror = ijk_vec;
@@ -412,7 +412,7 @@ using namespace amrex;
         {
             for (int iside = 0; iside < 2; ++iside)
             {
-                if (!is_pec[idim][iside]) { continue; }
+                if (!is_reflective[idim][iside]) { continue; }
 
                 amrex::IntVect iv_mirror = ijk_vec;
                 iv_mirror[idim] = mirrorfac[idim][iside] - ijk_vec[idim];
@@ -516,7 +516,7 @@ using namespace amrex;
      * \param[in]     lev        level of the Multifab
      * \param[in]     patch_type coarse or fine
      */
-    void ApplyPECtoRhofield(amrex::MultiFab* rho, int lev,
+    void ApplyReflectiveBoundarytoRhofield(amrex::MultiFab* rho, int lev,
                             PatchType patch_type);
 
     /**
@@ -527,7 +527,7 @@ using namespace amrex;
      * \param[in]     lev        level of the Multifab
      * \param[in]     patch_type coarse or fine
      */
-    void ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
+    void ApplyReflectiveBoundarytoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
                           amrex::MultiFab* Jz, int lev,
                           PatchType patch_type);
 

@@ -231,7 +231,7 @@ PEC::ApplyPECtoBfield (std::array<amrex::MultiFab*, 3> Bfield, const int lev,
  *        location inside the domain - representing image charges.
  **/
 void
-PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev, PatchType patch_type)
+PEC::ApplyReflectiveBoundarytoRhofield (amrex::MultiFab* rho, const int lev, PatchType patch_type)
 {
     auto& warpx = WarpX::GetInstance();
 
@@ -252,17 +252,15 @@ PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev, PatchType patch_ty
     // cells for boundaries that are NOT PEC
     amrex::Box grown_domain_box = domain_box;
 
-    amrex::GpuArray<GpuArray<bool,2>, AMREX_SPACEDIM> is_pec;
+    amrex::GpuArray<GpuArray<bool,2>, AMREX_SPACEDIM> is_reflective;
     amrex::GpuArray<bool, AMREX_SPACEDIM> is_tangent_to_bndy;
     amrex::GpuArray<GpuArray<amrex::Real,2>, AMREX_SPACEDIM> psign;
     amrex::GpuArray<GpuArray<int,2>, AMREX_SPACEDIM> mirrorfac;
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
-        is_pec[idim][0] = (  WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC
-                          || WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Reflecting);
-        is_pec[idim][1] = (  WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC
-                          || WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Reflecting);
-        if (!is_pec[idim][0]) { grown_domain_box.growLo(idim, ng_fieldgather[idim]); }
-        if (!is_pec[idim][1]) { grown_domain_box.growHi(idim, ng_fieldgather[idim]); }
+        is_reflective[idim][0] = ( WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Reflecting);
+        is_reflective[idim][1] = ( WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Reflecting);
+        if (!is_reflective[idim][0]) { grown_domain_box.growLo(idim, ng_fieldgather[idim]); }
+        if (!is_reflective[idim][1]) { grown_domain_box.growHi(idim, ng_fieldgather[idim]); }
 
         // rho values inside guard cells are updated the same as tangential
         // components of the current density
@@ -304,7 +302,7 @@ PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev, PatchType patch_ty
             const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 
             PEC::SetRhoOrJfieldFromPEC(
-                n, iv, rho_array, mirrorfac, psign, is_pec,
+                n, iv, rho_array, mirrorfac, psign, is_reflective,
                 is_tangent_to_bndy, fabbox
             );
         });
@@ -313,7 +311,7 @@ PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev, PatchType patch_ty
 
 
 void
-PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
+PEC::ApplyReflectiveBoundarytoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
                       amrex::MultiFab* Jz, const int lev,
                       PatchType patch_type)
 {
@@ -346,17 +344,15 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
     // directions of the current density multifab
     const amrex::IntVect ng_fieldgather = Jx->nGrowVect();
 
-    amrex::GpuArray<GpuArray<bool, 2>, AMREX_SPACEDIM> is_pec;
+    amrex::GpuArray<GpuArray<bool, 2>, AMREX_SPACEDIM> is_reflective;
     amrex::GpuArray<GpuArray<bool, AMREX_SPACEDIM>, 3> is_tangent_to_bndy;
     amrex::GpuArray<GpuArray<GpuArray<amrex::Real, 2>, AMREX_SPACEDIM>, 3> psign;
     amrex::GpuArray<GpuArray<GpuArray<int, 2>, AMREX_SPACEDIM>, 3> mirrorfac;
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
-        is_pec[idim][0] = (  WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC
-                          || WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Reflecting);
-        is_pec[idim][1] = (  WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC
-                          || WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Reflecting);
-        if (!is_pec[idim][0]) { grown_domain_box.growLo(idim, ng_fieldgather[idim]); }
-        if (!is_pec[idim][1]) { grown_domain_box.growHi(idim, ng_fieldgather[idim]); }
+        is_reflective[idim][0] = ( WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Reflecting);
+        is_reflective[idim][1] = ( WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Reflecting);
+        if (!is_reflective[idim][0]) { grown_domain_box.growLo(idim, ng_fieldgather[idim]); }
+        if (!is_reflective[idim][1]) { grown_domain_box.growHi(idim, ng_fieldgather[idim]); }
 
         for (int icomp=0; icomp < 3; ++icomp) {
             // Set the psign value correctly for each current component for each
@@ -428,7 +424,7 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
             const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 
             PEC::SetRhoOrJfieldFromPEC(
-                n, iv, Jx_array, mirrorfac[0], psign[0], is_pec,
+                n, iv, Jx_array, mirrorfac[0], psign[0], is_reflective,
                 is_tangent_to_bndy[0], fabbox
             );
         });
@@ -463,7 +459,7 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
             const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 
             PEC::SetRhoOrJfieldFromPEC(
-                n, iv, Jy_array, mirrorfac[1], psign[1], is_pec,
+                n, iv, Jy_array, mirrorfac[1], psign[1], is_reflective,
                 is_tangent_to_bndy[1], fabbox
             );
         });
@@ -498,7 +494,7 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
             const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 
             PEC::SetRhoOrJfieldFromPEC(
-                n, iv, Jz_array, mirrorfac[2], psign[2], is_pec,
+                n, iv, Jz_array, mirrorfac[2], psign[2], is_reflective,
                 is_tangent_to_bndy[2], fabbox
             );
         });
