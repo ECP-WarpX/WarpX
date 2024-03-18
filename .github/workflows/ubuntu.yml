@@ -246,6 +246,8 @@ jobs:
         export CCACHE_MAXSIZE=100M
         ccache -z
 
+        export CXX=$(which clang++-15)
+        export CC=$(which clang-15)
         export CXXFLAGS="-fsanitize=undefined"
 
         cmake -S . -B build                 \
