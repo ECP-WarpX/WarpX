@@ -103,30 +103,32 @@ FieldProbeParticleContainer::AddNParticles (int lev,
     // write Real attributes (SoA) to particle initialized zero
     DefineAndReturnParticleTile(0, 0, 0);
 
-    // for RZ write theta value
+    if (np > 0){
+        // for RZ write theta value
 #ifdef WARPX_DIM_RZ
-    pinned_tile.push_back_real(FieldProbePIdx::theta, np, 0.0);
+        pinned_tile.push_back_real(FieldProbePIdx::theta, np, 0.0);
 #endif
 #if !defined (WARPX_DIM_1D_Z)
-    pinned_tile.push_back_real(FieldProbePIdx::x, x);
+        pinned_tile.push_back_real(FieldProbePIdx::x, x);
 #endif
 #if defined (WARPX_DIM_3D)
-    pinned_tile.push_back_real(FieldProbePIdx::y, y);
+        pinned_tile.push_back_real(FieldProbePIdx::y, y);
 #endif
-    pinned_tile.push_back_real(FieldProbePIdx::z, z);
-    pinned_tile.push_back_real(FieldProbePIdx::Ex, np, 0.0);
-    pinned_tile.push_back_real(FieldProbePIdx::Ey, np, 0.0);
-    pinned_tile.push_back_real(FieldProbePIdx::Ez, np, 0.0);
-    pinned_tile.push_back_real(FieldProbePIdx::Bx, np, 0.0);
-    pinned_tile.push_back_real(FieldProbePIdx::By, np, 0.0);
-    pinned_tile.push_back_real(FieldProbePIdx::Bz, np, 0.0);
-    pinned_tile.push_back_real(FieldProbePIdx::S, np, 0.0);
+        pinned_tile.push_back_real(FieldProbePIdx::z, z);
+        pinned_tile.push_back_real(FieldProbePIdx::Ex, np, 0.0);
+        pinned_tile.push_back_real(FieldProbePIdx::Ey, np, 0.0);
+        pinned_tile.push_back_real(FieldProbePIdx::Ez, np, 0.0);
+        pinned_tile.push_back_real(FieldProbePIdx::Bx, np, 0.0);
+        pinned_tile.push_back_real(FieldProbePIdx::By, np, 0.0);
+        pinned_tile.push_back_real(FieldProbePIdx::Bz, np, 0.0);
+        pinned_tile.push_back_real(FieldProbePIdx::S, np, 0.0);
 
-    auto old_np = particle_tile.numParticles();
-    auto new_np = old_np + pinned_tile.numParticles();
-    particle_tile.resize(new_np);
-    amrex::copyParticles(
-        particle_tile, pinned_tile, 0, old_np, pinned_tile.numParticles());
+        const auto old_np = particle_tile.numParticles();
+        const auto new_np = old_np + pinned_tile.numParticles();
+        particle_tile.resize(new_np);
+        amrex::copyParticles(
+            particle_tile, pinned_tile, 0, old_np, pinned_tile.numParticles());
+    }
 
     /*
      * Redistributes particles to their appropriate tiles if the box
