@@ -17,9 +17,9 @@ import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
+import yt
 from openpmd_viewer import OpenPMDTimeSeries
 from scipy.optimize import curve_fit
-import yt
 
 yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')

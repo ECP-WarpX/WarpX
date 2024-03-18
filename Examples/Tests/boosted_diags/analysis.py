@@ -21,8 +21,8 @@ import sys
 
 import numpy as np
 import openpmd_api as io
-from openpmd_viewer import OpenPMDTimeSeries
 import yt
+from openpmd_viewer import OpenPMDTimeSeries
 
 yt.funcs.mylog.setLevel(0)
 
