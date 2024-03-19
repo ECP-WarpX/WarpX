@@ -415,13 +415,14 @@ void ReadBCParams ()
         ablastr::warn_manager::WMRecordWarning("Input", warnMsg);
     }
 
-    // particle boundary may not be explicitly specified for some applications
     const ParmParse pp_particles("particles");
     std::vector<std::string> species_names;
     pp_particles.queryarr("species_names",species_names);
     const ParmParse pp_boundary("boundary");
     pp_boundary.queryarr("field_lo", field_BC_lo, 0, AMREX_SPACEDIM);
     pp_boundary.queryarr("field_hi", field_BC_hi, 0, AMREX_SPACEDIM);
+
+    // If number of species is finite, then get particle boundary condition, which must be specified
     if (species_names.size() > 0) {
         pp_boundary.getarr("particle_lo", particle_BC_lo, 0, AMREX_SPACEDIM);
         pp_boundary.getarr("particle_hi", particle_BC_hi, 0, AMREX_SPACEDIM);
