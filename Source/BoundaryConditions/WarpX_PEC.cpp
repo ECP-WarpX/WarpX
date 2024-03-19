@@ -257,8 +257,10 @@ PEC::ApplyReflectiveBoundarytoRhofield (amrex::MultiFab* rho, const int lev, Pat
     amrex::GpuArray<GpuArray<amrex::Real,2>, AMREX_SPACEDIM> psign;
     amrex::GpuArray<GpuArray<int,2>, AMREX_SPACEDIM> mirrorfac;
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
-        is_reflective[idim][0] = ( WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Reflecting);
-        is_reflective[idim][1] = ( WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Reflecting);
+        is_reflective[idim][0] = ( WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Reflecting)
+                              || ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC);
+        is_reflective[idim][1] = ( WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Reflecting)
+                              || ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC)
         if (!is_reflective[idim][0]) { grown_domain_box.growLo(idim, ng_fieldgather[idim]); }
         if (!is_reflective[idim][1]) { grown_domain_box.growHi(idim, ng_fieldgather[idim]); }
 
@@ -349,8 +351,10 @@ PEC::ApplyReflectiveBoundarytoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
     amrex::GpuArray<GpuArray<GpuArray<amrex::Real, 2>, AMREX_SPACEDIM>, 3> psign;
     amrex::GpuArray<GpuArray<GpuArray<int, 2>, AMREX_SPACEDIM>, 3> mirrorfac;
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
-        is_reflective[idim][0] = ( WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Reflecting);
-        is_reflective[idim][1] = ( WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Reflecting);
+        is_reflective[idim][0] = ( WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Reflecting)
+                              || ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC);
+        is_reflective[idim][1] = ( WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Reflecting)
+                              || ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC)
         if (!is_reflective[idim][0]) { grown_domain_box.growLo(idim, ng_fieldgather[idim]); }
         if (!is_reflective[idim][1]) { grown_domain_box.growHi(idim, ng_fieldgather[idim]); }
 
