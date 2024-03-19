@@ -12,12 +12,6 @@ geometry.prob_hi     = 0.26  0.26
 
 boundary.field_lo = none periodic
 boundary.field_hi = pec periodic
-boundary.potential_lo_x = 0
-boundary.potential_hi_x = 0
-boundary.potential_lo_y = 0
-boundary.potential_hi_y = 0
-boundary.potential_lo_z = 0
-boundary.potential_hi_z = 0
 
 warpx.const_dt = 1e-10
 warpx.eb_implicit_function = "-(x**2 -0.2**2)"

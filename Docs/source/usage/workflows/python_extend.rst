@@ -90,6 +90,12 @@ This object is the Python equivalent to the C++ ``WarpX`` simulation class.
 
    .. py:method:: get_particle_boundary_buffer
 
+   .. py:method:: set_potential_on_domain_boundary(potential_[lo/hi]_[x/y/z]: str)
+
+      The potential on the domain boundaries can be modified when using the electrostatic solver.
+      This function updates the strings and function parsers which set the domain
+      boundary potentials during the Poisson solve.
+
    .. py:method:: set_potential_on_eb(potential: str)
 
       The embedded boundary (EB) conditions can be modified when using the electrostatic solver.

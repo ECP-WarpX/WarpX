@@ -8,14 +8,13 @@
 # --- https://aip.scitation.org/doi/10.1063/1.4943893.
 
 import argparse
-from pathlib import Path
 import shutil
 import sys
+from pathlib import Path
 
 import dill
-from mpi4py import MPI as mpi
 import numpy as np
-
+from mpi4py import MPI as mpi
 from pywarpx import callbacks, fields, libwarpx, picmi
 
 constants = picmi.constants
