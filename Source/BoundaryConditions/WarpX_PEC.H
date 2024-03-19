@@ -355,8 +355,9 @@ using namespace amrex;
 
 
     /**
-     * \brief Sets the rho or J field value in cells close to and on reflecting particle boundary. The
-     *        charge/current density deposited in the guard cells are either reflected
+     * \brief Sets the rho or J field value in cells close to and on reflecting particle boundary
+     *        or PEC field boundary. The charge/current density deposited
+     *        in the guard cells are either reflected
      *        back into the simulation domain (if a reflecting particle
      *        boundary is used), or the opposite charge/current density is deposited
      *        back in the domain to capture the effect of an image charge.
@@ -370,7 +371,7 @@ using namespace amrex;
      * \param[in out] field    field data to be updated
      * \param[in] mirrorfac    mirror cell is given by mirrorfac - ijk_vec
      * \param[in] psign        Whether the field value should be flipped across the boundary
-     * \param[in] is_reflective      Whether the given particle boundary is reflecting
+     * \param[in] is_reflective      Whether the given particle boundary is reflecting or field boundary is pec
      * \param[in] tangent_to_bndy    Whether a given direction is perpendicular to the boundary
      * \param[in] fabbox       multifab box including ghost cells
      */
