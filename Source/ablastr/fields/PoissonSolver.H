@@ -109,7 +109,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
             [[maybe_unused]] T_PostPhiCalculationFunctor post_phi_calculation = std::nullopt,
             [[maybe_unused]] std::optional<amrex::Real const> current_time = std::nullopt, // only used for EB
             [[maybe_unused]] std::optional<amrex::Vector<T_FArrayBoxFactory const *> > eb_farray_box_factory = std::nullopt, // only used for EB
-            bool const is_solver_multigrid = true
+            [[maybe_unused]] bool const is_solver_multigrid = true
 )
 {
     using namespace amrex::literals;
