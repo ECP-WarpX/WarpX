@@ -1,4 +1,4 @@
-/* Copyright 2019-2022 Axel Huebl, Remi Lehe
+/* Copyright 2019-2024 Arianna Formenti, Remi Lehe
  *
  * This file is part of WarpX.
  *
