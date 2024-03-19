@@ -260,7 +260,7 @@ PEC::ApplyReflectiveBoundarytoRhofield (amrex::MultiFab* rho, const int lev, Pat
         is_reflective[idim][0] = ( WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Reflecting)
                               || ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC);
         is_reflective[idim][1] = ( WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Reflecting)
-                              || ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC)
+                              || ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC);
         if (!is_reflective[idim][0]) { grown_domain_box.growLo(idim, ng_fieldgather[idim]); }
         if (!is_reflective[idim][1]) { grown_domain_box.growHi(idim, ng_fieldgather[idim]); }
 
