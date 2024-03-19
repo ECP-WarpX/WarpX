@@ -113,7 +113,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 {
     using namespace amrex::literals;
 
-    WARPX_PROFILE("computePhi");
+    ABLASTR_PROFILE("computePhi", false);
 
     if (!rel_ref_ratio.has_value()) {
         ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(rho.size() == 1u,
