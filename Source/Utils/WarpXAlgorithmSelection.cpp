@@ -249,9 +249,9 @@ GetParticleBCTypeInteger( std::string BCType ){
 
 std::string
 GetFieldBCTypeString( int fb_type ) {
-    std::string boundary_name = "";
+    std::string boundary_name;
     for (const auto &valid_pair : FieldBCType_algo_to_int) {
-        if ((valid_pair.second == fb_type)&(valid_pair.first != "default")){
+        if ((valid_pair.second == fb_type)&&(valid_pair.first != "default")){
             boundary_name = valid_pair.first;
             break;
         }

@@ -8,8 +8,8 @@
 
 import numpy as np
 
-from .LoadThirdParty import load_cupy
 from ._libwarpx import libwarpx
+from .LoadThirdParty import load_cupy
 
 
 class ParticleContainerWrapper(object):

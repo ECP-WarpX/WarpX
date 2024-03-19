@@ -12,10 +12,9 @@
 # --- of electrons - leads to a decrease of the potential on the surface over the time
 # --- until reaching an equilibrium floating potential of ~144.5 V (*).
 
-from mpi4py import MPI as mpi
 import numpy as np
 import scipy.constants as scc
-
+from mpi4py import MPI as mpi
 from pywarpx import picmi
 from pywarpx.callbacks import installafterEsolve, installafterInitEsolve
 from pywarpx.fields import ExWrapper, EzWrapper, PhiFPWrapper, RhoFPWrapper
