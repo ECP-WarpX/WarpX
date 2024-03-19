@@ -31,7 +31,7 @@ namespace ablastr::math::anyfft
                        Complex * const complex_array, const direction dir, const int dim)
     {
         FFTplan fft_plan;
-        ABLASTR_PROFILE("ablastr::math::anyfft::CreatePlan", true);
+        ABLASTR_PROFILE("ablastr::math::anyfft::CreatePlan", false);
 
         // Initialize fft_plan.m_plan with the vendor fft plan.
         cufftResult result;
