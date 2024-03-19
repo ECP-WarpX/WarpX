@@ -95,11 +95,11 @@ public:
 
     void InitMultiPhysicsModules ();
 
-    ///
-    /// This evolves all the particles by one PIC time step, including current deposition, the
-    /// field solve, and pushing the particles, for all the species in the MultiParticleContainer.
-    /// This is the electromagnetic version.
-    ///
+    /**
+    * \brief This evolves all the particles by one PIC time step, including current deposition, the
+    * field solve, and pushing the particles, for all the species in the MultiParticleContainer.
+    * This is the electromagnetic version.
+    */
     void Evolve (int lev,
                  const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
                  const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz,
@@ -111,19 +111,18 @@ public:
                  amrex::Real t, amrex::Real dt, DtType a_dt_type=DtType::Full, bool skip_deposition=false,
                  PushType push_type=PushType::Explicit);
 
-    ///
-    /// This pushes the particle positions by one half time step for all the species in the
-    /// MultiParticleContainer. It is used to desynchronize the particles after initialization
-    /// or when restarting from a checkpoint.
-    ///
+    /**
+    * \brief This pushes the particle positions by one time step for all the species in the
+    * MultiParticleContainer.
+    */
     void PushX (amrex::Real dt);
 
-    ///
-    /// This pushes the particle momenta by dt for all the species in the
-    /// MultiParticleContainer. It is used to desynchronize the particles after initialization
-    /// or when restarting from a checkpoint.  It is also used to synchronize particles at the
-    /// the end of the run.  This is the electromagnetic version.
-    ///
+    /**
+    * This pushes the particle momenta by dt for all the species in the
+    * MultiParticleContainer. It is used to desynchronize the particles after initialization
+    * or when restarting from a checkpoint.  It is also used to synchronize particles at the
+    * the end of the run.  This is the electromagnetic version.
+    */
     void PushP (int lev, amrex::Real dt,
                 const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
                 const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz);

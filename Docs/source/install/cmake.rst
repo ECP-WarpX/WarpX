@@ -223,11 +223,11 @@ For PICMI Python bindings, configure WarpX to produce a library and call our ``p
 .. code-block:: bash
 
    # find dependencies & configure for all WarpX dimensionalities
-   cmake -S . -B build -DWarpX_DIMS="1;2;RZ;3" -DWarpX_PYTHON=ON
+   cmake -S . -B build_py -DWarpX_DIMS="1;2;RZ;3" -DWarpX_PYTHON=ON
 
 
    # build and then call "python3 -m pip install ..."
-   cmake --build build --target pip_install -j 4
+   cmake --build build_py --target pip_install -j 4
 
 **That's it!**
 You can now :ref:`run a first 3D PICMI script <usage-picmi>` from our :ref:`examples <usage-examples>`.
@@ -324,10 +324,10 @@ This is the workflow most developers will prefer as it allows rapid re-compiles:
 .. code-block:: bash
 
    # build WarpX executables and libraries
-   cmake -S . -B build -DWarpX_DIMS="1;2;RZ;3" -DWarpX_PYTHON=ON
+   cmake -S . -B build_py -DWarpX_DIMS="1;2;RZ;3" -DWarpX_PYTHON=ON
 
    # build & install Python only
-   cmake --build build -j 4 --target pip_install
+   cmake --build build_py -j 4 --target pip_install
 
 There is also a ``--target pip_install_nodeps`` option that :ref:`skips pip-based dependency checks <developers-local-compile-pylto>`.
 

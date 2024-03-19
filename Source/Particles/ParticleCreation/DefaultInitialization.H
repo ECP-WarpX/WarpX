@@ -161,7 +161,7 @@ void DefaultInitializeRuntimeAttributes (PTile& ptile,
                 if constexpr (amrex::RunOnGpu<typename PTile::template AllocatorType<amrex::Real>>::value) {
                         amrex::ParallelForRNG(stop - start,
                                               [=] AMREX_GPU_DEVICE (int i, amrex::RandomEngine const& engine) noexcept {
-                                                  int ip = i + start;
+                                                  const int ip = i + start;
                                                   attr_ptr[ip] = quantum_sync_get_opt(engine);
                                               });
                 // Otherwise (e.g. particle tile allocated in pinned memory), run on CPU
@@ -183,7 +183,7 @@ void DefaultInitializeRuntimeAttributes (PTile& ptile,
                 if constexpr (amrex::RunOnGpu<typename PTile::template AllocatorType<amrex::Real>>::value) {
                         amrex::ParallelForRNG(stop - start,
                                               [=] AMREX_GPU_DEVICE (int i, amrex::RandomEngine const& engine) noexcept {
-                                                  int ip = i + start;
+                                                  const int ip = i + start;
                                                   attr_ptr[ip] = breit_wheeler_get_opt(engine);
                                               });
                 // Otherwise (e.g. particle tile allocated in pinned memory), run on CPU
@@ -207,7 +207,7 @@ void DefaultInitializeRuntimeAttributes (PTile& ptile,
                     if constexpr (amrex::RunOnGpu<typename PTile::template AllocatorType<amrex::Real>>::value) {
                         amrex::ParallelFor(stop - start,
                                            [=] AMREX_GPU_DEVICE (int i) noexcept {
-                                               int ip = i + start;
+                                               const int ip = i + start;
                                                amrex::ParticleReal xp, yp, zp;
                                                get_position(ip, xp, yp, zp);
                                                attr_ptr[ip] = user_real_attrib_parserexec(xp, yp, zp,
@@ -238,7 +238,7 @@ void DefaultInitializeRuntimeAttributes (PTile& ptile,
                 if constexpr (amrex::RunOnGpu<typename PTile::template AllocatorType<int>>::value) {
                         amrex::ParallelFor(stop - start,
                                            [=] AMREX_GPU_DEVICE (int i) noexcept {
-                                               int ip = i + start;
+                                               const int ip = i + start;
                                                attr_ptr[ip] = ionization_initial_level;
                                            });
                 } else {
@@ -259,7 +259,7 @@ void DefaultInitializeRuntimeAttributes (PTile& ptile,
                 if constexpr (amrex::RunOnGpu<typename PTile::template AllocatorType<int>>::value) {
                         amrex::ParallelFor(stop - start,
                                            [=] AMREX_GPU_DEVICE (int i) noexcept {
-                                               int ip = i + start;
+                                               const int ip = i + start;
                                                amrex::ParticleReal xp, yp, zp;
                                                get_position(ip, xp, yp, zp);
                                                attr_ptr[ip] = static_cast<int>(

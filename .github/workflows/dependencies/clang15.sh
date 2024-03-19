@@ -15,17 +15,17 @@ echo 'Acquire::Retries "3";' | sudo tee /etc/apt/apt.conf.d/80-retries
 sudo apt-get -qqq update
 sudo apt-get install -y \
     cmake               \
-    clang-14            \
-    clang-tidy-14       \
+    clang-15            \
+    clang-tidy-15       \
     libblas-dev         \
-    libc++-14-dev       \
+    libc++-15-dev       \
     libboost-math-dev   \
     libfftw3-dev        \
     libfftw3-mpi-dev    \
     libhdf5-openmpi-dev \
     liblapack-dev       \
     libopenmpi-dev      \
-    libomp-dev          \
+    libomp-15-dev          \
     ninja-build
 
 # ccache

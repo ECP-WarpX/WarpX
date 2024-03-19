@@ -20,11 +20,13 @@
 
 RhoFunctor::RhoFunctor (const int lev,
                         const amrex::IntVect crse_ratio,
+                        bool apply_rz_psatd_filter,
                         const int species_index,
                         bool convertRZmodes2cartesian,
                         const int ncomp)
     : ComputeDiagFunctor(ncomp, crse_ratio),
       m_lev(lev),
+      m_apply_rz_psatd_filter(apply_rz_psatd_filter),
       m_species_index(species_index),
       m_convertRZmodes2cartesian(convertRZmodes2cartesian)
 {}
@@ -62,7 +64,7 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
     // Apply k-space filtering when using the PSATD solver
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
     {
-        if (WarpX::use_kspace_filter) {
+        if (WarpX::use_kspace_filter && m_apply_rz_psatd_filter) {
             auto & solver = warpx.get_spectral_solver_fp(m_lev);
             const SpectralFieldIndex& Idx = solver.m_spectral_index;
             solver.ForwardTransform(m_lev, *rho, Idx.rho_new);
@@ -70,6 +72,8 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
             solver.BackwardTransform(m_lev, *rho, Idx.rho_new);
         }
     }
+#else
+    amrex::ignore_unused(m_apply_rz_psatd_filter);
 #endif
 
     InterpolateMFForDiag(mf_dst, *rho, dcomp, warpx.DistributionMap(m_lev),

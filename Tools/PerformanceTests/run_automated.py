@@ -13,14 +13,14 @@ import shutil
 import sys
 import time
 
+import git
+import pandas as pd
 from functions_perftest import (
     extract_dataframe,
     get_file_content,
     run_batch_nnode,
     store_git_hash,
 )
-import git
-import pandas as pd
 
 # Get name of supercomputer and import configuration functions from
 # machine-specific file

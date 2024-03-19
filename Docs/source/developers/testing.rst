@@ -34,6 +34,20 @@ For instance, compiling with ``clang++ -Werror`` would be:
    export CXXFLAGS="-Werror"
 
 
+Run Pre-Commit Tests Locally
+----------------------------
+
+When proposing code changes to Warpx, we perform a couple of automated stylistic and correctness checks on the code change.
+You can run those locally before you push to save some time, install them once like this:
+
+.. code-block:: sh
+
+   python -m pip install -U pre-commit
+   pre-commit install
+
+See `pre-commit.com <https://pre-commit.com>`__ and our ``.pre-commit-config.yaml`` file in the repository for more details.
+
+
 Run the test suite locally
 --------------------------
 
