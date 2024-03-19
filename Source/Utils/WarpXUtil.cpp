@@ -416,20 +416,20 @@ void ReadBCParams ()
     }
 
     // particle boundary may not be explicitly specified for some applications
-    bool particle_boundary_specified = false;
+    const ParmParse pp_particles("particles");
+    std::vector<std::string> species_names;
+    pp_particles.queryarr("species_names",species_names);
     const ParmParse pp_boundary("boundary");
     pp_boundary.queryarr("field_lo", field_BC_lo, 0, AMREX_SPACEDIM);
     pp_boundary.queryarr("field_hi", field_BC_hi, 0, AMREX_SPACEDIM);
-    if (pp_boundary.queryarr("particle_lo", particle_BC_lo, 0, AMREX_SPACEDIM)) {
-        particle_boundary_specified = true;
-    }
-    if (pp_boundary.queryarr("particle_hi", particle_BC_hi, 0, AMREX_SPACEDIM)) {
-        particle_boundary_specified = true;
+    if (species_names.size() > 0) {
+        pp_boundary.getarr("particle_lo", particle_BC_lo, 0, AMREX_SPACEDIM);
+        pp_boundary.getarr("particle_hi", particle_BC_hi, 0, AMREX_SPACEDIM);
+        AMREX_ALWAYS_ASSERT(particle_BC_lo.size() == AMREX_SPACEDIM);
+        AMREX_ALWAYS_ASSERT(particle_BC_hi.size() == AMREX_SPACEDIM);
     }
     AMREX_ALWAYS_ASSERT(field_BC_lo.size() == AMREX_SPACEDIM);
     AMREX_ALWAYS_ASSERT(field_BC_hi.size() == AMREX_SPACEDIM);
-    AMREX_ALWAYS_ASSERT(particle_BC_lo.size() == AMREX_SPACEDIM);
-    AMREX_ALWAYS_ASSERT(particle_BC_hi.size() == AMREX_SPACEDIM);
 
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         // Get field boundary type
@@ -449,15 +449,11 @@ void ReadBCParams ()
                 (WarpX::field_boundary_lo[idim]  == FieldBoundaryType::Periodic) &&
                 (WarpX::field_boundary_hi[idim]  == FieldBoundaryType::Periodic),
             "field boundary must be consistenly periodic in both lo and hi");
-            if (particle_boundary_specified) {
+            if (species_names.size() > 0) {
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                     (WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Periodic) &&
                     (WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Periodic),
                "field and particle boundary must be periodic in both lo and hi");
-            } else {
-                // set particle boundary to periodic
-                WarpX::particle_boundary_lo[idim] = ParticleBoundaryType::Periodic;
-                WarpX::particle_boundary_hi[idim] = ParticleBoundaryType::Periodic;
             }
         }
 
