@@ -14,8 +14,7 @@
 
 /** collect the particles that are absorbed at the embedded boundary, throughout the simulation
  */
-class
-BoundaryScrapingDiagnostics final : public Diagnostics
+class BoundaryScrapingDiagnostics final : public Diagnostics
 {
 public:
 
@@ -34,7 +33,7 @@ private:
     utils::parser::IntervalsParser m_intervals;
 
     /** \brief Flush data to file. */
-    void Flush (int i_buffer) override;
+    void Flush (int i_buffer, bool /* force_flush */) override;
     /** \brief Return whether to dump data to file at this time step.
      * (i.e. whether to call Flush)
      *
@@ -52,7 +51,7 @@ private:
      *
      * This is not used for BoundaryScrapingDiagnostics: no field to output
      */
-     void InitializeBufferData (int i_buffer, int lev, bool restart=false) override;
+    void InitializeBufferData (int i_buffer, int lev, bool restart=false) override;
     /** Initialize functors that point to the fields requested by the user.
      *
      * This is not used for BoundaryScrapingDiagnostics: no field to output

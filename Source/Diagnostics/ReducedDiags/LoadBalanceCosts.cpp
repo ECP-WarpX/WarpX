@@ -56,8 +56,7 @@ namespace
             auto const & plev  = pc.GetParticles(lev);
 
             auto const & ptile = plev.at(box_index);
-            auto const & aos   = ptile.GetArrayOfStructs();
-            auto const np = aos.numParticles();
+            auto const np = ptile.numParticles();
             num_macro_particles += np;
         }
 
@@ -87,7 +86,7 @@ void LoadBalanceCosts::ComputeDiags (int step)
     int nBoxes = 0;
     for (int lev = 0; lev < nLevels; ++lev)
     {
-        const auto cost = WarpX::getCosts(lev);
+        auto *const cost = WarpX::getCosts(lev);
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             cost, "ERROR: costs are not initialized on level " + std::to_string(lev) + " !");
         nBoxes += cost->size();
@@ -282,7 +281,7 @@ void LoadBalanceCosts::WriteToFile (int step) const
     // get a reference to WarpX instance
     auto& warpx = WarpX::GetInstance();
 
-    if (!ParallelDescriptor::IOProcessor()) return;
+    if (!ParallelDescriptor::IOProcessor()) { return; }
 
     // final step is a special case, fill jagged array with NaN
     if (m_intervals.nextContains(step+1) > warpx.maxStep())
@@ -347,7 +346,7 @@ void LoadBalanceCosts::WriteToFile (int step) const
             while (std::getline(ss, token, m_sep[0]))
             {
                 cnt += 1;
-                if (ss.peek() == m_sep[0]) ss.ignore();
+                if (ss.peek() == m_sep[0]) { ss.ignore(); }
             }
 
             // 2 columns for step, time; then nBoxes*nDatafields columns for data;

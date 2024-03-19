@@ -24,11 +24,10 @@ public:
         bool isBTD = false, int snapshotID = -1,
         int bufferID = 1, int numBuffers = 1,
         const amrex::Geometry& full_BTD_snapshot = amrex::Geometry(),
-        bool isLastBTDFlush = false,
-        const amrex::Vector<int>& totalParticlesFlushedAlready = amrex::Vector<int>() ) const = 0;
+        bool isLastBTDFlush = false) const = 0;
 
     FlushFormat () = default;
-    virtual ~FlushFormat() {}
+    virtual ~FlushFormat() = default;
 
     FlushFormat ( FlushFormat const &)             = default;
     FlushFormat& operator= ( FlushFormat const & ) = default;

@@ -12,6 +12,7 @@
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
 #   include "BoundaryConditions/PML_RZ.H"
 #endif
+#include "Initialization/ExternalField.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Fluids/MultiFluidContainer.H"
 #include "Fluids/WarpXFluidContainer.H"
@@ -81,7 +82,8 @@ WarpX::UpdateInjectionPosition (const amrex::Real a_dt)
             current_injection_position[dir] = pc.m_current_injection_position;
 #endif
 
-            PlasmaInjector* plasma_injector = pc.GetPlasmaInjector();
+            // This only uses the base plasma injector
+            PlasmaInjector* plasma_injector = pc.GetPlasmaInjector(0);
 
             amrex::Real v_shift = 0._rt;
             if (plasma_injector != nullptr)
@@ -142,7 +144,7 @@ WarpX::MoveWindow (const int step, bool move_j)
     if (step == end_moving_window_step) {
         amrex::Print() << Utils::TextMsg::Info("Stopping moving window");
     }
-    if (!moving_window_active(step)) return 0;
+    if (!moving_window_active(step)) { return 0; }
 
     // Update the continuous position of the moving window,
     // and of the plasma injection
@@ -163,7 +165,7 @@ WarpX::MoveWindow (const int step, bool move_j)
     const amrex::Real* cdx = geom[0].CellSize();
     const int num_shift_base = static_cast<int>((moving_window_x - current_lo[dir]) / cdx[dir]);
 
-    if (num_shift_base == 0) return 0;
+    if (num_shift_base == 0) { return 0; }
 
     // update the problem domain. Note the we only do this on the base level because
     // amrex::Geometry objects share the same, static RealBox.
@@ -180,20 +182,20 @@ WarpX::MoveWindow (const int step, bool move_j)
     // slice box is modified only if slice diagnostics is initialized in input //
     if ( slice_plot_int > 0 )
     {
-       amrex::Real new_slice_lo[AMREX_SPACEDIM];
-       amrex::Real new_slice_hi[AMREX_SPACEDIM];
-       const amrex::Real* current_slice_lo = slice_realbox.lo();
-       const amrex::Real* current_slice_hi = slice_realbox.hi();
-       for ( int i = 0; i < AMREX_SPACEDIM; i++) {
-           new_slice_lo[i] = current_slice_lo[i];
-           new_slice_hi[i] = current_slice_hi[i];
-       }
-       const int num_shift_base_slice = static_cast<int> ((moving_window_x -
-                                  current_slice_lo[dir]) / cdx[dir]);
-       new_slice_lo[dir] = current_slice_lo[dir] + num_shift_base_slice*cdx[dir];
-       new_slice_hi[dir] = current_slice_hi[dir] + num_shift_base_slice*cdx[dir];
-       slice_realbox.setLo(new_slice_lo);
-       slice_realbox.setHi(new_slice_hi);
+        amrex::Real new_slice_lo[AMREX_SPACEDIM];
+        amrex::Real new_slice_hi[AMREX_SPACEDIM];
+        const amrex::Real* current_slice_lo = slice_realbox.lo();
+        const amrex::Real* current_slice_hi = slice_realbox.hi();
+        for ( int i = 0; i < AMREX_SPACEDIM; i++) {
+            new_slice_lo[i] = current_slice_lo[i];
+            new_slice_hi[i] = current_slice_hi[i];
+        }
+        const int num_shift_base_slice = static_cast<int> ((moving_window_x -
+                                   current_slice_lo[dir]) / cdx[dir]);
+        new_slice_lo[dir] = current_slice_lo[dir] + num_shift_base_slice*cdx[dir];
+        new_slice_hi[dir] = current_slice_hi[dir] + num_shift_base_slice*cdx[dir];
+        slice_realbox.setLo(new_slice_lo);
+        slice_realbox.setHi(new_slice_hi);
     }
 
     int num_shift      = num_shift_base;
@@ -217,27 +219,29 @@ WarpX::MoveWindow (const int step, bool move_j)
             amrex::ParserExecutor<3> Efield_parser;
             bool use_Bparser = false;
             bool use_Eparser = false;
-            if (B_ext_grid_s == "parse_b_ext_grid_function") {
+            if (m_p_ext_field_params->B_ext_grid_type ==
+                    ExternalFieldType::parse_ext_grid_function) {
                 use_Bparser = true;
-                if (dim == 0) Bfield_parser = Bxfield_parser->compile<3>();
-                if (dim == 1) Bfield_parser = Byfield_parser->compile<3>();
-                if (dim == 2) Bfield_parser = Bzfield_parser->compile<3>();
+                if (dim == 0) { Bfield_parser = m_p_ext_field_params->Bxfield_parser->compile<3>(); }
+                if (dim == 1) { Bfield_parser = m_p_ext_field_params->Byfield_parser->compile<3>(); }
+                if (dim == 2) { Bfield_parser = m_p_ext_field_params->Bzfield_parser->compile<3>(); }
             }
-            if (E_ext_grid_s == "parse_e_ext_grid_function") {
+            if (m_p_ext_field_params->E_ext_grid_type ==
+                    ExternalFieldType::parse_ext_grid_function) {
                 use_Eparser = true;
-                if (dim == 0) Efield_parser = Exfield_parser->compile<3>();
-                if (dim == 1) Efield_parser = Eyfield_parser->compile<3>();
-                if (dim == 2) Efield_parser = Ezfield_parser->compile<3>();
+                if (dim == 0) { Efield_parser = m_p_ext_field_params->Exfield_parser->compile<3>(); }
+                if (dim == 1) { Efield_parser = m_p_ext_field_params->Eyfield_parser->compile<3>(); }
+                if (dim == 2) { Efield_parser = m_p_ext_field_params->Ezfield_parser->compile<3>(); }
             }
             shiftMF(*Bfield_fp[lev][dim], geom[lev], num_shift, dir, lev, do_update_cost,
-                B_external_grid[dim], use_Bparser, Bfield_parser);
+                m_p_ext_field_params->B_external_grid[dim], use_Bparser, Bfield_parser);
             shiftMF(*Efield_fp[lev][dim], geom[lev], num_shift, dir, lev, do_update_cost,
-                E_external_grid[dim], use_Eparser, Efield_parser);
+                m_p_ext_field_params->E_external_grid[dim], use_Eparser, Efield_parser);
             if (fft_do_time_averaging) {
                 shiftMF(*Bfield_avg_fp[lev][dim], geom[lev], num_shift, dir, lev, do_update_cost,
-                    B_external_grid[dim], use_Bparser, Bfield_parser);
+                    m_p_ext_field_params->B_external_grid[dim], use_Bparser, Bfield_parser);
                 shiftMF(*Efield_avg_fp[lev][dim], geom[lev], num_shift, dir, lev, do_update_cost,
-                    E_external_grid[dim], use_Eparser, Efield_parser);
+                   m_p_ext_field_params-> E_external_grid[dim], use_Eparser, Efield_parser);
             }
             if (move_j) {
                 shiftMF(*current_fp[lev][dim], geom[lev], num_shift, dir, lev, do_update_cost);
@@ -259,16 +263,16 @@ WarpX::MoveWindow (const int step, bool move_j)
             if (lev > 0) {
                 // coarse grid
                 shiftMF(*Bfield_cp[lev][dim], geom[lev-1], num_shift_crse, dir, lev, do_update_cost,
-                    B_external_grid[dim], use_Bparser, Bfield_parser);
+                    m_p_ext_field_params->B_external_grid[dim], use_Bparser, Bfield_parser);
                 shiftMF(*Efield_cp[lev][dim], geom[lev-1], num_shift_crse, dir, lev, do_update_cost,
-                    E_external_grid[dim], use_Eparser, Efield_parser);
+                    m_p_ext_field_params->E_external_grid[dim], use_Eparser, Efield_parser);
                 shiftMF(*Bfield_aux[lev][dim], geom[lev], num_shift, dir, lev, do_update_cost);
                 shiftMF(*Efield_aux[lev][dim], geom[lev], num_shift, dir, lev, do_update_cost);
                 if (fft_do_time_averaging) {
                     shiftMF(*Bfield_avg_cp[lev][dim], geom[lev-1], num_shift_crse, dir, lev, do_update_cost,
-                        B_external_grid[dim], use_Bparser, Bfield_parser);
+                        m_p_ext_field_params->B_external_grid[dim], use_Bparser, Bfield_parser);
                     shiftMF(*Efield_avg_cp[lev][dim], geom[lev-1], num_shift_crse, dir, lev, do_update_cost,
-                        E_external_grid[dim], use_Eparser, Efield_parser);
+                        m_p_ext_field_params->E_external_grid[dim], use_Eparser, Efield_parser);
                 }
                 if (move_j) {
                     shiftMF(*current_cp[lev][dim], geom[lev-1], num_shift_crse, dir, lev, do_update_cost);
@@ -600,7 +604,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
         // guard region both radially and longitudinally. These are the PML cells in the overlapping
         // longitudinal region. FillBoundary normally does not update these cells.
         // This update is needed so that the cells at the end of the FABs are updated appropriately
-        // with the data shifted from the nieghboring FAB. Without this update, the RZ PML becomes
+        // with the data shifted from the neighboring FAB. Without this update, the RZ PML becomes
         // unstable with the moving grid.
         // This code creates a temporary MultiFab using a BoxList where the radial size of all of
         // its boxes is increased so that the radial guard cells are included in the boxes valid domain.

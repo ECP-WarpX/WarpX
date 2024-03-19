@@ -35,6 +35,9 @@ public:
     /// File type
     std::string m_openpmd_backend {"default"};
 
+    /// minimum number of digits for file suffix (file-based only supported now for now) */
+    int m_file_min_digits = 6;
+
     /// number of bins on the abscissa and ordinate
     int m_bin_num_abs;
     int m_bin_num_ord;

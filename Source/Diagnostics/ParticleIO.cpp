@@ -160,7 +160,7 @@ MultiParticleContainer::Restart (const std::string& dir)
             );
         }
 
-        for (int j = PIdx::nattribs; j < nr; ++j) {
+        for (int j = PIdx::nattribs-AMREX_SPACEDIM; j < nr; ++j) {
             const auto& comp_name = real_comp_names[j];
             auto current_comp_names = pc->getParticleComps();
             auto search = current_comp_names.find(comp_name);

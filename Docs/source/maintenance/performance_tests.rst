@@ -75,6 +75,7 @@ Then, in ``$AUTOMATED_PERF_TESTS``, create a file ``run_automated_performance_te
    # lines below this comment once, before submission.
    # The commented lines take too long for the job script.
    #python3 -m pip install --upgrade pip
+   #python3 -m pip install --upgrade build packaging setuptools wheel
    #python3 -m pip install --upgrade cython
    #python3 -m pip install --upgrade numpy
    #python3 -m pip install --upgrade markupsafe

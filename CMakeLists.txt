@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.20.0)
-project(WarpX VERSION 23.10)
+project(WarpX VERSION 24.02)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -43,7 +43,15 @@ set_cxx17_superbuild()
 # this is an optional tool that stores compiled object files; allows fast
 # re-builds even with "make clean" in between. Mainly used to store AMReX
 # objects
-set_ccache()
+if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+    set(WarpX_CCACHE_DEFAULT ON)
+else()
+    set(WarpX_CCACHE_DEFAULT OFF)  # we are a subproject in a superbuild
+endif()
+option(WarpX_CCACHE "Enable ccache for faster rebuilds" ${WarpX_CCACHE_DEFAULT})
+if(WarpX_CCACHE)
+    set_ccache()
+endif()
 
 
 # Output Directories ##########################################################
@@ -138,7 +146,7 @@ option(WarpX_PYTHON_IPO
 )
 
 set(pyWarpX_VERSION_INFO "" CACHE STRING
-    "PEP-440 conformant version (set by distutils)")
+    "PEP-440 conformant version (set by setup.py)")
 
 # enforce consistency of dependent options
 if(WarpX_APP OR WarpX_PYTHON)
@@ -151,6 +159,11 @@ endif()
 option(ABLASTR_POSITION_INDEPENDENT_CODE
        "Build ABLASTR with position independent code" ON)
 mark_as_advanced(ABLASTR_POSITION_INDEPENDENT_CODE)
+
+option(ABLASTR_FFT "compile AnyFFT wrappers" ${WarpX_PSATD})
+if(WarpX_PSATD)
+    set(ABLASTR_FFT ON CACHE STRING "compile AnyFFT wrappers" FORCE)
+endif()
 
 # this defined the variable BUILD_TESTING which is ON by default
 #include(CTest)
@@ -418,7 +431,7 @@ foreach(D IN LISTS WarpX_DIMS)
         target_link_libraries(ablastr_${SD} PUBLIC WarpX::thirdparty::amrex_${D}d)
     endif()
 
-    if(WarpX_PSATD)
+    if(ABLASTR_FFT)
         target_link_libraries(ablastr_${SD} PUBLIC WarpX::thirdparty::FFT)
         if(D STREQUAL "RZ")
             target_link_libraries(ablastr_${SD} PUBLIC blaspp)
@@ -514,6 +527,10 @@ foreach(D IN LISTS WarpX_DIMS)
 
     if(WarpX_PSATD)
         target_compile_definitions(ablastr_${SD} PUBLIC WARPX_USE_PSATD)
+    endif()
+    if(ABLASTR_FFT)
+        # We need to enable FFT support in ABLASTR for PSATD solver
+        target_compile_definitions(ablastr_${SD} PUBLIC ABLASTR_USE_FFT)
     endif()
 
     if(WarpX_PYTHON AND pyWarpX_VERSION_INFO)

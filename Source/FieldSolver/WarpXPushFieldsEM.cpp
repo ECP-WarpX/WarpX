@@ -183,11 +183,11 @@ WarpX::PSATDForwardTransformF ()
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (F_fp[lev]) spectral_solver_fp[lev]->ForwardTransform(lev, *F_fp[lev], Idx.F);
+        if (F_fp[lev]) { spectral_solver_fp[lev]->ForwardTransform(lev, *F_fp[lev], Idx.F); }
 
         if (spectral_solver_cp[lev])
         {
-            if (F_cp[lev]) spectral_solver_cp[lev]->ForwardTransform(lev, *F_cp[lev], Idx.F);
+            if (F_cp[lev]) { spectral_solver_cp[lev]->ForwardTransform(lev, *F_cp[lev], Idx.F); }
         }
     }
 }
@@ -200,17 +200,17 @@ WarpX::PSATDBackwardTransformF ()
     for (int lev = 0; lev <= finest_level; ++lev)
     {
 #ifdef WARPX_DIM_RZ
-        if (F_fp[lev]) spectral_solver_fp[lev]->BackwardTransform(lev, *F_fp[lev], Idx.F);
+        if (F_fp[lev]) { spectral_solver_fp[lev]->BackwardTransform(lev, *F_fp[lev], Idx.F); }
 #else
-        if (F_fp[lev]) spectral_solver_fp[lev]->BackwardTransform(lev, *F_fp[lev], Idx.F, m_fill_guards_fields);
+        if (F_fp[lev]) { spectral_solver_fp[lev]->BackwardTransform(lev, *F_fp[lev], Idx.F, m_fill_guards_fields); }
 #endif
 
         if (spectral_solver_cp[lev])
         {
 #ifdef WARPX_DIM_RZ
-            if (F_cp[lev]) spectral_solver_cp[lev]->BackwardTransform(lev, *F_cp[lev], Idx.F);
+            if (F_cp[lev]) { spectral_solver_cp[lev]->BackwardTransform(lev, *F_cp[lev], Idx.F); }
 #else
-            if (F_cp[lev]) spectral_solver_cp[lev]->BackwardTransform(lev, *F_cp[lev], Idx.F, m_fill_guards_fields);
+            if (F_cp[lev]) { spectral_solver_cp[lev]->BackwardTransform(lev, *F_cp[lev], Idx.F, m_fill_guards_fields); }
 #endif
         }
     }
@@ -229,11 +229,11 @@ WarpX::PSATDForwardTransformG ()
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (G_fp[lev]) spectral_solver_fp[lev]->ForwardTransform(lev, *G_fp[lev], Idx.G);
+        if (G_fp[lev]) { spectral_solver_fp[lev]->ForwardTransform(lev, *G_fp[lev], Idx.G); }
 
         if (spectral_solver_cp[lev])
         {
-            if (G_cp[lev]) spectral_solver_cp[lev]->ForwardTransform(lev, *G_cp[lev], Idx.G);
+            if (G_cp[lev]) { spectral_solver_cp[lev]->ForwardTransform(lev, *G_cp[lev], Idx.G); }
         }
     }
 }
@@ -246,17 +246,17 @@ WarpX::PSATDBackwardTransformG ()
     for (int lev = 0; lev <= finest_level; ++lev)
     {
 #ifdef WARPX_DIM_RZ
-        if (G_fp[lev]) spectral_solver_fp[lev]->BackwardTransform(lev, *G_fp[lev], Idx.G);
+        if (G_fp[lev]) { spectral_solver_fp[lev]->BackwardTransform(lev, *G_fp[lev], Idx.G); }
 #else
-        if (G_fp[lev]) spectral_solver_fp[lev]->BackwardTransform(lev, *G_fp[lev], Idx.G, m_fill_guards_fields);
+        if (G_fp[lev]) { spectral_solver_fp[lev]->BackwardTransform(lev, *G_fp[lev], Idx.G, m_fill_guards_fields); }
 #endif
 
         if (spectral_solver_cp[lev])
         {
 #ifdef WARPX_DIM_RZ
-            if (G_cp[lev]) spectral_solver_cp[lev]->BackwardTransform(lev, *G_cp[lev], Idx.G);
+            if (G_cp[lev]) { spectral_solver_cp[lev]->BackwardTransform(lev, *G_cp[lev], Idx.G); }
 #else
-            if (G_cp[lev]) spectral_solver_cp[lev]->BackwardTransform(lev, *G_cp[lev], Idx.G, m_fill_guards_fields);
+            if (G_cp[lev]) { spectral_solver_cp[lev]->BackwardTransform(lev, *G_cp[lev], Idx.G, m_fill_guards_fields); }
 #endif
         }
     }
@@ -370,15 +370,15 @@ void WarpX::PSATDForwardTransformRho (
     const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
     const int icomp, const int dcomp, const bool apply_kspace_filter)
 {
-    if (charge_fp[0] == nullptr) return;
+    if (charge_fp[0] == nullptr) { return; }
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (charge_fp[lev]) spectral_solver_fp[lev]->ForwardTransform(lev, *charge_fp[lev], dcomp, icomp);
+        if (charge_fp[lev]) { spectral_solver_fp[lev]->ForwardTransform(lev, *charge_fp[lev], dcomp, icomp); }
 
         if (spectral_solver_cp[lev])
         {
-            if (charge_cp[lev]) spectral_solver_cp[lev]->ForwardTransform(lev, *charge_cp[lev], dcomp, icomp);
+            if (charge_cp[lev]) { spectral_solver_cp[lev]->ForwardTransform(lev, *charge_cp[lev], dcomp, icomp); }
         }
     }
 
@@ -759,22 +759,23 @@ WarpX::PushPSATD ()
     PSATDForwardTransformEB(Efield_fp, Bfield_fp, Efield_cp, Bfield_cp);
 
 #ifdef WARPX_DIM_RZ
-    if (pml_rz[0]) pml_rz[0]->PushPSATD(0);
+    if (pml_rz[0]) { pml_rz[0]->PushPSATD(0); }
 #endif
 
     // FFT of F and G
-    if (WarpX::do_dive_cleaning) PSATDForwardTransformF();
-    if (WarpX::do_divb_cleaning) PSATDForwardTransformG();
+    if (WarpX::do_dive_cleaning) { PSATDForwardTransformF(); }
+    if (WarpX::do_divb_cleaning) { PSATDForwardTransformG(); }
 
     // Update E, B, F, and G in k-space
     PSATDPushSpectralFields();
 
     // Inverse FFT of E, B, F, and G
     PSATDBackwardTransformEB(Efield_fp, Bfield_fp, Efield_cp, Bfield_cp);
-    if (WarpX::fft_do_time_averaging)
+    if (WarpX::fft_do_time_averaging) {
         PSATDBackwardTransformEBavg(Efield_avg_fp, Bfield_avg_fp, Efield_avg_cp, Bfield_avg_cp);
-    if (WarpX::do_dive_cleaning) PSATDBackwardTransformF();
-    if (WarpX::do_divb_cleaning) PSATDBackwardTransformG();
+    }
+    if (WarpX::do_dive_cleaning) { PSATDBackwardTransformF(); }
+    if (WarpX::do_divb_cleaning) { PSATDBackwardTransformG(); }
 
     // Evolve the fields in the PML boxes
     for (int lev = 0; lev <= finest_level; ++lev)
@@ -784,9 +785,9 @@ WarpX::PushPSATD ()
             pml[lev]->PushPSATD(lev);
         }
         ApplyEfieldBoundary(lev, PatchType::fine);
-        if (lev > 0) ApplyEfieldBoundary(lev, PatchType::coarse);
+        if (lev > 0) { ApplyEfieldBoundary(lev, PatchType::coarse); }
         ApplyBfieldBoundary(lev, PatchType::fine, DtType::FirstHalf);
-        if (lev > 0) ApplyBfieldBoundary(lev, PatchType::coarse, DtType::FirstHalf);
+        if (lev > 0) { ApplyBfieldBoundary(lev, PatchType::coarse, DtType::FirstHalf); }
     }
 #endif
 }
@@ -916,7 +917,7 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
 void
 WarpX::EvolveF (amrex::Real a_dt, DtType a_dt_type)
 {
-    if (!do_dive_cleaning) return;
+    if (!do_dive_cleaning) { return; }
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -927,16 +928,16 @@ WarpX::EvolveF (amrex::Real a_dt, DtType a_dt_type)
 void
 WarpX::EvolveF (int lev, amrex::Real a_dt, DtType a_dt_type)
 {
-    if (!do_dive_cleaning) return;
+    if (!do_dive_cleaning) { return; }
 
     EvolveF(lev, PatchType::fine, a_dt, a_dt_type);
-    if (lev > 0) EvolveF(lev, PatchType::coarse, a_dt, a_dt_type);
+    if (lev > 0) { EvolveF(lev, PatchType::coarse, a_dt, a_dt_type); }
 }
 
 void
 WarpX::EvolveF (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_type)
 {
-    if (!do_dive_cleaning) return;
+    if (!do_dive_cleaning) { return; }
 
     WARPX_PROFILE("WarpX::EvolveF()");
 
@@ -966,7 +967,7 @@ WarpX::EvolveF (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
 void
 WarpX::EvolveG (amrex::Real a_dt, DtType a_dt_type)
 {
-    if (!do_divb_cleaning) return;
+    if (!do_divb_cleaning) { return; }
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -977,7 +978,7 @@ WarpX::EvolveG (amrex::Real a_dt, DtType a_dt_type)
 void
 WarpX::EvolveG (int lev, amrex::Real a_dt, DtType a_dt_type)
 {
-    if (!do_divb_cleaning) return;
+    if (!do_divb_cleaning) { return; }
 
     EvolveG(lev, PatchType::fine, a_dt, a_dt_type);
 
@@ -990,7 +991,7 @@ WarpX::EvolveG (int lev, amrex::Real a_dt, DtType a_dt_type)
 void
 WarpX::EvolveG (int lev, PatchType patch_type, amrex::Real a_dt, DtType /*a_dt_type*/)
 {
-    if (!do_divb_cleaning) return;
+    if (!do_divb_cleaning) { return; }
 
     WARPX_PROFILE("WarpX::EvolveG()");
 
@@ -1076,8 +1077,8 @@ WarpX::DampFieldsInGuards(const int lev,
         {
 
             // Only apply to damped boundaries
-            if (iside == 0 && WarpX::field_boundary_lo[dampdir] != FieldBoundaryType::Damped) continue;
-            if (iside == 1 && WarpX::field_boundary_hi[dampdir] != FieldBoundaryType::Damped) continue;
+            if (iside == 0 && WarpX::field_boundary_lo[dampdir] != FieldBoundaryType::Damped) { continue; }
+            if (iside == 1 && WarpX::field_boundary_hi[dampdir] != FieldBoundaryType::Damped) { continue; }
 
             for ( amrex::MFIter mfi(*Efield[0], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi )
             {
@@ -1170,8 +1171,8 @@ void WarpX::DampFieldsInGuards(const int lev, std::unique_ptr<amrex::MultiFab>& 
         for (int iside = 0; iside < 2; iside++)
         {
             // Only apply to damped boundaries
-            if (iside == 0 && WarpX::field_boundary_lo[dampdir] != FieldBoundaryType::Damped) continue;
-            if (iside == 1 && WarpX::field_boundary_hi[dampdir] != FieldBoundaryType::Damped) continue;
+            if (iside == 0 && WarpX::field_boundary_lo[dampdir] != FieldBoundaryType::Damped) { continue; }
+            if (iside == 1 && WarpX::field_boundary_hi[dampdir] != FieldBoundaryType::Damped) { continue; }
 
             for (amrex::MFIter mfi(*mf, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
             {
@@ -1207,7 +1208,7 @@ void WarpX::DampFieldsInGuards(const int lev, std::unique_ptr<amrex::MultiFab>& 
 }
 
 #ifdef WARPX_DIM_RZ
-// This scales the current by the inverse volume and wraps around the depostion at negative radius.
+// This scales the current by the inverse volume and wraps around the deposition at negative radius.
 // It is faster to apply this on the grid than to do it particle by particle.
 // It is put here since there isn't another nice place for it.
 void

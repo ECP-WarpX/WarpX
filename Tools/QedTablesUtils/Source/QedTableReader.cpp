@@ -5,6 +5,7 @@
 #include <picsar_qed/physics/quantum_sync/quantum_sync_engine_tables.hpp>
 #include <picsar_qed/utils/serialization.hpp>
 
+#include <cstdint>
 #include <fstream>
 #include <iomanip>
 #include <iostream>

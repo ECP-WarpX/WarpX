@@ -130,8 +130,8 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
             const Complex rho_new = fields(i,j,k,Idx.rho_new);
 
             Complex F_old, G_old;
-            if (dive_cleaning) F_old = fields(i,j,k,Idx.F);
-            if (divb_cleaning) G_old = fields(i,j,k,Idx.G);
+            if (dive_cleaning) { F_old = fields(i,j,k,Idx.F); }
+            if (divb_cleaning) { G_old = fields(i,j,k,Idx.G); }
 
             // k vector values
             const amrex::Real kx = modified_kx_arr[i];

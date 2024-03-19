@@ -134,6 +134,13 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
 
     const auto getExternalEB = GetExternalEBField(pti, offset);
 
+    const amrex::ParticleReal Ex_external_particle = m_E_external_particle[0];
+    const amrex::ParticleReal Ey_external_particle = m_E_external_particle[1];
+    const amrex::ParticleReal Ez_external_particle = m_E_external_particle[2];
+    const amrex::ParticleReal Bx_external_particle = m_B_external_particle[0];
+    const amrex::ParticleReal By_external_particle = m_B_external_particle[1];
+    const amrex::ParticleReal Bz_external_particle = m_B_external_particle[2];
+
     // Lower corner of tile box physical domain (take into account Galilean shift)
     const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, gather_lev, 0._rt);
 
@@ -178,12 +185,16 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
                        np_to_push,
                        [=] AMREX_GPU_DEVICE (long i, auto exteb_control,
                                              auto qed_control) {
-            if (do_copy) copyAttribs(i);
+            if (do_copy) { copyAttribs(i); }
             ParticleReal x, y, z;
             GetPosition(i, x, y, z);
 
-            amrex::ParticleReal Exp=0, Eyp=0, Ezp=0;
-            amrex::ParticleReal Bxp=0, Byp=0, Bzp=0;
+            amrex::ParticleReal Exp = Ex_external_particle;
+            amrex::ParticleReal Eyp = Ey_external_particle;
+            amrex::ParticleReal Ezp = Ez_external_particle;
+            amrex::ParticleReal Bxp = Bx_external_particle;
+            amrex::ParticleReal Byp = By_external_particle;
+            amrex::ParticleReal Bzp = Bz_external_particle;
 
             if(!t_do_not_gather){
                 // first gather E and B to the particle positions
@@ -194,17 +205,17 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
                                nox, galerkin_interpolation);
             }
 
-            [[maybe_unused]] auto& getExternalEB_tmp = getExternalEB; // workaround for nvcc
+            [[maybe_unused]] const auto& getExternalEB_tmp = getExternalEB; // workaround for nvcc
             if constexpr (exteb_control == has_exteb) {
                 getExternalEB(i, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
             }
 
 #ifdef WARPX_QED
-            [[maybe_unused]] auto& evolve_opt_tmp = evolve_opt;
-            [[maybe_unused]] auto p_optical_depth_BW_tmp = p_optical_depth_BW;
-            [[maybe_unused]] auto ux_tmp = ux; // for nvhpc
-            [[maybe_unused]] auto uy_tmp = uy;
-            [[maybe_unused]] auto uz_tmp = uz;
+            [[maybe_unused]] const auto& evolve_opt_tmp = evolve_opt;
+            [[maybe_unused]] auto *p_optical_depth_BW_tmp = p_optical_depth_BW;
+            [[maybe_unused]] auto *ux_tmp = ux; // for nvhpc
+            [[maybe_unused]] auto *uy_tmp = uy;
+            [[maybe_unused]] auto *uz_tmp = uz;
             [[maybe_unused]] auto dt_tmp = dt;
             if constexpr (qed_control == has_qed) {
                 evolve_opt(ux[i], uy[i], uz[i], Exp, Eyp, Ezp, Bxp, Byp, Bzp,
@@ -229,10 +240,11 @@ PhotonParticleContainer::Evolve (int lev,
                                  MultiFab* rho, MultiFab* crho,
                                  const MultiFab* cEx, const MultiFab* cEy, const MultiFab* cEz,
                                  const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
-                                 Real t, Real dt, DtType a_dt_type, bool skip_deposition)
+                                 Real t, Real dt, DtType a_dt_type, bool skip_deposition,
+                                 PushType push_type)
 {
-    // This does gather, push and depose.
-    // Push and depose have been re-written for photons
+    // This does gather, push and deposit.
+    // Push and deposit have been re-written for photons
     PhysicalParticleContainer::Evolve (lev,
                                        Ex, Ey, Ez,
                                        Bx, By, Bz,
@@ -241,6 +253,6 @@ PhotonParticleContainer::Evolve (int lev,
                                        rho, crho,
                                        cEx, cEy, cEz,
                                        cBx, cBy, cBz,
-                                       t, dt, a_dt_type, skip_deposition);
+                                       t, dt, a_dt_type, skip_deposition, push_type);
 
 }

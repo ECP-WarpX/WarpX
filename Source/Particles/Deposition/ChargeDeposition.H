@@ -27,7 +27,7 @@
                        since q is a scalar. For non-ionizable species,
                        ion_lev is a null pointer.
  * \param rho_fab      FArrayBox of charge density, either full array or tile.
- * \param np_to_depose Number of particles for which current is deposited.
+ * \param np_to_deposit Number of particles for which current is deposited.
  * \param dx           3D cell size
  * \param xyzmin       Physical lower bounds of domain.
  * \param lo           Index lower bounds of domain.
@@ -41,7 +41,7 @@ void doChargeDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                                const amrex::ParticleReal * const wp,
                                const int* ion_lev,
                                amrex::FArrayBox& rho_fab,
-                               long np_to_depose,
+                               long np_to_deposit,
                                const std::array<amrex::Real,3>& dx,
                                const std::array<amrex::Real, 3> xyzmin,
                                amrex::Dim3 lo,
@@ -95,8 +95,8 @@ void doChargeDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
     }
 #endif
     amrex::ParallelFor(
-        np_to_depose,
-        [=] AMREX_GPU_DEVICE (long ip) {
+            np_to_deposit,
+            [=] AMREX_GPU_DEVICE (long ip) {
 #if defined(WARPX_USE_GPUCLOCK)
             const auto KernelTimer = ablastr::parallelization::KernelTimer(
                 cost && (load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock),
@@ -252,7 +252,7 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPositio
                                      const int n_rz_azimuthal_modes,
                                      amrex::Real* cost,
                                      const long load_balance_costs_update_algo,
-                                     const amrex::DenseBins<WarpXParticleContainer::ParticleType>& a_bins,
+                                     const amrex::DenseBins<WarpXParticleContainer::ParticleTileType::ParticleTileDataType>& a_bins,
                                      const amrex::Box& box,
                                      const amrex::Geometry& geom,
                                      const amrex::IntVect& a_tbox_max_size,
@@ -261,7 +261,7 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPositio
 {
     using namespace amrex;
 
-    auto permutation = a_bins.permutationPtr();
+    const auto *permutation = a_bins.permutationPtr();
 
 #if !defined(AMREX_USE_GPU)
     amrex::ignore_unused(ix_type, cost, load_balance_costs_update_algo, a_bins, box, geom, a_tbox_max_size, bin_size);

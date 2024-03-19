@@ -13,6 +13,7 @@
 #include "WarpXParticleContainer_fwd.H"
 
 #include "Evolve/WarpXDtType.H"
+#include "Evolve/WarpXPushType.H"
 #include "Initialization/PlasmaInjector.H"
 #include "Particles/ParticleBoundaries.H"
 #include "SpeciesPhysicalProperties.H"
@@ -48,32 +49,37 @@
 
 
 class WarpXParIter
-    : public amrex::ParIter<0,0,PIdx::nattribs>
+    : public amrex::ParIterSoA<PIdx::nattribs, 0>
 {
 public:
-    using amrex::ParIter<0,0,PIdx::nattribs>::ParIter;
+    using amrex::ParIterSoA<PIdx::nattribs, 0>::ParIterSoA;
 
     WarpXParIter (ContainerType& pc, int level);
 
     WarpXParIter (ContainerType& pc, int level, amrex::MFItInfo& info);
 
-    const std::array<RealVector, PIdx::nattribs>& GetAttribs () const {
+    [[nodiscard]] const std::array<RealVector, PIdx::nattribs>& GetAttribs () const
+    {
         return GetStructOfArrays().GetRealData();
     }
 
-    std::array<RealVector, PIdx::nattribs>& GetAttribs () {
+    [[nodiscard]] std::array<RealVector, PIdx::nattribs>& GetAttribs ()
+    {
         return GetStructOfArrays().GetRealData();
     }
 
-    const RealVector& GetAttribs (int comp) const {
+    [[nodiscard]] const RealVector& GetAttribs (int comp) const
+    {
         return GetStructOfArrays().GetRealData(comp);
     }
 
-    RealVector& GetAttribs (int comp) {
+    [[nodiscard]] RealVector& GetAttribs (int comp)
+    {
         return GetStructOfArrays().GetRealData(comp);
     }
 
-    IntVector& GetiAttribs (int comp) {
+    [[nodiscard]] IntVector& GetiAttribs (int comp)
+    {
         return GetStructOfArrays().GetIntData(comp);
     }
 };
@@ -83,13 +89,14 @@ public:
  * particle container classes (that store a collection of particles) derive. Derived
  * classes can be used for plasma particles, photon particles, or non-physical
  * particles (e.g., for the laser antenna).
- * It derives from amrex::ParticleContainer<0,0,PIdx::nattribs>, where the
- * template arguments stand for the number of int and amrex::Real SoA and AoS
- * data in amrex::Particle.
- *  - AoS amrex::Real: x, y, z (default), 0 additional (first template
- *    parameter)
- *  - AoS int: id, cpu (default), 0 additional (second template parameter)
- *  - SoA amrex::Real: PIdx::nattribs (third template parameter), see PIdx for
+ * It derives from amrex::ParticleContainerPureSoA<PIdx::nattribs>, where the
+ * template arguments stand for the number of int and amrex::Real SoA
+ * data in amrex::SoAParticle.
+ *  - SoA amrex::Real: positions x, y, z, momentum ux, uy, uz, ... see PIdx for details;
+ *                     more can be added at runtime
+ *  - SoA int: 0 attributes by default, but can be added at runtime
+ *  - SoA uint64_t: idcpu, a global 64bit index, with a 40bit local id and a 24bit cpu id
+ *    (both set at creation)
  * the list.
  *
  * WarpXParticleContainer contains the main functions for initialization,
@@ -115,7 +122,7 @@ public:
     using DiagnosticParticles = amrex::Vector<std::map<std::pair<int, int>, DiagnosticParticleData> >;
 
     WarpXParticleContainer (amrex::AmrCore* amr_core, int ispecies);
-    ~WarpXParticleContainer() override {}
+    ~WarpXParticleContainer() override = default;
 
     // Move and copy operations
     WarpXParticleContainer(const WarpXParticleContainer&)            = delete;
@@ -131,7 +138,7 @@ public:
      * \brief Virtual function that returns a pointer to the plasma injector,
      *        for derived classes that define one (PhysicalParticleContainer).
      */
-    virtual PlasmaInjector* GetPlasmaInjector () { return nullptr; }
+    virtual PlasmaInjector* GetPlasmaInjector (const int /*i*/) { return nullptr; }
 
     /**
      * Evolve is the central WarpXParticleContainer function that advances
@@ -146,7 +153,8 @@ public:
                          amrex::MultiFab* rho, amrex::MultiFab* crho,
                          const amrex::MultiFab* cEx, const amrex::MultiFab* cEy, const amrex::MultiFab* cEz,
                          const amrex::MultiFab* cBx, const amrex::MultiFab* cBy, const amrex::MultiFab* cBz,
-                         amrex::Real t, amrex::Real dt, DtType a_dt_type=DtType::Full, bool skip_deposition=false) = 0;
+                         amrex::Real t, amrex::Real dt, DtType a_dt_type=DtType::Full, bool skip_deposition=false,
+                         PushType push_type=PushType::Explicit) = 0;
 
     virtual void PostRestart () = 0;
 
@@ -157,16 +165,13 @@ public:
      * class.
      */
     virtual void DefaultInitializeRuntimeAttributes (
-                        amrex::ParticleTile<amrex::Particle<NStructReal, NStructInt>,
-                                            NArrayReal, NArrayInt,
-                                            amrex::PinnedArenaAllocator>& pinned_tile,
-                        int n_external_attr_real,
-                        int n_external_attr_int,
-                        const amrex::RandomEngine& engine) = 0;
+        typename ContainerLike<amrex::PinnedArenaAllocator>::ParticleTileType& pinned_tile,
+        int n_external_attr_real,
+        int n_external_attr_int) = 0;
 
     ///
     /// This pushes the particle positions by one half time step.
-    /// It is used to desynchronize the particles after initializaton
+    /// It is used to desynchronize the particles after initialization
     /// or when restarting from a checkpoint.
     ///
     void PushX (         amrex::Real dt);
@@ -225,7 +230,7 @@ public:
                                amrex::MultiFab* rho,
                                int icomp,
                                long offset,
-                               long np_to_depose,
+                               long np_to_deposit,
                                int thread_num,
                                int lev,
                                int depos_lev);
@@ -240,12 +245,13 @@ public:
                                 amrex::MultiFab* jy,
                                 amrex::MultiFab* jz,
                                 long offset,
-                                long np_to_depose,
+                                long np_to_deposit,
                                 int thread_num,
                                 int lev,
                                 int depos_lev,
                                 amrex::Real dt,
-                                amrex::Real relative_time);
+                                amrex::Real relative_time,
+                                PushType push_type);
 
     // If particles start outside of the domain, ContinuousInjection
     // makes sure that they are initialized when they enter the domain, and
@@ -335,6 +341,10 @@ public:
     int self_fields_max_iters = 200;
     int self_fields_verbosity = 2;
 
+    // External fields added to particle fields.
+    amrex::Vector<amrex::ParticleReal> m_B_external_particle;
+    amrex::Vector<amrex::ParticleReal> m_E_external_particle;
+
     //! Current injection position
     amrex::Real m_current_injection_position;
 
@@ -393,7 +403,20 @@ public:
      * they do not exist (or if they were defined by default, i.e.,
      * without runtime component).
      */
-     void defineAllParticleTiles () noexcept;
+    void defineAllParticleTiles () noexcept;
+
+    virtual std::vector<std::string> getUserIntAttribs () const { return std::vector<std::string>{}; }
+
+    virtual std::vector<std::string> getUserRealAttribs () const { return std::vector<std::string>{}; }
+
+    virtual amrex::Vector< amrex::Parser* > getUserIntAttribParser () const { return amrex::Vector<amrex::Parser*>{}; }
+
+    virtual amrex::Vector< amrex::Parser* > getUserRealAttribParser () const { return amrex::Vector<amrex::Parser*>{}; }
+
+#ifdef WARPX_QED
+    virtual BreitWheelerEngine* get_breit_wheeler_engine_ptr () const {return nullptr;}
+    virtual QuantumSynchrotronEngine* get_quantum_sync_engine_ptr () const {return nullptr;}
+#endif
 
 protected:
     int species_id;
@@ -421,6 +444,7 @@ protected:
     int do_continuous_injection = 0;
 
     int do_field_ionization = 0;
+    int do_adk_correction = 0;
     int ionization_product;
     std::string ionization_product_name;
     int ion_atomic_number;
@@ -429,6 +453,8 @@ protected:
     amrex::Gpu::DeviceVector<amrex::Real> adk_power;
     amrex::Gpu::DeviceVector<amrex::Real> adk_prefactor;
     amrex::Gpu::DeviceVector<amrex::Real> adk_exp_prefactor;
+    /** for correction in Zhang et al., PRA 90, 043410 (2014). a1, a2, a3, Ecrit. */
+    amrex::Gpu::DeviceVector<amrex::Real> adk_correction_factors;
     std::string physical_element;
 
     int do_resampling = 0;
@@ -464,6 +490,9 @@ public:
     using TmpParticles = amrex::Vector<std::map<PairIndex, TmpParticleTile> >;
 
     TmpParticles getTmpParticleData () const noexcept {return tmp_particle_data;}
+
+    int getIonizationInitialLevel () const noexcept {return ionization_initial_level;}
+
 protected:
     TmpParticles tmp_particle_data;
 

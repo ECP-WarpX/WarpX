@@ -1,5 +1,4 @@
 #include "FullDiagnostics.H"
-
 #include "ComputeDiagFunctors/CellCenterFunctor.H"
 #include "ComputeDiagFunctors/DivBFunctor.H"
 #include "ComputeDiagFunctors/DivEFunctor.H"
@@ -126,15 +125,16 @@ FullDiagnostics::BackwardCompatibility ()
 }
 
 void
-FullDiagnostics::Flush ( int i_buffer )
+FullDiagnostics::Flush ( int i_buffer, bool /* force_flush */ )
 {
     // This function should be moved to Diagnostics when plotfiles/openpmd format
     // is supported for BackTransformed Diagnostics, in BTDiagnostics class.
     auto & warpx = WarpX::GetInstance();
 
     m_flush_format->WriteToFile(
-        m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
-        warpx.gett_new(0), m_output_species[i_buffer], nlev_output, m_file_prefix,
+        m_varnames, m_mf_output.at(i_buffer), m_geom_output.at(i_buffer), warpx.getistep(),
+        warpx.gett_new(0),
+        m_output_species.at(i_buffer), nlev_output, m_file_prefix,
         m_file_min_digits, m_plot_raw_fields, m_plot_raw_fields_guards);
 
     FlushRaw();
@@ -147,7 +147,7 @@ FullDiagnostics::FlushRaw () {}
 bool
 FullDiagnostics::DoDump (int step, int /*i_buffer*/, bool force_flush)
 {
-    if (m_already_done) return false;
+    if (m_already_done) { return false; }
     if ( force_flush || (m_intervals.contains(step+1)) ){
         m_already_done = true;
         return true;
@@ -268,14 +268,14 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
             }
         } else if ( m_varnames_fields[comp] == "rho" ){
             // Initialize rho functor to dump total rho
-            m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, -1,
+            m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, true, -1,
                                                         false, ncomp);
             if (update_varnames) {
                 AddRZModesToOutputNames(std::string("rho"), ncomp);
             }
         } else if ( m_varnames_fields[comp].rfind("rho_", 0) == 0 ){
             // Initialize rho functor to dump rho per species
-            m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, m_rho_per_species_index[i],
+            m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, true, m_rho_per_species_index[i],
                                                         false, ncomp);
             if (update_varnames) {
                 AddRZModesToOutputNames(std::string("rho_") + m_all_species_names[m_rho_per_species_index[i]], ncomp);
@@ -360,7 +360,7 @@ FullDiagnostics::AddRZModesToDiags (int lev)
 {
 #ifdef WARPX_DIM_RZ
 
-    if (!m_dump_rz_modes) return;
+    if (!m_dump_rz_modes) { return; }
 
     auto & warpx = WarpX::GetInstance();
     const int ncomp_multimodefab = warpx.get_pointer_Efield_aux(0, 0)->nComp();
@@ -443,7 +443,7 @@ FullDiagnostics::AddRZModesToDiags (int lev)
     }
     // rho
     if (rho_requested) {
-        m_all_field_functors[lev][icomp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, -1, false, ncomp_multimodefab);
+        m_all_field_functors[lev][icomp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, true, -1, false, ncomp_multimodefab);
         icomp += 1;
         AddRZModesToOutputNames(std::string("rho"), ncomp_multimodefab);
     }
@@ -507,11 +507,13 @@ FullDiagnostics::InitializeBufferData (int i_buffer, int lev, bool restart ) {
         diag_dom.setLo(idim, std::max(m_lo[idim],warpx.Geom(lev).ProbLo(idim)) );
         diag_dom.setHi(idim, std::min(m_hi[idim],warpx.Geom(lev).ProbHi(idim)) );
         if ( std::fabs(warpx.Geom(lev).ProbLo(idim) - diag_dom.lo(idim))
-                               >  warpx.Geom(lev).CellSize(idim) )
+                               >  warpx.Geom(lev).CellSize(idim) ) {
              use_warpxba = false;
+        }
         if ( std::fabs(warpx.Geom(lev).ProbHi(idim) - diag_dom.hi(idim))
-                               > warpx.Geom(lev).CellSize(idim) )
+                               > warpx.Geom(lev).CellSize(idim) ) {
              use_warpxba = false;
+        }
 
         // User-defined value for coarsening should be an integer divisor of
         // blocking factor at level, lev. This assert is not relevant and thus
@@ -573,7 +575,7 @@ FullDiagnostics::InitializeBufferData (int i_buffer, int lev, bool restart ) {
     ba.coarsen(m_crse_ratio);
     // Generate a new distribution map if the physical m_lo and m_hi for the output
     // is different from the lo and hi physical co-ordinates of the simulation domain.
-    if (!use_warpxba) dmap = amrex::DistributionMapping{ba};
+    if (!use_warpxba) { dmap = amrex::DistributionMapping{ba}; }
     // Allocate output MultiFab for diagnostics. The data will be stored at cell-centers.
     const int ngrow = (m_format == "sensei" || m_format == "ascent") ? 1 : 0;
     int const ncomp = static_cast<int>(m_varnames.size());
@@ -627,7 +629,7 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
     m_all_field_functors[lev].resize(ntot);
     // Fill vector of functors for all components except individual cylindrical modes.
     for (int comp=0; comp<nvar; comp++){
-         if       ( m_varnames[comp] == "Ez" ){
+        if        ( m_varnames[comp] == "Ez" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 2), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "Bz" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_aux(lev, 2), lev, m_crse_ratio);
@@ -638,10 +640,10 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_vector_potential_fp(lev, 2), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "rho" ){
             // Initialize rho functor to dump total rho
-            m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio);
+            m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, true);
         } else if ( m_varnames[comp].rfind("rho_", 0) == 0 ){
             // Initialize rho functor to dump rho per species
-            m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, m_rho_per_species_index[i]);
+            m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, true, m_rho_per_species_index[i]);
             i++;
         } else if ( m_varnames[comp] == "F" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_F_fp(lev), lev, m_crse_ratio);

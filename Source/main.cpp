@@ -10,8 +10,8 @@
 
 #include "Initialization/WarpXAMReXInit.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#include "Utils/WarpXrocfftUtil.H"
 
+#include <ablastr/math/fft/AnyFFT.H>
 #include <ablastr/parallelization/MPIInitHelpers.H>
 #include <ablastr/utils/timer/Timer.H>
 #include <ablastr/warn_manager/WarnManager.H>
@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
 
     warpx::initialization::amrex_init(argc, argv);
 
-    utils::rocfft::setup();
+    ablastr::math::anyfft::setup();
 
     {
         WARPX_PROFILE_VAR("main()", pmain);
@@ -39,14 +39,14 @@ int main(int argc, char* argv[])
 
         warpx.Evolve();
 
-        //Print warning messages at the end of the simulation
         amrex::Print() <<
             ablastr::warn_manager::GetWMInstance().PrintGlobalWarnings("THE END");
 
         timer.record_stop_time();
-        if (warpx.Verbose()) {
+        if (warpx.Verbose())
+        {
             amrex::Print() << "Total Time                     : "
-                    << timer.get_global_duration() << '\n';
+                           << timer.get_global_duration() << '\n';
         }
 
         WARPX_PROFILE_VAR_STOP(pmain);
@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
         WarpX::Finalize();
     }
 
-    utils::rocfft::cleanup();
+    ablastr::math::anyfft::cleanup();
 
     amrex::Finalize();
 

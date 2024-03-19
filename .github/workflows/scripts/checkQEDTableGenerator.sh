@@ -10,13 +10,11 @@ set -eu -o pipefail
 export OMP_NUM_THREADS=2
 
 #
-# DEBUG
-pwd
-ls
-ls ./build
-ls ./build/bin
-# DEBUG
+# Compile QED external tool
 #
+cd build/Tools
+make -j 2
+cd ../../
 
 #
 # Generate QED lookup tables using external tool
