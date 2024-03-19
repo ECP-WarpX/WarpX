@@ -20,8 +20,8 @@ import torch.optim as optim
 stage_i = 0
 species = f'beam_stage_{stage_i}'
 source_index = 0
-target_index = 4
-survivor_select_index = 4
+target_index = 1
+survivor_select_index = 1
 
 data_dim = 6
 n_in = data_dim

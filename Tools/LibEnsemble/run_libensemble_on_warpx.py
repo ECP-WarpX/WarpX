@@ -21,20 +21,23 @@ machine = 'local'
 
 import sys
 
+import numpy as np
+
 # Import libEnsemble modules
 from libensemble.libE import libE
-import numpy as np
 from warpx_simf import run_warpx  # Sim function from current directory
 
 if generator_type == 'random':
-    from libensemble.alloc_funcs.give_sim_work_first import \
-        give_sim_work_first as alloc_f
+    from libensemble.alloc_funcs.give_sim_work_first import (
+        give_sim_work_first as alloc_f,
+    )
     from libensemble.gen_funcs.sampling import uniform_random_sample as gen_f
 elif generator_type == 'aposmm':
     import libensemble.gen_funcs
     libensemble.gen_funcs.rc.aposmm_optimizers = 'nlopt'
-    from libensemble.alloc_funcs.persistent_aposmm_alloc import \
-        persistent_aposmm_alloc as alloc_f
+    from libensemble.alloc_funcs.persistent_aposmm_alloc import (
+        persistent_aposmm_alloc as alloc_f,
+    )
     from libensemble.gen_funcs.persistent_aposmm import aposmm as gen_f
 else:
     print("you shouldn' hit that")
@@ -43,11 +46,7 @@ else:
 import all_machine_specs
 from libensemble import libE_logger
 from libensemble.executors.mpi_executor import MPIExecutor
-from libensemble.tools import (
-    add_unique_random_streams,
-    parse_args,
-    save_libE_output,
-)
+from libensemble.tools import add_unique_random_streams, parse_args, save_libE_output
 
 # Import machine-specific run parameters
 if machine == 'local':

@@ -18,8 +18,8 @@ import re
 import sys
 
 import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 import yt
+from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 
 yt.funcs.mylog.setLevel(50)
 

@@ -20,6 +20,7 @@
 #       include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #   endif
 #endif
+#include "Python/callbacks.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
@@ -798,6 +799,9 @@ WarpX::EvolveB (amrex::Real a_dt, DtType a_dt_type)
     for (int lev = 0; lev <= finest_level; ++lev) {
         EvolveB(lev, a_dt, a_dt_type);
     }
+
+    // Allow execution of Python callback after B-field push
+    ExecutePythonCallback("afterBpush");
 }
 
 void
@@ -848,6 +852,9 @@ WarpX::EvolveE (amrex::Real a_dt)
     {
         EvolveE(lev, a_dt);
     }
+
+    // Allow execution of Python callback after E-field push
+    ExecutePythonCallback("afterEpush");
 }
 
 void

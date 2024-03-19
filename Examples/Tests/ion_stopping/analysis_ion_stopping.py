@@ -16,8 +16,8 @@ import re
 import sys
 
 import numpy as np
-from scipy.constants import e, epsilon_0, k, m_e, m_p
 import yt
+from scipy.constants import e, epsilon_0, k, m_e, m_p
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI

@@ -21,8 +21,8 @@ import os
 import sys
 
 import numpy as np
-from scipy.optimize import fsolve
 import yt
+from scipy.optimize import fsolve
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
