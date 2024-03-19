@@ -1,6 +1,6 @@
 /* Copyright 2019-2024 Arianna Formenti, Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of ABLASTR.
  *
  * License: BSD-3-Clause-LBNL
  */
