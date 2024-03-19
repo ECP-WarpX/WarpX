@@ -108,7 +108,8 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
             std::optional<amrex::Vector<amrex::IntVect> > rel_ref_ratio = std::nullopt,
             [[maybe_unused]] T_PostPhiCalculationFunctor post_phi_calculation = std::nullopt,
             [[maybe_unused]] std::optional<amrex::Real const> current_time = std::nullopt, // only used for EB
-            [[maybe_unused]] std::optional<amrex::Vector<T_FArrayBoxFactory const *> > eb_farray_box_factory = std::nullopt // only used for EB
+            [[maybe_unused]] std::optional<amrex::Vector<T_FArrayBoxFactory const *> > eb_farray_box_factory = std::nullopt, // only used for EB
+            bool const is_solver_multigrid = true
 )
 {
     using namespace amrex::literals;
@@ -127,6 +128,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
     amrex::Real max_norm_b = 0.0;
     for (int lev=0; lev<=finest_level; lev++) {
         using namespace ablastr::constant::SI;
+
         rho[lev]->mult(-1._rt/PhysConst::ep0);  // TODO: when do we "un-multiply" this? We need to document this side-effect!
         max_norm_b = amrex::max(max_norm_b, rho[lev]->norm0());
     }
@@ -161,7 +163,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 
 #if (defined(WARPX_USE_PSATD)  && defined(WARPX_DIM_3D))
         // Use the Integrated Green Function solver (fft-based) on the coarsest level if it was selected
-        if(WarpX::poisson_solver_id==PoissonSolverAlgo::IntegratedGreenFunction && lev==0){
+        if(!is_solver_multigrid && lev==0){
             rho[lev]->mult(-PhysConst::ep0);
             amrex::Array<amrex::Real,AMREX_SPACEDIM> const dx_igf
                     {AMREX_D_DECL(geom[lev].CellSize(0)/std::sqrt(1._rt-beta_solver[0]*beta_solver[0]),
