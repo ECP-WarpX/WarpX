@@ -893,7 +893,7 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
     auto const numParticleOnTile64 = static_cast<uint64_t>(numParticleOnTile);
     auto const& soa = pti.GetStructOfArrays();
 
-    auto const getComponentRecord = [&currSpecies](std::string const comp_name) {
+    auto const getComponentRecord = [&currSpecies](std::string const& comp_name) {
         // handle scalar and non-scalar records by name
         const auto [record_name, component_name] = detail::name2openPMD(comp_name);
         return currSpecies[record_name][component_name];
