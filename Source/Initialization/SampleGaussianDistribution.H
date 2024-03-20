@@ -8,7 +8,7 @@
 #ifndef SAMPLE_GAUSSIAN_DISTRIBUTION_H
 #define SAMPLE_GAUSSIAN_DISTRIBUTION_H
 
-#include <AMREX_Random.H>
+#include <AMReX_Random.H>
 
 namespace {
     /** This function returns u sampled according to the probability distribution:
