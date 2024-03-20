@@ -46,7 +46,7 @@ jobs:
         du -hs ~/.cache/ccache
 
   build_1D_2D:
-    name: GCC 1D & 2D w/ MPI
+    name: GCC 1D & 2D w/ MPI, QED tools
     runs-on: ubuntu-22.04
     if: github.event.pull_request.draft == false
     env:
