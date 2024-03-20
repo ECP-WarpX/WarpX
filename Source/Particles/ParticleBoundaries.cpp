@@ -94,13 +94,3 @@ ParticleBoundaries::BuildReflectionModelParsers ()
         utils::parser::makeParser(reflection_model_zhi_str, {"v"}));
     data.reflection_model_zhi = reflection_model_zhi_parser->compile<1>();
 }
-
-bool
-ParticleBoundaries::isAnyParticleBoundaryThermal ()
-{
-    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-        if (WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Thermal) {return true;}
-        if (WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Thermal) {return true;}
-    }
-    return false;
-}

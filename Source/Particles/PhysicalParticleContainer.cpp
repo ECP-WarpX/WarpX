@@ -446,10 +446,9 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 
     // currently supports only isotropic thermal distribution
     // same distribution is applied to all boundaries
-    if (m_boundary_conditions.isAnyParticleBoundaryThermal()) {
+    if (WarpX::isAnyParticleBoundaryThermal()) {
         amrex::Real boundary_uth;
         utils::parser::getWithParser(pp_species_name,"boundary_uth",boundary_uth);
-        amrex::Print() << " thermal vel : " << boundary_uth << "\n";
         m_boundary_conditions.SetThermalVelocity(boundary_uth);
     }
 }

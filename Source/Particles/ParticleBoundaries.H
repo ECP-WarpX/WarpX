@@ -33,9 +33,6 @@ struct ParticleBoundaries
 
     void BuildReflectionModelParsers ();
 
-    /** True if any of the particle boundary condition type is Thermal */
-    bool isAnyParticleBoundaryThermal ();
-
     // reflection models for absorbing boundaries
     std::string reflection_model_xlo_str = "0.0";
     std::string reflection_model_xhi_str = "0.0";

@@ -753,6 +753,8 @@ public:
 
     void CopyJPML ();
     bool isAnyBoundaryPML();
+    /** True if any of the particle boundary condition type is Thermal */
+    static bool isAnyParticleBoundaryThermal();
 
     PML* GetPML (int lev);
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
