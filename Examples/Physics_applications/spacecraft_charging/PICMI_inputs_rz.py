@@ -25,7 +25,8 @@ from pywarpx.particle_containers import ParticleBoundaryBufferWrapper
 class SpaceChargeFieldCorrector(object):
     """
     Class used by the callback functions to calculate the
-    correct charge on the spacecraft at each initialisation.
+    correct field around the spacecraft, at each timestep
+    (taking into account the charge that has been collected on the spacecraft)
     """
     def __init__(self):
         self.saved_first_iteration_fields = False
@@ -46,11 +47,11 @@ class SpaceChargeFieldCorrector(object):
             q = compute_actual_charge_on_spacecraft()
 
         # Correct fields so as to recover the actual charge
-        Er = ExWrapper(include_ghosts=True)[:,:]
+        Er = ExWrapper(include_ghosts=True)
         Er[...] = Er[...]+(q - q_v)*self.normalized_Er[...]
-        Ez = EzWrapper(include_ghosts=True)[:,:]
+        Ez = EzWrapper(include_ghosts=True)
         Ez[...]  += (q - q_v)*self.normalized_Ez[...]
-        phi = PhiFPWrapper(include_ghosts=True)[:,:]
+        phi = PhiFPWrapper(include_ghosts=True)
         phi[...]  += (q - q_v)*self.normalized_phi[...]
         self.spacecraft_potential += (q - q_v)*self.spacecraft_capacitance
         sim.extension.warpx.set_potential_on_eb( "%f" %self.spacecraft_potential )
