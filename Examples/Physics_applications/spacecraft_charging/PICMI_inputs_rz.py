@@ -48,11 +48,11 @@ class SpaceChargeFieldCorrector(object):
 
         # Correct fields so as to recover the actual charge
         Er = ExWrapper(include_ghosts=True)
-        Er[...] += (q - q_v)*self.normalized_Er[...]
+        Er[...] += (q - q_v)*self.normalized_Er
         Ez = EzWrapper(include_ghosts=True)
-        Ez[...]  += (q - q_v)*self.normalized_Ez[...]
+        Ez[...]  += (q - q_v)*self.normalized_Ez
         phi = PhiFPWrapper(include_ghosts=True)
-        phi[...]  += (q - q_v)*self.normalized_phi[...]
+        phi[...]  += (q - q_v)*self.normalized_phi
         self.spacecraft_potential += (q - q_v)*self.spacecraft_capacitance
         sim.extension.warpx.set_potential_on_eb( "%f" %self.spacecraft_potential )
         print('Setting potential to %f' %self.spacecraft_potential)
