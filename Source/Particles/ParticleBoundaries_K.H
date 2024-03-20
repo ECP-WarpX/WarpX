@@ -137,12 +137,16 @@ namespace ApplyParticleBoundaries {
                        boundaries.xmin_bc, boundaries.xmax_bc,
                        boundaries.reflection_model_xlo(-ux), boundaries.reflection_model_xhi(ux),
                        engine);
+#else
+        amrex::ignore_unused(rethermalize_x);
 #endif
 #ifdef WARPX_DIM_3D
         apply_boundary(y, ymin, ymax, change_sign_uy, rethermalize_y, particle_lost,
                        boundaries.ymin_bc, boundaries.ymax_bc,
                        boundaries.reflection_model_ylo(-uy), boundaries.reflection_model_yhi(uy),
                        engine);
+#else
+        amrex::ignore_unused(rethermalize_y);
 #endif
         apply_boundary(z, zmin, zmax, change_sign_uz, rethermalize_z, particle_lost,
                        boundaries.zmin_bc, boundaries.zmax_bc,
