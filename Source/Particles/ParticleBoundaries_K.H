@@ -149,17 +149,19 @@ namespace ApplyParticleBoundaries {
                        boundaries.reflection_model_zlo(-uz), boundaries.reflection_model_zhi(uz),
                        engine);
 
-#ifndef WARPX_DIM_RZ
+#ifndef WARPX_DIM_1D_Z
         if (rethermalize_x) {
             thermalize_boundary_particle(ux, uy, uz, boundaries.m_uth, engine);
         }
+#endif
+#ifdef WARPX_DIM_3D
         if (rethermalize_y) {
             thermalize_boundary_particle(uy, uz, ux, boundaries.m_uth, engine);
         }
+#endif
         if (rethermalize_z) {
             thermalize_boundary_particle(uz, ux, uy, boundaries.m_uth, engine);
         }
-#endif
 
         if (boundaries.reflect_all_velocities && (change_sign_ux | change_sign_uy | change_sign_uz)) {
             change_sign_ux = true;
