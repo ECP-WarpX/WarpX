@@ -185,11 +185,10 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
                         relative_tolerance, absolute_tolerance );
 
             // Synchronize the ghost cells, do halo exchange
-            ablastr::utils::communication::FillBoundary(*A[lev][adim],
-                                                        A[lev][adim]->nGrowVect(),
-                                                        WarpX::do_single_precision_comms,
-                                                        geom[lev].periodicity(),
-                                                        false);
+            ablastr::utils::communication::FillBoundary(
+                *A[lev][adim], A[lev][adim]->nGrowVect(),
+                do_single_precision_comms,
+                geom[lev].periodicity(), false);
 
             // needed for solving the levels by levels:
             // - coarser level is initial guess for finer level

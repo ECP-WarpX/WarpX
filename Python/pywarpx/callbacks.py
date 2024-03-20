@@ -30,6 +30,8 @@ Functions can be called at the following times:
 * ``beforeEsolve``: before the solve for E fields
 * ``poissonsolver``: In place of the computePhi call but only in an electrostatic simulation
 * ``afterEsolve``: after the solve for E fields
+* ``afterBpush``: after the B field advance for electromagnetic solvers
+* ``afterEpush``: after the E field advance for electromagnetic solvers
 * ``beforedeposition``: before the particle deposition (for charge and/or current)
 * ``afterdeposition``: after particle deposition (for charge and/or current)
 * ``beforestep``: before the time step
@@ -276,6 +278,8 @@ callback_instances = {
     "beforeEsolve": {},
     "poissonsolver": {'singlefunconly': True}, # external Poisson solver
     "afterEsolve": {},
+    "afterBpush": {},
+    "afterEpush": {},
     "beforedeposition": {},
     "afterdeposition": {},
     "particlescraper": {},
@@ -400,6 +404,20 @@ def callfromafterEsolve(f):
     return f
 def installafterEsolve(f):
     installcallback('afterEsolve', f)
+
+# ----------------------------------------------------------------------------
+def callfromafterBpush(f):
+    installcallback('afterBpush', f)
+    return f
+def installafterBpush(f):
+    installcallback('afterBpush', f)
+
+# ----------------------------------------------------------------------------
+def callfromafterEpush(f):
+    installcallback('afterEpush', f)
+    return f
+def installafterEpush(f):
+    installcallback('afterEpush', f)
 
 # ----------------------------------------------------------------------------
 def callfrombeforedeposition(f):
