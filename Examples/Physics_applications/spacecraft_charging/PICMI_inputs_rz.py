@@ -48,7 +48,7 @@ class SpaceChargeFieldCorrector(object):
 
         # Correct fields so as to recover the actual charge
         Er = ExWrapper(include_ghosts=True)
-        Er[...] = Er[...]+(q - q_v)*self.normalized_Er[...]
+        Er[...] += (q - q_v)*self.normalized_Er[...]
         Ez = EzWrapper(include_ghosts=True)
         Ez[...]  += (q - q_v)*self.normalized_Ez[...]
         phi = PhiFPWrapper(include_ghosts=True)
