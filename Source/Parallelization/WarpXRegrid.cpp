@@ -50,11 +50,25 @@
 using namespace amrex;
 
 void
+WarpX::CheckLoadBalance (int step)
+{
+    if (step > 0 && load_balance_intervals.contains(step+1))
+    {
+        LoadBalance();
+
+        // Reset the costs to 0
+        ResetCosts();
+    }
+    RescaleCosts(step);
+}
+
+void
 WarpX::LoadBalance ()
 {
     WARPX_PROFILE_REGION("LoadBalance");
     WARPX_PROFILE("WarpX::LoadBalance()");
 
+    AMREX_ALWAYS_ASSERT(!costs.empty());
     AMREX_ALWAYS_ASSERT(costs[0] != nullptr);
 
 #ifdef AMREX_USE_MPI
@@ -401,6 +415,9 @@ WarpX::ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::LayoutData<am
 void
 WarpX::ResetCosts ()
 {
+    AMREX_ALWAYS_ASSERT(!costs.empty());
+    AMREX_ALWAYS_ASSERT(costs[0] != nullptr);
+
     for (int lev = 0; lev <= finest_level; ++lev)
     {
         const auto iarr = costs[lev]->IndexArray();
@@ -408,6 +425,28 @@ WarpX::ResetCosts ()
         {
             // Reset costs
             (*costs[lev])[i] = 0.0;
+        }
+    }
+}
+
+void
+WarpX::RescaleCosts (int step)
+{
+    AMREX_ALWAYS_ASSERT(!costs.empty());
+    AMREX_ALWAYS_ASSERT(costs[0] != nullptr);
+
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        if (costs[lev] && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            // Perform running average of the costs
+            // (Giving more importance to most recent costs; only needed
+            // for timers update, heuristic load balance considers the
+            // instantaneous costs)
+            for (const auto& i : costs[lev]->IndexArray())
+            {
+                (*costs[lev])[i] *= (1._rt - 2._rt/load_balance_intervals.localPeriod(step+1));
+            }
         }
     }
 }
