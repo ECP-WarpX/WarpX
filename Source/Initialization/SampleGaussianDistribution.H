@@ -23,12 +23,12 @@ namespace {
     AMREX_GPU_HOST_DEVICE
     amrex::Real
     generateGaussianFluxDist( amrex::Real u_m, amrex::Real u_th, amrex::RandomEngine const& engine ) {
-    
+
         using namespace amrex::literals;
-    
+
         // Momentum to be returned at the end of this function
         amrex::Real u = 0._rt;
-        
+
         const amrex::Real abs_u_m = std::abs(u_m);
 
         if (u_th == 0._rt) {
