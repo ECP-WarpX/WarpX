@@ -161,7 +161,8 @@ enum struct ParticleBoundaryType {
         Absorbing = 0,     //!< particles crossing domain boundary are removed
         Open = 1,          //!< particles cross domain boundary leave with damped j
         Reflecting = 2,     //!< particles are reflected
-        Periodic = 3
+        Periodic = 3,      //!< particles are introduced from the periodic boundary
+        Thermal = 4
 };
 
 /** MPI reductions

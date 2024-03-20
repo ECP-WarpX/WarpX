@@ -135,6 +135,7 @@ const std::map<std::string, ParticleBoundaryType> ParticleBCType_algo_to_enum = 
     {"open",       ParticleBoundaryType::Open},
     {"reflecting", ParticleBoundaryType::Reflecting},
     {"periodic",   ParticleBoundaryType::Periodic},
+    {"thermal",    ParticleBoundaryType::Thermal},
     {"default",    ParticleBoundaryType::Absorbing}
 };
 
