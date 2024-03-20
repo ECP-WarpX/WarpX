@@ -3319,6 +3319,8 @@ Lookup tables store pre-computed values for functions used by the QED modules.
 
         * ``qed_bw.save_table_in`` (`string`): where to save the lookup table
 
+      Alternatively, the lookup table can be generated using a standalone tool (see :ref:`qed tools section <generate-lookup-tables-with-tools>`).
+
     * ``load``: a lookup table is loaded from a pre-generated binary file. The following parameter
       must be specified:
 
@@ -3355,6 +3357,8 @@ Lookup tables store pre-computed values for functions used by the QED modules.
         * ``qed_qs.tab_em_frac_min`` (`float`): minimum value to be considered for the second axis of lookup table 2
 
         * ``qed_qs.save_table_in`` (`string`): where to save the lookup table
+
+      Alternatively, the lookup table can be generated using a standalone tool (see :ref:`qed tools section <generate-lookup-tables-with-tools>`).
 
     * ``load``: a lookup table is loaded from a pre-generated binary file. The following parameter
       must be specified:
