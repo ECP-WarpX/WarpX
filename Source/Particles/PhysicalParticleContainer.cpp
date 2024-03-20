@@ -444,6 +444,14 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp_boundary.query("reflect_all_velocities", flag);
     m_boundary_conditions.Set_reflect_all_velocities(flag);
 
+    // currently supports only isotropic thermal distribution
+    // same distribution is applied to all boundaries
+    if (m_boundary_conditions.isAnyParticleBoundaryThermal()) {
+        amrex::Real boundary_uth;
+        utils::parser::getWithParser(pp_species_name,"boundary_uth",boundary_uth);
+        amrex::Print() << " thermal vel : " << boundary_uth << "\n";
+        m_boundary_conditions.SetThermalVelocity(boundary_uth);
+    }
 }
 
 PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core)

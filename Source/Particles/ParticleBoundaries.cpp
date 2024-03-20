@@ -6,6 +6,7 @@
  */
 
 #include "ParticleBoundaries.H"
+#include "WarpX.H"
 
 #include "Utils/Parser/ParserUtils.H"
 
@@ -30,6 +31,12 @@ ParticleBoundaries::SetAll (ParticleBoundaryType bc)
     data.ymax_bc = bc;
     data.zmin_bc = bc;
     data.zmax_bc = bc;
+}
+
+void
+ParticleBoundaries::SetThermalVelocity (amrex::Real u_th)
+{
+    data.m_uth = u_th;
 }
 
 void
@@ -86,4 +93,14 @@ ParticleBoundaries::BuildReflectionModelParsers ()
     reflection_model_zhi_parser = std::make_unique<amrex::Parser>(
         utils::parser::makeParser(reflection_model_zhi_str, {"v"}));
     data.reflection_model_zhi = reflection_model_zhi_parser->compile<1>();
+}
+
+bool
+ParticleBoundaries::isAnyParticleBoundaryThermal ()
+{
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        if (WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Thermal) {return true;}
+        if (WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Thermal) {return true;}
+    }
+    return false;
 }
