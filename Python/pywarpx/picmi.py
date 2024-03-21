@@ -1134,6 +1134,9 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
     plasma_resistivity: float or str
         Value or expression to use for the plasma resistivity.
 
+    plasma_hyper_resistivity: float or str
+        Value or expression to use for the plasma hyper-resistivity.
+
     substeps: int, default=100
         Number of substeps to take when updating the B-field.
 
