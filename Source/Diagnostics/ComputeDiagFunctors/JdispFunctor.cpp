@@ -59,42 +59,47 @@ JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buff
         -1, *m_mf_j, 0, 0, 1, Jdisp.nGrowVect()
     );
 
-//    // Subtract the interpolated j_external value from j_displacement.
-//     if (hybrid_pic_model) {
-//         // Index type required for interpolating Jext from their respective
-//         // staggering (nodal) to the Jx_displacement, Jy_displacement, Jz_displacement
-//         // locations. The staggering of J_displacement is the same as the
-//         // staggering for J, so we use J_stag as the interpolation map.
-//         amrex::GpuArray<int, 3> Jext_IndexType;
-//         amrex::GpuArray<int, 3> J_IndexType;
-//         amrex::IntVect Jext_stag = m_mf_j_external->ixType().toIntVect();
-//         amrex::IntVect J_stag = m_mf_j->ixType().toIntVect();
-//         for ( int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-//             Jext_IndexType[idim] = Jext_stag[idim];
-//             J_IndexType[idim] = J_stag[idim];
-//         }
-//         // Parameters for `interp` that maps from Jext to cc.
-//         // The "coarsening is just 1 i.e. no coarsening"
-//         amrex::GpuArray<int, 3> const& coarsen = {1, 1, 1};
+   // Subtract the interpolated j_external value from j_displacement.
+    if (hybrid_pic_model) {
+        // Index type required for interpolating Jext from their respective
+        // staggering (nodal) to the Jx_displacement, Jy_displacement, Jz_displacement
+        // locations. The staggering of J_displacement is the same as the
+        // staggering for J, so we use J_stag as the interpolation map.
+        // For interp to work below, the indices of the undefined dimensions
+        // must match. We set them as (1,1,1).
+        amrex::GpuArray<int, 3> Jext_IndexType = {1, 1, 1};
+        amrex::GpuArray<int, 3> J_IndexType = {1, 1, 1};
+        amrex::IntVect Jext_stag = m_mf_j_external->ixType().toIntVect();
+        amrex::IntVect J_stag = m_mf_j->ixType().toIntVect();
 
-//         // Loop through the grids, and over the tiles within each grid to
-//         // subtract the interpolated Jext from J_displacement.
-// #ifdef AMREX_USE_OMP
-// #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
-// #endif
-//         for ( MFIter mfi(Jdisp, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+        // Index types for the dimensions simulated are overwritten.
+        for ( int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            Jext_IndexType[idim] = Jext_stag[idim];
+            J_IndexType[idim] = J_stag[idim];
+        }
 
-//             Array4<Real> const& Jdisp_arr = Jdisp.array(mfi);
-//             Array4<Real const> const& Jext = m_mf_j_external->const_array(mfi);
+        // Parameters for `interp` that maps from Jext to J.
+        // The "coarsening is just 1 i.e. no coarsening"
+        amrex::GpuArray<int, 3> const& coarsen = {1, 1, 1};
 
-//             //  Loop over cells and update the Jdisp MultiFab
-//             amrex::ParallelFor(mfi.tilebox(), [=] AMREX_GPU_DEVICE (int i, int j, int k){
-//                 // Interpolate Jext to the staggering of J
-//                 auto const jext_interp = ablastr::coarsen::sample::Interp(Jext, Jext_IndexType, J_IndexType, coarsen, i, j, k, 0);
-//                 Jdisp_arr(i, j, k, 0) -= jext_interp;
-//             });
-//         }
-//     }
+        // Loop through the grids, and over the tiles within each grid to
+        // subtract the interpolated Jext from J_displacement.
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+        for ( MFIter mfi(Jdisp, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+
+            Array4<Real> const& Jdisp_arr = Jdisp.array(mfi);
+            Array4<Real const> const& Jext = m_mf_j_external->const_array(mfi);
+
+            //  Loop over cells and update the Jdisp MultiFab
+            amrex::ParallelFor(mfi.tilebox(), [=] AMREX_GPU_DEVICE (int i, int j, int k){
+                // Interpolate Jext to the staggering of J
+                auto const jext_interp = ablastr::coarsen::sample::Interp(Jext, Jext_IndexType, J_IndexType, coarsen, i, j, k, 0);
+                Jdisp_arr(i, j, k, 0) -= jext_interp;
+            });
+        }
+    }
 
     InterpolateMFForDiag(mf_dst, Jdisp, dcomp, warpx.DistributionMap(m_lev),
                          m_convertRZmodes2cartesian);
