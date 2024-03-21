@@ -59,7 +59,10 @@ WarpX::CheckLoadBalance (int step)
         // Reset the costs to 0
         ResetCosts();
     }
-    RescaleCosts(step);
+    if (!costs.empty())
+    {
+        RescaleCosts(step);
+    }
 }
 
 void
@@ -432,12 +435,17 @@ WarpX::ResetCosts ()
 void
 WarpX::RescaleCosts (int step)
 {
-    AMREX_ALWAYS_ASSERT(!costs.empty());
-    AMREX_ALWAYS_ASSERT(costs[0] != nullptr);
+    // rescale is only used for timers
+    if (WarpX::load_balance_costs_update_algo != LoadBalanceCostsUpdateAlgo::Timers)
+    {
+        return;
+    }
+
+    AMREX_ALWAYS_ASSERT(costs.size() == finest_level + 1);
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (costs[lev] && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (costs[lev])
         {
             // Perform running average of the costs
             // (Giving more importance to most recent costs; only needed
