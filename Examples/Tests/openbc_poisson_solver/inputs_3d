@@ -18,6 +18,7 @@ warpx.poisson_solver = fft-based
 algo.field_gathering = momentum-conserving
 algo.particle_shape = 1
 
+
 particles.species_names = electron
 
 electron.charge = -q_e
@@ -30,6 +31,7 @@ electron.momentum_distribution_type = "constant"
 electron.ux = 0.0
 electron.uy = 0.0
 electron.uz = 25000
+electron.initialize_self_fields = 1 
 
 diagnostics.diags_names = diag1 diag2
 
