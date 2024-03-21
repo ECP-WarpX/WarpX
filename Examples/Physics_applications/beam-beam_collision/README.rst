@@ -80,122 +80,122 @@ The small-scale simulation has been performed with a resolution of ``nx = 64, ny
 
          # You can copy this file from Examples/Physics_applications/beam-beam_collisions/Plot_full_.py
          # Contents of Plot_full_.py
-	from openpmd_viewer import OpenPMDTimeSeries
-	import numpy as np 
-	import matplotlib.pyplot as plt
-	from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
+    from openpmd_viewer import OpenPMDTimeSeries
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 
-	series = OpenPMDTimeSeries('./diags/diag1')
-	steps = series.iterations
-	print(steps)
+    series = OpenPMDTimeSeries('./diags/diag1')
+    steps = series.iterations
+    print(steps)
 
-	ylabel = 'y [m]'
-	xlabel = 'z [m]'
-	#slice_axis = 'x'
-	slice_axis = 'y'
+    ylabel = 'y [m]'
+    xlabel = 'z [m]'
+    #slice_axis = 'x'
+    slice_axis = 'y'
 
-	#loop through E,B,Rho
-	for n in steps:
+    #loop through E,B,Rho
+    for n in steps:
 
-	    fig, ax = plt.subplots(ncols=4, nrows=2, figsize=(40, 10), dpi=100., sharex=True, sharey=True)
-	    
-	    #E field
-	    Ex, info = series.get_field(field='E', coord='x', iteration=n, plot=False, slice_across=slice_axis)
-	    Ey, info = series.get_field(field='E', coord='y', iteration=n, plot=False, slice_across=slice_axis)
-	    Ez, info = series.get_field(field='E', coord='z', iteration=n, plot=False, slice_across=slice_axis)
-	    
-	    #B field
-	    Bx, info = series.get_field(field='B', coord=slice_axis, iteration=n, plot=False, slice_across=slice_axis)
-	    By, info = series.get_field(field='B', coord='y', iteration=n, plot=False, slice_across=slice_axis)    
-	    Bz, info = series.get_field(field='B', coord='z', iteration=n, plot=False, slice_across=slice_axis)
-	    
-	    # Rho
-	    rho_beam1, info = series.get_field(field='rho_beam1', iteration=n, plot=False, slice_across=slice_axis)
-	    rho_beam2, info = series.get_field(field='rho_beam2', iteration=n, plot=False, slice_across=slice_axis)
-	    rho_ele1, info = series.get_field(field='rho_ele1', iteration=n, plot=False, slice_across=slice_axis)
-	    rho_pos1, info = series.get_field(field='rho_pos1', iteration=n, plot=False, slice_across=slice_axis)    
-	    rho_ele2, info = series.get_field(field='rho_ele2', iteration=n, plot=False, slice_across=slice_axis)
-	    rho_pos2, info = series.get_field(field='rho_pos2', iteration=n, plot=False, slice_across=slice_axis)
-	    
-	    xmin = info.z.min()
-	    xmax = info.z.max()
-	    if slice_axis == 'x':
-		ymin = info.y.min()
-		ymax = info.y.max()  
-	    elif slice_axis == 'y':
-		ymin = info.x.min()
-		ymax = info.x.max()
-		
-	       
-	     #E field plots
-	    im1 = ax[0,0].imshow(np.transpose(Ex), cmap='seismic', extent=[xmin , xmax, ymin, ymax])
-	    ax[0,0].set_title(f'E$_x$', fontsize=20)   
-	    divider1 = make_axes_locatable(ax[0,0])
-	    cax = divider1.append_axes('right', size='5%', pad=0.05)
-	    fig.colorbar(im1, cax=cax, orientation='vertical')
-	    
-	    
-	    im2 = ax[0,1].imshow(np.transpose(Ey), cmap='seismic', extent=[xmin , xmax, ymin, ymax])
-	    ax[0,1].set_title(f'E$_y$', fontsize=20)   
-	    divider2 = make_axes_locatable(ax[0,1])
-	    cax = divider2.append_axes('right', size='5%', pad=0.05)
-	    fig.colorbar(im2, cax=cax, orientation='vertical')
+        fig, ax = plt.subplots(ncols=4, nrows=2, figsize=(40, 10), dpi=100., sharex=True, sharey=True)
 
-	    im3 = ax[0,2].imshow(np.transpose(Ez), cmap='seismic', extent=[xmin , xmax, ymin, ymax])
-	    ax[0,2].set_title(f'E$_z$', fontsize=20)   
-	    divider3 = make_axes_locatable(ax[0,2])
-	    cax = divider3.append_axes('right', size='5%', pad=0.05)
-	    fig.colorbar(im3, cax=cax, orientation='vertical')
-	    
-	    #B field plots
-	    im4 = ax[1,0].imshow(np.transpose(Bx), cmap='seismic', extent=[xmin , xmax, ymin, ymax])
-	    ax[1,0].set_title(f'B$_x$', fontsize=20)   
-	    divider4 = make_axes_locatable(ax[1,0])
-	    cax = divider4.append_axes('right', size='5%', pad=0.05)
-	    fig.colorbar(im4, cax=cax, orientation='vertical')
-	    
-	    
-	    im5 = ax[1,1].imshow(np.transpose(By), cmap='seismic', extent=[xmin , xmax, ymin, ymax])
-	    ax[1,1].set_title(f'B$_y$', fontsize=20)   
-	    divider5 = make_axes_locatable(ax[1,1])
-	    cax = divider5.append_axes('right', size='5%', pad=0.05)
-	    fig.colorbar(im5, cax=cax, orientation='vertical')
+        #E field
+        Ex, info = series.get_field(field='E', coord='x', iteration=n, plot=False, slice_across=slice_axis)
+        Ey, info = series.get_field(field='E', coord='y', iteration=n, plot=False, slice_across=slice_axis)
+        Ez, info = series.get_field(field='E', coord='z', iteration=n, plot=False, slice_across=slice_axis)
 
-	    im6 = ax[1,2].imshow(np.transpose(Bz), cmap='seismic', extent=[xmin , xmax, ymin, ymax])
-	    ax[1,2].set_title(f'B$_z$', fontsize=20)   
-	    divider6 = make_axes_locatable(ax[1,2])
-	    cax = divider6.append_axes('right', size='5%', pad=0.05)
-	    fig.colorbar(im6, cax=cax, orientation='vertical')
-	      
-	    #Rho plots
-	    im7 = ax[0,3].imshow(np.transpose(rho_beam1+rho_beam2), cmap='seismic', extent=[xmin , xmax, ymin, ymax])
-	    ax[0,3].set_title(f'rho$_{{\tbeams{{}}}}$', fontsize=20)   
-	    divider7 = make_axes_locatable(ax[0,3])
-	    cax = divider7.append_axes('right', size='5%', pad=0.05)
-	    fig.colorbar(im7, cax=cax, orientation='vertical')
-	    
-	    
-	    im8 = ax[1,3].imshow(np.transpose(rho_ele1+rho_pos1+rho_ele2+rho_pos2), cmap='seismic', extent=[xmin , xmax, ymin, ymax])
-	    ax[1,3].set_title(f'rho$_{{\tsecondaries{{}}}}$', fontsize=20)  
-	    divider8 = make_axes_locatable(ax[1,3])
-	    cax = divider8.append_axes('right', size='5%', pad=0.05)
-	    fig.colorbar(im8, cax=cax, orientation='vertical')
-	    
-	    
-	    ax[1,0].set_ylabel(ylabel, fontsize=20)
-	    ax[0,0].set_ylabel(ylabel, fontsize=20)
-	    ax[1,1].set_xlabel(xlabel, fontsize=20)
-	    ax[1,2].set_xlabel(xlabel, fontsize=20)
-	    ax[1,3].set_xlabel(xlabel, fontsize=20)
-	    ax[1,0].set_xlabel(xlabel, fontsize=20)
-	 
+        #B field
+        Bx, info = series.get_field(field='B', coord=slice_axis, iteration=n, plot=False, slice_across=slice_axis)
+        By, info = series.get_field(field='B', coord='y', iteration=n, plot=False, slice_across=slice_axis)
+        Bz, info = series.get_field(field='B', coord='z', iteration=n, plot=False, slice_across=slice_axis)
 
-	    fig.suptitle(f'Iteration {n:0}', fontsize=20)
-	    plt.tight_layout()
+        # Rho
+        rho_beam1, info = series.get_field(field='rho_beam1', iteration=n, plot=False, slice_across=slice_axis)
+        rho_beam2, info = series.get_field(field='rho_beam2', iteration=n, plot=False, slice_across=slice_axis)
+        rho_ele1, info = series.get_field(field='rho_ele1', iteration=n, plot=False, slice_across=slice_axis)
+        rho_pos1, info = series.get_field(field='rho_pos1', iteration=n, plot=False, slice_across=slice_axis)
+        rho_ele2, info = series.get_field(field='rho_ele2', iteration=n, plot=False, slice_across=slice_axis)
+        rho_pos2, info = series.get_field(field='rho_pos2', iteration=n, plot=False, slice_across=slice_axis)
 
-	    image_file_name = 'FULL_'+slice_axis+f'{n:03d}.png'
-	    plt.savefig(image_file_name, dpi=100, bbox_inches='tight')
-	    plt.close()
+        xmin = info.z.min()
+        xmax = info.z.max()
+        if slice_axis == 'x':
+        ymin = info.y.min()
+        ymax = info.y.max()
+        elif slice_axis == 'y':
+        ymin = info.x.min()
+        ymax = info.x.max()
+
+
+         #E field plots
+        im1 = ax[0,0].imshow(np.transpose(Ex), cmap='seismic', extent=[xmin , xmax, ymin, ymax])
+        ax[0,0].set_title(f'E$_x$', fontsize=20)
+        divider1 = make_axes_locatable(ax[0,0])
+        cax = divider1.append_axes('right', size='5%', pad=0.05)
+        fig.colorbar(im1, cax=cax, orientation='vertical')
+
+
+        im2 = ax[0,1].imshow(np.transpose(Ey), cmap='seismic', extent=[xmin , xmax, ymin, ymax])
+        ax[0,1].set_title(f'E$_y$', fontsize=20)
+        divider2 = make_axes_locatable(ax[0,1])
+        cax = divider2.append_axes('right', size='5%', pad=0.05)
+        fig.colorbar(im2, cax=cax, orientation='vertical')
+
+        im3 = ax[0,2].imshow(np.transpose(Ez), cmap='seismic', extent=[xmin , xmax, ymin, ymax])
+        ax[0,2].set_title(f'E$_z$', fontsize=20)
+        divider3 = make_axes_locatable(ax[0,2])
+        cax = divider3.append_axes('right', size='5%', pad=0.05)
+        fig.colorbar(im3, cax=cax, orientation='vertical')
+
+        #B field plots
+        im4 = ax[1,0].imshow(np.transpose(Bx), cmap='seismic', extent=[xmin , xmax, ymin, ymax])
+        ax[1,0].set_title(f'B$_x$', fontsize=20)
+        divider4 = make_axes_locatable(ax[1,0])
+        cax = divider4.append_axes('right', size='5%', pad=0.05)
+        fig.colorbar(im4, cax=cax, orientation='vertical')
+
+
+        im5 = ax[1,1].imshow(np.transpose(By), cmap='seismic', extent=[xmin , xmax, ymin, ymax])
+        ax[1,1].set_title(f'B$_y$', fontsize=20)
+        divider5 = make_axes_locatable(ax[1,1])
+        cax = divider5.append_axes('right', size='5%', pad=0.05)
+        fig.colorbar(im5, cax=cax, orientation='vertical')
+
+        im6 = ax[1,2].imshow(np.transpose(Bz), cmap='seismic', extent=[xmin , xmax, ymin, ymax])
+        ax[1,2].set_title(f'B$_z$', fontsize=20)
+        divider6 = make_axes_locatable(ax[1,2])
+        cax = divider6.append_axes('right', size='5%', pad=0.05)
+        fig.colorbar(im6, cax=cax, orientation='vertical')
+
+        #Rho plots
+        im7 = ax[0,3].imshow(np.transpose(rho_beam1+rho_beam2), cmap='seismic', extent=[xmin , xmax, ymin, ymax])
+        ax[0,3].set_title(f'rho$_{{\tbeams{{}}}}$', fontsize=20)
+        divider7 = make_axes_locatable(ax[0,3])
+        cax = divider7.append_axes('right', size='5%', pad=0.05)
+        fig.colorbar(im7, cax=cax, orientation='vertical')
+
+
+        im8 = ax[1,3].imshow(np.transpose(rho_ele1+rho_pos1+rho_ele2+rho_pos2), cmap='seismic', extent=[xmin , xmax, ymin, ymax])
+        ax[1,3].set_title(f'rho$_{{\tsecondaries{{}}}}$', fontsize=20)
+        divider8 = make_axes_locatable(ax[1,3])
+        cax = divider8.append_axes('right', size='5%', pad=0.05)
+        fig.colorbar(im8, cax=cax, orientation='vertical')
+
+
+        ax[1,0].set_ylabel(ylabel, fontsize=20)
+        ax[0,0].set_ylabel(ylabel, fontsize=20)
+        ax[1,1].set_xlabel(xlabel, fontsize=20)
+        ax[1,2].set_xlabel(xlabel, fontsize=20)
+        ax[1,3].set_xlabel(xlabel, fontsize=20)
+        ax[1,0].set_xlabel(xlabel, fontsize=20)
+
+
+        fig.suptitle(f'Iteration {n:0}', fontsize=20)
+        plt.tight_layout()
+
+        image_file_name = 'FULL_'+slice_axis+f'{n:03d}.png'
+        plt.savefig(image_file_name, dpi=100, bbox_inches='tight')
+        plt.close()
 
    .. tab-item:: Reduced Diagnostics
 
@@ -207,53 +207,51 @@ The small-scale simulation has been performed with a resolution of ``nx = 64, ny
 
          # You can copy this file from Examples/Physics_applications/beam-beam_collisions/Plot_reduced_.py
          # Contents of Plot_reduced_.py
-	import numpy as np
-	import matplotlib.pyplot as plt
-	from scipy.constants import micron, c, pi, m_e, femto, e, milli, eV, physical_constants, alpha, nano
-	from matplotlib import use, cm
-	import matplotlib.colors
-	import pandas as pd 
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from scipy.constants import micron, c, pi, m_e, femto, e, milli, eV, physical_constants, alpha, nano
+    from matplotlib import use, cm
+    import matplotlib.colors
+    import pandas as pd
 
-	r_e = physical_constants['classical electron radius'][0]
-	my_dpi=300
-	sigmaz = 10*nano
+    r_e = physical_constants['classical electron radius'][0]
+    my_dpi=300
+    sigmaz = 10*nano
 
-	fig, ax = plt.subplots(ncols=2, nrows=1, figsize=(2000./my_dpi, 1000./my_dpi), dpi=my_dpi)
+    fig, ax = plt.subplots(ncols=2, nrows=1, figsize=(2000./my_dpi, 1000./my_dpi), dpi=my_dpi)
 
-	rdir= './diags/reducedfiles/'
+    rdir= './diags/reducedfiles/'
 
-	df_cr = pd.read_csv(f'{rdir}'+'ColliderRelevant_beam1_beam2.txt', sep=" ", header=0)
-	df_pn = pd.read_csv(f'{rdir}'+'ParticleNumber.txt', sep=" ", header=0)
+    df_cr = pd.read_csv(f'{rdir}'+'ColliderRelevant_beam1_beam2.txt', sep=" ", header=0)
+    df_pn = pd.read_csv(f'{rdir}'+'ParticleNumber.txt', sep=" ", header=0)
 
 
-	times = df_cr[[col for col in df_cr.columns if f']time' in col]].to_numpy()
-	steps = df_cr[[col for col in df_cr.columns if f']step' in col]].to_numpy()
+    times = df_cr[[col for col in df_cr.columns if f']time' in col]].to_numpy()
+    steps = df_cr[[col for col in df_cr.columns if f']step' in col]].to_numpy()
 
-	x = df_cr[[col for col in df_cr.columns if f']dL_dt' in col]].to_numpy()
-	coll_index = np.argmax(x)
-	coll_time = times[coll_index]
+    x = df_cr[[col for col in df_cr.columns if f']dL_dt' in col]].to_numpy()
+    coll_index = np.argmax(x)
+    coll_time = times[coll_index]
 
-	# number of photons per beam particle 
-	np1 = df_pn[[col for col in df_pn.columns if f']pho1_weight' in col]].to_numpy()
-	np2 = df_pn[[col for col in df_pn.columns if f']pho2_weight' in col]].to_numpy()
-	Ne = df_pn[[col for col in df_pn.columns if f']beam1_weight' in col]].to_numpy()[0]
-	Np = df_pn[[col for col in df_pn.columns if f']beam2_weight' in col]].to_numpy()[0]
+    # number of photons per beam particle
+    np1 = df_pn[[col for col in df_pn.columns if f']pho1_weight' in col]].to_numpy()
+    np2 = df_pn[[col for col in df_pn.columns if f']pho2_weight' in col]].to_numpy()
+    Ne = df_pn[[col for col in df_pn.columns if f']beam1_weight' in col]].to_numpy()[0]
+    Np = df_pn[[col for col in df_pn.columns if f']beam2_weight' in col]].to_numpy()[0]
 
-	ax[0].plot((times-coll_time)/(sigmaz/c), (np1+np2)/(Ne+Np), lw=2)
-	ax[0].set_title(r'photon number/beam particle')
+    ax[0].plot((times-coll_time)/(sigmaz/c), (np1+np2)/(Ne+Np), lw=2)
+    ax[0].set_title(r'photon number/beam particle')
 
-	# number of NLBW particles per beam particle 
-	e1 = df_pn[[col for col in df_pn.columns if f']ele1_weight' in col]].to_numpy()
-	e2 = df_pn[[col for col in df_pn.columns if f']ele2_weight' in col]].to_numpy()
+    # number of NLBW particles per beam particle
+    e1 = df_pn[[col for col in df_pn.columns if f']ele1_weight' in col]].to_numpy()
+    e2 = df_pn[[col for col in df_pn.columns if f']ele2_weight' in col]].to_numpy()
 
-	ax[1].plot((times-coll_time)/(sigmaz/c), (e1+e2)/(Ne+Np), lw=2)
-	ax[1].set_title(r'NLBW particles/beam particle')
-	   
-	for a in ax.reshape(-1):
-	    a.set_xlabel(r'time [$\sigma_z/c$]')
-	image_file_name ='reduced.png'
-	plt.tight_layout()
-	plt.savefig(image_file_name,dpi=300, bbox_inches='tight') 
-	plt.close("all")
-         
+    ax[1].plot((times-coll_time)/(sigmaz/c), (e1+e2)/(Ne+Np), lw=2)
+    ax[1].set_title(r'NLBW particles/beam particle')
 
+    for a in ax.reshape(-1):
+        a.set_xlabel(r'time [$\sigma_z/c$]')
+    image_file_name ='reduced.png'
+    plt.tight_layout()
+    plt.savefig(image_file_name,dpi=300, bbox_inches='tight')
+    plt.close("all")
