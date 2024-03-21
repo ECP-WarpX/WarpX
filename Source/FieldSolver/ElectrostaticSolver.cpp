@@ -356,6 +356,11 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
     const std::optional<amrex::Vector<amrex::FArrayBoxFactory const *> > eb_farray_box_factory;
 #endif
 
+    bool is_solver_multigrid = true;
+    if(WarpX::poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction){
+        is_solver_multigrid = false;
+    }
+
     ablastr::fields::computePhi(
         sorted_rho,
         sorted_phi,
@@ -368,6 +373,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
         this->dmap,
         this->grids,
         this->m_poisson_boundary_handler,
+        is_solver_multigrid,
         WarpX::do_single_precision_comms,
         this->ref_ratio,
         post_phi_calculation,

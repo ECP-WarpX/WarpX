@@ -104,12 +104,12 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
             amrex::Vector<amrex::DistributionMapping> const dmap,
             amrex::Vector<amrex::BoxArray> const grids,
             T_BoundaryHandler const boundary_handler,
+            [[maybe_unused]] bool is_solver_multigrid,
             bool const do_single_precision_comms = false,
             std::optional<amrex::Vector<amrex::IntVect> > rel_ref_ratio = std::nullopt,
             [[maybe_unused]] T_PostPhiCalculationFunctor post_phi_calculation = std::nullopt,
             [[maybe_unused]] std::optional<amrex::Real const> current_time = std::nullopt, // only used for EB
-            [[maybe_unused]] std::optional<amrex::Vector<T_FArrayBoxFactory const *> > eb_farray_box_factory = std::nullopt, // only used for EB
-            [[maybe_unused]] bool const is_solver_multigrid = true
+            [[maybe_unused]] std::optional<amrex::Vector<T_FArrayBoxFactory const *> > eb_farray_box_factory = std::nullopt // only used for EB
 )
 {
     using namespace amrex::literals;
