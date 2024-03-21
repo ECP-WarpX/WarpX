@@ -1462,9 +1462,6 @@ private:
     //! Author of an input file / simulation setup
     std::string m_authors;
 
-    //! check typos in inputs after step 1
-    bool m_early_params_checked = false;
-
     amrex::Vector<int> istep;      // which step?
     amrex::Vector<int> nsubsteps;  // how many substeps on each level?
 
@@ -1771,7 +1768,7 @@ private:
      * At the beginning, we have B^{n} and E^{n}.
      * Particles have p^{n} and x^{n}.
      */
-    void ExplicitEBUpdate ();
+    void ExplicitFillBoundaryEBUpdateAux ();
 
     void PushPSATD ();
 

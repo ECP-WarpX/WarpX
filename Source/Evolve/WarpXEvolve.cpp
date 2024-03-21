@@ -70,6 +70,9 @@ WarpX::Evolve (int numsteps)
     // Note that the default argument is numsteps = -1
     const int numsteps_max = (numsteps < 0)?(max_step):(istep[0] + numsteps);
 
+    // check typos in inputs after step 1
+    bool early_params_checked = false;
+
     static Real evolve_time = 0;
 
     const int step_begin = istep[0];
@@ -93,7 +96,7 @@ WarpX::Evolve (int numsteps)
 
         if (evolve_scheme == EvolveScheme::Explicit)
         {
-            ExplicitEBUpdate();
+            ExplicitFillBoundaryEBUpdateAux();
         }
 
         // If needed, deposit the initial ion charge and current densities that
@@ -273,7 +276,10 @@ WarpX::Evolve (int numsteps)
         ExecutePythonCallback("afterdiagnostics");
 
         // inputs: unused parameters (e.g. typos) check after step 1 has finished
-        checkEarlyUnusedParams();
+        if (!early_params_checked) {
+            checkEarlyUnusedParams();
+            early_params_checked = true;
+        }
 
         // create ending time stamp for calculating elapsed time each iteration
         const auto evolve_time_end_step = static_cast<Real>(amrex::second());
@@ -424,22 +430,19 @@ bool WarpX::checkStopSimulation (amrex::Real cur_time)
     }
 }
 
-void WarpX::checkEarlyUnusedParams()
+void WarpX::checkEarlyUnusedParams ()
 {
-    if (!m_early_params_checked) {
-        amrex::Print() << "\n"; // better: conditional \n based on return value
-        amrex::ParmParse::QueryUnusedInputs();
+    amrex::Print() << "\n"; // better: conditional \n based on return value
+    amrex::ParmParse::QueryUnusedInputs();
 
-        // Print the warning list right after the first step.
-        amrex::Print() << ablastr::warn_manager::GetWMInstance().PrintGlobalWarnings("FIRST STEP");
-        m_early_params_checked = true;
-    }
+    // Print the warning list right after the first step.
+    amrex::Print() << ablastr::warn_manager::GetWMInstance().PrintGlobalWarnings("FIRST STEP");
 }
 
-void WarpX::ExplicitEBUpdate ()
+void WarpX::ExplicitFillBoundaryEBUpdateAux ()
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(evolve_scheme == EvolveScheme::Explicit,
-        "Cannot call WarpX::ExplicitEBUpdate wihtout Explicit evolve scheme set!");
+        "Cannot call WarpX::ExplicitFillBoundaryEBUpdateAux wihtout Explicit evolve scheme set!");
 
     // At the beginning, we have B^{n} and E^{n}.
     // Particles have p^{n} and x^{n}.
