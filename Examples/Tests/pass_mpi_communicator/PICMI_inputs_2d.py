@@ -6,7 +6,6 @@
 # --- if the correct amount of processors are initialized in AMReX.
 
 from mpi4py import MPI
-
 from pywarpx import picmi
 
 constants = picmi.constants

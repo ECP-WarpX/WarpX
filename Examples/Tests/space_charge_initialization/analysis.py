@@ -20,8 +20,8 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.constants as scc
-from scipy.special import gammainc
 import yt
+from scipy.special import gammainc
 
 yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')

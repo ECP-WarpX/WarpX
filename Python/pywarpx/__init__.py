@@ -23,6 +23,7 @@ if os.name == "nt":
         if os.path.exists(p_abs):
             os.add_dll_directory(p_abs)
 
+from ._libwarpx import libwarpx
 from .Algo import algo
 from .Amr import amr
 from .Amrex import amrex
@@ -36,10 +37,9 @@ from .HybridPICModel import hybridpicmodel
 from .Interpolation import interpolation
 from .Lasers import lasers
 from .LoadThirdParty import load_cupy
-from .PSATD import psatd
 from .Particles import newspecies, particles
+from .PSATD import psatd
 from .WarpX import warpx
-from ._libwarpx import libwarpx
 
 # This is a circular import and must happen after the import of libwarpx
 from . import picmi  # isort:skip

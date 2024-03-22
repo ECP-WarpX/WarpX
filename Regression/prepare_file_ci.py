@@ -6,6 +6,7 @@
 # License: BSD-3-Clause-LBNL
 
 import os
+
 # This script modifies `WarpX-test.ini` (which is used for nightly builds)
 # and creates the file `ci-test.ini` (which is used for continuous
 # integration)
