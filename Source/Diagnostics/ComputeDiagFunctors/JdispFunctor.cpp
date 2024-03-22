@@ -27,15 +27,12 @@ JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buff
     auto& warpx = WarpX::GetInstance();
     auto* hybrid_pic_model = warpx.get_pointer_HybridPICModel();
 
-    /** pointer to source1 (total simulation current J) multifab */
+    /** pointer to total simulation current (J) multifab */
     amrex::MultiFab* m_mf_j = warpx.get_pointer_current_fp(m_lev, m_dir);
     amrex::MultiFab* m_mf_curlB;
-    [[maybe_unused]] amrex::MultiFab* m_mf_j_external;
     if (hybrid_pic_model) {
-        /** pointer to source2 (current calculated from Ampere's Law, Jamp) multifab */
+        /** pointer to current calculated from Ampere's Law (Jamp) multifab */
         m_mf_curlB = hybrid_pic_model->get_pointer_current_fp_ampere(m_lev, m_dir);
-        /** pointer to source3 (external currents, Jext) multifab */
-        m_mf_j_external = hybrid_pic_model->get_pointer_current_fp_external(m_lev, m_dir);
     } else {
         // To finish this implementation, we need to implement a method to
         // calculate (∇ x B).
@@ -59,8 +56,11 @@ JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buff
         -1, *m_mf_j, 0, 0, 1, Jdisp.nGrowVect()
     );
 
-   // Subtract the interpolated j_external value from j_displacement.
     if (hybrid_pic_model) {
+        // Subtract the interpolated j_external value from j_displacement.
+        /** pointer to external currents (Jext) multifab */
+        amrex::MultiFab* m_mf_j_external = hybrid_pic_model->get_pointer_current_fp_external(m_lev, m_dir);
+
         // Index type required for interpolating Jext from their respective
         // staggering (nodal) to the Jx_displacement, Jy_displacement, Jz_displacement
         // locations. The staggering of J_displacement is the same as the
