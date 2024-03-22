@@ -200,7 +200,7 @@ void BeamRelevant::ComputeDiags (int step)
         using PType = typename WarpXParticleContainer::SuperParticleType;
 
         // number of reduction operations in first concurrent batch
-        const int num_red_ops_1 = 8;
+        constexpr size_t num_red_ops_1 = 8;
         TypeMultiplier<amrex::ReduceOps, ReduceOpSum[num_red_ops_1]> reduce_ops_1;
         using ReducedDataT1 = TypeMultiplier<amrex::ReduceData, ParticleReal[num_red_ops_1]>;
 
@@ -276,7 +276,7 @@ void BeamRelevant::ComputeDiags (int step)
         }
 
         // number of reduction operations in second concurrent batch
-        const int num_red_ops_2 = 11;
+        constexpr size_t num_red_ops_2 = 11;
 
         TypeMultiplier<amrex::ReduceOps, ReduceOpSum[num_red_ops_2]> reduce_ops2;
         using ReducedDataT2 = TypeMultiplier<amrex::ReduceData, ParticleReal[num_red_ops_2]>;
