@@ -3,7 +3,7 @@ name: 🧴 clang sanitizers
 on: [push, pull_request]
 
 concurrency:
-  group: ${{ github.ref }}-${{ github.head_ref }}-clangtidy
+  group: ${{ github.ref }}-${{ github.head_ref }}-clangsanitizers
   cancel-in-progress: true
 
 jobs:
