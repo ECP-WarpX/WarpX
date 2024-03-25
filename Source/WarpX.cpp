@@ -800,12 +800,6 @@ WarpX::ReadParameters ()
 
         utils::parser::queryWithParser(pp_warpx, "const_dt", m_const_dt);
 
-        // Filter currently not working with FDTD solver in RZ geometry: turn OFF by default
-        // (see https://github.com/ECP-WarpX/WarpX/issues/1943)
-#ifdef WARPX_DIM_RZ
-        if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) { WarpX::use_filter = false; }
-#endif
-
         // Read filter and fill IntVect filter_npass_each_dir with
         // proper size for AMREX_SPACEDIM
         pp_warpx.query("use_filter", use_filter);
