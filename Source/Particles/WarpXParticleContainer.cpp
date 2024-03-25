@@ -1306,9 +1306,9 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
     return rho;
 }
 
-amrex::ParticleReal WarpXParticleContainer::sumParticleCharge(bool local) {
+amrex::ParticleReal WarpXParticleContainer::sumParticleWeight(bool local) {
 
-    amrex::ParticleReal total_charge = 0.0;
+    amrex::ParticleReal total_weight = 0.0;
     ReduceOps<ReduceOpSum> reduce_op;
     ReduceData<ParticleReal> reduce_data(reduce_op);
 
@@ -1328,11 +1328,15 @@ amrex::ParticleReal WarpXParticleContainer::sumParticleCharge(bool local) {
         }
     }
 
-    total_charge = get<0>(reduce_data.value());
+    total_weight = get<0>(reduce_data.value());
 
-    if (!local) { ParallelDescriptor::ReduceRealSum(total_charge); }
-    total_charge *= this->charge;
-    return total_charge;
+    if (!local) { ParallelDescriptor::ReduceRealSum(total_weight); }
+    return total_weight;
+}
+
+amrex::ParticleReal WarpXParticleContainer::sumParticleCharge(bool local) {
+
+    return this->sumParticleWeight(local) * this->charge;
 }
 
 std::array<ParticleReal, 3> WarpXParticleContainer::meanParticleVelocity(bool local) {

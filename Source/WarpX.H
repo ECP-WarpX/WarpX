@@ -131,6 +131,7 @@ public:
     MultiFluidContainer& GetFluidContainer () { return *myfl; }
     MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
     HybridPICModel& GetHybridPICModel () { return *m_hybrid_pic_model; }
+    [[nodiscard]] HybridPICModel * get_pointer_HybridPICModel () const { return m_hybrid_pic_model.get(); }
     MultiDiagnostics& GetMultiDiags () {return *multi_diags;}
 #ifdef AMREX_USE_EB
     amrex::Vector<std::unique_ptr<amrex::MultiFab> >& GetDistanceToEB () {return m_distance_to_eb;}
