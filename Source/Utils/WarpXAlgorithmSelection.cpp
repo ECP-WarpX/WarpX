@@ -101,7 +101,6 @@ const std::map<std::string, int> rho_in_time_to_int = {
 
 const std::map<std::string, int> load_balance_costs_update_algo_to_int = {
     {"timers",    LoadBalanceCostsUpdateAlgo::Timers },
-    {"gpuclock",  LoadBalanceCostsUpdateAlgo::GpuClock },
     {"heuristic", LoadBalanceCostsUpdateAlgo::Heuristic },
     {"default",   LoadBalanceCostsUpdateAlgo::Timers }
 };
