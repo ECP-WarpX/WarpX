@@ -421,13 +421,8 @@ WarpX::OneStep_nosub (Real cur_time)
 bool WarpX::checkStopSimulation (amrex::Real cur_time)
 {
     m_exit_loop_due_to_interrupt_signal = SignalHandling::TestAndResetActionRequestFlag(SignalHandling::SIGNAL_REQUESTS_BREAK);
-    if (cur_time >= stop_time - 1.e-3*dt[0] || m_exit_loop_due_to_interrupt_signal) {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return (cur_time >= stop_time - 1.e-3*dt[0])  ||
+        m_exit_loop_due_to_interrupt_signal;
 }
 
 void WarpX::checkEarlyUnusedParams ()
