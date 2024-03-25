@@ -31,7 +31,7 @@ electron.momentum_distribution_type = "constant"
 electron.ux = 0.0
 electron.uy = 0.0
 electron.uz = 25000
-electron.initialize_self_fields = 1 
+electron.initialize_self_fields = 1
 
 diagnostics.diags_names = diag1 diag2
 
