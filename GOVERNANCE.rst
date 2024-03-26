@@ -53,7 +53,7 @@ Current Roster
 ^^^^^^^^^^^^^^
 
 - Luca Fedeli
-- Roelof Groenwald
+- Roelof Groenewald
 - David Grote
 - Axel Huebl
 - Revathi Jambunathan
