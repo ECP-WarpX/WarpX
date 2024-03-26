@@ -220,7 +220,7 @@ WarpX::PrintMainPICparameters ()
     }
     if(electrostatic_solver_id != ElectrostaticSolverAlgo::None){
         if(poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction){
-            amrex::Print() << "Poisson solver:       | fft-based" << "\n";
+            amrex::Print() << "Poisson solver:       | FFT-based" << "\n";
         }
         else if(poisson_solver_id == PoissonSolverAlgo::Multigrid){
             amrex::Print() << "Poisson solver:       | multigrid" << "\n";
