@@ -162,7 +162,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 #endif
 
 #if (defined(WARPX_USE_PSATD)  && defined(WARPX_DIM_3D))
-        // Use the Integrated Green Function solver (fft-based) on the coarsest level if it was selected
+        // Use the Integrated Green Function solver (FFT) on the coarsest level if it was selected
         if(!is_solver_multigrid && lev==0){
             rho[lev]->mult(-PhysConst::ep0);
             amrex::Array<amrex::Real,AMREX_SPACEDIM> const dx_igf
@@ -178,6 +178,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         }
 #endif
 
+// Use the Multigrid (MLMG) solver if selected or on refined patches 
 #if !(defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ))
         // Determine whether to use semi-coarsening
         amrex::Array<amrex::Real,AMREX_SPACEDIM> dx_scaled
