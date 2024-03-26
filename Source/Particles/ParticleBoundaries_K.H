@@ -85,7 +85,7 @@ namespace ApplyParticleBoundaries {
     {
         u_tang1 = (uth > 0._rt) ? PhysConst::c * amrex::RandomNormal(0._rt, uth, engine) : 0._rt;
         u_tang2 = (uth > 0._rt) ? PhysConst::c * amrex::RandomNormal(0._rt, uth, engine) : 0._rt;
-        u_norm = -1._rt * PhysConst::c * generateGaussianFluxDist(0._rt, uth, engine) * ((u_norm>0)-(u_norm<0));
+        u_norm = std::copysign(1._prt, -u_norm) * PhysConst::c * generateGaussianFluxDist(0._rt, uth, engine);
     }
 
 
