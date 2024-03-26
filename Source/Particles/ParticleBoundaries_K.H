@@ -128,41 +128,32 @@ namespace ApplyParticleBoundaries {
         bool change_sign_ux = false;
         bool change_sign_uy = false;
         bool change_sign_uz = false;
-        bool rethermalize_x = false; // stores if particle crosses x boundary and needs to be thermalized
-        bool rethermalize_y = false; // stores if particle crosses y boundary and needs to be thermalized
-        bool rethermalize_z = false; // stores if particle crosses z boundary and needs to be thermalized
 
 #ifndef WARPX_DIM_1D_Z
+        bool rethermalize_x = false; // stores if particle crosses x boundary and needs to be thermalized
         apply_boundary(x, xmin, xmax, change_sign_ux, rethermalize_x, particle_lost,
                        boundaries.xmin_bc, boundaries.xmax_bc,
                        boundaries.reflection_model_xlo(-ux), boundaries.reflection_model_xhi(ux),
                        engine);
-#else
-        amrex::ignore_unused(rethermalize_x);
-#endif
-#ifdef WARPX_DIM_3D
-        apply_boundary(y, ymin, ymax, change_sign_uy, rethermalize_y, particle_lost,
-                       boundaries.ymin_bc, boundaries.ymax_bc,
-                       boundaries.reflection_model_ylo(-uy), boundaries.reflection_model_yhi(uy),
-                       engine);
-#else
-        amrex::ignore_unused(rethermalize_y);
-#endif
-        apply_boundary(z, zmin, zmax, change_sign_uz, rethermalize_z, particle_lost,
-                       boundaries.zmin_bc, boundaries.zmax_bc,
-                       boundaries.reflection_model_zlo(-uz), boundaries.reflection_model_zhi(uz),
-                       engine);
-
-#ifndef WARPX_DIM_1D_Z
         if (rethermalize_x) {
             thermalize_boundary_particle(ux, uy, uz, boundaries.m_uth, engine);
         }
 #endif
 #ifdef WARPX_DIM_3D
+        bool rethermalize_y = false; // stores if particle crosses y boundary and needs to be thermalized
+        apply_boundary(y, ymin, ymax, change_sign_uy, rethermalize_y, particle_lost,
+                       boundaries.ymin_bc, boundaries.ymax_bc,
+                       boundaries.reflection_model_ylo(-uy), boundaries.reflection_model_yhi(uy),
+                       engine);
         if (rethermalize_y) {
             thermalize_boundary_particle(uy, uz, ux, boundaries.m_uth, engine);
         }
 #endif
+        bool rethermalize_z = false; // stores if particle crosses z boundary and needs to be thermalized
+        apply_boundary(z, zmin, zmax, change_sign_uz, rethermalize_z, particle_lost,
+                       boundaries.zmin_bc, boundaries.zmax_bc,
+                       boundaries.reflection_model_zlo(-uz), boundaries.reflection_model_zhi(uz),
+                       engine);
         if (rethermalize_z) {
             thermalize_boundary_particle(uz, ux, uy, boundaries.m_uth, engine);
         }
