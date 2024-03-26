@@ -178,7 +178,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         }
 #endif
 
-// Use the Multigrid (MLMG) solver if selected or on refined patches 
+// Use the Multigrid (MLMG) solver if selected or on refined patches
 #if !(defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ))
         // Determine whether to use semi-coarsening
         amrex::Array<amrex::Real,AMREX_SPACEDIM> dx_scaled
