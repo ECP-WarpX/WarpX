@@ -782,7 +782,7 @@ WarpX::ReadParameters ()
             electrostatic_solver_id!=ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic ||
             poisson_solver_id!=PoissonSolverAlgo::IntegratedGreenFunction
         ),
-        "The fft-based Poisson solver is not implemented in labframe-electromagnetostatic mode yet."
+        "The FFT-based Poisson solver is not implemented in labframe-electromagnetostatic mode yet."
         );
 
         // Parse the input file for domain boundary potentials
