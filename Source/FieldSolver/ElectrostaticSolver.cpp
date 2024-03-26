@@ -1066,7 +1066,7 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs (const amrex::Geo
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                     (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Open &&
                     WarpX::field_boundary_hi[idim] == FieldBoundaryType::Open),
-                    "The fft-based Poisson solver only works with field open boundary conditions "
+                    "The FFT-based Poisson solver only works with field open boundary conditions "
                     "in electrostatic mode."
                 );
             }
