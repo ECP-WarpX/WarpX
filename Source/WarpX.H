@@ -176,7 +176,7 @@ public:
     //! Flags whether the Picard iterations are required to converge
     static bool require_picard_convergence;
     /** Records a number corresponding to the load balance cost update strategy
-     *  being used (0, 1, 2 corresponding to timers, heuristic, or gpuclock).
+     *  being used (0 or 1 corresponding to timers or heuristic).
      */
     static short load_balance_costs_update_algo;
     //! Integer that corresponds to electromagnetic Maxwell solver (vacuum - 0, macroscopic - 1)

@@ -1134,6 +1134,9 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
     plasma_resistivity: float or str
         Value or expression to use for the plasma resistivity.
 
+    plasma_hyper_resistivity: float or str
+        Value or expression to use for the plasma hyper-resistivity.
+
     substeps: int, default=100
         Number of substeps to take when updating the B-field.
 
@@ -1822,7 +1825,7 @@ class Simulation(picmistandard.PICMI_Simulation):
     warpx_load_balance_knapsack_factor: float, default=1.24
         (See documentation)
 
-    warpx_load_balance_costs_update: {'heuristic' or 'timers' or 'gpuclock'}, optional
+    warpx_load_balance_costs_update: {'heuristic' or 'timers'}, optional
         (See documentation)
 
     warpx_costs_heuristic_particles_wt: float, optional

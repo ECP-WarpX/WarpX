@@ -27,19 +27,16 @@ JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buff
     auto& warpx = WarpX::GetInstance();
     auto* hybrid_pic_model = warpx.get_pointer_HybridPICModel();
 
-    /** pointer to source1 (total simulation current J) multifab */
-    amrex::MultiFab* m_mf_j = warpx.get_pointer_current_fp(m_lev, m_dir);
-    amrex::MultiFab* m_mf_curlB;
-    [[maybe_unused]] amrex::MultiFab* m_mf_j_external;
+    /** pointer to total simulation current (J) multifab */
+    amrex::MultiFab* mf_j = warpx.get_pointer_current_fp(m_lev, m_dir);
+    amrex::MultiFab* mf_curlB;
     if (hybrid_pic_model) {
-        /** pointer to source2 (current calculated from Ampere's Law, Jamp) multifab */
-        m_mf_curlB = hybrid_pic_model->get_pointer_current_fp_ampere(m_lev, m_dir);
-        /** pointer to source3 (external currents, Jext) multifab */
-        m_mf_j_external = hybrid_pic_model->get_pointer_current_fp_external(m_lev, m_dir);
+        /** pointer to current calculated from Ampere's Law (Jamp) multifab */
+        mf_curlB = hybrid_pic_model->get_pointer_current_fp_ampere(m_lev, m_dir);
     } else {
         // To finish this implementation, we need to implement a method to
         // calculate (∇ x B).
-        m_mf_curlB = nullptr;  // Remove when curlB implemented
+        mf_curlB = nullptr;  // Remove when curlB implemented
         WARPX_ABORT_WITH_MESSAGE(
             "Displacement current diagnostic is only implemented for the HybridPICModel.");
 
@@ -47,20 +44,23 @@ JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buff
         // Get curlB multifab
 
         // Divide curlB multifab by mu0 to get units of current
-        // m_mf_curlB->mult(1.0/PhysConsts::mu0)
+        // mf_curlB->mult(1.0/PhysConsts::mu0)
     }
     // A Jdisp multifab is generated to hold displacement current.
-    amrex::MultiFab Jdisp( m_mf_j->boxArray(), m_mf_j->DistributionMap(), 1, m_mf_j->nGrowVect() );
+    amrex::MultiFab Jdisp( mf_j->boxArray(), mf_j->DistributionMap(), 1, mf_j->nGrowVect() );
     Jdisp.setVal(0);
 
     // J_displacement = curl x B / mu0 - J
     amrex::MultiFab::LinComb(
-        Jdisp, 1, *m_mf_curlB, 0,
-        -1, *m_mf_j, 0, 0, 1, Jdisp.nGrowVect()
+        Jdisp, 1, *mf_curlB, 0,
+        -1, *mf_j, 0, 0, 1, Jdisp.nGrowVect()
     );
 
-   // Subtract the interpolated j_external value from j_displacement.
     if (hybrid_pic_model) {
+        // Subtract the interpolated j_external value from j_displacement.
+        /** pointer to external currents (Jext) multifab */
+        amrex::MultiFab* mf_j_external = hybrid_pic_model->get_pointer_current_fp_external(m_lev, m_dir);
+
         // Index type required for interpolating Jext from their respective
         // staggering (nodal) to the Jx_displacement, Jy_displacement, Jz_displacement
         // locations. The staggering of J_displacement is the same as the
@@ -69,8 +69,8 @@ JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buff
         // must match. We set them as (1,1,1).
         amrex::GpuArray<int, 3> Jext_IndexType = {1, 1, 1};
         amrex::GpuArray<int, 3> J_IndexType = {1, 1, 1};
-        amrex::IntVect Jext_stag = m_mf_j_external->ixType().toIntVect();
-        amrex::IntVect J_stag = m_mf_j->ixType().toIntVect();
+        amrex::IntVect Jext_stag = mf_j_external->ixType().toIntVect();
+        amrex::IntVect J_stag = mf_j->ixType().toIntVect();
 
         // Index types for the dimensions simulated are overwritten.
         for ( int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
@@ -90,7 +90,7 @@ JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buff
         for ( MFIter mfi(Jdisp, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
 
             Array4<Real> const& Jdisp_arr = Jdisp.array(mfi);
-            Array4<Real const> const& Jext = m_mf_j_external->const_array(mfi);
+            Array4<Real const> const& Jext = mf_j_external->const_array(mfi);
 
             //  Loop over cells and update the Jdisp MultiFab
             amrex::ParallelFor(mfi.tilebox(), [=] AMREX_GPU_DEVICE (int i, int j, int k){

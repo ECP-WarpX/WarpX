@@ -15,7 +15,7 @@ from functions_perftest import test_element
 
 
 def executable_name(compiler,architecture):
-    return 'perf_tests3d.' + compiler + '.TPROF.MTMPI.CUDA.QED.GPUCLOCK.ex'
+    return 'perf_tests3d.' + compiler + '.TPROF.MTMPI.CUDA.QED.ex'
 
 def get_config_command(compiler, architecture):
     config_command = ''
