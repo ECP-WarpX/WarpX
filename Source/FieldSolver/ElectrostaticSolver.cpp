@@ -1010,7 +1010,7 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs (const amrex::Geo
     amrex::ignore_unused(geom);
 #endif
     for (int idim=dim_start; idim<AMREX_SPACEDIM; idim++){
-    if(WarpX::poisson_solver_id == PoissonSolverAlgo::Multigrid){
+    if (WarpX::poisson_solver_id == PoissonSolverAlgo::Multigrid){
         if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Periodic
              && WarpX::field_boundary_hi[idim] == FieldBoundaryType::Periodic ) {
             lobc[idim] = LinOpBCType::Periodic;
