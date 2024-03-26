@@ -20,6 +20,7 @@ using namespace amrex;
 
 namespace
 {
+    /** Returns 1 if any domain boundary is set to PEC, else returns 0.*/
     [[nodiscard]]
     bool isAnyBoundaryPEC (
         const amrex::Vector<FieldBoundaryType>& field_boundary_lo,
@@ -30,6 +31,20 @@ namespace
 
         return std::any_of(field_boundary_lo.begin(), field_boundary_lo.end(), isPEC) ||
                std::any_of(field_boundary_hi.begin(), field_boundary_hi.end(), isPEC);
+    }
+
+
+    /** Return true if any particle boundary is set to reflecting, else returns false*/
+    [[nodiscard]]
+    bool isAnyParticleBoundaryReflecting (
+        const amrex::Vector<ParticleBoundaryType>& particle_boundary_lo,
+        const amrex::Vector<ParticleBoundaryType>& particle_boundary_hi)
+    {
+        const auto isReflecting = [](const auto& b){
+            return b == ParticleBoundaryType::Reflecting;};
+
+        return std::any_of(particle_boundary_lo.begin(), particle_boundary_lo.end(), isReflecting) ||
+               std::any_of(particle_boundary_hi.begin(), particle_boundary_hi.end(), isReflecting);
     }
 }
 
@@ -147,8 +162,10 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
 void WarpX::ApplyRhofieldBoundary (const int lev, MultiFab* rho,
                                    PatchType patch_type)
 {
-    if (::isAnyBoundaryPEC(field_boundary_lo, field_boundary_hi)) {
-        PEC::ApplyPECtoRhofield(rho,
+    if (::isAnyParticleBoundaryReflecting(particle_boundary_lo, particle_boundary_hi) ||
+        ::isAnyBoundaryPEC(field_boundary_lo, field_boundary_hi))
+    {
+        PEC::ApplyReflectiveBoundarytoRhofield(rho,
             field_boundary_lo, field_boundary_hi,
             particle_boundary_lo, particle_boundary_hi,
             Geom(lev), lev, patch_type, ref_ratio);
@@ -159,8 +176,10 @@ void WarpX::ApplyJfieldBoundary (const int lev, amrex::MultiFab* Jx,
                                  amrex::MultiFab* Jy, amrex::MultiFab* Jz,
                                  PatchType patch_type)
 {
-    if (::isAnyBoundaryPEC(field_boundary_lo, field_boundary_hi)) {
-        PEC::ApplyPECtoJfield(Jx, Jy, Jz,
+    if (::isAnyParticleBoundaryReflecting(particle_boundary_lo, particle_boundary_hi) ||
+        ::isAnyBoundaryPEC(field_boundary_lo, field_boundary_hi))
+    {
+        PEC::ApplyReflectiveBoundarytoJfield(Jx, Jy, Jz,
             field_boundary_lo, field_boundary_hi,
             particle_boundary_lo, particle_boundary_hi,
             Geom(lev), lev, patch_type, ref_ratio);

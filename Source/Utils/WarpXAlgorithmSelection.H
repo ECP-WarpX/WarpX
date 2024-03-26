@@ -138,9 +138,8 @@ struct RhoInTime {
 struct LoadBalanceCostsUpdateAlgo {
     enum {
         Timers    = 0, //!< load balance according to in-code timer-based weights (i.e., with  `costs`)
-        Heuristic = 1, /**< load balance according to weights computed from number of cells
-                             and number of particles per box (i.e., with `costs_heuristic`)*/
-        GpuClock  = 2
+        Heuristic = 1  /**< load balance according to weights computed from number of cells
+                             and number of particles per box (i.e., with `costs_heuristic`) */
     };
 };
 

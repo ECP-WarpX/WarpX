@@ -189,7 +189,7 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
                 if (phi_value < 0.0)
                 {
                     int ic, jc, kc; // Cell-centered indices
-                    int nodal;
+                    [[maybe_unused]] int nodal;
                     amrex::Real Wc[AMREX_SPACEDIM][2]; // Cell-centered weights
                     ablastr::particles::compute_weights(xp, yp, zp, plo, dxi, ic, jc, kc, Wc, nodal=0);
                     amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, ic, jc, kc, Wc, phi, dxi);

@@ -71,7 +71,7 @@ namespace PEC {
      * \param[in]     patch_type             coarse or fine
      * \param[in]     ref_ratios             vector containing the refinement ratios of the refinement levels
      */
-    void ApplyPECtoRhofield(
+    void ApplyReflectiveBoundarytoRhofield(
                         amrex::MultiFab* rho,
                         const amrex::Vector<FieldBoundaryType>& field_boundary_lo,
                         const amrex::Vector<FieldBoundaryType>& field_boundary_hi,
@@ -94,7 +94,7 @@ namespace PEC {
      * \param[in]     patch_type             coarse or fine
      * \param[in]     ref_ratios             vector containing the refinement ratios of the refinement levels
      */
-    void ApplyPECtoJfield(
+    void ApplyReflectiveBoundarytoJfield(
                         amrex::MultiFab* Jx, amrex::MultiFab* Jy,
                         amrex::MultiFab* Jz,
                         const amrex::Vector<FieldBoundaryType>& field_boundary_lo,

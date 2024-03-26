@@ -1,11 +1,4 @@
 #!/usr/bin/env python3
-#
-# Copyright 2022-2023 WarpX contributors
-# Authors: WarpX team
-# License: BSD-3-Clause-LBNL
-#
-# -*- coding: utf-8 -*-
-
 import math
 
 import numpy as np
@@ -21,7 +14,7 @@ ep0 = picmi.constants.ep0
 # Number of cells
 dim = '3'
 nx = ny = 128
-nz = 8832
+nz = 35328 #17664 #8832
 if dim == 'rz':
     nr = nx//2
 
@@ -33,9 +26,9 @@ zmax =  0.
 
 # Number of processes for static load balancing
 # Check with your submit script
-num_procs = [1, 1, 16*4]
+num_procs = [1, 1, 64*4]
 if dim == 'rz':
-    num_procs = [1, 16]
+    num_procs = [1, 64]
 
 # Number of time steps
 gamma_boost = 60.
@@ -73,7 +66,7 @@ else:
 
 # plasma region
 plasma_rlim = 100.e-6
-N_stage = 9
+N_stage = 15
 L_plasma_bulk = 0.28
 L_ramp = 1.e-9
 L_ramp_up = L_ramp
@@ -141,12 +134,12 @@ beam_charge = -10.e-15 # in Coulombs
 N_beam_particles = int(1e6)
 beam_centroid_z = -107.e-6
 beam_rms_z = 2.e-6
-#beam_gammas = [2000 + 13000 * i_stage for i_stage in range(N_stage)]
-beam_gammas = [1957, 15188, 28432, 41678, 54926, 68174, 81423,94672, 107922,121171] # From 3D run
+beam_gammas = [1960 + 13246 * i_stage for i_stage in range(N_stage)]
+#beam_gammas = [1957, 15188, 28432, 41678, 54926, 68174, 81423,94672, 107922,121171] # From 3D run
 beams = []
 for i_stage in range(N_stage):
     beam_gamma = beam_gammas[i_stage]
-    sigma_gamma = 0.10 * beam_gamma
+    sigma_gamma = 0.06 * beam_gamma
     gaussian_distribution = picmi.GaussianBunchDistribution(
         n_physical_particles= abs(beam_charge) / q_e,
         rms_bunch_size=[2.e-6, 2.e-6, beam_rms_z],
