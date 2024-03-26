@@ -81,6 +81,7 @@ namespace ablastr::fields {
  * \param[in] dmap the distribution mapping per level (e.g., from AmrMesh)
  * \param[in] grids the grids per level (e.g., from AmrMesh)
  * \param[in] boundary_handler a handler for boundary conditions, for example @see ElectrostaticSolver::PoissonBoundaryHandler
+ * \param[in] is_solver_multigrid boolean to select the Poisson solver: 1 for Multigrid, 0 for FFT  
  * \param[in] do_single_precision_comms perform communications in single precision
  * \param[in] rel_ref_ratio mesh refinement ratio between levels (default: 1)
  * \param[in] post_phi_calculation perform a calculation per level directly after phi was calculated; required for embedded boundaries (default: none)
