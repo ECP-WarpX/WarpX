@@ -32,6 +32,14 @@ export MPICH_GPU_SUPPORT_ENABLED=1
 export FI_MR_CACHE_MONITOR=memhooks  # alternative cache monitor
 
 # note
+# On machines with similar architectures (Frontier, OLCF) these settings
+# seem to prevent the following issue:
+# OLCFDEV-1597: OFI Poll Failed UNDELIVERABLE Errors
+# https://docs.olcf.ornl.gov/systems/frontier_user_guide.html#olcfdev-1597-ofi-poll-failed-undeliverable-errors
+export MPICH_SMP_SINGLE_COPY_MODE=NONE
+export FI_CXI_RX_MATCH_MODE=software
+
+# note
 # this environment setting is needed to avoid that rocFFT writes a cache in
 # the home directory, which does not scale.
 export ROCFFT_RTC_CACHE_PATH=/dev/null

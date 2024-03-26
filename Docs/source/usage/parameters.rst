@@ -395,11 +395,17 @@ Domain Boundary Conditions
     * ``damped``: This is the recommended option in the moving direction when using the spectral solver with moving window (currently only supported along z). This boundary condition applies a damping factor to the electric and magnetic fields in the outer half of the guard cells, using a sine squared profile. As the spectral solver is by nature periodic, the damping prevents fields from wrapping around to the other end of the domain when the periodicity is not desired. This boundary condition is only valid when using the spectral solver.
 
     * ``pec``: This option can be used to set a Perfect Electric Conductor at the simulation boundary. Please see the :ref:`PEC theory section <theory-bc-pec>` for more details. Note that PEC boundary is invalid at `r=0` for the RZ solver. Please use ``none`` option. This boundary condition does not work with the spectral solver.
-      If an electrostatic field solve is used the boundary potentials can also be set through ``boundary.potential_lo_x/y/z`` and ``boundary.potential_hi_x/y/z`` (default `0`).
 
     * ``none``: No boundary condition is applied to the fields with the electromagnetic solver. This option must be used for the RZ-solver at `r=0`.
 
     * ``neumann``: For the electrostatic solver, a Neumann boundary condition (with gradient of the potential equal to 0) will be applied on the specified boundary.
+
+* ``boundary.potential_lo_x/y/z`` and ``boundary.potential_hi_x/y/z`` (default `0`)
+    Gives the value of the electric potential at the boundaries, for ``pec`` boundaries. With electrostatic solvers
+    (i.e., with ``warpx.do_electrostatic = ...``), this is used in order to compute the potential
+    in the simulation volume at each timestep. When using other solvers (e.g. Maxwell solver),
+    setting these variables will trigger an electrostatic solve at ``t=0``, to compute the initial
+    electric field produced by the boundaries.
 
 * ``boundary.particle_lo`` and ``boundary.particle_hi`` (`2 strings` for 2D, `3 strings` for 3D, `absorbing` by default)
     Options are:
@@ -473,9 +479,12 @@ Embedded Boundary Conditions
     the interior of the embeddded boundary is where the function value is positive.
 
 * ``warpx.eb_potential(x,y,z,t)`` (`string`)
-    Only used when ``warpx.do_electrostatic=labframe``. Gives the value of
-    the electric potential at the surface of the embedded boundary,
-    as a function of  `x`, `y`, `z` and time. This function is also evaluated
+    Gives the value of the electric potential at the surface of the embedded boundary,
+    as a function of  `x`, `y`, `z` and `t`. With electrostatic solvers (i.e., with
+    ``warpx.do_electrostatic = ...``), this is used in order to compute the potential
+    in the simulation volume at each timestep. When using other solvers (e.g. Maxwell solver),
+    setting this variable will trigger an electrostatic solve at ``t=0``, to compute the initial
+    electric field produced by the boundaries. Note that this function is also evaluated
     inside the embedded boundary. For this reason, it is important to define
     this function in such a way that it is constant inside the embedded boundary.
 
@@ -548,7 +557,7 @@ Distribution across MPI ranks and parallelization
     For example, if there are 4 boxes per rank and `load_balance_knapsack_factor=2`,
     no more than 8 boxes can be assigned to any rank.
 
-* ``algo.load_balance_costs_update`` (`heuristic` or `timers` or `gpuclock`) optional (default `timers`)
+* ``algo.load_balance_costs_update`` (``heuristic`` or ``timers``) optional (default ``timers``)
     If this is `heuristic`: load balance costs are updated according to a measure of
     particles and cells assigned to each box of the domain.  The cost :math:`c` is
     computed as
@@ -564,10 +573,6 @@ Distribution across MPI ranks and parallelization
     :math:`w_{\text{cell}}` is the cell cost weight factor (controlled by ``algo.costs_heuristic_cells_wt``).
 
     If this is `timers`: costs are updated according to in-code timers.
-
-    If this is `gpuclock`: [**requires to compile with option** ``-DWarpX_GPUCLOCK=ON``]
-    costs are measured as (max-over-threads) time spent in current deposition
-    routine (only applies when running on GPUs).
 
 * ``algo.costs_heuristic_particles_wt`` (`float`) optional
     Particle weight factor used in `Heuristic` strategy for costs update; if running on GPU,
@@ -2254,6 +2259,9 @@ Maxwell solver: kinetic-fluid hybrid
 * ``hybrid_pic_model.plasma_resistivity(rho,J)`` (`float` or `str`) optional (default ``0``)
     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the plasma resistivity in :math:`\Omega m`.
 
+* ``hybrid_pic_model.plasma_hyper_resistivity`` (`float` or `str`) optional (default ``0``)
+    If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the plasma hyper-resistivity in :math:`\Omega m^3`.
+
 * ``hybrid_pic_model.J[x/y/z]_external_grid_function(x, y, z, t)`` (`float` or `str`) optional (default ``0``)
     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the external current (on the grid) in :math:`A/m^2`.
 
@@ -3310,6 +3318,8 @@ Lookup tables store pre-computed values for functions used by the QED modules.
 
         * ``qed_bw.save_table_in`` (`string`): where to save the lookup table
 
+      Alternatively, the lookup table can be generated using a standalone tool (see :ref:`qed tools section <generate-lookup-tables-with-tools>`).
+
     * ``load``: a lookup table is loaded from a pre-generated binary file. The following parameter
       must be specified:
 
@@ -3346,6 +3356,8 @@ Lookup tables store pre-computed values for functions used by the QED modules.
         * ``qed_qs.tab_em_frac_min`` (`float`): minimum value to be considered for the second axis of lookup table 2
 
         * ``qed_qs.save_table_in`` (`string`): where to save the lookup table
+
+      Alternatively, the lookup table can be generated using a standalone tool (see :ref:`qed tools section <generate-lookup-tables-with-tools>`).
 
     * ``load``: a lookup table is loaded from a pre-generated binary file. The following parameter
       must be specified:

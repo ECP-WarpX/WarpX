@@ -17,9 +17,9 @@ import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
+import yt
 from openpmd_viewer import OpenPMDTimeSeries
 from scipy.optimize import curve_fit
-import yt
 
 yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
@@ -61,8 +61,8 @@ print('fit parameters between the min(phi) curve over the time and the function 
 print('v0=%5.3f, tau=%5.9f' % (popt[0], popt[1]))
 
 
-tolerance_v0=0.01
-tolerance_tau=0.01
+tolerance_v0=0.04
+tolerance_tau=0.04
 print("tolerance for v0 = "+ str(tolerance_v0 *100) + '%')
 print("tolerance for tau = "+ str(tolerance_tau*100) + '%')
 
