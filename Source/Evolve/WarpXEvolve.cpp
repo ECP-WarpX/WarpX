@@ -225,7 +225,7 @@ WarpX::Evolve (int numsteps)
             }
         }
 
-        InjectRedistributeScapeParticles(step, cur_time, num_moved);
+        HandleParticlesAtBoundaries(step, cur_time, num_moved);
 
         // Field solve step for electrostatic or hybrid-PIC solvers
         if( electrostatic_solver_id != ElectrostaticSolverAlgo::None ||
@@ -484,7 +484,7 @@ void WarpX::ExplicitFillBoundaryEBUpdateAux ()
     }
 }
 
-void WarpX::InjectRedistributeScapeParticles (int step, amrex::Real cur_time, int num_moved)
+void WarpX::HandleParticlesAtBoundaries (int step, amrex::Real cur_time, int num_moved)
 {
     mypc->ContinuousFluxInjection(cur_time, dt[0]);
 

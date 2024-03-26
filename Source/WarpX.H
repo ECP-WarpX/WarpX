@@ -1751,7 +1751,7 @@ private:
      */
     void checkEarlyUnusedParams ();
 
-    /** Perform essential particle house keeping
+    /** Perform essential particle house keeping at boundaries
      *
      * Inject, communicate, scape and sort particles.
      *
@@ -1759,7 +1759,7 @@ private:
      * @param cur_time current time
      * @param num_moved number of cells the moving window moved
      */
-    void InjectRedistributeScapeParticles (int step, amrex::Real cur_time, int num_moved);
+    void HandleParticlesAtBoundaries (int step, amrex::Real cur_time, int num_moved);
 
     void ScrapeParticles ();
 
