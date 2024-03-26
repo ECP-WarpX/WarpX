@@ -475,7 +475,7 @@ void ReadBCParams ()
            WarpX::field_boundary_hi[idim] == FieldBoundaryType::Open){
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction,
-                "Field open boundary conditions are only implemented for the fft-based Poisson solver"
+                "Field open boundary conditions are only implemented for the FFT-based Poisson solver"
             );
         }
     }
