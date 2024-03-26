@@ -76,6 +76,10 @@ FieldProbeParticleContainer::AddNParticles (int lev,
 
     // number of particles to add
     auto const np = static_cast<int>(x.size());
+    if (np <= 0){
+        Redistribute();
+        return;
+    }
 
     // have to resize here, not in the constructor because grids have not
     // been built when constructor was called.
@@ -122,8 +126,8 @@ FieldProbeParticleContainer::AddNParticles (int lev,
     pinned_tile.push_back_real(FieldProbePIdx::Bz, np, 0.0);
     pinned_tile.push_back_real(FieldProbePIdx::S, np, 0.0);
 
-    auto old_np = particle_tile.numParticles();
-    auto new_np = old_np + pinned_tile.numParticles();
+    const auto old_np = particle_tile.numParticles();
+    const auto new_np = old_np + pinned_tile.numParticles();
     particle_tile.resize(new_np);
     amrex::copyParticles(
         particle_tile, pinned_tile, 0, old_np, pinned_tile.numParticles());

@@ -280,6 +280,7 @@ public:
     /// This is needed when solving Poisson's equation with periodic boundary conditions.
     ///
     amrex::ParticleReal sumParticleCharge(bool local = false);
+    amrex::ParticleReal sumParticleWeight(bool local = false);
 
     std::array<amrex::ParticleReal, 3> meanParticleVelocity(bool local = false);
 

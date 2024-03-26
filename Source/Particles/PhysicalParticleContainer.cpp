@@ -148,7 +148,9 @@ namespace
 
         AMREX_GPU_HOST_DEVICE
         PDim3(const amrex::XDim3& a):
-            x{a.x}, y{a.y}, z{a.z}
+            x{static_cast<ParticleReal>(a.x)},
+            y{static_cast<ParticleReal>(a.y)},
+            z{static_cast<ParticleReal>(a.z)}
         {}
 
         AMREX_GPU_HOST_DEVICE
