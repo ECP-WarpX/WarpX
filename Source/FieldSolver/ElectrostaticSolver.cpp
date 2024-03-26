@@ -1073,7 +1073,7 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs (const amrex::Geo
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                     (WarpX::field_boundary_lo[idim] == FieldBoundaryType::PML &&
                     WarpX::field_boundary_hi[idim] == FieldBoundaryType::PML),
-                    "The fft-based Poisson solver only works with field PML boundary conditions "
+                    "The FFT-based Poisson solver only works with field PML boundary conditions "
                     "to initialize the self-fields of the species in electromagnetic mode."
                 );
             }
