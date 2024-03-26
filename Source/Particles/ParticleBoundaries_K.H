@@ -8,7 +8,7 @@
 #define PARTICLEBOUNDARIES_K_H_
 
 #include "ParticleBoundaries.H"
-#include "Initialization/SampleGaussianDistribution.H"
+#include "Initialization/SampleGaussianFluxDistribution.H"
 
 #include <AMReX_AmrCore.H>
 

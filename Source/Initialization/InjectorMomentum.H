@@ -12,7 +12,7 @@
 #include "GetVelocity.H"
 #include "TemperatureProperties.H"
 #include "VelocityProperties.H"
-#include "SampleGaussianDistribution.H"
+#include "SampleGaussianFluxDistribution.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 
