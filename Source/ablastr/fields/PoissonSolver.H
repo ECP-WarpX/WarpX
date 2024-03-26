@@ -124,12 +124,9 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 
     auto const finest_level = static_cast<int>(rho.size() - 1);
 
-    // scale rho appropriately; also determine if rho is zero everywhere
+    // determine if rho is zero everywhere
     amrex::Real max_norm_b = 0.0;
     for (int lev=0; lev<=finest_level; lev++) {
-        using namespace ablastr::constant::SI;
-
-        rho[lev]->mult(-1._rt/PhysConst::ep0);  // TODO: when do we "un-multiply" this? We need to document this side-effect!
         max_norm_b = amrex::max(max_norm_b, rho[lev]->norm0());
     }
     amrex::ParallelDescriptor::ReduceRealMax(max_norm_b);
@@ -164,7 +161,6 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 #if (defined(WARPX_USE_PSATD)  && defined(WARPX_DIM_3D))
         // Use the Integrated Green Function solver (FFT) on the coarsest level if it was selected
         if(!is_solver_multigrid && lev==0){
-            rho[lev]->mult(-PhysConst::ep0);
             amrex::Array<amrex::Real,AMREX_SPACEDIM> const dx_igf
                     {AMREX_D_DECL(geom[lev].CellSize(0)/std::sqrt(1._rt-beta_solver[0]*beta_solver[0]),
                                 geom[lev].CellSize(1)/std::sqrt(1._rt-beta_solver[1]*beta_solver[1]),
@@ -178,7 +174,11 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         }
 #endif
 
-// Use the Multigrid (MLMG) solver if selected or on refined patches
+        // Use the Multigrid (MLMG) solver if selected or on refined patches
+        // but first scale rho appropriately
+        using namespace ablastr::constant::SI;
+        rho[lev]->mult(-1._rt/PhysConst::ep0);  // TODO: when do we "un-multiply" this? We need to document this side-effect!
+
 #if !(defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ))
         // Determine whether to use semi-coarsening
         amrex::Array<amrex::Real,AMREX_SPACEDIM> dx_scaled
