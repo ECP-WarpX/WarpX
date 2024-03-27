@@ -180,9 +180,9 @@ MacroscopicProperties::InitData ()
     amrex::IntVect sigma_stag = m_sigma_mf->ixType().toIntVect();
     amrex::IntVect epsilon_stag = m_eps_mf->ixType().toIntVect();
     amrex::IntVect mu_stag = m_mu_mf->ixType().toIntVect();
-    amrex::IntVect Ex_stag = warpx.getEfield_fp(0,0).ixType().toIntVect();
-    amrex::IntVect Ey_stag = warpx.getEfield_fp(0,1).ixType().toIntVect();
-    amrex::IntVect Ez_stag = warpx.getEfield_fp(0,2).ixType().toIntVect();
+    amrex::IntVect Ex_stag = warpx.getField(FieldType::Efield_fp, 0,0).ixType().toIntVect();
+    amrex::IntVect Ey_stag = warpx.getField(FieldType::Efield_fp, 0,1).ixType().toIntVect();
+    amrex::IntVect Ez_stag = warpx.getField(FieldType::Efield_fp, 0,2).ixType().toIntVect();
 
     for ( int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         sigma_IndexType[idim]   = sigma_stag[idim];
