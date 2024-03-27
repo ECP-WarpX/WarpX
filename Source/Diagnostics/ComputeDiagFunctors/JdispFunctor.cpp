@@ -34,12 +34,11 @@ JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buff
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(hybrid_pic_model,
         "Displacement current diagnostic is only implemented for the HybridPICModel.");
     AMREX_ASSUME(hybrid_pic_model);
-    amrex::MultiFab* mf_curlB;
-    if (hybrid_pic_model) {
-        /** pointer to current calculated from Ampere's Law (Jamp) multifab */
-        mf_curlB = hybrid_pic_model->get_pointer_current_fp_ampere(m_lev, m_dir);
-    }
-    //else{
+
+     /** pointer to current calculated from Ampere's Law (Jamp) multifab */
+    amrex::MultiFab* mf_curlB = hybrid_pic_model->get_pointer_current_fp_ampere(m_lev, m_dir);;
+
+    //if (!hybrid_pic_model) {
         // To finish this implementation, we need to implement a method to
         // calculate (∇ x B).
 
