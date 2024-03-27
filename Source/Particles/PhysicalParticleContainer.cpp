@@ -540,6 +540,10 @@ PhysicalParticleContainer::AddGaussianBeam (PlasmaInjector const& plasma_injecto
     const int symmetrization_order = plasma_injector.symmetrization_order;
     const Real focal_distance = plasma_injector.focal_distance;
 
+    const int do_rotation = plasma_injector.do_rotation; // 1;
+    const Vector<Real> rotation_axis = plasma_injector.rotation_axis ; // {0,1,0}; // normalize it if necessary
+    const Real rotation_angle = plasma_injector.rotation_angle; //45.*MathConst::pi/180.;
+
     // Declare temporary vectors on the CPU
     Gpu::HostVector<ParticleReal> particle_x;
     Gpu::HostVector<ParticleReal> particle_y;
@@ -579,6 +583,34 @@ PhysicalParticleContainer::AddGaussianBeam (PlasmaInjector const& plasma_injecto
                 std::abs( z - z_m ) <= z_cut * z_rms   ) {
                 XDim3 u = plasma_injector.getMomentum(x, y, z);
 
+                if (do_rotation){
+
+                    // put this into a function like rotate(XDim3 k, Real angle)
+                    Real Kx = -rotation_axis[2]*(y-y_m) + rotation_axis[1]*(z-z_m);
+                    Real Ky =  rotation_axis[2]*(x-x_m) - rotation_axis[0]*(z-z_m);
+                    Real Kz = -rotation_axis[1]*(x-x_m) + rotation_axis[0]*(y-y_m);
+
+                    Real K2x = -rotation_axis[2]*Ky + rotation_axis[1]*Kz;
+                    Real K2y =  rotation_axis[2]*Kx - rotation_axis[0]*Kz;
+                    Real K2z = -rotation_axis[1]*Kx + rotation_axis[0]*Ky;
+
+                    x = x - x_m + sin(rotation_angle) * Kx + (1. - cos(rotation_angle)) * K2x;
+                    y = y - y_m + sin(rotation_angle) * Ky + (1. - cos(rotation_angle)) * K2y;
+                    z = z - z_m + sin(rotation_angle) * Kz + (1. - cos(rotation_angle)) * K2z;
+
+                    Real Kux = -rotation_axis[2]*u.y + rotation_axis[1]*u.z;
+                    Real Kuy =  rotation_axis[2]*u.x - rotation_axis[0]*u.z;
+                    Real Kuz = -rotation_axis[1]*u.x + rotation_axis[0]*u.y;
+
+                    Real K2ux = -rotation_axis[2]*Kuy + rotation_axis[1]*Kuz;
+                    Real K2uy =  rotation_axis[2]*Kux - rotation_axis[0]*Kuz;
+                    Real K2uz = -rotation_axis[1]*Kux + rotation_axis[0]*Kuy;
+
+                    u.x = u.x + sin(rotation_angle) * Kux + (1. - cos(rotation_angle)) * K2ux;
+                    u.y = u.y + sin(rotation_angle) * Kuy + (1. - cos(rotation_angle)) * K2uy;
+                    u.z = u.z + sin(rotation_angle) * Kuz + (1. - cos(rotation_angle)) * K2uz;
+                }
+
             if (plasma_injector.do_focusing){
                 const XDim3 u_bulk = plasma_injector.getInjectorMomentumHost()->getBulkMomentum(x,y,z);
                 const Real u_bulk_norm = std::sqrt( u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z );
@@ -614,6 +646,7 @@ PhysicalParticleContainer::AddGaussianBeam (PlasmaInjector const& plasma_injecto
                 z = z - (v_z - v_dot_n*n_z) * t;
 #endif
             }
+
                 u.x *= PhysConst::c;
                 u.y *= PhysConst::c;
                 u.z *= PhysConst::c;
