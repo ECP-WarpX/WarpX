@@ -160,12 +160,6 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
     amrex::Geometry const& geom0 = warpx.Geom(0);
     real_box = geom0.ProbDomain();
     auto const dx = geom0.CellSizeArray();
-//    auto lo0 = geom0.ProbLo(0);
-//    auto hi0 = geom0.ProbHi(0);
-//    auto lo1 = geom0.ProbLo(1);
-//    auto hi1 = geom0.ProbHi(1);
-//    auto lo2 = geom0.ProbLo(2);
-//    auto hi2 = geom0.ProbHi(2);
     auto geom_lo = geom0.ProbLoArray();
     auto geom_hi = geom0.ProbHiArray();
     lo0 = geom_lo[0];
@@ -174,52 +168,36 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
     hi0 = geom_hi[0];
     hi1 = geom_hi[1];
     hi2 = geom_hi[2];
-    std::cout << "x: " << geom_lo[0] << "  " << geom_hi[0] <<'\n';
-    std::cout << "y: " << geom_lo[1] << "  " << geom_hi[1] <<'\n';
-    std::cout << "z: " << geom_lo[2] << "  " << geom_hi[2] <<'\n';
 
     // creating the mulitfab array
-    amrex::IntVect dom_lo (AMREX_D_DECL(0, 0, 0));
-    amrex::IntVect dom_hi (AMREX_D_DECL(n_cell[2]-1, n_cell[1]-1, n_cell[0]-1));
-    amrex::Box domain(dom_lo, dom_hi);
-    amrex::BoxArray ba(domain);
-    ba.maxSize(max_grid_size);
-    amrex::DistributionMapping dm(ba);
-    amrex::MultiFab mf(ba, dm, 1, 0);
-    const amrex::IntVect nodal_flag = mf.ixType().toIntVect();
+    IntVect rho_nodal_flag;
+    rho_nodal_flag = IntVect( AMREX_D_DECL(1,1,1) );
+    MultiFab *mf = warpx.get_pointer_rho_fp(0);
+    const amrex::IntVect nodal_flag = mf->ixType().toIntVect();
 
+    std::cout << rho_nodal_flag << '\n';
 
     // Read external field openPMD data
     io::Series series = io::Series(external_density_path, io::Access::READ_ONLY);
-    //io::Iteration i0  = series.iterations[0];
-    //io::Iteration i1  = series.iterations[1];
     auto iseries = series.iterations.begin()->second;
 
     io::Mesh P = iseries.meshes[density];
     io::MeshRecordComponent p_scalar0 = P[io::RecordComponent::SCALAR];
-    auto all_data0 = p_scalar0.loadChunk<double>();
+    //auto all_data0 = p_scalar0.loadChunk<double>();
 
     auto axisLabels = P.getAttribute("axisLabels").get<std::vector<std::string>>();
     auto fileGeom = P.getAttribute("geometry").get<std::string>();
 
-    std::cout << "all_data size is : " << sizeof(all_data0);
-
     io::ParticleSpecies particle = iseries.particles[a_species_name];
     charge = particle["charge"][openPMD::RecordComponent::SCALAR].loadChunk<double>();
     std::cout << "[5] electron charge is " << charge << '\n';
-    //series.flush();
 
-    //const auto fileGeom = P.getAttribute("geometry").get< std::string >();
     offset = P.gridGlobalOffset();
-    const auto offset0 = static_cast<amrex::Real>(offset[0]);
-    const auto offset1 = static_cast<amrex::Real>(offset[1]);
-    const auto offset2 = static_cast<amrex::Real>(offset[2]);
     spacing = P.gridSpacing< long double >();
     extent = p_scalar0.getExtent();
     const int extent0 = static_cast<int>(extent[0]);
     const int extent1 = static_cast<int>(extent[1]);
     const int extent2 = static_cast<int>(extent[2]);
-
 
     std::cout << "[7] Extent for each dimension: " << extent[0] << " " << extent[1] << " " << extent[2] << '\n';
 
@@ -230,7 +208,7 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
     const io::Offset chunk_offset =  {0, 0, 0};  //{0,0,0};
     const io::Extent chunk_extent = {extent[0], extent[1], extent[2]};
 
-    P_chunk_data = p_scalar0.loadChunk<double>(chunk_offset,chunk_extent);
+    std::shared_ptr<double> P_chunk_data = p_scalar0.loadChunk<double>(chunk_offset,chunk_extent);
     series.flush();
     P_data_host = P_chunk_data.get();
 
@@ -239,83 +217,20 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
     amrex::Gpu::DeviceVector<double> P_data_gpu(total_extent);
     double* P_data = P_data_gpu.data();
     amrex::Gpu::copy(amrex::Gpu::hostToDevice, P_data_host, P_data_host + total_extent, P_data);
-//
-//    for (size_t row = 0; row < chunk_extent[0] && row < 5; ++row)
-//    {
-//        for (size_t col = 0; col < chunk_extent[1] && col < 5; ++col) {
-//            for (size_t depth = 0; depth < chunk_extent[2] && depth < 5; ++depth) {
-//                std::cout << "\t" << '(' << row + chunk_offset[0] << '|'
-//                          << col + chunk_offset[1] << '|' << depth + chunk_offset[2] << ")\t"
-//                          << P_chunk_data.get()[row * col * depth] << ")\t" << all_data0.get()[row * col * depth];
-//            }
-//        }
-//        std::cout << '\n';
-//    }
-//
-//
 
-    data.resize(extent0);
-
-    for (int i = 0; i < extent[0]; ++i){
-        //std::cout << "inside for loop" << '\n';
-
-        for (int j = 0; j< extent[1]; ++j){
-            data[i].resize(extent1);
-            //std::cout << "inside second for loop" << '\n';
-
-            for (int k = 0; k < extent[2]; ++k){
-                data[i][j].resize(extent2);
-                //std::cout << "inside thrid for loop" << '\n';
-
-                amrex::Real x0, x1;
-                x0 = static_cast<amrex::Real>(real_box.lo(0)) + i*dx[0];
-                x1 = real_box.lo(1) + j*dx[1];
-                amrex::Real x2;
-                x2 = real_box.lo(2) + k*dx[2];
-
-                // Get index of the external field array
-
-                int const ix = std::floor( (x0-offset[0])/file_dx );
-                int const iy = std::floor( (x1-offset[1])/file_dy );
-                int const iz = std::floor( (x2-offset[2])/file_dz );
-
-//                // Get coordinates of external grid point
-                amrex::Real const xx0 = offset[0] + ix * file_dx;
-                amrex::Real const xx1 = offset[1] + iy * file_dy;
-                amrex::Real const xx2 = offset[2] + iz * file_dz;
-
-                const double
-                        f000 = P_chunk_data.get()[(i*extent[1]*extent[2]) + j*extent[2] + k],
-                        f001 = P_chunk_data.get()[(i*extent[1]*extent[2]) + j*extent[2] + (k+1)],
-                        f010 = P_chunk_data.get()[(i*extent[1]*extent[2]) + (j+1)*extent[2] + k],
-                        f011 = P_chunk_data.get()[(i*extent[1]*extent[2]) + (j+1)*extent[2] + (k+1)],
-                        f100 = P_chunk_data.get()[((i+1)*extent[1]*extent[2]) + j*extent[2] + k],
-                        f101 = P_chunk_data.get()[((i+1)*extent[1]*extent[2]) + j*extent[2] + (k+1)],
-                        f110 = P_chunk_data.get()[((i+1)*extent[1]*extent[2]) + (j+1)*extent[2] + k],
-                        f111 = P_chunk_data.get()[((i+1)*extent[1]*extent[2]) + (j+1)*extent[2] + (k+1)];
-                data[i][j][k] = static_cast<amrex::Real>(utils::algorithms::trilinear_interp<double>
-                                                 (xx0, xx0+file_dx, xx1, xx1+file_dy, xx2, xx2+file_dz,
-                                                  f000, f001, f010, f011, f100, f101, f110, f111,
-                                                  x0, x1, x2)/charge.get()[0]);
-                //std::cout << "data[" << i << "][" << j << "][" << k << "] is : " << data[i][j][k] << '\n';
-            }
-        }
-    }
-
-std::cout << "outside of for loop" << '\n';
-
-
-
-    const amrex::Array4<double> fc_array(P_data, {0,0,0}, {extent0, extent1, extent2}, 1);
+    const amrex::Array4<double> fc_array(P_data, {0,0,0}, {extent2, extent1, extent0}, 1);
     std::cout << "Offset is : (" << offset[0] << ", " << offset[1] <<  ", " << offset[2] << ")\n";
 
     // iterate over the external field and find the index that corresponds to the grid points
-    for (MFIter mfi(mf, TilingIfNotGPU()); mfi.isValid(); ++mfi)
+    for (MFIter mfi(*mf, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
+        std::cout << "inside MFIter\n";
         const amrex::Box box = mfi.growntilebox();
-        const amrex::Box tb = mfi.tilebox(nodal_flag, mf.nGrowVect());
+        const amrex::Box tb = mfi.tilebox(rho_nodal_flag, mf->nGrowVect());
         //const amrex::Array4<double> mffab = mf->array(mfi);
-        mffab = mf.array(mfi);
+        std::cout << "before mffab definition\n";
+        mffab = mf->array(mfi);
+        std::cout << "after mffab definition\n";
 
         amrex::ParallelFor (tb,
             [box, this, dx,file_dx, file_dy, file_dz, extent0, extent1, extent2, P_data] AMREX_GPU_DEVICE (int i, int j, int k) {
@@ -325,6 +240,7 @@ std::cout << "outside of for loop" << '\n';
                 //for 3D only!!
                 const int ii = i;
                 amrex::Real x0, x1;
+                std::cout << "inside parallel for";
 
                 if ( box.type(0)==amrex::IndexType::CellIndex::NODE )
                     {x0 = static_cast<amrex::Real>(real_box.lo(0)) + ii*dx[0]; }
@@ -346,9 +262,7 @@ std::cout << "outside of for loop" << '\n';
                 int const iy = std::floor( (x1-offset[1])/file_dy );
                 int const iz = std::floor( (x2-offset[2])/file_dz );
 
-
-
-//                // Get coordinates of external grid point
+                // Get coordinates of external grid point
                 amrex::Real const xx0 = offset[0] + ix * file_dx;
                 amrex::Real const xx1 = offset[1] + iy * file_dy;
                 amrex::Real const xx2 = offset[2] + iz * file_dz;
@@ -363,86 +277,17 @@ std::cout << "outside of for loop" << '\n';
                     f101 = fc_array(iz+1, iy  , ix+1),
                     f110 = fc_array(iz  , iy+1, ix+1),
                     f111 = fc_array(iz+1, iy+1, ix+1);
-                mffab(i,j,k) = static_cast<amrex::Real>(utils::algorithms::trilinear_interp<double>
+                mffab(i,j,k) = static_cast<amrex::Real> (utils::algorithms::trilinear_interp<double>
                     (xx0, xx0+file_dx, xx1, xx1+file_dy, xx2, xx2+file_dz,
                      f000, f001, f010, f011, f100, f101, f110, f111,
-                     x0, x1, x2)/charge.get()[0]);
+                     x0, x1, x2) );
+                //mffab(i,j,k) = static_cast<amrex::Real> (f000);
 //#endif
 
         }
         ); //end ParallelFor
     }
     std::cout << "made it to the end\n" ;
-
-//    std::cout << "Chunk has been read from disk\n"
-//         << "Read chunk contains:\n";
-//    for (size_t row = 0; row < chunk_extent[0]; ++row)
-//    {
-//        for (size_t col = 0; col < chunk_extent[1]; ++col) {
-//
-//            for (size_t depth = 0; depth < chunk_extent[2]; ++depth) {
-//                std::cout << "\t" << '(' << row + chunk_offset[0] << '|'
-//                          << col + chunk_offset[1] << '|' << depth + chunk_offset[2] << ")\t"
-//                          << P_chunk_data.get()[row * chunk_extent[1] * chunk_extent[2] + col * chunk_extent[2] +
-//                                                depth] /charge.get()[0];
-//                std::cout << '\n';
-//            }
-//        }
-//
-//    }
-    std::cout << "Full E/x starts with:\n\t{";
-    for (size_t col = 0; col < extent[1] && col < 16; ++col)
-        std::cout << P_chunk_data.get()[extent[0]*extent[1]*12 + extent[0]*30 + col] /charge.get()[0] << ", ";
-    std::cout << "...}\n";
-
-
-    std::cout << "Full E/x starts with:\n\t{";
-    for (size_t col = 0; col < extent[1] && col < 16; ++col)
-        std::cout << fc_array(col, 30, 12) /charge.get()[0] << ", ";
-    std::cout << "...}\n";
-
-    std::cout << "Full E/x starts with:\n\t{";
-    for (size_t depth = 0; depth < extent[0] && depth < 16; ++depth)
-        std::cout << P_chunk_data.get()[extent[0]*extent[1]*depth + extent[0]*30 + 12] /charge.get()[0] << ", ";
-    std::cout << "...}\n";
-
-
-    std::cout << "Full E/x starts with:\n\t{";
-    for (size_t depth = 0; depth < extent[1] && depth < 16; ++depth)
-        std::cout << fc_array(12, 30, depth) /charge.get()[0] << ", ";
-    std::cout << "...}\n";
-
-    std::cout << "Full E/x starts with:\n\t{";
-    for (size_t y = 0; y < extent[0] ; ++y)
-        std::cout << P_chunk_data.get()[extent[0]*extent[1]*12 + extent[0]*y + 30] /charge.get()[0] << ", ";
-    std::cout << "...}\n";
-
-
-    std::cout << "Full E/x starts with:\n\t{";
-    for (size_t y = 0; y < extent[1] ; ++y)
-        std::cout << fc_array(30, y, 12) /charge.get()[0] << ", ";
-    std::cout << "...}\n";
-
-//    std::cout << "Full E/x starts with:\n\t{";
-//    for (size_t col = 0; col < extent[1] && col < 16; ++col)
-//        std::cout << fc_array(0, 0, col) /charge.get()[0] << ", ";
-//    std::cout << "...}\n";
-
-
-//    std::cout << "extent0, extent1, extent2 is : ( " << extent0 << ", " << extent1 << ", " << extent2  << " )" << '\n';
-//    for (size_t row = 0; row < extent0 && row < 4; ++row) {
-//        for (size_t col = 0; col < extent1 && col < 4; ++col) {
-//            for (size_t depth = 0; depth < extent2 && depth < 8; ++depth) {
-//                std::cout << "for (" << row << ", " << col << ", " << depth << ") we have mffab: " << mffab(row, col, depth) << " and for fc_array: " << fc_array(row, col, depth) <<
-//                        " and for chunk_data: " << P_chunk_data.get()[(row*extent1*extent2) + col*extent2 + depth] /charge.get()[0]<< "and for all_data: " << all_data0.get()[(row*extent1*extent2) + col*extent2 + depth] /charge.get()[0] <<'\n';
-//            }
-//        }
-//    }
-
-
-
-
-
 
 }
 

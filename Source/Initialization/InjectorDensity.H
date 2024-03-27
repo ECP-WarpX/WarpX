@@ -170,44 +170,7 @@ struct InjectorDensityFromFile
     getDensity (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
     {
 
-//
-//        auto series = io::Series(file_path, io::Access::READ_ONLY);
-//        auto iseries  = series.iterations.begin()->second;
-//        auto P = iseries.meshes[dens];
-//        auto p_scalar = P[io::RecordComponent::SCALAR];
-//        auto particle = iseries.particles[species];
-//
-//        std::shared_ptr<double> charge = particle["charge"][openPMD::RecordComponent::SCALAR].loadChunk<double>();
-//        series.flush();
-//
-//        auto fileGeom = P.getAttribute("geometry").get< std::string >();
-//        const auto offset = P.gridGlobalOffset();
-//        const auto spacing = P.gridSpacing< long double >();
-//        const auto extent = p_scalar.getExtent();
-//
-//        const io::Offset chunk_offset = {0,0,0};
-//        const io::Extent chunk_extent = {extent[0], extent[1], extent[2]};
-//
-//        auto P_chunk_data = p_scalar.loadChunk< double > (chunk_offset, chunk_extent);
-//        series.flush();
-//
-//          WarpX& warpx = WarpX::GetInstance();
-//          amrex::Geometry const& geom0 = warpx.Geom(0);
-//          const amrex::RealBox& real_box = geom0.ProbDomain();
-//        const auto dx = geom0.CellSizeArray();
-//        //const amrex::IntVect nodal_flag = mf->ixType().toIntVect();
-
-        //convert x,y,z to corresponding i,j,k to call the correct index
-//        auto series = io::Series(external_density_path, io::Access::READ_ONLY);
-//        auto iseries  = series.iterations.begin()->second;
-//        auto P = iseries.meshes[density];
-//        auto p_scalar = P[io::RecordComponent::SCALAR];
-//        auto particle = iseries.particles[species];
-
-//        int i = std::floor((x-real_box.lo(0))/spacing[0]);
-//        int j = std::floor((y-real_box.lo(1))/spacing[1]);
-//        int k = std::floor((z-real_box.lo(2))/spacing[2]);
-
+//////////  INDEXING THAT WORKS ///////////////////
         double val;
         if (x < lo0 or x > hi0 or y < lo1 or y > hi1 or z < lo2 or z > hi2){
             val = 0;
@@ -220,49 +183,14 @@ struct InjectorDensityFromFile
         int iy = std::floor((y-lo1)/spacing[1]);
         int iz = std::floor((z-lo0)/spacing[0]);
 
-//        int ix = std::floor((x0-offset[0])/spacing[0]);
-//        int iy = std::floor((y0-offset[1])/spacing[1]);
-//        int iz = std::floor((z0-offset[2])/spacing[2]);
-//        std::cout << x << " " << y << " " << z << " ";
-//        std::cout << ix << " " << iy << " " << iz << " ";
-//        double xtot =
-//        int ix = std::floor((x-offset[0])/spacing[0]);
-//        int iy = std::floor((y-offset[1])/spacing[1]);
-//        int iz = std::floor((z-offset[2])/spacing[2]);
+    ///////// END OF INDEXING THAT WORKS ///////////////
 
-//        int const ix = std::floor( (x0-offset[0])/file_dx );
-//        int const iy = std::floor( (x1-offset[1])/file_dy );
-//        int const iz = std::floor( (x2-offset[2])/file_dz );
-
-//                // Get coordinates of external grid point
-        amrex::Real const xx0 = offset[0] + ix * spacing[0];
-        amrex::Real const xx1 = offset[1] + iy * spacing[1];
-        amrex::Real const xx2 = offset[2] + iz * spacing[2];
-
+        //////////// CALLING THAT WORKS //////////////////
         amrex::Array4<double> chunk_array (P_data_host, {0,0,0}, {static_cast<int>(extent[2]), static_cast<int>(extent[1]), static_cast<int>(extent[0])}, 1);
-        val = chunk_array(ix,iy,iz) /charge.get()[0];
+        //val = chunk_array(ix,iy,iz) /charge.get()[0];
+        /////////// END OF CALLING THAT WORKS ////////////////
 
-//        const double
-//                f000 = P_chunk_data.get()[(i*extent[1]*extent[2]) + j*extent[2] + k],
-//                f001 = P_chunk_data.get()[(i*extent[1]*extent[2]) + j*extent[2] + (k+1)],
-//                f010 = P_chunk_data.get()[(i*extent[1]*extent[2]) + (j+1)*extent[2] + k],
-//                f011 = P_chunk_data.get()[(i*extent[1]*extent[2]) + (j+1)*extent[2] + (k+1)],
-//                f100 = P_chunk_data.get()[((i+1)*extent[1]*extent[2]) + j*extent[2] + k],
-//                f101 = P_chunk_data.get()[((i+1)*extent[1]*extent[2]) + j*extent[2] + (k+1)],
-//                f110 = P_chunk_data.get()[((i+1)*extent[1]*extent[2]) + (j+1)*extent[2] + k],
-//                f111 = P_chunk_data.get()[((i+1)*extent[1]*extent[2]) + (j+1)*extent[2] + (k+1)];
-        //const double f000 = P_chunk_data.get()[ i + (j*extent[0]) + (k*extent[1]*extent[2])]/charge.get()[0];
-        //const double f000 =  P_chunk_data.get()[i*n_cell[1]*n_cell[2] + j*n_cell[2] + k] / charge.get()[0];//P_chunk_data.get()[i + j*n_cell[0] + k* n_cell[1] * n_cell[0]] /charge.get()[0];//P_chunk_data.get()[(k *extent[1] + j) + i] /charge.get()[0]; //P_chunk_data.get()[(i*extent[1]*extent[2]) + j*extent[2] + k];
-        //auto val = f000;
-//                //static_cast<amrex::Real>(utils::algorithms::trilinear_interp<double>
-//                                                         (, xx0+spacing[0], xx1, xx1+spacing[1], xx2, xx2+spacing[2],
-//                                                          f000, f001, f010, f011, f100, f101, f110, f111,
-//                                                          x, y, z)/charge.get()[0]);
-
-        //double val = mffab(i, j, k);
-        //val = P_chunk_data.get()[extent[0]*extent[1]*iz + extent[0]*iy + ix] / charge.get()[0];
-//        double val = 3.3e26;
-        //val = data[ix][iy][iz];
+        val = mffab(ix,iy,iz)/charge.get()[0];
 
         return static_cast<amrex::Real>(val);
     }
@@ -275,10 +203,10 @@ struct InjectorDensityFromFile
     std::vector<int> n_cell;
     int max_grid_size;
     std::vector<double> offset;
-    std::shared_ptr<double> P_chunk_data;
+    //std::shared_ptr<double> P_chunk_data;
     std::vector<std::uint64_t> extent;
     std::shared_ptr<double> charge;
-    std::vector< std::vector < std::vector<double> > > data;
+    //std::vector< std::vector < std::vector<double> > > data;
     double* P_data_host;
     double lo0;
     double hi0;
@@ -408,19 +336,6 @@ struct InjectorDensityDeleter {
             p->clear();
             delete p;
         }
-//        if (external_density_path) {
-//            external_density_path->clear();
-//            density->clear();
-//            mffab->clear();
-//            real_box->clear();
-//            spacing->clear();
-//
-//            delete external_density_path;
-//            delete density;
-//            delete mffab;
-//            delete real_box;
-//            delete spacing;
-//        }
     }
 };
 
