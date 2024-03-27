@@ -22,6 +22,9 @@ warpx.eb_implicit_function = "if( (abs(z)<0.5*aperture_l) and (x<aperture_r), 1,
 
 warpx.n_rz_azimuthal_modes = 2
 
+# Filtering
+warpx.use_filter = 1
+
 # Laser
 lasers.names        = laser1
 laser1.profile      = Gaussian
