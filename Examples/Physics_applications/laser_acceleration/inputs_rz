@@ -21,7 +21,6 @@ boundary.field_hi = pec pec
 warpx.verbose = 1
 warpx.do_dive_cleaning = 0
 warpx.use_filter = 1
-warpx.filter_npass_each_dir = 0 1
 warpx.cfl = 1. # if 1., the time step is set to its CFL limit
 warpx.do_moving_window = 1
 warpx.moving_window_dir = z
