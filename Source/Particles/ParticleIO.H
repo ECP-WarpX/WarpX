@@ -8,6 +8,8 @@
 #define PARTICLEIO_H_
 
 #include "Particles/WarpXParticleContainer.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
+#include "ablastr/particles/NodalFieldGather.H"
 
 #include <AMReX_AmrParticles.H>
 #include <AMReX_ParIter.H>
@@ -74,6 +76,39 @@ particlesConvertUnits (ConvertDirection convert_direction, T_ParticleContainer* 
             }
             );
         }
+    }
+}
+
+/** TODO: Add docstring */
+template< typename T_ParticleContainer >
+void
+storeFieldOnParticles ( T_ParticleContainer& tmp,
+    amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& plo,
+    amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi,
+    amrex::MultiFab const& phi,
+    int const phi_index, int const lev ) {
+
+    using PinnedParIter = typename T_ParticleContainer::ParIterType;
+
+    for (PinnedParIter pti(tmp, lev); pti.isValid(); ++pti) {
+
+        auto phi_grid = phi[pti].array();
+        const auto getPosition = GetParticlePosition<PIdx>(pti);
+        amrex::Real* phi_particle_arr = pti.GetStructOfArrays().GetRealData(phi_index).dataPtr();
+
+        // Loop over the particles and update their position
+        amrex::ParallelFor( pti.numParticles(),
+            [=] AMREX_GPU_DEVICE (long ip) {
+
+                amrex::ParticleReal xp, yp, zp;
+                getPosition(ip, xp, yp, zp);
+                int i, j, k;
+                amrex::Real W[AMREX_SPACEDIM][2];
+                ablastr::particles::compute_weights(xp, yp, zp, plo, dxi, i, j, k, W);
+                amrex::Real const phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, phi_grid);
+                phi_particle_arr[ip] = phi_value;
+            }
+        );
     }
 }
 
