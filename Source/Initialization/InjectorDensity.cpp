@@ -13,36 +13,23 @@
 #include "Utils/TextMsg.H"
 #include "Utils/Algorithms/LinearInterpolation.H"
 
-#include <AMReX_BLassert.H>
 #include <AMReX_ParmParse.H>
-
 #include <AMReX.H>
-#include <AMReX_AmrCore.H>
+
 #ifdef AMREX_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
-#include <AMReX_Array.H>
 #include <AMReX_Array4.H>
 #include <AMReX_Box.H>
-#include <AMReX_BoxArray.H>
-#include <AMReX_BoxList.H>
-#include <AMReX_Config.H>
 #include <AMReX_Geometry.H>
 #include <AMReX_GpuLaunch.H>
 #include <AMReX_GpuQualifiers.H>
-#include <AMReX_INT.H>
 #include <AMReX_IndexType.H>
 #include <AMReX_IntVect.H>
-#include <AMReX_LayoutData.H>
 #include <AMReX_MFIter.H>
 #include <AMReX_MultiFab.H>
-#include <AMReX_ParallelDescriptor.H>
-#include <AMReX_Parser.H>
-#include <AMReX_Print.H>
 #include <AMReX_REAL.H>
-#include <AMReX_RealBox.H>
 #include <AMReX_SPACE.H>
-#include <AMReX_Vector.H>
 
 #include <algorithm>
 #include <cctype>
@@ -56,26 +43,6 @@ namespace io = openPMD;
 using namespace amrex;
 namespace
 {
-/**
- * \brief Check that the number of guard cells is smaller than the number of valid cells,
- * for a given MultiFab, and abort otherwise.
- */
-//void CheckGuardCells(amrex::MultiFab const& mf)
-//{
-//    for (amrex::MFIter mfi(mf); mfi.isValid(); ++mfi)
-//    {
-//        const amrex::IntVect vc = mfi.validbox().enclosedCells().size();
-//        const amrex::IntVect gc = mf.nGrowVect();
-//
-//        std::stringstream ss_msg;
-//        ss_msg << "MultiFab " << mf.tags()[1].c_str() << ":" <<
-//               " the number of guard cells " << gc <<
-//               " is larger than or equal to the number of valid cells "
-//               << vc << ", please reduce the number of guard cells" <<
-//               " or increase the grid size by changing domain decomposition.";
-//        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(vc.allGT(gc), ss_msg.str());
-//    }
-//}
 }
 
 
@@ -218,7 +185,6 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
     double* P_data = P_data_gpu.data();
     amrex::Gpu::copy(amrex::Gpu::hostToDevice, P_data_host, P_data_host + total_extent, P_data);
 
-    const amrex::Array4<double> fc_array(P_data, {0,0,0}, {extent2, extent1, extent0}, 1);
     std::cout << "Offset is : (" << offset[0] << ", " << offset[1] <<  ", " << offset[2] << ")\n";
 
     // iterate over the external field and find the index that corresponds to the grid points
@@ -227,7 +193,6 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
         std::cout << "inside MFIter\n";
         const amrex::Box box = mfi.growntilebox();
         const amrex::Box tb = mfi.tilebox(rho_nodal_flag, mf->nGrowVect());
-        //const amrex::Array4<double> mffab = mf->array(mfi);
         std::cout << "before mffab definition\n";
         mffab = mf->array(mfi);
         std::cout << "after mffab definition\n";
@@ -263,9 +228,9 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
                 int const iz = std::floor( (x2-offset[2])/file_dz );
 
                 // Get coordinates of external grid point
-                amrex::Real const xx0 = offset[0] + ix * file_dx;
-                amrex::Real const xx1 = offset[1] + iy * file_dy;
-                amrex::Real const xx2 = offset[2] + iz * file_dz;
+                auto const xx0 = offset[0] + ix * file_dx;
+                auto const xx1 = offset[1] + iy * file_dy;
+                auto const xx2 = offset[2] + iz * file_dz;
 
                 const amrex::Array4<double> fc_array(P_data, {0,0,0}, {extent2, extent1, extent0}, 1);
                 const double
