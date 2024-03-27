@@ -28,7 +28,8 @@ JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buff
     auto* hybrid_pic_model = warpx.get_pointer_HybridPICModel();
 
     /** pointer to total simulation current (J) multifab */
-    amrex::MultiFab* mf_j = warpx.get_pointer_current_fp(m_lev, m_dir);
+
+    amrex::MultiFab* mf_j = warpx.getFieldPointer(FieldType::current_fp, m_lev, m_dir);
     amrex::MultiFab* mf_curlB;
     if (hybrid_pic_model) {
         /** pointer to current calculated from Ampere's Law (Jamp) multifab */
