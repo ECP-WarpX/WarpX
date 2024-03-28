@@ -7,11 +7,11 @@
 # Authors: Ryan Sandberg
 # License: BSD-3-Clause-LBNL
 #
-from matplotlib import pyplot as plt
 import neural_network_classes as mynn
 import numpy as np
 import torch
 import torch.nn.functional as F
+from matplotlib import pyplot as plt
 
 c = 2.998e8
 

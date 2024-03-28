@@ -131,6 +131,7 @@ public:
     MultiFluidContainer& GetFluidContainer () { return *myfl; }
     MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
     HybridPICModel& GetHybridPICModel () { return *m_hybrid_pic_model; }
+    [[nodiscard]] HybridPICModel * get_pointer_HybridPICModel () const { return m_hybrid_pic_model.get(); }
     MultiDiagnostics& GetMultiDiags () {return *multi_diags;}
 #ifdef AMREX_USE_EB
     amrex::Vector<std::unique_ptr<amrex::MultiFab> >& GetDistanceToEB () {return m_distance_to_eb;}
@@ -175,7 +176,7 @@ public:
     //! Flags whether the Picard iterations are required to converge
     static bool require_picard_convergence;
     /** Records a number corresponding to the load balance cost update strategy
-     *  being used (0, 1, 2 corresponding to timers, heuristic, or gpuclock).
+     *  being used (0 or 1 corresponding to timers or heuristic).
      */
     static short load_balance_costs_update_algo;
     //! Integer that corresponds to electromagnetic Maxwell solver (vacuum - 0, macroscopic - 1)
@@ -954,6 +955,7 @@ public:
      */
     [[nodiscard]] amrex::IntVect get_numprocs() const {return numprocs;}
 
+    bool m_boundary_potential_specified = false;
     ElectrostaticSolver::PoissonBoundaryHandler m_poisson_boundary_handler;
     void ComputeSpaceChargeField (bool reset_fields);
     void AddBoundaryField ();

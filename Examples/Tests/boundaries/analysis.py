@@ -18,8 +18,8 @@ import os
 import sys
 
 import numpy as np
-from scipy.constants import c, m_e
 import yt
+from scipy.constants import c, m_e
 
 yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')

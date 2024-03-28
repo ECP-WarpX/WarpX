@@ -190,6 +190,19 @@ public:
         }
     }
 
+    void defineAllParticleTiles () noexcept
+    {
+        for (int lev = 0; lev <= amrex::ParticleContainerPureSoA<PIdx::nattribs,0,T_Allocator>::finestLevel(); ++lev)
+        {
+            for (auto mfi = amrex::ParticleContainerPureSoA<PIdx::nattribs,0,T_Allocator>::MakeMFIter(lev); mfi.isValid(); ++mfi)
+            {
+                const int grid_id = mfi.index();
+                const int tile_id = mfi.LocalTileIndex();
+                amrex::ParticleContainerPureSoA<PIdx::nattribs,0,T_Allocator>::DefineAndReturnParticleTile(lev, grid_id, tile_id);
+            }
+        }
+    }
+
     /** Return the name-to-index map for the compile-time and runtime-time real components */
     [[nodiscard]] std::map<std::string, int> getParticleComps () const noexcept { return particle_comps;}
     /** Return the name-to-index map for the compile-time and runtime-time integer components */

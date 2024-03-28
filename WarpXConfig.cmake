@@ -17,7 +17,6 @@ set(WarpX_EB @WarpX_EB@)
 set(WarpX_EB_FOUND ${WarpX_EB})
 set(WarpX_LIB @WarpX_LIB@)
 set(WarpX_LIB_FOUND ${WarpX_LIB})
-WarpX_GPUCLOCK
 
 # dependencies
 set(WarpX_MPI @WarpX_MPI@)

@@ -35,7 +35,7 @@ Simulation and Grid Setup
 -------------------------
 
 .. autoclass:: pywarpx.picmi.Simulation
-    :members: step, add_species, add_laser, write_input_file
+    :members: step, add_species, add_laser, add_applied_field, write_input_file
 
 .. autoclass:: pywarpx.picmi.Cartesian3DGrid
 
@@ -69,6 +69,8 @@ which can be used directly inside any PICMI script. The values are in SI units.
 Applied fields
 --------------
 
+Instances of the classes below need to be passed to the method `add_applied_field` of the `Simulation` class.
+
 .. autoclass:: pywarpx.picmi.AnalyticInitialField
 
 .. autoclass:: pywarpx.picmi.ConstantAppliedField
@@ -93,6 +95,8 @@ Diagnostics
 .. autoclass:: pywarpx.picmi.ReducedDiagnostic
 
 Lab-frame diagnostics diagnostics are used when running boosted-frame simulations.
+
+.. autoclass:: pywarpx.picmi.LabFrameParticleDiagnostic
 
 .. autoclass:: pywarpx.picmi.LabFrameFieldDiagnostic
 

@@ -3,15 +3,14 @@
 # --- Analysis script for the hybrid-PIC example producing EM modes.
 
 import dill
-from matplotlib import colors
 import matplotlib.pyplot as plt
 import numpy as np
-from openpmd_viewer import OpenPMDTimeSeries
 import scipy.fft as fft
+from matplotlib import colors
+from openpmd_viewer import OpenPMDTimeSeries
+from pywarpx import picmi
 from scipy.interpolate import RegularGridInterpolator
 from scipy.special import j1, jn, jn_zeros
-
-from pywarpx import picmi
 
 constants = picmi.constants
 

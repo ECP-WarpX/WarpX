@@ -19,10 +19,10 @@ plotfiles.
 
 import glob
 
-from mpi4py import MPI
 import numpy as np
 import scipy.constants as scc
 import yt
+from mpi4py import MPI
 
 yt.funcs.mylog.setLevel(50)
 

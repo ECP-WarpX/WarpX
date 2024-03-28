@@ -19,6 +19,11 @@ eb2.box_has_fluid_inside = true
 # Note that for amrex EB implicit function, >0 is covered, =0 is boundary and <0 is regular.
 # warpx.eb_implicit_function = "max(max(max(x-0.5,-0.5-x), max(y-0.5,-0.5-y)), max(z-0.5,-0.5-z))"
 
+# To test the initial electrostatic solver, we also add uniform potential
+# Since, the potential is uniform here, it should not modify the fields, so this mainly
+# tests that calling the electrostatic solver does not raise any error/crash
+warpx.eb_potential(x,y,z,t) = "1"
+
 warpx.B_ext_grid_init_style = parse_B_ext_grid_function
 my_constants.m = 0
 my_constants.n = 1

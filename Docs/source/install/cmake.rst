@@ -89,7 +89,6 @@ CMake Option                  Default & Values                             Descr
 ``WarpX_COMPUTE``             NOACC/**OMP**/CUDA/SYCL/HIP                  On-node, accelerated computing backend
 ``WarpX_DIMS``                **3**/2/1/RZ                                 Simulation dimensionality. Use ``"1;2;RZ;3"`` for all.
 ``WarpX_EB``                  ON/**OFF**                                   Embedded boundary support (not supported in RZ yet)
-``WarpX_GPUCLOCK``            **ON**/OFF                                   Add GPU kernel timers (cost function, +4 registers/kernel)
 ``WarpX_IPO``                 ON/**OFF**                                   Compile WarpX with interprocedural optimization (aka LTO)
 ``WarpX_LIB``                 ON/**OFF**                                   Build WarpX as a library, e.g., for PICMI Python
 ``WarpX_MPI``                 **ON**/OFF                                   Multi-node support (message-passing)
@@ -101,6 +100,8 @@ CMake Option                  Default & Values                             Descr
 ``WarpX_PYTHON``              ON/**OFF**                                   Python bindings
 ``WarpX_QED``                 **ON**/OFF                                   QED support (requires PICSAR)
 ``WarpX_QED_TABLE_GEN``       ON/**OFF**                                   QED table generation support (requires PICSAR and Boost)
+``WarpX_QED_TOOLS``           ON/**OFF**                                   Build external tool to generate QED lookup tables (requires PICSAR and Boost)
+``WarpX_QED_TABLES_GEN_OMP``  **AUTO**/ON/OFF                              Enables OpenMP support for QED lookup tables generation
 ``WarpX_SENSEI``              ON/**OFF**                                   SENSEI in situ visualization
 ============================= ============================================ =========================================================
 
@@ -223,11 +224,11 @@ For PICMI Python bindings, configure WarpX to produce a library and call our ``p
 .. code-block:: bash
 
    # find dependencies & configure for all WarpX dimensionalities
-   cmake -S . -B build -DWarpX_DIMS="1;2;RZ;3" -DWarpX_PYTHON=ON
+   cmake -S . -B build_py -DWarpX_DIMS="1;2;RZ;3" -DWarpX_PYTHON=ON
 
 
    # build and then call "python3 -m pip install ..."
-   cmake --build build --target pip_install -j 4
+   cmake --build build_py --target pip_install -j 4
 
 **That's it!**
 You can now :ref:`run a first 3D PICMI script <usage-picmi>` from our :ref:`examples <usage-examples>`.
@@ -324,10 +325,10 @@ This is the workflow most developers will prefer as it allows rapid re-compiles:
 .. code-block:: bash
 
    # build WarpX executables and libraries
-   cmake -S . -B build -DWarpX_DIMS="1;2;RZ;3" -DWarpX_PYTHON=ON
+   cmake -S . -B build_py -DWarpX_DIMS="1;2;RZ;3" -DWarpX_PYTHON=ON
 
    # build & install Python only
-   cmake --build build -j 4 --target pip_install
+   cmake --build build_py -j 4 --target pip_install
 
 There is also a ``--target pip_install_nodeps`` option that :ref:`skips pip-based dependency checks <developers-local-compile-pylto>`.
 
