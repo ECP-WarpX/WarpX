@@ -258,8 +258,10 @@ PEC::ApplyReflectiveBoundarytoRhofield (amrex::MultiFab* rho, const int lev, Pat
     amrex::GpuArray<GpuArray<int,2>, AMREX_SPACEDIM> mirrorfac;
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
         is_reflective[idim][0] = ( WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Reflecting)
+                              || ( WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Thermal)
                               || ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC);
         is_reflective[idim][1] = ( WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Reflecting)
+                              || ( WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Thermal)
                               || ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC);
         if (!is_reflective[idim][0]) { grown_domain_box.growLo(idim, ng_fieldgather[idim]); }
         if (!is_reflective[idim][1]) { grown_domain_box.growHi(idim, ng_fieldgather[idim]); }
@@ -268,9 +270,11 @@ PEC::ApplyReflectiveBoundarytoRhofield (amrex::MultiFab* rho, const int lev, Pat
         // components of the current density
         is_tangent_to_bndy[idim] = true;
 
-        psign[idim][0] = (WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Reflecting)
+        psign[idim][0] = ( ( WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Reflecting)
+                        || ( WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Thermal) )
                          ? 1._rt : -1._rt;
-        psign[idim][1] = (WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Reflecting)
+        psign[idim][1] = ( (WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Reflecting)
+                        || ( WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Thermal) )
                          ? 1._rt : -1._rt;
         mirrorfac[idim][0] = 2*domain_lo[idim] - (1 - rho_nodal[idim]);
         mirrorfac[idim][1] = 2*domain_hi[idim] + (1 - rho_nodal[idim]);
@@ -352,8 +356,10 @@ PEC::ApplyReflectiveBoundarytoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
     amrex::GpuArray<GpuArray<GpuArray<int, 2>, AMREX_SPACEDIM>, 3> mirrorfac;
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
         is_reflective[idim][0] = ( WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Reflecting)
+                              || ( WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Thermal)
                               || ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC);
         is_reflective[idim][1] = ( WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Reflecting)
+                              || ( WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Thermal)
                               || ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC);
         if (!is_reflective[idim][0]) { grown_domain_box.growLo(idim, ng_fieldgather[idim]); }
         if (!is_reflective[idim][1]) { grown_domain_box.growHi(idim, ng_fieldgather[idim]); }
@@ -375,15 +381,19 @@ PEC::ApplyReflectiveBoundarytoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
 #endif
 
             if (is_tangent_to_bndy[icomp][idim]){
-                psign[icomp][idim][0] = (WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Reflecting)
+                psign[icomp][idim][0] = ( (WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Reflecting)
+                                     || ( WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Thermal) )
                                         ? 1._rt : -1._rt;
-                psign[icomp][idim][1] = (WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Reflecting)
+                psign[icomp][idim][1] = ( (WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Reflecting)
+                                     || ( WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Thermal) )
                                         ? 1._rt : -1._rt;
             }
             else {
-                psign[icomp][idim][0] = (WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Reflecting)
+                psign[icomp][idim][0] = ( (WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Reflecting)
+                                     || ( WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Thermal) )
                                         ? -1._rt : 1._rt;
-                psign[icomp][idim][1] = (WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Reflecting)
+                psign[icomp][idim][1] = ( (WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Reflecting)
+                                     || ( WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Thermal) )
                                         ? -1._rt : 1._rt;
             }
         }
