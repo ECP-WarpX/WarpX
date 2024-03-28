@@ -114,6 +114,9 @@ jobs:
 
     - name: run with thread sanitizer
       run: |
+        export PMIX_MCA_gds=hash
+        export TSAN_OPTIONS="ignore_noninstrumented_modules=1"
+
         export OMP_NUM_THREADS=2
         mpirun -n 2 ./build/bin/warpx.rz Examples/Physics_applications/laser_acceleration/inputs_rz
         mpirun -n 2 ./build/bin/warpx.1d Examples/Physics_applications/laser_acceleration/inputs_1d
