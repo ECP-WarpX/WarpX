@@ -42,10 +42,16 @@ namespace ablastr::constant
 
         //! vacuum speed of light [m/s]
         static constexpr auto c = 299'792'458._rt;
+        //! vacuum speed of light squared [m^2/s^2]
+        static constexpr auto c2 = c * c;
         //! vacuum permittivity: dielectric permittivity of vacuum [F/m]
         static constexpr auto ep0 = 8.8541878128e-12_rt;
+        //! vacuum inverse permittivity = 1/ep0 [m/F]
+        static constexpr auto ep0inv = 1.0_rt / ep0;
         //! vacuum permeability: magnetic permeability of vacuum = 4.0e-7 * pi [H/m]
         static constexpr auto mu0 = 1.25663706212e-06_rt;
+        //! vacuum magnetic reluctivity = 1/mu0 [m/H]
+        static constexpr auto mu0inv = 1._rt / mu0;
         //! elementary charge [C]
         static constexpr auto q_e = 1.602176634e-19_rt;
         //! electron mass [kg]

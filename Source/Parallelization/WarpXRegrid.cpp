@@ -166,6 +166,8 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
     {
         if (ParallelDescriptor::NProcs() == 1) { return; }
 
+        // Possible todo: add RemakeFab for M and dB for magnetic hysteresis objects
+
         // Fine patch
         for (int idim=0; idim < 3; ++idim)
         {

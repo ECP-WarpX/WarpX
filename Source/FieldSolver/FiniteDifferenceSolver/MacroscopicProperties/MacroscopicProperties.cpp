@@ -58,6 +58,7 @@ MacroscopicProperties::ReadParameters ()
         ablastr::warn_manager::WMRecordWarning("Macroscopic properties",
             warnMsg.str());
     }
+
     // initialization of sigma (conductivity) with parser
     if (m_sigma_s == "parse_sigma_function") {
         utils::parser::Store_parserString(
@@ -118,6 +119,22 @@ MacroscopicProperties::ReadParameters ()
             utils::parser::makeParser(m_str_mu_function,{"x","y","z"}));
     }
 
+    // Query input for magnetic materials
+    // m_magnetic_material_present_flag = false;
+    // if (utils::parser::queryWithParser(pp_macroscopic, "magnetic_id_vector", m_magnetic))
+    // {
+    //     m_magnetic_material_present_flag= true;
+    // }
+
+    // if (pp_macroscopic.query("ferromagnetic_material_id_function(x,y,z)", m_str_ferro_material_id_function)) {
+    //     m_ferromagnetic_material_present_flag = true;
+    // }
+
+    // m_magnetic = false;
+    // if (pp_macroscopic.query("ferromagnetic_material_id_function(x,y,z)", m_str_ferro_material_id_function)) {
+    //     m_ferromagnetic_material_present_flag = true;
+    // }
+
 }
 
 void
@@ -138,6 +155,9 @@ MacroscopicProperties::InitData ()
     m_eps_mf = std::make_unique<amrex::MultiFab>(ba, dmap, 1, ng_EB_alloc);
     // mu is cell-centered MultiFab
     m_mu_mf = std::make_unique<amrex::MultiFab>(ba, dmap, 1, ng_EB_alloc);
+    // mag_mat_id is cell-centered iMultiFab
+    m_magnetic_material_id_mf = std::make_unique<amrex::iMultiFab>(ba, dmap, 1, ng_EB_alloc);
+
     // Initialize sigma
     if (m_sigma_s == "constant") {
 
@@ -148,6 +168,7 @@ MacroscopicProperties::InitData ()
         InitializeMacroMultiFabUsingParser(m_sigma_mf.get(), m_sigma_parser->compile<3>(),
             warpx.Geom(lev).CellSizeArray(), warpx.Geom(lev).ProbDomain());
     }
+
     // Initialize epsilon
     if (m_epsilon_s == "constant") {
 
@@ -156,7 +177,7 @@ MacroscopicProperties::InitData ()
     } else if (m_epsilon_s == "parse_epsilon_function") {
 
         InitializeMacroMultiFabUsingParser(m_eps_mf.get(), m_epsilon_parser->compile<3>(),
-        warpx.Geom(lev).CellSizeArray(), warpx.Geom(lev).ProbDomain());
+            warpx.Geom(lev).CellSizeArray(), warpx.Geom(lev).ProbDomain());
 
     }
     // In the Maxwell solver, `epsilon` is used in the denominator.
@@ -176,13 +197,19 @@ MacroscopicProperties::InitData ()
             warpx.Geom(lev).CellSizeArray(), warpx.Geom(lev).ProbDomain());
 
     }
+    // In the Maxwell solver, `mu` is used in the denominator.
+    // Therefore, it needs to be strictly positive.
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_mu_mf->min(0,0,true) > 0,
+    "WarpX encountered zero or negative values for the relative permeability `mu`. Please check the initialization of `mu`.");
+
+    // Initialize magnetic material ID
 
     amrex::IntVect sigma_stag = m_sigma_mf->ixType().toIntVect();
     amrex::IntVect epsilon_stag = m_eps_mf->ixType().toIntVect();
     amrex::IntVect mu_stag = m_mu_mf->ixType().toIntVect();
-    amrex::IntVect Ex_stag = warpx.getEfield_fp(0,0).ixType().toIntVect();
-    amrex::IntVect Ey_stag = warpx.getEfield_fp(0,1).ixType().toIntVect();
-    amrex::IntVect Ez_stag = warpx.getEfield_fp(0,2).ixType().toIntVect();
+    amrex::IntVect Ex_stag = warpx.getEfield_fp(lev,0).ixType().toIntVect();
+    amrex::IntVect Ey_stag = warpx.getEfield_fp(lev,1).ixType().toIntVect();
+    amrex::IntVect Ez_stag = warpx.getEfield_fp(lev,2).ixType().toIntVect();
 
     for ( int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         sigma_IndexType[idim]   = sigma_stag[idim];

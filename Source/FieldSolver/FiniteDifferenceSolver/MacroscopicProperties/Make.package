@@ -1,3 +1,5 @@
+CEXE_sources += LangevinFunctions.cpp
+CEXE_sources += JAModel.cpp
 CEXE_sources += MacroscopicProperties.cpp
 
 VPATH_LOCATIONS += $(WARPX_HOME)/Source/FieldSolver/FiniteDifferenceSolver/MacroscopicProperties

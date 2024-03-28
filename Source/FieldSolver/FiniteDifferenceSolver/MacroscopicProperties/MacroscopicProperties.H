@@ -11,6 +11,7 @@
 #include "MacroscopicProperties_fwd.H"
 
 #include "Utils/WarpXConst.H"
+#include "MagneticMaterial.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_Extension.H>
@@ -43,6 +44,12 @@ public:
     /** return MultiFab, mu (permeability) of the medium. */
     amrex::MultiFab& getmu_mf  () {return (*m_mu_mf);}
 
+    /** return iMultiFab, magnetic material id number */
+    amrex::iMultiFab& get_MagneticMaterialID_mf  () { return (*m_magnetic_material_id_mf); }
+
+    /** Bool flag on whether there are any magnetic materials present. */
+    bool is_magnetic_material_present () { return m_magnetic_material_present_flag; }
+
     /** Initializes the Multifabs storing macroscopic properties
      *  with user-defined functions(x,y,z).
      */
@@ -50,6 +57,8 @@ public:
                                   amrex::ParserExecutor<3> const& macro_parser,
                                   const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>& dx_lev,
                                   const amrex::RealBox& prob_domain_lev);
+
+    const amrex::Vector<MagneticMaterial>& getMagneticMaterialList () { return m_magnetic_materials; }
 
     /** Gpu Vector with index type of the conductivity multifab */
     amrex::GpuArray<int, 3> sigma_IndexType;
@@ -80,6 +89,11 @@ private:
     std::unique_ptr<amrex::MultiFab> m_eps_mf;
     /** Multifab for m_mu */
     std::unique_ptr<amrex::MultiFab> m_mu_mf;
+    /** iMultifab for magnetic objects, where the integer refers specifies to the ID
+     * of which magnetic material is at the indexed location. The properties of each
+     * magnetic material are storing in m_magnetic_objects. Note that -1 corresponds to
+     * non-magnetic and defaults to m_mu_mf. */
+    std::unique_ptr<amrex::iMultiFab> m_magnetic_material_id_mf;
 
     /** Stores initialization type for conductivity : constant or parser */
     std::string m_sigma_s = "constant";
@@ -88,14 +102,29 @@ private:
     /** Stores initialization type for permeability : constant or parser */
     std::string m_mu_s = "constant";
 
-    /** string for storing parser function */
+    /** string for storing parser function for conductivity */
     std::string m_str_sigma_function;
+    /** string for storing parser function for permittivity */
     std::string m_str_epsilon_function;
+    /** string for storing parser function for permeability */
     std::string m_str_mu_function;
-    /** Parser Wrappers */
+    /** string vector for storing parser functions for the presence of magnetic materials.*/
+    amrex::Vector<std::string> m_str_magnetic_material_id_functions;
+
+    /** Parser Wrapper for conductivity */
     std::unique_ptr<amrex::Parser> m_sigma_parser;
+    /** Parser Wrapper for permittivity */
     std::unique_ptr<amrex::Parser> m_epsilon_parser;
+    /** Parser Wrapper for permeability */
     std::unique_ptr<amrex::Parser> m_mu_parser;
+    /** Parser Wrapper for the magnetic material ID */
+    amrex::Vector<std::unique_ptr<amrex::Parser>> m_magnetic_material_id_parsers;
+
+    /** Vector for storing magnetic materials present */
+    amrex::Vector<MagneticMaterial> m_magnetic_materials;
+
+    /** Bool flag on whether magnetic material is present. */
+    bool m_magnetic_material_present_flag = false;
 
 };
 
@@ -160,7 +189,6 @@ struct BackwardEulerAlgo {
         const amrex::Real beta = dt / ( epsilon * (1._rt + fac1) );
         return beta;
     }
-
 };
 
 #endif // WARPX_MACROSCOPIC_PROPERTIES_H_

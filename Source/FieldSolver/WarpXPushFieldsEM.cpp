@@ -1046,6 +1046,7 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
 
     m_fdtd_solver_fp[lev]->MacroscopicEvolveE(
         Efield_fp[lev], Bfield_fp[lev],
+        Hfield_fp[lev], magnetization_fp[lev],
         current_fp[lev], m_edge_lengths[lev],
         a_dt, m_macroscopic_properties);
 
