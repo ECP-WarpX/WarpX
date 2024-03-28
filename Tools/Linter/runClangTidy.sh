@@ -60,55 +60,13 @@ echo "$ export CLANGXX=clang++-15"
 echo "$ export CTIDCLANGTIDYY=clang-tidy-15"
 echo "$ ./Tools/Linter/runClangTidy.sh"
 echo
-echo "*****************************************************"
-echo "* Warning: clang v15 is currently used in CI tests. *"
-echo "* It is therefore recommended to use this version.  *"
-echo "* Otherwise, a newer version may find issues not    *"
-echo "* currently covered by CI tests (checks are opt-in) *"
-echo "* while older versions may not find all the issues. *"
-echo "*****************************************************"
-echo "_____________________________________________"
-
-# Install BLAS++
-echo
-echo "Installing BLAS++"
-echo
-if [ -d ${REPO_DIR}/src/blaspp ]
-then
-  cd ${REPO_DIR}/src/blaspp
-  git fetch --prune
-  git checkout master
-  git pull
-  cd -
-else
-  git clone https://github.com/icl-utk-edu/blaspp.git ${REPO_DIR}/src/blaspp
-fi
-rm -rf ${REPO_DIR}/src/blaspp-build
-cmake -S ${REPO_DIR}/src/blaspp -B ${REPO_DIR}/src/blaspp-build -Duse_openmp=ON -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=${REPO_DIR}/blaspp-install
-cmake --build ${REPO_DIR}/src/blaspp-build --target install --parallel ${PARALLEL}
-rm -rf ${REPO_DIR}/src/blaspp-build
-export CMAKE_PREFIX_PATH=${REPO_DIR}/blaspp-install:${CMAKE_PREFIX_PATH}
-echo "_____________________________________________"
-
-# Install LAPACK++
-echo
-echo "Installing LAPACK++"
-echo
-if [ -d ${REPO_DIR}/src/lapackpp ]
-then
-  cd ${REPO_DIR}/src/lapackpp
-  git fetch --prune
-  git checkout master
-  git pull
-  cd -
-else
-  git clone https://github.com/icl-utk-edu/lapackpp.git ${REPO_DIR}/src/lapackpp
-fi
-rm -rf ${REPO_DIR}/src/lapackpp-build
-cmake -S ${REPO_DIR}/src/lapackpp -B ${REPO_DIR}/src/lapackpp-build -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=${REPO_DIR}/lapackpp-install
-cmake --build ${REPO_DIR}/src/lapackpp-build --target install --parallel ${PARALLEL}
-rm -rf ${REPO_DIR}/src/lapackpp-build
-export CMAKE_PREFIX_PATH=${REPO_DIR}/lapackpp-install:${CMAKE_PREFIX_PATH}
+echo "******************************************************"
+echo "* Warning: clang v15 is currently used in CI tests.  *"
+echo "* It is therefore recommended to use this version.   *"
+echo "* Otherwise, a newer version may find issues not     *"
+echo "* currently covered by CI tests while older versions *"
+echo "* may not find all the issues.                       *"
+echo "******************************************************"
 echo "_____________________________________________"
 
 # Prepare clang-tidy wrapper
@@ -131,9 +89,11 @@ echo "_____________________________________________"
 
 # Compile Warpx using clang-tidy
 echo
-echo "Compile Warpx using clang-tidy"
-echo "The compilation requires libraries such as"
-echo "fftw (for PSATD) and boost (for the QED module)"
+echo "*******************************************"
+echo "* Compile Warpx using clang-tidy          *"
+echo "* Please ensure that all the dependencies *"
+echo "* required to compile WarpX are met       *"
+echo "*******************************************"
 echo
 
 rm -rf ${REPO_DIR}/build_clang_tidy

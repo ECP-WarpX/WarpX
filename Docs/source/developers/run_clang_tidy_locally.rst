@@ -22,8 +22,9 @@ enforced in CI tests can be found in the ``.clang-tidy`` configuration file.
 Run clang-tidy linter locally
 -----------------------------
 
-We provide a script to run clang-tidy locally. The script can be run as follows.
-Few optional environment variables can be set to tune the behavior of this script:
+We provide a script to run clang-tidy locally. The script can be run as follows,
+provided that all the requirements to compile WarpX are met (see `building from source <install-developers>`).
+Few optional environment variables can be set to tune the behavior of the script:
 
 * ``WARPX_TOOLS_LINTER_PARALLEL``: sets the number of cores to be used for the compilation
 * ``CLANG``, ``CLANGXX``, and ``CLANGTIDY`` : set the version of the compiler and of the linter
