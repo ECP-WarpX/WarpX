@@ -28,6 +28,7 @@
 #include <AMReX_IntVect.H>
 #include <AMReX_MFIter.H>
 #include <AMReX_MultiFab.H>
+//#include <AMReX_MultiFabUtill.H>
 #include <AMReX_REAL.H>
 #include <AMReX_SPACE.H>
 
@@ -50,34 +51,34 @@ void InjectorDensity::clear ()
 {
     switch (type)
     {
-    case Type::parser:
-    {
-        break;
-    }
-    case Type::predefined:
-    {
-        object.predefined.clear();
-        break;
-    }
-    case Type::fromfile:
-    {
-        object.fromfile.clear();
-        break;
-    }
-    default:
-        return;
+        case Type::parser:
+        {
+            break;
+        }
+        case Type::predefined:
+        {
+            object.predefined.clear();
+            break;
+        }
+        case Type::fromfile:
+        {
+            object.fromfile.clear();
+            break;
+        }
+        default:
+            return;
     }
 }
 
 InjectorDensityPredefined::InjectorDensityPredefined (
-    std::string const& a_species_name) noexcept
+        std::string const& a_species_name) noexcept
 {
     const ParmParse pp_species_name(a_species_name);
 
     std::vector<amrex::Real> v;
     // Read parameters for the predefined plasma profile.
     utils::parser::getArrWithParser(
-        pp_species_name, "predefined_profile_params", v);
+            pp_species_name, "predefined_profile_params", v);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(v.size() <= 6,
                                      "Too many parameters for InjectorDensityPredefined");
     for (int i = 0; i < static_cast<int>(v.size()); ++i) {
@@ -92,13 +93,13 @@ InjectorDensityPredefined::InjectorDensityPredefined (
     if (which_profile_s == "parabolic_channel"){
         profile = Profile::parabolic_channel;
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(v.size() > 5,
-            "InjectorDensityPredefined::parabolic_channel: not enough parameters");
+                                         "InjectorDensityPredefined::parabolic_channel: not enough parameters");
     }
 }
 
 InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_name)
 {
-
+    std::cout << "start injector density from file\n" ;
     //get the file path for reading the external density and the name of the field to be read
     const ParmParse pp (a_species_name);
     const ParmParse pp_warpx ("warpx");
@@ -138,11 +139,28 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
 
     // creating the mulitfab array
     IntVect rho_nodal_flag;
+    // This is taken from initialization of rho_nodal_flag in WarpX.cpp but do not know if it is always correct
     rho_nodal_flag = IntVect( AMREX_D_DECL(1,1,1) );
-    MultiFab *mf = warpx.get_pointer_rho_fp(0);
+    std::cout << "calling multifab\n";
+    MultiFab* mf = warpx.get_pointer_rho_fp(0);
+
+
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(mf != nullptr, "Inside Assert");
+
+    // PUT in an amrex declare if null pointer
+
+//    mf->set_val(0.0);
+//    copy = mf->copy();
+    //copy *= 0;
+    //MultiFab copy = mf->copy(mf, copy, mf->nComp(), mf->nComp());
+//    MultiFab mf_copy;
+//    static void copy(&mf_copy, const &mf, 1, 0);
     const amrex::IntVect nodal_flag = mf->ixType().toIntVect();
 
-    std::cout << rho_nodal_flag << '\n';
+
+
+//    std::cout << rho_nodal_flag << '\n';
+//    std::cout << nodal_flag << '\n';
 
     // Read external field openPMD data
     io::Series series = io::Series(external_density_path, io::Access::READ_ONLY);
@@ -150,7 +168,6 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
 
     io::Mesh P = iseries.meshes[density];
     io::MeshRecordComponent p_scalar0 = P[io::RecordComponent::SCALAR];
-    //auto all_data0 = p_scalar0.loadChunk<double>();
 
     auto axisLabels = P.getAttribute("axisLabels").get<std::vector<std::string>>();
     auto fileGeom = P.getAttribute("geometry").get<std::string>();
@@ -190,66 +207,66 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
     // iterate over the external field and find the index that corresponds to the grid points
     for (MFIter mfi(*mf, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-        std::cout << "inside MFIter\n";
+//        std::cout << "inside MFIter\n";
         const amrex::Box box = mfi.growntilebox();
         const amrex::Box tb = mfi.tilebox(rho_nodal_flag, mf->nGrowVect());
-        std::cout << "before mffab definition\n";
+//        std::cout << "before mffab definition\n";
         mffab = mf->array(mfi);
-        std::cout << "after mffab definition\n";
+//        std::cout << "after mffab definition\n";
 
         amrex::ParallelFor (tb,
-            [box, this, dx,file_dx, file_dy, file_dz, extent0, extent1, extent2, P_data] AMREX_GPU_DEVICE (int i, int j, int k) {
-                // i,j,k denote x,y,z indices in 3D xyz.
-                // i,j denote r,z indices in 2D rz; k is just 0
+                            [box, this, dx,file_dx, file_dy, file_dz, extent0, extent1, extent2, P_data] AMREX_GPU_DEVICE (int i, int j, int k) {
+                                // i,j,k denote x,y,z indices in 3D xyz.
+                                // i,j denote r,z indices in 2D rz; k is just 0
 
-                //for 3D only!!
-                const int ii = i;
-                amrex::Real x0, x1;
-                std::cout << "inside parallel for";
+                                //for 3D only!!
+                                const int ii = i;
+                                amrex::Real x0, x1;
+//                                std::cout << "inside parallel for";
 
-                if ( box.type(0)==amrex::IndexType::CellIndex::NODE )
-                    {x0 = static_cast<amrex::Real>(real_box.lo(0)) + ii*dx[0]; }
-                else {
-                    x0 = static_cast<amrex::Real>(real_box.lo(0)) + ii*dx[0] + 0.5_rt*dx[0]; }
-                if (box.type(1)==amrex::IndexType::CellIndex::NODE )
-                    {x1 = real_box.lo(1) + j*dx[1]; }
-                else {
-                    x1 = real_box.lo(1) + j*dx[1] + 0.5_rt*dx[1]; }
+                                if ( box.type(0)==amrex::IndexType::CellIndex::NODE )
+                                {x0 = static_cast<amrex::Real>(real_box.lo(0)) + ii*dx[0]; }
+                                else {
+                                    x0 = static_cast<amrex::Real>(real_box.lo(0)) + ii*dx[0] + 0.5_rt*dx[0]; }
+                                if (box.type(1)==amrex::IndexType::CellIndex::NODE )
+                                {x1 = real_box.lo(1) + j*dx[1]; }
+                                else {
+                                    x1 = real_box.lo(1) + j*dx[1] + 0.5_rt*dx[1]; }
 
-                amrex::Real x2;
-                if ( box.type(2)==amrex::IndexType::CellIndex::NODE )
-                    { x2 = real_box.lo(2) + k*dx[2]; }
-                else { x2 = real_box.lo(2) + k*dx[2] + 0.5_rt*dx[2]; }
+                                amrex::Real x2;
+                                if ( box.type(2)==amrex::IndexType::CellIndex::NODE )
+                                { x2 = real_box.lo(2) + k*dx[2]; }
+                                else { x2 = real_box.lo(2) + k*dx[2] + 0.5_rt*dx[2]; }
 
-                // Get index of the external field array
+                                // Get index of the external field array
 
-                int const ix = std::floor( (x0-offset[0])/file_dx );
-                int const iy = std::floor( (x1-offset[1])/file_dy );
-                int const iz = std::floor( (x2-offset[2])/file_dz );
+                                int const ix = std::floor( (x0-offset[0])/file_dx );
+                                int const iy = std::floor( (x1-offset[1])/file_dy );
+                                int const iz = std::floor( (x2-offset[2])/file_dz );
 
-                // Get coordinates of external grid point
-                auto const xx0 = offset[0] + ix * file_dx;
-                auto const xx1 = offset[1] + iy * file_dy;
-                auto const xx2 = offset[2] + iz * file_dz;
+                                // Get coordinates of external grid point
+                                auto const xx0 = offset[0] + ix * file_dx;
+                                auto const xx1 = offset[1] + iy * file_dy;
+                                auto const xx2 = offset[2] + iz * file_dz;
 
-                const amrex::Array4<double> fc_array(P_data, {0,0,0}, {extent2, extent1, extent0}, 1);
-                const double
-                    f000 = fc_array(iz  , iy  , ix  ),
-                    f001 = fc_array(iz+1, iy  , ix  ),
-                    f010 = fc_array(iz  , iy+1, ix  ),
-                    f011 = fc_array(iz+1, iy+1, ix  ),
-                    f100 = fc_array(iz  , iy  , ix+1),
-                    f101 = fc_array(iz+1, iy  , ix+1),
-                    f110 = fc_array(iz  , iy+1, ix+1),
-                    f111 = fc_array(iz+1, iy+1, ix+1);
-                mffab(i,j,k) = static_cast<amrex::Real> (utils::algorithms::trilinear_interp<double>
-                    (xx0, xx0+file_dx, xx1, xx1+file_dy, xx2, xx2+file_dz,
-                     f000, f001, f010, f011, f100, f101, f110, f111,
-                     x0, x1, x2) );
-                //mffab(i,j,k) = static_cast<amrex::Real> (f000);
+                                const amrex::Array4<double> fc_array(P_data, {0,0,0}, {extent2, extent1, extent0}, 1);
+                                const double
+                                        f000 = fc_array(iz  , iy  , ix  ),
+                                        f001 = fc_array(iz+1, iy  , ix  ),
+                                        f010 = fc_array(iz  , iy+1, ix  ),
+                                        f011 = fc_array(iz+1, iy+1, ix  ),
+                                        f100 = fc_array(iz  , iy  , ix+1),
+                                        f101 = fc_array(iz+1, iy  , ix+1),
+                                        f110 = fc_array(iz  , iy+1, ix+1),
+                                        f111 = fc_array(iz+1, iy+1, ix+1);
+                                mffab(i,j,k) = static_cast<amrex::Real> (utils::algorithms::trilinear_interp<double>
+                                        (xx0, xx0+file_dx, xx1, xx1+file_dy, xx2, xx2+file_dz,
+                                         f000, f001, f010, f011, f100, f101, f110, f111,
+                                         x0, x1, x2) );
+                                //mffab(i,j,k) = static_cast<amrex::Real> (f000);
 //#endif
 
-        }
+                            }
         ); //end ParallelFor
     }
     std::cout << "made it to the end\n" ;

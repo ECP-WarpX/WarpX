@@ -411,9 +411,12 @@ MultiParticleContainer::InitData ()
     InitMultiPhysicsModules();
 
     for (auto& pc : allcontainers) {
+        std::cout << "pc InitData\n";
         pc->InitData();
     }
-    pc_tmp->InitData();
+    std::cout << "pc_tmp InitData\n";
+    std::cout << "comment this back in later please !!\n";
+    //pc_tmp->InitData();
 
 }
 
