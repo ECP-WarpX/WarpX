@@ -40,7 +40,7 @@
 using namespace amrex;
 
 // constructor
-FieldMaximum::FieldMaximum (std::string rd_name)
+FieldMaximum::FieldMaximum (const std::string& rd_name)
 : ReducedDiags{rd_name}
 {
     // RZ coordinate is not working

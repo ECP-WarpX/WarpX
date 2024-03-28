@@ -216,7 +216,7 @@ Logger::Logger() :
     m_io_rank{amrex::ParallelDescriptor::IOProcessorNumber()}
 {}
 
-void Logger::record_msg(Msg msg)
+void Logger::record_msg(const Msg& msg)
 {
     m_messages[msg]++;
 }

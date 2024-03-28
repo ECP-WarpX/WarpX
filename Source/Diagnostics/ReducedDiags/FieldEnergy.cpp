@@ -30,7 +30,7 @@
 using namespace amrex;
 
 // constructor
-FieldEnergy::FieldEnergy (std::string rd_name)
+FieldEnergy::FieldEnergy (const std::string& rd_name)
 : ReducedDiags{rd_name}
 {
 

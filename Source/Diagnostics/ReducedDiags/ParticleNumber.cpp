@@ -27,7 +27,7 @@
 using namespace amrex::literals;
 
 // constructor
-ParticleNumber::ParticleNumber (std::string rd_name)
+ParticleNumber::ParticleNumber (const std::string& rd_name)
 : ReducedDiags{rd_name}
 {
     // get a reference to WarpX instance

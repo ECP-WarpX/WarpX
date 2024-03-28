@@ -11,8 +11,8 @@
 #include "SplitAndScatterFunc.H"
 
 
-DSMC::DSMC (const std::string collision_name)
-    : CollisionBase(collision_name)
+DSMC::DSMC (const std::string& collision_name)
+    : CollisionBase{collision_name}
 {
     using namespace amrex::literals;
     const amrex::ParmParse pp_collision_name(collision_name);

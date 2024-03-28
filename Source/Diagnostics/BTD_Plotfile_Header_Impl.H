@@ -200,12 +200,12 @@ class BTDMultiFabHeaderImpl
      */
     void SetBox (int ibox, amrex::Box ba_box) { m_ba.set(ibox, ba_box); }
     /** Set Fab name of the ith fab to be written in the multifab Header file.*/
-    void SetFabName (int ifab, std::string fodPrefix, std::string FabName,
+    void SetFabName (int ifab, const std::string& fodPrefix, const std::string& FabName,
                      int FabHead);
     /** Set minimum value of all the components for the ith fab. */
-    void SetMinVal (int ifab, amrex::Vector<amrex::Real> minval);
+    void SetMinVal (int ifab, const amrex::Vector<amrex::Real>& minval);
     /** Set maximum value of all the components for the ith fab. */
-    void SetMaxVal (int ifab, amrex::Vector<amrex::Real> maxval);
+    void SetMaxVal (int ifab, const amrex::Vector<amrex::Real>& maxval);
     private:
     /** Header file path */
     std::string m_Header_path;

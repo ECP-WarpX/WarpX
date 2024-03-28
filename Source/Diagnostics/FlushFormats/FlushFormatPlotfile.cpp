@@ -479,7 +479,7 @@ WriteZeroRawMF( const MultiFab& F, const DistributionMapping& dm,
  *  coarse and fine patch to have the same shape.
  */
 void
-WriteCoarseVector( const std::string field_name,
+WriteCoarseVector( const std::string& field_name,
     const MultiFab* Fx_cp,
     const MultiFab* Fy_cp,
     const MultiFab* Fz_cp,
@@ -519,7 +519,7 @@ WriteCoarseVector( const std::string field_name,
  *  coarse and fine patch to have the same shape.
  */
 void
-WriteCoarseScalar( const std::string field_name,
+WriteCoarseScalar( const std::string& field_name,
     const MultiFab* F_cp,
     const MultiFab* F_fp,
     const DistributionMapping& dm,

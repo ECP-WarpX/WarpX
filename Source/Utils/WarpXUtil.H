@@ -64,7 +64,7 @@ namespace WarpXUtilIO{
  * @param[in] data Vector containing binary data to write on disk
  * return true if it succeeds, false otherwise
  */
-bool WriteBinaryDataOnFile(std::string filename, const amrex::Vector<char>& data);
+bool WriteBinaryDataOnFile(const std::string& filename, const amrex::Vector<char>& data);
 
 }
 
@@ -116,7 +116,7 @@ namespace WarpXUtilLoadBalance
      * @param[in] dm the dmap to check
      * @return consistent whether the grids are consistent or not.
      */
-    bool doCosts (const amrex::LayoutData<amrex::Real>* cost, amrex::BoxArray ba,
+    bool doCosts (const amrex::LayoutData<amrex::Real>* cost, const amrex::BoxArray& ba,
                   const amrex::DistributionMapping& dm);
 }
 

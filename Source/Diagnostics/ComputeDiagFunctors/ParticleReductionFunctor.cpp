@@ -18,9 +18,9 @@
 using namespace amrex::literals;
 
 ParticleReductionFunctor::ParticleReductionFunctor (const amrex::MultiFab* mf_src, const int lev,
-        const amrex::IntVect crse_ratio, const std::string fn_str,
+        const amrex::IntVect crse_ratio, const std::string& fn_str,
         const int ispec, const bool do_average,
-        const bool do_filter, const std::string filter_str, const int ncomp)
+        const bool do_filter, const std::string& filter_str, const int ncomp)
     : ComputeDiagFunctor(ncomp, crse_ratio), m_lev(lev), m_ispec(ispec), m_do_average(do_average), m_do_filter(do_filter)
 {
     // mf_src will not be used, let's make sure it's null.

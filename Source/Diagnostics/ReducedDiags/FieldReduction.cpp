@@ -22,7 +22,7 @@
 #include <regex>
 
 // constructor
-FieldReduction::FieldReduction (std::string rd_name)
+FieldReduction::FieldReduction (const std::string& rd_name)
 : ReducedDiags{rd_name}
 {
     using namespace amrex::literals;
