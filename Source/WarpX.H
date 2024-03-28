@@ -1743,7 +1743,7 @@ private:
     /** Stop the simulation at the end of the current step?
      */
     [[nodiscard]]
-    bool checkStopSimulation (amrex::Real cur_time);
+    bool checkStopSimulation ();
 
     /** Print Unused Parameter Warnings after Step 1
      *
