@@ -12,6 +12,7 @@
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXConst.H"
 
+#include <AMReX_Math.H>
 #include <AMReX_Random.H>
 
 
@@ -141,8 +142,9 @@ void ElasticCollisionPerez (
            * there is a corresponding assert statement at initialization.) */
           T_PR const theta = theta2[I2[i2]]-theta1[I1[i1]];
           T_PR const u1xbuf = u1x[I1[i1]];
-          u1x[I1[i1]] = u1xbuf*std::cos(theta) - u1y[I1[i1]]*std::sin(theta);
-          u1y[I1[i1]] = u1xbuf*std::sin(theta) + u1y[I1[i1]]*std::cos(theta);
+          const auto [sin_theta, cos_theta] = amrex::Math::sincos(theta);
+          u1x[I1[i1]] = u1xbuf*cos_theta - u1y[I1[i1]]*sin_theta;
+          u1y[I1[i1]] = u1xbuf*sin_theta + u1y[I1[i1]]*cos_theta;
 #endif
 
           UpdateMomentumPerezElastic(
@@ -155,8 +157,8 @@ void ElasticCollisionPerez (
 
 #if (defined WARPX_DIM_RZ)
           T_PR const u1xbuf_new = u1x[I1[i1]];
-          u1x[I1[i1]] = u1xbuf_new*std::cos(-theta) - u1y[I1[i1]]*std::sin(-theta);
-          u1y[I1[i1]] = u1xbuf_new*std::sin(-theta) + u1y[I1[i1]]*std::cos(-theta);
+          u1x[I1[i1]] =  u1xbuf_new*cos_theta + u1y[I1[i1]]*sin_theta;
+          u1y[I1[i1]] = -u1xbuf_new*sin_theta + u1y[I1[i1]]*cos_theta;
 #endif
 
           ++i1; if ( i1 == I1e ) { i1 = I1s; }

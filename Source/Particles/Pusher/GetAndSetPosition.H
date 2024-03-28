@@ -12,6 +12,7 @@
 #include "Particles/NamedComponentParticleContainer.H"
 
 #include <AMReX.H>
+#include <AMReX_Math.H>
 #include <AMReX_REAL.H>
 
 #include <cmath>
@@ -35,8 +36,9 @@ void get_particle_position (const WarpXParticleContainer::SuperParticleType& p,
 #if defined(WARPX_DIM_RZ)
     amrex::ParticleReal const theta = p.rdata(T_PIdx::theta);
     amrex::ParticleReal const r = p.pos(T_PIdx::x);
-    x = r*std::cos(theta);
-    y = r*std::sin(theta);
+    auto const [sin_theta, cos_theta] = amrex::Math::sincos(theta);
+    x = r*cos_theta;
+    y = r*sin_theta;
     z = p.pos(PIdx::z);
 #elif defined(WARPX_DIM_3D)
     x = p.pos(PIdx::x);
@@ -120,8 +122,9 @@ struct GetParticlePosition
     {
 #ifdef WARPX_DIM_RZ
         RType const r = m_x[i];
-        x = r*std::cos(m_theta[i]);
-        y = r*std::sin(m_theta[i]);
+        auto const [sin_m_theta_i, cos_m_theta_i] = amrex::Math::sincos(m_theta[i]);
+        x = r*cos_m_theta_i;
+        y = r*sin_m_theta_i;
         z = m_z[i];
 #elif WARPX_DIM_3D
         x = m_x[i];

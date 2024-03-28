@@ -12,6 +12,7 @@
 #include "Particles/Collision/BinaryCollision/BinaryCollisionUtils.H"
 #include "Particles/Collision/ScatteringProcess.H"
 
+#include <AMReX_Math.H>
 #include <AMReX_Random.H>
 
 /**
@@ -194,8 +195,9 @@ void CollisionFilter (
             * there is a corresponding assert statement at initialization.) */
         amrex::ParticleReal const theta = theta2[I2[i2]]-theta1[I1[i1]];
         amrex::ParticleReal const u1xbuf = u1x[I1[i1]];
-        u1x[I1[i1]] = u1xbuf*std::cos(theta) - u1y[I1[i1]]*std::sin(theta);
-        u1y[I1[i1]] = u1xbuf*std::sin(theta) + u1y[I1[i1]]*std::cos(theta);
+        const auto [sin_theta, cos_theta] = amrex::Math::sincos(theta);
+        u1x[I1[i1]] = u1xbuf*cos_theta - u1y[I1[i1]]*sin_theta;
+        u1y[I1[i1]] = u1xbuf*sin_theta + u1y[I1[i1]]*cos_theta;
 #endif
 
         CollisionPairFilter(
@@ -207,8 +209,8 @@ void CollisionFilter (
 
 #if (defined WARPX_DIM_RZ)
         amrex::ParticleReal const u1xbuf_new = u1x[I1[i1]];
-        u1x[I1[i1]] = u1xbuf_new*std::cos(-theta) - u1y[I1[i1]]*std::sin(-theta);
-        u1y[I1[i1]] = u1xbuf_new*std::sin(-theta) + u1y[I1[i1]]*std::cos(-theta);
+        u1x[I1[i1]] =  u1xbuf_new*cos_theta + u1y[I1[i1]]*sin_theta;
+        u1y[I1[i1]] = -u1xbuf_new*sin_theta + u1y[I1[i1]]*cos_theta;
 #endif
 
         p_pair_indices_1[pair_index] = I1[i1];
