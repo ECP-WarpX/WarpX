@@ -342,6 +342,9 @@ public:
     int self_fields_max_iters = 200;
     int self_fields_verbosity = 2;
 
+    // Supercycling
+    int supercycling_interval = 1;
+
     // External fields added to particle fields.
     amrex::Vector<amrex::ParticleReal> m_B_external_particle;
     amrex::Vector<amrex::ParticleReal> m_E_external_particle;

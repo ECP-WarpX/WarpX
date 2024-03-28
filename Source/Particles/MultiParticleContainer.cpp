@@ -455,7 +455,7 @@ MultiParticleContainer::Evolve (int lev,
                                 MultiFab* rho, MultiFab* crho,
                                 const MultiFab* cEx, const MultiFab* cEy, const MultiFab* cEz,
                                 const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
-                                Real t, Real dt, DtType a_dt_type, bool skip_deposition,
+                                Real t, Real dt, int iter, DtType a_dt_type, bool skip_deposition,
                                 PushType push_type)
 {
     if (! skip_deposition) {
@@ -468,9 +468,14 @@ MultiParticleContainer::Evolve (int lev,
         if (rho) { rho->setVal(0.0); }
         if (crho) { crho->setVal(0.0); }
     }
+
     for (auto& pc : allcontainers) {
-        pc->Evolve(lev, Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, cjx, cjy, cjz,
-                   rho, crho, cEx, cEy, cEz, cBx, cBy, cBz, t, dt, a_dt_type, skip_deposition, push_type);
+        auto dt_species = dt * pc->supercycling_interval;
+        if (iter % pc->supercycling_interval == 0) {
+            pc->Evolve(lev, Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, cjx, cjy, cjz,
+                rho, crho, cEx, cEy, cEz, cBx, cBy, cBz, t, dt_species,
+                a_dt_type, skip_deposition, push_type);
+        }
     }
 }
 
