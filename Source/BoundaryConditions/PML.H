@@ -11,6 +11,8 @@
 
 #include "PML_fwd.H"
 
+#include "Utils/WarpXAlgorithmSelection.H"
+
 #ifdef WARPX_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #endif
@@ -130,8 +132,6 @@ private:
     amrex::Real dt_B = -1.e10;
     amrex::Real dt_E = -1.e10;
 };
-
-enum struct PatchType : int;
 
 class PML
 {
