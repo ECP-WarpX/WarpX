@@ -52,8 +52,12 @@ struct SmartCreate
         prt.m_rdata[PIdx::x][i_prt] = x;
         prt.m_rdata[PIdx::y][i_prt] = y;
         prt.m_rdata[PIdx::z][i_prt] = z;
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(WARPX_DIM_XZ)
         prt.m_rdata[PIdx::x][i_prt] = x;
+        prt.m_rdata[PIdx::z][i_prt] = z;
+        amrex::ignore_unused(y);
+#elif defined(WARPX_DIM_RZ)
+        prt.m_rdata[PIdx::r][i_prt] = x;
         prt.m_rdata[PIdx::z][i_prt] = z;
         amrex::ignore_unused(y);
 #else

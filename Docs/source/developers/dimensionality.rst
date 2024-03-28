@@ -15,6 +15,7 @@ Dimensions  CMake Option
 **2D3V**    ``WarpX_DIMS=2``
 **1D3V**    ``WarpX_DIMS=1``
 **RZ**      ``WarpX_DIMS=RZ``
+**all**     ``WarpX_DIMS="1;2;RZ;3"``
 ==========  ==========================
 
 Note that one can :ref:`build multiple WarpX dimensions at once <building-cmake-options>` via ``-DWarpX_DIMS="1;2;RZ;3"``.
