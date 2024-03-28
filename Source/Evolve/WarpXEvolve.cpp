@@ -125,7 +125,7 @@ WarpX::Evolve (int numsteps)
 
         ExecutePythonCallback("particleinjection");
 
-        // TOOD: move out
+        // TODO: move out
         if (evolve_scheme == EvolveScheme::ImplicitPicard ||
             evolve_scheme == EvolveScheme::SemiImplicitPicard) {
             OneStep_ImplicitPicard(cur_time);
