@@ -1753,7 +1753,7 @@ private:
 
     /** Perform essential particle house keeping at boundaries
      *
-     * Inject, communicate, scape and sort particles.
+     * Inject, communicate, scrape and sort particles.
      *
      * @param step current step
      * @param cur_time current time
