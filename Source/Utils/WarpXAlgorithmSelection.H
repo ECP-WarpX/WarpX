@@ -87,7 +87,8 @@ struct CurrentDepositionAlgo {
     enum {
         Esirkepov = 0,
         Direct = 1,
-        Vay = 2
+        Vay = 2,
+        Villasenor = 3
     };
 };
 
@@ -131,9 +132,8 @@ struct RhoInTime {
 struct LoadBalanceCostsUpdateAlgo {
     enum {
         Timers    = 0, //!< load balance according to in-code timer-based weights (i.e., with  `costs`)
-        Heuristic = 1, /**< load balance according to weights computed from number of cells
-                             and number of particles per box (i.e., with `costs_heuristic`)*/
-        GpuClock  = 2
+        Heuristic = 1  /**< load balance according to weights computed from number of cells
+                             and number of particles per box (i.e., with `costs_heuristic`) */
     };
 };
 
@@ -186,5 +186,10 @@ GetFieldBCTypeInteger( std::string BCType );
  */
 ParticleBoundaryType
 GetParticleBCTypeInteger( std::string BCType );
+
+/** Find the name associated with a BC type
+ */
+std::string
+GetFieldBCTypeString( int fb_type );
 
 #endif // UTILS_WARPXALGORITHMSELECTION_H_

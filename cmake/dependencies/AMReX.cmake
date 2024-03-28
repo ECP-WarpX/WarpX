@@ -250,13 +250,17 @@ macro(find_amrex)
         endif()
         set(COMPONENT_PRECISION ${WarpX_PRECISION} P${WarpX_PARTICLE_PRECISION})
 
-        find_package(AMReX 23.12 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIMS} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} ${COMPONENT_SENSEI} LSOLVERS)
+        find_package(AMReX 24.03 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIMS} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} ${COMPONENT_SENSEI} LSOLVERS)
         # note: TINYP skipped because user-configured and optional
 
         # AMReX CMake helper scripts
         list(APPEND CMAKE_MODULE_PATH "${AMReX_DIR}/AMReXCMakeModules")
 
         message(STATUS "AMReX: Found version '${AMReX_VERSION}'")
+
+        if(WarpX_COMPUTE STREQUAL CUDA)
+            enable_language(CUDA)
+        endif()
     endif()
 endmacro()
 
@@ -269,7 +273,7 @@ set(WarpX_amrex_src ""
 set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
     CACHE STRING
     "Repository URI to pull and build AMReX from if(WarpX_amrex_internal)")
-set(WarpX_amrex_branch "75571e2dcbf2417529c5ed8e24113580e8e1f3f1"
+set(WarpX_amrex_branch "9e8f8d60eca337e3c14396f06f0a77500289d45c"
     CACHE STRING
     "Repository branch for WarpX_amrex_repo if(WarpX_amrex_internal)")
 

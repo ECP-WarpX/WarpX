@@ -10,6 +10,7 @@
 # This is a script that analyses the simulation results from
 # the script `inputs_1d`. This simulates a 1D periodic plasma using the implicit solver.
 import os
+import re
 import sys
 
 import numpy as np
@@ -28,7 +29,11 @@ total_energy = field_energy[:,2] + particle_energy[:,2]
 delta_E = (total_energy - total_energy[0])/total_energy[0]
 max_delta_E = np.abs(delta_E).max()
 
-tolerance_rel = 1.e-14
+if re.match('SemiImplicitPicard_1d', fn):
+    tolerance_rel = 2.5e-5
+elif re.match('ImplicitPicard_1d', fn):
+    # This case should have near machine precision conservation of energy
+    tolerance_rel = 1.e-14
 
 print(f"max change in energy: {max_delta_E}")
 print(f"tolerance: {tolerance_rel}")

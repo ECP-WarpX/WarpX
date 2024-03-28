@@ -12,9 +12,8 @@ import os
 import sys
 
 import dill
-from mpi4py import MPI as mpi
 import numpy as np
-
+from mpi4py import MPI as mpi
 from pywarpx import callbacks, fields, libwarpx, picmi
 
 constants = picmi.constants
@@ -58,7 +57,7 @@ class EMModes(object):
     # Plasma resistivity - used to dampen the mode excitation
     eta = [[1e-7, 1e-7], [1e-7, 1e-5], [1e-7, 1e-4]]
     # Number of substeps used to update B
-    substeps = [[250, 500], [250, 750], [250, 1000]]
+    substeps = 20
 
     def __init__(self, test, dim, B_dir, verbose):
         """Get input parameters for the specific case desired."""
@@ -149,7 +148,6 @@ class EMModes(object):
 
         self.NPPC = self.NPPC[self.dim-1]
         self.eta = self.eta[self.dim-1][idx]
-        self.substeps = self.substeps[self.dim-1][idx]
 
     def get_plasma_quantities(self):
         """Calculate various plasma parameters based on the simulation input."""
@@ -270,7 +268,7 @@ class EMModes(object):
                 name='field_diag',
                 grid=self.grid,
                 period=self.total_steps,
-                data_list=['B', 'E'],
+                data_list=['B', 'E', 'J_displacement'],
                 write_dir='.',
                 warpx_file_prefix='Python_ohms_law_solver_EM_modes_1d_plt',
                 # warpx_format = 'openpmd',

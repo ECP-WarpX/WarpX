@@ -8,7 +8,7 @@
 #define ABLASTR_VECTOR_POISSON_SOLVER_H
 
 #include <ablastr/constant.H>
-#include <ablastr/fields/PoissonSolver.H>
+#include <ablastr/fields/Interpolate.H>
 #include <ablastr/utils/Communication.H>
 #include <ablastr/utils/TextMsg.H>
 #include <ablastr/warn_manager/WarnManager.H>
@@ -130,7 +130,7 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
         );
     }
 
-    const amrex::LPInfo info;
+    const amrex::LPInfo& info = amrex::LPInfo();
 
     // Loop over dimensions of A to solve each component individually
     for (int lev=0; lev<=finest_level; lev++) {
@@ -185,11 +185,10 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
                         relative_tolerance, absolute_tolerance );
 
             // Synchronize the ghost cells, do halo exchange
-            ablastr::utils::communication::FillBoundary(*A[lev][adim],
-                                                        A[lev][adim]->nGrowVect(),
-                                                        WarpX::do_single_precision_comms,
-                                                        geom[lev].periodicity(),
-                                                        false);
+            ablastr::utils::communication::FillBoundary(
+                *A[lev][adim], A[lev][adim]->nGrowVect(),
+                do_single_precision_comms,
+                geom[lev].periodicity(), false);
 
             // needed for solving the levels by levels:
             // - coarser level is initial guess for finer level

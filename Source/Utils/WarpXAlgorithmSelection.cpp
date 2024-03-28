@@ -63,10 +63,11 @@ const std::map<std::string, int> particle_pusher_algo_to_int = {
 };
 
 const std::map<std::string, int> current_deposition_algo_to_int = {
-    {"esirkepov", CurrentDepositionAlgo::Esirkepov },
-    {"direct",    CurrentDepositionAlgo::Direct },
-    {"vay",       CurrentDepositionAlgo::Vay },
-    {"default",   CurrentDepositionAlgo::Esirkepov } // NOTE: overwritten for PSATD and Hybrid-PIC below
+    {"esirkepov",  CurrentDepositionAlgo::Esirkepov },
+    {"direct",     CurrentDepositionAlgo::Direct },
+    {"vay",        CurrentDepositionAlgo::Vay },
+    {"villasenor", CurrentDepositionAlgo::Villasenor },
+    {"default",    CurrentDepositionAlgo::Esirkepov } // NOTE: overwritten for PSATD and Hybrid-PIC below
 };
 
 const std::map<std::string, int> charge_deposition_algo_to_int = {
@@ -100,7 +101,6 @@ const std::map<std::string, int> rho_in_time_to_int = {
 
 const std::map<std::string, int> load_balance_costs_update_algo_to_int = {
     {"timers",    LoadBalanceCostsUpdateAlgo::Timers },
-    {"gpuclock",  LoadBalanceCostsUpdateAlgo::GpuClock },
     {"heuristic", LoadBalanceCostsUpdateAlgo::Heuristic },
     {"default",   LoadBalanceCostsUpdateAlgo::Timers }
 };
@@ -244,4 +244,16 @@ GetParticleBCTypeInteger( std::string BCType ){
     }
     // return ParticleBCType_algo_to_enum[BCType]; // This operator cannot be used for a const map
     return ParticleBCType_algo_to_enum.at(BCType);
+}
+
+std::string
+GetFieldBCTypeString( int fb_type ) {
+    std::string boundary_name;
+    for (const auto &valid_pair : FieldBCType_algo_to_int) {
+        if ((valid_pair.second == fb_type)&&(valid_pair.first != "default")){
+            boundary_name = valid_pair.first;
+            break;
+        }
+    }
+    return boundary_name;
 }

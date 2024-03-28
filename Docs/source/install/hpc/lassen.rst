@@ -178,7 +178,7 @@ Finally, since lassen does not yet provide software modules for some of our depe
       .. code-block:: bash
 
          bash /usr/workspace/${USER}/lassen/src/warpx/Tools/machines/lassen-llnl/install_v100_dependencies_toss3.sh
-         source /usr/workspace/${USER}/lassen/gpu/venvs/warpx-lassen-toss3/bin/activate
+         source /usr/workspace/${USER}/lassen-toss3/gpu/venvs/warpx-lassen-toss3/bin/activate
 
       .. dropdown:: Script Details
          :color: light

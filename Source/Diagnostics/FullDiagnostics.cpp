@@ -1,9 +1,9 @@
 #include "FullDiagnostics.H"
-
 #include "ComputeDiagFunctors/CellCenterFunctor.H"
 #include "ComputeDiagFunctors/DivBFunctor.H"
 #include "ComputeDiagFunctors/DivEFunctor.H"
 #include "ComputeDiagFunctors/JFunctor.H"
+#include "ComputeDiagFunctors/JdispFunctor.H"
 #include "ComputeDiagFunctors/PartPerCellFunctor.H"
 #include "ComputeDiagFunctors/PartPerGridFunctor.H"
 #include "ComputeDiagFunctors/ParticleReductionFunctor.H"
@@ -44,8 +44,8 @@ using namespace amrex::literals;
 FullDiagnostics::FullDiagnostics (int i, std::string name):
     Diagnostics{i, name},
     m_solver_deposits_current{
-        !(WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::None &&
-        WarpX::electrostatic_solver_id != ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)}
+        (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::None) ||
+        (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)}
 {
     ReadParameters();
     BackwardCompatibility();
@@ -133,8 +133,9 @@ FullDiagnostics::Flush ( int i_buffer, bool /* force_flush */ )
     auto & warpx = WarpX::GetInstance();
 
     m_flush_format->WriteToFile(
-        m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
-        warpx.gett_new(0), m_output_species[i_buffer], nlev_output, m_file_prefix,
+        m_varnames, m_mf_output.at(i_buffer), m_geom_output.at(i_buffer), warpx.getistep(),
+        warpx.gett_new(0),
+        m_output_species.at(i_buffer), nlev_output, m_file_prefix,
         m_file_min_digits, m_plot_raw_fields, m_plot_raw_fields_guards);
 
     FlushRaw();
@@ -266,16 +267,34 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
             if (update_varnames) {
                 AddRZModesToOutputNames(std::string("jz"), ncomp);
             }
+        } else if ( m_varnames_fields[comp] == "jr_displacement" ){
+            m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(0, lev, m_crse_ratio,
+                                                        false, ncomp);
+            if (update_varnames) {
+                AddRZModesToOutputNames(std::string("jr_displacement"), ncomp);
+            }
+        } else if ( m_varnames_fields[comp] == "jt_displacement" ){
+            m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(1, lev, m_crse_ratio,
+                                                        false, ncomp);
+            if (update_varnames) {
+                AddRZModesToOutputNames(std::string("jt_displacement"), ncomp);
+            }
+        } else if ( m_varnames_fields[comp] == "jz_displacement" ){
+            m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(2, lev, m_crse_ratio,
+                                                        false, ncomp);
+            if (update_varnames) {
+                AddRZModesToOutputNames(std::string("jz_displacement"), ncomp);
+            }
         } else if ( m_varnames_fields[comp] == "rho" ){
             // Initialize rho functor to dump total rho
-            m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, -1,
+            m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, true, -1,
                                                         false, ncomp);
             if (update_varnames) {
                 AddRZModesToOutputNames(std::string("rho"), ncomp);
             }
         } else if ( m_varnames_fields[comp].rfind("rho_", 0) == 0 ){
             // Initialize rho functor to dump rho per species
-            m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, m_rho_per_species_index[i],
+            m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, true, m_rho_per_species_index[i],
                                                         false, ncomp);
             if (update_varnames) {
                 AddRZModesToOutputNames(std::string("rho_") + m_all_species_names[m_rho_per_species_index[i]], ncomp);
@@ -443,7 +462,7 @@ FullDiagnostics::AddRZModesToDiags (int lev)
     }
     // rho
     if (rho_requested) {
-        m_all_field_functors[lev][icomp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, -1, false, ncomp_multimodefab);
+        m_all_field_functors[lev][icomp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, true, -1, false, ncomp_multimodefab);
         icomp += 1;
         AddRZModesToOutputNames(std::string("rho"), ncomp_multimodefab);
     }
@@ -636,14 +655,16 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
         } else if ( m_varnames[comp] == "jz" ){
             m_all_field_functors[lev][comp] = std::make_unique<JFunctor>(2, lev, m_crse_ratio, true, deposit_current);
             deposit_current = false;
+        } else if ( m_varnames[comp] == "jz_displacement" ) {
+                m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(2, lev, m_crse_ratio, true);
         } else if ( m_varnames[comp] == "Az" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_vector_potential_fp(lev, 2), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "rho" ){
             // Initialize rho functor to dump total rho
-            m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio);
+            m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, true);
         } else if ( m_varnames[comp].rfind("rho_", 0) == 0 ){
             // Initialize rho functor to dump rho per species
-            m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, m_rho_per_species_index[i]);
+            m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, true, m_rho_per_species_index[i]);
             i++;
         } else if ( m_varnames[comp] == "F" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_F_fp(lev), lev, m_crse_ratio);
@@ -677,11 +698,17 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             } else if ( m_varnames[comp] == "jt" ){
                 m_all_field_functors[lev][comp] = std::make_unique<JFunctor>(1, lev, m_crse_ratio, true, deposit_current);
                 deposit_current = false;
+            } else if  (m_varnames[comp] == "jr_displacement" ){
+                m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(0, lev, m_crse_ratio, true);
+            } else if  (m_varnames[comp] == "jt_displacement" ){
+                m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(1, lev, m_crse_ratio, true);
             } else if ( m_varnames[comp] == "Ar" ){
                 m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_vector_potential_fp(lev, 0), lev, m_crse_ratio);
             } else if ( m_varnames[comp] == "At" ){
                 m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_vector_potential_fp(lev, 1), lev, m_crse_ratio);
-            } else {
+            }
+            else {
+                std::cout << "Error on component " << m_varnames[comp] << std::endl;
                 WARPX_ABORT_WITH_MESSAGE(m_varnames[comp] + " is not a known field output type for RZ geometry");
             }
 #else
@@ -700,11 +727,16 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             } else if ( m_varnames[comp] == "jy" ){
                 m_all_field_functors[lev][comp] = std::make_unique<JFunctor>(1, lev, m_crse_ratio, true, deposit_current);
                 deposit_current = false;
+            } else if ( m_varnames[comp] == "jx_displacement" ){
+                m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(0, lev, m_crse_ratio);
+            } else if ( m_varnames[comp] == "jy_displacement" ){
+                m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(1, lev, m_crse_ratio);
             } else if ( m_varnames[comp] == "Ax" ){
                 m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_vector_potential_fp(lev, 0), lev, m_crse_ratio);
             } else if ( m_varnames[comp] == "Ay" ){
                 m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_vector_potential_fp(lev, 1), lev, m_crse_ratio);
             } else {
+                std::cout << "Error on component " << m_varnames[comp] << std::endl;
                 WARPX_ABORT_WITH_MESSAGE(m_varnames[comp] + " is not a known field output type for this geometry");
             }
 #endif

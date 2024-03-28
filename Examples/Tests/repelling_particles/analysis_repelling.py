@@ -29,8 +29,8 @@ import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.constants import c, m_e, physical_constants
 import yt
+from scipy.constants import c, m_e, physical_constants
 
 yt.funcs.mylog.setLevel(0)
 

@@ -65,7 +65,7 @@ FlushFormatPlotfile::WriteToFile (
     const bool /*use_pinned_pc*/,
     bool isBTD, int snapshotID,  int bufferID, int numBuffers,
     const amrex::Geometry& /*full_BTD_snapshot*/,
-    bool isLastBTDFlush, const amrex::Vector<int>& /* totalParticlesFlushedAlready*/) const
+    bool isLastBTDFlush) const
 {
     WARPX_PROFILE("FlushFormatPlotfile::WriteToFile()");
     auto & warpx = WarpX::GetInstance();
@@ -303,7 +303,7 @@ FlushFormatPlotfile::WriteWarpXHeader(
 
         warpx.GetPartContainer().WriteHeader(HeaderFile);
 
-        MultiParticleContainer& mypc = warpx.GetPartContainer();
+        const MultiParticleContainer& mypc = warpx.GetPartContainer();
         const int n_species = mypc.nSpecies();
         for (int i=0; i<n_species; i++)
         {
@@ -340,9 +340,9 @@ FlushFormatPlotfile::WriteWarpXHeader(
 void
 FlushFormatPlotfile::WriteParticles(const std::string& dir,
                                     const amrex::Vector<ParticleDiag>& particle_diags,
-                                    const amrex::Real time, bool isBTD) const
+                                    const amrex::Real time,
+                                    bool isBTD) const
 {
-
     for (const auto& part_diag : particle_diags) {
         WarpXParticleContainer* pc = part_diag.getParticleContainer();
         PinnedMemoryParticleContainer* pinned_pc = part_diag.getPinnedParticleContainer();
@@ -355,8 +355,8 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         Vector<int> int_flags;
         Vector<int> real_flags;
 
+        // note: positions skipped here, since we reconstruct a plotfile SoA from them
         real_names.push_back("weight");
-
         real_names.push_back("momentum_x");
         real_names.push_back("momentum_y");
         real_names.push_back("momentum_z");
@@ -366,13 +366,20 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
 #endif
 
         // get the names of the real comps
-        real_names.resize(tmp.NumRealComps());
+
+        //   note: skips the mandatory AMREX_SPACEDIM positions for pure SoA
+        real_names.resize(tmp.NumRealComps() - AMREX_SPACEDIM);
         auto runtime_rnames = tmp.getParticleRuntimeComps();
-        for (auto const& x : runtime_rnames) { real_names[x.second+PIdx::nattribs] = x.first; }
+        for (auto const& x : runtime_rnames) {
+            real_names[x.second + PIdx::nattribs - AMREX_SPACEDIM] = x.first;
+        }
 
         // plot any "extra" fields by default
         real_flags = part_diag.m_plot_flags;
         real_flags.resize(tmp.NumRealComps(), 1);
+
+        //   note: skip the mandatory AMREX_SPACEDIM positions for pure SoA
+        real_flags.erase(real_flags.begin(), real_flags.begin() + AMREX_SPACEDIM);
 
         // and the names
         int_names.resize(tmp.NumIntComps());

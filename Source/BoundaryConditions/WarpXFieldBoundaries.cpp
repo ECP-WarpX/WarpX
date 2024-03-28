@@ -106,20 +106,24 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
 void WarpX::ApplyRhofieldBoundary (const int lev, MultiFab* rho,
                                    PatchType patch_type)
 {
-    if (PEC::isAnyBoundaryPEC()) { PEC::ApplyPECtoRhofield(rho, lev, patch_type); }
+    if (PEC::isAnyParticleBoundaryReflecting() || PEC::isAnyBoundaryPEC()) {
+        PEC::ApplyReflectiveBoundarytoRhofield(rho, lev, patch_type);
+    }
 }
 
 void WarpX::ApplyJfieldBoundary (const int lev, amrex::MultiFab* Jx,
                                  amrex::MultiFab* Jy, amrex::MultiFab* Jz,
                                  PatchType patch_type)
 {
-    if (PEC::isAnyBoundaryPEC()) { PEC::ApplyPECtoJfield(Jx, Jy, Jz, lev, patch_type); }
+    if (PEC::isAnyParticleBoundaryReflecting() || PEC::isAnyBoundaryPEC()) {
+        PEC::ApplyReflectiveBoundarytoJfield(Jx, Jy, Jz, lev, patch_type);
+    }
 }
 
 #ifdef WARPX_DIM_RZ
 // Applies the boundary conditions that are specific to the axis when in RZ.
 void
-WarpX::ApplyFieldBoundaryOnAxis (amrex::MultiFab* Er, amrex::MultiFab* Et, amrex::MultiFab* Ez, int lev)
+WarpX::ApplyFieldBoundaryOnAxis (amrex::MultiFab* Er, amrex::MultiFab* Et, amrex::MultiFab* Ez, int lev) const
 {
     const amrex::IntVect ngE = get_ng_fieldgather();
 

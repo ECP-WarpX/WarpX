@@ -44,9 +44,6 @@ namespace ablastr::particles
  * \param np_to_deposit number of particles to deposit (default: pti.numParticles())
  * \param icomp component in MultiFab to start depositing to
  * \param nc number of components to deposit
- * \param cost pointer to (load balancing) cost corresponding to box where present
-               particles deposit current. If nullptr, costs are not updated. (default: nullptr)
- * \param load_balance_costs_update_algo selected method for updating load balance costs (default: 0)
  * \param do_device_synchronize call amrex::Gpu::synchronize() for tiny profiler regions (default: true)
  */
 template< typename T_PC >
@@ -67,8 +64,6 @@ deposit_charge (typename T_PC::ParIterType& pti,
                 long const offset = 0,
                 std::optional<long> np_to_deposit = std::nullopt,
                 int const icomp = 0, int const nc = 1,
-                amrex::Real * const AMREX_RESTRICT cost = nullptr,
-                long const load_balance_costs_update_algo = 0,
                 bool const do_device_synchronize = true)
 {
     // deposition guards
@@ -183,25 +178,26 @@ deposit_charge (typename T_PC::ParIterType& pti,
     if        (nox == 1){
         doChargeDepositionShapeN<1>(GetPosition, wp.dataPtr()+offset, ion_lev,
                                     rho_fab, np_to_deposit.value(), dx, xyzmin, lo, charge,
-                                    n_rz_azimuthal_modes, cost,
-                                    load_balance_costs_update_algo);
+                                    n_rz_azimuthal_modes);
     } else if (nox == 2){
         doChargeDepositionShapeN<2>(GetPosition, wp.dataPtr()+offset, ion_lev,
                                     rho_fab, np_to_deposit.value(), dx, xyzmin, lo, charge,
-                                    n_rz_azimuthal_modes, cost,
-                                    load_balance_costs_update_algo);
+                                    n_rz_azimuthal_modes);
     } else if (nox == 3){
         doChargeDepositionShapeN<3>(GetPosition, wp.dataPtr()+offset, ion_lev,
                                     rho_fab, np_to_deposit.value(), dx, xyzmin, lo, charge,
-                                    n_rz_azimuthal_modes, cost,
-                                    load_balance_costs_update_algo);
+                                    n_rz_azimuthal_modes);
+    } else if (nox == 4){
+        doChargeDepositionShapeN<4>(GetPosition, wp.dataPtr()+offset, ion_lev,
+                                    rho_fab, np_to_deposit.value(), dx, xyzmin, lo, charge,
+                                    n_rz_azimuthal_modes);
     }
     ABLASTR_PROFILE_VAR_STOP(blp_ppc_chd, do_device_synchronize);
 
 #ifndef AMREX_USE_GPU
     // CPU, tiling: atomicAdd local_rho into rho
     ABLASTR_PROFILE_VAR_START(blp_accumulate, do_device_synchronize);
-    (*rho)[pti].atomicAdd(local_rho, tb, tb, 0, icomp*nc, nc);
+    (*rho)[pti].lockAdd(local_rho, tb, tb, 0, icomp*nc, nc);
     ABLASTR_PROFILE_VAR_STOP(blp_accumulate, do_device_synchronize);
 #endif
 }

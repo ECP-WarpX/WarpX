@@ -54,7 +54,7 @@ void WarpX::HybridPICEvolveFields ()
     }
 
     // Get requested number of substeps to use
-    int sub_steps = m_hybrid_pic_model->m_substeps / 2;
+    const int sub_steps = m_hybrid_pic_model->m_substeps;
 
     // Get the external current
     m_hybrid_pic_model->GetCurrentExternal(m_edge_lengths);
@@ -67,10 +67,6 @@ void WarpX::HybridPICEvolveFields ()
     // so that, at this time, we have rho^{n} in rho_fp_temp, rho{n+1} in the
     // 0'th index of `rho_fp`, J_i^{n-1/2} in `current_fp_temp` and J_i^{n+1/2}
     // in `current_fp`.
-
-    // TODO: To speed up the algorithm insert Runge-Kutta integration logic
-    // for B update instead of the substep update used here - can test with
-    // small timestep using this simpler implementation
 
     // Note: E^{n} is recalculated with the accurate J_i^{n} since at the end
     // of the last step we had to "guess" it. It also needs to be
@@ -100,14 +96,12 @@ void WarpX::HybridPICEvolveFields ()
     // momentum equation
     for (int sub_step = 0; sub_step < sub_steps; sub_step++)
     {
-        m_hybrid_pic_model->CalculateCurrentAmpere(Bfield_fp, m_edge_lengths);
-        m_hybrid_pic_model->HybridPICSolveE(
-            Efield_fp, current_fp_temp, Bfield_fp, rho_fp_temp, m_edge_lengths,
-            true
+        m_hybrid_pic_model->BfieldEvolveRK(
+            Bfield_fp, Efield_fp, current_fp_temp, rho_fp_temp,
+            m_edge_lengths, 0.5_rt/sub_steps*dt[0],
+            DtType::FirstHalf, guard_cells.ng_FieldSolver,
+            WarpX::sync_nodal_points
         );
-        FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
-        EvolveB(0.5_rt / sub_steps * dt[0], DtType::FirstHalf);
-        FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
     }
 
     // Average rho^{n} and rho^{n+1} to get rho^{n+1/2} in rho_fp_temp
@@ -128,14 +122,12 @@ void WarpX::HybridPICEvolveFields ()
     // Now push the B field from t=n+1/2 to t=n+1 using the n+1/2 quantities
     for (int sub_step = 0; sub_step < sub_steps; sub_step++)
     {
-        m_hybrid_pic_model->CalculateCurrentAmpere(Bfield_fp, m_edge_lengths);
-        m_hybrid_pic_model->HybridPICSolveE(
-            Efield_fp, current_fp, Bfield_fp, rho_fp_temp, m_edge_lengths,
-            true
+        m_hybrid_pic_model->BfieldEvolveRK(
+            Bfield_fp, Efield_fp, current_fp, rho_fp_temp,
+            m_edge_lengths, 0.5_rt/sub_steps*dt[0],
+            DtType::SecondHalf, guard_cells.ng_FieldSolver,
+            WarpX::sync_nodal_points
         );
-        FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
-        EvolveB(0.5_rt / sub_steps * dt[0], DtType::SecondHalf);
-        FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
     }
 
     // Extrapolate the ion current density to t=n+1 using
@@ -162,8 +154,7 @@ void WarpX::HybridPICEvolveFields ()
     // Update the E field to t=n+1 using the extrapolated J_i^n+1 value
     m_hybrid_pic_model->CalculateCurrentAmpere(Bfield_fp, m_edge_lengths);
     m_hybrid_pic_model->HybridPICSolveE(
-        Efield_fp, current_fp_temp, Bfield_fp, rho_fp, m_edge_lengths,
-        false
+        Efield_fp, current_fp_temp, Bfield_fp, rho_fp, m_edge_lengths, false
     );
     FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 

@@ -6,10 +6,9 @@
 # --- used for the field solve step.
 
 import numpy as np
+from pywarpx import callbacks, fields, picmi
 from scipy.sparse import csc_matrix
 from scipy.sparse import linalg as sla
-
-from pywarpx import callbacks, fields, picmi
 
 constants = picmi.constants
 
@@ -75,7 +74,7 @@ class PoissonSolverPseudo1D(picmi.ElectrostaticSolver):
         self.phi_wrapper = None
         self.time_sum = 0.0
 
-    def initialize_inputs(self):
+    def solver_initialize_inputs(self):
         """Grab geometrical quantities from the grid.
         """
         self.right_voltage = self.grid.potential_xmax
@@ -89,7 +88,7 @@ class PoissonSolverPseudo1D(picmi.ElectrostaticSolver):
         self.grid.potential_zmin = None
         self.grid.potential_zmax = None
 
-        super(PoissonSolverPseudo1D, self).initialize_inputs()
+        super(PoissonSolverPseudo1D, self).solver_initialize_inputs()
 
         self.nx = self.grid.number_of_cells[0]
         self.nz = self.grid.number_of_cells[1]
@@ -359,3 +358,6 @@ sim.add_diagnostic(field_diag)
 ##########################
 
 sim.step(max_steps)
+
+# confirm that the external solver was run
+assert hasattr(solver, 'phi')

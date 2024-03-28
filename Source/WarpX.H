@@ -131,8 +131,11 @@ public:
     MultiFluidContainer& GetFluidContainer () { return *myfl; }
     MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
     HybridPICModel& GetHybridPICModel () { return *m_hybrid_pic_model; }
+    [[nodiscard]] HybridPICModel * get_pointer_HybridPICModel () const { return m_hybrid_pic_model.get(); }
     MultiDiagnostics& GetMultiDiags () {return *multi_diags;}
-
+#ifdef AMREX_USE_EB
+    amrex::Vector<std::unique_ptr<amrex::MultiFab> >& GetDistanceToEB () {return m_distance_to_eb;}
+#endif
     ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_boundary_buffer; }
 
     static void shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
@@ -154,7 +157,7 @@ public:
     int maxlevel_extEMfield_init;
 
     // Algorithms
-    //! Integer that corresponds to the current deposition algorithm (Esirkepov, direct, Vay)
+    //! Integer that corresponds to the current deposition algorithm (Esirkepov, direct, Vay, Villasenor)
     static short current_deposition_algo;
     //! Integer that corresponds to the charge deposition algorithm (only standard deposition)
     static short charge_deposition_algo;
@@ -173,7 +176,7 @@ public:
     //! Flags whether the Picard iterations are required to converge
     static bool require_picard_convergence;
     /** Records a number corresponding to the load balance cost update strategy
-     *  being used (0, 1, 2 corresponding to timers, heuristic, or gpuclock).
+     *  being used (0 or 1 corresponding to timers or heuristic).
      */
     static short load_balance_costs_update_algo;
     //! Integer that corresponds to electromagnetic Maxwell solver (vacuum - 0, macroscopic - 1)
@@ -661,12 +664,25 @@ public:
 
     static amrex::Real quantum_xi_c2;
 
+    /** Check and potentially compute load balancing
+     */
+    void CheckLoadBalance (int step);
+
     /** \brief perform load balance; compute and communicate new `amrex::DistributionMapping`
      */
     void LoadBalance ();
+
     /** \brief resets costs to zero
      */
     void ResetCosts ();
+
+    /** Perform running average of the LB costs
+     *
+     * Only needed for timers cost update, heuristic load balance considers the
+     * instantaneous costs.
+     * This gives more importance to most recent costs.
+     */
+    void RescaleCosts (int step);
 
     /** \brief returns the load balance interval
      */
@@ -727,7 +743,7 @@ public:
 
 #ifdef WARPX_DIM_RZ
     // Applies the boundary conditions that are specific to the axis when in RZ.
-    void ApplyFieldBoundaryOnAxis (amrex::MultiFab* Er, amrex::MultiFab* Et, amrex::MultiFab* Ez, int lev);
+    void ApplyFieldBoundaryOnAxis (amrex::MultiFab* Er, amrex::MultiFab* Et, amrex::MultiFab* Ez, int lev) const;
 #endif
 
     /**
@@ -952,6 +968,7 @@ public:
      */
     [[nodiscard]] amrex::IntVect get_numprocs() const {return numprocs;}
 
+    bool m_boundary_potential_specified = false;
     ElectrostaticSolver::PoissonBoundaryHandler m_poisson_boundary_handler;
     void ComputeSpaceChargeField (bool reset_fields);
     void AddBoundaryField ();
@@ -1020,6 +1037,16 @@ public:
          char field,
          int lev, PatchType patch_type);
 
+    /**
+     * \brief Load field values from a user-specified openPMD file,
+     * for the fields Ex, Ey, Ez, Bx, By, Bz
+     */
+    void LoadExternalFieldsFromFile (int lev);
+
+    /**
+     * \brief Load field values from a user-specified openPMD file
+     * for a specific field (specified by `F_name`)
+     */
     void ReadExternalFieldFromFile (
          std::string read_fields_from_path, amrex::MultiFab* mf,
          std::string F_name, std::string F_component);
@@ -1709,7 +1736,40 @@ private:
         return *m_field_factory[lev];
     }
 
+    /** Stop the simulation at the end of the current step due to a received Unix signal?
+     */
+    bool m_exit_loop_due_to_interrupt_signal = false;
+
+    /** Stop the simulation at the end of the current step?
+     */
+    [[nodiscard]]
+    bool checkStopSimulation ();
+
+    /** Print Unused Parameter Warnings after Step 1
+     *
+     * Instead of waiting for a simulation to end, we already do an early "unused parameter check"
+     * after step 1 to inform users early of potential issues with their simulation setup.
+     */
+    void checkEarlyUnusedParams ();
+
+    /** Perform essential particle house keeping at boundaries
+     *
+     * Inject, communicate, scrape and sort particles.
+     *
+     * @param step current step
+     * @param cur_time current time
+     * @param num_moved number of cells the moving window moved
+     */
+    void HandleParticlesAtBoundaries (int step, amrex::Real cur_time, int num_moved);
+
     void ScrapeParticles ();
+
+    /** Update the E and B fields in the explicit em PIC scheme.
+     *
+     * At the beginning, we have B^{n} and E^{n}.
+     * Particles have p^{n} and x^{n}.
+     */
+    void ExplicitFillBoundaryEBUpdateAux ();
 
     void PushPSATD ();
 
