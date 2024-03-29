@@ -25,16 +25,16 @@ import checksumAPI
 
 filename = sys.argv[1]
 
-FE_rdiag = '/diags/reducedfiles/EF.txt'
+FE_rdiag = './diags/reducedfiles/EF.txt'
 init_Fenergy = np.loadtxt(FE_rdiag)[1,2]
 final_Fenergy = np.loadtxt(FE_rdiag)[-1,2]
 assert(final_Fenergy/init_Fenergy < 40)
 assert(final_Fenergy < 5.e-5)
 
-PE_rdiag = '/diags/reducedfiles/EN.txt'
+PE_rdiag = './diags/reducedfiles/EN.txt'
 init_Penergy = np.loadtxt(PE_rdiag)[0,2]
 final_Penergy = np.loadtxt(PE_rdiag)[-1,2]
 assert( abs(final_Penergy - init_Penergy)/init_Penergy < 0.02)
 
-test_name = os.path.splot(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)
