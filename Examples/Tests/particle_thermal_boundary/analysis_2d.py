@@ -1,4 +1,4 @@
-#!/use/bin/env python3
+#!/usr/bin/env python3
 #
 # Copyright 2023-2024 Revathi Jambunathan
 #
