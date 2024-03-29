@@ -664,12 +664,25 @@ public:
 
     static amrex::Real quantum_xi_c2;
 
+    /** Check and potentially compute load balancing
+     */
+    void CheckLoadBalance (int step);
+
     /** \brief perform load balance; compute and communicate new `amrex::DistributionMapping`
      */
     void LoadBalance ();
+
     /** \brief resets costs to zero
      */
     void ResetCosts ();
+
+    /** Perform running average of the LB costs
+     *
+     * Only needed for timers cost update, heuristic load balance considers the
+     * instantaneous costs.
+     * This gives more importance to most recent costs.
+     */
+    void RescaleCosts (int step);
 
     /** \brief returns the load balance interval
      */
@@ -1723,7 +1736,40 @@ private:
         return *m_field_factory[lev];
     }
 
+    /** Stop the simulation at the end of the current step due to a received Unix signal?
+     */
+    bool m_exit_loop_due_to_interrupt_signal = false;
+
+    /** Stop the simulation at the end of the current step?
+     */
+    [[nodiscard]]
+    bool checkStopSimulation (amrex::Real cur_time);
+
+    /** Print Unused Parameter Warnings after Step 1
+     *
+     * Instead of waiting for a simulation to end, we already do an early "unused parameter check"
+     * after step 1 to inform users early of potential issues with their simulation setup.
+     */
+    void checkEarlyUnusedParams ();
+
+    /** Perform essential particle house keeping at boundaries
+     *
+     * Inject, communicate, scrape and sort particles.
+     *
+     * @param step current step
+     * @param cur_time current time
+     * @param num_moved number of cells the moving window moved
+     */
+    void HandleParticlesAtBoundaries (int step, amrex::Real cur_time, int num_moved);
+
     void ScrapeParticles ();
+
+    /** Update the E and B fields in the explicit em PIC scheme.
+     *
+     * At the beginning, we have B^{n} and E^{n}.
+     * Particles have p^{n} and x^{n}.
+     */
+    void ExplicitFillBoundaryEBUpdateAux ();
 
     void PushPSATD ();
 
