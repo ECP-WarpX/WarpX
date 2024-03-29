@@ -73,6 +73,9 @@ WarpX::Evolve (int numsteps)
     // check typos in inputs after step 1
     bool early_params_checked = false;
 
+    // Flags receipt of interrupt signal
+    bool exit_loop_due_to_interrupt_signal = false;
+
     static Real evolve_time = 0;
 
     const int step_begin = istep[0];
@@ -295,9 +298,11 @@ WarpX::Evolve (int numsteps)
                       << " s; Avg. per step = " << evolve_time/(step-step_begin+1) << " s\n\n";
         }
 
-        if (checkStopSimulation()) {
+        exit_loop_due_to_interrupt_signal = checkStopSimulationInterrupt();
+        if (exit_loop_due_to_interrupt_signal) {
             break;
         }
+
     } // End loop on time steps
 
     if (verbose) {
@@ -317,9 +322,9 @@ WarpX::Evolve (int numsteps)
     // regardless of the diagnostic period parameter provided in the inputs.
     if (istep[0] == max_step
         || (stop_time <= cur_time && cur_time < stop_time + dt[0])
-        || m_exit_loop_due_to_interrupt_signal) {
+        || exit_loop_due_to_interrupt_signal) {
         multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
-        if (m_exit_loop_due_to_interrupt_signal) { ExecutePythonCallback("onbreaksignal"); }
+        if (exit_loop_due_to_interrupt_signal) { ExecutePythonCallback("onbreaksignal"); }
     }
 }
 
@@ -431,10 +436,9 @@ WarpX::OneStep_nosub (Real cur_time)
     ExecutePythonCallback("afterEsolve");
 }
 
-bool WarpX::checkStopSimulation ()
+bool WarpX::checkStopSimulationInterrupt ()
 {
-    m_exit_loop_due_to_interrupt_signal = SignalHandling::TestAndResetActionRequestFlag(SignalHandling::SIGNAL_REQUESTS_BREAK);
-    return m_exit_loop_due_to_interrupt_signal;
+    return SignalHandling::TestAndResetActionRequestFlag(SignalHandling::SIGNAL_REQUESTS_BREAK);
 }
 
 void WarpX::checkEarlyUnusedParams ()

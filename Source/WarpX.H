@@ -1736,14 +1736,10 @@ private:
         return *m_field_factory[lev];
     }
 
-    /** Stop the simulation at the end of the current step due to a received Unix signal?
-     */
-    bool m_exit_loop_due_to_interrupt_signal = false;
-
     /** Stop the simulation at the end of the current step?
      */
     [[nodiscard]]
-    bool checkStopSimulation ();
+    bool checkStopSimulationInterrupt ();
 
     /** Print Unused Parameter Warnings after Step 1
      *
