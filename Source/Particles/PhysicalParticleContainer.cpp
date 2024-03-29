@@ -978,6 +978,23 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
         rrfac = m_gdb->refRatio(0);
         fine_injection_box.coarsen(rrfac);
     }
+    static bool refineplasma = false;
+    amrex::ParticleLocator<amrex::DenseBins<amrex::Box> > refinepatch_locator;
+    if (WarpX::refineAddplasma)
+    {
+        refineplasma = true;
+        rrfac = m_gdb->refRatio(0);
+    }
+    auto fineba = ParticleBoxArray(1);
+    auto coarsened_fineba = fineba;
+    coarsened_fineba.coarsen(rrfac);
+    if (!refinepatch_locator.isValid(coarsened_fineba)) {
+        refinepatch_locator.build(coarsened_fineba, Geom(0));
+    }
+    refinepatch_locator.setGeometry(Geom(0));
+    auto assignpartgrid = refinepatch_locator.getGridAssignor();
+        // if assign_grid(ijk_vec) > 0, then we are in refinement patch. therefore refine plasma particles
+        // else, usual num_part
 
     InjectorPosition* inj_pos = plasma_injector.getInjectorPosition();
     InjectorDensity*  inj_rho = plasma_injector.getInjectorDensity();
@@ -1070,11 +1087,12 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
 
             lo.z = applyBallisticCorrection(lo, inj_mom, gamma_boost, beta_boost, t);
             hi.z = applyBallisticCorrection(hi, inj_mom, gamma_boost, beta_boost, t);
-
             if (inj_pos->overlapsWith(lo, hi))
             {
                 auto index = overlap_box.index(iv);
-                const amrex::Long r = (fine_overlap_box.ok() && fine_overlap_box.contains(iv))?
+                amrex::IntVect glo_iv = iv + tile_box.smallEnd();
+                bool in_refpatch = ( assignpartgrid(glo_iv) < 0 ) ? false : true;
+                const amrex::Long r = ( (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) || (refineplasma && in_refpatch) ) ?
                     (AMREX_D_TERM(lrrfac[0],*lrrfac[1],*lrrfac[2])) : (1);
                 pcounts[index] = num_ppc*r;
                 // update pcount by checking if cell-corners or cell-center
@@ -1113,7 +1131,6 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
         // Max number of new particles. All of them are created,
         // and invalid ones are then discarded
         const amrex::Long max_new_particles = Scan::ExclusiveSum(counts.size(), counts.data(), offset.data());
-
         // Update NextID to include particles created in this function
         amrex::Long pid;
 #ifdef AMREX_USE_OMP
@@ -1238,6 +1255,8 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
         {
             const IntVect iv = IntVect(AMREX_D_DECL(i, j, k));
             const auto index = overlap_box.index(iv);
+            amrex::IntVect glo_iv = iv + tile_box.smallEnd();
+            bool in_refpatch = ( assignpartgrid(glo_iv) < 0 ) ? false : true;
 #ifdef WARPX_DIM_RZ
             Real theta_offset = 0._rt;
             if (rz_random_theta) { theta_offset = amrex::Random(engine) * 2._rt * MathConst::pi; }
@@ -1258,13 +1277,12 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
             {
                 long ip = poffset[index] + i_part;
                 pa_idcpu[ip] = amrex::SetParticleIDandCPU(pid+ip, cpuid);
-                const XDim3 r = (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) ?
+                const XDim3 r = ( (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) || (refineplasma && in_refpatch))  ?
                   // In the refined injection region: use refinement ratio `lrrfac`
                   inj_pos->getPositionUnitBox(i_part, lrrfac, engine) :
                   // Otherwise: use 1 as the refinement ratio
                   inj_pos->getPositionUnitBox(i_part, amrex::IntVect::TheUnitVector(), engine);
                 auto pos = getCellCoords(overlap_corner, dx, r, iv);
-
 #if defined(WARPX_DIM_3D)
                 if (!tile_realbox.contains(XDim3{pos.x,pos.y,pos.z})) {
                     ZeroInitializeAndSetNegativeID(pa_idcpu, pa, ip, loc_do_field_ionization, pi
