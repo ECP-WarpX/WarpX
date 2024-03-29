@@ -15,7 +15,6 @@ beyond 2% in the time that it takes all particles to cross the domain boundary
 """
 
 
-import os
 import sys
 
 import numpy as np
