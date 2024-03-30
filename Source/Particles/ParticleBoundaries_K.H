@@ -96,8 +96,8 @@ namespace ApplyParticleBoundaries {
      *        code to take appropriate action to remove any lost particles). Absorbing boundaries can
      *        be given a reflection coefficient for stochastic reflection of particles, this
      *        coefficient is zero by default.
-     *        For thermal boundaries, the particle is first reflected and the positrion of the particle
-     *        is change appropriately. The sign of the ve
+     *        For thermal boundaries, the particle is first reflected and the position of the particle
+     *        is changed appropriately.
      *        Note that periodic boundaries are handled in AMReX code.
      *
      * \param x, xmin, xmax: particle x position, location of x boundary
