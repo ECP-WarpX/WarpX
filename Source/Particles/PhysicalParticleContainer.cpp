@@ -978,7 +978,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
         rrfac = m_gdb->refRatio(0);
         fine_injection_box.coarsen(rrfac);
     }
-    static bool refineplasma = false;
+    bool refineplasma = false;
     amrex::ParticleLocator<amrex::DenseBins<amrex::Box> > refinepatch_locator;
     if (WarpX::refineAddplasma)
     {
@@ -993,8 +993,6 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
     }
     refinepatch_locator.setGeometry(Geom(0));
     auto assignpartgrid = refinepatch_locator.getGridAssignor();
-        // if assign_grid(ijk_vec) > 0, then we are in refinement patch. therefore refine plasma particles
-        // else, usual num_part
 
     InjectorPosition* inj_pos = plasma_injector.getInjectorPosition();
     InjectorDensity*  inj_rho = plasma_injector.getInjectorDensity();
