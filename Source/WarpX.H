@@ -197,12 +197,12 @@ public:
     static amrex::Vector<int> field_boundary_hi;
     /** Integers that correspond to boundary condition applied to particles at the
      *  lower domain boundaries
-     *  (0 to 3 correspond to Absorbing, Open, Reflecting, Periodic)
+     *  (0 to 4 correspond to Absorbing, Open, Reflecting, Periodic, Thermal)
      */
     static amrex::Vector<ParticleBoundaryType> particle_boundary_lo;
     /** Integers that correspond to boundary condition applied to particles at the
      *  upper domain boundaries
-     *  (0 to 3 correspond to Absorbing, Open, Reflecting, Periodic)
+     *  (0 to 4 correspond to Absorbing, Open, Reflecting, Periodic, Thermal)
      */
     static amrex::Vector<ParticleBoundaryType> particle_boundary_hi;
 
@@ -767,6 +767,8 @@ public:
 
     void CopyJPML ();
     bool isAnyBoundaryPML();
+    /** True if any of the particle boundary condition type is Thermal */
+    static bool isAnyParticleBoundaryThermal();
 
     PML* GetPML (int lev);
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
