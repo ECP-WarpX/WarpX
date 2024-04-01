@@ -38,7 +38,7 @@
 
 using namespace amrex;
 
-FieldMomentum::FieldMomentum (std::string rd_name)
+FieldMomentum::FieldMomentum (const std::string& rd_name)
     : ReducedDiags{rd_name}
 {
     // RZ coordinate is not working

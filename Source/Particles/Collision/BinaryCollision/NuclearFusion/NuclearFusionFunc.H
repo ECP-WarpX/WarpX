@@ -56,19 +56,18 @@ public:
      * @param[in] mypc pointer to the MultiParticleContainer
      * @param[in] isSameSpecies whether the two colliding species are the same
      */
-    NuclearFusionFunc (const std::string collision_name, MultiParticleContainer const * const mypc,
+    NuclearFusionFunc (const std::string& collision_name, MultiParticleContainer const * const mypc,
                        const bool isSameSpecies):
         m_fusion_multiplier{amrex::ParticleReal{1.0}}, // default fusion multiplier
         m_probability_threshold{amrex::ParticleReal{0.02}}, // default fusion probability threshold
         m_probability_target_value{amrex::ParticleReal{0.002}}, // default fusion probability target_value
+        m_fusion_type{BinaryCollisionUtils::get_nuclear_fusion_type(collision_name, mypc)},
         m_isSameSpecies{isSameSpecies}
     {
 
 #ifdef AMREX_SINGLE_PRECISION_PARTICLES
         WARPX_ABORT_WITH_MESSAGE("Nuclear fusion module does not currently work with single precision");
 #endif
-
-        m_fusion_type = BinaryCollisionUtils::get_nuclear_fusion_type(collision_name, mypc);
 
         const amrex::ParmParse pp_collision_name(collision_name);
         utils::parser::queryWithParser(

@@ -30,8 +30,6 @@ Checks: '
         -modernize-use-trailing-return-type,
     mpi-*,
     performance-*,
-        -performance-unnecessary-copy-initialization,
-        -performance-unnecessary-value-param,
     portability-*,
     readability-*,
         -readability-convert-member-functions-to-static,

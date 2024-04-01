@@ -53,7 +53,7 @@
 using namespace amrex;
 
 // constructor
-ParticleExtrema::ParticleExtrema (std::string rd_name)
+ParticleExtrema::ParticleExtrema (const std::string& rd_name)
 : ReducedDiags{rd_name}
 {
     // read species name
