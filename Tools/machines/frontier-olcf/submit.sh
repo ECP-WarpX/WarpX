@@ -47,7 +47,7 @@ output="output.txt"
 date
 
 ########################################################################
-########## INSTRUCTIONS BELOW SHOULD NOT NORMALLY BE MODIFIED ##########
+########## INSTRUCTIONS BELOW SHOULD NORMALLY NOT BE MODIFIED ##########
 ########################################################################
 
 # ___ Broadcast WarpX and associated libraries to compute nodes_________
