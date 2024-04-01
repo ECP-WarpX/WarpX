@@ -17,6 +17,8 @@ amr.max_level = 0 # Maximum level in hierarchy (1 might be unstable, >1 is not s
 #################################
 boundary.field_lo = periodic periodic pec
 boundary.field_hi = periodic periodic pec
+boundary.particle_lo = periodic periodic absorbing
+boundary.particle_hi = periodic periodic absorbing
 
 #################################
 ############ NUMERICS ###########
