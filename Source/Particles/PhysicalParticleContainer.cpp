@@ -2867,11 +2867,11 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     // Using this version of ParallelFor with compile time options
     // improves performance when qed or external EB are not used by reducing
     // register pressure.
-    amrex::ParallelFor(TypeList<CompileTimeOptions<no_exteb,has_exteb>,
-                                CompileTimeOptions<no_qed  ,has_qed>>{},
-                       {exteb_runtime_flag, qed_runtime_flag},
-                       np_to_push, [=] AMREX_GPU_DEVICE (long ip, auto exteb_control,
-                                                         auto qed_control)
+    amrex::ParallelFor(
+        TypeList<CompileTimeOptions<no_exteb,has_exteb>, CompileTimeOptions<no_qed  ,has_qed>>{},
+        {exteb_runtime_flag, qed_runtime_flag},
+        np_to_push,
+        [=] AMREX_GPU_DEVICE (long ip, auto exteb_control, auto qed_control)
     {
         amrex::ParticleReal xp, yp, zp;
         getPosition(ip, xp, yp, zp);
