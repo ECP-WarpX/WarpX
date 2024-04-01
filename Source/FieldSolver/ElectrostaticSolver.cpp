@@ -357,8 +357,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
 #endif
 
     bool const is_solver_multigrid =
-        WarpX::poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction ?
-        false : true;
+        WarpX::poisson_solver_id != PoissonSolverAlgo::IntegratedGreenFunction;
 
     ablastr::fields::computePhi(
         sorted_rho,
