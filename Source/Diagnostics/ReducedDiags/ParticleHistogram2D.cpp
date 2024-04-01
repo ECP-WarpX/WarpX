@@ -54,7 +54,7 @@ using namespace amrex;
 
 
 // constructor
-ParticleHistogram2D::ParticleHistogram2D (std::string rd_name)
+ParticleHistogram2D::ParticleHistogram2D (const std::string& rd_name)
         : ReducedDiags{rd_name}
 {
     ParmParse pp_rd_name(rd_name);

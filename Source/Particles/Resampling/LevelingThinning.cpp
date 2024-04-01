@@ -29,7 +29,7 @@
 
 #include <AMReX_BaseFwd.H>
 
-LevelingThinning::LevelingThinning (const std::string species_name)
+LevelingThinning::LevelingThinning (const std::string& species_name)
 {
     using namespace amrex::literals;
 
