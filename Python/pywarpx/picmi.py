@@ -1627,8 +1627,9 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
         Whether to cover cells with multiple cuts.
         (If False, this will raise an error if some cells have multiple cuts)
 
-    particle_removal_depth: float (in meters), default = 0
+    particle_removal_depth: float, default = 0
         How far a particle needs to be inside the embedded boundary in order to be removed.
+        The depth is expressed in units of the cell size (or more specifically in units of the length of the diagonal of a cell).
 
     Parameters used in the analytic expressions should be given as additional keyword arguments.
 
