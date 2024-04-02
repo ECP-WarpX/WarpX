@@ -300,6 +300,18 @@ WarpX::PrintMainPICparameters ()
       amrex::Print() << "                      | - multi-J deposition is ON \n";
       amrex::Print() << "                      |   - do_multi_J_n_depositions = "
                                         << WarpX::do_multi_J_n_depositions << "\n";
+      if (J_in_time == JInTime::Linear){
+        amrex::Print() << "                      |   - J_in_time = linear \n";
+      }
+      if (J_in_time == JInTime::Constant){
+        amrex::Print() << "                      |   - J_in_time = constant \n";
+      }
+      if (rho_in_time == RhoInTime::Linear){
+        amrex::Print() << "                      |   - rho_in_time = linear \n";
+      }
+      if (rho_in_time == RhoInTime::Constant){
+        amrex::Print() << "                      |   - rho_in_time = constant \n";
+      }
     }
     if (fft_do_time_averaging == 1){
       amrex::Print()<<"                      | - time-averaged is ON \n";
