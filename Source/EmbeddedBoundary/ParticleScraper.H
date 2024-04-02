@@ -51,6 +51,7 @@
  * \param distance_to_eb a set of MultiFabs that store the signed distance function
  * \param lev the mesh refinement level to work on.
  * \param f the callable that defines what to do when a particle hits the boundary.
+ * \param particle_removal_depth how far a particle needs to be inside the EB in order to be removed
  *
  *        The form of the callable should model:
  *        template <typename PData>
@@ -65,9 +66,9 @@
  */
 template <class PC, class F, std::enable_if_t<amrex::IsParticleContainer<PC>::value, int> foo = 0>
 void
-scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, int lev, F&& f)
+scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, int lev, F&& f, amrex::Real particle_removal_depth)
 {
-    scrapeParticles(pc, distance_to_eb, lev, lev, std::forward<F>(f));
+    scrapeParticles(pc, distance_to_eb, lev, lev, std::forward<F>(f), particle_removal_depth);
 }
 
 /**
@@ -94,6 +95,7 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
  * \param pc the particle container to test for boundary interactions.
  * \param distance_to_eb a set of MultiFabs that store the signed distance function
  * \param f the callable that defines what to do when a particle hits the boundary.
+ * \param particle_removal_depth how far a particle needs to be inside the EB in order to be removed
  *
  *        The form of the callable should model:
  *        template <typename PData>
@@ -108,9 +110,9 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
  */
 template <class PC, class F, std::enable_if_t<amrex::IsParticleContainer<PC>::value, int> foo = 0>
 void
-scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, F&& f)
+scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, F&& f, amrex::Real particle_removal_depth)
 {
-    scrapeParticles(pc, distance_to_eb, 0, pc.finestLevel(), std::forward<F>(f));
+    scrapeParticles(pc, distance_to_eb, 0, pc.finestLevel(), std::forward<F>(f), particle_removal_depth);
 }
 
 /**
@@ -139,6 +141,7 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
  * \param lev_min the minimum mesh refinement level to work on.
  * \param lev_max the maximum mesh refinement level to work on.
  * \param f the callable that defines what to do when a particle hits the boundary.
+ * \param particle_removal_depth how far a particle needs to be inside the EB in order to be removed
  *
  *        The form of the callable should model:
  *        template <typename PData>
@@ -154,7 +157,7 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
 template <class PC, class F, std::enable_if_t<amrex::IsParticleContainer<PC>::value, int> foo = 0>
 void
 scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb,
-                 int lev_min, int lev_max, F&& f)
+                 int lev_min, int lev_max, F&& f, amrex::Real particle_removal_depth)
 {
     BL_PROFILE("scrapeParticles");
 
@@ -186,7 +189,7 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
                 ablastr::particles::compute_weights(xp, yp, zp, plo, dxi, i, j, k, W);
                 amrex::Real phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, phi);
 
-                if (phi_value < 0.0)
+                if (phi_value < -particle_removal_depth)
                 {
                     int ic, jc, kc; // Cell-centered indices
                     [[maybe_unused]] int nodal;

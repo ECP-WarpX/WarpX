@@ -137,6 +137,7 @@ public:
     amrex::Vector<std::unique_ptr<amrex::MultiFab> >& GetDistanceToEB () {return m_distance_to_eb;}
 #endif
     ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_boundary_buffer; }
+    amrex::Real GetParticleRemovalDepth () { return m_eb_particle_removal_depth; }
 
     static void shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
                          int num_shift, int dir, int lev, bool update_cost_flag,
@@ -1713,6 +1714,8 @@ private:
     //
     // Embedded Boundary
     //
+
+    amrex::Real m_eb_particle_removal_depth = 0;
 
     // Factory for field data
     amrex::Vector<std::unique_ptr<amrex::FabFactory<amrex::FArrayBox> > > m_field_factory;

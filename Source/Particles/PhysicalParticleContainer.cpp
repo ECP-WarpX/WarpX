@@ -1468,7 +1468,8 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
     // Remove particles that are inside the embedded boundaries
 #ifdef AMREX_USE_EB
     auto & distance_to_eb = WarpX::GetInstance().GetDistanceToEB();
-    scrapeParticles( *this, amrex::GetVecOfConstPtrs(distance_to_eb), ParticleBoundaryProcess::Absorb());
+    amrex::Real particle_removal_depth = WarpX::GetInstance().GetParticleRemovalDepth();
+    scrapeParticles( *this, amrex::GetVecOfConstPtrs(distance_to_eb), ParticleBoundaryProcess::Absorb(), particle_removal_depth);
 #endif
 
     // The function that calls this is responsible for redistributing particles.
@@ -1965,7 +1966,8 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
     // Remove particles that are inside the embedded boundaries
 #ifdef AMREX_USE_EB
     auto & distance_to_eb = WarpX::GetInstance().GetDistanceToEB();
-    scrapeParticles(tmp_pc, amrex::GetVecOfConstPtrs(distance_to_eb), ParticleBoundaryProcess::Absorb());
+    amrex::Real particle_removal_depth = WarpX::GetInstance().GetParticleRemovalDepth();
+    scrapeParticles(tmp_pc, amrex::GetVecOfConstPtrs(distance_to_eb), ParticleBoundaryProcess::Absorb(), particle_removal_depth);
 #endif
 
     // Redistribute the new particles that were added to the temporary container.

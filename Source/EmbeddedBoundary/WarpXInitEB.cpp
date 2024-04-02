@@ -106,6 +106,7 @@ WarpX::InitEB ()
         // See the comment above on amrex::EB2::Build for the hard-wired number 20.
         amrex::EB2::Build(Geom(maxLevel()), maxLevel(), maxLevel()+20);
     }
+    pp_warpx.query("eb_particle_removal_depth", m_eb_particle_removal_depth);
 
 #endif
 }
