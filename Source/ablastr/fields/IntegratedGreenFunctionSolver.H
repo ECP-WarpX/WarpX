@@ -23,12 +23,12 @@ namespace ablastr::fields
 
     /** @brief Implements equation 2 in https://doi.org/10.1103/PhysRevSTAB.10.129901
      *         with some modification to symmetrize the function.
-     * 
-     * @param[in] x x-coordinate of given location 
+     *
+     * @param[in] x x-coordinate of given location
      * @param[in] y y-coordinate of given location
-     * @param[in] z z-coordinate of given location 
-     * 
-     * @return the integrated Green function G 
+     * @param[in] z z-coordinate of given location
+     *
+     * @return the integrated Green function G
      */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     amrex::Real
@@ -48,14 +48,14 @@ namespace ablastr::fields
     }
 
     /** @brief Compute the electrostatic potential using the Integrated Green Function method
-     *         as in http://dx.doi.org/10.1103/PhysRevSTAB.9.044204 
+     *         as in http://dx.doi.org/10.1103/PhysRevSTAB.9.044204
      *
      * @param[in] rho the charge density amrex::MultiFab
-     * @param[in] phi the electrostatic potential amrex::MultiFab  
+     * @param[in] phi the electrostatic potential amrex::MultiFab
      * @param[in] cell_size an arreay of 3 reals dx dy dz
-     * @param[in] ba amrex::BoxArray with the grid of a given level 
-     * 
-     * @return nothing 
+     * @param[in] ba amrex::BoxArray with the grid of a given level
+     *
+     * @return nothing
      */
     void
     computePhiIGF (amrex::MultiFab const & rho,

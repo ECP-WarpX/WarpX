@@ -207,4 +207,4 @@ computePhiIGF ( amrex::MultiFab const & rho,
         ablastr::math::anyfft::DestroyPlan(backward_plan[mfi]);
     }
 }
-} // namespace ablastr::fields 
+} // namespace ablastr::fields
