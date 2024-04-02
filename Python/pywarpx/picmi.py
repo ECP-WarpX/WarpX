@@ -1627,11 +1627,14 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
         Whether to cover cells with multiple cuts.
         (If False, this will raise an error if some cells have multiple cuts)
 
+    particle_removal_depth: float (in meters), default = 0
+        How far a particle needs to be inside the embedded boundary in order to be removed.
+
     Parameters used in the analytic expressions should be given as additional keyword arguments.
 
     """
     def __init__(self, implicit_function=None, stl_file=None, stl_scale=None, stl_center=None, stl_reverse_normal=False,
-                 potential=None, cover_multiple_cuts=None, **kw):
+                 potential=None, cover_multiple_cuts=None, particle_removal_depth=0, **kw):
 
         assert stl_file is None or implicit_function is None, Exception('Only one between implicit_function and '
                                                                             'stl_file can be specified')
@@ -1649,6 +1652,8 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
         self.stl_reverse_normal = stl_reverse_normal
 
         self.potential = potential
+
+        self.particle_removal_depth = particle_removal_depth
 
         self.cover_multiple_cuts = cover_multiple_cuts
 
@@ -1686,6 +1691,8 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
             expression = pywarpx.my_constants.mangle_expression(self.potential, self.mangle_dict)
             pywarpx.warpx.__setattr__('eb_potential(x,y,z,t)', expression)
 
+        if self.particle_removal_depth != 0:
+            pywarpx.warpx.eb_particle_removal_depth = self.particle_removal_depth
 
 class PlasmaLens(picmistandard.base._ClassWithInit):
     """
