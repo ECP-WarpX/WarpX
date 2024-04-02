@@ -343,7 +343,7 @@ namespace detail
      * set the metadata that indicates the physical unit.
      */
     inline void
-    setOpenPMDUnit ( openPMD::Mesh mesh, const std::string field_name )
+    setOpenPMDUnit ( openPMD::Mesh mesh, const std::string& field_name )
     {
         if (field_name[0] == 'E'){  // Electric field
             mesh.setUnitDimension({
@@ -377,19 +377,19 @@ namespace detail
 #ifdef WARPX_USE_OPENPMD
 WarpXOpenPMDPlot::WarpXOpenPMDPlot (
     openPMD::IterationEncoding ie,
-    std::string openPMDFileType,
-    std::string operator_type,
-    std::map< std::string, std::string > operator_parameters,
-    std::string engine_type,
-    std::map< std::string, std::string > engine_parameters,
-    std::vector<bool> fieldPMLdirections,
+    const std::string& openPMDFileType,
+    const std::string& operator_type,
+    const std::map< std::string, std::string >& operator_parameters,
+    const std::string& engine_type,
+    const std::map< std::string, std::string >& engine_parameters,
+    const std::vector<bool>& fieldPMLdirections,
     const std::string& authors)
     : m_Series(nullptr),
       m_MPIRank{amrex::ParallelDescriptor::MyProc()},
       m_MPISize{amrex::ParallelDescriptor::NProcs()},
       m_Encoding(ie),
-      m_OpenPMDFileType(std::move(openPMDFileType)),
-      m_fieldPMLdirections(std::move(fieldPMLdirections)),
+      m_OpenPMDFileType{openPMDFileType},
+      m_fieldPMLdirections{fieldPMLdirections},
       m_authors{authors}
 {
     m_OpenPMDoptions = detail::getSeriesOptions(operator_type, operator_parameters,
@@ -833,7 +833,7 @@ WarpXOpenPMDPlot::SetupRealProperties (ParticleContainer const * pc,
     // the beam/input3d showed write_real_comp.size() = 16 while only 10 real comp names
     // so using the min to be safe.
     //
-    auto const getComponentRecord = [&currSpecies](std::string const comp_name) {
+    auto const getComponentRecord = [&currSpecies](std::string const& comp_name) {
         // handle scalar and non-scalar records by name
         const auto [record_name, component_name] = detail::name2openPMD(comp_name);
         return currSpecies[record_name][component_name];
@@ -910,7 +910,7 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
     auto const numParticleOnTile64 = static_cast<uint64_t>(numParticleOnTile);
     auto const& soa = pti.GetStructOfArrays();
 
-    auto const getComponentRecord = [&currSpecies](std::string const comp_name) {
+    auto const getComponentRecord = [&currSpecies](std::string const& comp_name) {
         // handle scalar and non-scalar records by name
         const auto [record_name, component_name] = detail::name2openPMD(comp_name);
         return currSpecies[record_name][component_name];
@@ -1211,9 +1211,9 @@ WarpXOpenPMDPlot::SetupFields ( openPMD::Container< openPMD::Mesh >& meshes,
  */
 void
 WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
-                                 amrex::Geometry& full_geom,
-                                 std::string comp_name,
-                                 std::string field_name,
+                                 amrex::Geometry const& full_geom,
+                                 std::string const& comp_name,
+                                 std::string const& field_name,
                                  amrex::MultiFab const& mf,
                                  bool var_in_theta_mode) const
 {

@@ -1320,10 +1320,6 @@ WarpX::ReadParameters ()
             utils::parser::queryWithParser(
                 pp_algo, "costs_heuristic_particles_wt", costs_heuristic_particles_wt);
         }
-#   ifndef WARPX_USE_GPUCLOCK
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::load_balance_costs_update_algo!=LoadBalanceCostsUpdateAlgo::GpuClock,
-            "`algo.load_balance_costs_update = gpuclock` requires to compile with `-DWarpX_GPUCLOCK=ON`.");
-#   endif // !WARPX_USE_GPUCLOCK
 
         // Parse algo.particle_shape and check that input is acceptable
         // (do this only if there is at least one particle or laser species)
@@ -3281,6 +3277,16 @@ WarpX::isAnyBoundaryPML()
     return false;
 }
 
+bool
+WarpX::isAnyParticleBoundaryThermal ()
+{
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        if (WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Thermal) {return true;}
+        if (WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Thermal) {return true;}
+    }
+    return false;
+}
+
 std::string
 TagWithLevelSuffix (std::string name, int const level)
 {
@@ -3363,4 +3369,128 @@ WarpX::AllocInitMultiFabFromModel (
         mf->setVal(*initial_value);
     }
     multifab_map[name_with_suffix] = mf.get();
+}
+
+amrex::MultiFab*
+WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, const int direction) const
+{
+    // This function does *not* check if the returned field pointer is != nullptr
+
+    amrex::MultiFab* field_pointer = nullptr;
+
+    switch(field_type)
+    {
+        case FieldType::Efield_aux :
+            field_pointer = Efield_aux[lev][direction].get();
+            break;
+       case FieldType::Bfield_aux :
+            field_pointer = Bfield_aux[lev][direction].get();
+            break;
+       case FieldType::Efield_fp :
+            field_pointer = Efield_fp[lev][direction].get();
+            break;
+       case FieldType::Bfield_fp :
+            field_pointer = Bfield_fp[lev][direction].get();
+            break;
+       case FieldType::current_fp :
+            field_pointer = current_fp[lev][direction].get();
+            break;
+       case FieldType::current_fp_nodal :
+            field_pointer = current_fp_nodal[lev][direction].get();
+            break;
+       case FieldType::rho_fp :
+            field_pointer = rho_fp[lev].get();
+            break;
+       case FieldType::F_fp :
+            field_pointer = F_fp[lev].get();
+            break;
+       case FieldType::G_fp :
+            field_pointer = G_fp[lev].get();
+            break;
+       case FieldType::phi_fp :
+            field_pointer = phi_fp[lev].get();
+            break;
+       case FieldType::vector_potential_fp :
+            field_pointer = vector_potential_fp_nodal[lev][direction].get();
+            break;
+       case FieldType::Efield_cp :
+            field_pointer = Efield_cp[lev][direction].get();
+            break;
+       case FieldType::Bfield_cp :
+            field_pointer = Bfield_cp[lev][direction].get();
+            break;
+       case FieldType::current_cp :
+            field_pointer = current_cp[lev][direction].get();
+            break;
+       case FieldType::rho_cp :
+            field_pointer = rho_cp[lev].get();
+            break;
+       case FieldType::F_cp :
+            field_pointer = F_cp[lev].get();
+            break;
+       case FieldType::G_cp :
+            field_pointer = G_cp[lev].get();
+            break;
+       case FieldType::edge_lengths :
+            field_pointer = m_edge_lengths[lev][direction].get();
+            break;
+       case FieldType::face_areas :
+            field_pointer = m_face_areas[lev][direction].get();
+            break;
+       case FieldType::Efield_avg_fp :
+            field_pointer = Efield_avg_fp[lev][direction].get();
+            break;
+       case FieldType::Bfield_avg_fp :
+            field_pointer = Bfield_avg_fp[lev][direction].get();
+            break;
+       case FieldType::Efield_avg_cp :
+            field_pointer = Efield_avg_cp[lev][direction].get();
+            break;
+       case FieldType::Bfield_avg_cp :
+            field_pointer = Bfield_avg_cp[lev][direction].get();
+            break;
+        default:
+            WARPX_ABORT_WITH_MESSAGE("Invalid field type");
+            break;
+    }
+
+    return field_pointer;
+}
+
+bool
+WarpX::isFieldInitialized (const FieldType field_type, const int lev, const int direction) const
+{
+    const bool is_field_init = (getFieldPointerUnchecked(field_type, lev, direction) != nullptr);
+    return is_field_init;
+}
+
+amrex::MultiFab*
+WarpX::getFieldPointer (const FieldType field_type, const int lev, const int direction) const
+{
+    auto* const field_pointer = getFieldPointerUnchecked(field_type, lev, direction);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        field_pointer != nullptr, "Requested field is not initialized!");
+    return field_pointer;
+}
+
+std::array<const amrex::MultiFab* const, 3>
+WarpX::getFieldPointerArray (const FieldType field_type, const int lev) const
+{
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        (field_type == FieldType::Efield_aux) || (field_type == FieldType::Bfield_aux) ||
+        (field_type == FieldType::Efield_fp) || (field_type == FieldType::Bfield_fp) ||
+        (field_type == FieldType::current_fp) || (field_type == FieldType::current_fp_nodal) ||
+        (field_type == FieldType::Efield_cp) || (field_type == FieldType::Bfield_cp) ||
+        (field_type == FieldType::current_cp), "Requested field type is not a vector.");
+
+    return std::array<const amrex::MultiFab* const, 3>{
+        getFieldPointer(field_type, lev, 0),
+        getFieldPointer(field_type, lev, 1),
+        getFieldPointer(field_type, lev, 2)};
+}
+
+const amrex::MultiFab&
+WarpX::getField(FieldType field_type, const int lev, const int direction) const
+{
+    return *getFieldPointer(field_type, lev, direction);
 }
