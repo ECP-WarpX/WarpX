@@ -249,7 +249,7 @@ public:
      * \param[in] species_name The species for which back-transformed particles is set.
      * \param[in] do_back_transformed_particles The parameter to set if back-transformed particles are set to true/false
      */
-    void SetDoBackTransformedParticles (std::string species_name, bool do_back_transformed_particles);
+    void SetDoBackTransformedParticles (const std::string& species_name, bool do_back_transformed_particles);
 
     [[nodiscard]] int nSpeciesDepositOnMainGrid () const
     {
@@ -330,7 +330,7 @@ public:
                       const amrex::MultiFab& Bz);
 #endif
 
-    [[nodiscard]] int getSpeciesID (std::string product_str) const;
+    [[nodiscard]] int getSpeciesID (const std::string& product_str) const;
 
     amrex::Vector<std::unique_ptr<WarpXParticleContainer>>::iterator begin() {return allcontainers.begin();}
     amrex::Vector<std::unique_ptr<WarpXParticleContainer>>::iterator end() {return allcontainers.end();}

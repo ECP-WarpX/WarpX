@@ -139,9 +139,8 @@ struct RhoInTime {
 struct LoadBalanceCostsUpdateAlgo {
     enum {
         Timers    = 0, //!< load balance according to in-code timer-based weights (i.e., with  `costs`)
-        Heuristic = 1, /**< load balance according to weights computed from number of cells
-                             and number of particles per box (i.e., with `costs_heuristic`)*/
-        GpuClock  = 2
+        Heuristic = 1  /**< load balance according to weights computed from number of cells
+                             and number of particles per box (i.e., with `costs_heuristic`) */
     };
 };
 
@@ -171,7 +170,8 @@ enum struct ParticleBoundaryType {
         Absorbing = 0,     //!< particles crossing domain boundary are removed
         Open = 1,          //!< particles cross domain boundary leave with damped j
         Reflecting = 2,     //!< particles are reflected
-        Periodic = 3
+        Periodic = 3,      //!< particles are introduced from the periodic boundary
+        Thermal = 4
 };
 
 /** MPI reductions
