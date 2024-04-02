@@ -47,10 +47,13 @@ class SpaceChargeFieldCorrector(object):
             q = compute_actual_charge_on_spacecraft()
 
         # Correct fields so as to recover the actual charge
-        Er = ExWrapper(include_ghosts=True)
-        Er[...] += (q - q_v)*self.normalized_Er
-        Ez = EzWrapper(include_ghosts=True)
-        Ez[...]  += (q - q_v)*self.normalized_Ez
+        Config = sim.extension.Config
+        Er = sim.extension.warpx.multifab(f"Efield_fp[x][level=0]")
+        for er, n_er in zip( Er.to_numpy(), self.normalized_Er.to_numpy() ):
+            er[...] += (q - q_v)*n_er
+        Ez = sim.extension.warpx.multifab(f"Efield_fp[z][level=0]")
+        for ez, n_ez in zip( Ez.to_numpy(), self.normalized_Ez.to_numpy() ):
+            ez[...] += (q - q_v)*n_ez
         phi = PhiFPWrapper(include_ghosts=True)
         phi[...]  += (q - q_v)*self.normalized_phi
         self.spacecraft_potential += (q - q_v)*self.spacecraft_capacitance
@@ -75,10 +78,11 @@ class SpaceChargeFieldCorrector(object):
         assert np.all( abs(rho[...]) < 1.e-11 )
 
         # Record fields
-        Er = ExWrapper(include_ghosts=True)[:,:]
-        self.normalized_Er = Er[...] /q_v
-        Ez = EzWrapper(include_ghosts=True)[:,:]
-        self.normalized_Ez = Ez[...] /q_v
+        # TODO: add guard cells
+        self.normalized_Er = sim.extension.warpx.multifab(f"Efield_fp[x][level=0]").copy()
+        self.normalized_Er.mult( 1/q_v, 0 )
+        self.normalized_Ez = sim.extension.warpx.multifab(f"Efield_fp[z][level=0]").copy()
+        self.normalized_Ez.mult( 1/q_v, 0 )
         phi = PhiFPWrapper(include_ghosts=True)[:,:]
         self.normalized_phi = phi[...] /q_v
 
