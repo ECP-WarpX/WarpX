@@ -494,6 +494,10 @@ Embedded Boundary Conditions
     inside the embedded boundary. For this reason, it is important to define
     this function in such a way that it is constant inside the embedded boundary.
 
+* ``warpx.eb_particle_removal_depth`` (`float`; default: 0)
+    How far a particle needs to be inside the embedded boundary in order to be removed.
+    The depth is expressed in units of the cell size (or more specifically in units of the length of the diagonal of a cell).
+
 .. _running-cpp-parameters-parallelization:
 
 Distribution across MPI ranks and parallelization
