@@ -171,7 +171,7 @@ Overall simulation parameters
         non-zero value is specified by the user via
         ``warpx.self_fields_absolute_tolerance``).
 
-    * ``fft-based``: Poisson's equation is solved using an Integrated Green Function method (which requires FFT calculations).
+    * ``fft``: Poisson's equation is solved using an Integrated Green Function method (which requires FFT calculations).
         See these references for more details :cite:t:`QiangPhysRevSTAB2006`, :cite:t:`QiangPhysRevSTAB2006err`.
         It only works in 3D and it requires the compilation flag ``-DWarpX_PSATD=ON``.
         If mesh refinement is enabled, this solver only works on the coarsest level.
