@@ -799,17 +799,18 @@ Particle initialization
 
       * ``<species_name>.focal_distance`` (optional, distance between the beam centroid and the position of the focal plane of the beam, along the direction of the beam mean velocity; space charge is ignored in the initialization of the particles)
 
-      If ``<species_name>.focal_distance`` is specified, ``x_rms``, ``y_rms`` and ``z_rms`` are the size of the beam in the focal plane. Since the beam is not necessarily initialized close to its focal plane, the initial size of the beam will differ from ``x_rms``, ``y_rms``, ``z_rms``.
+      If ``<species_name>.focal_distance`` is specified, ``x_rms``, ``y_rms`` and ``z_rms`` are the sizes of the beam in the focal plane. Since the beam is not necessarily initialized close to its focal plane, the initial size of the beam will differ from ``x_rms``, ``y_rms``, ``z_rms``.
 
-      Usually, in accelerator physics the operative quantities are the emittance :math:`\epsilon_{x,y}` and beta function :math:`\beta_{x,y}`. 
-      They are related to the focal distance :math:`f`, the beam size :math:`\sigma_{x,y}(z)` (at focus :math:`\sigma_{0x,0y}`), the energy of the beam :math:`\gamma`, and the normalized momentum spread :math:`du_{x,y}` according to the following equations:
+      Usually, in accelerator physics the operative quantities are the normalized emittances :math:`\epsilon_{x,y}` and beta functions :math:`\beta_{x,y}`. 
+      They are related to the focal distance :math:`f`, the beam sizes :math:`\sigma_{x,y}` (which in the code are ``x_rms``, ``y_rms``), the beam relativistic Lorentz factor :math:`\gamma`, and the normalized momentum spread :math:`\Delta u_{x,y}` according to the equations below (:cite:t:`param-Wiedemann2015`). All quantities marked with a :math:`*` are evaluated at the focal plane .  
 
       .. math::
-          du_{x,y} = \frac{\epsilon_{x,y}}{\sigma_{0x,0y}},  
+          \Delta u_{x,y} &= \frac{\epsilon^*_{x,y}}{\sigma^*_{x,y}},
           
-          \sigma_{0x, 0y} = \sqrt{ \frac{ \epsilon_{x,y} \beta_{x,y} }{\gamma}}, 
+          \sigma*_{x, y} &= \sqrt{ \frac{ \epsilon^*_{x,y} \beta^*_{x,y} }{\gamma}},
           
-          \sigma_{x,y}(z) = \sqrt{\sigma_{0x,0y}^2 + \epsilon_{x,y}^2  (z - z_m - f)^2 / \sigma_{0x,0y}^2}
+          \sigma_{x,y}(z) &= \sigma^*_{x,y} \sqrt{1 + \left( \frac{z - z^* - f}{\beta^*_{x,y}} \right)^2}
+
           
     * ``external_file``: Inject macroparticles with properties (mass, charge, position, and momentum - :math:`\gamma \beta m c`) read from an external openPMD file.
       With it users can specify the additional arguments:
