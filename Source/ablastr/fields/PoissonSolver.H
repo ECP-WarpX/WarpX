@@ -14,7 +14,7 @@
 #include <ablastr/math/fft/AnyFFT.H>
 #include <ablastr/fields/Interpolate.H>
 
-#if defined(WARPX_USE_PSATD)  && defined(WARPX_DIM_3D)
+#if defined(WARPX_USE_PSATD) && defined(WARPX_DIM_3D)
 #include <ablastr/fields/IntegratedGreenFunctionSolver.H>
 #endif
 
