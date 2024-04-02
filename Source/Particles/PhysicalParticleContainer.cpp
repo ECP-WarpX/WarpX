@@ -446,6 +446,14 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp_boundary.query("reflect_all_velocities", flag);
     m_boundary_conditions.Set_reflect_all_velocities(flag);
 
+    // currently supports only isotropic thermal distribution
+    // same distribution is applied to all boundaries
+    const amrex::ParmParse pp_species_boundary("boundary." + species_name);
+    if (WarpX::isAnyParticleBoundaryThermal()) {
+        amrex::Real boundary_uth;
+        utils::parser::getWithParser(pp_species_boundary,"u_th",boundary_uth);
+        m_boundary_conditions.SetThermalVelocity(boundary_uth);
+    }
 }
 
 PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core)
@@ -2861,11 +2869,11 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     // Using this version of ParallelFor with compile time options
     // improves performance when qed or external EB are not used by reducing
     // register pressure.
-    amrex::ParallelFor(TypeList<CompileTimeOptions<no_exteb,has_exteb>,
-                                CompileTimeOptions<no_qed  ,has_qed>>{},
-                       {exteb_runtime_flag, qed_runtime_flag},
-                       np_to_push, [=] AMREX_GPU_DEVICE (long ip, auto exteb_control,
-                                                         auto qed_control)
+    amrex::ParallelFor(
+        TypeList<CompileTimeOptions<no_exteb,has_exteb>, CompileTimeOptions<no_qed  ,has_qed>>{},
+        {exteb_runtime_flag, qed_runtime_flag},
+        np_to_push,
+        [=] AMREX_GPU_DEVICE (long ip, auto exteb_control, auto qed_control)
     {
         amrex::ParticleReal xp, yp, zp;
         getPosition(ip, xp, yp, zp);
@@ -3386,14 +3394,14 @@ bool PhysicalParticleContainer::has_breit_wheeler () const
 
 void
 PhysicalParticleContainer::
-set_breit_wheeler_engine_ptr (std::shared_ptr<BreitWheelerEngine> ptr)
+set_breit_wheeler_engine_ptr (const std::shared_ptr<BreitWheelerEngine>& ptr)
 {
     m_shr_p_bw_engine = ptr;
 }
 
 void
 PhysicalParticleContainer::
-set_quantum_sync_engine_ptr (std::shared_ptr<QuantumSynchrotronEngine> ptr)
+set_quantum_sync_engine_ptr (const std::shared_ptr<QuantumSynchrotronEngine>& ptr)
 {
     m_shr_p_qs_engine = ptr;
 }

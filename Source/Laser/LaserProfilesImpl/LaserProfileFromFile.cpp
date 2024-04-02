@@ -162,7 +162,7 @@ WarpXLaserProfiles::FromFileLaserProfile::fill_amplitude (
 }
 
 void
-WarpXLaserProfiles::FromFileLaserProfile::parse_lasy_file(std::string lasy_file_name)
+WarpXLaserProfiles::FromFileLaserProfile::parse_lasy_file(const std::string& lasy_file_name)
 {
 #ifdef WARPX_USE_OPENPMD
     if(ParallelDescriptor::IOProcessor()){
@@ -237,7 +237,7 @@ WarpXLaserProfiles::FromFileLaserProfile::parse_lasy_file(std::string lasy_file_
 }
 
 void
-WarpXLaserProfiles::FromFileLaserProfile::parse_binary_file (std::string binary_file_name)
+WarpXLaserProfiles::FromFileLaserProfile::parse_binary_file (const std::string& binary_file_name)
 {
     if(ParallelDescriptor::IOProcessor()){
         std::ifstream inp(binary_file_name, std::ios::binary);

@@ -52,7 +52,7 @@ public:
      * @param[in] collision_name the name of the collision
      * @param[in] mypc pointer to the MultiParticleContainer
      */
-    ParticleCreationFunc (std::string collision_name, MultiParticleContainer const * mypc);
+    ParticleCreationFunc (const std::string& collision_name, MultiParticleContainer const * mypc);
 
     /**
      * \brief operator() of the ParticleCreationFunc class. It creates new particles from binary
@@ -318,7 +318,7 @@ class NoParticleCreationFunc
 public:
     NoParticleCreationFunc () = default;
 
-    NoParticleCreationFunc (const std::string /*collision_name*/,
+    NoParticleCreationFunc (const std::string& /*collision_name*/,
                             MultiParticleContainer const * const /*mypc*/) {}
 
     AMREX_INLINE

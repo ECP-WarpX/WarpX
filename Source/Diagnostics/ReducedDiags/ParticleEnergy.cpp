@@ -34,7 +34,7 @@
 using namespace amrex;
 
 // constructor
-ParticleEnergy::ParticleEnergy (std::string rd_name)
+ParticleEnergy::ParticleEnergy (const std::string& rd_name)
 : ReducedDiags{rd_name}
 {
     // get a reference to WarpX instance
