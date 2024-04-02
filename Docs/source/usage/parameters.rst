@@ -160,7 +160,7 @@ Overall simulation parameters
 * ``warpx.poisson_solver`` (`string`) optional (default `multigrid`)
 
     * ``multigrid``: Poisson's equation is solved using an iterative multigrid (MLMG) solver.
-        See the `AMReX documentation <https://amrex-codes.github.io/amrex/docs_html/LinearSolvers.html#>`_
+        See the `AMReX documentation <https://amrex-codes.github.io/amrex/docs_html/LinearSolvers.html#>`__
         for details of the MLMG solver (the default solver used with electrostatic
         simulations). The default behavior of the code is to check whether there is
         non-zero charge density in the system and if so force the MLMG solver to
