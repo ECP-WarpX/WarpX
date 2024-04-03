@@ -84,7 +84,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
     amrex::MultiFab tmp_G = amrex::MultiFab(realspace_ba, dm_global_fft, 1, 0);
     tmp_G.setVal(0);
     // Allocate corresponding arrays in Fourier space
-    using SpectralField = typename amrex::FabArray< amrex::BaseFab <ablastr::math::anyfft::Complex> >;
+    using SpectralField = amrex::FabArray< amrex::BaseFab< amrex::GpuComplex< amrex::Real > > >;
     SpectralField tmp_rho_fft = SpectralField( spectralspace_ba, dm_global_fft, 1, 0 );
     SpectralField tmp_G_fft = SpectralField( spectralspace_ba, dm_global_fft, 1, 0 );
 
