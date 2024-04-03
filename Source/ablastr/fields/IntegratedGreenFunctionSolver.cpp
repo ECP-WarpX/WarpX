@@ -7,12 +7,9 @@
 #include "IntegratedGreenFunctionSolver.H"
 
 #include <ablastr/constant.H>
-#include <ablastr/utils/Communication.H>
-#include <ablastr/utils/TextMsg.H>
 #include <ablastr/warn_manager/WarnManager.H>
 #include <ablastr/math/fft/AnyFFT.H>
 
-#include <AMReX_Array.H>
 #include <AMReX_Array4.H>
 #include <AMReX_BaseFab.H>
 #include <AMReX_BLassert.H>
@@ -20,28 +17,17 @@
 #include <AMReX_BoxArray.H>
 #include <AMReX_Config.H>
 #include <AMReX_DistributionMapping.H>
-#include <AMReX_FArrayBox.H>
 #include <AMReX_FabArray.H>
-#include <AMReX_Geometry.H>
 #include <AMReX_GpuControl.H>
 #include <AMReX_GpuLaunch.H>
 #include <AMReX_GpuQualifiers.H>
-#include <AMReX_IndexType.H>
 #include <AMReX_IntVect.H>
-#include <AMReX_LO_BCTYPES.H>
 #include <AMReX_MFIter.H>
-#include <AMReX_MFInterp_C.H>
 #include <AMReX_MLLinOp.H>
 #include <AMReX_MultiFab.H>
-#include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
-#include <AMReX_SPACE.H>
-#include <AMReX_TypeTraits.H>
-#include <AMReX_Vector.H>
 
 #include <array>
-#include <cmath>
-#include <optional>
 
 
 namespace ablastr::fields {
