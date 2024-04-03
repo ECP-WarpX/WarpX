@@ -192,9 +192,9 @@ struct InjectorDensityFromFile
         int iz = std::floor((z-lo2)/m_cell_size[2]);
 
 
-        return m_rho_array4(iz,iy,ix)/(charge.get()[0]);
+        return m_rho_array4(ix,iy,iz)/(charge.get()[0]);
     }
-//private:
+private:
     std::string external_density_path;
     std::string density;
 
