@@ -1,4 +1,4 @@
-/* Copyright 2023 The WarpX Community
+/* Copyright 2024 The WarpX Community
  *
  * This file is part of WarpX.
  *
@@ -125,18 +125,15 @@ void GridBasedMerging::operator() (WarpXParIter& pti, const int lev,
                 return;
             }
 
-    //amrex::AllPrint() << "Starting merging with " << cell_numparts << " particles in the spatial cell\n";
-    //amrex::Print() << "dtheta = " << dtheta << " dphi = " << dphi << " dr = " << dr << " Ntheta = " << Ntheta << " Nphi = " << Nphi << std::endl;
-
             // Loop over particles and label them with the appropriate
             // momentum bin number
             for (int i = cell_start; i < cell_stop; ++i)
             {
                 // get polar components of the velocity vector
                 auto u_mag = std::sqrt(
-                    ux[indices[i]]*ux[indices[i]]
-                    + uy[indices[i]]*uy[indices[i]]
-                    + uz[indices[i]]*uz[indices[i]]
+                    ux[indices[i]]*ux[indices[i]] +
+                    uy[indices[i]]*uy[indices[i]] +
+                    uz[indices[i]]*uz[indices[i]]
                 );
                 auto u_theta = std::atan2(uy[indices[i]], ux[indices[i]]) + MathConst::pi;
                 auto u_phi = std::acos(uz[indices[i]]/u_mag);
@@ -150,14 +147,9 @@ void GridBasedMerging::operator() (WarpXParIter& pti, const int lev,
                 momentum_bin_number_data[i] = (
                     ii + jj * Ntheta + kk * Ntheta * Nphi
                 );
-
-                //amrex::Print() << "Labeling part #" << i << " : " << u_mag << ", " << u_theta << ", " << u_phi << " => " << ii << " " << jj << " " << kk << " => label = " << momentum_bin_number_data[i] << std::endl;
             }
 
-            //amrex::AllPrint() << "done with labelling\n";
-
             // assign sorted_indices initial values
-            // std::iota(sorted_indices.begin() + cell_start, sorted_indices.begin() + cell_stop, 0);
             for (int i = cell_start; i < cell_stop; i++)
             {
                 sorted_indices_data[i] = i;
@@ -170,8 +162,6 @@ void GridBasedMerging::operator() (WarpXParIter& pti, const int lev,
             //     }
             // );
             heapSort(sorted_indices_data, momentum_bin_number_data, cell_start, cell_stop);
-
-            //amrex::AllPrint() << "done with argsort\n";
 
             // start by setting the running tallies equal to the first particle's attributes
             amrex::ParticleReal total_weight = w[indices[sorted_indices_data[cell_start]]];
@@ -186,7 +176,9 @@ void GridBasedMerging::operator() (WarpXParIter& pti, const int lev,
             amrex::ParticleReal cluster_uy = total_weight*uy[indices[sorted_indices_data[cell_start]]];
             amrex::ParticleReal cluster_uz = total_weight*uz[indices[sorted_indices_data[cell_start]]];
             amrex::ParticleReal total_energy = 0.5_prt * mass * total_weight * (
-                cluster_ux*cluster_ux + cluster_uy*cluster_uy + cluster_uz*cluster_uz
+                ux[indices[sorted_indices_data[cell_start]]]*ux[indices[sorted_indices_data[cell_start]]] +
+                uy[indices[sorted_indices_data[cell_start]]]*uy[indices[sorted_indices_data[cell_start]]] +
+                uz[indices[sorted_indices_data[cell_start]]]*uz[indices[sorted_indices_data[cell_start]]]
             );
 
             int particles_in_bin = 1;
@@ -195,13 +187,9 @@ void GridBasedMerging::operator() (WarpXParIter& pti, const int lev,
             // ones in the same momentum bin
             for (int i = cell_start+1; i < cell_stop; ++i)
             {
-                //amrex::Print() << "Particles in momentum cell: " << particles_in_bin << " Current particle in cell #" << momentum_bin_number_data[sorted_indices_data[i]] << std::endl;
-                //amrex::Print() << "   Particle index: " << sorted_indices_data[i] << " with cell starting at " << cell_start << " and ending at " << cell_stop << std::endl;
-
                 // check if this particle is in a new momentum bin
                 if (momentum_bin_number_data[sorted_indices_data[i]] != momentum_bin_number_data[sorted_indices_data[i - 1]])
                 {
-                    // amrex::Print() << "Cluster merge considered\n";
                     // check if the previous bin had more than 2 particles in it
                     if (particles_in_bin > 2){
                         // get average quantities for the previous bin
@@ -216,7 +204,7 @@ void GridBasedMerging::operator() (WarpXParIter& pti, const int lev,
                         cluster_uy /= total_weight;
                         cluster_uz /= total_weight;
 
-                        // perform merging of previous momentum bin particles
+                        // perform merging of momentum bin particles
                         auto u_perp2 = cluster_ux*cluster_ux + cluster_uy*cluster_uy;
                         auto u_perp = std::sqrt(u_perp2);
                         auto cluster_u_mag2 = u_perp2 + cluster_uz*cluster_uz;
@@ -224,11 +212,11 @@ void GridBasedMerging::operator() (WarpXParIter& pti, const int lev,
 
                         // calculate required velocity magnitude to achieve
                         // energy conservation
-                        auto v_mag2 = 2.0 * total_energy / (total_weight * mass);
+                        auto v_mag2 = 2._prt * total_energy / (total_weight * mass);
                         auto v_perp = std::sqrt(v_mag2 - cluster_u_mag2);
 
                         // choose random angle for new velocity vector
-                        auto phi = amrex::Random(engine) * 2.0 * MathConst::pi;
+                        auto phi = amrex::Random(engine) * 2._prt * MathConst::pi;
 
                         // set new velocity components based on chosen phi
                         auto vx = v_perp * std::cos(phi);
@@ -240,7 +228,7 @@ void GridBasedMerging::operator() (WarpXParIter& pti, const int lev,
                         auto cos_phi = cluster_ux / u_perp;
                         auto sin_phi = cluster_uy / u_perp;
 
-                        // rotate new velocity vector back to labframe
+                        // rotate new velocity vector to labframe
                         auto ux_new = (
                             vx * cos_theta * cos_phi - vy * sin_phi
                             + cluster_u_mag * sin_theta * cos_phi
@@ -253,11 +241,11 @@ void GridBasedMerging::operator() (WarpXParIter& pti, const int lev,
 
                         // set the previous two particles' attributes according to
                         // the previous bin's values
-                        auto part_idx1 = indices[sorted_indices_data[i - 1]];
-                        auto part_idx2 = indices[sorted_indices_data[i - 2]];
+                        int part_idx1 = indices[sorted_indices_data[i - 1]];
+                        int part_idx2 = indices[sorted_indices_data[i - 2]];
 
-                        w[part_idx1] = total_weight / 2.0;
-                        w[part_idx2] = total_weight / 2.0;
+                        w[part_idx1] = total_weight / 2._prt;
+                        w[part_idx2] = total_weight / 2._prt;
 #if !defined(WARPX_DIM_1D_Z)
                         x[part_idx1] = cluster_x;
                         x[part_idx2] = cluster_x;
@@ -270,11 +258,11 @@ void GridBasedMerging::operator() (WarpXParIter& pti, const int lev,
                         z[part_idx2] = cluster_z;
 
                         ux[part_idx1] = ux_new;
-                        uz[part_idx1] = uz_new;
                         uy[part_idx1] = uy_new;
-                        ux[part_idx2] = 2.0 * cluster_ux - ux_new;
-                        uy[part_idx2] = 2.0 * cluster_uy - uz_new;
-                        uz[part_idx2] = 2.0 * cluster_uz - uy_new;
+                        uz[part_idx1] = uz_new;
+                        ux[part_idx2] = 2._prt * cluster_ux - ux_new;
+                        uy[part_idx2] = 2._prt * cluster_uy - uy_new;
+                        uz[part_idx2] = 2._prt * cluster_uz - uz_new;
 
                         // set ids of merged particles so they will be removed
                         for (int j = 2; j < particles_in_bin; j++){
@@ -318,6 +306,4 @@ void GridBasedMerging::operator() (WarpXParIter& pti, const int lev,
             }
         }
     );
-
-    // amrex::Print() << "Merging complete." << std::endl;
 }
