@@ -94,7 +94,7 @@ storeFieldOnParticles ( T_ParticleContainer& tmp,
 
         auto phi_grid = phi[pti].array();
         const auto getPosition = GetParticlePosition<PIdx>(pti);
-        amrex::Real* phi_particle_arr = pti.GetStructOfArrays().GetRealData(phi_index).dataPtr();
+        amrex::ParticleReal* phi_particle_arr = pti.GetStructOfArrays().GetRealData(phi_index).dataPtr();
 
         // Loop over the particles and update their position
         amrex::ParallelFor( pti.numParticles(),
