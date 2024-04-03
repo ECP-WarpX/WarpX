@@ -107,6 +107,8 @@ void GridBasedMerging::operator() (WarpXParIter& pti, const int lev,
     auto dtheta = 2.0_prt * MathConst::pi / Ntheta;
     auto dphi = MathConst::pi / Nphi;
 
+    auto heapSort = HeapSort();
+
     // Loop over cells
     amrex::ParallelForRNG( n_cells,
         [=] AMREX_GPU_DEVICE (int i_cell, amrex::RandomEngine const& engine) noexcept

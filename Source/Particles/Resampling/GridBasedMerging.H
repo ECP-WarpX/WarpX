@@ -49,71 +49,73 @@ public:
      * from https://www.geeksforgeeks.org/heap-sort/ and modified for the
      * current purpose.
     */
-    AMREX_GPU_HOST_DEVICE
-    void swap(int *a, int *b) const
-    {
-        int temp = *b;
-        *b = *a;
-        *a = temp;
-    }
+    struct HeapSort {
 
-    AMREX_GPU_HOST_DEVICE
-    void heapify(int index_array[], int bin_array[], int start, int N, int i) const
-    {
-
-        // Initialize largest as current node
-        int largest = i;
-
-        // get child node indices for the current node
-        int l = 2 * i + 1;
-        int r = 2 * i + 2;
-
-        // If left child is larger than the current node, set that child to the
-        // largest, and the same
-        if (l < N && bin_array[index_array[l+start]] > bin_array[index_array[largest+start]])
-            largest = l;
-        if (r < N && bin_array[index_array[r+start]] > bin_array[index_array[largest+start]])
-            largest = r;
-
-        // If largest is not root
-        if (largest != i) {
-            // int temp = index_array[i+start];
-            // index_array[i+start] = index_array[largest+start];
-            // index_array[largest+start] = temp;
-            swap(&index_array[largest+start], &index_array[i+start]);
-
-            // Recursively heapify the affected
-            // sub-tree
-            heapify(index_array, bin_array, start, N, largest);
-        }
-    }
-
-    // Main function to do heap sort
-    AMREX_GPU_HOST_DEVICE
-    void heapSort(int index_array[], int bin_array[], int start, int stop) const
-    {
-        int N = stop - start;
-
-        // Build heap (rearrange array)
-        for (int i = N / 2 - 1; i >= 0; i--)
+        AMREX_GPU_HOST_DEVICE
+        void swap(int *a, int *b) const
         {
-            heapify(index_array, bin_array, start, N, i);
+            int temp = *b;
+            *b = *a;
+            *a = temp;
         }
 
-        // One by one extract an element
-        // from heap
-        for (int i = N - 1; i > 0; i--) {
+        AMREX_GPU_HOST_DEVICE
+        void heapify(int index_array[], int bin_array[], int start, int N, int i) const
+        {
 
-            // Move current root to end
-            // int temp = index_array[start];
-            // index_array[i+start] = index_array[start];
-            // index_array[start] = temp;
-            swap(&index_array[start], &index_array[i+start]);
+            // Initialize largest as current node
+            int largest = i;
 
-            // call max heapify on the reduced heap
-            heapify(index_array, bin_array, start, i, 0);
+            // get child node indices for the current node
+            int l = 2 * i + 1;
+            int r = 2 * i + 2;
+
+            // If left child is larger than the current node, set that child to the
+            // largest, and the same
+            if (l < N && bin_array[index_array[l+start]] > bin_array[index_array[largest+start]])
+                largest = l;
+            if (r < N && bin_array[index_array[r+start]] > bin_array[index_array[largest+start]])
+                largest = r;
+
+            // If largest is not root
+            if (largest != i) {
+                // int temp = index_array[i+start];
+                // index_array[i+start] = index_array[largest+start];
+                // index_array[largest+start] = temp;
+                swap(&index_array[largest+start], &index_array[i+start]);
+
+                // Recursively heapify the affected
+                // sub-tree
+                heapify(index_array, bin_array, start, N, largest);
+            }
         }
-    }
+
+        AMREX_GPU_HOST_DEVICE
+        void operator() (int index_array[], int bin_array[], int start, int stop) const
+        {
+            int N = stop - start;
+
+            // Build heap (rearrange array)
+            for (int i = N / 2 - 1; i >= 0; i--)
+            {
+                heapify(index_array, bin_array, start, N, i);
+            }
+
+            // One by one extract an element
+            // from heap
+            for (int i = N - 1; i > 0; i--) {
+
+                // Move current root to end
+                // int temp = index_array[start];
+                // index_array[i+start] = index_array[start];
+                // index_array[start] = temp;
+                swap(&index_array[start], &index_array[i+start]);
+
+                // call max heapify on the reduced heap
+                heapify(index_array, bin_array, start, i, 0);
+            }
+        }
+    };
 
 private:
     int m_min_ppc = 100;
