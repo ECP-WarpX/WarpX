@@ -604,7 +604,7 @@ for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
             const amrex::Geometry& geom = warpx.Geom(lev);
             auto plo = geom.ProbLoArray();
             auto dxi = geom.InvCellSizeArray();
-            amrex::MultiFab const& phi = warpx.getphi_fp(lev);
+            amrex::MultiFab const& phi = warpx.getField( FieldType::phi_fp, lev, 0 );
             storeFieldOnParticles( tmp, plo, dxi, phi, phi_index, lev );
         }
     }
