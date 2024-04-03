@@ -138,6 +138,18 @@ class Species(picmistandard.PICMI_Species):
     warpx_resampling_trigger_max_avg_ppc: int, default=infinity
         Resampling will be done when the average number of
         particles per cell exceeds this number
+
+    warpx_resampling_algorithm_delta_ur: float, default=1e5
+        Size of velocity window used for clustering particles during grid-based
+        merging.
+
+    warpx_resampling_algorithm_n_theta: int, default 120
+        Number of bins to use in theta when clustering particle velocities
+        during grid-based merging.
+
+    warpx_resampling_algorithm_n_phi: int, default 60
+        Number of bins to use in phi when clustering particle velocities
+        during grid-based merging.
     """
     def init(self, kw):
 
@@ -215,8 +227,13 @@ class Species(picmistandard.PICMI_Species):
 
         # Resampling settings
         self.do_resampling = kw.pop('warpx_do_resampling', None)
+        self.resampling_algorithm = kw.pop('warpx_resampling_algorithm', None)
+        self.resampling_algorithm_min_ppc = kw.pop('warpx_resampling_algorithm_min_ppc', None)
         self.resampling_trigger_intervals = kw.pop('warpx_resampling_trigger_intervals', None)
         self.resampling_triggering_max_avg_ppc = kw.pop('warpx_resampling_trigger_max_avg_ppc', None)
+        self.resampling_algorithm_delta_ur = kw.pop('warpx_resampling_algorithm_delta_ur', None)
+        self.resampling_algorithm_n_theta = kw.pop('warpx_resampling_algorithm_n_theta', None)
+        self.resampling_algorithm_n_phi = kw.pop('warpx_resampling_algorithm_n_phi', None)
 
     def species_initialize_inputs(self, layout,
                                   initialize_self_fields = False,
@@ -255,8 +272,13 @@ class Species(picmistandard.PICMI_Species):
                                              do_not_gather = self.do_not_gather,
                                              random_theta = self.random_theta,
                                              do_resampling=self.do_resampling,
+                                             resampling_algorithm=self.resampling_algorithm,
+                                             resampling_algorithm_min_ppc=self.resampling_algorithm_min_ppc,
                                              resampling_trigger_intervals=self.resampling_trigger_intervals,
-                                             resampling_trigger_max_avg_ppc=self.resampling_triggering_max_avg_ppc)
+                                             resampling_trigger_max_avg_ppc=self.resampling_triggering_max_avg_ppc,
+                                             resampling_algorithm_delta_ur=self.resampling_algorithm_delta_ur,
+                                             resampling_algorithm_n_theta=self.resampling_algorithm_n_theta,
+                                             resampling_algorithm_n_phi=self.resampling_algorithm_n_phi)
 
         # add reflection models
         self.species.add_new_attr("reflection_model_xlo(E)", self.reflection_model_xlo)
