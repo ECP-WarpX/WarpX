@@ -64,8 +64,14 @@ void GridBasedMerging::operator() (WarpXParIter& pti, const int lev,
 
     auto& ptile = pc->ParticlesAt(lev, pti);
     auto& soa = ptile.GetStructOfArrays();
+#if defined(WARPX_DIM_2D) || defined(WARPX_DIM_3D)
     auto * const AMREX_RESTRICT x = soa.GetRealData(PIdx::x).data();
+#elif defined(WARPX_DIM_RZ)
+    auto * const AMREX_RESTRICT x = soa.GetRealData(PIdx::r).data();
+#endif
+#if defined(WARPX_DIM_3D)
     auto * const AMREX_RESTRICT y = soa.GetRealData(PIdx::y).data();
+#endif
     auto * const AMREX_RESTRICT z = soa.GetRealData(PIdx::z).data();
     auto * const AMREX_RESTRICT ux = soa.GetRealData(PIdx::ux).data();
     auto * const AMREX_RESTRICT uy = soa.GetRealData(PIdx::uy).data();
@@ -167,8 +173,12 @@ void GridBasedMerging::operator() (WarpXParIter& pti, const int lev,
 
             // start by setting the running tallies equal to the first particle's attributes
             amrex::ParticleReal total_weight = w[indices[sorted_indices_data[cell_start]]];
+#if !defined(WARPX_DIM_1D_Z)
             amrex::ParticleReal cluster_x = total_weight*x[indices[sorted_indices_data[cell_start]]];
+#endif
+#if defined(WARPX_DIM_3D)
             amrex::ParticleReal cluster_y = total_weight*y[indices[sorted_indices_data[cell_start]]];
+#endif
             amrex::ParticleReal cluster_z = total_weight*z[indices[sorted_indices_data[cell_start]]];
             amrex::ParticleReal cluster_ux = total_weight*ux[indices[sorted_indices_data[cell_start]]];
             amrex::ParticleReal cluster_uy = total_weight*uy[indices[sorted_indices_data[cell_start]]];
@@ -193,17 +203,21 @@ void GridBasedMerging::operator() (WarpXParIter& pti, const int lev,
                     // check if the previous bin had more than 2 particles in it
                     if (particles_in_bin > 2){
                         // get average quantities for the previous bin
+#if !defined(WARPX_DIM_1D_Z)
                         cluster_x /= total_weight;
+#endif
+#if defined(WARPX_DIM_3D)
                         cluster_y /= total_weight;
+#endif
                         cluster_z /= total_weight;
                         cluster_ux /= total_weight;
                         cluster_uy /= total_weight;
                         cluster_uz /= total_weight;
 
                         // perform merging of previous momentum bin particles
-                        auto u_perp2 = cluster_ux*cluster_x + cluster_uy*cluster_y;
+                        auto u_perp2 = cluster_ux*cluster_ux + cluster_uy*cluster_uy;
                         auto u_perp = std::sqrt(u_perp2);
-                        auto cluster_u_mag2 = u_perp2 + cluster_z*cluster_z;
+                        auto cluster_u_mag2 = u_perp2 + cluster_uz*cluster_uz;
                         auto cluster_u_mag = std::sqrt(cluster_u_mag2);
 
                         // calculate required velocity magnitude to achieve
@@ -242,11 +256,15 @@ void GridBasedMerging::operator() (WarpXParIter& pti, const int lev,
 
                         w[part_idx1] = total_weight / 2.0;
                         w[part_idx2] = total_weight / 2.0;
+#if !defined(WARPX_DIM_1D_Z)
                         x[part_idx1] = cluster_x;
-                        y[part_idx1] = cluster_y;
-                        z[part_idx1] = cluster_z;
                         x[part_idx2] = cluster_x;
+#endif
+#if defined(WARPX_DIM_3D)
+                        y[part_idx1] = cluster_y;
                         y[part_idx2] = cluster_y;
+#endif
+                        z[part_idx1] = cluster_z;
                         z[part_idx2] = cluster_z;
 
                         ux[part_idx1] = ux_new;
@@ -265,8 +283,12 @@ void GridBasedMerging::operator() (WarpXParIter& pti, const int lev,
                     particles_in_bin = 0;
                     total_weight = 0._prt;
                     total_energy = 0._prt;
+#if !defined(WARPX_DIM_1D_Z)
                     cluster_x = 0_prt;
+#endif
+#if defined(WARPX_DIM_3D)
                     cluster_y = 0_prt;
+#endif
                     cluster_z = 0_prt;
                     cluster_ux = 0_prt;
                     cluster_uy = 0_prt;
@@ -274,18 +296,22 @@ void GridBasedMerging::operator() (WarpXParIter& pti, const int lev,
                 }
 
                 particles_in_bin += 1;
+                const int part_idx = indices[sorted_indices_data[i]];
 
-                cluster_x += w[indices[sorted_indices_data[i]]]*x[indices[sorted_indices_data[i]]];
-                cluster_y += w[indices[sorted_indices_data[i]]]*y[indices[sorted_indices_data[i]]];
-                cluster_z += w[indices[sorted_indices_data[i]]]*z[indices[sorted_indices_data[i]]];
-                cluster_ux += w[indices[sorted_indices_data[i]]]*ux[indices[sorted_indices_data[i]]];
-                cluster_uy += w[indices[sorted_indices_data[i]]]*uy[indices[sorted_indices_data[i]]];
-                cluster_uz += w[indices[sorted_indices_data[i]]]*uz[indices[sorted_indices_data[i]]];
-                total_weight += w[indices[sorted_indices_data[i]]];
-                total_energy += 0.5_prt * mass * w[indices[sorted_indices_data[i]]] * (
-                    ux[indices[sorted_indices_data[i]]]*ux[indices[sorted_indices_data[i]]]
-                    + uy[indices[sorted_indices_data[i]]]*uy[indices[sorted_indices_data[i]]]
-                    + uz[indices[sorted_indices_data[i]]]*uz[indices[sorted_indices_data[i]]]
+#if !defined(WARPX_DIM_1D_Z)
+                cluster_x += w[part_idx]*x[part_idx];
+#endif
+#if defined(WARPX_DIM_3D)
+                cluster_y += w[part_idx]*y[part_idx];
+#endif
+                cluster_z += w[part_idx]*z[part_idx];
+                cluster_ux += w[part_idx]*ux[part_idx];
+                cluster_uy += w[part_idx]*uy[part_idx];
+                cluster_uz += w[part_idx]*uz[part_idx];
+                total_weight += w[part_idx];
+                total_energy += 0.5_prt * mass * w[part_idx] * (
+                    ux[part_idx]*ux[part_idx] + uy[part_idx]*uy[part_idx]
+                    + uz[part_idx]*uz[part_idx]
                 );
             }
         }
