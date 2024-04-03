@@ -198,6 +198,8 @@ void WarpXFluidContainer::InitData(int lev, amrex::Box init_box, amrex::Real cur
         // Return the intersection of all cells and the ones we wish to update
         amrex::Box const init_box_intersection = init_box & tile_box;
 
+        inj_rho->prepareBox(lev, mfi);
+
         amrex::ParallelFor(init_box_intersection,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {

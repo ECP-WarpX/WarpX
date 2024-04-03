@@ -1066,6 +1066,9 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
         if (refine_injection) {
             fine_overlap_box = overlap_box & amrex::shift(fine_injection_box, -shifted);
         }
+
+        inj_rho->prepareBox(lev, mfi);
+
         amrex::ParallelFor(overlap_box, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
         {
             const IntVect iv(AMREX_D_DECL(i, j, k));
@@ -1237,6 +1240,8 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
 #ifdef WARPX_DIM_RZ
         const bool rz_random_theta = m_rz_random_theta;
 #endif
+        inj_rho->prepareBox(lev, mfi);
+
         amrex::ParallelForRNG(overlap_box,
         [=] AMREX_GPU_DEVICE (int i, int j, int k, amrex::RandomEngine const& engine) noexcept
         {

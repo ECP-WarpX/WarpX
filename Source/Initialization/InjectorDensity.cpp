@@ -136,11 +136,11 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
 
     // creating the mulitfab array
     std::cout << "calling multifab\n";
-    MultiFab* mf = warpx.get_pointer_rho_fp(0);
-    mf->setVal(0);
-    const amrex::IntVect nodal_flag = mf->ixType().toIntVect();
+    m_rho = warpx.get_pointer_rho_fp(0);
+    m_rho->setVal(0);
+    const amrex::IntVect nodal_flag = m_rho->ixType().toIntVect();
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(mf != nullptr, "Inside Assert");
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_rho != nullptr, "Inside Assert");
 
     // Read external field openPMD data
     io::Series series = io::Series(external_density_path, io::Access::READ_ONLY);
@@ -185,13 +185,13 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
 
     // iterate over the external field and find the index that corresponds to the grid points
     amrex::AllPrint() << "Before MFIter Loop...\n";
-    for (MFIter mfi(*mf, TilingIfNotGPU()); mfi.isValid(); ++mfi)
+    for (MFIter mfi(*m_rho, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-        const amrex::Box tb = mfi.tilebox(nodal_flag, mf->nGrowVect());
-        amrex::Array4<amrex::Real> mffab = mf->array(mfi);
+        const amrex::Box tb = mfi.tilebox(nodal_flag, m_rho->nGrowVect());
+        amrex::Array4<amrex::Real> rho_array4 = m_rho->array(mfi);
 
-        int start[3] = {mffab.begin.x, mffab.begin.y, mffab.begin.z};
-        int end[3] = {mffab.end.x, mffab.end.y, mffab.end.z};
+        int start[3] = {rho_array4.begin.x, rho_array4.begin.y, rho_array4.begin.z};
+        int end[3] = {rho_array4.end.x, rho_array4.end.y, rho_array4.end.z};
         amrex::IntVect start_vect(start);
         amrex::IntVect end_vect(end);
         amrex::Box mf_bx(start_vect, end_vect);
@@ -211,12 +211,12 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
 
 
         amrex::ParallelFor (tb,
-                            [tb, this, file_dx, file_dy, file_dz, extent0, extent1, extent2, P_data, rb] AMREX_GPU_DEVICE (int i, int j, int k) {
+                            [=] AMREX_GPU_DEVICE (int i, int j, int k)
+        {
                                 // i,j,k denote x,y,z indices in 3D xyz
                                 // i,j denote r,z indices in 2D rz; k is just 0
 
-                                //for 3D only!!
-                                const int ii = i;
+                                // TODO: so far for 3D only!!
                                 amrex::Real x0, x1, x2;
 
                                 // real position in the multifab that we interpolate to
@@ -252,16 +252,18 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
 
                                 // source data access
                                 const amrex::Array4<double> src_data(P_data, {0, 0, 0}, {extent2, extent1, extent0}, 1);
+
+                                // interpolate from closest source data points to rho MultiFab resolution
                                 const double
-                                        f000 = src_data(iz  , iy  , ix ),
-                                        f001 = src_data(iz + 1, iy  , ix  ),
-                                        f010 = src_data(iz  , iy + 1, ix  ),
-                                        f011 = src_data(iz + 1, iy + 1, ix ),
-                                        f100 = src_data(iz  , iy  , ix + 1),
-                                        f101 = src_data(iz + 1, iy  , ix + 1),
-                                        f110 = src_data(iz  , iy + 1, ix + 1),
-                                        f111 = src_data(iz + 1, iy + 1, ix + 1);
-                                mffab(i,j,k) = static_cast<amrex::Real> (utils::algorithms::trilinear_interp<double>
+                                    f000 = src_data(iz    , iy    , ix    ),
+                                    f001 = src_data(iz + 1, iy    , ix    ),
+                                    f010 = src_data(iz    , iy + 1, ix    ),
+                                    f011 = src_data(iz + 1, iy + 1, ix    ),
+                                    f100 = src_data(iz    , iy    , ix + 1),
+                                    f101 = src_data(iz + 1, iy    , ix + 1),
+                                    f110 = src_data(iz    , iy + 1, ix + 1),
+                                    f111 = src_data(iz + 1, iy + 1, ix + 1);
+                                rho_array4(i,j,k) = static_cast<amrex::Real> (utils::algorithms::trilinear_interp<double>
                                         (xx0, xx0+file_dx, xx1, xx1+file_dy, xx2, xx2+file_dz,
                                          f000, f001, f010, f011, f100, f101, f110, f111,
                                          x0, x1, x2) );

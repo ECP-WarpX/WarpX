@@ -63,6 +63,9 @@ struct InjectorDensityConstant
 {
     InjectorDensityConstant (amrex::Real a_rho) noexcept : m_rho(a_rho) {}
 
+    void
+    prepareBox (int, amrex::MFIter &) {}
+
     [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::Real
@@ -81,6 +84,9 @@ struct InjectorDensityParser
     InjectorDensityParser (amrex::ParserExecutor<3> const& a_parser) noexcept
         : m_parser(a_parser) {}
 
+    void
+    prepareBox (int, amrex::MFIter &) {}
+
     [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::Real
@@ -98,6 +104,9 @@ struct InjectorDensityPredefined
     InjectorDensityPredefined (std::string const& a_species_name) noexcept;
 
     void clear ();
+
+    void
+    prepareBox (int, amrex::MFIter &) {}
 
     [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
@@ -163,6 +172,11 @@ struct InjectorDensityFromFile
 
     void clear();
 
+    void
+    prepareBox (int /* lev */, amrex::MFIter & mfi)
+    {
+        m_rho_array4 = m_rho->array(mfi);
+    }
 
     [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
@@ -177,12 +191,16 @@ struct InjectorDensityFromFile
         int iy = std::floor((y-lo1)/m_cell_size[1]);
         int iz = std::floor((z-lo2)/m_cell_size[2]);
 
-        return mffab(iz,iy,ix)/(charge.get()[0]);
+
+        return m_rho_array4(iz,iy,ix)/(charge.get()[0]);
     }
 //private:
     std::string external_density_path;
     std::string density;
-    amrex::Array4<amrex::Real> mffab;
+
+    amrex::MultiFab* m_rho;
+    amrex::Array4<amrex::Real> m_rho_array4;
+
     amrex::RealBox real_box;
     std::vector<long double> spacing;
     std::vector<int> n_cell;
@@ -239,6 +257,15 @@ struct InjectorDensity
             : type(Type::fromfile),
               object(t, a_species_name)
     { }
+
+    void
+    prepareBox (int lev, amrex::MFIter & mfi)
+    {
+        if (type == Type::fromfile)
+        {
+            return object.fromfile.prepareBox(lev, mfi);
+        }
+    }
 
     // Explicitly prevent the compiler from generating copy constructors
     // and copy assignment operators.
