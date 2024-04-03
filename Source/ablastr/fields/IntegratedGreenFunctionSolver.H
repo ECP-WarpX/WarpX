@@ -51,17 +51,15 @@ namespace ablastr::fields
      *         as in http://dx.doi.org/10.1103/PhysRevSTAB.9.044204
      *
      * @param[in] rho the charge density amrex::MultiFab
-     * @param[in] phi the electrostatic potential amrex::MultiFab
+     * @param[out] phi the electrostatic potential amrex::MultiFab
      * @param[in] cell_size an arreay of 3 reals dx dy dz
      * @param[in] ba amrex::BoxArray with the grid of a given level
-     *
-     * @return nothing
      */
     void
     computePhiIGF (amrex::MultiFab const & rho,
                    amrex::MultiFab & phi,
-                   std::array<amrex::Real, 3> const cell_size,
-                   amrex::BoxArray const ba);
+                   std::array<amrex::Real, 3> const & cell_size,
+                   amrex::BoxArray const & ba);
 
 } // namespace ablastr::fields
 

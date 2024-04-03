@@ -35,8 +35,8 @@ namespace ablastr::fields {
 void
 computePhiIGF ( amrex::MultiFab const & rho,
                 amrex::MultiFab & phi,
-                std::array<amrex::Real, 3> const cell_size,
-                amrex::BoxArray const ba )
+                std::array<amrex::Real, 3> const & cell_size,
+                amrex::BoxArray const & ba )
 {
     using namespace amrex::literals;
 
