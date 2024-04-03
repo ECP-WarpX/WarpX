@@ -32,7 +32,7 @@
 #include <AMReX_REAL.H>
 #include <AMReX_SPACE.H>
 
-#include <algorithm>
+//#include <algorithm>
 #include <cctype>
 #include <vector>
 
@@ -113,15 +113,10 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
     std::vector<int> cells(3);
     utils::parser::getArrWithParser(pp_amr, "n_cell", cells);
 
-    for (int i = 0; i < cells.size(); i++) {
+    for (int i = 0; i < static_cast<int>(cells.size()); i++) {
         std::cout << i;
         n_cell.push_back(cells[i]);
     }
-
-    std::cout << "[1] File path is: " << external_density_path << '\n' ;
-    std::cout << "[2] Density name is: " << density << '\n' ;
-    std::cout << "[3] Max grid size is: " << max_grid_size << '\n' ;
-    std::cout << "[4] N_cell for each dimension: " << n_cell[0] << " " << n_cell[1] << " " << n_cell[2] << '\n';
 
     // Get WarpX domain info
     WarpX& warpx = WarpX::GetInstance();
@@ -137,30 +132,15 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
     hi1 = geom_hi[1];
     hi2 = geom_hi[2];
 
+    std::cout << "lo0, lo1, lo2: " << lo0 << " " << lo1 << " " << lo2 << '\n';
+
     // creating the mulitfab array
-    IntVect rho_nodal_flag;
-    // This is taken from initialization of rho_nodal_flag in WarpX.cpp but do not know if it is always correct
-    rho_nodal_flag = IntVect( AMREX_D_DECL(1,1,1) );
     std::cout << "calling multifab\n";
     MultiFab* mf = warpx.get_pointer_rho_fp(0);
-
-
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(mf != nullptr, "Inside Assert");
-
-    // PUT in an amrex declare if null pointer
-
-//    mf->set_val(0.0);
-//    copy = mf->copy();
-    //copy *= 0;
-    //MultiFab copy = mf->copy(mf, copy, mf->nComp(), mf->nComp());
-//    MultiFab mf_copy;
-//    static void copy(&mf_copy, const &mf, 1, 0);
+    mf->setVal(0);
     const amrex::IntVect nodal_flag = mf->ixType().toIntVect();
 
-
-
-//    std::cout << rho_nodal_flag << '\n';
-//    std::cout << nodal_flag << '\n';
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(mf != nullptr, "Inside Assert");
 
     // Read external field openPMD data
     io::Series series = io::Series(external_density_path, io::Access::READ_ONLY);
@@ -174,7 +154,6 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
 
     io::ParticleSpecies particle = iseries.particles[a_species_name];
     charge = particle["charge"][openPMD::RecordComponent::SCALAR].loadChunk<double>();
-    std::cout << "[5] electron charge is " << charge << '\n';
 
     offset = P.gridGlobalOffset();
     spacing = P.gridSpacing< long double >();
@@ -183,7 +162,7 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
     const int extent1 = static_cast<int>(extent[1]);
     const int extent2 = static_cast<int>(extent[2]);
 
-    std::cout << "[7] Extent for each dimension: " << extent[0] << " " << extent[1] << " " << extent[2] << '\n';
+    std::cout << "Extent for each dimension: " << extent[0] << " " << extent[1] << " " << extent[2] << '\n';
 
     const long double file_dx = static_cast<amrex::Real>(spacing[0]);
     const long double file_dy = static_cast<amrex::Real>(spacing[1]);
@@ -205,72 +184,92 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
     std::cout << "Offset is : (" << offset[0] << ", " << offset[1] <<  ", " << offset[2] << ")\n";
 
     // iterate over the external field and find the index that corresponds to the grid points
+    amrex::AllPrint() << "Before MFIter Loop...\n";
     for (MFIter mfi(*mf, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-//        std::cout << "inside MFIter\n";
-        const amrex::Box box = mfi.growntilebox();
-        const amrex::Box tb = mfi.tilebox(rho_nodal_flag, mf->nGrowVect());
-//        std::cout << "before mffab definition\n";
-        mffab = mf->array(mfi);
-//        std::cout << "after mffab definition\n";
+        const amrex::Box tb = mfi.tilebox(nodal_flag, mf->nGrowVect());
+        amrex::Array4<amrex::Real> mffab = mf->array(mfi);
+
+        int start[3] = {mffab.begin.x, mffab.begin.y, mffab.begin.z};
+        int end[3] = {mffab.end.x, mffab.end.y, mffab.end.z};
+        amrex::IntVect start_vect(start);
+        amrex::IntVect end_vect(end);
+        amrex::Box mf_bx(start_vect, end_vect);
+
+        m_cell_size = geom0.CellSizeArray();
+        amrex::RealBox rb(tb, m_cell_size.data(), geom0.ProbLo());
+
+        amrex::AllPrint() << "MultiFab meta data\n";
+        amrex::AllPrint() << "  real box lo: " << rb.lo(0) << "  " << rb.lo(1) << "  " << rb.lo(2) << '\n';
+        amrex::AllPrint() << "  tb lo * dx: " << tb.smallEnd(0) * dx[0] << "  " << tb.smallEnd(1) * dx[1] << "  " << tb.smallEnd(2) * dx[2] << '\n';
+        amrex::AllPrint() << "  cell size: " << m_cell_size[0] << "  " << m_cell_size[1] << "  " << m_cell_size[2] << '\n';
+        amrex::AllPrint() << "  dx: " << dx[0] << "  " << dx[1] << "  " << dx[2] << '\n';
+
+        amrex::AllPrint() << "Source offsets\n";
+        amrex::AllPrint() << "  offsets=" << offset[0] << " " << offset[1] << " " << offset[2] << "\n";
+        amrex::AllPrint() << "  file_dx=" << file_dx << " " << file_dy << " " << file_dz << "\n";
+
 
         amrex::ParallelFor (tb,
-                            [box, this, dx,file_dx, file_dy, file_dz, extent0, extent1, extent2, P_data] AMREX_GPU_DEVICE (int i, int j, int k) {
-                                // i,j,k denote x,y,z indices in 3D xyz.
+                            [tb, this, file_dx, file_dy, file_dz, extent0, extent1, extent2, P_data, rb] AMREX_GPU_DEVICE (int i, int j, int k) {
+                                // i,j,k denote x,y,z indices in 3D xyz
                                 // i,j denote r,z indices in 2D rz; k is just 0
 
                                 //for 3D only!!
                                 const int ii = i;
-                                amrex::Real x0, x1;
-//                                std::cout << "inside parallel for";
+                                amrex::Real x0, x1, x2;
 
-                                if ( box.type(0)==amrex::IndexType::CellIndex::NODE )
-                                {x0 = static_cast<amrex::Real>(real_box.lo(0)) + ii*dx[0]; }
-                                else {
-                                    x0 = static_cast<amrex::Real>(real_box.lo(0)) + ii*dx[0] + 0.5_rt*dx[0]; }
-                                if (box.type(1)==amrex::IndexType::CellIndex::NODE )
-                                {x1 = real_box.lo(1) + j*dx[1]; }
-                                else {
-                                    x1 = real_box.lo(1) + j*dx[1] + 0.5_rt*dx[1]; }
+                                // real position in the multifab that we interpolate to
+                                x0 = real_box.lo(0) + amrex::Real(i)*m_cell_size[0];
+                                if ( tb.type(0)==amrex::IndexType::CellIndex::CELL ) {
+                                    x0 += 0.5_rt*m_cell_size[0];
+                                }
+                                x1 = real_box.lo(1) + amrex::Real(j)*m_cell_size[1];
+                                if (tb.type(1)==amrex::IndexType::CellIndex::CELL ) {
+                                    x1 += 0.5_rt*m_cell_size[1];
+                                }
+                                x2 = real_box.lo(2) + amrex::Real(k)*m_cell_size[2];
+                                if ( tb.type(2)==amrex::IndexType::CellIndex::CELL ){
+                                    x2 += 0.5_rt*m_cell_size[2];
+                                }
 
-                                amrex::Real x2;
-                                if ( box.type(2)==amrex::IndexType::CellIndex::NODE )
-                                { x2 = real_box.lo(2) + k*dx[2]; }
-                                else { x2 = real_box.lo(2) + k*dx[2] + 0.5_rt*dx[2]; }
-
-                                // Get index of the external field array
-
+                                // the next lower index in the data source at the current real position
                                 int const ix = std::floor( (x0-offset[0])/file_dx );
                                 int const iy = std::floor( (x1-offset[1])/file_dy );
                                 int const iz = std::floor( (x2-offset[2])/file_dz );
 
-                                // Get coordinates of external grid point
-                                auto const xx0 = offset[0] + ix * file_dx;
-                                auto const xx1 = offset[1] + iy * file_dy;
-                                auto const xx2 = offset[2] + iz * file_dz;
+                                // Get coordinates of data source grid point (real position)
+                                auto const xx0 = ix * file_dx + offset[0];
+                                auto const xx1 = iy * file_dy + offset[1];
+                                auto const xx2 = iz * file_dz + offset[2];
 
-                                const amrex::Array4<double> fc_array(P_data, {0,0,0}, {extent2, extent1, extent0}, 1);
+
+                                std::cout << "index: " << iz << ", " << iy << ", " << ix << "   -> " << i << ", " << j << ", " << k << "   ";
+                                std::cout << "x0: " << x0 << " xx0: " << xx0 << "   ";
+                                std::cout << "x1: " << x1 << " xx1: " << xx1 << "   ";
+                                std::cout << "x2: " << x2 << " xx2: " << xx2 << "   ";
+                                std::cout << "offset: " << rb.lo(0) << ", " << rb.lo(1) << ", " << rb.lo(2) << "   \n";
+
+                                // source data access
+                                const amrex::Array4<double> src_data(P_data, {0, 0, 0}, {extent2, extent1, extent0}, 1);
                                 const double
-                                        f000 = fc_array(iz  , iy  , ix  ),
-                                        f001 = fc_array(iz+1, iy  , ix  ),
-                                        f010 = fc_array(iz  , iy+1, ix  ),
-                                        f011 = fc_array(iz+1, iy+1, ix  ),
-                                        f100 = fc_array(iz  , iy  , ix+1),
-                                        f101 = fc_array(iz+1, iy  , ix+1),
-                                        f110 = fc_array(iz  , iy+1, ix+1),
-                                        f111 = fc_array(iz+1, iy+1, ix+1);
+                                        f000 = src_data(iz  , iy  , ix ),
+                                        f001 = src_data(iz + 1, iy  , ix  ),
+                                        f010 = src_data(iz  , iy + 1, ix  ),
+                                        f011 = src_data(iz + 1, iy + 1, ix ),
+                                        f100 = src_data(iz  , iy  , ix + 1),
+                                        f101 = src_data(iz + 1, iy  , ix + 1),
+                                        f110 = src_data(iz  , iy + 1, ix + 1),
+                                        f111 = src_data(iz + 1, iy + 1, ix + 1);
                                 mffab(i,j,k) = static_cast<amrex::Real> (utils::algorithms::trilinear_interp<double>
                                         (xx0, xx0+file_dx, xx1, xx1+file_dy, xx2, xx2+file_dz,
                                          f000, f001, f010, f011, f100, f101, f110, f111,
                                          x0, x1, x2) );
-                                //mffab(i,j,k) = static_cast<amrex::Real> (f000);
-//#endif
-
                             }
         ); //end ParallelFor
     }
-    std::cout << "made it to the end\n" ;
 
+    std::cout << "made it to the end\n" ;
 }
 
 // Note that we are not allowed to have non-trivial destructor.

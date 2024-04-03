@@ -169,42 +169,27 @@ struct InjectorDensityFromFile
     amrex::Real
     getDensity (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
     {
-
-//////////  INDEXING THAT WORKS ///////////////////
-        double val;
         if (x < lo0 or x > hi0 or y < lo1 or y > hi1 or z < lo2 or z > hi2){
-            val = 0;
-        }
-        else {
-
+            return 0;
         }
 
-        int ix = std::floor((x-lo2)/spacing[2]);
-        int iy = std::floor((y-lo1)/spacing[1]);
-        int iz = std::floor((z-lo0)/spacing[0]);
+        int ix = std::floor((x-lo0)/m_cell_size[0]);
+        int iy = std::floor((y-lo1)/m_cell_size[1]);
+        int iz = std::floor((z-lo2)/m_cell_size[2]);
 
-    ///////// END OF INDEXING THAT WORKS ///////////////
-
-        //////////// CALLING THAT WORKS //////////////////
-        amrex::Array4<double> chunk_array (P_data_host, {0,0,0}, {static_cast<int>(extent[2]), static_cast<int>(extent[1]), static_cast<int>(extent[0])}, 1);
-        //val = chunk_array(ix,iy,iz) /charge.get()[0];
-        /////////// END OF CALLING THAT WORKS ////////////////
-
-        val = mffab(ix,iy,iz)/charge.get()[0];
-
-        return static_cast<amrex::Real>(val);
+        return mffab(iz,iy,ix)/(charge.get()[0]);
     }
 //private:
     std::string external_density_path;
     std::string density;
-    amrex::Array4<double> mffab;
+    amrex::Array4<amrex::Real> mffab;
     amrex::RealBox real_box;
     std::vector<long double> spacing;
     std::vector<int> n_cell;
     int max_grid_size;
     std::vector<double> offset;
-    //std::shared_ptr<double> P_chunk_data;
     std::vector<std::uint64_t> extent;
+    //std::shared_ptr<double> P_chunk_data;
     std::shared_ptr<double> charge;
     //std::vector< std::vector < std::vector<double> > > data;
     double* P_data_host;
@@ -214,6 +199,7 @@ struct InjectorDensityFromFile
     double hi1;
     double lo2;
     double hi2;
+    amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> m_cell_size;
 };
 
 
