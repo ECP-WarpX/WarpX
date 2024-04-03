@@ -56,8 +56,8 @@ const std::map<std::string, int> electrostatic_solver_algo_to_int = {
 };
 
 const std::map<std::string, int> poisson_solver_algo_to_int = {
-    {"Multigrid", PoissonSolverAlgo::Multigrid},
-    {"FFT", PoissonSolverAlgo::IntegratedGreenFunction},
+    {"multigrid", PoissonSolverAlgo::Multigrid},
+    {"fft", PoissonSolverAlgo::IntegratedGreenFunction},
     {"default", PoissonSolverAlgo::Multigrid }
 };
 
