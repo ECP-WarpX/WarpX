@@ -929,6 +929,7 @@ public:
     static const amrex::iMultiFab* GatherBufferMasks (int lev);
 
     static int electrostatic_solver_id;
+    static int poisson_solver_id;
 
     // Parameters for lab frame electrostatic
     static amrex::Real self_fields_required_precision;
