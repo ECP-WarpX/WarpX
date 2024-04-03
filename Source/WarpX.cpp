@@ -2426,9 +2426,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             rho_ncomps = (WarpX::do_multi_J) ? ncomps : 2*ncomps;
         }
     }
+    //TODO:: Only do this if plasma density is read from file
+    if (rho_ncomps == 0){ rho_ncomps = 1;}
+
     if (rho_ncomps > 0)
     {
         AllocInitMultiFab(rho_fp[lev], amrex::convert(ba, rho_nodal_flag), dm, rho_ncomps, ngRho, lev, "rho_fp", 0.0_rt);
+        std::cout << "allocated\n";
     }
 
     if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
