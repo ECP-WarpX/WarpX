@@ -9,12 +9,11 @@
 
 #include "SplitAndScatterFunc.H"
 
-SplitAndScatterFunc::SplitAndScatterFunc (const std::string collision_name,
-                                          MultiParticleContainer const * const mypc)
+SplitAndScatterFunc::SplitAndScatterFunc (const std::string& collision_name,
+                                          MultiParticleContainer const * const mypc):
+    m_collision_type{BinaryCollisionUtils::get_collision_type(collision_name, mypc)}
 {
     const amrex::ParmParse pp_collision_name(collision_name);
-
-    m_collision_type = BinaryCollisionUtils::get_collision_type(collision_name, mypc);
 
     if (m_collision_type == CollisionType::DSMC)
     {

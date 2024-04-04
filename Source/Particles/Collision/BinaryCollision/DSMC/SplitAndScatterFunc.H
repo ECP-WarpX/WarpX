@@ -42,7 +42,7 @@ public:
      * @param[in] collision_name the name of the collision
      * @param[in] mypc pointer to the MultiParticleContainer
      */
-    SplitAndScatterFunc (std::string collision_name, MultiParticleContainer const * mypc);
+    SplitAndScatterFunc (const std::string& collision_name, MultiParticleContainer const * mypc);
 
     /**
      * \brief Function that performs the particle scattering and injection due

@@ -16,7 +16,7 @@
  * @param[in] isSameSpecies whether the two colliding species are the same
  */
 DSMCFunc::DSMCFunc (
-    const std::string collision_name,
+    const std::string& collision_name,
     [[maybe_unused]] MultiParticleContainer const * const mypc,
     [[maybe_unused]] const bool isSameSpecies )
 {
