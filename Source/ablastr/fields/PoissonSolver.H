@@ -13,6 +13,7 @@
 #include <ablastr/warn_manager/WarnManager.H>
 #include <ablastr/math/fft/AnyFFT.H>
 #include <ablastr/fields/Interpolate.H>
+#include <ablastr/profiler/ProfilerWrapper.H>
 
 #if defined(WARPX_USE_PSATD) && defined(WARPX_DIM_3D)
 #include <ablastr/fields/IntegratedGreenFunctionSolver.H>
@@ -178,7 +179,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         // Use the Multigrid (MLMG) solver if selected or on refined patches
         // but first scale rho appropriately
         using namespace ablastr::constant::SI;
-        rho[lev]->mult(-1._rt/PhysConst::ep0);  // TODO: when do we "un-multiply" this? We need to document this side-effect!
+        rho[lev]->mult(-1._rt/ep0);  // TODO: when do we "un-multiply" this? We need to document this side-effect!
 
 #if !(defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ))
         // Determine whether to use semi-coarsening
