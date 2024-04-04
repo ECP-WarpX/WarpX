@@ -46,8 +46,8 @@ public:
     /**
      * \brief This merging routine requires functionality to sort a GPU vector
      * based on another GPU vector's values. The heap-sort functions below were
-     * obtained from https://www.geeksforgeeks.org/heap-sort/ and modified for
-     * the current purpose. It achieves the same as
+     * obtained from https://www.geeksforgeeks.org/iterative-heap-sort/ and
+     * modified for the current purpose. It achieves the same as
      * ```
      * std::stable_sort(
      *    sorted_indices_data + cell_start, sorted_indices_data + cell_stop,
@@ -68,53 +68,53 @@ public:
             *a = temp;
         }
 
+        // function to build max heap
         AMREX_GPU_HOST_DEVICE
-        void heapify(int index_array[], int bin_array[], int start, int N, int i) const
+        void buildMaxHeap(int index_array[], int bin_array[], int start, int n) const
         {
+            for (int i = 1; i < n; i++)
+            {
+                // if child is bigger than parent
+                if (bin_array[index_array[i+start]] > bin_array[index_array[(i - 1) / 2 + start]])
+                {
+                    int j = i;
 
-            // Initialize largest as current node
-            int largest = i;
-
-            // get child node indices for the current node
-            const int l = 2 * i + 1;
-            const int r = 2 * i + 2;
-
-            // If left child is larger than the current node, set that child to the
-            // largest, and the same
-            if (l < N && bin_array[index_array[l+start]] > bin_array[index_array[largest+start]]) {
-                largest = l;
-            }
-            if (r < N && bin_array[index_array[r+start]] > bin_array[index_array[largest+start]]) {
-                largest = r;
-            }
-            // If largest is not root
-            if (largest != i) {
-                swap(&index_array[largest+start], &index_array[i+start]);
-
-                // Recursively heapify the affected sub-tree
-                heapify(index_array, bin_array, start, N, largest);
+                    // swap child and parent until parent is smaller
+                    while (bin_array[index_array[j+start]] > bin_array[index_array[(j - 1) / 2 + start]])
+                    {
+                        swap(&index_array[j+start], &index_array[(j - 1) / 2 + start]);
+                        j = (j - 1) / 2;
+                    }
+                }
             }
         }
 
         AMREX_GPU_HOST_DEVICE
         void operator() (int index_array[], int bin_array[], int start, int stop) const
         {
-            const int N = stop - start;
+            const int n = stop - start;
+            buildMaxHeap(index_array, bin_array, start, n);
 
-            // Build heap (rearrange array)
-            for (int i = N / 2 - 1; i >= 0; i--)
+            for (int i = n - 1; i > 0; i--)
             {
-                heapify(index_array, bin_array, start, N, i);
-            }
-
-            // One by one extract an element from the heap
-            for (int i = N - 1; i > 0; i--) {
-
-                // Move current root to end
+                // swap value of first indexed with last indexed
                 swap(&index_array[start], &index_array[i+start]);
 
-                // call heapify on the reduced heap
-                heapify(index_array, bin_array, start, i, 0);
+                int j = 0, index;
+                do {
+                    index = (2 * j + 1);
+
+                    // if left child is smaller than right child point index variable to right child
+                    if (bin_array[index_array[index+start]] < bin_array[index_array[index+1+start]] && index < (i - 1)) {
+                        index++;
+                    }
+                    // if parent is smaller than child then swap parent with child having higher value
+                    if (bin_array[index_array[j+start]] < bin_array[index_array[index+start]] && index < i) {
+                        swap(&index_array[j+start], &index_array[index+start]);
+                    }
+
+                    j = index;
+                } while (index < i);
             }
         }
     };
