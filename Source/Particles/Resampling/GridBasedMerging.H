@@ -32,7 +32,7 @@ public:
      *
      * @param[in] species_name the name of the resampled species
      */
-    GridBasedMerging (std::string species_name);
+    GridBasedMerging (std::string& species_name);
 
     /**
      * \brief A method that performs merging for the considered species.
@@ -54,7 +54,7 @@ public:
         AMREX_GPU_HOST_DEVICE
         void swap(int *a, int *b) const
         {
-            int temp = *b;
+            const int temp = *b;
             *b = *a;
             *a = temp;
         }
@@ -67,25 +67,22 @@ public:
             int largest = i;
 
             // get child node indices for the current node
-            int l = 2 * i + 1;
-            int r = 2 * i + 2;
+            const int l = 2 * i + 1;
+            const int r = 2 * i + 2;
 
             // If left child is larger than the current node, set that child to the
             // largest, and the same
-            if (l < N && bin_array[index_array[l+start]] > bin_array[index_array[largest+start]])
+            if (l < N && bin_array[index_array[l+start]] > bin_array[index_array[largest+start]]) {
                 largest = l;
-            if (r < N && bin_array[index_array[r+start]] > bin_array[index_array[largest+start]])
+            }
+            if (r < N && bin_array[index_array[r+start]] > bin_array[index_array[largest+start]]) {
                 largest = r;
-
+            }
             // If largest is not root
             if (largest != i) {
-                // int temp = index_array[i+start];
-                // index_array[i+start] = index_array[largest+start];
-                // index_array[largest+start] = temp;
                 swap(&index_array[largest+start], &index_array[i+start]);
 
-                // Recursively heapify the affected
-                // sub-tree
+                // Recursively heapify the affected sub-tree
                 heapify(index_array, bin_array, start, N, largest);
             }
         }
@@ -93,7 +90,7 @@ public:
         AMREX_GPU_HOST_DEVICE
         void operator() (int index_array[], int bin_array[], int start, int stop) const
         {
-            int N = stop - start;
+            const int N = stop - start;
 
             // Build heap (rearrange array)
             for (int i = N / 2 - 1; i >= 0; i--)
@@ -106,9 +103,6 @@ public:
             for (int i = N - 1; i > 0; i--) {
 
                 // Move current root to end
-                // int temp = index_array[start];
-                // index_array[i+start] = index_array[start];
-                // index_array[start] = temp;
                 swap(&index_array[start], &index_array[i+start]);
 
                 // call max heapify on the reduced heap

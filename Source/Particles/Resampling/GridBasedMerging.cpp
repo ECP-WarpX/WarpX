@@ -32,7 +32,7 @@
 
 #include <AMReX_BaseFwd.H>
 
-GridBasedMerging::GridBasedMerging (const std::string species_name)
+GridBasedMerging::GridBasedMerging (std::string& species_name)
 {
     using namespace amrex::literals;
 
@@ -98,10 +98,10 @@ void GridBasedMerging::operator() (WarpXParIter& pti, const int lev,
     // create a GPU vector to hold the index sorting for the momentum bins
     amrex::Gpu::DeviceVector<int> sorted_indices;
     sorted_indices.resize(bins.numItems());
-    auto sorted_indices_data = sorted_indices.data();
+    auto* sorted_indices_data = sorted_indices.data();
 
-    int Ntheta = m_ntheta;
-    int Nphi = m_nphi;
+    const int Ntheta = m_ntheta;
+    const int Nphi = m_nphi;
 
     auto dr = m_delta_ur;
     auto dtheta = 2.0_prt * MathConst::pi / Ntheta;
@@ -138,9 +138,9 @@ void GridBasedMerging::operator() (WarpXParIter& pti, const int lev,
                 auto u_theta = std::atan2(uy[indices[i]], ux[indices[i]]) + MathConst::pi;
                 auto u_phi = std::acos(uz[indices[i]]/u_mag);
 
-                int ii = static_cast<int>(u_theta / dtheta);
-                int jj = static_cast<int>(u_phi / dphi);
-                int kk = static_cast<int>(u_mag / dr);
+                const int ii = static_cast<int>(u_theta / dtheta);
+                const int jj = static_cast<int>(u_phi / dphi);
+                const int kk = static_cast<int>(u_mag / dr);
 
                 // note that the momentum bin number indexing is based on the
                 // cell sorted indexing, not the particle indexing
@@ -156,7 +156,7 @@ void GridBasedMerging::operator() (WarpXParIter& pti, const int lev,
             }
             // sort indexes based on comparing values in momentum_bin_number
             // std::stable_sort(
-            //     sorted_indices_data.begin() + cell_start, sorted_indices_data.begin() + cell_stop,
+            //     sorted_indices.begin() + cell_start, sorted_indices.begin() + cell_stop,
             //     [&momentum_bin_number_data](size_t i1, size_t i2) {
             //         return momentum_bin_number_data[i1] < momentum_bin_number_data[i2];
             //     }
@@ -241,8 +241,8 @@ void GridBasedMerging::operator() (WarpXParIter& pti, const int lev,
 
                         // set the previous two particles' attributes according to
                         // the previous bin's values
-                        int part_idx1 = indices[sorted_indices_data[i - 1]];
-                        int part_idx2 = indices[sorted_indices_data[i - 2]];
+                        const auto part_idx1 = indices[sorted_indices_data[i - 1]];
+                        const auto part_idx2 = indices[sorted_indices_data[i - 2]];
 
                         w[part_idx1] = total_weight / 2._prt;
                         w[part_idx2] = total_weight / 2._prt;
