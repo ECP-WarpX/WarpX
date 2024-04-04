@@ -280,6 +280,7 @@ public:
     /// This is needed when solving Poisson's equation with periodic boundary conditions.
     ///
     amrex::ParticleReal sumParticleCharge(bool local = false);
+    amrex::ParticleReal sumParticleWeight(bool local = false);
 
     std::array<amrex::ParticleReal, 3> meanParticleVelocity(bool local = false);
 
@@ -466,9 +467,9 @@ protected:
     //Species can receive a shared pointer to a QED engine (species for
     //which this is relevant should override these functions)
     virtual void
-    set_breit_wheeler_engine_ptr(std::shared_ptr<BreitWheelerEngine>){}
+    set_breit_wheeler_engine_ptr(const std::shared_ptr<BreitWheelerEngine>&){}
     virtual void
-    set_quantum_sync_engine_ptr(std::shared_ptr<QuantumSynchrotronEngine>){}
+    set_quantum_sync_engine_ptr(const std::shared_ptr<QuantumSynchrotronEngine>&){}
 
     int m_qed_breit_wheeler_ele_product;
     std::string m_qed_breit_wheeler_ele_product_name;

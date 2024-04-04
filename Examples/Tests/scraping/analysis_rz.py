@@ -24,8 +24,8 @@ import os
 import sys
 
 import numpy as np
-from openpmd_viewer import OpenPMDTimeSeries
 import yt
+from openpmd_viewer import OpenPMDTimeSeries
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI

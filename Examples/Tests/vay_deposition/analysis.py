@@ -10,8 +10,8 @@ import os
 import sys
 
 import numpy as np
-from scipy.constants import epsilon_0
 import yt
+from scipy.constants import epsilon_0
 
 yt.funcs.mylog.setLevel(50)
 

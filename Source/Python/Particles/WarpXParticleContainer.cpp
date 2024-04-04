@@ -109,6 +109,10 @@ void init_WarpXParticleContainer (py::module& m)
             &WarpXParticleContainer::TotalNumberOfParticles,
             py::arg("valid_particles_only"), py::arg("local")
         )
+        .def("sum_particle_weight",
+            &WarpXParticleContainer::sumParticleWeight,
+            py::arg("local")
+        )
         .def("sum_particle_charge",
             &WarpXParticleContainer::sumParticleCharge,
             py::arg("local")

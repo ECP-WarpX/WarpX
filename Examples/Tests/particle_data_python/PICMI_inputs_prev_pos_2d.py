@@ -3,7 +3,6 @@
 # --- Input file to test the saving of old particle positions
 
 import numpy as np
-
 from pywarpx import particle_containers, picmi
 
 constants = picmi.constants

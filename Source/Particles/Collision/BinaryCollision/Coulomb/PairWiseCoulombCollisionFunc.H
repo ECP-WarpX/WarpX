@@ -46,7 +46,7 @@ public:
      * @param[in] mypc the particle container (unused)
      * @param[in] isSameSpecies true if this is an intra-species colission
      */
-    PairWiseCoulombCollisionFunc (const std::string collision_name,
+    PairWiseCoulombCollisionFunc (const std::string& collision_name,
                                   [[maybe_unused]] MultiParticleContainer const * const mypc,
                                   const bool isSameSpecies):
         m_isSameSpecies{isSameSpecies}

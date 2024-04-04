@@ -148,7 +148,9 @@ namespace
 
         AMREX_GPU_HOST_DEVICE
         PDim3(const amrex::XDim3& a):
-            x{a.x}, y{a.y}, z{a.z}
+            x{static_cast<ParticleReal>(a.x)},
+            y{static_cast<ParticleReal>(a.y)},
+            z{static_cast<ParticleReal>(a.z)}
         {}
 
         AMREX_GPU_HOST_DEVICE
@@ -444,6 +446,14 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp_boundary.query("reflect_all_velocities", flag);
     m_boundary_conditions.Set_reflect_all_velocities(flag);
 
+    // currently supports only isotropic thermal distribution
+    // same distribution is applied to all boundaries
+    const amrex::ParmParse pp_species_boundary("boundary." + species_name);
+    if (WarpX::isAnyParticleBoundaryThermal()) {
+        amrex::Real boundary_uth;
+        utils::parser::getWithParser(pp_species_boundary,"u_th",boundary_uth);
+        m_boundary_conditions.SetThermalVelocity(boundary_uth);
+    }
 }
 
 PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core)
@@ -521,14 +531,22 @@ void PhysicalParticleContainer::MapParticletoBoostedFrame (
 }
 
 void
-PhysicalParticleContainer::AddGaussianBeam (
-    PlasmaInjector const& plasma_injector,
-    const Real x_m, const Real y_m, const Real z_m,
-    const Real x_rms, const Real y_rms, const Real z_rms,
-    const Real x_cut, const Real y_cut, const Real z_cut,
-    const Real q_tot, long npart,
-    const int do_symmetrize,
-    const int symmetrization_order, const Real focal_distance) {
+PhysicalParticleContainer::AddGaussianBeam (PlasmaInjector const& plasma_injector){
+
+    const Real x_m = plasma_injector.x_m;
+    const Real y_m = plasma_injector.y_m;
+    const Real z_m = plasma_injector.z_m;
+    const Real x_rms = plasma_injector.x_rms;
+    const Real y_rms = plasma_injector.y_rms;
+    const Real z_rms = plasma_injector.z_rms;
+    const Real x_cut = plasma_injector.x_cut;
+    const Real y_cut = plasma_injector.y_cut;
+    const Real z_cut = plasma_injector.z_cut;
+    const Real q_tot = plasma_injector.q_tot;
+    long npart = plasma_injector.npart;
+    const int do_symmetrize = plasma_injector.do_symmetrize;
+    const int symmetrization_order = plasma_injector.symmetrization_order;
+    const Real focal_distance = plasma_injector.focal_distance;
 
     // Declare temporary vectors on the CPU
     Gpu::HostVector<ParticleReal> particle_x;
@@ -918,21 +936,7 @@ PhysicalParticleContainer::AddParticles (int lev)
         }
 
         if (plasma_injector->gaussian_beam) {
-            AddGaussianBeam(*plasma_injector,
-                            plasma_injector->x_m,
-                            plasma_injector->y_m,
-                            plasma_injector->z_m,
-                            plasma_injector->x_rms,
-                            plasma_injector->y_rms,
-                            plasma_injector->z_rms,
-                            plasma_injector->x_cut,
-                            plasma_injector->y_cut,
-                            plasma_injector->z_cut,
-                            plasma_injector->q_tot,
-                            plasma_injector->npart,
-                            plasma_injector->do_symmetrize,
-                            plasma_injector->symmetrization_order,
-                            plasma_injector->focal_distance);
+            AddGaussianBeam(*plasma_injector);
         }
 
         if (plasma_injector->external_file) {
@@ -2863,11 +2867,11 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     // Using this version of ParallelFor with compile time options
     // improves performance when qed or external EB are not used by reducing
     // register pressure.
-    amrex::ParallelFor(TypeList<CompileTimeOptions<no_exteb,has_exteb>,
-                                CompileTimeOptions<no_qed  ,has_qed>>{},
-                       {exteb_runtime_flag, qed_runtime_flag},
-                       np_to_push, [=] AMREX_GPU_DEVICE (long ip, auto exteb_control,
-                                                         auto qed_control)
+    amrex::ParallelFor(
+        TypeList<CompileTimeOptions<no_exteb,has_exteb>, CompileTimeOptions<no_qed  ,has_qed>>{},
+        {exteb_runtime_flag, qed_runtime_flag},
+        np_to_push,
+        [=] AMREX_GPU_DEVICE (long ip, auto exteb_control, auto qed_control)
     {
         amrex::ParticleReal xp, yp, zp;
         getPosition(ip, xp, yp, zp);
@@ -3388,14 +3392,14 @@ bool PhysicalParticleContainer::has_breit_wheeler () const
 
 void
 PhysicalParticleContainer::
-set_breit_wheeler_engine_ptr (std::shared_ptr<BreitWheelerEngine> ptr)
+set_breit_wheeler_engine_ptr (const std::shared_ptr<BreitWheelerEngine>& ptr)
 {
     m_shr_p_bw_engine = ptr;
 }
 
 void
 PhysicalParticleContainer::
-set_quantum_sync_engine_ptr (std::shared_ptr<QuantumSynchrotronEngine> ptr)
+set_quantum_sync_engine_ptr (const std::shared_ptr<QuantumSynchrotronEngine>& ptr)
 {
     m_shr_p_qs_engine = ptr;
 }

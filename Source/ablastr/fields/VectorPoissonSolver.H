@@ -89,9 +89,9 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
                             amrex::Real absolute_tolerance,
                             int const max_iters,
                             int const verbosity,
-                            amrex::Vector<amrex::Geometry> const geom,
-                            amrex::Vector<amrex::DistributionMapping> const dmap,
-                            amrex::Vector<amrex::BoxArray> const grids,
+                            amrex::Vector<amrex::Geometry> const& geom,
+                            amrex::Vector<amrex::DistributionMapping> const& dmap,
+                            amrex::Vector<amrex::BoxArray> const& grids,
                             T_BoundaryHandler const boundary_handler,
                             bool const do_single_precision_comms = false,
                             std::optional<amrex::Vector<amrex::IntVect> > rel_ref_ratio = std::nullopt,
@@ -185,11 +185,10 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
                         relative_tolerance, absolute_tolerance );
 
             // Synchronize the ghost cells, do halo exchange
-            ablastr::utils::communication::FillBoundary(*A[lev][adim],
-                                                        A[lev][adim]->nGrowVect(),
-                                                        WarpX::do_single_precision_comms,
-                                                        geom[lev].periodicity(),
-                                                        false);
+            ablastr::utils::communication::FillBoundary(
+                *A[lev][adim], A[lev][adim]->nGrowVect(),
+                do_single_precision_comms,
+                geom[lev].periodicity(), false);
 
             // needed for solving the levels by levels:
             // - coarser level is initial guess for finer level

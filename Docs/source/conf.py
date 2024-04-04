@@ -31,8 +31,8 @@ import sys
 import urllib.request
 
 import pybtex.plugin
-from pybtex.style.formatting.unsrt import Style as UnsrtStyle
 import sphinx_rtd_theme
+from pybtex.style.formatting.unsrt import Style as UnsrtStyle
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../Regression/Checksum'))
 
