@@ -70,7 +70,7 @@ public:
 
         // function to build max heap
         AMREX_GPU_HOST_DEVICE
-        void buildMaxHeap(int index_array[], int bin_array[], int start, int n) const
+        void buildMaxHeap(int index_array[], const int bin_array[], int start, int n) const
         {
             for (int i = 1; i < n; i++)
             {
@@ -90,7 +90,7 @@ public:
         }
 
         AMREX_GPU_HOST_DEVICE
-        void operator() (int index_array[], int bin_array[], int start, int stop) const
+        void operator() (int index_array[], const int bin_array[], int start, int stop) const
         {
             const int n = stop - start;
             buildMaxHeap(index_array, bin_array, start, n);
