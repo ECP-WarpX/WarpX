@@ -49,7 +49,7 @@ public:
      * obtained from https://www.geeksforgeeks.org/iterative-heap-sort/ and
      * modified for the current purpose. It achieves the same as
      * ```
-     * std::stable_sort(
+     * std::sort(
      *    sorted_indices_data + cell_start, sorted_indices_data + cell_stop,
      *    [&momentum_bin_number_data](size_t i1, size_t i2) {
      *        return momentum_bin_number_data[i1] < momentum_bin_number_data[i2];
@@ -74,14 +74,13 @@ public:
             // sort index_array into a max heap structure
             for (int i = 1; i < n; i++)
             {
-                // if child is bigger than parent
+                // move child through heap if it is bigger than its parent
                 if (bin_array[index_array[i+start]] > bin_array[index_array[(i - 1)/2 + start]])
                 {
                     int j = i;
-
-                    // swap child and parent until parent is smaller
+                    // swap child and parent until branch is properly ordered
                     do {
-                        swap(index_array[j+start], index_array[(j - 1) / 2 + start]);
+                        swap(index_array[j+start], index_array[(j - 1)/2 + start]);
                         j = (j - 1) / 2;
                     } while (bin_array[index_array[j+start]] > bin_array[index_array[(j - 1)/2 + start]]);
                 }
@@ -97,15 +96,14 @@ public:
                 do {
                     index = (2 * j + 1);
 
-                    // if left child is smaller than right child point index variable to right child
+                    // if left child is smaller than right child, point index variable to right child
                     if (index < (i - 1) && bin_array[index_array[index+start]] < bin_array[index_array[index+1+start]]) {
                         index++;
                     }
-                    // if parent is smaller than child then swap parent with child having higher value
+                    // if parent is smaller than child, swap parent with child having higher value
                     if (index < i && bin_array[index_array[j+start]] < bin_array[index_array[index+start]]) {
                         swap(index_array[j+start], index_array[index+start]);
                     }
-
                     j = index;
                 } while (index < i);
             }
@@ -114,10 +112,8 @@ public:
 
 private:
     int m_min_ppc = 100;
-
     int m_ntheta = 120;
     int m_nphi = 60;
-
     amrex::ParticleReal m_delta_ur = 1e5;
 };
 #endif // WARPX_GRID_BASED_MERGING_H_
