@@ -32,7 +32,7 @@
 
 #include <AMReX_BaseFwd.H>
 
-GridBasedMerging::GridBasedMerging (std::string& species_name)
+GridBasedMerging::GridBasedMerging (const std::string& species_name)
 {
     using namespace amrex::literals;
 
@@ -286,7 +286,7 @@ void GridBasedMerging::operator() (WarpXParIter& pti, const int lev,
                 }
 
                 particles_in_bin += 1;
-                const int part_idx = indices[sorted_indices_data[i]];
+                const auto part_idx = indices[sorted_indices_data[i]];
 
 #if !defined(WARPX_DIM_1D_Z)
                 cluster_x += w[part_idx]*x[part_idx];
