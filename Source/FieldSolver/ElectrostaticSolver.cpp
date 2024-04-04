@@ -177,12 +177,23 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     }
 
     // Deposit particle charge density (source of Poisson solver)
-    bool const local = false;
+    // The options below are identical to those in MultiParticleContainer::DepositCharge
+    bool const local = true;
     bool const reset = false;
-    bool const apply_boundary_and_scale_volume = true;
+    bool const apply_boundary_and_scale_volume = false;
+    bool const interpolate_across_levels = false;
     if ( !pc.do_not_deposit) {
-        pc.DepositCharge(rho, local, reset, apply_boundary_and_scale_volume);
+        pc->DepositCharge(rho, local, reset, apply_boundary_and_scale_volume,
+                              interpolate_across_levels);
     }
+
+    SyncRho(rho, rho_cp, charge_buf); // Apply filter, perform MPI exchange, interpolate across levels
+#ifndef WARPX_DIM_RZ
+    for (int lev = 0; lev <= finestLevel(); lev++) {
+        // Reflect density over PEC boundaries, if needed.
+        ApplyRhofieldBoundary(lev, rho[lev].get(), PatchType::fine);
+    }
+#endif
 
     // Get the particle beta vector
     bool const local_average = false; // Average across all MPI ranks
