@@ -45,9 +45,18 @@ public:
 
     /**
      * \brief This merging routine requires functionality to sort a GPU vector
-     * based on another GPU vector. The heap-sort functions below where obtained
-     * from https://www.geeksforgeeks.org/heap-sort/ and modified for the
-     * current purpose.
+     * based on another GPU vector's values. The heap-sort functions below were
+     * obtained from https://www.geeksforgeeks.org/heap-sort/ and modified for
+     * the current purpose. It achieves the same as
+     * ```
+     * std::stable_sort(
+     *    sorted_indices_data + cell_start, sorted_indices_data + cell_stop,
+     *    [&momentum_bin_number_data](size_t i1, size_t i2) {
+     *        return momentum_bin_number_data[i1] < momentum_bin_number_data[i2];
+     *    }
+     * );
+     * ```
+     * but with support for device execution.
     */
     struct HeapSort {
 
@@ -98,14 +107,13 @@ public:
                 heapify(index_array, bin_array, start, N, i);
             }
 
-            // One by one extract an element
-            // from heap
+            // One by one extract an element from the heap
             for (int i = N - 1; i > 0; i--) {
 
                 // Move current root to end
                 swap(&index_array[start], &index_array[i+start]);
 
-                // call max heapify on the reduced heap
+                // call heapify on the reduced heap
                 heapify(index_array, bin_array, start, i, 0);
             }
         }

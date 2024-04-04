@@ -155,12 +155,6 @@ void GridBasedMerging::operator() (WarpXParIter& pti, const int lev,
                 sorted_indices_data[i] = i;
             }
             // sort indexes based on comparing values in momentum_bin_number
-            // std::stable_sort(
-            //     sorted_indices.begin() + cell_start, sorted_indices.begin() + cell_stop,
-            //     [&momentum_bin_number_data](size_t i1, size_t i2) {
-            //         return momentum_bin_number_data[i1] < momentum_bin_number_data[i2];
-            //     }
-            // );
             heapSort(sorted_indices_data, momentum_bin_number_data, cell_start, cell_stop);
 
             // start by setting the running tallies equal to the first particle's attributes
