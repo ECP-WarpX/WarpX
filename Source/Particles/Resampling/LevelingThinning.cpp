@@ -47,7 +47,7 @@ LevelingThinning::LevelingThinning (const std::string& species_name)
     }
 
     utils::parser::queryWithParser(
-        pp_species_name, "resampling_algorithm_min_ppc", m_min_ppc);
+        pp_species_name, "resampling_min_ppc", m_min_ppc);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_min_ppc >= 1,
                                      "Resampling min_ppc should be greater than or equal to 1");
 }

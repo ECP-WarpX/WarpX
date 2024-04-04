@@ -39,7 +39,7 @@ GridBasedMerging::GridBasedMerging (const std::string& species_name)
     const amrex::ParmParse pp_species_name(species_name);
 
     utils::parser::queryWithParser(
-        pp_species_name, "resampling_algorithm_min_ppc", m_min_ppc
+        pp_species_name, "resampling_min_ppc", m_min_ppc
     );
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_min_ppc >= 1,
@@ -155,7 +155,7 @@ void GridBasedMerging::operator() (WarpXParIter& pti, const int lev,
                 sorted_indices_data[i] = i;
             }
             // sort indexes based on comparing values in momentum_bin_number
-            heapSort(sorted_indices_data, momentum_bin_number_data, cell_start, cell_stop);
+            heapSort(sorted_indices_data, momentum_bin_number_data, cell_start, cell_numparts);
 
             // start by setting the running tallies equal to the first particle's attributes
             amrex::ParticleReal total_weight = w[indices[sorted_indices_data[cell_start]]];
@@ -210,7 +210,7 @@ void GridBasedMerging::operator() (WarpXParIter& pti, const int lev,
                         auto v_perp = std::sqrt(v_mag2 - cluster_u_mag2);
 
                         // choose random angle for new velocity vector
-                        auto phi = amrex::Random(engine) * 2._prt * MathConst::pi;
+                        auto phi = amrex::Random(engine) * MathConst::pi;
 
                         // set new velocity components based on chosen phi
                         auto vx = v_perp * std::cos(phi);

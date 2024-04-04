@@ -60,57 +60,50 @@ public:
     */
     struct HeapSort {
 
-        AMREX_GPU_HOST_DEVICE
-        void swap(int *a, int *b) const
+        AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+        void swap(int &a, int &b) const
         {
-            const int temp = *b;
-            *b = *a;
-            *a = temp;
+            const int temp = b;
+            b = a;
+            a = temp;
         }
 
-        // function to build max heap
         AMREX_GPU_HOST_DEVICE
-        void buildMaxHeap(int index_array[], const int bin_array[], int start, int n) const
+        void operator() (int index_array[], const int bin_array[], const int start, const int n) const
         {
+            // sort index_array into a max heap structure
             for (int i = 1; i < n; i++)
             {
                 // if child is bigger than parent
-                if (bin_array[index_array[i+start]] > bin_array[index_array[(i - 1) / 2 + start]])
+                if (bin_array[index_array[i+start]] > bin_array[index_array[(i - 1)/2 + start]])
                 {
                     int j = i;
 
                     // swap child and parent until parent is smaller
-                    while (bin_array[index_array[j+start]] > bin_array[index_array[(j - 1) / 2 + start]])
-                    {
-                        swap(&index_array[j+start], &index_array[(j - 1) / 2 + start]);
+                    do {
+                        swap(index_array[j+start], index_array[(j - 1) / 2 + start]);
                         j = (j - 1) / 2;
-                    }
+                    } while (bin_array[index_array[j+start]] > bin_array[index_array[(j - 1)/2 + start]]);
                 }
             }
-        }
-
-        AMREX_GPU_HOST_DEVICE
-        void operator() (int index_array[], const int bin_array[], int start, int stop) const
-        {
-            const int n = stop - start;
-            buildMaxHeap(index_array, bin_array, start, n);
 
             for (int i = n - 1; i > 0; i--)
             {
-                // swap value of first indexed with last indexed
-                swap(&index_array[start], &index_array[i+start]);
+                // swap value of first (now the largest value) to the new end point
+                swap(index_array[start], index_array[i+start]);
 
+                // remake the max heap
                 int j = 0, index;
                 do {
                     index = (2 * j + 1);
 
                     // if left child is smaller than right child point index variable to right child
-                    if (bin_array[index_array[index+start]] < bin_array[index_array[index+1+start]] && index < (i - 1)) {
+                    if (index < (i - 1) && bin_array[index_array[index+start]] < bin_array[index_array[index+1+start]]) {
                         index++;
                     }
                     // if parent is smaller than child then swap parent with child having higher value
-                    if (bin_array[index_array[j+start]] < bin_array[index_array[index+start]] && index < i) {
-                        swap(&index_array[j+start], &index_array[index+start]);
+                    if (index < i && bin_array[index_array[j+start]] < bin_array[index_array[index+start]]) {
+                        swap(index_array[j+start], index_array[index+start]);
                     }
 
                     j = index;

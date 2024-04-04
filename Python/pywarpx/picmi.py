@@ -132,10 +132,7 @@ class Species(picmistandard.PICMI_Species):
     warpx_do_resampling: bool, default=False
         Whether particles will be resampled
 
-    warpx_resampling_algorithm: str, default="leveling_thinning"
-        Resampling algorithm to use.
-
-    warpx_resampling_algorithm_min_ppc: int, default=100
+    warpx_resampling_min_ppc: int, default=100
         Cells with fewer particles than this number will be
         skipped during resampling.
 
@@ -145,6 +142,9 @@ class Species(picmistandard.PICMI_Species):
     warpx_resampling_trigger_max_avg_ppc: int, default=infinity
         Resampling will be done when the average number of
         particles per cell exceeds this number
+
+    warpx_resampling_algorithm: str, default="leveling_thinning"
+        Resampling algorithm to use.
 
     warpx_resampling_algorithm_delta_ur: float, default=1e5
         Size of velocity window used for clustering particles during grid-based
@@ -235,7 +235,7 @@ class Species(picmistandard.PICMI_Species):
         # Resampling settings
         self.do_resampling = kw.pop('warpx_do_resampling', None)
         self.resampling_algorithm = kw.pop('warpx_resampling_algorithm', None)
-        self.resampling_algorithm_min_ppc = kw.pop('warpx_resampling_algorithm_min_ppc', None)
+        self.resampling_min_ppc = kw.pop('warpx_resampling_min_ppc', None)
         self.resampling_trigger_intervals = kw.pop('warpx_resampling_trigger_intervals', None)
         self.resampling_triggering_max_avg_ppc = kw.pop('warpx_resampling_trigger_max_avg_ppc', None)
         self.resampling_algorithm_delta_ur = kw.pop('warpx_resampling_algorithm_delta_ur', None)
@@ -280,7 +280,7 @@ class Species(picmistandard.PICMI_Species):
                                              random_theta = self.random_theta,
                                              do_resampling=self.do_resampling,
                                              resampling_algorithm=self.resampling_algorithm,
-                                             resampling_algorithm_min_ppc=self.resampling_algorithm_min_ppc,
+                                             resampling_min_ppc=self.resampling_min_ppc,
                                              resampling_trigger_intervals=self.resampling_trigger_intervals,
                                              resampling_trigger_max_avg_ppc=self.resampling_triggering_max_avg_ppc,
                                              resampling_algorithm_delta_ur=self.resampling_algorithm_delta_ur,
