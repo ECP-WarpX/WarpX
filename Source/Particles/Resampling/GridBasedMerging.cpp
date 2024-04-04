@@ -64,10 +64,10 @@ void GridBasedMerging::operator() (WarpXParIter& pti, const int lev,
 
     auto& ptile = pc->ParticlesAt(lev, pti);
     auto& soa = ptile.GetStructOfArrays();
-#if defined(WARPX_DIM_2D) || defined(WARPX_DIM_3D)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_3D)
     auto * const AMREX_RESTRICT x = soa.GetRealData(PIdx::x).data();
 #elif defined(WARPX_DIM_RZ)
-    auto * const AMREX_RESTRICT x = soa.GetRealData(PIdx::r).data();
+    auto * const AMREX_RESTRICT x = soa.GetRealData(PIdx::x).data(); // rename to PIdx::r after PR #4667
 #endif
 #if defined(WARPX_DIM_3D)
     auto * const AMREX_RESTRICT y = soa.GetRealData(PIdx::y).data();
