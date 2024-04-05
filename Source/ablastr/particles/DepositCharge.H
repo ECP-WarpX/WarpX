@@ -71,7 +71,7 @@ deposit_charge (typename T_PC::ParIterType& pti,
     if (num_rho_deposition_guards.has_value()) {
         ng_rho = num_rho_deposition_guards.value();
     }
-    ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(ng_rho <= rho->nGrowVect(),
+    ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(ng_rho.allLT(rho->nGrowVect()),
                                        "num_rho_deposition_guards are larger than allocated!");
     // particle shape
     auto const[nox, noy, noz] = std::array<int, 3>{particle_shape, particle_shape, particle_shape};
