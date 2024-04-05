@@ -10,6 +10,7 @@ boundary.field_lo = pec pec pec
 boundary.field_hi = pec pec pec
 warpx.const_dt = 1e-6
 warpx.do_electrostatic = relativistic
+warpx.use_filter = 0
 
 particles.species_names = electron
 
