@@ -159,36 +159,48 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
             heapSort(sorted_indices_data, momentum_bin_number_data, cell_start, cell_numparts);
 
             // start by setting the running tallies equal to the first particle's attributes
-            amrex::ParticleReal total_weight = w[indices[sorted_indices_data[cell_start]]];
+            amrex::ParticleReal total_weight = 0._prt, total_energy = 0._prt;
 #if !defined(WARPX_DIM_1D_Z)
-            amrex::ParticleReal cluster_x = total_weight*x[indices[sorted_indices_data[cell_start]]];
+            amrex::ParticleReal cluster_x = 0._prt;
 #endif
 #if defined(WARPX_DIM_3D)
-            amrex::ParticleReal cluster_y = total_weight*y[indices[sorted_indices_data[cell_start]]];
+            amrex::ParticleReal cluster_y = 0._prt;
 #endif
-            amrex::ParticleReal cluster_z = total_weight*z[indices[sorted_indices_data[cell_start]]];
-            amrex::ParticleReal cluster_ux = total_weight*ux[indices[sorted_indices_data[cell_start]]];
-            amrex::ParticleReal cluster_uy = total_weight*uy[indices[sorted_indices_data[cell_start]]];
-            amrex::ParticleReal cluster_uz = total_weight*uz[indices[sorted_indices_data[cell_start]]];
-            amrex::ParticleReal total_energy = total_weight*Algorithms::KineticEnergy(
-                ux[indices[sorted_indices_data[cell_start]]],
-                uy[indices[sorted_indices_data[cell_start]]],
-                uz[indices[sorted_indices_data[cell_start]]],
-                mass
-            );
+            amrex::ParticleReal cluster_z = 0._prt;
+            amrex::ParticleReal cluster_ux = 0._prt, cluster_uy = 0._prt, cluster_uz = 0._prt;
 
-            int particles_in_bin = 1;
+            int particles_in_bin = 0;
 
             // Finally, loop through the particles in the cell and merge
             // ones in the same momentum bin
-            for (int i = cell_start+1; i < cell_stop; ++i)
+            for (int i = cell_start; i < cell_stop-1; ++i)
             {
-                // check if this particle is in a new momentum bin
-                if (momentum_bin_number_data[sorted_indices_data[i]] != momentum_bin_number_data[sorted_indices_data[i - 1]])
+                particles_in_bin += 1;
+                const auto part_idx = indices[sorted_indices_data[i]];
+
+#if !defined(WARPX_DIM_1D_Z)
+                cluster_x += w[part_idx]*x[part_idx];
+#endif
+#if defined(WARPX_DIM_3D)
+                cluster_y += w[part_idx]*y[part_idx];
+#endif
+                cluster_z += w[part_idx]*z[part_idx];
+                cluster_ux += w[part_idx]*ux[part_idx];
+                cluster_uy += w[part_idx]*uy[part_idx];
+                cluster_uz += w[part_idx]*uz[part_idx];
+                total_weight += w[part_idx];
+                total_energy += w[part_idx] * Algorithms::KineticEnergy(
+                    ux[part_idx], uy[part_idx], uz[part_idx], mass
+                );
+
+                // check if this is the last particle in the current momentum bin
+                if (
+                    (momentum_bin_number_data[sorted_indices_data[i]] != momentum_bin_number_data[sorted_indices_data[i + 1]])
+                    || (i == cell_stop - 2) )
                 {
-                    // check if the previous bin had more than 2 particles in it
+                    // check if the bin has more than 2 particles in it
                     if (particles_in_bin > 2){
-                        // get average quantities for the previous bin
+                        // get average quantities for the bin
 #if !defined(WARPX_DIM_1D_Z)
                         cluster_x /= total_weight;
 #endif
@@ -235,36 +247,36 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
                         );
                         auto uz_new = -vx * sin_theta + cluster_u_mag * cos_theta;
 
-                        // set the previous two particles' attributes according to
-                        // the previous bin's values
-                        const auto part_idx1 = indices[sorted_indices_data[i - 1]];
-                        const auto part_idx2 = indices[sorted_indices_data[i - 2]];
+                        // set the last two particles' attributes according to
+                        // the bin's aggregate values
+                        const auto part_idx2 = indices[sorted_indices_data[i - 1]];
 
-                        w[part_idx1] = total_weight / 2._prt;
+                        w[part_idx] = total_weight / 2._prt;
                         w[part_idx2] = total_weight / 2._prt;
 #if !defined(WARPX_DIM_1D_Z)
-                        x[part_idx1] = cluster_x;
+                        x[part_idx] = cluster_x;
                         x[part_idx2] = cluster_x;
 #endif
 #if defined(WARPX_DIM_3D)
-                        y[part_idx1] = cluster_y;
+                        y[part_idx] = cluster_y;
                         y[part_idx2] = cluster_y;
 #endif
-                        z[part_idx1] = cluster_z;
+                        z[part_idx] = cluster_z;
                         z[part_idx2] = cluster_z;
 
-                        ux[part_idx1] = ux_new;
-                        uy[part_idx1] = uy_new;
-                        uz[part_idx1] = uz_new;
+                        ux[part_idx] = ux_new;
+                        uy[part_idx] = uy_new;
+                        uz[part_idx] = uz_new;
                         ux[part_idx2] = 2._prt * cluster_ux - ux_new;
                         uy[part_idx2] = 2._prt * cluster_uy - uy_new;
                         uz[part_idx2] = 2._prt * cluster_uz - uz_new;
 
                         // set ids of merged particles so they will be removed
                         for (int j = 2; j < particles_in_bin; j++){
-                            idcpu[indices[sorted_indices_data[i - 1 - j]]] = amrex::ParticleIdCpus::Invalid;
+                            idcpu[indices[sorted_indices_data[i - j]]] = amrex::ParticleIdCpus::Invalid;
                         }
                     }
+
                     // restart the tallies
                     particles_in_bin = 0;
                     total_weight = 0._prt;
@@ -280,24 +292,6 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
                     cluster_uy = 0_prt;
                     cluster_uz = 0_prt;
                 }
-
-                particles_in_bin += 1;
-                const auto part_idx = indices[sorted_indices_data[i]];
-
-#if !defined(WARPX_DIM_1D_Z)
-                cluster_x += w[part_idx]*x[part_idx];
-#endif
-#if defined(WARPX_DIM_3D)
-                cluster_y += w[part_idx]*y[part_idx];
-#endif
-                cluster_z += w[part_idx]*z[part_idx];
-                cluster_ux += w[part_idx]*ux[part_idx];
-                cluster_uy += w[part_idx]*uy[part_idx];
-                cluster_uz += w[part_idx]*uz[part_idx];
-                total_weight += w[part_idx];
-                total_energy += w[part_idx] * Algorithms::KineticEnergy(
-                    ux[part_idx], uy[part_idx], uz[part_idx], mass
-                );
             }
         }
     );
