@@ -164,6 +164,7 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     // Allocate fields for charge and potential
     const int num_levels = max_level + 1;
     Vector<std::unique_ptr<MultiFab> > rho(num_levels);
+    Vector<std::unique_ptr<MultiFab> > rho_coarse(num_levels); // Used in order to interpolate between levels
     Vector<std::unique_ptr<MultiFab> > phi(num_levels);
     // Use number of guard cells used for local deposition of rho
     const amrex::IntVect ng = guard_cells.ng_depos_rho;
@@ -174,6 +175,13 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
         rho[lev]->setVal(0.);
         phi[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, 1);
         phi[lev]->setVal(0.);
+        if (lev > 0) {
+            // For MR levels: allocated the coarsened version of rho
+            BoxArray cba = nba;
+            cba.coarsen(refRatio(lev-1));
+            rho_coarse[lev] = std::make_unique<MultiFab>(cba, DistributionMap(lev), 1, ng);
+            rho_coarse[lev]->setVal(0.);
+        }
     }
 
     // Deposit particle charge density (source of Poisson solver)
@@ -183,11 +191,11 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     bool const apply_boundary_and_scale_volume = false;
     bool const interpolate_across_levels = false;
     if ( !pc.do_not_deposit) {
-        pc->DepositCharge(rho, local, reset, apply_boundary_and_scale_volume,
+        pc.DepositCharge(rho, local, reset, apply_boundary_and_scale_volume,
                               interpolate_across_levels);
     }
 
-    SyncRho(rho, rho_cp, charge_buf); // Apply filter, perform MPI exchange, interpolate across levels
+    SyncRho(rho, rho_coarse, charge_buf); // Apply filter, perform MPI exchange, interpolate across levels
 #ifndef WARPX_DIM_RZ
     for (int lev = 0; lev <= finestLevel(); lev++) {
         // Reflect density over PEC boundaries, if needed.
