@@ -6,7 +6,7 @@
  */
 #include "Resampling.H"
 
-#include "GridBasedMerging.H"
+#include "VelocityCoincidenceThinning.H"
 #include "LevelingThinning.H"
 #include "Utils/TextMsg.H"
 
@@ -23,9 +23,9 @@ Resampling::Resampling (const std::string& species_name)
     {
         m_resampling_algorithm = std::make_unique<LevelingThinning>(species_name);
     }
-    else if (resampling_algorithm_string == "grid_based")
+    else if (resampling_algorithm_string == "velocity_coincidence_thinning")
     {
-        m_resampling_algorithm = std::make_unique<GridBasedMerging>(species_name);
+        m_resampling_algorithm = std::make_unique<VelocityCoincidenceThinning>(species_name);
     }
     else
     { WARPX_ABORT_WITH_MESSAGE("Unknown resampling algorithm."); }

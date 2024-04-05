@@ -1284,8 +1284,8 @@ Particle initialization
             This **roughly** corresponds to the ratio between the number of particles before and
             after resampling.
 
-    * ``grid_based`` The particles are sorted into phase space cells and merged.
-      It has three parameters:
+    * ``velocity_coincidence_thinning``` The particles are sorted into phase space
+      cells and merged. It has three parameters:
 
         * ``<species>.resampling_algorithm_delta_ur`` (`float`) optional (default `1e5`)
             The width of momentum cells used in clustering particles, in m/s.

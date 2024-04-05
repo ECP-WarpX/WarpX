@@ -4,7 +4,7 @@ foreach(D IN LISTS WarpX_DIMS)
       PRIVATE
         Resampling.cpp
         ResamplingTrigger.cpp
-        GridBasedMerging.cpp
         LevelingThinning.cpp
+        VelocityCoincidenceThinning.cpp
     )
 endforeach()

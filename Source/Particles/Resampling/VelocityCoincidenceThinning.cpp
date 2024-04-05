@@ -7,7 +7,7 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#include "GridBasedMerging.H"
+#include "VelocityCoincidenceThinning.H"
 
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/Parser/ParserUtils.H"
@@ -32,7 +32,7 @@
 
 #include <AMReX_BaseFwd.H>
 
-GridBasedMerging::GridBasedMerging (const std::string& species_name)
+VelocityCoincidenceThinning::VelocityCoincidenceThinning (const std::string& species_name)
 {
     using namespace amrex::literals;
 
@@ -57,7 +57,7 @@ GridBasedMerging::GridBasedMerging (const std::string& species_name)
     );
 }
 
-void GridBasedMerging::operator() (WarpXParIter& pti, const int lev,
+void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
                                    WarpXParticleContainer * const pc) const
 {
     using namespace amrex::literals;

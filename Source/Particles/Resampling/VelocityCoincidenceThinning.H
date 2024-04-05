@@ -19,20 +19,20 @@
  * into two remaining particles. The scheme conserves linear momentum and
  * kinetic energy within each cluster.
  */
-class GridBasedMerging: public ResamplingAlgorithm {
+class VelocityCoincidenceThinning: public ResamplingAlgorithm {
 public:
 
     /**
-     * \brief Default constructor of the GridBasedMerging class.
+     * \brief Default constructor of the VelocityCoincidenceThinning class.
      */
-    GridBasedMerging () = default;
+    VelocityCoincidenceThinning () = default;
 
     /**
-     * \brief Constructor of the GridBasedMerging class
+     * \brief Constructor of the VelocityCoincidenceThinning class
      *
      * @param[in] species_name the name of the resampled species
      */
-    GridBasedMerging (const std::string& species_name);
+    VelocityCoincidenceThinning (const std::string& species_name);
 
     /**
      * \brief A method that performs merging for the considered species.
