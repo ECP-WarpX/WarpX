@@ -97,12 +97,13 @@ void HybridPICModel::AllocateLevelMFs (int lev, const BoxArray& ba, const Distri
 
     // the external current density multifab is made nodal to avoid needing to interpolate
     // to a nodal grid as has to be done for the ion and total current density multifabs
+    // this also allows the external current multifab to not have any ghost cells
     WarpX::AllocInitMultiFab(current_fp_external[lev][0], amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
-        dm, ncomps, ngJ, lev, "current_fp_external[x]", 0.0_rt);
+        dm, ncomps, IntVect(AMREX_D_DECL(0,0,0)), lev, "current_fp_external[x]", 0.0_rt);
     WarpX::AllocInitMultiFab(current_fp_external[lev][1], amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
-        dm, ncomps, ngJ, lev, "current_fp_external[y]", 0.0_rt);
+        dm, ncomps, IntVect(AMREX_D_DECL(0,0,0)), lev, "current_fp_external[y]", 0.0_rt);
     WarpX::AllocInitMultiFab(current_fp_external[lev][2], amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
-        dm, ncomps, ngJ, lev, "current_fp_external[z]", 0.0_rt);
+        dm, ncomps, IntVect(AMREX_D_DECL(0,0,0)), lev, "current_fp_external[z]", 0.0_rt);
 
 #ifdef WARPX_DIM_RZ
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
