@@ -10,6 +10,7 @@
 #include "VelocityCoincidenceThinning.H"
 
 #include "Particles/WarpXParticleContainer.H"
+#include "Particles/Algorithms/KineticEnergy.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/ParticleUtils.H"
 #include "Utils/TextMsg.H"
@@ -169,10 +170,11 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
             amrex::ParticleReal cluster_ux = total_weight*ux[indices[sorted_indices_data[cell_start]]];
             amrex::ParticleReal cluster_uy = total_weight*uy[indices[sorted_indices_data[cell_start]]];
             amrex::ParticleReal cluster_uz = total_weight*uz[indices[sorted_indices_data[cell_start]]];
-            amrex::ParticleReal total_energy = 0.5_prt * mass * total_weight * (
-                ux[indices[sorted_indices_data[cell_start]]]*ux[indices[sorted_indices_data[cell_start]]] +
-                uy[indices[sorted_indices_data[cell_start]]]*uy[indices[sorted_indices_data[cell_start]]] +
-                uz[indices[sorted_indices_data[cell_start]]]*uz[indices[sorted_indices_data[cell_start]]]
+            amrex::ParticleReal total_energy = total_weight*Algorithms::KineticEnergy(
+                ux[indices[sorted_indices_data[cell_start]]],
+                uy[indices[sorted_indices_data[cell_start]]],
+                uz[indices[sorted_indices_data[cell_start]]],
+                mass
             );
 
             int particles_in_bin = 1;
@@ -293,9 +295,8 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
                 cluster_uy += w[part_idx]*uy[part_idx];
                 cluster_uz += w[part_idx]*uz[part_idx];
                 total_weight += w[part_idx];
-                total_energy += 0.5_prt * mass * w[part_idx] * (
-                    ux[part_idx]*ux[part_idx] + uy[part_idx]*uy[part_idx]
-                    + uz[part_idx]*uz[part_idx]
+                total_energy += w[part_idx] * Algorithms::KineticEnergy(
+                    ux[part_idx], uy[part_idx], uz[part_idx], mass
                 );
             }
         }
