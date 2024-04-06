@@ -305,7 +305,7 @@ WarpXParticleContainer::AddNParticles (int lev, long n,
 #endif
 
     // Call (local) redistribute again to remove particles with invalid ids
-    Redistribute(lev, lev, 1, true, true);
+    Redistribute(lev, lev, 0, 0, true);
 }
 
 /* \brief Current Deposition for thread thread_num
