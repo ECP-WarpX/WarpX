@@ -196,12 +196,6 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     }
 
     SyncRho(rho, rho_coarse, charge_buf); // Apply filter, perform MPI exchange, interpolate across levels
-#ifndef WARPX_DIM_RZ
-    for (int lev = 0; lev <= finestLevel(); lev++) {
-        // Reflect density over PEC boundaries, if needed.
-        ApplyRhofieldBoundary(lev, rho[lev].get(), PatchType::fine);
-    }
-#endif
 
     // Get the particle beta vector
     bool const local_average = false; // Average across all MPI ranks
