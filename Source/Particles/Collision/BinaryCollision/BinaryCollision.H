@@ -220,8 +220,8 @@ public:
 
             if (m_have_product_species) {
                 // Call redistribute to remove particles with negative ids
-                species1.Redistribute(lev, lev, 0, true, true);
-                species2.Redistribute(lev, lev, 0, true, true);
+                species1.Redistribute(lev, lev, 0, 0, true);
+                species2.Redistribute(lev, lev, 0, 0, true);
             }
         }
     }
