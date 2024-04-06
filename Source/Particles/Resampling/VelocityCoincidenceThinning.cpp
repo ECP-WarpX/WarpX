@@ -107,6 +107,7 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
     auto dr = m_delta_ur;
     auto dtheta = 2.0_prt * MathConst::pi / Ntheta;
     auto dphi = MathConst::pi / Nphi;
+    auto c2 = PhysConst::c * PhysConst::c;
 
     auto heapSort = HeapSort();
 
@@ -220,7 +221,10 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
 
                         // calculate required velocity magnitude to achieve
                         // energy conservation
-                        auto v_mag2 = 2._prt * total_energy / (total_weight * mass);
+                        auto v_mag2 = total_energy / total_weight * (
+                            (total_energy / total_weight + 2._prt * mass * c2 )
+                            / (mass * mass * c2)
+                        );
                         auto v_perp = std::sqrt(v_mag2 - cluster_u_mag2);
 
                         // choose random angle for new velocity vector
