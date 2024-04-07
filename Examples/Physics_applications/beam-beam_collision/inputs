@@ -37,7 +37,6 @@ my_constants.dt = sigmaz/clight/10.
 # DIAGS
 my_constants.every_red = 1.
 warpx.used_inputs_file = warpx_used_inputs.txt
-warpx.use_filter = 0
 
 #################################
 ####### GENERAL PARAMETERS ######
