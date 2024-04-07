@@ -188,7 +188,7 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     // The options below are identical to those in MultiParticleContainer::DepositCharge
     bool const local = true;
     bool const reset = false;
-    bool const apply_boundary_and_scale_volume = false;
+    bool const apply_boundary_and_scale_volume = true;
     bool const interpolate_across_levels = false;
     if ( !pc.do_not_deposit) {
         pc.DepositCharge(rho, local, reset, apply_boundary_and_scale_volume,
