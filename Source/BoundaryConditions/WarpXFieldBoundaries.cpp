@@ -20,37 +20,35 @@ using namespace amrex;
 
 namespace
 {
-    /** Returns 1 if any domain boundary is set to PEC, else returns 0.*/
+    /** Returns true if any field boundary is set to FieldBoundaryType FT, else returns false.*/
+    template <FieldBoundaryType FT>
     [[nodiscard]]
-    bool isAnyBoundaryPEC (
-        const amrex::Vector<FieldBoundaryType>& field_boundary_lo,
+    bool isAnyBoundary (const amrex::Vector<FieldBoundaryType>& field_boundary_lo,
         const amrex::Vector<FieldBoundaryType>& field_boundary_hi)
     {
-        const auto isPEC = [](const auto& b){
-            return b == FieldBoundaryType::PEC;};
-
-        return std::any_of(field_boundary_lo.begin(), field_boundary_lo.end(), isPEC) ||
-               std::any_of(field_boundary_hi.begin(), field_boundary_hi.end(), isPEC);
+        const auto isFT = [](const auto& b){
+            return b == FT;};
+        return std::any_of(field_boundary_lo.begin(), field_boundary_lo.end(), isFT) ||
+               std::any_of(field_boundary_hi.begin(), field_boundary_hi.end(), isFT);
     }
 
-
-    /** Return true if any particle boundary is set to reflecting, else returns false*/
+    /** Returns true if any particle boundary is set to ParticleBoundaryType PT, else returns false.*/
+    template <ParticleBoundaryType PT>
     [[nodiscard]]
-    bool isAnyParticleBoundaryReflecting (
-        const amrex::Vector<ParticleBoundaryType>& particle_boundary_lo,
+    bool isAnyBoundary (const amrex::Vector<ParticleBoundaryType>& particle_boundary_lo,
         const amrex::Vector<ParticleBoundaryType>& particle_boundary_hi)
     {
-        const auto isReflecting = [](const auto& b){
-            return b == ParticleBoundaryType::Reflecting;};
-
-        return std::any_of(particle_boundary_lo.begin(), particle_boundary_lo.end(), isReflecting) ||
-               std::any_of(particle_boundary_hi.begin(), particle_boundary_hi.end(), isReflecting);
+        const auto isPT = [](const auto& b){
+            return b == PT;};
+        return std::any_of(particle_boundary_lo.begin(), particle_boundary_lo.end(), isPT) ||
+               std::any_of(particle_boundary_hi.begin(), particle_boundary_hi.end(), isPT);
     }
+
 }
 
 void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
 {
-    if (::isAnyBoundaryPEC(field_boundary_lo, field_boundary_hi)) {
+    if (::isAnyBoundary<FieldBoundaryType::PEC>(field_boundary_lo, field_boundary_hi)) {
         if (patch_type == PatchType::fine) {
             PEC::ApplyPECtoEfield(
                     {getFieldPointer(FieldType::Efield_fp, lev, 0),
@@ -59,7 +57,7 @@ void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
                     field_boundary_lo, field_boundary_hi,
                     get_ng_fieldgather(), Geom(lev),
                     lev, patch_type, ref_ratio);
-            if (WarpX::isAnyBoundaryPML()) {
+            if (::isAnyBoundary<FieldBoundaryType::PML>(field_boundary_lo, field_boundary_hi)) {
                 // apply pec on split E-fields in PML region
                 const bool split_pml_field = true;
                 PEC::ApplyPECtoEfield(
@@ -77,7 +75,7 @@ void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
                 field_boundary_lo, field_boundary_hi,
                 get_ng_fieldgather(), Geom(lev),
                 lev, patch_type, ref_ratio);
-            if (WarpX::isAnyBoundaryPML()) {
+            if (::isAnyBoundary<FieldBoundaryType::PML>(field_boundary_lo, field_boundary_hi)) {
                 // apply pec on split E-fields in PML region
                 const bool split_pml_field = true;
                 PEC::ApplyPECtoEfield(
@@ -105,7 +103,7 @@ void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
 
 void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_dt_type)
 {
-    if (::isAnyBoundaryPEC(field_boundary_lo, field_boundary_hi)) {
+    if (::isAnyBoundary<FieldBoundaryType::PEC>(field_boundary_lo, field_boundary_hi)) {
         if (patch_type == PatchType::fine) {
             PEC::ApplyPECtoBfield( {
                 getFieldPointer(FieldType::Bfield_fp, lev, 0),
@@ -132,16 +130,16 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
         if (a_dt_type == DtType::FirstHalf) {
             bool applySilverMueller = false;
             for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-                if ( (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Absorbing_SilverMueller) ||
-                   (WarpX::field_boundary_hi[idim] == FieldBoundaryType::Absorbing_SilverMueller) ) {
+                if ( (field_boundary_lo[idim] == FieldBoundaryType::Absorbing_SilverMueller) ||
+                   (field_boundary_hi[idim] == FieldBoundaryType::Absorbing_SilverMueller) ) {
                     applySilverMueller = true;
                 }
             }
             if(applySilverMueller) { m_fdtd_solver_fp[0]->ApplySilverMuellerBoundary(
                                          Efield_fp[lev], Bfield_fp[lev],
                                          Geom(lev).Domain(), dt[lev],
-                                         WarpX::field_boundary_lo,
-                                         WarpX::field_boundary_hi);
+                                         field_boundary_lo,
+                                         field_boundary_hi);
             }
         }
     }
@@ -162,9 +160,9 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
 void WarpX::ApplyRhofieldBoundary (const int lev, MultiFab* rho,
                                    PatchType patch_type)
 {
-    if (::isAnyParticleBoundaryReflecting(particle_boundary_lo, particle_boundary_hi) ||
-        WarpX::isAnyParticleBoundaryThermal() ||
-        ::isAnyBoundaryPEC(field_boundary_lo, field_boundary_hi))
+    if (::isAnyBoundary<ParticleBoundaryType::Reflecting>(particle_boundary_lo, particle_boundary_hi) ||
+        ::isAnyBoundary<ParticleBoundaryType::Thermal>(particle_boundary_lo, particle_boundary_hi) ||
+        ::isAnyBoundary<FieldBoundaryType::PEC>(field_boundary_lo, field_boundary_hi))
     {
         PEC::ApplyReflectiveBoundarytoRhofield(rho,
             field_boundary_lo, field_boundary_hi,
@@ -177,9 +175,9 @@ void WarpX::ApplyJfieldBoundary (const int lev, amrex::MultiFab* Jx,
                                  amrex::MultiFab* Jy, amrex::MultiFab* Jz,
                                  PatchType patch_type)
 {
-    if (::isAnyParticleBoundaryReflecting(particle_boundary_lo, particle_boundary_hi) ||
-        WarpX::isAnyParticleBoundaryThermal() ||
-        ::isAnyBoundaryPEC(field_boundary_lo, field_boundary_hi))
+    if (::isAnyBoundary<ParticleBoundaryType::Reflecting>(particle_boundary_lo, particle_boundary_hi) ||
+        ::isAnyBoundary<ParticleBoundaryType::Thermal>(particle_boundary_lo, particle_boundary_hi) ||
+        ::isAnyBoundary<FieldBoundaryType::PEC>(field_boundary_lo, field_boundary_hi))
     {
         PEC::ApplyReflectiveBoundarytoJfield(Jx, Jy, Jz,
             field_boundary_lo, field_boundary_hi,
@@ -273,7 +271,7 @@ WarpX::ApplyFieldBoundaryOnAxis (amrex::MultiFab* Er, amrex::MultiFab* Et, amrex
 
 void WarpX::ApplyElectronPressureBoundary (const int lev, PatchType patch_type)
 {
-    if (::isAnyBoundaryPEC(field_boundary_lo, field_boundary_hi)) {
+    if (::isAnyBoundary<FieldBoundaryType::PEC>(field_boundary_lo, field_boundary_hi)) {
         if (patch_type == PatchType::fine) {
             PEC::ApplyPECtoElectronPressure(
                 m_hybrid_pic_model->get_pointer_electron_pressure_fp(lev),
