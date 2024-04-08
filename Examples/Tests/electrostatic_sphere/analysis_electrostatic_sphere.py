@@ -22,9 +22,9 @@ import sys
 
 import numpy as np
 import yt
-from scipy.optimize import fsolve
-from scipy.constants import c
 from openpmd_viewer import OpenPMDTimeSeries
+from scipy.constants import c
+from scipy.optimize import fsolve
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
