@@ -146,6 +146,10 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
 {
     WARPX_PROFILE("WarpX::AddSpaceChargeField");
 
+    if (pc.getCharge() == 0) {
+        return;
+    }
+
     // Store the boundary conditions for the field solver if they haven't been
     // stored yet
     if (!m_poisson_boundary_handler.bcs_set) {
@@ -249,7 +253,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
         // Use the tridiag solver with 1D
         computePhiTriDiagonal(rho_fp, phi_fp);
 #else
-        // Use the AMREX MLMG solver otherwise
+        // Use the AMREX MLMG or the FFT (IGF) solver otherwise
         computePhi(rho_fp, phi_fp, beta, self_fields_required_precision,
                    self_fields_absolute_tolerance, self_fields_max_iters,
                    self_fields_verbosity);
@@ -352,6 +356,9 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
     const std::optional<amrex::Vector<amrex::FArrayBoxFactory const *> > eb_farray_box_factory;
 #endif
 
+    bool const is_solver_multigrid =
+        WarpX::poisson_solver_id != PoissonSolverAlgo::IntegratedGreenFunction;
+
     ablastr::fields::computePhi(
         sorted_rho,
         sorted_phi,
@@ -364,6 +371,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
         this->dmap,
         this->grids,
         this->m_poisson_boundary_handler,
+        is_solver_multigrid,
         WarpX::do_single_precision_comms,
         this->ref_ratio,
         post_phi_calculation,
@@ -1001,6 +1009,7 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs (const amrex::Geo
     amrex::ignore_unused(geom);
 #endif
     for (int idim=dim_start; idim<AMREX_SPACEDIM; idim++){
+    if (WarpX::poisson_solver_id == PoissonSolverAlgo::Multigrid){
         if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Periodic
              && WarpX::field_boundary_hi[idim] == FieldBoundaryType::Periodic ) {
             lobc[idim] = LinOpBCType::Periodic;
@@ -1021,7 +1030,7 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs (const amrex::Geo
             else {
                 WARPX_ABORT_WITH_MESSAGE(
                     "Field boundary conditions have to be either periodic, PEC or neumann "
-                    "when using the electrostatic solver,  but they are " + GetFieldBCTypeString(WarpX::field_boundary_lo[idim])
+                    "when using the electrostatic Multigrid solver,  but they are " + GetFieldBCTypeString(WarpX::field_boundary_lo[idim])
                 );
             }
 
@@ -1036,10 +1045,38 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs (const amrex::Geo
             else {
                 WARPX_ABORT_WITH_MESSAGE(
                     "Field boundary conditions have to be either periodic, PEC or neumann "
-                    "when using the electrostatic solver,  but they are " + GetFieldBCTypeString(WarpX::field_boundary_hi[idim])
+                    "when using the electrostatic Multigrid solver,  but they are " + GetFieldBCTypeString(WarpX::field_boundary_hi[idim])
                 );
             }
         }
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            (WarpX::field_boundary_lo[idim] != FieldBoundaryType::Open &&
+            WarpX::field_boundary_hi[idim] != FieldBoundaryType::Open &&
+            WarpX::field_boundary_lo[idim] != FieldBoundaryType::PML &&
+            WarpX::field_boundary_hi[idim] != FieldBoundaryType::PML) ,
+            "Open and PML field boundary conditions only work with "
+            "warpx.poisson_solver = fft."
+        );
+    }
+    else if (WarpX::poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction){
+            if (WarpX::electrostatic_solver_id != ElectrostaticSolverAlgo::None){
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Open &&
+                    WarpX::field_boundary_hi[idim] == FieldBoundaryType::Open),
+                    "The FFT Poisson solver only works with field open boundary conditions "
+                    "in electrostatic mode."
+                );
+            }
+            else{ // if electromagnetic mode on with species.initialize_self_fields = 1
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    (WarpX::field_boundary_lo[idim] == FieldBoundaryType::PML &&
+                    WarpX::field_boundary_hi[idim] == FieldBoundaryType::PML),
+                    "The FFT Poisson solver only works with field PML boundary conditions "
+                    "to initialize the self-fields of the species in electromagnetic mode."
+                );
+            }
+    }
     }
     bcs_set = true;
 }
