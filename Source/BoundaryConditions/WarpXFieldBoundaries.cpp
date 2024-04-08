@@ -128,18 +128,11 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
     // E and B are staggered in time, which is only true after the first half-push
     if (lev == 0) {
         if (a_dt_type == DtType::FirstHalf) {
-            bool applySilverMueller = false;
-            for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-                if ( (field_boundary_lo[idim] == FieldBoundaryType::Absorbing_SilverMueller) ||
-                   (field_boundary_hi[idim] == FieldBoundaryType::Absorbing_SilverMueller) ) {
-                    applySilverMueller = true;
-                }
-            }
-            if(applySilverMueller) { m_fdtd_solver_fp[0]->ApplySilverMuellerBoundary(
-                                         Efield_fp[lev], Bfield_fp[lev],
-                                         Geom(lev).Domain(), dt[lev],
-                                         field_boundary_lo,
-                                         field_boundary_hi);
+            if(::isAnyBoundary<FieldBoundaryType::Absorbing_SilverMueller>(field_boundary_lo, field_boundary_hi)){
+                m_fdtd_solver_fp[0]->ApplySilverMuellerBoundary(
+                Efield_fp[lev], Bfield_fp[lev],
+                Geom(lev).Domain(), dt[lev],
+                field_boundary_lo, field_boundary_hi);
             }
         }
     }
