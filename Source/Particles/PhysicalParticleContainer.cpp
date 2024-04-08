@@ -3372,6 +3372,8 @@ void PhysicalParticleContainer::resample (const int timestep, const bool verbose
                 m_resampler(pti, lev, this);
             }
         }
+        // call Redistribute() to remove invalid particles
+        Redistribute(0, maxLevel(), 0, 1, true);
     }
     WARPX_PROFILE_VAR_STOP(blp_resample_actual);
 }
