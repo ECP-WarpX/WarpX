@@ -140,9 +140,9 @@ assert L2_error_z < 0.05
 
 # Check conservation of energy
 def return_energies(iteration):
-    ux, uy, uz, phi, m, q = ts.get_particle(['ux', 'uy', 'uz', 'phi', 'mass', 'charge'], iteration=iteration)
-    E_kinetic = (m*c**2 * (np.sqrt(1 + ux**2 + uy**2 + uz**2) - 1)).sum()
-    E_potential = 0.5*(q*phi).sum() # potential energy of particles in their own space-charge field: includes factor 1/2
+    ux, uy, uz, phi, m, q, w = ts.get_particle(['ux', 'uy', 'uz', 'phi', 'mass', 'charge', 'w'], iteration=iteration)
+    E_kinetic = (w*m*c**2 * (np.sqrt(1 + ux**2 + uy**2 + uz**2) - 1)).sum()
+    E_potential = 0.5*(w*q*phi).sum() # potential energy of particles in their own space-charge field: includes factor 1/2
     return E_kinetic, E_potential
 ts = OpenPMDTimeSeries('./diags/diag2')
 if 'phi' in ts.avail_record_components['electron']:
@@ -151,7 +151,7 @@ if 'phi' in ts.avail_record_components['electron']:
     Ek_i, Ep_i = return_energies(0)
     Ek_f, Ep_f = return_energies(30)
     assert Ep_f < 0.7*Ep_i # Check that potential energy changes significantly
-    assert abs( Ek_i + Ep_i - Ek_f - Ep_f ) < 0.09 * (Ek_i + Ep_i)
+    assert abs( Ek_i + Ep_i - Ek_f - Ep_f ) < 0.003 * (Ek_i + Ep_i)
 
 # Checksum regression analysis
 test_name = os.path.split(os.getcwd())[1]
