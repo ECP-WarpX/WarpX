@@ -61,18 +61,18 @@ public:
     struct HeapSort {
 
         AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-        void swap(uint &a, uint &b) const
+        void swap(int &a, int &b) const
         {
-            const uint temp = b;
+            const int temp = b;
             b = a;
             a = temp;
         }
 
         AMREX_GPU_HOST_DEVICE
-        void operator() (uint index_array[], const uint bin_array[], const uint start, const uint n) const
+        void operator() (int index_array[], const int bin_array[], const int start, const int n) const
         {
             // sort index_array into a max heap structure
-            for (uint i = 1; i < n; i++)
+            for (int i = 1; i < n; i++)
             {
                 // move child through heap if it is bigger than its parent
                 if (bin_array[index_array[i+start]] > bin_array[index_array[(i - 1)/2 + start]])
@@ -86,13 +86,13 @@ public:
                 }
             }
 
-            for (uint i = n - 1; i > 0; i--)
+            for (int i = n - 1; i > 0; i--)
             {
                 // swap value of first (now the largest value) to the new end point
                 swap(index_array[start], index_array[i+start]);
 
                 // remake the max heap
-                uint j = 0, index;
+                int j = 0, index;
                 do {
                     index = (2 * j + 1);
 
@@ -111,9 +111,9 @@ public:
     };
 
 private:
-    uint m_min_ppc = 100;
-    uint m_ntheta = 120;
-    uint m_nphi = 60;
+    int m_min_ppc = 100;
+    int m_ntheta = 120;
+    int m_nphi = 60;
     amrex::ParticleReal m_delta_ur = 1e5;
 };
 #endif // WARPX_GRID_BASED_MERGING_H_
