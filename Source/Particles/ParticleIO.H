@@ -9,7 +9,8 @@
 
 #include "Particles/WarpXParticleContainer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
-#include "ablastr/particles/NodalFieldGather.H"
+
+#include <ablastr/particles/NodalFieldGather.H>
 
 #include <AMReX_AmrParticles.H>
 #include <AMReX_ParIter.H>

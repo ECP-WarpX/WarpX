@@ -605,7 +605,6 @@ for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
             "Output of the electrostatic potential (phi) on the particles was requested, "
             "but this is only available with `diag_type = Full`.");
         tmp.AddRealComp("phi");
-        tmp.defineAllParticleTiles();
         int const phi_index = tmp.getParticleComps().at("phi");
         auto& warpx = WarpX::GetInstance();
 #ifdef AMREX_USE_OMP
