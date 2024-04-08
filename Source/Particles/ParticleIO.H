@@ -79,7 +79,17 @@ particlesConvertUnits (ConvertDirection convert_direction, T_ParticleContainer* 
     }
 }
 
-/** TODO: Add docstring */
+/** Gathers the field from a MultiFab to the macroparticles
+ * and stores it into a runtime component of the particle container
+ *
+ * @tparam T_ParticleContainer a WarpX particle container or AmrParticleContainer
+ * @param tmp the particle container on which to store the gathered field
+ * @param plo the coordinates of the low bound of the box, along each dimension
+ * @param dxi the inverse of the cell size, along each dimension
+ * @param phi a multifab that contains the field to be gathered
+ * @param phi_index the index of the runtime component where to store the gathered field
+ * @param lev the MR level
+ */
 template< typename T_ParticleContainer >
 void
 storeFieldOnParticles ( T_ParticleContainer& tmp,
