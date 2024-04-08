@@ -150,8 +150,8 @@ if 'phi' in ts.avail_record_components['electron']:
     print('Checking conservation of energy')
     Ek_i, Ep_i = return_energies(0)
     Ek_f, Ep_f = return_energies(30)
-assert Ep_f < 0.7*Ep_i # Check that potential energy changes significantly
-assert abs( Ek_i + Ep_i - Ek_f - Ep_f ) < 0.09 * (Ek_i + Ep_i)
+    assert Ep_f < 0.7*Ep_i # Check that potential energy changes significantly
+    assert abs( Ek_i + Ep_i - Ek_f - Ep_f ) < 0.09 * (Ek_i + Ep_i)
 
 # Checksum regression analysis
 test_name = os.path.split(os.getcwd())[1]
