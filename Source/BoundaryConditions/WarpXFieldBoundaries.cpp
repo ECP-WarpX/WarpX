@@ -117,8 +117,8 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
         } else {
             PEC::ApplyPECtoBfield( {
                 getFieldPointer(FieldType::Bfield_cp, lev, 0),
-                getFieldPointer(FieldType::Bfield_cp, lev, 1)
-                getFieldPointer(FieldType::Bfield_cp, lev, 2) },
+                getFieldPointer(FieldType::Bfield_cp, lev, 1),
+                getFieldPointer(FieldType::Bfield_cp, lev, 2)},
                 field_boundary_lo, field_boundary_hi,
                 get_ng_fieldgather(), Geom(lev),
                 lev, patch_type, ref_ratio);

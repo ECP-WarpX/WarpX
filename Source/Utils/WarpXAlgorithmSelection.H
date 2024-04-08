@@ -166,7 +166,6 @@ enum struct FieldBoundaryType {
         Open = 8     // Used in the Integrated Green Function Poisson solver
                      // Note that the solver implicitely assumes open BCs:
                      // no need to enforce them separately
-    };
 };
 
 /** Particle boundary conditions at the domain boundary

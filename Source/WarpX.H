@@ -75,12 +75,6 @@
 #include <string>
 #include <vector>
 
-enum struct PatchType : int
-{
-    fine,
-    coarse
-};
-
 enum struct FieldType : int
 {
     Efield_aux,
