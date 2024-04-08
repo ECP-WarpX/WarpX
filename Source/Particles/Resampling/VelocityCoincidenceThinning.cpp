@@ -83,26 +83,26 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
     // Using this function means that we must loop over the cells in the ParallelFor.
     auto bins = ParticleUtils::findParticlesInEachCell(lev, pti, ptile);
 
-    const auto n_cells = static_cast<int>(bins.numBins());
+    const auto n_cells = bins.numBins();
     auto *const indices = bins.permutationPtr();
     auto *const cell_offsets = bins.offsetsPtr();
 
-    const int min_ppc = m_min_ppc;
+    const auto min_ppc = m_min_ppc;
 
     const auto mass = pc->getMass();
 
     // create a GPU vector to hold the momentum cluster index for each particle
-    amrex::Gpu::DeviceVector<int> momentum_bin_number;
+    amrex::Gpu::DeviceVector<uint> momentum_bin_number;
     momentum_bin_number.resize(bins.numItems());
     auto* momentum_bin_number_data = momentum_bin_number.data();
 
     // create a GPU vector to hold the index sorting for the momentum bins
-    amrex::Gpu::DeviceVector<int> sorted_indices;
+    amrex::Gpu::DeviceVector<uint> sorted_indices;
     sorted_indices.resize(bins.numItems());
     auto* sorted_indices_data = sorted_indices.data();
 
-    const int Ntheta = m_ntheta;
-    const int Nphi = m_nphi;
+    const uint Ntheta = m_ntheta;
+    const uint Nphi = m_nphi;
 
     auto dr = m_delta_ur;
     auto dtheta = 2.0_prt * MathConst::pi / Ntheta;
@@ -113,13 +113,13 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
 
     // Loop over cells
     amrex::ParallelForRNG( n_cells,
-        [=] AMREX_GPU_DEVICE (int i_cell, amrex::RandomEngine const& engine) noexcept
+        [=] AMREX_GPU_DEVICE (uint i_cell, amrex::RandomEngine const& engine) noexcept
         {
             // The particles that are in the cell `i_cell` are
             // given by the `indices[cell_start:cell_stop]`
-            const auto cell_start = static_cast<int>(cell_offsets[i_cell]);
-            const auto cell_stop  = static_cast<int>(cell_offsets[i_cell+1]);
-            const int cell_numparts = cell_stop - cell_start;
+            const auto cell_start = cell_offsets[i_cell];
+            const auto cell_stop  = cell_offsets[i_cell+1];
+            const auto cell_numparts = cell_stop - cell_start;
 
             // do nothing for cells with less particles than min_ppc
             // (this intentionally includes skipping empty cells, too)
@@ -129,7 +129,7 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
 
             // Loop over particles and label them with the appropriate
             // momentum bin number
-            for (int i = cell_start; i < cell_stop; ++i)
+            for (uint i = cell_start; i < cell_stop; ++i)
             {
                 // get polar components of the velocity vector
                 auto u_mag = std::sqrt(
@@ -140,23 +140,19 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
                 auto u_theta = std::atan2(uy[indices[i]], ux[indices[i]]) + MathConst::pi;
                 auto u_phi = std::acos(uz[indices[i]]/u_mag);
 
-                const int ii = static_cast<int>(u_theta / dtheta);
-                const int jj = static_cast<int>(u_phi / dphi);
-                const int kk = static_cast<int>(u_mag / dr);
+                const auto ii = static_cast<uint>(u_theta / dtheta);
+                const auto jj = static_cast<uint>(u_phi / dphi);
+                const auto kk = static_cast<uint>(u_mag / dr);
 
-                // note that the momentum bin number indexing is based on the
-                // cell sorted indexing, not the particle indexing
-                momentum_bin_number_data[i] = (
-                    ii + jj * Ntheta + kk * Ntheta * Nphi
-                );
+                momentum_bin_number_data[i] = ii + jj * Ntheta + kk * Ntheta * Nphi;
             }
 
             // assign sorted_indices initial values
-            for (int i = cell_start; i < cell_stop; i++)
+            for (uint i = cell_start; i < cell_stop; i++)
             {
                 sorted_indices_data[i] = i;
             }
-            // sort indexes based on comparing values in momentum_bin_number
+            // sort indices based on comparing values in momentum_bin_number
             heapSort(sorted_indices_data, momentum_bin_number_data, cell_start, cell_numparts);
 
             // start by setting the running tallies equal to the first particle's attributes
@@ -174,7 +170,7 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
 
             // Finally, loop through the particles in the cell and merge
             // ones in the same momentum bin
-            for (int i = cell_start; i < cell_stop-1; ++i)
+            for (uint i = cell_start; i < cell_stop-1; ++i)
             {
                 particles_in_bin += 1;
                 const auto part_idx = indices[sorted_indices_data[i]];
