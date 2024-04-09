@@ -1285,7 +1285,8 @@ Particle initialization
             after resampling.
 
     * ``velocity_coincidence_thinning``` The particles are sorted into phase space
-      cells and merged. It has three parameters:
+      cells and merged, similar to the approach described in :cite:t:`param-Vranic2015`.
+      It has three parameters:
 
         * ``<species>.resampling_algorithm_delta_ur`` (`float`) optional (default `1e5`)
             The width of momentum cells used in clustering particles, in m/s.
