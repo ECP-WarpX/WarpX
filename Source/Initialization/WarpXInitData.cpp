@@ -1297,12 +1297,6 @@ void WarpX::CheckKnownIssues()
                 ablastr::warn_manager::WarnPriority::low);
         }
 
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            !load_balance_intervals.isActivated(),
-            "The hybrid-PIC algorithm involves multifabs that are not yet "
-            "properly redistributed during load balancing events."
-        );
-
         const bool external_particle_field_used = (
             mypc->m_B_ext_particle_s != "none" || mypc->m_E_ext_particle_s != "none"
         );
