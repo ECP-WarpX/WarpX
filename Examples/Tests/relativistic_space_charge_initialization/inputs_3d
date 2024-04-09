@@ -1,5 +1,5 @@
 max_step = 1
-amr.n_cell =  64 64 64
+amr.n_cell =  128 128 128
 amr.max_grid_size = 32
 amr.max_level = 0
 
