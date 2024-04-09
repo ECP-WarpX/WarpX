@@ -302,10 +302,9 @@ WarpXParticleContainer::AddNParticles (int lev, long n,
 #ifdef AMREX_USE_EB
     auto & distance_to_eb = WarpX::GetInstance().GetDistanceToEB();
     scrapeParticles( *this, amrex::GetVecOfConstPtrs(distance_to_eb), ParticleBoundaryProcess::Absorb());
-#endif
-
     // Call (local) redistribute again to remove particles with invalid ids
     Redistribute(lev, lev, 0, 1, true);
+#endif
 }
 
 /* \brief Current Deposition for thread thread_num
