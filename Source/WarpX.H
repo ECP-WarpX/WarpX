@@ -75,12 +75,6 @@
 #include <string>
 #include <vector>
 
-enum struct PatchType : int
-{
-    fine,
-    coarse
-};
-
 enum struct FieldType : int
 {
     Efield_aux,
@@ -215,12 +209,12 @@ public:
      *  lower domain boundaries
      *  (0 to 6 correspond to PML, Periodic, PEC, PMC, Damped, Absorbing Silver-Mueller, None)
      */
-    static amrex::Vector<int> field_boundary_lo;
+    static amrex::Vector<FieldBoundaryType> field_boundary_lo;
     /** Integers that correspond to boundary condition applied to fields at the
      *  upper domain boundaries
      *  (0 to 6 correspond to PML, Periodic, PEC, PMC, Damped, Absorbing Silver-Mueller, None)
      */
-    static amrex::Vector<int> field_boundary_hi;
+    static amrex::Vector<FieldBoundaryType> field_boundary_hi;
     /** Integers that correspond to boundary condition applied to particles at the
      *  lower domain boundaries
      *  (0 to 4 correspond to Absorbing, Open, Reflecting, Periodic, Thermal)
