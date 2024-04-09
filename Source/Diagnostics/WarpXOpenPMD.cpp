@@ -591,32 +591,7 @@ for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
 
     // Gather the electrostatic potential (phi) on the macroparticles
     if ( particle_diags[i].m_plot_phi ) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) ||
-            (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic),
-            "Output of the electrostatic potential (phi) on the particles was requested, "
-            "but this is only available for `warpx.do_electrostatic=labframe` or `labframe-electromagnetostatic`.");
-        // Using pinned PC indicates that the particles are not written at the same physical time (i.e. PIC iteration)
-        // that they were collected. This happens for diagnostics that use buffering (e.g. BackTransformed, BoundaryScraping).
-        // Here `phi` is gathered at the iteration when particles are written (not collected) and is thus mismatched.
-        // To avoid confusion, we raise an error in this case.
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            use_pinned_pc == false,
-            "Output of the electrostatic potential (phi) on the particles was requested, "
-            "but this is only available with `diag_type = Full`.");
-        tmp.AddRealComp("phi");
-        int const phi_index = tmp.getParticleComps().at("phi");
-        auto& warpx = WarpX::GetInstance();
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
-#endif
-        for (int lev=0; lev<=warpx.finestLevel(); lev++) {
-            const amrex::Geometry& geom = warpx.Geom(lev);
-            auto plo = geom.ProbLoArray();
-            auto dxi = geom.InvCellSizeArray();
-            amrex::MultiFab const& phi = warpx.getField( FieldType::phi_fp, lev, 0 );
-            storeFieldOnParticles( tmp, plo, dxi, phi, phi_index, lev );
-        }
+        storePhiOnParticles( tmp, WarpX::electrostatic_solver_id, !use_pinned_pc );
     }
 
     // names of amrex::Real and int particle attributes in SoA data

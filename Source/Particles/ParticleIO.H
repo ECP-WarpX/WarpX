@@ -9,6 +9,7 @@
 
 #include "Particles/WarpXParticleContainer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
+#include "Particles/PinnedMemoryParticleContainer.H"
 
 #include <ablastr/particles/NodalFieldGather.H>
 
@@ -80,47 +81,15 @@ particlesConvertUnits (ConvertDirection convert_direction, T_ParticleContainer* 
     }
 }
 
-/** Gathers the field from a MultiFab to the macroparticles
- * and stores it into a runtime component of the particle container
+/** Gathers phi (electrostatic potential) from a MultiFab to the macroparticles.
+ * Adds a runtime component of the particle container to store it.
  *
- * @tparam T_ParticleContainer a WarpX particle container or AmrParticleContainer
  * @param tmp the particle container on which to store the gathered field
- * @param plo the coordinates of the low bound of the box, along each dimension
- * @param dxi the inverse of the cell size, along each dimension
- * @param phi a multifab that contains the field to be gathered
- * @param phi_index the index of the runtime component where to store the gathered field
- * @param lev the MR level
+ * @param electrostatic_solver_id the type of electrostatic solver used
+ * @param is_full_diagnostic whether this diagnostic is a full diagnostic
  */
-template< typename T_ParticleContainer >
 void
-storeFieldOnParticles ( T_ParticleContainer& tmp,
-    amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& plo,
-    amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi,
-    amrex::MultiFab const& phi,
-    int const phi_index, int const lev ) {
-
-    using PinnedParIter = typename T_ParticleContainer::ParIterType;
-
-    for (PinnedParIter pti(tmp, lev); pti.isValid(); ++pti) {
-
-        auto phi_grid = phi[pti].array();
-        const auto getPosition = GetParticlePosition<PIdx>(pti);
-        amrex::ParticleReal* phi_particle_arr = pti.GetStructOfArrays().GetRealData(phi_index).dataPtr();
-
-        // Loop over the particles and update their position
-        amrex::ParallelFor( pti.numParticles(),
-            [=] AMREX_GPU_DEVICE (long ip) {
-
-                amrex::ParticleReal xp, yp, zp;
-                getPosition(ip, xp, yp, zp);
-                int i, j, k;
-                amrex::Real W[AMREX_SPACEDIM][2];
-                ablastr::particles::compute_weights(xp, yp, zp, plo, dxi, i, j, k, W);
-                amrex::Real const phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, phi_grid);
-                phi_particle_arr[ip] = phi_value;
-            }
-        );
-    }
-}
+storePhiOnParticles ( PinnedMemoryParticleContainer& tmp,
+    int electrostatic_solver_id, bool is_full_diagnostic );
 
 #endif /* PARTICLEIO_H_ */
