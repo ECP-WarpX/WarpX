@@ -3365,6 +3365,7 @@ void PhysicalParticleContainer::resample (const int timestep, const bool verbose
                 "Resampling " + species_name + " at step " + std::to_string(timestep)
             );
         }
+        Redistribute();
         for (int lev = 0; lev <= maxLevel(); lev++)
         {
             for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
