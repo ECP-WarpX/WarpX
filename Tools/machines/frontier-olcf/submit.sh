@@ -43,7 +43,7 @@ fi
 # File to redirect stdandard output to
 output="output.txt"
 
-# It may be a good idea to print the current date
+# Time and date when the job script started (system time)
 date
 
 ########################################################################
