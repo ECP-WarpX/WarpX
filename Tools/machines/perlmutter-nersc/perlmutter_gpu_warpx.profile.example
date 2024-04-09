@@ -37,9 +37,9 @@ export PATH=/global/common/software/spackecp/perlmutter/e4s-23.08/default/spack/
 # optional: for Python bindings or libEnsemble
 module load cray-python/3.11.5
 
-if [ -d "${CFS}/${proj%_g}/${USER}/sw/perlmutter/gpu/venvs/warpx" ]
+if [ -d "${CFS}/${proj%_g}/${USER}/sw/perlmutter/gpu/venvs/warpx-gpu" ]
 then
-  source ${CFS}/${proj%_g}/${USER}/sw/perlmutter/gpu/venvs/warpx/bin/activate
+  source ${CFS}/${proj%_g}/${USER}/sw/perlmutter/gpu/venvs/warpx-gpu/bin/activate
 fi
 
 # an alias to request an interactive batch node for one hour

@@ -13,8 +13,10 @@
 
 using namespace amrex;
 
-ParticleDiag::ParticleDiag(std::string diag_name, std::string name, WarpXParticleContainer* pc, PinnedMemoryParticleContainer* pinned_pc)
-    : m_diag_name(diag_name), m_name(name), m_pc(pc), m_pinned_pc(pinned_pc)
+ParticleDiag::ParticleDiag(
+    const std::string& diag_name, const std::string& name,
+    WarpXParticleContainer* pc, PinnedMemoryParticleContainer* pinned_pc):
+    m_diag_name(diag_name), m_name(name), m_pc(pc), m_pinned_pc(pinned_pc)
 {
     //variable to set m_plot_flags size
     const int plot_flag_size = pc->NumRealComps();
@@ -33,12 +35,19 @@ ParticleDiag::ParticleDiag(std::string diag_name, std::string name, WarpXParticl
         if (variables[0] != "none"){
             const std::map<std::string, int> existing_variable_names = pc->getParticleComps();
             for (const auto& var : variables){
-                const auto search = existing_variable_names.find(var);
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                    search != existing_variable_names.end(),
-                    "variables argument '" + var
-                    +"' is not an existing attribute for this species");
-                m_plot_flags[existing_variable_names.at(var)] = 1;
+                if (var == "phi") {
+                    // User requests phi on particle. This is *not* part of the variables that
+                    // the particle container carries, and is only added to particles during output.
+                    // Therefore, this case needs to be treated specifically.
+                    m_plot_phi = true;
+                } else {
+                    const auto search = existing_variable_names.find(var);
+                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                        search != existing_variable_names.end(),
+                        "variables argument '" + var
+                        +"' is not an existing attribute for this species");
+                    m_plot_flags[existing_variable_names.at(var)] = 1;
+                }
             }
         }
     }

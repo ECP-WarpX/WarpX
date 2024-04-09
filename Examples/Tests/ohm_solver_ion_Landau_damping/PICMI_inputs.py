@@ -11,9 +11,8 @@ import sys
 import time
 
 import dill
-from mpi4py import MPI as mpi
 import numpy as np
-
+from mpi4py import MPI as mpi
 from pywarpx import callbacks, fields, libwarpx, particle_containers, picmi
 
 constants = picmi.constants
