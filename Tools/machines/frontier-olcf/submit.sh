@@ -24,7 +24,7 @@
 # warpx executable and the associated libraries to all the nodes.
 #is_pywarpx=true
 
-if [ $is_pywarpx ]; then
+if [ ${is_pywarpx} ]; then
 
     # Replace this with the name of the WarpX input script
     input_script="inputs_3d.py"
