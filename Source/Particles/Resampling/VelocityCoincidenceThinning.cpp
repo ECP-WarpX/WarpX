@@ -172,7 +172,7 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
                     || (i == cell_stop - 2) )
                 {
                     // check if the bin has more than 2 particles in it
-                    if (particles_in_bin > 2){
+                    if ( particles_in_bin > 2 && total_weight > std::numeric_limits<amrex::ParticleReal>::min() ){
                         // get average quantities for the bin
 #if !defined(WARPX_DIM_1D_Z)
                         cluster_x /= total_weight;
@@ -213,11 +213,11 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
                         auto sin_phi = cluster_uy / u_perp;
 
                         // handle edge case with stationary clusters or particles
-                        if (std::abs(u_perp) <= std::numeric_limits<amrex::ParticleReal>::min() || std::isnan(cos_phi) ) {
+                        if (std::abs(u_perp) <= std::numeric_limits<amrex::ParticleReal>::min()) {
                             cos_phi = 0._prt;
                             sin_phi = 0._prt;
                             sin_theta = 0._prt;
-                            if (std::abs(cluster_u_mag) <= std::numeric_limits<amrex::ParticleReal>::min() || std::isnan(cos_theta) ) {
+                            if (std::abs(cluster_u_mag) <= std::numeric_limits<amrex::ParticleReal>::min()) {
                                 cos_theta = 0._prt;
                             }
                         }
