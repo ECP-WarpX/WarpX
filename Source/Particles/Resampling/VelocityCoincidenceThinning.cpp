@@ -9,29 +9,10 @@
 
 #include "VelocityCoincidenceThinning.H"
 
-#include "Particles/WarpXParticleContainer.H"
 #include "Particles/Algorithms/KineticEnergy.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/ParticleUtils.H"
-#include "Utils/TextMsg.H"
 
-#include <ablastr/warn_manager/WarnManager.H>
-
-#include <AMReX.H>
-#include <AMReX_BLassert.H>
-#include <AMReX_DenseBins.H>
-#include <AMReX_Extension.H>
-#include <AMReX_GpuLaunch.H>
-#include <AMReX_GpuQualifiers.H>
-#include <AMReX_PODVector.H>
-#include <AMReX_ParmParse.H>
-#include <AMReX_Particle.H>
-#include <AMReX_ParticleTile.H>
-#include <AMReX_Particles.H>
-#include <AMReX_Random.H>
-#include <AMReX_StructOfArrays.H>
-
-#include <AMReX_BaseFwd.H>
 
 VelocityCoincidenceThinning::VelocityCoincidenceThinning (const std::string& species_name)
 {
@@ -87,7 +68,7 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
     auto *const indices = bins.permutationPtr();
     auto *const cell_offsets = bins.offsetsPtr();
 
-    const int min_ppc = m_min_ppc;
+    const auto min_ppc = m_min_ppc;
 
     const auto mass = pc->getMass();
 
@@ -101,8 +82,8 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
     sorted_indices.resize(bins.numItems());
     auto* sorted_indices_data = sorted_indices.data();
 
-    const int Ntheta = m_ntheta;
-    const int Nphi = m_nphi;
+    const auto Ntheta = m_ntheta;
+    const auto Nphi = m_nphi;
 
     auto dr = m_delta_ur;
     auto dtheta = 2.0_prt * MathConst::pi / Ntheta;
@@ -119,7 +100,7 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
             // given by the `indices[cell_start:cell_stop]`
             const auto cell_start = static_cast<int>(cell_offsets[i_cell]);
             const auto cell_stop  = static_cast<int>(cell_offsets[i_cell+1]);
-            const int cell_numparts = cell_stop - cell_start;
+            const auto cell_numparts = cell_stop - cell_start;
 
             // do nothing for cells with less particles than min_ppc
             // (this intentionally includes skipping empty cells, too)
@@ -127,8 +108,8 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
                 return;
             }
 
-            // Loop over particles and label them with the appropriate
-            // momentum bin number
+            // Loop over particles and label them with the appropriate momentum bin
+            // number. Also assign initial ordering to the sorted_indices array.
             for (int i = cell_start; i < cell_stop; ++i)
             {
                 // get polar components of the velocity vector
@@ -140,26 +121,19 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
                 auto u_theta = std::atan2(uy[indices[i]], ux[indices[i]]) + MathConst::pi;
                 auto u_phi = std::acos(uz[indices[i]]/u_mag);
 
-                const int ii = static_cast<int>(u_theta / dtheta);
-                const int jj = static_cast<int>(u_phi / dphi);
-                const int kk = static_cast<int>(u_mag / dr);
+                const auto ii = static_cast<int>(u_theta / dtheta);
+                const auto jj = static_cast<int>(u_phi / dphi);
+                const auto kk = static_cast<int>(u_mag / dr);
 
-                // note that the momentum bin number indexing is based on the
-                // cell sorted indexing, not the particle indexing
-                momentum_bin_number_data[i] = (
-                    ii + jj * Ntheta + kk * Ntheta * Nphi
-                );
-            }
-
-            // assign sorted_indices initial values
-            for (int i = cell_start; i < cell_stop; i++)
-            {
+                momentum_bin_number_data[i] = ii + jj * Ntheta + kk * Ntheta * Nphi;
                 sorted_indices_data[i] = i;
             }
-            // sort indexes based on comparing values in momentum_bin_number
+
+            // sort indices based on comparing values in momentum_bin_number
             heapSort(sorted_indices_data, momentum_bin_number_data, cell_start, cell_numparts);
 
-            // start by setting the running tallies equal to the first particle's attributes
+            // initialize variables used to hold cluster totals
+            int particles_in_bin = 0;
             amrex::ParticleReal total_weight = 0._prt, total_energy = 0._prt;
 #if !defined(WARPX_DIM_1D_Z)
             amrex::ParticleReal cluster_x = 0._prt;
@@ -169,8 +143,6 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
 #endif
             amrex::ParticleReal cluster_z = 0._prt;
             amrex::ParticleReal cluster_ux = 0._prt, cluster_uy = 0._prt, cluster_uz = 0._prt;
-
-            int particles_in_bin = 0;
 
             // Finally, loop through the particles in the cell and merge
             // ones in the same momentum bin
@@ -286,7 +258,7 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
                         uz[part_idx2] = 2._prt * cluster_uz - uz_new;
 
                         // set ids of merged particles so they will be removed
-                        for (int j = 2; j < particles_in_bin; j++){
+                        for (int j = 2; j < particles_in_bin; ++j){
                             idcpu[indices[sorted_indices_data[i - j]]] = amrex::ParticleIdCpus::Invalid;
                         }
                     }

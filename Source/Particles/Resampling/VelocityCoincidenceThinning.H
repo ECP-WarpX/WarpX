@@ -11,7 +11,6 @@
 
 #include "Resampling.H"
 
-#include "Particles/WarpXParticleContainer_fwd.H"
 
 /**
  * \brief This class implements a particle merging scheme wherein particles
@@ -63,26 +62,23 @@ public:
         AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
         void swap(int &a, int &b) const
         {
-            const int temp = b;
+            const auto temp = b;
             b = a;
             a = temp;
         }
 
-        AMREX_GPU_HOST_DEVICE
+        AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
         void operator() (int index_array[], const int bin_array[], const int start, const int n) const
         {
             // sort index_array into a max heap structure
             for (int i = 1; i < n; i++)
             {
+                auto j = i;
                 // move child through heap if it is bigger than its parent
-                if (bin_array[index_array[i+start]] > bin_array[index_array[(i - 1)/2 + start]])
-                {
-                    int j = i;
+                while (j > 0 && bin_array[index_array[j+start]] > bin_array[index_array[(j - 1)/2 + start]]) {
                     // swap child and parent until branch is properly ordered
-                    do {
-                        swap(index_array[j+start], index_array[(j - 1)/2 + start]);
-                        j = (j - 1) / 2;
-                    } while (bin_array[index_array[j+start]] > bin_array[index_array[(j - 1)/2 + start]]);
+                    swap(index_array[j+start], index_array[(j - 1)/2 + start]);
+                    j = (j - 1) / 2;
                 }
             }
 
@@ -93,11 +89,11 @@ public:
 
                 // remake the max heap
                 int j = 0, index;
-                do {
-                    index = (2 * j + 1);
+                while (j < i) {
+                    index = 2 * j + 1;
 
                     // if left child is smaller than right child, point index variable to right child
-                    if (index < (i - 1) && bin_array[index_array[index+start]] < bin_array[index_array[index+1+start]]) {
+                    if (index + 1 < i && bin_array[index_array[index+start]] < bin_array[index_array[index+1+start]]) {
                         index++;
                     }
                     // if parent is smaller than child, swap parent with child having higher value
@@ -105,7 +101,7 @@ public:
                         swap(index_array[j+start], index_array[index+start]);
                     }
                     j = index;
-                } while (index < i);
+                }
             }
         }
     };
