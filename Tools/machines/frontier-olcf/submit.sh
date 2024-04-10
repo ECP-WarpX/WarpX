@@ -59,7 +59,7 @@ if [ ! $is_pywarpx ]; then
     # is needed in SBATCH headers to use the NVMe drive
     # NOTE: dlopen'd files will NOT be picked up by sbcast
     sbcast --send-libs --exclude=NONE -pf ${exe} /mnt/bb/$USER/warpx
-    if [ ! "$?" == "0" ]; then
+    if [ "$?" != "0" ]; then
         # CHECK EXIT CODE. When SBCAST fails, it may leave partial
         # files on the compute nodes, and if you continue to launch srun,
         # your application may pick up partially complete shared library files,
