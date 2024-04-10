@@ -119,7 +119,6 @@ struct FindEmbeddedBoundaryIntersection {
         ablastr::particles::compute_weights<ablastr::particles::FieldType::nodal>(
             x_temp, y_temp, z_temp, plo, dxi, i, j, k, W);
         int ic, jc, kc; // Cell-centered indices
-        int nodal;
         amrex::Real Wc[AMREX_SPACEDIM][2]; // Cell-centered weight
         ablastr::particles::compute_weights<ablastr::particles::FieldType::cell_centered>(
             x_temp, y_temp, z_temp, plo, dxi, ic, jc, kc, Wc);
