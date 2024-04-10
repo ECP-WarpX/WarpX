@@ -302,7 +302,11 @@ WarpXParticleContainer::AddNParticles (int /*lev*/, long n,
 #ifdef AMREX_USE_EB
     auto & distance_to_eb = WarpX::GetInstance().GetDistanceToEB();
     scrapeParticles( *this, amrex::GetVecOfConstPtrs(distance_to_eb), ParticleBoundaryProcess::Absorb());
-    // Remove particles with invalid ids
+    deleteInvalidParticles();
+}
+
+void
+WarpXParticleContainer::deleteInvalidParticles () {
     const int nLevels = finestLevel();
     for (int lev = 0; lev <= nLevels; ++lev) {
 #ifdef AMREX_USE_OMP
