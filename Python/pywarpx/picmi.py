@@ -602,6 +602,10 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
     warpx_end_moving_window_step: int, default=-1
        The timestep at which the moving window ends. If -1, the moving window
        will continue until the end of the simulation.
+
+    warpx_boundary_u_th: dict, default=None
+        If a thermal boundary is used for particles, this dictionary should
+        specify the temperature for each species in the form {`<species>`: u_th}
     """
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
@@ -629,6 +633,16 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
 
+        # if a thermal boundary is used for particles, get the temperatures
+        if ('thermal' in self.lower_boundary_conditions_particles
+            or 'thermal' in self.upper_boundary_conditions_particles):
+            self.thermal_boundary_u_th = kw.pop('warpx_boundary_u_th', None)
+            if self.thermal_boundary_u_th is None:
+                raise AttributeError(
+                    "Thermal boundary specified: velocity standard deviation "
+                    "must be specified for each species."
+                )
+
     def grid_initialize_inputs(self):
         pywarpx.amr.n_cell = self.number_of_cells
 
@@ -652,6 +666,10 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         pywarpx.boundary.particle_lo = self.lower_boundary_conditions_particles
         pywarpx.boundary.particle_hi = self.upper_boundary_conditions_particles
         pywarpx.boundary.reflect_all_velocities = self.reflect_all_velocities
+
+        if self.thermal_boundary_u_th is not None:
+            for name, val in self.thermal_boundary_u_th.items():
+                pywarpx.boundary.__setattr__(f'{name}.u_th', val)
 
         if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
             pywarpx.warpx.do_moving_window = 1
