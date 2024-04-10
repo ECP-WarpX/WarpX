@@ -208,7 +208,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                 RemakeMultiFab(Bfield_avg_fp[lev][idim], dm, true ,lev);
             }
             if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
-                RemakeMultiFab(m_hybrid_pic_model->current_fp_temp[lev][idim], dm, false, lev);
+                RemakeMultiFab(m_hybrid_pic_model->current_fp_temp[lev][idim], dm, true, lev);
                 RemakeMultiFab(m_hybrid_pic_model->current_fp_ampere[lev][idim], dm, false, lev);
                 RemakeMultiFab(m_hybrid_pic_model->current_fp_external[lev][idim], dm, true, lev);
             }
