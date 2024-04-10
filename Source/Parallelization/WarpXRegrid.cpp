@@ -235,7 +235,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         RemakeMultiFab(phi_fp[lev], dm, true ,lev);
 
         if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
-            RemakeMultiFab(m_hybrid_pic_model->rho_fp_temp[lev], dm, false, lev);
+            RemakeMultiFab(m_hybrid_pic_model->rho_fp_temp[lev], dm, true, lev);
             RemakeMultiFab(m_hybrid_pic_model->electron_pressure_fp[lev], dm, false, lev);
         }
 
