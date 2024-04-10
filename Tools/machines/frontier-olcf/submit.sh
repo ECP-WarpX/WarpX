@@ -52,7 +52,7 @@ date
 
 # ___ Broadcast WarpX and associated libraries to compute nodes_________
 
-if [ ! $is_pywarpx ]; then
+if [ ! ${is_pywarpx} ]; then
 
     # From the documentation:
     # SBCAST executable from Orion to NVMe -- NOTE: ``-C nvme``
