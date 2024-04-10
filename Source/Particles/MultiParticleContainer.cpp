@@ -803,7 +803,7 @@ MultiParticleContainer::mapSpeciesProduct ()
 /* \brief Given a species name, return its ID.
  */
 int
-MultiParticleContainer::getSpeciesID (std::string product_str) const
+MultiParticleContainer::getSpeciesID (const std::string& product_str) const
 {
     auto species_and_lasers_names = GetSpeciesAndLasersNames();
     int i_product = 0;
@@ -832,7 +832,7 @@ MultiParticleContainer::SetDoBackTransformedParticles (const bool do_back_transf
 }
 
 void
-MultiParticleContainer::SetDoBackTransformedParticles (std::string species_name, const bool do_back_transformed_particles) {
+MultiParticleContainer::SetDoBackTransformedParticles (const std::string& species_name, const bool do_back_transformed_particles) {
     auto species_names_list = GetSpeciesNames();
     bool found = false;
     // Loop over species
@@ -1344,12 +1344,12 @@ MultiParticleContainer::doQEDSchwinger ()
     pc_product_ele->defineAllParticleTiles();
     pc_product_pos->defineAllParticleTiles();
 
-    const MultiFab & Ex = warpx.getEfield(level_0,0);
-    const MultiFab & Ey = warpx.getEfield(level_0,1);
-    const MultiFab & Ez = warpx.getEfield(level_0,2);
-    const MultiFab & Bx = warpx.getBfield(level_0,0);
-    const MultiFab & By = warpx.getBfield(level_0,1);
-    const MultiFab & Bz = warpx.getBfield(level_0,2);
+    const MultiFab & Ex = warpx.getField(FieldType::Efield_aux, level_0,0);
+    const MultiFab & Ey = warpx.getField(FieldType::Efield_aux, level_0,1);
+    const MultiFab & Ez = warpx.getField(FieldType::Efield_aux, level_0,2);
+    const MultiFab & Bx = warpx.getField(FieldType::Bfield_aux, level_0,0);
+    const MultiFab & By = warpx.getField(FieldType::Bfield_aux, level_0,1);
+    const MultiFab & Bz = warpx.getField(FieldType::Bfield_aux, level_0,2);
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())

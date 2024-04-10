@@ -12,15 +12,15 @@
 
 #include "HybridPICModel_fwd.H"
 
+#include "Utils/WarpXAlgorithmSelection.H"
+
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#include "WarpX.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_REAL.H>
-
 
 /**
  * \brief This class contains the parameters needed to evaluate hybrid field
@@ -198,6 +198,12 @@ public:
     get_pointer_current_fp_ampere  (int lev, int direction) const
     {
         return current_fp_ampere[lev][direction].get();
+    }
+
+    [[nodiscard]] amrex::MultiFab*
+    get_pointer_current_fp_external (int lev, int direction) const
+    {
+        return current_fp_external[lev][direction].get();
     }
 
     [[nodiscard]] amrex::MultiFab*

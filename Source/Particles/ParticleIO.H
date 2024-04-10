@@ -8,6 +8,10 @@
 #define PARTICLEIO_H_
 
 #include "Particles/WarpXParticleContainer.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
+#include "Particles/PinnedMemoryParticleContainer.H"
+
+#include <ablastr/particles/NodalFieldGather.H>
 
 #include <AMReX_AmrParticles.H>
 #include <AMReX_ParIter.H>
@@ -76,5 +80,16 @@ particlesConvertUnits (ConvertDirection convert_direction, T_ParticleContainer* 
         }
     }
 }
+
+/** Gathers phi (electrostatic potential) from a MultiFab to the macroparticles.
+ * Adds a runtime component of the particle container to store it.
+ *
+ * @param tmp the particle container on which to store the gathered field
+ * @param electrostatic_solver_id the type of electrostatic solver used
+ * @param is_full_diagnostic whether this diagnostic is a full diagnostic
+ */
+void
+storePhiOnParticles ( PinnedMemoryParticleContainer& tmp,
+    int electrostatic_solver_id, bool is_full_diagnostic );
 
 #endif /* PARTICLEIO_H_ */
