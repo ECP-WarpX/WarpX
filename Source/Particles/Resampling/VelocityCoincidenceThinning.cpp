@@ -197,7 +197,7 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
                             (total_energy / total_weight + 2._prt * mass * c2 )
                             / (mass * mass * c2)
                         );
-                        auto v_perp = std::sqrt(v_mag2 - cluster_u_mag2);
+                        auto v_perp = (v_mag2 > cluster_u_mag2) ? std::sqrt(v_mag2 - cluster_u_mag2) : 0_prt;
 
                         // choose random angle for new velocity vector
                         auto phi = amrex::Random(engine) * MathConst::pi;
