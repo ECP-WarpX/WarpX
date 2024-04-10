@@ -303,6 +303,7 @@ WarpXParticleContainer::AddNParticles (int /*lev*/, long n,
     auto & distance_to_eb = WarpX::GetInstance().GetDistanceToEB();
     scrapeParticles( *this, amrex::GetVecOfConstPtrs(distance_to_eb), ParticleBoundaryProcess::Absorb());
     deleteInvalidParticles();
+#endif
 }
 
 void
@@ -317,7 +318,6 @@ WarpXParticleContainer::deleteInvalidParticles () {
             removeInvalidParticles( ptile );
         }
     }
-#endif
 }
 
 /* \brief Current Deposition for thread thread_num
