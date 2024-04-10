@@ -158,7 +158,7 @@ WarpXParticleContainer::AllocData ()
 }
 
 void
-WarpXParticleContainer::AddNParticles (int lev, long n,
+WarpXParticleContainer::AddNParticles (int /*lev*/, long n,
                                        amrex::Vector<amrex::ParticleReal> const & x,
                                        amrex::Vector<amrex::ParticleReal> const & y,
                                        amrex::Vector<amrex::ParticleReal> const & z,
@@ -303,7 +303,7 @@ WarpXParticleContainer::AddNParticles (int lev, long n,
     auto & distance_to_eb = WarpX::GetInstance().GetDistanceToEB();
     scrapeParticles( *this, amrex::GetVecOfConstPtrs(distance_to_eb), ParticleBoundaryProcess::Absorb());
     // Call (local) redistribute again to remove particles with invalid ids
-    Redistribute(lev, lev, 0, 1, true);
+    Redistribute(0, -1, 0, 1, true);
 #endif
 }
 
