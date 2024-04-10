@@ -52,43 +52,8 @@ date
 
 # ___ Broadcast WarpX and associated libraries to compute nodes_________
 
-if [ ! ${is_pywarpx} ]; then
+if [ ${is_pywarpx} ]; then
 
-    # From the documentation:
-    # SBCAST executable from Orion to NVMe -- NOTE: ``-C nvme``
-    # is needed in SBATCH headers to use the NVMe drive
-    # NOTE: dlopen'd files will NOT be picked up by sbcast
-    sbcast --send-libs --exclude=NONE -pf ${exe} /mnt/bb/$USER/warpx
-    if [ "$?" != "0" ]; then
-        # CHECK EXIT CODE. When SBCAST fails, it may leave partial
-        # files on the compute nodes, and if you continue to launch srun,
-        # your application may pick up partially complete shared library files,
-        # which would give you confusing errors.
-        echo "SBCAST failed!"
-        exit 1
-    fi
-    # SBCAST sends all libraries detected by `ld` (minus any excluded),
-    # and stores them in the same directory in each node's node-local storage
-    # Any libraries opened by `dlopen` are NOT sent, since they are not
-    # known by the linker at run-time.
-    # All required libraries now reside in /mnt/bb/$USER/warpx_libs
-    export LD_LIBRARY_PATH="/mnt/bb/$USER/warpx_libs"
-    # libfabric dlopen's several libraries:
-    export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:$(pkg-config --variable=libdir libfabric)"
-    # cray-mpich dlopen's libhsa-runtime64.so and
-    # libamdhip64.so (non-versioned), so symlink on each node:
-    srun -N ${SLURM_NNODES} -n ${SLURM_NNODES} --ntasks-per-node=1 --label -D /mnt/bb/$USER/warpx_libs \
-        bash -c "if [ -f libhsa-runtime64.so.1 ]; then ln -s libhsa-runtime64.so.1 libhsa-runtime64.so; fi;
-        if [ -f libamdhip64.so.5 ]; then ln -s libamdhip64.so.5 libamdhip64.so; fi"
-    # You may notice that some libraries are still linked
-    # from /sw/frontier, even after SBCASTing.
-    # This is because the Spack-build modules use RPATH to find their dependencies.
-    # This behavior cannot be changed.
-    echo "*****ldd /mnt/bb/$USER/warpx*****"
-    ldd /mnt/bb/$USER/warpx
-    echo "*************************************"
-
-else
     # Find out the path of the pywarpx module
     PYWARPX_PATH=$(python3 -c "import pywarpx; print(pywarpx.__path__[0])")
 
@@ -149,6 +114,43 @@ else
     echo ""
     python3 -c "import pywarpx; print('pywarpx.__path__: ', pywarpx.__path__)"
     echo "*************************************"
+
+else
+
+    # From the documentation:
+    # SBCAST executable from Orion to NVMe -- NOTE: ``-C nvme``
+    # is needed in SBATCH headers to use the NVMe drive
+    # NOTE: dlopen'd files will NOT be picked up by sbcast
+    sbcast --send-libs --exclude=NONE -pf ${exe} /mnt/bb/$USER/warpx
+    if [ "$?" != "0" ]; then
+        # CHECK EXIT CODE. When SBCAST fails, it may leave partial
+        # files on the compute nodes, and if you continue to launch srun,
+        # your application may pick up partially complete shared library files,
+        # which would give you confusing errors.
+        echo "SBCAST failed!"
+        exit 1
+    fi
+    # SBCAST sends all libraries detected by `ld` (minus any excluded),
+    # and stores them in the same directory in each node's node-local storage
+    # Any libraries opened by `dlopen` are NOT sent, since they are not
+    # known by the linker at run-time.
+    # All required libraries now reside in /mnt/bb/$USER/warpx_libs
+    export LD_LIBRARY_PATH="/mnt/bb/$USER/warpx_libs"
+    # libfabric dlopen's several libraries:
+    export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:$(pkg-config --variable=libdir libfabric)"
+    # cray-mpich dlopen's libhsa-runtime64.so and
+    # libamdhip64.so (non-versioned), so symlink on each node:
+    srun -N ${SLURM_NNODES} -n ${SLURM_NNODES} --ntasks-per-node=1 --label -D /mnt/bb/$USER/warpx_libs \
+        bash -c "if [ -f libhsa-runtime64.so.1 ]; then ln -s libhsa-runtime64.so.1 libhsa-runtime64.so; fi;
+        if [ -f libamdhip64.so.5 ]; then ln -s libamdhip64.so.5 libamdhip64.so; fi"
+    # You may notice that some libraries are still linked
+    # from /sw/frontier, even after SBCASTing.
+    # This is because the Spack-build modules use RPATH to find their dependencies.
+    # This behavior cannot be changed.
+    echo "*****ldd /mnt/bb/$USER/warpx*****"
+    ldd /mnt/bb/$USER/warpx
+    echo "*************************************"
+
 fi
 
 # _____________________________________________________________________________
@@ -194,11 +196,11 @@ export TOTAL_NMPI=$(( ${SLURM_JOB_NUM_NODES} * ${WARPX_NMPI_PER_NODE} ))
 
 # ___ Run WarpX simulation ____________________________________________________
 
-if [ ! ${is_pywarpx} ]; then
-    srun -N${SLURM_JOB_NUM_NODES} -n${TOTAL_NMPI} --ntasks-per-node=${WARPX_NMPI_PER_NODE} \
-        /mnt/bb/$USER/warpx ./${inputfile} > ${output}
-else
+if [ ${is_pywarpx} ]; then
     srun -N${SLURM_JOB_NUM_NODES} -n${TOTAL_NMPI} --ntasks-per-node=${WARPX_NMPI_PER_NODE} \
         ./${input_script}> ${output}
+else
+    srun -N${SLURM_JOB_NUM_NODES} -n${TOTAL_NMPI} --ntasks-per-node=${WARPX_NMPI_PER_NODE} \
+        /mnt/bb/$USER/warpx ./${inputfile} > ${output}
 fi
 # _____________________________________________________________________________
