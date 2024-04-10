@@ -220,7 +220,7 @@ public:
 
             if (m_have_product_species) {
                 // The fact that there are product species indicates that particles of
-                // the colliding species (`species1` and `species2`) may be removed 
+                // the colliding species (`species1` and `species2`) may be removed
                 // (i.e., marked as invalid) in the process of creating new product particles.
                 // Call (local) redistribute to remove invalid particles
                 species1.Redistribute(lev, lev, 0, 1, true);
