@@ -330,9 +330,6 @@ public:
                                                     p_n_pairs_in_each_cell, pair_offsets.data());
             index_type* AMREX_RESTRICT p_pair_offsets = pair_offsets.dataPtr();
 
-            /*
-               preprocessing calculations for efficient gpu acceleration
-            */
             amrex::Gpu::DeviceVector<index_type> n_ind_pairs_in_each_cell(n_cells+1);
             index_type* AMREX_RESTRICT p_n_ind_pairs_in_each_cell = n_ind_pairs_in_each_cell.dataPtr();
 
@@ -351,9 +348,6 @@ public:
             const auto n_independent_pairs =  (int) amrex::Scan::ExclusiveSum(n_cells+1,
                                                     p_n_ind_pairs_in_each_cell, coll_offsets.data(), amrex::Scan::RetSum{true});
             index_type* AMREX_RESTRICT p_coll_offsets = coll_offsets.dataPtr();
-            /*
-               end of preprocessing calculations
-            */
 
             // mask: equal to 1 if particle creation occurs for a given pair, 0 otherwise
             amrex::Gpu::DeviceVector<index_type> mask(n_total_pairs);
@@ -527,9 +521,6 @@ public:
                                                     p_n_pairs_in_each_cell, pair_offsets.data());
             index_type* AMREX_RESTRICT p_pair_offsets = pair_offsets.dataPtr();
 
-            /*
-               preprocessing calculations for efficient gpu acceleration
-            */
             amrex::Gpu::DeviceVector<index_type> n_ind_pairs_in_each_cell(n_cells+1);
             index_type* AMREX_RESTRICT p_n_ind_pairs_in_each_cell = n_ind_pairs_in_each_cell.dataPtr();
 
@@ -540,15 +531,7 @@ public:
                     {
                         const auto n_part_in_cell_1 = cell_offsets_1[i_cell+1] - cell_offsets_1[i_cell];
                         const auto n_part_in_cell_2 = cell_offsets_2[i_cell+1] - cell_offsets_2[i_cell];
-                        // Particular case: no pair if a species has no particle in that cell
-                        if (n_part_in_cell_1 == 0 || n_part_in_cell_2 == 0)
-                        {
-                            p_n_ind_pairs_in_each_cell[i_cell] = 0;
-                        }
-                        else
-                        {
-                            p_n_ind_pairs_in_each_cell[i_cell] = amrex::min(n_part_in_cell_1, n_part_in_cell_2);
-                        }
+                        p_n_ind_pairs_in_each_cell[i_cell] = amrex::min(n_part_in_cell_1, n_part_in_cell_2);
                     }
                     else
                     {
@@ -563,9 +546,6 @@ public:
             const auto n_independent_pairs = (int) amrex::Scan::ExclusiveSum(n_cells+1,
                                                     p_n_ind_pairs_in_each_cell, coll_offsets.data(), amrex::Scan::RetSum{true});
             index_type* AMREX_RESTRICT p_coll_offsets = coll_offsets.dataPtr();
-            /*
-               end of preprocessing calculations
-            */
 
             // mask: equal to 1 if particle creation occurs for a given pair, 0 otherwise
             amrex::Gpu::DeviceVector<index_type> mask(n_total_pairs);
