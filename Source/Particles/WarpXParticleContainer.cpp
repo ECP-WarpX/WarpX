@@ -309,7 +309,8 @@ WarpXParticleContainer::AddNParticles (int /*lev*/, long n,
 #pragma omp parallel
 #endif
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti) {
-            removeInvalidParticles( pti );
+            ParticleTileType& ptile = ParticlesAt(lev, pti);
+            removeInvalidParticles( ptile );
         }
     }
 #endif
