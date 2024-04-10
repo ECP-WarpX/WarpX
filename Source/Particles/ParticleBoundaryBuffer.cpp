@@ -98,7 +98,8 @@ struct FindEmbeddedBoundaryIntersection {
                 amrex::Real W[AMREX_SPACEDIM][2];
                 amrex::ParticleReal x_temp=xp, y_temp=yp, z_temp=zp;
                 UpdatePosition(x_temp, y_temp, z_temp, ux, uy, uz, -dt_frac*dt);
-                ablastr::particles::compute_weights(x_temp, y_temp, z_temp, plo, dxi, i, j, k, W);
+                ablastr::particles::compute_weights<ablastr::particles::FieldType::nodal>(
+                    x_temp, y_temp, z_temp, plo, dxi, i, j, k, W);
                 amrex::Real phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, phiarr);
                 return phi_value;
             } );
@@ -115,11 +116,13 @@ struct FindEmbeddedBoundaryIntersection {
         // record the components of the normal on the destination
         int i, j, k;
         amrex::Real W[AMREX_SPACEDIM][2];
-        ablastr::particles::compute_weights(x_temp, y_temp, z_temp, plo, dxi, i, j, k, W);
+        ablastr::particles::compute_weights<ablastr::particles::FieldType::nodal>(
+            x_temp, y_temp, z_temp, plo, dxi, i, j, k, W);
         int ic, jc, kc; // Cell-centered indices
         int nodal;
         amrex::Real Wc[AMREX_SPACEDIM][2]; // Cell-centered weight
-        ablastr::particles::compute_weights(x_temp, y_temp, z_temp, plo, dxi, ic, jc, kc, Wc, nodal=0); // nodal=0 to calculate the weights with respect to the cell-centered nodes
+        ablastr::particles::compute_weights<ablastr::particles::FieldType::cell_centered>(
+            x_temp, y_temp, z_temp, plo, dxi, ic, jc, kc, Wc);
         amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, ic, jc, kc, Wc, phiarr, dxi);
         DistanceToEB::normalize(normal);
 
