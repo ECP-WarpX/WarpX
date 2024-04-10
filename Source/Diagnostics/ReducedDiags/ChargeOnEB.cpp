@@ -28,7 +28,7 @@
 using namespace amrex;
 
 // constructor
-ChargeOnEB::ChargeOnEB (std::string rd_name)
+ChargeOnEB::ChargeOnEB (const std::string& rd_name)
 : ReducedDiags{rd_name}
 {
     // Only 3D is working for now
@@ -93,9 +93,9 @@ void ChargeOnEB::ComputeDiags (const int step)
     int const lev = 0;
 
     // get MultiFab data at lev
-    const amrex::MultiFab & Ex = warpx.getEfield_fp(lev,0);
-    const amrex::MultiFab & Ey = warpx.getEfield_fp(lev,1);
-    const amrex::MultiFab & Ez = warpx.getEfield_fp(lev,2);
+    const amrex::MultiFab & Ex = warpx.getField(FieldType::Efield_fp, lev,0);
+    const amrex::MultiFab & Ey = warpx.getField(FieldType::Efield_fp, lev,1);
+    const amrex::MultiFab & Ez = warpx.getField(FieldType::Efield_fp, lev,2);
 
     // get EB structures
     amrex::EBFArrayBoxFactory const& eb_box_factory = warpx.fieldEBFactory(lev);

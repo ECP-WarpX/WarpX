@@ -9,6 +9,7 @@ import re
 import sys
 
 from . import Particles
+from ._libwarpx import libwarpx
 from .Algo import algo
 from .Amr import amr
 from .Amrex import amrex
@@ -22,9 +23,8 @@ from .Geometry import geometry
 from .HybridPICModel import hybridpicmodel
 from .Interpolation import interpolation
 from .Lasers import lasers, lasers_list
-from .PSATD import psatd
 from .Particles import particles, particles_list
-from ._libwarpx import libwarpx
+from .PSATD import psatd
 
 
 class WarpX(Bucket):

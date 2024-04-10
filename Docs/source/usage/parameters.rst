@@ -157,16 +157,28 @@ Overall simulation parameters
       where :math:`\boldsymbol{\beta}` is the average (normalized) velocity of the considered species (which can be relativistic).
       See, e.g., :cite:t:`param-Vaypop2008` for more information.
 
-    See the `AMReX documentation <https://amrex-codes.github.io/amrex/docs_html/LinearSolvers.html#>`_
-    for details of the MLMG solver (the default solver used with electrostatic
-    simulations). The default behavior of the code is to check whether there is
-    non-zero charge density in the system and if so force the MLMG solver to
-    use the solution max norm when checking convergence. If there is no charge
-    density, the MLMG solver will switch to using the initial guess max norm
-    error when evaluating convergence and an absolute error tolerance of
-    :math:`10^{-6}` :math:`\mathrm{V/m}^2` will be used (unless a different
-    non-zero value is specified by the user via
-    ``warpx.self_fields_absolute_tolerance``).
+* ``warpx.poisson_solver`` (`string`) optional (default `multigrid`)
+
+    * ``multigrid``: Poisson's equation is solved using an iterative multigrid (MLMG) solver.
+        See the `AMReX documentation <https://amrex-codes.github.io/amrex/docs_html/LinearSolvers.html#>`__
+        for details of the MLMG solver (the default solver used with electrostatic
+        simulations). The default behavior of the code is to check whether there is
+        non-zero charge density in the system and if so force the MLMG solver to
+        use the solution max norm when checking convergence. If there is no charge
+        density, the MLMG solver will switch to using the initial guess max norm
+        error when evaluating convergence and an absolute error tolerance of
+        :math:`10^{-6}` :math:`\mathrm{V/m}^2` will be used (unless a different
+        non-zero value is specified by the user via
+        ``warpx.self_fields_absolute_tolerance``).
+
+    * ``fft``: Poisson's equation is solved using an Integrated Green Function method (which requires FFT calculations).
+        See these references for more details :cite:t:`QiangPhysRevSTAB2006`, :cite:t:`QiangPhysRevSTAB2006err`.
+        It only works in 3D and it requires the compilation flag ``-DWarpX_PSATD=ON``.
+        If mesh refinement is enabled, this solver only works on the coarsest level.
+        On the refined patches, the Poisson equation is solved with the multigrid solver.
+        In electrostatic mode, this solver requires open field boundary conditions (``boundary.field_lo,hi = open``).
+        In electromagnetic mode, this solver can be used to initialize the species' self fields
+        (``<species_name>.initialize_self_fields=1``) provided that the field BCs are PML (``boundary.field_lo,hi = PML``).
 
 * ``warpx.self_fields_required_precision`` (`float`, default: 1.e-11)
     The relative precision with which the electrostatic space-charge fields should
@@ -395,11 +407,19 @@ Domain Boundary Conditions
     * ``damped``: This is the recommended option in the moving direction when using the spectral solver with moving window (currently only supported along z). This boundary condition applies a damping factor to the electric and magnetic fields in the outer half of the guard cells, using a sine squared profile. As the spectral solver is by nature periodic, the damping prevents fields from wrapping around to the other end of the domain when the periodicity is not desired. This boundary condition is only valid when using the spectral solver.
 
     * ``pec``: This option can be used to set a Perfect Electric Conductor at the simulation boundary. Please see the :ref:`PEC theory section <theory-bc-pec>` for more details. Note that PEC boundary is invalid at `r=0` for the RZ solver. Please use ``none`` option. This boundary condition does not work with the spectral solver.
-      If an electrostatic field solve is used the boundary potentials can also be set through ``boundary.potential_lo_x/y/z`` and ``boundary.potential_hi_x/y/z`` (default `0`).
 
     * ``none``: No boundary condition is applied to the fields with the electromagnetic solver. This option must be used for the RZ-solver at `r=0`.
 
-    * ``neumann``: For the electrostatic solver, a Neumann boundary condition (with gradient of the potential equal to 0) will be applied on the specified boundary.
+    * ``neumann``: For the electrostatic multigrid solver, a Neumann boundary condition (with gradient of the potential equal to 0) will be applied on the specified boundary.
+
+    * ``open``: For the electrostatic Poisson solver based on a Integrated Green Function method.
+
+* ``boundary.potential_lo_x/y/z`` and ``boundary.potential_hi_x/y/z`` (default `0`)
+    Gives the value of the electric potential at the boundaries, for ``pec`` boundaries. With electrostatic solvers
+    (i.e., with ``warpx.do_electrostatic = ...``), this is used in order to compute the potential
+    in the simulation volume at each timestep. When using other solvers (e.g. Maxwell solver),
+    setting these variables will trigger an electrostatic solve at ``t=0``, to compute the initial
+    electric field produced by the boundaries.
 
 * ``boundary.particle_lo`` and ``boundary.particle_hi`` (`2 strings` for 2D, `3 strings` for 3D, `absorbing` by default)
     Options are:
@@ -410,6 +430,12 @@ Domain Boundary Conditions
 
     * ``Reflecting``: Particles leaving the boundary are reflected from the boundary back into the domain.
       When ``boundary.reflect_all_velocities`` is false, the sign of only the normal velocity is changed, otherwise the sign of all velocities are changed.
+
+    * ``Thermal``: Particles leaving the boundary are reflected from the boundary back into the domain
+      and their velocities are thermalized. The tangential velocity components are sampled from ``gaussian`` distribution
+      and the component normal to the boundary is sampled from ``gaussian flux`` distribution.
+      The standard deviation for these distributions should be provided for each species using
+      ``boundary.<species>.u_th``. The same standard deviation is used to sample all components.
 
 * ``boundary.reflect_all_velocities`` (`bool`) optional (default `false`)
     For a reflecting boundary condition, this flags whether the sign of only the normal velocity is changed or all velocities.
@@ -473,9 +499,12 @@ Embedded Boundary Conditions
     the interior of the embeddded boundary is where the function value is positive.
 
 * ``warpx.eb_potential(x,y,z,t)`` (`string`)
-    Only used when ``warpx.do_electrostatic=labframe``. Gives the value of
-    the electric potential at the surface of the embedded boundary,
-    as a function of  `x`, `y`, `z` and time. This function is also evaluated
+    Gives the value of the electric potential at the surface of the embedded boundary,
+    as a function of  `x`, `y`, `z` and `t`. With electrostatic solvers (i.e., with
+    ``warpx.do_electrostatic = ...``), this is used in order to compute the potential
+    in the simulation volume at each timestep. When using other solvers (e.g. Maxwell solver),
+    setting this variable will trigger an electrostatic solve at ``t=0``, to compute the initial
+    electric field produced by the boundaries. Note that this function is also evaluated
     inside the embedded boundary. For this reason, it is important to define
     this function in such a way that it is constant inside the embedded boundary.
 
@@ -548,7 +577,7 @@ Distribution across MPI ranks and parallelization
     For example, if there are 4 boxes per rank and `load_balance_knapsack_factor=2`,
     no more than 8 boxes can be assigned to any rank.
 
-* ``algo.load_balance_costs_update`` (`heuristic` or `timers` or `gpuclock`) optional (default `timers`)
+* ``algo.load_balance_costs_update`` (``heuristic`` or ``timers``) optional (default ``timers``)
     If this is `heuristic`: load balance costs are updated according to a measure of
     particles and cells assigned to each box of the domain.  The cost :math:`c` is
     computed as
@@ -564,10 +593,6 @@ Distribution across MPI ranks and parallelization
     :math:`w_{\text{cell}}` is the cell cost weight factor (controlled by ``algo.costs_heuristic_cells_wt``).
 
     If this is `timers`: costs are updated according to in-code timers.
-
-    If this is `gpuclock`: [**requires to compile with option** ``-DWarpX_GPUCLOCK=ON``]
-    costs are measured as (max-over-threads) time spent in current deposition
-    routine (only applies when running on GPUs).
 
 * ``algo.costs_heuristic_particles_wt`` (`float`) optional
     Particle weight factor used in `Heuristic` strategy for costs update; if running on GPU,
@@ -799,7 +824,20 @@ Particle initialization
 
       * ``<species_name>.focal_distance`` (optional, distance between the beam centroid and the position of the focal plane of the beam, along the direction of the beam mean velocity; space charge is ignored in the initialization of the particles)
 
-      If ``<species_name>.focal_distance`` is specified, ``x_rms``, ``y_rms`` and ``z_rms`` are the size of the beam in the focal plane. Since the beam is not necessarily initialized close to its focal plane, the initial size of the beam will differ from ``x_rms``, ``y_rms``, ``z_rms``.
+      If ``<species_name>.focal_distance`` is specified, ``x_rms``, ``y_rms`` and ``z_rms`` are the sizes of the beam in the focal plane. Since the beam is not necessarily initialized close to its focal plane, the initial size of the beam will differ from ``x_rms``, ``y_rms``, ``z_rms``.
+
+      Usually, in accelerator physics the operative quantities are the normalized emittances :math:`\epsilon_{x,y}` and beta functions :math:`\beta_{x,y}`.
+      We assume that the beam travels along :math:`z` and we mark the quantities evaluated at the focal plane with a :math:`*`.
+      Therefore, the normalized transverse emittances and beta functions are related to the focal distance :math:`f = z - z^*`, the beam sizes :math:`\sigma_{x,y}` (which in the code are ``x_rms``, ``y_rms``), the beam relativistic Lorentz factor :math:`\gamma`, and the normalized momentum spread :math:`\Delta u_{x,y}` according to the equations below (:cite:t:`param-Wiedemann2015`).
+
+      .. math::
+
+          \Delta u_{x,y} &= \frac{\epsilon^*_{x,y}}{\sigma^*_{x,y}},
+
+          \sigma*_{x, y} &= \sqrt{ \frac{ \epsilon^*_{x,y} \beta^*_{x,y} }{\gamma}},
+
+          \sigma_{x,y}(z) &= \sigma^*_{x,y} \sqrt{1 + \left( \frac{z - z^*}{\beta^*_{x,y}} \right)^2}
+
 
     * ``external_file``: Inject macroparticles with properties (mass, charge, position, and momentum - :math:`\gamma \beta m c`) read from an external openPMD file.
       With it users can specify the additional arguments:
@@ -2254,6 +2292,9 @@ Maxwell solver: kinetic-fluid hybrid
 * ``hybrid_pic_model.plasma_resistivity(rho,J)`` (`float` or `str`) optional (default ``0``)
     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the plasma resistivity in :math:`\Omega m`.
 
+* ``hybrid_pic_model.plasma_hyper_resistivity`` (`float` or `str`) optional (default ``0``)
+    If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the plasma hyper-resistivity in :math:`\Omega m^3`.
+
 * ``hybrid_pic_model.J[x/y/z]_external_grid_function(x, y, z, t)`` (`float` or `str`) optional (default ``0``)
     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the external current (on the grid) in :math:`A/m^2`.
 
@@ -3310,6 +3351,8 @@ Lookup tables store pre-computed values for functions used by the QED modules.
 
         * ``qed_bw.save_table_in`` (`string`): where to save the lookup table
 
+      Alternatively, the lookup table can be generated using a standalone tool (see :ref:`qed tools section <generate-lookup-tables-with-tools>`).
+
     * ``load``: a lookup table is loaded from a pre-generated binary file. The following parameter
       must be specified:
 
@@ -3346,6 +3389,8 @@ Lookup tables store pre-computed values for functions used by the QED modules.
         * ``qed_qs.tab_em_frac_min`` (`float`): minimum value to be considered for the second axis of lookup table 2
 
         * ``qed_qs.save_table_in`` (`string`): where to save the lookup table
+
+      Alternatively, the lookup table can be generated using a standalone tool (see :ref:`qed tools section <generate-lookup-tables-with-tools>`).
 
     * ``load``: a lookup table is loaded from a pre-generated binary file. The following parameter
       must be specified:

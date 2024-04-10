@@ -17,7 +17,7 @@
 
 namespace BinaryCollisionUtils{
 
-    CollisionType get_collision_type (const std::string collision_name,
+    CollisionType get_collision_type (const std::string& collision_name,
                                       MultiParticleContainer const * const mypc)
     {
         const amrex::ParmParse pp_collision_name(collision_name);
@@ -37,7 +37,7 @@ namespace BinaryCollisionUtils{
         return CollisionType::Undefined;
     }
 
-    NuclearFusionType get_nuclear_fusion_type (const std::string collision_name,
+    NuclearFusionType get_nuclear_fusion_type (const std::string& collision_name,
                                                MultiParticleContainer const * const mypc)
     {
         const amrex::ParmParse pp_collision_name(collision_name);

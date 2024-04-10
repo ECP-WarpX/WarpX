@@ -25,7 +25,6 @@ import sys
 
 import numpy as np
 import openpmd_api as io
-from scipy.constants import m_e
 import yt
 
 yt.funcs.mylog.setLevel(0)

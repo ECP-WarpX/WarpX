@@ -59,9 +59,9 @@
 /**
  * \brief This class performs generic binary collisions.
  *
- * \tparam CollisionFunctor the the specific binary collision functor that acts on a
+ * \tparam CollisionFunctor the specific binary collision functor that acts on a
  *         single cell
- * \tparam CopyTransformFunctor the the second functor used in the case of
+ * \tparam CopyTransformFunctor the second functor used in the case of
  *         particle creation
  *
  */
@@ -103,19 +103,10 @@ public:
         pp_collision_name.queryarr("product_species", m_product_species);
 
         // if DSMC the colliding species are also product species
+        // Therefore, we insert the colliding species at the beginning of `m_product_species`
         if (collision_type == CollisionType::DSMC) {
-            m_product_species.push_back(m_species_names[0]);
-            if (!m_isSameSpecies) {
-                m_product_species.push_back(m_species_names[1]);
-            }
-            // rotate to have the colliding species first
-            std::rotate(
-                m_product_species.rbegin(),
-                m_product_species.rbegin() + 1 + (!m_isSameSpecies),
-                m_product_species.rend()
-            );
+            m_product_species.insert( m_product_species.begin(), m_species_names.begin(), m_species_names.end() );
         }
-
         m_have_product_species = !m_product_species.empty();
 
         if ((std::is_same<CopyTransformFunctor, NoParticleCreationFunc>::value) && (m_have_product_species)) {
@@ -218,9 +209,14 @@ public:
                 }
             }
 
-            // Call redistribute to remove particles with negative ids
-            species1.Redistribute(lev, lev, 0, true, true);
-            species2.Redistribute(lev, lev, 0, true, true);
+            if (m_have_product_species) {
+                // The fact that there are product species indicates that particles of
+                // the colliding species (`species1` and `species2`) may be removed
+                // (i.e., marked as invalid) in the process of creating new product particles.
+                // Call (local) redistribute to remove invalid particles
+                species1.Redistribute(lev, lev, 0, 1, true);
+                species2.Redistribute(lev, lev, 0, 1, true);
+            }
         }
     }
 

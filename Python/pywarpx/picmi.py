@@ -8,13 +8,12 @@
 
 """Classes following the PICMI standard
 """
-from dataclasses import dataclass
 import os
 import re
+from dataclasses import dataclass
 
 import numpy as np
 import periodictable
-
 import picmistandard
 import pywarpx
 
@@ -1135,6 +1134,9 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
     plasma_resistivity: float or str
         Value or expression to use for the plasma resistivity.
 
+    plasma_hyper_resistivity: float or str
+        Value or expression to use for the plasma hyper-resistivity.
+
     substeps: int, default=100
         Number of substeps to take when updating the B-field.
 
@@ -1142,7 +1144,8 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         Function of space and time specifying external (non-plasma) currents.
     """
     def __init__(self, grid, Te=None, n0=None, gamma=None,
-                 n_floor=None, plasma_resistivity=None, substeps=None,
+                 n_floor=None, plasma_resistivity=None,
+                 plasma_hyper_resistivity=None, substeps=None,
                  Jx_external_function=None, Jy_external_function=None,
                  Jz_external_function=None, **kw):
         self.grid = grid
@@ -1153,6 +1156,7 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         self.gamma = gamma
         self.n_floor = n_floor
         self.plasma_resistivity = plasma_resistivity
+        self.plasma_hyper_resistivity = plasma_hyper_resistivity
 
         self.substeps = substeps
 
@@ -1187,6 +1191,7 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
             'plasma_resistivity(rho,J)',
             pywarpx.my_constants.mangle_expression(self.plasma_resistivity, self.mangle_dict)
         )
+        pywarpx.hybridpicmodel.plasma_hyper_resistivity = self.plasma_hyper_resistivity
         pywarpx.hybridpicmodel.substeps = self.substeps
         pywarpx.hybridpicmodel.__setattr__(
             'Jx_external_grid_function(x,y,z,t)',
@@ -1678,7 +1683,6 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
         pywarpx.eb2.cover_multiple_cuts = self.cover_multiple_cuts
 
         if self.potential is not None:
-            assert isinstance(solver, ElectrostaticSolver), Exception('The potential is only supported with the ElectrostaticSolver')
             expression = pywarpx.my_constants.mangle_expression(self.potential, self.mangle_dict)
             pywarpx.warpx.__setattr__('eb_potential(x,y,z,t)', expression)
 
@@ -1821,7 +1825,7 @@ class Simulation(picmistandard.PICMI_Simulation):
     warpx_load_balance_knapsack_factor: float, default=1.24
         (See documentation)
 
-    warpx_load_balance_costs_update: {'heuristic' or 'timers' or 'gpuclock'}, optional
+    warpx_load_balance_costs_update: {'heuristic' or 'timers'}, optional
         (See documentation)
 
     warpx_costs_heuristic_particles_wt: float, optional
@@ -2246,11 +2250,13 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
             E_fields_list = ['Er', 'Et', 'Ez']
             B_fields_list = ['Br', 'Bt', 'Bz']
             J_fields_list = ['Jr', 'Jt', 'Jz']
+            J_displacement_fields_list = ['Jr_displacement', 'Jt_displacement', 'Jz_displacement']
             A_fields_list = ['Ar', 'At', 'Az']
         else:
             E_fields_list = ['Ex', 'Ey', 'Ez']
             B_fields_list = ['Bx', 'By', 'Bz']
             J_fields_list = ['Jx', 'Jy', 'Jz']
+            J_displacement_fields_list = ['Jx_displacement', 'Jy_displacement', 'Jz_displacement']
             A_fields_list = ['Ax', 'Ay', 'Az']
         if self.data_list is not None:
             for dataname in self.data_list:
@@ -2262,6 +2268,9 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
                         fields_to_plot.add(field_name)
                 elif dataname == 'J':
                     for field_name in J_fields_list:
+                        fields_to_plot.add(field_name.lower())
+                elif dataname == 'J_displacement':
+                    for field_name in J_displacement_fields_list:
                         fields_to_plot.add(field_name.lower())
                 elif dataname == 'A':
                     for field_name in A_fields_list:
@@ -2275,6 +2284,8 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
                 elif dataname in ['rho', 'phi', 'F', 'G', 'divE', 'divB', 'proc_number', 'part_per_cell']:
                     fields_to_plot.add(dataname)
                 elif dataname in J_fields_list:
+                    fields_to_plot.add(dataname.lower())
+                elif dataname in J_displacement_fields_list:
                     fields_to_plot.add(dataname.lower())
                 elif dataname.startswith('rho_'):
                     # Adds rho_species diagnostic
@@ -2687,47 +2698,47 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
         # --- Use a set to ensure that fields don't get repeated.
         variables = set()
 
-
-        for dataname in self.data_list:
-            if dataname == 'position':
-                if pywarpx.geometry.dims != '1':  # because then it's WARPX_DIM_1D_Z
-                    variables.add('x')
-                if pywarpx.geometry.dims == '3':
-                    variables.add('y')
-                variables.add('z')
-                if pywarpx.geometry.dims == 'RZ':
-                    variables.add('theta')
-            elif dataname == 'momentum':
-                variables.add('ux')
-                variables.add('uy')
-                variables.add('uz')
-            elif dataname == 'weighting':
-                variables.add('w')
-            elif dataname == 'fields':
-                variables.add('Ex')
-                variables.add('Ey')
-                variables.add('Ez')
-                variables.add('Bx')
-                variables.add('By')
-                variables.add('Bz')
-            elif dataname in ['x', 'y', 'z', 'theta', 'ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'Er', 'Et', 'Br', 'Bt']:
-                if pywarpx.geometry.dims == '1' and (dataname == 'x' or dataname == 'y'):
-                    raise RuntimeError(
-                        f"The attribute {dataname} is not available in mode WARPX_DIM_1D_Z"
-                        f"chosen by dim={pywarpx.geometry.dims} in pywarpx."
-                    )
-                elif pywarpx.geometry.dims != '3' and dataname == 'y':
-                    raise RuntimeError(
-                        f"The attribute {dataname} is not available outside of mode WARPX_DIM_3D"
-                        f"The chosen value was dim={pywarpx.geometry.dims} in pywarpx."
-                    )
-                elif pywarpx.geometry.dims != 'RZ' and dataname == 'theta':
-                    raise RuntimeError(
-                        f"The attribute {dataname} is not available outside of mode WARPX_DIM_RZ."
-                        f"The chosen value was dim={pywarpx.geometry.dims} in pywarpx."
-                    )
-                else:
-                    variables.add(dataname)
+        if self.data_list is not None:
+            for dataname in self.data_list:
+                if dataname == 'position':
+                    if pywarpx.geometry.dims != '1':  # because then it's WARPX_DIM_1D_Z
+                        variables.add('x')
+                    if pywarpx.geometry.dims == '3':
+                        variables.add('y')
+                    variables.add('z')
+                    if pywarpx.geometry.dims == 'RZ':
+                        variables.add('theta')
+                elif dataname == 'momentum':
+                    variables.add('ux')
+                    variables.add('uy')
+                    variables.add('uz')
+                elif dataname == 'weighting':
+                    variables.add('w')
+                elif dataname == 'fields':
+                    variables.add('Ex')
+                    variables.add('Ey')
+                    variables.add('Ez')
+                    variables.add('Bx')
+                    variables.add('By')
+                    variables.add('Bz')
+                elif dataname in ['x', 'y', 'z', 'theta', 'ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'Er', 'Et', 'Br', 'Bt']:
+                    if pywarpx.geometry.dims == '1' and (dataname == 'x' or dataname == 'y'):
+                        raise RuntimeError(
+                            f"The attribute {dataname} is not available in mode WARPX_DIM_1D_Z"
+                            f"chosen by dim={pywarpx.geometry.dims} in pywarpx."
+                        )
+                    elif pywarpx.geometry.dims != '3' and dataname == 'y':
+                        raise RuntimeError(
+                            f"The attribute {dataname} is not available outside of mode WARPX_DIM_3D"
+                            f"The chosen value was dim={pywarpx.geometry.dims} in pywarpx."
+                        )
+                    elif pywarpx.geometry.dims != 'RZ' and dataname == 'theta':
+                        raise RuntimeError(
+                            f"The attribute {dataname} is not available outside of mode WARPX_DIM_RZ."
+                            f"The chosen value was dim={pywarpx.geometry.dims} in pywarpx."
+                        )
+                    else:
+                        variables.add(dataname)
 
             # --- Convert the set to a sorted list so that the order
             # --- is the same on all processors.

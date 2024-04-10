@@ -226,13 +226,7 @@ public:
                                     amrex::ParticleReal& ux, amrex::ParticleReal& uy, amrex::ParticleReal& uz,
                                     amrex::Real t_lab = 0.) const;
 
-    void AddGaussianBeam (
-        PlasmaInjector const& plasma_injector,
-        amrex::Real x_m, amrex::Real y_m, amrex::Real z_m,
-        amrex::Real x_rms, amrex::Real y_rms, amrex::Real z_rms,
-        amrex::Real x_cut, amrex::Real y_cut, amrex::Real z_cut,
-        amrex::Real q_tot, long npart, int do_symmetrize, int symmetrization_order,
-        amrex::Real focal_distance);
+    void AddGaussianBeam (PlasmaInjector const& plasma_injector);
 
     /** Load a particle beam from an external file
      * @param[in] the PlasmaInjector instance holding the input parameters
@@ -358,14 +352,14 @@ public:
      * @param[in] ptr the pointer
      */
     void set_breit_wheeler_engine_ptr
-        (std::shared_ptr<BreitWheelerEngine> ptr) override;
+        (const std::shared_ptr<BreitWheelerEngine>& ptr) override;
 
     /**
      * Acquires a shared smart pointer to a QuantumSynchrotronEngine
      * @param[in] ptr the pointer
      */
     void set_quantum_sync_engine_ptr
-        (std::shared_ptr<QuantumSynchrotronEngine> ptr) override;
+        (const std::shared_ptr<QuantumSynchrotronEngine>& ptr) override;
     //__________
 
     BreitWheelerEngine* get_breit_wheeler_engine_ptr () const override {

@@ -75,6 +75,13 @@ struct ElectrostaticSolverAlgo {
     };
 };
 
+struct PoissonSolverAlgo {
+    enum {
+        Multigrid = 1,
+        IntegratedGreenFunction = 2,
+    };
+};
+
 struct ParticlePusherAlgo {
     enum {
         Boris = 0,
@@ -132,9 +139,8 @@ struct RhoInTime {
 struct LoadBalanceCostsUpdateAlgo {
     enum {
         Timers    = 0, //!< load balance according to in-code timer-based weights (i.e., with  `costs`)
-        Heuristic = 1, /**< load balance according to weights computed from number of cells
-                             and number of particles per box (i.e., with `costs_heuristic`)*/
-        GpuClock  = 2
+        Heuristic = 1  /**< load balance according to weights computed from number of cells
+                             and number of particles per box (i.e., with `costs_heuristic`) */
     };
 };
 
@@ -150,8 +156,11 @@ struct FieldBoundaryType {
                      //in the moving window direction
         Absorbing_SilverMueller = 5, // Silver-Mueller boundary condition
         Neumann = 6, // For electrostatic, the normal E is set to zero
-        None = 7     // The fields values at the boundary are not updated. This is
+        None = 7,    // The fields values at the boundary are not updated. This is
                      // useful for RZ simulations, at r=0.
+        Open = 8     // Used in the Integrated Green Function Poisson solver
+                     // Note that the solver implicitely assumes open BCs:
+                     // no need to enforce them separately
     };
 };
 
@@ -161,7 +170,8 @@ enum struct ParticleBoundaryType {
         Absorbing = 0,     //!< particles crossing domain boundary are removed
         Open = 1,          //!< particles cross domain boundary leave with damped j
         Reflecting = 2,     //!< particles are reflected
-        Periodic = 3
+        Periodic = 3,      //!< particles are introduced from the periodic boundary
+        Thermal = 4
 };
 
 /** MPI reductions
@@ -187,5 +197,10 @@ GetFieldBCTypeInteger( std::string BCType );
  */
 ParticleBoundaryType
 GetParticleBCTypeInteger( std::string BCType );
+
+/** Find the name associated with a BC type
+ */
+std::string
+GetFieldBCTypeString( int fb_type );
 
 #endif // UTILS_WARPXALGORITHMSELECTION_H_

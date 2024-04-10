@@ -21,7 +21,7 @@
 
 #include <string>
 
-BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name)
+BackgroundMCCCollision::BackgroundMCCCollision (std::string const& collision_name)
     : CollisionBase(collision_name)
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_species_names.size() == 1,

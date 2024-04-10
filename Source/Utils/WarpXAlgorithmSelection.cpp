@@ -55,6 +55,12 @@ const std::map<std::string, int> electrostatic_solver_algo_to_int = {
     {"default", ElectrostaticSolverAlgo::None }
 };
 
+const std::map<std::string, int> poisson_solver_algo_to_int = {
+    {"multigrid", PoissonSolverAlgo::Multigrid},
+    {"fft", PoissonSolverAlgo::IntegratedGreenFunction},
+    {"default", PoissonSolverAlgo::Multigrid }
+};
+
 const std::map<std::string, int> particle_pusher_algo_to_int = {
     {"boris",   ParticlePusherAlgo::Boris },
     {"vay",     ParticlePusherAlgo::Vay },
@@ -101,7 +107,6 @@ const std::map<std::string, int> rho_in_time_to_int = {
 
 const std::map<std::string, int> load_balance_costs_update_algo_to_int = {
     {"timers",    LoadBalanceCostsUpdateAlgo::Timers },
-    {"gpuclock",  LoadBalanceCostsUpdateAlgo::GpuClock },
     {"heuristic", LoadBalanceCostsUpdateAlgo::Heuristic },
     {"default",   LoadBalanceCostsUpdateAlgo::Timers }
 };
@@ -126,6 +131,7 @@ const std::map<std::string, int> FieldBCType_algo_to_int = {
     {"damped",   FieldBoundaryType::Damped},
     {"absorbing_silver_mueller", FieldBoundaryType::Absorbing_SilverMueller},
     {"neumann",  FieldBoundaryType::Neumann},
+    {"open",     FieldBoundaryType::Open},
     {"none",     FieldBoundaryType::None},
     {"default",  FieldBoundaryType::PML}
 };
@@ -135,6 +141,7 @@ const std::map<std::string, ParticleBoundaryType> ParticleBCType_algo_to_enum = 
     {"open",       ParticleBoundaryType::Open},
     {"reflecting", ParticleBoundaryType::Reflecting},
     {"periodic",   ParticleBoundaryType::Periodic},
+    {"thermal",    ParticleBoundaryType::Thermal},
     {"default",    ParticleBoundaryType::Absorbing}
 };
 
@@ -163,6 +170,8 @@ GetAlgorithmInteger(const amrex::ParmParse& pp, const char* pp_search_key ){
         algo_to_int = grid_to_int;
     } else if (0 == std::strcmp(pp_search_key, "do_electrostatic")) {
         algo_to_int = electrostatic_solver_algo_to_int;
+    } else if (0 == std::strcmp(pp_search_key, "poisson_solver")) {
+        algo_to_int = poisson_solver_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "particle_pusher")) {
         algo_to_int = particle_pusher_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "current_deposition")) {
@@ -245,4 +254,16 @@ GetParticleBCTypeInteger( std::string BCType ){
     }
     // return ParticleBCType_algo_to_enum[BCType]; // This operator cannot be used for a const map
     return ParticleBCType_algo_to_enum.at(BCType);
+}
+
+std::string
+GetFieldBCTypeString( int fb_type ) {
+    std::string boundary_name;
+    for (const auto &valid_pair : FieldBCType_algo_to_int) {
+        if ((valid_pair.second == fb_type)&&(valid_pair.first != "default")){
+            boundary_name = valid_pair.first;
+            break;
+        }
+    }
+    return boundary_name;
 }

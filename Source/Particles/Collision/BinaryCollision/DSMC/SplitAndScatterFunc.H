@@ -42,7 +42,7 @@ public:
      * @param[in] collision_name the name of the collision
      * @param[in] mypc pointer to the MultiParticleContainer
      */
-    SplitAndScatterFunc (std::string collision_name, MultiParticleContainer const * mypc);
+    SplitAndScatterFunc (const std::string& collision_name, MultiParticleContainer const * mypc);
 
     /**
      * \brief Function that performs the particle scattering and injection due
@@ -176,13 +176,12 @@ public:
                 };
 
                 // If the colliding particle weight decreases to zero, remove particle by
-                // setting its id to -1
-                if (w1[p_pair_indices_1[i]] <= amrex::ParticleReal(0.))
+                // setting its id to invalid
+                if (w1[p_pair_indices_1[i]] <= std::numeric_limits<amrex::ParticleReal>::min())
                 {
                     atomicSetIdMinus(idcpu1[p_pair_indices_1[i]]);
-
                 }
-                if (w2[p_pair_indices_2[i]] <= amrex::ParticleReal(0.))
+                if (w2[p_pair_indices_2[i]] <= std::numeric_limits<amrex::ParticleReal>::min())
                 {
                     atomicSetIdMinus(idcpu2[p_pair_indices_2[i]]);
                 }

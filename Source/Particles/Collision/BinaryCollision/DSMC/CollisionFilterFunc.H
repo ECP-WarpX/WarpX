@@ -18,18 +18,20 @@
  * \brief This function determines whether a collision occurs for a given
  * pair of particles.
  *
- * @param[in] u1x,u1y,u1z momenta of the first colliding particle
- * @param[in] u2x,u2y,u2z momenta of the second colliding particle
- * @param[in] m1,m2 masses
- * @param[in] w1,w2 effective weight of the colliding particles
+ * @param[in] u1x,u1y,u1z momenta of the first colliding particle.
+ * @param[in] u2x,u2y,u2z momenta of the second colliding particle.
+ * @param[in] m1,m2 masses.
+ * @param[in] w1,w2 effective weight of the colliding particles.
  * @param[in] dt is the time step length between two collision calls.
  * @param[in] dV is the volume of the corresponding cell.
- * @param[in] pair_index is the index of the colliding pair
+ * @param[in] pair_index is the index of the colliding pair.
  * @param[out] p_mask is a mask that will be set to a non-zero integer if a
  *             collision occurs. The integer encodes the scattering process.
- * @param[out] p_pair_reaction_weight stores the weight of the product particles
- * @param[in] process_count number of scattering processes to consider
- * @param[in] scattering processes an array of scattering processes included for consideration
+ * @param[out] p_pair_reaction_weight stores the weight of the product particles.
+ * @param[in] multiplier factor by which the collision probability is increased to
+ *            account for all other possible binary collision partners.
+ * @param[in] process_count number of scattering processes to consider.
+ * @param[in] scattering processes an array of scattering processes included for consideration.
  * @param[in] engine the random engine.
  */
 template <typename index_type>

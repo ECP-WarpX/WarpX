@@ -7,17 +7,16 @@
 # Authors: Ryan Sandberg
 # License: BSD-3-Clause-LBNL
 #
+
 import os
-import tarfile
+import zipfile
 from urllib import request
 
 import numpy as np
+import torch
+from openpmd_viewer import OpenPMDTimeSeries, ParticleTracker
 
 c = 2.998e8
-
-from openpmd_viewer import OpenPMDTimeSeries, ParticleTracker
-import torch
-
 ###############
 
 def sanitize_dir_strings(*dir_strings):
@@ -31,14 +30,15 @@ def sanitize_dir_strings(*dir_strings):
     return dir_strings
 
 def download_and_unzip(url, data_dir):
-  request.urlretrieve(url, data_dir)
-  with tarfile.open(data_dir) as tar_dataset:
-      tar_dataset.extractall()
+    request.urlretrieve(url, data_dir)
+    with zipfile.ZipFile(data_dir, 'r') as zip_dataset:
+        zip_dataset.extractall()
 
 def create_source_target_data(data_dir,
                               species,
                               source_index=0,
                               target_index=-1,
+                              survivor_select_index=-1,
                               particle_selection=None
                              ):
     """Create dataset from openPMD files
@@ -67,7 +67,7 @@ def create_source_target_data(data_dir,
     relevant_times = [ts.t[source_index], ts.t[target_index]]
 
     # Manual: Particle tracking START
-    iteration = ts.iterations[target_index]
+    iteration = ts.iterations[survivor_select_index]
     pt = ParticleTracker( ts,
                          species=species,
                          iteration=iteration,
@@ -116,7 +116,6 @@ def create_source_target_data(data_dir,
 
     return source_data, source_means, source_stds, target_data, target_means, target_stds, relevant_times
 
-
 def save_warpx_surrogate_data(dataset_fullpath_filename,
                               diag_dir,
                               species,
@@ -128,12 +127,14 @@ def save_warpx_surrogate_data(dataset_fullpath_filename,
                               particle_selection=None
                              ):
 
-    source_target_data = create_source_target_data(data_dir=diag_dir,
-                                                      species=species,
-                                                      source_index=source_index,
-                                                      target_index=target_index,
-                                                      particle_selection=particle_selection
-                                                     )
+    source_target_data = create_source_target_data(
+        data_dir=diag_dir,
+        species=species,
+        source_index=source_index,
+        target_index=target_index,
+        survivor_select_index=survivor_select_index,
+        particle_selection=particle_selection
+    )
     source_data, source_means, source_stds, target_data, target_means, target_stds, times = source_target_data
 
     # Manual: Save dataset START
@@ -161,10 +162,9 @@ def save_warpx_surrogate_data(dataset_fullpath_filename,
 ######## end utility functions #############
 ######## start dataset creation ############
 
-data_url = "https://zenodo.org/records/10368972/files/ml_example_training.tar.gz?download=1"
-download_and_unzip(data_url, "training_dataset.tar.gz")
+data_url = "https://zenodo.org/records/10810754/files/lab_particle_diags.zip?download=1"
+download_and_unzip(data_url, "lab_particle_diags.zip")
 data_dir = "lab_particle_diags/lab_particle_diags/"
-
 
 # create data set
 
@@ -178,7 +178,7 @@ os.makedirs('datasets', exist_ok=True)
 
 # improve stage 0 dataset
 stage_i = 0
-select = {'z':[0.28002, None]}
+select = {'z':[0.280025, None]}
 species = f'beam_stage_{stage_i}'
 dataset_filename = f'dataset_{species}.pt'
 dataset_file = 'datasets/' + dataset_filename
@@ -193,7 +193,7 @@ save_warpx_surrogate_data(dataset_fullpath_filename=dataset_file,
                 particle_selection=select
                )
 
-for stage_i in range(1,9):
+for stage_i in range(1,15):
     species = f'beam_stage_{stage_i}'
     dataset_filename = f'dataset_{species}.pt'
     dataset_file = 'datasets/' + dataset_filename
