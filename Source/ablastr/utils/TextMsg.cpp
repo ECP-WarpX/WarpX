@@ -9,8 +9,6 @@
 
 #include "ablastr/utils/text/StringUtils.H"
 
-#include <AMReX.H>
-
 #include <algorithm>
 #include <iterator>
 #include <sstream>
@@ -80,6 +78,7 @@ ablastr::utils::TextMsg::Assert (const char* ex, const char* file, const int lin
     amrex::Assert(ex , file, line , n_msg.c_str());
 }
 
+AMREX_GPU_HOST_DEVICE
 void
 ablastr::utils::TextMsg::Abort (const char* file, const int line, const std::string& msg)
 {

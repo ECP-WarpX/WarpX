@@ -8,6 +8,8 @@
 #ifndef ABLASTR_TEXT_MSG_H_
 #define ABLASTR_TEXT_MSG_H_
 
+#include <AMReX.H>
+
 #include <string>
 
 namespace ablastr::utils::TextMsg
@@ -67,6 +69,7 @@ namespace ablastr::utils::TextMsg
     * @param[in] line the line here abort was called
     * @param[in] msg the error message
     */
+    AMREX_GPU_HOST_DEVICE
     void
     Abort (const char *file, int line, const std::string &msg);
 
