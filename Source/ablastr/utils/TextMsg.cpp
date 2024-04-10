@@ -9,6 +9,8 @@
 
 #include "ablastr/utils/text/StringUtils.H"
 
+#include <AMReX.H>
+
 #include <algorithm>
 #include <iterator>
 #include <sstream>

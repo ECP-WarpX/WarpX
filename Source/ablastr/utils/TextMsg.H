@@ -8,7 +8,7 @@
 #ifndef ABLASTR_TEXT_MSG_H_
 #define ABLASTR_TEXT_MSG_H_
 
-#include <AMReX.H>
+#include <AMReX_GpuQualifiers.H>
 
 #include <string>
 
