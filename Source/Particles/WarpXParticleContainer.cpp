@@ -295,13 +295,16 @@ WarpXParticleContainer::AddNParticles (int /*lev*/, long n,
         );
     }
 
+    // Move particles to their appropriate tiles
+    Redistribute();
+
     // Remove particles that are inside the embedded boundaries
 #ifdef AMREX_USE_EB
     auto & distance_to_eb = WarpX::GetInstance().GetDistanceToEB();
     scrapeParticles( *this, amrex::GetVecOfConstPtrs(distance_to_eb), ParticleBoundaryProcess::Absorb());
+    // Call (local) redistribute again to remove particles with invalid ids
+    Redistribute(0, -1, 0, 1, true);
 #endif
-
-    Redistribute();
 }
 
 /* \brief Current Deposition for thread thread_num
