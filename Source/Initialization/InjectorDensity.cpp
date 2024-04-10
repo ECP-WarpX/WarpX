@@ -211,7 +211,7 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
 
 
         amrex::ParallelFor (tb,
-                            [=] AMREX_GPU_DEVICE (int i, int j, int k)
+                            [this, tb, file_dx, file_dy, file_dz, rb, P_data, extent2, extent1, extent0, rho_array4] AMREX_GPU_DEVICE (int i, int j, int k)
         {
                                 // i,j,k denote x,y,z indices in 3D xyz
                                 // i,j denote r,z indices in 2D rz; k is just 0
@@ -248,11 +248,17 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
                                 std::cout << "x0: " << x0 << " xx0: " << xx0 << "   ";
                                 std::cout << "x1: " << x1 << " xx1: " << xx1 << "   ";
                                 std::cout << "x2: " << x2 << " xx2: " << xx2 << "   ";
-                                std::cout << "offset: " << rb.lo(0) << ", " << rb.lo(1) << ", " << rb.lo(2) << "   \n";
+                                //std::cout << "offser: " << real_box.lo(0) << ", " << real_box.lo(1) << ", " << real_box.lo(2) << "   \n";
+                                std::cout << "real_box: " << real_box.lo(0) << ", " << real_box.lo(1) << ", " << real_box.lo(2) << "   \n";
 
                                 // source data access
                                 const amrex::Array4<double> src_data(P_data, {0, 0, 0}, {extent2, extent1, extent0}, 1);
 
+                                if (iz < 0 | iz > extent2-1 | iy < 0 | iy > extent1-1 | ix < 0 | ix > extent0-1 ){
+                                    rho_array4(i,j,k) = static_cast<amrex::Real> (0);
+//                                    std::cout << "out of bounds ! : " << i << ", " << j << ", " << k << '\n';
+
+                                }else{
                                 // interpolate from closest source data points to rho MultiFab resolution
                                 const double
                                     f000 = src_data(iz    , iy    , ix    ),
@@ -263,10 +269,13 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
                                     f101 = src_data(iz + 1, iy    , ix + 1),
                                     f110 = src_data(iz    , iy + 1, ix + 1),
                                     f111 = src_data(iz + 1, iy + 1, ix + 1);
-                                rho_array4(i,j,k) = static_cast<amrex::Real> (utils::algorithms::trilinear_interp<double>
-                                        (xx0, xx0+file_dx, xx1, xx1+file_dy, xx2, xx2+file_dz,
-                                         f000, f001, f010, f011, f100, f101, f110, f111,
-                                         x0, x1, x2) );
+
+                                    rho_array4(i, j, k) = static_cast<amrex::Real> (utils::algorithms::trilinear_interp<double>
+                                            (xx0, xx0 + file_dx, xx1, xx1 + file_dy, xx2, xx2 + file_dz,
+                                             f000, f001, f010, f011, f100, f101, f110, f111,
+                                             x0, x1, x2));
+//                                    rho_array4(i,j,k) = static_cast<amrex::Real> (f000);
+                                }
                             }
         ); //end ParallelFor
     }
