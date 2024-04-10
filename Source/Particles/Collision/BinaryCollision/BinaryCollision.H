@@ -103,19 +103,10 @@ public:
         pp_collision_name.queryarr("product_species", m_product_species);
 
         // if DSMC the colliding species are also product species
+        // Therefore, we insert the colliding species at the beginning of `m_product_species`
         if (collision_type == CollisionType::DSMC) {
-            m_product_species.push_back(m_species_names[0]);
-            if (!m_isSameSpecies) {
-                m_product_species.push_back(m_species_names[1]);
-            }
-            // rotate to have the colliding species first
-            std::rotate(
-                m_product_species.rbegin(),
-                m_product_species.rbegin() + 1 + (!m_isSameSpecies),
-                m_product_species.rend()
-            );
+            m_product_species.insert( m_product_species.begin(), m_species_names.begin(), m_species_names.end() );
         }
-
         m_have_product_species = !m_product_species.empty();
 
         if ((std::is_same<CopyTransformFunctor, NoParticleCreationFunc>::value) && (m_have_product_species)) {
