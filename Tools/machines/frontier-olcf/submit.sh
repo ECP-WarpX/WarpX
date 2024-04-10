@@ -144,10 +144,10 @@ else
     export PYTHONPATH=/mnt/bb/$USER/:$PYTHONPATH
 
     echo "*************************************"
-    python3 -c "import pywarpx; print('pywarpx.__path__: ', pywarpx.__path__)"
-    echo ""
     echo "ldd /mnt/bb/$USER/pywarpx/${WARPX_SO} :"
     ldd /mnt/bb/$USER/pywarpx/${WARPX_SO}
+    echo ""
+    python3 -c "import pywarpx; print('pywarpx.__path__: ', pywarpx.__path__)"
     echo "*************************************"
 fi
 
