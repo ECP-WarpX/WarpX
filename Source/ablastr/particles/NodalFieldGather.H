@@ -99,7 +99,7 @@ void compute_weights (const amrex::ParticleReal xp,
     amrex::ignore_unused(xp, yp);
     i = static_cast<int>(amrex::Math::floor(z));
 
-    W[0][1] = z - k;
+    W[0][1] = z - i;
     W[0][0] = 1.0_rt - W[0][1];
 
     j = 0;
