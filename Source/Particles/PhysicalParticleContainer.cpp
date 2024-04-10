@@ -3360,11 +3360,6 @@ void PhysicalParticleContainer::resample (const int timestep, const bool verbose
     WARPX_PROFILE_VAR_START(blp_resample_actual);
     if (m_resampler.triggered(timestep, global_numparts))
     {
-        if (verbose) {
-            amrex::Print() << Utils::TextMsg::Info(
-                "Resampling " + species_name + " at step " + std::to_string(timestep)
-            );
-        }
         Redistribute();
         for (int lev = 0; lev <= maxLevel(); lev++)
         {
@@ -3375,6 +3370,13 @@ void PhysicalParticleContainer::resample (const int timestep, const bool verbose
         }
         // call Redistribute() to remove invalid particles
         Redistribute(0, maxLevel(), 0, 1, true);
+        if (verbose) {
+            amrex::Print() << Utils::TextMsg::Info(
+                "Resampled " + species_name + " at step " + std::to_string(timestep)
+                + ": macroparticle count decreased by "
+                + std::to_string(static_cast<int>(global_numparts - TotalNumberOfParticles()))
+            );
+        }
     }
     WARPX_PROFILE_VAR_STOP(blp_resample_actual);
 }
