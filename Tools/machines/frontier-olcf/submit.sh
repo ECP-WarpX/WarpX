@@ -194,7 +194,7 @@ export TOTAL_NMPI=$(( ${SLURM_JOB_NUM_NODES} * ${WARPX_NMPI_PER_NODE} ))
 
 # ___ Run WarpX simulation ____________________________________________________
 
-if [ ! $is_pywarpx ]; then
+if [ ! ${is_pywarpx} ]; then
     srun -N${SLURM_JOB_NUM_NODES} -n${TOTAL_NMPI} --ntasks-per-node=${WARPX_NMPI_PER_NODE} \
         /mnt/bb/$USER/warpx ./${inputfile} > ${output}
 else
