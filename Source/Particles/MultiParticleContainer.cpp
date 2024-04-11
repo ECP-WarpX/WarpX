@@ -633,6 +633,14 @@ MultiParticleContainer::defineAllParticleTiles ()
 }
 
 void
+MultiParticleContainer::deleteInvalidParticles ()
+{
+    for (auto& pc : allcontainers) {
+        pc->deleteInvalidParticles();
+    }
+}
+
+void
 MultiParticleContainer::RedistributeLocal (const int num_ghost)
 {
     for (auto& pc : allcontainers) {

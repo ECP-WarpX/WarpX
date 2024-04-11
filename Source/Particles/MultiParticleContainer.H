@@ -213,6 +213,8 @@ public:
 
     void defineAllParticleTiles ();
 
+    void deleteInvalidParticles ();
+
     void RedistributeLocal (int num_ghost);
 
     /** Apply BC. For now, just discard particles outside the domain, regardless
