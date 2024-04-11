@@ -3368,8 +3368,7 @@ void PhysicalParticleContainer::resample (const int timestep, const bool verbose
                 m_resampler(pti, lev, this);
             }
         }
-        // call Redistribute() to remove invalid particles
-        Redistribute(0, maxLevel(), 0, 1, true);
+        deleteInvalidParticles();
         if (verbose) {
             amrex::Print() << Utils::TextMsg::Info(
                 "Resampled " + species_name + " at step " + std::to_string(timestep)
