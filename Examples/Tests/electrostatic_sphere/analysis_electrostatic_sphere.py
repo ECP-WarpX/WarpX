@@ -22,6 +22,8 @@ import sys
 
 import numpy as np
 import yt
+from openpmd_viewer import OpenPMDTimeSeries
+from scipy.constants import c
 from scipy.optimize import fsolve
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
@@ -125,7 +127,6 @@ def calculate_error(E_axis, xmin, dx, nx):
 
     return L2_error
 
-
 L2_error_x = calculate_error(Ex_axis, xmin, dx, nx)
 L2_error_y = calculate_error(Ey_axis, ymin, dy, ny)
 L2_error_z = calculate_error(Ez_axis, zmin, dz, nz)
@@ -136,6 +137,21 @@ print("L2 error along z-axis = %s" %L2_error_z)
 assert L2_error_x < 0.05
 assert L2_error_y < 0.05
 assert L2_error_z < 0.05
+
+# Check conservation of energy
+def return_energies(iteration):
+    ux, uy, uz, phi, m, q, w = ts.get_particle(['ux', 'uy', 'uz', 'phi', 'mass', 'charge', 'w'], iteration=iteration)
+    E_kinetic = (w*m*c**2 * (np.sqrt(1 + ux**2 + uy**2 + uz**2) - 1)).sum()
+    E_potential = 0.5*(w*q*phi).sum() # potential energy of particles in their own space-charge field: includes factor 1/2
+    return E_kinetic, E_potential
+ts = OpenPMDTimeSeries('./diags/diag2')
+if 'phi' in ts.avail_record_components['electron']:
+    # phi is only available when this script is run with the labframe poisson solver
+    print('Checking conservation of energy')
+    Ek_i, Ep_i = return_energies(0)
+    Ek_f, Ep_f = return_energies(30)
+    assert Ep_f < 0.7*Ep_i # Check that potential energy changes significantly
+    assert abs( (Ek_i + Ep_i) - (Ek_f + Ep_f) ) < 0.003 * (Ek_i + Ep_i) # Check conservation of energy
 
 # Checksum regression analysis
 test_name = os.path.split(os.getcwd())[1]

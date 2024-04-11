@@ -548,48 +548,6 @@ for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
         pinned_pc->make_alike<amrex::PinnedArenaAllocator>() :
         pc->make_alike<amrex::PinnedArenaAllocator>();
 
-    // names of amrex::Real and int particle attributes in SoA data
-    amrex::Vector<std::string> real_names;
-    amrex::Vector<std::string> int_names;
-    amrex::Vector<int> int_flags;
-    amrex::Vector<int> real_flags;
-
-    // see openPMD ED-PIC extension for namings
-    // note: an underscore separates the record name from its component
-    //       for non-scalar records
-    // note: in RZ, we reconstruct x,y,z positions from r,z,theta in WarpX
-#if !defined (WARPX_DIM_1D_Z)
-    real_names.push_back("position_x");
-#endif
-#if defined (WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
-    real_names.push_back("position_y");
-#endif
-    real_names.push_back("position_z");
-    real_names.push_back("weighting");
-    real_names.push_back("momentum_x");
-    real_names.push_back("momentum_y");
-    real_names.push_back("momentum_z");
-
-    // get the names of the real comps
-    real_names.resize(tmp.NumRealComps());
-    auto runtime_rnames = tmp.getParticleRuntimeComps();
-    for (auto const& x : runtime_rnames)
-    {
-        real_names[x.second+PIdx::nattribs] = detail::snakeToCamel(x.first);
-    }
-    // plot any "extra" fields by default
-    real_flags = particle_diags[i].m_plot_flags;
-    real_flags.resize(tmp.NumRealComps(), 1);
-    // and the names
-    int_names.resize(tmp.NumIntComps());
-    auto runtime_inames = tmp.getParticleRuntimeiComps();
-    for (auto const& x : runtime_inames)
-    {
-        int_names[x.second+0] = detail::snakeToCamel(x.first);
-    }
-    // plot by default
-    int_flags.resize(tmp.NumIntComps(), 1);
-
     const auto mass = pc->AmIA<PhysicalSpecies::photon>() ? PhysConst::m_e : pc->getMass();
     RandomFilter const random_filter(particle_diags[i].m_do_random_filter,
                                      particle_diags[i].m_random_fraction);
@@ -631,6 +589,51 @@ for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
         particlesConvertUnits(ConvertDirection::SI_to_WarpX, pc, mass);
     }
 
+    // Gather the electrostatic potential (phi) on the macroparticles
+    if ( particle_diags[i].m_plot_phi ) {
+        storePhiOnParticles( tmp, WarpX::electrostatic_solver_id, !use_pinned_pc );
+    }
+
+    // names of amrex::Real and int particle attributes in SoA data
+    amrex::Vector<std::string> real_names;
+    amrex::Vector<std::string> int_names;
+    amrex::Vector<int> int_flags;
+    amrex::Vector<int> real_flags;
+    // see openPMD ED-PIC extension for namings
+    // note: an underscore separates the record name from its component
+    //       for non-scalar records
+    // note: in RZ, we reconstruct x,y,z positions from r,z,theta in WarpX
+#if !defined (WARPX_DIM_1D_Z)
+    real_names.push_back("position_x");
+#endif
+#if defined (WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+    real_names.push_back("position_y");
+#endif
+    real_names.push_back("position_z");
+    real_names.push_back("weighting");
+    real_names.push_back("momentum_x");
+    real_names.push_back("momentum_y");
+    real_names.push_back("momentum_z");
+    // get the names of the real comps
+    real_names.resize(tmp.NumRealComps());
+    auto runtime_rnames = tmp.getParticleRuntimeComps();
+    for (auto const& x : runtime_rnames)
+    {
+        real_names[x.second+PIdx::nattribs] = detail::snakeToCamel(x.first);
+    }
+    // plot any "extra" fields by default
+    real_flags = particle_diags[i].m_plot_flags;
+    real_flags.resize(tmp.NumRealComps(), 1);
+    // and the names
+    int_names.resize(tmp.NumIntComps());
+    auto runtime_inames = tmp.getParticleRuntimeiComps();
+    for (auto const& x : runtime_inames)
+    {
+        int_names[x.second+0] = detail::snakeToCamel(x.first);
+    }
+    // plot by default
+    int_flags.resize(tmp.NumIntComps(), 1);
+
     // real_names contains a list of all real particle attributes.
     // real_flags is 1 or 0, whether quantity is dumped or not.
     DumpToFile(&tmp,
@@ -640,9 +643,8 @@ for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
         int_flags,
         real_names, int_names,
         pc->getCharge(), pc->getMass(),
-        isBTD, isLastBTDFlush
-    );
-}
+        isBTD, isLastBTDFlush);
+    }
 }
 
 void
