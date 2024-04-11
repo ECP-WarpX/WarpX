@@ -174,7 +174,7 @@ public:
 #endif
         if (m_have_product_species){
             species1.defineAllParticleTiles();
-            species2.defineAllParticleTiles();
+            if (!m_isSameSpecies) { species2.defineAllParticleTiles(); }
         }
 
         // Enable tiling
@@ -214,7 +214,7 @@ public:
                 // the colliding species (`species1` and `species2`) may be removed
                 // (i.e., marked as invalid) in the process of creating new product particles.
                 species1.deleteInvalidParticles();
-                species2.deleteInvalidParticles();
+                if (!m_isSameSpecies) { species2.deleteInvalidParticles(); }
             }
         }
     }

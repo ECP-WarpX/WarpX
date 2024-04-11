@@ -219,7 +219,6 @@ public:
 
                 p_pair_indices_1[pair_index] = I1[i1];
                 p_pair_indices_2[pair_index] = I2[i2];
-
                 if (max_N == NI1) {
                     i1 += min_N;
                 }
