@@ -596,7 +596,7 @@ WarpX::FillBoundaryE (const int lev, const PatchType patch_type, const amrex::In
     for (int i = 0; i < 3; ++i)
     {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            ng <= mf[i]->nGrowVect(),
+            ng.allLE(mf[i]->nGrowVect()),
             "Error: in FillBoundaryE, requested more guard cells than allocated");
 
         const amrex::IntVect nghost = (safe_guard_cells) ? mf[i]->nGrowVect() : ng;
@@ -653,7 +653,7 @@ WarpX::FillBoundaryB (const int lev, const PatchType patch_type, const amrex::In
     for (int i = 0; i < 3; ++i)
     {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            ng <= mf[i]->nGrowVect(),
+            ng.allLE(mf[i]->nGrowVect()),
             "Error: in FillBoundaryB, requested more guard cells than allocated");
 
         const amrex::IntVect nghost = (safe_guard_cells) ? mf[i]->nGrowVect() : ng;
@@ -684,7 +684,7 @@ WarpX::FillBoundaryE_avg (int lev, PatchType patch_type, IntVect ng)
             ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period);
         } else {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng <= Efield_avg_fp[lev][0]->nGrowVect(),
+                ng.allLE(Efield_avg_fp[lev][0]->nGrowVect()),
                 "Error: in FillBoundaryE_avg, requested more guard cells than allocated");
             ablastr::utils::communication::FillBoundary(*Efield_avg_fp[lev][0], ng, WarpX::do_single_precision_comms, period);
             ablastr::utils::communication::FillBoundary(*Efield_avg_fp[lev][1], ng, WarpX::do_single_precision_comms, period);
@@ -705,7 +705,7 @@ WarpX::FillBoundaryE_avg (int lev, PatchType patch_type, IntVect ng)
 
         } else {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng <= Efield_avg_cp[lev][0]->nGrowVect(),
+                ng.allLE(Efield_avg_cp[lev][0]->nGrowVect()),
                 "Error: in FillBoundaryE, requested more guard cells than allocated");
             ablastr::utils::communication::FillBoundary(*Efield_avg_cp[lev][0], ng, WarpX::do_single_precision_comms, cperiod);
             ablastr::utils::communication::FillBoundary(*Efield_avg_cp[lev][1], ng, WarpX::do_single_precision_comms, cperiod);
@@ -737,7 +737,7 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
             ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period);
         } else {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng <= Bfield_fp[lev][0]->nGrowVect(),
+                ng.allLE(Bfield_fp[lev][0]->nGrowVect()),
                 "Error: in FillBoundaryB, requested more guard cells than allocated");
             ablastr::utils::communication::FillBoundary(*Bfield_avg_fp[lev][0], ng, WarpX::do_single_precision_comms, period);
             ablastr::utils::communication::FillBoundary(*Bfield_avg_fp[lev][1], ng, WarpX::do_single_precision_comms, period);
@@ -757,7 +757,7 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
             ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, cperiod);
         } else {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng <= Bfield_avg_cp[lev][0]->nGrowVect(),
+                ng.allLE(Bfield_avg_cp[lev][0]->nGrowVect()),
                 "Error: in FillBoundaryB_avg, requested more guard cells than allocated");
             ablastr::utils::communication::FillBoundary(*Bfield_avg_cp[lev][0], ng, WarpX::do_single_precision_comms, cperiod);
             ablastr::utils::communication::FillBoundary(*Bfield_avg_cp[lev][1], ng, WarpX::do_single_precision_comms, cperiod);
