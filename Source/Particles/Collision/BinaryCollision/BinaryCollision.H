@@ -8,6 +8,7 @@
 #define WARPX_PARTICLES_COLLISION_BINARYCOLLISION_H_
 
 #include "Particles/Collision/BinaryCollision/Coulomb/PairWiseCoulombCollisionFunc.H"
+#include "Particles/Collision/BinaryCollision/DSMC/DSMCFunc.H"
 #include "Particles/Collision/BinaryCollision/NuclearFusion/NuclearFusionFunc.H"
 #include "Particles/Collision/BinaryCollision/ParticleCreationFunc.H"
 #include "Particles/Collision/BinaryCollision/ShuffleFisherYates.H"
@@ -58,14 +59,14 @@
 /**
  * \brief This class performs generic binary collisions.
  *
- * \tparam CollisionFunctorType the type of the specific binary collision functor that acts on a
+ * \tparam CollisionFunctor the specific binary collision functor that acts on a
  *         single cell
- * \tparam CopyTransformFunctorType the type of the second functor used in the case of
+ * \tparam CopyTransformFunctor the second functor used in the case of
  *         particle creation
  *
  */
-template <typename CollisionFunctorType,
-          typename CopyTransformFunctorType = NoParticleCreationFunc>
+template <typename CollisionFunctor,
+          typename CopyTransformFunctor = NoParticleCreationFunc>
 class BinaryCollision final
     : public CollisionBase
 {
@@ -92,25 +93,33 @@ public:
             WARPX_ABORT_WITH_MESSAGE("Binary collision " + collision_name + " must have exactly two species.");
         }
 
+        const CollisionType collision_type = BinaryCollisionUtils::get_collision_type(collision_name, mypc);
+
         m_isSameSpecies = (m_species_names[0] == m_species_names[1]);
 
-        m_binary_collision_functor = CollisionFunctorType(collision_name, mypc, m_isSameSpecies);
+        m_binary_collision_functor = CollisionFunctor(collision_name, mypc, m_isSameSpecies);
 
         const amrex::ParmParse pp_collision_name(collision_name);
         pp_collision_name.queryarr("product_species", m_product_species);
+
+        // if DSMC the colliding species are also product species
+        // Therefore, we insert the colliding species at the beginning of `m_product_species`
+        if (collision_type == CollisionType::DSMC) {
+            m_product_species.insert( m_product_species.begin(), m_species_names.begin(), m_species_names.end() );
+        }
         m_have_product_species = !m_product_species.empty();
-        if ((std::is_same<CopyTransformFunctorType, NoParticleCreationFunc>::value) & (m_have_product_species)) {
+
+        if ((std::is_same<CopyTransformFunctor, NoParticleCreationFunc>::value) && (m_have_product_species)) {
             WARPX_ABORT_WITH_MESSAGE( "Binary collision " + collision_name +
                 " does not produce species. Thus, `product_species` should not be specified in the input script." );
         }
-        m_copy_transform_functor = CopyTransformFunctorType(collision_name, mypc);
+        m_copy_transform_functor = CopyTransformFunctor(collision_name, mypc);
     }
 
     ~BinaryCollision () override = default;
 
     BinaryCollision ( BinaryCollision const &)             = default;
     BinaryCollision& operator= ( BinaryCollision const & ) = default;
-
 
     BinaryCollision ( BinaryCollision&& )                  = delete;
     BinaryCollision& operator= ( BinaryCollision&& )       = delete;
@@ -157,8 +166,8 @@ public:
         amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, copy_species2.begin(),
                               copy_species2.end(), device_copy_species2.begin());
         amrex::Gpu::streamSynchronize();
-        auto copy_species1_data = device_copy_species1.data();
-        auto copy_species2_data = device_copy_species2.data();
+        auto *copy_species1_data = device_copy_species1.data();
+        auto *copy_species2_data = device_copy_species2.data();
 #else
         auto *copy_species1_data = copy_species1.data();
         auto *copy_species2_data = copy_species2.data();
@@ -190,7 +199,7 @@ public:
                 auto wt = static_cast<amrex::Real>(amrex::second());
 
                 doCollisionsWithinTile( dt, lev, mfi, species1, species2, product_species_vector,
-                                         copy_species1_data, copy_species2_data);
+                                        copy_species1_data, copy_species2_data);
 
                 if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
                 {
@@ -198,6 +207,14 @@ public:
                     wt = static_cast<amrex::Real>(amrex::second()) - wt;
                     amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
                 }
+            }
+
+            if (m_have_product_species) {
+                // The fact that there are product species indicates that particles of
+                // the colliding species (`species1` and `species2`) may be removed
+                // (i.e., marked as invalid) in the process of creating new product particles.
+                species1.deleteInvalidParticles();
+                species2.deleteInvalidParticles();
             }
         }
     }
@@ -224,7 +241,7 @@ public:
         using namespace ParticleUtils;
         using namespace amrex::literals;
 
-        CollisionFunctorType binary_collision_functor = m_binary_collision_functor;
+        const auto& binary_collision_functor = m_binary_collision_functor.executor();
         const bool have_product_species = m_have_product_species;
 
         // Store product species data in vectors
@@ -522,7 +539,6 @@ public:
                 }
             );
 
-
             // Create the new product particles and define their initial values
             // num_added: how many particles of each product species have been created
             const amrex::Vector<int> num_added = m_copy_transform_functor(n_total_pairs,
@@ -550,9 +566,9 @@ private:
     bool m_have_product_species;
     amrex::Vector<std::string> m_product_species;
     // functor that performs collisions within a cell
-    CollisionFunctorType m_binary_collision_functor;
+    CollisionFunctor m_binary_collision_functor;
     // functor that creates new particles and initializes their parameters
-    CopyTransformFunctorType m_copy_transform_functor;
+    CopyTransformFunctor m_copy_transform_functor;
 
 };
 

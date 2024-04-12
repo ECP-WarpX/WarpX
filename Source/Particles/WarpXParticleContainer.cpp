@@ -295,13 +295,29 @@ WarpXParticleContainer::AddNParticles (int /*lev*/, long n,
         );
     }
 
+    // Move particles to their appropriate tiles
+    Redistribute();
+
     // Remove particles that are inside the embedded boundaries
 #ifdef AMREX_USE_EB
     auto & distance_to_eb = WarpX::GetInstance().GetDistanceToEB();
     scrapeParticles( *this, amrex::GetVecOfConstPtrs(distance_to_eb), ParticleBoundaryProcess::Absorb());
+    deleteInvalidParticles();
 #endif
+}
 
-    Redistribute();
+void
+WarpXParticleContainer::deleteInvalidParticles () {
+    const int nLevels = finestLevel();
+    for (int lev = 0; lev <= nLevels; ++lev) {
+#ifdef AMREX_USE_OMP
+#pragma omp parallel
+#endif
+        for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti) {
+            ParticleTileType& ptile = ParticlesAt(lev, pti);
+            removeInvalidParticles( ptile );
+        }
+    }
 }
 
 /* \brief Current Deposition for thread thread_num
