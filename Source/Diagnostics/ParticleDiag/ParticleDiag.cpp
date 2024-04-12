@@ -41,7 +41,6 @@ ParticleDiag::ParticleDiag(
                     // Therefore, this case needs to be treated specifically.
                     m_plot_phi = true;
                 } else {
-                    amrex::Print() << var << std::endl;
                     const auto search = existing_variable_names.find(var);
                     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                         search != existing_variable_names.end(),
