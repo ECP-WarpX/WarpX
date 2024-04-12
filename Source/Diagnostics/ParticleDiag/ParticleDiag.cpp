@@ -52,8 +52,12 @@ ParticleDiag::ParticleDiag(
         }
     }
     // Always write the position
+#if !defined (WARPX_DIM_1D_Z)
     m_plot_flags[pc->getParticleComps().at("x")] = 1;
+#endif
+#if defined (WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
     m_plot_flags[pc->getParticleComps().at("y")] = 1;
+#endif
     m_plot_flags[pc->getParticleComps().at("z")] = 1;
 
     // build filter functors
