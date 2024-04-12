@@ -382,11 +382,11 @@ public:
             );
 
             // Loop over independent particle pairs
-            // To speed up binary collisions on GPU, we try to expose as much parallelism 
-            // as possible (while avoiding race conditions): Instead of looping with one GPU 
-            // thread per cell, we loop with one GPU thread per "independent pairs" (i.e. pairs 
-            // that do not touch the same macroparticles, so that there is no race condition), 
-            // where the number of independent pairs is determined by the lower number of 
+            // To speed up binary collisions on GPU, we try to expose as much parallelism
+            // as possible (while avoiding race conditions): Instead of looping with one GPU
+            // thread per cell, we loop with one GPU thread per "independent pairs" (i.e. pairs
+            // that do not touch the same macroparticles, so that there is no race condition),
+            // where the number of independent pairs is determined by the lower number of
             // macroparticles of either species, within each cell.
             amrex::ParallelForRNG( n_independent_pairs,
                 [=] AMREX_GPU_DEVICE (int i_coll, amrex::RandomEngine const& engine) noexcept
@@ -594,11 +594,11 @@ public:
             );
 
             // Loop over independent particle pairs
-            // To speed up binary collisions on GPU, we try to expose as much parallelism 
-            // as possible (while avoiding race conditions): Instead of looping with one GPU 
-            // thread per cell, we loop with one GPU thread per "independent pairs" (i.e. pairs 
-            // that do not touch the same macroparticles, so that there is no race condition), 
-            // where the number of independent pairs is determined by the lower number of 
+            // To speed up binary collisions on GPU, we try to expose as much parallelism
+            // as possible (while avoiding race conditions): Instead of looping with one GPU
+            // thread per cell, we loop with one GPU thread per "independent pairs" (i.e. pairs
+            // that do not touch the same macroparticles, so that there is no race condition),
+            // where the number of independent pairs is determined by the lower number of
             // macroparticles of either species, within each cell.
             amrex::ParallelForRNG( n_independent_pairs,
                 [=] AMREX_GPU_DEVICE (int i_coll, amrex::RandomEngine const& engine) noexcept
