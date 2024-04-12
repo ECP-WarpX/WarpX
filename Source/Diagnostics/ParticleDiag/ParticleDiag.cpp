@@ -49,16 +49,17 @@ ParticleDiag::ParticleDiag(
                     m_plot_flags[existing_variable_names.at(var)] = 1;
                 }
             }
+            // Always write the position
+            // Note: for WARPX_DIM_RZ, no need to set the flag for x and y: they are always written
+#if defined (WARPX_DIM_2D) || defined(WARPX_DIM_3Z)
+            m_plot_flags[pc->getParticleComps().at("x")] = 1;
+#endif
+#if defined (WARPX_DIM_3D)
+            m_plot_flags[pc->getParticleComps().at("y")] = 1;
+#endif
+            m_plot_flags[pc->getParticleComps().at("z")] = 1;
         }
     }
-    // Always write the position
-#if !defined (WARPX_DIM_1D_Z)
-    m_plot_flags[pc->getParticleComps().at("x")] = 1;
-#endif
-#if defined (WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
-    m_plot_flags[pc->getParticleComps().at("y")] = 1;
-#endif
-    m_plot_flags[pc->getParticleComps().at("z")] = 1;
 
     // build filter functors
     m_do_random_filter = utils::parser::queryWithParser(
