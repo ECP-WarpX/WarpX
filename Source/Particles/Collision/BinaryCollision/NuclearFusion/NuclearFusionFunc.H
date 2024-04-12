@@ -177,8 +177,7 @@ public:
             index_type i1 = I1s + coll_idx;
             index_type i2 = I2s + coll_idx;
             // we will start from collision number = coll_idx and then add
-            // stride (smaller set size) until we do all NI1 (laarger set size)
-            // collisions as needed
+            // stride (smaller set size) until we do all collisions (larger set size)
             for (index_type k = coll_idx; k < max_N; k += min_N)
             {
                 // c1k : how many times the current particle of species 1 is paired with a particle

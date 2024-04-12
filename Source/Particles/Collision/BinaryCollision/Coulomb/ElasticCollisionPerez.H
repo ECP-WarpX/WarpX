@@ -133,8 +133,7 @@ void ElasticCollisionPerez (
       T_index i2 = I2s + coll_idx;
 
       // we will start from collision number = coll_idx and then add
-      // stride (smaller set size) until we do all NI1 (laarger set size)
-      // collisions as needed
+      // stride (smaller set size) until we do all collisions (larger set size)
       for (T_index k = coll_idx; k < max_N; k += min_N)
       {
 #if (defined WARPX_DIM_RZ)
