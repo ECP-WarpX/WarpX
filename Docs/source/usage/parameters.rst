@@ -2676,6 +2676,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 * ``<diag_name>.<species_name>.variables`` (list of `strings` separated by spaces, optional)
     List of particle quantities to write to output.
     Choices are ``w`` for the particle weight and ``ux`` ``uy`` ``uz`` for the particle momenta.
+    (The positions ``x``, ``y``, ``z``, as well as the particle ID are always written, and thus do not need to be specified in this list.)
     When using the lab-frame electrostatic solver, ``phi`` (electrostatic potential, on the macroparticles) is also available.
     By default, all particle quantities (except ``phi``) are written.
     If ``<diag_name>.<species_name>.variables = none``, no particle data are written, except for particle positions, which are always included.

@@ -41,6 +41,7 @@ ParticleDiag::ParticleDiag(
                     // Therefore, this case needs to be treated specifically.
                     m_plot_phi = true;
                 } else {
+                    amrex::Print() << var << std::endl;
                     const auto search = existing_variable_names.find(var);
                     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                         search != existing_variable_names.end(),
@@ -51,13 +52,10 @@ ParticleDiag::ParticleDiag(
             }
         }
     }
-
-#ifdef WARPX_DIM_RZ
-    // Always write out theta, whether or not it's requested,
-    // to be consistent with always writing out r and z.
-    // TODO: openPMD does a reconstruction to Cartesian, so we can now skip force-writing this
-    m_plot_flags[pc->getParticleComps().at("theta")] = 1;
-#endif
+    // Always write the position
+    m_plot_flags[pc->getParticleComps().at("x")] = 1;
+    m_plot_flags[pc->getParticleComps().at("y")] = 1;
+    m_plot_flags[pc->getParticleComps().at("z")] = 1;
 
     // build filter functors
     m_do_random_filter = utils::parser::queryWithParser(
