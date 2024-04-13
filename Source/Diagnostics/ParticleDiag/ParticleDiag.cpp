@@ -50,8 +50,8 @@ ParticleDiag::ParticleDiag(
                 }
             }
             // Always write the position
-            // Note: for WARPX_DIM_RZ, no need to set the flag for x and y: they are always written
-#if defined (WARPX_DIM_2D) || defined(WARPX_DIM_3Z)
+            // Note: for WARPX_DIM_RZ, no need to set the flag y: it is always written
+#if !defined (WARPX_DIM_1D_Z)
             m_plot_flags[pc->getParticleComps().at("x")] = 1;
 #endif
 #if defined (WARPX_DIM_3D)
