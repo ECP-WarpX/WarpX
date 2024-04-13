@@ -7,15 +7,15 @@
 # License: BSD-3-Clause-LBNL
 
 
-import os
 import sys
+
 import numpy as np
-from scipy.constants import c, eV, m_e, micro, nano, milli
+from openpmd_viewer import OpenPMDTimeSeries
+from scipy.constants import c, eV, m_e, micro, milli, nano
 
 #sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 #import checksumAPI
 
-from openpmd_viewer import OpenPMDTimeSeries
 
 sigmax = 2*micro
 sigmay = 1*micro
@@ -25,7 +25,7 @@ emity = 20*milli
 gamma = 125*1e9*eV/(m_e*c**2)
 x_m = 10*sigmax
 y_m = 10*sigmay
-z_m = 10*sigmaz 
+z_m = 10*sigmaz
 focal_distance = 4*sigmaz
 theta = 0.25*np.pi
 
@@ -38,13 +38,13 @@ filename = sys.argv[1]
 
 series = OpenPMDTimeSeries('./diags/openpmd/')
 
-# Rotated beam 
+# Rotated beam
 xrot, yrot, zrot, w, uxrot, uyrot, uzrot = series.get_particle( ['x', 'y', 'z', 'w', 'ux', 'uy', 'uz'], species='beam1', iteration=0, plot=False)
 
-# Rotate the beam back so that it propagates along z 
+# Rotate the beam back so that it propagates along z
 z = z_m + np.cos(-theta)*(zrot-z_m) - np.sin(-theta)*(xrot-x_m)
 x = x_m + np.sin(-theta)*(zrot-z_m) + np.cos(-theta)*(xrot-x_m)
-y = yrot 
+y = yrot
 
 # Compute the size of the beam in different z slices
 gridz = np.linspace(z_m-focal_distance*0.8, z_m+focal_distance*0.8, 64)
@@ -68,10 +68,10 @@ sy_theory = s(gridz, sigmay, emity/gamma, y_m)
 assert(np.allclose(sx, sx_theory, rtol=0.073, atol=0))
 assert(np.allclose(sy, sy_theory, rtol=0.081, atol=0))
 
-# Rotate the beam back so that it propagates along z 
+# Rotate the beam back so that it propagates along z
 uz = np.cos(-theta)*uzrot - np.sin(-theta)*uxrot
 ux = np.sin(-theta)*uzrot + np.cos(-theta)*uxrot
-uy = uyrot 
+uy = uyrot
 
 uz_m = np.average(uz, weights=w)
 uz_th = np.sqrt(np.average((uz-uz_m)**2, weights=w))
@@ -79,7 +79,7 @@ uz_th = np.sqrt(np.average((uz-uz_m)**2, weights=w))
 ux_m = np.average(ux, weights=w)
 ux_th = np.sqrt(np.average((ux-ux_m)**2, weights=w))
 
-err1 = np.abs( (uz_m - gamma) / gamma) 
+err1 = np.abs( (uz_m - gamma) / gamma)
 err2 = np.abs( uz_th )
 err3 = np.abs( ux_m )
 err4 = np.abs( (ux_th - emitx/sigmax) / (emitx/sigmax))
@@ -95,13 +95,13 @@ print(np.isclose(ux_m, 0.))
 
 print(np.isclose(ux_th, emitx / sigmax, rtol=1e-3))
 
-#errx =  np.average( np.asarray(ux) ) 
-#errz =  np.abs( (uz - gamma) / gamma ) 
+#errx =  np.average( np.asarray(ux) )
+#errz =  np.abs( (uz - gamma) / gamma )
 #print(np.max(errx), np.max(errz))
 #assert(np.allclose(uz, uz_m, rtol=0.081, atol=0))
 
 
-#import matplotlib.pyplot as plt 
+#import matplotlib.pyplot as plt
 #N = 100
 #plt.quiver(zrot[::N], xrot[::N], uzrot[::N], uxrot[::N])
 #plt.quiver(z[::N], x[::N], uz[::N], ux[::N])
@@ -109,4 +109,3 @@ print(np.isclose(ux_th, emitx / sigmax, rtol=1e-3))
 
 #test_name = os.path.split(os.getcwd())[1]
 #checksumAPI.evaluate_checksum(test_name, filename)
-

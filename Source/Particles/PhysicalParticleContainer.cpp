@@ -548,8 +548,8 @@ PhysicalParticleContainer::AddGaussianBeam (PlasmaInjector const& plasma_injecto
     const int symmetrization_order = plasma_injector.symmetrization_order;
     const Real focal_distance = plasma_injector.focal_distance;
 
-    const int do_rotation = plasma_injector.do_rotation; 
-    Vector<Real> rotation_axis = plasma_injector.rotation_axis ; 
+    const int do_rotation = plasma_injector.do_rotation;
+    Vector<Real> rotation_axis = plasma_injector.rotation_axis ;
     const Real rotation_angle = plasma_injector.rotation_angle;
 
     // Declare temporary vectors on the CPU
@@ -629,44 +629,44 @@ PhysicalParticleContainer::AddGaussianBeam (PlasmaInjector const& plasma_injecto
 
             if (do_rotation){
 
-                // normalize the rotation axis 
+                // normalize the rotation axis
                 Real k_norm = std::sqrt(rotation_axis[0]*rotation_axis[0] + rotation_axis[1]*rotation_axis[1] + rotation_axis[2]*rotation_axis[2]);
                 Real kx = rotation_axis[0]/k_norm;
                 Real ky = rotation_axis[1]/k_norm;
                 Real kz = rotation_axis[2]/k_norm;
-            
-                // compute rotated vector: 
-                // v_rot = v * cos + (k x v) sin + k (k * v) (1 - cos)
-                
 
-                // center around the origin 
+                // compute rotated vector:
+                // v_rot = v * cos + (k x v) sin + k (k * v) (1 - cos)
+
+
+                // center around the origin
                 Real x_c = x - x_m;
                 Real y_c = y - y_m;
                 Real z_c = z - z_m;
-                
-                // dot product  
+
+                // dot product
                 Real k_dot_x = kx*x_c + ky*y_c + kz*z_c;
 
-                // cross product 
+                // cross product
                 Real k_cross_x = ky*z_c - kz*y_c;
                 Real k_cross_y = kz*x_c - kx*z_c;
                 Real k_cross_z = kx*y_c - ky*x_c;
 
-                // rotate positions 
+                // rotate positions
                 x_c = x_c * std::cos(rotation_angle) + k_cross_x * std::sin(rotation_angle) + kx * k_dot_x * (1._rt - std::cos(rotation_angle));
                 y_c = y_c * std::cos(rotation_angle) + k_cross_y * std::sin(rotation_angle) + ky * k_dot_x * (1._rt - std::cos(rotation_angle));
                 z_c = z_c * std::cos(rotation_angle) + k_cross_z * std::sin(rotation_angle) + kz * k_dot_x * (1._rt - std::cos(rotation_angle));
 
                 // center back around the mean position x_m, y_m, z_m
-                x = x_c + x_m; 
-                y = y_c + y_m; 
-                z = z_c + z_m; 
+                x = x_c + x_m;
+                y = y_c + y_m;
+                z = z_c + z_m;
 
 
-                // dot product  
+                // dot product
                 Real k_dot_u = kx*u.x + ky*u.y + kz*u.z;
 
-                // cross product 
+                // cross product
                 Real k_cross_u_x = ky*u.z - kz*u.y;
                 Real k_cross_u_y = kz*u.x - kx*u.z;
                 Real k_cross_u_z = kx*u.y - ky*u.x;
