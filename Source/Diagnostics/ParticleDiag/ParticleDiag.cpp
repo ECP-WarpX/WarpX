@@ -61,6 +61,13 @@ ParticleDiag::ParticleDiag(
         }
     }
 
+#ifdef WARPX_DIM_RZ
+    // Always write out theta, whether or not it's requested,
+    // to be consistent with always writing out r and z.
+    // TODO: openPMD does a reconstruction to Cartesian, so we can now skip force-writing this
+    m_plot_flags[pc->getParticleComps().at("theta")] = 1;
+#endif
+
     // build filter functors
     m_do_random_filter = utils::parser::queryWithParser(
         pp_diag_name_species_name, "random_fraction", m_random_fraction);
