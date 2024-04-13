@@ -591,44 +591,6 @@ PhysicalParticleContainer::AddGaussianBeam (PlasmaInjector const& plasma_injecto
                 std::abs( z - z_m ) <= z_cut * z_rms   ) {
                 XDim3 u = plasma_injector.getMomentum(x, y, z);
 
-                if (do_rotation){
-
-                    // normalize the rotation axis 
-                    Real k_norm = std::sqrt(rotation_axis[0]*rotation_axis[0] + rotation_axis[1]*rotation_axis[1] + rotation_axis[2]*rotation_axis[2]);
-                    Real kx = rotation_axis[0]/k_norm;
-                    Real ky = rotation_axis[1]/k_norm;
-                    Real kz = rotation_axis[2]/k_norm;
-                
-                    // compute rotated vector: v_rot = v + sin(theta) * Kv + (1-cos(theta)) K^2v
-                    // where K is the rotation matrix = cross-product matrix associated to the rotation axis vector k = (kx, ky, kz)
-                    //     [  0 -kx  ky]
-                    // K = [ kz  0  -kx]
-                    //     [-ky  kz   0]
-
-                    // rotate positions 
-                    Real Kx = -kz*(y-y_m) + ky*(z-z_m);
-                    Real Ky =  kz*(x-x_m) - kx*(z-z_m);
-                    Real Kz = -ky*(x-x_m) + kx*(y-y_m);
-                    Real K2x = -kz*Ky + ky*Kz;
-                    Real K2y =  kz*Kx - kx*Kz;
-                    Real K2z = -ky*Kx + kx*Ky;
-                    x = x - x_m + std::sin(rotation_angle) * Kx + (1._rt - std::cos(rotation_angle)) * K2x;
-                    y = y - y_m + std::sin(rotation_angle) * Ky + (1._rt - std::cos(rotation_angle)) * K2y;
-                    z = z - z_m + std::sin(rotation_angle) * Kz + (1._rt - std::cos(rotation_angle)) * K2z;
-
-                    // rotate momenta                   
-                    Real Kux = -kz*u.y + ky*u.z;
-                    Real Kuy =  kz*u.x - kx*u.z;
-                    Real Kuz = -ky*u.x + kx*u.y;
-                    Real K2ux = -kz*Kuy + ky*Kuz;
-                    Real K2uy =  kz*Kux - kx*Kuz;
-                    Real K2uz = -ky*Kux + kx*Kuy;
-                    u.x = u.x + std::sin(rotation_angle) * Kux + (1._rt - std::cos(rotation_angle)) * K2ux;
-                    u.y = u.y + std::sin(rotation_angle) * Kuy + (1._rt - std::cos(rotation_angle)) * K2uy;
-                    u.z = u.z + std::sin(rotation_angle) * Kuz + (1._rt - std::cos(rotation_angle)) * K2uz;
-
-                }
-
             if (plasma_injector.do_focusing){
                 const XDim3 u_bulk = plasma_injector.getInjectorMomentumHost()->getBulkMomentum(x,y,z);
                 const Real u_bulk_norm = std::sqrt( u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z );
@@ -663,6 +625,57 @@ PhysicalParticleContainer::AddGaussianBeam (PlasmaInjector const& plasma_injecto
 #elif defined(WARPX_DIM_1D_Z)
                 z = z - (v_z - v_dot_n*n_z) * t;
 #endif
+            }
+
+            if (do_rotation){
+
+                // normalize the rotation axis 
+                Real k_norm = std::sqrt(rotation_axis[0]*rotation_axis[0] + rotation_axis[1]*rotation_axis[1] + rotation_axis[2]*rotation_axis[2]);
+                Real kx = rotation_axis[0]/k_norm;
+                Real ky = rotation_axis[1]/k_norm;
+                Real kz = rotation_axis[2]/k_norm;
+            
+                // compute rotated vector: 
+                // v_rot = v * cos + (k x v) sin + k (k * v) (1 - cos)
+                
+
+                // center around the origin 
+                Real x_c = x - x_m;
+                Real y_c = y - y_m;
+                Real z_c = z - z_m;
+                
+                // dot product  
+                Real k_dot_x = kx*x_c + ky*y_c + kz*z_c;
+
+                // cross product 
+                Real k_cross_x = ky*z_c - kz*y_c;
+                Real k_cross_y = kz*x_c - kx*z_c;
+                Real k_cross_z = kx*y_c - ky*x_c;
+
+                // rotate positions 
+                x_c = x_c * std::cos(rotation_angle) + k_cross_x * std::sin(rotation_angle) + kx * k_dot_x * (1._rt - std::cos(rotation_angle));
+                y_c = y_c * std::cos(rotation_angle) + k_cross_y * std::sin(rotation_angle) + ky * k_dot_x * (1._rt - std::cos(rotation_angle));
+                z_c = z_c * std::cos(rotation_angle) + k_cross_z * std::sin(rotation_angle) + kz * k_dot_x * (1._rt - std::cos(rotation_angle));
+
+                // center back around the mean position x_m, y_m, z_m
+                x = x_c + x_m; 
+                y = y_c + y_m; 
+                z = z_c + z_m; 
+
+
+                // dot product  
+                Real k_dot_u = kx*u.x + ky*u.y + kz*u.z;
+
+                // cross product 
+                Real k_cross_u_x = ky*u.z - kz*u.y;
+                Real k_cross_u_y = kz*u.x - kx*u.z;
+                Real k_cross_u_z = kx*u.y - ky*u.x;
+
+                // rotate momenta
+                u.x = u.x * std::cos(rotation_angle) + k_cross_u_x * std::sin(rotation_angle) + kx * k_dot_u * (1._rt - std::cos(rotation_angle));
+                u.y = u.y * std::cos(rotation_angle) + k_cross_u_y * std::sin(rotation_angle) + ky * k_dot_u * (1._rt - std::cos(rotation_angle));
+                u.z = u.z * std::cos(rotation_angle) + k_cross_u_z * std::sin(rotation_angle) + kz * k_dot_u * (1._rt - std::cos(rotation_angle));
+
             }
 
                 u.x *= PhysConst::c;
