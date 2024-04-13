@@ -45,26 +45,12 @@ void ImplicitDarwinSolver::AllocateLevelMFs (
     // );
     // sigma[lev][1].setVal(0.0_rt);
 
-    // The "sigma" multifabs stores the dressing of the Poisson equation that
-    // eliminates plasma frequency effects.
+    // The "sigma" multifabs stores the dressing of the Poisson equation. It
+    // is a cell-centered multifab.
     WarpX::AllocInitMultiFab(
-        sigma[lev][0], amrex::convert(ba, IntVect( AMREX_D_DECL(0,0,0) )),
-        dm, ncomps, ngRho, lev, "sigma[x]", 1.0_rt
+        sigma[lev], amrex::convert(ba, IntVect( AMREX_D_DECL(0,0,0) )),
+        dm, ncomps, ngRho, lev, "sigma"
     );
-    WarpX::AllocInitMultiFab(
-        sigma[lev][1], amrex::convert(ba, IntVect( AMREX_D_DECL(0,0,0) )),
-        dm, ncomps, ngRho, lev, "sigma[y]", 1.0_rt
-    );
-    // WarpX::AllocInitMultiFab(
-    //     sigma[lev][2], amrex::convert(ba, IntVect( AMREX_D_DECL(0,0,0) )),
-    //     dm, ncomps, ngRho, lev, "sigma[z]", 0.0_rt
-    // );
-    // sigma[lev][1] = std::make_unique<amrex::MultiFab>(
-    //     sigma[lev][0], amrex::make_alias, 0, ncomps
-    // );
-    // sigma[lev][2] = std::make_unique<amrex::MultiFab>(
-    //     sigma[lev][0], amrex::make_alias, 0, ncomps
-    // );
 
 #ifdef WARPX_DIM_RZ
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -75,10 +61,10 @@ void ImplicitDarwinSolver::AllocateLevelMFs (
 
 void ImplicitDarwinSolver::ClearLevel (int lev)
 {
-    // sigma[lev].reset();
-    for (int i = 0; i < 3; ++i) {
-        sigma[lev][i].reset();
-    }
+    sigma[lev].reset();
+    // for (int i = 0; i < 3; ++i) {
+    //     sigma[lev][i].reset();
+    // }
 }
 
 void
@@ -165,7 +151,7 @@ void ImplicitDarwinSolver::ComputeSigma () {
 
     auto& warpx = WarpX::GetInstance();
     auto& mypc = warpx.GetPartContainer();
-    auto& pc_electron = mypc.GetParticleContainerFromName("electrons");
+    auto& pc_electron = mypc.GetParticleContainerFromName("electron");
 
     // GetChargeDensity returns a cell-centered multifab
     auto rho_electron = pc_electron.GetChargeDensity(lev, false);
@@ -177,16 +163,23 @@ void ImplicitDarwinSolver::ComputeSigma () {
         / (pc_electron.getMass())
     );
 
-    // set sigma multifabs to 1 then add rho_electron to it
-    for (int ii = 0; ii < AMREX_SPACEDIM; ii++)
-    {
-        sigma[lev][ii]->setVal(1.0_rt);
-        MultiFab::Add(
-            *sigma[lev][ii], *rho_electron, 0, 0, 1,
-            sigma[lev][ii]->nGrowVect()
-        );
-    }
+    // interpolate rho_electron to cell-centered multifab
 
+
+    // set sigma multifabs to 1 then add rho_electron to it
+    // for (int ii = 0; ii < AMREX_SPACEDIM; ii++)
+    // {
+    //     sigma[lev][ii]->setVal(1.0_rt);
+    //     MultiFab::Add(
+    //         *sigma[lev][ii], *rho_electron, 0, 0, 1,
+    //         sigma[lev][ii]->nGrowVect()
+    //     );
+    // }
+    sigma[lev]->setVal(1.0_rt);
+    // MultiFab::Add(
+    //     *sigma[lev][ii], *rho_electron, 0, 0, 1,
+    //     sigma[lev][ii]->nGrowVect()
+    // );
 
     // // Temporary cell-centered, single-component MultiFab for storing particles per cell.
     // amrex::MultiFab ppc_mf(warpx.boxArray(lev), warpx.DistributionMap(lev), 1, 1);
@@ -223,19 +216,21 @@ void ImplicitDarwinSolver::ComputePhi (
     if (!always_use_bnorm) {
         if (absolute_tolerance == 0.0) absolute_tolerance = amrex::Real(1e-6);
         ablastr::warn_manager::WMRecordWarning(
-                "ElectrostaticSolver",
+                "ImplicitDarwinSolver",
                 "Max norm of rho is 0",
                 ablastr::warn_manager::WarnPriority::low
         );
     }
 
+    // auto& warpx = WarpX::GetInstance();
+    // amrex::LPInfo info = LPInfo().setMaxCoarseningLevel(0);
     amrex::LPInfo info;
 
 #if defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ)
     // In the presence of EB or RZ: the solver assumes that the beam is
     // propagating along  one of the axes of the grid, i.e. that only *one*
     // of the components of `beta` is non-negligible.
-    amrex::MLABecLaplacian linop( {geom}, {rho.boxArray()}, {rho[lev].dm()}, info
+    amrex::MLEBNodeLaplacian linop( {geom}, {rho.boxArray()}, {rho[lev].dm()}, info
 #if defined(AMREX_USE_EB)
         , {eb_farray_box_factory.value()[lev]}
 #endif
@@ -251,6 +246,8 @@ void ImplicitDarwinSolver::ComputePhi (
         1._rt-beta_solver[0]*beta_solver[0],
         1._rt-beta_solver[1]*beta_solver[1],
         1._rt-beta_solver[2]*beta_solver[2])});
+    // linop.setScalars(0.0, 1.0);
+    // linop.setBCoeffs(lev, amrex::GetArrOfConstPtrs(sigma[lev]) ); // for the non-axis-aligned solver
 #endif
 
 #if defined(AMREX_USE_EB)
@@ -264,12 +261,12 @@ void ImplicitDarwinSolver::ComputePhi (
 #endif
 #else
     // In the absence of EB and RZ: use a more generic solver
-    // that can handle beams propagating in any direction
-    amrex::MLABecLaplacian linop(
+    // that can handle sigma in all directions
+    amrex::MLNodeLaplacian linop(
         {geom}, {rho[lev]->boxArray()}, {rho[lev]->DistributionMap()}, info
+        // {}, 1.0
     );
-    linop.setScalars(0.0, 1.0);
-    linop.setBCoeffs(lev, amrex::GetArrOfConstPtrs(sigma[lev]) ); // for the non-axis-aligned solver
+    linop.setSigma(lev, *sigma[lev]);
 #endif
 
     // Solve the Poisson equation
@@ -282,9 +279,17 @@ void ImplicitDarwinSolver::ComputePhi (
     mlmg.setMaxIter(max_iters);
     mlmg.setAlwaysUseBNorm(always_use_bnorm);
 
+    // // create a vector to our fields, sorted by level
+    // amrex::Vector<amrex::MultiFab*> sorted_rho;
+    // amrex::Vector<amrex::MultiFab*> sorted_phi;
+    // // for (int nlev = 0; nlev <= finest_level; ++nlev) {
+    // sorted_rho.emplace_back(rho[lev].get());
+    // sorted_phi.emplace_back(phi[lev].get());
+    // // }
+
     // Solve Poisson equation at lev
     mlmg.solve(
-        GetVecOfPtrs(phi), GetVecOfConstPtrs(rho),
+        { phi[lev].get() }, { rho[lev].get() },   // GetVecOfPtrs(phi), GetVecOfConstPtrs(rho) //
         relative_tolerance, absolute_tolerance
     );
 

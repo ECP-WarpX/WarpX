@@ -21,7 +21,8 @@
 #include <ablastr/utils/Communication.H>
 #include <ablastr/warn_manager/WarnManager.H>
 
-#include <AMReX_MLABecLaplacian.H>
+#include <AMReX_MLEBNodeFDLaplacian.H>
+#include <AMReX_MLNodeLaplacian.H>
 #include <AMReX_MLMG.H>
 
 /**
@@ -68,9 +69,9 @@ public:
 
     // Declare multifabs specifically needed for the implicit Darwin model
     // amrex::Vector<std::unique_ptr<amrex::MultiFab>> sigma_fp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, AMREX_SPACEDIM > > sigma;
+    // amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, AMREX_SPACEDIM > > sigma;
     // amrex::Vector<std::array< amrex::MultiFab, AMREX_SPACEDIM > > sigma;
-
+    amrex::Vector<std::unique_ptr<amrex::MultiFab> > sigma;
 };
 
 #endif // WARPX_IMPLICITDARWINSOLVER_H_
