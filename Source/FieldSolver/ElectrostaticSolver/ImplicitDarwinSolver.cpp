@@ -18,6 +18,10 @@ ImplicitDarwinSolver::ImplicitDarwinSolver ( int nlevs_max )
         (nlevs_max == 1),
         "Implicit Darwin solver only support one level at present"
     );
+
+    // read input parameters
+    const ParmParse pp_warpx("warpx");
+    utils::parser::queryWithParser(pp_warpx, "semi_implicit_factor", m_C_SI);
 }
 
 void ImplicitDarwinSolver::AllocateMFs (int nlevs_max)
@@ -148,45 +152,62 @@ ImplicitDarwinSolver::AddSpaceChargeField (
 void ImplicitDarwinSolver::ComputeSigma () {
 
     int const lev = 0;
+    sigma[lev]->setVal(1.0_rt);
+
+    // GetChargeDensity returns a nodal multifab
+    amrex::GpuArray<int, 3> nodal = {1, 1, 1};
+    // sigma is a cell-centered array
+    amrex::GpuArray<int, 3> const& cell_centered = {0, 0, 0};
+    // The "coarsening is just 1 i.e. no coarsening"
+    amrex::GpuArray<int, 3> const& coarsen = {1, 1, 1};
+
+    // Below we set all the unused dimensions to have cell-centered values for
+    // rho since these values will be interpolated onto a cell-centered grid
+    // - if this is not done the Interp function returns nonsense values.
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_1D_Z)
+    nodal[2] = 0;
+#endif
+#if defined(WARPX_DIM_1D_Z)
+    nodal[1] = 0;
+#endif
 
     auto& warpx = WarpX::GetInstance();
     auto& mypc = warpx.GetPartContainer();
-    auto& pc_electron = mypc.GetParticleContainerFromName("electron");
 
-    // GetChargeDensity returns a cell-centered multifab
-    auto rho_electron = pc_electron.GetChargeDensity(lev, false);
-
-    // multiply charge density by C_SI * dt**2 /4.0 q/(m \varepsilon_0)
-    rho_electron->mult(
-        (2.0_rt / 4.0_rt) * warpx.getdt(lev)*warpx.getdt(lev)
-        * pc_electron.getCharge()
-        / (pc_electron.getMass())
+    auto m_mult_factor = (
+        m_C_SI * warpx.getdt(lev) * warpx.getdt(lev)
+        / (16._rt * MathConst::pi * MathConst::pi * PhysConst::ep0)
     );
 
-    // interpolate rho_electron to cell-centered multifab
+    // Loop over each species to calculate the Poisson equation dressing
+    for (auto const& pc : mypc) {
+        auto rho = pc->GetChargeDensity(lev, false);
+        // Handle the parallel transfers of guard cells and
+        // apply the filtering if requested - might not be needed...
+        warpx.ApplyFilterandSumBoundaryRho(lev, lev, *rho, 0, rho->nComp());
 
+        // multiply charge density by C_SI * dt**2 /4.0 q/(m \varepsilon_0)
+        rho->mult(m_mult_factor * pc->getCharge() / pc->getMass());
 
-    // set sigma multifabs to 1 then add rho_electron to it
-    // for (int ii = 0; ii < AMREX_SPACEDIM; ii++)
-    // {
-    //     sigma[lev][ii]->setVal(1.0_rt);
-    //     MultiFab::Add(
-    //         *sigma[lev][ii], *rho_electron, 0, 0, 1,
-    //         sigma[lev][ii]->nGrowVect()
-    //     );
-    // }
-    sigma[lev]->setVal(1.0_rt);
-    // MultiFab::Add(
-    //     *sigma[lev][ii], *rho_electron, 0, 0, 1,
-    //     sigma[lev][ii]->nGrowVect()
-    // );
+        // update sigma
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+        for ( MFIter mfi(*sigma[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+            Array4<Real> const& sigma_arr = sigma[lev]->array(mfi);
+            Array4<Real const> const& rho_arr = rho->const_array(mfi);
 
-    // // Temporary cell-centered, single-component MultiFab for storing particles per cell.
-    // amrex::MultiFab ppc_mf(warpx.boxArray(lev), warpx.DistributionMap(lev), 1, 1);
-    // // Set value to 0, and increment the value in each cell with ppc.
-    // ppc_mf.setVal(0._rt);
-    // // Compute ppc which includes a summation over all species.
-    // pc_electron.Increment(ppc_mf, lev);
+            // Loop over the cells and update the sigma field
+            amrex::ParallelFor(mfi.tilebox(), [=] AMREX_GPU_DEVICE (int i, int j, int k){
+                // Interpolate rho to cell-centered multifab to add to sigma.
+                auto const rho_interp = ablastr::coarsen::sample::Interp(
+                    rho_arr, nodal, cell_centered, coarsen, i, j, k, 0
+                );
+                sigma_arr(i, j, k, 0) += rho_interp;
+            });
+
+        }
+    }
 }
 
 template<typename T_BoundaryHandler, typename T_FArrayBoxFactory>

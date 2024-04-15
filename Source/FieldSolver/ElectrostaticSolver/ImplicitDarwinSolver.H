@@ -13,10 +13,12 @@
 #include "ImplicitDarwinSolver_fwd.H"
 
 #include "Particles/MultiParticleContainer.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
+#include <ablastr/coarsen/sample.H>
 #include <ablastr/fields/PoissonSolver.H>
 #include <ablastr/utils/Communication.H>
 #include <ablastr/warn_manager/WarnManager.H>
@@ -72,6 +74,8 @@ public:
     // amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, AMREX_SPACEDIM > > sigma;
     // amrex::Vector<std::array< amrex::MultiFab, AMREX_SPACEDIM > > sigma;
     amrex::Vector<std::unique_ptr<amrex::MultiFab> > sigma;
+
+    amrex::Real m_C_SI = 6.0;
 };
 
 #endif // WARPX_IMPLICITDARWINSOLVER_H_
