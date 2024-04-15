@@ -76,6 +76,7 @@ public:
          * @param[in] m1,m2 are masses.
          * @param[in] dt is the time step length between two collision calls.
          * @param[in] dV is the volume of the corresponding cell.
+         * @param[in] coll_idx is the collision index offset.
          * @param[in] engine the random engine.
          */
         AMREX_GPU_HOST_DEVICE AMREX_INLINE
@@ -88,7 +89,7 @@ public:
             GetParticlePosition<PIdx> /*get_position_1*/, GetParticlePosition<PIdx> /*get_position_2*/,
             amrex::ParticleReal const  q1, amrex::ParticleReal const  q2,
             amrex::ParticleReal const  m1, amrex::ParticleReal const  m2,
-            amrex::Real const  dt, amrex::Real const dV,
+            amrex::Real const  dt, amrex::Real const dV, index_type coll_idx,
             index_type const /*cell_start_pair*/, index_type* /*p_mask*/,
             index_type* /*p_pair_indices_1*/, index_type* /*p_pair_indices_2*/,
             amrex::ParticleReal* /*p_pair_reaction_weight*/,
@@ -100,7 +101,7 @@ public:
                     I1s, I1e, I2s, I2e, I1, I2,
                     soa_1, soa_2,
                     q1, q2, m1, m2, -1.0_prt, -1.0_prt,
-                    dt, m_CoulombLog, dV, engine, m_isSameSpecies);
+                    dt, m_CoulombLog, dV, engine, m_isSameSpecies, coll_idx);
         }
 
         amrex::ParticleReal m_CoulombLog;
