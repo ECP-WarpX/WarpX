@@ -1,39 +1,40 @@
-/* Copyright 2021 Neil Zaim
+/* Copyright 2024 The WarpX Community
  *
  * This file is part of WarpX.
+ *
+ * Authors: Roelof Groenewald (TAE Technologies)
  *
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef NUCLEAR_FUSION_FUNC_H_
-#define NUCLEAR_FUSION_FUNC_H_
+#ifndef DSMC_FUNC_H_
+#define DSMC_FUNC_H_
 
-#include "SingleNuclearFusionEvent.H"
+#include "CollisionFilterFunc.H"
 
 #include "Particles/Collision/BinaryCollision/BinaryCollisionUtils.H"
-#include "Particles/Pusher/GetAndSetPosition.H"
+#include "Particles/Collision/BinaryCollision/ShuffleFisherYates.H"
+#include "Particles/Collision/CollisionBase.H"
+#include "Particles/Collision/ScatteringProcess.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Particles/ParticleCreation/SmartCopy.H"
+#include "Particles/ParticleCreation/SmartUtils.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/Parser/ParserUtils.H"
-#include "Utils/TextMsg.H"
-#include "WarpX.H"
+#include "Utils/ParticleUtils.H"
+#include "Utils/WarpXProfilerWrapper.H"
 
-#include <AMReX_Algorithm.H>
 #include <AMReX_DenseBins.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_Random.H>
-#include <AMReX_REAL.H>
-#include <AMReX_Vector.H>
 
 /**
- * \brief This functor does binary nuclear fusions on a single cell.
- *  Particles of the two reacting species are paired with each other and for each pair we compute
- *  if a fusion event occurs. If so, we fill a mask (input parameter p_mask) with true so that
- *  product particles corresponding to a given pair can be effectively created in the particle
- *  creation functor.
- *  This functor also reads and contains the fusion multiplier.
+ * \brief This class performs DSMC (direct simulation Monte Carlo) collisions
+ * within a cell. Particles are paired up and for each pair a stochastic process
+ * determines whether a collision occurs. The algorithm is similar to the one
+ * used for binary Coulomb collisions and the nuclear fusion module.
  */
-class NuclearFusionFunc
+class DSMCFunc
 {
     // Define shortcuts for frequently-used type names
     using ParticleType = WarpXParticleContainer::ParticleType;
@@ -44,64 +45,28 @@ class NuclearFusionFunc
     using SoaData_type = WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
 
 public:
-    /**
-     * \brief Default constructor of the NuclearFusionFunc class.
-     */
-    NuclearFusionFunc () = default;
 
     /**
-     * \brief Constructor of the NuclearFusionFunc class
+     * \brief Constructor of the DSMCFunc class.
+     */
+    DSMCFunc () = default;
+
+    /**
+     * \brief Constructor of the DSMCFunc class
      *
      * @param[in] collision_name the name of the collision
      * @param[in] mypc pointer to the MultiParticleContainer
      * @param[in] isSameSpecies whether the two colliding species are the same
      */
-    NuclearFusionFunc (const std::string& collision_name, MultiParticleContainer const * const mypc,
-                       const bool isSameSpecies):
-        m_fusion_multiplier{amrex::ParticleReal{1.0}}, // default fusion multiplier
-        m_probability_threshold{amrex::ParticleReal{0.02}}, // default fusion probability threshold
-        m_probability_target_value{amrex::ParticleReal{0.002}}, // default fusion probability target_value
-        m_fusion_type{BinaryCollisionUtils::get_nuclear_fusion_type(collision_name, mypc)},
-        m_isSameSpecies{isSameSpecies}
-    {
-
-#ifdef AMREX_SINGLE_PRECISION_PARTICLES
-        WARPX_ABORT_WITH_MESSAGE("Nuclear fusion module does not currently work with single precision");
-#endif
-
-        const amrex::ParmParse pp_collision_name(collision_name);
-        utils::parser::queryWithParser(
-            pp_collision_name, "fusion_multiplier", m_fusion_multiplier);
-        utils::parser::queryWithParser(
-            pp_collision_name, "fusion_probability_threshold", m_probability_threshold);
-        utils::parser::queryWithParser(
-            pp_collision_name, "fusion_probability_target_value",
-            m_probability_target_value);
-
-        m_exe.m_fusion_multiplier = m_fusion_multiplier;
-        m_exe.m_probability_threshold = m_probability_threshold;
-        m_exe.m_probability_target_value = m_probability_target_value;
-        m_exe.m_fusion_type = m_fusion_type;
-        m_exe.m_isSameSpecies = m_isSameSpecies;
-    }
+    DSMCFunc ( const std::string& collision_name,
+               MultiParticleContainer const * mypc,
+               bool isSameSpecies );
 
     struct Executor {
         /**
-         * \brief Executor of the NuclearFusionFunc class. Performs nuclear fusions at the cell level
-         * using the algorithm described in Higginson et al., Journal of Computational Physics 388,
-         * 439-453 (2019). Note that this function does not yet create the product particles, but
-         * instead fills an array p_mask that stores which collisions result in a fusion event.
-         *
-         * Also note that there are three main differences between this implementation and the
-         * algorithm described in Higginson's paper:
-         * - 1) The transformation from the lab frame to the center of mass frame is nonrelativistic
-         * in Higginson's paper. Here, we implement a relativistic generalization.
-         * - 2) The behaviour when the estimated fusion probability is greater than one is not
-         * specified in Higginson's paper. Here, we provide an implementation using two runtime
-         * dependent parameters (fusion probability threshold and fusion probability target value). See
-         * documentation for more details.
-         * - 3) Here, we divide the weight of a particle by the number of times it is paired with other
-         * particles. This was not explicitly specified in Higginson's paper.
+         * \brief Executor of the DSMCFunc class. Performs DSMC collisions at the cell level.
+         * Note that this function does not yet create the product particles, but
+         * instead fills an array p_mask that stores which pairs result in a collision event.
          *
          * @param[in] I1s,I2s is the start index for I1,I2 (inclusive).
          * @param[in] I1e,I2e is the stop index for I1,I2 (exclusive).
@@ -166,10 +131,6 @@ public:
             const index_type c1 = amrex::max(NI2/NI1, index_type(1));
             const index_type c2 = amrex::max(NI1/NI2, index_type(1));
 
-            // multiplier ratio to take into account unsampled pairs
-            const auto multiplier_ratio = static_cast<int>(
-                m_isSameSpecies ? 2*max_N - 1 : max_N);
-
 #if (defined WARPX_DIM_RZ)
             amrex::ParticleReal * const AMREX_RESTRICT theta1 = soa_1.m_rdata[PIdx::theta];
             amrex::ParticleReal * const AMREX_RESTRICT theta2 = soa_2.m_rdata[PIdx::theta];
@@ -187,28 +148,27 @@ public:
 
 #if (defined WARPX_DIM_RZ)
                 /* In RZ geometry, macroparticles can collide with other macroparticles
-                 * in the same *cylindrical* cell. For this reason, collisions between macroparticles
-                 * are actually not local in space. In this case, the underlying assumption is that
-                 * particles within the same cylindrical cell represent a cylindrically-symmetry
-                 * momentum distribution function. Therefore, here, we temporarily rotate the
-                 * momentum of one of the macroparticles in agreement with this cylindrical symmetry.
-                 * (This is technically only valid if we use only the m=0 azimuthal mode in the simulation;
-                 * there is a corresponding assert statement at initialization.) */
+                * in the same *cylindrical* cell. For this reason, collisions between macroparticles
+                * are actually not local in space. In this case, the underlying assumption is that
+                * particles within the same cylindrical cell represent a cylindrically-symmetry
+                * momentum distribution function. Therefore, here, we temporarily rotate the
+                * momentum of one of the macroparticles in agreement with this cylindrical symmetry.
+                * (This is technically only valid if we use only the m=0 azimuthal mode in the simulation;
+                * there is a corresponding assert statement at initialization.)
+                */
                 amrex::ParticleReal const theta = theta2[I2[i2]]-theta1[I1[i1]];
                 amrex::ParticleReal const u1xbuf = u1x[I1[i1]];
                 u1x[I1[i1]] = u1xbuf*std::cos(theta) - u1y[I1[i1]]*std::sin(theta);
                 u1y[I1[i1]] = u1xbuf*std::sin(theta) + u1y[I1[i1]]*std::cos(theta);
 #endif
 
-                SingleNuclearFusionEvent(
+                CollisionPairFilter(
                     u1x[ I1[i1] ], u1y[ I1[i1] ], u1z[ I1[i1] ],
                     u2x[ I2[i2] ], u2y[ I2[i2] ], u2z[ I2[i2] ],
                     m1, m2, w1[ I1[i1] ]/c1k, w2[ I2[i2] ]/c2k,
-                    dt, dV, static_cast<int>(pair_index), p_mask, p_pair_reaction_weight,
-                    m_fusion_multiplier, multiplier_ratio,
-                    m_probability_threshold,
-                    m_probability_target_value,
-                    m_fusion_type, engine);
+                    dt, dV, static_cast<int>(pair_index), p_mask,
+                    p_pair_reaction_weight, static_cast<int>(max_N),
+                    m_process_count, m_scattering_processes_data, engine);
 
 #if (defined WARPX_DIM_RZ)
                 amrex::ParticleReal const u1xbuf_new = u1x[I1[i1]];
@@ -228,31 +188,17 @@ public:
             }
         }
 
-        amrex::ParticleReal m_fusion_multiplier;
-        amrex::ParticleReal m_probability_threshold;
-        amrex::ParticleReal m_probability_target_value;
-        NuclearFusionType m_fusion_type;
-        bool m_isSameSpecies;
+        int m_process_count;
+        ScatteringProcess::Executor* m_scattering_processes_data;
     };
 
     [[nodiscard]] Executor const& executor () const { return m_exe; }
 
 private:
-    // Factor used to increase the number of fusion reaction by decreasing the weight of the
-    // produced particles
-    amrex::ParticleReal m_fusion_multiplier;
-    // If the fusion multiplier is too high and results in a fusion probability that approaches
-    // 1, there is a risk of underestimating the total fusion yield. In these cases, we reduce
-    // the fusion multiplier used in a given collision. m_probability_threshold is the fusion
-    // probability threshold above which we reduce the fusion multiplier.
-    // m_probability_target_value is the target probability used to determine by how much
-    // the fusion multiplier should be reduced.
-    amrex::ParticleReal m_probability_threshold;
-    amrex::ParticleReal m_probability_target_value;
-    NuclearFusionType m_fusion_type;
-    bool m_isSameSpecies;
+    amrex::Vector<ScatteringProcess> m_scattering_processes;
+    amrex::Gpu::DeviceVector<ScatteringProcess::Executor> m_scattering_processes_exe;
 
     Executor m_exe;
 };
 
-#endif // NUCLEAR_FUSION_FUNC_H_
+#endif // DSMC_FUNC_H_
