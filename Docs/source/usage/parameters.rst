@@ -1288,14 +1288,14 @@ Particle initialization
       cells and merged, similar to the approach described in :cite:t:`param-Vranic2015`.
       It has three parameters:
 
-        * ``<species>.resampling_algorithm_delta_ur`` (`float`) optional (default `1e5`)
+        * ``<species>.resampling_algorithm_delta_ur`` (`float`)
             The width of momentum cells used in clustering particles, in m/s.
 
-        * ``<species>.resampling_algorithm_n_theta`` (`int`) optional (default `120`)
+        * ``<species>.resampling_algorithm_n_theta`` (`int`)
             The number of cell divisions to use in the :math:`\theta` direction
             when clustering the particle velocities.
 
-        * ``<species>.resampling_algorithm_n_phi`` (`int`) optional (default `60`)
+        * ``<species>.resampling_algorithm_n_phi`` (`int`)
             The number of cell divisions to use in the :math:`\phi` direction
             when clustering the particle velocities.
 

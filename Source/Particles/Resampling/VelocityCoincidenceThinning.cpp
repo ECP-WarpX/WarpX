@@ -28,13 +28,13 @@ VelocityCoincidenceThinning::VelocityCoincidenceThinning (const std::string& spe
         "Resampling min_ppc should be greater than or equal to 1"
     );
 
-    utils::parser::queryWithParser(
+    utils::parser::getWithParser(
         pp_species_name, "resampling_algorithm_delta_ur", m_delta_ur
     );
-    utils::parser::queryWithParser(
+    utils::parser::getWithParser(
         pp_species_name, "resampling_algorithm_n_theta", m_ntheta
     );
-    utils::parser::queryWithParser(
+    utils::parser::getWithParser(
         pp_species_name, "resampling_algorithm_n_phi", m_nphi
     );
 }

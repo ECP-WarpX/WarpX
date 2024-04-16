@@ -107,9 +107,9 @@ public:
     };
 
 private:
-    int m_min_ppc = 100;
-    int m_ntheta = 120;
-    int m_nphi = 60;
-    amrex::ParticleReal m_delta_ur = 1e5;
+    int m_min_ppc = 1;
+    int m_ntheta;
+    int m_nphi;
+    amrex::ParticleReal m_delta_ur;
 };
 #endif // WARPX_GRID_BASED_MERGING_H_
