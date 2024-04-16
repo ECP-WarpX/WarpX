@@ -2227,10 +2227,9 @@ PhysicalParticleContainer::Evolve (int lev,
             if (rho && ! skip_deposition && ! do_not_deposit) {
                 // Deposit charge after particle push, in component 1 of MultiFab rho.
                 // (Skipped for electrostatic solver, as this may lead to out-of-bounds)
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(rho->nComp() >= 2,
-                    "Cannot deposit charge in rho component 1: only component 0 is allocated!");
-
                 if (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::None) {
+                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(rho->nComp() >= 2,
+                        "Cannot deposit charge in rho component 1: only component 0 is allocated!");
 
                     const int* const AMREX_RESTRICT ion_lev = (do_field_ionization)?
                         pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr():nullptr;
