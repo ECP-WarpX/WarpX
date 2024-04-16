@@ -18,15 +18,10 @@
 namespace ablastr::particles
 {
 
-    enum class FieldType{
-        nodal,
-        cell_centered
-    };
-
 /**
  * \brief Compute weight of each surrounding node (or cell-centered nodes) in interpolating a nodal ((or a cell-centered node) field
- *        to the given coordinates. If template parameter FT is FieldType::nodal, then the calculations will be done with respect to the nodes (default).
- *        If template parameter FT is FieldType::cell_centered, then the calculations will be done with respect to the cell-centered nodal.
+ *        to the given coordinates. If template parameter IdxType is amrex::IndexType::CellIndex::NODE, then the calculations will be done with respect to the nodes (default).
+ *        If template parameter IdxType is amrex::IndexType::CellIndex::CELL, then the calculations will be done with respect to the cell-centered nodal.
  *        This currently only does linear order.
  *
  * \param xp,yp,zp Particle position coordinates
@@ -36,7 +31,7 @@ namespace ablastr::particles
  * \param W        2D array of weights to store each neighbouring node (or cell-centered node)
  * \param nodal    Int that tells if the weights are calculated in respect to the nodes (nodal=1) of the cell-centered nodes (nodal=0)
  */
-template <FieldType FT>
+template <amrex::IndexType::CellIndex IdxType>
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void compute_weights (const amrex::ParticleReal xp,
                             const amrex::ParticleReal yp,
@@ -48,7 +43,7 @@ void compute_weights (const amrex::ParticleReal xp,
     using namespace amrex::literals;
 
     constexpr auto half_if_cell_centered = [](){
-        if constexpr (FT == FieldType::nodal){
+        if constexpr (IdxType == amrex::IndexType::CellIndex::NODE){
             return 0.0_rt;
         }
         else{
@@ -161,7 +156,7 @@ amrex::Real doGatherScalarFieldNodal (const amrex::ParticleReal xp,
     // first find the weight of surrounding nodes to use during interpolation
     int ii, jj, kk;
     amrex::Real W[AMREX_SPACEDIM][2];
-    compute_weights<FieldType::nodal>(xp, yp, zp, lo, dxi, ii, jj, kk, W);
+    compute_weights<amrex::IndexType::NODE>(xp, yp, zp, lo, dxi, ii, jj, kk, W);
 
     return interp_field_nodal(ii, jj, kk, W, scalar_field);
 }
@@ -189,7 +184,7 @@ doGatherVectorFieldNodal (const amrex::ParticleReal xp,
     // first find the weight of surrounding nodes to use during interpolation
     int ii, jj, kk;
     amrex::Real W[AMREX_SPACEDIM][2];
-    compute_weights<FieldType::nodal>(xp, yp, zp, lo, dxi, ii, jj, kk, W);
+    compute_weights<amrex::IndexType::NODE>(xp, yp, zp, lo, dxi, ii, jj, kk, W);
 
     amrex::GpuArray<amrex::Real, 3> const field_interp = {
         interp_field_nodal(ii, jj, kk, W, vector_field_x),
