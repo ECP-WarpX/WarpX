@@ -62,6 +62,7 @@ void UpdateMomentumBoris1(
     const amrex::ParticleReal q, const amrex::ParticleReal m, const amrex::Real dt )
 {
     using namespace amrex::literals;
+    //amrex::Print() << "(1.1) inside UpdateMomentumBoris1(): uz = "<< uz << "\n";
 
     const amrex::ParticleReal econst = 0.5_prt*q*dt/m;
 
@@ -74,9 +75,9 @@ void UpdateMomentumBoris1(
     const amrex::ParticleReal inv_gamma = 1._prt/std::sqrt(1._prt + (ux*ux + uy*uy + uz*uz)*inv_c2);
     // Magnetic rotation
     // - Compute temporary variables
-    const amrex::ParticleReal tx = 0.5*econst*inv_gamma*Bx;
-    const amrex::ParticleReal ty = 0.5*econst*inv_gamma*By;
-    const amrex::ParticleReal tz = 0.5*econst*inv_gamma*Bz;
+    const amrex::ParticleReal tx = econst*inv_gamma*Bx;
+    const amrex::ParticleReal ty = econst*inv_gamma*By;
+    const amrex::ParticleReal tz = econst*inv_gamma*Bz;
     const amrex::ParticleReal tsqi = 2._prt/(1._prt + tx*tx + ty*ty + tz*tz);
     const amrex::ParticleReal sx = tx*tsqi;
     const amrex::ParticleReal sy = ty*tsqi;
@@ -88,7 +89,11 @@ void UpdateMomentumBoris1(
     ux += uy_p*sz - uz_p*sy;
     uy += uz_p*sx - ux_p*sz;
     uz += ux_p*sy - uy_p*sx;
-
+    //amrex::Print() << "(1.2) inside UpdateMomentumBoris1(): uz = "<< uz << "\n";
+    // Second half-push for E
+    ux += econst*Ex;
+    uy += econst*Ey;
+    uz += econst*Ez;
 }
 
 /** \brief Push the particle's positions over one timestep,
@@ -101,6 +106,8 @@ void UpdateMomentumBoris2(
     const amrex::ParticleReal q, const amrex::ParticleReal m, const amrex::Real dt )
 {
     using namespace amrex::literals;
+    //amrex::Print() << "(2.1) inside UpdateMomentumBoris2(): uz = "<< uz << "\n";
+
 
     const amrex::ParticleReal econst = 0.5_prt*q*dt/m;
 
@@ -109,9 +116,9 @@ void UpdateMomentumBoris2(
     const amrex::ParticleReal inv_gamma = 1._prt/std::sqrt(1._prt + (ux*ux + uy*uy + uz*uz)*inv_c2);
     // Magnetic rotation
     // - Compute temporary variables
-    const amrex::ParticleReal tx = 0.5*econst*inv_gamma*Bx;
-    const amrex::ParticleReal ty = 0.5*econst*inv_gamma*By;
-    const amrex::ParticleReal tz = 0.5*econst*inv_gamma*Bz;
+    const amrex::ParticleReal tx = econst*inv_gamma*Bx;
+    const amrex::ParticleReal ty = econst*inv_gamma*By;
+    const amrex::ParticleReal tz = econst*inv_gamma*Bz;
     const amrex::ParticleReal tsqi = 2._prt/(1._prt + tx*tx + ty*ty + tz*tz);
     const amrex::ParticleReal sx = tx*tsqi;
     const amrex::ParticleReal sy = ty*tsqi;
@@ -127,6 +134,8 @@ void UpdateMomentumBoris2(
     ux += econst*Ex;
     uy += econst*Ey;
     uz += econst*Ez;
+    //amrex::Print() << "(2.2) inside UpdateMomentumBoris2(): uz = "<< uz << "\n";
+
 }
 
 #endif // WARPX_PARTICLES_PUSHER_UPDATEMOMENTUM_BORIS_H_
