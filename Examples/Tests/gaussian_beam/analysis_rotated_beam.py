@@ -9,13 +9,14 @@
 
 import os
 import sys
+
 import numpy as np
+from openpmd_viewer import OpenPMDTimeSeries
 from scipy.constants import c, eV, m_e, micro, milli
 
 #sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 #import checksumAPI
 
-from openpmd_viewer import OpenPMDTimeSeries
 
 sigmax = 2*micro
 sigmay = 1*micro
@@ -25,7 +26,7 @@ emity = 20*milli
 gamma = 125*1e9*eV/(m_e*c**2)
 x_m = 10*sigmax
 y_m = 10*sigmay
-z_m = 10*sigmaz 
+z_m = 10*sigmaz
 focal_distance = 4*sigmaz
 theta = 0.25*np.pi
 
@@ -38,10 +39,10 @@ filename = sys.argv[1]
 
 series = OpenPMDTimeSeries('./diags/openpmd/')
 
-# Rotated beam 
+# Rotated beam
 xrot, yrot, zrot, w, uxrot, uyrot, uzrot = series.get_particle( ['x', 'y', 'z', 'w', 'ux', 'uy', 'uz'], species='beam1', iteration=0, plot=False)
 
-# Rotate the beam back so that it propagates along z 
+# Rotate the beam back so that it propagates along z
 x = x_m + np.cos(-theta)*(xrot-x_m) + np.sin(-theta)*(zrot-z_m)
 y = yrot
 z = z_m - np.sin(-theta)*(xrot-x_m) + np.cos(-theta)*(zrot-z_m)
@@ -69,9 +70,9 @@ sy_theory = s(gridz, sigmay, emity/gamma)
 assert(np.allclose(sx, sx_theory, rtol=0.086, atol=0))
 assert(np.allclose(sy, sy_theory, rtol=0.056, atol=0))
 
-# Rotate the beam back so that it propagates along z 
+# Rotate the beam back so that it propagates along z
 ux = np.cos(-theta)*uxrot + np.sin(-theta)*uzrot
-uy = uyrot 
+uy = uyrot
 uz = - np.sin(-theta)*uxrot + np.cos(-theta)*uzrot
 
 
@@ -90,4 +91,3 @@ assert(np.isclose(ux_th, emitx / sigmax, rtol=1e-3, atol=0))
 
 test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)
-
