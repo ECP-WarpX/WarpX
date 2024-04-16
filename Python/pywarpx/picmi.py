@@ -132,7 +132,7 @@ class Species(picmistandard.PICMI_Species):
     warpx_do_resampling: bool, default=False
         Whether particles will be resampled
 
-    warpx_resampling_min_ppc: int, default=100
+    warpx_resampling_min_ppc: int, default=1
         Cells with fewer particles than this number will be
         skipped during resampling.
 
@@ -146,15 +146,15 @@ class Species(picmistandard.PICMI_Species):
     warpx_resampling_algorithm: str, default="leveling_thinning"
         Resampling algorithm to use.
 
-    warpx_resampling_algorithm_delta_ur: float, default=1e5
+    warpx_resampling_algorithm_delta_ur: float
         Size of velocity window used for clustering particles during grid-based
         merging.
 
-    warpx_resampling_algorithm_n_theta: int, default 120
+    warpx_resampling_algorithm_n_theta: int
         Number of bins to use in theta when clustering particle velocities
         during grid-based merging.
 
-    warpx_resampling_algorithm_n_phi: int, default 60
+    warpx_resampling_algorithm_n_phi: int
         Number of bins to use in phi when clustering particle velocities
         during grid-based merging.
     """
