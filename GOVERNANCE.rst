@@ -25,6 +25,7 @@ Members of the steering committee (SC) can change organizational settings, do ad
 SC members can call votes for decisions (technical or governance).
 
 The SC can veto decisions of the technical committee (TC) by voting in the SC.
+The TC can overwrite a veto with a 2/3rd majority vote in the TC.
 
 The SC can change the governance structure, but only in a unanimous vote.
 
