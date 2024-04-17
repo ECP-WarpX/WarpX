@@ -205,20 +205,10 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
                         auto vy = v_perp * std::sin(phi);
 
                         // calculate rotation angles to parallel coord. frame
-                        auto cos_theta = cluster_uz / cluster_u_mag;
-                        auto sin_theta = u_perp / cluster_u_mag;
-                        auto cos_phi = cluster_ux / u_perp;
-                        auto sin_phi = cluster_uy / u_perp;
-
-                        // handle edge case with stationary clusters or particles
-                        if (std::abs(u_perp) <= std::numeric_limits<amrex::ParticleReal>::min()) {
-                            cos_phi = 0._prt;
-                            sin_phi = 0._prt;
-                            sin_theta = 0._prt;
-                            if (std::abs(cluster_u_mag) <= std::numeric_limits<amrex::ParticleReal>::min()) {
-                                cos_theta = 0._prt;
-                            }
-                        }
+                        auto cos_theta = (cluster_u_mag > 0._prt) ? cluster_uz / cluster_u_mag : 0._prt;
+                        auto sin_theta = (cluster_u_mag > 0._prt) ? u_perp / cluster_u_mag : 0._prt;
+                        auto cos_phi = (u_perp > 0._prt) ? cluster_ux / u_perp : 0._prt;
+                        auto sin_phi = (u_perp > 0._prt) ? cluster_uy / u_perp : 0._prt;
 
                         // rotate new velocity vector to labframe
                         auto ux_new = (
