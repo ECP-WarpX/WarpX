@@ -74,9 +74,9 @@ void UpdateMomentumBoris1(
     const amrex::ParticleReal inv_gamma = 1._prt/std::sqrt(1._prt + (ux*ux + uy*uy + uz*uz)*inv_c2);
     // Magnetic rotation
     // - Compute temporary variables
-    const amrex::ParticleReal tx = 0.5*econst*inv_gamma*Bx;
-    const amrex::ParticleReal ty = 0.5*econst*inv_gamma*By;
-    const amrex::ParticleReal tz = 0.5*econst*inv_gamma*Bz;
+    const amrex::ParticleReal tx = econst*inv_gamma*Bx;
+    const amrex::ParticleReal ty = econst*inv_gamma*By;
+    const amrex::ParticleReal tz = econst*inv_gamma*Bz;
     const amrex::ParticleReal tsqi = 2._prt/(1._prt + tx*tx + ty*ty + tz*tz);
     const amrex::ParticleReal sx = tx*tsqi;
     const amrex::ParticleReal sy = ty*tsqi;
@@ -88,6 +88,10 @@ void UpdateMomentumBoris1(
     ux += uy_p*sz - uz_p*sy;
     uy += uz_p*sx - ux_p*sz;
     uz += ux_p*sy - uy_p*sx;
+    // Second half-push for E
+    ux += econst*Ex;
+    uy += econst*Ey;
+    uz += econst*Ez;
 
 }
 
@@ -109,9 +113,9 @@ void UpdateMomentumBoris2(
     const amrex::ParticleReal inv_gamma = 1._prt/std::sqrt(1._prt + (ux*ux + uy*uy + uz*uz)*inv_c2);
     // Magnetic rotation
     // - Compute temporary variables
-    const amrex::ParticleReal tx = 0.5*econst*inv_gamma*Bx;
-    const amrex::ParticleReal ty = 0.5*econst*inv_gamma*By;
-    const amrex::ParticleReal tz = 0.5*econst*inv_gamma*Bz;
+    const amrex::ParticleReal tx = econst*inv_gamma*Bx;
+    const amrex::ParticleReal ty = econst*inv_gamma*By;
+    const amrex::ParticleReal tz = econst*inv_gamma*Bz;
     const amrex::ParticleReal tsqi = 2._prt/(1._prt + tx*tx + ty*ty + tz*tz);
     const amrex::ParticleReal sx = tx*tsqi;
     const amrex::ParticleReal sy = ty*tsqi;

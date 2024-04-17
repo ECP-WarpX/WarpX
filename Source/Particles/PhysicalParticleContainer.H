@@ -509,6 +509,12 @@ protected:
     // A flag to enable saving of the previous timestep positions
     bool m_save_previous_position = false;
 
+    // A flag to enable saving of the previous timestep momenta
+    bool m_save_previous_momenta = true;
+    
+    // A flag to enable saving of the averaged timestep momenta
+    bool m_save_avg_momenta = true;
+
 #ifdef WARPX_QED
     // A flag to enable quantum_synchrotron process for leptons
     bool m_do_qed_quantum_sync = false;

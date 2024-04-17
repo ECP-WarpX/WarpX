@@ -430,6 +430,38 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 #endif
     }
 
+     // If old particle momenta should be saved add the needed components
+     pp_species_name.query("save_previous_momenta", m_save_previous_momenta);
+     if (m_save_previous_momenta)
+     {
+ #if (AMREX_SPACEDIM >= 2)
+         AddRealComp("prev_ux");
+ #endif
+ #if defined(WARPX_DIM_3D)
+         AddRealComp("prev_uy");
+ #endif
+         AddRealComp("prev_uz");
+ #ifdef WARPX_DIM_RZ
+         amrex::Abort("Saving previous particle momenta not yet implemented in RZ");
+ #endif
+     }
+
+     // If particle averaged momenta should be saved add the needed components
+     pp_species_name.query("save_avg_momenta", m_save_avg_momenta);
+     if (m_save_avg_momenta)
+     {
+ #if (AMREX_SPACEDIM >= 2)
+         AddRealComp("avg_ux");
+ #endif
+ #if defined(WARPX_DIM_3D)
+         AddRealComp("avg_uy");
+ #endif
+         AddRealComp("avg_uz");
+ #ifdef WARPX_DIM_RZ
+         amrex::Abort("Saving averaged particle momenta not yet implemented in RZ");
+ #endif
+     }
+
     // Read reflection models for absorbing boundaries; defaults to a zero
     pp_species_name.query("reflection_model_xlo(E)", m_boundary_conditions.reflection_model_xlo_str);
     pp_species_name.query("reflection_model_xhi(E)", m_boundary_conditions.reflection_model_xhi_str);
@@ -2529,6 +2561,10 @@ PhysicalParticleContainer::Evolve2 (int lev,
             auto& uyp = attribs[PIdx::uy];
             auto& uzp = attribs[PIdx::uz];
 
+            auto &uxp_avg = pti.GetAttribs(particle_comps["avg_ux"]);
+            auto &uyp_avg = pti.GetAttribs(particle_comps["avg_uy"]);
+            auto &uzp_avg = pti.GetAttribs(particle_comps["avg_uz"]);
+
             const long np = pti.numParticles();
 
             // Data on the grid
@@ -2626,14 +2662,14 @@ PhysicalParticleContainer::Evolve2 (int lev,
                         pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr():nullptr;
 
                     // Deposit inside domains
-                    DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
+                    DepositCurrent(pti, wp, uxp_avg, uyp_avg, uzp_avg, ion_lev, &jx, &jy, &jz,
                                    0, np_current, thread_num,
                                    lev, lev, dt, relative_time, push_type);
 
                     if (has_buffer)
                     {
                         // Deposit in buffers
-                        DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
+                        DepositCurrent(pti, wp, uxp_avg, uyp_avg, uzp_avg, ion_lev, cjx, cjy, cjz,
                                        np_current, np-np_current, thread_num,
                                        lev, lev-1, dt, relative_time, push_type);
                     }
@@ -3494,6 +3530,25 @@ PhysicalParticleContainer::PushPX1 (WarpXParIter& pti,
 #endif
         z_old = pti.GetAttribs(particle_comps["prev_z"]).dataPtr() + offset;
     }
+    
+    const bool save_previous_momenta = m_save_previous_momenta; 
+    ParticleReal* ux_old = nullptr;
+    ParticleReal* uy_old = nullptr;
+    ParticleReal* uz_old = nullptr;
+    if (save_previous_momenta)
+    {
+ #if (AMREX_SPACEDIM >= 2)
+        ux_old = pti.GetAttribs(particle_comps["prev_ux"]).dataPtr()+ offset;
+ #else
+        amrex::ignore_unused(ux_old);
+ #endif
+ #if defined(WARPX_DIM_3D)
+        uy_old = pti.GetAttribs(particle_comps["prev_uy"]).dataPtr()+ offset;
+ #else
+        amrex::ignore_unused(uy_old);
+ #endif
+        uz_old = pti.GetAttribs(particle_comps["prev_uz"]).dataPtr()+ offset;
+    }
 
     // Loop over the particles and update their momentum
     const amrex::ParticleReal q = this->charge;
@@ -3589,8 +3644,21 @@ PhysicalParticleContainer::PushPX1 (WarpXParIter& pti,
                                       t_chi_max,
 #endif
                                       dt);
+            UpdatePosition(xp, yp, zp, ux[ip], uy[ip], uz[ip], dt/2._rt);
+            setPosition(ip, xp, yp, zp);
+
+            if (save_previous_momenta) {
+#if (AMREX_SPACEDIM >= 2)
+            ux_old[ip] = ux[ip];
+#endif
+#if defined(WARPX_DIM_3D)
+            uy_old[ip] = uy[ip];
+#endif
+            uz_old[ip] = uz[ip];
+        }
 
         }
+        
 #ifdef WARPX_QED
         else {
             if constexpr (qed_control == has_qed) {
@@ -3711,6 +3779,10 @@ PhysicalParticleContainer::PushPX2 (WarpXParIter& pti,
     ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr() + offset;
     ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr() + offset;
 
+    ParticleReal *ux_old = pti.GetAttribs(particle_comps["prev_ux"]).dataPtr() + offset;
+    ParticleReal *uy_old = pti.GetAttribs(particle_comps["prev_uy"]).dataPtr() + offset;
+    ParticleReal *uz_old = pti.GetAttribs(particle_comps["prev_uz"]).dataPtr() + offset;
+
     const int do_copy = (m_do_back_transformed_particles && (a_dt_type!=DtType::SecondHalf) );
     CopyParticleAttribs copyAttribs;
     if (do_copy) {
@@ -3738,6 +3810,26 @@ PhysicalParticleContainer::PushPX2 (WarpXParIter& pti,
     amrex::ignore_unused(y_old);
 #endif
         z_old = pti.GetAttribs(particle_comps["prev_z"]).dataPtr() + offset;
+    }
+
+    ParticleReal* ux_avg = nullptr;
+    ParticleReal* uy_avg = nullptr;
+    ParticleReal* uz_avg = nullptr;
+
+    const bool save_avg_momenta = m_save_avg_momenta;
+    if (save_avg_momenta)
+    {
+#if (AMREX_SPACEDIM >= 2)
+        ux_avg = pti.GetAttribs(particle_comps["avg_ux"]).dataPtr()+ offset;
+#else
+        amrex::ignore_unused(ux_avg);
+#endif
+#if defined(WARPX_DIM_3D)
+        uy_avg = pti.GetAttribs(particle_comps["avg_uy"]).dataPtr()+ offset;
+#else
+        amrex::ignore_unused(uy_avg);
+#endif
+        uz_avg = pti.GetAttribs(particle_comps["avg_uz"]).dataPtr()+ offset;
     }
 
     // Loop over the particles and update their momentum
@@ -3826,17 +3918,27 @@ PhysicalParticleContainer::PushPX2 (WarpXParIter& pti,
                 copyAttribs(ip);
             }
 
-            doParticleMomentumPush2<0>(ux[ip], uy[ip], uz[ip],
-                                      Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                                      ion_lev ? ion_lev[ip] : 1,
-                                      m, q, pusher_algo, do_crr,
-#ifdef WARPX_QED
-                                      t_chi_max,
-#endif
-                                      dt);
+//             doParticleMomentumPush2<0>(ux[ip], uy[ip], uz[ip],
+//                                       Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+//                                       ion_lev ? ion_lev[ip] : 1,
+//                                       m, q, pusher_algo, do_crr,
+// #ifdef WARPX_QED
+//                                       t_chi_max,
+// #endif
+//                                       dt);
 
-            UpdatePosition(xp, yp, zp, ux[ip], uy[ip], uz[ip], dt);
+            UpdatePosition(xp, yp, zp, ux[ip], uy[ip], uz[ip], dt/2._rt);
             setPosition(ip, xp, yp, zp);
+
+            if (save_avg_momenta) {
+#if (AMREX_SPACEDIM >= 2)
+                    ux_avg[ip] = 0.5_rt * (ux[ip] + ux_old[ip]);
+#endif
+#if defined(WARPX_DIM_3D)
+                    uy_avg[ip] = 0.5_rt * (uy[ip] + uy_old[ip]);
+#endif
+                    uz_avg[ip] = 0.5_rt * (uz[ip] + uz_old[ip]);
+            }
         }
 #ifdef WARPX_QED
         else {
