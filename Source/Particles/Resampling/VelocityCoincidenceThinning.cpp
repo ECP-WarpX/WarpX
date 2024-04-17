@@ -73,22 +73,20 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
     const auto mass = pc->getMass();
 
     // create a GPU vector to hold the momentum cluster index for each particle
-    amrex::Gpu::DeviceVector<int> momentum_bin_number;
-    momentum_bin_number.resize(bins.numItems());
+    amrex::Gpu::DeviceVector<int> momentum_bin_number(bins.numItems());
     auto* momentum_bin_number_data = momentum_bin_number.data();
 
     // create a GPU vector to hold the index sorting for the momentum bins
-    amrex::Gpu::DeviceVector<int> sorted_indices;
-    sorted_indices.resize(bins.numItems());
+    amrex::Gpu::DeviceVector<int> sorted_indices(bins.numItems());
     auto* sorted_indices_data = sorted_indices.data();
 
     const auto Ntheta = m_ntheta;
     const auto Nphi = m_nphi;
 
-    auto dr = m_delta_ur;
-    auto dtheta = 2.0_prt * MathConst::pi / Ntheta;
-    auto dphi = MathConst::pi / Nphi;
-    auto c2 = PhysConst::c * PhysConst::c;
+    const auto dr = m_delta_ur;
+    const auto dtheta = 2.0_prt * MathConst::pi / Ntheta;
+    const auto dphi = MathConst::pi / Nphi;
+    constexpr auto c2 = PhysConst::c * PhysConst::c;
 
     auto heapSort = HeapSort();
 
@@ -146,7 +144,7 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
 
             // Finally, loop through the particles in the cell and merge
             // ones in the same momentum bin
-            for (int i = cell_start; i < cell_stop-1; ++i)
+            for (int i = cell_start; i < cell_stop; ++i)
             {
                 particles_in_bin += 1;
                 const auto part_idx = indices[sorted_indices_data[i]];
@@ -168,9 +166,9 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
 
                 // check if this is the last particle in the current momentum bin
                 if (
-                    (momentum_bin_number_data[sorted_indices_data[i]] != momentum_bin_number_data[sorted_indices_data[i + 1]])
-                    || (i == cell_stop - 2) )
-                {
+                    (i == cell_stop - 1)
+                    || (momentum_bin_number_data[sorted_indices_data[i]] != momentum_bin_number_data[sorted_indices_data[i + 1]])
+                ) {
                     // check if the bin has more than 2 particles in it
                     if ( particles_in_bin > 2 && total_weight > std::numeric_limits<amrex::ParticleReal>::min() ){
                         // get average quantities for the bin

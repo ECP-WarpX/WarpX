@@ -6,8 +6,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_GRID_BASED_MERGING_H_
-#define WARPX_GRID_BASED_MERGING_H_
+#ifndef WARPX_VELOCITY_COINCIDENCE_THINNING_H_
+#define WARPX_VELOCITY_COINCIDENCE_THINNING_H_
 
 #include "Resampling.H"
 
@@ -112,4 +112,4 @@ private:
     int m_nphi;
     amrex::ParticleReal m_delta_ur;
 };
-#endif // WARPX_GRID_BASED_MERGING_H_
+#endif // WARPX_VELOCITY_COINCIDENCE_THINNING_H_
