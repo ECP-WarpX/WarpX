@@ -11,8 +11,13 @@
 #include <ablastr/utils/Communication.H>
 #include <ablastr/utils/TextMsg.H>
 #include <ablastr/warn_manager/WarnManager.H>
+#include <ablastr/math/fft/AnyFFT.H>
 #include <ablastr/fields/Interpolate.H>
+#include <ablastr/profiler/ProfilerWrapper.H>
 
+#if defined(WARPX_USE_PSATD) && defined(WARPX_DIM_3D)
+#include <ablastr/fields/IntegratedGreenFunctionSolver.H>
+#endif
 
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
@@ -77,6 +82,7 @@ namespace ablastr::fields {
  * \param[in] dmap the distribution mapping per level (e.g., from AmrMesh)
  * \param[in] grids the grids per level (e.g., from AmrMesh)
  * \param[in] boundary_handler a handler for boundary conditions, for example @see ElectrostaticSolver::PoissonBoundaryHandler
+ * \param[in] is_solver_multigrid boolean to select the Poisson solver: 1 for Multigrid, 0 for FFT
  * \param[in] do_single_precision_comms perform communications in single precision
  * \param[in] rel_ref_ratio mesh refinement ratio between levels (default: 1)
  * \param[in] post_phi_calculation perform a calculation per level directly after phi was calculated; required for embedded boundaries (default: none)
@@ -100,6 +106,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
             amrex::Vector<amrex::DistributionMapping> const& dmap,
             amrex::Vector<amrex::BoxArray> const& grids,
             T_BoundaryHandler const boundary_handler,
+            [[maybe_unused]] bool is_solver_multigrid,
             bool const do_single_precision_comms = false,
             std::optional<amrex::Vector<amrex::IntVect> > rel_ref_ratio = std::nullopt,
             [[maybe_unused]] T_PostPhiCalculationFunctor post_phi_calculation = std::nullopt,
@@ -109,6 +116,8 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 {
     using namespace amrex::literals;
 
+    ABLASTR_PROFILE("computePhi", false);
+
     if (!rel_ref_ratio.has_value()) {
         ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(rho.size() == 1u,
                                            "rel_ref_ratio must be set if mesh-refinement is used");
@@ -117,11 +126,9 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 
     auto const finest_level = static_cast<int>(rho.size() - 1);
 
-    // scale rho appropriately; also determine if rho is zero everywhere
+    // determine if rho is zero everywhere
     amrex::Real max_norm_b = 0.0;
     for (int lev=0; lev<=finest_level; lev++) {
-        using namespace ablastr::constant::SI;
-        rho[lev]->mult(-1._rt/ep0);  // TODO: when do we "un-multiply" this? We need to document this side-effect!
         max_norm_b = amrex::max(max_norm_b, rho[lev]->norm0());
     }
     amrex::ParallelDescriptor::ReduceRealMax(max_norm_b);
@@ -152,6 +159,27 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 #else
                 {{ beta[0], beta[1], beta[2] }};
 #endif
+
+#if (defined(WARPX_USE_PSATD)  && defined(WARPX_DIM_3D))
+        // Use the Integrated Green Function solver (FFT) on the coarsest level if it was selected
+        if(!is_solver_multigrid && lev==0){
+            amrex::Array<amrex::Real,AMREX_SPACEDIM> const dx_igf
+                    {AMREX_D_DECL(geom[lev].CellSize(0)/std::sqrt(1._rt-beta_solver[0]*beta_solver[0]),
+                                geom[lev].CellSize(1)/std::sqrt(1._rt-beta_solver[1]*beta_solver[1]),
+                                geom[lev].CellSize(2)/std::sqrt(1._rt-beta_solver[2]*beta_solver[2]))};
+            if ( max_norm_b == 0 ) {
+                phi[lev]->setVal(0);
+            } else {
+                computePhiIGF( *rho[lev], *phi[lev], dx_igf, grids[lev] );
+            }
+            continue;
+        }
+#endif
+
+        // Use the Multigrid (MLMG) solver if selected or on refined patches
+        // but first scale rho appropriately
+        using namespace ablastr::constant::SI;
+        rho[lev]->mult(-1._rt/ep0);  // TODO: when do we "un-multiply" this? We need to document this side-effect!
 
 #if !(defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ))
         // Determine whether to use semi-coarsening

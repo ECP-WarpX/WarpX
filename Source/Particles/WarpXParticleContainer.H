@@ -322,6 +322,13 @@ public:
                         int nattr_int, amrex::Vector<amrex::Vector<int>> const & attr_int,
                         int uniqueparticles, amrex::Long id=-1);
 
+    /** Remove particles with invalid ID
+    *
+    * This is a local operation (no MPI communication) and is thus preferable over `ReDistribute`
+    * (which also removes invalid particles, but involves MPI communications at the same time)
+    */
+    void deleteInvalidParticles ();
+
     virtual void ReadHeader (std::istream& is) = 0;
 
     virtual void WriteHeader (std::ostream& os) const = 0;

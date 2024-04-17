@@ -55,6 +55,12 @@ const std::map<std::string, int> electrostatic_solver_algo_to_int = {
     {"default", ElectrostaticSolverAlgo::None }
 };
 
+const std::map<std::string, int> poisson_solver_algo_to_int = {
+    {"multigrid", PoissonSolverAlgo::Multigrid},
+    {"fft", PoissonSolverAlgo::IntegratedGreenFunction},
+    {"default", PoissonSolverAlgo::Multigrid }
+};
+
 const std::map<std::string, int> particle_pusher_algo_to_int = {
     {"boris",   ParticlePusherAlgo::Boris },
     {"vay",     ParticlePusherAlgo::Vay },
@@ -117,7 +123,7 @@ const std::map<std::string, int> MacroscopicSolver_algo_to_int = {
     {"default", MacroscopicSolverAlgo::BackwardEuler}
 };
 
-const std::map<std::string, int> FieldBCType_algo_to_int = {
+const std::map<std::string, FieldBoundaryType> FieldBCType_algo_to_enum = {
     {"pml",      FieldBoundaryType::PML},
     {"periodic", FieldBoundaryType::Periodic},
     {"pec",      FieldBoundaryType::PEC},
@@ -125,6 +131,7 @@ const std::map<std::string, int> FieldBCType_algo_to_int = {
     {"damped",   FieldBoundaryType::Damped},
     {"absorbing_silver_mueller", FieldBoundaryType::Absorbing_SilverMueller},
     {"neumann",  FieldBoundaryType::Neumann},
+    {"open",     FieldBoundaryType::Open},
     {"none",     FieldBoundaryType::None},
     {"default",  FieldBoundaryType::PML}
 };
@@ -163,6 +170,8 @@ GetAlgorithmInteger(const amrex::ParmParse& pp, const char* pp_search_key ){
         algo_to_int = grid_to_int;
     } else if (0 == std::strcmp(pp_search_key, "do_electrostatic")) {
         algo_to_int = electrostatic_solver_algo_to_int;
+    } else if (0 == std::strcmp(pp_search_key, "poisson_solver")) {
+        algo_to_int = poisson_solver_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "particle_pusher")) {
         algo_to_int = particle_pusher_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "current_deposition")) {
@@ -213,21 +222,21 @@ GetAlgorithmInteger(const amrex::ParmParse& pp, const char* pp_search_key ){
     return algo_to_int[algo];
 }
 
-int
+FieldBoundaryType
 GetFieldBCTypeInteger( std::string BCType ){
     std::transform(BCType.begin(), BCType.end(), BCType.begin(), ::tolower);
 
-    if (FieldBCType_algo_to_int.count(BCType) == 0) {
+    if (FieldBCType_algo_to_enum.count(BCType) == 0) {
         std::string error_message = "Invalid string for field/particle BC. : " + BCType                         + "\nThe valid values are : \n";
-        for (const auto &valid_pair : FieldBCType_algo_to_int) {
+        for (const auto &valid_pair : FieldBCType_algo_to_enum) {
             if (valid_pair.first != "default"){
                 error_message += " - " + valid_pair.first + "\n";
             }
         }
         WARPX_ABORT_WITH_MESSAGE(error_message);
     }
-    // return FieldBCType_algo_to_int[BCType]; // This operator cannot be used for a const map
-    return FieldBCType_algo_to_int.at(BCType);
+    // return FieldBCType_algo_to_enum[BCType]; // This operator cannot be used for a const map
+    return FieldBCType_algo_to_enum.at(BCType);
 }
 
 ParticleBoundaryType
@@ -248,9 +257,9 @@ GetParticleBCTypeInteger( std::string BCType ){
 }
 
 std::string
-GetFieldBCTypeString( int fb_type ) {
+GetFieldBCTypeString( FieldBoundaryType fb_type ) {
     std::string boundary_name;
-    for (const auto &valid_pair : FieldBCType_algo_to_int) {
+    for (const auto &valid_pair : FieldBCType_algo_to_enum) {
         if ((valid_pair.second == fb_type)&&(valid_pair.first != "default")){
             boundary_name = valid_pair.first;
             break;
