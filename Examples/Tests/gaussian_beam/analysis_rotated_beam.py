@@ -14,8 +14,8 @@ import numpy as np
 from openpmd_viewer import OpenPMDTimeSeries
 from scipy.constants import c, eV, m_e, micro, milli
 
-#sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
-#import checksumAPI
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
 
 sigmax = 2*micro
