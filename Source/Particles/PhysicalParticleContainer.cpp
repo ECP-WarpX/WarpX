@@ -591,92 +591,86 @@ PhysicalParticleContainer::AddGaussianBeam (PlasmaInjector const& plasma_injecto
                 std::abs( z - z_m ) <= z_cut * z_rms   ) {
                 XDim3 u = plasma_injector.getMomentum(x, y, z);
 
-            if (plasma_injector.do_focusing){
-                const XDim3 u_bulk = plasma_injector.getInjectorMomentumHost()->getBulkMomentum(x,y,z);
-                const Real u_bulk_norm = std::sqrt( u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z );
+                if (plasma_injector.do_focusing){
+                    const XDim3 u_bulk = plasma_injector.getInjectorMomentumHost()->getBulkMomentum(x,y,z);
+                    const Real u_bulk_norm = std::sqrt( u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z );
 
-                // Compute the position of the focal plane
-                // (it is located at a distance `focal_distance` from the beam centroid, in the direction of the bulk velocity)
-                const Real n_x = u_bulk.x/u_bulk_norm;
-                const Real n_y = u_bulk.y/u_bulk_norm;
-                const Real n_z = u_bulk.z/u_bulk_norm;
-                const Real x_f = x_m + focal_distance * n_x;
-                const Real y_f = y_m + focal_distance * n_y;
-                const Real z_f = z_m + focal_distance * n_z;
-                const Real gamma = std::sqrt( 1._rt + (u.x*u.x+u.y*u.y+u.z*u.z) );
+                    // Compute the position of the focal plane
+                    // (it is located at a distance `focal_distance` from the beam centroid, in the direction of the bulk velocity)
+                    const Real n_x = u_bulk.x/u_bulk_norm;
+                    const Real n_y = u_bulk.y/u_bulk_norm;
+                    const Real n_z = u_bulk.z/u_bulk_norm;
+                    const Real x_f = x_m + focal_distance * n_x;
+                    const Real y_f = y_m + focal_distance * n_y;
+                    const Real z_f = z_m + focal_distance * n_z;
+                    const Real gamma = std::sqrt( 1._rt + (u.x*u.x+u.y*u.y+u.z*u.z) );
 
-                const Real v_x = u.x / gamma * PhysConst::c;
-                const Real v_y = u.y / gamma * PhysConst::c;
-                const Real v_z = u.z / gamma * PhysConst::c;
+                    const Real v_x = u.x / gamma * PhysConst::c;
+                    const Real v_y = u.y / gamma * PhysConst::c;
+                    const Real v_z = u.z / gamma * PhysConst::c;
 
-                // Compute the time at which the particle will cross the focal plane
-                const Real v_dot_n = v_x * n_x + v_y * n_y + v_z * n_z;
-                const Real t = ((x_f-x)*n_x + (y_f-y)*n_y + (z_f-z)*n_z) / v_dot_n;
+                    // Compute the time at which the particle will cross the focal plane
+                    const Real v_dot_n = v_x * n_x + v_y * n_y + v_z * n_z;
+                    const Real t = ((x_f-x)*n_x + (y_f-y)*n_y + (z_f-z)*n_z) / v_dot_n;
 
-                // Displace particles in the direction orthogonal to the beam bulk momentum
-                // i.e. orthogonal to (n_x, n_y, n_z)
+                    // Displace particles in the direction orthogonal to the beam bulk momentum
+                    // i.e. orthogonal to (n_x, n_y, n_z)
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
-                x = x - (v_x - v_dot_n*n_x) * t;
-                y = y - (v_y - v_dot_n*n_y) * t;
-                z = z - (v_z - v_dot_n*n_z) * t;
+                    x = x - (v_x - v_dot_n*n_x) * t;
+                    y = y - (v_y - v_dot_n*n_y) * t;
+                    z = z - (v_z - v_dot_n*n_z) * t;
 #elif defined(WARPX_DIM_XZ)
-                x = x - (v_x - v_dot_n*n_x) * t;
-                z = z - (v_z - v_dot_n*n_z) * t;
+                    x = x - (v_x - v_dot_n*n_x) * t;
+                    z = z - (v_z - v_dot_n*n_z) * t;
 #elif defined(WARPX_DIM_1D_Z)
-                z = z - (v_z - v_dot_n*n_z) * t;
+                    z = z - (v_z - v_dot_n*n_z) * t;
 #endif
-            }
+                }
 
-            if (do_rotation){
+                if (do_rotation){
 
-                // normalize the rotation axis
-                Real k_norm = std::sqrt(rotation_axis[0]*rotation_axis[0] + rotation_axis[1]*rotation_axis[1] + rotation_axis[2]*rotation_axis[2]);
-                Real kx = rotation_axis[0]/k_norm;
-                Real ky = rotation_axis[1]/k_norm;
-                Real kz = rotation_axis[2]/k_norm;
+                    // normalize the rotation axis
+                    const Real k_norm = std::sqrt(rotation_axis[0]*rotation_axis[0] + rotation_axis[1]*rotation_axis[1] + rotation_axis[2]*rotation_axis[2]);
+                    const Real kx = rotation_axis[0]/k_norm;
+                    const Real ky = rotation_axis[1]/k_norm;
+                    const Real kz = rotation_axis[2]/k_norm;
 
-                // compute rotated vector:
-                // v_rot = v * cos + (k x v) sin + k (k * v) (1 - cos)
+                    // compute rotated vector:
+                    // v_rot = v * cos + (k x v) sin + k (k * v) (1 - cos)
 
+                    // dot product
+                    const Real k_dot_x = kx*(x-x_m) + ky*(y-y_m) + kz*(z-z_m);
 
-                // center around the origin
-                Real x_c = x - x_m;
-                Real y_c = y - y_m;
-                Real z_c = z - z_m;
+                    // cross product
+                    const Real k_cross_x = ky*(z-z_m) - kz*(y-y_m);
+                    const Real k_cross_y = kz*(x-x_m) - kx*(z-z_m);
+                    const Real k_cross_z = kx*(y-y_m) - ky*(x-x_m);
+                    ignore_unused(k_cross_x, k_cross_y);
+                    
+                    // rotate positions around the centroid 
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+                    x = x_m + (x-x_m)*std::cos(rotation_angle) + k_cross_x*std::sin(rotation_angle) + kx*k_dot_x*(1._rt - std::cos(rotation_angle));
+                    y = y_m + (y-y_m)*std::cos(rotation_angle) + k_cross_y*std::sin(rotation_angle) + ky*k_dot_x*(1._rt - std::cos(rotation_angle));
+                    z = z_m + (z-z_m)*std::cos(rotation_angle) + k_cross_z*std::sin(rotation_angle) + kz*k_dot_x*(1._rt - std::cos(rotation_angle));
+#elif defined(WARPX_DIM_XZ)
+                    x = x_m + (x-x_m)*std::cos(rotation_angle) + k_cross_x*std::sin(rotation_angle) + kx*k_dot_x*(1._rt - std::cos(rotation_angle));
+                    z = z_m + (z-z_m)*std::cos(rotation_angle) + k_cross_z*std::sin(rotation_angle) + kz*k_dot_x*(1._rt - std::cos(rotation_angle));
+#elif defined(WARPX_DIM_1D_Z)
+                    z = z_m + (z-z_m)*std::cos(rotation_angle) + k_cross_z*std::sin(rotation_angle) + kz*k_dot_x*(1._rt - std::cos(rotation_angle));
+#endif
+                    // dot product
+                    const Real k_dot_u = kx*u.x + ky*u.y + kz*u.z;
 
-                // dot product
-                Real k_dot_x = kx*x_c + ky*y_c + kz*z_c;
+                    // cross product
+                    const Real k_cross_u_x = ky*u.z - kz*u.y;
+                    const Real k_cross_u_y = kz*u.x - kx*u.z;
+                    const Real k_cross_u_z = kx*u.y - ky*u.x;
 
-                // cross product
-                Real k_cross_x = ky*z_c - kz*y_c;
-                Real k_cross_y = kz*x_c - kx*z_c;
-                Real k_cross_z = kx*y_c - ky*x_c;
-
-                // rotate positions
-                x_c = x_c * std::cos(rotation_angle) + k_cross_x * std::sin(rotation_angle) + kx * k_dot_x * (1._rt - std::cos(rotation_angle));
-                y_c = y_c * std::cos(rotation_angle) + k_cross_y * std::sin(rotation_angle) + ky * k_dot_x * (1._rt - std::cos(rotation_angle));
-                z_c = z_c * std::cos(rotation_angle) + k_cross_z * std::sin(rotation_angle) + kz * k_dot_x * (1._rt - std::cos(rotation_angle));
-
-                // center back around the mean position x_m, y_m, z_m
-                x = x_c + x_m;
-                y = y_c + y_m;
-                z = z_c + z_m;
-
-
-                // dot product
-                Real k_dot_u = kx*u.x + ky*u.y + kz*u.z;
-
-                // cross product
-                Real k_cross_u_x = ky*u.z - kz*u.y;
-                Real k_cross_u_y = kz*u.x - kx*u.z;
-                Real k_cross_u_z = kx*u.y - ky*u.x;
-
-                // rotate momenta
-                u.x = u.x * std::cos(rotation_angle) + k_cross_u_x * std::sin(rotation_angle) + kx * k_dot_u * (1._rt - std::cos(rotation_angle));
-                u.y = u.y * std::cos(rotation_angle) + k_cross_u_y * std::sin(rotation_angle) + ky * k_dot_u * (1._rt - std::cos(rotation_angle));
-                u.z = u.z * std::cos(rotation_angle) + k_cross_u_z * std::sin(rotation_angle) + kz * k_dot_u * (1._rt - std::cos(rotation_angle));
-
-            }
+                    // rotate momenta
+                    u.x = u.x * std::cos(rotation_angle) + k_cross_u_x * std::sin(rotation_angle) + kx * k_dot_u * (1._rt - std::cos(rotation_angle));
+                    u.y = u.y * std::cos(rotation_angle) + k_cross_u_y * std::sin(rotation_angle) + ky * k_dot_u * (1._rt - std::cos(rotation_angle));
+                    u.z = u.z * std::cos(rotation_angle) + k_cross_u_z * std::sin(rotation_angle) + kz * k_dot_u * (1._rt - std::cos(rotation_angle));
+                }
 
                 u.x *= PhysConst::c;
                 u.y *= PhysConst::c;
