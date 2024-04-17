@@ -201,7 +201,7 @@ WarpX::Evolve (int numsteps)
             PushParticlesandDeposit1(cur_time, skip_deposition);
             if (collisions_placement == 1){
                 ExecutePythonCallback("beforecollisions");
-                mypc->doCollisions( cur_time, dt[0] );
+                //mypc->doCollisions( cur_time, dt[0] );
                 ExecutePythonCallback("aftercollisions");
             }
             PushParticlesandDeposit2(cur_time, skip_deposition);
@@ -218,7 +218,7 @@ WarpX::Evolve (int numsteps)
             OneStep_nosub1(cur_time);
             if (collisions_placement == 1){
                 ExecutePythonCallback("beforecollisions");
-                mypc->doCollisions( cur_time, dt[0] );
+                //mypc->doCollisions( cur_time, dt[0] );
                 ExecutePythonCallback("aftercollisions");
             }
             OneStep_nosub2(cur_time);

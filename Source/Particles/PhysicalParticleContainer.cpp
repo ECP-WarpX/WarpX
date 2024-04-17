@@ -461,7 +461,20 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
          amrex::Abort("Saving averaged particle momenta not yet implemented in RZ");
  #endif
      }
-
+     pp_species_name.query("add_collisions", m_add_collisions);
+     if (m_add_collisions)
+     {
+ #if (AMREX_SPACEDIM >= 2)
+         AddRealComp("rn_ux");
+ #endif
+ #if defined(WARPX_DIM_3D)
+         AddRealComp("rn_uy");
+ #endif
+         AddRealComp("rn_uz");
+ #ifdef WARPX_DIM_RZ
+         amrex::Abort("Adding particle momenta (randomly generated) not yet implemented in RZ");
+ #endif
+     }
     // Read reflection models for absorbing boundaries; defaults to a zero
     pp_species_name.query("reflection_model_xlo(E)", m_boundary_conditions.reflection_model_xlo_str);
     pp_species_name.query("reflection_model_xhi(E)", m_boundary_conditions.reflection_model_xhi_str);
@@ -3550,6 +3563,32 @@ PhysicalParticleContainer::PushPX1 (WarpXParIter& pti,
         uz_old = pti.GetAttribs(particle_comps["prev_uz"]).dataPtr()+ offset;
     }
 
+    const bool add_collisions = m_add_collisions; 
+    ParticleReal* ux_rn = nullptr;
+    ParticleReal* uy_rn = nullptr;
+    ParticleReal* uz_rn = nullptr;
+
+    ParticleReal* factor = nullptr;
+
+    if (add_collisions)
+    {
+ #if (AMREX_SPACEDIM >= 2)
+ {
+        ux_rn = pti.GetAttribs(particle_comps["rn_ux"]).dataPtr()+ offset;
+        factor = pti.GetAttribs(particle_comps["factor"]).dataPtr()+ offset;
+ }
+ #else
+        amrex::ignore_unused(ux_rn);
+ #endif
+ #if defined(WARPX_DIM_3D)
+        uy_rn = pti.GetAttribs(particle_comps["rn_uy"]).dataPtr()+ offset;
+ #else
+        amrex::ignore_unused(uy_rn);
+ #endif
+        uz_rn = pti.GetAttribs(particle_comps["rn_uz"]).dataPtr()+ offset;
+    }
+
+
     // Loop over the particles and update their momentum
     const amrex::ParticleReal q = this->charge;
     const amrex::ParticleReal m = this-> mass;
@@ -3647,15 +3686,37 @@ PhysicalParticleContainer::PushPX1 (WarpXParIter& pti,
             UpdatePosition(xp, yp, zp, ux[ip], uy[ip], uz[ip], dt/2._rt);
             setPosition(ip, xp, yp, zp);
 
-            if (save_previous_momenta) {
+            std::random_device rd;
+            std::mt19937 gen(rd());
+            std::uniform_real_distribution<> dis(-0.5, 0.5);
+            //amrex::Print() << "start of add_collisions" << "\n";
+
+            if (add_collisions) {
+            amrex::Print() << "add_collisions "<< "\n"; 
 #if (AMREX_SPACEDIM >= 2)
+            const amrex::Real ux0_rn = dis(gen);
+            ux_rn[ip] = ux0_rn;
             ux_old[ip] = ux[ip];
 #endif
 #if defined(WARPX_DIM_3D)
+            const amrex::Real uy0_rn = dis(gen);
+            uy_rn[ip] =  uy0_rn;
             uy_old[ip] = uy[ip];
 #endif
+            const amrex::Real uz0_rn = dis(gen);
+            uz_rn[ip] = uz0_rn;
             uz_old[ip] = uz[ip];
+
+            const amrex::Real factor0 = std::sqrt((ux[ip] * ux[ip] + uz[ip] * uz[ip]) / (ux_rn[ip] * ux_rn[ip] + uz_rn[ip] * uz_rn[ip]) );         
+#if (AMREX_SPACEDIM >= 2)            
+            ux[ip]  = factor0 * ux_rn[ip];
+#endif
+#if defined(WARPX_DIM_3D)
+            uy[ip]  = factor0 * uy_rn[ip];
+#endif
+            uz[ip]  = factor0 * uz_rn[ip];
         }
+
 
         }
         
@@ -3779,9 +3840,9 @@ PhysicalParticleContainer::PushPX2 (WarpXParIter& pti,
     ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr() + offset;
     ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr() + offset;
 
-    ParticleReal *ux_old = pti.GetAttribs(particle_comps["prev_ux"]).dataPtr() + offset;
-    ParticleReal *uy_old = pti.GetAttribs(particle_comps["prev_uy"]).dataPtr() + offset;
-    ParticleReal *uz_old = pti.GetAttribs(particle_comps["prev_uz"]).dataPtr() + offset;
+    ParticleReal* ux_old = pti.GetAttribs(particle_comps["prev_ux"]).dataPtr() + offset;
+    ParticleReal* uy_old = pti.GetAttribs(particle_comps["prev_uy"]).dataPtr() + offset;
+    ParticleReal* uz_old = pti.GetAttribs(particle_comps["prev_uz"]).dataPtr() + offset;
 
     const int do_copy = (m_do_back_transformed_particles && (a_dt_type!=DtType::SecondHalf) );
     CopyParticleAttribs copyAttribs;

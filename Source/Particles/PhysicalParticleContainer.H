@@ -515,6 +515,8 @@ protected:
     // A flag to enable saving of the averaged timestep momenta
     bool m_save_avg_momenta = true;
 
+    bool m_add_collisions = true;
+
 #ifdef WARPX_QED
     // A flag to enable quantum_synchrotron process for leptons
     bool m_do_qed_quantum_sync = false;
