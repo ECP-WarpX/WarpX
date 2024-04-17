@@ -9,6 +9,7 @@
 
 #include "HybridPICModel.H"
 
+#include "EmbeddedBoundary/Enabled.H"
 #include "FieldSolver/Fields.H"
 #include "WarpX.H"
 
@@ -226,23 +227,23 @@ void HybridPICModel::InitData ()
     // Initialize external current - note that this approach skips the check
     // if the current is time dependent which is what needs to be done to
     // write time independent fields on the first step.
-    for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
-    {
+    for (int lev = 0; lev <= warpx.finestLevel(); ++lev) {
+        auto edge_lengths = std::array<std::unique_ptr<amrex::MultiFab>, 3>();
 #ifdef AMREX_USE_EB
-        auto& edge_lengths_x = warpx.getField(FieldType::edge_lengths, lev, 0);
-        auto& edge_lengths_y = warpx.getField(FieldType::edge_lengths, lev, 1);
-        auto& edge_lengths_z = warpx.getField(FieldType::edge_lengths, lev, 2);
+        if (EB::enabled()) {
+            auto& edge_lengths_x = warpx.getField(FieldType::edge_lengths, lev, 0);
+            auto& edge_lengths_y = warpx.getField(FieldType::edge_lengths, lev, 1);
+            auto& edge_lengths_z = warpx.getField(FieldType::edge_lengths, lev, 2);
 
-        const auto edge_lengths = std::array< std::unique_ptr<amrex::MultiFab>, 3 >{
-            std::make_unique<amrex::MultiFab>(
-                edge_lengths_x, amrex::make_alias, 0, edge_lengths_x.nComp()),
-            std::make_unique<amrex::MultiFab>(
-                edge_lengths_y, amrex::make_alias, 0, edge_lengths_y.nComp()),
-            std::make_unique<amrex::MultiFab>(
-                edge_lengths_z, amrex::make_alias, 0, edge_lengths_z.nComp())
-        };
-#else
-        const auto edge_lengths = std::array< std::unique_ptr<amrex::MultiFab>, 3 >();
+            edge_lengths = std::array< std::unique_ptr<amrex::MultiFab>, 3 >{
+                std::make_unique<amrex::MultiFab>(
+                    edge_lengths_x, amrex::make_alias, 0, edge_lengths_x.nComp()),
+                std::make_unique<amrex::MultiFab>(
+                    edge_lengths_y, amrex::make_alias, 0, edge_lengths_y.nComp()),
+                std::make_unique<amrex::MultiFab>(
+                    edge_lengths_z, amrex::make_alias, 0, edge_lengths_z.nComp())
+            };
+        }
 #endif
         GetCurrentExternal(edge_lengths, lev);
     }
@@ -289,31 +290,26 @@ void HybridPICModel::GetCurrentExternal (
 
     for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-       const amrex::Box& tbx = mfi.tilebox( x_nodal_flag, mfx->nGrowVect() );
-       const amrex::Box& tby = mfi.tilebox( y_nodal_flag, mfy->nGrowVect() );
-       const amrex::Box& tbz = mfi.tilebox( z_nodal_flag, mfz->nGrowVect() );
+        const amrex::Box& tbx = mfi.tilebox( x_nodal_flag, mfx->nGrowVect() );
+        const amrex::Box& tby = mfi.tilebox( y_nodal_flag, mfy->nGrowVect() );
+        const amrex::Box& tbz = mfi.tilebox( z_nodal_flag, mfz->nGrowVect() );
 
-       auto const& mfxfab = mfx->array(mfi);
-       auto const& mfyfab = mfy->array(mfi);
-       auto const& mfzfab = mfz->array(mfi);
+        auto const& mfxfab = mfx->array(mfi);
+        auto const& mfyfab = mfy->array(mfi);
+        auto const& mfzfab = mfz->array(mfi);
 
-#ifdef AMREX_USE_EB
-       amrex::Array4<amrex::Real> const& lx = edge_lengths[0]->array(mfi);
-       amrex::Array4<amrex::Real> const& ly = edge_lengths[1]->array(mfi);
-       amrex::Array4<amrex::Real> const& lz = edge_lengths[2]->array(mfi);
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        amrex::ignore_unused(ly);
-#endif
-#else
-       amrex::ignore_unused(edge_lengths);
-#endif
+        amrex::Array4<amrex::Real> lx, ly, lz;
+        if (EB::enabled()) {
+            lx = edge_lengths[0]->array(mfi);
+            ly = edge_lengths[1]->array(mfi);
+            lz = edge_lengths[2]->array(mfi);
+        }
 
         amrex::ParallelFor (tbx, tby, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 // skip if node is covered by an embedded boundary
-#ifdef AMREX_USE_EB
-                if (lx(i, j, k) <= 0) return;
-#endif
+                if (lx && lx(i, j, k) <= 0) { return; }
+
                 // Shift required in the x-, y-, or z- position
                 // depending on the index type of the multifab
 #if defined(WARPX_DIM_1D_Z)
@@ -340,9 +336,8 @@ void HybridPICModel::GetCurrentExternal (
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 // skip if node is covered by an embedded boundary
-#ifdef AMREX_USE_EB
-                if (ly(i, j, k) <= 0) return;
-#endif
+                if (ly && ly(i, j, k) <= 0) { return; }
+
 #if defined(WARPX_DIM_1D_Z)
                 const amrex::Real x = 0._rt;
                 const amrex::Real y = 0._rt;
@@ -367,9 +362,8 @@ void HybridPICModel::GetCurrentExternal (
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 // skip if node is covered by an embedded boundary
-#ifdef AMREX_USE_EB
-                if (lz(i, j, k) <= 0) return;
-#endif
+                if (lz && lz(i, j, k) <= 0) { return; }
+
 #if defined(WARPX_DIM_1D_Z)
                 const amrex::Real x = 0._rt;
                 const amrex::Real y = 0._rt;

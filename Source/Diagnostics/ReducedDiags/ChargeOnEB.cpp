@@ -8,6 +8,7 @@
 #include "ChargeOnEB.H"
 
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
+#include "EmbeddedBoundary/Enabled.H"
 #include "FieldSolver/Fields.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
@@ -24,10 +25,12 @@
 
 #include <algorithm>
 #include <fstream>
+#include <stdexcept>
 #include <vector>
 
 using namespace amrex;
 using namespace warpx::fields;
+
 
 // constructor
 ChargeOnEB::ChargeOnEB (const std::string& rd_name)
@@ -43,6 +46,10 @@ ChargeOnEB::ChargeOnEB (const std::string& rd_name)
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
         "ChargeOnEB reduced diagnostics only works when compiling with EB support");
 #endif
+
+    if (!EB::enabled()) {
+        throw std::runtime_error("ChargeOnEB reduced diagnostics only works when EBs are enabled at runtime");
+    }
 
     // resize data array
     m_data.resize(1, 0.0_rt);
@@ -87,6 +94,9 @@ void ChargeOnEB::ComputeDiags (const int step)
     // Judge whether the diags should be done
     if (!m_intervals.contains(step+1)) { return; }
 
+    if (!EB::enabled()) {
+        throw std::runtime_error("ComputeDiags only works when EBs are enabled at runtime");
+    }
 #if ((defined WARPX_DIM_3D) && (defined AMREX_USE_EB))
     // get a reference to WarpX instance
     auto & warpx = WarpX::GetInstance();

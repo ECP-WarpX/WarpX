@@ -7,6 +7,7 @@
 
 #include "WarpX.H"
 
+#include "EmbeddedBoundary/Enabled.H"
 #ifdef AMREX_USE_EB
 #  include "Utils/Parser/ParserUtils.H"
 #  include "Utils/TextMsg.H"
@@ -80,6 +81,9 @@ namespace {
 void
 WarpX::InitEB ()
 {
+    if (!EB::enabled()) {
+        throw std::runtime_error("InitEB only works when EBs are enabled at runtime");
+    }
 #ifdef AMREX_USE_EB
     BL_PROFILE("InitEB");
 
@@ -106,7 +110,6 @@ WarpX::InitEB ()
         // See the comment above on amrex::EB2::Build for the hard-wired number 20.
         amrex::EB2::Build(Geom(maxLevel()), maxLevel(), maxLevel()+20);
     }
-
 #endif
 }
 
@@ -397,7 +400,11 @@ WarpX::MarkCells(){
 #endif
 
 void
-WarpX::ComputeDistanceToEB () {
+WarpX::ComputeDistanceToEB ()
+{
+    if (!EB::enabled()) {
+        throw std::runtime_error("ComputeDistanceToEB only works when EBs are enabled at runtime");
+    }
 #ifdef AMREX_USE_EB
     BL_PROFILE("ComputeDistanceToEB");
     const amrex::EB2::IndexSpace& eb_is = amrex::EB2::IndexSpace::top();

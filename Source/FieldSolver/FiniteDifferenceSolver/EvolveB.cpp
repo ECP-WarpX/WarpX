@@ -87,12 +87,9 @@ void FiniteDifferenceSolver::EvolveB (
     } else if (m_fdtd_algo == ElectromagneticSolverAlgo::CKC) {
 
         EvolveBCartesian <CartesianCKCAlgorithm> ( Bfield, Efield, Gfield, lev, dt );
-#ifdef AMREX_USE_EB
     } else if (m_fdtd_algo == ElectromagneticSolverAlgo::ECT) {
-
         EvolveBCartesianECT(Bfield, face_areas, area_mod, ECTRhofield, Venl, flag_info_cell,
                             borrowing, lev, dt);
-#endif
 #endif
     } else {
         WARPX_ABORT_WITH_MESSAGE("EvolveB: Unknown algorithm");

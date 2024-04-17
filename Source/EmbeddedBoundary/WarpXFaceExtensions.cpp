@@ -6,6 +6,7 @@
  */
 
 #include "WarpXFaceInfoBox.H"
+#include "EmbeddedBoundary/Enabled.H"
 #include "Utils/TextMsg.H"
 #include "WarpX.H"
 
@@ -163,43 +164,49 @@ ComputeSStab(const int i, const int j, const int k,
 
 
 amrex::Array1D<int, 0, 2>
-WarpX::CountExtFaces() {
+WarpX::CountExtFaces () {
     amrex::Array1D<int, 0, 2> sums{0, 0, 0};
 #ifdef AMREX_USE_EB
+    if (EB::enabled()) {
 #ifndef WARPX_DIM_RZ
 
 #ifdef WARPX_DIM_XZ
-    // In 2D we change the extrema of the for loop so that we only have the case idim=1
-    for(int idim = 1; idim < AMREX_SPACEDIM; ++idim) {
+        // In 2D we change the extrema of the for loop so that we only have the case idim=1
+        for(int idim = 1; idim < AMREX_SPACEDIM; ++idim) {
 #elif defined(WARPX_DIM_3D)
-        for(int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            for(int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
 #else
-        WARPX_ABORT_WITH_MESSAGE(
-            "CountExtFaces: Only implemented in 2D3V and 3D3V");
+            WARPX_ABORT_WITH_MESSAGE(
+                "CountExtFaces: Only implemented in 2D3V and 3D3V");
 #endif
-        amrex::ReduceOps<amrex::ReduceOpSum> reduce_ops;
-        amrex::ReduceData<int> reduce_data(reduce_ops);
-        for (amrex::MFIter mfi(*m_flag_ext_face[maxLevel()][idim]); mfi.isValid(); ++mfi) {
-            amrex::Box const &box = mfi.validbox();
-            auto const &flag_ext_face = m_flag_ext_face[maxLevel()][idim]->array(mfi);
-            reduce_ops.eval(box, reduce_data,
-                [=] AMREX_GPU_DEVICE(int i, int j, int k) -> amrex::GpuTuple<int> {
-                    return flag_ext_face(i, j, k);
-                });
+            amrex::ReduceOps<amrex::ReduceOpSum> reduce_ops;
+            amrex::ReduceData<int> reduce_data(reduce_ops);
+            for (amrex::MFIter mfi(*m_flag_ext_face[maxLevel()][idim]); mfi.isValid(); ++mfi) {
+                amrex::Box const &box = mfi.validbox();
+                auto const &flag_ext_face = m_flag_ext_face[maxLevel()][idim]->array(mfi);
+                reduce_ops.eval(box, reduce_data,
+                    [=] AMREX_GPU_DEVICE(int i, int j, int k) -> amrex::GpuTuple<int> {
+                        return flag_ext_face(i, j, k);
+                    });
+            }
+
+            auto r = reduce_data.value();
+            sums(idim) = amrex::get<0>(r);
         }
 
-        auto r = reduce_data.value();
-        sums(idim) = amrex::get<0>(r);
-    }
-
-    amrex::ParallelDescriptor::ReduceIntSum(&(sums(0)), AMREX_SPACEDIM);
+        amrex::ParallelDescriptor::ReduceIntSum(&(sums(0)), AMREX_SPACEDIM);
 #endif
+    }
 #endif
     return sums;
 }
 
 void
-WarpX::ComputeFaceExtensions(){
+WarpX::ComputeFaceExtensions ()
+{
+    if (!EB::enabled()) {
+        throw std::runtime_error("ComputeFaceExtensions only works when EBs are enabled at runtime");
+    }
 #ifdef AMREX_USE_EB
     amrex::Array1D<int, 0, 2> N_ext_faces = CountExtFaces();
     ablastr::warn_manager::WMRecordWarning("Embedded Boundary",
@@ -421,7 +428,11 @@ ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ex
 
 
 void
-WarpX::ComputeOneWayExtensions() {
+WarpX::ComputeOneWayExtensions ()
+{
+    if (!EB::enabled()) {
+        throw std::runtime_error("ComputeOneWayExtensions only works when EBs are enabled at runtime");
+    }
 #ifdef AMREX_USE_EB
 #ifndef WARPX_DIM_RZ
     auto const eb_fact = fieldEBFactory(maxLevel());
@@ -545,7 +556,11 @@ WarpX::ComputeOneWayExtensions() {
 
 
 void
-WarpX::ComputeEightWaysExtensions() {
+WarpX::ComputeEightWaysExtensions ()
+{
+    if (!EB::enabled()) {
+        throw std::runtime_error("ComputeEightWaysExtensions only works when EBs are enabled at runtime");
+    }
 #ifdef AMREX_USE_EB
 #ifndef WARPX_DIM_RZ
     auto const &cell_size = CellSize(maxLevel());
@@ -703,7 +718,11 @@ WarpX::ComputeEightWaysExtensions() {
 }
 
 void
-WarpX::ApplyBCKCorrection(const int idim) {
+WarpX::ApplyBCKCorrection (const int idim)
+{
+    if (!EB::enabled()) {
+        throw std::runtime_error("ApplyBCKCorrection only works when EBs are enabled at runtime");
+    }
 #if defined(AMREX_USE_EB) and !defined(WARPX_DIM_RZ)
     const std::array<amrex::Real,3> &cell_size = CellSize(maxLevel());
 
@@ -736,7 +755,8 @@ WarpX::ApplyBCKCorrection(const int idim) {
 }
 
 void
-WarpX::ShrinkBorrowing() {
+WarpX::ShrinkBorrowing ()
+{
     for(int idim = 0; idim < AMREX_SPACEDIM; idim++) {
         for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
             auto &borrowing = (*m_borrowing[maxLevel()][idim])[mfi];

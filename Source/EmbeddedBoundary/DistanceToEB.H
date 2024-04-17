@@ -14,8 +14,6 @@
 #include <AMReX_RealVect.H>
 #include <AMReX_Array.H>
 
-#ifdef AMREX_USE_EB
-
 namespace DistanceToEB
 {
 
@@ -28,7 +26,8 @@ amrex::Real dot_product (const amrex::RealVect& a, const amrex::RealVect& b) noe
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void normalize (amrex::RealVect& a) noexcept
 {
-    amrex::Real inv_norm = 1.0/std::sqrt(dot_product(a,a));
+    using namespace amrex::literals;
+    amrex::Real const inv_norm = 1.0_rt / std::sqrt(dot_product(a, a));
     AMREX_D_DECL(a[0] *= inv_norm,
                  a[1] *= inv_norm,
                  a[2] *= inv_norm);
@@ -120,13 +119,11 @@ amrex::RealVect interp_normal (int i, int j, int k, const amrex::Real W[AMREX_SP
 
 #else
     amrex::ignore_unused(i, j, k, ic, jc, kc, W, Wc, phi, dxi);
-    amrex::RealVect normal{0.0, 0.0};
+    amrex::RealVect normal(0.0);
     WARPX_ABORT_WITH_MESSAGE("Error: interp_distance not yet implemented in 1D");
 
 #endif
     return normal;
 }
 }
-
-#endif // AMREX_USE_EB
 #endif // WARPX_DISTANCETOEB_H_
