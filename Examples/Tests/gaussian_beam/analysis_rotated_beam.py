@@ -17,7 +17,6 @@ from scipy.constants import c, eV, m_e, micro, milli
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
-
 sigmax = 2*micro
 sigmay = 1*micro
 sigmaz = 3.*micro

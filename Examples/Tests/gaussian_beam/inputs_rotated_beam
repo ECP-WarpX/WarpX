@@ -12,8 +12,8 @@ my_constants.gamma = energy/mc2
 my_constants.npart = 2.e10
 my_constants.nmacropart = 2000000
 my_constants.charge = q_e * npart
-my_constants.sigmax = 2*micro 
-my_constants.sigmay = 1*micro 
+my_constants.sigmax = 2*micro
+my_constants.sigmay = 1*micro
 my_constants.sigmaz = 3.*micro
 my_constants.mux = 0.5*Lx
 my_constants.muy = 0.5*Ly
@@ -53,8 +53,8 @@ geometry.prob_hi = Lx  Ly  Lz
 #################################
 ######## BOUNDARY CONDITION #####
 #################################
-boundary.field_lo = open open open 
-boundary.field_hi = open open open 
+boundary.field_lo = open open open
+boundary.field_hi = open open open
 boundary.particle_lo = Absorbing Absorbing Absorbing
 boundary.particle_hi = Absorbing Absorbing Absorbing
 
@@ -65,8 +65,8 @@ warpx.do_electrostatic = relativistic
 warpx.const_dt = sigmaz/clight/20
 warpx.grid_type = collocated
 algo.particle_shape = 3
-algo.particle_pusher = vay 
-warpx.poisson_solver = fft 
+algo.particle_pusher = vay
+warpx.poisson_solver = fft
 
 #################################
 ########### PARTICLES ###########
