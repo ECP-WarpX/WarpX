@@ -34,16 +34,16 @@ void UpdatePosition(amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::Parti
     const amrex::ParticleReal inv_gamma = 1._prt/std::sqrt(1._prt + (ux*ux + uy*uy + uz*uz)*inv_c2);
     // Update positions over one time step
 #if (AMREX_SPACEDIM >= 2)
-    x += ux * inv_gamma * dt; // * 0.5_rt;
+    x += ux * inv_gamma * dt;
 #else
     amrex::ignore_unused(x);
 #endif
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ) // RZ pushes particles in 3D
-    y += uy * inv_gamma * dt; // * 0.5_rt;
+    y += uy * inv_gamma * dt;
 #else
     amrex::ignore_unused(y);
 #endif
-    z += uz * inv_gamma * dt; //* 0.5_rt;
+    z += uz * inv_gamma * dt;
 }
 
 /** \brief Push the particle's positions over one timestep,

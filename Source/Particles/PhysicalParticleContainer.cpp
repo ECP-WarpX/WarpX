@@ -2402,7 +2402,6 @@ void PhysicalParticleContainer::Evolve(int lev,
                 if (!skip_deposition)
                 {
                     // Deposit at t_{n+1/2} with explicit push
-                    //amrex::Print() << " <<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>> I am inside !skip_deposition () "<< "";
                     const amrex::Real relative_time = (push_type == PushType::Explicit ? -0.5_rt * dt : 0.0_rt);
 
                     const int *const AMREX_RESTRICT ion_lev = (do_field_ionization) ? pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr() : nullptr;
@@ -2418,8 +2417,6 @@ void PhysicalParticleContainer::Evolve(int lev,
                         DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
                                        np_current, np - np_current, thread_num,
                                        lev, lev - 1, dt, relative_time, push_type);
-                        //amrex::Print() << " >>>>>>>>>>> I am inside has_buffer () "<< "";
-
                     }
                 } // end of "if electrostatic_solver_id == ElectrostaticSolverAlgo::None"
             }     // end of "if do_not_push"
@@ -2847,7 +2844,6 @@ void PhysicalParticleContainer::Evolve2(int lev,
                 if (!skip_deposition)
                 {
                     // Deposit at t_{n+1/2} with explicit push
-                    //amrex::Print() << " >>>>>>>>>>> I am inside !skip_deposition () "<< "\n";
                     const amrex::Real relative_time = (push_type == PushType::Explicit ? -0.5_rt * dt : 0.0_rt);
 
                     const int *const AMREX_RESTRICT ion_lev = (do_field_ionization) ? pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr() : nullptr;
@@ -2861,8 +2857,6 @@ void PhysicalParticleContainer::Evolve2(int lev,
                     if (has_buffer)
                     {
                         // Deposit in buffers
-                        //amrex::Print() << " >>>>>>>>>>> I am inside has_buffer () "<< "\n";
-
                         DepositCurrent(pti, wp,  uxp_avg, uyp_avg, uzp_avg, ion_lev, cjx, cjy, cjz,
                                        np_current, np - np_current, thread_num,
                                        lev, lev - 1, dt, relative_time, push_type);
@@ -3481,8 +3475,6 @@ void PhysicalParticleContainer::PushPX(WarpXParIter &pti,
     ParticleReal *const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr() + offset;
     ParticleReal *const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr() + offset;
 
-    //amrex::Print() << "####################  inside Physical PR \n";
-
     const int do_copy = (m_do_back_transformed_particles && (a_dt_type != DtType::SecondHalf));
     CopyParticleAttribs copyAttribs;
     if (do_copy)
@@ -3569,7 +3561,6 @@ void PhysicalParticleContainer::PushPX(WarpXParIter &pti,
                        {
                            amrex::ParticleReal xp, yp, zp;
                            getPosition(ip, xp, yp, zp);
-                           //amrex::Print() << "+++  I am here \n";
 
                            if (save_previous_position)
                            {
@@ -3883,19 +3874,6 @@ void PhysicalParticleContainer::PushPX1(WarpXParIter &pti,
                                    copyAttribs(ip);
                                }
 
-//                                if (save_previous_momenta)
-//                                {
-//                                 amrex::Print() << "******** Writing new values for old momenta ********"<< "\n";
-// #if (AMREX_SPACEDIM >= 2)
-//                                    ux_old[ip] = ux[ip];
-// #endif
-// #if defined(WARPX_DIM_3D)
-//                                    uy_old[ip] = uy[ip];
-// #endif
-//                                    uz_old[ip] = uz[ip]; // olga
-//                                }
-                               //amrex::Print() << "inside PX1 before doParticleMomentumPush1(): v_{n-1/2}:  << --- zp[ip] = " << zp << "+++++ uz[ip] = " << uz[ip] << "\n";
-
                                doParticleMomentumPush1<0>(ux[ip], uy[ip], uz[ip],
                                                           Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                                           ion_lev ? ion_lev[ip] : 1,
@@ -3905,16 +3883,12 @@ void PhysicalParticleContainer::PushPX1(WarpXParIter &pti,
 #endif
                                                           dt);
 
-                               UpdatePosition(xp, yp, zp, ux[ip], uy[ip], uz[ip], dt/2._rt); // dt/2._rt
+                               UpdatePosition(xp, yp, zp, ux[ip], uy[ip], uz[ip], dt/2._rt);
                                setPosition(ip, xp, yp, zp);
-
-
-                               //amrex::Print() << "inside PX1 afater doParticleMomentumPush1(): v_{n+1/2}:  << --- zp[ip] = " << zp << "+++++  uz[ip] = " << uz[ip] << "\n";
                                 
 
                                if (save_previous_momenta)
                                {
-                                   //amrex::Print() << "inside PX1 afater doParticleMomentumPush1(): v_{n+1/2}:  << --- zp[ip] = " << zp << "+++++" << uz[ip] << "\n";
 #if (AMREX_SPACEDIM >= 2)
                                    ux_old[ip] = ux[ip];
 #endif
@@ -3923,8 +3897,7 @@ void PhysicalParticleContainer::PushPX1(WarpXParIter &pti,
 #endif
                                    uz_old[ip] = uz[ip]; // olga
                                }
-                               //amrex::Print() << "---------- inside PX1 & after saving data into old values: ----ip =  "<< ip << "--- zp[ip] = " << zp << "uz_old[ip]  = " << uz_old[ip] << "\n";
-                               //amrex::Print() << " offset = "<< offset << "\n";
+
                            }
 #ifdef WARPX_QED
                            else
@@ -4195,14 +4168,12 @@ void PhysicalParticleContainer::PushPX2(WarpXParIter &pti,
                             //    #endif
                             //                                          dt);
 
-                               UpdatePosition(xp, yp, zp, ux[ip], uy[ip], uz[ip], dt/2._rt); // dt/2._rt
+                               UpdatePosition(xp, yp, zp, ux[ip], uy[ip], uz[ip], dt/2._rt);
                                setPosition(ip, xp, yp, zp);
                                // Take average to get the time centered value
-                               //amrex::Print() << "INSIDE PX2: ----ip =  "<< ip << "--- uz_old[ip] "<<   uz_old[ip] << "----uz[ip] = "<< uz[ip] << "\n";
                                 
                                if (save_previous_avg_momenta)
                                {
-                                   //amrex::Print() << "******** Writing new values for old momenta ********"<< "\n";
 #if (AMREX_SPACEDIM >= 2)
                                    ux_avg[ip] = 0.5_rt * (ux[ip] + ux_old[ip]);
 #endif
@@ -4210,7 +4181,6 @@ void PhysicalParticleContainer::PushPX2(WarpXParIter &pti,
                                    uy_avg[ip] = 0.5_rt * (uy[ip] + uy_old[ip]);
 #endif
                                    uz_avg[ip] = 0.5_rt * (uz[ip] + uz_old[ip]);
-                                   //amrex::Print() << "save_previous_avg_momenta: uz[ip] = "<< uz[ip] << "----uz_old[ip]" << uz_old[ip] << "\n";
                                }
                            }
 #ifdef WARPX_QED

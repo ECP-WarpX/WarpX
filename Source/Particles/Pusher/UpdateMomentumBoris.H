@@ -62,7 +62,6 @@ void UpdateMomentumBoris1(
     const amrex::ParticleReal q, const amrex::ParticleReal m, const amrex::Real dt )
 {
     using namespace amrex::literals;
-    //amrex::Print() << "(1.1) inside UpdateMomentumBoris1(): uz = "<< uz << "\n";
 
     const amrex::ParticleReal econst = 0.5_prt*q*dt/m;
 
@@ -89,7 +88,6 @@ void UpdateMomentumBoris1(
     ux += uy_p*sz - uz_p*sy;
     uy += uz_p*sx - ux_p*sz;
     uz += ux_p*sy - uy_p*sx;
-    //amrex::Print() << "(1.2) inside UpdateMomentumBoris1(): uz = "<< uz << "\n";
     // Second half-push for E
     ux += econst*Ex;
     uy += econst*Ey;
@@ -106,8 +104,6 @@ void UpdateMomentumBoris2(
     const amrex::ParticleReal q, const amrex::ParticleReal m, const amrex::Real dt )
 {
     using namespace amrex::literals;
-    //amrex::Print() << "(2.1) inside UpdateMomentumBoris2(): uz = "<< uz << "\n";
-
 
     const amrex::ParticleReal econst = 0.5_prt*q*dt/m;
 
@@ -134,8 +130,6 @@ void UpdateMomentumBoris2(
     ux += econst*Ex;
     uy += econst*Ey;
     uz += econst*Ez;
-    //amrex::Print() << "(2.2) inside UpdateMomentumBoris2(): uz = "<< uz << "\n";
 
 }
-
 #endif // WARPX_PARTICLES_PUSHER_UPDATEMOMENTUM_BORIS_H_
