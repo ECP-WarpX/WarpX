@@ -39,7 +39,7 @@ build_dir=$(mktemp -d)
 # c-blosc (I/O compression)
 if [ -d $HOME/src/c-blosc2 ]
 then
-  cd $HOME/src/c-blosc
+  cd $HOME/src/c-blosc2
   git fetch --prune
   git checkout v2.14.4
   cd -
@@ -47,7 +47,7 @@ else
   git clone -b v2.14.4 https://github.com/Blosc/c-blosc2.git $HOME/src/c-blosc2
 fi
 rm -rf $HOME/src/c-blosc2-v100-build
-cmake -S $HOME/src/c-blosc -B ${build_dir}/c-blosc2-v100-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_FUZZERS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=${SW_DIR}/c-blosc-1.21.1
+cmake -S $HOME/src/c-blosc2 -B ${build_dir}/c-blosc2-v100-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_FUZZERS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=${SW_DIR}/c-blosc2-2.14.4
 cmake --build ${build_dir}/c-blosc2-v100-build --target install --parallel 8
 rm -rf ${build_dir}/c-blosc2-v100-build
 
