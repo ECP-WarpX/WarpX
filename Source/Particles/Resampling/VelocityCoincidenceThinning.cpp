@@ -72,6 +72,12 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
 
     const auto mass = pc->getMass();
 
+    // check if species mass > 0
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        mass > 0,
+        "VelocityCoincidenceThinning does not yet work for massless particles."
+    );
+
     // create a GPU vector to hold the momentum cluster index for each particle
     amrex::Gpu::DeviceVector<int> momentum_bin_number(bins.numItems());
     auto* momentum_bin_number_data = momentum_bin_number.data();
