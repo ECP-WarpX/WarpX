@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef PARTICLEBOUNDARYBUFFER_H_
-#define PARTICLEBOUNDARYBUFFER_H_
+#ifndef WARPX_PARTICLEBOUNDARYBUFFER_H_
+#define WARPX_PARTICLEBOUNDARYBUFFER_H_
 
 #include "Particles/MultiParticleContainer_fwd.H"
 #include "Particles/WarpXParticleContainer.H"
@@ -80,4 +80,4 @@ private:
     mutable std::vector<std::string> m_species_names;
 };
 
-#endif /*PARTICLEBOUNDARYBUFFER_H_*/
+#endif /*WARPX_PARTICLEBOUNDARYBUFFER_H_*/
