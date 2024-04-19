@@ -488,6 +488,9 @@ void WarpX::HandleParticlesAtBoundaries (int step, amrex::Real cur_time, int num
 {
     mypc->ContinuousFluxInjection(cur_time, dt[0]);
 
+    mypc->ApplyBoundaryConditions();
+    m_particle_boundary_buffer->gatherParticlesFromDomainBoundaries(*mypc);
+
     // Non-Maxwell solver: particles can move by an arbitrary number of cells
     if( electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
         electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC )
@@ -514,14 +517,11 @@ void WarpX::HandleParticlesAtBoundaries (int step, amrex::Real cur_time, int num
         }
     }
 
-    mypc->ApplyBoundaryConditions();
-
     // interact the particles with EB walls (if present)
 #ifdef AMREX_USE_EB
     mypc->ScrapeParticles(amrex::GetVecOfConstPtrs(m_distance_to_eb));
+    m_particle_boundary_buffer->gatherParticlesFromEmbeddedBoundaries(*mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
 #endif
-
-    m_particle_boundary_buffer->gatherParticles(*mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
 
     mypc->deleteInvalidParticles();
 
