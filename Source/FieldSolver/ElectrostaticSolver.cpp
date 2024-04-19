@@ -55,6 +55,7 @@
 #include <string>
 
 using namespace amrex;
+using namespace warpx::fields;
 
 void
 WarpX::ComputeSpaceChargeField (bool const reset_fields)

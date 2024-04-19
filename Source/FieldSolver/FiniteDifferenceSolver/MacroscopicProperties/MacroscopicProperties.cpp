@@ -1,5 +1,6 @@
 #include "MacroscopicProperties.H"
 
+#include "FieldSolver/Fields.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "WarpX.H"
@@ -26,6 +27,7 @@
 #include <sstream>
 
 using namespace amrex;
+using namespace warpx::fields;
 
 MacroscopicProperties::MacroscopicProperties ()
 {

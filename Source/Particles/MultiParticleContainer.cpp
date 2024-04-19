@@ -10,6 +10,8 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "MultiParticleContainer.H"
+
+#include "FieldSolver/Fields.H"
 #include "Particles/ElementaryProcess/Ionization.H"
 #ifdef WARPX_QED
 #   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
@@ -80,6 +82,7 @@
 #include <vector>
 
 using namespace amrex;
+using namespace warpx::fields;
 
 namespace
 {

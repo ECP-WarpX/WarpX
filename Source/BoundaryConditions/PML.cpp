@@ -10,6 +10,7 @@
 
 #include "BoundaryConditions/PML.H"
 #include "BoundaryConditions/PMLComponent.H"
+#include "FieldSolver/Fields.H"
 #ifdef WARPX_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #endif
@@ -55,6 +56,7 @@
 #endif
 
 using namespace amrex;
+using namespace warpx::fields;
 
 namespace
 {

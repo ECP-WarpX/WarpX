@@ -6,6 +6,7 @@
 #include "JdispFunctor.H"
 
 #include "WarpX.H"
+#include "FieldSolver/Fields.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #include "Particles/MultiParticleContainer.H"
 
@@ -15,6 +16,7 @@
 #include <AMReX_MultiFab.H>
 
 using namespace amrex;
+using namespace warpx::fields;
 
 JdispFunctor::JdispFunctor (int dir, int lev,
         amrex::IntVect crse_ratio, bool convertRZmodes2cartesian, int ncomp)

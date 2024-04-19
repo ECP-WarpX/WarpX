@@ -11,6 +11,7 @@
 #if (defined WARPX_QED)
 #   include "Particles/ElementaryProcess/QEDInternals/QedChiFunctions.H"
 #endif
+#include "FieldSolver/Fields.H"
 #include "Particles/Gather/FieldGather.H"
 #include "Particles/Gather/GetExternalFields.H"
 #include "Particles/MultiParticleContainer.H"
@@ -51,6 +52,7 @@
 #include <vector>
 
 using namespace amrex;
+using namespace warpx::fields;
 
 // constructor
 ParticleExtrema::ParticleExtrema (const std::string& rd_name)
