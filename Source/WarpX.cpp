@@ -212,8 +212,6 @@ int WarpX::n_current_deposition_buffer = -1;
 short WarpX::grid_type;
 amrex::IntVect m_rho_nodal_flag;
 
-int WarpX::do_similar_dm_pml = 1;
-
 #ifdef AMREX_USE_GPU
 bool WarpX::do_device_synchronize = true;
 #else

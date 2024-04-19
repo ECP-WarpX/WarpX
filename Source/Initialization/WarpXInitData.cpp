@@ -587,16 +587,17 @@ WarpX::InitPML ()
         // Note: fill_guards_fields and fill_guards_current are both set to
         // zero (amrex::IntVect(0)) (what we do with damping BCs does not apply
         // to the PML, for example in the presence of mesh refinement patches)
-        pml[0] = std::make_unique<PML>(0, boxArray(0), DistributionMap(0), &Geom(0), nullptr,
-                             pml_ncell, pml_delta, amrex::IntVect::TheZeroVector(),
-                             dt[0], nox_fft, noy_fft, noz_fft, grid_type,
-                             do_moving_window, pml_has_particles, do_pml_in_domain,
-                             psatd_solution_type, J_in_time, rho_in_time,
-                             do_pml_dive_cleaning, do_pml_divb_cleaning,
-                             amrex::IntVect(0), amrex::IntVect(0),
-                             guard_cells.ng_FieldSolver.max(),
-                             v_particle_pml,
-                             do_pml_Lo[0], do_pml_Hi[0]);
+        pml[0] = std::make_unique<PML>(
+            0, boxArray(0), DistributionMap(0), do_similar_dm_pml, &Geom(0), nullptr,
+            pml_ncell, pml_delta, amrex::IntVect::TheZeroVector(),
+            dt[0], nox_fft, noy_fft, noz_fft, grid_type,
+            do_moving_window, pml_has_particles, do_pml_in_domain,
+            psatd_solution_type, J_in_time, rho_in_time,
+            do_pml_dive_cleaning, do_pml_divb_cleaning,
+            amrex::IntVect(0), amrex::IntVect(0),
+            guard_cells.ng_FieldSolver.max(),
+            v_particle_pml,
+            do_pml_Lo[0], do_pml_Hi[0]);
 #endif
 
         for (int lev = 1; lev <= finest_level; ++lev)
@@ -625,16 +626,17 @@ WarpX::InitPML ()
             // Note: fill_guards_fields and fill_guards_current are both set to
             // zero (amrex::IntVect(0)) (what we do with damping BCs does not apply
             // to the PML, for example in the presence of mesh refinement patches)
-            pml[lev] = std::make_unique<PML>(lev, boxArray(lev), DistributionMap(lev),
-                                   &Geom(lev), &Geom(lev-1),
-                                   pml_ncell, pml_delta, refRatio(lev-1),
-                                   dt[lev], nox_fft, noy_fft, noz_fft, grid_type,
-                                   do_moving_window, pml_has_particles, do_pml_in_domain,
-                                   psatd_solution_type, J_in_time, rho_in_time, do_pml_dive_cleaning, do_pml_divb_cleaning,
-                                   amrex::IntVect(0), amrex::IntVect(0),
-                                   guard_cells.ng_FieldSolver.max(),
-                                   v_particle_pml,
-                                   do_pml_Lo[lev], do_pml_Hi[lev]);
+            pml[lev] = std::make_unique<PML>(
+                lev, boxArray(lev), DistributionMap(lev), do_similar_dm_pml,
+                &Geom(lev), &Geom(lev-1),
+                pml_ncell, pml_delta, refRatio(lev-1),
+                dt[lev], nox_fft, noy_fft, noz_fft, grid_type,
+                do_moving_window, pml_has_particles, do_pml_in_domain,
+                psatd_solution_type, J_in_time, rho_in_time, do_pml_dive_cleaning, do_pml_divb_cleaning,
+                amrex::IntVect(0), amrex::IntVect(0),
+                guard_cells.ng_FieldSolver.max(),
+                v_particle_pml,
+                do_pml_Lo[lev], do_pml_Hi[lev]);
         }
     }
 }
