@@ -301,7 +301,7 @@ WarpXParticleContainer::AddNParticles (int /*lev*/, long n,
     // Remove particles that are inside the embedded boundaries
 #ifdef AMREX_USE_EB
     auto & distance_to_eb = WarpX::GetInstance().GetDistanceToEB();
-    scrapeParticles( *this, amrex::GetVecOfConstPtrs(distance_to_eb), ParticleBoundaryProcess::Absorb());
+    scrapeParticlesAtEB( *this, amrex::GetVecOfConstPtrs(distance_to_eb), ParticleBoundaryProcess::Absorb());
     deleteInvalidParticles();
 #endif
 }
