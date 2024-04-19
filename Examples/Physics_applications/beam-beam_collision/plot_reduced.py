@@ -1,21 +1,10 @@
-
-import matplotlib.colors
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from matplotlib import cm, use
 from scipy.constants import (
-    alpha,
     c,
-    e,
-    eV,
-    femto,
-    m_e,
-    micron,
-    milli,
     nano,
     physical_constants,
-    pi,
 )
 
 r_e = physical_constants['classical electron radius'][0]
