@@ -1,11 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from scipy.constants import (
-    c,
-    nano,
-    physical_constants,
-)
+from scipy.constants import c, nano, physical_constants
 
 r_e = physical_constants['classical electron radius'][0]
 my_dpi=300
