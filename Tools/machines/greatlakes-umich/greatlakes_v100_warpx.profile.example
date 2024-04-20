@@ -17,7 +17,7 @@ module load openmpi/4.1.6-cuda
 module load boost/1.78.0
 
 # optional: for openPMD and PSATD+RZ support
-module load phdf5
+module load phdf5/1.12.1
 
 SW_DIR="${HOME}/sw/greatlakes/v100"
 export CMAKE_PREFIX_PATH=${SW_DIR}/c-blosc2-2.14.4:$CMAKE_PREFIX_PATH
