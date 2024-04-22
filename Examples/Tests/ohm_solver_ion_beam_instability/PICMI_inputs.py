@@ -12,9 +12,8 @@ import sys
 import time
 
 import dill
-from mpi4py import MPI as mpi
 import numpy as np
-
+from mpi4py import MPI as mpi
 from pywarpx import callbacks, fields, libwarpx, particle_containers, picmi
 
 constants = picmi.constants
@@ -259,7 +258,7 @@ class HybridPICBeamInstability(object):
                 name='diag1',
                 period=1250,
                 species=[self.ions, self.beam_ions],
-                data_list = ['ux', 'uy', 'uz', 'x', 'weighting'],
+                data_list = ['ux', 'uy', 'uz', 'z', 'weighting'],
                 write_dir='.',
                 warpx_file_prefix='Python_ohms_law_solver_ion_beam_1d_plt',
             )

@@ -7,7 +7,6 @@
 import sys
 
 import numpy as np
-
 from pywarpx import callbacks, particle_containers, picmi
 
 ##########################
@@ -158,10 +157,10 @@ sim.step(max_steps - 1 - step_number)
 ##########################
 
 assert electron_wrapper.nps == 90
-assert electron_wrapper.particle_container.get_comp_index("w") == 0
-assert electron_wrapper.particle_container.get_comp_index("newPid") == 4
+assert electron_wrapper.particle_container.get_comp_index("w") == 2
+assert electron_wrapper.particle_container.get_comp_index("newPid") == 6
 
-new_pid_vals = electron_wrapper.get_particle_arrays("newPid", 0)
+new_pid_vals = electron_wrapper.get_particle_real_arrays("newPid", 0)
 for vals in new_pid_vals:
     assert np.allclose(vals, 5)
 

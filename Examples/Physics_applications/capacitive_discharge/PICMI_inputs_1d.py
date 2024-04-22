@@ -8,10 +8,9 @@ import argparse
 import sys
 
 import numpy as np
+from pywarpx import callbacks, fields, libwarpx, particle_containers, picmi
 from scipy.sparse import csc_matrix
 from scipy.sparse import linalg as sla
-
-from pywarpx import callbacks, fields, libwarpx, particle_containers, picmi
 
 constants = picmi.constants
 
@@ -184,11 +183,10 @@ class CapacitiveDischargeExample(object):
             self.max_steps = 50
             self.diag_steps = 5
             self.mcc_subcycling_steps = 2
+            self.rng = np.random.default_rng(23094290)
         else:
             self.mcc_subcycling_steps = None
-
-        if self.dsmc:
-            self.rng = np.random.default_rng(23094290)
+            self.rng = np.random.default_rng()
 
         self.ion_density_array = np.zeros(self.nz + 1)
 

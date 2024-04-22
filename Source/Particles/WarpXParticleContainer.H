@@ -49,10 +49,10 @@
 
 
 class WarpXParIter
-    : public amrex::ParIter<0,0,PIdx::nattribs>
+    : public amrex::ParIterSoA<PIdx::nattribs, 0>
 {
 public:
-    using amrex::ParIter<0,0,PIdx::nattribs>::ParIter;
+    using amrex::ParIterSoA<PIdx::nattribs, 0>::ParIterSoA;
 
     WarpXParIter (ContainerType& pc, int level);
 
@@ -89,13 +89,14 @@ public:
  * particle container classes (that store a collection of particles) derive. Derived
  * classes can be used for plasma particles, photon particles, or non-physical
  * particles (e.g., for the laser antenna).
- * It derives from amrex::ParticleContainer<0,0,PIdx::nattribs>, where the
- * template arguments stand for the number of int and amrex::Real SoA and AoS
- * data in amrex::Particle.
- *  - AoS amrex::Real: x, y, z (default), 0 additional (first template
- *    parameter)
- *  - AoS int: id, cpu (default), 0 additional (second template parameter)
- *  - SoA amrex::Real: PIdx::nattribs (third template parameter), see PIdx for
+ * It derives from amrex::ParticleContainerPureSoA<PIdx::nattribs>, where the
+ * template arguments stand for the number of int and amrex::Real SoA
+ * data in amrex::SoAParticle.
+ *  - SoA amrex::Real: positions x, y, z, momentum ux, uy, uz, ... see PIdx for details;
+ *                     more can be added at runtime
+ *  - SoA int: 0 attributes by default, but can be added at runtime
+ *  - SoA uint64_t: idcpu, a global 64bit index, with a 40bit local id and a 24bit cpu id
+ *    (both set at creation)
  * the list.
  *
  * WarpXParticleContainer contains the main functions for initialization,
@@ -164,11 +165,9 @@ public:
      * class.
      */
     virtual void DefaultInitializeRuntimeAttributes (
-                        amrex::ParticleTile<amrex::Particle<NStructReal, NStructInt>,
-                                            NArrayReal, NArrayInt,
-                                            amrex::PinnedArenaAllocator>& pinned_tile,
-                        int n_external_attr_real,
-                        int n_external_attr_int) = 0;
+        typename ContainerLike<amrex::PinnedArenaAllocator>::ParticleTileType& pinned_tile,
+        int n_external_attr_real,
+        int n_external_attr_int) = 0;
 
     ///
     /// This pushes the particle positions by one half time step.
@@ -281,6 +280,7 @@ public:
     /// This is needed when solving Poisson's equation with periodic boundary conditions.
     ///
     amrex::ParticleReal sumParticleCharge(bool local = false);
+    amrex::ParticleReal sumParticleWeight(bool local = false);
 
     std::array<amrex::ParticleReal, 3> meanParticleVelocity(bool local = false);
 
@@ -321,6 +321,13 @@ public:
                         amrex::Vector<amrex::Vector<amrex::ParticleReal>> const & attr_real,
                         int nattr_int, amrex::Vector<amrex::Vector<int>> const & attr_int,
                         int uniqueparticles, amrex::Long id=-1);
+
+    /** Remove particles with invalid ID
+    *
+    * This is a local operation (no MPI communication) and is thus preferable over `ReDistribute`
+    * (which also removes invalid particles, but involves MPI communications at the same time)
+    */
+    void deleteInvalidParticles ();
 
     virtual void ReadHeader (std::istream& is) = 0;
 
@@ -419,6 +426,8 @@ public:
     virtual QuantumSynchrotronEngine* get_quantum_sync_engine_ptr () const {return nullptr;}
 #endif
 
+    void setDoNotPush (bool flag) { do_not_push = flag; }
+
 protected:
     int species_id;
 
@@ -435,7 +444,7 @@ protected:
     //! instead of gathering fields from the finest patch level, gather from the coarsest
     bool m_gather_from_main_grid = false;
 
-    int do_not_push = 0;
+    bool do_not_push = false;
     int do_not_gather = 0;
 
     // Whether to allow particles outside of the simulation domain to be
@@ -467,9 +476,9 @@ protected:
     //Species can receive a shared pointer to a QED engine (species for
     //which this is relevant should override these functions)
     virtual void
-    set_breit_wheeler_engine_ptr(std::shared_ptr<BreitWheelerEngine>){}
+    set_breit_wheeler_engine_ptr(const std::shared_ptr<BreitWheelerEngine>&){}
     virtual void
-    set_quantum_sync_engine_ptr(std::shared_ptr<QuantumSynchrotronEngine>){}
+    set_quantum_sync_engine_ptr(const std::shared_ptr<QuantumSynchrotronEngine>&){}
 
     int m_qed_breit_wheeler_ele_product;
     std::string m_qed_breit_wheeler_ele_product_name;

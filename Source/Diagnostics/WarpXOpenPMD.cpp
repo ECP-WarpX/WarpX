@@ -10,6 +10,7 @@
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "FieldIO.H"
 #include "Particles/Filter/FilterFunctors.H"
+#include "Particles/NamedComponentParticleContainer.H"
 #include "Utils/TextMsg.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/RelativeCellPosition.H"
@@ -18,11 +19,9 @@
 #include "WarpX.H"
 #include "OpenPMDHelpFunction.H"
 
-#include <ablastr/particles/IndexHandling.H>
 #include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX.H>
-#include <AMReX_ArrayOfStructs.H>
 #include <AMReX_BLassert.H>
 #include <AMReX_Box.H>
 #include <AMReX_Config.H>
@@ -317,7 +316,15 @@ namespace detail
             return {{openPMD::UnitDimension::T,  1.},
                     {openPMD::UnitDimension::I,  1.}};
         } else if( record_name == "mass" ) {
-            return {{openPMD::UnitDimension::M,  1.}};
+            return {{openPMD::UnitDimension::M, 1.}};
+        } else if( record_name == "weighting" ) {  // NOLINT(bugprone-branch-clone)
+#if defined(WARPX_DIM_1D_Z)
+            return {{openPMD::UnitDimension::L, -2.}};
+#elif defined(WARPX_DIM_XZ)
+            return {{openPMD::UnitDimension::L, -1.}};
+#else  // 3D and RZ
+            return {};
+#endif
         } else if( record_name == "E" ) {
             return {{openPMD::UnitDimension::L,  1.},
                     {openPMD::UnitDimension::M,  1.},
@@ -327,7 +334,7 @@ namespace detail
             return {{openPMD::UnitDimension::M,  1.},
                     {openPMD::UnitDimension::I, -1.},
                     {openPMD::UnitDimension::T, -2.}};
-        } else {
+        } else {  // NOLINT(bugprone-branch-clone)
             return {};
         }
     }
@@ -336,7 +343,7 @@ namespace detail
      * set the metadata that indicates the physical unit.
      */
     inline void
-    setOpenPMDUnit ( openPMD::Mesh mesh, const std::string field_name )
+    setOpenPMDUnit ( openPMD::Mesh mesh, const std::string& field_name )
     {
         if (field_name[0] == 'E'){  // Electric field
             mesh.setUnitDimension({
@@ -370,19 +377,19 @@ namespace detail
 #ifdef WARPX_USE_OPENPMD
 WarpXOpenPMDPlot::WarpXOpenPMDPlot (
     openPMD::IterationEncoding ie,
-    std::string openPMDFileType,
-    std::string operator_type,
-    std::map< std::string, std::string > operator_parameters,
-    std::string engine_type,
-    std::map< std::string, std::string > engine_parameters,
-    std::vector<bool> fieldPMLdirections,
+    const std::string& openPMDFileType,
+    const std::string& operator_type,
+    const std::map< std::string, std::string >& operator_parameters,
+    const std::string& engine_type,
+    const std::map< std::string, std::string >& engine_parameters,
+    const std::vector<bool>& fieldPMLdirections,
     const std::string& authors)
     : m_Series(nullptr),
       m_MPIRank{amrex::ParallelDescriptor::MyProc()},
       m_MPISize{amrex::ParallelDescriptor::NProcs()},
       m_Encoding(ie),
-      m_OpenPMDFileType(std::move(openPMDFileType)),
-      m_fieldPMLdirections(std::move(fieldPMLdirections)),
+      m_OpenPMDFileType{openPMDFileType},
+      m_fieldPMLdirections{fieldPMLdirections},
       m_authors{authors}
 {
     m_OpenPMDoptions = detail::getSeriesOptions(operator_type, operator_parameters,
@@ -541,42 +548,6 @@ for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
         pinned_pc->make_alike<amrex::PinnedArenaAllocator>() :
         pc->make_alike<amrex::PinnedArenaAllocator>();
 
-    // names of amrex::Real and int particle attributes in SoA data
-    amrex::Vector<std::string> real_names;
-    amrex::Vector<std::string> int_names;
-    amrex::Vector<int> int_flags;
-    amrex::Vector<int> real_flags;
-
-    // see openPMD ED-PIC extension for namings
-    // note: an underscore separates the record name from its component
-    //       for non-scalar records
-    real_names.push_back("weighting");
-    real_names.push_back("momentum_x");
-    real_names.push_back("momentum_y");
-    real_names.push_back("momentum_z");
-#ifdef WARPX_DIM_RZ
-    real_names.push_back("theta");
-#endif
-    // get the names of the real comps
-    real_names.resize(tmp.NumRealComps());
-    auto runtime_rnames = tmp.getParticleRuntimeComps();
-    for (auto const& x : runtime_rnames)
-    {
-        real_names[x.second+PIdx::nattribs] = detail::snakeToCamel(x.first);
-    }
-    // plot any "extra" fields by default
-    real_flags = particle_diags[i].m_plot_flags;
-    real_flags.resize(tmp.NumRealComps(), 1);
-    // and the names
-    int_names.resize(tmp.NumIntComps());
-    auto runtime_inames = tmp.getParticleRuntimeiComps();
-    for (auto const& x : runtime_inames)
-    {
-        int_names[x.second+0] = detail::snakeToCamel(x.first);
-    }
-    // plot by default
-    int_flags.resize(tmp.NumIntComps(), 1);
-
     const auto mass = pc->AmIA<PhysicalSpecies::photon>() ? PhysConst::m_e : pc->getMass();
     RandomFilter const random_filter(particle_diags[i].m_do_random_filter,
                                      particle_diags[i].m_random_fraction);
@@ -618,6 +589,51 @@ for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
         particlesConvertUnits(ConvertDirection::SI_to_WarpX, pc, mass);
     }
 
+    // Gather the electrostatic potential (phi) on the macroparticles
+    if ( particle_diags[i].m_plot_phi ) {
+        storePhiOnParticles( tmp, WarpX::electrostatic_solver_id, !use_pinned_pc );
+    }
+
+    // names of amrex::Real and int particle attributes in SoA data
+    amrex::Vector<std::string> real_names;
+    amrex::Vector<std::string> int_names;
+    amrex::Vector<int> int_flags;
+    amrex::Vector<int> real_flags;
+    // see openPMD ED-PIC extension for namings
+    // note: an underscore separates the record name from its component
+    //       for non-scalar records
+    // note: in RZ, we reconstruct x,y,z positions from r,z,theta in WarpX
+#if !defined (WARPX_DIM_1D_Z)
+    real_names.push_back("position_x");
+#endif
+#if defined (WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+    real_names.push_back("position_y");
+#endif
+    real_names.push_back("position_z");
+    real_names.push_back("weighting");
+    real_names.push_back("momentum_x");
+    real_names.push_back("momentum_y");
+    real_names.push_back("momentum_z");
+    // get the names of the real comps
+    real_names.resize(tmp.NumRealComps());
+    auto runtime_rnames = tmp.getParticleRuntimeComps();
+    for (auto const& x : runtime_rnames)
+    {
+        real_names[x.second+PIdx::nattribs] = detail::snakeToCamel(x.first);
+    }
+    // plot any "extra" fields by default
+    real_flags = particle_diags[i].m_plot_flags;
+    real_flags.resize(tmp.NumRealComps(), 1);
+    // and the names
+    int_names.resize(tmp.NumIntComps());
+    auto runtime_inames = tmp.getParticleRuntimeiComps();
+    for (auto const& x : runtime_inames)
+    {
+        int_names[x.second+0] = detail::snakeToCamel(x.first);
+    }
+    // plot by default
+    int_flags.resize(tmp.NumIntComps(), 1);
+
     // real_names contains a list of all real particle attributes.
     // real_flags is 1 or 0, whether quantity is dumped or not.
     DumpToFile(&tmp,
@@ -627,9 +643,8 @@ for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
         int_flags,
         real_names, int_names,
         pc->getCharge(), pc->getMass(),
-        isBTD, isLastBTDFlush
-    );
-}
+        isBTD, isLastBTDFlush);
+    }
 }
 
 void
@@ -660,7 +675,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
     openPMD::ParticleSpecies currSpecies = currIteration.particles[name];
 
     // only BTD writes multiple times into the same step, zero for other methods
-    unsigned long ParticleFlushOffset = isBTD ? num_already_flushed(currSpecies) : 0;
+    const unsigned long ParticleFlushOffset = isBTD ? num_already_flushed(currSpecies) : 0;
 
     // prepare data structures the first time BTD has non-zero particles
     //   we set some of them to zero extent, so we need to time that well
@@ -722,77 +737,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
 
             contributed_particles = true;
 
-            // get position and particle ID from aos
-            // note: this implementation iterates the AoS 4x...
-            // if we flush late as we do now, we can also copy out the data in one go
-            const auto &aos = pti.GetArrayOfStructs();  // size =  numParticlesOnTile
-            {
-                // Save positions
-#if defined(WARPX_DIM_RZ)
-                {
-                   const std::shared_ptr<amrex::ParticleReal> z(
-                           new amrex::ParticleReal[numParticleOnTile],
-                           [](amrex::ParticleReal const *p) { delete[] p; }
-                   );
-                   for (auto i = 0; i < numParticleOnTile; i++) {
-                       z.get()[i] = aos[i].pos(1);  // {0: "r", 1: "z"}
-                   }
-                   std::string const positionComponent = "z";
-                   currSpecies["position"]["z"].storeChunk(z, {offset}, {numParticleOnTile64});
-                }
-
-                //   reconstruct x and y from polar coordinates r, theta
-                auto const& soa = pti.GetStructOfArrays();
-                amrex::ParticleReal const* theta = soa.GetRealData(PIdx::theta).dataPtr();
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(theta != nullptr, "openPMD: invalid theta pointer.");
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(int(soa.GetRealData(PIdx::theta).size()) == numParticleOnTile,
-                                                 "openPMD: theta and tile size do not match");
-                {
-                    const std::shared_ptr< amrex::ParticleReal > x(
-                            new amrex::ParticleReal[numParticleOnTile],
-                            [](amrex::ParticleReal const *p){ delete[] p; }
-                    );
-                    const std::shared_ptr< amrex::ParticleReal > y(
-                            new amrex::ParticleReal[numParticleOnTile],
-                            [](amrex::ParticleReal const *p){ delete[] p; }
-                    );
-                    for (auto i=0; i<numParticleOnTile; i++) {
-                        auto const r = aos[i].pos(0);  // {0: "r", 1: "z"}
-                        x.get()[i] = r * std::cos(theta[i]);
-                        y.get()[i] = r * std::sin(theta[i]);
-                    }
-                    currSpecies["position"]["x"].storeChunk(x, {offset}, {numParticleOnTile64});
-                    currSpecies["position"]["y"].storeChunk(y, {offset}, {numParticleOnTile64});
-                }
-#else
-                auto const positionComponents = detail::getParticlePositionComponentLabels();
-                for (auto currDim = 0; currDim < AMREX_SPACEDIM; currDim++) {
-                    const std::shared_ptr<amrex::ParticleReal> curr(
-                            new amrex::ParticleReal[numParticleOnTile],
-                            [](amrex::ParticleReal const *p) { delete[] p; }
-                    );
-                    for (auto i = 0; i < numParticleOnTile; i++) {
-                        curr.get()[i] = aos[i].pos(currDim);
-                    }
-                    std::string const positionComponent = positionComponents[currDim];
-                    currSpecies["position"][positionComponent].storeChunk(curr, {offset},
-                                                                          {numParticleOnTile64});
-                }
-#endif
-
-                // save particle ID after converting it to a globally unique ID
-                const std::shared_ptr<uint64_t> ids(
-                        new uint64_t[numParticleOnTile],
-                        [](uint64_t const *p) { delete[] p; }
-                );
-                for (auto i = 0; i < numParticleOnTile; i++) {
-                    ids.get()[i] = ablastr::particles::localIDtoGlobal(static_cast<int>(aos[i].id()), static_cast<int>(aos[i].cpu()));
-                }
-                const auto *const scalar = openPMD::RecordComponent::SCALAR;
-                currSpecies["id"][scalar].storeChunk(ids, {offset}, {numParticleOnTile64});
-
-            }
-            //  save "extra" particle properties in AoS and SoA
+            //  save particle properties
             SaveRealProperty(pti,
                              currSpecies,
                              offset,
@@ -873,7 +818,7 @@ WarpXOpenPMDPlot::SetupRealProperties (ParticleContainer const * pc,
     // the beam/input3d showed write_real_comp.size() = 16 while only 10 real comp names
     // so using the min to be safe.
     //
-    auto const getComponentRecord = [&currSpecies](std::string const comp_name) {
+    auto const getComponentRecord = [&currSpecies](std::string const& comp_name) {
         // handle scalar and non-scalar records by name
         const auto [record_name, component_name] = detail::name2openPMD(comp_name);
         return currSpecies[record_name][component_name];
@@ -893,10 +838,9 @@ WarpXOpenPMDPlot::SetupRealProperties (ParticleContainer const * pc,
 
     std::set< std::string > addedRecords; // add meta-data per record only once
     for (auto idx=0; idx<pc->NumRealComps(); idx++) {
-        auto ii = ParticleContainer::NStructReal + idx; // jump over extra AoS names
-        if (write_real_comp[ii]) {
+        if (write_real_comp[idx]) {
             // handle scalar and non-scalar records by name
-            const auto [record_name, component_name] = detail::name2openPMD(real_comp_names[ii]);
+            const auto [record_name, component_name] = detail::name2openPMD(real_comp_names[idx]);
             auto currRecord = currSpecies[record_name];
 
             // meta data for ED-PIC extension
@@ -917,10 +861,9 @@ WarpXOpenPMDPlot::SetupRealProperties (ParticleContainer const * pc,
         }
     }
     for (auto idx=0; idx<int_counter; idx++) {
-        auto ii = ParticleContainer::NStructInt + idx; // jump over extra AoS names
-        if (write_int_comp[ii]) {
+        if (write_int_comp[idx]) {
             // handle scalar and non-scalar records by name
-            const auto [record_name, component_name] = detail::name2openPMD(int_comp_names[ii]);
+            const auto [record_name, component_name] = detail::name2openPMD(int_comp_names[idx]);
             auto currRecord = currSpecies[record_name];
 
             // meta data for ED-PIC extension
@@ -948,63 +891,87 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
                        amrex::Vector<std::string> const& int_comp_names) const
 
 {
-  auto const numParticleOnTile = pti.numParticles();
-  auto const numParticleOnTile64 = static_cast<uint64_t>( numParticleOnTile );
-  auto const& aos = pti.GetArrayOfStructs();  // size =  numParticlesOnTile
-  auto const& soa = pti.GetStructOfArrays();
-  // first we concatenate the AoS into contiguous arrays
-  {
-    // note: WarpX does not yet use extra AoS Real attributes
-    for( auto idx=0; idx<ParticleIter::ContainerType::NStructReal; idx++ ) {  // lgtm [cpp/constant-comparison]
-        if( write_real_comp[idx] ) {
-            // handle scalar and non-scalar records by name
-            const auto [record_name, component_name] = detail::name2openPMD(real_comp_names[idx]);
-            auto currRecord = currSpecies[record_name];
-            auto currRecordComp = currRecord[component_name];
+    auto const numParticleOnTile = pti.numParticles();
+    auto const numParticleOnTile64 = static_cast<uint64_t>(numParticleOnTile);
+    auto const& soa = pti.GetStructOfArrays();
 
-            const std::shared_ptr< amrex::ParticleReal > d(
+    auto const getComponentRecord = [&currSpecies](std::string const& comp_name) {
+        // handle scalar and non-scalar records by name
+        const auto [record_name, component_name] = detail::name2openPMD(comp_name);
+        return currSpecies[record_name][component_name];
+    };
+
+    // here we the save the SoA properties (idcpu)
+    {
+        // todo: add support to not write the particle index
+        getComponentRecord("id").storeChunkRaw(
+            soa.GetIdCPUData().data(), {offset}, {numParticleOnTile64});
+    }
+
+    // here we the save the SoA properties (real)
+    {
+        auto const real_counter = std::min(write_real_comp.size(), real_comp_names.size());
+
+        // reconstruct Cartesian positions for RZ simulations
+        // r,z,theta -> x,y,z
+#if defined(WARPX_DIM_RZ)
+        auto const * const r = soa.GetRealData(PIdx::x).data();
+        auto const * const theta = soa.GetRealData(PIdx::theta).data();
+
+        if (write_real_comp[0]) {
+            std::shared_ptr<amrex::ParticleReal> const x(
                 new amrex::ParticleReal[numParticleOnTile],
-                [](amrex::ParticleReal const *p){ delete[] p; }
+                [](amrex::ParticleReal const *p) { delete[] p; }
             );
-
-            for( auto kk=0; kk<numParticleOnTile; kk++ ) {
-                d.get()[kk] = aos[kk].rdata(idx);
+            for (int i = 0; i < numParticleOnTile; ++i) {
+                x.get()[i] = r[i] * std::cos(theta[i]);
             }
+            getComponentRecord(real_comp_names[0]).storeChunk(
+                x, {offset}, {numParticleOnTile64});
+        }
+        if (write_real_comp[1]) {
+            std::shared_ptr<amrex::ParticleReal> const y(
+                new amrex::ParticleReal[numParticleOnTile],
+                [](amrex::ParticleReal const *p) { delete[] p; }
+            );
+            for (int i = 0; i < numParticleOnTile; ++i) {
+                y.get()[i] = r[i] * std::sin(theta[i]);
+            }
+            getComponentRecord(real_comp_names[1]).storeChunk(
+                y, {offset}, {numParticleOnTile64});
+        }
+#endif
 
-            currRecordComp.storeChunk(d,
-                {offset}, {numParticleOnTile64});
+        for (auto idx=0; idx<real_counter; idx++) {
+#if defined(WARPX_DIM_RZ)
+            // skip over x,y
+            if (idx < 2) {
+                continue;
+            }
+            // mak names and write flags to SoA real array number
+            int const soa_r_idx = idx - 1 < PIdx::theta ?
+                idx - 1 :  // z and momenta before theta (we added y)
+                idx        // jump over theta (skipped)
+            ;
+#else
+            int const soa_r_idx = idx;
+#endif
+            if (write_real_comp[idx]) {
+                getComponentRecord(real_comp_names[idx]).storeChunkRaw(
+                    soa.GetRealData(soa_r_idx).data(), {offset}, {numParticleOnTile64});
+            }
         }
     }
-  }
-
-  auto const getComponentRecord = [&currSpecies](std::string const comp_name) {
-    // handle scalar and non-scalar records by name
-    const auto [record_name, component_name] = detail::name2openPMD(comp_name);
-    return currSpecies[record_name][component_name];
-  };
-
-  // here we the save the SoA properties (real)
-  {
-    auto const real_counter = std::min(write_real_comp.size(), real_comp_names.size());
-    for (auto idx=0; idx<real_counter; idx++) {
-        auto ii = ParticleIter::ContainerType::NStructReal + idx;  // jump over extra AoS names
-        if (write_real_comp[ii]) {
-            getComponentRecord(real_comp_names[ii]).storeChunkRaw(
-                soa.GetRealData(idx).data(), {offset}, {numParticleOnTile64});
+    // and now SoA int properties
+    {
+        auto const int_counter = std::min(write_int_comp.size(), int_comp_names.size());
+        for (auto idx=0; idx<int_counter; idx++) {
+            if (write_int_comp[idx]) {
+                getComponentRecord(int_comp_names[idx]).storeChunkRaw(
+                    soa.GetIntData(idx).data(), {offset}, {numParticleOnTile64});
+            }
         }
     }
-  }
-  // and now SoA int properties
-  {
-    auto const int_counter = std::min(write_int_comp.size(), int_comp_names.size());
-    for (auto idx=0; idx<int_counter; idx++) {
-        auto ii = ParticleIter::ContainerType::NStructInt + idx;  // jump over extra AoS names
-        if (write_int_comp[ii]) {
-            getComponentRecord(int_comp_names[ii]).storeChunkRaw(
-                soa.GetIntData(idx).data(), {offset}, {numParticleOnTile64});
-        }
-    }
-  }
 }
 
 
@@ -1229,9 +1196,9 @@ WarpXOpenPMDPlot::SetupFields ( openPMD::Container< openPMD::Mesh >& meshes,
  */
 void
 WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
-                                 amrex::Geometry& full_geom,
-                                 std::string comp_name,
-                                 std::string field_name,
+                                 amrex::Geometry const& full_geom,
+                                 std::string const& comp_name,
+                                 std::string const& field_name,
                                  amrex::MultiFab const& mf,
                                  bool var_in_theta_mode) const
 {

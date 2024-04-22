@@ -41,7 +41,7 @@ class WarpXParticleCounter
 {
 public:
   using ParticleContainer = typename WarpXParticleContainer::ContainerLike<amrex::PinnedArenaAllocator>;
-  using ParticleIter = typename amrex::ParIter<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>;
+  using ParticleIter = typename amrex::ParIterSoA<PIdx::nattribs, 0, amrex::PinnedArenaAllocator>;
 
   WarpXParticleCounter (ParticleContainer* pc);
   [[nodiscard]] unsigned long GetTotalNumParticles () const {return m_Total;}
@@ -77,7 +77,7 @@ class WarpXOpenPMDPlot
 {
 public:
   using ParticleContainer = typename WarpXParticleContainer::ContainerLike<amrex::PinnedArenaAllocator>;
-  using ParticleIter = typename amrex::ParConstIter<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>;
+  using ParticleIter = typename amrex::ParConstIterSoA<PIdx::nattribs, 0, amrex::PinnedArenaAllocator>;
 
   /** Initialize openPMD I/O routines
    *
@@ -91,12 +91,12 @@ public:
    * @param authors a string specifying the authors of the simulation (can be empty)
    */
   WarpXOpenPMDPlot (openPMD::IterationEncoding ie,
-                    std::string filetype,
-                    std::string operator_type,
-                    std::map< std::string, std::string > operator_parameters,
-                    std::string engine_type,
-                    std::map< std::string, std::string > engine_parameters,
-                    std::vector<bool> fieldPMLdirections,
+                    const std::string& filetype,
+                    const std::string& operator_type,
+                    const std::map< std::string, std::string >& operator_parameters,
+                    const std::string& engine_type,
+                    const std::map< std::string, std::string >& engine_parameters,
+                    const std::vector<bool>& fieldPMLdirections,
                     const std::string& authors);
 
   ~WarpXOpenPMDPlot ();
@@ -188,9 +188,9 @@ private:
 
   void SetupMeshComp (
       openPMD::Mesh& mesh,
-      amrex::Geometry& full_geom,
-      std::string comp_name,
-      std::string field_name,
+      amrex::Geometry const& full_geom,
+      std::string const& comp_name,
+      std::string const& field_name,
       amrex::MultiFab const& mf,
       bool var_in_theta_mode
   ) const;

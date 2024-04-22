@@ -59,11 +59,11 @@
 
 using namespace amrex;
 
-ColliderRelevant::ColliderRelevant (std::string rd_name)
-: ReducedDiags{std::move(rd_name)}
+ColliderRelevant::ColliderRelevant (const std::string& rd_name)
+: ReducedDiags{rd_name}
 {
     // read colliding species names - must be 2
-    amrex::ParmParse pp_rd_name(m_rd_name);
+    const amrex::ParmParse pp_rd_name(m_rd_name);
     pp_rd_name.getarr("species", m_beam_name);
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -203,7 +203,7 @@ void ColliderRelevant::ComputeDiags (int step)
 
     // get cell volume
     amrex::Geometry const & geom = warpx.Geom(0);
-    amrex::Real dV = AMREX_D_TERM(geom.CellSize(0), *geom.CellSize(1), *geom.CellSize(2));
+    const amrex::Real dV = AMREX_D_TERM(geom.CellSize(0), *geom.CellSize(1), *geom.CellSize(2));
 
     const auto get_idx = [&](const std::string& name){
         return m_headers_indices.at(name).idx;
@@ -441,12 +441,12 @@ void ColliderRelevant::ComputeDiags (int step)
             // define variables in preparation for field gathering
             const std::array<amrex::Real,3>& dx = WarpX::CellSize(std::max(lev, 0));
             const amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
-            const amrex::MultiFab & Ex = warpx.getEfield(lev,0);
-            const amrex::MultiFab & Ey = warpx.getEfield(lev,1);
-            const amrex::MultiFab & Ez = warpx.getEfield(lev,2);
-            const amrex::MultiFab & Bx = warpx.getBfield(lev,0);
-            const amrex::MultiFab & By = warpx.getBfield(lev,1);
-            const amrex::MultiFab & Bz = warpx.getBfield(lev,2);
+            const amrex::MultiFab & Ex = warpx.getField(FieldType::Efield_aux, lev,0);
+            const amrex::MultiFab & Ey = warpx.getField(FieldType::Efield_aux, lev,1);
+            const amrex::MultiFab & Ez = warpx.getField(FieldType::Efield_aux, lev,2);
+            const amrex::MultiFab & Bx = warpx.getField(FieldType::Bfield_aux, lev,0);
+            const amrex::MultiFab & By = warpx.getField(FieldType::Bfield_aux, lev,1);
+            const amrex::MultiFab & Bz = warpx.getField(FieldType::Bfield_aux, lev,2);
 
             // declare reduce_op
             ReduceOps<ReduceOpMin, ReduceOpMax, ReduceOpSum> reduce_op;
@@ -544,7 +544,7 @@ void ColliderRelevant::ComputeDiags (int step)
 
     // make density MultiFabs from nodal to cell centered
     amrex::BoxArray ba = warpx.boxArray(0);
-    amrex::DistributionMapping dmap = warpx.DistributionMap(0);
+    const amrex::DistributionMapping dmap = warpx.DistributionMap(0);
     constexpr int ncomp = 1;
     constexpr int ngrow = 0;
     amrex::MultiFab mf_dst1(ba.convert(amrex::IntVect::TheCellVector()), dmap, ncomp, ngrow);

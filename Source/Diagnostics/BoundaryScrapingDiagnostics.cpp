@@ -21,8 +21,8 @@
 
 using namespace amrex::literals;
 
-BoundaryScrapingDiagnostics::BoundaryScrapingDiagnostics (int i, std::string name)
-    : Diagnostics(i, name)
+BoundaryScrapingDiagnostics::BoundaryScrapingDiagnostics (int i, const std::string& name)
+    : Diagnostics{i, name}
 {
     ReadParameters();
 }

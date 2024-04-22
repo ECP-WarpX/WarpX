@@ -137,8 +137,8 @@ amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(1,1,1));
 #endif
 int WarpX::shared_mem_current_tpb = 128;
 
-amrex::Vector<int> WarpX::field_boundary_lo(AMREX_SPACEDIM,0);
-amrex::Vector<int> WarpX::field_boundary_hi(AMREX_SPACEDIM,0);
+amrex::Vector<FieldBoundaryType> WarpX::field_boundary_lo(AMREX_SPACEDIM,FieldBoundaryType::PML);
+amrex::Vector<FieldBoundaryType> WarpX::field_boundary_hi(AMREX_SPACEDIM,FieldBoundaryType::PML);
 amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_lo(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
 amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_hi(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
 
@@ -190,6 +190,7 @@ amrex::IntVect WarpX::sort_idx_type(AMREX_D_DECL(0,0,0));
 bool WarpX::do_dynamic_scheduling = true;
 
 int WarpX::electrostatic_solver_id;
+int WarpX::poisson_solver_id;
 Real WarpX::self_fields_required_precision = 1.e-11_rt;
 Real WarpX::self_fields_absolute_tolerance = 0.0_rt;
 int WarpX::self_fields_max_iters = 200;
@@ -440,6 +441,11 @@ WarpX::WarpX ()
                     costs_heuristic_cells_wt = 0.250_rt;
                     costs_heuristic_particles_wt = 0.750_rt;
                     break;
+                case 4:
+                    // this is only a guess
+                    costs_heuristic_cells_wt = 0.200_rt;
+                    costs_heuristic_particles_wt = 0.800_rt;
+                    break;
             }
         } else { // FDTD
             switch (WarpX::nox)
@@ -455,6 +461,11 @@ WarpX::WarpX ()
                 case 3:
                     costs_heuristic_cells_wt = 0.145_rt;
                     costs_heuristic_particles_wt = 0.855_rt;
+                    break;
+                case 4:
+                    // this is only a guess
+                    costs_heuristic_cells_wt = 0.100_rt;
+                    costs_heuristic_particles_wt = 0.900_rt;
                     break;
             }
         }
@@ -742,12 +753,6 @@ WarpX::ReadParameters ()
             electromagnetic_solver_id = ElectromagneticSolverAlgo::None;
         }
 
-#if defined(AMREX_USE_EB) && defined(WARPX_DIM_RZ)
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        electromagnetic_solver_id==ElectromagneticSolverAlgo::None,
-        "Currently, the embedded boundary in RZ only works for electrostatic solvers (or no solver).");
-#endif
-
         if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
             electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
         {
@@ -761,15 +766,57 @@ WarpX::ReadParameters ()
                 pp_warpx, "self_fields_max_iters", self_fields_max_iters);
             pp_warpx.query("self_fields_verbosity", self_fields_verbosity);
         }
+
+        poisson_solver_id = GetAlgorithmInteger(pp_warpx, "poisson_solver");
+#ifndef WARPX_DIM_3D
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        poisson_solver_id!=PoissonSolverAlgo::IntegratedGreenFunction,
+        "The FFT Poisson solver only works in 3D.");
+#endif
+#ifndef WARPX_USE_PSATD
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        poisson_solver_id!=PoissonSolverAlgo::IntegratedGreenFunction,
+        "To use the FFT Poisson solver, compile with WARPX_USE_PSATD=ON.");
+#endif
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        (
+            electrostatic_solver_id!=ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic ||
+            poisson_solver_id!=PoissonSolverAlgo::IntegratedGreenFunction
+        ),
+        "The FFT Poisson solver is not implemented in labframe-electromagnetostatic mode yet."
+        );
+
         // Parse the input file for domain boundary potentials
         const ParmParse pp_boundary("boundary");
-        pp_boundary.query("potential_lo_x", m_poisson_boundary_handler.potential_xlo_str);
-        pp_boundary.query("potential_hi_x", m_poisson_boundary_handler.potential_xhi_str);
-        pp_boundary.query("potential_lo_y", m_poisson_boundary_handler.potential_ylo_str);
-        pp_boundary.query("potential_hi_y", m_poisson_boundary_handler.potential_yhi_str);
-        pp_boundary.query("potential_lo_z", m_poisson_boundary_handler.potential_zlo_str);
-        pp_boundary.query("potential_hi_z", m_poisson_boundary_handler.potential_zhi_str);
-        pp_warpx.query("eb_potential(x,y,z,t)", m_poisson_boundary_handler.potential_eb_str);
+        bool potential_specified = false;
+        // When reading the potential at the boundary from the input file, set this flag to true if any of the potential is specified
+        potential_specified |= pp_boundary.query("potential_lo_x", m_poisson_boundary_handler.potential_xlo_str);
+        potential_specified |= pp_boundary.query("potential_hi_x", m_poisson_boundary_handler.potential_xhi_str);
+        potential_specified |= pp_boundary.query("potential_lo_y", m_poisson_boundary_handler.potential_ylo_str);
+        potential_specified |= pp_boundary.query("potential_hi_y", m_poisson_boundary_handler.potential_yhi_str);
+        potential_specified |= pp_boundary.query("potential_lo_z", m_poisson_boundary_handler.potential_zlo_str);
+        potential_specified |= pp_boundary.query("potential_hi_z", m_poisson_boundary_handler.potential_zhi_str);
+#if defined(AMREX_USE_EB)
+        potential_specified |= pp_warpx.query("eb_potential(x,y,z,t)", m_poisson_boundary_handler.potential_eb_str);
+#endif
+        m_boundary_potential_specified = potential_specified;
+        if (potential_specified & (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)) {
+            ablastr::warn_manager::WMRecordWarning(
+                "Algorithms",
+                "The input script specifies the electric potential (phi) at the boundary, but \
+                also uses the hybrid PIC solver based on Ohm’s law. When using this solver, the \
+                electric potential does not have any impact on the simulation.",
+                ablastr::warn_manager::WarnPriority::low);
+        }
+        else if (potential_specified & (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::None)) {
+            ablastr::warn_manager::WMRecordWarning(
+                "Algorithms",
+                "The input script specifies the electric potential (phi) at the boundary so \
+                an initial Poisson solve will be performed.",
+                ablastr::warn_manager::WarnPriority::low);
+        }
+
         m_poisson_boundary_handler.buildParsers();
 #ifdef WARPX_DIM_RZ
         pp_boundary.query("verboncoeur_axis_correction", verboncoeur_axis_correction);
@@ -1000,10 +1047,10 @@ WarpX::ReadParameters ()
 
         if (maxLevel() > 0) {
             Vector<Real> lo, hi;
-            bool fine_tag_lo_specified = utils::parser::queryArrWithParser(pp_warpx, "fine_tag_lo", lo);
-            bool fine_tag_hi_specified = utils::parser::queryArrWithParser(pp_warpx, "fine_tag_hi", hi);
+            const bool fine_tag_lo_specified = utils::parser::queryArrWithParser(pp_warpx, "fine_tag_lo", lo);
+            const bool fine_tag_hi_specified = utils::parser::queryArrWithParser(pp_warpx, "fine_tag_hi", hi);
             std::string ref_patch_function;
-            bool parser_specified = pp_warpx.query("ref_patch_function(x,y,z)",ref_patch_function);
+            const bool parser_specified = pp_warpx.query("ref_patch_function(x,y,z)",ref_patch_function);
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE( ((fine_tag_lo_specified && fine_tag_hi_specified) ||
                                                 parser_specified ),
                                                 "For max_level > 0, you need to either set\
@@ -1298,10 +1345,6 @@ WarpX::ReadParameters ()
             utils::parser::queryWithParser(
                 pp_algo, "costs_heuristic_particles_wt", costs_heuristic_particles_wt);
         }
-#   ifndef WARPX_USE_GPUCLOCK
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::load_balance_costs_update_algo!=LoadBalanceCostsUpdateAlgo::GpuClock,
-            "`algo.load_balance_costs_update = gpuclock` requires to compile with `-DWarpX_GPUCLOCK=ON`.");
-#   endif // !WARPX_USE_GPUCLOCK
 
         // Parse algo.particle_shape and check that input is acceptable
         // (do this only if there is at least one particle or laser species)
@@ -1330,19 +1373,10 @@ WarpX::ReadParameters ()
         int particle_shape;
         if (!species_names.empty() || !lasers_names.empty()) {
             if (utils::parser::queryWithParser(pp_algo, "particle_shape", particle_shape)){
-
-                if(current_deposition_algo == CurrentDepositionAlgo::Villasenor) {
-                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                        (particle_shape >= 1) && (particle_shape <=4),
-                        "algo.particle_shape can be only 1, 2, 3, or 4 with villasenor deposition"
-                    );
-                }
-                else {
-                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                        (particle_shape >= 1) && (particle_shape <=3),
-                        "algo.particle_shape can be only 1, 2, or 3"
-                    );
-                }
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    (particle_shape >= 1) && (particle_shape <=4),
+                    "algo.particle_shape can be only 1, 2, 3, or 4"
+                );
 
                 nox = particle_shape;
                 noy = particle_shape;
@@ -1351,8 +1385,7 @@ WarpX::ReadParameters ()
             else{
                 WARPX_ABORT_WITH_MESSAGE(
                     "algo.particle_shape must be set in the input file:"
-                    " please set algo.particle_shape to 1, 2, or 3."
-                    " if using the villasenor deposition, can use 4 also.");
+                    " please set algo.particle_shape to 1, 2, 3, or 4");
             }
 
             if ((maxLevel() > 0) && (particle_shape > 1) && (do_pml_j_damping == 1))
@@ -3280,6 +3313,16 @@ WarpX::isAnyBoundaryPML()
     return false;
 }
 
+bool
+WarpX::isAnyParticleBoundaryThermal ()
+{
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        if (WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Thermal) {return true;}
+        if (WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Thermal) {return true;}
+    }
+    return false;
+}
+
 std::string
 TagWithLevelSuffix (std::string name, int const level)
 {
@@ -3362,4 +3405,128 @@ WarpX::AllocInitMultiFabFromModel (
         mf->setVal(*initial_value);
     }
     multifab_map[name_with_suffix] = mf.get();
+}
+
+amrex::MultiFab*
+WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, const int direction) const
+{
+    // This function does *not* check if the returned field pointer is != nullptr
+
+    amrex::MultiFab* field_pointer = nullptr;
+
+    switch(field_type)
+    {
+        case FieldType::Efield_aux :
+            field_pointer = Efield_aux[lev][direction].get();
+            break;
+       case FieldType::Bfield_aux :
+            field_pointer = Bfield_aux[lev][direction].get();
+            break;
+       case FieldType::Efield_fp :
+            field_pointer = Efield_fp[lev][direction].get();
+            break;
+       case FieldType::Bfield_fp :
+            field_pointer = Bfield_fp[lev][direction].get();
+            break;
+       case FieldType::current_fp :
+            field_pointer = current_fp[lev][direction].get();
+            break;
+       case FieldType::current_fp_nodal :
+            field_pointer = current_fp_nodal[lev][direction].get();
+            break;
+       case FieldType::rho_fp :
+            field_pointer = rho_fp[lev].get();
+            break;
+       case FieldType::F_fp :
+            field_pointer = F_fp[lev].get();
+            break;
+       case FieldType::G_fp :
+            field_pointer = G_fp[lev].get();
+            break;
+       case FieldType::phi_fp :
+            field_pointer = phi_fp[lev].get();
+            break;
+       case FieldType::vector_potential_fp :
+            field_pointer = vector_potential_fp_nodal[lev][direction].get();
+            break;
+       case FieldType::Efield_cp :
+            field_pointer = Efield_cp[lev][direction].get();
+            break;
+       case FieldType::Bfield_cp :
+            field_pointer = Bfield_cp[lev][direction].get();
+            break;
+       case FieldType::current_cp :
+            field_pointer = current_cp[lev][direction].get();
+            break;
+       case FieldType::rho_cp :
+            field_pointer = rho_cp[lev].get();
+            break;
+       case FieldType::F_cp :
+            field_pointer = F_cp[lev].get();
+            break;
+       case FieldType::G_cp :
+            field_pointer = G_cp[lev].get();
+            break;
+       case FieldType::edge_lengths :
+            field_pointer = m_edge_lengths[lev][direction].get();
+            break;
+       case FieldType::face_areas :
+            field_pointer = m_face_areas[lev][direction].get();
+            break;
+       case FieldType::Efield_avg_fp :
+            field_pointer = Efield_avg_fp[lev][direction].get();
+            break;
+       case FieldType::Bfield_avg_fp :
+            field_pointer = Bfield_avg_fp[lev][direction].get();
+            break;
+       case FieldType::Efield_avg_cp :
+            field_pointer = Efield_avg_cp[lev][direction].get();
+            break;
+       case FieldType::Bfield_avg_cp :
+            field_pointer = Bfield_avg_cp[lev][direction].get();
+            break;
+        default:
+            WARPX_ABORT_WITH_MESSAGE("Invalid field type");
+            break;
+    }
+
+    return field_pointer;
+}
+
+bool
+WarpX::isFieldInitialized (const FieldType field_type, const int lev, const int direction) const
+{
+    const bool is_field_init = (getFieldPointerUnchecked(field_type, lev, direction) != nullptr);
+    return is_field_init;
+}
+
+amrex::MultiFab*
+WarpX::getFieldPointer (const FieldType field_type, const int lev, const int direction) const
+{
+    auto* const field_pointer = getFieldPointerUnchecked(field_type, lev, direction);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        field_pointer != nullptr, "Requested field is not initialized!");
+    return field_pointer;
+}
+
+std::array<const amrex::MultiFab* const, 3>
+WarpX::getFieldPointerArray (const FieldType field_type, const int lev) const
+{
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        (field_type == FieldType::Efield_aux) || (field_type == FieldType::Bfield_aux) ||
+        (field_type == FieldType::Efield_fp) || (field_type == FieldType::Bfield_fp) ||
+        (field_type == FieldType::current_fp) || (field_type == FieldType::current_fp_nodal) ||
+        (field_type == FieldType::Efield_cp) || (field_type == FieldType::Bfield_cp) ||
+        (field_type == FieldType::current_cp), "Requested field type is not a vector.");
+
+    return std::array<const amrex::MultiFab* const, 3>{
+        getFieldPointer(field_type, lev, 0),
+        getFieldPointer(field_type, lev, 1),
+        getFieldPointer(field_type, lev, 2)};
+}
+
+const amrex::MultiFab&
+WarpX::getField(FieldType field_type, const int lev, const int direction) const
+{
+    return *getFieldPointer(field_type, lev, direction);
 }

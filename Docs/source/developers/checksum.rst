@@ -32,7 +32,7 @@ You can execute ``checksumAPI.py`` as a Python script for that, and pass the plo
 
 .. code-block:: bash
 
-   ./checksumAPI.py --evaluate --output-file <path/to/plotfile> --format <'openpmd' or 'plotfile'> --test-name <test name>
+   ./checksumAPI.py --evaluate --output-file <path/to/plotfile> --output-format <'openpmd' or 'plotfile'> --test-name <test name>
 
 See additional options
 
@@ -51,7 +51,7 @@ This is using ``checksumAPI.py`` as a Python script.
 
 .. code-block:: bash
 
-   ./checksumAPI.py --reset-benchmark --output-file <path/to/plotfile> --format <'openpmd' or 'plotfile'> --test-name <test name>
+   ./checksumAPI.py --reset-benchmark --output-file <path/to/plotfile> --output-format <'openpmd' or 'plotfile'> --test-name <test name>
 
 See additional options
 

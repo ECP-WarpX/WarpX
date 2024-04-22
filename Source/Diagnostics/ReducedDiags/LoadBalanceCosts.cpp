@@ -56,8 +56,7 @@ namespace
             auto const & plev  = pc.GetParticles(lev);
 
             auto const & ptile = plev.at(box_index);
-            auto const & aos   = ptile.GetArrayOfStructs();
-            auto const np = aos.numParticles();
+            auto const np = ptile.numParticles();
             num_macro_particles += np;
         }
 
@@ -66,7 +65,7 @@ namespace
 }
 
 // constructor
-LoadBalanceCosts::LoadBalanceCosts (std::string rd_name)
+LoadBalanceCosts::LoadBalanceCosts (const std::string& rd_name)
     : ReducedDiags{rd_name}
 {
 }
@@ -126,7 +125,7 @@ void LoadBalanceCosts::ComputeDiags (int step)
     for (int lev = 0; lev < nLevels; ++lev)
     {
         const amrex::DistributionMapping& dm = warpx.DistributionMap(lev);
-        const MultiFab & Ex = warpx.getEfield(lev,0);
+        const MultiFab & Ex = warpx.getField(FieldType::Efield_aux, lev,0);
         for (MFIter mfi(Ex, false); mfi.isValid(); ++mfi)
         {
             const Box& tbx = mfi.tilebox();

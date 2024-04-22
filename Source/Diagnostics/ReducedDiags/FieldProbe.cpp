@@ -47,7 +47,7 @@ using namespace amrex;
 
 // constructor
 
-FieldProbe::FieldProbe (std::string rd_name)
+FieldProbe::FieldProbe (const std::string& rd_name)
 : ReducedDiags{rd_name}, m_probe(&WarpX::GetInstance())
 {
 
@@ -391,12 +391,12 @@ void FieldProbe::ComputeDiags (int step)
         }
 
         // get MultiFab data at lev
-        const amrex::MultiFab &Ex = warpx.getEfield(lev, 0);
-        const amrex::MultiFab &Ey = warpx.getEfield(lev, 1);
-        const amrex::MultiFab &Ez = warpx.getEfield(lev, 2);
-        const amrex::MultiFab &Bx = warpx.getBfield(lev, 0);
-        const amrex::MultiFab &By = warpx.getBfield(lev, 1);
-        const amrex::MultiFab &Bz = warpx.getBfield(lev, 2);
+        const amrex::MultiFab &Ex = warpx.getField(FieldType::Efield_aux, lev, 0);
+        const amrex::MultiFab &Ey = warpx.getField(FieldType::Efield_aux, lev, 1);
+        const amrex::MultiFab &Ez = warpx.getField(FieldType::Efield_aux, lev, 2);
+        const amrex::MultiFab &Bx = warpx.getField(FieldType::Bfield_aux, lev, 0);
+        const amrex::MultiFab &By = warpx.getField(FieldType::Bfield_aux, lev, 1);
+        const amrex::MultiFab &Bz = warpx.getField(FieldType::Bfield_aux, lev, 2);
 
         /*
          * Prepare interpolation of field components to probe_position
@@ -431,8 +431,6 @@ void FieldProbe::ComputeDiags (int step)
         {
             const auto getPosition = GetParticlePosition<FieldProbePIdx>(pti);
             auto setPosition = SetParticlePosition<FieldProbePIdx>(pti);
-            const auto& aos = pti.GetArrayOfStructs();
-            const auto* AMREX_RESTRICT m_structs = aos().dataPtr();
 
             auto const np = pti.numParticles();
             if (update_particles_moving_window)
@@ -481,6 +479,8 @@ void FieldProbe::ComputeDiags (int step)
                 ParticleReal* const AMREX_RESTRICT part_By = attribs[FieldProbePIdx::By].dataPtr();
                 ParticleReal* const AMREX_RESTRICT part_Bz = attribs[FieldProbePIdx::Bz].dataPtr();
                 ParticleReal* const AMREX_RESTRICT part_S = attribs[FieldProbePIdx::S].dataPtr();
+
+                auto * const AMREX_RESTRICT idcpu = pti.GetStructOfArrays().GetIdCPUData().data();
 
                 const auto &xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
                 const std::array<Real, 3> &dx = WarpX::CellSize(lev);
@@ -556,7 +556,7 @@ void FieldProbe::ComputeDiags (int step)
                         amrex::ParticleReal xp, yp, zp;
                         getPosition(ip, xp, yp, zp);
                         long idx = ip*noutputs;
-                        dvp[idx++] = m_structs[ip].id();
+                        dvp[idx++] = amrex::ParticleIDWrapper{idcpu[ip]};  // all particles created on IO cpu
                         dvp[idx++] = xp;
                         dvp[idx++] = yp;
                         dvp[idx++] = zp;

@@ -12,9 +12,8 @@ import os
 import sys
 
 import dill
-from mpi4py import MPI as mpi
 import numpy as np
-
+from mpi4py import MPI as mpi
 from pywarpx import callbacks, fields, libwarpx, picmi
 
 constants = picmi.constants
@@ -269,7 +268,7 @@ class EMModes(object):
                 name='field_diag',
                 grid=self.grid,
                 period=self.total_steps,
-                data_list=['B', 'E'],
+                data_list=['B', 'E', 'J_displacement'],
                 write_dir='.',
                 warpx_file_prefix='Python_ohms_law_solver_EM_modes_1d_plt',
                 # warpx_format = 'openpmd',
