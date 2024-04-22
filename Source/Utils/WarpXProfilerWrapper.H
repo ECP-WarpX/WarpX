@@ -35,7 +35,7 @@ namespace warpx::profiler
         static void InitProfileSettings (bool device_synchronize_flag);
 
         /** Destructor */
-        ~ProfileSettings () {delete m_instance;};
+        ~ProfileSettings () {delete m_instance;}
 
         /** Copy constructor */
         ProfileSettings ( ProfileSettings const &) = delete;
