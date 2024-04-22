@@ -11,9 +11,9 @@
 #SBATCH -A <proj>
 #SBATCH --partition=gpu
 #SBATCH --exclusive
-#SBATCH --cpus-per-task=20
 #SBATCH --ntasks-per-node=2
-#SBATCH --gpus-per-node=v100:2
+#SBATCH --cpus-per-task=20
+#SBATCH --gpus-per-task=v100:1
 #SBATCH -o WarpX.o%j
 #SBATCH -e WarpX.e%j
 
@@ -31,8 +31,7 @@ export OMP_NUM_THREADS=${SRUN_CPUS_PER_TASK}
 # GPU-aware MPI optimizations
 GPU_AWARE_MPI="amrex.use_gpu_aware_mpi=1"
 
-# CUDA visible devices are ordered inverse to local task IDs
-#   Reference: nvidia-smi topo -m
+# run WarpX
 srun --cpu-bind=cores \
   ${EXE} ${INPUTS} ${GPU_AWARE_MPI} \
   > output.txt

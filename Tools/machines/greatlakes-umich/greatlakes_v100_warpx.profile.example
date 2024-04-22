@@ -42,10 +42,10 @@ fi
 
 # an alias to request an interactive batch node for one hour
 #   for parallel execution, start on the batch node: srun <command>
-alias getNode="salloc -N 1 --partition=gpu --ntasks-per-node=2 --cpus-per-task=20 --gpus-per-node=v100:2 -t 1:00:00 -A $proj"
+alias getNode="salloc -N 1 --partition=gpu --ntasks-per-node=2 --cpus-per-task=20 --gpus-per-task=v100:1 -t 1:00:00 -A $proj"
 # an alias to run a command on a batch node for up to 30min
 #   usage: runNode <command>
-alias runNode="srun -N 1 --partition=gpu --ntasks-per-node=2 --cpus-per-task=20 --gpus-per-node=v100:2 -t 1:00:00 -A $proj"
+alias runNode="srun -N 1 --partition=gpu --ntasks-per-node=2 --cpus-per-task=20 --gpus-per-task=v100:1 -t 1:00:00 -A $proj"
 
 # optimize CUDA compilation for V100
 export AMREX_CUDA_ARCH=7.0
