@@ -1156,7 +1156,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
                 ng_rho, depos_lev, ref_ratio,
                 offset, np_to_deposit,
                 icomp, nc,
-                WarpX::do_device_synchronize
+                warpx::profiler::get_device_synchronize_flag()
         );
     }
 }

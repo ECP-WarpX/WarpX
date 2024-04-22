@@ -214,12 +214,6 @@ amrex::IntVect m_rho_nodal_flag;
 
 int WarpX::do_similar_dm_pml = 1;
 
-#ifdef AMREX_USE_GPU
-bool WarpX::do_device_synchronize = true;
-#else
-bool WarpX::do_device_synchronize = false;
-#endif
-
 WarpX* WarpX::m_instance = nullptr;
 
 void WarpX::MakeWarpX ()
@@ -686,7 +680,13 @@ WarpX::ReadParameters ()
 
         ReadBoostedFrameParameters(gamma_boost, beta_boost, boost_direction);
 
+#ifdef AMREX_USE_GPU
+        bool do_device_synchronize = true;
+#else
+        bool do_device_synchronize = false;
+#endif
         pp_warpx.query("do_device_synchronize", do_device_synchronize);
+        warpx::profiler::ProfileSettings::InitProfileSettings(do_device_synchronize);
 
         // queryWithParser returns 1 if argument zmax_plasma_to_compute_max_step is
         // specified by the user, 0 otherwise.

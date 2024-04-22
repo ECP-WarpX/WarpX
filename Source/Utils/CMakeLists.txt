@@ -8,6 +8,7 @@ foreach(D IN LISTS WarpX_DIMS)
         RelativeCellPosition.cpp
         WarpXAlgorithmSelection.cpp
         WarpXMovingWindow.cpp
+        WarpXProfilerWrapper.cpp
         WarpXTagging.cpp
         WarpXUtil.cpp
         WarpXVersion.cpp
