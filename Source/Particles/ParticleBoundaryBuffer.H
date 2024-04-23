@@ -39,8 +39,10 @@ public:
 
     const std::vector<std::string>& getSpeciesNames() const;
 
-    void gatherParticles (MultiParticleContainer& mypc,
-                          const amrex::Vector<const amrex::MultiFab*>& distance_to_eb);
+    void gatherParticlesFromDomainBoundaries (MultiParticleContainer& mypc);
+    void gatherParticlesFromEmbeddedBoundaries (
+        MultiParticleContainer& mypc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb
+    );
 
     void redistribute ();
     void clearParticles ();
