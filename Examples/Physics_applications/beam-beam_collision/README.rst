@@ -80,7 +80,7 @@ The small-scale simulation has been performed with a resolution of ``nx = 64, ny
       .. code-block:: python
 
          # You can copy this file from Examples/Physics_applications/beam-beam_collisions/Plot_full_.py
-         # Contents of plot_full_.py
+         # Contents of plot_full.py
          from openpmd_viewer import OpenPMDTimeSeries
          import numpy as np
          import matplotlib.pyplot as plt
