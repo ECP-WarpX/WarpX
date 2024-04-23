@@ -31,7 +31,7 @@ For `MPI-parallel <https://www.mpi-forum.org>`__ runs, prefix these lines with `
 Visualize
 ---------
 
-The figure below shows the number of photons emitted per beam particle (left) and the number of secondary pairs generated per beam particle (right). We present the reduced diagnostics and then further compare different results for the reduced diagnostics with some literature:
+The figure below shows the number of photons emitted per beam particle (left) and the number of secondary pairs generated per beam particle (right). We present the reduced diagnostics using the ``plot_reduced.py`` script and then further compare different results for the reduced diagnostics with some literature:
 
 * (red) simplified WarpX simulation as the example stored in the directory ``/Examples/Physics_applications/beam-beam_collision``;
 * (blue) large-scale WarpX simulation (high resolution and ad hoc generated tables ;
@@ -73,12 +73,14 @@ The small-scale simulation has been performed with a resolution of ``nx = 64, ny
 
       This example can be run as a python script to visualize the fields evolution of the collision between two ultra-relativistic particle beams:
 
-      - **Python** script: ``python3 plot_full_.py``
+      - **Python** script: ``python3 plot_full.py``
+
+      The python script loads WarpX simulation stored data (diags) using OpenPMDTimeSeries and iterates over each time step ``n = 65``, after which the fields ``E,B,rho`` components in ``x`` and ``y`` directions are extracted. There after, the plots to visualize the evolution of electric field ``E``, magnetic field ``B``, and charge density ``rho`` components of the two ultra-relativistic colliding particle beams are generated.
 
       .. code-block:: python
 
          # You can copy this file from Examples/Physics_applications/beam-beam_collisions/Plot_full_.py
-         # Contents of Plot_full_.py
+         # Contents of plot_full_.py
          from openpmd_viewer import OpenPMDTimeSeries
          import numpy as np
          import matplotlib.pyplot as plt
@@ -119,11 +121,11 @@ The small-scale simulation has been performed with a resolution of ``nx = 64, ny
              xmin = info.z.min()
              xmax = info.z.max()
              if slice_axis == 'x':
-             ymin = info.y.min()
-             ymax = info.y.max()
+                 ymin = info.y.min()
+                 ymax = info.y.max()
              elif slice_axis == 'y':
-             ymin = info.x.min()
-             ymax = info.x.max()
+                 ymin = info.x.min()
+                 ymax = info.x.max()
 
 
                #E field plots
@@ -200,12 +202,13 @@ The small-scale simulation has been performed with a resolution of ``nx = 64, ny
 
       This example can be run as a Python file in the same directory:
 
-      - **Python** script: ``python3 plot_reduced_.py``
+      - **Python** script: ``python3 plot_reduced.py``
+      The python script below was used to produce the reduced diagnostics which was then further benchmarked with Yakimenko.
 
       .. code-block:: python
 
          # You can copy this file from Examples/Physics_applications/beam-beam_collisions/Plot_reduced_.py
-         # Contents of plot_reduced_.py
+         # Contents of plot_reduced.py
          import numpy as np
          import matplotlib.pyplot as plt
          from scipy.constants import micron, c, pi, m_e, femto, e, milli, eV, physical_constants, alpha, nano
