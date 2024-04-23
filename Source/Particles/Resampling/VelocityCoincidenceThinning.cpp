@@ -24,10 +24,12 @@ VelocityCoincidenceThinning::VelocityCoincidenceThinning (const std::string& spe
         "Resampling min_ppc should be greater than or equal to 1"
     );
 
+    std::string velocity_grid_type_str = "spherical";
     pp_species_name.query(
-        "resampling_algorithm_velocity_grid_type", m_velocity_grid_type
+        "resampling_algorithm_velocity_grid_type", velocity_grid_type_str
     );
-    if (m_velocity_grid_type == "spherical") {
+    if (velocity_grid_type_str == "spherical") {
+        m_velocity_grid_type = VelocityGridType::Spherical;
         utils::parser::getWithParser(
             pp_species_name, "resampling_algorithm_delta_ur", m_delta_ur
         );
@@ -38,7 +40,8 @@ VelocityCoincidenceThinning::VelocityCoincidenceThinning (const std::string& spe
             pp_species_name, "resampling_algorithm_n_phi", m_nphi
         );
     }
-    else if (m_velocity_grid_type == "cartesian") {
+    else if (velocity_grid_type_str == "cartesian") {
+        m_velocity_grid_type = VelocityGridType::Cartesian;
         utils::parser::getWithParser(
             pp_species_name, "resampling_algorithm_delta_ux", m_delta_ux
         );
@@ -48,6 +51,9 @@ VelocityCoincidenceThinning::VelocityCoincidenceThinning (const std::string& spe
         utils::parser::getWithParser(
             pp_species_name, "resampling_algorithm_delta_uz", m_delta_uz
         );
+    }
+    else {
+        WARPX_ABORT_WITH_MESSAGE("Unkown velocity grid type.");
     }
 }
 
@@ -103,14 +109,14 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
 
     auto velocityBinCalculator = VelocityBinCalculator();
     velocityBinCalculator.velocity_grid_type = m_velocity_grid_type;
-    if (m_velocity_grid_type == "spherical") {
+    if (m_velocity_grid_type == VelocityGridType::Spherical) {
         velocityBinCalculator.dur = m_delta_ur;
         velocityBinCalculator.n1 = m_ntheta;
         velocityBinCalculator.n2 = m_nphi;
         velocityBinCalculator.dutheta = 2.0_prt * MathConst::pi / m_ntheta;
         velocityBinCalculator.duphi = MathConst::pi / m_nphi;
     }
-    else if (m_velocity_grid_type == "cartesian") {
+    else if (m_velocity_grid_type == VelocityGridType::Cartesian) {
         velocityBinCalculator.dux = m_delta_ux;
         velocityBinCalculator.duy = m_delta_uy;
         velocityBinCalculator.duz = m_delta_uz;
@@ -129,9 +135,6 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
         velocityBinCalculator.n2 = static_cast<int>(
             ceil((velocityBinCalculator.uy_max - velocityBinCalculator.uy_min) / m_delta_ux)
         );
-    }
-    else {
-        WARPX_ABORT_WITH_MESSAGE("Unkown velocity grid type.");
     }
     auto heapSort = HeapSort();
 

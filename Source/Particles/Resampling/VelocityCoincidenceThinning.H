@@ -35,6 +35,11 @@ public:
      */
     VelocityCoincidenceThinning (const std::string& species_name);
 
+    enum struct VelocityGridType {
+        Spherical = 0,
+        Cartesian = 1
+    };
+
     /**
      * \brief A method that performs merging for the considered species.
      *
@@ -123,7 +128,7 @@ public:
             for (int i = cell_start; i < cell_stop; ++i)
             {
                 int ii = -1, jj = -1, kk = -1;
-                if (velocity_grid_type == "spherical") {
+                if (velocity_grid_type == VelocityGridType::Spherical) {
                     // get polar components of the velocity vector
                     auto u_mag = std::sqrt(
                         ux[indices[i]]*ux[indices[i]] +
@@ -138,7 +143,7 @@ public:
                     kk = static_cast<int>(u_mag / dur);
 
                 }
-                else if (velocity_grid_type == "cartesian") {
+                else if (velocity_grid_type == VelocityGridType::Cartesian) {
                     ii = static_cast<int>((ux[indices[i]] - ux_min) / dux);
                     jj = static_cast<int>((uy[indices[i]] - uy_min) / duy);
                     kk = static_cast<int>((uz[indices[i]] - uz_min) / duz);
@@ -148,7 +153,7 @@ public:
             }
         }
 
-        std::string velocity_grid_type = "spherical";
+        VelocityGridType velocity_grid_type;
         int n1, n2;
         amrex::ParticleReal dur, dutheta, duphi;
         amrex::ParticleReal dux, duy, duz;
@@ -156,7 +161,7 @@ public:
     };
 
 private:
-    std::string m_velocity_grid_type = "spherical";
+    VelocityGridType m_velocity_grid_type;
 
     int m_min_ppc = 1;
     int m_ntheta;
