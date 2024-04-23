@@ -26,6 +26,7 @@ SC members can call votes for decisions (technical or governance).
 
 The SC can veto decisions of the technical committee (TC) by voting in the SC.
 The TC can overwrite a veto with a 2/3rd majority vote in the TC.
+Decisions are documented in the `weekly developer meeting notes <https://docs.google.com/document/d/1eYD8EYCYDI0H7FhiiEuRUDJZ5pPDr6MUL-IibE-Pk50/edit>`__ and/or on the GitHub repository.
 
 The SC can change the governance structure, but only in a unanimous vote.
 
@@ -85,6 +86,7 @@ Discussion in the TC usually happens in the weekly developer meetings.
 If someone calls for a vote to make a decision: majority based on the cast votes; we need 50% of the committee participating to vote. In the absence of a quorum, the SC will decide according to its voting rules.
 
 Votes are cast in a non-confidential manner.
+Decisions are documented in the `weekly developer meeting notes <https://docs.google.com/document/d/1eYD8EYCYDI0H7FhiiEuRUDJZ5pPDr6MUL-IibE-Pk50/edit>`__ and/or on the GitHub repository.
 
 TC members can individually appoint new contributors, unless a vote is called on an individual.
 
