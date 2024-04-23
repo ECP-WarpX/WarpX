@@ -81,7 +81,7 @@ cd -
 # Clone the AMReX regression test utility
 git clone https://github.com/AMReX-Codes/regression_testing.git
 # FIXME: https://github.com/AMReX-Codes/regression_testing/issues/136
-cd regression_testing && git checkout db67b6bd80cff208dba59ec2938ffd02e8ad9cef && cd -
+cd regression_testing && git checkout 93ddfb11456f47d6555c39388ba1a4ead61fbf4e && cd -
 
 # Prepare regression tests
 mkdir -p rt-WarpX/WarpX-benchmarks
