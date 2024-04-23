@@ -146,17 +146,33 @@ class Species(picmistandard.PICMI_Species):
     warpx_resampling_algorithm: str, default="leveling_thinning"
         Resampling algorithm to use.
 
+    warpx_resampling_algorithm_velocity_grid_type: str, default="spherical"
+        Type of grid to use when clustering particles in velocity space. Only
+        applicable with the `velocity_coincidence_thinning` algorithm.
+
     warpx_resampling_algorithm_delta_ur: float
         Size of velocity window used for clustering particles during grid-based
-        merging.
+        merging, with `velocity_grid_type == "spherical"`.
 
     warpx_resampling_algorithm_n_theta: int
         Number of bins to use in theta when clustering particle velocities
-        during grid-based merging.
+        during grid-based merging, with `velocity_grid_type == "spherical"`.
 
     warpx_resampling_algorithm_n_phi: int
         Number of bins to use in phi when clustering particle velocities
-        during grid-based merging.
+        during grid-based merging, with `velocity_grid_type == "spherical"`.
+
+    warpx_resampling_algorithm_delta_ux: float
+        Size of velocity window used in ux for clustering particles during grid-based
+        merging, with `velocity_grid_type == "cartesian"`.
+
+    warpx_resampling_algorithm_delta_uy: float
+        Size of velocity window used in uy for clustering particles during grid-based
+        merging, with `velocity_grid_type == "cartesian"`.
+
+    warpx_resampling_algorithm_delta_uz: float
+        Size of velocity window used in uz for clustering particles during grid-based
+        merging, with `velocity_grid_type == "cartesian"`.
     """
     def init(self, kw):
 
@@ -238,9 +254,13 @@ class Species(picmistandard.PICMI_Species):
         self.resampling_min_ppc = kw.pop('warpx_resampling_min_ppc', None)
         self.resampling_trigger_intervals = kw.pop('warpx_resampling_trigger_intervals', None)
         self.resampling_triggering_max_avg_ppc = kw.pop('warpx_resampling_trigger_max_avg_ppc', None)
+        self.resampling_algorithm_velocity_grid_type = kw.pop('warpx_resampling_algorithm_velocity_grid_type', None)
         self.resampling_algorithm_delta_ur = kw.pop('warpx_resampling_algorithm_delta_ur', None)
         self.resampling_algorithm_n_theta = kw.pop('warpx_resampling_algorithm_n_theta', None)
         self.resampling_algorithm_n_phi = kw.pop('warpx_resampling_algorithm_n_phi', None)
+        self.resampling_algorithm_delta_ux = kw.pop('warpx_resampling_algorithm_delta_ux', None)
+        self.resampling_algorithm_delta_uy = kw.pop('warpx_resampling_algorithm_delta_uy', None)
+        self.resampling_algorithm_delta_uz = kw.pop('warpx_resampling_algorithm_delta_uz', None)
 
     def species_initialize_inputs(self, layout,
                                   initialize_self_fields = False,
@@ -283,9 +303,13 @@ class Species(picmistandard.PICMI_Species):
                                              resampling_min_ppc=self.resampling_min_ppc,
                                              resampling_trigger_intervals=self.resampling_trigger_intervals,
                                              resampling_trigger_max_avg_ppc=self.resampling_triggering_max_avg_ppc,
+                                             resampling_algorithm_velocity_grid_type=self.resampling_algorithm_velocity_grid_type,
                                              resampling_algorithm_delta_ur=self.resampling_algorithm_delta_ur,
                                              resampling_algorithm_n_theta=self.resampling_algorithm_n_theta,
-                                             resampling_algorithm_n_phi=self.resampling_algorithm_n_phi)
+                                             resampling_algorithm_n_phi=self.resampling_algorithm_n_phi,
+                                             resampling_algorithm_delta_ux=self.resampling_algorithm_delta_ux,
+                                             resampling_algorithm_delta_uy=self.resampling_algorithm_delta_uy,
+                                             resampling_algorithm_delta_uz=self.resampling_algorithm_delta_uz)
 
         # add reflection models
         self.species.add_new_attr("reflection_model_xlo(E)", self.reflection_model_xlo)

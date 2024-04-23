@@ -9,8 +9,10 @@
 #ifndef WARPX_VELOCITY_COINCIDENCE_THINNING_H_
 #define WARPX_VELOCITY_COINCIDENCE_THINNING_H_
 
+#include "Particles/Algorithms/KineticEnergy.H"
 #include "Resampling.H"
-
+#include "Utils/Parser/ParserUtils.H"
+#include "Utils/ParticleUtils.H"
 
 /**
  * \brief This class implements a particle merging scheme wherein particles
@@ -106,10 +108,62 @@ public:
         }
     };
 
+    /**
+     * \brief Struct used to assign velocity space bin numbers to a given set
+     * of particles.
+    */
+    struct VelocityBinCalculator {
+
+        AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+        void operator() (const amrex::ParticleReal ux[], const amrex::ParticleReal uy[],
+                         const amrex::ParticleReal uz[], const uint indices[],
+                         int bin_array[], int index_array[],
+                         const int cell_start, const int cell_stop) const
+        {
+            for (int i = cell_start; i < cell_stop; ++i)
+            {
+                int ii = -1, jj = -1, kk = -1;
+                if (velocity_grid_type == "spherical") {
+                    // get polar components of the velocity vector
+                    auto u_mag = std::sqrt(
+                        ux[indices[i]]*ux[indices[i]] +
+                        uy[indices[i]]*uy[indices[i]] +
+                        uz[indices[i]]*uz[indices[i]]
+                    );
+                    auto u_theta = std::atan2(uy[indices[i]], ux[indices[i]]) + MathConst::pi;
+                    auto u_phi = std::acos(uz[indices[i]]/u_mag);
+
+                    ii = static_cast<int>(u_theta / dutheta);
+                    jj = static_cast<int>(u_phi / duphi);
+                    kk = static_cast<int>(u_mag / dur);
+
+                }
+                else if (velocity_grid_type == "cartesian") {
+                    ii = static_cast<int>((ux[indices[i]] - ux_min) / dux);
+                    jj = static_cast<int>((uy[indices[i]] - uy_min) / duy);
+                    kk = static_cast<int>((uz[indices[i]] - uz_min) / duz);
+                }
+                bin_array[i] = ii + jj * n1 + kk * n1 * n2;
+                index_array[i] = i;
+            }
+        }
+
+        std::string velocity_grid_type = "spherical";
+        int n1, n2;
+        amrex::ParticleReal dur, dutheta, duphi;
+        amrex::ParticleReal dux, duy, duz;
+        amrex::ParticleReal ux_min, uy_min, uz_min, ux_max, uy_max;
+    };
+
 private:
+    std::string m_velocity_grid_type = "spherical";
+
     int m_min_ppc = 1;
     int m_ntheta;
     int m_nphi;
     amrex::ParticleReal m_delta_ur;
+    amrex::ParticleReal m_delta_ux;
+    amrex::ParticleReal m_delta_uy;
+    amrex::ParticleReal m_delta_uz;
 };
 #endif // WARPX_VELOCITY_COINCIDENCE_THINNING_H_

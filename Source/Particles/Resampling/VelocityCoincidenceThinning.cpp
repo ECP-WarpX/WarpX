@@ -9,10 +9,6 @@
 
 #include "VelocityCoincidenceThinning.H"
 
-#include "Particles/Algorithms/KineticEnergy.H"
-#include "Utils/Parser/ParserUtils.H"
-#include "Utils/ParticleUtils.H"
-
 
 VelocityCoincidenceThinning::VelocityCoincidenceThinning (const std::string& species_name)
 {
@@ -28,15 +24,31 @@ VelocityCoincidenceThinning::VelocityCoincidenceThinning (const std::string& spe
         "Resampling min_ppc should be greater than or equal to 1"
     );
 
-    utils::parser::getWithParser(
-        pp_species_name, "resampling_algorithm_delta_ur", m_delta_ur
+    pp_species_name.query(
+        "resampling_algorithm_velocity_grid_type", m_velocity_grid_type
     );
-    utils::parser::getWithParser(
-        pp_species_name, "resampling_algorithm_n_theta", m_ntheta
-    );
-    utils::parser::getWithParser(
-        pp_species_name, "resampling_algorithm_n_phi", m_nphi
-    );
+    if (m_velocity_grid_type == "spherical") {
+        utils::parser::getWithParser(
+            pp_species_name, "resampling_algorithm_delta_ur", m_delta_ur
+        );
+        utils::parser::getWithParser(
+            pp_species_name, "resampling_algorithm_n_theta", m_ntheta
+        );
+        utils::parser::getWithParser(
+            pp_species_name, "resampling_algorithm_n_phi", m_nphi
+        );
+    }
+    else if (m_velocity_grid_type == "cartesian") {
+        utils::parser::getWithParser(
+            pp_species_name, "resampling_algorithm_delta_ux", m_delta_ux
+        );
+        utils::parser::getWithParser(
+            pp_species_name, "resampling_algorithm_delta_uy", m_delta_uy
+        );
+        utils::parser::getWithParser(
+            pp_species_name, "resampling_algorithm_delta_uz", m_delta_uz
+        );
+    }
 }
 
 void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
@@ -65,6 +77,7 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
     auto bins = ParticleUtils::findParticlesInEachCell(lev, pti, ptile);
 
     const auto n_cells = static_cast<int>(bins.numBins());
+    const auto n_parts_in_tile = static_cast<int>(bins.numItems());
     auto *const indices = bins.permutationPtr();
     auto *const cell_offsets = bins.offsetsPtr();
 
@@ -79,21 +92,47 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
     );
 
     // create a GPU vector to hold the momentum cluster index for each particle
-    amrex::Gpu::DeviceVector<int> momentum_bin_number(bins.numItems());
+    amrex::Gpu::DeviceVector<int> momentum_bin_number(n_parts_in_tile);
     auto* momentum_bin_number_data = momentum_bin_number.data();
 
     // create a GPU vector to hold the index sorting for the momentum bins
-    amrex::Gpu::DeviceVector<int> sorted_indices(bins.numItems());
+    amrex::Gpu::DeviceVector<int> sorted_indices(n_parts_in_tile);
     auto* sorted_indices_data = sorted_indices.data();
 
-    const auto Ntheta = m_ntheta;
-    const auto Nphi = m_nphi;
-
-    const auto dr = m_delta_ur;
-    const auto dtheta = 2.0_prt * MathConst::pi / Ntheta;
-    const auto dphi = MathConst::pi / Nphi;
     constexpr auto c2 = PhysConst::c * PhysConst::c;
 
+    auto velocityBinCalculator = VelocityBinCalculator();
+    velocityBinCalculator.velocity_grid_type = m_velocity_grid_type;
+    if (m_velocity_grid_type == "spherical") {
+        velocityBinCalculator.dur = m_delta_ur;
+        velocityBinCalculator.n1 = m_ntheta;
+        velocityBinCalculator.n2 = m_nphi;
+        velocityBinCalculator.dutheta = 2.0_prt * MathConst::pi / m_ntheta;
+        velocityBinCalculator.duphi = MathConst::pi / m_nphi;
+    }
+    else if (m_velocity_grid_type == "cartesian") {
+        velocityBinCalculator.dux = m_delta_ux;
+        velocityBinCalculator.duy = m_delta_uy;
+        velocityBinCalculator.duz = m_delta_uz;
+
+        // get the minimum and maximum velocities to determine the velocity space
+        // grid boundaries
+        velocityBinCalculator.ux_min = *std::min_element(ux, ux + n_parts_in_tile);
+        velocityBinCalculator.uy_min = *std::min_element(uy, uy + n_parts_in_tile);
+        velocityBinCalculator.uz_min = *std::min_element(uz, uz + n_parts_in_tile);
+        velocityBinCalculator.ux_max = *std::max_element(ux, ux + n_parts_in_tile);
+        velocityBinCalculator.uy_max = *std::max_element(uy, uy + n_parts_in_tile);
+
+        velocityBinCalculator.n1 = static_cast<int>(
+            ceil((velocityBinCalculator.ux_max - velocityBinCalculator.ux_min) / m_delta_ux)
+        );
+        velocityBinCalculator.n2 = static_cast<int>(
+            ceil((velocityBinCalculator.uy_max - velocityBinCalculator.uy_min) / m_delta_ux)
+        );
+    }
+    else {
+        WARPX_ABORT_WITH_MESSAGE("Unkown velocity grid type.");
+    }
     auto heapSort = HeapSort();
 
     // Loop over cells
@@ -114,24 +153,10 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
 
             // Loop over particles and label them with the appropriate momentum bin
             // number. Also assign initial ordering to the sorted_indices array.
-            for (int i = cell_start; i < cell_stop; ++i)
-            {
-                // get polar components of the velocity vector
-                auto u_mag = std::sqrt(
-                    ux[indices[i]]*ux[indices[i]] +
-                    uy[indices[i]]*uy[indices[i]] +
-                    uz[indices[i]]*uz[indices[i]]
-                );
-                auto u_theta = std::atan2(uy[indices[i]], ux[indices[i]]) + MathConst::pi;
-                auto u_phi = std::acos(uz[indices[i]]/u_mag);
-
-                const auto ii = static_cast<int>(u_theta / dtheta);
-                const auto jj = static_cast<int>(u_phi / dphi);
-                const auto kk = static_cast<int>(u_mag / dr);
-
-                momentum_bin_number_data[i] = ii + jj * Ntheta + kk * Ntheta * Nphi;
-                sorted_indices_data[i] = i;
-            }
+            velocityBinCalculator(
+                ux, uy, uz, indices, momentum_bin_number_data, sorted_indices_data,
+                cell_start, cell_stop
+            );
 
             // sort indices based on comparing values in momentum_bin_number
             heapSort(sorted_indices_data, momentum_bin_number_data, cell_start, cell_numparts);
