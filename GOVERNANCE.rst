@@ -62,6 +62,7 @@ Current Roster
 - Remi Lehe
 - Andrew Myers
 - Maxence Thévenet
+- Jean-Luc Vay
 - Weiqun Zhang
 - Edoardo Zoni
 
