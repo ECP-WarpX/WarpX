@@ -123,17 +123,33 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
 
         // get the minimum and maximum velocities to determine the velocity space
         // grid boundaries
-        velocityBinCalculator.ux_min = *std::min_element(ux, ux + n_parts_in_tile);
-        velocityBinCalculator.uy_min = *std::min_element(uy, uy + n_parts_in_tile);
-        velocityBinCalculator.uz_min = *std::min_element(uz, uz + n_parts_in_tile);
-        velocityBinCalculator.ux_max = *std::max_element(ux, ux + n_parts_in_tile);
-        velocityBinCalculator.uy_max = *std::max_element(uy, uy + n_parts_in_tile);
+        using PType = typename WarpXParticleContainer::SuperParticleType;
+        velocityBinCalculator.ux_min = ReduceMin( *pc,
+            [=] AMREX_GPU_HOST_DEVICE (const PType& p)
+            { return p.rdata(PIdx::ux); }
+        );
+        velocityBinCalculator.uy_min = ReduceMin( *pc,
+            [=] AMREX_GPU_HOST_DEVICE (const PType& p)
+            { return p.rdata(PIdx::uy); }
+        );
+        velocityBinCalculator.uz_min = ReduceMin( *pc,
+            [=] AMREX_GPU_HOST_DEVICE (const PType& p)
+            { return p.rdata(PIdx::uz); }
+        );
+        velocityBinCalculator.ux_max = ReduceMax( *pc,
+            [=] AMREX_GPU_HOST_DEVICE (const PType& p)
+            { return p.rdata(PIdx::ux); }
+        );
+        velocityBinCalculator.uy_max = ReduceMax( *pc,
+            [=] AMREX_GPU_HOST_DEVICE (const PType& p)
+            { return p.rdata(PIdx::uy); }
+        );
 
         velocityBinCalculator.n1 = static_cast<int>(
             std::ceil((velocityBinCalculator.ux_max - velocityBinCalculator.ux_min) / m_delta_ux)
         );
         velocityBinCalculator.n2 = static_cast<int>(
-            std::ceil((velocityBinCalculator.uy_max - velocityBinCalculator.uy_min) / m_delta_ux)
+            std::ceil((velocityBinCalculator.uy_max - velocityBinCalculator.uy_min) / m_delta_uy)
         );
     }
     auto heapSort = HeapSort();
