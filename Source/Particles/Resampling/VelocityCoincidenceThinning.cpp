@@ -130,10 +130,10 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
         velocityBinCalculator.uy_max = *std::max_element(uy, uy + n_parts_in_tile);
 
         velocityBinCalculator.n1 = static_cast<int>(
-            ceil((velocityBinCalculator.ux_max - velocityBinCalculator.ux_min) / m_delta_ux)
+            std::ceil((velocityBinCalculator.ux_max - velocityBinCalculator.ux_min) / m_delta_ux)
         );
         velocityBinCalculator.n2 = static_cast<int>(
-            ceil((velocityBinCalculator.uy_max - velocityBinCalculator.uy_min) / m_delta_ux)
+            std::ceil((velocityBinCalculator.uy_max - velocityBinCalculator.uy_min) / m_delta_ux)
         );
     }
     auto heapSort = HeapSort();
