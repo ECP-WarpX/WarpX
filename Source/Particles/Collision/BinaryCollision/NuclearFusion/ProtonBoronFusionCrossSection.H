@@ -5,8 +5,8 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef PROTON_BORON_FUSION_CROSS_SECTION_H
-#define PROTON_BORON_FUSION_CROSS_SECTION_H
+#ifndef WARPX_PROTON_BORON_FUSION_CROSS_SECTION_H
+#define WARPX_PROTON_BORON_FUSION_CROSS_SECTION_H
 
 #include "Utils/WarpXConst.H"
 
@@ -154,4 +154,4 @@ amrex::ParticleReal ProtonBoronFusionCrossSection (const amrex::ParticleReal& E_
     return cross_section_b*barn_to_sqm;
 }
 
-#endif // PROTON_BORON_FUSION_CROSS_SECTION_H
+#endif // WARPX_PROTON_BORON_FUSION_CROSS_SECTION_H

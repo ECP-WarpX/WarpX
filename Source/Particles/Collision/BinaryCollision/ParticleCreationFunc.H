@@ -5,8 +5,8 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef PARTICLE_CREATION_FUNC_H_
-#define PARTICLE_CREATION_FUNC_H_
+#ifndef WARPX_PARTICLE_CREATION_FUNC_H_
+#define WARPX_PARTICLE_CREATION_FUNC_H_
 
 #include "BinaryCollisionUtils.H"
 
@@ -15,7 +15,6 @@
 #include "Particles/ParticleCreation/SmartCopy.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "WarpX.H"
 
 #include <AMReX_DenseBins.H>
 #include <AMReX_GpuAtomic.H>
@@ -339,4 +338,4 @@ public:
     }
 };
 
-#endif // PARTICLE_CREATION_FUNC_H_
+#endif // WARPX_PARTICLE_CREATION_FUNC_H_

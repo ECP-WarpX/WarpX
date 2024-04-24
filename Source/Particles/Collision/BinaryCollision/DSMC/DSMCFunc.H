@@ -7,8 +7,8 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef DSMC_FUNC_H_
-#define DSMC_FUNC_H_
+#ifndef WARPX_DSMC_FUNC_H_
+#define WARPX_DSMC_FUNC_H_
 
 #include "CollisionFilterFunc.H"
 
@@ -201,4 +201,4 @@ private:
     Executor m_exe;
 };
 
-#endif // DSMC_FUNC_H_
+#endif // WARPX_DSMC_FUNC_H_

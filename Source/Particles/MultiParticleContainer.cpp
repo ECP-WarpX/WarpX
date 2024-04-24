@@ -633,6 +633,14 @@ MultiParticleContainer::defineAllParticleTiles ()
 }
 
 void
+MultiParticleContainer::deleteInvalidParticles ()
+{
+    for (auto& pc : allcontainers) {
+        pc->deleteInvalidParticles();
+    }
+}
+
+void
 MultiParticleContainer::RedistributeLocal (const int num_ghost)
 {
     for (auto& pc : allcontainers) {
@@ -945,11 +953,11 @@ void MultiParticleContainer::CheckIonizationProductSpecies()
     }
 }
 
-void MultiParticleContainer::ScrapeParticles (const amrex::Vector<const amrex::MultiFab*>& distance_to_eb)
+void MultiParticleContainer::ScrapeParticlesAtEB (const amrex::Vector<const amrex::MultiFab*>& distance_to_eb)
 {
 #ifdef AMREX_USE_EB
     for (auto& pc : allcontainers) {
-        scrapeParticles(*pc, distance_to_eb, ParticleBoundaryProcess::Absorb());
+        scrapeParticlesAtEB(*pc, distance_to_eb, ParticleBoundaryProcess::Absorb());
     }
 #else
     amrex::ignore_unused(distance_to_eb);
