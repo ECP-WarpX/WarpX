@@ -7,6 +7,7 @@
 #include "LoadBalanceCosts.H"
 
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
+#include "FieldSolver/Fields.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -35,6 +36,7 @@
 #include <utility>
 
 using namespace amrex;
+using namespace warpx::fields;
 
 namespace
 {

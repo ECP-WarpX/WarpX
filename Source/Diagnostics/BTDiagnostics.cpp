@@ -14,6 +14,7 @@
 #include "Diagnostics/Diagnostics.H"
 #include "Diagnostics/FlushFormats/FlushFormat.H"
 #include "ComputeDiagFunctors/BackTransformParticleFunctor.H"
+#include "FieldSolver/Fields.H"
 #include "Utils/Algorithms/IsIn.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
@@ -46,6 +47,7 @@
 #include <vector>
 
 using namespace amrex::literals;
+using namespace warpx::fields;
 
 namespace
 {

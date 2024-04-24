@@ -85,6 +85,7 @@
 #include <utility>
 
 using namespace amrex;
+using namespace warpx::fields;
 
 int WarpX::do_moving_window = 0;
 int WarpX::start_moving_window_step = 0;
