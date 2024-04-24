@@ -19,6 +19,7 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "WarpX.H"
 
 #include <ablastr/warn_manager/WarnManager.H>
 

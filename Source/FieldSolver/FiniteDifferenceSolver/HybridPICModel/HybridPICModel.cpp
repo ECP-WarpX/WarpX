@@ -9,6 +9,8 @@
 
 #include "HybridPICModel.H"
 
+#include "WarpX.H"
+
 using namespace amrex;
 
 HybridPICModel::HybridPICModel ( int nlevs_max )

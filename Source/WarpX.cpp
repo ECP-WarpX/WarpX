@@ -212,12 +212,6 @@ int WarpX::n_current_deposition_buffer = -1;
 short WarpX::grid_type;
 amrex::IntVect m_rho_nodal_flag;
 
-#ifdef AMREX_USE_GPU
-bool WarpX::do_device_synchronize = true;
-#else
-bool WarpX::do_device_synchronize = false;
-#endif
-
 WarpX* WarpX::m_instance = nullptr;
 
 void WarpX::MakeWarpX ()
@@ -683,8 +677,6 @@ WarpX::ReadParameters ()
                                          "Subcycling method 1 only works for 2 levels.");
 
         ReadBoostedFrameParameters(gamma_boost, beta_boost, boost_direction);
-
-        pp_warpx.query("do_device_synchronize", do_device_synchronize);
 
         // queryWithParser returns 1 if argument zmax_plasma_to_compute_max_step is
         // specified by the user, 0 otherwise.
