@@ -480,9 +480,9 @@ WarpX::InitData ()
             DistributionMap(lev_zero),
             getngEB(),
             Geom(lev_zero),
-            getField(FieldType::Efield_fp, lev_zero,0).ixType().toIntVect(),
-            getField(FieldType::Efield_fp, lev_zero,1).ixType().toIntVect(),
-            getField(FieldType::Efield_fp, lev_zero,2).ixType().toIntVect()
+            getField(warpx::fields::FieldType::Efield_fp, lev_zero,0).ixType().toIntVect(),
+            getField(warpx::fields::FieldType::Efield_fp, lev_zero,1).ixType().toIntVect(),
+            getField(warpx::fields::FieldType::Efield_fp, lev_zero,2).ixType().toIntVect()
         );
     }
 
