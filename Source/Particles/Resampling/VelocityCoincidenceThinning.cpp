@@ -63,6 +63,7 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
     using namespace amrex::literals;
 
     auto& ptile = pc->ParticlesAt(lev, pti);
+    const auto n_parts_in_tile = pti.numParticles();
     auto& soa = ptile.GetStructOfArrays();
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_3D)
     auto * const AMREX_RESTRICT x = soa.GetRealData(PIdx::x).data();
@@ -83,7 +84,6 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
     auto bins = ParticleUtils::findParticlesInEachCell(lev, pti, ptile);
 
     const auto n_cells = static_cast<int>(bins.numBins());
-    const auto n_parts_in_tile = static_cast<int>(bins.numItems());
     auto *const indices = bins.permutationPtr();
     auto *const cell_offsets = bins.offsetsPtr();
 
@@ -123,27 +123,24 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
 
         // get the minimum and maximum velocities to determine the velocity space
         // grid boundaries
-        using PType = typename WarpXParticleContainer::SuperParticleType;
-        velocityBinCalculator.ux_min = ReduceMin( *pc,
-            [=] AMREX_GPU_HOST_DEVICE (const PType& p)
-            { return p.rdata(PIdx::ux); }
-        );
-        velocityBinCalculator.uy_min = ReduceMin( *pc,
-            [=] AMREX_GPU_HOST_DEVICE (const PType& p)
-            { return p.rdata(PIdx::uy); }
-        );
-        velocityBinCalculator.uz_min = ReduceMin( *pc,
-            [=] AMREX_GPU_HOST_DEVICE (const PType& p)
-            { return p.rdata(PIdx::uz); }
-        );
-        velocityBinCalculator.ux_max = ReduceMax( *pc,
-            [=] AMREX_GPU_HOST_DEVICE (const PType& p)
-            { return p.rdata(PIdx::ux); }
-        );
-        velocityBinCalculator.uy_max = ReduceMax( *pc,
-            [=] AMREX_GPU_HOST_DEVICE (const PType& p)
-            { return p.rdata(PIdx::uy); }
-        );
+        {
+            using ReduceOpsT = amrex::TypeMultiplier<amrex::ReduceOps,
+                                                     amrex::ReduceOpMin[3],
+                                                     amrex::ReduceOpMax[2]>;
+            using ReduceDataT = amrex::TypeMultiplier<amrex::ReduceData, amrex::ParticleReal[5]>;
+            ReduceOpsT reduce_op;
+            ReduceDataT reduce_data(reduce_op);
+            using ReduceTuple = typename ReduceDataT::Type;
+            reduce_op.eval(n_parts_in_tile, reduce_data, [=] AMREX_GPU_DEVICE(int i) -> ReduceTuple {
+                return {ux[i], uy[i], uz[i], ux[i], uy[i]};
+            });
+            auto hv = reduce_data.value(reduce_op);
+            velocityBinCalculator.ux_min = amrex::get<0>(hv);
+            velocityBinCalculator.uy_min = amrex::get<1>(hv);
+            velocityBinCalculator.uz_min = amrex::get<2>(hv);
+            velocityBinCalculator.ux_max = amrex::get<3>(hv);
+            velocityBinCalculator.uy_max = amrex::get<4>(hv);
+        }
 
         velocityBinCalculator.n1 = static_cast<int>(
             std::ceil((velocityBinCalculator.ux_max - velocityBinCalculator.ux_min) / m_delta_ux)
