@@ -20,6 +20,7 @@ if [ -z ${proj-} ]; then echo "WARNING: The 'proj' variable is not yet set in yo
 
 # Remove old dependencies #####################################################
 #
+echo "Cleaning up prior installation directory... This may take several minutes."
 SW_DIR="${HOME}/sw/greatlakes/v100"
 rm -rf ${SW_DIR}
 mkdir -p ${SW_DIR}
