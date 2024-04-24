@@ -38,6 +38,7 @@
 #include "AcceleratorLattice/AcceleratorLattice.H"
 #include "Evolve/WarpXDtType.H"
 #include "Evolve/WarpXPushType.H"
+#include "FieldSolver/Fields.H"
 #include "FieldSolver/ElectrostaticSolver.H"
 #include "FieldSolver/MagnetostaticSolver/MagnetostaticSolver.H"
 #include "Filter/BilinearFilter.H"
@@ -74,33 +75,6 @@
 #include <optional>
 #include <string>
 #include <vector>
-
-enum struct FieldType : int
-{
-    Efield_aux,
-    Bfield_aux,
-    Efield_fp,
-    Bfield_fp,
-    current_fp,
-    current_fp_nodal,
-    rho_fp,
-    F_fp,
-    G_fp,
-    phi_fp,
-    vector_potential_fp,
-    Efield_cp,
-    Bfield_cp,
-    current_cp,
-    rho_cp,
-    F_cp,
-    G_cp,
-    edge_lengths,
-    face_areas,
-    Efield_avg_fp,
-    Bfield_avg_fp,
-    Efield_avg_cp,
-    Bfield_avg_cp
-};
 
 class WARPX_EXPORT WarpX
     : public amrex::AmrCore
@@ -492,7 +466,7 @@ public:
      * \return true if the field is initialized, false otherwise
      */
     [[nodiscard]] bool
-    isFieldInitialized (FieldType field_type, int lev, int direction = 0) const;
+    isFieldInitialized (warpx::fields::FieldType field_type, int lev, int direction = 0) const;
 
     /**
      * \brief
@@ -505,7 +479,7 @@ public:
      * \return the pointer to an amrex::MultiFab containing the field data
      */
     [[nodiscard]] amrex::MultiFab*
-    getFieldPointer (FieldType field_type, int lev, int direction = 0) const;
+    getFieldPointer (warpx::fields::FieldType field_type, int lev, int direction = 0) const;
 
     /**
      * \brief
@@ -517,7 +491,7 @@ public:
      * \return an array of three pointers amrex::MultiFab* containing the field data
      */
     [[nodiscard]] std::array<const amrex::MultiFab* const, 3>
-    getFieldPointerArray (FieldType field_type, int lev) const;
+    getFieldPointerArray (warpx::fields::FieldType field_type, int lev) const;
 
     /**
      * \brief
@@ -530,7 +504,7 @@ public:
      * \return a constant refernce to an amrex::MultiFab containing the field data
      */
     [[nodiscard]] const amrex::MultiFab&
-    getField(FieldType field_type, int lev, int direction = 0) const;
+    getField(warpx::fields::FieldType field_type, int lev, int direction = 0) const;
 
     [[nodiscard]] bool DoPML () const {return do_pml;}
     [[nodiscard]] bool DoFluidSpecies () const {return do_fluid_species;}
@@ -1601,7 +1575,7 @@ private:
      * \return the pointer to an amrex::MultiFab containing the field data
      */
     [[nodiscard]] amrex::MultiFab*
-    getFieldPointerUnchecked (FieldType field_type, int lev, int direction = 0) const;
+    getFieldPointerUnchecked (warpx::fields::FieldType field_type, int lev, int direction = 0) const;
 
     // PML
     int do_pml = 0;

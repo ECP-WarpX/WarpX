@@ -15,8 +15,10 @@
 #include <algorithm>
 #include <array>
 #include <memory>
-using namespace amrex::literals;
+
 using namespace amrex;
+using namespace amrex::literals;
+using namespace warpx::fields;
 
 namespace
 {
