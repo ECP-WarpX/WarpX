@@ -136,8 +136,8 @@ private:
 class PML
 {
 public:
-    PML (int lev,
-         const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
+    PML (int lev, const amrex::BoxArray& ba,
+         const amrex::DistributionMapping& dm, bool do_similar_dm_pml,
          const amrex::Geometry* geom, const amrex::Geometry* cgeom,
          int ncell, int delta, amrex::IntVect ref_ratio,
          amrex::Real dt, int nox_fft, int noy_fft, int noz_fft, short grid_type,
