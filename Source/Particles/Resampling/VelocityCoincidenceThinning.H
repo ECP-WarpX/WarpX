@@ -164,11 +164,7 @@ private:
     VelocityGridType m_velocity_grid_type;
 
     int m_min_ppc = 1;
-    int m_ntheta;
-    int m_nphi;
-    amrex::ParticleReal m_delta_ur;
-    amrex::ParticleReal m_delta_ux;
-    amrex::ParticleReal m_delta_uy;
-    amrex::ParticleReal m_delta_uz;
+    int m_ntheta, m_nphi;
+    amrex::ParticleReal m_delta_ur, m_delta_ux, m_delta_uy, m_delta_uz;
 };
 #endif // WARPX_VELOCITY_COINCIDENCE_THINNING_H_
