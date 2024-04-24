@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef PARTICLESCRAPER_H_
-#define PARTICLESCRAPER_H_
+#ifndef WARPX_PARTICLESCRAPER_H_
+#define WARPX_PARTICLESCRAPER_H_
 
 #include "EmbeddedBoundary/DistanceToEB.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
@@ -216,4 +216,4 @@ scrapeParticlesAtEB (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distan
     }
 }
 
-#endif
+#endif //WARPX_PARTICLESCRAPER_H_

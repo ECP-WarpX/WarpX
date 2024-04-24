@@ -5,8 +5,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef FILTER_COPY_TRANSFORM_H_
-#define FILTER_COPY_TRANSFORM_H_
+#ifndef WARPX_FILTER_COPY_TRANSFORM_H_
+#define WARPX_FILTER_COPY_TRANSFORM_H_
 
 #include "Particles/ParticleCreation/DefaultInitialization.H"
 
@@ -360,4 +360,4 @@ Index filterCopyTransformParticles (DstPC& pc1, DstPC& pc2, DstTile& dst1, DstTi
                                         std::forward<TransFunc>(transform));
 }
 
-#endif
+#endif //WARPX_FILTER_COPY_TRANSFORM_H_

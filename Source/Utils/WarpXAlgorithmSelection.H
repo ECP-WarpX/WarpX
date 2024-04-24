@@ -5,8 +5,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef UTILS_WARPXALGORITHMSELECTION_H_
-#define UTILS_WARPXALGORITHMSELECTION_H_
+#ifndef WARPX_UTILS_WARPXALGORITHMSELECTION_H_
+#define WARPX_UTILS_WARPXALGORITHMSELECTION_H_
 
 #include <AMReX_BaseFwd.H>
 
@@ -207,4 +207,4 @@ GetParticleBCTypeInteger( std::string BCType );
 std::string
 GetFieldBCTypeString( FieldBoundaryType fb_type );
 
-#endif // UTILS_WARPXALGORITHMSELECTION_H_
+#endif // WARPX_UTILS_WARPXALGORITHMSELECTION_H_

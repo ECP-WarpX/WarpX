@@ -6,8 +6,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef COLLISION_FILTER_FUNC_H_
-#define COLLISION_FILTER_FUNC_H_
+#ifndef WARPX_COLLISION_FILTER_FUNC_H_
+#define WARPX_COLLISION_FILTER_FUNC_H_
 
 #include "Particles/Collision/BinaryCollision/BinaryCollisionUtils.H"
 #include "Particles/Collision/ScatteringProcess.H"
@@ -109,4 +109,4 @@ void CollisionPairFilter (const amrex::ParticleReal u1x, const amrex::ParticleRe
     }
 }
 
-#endif // COLLISION_FILTER_FUNC_H_
+#endif // WARPX_COLLISION_FILTER_FUNC_H_
