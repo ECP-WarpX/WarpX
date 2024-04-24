@@ -14,6 +14,7 @@
 #SBATCH --ntasks-per-node=2
 #SBATCH --cpus-per-task=20
 #SBATCH --gpus-per-task=v100:1
+#SBATCH --gpu-bind=single:1
 #SBATCH -o WarpX.o%j
 #SBATCH -e WarpX.e%j
 
