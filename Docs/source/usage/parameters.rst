@@ -1269,25 +1269,39 @@ Particle initialization
 * ``<species>.do_resampling`` (`0` or `1`) optional (default `0`)
     If `1` resampling is performed for this species. This means that the number of macroparticles
     will be reduced at specific timesteps while preserving the distribution function as much as
-    possible (in particular the weight of the remaining particles will be increased on average).
+    possible (details depend on the chosen resampling algorithm).
     This can be useful in situations with continuous creation of particles (e.g. with ionization
     or with QED effects). At least one resampling trigger (see below) must be specified to actually
     perform resampling.
 
 * ``<species>.resampling_algorithm`` (`string`) optional (default `leveling_thinning`)
-    The algorithm used for resampling. Currently there is only one option, which is already set by
-    default:
+    The algorithm used for resampling:
 
     * ``leveling_thinning`` This algorithm is defined in :cite:t:`param-MuravievCPC2021`.
-      It has two parameters:
+      It has one parameter:
 
         * ``<species>.resampling_algorithm_target_ratio`` (`float`) optional (default `1.5`)
             This **roughly** corresponds to the ratio between the number of particles before and
             after resampling.
 
-        * ``<species>.resampling_algorithm_min_ppc`` (`int`) optional (default `1`)
-            Resampling is not performed in cells with a number of macroparticles strictly smaller
-            than this parameter.
+    * ``velocity_coincidence_thinning``` The particles are sorted into phase space
+      cells and merged, similar to the approach described in :cite:t:`param-Vranic2015`.
+      It has three parameters:
+
+        * ``<species>.resampling_algorithm_delta_ur`` (`float`)
+            The width of momentum cells used in clustering particles, in m/s.
+
+        * ``<species>.resampling_algorithm_n_theta`` (`int`)
+            The number of cell divisions to use in the :math:`\theta` direction
+            when clustering the particle velocities.
+
+        * ``<species>.resampling_algorithm_n_phi`` (`int`)
+            The number of cell divisions to use in the :math:`\phi` direction
+            when clustering the particle velocities.
+
+* ``<species>.resampling_min_ppc`` (`int`) optional (default `1`)
+    Resampling is not performed in cells with a number of macroparticles strictly smaller
+    than this parameter.
 
 * ``<species>.resampling_trigger_intervals`` (`string`) optional (default `0`)
     Using the `Intervals parser`_ syntax, this string defines timesteps at which resampling is
