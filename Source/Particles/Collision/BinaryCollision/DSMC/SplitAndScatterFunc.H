@@ -6,8 +6,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef SPLIT_AND_SCATTER_FUNC_H_
-#define SPLIT_AND_SCATTER_FUNC_H_
+#ifndef WARPX_SPLIT_AND_SCATTER_FUNC_H_
+#define WARPX_SPLIT_AND_SCATTER_FUNC_H_
 
 #include "Particles/Collision/BinaryCollision/BinaryCollisionUtils.H"
 #include "Particles/Collision/ScatteringProcess.H"
@@ -291,4 +291,4 @@ private:
     amrex::Gpu::HostVector<int> m_num_products_host;
     CollisionType m_collision_type;
 };
-#endif // SPLIT_AND_SCATTER_FUNC_H_
+#endif // WARPX_SPLIT_AND_SCATTER_FUNC_H_
