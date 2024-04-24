@@ -2863,7 +2863,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     const auto save_previous_position_flag =
         (save_previous_position) ? do_save_previous_position : dont_save_previous_position;
     const auto gather_flag = (do_not_gather) ? no_gather : has_gather;
-    const auto copy_flag = (do_copy) ? no_copy : has_copy;
+    const auto copy_flag = (do_copy) ? has_copy : no_copy;
     const auto exteb_runtime_flag = getExternalEB.isNoOp() ? no_exteb : has_exteb;
 #ifdef WARPX_QED
     const auto qed_runtime_flag = (local_has_quantum_sync || do_sync) ? has_qed : no_qed;
