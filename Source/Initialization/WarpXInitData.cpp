@@ -474,7 +474,16 @@ WarpX::InitData ()
     BuildBufferMasks();
 
     if (WarpX::em_solver_medium==1) {
-        m_macroscopic_properties->InitData();
+        const int lev_zero = 0;
+        m_macroscopic_properties->InitData(
+            boxArray(lev_zero),
+            DistributionMap(lev_zero),
+            getngEB(),
+            Geom(lev_zero),
+            getField(FieldType::Efield_fp, lev_zero,0).ixType().toIntVect(),
+            getField(FieldType::Efield_fp, lev_zero,1).ixType().toIntVect(),
+            getField(FieldType::Efield_fp, lev_zero,2).ixType().toIntVect()
+        );
     }
 
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
