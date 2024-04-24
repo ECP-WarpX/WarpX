@@ -5,8 +5,8 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef FILTER_CREATE_TRANSFORM_FROM_FAB_H_
-#define FILTER_CREATE_TRANSFORM_FROM_FAB_H_
+#ifndef WARPX_FILTER_CREATE_TRANSFORM_FROM_FAB_H_
+#define WARPX_FILTER_CREATE_TRANSFORM_FROM_FAB_H_
 
 #include "Particles/ParticleCreation/DefaultInitialization.H"
 #include "WarpX.H"
@@ -244,4 +244,4 @@ Index filterCreateTransformFromFAB (DstPC& pc1, DstPC& pc2, DstTile& dst1, DstTi
                                         std::forward<TransFunc>(transform));
 }
 
-#endif // FILTER_CREATE_TRANSFORM_FROM_FAB_H_
+#endif // WARPX_FILTER_CREATE_TRANSFORM_FROM_FAB_H_

@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef DISTANCETOEB_H_
-#define DISTANCETOEB_H_
+#ifndef WARPX_DISTANCETOEB_H_
+#define WARPX_DISTANCETOEB_H_
 
 #include "Utils/TextMsg.H"
 
@@ -129,4 +129,4 @@ amrex::RealVect interp_normal (int i, int j, int k, const amrex::Real W[AMREX_SP
 }
 
 #endif // AMREX_USE_EB
-#endif // DISTANCETOEB_H_
+#endif // WARPX_DISTANCETOEB_H_

@@ -6,8 +6,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef SPLIT_AND_SCATTER_FUNC_H_
-#define SPLIT_AND_SCATTER_FUNC_H_
+#ifndef WARPX_SPLIT_AND_SCATTER_FUNC_H_
+#define WARPX_SPLIT_AND_SCATTER_FUNC_H_
 
 #include "Particles/Collision/BinaryCollision/BinaryCollisionUtils.H"
 #include "Particles/Collision/ScatteringProcess.H"
@@ -162,7 +162,7 @@ public:
 
                 // Note: Particle::atomicSetID should also be provided as a standalone helper function in AMReX
                 //       to replace the following lambda.
-                auto const atomicSetIdMinus = [] AMREX_GPU_DEVICE (uint64_t & idcpu)
+                auto const atomicSetIdInvalid = [] AMREX_GPU_DEVICE (uint64_t & idcpu)
                 {
 #if defined(AMREX_USE_OMP)
 #pragma omp atomic write
@@ -179,11 +179,11 @@ public:
                 // setting its id to invalid
                 if (w1[p_pair_indices_1[i]] <= std::numeric_limits<amrex::ParticleReal>::min())
                 {
-                    atomicSetIdMinus(idcpu1[p_pair_indices_1[i]]);
+                    atomicSetIdInvalid(idcpu1[p_pair_indices_1[i]]);
                 }
                 if (w2[p_pair_indices_2[i]] <= std::numeric_limits<amrex::ParticleReal>::min())
                 {
-                    atomicSetIdMinus(idcpu2[p_pair_indices_2[i]]);
+                    atomicSetIdInvalid(idcpu2[p_pair_indices_2[i]]);
                 }
 
                 // Set the child particle properties appropriately
@@ -291,4 +291,4 @@ private:
     amrex::Gpu::HostVector<int> m_num_products_host;
     CollisionType m_collision_type;
 };
-#endif // SPLIT_AND_SCATTER_FUNC_H_
+#endif // WARPX_SPLIT_AND_SCATTER_FUNC_H_
