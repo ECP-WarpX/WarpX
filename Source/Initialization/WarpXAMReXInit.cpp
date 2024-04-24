@@ -47,7 +47,7 @@ namespace {
             pp_amr.add("blocking_factor", 1);
         }
 
-        //https://github.com/AMReX-Codes/amrex/pull/3763
+        //See https://github.com/AMReX-Codes/amrex/pull/3763
 #ifdef AMREX_USE_GPU
         bool warpx_do_device_synchronize = true;
 #else
