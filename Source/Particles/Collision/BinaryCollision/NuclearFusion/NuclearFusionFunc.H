@@ -5,8 +5,8 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef NUCLEAR_FUSION_FUNC_H_
-#define NUCLEAR_FUSION_FUNC_H_
+#ifndef WARPX_NUCLEAR_FUSION_FUNC_H_
+#define WARPX_NUCLEAR_FUSION_FUNC_H_
 
 #include "SingleNuclearFusionEvent.H"
 
@@ -255,4 +255,4 @@ private:
     Executor m_exe;
 };
 
-#endif // NUCLEAR_FUSION_FUNC_H_
+#endif // WARPX_NUCLEAR_FUSION_FUNC_H_

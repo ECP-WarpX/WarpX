@@ -5,8 +5,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef INJECTOR_MOMENTUM_H_
-#define INJECTOR_MOMENTUM_H_
+#ifndef WARPX_INJECTOR_MOMENTUM_H_
+#define WARPX_INJECTOR_MOMENTUM_H_
 
 #include "GetTemperature.H"
 #include "GetVelocity.H"
@@ -771,4 +771,4 @@ struct InjectorMomentumDeleter {
     }
 };
 
-#endif
+#endif //WARPX_INJECTOR_MOMENTUM_H_

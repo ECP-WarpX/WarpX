@@ -5,8 +5,8 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef QED_PAIR_GENERATION_H_
-#define QED_PAIR_GENERATION_H_
+#ifndef WARPX_QED_PAIR_GENERATION_H_
+#define WARPX_QED_PAIR_GENERATION_H_
 
 #include "Particles/Gather/FieldGather.H"
 #include "Particles/Gather/GetExternalFields.H"
@@ -208,4 +208,4 @@ private:
     amrex::Dim3 m_lo;
 };
 
-#endif //QED_PAIR_GENERATION_H_
+#endif //WARPX_QED_PAIR_GENERATION_H_
