@@ -10,8 +10,6 @@
 
 #include <AMReX_BLProfiler.H>
 
-// `BL_PROFILE_PASTE(SYNC_SCOPE_, __COUNTER__)` and `SYNC_V_##vname` used to make unique names for
-// synchronizeOnDestruct objects, like `SYNC_SCOPE_0` and `SYNC_V_pmain`
 #define WARPX_PROFILE(fname) BL_PROFILE(fname)
 #define WARPX_PROFILE_VAR(fname, vname) BL_PROFILE_VAR(fname, vname)
 #define WARPX_PROFILE_VAR_NS(fname, vname) BL_PROFILE_VAR_NS(fname, vname)

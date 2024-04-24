@@ -10,7 +10,6 @@
 
 #include <AMReX_BLProfiler.H>
 
-// `BL_PROFILE_PASTE(SYNC_SCOPE_, __COUNTER__)` and `SYNC_V_##vname` used to make unique names for
 #define ABLASTR_PROFILE(fname) BL_PROFILE(fname)
 #define ABLASTR_PROFILE_VAR(fname, vname) BL_PROFILE_VAR(fname, vname)
 #define ABLASTR_PROFILE_VAR_NS(fname, vname) BL_PROFILE_VAR_NS(fname, vname)
