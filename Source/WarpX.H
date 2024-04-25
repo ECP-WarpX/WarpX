@@ -1376,15 +1376,6 @@ private:
 
     void BuildBufferMasks ();
 
-    [[nodiscard]] const amrex::iMultiFab* getCurrentBufferMasks (int lev) const {
-        return current_buffer_masks[lev].get();
-    }
-
-    [[nodiscard]] const amrex::iMultiFab* getGatherBufferMasks (int lev) const
-    {
-        return gather_buffer_masks[lev].get();
-    }
-
     /**
      * \brief Re-orders the Fornberg coefficients so that they can be used more conveniently for
      * finite-order centering operations. For example, for finite-order centering of order 6,
