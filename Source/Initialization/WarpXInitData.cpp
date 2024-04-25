@@ -105,6 +105,71 @@ namespace
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(vc.allGT(gc), ss_msg.str());
         }
     }
+
+    /**
+     * \brief Check the requested resources and write performance hints
+     *
+     * @param[in] total_nboxes total number of boxes in the simulation
+     * @param[in] nprocs number of MPI processes
+     */
+    void PerformanceHints (const int total_nboxes, const int nprocs)
+    {
+        // Check: are there more MPI ranks than Boxes?
+        if (nprocs > total_nboxes) {
+            std::stringstream warnMsg;
+            warnMsg << "Too many resources / too little work!\n"
+                << "  It looks like you requested more compute resources than "
+                << "there are total number of boxes of cells available ("
+                << total_nboxes << "). "
+                << "You started with (" << nprocs
+                << ") MPI ranks, so (" << nprocs - total_nboxes
+                << ") rank(s) will have no work.\n"
+    #ifdef AMREX_USE_GPU
+                << "  On GPUs, consider using 1-8 boxes per GPU that together fill "
+                << "each GPU's memory sufficiently. If you do not rely on dynamic "
+                << "load-balancing, then one large box per GPU is ideal.\n"
+    #endif
+                << "Consider decreasing the amr.blocking_factor and "
+                << "amr.max_grid_size parameters and/or using fewer MPI ranks.\n"
+                << "  More information:\n"
+                << "  https://warpx.readthedocs.io/en/latest/usage/workflows/parallelization.html\n";
+
+            ablastr::warn_manager::WMRecordWarning(
+            "Performance", warnMsg.str(), ablastr::warn_manager::WarnPriority::high);
+        }
+
+    #ifdef AMREX_USE_GPU
+        // Check: Are there more than 12 boxes per GPU?
+        if (total_nboxes > nprocs * 12) {
+            std::stringstream warnMsg;
+            warnMsg << "Too many boxes per GPU!\n"
+                << "  It looks like you split your simulation domain "
+                << "in too many boxes (" << total_nboxes << "), which "
+                << "results in an average number of ("
+                << amrex::Long(total_nboxes/nprocs) << ") per GPU. "
+                << "This causes severe overhead in the communication of "
+                << "border/guard regions.\n"
+                << "  On GPUs, consider using 1-8 boxes per GPU that together fill "
+                << "each GPU's memory sufficiently. If you do not rely on dynamic "
+                << "load-balancing, then one large box per GPU is ideal.\n"
+                << "Consider increasing the amr.blocking_factor and "
+                << "amr.max_grid_size parameters and/or using more MPI ranks.\n"
+                << "  More information:\n"
+                << "  https://warpx.readthedocs.io/en/latest/usage/workflows/parallelization.html\n";
+
+            ablastr::warn_manager::WMRecordWarning(
+            "Performance", warnMsg.str(), ablastr::warn_manager::WarnPriority::high);
+        }
+    #endif
+
+        // TODO: warn if some ranks have disproportionally more work than all others
+        //       tricky: it can be ok to assign "vacuum" boxes to some ranks w/o slowing down
+        //               all other ranks; we need to measure this with our load-balancing
+        //               routines and issue a warning only of some ranks stall all other ranks
+        // TODO: check MPI-rank to GPU ratio (should be 1:1)
+        // TODO: check memory per MPI rank, especially if GPUs are underutilized
+        // TODO: CPU tiling hints with OpenMP
+    }
 }
 
 void
@@ -532,7 +597,14 @@ WarpX::InitData ()
         }
     }
 
-    PerformanceHints();
+    // Computes available boxes on all levels.
+    amrex::Long total_nboxes = 0;
+    for (int ilev = 0; ilev <= finestLevel(); ++ilev) {
+        total_nboxes += boxArray(ilev).size();
+    }
+    auto const nprocs = ParallelDescriptor::NProcs();
+
+    ::PerformanceHints(total_nboxes, nprocs);
 
     CheckKnownIssues();
 }
@@ -1110,73 +1182,6 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
             }
         );
     }
-}
-
-void
-WarpX::PerformanceHints ()
-{
-    // Check requested MPI ranks and available boxes
-    amrex::Long total_nboxes = 0; // on all MPI ranks
-    for (int ilev = 0; ilev <= finestLevel(); ++ilev) {
-        total_nboxes += boxArray(ilev).size();
-    }
-    auto const nprocs = ParallelDescriptor::NProcs();
-
-    // Check: are there more MPI ranks than Boxes?
-    if (nprocs > total_nboxes) {
-        std::stringstream warnMsg;
-        warnMsg << "Too many resources / too little work!\n"
-            << "  It looks like you requested more compute resources than "
-            << "there are total number of boxes of cells available ("
-            << total_nboxes << "). "
-            << "You started with (" << nprocs
-            << ") MPI ranks, so (" << nprocs - total_nboxes
-            << ") rank(s) will have no work.\n"
-#ifdef AMREX_USE_GPU
-            << "  On GPUs, consider using 1-8 boxes per GPU that together fill "
-            << "each GPU's memory sufficiently. If you do not rely on dynamic "
-            << "load-balancing, then one large box per GPU is ideal.\n"
-#endif
-            << "Consider decreasing the amr.blocking_factor and "
-            << "amr.max_grid_size parameters and/or using fewer MPI ranks.\n"
-            << "  More information:\n"
-            << "  https://warpx.readthedocs.io/en/latest/usage/workflows/parallelization.html\n";
-
-        ablastr::warn_manager::WMRecordWarning(
-          "Performance", warnMsg.str(), ablastr::warn_manager::WarnPriority::high);
-    }
-
-#ifdef AMREX_USE_GPU
-    // Check: Are there more than 12 boxes per GPU?
-    if (total_nboxes > nprocs * 12) {
-        std::stringstream warnMsg;
-        warnMsg << "Too many boxes per GPU!\n"
-            << "  It looks like you split your simulation domain "
-            << "in too many boxes (" << total_nboxes << "), which "
-            << "results in an average number of ("
-            << amrex::Long(total_nboxes/nprocs) << ") per GPU. "
-            << "This causes severe overhead in the communication of "
-            << "border/guard regions.\n"
-            << "  On GPUs, consider using 1-8 boxes per GPU that together fill "
-            << "each GPU's memory sufficiently. If you do not rely on dynamic "
-            << "load-balancing, then one large box per GPU is ideal.\n"
-            << "Consider increasing the amr.blocking_factor and "
-            << "amr.max_grid_size parameters and/or using more MPI ranks.\n"
-            << "  More information:\n"
-            << "  https://warpx.readthedocs.io/en/latest/usage/workflows/parallelization.html\n";
-
-        ablastr::warn_manager::WMRecordWarning(
-          "Performance", warnMsg.str(), ablastr::warn_manager::WarnPriority::high);
-    }
-#endif
-
-    // TODO: warn if some ranks have disproportionally more work than all others
-    //       tricky: it can be ok to assign "vacuum" boxes to some ranks w/o slowing down
-    //               all other ranks; we need to measure this with our load-balancing
-    //               routines and issue a warning only of some ranks stall all other ranks
-    // TODO: check MPI-rank to GPU ratio (should be 1:1)
-    // TODO: check memory per MPI rank, especially if GPUs are underutilized
-    // TODO: CPU tiling hints with OpenMP
 }
 
 void WarpX::CheckGuardCells()
