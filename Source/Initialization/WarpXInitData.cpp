@@ -112,7 +112,7 @@ namespace
      * @param[in] total_nboxes total number of boxes in the simulation
      * @param[in] nprocs number of MPI processes
      */
-    void PerformanceHints (const int total_nboxes, const int nprocs)
+    void PerformanceHints (const amrex::Long total_nboxes, const amrex::Long nprocs)
     {
         // Check: are there more MPI ranks than Boxes?
         if (nprocs > total_nboxes) {
