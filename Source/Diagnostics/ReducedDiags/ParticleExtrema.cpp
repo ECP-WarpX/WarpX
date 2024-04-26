@@ -11,6 +11,7 @@
 #if (defined WARPX_QED)
 #   include "Particles/ElementaryProcess/QEDInternals/QedChiFunctions.H"
 #endif
+#include "FieldSolver/Fields.H"
 #include "Particles/Gather/FieldGather.H"
 #include "Particles/Gather/GetExternalFields.H"
 #include "Particles/MultiParticleContainer.H"
@@ -51,9 +52,10 @@
 #include <vector>
 
 using namespace amrex;
+using namespace warpx::fields;
 
 // constructor
-ParticleExtrema::ParticleExtrema (std::string rd_name)
+ParticleExtrema::ParticleExtrema (const std::string& rd_name)
 : ReducedDiags{rd_name}
 {
     // read species name
@@ -373,12 +375,12 @@ void ParticleExtrema::ComputeDiags (int step)
                 // define variables in preparation for field gathering
                 const std::array<amrex::Real,3>& dx = WarpX::CellSize(std::max(lev, 0));
                 const GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
-                const MultiFab & Ex = warpx.getEfield(lev,0);
-                const MultiFab & Ey = warpx.getEfield(lev,1);
-                const MultiFab & Ez = warpx.getEfield(lev,2);
-                const MultiFab & Bx = warpx.getBfield(lev,0);
-                const MultiFab & By = warpx.getBfield(lev,1);
-                const MultiFab & Bz = warpx.getBfield(lev,2);
+                const MultiFab & Ex = warpx.getField(FieldType::Efield_aux, lev,0);
+                const MultiFab & Ey = warpx.getField(FieldType::Efield_aux, lev,1);
+                const MultiFab & Ez = warpx.getField(FieldType::Efield_aux, lev,2);
+                const MultiFab & Bx = warpx.getField(FieldType::Bfield_aux, lev,0);
+                const MultiFab & By = warpx.getField(FieldType::Bfield_aux, lev,1);
+                const MultiFab & Bz = warpx.getField(FieldType::Bfield_aux, lev,2);
 
                 // declare reduce_op
                 ReduceOps<ReduceOpMin, ReduceOpMax> reduce_op;

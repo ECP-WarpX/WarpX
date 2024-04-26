@@ -5,8 +5,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef IONIZATION_H_
-#define IONIZATION_H_
+#ifndef WARPX_IONIZATION_H_
+#define WARPX_IONIZATION_H_
 
 #include "Particles/Gather/FieldGather.H"
 #include "Particles/Gather/GetExternalFields.H"
@@ -171,4 +171,4 @@ struct IonizationTransformFunc
     }
 };
 
-#endif
+#endif //WARPX_IONIZATION_H_

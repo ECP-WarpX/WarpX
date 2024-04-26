@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.20.0)
-project(WarpX VERSION 24.03)
+project(WarpX VERSION 24.04)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -69,10 +69,6 @@ include(CMakeDependentOption)
 option(WarpX_APP           "Build the WarpX executable application"     ON)
 option(WarpX_ASCENT        "Ascent in situ diagnostics"                 OFF)
 option(WarpX_EB            "Embedded boundary support"                  OFF)
-cmake_dependent_option(WarpX_GPUCLOCK
-                           "Add GPU kernel timers (cost function)"      ON
-                           "WarpX_COMPUTE STREQUAL CUDA OR WarpX_COMPUTE STREQUAL HIP"
-                                                                        OFF)
 option(WarpX_LIB           "Build WarpX as a library"                   OFF)
 option(WarpX_MPI           "Multi-node support (message-passing)"       ON)
 option(WarpX_OPENPMD       "openPMD I/O (HDF5, ADIOS)"                  ON)
@@ -508,10 +504,6 @@ foreach(D IN LISTS WarpX_DIMS)
         target_compile_definitions(ablastr_${SD} PUBLIC WARPX_DIM_1D_Z WARPX_ZINDEX=0)
     elseif(D STREQUAL "RZ")
         target_compile_definitions(ablastr_${SD} PUBLIC WARPX_DIM_RZ WARPX_ZINDEX=1)
-    endif()
-
-    if(WarpX_GPUCLOCK)
-        target_compile_definitions(ablastr_${SD} PUBLIC WARPX_USE_GPUCLOCK)
     endif()
 
     if(WarpX_OPENPMD)

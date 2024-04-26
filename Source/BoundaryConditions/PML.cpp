@@ -10,6 +10,7 @@
 
 #include "BoundaryConditions/PML.H"
 #include "BoundaryConditions/PMLComponent.H"
+#include "FieldSolver/Fields.H"
 #ifdef WARPX_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #endif
@@ -55,6 +56,7 @@
 #endif
 
 using namespace amrex;
+using namespace warpx::fields;
 
 namespace
 {
@@ -542,7 +544,8 @@ MultiSigmaBox::ComputePMLFactorsE (const Real* dx, Real dt)
     }
 }
 
-PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& grid_dm,
+PML::PML (const int lev, const BoxArray& grid_ba,
+          const DistributionMapping& grid_dm, const bool do_similar_dm_pml,
           const Geometry* geom, const Geometry* cgeom,
           int ncell, int delta, amrex::IntVect ref_ratio,
           Real dt, int nox_fft, int noy_fft, int noz_fft, short grid_type,
@@ -658,7 +661,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     }
 
     DistributionMapping dm;
-    if (WarpX::do_similar_dm_pml) {
+    if (do_similar_dm_pml) {
         auto ng_sim = amrex::elemwiseMax(amrex::elemwiseMax(nge, ngb), ngf);
         dm = amrex::MakeSimilarDM(ba, grid_ba, grid_dm, ng_sim);
     } else {
@@ -678,23 +681,23 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     const int ncompe = (m_dive_cleaning) ? 3 : 2;
     const int ncompb = (m_divb_cleaning) ? 3 : 2;
 
-    const amrex::BoxArray ba_Ex = amrex::convert(ba, WarpX::GetInstance().getEfield_fp(0,0).ixType().toIntVect());
-    const amrex::BoxArray ba_Ey = amrex::convert(ba, WarpX::GetInstance().getEfield_fp(0,1).ixType().toIntVect());
-    const amrex::BoxArray ba_Ez = amrex::convert(ba, WarpX::GetInstance().getEfield_fp(0,2).ixType().toIntVect());
+    const amrex::BoxArray ba_Ex = amrex::convert(ba, WarpX::GetInstance().getField(FieldType::Efield_fp, 0,0).ixType().toIntVect());
+    const amrex::BoxArray ba_Ey = amrex::convert(ba, WarpX::GetInstance().getField(FieldType::Efield_fp, 0,1).ixType().toIntVect());
+    const amrex::BoxArray ba_Ez = amrex::convert(ba, WarpX::GetInstance().getField(FieldType::Efield_fp, 0,2).ixType().toIntVect());
     WarpX::AllocInitMultiFab(pml_E_fp[0], ba_Ex, dm, ncompe, nge, lev, "pml_E_fp[x]", 0.0_rt);
     WarpX::AllocInitMultiFab(pml_E_fp[1], ba_Ey, dm, ncompe, nge, lev, "pml_E_fp[y]", 0.0_rt);
     WarpX::AllocInitMultiFab(pml_E_fp[2], ba_Ez, dm, ncompe, nge, lev, "pml_E_fp[z]", 0.0_rt);
 
-    const amrex::BoxArray ba_Bx = amrex::convert(ba, WarpX::GetInstance().getBfield_fp(0,0).ixType().toIntVect());
-    const amrex::BoxArray ba_By = amrex::convert(ba, WarpX::GetInstance().getBfield_fp(0,1).ixType().toIntVect());
-    const amrex::BoxArray ba_Bz = amrex::convert(ba, WarpX::GetInstance().getBfield_fp(0,2).ixType().toIntVect());
+    const amrex::BoxArray ba_Bx = amrex::convert(ba, WarpX::GetInstance().getField(FieldType::Bfield_fp, 0,0).ixType().toIntVect());
+    const amrex::BoxArray ba_By = amrex::convert(ba, WarpX::GetInstance().getField(FieldType::Bfield_fp, 0,1).ixType().toIntVect());
+    const amrex::BoxArray ba_Bz = amrex::convert(ba, WarpX::GetInstance().getField(FieldType::Bfield_fp, 0,2).ixType().toIntVect());
     WarpX::AllocInitMultiFab(pml_B_fp[0], ba_Bx, dm, ncompb, ngb, lev, "pml_B_fp[x]", 0.0_rt);
     WarpX::AllocInitMultiFab(pml_B_fp[1], ba_By, dm, ncompb, ngb, lev, "pml_B_fp[y]", 0.0_rt);
     WarpX::AllocInitMultiFab(pml_B_fp[2], ba_Bz, dm, ncompb, ngb, lev, "pml_B_fp[z]", 0.0_rt);
 
-    const amrex::BoxArray ba_jx = amrex::convert(ba, WarpX::GetInstance().getcurrent_fp(0,0).ixType().toIntVect());
-    const amrex::BoxArray ba_jy = amrex::convert(ba, WarpX::GetInstance().getcurrent_fp(0,1).ixType().toIntVect());
-    const amrex::BoxArray ba_jz = amrex::convert(ba, WarpX::GetInstance().getcurrent_fp(0,2).ixType().toIntVect());
+    const amrex::BoxArray ba_jx = amrex::convert(ba, WarpX::GetInstance().getField(FieldType::current_fp, 0,0).ixType().toIntVect());
+    const amrex::BoxArray ba_jy = amrex::convert(ba, WarpX::GetInstance().getField(FieldType::current_fp, 0,1).ixType().toIntVect());
+    const amrex::BoxArray ba_jz = amrex::convert(ba, WarpX::GetInstance().getField(FieldType::current_fp, 0,2).ixType().toIntVect());
     WarpX::AllocInitMultiFab(pml_j_fp[0], ba_jx, dm, 1, ngb, lev, "pml_j_fp[x]", 0.0_rt);
     WarpX::AllocInitMultiFab(pml_j_fp[1], ba_jy, dm, 1, ngb, lev, "pml_j_fp[y]", 0.0_rt);
     WarpX::AllocInitMultiFab(pml_j_fp[2], ba_jz, dm, 1, ngb, lev, "pml_j_fp[z]", 0.0_rt);
@@ -806,22 +809,23 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         const BoxArray& cba = MakeBoxArray(is_single_box_domain, cdomain, *cgeom, grid_cba_reduced,
                                            cncells, do_pml_in_domain, do_pml_Lo, do_pml_Hi);
         DistributionMapping cdm;
-        if (WarpX::do_similar_dm_pml) {
+        if (do_similar_dm_pml) {
             auto ng_sim = amrex::elemwiseMax(amrex::elemwiseMax(nge, ngb), ngf);
             cdm = amrex::MakeSimilarDM(cba, grid_cba_reduced, grid_dm, ng_sim);
         } else {
             cdm.define(cba);
         }
-        const amrex::BoxArray cba_Ex = amrex::convert(cba, WarpX::GetInstance().getEfield_cp(1,0).ixType().toIntVect());
-        const amrex::BoxArray cba_Ey = amrex::convert(cba, WarpX::GetInstance().getEfield_cp(1,1).ixType().toIntVect());
-        const amrex::BoxArray cba_Ez = amrex::convert(cba, WarpX::GetInstance().getEfield_cp(1,2).ixType().toIntVect());
+
+        const amrex::BoxArray cba_Ex = amrex::convert(cba, WarpX::GetInstance().getField(FieldType::Efield_cp, 1,0).ixType().toIntVect());
+        const amrex::BoxArray cba_Ey = amrex::convert(cba, WarpX::GetInstance().getField(FieldType::Efield_cp, 1,1).ixType().toIntVect());
+        const amrex::BoxArray cba_Ez = amrex::convert(cba, WarpX::GetInstance().getField(FieldType::Efield_cp, 1,2).ixType().toIntVect());
         WarpX::AllocInitMultiFab(pml_E_cp[0], cba_Ex, cdm, ncompe, nge, lev, "pml_E_cp[x]", 0.0_rt);
         WarpX::AllocInitMultiFab(pml_E_cp[1], cba_Ey, cdm, ncompe, nge, lev, "pml_E_cp[y]", 0.0_rt);
         WarpX::AllocInitMultiFab(pml_E_cp[2], cba_Ez, cdm, ncompe, nge, lev, "pml_E_cp[z]", 0.0_rt);
 
-        const amrex::BoxArray cba_Bx = amrex::convert(cba, WarpX::GetInstance().getBfield_cp(1,0).ixType().toIntVect());
-        const amrex::BoxArray cba_By = amrex::convert(cba, WarpX::GetInstance().getBfield_cp(1,1).ixType().toIntVect());
-        const amrex::BoxArray cba_Bz = amrex::convert(cba, WarpX::GetInstance().getBfield_cp(1,2).ixType().toIntVect());
+        const amrex::BoxArray cba_Bx = amrex::convert(cba, WarpX::GetInstance().getField(FieldType::Bfield_cp, 1,0).ixType().toIntVect());
+        const amrex::BoxArray cba_By = amrex::convert(cba, WarpX::GetInstance().getField(FieldType::Bfield_cp, 1,1).ixType().toIntVect());
+        const amrex::BoxArray cba_Bz = amrex::convert(cba, WarpX::GetInstance().getField(FieldType::Bfield_cp, 1,2).ixType().toIntVect());
         WarpX::AllocInitMultiFab(pml_B_cp[0], cba_Bx, cdm, ncompb, ngb, lev, "pml_B_cp[x]", 0.0_rt);
         WarpX::AllocInitMultiFab(pml_B_cp[1], cba_By, cdm, ncompb, ngb, lev, "pml_B_cp[y]", 0.0_rt);
         WarpX::AllocInitMultiFab(pml_B_cp[2], cba_Bz, cdm, ncompb, ngb, lev, "pml_B_cp[z]", 0.0_rt);
@@ -842,9 +846,9 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
             WarpX::AllocInitMultiFab( pml_G_cp, cba_G_nodal, cdm, 3, ngf, lev, "pml_G_cp", 0.0_rt);
         }
 
-        const amrex::BoxArray cba_jx = amrex::convert(cba, WarpX::GetInstance().getcurrent_cp(1,0).ixType().toIntVect());
-        const amrex::BoxArray cba_jy = amrex::convert(cba, WarpX::GetInstance().getcurrent_cp(1,1).ixType().toIntVect());
-        const amrex::BoxArray cba_jz = amrex::convert(cba, WarpX::GetInstance().getcurrent_cp(1,2).ixType().toIntVect());
+        const amrex::BoxArray cba_jx = amrex::convert(cba, WarpX::GetInstance().getField(FieldType::current_cp, 1,0).ixType().toIntVect());
+        const amrex::BoxArray cba_jy = amrex::convert(cba, WarpX::GetInstance().getField(FieldType::current_cp, 1,1).ixType().toIntVect());
+        const amrex::BoxArray cba_jz = amrex::convert(cba, WarpX::GetInstance().getField(FieldType::current_cp, 1,2).ixType().toIntVect());
         WarpX::AllocInitMultiFab(pml_j_cp[0], cba_jx, cdm, 1, ngb, lev, "pml_j_cp[x]", 0.0_rt);
         WarpX::AllocInitMultiFab(pml_j_cp[1], cba_jy, cdm, 1, ngb, lev, "pml_j_cp[y]", 0.0_rt);
         WarpX::AllocInitMultiFab(pml_j_cp[2], cba_jz, cdm, 1, ngb, lev, "pml_j_cp[z]", 0.0_rt);

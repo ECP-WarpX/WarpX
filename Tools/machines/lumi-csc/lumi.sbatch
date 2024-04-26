@@ -20,7 +20,7 @@ date
 export FI_MR_CACHE_MONITOR=memhooks  # alternative cache monitor
 
 # Seen since August 2023 seen on OLCF (not yet seen on LUMI?)
-# OLCFDEV-1597: OFI Poll Failed UNDELIVERABLE Errors
+# OLCFDEV-1597: OFI Poll Failed UNDELIVERABLE Errors
 # https://docs.olcf.ornl.gov/systems/frontier_user_guide.html#olcfdev-1597-ofi-poll-failed-undeliverable-errors
 #export MPICH_SMP_SINGLE_COPY_MODE=NONE
 #export FI_CXI_RX_MATCH_MODE=software

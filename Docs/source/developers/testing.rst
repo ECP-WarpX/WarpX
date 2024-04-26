@@ -90,7 +90,7 @@ The content of this directory will look like the following (possibly including b
     $ ls ./test_dir/rt-WarpX/WarpX-tests/2021-04-30/pml_x_yee/
     analysis_pml_yee.py     # Python analysis script
     inputs_2d               # input file
-    main2d.gnu.TEST.TPROF.MTMPI.OMP.QED.GPUCLOCK.ex  # executable
+    main2d.gnu.TEST.TPROF.MTMPI.OMP.QED.ex  # executable
     pml_x_yee.analysis.out  # Python analysis output
     pml_x_yee.err.out       # error output
     pml_x_yee.make.out      # build output
