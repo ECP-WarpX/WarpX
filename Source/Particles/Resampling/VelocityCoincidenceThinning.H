@@ -120,36 +120,69 @@ public:
     struct VelocityBinCalculator {
 
         AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+        void labelOnSphericalVelocityGrid (const amrex::ParticleReal ux[],
+                                           const amrex::ParticleReal uy[],
+                                           const amrex::ParticleReal uz[],
+                                           const unsigned int indices[],
+                                           int bin_array[], int index_array[],
+                                           const int cell_start, const int cell_stop ) const
+        {
+            for (int i = cell_start; i < cell_stop; ++i)
+            {
+                // get polar components of the velocity vector
+                auto u_mag = std::sqrt(
+                    ux[indices[i]]*ux[indices[i]] +
+                    uy[indices[i]]*uy[indices[i]] +
+                    uz[indices[i]]*uz[indices[i]]
+                );
+                auto u_theta = std::atan2(uy[indices[i]], ux[indices[i]]) + MathConst::pi;
+                auto u_phi = std::acos(uz[indices[i]]/u_mag);
+
+                const int ii = static_cast<int>(u_theta / dutheta);
+                const int jj = static_cast<int>(u_phi / duphi);
+                const int kk = static_cast<int>(u_mag / dur);
+
+                bin_array[i] = ii + jj * n1 + kk * n1 * n2;
+                index_array[i] = i;
+            }
+        }
+
+        AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+        void labelOnCartesianVelocityGrid (const amrex::ParticleReal ux[],
+                                           const amrex::ParticleReal uy[],
+                                           const amrex::ParticleReal uz[],
+                                           const unsigned int indices[],
+                                           int bin_array[], int index_array[],
+                                           const int cell_start, const int cell_stop ) const
+        {
+            for (int i = cell_start; i < cell_stop; ++i)
+            {
+                const int ii = static_cast<int>((ux[indices[i]] - ux_min) / dux);
+                const int jj = static_cast<int>((uy[indices[i]] - uy_min) / duy);
+                const int kk = static_cast<int>((uz[indices[i]] - uz_min) / duz);
+
+                bin_array[i] = ii + jj * n1 + kk * n1 * n2;
+                index_array[i] = i;
+            }
+        }
+
+        AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
         void operator() (const amrex::ParticleReal ux[], const amrex::ParticleReal uy[],
                          const amrex::ParticleReal uz[], const unsigned int indices[],
                          int bin_array[], int index_array[],
                          const int cell_start, const int cell_stop) const
         {
-            for (int i = cell_start; i < cell_stop; ++i)
-            {
-                int ii = -1, jj = -1, kk = -1;
-                if (velocity_grid_type == VelocityGridType::Spherical) {
-                    // get polar components of the velocity vector
-                    auto u_mag = std::sqrt(
-                        ux[indices[i]]*ux[indices[i]] +
-                        uy[indices[i]]*uy[indices[i]] +
-                        uz[indices[i]]*uz[indices[i]]
-                    );
-                    auto u_theta = std::atan2(uy[indices[i]], ux[indices[i]]) + MathConst::pi;
-                    auto u_phi = std::acos(uz[indices[i]]/u_mag);
-
-                    ii = static_cast<int>(u_theta / dutheta);
-                    jj = static_cast<int>(u_phi / duphi);
-                    kk = static_cast<int>(u_mag / dur);
-
-                }
-                else if (velocity_grid_type == VelocityGridType::Cartesian) {
-                    ii = static_cast<int>((ux[indices[i]] - ux_min) / dux);
-                    jj = static_cast<int>((uy[indices[i]] - uy_min) / duy);
-                    kk = static_cast<int>((uz[indices[i]] - uz_min) / duz);
-                }
-                bin_array[i] = ii + jj * n1 + kk * n1 * n2;
-                index_array[i] = i;
+            if (velocity_grid_type == VelocityGridType::Spherical) {
+                labelOnSphericalVelocityGrid(
+                    ux, uy, uz, indices, bin_array, index_array, cell_start,
+                    cell_stop
+                );
+            }
+            else if (velocity_grid_type == VelocityGridType::Cartesian) {
+                labelOnCartesianVelocityGrid(
+                    ux, uy, uz, indices, bin_array, index_array, cell_start,
+                    cell_stop
+                );
             }
         }
 
