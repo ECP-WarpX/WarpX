@@ -4,8 +4,11 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "FieldSolver/Fields.H"
 #include "ThetaImplicitEM.H"
 #include "WarpX.H"
+
+using namespace warpx::fields;
 
 void ThetaImplicitEM::Define ( WarpX* const  a_WarpX )
 {
@@ -29,7 +32,7 @@ void ThetaImplicitEM::Define ( WarpX* const  a_WarpX )
     const int lev = 0;
     m_Bold.resize(1); // size is number of levels
     for (int n=0; n<3; n++) {
-        const amrex::MultiFab& Bfp = m_WarpX->getBfield_fp(lev,n);
+        const amrex::MultiFab& Bfp = m_WarpX->getField( FieldType::Bfield_fp,lev,n);
         m_Bold[lev][n] = std::make_unique<amrex::MultiFab>( Bfp.boxArray(),
                                                             Bfp.DistributionMap(),
                                                             Bfp.nComp(),
@@ -113,7 +116,7 @@ void ThetaImplicitEM::OneStep ( const amrex::Real  a_time,
 
     const int lev = 0;
     for (int n=0; n<3; n++) {
-        const amrex::MultiFab& Bfp = m_WarpX->getBfield_fp(lev,n);
+        const amrex::MultiFab& Bfp = m_WarpX->getField(FieldType::Bfield_fp,lev,n);
         amrex::MultiFab& Bold = *m_Bold[lev][n];
         amrex::MultiFab::Copy(Bold, Bfp, 0, 0, 1, Bold.nGrowVect());
     }
