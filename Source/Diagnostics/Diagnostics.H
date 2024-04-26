@@ -256,7 +256,7 @@ protected:
      */
     virtual void UpdateBufferData (
         const amrex::Vector<amrex::IntVect>& /*ref_ratios*/,
-        const amrex::Vector<amrex::Real>& /*dts*/) {};
+        const amrex::Vector<amrex::Real>& /*dts*/) {}
 
     /** Prepare data (either fill-boundary or cell-centered data for
      *   back-transform diagnostics) to be processed for diagnostics.
@@ -271,7 +271,7 @@ protected:
         const amrex::Vector<amrex::Geometry>& /*geometry_vector*/,
         const amrex::Vector<amrex::IntVect>& /*ref_ratios*/,
         const amrex::Vector<amrex::Real>& /*dts*/
-    ) {};
+    ) {}
 
     /**
      *  \brief The Particle Geometry, BoxArray, and RealBox are set for the lab-frame output
@@ -283,7 +283,7 @@ protected:
     virtual void PrepareParticleDataForOutput (
         const amrex::Vector<amrex::Geometry>& /*geometry_vector*/,
         const amrex::Vector<amrex::IntVect>& /*ref_ratios*/,
-        const amrex::Vector<amrex::Real>& /*dts*/) {};
+        const amrex::Vector<amrex::Real>& /*dts*/) {}
 
     /** Update the physical extent of the diagnostic domain for moving window and
      *  galilean shift simulations
