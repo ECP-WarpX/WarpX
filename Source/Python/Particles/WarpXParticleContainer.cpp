@@ -119,13 +119,13 @@ void init_WarpXParticleContainer (py::module& m)
         )
         .def("deposit_charge",
             [](WarpXParticleContainer& pc,
-            amrex::MultiFab* rho, const int lev)
+            amrex::MultiFab* rho, const int lev, const amrex::Vector<amrex::IntVect>& ref_ratios)
             {
                 for (WarpXParIter pti(pc, lev); pti.isValid(); ++pti)
                 {
                     const long np = pti.numParticles();
                     auto& wp = pti.GetAttribs(PIdx::w);
-                    pc.DepositCharge(pti, wp, nullptr, rho, 0, 0, np, 0, lev, lev);
+                    pc.DepositCharge(pti, wp, nullptr, rho, 0, 0, np, 0, lev, lev, ref_ratios[lev]);
                 }
             },
             py::arg("rho"), py::arg("lev")
