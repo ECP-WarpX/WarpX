@@ -162,17 +162,11 @@ class Species(picmistandard.PICMI_Species):
         Number of bins to use in phi when clustering particle velocities
         during grid-based merging, with `velocity_grid_type == "spherical"`.
 
-    warpx_resampling_algorithm_delta_ux: float
-        Size of velocity window used in ux for clustering particles during grid-based
-        merging, with `velocity_grid_type == "cartesian"`.
-
-    warpx_resampling_algorithm_delta_uy: float
-        Size of velocity window used in uy for clustering particles during grid-based
-        merging, with `velocity_grid_type == "cartesian"`.
-
-    warpx_resampling_algorithm_delta_uz: float
-        Size of velocity window used in uz for clustering particles during grid-based
-        merging, with `velocity_grid_type == "cartesian"`.
+    warpx_resampling_algorithm_delta_u: array of floats or float
+        Size of velocity window used in ux, uy and uz for clustering particles
+        during grid-based merging, with `velocity_grid_type == "cartesian"`. If
+        a single number is given the same du value will be used in all three
+        directions.
     """
     def init(self, kw):
 
@@ -258,9 +252,9 @@ class Species(picmistandard.PICMI_Species):
         self.resampling_algorithm_delta_ur = kw.pop('warpx_resampling_algorithm_delta_ur', None)
         self.resampling_algorithm_n_theta = kw.pop('warpx_resampling_algorithm_n_theta', None)
         self.resampling_algorithm_n_phi = kw.pop('warpx_resampling_algorithm_n_phi', None)
-        self.resampling_algorithm_delta_ux = kw.pop('warpx_resampling_algorithm_delta_ux', None)
-        self.resampling_algorithm_delta_uy = kw.pop('warpx_resampling_algorithm_delta_uy', None)
-        self.resampling_algorithm_delta_uz = kw.pop('warpx_resampling_algorithm_delta_uz', None)
+        self.resampling_algorithm_delta_u = kw.pop('warpx_resampling_algorithm_delta_u', None)
+        if self.resampling_algorithm_delta_u is not None and np.size(self.resampling_algorithm_delta_u) == 1:
+            self.resampling_algorithm_delta_u = [self.resampling_algorithm_delta_u]*3
 
     def species_initialize_inputs(self, layout,
                                   initialize_self_fields = False,
@@ -307,9 +301,9 @@ class Species(picmistandard.PICMI_Species):
                                              resampling_algorithm_delta_ur=self.resampling_algorithm_delta_ur,
                                              resampling_algorithm_n_theta=self.resampling_algorithm_n_theta,
                                              resampling_algorithm_n_phi=self.resampling_algorithm_n_phi,
-                                             resampling_algorithm_delta_ux=self.resampling_algorithm_delta_ux,
-                                             resampling_algorithm_delta_uy=self.resampling_algorithm_delta_uy,
-                                             resampling_algorithm_delta_uz=self.resampling_algorithm_delta_uz)
+                                             resampling_algorithm_delta_ux=self.resampling_algorithm_delta_u[0],
+                                             resampling_algorithm_delta_uy=self.resampling_algorithm_delta_u[1],
+                                             resampling_algorithm_delta_uz=self.resampling_algorithm_delta_u[2])
 
         # add reflection models
         self.species.add_new_attr("reflection_model_xlo(E)", self.reflection_model_xlo)
