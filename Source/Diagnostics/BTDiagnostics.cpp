@@ -291,7 +291,11 @@ BTDiagnostics::ReadParameters ()
 }
 
 bool
-BTDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
+BTDiagnostics::DoDump (
+    int step, int i_buffer,
+    const amrex::Vector<amrex::IntVect>& ref_ratios,
+    const amrex::Real dt_0,
+    bool force_flush)
 {
 
     // Do not call dump if timestep < 0, i.e., at initialization time when step == -1
@@ -300,7 +304,7 @@ BTDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
 
         // If buffer for this lab snapshot is full then dump it and continue to collect
         // slices afterwards
-        const auto is_buffer_full = buffer_full(i_buffer);
+        const auto is_buffer_full = buffer_full(i_buffer, ref_ratios, dt_0);
         // or
         // If last z-slice in the lab-frame snapshot is filled, call dump to
         // write the buffer and close the file.
@@ -330,7 +334,8 @@ BTDiagnostics::DoComputeAndPack (int step, bool force_flush)
 }
 
 void
-BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
+BTDiagnostics::InitializeBufferData (
+    int i_buffer , int lev, const amrex::Vector<amrex::IntVect>& ref_ratios, bool restart)
 {
     auto & warpx = WarpX::GetInstance();
 
@@ -426,7 +431,7 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
     // computed using the coarsened cell-size in the lab-frame obtained using
     // the ref_ratio at level, lev-1.
     auto ref_ratio = amrex::IntVect(1);
-    if (lev > 0 ) { ref_ratio = WarpX::RefRatio(lev-1); }
+    if (lev > 0 ) { ref_ratio = ref_ratios[lev-1]; }
     // Number of lab-frame cells in z-direction at level, lev
     const int num_zcells_lab = static_cast<int>( std::floor (
                                    ( zmax_buffer_lab - zmin_buffer_lab)
@@ -761,7 +766,10 @@ BTDiagnostics::PrepareBufferData ()
 }
 
 void
-BTDiagnostics::UpdateBufferData ()
+BTDiagnostics::UpdateBufferData (
+    const amrex::Vector<amrex::IntVect>& ref_ratios,
+    const amrex::Vector<amrex::Real>& dts
+    )
 {
     const int num_BT_functors = 1;
 
@@ -774,7 +782,7 @@ BTDiagnostics::UpdateBufferData ()
                 const bool ZSliceInDomain = GetZSliceInDomainFlag (i_buffer, lev);
                 if (ZSliceInDomain) { ++m_buffer_counter[i_buffer]; }
                 // when the z-index is equal to the smallEnd of the snapshot box, then set lastValidZSlice to 1
-                if (k_index_zlab(i_buffer, lev) == m_snapshot_box[i_buffer].smallEnd(m_moving_window_dir)) {
+                if (k_index_zlab(i_buffer, lev, ref_ratios, dts[lev]) == m_snapshot_box[i_buffer].smallEnd(m_moving_window_dir)) {
                     m_lastValidZSlice[i_buffer] = 1;
                 }
             }
@@ -783,12 +791,15 @@ BTDiagnostics::UpdateBufferData ()
 }
 
 void
-BTDiagnostics::PrepareFieldDataForOutput ()
+BTDiagnostics::PrepareFieldDataForOutput (
+    const int finest_level,
+    const amrex::Vector<amrex::Geometry>& geometry_vector,
+    const amrex::Vector<amrex::IntVect>& ref_ratios,
+    const amrex::Vector<amrex::Real>& dts)
 {
     // Initialize fields functors only if do_back_transformed_fields is selected
     if (!m_do_back_transformed_fields) { return; }
 
-    auto & warpx = WarpX::GetInstance();
     // In this function, we will get cell-centered data for every level, lev,
     // using the cell-center functors and their respective operators()
     // Call m_cell_center_functors->operator
@@ -807,13 +818,13 @@ BTDiagnostics::PrepareFieldDataForOutput ()
         // fill boundary call is required to average_down (flatten) data to
         // the coarsest level.
         ablastr::utils::communication::FillBoundary(*m_cell_centered_data[lev], WarpX::do_single_precision_comms,
-                                                    warpx.Geom(lev).periodicity());
+                                                    geometry_vector[lev].periodicity());
     }
     // Flattening out MF over levels
 
-    for (int lev = warpx.finestLevel(); lev > 0; --lev) {
+    for (int lev = finest_level; lev > 0; --lev) {
         ablastr::coarsen::sample::Coarsen(*m_cell_centered_data[lev - 1], *m_cell_centered_data[lev], 0, 0,
-                                          static_cast<int>(m_cellcenter_varnames.size()), 0, WarpX::RefRatio(lev-1) );
+            static_cast<int>(m_cellcenter_varnames.size()), 0, ref_ratios[lev-1]);
     }
 
     const int num_BT_functors = 1;
@@ -826,15 +837,15 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                 // Check if the zslice is in domain
                 const bool ZSliceInDomain = GetZSliceInDomainFlag (i_buffer, lev);
                 // Initialize and define field buffer multifab if buffer is empty
-                const bool kindexInSnapshotBox = GetKIndexInSnapshotBoxFlag (i_buffer, lev);
+                const bool kindexInSnapshotBox = GetKIndexInSnapshotBoxFlag (i_buffer, lev, ref_ratios, dts[lev]);
                 if (kindexInSnapshotBox) {
                     if ( buffer_empty(i_buffer) ) {
                         if ( m_buffer_flush_counter[i_buffer] == 0 || m_first_flush_after_restart[i_buffer] == 1) {
                             // Compute the geometry, snapshot lab-domain extent
                             // and box-indices
-                            DefineSnapshotGeometry(i_buffer, lev);
+                            DefineSnapshotGeometry(i_buffer, lev, ref_ratios);
                         }
-                        DefineFieldBufferMultiFab(i_buffer, lev);
+                        DefineFieldBufferMultiFab(i_buffer, lev, geometry_vector, ref_ratios, dts);
                     }
                 }
                 if (ZSliceInDomain) {
@@ -854,7 +865,7 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                                              i_buffer, ZSliceInDomain,
                                              m_current_z_boost[i_buffer],
                                              m_buffer_box[i_buffer],
-                                             k_index_zlab(i_buffer, lev),
+                                             k_index_zlab(i_buffer, lev, ref_ratios, dts[lev]),
                                              m_snapshot_full[i_buffer] );
 
             }
@@ -871,16 +882,15 @@ BTDiagnostics::dz_lab (amrex::Real dt, amrex::Real ref_ratio) const
 
 
 int
-BTDiagnostics::k_index_zlab (int i_buffer, int lev) const
+BTDiagnostics::k_index_zlab (int i_buffer, int lev, const amrex::Vector<amrex::IntVect>& ref_ratios, amrex::Real dt_lev) const
 {
-    auto & warpx = WarpX::GetInstance();
     const amrex::Real prob_domain_zmin_lab = m_snapshot_domain_lab[i_buffer].lo( m_moving_window_dir );
     auto ref_ratio = amrex::IntVect(1);
-    if (lev > 0 ) { ref_ratio = WarpX::RefRatio(lev-1); }
+    if (lev > 0 ) { ref_ratio = ref_ratios[lev-1]; }
     const int k_lab = static_cast<int>(std::floor (
                           ( m_current_z_lab[i_buffer]
                             - (prob_domain_zmin_lab  ) )
-                          / dz_lab( warpx.getdt(lev), ref_ratio[m_moving_window_dir] )
+                          / dz_lab( dt_lev, ref_ratio[m_moving_window_dir] )
                       ) ) + m_snapshot_box[i_buffer].smallEnd(m_moving_window_dir);
     return k_lab;
 }
@@ -895,10 +905,13 @@ BTDiagnostics::SetSnapshotFullStatus (const int i_buffer)
 }
 
 void
-BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
+BTDiagnostics::DefineFieldBufferMultiFab (
+    const int i_buffer, const int lev,
+    const amrex::Vector<amrex::Geometry>& geometry_vector,
+    const amrex::Vector<amrex::IntVect>& ref_ratios,
+    const amrex::Vector<amrex::Real>& dts)
 {
     if (m_field_buffer_multifab_defined[i_buffer] == 1) { return; }
-    auto & warpx = WarpX::GetInstance();
 
     const int hi_k_lab = m_buffer_k_index_hi[i_buffer];
     m_buffer_box[i_buffer].setSmall( m_moving_window_dir, hi_k_lab - m_buffer_size + 1);
@@ -914,11 +927,11 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
     m_mf_output[i_buffer][lev].setVal(0.);
 
     auto ref_ratio = amrex::IntVect(1);
-    if (lev > 0 ) { ref_ratio = WarpX::RefRatio(lev-1); }
+    if (lev > 0 ) { ref_ratio = ref_ratios[lev-1]; }
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         const amrex::Real cellsize = (idim < WARPX_ZINDEX)?
-            warpx.Geom(lev).CellSize(idim):
-            dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
+            geometry_vector[lev].CellSize(idim):
+            dz_lab(dts[lev], ref_ratio[m_moving_window_dir]);
         const amrex::Real buffer_lo = m_snapshot_domain_lab[i_buffer].lo(idim)
                                 + ( buffer_ba.getCellCenteredBox(0).smallEnd(idim)
                                   - m_snapshot_box[i_buffer].smallEnd(idim)
@@ -946,7 +959,7 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
     } else if (lev > 0 ) {
         // Refine the geometry object defined at the previous level, lev-1
         m_geom_output[i_buffer][lev] = amrex::refine( m_geom_output[i_buffer][lev-1],
-                                                      WarpX::RefRatio(lev-1) );
+                                                      ref_ratios[lev-1] );
     }
     m_field_buffer_multifab_defined[i_buffer] = 1;
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_mf_output[i_buffer][lev].boxArray().size() == 1,
@@ -955,7 +968,9 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
 
 
 void
-BTDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
+BTDiagnostics::DefineSnapshotGeometry (
+    const int i_buffer, const int lev,
+    const amrex::Vector<amrex::IntVect>& ref_ratios)
 {
     if (m_snapshot_geometry_defined[i_buffer] == 1) { return; }
 
@@ -972,7 +987,7 @@ BTDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
     } else if (lev > 0) {
         // Refine the geometry object defined at the previous level, lev-1
         m_geom_snapshot[i_buffer][lev] = amrex::refine( m_geom_snapshot[i_buffer][lev-1],
-                                                        WarpX::RefRatio(lev-1) );
+                                                        ref_ratios[lev-1] );
     }
     m_snapshot_geometry_defined[i_buffer] = 1;
 }
@@ -996,10 +1011,13 @@ BTDiagnostics::GetZSliceInDomainFlag (const int i_buffer, const int lev)
 
 
 bool
-BTDiagnostics::GetKIndexInSnapshotBoxFlag (const int i_buffer, const int lev)
+BTDiagnostics::GetKIndexInSnapshotBoxFlag (
+    const int i_buffer, const int lev,
+    const amrex::Vector<amrex::IntVect>& ref_ratios,
+    const amrex::Real dt_lev)
 {
-    return (k_index_zlab(i_buffer, lev) >= m_snapshot_box[i_buffer].smallEnd(m_moving_window_dir) &&
-        k_index_zlab(i_buffer, lev) <= m_snapshot_box[i_buffer].bigEnd(m_moving_window_dir));
+    return (k_index_zlab(i_buffer, lev, ref_ratios, dt_lev) >= m_snapshot_box[i_buffer].smallEnd(m_moving_window_dir) &&
+        k_index_zlab(i_buffer, lev, ref_ratios, dt_lev) <= m_snapshot_box[i_buffer].bigEnd(m_moving_window_dir));
 }
 
 void
@@ -1450,7 +1468,10 @@ BTDiagnostics::InitializeParticleBuffer ()
 }
 
 void
-BTDiagnostics::PrepareParticleDataForOutput()
+BTDiagnostics::PrepareParticleDataForOutput(
+    const amrex::Vector<amrex::Geometry>& geometry_vector,
+    const amrex::Vector<amrex::IntVect>& ref_ratios,
+    const amrex::Vector<amrex::Real>& dts)
 {
     for (int lev = 0; lev < nlev_output; ++lev) {
         for (int i = 0; i < m_all_particle_functors.size(); ++i)
@@ -1459,14 +1480,14 @@ BTDiagnostics::PrepareParticleDataForOutput()
             {
                 // Check if the zslice is in domain
                 const bool ZSliceInDomain = GetZSliceInDomainFlag (i_buffer, lev);
-                const bool kindexInSnapshotBox = GetKIndexInSnapshotBoxFlag (i_buffer, lev);
+                const bool kindexInSnapshotBox = GetKIndexInSnapshotBoxFlag (i_buffer, lev, ref_ratios, dts[lev]);
                 if (kindexInSnapshotBox) {
                     if ( buffer_empty(i_buffer) ) {
                         if (!m_do_back_transformed_fields || m_varnames_fields.empty()) {
                             if ( m_buffer_flush_counter[i_buffer] == 0) {
-                                DefineSnapshotGeometry(i_buffer, lev);
+                                DefineSnapshotGeometry(i_buffer, lev, ref_ratios);
                             }
-                            DefineFieldBufferMultiFab(i_buffer, lev);
+                            DefineFieldBufferMultiFab(i_buffer, lev, geometry_vector, ref_ratios, dts);
                         }
                         const amrex::Box particle_buffer_box = m_buffer_box[i_buffer];
                         const amrex::BoxArray buffer_ba( particle_buffer_box );

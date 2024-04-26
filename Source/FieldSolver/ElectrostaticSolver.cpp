@@ -192,7 +192,7 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     bool const apply_boundary_and_scale_volume = true;
     bool const interpolate_across_levels = false;
     if ( !pc.do_not_deposit) {
-        pc.DepositCharge(rho, local, reset, apply_boundary_and_scale_volume,
+        pc.DepositCharge(rho, refRatio(), local, reset, apply_boundary_and_scale_volume,
                               interpolate_across_levels);
     }
 
@@ -234,7 +234,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
 #endif
 
     // Deposit particle charge density (source of Poisson solver)
-    mypc->DepositCharge(rho_fp, 0.0_rt);
+    mypc->DepositCharge(rho_fp, 0.0_rt, refRatio());
     if (do_fluid_species) {
         int const lev = 0;
         myfl->DepositCharge( lev, *rho_fp[lev] );

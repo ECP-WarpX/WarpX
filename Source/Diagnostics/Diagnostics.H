@@ -48,8 +48,19 @@ public:
     /** Pack (stack) all fields in the cell-centered output MultiFab m_mf_output.
      *
      * Fields are computed (e.g., cell-centered or back-transformed)
-       on-the-fly using a functor. */
-    void ComputeAndPack ();
+     *  on-the-fly using a functor.
+     *
+     * \param[in] finest_level the finest refinement level
+     * \param[in] geometry_vector a vector containing the geometry of each level
+     * \param[in] ref_ratios refinement ratios between all levels
+     * \param[in] dts timesteps associated to all levels
+    */
+    void ComputeAndPack (
+        int finest_level,
+        const amrex::Vector<amrex::Geometry>& geometry_vector,
+        const amrex::Vector<amrex::IntVect>& ref_ratios,
+        const amrex::Vector<amrex::Real>& dts
+    );
 
     /** \brief Flush particle and field buffers to file using the FlushFormat member variable.
      *
@@ -67,10 +78,22 @@ public:
      * (including metadata listing the total number of particles) even if the snapshot is incomplete
      */
     virtual void Flush (int i_buffer, bool force_flush) = 0;
-    /** Initialize pointers to main fields and allocate output multifab m_mf_output. */
-    void InitData ();
+
+    /** \brief Initialize pointers to main fields and allocate output multifab m_mf_output.
+     *
+     * \param[in] finest_level the finest refinement level
+     * \param[in] ref_ratios refinement ratios between all levels
+    */
+    void InitData (const int finest_level, const amrex::Vector<amrex::IntVect>& ref_ratios);
+
     void InitDataBeforeRestart ();
-    void InitDataAfterRestart ();
+
+    /** \brief Initialize data after restart
+     *
+     * \param[in] ref_ratios refinement ratios between all levels
+     */
+    void InitDataAfterRestart (const amrex::Vector<amrex::IntVect>& ref_ratios);
+
     /** Initialize functors that store pointers to the fields requested by the user.
      *
      * Derived classes MUST implement this function, and it must allocate m_all_field_functors
@@ -98,19 +121,38 @@ public:
     /** whether to flush at this time step
      * \param[in] step current time step
      * \param[in] i_buffer index of the buffer data to be flushed.
+     * \param[in] ref_ratios refinement ratios between all levels
+     * \param[in] dt_0 the timestep corresponding to the coarsest grid
      * \param[in] force_flush if true, return true for any step
      * \return bool, whether to flush
      */
-    virtual bool DoDump (int step, int i_buffer, bool force_flush=false) = 0;
+    virtual bool DoDump (
+      int step, int i_buffer,
+      const amrex::Vector<amrex::IntVect>& ref_ratios,
+      amrex::Real dt_0,
+      bool force_flush=false) = 0;
+
     /** Start a new iteration, i.e., dump has not been done yet. */
     void NewIteration () {m_already_done = false;}
+
     /** Perform necessary operations with user-defined diagnostic parameters
      *  to filter (coarsen, slice), compute (cell-center, back-transform),
      *  and flush the output data stored in buffers, m_mf_output.
+     *
      * \param[in] step current timestep
+     * \param[in] finest_level the finest refinement level
+     * \param[in] geometry_vector a vector containing the geometry of each level
+     * \param[in] ref_ratios refinement ratios between all levels
+     * \param[in] dts timesteps associated to all levels
      * \param[in] force_flush used to force-fully write data stored in buffers.
      */
-    void FilterComputePackFlush (int step, bool force_flush=false);
+    void FilterComputePackFlush (
+      int step, int finest_level,
+      const amrex::Vector<amrex::Geometry>& geometry_vector,
+      const amrex::Vector<amrex::IntVect>& ref_ratios,
+      const amrex::Vector<amrex::Real>& dts,
+      bool force_flush=false);
+
     /** Whether the last timestep is always dumped */
     [[nodiscard]] bool DoDumpLastTimestep () const {return  m_dump_last_timestep;}
     /** Returns the number of snapshots used in BTD. For Full-Diagnostics, the value is 1*/
@@ -191,8 +233,10 @@ protected:
     /** Initialize m_mf_output vectors and data required to construct the buffers
      * \param[in] i_buffer index of buffer for which the output MultiFab is defined.
      * \param[in] lev level on which the output MultiFab is defined
+     * \param[in] ref_ratios refinement ratios between all levels
      */
-    virtual void InitializeBufferData (int i_buffer, int lev, bool restart=false) = 0;
+    virtual void InitializeBufferData (int i_buffer, int lev,
+      const amrex::Vector<amrex::IntVect>& ref_ratios, bool restart=false) = 0;
     /** Initialize member variables and arrays specific to the diagnostics in the
      *  derived classes.(FullDiagnostics, BTDiagnostics)
      */
@@ -203,16 +247,44 @@ protected:
      *  this function prepares the z coordinate in the boosted-frame and lab-frame.
      */
     virtual void PrepareBufferData () {}
+
     /** This function updates buffer data and computes the number of buffers filled in the output multifab as well
      *  as identifies if the last buffer has been filled as needed to close the output files.
+     *
+     * \param[in] ref_ratios refinement ratios between all levels
+     * \param[in] dts timesteps associated to all levels
      */
-    virtual void UpdateBufferData () {}
+    virtual void UpdateBufferData (
+        const amrex::Vector<amrex::IntVect>& /*ref_ratios*/,
+        const amrex::Vector<amrex::Real>& /*dts*/) {};
+
     /** Prepare data (either fill-boundary or cell-centered data for
-        back-transform diagnostics) to be processed for diagnostics.
+     *   back-transform diagnostics) to be processed for diagnostics.
+     *
+     * \param[in] finest_level the finest refinement level
+     * \param[in] geometry_vector a vector containing the geometry of each level
+     * \param[in] ref_ratios refinement ratios between all levels
+     * \param[in] dts timesteps associated to all levels
      */
-    virtual void PrepareFieldDataForOutput () {}
-    /** The Particle Geometry, BoxArray, and RealBox are set for the lab-frame output */
-    virtual void PrepareParticleDataForOutput () {}
+    virtual void PrepareFieldDataForOutput (
+        int /*finest_level*/,
+        const amrex::Vector<amrex::Geometry>& /*geometry_vector*/,
+        const amrex::Vector<amrex::IntVect>& /*ref_ratios*/,
+        const amrex::Vector<amrex::Real>& /*dts*/
+    ) {};
+
+    /**
+     *  \brief The Particle Geometry, BoxArray, and RealBox are set for the lab-frame output
+     *
+     * \param[in] geometry_vector a vector containing the geometry of each level
+     * \param[in] ref_ratios refinement ratios between all levels
+     * \param[in] dts timesteps associated to all levels
+     */
+    virtual void PrepareParticleDataForOutput (
+        const amrex::Vector<amrex::Geometry>& /*geometry_vector*/,
+        const amrex::Vector<amrex::IntVect>& /*ref_ratios*/,
+        const amrex::Vector<amrex::Real>& /*dts*/) {};
+
     /** Update the physical extent of the diagnostic domain for moving window and
      *  galilean shift simulations
      *

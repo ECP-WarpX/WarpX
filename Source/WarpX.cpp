@@ -2904,12 +2904,6 @@ WarpX::UpperCorner(const Box& bx, const int lev, const amrex::Real time_shift_de
 #endif
 }
 
-IntVect
-WarpX::RefRatio (int lev)
-{
-    return GetInstance().refRatio(lev);
-}
-
 void
 WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
                     const std::array<const amrex::MultiFab* const, 3>& B,

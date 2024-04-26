@@ -210,7 +210,7 @@ WarpX::Evolve (int numsteps)
         for (int i = 0; i <= max_level; ++i) {
             t_new[i] = cur_time;
         }
-        multi_diags->FilterComputePackFlush( step, false, true );
+        multi_diags->FilterComputePackFlush( step, finestLevel(), Geom(), refRatio(), getdt(), false, true );
 
         const bool move_j = is_synchronized;
         // If is_synchronized we need to shift j too so that next step we can evolve E by dt/2.
@@ -270,7 +270,7 @@ WarpX::Evolve (int numsteps)
             reduced_diags->ComputeDiags(step);
             reduced_diags->WriteToFile(step);
         }
-        multi_diags->FilterComputePackFlush( step );
+        multi_diags->FilterComputePackFlush( step, finestLevel(), Geom(), refRatio(), getdt());
 
         // execute afterdiagnostic callbacks
         ExecutePythonCallback("afterdiagnostics");
@@ -305,7 +305,7 @@ WarpX::Evolve (int numsteps)
     // regardless of the diagnostic period parameter provided in the inputs.
     if (istep[0] == max_step || (stop_time - 1.e-3*dt[0] <= cur_time && cur_time < stop_time + dt[0])
         || m_exit_loop_due_to_interrupt_signal) {
-        multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
+        multi_diags->FilterComputePackFlushLastTimestep( istep[0], finestLevel(), Geom(), refRatio(), getdt() );
         if (m_exit_loop_due_to_interrupt_signal) { ExecutePythonCallback("onbreaksignal"); }
     }
 }
@@ -634,7 +634,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     {
         // Deposit rho at relative time -dt
         // (dt[0] denotes the time step on mesh refinement level 0)
-        mypc->DepositCharge(rho_fp, -dt[0]);
+        mypc->DepositCharge(rho_fp, -dt[0], refRatio());
         // Filter, exchange boundary, and interpolate across levels
         SyncRho(rho_fp, rho_cp, charge_buf);
         // Forward FFT of rho
@@ -646,7 +646,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     if (J_in_time == JInTime::Linear)
     {
         auto& current = (WarpX::do_current_centering) ? current_fp_nodal : current_fp;
-        mypc->DepositCurrent(current, dt[0], -dt[0]);
+        mypc->DepositCurrent(current, dt[0], -dt[0], refRatio());
         // Synchronize J: filter, exchange boundary, and interpolate across levels.
         // With current centering, the nodal current is deposited in 'current',
         // namely 'current_fp_nodal': SyncCurrent stores the result of its centering
@@ -680,7 +680,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         // Deposit new J at relative time t_deposit_current with time step dt
         // (dt[0] denotes the time step on mesh refinement level 0)
         auto& current = (WarpX::do_current_centering) ? current_fp_nodal : current_fp;
-        mypc->DepositCurrent(current, dt[0], t_deposit_current);
+        mypc->DepositCurrent(current, dt[0], t_deposit_current, refRatio());
         // Synchronize J: filter, exchange boundary, and interpolate across levels.
         // With current centering, the nodal current is deposited in 'current',
         // namely 'current_fp_nodal': SyncCurrent stores the result of its centering
@@ -698,7 +698,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             if (rho_in_time == RhoInTime::Linear) { PSATDMoveRhoNewToRhoOld(); }
 
             // Deposit rho at relative time t_deposit_charge
-            mypc->DepositCharge(rho_fp, t_deposit_charge);
+            mypc->DepositCharge(rho_fp, t_deposit_charge, refRatio());
             // Filter, exchange boundary, and interpolate across levels
             SyncRho(rho_fp, rho_cp, charge_buf);
             // Forward FFT of rho
@@ -1023,7 +1023,7 @@ WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type,
                  rho_fp[lev].get(), charge_buf[lev].get(),
                  Efield_cax[lev][0].get(), Efield_cax[lev][1].get(), Efield_cax[lev][2].get(),
                  Bfield_cax[lev][0].get(), Bfield_cax[lev][1].get(), Bfield_cax[lev][2].get(),
-                 cur_time, dt[lev], a_dt_type, skip_current, push_type);
+                 cur_time, dt[lev], refRatio(), a_dt_type, skip_current, push_type);
     if (! skip_current) {
 #ifdef WARPX_DIM_RZ
         // This is called after all particles have deposited their current and charge.
@@ -1142,7 +1142,7 @@ WarpX::HandleSignals()
     // SIGNAL_REQUESTS_BREAK is handled directly in WarpX::Evolve
 
     if (SignalHandling::TestAndResetActionRequestFlag(SignalHandling::SIGNAL_REQUESTS_CHECKPOINT)) {
-        multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
+        multi_diags->FilterComputePackFlushLastTimestep( istep[0], finestLevel(), Geom(), refRatio(), getdt() );
         ExecutePythonCallback("oncheckpointsignal");
     }
 }

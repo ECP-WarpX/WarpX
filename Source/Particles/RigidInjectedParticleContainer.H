@@ -84,6 +84,7 @@ public:
                          const amrex::MultiFab* cBz,
                          amrex::Real t,
                          amrex::Real dt,
+                         const amrex::Vector<amrex::IntVect>& ref_ratios,
                          DtType a_dt_type=DtType::Full,
                          bool skip_deposition=false,
                          PushType push_type=PushType::Explicit) override;
@@ -100,6 +101,7 @@ public:
                          long np_to_push,
                          int lev, int gather_lev,
                          amrex::Real dt, ScaleFields scaleFields,
+                         const amrex::IntVect& ref_ratio_gather_level,
                          DtType a_dt_type=DtType::Full) override;
 
     void PushP (int lev, amrex::Real dt,

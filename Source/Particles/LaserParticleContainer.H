@@ -72,8 +72,9 @@ public:
                          amrex::MultiFab* rho, amrex::MultiFab* crho,
                          const amrex::MultiFab*, const amrex::MultiFab*, const amrex::MultiFab*,
                          const amrex::MultiFab*, const amrex::MultiFab*, const amrex::MultiFab*,
-                         amrex::Real t, amrex::Real dt, DtType a_dt_type=DtType::Full,
-                         bool skip_deposition=false, PushType push_type=PushType::Explicit) final;
+                         amrex::Real t, amrex::Real dt, const amrex::Vector<amrex::IntVect>& ref_ratios,
+                         DtType a_dt_type=DtType::Full, bool skip_deposition=false,
+                         PushType push_type=PushType::Explicit) final;
 
     void PushP (int lev, amrex::Real dt,
                         const amrex::MultiFab& ,

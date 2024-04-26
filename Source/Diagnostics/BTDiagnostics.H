@@ -47,15 +47,22 @@ private:
      * the function call to flush out buffer data for
      * FullDiagnostics and BTDiagnostics is the same */
     void Flush (int i_buffer, bool force_flush) override;
+
     /** whether to write output files at this time step
      *  The data is flushed when the buffer is full and/or
      *  when the simulation ends or when forced.
      * \param[in] step current time step
      * \param[in] i_buffer snapshot index
+     * \param[in] ref_ratios refinement ratios between all levels
+     * \param[in] dt_0 the timestep corresponding to the coarsest grid
      * \param[in] force_flush if true, return true for any step
      *  The return bool is used to determine when to write buffer data out
      */
-    bool DoDump (int step, int i_buffer, bool force_flush=false) override;
+    bool DoDump (int step, int i_buffer,
+        const amrex::Vector<amrex::IntVect>& ref_ratios,
+        amrex::Real dt_0,
+        bool force_flush=false) override;
+
     /** whether to compute the back-transformed data and store buffer in this timestep
      *  The field-data is back-transformed from boosted-frame to lab-frame
      *  at every time step within the PIC loop. Back-transformation is not performed
@@ -101,18 +108,45 @@ private:
         the particle and fields.
      */
     void PrepareBufferData () override;
-    /** This function increments the buffer counter and identifies if the snapshot is fully populated */
-    void UpdateBufferData () override;
+
+    /** This function increments the buffer counter and identifies if the snapshot is fully populated
+     *
+     * \param[in] ref_ratios refinement ratios between all levels
+     * \param[in] dts timesteps associated to all levels
+     */
+    virtual void UpdateBufferData (
+        const amrex::Vector<amrex::IntVect>& ref_ratios,
+        const amrex::Vector<amrex::Real>& dts) override;
+
+
     /** The cell-centered data for all fields, namely,
      *  Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho is computed and stored in
      *  the multi-level cell-centered multifab, m_mf_cc. This MultiFab extends
      *  over the entire domain and is coarsened using the user-defined crse_ratio.
      *  For every lab-frame buffer, the data stored in this cell-centered MultiFab
      *  is sliced, back-transformed, and stored in the output multifab, m_mf_output.
+     *
+     * \param[in] finest_level the finest refinement level
+     * \param[in] geometry_vector a vector containing the geometry of each level
+     * \param[in] ref_ratios refinement ratios between all levels
+     * \param[in] dts timesteps associated to all levels
      */
-    void PrepareFieldDataForOutput () override;
-    /** The Particle Geometry, BoxArray, and RealBox are set for the lab-frame output */
-    void PrepareParticleDataForOutput() override;
+    void PrepareFieldDataForOutput (
+        int finest_level,
+        const amrex::Vector<amrex::Geometry>& geometry_vector,
+        const amrex::Vector<amrex::IntVect>& ref_ratios,
+        const amrex::Vector<amrex::Real>& dts) override;
+
+    /** \brief The Particle Geometry, BoxArray, and RealBox are set for the lab-frame output
+     *
+     * \param[in] geometry_vector a vector containing the geometry of each level
+     * \param[in] ref_ratios refinement ratios between all levels
+     * \param[in] dts timesteps associated to all levels
+     */
+    void PrepareParticleDataForOutput(
+        const amrex::Vector<amrex::Geometry>& geometry_vector,
+        const amrex::Vector<amrex::IntVect>& ref_ratios,
+        const amrex::Vector<amrex::Real>& dts) override;
 
     /** whether z-slice that corresponds to the buffer, i_buffer, is within the
      *  boosted-domain and lab-frame domains at level, lev.
@@ -129,15 +163,24 @@ private:
      * \param[in] i_buffer index of the buffer for which the k-index is checked.
      * \param[in] lev mesh-refinement level using which the k-index for the z-slice being filled in the ith buffer is computed
      *            Return true if the k-index of the z-slice is within the bounds of the box for the buffer being filled
+     * \param[in] ref_ratios refinement ratios between all levels
+     * \param[in] dt_lev timesteps associated to level lev
      */
-    bool GetKIndexInSnapshotBoxFlag (int i_buffer, int lev);
+    bool GetKIndexInSnapshotBoxFlag (
+        int i_buffer, int lev,
+        const amrex::Vector<amrex::IntVect>& ref_ratios,
+        amrex::Real dt_lev);
 
     /** Initialize buffer domain, buffer box and lab-frame parameters such as
      *  m_t_lab, and z-positions for the i^th snapshot, i_buffer, and level, lev.
      * \param[in] i_buffer i^th snapshot or buffer
      * \param[in] lev mesh-refinement level for which the field and/or particle buffer data is initialized.
+     * \param[in] ref_ratios refinement ratios between all levels
      */
-    void InitializeBufferData ( int i_buffer , int lev, bool restart=false) override;
+    void InitializeBufferData ( int i_buffer, int lev,
+        const amrex::Vector<amrex::IntVect>& ref_ratios,
+        bool restart=false) override;
+
     /** Whether to compute back-tranformed values for field-data.
      *  default value is true.
      */
@@ -257,16 +300,26 @@ private:
      *
      * \param[in] i_buffer buffer-id of the back-transformed snapshot
      * \param[in] lev      mesh-refinement level at which the output buffer MultiFab is defined
+     * \param[in] geometry_vector a vector containing the geometry of each level
+     * \param[in] ref_ratios refinement ratios between all levels
+     * \param[in] dts timesteps associated to all levels
      */
-    void DefineFieldBufferMultiFab (int i_buffer, int lev);
+    void DefineFieldBufferMultiFab (int i_buffer, int lev,
+        const amrex::Vector<amrex::Geometry>& geometry_vector,
+        const amrex::Vector<amrex::IntVect>& ref_ratios,
+        const amrex::Vector<amrex::Real>& dts);
 
     /** Define the geometry object that spans the user-defined region for the
      *  ith snapshot, i_buffer, at level, lev.
      *
      * \param[in] i_buffer id of the back-transformed snapshot
      * \param[in] lev      level at which the geometry object is defined
+     * \param[in] ref_ratios refinement ratios between all levels
      */
-    void DefineSnapshotGeometry (int i_buffer, int lev);
+    void DefineSnapshotGeometry (
+        int i_buffer,
+        int lev,
+        const amrex::Vector<amrex::IntVect>& ref_ratios);
 
     /** Compute and return z-position in the boosted-frame at the current timestep
       * \param[in] t_lab   lab-frame time of the snapshot
@@ -292,19 +345,35 @@ private:
      *             The ref-ratio in the z-direction for single-level diagnostics is 1.
      */
     [[nodiscard]] amrex::Real dz_lab (amrex::Real dt, amrex::Real ref_ratio) const;
+
     /** Compute k-index corresponding to current lab-frame z co-ordinate (m_current_z_lab)
      *  for the ith buffer i_buffer, and at level, lev.
      * \param[in] i_buffer snapshot index
      * \param[in] lev      mesh-refinement level at which the lab-frame z-index is computed
+     * \param[in] ref_ratios refinement ratios between all levels
+     * \param[in] dt_lev   the timestep associated with level lev
      */
-    [[nodiscard]] int k_index_zlab (int i_buffer, int lev) const;
+    [[nodiscard]] int k_index_zlab (
+        int i_buffer, int lev,
+        const amrex::Vector<amrex::IntVect>& ref_ratios,
+        amrex::Real dt_lev) const;
+
     /** whether field buffer is full
      * \param[in] i_buffer buffer id for which the buffer size is checked.
      * returns bool = true is buffer is full, that is,
                when buffer counter is equal to m_buffer_size
+     * \param[in] i_buffer snapshot index
+     * \param[in] ref_ratios refinement ratios between all levels
+     * \param[in] dt_0   the timestep associated with the coarsest level
      */
-    bool buffer_full (int i_buffer) {
-        return (k_index_zlab(i_buffer,0) == m_buffer_box[i_buffer].smallEnd(m_moving_window_dir));
+    bool buffer_full (
+        const int i_buffer,
+        const amrex::Vector<amrex::IntVect>& ref_ratios,
+        const amrex::Real dt_0
+    )
+    {
+        constexpr int lev_0 = 0;
+        return (k_index_zlab(i_buffer, lev_0, ref_ratios, dt_0) == m_buffer_box[i_buffer].smallEnd(m_moving_window_dir));
     }
 
     /** whether field buffer is empty.

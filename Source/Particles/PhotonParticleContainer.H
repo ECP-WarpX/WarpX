@@ -69,6 +69,7 @@ public:
                          const amrex::MultiFab* cBz,
                          amrex::Real t,
                          amrex::Real dt,
+                         const amrex::Vector<amrex::IntVect>& ref_ratios,
                          DtType a_dt_type=DtType::Full,
                          bool skip_deposition=false,
                          PushType push_type=PushType::Explicit) override;
@@ -85,6 +86,7 @@ public:
                         long np_to_push,
                         int lev, int gather_lev,
                         amrex::Real dt, ScaleFields scaleFields,
+                        const amrex::IntVect& ref_ratio_gather_level,
                         DtType a_dt_type) override;
 
     // Do nothing
@@ -108,7 +110,8 @@ public:
                                 const long /*np_to_deposit*/,
                                 int /*thread_num*/,
                                 int /*lev*/,
-                                int /*depos_lev*/) override {}
+                                int /*depos_lev*/,
+                                const amrex::IntVect& /*ref_ratio_depos_level*/) override {}
 
     // DepositCurrent should do nothing for photons
     void DepositCurrent (WarpXParIter& /*pti*/,
@@ -125,6 +128,7 @@ public:
                                  int const /*thread_num*/,
                                  int const /*lev*/,
                                  int const /*depos_lev*/,
+                                 const amrex::IntVect& /*ref_ratio_depos_level*/,
                                  amrex::Real const /*dt*/,
                                  amrex::Real const /*relative_time*/,
                                  PushType /*push_type*/) override {}

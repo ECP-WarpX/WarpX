@@ -262,12 +262,12 @@ WarpX::InitFromCheckpoint ()
                         diag.set_snapshot_full(i_buffer, snapshot_full_flag);
 
                     }
-                    diag.InitDataAfterRestart();
+                    diag.InitDataAfterRestart(refRatio());
                 } else {
-                    diag.InitData();
+                    diag.InitData(finestLevel(), refRatio());
                 }
             } else {
-                multi_diags->GetDiag(idiag).InitData();
+                multi_diags->GetDiag(idiag).InitData(finestLevel(), refRatio());
             }
         }
     }

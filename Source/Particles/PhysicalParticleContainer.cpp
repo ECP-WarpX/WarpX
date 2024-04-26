@@ -2012,8 +2012,9 @@ PhysicalParticleContainer::Evolve (int lev,
                                    MultiFab* rho, MultiFab* crho,
                                    const MultiFab* cEx, const MultiFab* cEy, const MultiFab* cEz,
                                    const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
-                                   Real /*t*/, Real dt, DtType a_dt_type, bool skip_deposition,
-                                   PushType push_type)
+                                   Real /*t*/, Real dt,
+                                   const amrex::Vector<amrex::IntVect>& ref_ratios,
+                                   DtType a_dt_type, bool skip_deposition, PushType push_type)
 {
 
     WARPX_PROFILE("PhysicalParticleContainer::Evolve()");
@@ -2123,10 +2124,10 @@ PhysicalParticleContainer::Evolve (int lev,
                     pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr():nullptr;
 
                 DepositCharge(pti, wp, ion_lev, rho, 0, 0,
-                              np_current, thread_num, lev, lev);
+                              np_current, thread_num, lev, lev, ref_ratios[lev]);
                 if (has_buffer){
                     DepositCharge(pti, wp, ion_lev, crho, 0, np_current,
-                                  np-np_current, thread_num, lev, lev-1);
+                                  np-np_current, thread_num, lev, lev-1, ref_ratios[lev-1]);
                 }
             }
 
@@ -2146,18 +2147,17 @@ PhysicalParticleContainer::Evolve (int lev,
                     PushPX(pti, exfab, eyfab, ezfab,
                            bxfab, byfab, bzfab,
                            Ex.nGrowVect(), e_is_nodal,
-                           0, np_to_push, lev, gather_lev, dt, ScaleFields(false), a_dt_type);
+                           0, np_to_push, lev, gather_lev, dt, ScaleFields(false), ref_ratios[gather_lev], a_dt_type);
                 } else if (push_type == PushType::Implicit) {
                     ImplicitPushXP(pti, exfab, eyfab, ezfab,
                                    bxfab, byfab, bzfab,
                                    Ex.nGrowVect(), e_is_nodal,
-                                   0, np_to_push, lev, gather_lev, dt, ScaleFields(false), a_dt_type);
+                                   0, np_to_push, lev, gather_lev, dt, ScaleFields(false), ref_ratios[gather_lev], a_dt_type);
                 }
 
                 if (np_gather < np)
                 {
-                    const IntVect& ref_ratio = WarpX::RefRatio(lev-1);
-                    const Box& cbox = amrex::coarsen(box,ref_ratio);
+                    const Box& cbox = amrex::coarsen(box,ref_ratios[lev-1]);
 
                     // Data on the grid
                     FArrayBox const* cexfab = &(*cEx)[pti];
@@ -2188,13 +2188,13 @@ PhysicalParticleContainer::Evolve (int lev,
                                cbxfab, cbyfab, cbzfab,
                                cEx->nGrowVect(), e_is_nodal,
                                nfine_gather, np-nfine_gather,
-                               lev, lev-1, dt, ScaleFields(false), a_dt_type);
+                               lev, lev-1, dt, ScaleFields(false), ref_ratios[lev-1], a_dt_type);
                     } else if (push_type == PushType::Implicit) {
                         ImplicitPushXP(pti, cexfab, ceyfab, cezfab,
                                        cbxfab, cbyfab, cbzfab,
                                        cEx->nGrowVect(), e_is_nodal,
                                        nfine_gather, np-nfine_gather,
-                                       lev, lev-1, dt, ScaleFields(false), a_dt_type);
+                                       lev, lev-1, dt, ScaleFields(false), ref_ratios[lev-1], a_dt_type);
                     }
                 }
 
@@ -2212,14 +2212,14 @@ PhysicalParticleContainer::Evolve (int lev,
                     // Deposit inside domains
                     DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
                                    0, np_current, thread_num,
-                                   lev, lev, dt, relative_time, push_type);
+                                   lev, lev, ref_ratios[lev], dt, relative_time, push_type);
 
                     if (has_buffer)
                     {
                         // Deposit in buffers
                         DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
                                        np_current, np-np_current, thread_num,
-                                       lev, lev-1, dt, relative_time, push_type);
+                                       lev, lev-1, ref_ratios[lev-1], dt, relative_time, push_type);
                     }
                 } // end of "if electrostatic_solver_id == ElectrostaticSolverAlgo::None"
             } // end of "if do_not_push"
@@ -2235,10 +2235,10 @@ PhysicalParticleContainer::Evolve (int lev,
                         pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr():nullptr;
 
                     DepositCharge(pti, wp, ion_lev, rho, 1, 0,
-                                  np_current, thread_num, lev, lev);
+                                  np_current, thread_num, lev, lev, ref_ratios[lev]);
                     if (has_buffer){
                         DepositCharge(pti, wp, ion_lev, crho, 1, np_current,
-                                      np-np_current, thread_num, lev, lev-1);
+                                      np-np_current, thread_num, lev, lev-1, ref_ratios[lev-1]);
                     }
                 }
             }
@@ -2738,6 +2738,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                                    const long np_to_push,
                                    int lev, int gather_lev,
                                    amrex::Real dt, ScaleFields scaleFields,
+                                   const amrex::IntVect& ref_ratio_gather_level,
                                    DtType a_dt_type)
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE((gather_lev==(lev-1)) ||
@@ -2755,8 +2756,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     if (lev == gather_lev) {
         box = pti.tilebox();
     } else {
-        const IntVect& ref_ratio = WarpX::RefRatio(gather_lev);
-        box = amrex::coarsen(pti.tilebox(),ref_ratio);
+        box = amrex::coarsen(pti.tilebox(),ref_ratio_gather_level);
     }
 
     // Add guard cells to the box.
@@ -2991,6 +2991,7 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
                                            long np_to_push,
                                            int lev, int gather_lev,
                                            amrex::Real dt, ScaleFields scaleFields,
+                                           const amrex::IntVect& ref_ratio_gather_level,
                                            DtType a_dt_type)
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE((gather_lev==(lev-1)) ||
@@ -3008,8 +3009,7 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
     if (lev == gather_lev) {
         box = pti.tilebox();
     } else {
-        const IntVect& ref_ratio = WarpX::RefRatio(gather_lev);
-        box = amrex::coarsen(pti.tilebox(),ref_ratio);
+        box = amrex::coarsen(pti.tilebox(),ref_ratio_gather_level);
     }
 
     // Add guard cells to the box.

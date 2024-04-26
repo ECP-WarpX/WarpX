@@ -94,7 +94,7 @@ WarpX::AddMagnetostaticFieldLabFrame()
     for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
         WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
         if (!species.do_not_deposit) {
-            species.DepositCurrent(current_fp, dt[0], 0.);
+            species.DepositCurrent(current_fp, dt[0], 0., refRatio());
         }
     }
 

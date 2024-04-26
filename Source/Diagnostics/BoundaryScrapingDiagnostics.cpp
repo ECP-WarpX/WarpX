@@ -75,7 +75,8 @@ BoundaryScrapingDiagnostics::InitializeFieldFunctors (int /*lev*/)
 }
 
 void
-BoundaryScrapingDiagnostics::InitializeBufferData (int /*i_buffer*/, int /*lev*/, bool /*restart*/)
+BoundaryScrapingDiagnostics::InitializeBufferData (
+    int /*i_buffer*/, int /*lev*/, const amrex::Vector<amrex::IntVect>& /*ref_ratios*/, bool /*restart*/)
 {
     // This function is usually used for field output
     // Nothing to do here for boundary scraping output,
@@ -111,7 +112,11 @@ BoundaryScrapingDiagnostics::DoComputeAndPack (int /*step*/, bool /*force_flush*
 }
 
 bool
-BoundaryScrapingDiagnostics::DoDump (int step, int /*i_buffer*/, bool force_flush)
+BoundaryScrapingDiagnostics::DoDump (
+    int step, int /*i_buffer*/,
+    const amrex::Vector<amrex::IntVect>& /*ref_ratios*/,
+    amrex::Real /*dt_0*/,
+    bool force_flush)
 {
     if (force_flush) {
         return true;

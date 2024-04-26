@@ -167,6 +167,7 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
                                         const long np_to_push,
                                         int lev, int gather_lev,
                                         amrex::Real dt, ScaleFields /*scaleFields*/,
+                                        const amrex::IntVect& ref_ratio_gather_level,
                                         DtType a_dt_type)
 {
     auto& attribs = pti.GetAttribs();
@@ -245,6 +246,7 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
                                       ngEB, e_is_nodal, offset, np_to_push, lev, gather_lev, dt,
                                       ScaleFields(do_scale, dt, zinject_plane_lev_previous,
                                                   vzbeam_ave_boosted, v_boost),
+                                      ref_ratio_gather_level,
                                       a_dt_type);
 
     if (!done_injecting_lev) {
@@ -299,7 +301,8 @@ RigidInjectedParticleContainer::Evolve (int lev,
                                         MultiFab* rho, MultiFab* crho,
                                         const MultiFab* cEx, const MultiFab* cEy, const MultiFab* cEz,
                                         const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
-                                        Real t, Real dt, DtType a_dt_type, bool skip_deposition,
+                                        Real t, Real dt, const amrex::Vector<amrex::IntVect>& ref_ratios,
+                                        DtType a_dt_type, bool skip_deposition,
                                         PushType push_type)
 {
 
@@ -325,7 +328,8 @@ RigidInjectedParticleContainer::Evolve (int lev,
                                        rho, crho,
                                        cEx, cEy, cEz,
                                        cBx, cBy, cBz,
-                                       t, dt, a_dt_type, skip_deposition, push_type);
+                                       t, dt, ref_ratios,
+                                       a_dt_type, skip_deposition, push_type);
 }
 
 void

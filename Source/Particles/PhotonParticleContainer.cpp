@@ -91,7 +91,9 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
                                  const long offset,
                                  const long np_to_push,
                                  int lev, int gather_lev,
-                                 amrex::Real dt, ScaleFields /*scaleFields*/, DtType a_dt_type)
+                                 amrex::Real dt, ScaleFields /*scaleFields*/,
+                                 const amrex::IntVect& ref_ratio_gather_level,
+                                 DtType a_dt_type)
 {
     // Get cell size on gather_lev
     const std::array<Real,3>& dx = WarpX::CellSize(std::max(gather_lev,0));
@@ -102,8 +104,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     if (lev == gather_lev) {
         box = pti.tilebox();
     } else {
-        const IntVect& ref_ratio = WarpX::RefRatio(gather_lev);
-        box = amrex::coarsen(pti.tilebox(),ref_ratio);
+        box = amrex::coarsen(pti.tilebox(),ref_ratio_gather_level);
     }
 
     // Add guard cells to the box.
@@ -240,7 +241,8 @@ PhotonParticleContainer::Evolve (int lev,
                                  MultiFab* rho, MultiFab* crho,
                                  const MultiFab* cEx, const MultiFab* cEy, const MultiFab* cEz,
                                  const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
-                                 Real t, Real dt, DtType a_dt_type, bool skip_deposition,
+                                 Real t, Real dt, const amrex::Vector<amrex::IntVect>& ref_ratios,
+                                 DtType a_dt_type, bool skip_deposition,
                                  PushType push_type)
 {
     // This does gather, push and deposit.
@@ -253,6 +255,6 @@ PhotonParticleContainer::Evolve (int lev,
                                        rho, crho,
                                        cEx, cEy, cEz,
                                        cBx, cBy, cBz,
-                                       t, dt, a_dt_type, skip_deposition, push_type);
+                                       t, dt, ref_ratios, a_dt_type, skip_deposition, push_type);
 
 }

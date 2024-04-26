@@ -562,7 +562,8 @@ LaserParticleContainer::Evolve (int lev,
                                 MultiFab* rho, MultiFab* crho,
                                 const MultiFab*, const MultiFab*, const MultiFab*,
                                 const MultiFab*, const MultiFab*, const MultiFab*,
-                                Real t, Real dt, DtType /*a_dt_type*/, bool skip_deposition, PushType push_type)
+                                Real t, Real dt, const amrex::Vector<amrex::IntVect>& ref_ratios,
+                                DtType /*a_dt_type*/, bool skip_deposition, PushType push_type)
 {
     WARPX_PROFILE("LaserParticleContainer::Evolve()");
     WARPX_PROFILE_VAR_NS("LaserParticleContainer::Evolve::ParticlePush", blp_pp);
@@ -627,10 +628,10 @@ LaserParticleContainer::Evolve (int lev,
             if (rho && ! skip_deposition && ! do_not_deposit) {
                 int* AMREX_RESTRICT ion_lev = nullptr;
                 DepositCharge(pti, wp, ion_lev, rho, 0, 0,
-                              np_current, thread_num, lev, lev);
+                              np_current, thread_num, lev, lev, ref_ratios[lev]);
                 if (has_buffer) {
                     DepositCharge(pti, wp, ion_lev, crho, 0, np_current,
-                                  np-np_current, thread_num, lev, lev-1);
+                                  np-np_current, thread_num, lev, lev-1, ref_ratios[lev-1]);
                 }
             }
 
@@ -665,14 +666,14 @@ LaserParticleContainer::Evolve (int lev,
                 // Deposit inside domains
                 DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
                                0, np_current, thread_num,
-                               lev, lev, dt, relative_time, push_type);
+                               lev, lev, ref_ratios[lev], dt, relative_time, push_type);
 
                 if (has_buffer)
                 {
                     // Deposit in buffers
                     DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
                                    np_current, np-np_current, thread_num,
-                                   lev, lev-1, dt, relative_time, push_type);
+                                   lev, lev-1, ref_ratios[lev-1], dt, relative_time, push_type);
                 }
             }
 
@@ -680,10 +681,10 @@ LaserParticleContainer::Evolve (int lev,
             if (rho && ! skip_deposition && ! do_not_deposit) {
                 int* AMREX_RESTRICT ion_lev = nullptr;
                 DepositCharge(pti, wp, ion_lev, rho, 1, 0,
-                              np_current, thread_num, lev, lev);
+                              np_current, thread_num, lev, lev, ref_ratios[lev]);
                 if (has_buffer) {
                     DepositCharge(pti, wp, ion_lev, crho, 1, np_current,
-                                  np-np_current, thread_num, lev, lev-1);
+                                  np-np_current, thread_num, lev, lev-1, ref_ratios[lev-1]);
                 }
             }
 

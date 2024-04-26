@@ -149,7 +149,11 @@ FullDiagnostics::FlushRaw () {}
 
 
 bool
-FullDiagnostics::DoDump (int step, int /*i_buffer*/, bool force_flush)
+FullDiagnostics::DoDump (
+    int step, int /*i_buffer*/,
+    const amrex::Vector<amrex::IntVect>& /*ref_ratios*/,
+    const amrex::Real /*dt_0*/,
+    bool force_flush)
 {
     if (m_already_done) { return false; }
     if ( force_flush || (m_intervals.contains(step+1)) ){
@@ -496,7 +500,7 @@ FullDiagnostics::AddRZModesToOutputNames (const std::string& field, int ncomp){
 
 
 void
-FullDiagnostics::InitializeBufferData (int i_buffer, int lev, bool restart ) {
+FullDiagnostics::InitializeBufferData (int i_buffer, int lev, const amrex::Vector<amrex::IntVect>& ref_ratios, bool restart ) {
     amrex::ignore_unused(restart);
     auto & warpx = WarpX::GetInstance();
     amrex::RealBox diag_dom;
@@ -613,7 +617,7 @@ FullDiagnostics::InitializeBufferData (int i_buffer, int lev, bool restart ) {
     } else if (lev > 0) {
         // Take the geom object of previous level and refine it.
         m_geom_output[i_buffer][lev] = amrex::refine( m_geom_output[i_buffer][lev-1],
-                                                      WarpX::RefRatio(lev-1) );
+                                                      ref_ratios[lev-1] );
     }
 }
 
@@ -753,7 +757,11 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
 
 
 void
-FullDiagnostics::PrepareFieldDataForOutput ()
+FullDiagnostics::PrepareFieldDataForOutput (
+    const int /* finest_level */,
+    const  amrex::Vector<amrex::Geometry>& /* geometry_vector */,
+    const amrex::Vector<amrex::IntVect>& /* ref_ratios */,
+    const amrex::Vector<amrex::Real>& /* dts */)
 {
     // First, make sure all guard cells are properly filled
     // Probably overkill/unnecessary, but safe and shouldn't happen often !!

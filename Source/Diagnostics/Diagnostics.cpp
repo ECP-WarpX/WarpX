@@ -305,7 +305,7 @@ Diagnostics::InitDataBeforeRestart ()
 }
 
 void
-Diagnostics::InitDataAfterRestart ()
+Diagnostics::InitDataAfterRestart (const amrex::Vector<amrex::IntVect>& ref_ratios)
 {
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
         // loop over all levels
@@ -321,7 +321,7 @@ Diagnostics::InitDataAfterRestart ()
         // and only the coarse level (mother grid) for BTD
         for (int lev = 0; lev < nlev_output; ++lev) {
             // Initialize buffer data required for particle and/or fields
-            InitializeBufferData(i_buffer, lev, true);
+            InitializeBufferData(i_buffer, lev, ref_ratios, true);
         }
     }
 
@@ -374,13 +374,8 @@ Diagnostics::InitDataAfterRestart ()
 
 
 void
-Diagnostics::InitData ()
+Diagnostics::InitData (const int finest_level, const amrex::Vector<amrex::IntVect>& ref_ratios)
 {
-    auto& warpx = WarpX::GetInstance();
-
-    // Get current finest level available
-    const int finest_level = warpx.finestLevel();
-
     // initialize member variables and arrays in base class::Diagnostics
     InitBaseData();
     // initialize member variables and arrays specific to each derived class
@@ -400,7 +395,7 @@ Diagnostics::InitData ()
         // and only the coarse level (mother grid) for BTD
         for (int lev = 0; lev < nlev_output; ++lev) {
             // Initialize buffer data required for particle and/or fields
-            InitializeBufferData(i_buffer, lev);
+            InitializeBufferData(i_buffer, lev, ref_ratios);
         }
     }
 
@@ -519,17 +514,19 @@ Diagnostics::InitBaseData ()
 }
 
 void
-Diagnostics::ComputeAndPack ()
+Diagnostics::ComputeAndPack (
+    const int finest_level,
+    const amrex::Vector<amrex::Geometry>& geometry_vector,
+    const amrex::Vector<amrex::IntVect>& ref_ratios,
+    const amrex::Vector<amrex::Real>& dts)
 {
     PrepareBufferData();
     // prepare the field-data necessary to compute output data
-    PrepareFieldDataForOutput();
+    PrepareFieldDataForOutput(finest_level, geometry_vector, ref_ratios, dts);
     // Prepare the particle data necessary to compute output data
     // Field-data is called first for BTD, since the z-slice location is used to prepare particle data
     // to determine if the transform is to be done this step.
-    PrepareParticleDataForOutput();
-
-    auto & warpx = WarpX::GetInstance();
+    PrepareParticleDataForOutput(geometry_vector, ref_ratios, dts);
 
     // compute the necessary fields and store result in m_mf_output.
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
@@ -550,7 +547,7 @@ Diagnostics::ComputeAndPack ()
             // needed for contour plots of rho, i.e. ascent/sensei
             if (m_format == "sensei" || m_format == "ascent") {
                 ablastr::utils::communication::FillBoundary(m_mf_output[i_buffer][lev], WarpX::do_single_precision_comms,
-                                                            warpx.Geom(lev).periodicity());
+                                                            geometry_vector[lev].periodicity());
             }
         }
         // Call Particle functor
@@ -559,22 +556,29 @@ Diagnostics::ComputeAndPack ()
         }
     }
 
-    UpdateBufferData();
+    UpdateBufferData(ref_ratios, dts);
 }
 
 
 void
-Diagnostics::FilterComputePackFlush (int step, bool force_flush)
+Diagnostics::FilterComputePackFlush (
+    int step,
+    const int finest_level,
+    const amrex::Vector<amrex::Geometry>& geometry_vector,
+    const amrex::Vector<amrex::IntVect>& ref_ratios,
+    const amrex::Vector<amrex::Real>& dts,
+    bool force_flush
+)
 {
     WARPX_PROFILE("Diagnostics::FilterComputePackFlush()");
     MovingWindowAndGalileanDomainShift (step);
 
     if ( DoComputeAndPack (step, force_flush) ) {
-        ComputeAndPack();
+        ComputeAndPack(finest_level, geometry_vector, ref_ratios, dts);
     }
 
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
-        if ( !DoDump (step, i_buffer, force_flush) ) { continue; }
+        if ( !DoDump (step, i_buffer,ref_ratios, dts[0], force_flush) ) { continue; }
         Flush(i_buffer, force_flush);
     }
 }

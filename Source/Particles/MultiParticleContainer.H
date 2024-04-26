@@ -108,7 +108,8 @@ public:
                  amrex::MultiFab* rho, amrex::MultiFab* crho,
                  const amrex::MultiFab* cEx, const amrex::MultiFab* cEy, const amrex::MultiFab* cEz,
                  const amrex::MultiFab* cBx, const amrex::MultiFab* cBy, const amrex::MultiFab* cBz,
-                 amrex::Real t, amrex::Real dt, DtType a_dt_type=DtType::Full, bool skip_deposition=false,
+                 amrex::Real t, amrex::Real dt, const amrex::Vector<amrex::IntVect>& ref_ratios,
+                 DtType a_dt_type=DtType::Full, bool skip_deposition=false,
                  PushType push_type=PushType::Explicit);
 
     /**
@@ -143,10 +144,12 @@ public:
      *                          current positions of the particles. When different than 0,
      *                          the particle position will be temporarily modified to match
      *                          the time of the deposition.
+     * \param[in] ref_ratios refinement ratios between all levels
      */
     void
     DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                   amrex::Real relative_time);
+                   amrex::Real relative_time,
+                   const amrex::Vector<amrex::IntVect>& ref_ratios);
 
     /**
      * \brief Deposit current density.
@@ -158,16 +161,18 @@ public:
      *                          current positions of the particles. When different than 0,
      *                          the particle position will be temporarily modified to match
      *                          the time of the deposition.
+     * \param[in] ref_ratios refinement ratios between all levels
      */
     void
     DepositCurrent (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
-                    amrex::Real dt, amrex::Real relative_time);
+                    amrex::Real dt, amrex::Real relative_time,
+                    const amrex::Vector<amrex::IntVect>& ref_ratios);
 
     ///
     /// This deposits the particle charge onto a node-centered MultiFab and returns a unique ptr
     /// to it. The charge density is accumulated over all the particles in the MultiParticleContainer
 
-    std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, bool local = false);
+    std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, const amrex::Vector<amrex::IntVect>& ref_ratios, bool local = false);
 
     void doFieldIonization (int lev,
                             const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,

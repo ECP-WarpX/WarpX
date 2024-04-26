@@ -34,10 +34,10 @@ MultiDiagnostics::MultiDiagnostics ()
 }
 
 void
-MultiDiagnostics::InitData ()
+MultiDiagnostics::InitData (const int finest_level, const amrex::Vector<amrex::IntVect>& ref_ratios)
 {
     for( auto& diag : alldiags ){
-        diag->InitData();
+        diag->InitData(finest_level, ref_ratios);
     }
 }
 
@@ -77,17 +77,23 @@ MultiDiagnostics::ReadParameters ()
 }
 
 void
-MultiDiagnostics::FilterComputePackFlush (int step, bool force_flush, bool BackTransform)
+MultiDiagnostics::FilterComputePackFlush (
+    const int step,
+    const int finest_level,
+    const amrex::Vector<amrex::Geometry>& geometry_vector,
+    const amrex::Vector<amrex::IntVect>& ref_ratios,
+    const amrex::Vector<amrex::Real>& dts,
+    const bool force_flush, const bool BackTransform)
 {
     int i = 0;
     for (auto& diag : alldiags){
         if (BackTransform) {
             if (diags_types[i] == DiagTypes::BackTransformed) {
-                diag->FilterComputePackFlush (step, force_flush);
+                diag->FilterComputePackFlush (step, finest_level, geometry_vector, ref_ratios, dts, force_flush);
             }
         } else {
             if (diags_types[i] != DiagTypes::BackTransformed) {
-                diag->FilterComputePackFlush (step, force_flush);
+                diag->FilterComputePackFlush (step, finest_level, geometry_vector, ref_ratios, dts, force_flush);
             }
         }
         ++i;
@@ -95,12 +101,18 @@ MultiDiagnostics::FilterComputePackFlush (int step, bool force_flush, bool BackT
 }
 
 void
-MultiDiagnostics::FilterComputePackFlushLastTimestep (int step)
+MultiDiagnostics::FilterComputePackFlushLastTimestep (
+    const int step,
+    const int finest_level,
+    const amrex::Vector<amrex::Geometry>& geometry_vector,
+    const amrex::Vector<amrex::IntVect>& ref_ratios,
+    const amrex::Vector<amrex::Real>& dts
+)
 {
     for (auto& diag : alldiags){
         if (diag->DoDumpLastTimestep()){
             constexpr bool force_flush = true;
-            diag->FilterComputePackFlush (step, force_flush);
+            diag->FilterComputePackFlush (step, finest_level, geometry_vector, ref_ratios, dts, force_flush);
         }
     }
 }

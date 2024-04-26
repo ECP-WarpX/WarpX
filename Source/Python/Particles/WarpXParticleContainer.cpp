@@ -131,11 +131,11 @@ void init_WarpXParticleContainer (py::module& m)
             py::arg("rho"), py::arg("lev")
         )
         .def("get_charge_density",
-            [](WarpXParticleContainer& pc, int lev, bool local)
+            [](WarpXParticleContainer& pc, int lev, const amrex::Vector<amrex::IntVect>& ref_ratios, bool local)
             {
-                return pc.GetChargeDensity(lev, local);
+                return pc.GetChargeDensity(lev, ref_ratios, local);
             },
-            py::arg("lev"), py::arg("local")
+            py::arg("lev"), py::arg("ref_ratios"), py::arg("local")
         )
         .def("set_do_not_push",
             [](WarpXParticleContainer& pc, bool flag) { pc.setDoNotPush(flag); },

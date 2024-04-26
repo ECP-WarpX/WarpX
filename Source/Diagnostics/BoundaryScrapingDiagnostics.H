@@ -39,9 +39,16 @@ private:
      *
      * \param[in] step current time step
      * \param[in] i_buffer index of the boundary buffer used (e.g. upper/lower boundary, EB boundary)
+     * \param[in] ref_ratios refinement ratios between all levels
+     * \param[in] dt_0 the timestep corresponding to the coarsest grid
      * \param[in] force_flush if true, return true for any step
      */
-    bool DoDump (int step, int i_buffer, bool force_flush=false) override;
+    bool DoDump (
+        int step, int i_buffer,
+        const amrex::Vector<amrex::IntVect>& ref_ratios,
+        amrex::Real dt_0,
+        bool force_flush=false) override;
+
     /** Return whether to pack field data in output buffers at this time step
      *
      * This is not used for BoundaryScrapingDiagnostics: no field to output
@@ -51,7 +58,8 @@ private:
      *
      * This is not used for BoundaryScrapingDiagnostics: no field to output
      */
-    void InitializeBufferData (int i_buffer, int lev, bool restart=false) override;
+    void InitializeBufferData (int i_buffer, int lev,
+        const amrex::Vector<amrex::IntVect>& ref_ratios, bool restart=false) override;
     /** Initialize functors that point to the fields requested by the user.
      *
      * This is not used for BoundaryScrapingDiagnostics: no field to output

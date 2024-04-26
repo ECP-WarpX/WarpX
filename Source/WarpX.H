@@ -889,8 +889,6 @@ public:
      */
     static std::array<amrex::Real,3> UpperCorner (const amrex::Box& bx, int lev, amrex::Real time_shift_delta);
 
-    static amrex::IntVect RefRatio (int lev);
-
     static const amrex::iMultiFab* CurrentBufferMasks (int lev);
     static const amrex::iMultiFab* GatherBufferMasks (int lev);
 

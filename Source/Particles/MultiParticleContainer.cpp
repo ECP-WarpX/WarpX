@@ -458,7 +458,8 @@ MultiParticleContainer::Evolve (int lev,
                                 MultiFab* rho, MultiFab* crho,
                                 const MultiFab* cEx, const MultiFab* cEy, const MultiFab* cEz,
                                 const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
-                                Real t, Real dt, DtType a_dt_type, bool skip_deposition,
+                                Real t, Real dt, const amrex::Vector<amrex::IntVect>& ref_ratios,
+                                DtType a_dt_type, bool skip_deposition,
                                 PushType push_type)
 {
     if (! skip_deposition) {
@@ -473,7 +474,7 @@ MultiParticleContainer::Evolve (int lev,
     }
     for (auto& pc : allcontainers) {
         pc->Evolve(lev, Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, cjx, cjy, cjz,
-                   rho, crho, cEx, cEy, cEz, cBx, cBy, cBz, t, dt, a_dt_type, skip_deposition, push_type);
+                   rho, crho, cEx, cEy, cEz, cBx, cBy, cBz, t, dt, ref_ratios, a_dt_type, skip_deposition, push_type);
     }
 }
 
@@ -523,7 +524,8 @@ MultiParticleContainer::GetZeroChargeDensity (const int lev)
 void
 MultiParticleContainer::DepositCurrent (
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
-    const amrex::Real dt, const amrex::Real relative_time)
+    const amrex::Real dt, const amrex::Real relative_time,
+    const amrex::Vector<amrex::IntVect>& ref_ratios)
 {
     // Reset the J arrays
     for (auto& J_lev : J)
@@ -536,7 +538,7 @@ MultiParticleContainer::DepositCurrent (
     // Call the deposition kernel for each species
     for (auto& pc : allcontainers)
     {
-        pc->DepositCurrent(J, dt, relative_time);
+        pc->DepositCurrent(J, dt, relative_time, ref_ratios);
     }
 
 #ifdef WARPX_DIM_RZ
@@ -551,7 +553,8 @@ MultiParticleContainer::DepositCurrent (
 void
 MultiParticleContainer::DepositCharge (
     amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-    const amrex::Real relative_time)
+    const amrex::Real relative_time,
+    const amrex::Vector<amrex::IntVect>& ref_ratios)
 {
     // Reset the rho array
     for (auto& rho_lev : rho)
@@ -570,7 +573,7 @@ MultiParticleContainer::DepositCharge (
     for (auto& pc : allcontainers)
     {
         if (pc->do_not_deposit) { continue; }
-        pc->DepositCharge(rho, local, reset, apply_boundary_and_scale_volume,
+        pc->DepositCharge(rho, ref_ratios, local, reset, apply_boundary_and_scale_volume,
                               interpolate_across_levels);
     }
 
@@ -586,13 +589,13 @@ MultiParticleContainer::DepositCharge (
 }
 
 std::unique_ptr<MultiFab>
-MultiParticleContainer::GetChargeDensity (int lev, bool local)
+MultiParticleContainer::GetChargeDensity (int lev, const amrex::Vector<amrex::IntVect>& ref_ratios, bool local)
 {
     std::unique_ptr<MultiFab> rho = GetZeroChargeDensity(lev);
 
     for (auto& container : allcontainers) {
         if (container->do_not_deposit) { continue; }
-        const std::unique_ptr<MultiFab> rhoi = container->GetChargeDensity(lev, true);
+        const std::unique_ptr<MultiFab> rhoi = container->GetChargeDensity(lev, ref_ratios, true);
         MultiFab::Add(*rho, *rhoi, 0, 0, rho->nComp(), rho->nGrowVect());
     }
     if (!local) {

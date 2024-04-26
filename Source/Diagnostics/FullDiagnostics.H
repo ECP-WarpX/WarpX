@@ -39,10 +39,17 @@ private:
     /** whether to flush at this time step
      * \param[in] step current time step
      * \param[in] i_buffer index of a back-transformed snapshot
+     * \param[in] ref_ratios refinement ratios between all levels
+     * \param[in] dt_0 the timestep corresponding to the coarsest grid
      * \param[in] force_flush if true, return true for any step
      * \return bool, whether to flush
      */
-    bool DoDump (int step, int i_buffer, bool force_flush=false) override;
+    bool DoDump (
+      int step, int i_buffer,
+      const amrex::Vector<amrex::IntVect>& ref_ratios,
+      amrex::Real dt_0,
+      bool force_flush=false) override;
+
     /** Append varnames with names for all modes of a field
      * \param[in] field field name (includes component, e.g., Er)
      * \param[in] ncomp number of components (modes, real and imag)
@@ -54,8 +61,10 @@ private:
       *
       * \param[in] i_buffer index of a back-transformed snapshot
       * \param[in] lev level on which source multifabs are defined
+      * \param[in] ref_ratios refinement ratios between all levels
       */
-    void InitializeBufferData ( int i_buffer, int lev, bool restart=false ) override;
+    void InitializeBufferData ( int i_buffer, int lev,
+      const amrex::Vector<amrex::IntVect>& ref_ratios, bool restart=false ) override;
     /** Initialize functors that store pointers to the RZ fields requested by the user.
      * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
      */
@@ -70,10 +79,23 @@ private:
       */
     void InitializeFieldFunctors (int lev) override;
     void InitializeParticleBuffer () override;
+
     /** Prepare field data to be used for diagnostics */
-    void PrepareFieldDataForOutput () override;
-    /** Prepare particle data to be used for diagnostics. */
-    void PrepareParticleDataForOutput() override {}
+    void PrepareFieldDataForOutput (
+        int /* finest_level */,
+        const  amrex::Vector<amrex::Geometry>& /* geometry_vector */,
+        const amrex::Vector<amrex::IntVect>& /* ref_ratios */,
+        const amrex::Vector<amrex::Real>& /* dts */) override;
+
+    /**
+     *  \brief The Particle Geometry, BoxArray, and RealBox are set for the lab-frame output
+     *
+     */
+    void PrepareParticleDataForOutput(
+      const  amrex::Vector<amrex::Geometry>& /* geometry_vector */,
+      const amrex::Vector<amrex::IntVect>& /*ref_ratios*/,
+      const amrex::Vector<amrex::Real>& /*dts*/) override {}
+
     /** Update the physical extent of the diagnostic domain for moving window and
      *  galilean shift simulations
      *

@@ -153,7 +153,8 @@ public:
                          amrex::MultiFab* rho, amrex::MultiFab* crho,
                          const amrex::MultiFab* cEx, const amrex::MultiFab* cEy, const amrex::MultiFab* cEz,
                          const amrex::MultiFab* cBx, const amrex::MultiFab* cBy, const amrex::MultiFab* cBz,
-                         amrex::Real t, amrex::Real dt, DtType a_dt_type=DtType::Full, bool skip_deposition=false,
+                         amrex::Real t, amrex::Real dt, const amrex::Vector<amrex::IntVect>& ref_ratios,
+                         DtType a_dt_type=DtType::Full, bool skip_deposition=false,
                          PushType push_type=PushType::Explicit) = 0;
 
     virtual void PostRestart () = 0;
@@ -198,14 +199,17 @@ public:
      *                          current positions of the particles. When different than 0,
      *                          the particle position will be temporarily modified to match
      *                          the time of the deposition.
+     * \param[in] ref_ratios refinement ratios between all levels
      */
     void DepositCurrent (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
-                         amrex::Real dt, amrex::Real relative_time);
+                         amrex::Real dt, amrex::Real relative_time,
+                         const amrex::Vector<amrex::IntVect>& ref_ratios);
 
     /**
      * \brief Deposit charge density.
      *
      * \param[in,out] rho vector of charge densities (one pointer to MultiFab per mesh refinement level)
+     * \param[in] ref_ratios refinement ratios between all levels
      * \param[in] local if false, exchange the data in the guard cells after the deposition
      * \param[in] reset if true, reset all values of rho to zero
      * \param[in] apply_boundary_and_scale_volume whether to apply boundary conditions and scale the final density by some volume norm in RZ geometry
@@ -213,16 +217,19 @@ public:
      * \param[in] icomp component of the MultiFab where rho is deposited (old, new)
      */
     void DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+                        const amrex::Vector<amrex::IntVect>& ref_ratios,
                         bool local = false, bool reset = false,
                         bool apply_boundary_and_scale_volume = false,
                         bool interpolate_across_levels = true,
                         int icomp = 0);
+
     void DepositCharge (std::unique_ptr<amrex::MultiFab>& rho, int lev,
+                        const amrex::Vector<amrex::IntVect>& ref_ratios,
                         bool local = false, bool reset = false,
                         bool apply_boundary_and_scale_volume = false,
                         int icomp = 0);
 
-    std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, bool local = false);
+    std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, const amrex::Vector<amrex::IntVect>& ref_ratios, bool local = false);
 
     virtual void DepositCharge (WarpXParIter& pti,
                                RealVector const & wp,
@@ -233,7 +240,8 @@ public:
                                long np_to_deposit,
                                int thread_num,
                                int lev,
-                               int depos_lev);
+                               int depos_lev,
+                               const amrex::IntVect& ref_ratio_depos_level);
 
     virtual void DepositCurrent (WarpXParIter& pti,
                                 RealVector const & wp,
@@ -249,6 +257,7 @@ public:
                                 int thread_num,
                                 int lev,
                                 int depos_lev,
+                                const amrex::IntVect& ref_ratio_depos_level,
                                 amrex::Real dt,
                                 amrex::Real relative_time,
                                 PushType push_type);

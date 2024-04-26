@@ -223,7 +223,7 @@ void ColliderRelevant::ComputeDiags (int step)
 
         using PType = typename WarpXParticleContainer::SuperParticleType;
 
-        num_dens[i_s] = myspc.GetChargeDensity(0);
+        num_dens[i_s] = myspc.GetChargeDensity(0, warpx.refRatio());
         num_dens[i_s]->mult(1._prt/q);
 
 #if defined(WARPX_DIM_1D_Z)

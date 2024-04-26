@@ -23,13 +23,30 @@ public:
     MultiDiagnostics ();
     /** \brief Read Input parameters. Called in constructor. */
     void ReadParameters ();
-    /** \brief Loop over diags in alldiags and call their InitDiags */
-    void InitData ();
+
+    /** \brief Loop over diags in alldiags and call their InitDiags
+     *
+     * \param[in] finest_level the finest refinement level
+     * \param[in] ref_ratios refinement ratios between all levels
+    */
+    void InitData (int finest_level, const amrex::Vector<amrex::IntVect>& ref_ratios);
+
     /** \brief Called at each iteration. Compute diags and flush. */
-    void FilterComputePackFlush (int step, bool force_flush=false, bool BackTransform=false);
+    void FilterComputePackFlush (
+        int step, int finest_level,
+        const amrex::Vector<amrex::Geometry>& geometry_vector,
+        const amrex::Vector<amrex::IntVect>& ref_ratios,
+        const amrex::Vector<amrex::Real>& dts,
+        bool force_flush=false, bool BackTransform=false);
+
     /** \brief Called only at the last iteration. Loop over each diag and if m_dump_last_timestep
      *         is true, compute diags and flush with force_flush=true. */
-    void FilterComputePackFlushLastTimestep (int step);
+    void FilterComputePackFlushLastTimestep (
+        int step, int finest_level,
+        const amrex::Vector<amrex::Geometry>& geometry_vector,
+        const amrex::Vector<amrex::IntVect>& ref_ratios,
+        const amrex::Vector<amrex::Real>& dts);
+
     /** \brief Loop over diags in all diags and call their InitializeFieldFunctors.
                Called when a new partitioning is generated at level, lev.
       * \param[in] lev level at this the field functors are initialized.
