@@ -128,7 +128,7 @@ void init_WarpXParticleContainer (py::module& m)
                     pc.DepositCharge(pti, wp, nullptr, rho, 0, 0, np, 0, lev, lev, ref_ratios[lev]);
                 }
             },
-            py::arg("rho"), py::arg("lev")
+            py::arg("rho"), py::arg("lev"), py::arg("ref_ratios")
         )
         .def("get_charge_density",
             [](WarpXParticleContainer& pc, int lev, const amrex::Vector<amrex::IntVect>& ref_ratios, bool local)
