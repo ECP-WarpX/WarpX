@@ -84,7 +84,7 @@ public:
      * \param[in] finest_level the finest refinement level
      * \param[in] ref_ratios refinement ratios between all levels
     */
-    void InitData (const int finest_level, const amrex::Vector<amrex::IntVect>& ref_ratios);
+    void InitData (int finest_level, const amrex::Vector<amrex::IntVect>& ref_ratios);
 
     void InitDataBeforeRestart ();
 

@@ -114,7 +114,7 @@ private:
      * \param[in] ref_ratios refinement ratios between all levels
      * \param[in] dts timesteps associated to all levels
      */
-    virtual void UpdateBufferData (
+    void UpdateBufferData (
         const amrex::Vector<amrex::IntVect>& ref_ratios,
         const amrex::Vector<amrex::Real>& dts) override;
 
