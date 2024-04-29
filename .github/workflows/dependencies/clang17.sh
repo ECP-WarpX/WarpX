@@ -37,7 +37,9 @@ sudo apt-get install -y \
     curl                \
     git
 
-# set clang 17 as the CXX compiler
+# Use clang 17
+export CXX=$(which clang++-17)
+export CC=$(which clang-17)
 
 # cmake-easyinstall
 #
@@ -45,10 +47,6 @@ sudo curl -L -o /usr/local/bin/cmake-easyinstall https://raw.githubusercontent.c
 sudo chmod a+x /usr/local/bin/cmake-easyinstall
 export CEI_SUDO="sudo"
 export CEI_TMP="/tmp/cei"
-
-# Use clang 17
-export CXX=clang++-17
-export CC=clang-17
 
 # BLAS++ & LAPACK++
 cmake-easyinstall \
