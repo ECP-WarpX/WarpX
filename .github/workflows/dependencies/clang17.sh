@@ -46,13 +46,16 @@ sudo chmod a+x /usr/local/bin/cmake-easyinstall
 export CEI_SUDO="sudo"
 export CEI_TMP="/tmp/cei"
 
+# Use clang 17
+export CXX=clang++-17
+export CC=clang-17
+
 # BLAS++ & LAPACK++
 cmake-easyinstall \
   --prefix=/usr/local                           \
   git+https://github.com/icl-utk-edu/blaspp.git \
   -Duse_openmp=OFF                              \
   -Dbuild_tests=OFF                             \
-  -CMAKE_CXX_COMPILER="clang++-17"              \
   -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache) \
   -DCMAKE_VERBOSE_MAKEFILE=ON
 
@@ -61,6 +64,5 @@ cmake-easyinstall \
   git+https://github.com/icl-utk-edu/lapackpp.git \
   -Duse_cmake_find_lapack=ON                      \
   -Dbuild_tests=OFF                               \
-  -CMAKE_CXX_COMPILER="clang++-17"                \
   -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache)   \
   -DCMAKE_VERBOSE_MAKEFILE=ON
