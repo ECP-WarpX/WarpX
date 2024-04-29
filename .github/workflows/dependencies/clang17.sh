@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
 #
-# Copyright 2023 The WarpX Community
+# Copyright 2024 The WarpX Community
 #
 # License: BSD-3-Clause-LBNL
 # Authors: Luca Fedeli
 
 set -eu -o pipefail
+
+# This dependency file is currently used within a docker container,
+# which does not come with sudo.
+apt-get update && \
+      apt-get -y install sudo
 
 # `man apt.conf`:
 #   Number of retries to perform. If this is non-zero APT will retry
