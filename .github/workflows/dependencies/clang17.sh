@@ -9,8 +9,8 @@ set -eu -o pipefail
 
 # This dependency file is currently used within a docker container,
 # which does not come with sudo.
-apt-get update && \
-      apt-get -y install sudo
+apt-get -qqq update
+apt-get -y install sudo
 
 # `man apt.conf`:
 #   Number of retries to perform. If this is non-zero APT will retry
