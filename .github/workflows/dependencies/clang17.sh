@@ -32,8 +32,7 @@ sudo apt-get install -y \
     libopenmpi-dev      \
     libomp-17-dev       \
     ninja-build         \
-    wget                \
-    xz-utils
+    curl
 
 # ccache
 $(dirname "$0")/ccache.sh
