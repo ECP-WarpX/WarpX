@@ -30,8 +30,9 @@ sudo apt-get install -y \
     libhdf5-openmpi-dev \
     liblapack-dev       \
     libopenmpi-dev      \
-    libomp-17-dev          \
-    ninja-build
+    libomp-17-dev       \
+    ninja-build         \
+    wget
 
 # ccache
 $(dirname "$0")/ccache.sh
