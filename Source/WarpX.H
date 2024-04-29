@@ -117,10 +117,10 @@ public:
     //
     // Functions used by implicit solvers
     //
-    void PreRHSOp ( amrex::Real  cur_time,
-                    amrex::Real  a_full_dt,
-                    int          a_nl_iter,
-                    bool         a_from_jacobian );
+    void ImplicitPreRHSOp ( amrex::Real  cur_time,
+                            amrex::Real  a_full_dt,
+                            int          a_nl_iter,
+                            bool         a_from_jacobian );
     void SaveParticlesAtImplicitStepStart ();
     void FinishImplicitParticleUpdate ();
     void SetElectricFieldAndApplyBCs ( const WarpXSolverVec&  a_E );
@@ -132,9 +132,9 @@ public:
     void FinishImplicitField ( amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_fp,
                          const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_n,
                          amrex::Real theta );
-    void ComputeRHSE (         amrex::Real dt, WarpXSolverVec& a_Erhs_vec);
-    void ComputeRHSE (int lev, amrex::Real dt, WarpXSolverVec& a_Erhs_vec);
-    void ComputeRHSE (int lev, PatchType patch_type, amrex::Real dt, WarpXSolverVec& a_Erhs_vec);
+    void ImplicitComputeRHSE (         amrex::Real dt, WarpXSolverVec& a_Erhs_vec);
+    void ImplicitComputeRHSE (int lev, amrex::Real dt, WarpXSolverVec& a_Erhs_vec);
+    void ImplicitComputeRHSE (int lev, PatchType patch_type, amrex::Real dt, WarpXSolverVec& a_Erhs_vec);
 
     MultiParticleContainer& GetPartContainer () { return *mypc; }
     MultiFluidContainer& GetFluidContainer () { return *myfl; }

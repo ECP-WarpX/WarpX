@@ -130,8 +130,8 @@ void SemiImplicitEM::PreRHSOp ( const WarpXSolverVec&  a_E,
 
     // Advance the particle positions by 1/2 dt,
     // particle velocities by dt, then take average of old and new v,
-    // deposit currents, giving J at n+1/2 used in ComputeRHSE below
-    m_WarpX->PreRHSOp( a_time, a_dt, a_nl_iter, a_from_jacobian );
+    // deposit currents, giving J at n+1/2 used in ImplicitComputeRHSE below
+    m_WarpX->ImplicitPreRHSOp( a_time, a_dt, a_nl_iter, a_from_jacobian );
 
 }
 
@@ -142,7 +142,7 @@ void SemiImplicitEM::ComputeRHS ( WarpXSolverVec&  a_Erhs,
 {
     amrex::ignore_unused(a_E, a_time);
     using namespace amrex::literals;
-    m_WarpX->ComputeRHSE(0.5_rt*a_dt, a_Erhs);
+    m_WarpX->ImplicitComputeRHSE(0.5_rt*a_dt, a_Erhs);
 }
 
 void SemiImplicitEM::UpdateWarpXState ( const WarpXSolverVec&  a_E,

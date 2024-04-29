@@ -52,10 +52,10 @@
 #include <vector>
 
 void
-WarpX::PreRHSOp ( amrex::Real  a_cur_time,
-                  amrex::Real  a_full_dt,
-                  int          a_nl_iter,
-                  bool         a_from_jacobian )
+WarpX::ImplicitPreRHSOp ( amrex::Real  a_cur_time,
+                          amrex::Real  a_full_dt,
+                          int          a_nl_iter,
+                          bool         a_from_jacobian )
 {
     using namespace amrex::literals;
     amrex::ignore_unused( a_full_dt, a_nl_iter, a_from_jacobian );
@@ -285,27 +285,27 @@ WarpX::FinishImplicitField( amrex::Vector<std::array< std::unique_ptr<amrex::Mul
 }
 
 void
-WarpX::ComputeRHSE (amrex::Real a_dt, WarpXSolverVec&  a_Erhs_vec)
+WarpX::ImplicitComputeRHSE (amrex::Real a_dt, WarpXSolverVec&  a_Erhs_vec)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        ComputeRHSE(lev, a_dt, a_Erhs_vec);
+        ImplicitComputeRHSE(lev, a_dt, a_Erhs_vec);
     }
 }
 
 void
-WarpX::ComputeRHSE (int lev, amrex::Real a_dt, WarpXSolverVec&  a_Erhs_vec)
+WarpX::ImplicitComputeRHSE (int lev, amrex::Real a_dt, WarpXSolverVec&  a_Erhs_vec)
 {
-    WARPX_PROFILE("WarpX::ComputeRHSE()");
-    ComputeRHSE(lev, PatchType::fine, a_dt, a_Erhs_vec);
+    WARPX_PROFILE("WarpX::ImplicitComputeRHSE()");
+    ImplicitComputeRHSE(lev, PatchType::fine, a_dt, a_Erhs_vec);
     if (lev > 0)
     {
-        ComputeRHSE(lev, PatchType::coarse, a_dt, a_Erhs_vec);
+        ImplicitComputeRHSE(lev, PatchType::coarse, a_dt, a_Erhs_vec);
     }
 }
 
 void
-WarpX::ComputeRHSE (int lev, PatchType patch_type, amrex::Real a_dt, WarpXSolverVec&  a_Erhs_vec)
+WarpX::ImplicitComputeRHSE (int lev, PatchType patch_type, amrex::Real a_dt, WarpXSolverVec&  a_Erhs_vec)
 {
     // set RHS to zero value
     a_Erhs_vec.getVec()[lev][0]->setVal(0.0);

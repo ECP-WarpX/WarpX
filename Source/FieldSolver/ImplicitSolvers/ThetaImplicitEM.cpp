@@ -155,8 +155,8 @@ void ThetaImplicitEM::PreRHSOp ( const WarpXSolverVec&  a_E,
 
     // Advance the particle positions by 1/2 dt,
     // particle velocities by dt, then take average of old and new v,
-    // deposit currents, giving J at n+1/2 used in ComputeRHSE below
-    m_WarpX->PreRHSOp( a_time, a_dt, a_nl_iter, a_from_jacobian );
+    // deposit currents, giving J at n+1/2 used in ImplicitComputeRHSE below
+    m_WarpX->ImplicitPreRHSOp( a_time, a_dt, a_nl_iter, a_from_jacobian );
 
 }
 
@@ -166,7 +166,7 @@ void ThetaImplicitEM::ComputeRHS ( WarpXSolverVec&  a_Erhs,
                                    amrex::Real      a_dt )
 {
     amrex::ignore_unused(a_E, a_time);
-    m_WarpX->ComputeRHSE(m_theta*a_dt, a_Erhs);
+    m_WarpX->ImplicitComputeRHSE(m_theta*a_dt, a_Erhs);
 }
 
 void ThetaImplicitEM::UpdateWarpXState ( const WarpXSolverVec&  a_E,

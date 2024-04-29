@@ -7,7 +7,7 @@
 #ifndef IMPLICIT_SOLVER_LIBRARY_H_
 #define IMPLICIT_SOLVER_LIBRARY_H_
 
-#include "SemiImplicitEM.H"
-#include "ThetaImplicitEM.H"
+#include "SemiImplicitEM.H"  // IWYU pragma: export
+#include "ThetaImplicitEM.H"  // IWYU pragma: export 
 
 #endif
