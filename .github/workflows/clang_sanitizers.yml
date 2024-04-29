@@ -116,7 +116,7 @@ jobs:
       run: |
         export PMIX_MCA_gds=hash
         export TSAN_OPTIONS='ignore_noninstrumented_modules=1'
-        export ARCHER_OPTIONS="verbose=true"
+        export ARCHER_OPTIONS="verbose=1"
         sudo sysctl vm.mmap_rnd_bits
 
         export OMP_NUM_THREADS=2
