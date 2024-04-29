@@ -210,7 +210,7 @@ void JacobianFunctionMF<T,Ops>::apply (T& a_dF, const T& a_dU)
              * M. Pernice and H. F. Walker, "NITSOL: A Newton Iterative Solver for
              * Nonlinear Systems", SIAM J. Sci. Stat. Comput., 1998, vol 19,
              * pp. 302--318. */
-            if (m_normY0==0.0) { eps = m_epsJFNK*norm2(m_R0); }
+            if (m_normY0==0.0) { eps = m_epsJFNK * norm2(m_R0) / normY; }
             else {
                 // m_epsJFNK * sqrt(1.0 + m_normY0) / normY
                 // above commonly used form not recommend for poorly scaled Y0
