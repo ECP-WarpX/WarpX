@@ -34,7 +34,8 @@ sudo apt-get install -y \
     ninja-build         \
     wget                \
     xz-utils            \
-    curl
+    curl                \
+    git
 
 # ccache
 $(dirname "$0")/ccache.sh
