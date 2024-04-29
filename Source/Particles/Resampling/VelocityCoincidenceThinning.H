@@ -198,6 +198,7 @@ private:
 
     int m_min_ppc = 1;
     int m_ntheta, m_nphi;
-    amrex::ParticleReal m_delta_ur, m_delta_ux, m_delta_uy, m_delta_uz;
+    amrex::ParticleReal m_delta_ur;
+    amrex::Vector<amrex::ParticleReal> m_delta_u;
 };
 #endif // WARPX_VELOCITY_COINCIDENCE_THINNING_H_

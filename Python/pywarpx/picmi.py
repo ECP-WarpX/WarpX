@@ -301,9 +301,7 @@ class Species(picmistandard.PICMI_Species):
                                              resampling_algorithm_delta_ur=self.resampling_algorithm_delta_ur,
                                              resampling_algorithm_n_theta=self.resampling_algorithm_n_theta,
                                              resampling_algorithm_n_phi=self.resampling_algorithm_n_phi,
-                                             resampling_algorithm_delta_ux=self.resampling_algorithm_delta_u[0],
-                                             resampling_algorithm_delta_uy=self.resampling_algorithm_delta_u[1],
-                                             resampling_algorithm_delta_uz=self.resampling_algorithm_delta_u[2])
+                                             resampling_algorithm_delta_u=self.resampling_algorithm_delta_u)
 
         # add reflection models
         self.species.add_new_attr("reflection_model_xlo(E)", self.reflection_model_xlo)

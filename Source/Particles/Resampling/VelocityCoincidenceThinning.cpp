@@ -42,15 +42,11 @@ VelocityCoincidenceThinning::VelocityCoincidenceThinning (const std::string& spe
     }
     else if (velocity_grid_type_str == "cartesian") {
         m_velocity_grid_type = VelocityGridType::Cartesian;
-        utils::parser::getWithParser(
-            pp_species_name, "resampling_algorithm_delta_ux", m_delta_ux
+        utils::parser::getArrWithParser(
+            pp_species_name, "resampling_algorithm_delta_u", m_delta_u
         );
-        utils::parser::getWithParser(
-            pp_species_name, "resampling_algorithm_delta_uy", m_delta_uy
-        );
-        utils::parser::getWithParser(
-            pp_species_name, "resampling_algorithm_delta_uz", m_delta_uz
-        );
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_delta_u.size() == 3,
+            "resampling_algorithm_delta_u must have three components.");
     }
     else {
         WARPX_ABORT_WITH_MESSAGE("Unkown velocity grid type.");
@@ -117,9 +113,9 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
         velocityBinCalculator.duphi = MathConst::pi / m_nphi;
     }
     else if (m_velocity_grid_type == VelocityGridType::Cartesian) {
-        velocityBinCalculator.dux = m_delta_ux;
-        velocityBinCalculator.duy = m_delta_uy;
-        velocityBinCalculator.duz = m_delta_uz;
+        velocityBinCalculator.dux = m_delta_u[0];
+        velocityBinCalculator.duy = m_delta_u[1];
+        velocityBinCalculator.duz = m_delta_u[2];
 
         // get the minimum and maximum velocities to determine the velocity space
         // grid boundaries
@@ -143,10 +139,10 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
         }
 
         velocityBinCalculator.n1 = static_cast<int>(
-            std::ceil((velocityBinCalculator.ux_max - velocityBinCalculator.ux_min) / m_delta_ux)
+            std::ceil((velocityBinCalculator.ux_max - velocityBinCalculator.ux_min) / m_delta_u[0])
         );
         velocityBinCalculator.n2 = static_cast<int>(
-            std::ceil((velocityBinCalculator.uy_max - velocityBinCalculator.uy_min) / m_delta_uy)
+            std::ceil((velocityBinCalculator.uy_max - velocityBinCalculator.uy_min) / m_delta_u[1])
         );
     }
     auto heapSort = HeapSort();
