@@ -7,6 +7,8 @@
 #include "SemiImplicitEM.H"
 #include "WarpX.H"
 
+using namespace warpx::fields;
+
 void SemiImplicitEM::Define ( WarpX*  a_WarpX )
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -17,8 +19,8 @@ void SemiImplicitEM::Define ( WarpX*  a_WarpX )
     m_WarpX = a_WarpX;
 
     // Define E vectors
-    m_E.Define( m_WarpX->getEfield_fp_vec() );
-    m_Eold.Define( m_WarpX->getEfield_fp_vec() );
+    m_E.Define( m_WarpX->getMultiLevelField(FieldType::Efield_fp) );
+    m_Eold.Define( m_WarpX->getMultiLevelField(FieldType::Efield_fp) );
 
     // Need to define the WarpXSolverVec owned dot_mask to do dot
     // product correctly for linear and nonlinear solvers
@@ -87,7 +89,7 @@ void SemiImplicitEM::OneStep ( amrex::Real  a_time,
     m_WarpX->SaveParticlesAtImplicitStepStart ( );
 
     // Save the fields at the start of the step
-    m_Eold.Copy( m_WarpX->getEfield_fp_vec() );
+    m_Eold.Copy( m_WarpX->getMultiLevelField(FieldType::Efield_fp) );
     m_E = m_Eold; // initial guess for E
 
     // Compute Bfield at time n+1/2

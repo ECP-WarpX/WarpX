@@ -521,8 +521,16 @@ public:
     [[nodiscard]] const amrex::MultiFab&
     getField(warpx::fields::FieldType field_type, int lev, int direction = 0) const;
 
-    [[nodiscard]] const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>,3>>& getEfield_fp_vec() const {return Efield_fp;}
-    [[nodiscard]] const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>,3>>& getBfield_fp_vec() const {return Bfield_fp;}
+    /**
+     * \brief
+     * Get a constant reference to the specified vector field on the different MR levels
+     *
+     * \param field_type[in] the field type
+     *
+     * \return a vector (which one element per MR level) of arrays of three pointers (for 3 vector components) amrex::MultiFab* containing the field data
+     */
+    [[nodiscard]] const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>,3>>&
+    getMultiLevelField(warpx::fields::FieldType field_type) const;
 
     [[nodiscard]] bool DoPML () const {return do_pml;}
     [[nodiscard]] bool DoFluidSpecies () const {return do_fluid_species;}

@@ -20,8 +20,8 @@ void ThetaImplicitEM::Define ( WarpX* const  a_WarpX )
     m_WarpX = a_WarpX;
 
     // Define E vectors
-    m_E.Define( m_WarpX->getEfield_fp_vec() );
-    m_Eold.Define( m_WarpX->getEfield_fp_vec() );
+    m_E.Define( m_WarpX->getMultiLevelField(FieldType::Efield_fp) );
+    m_Eold.Define( m_WarpX->getMultiLevelField(FieldType::Efield_fp) );
 
     // Need to define the WarpXSolverVec owned dot_mask to do dot
     // product correctly for linear and nonlinear solvers
@@ -111,7 +111,7 @@ void ThetaImplicitEM::OneStep ( const amrex::Real  a_time,
     m_WarpX->SaveParticlesAtImplicitStepStart ( );
 
     // Save the fields at the start of the step
-    m_Eold.Copy( m_WarpX->getEfield_fp_vec() );
+    m_Eold.Copy( m_WarpX->getMultiLevelField(FieldType::Efield_fp) );
     m_E = m_Eold; // initial guess for E
 
     const int lev = 0;
