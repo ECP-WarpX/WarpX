@@ -11,6 +11,7 @@
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "EmbeddedBoundary/WarpXFaceInfoBox.H"
+#include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #include "Initialization/ExternalField.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
@@ -50,11 +51,28 @@
 using namespace amrex;
 
 void
+WarpX::CheckLoadBalance (int step)
+{
+    if (step > 0 && load_balance_intervals.contains(step+1))
+    {
+        LoadBalance();
+
+        // Reset the costs to 0
+        ResetCosts();
+    }
+    if (!costs.empty())
+    {
+        RescaleCosts(step);
+    }
+}
+
+void
 WarpX::LoadBalance ()
 {
     WARPX_PROFILE_REGION("LoadBalance");
     WARPX_PROFILE("WarpX::LoadBalance()");
 
+    AMREX_ALWAYS_ASSERT(!costs.empty());
     AMREX_ALWAYS_ASSERT(costs[0] != nullptr);
 
 #ifdef AMREX_USE_MPI
@@ -189,6 +207,11 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                 RemakeMultiFab(Efield_avg_fp[lev][idim], dm, true ,lev);
                 RemakeMultiFab(Bfield_avg_fp[lev][idim], dm, true ,lev);
             }
+            if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
+                RemakeMultiFab(m_hybrid_pic_model->current_fp_temp[lev][idim], dm, true, lev);
+                RemakeMultiFab(m_hybrid_pic_model->current_fp_ampere[lev][idim], dm, false, lev);
+                RemakeMultiFab(m_hybrid_pic_model->current_fp_external[lev][idim], dm, true, lev);
+            }
 #ifdef AMREX_USE_EB
             if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) {
                 RemakeMultiFab(m_edge_lengths[lev][idim], dm, false ,lev);
@@ -210,6 +233,11 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         // phi_fp should be redistributed since we use the solution from
         // the last step as the initial guess for the next solve
         RemakeMultiFab(phi_fp[lev], dm, true ,lev);
+
+        if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
+            RemakeMultiFab(m_hybrid_pic_model->rho_fp_temp[lev], dm, true, lev);
+            RemakeMultiFab(m_hybrid_pic_model->electron_pressure_fp[lev], dm, false, lev);
+        }
 
 #ifdef AMREX_USE_EB
         RemakeMultiFab(m_distance_to_eb[lev], dm, false ,lev);
@@ -401,6 +429,9 @@ WarpX::ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::LayoutData<am
 void
 WarpX::ResetCosts ()
 {
+    AMREX_ALWAYS_ASSERT(!costs.empty());
+    AMREX_ALWAYS_ASSERT(costs[0] != nullptr);
+
     for (int lev = 0; lev <= finest_level; ++lev)
     {
         const auto iarr = costs[lev]->IndexArray();
@@ -408,6 +439,33 @@ WarpX::ResetCosts ()
         {
             // Reset costs
             (*costs[lev])[i] = 0.0;
+        }
+    }
+}
+
+void
+WarpX::RescaleCosts (int step)
+{
+    // rescale is only used for timers
+    if (WarpX::load_balance_costs_update_algo != LoadBalanceCostsUpdateAlgo::Timers)
+    {
+        return;
+    }
+
+    AMREX_ALWAYS_ASSERT(costs.size() == finest_level + 1);
+
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        if (costs[lev])
+        {
+            // Perform running average of the costs
+            // (Giving more importance to most recent costs; only needed
+            // for timers update, heuristic load balance considers the
+            // instantaneous costs)
+            for (const auto& i : costs[lev]->IndexArray())
+            {
+                (*costs[lev])[i] *= (1._rt - 2._rt/load_balance_intervals.localPeriod(step+1));
+            }
         }
     }
 }

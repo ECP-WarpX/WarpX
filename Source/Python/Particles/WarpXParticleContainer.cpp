@@ -137,5 +137,9 @@ void init_WarpXParticleContainer (py::module& m)
             },
             py::arg("lev"), py::arg("local")
         )
+        .def("set_do_not_push",
+            [](WarpXParticleContainer& pc, bool flag) { pc.setDoNotPush(flag); },
+            py::arg("flag")
+        )
     ;
 }

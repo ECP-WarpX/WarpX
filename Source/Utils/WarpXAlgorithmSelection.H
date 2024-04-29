@@ -5,8 +5,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef UTILS_WARPXALGORITHMSELECTION_H_
-#define UTILS_WARPXALGORITHMSELECTION_H_
+#ifndef WARPX_UTILS_WARPXALGORITHMSELECTION_H_
+#define WARPX_UTILS_WARPXALGORITHMSELECTION_H_
 
 #include <AMReX_BaseFwd.H>
 
@@ -55,6 +55,12 @@ struct GridType {
     };
 };
 
+enum struct PatchType
+{
+    fine,
+    coarse
+};
+
 struct ElectromagneticSolverAlgo {
     enum {
         None = 0,
@@ -72,6 +78,13 @@ struct ElectrostaticSolverAlgo {
         Relativistic = 1,
         LabFrameElectroMagnetostatic = 2,
         LabFrame = 3  // Non relativistic
+    };
+};
+
+struct PoissonSolverAlgo {
+    enum {
+        Multigrid = 1,
+        IntegratedGreenFunction = 2,
     };
 };
 
@@ -139,19 +152,20 @@ struct LoadBalanceCostsUpdateAlgo {
 
 /** Field boundary conditions at the domain boundary
  */
-struct FieldBoundaryType {
-    enum {
+enum struct FieldBoundaryType {
         PML = 0,
         Periodic = 1,
-        PEC = 2,     //!< perfect electric conductor (PEC) with E_tangential=0
+        PEC = 2,      //!< perfect electric conductor (PEC) with E_tangential=0
         PMC = 3,      //!< perfect magnetic conductor (PMC) with B_tangential=0
         Damped = 4,   // Fields in the guard cells are damped for PSATD
-                     //in the moving window direction
+                      //in the moving window direction
         Absorbing_SilverMueller = 5, // Silver-Mueller boundary condition
         Neumann = 6, // For electrostatic, the normal E is set to zero
-        None = 7     // The fields values at the boundary are not updated. This is
+        None = 7,    // The fields values at the boundary are not updated. This is
                      // useful for RZ simulations, at r=0.
-    };
+        Open = 8     // Used in the Integrated Green Function Poisson solver
+                     // Note that the solver implicitely assumes open BCs:
+                     // no need to enforce them separately
 };
 
 /** Particle boundary conditions at the domain boundary
@@ -160,7 +174,8 @@ enum struct ParticleBoundaryType {
         Absorbing = 0,     //!< particles crossing domain boundary are removed
         Open = 1,          //!< particles cross domain boundary leave with damped j
         Reflecting = 2,     //!< particles are reflected
-        Periodic = 3
+        Periodic = 3,      //!< particles are introduced from the periodic boundary
+        Thermal = 4
 };
 
 /** MPI reductions
@@ -179,7 +194,7 @@ GetAlgorithmInteger(const amrex::ParmParse& pp, const char* pp_search_key );
 /** Select BC Type for fields, if field=true
  *  else select BCType for particles.
  */
-int
+FieldBoundaryType
 GetFieldBCTypeInteger( std::string BCType );
 
 /** Select BC Type for particles.
@@ -190,6 +205,6 @@ GetParticleBCTypeInteger( std::string BCType );
 /** Find the name associated with a BC type
  */
 std::string
-GetFieldBCTypeString( int fb_type );
+GetFieldBCTypeString( FieldBoundaryType fb_type );
 
-#endif // UTILS_WARPXALGORITHMSELECTION_H_
+#endif // WARPX_UTILS_WARPXALGORITHMSELECTION_H_

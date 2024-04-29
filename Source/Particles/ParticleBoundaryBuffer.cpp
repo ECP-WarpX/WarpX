@@ -354,8 +354,7 @@ void ParticleBoundaryBuffer::clearParticles (int const i) {
     }
 }
 
-void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
-                                              const amrex::Vector<const amrex::MultiFab*>& distance_to_eb)
+void ParticleBoundaryBuffer::gatherParticlesFromDomainBoundaries (MultiParticleContainer& mypc)
 {
     WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles");
 
@@ -439,9 +438,18 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
             }
         }
     }
+}
 
+void ParticleBoundaryBuffer::gatherParticlesFromEmbeddedBoundaries (
+    MultiParticleContainer& mypc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb)
+{
 #ifdef AMREX_USE_EB
     WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::EB");
+
+    using PIter = amrex::ParConstIterSoA<PIdx::nattribs, 0>;
+    const auto& warpx_instance = WarpX::GetInstance();
+    const amrex::Geometry& geom = warpx_instance.Geom(0);
+    auto plo = geom.ProbLoArray();
 
     auto& buffer = m_particle_containers[m_particle_containers.size()-1];
     for (int i = 0; i < numSpecies(); ++i)
@@ -526,12 +534,12 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
         }
     }
 #else
-    amrex::ignore_unused(distance_to_eb);
+    amrex::ignore_unused(mypc, distance_to_eb);
 #endif
 }
 
 int ParticleBoundaryBuffer::getNumParticlesInContainer(
-        const std::string species_name, int boundary, bool local) {
+        const std::string& species_name, int boundary, bool local) {
 
     auto& buffer = m_particle_containers[boundary];
     auto index = WarpX::GetInstance().GetPartContainer().getSpeciesID(species_name);
@@ -545,7 +553,7 @@ int ParticleBoundaryBuffer::getNumParticlesInContainer(
 }
 
 PinnedMemoryParticleContainer &
-ParticleBoundaryBuffer::getParticleBuffer(const std::string species_name, int boundary) {
+ParticleBoundaryBuffer::getParticleBuffer(const std::string& species_name, int boundary) {
 
     auto& buffer = m_particle_containers[boundary];
     auto index = WarpX::GetInstance().GetPartContainer().getSpeciesID(species_name);
@@ -560,7 +568,7 @@ ParticleBoundaryBuffer::getParticleBuffer(const std::string species_name, int bo
 }
 
 PinnedMemoryParticleContainer *
-ParticleBoundaryBuffer::getParticleBufferPointer(const std::string species_name, int boundary) {
+ParticleBoundaryBuffer::getParticleBufferPointer(const std::string& species_name, int boundary) {
 
     auto& buffer = m_particle_containers[boundary];
     auto index = WarpX::GetInstance().GetPartContainer().getSpeciesID(species_name);

@@ -5,8 +5,8 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef BINARY_COLLISION_UTILS_H_
-#define BINARY_COLLISION_UTILS_H_
+#ifndef WARPX_BINARY_COLLISION_UTILS_H_
+#define WARPX_BINARY_COLLISION_UTILS_H_
 
 #include <string>
 
@@ -19,6 +19,8 @@ enum struct CollisionType { DeuteriumTritiumToNeutronHeliumFusion,
                             DeuteriumDeuteriumToNeutronHeliumFusion,
                             DeuteriumHeliumToProtonHeliumFusion,
                             ProtonBoronToAlphasFusion,
+                            DSMC,
+                            PairwiseCoulomb,
                             Undefined };
 
 enum struct NuclearFusionType {
@@ -31,10 +33,10 @@ enum struct NuclearFusionType {
 
 namespace BinaryCollisionUtils{
 
-    NuclearFusionType get_nuclear_fusion_type (std::string collision_name,
+    NuclearFusionType get_nuclear_fusion_type (const std::string& collision_name,
                                                MultiParticleContainer const * mypc);
 
-    CollisionType get_collision_type (std::string collision_name,
+    CollisionType get_collision_type (const std::string& collision_name,
                                       MultiParticleContainer const * mypc);
 
     CollisionType nuclear_fusion_type_to_collision_type (NuclearFusionType fusion_type);
@@ -126,4 +128,4 @@ namespace BinaryCollisionUtils{
     }
 }
 
-#endif // BINARY_COLLISION_UTILS_H_
+#endif // WARPX_BINARY_COLLISION_UTILS_H_
