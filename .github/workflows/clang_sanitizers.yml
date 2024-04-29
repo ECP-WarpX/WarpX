@@ -118,7 +118,10 @@ jobs:
         export PMIX_MCA_gds=hash
         export TSAN_OPTIONS='ignore_noninstrumented_modules=1'
         export ARCHER_OPTIONS="verbose=1"
-        sudo sysctl vm.mmap_rnd_bits
+
+        # We need these two lines because these tests run inside a docker container
+        export OMPI_ALLOW_RUN_AS_ROOT=1
+        export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
 
         export OMP_NUM_THREADS=2
         mpirun -n 2 ./build/bin/warpx.rz Examples/Physics_applications/laser_acceleration/inputs_rz
