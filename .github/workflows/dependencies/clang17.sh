@@ -33,6 +33,7 @@ sudo apt-get install -y \
     libomp-17-dev       \
     ninja-build         \
     wget                \
+    xz-utils            \
     curl
 
 # ccache
