@@ -37,8 +37,7 @@ sudo apt-get install -y \
     curl                \
     git
 
-# ccache
-$(dirname "$0")/ccache.sh
+# set clang 17 as the CXX compiler
 
 # cmake-easyinstall
 #
@@ -49,17 +48,19 @@ export CEI_TMP="/tmp/cei"
 
 # BLAS++ & LAPACK++
 cmake-easyinstall \
-  --prefix=/usr/local                      \
+  --prefix=/usr/local                           \
   git+https://github.com/icl-utk-edu/blaspp.git \
-  -Duse_openmp=OFF                         \
-  -Dbuild_tests=OFF                        \
+  -Duse_openmp=OFF                              \
+  -Dbuild_tests=OFF                             \
+  -CMAKE_CXX_COMPILER="clang++-17"              \
   -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache) \
   -DCMAKE_VERBOSE_MAKEFILE=ON
 
 cmake-easyinstall \
-  --prefix=/usr/local                        \
+  --prefix=/usr/local                             \
   git+https://github.com/icl-utk-edu/lapackpp.git \
-  -Duse_cmake_find_lapack=ON                 \
-  -Dbuild_tests=OFF                          \
-  -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache) \
+  -Duse_cmake_find_lapack=ON                      \
+  -Dbuild_tests=OFF                               \
+    -CMAKE_CXX_COMPILER="clang++-17"              \
+  -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache)   \
   -DCMAKE_VERBOSE_MAKEFILE=ON
