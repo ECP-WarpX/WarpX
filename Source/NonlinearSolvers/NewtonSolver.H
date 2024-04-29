@@ -75,6 +75,7 @@ public:
         amrex::Print()     << "Newton absolute tolerance:  " << m_atol << std::endl;
         amrex::Print()     << "Newton require convergence: " << (m_require_convergence?"true":"false") << std::endl;
         amrex::Print()     << "GMRES verbose:            " << m_gmres_verbose_int << std::endl;
+        amrex::Print()     << "GMRES restart length:     " << m_gmres_restart_length << std::endl;
         amrex::Print()     << "GMRES max iterations:     " << m_gmres_maxits << std::endl;
         amrex::Print()     << "GMRES relative tolerance: " << m_gmres_rtol << std::endl;
         amrex::Print()     << "GMRES absolute tolerance: " << m_gmres_atol << std::endl;
@@ -122,6 +123,7 @@ protected:
     int m_gmres_maxits = 1000;
 
     int m_gmres_verbose_int = 2;
+    int m_gmres_restart_length = 30;
 
     mutable amrex::Real m_cur_time, m_dt;
     mutable bool m_update_pc = false;
@@ -168,6 +170,8 @@ void NewtonSolver<Vec,Ops>::Define ( const Vec&  a_U,
     m_linear_solver = std::make_unique<amrex::GMRES<Vec,JacobianFunctionMF<Vec,Ops>>>();
     m_linear_solver->define(*m_linear_function);
     m_linear_solver->setVerbose( m_gmres_verbose_int );
+    m_linear_solver->setRestartLength( m_gmres_restart_length );
+    m_linear_solver->setMaxIters( m_gmres_maxits );
 
     m_is_defined = true;
 
@@ -185,6 +189,7 @@ void NewtonSolver<Vec,Ops>::ParseParameters ()
 
     const amrex::ParmParse pp_gmres("gmres");
     pp_gmres.query("verbose_int",         m_gmres_verbose_int);
+    pp_gmres.query("restart_length",      m_gmres_restart_length);
     pp_gmres.query("absolute_tolerance",  m_gmres_atol);
     pp_gmres.query("relative_tolerance",  m_gmres_rtol);
     pp_gmres.query("max_iterations",      m_gmres_maxits);
@@ -258,7 +263,7 @@ void NewtonSolver<Vec,Ops>::Solve ( Vec&         a_U,
 
         // Solve linear system for Newton step [Jac]*dU = F
         m_dU.zero();
-        m_linear_solver->solve(m_dU,m_F,m_gmres_rtol,m_gmres_atol,m_gmres_maxits);
+        m_linear_solver->solve( m_dU, m_F, m_gmres_rtol, m_gmres_atol );
 
         // Update solution
         a_U -= m_dU;
