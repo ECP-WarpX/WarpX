@@ -4,6 +4,7 @@
 # --- to access the buffer of scraped particles.
 
 import numpy as np
+
 from pywarpx import libwarpx, particle_containers, picmi
 
 ##########################

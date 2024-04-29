@@ -15,6 +15,7 @@
 import numpy as np
 import scipy.constants as scc
 from mpi4py import MPI as mpi
+
 from pywarpx import picmi
 from pywarpx.callbacks import installafterEsolve, installafterInitEsolve
 from pywarpx.fields import ExWrapper, EzWrapper, PhiFPWrapper, RhoFPWrapper

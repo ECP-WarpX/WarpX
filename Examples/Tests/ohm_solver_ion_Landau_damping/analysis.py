@@ -6,6 +6,7 @@ import dill
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+
 from pywarpx import picmi
 
 constants = picmi.constants
