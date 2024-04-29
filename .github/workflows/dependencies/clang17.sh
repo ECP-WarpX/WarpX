@@ -17,6 +17,8 @@ apt-get -y install sudo
 #   failed files the given number of times.
 echo 'Acquire::Retries "3";' | sudo tee /etc/apt/apt.conf.d/80-retries
 
+# Note: this dependency file is currently used within a docker container,
+# which does not come with wget, xz-utils, curl, git and ccache pre-installed.
 sudo apt-get -qqq update
 sudo apt-get install -y \
     cmake               \
@@ -35,7 +37,8 @@ sudo apt-get install -y \
     wget                \
     xz-utils            \
     curl                \
-    git
+    git                 \
+    ccache
 
 # Use clang 17
 export CXX=$(which clang++-17)
