@@ -131,7 +131,7 @@ public:
         }
         return *this;
     }
-
+    
     inline
     void operator+= ( const WarpXSolverVec&  a_vec )
     {
@@ -141,29 +141,11 @@ public:
     }
 
     inline
-    WarpXSolverVec operator+ ( const WarpXSolverVec&  a_vec ) const
-    {
-        WarpXSolverVec retval(*this);
-        retval = *this;
-        retval += a_vec;
-        return retval;
-    }
-
-    inline
     void operator-= (const WarpXSolverVec& a_vec)
     {
         m_field_vec[0][0]->minus(*(a_vec.getVec()[0][0]), 0, 1, 0);
         m_field_vec[0][1]->minus(*(a_vec.getVec()[0][1]), 0, 1, 0);
         m_field_vec[0][2]->minus(*(a_vec.getVec()[0][2]), 0, 1, 0);
-    }
-
-    inline
-    WarpXSolverVec operator- ( const WarpXSolverVec& a_vec ) const
-    {
-        WarpXSolverVec retval(*this);
-        retval = *this;
-        retval -= a_vec;
-        return retval;
     }
 
     inline
@@ -191,12 +173,6 @@ public:
         m_field_vec[0][0]->mult(a_a, 0, 1);
         m_field_vec[0][1]->mult(a_a, 0, 1);
         m_field_vec[0][2]->mult(a_a, 0, 1);
-    }
-
-    inline
-    void operator*= (RT a_a)
-    {
-      scale(a_a);
     }
 
     inline

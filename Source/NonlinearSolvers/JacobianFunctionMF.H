@@ -62,7 +62,7 @@ class JacobianFunctionMF
     inline
     void increment( T& a_Z, const T& a_U, RT a_scale )
     {
-        a_Z += a_scale*a_U;
+        a_Z.increment(a_U,a_scale);
     }
 
     inline
@@ -206,7 +206,7 @@ void JacobianFunctionMF<T,Ops>::apply (T& a_dF, const T& a_dU)
         if (m_is_linear) {
             eps = 1.0_rt;
         } else {
-            /* eps = error_rel * sqrt(1 + ||U||) / ||a||
+            /* eps = error_rel * sqrt(1 + ||Y0||) / ||dU||
              * M. Pernice and H. F. Walker, "NITSOL: A Newton Iterative Solver for
              * Nonlinear Systems", SIAM J. Sci. Stat. Comput., 1998, vol 19,
              * pp. 302--318. */
@@ -219,14 +219,14 @@ void JacobianFunctionMF<T,Ops>::apply (T& a_dF, const T& a_dU)
         }
         const RT eps_inv = 1.0_rt/eps;
 
-        m_Z = m_Y0 + eps*a_dU;
+        m_Z.linComb( 1.0, m_Y0, eps, a_dU ); // Z = Y0 + eps*dU
         m_ops->PreRHSOp( m_Z, m_cur_time, m_dt, -1, true );
         m_ops->ComputeRHS(m_R, m_Z, m_cur_time, m_dt );
 
-        // F(Y) = Y - b - R(Y)
-        // dF = dF/dY*dU = [1 - dR/dY]*dU
-        //    = dU - (R(Y0+eps*dU)-R(Y0))/eps
-        a_dF = a_dU - eps_inv*(m_R - m_R0);
+        // F(Y) = Y - b - R(Y) ==> dF = dF/dY*dU = [1 - dR/dY]*dU
+        //                            = dU - (R(Z)-R(Y0))/eps
+        a_dF.linComb( 1.0, a_dU, eps_inv, m_R0 );
+        a_dF.increment(m_R,-eps_inv);
 
     }
 

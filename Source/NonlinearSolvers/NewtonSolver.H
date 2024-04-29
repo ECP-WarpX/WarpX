@@ -306,7 +306,7 @@ void NewtonSolver<Vec,Ops>::EvalResidual ( Vec&         a_F,
     m_ops->PreRHSOp( a_U, a_time, a_dt, a_iter, false );
     m_ops->ComputeRHS( m_R, a_U, a_time, a_dt );
 
-    // set base Y and R(Y) for Jacobian //
+    // set base U and R(U) for Jacobian //
     m_linear_function->setBaseSolution(a_U);
     m_linear_function->setBaseRHS(m_R);
 
@@ -316,8 +316,10 @@ void NewtonSolver<Vec,Ops>::EvalResidual ( Vec&         a_F,
     }
     m_update_pc_init = false;
 
-    // Compute ([Y - R(Y)] - b) //
-    a_F = a_U - m_R - a_b;
+    // Compute residual: F = [U - R(U)] - b //
+    a_F = a_U;
+    a_F -= m_R;
+    a_F -= a_b;
 
 }
 
