@@ -99,7 +99,7 @@ Overall simulation parameters
       Exact energy conservation requires that the interpolation stencil used for the field gather match that used for the current deposition. ``algo.current_deposition = direct`` must be used with ``interpolation.galerkin_scheme = 0``, and ``algo.current_deposition = Esirkepov`` must be used with ``interpolation.galerkin_scheme = 1``. If using ``algo.current_deposition = villasenor``, the corresponding field gather routine will automatically be selected and the ``interpolation.galerkin_scheme`` flag does not need to be specified. The Esirkepov and villasenor deposition schemes are charge-conserving.
 
 * ``implicit_evolve.theta`` (`float`, default: 0.5)
-    When `algo.evolve_scheme = theta_implicit_em`, the fields used on the RHS of the equations for the implicit advance 
+    When `algo.evolve_scheme = theta_implicit_em`, the fields used on the RHS of the equations for the implicit advance
     are computed as (1-theta)*E_{n} + theta*E_{n+1}. theta is bound between 0.5 and 1. The default value of theta = 0.5
     is needed for exact energy conservation. For theta > 0.5, high-k modes will be damped and the method will not be
     exactly energy conserving, but the solver may perform better.
@@ -119,7 +119,7 @@ Overall simulation parameters
     calculation continues.
 
 * ``picard.require_convergence`` (`bool`, default: 1)
-    When `algo.evolve_scheme` is either `theta_implicit_em` or `semi_implicit_em` and `implicit_evolve.nonlinear_solver 
+    When `algo.evolve_scheme` is either `theta_implicit_em` or `semi_implicit_em` and `implicit_evolve.nonlinear_solver
     = picard`, this sets whether the Picard method is required to converge for each Newton iteration. If it is required,
     an abort is raised if it does not converge and the code then exits. If not, then a warning is issued and the
     calculation continues.
