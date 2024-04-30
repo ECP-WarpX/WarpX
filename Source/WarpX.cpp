@@ -41,6 +41,8 @@
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
 
+#include "FieldSolver/ImplicitSolvers/ImplicitSolverLibrary.H"
+
 #include <ablastr/utils/SignalHandling.H>
 #include <ablastr/warn_manager/WarnManager.H>
 
