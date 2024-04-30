@@ -839,6 +839,10 @@ PEC::ApplyReflectiveBoundarytoJfield(
         mirrorfac[2][idim][1] = 2*domain_hi[idim] - (1 - Jz_nodal[idim]);
     }
 
+    grown_domain_box.convert(Jx_nodal);
+    grown_domain_box.convert(Jy_nodal);
+    grown_domain_box.convert(Jz_nodal);
+
     // Each current component is handled separately below, starting with Jx.
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -850,7 +854,6 @@ PEC::ApplyReflectiveBoundarytoJfield(
 
         // If grown_domain_box contains fabbox it means there are no PEC
         // boundaries to handle so continue to next box
-        grown_domain_box.convert(Jx_nodal);
         if (grown_domain_box.contains(fabbox)) { continue; }
 
         // Extract field data
@@ -885,7 +888,6 @@ PEC::ApplyReflectiveBoundarytoJfield(
 
         // If grown_domain_box contains fabbox it means there are no PEC
         // boundaries to handle so continue to next box
-        grown_domain_box.convert(Jy_nodal);
         if (grown_domain_box.contains(fabbox)) { continue; }
 
         // Extract field data
@@ -920,7 +922,6 @@ PEC::ApplyReflectiveBoundarytoJfield(
 
         // If grown_domain_box contains fabbox it means there are no PEC
         // boundaries to handle so continue to next box
-        grown_domain_box.convert(Jz_nodal);
         if (grown_domain_box.contains(fabbox)) { continue; }
 
         // Extract field data
