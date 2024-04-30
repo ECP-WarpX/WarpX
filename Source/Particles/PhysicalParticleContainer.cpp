@@ -1124,6 +1124,16 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
         // and invalid ones are then discarded
         const amrex::Long max_new_particles = Scan::ExclusiveSum(counts.size(), counts.data(), offset.data());
 
+        // User-defined integer and real attributes: prepare parsers
+        const auto n_user_int_attribs = static_cast<int>(m_user_int_attribs.size());
+        const auto n_user_real_attribs = static_cast<int>(m_user_real_attribs.size());
+        for (int ia = 0; ia < n_user_int_attribs; ++ia) {
+            user_int_attrib_parserexec_pinned[ia] = m_user_int_attrib_parser[ia]->compile<7>();
+        }
+        for (int ia = 0; ia < n_user_real_attribs; ++ia) {
+            user_real_attrib_parserexec_pinned[ia] = m_user_real_attrib_parser[ia]->compile<7>();
+        }
+
         // Update NextID to include particles created in this function
         amrex::Long pid;
 #ifdef AMREX_USE_OMP
@@ -1156,19 +1166,15 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
         }
         uint64_t * AMREX_RESTRICT pa_idcpu = soa.GetIdCPUData().data() + old_size;
         // user-defined integer and real attributes
-        const auto n_user_int_attribs = static_cast<int>(m_user_int_attribs.size());
-        const auto n_user_real_attribs = static_cast<int>(m_user_real_attribs.size());
         amrex::Gpu::PinnedVector<int*> pa_user_int_pinned(n_user_int_attribs);
         amrex::Gpu::PinnedVector<ParticleReal*> pa_user_real_pinned(n_user_real_attribs);
         amrex::Gpu::PinnedVector< amrex::ParserExecutor<7> > user_int_attrib_parserexec_pinned(n_user_int_attribs);
         amrex::Gpu::PinnedVector< amrex::ParserExecutor<7> > user_real_attrib_parserexec_pinned(n_user_real_attribs);
         for (int ia = 0; ia < n_user_int_attribs; ++ia) {
             pa_user_int_pinned[ia] = soa.GetIntData(particle_icomps[m_user_int_attribs[ia]]).data() + old_size;
-            user_int_attrib_parserexec_pinned[ia] = m_user_int_attrib_parser[ia]->compile<7>();
         }
         for (int ia = 0; ia < n_user_real_attribs; ++ia) {
             pa_user_real_pinned[ia] = soa.GetRealData(particle_comps[m_user_real_attribs[ia]]).data() + old_size;
-            user_real_attrib_parserexec_pinned[ia] = m_user_real_attrib_parser[ia]->compile<7>();
         }
 #ifdef AMREX_USE_GPU
         // To avoid using managed memory, we first define pinned memory vector, initialize on cpu,
