@@ -5,8 +5,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef CURRENTDEPOSITION_H_
-#define CURRENTDEPOSITION_H_
+#ifndef WARPX_CURRENTDEPOSITION_H_
+#define WARPX_CURRENTDEPOSITION_H_
 
 #include "Particles/Deposition/SharedDepositionUtils.H"
 #include "ablastr/parallelization/KernelTimer.H"
@@ -2378,4 +2378,4 @@ void doVayDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
 
 #endif // #if !(defined WARPX_DIM_RZ || defined WARPX_DIM_1D_Z)
 }
-#endif // CURRENTDEPOSITION_H_
+#endif // WARPX_CURRENTDEPOSITION_H_

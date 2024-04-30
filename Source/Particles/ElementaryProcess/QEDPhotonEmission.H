@@ -5,8 +5,8 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef QED_PHOTON_EMISSION_H_
-#define QED_PHOTON_EMISSION_H_
+#ifndef WARPX_QED_PHOTON_EMISSION_H_
+#define WARPX_QED_PHOTON_EMISSION_H_
 
 #include "Particles/Gather/FieldGather.H"
 #include "Particles/Gather/GetExternalFields.H"
@@ -267,4 +267,4 @@ void cleanLowEnergyPhotons(
 }
 
 
-#endif //QED_PHOTON_EMISSION_H_
+#endif //WARPX_QED_PHOTON_EMISSION_H_

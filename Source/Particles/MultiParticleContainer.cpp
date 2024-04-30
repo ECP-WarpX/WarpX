@@ -10,6 +10,8 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "MultiParticleContainer.H"
+
+#include "FieldSolver/Fields.H"
 #include "Particles/ElementaryProcess/Ionization.H"
 #ifdef WARPX_QED
 #   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
@@ -80,6 +82,7 @@
 #include <vector>
 
 using namespace amrex;
+using namespace warpx::fields;
 
 namespace
 {
@@ -633,6 +636,14 @@ MultiParticleContainer::defineAllParticleTiles ()
 }
 
 void
+MultiParticleContainer::deleteInvalidParticles ()
+{
+    for (auto& pc : allcontainers) {
+        pc->deleteInvalidParticles();
+    }
+}
+
+void
 MultiParticleContainer::RedistributeLocal (const int num_ghost)
 {
     for (auto& pc : allcontainers) {
@@ -945,12 +956,12 @@ void MultiParticleContainer::CheckIonizationProductSpecies()
     }
 }
 
-void MultiParticleContainer::ScrapeParticles (const amrex::Vector<const amrex::MultiFab*>& distance_to_eb)
+void MultiParticleContainer::ScrapeParticlesAtEB (const amrex::Vector<const amrex::MultiFab*>& distance_to_eb)
 {
 #ifdef AMREX_USE_EB
     amrex::Real particle_removal_depth = WarpX::GetInstance().GetParticleRemovalDepth();
     for (auto& pc : allcontainers) {
-        scrapeParticles(*pc, distance_to_eb, ParticleBoundaryProcess::Absorb(), particle_removal_depth );
+        scrapeParticlesAtEB(*pc, distance_to_eb, ParticleBoundaryProcess::Absorb(), particle_removal_depth );
     }
 #else
     amrex::ignore_unused(distance_to_eb);
@@ -1389,10 +1400,12 @@ MultiParticleContainer::doQEDSchwinger ()
 
         const auto Transform = SchwingerTransformFunc{m_qed_schwinger_y_size, PIdx::w};
 
+        const amrex::Geometry& geom_level_zero = warpx.Geom(level_0);
+
         const auto num_added = filterCreateTransformFromFAB<1>( *pc_product_ele, *pc_product_pos, dst_ele_tile,
                                dst_pos_tile, box, fieldsEB, np_ele_dst,
                                np_pos_dst,Filter, CreateEle, CreatePos,
-                               Transform);
+                               Transform, geom_level_zero);
 
         setNewParticleIDs(dst_ele_tile, np_ele_dst, num_added);
         setNewParticleIDs(dst_pos_tile, np_pos_dst, num_added);

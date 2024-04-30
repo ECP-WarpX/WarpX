@@ -12,6 +12,7 @@ import sys
 import dill
 import numpy as np
 from mpi4py import MPI as mpi
+
 from pywarpx import picmi
 
 constants = picmi.constants

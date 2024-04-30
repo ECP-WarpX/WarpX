@@ -85,6 +85,7 @@
 #include <utility>
 
 using namespace amrex;
+using namespace warpx::fields;
 
 int WarpX::do_moving_window = 0;
 int WarpX::start_moving_window_step = 0;
@@ -211,8 +212,6 @@ int WarpX::n_current_deposition_buffer = -1;
 
 short WarpX::grid_type;
 amrex::IntVect m_rho_nodal_flag;
-
-int WarpX::do_similar_dm_pml = 1;
 
 #ifdef AMREX_USE_GPU
 bool WarpX::do_device_synchronize = true;

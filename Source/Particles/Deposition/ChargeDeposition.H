@@ -5,8 +5,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef CHARGEDEPOSITION_H_
-#define CHARGEDEPOSITION_H_
+#ifndef WARPX_CHARGEDEPOSITION_H_
+#define WARPX_CHARGEDEPOSITION_H_
 
 #include "Particles/Deposition/SharedDepositionUtils.H"
 #include "ablastr/parallelization/KernelTimer.H"
@@ -468,4 +468,4 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPositio
 #endif
 }
 
-#endif // CHARGEDEPOSITION_H_
+#endif // WARPX_CHARGEDEPOSITION_H_

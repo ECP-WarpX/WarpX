@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef PARTICLESCRAPER_H_
-#define PARTICLESCRAPER_H_
+#ifndef WARPX_PARTICLESCRAPER_H_
+#define WARPX_PARTICLESCRAPER_H_
 
 #include "EmbeddedBoundary/DistanceToEB.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
@@ -66,9 +66,9 @@
  */
 template <class PC, class F, std::enable_if_t<amrex::IsParticleContainer<PC>::value, int> foo = 0>
 void
-scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, int lev, F&& f, amrex::Real particle_removal_depth)
+scrapeParticlesAtEB (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, int lev, F&& f, amrex::Real particle_removal_depth)
 {
-    scrapeParticles(pc, distance_to_eb, lev, lev, std::forward<F>(f), particle_removal_depth);
+    scrapeParticlesAtEB(pc, distance_to_eb, lev, lev, std::forward<F>(f), particle_removal_depth);
 }
 
 /**
@@ -110,9 +110,9 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
  */
 template <class PC, class F, std::enable_if_t<amrex::IsParticleContainer<PC>::value, int> foo = 0>
 void
-scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, F&& f, amrex::Real particle_removal_depth)
+scrapeParticlesAtEB (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, F&& f, amrex::Real particle_removal_depth)
 {
-    scrapeParticles(pc, distance_to_eb, 0, pc.finestLevel(), std::forward<F>(f), particle_removal_depth);
+    scrapeParticlesAtEB(pc, distance_to_eb, 0, pc.finestLevel(), std::forward<F>(f), particle_removal_depth);
 }
 
 /**
@@ -156,10 +156,10 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
  */
 template <class PC, class F, std::enable_if_t<amrex::IsParticleContainer<PC>::value, int> foo = 0>
 void
-scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb,
+scrapeParticlesAtEB (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb,
                  int lev_min, int lev_max, F&& f, amrex::Real particle_removal_depth)
 {
-    BL_PROFILE("scrapeParticles");
+    BL_PROFILE("scrapeParticlesAtEB");
 
     for (int lev = lev_min; lev <= lev_max; ++lev)
     {
@@ -219,4 +219,4 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
     }
 }
 
-#endif
+#endif //WARPX_PARTICLESCRAPER_H_

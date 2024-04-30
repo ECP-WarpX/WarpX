@@ -5,8 +5,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef FIELDGATHER_H_
-#define FIELDGATHER_H_
+#ifndef WARPX_FIELDGATHER_H_
+#define WARPX_FIELDGATHER_H_
 
 #include "Particles/Gather/GetExternalFields.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
@@ -1852,4 +1852,4 @@ void doGatherShapeNImplicit (
     }
 }
 
-#endif // FIELDGATHER_H_
+#endif // WARPX_FIELDGATHER_H_

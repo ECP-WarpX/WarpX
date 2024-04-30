@@ -5,8 +5,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef INJECTOR_POSITION_H_
-#define INJECTOR_POSITION_H_
+#ifndef WARPX_INJECTOR_POSITION_H_
+#define WARPX_INJECTOR_POSITION_H_
 
 #include "InjectorPosition_fwd.H"
 
@@ -255,4 +255,4 @@ private:
     amrex::Real zmin, zmax;
 };
 
-#endif
+#endif //WARPX_INJECTOR_POSITION_H_
