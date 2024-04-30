@@ -3112,8 +3112,8 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
     const int qed_runtime_flag = no_qed;
 #endif
 
-    const int max_iterations = WarpX::max_particle_iterations;
-    const amrex::ParticleReal particle_tolerance = WarpX::particle_tolerance;
+    const int max_iterations = WarpX::max_particle_its_in_implicit_scheme;
+    const amrex::ParticleReal particle_tolerance = WarpX::particle_tol_in_implicit_scheme;
 
     amrex::Gpu::Buffer<amrex::Long> unconverged_particles({0});
     amrex::Long* unconverged_particles_ptr = unconverged_particles.data();

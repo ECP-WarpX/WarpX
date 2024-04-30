@@ -573,7 +573,8 @@ WarpX::InitFromScratch ()
     if (m_implicit_solver) {
 
         m_implicit_solver->Define(this);
-        m_implicit_solver->GetParticleSolverParams(max_particle_iterations,particle_tolerance);
+        m_implicit_solver->GetParticleSolverParams( max_particle_its_in_implicit_scheme,
+                                                    particle_tol_in_implicit_scheme );
 
         // Add space to save the positions and velocities at the start of the time steps
         for (auto const& pc : *mypc) {
