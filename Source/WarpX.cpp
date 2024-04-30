@@ -3538,6 +3538,7 @@ WarpX::getMultiLevelField(warpx::fields::FieldType field_type) const
         case FieldType::current_cp :
             return current_cp;
         default:
-           WARPX_ABORT_WITH_MESSAGE("Invalid field type");
+            WARPX_ABORT_WITH_MESSAGE("Invalid field type");
+            return Efield_fp;
     }
 }
