@@ -100,23 +100,30 @@ Overall simulation parameters
       Exact energy conservation requires that the interpolation stencil used for the field gather match that used for the current deposition. ``algo.current_deposition = direct`` must be used with ``interpolation.galerkin_scheme = 0``, and ``algo.current_deposition = Esirkepov`` must be used with ``interpolation.galerkin_scheme = 1``. If using ``algo.current_deposition = villasenor``, the corresponding field gather routine will automatically be selected and the ``interpolation.galerkin_scheme`` flag does not need to be specified. The Esirkepov and villasenor deposition schemes are charge-conserving.
 
 * ``implicit_evolve.theta`` (`float`, default: 0.5)
-    When `algo.evolve_scheme = theta_implicit_em`, the fields used on the RHS of the equations for the implicit advance are computed as (1-theta)*E_{n} + theta*E_{n+1}. theta is bound between 0.5 and 1. The default value of theta = 0.5 is needed for exact energy conservation. For theta > 0.5, high-k modes will be damped and the method will not be exactly energy conserving, but the solver may perform better.
+    When `algo.evolve_scheme = theta_implicit_em`, the fields used on the RHS of the equations for the implicit advance 
+    are computed as (1-theta)*E_{n} + theta*E_{n+1}. theta is bound between 0.5 and 1. The default value of theta = 0.5
+    is needed for exact energy conservation. For theta > 0.5, high-k modes will be damped and the method will not be
+    exactly energy conserving, but the solver may perform better.
 
-* ``algo.max_picard_iterations`` (`integer`, default: 10)
-    When `algo.evolve_scheme` is either `implicit_picard` or `semi_implicit_picard`, this sets the maximum number of Picard
-    itearations that are done each time step.
+* ``implicit_evolve.max_particle_iterations`` (`integer`, default: 21)
+    When `algo.evolve_scheme` is either `theta_implicit_em` or `semi_implicit_em`, this sets the maximum number of Picard
+    iterations for the self-consistent update of the particles at each iteration in the JFNK process.
 
-* ``algo.picard_iteration_tolerance`` (`float`, default: 1.e-7)
-    When `algo.evolve_scheme` is either `implicit_picard` or `semi_implicit_picard`, this sets the convergence tolerance of
-    the iterations, the maximum of the relative change of the L2 norm of the field from one iteration to the next.
-    If this is set to zero, the maximum number of iterations will always be done with the change only calculated on the last
-    iteration (for a slight optimization).
+* ``implicit_evolve.particle_tolerance`` (`float`, default: 1.e-10)
+    When `algo.evolve_scheme` is either `theta_implicit_em` or `semi_implicit_em`, this sets the relative tolerance for
+    the Picard method used to obtain a self-consistent update of the particles at each iteration in the JFNK process.
 
-* ``algo.require_picard_convergence`` (`bool`, default: 1)
-    When `algo.evolve_scheme` is either `implicit_picard` or `semi_implicit_picard`, this sets whether the iteration each step
-    is required to converge.
-    If it is required, an abort is raised if it does not converge and the code then exits.
-    If not, then a warning is issued and the calculation continues.
+* ``newton.require_convergence`` (`bool`, default: 1)
+    When `algo.evolve_scheme` is either `theta_implicit_em` or `semi_implicit_em` and `implicit_evolve.nonlinear_solver
+    = newton`, this sets whether the Newton method is required to converge for each Newton iteration. If it is required,
+    an abort is raised if it does not converge and the code then exits. If not, then a warning is issued and the
+    calculation continues.
+
+* ``picard.require_convergence`` (`bool`, default: 1)
+    When `algo.evolve_scheme` is either `theta_implicit_em` or `semi_implicit_em` and `implicit_evolve.nonlinear_solver 
+    = picard`, this sets whether the Picard method is required to converge for each Newton iteration. If it is required,
+    an abort is raised if it does not converge and the code then exits. If not, then a warning is issued and the
+    calculation continues.
 
 * ``warpx.do_electrostatic`` (`string`) optional (default `none`)
     Specifies the electrostatic mode. When turned on, instead of updating

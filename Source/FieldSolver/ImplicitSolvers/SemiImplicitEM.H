@@ -105,7 +105,7 @@ private:
  * \brief maximum iterations for the Picard method used to obtain a self-consistent
  *  update of the particle positions and velocities for given E and B on the grid
  */
-    int m_max_particle_iterations = 20;
+    int m_max_particle_iterations = 21;
 
     NonlinearSolverType m_nlsolver_type = NonlinearSolverType::Picard;
     std::unique_ptr<NonlinearSolver<WarpXSolverVec,SemiImplicitEM>> m_nlsolver;
