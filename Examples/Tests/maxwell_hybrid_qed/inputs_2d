@@ -38,14 +38,14 @@ my_constants.xi = 1.e-23
 
 
 warpx.E_ext_grid_init_style = parse_E_ext_grid_function
-warpx.Ez_external_grid_function(x,y,z) = 0.
-warpx.Ex_external_grid_function(x,y,z) = 0.
-warpx.Ey_external_grid_function(x,y,z) = "exp(-z**2/L**2)*cos(2*pi*z/wavelength) + Es"
+warpx.Ez_external_grid_function(x,z) = 0.
+warpx.Ex_external_grid_function(x,z) = 0.
+warpx.Ey_external_grid_function(x,z) = "exp(-z**2/L**2)*cos(2*pi*z/wavelength) + Es"
 
 warpx.B_ext_grid_init_style = parse_B_ext_grid_function
-warpx.Bx_external_grid_function(x,y,z)= "-sqrt((1+(12*xi*Es**2)/epsilon0)/(1+(4*xi*Es**2)/epsilon0))*exp(-z**2/L**2)*cos(2*pi*z/wavelength)/clight"
-warpx.By_external_grid_function(x,y,z)= 0.
-warpx.Bz_external_grid_function(x,y,z) = 0.
+warpx.Bx_external_grid_function(x,z)= "-sqrt((1+(12*xi*Es**2)/epsilon0)/(1+(4*xi*Es**2)/epsilon0))*exp(-z**2/L**2)*cos(2*pi*z/wavelength)/clight"
+warpx.By_external_grid_function(x,z)= 0.
+warpx.Bz_external_grid_function(x,z) = 0.
 
 # Diagnostics
 diagnostics.diags_names = diag1

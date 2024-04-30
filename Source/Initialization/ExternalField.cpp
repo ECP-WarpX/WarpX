@@ -105,36 +105,65 @@ ExternalFieldParams::ExternalFieldParams(const amrex::ParmParse& pp_warpx)
         std::string str_By_ext_grid_function;
         std::string str_Bz_ext_grid_function;
 
-#ifdef WARPX_DIM_RZ
-        std::stringstream warnMsg;
-        warnMsg << "Parser for external B (r and theta) fields does not work with RZ\n"
-            << "The initial Br and Bt fields are currently hardcoded to 0.\n"
-            << "The initial Bz field should only be a function of z.\n";
-        ablastr::warn_manager::WMRecordWarning(
-          "Inputs", warnMsg.str(), ablastr::warn_manager::WarnPriority::high);
-        str_Bx_ext_grid_function = "0";
-        str_By_ext_grid_function = "0";
-#else
+#if defined(WARPX_DIM_1D_Z)
+        utils::parser::Store_parserString(pp_warpx, "Bx_external_grid_function(z)",
+          str_Bx_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "By_external_grid_function(z)",
+          str_By_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "Bz_external_grid_function(z)",
+            str_Bz_ext_grid_function);
+        Bxfield_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_Bx_ext_grid_function,{"z"}));
+        Byfield_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_By_ext_grid_function,{"z"}));
+        Bzfield_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_Bz_ext_grid_function,{"z"}));
+#elif defined(WARPX_DIM_XZ)
+        utils::parser::Store_parserString(pp_warpx, "Bx_external_grid_function(x,z)",
+          str_Bx_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "By_external_grid_function(x,z)",
+          str_By_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "Bz_external_grid_function(x,z)",
+            str_Bz_ext_grid_function);
+        Bxfield_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_Bx_ext_grid_function,{"x","z"}));
+        Byfield_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_By_ext_grid_function,{"x","z"}));
+        Bzfield_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_Bz_ext_grid_function,{"x","z"}));
+#elif WARPX_DIM_RZ
+        utils::parser::Store_parserString(pp_warpx, "Br_external_grid_function(r,z)",
+          str_Bx_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "Bt_external_grid_function(r,z)",
+          str_By_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "Bz_external_grid_function(r,z)",
+            str_Bz_ext_grid_function);
+        Bxfield_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_Bx_ext_grid_function,{"r","z"}));
+        Byfield_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_By_ext_grid_function,{"r","z"}));
+        Bzfield_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_Bz_ext_grid_function,{"r","z"}));
+#elif defined(WARPX_DIM_3D)
         utils::parser::Store_parserString(pp_warpx, "Bx_external_grid_function(x,y,z)",
           str_Bx_ext_grid_function);
         utils::parser::Store_parserString(pp_warpx, "By_external_grid_function(x,y,z)",
           str_By_ext_grid_function);
-#endif
         utils::parser::Store_parserString(pp_warpx, "Bz_external_grid_function(x,y,z)",
             str_Bz_ext_grid_function);
-
         Bxfield_parser = std::make_unique<amrex::Parser>(
             utils::parser::makeParser(str_Bx_ext_grid_function,{"x","y","z"}));
         Byfield_parser = std::make_unique<amrex::Parser>(
             utils::parser::makeParser(str_By_ext_grid_function,{"x","y","z"}));
         Bzfield_parser = std::make_unique<amrex::Parser>(
             utils::parser::makeParser(str_Bz_ext_grid_function,{"x","y","z"}));
+#endif
     }
     //___________________________________________________________________________
 
 
     //
-    //  External B field with parser
+    //  External E field with parser
     //
 
     // if the input string for the E-field is "parse_e_ext_grid_function",
@@ -142,29 +171,64 @@ ExternalFieldParams::ExternalFieldParams(const amrex::ParmParse& pp_warpx)
     // provided in the input file.
     if (E_ext_grid_type == ExternalFieldType::parse_ext_grid_function) {
 
-#ifdef WARPX_DIM_RZ
-        WARPX_ABORT_WITH_MESSAGE(
-            "E parser for external fields does not work with RZ -- TO DO");
-#endif
-
-        //! Strings storing parser function to initialize the components of the electric field on the grid
+        //! Strings storing parser function to initialize the components of the magnetic field on the grid
         std::string str_Ex_ext_grid_function;
         std::string str_Ey_ext_grid_function;
         std::string str_Ez_ext_grid_function;
 
-        utils::parser::Store_parserString(pp_warpx, "Ex_external_grid_function(x,y,z)",
-            str_Ex_ext_grid_function);
-        utils::parser::Store_parserString(pp_warpx, "Ey_external_grid_function(x,y,z)",
-           str_Ey_ext_grid_function);
-        utils::parser::Store_parserString(pp_warpx, "Ez_external_grid_function(x,y,z)",
-           str_Ez_ext_grid_function);
-
+#if defined(WARPX_DIM_1D_Z)
+        utils::parser::Store_parserString(pp_warpx, "Ex_external_grid_function(z)",
+          str_Ex_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "Ey_external_grid_function(z)",
+          str_Ey_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "Ez_external_grid_function(z)",
+            str_Ez_ext_grid_function);
         Exfield_parser = std::make_unique<amrex::Parser>(
-           utils::parser::makeParser(str_Ex_ext_grid_function,{"x","y","z"}));
+            utils::parser::makeParser(str_Ex_ext_grid_function,{"z"}));
         Eyfield_parser = std::make_unique<amrex::Parser>(
-           utils::parser::makeParser(str_Ey_ext_grid_function,{"x","y","z"}));
+            utils::parser::makeParser(str_Ey_ext_grid_function,{"z"}));
         Ezfield_parser = std::make_unique<amrex::Parser>(
-           utils::parser::makeParser(str_Ez_ext_grid_function,{"x","y","z"}));
+            utils::parser::makeParser(str_Ez_ext_grid_function,{"z"}));
+#elif defined(WARPX_DIM_XZ)
+        utils::parser::Store_parserString(pp_warpx, "Ex_external_grid_function(x,z)",
+          str_Ex_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "Ey_external_grid_function(x,z)",
+          str_Ey_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "Ez_external_grid_function(x,z)",
+            str_Ez_ext_grid_function);
+        Exfield_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_Ex_ext_grid_function,{"x","z"}));
+        Eyfield_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_Ey_ext_grid_function,{"x","z"}));
+        Ezfield_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_Ez_ext_grid_function,{"x","z"}));
+#elif WARPX_DIM_RZ
+        utils::parser::Store_parserString(pp_warpx, "Er_external_grid_function(r,z)",
+          str_Ex_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "Et_external_grid_function(r,z)",
+          str_Ey_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "Ez_external_grid_function(r,z)",
+            str_Ez_ext_grid_function);
+        Exfield_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_Ex_ext_grid_function,{"r","z"}));
+        Eyfield_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_Ey_ext_grid_function,{"r","z"}));
+        Ezfield_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_Ez_ext_grid_function,{"r","z"}));
+#elif defined(WARPX_DIM_3D)
+        utils::parser::Store_parserString(pp_warpx, "Ex_external_grid_function(x,y,z)",
+          str_Ex_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "Ey_external_grid_function(x,y,z)",
+          str_Ey_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "Ez_external_grid_function(x,y,z)",
+            str_Ez_ext_grid_function);
+        Exfield_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_Ex_ext_grid_function,{"x","y","z"}));
+        Eyfield_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_Ey_ext_grid_function,{"x","y","z"}));
+        Ezfield_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_Ez_ext_grid_function,{"x","y","z"}));
+#endif
     }
     //___________________________________________________________________________
 
