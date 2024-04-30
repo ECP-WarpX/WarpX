@@ -12,6 +12,16 @@
 
 /**
  * \brief Top-level class for the nonlinear solver
+ *
+ *    This class is templated on a vector class Vec, and an operator class Ops.
+ *
+ *    The Ops class must have the following functions:
+ *    1) PreRHSOp( U_vec, time, dt, iter, from_jacobian ),
+ *    2) ComputeRHS( R_vec, U_vec, time, dt ),
+ *    where U_vec and R_vec are of of type Vec.
+ *
+ *    The Vec class must have basic math operators, such as =, +=, -=,
+ *    increment(), linComb(), scale(), etc.. See WarpXSolverVec.H for an example.
  */
 
 template<class Vec, class Ops>
