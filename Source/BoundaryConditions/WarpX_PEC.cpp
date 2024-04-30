@@ -839,11 +839,8 @@ PEC::ApplyReflectiveBoundarytoJfield(
         mirrorfac[2][idim][1] = 2*domain_hi[idim] - (1 - Jz_nodal[idim]);
     }
 
-    grown_domain_box.convert(Jx_nodal);
-    grown_domain_box.convert(Jy_nodal);
-    grown_domain_box.convert(Jz_nodal);
-
     // Each current component is handled separately below, starting with Jx.
+    grown_domain_box.convert(Jx_nodal);
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
@@ -878,6 +875,7 @@ PEC::ApplyReflectiveBoundarytoJfield(
     }
 
     // Handle Jy.
+    grown_domain_box.convert(Jy_nodal);
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
@@ -912,6 +910,7 @@ PEC::ApplyReflectiveBoundarytoJfield(
     }
 
     // Handle Jz.
+    grown_domain_box.convert(Jz_nodal);
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
