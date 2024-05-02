@@ -867,14 +867,20 @@ LaserParticleContainer::update_laser_particle (WarpXParIter& pti,
     // to the initial position (at the beginning of the timestep), before updating the particle position
 #if (AMREX_SPACEDIM >= 2)
     ParticleReal* x_n = nullptr;
-    if (push_type == PushType::Implicit) x_n = pti.GetAttribs(particle_comps["x_n"]).dataPtr();
+    if (push_type == PushType::Implicit) {
+        x_n = pti.GetAttribs(particle_comps["x_n"]).dataPtr();
+    }
 #endif
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
     ParticleReal* y_n = nullptr;
-    if (push_type == PushType::Implicit) y_n = pti.GetAttribs(particle_comps["y_n"]).dataPtr();
+    if (push_type == PushType::Implicit) {
+        y_n = pti.GetAttribs(particle_comps["y_n"]).dataPtr();
+    }
 #endif
     ParticleReal* z_n = nullptr;
-    if (push_type == PushType::Implicit) z_n = pti.GetAttribs(particle_comps["z_n"]).dataPtr();
+    if (push_type == PushType::Implicit) {
+        z_n = pti.GetAttribs(particle_comps["z_n"]).dataPtr();
+    }
 
     // Copy member variables to tmp copies for GPU runs.
     const Real tmp_mobility = m_mobility;
@@ -913,17 +919,25 @@ LaserParticleContainer::update_laser_particle (WarpXParIter& pti,
             // to the initial position (at the beginning of the timestep), before updating the particle position
 
             ParticleReal x=0., y=0., z=0.;
-            if (push_type == PushType::Explicit) GetPosition(i, x, y, z);
+            if (push_type == PushType::Explicit) {
+                GetPosition(i, x, y, z);
+            }
 
 #if !defined(WARPX_DIM_1D_Z)
-            if (push_type == PushType::Implicit) x = x_n[i];
+            if (push_type == PushType::Implicit) {
+                x = x_n[i];
+            }
             x += vx * dt;
 #endif
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
-            if (push_type == PushType::Implicit) y = y_n[i];
+            if (push_type == PushType::Implicit) {
+                y = y_n[i];
+            }
             y += vy * dt;
 #endif
-            if (push_type == PushType::Implicit) z = z_n[i];
+            if (push_type == PushType::Implicit) {
+                z = z_n[i];
+            }
             z += vz * dt;
 
             SetPosition(i, x, y, z);
