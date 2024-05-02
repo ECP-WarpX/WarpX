@@ -95,16 +95,16 @@ private:
 
     WarpX* m_WarpX;
 
-/**
- * \brief tolerance used by the Picard method used to obtain a self-consistent
- *  update of the particle positions and velocities for given E and B on the grid
- */
+    /**
+     * \brief tolerance used by the Picard method used to obtain a self-consistent
+     *  update of the particle positions and velocities for given E and B on the grid
+    */
     amrex::ParticleReal m_particle_tolerance = 1.0e-10;
 
-/**
- * \brief maximum iterations for the Picard method used to obtain a self-consistent
- *  update of the particle positions and velocities for given E and B on the grid
- */
+    /**
+     * \brief maximum iterations for the Picard method used to obtain a self-consistent
+     *  update of the particle positions and velocities for given E and B on the grid
+     */
     int m_max_particle_iterations = 21;
 
     NonlinearSolverType m_nlsolver_type = NonlinearSolverType::Picard;
@@ -112,9 +112,12 @@ private:
 
     WarpXSolverVec m_E, m_Eold;
 
-    void UpdateWarpXState ( const WarpXSolverVec&  a_E,
-                            amrex::Real            a_time,
-                            amrex::Real            a_dt );
+    /**
+     * \brief Update the E and B fields owned by WarpX
+     */
+    void UpdateWarpXFields ( const WarpXSolverVec&  a_E,
+                             amrex::Real            a_time,
+                             amrex::Real            a_dt );
 
 };
 

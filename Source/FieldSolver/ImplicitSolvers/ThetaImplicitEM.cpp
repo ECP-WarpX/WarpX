@@ -128,10 +128,7 @@ void ThetaImplicitEM::OneStep ( const amrex::Real  a_time,
     m_nlsolver->Solve( m_E, m_Eold, theta_time, a_dt );
 
     // Update WarpX owned Efield_fp and Bfield_fp to t_{n+theta}
-    UpdateWarpXState( m_E, theta_time, a_dt );
-
-    // Update field boundary probes prior to updating fields to t_{n+1}
-    //UpdateBoundaryProbes( a_dt )
+    UpdateWarpXFields( m_E, theta_time, a_dt );
 
     // Advance particles from time n+1/2 to time n+1
     m_WarpX->FinishImplicitParticleUpdate();
@@ -151,7 +148,7 @@ void ThetaImplicitEM::PreRHSOp ( const WarpXSolverVec&  a_E,
     amrex::ignore_unused(a_E);
 
     // update derived variable B and then update WarpX owned Efield_fp and Bfield_fp
-    UpdateWarpXState( a_E, a_time, a_dt );
+    UpdateWarpXFields( a_E, a_time, a_dt );
 
     // Advance the particle positions by 1/2 dt,
     // particle velocities by dt, then take average of old and new v,
@@ -169,9 +166,9 @@ void ThetaImplicitEM::ComputeRHS ( WarpXSolverVec&  a_Erhs,
     m_WarpX->ImplicitComputeRHSE(m_theta*a_dt, a_Erhs);
 }
 
-void ThetaImplicitEM::UpdateWarpXState ( const WarpXSolverVec&  a_E,
-                                         amrex::Real            a_time,
-                                         amrex::Real            a_dt )
+void ThetaImplicitEM::UpdateWarpXFields ( const WarpXSolverVec&  a_E,
+                                          amrex::Real            a_time,
+                                          amrex::Real            a_dt )
 {
     using namespace amrex::literals;
     amrex::ignore_unused(a_time);

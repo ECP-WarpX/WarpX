@@ -135,51 +135,66 @@ public:
     inline
     void operator+= ( const WarpXSolverVec&  a_vec )
     {
-        m_field_vec[0][0]->plus(*(a_vec.getVec()[0][0]), 0, 1, 0);
-        m_field_vec[0][1]->plus(*(a_vec.getVec()[0][1]), 0, 1, 0);
-        m_field_vec[0][2]->plus(*(a_vec.getVec()[0][2]), 0, 1, 0);
+        for (int lev = 0; lev < m_num_amr_levels; ++lev) {
+            for (int n=0; n<3; n++) {
+                m_field_vec[lev][n]->plus(*(a_vec.getVec()[lev][n]), 0, 1, 0);
+            }
+        }
     }
 
     inline
     void operator-= (const WarpXSolverVec& a_vec)
     {
-        m_field_vec[0][0]->minus(*(a_vec.getVec()[0][0]), 0, 1, 0);
-        m_field_vec[0][1]->minus(*(a_vec.getVec()[0][1]), 0, 1, 0);
-        m_field_vec[0][2]->minus(*(a_vec.getVec()[0][2]), 0, 1, 0);
+        for (int lev = 0; lev < m_num_amr_levels; ++lev) {
+            for (int n=0; n<3; n++) {
+                m_field_vec[lev][n]->minus(*(a_vec.getVec()[lev][n]), 0, 1, 0);
+            }
+        }
     }
 
+    /**
+     * \brief Y = a*X + b*Y
+     */
     inline
     void linComb (const RT a, const WarpXSolverVec& X, const RT b, const WarpXSolverVec& Y)
     {
-        for (int n=0; n<3; n++) {
-            amrex::MultiFab::LinComb(*m_field_vec[0][n], a, *X.getVec()[0][n], 0,
-                                                         b, *Y.getVec()[0][n], 0,
-                                                         0, 1, 0);
+        for (int lev = 0; lev < m_num_amr_levels; ++lev) {
+            for (int n=0; n<3; n++) {
+                amrex::MultiFab::LinComb(*m_field_vec[lev][n], a, *X.getVec()[lev][n], 0,
+                                                               b, *Y.getVec()[lev][n], 0,
+                                                               0, 1, 0);
+            }
         }
     }
 
-    inline
-    void increment (const WarpXSolverVec& a_X, const RT a_a)
+    /**
+     * \brief Increment Y by a*X (Y += a*X)
+     */
+    void increment (const WarpXSolverVec& X, const RT a)
     {
-        for (int n=0; n<3; n++) {
-            amrex::MultiFab::Saxpy( *m_field_vec[0][n], a_a, *a_X.getVec()[0][n],
-                                    0, 0, 1, amrex::IntVect::TheZeroVector() );
+        for (int lev = 0; lev < m_num_amr_levels; ++lev) {
+            for (int n=0; n<3; n++) {
+                amrex::MultiFab::Saxpy( *m_field_vec[lev][n], a, *X.getVec()[lev][n],
+                                        0, 0, 1, amrex::IntVect::TheZeroVector() );
+            }
         }
     }
 
+    /**
+     * \brief Scale Y by a (Y *= a)
+     */
     inline
     void scale (RT a_a)
     {
-        m_field_vec[0][0]->mult(a_a, 0, 1);
-        m_field_vec[0][1]->mult(a_a, 0, 1);
-        m_field_vec[0][2]->mult(a_a, 0, 1);
+        for (int lev = 0; lev < m_num_amr_levels; ++lev) {
+            for (int n=0; n<3; n++) {
+                m_field_vec[lev][n]->mult(a_a, 0, 1);
+            }
+        }
     }
 
     inline
     void zero () { setVal(0.0); }
-
-    inline
-    void ones () { setVal(RT(1.0)); }
 
     inline
     void setVal ( const RT  a_val )
@@ -187,10 +202,11 @@ public:
         AMREX_ASSERT_WITH_MESSAGE(
             IsDefined(),
             "WarpXSolverVec::ones() called on undefined WarpXSolverVec");
-        const int lev = 0;
-        m_field_vec[lev][0]->setVal(a_val);
-        m_field_vec[lev][1]->setVal(a_val);
-        m_field_vec[lev][2]->setVal(a_val);
+        for (int lev = 0; lev < m_num_amr_levels; ++lev) {
+            for (int n=0; n<3; n++) {
+                m_field_vec[lev][n]->setVal(a_val);
+            }
+        }
     }
 
     [[nodiscard]] inline RT norm2 () const

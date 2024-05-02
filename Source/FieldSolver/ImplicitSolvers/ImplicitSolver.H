@@ -37,6 +37,10 @@ public:
     // the following routines are called by WarpX
     //
 
+    /**
+     * \brief Read user-provided parameters that control the implicit solver.
+     * Allocate internal arrays for intermediate field values needed by the solver.
+     */
     virtual void Define ( WarpX*  a_WarpX ) = 0;
 
     [[nodiscard]] virtual bool IsDefined () const = 0;
@@ -47,7 +51,9 @@ public:
 
     virtual void GetParticleSolverParams (int&  a_max_particle_iter,
                                           amrex::ParticleReal&  a_particle_tol ) = 0;
-
+    /**
+     * \brief Advance fields and particles by one time step using the specified implicit algorithm
+     */
     virtual void OneStep ( amrex::Real  a_time,
                            amrex::Real  a_dt,
                            int          a_step ) = 0;
@@ -56,12 +62,29 @@ public:
     // the following routines are called by the linear and nonlinear solvers
     //
 
+    /**
+     * \brief Perform implicit-algorithm specific operations prior to calling
+     * ComputeRHS from the nonlinear and linear solvers.
+     * e.g., update particles and compute the current density
+     */
     virtual void PreRHSOp ( const WarpXSolverVec&  a_E,
                             amrex::Real            a_time,
                             amrex::Real            a_dt,
                             int                    a_nl_iter,
                             bool                   a_from_jacobian ) = 0;
 
+    /**
+     * \brief Computes the RHS of the equation corresponding to the specified implicit algorithm.
+     * The discrete equations corresponding to numerical integration of ODEs are often
+     * written in the form U = b + RHS(U), where U is the variable to be solved for (e.g.,
+     * the solution at the next time step), b is a constant (i.e., the solution from the
+     * previous time step), and RHS(U) is the right-hand-side of the equation. Iterative
+     * solvers, such as Picard and Newton, and higher-order Runge-Kutta methods, need to
+     * compute RHS(U) multiple times for different values of U. Thus, a routine that
+     * returns this value is needed.
+     * e.g., Ebar - E^n = cvac^2*0.5*dt*(curl(Bbar) - mu0*Jbar(Ebar,Bbar))
+     * Here, U = Ebar, b = E^n, and the expression on the right is RHS(U).
+     */
     virtual void ComputeRHS ( WarpXSolverVec&  a_Erhs,
                         const WarpXSolverVec&  a_E,
                               amrex::Real      a_time,
