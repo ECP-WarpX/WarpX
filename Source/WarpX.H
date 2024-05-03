@@ -1216,7 +1216,7 @@ protected:
     //! DistributionMapping in the virtual function MakeDistributionMap. The
     //! default is false. Note that the DistributionMapping made by the
     //! MakeDistributionMap function could still be overridden by load
-    //! balancing. In the RRSFC strategy, The Round robin method is used to
+    //! balancing. In the RRSFC strategy, the Round robin method is used to
     //! distribute Boxes orderd by the space filling curve. This might help
     //! avoid some processes running out of memory due to having too many
     //! particles during initialization.
