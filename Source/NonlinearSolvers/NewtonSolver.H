@@ -17,8 +17,10 @@
 #include <vector>
 
 /**
- * \brief Newton method to solve nonlinear
- *  equation of form: F(U) = U - b - R(U) = 0
+ * \brief Newton method to solve nonlinear equation of form:
+ * F(U) = U - b - R(U) = 0. U is the solution vector, b is a constant,
+ * and R(U) is some nonlinear function of U, which is computed in the
+ * ComputeRHS() Ops function.
  */
 
 template<class Vec, class Ops>

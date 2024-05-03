@@ -46,7 +46,7 @@
  *  algorithm for Coulomb collisions.", JCP 456 (2022).
  *
  *  See J.R. Angus, W. Farmer, A. Friedman, D. Ghosh, D. Grote, D. Larson, A. Link, "An
- *  implicit particle code with exact energy and charge consevation for electromagnetic studies
+ *  implicit particle code with exact energy and charge conservation for electromagnetic studies
  *  of dense plasmas.", JCP 491 (2023).
  */
 

@@ -50,11 +50,6 @@ public:
 
     WarpXSolverVec() = default;
 
-    WarpXSolverVec(const WarpXSolverVec& a_vec)
-    {
-        Define(a_vec);
-    }
-
     ~WarpXSolverVec() = default;
 
     using value_type = amrex::Real;
@@ -236,14 +231,5 @@ private:
     static amrex::Vector<std::array<std::unique_ptr<amrex::iMultiFab>,3>> m_dotMask;
 
 };
-
-template <typename T>
-WarpXSolverVec operator* (T a_a, const WarpXSolverVec& a_vec)
-{
-    WarpXSolverVec retval(a_vec);
-    retval = a_vec;
-    retval.scale(a_a);
-    return retval;
-}
 
 #endif

@@ -16,7 +16,9 @@
 
 /**
  * \brief Picard fixed-point iteration method to solve nonlinear
- *  equation of form: U = b + R(U)
+ *  equation of form: U = b + R(U). U is the solution vector. b
+ *  is a constant. R(U) is some nonlinear function of U, which
+ *  is computed in the ComputeRHS() Ops function.
  */
 
 template<class Vec, class Ops>
