@@ -25,6 +25,11 @@ void WarpXSolverVec::SetDotMask( const amrex::Vector<amrex::Geometry>&  a_Geom )
         m_dotMask[0][n] = tmp.OwnerMask(period);
     }
     m_dot_mask_defined = true;
+
+    // If the function below is not called, then the following
+    // error message occurs after the simulation finishes:
+    // malloc_consolidate(): unaligned fastbin chunk detected
+    amrex::ExecOnFinalize(WarpXSolverVec::clearDotMask);
 }
 
 [[nodiscard]] amrex::Real WarpXSolverVec::dotProduct ( const WarpXSolverVec&  a_X ) const
