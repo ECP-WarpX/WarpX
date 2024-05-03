@@ -219,6 +219,8 @@ bool WarpX::do_device_synchronize = true;
 bool WarpX::do_device_synchronize = false;
 #endif
 
+bool WarpX::roundrobin_sfc = false;
+
 WarpX* WarpX::m_instance = nullptr;
 
 void WarpX::MakeWarpX ()
@@ -1157,6 +1159,8 @@ WarpX::ReadParameters ()
             maxLevel() == 0 || !do_current_centering,
             "Finite-order centering of currents is not implemented with mesh refinement"
         );
+
+        pp_warpx.query("roundrobin_sfc", roundrobin_sfc);
     }
 
     {
@@ -3514,4 +3518,18 @@ const amrex::MultiFab&
 WarpX::getField(FieldType field_type, const int lev, const int direction) const
 {
     return *getFieldPointer(field_type, lev, direction);
+}
+
+amrex::DistributionMapping
+WarpX::MakeDistributionMap (int lev, amrex::BoxArray const& ba)
+{
+    if (roundrobin_sfc) {
+        auto old_strategy = amrex::DistributionMapping::strategy();
+        amrex::DistributionMapping::strategy(amrex::DistributionMapping::RRSFC);
+        amrex::DistributionMapping dm(ba);
+        amrex::DistributionMapping::strategy(old_strategy);
+        return dm;
+    } else {
+        return amrex::AmrCore::MakeDistributionMap(lev, ba);
+    }
 }

@@ -1212,6 +1212,20 @@ protected:
     //! This function is called in amrex::AmrCore::InitFromScratch.
     void PostProcessBaseGrids (amrex::BoxArray& ba0) const final;
 
+    //! If this is true, AMReX's RRSFC strategy is used to make
+    //! DistributionMapping in the virtual function MakeDistributionMap. The
+    //! default is false. Note that the DistributionMapping made by the
+    //! MakeDistributionMap function could still be overridden by load
+    //! balancing. In the RRSFC strategy, The Round robin method is used to
+    //! distribute Boxes orderd by the space filling curve. This might help
+    //! avoid some processes running out of memory due to having too many
+    //! particles during initialization.
+    static bool roundrobin_sfc;
+
+    //! Use this function to override how DistributionMapping is made.
+    [[nodiscard]] amrex::DistributionMapping
+    MakeDistributionMap (int lev, amrex::BoxArray const& ba) final;
+
     //! Make a new level from scratch using provided BoxArray and
     //! DistributionMapping.  Only used during initialization.  Called
     //! by AmrCoreInitFromScratch.
