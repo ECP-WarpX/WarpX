@@ -45,6 +45,8 @@ public:
 
     SemiImplicitEM() = default;
 
+    ~SemiImplicitEM() override = default;
+
     // Prohibit Move and Copy operations
     SemiImplicitEM(const SemiImplicitEM&) = delete;
     SemiImplicitEM& operator=(const SemiImplicitEM&) = delete;

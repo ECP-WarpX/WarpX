@@ -56,6 +56,8 @@ public:
 
     ThetaImplicitEM() = default;
 
+    ~ThetaImplicitEM() override = default;
+
     // Prohibit Move and Copy operations
     ThetaImplicitEM(const ThetaImplicitEM&) = delete;
     ThetaImplicitEM& operator=(const ThetaImplicitEM&) = delete;

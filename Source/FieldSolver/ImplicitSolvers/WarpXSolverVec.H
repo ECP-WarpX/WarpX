@@ -50,10 +50,7 @@ public:
 
     WarpXSolverVec() = default;
 
-    WarpXSolverVec(const WarpXSolverVec& a_vec)
-    {
-        Define(a_vec);
-    }
+    WarpXSolverVec(const WarpXSolverVec&) = delete;
 
     ~WarpXSolverVec() = default;
 
