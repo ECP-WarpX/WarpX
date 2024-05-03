@@ -50,6 +50,11 @@ public:
 
     WarpXSolverVec() = default;
 
+    WarpXSolverVec(const WarpXSolverVec& a_vec)
+    {
+        Define(a_vec);
+    }
+
     ~WarpXSolverVec() = default;
 
     using value_type = amrex::Real;

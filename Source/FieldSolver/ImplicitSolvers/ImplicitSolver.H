@@ -49,7 +49,7 @@ public:
     virtual void PrintParameters () const = 0;
 
     void GetParticleSolverParams (int&  a_max_particle_iter,
-                                  amrex::ParticleReal&  a_particle_tol )
+                                  amrex::ParticleReal&  a_particle_tol ) const
     {
         a_max_particle_iter = m_max_particle_iterations;
         a_particle_tol = m_particle_tolerance;
