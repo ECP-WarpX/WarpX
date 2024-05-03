@@ -8,6 +8,7 @@
 #define Implicit_Solver_H_
 
 #include "FieldSolver/ImplicitSolvers/WarpXSolverVec.H"
+#include "NonlinearSolvers/NonlinearSolverLibrary.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_REAL.H>
@@ -43,11 +44,9 @@ public:
      */
     virtual void Define ( WarpX*  a_WarpX ) = 0;
 
-    [[nodiscard]] virtual bool IsDefined () const = 0;
+    bool IsDefined () const { return m_is_defined; }
 
     virtual void PrintParameters () const = 0;
-
-    virtual void Initialize () = 0;
 
     virtual void GetParticleSolverParams (int&  a_max_particle_iter,
                                           amrex::ParticleReal&  a_particle_tol ) = 0;
@@ -90,7 +89,60 @@ public:
                               amrex::Real      a_time,
                               amrex::Real      a_dt ) = 0;
 
-private:
+protected:
+
+    /**
+     * \brief Pointer back to main WarpX class
+     */
+    WarpX* m_WarpX;
+
+    bool m_is_defined = false;
+
+    /**
+     * \brief Nonlinear solver type and object
+     */
+    NonlinearSolverType m_nlsolver_type;
+    std::unique_ptr<NonlinearSolver<WarpXSolverVec,ImplicitSolver>> m_nlsolver;
+
+    /**
+     * \brief tolerance used by the iterative method used to obtain a self-consistent
+     *  update of the particle positions and velocities for given E and B on the grid
+     */
+    amrex::ParticleReal m_particle_tolerance = 1.0e-10;
+
+    /**
+     * \brief maximum iterations for the iterative method used to obtain a self-consistent
+     *  update of the particle positions and velocities for given E and B on the grid
+     */
+    int m_max_particle_iterations = 21;
+
+    /**
+     * \brief parse nonlinear solver parameters (if one is used)
+     */
+    void parseNonlinearSolverParams( const amrex::ParmParse&  pp )
+    {
+
+        std::string nlsolver_type_str;
+        pp.get("nonlinear_solver", nlsolver_type_str);
+
+        if (nlsolver_type_str=="picard") {
+            m_nlsolver_type = NonlinearSolverType::Picard;
+            m_nlsolver = std::make_unique<PicardSolver<WarpXSolverVec,ImplicitSolver>>();
+            m_max_particle_iterations = 1;
+            m_particle_tolerance = 0.0;
+        }
+        else if (nlsolver_type_str=="newton") {
+            m_nlsolver_type = NonlinearSolverType::Newton;
+            m_nlsolver = std::make_unique<NewtonSolver<WarpXSolverVec,ImplicitSolver>>();
+            pp.query("max_particle_iterations", m_max_particle_iterations);
+            pp.query("particle_tolerance", m_particle_tolerance);
+        }
+        else {
+            WARPX_ABORT_WITH_MESSAGE(
+                "invalid nonlinear_solver specified. Valid options are picard and newton.");
+        }
+
+    }
 
 };
 

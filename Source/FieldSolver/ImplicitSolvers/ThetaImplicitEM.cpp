@@ -19,7 +19,7 @@ void ThetaImplicitEM::Define ( WarpX* const  a_WarpX )
     // Retain a pointer back to main WarpX class
     m_WarpX = a_WarpX;
 
-    // Define E vectors
+    // Define E and Eold vectors
     m_E.Define( m_WarpX->getMultiLevelField(FieldType::Efield_fp) );
     m_Eold.Define( m_WarpX->getMultiLevelField(FieldType::Efield_fp) );
 
@@ -28,7 +28,7 @@ void ThetaImplicitEM::Define ( WarpX* const  a_WarpX )
     const amrex::Vector<amrex::Geometry>& Geom = m_WarpX->Geom();
     m_E.SetDotMask(Geom);
 
-    // Define Bold vector
+    // Define Bold MultiFab
     const int lev = 0;
     m_Bold.resize(1); // size is number of levels
     for (int n=0; n<3; n++) {
@@ -46,33 +46,11 @@ void ThetaImplicitEM::Define ( WarpX* const  a_WarpX )
         m_theta>=0.5 && m_theta<=1.0,
         "theta parameter for theta implicit time solver must be between 0.5 and 1.0");
 
-    std::string nlsolver_type_str;
-    pp.query("nonlinear_solver", nlsolver_type_str);
-    if (nlsolver_type_str=="picard") {
-        m_nlsolver_type = NonlinearSolverType::Picard;
-        m_max_particle_iterations = 1;
-        m_particle_tolerance = 0.0;
-    }
-    else if (nlsolver_type_str=="newton") {
-        m_nlsolver_type = NonlinearSolverType::Newton;
-        pp.query("max_particle_iterations", m_max_particle_iterations);
-        pp.query("particle_tolerance", m_particle_tolerance);
-    }
-    else {
-        WARPX_ABORT_WITH_MESSAGE(
-            "invalid nonlinear_solver specified. Valid options are picard and newton.");
-    }
+    // Parse nonlinear solver parameters
+    parseNonlinearSolverParams( pp );
 
     // Define the nonlinear solver
-    if (m_nlsolver_type == NonlinearSolverType::Picard) {
-        m_nlsolver = std::make_unique<PicardSolver<WarpXSolverVec,ThetaImplicitEM>>();
-        m_nlsolver->Define(m_E, this);
-    }
-    else if (m_nlsolver_type == NonlinearSolverType::Newton) {
-        m_nlsolver = std::make_unique<NewtonSolver<WarpXSolverVec,ThetaImplicitEM>>();
-        m_nlsolver->Define(m_E, this);
-    }
-
+    m_nlsolver->Define(m_E, this);
     m_is_defined = true;
 }
 
@@ -145,7 +123,6 @@ void ThetaImplicitEM::PreRHSOp ( const WarpXSolverVec&  a_E,
                                  const int              a_nl_iter,
                                  const bool             a_from_jacobian )
 {
-    amrex::ignore_unused(a_E);
 
     // update derived variable B and then update WarpX owned Efield_fp and Bfield_fp
     UpdateWarpXFields( a_E, a_time, a_dt );

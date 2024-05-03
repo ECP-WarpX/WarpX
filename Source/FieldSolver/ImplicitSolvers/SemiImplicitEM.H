@@ -8,7 +8,6 @@
 #define SEMI_IMPLICIT_EM_H_
 
 #include "FieldSolver/ImplicitSolvers/WarpXSolverVec.H"
-#include "NonlinearSolvers/NonlinearSolverLibrary.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_MultiFab.H>
@@ -61,11 +60,7 @@ public:
 
     void Define ( WarpX*  a_WarpX ) override;
 
-    [[nodiscard]] bool IsDefined () const override { return m_is_defined; }
-
     void PrintParameters () const override;
-
-    void Initialize () override {;}
 
     void GetParticleSolverParams ( int&  a_max_particle_iterations,
                                    amrex::ParticleReal&  a_particle_tolerance ) override
@@ -91,29 +86,13 @@ public:
 
 private:
 
-    bool m_is_defined = false;
-
-    WarpX* m_WarpX;
-
     /**
-     * \brief tolerance used by the Picard method used to obtain a self-consistent
-     *  update of the particle positions and velocities for given E and B on the grid
-    */
-    amrex::ParticleReal m_particle_tolerance = 1.0e-10;
-
-    /**
-     * \brief maximum iterations for the Picard method used to obtain a self-consistent
-     *  update of the particle positions and velocities for given E and B on the grid
+     * \brief Solver vectors for E and Eold
      */
-    int m_max_particle_iterations = 21;
-
-    NonlinearSolverType m_nlsolver_type = NonlinearSolverType::Picard;
-    std::unique_ptr<NonlinearSolver<WarpXSolverVec,SemiImplicitEM>> m_nlsolver;
-
     WarpXSolverVec m_E, m_Eold;
 
     /**
-     * \brief Update the E and B fields owned by WarpX
+     * \brief Update the E field owned by WarpX
      */
     void UpdateWarpXFields ( const WarpXSolverVec&  a_E,
                              amrex::Real            a_time,

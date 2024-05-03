@@ -8,7 +8,6 @@
 #define THETA_IMPLICIT_EM_H_
 
 #include "FieldSolver/ImplicitSolvers/WarpXSolverVec.H"
-#include "NonlinearSolvers/NonlinearSolverLibrary.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_MultiFab.H>
@@ -72,11 +71,7 @@ public:
 
     void Define ( WarpX*  a_WarpX ) override;
 
-    [[nodiscard]] bool IsDefined () const override { return m_is_defined; }
-
     void PrintParameters () const override;
-
-    void Initialize () override {;}
 
     void GetParticleSolverParams ( int&  a_max_particle_iterations,
                                    amrex::ParticleReal&  a_particle_tolerance ) override
@@ -104,31 +99,20 @@ public:
 
 private:
 
-    bool m_is_defined = false;
-
-    WarpX* m_WarpX;
-
     /**
-     * \brief time-biasing parmemeter theta bound between 0.5 and 1.0
+     * \brief Time-biasing parameter for fields used on RHS to advance system
      */
     amrex::Real m_theta = 0.5;
 
     /**
-     * \brief tolerance used by the Picard method used to obtain a self-consistent
-     *  update of the particle positions and velocities for given E and B on the grid
+     * \brief Solver vectors for E and Eold
      */
-    amrex::ParticleReal m_particle_tolerance = 1.0e-10;
+    WarpXSolverVec m_E, m_Eold;
 
     /**
-     * \brief maximum iterations for the Picard method used to obtain a self-consistent
-     *  update of the particle positions and velocities for given E and B on the grid
+     * \brief B is a derived variable from E. B is owned by WarpX.
+     * Need to save Bold to update B during the solve for m_E.
      */
-    int m_max_particle_iterations = 21;
-
-    NonlinearSolverType m_nlsolver_type = NonlinearSolverType::Picard;
-    std::unique_ptr<NonlinearSolver<WarpXSolverVec,ThetaImplicitEM>> m_nlsolver;
-
-    WarpXSolverVec m_E, m_Eold;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_Bold;
 
     /**
@@ -138,6 +122,10 @@ private:
                              amrex::Real            a_time,
                              amrex::Real            a_dt );
 
+    /**
+     * \brief Nonlinear solver is for the time-centered values of E. After
+     * the solver, need to use m_E and m_Eold to compute E^{n+1}
+     */
     void FinishFieldUpdate ( amrex::Real  a_new_time );
 
 };

@@ -18,7 +18,7 @@ void SemiImplicitEM::Define ( WarpX*  a_WarpX )
     // Retain a pointer back to main WarpX class
     m_WarpX = a_WarpX;
 
-    // Define E vectors
+    // Define E and Eold vectors
     m_E.Define( m_WarpX->getMultiLevelField(FieldType::Efield_fp) );
     m_Eold.Define( m_WarpX->getMultiLevelField(FieldType::Efield_fp) );
 
@@ -29,30 +29,12 @@ void SemiImplicitEM::Define ( WarpX*  a_WarpX )
 
     // Parse implicit solver parameters
     const amrex::ParmParse pp("implicit_evolve");
-
-    std::string nlsolver_type_str;
-    pp.query("nonlinear_solver", nlsolver_type_str);
-    if (nlsolver_type_str=="picard") {
-        m_nlsolver_type = NonlinearSolverType::Picard;
-        m_max_particle_iterations = 1;
-        m_particle_tolerance = 0.0;
-        m_nlsolver = std::make_unique<PicardSolver<WarpXSolverVec,SemiImplicitEM>>();
-    }
-    else if (nlsolver_type_str=="newton") {
-        m_nlsolver_type = NonlinearSolverType::Newton;
-        pp.query("max_particle_iterations", m_max_particle_iterations);
-        pp.query("particle_tolerance", m_particle_tolerance);
-        m_nlsolver = std::make_unique<NewtonSolver<WarpXSolverVec,SemiImplicitEM>>();
-    }
-    else {
-        WARPX_ABORT_WITH_MESSAGE(
-            "invalid nonlinear_solver specified. Valid options are picard and newton.");
-    }
+    parseNonlinearSolverParams( pp );
 
     // Define the nonlinear solver
     m_nlsolver->Define(m_E, this);
-
     m_is_defined = true;
+
 }
 
 void SemiImplicitEM::PrintParameters () const
@@ -102,7 +84,7 @@ void SemiImplicitEM::OneStep ( amrex::Real  a_time,
     // Particles will be advanced to t_{n+1/2}
     m_nlsolver->Solve( m_E, m_Eold, half_time, a_dt );
 
-    // Update WarpX owned Efield_fp and Bfield_fp to t_{n+1/2}
+    // Update WarpX owned Efield_fp to t_{n+1/2}
     UpdateWarpXFields( m_E, half_time, a_dt );
 
     // Advance particles from time n+1/2 to time n+1
@@ -123,7 +105,7 @@ void SemiImplicitEM::PreRHSOp ( const WarpXSolverVec&  a_E,
                                 bool                   a_from_jacobian )
 {
 
-    // update derived variable B and then update WarpX owned Efield_fp and Bfield_fp
+    // update WarpX owned Efield_fp
     UpdateWarpXFields( a_E, a_time, a_dt );
 
     // Advance the particle positions by 1/2 dt,
@@ -152,12 +134,5 @@ void SemiImplicitEM::UpdateWarpXFields ( const WarpXSolverVec&  a_E,
 
     // Update Efield_fp owned by WarpX
     m_WarpX->SetElectricFieldAndApplyBCs( a_E );
-
-    // The B field update needs. Talk to DG about this. Only needed when B updates?
-    if (WarpX::num_mirrors>0){
-        m_WarpX->applyMirrors(a_time);
-        // E : guard cells are NOT up-to-date from the mirrors
-        // B : guard cells are NOT up-to-date from the mirrors
-    }
 
 }
