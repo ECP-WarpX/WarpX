@@ -70,7 +70,7 @@ jobs:
           -DWarpX_OPENPMD=ON           \
           -DWarpX_openpmd_internal=OFF \
           -DWarpX_PRECISION=SINGLE     \
-          -DWarpX_PSATD=ON             \
+          -DWarpX_FFT=ON               \
           -DAMReX_CUDA_ERROR_CROSS_EXECUTION_SPACE_CALL=ON \
           -DAMReX_CUDA_ERROR_CAPTURE_THIS=ON
         cmake --build build_sp -j 4
@@ -168,7 +168,7 @@ jobs:
           -DWarpX_PYTHON=OFF           \
           -DAMReX_CUDA_ARCH=8.0        \
           -DWarpX_OPENPMD=ON           \
-          -DWarpX_PSATD=ON             \
+          -DWarpX_FFT=ON               \
           -DAMReX_CUDA_ERROR_CROSS_EXECUTION_SPACE_CALL=ON \
           -DAMReX_CUDA_ERROR_CAPTURE_THIS=ON
         cmake --build build -j 4

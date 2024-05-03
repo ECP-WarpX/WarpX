@@ -72,7 +72,7 @@ option(WarpX_EB            "Embedded boundary support"                  OFF)
 option(WarpX_LIB           "Build WarpX as a library"                   OFF)
 option(WarpX_MPI           "Multi-node support (message-passing)"       ON)
 option(WarpX_OPENPMD       "openPMD I/O (HDF5, ADIOS)"                  ON)
-option(WarpX_PSATD         "spectral solver support"                    OFF)
+option(WarpX_FFT           "FFT-based solvers"                          OFF)
 option(WarpX_PYTHON        "Python bindings"                            OFF)
 option(WarpX_SENSEI        "SENSEI in situ diagnostics"                 OFF)
 option(WarpX_QED           "QED support (requires PICSAR)"              ON)
@@ -156,14 +156,16 @@ option(ABLASTR_POSITION_INDEPENDENT_CODE
        "Build ABLASTR with position independent code" ON)
 mark_as_advanced(ABLASTR_POSITION_INDEPENDENT_CODE)
 
-option(ABLASTR_FFT "compile AnyFFT wrappers" ${WarpX_PSATD})
-if(WarpX_PSATD)
-    set(ABLASTR_FFT ON CACHE STRING "compile AnyFFT wrappers" FORCE)
+option(ABLASTR_FFT "compile AnyFFT wrappers" ${WarpX_FFT})
+if(WarpX_FFT)
+    set(ABLASTR_FFT ON CACHE STRING "FFT-based solvers" FORCE)
 endif()
 
 # this defined the variable BUILD_TESTING which is ON by default
 #include(CTest)
-
+if(NOT "${WarpX_PSATD}" STREQUAL "")
+    message(FATAL_ERROR "WarpX_PSATD is outdated. Please use WarpX_FFT.")
+endif()
 
 # Dependencies ################################################################
 #
@@ -192,7 +194,7 @@ include(${WarpX_SOURCE_DIR}/cmake/dependencies/openPMD.cmake)
 
 # PSATD
 include(${WarpX_SOURCE_DIR}/cmake/dependencies/FFT.cmake)
-if(WarpX_PSATD)
+if(WarpX_FFT)
     # BLASPP and LAPACKPP
     if(RZ IN_LIST WarpX_DIMS)
         find_package(blaspp CONFIG REQUIRED)
@@ -517,7 +519,7 @@ foreach(D IN LISTS WarpX_DIMS)
         endif()
     endif()
 
-    if(WarpX_PSATD)
+    if(WarpX_FFT)
         target_compile_definitions(ablastr_${SD} PUBLIC WARPX_USE_PSATD)
     endif()
     if(ABLASTR_FFT)

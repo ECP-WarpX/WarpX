@@ -173,7 +173,7 @@ Overall simulation parameters
 
     * ``fft``: Poisson's equation is solved using an Integrated Green Function method (which requires FFT calculations).
         See these references for more details :cite:t:`QiangPhysRevSTAB2006`, :cite:t:`QiangPhysRevSTAB2006err`.
-        It only works in 3D and it requires the compilation flag ``-DWarpX_PSATD=ON``.
+        It only works in 3D and it requires the compilation flag ``-DWarpX_FFT=ON``.
         If mesh refinement is enabled, this solver only works on the coarsest level.
         On the refined patches, the Poisson equation is solved with the multigrid solver.
         In electrostatic mode, this solver requires open field boundary conditions (``boundary.field_lo,hi = open``).
