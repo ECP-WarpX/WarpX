@@ -8,6 +8,7 @@
 #include "WarpX.H"
 
 using namespace warpx::fields;
+using namespace amrex::literals;
 
 void SemiImplicitEM::Define ( WarpX*  a_WarpX )
 {
@@ -61,7 +62,6 @@ void SemiImplicitEM::OneStep ( amrex::Real  a_time,
                                amrex::Real  a_dt,
                                int          a_step )
 {
-    using namespace amrex::literals;
     amrex::ignore_unused(a_step);
 
     // Fields have E^{n}, B^{n-1/2]
@@ -121,7 +121,6 @@ void SemiImplicitEM::ComputeRHS ( WarpXSolverVec&  a_Erhs,
                                   amrex::Real      a_dt )
 {
     amrex::ignore_unused(a_E, a_time);
-    using namespace amrex::literals;
     m_WarpX->ImplicitComputeRHSE(0.5_rt*a_dt, a_Erhs);
 }
 
@@ -129,7 +128,6 @@ void SemiImplicitEM::UpdateWarpXFields ( const WarpXSolverVec&  a_E,
                                          amrex::Real            a_time,
                                          amrex::Real            a_dt )
 {
-    using namespace amrex::literals;
     amrex::ignore_unused(a_time,a_dt);
 
     // Update Efield_fp owned by WarpX

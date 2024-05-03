@@ -9,6 +9,7 @@
 #include "WarpX.H"
 
 using namespace warpx::fields;
+using namespace amrex::literals;
 
 void ThetaImplicitEM::Define ( WarpX* const  a_WarpX )
 {
@@ -79,7 +80,6 @@ void ThetaImplicitEM::OneStep ( const amrex::Real  a_time,
                                 const amrex::Real  a_dt,
                                 const int          a_step )
 {
-    using namespace amrex::literals;
     amrex::ignore_unused(a_step);
 
     // Fields have E^{n} and B^{n}
@@ -147,26 +147,18 @@ void ThetaImplicitEM::UpdateWarpXFields ( const WarpXSolverVec&  a_E,
                                           amrex::Real            a_time,
                                           amrex::Real            a_dt )
 {
-    using namespace amrex::literals;
     amrex::ignore_unused(a_time);
 
     // Update Efield_fp owned by WarpX
     m_WarpX->SetElectricFieldAndApplyBCs( a_E );
 
-    // Update Bfield owned by WarpX
+    // Update Bfield_fp owned by WarpX
     m_WarpX->UpdateMagneticFieldAndApplyBCs( m_Bold, m_theta*a_dt );
-
-    if (WarpX::num_mirrors>0){
-        m_WarpX->applyMirrors(a_time);
-        // E : guard cells are NOT up-to-date from the mirrors
-        // B : guard cells are NOT up-to-date from the mirrors
-    }
 
 }
 
 void ThetaImplicitEM::FinishFieldUpdate ( amrex::Real  a_new_time )
 {
-    using namespace amrex::literals;
     amrex::ignore_unused(a_new_time);
 
     // Eg^{n+1} = (1/theta)*E_g^{n+theta} + (1-1/theta)*E_g^n
@@ -177,11 +169,5 @@ void ThetaImplicitEM::FinishFieldUpdate ( amrex::Real  a_new_time )
     m_E.linComb( c0, m_E, c1, m_Eold );
     m_WarpX->SetElectricFieldAndApplyBCs( m_E );
     m_WarpX->FinishMagneticFieldAndApplyBCs( m_Bold, m_theta );
-
-    if (WarpX::num_mirrors>0){
-        m_WarpX->applyMirrors(a_new_time);
-        // E : guard cells are NOT up-to-date from the mirrors
-        // B : guard cells are NOT up-to-date from the mirrors
-    }
 
 }

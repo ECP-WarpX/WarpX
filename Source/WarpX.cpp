@@ -1198,11 +1198,19 @@ WarpX::ReadParameters ()
         particle_pusher_algo = static_cast<short>(GetAlgorithmInteger(pp_algo, "particle_pusher"));
         evolve_scheme = static_cast<short>(GetAlgorithmInteger(pp_algo, "evolve_scheme"));
 
+        // check for implicit evolve scheme
         if (evolve_scheme == EvolveScheme::SemiImplicitEM) {
             m_implicit_solver = std::make_unique<SemiImplicitEM>();
         }
         else if (evolve_scheme == EvolveScheme::ThetaImplicitEM) {
             m_implicit_solver = std::make_unique<ThetaImplicitEM>();
+        }
+
+        // implicit evolve schemes not setup to use mirrors
+        if (evolve_scheme == EvolveScheme::SemiImplicitEM ||
+            evolve_scheme == EvolveScheme::ThetaImplicitEM) {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE( num_mirrors == 0,
+                "Mirrors cannot be used with Implicit evolve schemes.");
         }
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
