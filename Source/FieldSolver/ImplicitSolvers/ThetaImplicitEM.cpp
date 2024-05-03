@@ -40,7 +40,7 @@ void ThetaImplicitEM::Define ( WarpX* const  a_WarpX )
                                                             Bfp.nGrowVect() );
     }
 
-    // Parse implicit solver parameters
+    // Parse theta-implicit solver specific parameters
     const amrex::ParmParse pp("implicit_evolve");
     pp.query("theta", m_theta);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -53,6 +53,7 @@ void ThetaImplicitEM::Define ( WarpX* const  a_WarpX )
     // Define the nonlinear solver
     m_nlsolver->Define(m_E, this);
     m_is_defined = true;
+
 }
 
 void ThetaImplicitEM::PrintParameters () const

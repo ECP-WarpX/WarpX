@@ -64,7 +64,7 @@ void SemiImplicitEM::OneStep ( amrex::Real  a_time,
 {
     amrex::ignore_unused(a_step);
 
-    // Fields have E^{n}, B^{n-1/2]
+    // Fields have E^{n}, B^{n-1/2}
     // Particles have p^{n} and x^{n}.
 
     // Save the values at the start of the time step,
@@ -85,7 +85,7 @@ void SemiImplicitEM::OneStep ( amrex::Real  a_time,
     m_nlsolver->Solve( m_E, m_Eold, half_time, a_dt );
 
     // Update WarpX owned Efield_fp to t_{n+1/2}
-    UpdateWarpXFields( m_E, half_time, a_dt );
+    m_WarpX->SetElectricFieldAndApplyBCs( m_E );
 
     // Advance particles from time n+1/2 to time n+1
     m_WarpX->FinishImplicitParticleUpdate();
@@ -93,8 +93,7 @@ void SemiImplicitEM::OneStep ( amrex::Real  a_time,
     // Advance E fields from time n+1/2 to time n+1
     // Eg^{n+1} = 2.0*E_g^{n+1/2} - E_g^n
     m_E.linComb( 2._rt, m_E, -1._rt, m_Eold );
-    const amrex::Real new_time = a_time + a_dt;
-    UpdateWarpXFields( m_E, new_time, a_dt );
+    m_WarpX->SetElectricFieldAndApplyBCs( m_E );
 
 }
 
@@ -105,8 +104,8 @@ void SemiImplicitEM::PreRHSOp ( const WarpXSolverVec&  a_E,
                                 bool                   a_from_jacobian )
 {
 
-    // update WarpX owned Efield_fp
-    UpdateWarpXFields( a_E, a_time, a_dt );
+    // Update Efield_fp owned by WarpX
+    m_WarpX->SetElectricFieldAndApplyBCs( a_E );
 
     // Advance the particle positions by 1/2 dt,
     // particle velocities by dt, then take average of old and new v,
@@ -122,15 +121,4 @@ void SemiImplicitEM::ComputeRHS ( WarpXSolverVec&  a_Erhs,
 {
     amrex::ignore_unused(a_E, a_time);
     m_WarpX->ImplicitComputeRHSE(0.5_rt*a_dt, a_Erhs);
-}
-
-void SemiImplicitEM::UpdateWarpXFields ( const WarpXSolverVec&  a_E,
-                                         amrex::Real            a_time,
-                                         amrex::Real            a_dt )
-{
-    amrex::ignore_unused(a_time,a_dt);
-
-    // Update Efield_fp owned by WarpX
-    m_WarpX->SetElectricFieldAndApplyBCs( a_E );
-
 }

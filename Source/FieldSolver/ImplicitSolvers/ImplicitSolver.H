@@ -44,12 +44,17 @@ public:
      */
     virtual void Define ( WarpX*  a_WarpX ) = 0;
 
-    bool IsDefined () const { return m_is_defined; }
+    [[nodiscard]] bool IsDefined () const { return m_is_defined; }
 
     virtual void PrintParameters () const = 0;
 
-    virtual void GetParticleSolverParams (int&  a_max_particle_iter,
-                                          amrex::ParticleReal&  a_particle_tol ) = 0;
+    void GetParticleSolverParams (int&  a_max_particle_iter,
+                                  amrex::ParticleReal&  a_particle_tol )
+    {
+        a_max_particle_iter = m_max_particle_iterations;
+        a_particle_tol = m_particle_tolerance;
+    }
+
     /**
      * \brief Advance fields and particles by one time step using the specified implicit algorithm
      */

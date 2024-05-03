@@ -62,13 +62,6 @@ public:
 
     void PrintParameters () const override;
 
-    void GetParticleSolverParams ( int&  a_max_particle_iterations,
-                                   amrex::ParticleReal&  a_particle_tolerance ) override
-    {
-        a_max_particle_iterations = m_max_particle_iterations;
-        a_particle_tolerance = m_particle_tolerance;
-    }
-
     void OneStep ( amrex::Real  a_time,
                    amrex::Real  a_dt,
                    int          a_step ) override;
@@ -90,13 +83,6 @@ private:
      * \brief Solver vectors for E and Eold
      */
     WarpXSolverVec m_E, m_Eold;
-
-    /**
-     * \brief Update the E field owned by WarpX
-     */
-    void UpdateWarpXFields ( const WarpXSolverVec&  a_E,
-                             amrex::Real            a_time,
-                             amrex::Real            a_dt );
 
 };
 

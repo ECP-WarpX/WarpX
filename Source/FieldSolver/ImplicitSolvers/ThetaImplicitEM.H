@@ -73,13 +73,6 @@ public:
 
     void PrintParameters () const override;
 
-    void GetParticleSolverParams ( int&  a_max_particle_iterations,
-                                   amrex::ParticleReal&  a_particle_tolerance ) override
-    {
-        a_max_particle_iterations = m_max_particle_iterations;
-        a_particle_tolerance = m_particle_tolerance;
-    }
-
     void OneStep ( amrex::Real  a_time,
                    amrex::Real  a_dt,
                    int          a_step ) override;
@@ -105,13 +98,20 @@ private:
     amrex::Real m_theta = 0.5;
 
     /**
-     * \brief Solver vectors for E and Eold
+     * \brief Solver vectors to be used in the nonlinear solver to solve for the
+     * electric field E. The main logic for determining which variables should be
+     * WarpXSolverVec type is that it must have the same size and have the same
+     * centering of the data as the variable being solved for, which is E here.
+     * For example, if using a Yee grid then a container for curlB could be a
+     * WarpXSovlerVec, but magnetic field B should not be.
      */
     WarpXSolverVec m_E, m_Eold;
 
     /**
-     * \brief B is a derived variable from E. B is owned by WarpX.
-     * Need to save Bold to update B during the solve for m_E.
+     * \brief B is a derived variable from E. Need to save Bold to update B during
+     * the iterative nonlinear solve for E. Bold is owned here, but only used by WarpX.
+     * It is not used directly by the nonlinear solver, nor is it the same size as the
+     * solver vector (size E), and so it should not be WarpXSolverVec type.
      */
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_Bold;
 
