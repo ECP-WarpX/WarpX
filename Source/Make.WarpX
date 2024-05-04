@@ -171,7 +171,7 @@ ifeq ($(USE_OPENPMD), TRUE)
 endif
 
 
-ifeq ($(USE_PSATD),TRUE)
+ifeq ($(USE_FFT),TRUE)
   USERSuffix := $(USERSuffix).PSATD
   DEFINES += -DWARPX_USE_FFT -DABLASTR_USE_FFT
   ifeq ($(USE_CUDA),TRUE)
