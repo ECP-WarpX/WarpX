@@ -9,7 +9,7 @@
 
 #include "BoundaryConditions/PML_RZ.H"
 #include "FieldSolver/Fields.H"
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
 #   include "FieldSolver/SpectralSolver/SpectralFieldDataRZ.H"
 #endif
 #include "Utils/WarpXConst.H"
@@ -187,7 +187,7 @@ PML_RZ::Restart (const std::string& dir)
     }
 }
 
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
 void
 PML_RZ::PushPSATD (const int lev)
 {

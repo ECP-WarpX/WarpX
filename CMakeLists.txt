@@ -520,7 +520,7 @@ foreach(D IN LISTS WarpX_DIMS)
     endif()
 
     if(WarpX_FFT)
-        target_compile_definitions(ablastr_${SD} PUBLIC WARPX_USE_PSATD)
+        target_compile_definitions(ablastr_${SD} PUBLIC WARPX_USE_FFT)
     endif()
     if(ABLASTR_FFT)
         # We need to enable FFT support in ABLASTR for PSATD solver

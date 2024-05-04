@@ -8,7 +8,7 @@
 #include "WarpX.H"
 
 #include "BoundaryConditions/PML.H"
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
 #   include "BoundaryConditions/PML_RZ.H"
 #endif
 #include "PML_current.H"
@@ -60,7 +60,7 @@ WarpX::DampPML (const int lev, PatchType patch_type)
     if (!do_pml) { return; }
 
     WARPX_PROFILE("WarpX::DampPML()");
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
     if (pml_rz[lev]) {
         pml_rz[lev]->ApplyDamping(Efield_fp[lev][1].get(), Efield_fp[lev][2].get(),
                                   Bfield_fp[lev][1].get(), Bfield_fp[lev][2].get(),

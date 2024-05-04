@@ -18,7 +18,7 @@
 
 #include <memory>
 
-#if WARPX_USE_PSATD
+#if WARPX_USE_FFT
 
 SpectralSolver::SpectralSolver(
                 const int lev,
@@ -144,4 +144,4 @@ SpectralSolver::pushSpectralFields(){
     algorithm->pushSpectralFields( field_data );
 }
 
-#endif // WARPX_USE_PSATD
+#endif // WARPX_USE_FFT

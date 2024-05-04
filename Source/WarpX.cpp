@@ -18,7 +18,7 @@
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
 #   include "FieldSolver/SpectralSolver/SpectralKSpace.H"
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
@@ -399,7 +399,7 @@ WarpX::WarpX ()
     charge_buf.resize(nlevs_max);
 
     pml.resize(nlevs_max);
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
     pml_rz.resize(nlevs_max);
 #endif
 
@@ -473,7 +473,7 @@ WarpX::WarpX ()
     }
 
     // Allocate field solver objects
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         spectral_solver_fp.resize(nlevs_max);
         spectral_solver_cp.resize(nlevs_max);
@@ -768,10 +768,10 @@ WarpX::ReadParameters ()
         poisson_solver_id!=PoissonSolverAlgo::IntegratedGreenFunction,
         "The FFT Poisson solver only works in 3D.");
 #endif
-#ifndef WARPX_USE_PSATD
+#ifndef WARPX_USE_FFT
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         poisson_solver_id!=PoissonSolverAlgo::IntegratedGreenFunction,
-        "To use the FFT Poisson solver, compile with WARPX_USE_PSATD=ON.");
+        "To use the FFT Poisson solver, compile with WARPX_USE_FFT=ON.");
 #endif
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -1163,7 +1163,7 @@ WarpX::ReadParameters ()
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( electromagnetic_solver_id != ElectromagneticSolverAlgo::CKC,
             "algo.maxwell_solver = ckc is not (yet) available for RZ geometry");
 #endif
-#ifndef WARPX_USE_PSATD
+#ifndef WARPX_USE_FFT
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD,
             "algo.maxwell_solver = psatd is not supported because WarpX was built without spectral solvers");
 #endif
@@ -2091,7 +2091,7 @@ WarpX::ClearLevel (int lev)
     G_cp  [lev].reset();
     rho_cp[lev].reset();
 
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         spectral_solver_fp[lev].reset();
         spectral_solver_cp[lev].reset();
@@ -2477,7 +2477,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
     {
         // Allocate and initialize the spectral solver
-#ifndef WARPX_USE_PSATD
+#ifndef WARPX_USE_FFT
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( false,
             "WarpX::AllocLevelMFs: PSATD solver requires WarpX build with spectral solver support.");
 #else
@@ -2635,7 +2635,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
         {
             // Allocate and initialize the spectral solver
-#ifndef WARPX_USE_PSATD
+#ifndef WARPX_USE_FFT
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE( false,
                 "WarpX::AllocLevelMFs: PSATD solver requires WarpX build with spectral solver support.");
 #else
@@ -2729,7 +2729,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
 }
 
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
 #   ifdef WARPX_DIM_RZ
 /* \brief Allocate spectral Maxwell solver (RZ dimensions) at a level
  *
@@ -2986,7 +2986,7 @@ void
 WarpX::ComputeDivE(amrex::MultiFab& divE, const int lev)
 {
     if ( WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD ) {
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
         spectral_solver_fp[lev]->ComputeSpectralDivE( lev, Efield_aux[lev], divE );
 #else
         WARPX_ABORT_WITH_MESSAGE(
@@ -2997,7 +2997,7 @@ WarpX::ComputeDivE(amrex::MultiFab& divE, const int lev)
     }
 }
 
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
 PML_RZ*
 WarpX::GetPML_RZ (int lev)
 {
