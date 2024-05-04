@@ -30,14 +30,16 @@ void ThetaImplicitEM::Define ( WarpX* const  a_WarpX )
     m_E.SetDotMask(Geom);
 
     // Define Bold MultiFab
-    const int lev = 0;
-    m_Bold.resize(1); // size is number of levels
-    for (int n=0; n<3; n++) {
-        const amrex::MultiFab& Bfp = m_WarpX->getField( FieldType::Bfield_fp,lev,n);
-        m_Bold[lev][n] = std::make_unique<amrex::MultiFab>( Bfp.boxArray(),
-                                                            Bfp.DistributionMap(),
-                                                            Bfp.nComp(),
-                                                            Bfp.nGrowVect() );
+    const int num_levels = 1;
+    m_Bold.resize(num_levels); // size is number of levels
+    for (int lev = 0; lev < num_levels; ++lev) {
+        for (int n=0; n<3; n++) {
+            const amrex::MultiFab& Bfp = m_WarpX->getField( FieldType::Bfield_fp,lev,n);
+            m_Bold[lev][n] = std::make_unique<amrex::MultiFab>( Bfp.boxArray(),
+                                                                Bfp.DistributionMap(),
+                                                                Bfp.nComp(),
+                                                                Bfp.nGrowVect() );
+        }
     }
 
     // Parse theta-implicit solver specific parameters
@@ -93,11 +95,13 @@ void ThetaImplicitEM::OneStep ( const amrex::Real  a_time,
     m_Eold.Copy( m_WarpX->getMultiLevelField(FieldType::Efield_fp) );
     m_E = m_Eold; // initial guess for E
 
-    const int lev = 0;
-    for (int n=0; n<3; n++) {
-        const amrex::MultiFab& Bfp = m_WarpX->getField(FieldType::Bfield_fp,lev,n);
-        amrex::MultiFab& Bold = *m_Bold[lev][n];
-        amrex::MultiFab::Copy(Bold, Bfp, 0, 0, 1, Bold.nGrowVect());
+    const int num_levels = m_Bold.size();
+    for (int lev = 0; lev < num_levels; ++lev) {
+        for (int n=0; n<3; n++) {
+            const amrex::MultiFab& Bfp = m_WarpX->getField(FieldType::Bfield_fp,lev,n);
+            amrex::MultiFab& Bold = *m_Bold[lev][n];
+            amrex::MultiFab::Copy(Bold, Bfp, 0, 0, 1, Bold.nGrowVect());
+        }
     }
 
     const amrex::Real theta_time = a_time + m_theta*a_dt;
