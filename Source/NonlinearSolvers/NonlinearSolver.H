@@ -30,6 +30,7 @@ class NonlinearSolver
 public:
 
     NonlinearSolver<Vec,Ops>() = default;
+
     virtual ~NonlinearSolver<Vec,Ops>() = default;
 
     // Prohibit Move and Copy operations
@@ -38,35 +39,49 @@ public:
     NonlinearSolver(NonlinearSolver&&) noexcept = delete;
     NonlinearSolver& operator=(NonlinearSolver&&) noexcept = delete;
 
+    /**
+     * \brief Read user-provided parameters that control the nonlinear solver.
+     * Allocate intermediate data containers needed by the solver. For Newton,
+     * setup the linear solver for computing the Newton step.
+     */
     virtual void Define ( const Vec&,
                           Ops* ) = 0;
 
+    /**
+     * \brief Check if the nonlinear solver has been defined.
+     */
+    [[nodiscard]] bool IsDefined () const { return m_is_defined; }
+
+    /**
+     * \brief Solve the specified nonlinear equation for U.
+     *  Picard: U = b + R(U).
+     *  Newton: F(U) = U - b - R(U) = 0.
+     */
     virtual void Solve ( Vec&,
                    const Vec&,
                          amrex::Real,
                          amrex::Real ) const = 0;
 
-    [[nodiscard]] virtual bool IsDefined () const = 0;
+    /**
+     * \brief Print parameters used by the nonlinear solver.
+     */
     virtual void PrintParams () const = 0;
+
+    /**
+     * \brief Return the convergence parameters used by the nonlinear solver.
+     */
     virtual void GetSolverParams (amrex::Real&, amrex::Real&, int&) = 0;
 
-    virtual void Verbose ( bool ) { }
+    /**
+     * \brief Allow caller to dynamically change the verbosity flag. For
+     * example, one may want to only print solver information every 100 steps.
+     */
+    void Verbose ( bool  a_verbose ) { m_verbose = a_verbose; }
 
-    virtual void GetConvergenceParams ( int& a_l_exit_status, int& a_l_last_iter, int& a_l_total_iter,
-                                        int& a_nl_exit_status, int& a_nl_iter, int& a_nl_total_iter,
-                                        double& a_nl_abs_res, double& a_nl_rel_res ) const
-    {
-        a_l_exit_status = 0;
-        a_l_last_iter = 0;
-        a_l_total_iter = 0;
-        a_nl_exit_status = 0;
-        a_nl_iter = 0;
-        a_nl_total_iter = 0;
-        a_nl_abs_res = 0.0;
-        a_nl_rel_res = 0.0;
-    }
+protected:
 
-private:
+    bool m_is_defined = false;
+    mutable bool m_verbose = true;
 
 };
 

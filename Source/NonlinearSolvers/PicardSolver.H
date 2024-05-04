@@ -18,7 +18,7 @@
  * \brief Picard fixed-point iteration method to solve nonlinear
  *  equation of form: U = b + R(U). U is the solution vector. b
  *  is a constant. R(U) is some nonlinear function of U, which
- *  is computed in the ComputeRHS() Ops function.
+ *  is computed in the Ops function ComputeRHS().
  */
 
 template<class Vec, class Ops>
@@ -44,8 +44,6 @@ public:
            amrex::Real  a_time,
            amrex::Real  a_dt ) const override;
 
-    [[nodiscard]] bool IsDefined () const override { return m_is_defined; }
-
     void GetSolverParams ( amrex::Real&  a_rtol,
                            amrex::Real&  a_atol,
                            int&          a_maxits ) override
@@ -63,33 +61,37 @@ public:
         amrex::Print() << "Picard require convergence: " << (m_require_convergence?"true":"false") << std::endl;
     }
 
-    void Verbose ( bool  a_verbose ) override { m_verbose = a_verbose; }
+private:
 
-protected:
-
-    bool m_is_defined = false;
-    bool m_verbose = true;
-    bool m_require_convergence = true;
-
+    /**
+     * \brief Intermediate Vec containers used by the solver.
+     */
     mutable Vec m_Usave, m_R;
+
+    /**
+     * \brief Pointer to Ops class.
+     */
     Ops* m_ops = nullptr;
 
-/**
- * \brief relative tolerance for the Picard nonlinear solver
- */
+    /**
+     * \brief Flag to determine whether convergence is required.
+     */
+    bool m_require_convergence = true;
+
+    /**
+     * \brief Relative tolerance for the Picard nonlinear solver
+     */
     amrex::Real m_rtol = 1.0e-6;
 
-/**
- * \brief absolute tolerance for the Picard nonlinear solver
- */
+    /**
+     * \brief Absolute tolerance for the Picard nonlinear solver
+     */
     amrex::Real m_atol = 0.;
 
-/**
- * \brief maximum iterations for the Picard nonlinear solver
- */
+    /**
+     * \brief Maximum iterations for the Picard nonlinear solver
+     */
     int m_maxits = 100;
-
-private:
 
     void ParseParameters( );
 
@@ -100,7 +102,7 @@ void PicardSolver<Vec,Ops>::Define ( const Vec&  a_U,
                                      Ops*        a_ops )
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        !m_is_defined,
+        !this->m_is_defined,
         "Picard nonlinear solver object is already defined!");
 
     ParseParameters();
@@ -110,7 +112,7 @@ void PicardSolver<Vec,Ops>::Define ( const Vec&  a_U,
 
     m_ops = a_ops;
 
-    m_is_defined = true;
+    this->m_is_defined = true;
 
 }
 
@@ -118,7 +120,7 @@ template <class Vec, class Ops>
 void PicardSolver<Vec,Ops>::ParseParameters ()
 {
     const amrex::ParmParse pp_picard("picard");
-    pp_picard.query("verbose",             m_verbose);
+    pp_picard.query("verbose",             this->m_verbose);
     pp_picard.query("absolute_tolerance",  m_atol);
     pp_picard.query("relative_tolerance",  m_rtol);
     pp_picard.query("max_iterations",      m_maxits);
@@ -134,7 +136,7 @@ void PicardSolver<Vec,Ops>::Solve ( Vec&         a_U,
 {
     BL_PROFILE("PicardSolver::Solve()");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        m_is_defined,
+        this->m_is_defined,
         "PicardSolver::Solve() called on undefined object");
     using namespace amrex::literals;
 
@@ -170,7 +172,7 @@ void PicardSolver<Vec,Ops>::Solve ( Vec&         a_U,
         iter++;
 
         // Check for convergence criteria
-        if (m_verbose || iter == m_maxits) {
+        if (this->m_verbose || iter == m_maxits) {
             amrex::Print() << "Picard: iter = " << std::setw(3) << iter <<  ", norm = "
                            << std::scientific << std::setprecision(5) << norm_abs << " (abs.), "
                            << std::scientific << std::setprecision(5) << norm_rel << " (rel.)" << "\n";
@@ -203,7 +205,7 @@ void PicardSolver<Vec,Ops>::Solve ( Vec&         a_U,
                          " and the relative tolerance is " << m_rtol <<
                          ". Absolute norm is " << norm_abs <<
                          " and the absolute tolerance is " << m_atol;
-       if (m_verbose) { amrex::Print() << convergenceMsg.str() << std::endl; }
+       if (this->m_verbose) { amrex::Print() << convergenceMsg.str() << std::endl; }
        if (m_require_convergence) {
            WARPX_ABORT_WITH_MESSAGE(convergenceMsg.str());
        } else {
