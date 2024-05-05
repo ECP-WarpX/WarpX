@@ -180,6 +180,11 @@ Overall simulation parameters
     When `implicit_evolve.nonlinear_sovler = newton`, this sets the verbosity of the AMReX::GMRES linear solver. The default
     value of 2 gives maximumal verbosity and information about the residual are printed to the screen at each GMRES iteration.
 
+* ``gmres.restart_length`` (`int`, default: 30)
+    When `implicit_evolve.nonlinear_solver = newton`, this sets the iteration number at which to do a restart in AMReX::GMRES.
+    This parameter is used to save memory on building the Krylov subspace basis vectors for linear systems that are ill-conditioned
+    and require many iterations to converge.
+
 * ``gmres.relative_tolerance`` (`float`, default: 1.0e-4)
     When `implicit_evolve.nonlinear_solver = newton`, this sets the relative tolerance used to determine convergence of the
     AMReX::GMRES linear solver used to compute the Newton step in the JNFK process. The absolute error is the L2 norm of the
