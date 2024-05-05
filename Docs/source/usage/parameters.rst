@@ -104,25 +104,99 @@ Overall simulation parameters
     is needed for exact energy conservation. For theta > 0.5, high-k modes will be damped and the method will not be
     exactly energy conserving, but the solver may perform better.
 
+* ``implicit_evolve.nonlinear_solver`` (`string`, default: None)
+    When `algo.evolve_scheme` is either `theta_implicit_em` or `semi_implicit_em`, this sets the nonlinear solver used
+    to advance the field-particle system in time. Options are `picard` or `newton`.
+
 * ``implicit_evolve.max_particle_iterations`` (`integer`, default: 21)
-    When `algo.evolve_scheme` is either `theta_implicit_em` or `semi_implicit_em`, this sets the maximum number of Picard
-    iterations for the self-consistent update of the particles at each iteration in the JFNK process.
+    When `algo.evolve_scheme` is either `theta_implicit_em` or `semi_implicit_em` and `implicit_evolve.nonlinear_solver = newton`
+    , this sets the maximum number of iterations for the method used to obtain a self-consistent update of the particles at
+    each iteration in the JFNK process.
 
 * ``implicit_evolve.particle_tolerance`` (`float`, default: 1.e-10)
-    When `algo.evolve_scheme` is either `theta_implicit_em` or `semi_implicit_em`, this sets the relative tolerance for
-    the Picard method used to obtain a self-consistent update of the particles at each iteration in the JFNK process.
+    When `algo.evolve_scheme` is either `theta_implicit_em` or `semi_implicit_em` and `implicit_evolve.nonlinear_solver = newton`
+    , this sets the relative tolerance for the iterative method used to obtain a self-consistent update of the particles at
+    each iteration in the JFNK process.
 
-* ``newton.require_convergence`` (`bool`, default: 1)
-    When `algo.evolve_scheme` is either `theta_implicit_em` or `semi_implicit_em` and `implicit_evolve.nonlinear_solver
-    = newton`, this sets whether the Newton method is required to converge for each Newton iteration. If it is required,
-    an abort is raised if it does not converge and the code then exits. If not, then a warning is issued and the
-    calculation continues.
+* ``picard.verbose`` (`bool`, default: 1)
+    When `implicit_evolve.nonlinear_sovler = picardn`, this sets the verbosity of the Picard solver. If true, then information
+    on the nonlinear error are printed to screen at each nonlinear iteration.
 
 * ``picard.require_convergence`` (`bool`, default: 1)
-    When `algo.evolve_scheme` is either `theta_implicit_em` or `semi_implicit_em` and `implicit_evolve.nonlinear_solver
-    = picard`, this sets whether the Picard method is required to converge for each Newton iteration. If it is required,
-    an abort is raised if it does not converge and the code then exits. If not, then a warning is issued and the
-    calculation continues.
+    When `implicit_evolve.nonlinear_solver = picard`, this sets whether the Picard method is required to converge at each
+    time step. If it is required, an abort is raised if it does not converge and the code then exits. If not, then a warning
+    is issued and the calculation continues.
+
+* ``picard.maximum_iterations`` (`int`, default: 100)
+    When `implicit_evolve.nonlinear_solver = picard`, this sets the maximum iterations used by the Picard method. If
+    `picard.require_convergence = false`, the solution is considered converged if the iteration count reaches this value,
+    but a warning is issued. If `picard.require_convergence = true`, then an abort is raised if the iteration count reaches
+    this value.
+
+* ``picard.relative_tolerance`` (`float`, default: 1.0e-6)
+    When `implicit_evolve.nonlinear_solver = picard`, this sets the relative tolerance used by the Picard method for determining
+    convergence. The absolute error for the Picard method is the L2 norm of the difference of the solution vector between
+    two successive iterations. The relative error is the absolute error divided by the L2 norm of the initial guess for the
+    solution vector. The Picard method is considered converged when the relative error is below the relative tolerance. This
+    is the preferred means of determining convergence.
+
+* ``picard.absolute_tolerance`` (`float`, default: 0.0)
+    When `implicit_evolve.nonlinear_solver = picard`, this sets the absolute tolerance used by the Picard method for determining
+    convergence. The default value is 0.0, which means that the absolute tolerance is not used to determine converence. The
+    solution vector in the nonlinear solvers are in physical units rather than normalized ones. Thus, the absolute scale
+    of the problem can vary over many orders and magnitude depending on the problem. The relative tolerance is the preferred
+    means of determining convergence.
+
+* ``newton.verbose`` (`bool`, default: 1)
+    When `implicit_evolve.nonlinear_sovler = newton`, this sets the verbosity of the Newton solver. If true, then information
+    on the nonlinear error are printed to screen at each nonlinear iteration.
+
+* ``newton.require_convergence`` (`bool`, default: 1)
+    When `implicit_evolve.nonlinear_solver = newton`, this sets whether the Newton method is required to converge at each
+    time step. If it is required, an abort is raised if it does not converge and the code then exits. If not, then a warning
+    is issued and the calculation continues.
+
+* ``newton.maximum_iterations`` (`int`, default: 100)
+    When `implicit_evolve.nonlinear_solver = newton`, this sets the maximum iterations used by the Newton method. If
+    `newton.require_convergence = false`, the solution is considered converged if the iteration count reaches this value,
+    but a warning is issued. If `newton.require_convergence = true`, then an abort is raised if the iteration count reaches
+    this value.
+
+* ``newton.relative_tolerance`` (`float`, default: 1.0e-6)
+    When `implicit_evolve.nonlinear_solver = newton`, this sets the relative tolerance used by the Newton method for determining
+    convergence. The absolute error for the Newton method is the L2 norm of the residual vector. The relative error is the
+    absolute error divided by the L2 norm of the initial residual associated with the initial guess. The Newton method is
+    considered converged when the relative error is below the relative tolerance. This is the preferred means of determining
+    convergence.
+
+* ``newton.absolute_tolerance`` (`float`, default: 0.0)
+    When `implicit_evolve.nonlinear_solver = newton`, this sets the absolute tolerance used by the Newton method for determining
+    convergence. The default value is 0.0, which means that the absolute tolerance is not used to determine converence. The
+    residual vector in the nonlinear solvers are in physical units rather than normalized ones. Thus, the absolute scale
+    of the problem can vary over many orders and magnitude depending on the problem. The relative tolerance is the preferred
+    means of determining convergence.
+
+* ``gmres.verbose_int`` (`int`, default: 2)
+    When `implicit_evolve.nonlinear_sovler = newton`, this sets the verbosity of the AMReX::GMRES linear solver. The default
+    value of 2 gives maximumal verbosity and information about the residual are printed to the screen at each GMRES iteration.
+
+* ``gmres.relative_tolerance`` (`float`, default: 1.0e-4)
+    When `implicit_evolve.nonlinear_solver = newton`, this sets the relative tolerance used to determine convergence of the
+    AMReX::GMRES linear solver used to compute the Newton step in the JNFK process. The absolute error is the L2 norm of the
+    residual vector. The relative error is the absolute error divided by the L2 norm of the initial residual (typically equal
+    to the norm of the nonlinear residual from the end of the previous Newton iteration). The linear solver is considered
+    converged when the relative error is below the relative tolerance. This is the preferred means of determining convergence.
+
+* ``gmres.absolute_tolerance`` (`float`, default: 0.0)
+    When `implicit_evolve.nonlinear_solver = newton`, this sets the absolute tolerance used to determine converence of the
+    GMRES linear solver used to compute the Newton step in the JNFK process. The default value is 0.0, which means that the
+    absolute tolerance is not used to determine converence. The residual vector in the nonlinear/linear solvers are in physical
+    units rather than normalized ones. Thus, the absolute scale of the problem can vary over many orders and magnitude depending
+    on the problem. The relative tolerance is the preferred means of determining convergence.
+
+* ``gmres.maximum_iterations`` (`int`, default: 1000)
+    When `implicit_evolve.nonlinear_solver = newton`, this sets the maximum iterations used by the GMRES linear solver. The
+    solution to the linear system is considered converged if the iteration count reaches this value.
 
 * ``warpx.do_electrostatic`` (`string`) optional (default `none`)
     Specifies the electrostatic mode. When turned on, instead of updating
