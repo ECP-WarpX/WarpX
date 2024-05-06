@@ -119,7 +119,7 @@ Overall simulation parameters
     each iteration in the JFNK process.
 
 * ``picard.verbose`` (`bool`, default: 1)
-    When `implicit_evolve.nonlinear_sovler = picardn`, this sets the verbosity of the Picard solver. If true, then information
+    When `implicit_evolve.nonlinear_solver = picard`, this sets the verbosity of the Picard solver. If true, then information
     on the nonlinear error are printed to screen at each nonlinear iteration.
 
 * ``picard.require_convergence`` (`bool`, default: 1)
@@ -136,9 +136,9 @@ Overall simulation parameters
 * ``picard.relative_tolerance`` (`float`, default: 1.0e-6)
     When `implicit_evolve.nonlinear_solver = picard`, this sets the relative tolerance used by the Picard method for determining
     convergence. The absolute error for the Picard method is the L2 norm of the difference of the solution vector between
-    two successive iterations. The relative error is the absolute error divided by the L2 norm of the initial guess for the
-    solution vector. The Picard method is considered converged when the relative error is below the relative tolerance. This
-    is the preferred means of determining convergence.
+    two successive iterations. The relative error is the absolute error after iteration k > 1 divided by the absolute error
+    after the first iteration. The Picard method is considered converged when the relative error is below the relative tolerance.
+    This is the preferred means of determining convergence.
 
 * ``picard.absolute_tolerance`` (`float`, default: 0.0)
     When `implicit_evolve.nonlinear_solver = picard`, this sets the absolute tolerance used by the Picard method for determining
@@ -148,7 +148,7 @@ Overall simulation parameters
     means of determining convergence.
 
 * ``newton.verbose`` (`bool`, default: 1)
-    When `implicit_evolve.nonlinear_sovler = newton`, this sets the verbosity of the Newton solver. If true, then information
+    When `implicit_evolve.nonlinear_solver = newton`, this sets the verbosity of the Newton solver. If true, then information
     on the nonlinear error are printed to screen at each nonlinear iteration.
 
 * ``newton.require_convergence`` (`bool`, default: 1)
@@ -177,7 +177,7 @@ Overall simulation parameters
     means of determining convergence.
 
 * ``gmres.verbose_int`` (`int`, default: 2)
-    When `implicit_evolve.nonlinear_sovler = newton`, this sets the verbosity of the AMReX::GMRES linear solver. The default
+    When `implicit_evolve.nonlinear_solver = newton`, this sets the verbosity of the AMReX::GMRES linear solver. The default
     value of 2 gives maximumal verbosity and information about the residual are printed to the screen at each GMRES iteration.
 
 * ``gmres.restart_length`` (`int`, default: 30)
