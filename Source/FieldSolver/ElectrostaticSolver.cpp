@@ -197,7 +197,9 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     }
     for (int lev = 0; lev <= max_level; lev++) {
         if (lev > 0) {
-            if (charge_buf[lev]) charge_buf[lev]->setVal(0.);
+            if (charge_buf[lev]) {
+                charge_buf[lev]->setVal(0.);
+            }
         }
     }
     SyncRho(rho, rho_coarse, charge_buf); // Apply filter, perform MPI exchange, interpolate across levels
@@ -245,7 +247,9 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     }
     for (int lev = 0; lev <= max_level; lev++) {
         if (lev > 0) {
-            if (charge_buf[lev]) charge_buf[lev]->setVal(0.);
+            if (charge_buf[lev]) {
+                charge_buf[lev]->setVal(0.);
+            }
         }
     }
     SyncRho(rho_fp, rho_cp, charge_buf); // Apply filter, perform MPI exchange, interpolate across levels
