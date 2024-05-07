@@ -323,8 +323,7 @@ void NewtonSolver<Vec,Ops>::EvalResidual ( Vec&         a_F,
                                            int          a_iter ) const
 {
 
-    m_ops->PreRHSOp( a_U, a_time, a_dt, a_iter, false );
-    m_ops->ComputeRHS( m_R, a_U, a_time, a_dt );
+    m_ops->ComputeRHS( m_R, a_U, a_time, a_dt, a_iter, false );
 
     // set base U and R(U) for matrix-free Jacobian action calculation
     m_linear_function->setBaseSolution(a_U);

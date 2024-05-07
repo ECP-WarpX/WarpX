@@ -122,30 +122,23 @@ void ThetaImplicitEM::OneStep ( const amrex::Real  a_time,
 
 }
 
-void ThetaImplicitEM::PreRHSOp ( const WarpXSolverVec&  a_E,
-                                 const amrex::Real      a_time,
-                                 const amrex::Real      a_dt,
-                                 const int              a_nl_iter,
-                                 const bool             a_from_jacobian )
+void ThetaImplicitEM::ComputeRHS ( WarpXSolverVec&  a_RHS,
+                             const WarpXSolverVec&  a_E,
+                             const amrex::Real      a_time,
+                             const amrex::Real      a_dt,
+                             const int              a_nl_iter,
+                             const bool             a_from_jacobian )
 {
-
-    // update derived variable B and then update WarpX owned Efield_fp and Bfield_fp
+    // update WarpX-owned Efield_fp and Bfield_fp using current state of E from
+    // the nonlinear solver at time n+theta
     UpdateWarpXFields( a_E, a_time, a_dt );
 
-    // Advance the particle positions by 1/2 dt,
-    // particle velocities by dt, then take average of old and new v,
-    // deposit currents, giving J at n+1/2 used in ImplicitComputeRHSE below
+    // Self consistently update particle positions and velocities using the
+    // current state of the fields E and B. Deposit current density at time n+1/2.
     m_WarpX->ImplicitPreRHSOp( a_time, a_dt, a_nl_iter, a_from_jacobian );
 
-}
-
-void ThetaImplicitEM::ComputeRHS ( WarpXSolverVec&  a_Erhs,
-                             const WarpXSolverVec&  a_E,
-                                   amrex::Real      a_time,
-                                   amrex::Real      a_dt )
-{
-    amrex::ignore_unused(a_E, a_time);
-    m_WarpX->ImplicitComputeRHSE(m_theta*a_dt, a_Erhs);
+    // RHS = cvac^2*m_theta*dt*( curl(B^{n+theta}) - mu0*J^{n+1/2} )
+    m_WarpX->ImplicitComputeRHSE(m_theta*a_dt, a_RHS);
 }
 
 void ThetaImplicitEM::UpdateWarpXFields ( const WarpXSolverVec&  a_E,

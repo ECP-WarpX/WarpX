@@ -67,17 +67,6 @@ public:
     //
 
     /**
-     * \brief Perform implicit-algorithm specific operations prior to calling
-     * ComputeRHS from the nonlinear and linear solvers.
-     * e.g., update particles and compute the current density
-     */
-    virtual void PreRHSOp ( const WarpXSolverVec&  a_E,
-                            amrex::Real            a_time,
-                            amrex::Real            a_dt,
-                            int                    a_nl_iter,
-                            bool                   a_from_jacobian ) = 0;
-
-    /**
      * \brief Computes the RHS of the equation corresponding to the specified implicit algorithm.
      * The discrete equations corresponding to numerical integration of ODEs are often
      * written in the form U = b + RHS(U), where U is the variable to be solved for (e.g.,
@@ -89,10 +78,12 @@ public:
      * e.g., Ebar - E^n = cvac^2*0.5*dt*(curl(Bbar) - mu0*Jbar(Ebar,Bbar))
      * Here, U = Ebar, b = E^n, and the expression on the right is RHS(U).
      */
-    virtual void ComputeRHS ( WarpXSolverVec&  a_Erhs,
+    virtual void ComputeRHS ( WarpXSolverVec&  a_RHS,
                         const WarpXSolverVec&  a_E,
-                              amrex::Real      a_time,
-                              amrex::Real      a_dt ) = 0;
+                        const amrex::Real      a_time,
+                        const amrex::Real      a_dt,
+                        const int              a_nl_iter,
+                        const bool             a_from_jacobian ) = 0;
 
 protected:
 

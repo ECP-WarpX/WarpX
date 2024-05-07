@@ -61,16 +61,12 @@ public:
                    amrex::Real  a_dt,
                    int          a_step ) override;
 
-    void PreRHSOp ( const WarpXSolverVec&  a_E,
-                    amrex::Real            a_time,
-                    amrex::Real            a_dt,
-                    int                    a_nl_iter,
-                    bool                   a_from_jacobian ) override;
-
-    void ComputeRHS ( WarpXSolverVec&  a_Erhs,
+    void ComputeRHS ( WarpXSolverVec&  a_RHS,
                 const WarpXSolverVec&  a_E,
-                      amrex::Real      a_time,
-                      amrex::Real      a_dt ) override;
+                const amrex::Real      a_time,
+                const amrex::Real      a_dt,
+                const int              a_nl_iter,
+                const bool             a_from_jacobian ) override;
 
 private:
 

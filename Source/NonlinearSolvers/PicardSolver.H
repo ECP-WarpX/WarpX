@@ -156,8 +156,7 @@ void PicardSolver<Vec,Ops>::Solve ( Vec&         a_U,
         m_Usave = a_U;
 
         // Update the solver state (a_U = a_b + m_R)
-        m_ops->PreRHSOp( a_U, a_time, a_dt, iter, false );
-        m_ops->ComputeRHS( m_R, a_U, a_time, a_dt );
+        m_ops->ComputeRHS( m_R, a_U, a_time, a_dt, iter, false );
         a_U = a_b;
         a_U += m_R;
 

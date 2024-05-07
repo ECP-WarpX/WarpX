@@ -97,28 +97,21 @@ void SemiImplicitEM::OneStep ( amrex::Real  a_time,
 
 }
 
-void SemiImplicitEM::PreRHSOp ( const WarpXSolverVec&  a_E,
-                                amrex::Real            a_time,
-                                amrex::Real            a_dt,
-                                int                    a_nl_iter,
-                                bool                   a_from_jacobian )
+void SemiImplicitEM::ComputeRHS ( WarpXSolverVec&  a_RHS,
+                            const WarpXSolverVec&  a_E,
+                            const amrex::Real      a_time,
+                            const amrex::Real      a_dt,
+                            const int              a_nl_iter,
+                            const bool             a_from_jacobian )
 {
-
-    // Update Efield_fp owned by WarpX
+    // update WarpX-owned Efield_fp using current state of E from
+    // the nonlinear solver at time n+theta
     m_WarpX->SetElectricFieldAndApplyBCs( a_E );
 
-    // Advance the particle positions by 1/2 dt,
-    // particle velocities by dt, then take average of old and new v,
-    // deposit currents, giving J at n+1/2 used in ImplicitComputeRHSE below
+    // Self consistently update particle positions and velocities using the
+    // current state of the fields E and B. Deposit current density at time n+1/2.
     m_WarpX->ImplicitPreRHSOp( a_time, a_dt, a_nl_iter, a_from_jacobian );
 
-}
-
-void SemiImplicitEM::ComputeRHS ( WarpXSolverVec&  a_Erhs,
-                            const WarpXSolverVec&  a_E,
-                                  amrex::Real      a_time,
-                                  amrex::Real      a_dt )
-{
-    amrex::ignore_unused(a_E, a_time);
-    m_WarpX->ImplicitComputeRHSE(0.5_rt*a_dt, a_Erhs);
+    // RHS = cvac^2*0.5*dt*( curl(B^{n+1/2}) - mu0*J^{n+1/2} )
+    m_WarpX->ImplicitComputeRHSE(0.5_rt*a_dt, a_RHS);
 }
