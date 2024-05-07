@@ -99,10 +99,10 @@ void SemiImplicitEM::OneStep ( amrex::Real  a_time,
 
 void SemiImplicitEM::ComputeRHS ( WarpXSolverVec&  a_RHS,
                             const WarpXSolverVec&  a_E,
-                            const amrex::Real      a_time,
-                            const amrex::Real      a_dt,
-                            const int              a_nl_iter,
-                            const bool             a_from_jacobian )
+                                  amrex::Real      a_time,
+                                  amrex::Real      a_dt,
+                                  int              a_nl_iter,
+                                  bool             a_from_jacobian )
 {
     // update WarpX-owned Efield_fp using current state of E from
     // the nonlinear solver at time n+theta
