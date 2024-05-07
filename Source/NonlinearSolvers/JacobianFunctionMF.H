@@ -56,7 +56,7 @@ class JacobianFunctionMF
 
     inline
     void assign( T& a_Z, const T& a_U ) {
-        a_Z = a_U;
+        a_Z.Copy(a_U);
     }
 
     inline

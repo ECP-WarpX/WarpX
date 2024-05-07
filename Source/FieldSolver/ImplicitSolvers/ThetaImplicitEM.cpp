@@ -93,7 +93,7 @@ void ThetaImplicitEM::OneStep ( const amrex::Real  a_time,
 
     // Save the fields at the start of the step
     m_Eold.Copy( m_WarpX->getMultiLevelField(FieldType::Efield_fp) );
-    m_E = m_Eold; // initial guess for E
+    m_E.Copy(m_Eold); // initial guess for E
 
     const int num_levels = static_cast<int>(m_Bold.size());
     for (int lev = 0; lev < num_levels; ++lev) {

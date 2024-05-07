@@ -336,7 +336,7 @@ void NewtonSolver<Vec,Ops>::EvalResidual ( Vec&         a_F,
     m_update_pc_init = false;
 
     // Compute residual: F(U) = U - b - R(U)
-    a_F = a_U;
+    a_F.Copy(a_U);
     a_F -= m_R;
     a_F -= a_b;
 

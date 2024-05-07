@@ -72,7 +72,7 @@ void SemiImplicitEM::OneStep ( amrex::Real  a_time,
 
     // Save the fields at the start of the step
     m_Eold.Copy( m_WarpX->getMultiLevelField(FieldType::Efield_fp) );
-    m_E = m_Eold; // initial guess for E
+    m_E.Copy(m_Eold); // initial guess for E
 
     // Compute Bfield at time n+1/2
     m_WarpX->EvolveB(a_dt, DtType::Full);

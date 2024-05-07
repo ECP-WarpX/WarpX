@@ -153,11 +153,11 @@ void PicardSolver<Vec,Ops>::Solve ( Vec&         a_U,
     for (iter = 0; iter < m_maxits;) {
 
         // Save previous state for norm calculation
-        m_Usave = a_U;
+        m_Usave.Copy(a_U);
 
         // Update the solver state (a_U = a_b + m_R)
         m_ops->ComputeRHS( m_R, a_U, a_time, a_dt, iter, false );
-        a_U = a_b;
+        a_U.Copy(a_b);
         a_U += m_R;
 
         // Compute the step norm and update iter

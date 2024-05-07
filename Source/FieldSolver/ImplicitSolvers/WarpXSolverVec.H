@@ -111,12 +111,8 @@ public:
         Copy(field_vec);
     }
 
-    // Copy assignment operator
-    WarpXSolverVec& operator= ( const WarpXSolverVec&  a_vec )
-    {
-        if (this != &a_vec) { Copy(a_vec); }
-        return *this;
-    }
+    // Prohibit Copy assignment operator
+    WarpXSolverVec& operator= ( const WarpXSolverVec&  a_vec ) = delete;
 
     // Move assignment operator
     WarpXSolverVec(WarpXSolverVec&&) noexcept = default;

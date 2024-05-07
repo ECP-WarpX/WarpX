@@ -19,7 +19,7 @@
  *    ComputeRHS( R_vec, U_vec, time, dt, nl_iter, from_jacobian ),
  *    where U_vec and R_vec are of type Vec.
  *
- *    The Vec class must have basic math operators, such as =, +=, -=,
+ *    The Vec class must have basic math operators, such as Copy, +=, -=,
  *    increment(), linComb(), scale(), etc.. See WarpXSolverVec.H for an example.
  */
 
