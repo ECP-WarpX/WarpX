@@ -51,8 +51,9 @@ ParticleDiag::ParticleDiag (
                         +"' is not an existing attribute for this species");
                     m_plot_flags[existing_variable_names.at(var)] = 1;
 
-                    if (var == "x" || var == "y" || var == "z")
+                    if (var == "x" || var == "y" || var == "z") {
                         contains_positions = true;
+                    }
                 }
             }
         }
