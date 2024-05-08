@@ -14,6 +14,7 @@ from dataclasses import dataclass
 
 import numpy as np
 import periodictable
+
 import picmistandard
 import pywarpx
 
@@ -132,12 +133,41 @@ class Species(picmistandard.PICMI_Species):
     warpx_do_resampling: bool, default=False
         Whether particles will be resampled
 
+    warpx_resampling_min_ppc: int, default=1
+        Cells with fewer particles than this number will be
+        skipped during resampling.
+
     warpx_resampling_trigger_intervals: bool, default=0
         Timesteps at which to resample
 
     warpx_resampling_trigger_max_avg_ppc: int, default=infinity
         Resampling will be done when the average number of
         particles per cell exceeds this number
+
+    warpx_resampling_algorithm: str, default="leveling_thinning"
+        Resampling algorithm to use.
+
+    warpx_resampling_algorithm_velocity_grid_type: str, default="spherical"
+        Type of grid to use when clustering particles in velocity space. Only
+        applicable with the `velocity_coincidence_thinning` algorithm.
+
+    warpx_resampling_algorithm_delta_ur: float
+        Size of velocity window used for clustering particles during grid-based
+        merging, with `velocity_grid_type == "spherical"`.
+
+    warpx_resampling_algorithm_n_theta: int
+        Number of bins to use in theta when clustering particle velocities
+        during grid-based merging, with `velocity_grid_type == "spherical"`.
+
+    warpx_resampling_algorithm_n_phi: int
+        Number of bins to use in phi when clustering particle velocities
+        during grid-based merging, with `velocity_grid_type == "spherical"`.
+
+    warpx_resampling_algorithm_delta_u: array of floats or float
+        Size of velocity window used in ux, uy and uz for clustering particles
+        during grid-based merging, with `velocity_grid_type == "cartesian"`. If
+        a single number is given the same du value will be used in all three
+        directions.
     """
     def init(self, kw):
 
@@ -215,8 +245,17 @@ class Species(picmistandard.PICMI_Species):
 
         # Resampling settings
         self.do_resampling = kw.pop('warpx_do_resampling', None)
+        self.resampling_algorithm = kw.pop('warpx_resampling_algorithm', None)
+        self.resampling_min_ppc = kw.pop('warpx_resampling_min_ppc', None)
         self.resampling_trigger_intervals = kw.pop('warpx_resampling_trigger_intervals', None)
         self.resampling_triggering_max_avg_ppc = kw.pop('warpx_resampling_trigger_max_avg_ppc', None)
+        self.resampling_algorithm_velocity_grid_type = kw.pop('warpx_resampling_algorithm_velocity_grid_type', None)
+        self.resampling_algorithm_delta_ur = kw.pop('warpx_resampling_algorithm_delta_ur', None)
+        self.resampling_algorithm_n_theta = kw.pop('warpx_resampling_algorithm_n_theta', None)
+        self.resampling_algorithm_n_phi = kw.pop('warpx_resampling_algorithm_n_phi', None)
+        self.resampling_algorithm_delta_u = kw.pop('warpx_resampling_algorithm_delta_u', None)
+        if np.size(self.resampling_algorithm_delta_u) == 1:
+            self.resampling_algorithm_delta_u = [self.resampling_algorithm_delta_u]*3
 
     def species_initialize_inputs(self, layout,
                                   initialize_self_fields = False,
@@ -255,8 +294,15 @@ class Species(picmistandard.PICMI_Species):
                                              do_not_gather = self.do_not_gather,
                                              random_theta = self.random_theta,
                                              do_resampling=self.do_resampling,
+                                             resampling_algorithm=self.resampling_algorithm,
+                                             resampling_min_ppc=self.resampling_min_ppc,
                                              resampling_trigger_intervals=self.resampling_trigger_intervals,
-                                             resampling_trigger_max_avg_ppc=self.resampling_triggering_max_avg_ppc)
+                                             resampling_trigger_max_avg_ppc=self.resampling_triggering_max_avg_ppc,
+                                             resampling_algorithm_velocity_grid_type=self.resampling_algorithm_velocity_grid_type,
+                                             resampling_algorithm_delta_ur=self.resampling_algorithm_delta_ur,
+                                             resampling_algorithm_n_theta=self.resampling_algorithm_n_theta,
+                                             resampling_algorithm_n_phi=self.resampling_algorithm_n_phi,
+                                             resampling_algorithm_delta_u=self.resampling_algorithm_delta_u)
 
         # add reflection models
         self.species.add_new_attr("reflection_model_xlo(E)", self.reflection_model_xlo)
@@ -602,6 +648,11 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
     warpx_end_moving_window_step: int, default=-1
        The timestep at which the moving window ends. If -1, the moving window
        will continue until the end of the simulation.
+
+    warpx_boundary_u_th: dict, default=None
+        If a thermal boundary is used for particles, this dictionary should
+        specify the thermal speed for each species in the form {`<species>`: u_th}.
+        Note: u_th = sqrt(T*q_e/mass)/clight with T in eV.
     """
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
@@ -629,6 +680,9 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
 
+        # if a thermal boundary is used for particles, get the thermal speeds
+        self.thermal_boundary_u_th = kw.pop('warpx_boundary_u_th', None)
+
     def grid_initialize_inputs(self):
         pywarpx.amr.n_cell = self.number_of_cells
 
@@ -652,6 +706,10 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         pywarpx.boundary.particle_lo = self.lower_boundary_conditions_particles
         pywarpx.boundary.particle_hi = self.upper_boundary_conditions_particles
         pywarpx.boundary.reflect_all_velocities = self.reflect_all_velocities
+
+        if self.thermal_boundary_u_th is not None:
+            for name, val in self.thermal_boundary_u_th.items():
+                pywarpx.boundary.__setattr__(f'{name}.u_th', val)
 
         if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
             pywarpx.warpx.do_moving_window = 1
@@ -706,6 +764,11 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
     warpx_end_moving_window_step: int, default=-1
        The timestep at which the moving window ends. If -1, the moving window
        will continue until the end of the simulation.
+
+    warpx_boundary_u_th: dict, default=None
+        If a thermal boundary is used for particles, this dictionary should
+        specify the thermal speed for each species in the form {`<species>`: u_th}.
+        Note: u_th = sqrt(T*q_e/mass)/clight with T in eV.
     """
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
@@ -730,6 +793,9 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
 
+        # if a thermal boundary is used for particles, get the thermal speeds
+        self.thermal_boundary_u_th = kw.pop('warpx_boundary_u_th', None)
+
     def grid_initialize_inputs(self):
         pywarpx.amr.n_cell = self.number_of_cells
 
@@ -745,6 +811,10 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
         pywarpx.boundary.field_hi = [BC_map[bc] for bc in self.upper_boundary_conditions]
         pywarpx.boundary.particle_lo = self.lower_boundary_conditions_particles
         pywarpx.boundary.particle_hi = self.upper_boundary_conditions_particles
+
+        if self.thermal_boundary_u_th is not None:
+            for name, val in self.thermal_boundary_u_th.items():
+                pywarpx.boundary.__setattr__(f'{name}.u_th', val)
 
         if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
             pywarpx.warpx.do_moving_window = 1
@@ -807,6 +877,11 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
     warpx_end_moving_window_step: int, default=-1
        The timestep at which the moving window ends. If -1, the moving window
        will continue until the end of the simulation.
+
+    warpx_boundary_u_th: dict, default=None
+        If a thermal boundary is used for particles, this dictionary should
+        specify the thermal speed for each species in the form {`<species>`: u_th}.
+        Note: u_th = sqrt(T*q_e/mass)/clight with T in eV.
     """
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
@@ -833,6 +908,9 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
 
+        # if a thermal boundary is used for particles, get the thermal speeds
+        self.thermal_boundary_u_th = kw.pop('warpx_boundary_u_th', None)
+
     def grid_initialize_inputs(self):
         pywarpx.amr.n_cell = self.number_of_cells
 
@@ -850,6 +928,10 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
         pywarpx.boundary.field_hi = [BC_map[bc] for bc in self.upper_boundary_conditions]
         pywarpx.boundary.particle_lo = self.lower_boundary_conditions_particles
         pywarpx.boundary.particle_hi = self.upper_boundary_conditions_particles
+
+        if self.thermal_boundary_u_th is not None:
+            for name, val in self.thermal_boundary_u_th.items():
+                pywarpx.boundary.__setattr__(f'{name}.u_th', val)
 
         if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
             pywarpx.warpx.do_moving_window = 1
@@ -928,6 +1010,11 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
     warpx_end_moving_window_step: int, default=-1
        The timestep at which the moving window ends. If -1, the moving window
        will continue until the end of the simulation.
+
+    warpx_boundary_u_th: dict, default=None
+        If a thermal boundary is used for particles, this dictionary should
+        specify the thermal speed for each species in the form {`<species>`: u_th}.
+        Note: u_th = sqrt(T*q_e/mass)/clight with T in eV.
     """
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
@@ -956,6 +1043,9 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
 
+        # if a thermal boundary is used for particles, get the thermal speeds
+        self.thermal_boundary_u_th = kw.pop('warpx_boundary_u_th', None)
+
     def grid_initialize_inputs(self):
         pywarpx.amr.n_cell = self.number_of_cells
 
@@ -975,6 +1065,10 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
         pywarpx.boundary.field_hi = [BC_map[bc] for bc in self.upper_boundary_conditions]
         pywarpx.boundary.particle_lo = self.lower_boundary_conditions_particles
         pywarpx.boundary.particle_hi = self.upper_boundary_conditions_particles
+
+        if self.thermal_boundary_u_th is not None:
+            for name, val in self.thermal_boundary_u_th.items():
+                pywarpx.boundary.__setattr__(f'{name}.u_th', val)
 
         if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
             pywarpx.warpx.do_moving_window = 1

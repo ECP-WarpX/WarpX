@@ -8,6 +8,7 @@
 #include "ChargeOnEB.H"
 
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
+#include "FieldSolver/Fields.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/Parser/ParserUtils.H"
@@ -26,6 +27,7 @@
 #include <vector>
 
 using namespace amrex;
+using namespace warpx::fields;
 
 // constructor
 ChargeOnEB::ChargeOnEB (const std::string& rd_name)

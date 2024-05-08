@@ -6,6 +6,7 @@
 import sys
 
 import numpy as np
+
 from pywarpx import callbacks, particle_containers, picmi
 
 ##########################

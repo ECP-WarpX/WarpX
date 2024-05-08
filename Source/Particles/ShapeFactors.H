@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef SHAPEFACTORS_H_
-#define SHAPEFACTORS_H_
+#ifndef WARPX_SHAPEFACTORS_H_
+#define WARPX_SHAPEFACTORS_H_
 
 #include "Utils/TextMsg.H"
 
@@ -243,4 +243,4 @@ struct Compute_shape_factor_pair
     }
 };
 
-#endif // SHAPEFACTORS_H_
+#endif // WARPX_SHAPEFACTORS_H_

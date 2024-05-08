@@ -5,8 +5,8 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef BINARY_COLLISION_UTILS_H_
-#define BINARY_COLLISION_UTILS_H_
+#ifndef WARPX_BINARY_COLLISION_UTILS_H_
+#define WARPX_BINARY_COLLISION_UTILS_H_
 
 #include <string>
 
@@ -128,4 +128,4 @@ namespace BinaryCollisionUtils{
     }
 }
 
-#endif // BINARY_COLLISION_UTILS_H_
+#endif // WARPX_BINARY_COLLISION_UTILS_H_

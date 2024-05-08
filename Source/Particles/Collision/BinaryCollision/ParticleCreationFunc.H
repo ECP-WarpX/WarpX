@@ -5,8 +5,8 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef PARTICLE_CREATION_FUNC_H_
-#define PARTICLE_CREATION_FUNC_H_
+#ifndef WARPX_PARTICLE_CREATION_FUNC_H_
+#define WARPX_PARTICLE_CREATION_FUNC_H_
 
 #include "BinaryCollisionUtils.H"
 
@@ -15,7 +15,6 @@
 #include "Particles/ParticleCreation/SmartCopy.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "WarpX.H"
 
 #include <AMReX_DenseBins.H>
 #include <AMReX_GpuAtomic.H>
@@ -204,7 +203,7 @@ public:
 
                 // Note: Particle::atomicSetID should also be provided as a standalone helper function in AMReX
                 //       to replace the following lambda.
-                auto const atomicSetIdMinus = [] AMREX_GPU_DEVICE (uint64_t & idcpu)
+                auto const atomicSetIdInvalid = [] AMREX_GPU_DEVICE (uint64_t & idcpu)
                 {
 #if defined(AMREX_USE_OMP)
 #pragma omp atomic write
@@ -218,15 +217,15 @@ public:
                 };
 
                 // If the colliding particle weight decreases to zero, remove particle by
-                // setting its id to -1
-                if (w1[p_pair_indices_1[i]] <= amrex::ParticleReal(0.))
+                // setting its id to invalid
+                if (w1[p_pair_indices_1[i]] <= std::numeric_limits<amrex::ParticleReal>::min())
                 {
-                    atomicSetIdMinus(idcpu1[p_pair_indices_1[i]]);
+                    atomicSetIdInvalid(idcpu1[p_pair_indices_1[i]]);
 
                 }
-                if (w2[p_pair_indices_2[i]] <= amrex::ParticleReal(0.))
+                if (w2[p_pair_indices_2[i]] <= std::numeric_limits<amrex::ParticleReal>::min())
                 {
-                    atomicSetIdMinus(idcpu2[p_pair_indices_2[i]]);
+                    atomicSetIdInvalid(idcpu2[p_pair_indices_2[i]]);
                 }
 
                 // Initialize the product particles' momentum, using a function depending on the
@@ -339,4 +338,4 @@ public:
     }
 };
 
-#endif // PARTICLE_CREATION_FUNC_H_
+#endif // WARPX_PARTICLE_CREATION_FUNC_H_

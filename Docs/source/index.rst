@@ -150,4 +150,5 @@ Epilogue
    :hidden:
 
    glossary
+   governance
    acknowledgements

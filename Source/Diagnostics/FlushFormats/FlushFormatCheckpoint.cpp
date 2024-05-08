@@ -5,6 +5,7 @@
 #   include "BoundaryConditions/PML_RZ.H"
 #endif
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
+#include "FieldSolver/Fields.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -19,6 +20,7 @@
 #include <AMReX_VisMF.H>
 
 using namespace amrex;
+using namespace warpx::fields;
 
 namespace
 {

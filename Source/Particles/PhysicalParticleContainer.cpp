@@ -1476,7 +1476,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
     // Remove particles that are inside the embedded boundaries
 #ifdef AMREX_USE_EB
     auto & distance_to_eb = WarpX::GetInstance().GetDistanceToEB();
-    scrapeParticles( *this, amrex::GetVecOfConstPtrs(distance_to_eb), ParticleBoundaryProcess::Absorb());
+    scrapeParticlesAtEB( *this, amrex::GetVecOfConstPtrs(distance_to_eb), ParticleBoundaryProcess::Absorb());
 #endif
 
     // The function that calls this is responsible for redistributing particles.
@@ -1973,7 +1973,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
     // Remove particles that are inside the embedded boundaries
 #ifdef AMREX_USE_EB
     auto & distance_to_eb = WarpX::GetInstance().GetDistanceToEB();
-    scrapeParticles(tmp_pc, amrex::GetVecOfConstPtrs(distance_to_eb), ParticleBoundaryProcess::Absorb());
+    scrapeParticlesAtEB(tmp_pc, amrex::GetVecOfConstPtrs(distance_to_eb), ParticleBoundaryProcess::Absorb());
 #endif
 
     // Redistribute the new particles that were added to the temporary container.
@@ -2228,6 +2228,8 @@ PhysicalParticleContainer::Evolve (int lev,
                 // Deposit charge after particle push, in component 1 of MultiFab rho.
                 // (Skipped for electrostatic solver, as this may lead to out-of-bounds)
                 if (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::None) {
+                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(rho->nComp() >= 2,
+                        "Cannot deposit charge in rho component 1: only component 0 is allocated!");
 
                     const int* const AMREX_RESTRICT ion_lev = (do_field_ionization)?
                         pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr():nullptr;
@@ -3360,17 +3362,21 @@ void PhysicalParticleContainer::resample (const int timestep, const bool verbose
     WARPX_PROFILE_VAR_START(blp_resample_actual);
     if (m_resampler.triggered(timestep, global_numparts))
     {
-        if (verbose) {
-            amrex::Print() << Utils::TextMsg::Info(
-                "Resampling " + species_name + " at step " + std::to_string(timestep)
-            );
-        }
+        Redistribute();
         for (int lev = 0; lev <= maxLevel(); lev++)
         {
             for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
             {
                 m_resampler(pti, lev, this);
             }
+        }
+        deleteInvalidParticles();
+        if (verbose) {
+            amrex::Print() << Utils::TextMsg::Info(
+                "Resampled " + species_name + " at step " + std::to_string(timestep)
+                + ": macroparticle count decreased by "
+                + std::to_string(static_cast<int>(global_numparts - TotalNumberOfParticles()))
+            );
         }
     }
     WARPX_PROFILE_VAR_STOP(blp_resample_actual);

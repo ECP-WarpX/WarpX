@@ -8,6 +8,7 @@
 #include "ColliderRelevant.H"
 
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
+#include "FieldSolver/Fields.H"
 #if (defined WARPX_QED)
 #   include "Particles/ElementaryProcess/QEDInternals/QedChiFunctions.H"
 #endif
@@ -58,6 +59,7 @@
 #include <vector>
 
 using namespace amrex;
+using namespace warpx::fields;
 
 ColliderRelevant::ColliderRelevant (const std::string& rd_name)
 : ReducedDiags{rd_name}

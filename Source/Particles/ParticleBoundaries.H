@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef PARTICLEBOUNDARIES_H_
-#define PARTICLEBOUNDARIES_H_
+#ifndef WARPX_PARTICLEBOUNDARIES_H_
+#define WARPX_PARTICLEBOUNDARIES_H_
 
 #include "Utils/WarpXAlgorithmSelection.H"
 
@@ -70,4 +70,4 @@ struct ParticleBoundaries
     ParticleBoundariesData data;
 
 };
-#endif /*PARTICLEBOUNDARIES_H_*/
+#endif /*WARPX_PARTICLEBOUNDARIES_H_*/

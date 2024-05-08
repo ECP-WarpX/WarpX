@@ -1,4 +1,5 @@
 #include "FullDiagnostics.H"
+
 #include "ComputeDiagFunctors/CellCenterFunctor.H"
 #include "ComputeDiagFunctors/DivBFunctor.H"
 #include "ComputeDiagFunctors/DivEFunctor.H"
@@ -10,6 +11,7 @@
 #include "ComputeDiagFunctors/RhoFunctor.H"
 #include "Diagnostics/Diagnostics.H"
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
+#include "FieldSolver/Fields.H"
 #include "FlushFormats/FlushFormat.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/Algorithms/IsIn.H"
@@ -40,6 +42,7 @@
 #include <vector>
 
 using namespace amrex::literals;
+using namespace warpx::fields;
 
 FullDiagnostics::FullDiagnostics (int i, const std::string& name):
     Diagnostics{i, name},
