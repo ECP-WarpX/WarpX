@@ -36,7 +36,11 @@ ParticleDiag::ParticleDiag (
         std::fill(m_plot_flags.begin(), m_plot_flags.end(), 0);
         bool contains_positions = false;
         if (variables[0] != "none"){
-            const std::map<std::string, int> existing_variable_names = pc->getParticleComps();
+            std::map<std::string, int> existing_variable_names = pc->getParticleComps();
+#ifdef WARPX_DIM_RZ
+            // we reconstruct to Cartesian x,y,z for RZ particle output
+            existing_variable_names["y"] = PIdx::theta;
+#endif
             for (const auto& var : variables){
                 if (var == "phi") {
                     // User requests phi on particle. This is *not* part of the variables that
