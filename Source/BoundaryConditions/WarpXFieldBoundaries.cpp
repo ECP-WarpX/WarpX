@@ -1,4 +1,5 @@
 #include "WarpX.H"
+#include "BoundaryConditions/PEC_Insulator.H"
 #include "BoundaryConditions/PML.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
@@ -90,6 +91,46 @@ void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
         }
     }
 
+    if (::isAnyBoundary<FieldBoundaryType::PEC_Insulator>(field_boundary_lo, field_boundary_hi)) {
+        if (patch_type == PatchType::fine) {
+            pec_insulator_boundary->ApplyPEC_InsulatortoEfield(
+                    {getFieldPointer(FieldType::Efield_fp, lev, 0),
+                    getFieldPointer(FieldType::Efield_fp, lev, 1),
+                    getFieldPointer(FieldType::Efield_fp, lev, 2)},
+                    field_boundary_lo, field_boundary_hi,
+                    get_ng_fieldgather(), Geom(lev),
+                    lev, patch_type, ref_ratio);
+            if (::isAnyBoundary<FieldBoundaryType::PML>(field_boundary_lo, field_boundary_hi)) {
+                // apply pec on split E-fields in PML region
+                const bool split_pml_field = true;
+                pec_insulator_boundary->ApplyPEC_InsulatortoEfield(
+                    pml[lev]->GetE_fp(),
+                    field_boundary_lo, field_boundary_hi,
+                    get_ng_fieldgather(), Geom(lev),
+                    lev, patch_type, ref_ratio,
+                    split_pml_field);
+            }
+        } else {
+            pec_insulator_boundary->ApplyPEC_InsulatortoEfield(
+                {getFieldPointer(FieldType::Efield_cp, lev, 0),
+                getFieldPointer(FieldType::Efield_cp, lev, 1),
+                getFieldPointer(FieldType::Efield_cp, lev, 2)},
+                field_boundary_lo, field_boundary_hi,
+                get_ng_fieldgather(), Geom(lev),
+                lev, patch_type, ref_ratio);
+            if (::isAnyBoundary<FieldBoundaryType::PML>(field_boundary_lo, field_boundary_hi)) {
+                // apply pec on split E-fields in PML region
+                const bool split_pml_field = true;
+                pec_insulator_boundary->ApplyPEC_InsulatortoEfield(
+                    pml[lev]->GetE_cp(),
+                    field_boundary_lo, field_boundary_hi,
+                    get_ng_fieldgather(), Geom(lev),
+                    lev, patch_type, ref_ratio,
+                    split_pml_field);
+            }
+        }
+    }
+
 #ifdef WARPX_DIM_RZ
     if (patch_type == PatchType::fine) {
         ApplyFieldBoundaryOnAxis(getFieldPointer(FieldType::Efield_fp, lev, 0),
@@ -122,6 +163,27 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
                 field_boundary_lo, field_boundary_hi,
                 get_ng_fieldgather(), Geom(lev),
                 lev, patch_type, ref_ratio);
+        }
+    }
+
+    if (::isAnyBoundary<FieldBoundaryType::PEC_Insulator>(field_boundary_lo, field_boundary_hi)) {
+        amrex::Real tnew = gett_new(lev);
+        if (patch_type == PatchType::fine) {
+            pec_insulator_boundary->ApplyPEC_InsulatortoBfield( {
+                getFieldPointer(FieldType::Bfield_fp, lev, 0),
+                getFieldPointer(FieldType::Bfield_fp, lev, 1),
+                getFieldPointer(FieldType::Bfield_fp, lev, 2) },
+                field_boundary_lo, field_boundary_hi,
+                get_ng_fieldgather(), Geom(lev),
+                lev, patch_type, ref_ratio, tnew);
+        } else {
+            pec_insulator_boundary->ApplyPEC_InsulatortoBfield( {
+                getFieldPointer(FieldType::Bfield_cp, lev, 0),
+                getFieldPointer(FieldType::Bfield_cp, lev, 1),
+                getFieldPointer(FieldType::Bfield_cp, lev, 2)},
+                field_boundary_lo, field_boundary_hi,
+                get_ng_fieldgather(), Geom(lev),
+                lev, patch_type, ref_ratio, tnew);
         }
     }
 

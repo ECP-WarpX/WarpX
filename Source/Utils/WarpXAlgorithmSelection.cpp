@@ -132,6 +132,7 @@ const std::map<std::string, FieldBoundaryType> FieldBCType_algo_to_enum = {
     {"absorbing_silver_mueller", FieldBoundaryType::Absorbing_SilverMueller},
     {"neumann",  FieldBoundaryType::Neumann},
     {"open",     FieldBoundaryType::Open},
+    {"pec_insulator",     FieldBoundaryType::PEC_Insulator},
     {"none",     FieldBoundaryType::None},
     {"default",  FieldBoundaryType::PML}
 };
