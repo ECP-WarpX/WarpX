@@ -139,9 +139,9 @@ namespace BinaryCollisionUtils{
         // Remove weight from given particle
         amrex::Gpu::Atomic::AddNoRet(&weight, -reaction_weight);
 
-        // Note: Particle::atomicSetID should also be provided as a standalone helper function in AMReX
-        //       to replace the following lambda.
-        auto const atomicSetIdInvalid = [] AMREX_GPU_DEVICE (uint64_t & idcpu)
+        // If the colliding particle weight decreases to zero, remove particle by
+        // setting its id to invalid
+        if (weight <= std::numeric_limits<amrex::ParticleReal>::min())
         {
 #if defined(AMREX_USE_OMP)
 #pragma omp atomic write
@@ -152,13 +152,6 @@ namespace BinaryCollisionUtils{
                 (unsigned long long)amrex::ParticleIdCpus::Invalid
             );
 #endif
-        };
-
-        // If the colliding particle weight decreases to zero, remove particle by
-        // setting its id to invalid
-        if (weight <= std::numeric_limits<amrex::ParticleReal>::min())
-        {
-            atomicSetIdInvalid(idcpu);
         }
     }
 }
