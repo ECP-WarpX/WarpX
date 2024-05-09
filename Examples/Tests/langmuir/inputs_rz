@@ -28,6 +28,8 @@ geometry.prob_lo     =   0.e-6   -20.e-6    # physical domain
 geometry.prob_hi     =  20.e-6    20.e-6
 boundary.field_lo = none periodic
 boundary.field_hi = none periodic
+boundary.particle_lo = none periodic
+boundary.particle_hi = absorbing periodic
 
 warpx.serialize_initial_conditions = 1
 
