@@ -1014,9 +1014,12 @@ WarpXOpenPMDPlot::SetConstParticleRecordsEDPIC (
 #if defined(WARPX_DIM_1D_Z)
     currSpecies["position"]["x"].resetDataset( realType );
     currSpecies["position"]["y"].resetDataset( realType );
+    currSpecies["positionOffset"]["x"].resetDataset( realType );
+    currSpecies["positionOffset"]["y"].resetDataset( realType );
 #endif
 #if defined(WARPX_DIM_XZ)
     currSpecies["position"]["y"].resetDataset( realType );
+    currSpecies["positionOffset"]["y"].resetDataset( realType );
 #endif
 
     // make constant
@@ -1030,9 +1033,12 @@ WarpXOpenPMDPlot::SetConstParticleRecordsEDPIC (
 #if defined(WARPX_DIM_1D_Z)
     currSpecies["position"]["x"].makeConstant( 0._prt );
     currSpecies["position"]["y"].makeConstant( 0._prt );
+    currSpecies["positionOffset"]["x"].makeConstant( 0._prt );
+    currSpecies["positionOffset"]["y"].makeConstant( 0._prt );
 #endif
 #if defined(WARPX_DIM_XZ)
     currSpecies["position"]["y"].makeConstant( 0._prt );
+    currSpecies["positionOffset"]["y"].makeConstant( 0._prt );
 #endif
 
     // meta data
