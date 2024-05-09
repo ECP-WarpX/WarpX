@@ -202,7 +202,7 @@ namespace
         bool isInsulatorBoundary = false;
         amrex::Real sign = 1._rt;
         bool is_normal_to_boundary;
-        amrex::Real B_value;
+        amrex::Real B_value = 0._rt;
         // Loop over all dimensions
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             // Loop over sides, iside = -1 (lo), iside = +1 (hi)
