@@ -75,7 +75,6 @@ class BinaryCollision final
     using ParticleTileType = WarpXParticleContainer::ParticleTileType;
     using ParticleTileDataType = ParticleTileType::ParticleTileDataType;
     using ParticleBins = amrex::DenseBins<ParticleTileDataType>;
-    using SoaData_type = WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
     using index_type = ParticleBins::index_type;
 
 public:
@@ -275,7 +274,6 @@ public:
             // Extract low-level data
             auto const n_cells = static_cast<int>(bins_1.numBins());
             // - Species 1
-            const auto soa_1 = ptile_1.getParticleTileData();
             index_type* AMREX_RESTRICT indices_1 = bins_1.permutationPtr();
             index_type const* AMREX_RESTRICT cell_offsets_1 = bins_1.offsetsPtr();
             const amrex::ParticleReal q1 = species_1.getCharge();
@@ -421,7 +419,7 @@ public:
                         cell_start_1, cell_half_1,
                         cell_half_1, cell_stop_1,
                         indices_1, indices_1,
-                        soa_1, soa_1, get_position_1, get_position_1,
+                        ptile_1, ptile_1, get_position_1, get_position_1,
                         q1, q1, m1, m1, dt, dV, coll_idx,
                         cell_start_pair, p_mask, p_pair_indices_1, p_pair_indices_2,
                         p_pair_reaction_weight, engine);
@@ -431,7 +429,7 @@ public:
             // Create the new product particles and define their initial values
             // num_added: how many particles of each product species have been created
             const amrex::Vector<int> num_added = m_copy_transform_functor(n_total_pairs,
-                                                    soa_1, soa_1,
+                                                    ptile_1, ptile_1,
                                                     product_species_vector,
                                                     tile_products_data,
                                                     m1, m1,
@@ -460,14 +458,12 @@ public:
             // Extract low-level data
             auto const n_cells = static_cast<int>(bins_1.numBins());
             // - Species 1
-            const auto soa_1 = ptile_1.getParticleTileData();
             index_type* AMREX_RESTRICT indices_1 = bins_1.permutationPtr();
             index_type const* AMREX_RESTRICT cell_offsets_1 = bins_1.offsetsPtr();
             const amrex::ParticleReal q1 = species_1.getCharge();
             const amrex::ParticleReal m1 = species_1.getMass();
             auto get_position_1  = GetParticlePosition<PIdx>(ptile_1, getpos_offset);
             // - Species 2
-            const auto soa_2 = ptile_2.getParticleTileData();
             index_type* AMREX_RESTRICT indices_2 = bins_2.permutationPtr();
             index_type const* AMREX_RESTRICT cell_offsets_2 = bins_2.offsetsPtr();
             const amrex::ParticleReal q2 = species_2.getCharge();
@@ -638,7 +634,7 @@ public:
                     binary_collision_functor(
                         cell_start_1, cell_stop_1, cell_start_2, cell_stop_2,
                         indices_1, indices_2,
-                        soa_1, soa_2, get_position_1, get_position_2,
+                        ptile_1, ptile_2, get_position_1, get_position_2,
                         q1, q2, m1, m2, dt, dV, coll_idx,
                         cell_start_pair, p_mask, p_pair_indices_1, p_pair_indices_2,
                         p_pair_reaction_weight, engine);
@@ -648,7 +644,7 @@ public:
             // Create the new product particles and define their initial values
             // num_added: how many particles of each product species have been created
             const amrex::Vector<int> num_added = m_copy_transform_functor(n_total_pairs,
-                                                    soa_1, soa_2,
+                                                    ptile_1, ptile_2,
                                                     product_species_vector,
                                                     tile_products_data,
                                                     m1, m2,
