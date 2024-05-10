@@ -53,7 +53,6 @@ void
 WarpX::UpdateAuxilaryData ()
 {
     WARPX_PROFILE("WarpX::UpdateAuxilaryData()");
-
     if (Bfield_aux[0][0]->ixType() == Bfield_fp[0][0]->ixType()) {
         UpdateAuxilaryDataSameType();
     } else {
@@ -301,43 +300,79 @@ WarpX::UpdateAuxilaryDataSameType ()
 
         // B field
         {
-            MultiFab dBx(Bfield_cp[lev][0]->boxArray(), dm, Bfield_cp[lev][0]->nComp(), ng);
-            MultiFab dBy(Bfield_cp[lev][1]->boxArray(), dm, Bfield_cp[lev][1]->nComp(), ng);
-            MultiFab dBz(Bfield_cp[lev][2]->boxArray(), dm, Bfield_cp[lev][2]->nComp(), ng);
-            dBx.setVal(0.0);
-            dBy.setVal(0.0);
-            dBz.setVal(0.0);
+            if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None) {
+                MultiFab dBx(Bfield_cp[lev][0]->boxArray(), dm, Bfield_cp[lev][0]->nComp(), ng);
+                MultiFab dBy(Bfield_cp[lev][1]->boxArray(), dm, Bfield_cp[lev][1]->nComp(), ng);
+                MultiFab dBz(Bfield_cp[lev][2]->boxArray(), dm, Bfield_cp[lev][2]->nComp(), ng);
 
-            // Guard cells may not be up to date beyond ng_FieldGather
-            const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
-            // Copy Bfield_aux to the dB MultiFabs, using up to ng_src (=ng_FieldGather) guard
-            // cells from Bfield_aux and filling up to ng (=nGrow) guard cells in the dB MultiFabs
+                dBx.setVal(0.0);
+                dBy.setVal(0.0);
+                dBz.setVal(0.0);
 
-            ablastr::utils::communication::ParallelCopy(dBx, *Bfield_aux[lev - 1][0], 0, 0,
-                                                        Bfield_aux[lev - 1][0]->nComp(), ng_src, ng, WarpX::do_single_precision_comms,
-                                                        crse_period);
-            ablastr::utils::communication::ParallelCopy(dBy, *Bfield_aux[lev - 1][1], 0, 0,
-                                                        Bfield_aux[lev - 1][1]->nComp(), ng_src, ng, WarpX::do_single_precision_comms,
-                                                        crse_period);
-            ablastr::utils::communication::ParallelCopy(dBz, *Bfield_aux[lev - 1][2], 0, 0,
-                                                        Bfield_aux[lev - 1][2]->nComp(), ng_src, ng, WarpX::do_single_precision_comms,
-                                                        crse_period);
+                // Guard cells may not be up to date beyond ng_FieldGather
+                const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
+                // Copy Bfield_aux to the dB MultiFabs, using up to ng_src (=ng_FieldGather) guard
+                // cells from Bfield_aux and filling up to ng (=nGrow) guard cells in the dB MultiFabs
 
-            if (Bfield_cax[lev][0])
+                ablastr::utils::communication::ParallelCopy(dBx, *Bfield_aux[lev - 1][0], 0, 0,
+                                                            Bfield_aux[lev - 1][0]->nComp(), ng_src, ng, WarpX::do_single_precision_comms,
+                                                            crse_period);
+                ablastr::utils::communication::ParallelCopy(dBy, *Bfield_aux[lev - 1][1], 0, 0,
+                                                            Bfield_aux[lev - 1][1]->nComp(), ng_src, ng, WarpX::do_single_precision_comms,
+                                                            crse_period);
+                ablastr::utils::communication::ParallelCopy(dBz, *Bfield_aux[lev - 1][2], 0, 0,
+                                                            Bfield_aux[lev - 1][2]->nComp(), ng_src, ng, WarpX::do_single_precision_comms,
+                                                            crse_period);
+
+                if (Bfield_cax[lev][0])
+                {
+                    MultiFab::Copy(*Bfield_cax[lev][0], dBx, 0, 0, Bfield_cax[lev][0]->nComp(), ng);
+                    MultiFab::Copy(*Bfield_cax[lev][1], dBy, 0, 0, Bfield_cax[lev][1]->nComp(), ng);
+                    MultiFab::Copy(*Bfield_cax[lev][2], dBz, 0, 0, Bfield_cax[lev][2]->nComp(), ng);
+                }
+                MultiFab::Subtract(dBx, *Bfield_cp[lev][0], 0, 0, Bfield_cp[lev][0]->nComp(), ng);
+                MultiFab::Subtract(dBy, *Bfield_cp[lev][1], 0, 0, Bfield_cp[lev][1]->nComp(), ng);
+                MultiFab::Subtract(dBz, *Bfield_cp[lev][2], 0, 0, Bfield_cp[lev][2]->nComp(), ng);
+
+                const amrex::IntVect& refinement_ratio = refRatio(lev-1);
+
+                const amrex::IntVect& Bx_stag = Bfield_aux[lev-1][0]->ixType().toIntVect();
+                const amrex::IntVect& By_stag = Bfield_aux[lev-1][1]->ixType().toIntVect();
+                const amrex::IntVect& Bz_stag = Bfield_aux[lev-1][2]->ixType().toIntVect();
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+                for (MFIter mfi(*Bfield_aux[lev][0]); mfi.isValid(); ++mfi)
+                {
+                    Array4<Real> const& bx_aux = Bfield_aux[lev][0]->array(mfi);
+                    Array4<Real> const& by_aux = Bfield_aux[lev][1]->array(mfi);
+                    Array4<Real> const& bz_aux = Bfield_aux[lev][2]->array(mfi);
+
+                    Array4<Real const> const& bx_fp = Bfield_fp[lev][0]->const_array(mfi);
+                    Array4<Real const> const& by_fp = Bfield_fp[lev][1]->const_array(mfi);
+                    Array4<Real const> const& bz_fp = Bfield_fp[lev][2]->const_array(mfi);
+
+                    Array4<Real const> const& bx_c = dBx.const_array(mfi);
+                    Array4<Real const> const& by_c = dBy.const_array(mfi);
+                    Array4<Real const> const& bz_c = dBz.const_array(mfi);
+
+                    amrex::ParallelFor(Box(bx_aux), Box(by_aux), Box(bz_aux),
+                    [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+                    {
+                        warpx_interp(j, k, l, bx_aux, bx_fp, bx_c, Bx_stag, refinement_ratio);
+                    },
+                    [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+                    {
+                        warpx_interp(j, k, l, by_aux, by_fp, by_c, By_stag, refinement_ratio);
+                    },
+                    [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+                    {
+                        warpx_interp(j, k, l, bz_aux, bz_fp, bz_c, Bz_stag, refinement_ratio);
+                    });
+                }
+        } else
             {
-                MultiFab::Copy(*Bfield_cax[lev][0], dBx, 0, 0, Bfield_cax[lev][0]->nComp(), ng);
-                MultiFab::Copy(*Bfield_cax[lev][1], dBy, 0, 0, Bfield_cax[lev][1]->nComp(), ng);
-                MultiFab::Copy(*Bfield_cax[lev][2], dBz, 0, 0, Bfield_cax[lev][2]->nComp(), ng);
-            }
-            MultiFab::Subtract(dBx, *Bfield_cp[lev][0], 0, 0, Bfield_cp[lev][0]->nComp(), ng);
-            MultiFab::Subtract(dBy, *Bfield_cp[lev][1], 0, 0, Bfield_cp[lev][1]->nComp(), ng);
-            MultiFab::Subtract(dBz, *Bfield_cp[lev][2], 0, 0, Bfield_cp[lev][2]->nComp(), ng);
-
-            const amrex::IntVect& refinement_ratio = refRatio(lev-1);
-
-            const amrex::IntVect& Bx_stag = Bfield_aux[lev-1][0]->ixType().toIntVect();
-            const amrex::IntVect& By_stag = Bfield_aux[lev-1][1]->ixType().toIntVect();
-            const amrex::IntVect& Bz_stag = Bfield_aux[lev-1][2]->ixType().toIntVect();
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -350,105 +385,136 @@ WarpX::UpdateAuxilaryDataSameType ()
                 Array4<Real const> const& bx_fp = Bfield_fp[lev][0]->const_array(mfi);
                 Array4<Real const> const& by_fp = Bfield_fp[lev][1]->const_array(mfi);
                 Array4<Real const> const& bz_fp = Bfield_fp[lev][2]->const_array(mfi);
-                Array4<Real const> const& bx_c = dBx.const_array(mfi);
-                Array4<Real const> const& by_c = dBy.const_array(mfi);
-                Array4<Real const> const& bz_c = dBz.const_array(mfi);
 
                 amrex::ParallelFor(Box(bx_aux), Box(by_aux), Box(bz_aux),
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp(j, k, l, bx_aux, bx_fp, bx_c, Bx_stag, refinement_ratio);
+                    warpx_interp(j, k, l, bx_aux, bx_fp);
                 },
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp(j, k, l, by_aux, by_fp, by_c, By_stag, refinement_ratio);
+                    warpx_interp(j, k, l, by_aux, by_fp);
                 },
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp(j, k, l, bz_aux, bz_fp, bz_c, Bz_stag, refinement_ratio);
-                });
-            }
-        }
-
-        // E field
-        {
-            MultiFab dEx(Efield_cp[lev][0]->boxArray(), dm, Efield_cp[lev][0]->nComp(), ng);
-            MultiFab dEy(Efield_cp[lev][1]->boxArray(), dm, Efield_cp[lev][1]->nComp(), ng);
-            MultiFab dEz(Efield_cp[lev][2]->boxArray(), dm, Efield_cp[lev][2]->nComp(), ng);
-            dEx.setVal(0.0);
-            dEy.setVal(0.0);
-            dEz.setVal(0.0);
-
-            // Guard cells may not be up to date beyond ng_FieldGather
-            const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
-            // Copy Efield_aux to the dE MultiFabs, using up to ng_src (=ng_FieldGather) guard
-            // cells from Efield_aux and filling up to ng (=nGrow) guard cells in the dE MultiFabs
-            ablastr::utils::communication::ParallelCopy(dEx, *Efield_aux[lev - 1][0], 0, 0,
-                                                        Efield_aux[lev - 1][0]->nComp(), ng_src, ng,
-                                                        WarpX::do_single_precision_comms,
-                                                        crse_period);
-            ablastr::utils::communication::ParallelCopy(dEy, *Efield_aux[lev - 1][1], 0, 0,
-                                                        Efield_aux[lev - 1][1]->nComp(), ng_src, ng,
-                                                        WarpX::do_single_precision_comms,
-                                                        crse_period);
-            ablastr::utils::communication::ParallelCopy(dEz, *Efield_aux[lev - 1][2], 0, 0,
-                                                        Efield_aux[lev - 1][2]->nComp(), ng_src, ng,
-                                                        WarpX::do_single_precision_comms,
-                                                        crse_period);
-
-            if (Efield_cax[lev][0])
-            {
-                MultiFab::Copy(*Efield_cax[lev][0], dEx, 0, 0, Efield_cax[lev][0]->nComp(), ng);
-                MultiFab::Copy(*Efield_cax[lev][1], dEy, 0, 0, Efield_cax[lev][1]->nComp(), ng);
-                MultiFab::Copy(*Efield_cax[lev][2], dEz, 0, 0, Efield_cax[lev][2]->nComp(), ng);
-            }
-            MultiFab::Subtract(dEx, *Efield_cp[lev][0], 0, 0, Efield_cp[lev][0]->nComp(), ng);
-            MultiFab::Subtract(dEy, *Efield_cp[lev][1], 0, 0, Efield_cp[lev][1]->nComp(), ng);
-            MultiFab::Subtract(dEz, *Efield_cp[lev][2], 0, 0, Efield_cp[lev][2]->nComp(), ng);
-
-            const amrex::IntVect& refinement_ratio = refRatio(lev-1);
-
-            const amrex::IntVect& Ex_stag = Efield_aux[lev-1][0]->ixType().toIntVect();
-            const amrex::IntVect& Ey_stag = Efield_aux[lev-1][1]->ixType().toIntVect();
-            const amrex::IntVect& Ez_stag = Efield_aux[lev-1][2]->ixType().toIntVect();
-
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-            for (MFIter mfi(*Efield_aux[lev][0]); mfi.isValid(); ++mfi)
-            {
-                Array4<Real> const& ex_aux = Efield_aux[lev][0]->array(mfi);
-                Array4<Real> const& ey_aux = Efield_aux[lev][1]->array(mfi);
-                Array4<Real> const& ez_aux = Efield_aux[lev][2]->array(mfi);
-                Array4<Real const> const& ex_fp = Efield_fp[lev][0]->const_array(mfi);
-                Array4<Real const> const& ey_fp = Efield_fp[lev][1]->const_array(mfi);
-                Array4<Real const> const& ez_fp = Efield_fp[lev][2]->const_array(mfi);
-                Array4<Real const> const& ex_c = dEx.const_array(mfi);
-                Array4<Real const> const& ey_c = dEy.const_array(mfi);
-                Array4<Real const> const& ez_c = dEz.const_array(mfi);
-
-                amrex::ParallelFor(Box(ex_aux), Box(ey_aux), Box(ez_aux),
-                [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
-                {
-                    warpx_interp(j, k, l, ex_aux, ex_fp, ex_c, Ex_stag, refinement_ratio);
-                },
-                [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
-                {
-                    warpx_interp(j, k, l, ey_aux, ey_fp, ey_c, Ey_stag, refinement_ratio);
-                },
-                [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
-                {
-                    warpx_interp(j, k, l, ez_aux, ez_fp, ez_c, Ez_stag, refinement_ratio);
+                    warpx_interp(j, k, l, bz_aux, bz_fp);
                 });
             }
         }
     }
-}
+        // E field
+        {   
 
+            if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None) {
+                MultiFab dEx(Efield_cp[lev][0]->boxArray(), dm, Efield_cp[lev][0]->nComp(), ng);
+                MultiFab dEy(Efield_cp[lev][1]->boxArray(), dm, Efield_cp[lev][1]->nComp(), ng);
+                MultiFab dEz(Efield_cp[lev][2]->boxArray(), dm, Efield_cp[lev][2]->nComp(), ng);
+
+                dEx.setVal(0.0);
+                dEy.setVal(0.0);
+                dEz.setVal(0.0);
+
+                // Guard cells may not be up to date beyond ng_FieldGather
+                const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
+                // Copy Efield_aux to the dE MultiFabs, using up to ng_src (=ng_FieldGather) guard
+                // cells from Efield_aux and filling up to ng (=nGrow) guard cells in the dE MultiFabs
+                ablastr::utils::communication::ParallelCopy(dEx, *Efield_aux[lev - 1][0], 0, 0,
+                                                            Efield_aux[lev - 1][0]->nComp(), ng_src, ng,
+                                                            WarpX::do_single_precision_comms,
+                                                            crse_period);
+                ablastr::utils::communication::ParallelCopy(dEy, *Efield_aux[lev - 1][1], 0, 0,
+                                                            Efield_aux[lev - 1][1]->nComp(), ng_src, ng,
+                                                            WarpX::do_single_precision_comms,
+                                                            crse_period);
+                ablastr::utils::communication::ParallelCopy(dEz, *Efield_aux[lev - 1][2], 0, 0,
+                                                            Efield_aux[lev - 1][2]->nComp(), ng_src, ng,
+                                                            WarpX::do_single_precision_comms,
+                                                            crse_period);
+
+                if (Efield_cax[lev][0])
+                {
+                    MultiFab::Copy(*Efield_cax[lev][0], dEx, 0, 0, Efield_cax[lev][0]->nComp(), ng);
+                    MultiFab::Copy(*Efield_cax[lev][1], dEy, 0, 0, Efield_cax[lev][1]->nComp(), ng);
+                    MultiFab::Copy(*Efield_cax[lev][2], dEz, 0, 0, Efield_cax[lev][2]->nComp(), ng);
+                }
+                MultiFab::Subtract(dEx, *Efield_cp[lev][0], 0, 0, Efield_cp[lev][0]->nComp(), ng);
+                MultiFab::Subtract(dEy, *Efield_cp[lev][1], 0, 0, Efield_cp[lev][1]->nComp(), ng);
+                MultiFab::Subtract(dEz, *Efield_cp[lev][2], 0, 0, Efield_cp[lev][2]->nComp(), ng);
+                const amrex::IntVect& refinement_ratio = refRatio(lev-1);
+
+                const amrex::IntVect& Ex_stag = Efield_aux[lev-1][0]->ixType().toIntVect();
+                const amrex::IntVect& Ey_stag = Efield_aux[lev-1][1]->ixType().toIntVect();
+                const amrex::IntVect& Ez_stag = Efield_aux[lev-1][2]->ixType().toIntVect();
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+                
+                for (MFIter mfi(*Efield_aux[lev][0]); mfi.isValid(); ++mfi)
+                {
+                    Array4<Real> const& ex_aux = Efield_aux[lev][0]->array(mfi);
+                    Array4<Real> const& ey_aux = Efield_aux[lev][1]->array(mfi);
+                    Array4<Real> const& ez_aux = Efield_aux[lev][2]->array(mfi);
+                    Array4<Real const> const& ex_fp = Efield_fp[lev][0]->const_array(mfi);
+                    Array4<Real const> const& ey_fp = Efield_fp[lev][1]->const_array(mfi);
+                    Array4<Real const> const& ez_fp = Efield_fp[lev][2]->const_array(mfi);
+
+                    Array4<Real const> const& ex_c = dEx.const_array(mfi);
+                    Array4<Real const> const& ey_c = dEy.const_array(mfi);
+                    Array4<Real const> const& ez_c = dEz.const_array(mfi);
+
+                    amrex::ParallelFor(Box(ex_aux), Box(ey_aux), Box(ez_aux),
+                    [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+                    {
+                        warpx_interp(j, k, l, ex_aux, ex_fp, ex_c, Ex_stag, refinement_ratio);
+                    },
+                    [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+                    {
+                        warpx_interp(j, k, l, ey_aux, ey_fp, ey_c, Ey_stag, refinement_ratio);
+                    },
+                    [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+                    {
+                        warpx_interp(j, k, l, ez_aux, ez_fp, ez_c, Ez_stag, refinement_ratio);
+                    });
+                }
+            }
+            else {
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+                for (MFIter mfi(*Efield_aux[lev][0]); mfi.isValid(); ++mfi)
+                {
+                
+                    Array4<Real> const& ex_aux = Efield_aux[lev][0]->array(mfi);
+                    Array4<Real> const& ey_aux = Efield_aux[lev][1]->array(mfi);
+                    Array4<Real> const& ez_aux = Efield_aux[lev][2]->array(mfi);
+                    Array4<Real const> const& ex_fp = Efield_fp[lev][0]->const_array(mfi);
+                    Array4<Real const> const& ey_fp = Efield_fp[lev][1]->const_array(mfi);
+                    Array4<Real const> const& ez_fp = Efield_fp[lev][2]->const_array(mfi);
+                    
+                    amrex::ParallelFor(Box(ex_aux), Box(ey_aux), Box(ez_aux),
+                    [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+                    {
+                        warpx_interp(j, k, l, ex_aux, ex_fp);
+                    },
+                    [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+                    {
+                        warpx_interp(j, k, l, ey_aux, ey_fp);
+                    },
+                    [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+                    {
+                        warpx_interp(j, k, l, ez_aux, ez_fp);
+                    });
+                }
+            }
+        }
+    }
+}
 void WarpX::UpdateCurrentNodalToStag (amrex::MultiFab& dst, amrex::MultiFab const& src)
 {
     // If source and destination MultiFabs have the same index type, a simple copy is enough
     // (for example, this happens with the current along y in 2D, which is always fully nodal)
+    amrex::Print() << "I am inside UpdateCurrentNodalToStag()" << "\n";
     if (dst.ixType() == src.ixType())
     {
         amrex::MultiFab::Copy(dst, src, 0, 0, dst.nComp(), dst.nGrowVect());
