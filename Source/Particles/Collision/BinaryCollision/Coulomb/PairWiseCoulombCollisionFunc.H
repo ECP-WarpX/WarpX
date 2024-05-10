@@ -31,6 +31,7 @@ class PairWiseCoulombCollisionFunc
     using ParticleTileDataType = ParticleTileType::ParticleTileDataType;
     using ParticleBins = amrex::DenseBins<ParticleTileDataType>;
     using index_type = ParticleBins::index_type;
+    using SoaData_type = WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
 
 public:
     /**
@@ -70,7 +71,7 @@ public:
          * @param[in] I1s,I2s is the start index for I1,I2 (inclusive).
          * @param[in] I1e,I2e is the stop index for I1,I2 (exclusive).
          * @param[in] I1,I2 index arrays. They determine all elements that will be used.
-         * @param[in, out] ptile1,ptile2 the particle tiles of the two colliding species
+         * @param[in,out] soa_1,soa_2 contain the struct of array data of the two species.
          * @param[in] q1,q2 are charges.
          * @param[in] m1,m2 are masses.
          * @param[in] dt is the time step length between two collision calls.
@@ -84,7 +85,7 @@ public:
             index_type const I2s, index_type const I2e,
             index_type const* AMREX_RESTRICT I1,
             index_type const* AMREX_RESTRICT I2,
-            ParticleTileType ptile1, ParticleTileType ptile2,
+            const SoaData_type& soa_1, const SoaData_type& soa_2,
             GetParticlePosition<PIdx> /*get_position_1*/, GetParticlePosition<PIdx> /*get_position_2*/,
             amrex::ParticleReal const  q1, amrex::ParticleReal const  q2,
             amrex::ParticleReal const  m1, amrex::ParticleReal const  m2,
@@ -95,9 +96,6 @@ public:
             amrex::RandomEngine const& engine) const
         {
             using namespace amrex::literals;
-
-            const auto soa_1 = ptile1.getParticleTileData();
-            const auto soa_2 = ptile2.getParticleTileData();
 
             ElasticCollisionPerez(
                     I1s, I1e, I2s, I2e, I1, I2,

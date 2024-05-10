@@ -274,6 +274,7 @@ public:
             // Extract low-level data
             auto const n_cells = static_cast<int>(bins_1.numBins());
             // - Species 1
+            const auto soa_1 = ptile_1.getParticleTileData();
             index_type* AMREX_RESTRICT indices_1 = bins_1.permutationPtr();
             index_type const* AMREX_RESTRICT cell_offsets_1 = bins_1.offsetsPtr();
             const amrex::ParticleReal q1 = species_1.getCharge();
@@ -295,7 +296,6 @@ public:
 #elif defined(WARPX_DIM_3D)
             auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
 #endif
-
 
             /*
               The following calculations are only required when creating product particles
@@ -419,7 +419,7 @@ public:
                         cell_start_1, cell_half_1,
                         cell_half_1, cell_stop_1,
                         indices_1, indices_1,
-                        ptile_1, ptile_1, get_position_1, get_position_1,
+                        soa_1, soa_1, get_position_1, get_position_1,
                         q1, q1, m1, m1, dt, dV, coll_idx,
                         cell_start_pair, p_mask, p_pair_indices_1, p_pair_indices_2,
                         p_pair_reaction_weight, engine);
@@ -458,12 +458,14 @@ public:
             // Extract low-level data
             auto const n_cells = static_cast<int>(bins_1.numBins());
             // - Species 1
+            const auto soa_1 = ptile_1.getParticleTileData();
             index_type* AMREX_RESTRICT indices_1 = bins_1.permutationPtr();
             index_type const* AMREX_RESTRICT cell_offsets_1 = bins_1.offsetsPtr();
             const amrex::ParticleReal q1 = species_1.getCharge();
             const amrex::ParticleReal m1 = species_1.getMass();
             auto get_position_1  = GetParticlePosition<PIdx>(ptile_1, getpos_offset);
             // - Species 2
+            const auto soa_2 = ptile_2.getParticleTileData();
             index_type* AMREX_RESTRICT indices_2 = bins_2.permutationPtr();
             index_type const* AMREX_RESTRICT cell_offsets_2 = bins_2.offsetsPtr();
             const amrex::ParticleReal q2 = species_2.getCharge();
@@ -634,7 +636,7 @@ public:
                     binary_collision_functor(
                         cell_start_1, cell_stop_1, cell_start_2, cell_stop_2,
                         indices_1, indices_2,
-                        ptile_1, ptile_2, get_position_1, get_position_2,
+                        soa_1, soa_2, get_position_1, get_position_2,
                         q1, q2, m1, m2, dt, dV, coll_idx,
                         cell_start_pair, p_mask, p_pair_indices_1, p_pair_indices_2,
                         p_pair_reaction_weight, engine);

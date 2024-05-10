@@ -52,7 +52,7 @@ public:
     AMREX_INLINE
     amrex::Vector<int> operator() (
         const index_type& n_total_pairs,
-        ParticleTileType ptile1, ParticleTileType ptile2,
+        ParticleTileType& ptile1, ParticleTileType& ptile2,
         const amrex::Vector<WarpXParticleContainer*>& pc_products,
         ParticleTileType** AMREX_RESTRICT tile_products,
         const amrex::ParticleReal m1, const amrex::ParticleReal m2,
