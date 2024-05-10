@@ -56,7 +56,7 @@ bool utils::parser::Query_parserString(
     std::string const& query_string,
     std::string& stored_string)
 {
-    bool input_specified = pp.contains(query_string.c_str());
+    bool const input_specified = pp.contains(query_string.c_str());
     if (input_specified) {
         stored_string.clear();
         utils::parser::Store_parserString(pp, query_string, stored_string);
