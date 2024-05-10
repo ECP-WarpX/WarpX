@@ -52,8 +52,6 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
     constexpr int ng = 1;
     // Temporary cell-centered, multi-component MultiFab for storing particles per cell.
     amrex::MultiFab red_mf(warpx.boxArray(m_lev), warpx.DistributionMap(m_lev), 1, ng);
-    // Set value to 0, and increment the value in each cell with ppc.
-    red_mf.setVal(0._rt);
     auto& pc = warpx.GetPartContainer().GetParticleContainer(m_ispec);
     // Copy over member variables so they can be captured in the lambda
     auto map_fn = m_map_fn;
@@ -99,7 +97,6 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
             });
     if (m_do_average) {
         amrex::MultiFab ppc_mf(warpx.boxArray(m_lev), warpx.DistributionMap(m_lev), 1, ng);
-        ppc_mf.setVal(0._rt);
         // Add the weight for each particle -- total number of particles of this species
         ParticleToMesh(pc, ppc_mf, m_lev,
                 [=] AMREX_GPU_DEVICE (const WarpXParticleContainer::SuperParticleType& p,
