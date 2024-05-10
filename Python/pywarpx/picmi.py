@@ -254,7 +254,7 @@ class Species(picmistandard.PICMI_Species):
         self.resampling_algorithm_n_theta = kw.pop('warpx_resampling_algorithm_n_theta', None)
         self.resampling_algorithm_n_phi = kw.pop('warpx_resampling_algorithm_n_phi', None)
         self.resampling_algorithm_delta_u = kw.pop('warpx_resampling_algorithm_delta_u', None)
-        if np.size(self.resampling_algorithm_delta_u) == 1:
+        if self.resampling_algorithm_delta_u is not None and np.size(self.resampling_algorithm_delta_u) == 1:
             self.resampling_algorithm_delta_u = [self.resampling_algorithm_delta_u]*3
 
     def species_initialize_inputs(self, layout,
