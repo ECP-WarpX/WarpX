@@ -403,7 +403,7 @@ WarpX::UpdateAuxilaryDataSameType ()
         }
     }
         // E field
-        {   
+        {
 
             if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None) {
                 MultiFab dEx(Efield_cp[lev][0]->boxArray(), dm, Efield_cp[lev][0]->nComp(), ng);
@@ -449,7 +449,7 @@ WarpX::UpdateAuxilaryDataSameType ()
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-                
+
                 for (MFIter mfi(*Efield_aux[lev][0]); mfi.isValid(); ++mfi)
                 {
                     Array4<Real> const& ex_aux = Efield_aux[lev][0]->array(mfi);
@@ -484,14 +484,14 @@ WarpX::UpdateAuxilaryDataSameType ()
 #endif
                 for (MFIter mfi(*Efield_aux[lev][0]); mfi.isValid(); ++mfi)
                 {
-                
+
                     Array4<Real> const& ex_aux = Efield_aux[lev][0]->array(mfi);
                     Array4<Real> const& ey_aux = Efield_aux[lev][1]->array(mfi);
                     Array4<Real> const& ez_aux = Efield_aux[lev][2]->array(mfi);
                     Array4<Real const> const& ex_fp = Efield_fp[lev][0]->const_array(mfi);
                     Array4<Real const> const& ey_fp = Efield_fp[lev][1]->const_array(mfi);
                     Array4<Real const> const& ez_fp = Efield_fp[lev][2]->const_array(mfi);
-                    
+
                     amrex::ParallelFor(Box(ex_aux), Box(ey_aux), Box(ez_aux),
                     [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                     {
