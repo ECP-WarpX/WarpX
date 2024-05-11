@@ -33,11 +33,11 @@ public:
      *                                        split pml field
      */
     void ApplyPEC_InsulatortoEfield (std::array<amrex::MultiFab*, 3> Efield,
-                                 const amrex::Vector<FieldBoundaryType>& field_boundary_lo,
-                                 const amrex::Vector<FieldBoundaryType>& field_boundary_hi,
-                                 const amrex::IntVect& ng_fieldgather, const amrex::Geometry& geom,
-                                 int lev, PatchType patch_type, const amrex::Vector<amrex::IntVect>& ref_ratios,
-                                 bool split_pml_field = false);
+                                     amrex::Vector<FieldBoundaryType> const & field_boundary_lo,
+                                     amrex::Vector<FieldBoundaryType> const & field_boundary_hi,
+                                     amrex::IntVect const & ng_fieldgather, amrex::Geometry const & geom,
+                                     int lev, PatchType patch_type, amrex::Vector<amrex::IntVect> const & ref_ratios,
+                                     bool split_pml_field = false);
     /**
      * \brief The magnetic field at the insulator boundary are unchanged.
      *        The tangential guard cell values are set to the specified values.
@@ -53,11 +53,11 @@ public:
      * \param[in]     time                current time of the simulation
      */
     void ApplyPEC_InsulatortoBfield (std::array<amrex::MultiFab*, 3> Bfield,
-                                 const amrex::Vector<FieldBoundaryType>& field_boundary_lo,
-                                 const amrex::Vector<FieldBoundaryType>& field_boundary_hi,
-                                 const amrex::IntVect& ng_fieldgather, const amrex::Geometry& geom,
-                                 int lev, PatchType patch_type, const amrex::Vector<amrex::IntVect>& ref_ratios,
-                                 amrex::Real time);
+                                     amrex::Vector<FieldBoundaryType> const & field_boundary_lo,
+                                     amrex::Vector<FieldBoundaryType> const & field_boundary_hi,
+                                     amrex::IntVect const & ng_fieldgather, amrex::Geometry const & geom,
+                                     int lev, PatchType patch_type, amrex::Vector<amrex::IntVect> const & ref_ratios,
+                                     amrex::Real time);
 
 private:
 
