@@ -195,7 +195,13 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
         pc.DepositCharge(rho, local, reset, apply_boundary_and_scale_volume,
                               interpolate_across_levels);
     }
-
+    for (int lev = 0; lev <= max_level; lev++) {
+        if (lev > 0) {
+            if (charge_buf[lev]) {
+                charge_buf[lev]->setVal(0.);
+            }
+        }
+    }
     SyncRho(rho, rho_coarse, charge_buf); // Apply filter, perform MPI exchange, interpolate across levels
 
     // Get the particle beta vector
@@ -239,7 +245,13 @@ WarpX::AddSpaceChargeFieldLabFrame ()
         int const lev = 0;
         myfl->DepositCharge( lev, *rho_fp[lev] );
     }
-
+    for (int lev = 0; lev <= max_level; lev++) {
+        if (lev > 0) {
+            if (charge_buf[lev]) {
+                charge_buf[lev]->setVal(0.);
+            }
+        }
+    }
     SyncRho(rho_fp, rho_cp, charge_buf); // Apply filter, perform MPI exchange, interpolate across levels
 #ifndef WARPX_DIM_RZ
     for (int lev = 0; lev <= finestLevel(); lev++) {
