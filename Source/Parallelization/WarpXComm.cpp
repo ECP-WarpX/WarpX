@@ -882,7 +882,7 @@ WarpX::SyncCurrent (
     WARPX_PROFILE("WarpX::SyncCurrent()");
 
     // If warpx.do_current_centering = 1, center currents from nodal grid to staggered grid
-    if (WarpX::do_current_centering)
+    if (do_current_centering)
     {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(finest_level <= 1,
                                          "warpx.do_current_centering=1 not supported with more than one fine levels");
@@ -1178,7 +1178,7 @@ void WarpX::SumBoundaryJ (
     const amrex::IntVect ng = J.nGrowVect();
     amrex::IntVect ng_depos_J = get_ng_depos_J();
 
-    if (WarpX::do_current_centering)
+    if (do_current_centering)
     {
 #if   defined(WARPX_DIM_1D_Z)
         ng_depos_J[0] += WarpX::current_centering_noz / 2;
