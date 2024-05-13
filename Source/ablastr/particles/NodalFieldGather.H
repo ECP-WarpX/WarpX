@@ -22,7 +22,7 @@ namespace ablastr::particles
 
 /**
  * \brief Compute weight of each surrounding node (or cell-centered nodes) in interpolating a nodal ((or a cell-centered node) field
- *        to the given coordinates. If template parameter IdxType is amrex::IndexType::CellIndex::NODE, then the calculations will be done with respect to the nodes (default).
+ *        to the given coordinates. If template parameter IdxType is amrex::IndexType::CellIndex::NODE, then the calculations will be done with respect to the nodes.
  *        If template parameter IdxType is amrex::IndexType::CellIndex::CELL, then the calculations will be done with respect to the cell-centered nodal.
  *        This currently only does linear order.
  *
