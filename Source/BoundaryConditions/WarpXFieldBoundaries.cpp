@@ -167,7 +167,7 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
     }
 
     if (::isAnyBoundary<FieldBoundaryType::PEC_Insulator>(field_boundary_lo, field_boundary_hi)) {
-        amrex::Real tnew = gett_new(lev);
+        amrex::Real const tnew = gett_new(lev);
         if (patch_type == PatchType::fine) {
             pec_insulator_boundary->ApplyPEC_InsulatortoBfield( {
                 getFieldPointer(FieldType::Bfield_fp, lev, 0),
