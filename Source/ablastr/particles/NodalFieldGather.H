@@ -12,8 +12,10 @@
 #include <AMReX_Array.H>
 #include <AMReX_Extension.H>
 #include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
 #include <AMReX_Math.H>
 #include <AMReX_REAL.H>
+
 
 namespace ablastr::particles
 {
