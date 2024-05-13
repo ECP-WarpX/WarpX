@@ -144,8 +144,6 @@ amrex::Vector<FieldBoundaryType> WarpX::field_boundary_hi(AMREX_SPACEDIM,FieldBo
 amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_lo(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
 amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_hi(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
 
-bool WarpX::do_current_centering = false;
-
 int WarpX::n_rz_azimuthal_modes = 1;
 int WarpX::ncomps = 1;
 

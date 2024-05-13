@@ -212,7 +212,7 @@ public:
     //! If true, the current is deposited on a nodal grid and then centered onto a staggered grid
     //! using finite centering of order given by #current_centering_nox, #current_centering_noy,
     //! and #current_centering_noz
-    static bool do_current_centering;
+    bool do_current_centering = false;
 
     //! If true, a correction is applied to the current in Fourier space,
     //  to satisfy the continuity equation and charge conservation
