@@ -64,7 +64,7 @@ void
 WarpX::UpdateAuxilaryDataStagToNodal ()
 {
 #ifndef WARPX_USE_PSATD
-    if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
+    if (electromagnetic_solver_id == ElectrostaticSolverAlgo::PSATD) {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( false,
             "WarpX::UpdateAuxilaryDataStagToNodal: PSATD solver requires "
             "WarpX build with spectral solver support.");
@@ -154,136 +154,195 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
 
         // Bfield
         {
-            Array<std::unique_ptr<MultiFab>,3> Btmp;
-            if (Bfield_cax[lev][0]) {
-                for (int i = 0; i < 3; ++i) {
-                    Btmp[i] = std::make_unique<MultiFab>(
-                        *Bfield_cax[lev][i], amrex::make_alias, 0, 1);
+            if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None) {
+                Array<std::unique_ptr<MultiFab>,3> Btmp;
+                if (Bfield_cax[lev][0]) {
+                    for (int i = 0; i < 3; ++i) {
+                        Btmp[i] = std::make_unique<MultiFab>(
+                            *Bfield_cax[lev][i], amrex::make_alias, 0, 1);
+                    }
+                } else {
+                    const IntVect ngtmp = Bfield_aux[lev-1][0]->nGrowVect();
+                    for (int i = 0; i < 3; ++i) {
+                        Btmp[i] = std::make_unique<MultiFab>(cnba, dm, 1, ngtmp);
+                    }
                 }
-            } else {
-                const IntVect ngtmp = Bfield_aux[lev-1][0]->nGrowVect();
+                Btmp[0]->setVal(0.0);
+                Btmp[1]->setVal(0.0);
+                Btmp[2]->setVal(0.0);
+                // ParallelCopy from coarse level
                 for (int i = 0; i < 3; ++i) {
-                    Btmp[i] = std::make_unique<MultiFab>(cnba, dm, 1, ngtmp);
+                    const IntVect ng = Btmp[i]->nGrowVect();
+                    // Guard cells may not be up to date beyond ng_FieldGather
+                    const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
+                    // Copy Bfield_aux to Btmp, using up to ng_src (=ng_FieldGather) guard cells from
+                    // Bfield_aux and filling up to ng (=nGrow) guard cells in Btmp
+                    ablastr::utils::communication::ParallelCopy(*Btmp[i], *Bfield_aux[lev - 1][i], 0, 0, 1,
+                                                                ng_src, ng, WarpX::do_single_precision_comms, cperiod);
                 }
-            }
-            Btmp[0]->setVal(0.0);
-            Btmp[1]->setVal(0.0);
-            Btmp[2]->setVal(0.0);
-            // ParallelCopy from coarse level
-            for (int i = 0; i < 3; ++i) {
-                const IntVect ng = Btmp[i]->nGrowVect();
-                // Guard cells may not be up to date beyond ng_FieldGather
-                const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
-                // Copy Bfield_aux to Btmp, using up to ng_src (=ng_FieldGather) guard cells from
-                // Bfield_aux and filling up to ng (=nGrow) guard cells in Btmp
-                ablastr::utils::communication::ParallelCopy(*Btmp[i], *Bfield_aux[lev - 1][i], 0, 0, 1,
-                                                            ng_src, ng, WarpX::do_single_precision_comms, cperiod);
-            }
 
-            const amrex::IntVect& refinement_ratio = refRatio(lev-1);
+                const amrex::IntVect& refinement_ratio = refRatio(lev-1);
 
-            const amrex::IntVect& Bx_fp_stag = Bfield_fp[lev][0]->ixType().toIntVect();
-            const amrex::IntVect& By_fp_stag = Bfield_fp[lev][1]->ixType().toIntVect();
-            const amrex::IntVect& Bz_fp_stag = Bfield_fp[lev][2]->ixType().toIntVect();
+                const amrex::IntVect& Bx_fp_stag = Bfield_fp[lev][0]->ixType().toIntVect();
+                const amrex::IntVect& By_fp_stag = Bfield_fp[lev][1]->ixType().toIntVect();
+                const amrex::IntVect& Bz_fp_stag = Bfield_fp[lev][2]->ixType().toIntVect();
 
-            const amrex::IntVect& Bx_cp_stag = Bfield_cp[lev][0]->ixType().toIntVect();
-            const amrex::IntVect& By_cp_stag = Bfield_cp[lev][1]->ixType().toIntVect();
-            const amrex::IntVect& Bz_cp_stag = Bfield_cp[lev][2]->ixType().toIntVect();
+                const amrex::IntVect& Bx_cp_stag = Bfield_cp[lev][0]->ixType().toIntVect();
+                const amrex::IntVect& By_cp_stag = Bfield_cp[lev][1]->ixType().toIntVect();
+                const amrex::IntVect& Bz_cp_stag = Bfield_cp[lev][2]->ixType().toIntVect();
+
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-            for (MFIter mfi(*Bfield_aux[lev][0], TilingIfNotGPU()); mfi.isValid(); ++mfi)
-            {
-                Array4<Real> const& bx_aux = Bfield_aux[lev][0]->array(mfi);
-                Array4<Real> const& by_aux = Bfield_aux[lev][1]->array(mfi);
-                Array4<Real> const& bz_aux = Bfield_aux[lev][2]->array(mfi);
-                Array4<Real const> const& bx_fp = Bfield_fp[lev][0]->const_array(mfi);
-                Array4<Real const> const& by_fp = Bfield_fp[lev][1]->const_array(mfi);
-                Array4<Real const> const& bz_fp = Bfield_fp[lev][2]->const_array(mfi);
-                Array4<Real const> const& bx_cp = Bfield_cp[lev][0]->const_array(mfi);
-                Array4<Real const> const& by_cp = Bfield_cp[lev][1]->const_array(mfi);
-                Array4<Real const> const& bz_cp = Bfield_cp[lev][2]->const_array(mfi);
-                Array4<Real const> const& bx_c = Btmp[0]->const_array(mfi);
-                Array4<Real const> const& by_c = Btmp[1]->const_array(mfi);
-                Array4<Real const> const& bz_c = Btmp[2]->const_array(mfi);
-
-                const Box& bx = mfi.growntilebox();
-                amrex::ParallelFor(bx,
-                [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+                for (MFIter mfi(*Bfield_aux[lev][0], TilingIfNotGPU()); mfi.isValid(); ++mfi)
                 {
-                    warpx_interp(j, k, l, bx_aux, bx_fp, bx_cp, bx_c, Bx_fp_stag, Bx_cp_stag, refinement_ratio);
-                    warpx_interp(j, k, l, by_aux, by_fp, by_cp, by_c, By_fp_stag, By_cp_stag, refinement_ratio);
-                    warpx_interp(j, k, l, bz_aux, bz_fp, bz_cp, bz_c, Bz_fp_stag, Bz_cp_stag, refinement_ratio);
-                });
+                    Array4<Real> const& bx_aux = Bfield_aux[lev][0]->array(mfi);
+                    Array4<Real> const& by_aux = Bfield_aux[lev][1]->array(mfi);
+                    Array4<Real> const& bz_aux = Bfield_aux[lev][2]->array(mfi);
+                    Array4<Real const> const& bx_fp = Bfield_fp[lev][0]->const_array(mfi);
+                    Array4<Real const> const& by_fp = Bfield_fp[lev][1]->const_array(mfi);
+                    Array4<Real const> const& bz_fp = Bfield_fp[lev][2]->const_array(mfi);
+                    Array4<Real const> const& bx_cp = Bfield_cp[lev][0]->const_array(mfi);
+                    Array4<Real const> const& by_cp = Bfield_cp[lev][1]->const_array(mfi);
+                    Array4<Real const> const& bz_cp = Bfield_cp[lev][2]->const_array(mfi);
+                    Array4<Real const> const& bx_c = Btmp[0]->const_array(mfi);
+                    Array4<Real const> const& by_c = Btmp[1]->const_array(mfi);
+                    Array4<Real const> const& bz_c = Btmp[2]->const_array(mfi);
+
+                    const Box& bx = mfi.growntilebox();
+                    amrex::ParallelFor(bx,
+                    [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+                    {
+                        warpx_interp(j, k, l, bx_aux, bx_fp, bx_cp, bx_c, Bx_fp_stag, Bx_cp_stag, refinement_ratio);
+                        warpx_interp(j, k, l, by_aux, by_fp, by_cp, by_c, By_fp_stag, By_cp_stag, refinement_ratio);
+                        warpx_interp(j, k, l, bz_aux, bz_fp, bz_cp, bz_c, Bz_fp_stag, Bz_cp_stag, refinement_ratio);
+                    });
+                }
+
+            }
+            else {
+                const amrex::IntVect& Bx_fp_stag = Bfield_fp[lev][0]->ixType().toIntVect();
+                const amrex::IntVect& By_fp_stag = Bfield_fp[lev][1]->ixType().toIntVect();
+                const amrex::IntVect& Bz_fp_stag = Bfield_fp[lev][2]->ixType().toIntVect();
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+                for (MFIter mfi(*Bfield_aux[lev][0], TilingIfNotGPU()); mfi.isValid(); ++mfi)
+                {
+                    Array4<Real> const& bx_aux = Bfield_aux[lev][0]->array(mfi);
+                    Array4<Real> const& by_aux = Bfield_aux[lev][1]->array(mfi);
+                    Array4<Real> const& bz_aux = Bfield_aux[lev][2]->array(mfi);
+                    Array4<Real const> const& bx_fp = Bfield_fp[lev][0]->const_array(mfi);
+                    Array4<Real const> const& by_fp = Bfield_fp[lev][1]->const_array(mfi);
+                    Array4<Real const> const& bz_fp = Bfield_fp[lev][2]->const_array(mfi);
+
+                    const Box& bx = mfi.growntilebox();
+                    amrex::ParallelFor(bx,
+                    [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+                    {
+                        warpx_interp(j, k, l, bx_aux, bx_fp, Bx_fp_stag);
+                        warpx_interp(j, k, l, by_aux, by_fp, By_fp_stag);
+                        warpx_interp(j, k, l, bz_aux, bz_fp, Bz_fp_stag);
+                    });
+                }
             }
         }
-
         // Efield
         {
-            Array<std::unique_ptr<MultiFab>,3> Etmp;
-            if (Efield_cax[lev][0]) {
-                for (int i = 0; i < 3; ++i) {
-                    Etmp[i] = std::make_unique<MultiFab>(
-                        *Efield_cax[lev][i], amrex::make_alias, 0, 1);
+            if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None) {
+//OLGA
+                amrex::Print() << "not supposed to be here \n";
+                Array<std::unique_ptr<MultiFab>,3> Etmp;
+                if (Efield_cax[lev][0]) {
+                    for (int i = 0; i < 3; ++i) {
+                        Etmp[i] = std::make_unique<MultiFab>(
+                            *Efield_cax[lev][i], amrex::make_alias, 0, 1);
+                    }
+                } else {
+                    const IntVect ngtmp = Efield_aux[lev-1][0]->nGrowVect();
+                    for (int i = 0; i < 3; ++i) {
+                        Etmp[i] = std::make_unique<MultiFab>(
+                            cnba, dm, 1, ngtmp);
+                    }
                 }
-            } else {
-                const IntVect ngtmp = Efield_aux[lev-1][0]->nGrowVect();
+                Etmp[0]->setVal(0.0);
+                Etmp[1]->setVal(0.0);
+                Etmp[2]->setVal(0.0);
+                // ParallelCopy from coarse level
                 for (int i = 0; i < 3; ++i) {
-                    Etmp[i] = std::make_unique<MultiFab>(
-                        cnba, dm, 1, ngtmp);
+                    const IntVect ng = Etmp[i]->nGrowVect();
+                    // Guard cells may not be up to date beyond ng_FieldGather
+                    const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
+                    // Copy Efield_aux to Etmp, using up to ng_src (=ng_FieldGather) guard cells from
+                    // Efield_aux and filling up to ng (=nGrow) guard cells in Etmp
+                    ablastr::utils::communication::ParallelCopy(*Etmp[i], *Efield_aux[lev - 1][i], 0, 0, 1,
+                                                                ng_src, ng, WarpX::do_single_precision_comms, cperiod);
                 }
-            }
-            Etmp[0]->setVal(0.0);
-            Etmp[1]->setVal(0.0);
-            Etmp[2]->setVal(0.0);
-            // ParallelCopy from coarse level
-            for (int i = 0; i < 3; ++i) {
-                const IntVect ng = Etmp[i]->nGrowVect();
-                // Guard cells may not be up to date beyond ng_FieldGather
-                const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
-                // Copy Efield_aux to Etmp, using up to ng_src (=ng_FieldGather) guard cells from
-                // Efield_aux and filling up to ng (=nGrow) guard cells in Etmp
-                ablastr::utils::communication::ParallelCopy(*Etmp[i], *Efield_aux[lev - 1][i], 0, 0, 1,
-                                                            ng_src, ng, WarpX::do_single_precision_comms, cperiod);
-            }
+                const amrex::IntVect& refinement_ratio = refRatio(lev-1);
+                
+                const amrex::IntVect& Ex_fp_stag = Efield_fp[lev][0]->ixType().toIntVect();
+                const amrex::IntVect& Ey_fp_stag = Efield_fp[lev][1]->ixType().toIntVect();
+                const amrex::IntVect& Ez_fp_stag = Efield_fp[lev][2]->ixType().toIntVect();
 
-            const amrex::IntVect& refinement_ratio = refRatio(lev-1);
-
-            const amrex::IntVect& Ex_fp_stag = Efield_fp[lev][0]->ixType().toIntVect();
-            const amrex::IntVect& Ey_fp_stag = Efield_fp[lev][1]->ixType().toIntVect();
-            const amrex::IntVect& Ez_fp_stag = Efield_fp[lev][2]->ixType().toIntVect();
-
-            const amrex::IntVect& Ex_cp_stag = Efield_cp[lev][0]->ixType().toIntVect();
-            const amrex::IntVect& Ey_cp_stag = Efield_cp[lev][1]->ixType().toIntVect();
-            const amrex::IntVect& Ez_cp_stag = Efield_cp[lev][2]->ixType().toIntVect();
+                const amrex::IntVect& Ex_cp_stag = Efield_cp[lev][0]->ixType().toIntVect();
+                const amrex::IntVect& Ey_cp_stag = Efield_cp[lev][1]->ixType().toIntVect();
+                const amrex::IntVect& Ez_cp_stag = Efield_cp[lev][2]->ixType().toIntVect();
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-            for (MFIter mfi(*Efield_aux[lev][0]); mfi.isValid(); ++mfi)
-            {
-                Array4<Real> const& ex_aux = Efield_aux[lev][0]->array(mfi);
-                Array4<Real> const& ey_aux = Efield_aux[lev][1]->array(mfi);
-                Array4<Real> const& ez_aux = Efield_aux[lev][2]->array(mfi);
-                Array4<Real const> const& ex_fp = Efield_fp[lev][0]->const_array(mfi);
-                Array4<Real const> const& ey_fp = Efield_fp[lev][1]->const_array(mfi);
-                Array4<Real const> const& ez_fp = Efield_fp[lev][2]->const_array(mfi);
-                Array4<Real const> const& ex_cp = Efield_cp[lev][0]->const_array(mfi);
-                Array4<Real const> const& ey_cp = Efield_cp[lev][1]->const_array(mfi);
-                Array4<Real const> const& ez_cp = Efield_cp[lev][2]->const_array(mfi);
-                Array4<Real const> const& ex_c = Etmp[0]->const_array(mfi);
-                Array4<Real const> const& ey_c = Etmp[1]->const_array(mfi);
-                Array4<Real const> const& ez_c = Etmp[2]->const_array(mfi);
-
-                const Box& bx = mfi.fabbox();
-                amrex::ParallelFor(bx,
-                [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+                for (MFIter mfi(*Efield_aux[lev][0]); mfi.isValid(); ++mfi)
                 {
-                    warpx_interp(j, k, l, ex_aux, ex_fp, ex_cp, ex_c, Ex_fp_stag, Ex_cp_stag, refinement_ratio);
-                    warpx_interp(j, k, l, ey_aux, ey_fp, ey_cp, ey_c, Ey_fp_stag, Ey_cp_stag, refinement_ratio);
-                    warpx_interp(j, k, l, ez_aux, ez_fp, ez_cp, ez_c, Ez_fp_stag, Ez_cp_stag, refinement_ratio);
-                });
+                    Array4<Real> const& ex_aux = Efield_aux[lev][0]->array(mfi);
+                    Array4<Real> const& ey_aux = Efield_aux[lev][1]->array(mfi);
+                    Array4<Real> const& ez_aux = Efield_aux[lev][2]->array(mfi);
+                    Array4<Real const> const& ex_fp = Efield_fp[lev][0]->const_array(mfi);
+                    Array4<Real const> const& ey_fp = Efield_fp[lev][1]->const_array(mfi);
+                    Array4<Real const> const& ez_fp = Efield_fp[lev][2]->const_array(mfi);
+                    Array4<Real const> const& ex_cp = Efield_cp[lev][0]->const_array(mfi);
+                    Array4<Real const> const& ey_cp = Efield_cp[lev][1]->const_array(mfi);
+                    Array4<Real const> const& ez_cp = Efield_cp[lev][2]->const_array(mfi);
+                    Array4<Real const> const& ex_c = Etmp[0]->const_array(mfi);
+                    Array4<Real const> const& ey_c = Etmp[1]->const_array(mfi);
+                    Array4<Real const> const& ez_c = Etmp[2]->const_array(mfi);
+
+                    const Box& bx = mfi.fabbox();
+                    amrex::ParallelFor(bx,
+                    [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+                    {
+                        warpx_interp(j, k, l, ex_aux, ex_fp, ex_cp, ex_c, Ex_fp_stag, Ex_cp_stag, refinement_ratio);
+                        warpx_interp(j, k, l, ey_aux, ey_fp, ey_cp, ey_c, Ey_fp_stag, Ey_cp_stag, refinement_ratio);
+                        warpx_interp(j, k, l, ez_aux, ez_fp, ez_cp, ez_c, Ez_fp_stag, Ez_cp_stag, refinement_ratio);
+                    });
+                }
+            }
+            else {
+                amrex::Print() <<  "I am here \n";
+                const amrex::IntVect& Ex_fp_stag = Efield_fp[lev][0]->ixType().toIntVect();
+                const amrex::IntVect& Ey_fp_stag = Efield_fp[lev][1]->ixType().toIntVect();
+                const amrex::IntVect& Ez_fp_stag = Efield_fp[lev][2]->ixType().toIntVect();
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+                for (MFIter mfi(*Efield_aux[lev][0]); mfi.isValid(); ++mfi)
+                {
+                    
+                    Array4<Real> const& ex_aux = Efield_aux[lev][0]->array(mfi);
+                    Array4<Real> const& ey_aux = Efield_aux[lev][1]->array(mfi);
+                    Array4<Real> const& ez_aux = Efield_aux[lev][2]->array(mfi);
+                    Array4<Real const> const& ex_fp = Efield_fp[lev][0]->const_array(mfi);
+                    Array4<Real const> const& ey_fp = Efield_fp[lev][1]->const_array(mfi);
+                    Array4<Real const> const& ez_fp = Efield_fp[lev][2]->const_array(mfi);
+                    const Box& bx = mfi.fabbox();
+                    amrex::ParallelFor(bx,
+                    [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+                    {
+                        warpx_interp(j, k, l, ex_aux, ex_fp, Ex_fp_stag);
+                        warpx_interp(j, k, l, ey_aux, ey_fp, Ey_fp_stag);
+                        warpx_interp(j, k, l, ez_aux, ez_fp, Ez_fp_stag);
+                    });
+                }
             }
         }
     }
@@ -404,7 +463,7 @@ WarpX::UpdateAuxilaryDataSameType ()
     }
         // E field
         {   
-
+            
             if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None) {
                 MultiFab dEx(Efield_cp[lev][0]->boxArray(), dm, Efield_cp[lev][0]->nComp(), ng);
                 MultiFab dEy(Efield_cp[lev][1]->boxArray(), dm, Efield_cp[lev][1]->nComp(), ng);
@@ -449,7 +508,6 @@ WarpX::UpdateAuxilaryDataSameType ()
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-                
                 for (MFIter mfi(*Efield_aux[lev][0]); mfi.isValid(); ++mfi)
                 {
                     Array4<Real> const& ex_aux = Efield_aux[lev][0]->array(mfi);
@@ -484,7 +542,7 @@ WarpX::UpdateAuxilaryDataSameType ()
 #endif
                 for (MFIter mfi(*Efield_aux[lev][0]); mfi.isValid(); ++mfi)
                 {
-                
+                    
                     Array4<Real> const& ex_aux = Efield_aux[lev][0]->array(mfi);
                     Array4<Real> const& ey_aux = Efield_aux[lev][1]->array(mfi);
                     Array4<Real> const& ez_aux = Efield_aux[lev][2]->array(mfi);
