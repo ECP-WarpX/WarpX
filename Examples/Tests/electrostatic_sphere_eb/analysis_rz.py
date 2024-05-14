@@ -17,6 +17,7 @@
 # Possible running time: < 1 s
 
 import os
+import re
 import sys
 
 import numpy as np
