@@ -251,8 +251,6 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
         // Efield
         {
             if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None) {
-//OLGA
-                amrex::Print() << "not supposed to be here \n";
                 Array<std::unique_ptr<MultiFab>,3> Etmp;
                 if (Efield_cax[lev][0]) {
                     for (int i = 0; i < 3; ++i) {
@@ -318,7 +316,6 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                 }
             }
             else {
-                amrex::Print() <<  "I am here \n";
                 const amrex::IntVect& Ex_fp_stag = Efield_fp[lev][0]->ixType().toIntVect();
                 const amrex::IntVect& Ey_fp_stag = Efield_fp[lev][1]->ixType().toIntVect();
                 const amrex::IntVect& Ez_fp_stag = Efield_fp[lev][2]->ixType().toIntVect();
@@ -572,7 +569,6 @@ void WarpX::UpdateCurrentNodalToStag (amrex::MultiFab& dst, amrex::MultiFab cons
 {
     // If source and destination MultiFabs have the same index type, a simple copy is enough
     // (for example, this happens with the current along y in 2D, which is always fully nodal)
-    amrex::Print() << "I am inside UpdateCurrentNodalToStag()" << "\n";
     if (dst.ixType() == src.ixType())
     {
         amrex::MultiFab::Copy(dst, src, 0, 0, dst.nComp(), dst.nGrowVect());
