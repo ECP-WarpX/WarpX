@@ -278,7 +278,7 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                                                                 ng_src, ng, WarpX::do_single_precision_comms, cperiod);
                 }
                 const amrex::IntVect& refinement_ratio = refRatio(lev-1);
-                
+
                 const amrex::IntVect& Ex_fp_stag = Efield_fp[lev][0]->ixType().toIntVect();
                 const amrex::IntVect& Ey_fp_stag = Efield_fp[lev][1]->ixType().toIntVect();
                 const amrex::IntVect& Ez_fp_stag = Efield_fp[lev][2]->ixType().toIntVect();
@@ -324,7 +324,7 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
 #endif
                 for (MFIter mfi(*Efield_aux[lev][0]); mfi.isValid(); ++mfi)
                 {
-                    
+
                     Array4<Real> const& ex_aux = Efield_aux[lev][0]->array(mfi);
                     Array4<Real> const& ey_aux = Efield_aux[lev][1]->array(mfi);
                     Array4<Real> const& ez_aux = Efield_aux[lev][2]->array(mfi);
