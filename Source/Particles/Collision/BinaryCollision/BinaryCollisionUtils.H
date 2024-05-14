@@ -126,6 +126,34 @@ namespace BinaryCollisionUtils{
         // is calculated here.
         lab_to_COM_lorentz_factor = g1_star*g2_star/static_cast<amrex::ParticleReal>(g1*g2);
     }
+
+    /**
+     * \brief Subtract given weight from particle and set its ID to invalid
+     * if the weight reaches zero.
+     */
+    AMREX_GPU_HOST_DEVICE AMREX_INLINE
+    void remove_weight_from_colliding_particle (
+        amrex::ParticleReal& weight, uint64_t& idcpu,
+        const amrex::ParticleReal reaction_weight )
+    {
+        // Remove weight from given particle
+        amrex::Gpu::Atomic::AddNoRet(&weight, -reaction_weight);
+
+        // If the colliding particle weight decreases to zero, remove particle by
+        // setting its id to invalid
+        if (weight <= std::numeric_limits<amrex::ParticleReal>::min())
+        {
+#if defined(AMREX_USE_OMP)
+#pragma omp atomic write
+            idcpu = amrex::ParticleIdCpus::Invalid;
+#else
+            amrex::Gpu::Atomic::Exch(
+                (unsigned long long *)&idcpu,
+                (unsigned long long)amrex::ParticleIdCpus::Invalid
+            );
+#endif
+        }
+    }
 }
 
 #endif // WARPX_BINARY_COLLISION_UTILS_H_

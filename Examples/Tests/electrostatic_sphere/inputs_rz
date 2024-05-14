@@ -39,5 +39,5 @@ diag1.fields_to_plot = Er Et Ez rho
 diag2.intervals = 30
 diag2.diag_type = Full
 diag2.fields_to_plot = none
-diag2.electron.variables = ux uy uz w phi
+diag2.electron.variables = x y z ux uy uz w phi
 diag2.format = openpmd
