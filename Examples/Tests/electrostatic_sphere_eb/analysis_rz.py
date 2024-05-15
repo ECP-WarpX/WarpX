@@ -32,7 +32,7 @@ tolerance = 0.0041
 fn = sys.argv[1]
 ds = yt.load( fn )
 
-lev_1 = True if re.search('lev_1 ', filename) else False
+lev_1 = True if re.search('lev_1 ', fn) else False
 
 if lev_1 :
     level = 1
