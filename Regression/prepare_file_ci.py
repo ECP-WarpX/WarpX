@@ -6,8 +6,9 @@
 # License: BSD-3-Clause-LBNL
 
 import os
+
 # This script modifies `WarpX-test.ini` (which is used for nightly builds)
-# and creates the file `ci-test.ini` (which is used for continous
+# and creates the file `ci-test.ini` (which is used for continuous
 # integration)
 # The subtests that are selected are controlled by WARPX_TEST_DIM
 # The architecture (CPU/GPU) is selected by WARPX_TEST_ARCH
@@ -62,7 +63,7 @@ if ci_psatd:
     text = re.sub('USE_PSATD=FALSE',
                   '', text)
 
-# Ccache
+# CCache
 if ci_ccache:
     text = re.sub('addToCompileString =',
                   'addToCompileString = USE_CCACHE=TRUE ', text)
@@ -76,6 +77,14 @@ text = re.sub('runtime_params =',
               'amrex.fpe_trap_invalid=1 amrex.fpe_trap_zero=1 amrex.fpe_trap_overflow=1 '+
               'warpx.always_warn_immediately=1 warpx.abort_on_warning_threshold=low',
               text)
+
+# Add runtime options for CPU:
+# > serialize initial conditions and no dynamic scheduling in OpenMP
+if arch == 'CPU':
+    text = re.sub('runtime_params =',
+                  'runtime_params = '+
+                  'warpx.do_dynamic_scheduling=0 warpx.serialize_initial_conditions=1',
+                  text)
 
 # Use less/more cores for compiling, e.g. public CI only provides 2 cores
 if ci_num_make_jobs is not None:

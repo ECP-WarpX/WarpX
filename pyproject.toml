@@ -2,6 +2,11 @@
 requires = [
     "setuptools>=42",
     "wheel",
-    "cmake>=3.20.0,<4.0.0"
+    "cmake>=3.20.0,<4.0.0",
+    "packaging>=23",
 ]
 build-backend = "setuptools.build_meta"
+
+[tool.isort]
+known_first_party = ["amrex", "picmistandard", "pywarpx", "warpx"]
+profile = "black"

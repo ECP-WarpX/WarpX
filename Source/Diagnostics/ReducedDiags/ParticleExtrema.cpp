@@ -11,6 +11,7 @@
 #if (defined WARPX_QED)
 #   include "Particles/ElementaryProcess/QEDInternals/QedChiFunctions.H"
 #endif
+#include "FieldSolver/Fields.H"
 #include "Particles/Gather/FieldGather.H"
 #include "Particles/Gather/GetExternalFields.H"
 #include "Particles/MultiParticleContainer.H"
@@ -51,9 +52,10 @@
 #include <vector>
 
 using namespace amrex;
+using namespace warpx::fields;
 
 // constructor
-ParticleExtrema::ParticleExtrema (std::string rd_name)
+ParticleExtrema::ParticleExtrema (const std::string& rd_name)
 : ReducedDiags{rd_name}
 {
     // read species name
@@ -373,12 +375,12 @@ void ParticleExtrema::ComputeDiags (int step)
                 // define variables in preparation for field gathering
                 const std::array<amrex::Real,3>& dx = WarpX::CellSize(std::max(lev, 0));
                 const GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
-                const MultiFab & Ex = warpx.getEfield(lev,0);
-                const MultiFab & Ey = warpx.getEfield(lev,1);
-                const MultiFab & Ez = warpx.getEfield(lev,2);
-                const MultiFab & Bx = warpx.getBfield(lev,0);
-                const MultiFab & By = warpx.getBfield(lev,1);
-                const MultiFab & Bz = warpx.getBfield(lev,2);
+                const MultiFab & Ex = warpx.getField(FieldType::Efield_aux, lev,0);
+                const MultiFab & Ey = warpx.getField(FieldType::Efield_aux, lev,1);
+                const MultiFab & Ez = warpx.getField(FieldType::Efield_aux, lev,2);
+                const MultiFab & Bx = warpx.getField(FieldType::Bfield_aux, lev,0);
+                const MultiFab & By = warpx.getField(FieldType::Bfield_aux, lev,1);
+                const MultiFab & Bz = warpx.getField(FieldType::Bfield_aux, lev,2);
 
                 // declare reduce_op
                 ReduceOps<ReduceOpMin, ReduceOpMax> reduce_op;
@@ -388,7 +390,7 @@ void ParticleExtrema::ComputeDiags (int step)
                 // Loop over boxes
                 for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti)
                 {
-                    const auto GetPosition = GetParticlePosition(pti);
+                    const auto GetPosition = GetParticlePosition<PIdx>(pti);
                     // get particle arrays
                     amrex::ParticleReal* const AMREX_RESTRICT ux = pti.GetAttribs()[PIdx::ux].dataPtr();
                     amrex::ParticleReal* const AMREX_RESTRICT uy = pti.GetAttribs()[PIdx::uy].dataPtr();
@@ -396,6 +398,13 @@ void ParticleExtrema::ComputeDiags (int step)
                     // declare external fields
                     const int offset = 0;
                     const auto getExternalEB = GetExternalEBField(pti, offset);
+                    const amrex::ParticleReal Ex_external_particle = myspc.m_E_external_particle[0];
+                    const amrex::ParticleReal Ey_external_particle = myspc.m_E_external_particle[1];
+                    const amrex::ParticleReal Ez_external_particle = myspc.m_E_external_particle[2];
+                    const amrex::ParticleReal Bx_external_particle = myspc.m_B_external_particle[0];
+                    const amrex::ParticleReal By_external_particle = myspc.m_B_external_particle[1];
+                    const amrex::ParticleReal Bz_external_particle = myspc.m_B_external_particle[2];
+
                     // define variables in preparation for field gathering
                     amrex::Box box = pti.tilebox();
                     box.grow(ngEB);
@@ -422,8 +431,13 @@ void ParticleExtrema::ComputeDiags (int step)
                         // get external fields
                         ParticleReal xp, yp, zp;
                         GetPosition(i, xp, yp, zp);
-                        ParticleReal ex = 0._rt, ey = 0._rt, ez = 0._rt;
-                        ParticleReal bx = 0._rt, by = 0._rt, bz = 0._rt;
+                        amrex::ParticleReal ex = Ex_external_particle;
+                        amrex::ParticleReal ey = Ey_external_particle;
+                        amrex::ParticleReal ez = Ez_external_particle;
+                        amrex::ParticleReal bx = Bx_external_particle;
+                        amrex::ParticleReal by = By_external_particle;
+                        amrex::ParticleReal bz = Bz_external_particle;
+
                         getExternalEB(i, ex, ey, ez, bx, by, bz);
 
                         // gather E and B

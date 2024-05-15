@@ -14,7 +14,7 @@ set -eu -o pipefail
 
 # Check: ######################################################################
 #
-#   Was perlmutter_gpu_warpx.profile sourced and configured correctly?
+#   Was frontier_warpx.profile sourced and configured correctly?
 if [ -z ${proj-} ]; then echo "WARNING: The 'proj' variable is not yet set in your frontier_warpx.profile file! Please edit its line 2 to continue!"; exit 1; fi
 
 
@@ -86,8 +86,14 @@ rm -rf ${SW_DIR}/venvs/warpx-frontier
 python3 -m venv ${SW_DIR}/venvs/warpx-frontier
 source ${SW_DIR}/venvs/warpx-frontier/bin/activate
 python3 -m pip install --upgrade pip
+python3 -m pip install --upgrade build
+python3 -m pip install --upgrade packaging
 python3 -m pip install --upgrade wheel
-python3 -m pip install --upgrade cython
+python3 -m pip install --upgrade setuptools
+# cupy and h5py need an older Cython
+# https://github.com/cupy/cupy/issues/4610
+# https://github.com/h5py/h5py/issues/2268
+python3 -m pip install --upgrade "cython<3.0"
 python3 -m pip install --upgrade numpy
 python3 -m pip install --upgrade pandas
 python3 -m pip install --upgrade scipy
@@ -97,6 +103,14 @@ python3 -m pip install --upgrade matplotlib
 python3 -m pip install --upgrade yt
 # install or update WarpX dependencies such as picmistandard
 python3 -m pip install --upgrade -r $HOME/src/warpx/requirements.txt
+# cupy for ROCm
+#   https://docs.cupy.dev/en/stable/install.html#building-cupy-for-rocm-from-source
+#   https://github.com/cupy/cupy/issues/7830
+CC=cc CXX=CC \
+CUPY_INSTALL_USE_HIP=1  \
+ROCM_HOME=${ROCM_PATH}  \
+HCC_AMDGPU_TARGET=${AMREX_AMD_ARCH}  \
+  python3 -m pip install -v cupy
 # optional: for libEnsemble
 python3 -m pip install -r $HOME/src/warpx/Tools/LibEnsemble/requirements.txt
 # optional: for optimas (based on libEnsemble & ax->botorch->gpytorch->pytorch)

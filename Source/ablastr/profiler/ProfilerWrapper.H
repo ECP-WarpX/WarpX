@@ -21,8 +21,9 @@ namespace ablastr::profiler
     AMREX_FORCE_INLINE
     void
     device_synchronize(bool const do_device_synchronize = false) {
-        if (do_device_synchronize)
+        if (do_device_synchronize) {
             amrex::Gpu::synchronize();
+        }
     }
 
     /** An object that conditionally calls device_synchronize() on destruction
@@ -37,6 +38,12 @@ namespace ablastr::profiler
         ~SynchronizeOnDestruct() {
             device_synchronize(m_do_device_synchronize);
         }
+
+        // default move and copy operations
+        SynchronizeOnDestruct(const SynchronizeOnDestruct&) = default;
+        SynchronizeOnDestruct& operator=(const SynchronizeOnDestruct&) = default;
+        SynchronizeOnDestruct(SynchronizeOnDestruct&&) = default;
+        SynchronizeOnDestruct& operator=(SynchronizeOnDestruct&& field_data) = default;
 
         bool m_do_device_synchronize = false;
     };

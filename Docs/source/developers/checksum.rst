@@ -9,14 +9,14 @@ The checksum module is located in ``Regression/Checksum/``, and the benchmarks a
 
 For more details on the implementation, the Python files in ``Regression/Checksum/`` should be well documented.
 
-From a user point of view, you should only need to use ``checksumAPI.py``. It contains Python functions that can be imported and used from an analysis Python script. It can also be executed directly as a Python script. Here are recipies for the main tasks related to checksum regression tests in WarpX CI.
+From a user point of view, you should only need to use ``checksumAPI.py``. It contains Python functions that can be imported and used from an analysis Python script. It can also be executed directly as a Python script. Here are recipes for the main tasks related to checksum regression tests in WarpX CI.
 
 Include a checksum regression test in an analysis Python script
 ---------------------------------------------------------------
 
-This relies on function ``evaluate_checksum``:
+This relies on the function ``evaluate_checksum``:
 
-.. doxygenfunction:: evaluate_checksum
+.. autofunction:: checksumAPI.evaluate_checksum
 
 For an example, see
 
@@ -32,7 +32,7 @@ You can execute ``checksumAPI.py`` as a Python script for that, and pass the plo
 
 .. code-block:: bash
 
-   ./checksumAPI.py --evaluate --plotfile <path/to/plotfile> --test-name <test name>
+   ./checksumAPI.py --evaluate --output-file <path/to/plotfile> --output-format <'openpmd' or 'plotfile'> --test-name <test name>
 
 See additional options
 
@@ -41,17 +41,17 @@ See additional options
 * ``--rtol`` relative tolerance for the comparison
 * ``--atol`` absolute tolerance for the comparison (a sum of both is used by ``numpy.isclose()``)
 
-Reset a benchmark with new values that you know are correct
------------------------------------------------------------
+Create/Reset a benchmark with new values that you know are correct
+------------------------------------------------------------------
 
-Reset a benchmark from a plotfile generated locally
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Create/Reset a benchmark from a plotfile generated locally
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This is using ``checksumAPI.py`` as a Python script.
 
 .. code-block:: bash
 
-   ./checksumAPI.py --reset-benchmark --plotfile <path/to/plotfile> --test-name <test name>
+   ./checksumAPI.py --reset-benchmark --output-file <path/to/plotfile> --output-format <'openpmd' or 'plotfile'> --test-name <test name>
 
 See additional options
 

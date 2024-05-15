@@ -259,7 +259,7 @@ if args.mode == 'read':
         log_line = '## year month day run_name compiler architecture n_node n_mpi ' +\
                    'n_omp time_initialization time_one_iteration Redistribute '+\
                    'FillBoundary ParallelCopy CurrentDeposition FieldGather '+\
-                   'ParthiclePush Copy EvolveEM Checkpoint '+\
+                   'ParticlePush Copy Evolve Checkpoint '+\
                    'WriteParticles Write_FabArray '+\
                    'WriteMultiLevelPlotfile '+\
                    'RedistributeMPI(unit: second)\n'

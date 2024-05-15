@@ -56,11 +56,10 @@ PsatdAlgorithmPml::PsatdAlgorithmPml(
     m_v_galilean(v_galilean),
     m_dt(dt),
     m_dive_cleaning(dive_cleaning),
-    m_divb_cleaning(divb_cleaning)
+    m_divb_cleaning(divb_cleaning),
+    m_is_galilean{(v_galilean[0] != 0.) || (v_galilean[1] != 0.) || (v_galilean[2] != 0.)}
 {
     const BoxArray& ba = spectral_kspace.spectralspace_ba;
-
-    m_is_galilean = (v_galilean[0] != 0.) || (v_galilean[1] != 0.) || (v_galilean[2] != 0.);
 
     // Allocate arrays of coefficients
     C_coef = SpectralRealCoefficients(ba, dm, 1, 0);
@@ -411,11 +410,11 @@ void PsatdAlgorithmPml::InitializeSpectralCoefficients (
         }
 
         // Extract Galilean velocity
-        amrex::Real vg_x = m_v_galilean[0];
+        const amrex::Real vg_x = m_v_galilean[0];
 #if defined(WARPX_DIM_3D)
-        amrex::Real vg_y = m_v_galilean[1];
+        const amrex::Real vg_y = m_v_galilean[1];
 #endif
-        amrex::Real vg_z = m_v_galilean[2];
+        const amrex::Real vg_z = m_v_galilean[2];
 
         // Loop over indices within one box
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept

@@ -11,6 +11,7 @@
 #define WARPX_PhysicalParticleContainer_H_
 
 #include "Evolve/WarpXDtType.H"
+#include "Evolve/WarpXPushType.H"
 #include "Initialization/PlasmaInjector.H"
 #include "Particles/ElementaryProcess/Ionization.H"
 #ifdef WARPX_QED
@@ -56,20 +57,25 @@ public:
      *  the run if one of them is specified. */
     void BackwardCompatibility ();
 
-    virtual ~PhysicalParticleContainer () {}
+    ~PhysicalParticleContainer () override = default;
 
-    virtual void InitData () override;
+    PhysicalParticleContainer (PhysicalParticleContainer const &)              = delete;
+    PhysicalParticleContainer& operator= (PhysicalParticleContainer const & )  = delete;
+    PhysicalParticleContainer(PhysicalParticleContainer&& )                    = default;
+    PhysicalParticleContainer& operator=(PhysicalParticleContainer&& )         = default;
 
-    virtual void ReadHeader (std::istream& is) override;
+    void InitData () override;
 
-    virtual void WriteHeader (std::ostream& os) const override;
+    void ReadHeader (std::istream& is) override;
 
-    virtual void InitIonizationModule () override;
+    void WriteHeader (std::ostream& os) const override;
+
+    void InitIonizationModule () override;
 
     /*
-     * \brief Returns a pointer to the plasma injector.
+     * \brief Returns a pointer to the i'th plasma injector.
      */
-    virtual PlasmaInjector* GetPlasmaInjector () override;
+    PlasmaInjector* GetPlasmaInjector (int i) override;
 
     /**
      * \brief Evolve is the central function PhysicalParticleContainer that
@@ -100,12 +106,13 @@ public:
      * \param dt time step by which particles are advanced
      * \param a_dt_type type of time step (used for sub-cycling)
      * \param skip_deposition Skip the charge and current deposition.
+     * \param push_type Type of particle push, explicit or implicit. Defaults to explicit
      *
      * Evolve iterates over particle iterator (each box) and performs filtering,
      * field gather, particle push and current deposition for all particles
      * in the box.
      */
-    virtual void Evolve (int lev,
+    void Evolve (int lev,
                          const amrex::MultiFab& Ex,
                          const amrex::MultiFab& Ey,
                          const amrex::MultiFab& Ez,
@@ -129,7 +136,8 @@ public:
                          amrex::Real t,
                          amrex::Real dt,
                          DtType a_dt_type=DtType::Full,
-                         bool skip_deposition=false ) override;
+                         bool skip_deposition=false,
+                         PushType push_type=PushType::Explicit) override;
 
     virtual void PushPX (WarpXParIter& pti,
                          amrex::FArrayBox const * exfab,
@@ -145,7 +153,21 @@ public:
                          amrex::Real dt, ScaleFields scaleFields,
                          DtType a_dt_type=DtType::Full);
 
-    virtual void PushP (int lev, amrex::Real dt,
+    void ImplicitPushXP (WarpXParIter& pti,
+                         amrex::FArrayBox const * exfab,
+                         amrex::FArrayBox const * eyfab,
+                         amrex::FArrayBox const * ezfab,
+                         amrex::FArrayBox const * bxfab,
+                         amrex::FArrayBox const * byfab,
+                         amrex::FArrayBox const * bzfab,
+                         amrex::IntVect ngEB, int /*e_is_nodal*/,
+                         long offset,
+                         long np_to_push,
+                         int lev, int gather_lev,
+                         amrex::Real dt, ScaleFields scaleFields,
+                         DtType a_dt_type=DtType::Full);
+
+    void PushP (int lev, amrex::Real dt,
                         const amrex::MultiFab& Ex,
                         const amrex::MultiFab& Ey,
                         const amrex::MultiFab& Ez,
@@ -162,7 +184,7 @@ public:
                         amrex::iMultiFab const* current_masks,
                         amrex::iMultiFab const* gather_masks );
 
-    virtual void PostRestart () final {}
+    void PostRestart () final {}
 
     void SplitParticles (int lev);
 
@@ -184,35 +206,35 @@ public:
      * number of particles per cell (in the cells of `part_realbox`).
      * The new particles are only created inside the intersection of `part_realbox`
      * with the local grid for the current proc.
+     * @param[in] the PlasmaInjector instance holding the input parameters
      * @param[in] lev the index of the refinement level
      * @param[in] part_realbox the box in which new particles should be created
      * (this box should correspond to an integer number of cells in each direction,
      * but its boundaries need not be aligned with the actual cells of the simulation)
     */
-    void AddPlasma (int lev, amrex::RealBox part_realbox = amrex::RealBox());
+    void AddPlasma (PlasmaInjector const& plasma_injector, int lev, amrex::RealBox part_realbox = amrex::RealBox());
 
     /**
      * Create new macroparticles for this species, with a fixed
      * number of particles per cell in a plane.
+     * @param[in] the PlasmaInjector instance holding the input parameters
      * @param[in] dt time step size, used to partially advance the particles
     */
-    void AddPlasmaFlux (amrex::Real dt);
+    void AddPlasmaFlux (PlasmaInjector const& plasma_injector, amrex::Real dt);
 
     void MapParticletoBoostedFrame (amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::ParticleReal& z,
                                     amrex::ParticleReal& ux, amrex::ParticleReal& uy, amrex::ParticleReal& uz,
-                                    amrex::Real t_lab = 0.);
+                                    amrex::Real t_lab = 0.) const;
 
-    void AddGaussianBeam (
-        amrex::Real x_m, amrex::Real y_m, amrex::Real z_m,
-        amrex::Real x_rms, amrex::Real y_rms, amrex::Real z_rms,
-        amrex::Real x_cut, amrex::Real y_cut, amrex::Real z_cut,
-        amrex::Real q_tot, long npart, int do_symmetrize, int symmetrization_order);
+    void AddGaussianBeam (PlasmaInjector const& plasma_injector);
 
     /** Load a particle beam from an external file
+     * @param[in] the PlasmaInjector instance holding the input parameters
      * @param[in] q_tot total charge of the particle species to be initialized
      * @param[in] z_shift optional shift to the z position of particles (useful for boosted frame runs)
      */
-    void AddPlasmaFromFile (amrex::ParticleReal q_tot,
+    void AddPlasmaFromFile (PlasmaInjector & plasma_injector,
+                            amrex::ParticleReal q_tot,
                             amrex::ParticleReal z_shift);
 
     void CheckAndAddParticle (
@@ -226,7 +248,7 @@ public:
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_uy,
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_uz,
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_w,
-        amrex::Real t_lab= 0.);
+        amrex::Real t_lab= 0.) const;
 
     /**
      * \brief Default initialize runtime attributes in a tile. This routine does not initialize the
@@ -240,13 +262,10 @@ public:
      * These are NOT initialized by this function.
      * @param[in] engine the random engine, used in initialization of QED optical depths
      */
-    virtual void DefaultInitializeRuntimeAttributes (
-                    amrex::ParticleTile<amrex::Particle<NStructReal, NStructInt>,
-                                        NArrayReal, NArrayInt,
-                                        amrex::PinnedArenaAllocator>& pinned_tile,
-                    int n_external_attr_real,
-                    int n_external_attr_int,
-                    const amrex::RandomEngine& engine) override final;
+    void DefaultInitializeRuntimeAttributes (
+        typename ContainerLike<amrex::PinnedArenaAllocator>::ParticleTileType& pinned_tile,
+        int n_external_attr_real,
+        int n_external_attr_int) final;
 
 /**
  * \brief Apply NCI Godfrey filter to all components of E and B before gather
@@ -276,12 +295,12 @@ public:
  * \param Bx Field array before filtering (not modified)
  * \param By Field array before filtering (not modified)
  * \param Bz Field array before filtering (not modified)
- * \param exfab pointer to the Ex field (modified)
- * \param eyfab pointer to the Ey field (modified)
- * \param ezfab pointer to the Ez field (modified)
- * \param bxfab pointer to the Bx field (modified)
- * \param byfab pointer to the By field (modified)
- * \param bzfab pointer to the Bz field (modified)
+ * \param ex_ptr pointer to the Ex field (modified)
+ * \param ey_ptr pointer to the Ey field (modified)
+ * \param ez_ptr pointer to the Ez field (modified)
+ * \param bx_ptr pointer to the Bx field (modified)
+ * \param by_ptr pointer to the By field (modified)
+ * \param bz_ptr pointer to the Bz field (modified)
  *
  * The NCI Godfrey filter is applied on Ex, the result is stored in filtered_Ex
  * and the pointer exfab is modified (before this function is called, it points to Ex
@@ -297,9 +316,9 @@ public:
         const amrex::FArrayBox& Ex, const amrex::FArrayBox& Ey,
         const amrex::FArrayBox& Ez, const amrex::FArrayBox& Bx,
         const amrex::FArrayBox& By, const amrex::FArrayBox& Bz,
-        amrex::FArrayBox const * & exfab, amrex::FArrayBox const * & eyfab,
-        amrex::FArrayBox const * & ezfab, amrex::FArrayBox const * & bxfab,
-        amrex::FArrayBox const * & byfab, amrex::FArrayBox const * & bzfab);
+        amrex::FArrayBox const * & ex_ptr, amrex::FArrayBox const * & ey_ptr,
+        amrex::FArrayBox const * & ez_ptr, amrex::FArrayBox const * & bx_ptr,
+        amrex::FArrayBox const * & by_ptr, amrex::FArrayBox const * & bz_ptr);
 
     /**
     * \brief This function determines if resampling should be done for the current species, and
@@ -307,7 +326,7 @@ public:
     *
     * @param[in] timestep the current timestep.
     */
-    void resample (int timestep, bool verbose=true) override final;
+    void resample (int timestep, bool verbose=true) final;
 
 #ifdef WARPX_QED
     //Functions decleared in WarpXParticleContainer.H
@@ -333,24 +352,48 @@ public:
      * @param[in] ptr the pointer
      */
     void set_breit_wheeler_engine_ptr
-        (std::shared_ptr<BreitWheelerEngine> ptr) override;
+        (const std::shared_ptr<BreitWheelerEngine>& ptr) override;
 
     /**
      * Acquires a shared smart pointer to a QuantumSynchrotronEngine
      * @param[in] ptr the pointer
      */
     void set_quantum_sync_engine_ptr
-        (std::shared_ptr<QuantumSynchrotronEngine> ptr) override;
+        (const std::shared_ptr<QuantumSynchrotronEngine>& ptr) override;
     //__________
+
+    BreitWheelerEngine* get_breit_wheeler_engine_ptr () const override {
+        return m_shr_p_bw_engine.get();
+    }
+
+    QuantumSynchrotronEngine* get_quantum_sync_engine_ptr () const override {
+        return m_shr_p_qs_engine.get();
+    }
 
     PhotonEmissionFilterFunc getPhotonEmissionFilterFunc ();
 
     PairGenerationFilterFunc getPairGenerationFilterFunc ();
 #endif
 
+    std::vector<std::string> getUserIntAttribs () const override {
+        return m_user_int_attribs;
+    }
+
+    std::vector<std::string> getUserRealAttribs () const override {
+        return m_user_real_attribs;
+    }
+
+    amrex::Vector< amrex::Parser* > getUserIntAttribParser () const override {
+        return GetVecOfPtrs(m_user_int_attrib_parser);
+    }
+
+    amrex::Vector< amrex::Parser* > getUserRealAttribParser () const override {
+        return GetVecOfPtrs(m_user_real_attrib_parser);
+    }
+
 protected:
     std::string species_name;
-    std::unique_ptr<PlasmaInjector> plasma_injector;
+    std::vector<std::unique_ptr<PlasmaInjector>> plasma_injectors;
 
     // When true, adjust the transverse particle positions accounting
     // for the difference between the Lorentz transformed time of the
@@ -398,9 +441,9 @@ protected:
     /* Vector of user-defined real attributes for species, species_name */
     std::vector<std::string> m_user_real_attribs;
     /* Vector of user-defined parser for initializing user-defined integer attributes */
-    std::vector< std::unique_ptr<amrex::Parser> > m_user_int_attrib_parser;
+    amrex::Vector< std::unique_ptr<amrex::Parser> > m_user_int_attrib_parser;
     /* Vector of user-defined parser for initializing user-defined real attributes */
-    std::vector< std::unique_ptr<amrex::Parser> > m_user_real_attrib_parser;
+    amrex::Vector< std::unique_ptr<amrex::Parser> > m_user_real_attrib_parser;
 
 };
 

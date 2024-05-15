@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.20.0)
-project(WarpX VERSION 23.10)
+project(WarpX VERSION 24.05)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -43,7 +43,15 @@ set_cxx17_superbuild()
 # this is an optional tool that stores compiled object files; allows fast
 # re-builds even with "make clean" in between. Mainly used to store AMReX
 # objects
-set_ccache()
+if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+    set(WarpX_CCACHE_DEFAULT ON)
+else()
+    set(WarpX_CCACHE_DEFAULT OFF)  # we are a subproject in a superbuild
+endif()
+option(WarpX_CCACHE "Enable ccache for faster rebuilds" ${WarpX_CCACHE_DEFAULT})
+if(WarpX_CCACHE)
+    set_ccache()
+endif()
 
 
 # Output Directories ##########################################################
@@ -61,17 +69,17 @@ include(CMakeDependentOption)
 option(WarpX_APP           "Build the WarpX executable application"     ON)
 option(WarpX_ASCENT        "Ascent in situ diagnostics"                 OFF)
 option(WarpX_EB            "Embedded boundary support"                  OFF)
-cmake_dependent_option(WarpX_GPUCLOCK
-                           "Add GPU kernel timers (cost function)"      ON
-                           "WarpX_COMPUTE STREQUAL CUDA OR WarpX_COMPUTE STREQUAL HIP" OFF)
 option(WarpX_LIB           "Build WarpX as a library"                   OFF)
 option(WarpX_MPI           "Multi-node support (message-passing)"       ON)
 option(WarpX_OPENPMD       "openPMD I/O (HDF5, ADIOS)"                  ON)
 option(WarpX_PSATD         "spectral solver support"                    OFF)
 option(WarpX_PYTHON        "Python bindings"                            OFF)
 option(WarpX_SENSEI        "SENSEI in situ diagnostics"                 OFF)
-option(WarpX_QED           "QED support (requires PICSAR)"                    ON)
-option(WarpX_QED_TABLE_GEN "QED table generation (requires PICSAR and Boost)" OFF)
+option(WarpX_QED           "QED support (requires PICSAR)"              ON)
+option(WarpX_QED_TABLE_GEN "QED table generation (requires PICSAR and Boost)"
+                                                                        OFF)
+option(WarpX_QED_TOOLS     "Build external tool to generate QED lookup tables (requires PICSAR and Boost)"
+                                                                        OFF)
 
 set(WarpX_DIMS_VALUES 1 2 3 RZ)
 set(WarpX_DIMS 3 CACHE STRING "Simulation dimensionality <1;2;3;RZ>")
@@ -103,6 +111,13 @@ if(NOT WarpX_PARTICLE_PRECISION IN_LIST WarpX_PARTICLE_PRECISION_VALUES)
     message(FATAL_ERROR "WarpX_PARTICLE_PRECISION (${WarpX_PARTICLE_PRECISION}) must be one of ${WarpX_PARTICLE_PRECISION_VALUES}")
 endif()
 
+set(WarpX_QED_TABLES_GEN_OMP_VALUES AUTO ON OFF)
+set(WarpX_QED_TABLES_GEN_OMP AUTO CACHE STRING "Enables OpenMP support for QED lookup tables generation (AUTO/ON/OFF)")
+set_property(CACHE WarpX_QED_TABLES_GEN_OMP PROPERTY STRINGS ${WarpX_QED_TABLES_GEN_OMP_VALUES})
+if(NOT WarpX_QED_TABLES_GEN_OMP IN_LIST WarpX_QED_TABLES_GEN_OMP_VALUES)
+    message(FATAL_ERROR "WarpX_QED_TABLES_GEN_OMP (${WarpX_QED_TABLES_GEN_OMP}) must be one of ${WarpX_QED_TABLES_GEN_OMP_VALUES}")
+endif()
+
 set(WarpX_COMPUTE_VALUES NOACC OMP CUDA SYCL HIP)
 set(WarpX_COMPUTE OMP CACHE STRING "On-node, accelerated computing backend (NOACC/OMP/CUDA/SYCL/HIP)")
 set_property(CACHE WarpX_COMPUTE PROPERTY STRINGS ${WarpX_COMPUTE_VALUES})
@@ -127,7 +142,7 @@ option(WarpX_PYTHON_IPO
 )
 
 set(pyWarpX_VERSION_INFO "" CACHE STRING
-    "PEP-440 conformant version (set by distutils)")
+    "PEP-440 conformant version (set by setup.py)")
 
 # enforce consistency of dependent options
 if(WarpX_APP OR WarpX_PYTHON)
@@ -140,6 +155,11 @@ endif()
 option(ABLASTR_POSITION_INDEPENDENT_CODE
        "Build ABLASTR with position independent code" ON)
 mark_as_advanced(ABLASTR_POSITION_INDEPENDENT_CODE)
+
+option(ABLASTR_FFT "compile AnyFFT wrappers" ${WarpX_PSATD})
+if(WarpX_PSATD)
+    set(ABLASTR_FFT ON CACHE STRING "compile AnyFFT wrappers" FORCE)
+endif()
 
 # this defined the variable BUILD_TESTING which is ON by default
 #include(CTest)
@@ -389,6 +409,9 @@ if(WarpX_LIB)
     add_subdirectory(Source/Python)
     add_subdirectory(Source/Utils)
 endif()
+if(WarpX_QED_TOOLS)
+    add_subdirectory(Tools/QedTablesUtils)
+endif()
 
 # Interprocedural optimization (IPO) / Link-Time Optimization (LTO)
 if(WarpX_IPO)
@@ -404,7 +427,7 @@ foreach(D IN LISTS WarpX_DIMS)
         target_link_libraries(ablastr_${SD} PUBLIC WarpX::thirdparty::amrex_${D}d)
     endif()
 
-    if(WarpX_PSATD)
+    if(ABLASTR_FFT)
         target_link_libraries(ablastr_${SD} PUBLIC WarpX::thirdparty::FFT)
         if(D STREQUAL "RZ")
             target_link_libraries(ablastr_${SD} PUBLIC blaspp)
@@ -483,10 +506,6 @@ foreach(D IN LISTS WarpX_DIMS)
         target_compile_definitions(ablastr_${SD} PUBLIC WARPX_DIM_RZ WARPX_ZINDEX=1)
     endif()
 
-    if(WarpX_GPUCLOCK)
-        target_compile_definitions(ablastr_${SD} PUBLIC WARPX_USE_GPUCLOCK)
-    endif()
-
     if(WarpX_OPENPMD)
         target_compile_definitions(ablastr_${SD} PUBLIC WARPX_USE_OPENPMD)
     endif()
@@ -500,6 +519,10 @@ foreach(D IN LISTS WarpX_DIMS)
 
     if(WarpX_PSATD)
         target_compile_definitions(ablastr_${SD} PUBLIC WARPX_USE_PSATD)
+    endif()
+    if(ABLASTR_FFT)
+        # We need to enable FFT support in ABLASTR for PSATD solver
+        target_compile_definitions(ablastr_${SD} PUBLIC ABLASTR_USE_FFT)
     endif()
 
     if(WarpX_PYTHON AND pyWarpX_VERSION_INFO)
@@ -646,7 +669,7 @@ if(WarpX_PYTHON)
         ${CMAKE_COMMAND} -E rm -f -r warpx-whl
         COMMAND
             ${CMAKE_COMMAND} -E env PYWARPX_LIB_DIR=$<TARGET_FILE_DIR:pyWarpX_${WarpX_DIMS_LAST}>
-                python3 -m pip wheel -v --no-build-isolation --no-deps --wheel-dir=warpx-whl ${WarpX_SOURCE_DIR}
+                ${Python_EXECUTABLE} -m pip wheel -v --no-build-isolation --no-deps --wheel-dir=warpx-whl ${WarpX_SOURCE_DIR}
         WORKING_DIRECTORY
             ${WarpX_BINARY_DIR}
         DEPENDS
@@ -660,7 +683,7 @@ if(WarpX_PYTHON)
         set(pyWarpX_REQUIREMENT_FILE "requirements.txt")
     endif()
     add_custom_target(${WarpX_CUSTOM_TARGET_PREFIX}pip_install_requirements
-        python3 -m pip install ${PYINSTALLOPTIONS} -r "${WarpX_SOURCE_DIR}/${pyWarpX_REQUIREMENT_FILE}"
+        ${Python_EXECUTABLE} -m pip install ${PYINSTALLOPTIONS} -r "${WarpX_SOURCE_DIR}/${pyWarpX_REQUIREMENT_FILE}"
         WORKING_DIRECTORY
             ${WarpX_BINARY_DIR}
     )
@@ -677,7 +700,7 @@ if(WarpX_PYTHON)
     # because otherwise pip would also force reinstall all dependencies.
     add_custom_target(${WarpX_CUSTOM_TARGET_PREFIX}pip_install
         ${CMAKE_COMMAND} -E env WARPX_MPI=${WarpX_MPI}
-            python3 -m pip install --force-reinstall --no-index --no-deps ${PYINSTALLOPTIONS} --find-links=warpx-whl pywarpx
+            ${Python_EXECUTABLE} -m pip install --force-reinstall --no-index --no-deps ${PYINSTALLOPTIONS} --find-links=warpx-whl pywarpx
         WORKING_DIRECTORY
             ${WarpX_BINARY_DIR}
         DEPENDS
@@ -685,6 +708,17 @@ if(WarpX_PYTHON)
             ${WarpX_CUSTOM_TARGET_PREFIX}pip_wheel
             ${WarpX_CUSTOM_TARGET_PREFIX}pip_install_requirements
             ${_EXTRA_INSTALL_DEPENDS}
+    )
+
+    # this is for package managers only
+    add_custom_target(${WarpX_CUSTOM_TARGET_PREFIX}pip_install_nodeps
+        ${CMAKE_COMMAND} -E env WARPX_MPI=${WarpX_MPI}
+            ${Python_EXECUTABLE} -m pip install --force-reinstall --no-index --no-deps ${PYINSTALLOPTIONS} --find-links=warpx-whl pywarpx
+        WORKING_DIRECTORY
+            ${WarpX_BINARY_DIR}
+        DEPENDS
+            pyWarpX_${WarpX_DIMS_LAST}
+            ${WarpX_CUSTOM_TARGET_PREFIX}pip_wheel
     )
 endif()
 

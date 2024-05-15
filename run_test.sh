@@ -61,17 +61,14 @@ echo "cd $PWD"
 rm -rf py-venv
 python3 -m venv py-venv
 source py-venv/bin/activate
-python3 -m pip install --upgrade pip setuptools wheel
+python3 -m pip install --upgrade pip
+python3 -m pip install --upgrade build packaging setuptools wheel
 python3 -m pip install --upgrade cmake
-# setuptools/mp4py work-around, see
-#   https://github.com/mpi4py/mpi4py/pull/159
-#   https://github.com/mpi4py/mpi4py/issues/157#issuecomment-1001022274
-export SETUPTOOLS_USE_DISTUTILS="stdlib"
 python3 -m pip install --upgrade -r warpx/Regression/requirements.txt
 
 # Clone AMReX and warpx-data
 git clone https://github.com/AMReX-Codes/amrex.git
-cd amrex && git checkout --detach 23.10 && cd -
+cd amrex && git checkout --detach 8eff86d32d17bfbfc6b6bf1091a45bdeb6dd5c86 && cd -
 # warpx-data contains various required data sets
 git clone --depth 1 https://github.com/ECP-WarpX/warpx-data.git
 # openPMD-example-datasets contains various required data sets
@@ -83,6 +80,8 @@ cd -
 
 # Clone the AMReX regression test utility
 git clone https://github.com/AMReX-Codes/regression_testing.git
+# FIXME: https://github.com/AMReX-Codes/regression_testing/issues/136
+cd regression_testing && git checkout 93ddfb11456f47d6555c39388ba1a4ead61fbf4e && cd -
 
 # Prepare regression tests
 mkdir -p rt-WarpX/WarpX-benchmarks

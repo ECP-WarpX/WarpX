@@ -5,14 +5,13 @@
 
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "Particles/MultiParticleContainer.H"
-#include "WarpX.H"
 
 class FlushFormat
 {
 public:
     /** Flush fields and particles to file */
     virtual void WriteToFile (
-        amrex::Vector<std::string> varnames,
+        const amrex::Vector<std::string>& varnames,
         const amrex::Vector<amrex::MultiFab>& mf,
         amrex::Vector<amrex::Geometry>& geom,
         amrex::Vector<int> iteration, double time,
@@ -24,10 +23,15 @@ public:
         bool isBTD = false, int snapshotID = -1,
         int bufferID = 1, int numBuffers = 1,
         const amrex::Geometry& full_BTD_snapshot = amrex::Geometry(),
-        bool isLastBTDFlush = false,
-        const amrex::Vector<int>& totalParticlesFlushedAlready = amrex::Vector<int>() ) const = 0;
+        bool isLastBTDFlush = false) const = 0;
 
-     virtual ~FlushFormat() {}
+    FlushFormat () = default;
+    virtual ~FlushFormat() = default;
+
+    FlushFormat ( FlushFormat const &)             = default;
+    FlushFormat& operator= ( FlushFormat const & ) = default;
+    FlushFormat ( FlushFormat&& )                  = default;
+    FlushFormat& operator= ( FlushFormat&& )       = default;
 };
 
 #endif // WARPX_FLUSHFORMAT_H_

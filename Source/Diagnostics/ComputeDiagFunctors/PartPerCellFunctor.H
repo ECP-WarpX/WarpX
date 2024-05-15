@@ -8,8 +8,7 @@
 /**
  * \brief Functor to cell-center MF and store result in mf_out.
  */
-class
-PartPerCellFunctor final : public ComputeDiagFunctor
+class PartPerCellFunctor final : public ComputeDiagFunctor
 {
 public:
     /** Constructor.
@@ -29,7 +28,7 @@ public:
      * \param[in] dcomp first component of mf_dst in which cell-centered
      *            data is stored
      */
-    virtual void operator()(amrex::MultiFab& mf_dst, int dcomp, int /*i_buffer=0*/) const override;
+    void operator()(amrex::MultiFab& mf_dst, int dcomp, int /*i_buffer=0*/) const override;
 private:
     int const m_lev; /**< level on which mf_src is defined */
 };

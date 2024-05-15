@@ -34,7 +34,6 @@ for itry in {1..5}
 do
     sudo apt-get install -y --no-install-recommends \
         build-essential \
-        ccache          \
         cmake           \
         intel-oneapi-compiler-dpcpp-cpp intel-oneapi-mkl-devel \
         g++ gfortran    \
@@ -58,3 +57,6 @@ sudo rm -rf /opt/intel/oneapi/mkl/latest/lib/intel64/*.a           \
 du -sh /opt/intel/oneapi/
 du -sh /opt/intel/oneapi/*/*
 df -h
+
+# ccache
+$(dirname "$0")/ccache.sh

@@ -1,7 +1,7 @@
 # Standard imports
+import os
 from collections import defaultdict
 from itertools import product
-import os
 
 # High-performance math
 import numpy as np
@@ -98,7 +98,7 @@ class SimData:
         j_non_zero = j_blocks[j_blocks != 0]
         k_non_zero = k_blocks[k_blocks != 0]
 
-        #                   only one block in a dir - or smalles block size
+        #                   only one block in a dir - or smallest block size
         i_blocking_factor = 1 if len(i_non_zero) == 0 else i_non_zero.min()
         j_blocking_factor = 1 if len(j_non_zero) == 0 else j_non_zero.min()
         k_blocking_factor = 1 if len(k_non_zero) == 0 else k_non_zero.min()

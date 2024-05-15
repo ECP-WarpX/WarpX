@@ -13,14 +13,14 @@ import shutil
 import sys
 import time
 
+import git
+import pandas as pd
 from functions_perftest import (
     extract_dataframe,
     get_file_content,
     run_batch_nnode,
     store_git_hash,
 )
-import git
-import pandas as pd
 
 # Get name of supercomputer and import configuration functions from
 # machine-specific file
@@ -87,7 +87,7 @@ parser.add_argument('--automated',
 parser.add_argument('--n_node_list',
                     dest='n_node_list',
                     default=[],
-                    help='list ofnumber of nodes for the runs', type=str)
+                    help='list of number of nodes for the runs', type=str)
 parser.add_argument('--start_date',
                     dest='start_date' )
 parser.add_argument('--compiler',

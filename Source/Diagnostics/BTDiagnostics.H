@@ -24,12 +24,11 @@
 #include <memory>
 #include <string>
 
-class
-BTDiagnostics final : public Diagnostics
+class BTDiagnostics final : public Diagnostics
 {
 public:
 
-    BTDiagnostics (int i, std::string name);
+    BTDiagnostics (int i, const std::string& name);
 
 private:
     /** Whether to plot raw (i.e., NOT cell-centered) fields */
@@ -47,7 +46,7 @@ private:
      * can be defined and implemented in Diagnostics.H, such that,
      * the function call to flush out buffer data for
      * FullDiagnostics and BTDiagnostics is the same */
-    void Flush (int i_buffer) override;
+    void Flush (int i_buffer, bool force_flush) override;
     /** whether to write output files at this time step
      *  The data is flushed when the buffer is full and/or
      *  when the simulation ends or when forced.
@@ -177,9 +176,6 @@ private:
 
     /** Vector of lab-frame time corresponding to each snapshot */
     amrex::Vector<amrex::Real> m_t_lab;
-    /** Vector of user-defined physical region for diagnostics in lab-frame
-     *  for each back-transformed snapshot */
-    amrex::Vector<amrex::RealBox> m_snapshot_domain_lab;
     /** Vector of physical region corresponding to the buffer that spans a part
      *  of the full back-transformed snapshot */
     amrex::Vector<amrex::RealBox> m_buffer_domain_lab;
@@ -276,7 +272,7 @@ private:
       * \param[in] t_lab   lab-frame time of the snapshot
       * \param[in] t_boost boosted-frame time at level, lev
       */
-    amrex::Real UpdateCurrentZBoostCoordinate(amrex::Real t_lab, amrex::Real t_boost)
+    [[nodiscard]] amrex::Real UpdateCurrentZBoostCoordinate(amrex::Real t_lab, amrex::Real t_boost) const
     {
         const amrex::Real current_z_boost = (t_lab / m_gamma_boost - t_boost) * PhysConst::c / m_beta_boost;
         return current_z_boost;
@@ -285,7 +281,7 @@ private:
       * \param[in] t_lab   lab-frame time of the snapshot
       * \param[in] t_boost boosted-frame time at level, lev
       */
-    amrex::Real UpdateCurrentZLabCoordinate(amrex::Real t_lab, amrex::Real t_boost)
+    [[nodiscard]] amrex::Real UpdateCurrentZLabCoordinate(amrex::Real t_lab, amrex::Real t_boost) const
     {
         const amrex::Real current_z_lab = (t_lab - t_boost / m_gamma_boost ) * PhysConst::c / m_beta_boost;
         return current_z_lab;
@@ -295,13 +291,13 @@ private:
      *  \param[in] ref_ratio  refinement ratio in the z-direction at level, lev-1.
      *             The ref-ratio in the z-direction for single-level diagnostics is 1.
      */
-    amrex::Real dz_lab (amrex::Real dt, amrex::Real ref_ratio);
+    [[nodiscard]] amrex::Real dz_lab (amrex::Real dt, amrex::Real ref_ratio) const;
     /** Compute k-index corresponding to current lab-frame z co-ordinate (m_current_z_lab)
      *  for the ith buffer i_buffer, and at level, lev.
      * \param[in] i_buffer snapshot index
      * \param[in] lev      mesh-refinement level at which the lab-frame z-index is computed
      */
-    int k_index_zlab (int i_buffer, int lev);
+    [[nodiscard]] int k_index_zlab (int i_buffer, int lev) const;
     /** whether field buffer is full
      * \param[in] i_buffer buffer id for which the buffer size is checked.
      * returns bool = true is buffer is full, that is,
@@ -376,32 +372,30 @@ private:
     /** Interleave lab-frame meta-data of the buffers to be consistent
      *  with the merged plotfile lab-frame data.
      */
-    void InterleaveBufferAndSnapshotHeader ( std::string buffer_Header,
-                                             std::string snapshot_Header);
+    void InterleaveBufferAndSnapshotHeader (const std::string& buffer_Header,
+                                            const std::string& snapshot_Header);
     /** Interleave meta-data of the buffer multifabs to be consistent
      *  with the merged plotfile lab-frame data.
      */
-    void InterleaveFabArrayHeader( std::string Buffer_FabHeaderFilename,
-                                   std::string snapshot_FabHeaderFilename,
-                                   std::string newsnapshot_FabFilename);
+    void InterleaveFabArrayHeader (const std::string& Buffer_FabHeader_path,
+                                  const std::string& snapshot_FabHeader_path,
+                                  const std::string& newsnapshot_FabFilename);
     /** Interleave lab-frame metadata of the species header file in the buffers to
      *  be consistent with the merged plotfile lab-frame data
      */
-    void InterleaveSpeciesHeader(std::string buffer_species_Header_path,
-                                 std::string snapshot_species_Header_path,
-                                 std::string species_name, int new_data_index);
+    void InterleaveSpeciesHeader(const std::string& buffer_species_Header_path,
+                                 const std::string& snapshot_species_Header_path,
+                                 const std::string& species_name, int new_data_index);
 
     /** Interleave lab-frame metadata of the particle header file in the buffers to
      *  be consistent with the merged plotfile lab-frame data
      */
-    void InterleaveParticleDataHeader( std::string buffer_ParticleHdrFilename,
-                                       std::string snapshot_ParticleHdrFilename);
+    void InterleaveParticleDataHeader(const std::string& buffer_ParticleHdrFilename,
+                                      const std::string& snapshot_ParticleHdrFilename);
     /** Initialize particle functors for each species to compute the back-transformed
         lab-frame data. */
     void InitializeParticleFunctors () override;
 
-    /** Update total number of particles flushed for all species for ith snapshot */
-    void UpdateTotalParticlesFlushed(int i_buffer);
     /** Reset total number of particles in the particle buffer to 0 for ith snapshot */
     void ResetTotalParticlesInBuffer(int i_buffer);
     /** Clear particle data stored in the particle buffer */

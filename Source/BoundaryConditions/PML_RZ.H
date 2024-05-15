@@ -10,6 +10,8 @@
 
 #include "PML_RZ_fwd.H"
 
+#include "Utils/WarpXAlgorithmSelection.H"
+
 #ifdef WARPX_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
 #endif
@@ -24,8 +26,6 @@
 #include <array>
 #include <optional>
 #include <string>
-
-enum struct PatchType : int;
 
 class PML_RZ
 {
@@ -51,8 +51,6 @@ public:
 
     void CheckPoint (const std::string& dir) const;
     void Restart (const std::string& dir);
-
-    ~PML_RZ () = default;
 
 private:
 

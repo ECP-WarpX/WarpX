@@ -14,15 +14,17 @@
 # 5 denotes maxwell-juttner distribution w/ spatially varying temperature
 # 6 denotes maxwell-boltzmann distribution w/ constant velocity
 # 7 denotes maxwell-boltzmann distribution w/ spatially-varying velocity
+# 8 denotes uniform distribution
+# 9 denotes gaussian_parser distribution w/ spatially-varying mean and thermal velocity
 # The distribution is obtained through reduced diagnostic ParticleHistogram.
 
 import os
 import sys
 
 import numpy as np
-from read_raw_data import read_reduced_diags, read_reduced_diags_histogram
 import scipy.constants as scc
 import scipy.special as scs
+from read_raw_data import read_reduced_diags, read_reduced_diags_histogram
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
@@ -339,6 +341,33 @@ for timestep in range(len(h8x)):
     check_validity_uniform(bin_value_x, h8x[timestep] / N0, ux_min, ux_max)
     check_validity_uniform(bin_value_y, h8y[timestep] / N0, uy_min, uy_max)
     check_validity_uniform(bin_value_z, h8z[timestep] / N0, uz_min, uz_max)
+
+#=================================================
+# Gaussian with parser mean and standard deviation
+#=================================================
+
+# load data
+bin_value_ux, bin_data_ux = read_reduced_diags_histogram("h9x.txt")[2:]
+bin_value_uy, bin_data_uy = read_reduced_diags_histogram("h9y.txt")[2:]
+bin_value_uz, bin_data_uz = read_reduced_diags_histogram("h9z.txt")[2:]
+
+def Gaussian(mean, sigma, u):
+    V = 8.0 # volume in m^3
+    n = 1.0e21 # number density in 1/m^3
+    return (n*V/(sigma*np.sqrt(2.*np.pi)))*np.exp(-(u - mean)**2/(2.*sigma**2))
+
+du = 2./50
+f_ux = Gaussian(0.1 , 0.2 , bin_value_ux)*du
+f_uy = Gaussian(0.12, 0.21, bin_value_uy)*du
+f_uz = Gaussian(0.14, 0.22, bin_value_uz)*du
+
+f9_error = np.sum(np.abs(f_ux - bin_data_ux)/f_ux.max()
+                 +np.abs(f_uy - bin_data_uy)/f_ux.max()
+                 +np.abs(f_uz - bin_data_uz)/f_uz.max()) / bin_value_ux.size
+
+print('gaussian_parse_momentum_function velocity difference:', f9_error)
+
+assert(f9_error < tolerance)
 
 
 test_name = os.path.split(os.getcwd())[1]

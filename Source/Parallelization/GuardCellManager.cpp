@@ -44,8 +44,8 @@ guardCellManager::Init (
     const int nci_corr_stencil,
     const int electromagnetic_solver_id,
     const int max_level,
-    const amrex::Vector<amrex::Real> v_galilean,
-    const amrex::Vector<amrex::Real> v_comoving,
+    const amrex::Vector<amrex::Real>& v_galilean,
+    const amrex::Vector<amrex::Real>& v_comoving,
     const bool safe_guard_cells,
     const int do_multi_J,
     const bool fft_do_time_averaging,
@@ -103,7 +103,7 @@ guardCellManager::Init (
     if (do_moving_window) {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(ref_ratios.size() <= 1,
             "The number of grow cells for the moving window currently assumes 2 levels max.");
-        const int nlevs = ref_ratios.size()+1;
+        const auto nlevs = static_cast<int>(ref_ratios.size()+1);
         const int max_r = (nlevs > 1) ? ref_ratios[0][moving_window_dir] : 2;
 
         ngx = std::max(ngx,max_r);
@@ -120,9 +120,11 @@ guardCellManager::Init (
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     ng_alloc_EB = IntVect(ngx,ngz);
     ng_alloc_J = IntVect(ngJx,ngJz);
+    amrex::ignore_unused(ngy, ngJy);
 #elif defined(WARPX_DIM_1D_Z)
     ng_alloc_EB = IntVect(ngz);
     ng_alloc_J = IntVect(ngJz);
+    amrex::ignore_unused(ngx, ngJx, ngy, ngJy);
 #endif
 
     // TODO Adding one cell for rho should not be necessary, given that the number of guard cells
@@ -172,7 +174,7 @@ guardCellManager::Init (
     // After pushing particle
     int ng_alloc_F_int = (do_moving_window) ? 2 : 0;
     // CKC solver requires one additional guard cell
-    if (electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC) ng_alloc_F_int = std::max( ng_alloc_F_int, 1 );
+    if (electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC) { ng_alloc_F_int = std::max( ng_alloc_F_int, 1 ); }
     ng_alloc_F = IntVect(AMREX_D_DECL(ng_alloc_F_int, ng_alloc_F_int, ng_alloc_F_int));
 
     // Used if warpx.do_divb_cleaning = 1
@@ -208,11 +210,11 @@ guardCellManager::Init (
         utils::parser::queryWithParser(pp_psatd, "nz_guard", ngFFt_z);
 
 #if defined(WARPX_DIM_3D)
-        IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
+        auto ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        IntVect ngFFT = IntVect(ngFFt_x, ngFFt_z);
+        auto ngFFT = IntVect(ngFFt_x, ngFFt_z);
 #elif defined(WARPX_DIM_1D_Z)
-        IntVect ngFFT = IntVect(ngFFt_z);
+        auto ngFFT = IntVect(ngFFt_z);
 #endif
 
 #ifdef WARPX_DIM_RZ
@@ -222,7 +224,7 @@ guardCellManager::Init (
             }
         }
 #else
-       amrex::ignore_unused(do_pml, do_pml_in_domain, pml_ncell);
+        amrex::ignore_unused(do_pml, do_pml_in_domain, pml_ncell);
 #endif
 
         // All boxes should have the same number of guard cells, to avoid temporary parallel copies:
@@ -309,13 +311,14 @@ guardCellManager::Init (
         // factor grows symmetrically by half a cell on each side. So every
         // +2 orders, one touches one more cell point.
         int const FGcell = (nox + 1) / 2;  // integer division
-        IntVect ng_FieldGather_noNCI = IntVect(AMREX_D_DECL(FGcell,FGcell,FGcell));
+        auto ng_FieldGather_noNCI = IntVect(AMREX_D_DECL(FGcell,FGcell,FGcell));
         ng_FieldGather_noNCI = ng_FieldGather_noNCI.min(ng_alloc_EB);
 
         // If NCI filter, add guard cells in the z direction
         IntVect ng_NCIFilter = IntVect::TheZeroVector();
-        if (do_fdtd_nci_corr)
+        if (do_fdtd_nci_corr) {
             ng_NCIFilter[WARPX_ZINDEX] = NCIGodfreyFilter::m_stencil_width;
+        }
 
         // Note: communications of guard cells for bilinear filter are handled
         // separately.

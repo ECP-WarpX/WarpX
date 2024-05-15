@@ -16,8 +16,8 @@ import re
 import sys
 
 import numpy as np
-from scipy.constants import e, epsilon_0, k, m_e, m_p
 import yt
+from scipy.constants import e, epsilon_0, k, m_e, m_p
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
@@ -73,7 +73,7 @@ def stopping_from_ions(dt, ni, Ti, mi, Zi, Zb, ion_mass, ion_energy):
     ion_energy = (f1)**(2./3.)/e
     return ion_energy
 
-# Fetch background parameters and inital particle data
+# Fetch background parameters and initial particle data
 ds0 = yt.load(f'{prefix}{len(last_it)*"0"}')
 ad0 = ds0.all_data()
 

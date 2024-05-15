@@ -45,12 +45,12 @@ A package for WarpX is available via the `Conda <https://conda.io>`_ package man
 
 .. tip::
 
-   We recommend to configure your conda to use the faster `libmamba` `dependency solver <https://www.anaconda.com/blog/a-faster-conda-for-a-growing-community>`__.
+   We recommend to configure your conda to use the faster ``libmamba`` `dependency solver <https://www.anaconda.com/blog/a-faster-conda-for-a-growing-community>`__.
 
    .. code-block:: bash
 
-      conda update -n base conda
-      conda install -n base conda-libmamba-solver
+      conda update -y -n base conda
+      conda install -y -n base conda-libmamba-solver
       conda config --set solver libmamba
 
    We recommend to deactivate that conda self-activates its ``base`` environment.
@@ -109,12 +109,11 @@ Given that you have the :ref:`WarpX dependencies <install-dependencies>` install
 
 .. code-block:: bash
 
-   # optional:                                    --user
-   python3 -m pip install -U pip setuptools wheel
+   python3 -m pip install -U pip
+   python3 -m pip install -U build packaging setuptools wheel
    python3 -m pip install -U cmake
 
    python3 -m pip wheel -v git+https://github.com/ECP-WarpX/WarpX.git
-   # optional:                 --user
    python3 -m pip install *whl
 
 In the future, will publish pre-compiled binary packages on `PyPI <https://pypi.org/>`__ for faster installs.

@@ -8,8 +8,7 @@
 /**
  * \brief Functor to cell-center MF for current density and store result in mf_out.
  */
-class
-JFunctor final : public ComputeDiagFunctor
+class JFunctor final : public ComputeDiagFunctor
 {
 public:
     /** Constructor.
@@ -20,6 +19,8 @@ public:
                   to the output diagnostic MultiFab, mf_dst.
      * \param[in] convertRZmodes2cartesian (in cylindrical) whether to
      *            sum all modes in mf_src before cell-centering into dst multifab.
+     * \param[in] deposit_current whether to deposit current. Used to output current in cases
+                  where no field solve is used.
      * \param[in] ncomp Number of component of mf_src to cell-center in dst multifab.
      */
     JFunctor (int dir, int lev,
@@ -35,7 +36,7 @@ public:
      * \param[in] dcomp first component of mf_dst in which cell-centered
      *            data is stored
      */
-    virtual void operator()(amrex::MultiFab& mf_dst, int dcomp, int /*i_buffer=0*/) const override;
+    void operator()(amrex::MultiFab& mf_dst, int dcomp, int /*i_buffer=0*/) const override;
 private:
     /** direction of the current density to save */
     const int m_dir;

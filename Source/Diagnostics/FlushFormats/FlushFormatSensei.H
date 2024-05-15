@@ -33,21 +33,23 @@ class FlushFormatSensei : public FlushFormat
 {
 public:
     FlushFormatSensei();
-    ~FlushFormatSensei();
+    ~FlushFormatSensei() override;
 
-    FlushFormatSensei(const FlushFormatSensei &) = delete;
-    void operator=(const FlushFormatSensei &) = delete;
+    FlushFormatSensei(const FlushFormatSensei &)            = delete;
+    FlushFormatSensei& operator=(const FlushFormatSensei &) = delete;
+    FlushFormatSensei(FlushFormatSensei&&)                  = default;
+    FlushFormatSensei& operator=(FlushFormatSensei&& )      = default;
 
     /** Construct.
      *
      * \param[in] amr_mesh an AmrMesh instance
      * \param[in] diag_name ParmParse scope string.
      */
-    FlushFormatSensei (amrex::AmrMesh *amr_mesh, std::string diag_name);
+    FlushFormatSensei (amrex::AmrMesh *amr_mesh, const std::string& diag_name);
 
     /** Do in-situ visualization for field and particle data */
-    virtual void WriteToFile (
-        amrex::Vector<std::string> varnames,
+    void WriteToFile (
+        const amrex::Vector<std::string>& varnames,
         const amrex::Vector<amrex::MultiFab>& mf,
         amrex::Vector<amrex::Geometry>& geom,
         amrex::Vector<int> iteration, double time,
@@ -59,8 +61,7 @@ public:
         bool isBTD = false, int snapshotID = -1,
         int bufferID = 1, int numBuffers = 1,
         const amrex::Geometry& full_BTD_snapshot = amrex::Geometry(),
-        bool isLastBTDFlush = false,
-        const amrex::Vector<int>& totalParticlesFlushedAlready = amrex::Vector<int>() ) const override;
+        bool isLastBTDFlush = false) const override;
 
     /** \brief Do in-situ visualization for particle data.
      * \param[in] particle_diags Each element of this vector handles output of 1 species.

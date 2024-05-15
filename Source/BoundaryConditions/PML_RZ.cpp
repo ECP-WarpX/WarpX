@@ -8,6 +8,7 @@
 #include "PML_RZ.H"
 
 #include "BoundaryConditions/PML_RZ.H"
+#include "FieldSolver/Fields.H"
 #ifdef WARPX_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralFieldDataRZ.H"
 #endif
@@ -33,6 +34,7 @@
 #include <memory>
 
 using namespace amrex;
+using namespace warpx::fields;
 
 PML_RZ::PML_RZ (const int lev, const amrex::BoxArray& grid_ba, const amrex::DistributionMapping& grid_dm,
                 const amrex::Geometry* geom, const int ncell, const int do_pml_in_domain)
@@ -41,15 +43,15 @@ PML_RZ::PML_RZ (const int lev, const amrex::BoxArray& grid_ba, const amrex::Dist
       m_geom(geom)
 {
 
-    const amrex::MultiFab & Er_fp = WarpX::GetInstance().getEfield_fp(lev,0);
-    const amrex::MultiFab & Et_fp = WarpX::GetInstance().getEfield_fp(lev,1);
+    const amrex::MultiFab & Er_fp = WarpX::GetInstance().getField(FieldType::Efield_fp, lev,0);
+    const amrex::MultiFab & Et_fp = WarpX::GetInstance().getField(FieldType::Efield_fp, lev,1);
     const amrex::BoxArray ba_Er = amrex::convert(grid_ba, Er_fp.ixType().toIntVect());
     const amrex::BoxArray ba_Et = amrex::convert(grid_ba, Et_fp.ixType().toIntVect());
     WarpX::AllocInitMultiFab(pml_E_fp[0], ba_Er, grid_dm, Er_fp.nComp(), Er_fp.nGrowVect(), lev, "pml_E_fp[0]", 0.0_rt);
     WarpX::AllocInitMultiFab(pml_E_fp[1], ba_Et, grid_dm, Et_fp.nComp(), Et_fp.nGrowVect(), lev, "pml_E_fp[1]", 0.0_rt);
 
-    const amrex::MultiFab & Br_fp = WarpX::GetInstance().getBfield_fp(lev,0);
-    const amrex::MultiFab & Bt_fp = WarpX::GetInstance().getBfield_fp(lev,1);
+    const amrex::MultiFab & Br_fp = WarpX::GetInstance().getField(FieldType::Bfield_fp, lev,0);
+    const amrex::MultiFab & Bt_fp = WarpX::GetInstance().getField(FieldType::Bfield_fp, lev,1);
     const amrex::BoxArray ba_Br = amrex::convert(grid_ba, Br_fp.ixType().toIntVect());
     const amrex::BoxArray ba_Bt = amrex::convert(grid_ba, Bt_fp.ixType().toIntVect());
     WarpX::AllocInitMultiFab(pml_B_fp[0], ba_Br, grid_dm, Br_fp.nComp(), Br_fp.nGrowVect(), lev, "pml_B_fp[0]", 0.0_rt);
@@ -95,7 +97,7 @@ PML_RZ::ApplyDamping (amrex::MultiFab* Et_fp, amrex::MultiFab* Ez_fp,
         amrex::ParallelFor( tilebox, Et_fp->nComp(),
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
             {
-                const amrex::Real rr = static_cast<amrex::Real>(i - nr_damp_min);
+                const auto rr = static_cast<amrex::Real>(i - nr_damp_min);
                 const amrex::Real wr = rr/nr_damp;
                 const amrex::Real damp_factor = std::exp( -4._rt * cdt_over_dr * wr*wr );
 

@@ -8,6 +8,7 @@
 #include "ColliderRelevant.H"
 
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
+#include "FieldSolver/Fields.H"
 #if (defined WARPX_QED)
 #   include "Particles/ElementaryProcess/QEDInternals/QedChiFunctions.H"
 #endif
@@ -58,12 +59,13 @@
 #include <vector>
 
 using namespace amrex;
+using namespace warpx::fields;
 
-ColliderRelevant::ColliderRelevant (std::string rd_name)
-: ReducedDiags{std::move(rd_name)}
+ColliderRelevant::ColliderRelevant (const std::string& rd_name)
+: ReducedDiags{rd_name}
 {
     // read colliding species names - must be 2
-    amrex::ParmParse pp_rd_name(m_rd_name);
+    const amrex::ParmParse pp_rd_name(m_rd_name);
     pp_rd_name.getarr("species", m_beam_name);
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -203,7 +205,7 @@ void ColliderRelevant::ComputeDiags (int step)
 
     // get cell volume
     amrex::Geometry const & geom = warpx.Geom(0);
-    amrex::Real dV = AMREX_D_TERM(geom.CellSize(0), *geom.CellSize(1), *geom.CellSize(2));
+    const amrex::Real dV = AMREX_D_TERM(geom.CellSize(0), *geom.CellSize(1), *geom.CellSize(2));
 
     const auto get_idx = [&](const std::string& name){
         return m_headers_indices.at(name).idx;
@@ -222,7 +224,7 @@ void ColliderRelevant::ComputeDiags (int step)
         using PType = typename WarpXParticleContainer::SuperParticleType;
 
         num_dens[i_s] = myspc.GetChargeDensity(0);
-        num_dens[i_s]->mult(1./q);
+        num_dens[i_s]->mult(1._prt/q);
 
 #if defined(WARPX_DIM_1D_Z)
         // w_tot
@@ -441,12 +443,12 @@ void ColliderRelevant::ComputeDiags (int step)
             // define variables in preparation for field gathering
             const std::array<amrex::Real,3>& dx = WarpX::CellSize(std::max(lev, 0));
             const amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
-            const amrex::MultiFab & Ex = warpx.getEfield(lev,0);
-            const amrex::MultiFab & Ey = warpx.getEfield(lev,1);
-            const amrex::MultiFab & Ez = warpx.getEfield(lev,2);
-            const amrex::MultiFab & Bx = warpx.getBfield(lev,0);
-            const amrex::MultiFab & By = warpx.getBfield(lev,1);
-            const amrex::MultiFab & Bz = warpx.getBfield(lev,2);
+            const amrex::MultiFab & Ex = warpx.getField(FieldType::Efield_aux, lev,0);
+            const amrex::MultiFab & Ey = warpx.getField(FieldType::Efield_aux, lev,1);
+            const amrex::MultiFab & Ez = warpx.getField(FieldType::Efield_aux, lev,2);
+            const amrex::MultiFab & Bx = warpx.getField(FieldType::Bfield_aux, lev,0);
+            const amrex::MultiFab & By = warpx.getField(FieldType::Bfield_aux, lev,1);
+            const amrex::MultiFab & Bz = warpx.getField(FieldType::Bfield_aux, lev,2);
 
             // declare reduce_op
             ReduceOps<ReduceOpMin, ReduceOpMax, ReduceOpSum> reduce_op;
@@ -456,7 +458,7 @@ void ColliderRelevant::ComputeDiags (int step)
             // Loop over boxes
             for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti)
             {
-                const auto GetPosition = GetParticlePosition(pti);
+                const auto GetPosition = GetParticlePosition<PIdx>(pti);
                 // get particle arrays
                 amrex::ParticleReal* const AMREX_RESTRICT ux = pti.GetAttribs()[PIdx::ux].dataPtr();
                 amrex::ParticleReal* const AMREX_RESTRICT uy = pti.GetAttribs()[PIdx::uy].dataPtr();
@@ -465,6 +467,13 @@ void ColliderRelevant::ComputeDiags (int step)
                 // declare external fields
                 const int offset = 0;
                 const auto getExternalEB = GetExternalEBField(pti, offset);
+                const amrex::ParticleReal Ex_external_particle = myspc.m_E_external_particle[0];
+                const amrex::ParticleReal Ey_external_particle = myspc.m_E_external_particle[1];
+                const amrex::ParticleReal Ez_external_particle = myspc.m_E_external_particle[2];
+                const amrex::ParticleReal Bx_external_particle = myspc.m_B_external_particle[0];
+                const amrex::ParticleReal By_external_particle = myspc.m_B_external_particle[1];
+                const amrex::ParticleReal Bz_external_particle = myspc.m_B_external_particle[2];
+
                 // define variables in preparation for field gathering
                 amrex::Box box = pti.tilebox();
                 box.grow(ngEB);
@@ -491,8 +500,13 @@ void ColliderRelevant::ComputeDiags (int step)
                     // get external fields
                     amrex::ParticleReal xp, yp, zp;
                     GetPosition(i, xp, yp, zp);
-                    amrex::ParticleReal ex = 0._rt, ey = 0._rt, ez = 0._rt;
-                    amrex::ParticleReal bx = 0._rt, by = 0._rt, bz = 0._rt;
+                    amrex::ParticleReal ex = Ex_external_particle;
+                    amrex::ParticleReal ey = Ey_external_particle;
+                    amrex::ParticleReal ez = Ez_external_particle;
+                    amrex::ParticleReal bx = Bx_external_particle;
+                    amrex::ParticleReal by = By_external_particle;
+                    amrex::ParticleReal bz = Bz_external_particle;
+
                     getExternalEB(i, ex, ey, ez, bx, by, bz);
 
                     // gather E and B
@@ -532,7 +546,7 @@ void ColliderRelevant::ComputeDiags (int step)
 
     // make density MultiFabs from nodal to cell centered
     amrex::BoxArray ba = warpx.boxArray(0);
-    amrex::DistributionMapping dmap = warpx.DistributionMap(0);
+    const amrex::DistributionMapping dmap = warpx.DistributionMap(0);
     constexpr int ncomp = 1;
     constexpr int ngrow = 0;
     amrex::MultiFab mf_dst1(ba.convert(amrex::IntVect::TheCellVector()), dmap, ncomp, ngrow);
@@ -542,7 +556,7 @@ void ColliderRelevant::ComputeDiags (int step)
 
     // compute luminosity
     amrex::Real const n1_dot_n2 = amrex::MultiFab::Dot(mf_dst1, 0, mf_dst2, 0, 1, 0);
-    amrex::Real const lumi = 2. * PhysConst::c * n1_dot_n2 * dV;
+    amrex::Real const lumi = 2._rt * PhysConst::c * n1_dot_n2 * dV;
     m_data[get_idx("dL_dt")] = lumi;
 #endif // not RZ
 }

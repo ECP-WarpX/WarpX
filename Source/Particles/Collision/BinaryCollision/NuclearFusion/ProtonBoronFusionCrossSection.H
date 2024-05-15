@@ -5,8 +5,8 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef PROTON_BORON_FUSION_CROSS_SECTION_H
-#define PROTON_BORON_FUSION_CROSS_SECTION_H
+#ifndef WARPX_PROTON_BORON_FUSION_CROSS_SECTION_H
+#define WARPX_PROTON_BORON_FUSION_CROSS_SECTION_H
 
 #include "Utils/WarpXConst.H"
 
@@ -39,8 +39,9 @@ amrex::ParticleReal ProtonBoronFusionCrossSectionTentori (const amrex::ParticleR
     // Compute Gamow factor, in MeV
     constexpr auto one_pr = 1._prt;
     constexpr auto Z_boron = 5._prt;
-    constexpr amrex::ParticleReal m_boron = 10.7319_prt * PhysConst::m_p;
-    constexpr amrex::ParticleReal m_reduced = m_boron / (one_pr + m_boron/PhysConst::m_p);
+    constexpr amrex::ParticleReal m_boron = 11.00930536_prt * PhysConst::m_u;
+    constexpr amrex::ParticleReal m_hydrogen = 1.00782503223 * PhysConst::m_u;
+    constexpr amrex::ParticleReal m_reduced = m_boron / (one_pr + m_boron/m_hydrogen);
     constexpr amrex::ParticleReal gamow_factor = m_reduced / 2._prt *
                         (PhysConst::q_e*PhysConst::q_e * Z_boron /
                            (2._prt*PhysConst::ep0*PhysConst::hbar)) *
@@ -153,4 +154,4 @@ amrex::ParticleReal ProtonBoronFusionCrossSection (const amrex::ParticleReal& E_
     return cross_section_b*barn_to_sqm;
 }
 
-#endif // PROTON_BORON_FUSION_CROSS_SECTION_H
+#endif // WARPX_PROTON_BORON_FUSION_CROSS_SECTION_H

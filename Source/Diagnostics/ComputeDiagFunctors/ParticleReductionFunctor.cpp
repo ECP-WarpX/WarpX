@@ -18,9 +18,9 @@
 using namespace amrex::literals;
 
 ParticleReductionFunctor::ParticleReductionFunctor (const amrex::MultiFab* mf_src, const int lev,
-        const amrex::IntVect crse_ratio, const std::string fn_str,
+        const amrex::IntVect crse_ratio, const std::string& fn_str,
         const int ispec, const bool do_average,
-        const bool do_filter, const std::string filter_str, const int ncomp)
+        const bool do_filter, const std::string& filter_str, const int ncomp)
     : ComputeDiagFunctor(ncomp, crse_ratio), m_lev(lev), m_ispec(ispec), m_do_average(do_average), m_do_filter(do_filter)
 {
     // mf_src will not be used, let's make sure it's null.
@@ -52,8 +52,6 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
     constexpr int ng = 1;
     // Temporary cell-centered, multi-component MultiFab for storing particles per cell.
     amrex::MultiFab red_mf(warpx.boxArray(m_lev), warpx.DistributionMap(m_lev), 1, ng);
-    // Set value to 0, and increment the value in each cell with ppc.
-    red_mf.setVal(0._rt);
     auto& pc = warpx.GetPartContainer().GetParticleContainer(m_ispec);
     // Copy over member variables so they can be captured in the lambda
     auto map_fn = m_map_fn;
@@ -99,7 +97,6 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
             });
     if (m_do_average) {
         amrex::MultiFab ppc_mf(warpx.boxArray(m_lev), warpx.DistributionMap(m_lev), 1, ng);
-        ppc_mf.setVal(0._rt);
         // Add the weight for each particle -- total number of particles of this species
         ParticleToMesh(pc, ppc_mf, m_lev,
                 [=] AMREX_GPU_DEVICE (const WarpXParticleContainer::SuperParticleType& p,
@@ -135,8 +132,8 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
                     const amrex::ParticleReal uy = p.rdata(PIdx::uy) / PhysConst::c;
                     const amrex::ParticleReal uz = p.rdata(PIdx::uz) / PhysConst::c;
                     amrex::Real filter;
-                    if ((do_filter) && (!filter_fn(xw, yw, zw, ux, uy, uz))) filter = 0._rt;
-                    else filter = 1._rt;
+                    if ((do_filter) && (filter_fn(xw, yw, zw, ux, uy, uz) == 0._rt)) { filter = 0._rt;
+                    } else { filter = 1._rt; }
                     amrex::Gpu::Atomic::AddNoRet(&out_array(ii, jj, kk, 0), (amrex::Real)(p.rdata(PIdx::w) * filter));
                 });
         // Divide value by number of particles for average. Set average to zero if there are no particles
@@ -147,8 +144,8 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
             amrex::Array4<amrex::Real const> const& a_ppc = ppc_mf.const_array(mfi);
             amrex::ParallelFor(box,
                     [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                        if (a_ppc(i,j,k,0) == 0) a_red(i,j,k,0) = 0;
-                        else a_red(i,j,k,0) = a_red(i,j,k,0) / a_ppc(i,j,k,0);
+                        if (a_ppc(i,j,k,0) == 0) { a_red(i,j,k,0) = 0;
+                        } else { a_red(i,j,k,0) = a_red(i,j,k,0) / a_ppc(i,j,k,0); }
                     });
         }
     }
