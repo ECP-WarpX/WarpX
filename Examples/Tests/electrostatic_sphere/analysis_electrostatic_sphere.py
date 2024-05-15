@@ -37,7 +37,7 @@ filename = sys.argv[1]
 ds = yt.load( filename )
 t_max = ds.current_time.item()  # time of simulation
 
-# Parse test name and check if particle_shape = 4 is used
+# Parse test name and check if electron.mass = 10 is used
 emass_10 = True if re.search('emass_10', filename) else False
 
 if emass_10:
