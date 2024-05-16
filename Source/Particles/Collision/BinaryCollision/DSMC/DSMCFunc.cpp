@@ -7,6 +7,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "DSMCFunc.H"
+#include "Utils/TextMsg.H"
 
 /**
  * \brief Constructor of the DSMCFunc class
@@ -21,6 +22,9 @@ DSMCFunc::DSMCFunc (
     [[maybe_unused]] const bool isSameSpecies )
 {
     using namespace amrex::literals;
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( !(std::is_same<amrex::ParticleReal, float>::value),
+    "Particle precision must be double for DSMC collisions.");
 
     const amrex::ParmParse pp_collision_name(collision_name);
 
