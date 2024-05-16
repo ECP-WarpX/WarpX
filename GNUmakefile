@@ -68,5 +68,3 @@ else
 endif
 
 include $(AMREX_HOME)/Tools/GNUMake/Make.rules
-
-

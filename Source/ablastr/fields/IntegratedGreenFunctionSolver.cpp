@@ -64,17 +64,17 @@ computePhiIGF ( amrex::MultiFab const & rho,
         {domain.smallEnd(0), domain.smallEnd(1), domain.smallEnd(2)},
         {2*nx-1+domain.smallEnd(0), 2*ny-1+domain.smallEnd(1), 2*nz-1+domain.smallEnd(2)},
         amrex::IntVect::TheNodeVector() );
-    
+
     // Initialize the boxarray in "realspace_ba" from the single box "realspace_box"
     amrex::BoxArray realspace_ba = amrex::BoxArray( realspace_box );
-    
-    int const max_nz_box = (2*nz-1) / nprocs + (2*nz-1) % nprocs ; 
+
+    int const max_nz_box = (2*nz-1) / nprocs + (2*nz-1) % nprocs ;
 
      // create IntVect of max_grid_size
-    amrex::IntVect max_size(AMREX_D_DECL(2*nx-1, 2*ny-1, max_nz_box)); 
+    amrex::IntVect max_size(AMREX_D_DECL(2*nx-1, 2*ny-1, max_nz_box));
 
     // Break up boxarray "ba" into chunks no larger than "max_size" along a direction
-    realspace_ba.maxSize(max_size);   
+    realspace_ba.maxSize(max_size);
 
     // How Boxes are distrubuted among MPI processes
     amrex::DistributionMapping realspace_dm(realspace_ba);
@@ -128,9 +128,9 @@ computePhiIGF ( amrex::MultiFab const & rho,
         amrex::Real const dy = cell_size[1];
         amrex::Real const dz = cell_size[2];
 
-        amrex::Real x_hi = dx*(hi[0]+2); 
-        amrex::Real y_hi = dy*(hi[1]+2); 
-        amrex::Real z_hi = dz*(hi[2]+2); 
+        amrex::Real x_hi = dx*(hi[0]+2);
+        amrex::Real y_hi = dy*(hi[1]+2);
+        amrex::Real z_hi = dz*(hi[2]+2);
 
         amrex::Array4<amrex::Real> const tmp_G_arr = tmp_G.array(mfi);
         amrex::ParallelFor( bx,
@@ -143,18 +143,18 @@ computePhiIGF ( amrex::MultiFab const & rho,
                 amrex::Real const y = j0*dy;
                 amrex::Real const z = k0*dz;
 
-                if ((i0< nx)&&(j0< ny)&&(k0< nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential(x     , y     , z     , dx, dy, dz); } 
-                if ((i0< nx)&&(j0> ny)&&(k0< nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential(x     , y_hi-y, z     , dx, dy, dz); } 
-                if ((i0< nx)&&(j0< ny)&&(k0> nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential(x     , y     , z_hi-z, dx, dy, dz); } 
-                if ((i0> nx)&&(j0> ny)&&(k0< nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential(x_hi-x, y_hi-y, z     , dx, dy, dz); } 
-                if ((i0< nx)&&(j0> ny)&&(k0> nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential(x     , y_hi-y, z_hi-z, dx, dy, dz); } 
-                if ((i0> nx)&&(j0< ny)&&(k0> nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential(x_hi-x, y     , z_hi-z, dx, dy, dz); } 
-                if ((i0> nx)&&(j0> ny)&&(k0> nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential(x_hi-x, y_hi-y, z_hi-z, dx, dy, dz); } 
-                if ((i0> nx)&&(j0< ny)&&(k0< nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential(x_hi-x, y     , z     , dx, dy, dz); } 
+                if ((i0< nx)&&(j0< ny)&&(k0< nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential(x     , y     , z     , dx, dy, dz); }
+                if ((i0< nx)&&(j0> ny)&&(k0< nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential(x     , y_hi-y, z     , dx, dy, dz); }
+                if ((i0< nx)&&(j0< ny)&&(k0> nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential(x     , y     , z_hi-z, dx, dy, dz); }
+                if ((i0> nx)&&(j0> ny)&&(k0< nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential(x_hi-x, y_hi-y, z     , dx, dy, dz); }
+                if ((i0< nx)&&(j0> ny)&&(k0> nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential(x     , y_hi-y, z_hi-z, dx, dy, dz); }
+                if ((i0> nx)&&(j0< ny)&&(k0> nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential(x_hi-x, y     , z_hi-z, dx, dy, dz); }
+                if ((i0> nx)&&(j0> ny)&&(k0> nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential(x_hi-x, y_hi-y, z_hi-z, dx, dy, dz); }
+                if ((i0> nx)&&(j0< ny)&&(k0< nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential(x_hi-x, y     , z     , dx, dy, dz); }
          }
       );
     }
-    
+
     amrex::Box const realspace_box1 = amrex::Box(
     {domain.smallEnd(0), domain.smallEnd(1), domain.smallEnd(2)},
     {2*nx-1+domain.smallEnd(0), 2*ny-1+domain.smallEnd(1), 2*nz-1+domain.smallEnd(2)},
@@ -210,7 +210,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
     fft.forward(tmp_rho[local_boxid].dataPtr(), rho_fft_data);
     fft.forward(tmp_G[local_boxid].dataPtr(), G_fft_data);
 
-    // PRINT / SAVE THE FFT OF RHO AND/OR G 
+    // PRINT / SAVE THE FFT OF RHO AND/OR G
 
 
 
@@ -367,7 +367,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
     amrex::IntVect::TheCellVector() );
     amrex::Geometry geom1(realspace_box1);
     amrex::WriteSingleLevelPlotfile("remiG", tmp_G, {"G"}, geom1, 0, 0);
-      
+
       //amrex::Geometry geom1(realspace_box);
       //amrex::WriteSingleLevelPlotfile("remiG", tmp_G, {"G"}, geom1, 0, 0);
 

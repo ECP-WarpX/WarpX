@@ -50,7 +50,7 @@ namespace ablastr::fields
     }
 
     /** @brief add
-     *     
+     *
      * @param[in] x x-coordinate of given location
      * @param[in] y y-coordinate of given location
      * @param[in] z z-coordinate of given location
@@ -65,7 +65,7 @@ namespace ablastr::fields
 
 
         amrex::Real const G_value = 1._rt/(4._rt*ablastr::constant::math::pi*ablastr::constant::SI::ep0) * (
-            IntegratedPotential( x+0.5_rt*dx, y+0.5_rt*dy, z+0.5_rt*dz ) 
+            IntegratedPotential( x+0.5_rt*dx, y+0.5_rt*dy, z+0.5_rt*dz )
           - IntegratedPotential( x-0.5_rt*dx, y+0.5_rt*dy, z+0.5_rt*dz )
           - IntegratedPotential( x+0.5_rt*dx, y-0.5_rt*dy, z+0.5_rt*dz )
           + IntegratedPotential( x-0.5_rt*dx, y-0.5_rt*dy, z+0.5_rt*dz )
@@ -75,7 +75,7 @@ namespace ablastr::fields
           - IntegratedPotential( x-0.5_rt*dx, y-0.5_rt*dy, z-0.5_rt*dz )
         );
 
-        return G_value; 
+        return G_value;
     }
 
     /** @brief Compute the electrostatic potential using the Integrated Green Function method
