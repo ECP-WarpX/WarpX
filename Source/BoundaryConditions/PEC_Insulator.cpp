@@ -482,15 +482,15 @@ PEC_Insulator::ApplyPEC_InsulatortoField (
 #if defined(WARPX_DIM_3D)
                 is_insulator_lo[1] = (area_parsers_y_lo(x, z) > 0._rt);
                 is_insulator_hi[1] = (area_parsers_y_hi(x, z) > 0._rt);
-                F_lo[1] = (set_F_x_lo ? Fx_y_lo_parser(x, z, time) : 0._rt);
-                F_hi[1] = (set_F_x_hi ? Fx_y_hi_parser(x, z, time) : 0._rt);
+                F_lo[1] = (set_F_y_lo ? Fx_y_lo_parser(x, z, time) : 0._rt);
+                F_hi[1] = (set_F_y_hi ? Fx_y_hi_parser(x, z, time) : 0._rt);
                 set_field_lo[1] = set_F_y_lo;
                 set_field_hi[1] = set_F_y_hi;
 #endif
                 is_insulator_lo[WARPX_ZINDEX] = (area_parsers_z_lo(x, y) > 0._rt);
                 is_insulator_hi[WARPX_ZINDEX] = (area_parsers_z_hi(x, y) > 0._rt);
-                F_lo[WARPX_ZINDEX] = (set_F_x_lo ? Fx_z_lo_parser(x, y, time) : 0._rt);
-                F_hi[WARPX_ZINDEX] = (set_F_x_hi ? Fx_z_hi_parser(x, y, time) : 0._rt);
+                F_lo[WARPX_ZINDEX] = (set_F_z_lo ? Fx_z_lo_parser(x, y, time) : 0._rt);
+                F_hi[WARPX_ZINDEX] = (set_F_z_hi ? Fx_z_hi_parser(x, y, time) : 0._rt);
                 set_field_lo[WARPX_ZINDEX] = set_F_z_lo;
                 set_field_hi[WARPX_ZINDEX] = set_F_z_hi;
 
@@ -539,8 +539,8 @@ PEC_Insulator::ApplyPEC_InsulatortoField (
 #endif
                 is_insulator_lo[WARPX_ZINDEX] = (area_parsers_z_lo(x, y) > 0._rt);
                 is_insulator_hi[WARPX_ZINDEX] = (area_parsers_z_hi(x, y) > 0._rt);
-                F_lo[WARPX_ZINDEX] = (set_F_x_lo ? Fy_z_lo_parser(x, y, time) : 0._rt);
-                F_hi[WARPX_ZINDEX] = (set_F_x_hi ? Fy_z_hi_parser(x, y, time) : 0._rt);
+                F_lo[WARPX_ZINDEX] = (set_F_z_lo ? Fy_z_lo_parser(x, y, time) : 0._rt);
+                F_hi[WARPX_ZINDEX] = (set_F_z_hi ? Fy_z_hi_parser(x, y, time) : 0._rt);
                 set_field_lo[WARPX_ZINDEX] = set_F_z_lo;
                 set_field_hi[WARPX_ZINDEX] = set_F_z_hi;
 
@@ -582,8 +582,8 @@ PEC_Insulator::ApplyPEC_InsulatortoField (
 #if defined(WARPX_DIM_3D)
                 is_insulator_lo[1] = (area_parsers_y_lo(x, z) > 0._rt);
                 is_insulator_hi[1] = (area_parsers_y_hi(x, z) > 0._rt);
-                F_lo[1] = (set_F_x_lo ? Fz_y_lo_parser(x, z, time) : 0._rt);
-                F_hi[1] = (set_F_x_hi ? Fz_y_hi_parser(x, z, time) : 0._rt);
+                F_lo[1] = (set_F_y_lo ? Fz_y_lo_parser(x, z, time) : 0._rt);
+                F_hi[1] = (set_F_y_hi ? Fz_y_hi_parser(x, z, time) : 0._rt);
                 set_field_lo[1] = set_F_y_lo;
                 set_field_hi[1] = set_F_y_hi;
 #endif
