@@ -176,9 +176,9 @@ namespace
                     field(ijk_vec, n) = 2._rt*field(ijk_mirror, n) - field(ijk_mirrorp1, n);
                 }
             } else if ((OnBoundary || GuardCell) && set_field) {
-                amrex::Print() << "III " << ijk_vec << " " << E_like << " " << icomp << " " << is_normal_to_boundary << " " << GuardCell << " " << field_value << "\n";
-
                 field(ijk_vec, n) = field_value;
+            } else if (GuardCell) {
+                field(ijk_vec, n) = 2._rt*field(ijk_mirror, n) - field(ijk_mirrorp1, n);
             }
         } else {
             if (OnBoundary && (E_like ^ is_normal_to_boundary)) {
@@ -229,7 +229,6 @@ PEC_Insulator::PEC_Insulator ()
     m_set_B_x_lo |= ReadTangentialFieldParser(pp_insulator, m_Bz_x_lo, "Bz_x_lo(y,z,t)", "y", "z");
     m_set_B_x_hi |= ReadTangentialFieldParser(pp_insulator, m_By_x_hi, "By_x_hi(y,z,t)", "y", "z");
     m_set_B_x_hi |= ReadTangentialFieldParser(pp_insulator, m_Bz_x_hi, "Bz_x_hi(y,z,t)", "y", "z");
-    amrex::Print() << "\n\n\n\n\n\nSET " << m_set_B_x_hi << "\n\n\n\n\n\n\n";
 
     m_set_E_x_lo = false;
     m_set_E_x_hi = false;
