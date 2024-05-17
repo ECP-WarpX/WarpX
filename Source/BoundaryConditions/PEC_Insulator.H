@@ -141,31 +141,31 @@ private:
     std::vector<std::unique_ptr<amrex::Parser>> m_insulator_area_hi;
 
 #if (AMREX_SPACEDIM > 1)
-    bool m_set_B_x_lo, m_set_B_x_hi;
+    bool m_set_B_x_lo = false, m_set_B_x_hi = false;
     std::unique_ptr<amrex::Parser> m_By_x_lo, m_Bz_x_lo;
     std::unique_ptr<amrex::Parser> m_By_x_hi, m_Bz_x_hi;
 #endif
 #if defined(WARPX_DIM_3D)
-    bool m_set_B_y_lo, m_set_B_y_hi;
+    bool m_set_B_y_lo = false, m_set_B_y_hi = false;
     std::unique_ptr<amrex::Parser> m_Bx_y_lo, m_Bz_y_lo;
     std::unique_ptr<amrex::Parser> m_Bx_y_hi, m_Bz_y_hi;
 #endif
-    bool m_set_B_z_lo, m_set_B_z_hi;
+    bool m_set_B_z_lo = false, m_set_B_z_hi = false;
     std::unique_ptr<amrex::Parser> m_Bx_z_lo, m_By_z_lo;
     std::unique_ptr<amrex::Parser> m_Bx_z_hi, m_By_z_hi;
 
 
 #if (AMREX_SPACEDIM > 1)
-    bool m_set_E_x_lo, m_set_E_x_hi;
+    bool m_set_E_x_lo = false, m_set_E_x_hi = false;
     std::unique_ptr<amrex::Parser> m_Ey_x_lo, m_Ez_x_lo;
     std::unique_ptr<amrex::Parser> m_Ey_x_hi, m_Ez_x_hi;
 #endif
 #if defined(WARPX_DIM_3D)
-    bool m_set_E_y_lo, m_set_E_y_hi;
+    bool m_set_E_y_lo = false, m_set_E_y_hi = false;
     std::unique_ptr<amrex::Parser> m_Ex_y_lo, m_Ez_y_lo;
     std::unique_ptr<amrex::Parser> m_Ex_y_hi, m_Ez_y_hi;
 #endif
-    bool m_set_E_z_lo, m_set_E_z_hi;
+    bool m_set_E_z_lo = false, m_set_E_z_hi = false;
     std::unique_ptr<amrex::Parser> m_Ex_z_lo, m_Ey_z_lo;
     std::unique_ptr<amrex::Parser> m_Ex_z_hi, m_Ey_z_hi;
 

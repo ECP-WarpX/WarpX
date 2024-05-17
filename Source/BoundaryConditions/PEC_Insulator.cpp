@@ -223,15 +223,11 @@ PEC_Insulator::PEC_Insulator ()
     m_insulator_area_hi.push_back(
         std::make_unique<amrex::Parser>(utils::parser::makeParser(str_area_x_hi, {"y", "z"})));
 
-    m_set_B_x_lo = false;
-    m_set_B_x_hi = false;
     m_set_B_x_lo |= ReadTangentialFieldParser(pp_insulator, m_By_x_lo, "By_x_lo(y,z,t)", "y", "z");
     m_set_B_x_lo |= ReadTangentialFieldParser(pp_insulator, m_Bz_x_lo, "Bz_x_lo(y,z,t)", "y", "z");
     m_set_B_x_hi |= ReadTangentialFieldParser(pp_insulator, m_By_x_hi, "By_x_hi(y,z,t)", "y", "z");
     m_set_B_x_hi |= ReadTangentialFieldParser(pp_insulator, m_Bz_x_hi, "Bz_x_hi(y,z,t)", "y", "z");
 
-    m_set_E_x_lo = false;
-    m_set_E_x_hi = false;
     m_set_E_x_lo |= ReadTangentialFieldParser(pp_insulator, m_Ey_x_lo, "Ey_x_lo(y,z,t)", "y", "z");
     m_set_E_x_lo |= ReadTangentialFieldParser(pp_insulator, m_Ez_x_lo, "Ez_x_lo(y,z,t)", "y", "z");
     m_set_E_x_hi |= ReadTangentialFieldParser(pp_insulator, m_Ey_x_hi, "Ey_x_hi(y,z,t)", "y", "z");
@@ -247,15 +243,11 @@ PEC_Insulator::PEC_Insulator ()
     m_insulator_area_hi.push_back(
         std::make_unique<amrex::Parser>(utils::parser::makeParser(str_area_y_hi, {"x", "z"})));
 
-    m_set_B_y_lo = false;
-    m_set_B_y_hi = false;
     m_set_B_y_lo |= ReadTangentialFieldParser(pp_insulator, m_Bx_y_lo, "Bx_y_lo(x,z,t)", "x", "z");
     m_set_B_y_lo |= ReadTangentialFieldParser(pp_insulator, m_Bz_y_lo, "Bz_y_lo(x,z,t)", "x", "z");
     m_set_B_y_hi |= ReadTangentialFieldParser(pp_insulator, m_Bx_y_hi, "Bx_y_hi(x,z,t)", "x", "z");
     m_set_B_y_hi |= ReadTangentialFieldParser(pp_insulator, m_Bz_y_hi, "Bz_y_hi(x,z,t)", "x", "z");
 
-    m_set_E_y_lo = false;
-    m_set_E_y_hi = false;
     m_set_E_y_lo |= ReadTangentialFieldParser(pp_insulator, m_Ex_y_lo, "Ex_y_lo(x,z,t)", "x", "z");
     m_set_E_y_lo |= ReadTangentialFieldParser(pp_insulator, m_Ez_y_lo, "Ez_y_lo(x,z,t)", "x", "z");
     m_set_E_y_hi |= ReadTangentialFieldParser(pp_insulator, m_Ex_y_hi, "Ex_y_hi(x,z,t)", "x", "z");
@@ -271,15 +263,11 @@ PEC_Insulator::PEC_Insulator ()
     m_insulator_area_hi.push_back(
         std::make_unique<amrex::Parser>(utils::parser::makeParser(str_area_z_hi, {"x", "y"})));
 
-    m_set_B_z_lo = false;
-    m_set_B_z_hi = false;
     m_set_B_z_lo |= ReadTangentialFieldParser(pp_insulator, m_Bx_z_lo, "Bx_z_lo(x,y,t)", "x", "y");
     m_set_B_z_lo |= ReadTangentialFieldParser(pp_insulator, m_By_z_lo, "By_z_lo(x,y,t)", "x", "y");
     m_set_B_z_hi |= ReadTangentialFieldParser(pp_insulator, m_Bx_z_hi, "Bx_z_hi(x,y,t)", "x", "y");
     m_set_B_z_hi |= ReadTangentialFieldParser(pp_insulator, m_By_z_hi, "By_z_hi(x,y,t)", "x", "y");
 
-    m_set_E_z_lo = false;
-    m_set_E_z_hi = false;
     m_set_E_z_lo |= ReadTangentialFieldParser(pp_insulator, m_Ex_z_lo, "Ex_z_lo(x,y,t)", "x", "y");
     m_set_E_z_lo |= ReadTangentialFieldParser(pp_insulator, m_Ey_z_lo, "Ey_z_lo(x,y,t)", "x", "y");
     m_set_E_z_hi |= ReadTangentialFieldParser(pp_insulator, m_Ex_z_hi, "Ex_z_hi(x,y,t)", "x", "y");
