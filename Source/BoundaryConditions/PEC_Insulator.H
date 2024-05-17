@@ -66,22 +66,6 @@ public:
                                      int lev, PatchType patch_type, amrex::Vector<amrex::IntVect> const & ref_ratios,
                                      amrex::Real time);
 
-private:
-
-    /* \brief Reads in the parsers for the tangential fields, returning whether
-     *        the input parameter was specified.
-     * \param[in]  pp_insulator ParmParse instance
-     * \param[out] parser the parser generated from the input
-     * \param[in]  input_name the name of the input parameter
-     * \param[in]  coord1 the first coordinate in the plane
-     * \param[in]  coord2 the second coordinate in the plane
-     */
-    bool ReadTangentialFieldParser (amrex::ParmParse const & pp_insulator,
-                                    std::unique_ptr<amrex::Parser> & parser,
-                                    std::string const & input_name,
-                                    std::string const & coord1,
-                                    std::string const & coord2);
-
     /**
      * \brief The work routine applying the boundary condition
      *
@@ -136,6 +120,22 @@ private:
                                bool set_F_z_lo, bool set_F_z_hi,
                                std::unique_ptr<amrex::Parser> const & a_Fx_z_lo, std::unique_ptr<amrex::Parser> const & a_Fy_z_lo,
                                std::unique_ptr<amrex::Parser> const & a_Fx_z_hi, std::unique_ptr<amrex::Parser> const & a_Fy_z_hi);
+
+private:
+
+    /* \brief Reads in the parsers for the tangential fields, returning whether
+     *        the input parameter was specified.
+     * \param[in]  pp_insulator ParmParse instance
+     * \param[out] parser the parser generated from the input
+     * \param[in]  input_name the name of the input parameter
+     * \param[in]  coord1 the first coordinate in the plane
+     * \param[in]  coord2 the second coordinate in the plane
+     */
+    bool ReadTangentialFieldParser (amrex::ParmParse const & pp_insulator,
+                                    std::unique_ptr<amrex::Parser> & parser,
+                                    std::string const & input_name,
+                                    std::string const & coord1,
+                                    std::string const & coord2);
 
     std::vector<std::unique_ptr<amrex::Parser>> m_insulator_area_lo;
     std::vector<std::unique_ptr<amrex::Parser>> m_insulator_area_hi;
