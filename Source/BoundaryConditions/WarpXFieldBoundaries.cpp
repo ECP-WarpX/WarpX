@@ -92,6 +92,7 @@ void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
     }
 
     if (::isAnyBoundary<FieldBoundaryType::PEC_Insulator>(field_boundary_lo, field_boundary_hi)) {
+        amrex::Real const tnew = gett_new(lev);
         if (patch_type == PatchType::fine) {
             pec_insulator_boundary->ApplyPEC_InsulatortoEfield(
                     {getFieldPointer(FieldType::Efield_fp, lev, 0),
@@ -99,7 +100,7 @@ void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
                     getFieldPointer(FieldType::Efield_fp, lev, 2)},
                     field_boundary_lo, field_boundary_hi,
                     get_ng_fieldgather(), Geom(lev),
-                    lev, patch_type, ref_ratio);
+                    lev, patch_type, ref_ratio, tnew);
             if (::isAnyBoundary<FieldBoundaryType::PML>(field_boundary_lo, field_boundary_hi)) {
                 // apply pec on split E-fields in PML region
                 const bool split_pml_field = true;
@@ -107,7 +108,7 @@ void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
                     pml[lev]->GetE_fp(),
                     field_boundary_lo, field_boundary_hi,
                     get_ng_fieldgather(), Geom(lev),
-                    lev, patch_type, ref_ratio,
+                    lev, patch_type, ref_ratio, tnew,
                     split_pml_field);
             }
         } else {
@@ -117,7 +118,7 @@ void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
                 getFieldPointer(FieldType::Efield_cp, lev, 2)},
                 field_boundary_lo, field_boundary_hi,
                 get_ng_fieldgather(), Geom(lev),
-                lev, patch_type, ref_ratio);
+                lev, patch_type, ref_ratio, tnew);
             if (::isAnyBoundary<FieldBoundaryType::PML>(field_boundary_lo, field_boundary_hi)) {
                 // apply pec on split E-fields in PML region
                 const bool split_pml_field = true;
@@ -125,7 +126,7 @@ void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
                     pml[lev]->GetE_cp(),
                     field_boundary_lo, field_boundary_hi,
                     get_ng_fieldgather(), Geom(lev),
-                    lev, patch_type, ref_ratio,
+                    lev, patch_type, ref_ratio, tnew,
                     split_pml_field);
             }
         }
