@@ -32,52 +32,52 @@ tolerance = 0.0041
 fn = sys.argv[1]
 ds = yt.load( fn )
 
-lev_1 = True if re.search('lev_1 ', fn) else False
+def get_error_per_lev(ds, level):
+    if level == 1:
+        dims = ds.domain_dimensions * ds.refine_by**level
+        all_data_level = ds.covering_grid(level=level, left_edge=ds.domain_left_edge, dims=dims)
+        phi = all_data_level['boxlib', 'phi'].v.squeeze()
+        phi = phi[:,:,0]
+        Er = all_data_level['boxlib', 'Er'].v.squeeze()
+        Er = Er[:,:,0]
+    elif level==0:
+        dims = ds.domain_dimensions * ds.refine_by**level
+        all_data_level = ds.covering_grid(level=level, left_edge=ds.domain_left_edge, dims=dims)
+        phi = all_data_level['boxlib', 'phi'].v.squeeze()
+        Er = all_data_level['boxlib', 'Er'].v.squeeze()
+        
+    Dx = ds.domain_width/dims
+    dr = Dx[0]
+    rmin = ds.domain_left_edge[0]
+    rmax = ds.domain_right_edge[0]
+    nr = phi.shape[0]
+    r = np.linspace(rmin+dr/2.,rmax-dr/2.,nr)
+    B = 1.0/np.log(0.1/0.5)
+    A = -B*np.log(0.5)
+    err = 0.0
+    errmax_phi = 0.0
+    errmax_Er = 0.0
+    for i in range(len(r)):
+        # outside EB and last cutcell
+        if r[i] > 0.1*m + dr:
+            phi_theory = A+B*np.log(r[i])
+            Er_theory = -B/float(r[i])
+            err = abs( phi_theory - phi[i,:] ).max() / phi_theory
+            if err>errmax_phi:
+                errmax_phi = err
+            err = abs( Er_theory - Er[i,:] ).max() / Er_theory
+            # Exclude the last inaccurate interpolation.
+            if err>errmax_Er and i<len(r)-1:
+                errmax_Er = err
 
-if lev_1 :
-    level = 1
-    dims = ds.domain_dimensions * ds.refine_by**level
-    all_data_level = ds.covering_grid(level=level, left_edge=ds.domain_left_edge, dims=dims)
-    phi = all_data_level['boxlib', 'phi'].v.squeeze()
-    phi = phi[:,:,0]
-    Er = all_data_level['boxlib', 'Er'].v.squeeze()
-    Er = Er[:,:,0]
-else:
-    level = 0
-    dims = ds.domain_dimensions * ds.refine_by**level
-    all_data_level = ds.covering_grid(level=level, left_edge=ds.domain_left_edge, dims=dims)
-    phi = all_data_level['boxlib', 'phi'].v.squeeze()
-    Er = all_data_level['boxlib', 'Er'].v.squeeze()
+    print('max error of phi = ', errmax_phi)
+    print('max error of Er = ', errmax_Er)
+    print('tolerance = ', tolerance)
+    assert(errmax_phi<tolerance and errmax_Er<tolerance)
 
-Dx = ds.domain_width/dims
-dr = Dx[0]
-rmin = ds.domain_left_edge[0]
-rmax = ds.domain_right_edge[0]
-nr = phi.shape[0]
-r = np.linspace(rmin+dr/2.,rmax-dr/2.,nr)
-B = 1.0/np.log(0.1/0.5)
-A = -B*np.log(0.5)
-
-err = 0.0
-errmax_phi = 0.0
-errmax_Er = 0.0
-for i in range(len(r)):
-    # outside EB and last cutcell
-    if r[i] > 0.1*m + dr:
-        phi_theory = A+B*np.log(r[i])
-        Er_theory = -B/float(r[i])
-        err = abs( phi_theory - phi[i,:] ).max() / phi_theory
-        if err>errmax_phi:
-            errmax_phi = err
-        err = abs( Er_theory - Er[i,:] ).max() / Er_theory
-        # Exclude the last inaccurate interpolation.
-        if err>errmax_Er and i<len(r)-1:
-            errmax_Er = err
-
-print('max error of phi = ', errmax_phi)
-print('max error of Er = ', errmax_Er)
-print('tolerance = ', tolerance)
-assert(errmax_phi<tolerance and errmax_Er<tolerance)
+levels = [0,1]
+for level in levels:
+    get_error_per_lev(ds,level)
 
 test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, fn, do_particles=False)
