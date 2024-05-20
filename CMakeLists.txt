@@ -16,6 +16,12 @@ endif()
 
 # CMake policies ##############################################################
 #
+# Setting a cmake_policy to OLD is deprecated by definition and will raise a
+# verbose warning
+if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+    set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
+endif()
+
 # AMReX 21.06+ supports CUDA_ARCHITECTURES with CMake 3.20+
 # CMake 3.18+: CMAKE_CUDA_ARCHITECTURES
 # https://cmake.org/cmake/help/latest/policy/CMP0104.html
@@ -149,6 +155,14 @@ if(WarpX_APP OR WarpX_PYTHON)
     set(WarpX_LIB ON CACHE STRING "Build WarpX as a library" FORCE)
 endif()
 
+# deprecated options: transition phase
+
+if(DEFINED WarpX_PSATD)
+    message(WARNING "CMake option WarpX_PSATD is deprecated. Use WarpX_FFT instead.\n"
+                    "Overwriting WarpX_FFT with '${WarpX_PSATD}' because WarpX_PSATD was set.")
+    set(WarpX_FFT ${WarpX_PSATD} CACHE STRING "FFT-based solvers" FORCE)
+endif()
+
 # note: we could skip this if we solely build WarpX_APP, but if we build a
 # shared WarpX library or a third party, like ImpactX, uses ablastr in a
 # shared library (e.g., for Python bindings), then we need relocatable code.
@@ -163,9 +177,7 @@ endif()
 
 # this defined the variable BUILD_TESTING which is ON by default
 #include(CTest)
-if(NOT "${WarpX_PSATD}" STREQUAL "")
-    message(FATAL_ERROR "WarpX_PSATD is outdated. Please use WarpX_FFT.")
-endif()
+
 
 # Dependencies ################################################################
 #
