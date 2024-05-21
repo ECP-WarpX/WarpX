@@ -1,0 +1,82 @@
+/* Copyright 2024 Helion Energy, Inc.
+ *
+ * Authors: S. Eric Clark
+ * License: None
+ */
+#pragma once
+
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_LO_BCTYPES.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MFInterp_C.H>
+#include <AMReX_MLLinOp.H>
+#include <AMReX_MLMG.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_Parser.H>
+#include <AMReX_REAL.H>
+#include <AMReX_SPACE.H>
+#include <AMReX_Vector.H>
+#include <AMReX_MLMG.H>
+
+void run_ProjectionDivCleaner();
+
+class ProjectionDivCleaner
+{
+public:
+    amrex::Vector< std::unique_ptr<amrex::MultiFab> > m_solution;
+    amrex::Vector< std::unique_ptr<amrex::MultiFab> > m_source;
+
+    amrex::Vector<amrex::Real> m_h_stencil_coefs_x;
+    amrex::Vector<amrex::Real> m_h_stencil_coefs_y;
+    amrex::Vector<amrex::Real> m_h_stencil_coefs_z;
+
+    amrex::Gpu::DeviceVector<amrex::Real> m_stencil_coefs_x;
+    amrex::Gpu::DeviceVector<amrex::Real> m_stencil_coefs_y;
+    amrex::Gpu::DeviceVector<amrex::Real> m_stencil_coefs_z;
+
+    int m_levels;
+
+    int m_max_level = 1;
+    int m_ref_ratio = 1;
+
+    // For MLMG solver
+    int m_verbose = 2;
+    int m_bottom_verbose = 0;
+    int m_max_iter = 100;
+    int m_max_fmg_iter = 0;
+    int m_linop_maxorder = 2;
+    bool m_agglomeration = true;
+    bool m_consolidation = true;
+    bool m_semicoarsening = false;
+    int m_max_coarsening_level = 30;
+    int m_max_semicoarsening_level = 0;
+
+#if (WarpX_PRECISION == 'DOUBLE')
+    amrex::Real m_rtol = 1e-10;
+#else
+    amrex::Real m_rtol = 1e-5;
+#endif
+    amrex::Real m_atol = 0.0;
+
+    // Default Constructor
+    ProjectionDivCleaner ();
+
+    void solve ();
+    void setSourceFromBfield ();
+    void correctBfield ();
+
+};
