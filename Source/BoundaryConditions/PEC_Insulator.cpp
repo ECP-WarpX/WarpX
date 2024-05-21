@@ -591,5 +591,3 @@ PEC_Insulator::ApplyPEC_InsulatortoField (
         );
     }
 }
-
-

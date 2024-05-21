@@ -32,4 +32,3 @@ insulator.By_x_hi(y,z,t) = min(t/1.0e-12,1)*1.e1*3.3e-4
 diagnostics.diags_names = diag1
 diag1.intervals = 10
 diag1.diag_type = Full
-
