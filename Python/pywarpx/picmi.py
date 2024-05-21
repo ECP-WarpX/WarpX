@@ -2384,6 +2384,9 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
                 elif dataname.startswith('rho_'):
                     # Adds rho_species diagnostic
                     fields_to_plot.add(dataname)
+                elif dataname.startswith('T_'):
+                    # Adds T_species diagnostic
+                    fields_to_plot.add(dataname)
                 elif dataname == 'dive':
                     fields_to_plot.add('divE')
                 elif dataname == 'divb':
