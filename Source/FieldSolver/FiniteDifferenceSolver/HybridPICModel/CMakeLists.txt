@@ -5,5 +5,3 @@ foreach(D IN LISTS WarpX_DIMS)
       HybridPICModel.cpp
     )
 endforeach()
-
-add_subdirectory(DivCleaner)

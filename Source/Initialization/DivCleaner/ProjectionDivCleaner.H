@@ -56,7 +56,7 @@ public:
     // For MLMG solver
     int m_verbose = 2;
     int m_bottom_verbose = 0;
-    int m_max_iter = 100;
+    int m_max_iter = 500;
     int m_max_fmg_iter = 0;
     int m_linop_maxorder = 2;
     bool m_agglomeration = true;
@@ -65,11 +65,7 @@ public:
     int m_max_coarsening_level = 30;
     int m_max_semicoarsening_level = 0;
 
-#if (WarpX_PRECISION == 'DOUBLE')
     amrex::Real m_rtol = 1e-10;
-#else
-    amrex::Real m_rtol = 1e-5;
-#endif
     amrex::Real m_atol = 0.0;
 
     // Default Constructor
