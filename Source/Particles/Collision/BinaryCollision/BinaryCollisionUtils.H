@@ -67,14 +67,14 @@ namespace BinaryCollisionUtils{
 
         // Cast input parameters to double before computing collision properties
         // This is needed to avoid errors when using single-precision particles
-        const double m1_dbl = static_cast<double>(m1);
-        const double m2_dbl = static_cast<double>(m2);
-        const double u1x_dbl = static_cast<double>(u1x);
-        const double u1y_dbl = static_cast<double>(u1y);
-        const double u1z_dbl = static_cast<double>(u1z);
-        const double u2x_dbl = static_cast<double>(u2x);
-        const double u2y_dbl = static_cast<double>(u2y);
-        const double u2z_dbl = static_cast<double>(u2z);
+        const auto m1_dbl = static_cast<double>(m1);
+        const auto m2_dbl = static_cast<double>(m2);
+        const auto u1x_dbl = static_cast<double>(u1x);
+        const auto u1y_dbl = static_cast<double>(u1y);
+        const auto u1z_dbl = static_cast<double>(u1z);
+        const auto u2x_dbl = static_cast<double>(u2x);
+        const auto u2y_dbl = static_cast<double>(u2y);
+        const auto u2z_dbl = static_cast<double>(u2z);
 
         const double m1_sq = m1_dbl*m1_dbl;
         const double m2_sq = m2_dbl*m2_dbl;
