@@ -27,8 +27,7 @@ class SplitAndScatterFunc
     using ParticleTileDataType = typename ParticleTileType::ParticleTileDataType;
     using ParticleBins = amrex::DenseBins<ParticleTileDataType>;
     using index_type = typename ParticleBins::index_type;
-    using SoaData_type = typename WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
-
+    using SoaData_type = WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
 
 public:
     /**
@@ -53,8 +52,7 @@ public:
     AMREX_INLINE
     amrex::Vector<int> operator() (
         const index_type& n_total_pairs,
-        // Tile& ptile1, Tile& ptile2,
-        const SoaData_type& /*soa_1*/, const SoaData_type& /*soa_2*/,
+        ParticleTileType& ptile1, ParticleTileType& ptile2,
         const amrex::Vector<WarpXParticleContainer*>& pc_products,
         ParticleTileType** AMREX_RESTRICT tile_products,
         const amrex::ParticleReal m1, const amrex::ParticleReal m2,
@@ -93,9 +91,8 @@ public:
             tile_products[i]->resize(products_np[i] + num_added);
         }
 
-        // this works for DSMC since the colliding particles are also products
-        const auto soa_1 = tile_products[0]->getParticleTileData();
-        const auto soa_2 = tile_products[1]->getParticleTileData();
+        const auto soa_1 = ptile1.getParticleTileData();
+        const auto soa_2 = ptile2.getParticleTileData();
 
         amrex::ParticleReal* AMREX_RESTRICT w1 = soa_1.m_rdata[PIdx::w];
         amrex::ParticleReal* AMREX_RESTRICT w2 = soa_2.m_rdata[PIdx::w];
@@ -155,36 +152,10 @@ public:
                 soa_products_data[1].m_rdata[PIdx::w][product2_index] = p_pair_reaction_weight[i];
 
                 // Remove p_pair_reaction_weight[i] from the colliding particles' weights
-                amrex::Gpu::Atomic::AddNoRet(&w1[p_pair_indices_1[i]],
-                                                -p_pair_reaction_weight[i]);
-                amrex::Gpu::Atomic::AddNoRet(&w2[p_pair_indices_2[i]],
-                                                -p_pair_reaction_weight[i]);
-
-                // Note: Particle::atomicSetID should also be provided as a standalone helper function in AMReX
-                //       to replace the following lambda.
-                auto const atomicSetIdInvalid = [] AMREX_GPU_DEVICE (uint64_t & idcpu)
-                {
-#if defined(AMREX_USE_OMP)
-#pragma omp atomic write
-                    idcpu = amrex::ParticleIdCpus::Invalid;
-#else
-                    amrex::Gpu::Atomic::Exch(
-                        (unsigned long long *)&idcpu,
-                        (unsigned long long)amrex::ParticleIdCpus::Invalid
-                    );
-#endif
-                };
-
-                // If the colliding particle weight decreases to zero, remove particle by
-                // setting its id to invalid
-                if (w1[p_pair_indices_1[i]] <= std::numeric_limits<amrex::ParticleReal>::min())
-                {
-                    atomicSetIdInvalid(idcpu1[p_pair_indices_1[i]]);
-                }
-                if (w2[p_pair_indices_2[i]] <= std::numeric_limits<amrex::ParticleReal>::min())
-                {
-                    atomicSetIdInvalid(idcpu2[p_pair_indices_2[i]]);
-                }
+                BinaryCollisionUtils::remove_weight_from_colliding_particle(
+                    w1[p_pair_indices_1[i]], idcpu1[p_pair_indices_1[i]], p_pair_reaction_weight[i]);
+                BinaryCollisionUtils::remove_weight_from_colliding_particle(
+                    w2[p_pair_indices_2[i]], idcpu2[p_pair_indices_2[i]], p_pair_reaction_weight[i]);
 
                 // Set the child particle properties appropriately
                 auto& ux1 = soa_products_data[0].m_rdata[PIdx::ux][product1_index];

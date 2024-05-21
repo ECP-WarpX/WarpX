@@ -90,7 +90,7 @@ BackTransformParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_dst
         const amrex::Real dt = warpx.getdt(0);
 
         for (WarpXParIter pti(*m_pc_src, lev); pti.isValid(); ++pti) {
-            auto ptile_dst = pc_dst.DefineAndReturnParticleTile(lev, pti.index(), pti.LocalTileIndex() );
+            pc_dst.DefineAndReturnParticleTile(lev, pti.index(), pti.LocalTileIndex() );
         }
 
         auto& particles = m_pc_src->GetParticles(lev);
