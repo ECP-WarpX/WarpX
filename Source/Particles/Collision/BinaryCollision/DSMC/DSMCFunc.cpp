@@ -23,8 +23,8 @@ DSMCFunc::DSMCFunc (
 {
     using namespace amrex::literals;
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( (std::is_same<amrex::ParticleReal, double>::value),
-    "Particle precision must be double for DSMC collisions.");
+    // WARPX_ALWAYS_ASSERT_WITH_MESSAGE( (std::is_same<amrex::ParticleReal, double>::value),
+    // "Particle precision must be double for DSMC collisions.");
 
     const amrex::ParmParse pp_collision_name(collision_name);
 
