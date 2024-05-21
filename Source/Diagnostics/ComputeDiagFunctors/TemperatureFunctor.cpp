@@ -43,6 +43,9 @@ TemperatureFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, const 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(mass > 0.,
         "The temperature diagnostic can not be calculated for a massless species.");
 
+    // Calculate the averages in two steps, first the average velocity <u>, then the
+    // average velocity squared <u - <u>>**2. This method is more robust than the
+    // single step using <u**2> - <u>**2 when <u> >> u_rms.
     ParticleToMesh(pc, sum_mf, m_lev,
             [=] AMREX_GPU_DEVICE (const WarpXParticleContainer::SuperParticleType& p,
                 amrex::Array4<amrex::Real> const& out_array,
