@@ -103,10 +103,10 @@ TemperatureFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, const 
     for (WarpXParIter pti(pc, m_lev); pti.isValid(); ++pti)
     {
         const long np = pti.numParticles();
-        auto const & wp = pti.GetAttribs(PIdx::w);
-        auto const & uxp = pti.GetAttribs(PIdx::ux);
-        auto const & uyp = pti.GetAttribs(PIdx::uy);
-        auto const & uzp = pti.GetAttribs(PIdx::uz);
+        amrex::ParticleReal* wp = pti.GetAttribs(PIdx::w).dataPtr();
+        amrex::ParticleReal* uxp = pti.GetAttribs(PIdx::ux).dataPtr();
+        amrex::ParticleReal* uyp = pti.GetAttribs(PIdx::uy).dataPtr();
+        amrex::ParticleReal* uzp = pti.GetAttribs(PIdx::uz).dataPtr();
 
         auto const GetPosition = GetParticlePosition<PIdx>(pti);
 
