@@ -38,7 +38,7 @@ TemperatureFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, const 
     amrex::MultiFab sum_mf(warpx.boxArray(m_lev), warpx.DistributionMap(m_lev), 7, ng);
 
     auto& pc = warpx.GetPartContainer().GetParticleContainer(m_ispec);
-    amrex::Real mass = pc.getMass();  // Note, implicit conversion from ParticleReal
+    amrex::Real const mass = pc.getMass();  // Note, implicit conversion from ParticleReal
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(mass > 0.,
         "The temperature diagnostic can not be calculated for a massless species.");
@@ -110,7 +110,7 @@ TemperatureFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, const 
 
         auto const GetPosition = GetParticlePosition<PIdx>(pti);
 
-        amrex::Array4<amrex::Real> out_array = sum_mf[pti].array();
+        amrex::Array4<amrex::Real> const& out_array = sum_mf.array(pti);
 
         amrex::ParallelFor(np,
             [=] AMREX_GPU_DEVICE (long ip) {
