@@ -160,6 +160,11 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
                 {{ beta[0], beta[1], beta[2] }};
 #endif
 
+#if !defined(WARPX_USE_PSATD)
+        ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE( !is_solver_igf_on_lev0,
+        "Must compile with -DWarpX_PSATD=ON to use the FFT solver!");
+#endif
+
 #if (defined(WARPX_USE_PSATD)  && defined(WARPX_DIM_3D))
         // Use the Integrated Green Function solver (FFT) on the coarsest level if it was selected
         if(is_solver_igf_on_lev0 && lev==0){
