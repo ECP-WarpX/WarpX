@@ -30,7 +30,6 @@ tolerance = 0.0041
 fn = sys.argv[1]
 
 def find_first_non_zero_from_bottom_left(matrix):
-    print(np.shape(matrix))
     nj = len(matrix[0,:])
     ni = len(matrix[:,0])
     for i in np.arange(0,ni,1):
@@ -41,8 +40,6 @@ def find_first_non_zero_from_bottom_left(matrix):
     return i, j
 
 def find_first_non_zero_from_upper_right(matrix):
-    print(np.shape(matrix))
-    print(np.shape(matrix))
     nj = len(matrix[0,:])
     ni = len(matrix[:,0])
 
@@ -54,6 +51,9 @@ def find_first_non_zero_from_upper_right(matrix):
     return i,j
 
 def get_fields(ts, level):
+    er = []
+    phi = []
+    info = []
     if level == 1:
         er, info = ts.get_field('E_lvl1', 'r', iteration=0, plot=False)
         phi, info = ts.get_field('phi_lvl1', iteration=0, plot=False)
@@ -65,25 +65,16 @@ def get_fields(ts, level):
     return er, phi, info
 
 def get_error_per_lev(ts,level):
-    er = []
-    phi = []
     er, phi, info = get_fields(ts, level)
 
     nj = len(er[0,:])//2
-    ni = len(er[:,0])
     dr = info.r[1] - info.r[0]
-    print(dr)
 
     er_patch = er[:,nj:]
     phi_patch = phi[:,nj:]
     r1 = info.r[nj:]
     patch_left_lower_i, patch_left_lower_j = find_first_non_zero_from_bottom_left(er_patch)
     patch_right_upper_i, patch_right_upper_j = find_first_non_zero_from_upper_right(er_patch)
-    print(patch_left_lower_i, patch_left_lower_j)
-    print(patch_right_upper_i, patch_right_upper_j)
-
-    rmin = r1[patch_left_lower_j]
-    rmax = r1[patch_right_upper_j]
 
     # phi and Er field on the MR patch
     phi_sim = phi_patch[patch_left_lower_i:patch_right_upper_i+1, patch_left_lower_j:patch_right_upper_j+1]
@@ -93,7 +84,6 @@ def get_error_per_lev(ts,level):
     B = 1.0/np.log(0.1/0.5)
     A = -B*np.log(0.5)
 
-    err = 0.0
     errmax_phi = 0.0
     errmax_Er = 0.0
 
