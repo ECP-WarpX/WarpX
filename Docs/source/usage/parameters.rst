@@ -412,7 +412,8 @@ Domain Boundary Conditions
       boundary is PEC and some is insulator. In the isulator portion, the normal fields are extrapolated, the tangential fields
       either set to the specified value or extrapolated. The region that is insulator is specified using an spatially dependent expression with the insulator being in the area where the value of the expression is greater than zero.
       The expressions are given for the low and high boundary on each axis, as listed below. The tangential fields are specified as
-      expressions that can depend on the location and time.
+      expressions that can depend on the location and time. The tangential fields are in two pairs, the electric fields and the
+      magnetic fields. In each pair, if one is specified, the other will be set to zero if not specified.
 
       * ``insulator.area_x_lo(y,z)``: For the lower x (or r) boundary, expression specifying the insulator location
 
