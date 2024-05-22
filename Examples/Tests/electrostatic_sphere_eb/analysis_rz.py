@@ -61,7 +61,6 @@ def get_fields(ts, level):
     elif level==0:
         er, info = ts.get_field('E', 'r', iteration=0, plot=False)
         phi, info = ts.get_field('phi', iteration=0, plot=False)
-        np.shape(er)
 
     return er, phi, info
 
