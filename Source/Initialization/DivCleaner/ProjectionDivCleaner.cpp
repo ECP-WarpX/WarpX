@@ -130,7 +130,7 @@ ProjectionDivCleaner::solve ()
     }
 }
 
-void 
+void
 ProjectionDivCleaner::setSourceFromBfield ()
 {
     // Get WarpX object
@@ -142,9 +142,9 @@ ProjectionDivCleaner::setSourceFromBfield ()
     {
         // Zero out source multifab
         m_source[ilev]->setVal(0.0);
-        
+
         // Grab B-field multifabs at this level
-        std::array<const amrex::MultiFab* const, 3> Bfield = 
+        std::array<const amrex::MultiFab* const, 3> Bfield =
             warpx.getFieldPointerArray(warpx::fields::FieldType::Bfield_aux, ilev);
 
 #ifdef AMREX_USE_OMP
