@@ -66,7 +66,7 @@ public:
     int m_max_semicoarsening_level = 0;
 
 
-    
+
     amrex::Real m_rtol;
     amrex::Real m_atol;
 
