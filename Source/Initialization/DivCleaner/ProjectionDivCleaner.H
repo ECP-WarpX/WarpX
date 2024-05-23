@@ -65,8 +65,10 @@ public:
     int m_max_coarsening_level = 30;
     int m_max_semicoarsening_level = 0;
 
-    amrex::Real m_rtol = 1e-10;
-    amrex::Real m_atol = 0.0;
+
+    
+    amrex::Real m_rtol;
+    amrex::Real m_atol;
 
     // Default Constructor
     ProjectionDivCleaner ();

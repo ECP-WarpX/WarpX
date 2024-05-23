@@ -12,6 +12,16 @@ using namespace amrex;
 
 ProjectionDivCleaner::ProjectionDivCleaner()
 {
+    // Initialize tolerance based on field precision
+    if constexpr (std::is_same<Real, float>::value) {
+        m_rtol = 5e-5;
+        m_atol = 0.0;
+    }
+    else {
+        m_rtol = 1e-10;
+        m_atol = 0.0;
+    }
+
     auto& warpx = WarpX::GetInstance();
     m_levels = warpx.finestLevel() + 1;
 
