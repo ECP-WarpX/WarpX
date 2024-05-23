@@ -270,10 +270,10 @@ set(WarpX_amrex_src ""
     "Local path to AMReX source directory (preferred if set)")
 
 # Git fetcher
-set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
+set(WarpX_amrex_repo "https://github.com/atmyers/amrex/"
     CACHE STRING
     "Repository URI to pull and build AMReX from if(WarpX_amrex_internal)")
-set(WarpX_amrex_branch "7ca419ebb90da60fefc01d8c1816846fff8638a5"
+set(WarpX_amrex_branch "0cf6d9bf4aebc2bf2e9547ec8afc28733d24def4"
     CACHE STRING
     "Repository branch for WarpX_amrex_repo if(WarpX_amrex_internal)")
 
