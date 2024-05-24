@@ -14,11 +14,17 @@ ProjectionDivCleaner::ProjectionDivCleaner()
 {
     // Initialize tolerance based on field precision
     if constexpr (std::is_same<Real, float>::value) {
-        m_rtol = 1e-4;
+        // Error out of divergence cleaner
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+            "Single Precision Divergence Cleaner has convergence problems. "
+            "Please compile with WarpX_PRECISION=DOUBLE"
+        );
+        
+        m_rtol = 1e-6;
         m_atol = 0.0;
     }
     else {
-        m_rtol = 1e-8;
+        m_rtol = 1e-12;
         m_atol = 0.0;
     }
 
@@ -30,7 +36,7 @@ ProjectionDivCleaner::ProjectionDivCleaner()
 
     int ncomps = WarpX::ncomps;
     // auto Bx_point = warpx.getFieldPointer(warpx::fields::FieldType::Bfield_aux, 0, 0);
-    auto const& ng = IntVect( AMREX_D_DECL(1,1,1) );
+    auto const& ng = IntVect( AMREX_D_DECL(2,2,2) );
 
 
     std::array<amrex::Real,3> const& cell_size = warpx.CellSize(0);

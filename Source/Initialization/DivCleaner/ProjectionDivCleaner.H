@@ -57,8 +57,8 @@ public:
     int m_verbose = 2;
     int m_bottom_verbose = 0;
     int m_max_iter = 500;
-    int m_max_fmg_iter = 0;
-    int m_linop_maxorder = 2;
+    int m_max_fmg_iter = 10;
+    int m_linop_maxorder = 3;
     bool m_agglomeration = true;
     bool m_consolidation = true;
     bool m_semicoarsening = false;
