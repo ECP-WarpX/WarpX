@@ -2606,7 +2606,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
                     "Species list and random fraction list do not have equal length"
                 )
         else:
-            random_fraction = [self.random_fraction] * len(species_names)
+            self.random_fraction = [self.random_fraction] * len(species_names)
 
         # check if a different stride is given for each species
         if np.iterable(self.uniform_stride):
@@ -2615,7 +2615,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
                     "Species list and stride list do not have equal length"
                 )
         else:
-            uniform_stride = [self.uniform_stride] * len(species_names)
+            self.uniform_stride = [self.uniform_stride] * len(species_names)
 
 
         if self.mangle_dict is None:
@@ -2626,8 +2626,8 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         for ii, name in enumerate(species_names):
             diag = pywarpx.Bucket.Bucket(self.name + '.' + name,
                                          variables = variables,
-                                         random_fraction = random_fraction[ii],
-                                         uniform_stride = uniform_stride[ii])
+                                         random_fraction = self.random_fraction[ii],
+                                         uniform_stride = self.uniform_stride[ii])
             expression = pywarpx.my_constants.mangle_expression(self.plot_filter_function, self.mangle_dict)
             diag.__setattr__('plot_filter_function(t,x,y,z,ux,uy,uz)', expression)
             self.diagnostic._species_dict[name] = diag
