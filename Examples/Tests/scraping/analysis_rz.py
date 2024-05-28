@@ -61,9 +61,11 @@ n_total = n_remaining[0]
 assert np.all( n_scraped+n_remaining == n_total)
 
 # Check that the particle IDs match between the initial iteration
-# (all particles in the simulation domain) and the finall iteration (all particles scraped)
+# (all particles in the simulation domain) and the finall iteration (particles are either scraped or still in simulation box)
 id_initial, = ts_full.get_particle(['id'], iteration=0)
-id_final, = ts_scraping.get_particle(['id'], iteration=ts_scraping.iterations[0])
+id_final_scrape, = ts_scraping.get_particle(['id'], iteration=ts_scraping.iterations[0])
+id_final_box, = ts_full.get_particle(['id'], iteration=ts_full.iterations[-1])
+id_final = np.concatenate( (id_final_scrape, id_final_box))
 assert np.all( np.sort(id_initial) == np.sort(id_final) ) # Sort because particles may not be in the same order
 
 # Checksum test
