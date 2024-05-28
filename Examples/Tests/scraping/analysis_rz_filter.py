@@ -61,3 +61,9 @@ n_z_leq_zero = np.array([ n_scraped_z_leq_zero(iteration) for iteration in ts_fu
 n_total = n_remaining[0]
 assert np.all( 2*n_scraped+n_remaining == n_total)
 assert np.all( n_z_leq_zero == 0)
+
+# Check that the particle IDs match between the initial iteration
+# (all particles in the simulation domain) and the finall iteration (all particles scraped)
+id_initial, = ts_full.get_particle(['id'], iteration=0)
+id_final, = ts_scraping.get_particle(['id'], iteration=ts_scraping.iterations[0])
+assert np.all( np.sort(id_initial) == np.sort(id_final) ) # Sort because particles may not be in the same order
