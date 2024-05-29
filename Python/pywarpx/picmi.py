@@ -2609,7 +2609,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         random_fraction = {}
         for species_name in species_names:
             if isinstance(self.random_fraction, dict):
-                random_fraction[species_name] = self.random_fraction.get(species_name)
+                random_fraction[species_name] = self.random_fraction.get(species_name, 1)
             else:
                 # use the same random fraction for all species
                 random_fraction[species_name] = self.random_fraction
@@ -2618,7 +2618,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         uniform_stride = {}
         for species_name in species_names:
             if isinstance(self.uniform_stride, dict):
-                uniform_stride[species_name] = self.uniform_stride.get(species_name)
+                uniform_stride[species_name] = self.uniform_stride.get(species_name, 1)
             else:
                 # use the same stride for all species
                 uniform_stride[species_name] = self.uniform_stride
