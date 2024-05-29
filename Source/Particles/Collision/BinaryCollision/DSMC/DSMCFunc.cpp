@@ -7,6 +7,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "DSMCFunc.H"
+#include "Utils/TextMsg.H"
 
 /**
  * \brief Constructor of the DSMCFunc class

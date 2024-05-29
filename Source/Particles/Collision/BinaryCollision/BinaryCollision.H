@@ -75,7 +75,6 @@ class BinaryCollision final
     using ParticleTileType = WarpXParticleContainer::ParticleTileType;
     using ParticleTileDataType = ParticleTileType::ParticleTileDataType;
     using ParticleBins = amrex::DenseBins<ParticleTileDataType>;
-    using SoaData_type = WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
     using index_type = ParticleBins::index_type;
 
 public:
@@ -298,7 +297,6 @@ public:
             auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
 #endif
 
-
             /*
               The following calculations are only required when creating product particles
             */
@@ -431,7 +429,7 @@ public:
             // Create the new product particles and define their initial values
             // num_added: how many particles of each product species have been created
             const amrex::Vector<int> num_added = m_copy_transform_functor(n_total_pairs,
-                                                    soa_1, soa_1,
+                                                    ptile_1, ptile_1,
                                                     product_species_vector,
                                                     tile_products_data,
                                                     m1, m1,
@@ -648,7 +646,7 @@ public:
             // Create the new product particles and define their initial values
             // num_added: how many particles of each product species have been created
             const amrex::Vector<int> num_added = m_copy_transform_functor(n_total_pairs,
-                                                    soa_1, soa_2,
+                                                    ptile_1, ptile_2,
                                                     product_species_vector,
                                                     tile_products_data,
                                                     m1, m2,
