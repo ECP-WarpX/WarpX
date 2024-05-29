@@ -144,8 +144,6 @@ amrex::Vector<FieldBoundaryType> WarpX::field_boundary_hi(AMREX_SPACEDIM,FieldBo
 amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_lo(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
 amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_hi(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
 
-bool WarpX::do_current_centering = false;
-
 int WarpX::n_rz_azimuthal_modes = 1;
 int WarpX::ncomps = 1;
 
@@ -213,12 +211,6 @@ int WarpX::n_current_deposition_buffer = -1;
 
 short WarpX::grid_type;
 amrex::IntVect m_rho_nodal_flag;
-
-#ifdef AMREX_USE_GPU
-bool WarpX::do_device_synchronize = true;
-#else
-bool WarpX::do_device_synchronize = false;
-#endif
 
 WarpX* WarpX::m_instance = nullptr;
 
@@ -685,8 +677,6 @@ WarpX::ReadParameters ()
                                          "Subcycling method 1 only works for 2 levels.");
 
         ReadBoostedFrameParameters(gamma_boost, beta_boost, boost_direction);
-
-        pp_warpx.query("do_device_synchronize", do_device_synchronize);
 
         // queryWithParser returns 1 if argument zmax_plasma_to_compute_max_step is
         // specified by the user, 0 otherwise.

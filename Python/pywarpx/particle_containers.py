@@ -42,17 +42,18 @@ class ParticleContainerWrapper(object):
             The type of species for which particles will be added
 
         x, y, z          : arrays or scalars
-            The particle positions (default = 0.)
+            The particle positions (m) (default = 0.)
 
         ux, uy, uz       : arrays or scalars
-            The particle momenta (default = 0.)
+            The particle proper velocities (m/s) (default = 0.)
 
         w                : array or scalars
             Particle weights (default = 0.)
 
         unique_particles : bool
-            Whether the particles are unique or duplicated on several processes
-            (default = True)
+            True means the added particles are duplicated by each process;
+            False means the number of added particles is independent of
+            the number of processes (default = True)
 
         kwargs           : dict
             Containing an entry for all the extra particle attribute arrays. If

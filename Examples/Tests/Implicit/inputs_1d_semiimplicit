@@ -79,8 +79,8 @@ diagnostics.diags_names = diag1
 diag1.intervals = 100
 diag1.diag_type = Full
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho divE
-diag1.electrons.variables = w ux uy uz
-diag1.protons.variables = w ux uy uz
+diag1.electrons.variables = z w ux uy uz
+diag1.protons.variables = z w ux uy uz
 
 warpx.reduced_diags_names = particle_energy field_energy
 particle_energy.type = ParticleEnergy
