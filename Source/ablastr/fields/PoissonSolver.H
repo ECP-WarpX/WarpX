@@ -116,7 +116,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 {
     using namespace amrex::literals;
 
-    ABLASTR_PROFILE("computePhi", false);
+    ABLASTR_PROFILE("computePhi");
 
     if (!rel_ref_ratio.has_value()) {
         ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(rho.size() == 1u,
