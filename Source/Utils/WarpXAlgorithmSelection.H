@@ -175,7 +175,8 @@ enum struct ParticleBoundaryType {
         Open = 1,          //!< particles cross domain boundary leave with damped j
         Reflecting = 2,     //!< particles are reflected
         Periodic = 3,      //!< particles are introduced from the periodic boundary
-        Thermal = 4
+        Thermal = 4,
+        None = 5           //!< For r=0 boundary with RZ simulations
 };
 
 /** MPI reductions

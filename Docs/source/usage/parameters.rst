@@ -437,6 +437,10 @@ Domain Boundary Conditions
       The standard deviation for these distributions should be provided for each species using
       ``boundary.<species>.u_th``. The same standard deviation is used to sample all components.
 
+    * ``None``: No boundary conditions are applied to the particles.
+      When using RZ, this option must be used for the lower radial boundary, the first value of ``boundary.particle_lo``.
+      This should not be used in any other cases.
+
 * ``boundary.reflect_all_velocities`` (`bool`) optional (default `false`)
     For a reflecting boundary condition, this flags whether the sign of only the normal velocity is changed or all velocities.
 
