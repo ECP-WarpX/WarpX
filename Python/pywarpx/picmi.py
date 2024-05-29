@@ -2497,11 +2497,17 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
     warpx_file_min_digits: integer, optional
         Minimum number of digits for the time step number in the file name
 
-    warpx_random_fraction: float, optional
-        Random fraction of particles to include in the diagnostic
+    warpx_random_fraction: float or dict, optional
+        Random fraction of particles to include in the diagnostic. If a float
+        is given the same fraction will be used for all species, if a dictionary
+        is given the keys should be species names with the value specifying
+        the random fraction for that species.
 
-    warpx_uniform_stride: integer, optional
-        Stride to down select to the particles to include in the diagnostic
+    warpx_uniform_stride: integer or dict, optional
+        Stride to down select to the particles to include in the diagnostic.
+        If an integer is given the same stride will be used for all species, if
+        a dictionary is given the keys should be species names with the value
+        specifying the stride for that species.
 
     warpx_plot_filter_function: string, optional
         Analytic expression to down select the particles to in the diagnostic
@@ -2599,23 +2605,23 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         else:
             species_names = [self.species.name]
 
-        # check if a different random fraction is given for each species
-        if np.iterable(self.random_fraction):
-            if len(self.random_fraction) != len(species_names):
-                raise AttributeError(
-                    "Species list and random fraction list do not have equal length"
-                )
-        else:
-            self.random_fraction = [self.random_fraction] * len(species_names)
+        # check if random fraction is specified and whether a value is given for each species
+        random_fraction = {}
+        for species_name in species_names:
+            if isinstance(self.random_fraction, dict):
+                random_fraction[species_name] = self.random_fraction.get(species_name)
+            else:
+                # use the same random fraction for all species
+                random_fraction[species_name] = self.random_fraction
 
-        # check if a different stride is given for each species
-        if np.iterable(self.uniform_stride):
-            if len(self.uniform_stride) != len(species_names):
-                raise AttributeError(
-                    "Species list and stride list do not have equal length"
-                )
-        else:
-            self.uniform_stride = [self.uniform_stride] * len(species_names)
+        # check if uniform stride is specified and whether a value is given for each species
+        uniform_stride = {}
+        for species_name in species_names:
+            if isinstance(self.uniform_stride, dict):
+                uniform_stride[species_name] = self.uniform_stride.get(species_name)
+            else:
+                # use the same stride for all species
+                uniform_stride[species_name] = self.uniform_stride
 
 
         if self.mangle_dict is None:
@@ -2623,11 +2629,11 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
             # is used multiple times
             self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
 
-        for ii, name in enumerate(species_names):
+        for name in species_names:
             diag = pywarpx.Bucket.Bucket(self.name + '.' + name,
                                          variables = variables,
-                                         random_fraction = self.random_fraction[ii],
-                                         uniform_stride = self.uniform_stride[ii])
+                                         random_fraction = random_fraction[name],
+                                         uniform_stride = uniform_stride[name])
             expression = pywarpx.my_constants.mangle_expression(self.plot_filter_function, self.mangle_dict)
             diag.__setattr__('plot_filter_function(t,x,y,z,ux,uy,uz)', expression)
             self.diagnostic._species_dict[name] = diag
