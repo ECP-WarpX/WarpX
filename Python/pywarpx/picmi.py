@@ -2605,24 +2605,21 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         else:
             species_names = [self.species.name]
 
-        # check if random fraction is specified and whether a value is given for each species
+        # check if random fraction is specified and whether a value is given per species
         random_fraction = {}
-        for species_name in species_names:
-            if isinstance(self.random_fraction, dict):
-                random_fraction[species_name] = self.random_fraction.get(species_name, 1)
-            else:
-                # use the same random fraction for all species
-                random_fraction[species_name] = self.random_fraction
+        random_fraction_default = self.random_fraction
+        if isinstance(self.random_fraction, dict):
+            random_fraction_default = 1.0
+            for key, val in self.random_fraction.items():
+                random_fraction[key.name] = val
 
-        # check if uniform stride is specified and whether a value is given for each species
+        # check if uniform stride is specified and whether a value is given per species
         uniform_stride = {}
-        for species_name in species_names:
-            if isinstance(self.uniform_stride, dict):
-                uniform_stride[species_name] = self.uniform_stride.get(species_name, 1)
-            else:
-                # use the same stride for all species
-                uniform_stride[species_name] = self.uniform_stride
-
+        uniform_stride_default = self.uniform_stride
+        if isinstance(self.uniform_stride, dict):
+            uniform_stride_default = 1
+            for key, val in self.uniform_stride.items():
+                uniform_stride[key.name] = val
 
         if self.mangle_dict is None:
             # Only do this once so that the same variables are used in this distribution
@@ -2632,8 +2629,8 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         for name in species_names:
             diag = pywarpx.Bucket.Bucket(self.name + '.' + name,
                                          variables = variables,
-                                         random_fraction = random_fraction[name],
-                                         uniform_stride = uniform_stride[name])
+                                         random_fraction = random_fraction.get(name, random_fraction_default),
+                                         uniform_stride = uniform_stride.get(name, uniform_stride_default))
             expression = pywarpx.my_constants.mangle_expression(self.plot_filter_function, self.mangle_dict)
             diag.__setattr__('plot_filter_function(t,x,y,z,ux,uy,uz)', expression)
             self.diagnostic._species_dict[name] = diag
