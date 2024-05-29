@@ -2500,13 +2500,13 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
     warpx_random_fraction: float or dict, optional
         Random fraction of particles to include in the diagnostic. If a float
         is given the same fraction will be used for all species, if a dictionary
-        is given the keys should be species names with the value specifying
-        the random fraction for that species.
+        is given the keys should be species with the value specifying the random
+        fraction for that species.
 
     warpx_uniform_stride: integer or dict, optional
         Stride to down select to the particles to include in the diagnostic.
         If an integer is given the same stride will be used for all species, if
-        a dictionary is given the keys should be species names with the value
+        a dictionary is given the keys should be species with the value
         specifying the stride for that species.
 
     warpx_plot_filter_function: string, optional
