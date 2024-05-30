@@ -249,7 +249,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         m_field_factory[lev] = std::make_unique<FArrayBoxFactory>();
 #endif
 
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
         if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
             if (spectral_solver_fp[lev] != nullptr) {
                 // Get the cell-centered box
@@ -313,7 +313,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
             RemakeMultiFab(F_cp[lev], true);
             RemakeMultiFab(rho_cp[lev], false);
 
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
             if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
                 if (spectral_solver_cp[lev] != nullptr) {
                     BoxArray cba = ba;
