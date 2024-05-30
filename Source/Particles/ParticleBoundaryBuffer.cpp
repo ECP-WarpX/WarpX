@@ -160,6 +160,9 @@ struct FindEmbeddedBoundaryIntersection {
 #else
         amrex::ignore_unused(x_temp, y_temp, z_temp,normal);
 #endif
+
+        // flip id to positive in destination
+        amrex::ParticleIDWrapper{dst.m_idcpu[dst_i]}.make_valid();
     }
 };
 #endif
@@ -199,6 +202,9 @@ struct CopyAndTimestamp {
         dst.m_runtime_rdata[m_normal_index][dst_i]= n[0];
         dst.m_runtime_rdata[m_normal_index+1][dst_i]= n[1];
         dst.m_runtime_rdata[m_normal_index+2][dst_i]= n[2];
+
+        // flip id to positive in destination
+        amrex::ParticleIDWrapper{dst.m_idcpu[dst_i]}.make_valid();
     }
 };
 

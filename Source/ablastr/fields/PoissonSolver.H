@@ -15,7 +15,7 @@
 #include <ablastr/fields/Interpolate.H>
 #include <ablastr/profiler/ProfilerWrapper.H>
 
-#if defined(WARPX_USE_PSATD) && defined(WARPX_DIM_3D)
+#if defined(WARPX_USE_FFT) && defined(WARPX_DIM_3D)
 #include <ablastr/fields/IntegratedGreenFunctionSolver.H>
 #endif
 
@@ -116,7 +116,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 {
     using namespace amrex::literals;
 
-    ABLASTR_PROFILE("computePhi", false);
+    ABLASTR_PROFILE("computePhi");
 
     if (!rel_ref_ratio.has_value()) {
         ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(rho.size() == 1u,
@@ -160,7 +160,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
                 {{ beta[0], beta[1], beta[2] }};
 #endif
 
-#if (defined(WARPX_USE_PSATD)  && defined(WARPX_DIM_3D))
+#if (defined(WARPX_USE_FFT)  && defined(WARPX_DIM_3D))
         // Use the Integrated Green Function solver (FFT) on the coarsest level if it was selected
         if(!is_solver_multigrid && lev==0){
             amrex::Array<amrex::Real,AMREX_SPACEDIM> const dx_igf
