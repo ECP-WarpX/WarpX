@@ -117,62 +117,61 @@ WarpX::SaveParticlesAtImplicitStepStart ( )
     // time-centered position and velocity needed for the implicit stencil.
     // Thus, we need to save this information.
 
-    for (int lev = 0; lev <= finest_level; ++lev) {
-
     for (auto const& pc : *mypc) {
 
+        for (int lev = 0; lev <= finest_level; ++lev) {
 #ifdef AMREX_USE_OMP
 #pragma omp parallel
 #endif
-    {
+            {
 
-    auto particle_comps = pc->getParticleComps();
+            auto particle_comps = pc->getParticleComps();
 
-    for (WarpXParIter pti(*pc, lev); pti.isValid(); ++pti) {
+            for (WarpXParIter pti(*pc, lev); pti.isValid(); ++pti) {
 
-        const auto getPosition = GetParticlePosition(pti);
+                const auto getPosition = GetParticlePosition(pti);
 
-        auto& attribs = pti.GetAttribs();
-        amrex::ParticleReal* const AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
-        amrex::ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
-        amrex::ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
-
-#if (AMREX_SPACEDIM >= 2)
-        amrex::ParticleReal* x_n = pti.GetAttribs(particle_comps["x_n"]).dataPtr();
-#endif
-#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
-        amrex::ParticleReal* y_n = pti.GetAttribs(particle_comps["y_n"]).dataPtr();
-#endif
-        amrex::ParticleReal* z_n = pti.GetAttribs(particle_comps["z_n"]).dataPtr();
-        amrex::ParticleReal* ux_n = pti.GetAttribs(particle_comps["ux_n"]).dataPtr();
-        amrex::ParticleReal* uy_n = pti.GetAttribs(particle_comps["uy_n"]).dataPtr();
-        amrex::ParticleReal* uz_n = pti.GetAttribs(particle_comps["uz_n"]).dataPtr();
-
-        const long np = pti.numParticles();
-
-        amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
-        {
-            amrex::ParticleReal xp, yp, zp;
-            getPosition(ip, xp, yp, zp);
+                auto& attribs = pti.GetAttribs();
+                amrex::ParticleReal* const AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
+                amrex::ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
+                amrex::ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
 
 #if (AMREX_SPACEDIM >= 2)
-            x_n[ip] = xp;
+                amrex::ParticleReal* x_n = pti.GetAttribs(particle_comps["x_n"]).dataPtr();
 #endif
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
-            y_n[ip] = yp;
+                amrex::ParticleReal* y_n = pti.GetAttribs(particle_comps["y_n"]).dataPtr();
 #endif
-            z_n[ip] = zp;
+                amrex::ParticleReal* z_n = pti.GetAttribs(particle_comps["z_n"]).dataPtr();
+                amrex::ParticleReal* ux_n = pti.GetAttribs(particle_comps["ux_n"]).dataPtr();
+                amrex::ParticleReal* uy_n = pti.GetAttribs(particle_comps["uy_n"]).dataPtr();
+                amrex::ParticleReal* uz_n = pti.GetAttribs(particle_comps["uz_n"]).dataPtr();
 
-            ux_n[ip] = ux[ip];
-            uy_n[ip] = uy[ip];
-            uz_n[ip] = uz[ip];
+                const long np = pti.numParticles();
 
-        });
+                amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
+                {
+                    amrex::ParticleReal xp, yp, zp;
+                    getPosition(ip, xp, yp, zp);
 
-    }
-    }
+#if (AMREX_SPACEDIM >= 2)
+                    x_n[ip] = xp;
+#endif
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+                    y_n[ip] = yp;
+#endif
+                    z_n[ip] = zp;
 
-    }
+                    ux_n[ip] = ux[ip];
+                    uy_n[ip] = uy[ip];
+                    uz_n[ip] = uz[ip];
+
+                });
+
+            }
+            }
+
+        }
 
     }
 
@@ -188,64 +187,63 @@ WarpX::FinishImplicitParticleUpdate ()
     // step we need to transform the particle postion and momentum from
     // time n+1/2 to time n+1. This is done here.
 
-    for (int lev = 0; lev <= finest_level; ++lev) {
-
     for (auto const& pc : *mypc) {
 
+        for (int lev = 0; lev <= finest_level; ++lev) {
 #ifdef AMREX_USE_OMP
 #pragma omp parallel
 #endif
-    {
+            {
 
-    auto particle_comps = pc->getParticleComps();
+            auto particle_comps = pc->getParticleComps();
 
-    for (WarpXParIter pti(*pc, lev); pti.isValid(); ++pti) {
+            for (WarpXParIter pti(*pc, lev); pti.isValid(); ++pti) {
 
-        const auto getPosition = GetParticlePosition(pti);
-        const auto setPosition = SetParticlePosition(pti);
+                const auto getPosition = GetParticlePosition(pti);
+                const auto setPosition = SetParticlePosition(pti);
 
-        auto& attribs = pti.GetAttribs();
-        amrex::ParticleReal* const AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
-        amrex::ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
-        amrex::ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
-
-#if (AMREX_SPACEDIM >= 2)
-        amrex::ParticleReal* x_n = pti.GetAttribs(particle_comps["x_n"]).dataPtr();
-#endif
-#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
-        amrex::ParticleReal* y_n = pti.GetAttribs(particle_comps["y_n"]).dataPtr();
-#endif
-        amrex::ParticleReal* z_n = pti.GetAttribs(particle_comps["z_n"]).dataPtr();
-        amrex::ParticleReal* ux_n = pti.GetAttribs(particle_comps["ux_n"]).dataPtr();
-        amrex::ParticleReal* uy_n = pti.GetAttribs(particle_comps["uy_n"]).dataPtr();
-        amrex::ParticleReal* uz_n = pti.GetAttribs(particle_comps["uz_n"]).dataPtr();
-
-        const long np = pti.numParticles();
-
-        amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
-        {
-            amrex::ParticleReal xp, yp, zp;
-            getPosition(ip, xp, yp, zp);
+                auto& attribs = pti.GetAttribs();
+                amrex::ParticleReal* const AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
+                amrex::ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
+                amrex::ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
 
 #if (AMREX_SPACEDIM >= 2)
-            xp = 2._rt*xp - x_n[ip];
+                amrex::ParticleReal* x_n = pti.GetAttribs(particle_comps["x_n"]).dataPtr();
 #endif
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
-            yp = 2._rt*yp - y_n[ip];
+                amrex::ParticleReal* y_n = pti.GetAttribs(particle_comps["y_n"]).dataPtr();
 #endif
-            zp = 2._rt*zp - z_n[ip];
+                amrex::ParticleReal* z_n = pti.GetAttribs(particle_comps["z_n"]).dataPtr();
+                amrex::ParticleReal* ux_n = pti.GetAttribs(particle_comps["ux_n"]).dataPtr();
+                amrex::ParticleReal* uy_n = pti.GetAttribs(particle_comps["uy_n"]).dataPtr();
+                amrex::ParticleReal* uz_n = pti.GetAttribs(particle_comps["uz_n"]).dataPtr();
 
-            ux[ip] = 2._rt*ux[ip] - ux_n[ip];
-            uy[ip] = 2._rt*uy[ip] - uy_n[ip];
-            uz[ip] = 2._rt*uz[ip] - uz_n[ip];
+                const long np = pti.numParticles();
 
-            setPosition(ip, xp, yp, zp);
-        });
+                amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
+                {
+                    amrex::ParticleReal xp, yp, zp;
+                    getPosition(ip, xp, yp, zp);
 
-    }
-    }
+#if (AMREX_SPACEDIM >= 2)
+                    xp = 2._rt*xp - x_n[ip];
+#endif
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+                    yp = 2._rt*yp - y_n[ip];
+#endif
+                    zp = 2._rt*zp - z_n[ip];
 
-    }
+                    ux[ip] = 2._rt*ux[ip] - ux_n[ip];
+                    uy[ip] = 2._rt*uy[ip] - uy_n[ip];
+                    uz[ip] = 2._rt*uz[ip] - uz_n[ip];
+
+                    setPosition(ip, xp, yp, zp);
+                });
+
+            }
+            }
+
+        }
 
     }
 
