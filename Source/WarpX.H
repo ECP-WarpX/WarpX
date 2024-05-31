@@ -27,7 +27,7 @@
 #include "Fluids/MultiFluidContainer_fwd.H"
 #include "Fluids/WarpXFluidContainer_fwd.H"
 
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ_fwd.H"
 #       include "BoundaryConditions/PML_RZ_fwd.H"
@@ -509,7 +509,7 @@ public:
     [[nodiscard]] bool DoPML () const {return do_pml;}
     [[nodiscard]] bool DoFluidSpecies () const {return do_fluid_species;}
 
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
     const PML_RZ* getPMLRZ() {return pml_rz[0].get();}
 #endif
 
@@ -747,7 +747,7 @@ public:
     static bool isAnyParticleBoundaryThermal();
 
     PML* GetPML (int lev);
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
     PML_RZ* GetPML_RZ (int lev);
 #endif
 
@@ -1167,7 +1167,7 @@ public:
      */
     void PSATDSubtractCurrentPartialSumsAvg ();
 
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
 
 #   ifdef WARPX_DIM_RZ
         SpectralSolverRZ&
@@ -1422,7 +1422,7 @@ private:
                         const amrex::IntVect& ngRho, const amrex::IntVect& ngF,
                         const amrex::IntVect& ngG, bool aux_is_nodal);
 
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
 #   ifdef WARPX_DIM_RZ
     void AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSolverRZ>>& spectral_solver,
                                      int lev,
@@ -1591,7 +1591,7 @@ private:
     amrex::Vector<amrex::IntVect> do_pml_Lo;
     amrex::Vector<amrex::IntVect> do_pml_Hi;
     amrex::Vector<std::unique_ptr<PML> > pml;
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
     amrex::Vector<std::unique_ptr<PML_RZ> > pml_rz;
 #endif
     amrex::Real v_particle_pml;
@@ -1766,7 +1766,7 @@ private:
 
     void PushPSATD ();
 
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
 
     /**
      * \brief Forward FFT of E,B on all mesh refinement levels

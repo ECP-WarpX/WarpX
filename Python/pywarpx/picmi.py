@@ -2497,11 +2497,17 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
     warpx_file_min_digits: integer, optional
         Minimum number of digits for the time step number in the file name
 
-    warpx_random_fraction: float, optional
-        Random fraction of particles to include in the diagnostic
+    warpx_random_fraction: float or dict, optional
+        Random fraction of particles to include in the diagnostic. If a float
+        is given the same fraction will be used for all species, if a dictionary
+        is given the keys should be species with the value specifying the random
+        fraction for that species.
 
-    warpx_uniform_stride: integer, optional
-        Stride to down select to the particles to include in the diagnostic
+    warpx_uniform_stride: integer or dict, optional
+        Stride to down select to the particles to include in the diagnostic.
+        If an integer is given the same stride will be used for all species, if
+        a dictionary is given the keys should be species with the value
+        specifying the stride for that species.
 
     warpx_plot_filter_function: string, optional
         Analytic expression to down select the particles to in the diagnostic
@@ -2599,6 +2605,22 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         else:
             species_names = [self.species.name]
 
+        # check if random fraction is specified and whether a value is given per species
+        random_fraction = {}
+        random_fraction_default = self.random_fraction
+        if isinstance(self.random_fraction, dict):
+            random_fraction_default = 1.0
+            for key, val in self.random_fraction.items():
+                random_fraction[key.name] = val
+
+        # check if uniform stride is specified and whether a value is given per species
+        uniform_stride = {}
+        uniform_stride_default = self.uniform_stride
+        if isinstance(self.uniform_stride, dict):
+            uniform_stride_default = 1
+            for key, val in self.uniform_stride.items():
+                uniform_stride[key.name] = val
+
         if self.mangle_dict is None:
             # Only do this once so that the same variables are used in this distribution
             # is used multiple times
@@ -2607,8 +2629,8 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         for name in species_names:
             diag = pywarpx.Bucket.Bucket(self.name + '.' + name,
                                          variables = variables,
-                                         random_fraction = self.random_fraction,
-                                         uniform_stride = self.uniform_stride)
+                                         random_fraction = random_fraction.get(name, random_fraction_default),
+                                         uniform_stride = uniform_stride.get(name, uniform_stride_default))
             expression = pywarpx.my_constants.mangle_expression(self.plot_filter_function, self.mangle_dict)
             diag.__setattr__('plot_filter_function(t,x,y,z,ux,uy,uz)', expression)
             self.diagnostic._species_dict[name] = diag

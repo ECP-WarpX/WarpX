@@ -22,6 +22,8 @@
 #include <AMReX_Array.H>
 #include <AMReX_REAL.H>
 
+#include <optional>
+
 /**
  * \brief This class contains the parameters needed to evaluate hybrid field
  * solutions (kinetic ions with fluid electrons).
