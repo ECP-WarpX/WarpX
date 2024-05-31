@@ -112,7 +112,12 @@ WarpX::ApplyMagneticFieldBCs()
 void
 WarpX::SaveParticlesAtImplicitStepStart ( )
 {
-    const int lev = 0;
+    // The implicit advance routines require the particle velocity
+    // and position values at the beginning of the step to compute the
+    // time-centered position and velocity needed for the implicit stencil.
+    // Thus, we need to save this information.
+
+    for (int lev = 0; lev <= finest_level; ++lev) {
 
     for (auto const& pc : *mypc) {
 
@@ -169,14 +174,21 @@ WarpX::SaveParticlesAtImplicitStepStart ( )
 
     }
 
+    }
+
 }
 
 void
 WarpX::FinishImplicitParticleUpdate ()
 {
     using namespace amrex::literals;
+    
+    // The implicit advance routines use the time-centered position and
+    // momentum to advance the system in time. Thus, at the end of the
+    // step we need to transform the particle postion and momentum from
+    // time n+1/2 to time n+1. This is done here.
 
-    const int lev = 0;
+    for (int lev = 0; lev <= finest_level; ++lev) {
 
     for (auto const& pc : *mypc) {
 
@@ -235,6 +247,8 @@ WarpX::FinishImplicitParticleUpdate ()
 
     }
 
+    }
+
 }
 
 void
@@ -243,6 +257,10 @@ WarpX::FinishImplicitField( amrex::Vector<std::array< std::unique_ptr<amrex::Mul
                       amrex::Real theta )
 {
     using namespace amrex::literals;
+
+    // The implicit field advance routines use the fields at time n+theta
+    // with 0.5 <= theta <= 1.0. Thus, at the end of the step we need to
+    // transform the fields from time n+theta to time n+1. This is done here.
 
     for (int lev = 0; lev <= finest_level; ++lev) {
 
@@ -312,7 +330,10 @@ WarpX::ImplicitComputeRHSE (int lev, PatchType patch_type, amrex::Real a_dt, War
     a_Erhs_vec.getVec()[lev][1]->setVal(0.0);
     a_Erhs_vec.getVec()[lev][2]->setVal(0.0);
 
-    // Compute Efield_rhs in regular cells by calling EvolveE
+    // Compute Efield_rhs in regular cells by calling EvolveE. Because
+    // a_Erhs_vec is set to zero above, calling EvolveE below results in
+    // a_Erhs_vec storing only the RHS of the update equation. I.e.,
+    // c^2*dt*(curl(B^{n+theta} - mu0*J^{n+1/2})
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->EvolveE( a_Erhs_vec.getVec()[lev], Bfield_fp[lev],
                                         current_fp[lev], m_edge_lengths[lev],
