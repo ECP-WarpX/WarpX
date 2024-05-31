@@ -225,8 +225,8 @@ private:
     static constexpr int m_ncomp = 1;
     static constexpr int m_num_amr_levels = 1;
 
-    static bool m_dot_mask_defined;
-    static amrex::Vector<std::array<std::unique_ptr<amrex::iMultiFab>,3>> m_dotMask;
+    inline static bool m_dot_mask_defined = false;
+    inline static amrex::Vector<std::array<std::unique_ptr<amrex::iMultiFab>,3>> m_dotMask;
 
 };
 
