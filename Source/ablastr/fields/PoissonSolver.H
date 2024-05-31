@@ -165,7 +165,12 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         "Must compile with -DWarpX_PSATD=ON to use the FFT solver!");
 #endif
 
-#if (defined(WARPX_USE_PSATD)  && defined(WARPX_DIM_3D))
+#if !defined(WARPX_DIM_3D)
+        ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE( !is_solver_igf_on_lev0,
+        "The FFT Poisson solver is currently only implemented for 3D!");
+#endif
+
+#if (defined(WARPX_USE_PSATD) && defined(WARPX_DIM_3D))
         // Use the Integrated Green Function solver (FFT) on the coarsest level if it was selected
         if(is_solver_igf_on_lev0 && lev==0){
             amrex::Array<amrex::Real,AMREX_SPACEDIM> const dx_igf
