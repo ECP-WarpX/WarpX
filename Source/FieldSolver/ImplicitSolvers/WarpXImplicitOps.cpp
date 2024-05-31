@@ -182,7 +182,7 @@ void
 WarpX::FinishImplicitParticleUpdate ()
 {
     using namespace amrex::literals;
-    
+
     // The implicit advance routines use the time-centered position and
     // momentum to advance the system in time. Thus, at the end of the
     // step we need to transform the particle postion and momentum from
