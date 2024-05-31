@@ -11,7 +11,7 @@
 #include "BoundaryConditions/PML.H"
 #include "Evolve/WarpXDtType.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
-#if defined(WARPX_USE_PSATD)
+#if defined(WARPX_USE_FFT)
 #   include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
@@ -54,7 +54,7 @@
 
 using namespace amrex;
 
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
 namespace {
 
     void ForwardTransformVect (
@@ -645,12 +645,12 @@ WarpX::PSATDScaleAverageFields (const amrex::Real scale_factor)
         }
     }
 }
-#endif // WARPX_USE_PSATD
+#endif // WARPX_USE_FFT
 
 void
 WarpX::PushPSATD ()
 {
-#ifndef WARPX_USE_PSATD
+#ifndef WARPX_USE_FFT
     WARPX_ABORT_WITH_MESSAGE(
         "PushFieldsEM: PSATD solver selected but not built");
 #else

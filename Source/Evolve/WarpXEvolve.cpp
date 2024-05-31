@@ -15,7 +15,7 @@
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "Evolve/WarpXDtType.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
 #   else
@@ -601,7 +601,7 @@ void WarpX::SyncCurrentAndRho ()
 void
 WarpX::OneStep_multiJ (const amrex::Real cur_time)
 {
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD,
@@ -764,7 +764,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     amrex::ignore_unused(cur_time);
     WARPX_ABORT_WITH_MESSAGE(
         "multi-J algorithm not implemented for FDTD");
-#endif // WARPX_USE_PSATD
+#endif // WARPX_USE_FFT
 }
 
 /* /brief Perform one PIC iteration, with subcycling
