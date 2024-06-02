@@ -7,5 +7,6 @@ ifeq ($(USE_FFT),TRUE)
 endif
 include $(WARPX_HOME)/Source/FieldSolver/FiniteDifferenceSolver/Make.package
 include $(WARPX_HOME)/Source/FieldSolver/MagnetostaticSolver/Make.package
+include $(WARPX_HOME)/Source/FieldSolver/ImplicitSolvers/Make.package
 
 VPATH_LOCATIONS   += $(WARPX_HOME)/Source/FieldSolver

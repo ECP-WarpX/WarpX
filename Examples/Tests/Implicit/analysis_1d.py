@@ -31,7 +31,7 @@ max_delta_E = np.abs(delta_E).max()
 
 if re.match('SemiImplicitPicard_1d', fn):
     tolerance_rel = 2.5e-5
-elif re.match('ImplicitPicard_1d', fn):
+elif re.match('ThetaImplicitPicard_1d', fn):
     # This case should have near machine precision conservation of energy
     tolerance_rel = 1.e-14
 
