@@ -19,7 +19,7 @@
 #include <array>
 #include <memory>
 
-#if WARPX_USE_PSATD
+#if WARPX_USE_FFT
 
 /*
  * \brief Class that updates the field in spectral space
@@ -115,5 +115,5 @@ class PsatdAlgorithmPml : public SpectralBaseAlgorithm
         bool m_is_galilean;
 };
 
-#endif // WARPX_USE_PSATD
+#endif // WARPX_USE_FFT
 #endif // WARPX_PSATD_ALGORITHM_PML_H_

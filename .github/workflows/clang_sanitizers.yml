@@ -45,6 +45,7 @@ jobs:
           -DCMAKE_BUILD_TYPE=RelWithDebInfo \
           -DWarpX_DIMS="RZ;1;2;3"           \
           -DWarpX_PSATD=ON                  \
+          -DWarpX_FFT=ON                    \
           -DWarpX_QED=ON                    \
           -DWarpX_QED_TABLE_GEN=ON          \
           -DWarpX_OPENPMD=ON                \
@@ -101,7 +102,7 @@ jobs:
           -DCMAKE_VERBOSE_MAKEFILE=ON       \
           -DCMAKE_BUILD_TYPE=RelWithDebInfo \
           -DWarpX_DIMS="RZ;1;2;3"           \
-          -DWarpX_PSATD=ON                  \
+          -DWarpX_FFT=ON                    \
           -DWarpX_QED=ON                    \
           -DWarpX_QED_TABLE_GEN=ON          \
           -DWarpX_OPENPMD=ON                \

@@ -14,7 +14,7 @@
 #include <FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H>
 #include <FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H>
 #include <FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H>
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
 #   include <FieldSolver/SpectralSolver/SpectralKSpace.H>
 #   ifdef WARPX_DIM_RZ
 #       include <FieldSolver/SpectralSolver/SpectralSolverRZ.H>
