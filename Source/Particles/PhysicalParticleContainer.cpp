@@ -1003,6 +1003,19 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
     const bool radially_weighted = plasma_injector.radially_weighted;
 #endif
 
+
+    // User-defined integer and real attributes: prepare parsers
+    const auto n_user_int_attribs = static_cast<int>(m_user_int_attribs.size());
+    const auto n_user_real_attribs = static_cast<int>(m_user_real_attribs.size());
+    amrex::Gpu::PinnedVector< amrex::ParserExecutor<7> > user_int_attrib_parserexec_pinned(n_user_int_attribs);
+    amrex::Gpu::PinnedVector< amrex::ParserExecutor<7> > user_real_attrib_parserexec_pinned(n_user_real_attribs);
+    for (int ia = 0; ia < n_user_int_attribs; ++ia) {
+        user_int_attrib_parserexec_pinned[ia] = m_user_int_attrib_parser[ia]->compile<7>();
+    }
+    for (int ia = 0; ia < n_user_real_attribs; ++ia) {
+        user_real_attrib_parserexec_pinned[ia] = m_user_real_attrib_parser[ia]->compile<7>();
+    }
+
     MFItInfo info;
     if (do_tiling && Gpu::notInLaunchRegion()) {
         info.EnableTiling(tile_size);
@@ -1123,18 +1136,6 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
         // Max number of new particles. All of them are created,
         // and invalid ones are then discarded
         const amrex::Long max_new_particles = Scan::ExclusiveSum(counts.size(), counts.data(), offset.data());
-
-        // User-defined integer and real attributes: prepare parsers
-        const auto n_user_int_attribs = static_cast<int>(m_user_int_attribs.size());
-        const auto n_user_real_attribs = static_cast<int>(m_user_real_attribs.size());
-        amrex::Gpu::PinnedVector< amrex::ParserExecutor<7> > user_int_attrib_parserexec_pinned(n_user_int_attribs);
-        amrex::Gpu::PinnedVector< amrex::ParserExecutor<7> > user_real_attrib_parserexec_pinned(n_user_real_attribs);
-        for (int ia = 0; ia < n_user_int_attribs; ++ia) {
-            user_int_attrib_parserexec_pinned[ia] = m_user_int_attrib_parser[ia]->compile<7>();
-        }
-        for (int ia = 0; ia < n_user_real_attribs; ++ia) {
-            user_real_attrib_parserexec_pinned[ia] = m_user_real_attrib_parser[ia]->compile<7>();
-        }
 
         // Update NextID to include particles created in this function
         amrex::Long pid;
