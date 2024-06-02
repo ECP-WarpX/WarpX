@@ -85,4 +85,46 @@ void UpdatePositionImplicit(amrex::ParticleReal& x, amrex::ParticleReal& y, amre
     z += uz * inv_gamma * dt;
 }
 
+/** \brief Check particle position for convergence. This is used by the theta-implicit
+ *    and semi-implicit time solvers to obtain a self-consistent time-centered update
+ *    of the particles for given electric and magnetic fields on the grid.
+ */
+AMREX_GPU_HOST_DEVICE AMREX_INLINE
+void PositionNorm( amrex::ParticleReal dxp, amrex::ParticleReal dyp, amrex::ParticleReal dzp,
+                   amrex::ParticleReal& dxp_save, amrex::ParticleReal& dyp_save, amrex::ParticleReal& dzp_save,
+                   amrex::ParticleReal idxg2, amrex::ParticleReal idyg2, amrex::ParticleReal idzg2,
+                   amrex::ParticleReal& step_norm, const int iter )
+{
+    using namespace amrex::literals;
+
+#if defined(WARPX_DIM_1D_Z)
+    amrex::ignore_unused(dxp, dxp_save, idxg2);
+#endif
+#if !defined(WARPX_DIM_3D)
+    amrex::ignore_unused(dyp, dyp_save, idyg2);
+#endif
+
+    if (iter==0) { step_norm = 1.0_prt; }
+    else {
+        step_norm = (dzp - dzp_save)*(dzp - dzp_save)*idzg2;
+#if !defined(WARPX_DIM_1D_Z)
+        step_norm += (dxp - dxp_save)*(dxp - dxp_save)*idxg2;
+#endif
+#if defined(WARPX_DIM_3D)
+        step_norm += (dyp - dyp_save)*(dyp - dyp_save)*idyg2;
+#elif defined(WARPX_DIM_RZ)
+        step_norm += (dyp - dyp_save)*(dyp - dyp_save)*idxg2;
+#endif
+        step_norm = std::sqrt(step_norm);
+    }
+    dzp_save = dzp;
+#if !defined(WARPX_DIM_1D_Z)
+    dxp_save = dxp;
+#endif
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+    dyp_save = dyp;
+#endif
+
+}
+
 #endif // WARPX_PARTICLES_PUSHER_UPDATEPOSITION_H_

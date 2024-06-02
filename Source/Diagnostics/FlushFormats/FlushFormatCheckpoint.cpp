@@ -1,7 +1,7 @@
 #include "FlushFormatCheckpoint.H"
 
 #include "BoundaryConditions/PML.H"
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
 #   include "BoundaryConditions/PML_RZ.H"
 #endif
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
@@ -152,7 +152,7 @@ FlushFormatCheckpoint::WriteToFile (
                 warpx.GetPML(lev)->CheckPoint(
                     amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "pml"));
             }
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
             if (warpx.GetPML_RZ(lev)) {
                 warpx.GetPML_RZ(lev)->CheckPoint(
                     amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "pml_rz"));

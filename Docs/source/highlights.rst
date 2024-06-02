@@ -25,9 +25,9 @@ Scientific works in laser-plasma and beam-plasma acceleration.
    `DOI:10.1103/PhysRevResearch.5.033112 <https://doi.org/10.1103/PhysRevResearch.5.033112>`__
 
 #. Sandberg R T, Lehe R, Mitchell C E, Garten M, Myers A, Qiang J, Vay J-L and Huebl A.
-  **Synthesizing Particle-in-Cell Simulations Through Learning and GPU Computing for Hybrid Particle Accelerator Beamlines**.
-  Proc. of Platform for Advanced Scientific Computing (PASC'24), *submitted*, 2024.
-  `preprint <http://arxiv.org/abs/2402.17248>__`
+   **Synthesizing Particle-in-Cell Simulations Through Learning and GPU Computing for Hybrid Particle Accelerator Beamlines**.
+   Proc. of Platform for Advanced Scientific Computing (PASC'24), *submitted*, 2024.
+   `preprint <http://arxiv.org/abs/2402.17248>`__
 
 #. Sandberg R T, Lehe R, Mitchell C E, Garten M, Qiang J, Vay J-L and Huebl A.
    **Hybrid Beamline Element ML-Training for Surrogates in the ImpactX Beam-Dynamics Code**.
@@ -102,9 +102,9 @@ Particle Accelerator & Beam Physics
 Scientific works in particle and beam modeling.
 
 #. Sandberg R T, Lehe R, Mitchell C E, Garten M, Myers A, Qiang J, Vay J-L and Huebl A.
-  **Synthesizing Particle-in-Cell Simulations Through Learning and GPU Computing for Hybrid Particle Accelerator Beamlines**.
-  Proc. of Platform for Advanced Scientific Computing (PASC'24), *submitted*, 2024.
-  `preprint <http://arxiv.org/abs/2402.17248>__`
+   **Synthesizing Particle-in-Cell Simulations Through Learning and GPU Computing for Hybrid Particle Accelerator Beamlines**.
+   Proc. of Platform for Advanced Scientific Computing (PASC'24), *submitted*, 2024.
+   `preprint <http://arxiv.org/abs/2402.17248>`__
 
 #. Sandberg R T, Lehe R, Mitchell C E, Garten M, Qiang J, Vay J-L, Huebl A.
    **Hybrid Beamline Element ML-Training for Surrogates in the ImpactX Beam-Dynamics Code**.

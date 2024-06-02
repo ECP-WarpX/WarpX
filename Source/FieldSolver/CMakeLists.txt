@@ -11,6 +11,7 @@ endforeach()
 
 add_subdirectory(FiniteDifferenceSolver)
 add_subdirectory(MagnetostaticSolver)
-if(WarpX_PSATD)
+add_subdirectory(ImplicitSolvers)
+if(WarpX_FFT)
     add_subdirectory(SpectralSolver)
 endif()

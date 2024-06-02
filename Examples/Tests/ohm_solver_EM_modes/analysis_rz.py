@@ -8,9 +8,10 @@ import numpy as np
 import scipy.fft as fft
 from matplotlib import colors
 from openpmd_viewer import OpenPMDTimeSeries
-from pywarpx import picmi
 from scipy.interpolate import RegularGridInterpolator
 from scipy.special import j1, jn, jn_zeros
+
+from pywarpx import picmi
 
 constants = picmi.constants
 
