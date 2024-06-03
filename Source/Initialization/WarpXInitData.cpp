@@ -31,6 +31,7 @@
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
+#include"Utils/WarpXVersion.H"
 #include "Python/callbacks.H"
 
 #include <ablastr/parallelization/MPIInitHelpers.H>
@@ -430,10 +431,10 @@ WarpX::InitData ()
     ablastr::parallelization::check_mpi_thread_level();
 
 #ifdef WARPX_QED
-    Print() << "PICSAR (" << WarpX::PicsarVersion() << ")\n";
+    Print() << "PICSAR (" << warpx::PicsarVersion() << ")\n";
 #endif
 
-    Print() << "WarpX (" << WarpX::Version() << ")\n";
+    Print() << "WarpX (" << warpx::Version() << ")\n";
 
     Print() << utils::logo::get_logo();
 

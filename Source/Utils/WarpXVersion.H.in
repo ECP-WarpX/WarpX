@@ -7,6 +7,8 @@
 #ifndef WARPX_VERSION_H_
 #define WARPX_VERSION_H_
 
+#include <string>
+
 #ifndef WARPX_GIT_VERSION
 #   define WARPX_GIT_VERSION "@WarpX_GIT_VERSION@"
 #endif
@@ -14,5 +16,12 @@
 #ifndef PICSAR_GIT_VERSION
 #   define PICSAR_GIT_VERSION "@PXRMP_QED_GIT_VERSION@"
 #endif
+
+namespace warpx
+{
+    [[nodiscard]] std::string Version () noexcept; //!< Version of WarpX executable
+
+    [[nodiscard]] std::string PicsarVersion () noexcept; //!< Version of PICSAR dependency
+}
 
 #endif // WARPX_VERSION_H_

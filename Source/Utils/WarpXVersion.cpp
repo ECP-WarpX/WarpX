@@ -4,14 +4,9 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "WarpX.H"
 #include "Utils/WarpXVersion.H"
 
-#include <string>
-
-
-std::string
-WarpX::Version ()
+std::string warpx::Version () noexcept
 {
     std::string version;
 #ifdef WARPX_GIT_VERSION
@@ -24,8 +19,7 @@ WarpX::Version ()
     }
 }
 
-std::string
-WarpX::PicsarVersion ()
+std::string warpx::PicsarVersion () noexcept
 {
     std::string version;
 #ifdef PICSAR_GIT_VERSION
