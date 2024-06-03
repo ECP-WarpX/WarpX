@@ -78,7 +78,7 @@
 #include <string>
 #include <vector>
 
-class WARPX_EXPORT WarpX
+class WARPX_EXPORT WarpX final
     : public amrex::AmrCore
 {
 public:
@@ -92,9 +92,6 @@ public:
      * This method has to be called at the end of the simulation. It deletes the WarpX instance.
      */
     static void Finalize();
-
-    /** Destructor */
-    ~WarpX () override;
 
     /** Copy constructor */
     WarpX ( WarpX const &) = delete;
@@ -1261,6 +1258,9 @@ protected:
     void ClearLevel (int lev) final;
 
 private:
+
+    /** Destructor */
+    ~WarpX () override;
 
     /**
      * \brief
