@@ -31,7 +31,7 @@
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
-#include"Utils/WarpXVersion.H"
+#include "Utils/WarpXVersion.H"
 #include "Python/callbacks.H"
 
 #include <ablastr/parallelization/MPIInitHelpers.H>

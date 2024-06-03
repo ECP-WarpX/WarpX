@@ -7,8 +7,6 @@
 #ifndef WARPX_VERSION_H_
 #define WARPX_VERSION_H_
 
-#include <string>
-
 #ifndef WARPX_GIT_VERSION
 #   define WARPX_GIT_VERSION "@WarpX_GIT_VERSION@"
 #endif
@@ -16,6 +14,8 @@
 #ifndef PICSAR_GIT_VERSION
 #   define PICSAR_GIT_VERSION "@PXRMP_QED_GIT_VERSION@"
 #endif
+
+#include <string>
 
 namespace warpx
 {
