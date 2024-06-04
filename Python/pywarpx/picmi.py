@@ -138,7 +138,7 @@ class Species(picmistandard.PICMI_Species):
         skipped during resampling.
 
     warpx_resampling_algorithm_target_weight: float
-        Weight that particles undergoing resampling will not exceed.
+        Weight that the product particles from resampling will not exceed.
 
     warpx_resampling_trigger_intervals: bool, default=0
         Timesteps at which to resample
