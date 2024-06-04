@@ -196,10 +196,6 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
             // ones in the same momentum bin
             for (int i = cell_start; i < cell_stop; ++i)
             {
-                // skip merging if the momentum bin is 0
-                if (momentum_bin_number_data[sorted_indices_data[i]] == 0) {
-                    continue;
-                }
                 particles_in_bin += 1;
                 const auto part_idx = indices[sorted_indices_data[i]];
 
