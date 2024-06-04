@@ -43,7 +43,7 @@ jobs:
           -DWarpX_DIMS="${{ matrix.dim }}"  \
           -DWarpX_MPI=ON                    \
           -DWarpX_COMPUTE=OMP               \
-          -DWarpX_PSATD=ON                  \
+          -DWarpX_FFT=ON                    \
           -DWarpX_QED=ON                    \
           -DWarpX_QED_TABLE_GEN=ON          \
           -DWarpX_OPENPMD=ON                \

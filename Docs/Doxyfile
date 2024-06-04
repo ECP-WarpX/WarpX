@@ -2301,7 +2301,7 @@ PREDEFINED             = AMREX_Linux=1 \
                          WARPX_DIM_XZ=1 \
                          WARPX_USE_GPU=1 \
                          WARPX_USE_OPENPMD=1 \
-                         WARPX_USE_PSATD=1 \
+                         WARPX_USE_FFT=1 \
                          WARPX_QED=1 \
                          WARPX_QED_TABLE_GEN=1
 
