@@ -142,10 +142,10 @@ public:
                 const int ii = static_cast<int>(u_theta / dutheta);
                 const int jj = static_cast<int>(u_phi / duphi);
                 const int kk = static_cast<int>(u_mag / dur);
-                amrex::ParticleReal w_i = w[indices[i]];
+                const amrex::ParticleReal w_i = w[indices[i]];
 
-                // Assign 0th index of bin_array to particles with weight too low to be merged
-                if (m_max_w > 0 && w_i > m_max_w) {
+                // bin number 0 is used for particles that will not participate in merging
+                if (max_weight > 0 && w_i > max_weight) {
                     bin_array[i] = 0;
                 }
                 else {
@@ -169,10 +169,10 @@ public:
                 const int ii = static_cast<int>((ux[indices[i]] - ux_min) / dux);
                 const int jj = static_cast<int>((uy[indices[i]] - uy_min) / duy);
                 const int kk = static_cast<int>((uz[indices[i]] - uz_min) / duz);
-                amrex::ParticleReal w_i = w[indices[i]];
+                const amrex::ParticleReal w_i = w[indices[i]];
 
-                // Assign 0th index of bin_array to particles with weight too low to be merged
-                if (m_max_w > 0 && w_i > m_max_w) {
+                // bin number 0 is used for particles that will not participate in merging
+                if (max_weight > 0 && w_i > max_weight) {
                     bin_array[i] = 0;
                 }
                 else {
@@ -208,7 +208,7 @@ public:
         amrex::ParticleReal dur, dutheta, duphi;
         amrex::ParticleReal dux, duy, duz;
         amrex::ParticleReal ux_min, uy_min, uz_min, ux_max, uy_max;
-        amrex::ParticleReal m_max_w;
+        amrex::ParticleReal max_weight;
     };
 
 private:

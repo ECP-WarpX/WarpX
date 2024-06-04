@@ -25,7 +25,7 @@ VelocityCoincidenceThinning::VelocityCoincidenceThinning (const std::string& spe
     );
 
     utils::parser::queryWithParser(
-        pp_species_name, "resampling_algorithm_max_w", m_max_w
+        pp_species_name, "resampling_algorithm_max_weight", m_max_w
     );
 
     std::string velocity_grid_type_str = "spherical";
@@ -115,13 +115,13 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
         velocityBinCalculator.n2 = m_nphi;
         velocityBinCalculator.dutheta = 2.0_prt * MathConst::pi / m_ntheta;
         velocityBinCalculator.duphi = MathConst::pi / m_nphi;
-        velocityBinCalculator.m_max_w = m_max_w;
+        velocityBinCalculator.max_weight = m_max_w;
     }
     else if (m_velocity_grid_type == VelocityGridType::Cartesian) {
         velocityBinCalculator.dux = m_delta_u[0];
         velocityBinCalculator.duy = m_delta_u[1];
         velocityBinCalculator.duz = m_delta_u[2];
-        velocityBinCalculator.m_max_w = m_max_w;
+        velocityBinCalculator.max_weight = m_max_w;
 
         // get the minimum and maximum velocities to determine the velocity space
         // grid boundaries
