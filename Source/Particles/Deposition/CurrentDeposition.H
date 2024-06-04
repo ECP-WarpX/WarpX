@@ -2432,7 +2432,7 @@ void doEsirkepovDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosi
 {
     using namespace amrex;
 
-    auto permutation = a_bins.permutationPtr();
+    const auto *permutation = a_bins.permutationPtr();
 
 #if !defined(AMREX_USE_GPU)
     amrex::ignore_unused(a_bins, box, geom, a_tbox_max_size);
@@ -2550,7 +2550,7 @@ void doEsirkepovDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosi
         for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
 #endif
         {
-            unsigned int ip = permutation[ip_orig];
+            const unsigned int ip = permutation[ip_orig];
             depositEsirkepovComponentX<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jx_buff,// jx_type,
                                           dt, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes,
                                           ip);
@@ -2571,7 +2571,7 @@ void doEsirkepovDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosi
         for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
 #endif
         {
-            unsigned int ip = permutation[ip_orig];
+            const unsigned int ip = permutation[ip_orig];
             depositEsirkepovComponentY<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jy_buff,// jy_type,
                                           dt, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes,
                                           ip);
@@ -2592,7 +2592,7 @@ void doEsirkepovDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosi
         for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
 #endif
         {
-            unsigned int ip = permutation[ip_orig];
+            const unsigned int ip = permutation[ip_orig];
             depositEsirkepovComponentZ<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jz_buff, //jz_type,
                                           dt, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes,
                                           ip);
