@@ -326,17 +326,14 @@ class Species(picmistandard.PICMI_Species):
         # self.species.add_new_attr("reflection_model_eb(E)", self.reflection_model_eb)
 
         # extra particle attributes
-        attributes_dict = {}
         if self.extra_int_attributes is not None:
             self.species.addIntegerAttributes = self.extra_int_attributes.keys()
-            attributes_dict.update(self.extra_int_attributes)
+            for attr, function in self.extra_int_attributes.items():
+                self.species.add_new_attr('attribute.'+attr+'(x,y,z,ux,uy,uz,t)', function)
         if self.extra_real_attributes is not None:
             self.species.addRealAttributes = self.extra_real_attributes.keys()
-            attributes_dict.update(self.extra_real_attributes)
-        if len(attributes_dict) > 0:
-            attributes = pywarpx.Bucket.Bucket(self.name + '.' + 'attribute')
-            for attr, function in attributes_dict.items():
-                attributes.add_new_attr(attr+'(x,y,z,ux,uy,uz,t)', function)
+            for attr, function in self.extra_real_attributes.items():
+                self.species.add_new_attr('attribute.'+attr+'(x,y,z,ux,uy,uz,t)', function)
 
         pywarpx.Particles.particles_list.append(self.species)
 
