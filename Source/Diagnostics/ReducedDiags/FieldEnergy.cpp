@@ -100,13 +100,7 @@ void FieldEnergy::ComputeDiags (int step)
 
         // get cell size
         Geometry const & geom = warpx.Geom(lev);
-#if defined(WARPX_DIM_1D_Z)
-        auto dV = geom.CellSize(0);
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        auto dV = geom.CellSize(0) * geom.CellSize(1);
-#elif defined(WARPX_DIM_3D)
-        auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
-#endif
+        const amrex::Real dV = AMREX_D_TERM(geom.CellSize(0), *geom.CellSize(1), *geom.CellSize(2));
 
 #if defined(WARPX_DIM_RZ)
         amrex::Real const tmpEx = ComputeNorm2RZ(Ex, lev);

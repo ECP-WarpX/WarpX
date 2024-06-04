@@ -185,13 +185,7 @@ void FieldMomentum::ComputeDiags (int step)
 
         // Get cell size
         amrex::Geometry const & geom = warpx.Geom(lev);
-#if   defined(WARPX_DIM_1D_Z)
-        auto dV = geom.CellSize(0);
-#elif   defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        auto dV = geom.CellSize(0) * geom.CellSize(1);
-#elif defined(WARPX_DIM_3D)
-        auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
-#endif
+        const amrex::Real dV = AMREX_D_TERM(geom.CellSize(0), *geom.CellSize(1), *geom.CellSize(2));
 
         // Save data (offset: 3 values for each refinement level)
         const int offset = lev*3;
