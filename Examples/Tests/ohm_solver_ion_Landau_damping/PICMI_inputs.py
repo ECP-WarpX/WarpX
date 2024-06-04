@@ -11,8 +11,8 @@ import sys
 import time
 
 import dill
-from mpi4py import MPI as mpi
 import numpy as np
+from mpi4py import MPI as mpi
 
 from pywarpx import callbacks, fields, libwarpx, particle_containers, picmi
 
@@ -222,7 +222,7 @@ class IonLandauDamping(object):
                 period=100,
                 write_dir='.',
                 species=[self.ions],
-                data_list = ['ux', 'uy', 'uz', 'x', 'y', 'weighting'],
+                data_list = ['ux', 'uy', 'uz', 'x', 'z', 'weighting'],
                 warpx_file_prefix=f'Python_ohms_law_solver_landau_damping_{self.dim}d_plt',
             )
             simulation.add_diagnostic(particle_diag)

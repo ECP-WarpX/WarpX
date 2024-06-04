@@ -8,9 +8,9 @@
 
 """Classes following the PICMI standard
 """
-from dataclasses import dataclass
 import os
 import re
+from dataclasses import dataclass
 
 import numpy as np
 import periodictable
@@ -133,12 +133,41 @@ class Species(picmistandard.PICMI_Species):
     warpx_do_resampling: bool, default=False
         Whether particles will be resampled
 
+    warpx_resampling_min_ppc: int, default=1
+        Cells with fewer particles than this number will be
+        skipped during resampling.
+
     warpx_resampling_trigger_intervals: bool, default=0
         Timesteps at which to resample
 
     warpx_resampling_trigger_max_avg_ppc: int, default=infinity
         Resampling will be done when the average number of
         particles per cell exceeds this number
+
+    warpx_resampling_algorithm: str, default="leveling_thinning"
+        Resampling algorithm to use.
+
+    warpx_resampling_algorithm_velocity_grid_type: str, default="spherical"
+        Type of grid to use when clustering particles in velocity space. Only
+        applicable with the `velocity_coincidence_thinning` algorithm.
+
+    warpx_resampling_algorithm_delta_ur: float
+        Size of velocity window used for clustering particles during grid-based
+        merging, with `velocity_grid_type == "spherical"`.
+
+    warpx_resampling_algorithm_n_theta: int
+        Number of bins to use in theta when clustering particle velocities
+        during grid-based merging, with `velocity_grid_type == "spherical"`.
+
+    warpx_resampling_algorithm_n_phi: int
+        Number of bins to use in phi when clustering particle velocities
+        during grid-based merging, with `velocity_grid_type == "spherical"`.
+
+    warpx_resampling_algorithm_delta_u: array of floats or float
+        Size of velocity window used in ux, uy and uz for clustering particles
+        during grid-based merging, with `velocity_grid_type == "cartesian"`. If
+        a single number is given the same du value will be used in all three
+        directions.
     """
     def init(self, kw):
 
@@ -216,8 +245,17 @@ class Species(picmistandard.PICMI_Species):
 
         # Resampling settings
         self.do_resampling = kw.pop('warpx_do_resampling', None)
+        self.resampling_algorithm = kw.pop('warpx_resampling_algorithm', None)
+        self.resampling_min_ppc = kw.pop('warpx_resampling_min_ppc', None)
         self.resampling_trigger_intervals = kw.pop('warpx_resampling_trigger_intervals', None)
         self.resampling_triggering_max_avg_ppc = kw.pop('warpx_resampling_trigger_max_avg_ppc', None)
+        self.resampling_algorithm_velocity_grid_type = kw.pop('warpx_resampling_algorithm_velocity_grid_type', None)
+        self.resampling_algorithm_delta_ur = kw.pop('warpx_resampling_algorithm_delta_ur', None)
+        self.resampling_algorithm_n_theta = kw.pop('warpx_resampling_algorithm_n_theta', None)
+        self.resampling_algorithm_n_phi = kw.pop('warpx_resampling_algorithm_n_phi', None)
+        self.resampling_algorithm_delta_u = kw.pop('warpx_resampling_algorithm_delta_u', None)
+        if self.resampling_algorithm_delta_u is not None and np.size(self.resampling_algorithm_delta_u) == 1:
+            self.resampling_algorithm_delta_u = [self.resampling_algorithm_delta_u]*3
 
     def species_initialize_inputs(self, layout,
                                   initialize_self_fields = False,
@@ -256,8 +294,15 @@ class Species(picmistandard.PICMI_Species):
                                              do_not_gather = self.do_not_gather,
                                              random_theta = self.random_theta,
                                              do_resampling=self.do_resampling,
+                                             resampling_algorithm=self.resampling_algorithm,
+                                             resampling_min_ppc=self.resampling_min_ppc,
                                              resampling_trigger_intervals=self.resampling_trigger_intervals,
-                                             resampling_trigger_max_avg_ppc=self.resampling_triggering_max_avg_ppc)
+                                             resampling_trigger_max_avg_ppc=self.resampling_triggering_max_avg_ppc,
+                                             resampling_algorithm_velocity_grid_type=self.resampling_algorithm_velocity_grid_type,
+                                             resampling_algorithm_delta_ur=self.resampling_algorithm_delta_ur,
+                                             resampling_algorithm_n_theta=self.resampling_algorithm_n_theta,
+                                             resampling_algorithm_n_phi=self.resampling_algorithm_n_phi,
+                                             resampling_algorithm_delta_u=self.resampling_algorithm_delta_u)
 
         # add reflection models
         self.species.add_new_attr("reflection_model_xlo(E)", self.reflection_model_xlo)
@@ -603,6 +648,11 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
     warpx_end_moving_window_step: int, default=-1
        The timestep at which the moving window ends. If -1, the moving window
        will continue until the end of the simulation.
+
+    warpx_boundary_u_th: dict, default=None
+        If a thermal boundary is used for particles, this dictionary should
+        specify the thermal speed for each species in the form {`<species>`: u_th}.
+        Note: u_th = sqrt(T*q_e/mass)/clight with T in eV.
     """
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
@@ -630,6 +680,9 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
 
+        # if a thermal boundary is used for particles, get the thermal speeds
+        self.thermal_boundary_u_th = kw.pop('warpx_boundary_u_th', None)
+
     def grid_initialize_inputs(self):
         pywarpx.amr.n_cell = self.number_of_cells
 
@@ -653,6 +706,10 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         pywarpx.boundary.particle_lo = self.lower_boundary_conditions_particles
         pywarpx.boundary.particle_hi = self.upper_boundary_conditions_particles
         pywarpx.boundary.reflect_all_velocities = self.reflect_all_velocities
+
+        if self.thermal_boundary_u_th is not None:
+            for name, val in self.thermal_boundary_u_th.items():
+                pywarpx.boundary.__setattr__(f'{name}.u_th', val)
 
         if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
             pywarpx.warpx.do_moving_window = 1
@@ -707,6 +764,11 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
     warpx_end_moving_window_step: int, default=-1
        The timestep at which the moving window ends. If -1, the moving window
        will continue until the end of the simulation.
+
+    warpx_boundary_u_th: dict, default=None
+        If a thermal boundary is used for particles, this dictionary should
+        specify the thermal speed for each species in the form {`<species>`: u_th}.
+        Note: u_th = sqrt(T*q_e/mass)/clight with T in eV.
     """
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
@@ -731,6 +793,9 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
 
+        # if a thermal boundary is used for particles, get the thermal speeds
+        self.thermal_boundary_u_th = kw.pop('warpx_boundary_u_th', None)
+
     def grid_initialize_inputs(self):
         pywarpx.amr.n_cell = self.number_of_cells
 
@@ -746,6 +811,10 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
         pywarpx.boundary.field_hi = [BC_map[bc] for bc in self.upper_boundary_conditions]
         pywarpx.boundary.particle_lo = self.lower_boundary_conditions_particles
         pywarpx.boundary.particle_hi = self.upper_boundary_conditions_particles
+
+        if self.thermal_boundary_u_th is not None:
+            for name, val in self.thermal_boundary_u_th.items():
+                pywarpx.boundary.__setattr__(f'{name}.u_th', val)
 
         if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
             pywarpx.warpx.do_moving_window = 1
@@ -808,6 +877,11 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
     warpx_end_moving_window_step: int, default=-1
        The timestep at which the moving window ends. If -1, the moving window
        will continue until the end of the simulation.
+
+    warpx_boundary_u_th: dict, default=None
+        If a thermal boundary is used for particles, this dictionary should
+        specify the thermal speed for each species in the form {`<species>`: u_th}.
+        Note: u_th = sqrt(T*q_e/mass)/clight with T in eV.
     """
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
@@ -834,6 +908,9 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
 
+        # if a thermal boundary is used for particles, get the thermal speeds
+        self.thermal_boundary_u_th = kw.pop('warpx_boundary_u_th', None)
+
     def grid_initialize_inputs(self):
         pywarpx.amr.n_cell = self.number_of_cells
 
@@ -851,6 +928,10 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
         pywarpx.boundary.field_hi = [BC_map[bc] for bc in self.upper_boundary_conditions]
         pywarpx.boundary.particle_lo = self.lower_boundary_conditions_particles
         pywarpx.boundary.particle_hi = self.upper_boundary_conditions_particles
+
+        if self.thermal_boundary_u_th is not None:
+            for name, val in self.thermal_boundary_u_th.items():
+                pywarpx.boundary.__setattr__(f'{name}.u_th', val)
 
         if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
             pywarpx.warpx.do_moving_window = 1
@@ -929,6 +1010,11 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
     warpx_end_moving_window_step: int, default=-1
        The timestep at which the moving window ends. If -1, the moving window
        will continue until the end of the simulation.
+
+    warpx_boundary_u_th: dict, default=None
+        If a thermal boundary is used for particles, this dictionary should
+        specify the thermal speed for each species in the form {`<species>`: u_th}.
+        Note: u_th = sqrt(T*q_e/mass)/clight with T in eV.
     """
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
@@ -957,6 +1043,9 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
 
+        # if a thermal boundary is used for particles, get the thermal speeds
+        self.thermal_boundary_u_th = kw.pop('warpx_boundary_u_th', None)
+
     def grid_initialize_inputs(self):
         pywarpx.amr.n_cell = self.number_of_cells
 
@@ -976,6 +1065,10 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
         pywarpx.boundary.field_hi = [BC_map[bc] for bc in self.upper_boundary_conditions]
         pywarpx.boundary.particle_lo = self.lower_boundary_conditions_particles
         pywarpx.boundary.particle_hi = self.upper_boundary_conditions_particles
+
+        if self.thermal_boundary_u_th is not None:
+            for name, val in self.thermal_boundary_u_th.items():
+                pywarpx.boundary.__setattr__(f'{name}.u_th', val)
 
         if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
             pywarpx.warpx.do_moving_window = 1
@@ -1135,6 +1228,9 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
     plasma_resistivity: float or str
         Value or expression to use for the plasma resistivity.
 
+    plasma_hyper_resistivity: float or str
+        Value or expression to use for the plasma hyper-resistivity.
+
     substeps: int, default=100
         Number of substeps to take when updating the B-field.
 
@@ -1142,7 +1238,8 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         Function of space and time specifying external (non-plasma) currents.
     """
     def __init__(self, grid, Te=None, n0=None, gamma=None,
-                 n_floor=None, plasma_resistivity=None, substeps=None,
+                 n_floor=None, plasma_resistivity=None,
+                 plasma_hyper_resistivity=None, substeps=None,
                  Jx_external_function=None, Jy_external_function=None,
                  Jz_external_function=None, **kw):
         self.grid = grid
@@ -1153,6 +1250,7 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         self.gamma = gamma
         self.n_floor = n_floor
         self.plasma_resistivity = plasma_resistivity
+        self.plasma_hyper_resistivity = plasma_hyper_resistivity
 
         self.substeps = substeps
 
@@ -1187,6 +1285,7 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
             'plasma_resistivity(rho,J)',
             pywarpx.my_constants.mangle_expression(self.plasma_resistivity, self.mangle_dict)
         )
+        pywarpx.hybridpicmodel.plasma_hyper_resistivity = self.plasma_hyper_resistivity
         pywarpx.hybridpicmodel.substeps = self.substeps
         pywarpx.hybridpicmodel.__setattr__(
             'Jx_external_grid_function(x,y,z,t)',
@@ -1678,7 +1777,6 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
         pywarpx.eb2.cover_multiple_cuts = self.cover_multiple_cuts
 
         if self.potential is not None:
-            assert isinstance(solver, ElectrostaticSolver), Exception('The potential is only supported with the ElectrostaticSolver')
             expression = pywarpx.my_constants.mangle_expression(self.potential, self.mangle_dict)
             pywarpx.warpx.__setattr__('eb_potential(x,y,z,t)', expression)
 
@@ -1821,7 +1919,7 @@ class Simulation(picmistandard.PICMI_Simulation):
     warpx_load_balance_knapsack_factor: float, default=1.24
         (See documentation)
 
-    warpx_load_balance_costs_update: {'heuristic' or 'timers' or 'gpuclock'}, optional
+    warpx_load_balance_costs_update: {'heuristic' or 'timers'}, optional
         (See documentation)
 
     warpx_costs_heuristic_particles_wt: float, optional
@@ -2246,11 +2344,13 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
             E_fields_list = ['Er', 'Et', 'Ez']
             B_fields_list = ['Br', 'Bt', 'Bz']
             J_fields_list = ['Jr', 'Jt', 'Jz']
+            J_displacement_fields_list = ['Jr_displacement', 'Jt_displacement', 'Jz_displacement']
             A_fields_list = ['Ar', 'At', 'Az']
         else:
             E_fields_list = ['Ex', 'Ey', 'Ez']
             B_fields_list = ['Bx', 'By', 'Bz']
             J_fields_list = ['Jx', 'Jy', 'Jz']
+            J_displacement_fields_list = ['Jx_displacement', 'Jy_displacement', 'Jz_displacement']
             A_fields_list = ['Ax', 'Ay', 'Az']
         if self.data_list is not None:
             for dataname in self.data_list:
@@ -2262,6 +2362,9 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
                         fields_to_plot.add(field_name)
                 elif dataname == 'J':
                     for field_name in J_fields_list:
+                        fields_to_plot.add(field_name.lower())
+                elif dataname == 'J_displacement':
+                    for field_name in J_displacement_fields_list:
                         fields_to_plot.add(field_name.lower())
                 elif dataname == 'A':
                     for field_name in A_fields_list:
@@ -2275,6 +2378,8 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
                 elif dataname in ['rho', 'phi', 'F', 'G', 'divE', 'divB', 'proc_number', 'part_per_cell']:
                     fields_to_plot.add(dataname)
                 elif dataname in J_fields_list:
+                    fields_to_plot.add(dataname.lower())
+                elif dataname in J_displacement_fields_list:
                     fields_to_plot.add(dataname.lower())
                 elif dataname.startswith('rho_'):
                     # Adds rho_species diagnostic
@@ -2392,11 +2497,17 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
     warpx_file_min_digits: integer, optional
         Minimum number of digits for the time step number in the file name
 
-    warpx_random_fraction: float, optional
-        Random fraction of particles to include in the diagnostic
+    warpx_random_fraction: float or dict, optional
+        Random fraction of particles to include in the diagnostic. If a float
+        is given the same fraction will be used for all species, if a dictionary
+        is given the keys should be species with the value specifying the random
+        fraction for that species.
 
-    warpx_uniform_stride: integer, optional
-        Stride to down select to the particles to include in the diagnostic
+    warpx_uniform_stride: integer or dict, optional
+        Stride to down select to the particles to include in the diagnostic.
+        If an integer is given the same stride will be used for all species, if
+        a dictionary is given the keys should be species with the value
+        specifying the stride for that species.
 
     warpx_plot_filter_function: string, optional
         Analytic expression to down select the particles to in the diagnostic
@@ -2442,8 +2553,13 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         if self.data_list is not None:
             for dataname in self.data_list:
                 if dataname == 'position':
-                    # --- The positions are alway written out anyway
-                    pass
+                    if pywarpx.geometry.dims != '1':  # because then it's WARPX_DIM_1D_Z
+                        variables.add('x')
+                    if pywarpx.geometry.dims == '3':
+                        variables.add('y')
+                    variables.add('z')
+                    if pywarpx.geometry.dims == 'RZ':
+                        variables.add('theta')
                 elif dataname == 'momentum':
                     variables.add('ux')
                     variables.add('uy')
@@ -2457,8 +2573,24 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
                     variables.add('Bx')
                     variables.add('By')
                     variables.add('Bz')
-                elif dataname in ['ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz']:
-                    variables.add(dataname)
+                elif dataname in ['x', 'y', 'z', 'theta', 'ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'Er', 'Et', 'Br', 'Bt']:
+                    if pywarpx.geometry.dims == '1' and (dataname == 'x' or dataname == 'y'):
+                        raise RuntimeError(
+                            f"The attribute {dataname} is not available in mode WARPX_DIM_1D_Z"
+                            f"chosen by dim={pywarpx.geometry.dims} in pywarpx."
+                        )
+                    elif pywarpx.geometry.dims != '3' and dataname == 'y':
+                        raise RuntimeError(
+                            f"The attribute {dataname} is not available outside of mode WARPX_DIM_3D"
+                            f"The chosen value was dim={pywarpx.geometry.dims} in pywarpx."
+                        )
+                    elif pywarpx.geometry.dims != 'RZ' and dataname == 'theta':
+                        raise RuntimeError(
+                            f"The attribute {dataname} is not available outside of mode WARPX_DIM_RZ."
+                            f"The chosen value was dim={pywarpx.geometry.dims} in pywarpx."
+                        )
+                    else:
+                        variables.add(dataname)
 
             # --- Convert the set to a sorted list so that the order
             # --- is the same on all processors.
@@ -2469,9 +2601,25 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         if self.species is None:
             species_names = pywarpx.particles.species_names
         elif np.iterable(self.species):
-            species_names = [specie.name for specie in self.species]
+            species_names = [species.name for species in self.species]
         else:
             species_names = [self.species.name]
+
+        # check if random fraction is specified and whether a value is given per species
+        random_fraction = {}
+        random_fraction_default = self.random_fraction
+        if isinstance(self.random_fraction, dict):
+            random_fraction_default = 1.0
+            for key, val in self.random_fraction.items():
+                random_fraction[key.name] = val
+
+        # check if uniform stride is specified and whether a value is given per species
+        uniform_stride = {}
+        uniform_stride_default = self.uniform_stride
+        if isinstance(self.uniform_stride, dict):
+            uniform_stride_default = 1
+            for key, val in self.uniform_stride.items():
+                uniform_stride[key.name] = val
 
         if self.mangle_dict is None:
             # Only do this once so that the same variables are used in this distribution
@@ -2481,8 +2629,8 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         for name in species_names:
             diag = pywarpx.Bucket.Bucket(self.name + '.' + name,
                                          variables = variables,
-                                         random_fraction = self.random_fraction,
-                                         uniform_stride = self.uniform_stride)
+                                         random_fraction = random_fraction.get(name, random_fraction_default),
+                                         uniform_stride = uniform_stride.get(name, uniform_stride_default))
             expression = pywarpx.my_constants.mangle_expression(self.plot_filter_function, self.mangle_dict)
             diag.__setattr__('plot_filter_function(t,x,y,z,ux,uy,uz)', expression)
             self.diagnostic._species_dict[name] = diag
@@ -2669,8 +2817,13 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
         if self.data_list is not None:
             for dataname in self.data_list:
                 if dataname == 'position':
-                    # --- The positions are alway written out anyway
-                    pass
+                    if pywarpx.geometry.dims != '1':  # because then it's WARPX_DIM_1D_Z
+                        variables.add('x')
+                    if pywarpx.geometry.dims == '3':
+                        variables.add('y')
+                    variables.add('z')
+                    if pywarpx.geometry.dims == 'RZ':
+                        variables.add('theta')
                 elif dataname == 'momentum':
                     variables.add('ux')
                     variables.add('uy')
@@ -2684,8 +2837,24 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
                     variables.add('Bx')
                     variables.add('By')
                     variables.add('Bz')
-                elif dataname in ['ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'Er', 'Et', 'Br', 'Bt']:
-                    variables.add(dataname)
+                elif dataname in ['x', 'y', 'z', 'theta', 'ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'Er', 'Et', 'Br', 'Bt']:
+                    if pywarpx.geometry.dims == '1' and (dataname == 'x' or dataname == 'y'):
+                        raise RuntimeError(
+                            f"The attribute {dataname} is not available in mode WARPX_DIM_1D_Z"
+                            f"chosen by dim={pywarpx.geometry.dims} in pywarpx."
+                        )
+                    elif pywarpx.geometry.dims != '3' and dataname == 'y':
+                        raise RuntimeError(
+                            f"The attribute {dataname} is not available outside of mode WARPX_DIM_3D"
+                            f"The chosen value was dim={pywarpx.geometry.dims} in pywarpx."
+                        )
+                    elif pywarpx.geometry.dims != 'RZ' and dataname == 'theta':
+                        raise RuntimeError(
+                            f"The attribute {dataname} is not available outside of mode WARPX_DIM_RZ."
+                            f"The chosen value was dim={pywarpx.geometry.dims} in pywarpx."
+                        )
+                    else:
+                        variables.add(dataname)
 
             # --- Convert the set to a sorted list so that the order
             # --- is the same on all processors.
@@ -2696,9 +2865,9 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
         if self.species is None:
             species_names = pywarpx.particles.species_names
         elif np.iterable(self.species):
-            species_names = [specie.name for specie in self.species]
+            species_names = [species.name for species in self.species]
         else:
-            species_names = [species.name]
+            species_names = [self.species.name]
 
         for name in species_names:
             diag = pywarpx.Bucket.Bucket(self.name + '.' + name,

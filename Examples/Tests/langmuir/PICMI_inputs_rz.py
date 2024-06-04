@@ -90,7 +90,7 @@ grid = picmi.CylindricalGrid(number_of_cells = [nr, nz],
                              upper_bound = [rmax, zmax],
                              lower_boundary_conditions = ['none', 'periodic'],
                              upper_boundary_conditions = ['none', 'periodic'],
-                             lower_boundary_conditions_particles = ['absorbing', 'periodic'],
+                             lower_boundary_conditions_particles = ['none', 'periodic'],
                              upper_boundary_conditions_particles = ['absorbing', 'periodic'],
                              moving_window_velocity = [0.,0.],
                              warpx_max_grid_size=64)

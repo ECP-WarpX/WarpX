@@ -12,15 +12,17 @@
 
 #include "HybridPICModel_fwd.H"
 
+#include "Utils/WarpXAlgorithmSelection.H"
+
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#include "WarpX.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_REAL.H>
 
+#include <optional>
 
 /**
  * \brief This class contains the parameters needed to evaluate hybrid field
@@ -175,6 +177,9 @@ public:
     amrex::ParserExecutor<2> m_eta;
     bool m_resistivity_has_J_dependence = false;
 
+    /** Plasma hyper-resisitivity */
+    amrex::Real m_eta_h = 0.0;
+
     /** External current */
     std::string m_Jx_ext_grid_function = "0.0";
     std::string m_Jy_ext_grid_function = "0.0";
@@ -195,6 +200,12 @@ public:
     get_pointer_current_fp_ampere  (int lev, int direction) const
     {
         return current_fp_ampere[lev][direction].get();
+    }
+
+    [[nodiscard]] amrex::MultiFab*
+    get_pointer_current_fp_external (int lev, int direction) const
+    {
+        return current_fp_external[lev][direction].get();
     }
 
     [[nodiscard]] amrex::MultiFab*

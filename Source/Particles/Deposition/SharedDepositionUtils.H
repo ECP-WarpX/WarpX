@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef SHAREDDEPOSITIONUTILS_H_
-#define SHAREDDEPOSITIONUTILS_H_
+#ifndef WARPX_SHAREDDEPOSITIONUTILS_H_
+#define WARPX_SHAREDDEPOSITIONUTILS_H_
 
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "ablastr/parallelization/KernelTimer.H"
@@ -1293,4 +1293,4 @@ void depositEsirkepovComponentZ (const GetParticlePosition<PIdx>& GetPosition,
 #endif
 }
 
-#endif // SHAREDDEPOSITIONUTILS_H_
+#endif // WARPX_SHAREDDEPOSITIONUTILS_H_

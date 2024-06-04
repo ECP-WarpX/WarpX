@@ -9,7 +9,7 @@
 #include "WarpX.H"
 
 #include "BoundaryConditions/PML.H"
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
 #   include "BoundaryConditions/PML_RZ.H"
 #endif
 #include "Initialization/ExternalField.H"
@@ -88,7 +88,7 @@ WarpX::UpdateInjectionPosition (const amrex::Real a_dt)
             amrex::Real v_shift = 0._rt;
             if (plasma_injector != nullptr)
             {
-                amrex::XDim3 u_bulk = plasma_injector->getInjectorMomentumHost()->getBulkMomentum(
+                const amrex::XDim3 u_bulk = plasma_injector->getInjectorMomentumHost()->getBulkMomentum(
                     current_injection_position[0],
                     current_injection_position[1],
                     current_injection_position[2]);
@@ -252,7 +252,7 @@ WarpX::MoveWindow (const int step, bool move_j)
                 shiftMF(*pml_B[dim], geom[lev], num_shift, dir, lev, dont_update_cost);
                 shiftMF(*pml_E[dim], geom[lev], num_shift, dir, lev, dont_update_cost);
             }
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
             if (pml_rz[lev] && dim < 2) {
                 const std::array<amrex::MultiFab*, 2>& pml_rz_B = pml_rz[lev]->GetB_fp();
                 const std::array<amrex::MultiFab*, 2>& pml_rz_E = pml_rz[lev]->GetE_fp();
@@ -598,7 +598,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
         }
     }
 
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
     if (WarpX::GetInstance().getPMLRZ()) {
         // This does the exchange of data in the corner guard cells, the cells that are in the
         // guard region both radially and longitudinally. These are the PML cells in the overlapping

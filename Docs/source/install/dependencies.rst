@@ -63,8 +63,8 @@ Conda (Linux/macOS/Windows)
 
    .. code-block:: bash
 
-      conda update -n base conda
-      conda install -n base conda-libmamba-solver
+      conda update -y -n base conda
+      conda install -y -n base conda-libmamba-solver
       conda config --set solver libmamba
 
    We recommend to deactivate that conda self-activates its ``base`` environment.
@@ -80,7 +80,7 @@ Conda (Linux/macOS/Windows)
 
       .. code-block:: bash
 
-         conda create -n warpx-cpu-mpich-dev -c conda-forge blaspp boost ccache cmake compilers git lapackpp "openpmd-api=*=mpi_mpich*" python make numpy pandas scipy yt "fftw=*=mpi_mpich*" pkg-config matplotlib mamba mpich mpi4py ninja pip virtualenv
+         conda create -n warpx-cpu-mpich-dev -c conda-forge blaspp boost ccache cmake compilers git lapackpp "openpmd-api=*=mpi_mpich*" openpmd-viewer python make numpy pandas scipy yt "fftw=*=mpi_mpich*" pkg-config matplotlib mamba mpich mpi4py ninja pip virtualenv
          conda activate warpx-cpu-mpich-dev
 
          # compile WarpX with -DWarpX_MPI=ON
@@ -90,7 +90,7 @@ Conda (Linux/macOS/Windows)
 
       .. code-block:: bash
 
-         conda create -n warpx-cpu-dev -c conda-forge blaspp boost ccache cmake compilers git lapackpp openpmd-api python make numpy pandas scipy yt fftw pkg-config matplotlib mamba ninja pip virtualenv
+         conda create -n warpx-cpu-dev -c conda-forge blaspp boost ccache cmake compilers git lapackpp openpmd-api openpmd-viewer python make numpy pandas scipy yt fftw pkg-config matplotlib mamba ninja pip virtualenv
          conda activate warpx-cpu-dev
 
          # compile WarpX with -DWarpX_MPI=OFF

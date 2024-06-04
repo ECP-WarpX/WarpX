@@ -7,8 +7,9 @@
  */
 #include "SliceDiagnostic.H"
 
-#include "WarpX.H"
+#include "FieldSolver/Fields.H"
 #include "Utils/TextMsg.H"
+#include "WarpX.H"
 
 #include <ablastr/utils/Communication.H>
 #include <ablastr/warn_manager/WarnManager.H>
@@ -40,7 +41,7 @@
 #include <sstream>
 
 using namespace amrex;
-
+using namespace warpx::fields;
 
 /* \brief
  *  The functions creates the slice for diagnostics based on the user-input.
@@ -195,27 +196,27 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
                 amrex::amrex_avgdown_nodes(Dst_bx, Dst_fabox, Src_fabox, dcomp,
                                            scomp, ncomp, slice_cr_ratio);
             }
-            if( SliceType == WarpX::GetInstance().getEfield(0,0).ixType().toIntVect() ) {
+            if( SliceType == WarpX::GetInstance().getField(FieldType::Efield_aux, 0,0).ixType().toIntVect() ) {
                 amrex::amrex_avgdown_edges(Dst_bx, Dst_fabox, Src_fabox, dcomp,
                                            scomp, ncomp, slice_cr_ratio, 0);
             }
-            if( SliceType == WarpX::GetInstance().getEfield(0,1).ixType().toIntVect() ) {
+            if( SliceType == WarpX::GetInstance().getField(FieldType::Efield_aux, 0,1).ixType().toIntVect() ) {
                 amrex::amrex_avgdown_edges(Dst_bx, Dst_fabox, Src_fabox, dcomp,
                                            scomp, ncomp, slice_cr_ratio, 1);
             }
-            if( SliceType == WarpX::GetInstance().getEfield(0,2).ixType().toIntVect() ) {
+            if( SliceType == WarpX::GetInstance().getField(FieldType::Efield_aux, 0,2).ixType().toIntVect() ) {
                 amrex::amrex_avgdown_edges(Dst_bx, Dst_fabox, Src_fabox, dcomp,
                                            scomp, ncomp, slice_cr_ratio, 2);
             }
-            if( SliceType == WarpX::GetInstance().getBfield(0,0).ixType().toIntVect() ) {
+            if( SliceType == WarpX::GetInstance().getField(FieldType::Bfield_aux, 0,0).ixType().toIntVect() ) {
                 amrex::amrex_avgdown_faces(Dst_bx, Dst_fabox, Src_fabox, dcomp,
                                            scomp, ncomp, slice_cr_ratio, 0);
             }
-            if( SliceType == WarpX::GetInstance().getBfield(0,1).ixType().toIntVect() ) {
+            if( SliceType == WarpX::GetInstance().getField(FieldType::Bfield_aux, 0,1).ixType().toIntVect() ) {
                 amrex::amrex_avgdown_faces(Dst_bx, Dst_fabox, Src_fabox, dcomp,
                                            scomp, ncomp, slice_cr_ratio, 1);
             }
-            if( SliceType == WarpX::GetInstance().getBfield(0,2).ixType().toIntVect() ) {
+            if( SliceType == WarpX::GetInstance().getField(FieldType::Bfield_aux, 0,2).ixType().toIntVect() ) {
                 amrex::amrex_avgdown_faces(Dst_bx, Dst_fabox, Src_fabox, dcomp,
                                            scomp, ncomp, slice_cr_ratio, 2);
             }
@@ -419,7 +420,7 @@ CheckSliceInput( const RealBox real_box, RealBox &slice_cc_nd_box,
  */
 void
 InterpolateSliceValues(MultiFab& smf, IntVect interp_lo, RealBox slice_realbox,
-                       Vector<Geometry> geom, int ncomp, int nghost,
+                       const Vector<Geometry>& geom, int ncomp, int nghost,
                        IntVect slice_lo, IntVect /*slice_hi*/, IntVect SliceType,
                        const RealBox real_box)
 {

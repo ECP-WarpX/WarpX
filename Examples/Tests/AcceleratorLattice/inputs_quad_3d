@@ -2,8 +2,8 @@ max_step = 50
 amr.n_cell = 8 8 32
 amr.max_level = 0
 geometry.dims = 3
-geometry.prob_lo     = -0.2 -0.2 0.
-geometry.prob_hi     = +0.2 +0.2 1.6
+geometry.prob_lo     = -0.2 -0.2 -0.025
+geometry.prob_hi     = +0.2 +0.2 1.575
 
 warpx.const_dt = 1e-9
 warpx.do_electrostatic = labframe

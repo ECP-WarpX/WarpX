@@ -11,7 +11,7 @@
 #include "BoundaryConditions/PML.H"
 #include "Evolve/WarpXDtType.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
-#if defined(WARPX_USE_PSATD)
+#if defined(WARPX_USE_FFT)
 #   include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
@@ -20,6 +20,7 @@
 #       include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #   endif
 #endif
+#include "Python/callbacks.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
@@ -53,7 +54,7 @@
 
 using namespace amrex;
 
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
 namespace {
 
     void ForwardTransformVect (
@@ -644,12 +645,12 @@ WarpX::PSATDScaleAverageFields (const amrex::Real scale_factor)
         }
     }
 }
-#endif // WARPX_USE_PSATD
+#endif // WARPX_USE_FFT
 
 void
 WarpX::PushPSATD ()
 {
-#ifndef WARPX_USE_PSATD
+#ifndef WARPX_USE_FFT
     WARPX_ABORT_WITH_MESSAGE(
         "PushFieldsEM: PSATD solver selected but not built");
 #else
@@ -798,6 +799,9 @@ WarpX::EvolveB (amrex::Real a_dt, DtType a_dt_type)
     for (int lev = 0; lev <= finest_level; ++lev) {
         EvolveB(lev, a_dt, a_dt_type);
     }
+
+    // Allow execution of Python callback after B-field push
+    ExecutePythonCallback("afterBpush");
 }
 
 void
@@ -848,6 +852,9 @@ WarpX::EvolveE (amrex::Real a_dt)
     {
         EvolveE(lev, a_dt);
     }
+
+    // Allow execution of Python callback after E-field push
+    ExecutePythonCallback("afterEpush");
 }
 
 void

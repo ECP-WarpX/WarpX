@@ -9,6 +9,7 @@ import sys
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
+
 # Check reduced diagnostics for charge on EB
 import numpy as np
 from scipy.constants import epsilon_0

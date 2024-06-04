@@ -8,7 +8,7 @@
 #endif
 
 FlushFormatSensei::FlushFormatSensei (amrex::AmrMesh *amr_mesh,
-    std::string diag_name) :
+    const std::string& diag_name) :
     m_amr_mesh(amr_mesh)
 {
 #ifndef AMREX_USE_SENSEI_INSITU

@@ -8,8 +8,8 @@
 
 import numpy as np
 
-from .LoadThirdParty import load_cupy
 from ._libwarpx import libwarpx
+from .LoadThirdParty import load_cupy
 
 
 class ParticleContainerWrapper(object):
@@ -42,17 +42,18 @@ class ParticleContainerWrapper(object):
             The type of species for which particles will be added
 
         x, y, z          : arrays or scalars
-            The particle positions (default = 0.)
+            The particle positions (m) (default = 0.)
 
         ux, uy, uz       : arrays or scalars
-            The particle momenta (default = 0.)
+            The particle proper velocities (m/s) (default = 0.)
 
         w                : array or scalars
             Particle weights (default = 0.)
 
         unique_particles : bool
-            Whether the particles are unique or duplicated on several processes
-            (default = True)
+            True means the added particles are duplicated by each process;
+            False means the number of added particles is independent of
+            the number of processes (default = True)
 
         kwargs           : dict
             Containing an entry for all the extra particle attribute arrays. If
@@ -761,6 +762,9 @@ class ParticleBoundaryBufferWrapper(object):
         The data for the arrays are not copied, but share the underlying
         memory buffer with WarpX. The arrays are fully writeable.
 
+        You can find `here https://github.com/ECP-WarpX/WarpX/blob/319e55b10ad4f7c71b84a4fb21afbafe1f5b65c2/Examples/Tests/particle_boundary_interaction/PICMI_inputs_rz.py`
+        an example of a simple case of particle-boundary interaction (reflection).
+
         Parameters
         ----------
 
@@ -774,7 +778,8 @@ class ParticleBoundaryBufferWrapper(object):
             comp_name      : str
                 The component of the array data that will be returned.
                 "x", "y", "z", "ux", "uy", "uz", "w"
-                "step_scraped","time_scraped", "nx", "ny", "nz"
+                "stepScraped","deltaTimeScraped",
+                if boundary='eb': "nx", "ny", "nz"
 
             level          : int
                 Which AMR level to retrieve scraped particle data from.

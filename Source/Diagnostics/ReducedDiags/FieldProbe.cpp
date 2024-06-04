@@ -7,6 +7,7 @@
 
 #include "FieldProbe.H"
 #include "FieldProbeParticleContainer.H"
+#include "FieldSolver/Fields.H"
 #include "Particles/Gather/FieldGather.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/Pusher/UpdatePosition.H"
@@ -44,10 +45,11 @@
 #include <vector>
 
 using namespace amrex;
+using namespace warpx::fields;
 
 // constructor
 
-FieldProbe::FieldProbe (std::string rd_name)
+FieldProbe::FieldProbe (const std::string& rd_name)
 : ReducedDiags{rd_name}, m_probe(&WarpX::GetInstance())
 {
 
@@ -391,12 +393,12 @@ void FieldProbe::ComputeDiags (int step)
         }
 
         // get MultiFab data at lev
-        const amrex::MultiFab &Ex = warpx.getEfield(lev, 0);
-        const amrex::MultiFab &Ey = warpx.getEfield(lev, 1);
-        const amrex::MultiFab &Ez = warpx.getEfield(lev, 2);
-        const amrex::MultiFab &Bx = warpx.getBfield(lev, 0);
-        const amrex::MultiFab &By = warpx.getBfield(lev, 1);
-        const amrex::MultiFab &Bz = warpx.getBfield(lev, 2);
+        const amrex::MultiFab &Ex = warpx.getField(FieldType::Efield_aux, lev, 0);
+        const amrex::MultiFab &Ey = warpx.getField(FieldType::Efield_aux, lev, 1);
+        const amrex::MultiFab &Ez = warpx.getField(FieldType::Efield_aux, lev, 2);
+        const amrex::MultiFab &Bx = warpx.getField(FieldType::Bfield_aux, lev, 0);
+        const amrex::MultiFab &By = warpx.getField(FieldType::Bfield_aux, lev, 1);
+        const amrex::MultiFab &Bz = warpx.getField(FieldType::Bfield_aux, lev, 2);
 
         /*
          * Prepare interpolation of field components to probe_position
