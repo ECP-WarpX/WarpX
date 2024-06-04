@@ -2409,35 +2409,33 @@ void doVayDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
  */
 template <int depos_order>
 void doEsirkepovDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosition,
-                               const amrex::ParticleReal * const wp,
-                               const amrex::ParticleReal * const uxp,
-                               const amrex::ParticleReal * const uyp,
-                               const amrex::ParticleReal * const uzp,
-                               const int * const ion_lev,
-                               amrex::FArrayBox& jx_fab,
-                               amrex::FArrayBox& jy_fab,
-                               amrex::FArrayBox& jz_fab,
-                               const long np_to_depose,
-                               const amrex::Real dt,
-                               const amrex::Real relative_time,
-                               const std::array<amrex::Real,3>& dx,
-                               const std::array<amrex::Real,3>& xyzmin,
-                               const amrex::Dim3 lo,
-                               const amrex::Real q,
-                               const int n_rz_azimuthal_modes,
-                               amrex::Real* cost,
-                               const long load_balance_costs_update_algo,
-                               const amrex::DenseBins<WarpXParticleContainer::ParticleType>& a_bins,
-                               const amrex::Box& box,
-                               const amrex::Geometry& geom,
-                               const amrex::IntVect& a_tbox_max_size)
+                                        const amrex::ParticleReal * const wp,
+                                        const amrex::ParticleReal * const uxp,
+                                        const amrex::ParticleReal * const uyp,
+                                        const amrex::ParticleReal * const uzp,
+                                        const int * const ion_lev,
+                                        amrex::FArrayBox& jx_fab,
+                                        amrex::FArrayBox& jy_fab,
+                                        amrex::FArrayBox& jz_fab,
+                                        const long np_to_depose,
+                                        const amrex::Real dt,
+                                        const amrex::Real relative_time,
+                                        const std::array<amrex::Real,3>& dx,
+                                        const std::array<amrex::Real,3>& xyzmin,
+                                        const amrex::Dim3 lo,
+                                        const amrex::Real q,
+                                        const int n_rz_azimuthal_modes,
+                                        const amrex::DenseBins<WarpXParticleContainer::ParticleTileType::ParticleTileDataType>& a_bins,
+                                        const amrex::Box& box,
+                                        const amrex::Geometry& geom,
+                                        const amrex::IntVect& a_tbox_max_size)
 {
     using namespace amrex;
 
     auto permutation = a_bins.permutationPtr();
 
 #if !defined(AMREX_USE_GPU)
-    amrex::ignore_unused(cost, load_balance_costs_update_algo, a_bins, box, geom, a_tbox_max_size);
+    amrex::ignore_unused(a_bins, box, geom, a_tbox_max_size);
 #endif
 
     amrex::Array4<amrex::Real> const& jx_arr = jx_fab.array();
@@ -2445,14 +2443,6 @@ void doEsirkepovDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosi
     amrex::Array4<amrex::Real> const& jz_arr = jz_fab.array();
 
     // Loop over particles and deposit into jx_fab, jy_fab and jz_fab
-#if defined(WARPX_USE_GPUCLOCK)
-    amrex::Real* cost_real = nullptr;
-    if( load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
-        cost_real = (amrex::Real *) amrex::The_Managed_Arena()->alloc(sizeof(amrex::Real));
-        *cost_real = 0._rt;
-    }
-#endif
-
 #if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
     amrex::IntVect const jx_type = jx_fab.box().type();
     amrex::IntVect const jy_type = jy_fab.box().type();
@@ -2494,11 +2484,6 @@ void doEsirkepovDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosi
     amrex::ParallelFor(np_to_depose, [=] AMREX_GPU_DEVICE (long ip_orig) noexcept
 #endif
     {
-#if defined(WARPX_USE_GPUCLOCK)
-        const auto KernelTimer = ablastr::parallelization::KernelTimer(
-            cost && (load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock),
-            cost_real);
-#endif
 #if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
         const int bin_id = blockIdx.x;
         const unsigned int bin_start = offsets_ptr[bin_id];
@@ -2620,12 +2605,5 @@ void doEsirkepovDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosi
         addLocalToGlobal(tbox_z, jz_arr, jz_buff);
 #endif
     });
-#if defined(WARPX_USE_GPUCLOCK)
-    if( load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
-        amrex::Gpu::streamSynchronize();
-        *cost += *cost_real;
-        amrex::The_Managed_Arena()->free(cost_real);
-    }
-#endif
 }
 #endif // WARPX_CURRENTDEPOSITION_H_
