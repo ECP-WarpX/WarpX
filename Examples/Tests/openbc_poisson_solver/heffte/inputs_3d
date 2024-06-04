@@ -4,7 +4,7 @@ my_constants.sigmay = 7.7e-9
 my_constants.Q = 3.2e-9
 
 max_step = 0
-amr.n_cell = 8 8 8 #128 128 128
+amr.n_cell = 128 128 128 #128 128 128 8 8 8
 amr.max_level = 0
 amr.max_grid_size = 128
 geometry.dims = 3
