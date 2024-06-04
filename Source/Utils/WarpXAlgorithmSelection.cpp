@@ -24,10 +24,10 @@
 // and corresponding integer for use inside the code
 
 const std::map<std::string, int> evolve_scheme_to_int = {
-    {"explicit",             EvolveScheme::Explicit },
-    {"implicit_picard",      EvolveScheme::ImplicitPicard },
-    {"semi_implicit_picard", EvolveScheme::SemiImplicitPicard },
-    {"default",              EvolveScheme::Explicit }
+    {"explicit",       EvolveScheme::Explicit },
+    {"theta_implicit_em", EvolveScheme::ThetaImplicitEM },
+    {"semi_implicit_em",  EvolveScheme::SemiImplicitEM },
+    {"default",        EvolveScheme::Explicit }
 };
 
 const std::map<std::string, int> grid_to_int = {
@@ -142,6 +142,7 @@ const std::map<std::string, ParticleBoundaryType> ParticleBCType_algo_to_enum = 
     {"reflecting", ParticleBoundaryType::Reflecting},
     {"periodic",   ParticleBoundaryType::Periodic},
     {"thermal",    ParticleBoundaryType::Thermal},
+    {"none",       ParticleBoundaryType::None},
     {"default",    ParticleBoundaryType::Absorbing}
 };
 

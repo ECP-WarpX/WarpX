@@ -156,7 +156,7 @@ class CylindricalNormalModes(object):
             upper_bound=[self.Lr, self.Lz/2.0],
             lower_boundary_conditions = ['none', 'periodic'],
             upper_boundary_conditions = ['dirichlet', 'periodic'],
-            lower_boundary_conditions_particles = ['absorbing', 'periodic'],
+            lower_boundary_conditions_particles = ['none', 'periodic'],
             upper_boundary_conditions_particles = ['reflecting', 'periodic']
         )
         simulation.time_step_size = self.dt
