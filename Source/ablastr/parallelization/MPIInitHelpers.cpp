@@ -35,7 +35,7 @@ namespace ablastr::parallelization
 #ifdef AMREX_USE_MPI
 #   ifdef AMREX_MPI_THREAD_MULTIPLE  // i.e. for async_io
         return MPI_THREAD_MULTIPLE;
-#   elif AMREX_USE_OMP
+#   elif defined(AMREX_USE_OMP)
         return MPI_THREAD_FUNNELED;
 #   else
         return MPI_THREAD_SINGLE; // equiv. to MPI_Init

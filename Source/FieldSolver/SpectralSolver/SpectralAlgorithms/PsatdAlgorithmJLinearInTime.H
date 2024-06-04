@@ -20,7 +20,7 @@
 #include <array>
 #include <memory>
 
-#if WARPX_USE_PSATD
+#if WARPX_USE_FFT
 /*
  * \brief Class that updates the fields in spectral space according to the multi-J algorithm
  *        and stores the coefficients of the corresponding update equations. J is assumed to be
@@ -125,5 +125,5 @@ class PsatdAlgorithmJLinearInTime : public SpectralBaseAlgorithm
         bool m_dive_cleaning;
         bool m_divb_cleaning;
 };
-#endif // WARPX_USE_PSATD
+#endif // WARPX_USE_FFT
 #endif // WARPX_PSATD_ALGORITHM_J_LINEAR_IN_TIME_H_

@@ -21,7 +21,7 @@
 #include <array>
 #include <memory>
 
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
 /**
  * \brief Top-level class for the electromagnetic spectral solver
  *
@@ -205,5 +205,5 @@ class SpectralSolver
         // to an instance of a sub-class defining a specific algorithm
         std::unique_ptr<SpectralBaseAlgorithm> algorithm;
 };
-#endif // WARPX_USE_PSATD
+#endif // WARPX_USE_FFT
 #endif // WARPX_SPECTRAL_SOLVER_H_
