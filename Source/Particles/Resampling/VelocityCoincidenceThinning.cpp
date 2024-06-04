@@ -91,7 +91,7 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
     auto *const cell_offsets = bins.offsetsPtr();
 
     const auto min_ppc = m_min_ppc;
-
+    const auto cluster_weight = m_cluster_weight;
     const auto mass = pc->getMass();
 
     // check if species mass > 0
@@ -224,7 +224,7 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
                 if (
                     (i == cell_stop - 1)
                     || (momentum_bin_number_data[sorted_indices_data[i]] != momentum_bin_number_data[sorted_indices_data[i + 1]])
-                    || (total_weight + w[indices[sorted_indices_data[i+1]]] > m_cluster_weight)
+                    || (total_weight + w[indices[sorted_indices_data[i+1]]] > cluster_weight)
                 ) {
                     // check if the bin has more than 2 particles in it
                     if ( particles_in_bin > 2 && total_weight > std::numeric_limits<amrex::ParticleReal>::min() ){
