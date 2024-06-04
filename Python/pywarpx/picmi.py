@@ -168,6 +168,14 @@ class Species(picmistandard.PICMI_Species):
         during grid-based merging, with `velocity_grid_type == "cartesian"`. If
         a single number is given the same du value will be used in all three
         directions.
+
+    warpx_int_real_attributes: dict
+        Dictionary of extra integer particle attributes initialized with the
+        starting position and momentum for each particle.
+
+    warpx_add_real_attributes: dict
+        Dictionary of extra real particle attributes initialized with the
+        starting position and momentum for each particle.
     """
     def init(self, kw):
 
@@ -257,6 +265,10 @@ class Species(picmistandard.PICMI_Species):
         if self.resampling_algorithm_delta_u is not None and np.size(self.resampling_algorithm_delta_u) == 1:
             self.resampling_algorithm_delta_u = [self.resampling_algorithm_delta_u]*3
 
+        # extra particle attributes
+        self.extra_int_attributes = kw.pop('warpx_add_int_attributes', None)
+        self.extra_real_attributes = kw.pop('warpx_add_real_attributes', None)
+
     def species_initialize_inputs(self, layout,
                                   initialize_self_fields = False,
                                   injection_plane_position = None,
@@ -312,6 +324,19 @@ class Species(picmistandard.PICMI_Species):
         self.species.add_new_attr("reflection_model_zlo(E)", self.reflection_model_zlo)
         self.species.add_new_attr("reflection_model_zhi(E)", self.reflection_model_zhi)
         # self.species.add_new_attr("reflection_model_eb(E)", self.reflection_model_eb)
+
+        # extra particle attributes
+        attributes_dict = {}
+        if self.extra_int_attributes is not None:
+            self.species.addIntegerAttributes = self.extra_int_attributes.keys()
+            attributes_dict.update(self.extra_int_attributes)
+        if self.extra_real_attributes is not None:
+            self.species.addRealAttributes = self.extra_real_attributes.keys()
+            attributes_dict.update(self.extra_real_attributes)
+        if len(attributes_dict) > 0:
+            attributes = pywarpx.Bucket.Bucket(self.name + '.' + 'attribute')
+            for attr, function in attributes_dict.items():
+                attributes.add_new_attr(attr+'(x,y,z,ux,uy,uz,t)', function)
 
         pywarpx.Particles.particles_list.append(self.species)
 
