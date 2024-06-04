@@ -41,6 +41,8 @@
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
 
+#include "FieldSolver/ImplicitSolvers/ImplicitSolverLibrary.H"
+
 #include <ablastr/utils/SignalHandling.H>
 #include <ablastr/warn_manager/WarnManager.H>
 
@@ -113,9 +115,8 @@ short WarpX::field_gathering_algo;
 short WarpX::particle_pusher_algo;
 short WarpX::electromagnetic_solver_id;
 short WarpX::evolve_scheme;
-int WarpX::max_picard_iterations = 10;
-Real WarpX::picard_iteration_tolerance = 1.e-7;
-bool WarpX::require_picard_convergence = true;
+int WarpX::max_particle_its_in_implicit_scheme = 21;
+ParticleReal WarpX::particle_tol_in_implicit_scheme = 1.e-10;
 short WarpX::psatd_solution_type;
 short WarpX::J_in_time;
 short WarpX::rho_in_time;
@@ -1195,6 +1196,21 @@ WarpX::ReadParameters ()
         particle_pusher_algo = static_cast<short>(GetAlgorithmInteger(pp_algo, "particle_pusher"));
         evolve_scheme = static_cast<short>(GetAlgorithmInteger(pp_algo, "evolve_scheme"));
 
+        // check for implicit evolve scheme
+        if (evolve_scheme == EvolveScheme::SemiImplicitEM) {
+            m_implicit_solver = std::make_unique<SemiImplicitEM>();
+        }
+        else if (evolve_scheme == EvolveScheme::ThetaImplicitEM) {
+            m_implicit_solver = std::make_unique<ThetaImplicitEM>();
+        }
+
+        // implicit evolve schemes not setup to use mirrors
+        if (evolve_scheme == EvolveScheme::SemiImplicitEM ||
+            evolve_scheme == EvolveScheme::ThetaImplicitEM) {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE( num_mirrors == 0,
+                "Mirrors cannot be used with Implicit evolve schemes.");
+        }
+
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             current_deposition_algo != CurrentDepositionAlgo::Esirkepov ||
             !do_current_centering,
@@ -1231,8 +1247,8 @@ WarpX::ReadParameters ()
 
         if (current_deposition_algo == CurrentDepositionAlgo::Villasenor) {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                evolve_scheme == EvolveScheme::ImplicitPicard ||
-                evolve_scheme == EvolveScheme::SemiImplicitPicard,
+                evolve_scheme == EvolveScheme::SemiImplicitEM ||
+                evolve_scheme == EvolveScheme::ThetaImplicitEM,
                 "Villasenor current deposition can only"
                 "be used with Implicit evolve schemes.");
         }
@@ -1293,11 +1309,8 @@ WarpX::ReadParameters ()
             macroscopic_solver_algo = GetAlgorithmInteger(pp_algo,"macroscopic_sigma_method");
         }
 
-        if (evolve_scheme == EvolveScheme::ImplicitPicard ||
-            evolve_scheme == EvolveScheme::SemiImplicitPicard) {
-            utils::parser::queryWithParser(pp_algo, "max_picard_iterations", max_picard_iterations);
-            utils::parser::queryWithParser(pp_algo, "picard_iteration_tolerance", picard_iteration_tolerance);
-            utils::parser::queryWithParser(pp_algo, "require_picard_convergence", require_picard_convergence);
+        if (evolve_scheme == EvolveScheme::SemiImplicitEM ||
+            evolve_scheme == EvolveScheme::ThetaImplicitEM) {
 
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 current_deposition_algo == CurrentDepositionAlgo::Esirkepov ||
@@ -2176,11 +2189,6 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
 
     AllocLevelMFs(lev, ba, dm, guard_cells.ng_alloc_EB, guard_cells.ng_alloc_J,
                   guard_cells.ng_alloc_Rho, guard_cells.ng_alloc_F, guard_cells.ng_alloc_G, aux_is_nodal);
-
-    if (evolve_scheme == EvolveScheme::ImplicitPicard ||
-        evolve_scheme == EvolveScheme::SemiImplicitPicard) {
-        EvolveImplicitPicardInit(lev);
-    }
 
     m_accelerator_lattice[lev] = std::make_unique<AcceleratorLattice>();
     m_accelerator_lattice[lev]->InitElementFinder(lev, ba, dm);
@@ -3512,4 +3520,33 @@ const amrex::MultiFab&
 WarpX::getField(FieldType field_type, const int lev, const int direction) const
 {
     return *getFieldPointer(field_type, lev, direction);
+}
+
+const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>,3>>&
+WarpX::getMultiLevelField(warpx::fields::FieldType field_type) const
+{
+    switch(field_type)
+    {
+        case FieldType::Efield_aux :
+            return Efield_aux;
+        case FieldType::Bfield_aux :
+            return Bfield_aux;
+        case FieldType::Efield_fp :
+            return Efield_fp;
+        case FieldType::Bfield_fp :
+            return Bfield_fp;
+        case FieldType::current_fp :
+            return current_fp;
+        case FieldType::current_fp_nodal :
+            return current_fp_nodal;
+        case FieldType::Efield_cp :
+            return Efield_cp;
+        case FieldType::Bfield_cp :
+            return Bfield_cp;
+        case FieldType::current_cp :
+            return current_cp;
+        default:
+            WARPX_ABORT_WITH_MESSAGE("Invalid field type");
+            return Efield_fp;
+    }
 }

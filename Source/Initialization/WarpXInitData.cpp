@@ -501,6 +501,9 @@ WarpX::InitData ()
     CheckGuardCells();
 
     PrintMainPICparameters();
+    if (m_implicit_solver) {
+        m_implicit_solver->PrintParameters();
+    }
     WriteUsedInputsFile();
 
     if (restart_chkfile.empty())
@@ -568,10 +571,33 @@ WarpX::InitFromScratch ()
 
     AmrCore::InitFromScratch(time);  // This will call MakeNewLevelFromScratch
 
+    if (m_implicit_solver) {
+
+        m_implicit_solver->Define(this);
+        m_implicit_solver->GetParticleSolverParams( max_particle_its_in_implicit_scheme,
+                                                    particle_tol_in_implicit_scheme );
+
+        // Add space to save the positions and velocities at the start of the time steps
+        for (auto const& pc : *mypc) {
+#if (AMREX_SPACEDIM >= 2)
+            pc->AddRealComp("x_n");
+#endif
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+            pc->AddRealComp("y_n");
+#endif
+            pc->AddRealComp("z_n");
+            pc->AddRealComp("ux_n");
+            pc->AddRealComp("uy_n");
+            pc->AddRealComp("uz_n");
+        }
+
+    }
+
     mypc->AllocData();
     mypc->InitData();
 
     InitPML();
+
 }
 
 void
