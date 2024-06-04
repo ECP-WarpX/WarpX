@@ -28,12 +28,11 @@
 #include <AMReX_MLLinOp.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_REAL.H>
-
-
 #include <AMReX_PlotFileUtil.H>
 
 #include <array>
-
+#include <fstream>
+#include <iomanip>
 
 namespace ablastr::fields {
 
@@ -56,6 +55,9 @@ computePhiIGF ( amrex::MultiFab const & rho,
     int const nx = domain.length(0);
     int const ny = domain.length(1);
     int const nz = domain.length(2);
+    amrex::Print(0) << " nz " <<nz << " " <<  std::endl;
+    long npts = domain.numPts();
+    amrex::Real sqrtnpts = std::sqrt(npts);
 
     int const nprocs = amrex::ParallelDescriptor::NProcs();
 
@@ -64,20 +66,59 @@ computePhiIGF ( amrex::MultiFab const & rho,
         {domain.smallEnd(0), domain.smallEnd(1), domain.smallEnd(2)},
         {2*nx-1+domain.smallEnd(0), 2*ny-1+domain.smallEnd(1), 2*nz-1+domain.smallEnd(2)},
         amrex::IntVect::TheNodeVector() );
+        //amrex::Print(0) << " 2*nz-1+domain.smallEnd(2) " << 2*nz-1+domain.smallEnd(2) << " " <<  std::endl;
+        //amrex::Print(0) << "domain.smallEnd(2) " << domain.smallEnd(2) << " " <<  std::endl;
 
-    // Initialize the boxarray in "realspace_ba" from the single box "realspace_box"
-    amrex::BoxArray realspace_ba = amrex::BoxArray( realspace_box );
 
-    int const max_nz_box = (2*nz-1) / nprocs + (2*nz-1) % nprocs ;
+    amrex::BoxArray realspace_ba;
+    amrex::DistributionMapping realspace_dm;
+    {
+        int realspace_nx = realspace_box.length(0);
+        int realspace_ny = realspace_box.length(1);
+        int realspace_nz = realspace_box.length(2);
+        int minsize_z = realspace_nz / nprocs;
+        int nleft_z = realspace_nz - minsize_z*nprocs;
+        
 
-     // create IntVect of max_grid_size
-    amrex::IntVect max_size(AMREX_D_DECL(2*nx-1, 2*ny-1, max_nz_box));
+       //amrex::Print(0) << " realspace_nz " << realspace_nz << " " <<  std::endl;
+       //amrex::Print(0) << " minsize_z " << minsize_z << " " <<  std::endl;
+       //amrex::Print(0) << " nleft_z " << nleft_z << " " <<  std::endl;
 
-    // Break up boxarray "ba" into chunks no larger than "max_size" along a direction
-    realspace_ba.maxSize(max_size);
+        AMREX_ALWAYS_ASSERT(realspace_nz >= nprocs);
+        // We are going to split realspace_box in such a way that the first
+        // nleft boxes has minsize_z+1 nodes and the others minsize
+        // nodes. We do it this way instead of BoxArray::maxSize to make
+        // sure there are exactly nprocs boxes and there are no overlaps.
+        
+        amrex::BoxList bl(amrex::IndexType::TheNodeType());
+        for (int iproc = 0; iproc < nprocs; ++iproc) {
+            int zlo, zhi;
+            if (iproc < nleft_z) {
+                zlo = iproc*(minsize_z+1);
+                zhi = zlo + minsize_z;
+                amrex::Print(0) << "IF zlo zhi " << zlo << " " << zhi << " " <<  std::endl;
 
-    // How Boxes are distrubuted among MPI processes
-    amrex::DistributionMapping realspace_dm(realspace_ba);
+            } else {
+                zlo = iproc*minsize_z + nleft_z;
+                zhi = zlo + minsize_z - 1;
+
+                amrex::Print(0) << "ELSE zlo zhi " << zlo << " " << zhi << " " <<  std::endl;
+            }
+            amrex::Box tbx(amrex::IntVect(0,0,zlo),amrex::IntVect(realspace_nx-1,realspace_ny-1,zhi),amrex::IntVect(1));
+                        amrex::Print(0) << " tbx " << tbx << " " <<  std::endl;
+
+            tbx.shift(realspace_box.smallEnd());
+            bl.push_back(tbx);
+
+
+        }
+        
+        realspace_ba.define(std::move(bl));
+        amrex::Vector<int> pmap(nprocs);
+        std::iota(pmap.begin(), pmap.end(), 0);
+        realspace_dm.define(std::move(pmap));
+}
+
 
     // Allocate required arrays
     amrex::MultiFab tmp_rho = amrex::MultiFab(realspace_ba, realspace_dm, 1, 0);
@@ -85,47 +126,17 @@ computePhiIGF ( amrex::MultiFab const & rho,
     amrex::MultiFab tmp_G = amrex::MultiFab(realspace_ba, realspace_dm, 1, 0);
     tmp_G.setVal(0);
 
-    amrex::AllPrint() << " nx ny nz " << nx << " " << ny << " " << nz <<  std::endl;
-    amrex::AllPrint() << " n grow " << phi.nGrowVect()[2] << std::endl;
-    amrex::AllPrint() << " max nz box " << max_nz_box << std::endl;
-    amrex::AllPrint() << realspace_ba << std::endl;
-    amrex::AllPrint() << realspace_dm << std::endl;
+    //amrex::AllPrint() << " nx ny nz " << nx << " " << ny << " " << nz <<  std::endl;
+    //amrex::AllPrint() << " n grow " << phi.nGrowVect()[2] << std::endl;
+    //amrex::AllPrint() << " max nz box " << max_nz_box << std::endl;
+    //amrex::AllPrint() << realspace_ba << std::endl;
+    //amrex::AllPrint() << realspace_dm << std::endl;
 
-    amrex::IntVect lo(AMREX_D_DECL(-1,-1,-1));
-    amrex::IntVect hi(AMREX_D_DECL(20,20,20));
-    amrex::IndexType typ({AMREX_D_DECL(1,1,1)});
-    amrex::Box cc(lo,hi);        // By default, Box is cell based.
-    amrex::Box nd(lo,hi+1,typ);  // Construct a nodal Box.
+        // Copy from rho including its ghost cells to tmp_rho
+    // w.z.: please check. I think we need to use rho.nGrowVect() otherwise
+    // the data outside the ba.minimalBox() will not be copied over.
+    tmp_rho.ParallelCopy( rho, 0, 0, 1, rho.nGrowVect(), amrex::IntVect::TheZeroVector() );
     
-    amrex::AllPrint() << cc.length(0) << " " << nd.length(0) << std::endl;
-    amrex::AllPrint() << "A cell-centered Box " << cc << "\n";
-    amrex::AllPrint() << "An all nodal Box    " << nd << "\n";
-
-
-   amrex::Box domain2(amrex::IntVect{0,0,0}, amrex::IntVect{127,127,127},amrex::IntVect::TheNodeVector() );
-    amrex::BoxArray ba2(domain2);  // Make a new BoxArray out of a single Box
-    amrex::AllPrint() << "BoxArray size is " << ba2.size() << "\n";  // 1
-    ba2.maxSize(64);       // Chop into boxes of 64^3 cells
-    amrex::AllPrint() << ba2;
-
-
-    // check to make sure each MPI rank has exactly 1 box
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(tmp_rho.local_size() == 1, "Must have one Box per MPI process");
-
-    // since there is 1 MPI rank per box, here each MPI rank obtains its local box and the associated boxid
-    amrex::Box local_box;
-    int local_boxid;
-        for (int i = 0; i < realspace_ba.size(); ++i) {
-            amrex::Box b = realspace_ba[i];
-            // each MPI rank has its own local_box Box and local_boxid ID
-            if (amrex::ParallelDescriptor::MyProc() == realspace_dm[i]) {
-                local_box = b;
-                local_boxid = i;
-            }
-        }
-
-    // Copy from rho to tmp_rho
-    tmp_rho.ParallelCopy( rho, 0, 0, 1, amrex::IntVect::TheZeroVector(), amrex::IntVect::TheZeroVector() );
 
     // Compute the integrated Green function
     {
@@ -172,39 +183,52 @@ computePhiIGF ( amrex::MultiFab const & rho,
          }
       );
     }
+ 
+   /*// Save the MultiFab data to a text file
+    std::ofstream outfile("myG.txt");
+    outfile << std::setprecision(3); // Set precision for floating-point values
+
+    for (amrex::MFIter mfi(tmp_G, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+        const amrex::Box& bx = mfi.validbox();
+        const auto& arr = tmp_G.array(mfi);
+
+        for (int k = bx.smallEnd(2); k <= bx.bigEnd(2); ++k) {
+            for (int j = bx.smallEnd(1); j <= bx.bigEnd(1); ++j) {
+                for (int i = bx.smallEnd(0); i <= bx.bigEnd(0); ++i) {
+                    outfile << "i: " << i << " j: " << j << " k: " << k << " G: " << arr(i,j,k) << "\n";
+                }
+            }
+        }
+    }
+    outfile.close();*/
 
     amrex::Box const realspace_box1 = amrex::Box(
     {domain.smallEnd(0), domain.smallEnd(1), domain.smallEnd(2)},
     {2*nx-1+domain.smallEnd(0), 2*ny-1+domain.smallEnd(1), 2*nz-1+domain.smallEnd(2)},
-    amrex::IntVect::TheCellVector() );
+    amrex::IntVect::TheCellVector());
     amrex::Geometry geom1(realspace_box1);
     amrex::WriteSingleLevelPlotfile("myG", tmp_G, {"G"}, geom1, 0, 0);
 
-    //amrex::WriteSingleLevelPlotfile("myG", tmp_G, {"G"}, geom1, 0, 0);
-
     }
 
+    // since there is 1 MPI rank per box, here each MPI rank obtains its local box and the associated boxid
+    int local_boxid = amrex::ParallelDescriptor::MyProc(); // because of how we made the DistributionMapping
+    amrex::Box local_nodal_box = realspace_ba[local_boxid];
+    amrex::Box local_box(local_nodal_box.smallEnd(), local_nodal_box.bigEnd());
+    local_box.shift(-realspace_box.smallEnd()); // This simplifies the setup because the global lo is zero now
 
-    // start by coarsening each box by 2 in the x-direction
-    amrex::Box c_local_box = amrex::coarsen(local_box, amrex::IntVect(AMREX_D_DECL(2,1,1)));
+    // Since we the domain decompostion is in the z-direction, setting up
+    // c_local_box is simple.
+    amrex::Box c_local_box = local_box;
+    c_local_box.setBig(0, local_box.length(0)/2+1);
 
-    // if the coarsened box's high-x index tmp_rho_fftis even, we shrink the size in 1 in x
-    // this avoids overlap between coarsened boxes
-    /*if (c_local_box.bigEnd(0) * 2 == local_box.bigEnd(0)) {
-        c_local_box.setBig(0,c_local_box.bigEnd(0)-1);
-    }
-    // for any boxes that touch the hi-x domain we
-    // increase the size of boxes by 1 in x
-    // this makes the overall fft dataset have size (Nx/2+1 x Ny x Nz)
-    if (local_box.bigEnd(0) == nx) {
-        c_local_box.growHi(0,1);
-    }*/
-
-    amrex::AllPrint() << "myProc = " << amrex::ParallelDescriptor::MyProc() << " , local box = " << local_box <<  " coars local box = " << c_local_box << std::endl;
+    //amrex::AllPrint() << "myProc = " << amrex::ParallelDescriptor::MyProc() << " , local box = " << local_box <<  " complex local box = " << c_local_box << std::endl;
 
     using SpectralField = amrex::BaseFab< amrex::GpuComplex< amrex::Real > > ;
     SpectralField tmp_rho_fft(c_local_box, 1, amrex::The_Device_Arena());
     SpectralField tmp_G_fft(c_local_box, 1, amrex::The_Device_Arena());
+    tmp_rho_fft.shift(realspace_box.smallEnd());
+    tmp_G_fft.shift(realspace_box.smallEnd());
 
 #ifdef AMREX_USE_CUDA
     heffte::fft3d_r2c<heffte::backend::cufft> fft
@@ -219,7 +243,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
           {c_local_box.bigEnd(0)  ,c_local_box.bigEnd(1)  ,c_local_box.bigEnd(2)}},
          0, amrex::ParallelDescriptor::Communicator());
 
-    amrex::AllPrint() << "local" << local_box.smallEnd(2) << " " <<local_box.bigEnd(2) << "  " << c_local_box.smallEnd(2) << " " << c_local_box.bigEnd(2)<< " " << std::endl;
+    //amrex::AllPrint() << "local" << local_box.smallEnd(2) << " " <<local_box.bigEnd(2) << "  " << c_local_box.smallEnd(2) << " " << c_local_box.bigEnd(2)<< " " << std::endl;
 
     using heffte_complex = typename heffte::fft_output<amrex::Real>::type;
     heffte_complex* rho_fft_data = (heffte_complex*) tmp_rho_fft.dataPtr();
@@ -253,14 +277,16 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
             // increase the size of boxes touching the hi-x domain by 1 in x
             // this is an (Nx x Ny x Nz) -> (Nx/2+1 x Ny x Nz) real-to-complex sizing
-            if (b.bigEnd(0) == geom.Domain().bigEnd(0)) {
+            if (b.bigEnd(0) == domain.bigEnd(0)) {
                 c_box.growHi(0,1);
-            }*/
+            }
             bl.push_back(c_box);
 
         }
-        fft_ba.define(std::move(bl));
+        fft_ba.define(std::move(bl)); 
     }
+
+
 
     // storage for real, imaginary, magnitude, and phase
     amrex::MultiFab fft_data(fft_ba,realspace_dm,4,0);
@@ -271,12 +297,13 @@ computePhiIGF ( amrex::MultiFab const & rho,
         amrex::Array4<amrex::Real> const& data = fft_data.array(mfi);
         amrex::Array4< amrex::GpuComplex<amrex::Real> > spectral = tmp_G_fft.array();
 
-        const amrex::Box& bx = mfi.fabbox();
+        const amrex::Box& bx = mfi.validbox();
 
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
         {
-            amrex::Real re = spectral(i,j,k).real() / std::sqrt(realspace_box.numPts());
-            amrex::Real im = spectral(i,j,k).imag() / std::sqrt(realspace_box.numPts());
+            
+            amrex::Real re = spectral(i,j,k).real() / sqrtnpts;
+            amrex::Real im = spectral(i,j,k).imag() / sqrtnpts;
 
             data(i,j,k,0) = re;
             data(i,j,k,1) = im;
@@ -298,6 +325,28 @@ computePhiIGF ( amrex::MultiFab const & rho,
         });
     }
 
+    /*// Save the fft_data MultiFab to a text file
+    std::ofstream outfile("G_fft_data.txt");
+    outfile << std::setprecision(3); // Set precision for floating-point values
+
+    for (amrex::MFIter mfi(fft_data); mfi.isValid(); ++mfi) {
+        const amrex::Box& bx = mfi.validbox();
+        const auto& data = fft_data.array(mfi);
+
+        for (int k = bx.smallEnd(2); k <= bx.bigEnd(2); ++k) {
+            for (int j = bx.smallEnd(1); j <= bx.bigEnd(1); ++j) {
+                for (int i = bx.smallEnd(0); i <= bx.bigEnd(0); ++i) {
+                    outfile << "i: " << i << " j: " << j << " k: " << k
+                            << " real: " << data(i,j,k,0)
+                            << " imag: " << data(i,j,k,1)
+                            << " magnitude: " << data(i,j,k,2)
+                            << " phase: " << data(i,j,k,3) << "\n";
+                }
+            }
+        }
+    }
+    outfile.close();*/
+
     // domain for G fft data used to contruct a geometry object
     amrex::Box domain_fft = amrex::coarsen(domain, amrex::IntVect(AMREX_D_DECL(2,1,1)));
     // shrink by 1 in x in case there are an odd number of cells in the x-direction in domain
@@ -315,8 +364,6 @@ computePhiIGF ( amrex::MultiFab const & rho,
     amrex::WriteSingleLevelPlotfile("G_fft_data", fft_data, {"real", "imag", "magitude", "phase"}, geom_fft, 0, 0);
 
 // **********************************
-
-
 
     // Multiply tmp_G_fft and tmp_rho_fft in spectral space
     // Store the result in-place in Gtmp_G_fft, to save memory
@@ -336,6 +383,23 @@ computePhiIGF ( amrex::MultiFab const & rho,
     // Copy from tmp_G to phi
     phi.ParallelCopy( tmp_G, 0, 0, 1, amrex::IntVect::TheZeroVector(), phi.nGrowVect() );
 
+    /*// Save the MultiFab data (phi) to a text file
+    std::ofstream outfile("myphi.txt");
+    outfile << std::setprecision(3); // Set precision for floating-point values
+
+    for (amrex::MFIter mfi(phi, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+        const amrex::Box& bx = mfi.validbox();
+        const auto& arr = phi.array(mfi);
+
+        for (int k = bx.smallEnd(2); k <= bx.bigEnd(2); ++k) {
+            for (int j = bx.smallEnd(1); j <= bx.bigEnd(1); ++j) {
+                for (int i = bx.smallEnd(0); i <= bx.bigEnd(0); ++i) {
+                    outfile << "i: " << i << " j: " << j << " k: " << k << " phi: " << arr(i,j,k) << "\n";
+                }
+            }
+        }
+    }
+    outfile.close();*/
 
     amrex::Box const realspace_box1 = amrex::Box(
     {domain.smallEnd(0), domain.smallEnd(1), domain.smallEnd(2)},
@@ -345,29 +409,6 @@ computePhiIGF ( amrex::MultiFab const & rho,
     amrex::WriteSingleLevelPlotfile("myphi", tmp_G, {"phi"}, geom1, 0, 0);
 
 
-
-/*
-
-    // number of points in the domain
-    long npts = domain.numPts();
-    Real sqrtnpts = std::sqrt(npts);
-
-
-        // since there is 1 MPI rank per box, here each MPI rank obtains its local box and the associated boxid
-        amrex::Box local_box;
-        int local_boxid;
-        {
-            for (int i = 0; i < ba.size(); ++i) {
-                Box b = ba[i];
-                // each MPI rank has its own local_box Box and local_boxid ID
-                if (ParallelDescriptor::MyProc() == dm[i]) {
-                    local_box = b;
-                    local_boxid = i;
-                }
-            }
-        }
-
-*/
     }
     else{
 
@@ -460,6 +501,23 @@ computePhiIGF ( amrex::MultiFab const & rho,
             }
         );
     }
+    /*// Save the MultiFab data to a text file
+    std::ofstream outfile("remiG.txt");
+    outfile << std::setprecision(3); // Set precision for floating-point values
+
+    for (amrex::MFIter mfi(tmp_G, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+        const amrex::Box& bx = mfi.validbox();
+        const auto& arr = tmp_G.array(mfi);
+
+        for (int k = bx.smallEnd(2); k <= bx.bigEnd(2); ++k) {
+            for (int j = bx.smallEnd(1); j <= bx.bigEnd(1); ++j) {
+                for (int i = bx.smallEnd(0); i <= bx.bigEnd(0); ++i) {
+                    outfile << "i: " << i << " j: " << j << " k: " << k << " G: " << arr(i,j,k) << "\n";
+                }
+            }
+        }
+    }
+    outfile.close();*/
 
     amrex::Box const realspace_box1 = amrex::Box(
     {domain.smallEnd(0), domain.smallEnd(1), domain.smallEnd(2)},
@@ -467,9 +525,6 @@ computePhiIGF ( amrex::MultiFab const & rho,
     amrex::IntVect::TheCellVector() );
     amrex::Geometry geom1(realspace_box1);
     amrex::WriteSingleLevelPlotfile("remiG", tmp_G, {"G"}, geom1, 0, 0);
-
-      //amrex::Geometry geom1(realspace_box);
-      //amrex::WriteSingleLevelPlotfile("remiG", tmp_G, {"G"}, geom1, 0, 0);
 
     }
     // Perform forward FFTs
@@ -503,6 +558,28 @@ computePhiIGF ( amrex::MultiFab const & rho,
     // Store the result in-place in Gtmp_G_fft, to save memory
     amrex::Multiply( tmp_G_fft, tmp_rho_fft, 0, 0, 1, 0);
 
+   /*/ // Save the spectral data (tmp_G_fft) to a text file
+    std::ofstream outfile("remiG_fft_data.txt");
+    outfile << std::setprecision(3); // Set precision for floating-point values
+
+    for (amrex::MFIter mfi(spectralspace_ba, dm_global_fft); mfi.isValid(); ++mfi) {
+        const amrex::Box& bx = mfi.validbox();
+        const auto& G_spectral = tmp_G_fft.array(mfi);
+
+        for (int k = bx.smallEnd(2); k <= bx.bigEnd(2); ++k) {
+            for (int j = bx.smallEnd(1); j <= bx.bigEnd(1); ++j) {
+                for (int i = bx.smallEnd(0); i <= bx.bigEnd(0); ++i) {
+                    amrex::GpuComplex<amrex::Real> G_val = G_spectral(i,j,k);
+
+                    outfile << "i: " << i << " j: " << j << " k: " << k
+                            << " G_real: " << G_val.real() << " G_imag: " << G_val.imag() << "\n";
+                }
+            }
+        }
+    }
+    outfile.close();*/
+
+
     // Perform inverse FFT
     auto backward_plan = ablastr::math::anyfft::FFTplans(spectralspace_ba, dm_global_fft);
     // Loop over boxes perform FFTs
@@ -526,7 +603,24 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
     // Copy from tmp_G to phi
     phi.ParallelCopy( tmp_G, 0, 0, 1, amrex::IntVect::TheZeroVector(), phi.nGrowVect() );
+    
+    /*// Save the MultiFab data (phi) to a text file
+    std::ofstream outfile("remiphi.txt");
+    outfile << std::setprecision(3); // Set precision for floating-point values
 
+    for (amrex::MFIter mfi(phi, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+        const amrex::Box& bx = mfi.validbox();
+        const auto& arr = phi.array(mfi);
+
+        for (int k = bx.smallEnd(2); k <= bx.bigEnd(2); ++k) {
+            for (int j = bx.smallEnd(1); j <= bx.bigEnd(1); ++j) {
+                for (int i = bx.smallEnd(0); i <= bx.bigEnd(0); ++i) {
+                    outfile << "i: " << i << " j: " << j << " k: " << k << " phi: " << arr(i,j,k) << "\n";
+                }
+            }
+        }
+    }
+    outfile.close();*/
 
 
     amrex::Box const realspace_box1 = amrex::Box(
@@ -536,9 +630,6 @@ computePhiIGF ( amrex::MultiFab const & rho,
     amrex::Geometry geom1(realspace_box1);
     amrex::WriteSingleLevelPlotfile("remiphi", tmp_G, {"phi"}, geom1, 0, 0);
 
-
-    //amrex::Geometry geom1(realspace_box);
-    //amrex::WriteSingleLevelPlotfile("remiphi", tmp_G, {"phi"}, geom1, 0, 0);
 
 
     // Loop to destroy FFT plans
