@@ -137,6 +137,10 @@ class Species(picmistandard.PICMI_Species):
         Cells with fewer particles than this number will be
         skipped during resampling.
 
+    warpx_resampling_algorithm_max_w: float
+        Particles with weight larger than this number will be
+        skipped during resampling.
+
     warpx_resampling_trigger_intervals: bool, default=0
         Timesteps at which to resample
 
@@ -247,6 +251,7 @@ class Species(picmistandard.PICMI_Species):
         self.do_resampling = kw.pop('warpx_do_resampling', None)
         self.resampling_algorithm = kw.pop('warpx_resampling_algorithm', None)
         self.resampling_min_ppc = kw.pop('warpx_resampling_min_ppc', None)
+        self.resampling_algorithm_max_w = kw.pop('warpx_resampling_algorithm_max_w', None)
         self.resampling_trigger_intervals = kw.pop('warpx_resampling_trigger_intervals', None)
         self.resampling_triggering_max_avg_ppc = kw.pop('warpx_resampling_trigger_max_avg_ppc', None)
         self.resampling_algorithm_velocity_grid_type = kw.pop('warpx_resampling_algorithm_velocity_grid_type', None)
@@ -299,6 +304,7 @@ class Species(picmistandard.PICMI_Species):
                                              resampling_trigger_intervals=self.resampling_trigger_intervals,
                                              resampling_trigger_max_avg_ppc=self.resampling_triggering_max_avg_ppc,
                                              resampling_algorithm_velocity_grid_type=self.resampling_algorithm_velocity_grid_type,
+                                             resampling_algorithm_max_w=self.resampling_algorithm_max_w,
                                              resampling_algorithm_delta_ur=self.resampling_algorithm_delta_ur,
                                              resampling_algorithm_n_theta=self.resampling_algorithm_n_theta,
                                              resampling_algorithm_n_phi=self.resampling_algorithm_n_phi,

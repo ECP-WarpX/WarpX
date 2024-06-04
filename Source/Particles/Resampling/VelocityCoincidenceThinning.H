@@ -123,6 +123,7 @@ public:
         void labelOnSphericalVelocityGrid (const amrex::ParticleReal ux[],
                                            const amrex::ParticleReal uy[],
                                            const amrex::ParticleReal uz[],
+                                           const amrex::ParticleReal w[],
                                            const unsigned int indices[],
                                            int bin_array[], int index_array[],
                                            const int cell_start, const int cell_stop ) const
@@ -141,8 +142,15 @@ public:
                 const int ii = static_cast<int>(u_theta / dutheta);
                 const int jj = static_cast<int>(u_phi / duphi);
                 const int kk = static_cast<int>(u_mag / dur);
+                amrex::ParticleReal w_i = w[indices[i]];
 
-                bin_array[i] = ii + jj * n1 + kk * n1 * n2;
+                // Assign 0th index of bin_array to particles with weight too low to be merged
+                if (m_max_w > 0 && w_i > m_max_w) {
+                    bin_array[i] = 0;
+                }
+                else {
+                    bin_array[i] = 1 + ii + jj * n1 + kk * n1 * n2;
+                }
                 index_array[i] = i;
             }
         }
@@ -151,6 +159,7 @@ public:
         void labelOnCartesianVelocityGrid (const amrex::ParticleReal ux[],
                                            const amrex::ParticleReal uy[],
                                            const amrex::ParticleReal uz[],
+                                           const amrex::ParticleReal w[],
                                            const unsigned int indices[],
                                            int bin_array[], int index_array[],
                                            const int cell_start, const int cell_stop ) const
@@ -160,27 +169,35 @@ public:
                 const int ii = static_cast<int>((ux[indices[i]] - ux_min) / dux);
                 const int jj = static_cast<int>((uy[indices[i]] - uy_min) / duy);
                 const int kk = static_cast<int>((uz[indices[i]] - uz_min) / duz);
+                amrex::ParticleReal w_i = w[indices[i]];
 
-                bin_array[i] = ii + jj * n1 + kk * n1 * n2;
+                // Assign 0th index of bin_array to particles with weight too low to be merged
+                if (m_max_w > 0 && w_i > m_max_w) {
+                    bin_array[i] = 0;
+                }
+                else {
+                    bin_array[i] = 1 + ii + jj * n1 + kk * n1 * n2;
+                }
                 index_array[i] = i;
             }
         }
 
         AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
         void operator() (const amrex::ParticleReal ux[], const amrex::ParticleReal uy[],
-                         const amrex::ParticleReal uz[], const unsigned int indices[],
+                         const amrex::ParticleReal uz[], const amrex::ParticleReal w[],
+                         const unsigned int indices[],
                          int bin_array[], int index_array[],
                          const int cell_start, const int cell_stop) const
         {
             if (velocity_grid_type == VelocityGridType::Spherical) {
                 labelOnSphericalVelocityGrid(
-                    ux, uy, uz, indices, bin_array, index_array, cell_start,
+                    ux, uy, uz, w, indices, bin_array, index_array, cell_start,
                     cell_stop
                 );
             }
             else if (velocity_grid_type == VelocityGridType::Cartesian) {
                 labelOnCartesianVelocityGrid(
-                    ux, uy, uz, indices, bin_array, index_array, cell_start,
+                    ux, uy, uz, w, indices, bin_array, index_array, cell_start,
                     cell_stop
                 );
             }
@@ -191,6 +208,7 @@ public:
         amrex::ParticleReal dur, dutheta, duphi;
         amrex::ParticleReal dux, duy, duz;
         amrex::ParticleReal ux_min, uy_min, uz_min, ux_max, uy_max;
+        amrex::ParticleReal m_max_w;
     };
 
 private:
@@ -200,5 +218,6 @@ private:
     int m_ntheta, m_nphi;
     amrex::ParticleReal m_delta_ur;
     amrex::Vector<amrex::ParticleReal> m_delta_u;
+    amrex::ParticleReal m_max_w = 0;
 };
 #endif // WARPX_VELOCITY_COINCIDENCE_THINNING_H_

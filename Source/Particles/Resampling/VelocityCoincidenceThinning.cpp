@@ -24,6 +24,10 @@ VelocityCoincidenceThinning::VelocityCoincidenceThinning (const std::string& spe
         "Resampling min_ppc should be greater than or equal to 1"
     );
 
+    utils::parser::queryWithParser(
+        pp_species_name, "resampling_algorithm_max_w", m_max_w
+    );
+
     std::string velocity_grid_type_str = "spherical";
     pp_species_name.query(
         "resampling_algorithm_velocity_grid_type", velocity_grid_type_str
@@ -111,11 +115,13 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
         velocityBinCalculator.n2 = m_nphi;
         velocityBinCalculator.dutheta = 2.0_prt * MathConst::pi / m_ntheta;
         velocityBinCalculator.duphi = MathConst::pi / m_nphi;
+        velocityBinCalculator.m_max_w = m_max_w;
     }
     else if (m_velocity_grid_type == VelocityGridType::Cartesian) {
         velocityBinCalculator.dux = m_delta_u[0];
         velocityBinCalculator.duy = m_delta_u[1];
         velocityBinCalculator.duz = m_delta_u[2];
+        velocityBinCalculator.m_max_w = m_max_w;
 
         // get the minimum and maximum velocities to determine the velocity space
         // grid boundaries
@@ -166,7 +172,7 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
             // Loop over particles and label them with the appropriate momentum bin
             // number. Also assign initial ordering to the sorted_indices array.
             velocityBinCalculator(
-                ux, uy, uz, indices, momentum_bin_number_data, sorted_indices_data,
+                ux, uy, uz, w, indices, momentum_bin_number_data, sorted_indices_data,
                 cell_start, cell_stop
             );
 
@@ -189,6 +195,10 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
             // ones in the same momentum bin
             for (int i = cell_start; i < cell_stop; ++i)
             {
+                // skip merging if the momentum bin is 0
+                if (momentum_bin_number_data[sorted_indices_data[i]] == 0) {
+                    continue;
+                }
                 particles_in_bin += 1;
                 const auto part_idx = indices[sorted_indices_data[i]];
 
