@@ -96,7 +96,7 @@ assert( error_rel < tolerance_rel )
 # Check that the user runtime component worked as expected
 orig_z = ad['electrons', 'particle_orig_z'].v
 print(f"orig_z: min = {np.min(orig_z)}, max = {np.max(orig_z)}")
-assert np.all( (orig_z > 0) & (orig_z < 1.5e-5) )
+assert np.all( (orig_z > -5e-5) & (orig_z < 1.5e-5) )
 print('particle_orig_z has reasonable values')
 
 test_name = os.path.split(os.getcwd())[1]

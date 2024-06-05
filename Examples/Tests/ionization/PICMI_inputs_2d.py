@@ -53,7 +53,8 @@ ions = picmi.Species(
     particle_type = 'N',
     name = 'ions',
     charge_state = 2,
-    initial_distribution = uniform_distribution)
+    initial_distribution = uniform_distribution,
+    warpx_add_real_attributes = {'orig_z': 'z'})
 
 # Field ionization
 nitrogen_ionization = picmi.FieldIonization(
