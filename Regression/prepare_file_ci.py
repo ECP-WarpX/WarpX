@@ -59,8 +59,8 @@ if ci_openpmd:
 # always build with PSATD support (runtime controlled if used)
 if ci_psatd:
     text = re.sub('addToCompileString =',
-                  'addToCompileString = USE_PSATD=TRUE ', text)
-    text = re.sub('USE_PSATD=FALSE',
+                  'addToCompileString = USE_FFT=TRUE ', text)
+    text = re.sub('USE_FFT=FALSE',
                   '', text)
 
 # CCache

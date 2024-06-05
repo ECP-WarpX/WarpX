@@ -7,6 +7,7 @@
 
 #include "FieldEnergy.H"
 
+#include "FieldSolver/Fields.H"
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
@@ -28,6 +29,7 @@
 #include <vector>
 
 using namespace amrex;
+using namespace warpx::fields;
 
 // constructor
 FieldEnergy::FieldEnergy (const std::string& rd_name)

@@ -7,8 +7,9 @@
  */
 #include "SliceDiagnostic.H"
 
-#include "WarpX.H"
+#include "FieldSolver/Fields.H"
 #include "Utils/TextMsg.H"
+#include "WarpX.H"
 
 #include <ablastr/utils/Communication.H>
 #include <ablastr/warn_manager/WarnManager.H>
@@ -40,7 +41,7 @@
 #include <sstream>
 
 using namespace amrex;
-
+using namespace warpx::fields;
 
 /* \brief
  *  The functions creates the slice for diagnostics based on the user-input.

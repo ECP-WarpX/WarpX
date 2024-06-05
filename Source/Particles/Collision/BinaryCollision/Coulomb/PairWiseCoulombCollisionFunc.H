@@ -5,8 +5,8 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef PAIRWISE_COULOMB_COLLISION_FUNC_H_
-#define PAIRWISE_COULOMB_COLLISION_FUNC_H_
+#ifndef WARPX_PAIRWISE_COULOMB_COLLISION_FUNC_H_
+#define WARPX_PAIRWISE_COULOMB_COLLISION_FUNC_H_
 
 #include "ElasticCollisionPerez.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
@@ -117,4 +117,4 @@ private:
     Executor m_exe;
 };
 
-#endif // PAIRWISE_COULOMB_COLLISION_FUNC_H_
+#endif // WARPX_PAIRWISE_COULOMB_COLLISION_FUNC_H_

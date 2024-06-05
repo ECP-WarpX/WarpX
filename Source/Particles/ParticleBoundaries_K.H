@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef PARTICLEBOUNDARIES_K_H_
-#define PARTICLEBOUNDARIES_K_H_
+#ifndef WARPX_PARTICLEBOUNDARIES_K_H_
+#define WARPX_PARTICLEBOUNDARIES_K_H_
 
 #include "ParticleBoundaries.H"
 #include "Initialization/SampleGaussianFluxDistribution.H"
@@ -186,4 +186,4 @@ namespace ApplyParticleBoundaries {
     }
 
 }
-#endif
+#endif //WARPX_PARTICLEBOUNDARIES_K_H_

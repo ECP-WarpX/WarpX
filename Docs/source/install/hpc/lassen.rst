@@ -200,7 +200,7 @@ Use the following :ref:`cmake commands <building-cmake>` to compile the applicat
    cd /usr/workspace/${USER}/lassen/src/warpx
    rm -rf build_lassen
 
-   cmake -S . -B build_lassen -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_DIMS="1;2;RZ;3"
+   cmake -S . -B build_lassen -DWarpX_COMPUTE=CUDA -DWarpX_FFT=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_DIMS="1;2;RZ;3"
    cmake --build build_lassen -j 8
 
 The WarpX application executables are now in ``/usr/workspace/${USER}/lassen/src/warpx/build_lassen/bin/``.
@@ -210,7 +210,7 @@ Additionally, the following commands will install WarpX as a Python module:
 
    rm -rf build_lassen_py
 
-   cmake -S . -B build_lassen_py -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_APP=OFF -DWarpX_PYTHON=ON -DWarpX_DIMS="1;2;RZ;3"
+   cmake -S . -B build_lassen_py -DWarpX_COMPUTE=CUDA -DWarpX_FFT=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_APP=OFF -DWarpX_PYTHON=ON -DWarpX_DIMS="1;2;RZ;3"
    cmake --build build_lassen_py -j 8 --target pip_install
 
 Now, you can :ref:`submit lassen compute jobs <running-cpp-lassen>` for WarpX :ref:`Python (PICMI) scripts <usage-picmi>` (:ref:`example scripts <usage-examples>`).

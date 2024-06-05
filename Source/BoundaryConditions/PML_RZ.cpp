@@ -8,7 +8,8 @@
 #include "PML_RZ.H"
 
 #include "BoundaryConditions/PML_RZ.H"
-#ifdef WARPX_USE_PSATD
+#include "FieldSolver/Fields.H"
+#ifdef WARPX_USE_FFT
 #   include "FieldSolver/SpectralSolver/SpectralFieldDataRZ.H"
 #endif
 #include "Utils/WarpXConst.H"
@@ -33,6 +34,7 @@
 #include <memory>
 
 using namespace amrex;
+using namespace warpx::fields;
 
 PML_RZ::PML_RZ (const int lev, const amrex::BoxArray& grid_ba, const amrex::DistributionMapping& grid_dm,
                 const amrex::Geometry* geom, const int ncell, const int do_pml_in_domain)
@@ -185,7 +187,7 @@ PML_RZ::Restart (const std::string& dir)
     }
 }
 
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
 void
 PML_RZ::PushPSATD (const int lev)
 {

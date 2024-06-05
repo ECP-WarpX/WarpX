@@ -5,8 +5,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef UTILS_WARPXALGORITHMSELECTION_H_
-#define UTILS_WARPXALGORITHMSELECTION_H_
+#ifndef WARPX_UTILS_WARPXALGORITHMSELECTION_H_
+#define WARPX_UTILS_WARPXALGORITHMSELECTION_H_
 
 #include <AMReX_BaseFwd.H>
 
@@ -29,8 +29,8 @@ struct MediumForEM {
 struct EvolveScheme {
     enum {
         Explicit = 0,
-        ImplicitPicard = 1,
-        SemiImplicitPicard = 2
+        ThetaImplicitEM = 1,
+        SemiImplicitEM = 2
     };
 };
 
@@ -175,7 +175,8 @@ enum struct ParticleBoundaryType {
         Open = 1,          //!< particles cross domain boundary leave with damped j
         Reflecting = 2,     //!< particles are reflected
         Periodic = 3,      //!< particles are introduced from the periodic boundary
-        Thermal = 4
+        Thermal = 4,
+        None = 5           //!< For r=0 boundary with RZ simulations
 };
 
 /** MPI reductions
@@ -207,4 +208,4 @@ GetParticleBCTypeInteger( std::string BCType );
 std::string
 GetFieldBCTypeString( FieldBoundaryType fb_type );
 
-#endif // UTILS_WARPXALGORITHMSELECTION_H_
+#endif // WARPX_UTILS_WARPXALGORITHMSELECTION_H_

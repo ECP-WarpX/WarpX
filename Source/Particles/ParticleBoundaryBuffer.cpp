@@ -98,7 +98,8 @@ struct FindEmbeddedBoundaryIntersection {
                 amrex::Real W[AMREX_SPACEDIM][2];
                 amrex::ParticleReal x_temp=xp, y_temp=yp, z_temp=zp;
                 UpdatePosition(x_temp, y_temp, z_temp, ux, uy, uz, -dt_frac*dt);
-                ablastr::particles::compute_weights(x_temp, y_temp, z_temp, plo, dxi, i, j, k, W);
+                ablastr::particles::compute_weights<amrex::IndexType::NODE>(
+                    x_temp, y_temp, z_temp, plo, dxi, i, j, k, W);
                 amrex::Real phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, phiarr);
                 return phi_value;
             } );
@@ -115,11 +116,12 @@ struct FindEmbeddedBoundaryIntersection {
         // record the components of the normal on the destination
         int i, j, k;
         amrex::Real W[AMREX_SPACEDIM][2];
-        ablastr::particles::compute_weights(x_temp, y_temp, z_temp, plo, dxi, i, j, k, W);
+        ablastr::particles::compute_weights<amrex::IndexType::NODE>(
+            x_temp, y_temp, z_temp, plo, dxi, i, j, k, W);
         int ic, jc, kc; // Cell-centered indices
-        int nodal;
         amrex::Real Wc[AMREX_SPACEDIM][2]; // Cell-centered weight
-        ablastr::particles::compute_weights(x_temp, y_temp, z_temp, plo, dxi, ic, jc, kc, Wc, nodal=0); // nodal=0 to calculate the weights with respect to the cell-centered nodes
+        ablastr::particles::compute_weights<amrex::IndexType::CELL>(
+            x_temp, y_temp, z_temp, plo, dxi, ic, jc, kc, Wc);
         amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, ic, jc, kc, Wc, phiarr, dxi);
         DistanceToEB::normalize(normal);
 
@@ -158,6 +160,9 @@ struct FindEmbeddedBoundaryIntersection {
 #else
         amrex::ignore_unused(x_temp, y_temp, z_temp,normal);
 #endif
+
+        // flip id to positive in destination
+        amrex::ParticleIDWrapper{dst.m_idcpu[dst_i]}.make_valid();
     }
 };
 #endif
@@ -197,6 +202,9 @@ struct CopyAndTimestamp {
         dst.m_runtime_rdata[m_normal_index][dst_i]= n[0];
         dst.m_runtime_rdata[m_normal_index+1][dst_i]= n[1];
         dst.m_runtime_rdata[m_normal_index+2][dst_i]= n[2];
+
+        // flip id to positive in destination
+        amrex::ParticleIDWrapper{dst.m_idcpu[dst_i]}.make_valid();
     }
 };
 
@@ -354,8 +362,7 @@ void ParticleBoundaryBuffer::clearParticles (int const i) {
     }
 }
 
-void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
-                                              const amrex::Vector<const amrex::MultiFab*>& distance_to_eb)
+void ParticleBoundaryBuffer::gatherParticlesFromDomainBoundaries (MultiParticleContainer& mypc)
 {
     WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles");
 
@@ -439,9 +446,18 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
             }
         }
     }
+}
 
+void ParticleBoundaryBuffer::gatherParticlesFromEmbeddedBoundaries (
+    MultiParticleContainer& mypc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb)
+{
 #ifdef AMREX_USE_EB
     WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::EB");
+
+    using PIter = amrex::ParConstIterSoA<PIdx::nattribs, 0>;
+    const auto& warpx_instance = WarpX::GetInstance();
+    const amrex::Geometry& geom = warpx_instance.Geom(0);
+    auto plo = geom.ProbLoArray();
 
     auto& buffer = m_particle_containers[m_particle_containers.size()-1];
     for (int i = 0; i < numSpecies(); ++i)
@@ -526,7 +542,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
         }
     }
 #else
-    amrex::ignore_unused(distance_to_eb);
+    amrex::ignore_unused(mypc, distance_to_eb);
 #endif
 }
 

@@ -18,6 +18,7 @@ known analytic solution. While the radius r(t) is not analytically known, its
 inverse t(r) can be solved for exactly.
 """
 import os
+import re
 import sys
 
 import numpy as np
@@ -36,6 +37,15 @@ filename = sys.argv[1]
 ds = yt.load( filename )
 t_max = ds.current_time.item()  # time of simulation
 
+# Parse test name and check if particle_shape = 4 is used
+emass_10 = True if re.search('emass_10', filename) else False
+
+if emass_10:
+    l2_tolerance = 0.096
+    m_e = 10
+else:
+    l2_tolerance = 0.05
+    m_e = 9.10938356e-31 #Electron mass in kg
 ndims = np.count_nonzero(ds.domain_dimensions > 1)
 
 if ndims == 2:
@@ -60,7 +70,6 @@ iz0 = round((0. - zmin)/dz)
 
 # Constants
 eps_0 = 8.8541878128e-12  #Vacuum Permittivity in C/(V*m)
-m_e = 9.10938356e-31  #Electron mass in kg
 q_e = -1.60217662e-19  #Electron charge in C
 pi = np.pi  #Circular constant of the universe
 r_0 = 0.1  #Initial radius of sphere
@@ -134,9 +143,9 @@ print("L2 error along x-axis = %s" %L2_error_x)
 print("L2 error along y-axis = %s" %L2_error_y)
 print("L2 error along z-axis = %s" %L2_error_z)
 
-assert L2_error_x < 0.05
-assert L2_error_y < 0.05
-assert L2_error_z < 0.05
+assert L2_error_x < l2_tolerance
+assert L2_error_y < l2_tolerance
+assert L2_error_z < l2_tolerance
 
 # Check conservation of energy
 def return_energies(iteration):

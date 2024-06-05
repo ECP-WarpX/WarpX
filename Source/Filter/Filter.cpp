@@ -9,6 +9,7 @@
 
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "WarpX.H"
 
 #include <AMReX_Array4.H>
 #include <AMReX_Box.H>

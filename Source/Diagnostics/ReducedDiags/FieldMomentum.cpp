@@ -7,6 +7,7 @@
 
 #include "FieldMomentum.H"
 
+#include "FieldSolver/Fields.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "WarpX.H"
@@ -37,6 +38,7 @@
 #include <vector>
 
 using namespace amrex;
+using namespace warpx::fields;
 
 FieldMomentum::FieldMomentum (const std::string& rd_name)
     : ReducedDiags{rd_name}

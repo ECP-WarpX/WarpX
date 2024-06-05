@@ -9,7 +9,11 @@
 
 #include "HybridPICModel.H"
 
+#include "FieldSolver/Fields.H"
+#include "WarpX.H"
+
 using namespace amrex;
+using namespace warpx::fields;
 
 HybridPICModel::HybridPICModel ( int nlevs_max )
 {
