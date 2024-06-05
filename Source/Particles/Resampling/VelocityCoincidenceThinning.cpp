@@ -28,6 +28,7 @@ VelocityCoincidenceThinning::VelocityCoincidenceThinning (const std::string& spe
     if (utils::parser::queryWithParser(
         pp_species_name, "resampling_algorithm_target_weight", target_weight
     )) {
+        // factor of 2 since each cluster is reduced to 2 particles
         m_cluster_weight = target_weight * 2.0_prt;
     }
 
