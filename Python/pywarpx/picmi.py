@@ -169,13 +169,13 @@ class Species(picmistandard.PICMI_Species):
         a single number is given the same du value will be used in all three
         directions.
 
-    warpx_int_real_attributes: dict
-        Dictionary of extra integer particle attributes initialized with the
-        starting position and momentum for each particle.
+    warpx_add_int_attributes: dict
+        Dictionary of extra integer particle attributes initialized from an
+        expression that is a function of the variables (x, y, z, ux, uy, uz, t).
 
     warpx_add_real_attributes: dict
-        Dictionary of extra real particle attributes initialized with the
-        starting position and momentum for each particle.
+        Dictionary of extra real particle attributes initialized from an
+        expression that is a function of the variables (x, y, z, ux, uy, uz, t).
     """
     def init(self, kw):
 

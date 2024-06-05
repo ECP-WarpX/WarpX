@@ -75,7 +75,7 @@ if do_plot:
     plt.colorbar()
 
     # Plot electrons
-    species = 'electrons';
+    species = 'electrons'
     if species in [x[0] for x in ds.field_list]:
         xe = ad[species, 'particle_position_x'].v
         ze = ad[species, 'particle_position_y'].v
@@ -95,6 +95,7 @@ assert( error_rel < tolerance_rel )
 
 # Check that the user runtime component worked as expected
 orig_z = ad['electrons', 'particle_orig_z'].v
+print(f"orig_z: min = {np.min(orig_z)}, max = {np.max(orig_z)}")
 assert np.all( (orig_z > 0) & (orig_z < 1.5e-5) )
 print('particle_orig_z has reasonable values')
 
