@@ -1,4 +1,4 @@
-ifeq ($(USE_PSATD),TRUE)
+ifeq ($(USE_FFT),TRUE)
     ifeq ($(DIM),3)
         CEXE_sources += IntegratedGreenFunctionSolver.cpp
     endif

@@ -25,7 +25,7 @@
 
 #include <cmath>
 
-#if WARPX_USE_PSATD
+#if WARPX_USE_FFT
 
 using namespace amrex;
 
@@ -861,4 +861,4 @@ PsatdAlgorithmJConstantInTime::VayDeposition (SpectralFieldData& field_data)
     }
 }
 
-#endif // WARPX_USE_PSATD
+#endif // WARPX_USE_FFT

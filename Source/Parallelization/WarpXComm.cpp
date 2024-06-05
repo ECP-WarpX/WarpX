@@ -9,7 +9,7 @@
 #include "WarpX.H"
 
 #include "BoundaryConditions/PML.H"
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
 #   include "BoundaryConditions/PML_RZ.H"
 #endif
 #include "Filter/BilinearFilter.H"
@@ -63,7 +63,7 @@ WarpX::UpdateAuxilaryData ()
 void
 WarpX::UpdateAuxilaryDataStagToNodal ()
 {
-#ifndef WARPX_USE_PSATD
+#ifndef WARPX_USE_FFT
     if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( false,
             "WarpX::UpdateAuxilaryDataStagToNodal: PSATD solver requires "
@@ -702,7 +702,7 @@ WarpX::FillBoundaryE (const int lev, const PatchType patch_type, const amrex::In
             pml[lev]->FillBoundaryE(patch_type, nodal_sync);
         }
 
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
         if (pml_rz[lev])
         {
             pml_rz[lev]->FillBoundaryE(patch_type, nodal_sync);
@@ -759,7 +759,7 @@ WarpX::FillBoundaryB (const int lev, const PatchType patch_type, const amrex::In
             pml[lev]->FillBoundaryB(patch_type, nodal_sync);
         }
 
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
         if (pml_rz[lev])
         {
             pml_rz[lev]->FillBoundaryB(patch_type, nodal_sync);
