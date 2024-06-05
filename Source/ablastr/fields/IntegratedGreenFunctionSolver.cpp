@@ -65,7 +65,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
     amrex::Box const realspace_box = amrex::Box(
         {domain.smallEnd(0), domain.smallEnd(1), domain.smallEnd(2)},
         {2*nx-1+domain.smallEnd(0), 2*ny-1+domain.smallEnd(1), 2*nz-1+domain.smallEnd(2)},
-        amrex::IntVect::TheNodeVector());
+        amrex::IntVect::TheNodeVector() );
 
 
     amrex::BoxArray realspace_ba;
@@ -76,14 +76,14 @@ computePhiIGF ( amrex::MultiFab const & rho,
         int realspace_nz = realspace_box.length(2);
         int minsize_z = realspace_nz / nprocs;
         int nleft_z = realspace_nz - minsize_z*nprocs;
-
+        
 
         AMREX_ALWAYS_ASSERT(realspace_nz >= nprocs);
         // We are going to split realspace_box in such a way that the first
         // nleft boxes has minsize_z+1 nodes and the others minsize
         // nodes. We do it this way instead of BoxArray::maxSize to make
         // sure there are exactly nprocs boxes and there are no overlaps.
-
+        
         amrex::BoxList bl(amrex::IndexType::TheNodeType());
         for (int iproc = 0; iproc < nprocs; ++iproc) {
             int zlo, zhi;
@@ -103,7 +103,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
 
         }
-
+        
         realspace_ba.define(std::move(bl));
         amrex::Vector<int> pmap(nprocs);
         std::iota(pmap.begin(), pmap.end(), 0);
@@ -121,7 +121,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
     // w.z.: please check. I think we need to use rho.nGrowVect() otherwise
     // the data outside the ba.minimalBox() will not be copied over.
     tmp_rho.ParallelCopy( rho, 0, 0, 1, rho.nGrowVect(), amrex::IntVect::TheZeroVector() );
-
+    
 
     // Compute the integrated Green function
     {
@@ -168,34 +168,6 @@ computePhiIGF ( amrex::MultiFab const & rho,
          }
       );
     }
-<<<<<<< Updated upstream
-
-   /*// Save the MultiFab data to a text file
-    std::ofstream outfile("myG.txt");
-    outfile << std::setprecision(3); // Set precision for floating-point values
-
-    for (amrex::MFIter mfi(tmp_G, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
-        const amrex::Box& bx = mfi.validbox();
-        const auto& arr = tmp_G.array(mfi);
-
-        for (int k = bx.smallEnd(2); k <= bx.bigEnd(2); ++k) {
-            for (int j = bx.smallEnd(1); j <= bx.bigEnd(1); ++j) {
-                for (int i = bx.smallEnd(0); i <= bx.bigEnd(0); ++i) {
-                    outfile << "i: " << i << " j: " << j << " k: " << k << " G: " << arr(i,j,k) << "\n";
-                }
-            }
-        }
-    }
-    outfile.close();*/
-
-    amrex::Box const realspace_box1 = amrex::Box(
-    {domain.smallEnd(0), domain.smallEnd(1), domain.smallEnd(2)},
-    {2*nx-1+domain.smallEnd(0), 2*ny-1+domain.smallEnd(1), 2*nz-1+domain.smallEnd(2)},
-    amrex::IntVect::TheCellVector());
-    amrex::Geometry geom1(realspace_box1);
-    amrex::WriteSingleLevelPlotfile("myG", tmp_G, {"G"}, geom1, 0, 0);
-=======
->>>>>>> Stashed changes
 
     }
 
@@ -267,7 +239,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
             bl.push_back(c_box);
 
         }
-        fft_ba.define(std::move(bl));
+        fft_ba.define(std::move(bl)); 
     }
 
 
@@ -285,7 +257,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
         {
-
+            
             amrex::Real re = spectral(i,j,k).real() / sqrtnpts;
             amrex::Real im = spectral(i,j,k).imag() / sqrtnpts;
 
@@ -327,6 +299,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
     tmp_G_fft.mult(tmp_rho_fft, 0, 0, 1);
 
     // PRINT / SAVE G TIMES RHO
+
 
     fft.backward(G_fft_data, tmp_G[local_boxid].dataPtr());
 
@@ -432,6 +405,13 @@ computePhiIGF ( amrex::MultiFab const & rho,
         );
     }
 
+    amrex::Box const realspace_box1 = amrex::Box(
+    {domain.smallEnd(0), domain.smallEnd(1), domain.smallEnd(2)},
+    {2*nx-1+domain.smallEnd(0), 2*ny-1+domain.smallEnd(1), 2*nz-1+domain.smallEnd(2)},
+    amrex::IntVect::TheCellVector() );
+    amrex::Geometry geom1(realspace_box1);
+    amrex::WriteSingleLevelPlotfile("remiG", tmp_G, {"G"}, geom1, 0, 0);
+
     }
     // Perform forward FFTs
     auto forward_plan_rho = ablastr::math::anyfft::FFTplans(spectralspace_ba, dm_global_fft);
@@ -488,25 +468,6 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
     // Copy from tmp_G to phi
     phi.ParallelCopy( tmp_G, 0, 0, 1, amrex::IntVect::TheZeroVector(), phi.nGrowVect() );
-<<<<<<< Updated upstream
-
-    /*// Save the MultiFab data (phi) to a text file
-    std::ofstream outfile("remiphi.txt");
-    outfile << std::setprecision(3); // Set precision for floating-point values
-
-    for (amrex::MFIter mfi(phi, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
-        const amrex::Box& bx = mfi.validbox();
-        const auto& arr = phi.array(mfi);
-
-        for (int k = bx.smallEnd(2); k <= bx.bigEnd(2); ++k) {
-            for (int j = bx.smallEnd(1); j <= bx.bigEnd(1); ++j) {
-                for (int i = bx.smallEnd(0); i <= bx.bigEnd(0); ++i) {
-                    outfile << "i: " << i << " j: " << j << " k: " << k << " phi: " << arr(i,j,k) << "\n";
-                }
-            }
-        }
-    }
-    outfile.close();*/
 
 
     amrex::Box const realspace_box1 = amrex::Box(
@@ -515,10 +476,6 @@ computePhiIGF ( amrex::MultiFab const & rho,
     amrex::IntVect::TheCellVector() );
     amrex::Geometry geom1(realspace_box1);
     amrex::WriteSingleLevelPlotfile("remiphi", tmp_G, {"phi"}, geom1, 0, 0);
-
-
-=======
->>>>>>> Stashed changes
 
     // Loop to destroy FFT plans
     for ( amrex::MFIter mfi(spectralspace_ba, dm_global_fft); mfi.isValid(); ++mfi ){
