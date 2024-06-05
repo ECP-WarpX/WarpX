@@ -78,7 +78,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
         int realspace_nz = realspace_box.length(2);
         int minsize_z = realspace_nz / nprocs;
         int nleft_z = realspace_nz - minsize_z*nprocs;
-        
+
 
        //amrex::Print(0) << " realspace_nz " << realspace_nz << " " <<  std::endl;
        //amrex::Print(0) << " minsize_z " << minsize_z << " " <<  std::endl;
@@ -89,7 +89,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
         // nleft boxes has minsize_z+1 nodes and the others minsize
         // nodes. We do it this way instead of BoxArray::maxSize to make
         // sure there are exactly nprocs boxes and there are no overlaps.
-        
+
         amrex::BoxList bl(amrex::IndexType::TheNodeType());
         for (int iproc = 0; iproc < nprocs; ++iproc) {
             int zlo, zhi;
@@ -112,7 +112,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
 
         }
-        
+
         realspace_ba.define(std::move(bl));
         amrex::Vector<int> pmap(nprocs);
         std::iota(pmap.begin(), pmap.end(), 0);
@@ -136,7 +136,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
     // w.z.: please check. I think we need to use rho.nGrowVect() otherwise
     // the data outside the ba.minimalBox() will not be copied over.
     tmp_rho.ParallelCopy( rho, 0, 0, 1, rho.nGrowVect(), amrex::IntVect::TheZeroVector() );
-    
+
 
     // Compute the integrated Green function
     {
@@ -183,7 +183,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
          }
       );
     }
- 
+
    /*// Save the MultiFab data to a text file
     std::ofstream outfile("myG.txt");
     outfile << std::setprecision(3); // Set precision for floating-point values
@@ -283,7 +283,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
             bl.push_back(c_box);
 
         }
-        fft_ba.define(std::move(bl)); 
+        fft_ba.define(std::move(bl));
     }
 
 
@@ -301,7 +301,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
         {
-            
+
             amrex::Real re = spectral(i,j,k).real() / sqrtnpts;
             amrex::Real im = spectral(i,j,k).imag() / sqrtnpts;
 
@@ -603,7 +603,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
     // Copy from tmp_G to phi
     phi.ParallelCopy( tmp_G, 0, 0, 1, amrex::IntVect::TheZeroVector(), phi.nGrowVect() );
-    
+
     /*// Save the MultiFab data (phi) to a text file
     std::ofstream outfile("remiphi.txt");
     outfile << std::setprecision(3); // Set precision for floating-point values
