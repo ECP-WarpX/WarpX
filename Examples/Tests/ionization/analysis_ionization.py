@@ -93,11 +93,14 @@ print("tolerance_rel: " + str(tolerance_rel))
 
 assert( error_rel < tolerance_rel )
 
-# Check that the user runtime component worked as expected
-orig_z = ad['electrons', 'particle_orig_z'].v
-print(f"orig_z: min = {np.min(orig_z)}, max = {np.max(orig_z)}")
-assert np.all( (orig_z > -5e-5) & (orig_z < 1.5e-5) )
-print('particle_orig_z has reasonable values')
+# Check that the user runtime component (if it exists) worked as expected
+try:
+    orig_z = ad['electrons', 'particle_orig_z'].v
+    print(f"orig_z: min = {np.min(orig_z)}, max = {np.max(orig_z)}")
+    assert np.all( (orig_z > 0.0) & (orig_z < 1.5e-5) )
+    print('particle_orig_z has reasonable values')
+except yt.utilities.exceptions.YTFieldNotFound:
+    pass # The backtransformed diagnostic version of the test does not have orig_z
 
 test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)
