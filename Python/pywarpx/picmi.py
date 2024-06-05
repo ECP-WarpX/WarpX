@@ -2613,6 +2613,9 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
                         )
                     else:
                         variables.add(dataname)
+                else:
+                    # possibly add user defined attributes
+                    variables.add(dataname)
 
             # --- Convert the set to a sorted list so that the order
             # --- is the same on all processors.
