@@ -211,7 +211,7 @@ void ParticleExtrema::ComputeDiags (int step)
         amrex::Real ymax = amrex::get<6>(posminmax);
         amrex::Real zmax = amrex::get<7>(posminmax);
 
-        amrex::Real gfactor = (is_photon ? 0._rt : 1._rt);
+        amrex::Real const gfactor = (is_photon ? 0._rt : 1._rt);
         auto uminmax = amrex::ParticleReduce<amrex::ReduceData<amrex::Real, amrex::Real, amrex::Real, amrex::Real,
                                                                amrex::Real, amrex::Real, amrex::Real, amrex::Real>>(
             myspc,
