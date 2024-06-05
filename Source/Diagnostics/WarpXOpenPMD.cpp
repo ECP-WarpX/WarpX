@@ -915,8 +915,6 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
         // reconstruct Cartesian positions for RZ simulations
         // r,z,theta -> x,y,z
         // If each comp is being written, create a temporary array, otherwise create an empty array.
-        // Put the code in a block so that the temporaries are cleaned up right away.
-        {
         std::shared_ptr<amrex::ParticleReal> const x(
             new amrex::ParticleReal[(write_real_comp[0] ? numParticleOnTile : 0)],
             [](amrex::ParticleReal const *p) { delete[] p; }
@@ -941,7 +939,6 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
         }
         if (write_real_comp[1]) {
             getComponentRecord(real_comp_names[1]).storeChunk(y, {offset}, {numParticleOnTile64});
-        }
         }
 #endif
 
