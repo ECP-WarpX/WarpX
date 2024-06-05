@@ -265,13 +265,13 @@ void ParticleExtrema::ComputeDiags (int step)
             {
                 // define variables in preparation for field gathering
                 const std::array<amrex::Real,3>& dx = WarpX::CellSize(std::max(lev, 0));
-                const GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
-                const MultiFab & Ex = warpx.getField(FieldType::Efield_aux, lev,0);
-                const MultiFab & Ey = warpx.getField(FieldType::Efield_aux, lev,1);
-                const MultiFab & Ez = warpx.getField(FieldType::Efield_aux, lev,2);
-                const MultiFab & Bx = warpx.getField(FieldType::Bfield_aux, lev,0);
-                const MultiFab & By = warpx.getField(FieldType::Bfield_aux, lev,1);
-                const MultiFab & Bz = warpx.getField(FieldType::Bfield_aux, lev,2);
+                const amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
+                const amrex::MultiFab & Ex = warpx.getField(FieldType::Efield_aux, lev,0);
+                const amrex::MultiFab & Ey = warpx.getField(FieldType::Efield_aux, lev,1);
+                const amrex::MultiFab & Ez = warpx.getField(FieldType::Efield_aux, lev,2);
+                const amrex::MultiFab & Bx = warpx.getField(FieldType::Bfield_aux, lev,0);
+                const amrex::MultiFab & By = warpx.getField(FieldType::Bfield_aux, lev,1);
+                const amrex::MultiFab & Bz = warpx.getField(FieldType::Bfield_aux, lev,2);
 
                 // declare reduce_op
                 amrex::ReduceOps<amrex::ReduceOpMin, amrex::ReduceOpMax> reduce_op;
@@ -299,21 +299,21 @@ void ParticleExtrema::ComputeDiags (int step)
                     // define variables in preparation for field gathering
                     amrex::Box box = pti.tilebox();
                     box.grow(ngEB);
-                    const Dim3 lo = amrex::lbound(box);
+                    const amrex::Dim3 lo = amrex::lbound(box);
                     const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
-                    const GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
+                    const amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
                     const auto& ex_arr = Ex[pti].array();
                     const auto& ey_arr = Ey[pti].array();
                     const auto& ez_arr = Ez[pti].array();
                     const auto& bx_arr = Bx[pti].array();
                     const auto& by_arr = By[pti].array();
                     const auto& bz_arr = Bz[pti].array();
-                    const IndexType ex_type = Ex[pti].box().ixType();
-                    const IndexType ey_type = Ey[pti].box().ixType();
-                    const IndexType ez_type = Ez[pti].box().ixType();
-                    const IndexType bx_type = Bx[pti].box().ixType();
-                    const IndexType by_type = By[pti].box().ixType();
-                    const IndexType bz_type = Bz[pti].box().ixType();
+                    const amrex::IndexType ex_type = Ex[pti].box().ixType();
+                    const amrex::IndexType ey_type = Ey[pti].box().ixType();
+                    const amrex::IndexType ez_type = Ez[pti].box().ixType();
+                    const amrex::IndexType bx_type = Bx[pti].box().ixType();
+                    const amrex::IndexType by_type = By[pti].box().ixType();
+                    const amrex::IndexType bz_type = Bz[pti].box().ixType();
 
                     // evaluate reduce_op
                     reduce_op.eval(pti.numParticles(), reduce_data,
@@ -352,8 +352,8 @@ void ParticleExtrema::ComputeDiags (int step)
                     });
                 }
                 auto val = reduce_data.value();
-                chimin[lev] = get<0>(val);
-                chimax[lev] = get<1>(val);
+                chimin[lev] = amrex::get<0>(val);
+                chimax[lev] = amrex::get<1>(val);
             }
             chimin_f = *std::min_element(chimin.begin(), chimin.end());
             chimax_f = *std::max_element(chimax.begin(), chimax.end());
