@@ -55,7 +55,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
     int const nx = domain.length(0);
     int const ny = domain.length(1);
     int const nz = domain.length(2);
-   
+
     long npts = domain.numPts();
     amrex::Real sqrtnpts = std::sqrt(npts);
 
