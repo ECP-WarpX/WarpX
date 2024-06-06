@@ -47,6 +47,9 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
     if(XXX){
 
+    {
+    BL_PROFILE("Integrated Green Function Solver");
+
     // Define box that encompasses the full domain
     amrex::Box domain = ba.minimalBox();
     domain.surroundingNodes(); // get nodal points, since `phi` and `rho` are nodal
@@ -122,8 +125,6 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
 
     // Compute the integrated Green function
-    {
-    BL_PROFILE("Initialize Green function");
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -167,7 +168,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
       );
     }
 
-    }
+    
 
     // since there is 1 MPI rank per box, here each MPI rank obtains its local box and the associated boxid
     int local_boxid = amrex::ParallelDescriptor::MyProc(); // because of how we made the DistributionMapping
@@ -223,9 +224,12 @@ computePhiIGF ( amrex::MultiFab const & rho,
     // Copy from tmp_G to phi
     phi.ParallelCopy( tmp_G, 0, 0, 1, amrex::IntVect::TheZeroVector(), phi.nGrowVect());
 
-
+    }
+   
     }
     else{
+    {
+    BL_PROFILE("Integrated Green Function Solver");
 
     // Define box that encompasses the full domain
     amrex::Box domain = ba.minimalBox();
@@ -380,6 +384,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
         ablastr::math::anyfft::DestroyPlan(forward_plan_G[mfi]);
         ablastr::math::anyfft::DestroyPlan(forward_plan_rho[mfi]);
         ablastr::math::anyfft::DestroyPlan(backward_plan[mfi]);
+    }
     }
     }
 }
