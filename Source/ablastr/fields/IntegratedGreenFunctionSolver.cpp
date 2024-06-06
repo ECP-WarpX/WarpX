@@ -56,8 +56,6 @@ computePhiIGF ( amrex::MultiFab const & rho,
     int const ny = domain.length(1);
     int const nz = domain.length(2);
 
-    long npts = domain.numPts();
-    amrex::Real sqrtnpts = std::sqrt(npts);
 
     int const nprocs = amrex::ParallelDescriptor::NProcs();
 
@@ -209,90 +207,6 @@ computePhiIGF ( amrex::MultiFab const & rho,
     fft.forward(tmp_rho[local_boxid].dataPtr(), rho_fft_data);
     fft.forward(tmp_G[local_boxid].dataPtr(), G_fft_data);
 
-    // PRINT / SAVE THE FFT OF RHO AND/OR G
-
-    // PRINT / SAVE THE FFT OF G
-    // **********************************
-
-    amrex::BoxArray fft_ba;
-    {
-        amrex::BoxList bl(amrex::IndexType::TheNodeType());
-        bl.reserve(realspace_ba.size());
-
-        for (int i = 0; i < realspace_ba.size(); ++i) {
-            amrex::Box b = realspace_ba[i];
-
-            amrex::Box r_box = b;
-            amrex::Box c_box = amrex::coarsen(r_box, amrex::IntVect(AMREX_D_DECL(2,1,1)));
-
-            // this avoids overlap for the cases when one or more r_box's
-            // have an even cell index in the hi-x cell
-            if (c_box.bigEnd(0) * 2 == r_box.bigEnd(0)) {
-                c_box.setBig(0,c_box.bigEnd(0)-1);
-            }
-
-            // increase the size of boxes touching the hi-x domain by 1 in x
-            // this is an (Nx x Ny x Nz) -> (Nx/2+1 x Ny x Nz) real-to-complex sizing
-            if (b.bigEnd(0) == domain.bigEnd(0)) {
-                c_box.growHi(0,1);
-            }
-            bl.push_back(c_box);
-
-        }
-        fft_ba.define(std::move(bl)); 
-    }
-
-
-
-    // storage for real, imaginary, magnitude, and phase
-    amrex::MultiFab fft_data(fft_ba,realspace_dm,4,0);
-
-    // this copies the spectral data into a distributed MultiFab
-    for (amrex::MFIter mfi(fft_data); mfi.isValid(); ++mfi) {
-
-        amrex::Array4<amrex::Real> const& data = fft_data.array(mfi);
-        amrex::Array4< amrex::GpuComplex<amrex::Real> > spectral = tmp_G_fft.array();
-
-        const amrex::Box& bx = mfi.validbox();
-
-        amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-        {
-            
-            amrex::Real re = spectral(i,j,k).real() / sqrtnpts;
-            amrex::Real im = spectral(i,j,k).imag() / sqrtnpts;
-
-            data(i,j,k,0) = re;
-            data(i,j,k,1) = im;
-            data(i,j,k,2) = std::sqrt(re*re + im*im);
-
-            // Here we want to store the values of the phase angle
-            // Avoid division by zero
-            if (re == 0.0) {
-                if (im == 0.0){
-                    data(i,j,k,3) = 0.0;
-                } else if (im > 0.0) {
-                    data(i,j,k,3) = M_PI/2.0;
-                } else {
-                    data(i,j,k,3) = -M_PI/2.0;
-                }
-            } else {
-                data(i,j,k,3) = std::atan(im/re);
-            }
-        });
-    }
-
-
-    // domain for G fft data used to contruct a geometry object
-    amrex::Box domain_fft = amrex::coarsen(domain, amrex::IntVect(AMREX_D_DECL(2,1,1)));
-    // shrink by 1 in x in case there are an odd number of cells in the x-direction in domain
-    if (domain_fft.bigEnd(0) * 2 == domain.bigEnd(0)) {
-        domain_fft.setBig(0,domain_fft.bigEnd(0)-1);
-    }
-    // grow by 1 in the x-direction to match the size of the FFT
-    domain_fft.growHi(0,1);
-
-// **********************************
-
     // Multiply tmp_G_fft and tmp_rho_fft in spectral space
     // Store the result in-place in Gtmp_G_fft, to save memory
     //amrex::Multiply( tmp_G_fft, tmp_rho_fft, 0, 0, 1, 0);
@@ -300,13 +214,11 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
     // PRINT / SAVE G TIMES RHO
 
-
     fft.backward(G_fft_data, tmp_G[local_boxid].dataPtr());
 
      // Normalize, since (FFT + inverse FFT) results in a factor N
     const amrex::Real normalization = 1._rt / realspace_box.numPts();
     tmp_G.mult( normalization );
-
 
     // Copy from tmp_G to phi
     phi.ParallelCopy( tmp_G, 0, 0, 1, amrex::IntVect::TheZeroVector(), phi.nGrowVect());
@@ -405,12 +317,6 @@ computePhiIGF ( amrex::MultiFab const & rho,
         );
     }
 
-    amrex::Box const realspace_box1 = amrex::Box(
-    {domain.smallEnd(0), domain.smallEnd(1), domain.smallEnd(2)},
-    {2*nx-1+domain.smallEnd(0), 2*ny-1+domain.smallEnd(1), 2*nz-1+domain.smallEnd(2)},
-    amrex::IntVect::TheCellVector() );
-    amrex::Geometry geom1(realspace_box1);
-    amrex::WriteSingleLevelPlotfile("remiG", tmp_G, {"G"}, geom1, 0, 0);
 
     }
     // Perform forward FFTs
@@ -468,14 +374,6 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
     // Copy from tmp_G to phi
     phi.ParallelCopy( tmp_G, 0, 0, 1, amrex::IntVect::TheZeroVector(), phi.nGrowVect() );
-
-
-    amrex::Box const realspace_box1 = amrex::Box(
-    {domain.smallEnd(0), domain.smallEnd(1), domain.smallEnd(2)},
-    {2*nx-1+domain.smallEnd(0), 2*ny-1+domain.smallEnd(1), 2*nz-1+domain.smallEnd(2)},
-    amrex::IntVect::TheCellVector() );
-    amrex::Geometry geom1(realspace_box1);
-    amrex::WriteSingleLevelPlotfile("remiphi", tmp_G, {"phi"}, geom1, 0, 0);
 
     // Loop to destroy FFT plans
     for ( amrex::MFIter mfi(spectralspace_ba, dm_global_fft); mfi.isValid(); ++mfi ){
