@@ -15,6 +15,9 @@ SplitAndScatterFunc::SplitAndScatterFunc (const std::string& collision_name,
 {
     const amrex::ParmParse pp_collision_name(collision_name);
 
+    // get the minimum reaction weight at which particles should be split
+    pp_collision_name.query("minimum_splitting_weight", m_min_splitting_weight);
+
     if (m_collision_type == CollisionType::DSMC)
     {
         // here we can add logic to deal with cases where products are created,

@@ -27,7 +27,7 @@ class SplitAndScatterFunc
     using ParticleTileDataType = typename ParticleTileType::ParticleTileDataType;
     using ParticleBins = amrex::DenseBins<ParticleTileDataType>;
     using index_type = typename ParticleBins::index_type;
-    using SoaData_type = WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
+    using SoaData_type = typename WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
 
 public:
     /**
@@ -77,7 +77,7 @@ public:
         // a standard cummulative sum is not appropriate since the mask is also
         // used to specify the type of collision and can therefore have values >1
         auto const total = amrex::Scan::PrefixSum<index_type>(n_total_pairs,
-            [=] AMREX_GPU_DEVICE (index_type i) -> index_type { return mask[i] ? 1 : 0; },
+            [=] AMREX_GPU_DEVICE (index_type i) -> index_type { return (mask[i] && (p_pair_reaction_weight[i] > m_min_splitting_weight)) ? 1 : 0; },
             [=] AMREX_GPU_DEVICE (index_type i, index_type s) { offsets_data[i] = s; },
             amrex::Scan::Type::exclusive, amrex::Scan::retSum
         );
@@ -126,6 +126,8 @@ public:
 
         const int* AMREX_RESTRICT p_num_products_device = m_num_products_device.data();
 
+        const amrex::ParticleReal min_splitting_weight = m_min_splitting_weight;
+
         amrex::ParallelForRNG(n_total_pairs,
         [=] AMREX_GPU_DEVICE (int i, amrex::RandomEngine const& engine) noexcept
         {
@@ -133,37 +135,17 @@ public:
             {
                 // for now we ignore the possibility of having actual reaction
                 // products - only duplicating (splitting) of the colliding
-                // particles is supported.
+                // particles is supported. If the collision weight is below the
+                // user-set minimum weight, the product particles are immediately
+                // re-merged with the colliding particles.
 
-                const auto product1_index = products_np_data[0] +
-                                           (p_offsets[i]*p_num_products_device[0] + 0);
-                // Make a copy of the particle from species 1
-                copy_species1[0](soa_products_data[0], soa_1, static_cast<int>(p_pair_indices_1[i]),
-                                static_cast<int>(product1_index), engine);
-                // Set the weight of the new particles to p_pair_reaction_weight[i]
-                soa_products_data[0].m_rdata[PIdx::w][product1_index] = p_pair_reaction_weight[i];
-
-                const auto product2_index = products_np_data[1] +
-                                           (p_offsets[i]*p_num_products_device[1] + 0);
-                // Make a copy of the particle from species 2
-                copy_species2[1](soa_products_data[1], soa_2, static_cast<int>(p_pair_indices_2[i]),
-                                static_cast<int>(product2_index), engine);
-                // Set the weight of the new particles to p_pair_reaction_weight[i]
-                soa_products_data[1].m_rdata[PIdx::w][product2_index] = p_pair_reaction_weight[i];
-
-                // Remove p_pair_reaction_weight[i] from the colliding particles' weights
-                BinaryCollisionUtils::remove_weight_from_colliding_particle(
-                    w1[p_pair_indices_1[i]], idcpu1[p_pair_indices_1[i]], p_pair_reaction_weight[i]);
-                BinaryCollisionUtils::remove_weight_from_colliding_particle(
-                    w2[p_pair_indices_2[i]], idcpu2[p_pair_indices_2[i]], p_pair_reaction_weight[i]);
-
-                // Set the child particle properties appropriately
-                auto& ux1 = soa_products_data[0].m_rdata[PIdx::ux][product1_index];
-                auto& uy1 = soa_products_data[0].m_rdata[PIdx::uy][product1_index];
-                auto& uz1 = soa_products_data[0].m_rdata[PIdx::uz][product1_index];
-                auto& ux2 = soa_products_data[1].m_rdata[PIdx::ux][product2_index];
-                auto& uy2 = soa_products_data[1].m_rdata[PIdx::uy][product2_index];
-                auto& uz2 = soa_products_data[1].m_rdata[PIdx::uz][product2_index];
+                // Get the colliding velocities
+                auto ux1 = soa_1.m_rdata[PIdx::ux][p_pair_indices_1[i]];
+                auto uy1 = soa_1.m_rdata[PIdx::uy][p_pair_indices_1[i]];
+                auto uz1 = soa_1.m_rdata[PIdx::uz][p_pair_indices_1[i]];
+                auto ux2 = soa_2.m_rdata[PIdx::ux][p_pair_indices_2[i]];
+                auto uy2 = soa_2.m_rdata[PIdx::uy][p_pair_indices_2[i]];
+                auto uz2 = soa_2.m_rdata[PIdx::uz][p_pair_indices_2[i]];
 
                 // for simplicity (for now) we assume non-relativistic particles
                 // and simply calculate the center-of-momentum velocity from the
@@ -224,6 +206,59 @@ public:
                 ux2 += uCOM_x;
                 uy2 += uCOM_y;
                 uz2 += uCOM_z;
+
+                // If the reaction weight is more than the minimum set weight
+                // split the colliding weight off the colliding particles
+                if (p_pair_reaction_weight[i] > min_splitting_weight) {
+                    const auto product1_index = products_np_data[0] +
+                                            (p_offsets[i]*p_num_products_device[0] + 0);
+                    // Make a copy of the particle from species 1
+                    copy_species1[0](soa_products_data[0], soa_1, static_cast<int>(p_pair_indices_1[i]),
+                                    static_cast<int>(product1_index), engine);
+                    // Set the weight of the new particles to p_pair_reaction_weight[i]
+                    soa_products_data[0].m_rdata[PIdx::w][product1_index] = p_pair_reaction_weight[i];
+
+                    const auto product2_index = products_np_data[1] +
+                                            (p_offsets[i]*p_num_products_device[1] + 0);
+                    // Make a copy of the particle from species 2
+                    copy_species2[1](soa_products_data[1], soa_2, static_cast<int>(p_pair_indices_2[i]),
+                                    static_cast<int>(product2_index), engine);
+                    // Set the weight of the new particles to p_pair_reaction_weight[i]
+                    soa_products_data[1].m_rdata[PIdx::w][product2_index] = p_pair_reaction_weight[i];
+
+                    // set the new particles' velocties to the post collision velocities
+                    soa_products_data[0].m_rdata[PIdx::ux][product1_index] = ux1;
+                    soa_products_data[0].m_rdata[PIdx::uy][product1_index] = uy1;
+                    soa_products_data[0].m_rdata[PIdx::uz][product1_index] = uz1;
+                    soa_products_data[1].m_rdata[PIdx::ux][product2_index] = ux2;
+                    soa_products_data[1].m_rdata[PIdx::uy][product2_index] = uy2;
+                    soa_products_data[1].m_rdata[PIdx::uz][product2_index] = uz2;
+
+                    // Remove p_pair_reaction_weight[i] from the colliding particles' weights
+                    BinaryCollisionUtils::remove_weight_from_colliding_particle(
+                        w1[p_pair_indices_1[i]], idcpu1[p_pair_indices_1[i]], p_pair_reaction_weight[i]);
+                    BinaryCollisionUtils::remove_weight_from_colliding_particle(
+                        w2[p_pair_indices_2[i]], idcpu2[p_pair_indices_2[i]], p_pair_reaction_weight[i]);
+                }
+                else {
+                    // modify the colliding particles' velocity with a weighted
+                    // sum of the original and post-collision velocities
+                    const auto w1_frac = p_pair_reaction_weight[i] / w1[p_pair_indices_1[i]];
+                    const auto w2_frac = p_pair_reaction_weight[i] / w2[p_pair_indices_2[i]];
+                    soa_1.m_rdata[PIdx::ux][p_pair_indices_1[i]] *= 1.0_prt - w1_frac;
+                    soa_1.m_rdata[PIdx::uy][p_pair_indices_1[i]] *= 1.0_prt - w1_frac;
+                    soa_1.m_rdata[PIdx::uz][p_pair_indices_1[i]] *= 1.0_prt - w1_frac;
+                    soa_1.m_rdata[PIdx::ux][p_pair_indices_1[i]] += w1_frac * ux1;
+                    soa_1.m_rdata[PIdx::uy][p_pair_indices_1[i]] += w1_frac * uy1;
+                    soa_1.m_rdata[PIdx::uz][p_pair_indices_1[i]] += w1_frac * uz1;
+
+                    soa_2.m_rdata[PIdx::ux][p_pair_indices_2[i]] *= 1.0_prt - w2_frac;
+                    soa_2.m_rdata[PIdx::uy][p_pair_indices_2[i]] *= 1.0_prt - w2_frac;
+                    soa_2.m_rdata[PIdx::uz][p_pair_indices_2[i]] *= 1.0_prt - w2_frac;
+                    soa_2.m_rdata[PIdx::ux][p_pair_indices_2[i]] += w2_frac * ux2;
+                    soa_2.m_rdata[PIdx::uy][p_pair_indices_2[i]] += w2_frac * uy2;
+                    soa_2.m_rdata[PIdx::uz][p_pair_indices_2[i]] += w2_frac * uz2;
+                }
             }
         });
 
@@ -255,6 +290,8 @@ public:
 private:
     // How many different type of species the collision produces
     int m_num_product_species;
+    // Minimum reaction weight for which particles are split into new particles
+    amrex::ParticleReal m_min_splitting_weight = 0.0;
     // Vectors of size m_num_product_species storing how many particles of a given species are
     // produced by a collision event. These vectors are duplicated (one version for host and one
     // for device) which is necessary with GPUs but redundant on CPU.
