@@ -69,6 +69,8 @@ public:
 
         if (n_total_pairs == 0) { return amrex::Vector<int>(m_num_product_species, 0); }
 
+        const amrex::ParticleReal min_splitting_weight = m_min_splitting_weight;
+
         amrex::Gpu::DeviceVector<index_type> offsets(n_total_pairs);
         index_type* AMREX_RESTRICT offsets_data = offsets.data();
         const index_type* AMREX_RESTRICT p_offsets = offsets.dataPtr();
@@ -77,7 +79,7 @@ public:
         // a standard cummulative sum is not appropriate since the mask is also
         // used to specify the type of collision and can therefore have values >1
         auto const total = amrex::Scan::PrefixSum<index_type>(n_total_pairs,
-            [=] AMREX_GPU_DEVICE (index_type i) -> index_type { return (mask[i] && (p_pair_reaction_weight[i] > m_min_splitting_weight)) ? 1 : 0; },
+            [=] AMREX_GPU_DEVICE (index_type i) -> index_type { return (mask[i] && (p_pair_reaction_weight[i] > min_splitting_weight)) ? 1 : 0; },
             [=] AMREX_GPU_DEVICE (index_type i, index_type s) { offsets_data[i] = s; },
             amrex::Scan::Type::exclusive, amrex::Scan::retSum
         );
@@ -125,8 +127,6 @@ public:
 #endif
 
         const int* AMREX_RESTRICT p_num_products_device = m_num_products_device.data();
-
-        const amrex::ParticleReal min_splitting_weight = m_min_splitting_weight;
 
         amrex::ParallelForRNG(n_total_pairs,
         [=] AMREX_GPU_DEVICE (int i, amrex::RandomEngine const& engine) noexcept

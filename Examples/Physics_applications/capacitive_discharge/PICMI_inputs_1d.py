@@ -296,7 +296,10 @@ class CapacitiveDischargeExample(object):
             ion_colls = picmi.DSMCCollisions(
                 name='coll_ion',
                 species=[self.ions, self.neutrals],
-                ndt=5, scattering_processes=ion_scattering_processes
+                ndt=5, scattering_processes=ion_scattering_processes,
+                minimum_splitting_weight=(
+                    self.plasma_density*self.gap/(self.nz*self.seed_nppc)*0.05
+                )
             )
         else:
             ion_colls = picmi.MCCCollisions(
