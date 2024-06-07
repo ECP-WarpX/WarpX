@@ -24,6 +24,7 @@
 #include <AMReX.H>
 #include <AMReX_Arena.H>
 #include <AMReX_Array4.H>
+#include <AMReX_Dim3.H>
 #include <AMReX_REAL.H>
 
 /**
@@ -38,17 +39,17 @@
  *                      current positions of the particles. When different than 0,
  *                      the particle position will be temporarily modified to match
  *                      the time of the deposition.
- * \param dzi, dxi, dyi The inverse cell sizes
- * \param zmin, xmin, ymin The lower bounds of the domain
+ * \param dinv          The inverse cell sizes
+ * \param gridmins      The lower bounds of the domain
  * \param invvol        The inverse volume of a grid cell
  * \param lo            Index lower bounds of domain.
  * \param n_rz_azimuthal_modes Number of azimuthal modes when using RZ geometry.
  */
 template <int depos_order>
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
-void doDepositionShapeNKernel(const amrex::ParticleReal xp,
-                              const amrex::ParticleReal yp,
-                              const amrex::ParticleReal zp,
+void doDepositionShapeNKernel([[maybe_unused]] const amrex::ParticleReal xp,
+                              [[maybe_unused]] const amrex::ParticleReal yp,
+                              [[maybe_unused]] const amrex::ParticleReal zp,
                               const amrex::ParticleReal wq,
                               const amrex::ParticleReal vx,
                               const amrex::ParticleReal vy,
@@ -60,28 +61,14 @@ void doDepositionShapeNKernel(const amrex::ParticleReal xp,
                               amrex::IntVect const& jy_type,
                               amrex::IntVect const& jz_type,
                               const amrex::Real relative_time,
-                              AMREX_D_DECL(const amrex::Real dzi,
-                                           const amrex::Real dxi,
-                                           const amrex::Real dyi),
-                              AMREX_D_DECL(const amrex::Real zmin,
-                                           const amrex::Real xmin,
-                                           const amrex::Real ymin),
+                              amrex::XDim3 dinv,
+                              amrex::XDim3 gridmins,
                               const amrex::Real invvol,
                               const amrex::Dim3 lo,
-                              const int n_rz_azimuthal_modes)
+                              [[maybe_unused]] const int n_rz_azimuthal_modes)
 {
     using namespace amrex::literals;
-#if !defined(WARPX_DIM_RZ)
-    amrex::ignore_unused(n_rz_azimuthal_modes);
-#endif
-#if defined(WARPX_DIM_1D_Z)
-    amrex::ignore_unused(xp, yp);
-#endif
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    amrex::ignore_unused(yp);
-#endif
 
-    constexpr int zdir = WARPX_ZINDEX;
     constexpr int NODE = amrex::IndexType::NODE;
     constexpr int CELL = amrex::IndexType::CELL;
 
@@ -89,22 +76,17 @@ void doDepositionShapeNKernel(const amrex::ParticleReal xp,
 #if defined(WARPX_DIM_RZ)
     // In RZ, wqx is actually wqr, and wqy is wqtheta
     // Convert to cylindrical at the mid point
-    const amrex::Real xpmid = xp + relative_time*vx;
+    amrex::Real xpmid = xp + relative_time*vx;
     const amrex::Real ypmid = yp + relative_time*vy;
     const amrex::Real rpmid = std::sqrt(xpmid*xpmid + ypmid*ypmid);
-    amrex::Real costheta;
-    amrex::Real sintheta;
-    if (rpmid > 0._rt) {
-        costheta = xpmid/rpmid;
-        sintheta = ypmid/rpmid;
-    } else {
-        costheta = 1._rt;
-        sintheta = 0._rt;
-    }
+    const amrex::Real costheta = (rpmid > 0._rt ? xpmid/rpmid : 1._rt);
+    const amrex::Real sintheta = (rpmid > 0._rt ? ypmid/rpmid : 0._rt);
+    xpmid = rpmid;
     const Complex xy0 = Complex{costheta, sintheta};
     const amrex::Real wqx = wq*invvol*(+vx*costheta + vy*sintheta);
     const amrex::Real wqy = wq*invvol*(-vx*sintheta + vy*costheta);
 #else
+    const amrex::Real xpmid = xp + relative_time*vx;
     const amrex::Real wqx = wq*invvol*vx;
     const amrex::Real wqy = wq*invvol*vy;
 #endif
@@ -115,12 +97,9 @@ void doDepositionShapeNKernel(const amrex::ParticleReal xp,
 #if (AMREX_SPACEDIM >= 2)
     // x direction
     // Get particle position after 1/2 push back in position
-#if defined(WARPX_DIM_RZ)
     // Keep these double to avoid bug in single precision
-    const double xmid = (rpmid - xmin)*dxi;
-#else
-    const double xmid = ((xp - xmin) + relative_time*vx)*dxi;
-#endif
+    const double xmid = (xpmid - gridmins.x)*dinv.x;
+
     // j_j[xyz] leftmost grid point in x that the particle touches for the centering of each current
     // sx_j[xyz] shape factor along x for the centering of each current
     // There are only two possible centerings, node or cell centered, so at most only two shape factor
@@ -155,7 +134,7 @@ void doDepositionShapeNKernel(const amrex::ParticleReal xp,
 #if defined(WARPX_DIM_3D)
     // y direction
     // Keep these double to avoid bug in single precision
-    const double ymid = ((yp - ymin) + relative_time*vy)*dyi;
+    const double ymid = ((yp - gridmins.y) + relative_time*vy)*dinv.y;
     double sy_node[depos_order + 1] = {0.};
     double sy_cell[depos_order + 1] = {0.};
     int k_node = 0;
@@ -182,7 +161,8 @@ void doDepositionShapeNKernel(const amrex::ParticleReal xp,
 
     // z direction
     // Keep these double to avoid bug in single precision
-    const double zmid = ((zp - zmin) + relative_time*vz)*dzi;
+    constexpr int zdir = WARPX_ZINDEX;
+    const double zmid = ((zp - gridmins.z) + relative_time*vz)*dinv.z;
     double sz_node[depos_order + 1] = {0.};
     double sz_cell[depos_order + 1] = {0.};
     int l_node = 0;
@@ -304,37 +284,17 @@ void doDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                          const std::array<amrex::Real,3>& xyzmin,
                          amrex::Dim3 lo,
                          amrex::Real q,
-                         int n_rz_azimuthal_modes)
+                         [[maybe_unused]]int n_rz_azimuthal_modes)
 {
     using namespace amrex::literals;
-
-#if !defined(WARPX_DIM_RZ)
-    amrex::ignore_unused(n_rz_azimuthal_modes);
-#endif
 
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
     const bool do_ionization = ion_lev;
-    const amrex::Real dzi = 1.0_rt/dx[2];
-#if defined(WARPX_DIM_1D_Z)
-    const amrex::Real invvol = dzi;
-#endif
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    const amrex::Real dxi = 1.0_rt/dx[0];
-    const amrex::Real invvol = dxi*dzi;
-#elif defined(WARPX_DIM_3D)
-    const amrex::Real dxi = 1.0_rt/dx[0];
-    const amrex::Real dyi = 1.0_rt/dx[1];
-    const amrex::Real invvol = dxi*dyi*dzi;
-#endif
 
-#if (AMREX_SPACEDIM >= 2)
-    const amrex::Real xmin = xyzmin[0];
-#endif
-#if defined(WARPX_DIM_3D)
-    const amrex::Real ymin = xyzmin[1];
-#endif
-    const amrex::Real zmin = xyzmin[2];
+    const amrex::XDim3 gridmins = amrex::XDim3{xyzmin[0], xyzmin[1], xyzmin[2]};
+    const amrex::XDim3 dinv = amrex::XDim3{1._rt/dx[0], 1._rt/dx[1], 1._rt/dx[2]};
+    const amrex::Real invvol = 1._rt/(dx[0]*dx[1]*dx[2]);
 
     const amrex::Real clightsq = 1.0_rt/PhysConst::c/PhysConst::c;
 
@@ -367,9 +327,7 @@ void doDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
 
             doDepositionShapeNKernel<depos_order>(xp, yp, zp, wq, vx, vy, vz, jx_arr, jy_arr, jz_arr,
                                                   jx_type, jy_type, jz_type,
-                                                  relative_time,
-                                                  AMREX_D_DECL(dzi, dxi, dyi),
-                                                  AMREX_D_DECL(zmin, xmin, ymin),
+                                                  relative_time, dinv, gridmins,
                                                   invvol, lo, n_rz_azimuthal_modes);
 
         }
@@ -415,36 +373,17 @@ void doDepositionShapeNImplicit(const GetParticlePosition<PIdx>& GetPosition,
                                 const std::array<amrex::Real,3>& xyzmin,
                                 const amrex::Dim3 lo,
                                 const amrex::Real q,
-                                const int n_rz_azimuthal_modes)
+                                [[maybe_unused]]const int n_rz_azimuthal_modes)
 {
     using namespace amrex::literals;
-#if !defined(WARPX_DIM_RZ)
-    amrex::ignore_unused(n_rz_azimuthal_modes);
-#endif
 
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
     const bool do_ionization = ion_lev;
-    const amrex::Real dzi = 1.0_rt/dx[2];
-#if defined(WARPX_DIM_1D_Z)
-    const amrex::Real invvol = dzi;
-#endif
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    const amrex::Real dxi = 1.0_rt/dx[0];
-    const amrex::Real invvol = dxi*dzi;
-#elif defined(WARPX_DIM_3D)
-    const amrex::Real dxi = 1.0_rt/dx[0];
-    const amrex::Real dyi = 1.0_rt/dx[1];
-    const amrex::Real invvol = dxi*dyi*dzi;
-#endif
 
-#if (AMREX_SPACEDIM >= 2)
-    const amrex::Real xmin = xyzmin[0];
-#endif
-#if defined(WARPX_DIM_3D)
-    const amrex::Real ymin = xyzmin[1];
-#endif
-    const amrex::Real zmin = xyzmin[2];
+    const amrex::XDim3 gridmins = amrex::XDim3{xyzmin[0], xyzmin[1], xyzmin[2]};
+    const amrex::XDim3 dinv = amrex::XDim3{1._rt/dx[0], 1._rt/dx[1], 1._rt/dx[2]};
+    const amrex::Real invvol = 1._rt/(dx[0]*dx[1]*dx[2]);
 
     amrex::Array4<amrex::Real> const& jx_arr = jx_fab.array();
     amrex::Array4<amrex::Real> const& jy_arr = jy_fab.array();
@@ -483,9 +422,7 @@ void doDepositionShapeNImplicit(const GetParticlePosition<PIdx>& GetPosition,
             const amrex::Real relative_time = 0._rt;
             doDepositionShapeNKernel<depos_order>(xp, yp, zp, wq, vx, vy, vz, jx_arr, jy_arr, jz_arr,
                                                   jx_type, jy_type, jz_type,
-                                                  relative_time,
-                                                  AMREX_D_DECL(dzi, dxi, dyi),
-                                                  AMREX_D_DECL(zmin, xmin, ymin),
+                                                  relative_time, dinv, gridmins,
                                                   invvol, lo, n_rz_azimuthal_modes);
 
         }
@@ -721,49 +658,24 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                                   std::array<amrex::Real, 3> xyzmin,
                                   amrex::Dim3 lo,
                                   amrex::Real q,
-                                  int n_rz_azimuthal_modes)
+                                  [[maybe_unused]]int n_rz_azimuthal_modes)
 {
     using namespace amrex;
     using namespace amrex::literals;
 
-#if !defined(WARPX_DIM_RZ)
-    ignore_unused(n_rz_azimuthal_modes);
-#endif
-
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
     bool const do_ionization = ion_lev;
-#if !defined(WARPX_DIM_1D_Z)
-    Real const dxi = 1.0_rt / dx[0];
-#endif
-#if !defined(WARPX_DIM_1D_Z)
-    Real const xmin = xyzmin[0];
-#endif
-#if defined(WARPX_DIM_3D)
-    Real const dyi = 1.0_rt / dx[1];
-    Real const ymin = xyzmin[1];
-#endif
-    Real const dzi = 1.0_rt / dx[2];
-    Real const zmin = xyzmin[2];
+    const amrex::XDim3 gridmins = amrex::XDim3{xyzmin[0], xyzmin[1], xyzmin[2]};
+    const amrex::XDim3 dinv = amrex::XDim3{1._rt/dx[0], 1._rt/dx[1], 1._rt/dx[2]};
+    const amrex::Real invvol = 1._rt/(dx[0]*dx[1]*dx[2]);
 
-#if defined(WARPX_DIM_3D)
-    Real const invdtdx = 1.0_rt / (dt*dx[1]*dx[2]);
-    Real const invdtdy = 1.0_rt / (dt*dx[0]*dx[2]);
-    Real const invdtdz = 1.0_rt / (dt*dx[0]*dx[1]);
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    Real const invdtdx = 1.0_rt / (dt*dx[2]);
-    Real const invdtdz = 1.0_rt / (dt*dx[0]);
-    Real const invvol = 1.0_rt / (dx[0]*dx[2]);
-#elif defined(WARPX_DIM_1D_Z)
-    Real const invdtdz = 1.0_rt / (dt*dx[0]);
-    Real const invvol = 1.0_rt / (dx[2]);
-#endif
+    amrex::XDim3 const invdtd = amrex::XDim3{1.0_rt / (dt*dx[1]*dx[2]),
+                                             1.0_rt / (dt*dx[0]*dx[2]),
+                                             1.0_rt / (dt*dx[0]*dx[1])};
 
-#if defined(WARPX_DIM_RZ)
-    Complex const I = Complex{0._rt, 1._rt};
-#endif
+    Real constexpr clightsq = 1.0_rt / ( PhysConst::c * PhysConst::c );
 
-    Real const clightsq = 1.0_rt / ( PhysConst::c * PhysConst::c );
 #if !defined(WARPX_DIM_1D_Z)
     Real constexpr one_third = 1.0_rt / 3.0_rt;
     Real constexpr one_sixth = 1.0_rt / 6.0_rt;
@@ -778,7 +690,6 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                                                  + uyp[ip]*uyp[ip]*clightsq
                                                  + uzp[ip]*uzp[ip]*clightsq);
 
-            // wqx, wqy wqz are particle current in each direction
             Real wq = q*wp[ip];
             if (do_ionization){
                 wq *= ion_lev[ip];
@@ -786,14 +697,6 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
 
             ParticleReal xp, yp, zp;
             GetPosition(ip, xp, yp, zp);
-
-#if !defined(WARPX_DIM_1D_Z)
-            Real const wqx = wq*invdtdx;
-#endif
-#if defined(WARPX_DIM_3D)
-            Real const wqy = wq*invdtdy;
-#endif
-            Real const wqz = wq*invdtdz;
 
             // computes current and old position in grid units
 #if defined(WARPX_DIM_RZ)
@@ -806,51 +709,33 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
             Real const rp_new = std::sqrt(xp_new*xp_new + yp_new*yp_new);
             Real const rp_mid = std::sqrt(xp_mid*xp_mid + yp_mid*yp_mid);
             Real const rp_old = std::sqrt(xp_old*xp_old + yp_old*yp_old);
-            Real costheta_new, sintheta_new;
-            if (rp_new > 0._rt) {
-                costheta_new = xp_new/rp_new;
-                sintheta_new = yp_new/rp_new;
-            } else {
-                costheta_new = 1._rt;
-                sintheta_new = 0._rt;
-            }
-            amrex::Real costheta_mid, sintheta_mid;
-            if (rp_mid > 0._rt) {
-                costheta_mid = xp_mid/rp_mid;
-                sintheta_mid = yp_mid/rp_mid;
-            } else {
-                costheta_mid = 1._rt;
-                sintheta_mid = 0._rt;
-            }
-            amrex::Real costheta_old, sintheta_old;
-            if (rp_old > 0._rt) {
-                costheta_old = xp_old/rp_old;
-                sintheta_old = yp_old/rp_old;
-            } else {
-                costheta_old = 1._rt;
-                sintheta_old = 0._rt;
-            }
+            const amrex::Real costheta_mid = (rp_mid > 0._rt ? xp_mid/rp_mid : 1._rt);
+            const amrex::Real sintheta_mid = (rp_mid > 0._rt ? yp_mid/rp_mid : 0._rt);
+            const amrex::Real costheta_new = (rp_new > 0._rt ? xp_new/rp_new : 1._rt);
+            const amrex::Real sintheta_new = (rp_new > 0._rt ? yp_new/rp_new : 0._rt);
+            const amrex::Real costheta_old = (rp_old > 0._rt ? xp_old/rp_old : 1._rt);
+            const amrex::Real sintheta_old = (rp_old > 0._rt ? yp_old/rp_old : 0._rt);
             const Complex xy_new0 = Complex{costheta_new, sintheta_new};
             const Complex xy_mid0 = Complex{costheta_mid, sintheta_mid};
             const Complex xy_old0 = Complex{costheta_old, sintheta_old};
             // Keep these double to avoid bug in single precision
-            double const x_new = (rp_new - xmin)*dxi;
-            double const x_old = (rp_old - xmin)*dxi;
+            double const x_new = (rp_new - gridmins.x)*dinv.x;
+            double const x_old = (rp_old - gridmins.x)*dinv.x;
 #else
 #if !defined(WARPX_DIM_1D_Z)
             // Keep these double to avoid bug in single precision
-            double const x_new = (xp - xmin + (relative_time + 0.5_rt*dt)*uxp[ip]*gaminv)*dxi;
-            double const x_old = x_new - dt*dxi*uxp[ip]*gaminv;
+            double const x_new = (xp - gridmins.x + (relative_time + 0.5_rt*dt)*uxp[ip]*gaminv)*dinv.x;
+            double const x_old = x_new - dt*dinv.x*uxp[ip]*gaminv;
 #endif
 #endif
 #if defined(WARPX_DIM_3D)
             // Keep these double to avoid bug in single precision
-            double const y_new = (yp - ymin + (relative_time + 0.5_rt*dt)*uyp[ip]*gaminv)*dyi;
-            double const y_old = y_new - dt*dyi*uyp[ip]*gaminv;
+            double const y_new = (yp - gridmins.y + (relative_time + 0.5_rt*dt)*uyp[ip]*gaminv)*dinv.y;
+            double const y_old = y_new - dt*dinv.y*uyp[ip]*gaminv;
 #endif
             // Keep these double to avoid bug in single precision
-            double const z_new = (zp - zmin + (relative_time + 0.5_rt*dt)*uzp[ip]*gaminv)*dzi;
-            double const z_old = z_new - dt*dzi*uzp[ip]*gaminv;
+            double const z_new = (zp - gridmins.z + (relative_time + 0.5_rt*dt)*uzp[ip]*gaminv)*dinv.z;
+            double const z_old = z_new - dt*dinv.z*uzp[ip]*gaminv;
 
 #if defined(WARPX_DIM_RZ)
             Real const vy = (-uxp[ip]*sintheta_mid + uyp[ip]*costheta_mid)*gaminv;
@@ -861,6 +746,12 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
             Real const vy = uyp[ip]*gaminv;
 #endif
 
+            // --- Compute shape factors
+            // Compute shape factors for position as they are now and at old positions
+            // [ijk]_new: leftmost grid point that the particle touches
+            const Compute_shape_factor< depos_order > compute_shape_factor;
+            const Compute_shifted_shape_factor< depos_order > compute_shifted_shape_factor;
+
             // Shape factor arrays
             // Note that there are extra values above and below
             // to possibly hold the factor for the old particle
@@ -869,30 +760,17 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
 #if !defined(WARPX_DIM_1D_Z)
             double sx_new[depos_order + 3] = {0.};
             double sx_old[depos_order + 3] = {0.};
-#endif
-#if defined(WARPX_DIM_3D)
-            // Keep these double to avoid bug in single precision
-            double sy_new[depos_order + 3] = {0.};
-            double sy_old[depos_order + 3] = {0.};
-#endif
-            // Keep these double to avoid bug in single precision
-            double sz_new[depos_order + 3] = {0.};
-            double sz_old[depos_order + 3] = {0.};
-
-            // --- Compute shape factors
-            // Compute shape factors for position as they are now and at old positions
-            // [ijk]_new: leftmost grid point that the particle touches
-            const Compute_shape_factor< depos_order > compute_shape_factor;
-            const Compute_shifted_shape_factor< depos_order > compute_shifted_shape_factor;
-
-#if !defined(WARPX_DIM_1D_Z)
             const int i_new = compute_shape_factor(sx_new+1, x_new);
             const int i_old = compute_shifted_shape_factor(sx_old, x_old, i_new);
 #endif
 #if defined(WARPX_DIM_3D)
+            double sy_new[depos_order + 3] = {0.};
+            double sy_old[depos_order + 3] = {0.};
             const int j_new = compute_shape_factor(sy_new+1, y_new);
             const int j_old = compute_shifted_shape_factor(sy_old, y_old, j_new);
 #endif
+            double sz_new[depos_order + 3] = {0.};
+            double sz_old[depos_order + 3] = {0.};
             const int k_new = compute_shape_factor(sz_new+1, z_new);
             const int k_old = compute_shifted_shape_factor(sz_old, z_old, k_new);
 
@@ -917,7 +795,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                 for (int j=djl; j<=depos_order+2-dju; j++) {
                     amrex::Real sdxi = 0._rt;
                     for (int i=dil; i<=depos_order+1-diu; i++) {
-                        sdxi += wqx*(sx_old[i] - sx_new[i])*(
+                        sdxi += wq*invdtd.x*(sx_old[i] - sx_new[i])*(
                             one_third*(sy_new[j]*sz_new[k] + sy_old[j]*sz_old[k])
                            +one_sixth*(sy_new[j]*sz_old[k] + sy_old[j]*sz_new[k]));
                         amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdxi);
@@ -928,7 +806,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                 for (int i=dil; i<=depos_order+2-diu; i++) {
                     amrex::Real sdyj = 0._rt;
                     for (int j=djl; j<=depos_order+1-dju; j++) {
-                        sdyj += wqy*(sy_old[j] - sy_new[j])*(
+                        sdyj += wq*invdtd.y*(sy_old[j] - sy_new[j])*(
                             one_third*(sx_new[i]*sz_new[k] + sx_old[i]*sz_old[k])
                            +one_sixth*(sx_new[i]*sz_old[k] + sx_old[i]*sz_new[k]));
                         amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdyj);
@@ -939,7 +817,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                 for (int i=dil; i<=depos_order+2-diu; i++) {
                     amrex::Real sdzk = 0._rt;
                     for (int k=dkl; k<=depos_order+1-dku; k++) {
-                        sdzk += wqz*(sz_old[k] - sz_new[k])*(
+                        sdzk += wq*invdtd.z*(sz_old[k] - sz_new[k])*(
                             one_third*(sx_new[i]*sy_new[j] + sx_old[i]*sy_old[j])
                            +one_sixth*(sx_new[i]*sy_old[j] + sx_old[i]*sy_new[j]));
                         amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdzk);
@@ -952,7 +830,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
             for (int k=dkl; k<=depos_order+2-dku; k++) {
                 amrex::Real sdxi = 0._rt;
                 for (int i=dil; i<=depos_order+1-diu; i++) {
-                    sdxi += wqx*(sx_old[i] - sx_new[i])*0.5_rt*(sz_new[k] + sz_old[k]);
+                    sdxi += wq*invdtd.x*(sx_old[i] - sx_new[i])*0.5_rt*(sz_new[k] + sz_old[k]);
                     amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 0), sdxi);
 #if defined(WARPX_DIM_RZ)
                     Complex xy_mid = xy_mid0; // Throughout the following loop, xy_mid takes the value e^{i m theta}
@@ -973,6 +851,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                        +one_sixth*(sx_new[i]*sz_old[k] + sx_old[i]*sz_new[k]));
                     amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 0), sdyj);
 #if defined(WARPX_DIM_RZ)
+                    Complex const I = Complex{0._rt, 1._rt};
                     Complex xy_new = xy_new0;
                     Complex xy_mid = xy_mid0;
                     Complex xy_old = xy_old0;
@@ -980,7 +859,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                     for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
                         // The factor 2 comes from the normalization of the modes
                         // The minus sign comes from the different convention with respect to Davidson et al.
-                        const Complex djt_cmplx = -2._rt * I*(i_new-1 + i + xmin*dxi)*wq*invdtdx/(amrex::Real)imode
+                        const Complex djt_cmplx = -2._rt * I*(i_new-1 + i + gridmins.x*dinv.x)*wq*invdtd.x/(amrex::Real)imode
                                                   *(Complex(sx_new[i]*sz_new[k], 0._rt)*(xy_new - xy_mid)
                                                   + Complex(sx_old[i]*sz_old[k], 0._rt)*(xy_mid - xy_old));
                         amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 2*imode-1), djt_cmplx.real());
@@ -995,7 +874,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
             for (int i=dil; i<=depos_order+2-diu; i++) {
                 Real sdzk = 0._rt;
                 for (int k=dkl; k<=depos_order+1-dku; k++) {
-                    sdzk += wqz*(sz_old[k] - sz_new[k])*0.5_rt*(sx_new[i] + sx_old[i]);
+                    sdzk += wq*invdtd.z*(sz_old[k] - sz_new[k])*0.5_rt*(sx_new[i] + sx_old[i]);
                     amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 0), sdzk);
 #if defined(WARPX_DIM_RZ)
                     Complex xy_mid = xy_mid0; // Throughout the following loop, xy_mid takes the value e^{i m theta}
@@ -1021,7 +900,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
             }
             amrex::Real sdzk = 0._rt;
             for (int k=dkl; k<=depos_order+1-dku; k++) {
-                sdzk += wqz*(sz_old[k] - sz_new[k]);
+                sdzk += wq*invdtd.z*(sz_old[k] - sz_new[k]);
                 amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+k_new-1+k, 0, 0, 0), sdzk);
             }
 #endif
@@ -1054,9 +933,9 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
  * \param n_rz_azimuthal_modes Number of azimuthal modes when using RZ geometry.
  */
 template <int depos_order>
-void doChargeConservingDepositionShapeNImplicit (const amrex::ParticleReal * const xp_n,
-                                                 const amrex::ParticleReal * const yp_n,
-                                                 const amrex::ParticleReal * const zp_n,
+void doChargeConservingDepositionShapeNImplicit ([[maybe_unused]]const amrex::ParticleReal * const xp_n,
+                                                 [[maybe_unused]]const amrex::ParticleReal * const yp_n,
+                                                 [[maybe_unused]]const amrex::ParticleReal * const zp_n,
                                                  const GetParticlePosition<PIdx>& GetPosition,
                                                  const amrex::ParticleReal * const wp,
                                                  [[maybe_unused]]const amrex::ParticleReal * const uxp_n,
@@ -1075,45 +954,20 @@ void doChargeConservingDepositionShapeNImplicit (const amrex::ParticleReal * con
                                                  const std::array<amrex::Real, 3> xyzmin,
                                                  const amrex::Dim3 lo,
                                                  const amrex::Real q,
-                                                 const int n_rz_azimuthal_modes)
+                                                 [[maybe_unused]] const int n_rz_azimuthal_modes)
 {
     using namespace amrex;
-#if !defined(WARPX_DIM_RZ)
-    ignore_unused(n_rz_azimuthal_modes);
-#endif
 
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
     bool const do_ionization = ion_lev;
-#if !defined(WARPX_DIM_1D_Z)
-    Real const dxi = 1.0_rt / dx[0];
-#endif
-#if !defined(WARPX_DIM_1D_Z)
-    Real const xmin = xyzmin[0];
-#endif
-#if defined(WARPX_DIM_3D)
-    Real const dyi = 1.0_rt / dx[1];
-    Real const ymin = xyzmin[1];
-#endif
-    Real const dzi = 1.0_rt / dx[2];
-    Real const zmin = xyzmin[2];
+    const amrex::XDim3 gridmins = amrex::XDim3{xyzmin[0], xyzmin[1], xyzmin[2]};
+    const amrex::XDim3 dinv = amrex::XDim3{1._rt/dx[0], 1._rt/dx[1], 1._rt/dx[2]};
+    const amrex::Real invvol = 1._rt/(dx[0]*dx[1]*dx[2]);
 
-#if defined(WARPX_DIM_3D)
-    Real const invdtdx = 1.0_rt / (dt*dx[1]*dx[2]);
-    Real const invdtdy = 1.0_rt / (dt*dx[0]*dx[2]);
-    Real const invdtdz = 1.0_rt / (dt*dx[0]*dx[1]);
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    Real const invdtdx = 1.0_rt / (dt*dx[2]);
-    Real const invdtdz = 1.0_rt / (dt*dx[0]);
-    Real const invvol = 1.0_rt / (dx[0]*dx[2]);
-#elif defined(WARPX_DIM_1D_Z)
-    Real const invdtdz = 1.0_rt / (dt*dx[0]);
-    Real const invvol = 1.0_rt / (dx[2]);
-#endif
-
-#if defined(WARPX_DIM_RZ)
-    Complex const I = Complex{0._rt, 1._rt};
-#endif
+    amrex::XDim3 const invdtd = amrex::XDim3{1.0_rt / (dt*dx[1]*dx[2]),
+                                             1.0_rt / (dt*dx[0]*dx[2]),
+                                             1.0_rt / (dt*dx[0]*dx[1])};
 
 #if !defined(WARPX_DIM_1D_Z)
     Real constexpr one_third = 1.0_rt / 3.0_rt;
@@ -1137,7 +991,6 @@ void doChargeConservingDepositionShapeNImplicit (const amrex::ParticleReal * con
             const amrex::ParticleReal gaminv = 2.0_prt/(gamma_n + gamma_np1);
 #endif
 
-            // wqx, wqy wqz are particle current in each direction
             Real wq = q*wp[ip];
             if (do_ionization){
                 wq *= ion_lev[ip];
@@ -1148,23 +1001,11 @@ void doChargeConservingDepositionShapeNImplicit (const amrex::ParticleReal * con
 
 #if !defined(WARPX_DIM_1D_Z)
             ParticleReal const xp_np1 = 2._prt*xp_nph - xp_n[ip];
-#else
-            ignore_unused(xp_n);
 #endif
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
             ParticleReal const yp_np1 = 2._prt*yp_nph - yp_n[ip];
-#else
-            ignore_unused(yp_n);
 #endif
             ParticleReal const zp_np1 = 2._prt*zp_nph - zp_n[ip];
-
-#if !defined(WARPX_DIM_1D_Z)
-            amrex::Real const wqx = wq*invdtdx;
-#endif
-#if defined(WARPX_DIM_3D)
-            amrex::Real const wqy = wq*invdtdy;
-#endif
-            amrex::Real const wqz = wq*invdtdz;
 
             // computes current and old position in grid units
 #if defined(WARPX_DIM_RZ)
@@ -1177,51 +1018,33 @@ void doChargeConservingDepositionShapeNImplicit (const amrex::ParticleReal * con
             amrex::Real const rp_new = std::sqrt(xp_new*xp_new + yp_new*yp_new);
             amrex::Real const rp_old = std::sqrt(xp_old*xp_old + yp_old*yp_old);
             amrex::Real const rp_mid = (rp_new + rp_old)/2._rt;
-            amrex::Real costheta_new, sintheta_new;
-            if (rp_new > 0._rt) {
-                costheta_new = xp_new/rp_new;
-                sintheta_new = yp_new/rp_new;
-            } else {
-                costheta_new = 1._rt;
-                sintheta_new = 0._rt;
-            }
-            amrex::Real costheta_mid, sintheta_mid;
-            if (rp_mid > 0._rt) {
-                costheta_mid = xp_mid/rp_mid;
-                sintheta_mid = yp_mid/rp_mid;
-            } else {
-                costheta_mid = 1._rt;
-                sintheta_mid = 0._rt;
-            }
-            amrex::Real costheta_old, sintheta_old;
-            if (rp_old > 0._rt) {
-                costheta_old = xp_old/rp_old;
-                sintheta_old = yp_old/rp_old;
-            } else {
-                costheta_old = 1._rt;
-                sintheta_old = 0._rt;
-            }
+            const amrex::Real costheta_mid = (rp_mid > 0._rt ? xp_mid/rp_mid : 1._rt);
+            const amrex::Real sintheta_mid = (rp_mid > 0._rt ? yp_mid/rp_mid : 0._rt);
+            const amrex::Real costheta_new = (rp_new > 0._rt ? xp_new/rp_new : 1._rt);
+            const amrex::Real sintheta_new = (rp_new > 0._rt ? yp_new/rp_new : 0._rt);
+            const amrex::Real costheta_old = (rp_old > 0._rt ? xp_old/rp_old : 1._rt);
+            const amrex::Real sintheta_old = (rp_old > 0._rt ? yp_old/rp_old : 0._rt);
             const Complex xy_new0 = Complex{costheta_new, sintheta_new};
             const Complex xy_mid0 = Complex{costheta_mid, sintheta_mid};
             const Complex xy_old0 = Complex{costheta_old, sintheta_old};
             // Keep these double to avoid bug in single precision
-            double const x_new = (rp_new - xmin)*dxi;
-            double const x_old = (rp_old - xmin)*dxi;
+            double const x_new = (rp_new - gridmins.x)*dinv.x;
+            double const x_old = (rp_old - gridmins.x)*dinv.x;
 #else
 #if !defined(WARPX_DIM_1D_Z)
             // Keep these double to avoid bug in single precision
-            double const x_new = (xp_np1 - xmin)*dxi;
-            double const x_old = (xp_n[ip] - xmin)*dxi;
+            double const x_new = (xp_np1 - gridmins.x)*dinv.x;
+            double const x_old = (xp_n[ip] - gridmins.x)*dinv.x;
 #endif
 #endif
 #if defined(WARPX_DIM_3D)
             // Keep these double to avoid bug in single precision
-            double const y_new = (yp_np1 - ymin)*dyi;
-            double const y_old = (yp_n[ip] - ymin)*dyi;
+            double const y_new = (yp_np1 - gridmins.y)*dinv.y;
+            double const y_old = (yp_n[ip] - gridmins.y)*dinv.y;
 #endif
             // Keep these double to avoid bug in single precision
-            double const z_new = (zp_np1 - zmin)*dzi;
-            double const z_old = (zp_n[ip] - zmin)*dzi;
+            double const z_new = (zp_np1 - gridmins.z)*dinv.z;
+            double const z_old = (zp_n[ip] - gridmins.z)*dinv.z;
 
 #if defined(WARPX_DIM_RZ)
             amrex::Real const vy = (-uxp_nph[ip]*sintheta_mid + uyp_nph[ip]*costheta_mid)*gaminv;
@@ -1232,6 +1055,12 @@ void doChargeConservingDepositionShapeNImplicit (const amrex::ParticleReal * con
             amrex::Real const vy = uyp_nph[ip]*gaminv;
 #endif
 
+            // --- Compute shape factors
+            // Compute shape factors for position as they are now and at old positions
+            // [ijk]_new: leftmost grid point that the particle touches
+            const Compute_shape_factor< depos_order > compute_shape_factor;
+            const Compute_shifted_shape_factor< depos_order > compute_shifted_shape_factor;
+
             // Shape factor arrays
             // Note that there are extra values above and below
             // to possibly hold the factor for the old particle
@@ -1240,30 +1069,17 @@ void doChargeConservingDepositionShapeNImplicit (const amrex::ParticleReal * con
 #if !defined(WARPX_DIM_1D_Z)
             double sx_new[depos_order + 3] = {0.};
             double sx_old[depos_order + 3] = {0.};
-#endif
-#if defined(WARPX_DIM_3D)
-            // Keep these double to avoid bug in single precision
-            double sy_new[depos_order + 3] = {0.};
-            double sy_old[depos_order + 3] = {0.};
-#endif
-            // Keep these double to avoid bug in single precision
-            double sz_new[depos_order + 3] = {0.};
-            double sz_old[depos_order + 3] = {0.};
-
-            // --- Compute shape factors
-            // Compute shape factors for position as they are now and at old positions
-            // [ijk]_new: leftmost grid point that the particle touches
-            const Compute_shape_factor< depos_order > compute_shape_factor;
-            const Compute_shifted_shape_factor< depos_order > compute_shifted_shape_factor;
-
-#if !defined(WARPX_DIM_1D_Z)
             const int i_new = compute_shape_factor(sx_new+1, x_new);
             const int i_old = compute_shifted_shape_factor(sx_old, x_old, i_new);
 #endif
 #if defined(WARPX_DIM_3D)
+            double sy_new[depos_order + 3] = {0.};
+            double sy_old[depos_order + 3] = {0.};
             const int j_new = compute_shape_factor(sy_new+1, y_new);
             const int j_old = compute_shifted_shape_factor(sy_old, y_old, j_new);
 #endif
+            double sz_new[depos_order + 3] = {0.};
+            double sz_old[depos_order + 3] = {0.};
             const int k_new = compute_shape_factor(sz_new+1, z_new);
             const int k_old = compute_shifted_shape_factor(sz_old, z_old, k_new);
 
@@ -1288,7 +1104,7 @@ void doChargeConservingDepositionShapeNImplicit (const amrex::ParticleReal * con
                 for (int j=djl; j<=depos_order+2-dju; j++) {
                     amrex::Real sdxi = 0._rt;
                     for (int i=dil; i<=depos_order+1-diu; i++) {
-                        sdxi += wqx*(sx_old[i] - sx_new[i])*(
+                        sdxi += wq*invdtd.x*(sx_old[i] - sx_new[i])*(
                             one_third*(sy_new[j]*sz_new[k] + sy_old[j]*sz_old[k])
                            +one_sixth*(sy_new[j]*sz_old[k] + sy_old[j]*sz_new[k]));
                         amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdxi);
@@ -1299,7 +1115,7 @@ void doChargeConservingDepositionShapeNImplicit (const amrex::ParticleReal * con
                 for (int i=dil; i<=depos_order+2-diu; i++) {
                     amrex::Real sdyj = 0._rt;
                     for (int j=djl; j<=depos_order+1-dju; j++) {
-                        sdyj += wqy*(sy_old[j] - sy_new[j])*(
+                        sdyj += wq*invdtd.y*(sy_old[j] - sy_new[j])*(
                             one_third*(sx_new[i]*sz_new[k] + sx_old[i]*sz_old[k])
                            +one_sixth*(sx_new[i]*sz_old[k] + sx_old[i]*sz_new[k]));
                         amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdyj);
@@ -1310,7 +1126,7 @@ void doChargeConservingDepositionShapeNImplicit (const amrex::ParticleReal * con
                 for (int i=dil; i<=depos_order+2-diu; i++) {
                     amrex::Real sdzk = 0._rt;
                     for (int k=dkl; k<=depos_order+1-dku; k++) {
-                        sdzk += wqz*(sz_old[k] - sz_new[k])*(
+                        sdzk += wq*invdtd.z*(sz_old[k] - sz_new[k])*(
                             one_third*(sx_new[i]*sy_new[j] + sx_old[i]*sy_old[j])
                            +one_sixth*(sx_new[i]*sy_old[j] + sx_old[i]*sy_new[j]));
                         amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdzk);
@@ -1323,7 +1139,7 @@ void doChargeConservingDepositionShapeNImplicit (const amrex::ParticleReal * con
             for (int k=dkl; k<=depos_order+2-dku; k++) {
                 amrex::Real sdxi = 0._rt;
                 for (int i=dil; i<=depos_order+1-diu; i++) {
-                    sdxi += wqx*(sx_old[i] - sx_new[i])*0.5_rt*(sz_new[k] + sz_old[k]);
+                    sdxi += wq*invdtd.x*(sx_old[i] - sx_new[i])*0.5_rt*(sz_new[k] + sz_old[k]);
                     amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 0), sdxi);
 #if defined(WARPX_DIM_RZ)
                     Complex xy_mid = xy_mid0; // Throughout the following loop, xy_mid takes the value e^{i m theta}
@@ -1344,6 +1160,7 @@ void doChargeConservingDepositionShapeNImplicit (const amrex::ParticleReal * con
                        +one_sixth*(sx_new[i]*sz_old[k] + sx_old[i]*sz_new[k]));
                     amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 0), sdyj);
 #if defined(WARPX_DIM_RZ)
+                    Complex const I = Complex{0._rt, 1._rt};
                     Complex xy_new = xy_new0;
                     Complex xy_mid = xy_mid0;
                     Complex xy_old = xy_old0;
@@ -1351,7 +1168,7 @@ void doChargeConservingDepositionShapeNImplicit (const amrex::ParticleReal * con
                     for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
                         // The factor 2 comes from the normalization of the modes
                         // The minus sign comes from the different convention with respect to Davidson et al.
-                        const Complex djt_cmplx = -2._rt * I*(i_new-1 + i + xmin*dxi)*wq*invdtdx/(amrex::Real)imode
+                        const Complex djt_cmplx = -2._rt * I*(i_new-1 + i + gridmins.x*dinv.x)*wq*invdtd.x/(amrex::Real)imode
                                                   *(Complex(sx_new[i]*sz_new[k], 0._rt)*(xy_new - xy_mid)
                                                   + Complex(sx_old[i]*sz_old[k], 0._rt)*(xy_mid - xy_old));
                         amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 2*imode-1), djt_cmplx.real());
@@ -1366,7 +1183,7 @@ void doChargeConservingDepositionShapeNImplicit (const amrex::ParticleReal * con
             for (int i=dil; i<=depos_order+2-diu; i++) {
                 Real sdzk = 0._rt;
                 for (int k=dkl; k<=depos_order+1-dku; k++) {
-                    sdzk += wqz*(sz_old[k] - sz_new[k])*0.5_rt*(sx_new[i] + sx_old[i]);
+                    sdzk += wq*invdtd.z*(sz_old[k] - sz_new[k])*0.5_rt*(sx_new[i] + sx_old[i]);
                     amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 0), sdzk);
 #if defined(WARPX_DIM_RZ)
                     Complex xy_mid = xy_mid0; // Throughout the following loop, xy_mid takes the value e^{i m theta}
@@ -1392,7 +1209,7 @@ void doChargeConservingDepositionShapeNImplicit (const amrex::ParticleReal * con
             }
             amrex::Real sdzk = 0._rt;
             for (int k=dkl; k<=depos_order+1-dku; k++) {
-                sdzk += wqz*(sz_old[k] - sz_new[k]);
+                sdzk += wq*invdtd.z*(sz_old[k] - sz_new[k]);
                 amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+k_new-1+k, 0, 0, 0), sdzk);
             }
 #endif
@@ -1427,9 +1244,9 @@ void doChargeConservingDepositionShapeNImplicit (const amrex::ParticleReal * con
  * \param n_rz_azimuthal_modes  Number of azimuthal modes when using RZ geometry.
  */
 template <int depos_order>
-void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_n,
-                                           const amrex::ParticleReal * const yp_n,
-                                           const amrex::ParticleReal * const zp_n,
+void doVillasenorDepositionShapeNImplicit ([[maybe_unused]]const amrex::ParticleReal * const xp_n,
+                                           [[maybe_unused]]const amrex::ParticleReal * const yp_n,
+                                           [[maybe_unused]]const amrex::ParticleReal * const zp_n,
                                            const GetParticlePosition<PIdx>& GetPosition,
                                            const amrex::ParticleReal * const wp,
                                            [[maybe_unused]]const amrex::ParticleReal * const uxp_n,
@@ -1448,38 +1265,18 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
                                            const std::array<amrex::Real, 3> xyzmin,
                                            const amrex::Dim3 lo,
                                            const amrex::Real q,
-                                           const int n_rz_azimuthal_modes)
+                                           [[maybe_unused]] const int n_rz_azimuthal_modes)
 {
     using namespace amrex;
-#if !defined(WARPX_DIM_RZ)
-    ignore_unused(n_rz_azimuthal_modes);
-#endif
 
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
     bool const do_ionization = ion_lev;
-#if !defined(WARPX_DIM_1D_Z)
-    Real const dxi = 1.0_rt / dx[0];
-#endif
-#if !defined(WARPX_DIM_1D_Z)
-    Real const xmin = xyzmin[0];
-#endif
-#if defined(WARPX_DIM_3D)
-    Real const dyi = 1.0_rt / dx[1];
-    Real const ymin = xyzmin[1];
-#endif
-    Real const dzi = 1.0_rt / dx[2];
-    Real const zmin = xyzmin[2];
+    const amrex::XDim3 gridmins = amrex::XDim3{xyzmin[0], xyzmin[1], xyzmin[2]};
+    const amrex::XDim3 dinv = amrex::XDim3{1._rt/dx[0], 1._rt/dx[1], 1._rt/dx[2]};
+    const amrex::Real invvol = 1._rt/(dx[0]*dx[1]*dx[2]);
 
-#if defined(WARPX_DIM_3D)
-    Real const invvol = 1.0_rt / (dx[0]*dx[1]*dx[2]);
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    Real const invvol = 1.0_rt / (dx[0]*dx[2]);
-#elif defined(WARPX_DIM_1D_Z)
-    Real const invvol = 1.0_rt / (dx[2]);
-#endif
-
-#if !defined(WARPX_DIM_1D_Z)
+#if (AMREX_SPACEDIM > 1)
     Real constexpr one_third = 1.0_rt / 3.0_rt;
     Real constexpr one_sixth = 1.0_rt / 6.0_rt;
 #endif
@@ -1502,7 +1299,6 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
             const amrex::ParticleReal gaminv = 2.0_prt/(gamma_n + gamma_np1);
 #endif
 
-            // wqx, wqy wqz are particle current in each direction
             Real wq = q*wp[ip];
             if (do_ionization){
                 wq *= ion_lev[ip];
@@ -1513,13 +1309,9 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 
 #if !defined(WARPX_DIM_1D_Z)
             ParticleReal const xp_np1 = 2._prt*xp_nph - xp_n[ip];
-#else
-            ignore_unused(xp_n);
 #endif
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
             ParticleReal const yp_np1 = 2._prt*yp_nph - yp_n[ip];
-#else
-            ignore_unused(yp_n);
 #endif
             ParticleReal const zp_np1 = 2._prt*zp_nph - zp_n[ip];
 
@@ -1545,14 +1337,14 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
             const Complex xy_mid0 = Complex{costheta_mid, sintheta_mid};
 
             // Keep these double to avoid bug in single precision
-            double const x_new = (rp_new - xmin)*dxi;
-            double const x_old = (rp_old - xmin)*dxi;
+            double const x_new = (rp_new - gridmins.x)*dinv.x;
+            double const x_old = (rp_old - gridmins.x)*dinv.x;
             amrex::Real const vx = (rp_new - rp_old)/dt;
             amrex::Real const vy = (-uxp_nph[ip]*sintheta_mid + uyp_nph[ip]*costheta_mid)*gaminv;
 #elif defined(WARPX_DIM_XZ)
             // Keep these double to avoid bug in single precision
-            double const x_new = (xp_np1 - xmin)*dxi;
-            double const x_old = (xp_n[ip] - xmin)*dxi;
+            double const x_new = (xp_np1 - gridmins.x)*dinv.x;
+            double const x_old = (xp_n[ip] - gridmins.x)*dinv.x;
             amrex::Real const vx = (xp_np1 - xp_n[ip])/dt;
             amrex::Real const vy = uyp_nph[ip]*gaminv;
 #elif defined(WARPX_DIM_1D_Z)
@@ -1560,17 +1352,17 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
             amrex::Real const vy = uyp_nph[ip]*gaminv;
 #elif defined(WARPX_DIM_3D)
             // Keep these double to avoid bug in single precision
-            double const x_new = (xp_np1 - xmin)*dxi;
-            double const x_old = (xp_n[ip] - xmin)*dxi;
-            double const y_new = (yp_np1 - ymin)*dyi;
-            double const y_old = (yp_n[ip] - ymin)*dyi;
+            double const x_new = (xp_np1 - gridmins.x)*dinv.x;
+            double const x_old = (xp_n[ip] - gridmins.x)*dinv.x;
+            double const y_new = (yp_np1 - gridmins.y)*dinv.y;
+            double const y_old = (yp_n[ip] - gridmins.y)*dinv.y;
             amrex::Real const vx = (xp_np1 - xp_n[ip])/dt;
             amrex::Real const vy = (yp_np1 - yp_n[ip])/dt;
 #endif
 
             // Keep these double to avoid bug in single precision
-            double const z_new = (zp_np1 - zmin)*dzi;
-            double const z_old = (zp_n[ip] - zmin)*dzi;
+            double const z_new = (zp_np1 - gridmins.z)*dinv.z;
+            double const z_old = (zp_n[ip] - gridmins.z)*dinv.z;
             amrex::Real const vz = (zp_np1 - zp_n[ip])/dt;
 
             // Define velocity kernals to deposit
@@ -2080,53 +1872,35 @@ void doVayDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                             const std::array<amrex::Real,3>& xyzmin,
                             amrex::Dim3 lo,
                             amrex::Real q,
-                            int n_rz_azimuthal_modes)
+                            [[maybe_unused]]int n_rz_azimuthal_modes)
 {
     using namespace amrex::literals;
 
 #if defined(WARPX_DIM_RZ)
     amrex::ignore_unused(GetPosition,
         wp, uxp, uyp, uzp, ion_lev, Dx_fab, Dy_fab, Dz_fab,
-        np_to_deposit, dt, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes);
+        np_to_deposit, dt, relative_time, dx, xyzmin, lo, q);
     WARPX_ABORT_WITH_MESSAGE("Vay deposition not implemented in RZ geometry");
 #endif
 
 #if defined(WARPX_DIM_1D_Z)
     amrex::ignore_unused(GetPosition,
         wp, uxp, uyp, uzp, ion_lev, Dx_fab, Dy_fab, Dz_fab,
-        np_to_deposit, dt, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes);
-    WARPX_ABORT_WITH_MESSAGE("Vay deposition not implemented in cartesian 1D geometry");
+        np_to_deposit, dt, relative_time, dx, xyzmin, lo, q);
+    WARPX_ABORT_WITH_MESSAGE("Vay deposition not implemented in 1D geometry");
 #endif
 
 #if !(defined WARPX_DIM_RZ || defined WARPX_DIM_1D_Z)
-    amrex::ignore_unused(n_rz_azimuthal_modes);
 
     // If ion_lev is a null pointer, then do_ionization=0, else do_ionization=1
     const bool do_ionization = ion_lev;
 
-    // Inverse cell volume in each direction
-    const amrex::Real dxi = 1._rt / dx[0];
-    const amrex::Real dzi = 1._rt / dx[2];
-#if defined(WARPX_DIM_3D)
-    const amrex::Real dyi = 1._rt / dx[1];
-#endif
-
     // Inverse of time step
     const amrex::Real invdt = 1._rt / dt;
 
-    // Total inverse cell volume
-#if   defined(WARPX_DIM_XZ)
-    const amrex::Real invvol = dxi * dzi;
-#elif defined(WARPX_DIM_3D)
-    const amrex::Real invvol = dxi * dyi * dzi;
-#endif
-
-    // Lower bound of physical domain in each direction
-    const amrex::Real xmin = xyzmin[0];
-    const amrex::Real zmin = xyzmin[2];
-#if defined(WARPX_DIM_3D)
-    const amrex::Real ymin = xyzmin[1];
-#endif
+    const amrex::XDim3 gridmins = amrex::XDim3{xyzmin[0], xyzmin[1], xyzmin[2]};
+    const amrex::XDim3 dinv = amrex::XDim3{1._rt/dx[0], 1._rt/dx[1], 1._rt/dx[2]};
+    const amrex::Real invvol = 1._rt/(dx[0]*dx[1]*dx[2]);
 
     // Allocate temporary arrays
 #if defined(WARPX_DIM_3D)
@@ -2172,23 +1946,18 @@ void doVayDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
         yp += relative_time * vy;
         zp += relative_time * vz;
 
-        // Particle current densities
-#if defined(WARPX_DIM_XZ)
-        const amrex::Real wqy = wq * vy * invvol;
-#endif
-
         // Current and old particle positions in grid units
         // Keep these double to avoid bug in single precision.
-        double const x_new = (xp - xmin + 0.5_rt*dt*vx) * dxi;
-        double const x_old = (xp - xmin - 0.5_rt*dt*vx) * dxi;
+        double const x_new = (xp - gridmins.x + 0.5_rt*dt*vx) * dinv.x;
+        double const x_old = (xp - gridmins.x - 0.5_rt*dt*vx) * dinv.x;
 #if defined(WARPX_DIM_3D)
         // Keep these double to avoid bug in single precision.
-        double const y_new = (yp - ymin + 0.5_rt*dt*vy) * dyi;
-        double const y_old = (yp - ymin - 0.5_rt*dt*vy) * dyi;
+        double const y_new = (yp - gridmins.y + 0.5_rt*dt*vy) * dinv.y;
+        double const y_old = (yp - gridmins.y - 0.5_rt*dt*vy) * dinv.y;
 #endif
         // Keep these double to avoid bug in single precision.
-        double const z_new = (zp - zmin + 0.5_rt*dt*vz) * dzi;
-        double const z_old = (zp - zmin - 0.5_rt*dt*vz) * dzi;
+        double const z_new = (zp - gridmins.z + 0.5_rt*dt*vz) * dinv.z;
+        double const z_old = (zp - gridmins.z - 0.5_rt*dt*vz) * dinv.z;
 
         // Shape factor arrays for current and old positions (nodal)
         // Keep these double to avoid bug in single precision.
@@ -2235,6 +2004,7 @@ void doVayDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
         // Deposit current into Dx_arr, Dy_arr and Dz_arr
 #if defined(WARPX_DIM_XZ)
 
+        const amrex::Real wqy = wq * vy * invvol;
         for (int k=0; k<=depos_order; k++) {
             for (int i=0; i<=depos_order; i++) {
 
