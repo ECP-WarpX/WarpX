@@ -102,8 +102,6 @@ void FieldEnergy::ComputeDiags (int step)
         const std::array<Real, 3> &dx = WarpX::CellSize(lev);
         const amrex::Real dV = dx[0]*dx[1]*dx[2];
 
-        Geometry const & geom = warpx.Geom(lev);
-
 #if defined(WARPX_DIM_RZ)
         amrex::Real const tmpEx = ComputeNorm2RZ(Ex, lev);
         amrex::Real const tmpEy = ComputeNorm2RZ(Ey, lev);
@@ -115,6 +113,8 @@ void FieldEnergy::ComputeDiags (int step)
         amrex::Real const tmpBz = ComputeNorm2RZ(Bz, lev);
         amrex::Real const Bs = tmpBx + tmpBy + tmpBz;
 #else
+        Geometry const & geom = warpx.Geom(lev);
+
         // compute E squared
         Real const tmpEx = Ex.norm2(0,geom.periodicity());
         Real const tmpEy = Ey.norm2(0,geom.periodicity());
