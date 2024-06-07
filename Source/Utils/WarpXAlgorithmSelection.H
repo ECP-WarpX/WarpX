@@ -29,8 +29,8 @@ struct MediumForEM {
 struct EvolveScheme {
     enum {
         Explicit = 0,
-        ImplicitPicard = 1,
-        SemiImplicitPicard = 2
+        ThetaImplicitEM = 1,
+        SemiImplicitEM = 2
     };
 };
 
