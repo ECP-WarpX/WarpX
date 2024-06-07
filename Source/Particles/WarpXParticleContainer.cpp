@@ -990,6 +990,9 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
         // Indices of the lower bound
         const Dim3 lo = lbound(tilebox);
 
+        const amrex::XDim3 gridmins = amrex::XDim3{xyzmin[0], xyzmin[1], xyzmin[2]};
+        const amrex::XDim3 dinv = amrex::XDim3{1._rt/dx[0], 1._rt/dx[1], 1._rt/dx[2]};
+
         // HACK - sort particles by bin here.
         WARPX_PROFILE_VAR_START(blp_sort);
         amrex::DenseBins<ParticleTileType::ParticleTileDataType> bins;
@@ -1091,25 +1094,25 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
 
         if (WarpX::nox == 1){
             doChargeDepositionSharedShapeN<1>(GetPosition, wp.dataPtr()+offset, ion_lev,
-                                              rho_fab, ix_type, np_to_deposit, dx, xyzmin, lo, q,
+                                              rho_fab, ix_type, np_to_deposit, dinv, gridmins, lo, q,
                                               WarpX::n_rz_azimuthal_modes,
                                               bins, box, geom, max_tbox_size,
                                               WarpX::shared_tilesize);
         } else if (WarpX::nox == 2){
             doChargeDepositionSharedShapeN<2>(GetPosition, wp.dataPtr()+offset, ion_lev,
-                                              rho_fab, ix_type, np_to_deposit, dx, xyzmin, lo, q,
+                                              rho_fab, ix_type, np_to_deposit, dinv, gridmins, lo, q,
                                               WarpX::n_rz_azimuthal_modes,
                                               bins, box, geom, max_tbox_size,
                                               WarpX::shared_tilesize);
         } else if (WarpX::nox == 3){
             doChargeDepositionSharedShapeN<3>(GetPosition, wp.dataPtr()+offset, ion_lev,
-                                              rho_fab, ix_type, np_to_deposit, dx, xyzmin, lo, q,
+                                              rho_fab, ix_type, np_to_deposit, dinv, gridmins, lo, q,
                                               WarpX::n_rz_azimuthal_modes,
                                               bins, box, geom, max_tbox_size,
                                               WarpX::shared_tilesize);
         } else if (WarpX::nox == 4){
             doChargeDepositionSharedShapeN<4>(GetPosition, wp.dataPtr()+offset, ion_lev,
-                                              rho_fab, ix_type, np_to_deposit, dx, xyzmin, lo, q,
+                                              rho_fab, ix_type, np_to_deposit, dinv, gridmins, lo, q,
                                               WarpX::n_rz_azimuthal_modes,
                                               bins, box, geom, max_tbox_size,
                                               WarpX::shared_tilesize);
@@ -1155,13 +1158,16 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
         const amrex::Real time_shift_delta = (icomp == 0 ? 0.0_rt : dt);
         const std::array<amrex::Real,3>& xyzmin = WarpX::LowerCorner(tilebox, depos_lev, time_shift_delta);
 
+        const amrex::XDim3 gridmins = amrex::XDim3{xyzmin[0], xyzmin[1], xyzmin[2]};
+        const amrex::XDim3 dinv = amrex::XDim3{1._rt/dx[0], 1._rt/dx[1], 1._rt/dx[2]};
+
         AMREX_ALWAYS_ASSERT(WarpX::nox == WarpX::noy);
         AMREX_ALWAYS_ASSERT(WarpX::nox == WarpX::noz);
 
         ablastr::particles::deposit_charge<WarpXParticleContainer>(
                 pti, wp, this->charge, ion_lev,
                 rho, local_rho[thread_num],
-                WarpX::noz, dx, xyzmin, WarpX::n_rz_azimuthal_modes,
+                WarpX::noz, dinv, gridmins, WarpX::n_rz_azimuthal_modes,
                 ng_rho, depos_lev, ref_ratio,
                 offset, np_to_deposit,
                 icomp, nc);

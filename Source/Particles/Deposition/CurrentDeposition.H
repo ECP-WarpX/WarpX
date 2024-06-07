@@ -39,7 +39,7 @@
  *                      current positions of the particles. When different than 0,
  *                      the particle position will be temporarily modified to match
  *                      the time of the deposition.
- * \param dinv          The inverse cell sizes
+ * \param dinv          3D cell size inverse
  * \param gridmins      The lower bounds of the domain
  * \param invvol        The inverse volume of a grid cell
  * \param lo            Index lower bounds of domain.
