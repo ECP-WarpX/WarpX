@@ -61,8 +61,8 @@ void doDepositionShapeNKernel([[maybe_unused]] const amrex::ParticleReal xp,
                               amrex::IntVect const& jy_type,
                               amrex::IntVect const& jz_type,
                               const amrex::Real relative_time,
-                              amrex::XDim3 dinv,
-                              amrex::XDim3 gridmins,
+                              const amrex::XDim3 dinv,
+                              const amrex::XDim3 gridmins,
                               const amrex::Real invvol,
                               const amrex::Dim3 lo,
                               [[maybe_unused]] const int n_rz_azimuthal_modes)
@@ -262,8 +262,8 @@ void doDepositionShapeNKernel([[maybe_unused]] const amrex::ParticleReal xp,
  *                      current positions of the particles. When different than 0,
  *                      the particle position will be temporarily modified to match
  *                      the time of the deposition.
- * \param dx           3D cell size
- * \param xyzmin       Physical lower bounds of domain.
+ * \param dinv         3D cell size inverse
+ * \param gridmins     Physical lower bounds of domain.
  * \param lo           Index lower bounds of domain.
  * \param q            species charge.
  * \param n_rz_azimuthal_modes Number of azimuthal modes when using RZ geometry.
@@ -280,8 +280,8 @@ void doDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                          amrex::FArrayBox& jz_fab,
                          long np_to_deposit,
                          amrex::Real relative_time,
-                         const std::array<amrex::Real,3>& dx,
-                         const std::array<amrex::Real,3>& xyzmin,
+                         const amrex::XDim3 dinv,
+                         const amrex::XDim3 gridmins,
                          amrex::Dim3 lo,
                          amrex::Real q,
                          [[maybe_unused]]int n_rz_azimuthal_modes)
@@ -292,9 +292,7 @@ void doDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
     // (do_ionization=1)
     const bool do_ionization = ion_lev;
 
-    const amrex::XDim3 gridmins = amrex::XDim3{xyzmin[0], xyzmin[1], xyzmin[2]};
-    const amrex::XDim3 dinv = amrex::XDim3{1._rt/dx[0], 1._rt/dx[1], 1._rt/dx[2]};
-    const amrex::Real invvol = 1._rt/(dx[0]*dx[1]*dx[2]);
+    const amrex::Real invvol = dinv.x*dinv.y*dinv.z;
 
     const amrex::Real clightsq = 1.0_rt/PhysConst::c/PhysConst::c;
 
@@ -349,8 +347,8 @@ void doDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                          ion_lev is a null pointer.
  * \param jx_fab,jy_fab,jz_fab FArrayBox of current density, either full array or tile.
  * \param np_to_deposit Number of particles for which current is deposited.
- * \param dx           3D cell size
- * \param xyzmin       Physical lower bounds of domain.
+ * \param dinv         3D cell size inverse
+ * \param gridmins     Physical lower bounds of domain.
  * \param lo           Index lower bounds of domain.
  * \param q            species charge.
  * \param n_rz_azimuthal_modes Number of azimuthal modes when using RZ geometry.
@@ -369,8 +367,8 @@ void doDepositionShapeNImplicit(const GetParticlePosition<PIdx>& GetPosition,
                                 amrex::FArrayBox& jy_fab,
                                 amrex::FArrayBox& jz_fab,
                                 const long np_to_deposit,
-                                const std::array<amrex::Real,3>& dx,
-                                const std::array<amrex::Real,3>& xyzmin,
+                                const amrex::XDim3 dinv,
+                                const amrex::XDim3 gridmins,
                                 const amrex::Dim3 lo,
                                 const amrex::Real q,
                                 [[maybe_unused]]const int n_rz_azimuthal_modes)
@@ -381,9 +379,7 @@ void doDepositionShapeNImplicit(const GetParticlePosition<PIdx>& GetPosition,
     // (do_ionization=1)
     const bool do_ionization = ion_lev;
 
-    const amrex::XDim3 gridmins = amrex::XDim3{xyzmin[0], xyzmin[1], xyzmin[2]};
-    const amrex::XDim3 dinv = amrex::XDim3{1._rt/dx[0], 1._rt/dx[1], 1._rt/dx[2]};
-    const amrex::Real invvol = 1._rt/(dx[0]*dx[1]*dx[2]);
+    const amrex::Real invvol = dinv.x*dinv.y*dinv.z;
 
     amrex::Array4<amrex::Real> const& jx_arr = jx_fab.array();
     amrex::Array4<amrex::Real> const& jy_arr = jy_fab.array();
@@ -446,8 +442,8 @@ void doDepositionShapeNImplicit(const GetParticlePosition<PIdx>& GetPosition,
  *                      current positions of the particles. When different than 0,
  *                      the particle position will be temporarily modified to match
  *                      the time of the deposition.
- * \param dx           3D cell size
- * \param xyzmin       Physical lower bounds of domain.
+ * \param dinv         3D cell size inverse
+ * \param gridmins     Physical lower bounds of domain.
  * \param lo           Index lower bounds of domain.
  * \param q            species charge.
  * \param n_rz_azimuthal_modes Number of azimuthal modes when using RZ geometry.
@@ -464,8 +460,8 @@ void doDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosition,
                                amrex::FArrayBox& jz_fab,
                                long np_to_deposit,
                                const amrex::Real relative_time,
-                               const std::array<amrex::Real,3>& dx,
-                               const std::array<amrex::Real,3>& xyzmin,
+                               const amrex::XDim3 dinv,
+                               const amrex::XDim3 gridmins,
                                amrex::Dim3 lo,
                                amrex::Real q,
                                int n_rz_azimuthal_modes,
@@ -571,7 +567,7 @@ void doDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosition,
         {
             const unsigned int ip = permutation[ip_orig];
             depositComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jx_buff, jx_type,
-                                          relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes,
+                                          relative_time, dinv, gridmins, lo, q, n_rz_azimuthal_modes,
                                           ip, zdir, NODE, CELL, 0);
         }
 
@@ -586,7 +582,7 @@ void doDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosition,
         {
             const unsigned int ip = permutation[ip_orig];
             depositComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jy_buff, jy_type,
-                                          relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes,
+                                          relative_time, dinv, gridmins, lo, q, n_rz_azimuthal_modes,
                                           ip, zdir, NODE, CELL, 1);
         }
 
@@ -601,7 +597,7 @@ void doDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosition,
         {
             const unsigned int ip = permutation[ip_orig];
             depositComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jz_buff, jz_type,
-                                          relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes,
+                                          relative_time, dinv, gridmins, lo, q, n_rz_azimuthal_modes,
                                           ip, zdir, NODE, CELL, 2);
         }
 
@@ -612,7 +608,7 @@ void doDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosition,
     // Note, you should never reach this part of the code. This funcion cannot be called unless
     // using HIP/CUDA, and those things are checked prior
     //don't use any args
-    ignore_unused(GetPosition, wp, uxp, uyp, uzp, ion_lev, jx_fab, jy_fab, jz_fab, np_to_deposit, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes, a_bins, box, geom, a_tbox_max_size);
+    ignore_unused(GetPosition, wp, uxp, uyp, uzp, ion_lev, jx_fab, jy_fab, jz_fab, np_to_deposit, relative_time, dinv, gridmins, lo, q, n_rz_azimuthal_modes, a_bins, box, geom, a_tbox_max_size);
     WARPX_ABORT_WITH_MESSAGE("Shared memory only implemented for HIP/CUDA");
 #endif
 }
@@ -635,8 +631,8 @@ void doDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosition,
  *                          current positions of the particles. When different than 0,
  *                          the particle position will be temporarily modified to match
  *                          the time of the deposition.
- * \param dx           3D cell size
- * \param xyzmin       Physical lower bounds of domain.
+ * \param dinv         3D cell size inverse
+ * \param gridmins     Physical lower bounds of domain.
  * \param lo           Index lower bounds of domain.
  * \param q            species charge.
  * \param n_rz_azimuthal_modes Number of azimuthal modes when using RZ geometry.
@@ -654,8 +650,8 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                                   long np_to_deposit,
                                   amrex::Real dt,
                                   amrex::Real relative_time,
-                                  const std::array<amrex::Real,3>& dx,
-                                  std::array<amrex::Real, 3> xyzmin,
+                                  const amrex::XDim3 dinv,
+                                  const amrex::XDim3 gridmins,
                                   amrex::Dim3 lo,
                                   amrex::Real q,
                                   [[maybe_unused]]int n_rz_azimuthal_modes)
@@ -666,15 +662,13 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
     bool const do_ionization = ion_lev;
-    const amrex::XDim3 gridmins = amrex::XDim3{xyzmin[0], xyzmin[1], xyzmin[2]};
-    const amrex::XDim3 dinv = amrex::XDim3{1._rt/dx[0], 1._rt/dx[1], 1._rt/dx[2]};
 #if !defined(WARPX_DIM_3D)
-    const amrex::Real invvol = 1._rt/(dx[0]*dx[1]*dx[2]);
+    const amrex::Real invvol = dinv.x*dinv.y*dinv.z;
 #endif
 
-    amrex::XDim3 const invdtd = amrex::XDim3{1.0_rt / (dt*dx[1]*dx[2]),
-                                             1.0_rt / (dt*dx[0]*dx[2]),
-                                             1.0_rt / (dt*dx[0]*dx[1])};
+    amrex::XDim3 const invdtd = amrex::XDim3{(1.0_rt/dt)*dinv.y*dinv.z,
+                                             (1.0_rt/dt)*dinv.x*dinv.z,
+                                             (1.0_rt/dt)*dinv.x*dinv.y};
 
     Real constexpr clightsq = 1.0_rt / ( PhysConst::c * PhysConst::c );
 
@@ -928,8 +922,8 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
  * \param Jx_arr,Jy_arr,Jz_arr Array4 of current density, either full array or tile.
  * \param np_to_deposit Number of particles for which current is deposited.
  * \param dt           Time step for particle level
- * \param dx           3D cell size
- * \param xyzmin       Physical lower bounds of domain.
+ * \param dinv         3D cell size inverse
+ * \param gridmins     Physical lower bounds of domain.
  * \param lo           Index lower bounds of domain.
  * \param q            species charge.
  * \param n_rz_azimuthal_modes Number of azimuthal modes when using RZ geometry.
@@ -952,8 +946,8 @@ void doChargeConservingDepositionShapeNImplicit ([[maybe_unused]]const amrex::Pa
                                                  const amrex::Array4<amrex::Real>& Jz_arr,
                                                  const long np_to_deposit,
                                                  const amrex::Real dt,
-                                                 const std::array<amrex::Real, 3>& dx,
-                                                 const std::array<amrex::Real, 3> xyzmin,
+                                                 const amrex::XDim3 dinv,
+                                                 const amrex::XDim3 gridmins,
                                                  const amrex::Dim3 lo,
                                                  const amrex::Real q,
                                                  [[maybe_unused]] const int n_rz_azimuthal_modes)
@@ -963,15 +957,14 @@ void doChargeConservingDepositionShapeNImplicit ([[maybe_unused]]const amrex::Pa
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
     bool const do_ionization = ion_lev;
-    const amrex::XDim3 gridmins = amrex::XDim3{xyzmin[0], xyzmin[1], xyzmin[2]};
-    const amrex::XDim3 dinv = amrex::XDim3{1._rt/dx[0], 1._rt/dx[1], 1._rt/dx[2]};
+
 #if !defined(WARPX_DIM_3D)
-    const amrex::Real invvol = 1._rt/(dx[0]*dx[1]*dx[2]);
+    const amrex::Real invvol = dinv.x*dinv.y*dinv.z;
 #endif
 
-    amrex::XDim3 const invdtd = amrex::XDim3{1.0_rt / (dt*dx[1]*dx[2]),
-                                             1.0_rt / (dt*dx[0]*dx[2]),
-                                             1.0_rt / (dt*dx[0]*dx[1])};
+    amrex::XDim3 const invdtd = amrex::XDim3{(1.0_rt/dt)*dinv.y*dinv.z,
+                                             (1.0_rt/dt)*dinv.x*dinv.z,
+                                             (1.0_rt/dt)*dinv.x*dinv.y};
 
 #if !defined(WARPX_DIM_1D_Z)
     Real constexpr one_third = 1.0_rt / 3.0_rt;
@@ -1241,8 +1234,8 @@ void doChargeConservingDepositionShapeNImplicit ([[maybe_unused]]const amrex::Pa
  * \param Jx_arr,Jy_arr,Jz_arr  Array4 of current density, either full array or tile.
  * \param np_to_deposit         Number of particles for which current is deposited.
  * \param dt                    Time step for particle level
- * \param dx                    3D cell size
- * \param xyzmin                Physical lower bounds of domain.
+ * \param dinv                  3D cell size inverse
+ * \param gridmins              Physical lower bounds of domain.
  * \param lo                    Index lower bounds of domain.
  * \param q                     species charge.
  * \param n_rz_azimuthal_modes  Number of azimuthal modes when using RZ geometry.
@@ -1265,8 +1258,8 @@ void doVillasenorDepositionShapeNImplicit ([[maybe_unused]]const amrex::Particle
                                            const amrex::Array4<amrex::Real>& Jz_arr,
                                            const long np_to_deposit,
                                            const amrex::Real dt,
-                                           const std::array<amrex::Real, 3>& dx,
-                                           const std::array<amrex::Real, 3> xyzmin,
+                                           const amrex::XDim3 dinv,
+                                           const amrex::XDim3 gridmins,
                                            const amrex::Dim3 lo,
                                            const amrex::Real q,
                                            [[maybe_unused]] const int n_rz_azimuthal_modes)
@@ -1276,9 +1269,8 @@ void doVillasenorDepositionShapeNImplicit ([[maybe_unused]]const amrex::Particle
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
     bool const do_ionization = ion_lev;
-    const amrex::XDim3 gridmins = amrex::XDim3{xyzmin[0], xyzmin[1], xyzmin[2]};
-    const amrex::XDim3 dinv = amrex::XDim3{1._rt/dx[0], 1._rt/dx[1], 1._rt/dx[2]};
-    const amrex::Real invvol = 1._rt/(dx[0]*dx[1]*dx[2]);
+
+    const amrex::Real invvol = dinv.x*dinv.y*dinv.z;
 
 #if (AMREX_SPACEDIM > 1)
     Real constexpr one_third = 1.0_rt / 3.0_rt;
@@ -1853,8 +1845,8 @@ void doVillasenorDepositionShapeNImplicit ([[maybe_unused]]const amrex::Particle
  *                          current positions of the particles. When different than 0,
  *                          the particle position will be temporarily modified to match
  *                          the time of the deposition.
- * \param[in] dx           3D cell size
- * \param[in] xyzmin       3D lower bounds of physical domain
+ * \param[in] dinv         3D cell size inverse
+ * \param[in] gridmins     3D lower bounds of physical domain
  * \param[in] lo           Dimension-agnostic lower bounds of index domain
  * \param[in] q            Species charge
  * \param[in] n_rz_azimuthal_modes Number of azimuthal modes in RZ geometry
@@ -1872,8 +1864,8 @@ void doVayDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                             long np_to_deposit,
                             amrex::Real dt,
                             amrex::Real relative_time,
-                            const std::array<amrex::Real,3>& dx,
-                            const std::array<amrex::Real,3>& xyzmin,
+                            const amrex::XDim3 dinv,
+                            const amrex::XDim3 gridmins,
                             amrex::Dim3 lo,
                             amrex::Real q,
                             [[maybe_unused]]int n_rz_azimuthal_modes)
@@ -1883,14 +1875,14 @@ void doVayDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
 #if defined(WARPX_DIM_RZ)
     amrex::ignore_unused(GetPosition,
         wp, uxp, uyp, uzp, ion_lev, Dx_fab, Dy_fab, Dz_fab,
-        np_to_deposit, dt, relative_time, dx, xyzmin, lo, q);
+        np_to_deposit, dt, relative_time, dinv, gridmins, lo, q);
     WARPX_ABORT_WITH_MESSAGE("Vay deposition not implemented in RZ geometry");
 #endif
 
 #if defined(WARPX_DIM_1D_Z)
     amrex::ignore_unused(GetPosition,
         wp, uxp, uyp, uzp, ion_lev, Dx_fab, Dy_fab, Dz_fab,
-        np_to_deposit, dt, relative_time, dx, xyzmin, lo, q);
+        np_to_deposit, dt, relative_time, dinv, gridmins, lo, q);
     WARPX_ABORT_WITH_MESSAGE("Vay deposition not implemented in 1D geometry");
 #endif
 
@@ -1902,9 +1894,7 @@ void doVayDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
     // Inverse of time step
     const amrex::Real invdt = 1._rt / dt;
 
-    const amrex::XDim3 gridmins = amrex::XDim3{xyzmin[0], xyzmin[1], xyzmin[2]};
-    const amrex::XDim3 dinv = amrex::XDim3{1._rt/dx[0], 1._rt/dx[1], 1._rt/dx[2]};
-    const amrex::Real invvol = 1._rt/(dx[0]*dx[1]*dx[2]);
+    const amrex::Real invvol = dinv.x*dinv.y*dinv.z;
 
     // Allocate temporary arrays
 #if defined(WARPX_DIM_3D)
