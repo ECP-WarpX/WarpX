@@ -668,7 +668,9 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
     bool const do_ionization = ion_lev;
     const amrex::XDim3 gridmins = amrex::XDim3{xyzmin[0], xyzmin[1], xyzmin[2]};
     const amrex::XDim3 dinv = amrex::XDim3{1._rt/dx[0], 1._rt/dx[1], 1._rt/dx[2]};
+#if !defined(WARPX_DIM_3D)
     const amrex::Real invvol = 1._rt/(dx[0]*dx[1]*dx[2]);
+#endif
 
     amrex::XDim3 const invdtd = amrex::XDim3{1.0_rt / (dt*dx[1]*dx[2]),
                                              1.0_rt / (dt*dx[0]*dx[2]),
@@ -963,7 +965,9 @@ void doChargeConservingDepositionShapeNImplicit ([[maybe_unused]]const amrex::Pa
     bool const do_ionization = ion_lev;
     const amrex::XDim3 gridmins = amrex::XDim3{xyzmin[0], xyzmin[1], xyzmin[2]};
     const amrex::XDim3 dinv = amrex::XDim3{1._rt/dx[0], 1._rt/dx[1], 1._rt/dx[2]};
+#if !defined(WARPX_DIM_3D)
     const amrex::Real invvol = 1._rt/(dx[0]*dx[1]*dx[2]);
+#endif
 
     amrex::XDim3 const invdtd = amrex::XDim3{1.0_rt / (dt*dx[1]*dx[2]),
                                              1.0_rt / (dt*dx[0]*dx[2]),
