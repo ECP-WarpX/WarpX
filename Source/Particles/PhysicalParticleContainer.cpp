@@ -222,7 +222,9 @@ namespace
         ) noexcept
     {
         pa[PIdx::z][ip] = 0._rt;
-#if (AMREX_SPACEDIM >= 2)
+#ifdef WARPX_DIM_RZ
+        pa[PIdx::r][ip] = 0._rt;
+#elif !defined(WARPX_DIM_1D_Z)
         pa[PIdx::x][ip] = 0._rt;
 #endif
 #if defined(WARPX_DIM_3D)
@@ -1460,10 +1462,11 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                 pa[PIdx::x][ip] = pos.x;
                 pa[PIdx::y][ip] = pos.y;
                 pa[PIdx::z][ip] = pos.z;
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-#ifdef WARPX_DIM_RZ
+#elif defined(WARPX_DIM_RZ)
+                pa[PIdx::r][ip] = xb;
+                pa[PIdx::z][ip] = pos.z;
                 pa[PIdx::theta][ip] = theta;
-#endif
+#elif defined(WARPX_DIM_XZ)
                 pa[PIdx::x][ip] = xb;
                 pa[PIdx::z][ip] = pos.z;
 #else
@@ -1958,7 +1961,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 pa[PIdx::z][ip] = ppos.z;
 #elif defined(WARPX_DIM_RZ)
                 pa[PIdx::theta][ip] = std::atan2(ppos.y, ppos.x);
-                pa[PIdx::x][ip] = std::sqrt(ppos.x*ppos.x + ppos.y*ppos.y);
+                pa[PIdx::r][ip] = std::sqrt(ppos.x*ppos.x + ppos.y*ppos.y);
                 pa[PIdx::z][ip] = ppos.z;
 #elif defined(WARPX_DIM_XZ)
                 pa[PIdx::x][ip] = ppos.x;
