@@ -99,7 +99,7 @@ void FieldEnergy::ComputeDiags (int step)
         const MultiFab & Bz = warpx.getField(FieldType::Bfield_aux, lev,2);
 
         // get cell volume
-        const std::array<Real, 3> &dx = warpx.CellSize(lev);
+        const std::array<Real, 3> &dx = WarpX::CellSize(lev);
         const amrex::Real dV = dx[0]*dx[1]*dx[2];
 
         Geometry const & geom = warpx.Geom(lev);

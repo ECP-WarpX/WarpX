@@ -184,7 +184,7 @@ void FieldMomentum::ComputeDiags (int step)
         amrex::ParallelDescriptor::ReduceRealSum({ExB_x,ExB_y,ExB_z});
 
         // Get cell volume
-        const std::array<Real, 3> &dx = warpx.CellSize(lev);
+        const std::array<Real, 3> &dx = WarpX::CellSize(lev);
         const amrex::Real dV = dx[0]*dx[1]*dx[2];
 
         // Save data (offset: 3 values for each refinement level)
