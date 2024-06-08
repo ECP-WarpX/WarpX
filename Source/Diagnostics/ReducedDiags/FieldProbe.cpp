@@ -487,8 +487,8 @@ void FieldProbe::ComputeDiags (int step)
                 const auto &xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
                 const std::array<Real, 3> &dx = WarpX::CellSize(lev);
 
-                const amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
-                const amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
+                const amrex::XDim3 gridmins = amrex::XDim3{xyzmin[0], xyzmin[1], xyzmin[2]};
+                const amrex::XDim3 dinv = amrex::XDim3{1._rt/dx[0], 1._rt/dx[1], 1._rt/dx[2]};
                 const Dim3 lo = lbound(box);
 
                 // Temporarily defining modes and interp outside ParallelFor to avoid GPU compilation errors.
@@ -509,7 +509,7 @@ void FieldProbe::ComputeDiags (int step)
                     doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                    arrEx, arrEy, arrEz, arrBx, arrBy, arrBz,
                                    Extype, Eytype, Eztype, Bxtype, Bytype, Bztype,
-                                   dx_arr, xyzmin_arr, lo, temp_modes,
+                                   dinv, gridmins, lo, temp_modes,
                                    temp_interp_order, false);
 
                     //Calculate the Poynting Vector S

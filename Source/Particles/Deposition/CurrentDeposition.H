@@ -61,8 +61,8 @@ void doDepositionShapeNKernel([[maybe_unused]] const amrex::ParticleReal xp,
                               amrex::IntVect const& jy_type,
                               amrex::IntVect const& jz_type,
                               const amrex::Real relative_time,
-                              const amrex::XDim3 dinv,
-                              const amrex::XDim3 gridmins,
+                              const amrex::XDim3 & dinv,
+                              const amrex::XDim3 & gridmins,
                               const amrex::Real invvol,
                               const amrex::Dim3 lo,
                               [[maybe_unused]] const int n_rz_azimuthal_modes)
@@ -76,17 +76,15 @@ void doDepositionShapeNKernel([[maybe_unused]] const amrex::ParticleReal xp,
 #if defined(WARPX_DIM_RZ)
     // In RZ, wqx is actually wqr, and wqy is wqtheta
     // Convert to cylindrical at the mid point
-    amrex::Real xpmid = xp + relative_time*vx;
+    const amrex::Real xpmid = xp + relative_time*vx;
     const amrex::Real ypmid = yp + relative_time*vy;
     const amrex::Real rpmid = std::sqrt(xpmid*xpmid + ypmid*ypmid);
     const amrex::Real costheta = (rpmid > 0._rt ? xpmid/rpmid : 1._rt);
     const amrex::Real sintheta = (rpmid > 0._rt ? ypmid/rpmid : 0._rt);
-    xpmid = rpmid;
     const Complex xy0 = Complex{costheta, sintheta};
     const amrex::Real wqx = wq*invvol*(+vx*costheta + vy*sintheta);
     const amrex::Real wqy = wq*invvol*(-vx*sintheta + vy*costheta);
 #else
-    const amrex::Real xpmid = xp + relative_time*vx;
     const amrex::Real wqx = wq*invvol*vx;
     const amrex::Real wqy = wq*invvol*vy;
 #endif
@@ -98,7 +96,11 @@ void doDepositionShapeNKernel([[maybe_unused]] const amrex::ParticleReal xp,
     // x direction
     // Get particle position after 1/2 push back in position
     // Keep these double to avoid bug in single precision
-    const double xmid = (xpmid - gridmins.x)*dinv.x;
+#if defined(WARPX_DIM_RZ)
+    const double xmid = (rpmid - gridmins.x)*dinv.x;
+#else
+    const double xmid = ((xp - gridmins.x) + relative_time*vx)*dinv.x;
+#endif
 
     // j_j[xyz] leftmost grid point in x that the particle touches for the centering of each current
     // sx_j[xyz] shape factor along x for the centering of each current
@@ -280,8 +282,8 @@ void doDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                          amrex::FArrayBox& jz_fab,
                          long np_to_deposit,
                          amrex::Real relative_time,
-                         const amrex::XDim3 dinv,
-                         const amrex::XDim3 gridmins,
+                         const amrex::XDim3 & dinv,
+                         const amrex::XDim3 & gridmins,
                          amrex::Dim3 lo,
                          amrex::Real q,
                          [[maybe_unused]]int n_rz_azimuthal_modes)
@@ -367,8 +369,8 @@ void doDepositionShapeNImplicit(const GetParticlePosition<PIdx>& GetPosition,
                                 amrex::FArrayBox& jy_fab,
                                 amrex::FArrayBox& jz_fab,
                                 const long np_to_deposit,
-                                const amrex::XDim3 dinv,
-                                const amrex::XDim3 gridmins,
+                                const amrex::XDim3 & dinv,
+                                const amrex::XDim3 & gridmins,
                                 const amrex::Dim3 lo,
                                 const amrex::Real q,
                                 [[maybe_unused]]const int n_rz_azimuthal_modes)
@@ -460,8 +462,8 @@ void doDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosition,
                                amrex::FArrayBox& jz_fab,
                                long np_to_deposit,
                                const amrex::Real relative_time,
-                               const amrex::XDim3 dinv,
-                               const amrex::XDim3 gridmins,
+                               const amrex::XDim3 & dinv,
+                               const amrex::XDim3 & gridmins,
                                amrex::Dim3 lo,
                                amrex::Real q,
                                int n_rz_azimuthal_modes,
@@ -650,8 +652,8 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                                   long np_to_deposit,
                                   amrex::Real dt,
                                   amrex::Real relative_time,
-                                  const amrex::XDim3 dinv,
-                                  const amrex::XDim3 gridmins,
+                                  const amrex::XDim3 & dinv,
+                                  const amrex::XDim3 & gridmins,
                                   amrex::Dim3 lo,
                                   amrex::Real q,
                                   [[maybe_unused]]int n_rz_azimuthal_modes)
@@ -946,8 +948,8 @@ void doChargeConservingDepositionShapeNImplicit ([[maybe_unused]]const amrex::Pa
                                                  const amrex::Array4<amrex::Real>& Jz_arr,
                                                  const long np_to_deposit,
                                                  const amrex::Real dt,
-                                                 const amrex::XDim3 dinv,
-                                                 const amrex::XDim3 gridmins,
+                                                 const amrex::XDim3 & dinv,
+                                                 const amrex::XDim3 & gridmins,
                                                  const amrex::Dim3 lo,
                                                  const amrex::Real q,
                                                  [[maybe_unused]] const int n_rz_azimuthal_modes)
@@ -1258,8 +1260,8 @@ void doVillasenorDepositionShapeNImplicit ([[maybe_unused]]const amrex::Particle
                                            const amrex::Array4<amrex::Real>& Jz_arr,
                                            const long np_to_deposit,
                                            const amrex::Real dt,
-                                           const amrex::XDim3 dinv,
-                                           const amrex::XDim3 gridmins,
+                                           const amrex::XDim3 & dinv,
+                                           const amrex::XDim3 & gridmins,
                                            const amrex::Dim3 lo,
                                            const amrex::Real q,
                                            [[maybe_unused]] const int n_rz_azimuthal_modes)
@@ -1864,8 +1866,8 @@ void doVayDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                             long np_to_deposit,
                             amrex::Real dt,
                             amrex::Real relative_time,
-                            const amrex::XDim3 dinv,
-                            const amrex::XDim3 gridmins,
+                            const amrex::XDim3 & dinv,
+                            const amrex::XDim3 & gridmins,
                             amrex::Dim3 lo,
                             amrex::Real q,
                             [[maybe_unused]]int n_rz_azimuthal_modes)

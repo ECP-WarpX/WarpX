@@ -377,8 +377,8 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
             const int nox = WarpX::nox;
             const int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 
-            const amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
-            const amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
+            const amrex::XDim3 gridmins = amrex::XDim3{xyzmin[0], xyzmin[1], xyzmin[2]};
+            const amrex::XDim3 dinv = amrex::XDim3{1._rt/dx[0], 1._rt/dx[1], 1._rt/dx[2]};
 
             amrex::Array4<const amrex::Real> const& ex_arr = exfab.array();
             amrex::Array4<const amrex::Real> const& ey_arr = eyfab.array();
@@ -445,7 +445,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
                 doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                               dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
+                               dinv, gridmins, lo, n_rz_azimuthal_modes,
                                nox, galerkin_interpolation);
 
                 [[maybe_unused]] const auto& getExternalEB_tmp = getExternalEB;
