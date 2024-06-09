@@ -21,6 +21,7 @@
 #include "Utils/WarpXProfilerWrapper.H"
 
 #include <ablastr/fields/PoissonSolver.H>
+#include <ablastr/fields/SemiImplicitPoissonSolver.H>
 #include <ablastr/utils/Communication.H>
 #include <ablastr/warn_manager/WarnManager.H>
 
@@ -74,15 +75,9 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
     }
 
     if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
-        electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) {
+        electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic ||
+        electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameDarwinImplicit ) {
         AddSpaceChargeFieldLabFrame();
-    }
-    else if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameDarwinImplicit) {
-        m_implicit_darwin_solver->AddSpaceChargeField(
-            rho_fp, phi_fp, Efield_fp,
-            self_fields_required_precision, self_fields_absolute_tolerance,
-            self_fields_max_iters, self_fields_verbosity
-        );
     }
     else {
         // Loop over the species and add their space-charge contribution to E and B.
@@ -284,6 +279,9 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     } else {
 
 #if defined(WARPX_DIM_1D_Z)
+        if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameDarwinImplicit) {
+            amrex::Abort("Cannot use SI solver in 1d.");
+        }
         // Use the tridiag solver with 1D
         computePhiTriDiagonal(rho_fp, phi_fp);
 #else
@@ -393,27 +391,48 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
     bool const is_solver_igf_on_lev0 =
         WarpX::poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction;
 
-    ablastr::fields::computePhi(
-        sorted_rho,
-        sorted_phi,
-        beta,
-        required_precision,
-        absolute_tolerance,
-        max_iters,
-        verbosity,
-        this->geom,
-        this->dmap,
-        this->grids,
-        WarpX::grid_type,
-        this->m_poisson_boundary_handler,
-        is_solver_igf_on_lev0,
-        WarpX::do_single_precision_comms,
-        this->ref_ratio,
-        post_phi_calculation,
-        gett_new(0),
-        eb_farray_box_factory
-    );
-
+    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameDarwinImplicit) {
+        m_implicit_darwin_solver->ComputeSigma();
+        ablastr::fields::computeSemiImplicitPhi(
+            sorted_rho,
+            sorted_phi,
+            m_implicit_darwin_solver->sigma,
+            required_precision,
+            absolute_tolerance,
+            max_iters,
+            verbosity,
+            this->geom,
+            this->dmap,
+            this->grids,
+            this->m_poisson_boundary_handler,
+            is_solver_igf_on_lev0,
+            WarpX::do_single_precision_comms,
+            this->ref_ratio,
+            post_phi_calculation,
+            gett_new(0),
+            eb_farray_box_factory
+        );
+    } else {
+        ablastr::fields::computePhi(
+            sorted_rho,
+            sorted_phi,
+            beta,
+            required_precision,
+            absolute_tolerance,
+            max_iters,
+            verbosity,
+            this->geom,
+            this->dmap,
+            this->grids,
+            this->m_poisson_boundary_handler,
+            is_solver_igf_on_lev0,
+            WarpX::do_single_precision_comms,
+            this->ref_ratio,
+            post_phi_calculation,
+            gett_new(0),
+            eb_farray_box_factory
+        );
+    }
 }
 
 
