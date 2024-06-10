@@ -83,6 +83,13 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, long a_offset
         m_repeated_plasma_lens_strengths_B = mypc.d_repeated_plasma_lens_strengths_B.data();
     }
 
+    if (mypc.m_E_ext_particle_s == "read_from_file") {
+        m_Etype = ExternalFieldInitType::FromFile;
+    }
+    if (mypc.m_B_ext_particle_s == "read_from_file") {
+        m_Btype = ExternalFieldInitType::FromFile;
+    }
+
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_Etype != Unknown, "Unknown E_ext_particle_init_style");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_Btype != Unknown, "Unknown B_ext_particle_init_style");
 

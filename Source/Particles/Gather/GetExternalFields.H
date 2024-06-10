@@ -23,7 +23,7 @@
 */
 struct GetExternalEBField
 {
-    enum ExternalFieldInitType { None, Parser, RepeatedPlasmaLens, Unknown };
+    enum ExternalFieldInitType { None, Parser, RepeatedPlasmaLens, FromFile, Unknown };
 
     GetExternalEBField () = default;
 
