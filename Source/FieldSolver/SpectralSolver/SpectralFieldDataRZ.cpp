@@ -199,7 +199,7 @@ SpectralFieldDataRZ::SpectralFieldDataRZ (const int lev,
 #endif
 
         // Create the Hankel transformer for each box.
-        amrex::XDim3 xyzmax = WarpX::UpperCorner(mfi.tilebox(), lev, 0._rt);
+        amrex::XDim3 const xyzmax = WarpX::UpperCorner(mfi.tilebox(), lev, 0._rt);
         multi_spectral_hankel_transformer[mfi] = SpectralHankelTransformer(grid_size[0], n_rz_azimuthal_modes, xyzmax.x);
     }
 }
