@@ -70,10 +70,7 @@ PhotonEmissionTransformFunc (QuantumSynchrotronGetOpticalDepth opt_depth_functor
     m_dinv = amrex::XDim3{1._rt/dx[0], 1._rt/dx[1], 1._rt/dx[2]};
 
     // Lower corner of tile box physical domain (take into account Galilean shift)
-    const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
-    m_gridmins = amrex::XDim3{xyzmin[0], xyzmin[1], xyzmin[2]};
-
-
+    m_xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
 
     m_lo = amrex::lbound(box);
 }

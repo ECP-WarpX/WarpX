@@ -75,7 +75,7 @@ void depositComponent (const GetParticlePosition<PIdx>& GetPosition,
                        amrex::IntVect const j_type,
                        const amrex::Real relative_time,
                        const amrex::XDim3 dinv,
-                       const amrex::XDim3 gridmins,
+                       const amrex::XDim3 xyzmin,
                        const amrex::Dim3 lo,
                        const amrex::Real q,
                        const int n_rz_azimuthal_modes,
@@ -153,9 +153,9 @@ void depositComponent (const GetParticlePosition<PIdx>& GetPosition,
     // Get particle position after 1/2 push back in position
 #if defined(WARPX_DIM_RZ)
     // Keep these double to avoid bug in single precision
-    const double xmid = (rpmid - gridmins.x)*dinv.x;
+    const double xmid = (rpmid - xyzmin.x)*dinv.x;
 #else
-    const double xmid = ((xp - gridmins.x) + relative_time*vx)*dinv.x;
+    const double xmid = ((xp - xyzmin.x) + relative_time*vx)*dinv.x;
 #endif
     // j_j[xyz] leftmost grid point in x that the particle touches for the centering of each current
     // sx_j[xyz] shape factor along x for the centering of each current
@@ -185,7 +185,7 @@ void depositComponent (const GetParticlePosition<PIdx>& GetPosition,
 #if defined(WARPX_DIM_3D)
     // y direction
     // Keep these double to avoid bug in single precision
-    const double ymid = ((yp - gridmins.y) + relative_time*vy)*dinv.y;
+    const double ymid = ((yp - xyzmin.y) + relative_time*vy)*dinv.y;
     double sy_node[depos_order + 1] = {0.};
     double sy_cell[depos_order + 1] = {0.};
     int k_node = 0;
@@ -206,7 +206,7 @@ void depositComponent (const GetParticlePosition<PIdx>& GetPosition,
 
     // z direction
     // Keep these double to avoid bug in single precision
-    const double zmid = ((zp - gridmins.z) + relative_time*vz)*dinv.z;
+    const double zmid = ((zp - xyzmin.z) + relative_time*vz)*dinv.z;
     double sz_node[depos_order + 1] = {0.};
     double sz_cell[depos_order + 1] = {0.};
     int l_node = 0;

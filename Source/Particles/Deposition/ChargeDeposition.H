@@ -29,7 +29,7 @@
  * \param rho_fab      FArrayBox of charge density, either full array or tile.
  * \param np_to_deposit Number of particles for which current is deposited.
  * \param dinv         3D cell size inverse
- * \param gridmins     The lower bounds of the domain
+ * \param xyzmin       The lower bounds of the domain
  * \param lo           Index lower bounds of domain.
  * \param q            species charge.
  * \param n_rz_azimuthal_modes Number of azimuthal modes when using RZ geometry.
@@ -41,7 +41,7 @@ void doChargeDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                                amrex::FArrayBox& rho_fab,
                                long np_to_deposit,
                                const amrex::XDim3 & dinv,
-                               const amrex::XDim3 & gridmins,
+                               const amrex::XDim3 & xyzmin,
                                amrex::Dim3 lo,
                                amrex::Real q,
                                [[maybe_unused]] int n_rz_azimuthal_modes)
@@ -83,9 +83,9 @@ void doChargeDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
             const amrex::Real costheta = (rp > 0._rt ? xp/rp : 1._rt);
             const amrex::Real sintheta = (rp > 0._rt ? yp/rp : 0._rt);
             const Complex xy0 = Complex{costheta, sintheta};
-            const amrex::Real x = (rp - gridmins.x)*dinv.x;
+            const amrex::Real x = (rp - xyzmin.x)*dinv.x;
 #else
-            const amrex::Real x = (xp - gridmins.x)*dinv.x;
+            const amrex::Real x = (xp - xyzmin.x)*dinv.x;
 #endif
 
             // Compute shape factor along x
@@ -100,7 +100,7 @@ void doChargeDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
 #endif //defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_3D)
 #if defined(WARPX_DIM_3D)
             // y direction
-            const amrex::Real y = (yp - gridmins.y)*dinv.y;
+            const amrex::Real y = (yp - xyzmin.y)*dinv.y;
             amrex::Real sy[depos_order + 1] = {0._rt};
             int j = 0;
             if (rho_type[1] == NODE) {
@@ -110,7 +110,7 @@ void doChargeDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
             }
 #endif
             // z direction
-            const amrex::Real z = (zp - gridmins.z)*dinv.z;
+            const amrex::Real z = (zp - xyzmin.z)*dinv.z;
             amrex::Real sz[depos_order + 1] = {0._rt};
             int k = 0;
             if (rho_type[WARPX_ZINDEX] == NODE) {
@@ -169,7 +169,7 @@ void doChargeDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
  * \param ix_type
  * \param np_to_deposit Number of particles for which charge is deposited.
  * \param dinv          3D cell size inverse
- * \param gridmins      The lower bounds of the domain
+ * \param xyzmin        The lower bounds of the domain
  * \param lo            Index lower bounds of domain.
  * \param q             species charge.
  * \param n_rz_azimuthal_modes Number of azimuthal modes when using RZ geometry.
@@ -187,7 +187,7 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPositio
                                      const amrex::IntVect& ix_type,
                                      const long np_to_deposit,
                                      const amrex::XDim3 & dinv,
-                                     const amrex::XDim3 & gridmins,
+                                     const amrex::XDim3 & xyzmin,
                                      const amrex::Dim3 lo,
                                      const amrex::Real q,
                                      [[maybe_unused]]const int n_rz_azimuthal_modes,
@@ -331,9 +331,9 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPositio
                 sintheta = 0._rt;
             }
             const Complex xy0 = Complex{costheta, sintheta};
-            const amrex::Real x = (rp - gridmins.x)*dinv.x;
+            const amrex::Real x = (rp - xyzmin.x)*dinv.x;
 #else
-            const amrex::Real x = (xp - gridmins.x)*dinv.x;
+            const amrex::Real x = (xp - xyzmin.x)*dinv.x;
 #endif
 
             // Compute shape factor along x
@@ -348,7 +348,7 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPositio
 #endif //defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_3D)
 #if defined(WARPX_DIM_3D)
             // y direction
-            const amrex::Real y = (yp - gridmins.y)*dinv.y;
+            const amrex::Real y = (yp - xyzmin.y)*dinv.y;
             amrex::Real sy[depos_order + 1] = {0._rt};
             int j = 0;
             if (rho_type[1] == NODE) {
@@ -358,7 +358,7 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPositio
             }
 #endif
             // z direction
-            const amrex::Real z = (zp - gridmins.z)*dinv.z;
+            const amrex::Real z = (zp - xyzmin.z)*dinv.z;
             amrex::Real sz[depos_order + 1] = {0._rt};
             int k = 0;
             if (rho_type[WARPX_ZINDEX] == NODE) {
