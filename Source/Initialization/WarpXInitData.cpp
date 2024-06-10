@@ -1359,7 +1359,10 @@ void WarpX::CheckKnownIssues()
 void
 WarpX::LoadExternalFieldsFromFile (int const lev)
 {
-    if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::read_from_file) {
+    // TODO: assert that we cannot have both external grid and particle field from file
+
+    if ( (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::read_from_file) ||
+         (mypc->m_B_ext_particle_s == "read_from_file") ){
 #if defined(WARPX_DIM_RZ)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
                                          "External field reading is not implemented for more than one RZ mode (see #3829)");
@@ -1372,7 +1375,8 @@ WarpX::LoadExternalFieldsFromFile (int const lev)
         ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Bfield_fp_external[lev][2].get(), "B", "z");
 #endif
     }
-    if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::read_from_file) {
+    if ( (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::read_from_file) ||
+         (mypc->m_E_ext_particle_s == "read_from_file") ){
 #if defined(WARPX_DIM_RZ)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
                                          "External field reading is not implemented for more than one RZ mode (see #3829)");
@@ -1395,10 +1399,15 @@ WarpX::ReadExternalFieldFromFile (
 {
     // Get WarpX domain info
     auto& warpx = WarpX::GetInstance();
+    amrex::Print() << "Before getting geom" << std::endl;
     amrex::Geometry const& geom0 = warpx.Geom(0);
+    amrex::Print() << "After getting geom" << std::endl;
     const amrex::RealBox& real_box = geom0.ProbDomain();
+    amrex::Print() << "After getting probdomain" << std::endl;
     const auto dx = geom0.CellSizeArray();
+    amrex::Print() << "After getting cellsize" << std::endl;
     const amrex::IntVect nodal_flag = mf->ixType().toIntVect();
+    amrex::Print() << "After getting nodal flag" << std::endl;
 
     // Read external field openPMD data
     auto series = openPMD::Series(read_fields_from_path, openPMD::Access::READ_ONLY);
