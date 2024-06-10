@@ -36,15 +36,13 @@ public:
                           amrex::Array4<amrex::Real      > const& dst,
                           int scomp, int dcomp, int ncomp);
 
-    // In 2D, stencil_length_each_dir = {length(stencil_x), length(stencil_z)}
+    // Length of stencil in each included direction
     amrex::IntVect stencil_length_each_dir;
 
 protected:
     // Stencil along each direction.
-    // in 2D, stencil_y is not initialized.
     amrex::Gpu::DeviceVector<amrex::Real> stencil_x, stencil_y, stencil_z;
-    // Length of each stencil.
-    // In 2D, slen = {length(stencil_x), length(stencil_z), 1}
+    // Length of each stencil, 1 for dimensions not included
     amrex::Dim3 slen;
 
 private:
