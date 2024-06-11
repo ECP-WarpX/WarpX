@@ -293,6 +293,18 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
 void
 WarpX::UpdateAuxilaryDataSameType ()
 {
+    // Update aux field, including guard cells, up to ng_FieldGather
+    const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
+
+    // Level 0: Copy from fine to aux
+    // TODO Check if aux and fp are aliases of each other. If so, we can skip the copy.
+    MultiFab::Copy(*Efield_aux[0][0], *Efield_fp[0][0], 0, 0, Efield_aux[0][0]->nComp(), ng_src);
+    MultiFab::Copy(*Efield_aux[0][1], *Efield_fp[0][1], 0, 0, Efield_aux[0][1]->nComp(), ng_src);
+    MultiFab::Copy(*Efield_aux[0][2], *Efield_fp[0][2], 0, 0, Efield_aux[0][2]->nComp(), ng_src);
+    MultiFab::Copy(*Bfield_aux[0][0], *Bfield_fp[0][0], 0, 0, Bfield_aux[0][0]->nComp(), ng_src);
+    MultiFab::Copy(*Bfield_aux[0][1], *Bfield_fp[0][1], 0, 0, Bfield_aux[0][1]->nComp(), ng_src);
+    MultiFab::Copy(*Bfield_aux[0][2], *Bfield_fp[0][2], 0, 0, Bfield_aux[0][2]->nComp(), ng_src);
+
     for (int lev = 1; lev <= finest_level; ++lev)
     {
         const amrex::Periodicity& crse_period = Geom(lev-1).periodicity();
@@ -308,8 +320,6 @@ WarpX::UpdateAuxilaryDataSameType ()
             dBy.setVal(0.0);
             dBz.setVal(0.0);
 
-            // Guard cells may not be up to date beyond ng_FieldGather
-            const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
             // Copy Bfield_aux to the dB MultiFabs, using up to ng_src (=ng_FieldGather) guard
             // cells from Bfield_aux and filling up to ng (=nGrow) guard cells in the dB MultiFabs
 
@@ -379,8 +389,6 @@ WarpX::UpdateAuxilaryDataSameType ()
             dEy.setVal(0.0);
             dEz.setVal(0.0);
 
-            // Guard cells may not be up to date beyond ng_FieldGather
-            const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
             // Copy Efield_aux to the dE MultiFabs, using up to ng_src (=ng_FieldGather) guard
             // cells from Efield_aux and filling up to ng (=nGrow) guard cells in the dE MultiFabs
             ablastr::utils::communication::ParallelCopy(dEx, *Efield_aux[lev - 1][0], 0, 0,
