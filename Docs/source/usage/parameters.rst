@@ -1732,8 +1732,8 @@ are applied to the grid directly. In particular, these fields can be seen in the
     One can refer to input files in ``Examples/Tests/LoadExternalField`` for more information.
     Regarding how to prepare the openPMD data file, one can refer to
     the `openPMD-example-datasets <https://github.com/openPMD/openPMD-example-datasets>`__.
-    Note that if both `B_ext_grid_init_style` and `E_ext_grid_init_style` are set to
-    `read_from_file`, the openPMD file specified by `warpx.read_fields_from_path`
+    Note that if both ``B_ext_grid_init_style`` and ``E_ext_grid_init_style`` are set to
+    ``read_from_file``, the openPMD file specified by ``warpx.read_fields_from_path``
     should contain both B and E external fields data.
 
 * ``warpx.E_external_grid`` & ``warpx.B_external_grid`` (list of `3 floats`)
