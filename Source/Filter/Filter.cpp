@@ -278,9 +278,7 @@ void Filter::DoFilter (const Box& tbx,
     const auto lo = amrex::lbound(tbx);
     const auto hi = amrex::ubound(tbx);
     // tmp and dst are of type Array4 (Fortran ordering)
-#if (AMREX_SPACEDIM == 1)
     amrex::Real const* AMREX_RESTRICT sx = stencil_x.data();
-#endif
 #if (AMREX_SPACEDIM >= 2)
     amrex::Real const* AMREX_RESTRICT sy = stencil_y.data();
 #endif
