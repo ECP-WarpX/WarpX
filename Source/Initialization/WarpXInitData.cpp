@@ -1399,15 +1399,10 @@ WarpX::ReadExternalFieldFromFile (
 {
     // Get WarpX domain info
     auto& warpx = WarpX::GetInstance();
-    amrex::Print() << "Before getting geom" << std::endl;
     amrex::Geometry const& geom0 = warpx.Geom(0);
-    amrex::Print() << "After getting geom" << std::endl;
     const amrex::RealBox& real_box = geom0.ProbDomain();
-    amrex::Print() << "After getting probdomain" << std::endl;
     const auto dx = geom0.CellSizeArray();
-    amrex::Print() << "After getting cellsize" << std::endl;
     const amrex::IntVect nodal_flag = mf->ixType().toIntVect();
-    amrex::Print() << "After getting nodal flag" << std::endl;
 
     // Read external field openPMD data
     auto series = openPMD::Series(read_fields_from_path, openPMD::Access::READ_ONLY);
