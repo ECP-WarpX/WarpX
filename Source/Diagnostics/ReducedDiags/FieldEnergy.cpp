@@ -98,15 +98,9 @@ void FieldEnergy::ComputeDiags (int step)
         const MultiFab & By = warpx.getField(FieldType::Bfield_aux, lev,1);
         const MultiFab & Bz = warpx.getField(FieldType::Bfield_aux, lev,2);
 
-        // get cell size
-        Geometry const & geom = warpx.Geom(lev);
-#if defined(WARPX_DIM_1D_Z)
-        auto dV = geom.CellSize(0);
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        auto dV = geom.CellSize(0) * geom.CellSize(1);
-#elif defined(WARPX_DIM_3D)
-        auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
-#endif
+        // get cell volume
+        const std::array<Real, 3> &dx = WarpX::CellSize(lev);
+        const amrex::Real dV = dx[0]*dx[1]*dx[2];
 
 #if defined(WARPX_DIM_RZ)
         amrex::Real const tmpEx = ComputeNorm2RZ(Ex, lev);
@@ -119,6 +113,8 @@ void FieldEnergy::ComputeDiags (int step)
         amrex::Real const tmpBz = ComputeNorm2RZ(Bz, lev);
         amrex::Real const Bs = tmpBx + tmpBy + tmpBz;
 #else
+        Geometry const & geom = warpx.Geom(lev);
+
         // compute E squared
         Real const tmpEx = Ex.norm2(0,geom.periodicity());
         Real const tmpEy = Ey.norm2(0,geom.periodicity());
