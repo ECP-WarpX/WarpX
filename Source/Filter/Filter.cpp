@@ -98,12 +98,12 @@ void Filter::DoFilter (const Box& tbx,
 #if AMREX_SPACEDIM >= 2
     amrex::Real const* AMREX_RESTRICT sy = stencil_y.data();
 #endif
-#if defined(WARPX_DIM_3D)
+#if AMREX_SPACEDIM == 3
     amrex::Real const* AMREX_RESTRICT sz = stencil_z.data();
 #endif
     Dim3 slen_local = slen;
 
-#if defined(WARPX_DIM_3D)
+#if AMREX_SPACEDIM == 3
     AMREX_PARALLEL_FOR_4D ( tbx, ncomp, i, j, k, n,
     {
         Real d = 0.0;
@@ -279,10 +279,10 @@ void Filter::DoFilter (const Box& tbx,
     const auto hi = amrex::ubound(tbx);
     // tmp and dst are of type Array4 (Fortran ordering)
     amrex::Real const* AMREX_RESTRICT sx = stencil_x.data();
-#if (AMREX_SPACEDIM >= 2)
+#if AMREX_SPACEDIM >= 2
     amrex::Real const* AMREX_RESTRICT sy = stencil_y.data();
 #endif
-#if defined(WARPX_DIM_3D)
+#if AMREX_SPACEDIM == 3
     amrex::Real const* AMREX_RESTRICT sz = stencil_z.data();
 #endif
     for (int n = 0; n < ncomp; ++n) {
@@ -298,11 +298,11 @@ void Filter::DoFilter (const Box& tbx,
         for         (int iz=0; iz < slen.z; ++iz){
             for     (int iy=0; iy < slen.y; ++iy){
                 for (int ix=0; ix < slen.x; ++ix){
-#if defined(WARPX_DIM_3D)
+#if AMREX_SPACEDIM == 3
                     const Real sss = sx[ix]*sy[iy]*sz[iz];
-#elif (AMREX_SPACEDIM >= 2)
+#elif AMREX_SPACEDIM >= 2
                     const Real sss = sx[ix]*sy[iy];
-#elif (AMREX_SPACEDIM == 1)
+#elif AMREX_SPACEDIM == 1
                     const Real sss = sx[ix];
 #endif
                     // 3 nested loop on 3D array
@@ -310,7 +310,7 @@ void Filter::DoFilter (const Box& tbx,
                         for     (int j = lo.y; j <= hi.y; ++j) {
                             AMREX_PRAGMA_SIMD
                             for (int i = lo.x; i <= hi.x; ++i) {
-#if defined(WARPX_DIM_3D)
+#if AMREX_SPACEDIM == 3
                                 dst(i,j,k,dcomp+n) += sss*(tmp(i-ix,j-iy,k-iz,scomp+n)
                                                           +tmp(i+ix,j-iy,k-iz,scomp+n)
                                                           +tmp(i-ix,j+iy,k-iz,scomp+n)
@@ -319,7 +319,7 @@ void Filter::DoFilter (const Box& tbx,
                                                           +tmp(i+ix,j-iy,k+iz,scomp+n)
                                                           +tmp(i-ix,j+iy,k+iz,scomp+n)
                                                           +tmp(i+ix,j+iy,k+iz,scomp+n));
-#elif (AMREX_SPACEDIM >= 2)
+#elif AMREX_SPACEDIM >= 2
                                 dst(i,j,k,dcomp+n) += sss*(tmp(i-ix,j-iy,k,scomp+n)
                                                           +tmp(i+ix,j-iy,k,scomp+n)
                                                           +tmp(i-ix,j+iy,k,scomp+n)
