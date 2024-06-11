@@ -290,7 +290,9 @@ public:
 
                     // rescale velocity vectors to conserve kinetic energy
                     const auto Etot1 = (Ek1 + Ek_product1) / w1[p_pair_indices_1[i]];
-                    const amrex::ParticleReal up1 = std::sqrt(Etot1 * (Etot1 + 2.0_prt*m1*c2) / c2) / m1;
+                    const auto up1 = static_cast<amrex::ParticleReal>(
+                        std::sqrt(Etot1 * (Etot1 + 2.0_prt*m1*c2) / c2) / m1
+                    );
                     const amrex::ParticleReal scale1 = up1 / std::sqrt(
                         soa_1.m_rdata[PIdx::ux][p_pair_indices_1[i]]*soa_1.m_rdata[PIdx::ux][p_pair_indices_1[i]]
                         + soa_1.m_rdata[PIdx::uy][p_pair_indices_1[i]]*soa_1.m_rdata[PIdx::uy][p_pair_indices_1[i]]
@@ -301,7 +303,9 @@ public:
                     soa_1.m_rdata[PIdx::uz][p_pair_indices_1[i]] *= scale1;
 
                     const auto Etot2 = (Ek2 + Ek_product2) / w2[p_pair_indices_2[i]];
-                    const amrex::ParticleReal up2 = std::sqrt(Etot2 * (Etot2 + 2.0_prt*m2*c2) / c2) / m2;
+                    const auto up2 = static_cast<amrex::ParticleReal>(
+                        std::sqrt(Etot2 * (Etot2 + 2.0_prt*m2*c2) / c2) / m2
+                    );
                     const amrex::ParticleReal scale2 = up2 / std::sqrt(
                         soa_2.m_rdata[PIdx::ux][p_pair_indices_2[i]]*soa_2.m_rdata[PIdx::ux][p_pair_indices_2[i]]
                         + soa_2.m_rdata[PIdx::uy][p_pair_indices_2[i]]*soa_2.m_rdata[PIdx::uy][p_pair_indices_2[i]]
