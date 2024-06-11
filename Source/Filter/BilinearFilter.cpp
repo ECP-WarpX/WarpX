@@ -69,20 +69,20 @@ void BilinearFilter::ComputeStencils(){
 
     stencil_x.resize( 1u + npass_each_dir[0] );
     compute_stencil(stencil_x, npass_each_dir[0]);
-#if (AMREX_SPACEDIM >= 2)
+#if AMREX_SPACEDIM >= 2
     stencil_y.resize( 1u + npass_each_dir[1] );
     compute_stencil(stencil_y, npass_each_dir[1]);
 #endif
-#if defined(WARPX_DIM_3D)
+#if AMREX_SPACEDIM == 3
     stencil_z.resize( 1u + npass_each_dir[2] );
     compute_stencil(stencil_z, npass_each_dir[2]);
 #endif
 
     slen = stencil_length_each_dir.dim3();
-#if (AMREX_SPACEDIM < 3)
+#if AMREX_SPACEDIM < 3
     slen.z = 1;
 #endif
-#if (AMREX_SPACEDIM < 2)
+#if AMREX_SPACEDIM < 2
     slen.y = 1;
 #endif
 }
