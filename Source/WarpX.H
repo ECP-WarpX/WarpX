@@ -344,6 +344,7 @@ public:
 
     static bool do_dynamic_scheduling;
     static bool refine_plasma;
+    static bool refineAddplasma;
 
     static utils::parser::IntervalsParser sort_intervals;
     static amrex::IntVect sort_bin_size;
