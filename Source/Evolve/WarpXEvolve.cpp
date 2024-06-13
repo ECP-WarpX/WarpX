@@ -306,9 +306,6 @@ WarpX::Evolve (int numsteps)
         multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
         if (m_exit_loop_due_to_interrupt_signal) { ExecutePythonCallback("onbreaksignal"); }
     }
-
-    amrex::Print() <<
-        ablastr::warn_manager::GetWMInstance().PrintGlobalWarnings("THE END");
 }
 
 /* /brief Perform one PIC iteration, without subcycling
