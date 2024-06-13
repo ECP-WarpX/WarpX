@@ -506,7 +506,7 @@ Domain Boundary Conditions
     setting these variables will trigger an electrostatic solve at ``t=0``, to compute the initial
     electric field produced by the boundaries.
 
-* ``boundary.particle_lo`` and ``boundary.particle_hi`` (`2 strings` for 2D, `3 strings` for 3D, `absorbing` by default)
+* ``boundary.particle_lo`` and ``boundary.particle_hi`` (`2 strings` for 2D, `3 strings` for 3D)
     Options are:
 
     * ``Absorbing``: Particles leaving the boundary will be deleted.
@@ -785,6 +785,8 @@ Particle initialization
 * ``particles.species_names`` (`strings`, separated by spaces)
     The name of each species. This is then used in the rest of the input deck ;
     in this documentation we use `<species_name>` as a placeholder.
+    Note that particle boundary condition must be specified using
+    ``boundary.particle_lo`` and ``boundary.particle_hi``
 
 * ``particles.photon_species`` (`strings`, separated by spaces)
     List of species that are photon species, if any.
