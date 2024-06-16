@@ -74,7 +74,7 @@ struct UniformFilter
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     bool operator () (const SuperParticleType& p, const amrex::RandomEngine&) const noexcept
     {
-        return ( (!m_is_active) || ( p.id()%m_stride == 0 ) );
+        return ( (!m_is_active) || ( p.m_idcpu % m_stride == 0 ) );
     }
 private:
     const bool m_is_active; //! select all particles if false
