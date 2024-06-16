@@ -118,17 +118,17 @@ FlushFormatCatalyst::FlushFormatCatalyst() {
 
 void
 FlushFormatCatalyst::WriteToFile (
-    const amrex::Vector<std::string> varnames,
+    const amrex::Vector<std::string>& varnames,
     const amrex::Vector<amrex::MultiFab>& mf,
     amrex::Vector<amrex::Geometry>& geom,
-    const amrex::Vector<int> iteration, const double time,
+    amrex::Vector<int> iteration, double time,
     const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
     const std::string prefix, int file_min_digits, bool plot_raw_fields,
     bool plot_raw_fields_guards,
-    const bool /*use_pinned_pc*/,
+    bool /*use_pinned_pc*/,
     bool isBTD, int /*snapshotID*/, int /*bufferID*/, int /*numBuffers*/,
     const amrex::Geometry& /*full_BTD_snapshot*/,
-    bool /*isLastBTDFlush*/, const amrex::Vector<int>& /* totalParticlesFlushedAlready*/) const
+    bool /*isLastBTDFlush*/) const
 {
 #ifdef AMREX_USE_CATALYST
     amrex::Print() << Utils::TextMsg::Info("Running Catalyst pipeline scripts...");
@@ -141,14 +141,13 @@ FlushFormatCatalyst::WriteToFile (
         "In-situ visualization is not currently supported for back-transformed diagnostics.");
 
     // Mesh data
-    WARPX_PROFILE_VAR("FlushFormatCatlyst::WriteToFile::MultiLevelToBlueprint", prof_catalyst_mesh_blueprint);
+    WARPX_PROFILE_VAR("FlushFormatCatalyst::WriteToFile::MultiLevelToBlueprint", prof_catalyst_mesh_blueprint);
     conduit::Node node;
     auto & state = node["catalyst/state"];
     state["timestep"].set(iteration[0]);
     state["time"].set(time);
 
     auto& meshChannel = node["catalyst/channels/mesh"];
-    // meshChannel["type"].set_string("amrmesh");
     meshChannel["type"].set_string("multimesh");
     auto& meshData = meshChannel["data"];
 
@@ -180,7 +179,6 @@ FlushFormatCatalyst::WriteToFile (
         std::string message = " Error: Failed to execute Catalyst!\n";
         std::cerr << message << err << std::endl;
         amrex::Print() << message;
-        // amrex::Abort(message);
     }
     WARPX_PROFILE_VAR_STOP(prof_catalyst_execute);
 
