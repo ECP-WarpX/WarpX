@@ -258,20 +258,20 @@ public:
                         soa_1.m_rdata[PIdx::uy][p_pair_indices_1[i]],
                         soa_1.m_rdata[PIdx::uz][p_pair_indices_1[i]], m1, Ek1
                     );
-                    Ek1 *= (w1[p_pair_indices_1[i]] - p_pair_reaction_weight[i]);
+                    Ek1 *= (1.0_prt - w1_frac);
                     ParticleUtils::getEnergy(
                         soa_2.m_rdata[PIdx::ux][p_pair_indices_2[i]],
                         soa_2.m_rdata[PIdx::uy][p_pair_indices_2[i]],
                         soa_2.m_rdata[PIdx::uz][p_pair_indices_2[i]], m2, Ek2
                     );
-                    Ek2 *= (w2[p_pair_indices_2[i]] - p_pair_reaction_weight[i]);
+                    Ek2 *= (1.0_prt - w2_frac);
 
                     // Calculate energy of the product particles
                     double Ek_product1, Ek_product2;
                     ParticleUtils::getEnergy(ux1, uy1, uz1, m1, Ek_product1);
-                    Ek1 *= p_pair_reaction_weight[i];
+                    Ek_product1 *= w1_frac;
                     ParticleUtils::getEnergy(ux2, uy2, uz2, m2, Ek_product2);
-                    Ek2 *= p_pair_reaction_weight[i];
+                    Ek_product2 *= w2_frac;
 
                     // Scatter velocities based on weighted sum
                     soa_1.m_rdata[PIdx::ux][p_pair_indices_1[i]] *= 1.0_prt - w1_frac;
@@ -289,7 +289,7 @@ public:
                     soa_2.m_rdata[PIdx::uz][p_pair_indices_2[i]] += w2_frac * uz2;
 
                     // rescale velocity vectors to conserve kinetic energy
-                    const auto Etot1 = (Ek1 + Ek_product1) / w1[p_pair_indices_1[i]];
+                    const auto Etot1 = Ek1 + Ek_product1;
                     const auto up1 = static_cast<amrex::ParticleReal>(
                         std::sqrt(Etot1 * (Etot1 + 2.0_prt*m1*c2) / c2) / m1
                     );
@@ -302,7 +302,7 @@ public:
                     soa_1.m_rdata[PIdx::uy][p_pair_indices_1[i]] *= scale1;
                     soa_1.m_rdata[PIdx::uz][p_pair_indices_1[i]] *= scale1;
 
-                    const auto Etot2 = (Ek2 + Ek_product2) / w2[p_pair_indices_2[i]];
+                    const auto Etot2 = Ek2 + Ek_product2;
                     const auto up2 = static_cast<amrex::ParticleReal>(
                         std::sqrt(Etot2 * (Etot2 + 2.0_prt*m2*c2) / c2) / m2
                     );
