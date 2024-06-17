@@ -75,9 +75,9 @@ using namespace amrex;
 
 FlushFormatCatalyst::FlushFormatCatalyst() {
     ParmParse const pp_catalyst("catalyst");
-    std::string scriptPaths {""};
+    std::string scriptPaths;
     std::string implementation {"paraview"};
-    std::string searchPaths {""};
+    std::string searchPaths;
     pp_catalyst.query("script_paths", scriptPaths);
     pp_catalyst.query("implementation", implementation);
     pp_catalyst.query("implementation_search_paths", searchPaths);

@@ -36,8 +36,13 @@ public:
         void WriteParticles(const amrex::Vector<ParticleDiag>& particle_diags, conduit::Node& a_bp_mesh) const;
     #endif
 
-    // Finalize
-    ~FlushFormatInSitu() {}
+    FlushFormatInSitu ()          = default;
+    ~FlushFormatInSitu() override = default;
+
+    FlushFormatInSitu ( FlushFormatInSitu const &)             = default;
+    FlushFormatInSitu& operator= ( FlushFormatInSitu const & ) = default;
+    FlushFormatInSitu ( FlushFormatInSitu&& )                  = default;
+    FlushFormatInSitu& operator= ( FlushFormatInSitu&& )       = default;
 };
 
 #endif
