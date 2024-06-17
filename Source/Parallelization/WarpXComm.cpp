@@ -317,13 +317,24 @@ WarpX::UpdateAuxilaryDataSameType ()
 
     // Level 0: Copy from fine to aux
     // TODO Check if aux and fp are aliases of each other. If so, we can skip the copy.
-    MultiFab::Copy(*Efield_aux[0][0], *Efield_fp[0][0], 0, 0, Efield_aux[0][0]->nComp(), ng_src);
-    MultiFab::Copy(*Efield_aux[0][1], *Efield_fp[0][1], 0, 0, Efield_aux[0][1]->nComp(), ng_src);
-    MultiFab::Copy(*Efield_aux[0][2], *Efield_fp[0][2], 0, 0, Efield_aux[0][2]->nComp(), ng_src);
-    MultiFab::Copy(*Bfield_aux[0][0], *Bfield_fp[0][0], 0, 0, Bfield_aux[0][0]->nComp(), ng_src);
-    MultiFab::Copy(*Bfield_aux[0][1], *Bfield_fp[0][1], 0, 0, Bfield_aux[0][1]->nComp(), ng_src);
-    MultiFab::Copy(*Bfield_aux[0][2], *Bfield_fp[0][2], 0, 0, Bfield_aux[0][2]->nComp(), ng_src);
-
+    if (WarpX::fft_do_time_averaging)
+    {
+        MultiFab::Copy(*Efield_aux[0][0], *Efield_avg_fp[0][0], 0, 0, Efield_aux[0][0]->nComp(), ng_src);
+        MultiFab::Copy(*Efield_aux[0][1], *Efield_avg_fp[0][1], 0, 0, Efield_aux[0][1]->nComp(), ng_src);
+        MultiFab::Copy(*Efield_aux[0][2], *Efield_avg_fp[0][2], 0, 0, Efield_aux[0][2]->nComp(), ng_src);
+        MultiFab::Copy(*Bfield_aux[0][0], *Bfield_avg_fp[0][0], 0, 0, Bfield_aux[0][0]->nComp(), ng_src);
+        MultiFab::Copy(*Bfield_aux[0][1], *Bfield_avg_fp[0][1], 0, 0, Bfield_aux[0][1]->nComp(), ng_src);
+        MultiFab::Copy(*Bfield_aux[0][2], *Bfield_avg_fp[0][2], 0, 0, Bfield_aux[0][2]->nComp(), ng_src);
+    }
+    else
+    {
+        MultiFab::Copy(*Efield_aux[0][0], *Efield_fp[0][0], 0, 0, Efield_aux[0][0]->nComp(), ng_src);
+        MultiFab::Copy(*Efield_aux[0][1], *Efield_fp[0][1], 0, 0, Efield_aux[0][1]->nComp(), ng_src);
+        MultiFab::Copy(*Efield_aux[0][2], *Efield_fp[0][2], 0, 0, Efield_aux[0][2]->nComp(), ng_src);
+        MultiFab::Copy(*Bfield_aux[0][0], *Bfield_fp[0][0], 0, 0, Bfield_aux[0][0]->nComp(), ng_src);
+        MultiFab::Copy(*Bfield_aux[0][1], *Bfield_fp[0][1], 0, 0, Bfield_aux[0][1]->nComp(), ng_src);
+        MultiFab::Copy(*Bfield_aux[0][2], *Bfield_fp[0][2], 0, 0, Bfield_aux[0][2]->nComp(), ng_src);
+    }
     for (int lev = 1; lev <= finest_level; ++lev)
     {
         const amrex::Periodicity& crse_period = Geom(lev-1).periodicity();
