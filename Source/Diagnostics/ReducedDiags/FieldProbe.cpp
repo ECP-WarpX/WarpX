@@ -154,7 +154,12 @@ FieldProbe::FieldProbe (const std::string& rd_name)
             ablastr::warn_manager::WarnPriority::low);
     }
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(interp_order <= WarpX::nox ,
+    // ensure assumption holds: we read the fields in the interpolation kernel as they are,
+    // without further communication of guard/ghost/halo regions
+    int particle_shape;
+    const ParmParse pp_algo("algo");
+    utils::parser::getWithParser(pp_algo, "particle_shape", particle_shape);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(interp_order <= particle_shape ,
                                      "Field probe interp_order should be less than or equal to algo.particle_shape");
     if (ParallelDescriptor::IOProcessor())
     {
