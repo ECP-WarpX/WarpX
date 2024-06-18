@@ -289,31 +289,37 @@ public:
                     soa_2.m_rdata[PIdx::uz][p_pair_indices_2[i]] += w2_frac * uz2;
 
                     // rescale velocity vectors to conserve kinetic energy
-                    const auto Etot1 = Ek1 + Ek_product1;
-                    const auto up1 = static_cast<amrex::ParticleReal>(
-                        std::sqrt(Etot1 * (Etot1 + 2.0_prt*m1*c2) / c2) / m1
-                    );
-                    const amrex::ParticleReal scale1 = up1 / std::sqrt(
+                    const amrex::ParticleReal up1_mag = std::sqrt(
                         soa_1.m_rdata[PIdx::ux][p_pair_indices_1[i]]*soa_1.m_rdata[PIdx::ux][p_pair_indices_1[i]]
                         + soa_1.m_rdata[PIdx::uy][p_pair_indices_1[i]]*soa_1.m_rdata[PIdx::uy][p_pair_indices_1[i]]
                         + soa_1.m_rdata[PIdx::uz][p_pair_indices_1[i]]*soa_1.m_rdata[PIdx::uz][p_pair_indices_1[i]]
                     );
-                    soa_1.m_rdata[PIdx::ux][p_pair_indices_1[i]] *= scale1;
-                    soa_1.m_rdata[PIdx::uy][p_pair_indices_1[i]] *= scale1;
-                    soa_1.m_rdata[PIdx::uz][p_pair_indices_1[i]] *= scale1;
+                    amrex::ParticleReal scale_fac1 = 1.0_prt;
+                    if (up1_mag > 0.0_prt) {
+                        const auto Etot1 = (Ek1 + Ek_product1) * PhysConst::q_e;
+                        scale_fac1 = static_cast<amrex::ParticleReal>(
+                            std::sqrt(Etot1 * (Etot1 + 2.0_prt*m1*c2) / c2) / m1
+                        ) / up1_mag;
+                    }
+                    soa_1.m_rdata[PIdx::ux][p_pair_indices_1[i]] *= scale_fac1;
+                    soa_1.m_rdata[PIdx::uy][p_pair_indices_1[i]] *= scale_fac1;
+                    soa_1.m_rdata[PIdx::uz][p_pair_indices_1[i]] *= scale_fac1;
 
-                    const auto Etot2 = Ek2 + Ek_product2;
-                    const auto up2 = static_cast<amrex::ParticleReal>(
-                        std::sqrt(Etot2 * (Etot2 + 2.0_prt*m2*c2) / c2) / m2
-                    );
-                    const amrex::ParticleReal scale2 = up2 / std::sqrt(
+                    const amrex::ParticleReal up2_mag = std::sqrt(
                         soa_2.m_rdata[PIdx::ux][p_pair_indices_2[i]]*soa_2.m_rdata[PIdx::ux][p_pair_indices_2[i]]
                         + soa_2.m_rdata[PIdx::uy][p_pair_indices_2[i]]*soa_2.m_rdata[PIdx::uy][p_pair_indices_2[i]]
                         + soa_2.m_rdata[PIdx::uz][p_pair_indices_2[i]]*soa_2.m_rdata[PIdx::uz][p_pair_indices_2[i]]
                     );
-                    soa_2.m_rdata[PIdx::ux][p_pair_indices_2[i]] *= scale2;
-                    soa_2.m_rdata[PIdx::uy][p_pair_indices_2[i]] *= scale2;
-                    soa_2.m_rdata[PIdx::uz][p_pair_indices_2[i]] *= scale2;
+                    amrex::ParticleReal scale_fac2 = 1.0_prt;
+                    if (up2_mag > 0.0_prt) {
+                        const auto Etot2 = (Ek2 + Ek_product2) * PhysConst::q_e;
+                        scale_fac2 = static_cast<amrex::ParticleReal>(
+                            std::sqrt(Etot2 * (Etot2 + 2.0_prt*m2*c2) / c2) / m2
+                        ) / up2_mag;
+                    }
+                    soa_2.m_rdata[PIdx::ux][p_pair_indices_2[i]] *= scale_fac2;
+                    soa_2.m_rdata[PIdx::uy][p_pair_indices_2[i]] *= scale_fac2;
+                    soa_2.m_rdata[PIdx::uz][p_pair_indices_2[i]] *= scale_fac2;
                 }
             }
         });
