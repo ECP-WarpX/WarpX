@@ -133,7 +133,7 @@ void FiniteDifferenceSolver::ComputeDivECylindrical (
     for ( MFIter mfi(divEfield, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
 
         // Extract field data for this grid/tile
-        Array4<Real> divE = divEfield.array(mfi);
+        const Array4<Real> divE = divEfield.array(mfi);
         Array4<Real> const& Er = Efield[0]->array(mfi);
         Array4<Real> const& Et = Efield[1]->array(mfi);
         Array4<Real> const& Ez = Efield[2]->array(mfi);

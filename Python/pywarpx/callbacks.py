@@ -7,7 +7,7 @@
 # License: BSD-3-Clause-LBNL
 
 """Callback Locations
-==================
+------------------
 
 These are the functions which allow installing user created functions so that
 they are called at various places along the time step.
@@ -23,9 +23,6 @@ These functions all take a callback location name (string) and function or
 instance method as an argument. Note that if an instance method is used, an
 extra reference to the method's object is saved.
 
-The install can be done using a decorator, which has the prefix ``callfrom``. See
-example below.
-
 Functions can be called at the following times:
 
 * ``beforeInitEsolve``: before the initial solve for the E fields (i.e. before the PIC loop starts)
@@ -33,6 +30,8 @@ Functions can be called at the following times:
 * ``beforeEsolve``: before the solve for E fields
 * ``poissonsolver``: In place of the computePhi call but only in an electrostatic simulation
 * ``afterEsolve``: after the solve for E fields
+* ``afterBpush``: after the B field advance for electromagnetic solvers
+* ``afterEpush``: after the E field advance for electromagnetic solvers
 * ``beforedeposition``: before the particle deposition (for charge and/or current)
 * ``afterdeposition``: after particle deposition (for charge and/or current)
 * ``beforestep``: before the time step
@@ -46,27 +45,37 @@ Functions can be called at the following times:
 * ``particleinjection``: called when particle injection happens, after the position
   advance and before deposition is called, allowing a user
   defined particle distribution to be injected each time step
-* ``appliedfields``: allows directly specifying any fields to be applied to the particles
-  during the advance
 
-To use a decorator, the syntax is as follows. This will install the function
-``myplots`` to be called after each step.
+Example that calls the Python function ``myplots`` after each step:
 
 .. code-block:: python3
+
+   from pywarpx.callbacks import installcallback
+
+   def myplots():
+       # do something here
+
+   installcallback('afterstep', myplots)
+
+   # run simulation
+   sim.step(nsteps=100)
+
+The install can also be done using a `Python decorator <https://docs.python.org/3/glossary.html#term-decorator>`__, which has the prefix ``callfrom``.
+To use a decorator, the syntax is as follows. This will install the function ``myplots`` to be called after each step.
+The above example is quivalent to the following:
+
+.. code-block:: python3
+
+   from pywarpx.callbacks import callfromafterstep
 
    @callfromafterstep
    def myplots():
-       ppzx()
+       # do something here
 
-This is equivalent to the following:
-
-.. code-block:: python3
-
-   def myplots():
-       ppzx()
-
-   installcallback('afterstep', myplots)
+   # run simulation
+   sim.step(nsteps=100)
 """
+
 import copy
 import sys
 import time
@@ -269,6 +278,8 @@ callback_instances = {
     "beforeEsolve": {},
     "poissonsolver": {'singlefunconly': True}, # external Poisson solver
     "afterEsolve": {},
+    "afterBpush": {},
+    "afterEpush": {},
     "beforedeposition": {},
     "afterdeposition": {},
     "particlescraper": {},
@@ -393,6 +404,20 @@ def callfromafterEsolve(f):
     return f
 def installafterEsolve(f):
     installcallback('afterEsolve', f)
+
+# ----------------------------------------------------------------------------
+def callfromafterBpush(f):
+    installcallback('afterBpush', f)
+    return f
+def installafterBpush(f):
+    installcallback('afterBpush', f)
+
+# ----------------------------------------------------------------------------
+def callfromafterEpush(f):
+    installcallback('afterEpush', f)
+    return f
+def installafterEpush(f):
+    installcallback('afterEpush', f)
 
 # ----------------------------------------------------------------------------
 def callfrombeforedeposition(f):

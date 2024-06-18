@@ -8,7 +8,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "BoundaryConditions/PML.H"
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
 #    include "BoundaryConditions/PML_RZ.H"
 #endif
 #include "FieldIO.H"
@@ -66,7 +66,7 @@ WarpX::GetRestartDMap (const std::string& chkfile, const amrex::BoxArray& ba, in
     ParallelDescriptor::ReadAndBcastFile(DMFileName, fileCharPtr);
     const std::string fileCharPtrString(fileCharPtr.dataPtr());
     std::istringstream DMFile(fileCharPtrString, std::istringstream::in);
-    if ( ! DMFile.good()) amrex::FileOpenFailed(DMFileName);
+    if ( ! DMFile.good()) { amrex::FileOpenFailed(DMFileName); }
     DMFile.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
     int nprocs_in_checkpoint;
@@ -382,11 +382,13 @@ WarpX::InitFromCheckpoint ()
     if (do_pml)
     {
         for (int lev = 0; lev < nlevs; ++lev) {
-            if (pml[lev])
+            if (pml[lev]) {
                 pml[lev]->Restart(amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "pml"));
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
-            if (pml_rz[lev])
+            }
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
+            if (pml_rz[lev]) {
                 pml_rz[lev]->Restart(amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "pml_rz"));
+            }
 #endif
         }
     }

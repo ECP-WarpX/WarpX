@@ -3,10 +3,11 @@
 Beam-Driven Wakefield Acceleration of Electrons
 ===============================================
 
-This example shows how to model a beam-driven plasma-wakefield accelerator (PWFA) :cite:p:`TajimaDawson1982,Esarey1996`.
+This example shows how to model a beam-driven plasma-wakefield accelerator (PWFA) :cite:p:`ex-TajimaDawson1982,ex-Esarey1996`.
 
-PWFA is best performed in 3D and quasi-cylindrical (RZ) geometry, which ensures that the plasma wavelength of the wakefield is modelled with the right scale lengths.
-RZ modeling enables efficient modeling if effects of asymmetry shall be ignored (e.g., asymmetric beams and transverse profiles, hosing of the injected beam, etc.).
+PWFA is best performed in 3D or quasi-cylindrical (RZ) geometry, in order to correctly capture some of the key physics (structure of the space-charge fields, beamloading, shape of the accelerating bubble in the blowout regime, etc.).
+For physical situations that have close-to-cylindrical symmetry, simulations in RZ geometry capture the relevant physics at a fraction of the computational cost of a 3D simulation.
+On the other hand, for physical situation with strong asymmetries (e.g., non-round driver, strong hosing of the accelerated beam, etc.), only 3D simulations are suitable.
 
 Additionally, to speed up computation, this example uses the :ref:`boosted frame method <theory-boostedframe>` to effectively model long acceleration lengths.
 

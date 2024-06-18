@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 import numpy as np
+from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 
 from pywarpx import picmi
 

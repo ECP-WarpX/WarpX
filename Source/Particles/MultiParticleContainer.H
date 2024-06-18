@@ -14,6 +14,7 @@
 #include "MultiParticleContainer_fwd.H"
 
 #include "Evolve/WarpXDtType.H"
+#include "Evolve/WarpXPushType.H"
 #include "Particles/Collision/CollisionHandler.H"
 #ifdef WARPX_QED
 #   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper_fwd.H"
@@ -94,11 +95,11 @@ public:
 
     void InitMultiPhysicsModules ();
 
-    ///
-    /// This evolves all the particles by one PIC time step, including current deposition, the
-    /// field solve, and pushing the particles, for all the species in the MultiParticleContainer.
-    /// This is the electromagnetic version.
-    ///
+    /**
+    * \brief This evolves all the particles by one PIC time step, including current deposition, the
+    * field solve, and pushing the particles, for all the species in the MultiParticleContainer.
+    * This is the electromagnetic version.
+    */
     void Evolve (int lev,
                  const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
                  const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz,
@@ -107,21 +108,21 @@ public:
                  amrex::MultiFab* rho, amrex::MultiFab* crho,
                  const amrex::MultiFab* cEx, const amrex::MultiFab* cEy, const amrex::MultiFab* cEz,
                  const amrex::MultiFab* cBx, const amrex::MultiFab* cBy, const amrex::MultiFab* cBz,
-                 amrex::Real t, amrex::Real dt, DtType a_dt_type=DtType::Full, bool skip_deposition=false);
+                 amrex::Real t, amrex::Real dt, DtType a_dt_type=DtType::Full, bool skip_deposition=false,
+                 PushType push_type=PushType::Explicit);
 
-    ///
-    /// This pushes the particle positions by one half time step for all the species in the
-    /// MultiParticleContainer. It is used to desynchronize the particles after initialization
-    /// or when restarting from a checkpoint.
-    ///
+    /**
+    * \brief This pushes the particle positions by one time step for all the species in the
+    * MultiParticleContainer.
+    */
     void PushX (amrex::Real dt);
 
-    ///
-    /// This pushes the particle momenta by dt for all the species in the
-    /// MultiParticleContainer. It is used to desynchronize the particles after initialization
-    /// or when restarting from a checkpoint.  It is also used to synchronize particles at the
-    /// the end of the run.  This is the electromagnetic version.
-    ///
+    /**
+    * This pushes the particle momenta by dt for all the species in the
+    * MultiParticleContainer. It is used to desynchronize the particles after initialization
+    * or when restarting from a checkpoint.  It is also used to synchronize particles at the
+    * the end of the run.  This is the electromagnetic version.
+    */
     void PushP (int lev, amrex::Real dt,
                 const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
                 const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz);
@@ -212,6 +213,8 @@ public:
 
     void defineAllParticleTiles ();
 
+    void deleteInvalidParticles ();
+
     void RedistributeLocal (int num_ghost);
 
     /** Apply BC. For now, just discard particles outside the domain, regardless
@@ -248,7 +251,7 @@ public:
      * \param[in] species_name The species for which back-transformed particles is set.
      * \param[in] do_back_transformed_particles The parameter to set if back-transformed particles are set to true/false
      */
-    void SetDoBackTransformedParticles (std::string species_name, bool do_back_transformed_particles);
+    void SetDoBackTransformedParticles (const std::string& species_name, bool do_back_transformed_particles);
 
     [[nodiscard]] int nSpeciesDepositOnMainGrid () const
     {
@@ -293,7 +296,7 @@ public:
 
     PhysicalParticleContainer& GetPCtmp () { return *pc_tmp; }
 
-    void ScrapeParticles (const amrex::Vector<const amrex::MultiFab*>& distance_to_eb);
+    void ScrapeParticlesAtEB (const amrex::Vector<const amrex::MultiFab*>& distance_to_eb);
 
     std::string m_B_ext_particle_s = "none";
     std::string m_E_ext_particle_s = "none";
@@ -329,7 +332,10 @@ public:
                       const amrex::MultiFab& Bz);
 #endif
 
-    [[nodiscard]] int getSpeciesID (std::string product_str) const;
+    [[nodiscard]] int getSpeciesID (const std::string& product_str) const;
+
+    amrex::Vector<std::unique_ptr<WarpXParticleContainer>>::iterator begin() {return allcontainers.begin();}
+    amrex::Vector<std::unique_ptr<WarpXParticleContainer>>::iterator end() {return allcontainers.end();}
 
 protected:
 

@@ -20,8 +20,8 @@ import os
 import sys
 
 import numpy as np
-from unyt import m
 import yt
+from unyt import m
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI

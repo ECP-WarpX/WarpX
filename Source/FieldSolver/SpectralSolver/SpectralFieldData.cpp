@@ -29,7 +29,7 @@
 #include <AMReX_REAL.H>
 #include <AMReX_Utility.H>
 
-#if WARPX_USE_PSATD
+#if WARPX_USE_FFT
 
 using namespace amrex;
 
@@ -63,9 +63,9 @@ SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
             Bx_avg = c++; By_avg = c++; Bz_avg = c++;
         }
 
-        if (dive_cleaning) F = c++;
+        if (dive_cleaning) { F = c++; }
 
-        if (divb_cleaning) G = c++;
+        if (divb_cleaning) { G = c++; }
 
         if (J_in_time == JInTime::Constant)
         {
@@ -290,15 +290,15 @@ SpectralFieldData::ForwardTransform (const int lev,
                 Complex spectral_field_value = tmp_arr(i,j,k);
                 // Apply proper shift in each dimension
 #if (AMREX_SPACEDIM >= 2)
-                if (!is_nodal_x) spectral_field_value *= xshift_arr[i];
+                if (!is_nodal_x) { spectral_field_value *= xshift_arr[i]; }
 #endif
 #if defined(WARPX_DIM_3D)
-                if (!is_nodal_y) spectral_field_value *= yshift_arr[j];
-                if (!is_nodal_z) spectral_field_value *= zshift_arr[k];
+                if (!is_nodal_y) { spectral_field_value *= yshift_arr[j]; }
+                if (!is_nodal_z) { spectral_field_value *= zshift_arr[k]; }
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                if (!is_nodal_z) spectral_field_value *= zshift_arr[j];
+                if (!is_nodal_z) { spectral_field_value *= zshift_arr[j]; }
 #elif defined(WARPX_DIM_1D_Z)
-                if (!is_nodal_z) spectral_field_value *= zshift_arr[i];
+                if (!is_nodal_z) { spectral_field_value *= zshift_arr[i]; }
 #endif
                 // Copy field into the right index
                 fields_arr(i,j,k,field_index) = spectral_field_value;
@@ -390,15 +390,15 @@ SpectralFieldData::BackwardTransform (const int lev,
                 Complex spectral_field_value = field_arr(i,j,k,field_index);
                 // Apply proper shift in each dimension
 #if (AMREX_SPACEDIM >= 2)
-                if (!is_nodal_x) spectral_field_value *= xshift_arr[i];
+                if (!is_nodal_x) { spectral_field_value *= xshift_arr[i]; }
 #endif
 #if defined(WARPX_DIM_3D)
-                if (!is_nodal_y) spectral_field_value *= yshift_arr[j];
-                if (!is_nodal_z) spectral_field_value *= zshift_arr[k];
+                if (!is_nodal_y) { spectral_field_value *= yshift_arr[j]; }
+                if (!is_nodal_z) { spectral_field_value *= zshift_arr[k]; }
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                if (!is_nodal_z) spectral_field_value *= zshift_arr[j];
+                if (!is_nodal_z) { spectral_field_value *= zshift_arr[j]; }
 #elif defined(WARPX_DIM_1D_Z)
-                if (!is_nodal_z) spectral_field_value *= zshift_arr[i];
+                if (!is_nodal_z) { spectral_field_value *= zshift_arr[i]; }
 #endif
                 // Copy field into temporary array
                 tmp_arr(i,j,k) = spectral_field_value;
@@ -447,7 +447,7 @@ SpectralFieldData::BackwardTransform (const int lev,
             {
                 for (int dir = 0; dir < AMREX_SPACEDIM; dir++)
                 {
-                    if ((fill_guards[dir]) == 0) mf_box.grow(dir, -mf_ng[dir]);
+                    if ((fill_guards[dir]) == 0) { mf_box.grow(dir, -mf_ng[dir]); }
                 }
             }
 
@@ -475,4 +475,4 @@ SpectralFieldData::BackwardTransform (const int lev,
     }
 }
 
-#endif // WARPX_USE_PSATD
+#endif // WARPX_USE_FFT

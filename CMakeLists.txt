@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.20.0)
-project(WarpX VERSION 23.12)
+project(WarpX VERSION 24.06)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -16,6 +16,12 @@ endif()
 
 # CMake policies ##############################################################
 #
+# Setting a cmake_policy to OLD is deprecated by definition and will raise a
+# verbose warning
+if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+    set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
+endif()
+
 # AMReX 21.06+ supports CUDA_ARCHITECTURES with CMake 3.20+
 # CMake 3.18+: CMAKE_CUDA_ARCHITECTURES
 # https://cmake.org/cmake/help/latest/policy/CMP0104.html
@@ -43,7 +49,15 @@ set_cxx17_superbuild()
 # this is an optional tool that stores compiled object files; allows fast
 # re-builds even with "make clean" in between. Mainly used to store AMReX
 # objects
-set_ccache()
+if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+    set(WarpX_CCACHE_DEFAULT ON)
+else()
+    set(WarpX_CCACHE_DEFAULT OFF)  # we are a subproject in a superbuild
+endif()
+option(WarpX_CCACHE "Enable ccache for faster rebuilds" ${WarpX_CCACHE_DEFAULT})
+if(WarpX_CCACHE)
+    set_ccache()
+endif()
 
 
 # Output Directories ##########################################################
@@ -61,17 +75,18 @@ include(CMakeDependentOption)
 option(WarpX_APP           "Build the WarpX executable application"     ON)
 option(WarpX_ASCENT        "Ascent in situ diagnostics"                 OFF)
 option(WarpX_EB            "Embedded boundary support"                  OFF)
-cmake_dependent_option(WarpX_GPUCLOCK
-                           "Add GPU kernel timers (cost function)"      ON
-                           "WarpX_COMPUTE STREQUAL CUDA OR WarpX_COMPUTE STREQUAL HIP" OFF)
 option(WarpX_LIB           "Build WarpX as a library"                   OFF)
 option(WarpX_MPI           "Multi-node support (message-passing)"       ON)
 option(WarpX_OPENPMD       "openPMD I/O (HDF5, ADIOS)"                  ON)
-option(WarpX_PSATD         "spectral solver support"                    OFF)
+option(WarpX_FFT           "FFT-based solvers"                          OFF)
+option(WarpX_HEFFTE        "Multi-node FFT-based solvers"               OFF)
 option(WarpX_PYTHON        "Python bindings"                            OFF)
 option(WarpX_SENSEI        "SENSEI in situ diagnostics"                 OFF)
-option(WarpX_QED           "QED support (requires PICSAR)"                    ON)
-option(WarpX_QED_TABLE_GEN "QED table generation (requires PICSAR and Boost)" OFF)
+option(WarpX_QED           "QED support (requires PICSAR)"              ON)
+option(WarpX_QED_TABLE_GEN "QED table generation (requires PICSAR and Boost)"
+                                                                        OFF)
+option(WarpX_QED_TOOLS     "Build external tool to generate QED lookup tables (requires PICSAR and Boost)"
+                                                                        OFF)
 
 set(WarpX_DIMS_VALUES 1 2 3 RZ)
 set(WarpX_DIMS 3 CACHE STRING "Simulation dimensionality <1;2;3;RZ>")
@@ -103,6 +118,13 @@ if(NOT WarpX_PARTICLE_PRECISION IN_LIST WarpX_PARTICLE_PRECISION_VALUES)
     message(FATAL_ERROR "WarpX_PARTICLE_PRECISION (${WarpX_PARTICLE_PRECISION}) must be one of ${WarpX_PARTICLE_PRECISION_VALUES}")
 endif()
 
+set(WarpX_QED_TABLES_GEN_OMP_VALUES AUTO ON OFF)
+set(WarpX_QED_TABLES_GEN_OMP AUTO CACHE STRING "Enables OpenMP support for QED lookup tables generation (AUTO/ON/OFF)")
+set_property(CACHE WarpX_QED_TABLES_GEN_OMP PROPERTY STRINGS ${WarpX_QED_TABLES_GEN_OMP_VALUES})
+if(NOT WarpX_QED_TABLES_GEN_OMP IN_LIST WarpX_QED_TABLES_GEN_OMP_VALUES)
+    message(FATAL_ERROR "WarpX_QED_TABLES_GEN_OMP (${WarpX_QED_TABLES_GEN_OMP}) must be one of ${WarpX_QED_TABLES_GEN_OMP_VALUES}")
+endif()
+
 set(WarpX_COMPUTE_VALUES NOACC OMP CUDA SYCL HIP)
 set(WarpX_COMPUTE OMP CACHE STRING "On-node, accelerated computing backend (NOACC/OMP/CUDA/SYCL/HIP)")
 set_property(CACHE WarpX_COMPUTE PROPERTY STRINGS ${WarpX_COMPUTE_VALUES})
@@ -114,6 +136,10 @@ option(WarpX_MPI_THREAD_MULTIPLE "MPI thread-multiple support, i.e. for async_io
 mark_as_advanced(WarpX_MPI_THREAD_MULTIPLE)
 
 option(WarpX_amrex_internal                    "Download & build AMReX" ON)
+
+if(WarpX_HEFFTE AND NOT WarpX_MPI)
+    message(FATAL_ERROR "WarpX_HEFFTE (${WarpX_HEFFTE}) can only be used if WarpX_MPI is ON.")
+endif()
 
 # change the default build type to Release (or RelWithDebInfo) instead of Debug
 set_default_build_type("Release")
@@ -134,6 +160,14 @@ if(WarpX_APP OR WarpX_PYTHON)
     set(WarpX_LIB ON CACHE STRING "Build WarpX as a library" FORCE)
 endif()
 
+# deprecated options: transition phase
+
+if(DEFINED WarpX_PSATD)
+    message(WARNING "CMake option WarpX_PSATD is deprecated. Use WarpX_FFT instead.\n"
+                    "Overwriting WarpX_FFT with '${WarpX_PSATD}' because WarpX_PSATD was set.")
+    set(WarpX_FFT ${WarpX_PSATD} CACHE STRING "FFT-based solvers" FORCE)
+endif()
+
 # note: we could skip this if we solely build WarpX_APP, but if we build a
 # shared WarpX library or a third party, like ImpactX, uses ablastr in a
 # shared library (e.g., for Python bindings), then we need relocatable code.
@@ -141,13 +175,18 @@ option(ABLASTR_POSITION_INDEPENDENT_CODE
        "Build ABLASTR with position independent code" ON)
 mark_as_advanced(ABLASTR_POSITION_INDEPENDENT_CODE)
 
-option(ABLASTR_FFT "compile AnyFFT wrappers" ${WarpX_PSATD})
-if(WarpX_PSATD)
-    set(ABLASTR_FFT ON CACHE STRING "compile AnyFFT wrappers" FORCE)
+option(ABLASTR_FFT "compile AnyFFT wrappers" ${WarpX_FFT})
+if(WarpX_FFT)
+    set(ABLASTR_FFT ON CACHE STRING "FFT-based solvers" FORCE)
+endif()
+option(ABLASTR_HEFFTE "compile AnyFFT wrappers" ${WarpX_HEFFTE})
+if(WarpX_HEFFTE)
+    set(ABLASTR_HEFFTE ON CACHE STRING "Multi-Node FFT-based solvers" FORCE)
 endif()
 
 # this defined the variable BUILD_TESTING which is ON by default
 #include(CTest)
+
 
 # Dependencies ################################################################
 #
@@ -176,13 +215,30 @@ include(${WarpX_SOURCE_DIR}/cmake/dependencies/openPMD.cmake)
 
 # PSATD
 include(${WarpX_SOURCE_DIR}/cmake/dependencies/FFT.cmake)
-if(WarpX_PSATD)
+if(WarpX_FFT)
     # BLASPP and LAPACKPP
     if(RZ IN_LIST WarpX_DIMS)
         find_package(blaspp CONFIG REQUIRED)
         find_package(lapackpp CONFIG REQUIRED)
         find_package(OpenMP REQUIRED)  # pulled by the two above
     endif()
+endif()
+
+# multi-node FFT
+if(WarpX_HEFFTE)
+    if(WarpX_COMPUTE STREQUAL CUDA)
+        set(_heFFTe_COMPS CUDA)
+    elseif(WarpX_COMPUTE STREQUAL HIP)
+        set(_heFFTe_COMPS ROCM)
+    elseif(WarpX_COMPUTE STREQUAL SYCL)
+        set(_heFFTe_COMPS ONEAPI)
+    else()  # NOACC, OMP
+        set(_heFFTe_COMPS FFTW)  # or MKL
+    endif()
+    # note: we could also enforce GPUAWARE for CUDA and HIP, which can still be
+    #       disabled at runtime
+
+    find_package(Heffte REQUIRED COMPONENTS ${_heFFTe_COMPS})
 endif()
 
 # Python
@@ -393,6 +449,9 @@ if(WarpX_LIB)
     add_subdirectory(Source/Python)
     add_subdirectory(Source/Utils)
 endif()
+if(WarpX_QED_TOOLS)
+    add_subdirectory(Tools/QedTablesUtils)
+endif()
 
 # Interprocedural optimization (IPO) / Link-Time Optimization (LTO)
 if(WarpX_IPO)
@@ -420,6 +479,10 @@ foreach(D IN LISTS WarpX_DIMS)
                 target_link_libraries(ablastr_${SD} PUBLIC CUDA::cudart CUDA::cublas)
             endif()
         endif()
+    endif()
+
+    if(ABLASTR_HEFFTE)
+        target_link_libraries(ablastr_${SD} PUBLIC Heffte::Heffte)
     endif()
 
     if(WarpX_PYTHON)
@@ -487,10 +550,6 @@ foreach(D IN LISTS WarpX_DIMS)
         target_compile_definitions(ablastr_${SD} PUBLIC WARPX_DIM_RZ WARPX_ZINDEX=1)
     endif()
 
-    if(WarpX_GPUCLOCK)
-        target_compile_definitions(ablastr_${SD} PUBLIC WARPX_USE_GPUCLOCK)
-    endif()
-
     if(WarpX_OPENPMD)
         target_compile_definitions(ablastr_${SD} PUBLIC WARPX_USE_OPENPMD)
     endif()
@@ -502,12 +561,19 @@ foreach(D IN LISTS WarpX_DIMS)
         endif()
     endif()
 
-    if(WarpX_PSATD)
-        target_compile_definitions(ablastr_${SD} PUBLIC WARPX_USE_PSATD)
+    if(WarpX_FFT)
+        target_compile_definitions(ablastr_${SD} PUBLIC WARPX_USE_FFT)
     endif()
     if(ABLASTR_FFT)
         # We need to enable FFT support in ABLASTR for PSATD solver
         target_compile_definitions(ablastr_${SD} PUBLIC ABLASTR_USE_FFT)
+    endif()
+
+    if(WarpX_HEFFTE)
+        target_compile_definitions(ablastr_${SD} PUBLIC WARPX_USE_HEFFTE)
+    endif()
+    if(ABLASTR_HEFFTE)
+        target_compile_definitions(ablastr_${SD} PUBLIC ABLASTR_USE_HEFFTE)
     endif()
 
     if(WarpX_PYTHON AND pyWarpX_VERSION_INFO)

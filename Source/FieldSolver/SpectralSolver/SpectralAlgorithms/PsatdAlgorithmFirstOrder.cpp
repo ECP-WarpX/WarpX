@@ -24,7 +24,7 @@
 
 #include <cmath>
 
-#if WARPX_USE_PSATD
+#if WARPX_USE_FFT
 
 using namespace amrex::literals;
 
@@ -184,7 +184,7 @@ PsatdAlgorithmFirstOrder::pushSpectralFields (SpectralFieldData& f) const
                 C10 = (div_cleaning) ? 0._rt : mu0*c*kx*ky*(knorm*S-dt*c*knorm2)*inv_knorm4;
                 C11 = (div_cleaning) ? 0._rt : mu0*c*kx*kz*(knorm*S-dt*c*knorm2)*inv_knorm4;
                 C12 = 0._rt; // This is not redundant, do not remove this
-                if (J_linear) C12 = (div_cleaning) ? mu0*(C-1._rt)*inv_knorm2 : mu0*(2._rt*ky2*(C-1._rt)+2._rt*kz2*(C-1._rt)-dt2*c2*kx2*knorm2)*inv_knorm4*0.5_rt;
+                if (J_linear) { C12 = (div_cleaning) ? mu0*(C-1._rt)*inv_knorm2 : mu0*(2._rt*ky2*(C-1._rt)+2._rt*kz2*(C-1._rt)-dt2*c2*kx2*knorm2)*inv_knorm4*0.5_rt; }
                 C13 = (J_linear && !div_cleaning) ? mu0*kx*ky*(2._rt*(1._rt-C)-dt2*c2*knorm2)*inv_knorm4*0.5_rt : 0._rt;
                 C14 = (J_linear && !div_cleaning) ? mu0*kx*kz*(2._rt*(1._rt-C)-dt2*c2*knorm2)*inv_knorm4*0.5_rt : 0._rt;
                 C15 = (div_cleaning) ? I*mu0*c2*kx*(C-1._rt)*inv_knorm2 : 0._rt;
@@ -211,7 +211,7 @@ PsatdAlgorithmFirstOrder::pushSpectralFields (SpectralFieldData& f) const
                 C11 = (div_cleaning) ? 0._rt : mu0*c*ky*kz*(knorm*S-dt*c*knorm2)*inv_knorm4;
                 C12 = (J_linear && !div_cleaning) ? mu0*kx*ky*(2._rt*(1._rt-C)-dt2*c2*knorm2)*inv_knorm4*0.5_rt : 0._rt;
                 C13 = 0._rt; // This is not redundant, do not remove this
-                if (J_linear) C13 = (div_cleaning) ? mu0*(C-1._rt)*inv_knorm2 : mu0*(2._rt*kx2*(C-1._rt)+2._rt*kz2*(C-1._rt)-dt2*c2*ky2*knorm2)*inv_knorm4*0.5_rt;
+                if (J_linear) { C13 = (div_cleaning) ? mu0*(C-1._rt)*inv_knorm2 : mu0*(2._rt*kx2*(C-1._rt)+2._rt*kz2*(C-1._rt)-dt2*c2*ky2*knorm2)*inv_knorm4*0.5_rt; }
                 C14 = (J_linear && !div_cleaning) ? mu0*ky*kz*(2._rt*(1._rt-C)-dt2*c2*knorm2)*inv_knorm4*0.5_rt : 0._rt;
                 C15 = (div_cleaning) ? I*mu0*c2*ky*(C-1._rt)*inv_knorm2 : 0._rt;
                 C16 = (div_cleaning && rho_linear) ? I*mu0*c*ky*(knorm*S-dt*c*knorm2)*inv_knorm4 : 0._rt;
@@ -238,7 +238,7 @@ PsatdAlgorithmFirstOrder::pushSpectralFields (SpectralFieldData& f) const
                 C12 = (J_linear && !div_cleaning) ? mu0*kx*kz*(2._rt*(1._rt-C)-dt2*c2*knorm2)*inv_knorm4*0.5_rt : 0._rt;
                 C13 = (J_linear && !div_cleaning) ? mu0*ky*kz*(2._rt*(1._rt-C)-dt2*c2*knorm2)*inv_knorm4*0.5_rt : 0._rt;
                 C14 = 0._rt; // This is not redundant, do not remove this
-                if (J_linear) C14 = (div_cleaning) ? mu0*(C-1._rt)*inv_knorm2 : mu0*(2._rt*kx2*(C-1._rt)+2._rt*ky2*(C-1._rt)-dt2*c2*kz2*knorm2)*inv_knorm4*0.5_rt;
+                if (J_linear) { C14 = (div_cleaning) ? mu0*(C-1._rt)*inv_knorm2 : mu0*(2._rt*kx2*(C-1._rt)+2._rt*ky2*(C-1._rt)-dt2*c2*kz2*knorm2)*inv_knorm4*0.5_rt; }
                 C15 = (div_cleaning) ? I*mu0*c2*kz*(C-1._rt)*inv_knorm2 : 0._rt;
                 C16 = (div_cleaning && rho_linear) ? I*mu0*c*kz*(knorm*S-dt*c*knorm2)*inv_knorm4 : 0._rt;
 
@@ -371,4 +371,4 @@ PsatdAlgorithmFirstOrder::VayDeposition (SpectralFieldData& field_data)
         "Vay deposition not implemented for first-order PSATD equations");
 }
 
-#endif // WARPX_USE_PSATD
+#endif // WARPX_USE_FFT

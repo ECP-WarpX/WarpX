@@ -37,6 +37,7 @@
  * @param[in] dV is the volume of the corresponding cell.
  * @param[in] engine the random number generator state & factory
  * @param[in] isSameSpecies whether this is an intra-species collision process
+ * @param[in] coll_idx is the collision index offset.
 */
 
 template <typename T_index, typename T_PR, typename T_R, typename SoaData_type>
@@ -52,10 +53,12 @@ void ElasticCollisionPerez (
     T_PR const  T1, T_PR const  T2,
     T_R const  dt, T_PR const   L, T_R const dV,
     amrex::RandomEngine const& engine,
-    bool const isSameSpecies)
+    bool const isSameSpecies, T_index coll_idx)
 {
     const T_index NI1 = I1e - I1s;
     const T_index NI2 = I2e - I2s;
+    const T_index max_N = amrex::max(NI1,NI2);
+    const T_index min_N = amrex::max(NI1,NI2);
 
     T_PR * const AMREX_RESTRICT w1 = soa_1.m_rdata[PIdx::w];
     T_PR * const AMREX_RESTRICT u1x = soa_1.m_rdata[PIdx::ux];
@@ -95,7 +98,7 @@ void ElasticCollisionPerez (
     n1 = n1 / dV; n2 = n2 / dV;
     {
       T_index i1 = I1s; T_index i2 = I2s;
-      for (T_index k = 0; k < amrex::max(NI1,NI2); ++k)
+      for (T_index k = 0; k < max_N; ++k)
       {
         n12 += amrex::min( w1[ I1[i1] ], w2[ I2[i2] ] );
         ++i1; if ( i1 == I1e ) { i1 = I1s; }
@@ -104,7 +107,7 @@ void ElasticCollisionPerez (
       n12 = n12 / dV;
     }
     // Intra-species: Apply correction in collision rate
-    if (isSameSpecies) n12 *= T_PR(2.0);
+    if (isSameSpecies) { n12 *= T_PR(2.0); }
 
     // compute Debye length lmdD
     T_PR lmdD;
@@ -126,10 +129,13 @@ void ElasticCollisionPerez (
 
     // call UpdateMomentumPerezElastic()
     {
-      T_index i1 = I1s; T_index i2 = I2s;
-      for (T_index k = 0; k < amrex::max(NI1,NI2); ++k)
-      {
+      T_index i1 = I1s + coll_idx;
+      T_index i2 = I2s + coll_idx;
 
+      // we will start from collision number = coll_idx and then add
+      // stride (smaller set size) until we do all collisions (larger set size)
+      for (T_index k = coll_idx; k < max_N; k += min_N)
+      {
 #if (defined WARPX_DIM_RZ)
           /* In RZ geometry, macroparticles can collide with other macroparticles
            * in the same *cylindrical* cell. For this reason, collisions between macroparticles
@@ -159,8 +165,12 @@ void ElasticCollisionPerez (
           u1y[I1[i1]] = u1xbuf_new*std::sin(-theta) + u1y[I1[i1]]*std::cos(-theta);
 #endif
 
-          ++i1; if ( i1 == I1e ) { i1 = I1s; }
-          ++i2; if ( i2 == I2e ) { i2 = I2s; }
+          if (max_N == NI1) {
+            i1 += min_N;
+          }
+          if (max_N == NI2) {
+            i2 += min_N;
+          }
       }
     }
 

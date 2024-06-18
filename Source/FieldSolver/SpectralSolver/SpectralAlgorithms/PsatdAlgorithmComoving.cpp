@@ -19,7 +19,7 @@
 
 #include <cmath>
 
-#if WARPX_USE_PSATD
+#if WARPX_USE_FFT
 
 using namespace amrex;
 
@@ -505,4 +505,4 @@ PsatdAlgorithmComoving::VayDeposition (SpectralFieldData& /*field_data*/)
         "Vay deposition not implemented for comoving PSATD");
 }
 
-#endif // WARPX_USE_PSATD
+#endif // WARPX_USE_FFT

@@ -5,9 +5,9 @@
 import glob
 
 import dill
-from matplotlib import colors
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib import colors
 
 plt.rcParams.update({'font.size': 20})
 

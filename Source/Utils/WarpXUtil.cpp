@@ -146,7 +146,7 @@ void ConvertLabParamsToBoost()
 
     ReadBoostedFrameParameters(gamma_boost, beta_boost, boost_direction);
 
-    if (gamma_boost <= 1.) return;
+    if (gamma_boost <= 1.) { return; }
 
     Vector<Real> prob_lo(AMREX_SPACEDIM);
     Vector<Real> prob_hi(AMREX_SPACEDIM);
@@ -232,8 +232,8 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax)
     for(amrex::MFIter mfi(mf, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi){
         const amrex::Box& bx = mfi.tilebox();
         // Get box lower and upper physical z bound, and dz
-        const amrex::Real zmin_box = WarpX::LowerCorner(bx, lev, 0._rt)[2];
-        const amrex::Real zmax_box = WarpX::UpperCorner(bx, lev, 0._rt)[2];
+        const amrex::Real zmin_box = WarpX::LowerCorner(bx, lev, 0._rt).z;
+        const amrex::Real zmax_box = WarpX::UpperCorner(bx, lev, 0._rt).z;
         const amrex::Real dz  = WarpX::CellSize(lev)[2];
         // Get box lower index in the z direction
 #if defined(WARPX_DIM_3D)
@@ -266,7 +266,7 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax)
 }
 
 namespace WarpXUtilIO{
-    bool WriteBinaryDataOnFile(std::string filename, const amrex::Vector<char>& data)
+    bool WriteBinaryDataOnFile(const std::string& filename, const amrex::Vector<char>& data)
     {
         std::ofstream of{filename, std::ios::binary};
         of.write(data.data(), data.size());
@@ -313,8 +313,9 @@ void CheckGriddingForRZSpectral ()
     const int electromagnetic_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
 
     // only check for PSATD in RZ
-    if (electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD)
+    if (electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) {
         return;
+    }
 
     int max_level;
     Vector<int> n_cell(AMREX_SPACEDIM, -1);
@@ -403,6 +404,7 @@ void ReadBCParams ()
     const ParmParse pp_warpx("warpx");
     const ParmParse pp_algo("algo");
     const int electromagnetic_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
+    const int poisson_solver_id = GetAlgorithmInteger(pp_warpx, "poisson_solver");
 
     if (pp_geometry.queryarr("is_periodic", geom_periodicity))
     {
@@ -419,10 +421,12 @@ void ReadBCParams ()
     const ParmParse pp_boundary("boundary");
     pp_boundary.queryarr("field_lo", field_BC_lo, 0, AMREX_SPACEDIM);
     pp_boundary.queryarr("field_hi", field_BC_hi, 0, AMREX_SPACEDIM);
-    if (pp_boundary.queryarr("particle_lo", particle_BC_lo, 0, AMREX_SPACEDIM))
+    if (pp_boundary.queryarr("particle_lo", particle_BC_lo, 0, AMREX_SPACEDIM)) {
         particle_boundary_specified = true;
-    if (pp_boundary.queryarr("particle_hi", particle_BC_hi, 0, AMREX_SPACEDIM))
+    }
+    if (pp_boundary.queryarr("particle_hi", particle_BC_hi, 0, AMREX_SPACEDIM)) {
         particle_boundary_specified = true;
+    }
     AMREX_ALWAYS_ASSERT(field_BC_lo.size() == AMREX_SPACEDIM);
     AMREX_ALWAYS_ASSERT(field_BC_hi.size() == AMREX_SPACEDIM);
     AMREX_ALWAYS_ASSERT(particle_BC_lo.size() == AMREX_SPACEDIM);
@@ -466,6 +470,14 @@ void ReadBCParams ()
             ),
             "PEC boundary not implemented for PSATD, yet!"
         );
+
+        if(WarpX::field_boundary_lo[idim] == FieldBoundaryType::Open &&
+           WarpX::field_boundary_hi[idim] == FieldBoundaryType::Open){
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction,
+                "Field open boundary conditions are only implemented for the FFT-based Poisson solver"
+            );
+        }
     }
 
     // Appending periodicity information to input so that it can be used by amrex
@@ -478,11 +490,11 @@ void ReadBCParams ()
 
 namespace WarpXUtilLoadBalance
 {
-    bool doCosts (const amrex::LayoutData<amrex::Real>* costs, const amrex::BoxArray ba,
+    bool doCosts (const amrex::LayoutData<amrex::Real>* cost, const amrex::BoxArray& ba,
                   const amrex::DistributionMapping& dm)
     {
-        const bool consistent = costs && (dm == costs->DistributionMap()) &&
-            (ba.CellEqual(costs->boxArray())) &&
+        const bool consistent = cost && (dm == cost->DistributionMap()) &&
+            (ba.CellEqual(cost->boxArray())) &&
             (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers);
         return consistent;
     }

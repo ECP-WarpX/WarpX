@@ -12,15 +12,17 @@
 
 #include "HybridPICModel_fwd.H"
 
+#include "Utils/WarpXAlgorithmSelection.H"
+
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#include "WarpX.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_REAL.H>
 
+#include <optional>
 
 /**
  * \brief This class contains the parameters needed to evaluate hybrid field
@@ -107,6 +109,33 @@ public:
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
         int lev, PatchType patch_type, bool include_resistivity_term);
 
+    void BfieldEvolveRK (
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
+        amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
+        amrex::Real dt, DtType a_dt_type,
+        amrex::IntVect ng, std::optional<bool> nodal_sync);
+
+    void BfieldEvolveRK (
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
+        amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
+        amrex::Real dt, int lev, DtType dt_type,
+        amrex::IntVect ng, std::optional<bool> nodal_sync);
+
+    void FieldPush (
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
+        amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
+        amrex::Real dt, DtType dt_type,
+        amrex::IntVect ng, std::optional<bool> nodal_sync);
+
     /**
      * \brief
      * Function to calculate the electron pressure at a given timestep type
@@ -121,16 +150,16 @@ public:
      * charge density (and assumption of quasi-neutrality) using the user
      * specified electron equation of state.
      *
-     * \param[out] Pe   scalar electron pressure MultiFab at a given level
-     * \param[in] rhofield scalar ion charge density Multifab at a given level
+     * \param[out] Pe_filed scalar electron pressure MultiFab at a given level
+     * \param[in] rho_field scalar ion charge density Multifab at a given level
      */
     void FillElectronPressureMF (
-        std::unique_ptr<amrex::MultiFab> const& Pe,
-        amrex::MultiFab* const& rhofield );
+        std::unique_ptr<amrex::MultiFab> const& Pe_field,
+        amrex::MultiFab* const& rho_field ) const;
 
     // Declare variables to hold hybrid-PIC model parameters
     /** Number of substeps to take when evolving B */
-    int m_substeps = 100;
+    int m_substeps = 10;
 
     /** Electron temperature in eV */
     amrex::Real m_elec_temp;
@@ -145,7 +174,11 @@ public:
     /** Plasma resistivity */
     std::string m_eta_expression = "0.0";
     std::unique_ptr<amrex::Parser> m_resistivity_parser;
-    amrex::ParserExecutor<1> m_eta;
+    amrex::ParserExecutor<2> m_eta;
+    bool m_resistivity_has_J_dependence = false;
+
+    /** Plasma hyper-resisitivity */
+    amrex::Real m_eta_h = 0.0;
 
     /** External current */
     std::string m_Jx_ext_grid_function = "0.0";
@@ -167,6 +200,12 @@ public:
     get_pointer_current_fp_ampere  (int lev, int direction) const
     {
         return current_fp_ampere[lev][direction].get();
+    }
+
+    [[nodiscard]] amrex::MultiFab*
+    get_pointer_current_fp_external (int lev, int direction) const
+    {
+        return current_fp_external[lev][direction].get();
     }
 
     [[nodiscard]] amrex::MultiFab*

@@ -33,7 +33,7 @@ using namespace amrex;
 void
 guardCellManager::Init (
     const amrex::Real dt,
-    const amrex::RealVect dx,
+    const amrex::Real *dx,
     const bool do_subcycling,
     const bool do_fdtd_nci_corr,
     const short grid_type,
@@ -44,8 +44,8 @@ guardCellManager::Init (
     const int nci_corr_stencil,
     const int electromagnetic_solver_id,
     const int max_level,
-    const amrex::Vector<amrex::Real> v_galilean,
-    const amrex::Vector<amrex::Real> v_comoving,
+    const amrex::Vector<amrex::Real>& v_galilean,
+    const amrex::Vector<amrex::Real>& v_comoving,
     const bool safe_guard_cells,
     const int do_multi_J,
     const bool fft_do_time_averaging,
@@ -120,9 +120,11 @@ guardCellManager::Init (
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     ng_alloc_EB = IntVect(ngx,ngz);
     ng_alloc_J = IntVect(ngJx,ngJz);
+    amrex::ignore_unused(ngy, ngJy);
 #elif defined(WARPX_DIM_1D_Z)
     ng_alloc_EB = IntVect(ngz);
     ng_alloc_J = IntVect(ngJz);
+    amrex::ignore_unused(ngx, ngJx, ngy, ngJy);
 #endif
 
     // TODO Adding one cell for rho should not be necessary, given that the number of guard cells
@@ -172,7 +174,7 @@ guardCellManager::Init (
     // After pushing particle
     int ng_alloc_F_int = (do_moving_window) ? 2 : 0;
     // CKC solver requires one additional guard cell
-    if (electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC) ng_alloc_F_int = std::max( ng_alloc_F_int, 1 );
+    if (electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC) { ng_alloc_F_int = std::max( ng_alloc_F_int, 1 ); }
     ng_alloc_F = IntVect(AMREX_D_DECL(ng_alloc_F_int, ng_alloc_F_int, ng_alloc_F_int));
 
     // Used if warpx.do_divb_cleaning = 1
@@ -314,8 +316,9 @@ guardCellManager::Init (
 
         // If NCI filter, add guard cells in the z direction
         IntVect ng_NCIFilter = IntVect::TheZeroVector();
-        if (do_fdtd_nci_corr)
+        if (do_fdtd_nci_corr) {
             ng_NCIFilter[WARPX_ZINDEX] = NCIGodfreyFilter::m_stencil_width;
+        }
 
         // Note: communications of guard cells for bilinear filter are handled
         // separately.
