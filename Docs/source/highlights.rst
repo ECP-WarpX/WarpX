@@ -19,6 +19,11 @@ Scientific works in laser-plasma and beam-plasma acceleration.
    Phys. Rev. Research **6**, L022001, 2024
    `DOI:10.1103/PhysRevResearch.6.L022001 <https://doi.org/10.1103/PhysRevResearch.6.L022001>`__
 
+#. Sandberg R T, Lehe R, Mitchell C E, Garten M, Myers A, Qiang J, Vay J-L and Huebl A.
+   **Synthesizing Particle-in-Cell Simulations Through Learning and GPU Computing for Hybrid Particle Accelerator Beamlines**.
+   Proc. of Platform for Advanced Scientific Computing (PASC'24), *PASC24 Best Paper Award*, 2024.
+   `DOI:10.1145/3659914.3659937 <https://doi.org/10.1145/3659914.3659937>`__
+
 #. Peng H, Huang TW, Jiang K, Li R, Wu CN, Yu MY, Riconda C, Weber S, Zhou CT, Ruan SC.
    **Coherent Subcycle Optical Shock from a Superluminal Plasma Wake**.
    Phys. Rev. Lett. **131**, 145003, 2023
@@ -28,11 +33,6 @@ Scientific works in laser-plasma and beam-plasma acceleration.
    **Demonstration of tunability of HOFI waveguides via start-to-end simulations**.
    Phys. Rev. Research **5**, 033112, 2023
    `DOI:10.1103/PhysRevResearch.5.033112 <https://doi.org/10.1103/PhysRevResearch.5.033112>`__
-
-#. Sandberg R T, Lehe R, Mitchell C E, Garten M, Myers A, Qiang J, Vay J-L and Huebl A.
-   **Synthesizing Particle-in-Cell Simulations Through Learning and GPU Computing for Hybrid Particle Accelerator Beamlines**.
-   Proc. of Platform for Advanced Scientific Computing (PASC'24), *PASC24 Best Paper Award*, 2024.
-   `DOI:10.1145/3659914.3659937 <https://doi.org/10.1145/3659914.3659937>`__
 
 #. Sandberg R T, Lehe R, Mitchell C E, Garten M, Qiang J, Vay J-L and Huebl A.
    **Hybrid Beamline Element ML-Training for Surrogates in the ImpactX Beam-Dynamics Code**.
