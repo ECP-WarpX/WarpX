@@ -14,6 +14,11 @@ Plasma-Based Acceleration
 
 Scientific works in laser-plasma and beam-plasma acceleration.
 
+#. Ross, A. J. adnd Chappell, J. and van de Wetering, J. J. and Cowley, J. and Archer, E. and Bourgeois, N. and Corner, L. and Emerson, D. R. and Feder, L. and Gu, X. J. and Jakobsson, O. and Jones, H. and Picksley, A. and Reid, L. and Wang, W. and Walczak, R. and Hooker, S. M.
+   **Resonant excitation of plasma waves in a plasma channel**.
+   Phys. Rev. Research **6**, L022001, 2024
+   `DOI:10.1103/PhysRevResearch.6.L022001 <https://doi.org/10.1103/PhysRevResearch.6.L022001>`__
+
 #. Peng, H. and Huang, T. W. and Jiang, K. and Li, R. and Wu, C. N. and Yu, M. Y. and Riconda, C. and Weber, S. and Zhou, C. T. and Ruan, S. C.
    **Coherent Subcycle Optical Shock from a Superluminal Plasma Wake**.
    Phys. Rev. Lett. **131**, 145003, 2023
@@ -26,8 +31,8 @@ Scientific works in laser-plasma and beam-plasma acceleration.
 
 #. Sandberg R T, Lehe R, Mitchell C E, Garten M, Myers A, Qiang J, Vay J-L and Huebl A.
    **Synthesizing Particle-in-Cell Simulations Through Learning and GPU Computing for Hybrid Particle Accelerator Beamlines**.
-   Proc. of Platform for Advanced Scientific Computing (PASC'24), *submitted*, 2024.
-   `preprint <http://arxiv.org/abs/2402.17248>`__
+   Proc. of Platform for Advanced Scientific Computing (PASC'24), *PASC24 Best Paper Award*, 2024.
+   `DOI:10.1145/3659914.3659937 <https://doi.org/10.1145/3659914.3659937>`__
 
 #. Sandberg R T, Lehe R, Mitchell C E, Garten M, Qiang J, Vay J-L and Huebl A.
    **Hybrid Beamline Element ML-Training for Surrogates in the ImpactX Beam-Dynamics Code**.
@@ -103,14 +108,14 @@ Scientific works in particle and beam modeling.
 
 #. Sandberg R T, Lehe R, Mitchell C E, Garten M, Myers A, Qiang J, Vay J-L and Huebl A.
    **Synthesizing Particle-in-Cell Simulations Through Learning and GPU Computing for Hybrid Particle Accelerator Beamlines**.
-   Proc. of Platform for Advanced Scientific Computing (PASC'24), *submitted*, 2024.
-   `preprint <http://arxiv.org/abs/2402.17248>`__
+   Proc. of Platform for Advanced Scientific Computing (PASC'24), *PASC24 Best Paper Award*, 2024.
+   `DOI:10.1145/3659914.3659937 <https://doi.org/10.1145/3659914.3659937>`__
 
 #. Sandberg R T, Lehe R, Mitchell C E, Garten M, Qiang J, Vay J-L, Huebl A.
    **Hybrid Beamline Element ML-Training for Surrogates in the ImpactX Beam-Dynamics Code**.
-   14th International Particle Accelerator Conference (IPAC'23), WEPA101, *in print*, 2023.
+   14th International Particle Accelerator Conference (IPAC'23), WEPA101, 2023.
    `preprint <https://www.ipac23.org/preproc/pdf/WEPA101.pdf>`__,
-   `DOI:10.18429/JACoW-IPAC-23-WEPA101 <https://doi.org/10.18429/JACoW-IPAC-23-WEPA101>`__
+   `DOI:10.18429/JACoW-IPAC2023-WEPA101 <https://doi.org/10.18429/JACoW-IPAC2023-WEPA101>`__
 
 #. Tan W H, Piot P, Myers A, Zhang W, Rheaume T, Jambunathan R, Huebl A, Lehe R, Vay J-L.
    **Simulation studies of drive-beam instability in a dielectric wakefield accelerator**.
