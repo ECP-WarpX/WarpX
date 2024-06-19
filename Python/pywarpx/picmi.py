@@ -81,6 +81,10 @@ class Species(picmistandard.PICMI_Species):
     warpx_do_not_gather: bool, default=False
         Whether or not to gather the fields from grids for this species
 
+    warpx_radially_weighted: bool, default=True
+        When true, particle weights are proportional to their initial radii.
+        When false, the particles are uniformly weighted.
+
     warpx_random_theta: bool, default=True
         Whether or not to add random angle to the particles in theta
         when in RZ mode.

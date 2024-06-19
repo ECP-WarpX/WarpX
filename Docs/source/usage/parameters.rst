@@ -1049,8 +1049,9 @@ Particle initialization
     Maximum plasma density. The density at each point is the minimum between the value given in the profile, and `density_max`.
 
 * ``<species_name>.radially_weighted`` (`bool`) optional (default `true`)
-    Whether particle's weight is varied with their radius. This only applies to cylindrical geometry.
-    The only valid value is true.
+    Whether particle weights are proportional to their initial radius.
+    When `false`, the particles will be uniformly weighted.
+    This only applies to cylindrical geometry.
 
 * ``<species_name>.momentum_distribution_type`` (`string`)
     Distribution of the normalized momentum (`u=p/mc`) for this species. The options are:
