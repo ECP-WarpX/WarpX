@@ -115,7 +115,6 @@ then
   cd $HOME/src/heffte
   git fetch --prune
   git checkout v2.4.0
-  git pull
   cd -
 else
   git clone -b v2.4.0 https://github.com/icl-utk-edu/heffte.git ${HOME}/src/heffte
