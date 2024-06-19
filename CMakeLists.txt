@@ -612,6 +612,8 @@ set_cxx_warnings()
 
 # Generate Configuration and .pc Files ########################################
 #
+# these files are used if WarpX is installed and picked up by a downstream
+# project
 get_source_version(WarpX_${WarpX_DIMS_LAST} ${WarpX_SOURCE_DIR})
 set(WarpX_GIT_VERSION ${WarpX_${WarpX_DIMS_LAST}_GIT_VERSION})
 configure_file(
@@ -620,14 +622,19 @@ configure_file(
     @ONLY
 )
 
-# these files are used if WarpX is installed and picked up by a downstream
-# project (not needed yet)
-
-#include(CMakePackageConfigHelpers)
-#write_basic_package_version_file("WarpXConfigVersion.cmake"
-#    VERSION ${WarpX_VERSION}
-#    COMPATIBILITY SameMajorVersion
-#)
+include(CMakePackageConfigHelpers)
+configure_package_config_file(
+    ${WarpX_SOURCE_DIR}/WarpXConfig.cmake.in
+    ${WarpX_BINARY_DIR}/WarpXConfig.cmake
+    INSTALL_DESTINATION ${WarpX_INSTALL_CMAKEDIR}
+    #PATH_VARS MODULE_PATH
+    # We have our own check_required_components
+    NO_CHECK_REQUIRED_COMPONENTS_MACRO
+)
+write_basic_package_version_file("WarpXConfigVersion.cmake"
+    VERSION ${pyAMReX_VERSION}
+    COMPATIBILITY SameMinorVersion
+)
 
 
 # Installs ####################################################################
@@ -647,50 +654,61 @@ foreach(D IN LISTS WarpX_DIMS)
         list(APPEND WarpX_INSTALL_TARGET_NAMES pyWarpX_${SD})
     endif()
 
-    install(TARGETS ${WarpX_INSTALL_TARGET_NAMES}
-        EXPORT WarpXTargets
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    )
-
-    # simplified library alias
-    # this is currently expected by Python bindings
-    if(WarpX_LIB)
-        if(IS_ABSOLUTE ${CMAKE_INSTALL_LIBDIR})
-            set(ABS_INSTALL_LIB_DIR "${CMAKE_INSTALL_LIBDIR}")
-        else()
-            set(ABS_INSTALL_LIB_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
-        endif()
-        # escape spaces for generated cmake_install.cmake file
-        file(TO_CMAKE_PATH "${ABS_INSTALL_LIB_DIR}" ABS_INSTALL_LIB_DIR)
-
-        install(CODE "file(CREATE_LINK
-            $<TARGET_FILE_NAME:lib_${SD}>
-            \"${ABS_INSTALL_LIB_DIR}/libwarpx.${SD}$<TARGET_FILE_SUFFIX:lib_${SD}>\"
-            COPY_ON_ERROR SYMBOLIC)")
+    if(TARGET buildInfoapp_${SD})
+        list(APPEND WarpX_INSTALL_TARGET_NAMES buildInfoapp_${SD})
     endif()
-
-    # WarpX
-    # Utils/WarpXVersion.H
-
-    # ABLASTR
-    # export.H
-
-    # CMake package file for find_package(WarpX::WarpX) in depending projects
-    #install(EXPORT WarpXTargets
-    #    FILE WarpXTargets.cmake
-    #    NAMESPACE WarpX::
-    #    DESTINATION ${WarpX_INSTALL_CMAKEDIR}
-    #)
-    #install(
-    #    FILES
-    #        ${WarpX_BINARY_DIR}/WarpXConfig.cmake
-    #        ${WarpX_BINARY_DIR}/WarpXConfigVersion.cmake
-    #    DESTINATION ${WarpX_INSTALL_CMAKEDIR}
-    #)
+    if(TARGET buildInfolib_${SD})
+        list(APPEND WarpX_INSTALL_TARGET_NAMES buildInfolib_${SD})
+    endif()
+    if(TARGET buildInfopyWarpX_${SD})
+        list(APPEND WarpX_INSTALL_TARGET_NAMES buildInfopyWarpX_${SD})
+    endif()
 endforeach()
+
+# if(WarpX_APP OR WarpX_LIB OR WarpX_PYTHON)
+install(TARGETS ${WarpX_INSTALL_TARGET_NAMES}
+    EXPORT WarpXTargets
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+# simplified library alias
+# this is currently expected by Python bindings
+if(WarpX_LIB)
+    if(IS_ABSOLUTE ${CMAKE_INSTALL_LIBDIR})
+        set(ABS_INSTALL_LIB_DIR "${CMAKE_INSTALL_LIBDIR}")
+    else()
+        set(ABS_INSTALL_LIB_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+    endif()
+    # escape spaces for generated cmake_install.cmake file
+    file(TO_CMAKE_PATH "${ABS_INSTALL_LIB_DIR}" ABS_INSTALL_LIB_DIR)
+
+    install(CODE "file(CREATE_LINK
+        $<TARGET_FILE_NAME:lib_${SD}>
+        \"${ABS_INSTALL_LIB_DIR}/libwarpx.${SD}$<TARGET_FILE_SUFFIX:lib_${SD}>\"
+        COPY_ON_ERROR SYMBOLIC)")
+endif()
+
+# WarpX
+# Utils/WarpXVersion.H
+
+# ABLASTR
+# export.H
+
+# CMake package file for find_package(WarpX::WarpX) in depending projects
+install(EXPORT WarpXTargets
+    FILE WarpXTargets.cmake
+    NAMESPACE WarpX::
+    DESTINATION ${WarpX_INSTALL_CMAKEDIR}
+)
+install(
+    FILES
+        ${WarpX_BINARY_DIR}/WarpXConfig.cmake
+        ${WarpX_BINARY_DIR}/WarpXConfigVersion.cmake
+    DESTINATION ${WarpX_INSTALL_CMAKEDIR}
+)
 
 
 # pip helpers for the pywarpx package #########################################
