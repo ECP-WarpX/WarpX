@@ -23,14 +23,14 @@ Please add the following sentence to your publications, it helps contributors ke
 
 **Plain text:**
 
-  This research used the open-source particle-in-cell code WarpX https://github.com/ECP-WarpX/WarpX, primarily funded by the US DOE Exascale Computing Project. Primary WarpX contributors are with LBNL, LLNL, CEA-LIDYL, SLAC, DESY, CERN, and TAE Technologies. We acknowledge all WarpX contributors.
+  This research used the open-source particle-in-cell code WarpX https://github.com/ECP-WarpX/WarpX. Primary WarpX contributors are with LBNL, LLNL, CEA-LIDYL, SLAC, DESY, CERN, and TAE Technologies. We acknowledge all WarpX contributors.
 
 **LaTeX:**
 
 .. code-block:: latex
 
   \usepackage{hyperref}
-  This research used the open-source particle-in-cell code WarpX \url{https://github.com/ECP-WarpX/WarpX}, primarily funded by the US DOE Exascale Computing Project.
+  This research used the open-source particle-in-cell code WarpX \url{https://github.com/ECP-WarpX/WarpX}.
   Primary WarpX contributors are with LBNL, LLNL, CEA-LIDYL, SLAC, DESY, CERN, and TAE Technologies.
   We acknowledge all WarpX contributors.
 
