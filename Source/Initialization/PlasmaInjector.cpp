@@ -61,7 +61,9 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name,
 
     const amrex::ParmParse pp_species(species_name);
 
-    utils::parser::queryWithParser(pp_species, source_name, "radially_weighted", radially_weighted);
+    utils::parser::queryWithParser(pp_species, source_name, "radial_weight_power", radial_weight_power);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(radial_weight_power < 2.,
+        "The radial_weight_power must be less than 2.");
 
     // Unlimited boundaries
     xmin = std::numeric_limits<amrex::Real>::lowest();

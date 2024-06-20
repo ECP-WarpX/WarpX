@@ -1001,9 +1001,8 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
 
 #ifdef WARPX_DIM_RZ
     const int nmodes = WarpX::n_rz_azimuthal_modes;
-    const bool radially_weighted = plasma_injector.radially_weighted;
+    const amrex::Real radial_weight_power = plasma_injector.radial_weight_power;
 #endif
-
 
     // User-defined integer and real attributes: prepare parsers
     const auto n_user_int_attribs = static_cast<int>(m_user_int_attribs.size());
@@ -1323,14 +1322,12 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                 Real yb = pos.y;
 
 #ifdef WARPX_DIM_RZ
-                if (!radially_weighted) {
-                    // With uniformly weighted particles, the sqrt stretches
-                    // the positions to produce a uniform density.
-                    // Note that the tile_realbox.contains check above ensures
-                    // that the "logical" space is uniformly filled. The sqrt
-                    // converts to physical space.
-                    xb = std::sqrt(xb/rmax)*rmax;
-                }
+                // Adjust the particle positions to produce the correct distribution.
+                // Note that this may shift particles outside of the current tile,
+                // but this is Ok since particles will be redistributed afterwards.
+                // The tile_realbox.contains check above ensures
+                // that the "logical" space is uniformly filled.
+                xb = std::pow(xb/rmax, 1./(2. - radial_weight_power))*rmax;
 
                 // Replace the x and y, setting an angle theta.
                 // These x and y are used to get the momentum and density
@@ -1451,11 +1448,10 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                 weight *= scale_fac;
 
 #ifdef WARPX_DIM_RZ
-                if (radially_weighted) {
-                    weight *= 2._rt*MathConst::pi*xb;
-                } else {
-                    weight *= MathConst::pi*rmax;
-                }
+                // Update the weight based on the specified power.
+                // The coefficient ensures that the correct density distribution is obtained.
+                const amrex::Real coeff = (2./(2. - radial_weight_power))*MathConst::pi;
+                weight *= coeff*std::pow(xb/rmax, radial_weight_power)*rmax;
 #endif
                 pa[PIdx::w ][ip] = weight;
                 pa[PIdx::ux][ip] = u.x;
@@ -1564,7 +1560,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 #ifdef WARPX_DIM_RZ
     const int nmodes = WarpX::n_rz_azimuthal_modes;
     const bool rz_random_theta = m_rz_random_theta;
-    const bool radially_weighted = plasma_injector.radially_weighted;
+    const amrex::Real radial_weight_power = plasma_injector.radial_weight_power;
 #endif
 
     MFItInfo info;
@@ -1871,15 +1867,12 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 }
 
 #ifdef WARPX_DIM_RZ
-                amrex::Real radial_position = ppos.x;
-                if (!radially_weighted) {
-                    // With uniformly weighted particles, the sqrt stretches
-                    // the positions to produce a uniform density.
-                    // Note that the containsInclusive check above ensures
-                    // that the "logical" space is uniformly filled. The sqrt
-                    // converts to physical space.
-                    radial_position = std::sqrt(radial_position/rmax)*rmax;
-                }
+                // Adjust the particle positions to produce the correct distribution.
+                // Note that this may shift particles outside of the current tile,
+                // but this is Ok since particles will be redistributed afterwards.
+                // The containsInclusive check above ensures
+                // that the "logical" space is uniformly filled.
+                amrex::Real const radial_position = std::pow(ppos.x/rmax, 1./(2. - radial_weight_power))*rmax;
 
                 // Conversion from cylindrical to Cartesian coordinates
                 // Replace the x and y, setting an angle theta.
@@ -1944,12 +1937,12 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 // the radius ; thus, the calculation is finalized here
                 Real t_weight = flux * scale_fac * dt;
                 if (loc_flux_normal_axis != 1) {
-                    if (radially_weighted) {
-                         t_weight *= 2._rt*MathConst::pi*radial_position;
-                    } else {
-                         t_weight *= MathConst::pi*rmax;
-                    }
+                    // Update the weight based on the specified power.
+                    // The coefficient ensures that the correct density distribution is obtained.
+                    const amrex::Real coeff = (2./(2. - radial_weight_power))*MathConst::pi;
+                    t_weight *= coeff*std::pow(radial_position/rmax, radial_weight_power)*rmax;
                 }
+
                 const Real weight = t_weight;
 #else
                 const Real weight = flux * scale_fac * dt;
