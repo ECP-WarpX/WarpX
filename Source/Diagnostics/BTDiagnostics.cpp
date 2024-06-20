@@ -221,7 +221,7 @@ BTDiagnostics::ReadParameters ()
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( WarpX::moving_window_dir == WARPX_ZINDEX,
            "The boosted frame diagnostic currently only works if the moving window is in the z direction.");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        m_format == "plotfile" || m_format == "openpmd",
+        m_format == "plotfile" || m_format == "openpmd" || m_format == "plotplus",
         "<diag>.format must be plotfile or openpmd for back transformed diagnostics");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_crse_ratio == amrex::IntVect(1),
@@ -1074,7 +1074,7 @@ BTDiagnostics::Flush (int i_buffer, bool force_flush)
         m_max_buffer_multifabs.at(i_buffer), m_geom_snapshot.at(i_buffer).at(0), isLastBTDFlush);
 
     // Rescaling the box for plotfile after WriteToFile. This is because, for plotfiles, when writing particles, amrex checks if the particles are within the bounds defined by the box. However, in BTD, particles can be (at max) 1 cell outside the bounds of the geometry. So we keep a one-cell bigger box for plotfile when writing out the particle data and rescale after.
-    if (m_format == "plotfile") {
+    if (m_format == "plotfile" || m_format == "plotplus") {
         if (!m_particles_buffer.at(i_buffer).empty()) {
             m_buffer_box[i_buffer].setSmall(m_moving_window_dir, (m_buffer_box[i_buffer].smallEnd(m_moving_window_dir) + 1) );
             m_buffer_box[i_buffer].setBig(m_moving_window_dir, (m_buffer_box[i_buffer].bigEnd(m_moving_window_dir) - 1) );
