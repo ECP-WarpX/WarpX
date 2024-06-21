@@ -2,6 +2,7 @@
 
 #include <AMReX_MLPoisson.H>
 #include <AMReX_MultiFabUtil.H>
+#include <AMReX_LO_BCTYPES.H>
 
 #include <WarpX.H>
 #include <FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H>
@@ -17,7 +18,7 @@ ProjectionDivCleaner::ProjectionDivCleaner()
         // Error out of divergence cleaner
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
             "Single Precision Divergence Cleaner has convergence problems. "
-            "Please compile with WarpX_PRECISION=DOUBLE"
+            "Please compile with WarpX_PRECISION=DOUBLE."
         );
         
         m_rtol = 1e-6;
@@ -94,6 +95,82 @@ ProjectionDivCleaner::solve ()
     const auto& dmap = warpx.DistributionMap();
     const auto& geom = warpx.Geom();
 
+    // Pull boundary conditions from 
+    amrex::Array<LinOpBCType,AMREX_SPACEDIM> lobc({AMREX_D_DECL(LinOpBCType::bogus,
+                                                                LinOpBCType::bogus,
+                                                                LinOpBCType::bogus)});
+    amrex::Array<LinOpBCType,AMREX_SPACEDIM> hibc({AMREX_D_DECL(LinOpBCType::bogus,
+                                                                LinOpBCType::bogus,
+                                                                LinOpBCType::bogus)});
+
+#ifdef WARPX_DIM_RZ
+    if (geom.ProbLo(0) == 0){
+        lobc[0] = LinOpBCType::Neumann;
+
+        // handle the r_max boundary explicitly
+        if (WarpX::field_boundary_hi[0] == FieldBoundaryType::PEC) {
+            hibc[0] = LinOpBCType::Dirichlet;
+            dirichlet_flag[1] = true;
+        }
+        else if (WarpX::field_boundary_hi[0] == FieldBoundaryType::Neumann) {
+            hibc[0] = LinOpBCType::Neumann;
+            dirichlet_flag[1] = false;
+        }
+        else {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+                "Field boundary condition at the outer radius must be either PEC or neumann "
+                "when using the Projection Divergence Cleaner"
+            );
+        }
+    }
+    const int dim_start = 1;
+#else
+    const int dim_start = 0;
+#endif
+    for (int idim=dim_start; idim<AMREX_SPACEDIM; idim++){
+        if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Periodic
+             && WarpX::field_boundary_hi[idim] == FieldBoundaryType::Periodic ) {
+            lobc[idim] = LinOpBCType::Periodic;
+            hibc[idim] = LinOpBCType::Periodic;
+        }
+        else {
+            if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC ) {
+                lobc[idim] = LinOpBCType::Dirichlet;
+            }
+            else if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Neumann ) {
+                lobc[idim] = LinOpBCType::Neumann;
+            }
+            else {
+                WARPX_ABORT_WITH_MESSAGE(
+                    "Field boundary conditions have to be either periodic, PEC or neumann "
+                    "when using the Projection based Divergence Cleaner,  but they are " + GetFieldBCTypeString(WarpX::field_boundary_lo[idim])
+                );
+            }
+
+            if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC ) {
+                hibc[idim] = LinOpBCType::Dirichlet;
+            }
+            else if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::Neumann ) {
+                hibc[idim] = LinOpBCType::Neumann;
+            }
+            else {
+                WARPX_ABORT_WITH_MESSAGE(
+                    "Field boundary conditions have to be either periodic, PEC or neumann "
+                    "when using the electrostatic Multigrid solver,  but they are " + GetFieldBCTypeString(WarpX::field_boundary_hi[idim])
+                );
+            }
+        }
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            (WarpX::field_boundary_lo[idim] != FieldBoundaryType::Open &&
+            WarpX::field_boundary_hi[idim] != FieldBoundaryType::Open &&
+            WarpX::field_boundary_lo[idim] != FieldBoundaryType::PML &&
+            WarpX::field_boundary_hi[idim] != FieldBoundaryType::PML) ,
+            "Open and PML field boundary conditions only work with "
+            "warpx.poisson_solver = fft."
+        );
+    }
+
     LPInfo info;
     info.setAgglomeration(m_agglomeration);
     info.setConsolidation(m_consolidation);
@@ -106,12 +183,7 @@ ProjectionDivCleaner::solve ()
         mlpoisson.setMaxOrder(m_linop_maxorder);
 
         // This is a 3d problem with Dirichlet BC
-        mlpoisson.setDomainBC({AMREX_D_DECL(LinOpBCType::Periodic,
-                                            LinOpBCType::Periodic,
-                                            LinOpBCType::Neumann)},
-                              {AMREX_D_DECL(LinOpBCType::Periodic,
-                                            LinOpBCType::Periodic,
-                                            LinOpBCType::Neumann)});
+        mlpoisson.setDomainBC(lobc, hibc);
 
         if (ilev > 0) {
             mlpoisson.setCoarseFineBC(m_solution[ilev-1].get(), m_ref_ratio);
@@ -149,38 +221,14 @@ ProjectionDivCleaner::setSourceFromBfield ()
         // Zero out source multifab
         m_source[ilev]->setVal(0.0);
 
-        // Grab B-field multifabs at this level
-        std::array<const amrex::MultiFab* const, 3> Bfield =
-            warpx.getFieldPointerArray(warpx::fields::FieldType::Bfield_aux, ilev);
+        WarpX::ComputeDivB(
+            *(m_source[ilev].get()),
+            0,
+            warpx.getFieldPointerArray(warpx::fields::FieldType::Bfield_aux, ilev),
+            warpx.CellSize(0)
+            );
 
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-        for (MFIter mfi(*(m_source[ilev].get()), TilingIfNotGPU()); mfi.isValid(); ++mfi)
-        {
-            // Grab references to B field arrays for this grid/tile
-            amrex::Array4<Real const> const& Bx_arr = Bfield[0]->const_array(mfi);
-            amrex::Array4<Real const> const& By_arr = Bfield[1]->const_array(mfi);
-            amrex::Array4<Real const> const& Bz_arr = Bfield[2]->const_array(mfi);
-
-            // Extract stencil coefficients
-            Real const * const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
-            auto const n_coefs_x = static_cast<int>(m_stencil_coefs_x.size());
-            Real const * const AMREX_RESTRICT coefs_y = m_stencil_coefs_y.dataPtr();
-            auto const n_coefs_y = static_cast<int>(m_stencil_coefs_y.size());
-            Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
-            auto const n_coefs_z = static_cast<int>(m_stencil_coefs_z.size());
-
-            amrex::Array4<Real> const& src_arr = m_source[ilev].get()->array(mfi);
-
-            amrex::ParallelFor(mfi.tilebox(),
-            [=] AMREX_GPU_DEVICE (int i, int j, int k)
-            {
-                src_arr(i,j,k) -= CartesianYeeAlgorithm::DownwardDx(Bx_arr, coefs_x, n_coefs_x, i+1, j, k);
-                src_arr(i,j,k) -= CartesianYeeAlgorithm::DownwardDy(By_arr, coefs_y, n_coefs_y, i, j+1, k);
-                src_arr(i,j,k) -= CartesianYeeAlgorithm::DownwardDz(Bz_arr, coefs_z, n_coefs_z, i, j, k+1);
-            });
-        }
+        m_source[ilev]->mult(-1._rt);
 
         // Synchronize the ghost cells, do halo exchange
         ablastr::utils::communication::FillBoundary(*(m_source[ilev].get()),
