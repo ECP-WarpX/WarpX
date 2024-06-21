@@ -20,7 +20,7 @@ ProjectionDivCleaner::ProjectionDivCleaner()
             "Single Precision Divergence Cleaner has convergence problems. "
             "Please compile with WarpX_PRECISION=DOUBLE."
         );
-        
+
         m_rtol = 1e-6;
         m_atol = 0.0;
     }
