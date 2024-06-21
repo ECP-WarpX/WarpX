@@ -1316,19 +1316,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                 }
 #endif
 
-                // Save the x and y values to use in the insideBounds checks.
-                // This is needed with WARPX_DIM_RZ since x and y are modified.
-                Real xb = pos.x;
-                Real yb = pos.y;
-
 #ifdef WARPX_DIM_RZ
-                // Adjust the particle positions to produce the correct distribution.
-                // Note that this may shift particles outside of the current tile,
-                // but this is Ok since particles will be redistributed afterwards.
-                // The tile_realbox.contains check above ensures
-                // that the "logical" space is uniformly filled.
-                xb = std::pow(xb/rmax, 1./(2. - radial_weight_power))*rmax;
-
                 // Replace the x and y, setting an angle theta.
                 // These x and y are used to get the momentum and density
                 // With only 1 mode, the angle doesn't matter so
@@ -1336,8 +1324,21 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                 const Real theta = (nmodes == 1 && rz_random_theta)?
                     (2._rt*MathConst::pi*amrex::Random(engine)):
                     (2._rt*MathConst::pi*r.y + theta_offset);
+
+                // Adjust the particle radius to produce the correct distribution.
+                // Note that this may shift particles outside of the current tile,
+                // but this is Ok since particles will be redistributed afterwards.
+                // The tile_realbox.contains check above ensures
+                // that the "logical" space is uniformly filled.
+                amrex::Real const xb = std::pow(pos.x/rmax, 1./(2. - radial_weight_power))*rmax;
+                amrex::Real const yb = theta;
+
                 pos.x = xb*std::cos(theta);
                 pos.y = xb*std::sin(theta);
+#else
+                // Save the x and y values to use in the insideBounds checks.
+                amrex::Real const xb = pos.x;
+                amrex::Real const yb = pos.y;
 #endif
 
                 Real dens;
@@ -1867,7 +1868,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 }
 
 #ifdef WARPX_DIM_RZ
-                // Adjust the particle positions to produce the correct distribution.
+                // Adjust the particle radius to produce the correct distribution.
                 // Note that this may shift particles outside of the current tile,
                 // but this is Ok since particles will be redistributed afterwards.
                 // The containsInclusive check above ensures
