@@ -95,7 +95,7 @@ ProjectionDivCleaner::solve ()
     const auto& dmap = warpx.DistributionMap();
     const auto& geom = warpx.Geom();
 
-    // Pull boundary conditions from 
+    // Pull boundary conditions from
     amrex::Array<LinOpBCType,AMREX_SPACEDIM> lobc({AMREX_D_DECL(LinOpBCType::bogus,
                                                                 LinOpBCType::bogus,
                                                                 LinOpBCType::bogus)});
