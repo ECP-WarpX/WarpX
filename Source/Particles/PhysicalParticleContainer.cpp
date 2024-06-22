@@ -1330,7 +1330,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                 // but this is Ok since particles will be redistributed afterwards.
                 // The tile_realbox.contains check above ensures
                 // that the "logical" space is uniformly filled.
-                amrex::Real const xb = std::pow(pos.x/rmax, 1./(2. - radial_weight_power))*rmax;
+                amrex::Real const xb = std::pow(pos.x/rmax, 1._rt/(2._rt - radial_weight_power))*rmax;
                 amrex::Real const yb = theta;
 
                 pos.x = xb*std::cos(theta);
@@ -1451,7 +1451,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
 #ifdef WARPX_DIM_RZ
                 // Update the weight based on the specified power.
                 // The coefficient ensures that the correct density distribution is obtained.
-                const amrex::Real coeff = (2./(2. - radial_weight_power))*MathConst::pi;
+                const amrex::Real coeff = (2._rt/(2._rt - radial_weight_power))*MathConst::pi;
                 weight *= coeff*std::pow(xb/rmax, radial_weight_power)*rmax;
 #endif
                 pa[PIdx::w ][ip] = weight;
@@ -1873,7 +1873,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 // but this is Ok since particles will be redistributed afterwards.
                 // The containsInclusive check above ensures
                 // that the "logical" space is uniformly filled.
-                amrex::Real const radial_position = std::pow(ppos.x/rmax, 1./(2. - radial_weight_power))*rmax;
+                amrex::Real const radial_position = std::pow(ppos.x/rmax, 1._rt/(2._rt - radial_weight_power))*rmax;
 
                 // Conversion from cylindrical to Cartesian coordinates
                 // Replace the x and y, setting an angle theta.
@@ -1940,7 +1940,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 if (loc_flux_normal_axis != 1) {
                     // Update the weight based on the specified power.
                     // The coefficient ensures that the correct density distribution is obtained.
-                    const amrex::Real coeff = (2./(2. - radial_weight_power))*MathConst::pi;
+                    const amrex::Real coeff = (2._rt/(2._rt - radial_weight_power))*MathConst::pi;
                     t_weight *= coeff*std::pow(radial_position/rmax, radial_weight_power)*rmax;
                 }
 
