@@ -5,7 +5,11 @@
 #include <AMReX_LO_BCTYPES.H>
 
 #include <WarpX.H>
+#if defined WARPX_DIM_RZ
+#include <FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H>
+#else
 #include <FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H>
+#endif
 
 #include <ablastr/utils/Communication.H>
 
@@ -105,7 +109,7 @@ ProjectionDivCleaner::solve ()
                                                                 LinOpBCType::bogus)});
 
 #ifdef WARPX_DIM_RZ
-    if (geom.ProbLo(0) == 0){
+    if (geom[0].ProbLo(0) == 0){
         lobc[0] = LinOpBCType::Neumann;
 
         // handle the r_max boundary explicitly
@@ -277,11 +281,11 @@ ProjectionDivCleaner::correctBfield ()
             amrex::Array4<Real> const& sol_arr = m_solution[ilev]->array(mfi);
 #if defined WARPX_DIM_RZ
             amrex::ParallelFor(tbx, tbz,
-            [=] AMREX_GPU_DEVICE (int i, int j, /* int k */)
+            [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/)
             {
                 Bx_arr(i,j,0) += CylindricalYeeAlgorithm::DownwardDr(sol_arr, coefs_x, n_coefs_x, i, j, 0, 0);
             },
-            [=] AMREX_GPU_DEVICE (int i, int j, /* int k */)
+            [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/)
             {
                 Bz_arr(i,j,0) += CylindricalYeeAlgorithm::DownwardDz(sol_arr, coefs_z, n_coefs_z, i, j, 0, 0);
             });
