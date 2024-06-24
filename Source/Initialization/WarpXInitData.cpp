@@ -1349,7 +1349,7 @@ WarpX::LoadExternalFieldsFromFile (int const lev)
             run_ProjectionDivCleaner();
         } else {
             ablastr::warn_manager::WMRecordWarning("External Fields Loader",
-                "Field Precision is SINGLE, so divB not cleaned. Interpolation may lead to non-zero B field divergence.", 
+                "Field Precision is SINGLE, so divB not cleaned. Interpolation may lead to non-zero B field divergence.",
                 ablastr::warn_manager::WarnPriority::medium);
         }
     }
