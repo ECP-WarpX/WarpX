@@ -26,7 +26,7 @@
 
 #include <cmath>
 
-#if WARPX_USE_PSATD
+#if WARPX_USE_FFT
 
 using namespace amrex;
 
@@ -466,4 +466,4 @@ void PsatdAlgorithmPml::VayDeposition (SpectralFieldData& /*field_data*/)
     WARPX_ABORT_WITH_MESSAGE("Vay deposition not implemented for PML PSATD");
 }
 
-#endif // WARPX_USE_PSATD
+#endif // WARPX_USE_FFT

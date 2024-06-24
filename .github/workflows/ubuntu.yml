@@ -77,7 +77,7 @@ jobs:
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_DIMS="1;2"           \
           -DWarpX_EB=OFF               \
-          -DWarpX_PSATD=ON             \
+          -DWarpX_FFT=ON               \
           -DWarpX_QED_TABLE_GEN=ON     \
           -DWarpX_QED_TOOLS=ON
 
@@ -127,7 +127,7 @@ jobs:
           -DCMAKE_VERBOSE_MAKEFILE=ON       \
           -DWarpX_DIMS="RZ;3"               \
           -DWarpX_EB=OFF                    \
-          -DWarpX_PSATD=ON                  \
+          -DWarpX_FFT=ON                    \
           -DWarpX_PRECISION=SINGLE          \
           -DWarpX_PARTICLE_PRECISION=SINGLE \
           -DWarpX_QED_TABLE_GEN=ON
@@ -211,7 +211,7 @@ jobs:
         cmake -S . -B build            \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_APP=OFF              \
-          -DWarpX_PSATD=ON             \
+          -DWarpX_FFT=ON               \
           -DWarpX_PYTHON=ON            \
           -DWarpX_QED_TABLE_GEN=ON
         cmake --build build -j 4 --target pip_install
@@ -260,7 +260,7 @@ jobs:
           -GNinja                           \
           -DCMAKE_VERBOSE_MAKEFILE=ON       \
           -DWarpX_DIMS="RZ;1;2;3"           \
-          -DWarpX_PSATD=ON                  \
+          -DWarpX_FFT=ON                    \
           -DWarpX_QED=ON                    \
           -DWarpX_QED_TABLE_GEN=ON          \
           -DWarpX_OPENPMD=ON                \
