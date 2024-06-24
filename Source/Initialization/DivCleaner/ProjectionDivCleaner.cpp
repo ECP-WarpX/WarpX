@@ -275,6 +275,17 @@ ProjectionDivCleaner::correctBfield ()
             const Box& tbz = mfi.tilebox(Bz->ixType().toIntVect());
 
             amrex::Array4<Real> const& sol_arr = m_solution[ilev]->array(mfi);
+#if defined WARPX_DIM_RZ
+            amrex::ParallelFor(tbx, tbz,
+            [=] AMREX_GPU_DEVICE (int i, int j, /* int k */)
+            {
+                Bx_arr(i,j,0) += CylindricalYeeAlgorithm::DownwardDr(sol_arr, coefs_x, n_coefs_x, i, j, 0, 0);
+            },
+            [=] AMREX_GPU_DEVICE (int i, int j, /* int k */)
+            {
+                Bz_arr(i,j,0) += CylindricalYeeAlgorithm::DownwardDz(sol_arr, coefs_z, n_coefs_z, i, j, 0, 0);
+            });
+#else
             amrex::ParallelFor(tbx, tby, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int k)
             {
@@ -288,6 +299,7 @@ ProjectionDivCleaner::correctBfield ()
             {
                 Bz_arr(i,j,k) += CartesianYeeAlgorithm::DownwardDz(sol_arr, coefs_z, n_coefs_z, i, j, k);
             });
+#endif
         }
         // Synchronize the ghost cells, do halo exchange
         ablastr::utils::communication::FillBoundary(*Bx,
