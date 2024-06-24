@@ -67,14 +67,14 @@ WarpX::UpdateAuxilaryData ()
     for (int lev = 0; lev <= finest_level; ++lev) {
         // FIXME: RZ multimode has more than one component for all these
         if (mypc->m_E_ext_particle_s == "read_from_file") {
-            amrex::MultiFab::Add(*Efield_aux[lev][0], *Efield_fp_external[lev][0], 0, 0, 1, guard_cells.ng_alloc_EB);
-            amrex::MultiFab::Add(*Efield_aux[lev][1], *Efield_fp_external[lev][1], 0, 0, 1, guard_cells.ng_alloc_EB);
-            amrex::MultiFab::Add(*Efield_aux[lev][2], *Efield_fp_external[lev][2], 0, 0, 1, guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Efield_aux[lev][0], *Efield_fp_external[lev][0], 0, 0, 1, guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*Efield_aux[lev][1], *Efield_fp_external[lev][1], 0, 0, 1, guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*Efield_aux[lev][2], *Efield_fp_external[lev][2], 0, 0, 1, guard_cells.ng_FieldGather);
         }
         if (mypc->m_B_ext_particle_s == "read_from_file") {
-            amrex::MultiFab::Add(*Bfield_aux[lev][0], *Bfield_fp_external[lev][0], 0, 0, 1, guard_cells.ng_alloc_EB);
-            amrex::MultiFab::Add(*Bfield_aux[lev][1], *Bfield_fp_external[lev][1], 0, 0, 1, guard_cells.ng_alloc_EB);
-            amrex::MultiFab::Add(*Bfield_aux[lev][2], *Bfield_fp_external[lev][2], 0, 0, 1, guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Bfield_aux[lev][0], *Bfield_fp_external[lev][0], 0, 0, 1, guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*Bfield_aux[lev][1], *Bfield_fp_external[lev][1], 0, 0, 1, guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*Bfield_aux[lev][2], *Bfield_fp_external[lev][2], 0, 0, 1, guard_cells.ng_FieldGather);
         }
     }
 
