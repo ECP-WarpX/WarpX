@@ -95,7 +95,8 @@ ProjectionDivCleaner::solve ()
     const auto& dmap = warpx.DistributionMap();
     const auto& geom = warpx.Geom();
 
-    // Pull boundary conditions from 
+    // Pull boundary conditions from WarpX class
+    // bogus values are overwritten.
     amrex::Array<LinOpBCType,AMREX_SPACEDIM> lobc({AMREX_D_DECL(LinOpBCType::bogus,
                                                                 LinOpBCType::bogus,
                                                                 LinOpBCType::bogus)});
@@ -110,11 +111,9 @@ ProjectionDivCleaner::solve ()
         // handle the r_max boundary explicitly
         if (WarpX::field_boundary_hi[0] == FieldBoundaryType::PEC) {
             hibc[0] = LinOpBCType::Dirichlet;
-            dirichlet_flag[1] = true;
         }
         else if (WarpX::field_boundary_hi[0] == FieldBoundaryType::Neumann) {
             hibc[0] = LinOpBCType::Neumann;
-            dirichlet_flag[1] = false;
         }
         else {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
