@@ -40,8 +40,7 @@ ProjectionDivCleaner::ProjectionDivCleaner()
     m_source.resize(m_levels);
 
     int ncomps = WarpX::ncomps;
-    // auto Bx_point = warpx.getFieldPointer(warpx::fields::FieldType::Bfield_aux, 0, 0);
-    auto const& ng = IntVect( AMREX_D_DECL(2,2,2) );
+    auto const& ng = warpx.getFieldPointer(warpx::fields::FieldType::Bfield_aux, 0, 0)->nGrowVect();
 
 
     std::array<amrex::Real,3> const& cell_size = warpx.CellSize(0);
@@ -263,23 +262,29 @@ ProjectionDivCleaner::correctBfield ()
         {
             // Grab references to B field arrays for this grid/tile
             amrex::Array4<Real> const& Bx_arr = Bx->array(mfi);
+#if !defined(WARPX_DIM_RZ)
             amrex::Array4<Real> const& By_arr = By->array(mfi);
+#endif
             amrex::Array4<Real> const& Bz_arr = Bz->array(mfi);
 
             // Extract stencil coefficients
             Real const * const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
             auto const n_coefs_x = static_cast<int>(m_stencil_coefs_x.size());
+#if !defined(WARPX_DIM_RZ)
             Real const * const AMREX_RESTRICT coefs_y = m_stencil_coefs_y.dataPtr();
             auto const n_coefs_y = static_cast<int>(m_stencil_coefs_y.size());
+#endif
             Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
             auto const n_coefs_z = static_cast<int>(m_stencil_coefs_z.size());
 
             const Box& tbx = mfi.tilebox(Bx->ixType().toIntVect());
+#if !defined(WARPX_DIM_RZ)
             const Box& tby = mfi.tilebox(By->ixType().toIntVect());
+#endif
             const Box& tbz = mfi.tilebox(Bz->ixType().toIntVect());
 
             amrex::Array4<Real> const& sol_arr = m_solution[ilev]->array(mfi);
-#if defined WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ)
             amrex::ParallelFor(tbx, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/)
             {
