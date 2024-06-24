@@ -137,6 +137,9 @@ class Species(picmistandard.PICMI_Species):
         Cells with fewer particles than this number will be
         skipped during resampling.
 
+    warpx_resampling_algorithm_target_weight: float
+        Weight that the product particles from resampling will not exceed.
+
     warpx_resampling_trigger_intervals: bool, default=0
         Timesteps at which to resample
 
@@ -168,6 +171,14 @@ class Species(picmistandard.PICMI_Species):
         during grid-based merging, with `velocity_grid_type == "cartesian"`. If
         a single number is given the same du value will be used in all three
         directions.
+
+    warpx_add_int_attributes: dict
+        Dictionary of extra integer particle attributes initialized from an
+        expression that is a function of the variables (x, y, z, ux, uy, uz, t).
+
+    warpx_add_real_attributes: dict
+        Dictionary of extra real particle attributes initialized from an
+        expression that is a function of the variables (x, y, z, ux, uy, uz, t).
     """
     def init(self, kw):
 
@@ -249,6 +260,7 @@ class Species(picmistandard.PICMI_Species):
         self.resampling_min_ppc = kw.pop('warpx_resampling_min_ppc', None)
         self.resampling_trigger_intervals = kw.pop('warpx_resampling_trigger_intervals', None)
         self.resampling_triggering_max_avg_ppc = kw.pop('warpx_resampling_trigger_max_avg_ppc', None)
+        self.resampling_algorithm_target_weight = kw.pop('warpx_resampling_algorithm_target_weight', None)
         self.resampling_algorithm_velocity_grid_type = kw.pop('warpx_resampling_algorithm_velocity_grid_type', None)
         self.resampling_algorithm_delta_ur = kw.pop('warpx_resampling_algorithm_delta_ur', None)
         self.resampling_algorithm_n_theta = kw.pop('warpx_resampling_algorithm_n_theta', None)
@@ -256,6 +268,10 @@ class Species(picmistandard.PICMI_Species):
         self.resampling_algorithm_delta_u = kw.pop('warpx_resampling_algorithm_delta_u', None)
         if self.resampling_algorithm_delta_u is not None and np.size(self.resampling_algorithm_delta_u) == 1:
             self.resampling_algorithm_delta_u = [self.resampling_algorithm_delta_u]*3
+
+        # extra particle attributes
+        self.extra_int_attributes = kw.pop('warpx_add_int_attributes', None)
+        self.extra_real_attributes = kw.pop('warpx_add_real_attributes', None)
 
     def species_initialize_inputs(self, layout,
                                   initialize_self_fields = False,
@@ -298,6 +314,7 @@ class Species(picmistandard.PICMI_Species):
                                              resampling_min_ppc=self.resampling_min_ppc,
                                              resampling_trigger_intervals=self.resampling_trigger_intervals,
                                              resampling_trigger_max_avg_ppc=self.resampling_triggering_max_avg_ppc,
+                                             resampling_algorithm_target_weight=self.resampling_algorithm_target_weight,
                                              resampling_algorithm_velocity_grid_type=self.resampling_algorithm_velocity_grid_type,
                                              resampling_algorithm_delta_ur=self.resampling_algorithm_delta_ur,
                                              resampling_algorithm_n_theta=self.resampling_algorithm_n_theta,
@@ -312,6 +329,16 @@ class Species(picmistandard.PICMI_Species):
         self.species.add_new_attr("reflection_model_zlo(E)", self.reflection_model_zlo)
         self.species.add_new_attr("reflection_model_zhi(E)", self.reflection_model_zhi)
         # self.species.add_new_attr("reflection_model_eb(E)", self.reflection_model_eb)
+
+        # extra particle attributes
+        if self.extra_int_attributes is not None:
+            self.species.addIntegerAttributes = self.extra_int_attributes.keys()
+            for attr, function in self.extra_int_attributes.items():
+                self.species.add_new_attr('attribute.'+attr+'(x,y,z,ux,uy,uz,t)', function)
+        if self.extra_real_attributes is not None:
+            self.species.addRealAttributes = self.extra_real_attributes.keys()
+            for attr, function in self.extra_real_attributes.items():
+                self.species.add_new_attr('attribute.'+attr+'(x,y,z,ux,uy,uz,t)', function)
 
         pywarpx.Particles.particles_list.append(self.species)
 
@@ -2384,6 +2411,9 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
                 elif dataname.startswith('rho_'):
                     # Adds rho_species diagnostic
                     fields_to_plot.add(dataname)
+                elif dataname.startswith('T_'):
+                    # Adds T_species diagnostic
+                    fields_to_plot.add(dataname)
                 elif dataname == 'dive':
                     fields_to_plot.add('divE')
                 elif dataname == 'divb':
@@ -2497,11 +2527,17 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
     warpx_file_min_digits: integer, optional
         Minimum number of digits for the time step number in the file name
 
-    warpx_random_fraction: float, optional
-        Random fraction of particles to include in the diagnostic
+    warpx_random_fraction: float or dict, optional
+        Random fraction of particles to include in the diagnostic. If a float
+        is given the same fraction will be used for all species, if a dictionary
+        is given the keys should be species with the value specifying the random
+        fraction for that species.
 
-    warpx_uniform_stride: integer, optional
-        Stride to down select to the particles to include in the diagnostic
+    warpx_uniform_stride: integer or dict, optional
+        Stride to down select to the particles to include in the diagnostic.
+        If an integer is given the same stride will be used for all species, if
+        a dictionary is given the keys should be species with the value
+        specifying the stride for that species.
 
     warpx_plot_filter_function: string, optional
         Analytic expression to down select the particles to in the diagnostic
@@ -2585,6 +2621,9 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
                         )
                     else:
                         variables.add(dataname)
+                else:
+                    # possibly add user defined attributes
+                    variables.add(dataname)
 
             # --- Convert the set to a sorted list so that the order
             # --- is the same on all processors.
@@ -2599,6 +2638,22 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         else:
             species_names = [self.species.name]
 
+        # check if random fraction is specified and whether a value is given per species
+        random_fraction = {}
+        random_fraction_default = self.random_fraction
+        if isinstance(self.random_fraction, dict):
+            random_fraction_default = 1.0
+            for key, val in self.random_fraction.items():
+                random_fraction[key.name] = val
+
+        # check if uniform stride is specified and whether a value is given per species
+        uniform_stride = {}
+        uniform_stride_default = self.uniform_stride
+        if isinstance(self.uniform_stride, dict):
+            uniform_stride_default = 1
+            for key, val in self.uniform_stride.items():
+                uniform_stride[key.name] = val
+
         if self.mangle_dict is None:
             # Only do this once so that the same variables are used in this distribution
             # is used multiple times
@@ -2607,8 +2662,8 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         for name in species_names:
             diag = pywarpx.Bucket.Bucket(self.name + '.' + name,
                                          variables = variables,
-                                         random_fraction = self.random_fraction,
-                                         uniform_stride = self.uniform_stride)
+                                         random_fraction = random_fraction.get(name, random_fraction_default),
+                                         uniform_stride = uniform_stride.get(name, uniform_stride_default))
             expression = pywarpx.my_constants.mangle_expression(self.plot_filter_function, self.mangle_dict)
             diag.__setattr__('plot_filter_function(t,x,y,z,ux,uy,uz)', expression)
             self.diagnostic._species_dict[name] = diag
