@@ -474,7 +474,15 @@ void ParticleBoundaryBuffer::gatherParticlesFromEmbeddedBoundaries (
             buffer[i].AddRealComp("nz", false);
 
         }
+
         auto& species_buffer = buffer[i];
+        for (int lev = 0; lev < pc.numLevels(); ++lev){
+            for(PIter pti(pc, lev); pti.isValid(); ++pti){
+                species_buffer.DefineAndReturnParticleTile(
+                    lev, pti.index(), pti.LocalTileIndex());
+            }
+        }
+
         for (int lev = 0; lev < pc.numLevels(); ++lev)
         {
             const auto& plevel = pc.GetParticles(lev);
