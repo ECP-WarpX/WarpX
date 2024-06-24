@@ -21,6 +21,7 @@
 #include "Filter/BilinearFilter.H"
 #include "Filter/NCIGodfreyFilter.H"
 #include "Initialization/ExternalField.H"
+#include "Initialization/DivCleaner/ProjectionDivCleaner.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/Algorithms/LinearInterpolation.H"
 #include "Utils/Logo/GetLogo.H"
@@ -1344,6 +1345,13 @@ WarpX::LoadExternalFieldsFromFile (int const lev)
         ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Bfield_fp_external[lev][1].get(), "B", "y");
         ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Bfield_fp_external[lev][2].get(), "B", "z");
 #endif
+        if constexpr (std::is_same<Real, double>::value) {
+            run_ProjectionDivCleaner();
+        } else {
+            ablastr::warn_manager::WMRecordWarning("External Fields Loader",
+                "Field Precision is SINGLE, so divB not cleaned. Interpolation may lead to non-zero B field divergence.", 
+                ablastr::warn_manager::WarnPriority::medium);
+        }
     }
     if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::read_from_file) {
 #if defined(WARPX_DIM_RZ)
