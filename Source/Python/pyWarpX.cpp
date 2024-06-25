@@ -38,8 +38,6 @@ void init_WarpXParIter (py::module&);
 void init_WarpXParticleContainer (py::module&);
 void init_WarpX(py::module&);
 
-void run_ProjectionDivCleaner();
-
 PYBIND11_MODULE(PYWARPX_MODULE_NAME, m) {
     // make sure AMReX types are known
 #if defined(WARPX_DIM_3D)
@@ -68,8 +66,6 @@ PYBIND11_MODULE(PYWARPX_MODULE_NAME, m) {
     init_ParticleBoundaryBuffer(m);
     init_MultiParticleContainer(m);
     init_WarpX(m);
-
-    m.def("run_div_cleaner", &run_ProjectionDivCleaner);
 
     // expose our amrex module
     m.attr("amr") = amr;

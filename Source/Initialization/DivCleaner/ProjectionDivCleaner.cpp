@@ -1,3 +1,12 @@
+ /* Copyright 2024 The WarpX Community
+ *
+ * This file is part of WarpX.
+ *
+ * Authors: S. Eric Clark (Helion Energy, Inc.)
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+
 #include "ProjectionDivCleaner.H"
 
 #include <AMReX_MLPoisson.H>
@@ -14,6 +23,8 @@
 #include <ablastr/utils/Communication.H>
 
 using namespace amrex;
+
+namespace warpx::initialization {
 
 ProjectionDivCleaner::ProjectionDivCleaner()
 {
@@ -183,8 +194,6 @@ ProjectionDivCleaner::solve ()
         MLPoisson mlpoisson({geom[ilev]}, {ba[ilev]}, {dmap[ilev]}, info);
 
         mlpoisson.setMaxOrder(m_linop_maxorder);
-
-        // This is a 3d problem with Dirichlet BC
         mlpoisson.setDomainBC(lobc, hibc);
 
         if (ilev > 0) {
@@ -217,7 +226,7 @@ ProjectionDivCleaner::setSourceFromBfield ()
     auto & warpx = WarpX::GetInstance();
     const auto& geom = warpx.Geom();
 
-    // This function will compute divB and add to the source multifab
+    // This function will compute -divB and sotre in the source multifab
     for (int ilev = 0; ilev < m_levels; ++ilev)
     {
         // Zero out source multifab
@@ -247,7 +256,7 @@ ProjectionDivCleaner::correctBfield ()
     auto & warpx = WarpX::GetInstance();
     const auto& geom = warpx.Geom();
 
-    // This function will compute divB and add to the source multifab
+    // This function computes the gradient of the solution and subtracts out divB component from B
     for (int ilev = 0; ilev < m_levels; ++ilev)
     {
         // Grab B-field multifabs at this level
@@ -327,10 +336,15 @@ ProjectionDivCleaner::correctBfield ()
     }
 }
 
-void run_ProjectionDivCleaner() {
+} // namespace warpx::initialization
+
+void 
+WarpX::ProjectionCleanDivB() {
     // Build Object, run, then delete
-    ProjectionDivCleaner dc;
+    warpx::initialization::ProjectionDivCleaner dc;
     dc.setSourceFromBfield();
     dc.solve();
     dc.correctBfield();
 }
+
+

@@ -1,7 +1,10 @@
-/* Copyright 2024 Helion Energy, Inc.
+ /* Copyright 2024 The WarpX Community
  *
- * Authors: S. Eric Clark
- * License: None
+ * This file is part of WarpX.
+ *
+ * Authors: S. Eric Clark (Helion Energy, Inc.)
+ *
+ * License: BSD-3-Clause-LBNL
  */
 #pragma once
 
@@ -32,7 +35,7 @@
 #include <AMReX_Vector.H>
 #include <AMReX_MLMG.H>
 
-void run_ProjectionDivCleaner();
+namespace warpx::initialization {
 
 class ProjectionDivCleaner
 {
@@ -78,3 +81,5 @@ public:
     void correctBfield ();
 
 };
+
+}; // end namespace warpx::initialization
