@@ -544,16 +544,15 @@ WarpX::InitData ()
 void
 WarpX::AddExternalFields () {
     for (int lev = 0; lev <= finest_level; ++lev) {
-        // FIXME: RZ multimode has more than one component for all these
         if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::read_from_file) {
-            amrex::MultiFab::Add(*Efield_fp[lev][0], *Efield_fp_external[lev][0], 0, 0, 1, guard_cells.ng_alloc_EB);
-            amrex::MultiFab::Add(*Efield_fp[lev][1], *Efield_fp_external[lev][1], 0, 0, 1, guard_cells.ng_alloc_EB);
-            amrex::MultiFab::Add(*Efield_fp[lev][2], *Efield_fp_external[lev][2], 0, 0, 1, guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Efield_fp[lev][0], *Efield_fp_external[lev][0], 0, 0, Efield_fp_external[lev][0]->nComp(), guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Efield_fp[lev][1], *Efield_fp_external[lev][1], 0, 0, Efield_fp_external[lev][1]->nComp(), guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Efield_fp[lev][2], *Efield_fp_external[lev][2], 0, 0, Efield_fp_external[lev][2]->nComp(), guard_cells.ng_alloc_EB);
         }
         if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::read_from_file) {
-            amrex::MultiFab::Add(*Bfield_fp[lev][0], *Bfield_fp_external[lev][0], 0, 0, 1, guard_cells.ng_alloc_EB);
-            amrex::MultiFab::Add(*Bfield_fp[lev][1], *Bfield_fp_external[lev][1], 0, 0, 1, guard_cells.ng_alloc_EB);
-            amrex::MultiFab::Add(*Bfield_fp[lev][2], *Bfield_fp_external[lev][2], 0, 0, 1, guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Bfield_fp[lev][0], *Bfield_fp_external[lev][0], 0, 0, Bfield_fp_external[lev][0]->nComp(), guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Bfield_fp[lev][1], *Bfield_fp_external[lev][1], 0, 0, Bfield_fp_external[lev][1]->nComp(), guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Bfield_fp[lev][2], *Bfield_fp_external[lev][2], 0, 0, Bfield_fp_external[lev][2]->nComp(), guard_cells.ng_alloc_EB);
         }
     }
 }
