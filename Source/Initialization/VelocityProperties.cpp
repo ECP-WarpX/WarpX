@@ -19,15 +19,21 @@ VelocityProperties::VelocityProperties (const amrex::ParmParse& pp, std::string 
 
     utils::parser::query(pp, source_name, "bulk_vel_dir", vel_dir_s);
 
+    if(vel_dir_s.empty()){
+        WARPX_ABORT_WITH_MESSAGE("'<s_name>.bulk_vel_dir input ' can't be empty.");
+    }
+
     m_sign_dir = (vel_dir_s[0] == '-') ? -1 : 1;
 
-    if (vel_dir_s.back() == 'x'){
+    const auto dir = std::tolower(vel_dir_s.back());
+
+    if (dir == 'x'){
         m_dir = 0;
     }
-    else if (vel_dir_s.back() == 'y'){
+    else if (dir == 'y'){
         m_dir = 1;
     }
-    else if (vel_dir_s.back() == 'z'){
+    else if (dir == 'z'){
         m_dir = 2;
     }
     else{
