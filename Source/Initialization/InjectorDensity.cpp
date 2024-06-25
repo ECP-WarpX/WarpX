@@ -99,7 +99,6 @@ InjectorDensityPredefined::InjectorDensityPredefined (
 
 InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_name)
 {
-    std::cout << "start injector density from file\n" ;
     //get the file path for reading the external density and the name of the field to be read
     const ParmParse pp (a_species_name);
     const ParmParse pp_warpx ("warpx");
@@ -109,14 +108,6 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
     pp.query("read_density_from_path", external_density_path);
     pp.query("density_name", density);
     pp_amr.query("max_grid_size", max_grid_size);
-
-    std::vector<int> cells(3);
-    utils::parser::getArrWithParser(pp_amr, "n_cell", cells);
-
-    for (int i = 0; i < static_cast<int>(cells.size()); i++) {
-        std::cout << i;
-        n_cell.push_back(cells[i]);
-    }
 
     // Get WarpX domain info
     WarpX& warpx = WarpX::GetInstance();
@@ -132,10 +123,7 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
     hi1 = geom_hi[1];
     hi2 = geom_hi[2];
 
-    std::cout << "lo0, lo1, lo2: " << lo0 << " " << lo1 << " " << lo2 << '\n';
-
     // creating the mulitfab array
-    std::cout << "calling multifab\n";
     m_rho = warpx.get_pointer_rho_fp(0);
     m_rho->setVal(0);
     const amrex::IntVect nodal_flag = m_rho->ixType().toIntVect();
@@ -159,8 +147,6 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
     const int extent1 = static_cast<int>(extent[1]);
     const int extent2 = static_cast<int>(extent[2]);
 
-    std::cout << "Extent for each dimension: " << extent[0] << " " << extent[1] << " " << extent[2] << '\n';
-
     const long double file_dx = static_cast<amrex::Real>(spacing[0]);
     const long double file_dy = static_cast<amrex::Real>(spacing[1]);
     const long double file_dz = static_cast<amrex::Real>(spacing[2]);
@@ -177,8 +163,6 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
     amrex::Gpu::DeviceVector<double> P_data_gpu(total_extent);
     double* P_data = P_data_gpu.data();
     amrex::Gpu::copy(amrex::Gpu::hostToDevice, P_data_host, P_data_host + total_extent, P_data);
-
-    std::cout << "Offset is : (" << offset[0] << ", " << offset[1] <<  ", " << offset[2] << ")\n";
 
     // iterate over the external field and find the index that corresponds to the grid points
     amrex::AllPrint() << "Before MFIter Loop...\n";
@@ -263,7 +247,6 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
         ); //end ParallelFor
     }
 
-    std::cout << "made it to the end\n" ;
 }
 
 // Note that we are not allowed to have non-trivial destructor.
