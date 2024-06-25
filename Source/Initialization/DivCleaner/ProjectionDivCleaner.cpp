@@ -39,11 +39,11 @@ ProjectionDivCleaner::ProjectionDivCleaner()
     m_solution.resize(m_levels);
     m_source.resize(m_levels);
 
-    int ncomps = WarpX::ncomps;
+    const int ncomps = WarpX::ncomps;
     auto const& ng = warpx.getFieldPointer(warpx::fields::FieldType::Bfield_aux, 0, 0)->nGrowVect();
 
 
-    std::array<amrex::Real,3> const& cell_size = warpx.CellSize(0);
+    std::array<amrex::Real,3> const& cell_size = WarpX::CellSize(0);
 
     for (int lev = 0; lev < m_levels; ++lev)
     {
@@ -203,7 +203,7 @@ ProjectionDivCleaner::solve ()
         mlmg.solve({m_solution[ilev].get()}, {m_source[ilev].get()}, m_rtol, m_atol);
 
         // Synchronize the ghost cells, do halo exchange
-        ablastr::utils::communication::FillBoundary(*(m_solution[ilev].get()),
+        ablastr::utils::communication::FillBoundary(*m_solution[ilev],
                                                 m_solution[ilev]->nGrowVect(),
                                                 WarpX::do_single_precision_comms,
                                                 geom[ilev].periodicity());
@@ -224,7 +224,7 @@ ProjectionDivCleaner::setSourceFromBfield ()
         m_source[ilev]->setVal(0.0);
 
         WarpX::ComputeDivB(
-            *(m_source[ilev].get()),
+            *m_source[ilev],
             0,
             warpx.getFieldPointerArray(warpx::fields::FieldType::Bfield_aux, ilev),
             warpx.CellSize(0)
@@ -233,7 +233,7 @@ ProjectionDivCleaner::setSourceFromBfield ()
         m_source[ilev]->mult(-1._rt);
 
         // Synchronize the ghost cells, do halo exchange
-        ablastr::utils::communication::FillBoundary(*(m_source[ilev].get()),
+        ablastr::utils::communication::FillBoundary(*m_source[ilev],
                                                 m_source[ilev]->nGrowVect(),
                                                 WarpX::do_single_precision_comms,
                                                 geom[ilev].periodicity());
