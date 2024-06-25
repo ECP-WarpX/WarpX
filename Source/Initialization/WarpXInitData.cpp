@@ -1362,11 +1362,11 @@ WarpX::LoadExternalFieldsFromFile (int const lev)
     // Check that that the user did not attempt to use both particle and grid external fields from file
     // (These two options use the same MultiFab, i.e. Bfield_fp_external / Efield_fp_external, and
     // so they cannot be used simultaneously)
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( !(mypc->m_B_ext_particle_s == "read_from_file" &&
-                      m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::read_from_file),
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( (mypc->m_B_ext_particle_s != "read_from_file" ||
+                      m_p_ext_field_params->B_ext_grid_type != ExternalFieldType::read_from_file),
                     "It is not possible to simultaneously set external *grid* fields and external *particle* fields to be both read from file.");
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( !(mypc->m_E_ext_particle_s == "read_from_file" &&
-                      m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::read_from_file),
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( (mypc->m_E_ext_particle_s != "read_from_file" ||
+                      m_p_ext_field_params->E_ext_grid_type != ExternalFieldType::read_from_file),
                     "It is not possible to simultaneously set external *grid* fields and external *particle* fields to be both read from file.");
 
     if ( (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::read_from_file) ||
