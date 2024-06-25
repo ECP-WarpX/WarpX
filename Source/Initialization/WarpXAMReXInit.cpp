@@ -28,14 +28,14 @@ namespace {
     {
         // https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters
         auto pp_amrex = amrex::ParmParse{"amrex"};
-        bool abort_on_out_of_gpu_memory = true; // AMReX' default: false
+        bool abort_on_out_of_gpu_memory = true; // AMReX's default: false
         pp_amrex.queryAdd("abort_on_out_of_gpu_memory", abort_on_out_of_gpu_memory);
     }
 
     void override_default_the_arena_is_managed ()
     {
         auto pp_amrex = amrex::ParmParse{"amrex"};
-        bool the_arena_is_managed = false; // AMReX' default: true
+        bool the_arena_is_managed = false; // AMReX's default: true
         pp_amrex.queryAdd("the_arena_is_managed", the_arena_is_managed);
     }
 
@@ -43,7 +43,7 @@ namespace {
     {
         // https://amrex-codes.github.io/amrex/docs_html/InputsComputeBackends.html
         auto pp_amrex = amrex::ParmParse{"amrex"};
-        std::string omp_threads = "nosmt"; // AMReX' default: system
+        std::string omp_threads = "nosmt"; // AMReX's default: system
         pp_amrex.queryAdd("omp_threads", omp_threads);
     }
 
