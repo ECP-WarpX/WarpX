@@ -1381,7 +1381,7 @@ WarpX::LoadExternalFieldsFromFile (int const lev)
                 "Grid Type is collocated, so divB not cleaned. Interpolation may lead to non-zero B field divergence.",
                 ablastr::warn_manager::WarnPriority::medium);
         } else {
-            run_ProjectionDivCleaner();            
+            run_ProjectionDivCleaner();
         }
     }
     if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::read_from_file) {
