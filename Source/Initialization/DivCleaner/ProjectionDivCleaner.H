@@ -6,7 +6,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#pragma once
+#ifndef WARPX_PROJECTION_DIV_CLEANER_H_
+#define WARPX_PROJECTION_DIV_CLEANER_H_
 
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
@@ -83,3 +84,5 @@ public:
 };
 
 } // end namespace warpx::initialization
+
+#endif // WARPX_PROJECTION_DIV_CLEANER_H_
