@@ -152,9 +152,6 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
     auto axisLabels = P.getAttribute("axisLabels").get<std::vector<std::string>>();
     auto fileGeom = P.getAttribute("geometry").get<std::string>();
 
-    io::ParticleSpecies particle = iseries.particles[a_species_name];
-    charge = particle["charge"][openPMD::RecordComponent::SCALAR].loadChunk<double>();
-
     offset = P.gridGlobalOffset();
     spacing = P.gridSpacing< long double >();
     extent = p_scalar0.getExtent();
@@ -197,10 +194,8 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
         amrex::Box mf_bx(start_vect, end_vect);
 
         m_cell_size = geom0.CellSizeArray();
-        amrex::RealBox rb(tb, m_cell_size.data(), geom0.ProbLo());
 
         amrex::AllPrint() << "MultiFab meta data\n";
-        amrex::AllPrint() << "  real box lo: " << rb.lo(0) << "  " << rb.lo(1) << "  " << rb.lo(2) << '\n';
         amrex::AllPrint() << "  tb lo * dx: " << tb.smallEnd(0) * dx[0] << "  " << tb.smallEnd(1) * dx[1] << "  " << tb.smallEnd(2) * dx[2] << '\n';
         amrex::AllPrint() << "  cell size: " << m_cell_size[0] << "  " << m_cell_size[1] << "  " << m_cell_size[2] << '\n';
         amrex::AllPrint() << "  dx: " << dx[0] << "  " << dx[1] << "  " << dx[2] << '\n';
@@ -243,30 +238,27 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
                                 auto const xx1 = iy * file_dy + offset[1];
                                 auto const xx2 = iz * file_dz + offset[2];
 
-
-                                std::cout << "index: " << iz << ", " << iy << ", " << ix << "   -> " << i << ", " << j << ", " << k << "   ";
-                                std::cout << "x0: " << x0 << " xx0: " << xx0 << "   ";
-                                std::cout << "x1: " << x1 << " xx1: " << xx1 << "   ";
-                                std::cout << "x2: " << x2 << " xx2: " << xx2 << "   ";
-                                std::cout << "offset: " << rb.lo(0) << ", " << rb.lo(1) << ", " << rb.lo(2) << "   \n";
-
                                 // source data access
                                 const amrex::Array4<double> src_data(P_data, {0, 0, 0}, {extent2, extent1, extent0}, 1);
 
-                                // interpolate from closest source data points to rho MultiFab resolution
-                                const double
-                                    f000 = src_data(iz    , iy    , ix    ),
-                                    f001 = src_data(iz + 1, iy    , ix    ),
-                                    f010 = src_data(iz    , iy + 1, ix    ),
-                                    f011 = src_data(iz + 1, iy + 1, ix    ),
-                                    f100 = src_data(iz    , iy    , ix + 1),
-                                    f101 = src_data(iz + 1, iy    , ix + 1),
-                                    f110 = src_data(iz    , iy + 1, ix + 1),
-                                    f111 = src_data(iz + 1, iy + 1, ix + 1);
-                                rho_array4(i,j,k) = static_cast<amrex::Real> (utils::algorithms::trilinear_interp<double>
-                                        (xx0, xx0+file_dx, xx1, xx1+file_dy, xx2, xx2+file_dz,
-                                         f000, f001, f010, f011, f100, f101, f110, f111,
-                                         x0, x1, x2) );
+                                if (iz < 0 | iz > extent2-2 | iy < 0 | iy > extent1-2 | ix < 0 | ix > extent0-2 ){
+                                    rho_array4(i,j,k) = static_cast<amrex::Real> (0);
+                                }else{
+                                    // interpolate from closest source data points to rho MultiFab resolution
+                                    const double
+                                        f000 = src_data(iz    , iy    , ix    ),
+                                        f001 = src_data(iz + 1, iy    , ix    ),
+                                        f010 = src_data(iz    , iy + 1, ix    ),
+                                        f011 = src_data(iz + 1, iy + 1, ix    ),
+                                        f100 = src_data(iz    , iy    , ix + 1),
+                                        f101 = src_data(iz + 1, iy    , ix + 1),
+                                        f110 = src_data(iz    , iy + 1, ix + 1),
+                                        f111 = src_data(iz + 1, iy + 1, ix + 1);
+                                    rho_array4(i,j,k) = static_cast<amrex::Real> (utils::algorithms::trilinear_interp<double>
+                                            (xx0, xx0+file_dx, xx1, xx1+file_dy, xx2, xx2+file_dz,
+                                            f000, f001, f010, f011, f100, f101, f110, f111,
+                                            x0, x1, x2) );
+                                }
                             }
         ); //end ParallelFor
     }
