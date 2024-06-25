@@ -187,9 +187,9 @@ struct InjectorDensityFromFile
             return 0;
         }
 
-        int ix = std::floor((z-lo0)/m_cell_size[0]);
+        int ix = std::floor((x-lo0)/m_cell_size[0]);
         int iy = std::floor((y-lo1)/m_cell_size[1]);
-        int iz = std::floor((x-lo2)/m_cell_size[2]);
+        int iz = std::floor((z-lo2)/m_cell_size[2]);
 
 
         return m_rho_array4(ix,iy,iz)/(charge.get()[0]);
