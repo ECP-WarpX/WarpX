@@ -56,7 +56,7 @@ struct FaceInfoBox {
             {Neighbours::n , {0 ,-1}}, {Neighbours::s, {0 ,1}},
             {Neighbours::ne, {1 ,-1}}, {Neighbours::e, {1 ,0}}, {Neighbours::se, {1 ,1}}};
 
-        auto [i,j] = m_neig_to_i_j.at(mask);
+        const auto [i,j] = m_neig_to_i_j.at(mask);
         return amrex::Array1D<int, 0, 1>{i, j};
     }
 };
