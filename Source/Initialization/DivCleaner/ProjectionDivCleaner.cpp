@@ -338,7 +338,7 @@ ProjectionDivCleaner::correctBfield ()
 
 } // namespace warpx::initialization
 
-void 
+void
 WarpX::ProjectionCleanDivB() {
     // Build Object, run, then delete
     warpx::initialization::ProjectionDivCleaner dc;
@@ -346,5 +346,3 @@ WarpX::ProjectionCleanDivB() {
     dc.solve();
     dc.correctBfield();
 }
-
-
