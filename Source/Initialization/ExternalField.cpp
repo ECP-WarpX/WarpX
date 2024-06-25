@@ -172,6 +172,10 @@ ExternalFieldParams::ExternalFieldParams(const amrex::ParmParse& pp_warpx)
     //
     //  External fields from file
     //
+    // This is used both for external *grid* fields
+    // (e.g. warpx.E_ext_grid_init_style = "read_from_file")
+    // and for external *particle* fields
+    // (e.g. particles.E_ext_particle_init_style = "read_from_file")
     pp_warpx.query("read_fields_from_path", external_fields_path);
     //___________________________________________________________________________
 }

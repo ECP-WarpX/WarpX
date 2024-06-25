@@ -62,19 +62,16 @@ WarpX::UpdateAuxilaryData ()
     }
 
     // When loading particle fields from file: add the external fields:
-    // TODO reuse WarpX::AddExternalFields
-    // TODO replace fp_external with simply external
     for (int lev = 0; lev <= finest_level; ++lev) {
-        // FIXME: RZ multimode has more than one component for all these
         if (mypc->m_E_ext_particle_s == "read_from_file") {
-            amrex::MultiFab::Add(*Efield_aux[lev][0], *Efield_fp_external[lev][0], 0, 0, 1, guard_cells.ng_FieldGather);
-            amrex::MultiFab::Add(*Efield_aux[lev][1], *Efield_fp_external[lev][1], 0, 0, 1, guard_cells.ng_FieldGather);
-            amrex::MultiFab::Add(*Efield_aux[lev][2], *Efield_fp_external[lev][2], 0, 0, 1, guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*Efield_aux[lev][0], *Efield_fp_external[lev][0], 0, 0, Efield_fp_external[lev][0]->nComp(), guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*Efield_aux[lev][1], *Efield_fp_external[lev][1], 0, 0, Efield_fp_external[lev][1]->nComp(), guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*Efield_aux[lev][2], *Efield_fp_external[lev][2], 0, 0, Efield_fp_external[lev][2]->nComp(), guard_cells.ng_FieldGather);
         }
         if (mypc->m_B_ext_particle_s == "read_from_file") {
-            amrex::MultiFab::Add(*Bfield_aux[lev][0], *Bfield_fp_external[lev][0], 0, 0, 1, guard_cells.ng_FieldGather);
-            amrex::MultiFab::Add(*Bfield_aux[lev][1], *Bfield_fp_external[lev][1], 0, 0, 1, guard_cells.ng_FieldGather);
-            amrex::MultiFab::Add(*Bfield_aux[lev][2], *Bfield_fp_external[lev][2], 0, 0, 1, guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*Bfield_aux[lev][0], *Bfield_fp_external[lev][0], 0, 0, Bfield_fp_external[lev][0]->nComp(), guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*Bfield_aux[lev][1], *Bfield_fp_external[lev][1], 0, 0, Bfield_fp_external[lev][0]->nComp(), guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*Bfield_aux[lev][2], *Bfield_fp_external[lev][2], 0, 0, Bfield_fp_external[lev][0]->nComp(), guard_cells.ng_FieldGather);
         }
     }
 
@@ -316,7 +313,8 @@ WarpX::UpdateAuxilaryDataSameType ()
     const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
 
     // Level 0: Copy from fine to aux
-    // TODO Check if aux and fp are aliases of each other. If so, we can skip the copy.
+    // Note: in some configurations, Efield_aux/Bfield_aux and Efield_fp/Bfield_fp are simply aliases to the
+    // same MultiFab object. MultiFab::Copy operation automatically detects this and does nothing in this case.
     if (WarpX::fft_do_time_averaging)
     {
         MultiFab::Copy(*Efield_aux[0][0], *Efield_avg_fp[0][0], 0, 0, Efield_aux[0][0]->nComp(), ng_src);
