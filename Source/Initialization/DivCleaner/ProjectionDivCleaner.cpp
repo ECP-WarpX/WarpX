@@ -236,7 +236,7 @@ ProjectionDivCleaner::setSourceFromBfield ()
             *m_source[ilev],
             0,
             warpx.getFieldPointerArray(warpx::fields::FieldType::Bfield_aux, ilev),
-            warpx.CellSize(0)
+            WarpX::CellSize(0)
             );
 
         m_source[ilev]->mult(-1._rt);
