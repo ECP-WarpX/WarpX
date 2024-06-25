@@ -18,26 +18,19 @@ VelocityProperties::VelocityProperties (const amrex::ParmParse& pp, std::string 
     std::string vel_dir_s = "x";
 
     utils::parser::query(pp, source_name, "bulk_vel_dir", vel_dir_s);
-    if(vel_dir_s[0] == '-'){
-        m_sign_dir = -1;
-    }
-    else {
-        m_sign_dir = 1;
-    }
 
-    if ((vel_dir_s == "x" || vel_dir_s[1] == 'x') ||
-       (vel_dir_s == "X" || vel_dir_s[1] == 'X')){
+    m_sign_dir = (vel_dir_s[0] == '-') ? -1 : 1;
+
+    if (vel_dir_s.back() == 'x'){
         m_dir = 0;
     }
-    else if ((vel_dir_s == "y" || vel_dir_s[1] == 'y') ||
-               (vel_dir_s == "Y" || vel_dir_s[1] == 'Y')){
+    else if (vel_dir_s.back() == 'y'){
         m_dir = 1;
     }
-    else if ((vel_dir_s == "z" || vel_dir_s[1] == 'z') ||
-            (vel_dir_s == "Z" || vel_dir_s[1] == 'Z')) {
+    else if (vel_dir_s.back() == 'z'){
         m_dir = 2;
     }
-    else {
+    else{
         WARPX_ABORT_WITH_MESSAGE(
             "Cannot interpret <s_name>.bulk_vel_dir input '" + vel_dir_s +
             "'. Please enter +/- x, y, or z with no whitespace between the sign and"+
