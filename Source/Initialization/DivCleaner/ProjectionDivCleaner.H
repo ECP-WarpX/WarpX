@@ -82,4 +82,4 @@ public:
 
 };
 
-}; // end namespace warpx::initialization
+} // end namespace warpx::initialization
