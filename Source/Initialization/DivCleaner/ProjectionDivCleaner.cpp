@@ -226,7 +226,7 @@ ProjectionDivCleaner::setSourceFromBfield ()
     auto & warpx = WarpX::GetInstance();
     const auto& geom = warpx.Geom();
 
-    // This function will compute -divB and sotre in the source multifab
+    // This function will compute -divB and store it in the source multifab
     for (int ilev = 0; ilev < m_levels; ++ilev)
     {
         // Zero out source multifab
