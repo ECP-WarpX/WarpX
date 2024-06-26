@@ -2448,7 +2448,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         }
     }
     //TODO:: Only do this if plasma density is read from file
-    if (rho_ncomps == 0){ rho_ncomps = 1;}
+    if (rho_ncomps == 0){ rho_ncomps = 2;}
 
     if (rho_ncomps > 0)
     {
