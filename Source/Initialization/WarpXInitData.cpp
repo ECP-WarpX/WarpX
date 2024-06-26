@@ -1375,11 +1375,11 @@ WarpX::LoadExternalFieldsFromFile (int const lev)
         if constexpr (!std::is_same<Real, double>::value) {
             ablastr::warn_manager::WMRecordWarning("External Fields Loader",
                 "Field Precision is SINGLE, so divB not cleaned. Interpolation may lead to non-zero B field divergence.",
-                ablastr::warn_manager::WarnPriority::medium);
+                ablastr::warn_manager::WarnPriority::low);
         } else if (grid_type == GridType::Collocated) {
             ablastr::warn_manager::WMRecordWarning("External Fields Loader",
                 "Grid Type is collocated, so divB not cleaned. Interpolation may lead to non-zero B field divergence.",
-                ablastr::warn_manager::WarnPriority::medium);
+                ablastr::warn_manager::WarnPriority::low);
         } else {
             WarpX::ProjectionCleanDivB();
         }
