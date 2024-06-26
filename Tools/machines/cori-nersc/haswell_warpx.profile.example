@@ -8,8 +8,8 @@ module load cray-python/3.9.7.1
 export PKG_CONFIG_PATH=$FFTW_DIR/pkgconfig:$PKG_CONFIG_PATH
 export CMAKE_PREFIX_PATH=$HOME/sw/haswell/c-blosc-1.12.1-install:$CMAKE_PREFIX_PATH
 export CMAKE_PREFIX_PATH=$HOME/sw/haswell/adios2-2.7.1-install:$CMAKE_PREFIX_PATH
-export CMAKE_PREFIX_PATH=$HOME/sw/haswell/blaspp-master-install:$CMAKE_PREFIX_PATH
-export CMAKE_PREFIX_PATH=$HOME/sw/haswell/lapackpp-master-install:$CMAKE_PREFIX_PATH
+export CMAKE_PREFIX_PATH=$HOME/sw/haswell/blaspp-2024.05.31-install:$CMAKE_PREFIX_PATH
+export CMAKE_PREFIX_PATH=$HOME/sw/haswell/lapackpp-2024.05.31-install:$CMAKE_PREFIX_PATH
 
 if [ -d "$HOME/sw/haswell/venvs/haswell_warpx" ]
 then
