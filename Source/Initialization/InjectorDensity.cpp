@@ -122,12 +122,10 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
     hi2 = geom_hi[2];
 
     // creating the mulitfab array
-    m_rho = warpx.get_pointer_rho_fp(0);
+    m_rho = warpx.getFieldPointer(warpx::fields::FieldType::rho_fp, 0);
     m_rho->setVal(0);
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_rho != nullptr, "Inside Assert");
-
-    WarpX::ReadExternalFieldFromFile ( external_density_path, m_rho, density, "" );
+    WarpX::ReadExternalFieldFromFile( external_density_path, m_rho, density, "" );
 
 }
 

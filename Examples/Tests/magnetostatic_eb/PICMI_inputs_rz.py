@@ -27,6 +27,7 @@ matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.constants as con
+
 from pywarpx import fields, picmi
 
 ##########################
@@ -68,7 +69,7 @@ grid = picmi.CylindricalGrid(
     upper_bound = [rmax, zmax],
     lower_boundary_conditions = ['none', 'dirichlet'],
     upper_boundary_conditions = ['neumann', 'neumann'],
-    lower_boundary_conditions_particles = ['reflecting', 'absorbing'],
+    lower_boundary_conditions_particles = ['none', 'absorbing'],
     upper_boundary_conditions_particles = ['absorbing', 'absorbing'],
     warpx_potential_lo_z = V_domain_boundary,
     warpx_blocking_factor=8,

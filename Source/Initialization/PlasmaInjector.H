@@ -6,8 +6,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef PLASMA_INJECTOR_H_
-#define PLASMA_INJECTOR_H_
+#ifndef WARPX_PLASMA_INJECTOR_H_
+#define WARPX_PLASMA_INJECTOR_H_
 
 #include "InjectorDensity.H"
 #include "InjectorFlux.H"
@@ -202,4 +202,4 @@ protected:
     void parseFlux (amrex::ParmParse const& pp_species);
 };
 
-#endif
+#endif //WARPX_PLASMA_INJECTOR_H_

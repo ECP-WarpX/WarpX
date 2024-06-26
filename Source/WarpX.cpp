@@ -18,7 +18,7 @@
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
 #   include "FieldSolver/SpectralSolver/SpectralKSpace.H"
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
@@ -40,6 +40,8 @@
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
+
+#include "FieldSolver/ImplicitSolvers/ImplicitSolverLibrary.H"
 
 #include <ablastr/utils/SignalHandling.H>
 #include <ablastr/warn_manager/WarnManager.H>
@@ -85,6 +87,7 @@
 #include <utility>
 
 using namespace amrex;
+using namespace warpx::fields;
 
 int WarpX::do_moving_window = 0;
 int WarpX::start_moving_window_step = 0;
@@ -112,9 +115,8 @@ short WarpX::field_gathering_algo;
 short WarpX::particle_pusher_algo;
 short WarpX::electromagnetic_solver_id;
 short WarpX::evolve_scheme;
-int WarpX::max_picard_iterations = 10;
-Real WarpX::picard_iteration_tolerance = 1.e-7;
-bool WarpX::require_picard_convergence = true;
+int WarpX::max_particle_its_in_implicit_scheme = 21;
+ParticleReal WarpX::particle_tol_in_implicit_scheme = 1.e-10;
 short WarpX::psatd_solution_type;
 short WarpX::J_in_time;
 short WarpX::rho_in_time;
@@ -137,12 +139,10 @@ amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(1,1,1));
 #endif
 int WarpX::shared_mem_current_tpb = 128;
 
-amrex::Vector<int> WarpX::field_boundary_lo(AMREX_SPACEDIM,0);
-amrex::Vector<int> WarpX::field_boundary_hi(AMREX_SPACEDIM,0);
+amrex::Vector<FieldBoundaryType> WarpX::field_boundary_lo(AMREX_SPACEDIM,FieldBoundaryType::PML);
+amrex::Vector<FieldBoundaryType> WarpX::field_boundary_hi(AMREX_SPACEDIM,FieldBoundaryType::PML);
 amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_lo(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
 amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_hi(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
-
-bool WarpX::do_current_centering = false;
 
 int WarpX::n_rz_azimuthal_modes = 1;
 int WarpX::ncomps = 1;
@@ -190,6 +190,7 @@ amrex::IntVect WarpX::sort_idx_type(AMREX_D_DECL(0,0,0));
 bool WarpX::do_dynamic_scheduling = true;
 
 int WarpX::electrostatic_solver_id;
+int WarpX::poisson_solver_id;
 Real WarpX::self_fields_required_precision = 1.e-11_rt;
 Real WarpX::self_fields_absolute_tolerance = 0.0_rt;
 int WarpX::self_fields_max_iters = 200;
@@ -210,14 +211,6 @@ int WarpX::n_current_deposition_buffer = -1;
 
 short WarpX::grid_type;
 amrex::IntVect m_rho_nodal_flag;
-
-int WarpX::do_similar_dm_pml = 1;
-
-#ifdef AMREX_USE_GPU
-bool WarpX::do_device_synchronize = true;
-#else
-bool WarpX::do_device_synchronize = false;
-#endif
 
 WarpX* WarpX::m_instance = nullptr;
 
@@ -401,7 +394,7 @@ WarpX::WarpX ()
     charge_buf.resize(nlevs_max);
 
     pml.resize(nlevs_max);
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
     pml_rz.resize(nlevs_max);
 #endif
 
@@ -475,7 +468,7 @@ WarpX::WarpX ()
     }
 
     // Allocate field solver objects
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         spectral_solver_fp.resize(nlevs_max);
         spectral_solver_cp.resize(nlevs_max);
@@ -685,8 +678,6 @@ WarpX::ReadParameters ()
 
         ReadBoostedFrameParameters(gamma_boost, beta_boost, boost_direction);
 
-        pp_warpx.query("do_device_synchronize", do_device_synchronize);
-
         // queryWithParser returns 1 if argument zmax_plasma_to_compute_max_step is
         // specified by the user, 0 otherwise.
         do_compute_max_step_from_zmax = utils::parser::queryWithParser(
@@ -763,6 +754,27 @@ WarpX::ReadParameters ()
                 pp_warpx, "self_fields_max_iters", self_fields_max_iters);
             pp_warpx.query("self_fields_verbosity", self_fields_verbosity);
         }
+
+        poisson_solver_id = GetAlgorithmInteger(pp_warpx, "poisson_solver");
+#ifndef WARPX_DIM_3D
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        poisson_solver_id!=PoissonSolverAlgo::IntegratedGreenFunction,
+        "The FFT Poisson solver only works in 3D.");
+#endif
+#ifndef WARPX_USE_FFT
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        poisson_solver_id!=PoissonSolverAlgo::IntegratedGreenFunction,
+        "To use the FFT Poisson solver, compile with WARPX_USE_FFT=ON.");
+#endif
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        (
+            electrostatic_solver_id!=ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic ||
+            poisson_solver_id!=PoissonSolverAlgo::IntegratedGreenFunction
+        ),
+        "The FFT Poisson solver is not implemented in labframe-electromagnetostatic mode yet."
+        );
+
         // Parse the input file for domain boundary potentials
         const ParmParse pp_boundary("boundary");
         bool potential_specified = false;
@@ -1144,7 +1156,7 @@ WarpX::ReadParameters ()
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( electromagnetic_solver_id != ElectromagneticSolverAlgo::CKC,
             "algo.maxwell_solver = ckc is not (yet) available for RZ geometry");
 #endif
-#ifndef WARPX_USE_PSATD
+#ifndef WARPX_USE_FFT
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD,
             "algo.maxwell_solver = psatd is not supported because WarpX was built without spectral solvers");
 #endif
@@ -1158,6 +1170,14 @@ WarpX::ReadParameters ()
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 WarpX::field_boundary_lo[0] == FieldBoundaryType::None,
                 "Error : Field boundary at r=0 must be ``none``. \n");
+
+            const ParmParse pp_boundary("boundary");
+            if (pp_boundary.contains("particle_lo")) {
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    WarpX::particle_boundary_lo[0] == ParticleBoundaryType::None,
+                    "Error : Particle boundary at r=0 must be ``none``. \n");
+            }
+
         }
 
         if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
@@ -1175,6 +1195,21 @@ WarpX::ReadParameters ()
         charge_deposition_algo = static_cast<short>(GetAlgorithmInteger(pp_algo, "charge_deposition"));
         particle_pusher_algo = static_cast<short>(GetAlgorithmInteger(pp_algo, "particle_pusher"));
         evolve_scheme = static_cast<short>(GetAlgorithmInteger(pp_algo, "evolve_scheme"));
+
+        // check for implicit evolve scheme
+        if (evolve_scheme == EvolveScheme::SemiImplicitEM) {
+            m_implicit_solver = std::make_unique<SemiImplicitEM>();
+        }
+        else if (evolve_scheme == EvolveScheme::ThetaImplicitEM) {
+            m_implicit_solver = std::make_unique<ThetaImplicitEM>();
+        }
+
+        // implicit evolve schemes not setup to use mirrors
+        if (evolve_scheme == EvolveScheme::SemiImplicitEM ||
+            evolve_scheme == EvolveScheme::ThetaImplicitEM) {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE( num_mirrors == 0,
+                "Mirrors cannot be used with Implicit evolve schemes.");
+        }
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             current_deposition_algo != CurrentDepositionAlgo::Esirkepov ||
@@ -1212,8 +1247,8 @@ WarpX::ReadParameters ()
 
         if (current_deposition_algo == CurrentDepositionAlgo::Villasenor) {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                evolve_scheme == EvolveScheme::ImplicitPicard ||
-                evolve_scheme == EvolveScheme::SemiImplicitPicard,
+                evolve_scheme == EvolveScheme::SemiImplicitEM ||
+                evolve_scheme == EvolveScheme::ThetaImplicitEM,
                 "Villasenor current deposition can only"
                 "be used with Implicit evolve schemes.");
         }
@@ -1274,11 +1309,8 @@ WarpX::ReadParameters ()
             macroscopic_solver_algo = GetAlgorithmInteger(pp_algo,"macroscopic_sigma_method");
         }
 
-        if (evolve_scheme == EvolveScheme::ImplicitPicard ||
-            evolve_scheme == EvolveScheme::SemiImplicitPicard) {
-            utils::parser::queryWithParser(pp_algo, "max_picard_iterations", max_picard_iterations);
-            utils::parser::queryWithParser(pp_algo, "picard_iteration_tolerance", picard_iteration_tolerance);
-            utils::parser::queryWithParser(pp_algo, "require_picard_convergence", require_picard_convergence);
+        if (evolve_scheme == EvolveScheme::SemiImplicitEM ||
+            evolve_scheme == EvolveScheme::ThetaImplicitEM) {
 
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 current_deposition_algo == CurrentDepositionAlgo::Esirkepov ||
@@ -2072,7 +2104,7 @@ WarpX::ClearLevel (int lev)
     G_cp  [lev].reset();
     rho_cp[lev].reset();
 
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         spectral_solver_fp[lev].reset();
         spectral_solver_cp[lev].reset();
@@ -2088,13 +2120,7 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
 {
     const bool aux_is_nodal = (field_gathering_algo == GatheringAlgo::MomentumConserving);
 
-#if   defined(WARPX_DIM_1D_Z)
-    const amrex::RealVect dx(WarpX::CellSize(lev)[2]);
-#elif   defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    const amrex::RealVect dx = {WarpX::CellSize(lev)[0], WarpX::CellSize(lev)[2]};
-#elif defined(WARPX_DIM_3D)
-    const amrex::RealVect dx = {WarpX::CellSize(lev)[0], WarpX::CellSize(lev)[1], WarpX::CellSize(lev)[2]};
-#endif
+    const Real* dx = Geom(lev).CellSize();
 
     // Initialize filter before guard cells manager
     // (needs info on length of filter's stencil)
@@ -2157,11 +2183,6 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
 
     AllocLevelMFs(lev, ba, dm, guard_cells.ng_alloc_EB, guard_cells.ng_alloc_J,
                   guard_cells.ng_alloc_Rho, guard_cells.ng_alloc_F, guard_cells.ng_alloc_G, aux_is_nodal);
-
-    if (evolve_scheme == EvolveScheme::ImplicitPicard ||
-        evolve_scheme == EvolveScheme::SemiImplicitPicard) {
-        EvolveImplicitPicardInit(lev);
-    }
 
     m_accelerator_lattice[lev] = std::make_unique<AcceleratorLattice>();
     m_accelerator_lattice[lev]->InitElementFinder(lev, ba, dm);
@@ -2461,7 +2482,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
     {
         // Allocate and initialize the spectral solver
-#ifndef WARPX_USE_PSATD
+#ifndef WARPX_USE_FFT
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( false,
             "WarpX::AllocLevelMFs: PSATD solver requires WarpX build with spectral solver support.");
 #else
@@ -2619,7 +2640,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
         {
             // Allocate and initialize the spectral solver
-#ifndef WARPX_USE_PSATD
+#ifndef WARPX_USE_FFT
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE( false,
                 "WarpX::AllocLevelMFs: PSATD solver requires WarpX build with spectral solver support.");
 #else
@@ -2713,7 +2734,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
 }
 
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
 #   ifdef WARPX_DIM_RZ
 /* \brief Allocate spectral Maxwell solver (RZ dimensions) at a level
  *
@@ -2828,6 +2849,13 @@ WarpX::CellSize (int lev)
 #endif
 }
 
+amrex::XDim3
+WarpX::InvCellSize (int lev)
+{
+    std::array<Real,3> dx = WarpX::CellSize(lev);
+    return {1._rt/dx[0], 1._rt/dx[1], 1._rt/dx[2]};
+}
+
 amrex::RealBox
 WarpX::getRealBox(const Box& bx, int lev)
 {
@@ -2836,13 +2864,13 @@ WarpX::getRealBox(const Box& bx, int lev)
     return( grid_box );
 }
 
-std::array<Real,3>
+amrex::XDim3
 WarpX::LowerCorner(const Box& bx, const int lev, const amrex::Real time_shift_delta)
 {
     auto & warpx = GetInstance();
     const RealBox grid_box = getRealBox( bx, lev );
 
-    const Real* xyzmin = grid_box.lo();
+    const Real* grid_min = grid_box.lo();
 
     const amrex::Real cur_time = warpx.gett_new(lev);
     const amrex::Real time_shift = (cur_time + time_shift_delta - warpx.time_of_last_gal_shift);
@@ -2851,23 +2879,23 @@ WarpX::LowerCorner(const Box& bx, const int lev, const amrex::Real time_shift_de
                                                    warpx.m_v_galilean[2]*time_shift };
 
 #if defined(WARPX_DIM_3D)
-    return { xyzmin[0] + galilean_shift[0], xyzmin[1] + galilean_shift[1], xyzmin[2] + galilean_shift[2] };
+    return { grid_min[0] + galilean_shift[0], grid_min[1] + galilean_shift[1], grid_min[2] + galilean_shift[2] };
 
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    return { xyzmin[0] + galilean_shift[0], std::numeric_limits<Real>::lowest(), xyzmin[1] + galilean_shift[2] };
+    return { grid_min[0] + galilean_shift[0], std::numeric_limits<Real>::lowest(), grid_min[1] + galilean_shift[2] };
 
 #elif defined(WARPX_DIM_1D_Z)
-    return { std::numeric_limits<Real>::lowest(), std::numeric_limits<Real>::lowest(), xyzmin[0] + galilean_shift[2] };
+    return { std::numeric_limits<Real>::lowest(), std::numeric_limits<Real>::lowest(), grid_min[0] + galilean_shift[2] };
 #endif
 }
 
-std::array<Real,3>
+amrex::XDim3
 WarpX::UpperCorner(const Box& bx, const int lev, const amrex::Real time_shift_delta)
 {
     auto & warpx = GetInstance();
     const RealBox grid_box = getRealBox( bx, lev );
 
-    const Real* xyzmax = grid_box.hi();
+    const Real* grid_max = grid_box.hi();
 
     const amrex::Real cur_time = warpx.gett_new(lev);
     const amrex::Real time_shift = (cur_time + time_shift_delta - warpx.time_of_last_gal_shift);
@@ -2876,13 +2904,13 @@ WarpX::UpperCorner(const Box& bx, const int lev, const amrex::Real time_shift_de
                                                    warpx.m_v_galilean[2]*time_shift };
 
 #if defined(WARPX_DIM_3D)
-    return { xyzmax[0] + galilean_shift[0], xyzmax[1] + galilean_shift[1], xyzmax[2] + galilean_shift[2] };
+    return { grid_max[0] + galilean_shift[0], grid_max[1] + galilean_shift[1], grid_max[2] + galilean_shift[2] };
 
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    return { xyzmax[0] + galilean_shift[0], std::numeric_limits<Real>::max(), xyzmax[1] + galilean_shift[1] };
+    return { grid_max[0] + galilean_shift[0], std::numeric_limits<Real>::max(), grid_max[1] + galilean_shift[1] };
 
 #elif defined(WARPX_DIM_1D_Z)
-    return { std::numeric_limits<Real>::max(), std::numeric_limits<Real>::max(), xyzmax[0] + galilean_shift[0] };
+    return { std::numeric_limits<Real>::max(), std::numeric_limits<Real>::max(), grid_max[0] + galilean_shift[0] };
 #endif
 }
 
@@ -2970,7 +2998,7 @@ void
 WarpX::ComputeDivE(amrex::MultiFab& divE, const int lev)
 {
     if ( WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD ) {
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
         spectral_solver_fp[lev]->ComputeSpectralDivE( lev, Efield_aux[lev], divE );
 #else
         WARPX_ABORT_WITH_MESSAGE(
@@ -2981,7 +3009,7 @@ WarpX::ComputeDivE(amrex::MultiFab& divE, const int lev)
     }
 }
 
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
 PML_RZ*
 WarpX::GetPML_RZ (int lev)
 {
@@ -3280,6 +3308,16 @@ WarpX::isAnyBoundaryPML()
     return false;
 }
 
+bool
+WarpX::isAnyParticleBoundaryThermal ()
+{
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        if (WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Thermal) {return true;}
+        if (WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Thermal) {return true;}
+    }
+    return false;
+}
+
 std::string
 TagWithLevelSuffix (std::string name, int const level)
 {
@@ -3362,4 +3400,157 @@ WarpX::AllocInitMultiFabFromModel (
         mf->setVal(*initial_value);
     }
     multifab_map[name_with_suffix] = mf.get();
+}
+
+amrex::MultiFab*
+WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, const int direction) const
+{
+    // This function does *not* check if the returned field pointer is != nullptr
+
+    amrex::MultiFab* field_pointer = nullptr;
+
+    switch(field_type)
+    {
+        case FieldType::Efield_aux :
+            field_pointer = Efield_aux[lev][direction].get();
+            break;
+       case FieldType::Bfield_aux :
+            field_pointer = Bfield_aux[lev][direction].get();
+            break;
+       case FieldType::Efield_fp :
+            field_pointer = Efield_fp[lev][direction].get();
+            break;
+       case FieldType::Bfield_fp :
+            field_pointer = Bfield_fp[lev][direction].get();
+            break;
+       case FieldType::current_fp :
+            field_pointer = current_fp[lev][direction].get();
+            break;
+       case FieldType::current_fp_nodal :
+            field_pointer = current_fp_nodal[lev][direction].get();
+            break;
+       case FieldType::rho_fp :
+            field_pointer = rho_fp[lev].get();
+            break;
+       case FieldType::F_fp :
+            field_pointer = F_fp[lev].get();
+            break;
+       case FieldType::G_fp :
+            field_pointer = G_fp[lev].get();
+            break;
+       case FieldType::phi_fp :
+            field_pointer = phi_fp[lev].get();
+            break;
+       case FieldType::vector_potential_fp :
+            field_pointer = vector_potential_fp_nodal[lev][direction].get();
+            break;
+       case FieldType::Efield_cp :
+            field_pointer = Efield_cp[lev][direction].get();
+            break;
+       case FieldType::Bfield_cp :
+            field_pointer = Bfield_cp[lev][direction].get();
+            break;
+       case FieldType::current_cp :
+            field_pointer = current_cp[lev][direction].get();
+            break;
+       case FieldType::rho_cp :
+            field_pointer = rho_cp[lev].get();
+            break;
+       case FieldType::F_cp :
+            field_pointer = F_cp[lev].get();
+            break;
+       case FieldType::G_cp :
+            field_pointer = G_cp[lev].get();
+            break;
+       case FieldType::edge_lengths :
+            field_pointer = m_edge_lengths[lev][direction].get();
+            break;
+       case FieldType::face_areas :
+            field_pointer = m_face_areas[lev][direction].get();
+            break;
+       case FieldType::Efield_avg_fp :
+            field_pointer = Efield_avg_fp[lev][direction].get();
+            break;
+       case FieldType::Bfield_avg_fp :
+            field_pointer = Bfield_avg_fp[lev][direction].get();
+            break;
+       case FieldType::Efield_avg_cp :
+            field_pointer = Efield_avg_cp[lev][direction].get();
+            break;
+       case FieldType::Bfield_avg_cp :
+            field_pointer = Bfield_avg_cp[lev][direction].get();
+            break;
+        default:
+            WARPX_ABORT_WITH_MESSAGE("Invalid field type");
+            break;
+    }
+
+    return field_pointer;
+}
+
+bool
+WarpX::isFieldInitialized (const FieldType field_type, const int lev, const int direction) const
+{
+    const bool is_field_init = (getFieldPointerUnchecked(field_type, lev, direction) != nullptr);
+    return is_field_init;
+}
+
+amrex::MultiFab*
+WarpX::getFieldPointer (const FieldType field_type, const int lev, const int direction) const
+{
+    auto* const field_pointer = getFieldPointerUnchecked(field_type, lev, direction);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        field_pointer != nullptr, "Requested field is not initialized!");
+    return field_pointer;
+}
+
+std::array<const amrex::MultiFab* const, 3>
+WarpX::getFieldPointerArray (const FieldType field_type, const int lev) const
+{
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        (field_type == FieldType::Efield_aux) || (field_type == FieldType::Bfield_aux) ||
+        (field_type == FieldType::Efield_fp) || (field_type == FieldType::Bfield_fp) ||
+        (field_type == FieldType::current_fp) || (field_type == FieldType::current_fp_nodal) ||
+        (field_type == FieldType::Efield_cp) || (field_type == FieldType::Bfield_cp) ||
+        (field_type == FieldType::current_cp), "Requested field type is not a vector.");
+
+    return std::array<const amrex::MultiFab* const, 3>{
+        getFieldPointer(field_type, lev, 0),
+        getFieldPointer(field_type, lev, 1),
+        getFieldPointer(field_type, lev, 2)};
+}
+
+const amrex::MultiFab&
+WarpX::getField(FieldType field_type, const int lev, const int direction) const
+{
+    return *getFieldPointer(field_type, lev, direction);
+}
+
+const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>,3>>&
+WarpX::getMultiLevelField(warpx::fields::FieldType field_type) const
+{
+    switch(field_type)
+    {
+        case FieldType::Efield_aux :
+            return Efield_aux;
+        case FieldType::Bfield_aux :
+            return Bfield_aux;
+        case FieldType::Efield_fp :
+            return Efield_fp;
+        case FieldType::Bfield_fp :
+            return Bfield_fp;
+        case FieldType::current_fp :
+            return current_fp;
+        case FieldType::current_fp_nodal :
+            return current_fp_nodal;
+        case FieldType::Efield_cp :
+            return Efield_cp;
+        case FieldType::Bfield_cp :
+            return Bfield_cp;
+        case FieldType::current_cp :
+            return current_cp;
+        default:
+            WARPX_ABORT_WITH_MESSAGE("Invalid field type");
+            return Efield_fp;
+    }
 }

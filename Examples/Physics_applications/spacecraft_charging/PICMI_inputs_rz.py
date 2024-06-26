@@ -15,6 +15,7 @@
 import numpy as np
 import scipy.constants as scc
 from mpi4py import MPI as mpi
+
 from pywarpx import picmi
 from pywarpx.callbacks import installafterEsolve, installafterInitEsolve
 from pywarpx.fields import ExWrapper, EzWrapper, PhiFPWrapper, RhoFPWrapper
@@ -219,7 +220,7 @@ grid = picmi.CylindricalGrid(
     upper_bound = [rmax, zmax],
     lower_boundary_conditions = ['none', 'dirichlet'],
     upper_boundary_conditions =  ['dirichlet', 'dirichlet'],
-    lower_boundary_conditions_particles = ['absorbing', 'reflecting'],
+    lower_boundary_conditions_particles = ['none', 'reflecting'],
     upper_boundary_conditions_particles =  ['absorbing', 'reflecting']
 )
 

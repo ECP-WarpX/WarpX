@@ -23,7 +23,7 @@ public:
      * @param i index of diagnostics in MultiDiagnostics::alldiags
      * @param name diagnostics name in the inputs file
      */
-    BoundaryScrapingDiagnostics (int i, std::string name);
+    BoundaryScrapingDiagnostics (int i, const std::string& name);
 
 private:
     /** Read relevant parameters for BoundaryScraping */

@@ -8,9 +8,10 @@ import numpy as np
 import scipy.fft as fft
 from matplotlib import colors
 from openpmd_viewer import OpenPMDTimeSeries
-from pywarpx import picmi
 from scipy.interpolate import RegularGridInterpolator
 from scipy.special import j1, jn, jn_zeros
+
+from pywarpx import picmi
 
 constants = picmi.constants
 
@@ -153,7 +154,7 @@ else:
     amps = np.abs(F_kw[2, 1, len(kz)//2-2:len(kz)//2+2])
     print("Amplitude sample: ", amps)
     assert np.allclose(
-        amps, np.array([61.50945919, 19.74831134, 101.01820349, 10.8974811])
+        amps, np.array([ 61.02377286,  19.80026021, 100.47687017,  10.83331295])
     )
 
 if sim.test:

@@ -77,6 +77,8 @@ Instances of the classes below need to be passed to the method `add_applied_fiel
 
 .. autoclass:: pywarpx.picmi.AnalyticAppliedField
 
+.. autoclass:: pywarpx.picmi.LoadInitialField
+
 .. autoclass:: pywarpx.picmi.PlasmaLens
 
 .. autoclass:: pywarpx.picmi.Mirror

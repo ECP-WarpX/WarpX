@@ -9,7 +9,7 @@
 #include "WarpX.H"
 
 #include "BoundaryConditions/PML.H"
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
 #   include "BoundaryConditions/PML_RZ.H"
 #endif
 #include "Filter/BilinearFilter.H"
@@ -64,7 +64,7 @@ WarpX::UpdateAuxilaryData ()
 void
 WarpX::UpdateAuxilaryDataStagToNodal ()
 {
-#ifndef WARPX_USE_PSATD
+#ifndef WARPX_USE_FFT
     if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( false,
             "WarpX::UpdateAuxilaryDataStagToNodal: PSATD solver requires "
@@ -584,7 +584,7 @@ WarpX::FillBoundaryE (const int lev, const PatchType patch_type, const amrex::In
             pml[lev]->FillBoundaryE(patch_type, nodal_sync);
         }
 
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
         if (pml_rz[lev])
         {
             pml_rz[lev]->FillBoundaryE(patch_type, nodal_sync);
@@ -596,7 +596,7 @@ WarpX::FillBoundaryE (const int lev, const PatchType patch_type, const amrex::In
     for (int i = 0; i < 3; ++i)
     {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            ng <= mf[i]->nGrowVect(),
+            ng.allLE(mf[i]->nGrowVect()),
             "Error: in FillBoundaryE, requested more guard cells than allocated");
 
         const amrex::IntVect nghost = (safe_guard_cells) ? mf[i]->nGrowVect() : ng;
@@ -641,7 +641,7 @@ WarpX::FillBoundaryB (const int lev, const PatchType patch_type, const amrex::In
             pml[lev]->FillBoundaryB(patch_type, nodal_sync);
         }
 
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
         if (pml_rz[lev])
         {
             pml_rz[lev]->FillBoundaryB(patch_type, nodal_sync);
@@ -653,7 +653,7 @@ WarpX::FillBoundaryB (const int lev, const PatchType patch_type, const amrex::In
     for (int i = 0; i < 3; ++i)
     {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            ng <= mf[i]->nGrowVect(),
+            ng.allLE(mf[i]->nGrowVect()),
             "Error: in FillBoundaryB, requested more guard cells than allocated");
 
         const amrex::IntVect nghost = (safe_guard_cells) ? mf[i]->nGrowVect() : ng;
@@ -684,7 +684,7 @@ WarpX::FillBoundaryE_avg (int lev, PatchType patch_type, IntVect ng)
             ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period);
         } else {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng <= Efield_avg_fp[lev][0]->nGrowVect(),
+                ng.allLE(Efield_avg_fp[lev][0]->nGrowVect()),
                 "Error: in FillBoundaryE_avg, requested more guard cells than allocated");
             ablastr::utils::communication::FillBoundary(*Efield_avg_fp[lev][0], ng, WarpX::do_single_precision_comms, period);
             ablastr::utils::communication::FillBoundary(*Efield_avg_fp[lev][1], ng, WarpX::do_single_precision_comms, period);
@@ -705,7 +705,7 @@ WarpX::FillBoundaryE_avg (int lev, PatchType patch_type, IntVect ng)
 
         } else {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng <= Efield_avg_cp[lev][0]->nGrowVect(),
+                ng.allLE(Efield_avg_cp[lev][0]->nGrowVect()),
                 "Error: in FillBoundaryE, requested more guard cells than allocated");
             ablastr::utils::communication::FillBoundary(*Efield_avg_cp[lev][0], ng, WarpX::do_single_precision_comms, cperiod);
             ablastr::utils::communication::FillBoundary(*Efield_avg_cp[lev][1], ng, WarpX::do_single_precision_comms, cperiod);
@@ -737,7 +737,7 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
             ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period);
         } else {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng <= Bfield_fp[lev][0]->nGrowVect(),
+                ng.allLE(Bfield_fp[lev][0]->nGrowVect()),
                 "Error: in FillBoundaryB, requested more guard cells than allocated");
             ablastr::utils::communication::FillBoundary(*Bfield_avg_fp[lev][0], ng, WarpX::do_single_precision_comms, period);
             ablastr::utils::communication::FillBoundary(*Bfield_avg_fp[lev][1], ng, WarpX::do_single_precision_comms, period);
@@ -757,7 +757,7 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
             ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, cperiod);
         } else {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng <= Bfield_avg_cp[lev][0]->nGrowVect(),
+                ng.allLE(Bfield_avg_cp[lev][0]->nGrowVect()),
                 "Error: in FillBoundaryB_avg, requested more guard cells than allocated");
             ablastr::utils::communication::FillBoundary(*Bfield_avg_cp[lev][0], ng, WarpX::do_single_precision_comms, cperiod);
             ablastr::utils::communication::FillBoundary(*Bfield_avg_cp[lev][1], ng, WarpX::do_single_precision_comms, cperiod);
@@ -882,7 +882,7 @@ WarpX::SyncCurrent (
     WARPX_PROFILE("WarpX::SyncCurrent()");
 
     // If warpx.do_current_centering = 1, center currents from nodal grid to staggered grid
-    if (WarpX::do_current_centering)
+    if (do_current_centering)
     {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(finest_level <= 1,
                                          "warpx.do_current_centering=1 not supported with more than one fine levels");
@@ -1178,7 +1178,7 @@ void WarpX::SumBoundaryJ (
     const amrex::IntVect ng = J.nGrowVect();
     amrex::IntVect ng_depos_J = get_ng_depos_J();
 
-    if (WarpX::do_current_centering)
+    if (do_current_centering)
     {
 #if   defined(WARPX_DIM_1D_Z)
         ng_depos_J[0] += WarpX::current_centering_noz / 2;
