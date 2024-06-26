@@ -355,7 +355,7 @@ WarpX::ProjectionCleanDivB() {
             ablastr::warn_manager::WarnPriority::low);
     } else if ( WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee
             ||  WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC
-            ||  ( (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame 
+            ||  ( (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame
                 || WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
                 && WarpX::poisson_solver_id == PoissonSolverAlgo::Multigrid)) {
         // Build Object, run, then delete
