@@ -1372,24 +1372,7 @@ WarpX::LoadExternalFieldsFromFile (int const lev)
         ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Bfield_fp_external[lev][1].get(), "B", "y");
         ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Bfield_fp_external[lev][2].get(), "B", "z");
 #endif
-
-#if defined(WARPX_DIM_RZ)
-        ablastr::warn_manager::WMRecordWarning("External Fields Loader",
-            "WarpX is running in RZ mode, so divB not cleaned. Interpolation may lead to non-zero B field divergence.",
-            ablastr::warn_manager::WarnPriority::low);
-#else
-        if constexpr (!std::is_same<Real, double>::value) {
-            ablastr::warn_manager::WMRecordWarning("External Fields Loader",
-                "Field Precision is SINGLE, so divB not cleaned. Interpolation may lead to non-zero B field divergence.",
-                ablastr::warn_manager::WarnPriority::low);
-        } else if (grid_type == GridType::Collocated) {
-            ablastr::warn_manager::WMRecordWarning("External Fields Loader",
-                "Grid Type is collocated, so divB not cleaned. Interpolation may lead to non-zero B field divergence.",
-                ablastr::warn_manager::WarnPriority::low);
-        } else {
-            WarpX::ProjectionCleanDivB();
-        }
-#endif
+        WarpX::ProjectionCleanDivB();
     }
     if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::read_from_file) {
 #if defined(WARPX_DIM_RZ)

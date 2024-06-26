@@ -340,9 +340,33 @@ ProjectionDivCleaner::correctBfield ()
 
 void
 WarpX::ProjectionCleanDivB() {
-    // Build Object, run, then delete
-    warpx::initialization::ProjectionDivCleaner dc;
-    dc.setSourceFromBfield();
-    dc.solve();
-    dc.correctBfield();
+#if defined(WARPX_DIM_RZ)
+    ablastr::warn_manager::WMRecordWarning("Projection Div Cleaner",
+        "WarpX is running in RZ mode, so divB not cleaned. Interpolation may lead to non-zero B field divergence.",
+        ablastr::warn_manager::WarnPriority::low);
+#else
+    if constexpr (!std::is_same<Real, double>::value) {
+        ablastr::warn_manager::WMRecordWarning("Projection Div Cleaner",
+            "Field Precision is SINGLE, so divB not cleaned. Interpolation may lead to non-zero B field divergence.",
+            ablastr::warn_manager::WarnPriority::low);
+    } else if (grid_type == GridType::Collocated) {
+        ablastr::warn_manager::WMRecordWarning("Projection Div Cleaner",
+            "Grid Type is collocated, so divB not cleaned. Interpolation may lead to non-zero B field divergence.",
+            ablastr::warn_manager::WarnPriority::low);
+    } else if ( WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee
+            ||  WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC
+            ||  ( (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame 
+                || WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
+                && WarpX::poisson_solver_id == PoissonSolverAlgo::Multigrid)) {
+        // Build Object, run, then delete
+        warpx::initialization::ProjectionDivCleaner dc;
+        dc.setSourceFromBfield();
+        dc.solve();
+        dc.correctBfield();
+    } else {
+        ablastr::warn_manager::WMRecordWarning("Projection Div Cleaner",
+            "Only Yee, HybridPIC, and MLMG based static Labframe solvers are currently supported, so divB not cleaned. Interpolation may lead to non-zero B field divergence.",
+            ablastr::warn_manager::WarnPriority::low);
+    }
+#endif
 }
