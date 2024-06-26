@@ -10,53 +10,18 @@
 #define WARPX_INJECTOR_DENSITY_H_
 
 #include "Utils/WarpXConst.H"
-#include "Utils/Algorithms/LinearInterpolation.H"
 
 
 #include <AMReX.H>
-//include <WarpX.H>
-#include <AMReX_AmrCore.H>
 #include <AMReX_Array.H>
-#include <AMReX_Array4.H>
-#include <AMReX_BLassert.H>
-#include <AMReX_Box.H>
-#include <AMReX_BoxArray.H>
-#include <AMReX_BoxList.H>
-#include <AMReX_Config.H>
-#include <AMReX_Geometry.H>
 #include <AMReX_GpuQualifiers.H>
-#include <AMReX_INT.H>
-#include <AMReX_IndexType.H>
-#include <AMReX_IntVect.H>
-#include <AMReX_LayoutData.H>
-#include <AMReX_MFIter.H>
 #include <AMReX_MultiFab.H>
-#include <AMReX_ParallelDescriptor.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
-#include <AMReX_RealBox.H>
-#include <AMReX_SPACE.H>
-#include <AMReX_Vector.H>
 
 #include <cmath>
 #include <string>
-
-#ifdef WARPX_USE_OPENPMD
-#   include <openPMD/openPMD.hpp>
-namespace io = openPMD;
-#endif
-
-#include <algorithm>
-#include <array>
-#include <cctype>
-#include <iostream>
-#include <memory>
-#include <string>
-#include <utility>
-
-//using namespace amrex;
-//namespace
 
 // struct whose getDensity returns constant density.
 struct InjectorDensityConstant

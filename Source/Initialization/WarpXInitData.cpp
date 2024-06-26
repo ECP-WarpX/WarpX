@@ -1448,7 +1448,7 @@ WarpX::ReadExternalFieldFromFile (
 #endif
 
     // Extract the correct component of the field
-    auto FC = (F_component == "")? F[io::RecordComponent::SCALAR] : F[F_component];
+    auto FC = (F_component == "")? F[openPMD::RecordComponent::SCALAR] : F[F_component];
     const auto extent = FC.getExtent();
     const auto extent0 = static_cast<int>(extent[0]);
     const auto extent1 = static_cast<int>(extent[1]);

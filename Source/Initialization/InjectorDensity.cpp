@@ -5,13 +5,11 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "WarpX.H"
-
 #include "InjectorDensity.H"
 
+#include "WarpX.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
-#include "Utils/Algorithms/LinearInterpolation.H"
 
 #include <AMReX_ParmParse.H>
 #include <AMReX.H>
