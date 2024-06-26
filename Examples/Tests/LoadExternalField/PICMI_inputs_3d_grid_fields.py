@@ -93,7 +93,7 @@ particle_diag = picmi.ParticleDiagnostic(
         species=[ions],
         data_list = ['ux', 'uy', 'uz', 'x', 'y', 'z', 'weighting'],
         write_dir='.',
-        warpx_file_prefix='Python_LoadExternalField3D_plt'
+        warpx_file_prefix='Python_LoadExternalGridField3D_plt'
         )
 field_diag = picmi.FieldDiagnostic(
         name='diag1',
@@ -101,7 +101,7 @@ field_diag = picmi.FieldDiagnostic(
         period=300,
         data_list = ['Bx', 'By', 'Bz', 'Ex', 'Ey', 'Ez', 'Jx', 'Jy', 'Jz'],
         write_dir='.',
-        warpx_file_prefix='Python_LoadExternalField3D_plt'
+        warpx_file_prefix='Python_LoadExternalGridField3D_plt'
         )
 
 #################################
