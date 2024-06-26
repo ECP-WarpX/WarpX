@@ -1047,7 +1047,7 @@ public:
      * \brief Load field values from a user-specified openPMD file
      * for a specific field (specified by `F_name`)
      */
-    void ReadExternalFieldFromFile (
+    static void ReadExternalFieldFromFile (
          std::string read_fields_from_path, amrex::MultiFab* mf,
          std::string F_name, std::string F_component);
 

@@ -104,16 +104,14 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
     const ParmParse pp_warpx ("warpx");
     const ParmParse pp_amr ("amr");
 
-    std::string read_density_from_path= "./";
+    std::string external_density_path, density;
     pp.query("read_density_from_path", external_density_path);
     pp.query("density_name", density);
-    pp_amr.query("max_grid_size", max_grid_size);
 
     // Get WarpX domain info
     WarpX& warpx = WarpX::GetInstance();
     amrex::Geometry const& geom0 = warpx.Geom(0);
-    real_box = geom0.ProbDomain();
-    auto const dx = geom0.CellSizeArray();
+    m_cell_size = geom0.CellSizeArray();
     auto geom_lo = geom0.ProbLoArray();
     auto geom_hi = geom0.ProbHiArray();
     lo0 = geom_lo[0];
@@ -126,126 +124,10 @@ InjectorDensityFromFile::InjectorDensityFromFile (std::string const & a_species_
     // creating the mulitfab array
     m_rho = warpx.get_pointer_rho_fp(0);
     m_rho->setVal(0);
-    const amrex::IntVect nodal_flag = m_rho->ixType().toIntVect();
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_rho != nullptr, "Inside Assert");
 
-    // Read external field openPMD data
-    io::Series series = io::Series(external_density_path, io::Access::READ_ONLY);
-    auto iseries = series.iterations.begin()->second;
-
-    io::Mesh P = iseries.meshes[density];
-    io::MeshRecordComponent p_scalar0 = P[io::RecordComponent::SCALAR];
-
-    auto axisLabels = P.getAttribute("axisLabels").get<std::vector<std::string>>();
-    auto fileGeom = P.getAttribute("geometry").get<std::string>();
-
-    offset = P.gridGlobalOffset();
-    spacing = P.gridSpacing< long double >();
-    extent = p_scalar0.getExtent();
-    const int extent0 = static_cast<int>(extent[0]);
-    const int extent1 = static_cast<int>(extent[1]);
-    const int extent2 = static_cast<int>(extent[2]);
-
-    const long double file_dx = static_cast<amrex::Real>(spacing[0]);
-    const long double file_dy = static_cast<amrex::Real>(spacing[1]);
-    const long double file_dz = static_cast<amrex::Real>(spacing[2]);
-
-    const io::Offset chunk_offset =  {0, 0, 0};  //{0,0,0};
-    const io::Extent chunk_extent = {extent[0], extent[1], extent[2]};
-
-    std::shared_ptr<double> P_chunk_data = p_scalar0.loadChunk<double>(chunk_offset,chunk_extent);
-    series.flush();
-    P_data_host = P_chunk_data.get();
-
-    // Load data to GPU
-    const size_t total_extent = size_t(extent[0]) * extent[1] * extent[2];
-    amrex::Gpu::DeviceVector<double> P_data_gpu(total_extent);
-    double* P_data = P_data_gpu.data();
-    amrex::Gpu::copy(amrex::Gpu::hostToDevice, P_data_host, P_data_host + total_extent, P_data);
-
-    // iterate over the external field and find the index that corresponds to the grid points
-    amrex::AllPrint() << "Before MFIter Loop...\n";
-    for (MFIter mfi(*m_rho, TilingIfNotGPU()); mfi.isValid(); ++mfi)
-    {
-        const amrex::Box tb = mfi.tilebox(nodal_flag, m_rho->nGrowVect());
-        amrex::Array4<amrex::Real> rho_array4 = m_rho->array(mfi);
-
-        int start[3] = {rho_array4.begin.x, rho_array4.begin.y, rho_array4.begin.z};
-        int end[3] = {rho_array4.end.x, rho_array4.end.y, rho_array4.end.z};
-        amrex::IntVect start_vect(start);
-        amrex::IntVect end_vect(end);
-        amrex::Box mf_bx(start_vect, end_vect);
-
-        m_cell_size = geom0.CellSizeArray();
-
-        amrex::AllPrint() << "MultiFab meta data\n";
-        amrex::AllPrint() << "  tb lo * dx: " << tb.smallEnd(0) * dx[0] << "  " << tb.smallEnd(1) * dx[1] << "  " << tb.smallEnd(2) * dx[2] << '\n';
-        amrex::AllPrint() << "  cell size: " << m_cell_size[0] << "  " << m_cell_size[1] << "  " << m_cell_size[2] << '\n';
-        amrex::AllPrint() << "  dx: " << dx[0] << "  " << dx[1] << "  " << dx[2] << '\n';
-
-        amrex::AllPrint() << "Source offsets\n";
-        amrex::AllPrint() << "  offsets=" << offset[0] << " " << offset[1] << " " << offset[2] << "\n";
-        amrex::AllPrint() << "  file_dx=" << file_dx << " " << file_dy << " " << file_dz << "\n";
-
-
-        amrex::ParallelFor (tb,
-                            [=] AMREX_GPU_DEVICE (int i, int j, int k)
-        {
-                                // i,j,k denote x,y,z indices in 3D xyz
-                                // i,j denote r,z indices in 2D rz; k is just 0
-
-                                // TODO: so far for 3D only!!
-                                amrex::Real x0, x1, x2;
-
-                                // real position in the multifab that we interpolate to
-                                x0 = real_box.lo(0) + amrex::Real(i)*m_cell_size[0];
-                                if ( tb.type(0)==amrex::IndexType::CellIndex::CELL ) {
-                                    x0 += 0.5_rt*m_cell_size[0];
-                                }
-                                x1 = real_box.lo(1) + amrex::Real(j)*m_cell_size[1];
-                                if (tb.type(1)==amrex::IndexType::CellIndex::CELL ) {
-                                    x1 += 0.5_rt*m_cell_size[1];
-                                }
-                                x2 = real_box.lo(2) + amrex::Real(k)*m_cell_size[2];
-                                if ( tb.type(2)==amrex::IndexType::CellIndex::CELL ){
-                                    x2 += 0.5_rt*m_cell_size[2];
-                                }
-
-                                // the next lower index in the data source at the current real position
-                                int const ix = std::floor( (x0-offset[0])/file_dx );
-                                int const iy = std::floor( (x1-offset[1])/file_dy );
-                                int const iz = std::floor( (x2-offset[2])/file_dz );
-
-                                // Get coordinates of data source grid point (real position)
-                                auto const xx0 = ix * file_dx + offset[0];
-                                auto const xx1 = iy * file_dy + offset[1];
-                                auto const xx2 = iz * file_dz + offset[2];
-
-                                // source data access
-                                const amrex::Array4<double> src_data(P_data, {0, 0, 0}, {extent2, extent1, extent0}, 1);
-
-                                if (iz < 0 | iz > extent2-2 | iy < 0 | iy > extent1-2 | ix < 0 | ix > extent0-2 ){
-                                    rho_array4(i,j,k) = static_cast<amrex::Real> (0);
-                                }else{
-                                    // interpolate from closest source data points to rho MultiFab resolution
-                                    const double
-                                        f000 = src_data(iz    , iy    , ix    ),
-                                        f001 = src_data(iz + 1, iy    , ix    ),
-                                        f010 = src_data(iz    , iy + 1, ix    ),
-                                        f011 = src_data(iz + 1, iy + 1, ix    ),
-                                        f100 = src_data(iz    , iy    , ix + 1),
-                                        f101 = src_data(iz + 1, iy    , ix + 1),
-                                        f110 = src_data(iz    , iy + 1, ix + 1),
-                                        f111 = src_data(iz + 1, iy + 1, ix + 1);
-                                    rho_array4(i,j,k) = static_cast<amrex::Real> (utils::algorithms::trilinear_interp<double>
-                                            (xx0, xx0+file_dx, xx1, xx1+file_dy, xx2, xx2+file_dz,
-                                            f000, f001, f010, f011, f100, f101, f110, f111,
-                                            x0, x1, x2) );
-                                }
-                            }
-        ); //end ParallelFor
-    }
+    WarpX::ReadExternalFieldFromFile ( external_density_path, m_rho, density, "" );
 
 }
 

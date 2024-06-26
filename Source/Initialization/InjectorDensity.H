@@ -195,22 +195,9 @@ struct InjectorDensityFromFile
         return m_rho_array4(ix,iy,iz);
     }
 private:
-    std::string external_density_path;
-    std::string density;
-
     amrex::MultiFab* m_rho;
     amrex::Array4<amrex::Real> m_rho_array4;
 
-    amrex::RealBox real_box;
-    std::vector<long double> spacing;
-    std::vector<int> n_cell;
-    int max_grid_size;
-    std::vector<double> offset;
-    std::vector<std::uint64_t> extent;
-    //std::shared_ptr<double> P_chunk_data;
-    std::shared_ptr<double> charge;
-    //std::vector< std::vector < std::vector<double> > > data;
-    double* P_data_host;
     double lo0;
     double hi0;
     double lo1;
