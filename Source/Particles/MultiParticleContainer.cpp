@@ -416,6 +416,7 @@ MultiParticleContainer::InitData ()
     for (auto& pc : allcontainers) {
         pc->InitData();
     }
+    pc_tmp->InitData();
 
 }
 

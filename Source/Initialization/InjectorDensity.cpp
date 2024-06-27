@@ -6,44 +6,15 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "InjectorDensity.H"
-
 #include "WarpX.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 
 #include <AMReX_ParmParse.H>
-#include <AMReX.H>
-
-#ifdef AMREX_USE_SENSEI_INSITU
-#   include <AMReX_AmrMeshInSituBridge.H>
-#endif
-#include <AMReX_Array4.H>
-#include <AMReX_Box.H>
-#include <AMReX_Geometry.H>
-#include <AMReX_GpuLaunch.H>
-#include <AMReX_GpuQualifiers.H>
-#include <AMReX_IndexType.H>
-#include <AMReX_IntVect.H>
-#include <AMReX_MFIter.H>
-#include <AMReX_MultiFab.H>
-//#include <AMReX_MultiFabUtill.H>
-#include <AMReX_REAL.H>
-#include <AMReX_SPACE.H>
-
-//#include <algorithm>
 #include <cctype>
 #include <vector>
 
-#ifdef WARPX_USE_OPENPMD
-#   include <openPMD/openPMD.hpp>
-namespace io = openPMD;
-#endif
-
 using namespace amrex;
-namespace
-{
-}
-
 
 void InjectorDensity::clear ()
 {
