@@ -25,12 +25,14 @@ Overall simulation parameters
     When provided, this information is added as metadata to (openPMD) output files.
 
 * ``max_step`` (`integer`)
-    The number of PIC cycles to perform.
+    The number of PIC cycles to perform. See :ref:`stopping the simulation <stopping-the-simulation>`.
 
 * ``stop_time`` (`float`; in seconds)
-    The maximum physical time of the simulation. Can be provided instead of ``max_step``. If both
-    ``max_step`` and ``stop_time`` are provided, both criteria are used and the simulation stops
+    The maximum physical time of the simulation (in the boosted frame in a boosted-frame calculation).
+    Can be provided instead of ``max_step``.
+    If both ``max_step`` and ``stop_time`` are provided, both criteria are used and the simulation stops
     when the first criterion is hit.
+    See :ref:`stopping the simulation <stopping-the-simulation>`.
 
     Note: in boosted-frame simulations, ``stop_time`` refers to the time in the boosted frame.
 
@@ -58,6 +60,7 @@ Overall simulation parameters
     given in the lab frame). The value of ``max_step`` is overwritten, and
     printed to standard output. Currently only works if the Lorentz boost and
     the moving window are along the z direction.
+    See :ref:`stopping the simulation <stopping-the-simulation>`.
 
 * ``warpx.compute_max_step_from_btd`` (`integer`; 0 by default) optional
     Can be useful when computing back-transformed diagnostics.  If specified,
@@ -67,6 +70,7 @@ Overall simulation parameters
     or the current values of ``max_step`` and/or ``stop_time`` are too low to fill
     all BTD snapshots, the values of ``max_step`` and/or ``stop_time`` are
     overwritten with the new values and printed to standard output.
+    See :ref:`stopping the simulation <stopping-the-simulation>`.
 
 * ``warpx.random_seed`` (`string` or `int` > 0) optional
     If provided ``warpx.random_seed = random``, the random seed will be determined
@@ -364,6 +368,34 @@ We follow the same naming, but remove the ``SIG`` prefix, e.g., the WarpX signal
         > output.txt
 
 .. _running-cpp-parameters-box:
+
+.. _stopping-the-simulation:
+
+Stopping the simulation
+^^^^^^^^^^^^^^^^^^^^^^^
+
+There are several ways to control when a simulation will stop.
+The basic ways are to set either the maximum number of time steps (by setting
+``max_step``) or to set the maximum simulation time (by setting
+``stop_time``, noting the value will be in the boosted frame).
+When using the boosted frame and/or the back-transformed diagnostics, other
+criteria can be used.
+The quantity ``warpx.zmax_plasma_to_compute_max_step`` can be specified, setting the
+stopping criteria based on the location of the boosted frame.
+Also, ``warpx.compute_max_step_from_btd`` can be set, in which case the
+simulation will continue until the back-transformed diagnostics have been completed.
+Both of these methods override any input values of ``max_step`` and ``stop_time``.
+
+In the Python interface, the ``step`` command is called directly, with each
+call specifying the number of time steps.
+In this case, the ``max_step`` input parameter is ignored and the simulation
+will continue past it to complete the number of steps specified in the call to ``step``.
+Note that the simulation will stop if the time exceeds ``stop_time``.
+Any further calls to ``step`` will do nothing.
+
+The simulation can also be stopped by sending the appropriate signal (see :ref:`signal handling <signal-handling>`.).
+When a breaking signal is received, WarpX will finish its current time step, write out a check point file, and then exit.
+This overrides all other methods for controlling when the simulation stops.
 
 Setting up the field mesh
 -------------------------

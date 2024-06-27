@@ -73,6 +73,9 @@ WarpX::Evolve (int numsteps)
     // check typos in inputs after step 1
     bool early_params_checked = false;
 
+    // Flags receipt of interrupt signal
+    bool exit_loop_due_to_interrupt_signal = false;
+
     static Real evolve_time = 0;
 
     const int step_begin = istep[0];
@@ -174,7 +177,7 @@ WarpX::Evolve (int numsteps)
 
         // TODO: move out
         if (evolve_scheme == EvolveScheme::Explicit) {
-            if (cur_time + dt[0] >= stop_time - 1.e-3*dt[0] || step == numsteps_max-1) {
+            if (cur_time + dt[0] >= stop_time || step + 1 == numsteps_max) {
                 // At the end of last step, push p by 0.5*dt to synchronize
                 FillBoundaryE(guard_cells.ng_FieldGather);
                 FillBoundaryB(guard_cells.ng_FieldGather);
@@ -293,18 +296,33 @@ WarpX::Evolve (int numsteps)
                       << " s; Avg. per step = " << evolve_time/(step-step_begin+1) << " s\n\n";
         }
 
-        if (checkStopSimulation(cur_time)) {
+        exit_loop_due_to_interrupt_signal = checkStopSimulationInterrupt();
+        if (exit_loop_due_to_interrupt_signal) {
             break;
         }
+
     } // End loop on time steps
+
+    if (verbose) {
+        if (istep[0] == max_step) {
+            amrex::Print() << "Simulation stopped because max_step reached.\n";
+        }
+        if (stop_time <= cur_time && cur_time < stop_time + dt[0]) {
+            amrex::Print() << "Simulation stopped because stop_time reached.\n";
+        }
+        if (exit_loop_due_to_interrupt_signal) {
+            amrex::Print() << "Simulation stopped because break signal received.\n";
+        }
+    }
 
     // This if statement is needed for PICMI, which allows the Evolve routine to be
     // called multiple times, otherwise diagnostics will be done at every call,
     // regardless of the diagnostic period parameter provided in the inputs.
-    if (istep[0] == max_step || (stop_time - 1.e-3*dt[0] <= cur_time && cur_time < stop_time + dt[0])
-        || m_exit_loop_due_to_interrupt_signal) {
+    if (istep[0] == max_step
+        || (stop_time <= cur_time && cur_time < stop_time + dt[0])
+        || exit_loop_due_to_interrupt_signal) {
         multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
-        if (m_exit_loop_due_to_interrupt_signal) { ExecutePythonCallback("onbreaksignal"); }
+        if (exit_loop_due_to_interrupt_signal) { ExecutePythonCallback("onbreaksignal"); }
     }
 
     amrex::Print() <<
@@ -419,11 +437,9 @@ WarpX::OneStep_nosub (Real cur_time)
     ExecutePythonCallback("afterEsolve");
 }
 
-bool WarpX::checkStopSimulation (amrex::Real cur_time)
+bool WarpX::checkStopSimulationInterrupt ()
 {
-    m_exit_loop_due_to_interrupt_signal = SignalHandling::TestAndResetActionRequestFlag(SignalHandling::SIGNAL_REQUESTS_BREAK);
-    return (cur_time >= stop_time - 1.e-3*dt[0])  ||
-        m_exit_loop_due_to_interrupt_signal;
+    return SignalHandling::TestAndResetActionRequestFlag(SignalHandling::SIGNAL_REQUESTS_BREAK);
 }
 
 void WarpX::checkEarlyUnusedParams ()
