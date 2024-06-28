@@ -362,7 +362,7 @@ WarpX::ProjectionCleanDivB() {
                 || WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
                 && WarpX::poisson_solver_id == PoissonSolverAlgo::Multigrid)) {
         amrex::Print() << Utils::TextMsg::Info( "Starting Projection B-Field divergence cleaner.");
-        
+
         // Build Object, run, then delete to free memeory since not used often.
         warpx::initialization::ProjectionDivCleaner dc;
         dc.setSourceFromBfield();
@@ -372,7 +372,7 @@ WarpX::ProjectionCleanDivB() {
         amrex::Print() << Utils::TextMsg::Info( "Finished Projection B-Field divergence cleaner.");
     } else {
         ablastr::warn_manager::WMRecordWarning("Projection Div Cleaner",
-            "Only Yee, HybridPIC, and MLMG based static Labframe solvers are currently supported, so divB not cleaned. " 
+            "Only Yee, HybridPIC, and MLMG based static Labframe solvers are currently supported, so divB not cleaned. "
             "Interpolation may lead to non-zero B field divergence.",
             ablastr::warn_manager::WarnPriority::low);
     }

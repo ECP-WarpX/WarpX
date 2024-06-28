@@ -6,8 +6,8 @@ from pywarpx import picmi
 
 constants = picmi.constants
 
-import yt
 import numpy as np
+import yt
 
 #################################
 ####### GENERAL PARAMETERS ######
