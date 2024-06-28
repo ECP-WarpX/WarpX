@@ -21,6 +21,7 @@
 #endif
 
 #include <ablastr/utils/Communication.H>
+#include <Utils/WarpXProfilerWrapper.H>
 
 using namespace amrex;
 
@@ -235,7 +236,7 @@ ProjectionDivCleaner::setSourceFromBfield ()
         WarpX::ComputeDivB(
             *m_source[ilev],
             0,
-            warpx.getFieldPointerArray(warpx::fields::FieldType::Bfield_aux, ilev),
+            warpx.getFieldPointerArray(warpx::fields::FieldType::Bfield_fp_external, ilev),
             WarpX::CellSize(0)
             );
 
@@ -260,9 +261,9 @@ ProjectionDivCleaner::correctBfield ()
     for (int ilev = 0; ilev < m_levels; ++ilev)
     {
         // Grab B-field multifabs at this level
-        amrex::MultiFab* Bx = warpx.getFieldPointer(warpx::fields::FieldType::Bfield_aux, ilev, 0);
-        amrex::MultiFab* By = warpx.getFieldPointer(warpx::fields::FieldType::Bfield_aux, ilev, 1);
-        amrex::MultiFab* Bz = warpx.getFieldPointer(warpx::fields::FieldType::Bfield_aux, ilev, 2);
+        amrex::MultiFab* Bx = warpx.getFieldPointer(warpx::fields::FieldType::Bfield_fp_external, ilev, 0);
+        amrex::MultiFab* By = warpx.getFieldPointer(warpx::fields::FieldType::Bfield_fp_external, ilev, 1);
+        amrex::MultiFab* Bz = warpx.getFieldPointer(warpx::fields::FieldType::Bfield_fp_external, ilev, 2);
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -340,11 +341,13 @@ ProjectionDivCleaner::correctBfield ()
 
 void
 WarpX::ProjectionCleanDivB() {
-#if defined(WARPX_DIM_RZ)
-    ablastr::warn_manager::WMRecordWarning("Projection Div Cleaner",
-        "WarpX is running in RZ mode, so divB not cleaned. Interpolation may lead to non-zero B field divergence.",
-        ablastr::warn_manager::WarnPriority::low);
-#else
+    WARPX_PROFILE("WarpX::ProjectionDivCleanB()");
+
+// #if defined(WARPX_DIM_RZ)
+//     ablastr::warn_manager::WMRecordWarning("Projection Div Cleaner",
+//         "WarpX is running in RZ mode, so divB not cleaned. Interpolation may lead to non-zero B field divergence.",
+//         ablastr::warn_manager::WarnPriority::low);
+// #else
     if constexpr (!std::is_same<Real, double>::value) {
         ablastr::warn_manager::WMRecordWarning("Projection Div Cleaner",
             "Field Precision is SINGLE, so divB not cleaned. Interpolation may lead to non-zero B field divergence.",
@@ -358,15 +361,20 @@ WarpX::ProjectionCleanDivB() {
             ||  ( (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame
                 || WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
                 && WarpX::poisson_solver_id == PoissonSolverAlgo::Multigrid)) {
-        // Build Object, run, then delete
+        amrex::Print() << Utils::TextMsg::Info( "Starting Projection B-Field divergence cleaner.");
+        
+        // Build Object, run, then delete to free memeory since not used often.
         warpx::initialization::ProjectionDivCleaner dc;
         dc.setSourceFromBfield();
         dc.solve();
         dc.correctBfield();
+
+        amrex::Print() << Utils::TextMsg::Info( "Finished Projection B-Field divergence cleaner.");
     } else {
         ablastr::warn_manager::WMRecordWarning("Projection Div Cleaner",
-            "Only Yee, HybridPIC, and MLMG based static Labframe solvers are currently supported, so divB not cleaned. Interpolation may lead to non-zero B field divergence.",
+            "Only Yee, HybridPIC, and MLMG based static Labframe solvers are currently supported, so divB not cleaned. " 
+            "Interpolation may lead to non-zero B field divergence.",
             ablastr::warn_manager::WarnPriority::low);
     }
-#endif
+// #endif
 }

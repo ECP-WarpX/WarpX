@@ -518,6 +518,11 @@ WarpX::InitData ()
             ComputeMagnetostaticField();
         }
 
+        // Run div cleaner here to clean external fields if loaded from file and interpolated
+        if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::read_from_file) {
+            WarpX::ProjectionCleanDivB();
+        }
+
         // Set up an invariant condition through the rest of
         // execution, that any code besides the field solver that
         // looks at field values will see the composite of the field
@@ -1372,7 +1377,6 @@ WarpX::LoadExternalFieldsFromFile (int const lev)
         ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Bfield_fp_external[lev][1].get(), "B", "y");
         ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Bfield_fp_external[lev][2].get(), "B", "z");
 #endif
-        WarpX::ProjectionCleanDivB();
     }
     if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::read_from_file) {
 #if defined(WARPX_DIM_RZ)

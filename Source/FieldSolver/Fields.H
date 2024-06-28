@@ -15,6 +15,8 @@ namespace warpx::fields
         Bfield_aux,
         Efield_fp,
         Bfield_fp,
+        Efield_fp_external,
+        Bfield_fp_external,
         current_fp,
         current_fp_nodal,
         rho_fp,
