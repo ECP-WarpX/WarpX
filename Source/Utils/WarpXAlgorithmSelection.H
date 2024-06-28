@@ -30,7 +30,8 @@ struct EvolveScheme {
     enum {
         Explicit = 0,
         ThetaImplicitEM = 1,
-        SemiImplicitEM = 2
+        SemiImplicitEM = 2,
+        StrangImplicitSpectralEM = 3
     };
 };
 

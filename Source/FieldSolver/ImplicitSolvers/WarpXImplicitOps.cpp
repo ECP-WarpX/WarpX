@@ -12,13 +12,6 @@
 #include "Evolve/WarpXDtType.H"
 #include "Evolve/WarpXPushType.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
-#ifdef WARPX_USE_PSATD
-#   ifdef WARPX_DIM_RZ
-#       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
-#   else
-#       include "FieldSolver/SpectralSolver/SpectralSolver.H"
-#   endif
-#endif
 #include "Parallelization/GuardCellManager.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
@@ -107,6 +100,23 @@ WarpX::ApplyMagneticFieldBCs()
 {
     FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
     ApplyBfieldBoundary(0, PatchType::fine, DtType::Full);
+}
+
+void
+WarpX::SpectralSourceFreeFieldAdvance()
+{
+    using namespace amrex::literals;
+    // Do the first piece of the Strang splitting, source free advance of E and B
+    // It would be more efficient to write a specialized PSATD advance that does not use J,
+    // but this works for now.
+    // Note that erasing J messes up the J in the plot files since it uses the same data.
+    current_fp[0][0]->setVal(0._rt);
+    current_fp[0][1]->setVal(0._rt);
+    current_fp[0][2]->setVal(0._rt);
+    if (rho_fp[0]) { rho_fp[0]->setVal(0._rt); }
+    PushPSATD(); // Note that this does dt/2
+    FillBoundaryE(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+    FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
 }
 
 void
