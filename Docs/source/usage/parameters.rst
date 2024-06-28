@@ -94,7 +94,7 @@ Overall simulation parameters
       Exact energy conservation requires that the interpolation stencil used for the field gather match that used for the current deposition. ``algo.current_deposition = direct`` must be used with ``interpolation.galerkin_scheme = 0``, and ``algo.current_deposition = Esirkepov`` must be used with ``interpolation.galerkin_scheme = 1``. If using ``algo.current_deposition = villasenor``, the corresponding field gather routine will automatically be selected and the ``interpolation.galerkin_scheme`` flag does not need to be specified. The Esirkepov and villasenor deposition schemes are charge-conserving.
 
     * ``strang_implicit_spectral_em``: Use a fully implicit electromagnetic solver. All of the comments for ``theta_implicit_em``
-      above apply here as well (except that theta is fixed to 0.5).
+      above apply here as well (except that theta is fixed to 0.5 and that charge will not be conserved).
       In this version, the advance is Strang split, with a half advance of the source free Maxwell's equation (with a spectral solver), a full advance of the particles plus longitudinal E field, and a second half advance of the source free Maxwell's equations.
       The advantage of this method is that with the Spectral advance of the fields, it is dispersionless.
       Note that exact energy convergence is achieved only with one grid block and ``psatd.periodic_single_box_fft == 1``. Otherwise,
