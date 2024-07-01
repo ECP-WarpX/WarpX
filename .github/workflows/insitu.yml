@@ -68,3 +68,43 @@ jobs:
           *.png
           conduit_*
         if-no-files-found: error
+
+  catalyst:
+    name: Catalyst
+    runs-on: ubuntu-20.04
+    if: github.event.pull_request.draft == false
+    env:
+      CXX: g++
+      CC: gcc
+      CMAKE_PREFIX_PATH: "/opt/conduit:/opt/catalyst"
+      CATALYST_DEBUG: 1
+      CATALYST_IMPLEMENTATION_PATHS: /opt/paraview/lib/catalyst
+
+    container:
+      image: kitware/paraview:ci-catalyst-amrex-warpx-20240701
+    steps:
+    - uses: actions/checkout@v4
+    - name: Configure
+      run: |
+        cmake -S . -B build   \
+            -DWarpX_DIMS="2;3" \
+            -DWarpX_CATALYST=ON
+    - name: Build
+      run: |
+        cmake --build build -j 10
+    - name: 2D Test
+      run: |
+        cp Examples/Tests/ionization/inputs_2d_rt_catalyst .
+        cp Examples/Tests/ionization/sample_catalyst_pipeline.py .
+        mpiexec -n 2 ./build/bin/warpx.2d inputs_2d_rt_catalyst
+    - name: 3D Test
+      run: |
+        cp Examples/Tests/electrostatic_sphere/inputs_3d_catalyst .
+        cp Examples/Tests/electrostatic_sphere/sample_catalyst_pipeline.py .
+        mpiexec -n 2 ./build/bin/warpx.3d inputs_3d_catalyst
+    - uses: actions/upload-artifact@v4
+      with:
+        name: catalyst-test-artifacts
+        path: |
+          datasets/*.png
+        if-no-files-found: error
