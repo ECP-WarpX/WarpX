@@ -1284,8 +1284,12 @@ WarpX::ReadParameters ()
             }
         }
 
-        // Use same shape factors in all directions, for gathering
-        if (field_gathering_algo == GatheringAlgo::MomentumConserving) { galerkin_interpolation = false; }
+        // Use same shape factors in all directions
+        // - with momentum-conserving field gathering
+        // - with direct current deposition
+        if ((field_gathering_algo == GatheringAlgo::MomentumConserving) || (current_deposition_algo == CurrentDepositionAlgo::Direct)) {
+            galerkin_interpolation = false;
+        }
 
         {
             const ParmParse pp_interpolation("interpolation");
