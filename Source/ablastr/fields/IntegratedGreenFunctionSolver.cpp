@@ -43,10 +43,8 @@ computePhiIGF ( amrex::MultiFab const & rho,
                 amrex::BoxArray const & ba)
 {
     using namespace amrex::literals;
-    int XXX = 1;
 
-    if(XXX){
-
+#if defined(ABLASTR_FFT) && defined(ABLASTR_HEFFTE)
     {
     BL_PROFILE("Integrated Green Function Solver");
 
@@ -168,7 +166,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
       );
     }
 
-
+    
 
     // since there is 1 MPI rank per box, here each MPI rank obtains its local box and the associated boxid
     int local_boxid = amrex::ParallelDescriptor::MyProc(); // because of how we made the DistributionMapping
@@ -211,9 +209,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
     // Multiply tmp_G_fft and tmp_rho_fft in spectral space
     // Store the result in-place in Gtmp_G_fft, to save memory
     //amrex::Multiply( tmp_G_fft, tmp_rho_fft, 0, 0, 1, 0);
-    //tmp_G_fft.mult(tmp_rho_fft, 0, 0, 1);
-    tmp_G_fft.template mult<amrex::RunOn::Device>(tmp_rho_fft, 0, 0, 1);
-    amrex::Gpu::streamSynchronize();
+    tmp_G_fft.mult(tmp_rho_fft, 0, 0, 1);
 
     // PRINT / SAVE G TIMES RHO
 
@@ -227,9 +223,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
     phi.ParallelCopy( tmp_G, 0, 0, 1, amrex::IntVect::TheZeroVector(), phi.nGrowVect());
 
     }
-
-    }
-    else{
+#elif defined(ABLASTR_FFT)
     {
     BL_PROFILE("Integrated Green Function Solver");
 
@@ -388,6 +382,6 @@ computePhiIGF ( amrex::MultiFab const & rho,
         ablastr::math::anyfft::DestroyPlan(backward_plan[mfi]);
     }
     }
-    }
+#endif
 }
 } // namespace ablastr::fields
