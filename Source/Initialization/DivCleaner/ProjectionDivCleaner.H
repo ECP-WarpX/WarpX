@@ -63,7 +63,7 @@ protected:
 
     amrex::Real m_rtol;
     amrex::Real m_atol;
-    
+
     warpx::fields::FieldType m_field_type;
 
 public:

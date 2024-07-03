@@ -353,7 +353,7 @@ WarpX::ProjectionCleanDivB() {
                 || WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
                 && WarpX::poisson_solver_id == PoissonSolverAlgo::Multigrid)) {
         amrex::Print() << Utils::TextMsg::Info( "Starting Projection B-Field divergence cleaner.");
-        
+
 #if defined(WARPX_DIM_RZ)
         ablastr::warn_manager::WMRecordWarning("Projection Div Cleaner",
             "WarpX is running in RZ mode."
@@ -372,9 +372,9 @@ WarpX::ProjectionCleanDivB() {
         if (warpx.m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::read_from_file) {
             type = warpx::fields::FieldType::Bfield_fp_external;
         }
-        
+
         warpx::initialization::ProjectionDivCleaner dc(type);
-        
+
         dc.setSourceFromBfield();
         dc.solve();
         dc.correctBfield();
