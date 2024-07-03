@@ -109,7 +109,18 @@ WarpX::SpectralSourceFreeFieldAdvance()
     // Do the first piece of the Strang splitting, source free advance of E and B
     // It would be more efficient to write a specialized PSATD advance that does not use J,
     // but this works for now.
-    // Note that erasing J messes up the J in the plot files since it uses the same data.
+
+    // Create temporary MultiFabs to hold J
+    amrex::MultiFab j0(current_fp[0][0]->boxArray(), current_fp[0][0]->DistributionMap(),
+                       current_fp[0][0]->nComp(), current_fp[0][0]->nGrowVect());
+    amrex::MultiFab j1(current_fp[0][1]->boxArray(), current_fp[0][1]->DistributionMap(),
+                       current_fp[0][1]->nComp(), current_fp[0][1]->nGrowVect());
+    amrex::MultiFab j2(current_fp[0][2]->boxArray(), current_fp[0][2]->DistributionMap(),
+                       current_fp[0][2]->nComp(), current_fp[0][2]->nGrowVect());
+    amrex::MultiFab::Copy(j0, *(current_fp[0][0]), 0, 0, current_fp[0][0]->nComp(), current_fp[0][0]->nGrowVect());
+    amrex::MultiFab::Copy(j1, *(current_fp[0][1]), 0, 0, current_fp[0][1]->nComp(), current_fp[0][1]->nGrowVect());
+    amrex::MultiFab::Copy(j2, *(current_fp[0][2]), 0, 0, current_fp[0][2]->nComp(), current_fp[0][2]->nGrowVect());
+
     current_fp[0][0]->setVal(0._rt);
     current_fp[0][1]->setVal(0._rt);
     current_fp[0][2]->setVal(0._rt);
@@ -117,6 +128,12 @@ WarpX::SpectralSourceFreeFieldAdvance()
     PushPSATD(); // Note that this does dt/2
     FillBoundaryE(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
     FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+
+    // Restore the current_fp MultiFab. Note that this is only needed for diagnostics when
+    // J is being written out (since current_fp is not otherwise used).
+    amrex::MultiFab::Copy(*(current_fp[0][0]), j0, 0, 0, 1, current_fp[0][0]->nGrowVect());
+    amrex::MultiFab::Copy(*(current_fp[0][1]), j1, 0, 0, 1, current_fp[0][1]->nGrowVect());
+    amrex::MultiFab::Copy(*(current_fp[0][2]), j2, 0, 0, 1, current_fp[0][2]->nGrowVect());
 }
 
 void
