@@ -11,6 +11,7 @@
 #include "Evolve/WarpXDtType.H"
 #include "Evolve/WarpXPushType.H"
 #include "Laser/LaserProfiles.H"
+#include "LoadBalance/LoadBalance.H"
 #include "Particles/LaserParticleContainer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
@@ -583,8 +584,6 @@ LaserParticleContainer::Evolve (int lev,
 
     BL_ASSERT(OnSameGrids(lev,jx));
 
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
-
     const bool has_buffer = cjx;
 
 #ifdef AMREX_USE_OMP
@@ -601,11 +600,7 @@ LaserParticleContainer::Evolve (int lev,
 
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
-            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
-            {
-                amrex::Gpu::synchronize();
-            }
-            Real wt = static_cast<Real>(amrex::second());
+            const auto cost_tracker = warpx::load_balance::CostTracker(lev, mfi.index());
 
             auto& attribs = pti.GetAttribs();
 
@@ -690,12 +685,6 @@ LaserParticleContainer::Evolve (int lev,
 
             // This is necessary because of plane_Xp, plane_Yp and amplitude_E
             amrex::Gpu::synchronize();
-
-            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
-            {
-                wt = static_cast<Real>(amrex::second()) - wt;
-                amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
-            }
         }
     }
 }

@@ -6,6 +6,7 @@
  */
 #include "BackgroundStopping.H"
 
+#include "LoadBalance/LoadBalance.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/ParticleUtils.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -111,23 +112,12 @@ BackgroundStopping::doCollisions (amrex::Real cur_time, amrex::Real dt, MultiPar
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
         for (WarpXParIter pti(species, lev); pti.isValid(); ++pti) {
-            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
-            {
-                amrex::Gpu::synchronize();
-            }
-            auto wt = static_cast<amrex::Real>(amrex::second());
+            const auto cost_tracker = warpx::load_balance::CostTracker(lev, mfi.index());
 
             if (background_type == BackgroundStoppingType::ELECTRONS) {
                 doBackgroundStoppingOnElectronsWithinTile(pti, dt, cur_time, species_mass, species_charge);
             } else if (background_type == BackgroundStoppingType::IONS) {
                 doBackgroundStoppingOnIonsWithinTile(pti, dt, cur_time, species_mass, species_charge);
-            }
-
-            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
-            {
-                amrex::Gpu::synchronize();
-                wt = static_cast<amrex::Real>(amrex::second()) - wt;
-                amrex::HostDevice::Atomic::Add(&(*cost)[pti.index()], wt);
             }
         }
 

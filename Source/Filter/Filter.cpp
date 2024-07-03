@@ -7,6 +7,7 @@
  */
 #include "Filter.H"
 
+#include "LoadBalance/LoadBalance.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
@@ -40,15 +41,9 @@ Filter::ApplyStencil (MultiFab& dstmf, const MultiFab& srcmf, const int lev, int
     WARPX_PROFILE("Filter::ApplyStencil(MultiFab)");
     ncomp = std::min(ncomp, srcmf.nComp());
 
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
-
     for (MFIter mfi(dstmf); mfi.isValid(); ++mfi)
     {
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
-        {
-            amrex::Gpu::synchronize();
-        }
-        auto wt = static_cast<amrex::Real>(amrex::second());
+        const auto cost_tracker = warpx::load_balance::CostTracker(lev, mfi.index());
 
         const auto& src = srcmf.array(mfi);
         const auto& dst = dstmf.array(mfi);
@@ -56,13 +51,6 @@ Filter::ApplyStencil (MultiFab& dstmf, const MultiFab& srcmf, const int lev, int
 
         // Apply filter
         DoFilter(tbx, src, dst, scomp, dcomp, ncomp);
-
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
-        {
-            amrex::Gpu::synchronize();
-            wt = static_cast<amrex::Real>(amrex::second()) - wt;
-            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
-        }
     }
 }
 
@@ -205,8 +193,6 @@ Filter::ApplyStencil (amrex::MultiFab& dstmf, const amrex::MultiFab& srcmf, cons
     WARPX_PROFILE("Filter::ApplyStencil(MultiFab)");
     ncomp = std::min(ncomp, srcmf.nComp());
 
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
-
 #ifdef AMREX_USE_OMP
 // never runs on GPU since in the else branch of AMREX_USE_GPU
 #pragma omp parallel
@@ -215,11 +201,7 @@ Filter::ApplyStencil (amrex::MultiFab& dstmf, const amrex::MultiFab& srcmf, cons
         FArrayBox tmpfab;
         for (MFIter mfi(dstmf,true); mfi.isValid(); ++mfi){
 
-            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
-            {
-                amrex::Gpu::synchronize();
-            }
-            auto wt = static_cast<amrex::Real>(amrex::second());
+            const auto cost_tracker = warpx::load_balance::CostTracker(lev, mfi.index());
 
             const auto& srcfab = srcmf[mfi];
             auto& dstfab = dstmf[mfi];
@@ -233,13 +215,6 @@ Filter::ApplyStencil (amrex::MultiFab& dstmf, const amrex::MultiFab& srcmf, cons
             tmpfab.copy(srcfab, ibx, scomp, ibx, 0, ncomp);
             // Apply filter
             DoFilter(tbx, tmpfab.array(), dstfab.array(), 0, dcomp, ncomp);
-
-            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
-            {
-                amrex::Gpu::synchronize();
-                wt = static_cast<amrex::Real>(amrex::second()) - wt;
-                amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
-            }
         }
     }
 }

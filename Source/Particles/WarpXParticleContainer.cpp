@@ -10,9 +10,11 @@
 #include "WarpXParticleContainer.H"
 
 #include "ablastr/particles/DepositCharge.H"
+
 #include "Deposition/ChargeDeposition.H"
 #include "Deposition/CurrentDeposition.H"
 #include "Deposition/SharedDepositionUtils.H"
+#include "LoadBalance/LoadBalance.H"
 #include "Pusher/GetAndSetPosition.H"
 #include "Pusher/UpdatePosition.H"
 #include "ParticleBoundaries_K.H"
@@ -1471,11 +1473,7 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
 
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
-            if (costs && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
-            {
-                amrex::Gpu::synchronize();
-            }
-            auto wt = static_cast<amrex::Real>(amrex::second());
+            const auto cost_tracker = warpx::load_balance::CostTracker(lev, mfi.index());
 
             //
             // Particle Push
@@ -1499,13 +1497,6 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
                                     SetPosition(i, x, y, z);
                 }
             );
-
-            if (costs && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
-            {
-                amrex::Gpu::synchronize();
-                wt = static_cast<amrex::Real>(amrex::second()) - wt;
-                amrex::HostDevice::Atomic::Add( &(*costs)[pti.index()], wt);
-            }
         }
     }
 }

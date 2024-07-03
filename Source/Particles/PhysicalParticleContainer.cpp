@@ -11,6 +11,7 @@
 #include "PhysicalParticleContainer.H"
 
 #include "Filter/NCIGodfreyFilter.H"
+#include "LoadBalance/LoadBalance.H"
 #include "Initialization/InjectorDensity.H"
 #include "Initialization/InjectorMomentum.H"
 #include "Initialization/InjectorPosition.H"
@@ -971,8 +972,6 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
 
     defineAllParticleTiles();
 
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
-
     const int nlevs = numLevels();
     static bool refine_injection = false;
     static Box fine_injection_box;
@@ -1027,11 +1026,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
 #endif
     for (MFIter mfi = MakeMFIter(lev, info); mfi.isValid(); ++mfi)
     {
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
-        {
-            amrex::Gpu::synchronize();
-        }
-        auto wt = static_cast<amrex::Real>(amrex::second());
+        const auto cost_tracker = warpx::load_balance::CostTracker(lev, mfi.index());
 
         const Box& tile_box = mfi.tilebox();
         const RealBox tile_realbox = WarpX::getRealBox(tile_box, lev);
@@ -1473,12 +1468,6 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
         });
 
         amrex::Gpu::synchronize();
-
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
-        {
-            wt = static_cast<amrex::Real>(amrex::second()) - wt;
-            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
-        }
     }
 
     // Remove particles that are inside the embedded boundaries
@@ -1571,11 +1560,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 #endif
     for (MFIter mfi = MakeMFIter(0, info); mfi.isValid(); ++mfi)
     {
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
-        {
-            amrex::Gpu::synchronize();
-        }
-        auto wt = static_cast<amrex::Real>(amrex::second());
+        const auto cost_tracker = warpx::load_balance::CostTracker(lev, mfi.index());
 
         const Box& tile_box = mfi.tilebox();
         const RealBox tile_realbox = WarpX::getRealBox(tile_box, 0);
@@ -1971,11 +1956,6 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 
         amrex::Gpu::synchronize();
 
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
-        {
-            wt = static_cast<amrex::Real>(amrex::second()) - wt;
-            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
-        }
     }
 
     // Remove particles that are inside the embedded boundaries
@@ -2029,8 +2009,6 @@ PhysicalParticleContainer::Evolve (int lev,
 
     BL_ASSERT(OnSameGrids(lev,jx));
 
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
-
     const iMultiFab* current_masks = WarpX::CurrentBufferMasks(lev);
     const iMultiFab* gather_masks = WarpX::GatherBufferMasks(lev);
 
@@ -2065,11 +2043,7 @@ PhysicalParticleContainer::Evolve (int lev,
 
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
-            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
-            {
-                amrex::Gpu::synchronize();
-            }
-            auto wt = static_cast<amrex::Real>(amrex::second());
+            const auto cost_tracker = warpx::load_balance::CostTracker(lev, mfi.index());
 
             const Box& box = pti.validbox();
 
@@ -2252,12 +2226,6 @@ PhysicalParticleContainer::Evolve (int lev,
             }
 
             amrex::Gpu::synchronize();
-
-            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
-            {
-                wt = static_cast<amrex::Real>(amrex::second()) - wt;
-                amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
-            }
         }
     }
     // Split particles at the end of the timestep.

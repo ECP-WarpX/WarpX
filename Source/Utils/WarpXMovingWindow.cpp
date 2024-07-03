@@ -12,6 +12,7 @@
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
 #   include "BoundaryConditions/PML_RZ.H"
 #endif
+#include "LoadBalance/LoadBalance.H"
 #include "Initialization/ExternalField.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Fluids/MultiFluidContainer.H"
@@ -517,18 +518,13 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
     const amrex::RealBox& real_box = geom.ProbDomain();
     const auto dx = geom.CellSizeArray();
 
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
 
     for (amrex::MFIter mfi(tmpmf); mfi.isValid(); ++mfi )
     {
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
-        {
-            amrex::Gpu::synchronize();
-        }
-        auto wt = static_cast<amrex::Real>(amrex::second());
+        const auto cost_tracker = warpx::load_balance::CostTracker(lev, mfi.index());
 
         auto const& dstfab = mf.array(mfi);
         auto const& srcfab = tmpmf.array(mfi);
@@ -588,14 +584,6 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
         {
             dstfab(i,j,k,n) = srcfab(i+shift.x,j+shift.y,k+shift.z,n);
         })
-
-        if (cost && update_cost_flag &&
-            WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
-        {
-            amrex::Gpu::synchronize();
-            wt = static_cast<amrex::Real>(amrex::second()) - wt;
-            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
-        }
     }
 
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
