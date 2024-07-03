@@ -429,9 +429,9 @@ PEC_Insulator::ApplyPEC_InsulatortoField (
         amrex::Box const & tez = (split_pml_field) ? mfi.tilebox(field[2]->ixType().toIntVect())
                                                    : mfi.tilebox(field[2]->ixType().toIntVect(), ng_fieldgather);
 
-        std::array<amrex::Real, 3> const & xyzmin_x = WarpX::LowerCorner(tex, lev, 0._rt);
-        std::array<amrex::Real, 3> const & xyzmin_y = WarpX::LowerCorner(tey, lev, 0._rt);
-        std::array<amrex::Real, 3> const & xyzmin_z = WarpX::LowerCorner(tez, lev, 0._rt);
+        const amrex::XDim3 xyzmin_x = WarpX::LowerCorner(tex, lev, 0._rt);
+        const amrex::XDim3 xyzmin_y = WarpX::LowerCorner(tey, lev, 0._rt);
+        const amrex::XDim3 xyzmin_z = WarpX::LowerCorner(tez, lev, 0._rt);
         amrex::IntVect const lo_x = tex.smallEnd();
         amrex::IntVect const lo_y = tey.smallEnd();
         amrex::IntVect const lo_z = tez.smallEnd();
@@ -448,10 +448,10 @@ PEC_Insulator::ApplyPEC_InsulatortoField (
 #endif
 
                 amrex::IntVect const iv(AMREX_D_DECL(i, j, k));
-                amrex::Real const x = (AMREX_SPACEDIM > 1 ? xyzmin_x[0] + (iv[0] - lo_x[0])*dx[0] : 0._rt);
-                amrex::Real const y = (AMREX_SPACEDIM == 3 ? xyzmin_x[1] + (iv[1] - lo_x[1])*dx[1] : 0._rt);
+                amrex::Real const x = (AMREX_SPACEDIM > 1 ? xyzmin_x.x + (iv[0] - lo_x[0])*dx[0] : 0._rt);
+                amrex::Real const y = (AMREX_SPACEDIM == 3 ? xyzmin_x.y + (iv[1] - lo_x[1])*dx[1] : 0._rt);
 #if (AMREX_SPACEDIM > 1)
-                amrex::Real const z = xyzmin_x[2] + (iv[WARPX_ZINDEX] - lo_x[WARPX_ZINDEX])*dx[2];
+                amrex::Real const z = xyzmin_x.z + (iv[WARPX_ZINDEX] - lo_x[WARPX_ZINDEX])*dx[2];
 #endif
 
                 amrex::IntVect is_insulator_lo;
@@ -498,10 +498,10 @@ PEC_Insulator::ApplyPEC_InsulatortoField (
 #endif
 
                 amrex::IntVect const iv(AMREX_D_DECL(i, j, k));
-                amrex::Real const x = (AMREX_SPACEDIM > 1 ? xyzmin_y[0] + (iv[0] - lo_y[0])*dx[0] : 0._rt);
-                amrex::Real const y = (AMREX_SPACEDIM == 3 ? xyzmin_y[1] + (iv[1] - lo_y[1])*dx[1] : 0._rt);
+                amrex::Real const x = (AMREX_SPACEDIM > 1 ? xyzmin_y.x + (iv[0] - lo_y[0])*dx[0] : 0._rt);
+                amrex::Real const y = (AMREX_SPACEDIM == 3 ? xyzmin_y.y + (iv[1] - lo_y[1])*dx[1] : 0._rt);
 #if (AMREX_SPACEDIM > 1)
-                amrex::Real const z = xyzmin_y[2] + (iv[WARPX_ZINDEX] - lo_y[WARPX_ZINDEX])*dx[2];
+                amrex::Real const z = xyzmin_y.z + (iv[WARPX_ZINDEX] - lo_y[WARPX_ZINDEX])*dx[2];
 #endif
 
                 amrex::IntVect is_insulator_lo;
@@ -548,10 +548,10 @@ PEC_Insulator::ApplyPEC_InsulatortoField (
 #endif
 
                 amrex::IntVect const iv(AMREX_D_DECL(i, j, k));
-                amrex::Real const x = (AMREX_SPACEDIM > 1 ? xyzmin_z[0] + (iv[0] - lo_z[0])*dx[0] : 0._rt);
-                amrex::Real const y = (AMREX_SPACEDIM == 3 ? xyzmin_z[1] + (iv[1] - lo_z[1])*dx[1] : 0._rt);
+                amrex::Real const x = (AMREX_SPACEDIM > 1 ? xyzmin_z.x + (iv[0] - lo_z[0])*dx[0] : 0._rt);
+                amrex::Real const y = (AMREX_SPACEDIM == 3 ? xyzmin_z.y + (iv[1] - lo_z[1])*dx[1] : 0._rt);
 #if (AMREX_SPACEDIM > 1)
-                amrex::Real const z = xyzmin_z[2] + (iv[WARPX_ZINDEX] - lo_z[WARPX_ZINDEX])*dx[2];
+                amrex::Real const z = xyzmin_z.z + (iv[WARPX_ZINDEX] - lo_z[WARPX_ZINDEX])*dx[2];
 #endif
 
                 amrex::IntVect is_insulator_lo;
