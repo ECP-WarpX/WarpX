@@ -1288,8 +1288,8 @@ WarpX::ReadParameters ()
         // - with momentum-conserving field gathering
         if (field_gathering_algo == GatheringAlgo::MomentumConserving) {galerkin_interpolation = false;}
         // - with direct current deposition and the EM solver
-        if( electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
-            electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC ) {
+        if( electromagnetic_solver_id != ElectromagneticSolverAlgo::None &&
+            electromagnetic_solver_id != ElectromagneticSolverAlgo::HybridPIC ) {
             if (current_deposition_algo == CurrentDepositionAlgo::Direct) {
                 galerkin_interpolation = false;
             }
