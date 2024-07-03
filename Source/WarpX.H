@@ -264,6 +264,10 @@ public:
     //! Solve additional Maxwell equation for G in order to control errors in magnetic Gauss' law
     static bool do_divb_cleaning;
 
+    //! Solve Poisson equation when loading a an external magnetic field to clean divergence 
+    //! This is useful to remove errors that could lead to non-zero B field divergence
+    static bool do_divb_cleaning_external;
+
     //! Order of the particle shape factors (splines) along x
     static int nox;
     //! Order of the particle shape factors (splines) along y

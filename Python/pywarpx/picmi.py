@@ -17,6 +17,7 @@ import periodictable
 
 import picmistandard
 import pywarpx
+import pywarpx.callbacks
 
 codename = 'warpx'
 picmistandard.register_codename(codename)
@@ -1448,12 +1449,34 @@ class LaserAntenna(picmistandard.PICMI_LaserAntenna):
 
 
 class LoadInitialField(picmistandard.PICMI_LoadGriddedField):
+    def init(self, kw):
+        self.do_divb_cleaning_external = kw.pop('do_divb_cleaning_external', True)
+
     def applied_field_initialize_inputs(self):
         pywarpx.warpx.read_fields_from_path = self.read_fields_from_path
         if self.load_E:
             pywarpx.warpx.E_ext_grid_init_style = 'read_from_file'
         if self.load_B:
             pywarpx.warpx.B_ext_grid_init_style = 'read_from_file'
+            pywarpx.warpx.do_divb_cleaning_external = True
+
+class LoadInitialFieldFromPython:
+    def __init__(self, **kw):
+        self.do_divb_cleaning_external = kw.pop('warpx_do_divb_cleaning_external', False)
+
+        # If using load_from_python, a function handle is expected for callback
+        self.load_from_python = kw.pop('load_from_python')
+        self.load_E = kw.pop('load_E', True)
+        self.load_B = kw.pop('load_B', True)
+
+    def applied_field_initialize_inputs(self):
+        if self.load_E:
+            pywarpx.warpx.E_ext_grid_init_style = 'load_from_python'
+        if self.load_B:
+            pywarpx.warpx.B_ext_grid_init_style = 'load_from_python'
+            pywarpx.warpx.do_divb_cleaning_external = self.do_divb_cleaning_external
+
+        pywarpx.callbacks.installbeforeInitEsolve(self.load_from_python)
 
 
 class AnalyticInitialField(picmistandard.PICMI_AnalyticAppliedField):

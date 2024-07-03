@@ -123,6 +123,7 @@ short WarpX::rho_in_time;
 short WarpX::load_balance_costs_update_algo;
 bool WarpX::do_dive_cleaning = false;
 bool WarpX::do_divb_cleaning = false;
+bool WarpX::do_divb_cleaning_external = false;
 int WarpX::em_solver_medium;
 int WarpX::macroscopic_solver_algo;
 bool WarpX::do_single_precision_comms = false;
@@ -896,6 +897,7 @@ WarpX::ReadParameters ()
         pp_warpx.query("refine_plasma", refine_plasma);
         pp_warpx.query("do_dive_cleaning", do_dive_cleaning);
         pp_warpx.query("do_divb_cleaning", do_divb_cleaning);
+        pp_warpx.query("do_divb_cleaning_external", do_divb_cleaning_external);
         utils::parser::queryWithParser(
             pp_warpx, "n_field_gather_buffer", n_field_gather_buffer);
         utils::parser::queryWithParser(

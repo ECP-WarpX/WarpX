@@ -512,15 +512,16 @@ WarpX::InitData ()
         // Loop through species and calculate their space-charge field
         bool const reset_fields = false; // Do not erase previous user-specified values on the grid
         ExecutePythonCallback("beforeInitEsolve");
+
+        // Run div cleaner here on the loaded fields
+        if (WarpX::do_divb_cleaning_external) {
+            WarpX::ProjectionCleanDivB();
+        }
+
         ComputeSpaceChargeField(reset_fields);
         ExecutePythonCallback("afterInitEsolve");
         if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) {
             ComputeMagnetostaticField();
-        }
-
-        // Run div cleaner here to clean external fields if loaded from file and interpolated
-        if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::read_from_file) {
-            WarpX::ProjectionCleanDivB();
         }
 
         // Set up an invariant condition through the rest of

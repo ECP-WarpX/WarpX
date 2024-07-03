@@ -11,7 +11,7 @@ warpx.do_electrostatic = labframe
 ####### GENERAL PARAMETERS ######
 #################################
 max_step = 1
-amr.n_cell = 40 40
+amr.n_cell = 32 64
 warpx.numprocs = 1 1
 amr.max_level = 0
 geometry.dims = RZ
@@ -38,15 +38,14 @@ warpx.serialize_initial_conditions = 1
 warpx.verbose = 1
 warpx.const_dt = 4.40917904849092e-7
 warpx.use_filter = 0
-
-# Order of particle shape factors
-algo.particle_shape = 1
+warpx.do_divb_cleaning_external = true
 
 # Diagnostics
-diagnostics.diags_names = diag1 chk
+diagnostics.diags_names = diag1
 diag1.intervals = 1
 diag1.diag_type = Full
-
-chk.intervals = 1
-chk.diag_type = Full
-chk.format = checkpoint
+diag1.fields_to_plot = Br Bt Bz
+diag1.file_prefix= projection_divb_cleaner_rz_plt
+diag1.plot_raw_fields = true
+diag1.plot_raw_fields_guards = true
+diag1.format = plotfile

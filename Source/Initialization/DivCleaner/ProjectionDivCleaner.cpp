@@ -19,7 +19,8 @@
 #else
 #include <FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H>
 #endif
-
+#include <FieldSolver/Fields.H>
+#include <Initialization/ExternalField.H>
 #include <ablastr/utils/Communication.H>
 #include <Utils/WarpXProfilerWrapper.H>
 
@@ -27,17 +28,13 @@ using namespace amrex;
 
 namespace warpx::initialization {
 
-ProjectionDivCleaner::ProjectionDivCleaner()
+ProjectionDivCleaner::ProjectionDivCleaner(warpx::fields::FieldType a_field_type)
 {
+    m_field_type = a_field_type;
+
     // Initialize tolerance based on field precision
     if constexpr (std::is_same<Real, float>::value) {
-        // Error out of divergence cleaner
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-            "Single Precision Divergence Cleaner has convergence problems. "
-            "Please compile with WarpX_PRECISION=DOUBLE."
-        );
-
-        m_rtol = 1e-6;
+        m_rtol = 5e-5;
         m_atol = 0.0;
     }
     else {
@@ -52,8 +49,7 @@ ProjectionDivCleaner::ProjectionDivCleaner()
     m_source.resize(m_levels);
 
     const int ncomps = WarpX::ncomps;
-    auto const& ng = warpx.getFieldPointer(warpx::fields::FieldType::Bfield_aux, 0, 0)->nGrowVect();
-
+    auto const& ng = warpx.getFieldPointer(m_field_type, 0, 0)->nGrowVect();
 
     std::array<amrex::Real,3> const& cell_size = WarpX::CellSize(0);
 
@@ -73,8 +69,8 @@ ProjectionDivCleaner::ProjectionDivCleaner()
         m_source[lev] = std::make_unique<MultiFab>(amrex::convert(ba, IntVect::TheCellVector()),
             dmap, ncomps, ng, tag2);
 
-        m_solution[lev]->setVal(0.0);
-        m_source[lev]->setVal(0.0);
+        m_solution[lev]->setVal(0.0, ng);
+        m_source[lev]->setVal(0.0, ng);
     }
 
     m_h_stencil_coefs_x.resize(1);
@@ -189,6 +185,10 @@ ProjectionDivCleaner::solve ()
     info.setAgglomeration(m_agglomeration);
     info.setConsolidation(m_consolidation);
     info.setMaxCoarseningLevel(m_max_coarsening_level);
+#ifdef WARPX_DIM_RZ
+    info.setMetricTerm(true);
+#endif
+
 
     for (int ilev = 0; ilev < m_levels; ++ilev)
     {
@@ -201,15 +201,15 @@ ProjectionDivCleaner::solve ()
             mlpoisson.setCoarseFineBC(m_solution[ilev-1].get(), m_ref_ratio);
         }
 
-        m_solution[ilev]->setVal(0.);
-
         mlpoisson.setLevelBC(ilev, m_solution[ilev].get());
 
         MLMG mlmg(mlpoisson);
         mlmg.setMaxIter(m_max_iter);
         mlmg.setMaxFmgIter(m_max_fmg_iter);
+        mlmg.setBottomSolver(m_bottom_solver);
         mlmg.setVerbose(m_verbose);
         mlmg.setBottomVerbose(m_bottom_verbose);
+        mlmg.setAlwaysUseBNorm(false);
         mlmg.solve({m_solution[ilev].get()}, {m_source[ilev].get()}, m_rtol, m_atol);
 
         // Synchronize the ghost cells, do halo exchange
@@ -230,13 +230,10 @@ ProjectionDivCleaner::setSourceFromBfield ()
     // This function will compute -divB and store it in the source multifab
     for (int ilev = 0; ilev < m_levels; ++ilev)
     {
-        // Zero out source multifab
-        m_source[ilev]->setVal(0.0);
-
         WarpX::ComputeDivB(
             *m_source[ilev],
             0,
-            warpx.getFieldPointerArray(warpx::fields::FieldType::Bfield_fp_external, ilev),
+            warpx.getFieldPointerArray(m_field_type, ilev),
             WarpX::CellSize(0)
             );
 
@@ -261,9 +258,9 @@ ProjectionDivCleaner::correctBfield ()
     for (int ilev = 0; ilev < m_levels; ++ilev)
     {
         // Grab B-field multifabs at this level
-        amrex::MultiFab* Bx = warpx.getFieldPointer(warpx::fields::FieldType::Bfield_fp_external, ilev, 0);
-        amrex::MultiFab* By = warpx.getFieldPointer(warpx::fields::FieldType::Bfield_fp_external, ilev, 1);
-        amrex::MultiFab* Bz = warpx.getFieldPointer(warpx::fields::FieldType::Bfield_fp_external, ilev, 2);
+        amrex::MultiFab* Bx = warpx.getFieldPointer(m_field_type, ilev, 0);
+        amrex::MultiFab* By = warpx.getFieldPointer(m_field_type, ilev, 1);
+        amrex::MultiFab* Bz = warpx.getFieldPointer(m_field_type, ilev, 2);
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -294,6 +291,7 @@ ProjectionDivCleaner::correctBfield ()
             const Box& tbz = mfi.tilebox(Bz->ixType().toIntVect());
 
             amrex::Array4<Real> const& sol_arr = m_solution[ilev]->array(mfi);
+
 #if defined(WARPX_DIM_RZ)
             amrex::ParallelFor(tbx, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/)
@@ -343,16 +341,9 @@ void
 WarpX::ProjectionCleanDivB() {
     WARPX_PROFILE("WarpX::ProjectionDivCleanB()");
 
-// #if defined(WARPX_DIM_RZ)
-//     ablastr::warn_manager::WMRecordWarning("Projection Div Cleaner",
-//         "WarpX is running in RZ mode, so divB not cleaned. Interpolation may lead to non-zero B field divergence.",
-//         ablastr::warn_manager::WarnPriority::low);
-// #else
-    if constexpr (!std::is_same<Real, double>::value) {
-        ablastr::warn_manager::WMRecordWarning("Projection Div Cleaner",
-            "Field Precision is SINGLE, so divB not cleaned. Interpolation may lead to non-zero B field divergence.",
-            ablastr::warn_manager::WarnPriority::low);
-    } else if (grid_type == GridType::Collocated) {
+    auto & warpx = WarpX::GetInstance();
+
+    if (grid_type == GridType::Collocated) {
         ablastr::warn_manager::WMRecordWarning("Projection Div Cleaner",
             "Grid Type is collocated, so divB not cleaned. Interpolation may lead to non-zero B field divergence.",
             ablastr::warn_manager::WarnPriority::low);
@@ -362,9 +353,28 @@ WarpX::ProjectionCleanDivB() {
                 || WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
                 && WarpX::poisson_solver_id == PoissonSolverAlgo::Multigrid)) {
         amrex::Print() << Utils::TextMsg::Info( "Starting Projection B-Field divergence cleaner.");
+        
+#if defined(WARPX_DIM_RZ)
+        ablastr::warn_manager::WMRecordWarning("Projection Div Cleaner",
+            "WarpX is running in RZ mode."
+            "Convergence of projection based div cleaner is not optimal.",
+            ablastr::warn_manager::WarnPriority::low);
+#endif
 
-        // Build Object, run, then delete to free memeory since not used often.
-        warpx::initialization::ProjectionDivCleaner dc;
+        if constexpr (!std::is_same<Real, double>::value) {
+            ablastr::warn_manager::WMRecordWarning("Projection Div Cleaner",
+                "WarpX is running with a field precision of SINGLE."
+                "Convergence of projection based div cleaner is not optimal and may fail.",
+                ablastr::warn_manager::WarnPriority::low);
+        }
+
+        warpx::fields::FieldType type = warpx::fields::FieldType::Bfield_aux;
+        if (warpx.m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::read_from_file) {
+            type = warpx::fields::FieldType::Bfield_fp_external;
+        }
+        
+        warpx::initialization::ProjectionDivCleaner dc(type);
+        
         dc.setSourceFromBfield();
         dc.solve();
         dc.correctBfield();
@@ -376,5 +386,4 @@ WarpX::ProjectionCleanDivB() {
             "Interpolation may lead to non-zero B field divergence.",
             ablastr::warn_manager::WarnPriority::low);
     }
-// #endif
 }
