@@ -2,21 +2,12 @@
 #
 # --- Input file for loading initial field from Python callback
 
-import pickle
-from mpi4py import MPI as mpi
-import numpy as np
-
-
-import shutil
-from pathlib import Path
-
 import numpy as np
 import scipy.constants as con
+from mpi4py import MPI as mpi
 from scipy.special import ellipe, ellipk
 
-from pywarpx import picmi
-from pywarpx import fields
-
+from pywarpx import fields, picmi
 
 constants = picmi.constants
 
@@ -47,7 +38,7 @@ class CurrentLoop(object):
         # Convert to spherical coordinates
         rho = np.sqrt(r**2 + (z-self.z0)**2)
         theta = np.arctan2(r,z-self.z0)
-        
+
         coeff = con.mu_0*self.I/(4.*np.pi)
         denom = self.radius**2 + rho**2 + 2.*self.radius*rho*np.sin(theta)
 
@@ -124,7 +115,7 @@ class ProjectionDivCleanerTest(object):
 
 
     # Numerical parameters
-    DT          = 1e-9 # Time step 
+    DT          = 1e-9 # Time step
 
     def __init__(self):
         """Get input parameters for the specific case desired."""
@@ -221,7 +212,7 @@ def load_current_ring():
         By.mesh('y'),
         By.mesh('z'),
         coord='y')
-    
+
     Bz[:,:,:] = curr_loop(
         Bz.mesh('x'),
         Bz.mesh('y'),
