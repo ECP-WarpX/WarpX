@@ -1461,6 +1461,24 @@ class LoadInitialField(picmistandard.PICMI_LoadGriddedField):
             pywarpx.warpx.do_divb_cleaning_external = True
 
 class LoadInitialFieldFromPython:
+    """
+    Field Initializer that takes a function handle to be registered as a callback.
+    The function is expected to write the E and/or B fields into the 
+    fields.Bx/y/zFPExternalWrapper() multifab. The callback is installed 
+    in the beforeInitEsolve hook. This should operate identically to laoding from
+    a file.
+
+    Parameters
+    ----------
+    warpx_do_divb_cleaning_external: bool, default=False
+        Flag that controls whether or not to execute the Projection based B-field divergence cleaner.
+
+    load_E: bool, default=True
+        E field is expected to be loaded in the registered callback.
+
+    load_B: bool, default=True
+        B field is expected to be loaded in the registered callback.
+    """
     def __init__(self, **kw):
         self.do_divb_cleaning_external = kw.pop('warpx_do_divb_cleaning_external', False)
 

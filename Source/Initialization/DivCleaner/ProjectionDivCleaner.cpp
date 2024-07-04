@@ -28,10 +28,8 @@ using namespace amrex;
 
 namespace warpx::initialization {
 
-ProjectionDivCleaner::ProjectionDivCleaner(warpx::fields::FieldType a_field_type)
+ProjectionDivCleaner::ProjectionDivCleaner(warpx::fields::FieldType a_field_type) : m_field_type(a_field_type)
 {
-    m_field_type = a_field_type;
-
     // Initialize tolerance based on field precision
     if constexpr (std::is_same<Real, float>::value) {
         m_rtol = 5e-5;
@@ -368,12 +366,8 @@ WarpX::ProjectionCleanDivB() {
                 ablastr::warn_manager::WarnPriority::low);
         }
 
-        warpx::fields::FieldType type = warpx::fields::FieldType::Bfield_aux;
-        if (warpx.m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::read_from_file) {
-            type = warpx::fields::FieldType::Bfield_fp_external;
-        }
-
-        warpx::initialization::ProjectionDivCleaner dc(type);
+        warpx::initialization::ProjectionDivCleaner dc(
+            warpx::fields::FieldType::Bfield_fp_external);
 
         dc.setSourceFromBfield();
         dc.solve();
