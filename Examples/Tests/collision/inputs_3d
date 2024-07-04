@@ -22,6 +22,7 @@ boundary.field_hi = periodic periodic periodic
 warpx.serialize_initial_conditions = 1
 warpx.verbose = 1
 warpx.const_dt = 1.224744871e-07
+warpx.random_seed = 2034958209
 
 # Do not evolve the E and B fields
 algo.maxwell_solver = none
