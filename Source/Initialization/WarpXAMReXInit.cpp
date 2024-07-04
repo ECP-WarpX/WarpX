@@ -103,7 +103,7 @@ namespace {
         override_default_omp_threads();
         apply_workaround_for_warpx_numprocs();
         set_device_synchronization();
-        override_default_tiling_option_for_particles ();
+        override_default_tiling_option_for_particles();
     }
 }
 
