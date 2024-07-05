@@ -60,7 +60,7 @@ public:
                    amrex::Real  a_dt,
                    int          a_step ) override;
 
-    void ComputeRHS ( WarpXSolverVec&  a_RHS,
+    void ComputeRHS ( WarpXSolverVec&  a_Erhs,
                 const WarpXSolverVec&  a_E,
                       amrex::Real      a_time,
                       amrex::Real      a_dt,
