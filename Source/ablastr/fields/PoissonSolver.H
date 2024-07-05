@@ -297,15 +297,15 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
             const amrex::Periodicity& crse_period = geom[lev].periodicity();
 
             ablastr::utils::communication::ParallelCopy(
-                phi_cp,
-                *phi[lev],
-                0,
-                0,
-                1,
-                amrex::IntVect(0),
-                amrex::IntVect(1),
+                phi_cp,                    // dst
+                *phi[lev],                 // src
+                0,                         // src_comp
+                0,                         // dst_comp
+                1,                         // num_comp
+                amrex::IntVect(1),         // src_nghost
+                amrex::IntVect(1),         // dst_nghost
                 do_single_precision_comms,
-                crse_period
+                crse_period                // period
             );
 
             // Local interpolation from phi_cp to phi[lev+1]

@@ -109,4 +109,4 @@ for level in [0,1]:
     get_error_per_lev(ts,level)
 
 test_name = os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, fn, do_particles=False)
+checksumAPI.evaluate_checksum(test_name, fn, output_format='openpmd', do_particles=False)
