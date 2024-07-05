@@ -209,7 +209,9 @@ computePhiIGF ( amrex::MultiFab const & rho,
     // Multiply tmp_G_fft and tmp_rho_fft in spectral space
     // Store the result in-place in Gtmp_G_fft, to save memory
     //amrex::Multiply( tmp_G_fft, tmp_rho_fft, 0, 0, 1, 0);
-    tmp_G_fft.mult(tmp_rho_fft, 0, 0, 1);
+    //tmp_G_fft.mult(tmp_rho_fft, 0, 0, 1);
+    tmp_G_fft.template mult<amrex::RunOn::Device>(tmp_rho_fft, 0, 0, 1);
+    amrex::Gpu::streamSynchronize();
 
     // PRINT / SAVE G TIMES RHO
 
