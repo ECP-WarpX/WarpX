@@ -81,9 +81,8 @@ class Species(picmistandard.PICMI_Species):
     warpx_do_not_gather: bool, default=False
         Whether or not to gather the fields from grids for this species
 
-    warpx_radially_weighted: bool, default=True
-        When true, particle weights are proportional to their initial radii.
-        When false, the particles are uniformly weighted.
+    warpx_radial_weight_power: float, default=1.
+        With cylindrical geometry, specifies the radial power of the particle weight.
 
     warpx_random_theta: bool, default=True
         Whether or not to add random angle to the particles in theta
@@ -238,7 +237,7 @@ class Species(picmistandard.PICMI_Species):
         self.do_not_deposit = kw.pop('warpx_do_not_deposit', None)
         self.do_not_push = kw.pop('warpx_do_not_push', None)
         self.do_not_gather = kw.pop('warpx_do_not_gather', None)
-        self.radially_weighted = kw.pop('warpx_radially_weighted', None)
+        self.radial_weight_power = kw.pop('warpx_radial_weight_power', None)
         self.random_theta = kw.pop('warpx_random_theta', None)
 
         # For particle reflection
@@ -313,7 +312,7 @@ class Species(picmistandard.PICMI_Species):
                                              do_not_deposit = self.do_not_deposit,
                                              do_not_push = self.do_not_push,
                                              do_not_gather = self.do_not_gather,
-                                             radially_weighted = self.radially_weighted,
+                                             radial_weight_power = self.radial_weight_power,
                                              random_theta = self.random_theta,
                                              do_resampling=self.do_resampling,
                                              resampling_algorithm=self.resampling_algorithm,
