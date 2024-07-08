@@ -20,7 +20,8 @@ import os
 import sys
 
 import numpy as np
-from openpmd_viewer import OpenPMDTimeSeries
+import yt
+from unyt import m
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
@@ -28,85 +29,41 @@ import checksumAPI
 tolerance = 0.0041
 
 fn = sys.argv[1]
+ds = yt.load( fn )
 
-def find_first_non_zero_from_bottom_left(matrix):
-    nj = len(matrix[0,:])
-    ni = len(matrix[:,0])
-    for i in np.arange(0,ni,1):
-        for j in np.arange(0,nj,1):
-            if (matrix[i][j] != 0) and (matrix[i][j] != np.nan):
-                return (i, j)
-                stop
-    return i, j
+all_data_level_0 = ds.covering_grid(level=0,left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
+phi = all_data_level_0['boxlib', 'phi'].v.squeeze()
+Er = all_data_level_0['boxlib', 'Er'].v.squeeze()
 
-def find_first_non_zero_from_upper_right(matrix):
-    nj = len(matrix[0,:])
-    ni = len(matrix[:,0])
+Dx = ds.domain_width/ds.domain_dimensions
+dr = Dx[0]
+rmin = ds.domain_left_edge[0]
+rmax = ds.domain_right_edge[0]
+nr = phi.shape[0]
+r = np.linspace(rmin+dr/2.,rmax-dr/2.,nr)
+B = 1.0/np.log(0.1/0.5)
+A = -B*np.log(0.5)
 
-    for i in np.arange(ni-1, -1, -1):
-        for j in np.arange(nj-1, -1, -1):
-            if (matrix[i][j] != 0) and (matrix[i][j] != np.nan):
-                return (i, j)
-                stop
-    return i,j
+err = 0.0
+errmax_phi = 0.0
+errmax_Er = 0.0
+for i in range(len(r)):
+    # outside EB and last cutcell
+    if r[i] > 0.1*m + dr:
+        phi_theory = A+B*np.log(r[i])
+        Er_theory = -B/float(r[i])
+        err = abs( phi_theory - phi[i,:] ).max() / phi_theory
+        if err>errmax_phi:
+            errmax_phi = err
+        err = abs( Er_theory - Er[i,:] ).max() / Er_theory
+        # Exclude the last inaccurate interpolation.
+        if err>errmax_Er and i<len(r)-1:
+            errmax_Er = err
 
-def get_fields(ts, level):
-    er = []
-    phi = []
-    info = []
-    if level == 1:
-        er, info = ts.get_field('E_lvl1', 'r', iteration=0, plot=False)
-        phi, info = ts.get_field('phi_lvl1', iteration=0, plot=False)
-
-    elif level==0:
-        er, info = ts.get_field('E', 'r', iteration=0, plot=False)
-        phi, info = ts.get_field('phi', iteration=0, plot=False)
-
-    return er, phi, info
-
-def get_error_per_lev(ts,level):
-    er, phi, info = get_fields(ts, level)
-
-    nj = len(er[0,:])//2
-    dr = info.r[1] - info.r[0]
-
-    er_patch = er[:,nj:]
-    phi_patch = phi[:,nj:]
-    r1 = info.r[nj:]
-    patch_left_lower_i, patch_left_lower_j = find_first_non_zero_from_bottom_left(er_patch)
-    patch_right_upper_i, patch_right_upper_j = find_first_non_zero_from_upper_right(er_patch)
-
-    # phi and Er field on the MR patch
-    phi_sim = phi_patch[patch_left_lower_i:patch_right_upper_i+1, patch_left_lower_j:patch_right_upper_j+1]
-    er_sim =  er_patch[patch_left_lower_i:patch_right_upper_i+1, patch_left_lower_j:patch_right_upper_j+1]
-    r =  r1[patch_left_lower_j:patch_right_upper_j+1]
-
-    B = 1.0/np.log(0.1/0.5)
-    A = -B*np.log(0.5)
-
-    errmax_phi = 0.0
-    errmax_Er = 0.0
-
-    for j in range(len(r)):
-        # outside EB and last cutcell
-        if r[j] > 0.1 + dr:
-            phi_theory = A + B * np.log(r[j])
-            Er_theory = -B / float(r[j])
-            err = abs( phi_theory - phi_sim [:,j] ).max() / phi_theory
-            if err > errmax_phi:
-                errmax_phi = err
-            err = abs( Er_theory - er_sim [:,j] ).max() / Er_theory
-            if err > errmax_Er and j < len(r) - 1:
-                errmax_Er = err
-
-    print('max error of phi = ', errmax_phi)
-    print('max error of Er = ', errmax_Er)
-    print('tolerance = ', tolerance)
-
-ts = OpenPMDTimeSeries('./diags/diag2')
-for level in [0,1]:
-    print('At level =', level, ':')
-    get_error_per_lev(ts,level)
+print('max error of phi = ', errmax_phi)
+print('max error of Er = ', errmax_Er)
+print('tolerance = ', tolerance)
+assert(errmax_phi<tolerance and errmax_Er<tolerance)
 
 test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, fn, do_particles=False)
