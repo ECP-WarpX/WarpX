@@ -75,8 +75,8 @@ Z_proton = 1.
 E_Gamow = (Z_boron*Z_proton*np.pi*scc.fine_structure)**2*2.*m_reduced*scc.c**2
 E_Gamow_MeV = E_Gamow/MeV_to_Joule
 E_Gamow_keV = E_Gamow/keV_to_Joule
-E_fusion = 8.59009*MeV_to_Joule # Energy released during p + B -> alpha + Be
-E_decay = 0.0918984*MeV_to_Joule # Energy released during Be -> 2*alpha
+E_fusion = 5.65*MeV_to_Joule # Energy released during p + B -> alpha + Be*
+E_decay = 3.03*MeV_to_Joule # Energy released during Be* -> 2*alpha
 E_fusion_total = E_fusion + E_decay # Energy released during p + B -> 3*alpha
 
 ## Checks whether this is the 2D or the 3D test

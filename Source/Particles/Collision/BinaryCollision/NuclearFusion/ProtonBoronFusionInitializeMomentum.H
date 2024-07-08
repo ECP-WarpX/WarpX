@@ -73,11 +73,14 @@ namespace {
 
         constexpr amrex::ParticleReal mev_to_joule = PhysConst::q_e*1.e6_prt;
         // Energy produced in the fusion reaction proton + boron11 -> Beryllium8 + alpha
-        // cf. Janis book of proton-induced cross-sections (2019)
-        constexpr amrex::ParticleReal E_fusion = 8.59009_prt*mev_to_joule;
+        // cf. https://doi.org/10.1016/j.radphyschem.2022.110727
+        // Dominant reaction channel is p + B11 -> alpha_1 + 8Be* -> alpha_1 + alpha_11 + alpha_12 + 8.58 MeV
+        // Fusion energy = Total Energy Released - Decay Energy (8.68 - 3.03 = 5.65 MeV)
+        // cf. Geser (2019) https://doi.org/10.1016/j.radphyschem.2019.03.028
+        constexpr amrex::ParticleReal E_fusion = 5.65_prt*mev_to_joule;
         // Energy produced when Beryllium8 decays into two alphas
-        // cf. JEFF-3.3 radioactive decay data library (2017)
-        constexpr amrex::ParticleReal E_decay = 0.0918984_prt*mev_to_joule;
+        // cf. Geser (2019) https://doi.org/10.1016/j.radphyschem.2019.03.028
+        constexpr amrex::ParticleReal E_decay = 3.03_prt*mev_to_joule;
 
         // The constexprs ma_sq and mBe_sq underflow in single precision because we use SI units,
         // which can cause compilation to fail or generate a warning, so we're explicitly setting
