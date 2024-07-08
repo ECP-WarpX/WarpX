@@ -100,6 +100,8 @@ class CurrentLoop(object):
             grad_psi_y = (psi[:,1:,:] - psi[:,:-1,:])/dy
 
             return (XMB*grad_psi_x + YMB*grad_psi_y)/RMB**2
+        else:
+            error("coord must be x/y/z")
 
 class ProjectionDivCleanerTest(object):
 

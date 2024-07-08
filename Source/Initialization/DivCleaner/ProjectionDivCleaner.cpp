@@ -70,19 +70,28 @@ ProjectionDivCleaner::ProjectionDivCleaner(warpx::fields::FieldType a_field_type
     }
 
     auto cell_size = WarpX::CellSize(0);
+#if defined(WARPX_DIM_RZ)
+    CylindricalYeeAlgorithm::InitializeStencilCoefficients( cell_size,
+            m_h_stencil_coefs_x, m_h_stencil_coefs_z );
+#else
     CartesianYeeAlgorithm::InitializeStencilCoefficients( cell_size,
             m_h_stencil_coefs_x, m_h_stencil_coefs_y, m_h_stencil_coefs_z );
+#endif
 
     m_stencil_coefs_x.resize(m_h_stencil_coefs_x.size());
+#if !defined(WARPX_DIM_RZ)
     m_stencil_coefs_y.resize(m_h_stencil_coefs_y.size());
+#endif
     m_stencil_coefs_z.resize(m_h_stencil_coefs_z.size());
 
     amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
                           m_h_stencil_coefs_x.begin(), m_h_stencil_coefs_x.end(),
                           m_stencil_coefs_x.begin());
+#if !defined(WARPX_DIM_RZ)
     amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
                           m_h_stencil_coefs_y.begin(), m_h_stencil_coefs_y.end(),
                           m_stencil_coefs_y.begin());
+#endif
     amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
                           m_h_stencil_coefs_z.begin(), m_h_stencil_coefs_z.end(),
                           m_stencil_coefs_z.begin());
@@ -107,8 +116,7 @@ ProjectionDivCleaner::solve ()
     amrex::Array<LinOpBCType,AMREX_SPACEDIM> hibc({AMREX_D_DECL(LinOpBCType::bogus,
                                                                 LinOpBCType::bogus,
                                                                 LinOpBCType::bogus)});
-
-    const int dim_start = 0;
+    int dim_start = 0;
 
 #ifdef WARPX_DIM_RZ
     if (geom[0].ProbLo(0) == 0){

@@ -1450,7 +1450,7 @@ class LaserAntenna(picmistandard.PICMI_LaserAntenna):
 
 class LoadInitialField(picmistandard.PICMI_LoadGriddedField):
     def init(self, kw):
-        self.do_divb_cleaning_external = kw.pop('do_divb_cleaning_external', True)
+        self.do_divb_cleaning_external = kw.pop('warpx_do_divb_cleaning_external', None)
 
     def applied_field_initialize_inputs(self):
         pywarpx.warpx.read_fields_from_path = self.read_fields_from_path
@@ -1480,7 +1480,7 @@ class LoadInitialFieldFromPython:
         B field is expected to be loaded in the registered callback.
     """
     def __init__(self, **kw):
-        self.do_divb_cleaning_external = kw.pop('warpx_do_divb_cleaning_external', False)
+        self.do_divb_cleaning_external = kw.pop('warpx_do_divb_cleaning_external', None)
 
         # If using load_from_python, a function handle is expected for callback
         self.load_from_python = kw.pop('load_from_python')
