@@ -69,7 +69,7 @@ class CurrentLoop(object):
             psi = self.psi(RMP, ZMP)
             grad_psi_z = (psi[:,:,1:] - psi[:,:,:-1])/dz
 
-            B_coord = -XMB*grad_psi_z/RMB**2
+            return -XMB*grad_psi_z/RMB**2
         elif coord == 'y':
             # Gradient is along z direction
             zvp = augment_vector(zv)
@@ -80,7 +80,7 @@ class CurrentLoop(object):
             psi = self.psi(RMP, ZMP)
             grad_psi_z = (psi[:,:,1:] - psi[:,:,:-1])/dz
 
-            B_coord = -YMB*grad_psi_z/RMB**2
+            return -YMB*grad_psi_z/RMB**2
         elif coord == 'z':
             # Gradient is along x,y directions
             xvp = augment_vector(xv)
@@ -99,9 +99,7 @@ class CurrentLoop(object):
             psi = self.psi(RMP, ZMP)
             grad_psi_y = (psi[:,1:,:] - psi[:,:-1,:])/dy
 
-            B_coord = (XMB*grad_psi_x + YMB*grad_psi_y)/RMB**2
-
-        return B_coord
+            return (XMB*grad_psi_x + YMB*grad_psi_y)/RMB**2
 
 class ProjectionDivCleanerTest(object):
 
@@ -183,7 +181,7 @@ class ProjectionDivCleanerTest(object):
             period=self.diag_steps,
             data_list=['B'],
             write_dir='.',
-            warpx_file_prefix='Python_projection_divb_cleaner_callback_3d',
+            warpx_file_prefix='Python_projection_divb_cleaner_callback_3d_plt',
             warpx_format= 'plotfile',
         )
         simulation.add_diagnostic(field_diag)
@@ -242,16 +240,16 @@ dBzdz = (Bz_local[:,:,1:] - Bz_local[:,:,:-1])/run.DZ
 
 divB = dBxdx + dBydy + dBzdz
 
-if comm.rank == 0:
-    import matplotlib.pyplot as plt
-    plt.imshow(np.log10(np.abs(divB[2:-2, 22, 2:-2])))
-    plt.colorbar()
-    plt.savefig('divb.png')
+import matplotlib.pyplot as plt
 
+plt.imshow(np.log10(np.abs(divB[:,24,:])))
+plt.title('log10(|div(B)|)')
+plt.colorbar()
+plt.savefig('divb.png')
 
-tolerance = 1e-9
-error = np.abs(divB[2:-2, 2:-2, 2:-2]).sum()
-print(f"Error: {error}")
-print(f"Tolerance: {tolerance}")
+error = np.sqrt((divB[2:-2,2:-2,2:-2]**2).sum())
+tolerance = 1e-12
 
+print('error = ', error)
+print('tolerance = ', tolerance)
 assert(error < tolerance)

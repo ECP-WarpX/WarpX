@@ -49,8 +49,6 @@ ProjectionDivCleaner::ProjectionDivCleaner(warpx::fields::FieldType a_field_type
     const int ncomps = WarpX::ncomps;
     auto const& ng = warpx.getFieldPointer(m_field_type, 0, 0)->nGrowVect();
 
-    std::array<amrex::Real,3> const& cell_size = WarpX::CellSize(0);
-
     for (int lev = 0; lev < m_levels; ++lev)
     {
         // Default BoxArray and DistributionMap for initializing the output MultiFab, m_mf_output.
@@ -71,12 +69,9 @@ ProjectionDivCleaner::ProjectionDivCleaner(warpx::fields::FieldType a_field_type
         m_source[lev]->setVal(0.0, ng);
     }
 
-    m_h_stencil_coefs_x.resize(1);
-    m_h_stencil_coefs_x[0] = 1._rt/cell_size[0];
-    m_h_stencil_coefs_y.resize(1);
-    m_h_stencil_coefs_y[0] = 1._rt/cell_size[1];
-    m_h_stencil_coefs_z.resize(1);
-    m_h_stencil_coefs_z[0] = 1._rt/cell_size[2];
+    auto cell_size = WarpX::CellSize(0);
+    CartesianYeeAlgorithm::InitializeStencilCoefficients( cell_size,
+            m_h_stencil_coefs_x, m_h_stencil_coefs_y, m_h_stencil_coefs_z );
 
     m_stencil_coefs_x.resize(m_h_stencil_coefs_x.size());
     m_stencil_coefs_y.resize(m_h_stencil_coefs_y.size());
@@ -113,6 +108,8 @@ ProjectionDivCleaner::solve ()
                                                                 LinOpBCType::bogus,
                                                                 LinOpBCType::bogus)});
 
+    const int dim_start = 0;
+
 #ifdef WARPX_DIM_RZ
     if (geom[0].ProbLo(0) == 0){
         lobc[0] = LinOpBCType::Neumann;
@@ -130,10 +127,8 @@ ProjectionDivCleaner::solve ()
                 "when using the Projection Divergence Cleaner"
             );
         }
+        dim_start = 1;
     }
-    const int dim_start = 1;
-#else
-    const int dim_start = 0;
 #endif
     for (int idim=dim_start; idim<AMREX_SPACEDIM; idim++){
         if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Periodic
@@ -338,8 +333,6 @@ ProjectionDivCleaner::correctBfield ()
 void
 WarpX::ProjectionCleanDivB() {
     WARPX_PROFILE("WarpX::ProjectionDivCleanB()");
-
-    auto & warpx = WarpX::GetInstance();
 
     if (grid_type == GridType::Collocated) {
         ablastr::warn_manager::WMRecordWarning("Projection Div Cleaner",
