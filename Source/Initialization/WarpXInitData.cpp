@@ -155,13 +155,13 @@ WarpX::PrintMainPICparameters ()
     amrex::Print() << "-------------------------------------------------------------------------------\n";
 
     // print warpx build information
-    if constexpr (std::is_same<Real, float>::value) {
+    if constexpr (std::is_same_v<Real, float>) {
       amrex::Print() << "Precision:            | SINGLE" << "\n";
     }
     else {
       amrex::Print() << "Precision:            | DOUBLE" << "\n";
     }
-    if constexpr (std::is_same<ParticleReal, float>::value) {
+    if constexpr (std::is_same_v<ParticleReal, float>) {
       amrex::Print() << "Particle precision:   | SINGLE" << "\n";
     }
     else {
@@ -1359,6 +1359,21 @@ void WarpX::CheckKnownIssues()
 void
 WarpX::LoadExternalFieldsFromFile (int const lev)
 {
+    // External fields from file are currently not compatible with the moving window
+    // In order to support the moving window, the MultiFab containing the external
+    // fields should be updated every time the window moves.
+    if ( (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::read_from_file) ||
+         (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::read_from_file) ||
+         (mypc->m_B_ext_particle_s == "read_from_file") ||
+         (mypc->m_E_ext_particle_s == "read_from_file") ) {
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WarpX::do_moving_window == 0,
+            "External fields from file are not compatible with the moving window." );
+    }
+
+    // External grid fields
+
     if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::read_from_file) {
 #if defined(WARPX_DIM_RZ)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
@@ -1383,6 +1398,41 @@ WarpX::LoadExternalFieldsFromFile (int const lev)
         ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Efield_fp_external[lev][0].get(), "E", "x");
         ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Efield_fp_external[lev][1].get(), "E", "y");
         ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Efield_fp_external[lev][2].get(), "E", "z");
+#endif
+    }
+
+    // External particle fields
+
+    if (mypc->m_B_ext_particle_s == "read_from_file") {
+        std::string external_fields_path;
+        const amrex::ParmParse pp_particles("particles");
+        pp_particles.get("read_fields_from_path", external_fields_path );
+#if defined(WARPX_DIM_RZ)
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
+                                         "External field reading is not implemented for more than one RZ mode (see #3829)");
+        ReadExternalFieldFromFile(external_fields_path, B_external_particle_field[lev][0].get(), "B", "r");
+        ReadExternalFieldFromFile(external_fields_path, B_external_particle_field[lev][1].get(), "B", "t");
+        ReadExternalFieldFromFile(external_fields_path, B_external_particle_field[lev][2].get(), "B", "z");
+#else
+        ReadExternalFieldFromFile(external_fields_path, B_external_particle_field[lev][0].get(), "B", "x");
+        ReadExternalFieldFromFile(external_fields_path, B_external_particle_field[lev][1].get(), "B", "y");
+        ReadExternalFieldFromFile(external_fields_path, B_external_particle_field[lev][2].get(), "B", "z");
+#endif
+    }
+    if (mypc->m_E_ext_particle_s == "read_from_file") {
+        std::string external_fields_path;
+        const amrex::ParmParse pp_particles("particles");
+        pp_particles.get("read_fields_from_path", external_fields_path );
+#if defined(WARPX_DIM_RZ)
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
+                                         "External field reading is not implemented for more than one RZ mode (see #3829)");
+        ReadExternalFieldFromFile(external_fields_path, E_external_particle_field[lev][0].get(), "E", "r");
+        ReadExternalFieldFromFile(external_fields_path, E_external_particle_field[lev][1].get(), "E", "t");
+        ReadExternalFieldFromFile(external_fields_path, E_external_particle_field[lev][2].get(), "E", "z");
+#else
+        ReadExternalFieldFromFile(external_fields_path, E_external_particle_field[lev][0].get(), "E", "x");
+        ReadExternalFieldFromFile(external_fields_path, E_external_particle_field[lev][1].get(), "E", "y");
+        ReadExternalFieldFromFile(external_fields_path, E_external_particle_field[lev][2].get(), "E", "z");
 #endif
     }
 }
