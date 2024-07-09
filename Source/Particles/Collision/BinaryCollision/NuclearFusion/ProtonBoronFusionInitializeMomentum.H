@@ -76,18 +76,19 @@ namespace {
         // cf. https://doi.org/10.1016/j.radphyschem.2022.110727
         // Dominant reaction channel is p + B11 -> alpha_1 + 8Be* -> alpha_1 + alpha_11 + alpha_12 + 8.58 MeV
         // Fusion energy = Total Energy Released - Decay Energy (8.68 - 3.03 = 5.65 MeV)
-        // cf. Geser (2019) https://doi.org/10.1016/j.radphyschem.2019.03.028
-        constexpr amrex::ParticleReal E_fusion = 5.65_prt*mev_to_joule;
+        // cf. Kelley et al., (2017) http://dx.doi.org/10.1016/j.nuclphysa.2017.07.015
+        constexpr amrex::ParticleReal E_fusion = 5.557_prt*mev_to_joule;
         // Energy produced when Beryllium8 decays into two alphas
-        // cf. Geser (2019) https://doi.org/10.1016/j.radphyschem.2019.03.028
-        constexpr amrex::ParticleReal E_decay = 3.03_prt*mev_to_joule;
+        // cf. Kelley et al., (2017) http://dx.doi.org/10.1016/j.nuclphysa.2017.07.015
+        constexpr amrex::ParticleReal E_decay = 3.124_prt*mev_to_joule;
 
         // The constexprs ma_sq and mBe_sq underflow in single precision because we use SI units,
         // which can cause compilation to fail or generate a warning, so we're explicitly setting
         // them as double. Note that nuclear fusion module does not currently work with single
         // precision anyways.
         constexpr double m_alpha = PhysConst::m_u * 4.00260325413_prt;
-        constexpr double m_beryllium = PhysConst::m_p * 7.94748_prt;
+        // mass of the Be8 excited state (3.03 MeV above ground state)
+        constexpr double m_beryllium = PhysConst::m_p * 7.94748_prt + PhysConst::m_u * 0.00325283863_prt;
         constexpr double mBe_sq = m_beryllium*m_beryllium;
         constexpr amrex::ParticleReal c_sq = PhysConst::c * PhysConst::c;
 
