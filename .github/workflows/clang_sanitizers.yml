@@ -96,7 +96,6 @@ jobs:
         export CC=$(which clang-17)
         export CXXFLAGS="-fsanitize=thread"
 
-        rm -rf build
         cmake -S . -B build                 \
           -GNinja                           \
           -DCMAKE_VERBOSE_MAKEFILE=ON       \
@@ -106,7 +105,7 @@ jobs:
           -DWarpX_QED=ON                    \
           -DWarpX_QED_TABLE_GEN=ON          \
           -DWarpX_OPENPMD=ON                \
-          -WarpX_EB=ON                      \
+          -DWarpX_EB=ON                      \
           -DWarpX_PRECISION=SINGLE          \
           -DWarpX_PARTICLE_PRECISION=SINGLE
         cmake --build build -j 4
