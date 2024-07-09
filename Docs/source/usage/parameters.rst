@@ -1156,8 +1156,8 @@ Particle initialization
     * ``gaussian_parse_momentum_function``: Gaussian momentum distribution where the mean and the standard deviation are given by functions of position in the input file.
       Both are assumed to be non-relativistic.
       The mean is the normalized momentum, :math:`u_m = \gamma v_m/c`.
-      The standard deviation is normalized, :math:`u_th = v_th/c`.
-      For example, this might be `u_th = sqrt(T*q_e/mass)/clight` given the temperature (in eV) and mass.
+      The standard deviation is normalized, :math:`u_{th} = v_{th}/c`.
+      For example, this might be ``u_th = sqrt(T*q_e/mass)/clight`` given the temperature (in eV) and mass.
       It requires the following arguments:
 
       * ``<species_name>.momentum_function_ux_m(x,y,z)``: mean :math:`u_{x}`
