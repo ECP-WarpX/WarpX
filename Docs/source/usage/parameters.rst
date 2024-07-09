@@ -500,7 +500,7 @@ Domain Boundary Conditions
     * ``open``: For the electrostatic Poisson solver based on a Integrated Green Function method.
 
 * ``boundary.potential_lo_x/y/z`` and ``boundary.potential_hi_x/y/z`` (default `0`)
-    Gives the value of the electric potential at the boundaries, for ``pec`` boundaries. With electrostatic solvers
+    Gives the value of the electric potential, in Volts, at the boundaries, for ``pec`` boundaries. With electrostatic solvers
     (i.e., with ``warpx.do_electrostatic = ...``), this is used in order to compute the potential
     in the simulation volume at each timestep. When using other solvers (e.g. Maxwell solver),
     setting these variables will trigger an electrostatic solve at ``t=0``, to compute the initial
@@ -603,7 +603,7 @@ Whether the embedded boundary is defined with an analytical function or an STL f
 additionally define the electric potential at the embedded boundary with an analytical function:
 
 * ``warpx.eb_potential(x,y,z,t)`` (`string`)
-    Gives the value of the electric potential at the surface of the embedded boundary,
+    Gives the value of the electric potential, in Volts, at the surface of the embedded boundary,
     as a function of  `x`, `y`, `z` and `t`. With electrostatic solvers (i.e., with
     ``warpx.do_electrostatic = ...``), this is used in order to compute the potential
     in the simulation volume at each timestep. When using other solvers (e.g. Maxwell solver),
