@@ -343,6 +343,8 @@ WarpX::WarpX ()
     // Same as Bfield_fp/Efield_fp for reading external field data
     Bfield_fp_external.resize(1);
     Efield_fp_external.resize(1);
+    B_external_particle_field.resize(1);
+    E_external_particle_field.resize(1);
 
     m_edge_lengths.resize(nlevs_max);
     m_face_areas.resize(nlevs_max);
@@ -2592,22 +2594,24 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         AllocInitMultiFab(Bfield_fp_external[lev][0], amrex::convert(ba, Bfield_fp[lev][0]->ixType()), dm, ncomps, ngEB, lev, "Bfield_fp_external[x]", 0.0_rt);
         AllocInitMultiFab(Bfield_fp_external[lev][1], amrex::convert(ba, Bfield_fp[lev][1]->ixType()), dm, ncomps, ngEB, lev, "Bfield_fp_external[y]", 0.0_rt);
         AllocInitMultiFab(Bfield_fp_external[lev][2], amrex::convert(ba, Bfield_fp[lev][2]->ixType()), dm, ncomps, ngEB, lev, "Bfield_fp_external[z]", 0.0_rt);
-    } else if (mypc->m_B_ext_particle_s == "read_from_file") {
+    }
+    if (mypc->m_B_ext_particle_s == "read_from_file") {
         //  These fields will be added to the fields that the particles see, and need to match the index type
-        AllocInitMultiFab(Bfield_fp_external[lev][0], amrex::convert(ba, Bfield_aux[lev][0]->ixType()), dm, ncomps, ngEB, lev, "Bfield_fp_external[x]", 0.0_rt);
-        AllocInitMultiFab(Bfield_fp_external[lev][1], amrex::convert(ba, Bfield_aux[lev][1]->ixType()), dm, ncomps, ngEB, lev, "Bfield_fp_external[y]", 0.0_rt);
-        AllocInitMultiFab(Bfield_fp_external[lev][2], amrex::convert(ba, Bfield_aux[lev][2]->ixType()), dm, ncomps, ngEB, lev, "Bfield_fp_external[z]", 0.0_rt);
+        AllocInitMultiFab(B_external_particle_field[lev][0], amrex::convert(ba, Bfield_aux[lev][0]->ixType()), dm, ncomps, ngEB, lev, "B_external_particle_field[x]", 0.0_rt);
+        AllocInitMultiFab(B_external_particle_field[lev][1], amrex::convert(ba, Bfield_aux[lev][1]->ixType()), dm, ncomps, ngEB, lev, "B_external_particle_field[y]", 0.0_rt);
+        AllocInitMultiFab(B_external_particle_field[lev][2], amrex::convert(ba, Bfield_aux[lev][2]->ixType()), dm, ncomps, ngEB, lev, "B_external_particle_field[z]", 0.0_rt);
     }
     if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::read_from_file) {
         // These fields will be added directly to the grid, i.e. to fp, and need to match the index type
         AllocInitMultiFab(Efield_fp_external[lev][0], amrex::convert(ba, Efield_fp[lev][0]->ixType()), dm, ncomps, ngEB, lev, "Efield_fp_external[x]", 0.0_rt);
         AllocInitMultiFab(Efield_fp_external[lev][1], amrex::convert(ba, Efield_fp[lev][1]->ixType()), dm, ncomps, ngEB, lev, "Efield_fp_external[y]", 0.0_rt);
         AllocInitMultiFab(Efield_fp_external[lev][2], amrex::convert(ba, Efield_fp[lev][2]->ixType()), dm, ncomps, ngEB, lev, "Efield_fp_external[z]", 0.0_rt);
-    } else if (mypc->m_E_ext_particle_s == "read_from_file") {
+    }
+    if (mypc->m_E_ext_particle_s == "read_from_file") {
         //  These fields will be added to the fields that the particles see, and need to match the index type
-        AllocInitMultiFab(Efield_fp_external[lev][0], amrex::convert(ba, Efield_aux[lev][0]->ixType()), dm, ncomps, ngEB, lev, "Efield_fp_external[x]", 0.0_rt);
-        AllocInitMultiFab(Efield_fp_external[lev][1], amrex::convert(ba, Efield_aux[lev][1]->ixType()), dm, ncomps, ngEB, lev, "Efield_fp_external[y]", 0.0_rt);
-        AllocInitMultiFab(Efield_fp_external[lev][2], amrex::convert(ba, Efield_aux[lev][2]->ixType()), dm, ncomps, ngEB, lev, "Efield_fp_external[z]", 0.0_rt);
+        AllocInitMultiFab(E_external_particle_field[lev][0], amrex::convert(ba, Efield_aux[lev][0]->ixType()), dm, ncomps, ngEB, lev, "E_external_particle_field[x]", 0.0_rt);
+        AllocInitMultiFab(E_external_particle_field[lev][1], amrex::convert(ba, Efield_aux[lev][1]->ixType()), dm, ncomps, ngEB, lev, "E_external_particle_field[y]", 0.0_rt);
+        AllocInitMultiFab(E_external_particle_field[lev][2], amrex::convert(ba, Efield_aux[lev][2]->ixType()), dm, ncomps, ngEB, lev, "E_external_particle_field[z]", 0.0_rt);
     }
 
     //
