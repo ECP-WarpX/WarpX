@@ -86,7 +86,7 @@ Overall simulation parameters
 
     * ``explicit``: Use an explicit solver, such as the standard FDTD or PSATD
 
-    * ``theta_implicit_em``: Use a fully implicit electromagnetic solver with a time-biasing parameter theta bound between 0.5 and 1.0. Exact energy conservation is achieved using theta = 0.5. Maximal damping of high-k modes is obtained using theta = 1.0. Choices for the nonlinear solver include a Picard iteration scheme and particle-suppressed (PS) JNFK.
+    * ``theta_implicit_em``: Use a fully implicit electromagnetic solver with a time-biasing parameter theta bound between 0.5 and 1.0. Exact energy conservation is achieved using theta = 0.5. Maximal damping of high-k modes is obtained using theta = 1.0. Choices for the nonlinear solver include a Picard iteration scheme and particle-suppressed (PS) JFNK.
       The algorithm itself is numerical stable for large time steps. That is, it does not require time steps that resolve the plasma period or the CFL condition for light waves. However, the practicality of using a large time step depends on the nonlinear solver. Note that the Picard solver is for demonstration only. It is inefficient and will most like not converge when
       :math:`\omega_{pe} \Delta t` is close to or greater than one or when the CFL condition for light waves is violated. The PS-JFNK method must be used in order to use large time steps. However, the current implementation of PS-JFNK is still inefficient because the JFNK solver is not preconditioned and there is no use of the mass matrices to minimize the cost of a linear iteration. The time step is limited by how many cells a particle can cross in a time step (MPI-related) and by the need to resolve the relevant physics.
       The Picard method is described in `Angus et al., On numerical energy conservation for an implicit particle-in-cell method coupled with a binary Monte-Carlo algorithm for Coulomb collisions <https://doi.org/10.1016/j.jcp.2022.111030>`__.
@@ -2446,7 +2446,7 @@ Grid types (collocated, staggered, hybrid)
     For example, :math:`E_z` is gathered using ``algo.particle_shape`` along :math:`(x,y)` and ``algo.particle_shape - 1`` along :math:`z`.
     See equations (21)-(23) of :cite:t:`param-Godfrey2013` and associated references for details.
 
-    Default: ``interpolation.galerkin_scheme = 0`` with collocated grids and/or momentum-conserving field gathering, ``interpolation.galerkin_scheme = 1`` otherwise.
+    Default: ``interpolation.galerkin_scheme = 0`` with collocated grids, or momentum-conserving field gathering, or when ``algo.current_deposition = direct`` ; ``interpolation.galerkin_scheme = 1`` otherwise.
 
     .. warning::
 
