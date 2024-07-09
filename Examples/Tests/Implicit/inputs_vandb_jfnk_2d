@@ -38,10 +38,32 @@ warpx.const_dt = dt
 warpx.use_filter = 0
 
 algo.maxwell_solver = Yee
-algo.evolve_scheme = "implicit_picard"
-algo.require_picard_convergence = 0
-algo.max_picard_iterations = 25
-algo.picard_iteration_tolerance = 0.0 #1.0e-12
+algo.evolve_scheme = "theta_implicit_em"
+#algo.evolve_scheme = "semi_implicit_em"
+
+implicit_evolve.theta = 0.5
+implicit_evolve.max_particle_iterations = 21
+implicit_evolve.particle_tolerance = 1.0e-12
+
+#implicit_evolve.nonlinear_solver = "picard"
+#picard.verbose = true
+#picard.max_iterations = 25
+#picard.relative_tolerance = 0.0 #1.0e-12
+#picard.absolute_tolerance = 0.0 #1.0e-24
+#picard.require_convergence = false
+
+implicit_evolve.nonlinear_solver = "newton"
+newton.verbose = true
+newton.max_iterations = 20
+newton.relative_tolerance = 1.0e-12
+newton.absolute_tolerance = 0.0
+newton.require_convergence = false
+
+gmres.verbose_int = 2
+gmres.max_iterations = 1000
+gmres.relative_tolerance = 1.0e-8
+gmres.absolute_tolerance = 0.0
+
 algo.particle_pusher = "boris"
 #algo.particle_pusher = "higuera"
 
@@ -82,8 +104,8 @@ diagnostics.diags_names = diag1
 diag1.intervals = 20
 diag1.diag_type = Full
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho divE
-diag1.electrons.variables = w ux uy uz
-diag1.protons.variables = w ux uy uz
+diag1.electrons.variables = x z w ux uy uz
+diag1.protons.variables = x z w ux uy uz
 
 warpx.reduced_diags_names = particle_energy field_energy
 particle_energy.type = ParticleEnergy

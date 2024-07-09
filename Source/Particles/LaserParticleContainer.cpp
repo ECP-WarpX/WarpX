@@ -19,6 +19,7 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "WarpX.H"
 
 #include <ablastr/warn_manager/WarnManager.H>
 
@@ -652,7 +653,7 @@ LaserParticleContainer::Evolve (int lev,
             // Calculate the corresponding momentum and position for the particles
             update_laser_particle(pti, static_cast<int>(np), uxp.dataPtr(), uyp.dataPtr(),
                                   uzp.dataPtr(), wp.dataPtr(),
-                                  amplitude_E.dataPtr(), dt);
+                                  amplitude_E.dataPtr(), dt, push_type );
             WARPX_PROFILE_VAR_STOP(blp_pp);
 
             // Current Deposition
@@ -718,7 +719,7 @@ LaserParticleContainer::ComputeSpacing (int lev, Real& Sx, Real& Sy) const
 #if !defined(WARPX_DIM_RZ)
     constexpr float small_float_coeff = 1.e-25f;
     constexpr double small_double_coeff = 1.e-50;
-    constexpr Real small_coeff = std::is_same<Real,float>::value ?
+    constexpr Real small_coeff = std::is_same_v<Real,float> ?
         static_cast<Real>(small_float_coeff) :
         static_cast<Real>(small_double_coeff);
     const auto eps = static_cast<Real>(dx[0]*small_coeff);
@@ -850,7 +851,7 @@ LaserParticleContainer::update_laser_particle (WarpXParIter& pti,
                                                ParticleReal * AMREX_RESTRICT const puzp,
                                                ParticleReal const * AMREX_RESTRICT const pwp,
                                                Real const * AMREX_RESTRICT const amplitude,
-                                               const Real dt)
+                                               const Real dt, PushType push_type)
 {
     const auto GetPosition = GetParticlePosition<PIdx>(pti);
     auto       SetPosition = SetParticlePosition<PIdx>(pti);
@@ -861,6 +862,26 @@ LaserParticleContainer::update_laser_particle (WarpXParIter& pti,
     const Real tmp_nvec_0 = m_nvec[0];
     const Real tmp_nvec_1 = m_nvec[1];
     const Real tmp_nvec_2 = m_nvec[2];
+
+    // When using the implicit solver, this function is called multiple times per timestep
+    // (within the linear and nonlinear solver). Thus, the position of the particles needs to be reset
+    // to the initial position (at the beginning of the timestep), before updating the particle position
+#if (AMREX_SPACEDIM >= 2)
+    ParticleReal* x_n = nullptr;
+    if (push_type == PushType::Implicit) {
+        x_n = pti.GetAttribs(particle_comps["x_n"]).dataPtr();
+    }
+#endif
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+    ParticleReal* y_n = nullptr;
+    if (push_type == PushType::Implicit) {
+        y_n = pti.GetAttribs(particle_comps["y_n"]).dataPtr();
+    }
+#endif
+    ParticleReal* z_n = nullptr;
+    if (push_type == PushType::Implicit) {
+        z_n = pti.GetAttribs(particle_comps["z_n"]).dataPtr();
+    }
 
     // Copy member variables to tmp copies for GPU runs.
     const Real tmp_mobility = m_mobility;
@@ -893,15 +914,33 @@ LaserParticleContainer::update_laser_particle (WarpXParIter& pti,
             puzp[i] = gamma * vz;
 
             // Push the the particle positions
-            ParticleReal x, y, z;
-            GetPosition(i, x, y, z);
+
+            // When using the implicit solver, this function is called multiple times per timestep
+            // (within the linear and nonlinear solver). Thus, the position of the particles needs to be reset
+            // to the initial position (at the beginning of the timestep), before updating the particle position
+
+            ParticleReal x=0., y=0., z=0.;
+            if (push_type == PushType::Explicit) {
+                GetPosition(i, x, y, z);
+            }
+
 #if !defined(WARPX_DIM_1D_Z)
+            if (push_type == PushType::Implicit) {
+                x = x_n[i];
+            }
             x += vx * dt;
 #endif
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+            if (push_type == PushType::Implicit) {
+                y = y_n[i];
+            }
             y += vy * dt;
 #endif
+            if (push_type == PushType::Implicit) {
+                z = z_n[i];
+            }
             z += vz * dt;
+
             SetPosition(i, x, y, z);
         }
         );

@@ -9,10 +9,6 @@
 
 #include "VelocityCoincidenceThinning.H"
 
-#include "Particles/Algorithms/KineticEnergy.H"
-#include "Utils/Parser/ParserUtils.H"
-#include "Utils/ParticleUtils.H"
-
 
 VelocityCoincidenceThinning::VelocityCoincidenceThinning (const std::string& species_name)
 {
@@ -28,15 +24,41 @@ VelocityCoincidenceThinning::VelocityCoincidenceThinning (const std::string& spe
         "Resampling min_ppc should be greater than or equal to 1"
     );
 
-    utils::parser::getWithParser(
-        pp_species_name, "resampling_algorithm_delta_ur", m_delta_ur
+    amrex::ParticleReal target_weight = 0;
+    if (utils::parser::queryWithParser(
+        pp_species_name, "resampling_algorithm_target_weight", target_weight
+    )) {
+        // factor of 2 since each cluster is reduced to 2 particles
+        m_cluster_weight = target_weight * 2.0_prt;
+    }
+
+    std::string velocity_grid_type_str = "spherical";
+    pp_species_name.query(
+        "resampling_algorithm_velocity_grid_type", velocity_grid_type_str
     );
-    utils::parser::getWithParser(
-        pp_species_name, "resampling_algorithm_n_theta", m_ntheta
-    );
-    utils::parser::getWithParser(
-        pp_species_name, "resampling_algorithm_n_phi", m_nphi
-    );
+    if (velocity_grid_type_str == "spherical") {
+        m_velocity_grid_type = VelocityGridType::Spherical;
+        utils::parser::getWithParser(
+            pp_species_name, "resampling_algorithm_delta_ur", m_delta_ur
+        );
+        utils::parser::getWithParser(
+            pp_species_name, "resampling_algorithm_n_theta", m_ntheta
+        );
+        utils::parser::getWithParser(
+            pp_species_name, "resampling_algorithm_n_phi", m_nphi
+        );
+    }
+    else if (velocity_grid_type_str == "cartesian") {
+        m_velocity_grid_type = VelocityGridType::Cartesian;
+        utils::parser::getArrWithParser(
+            pp_species_name, "resampling_algorithm_delta_u", m_delta_u
+        );
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_delta_u.size() == 3,
+            "resampling_algorithm_delta_u must have three components.");
+    }
+    else {
+        WARPX_ABORT_WITH_MESSAGE("Unkown velocity grid type.");
+    }
 }
 
 void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
@@ -45,6 +67,7 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
     using namespace amrex::literals;
 
     auto& ptile = pc->ParticlesAt(lev, pti);
+    const auto n_parts_in_tile = pti.numParticles();
     auto& soa = ptile.GetStructOfArrays();
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_3D)
     auto * const AMREX_RESTRICT x = soa.GetRealData(PIdx::x).data();
@@ -69,7 +92,7 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
     auto *const cell_offsets = bins.offsetsPtr();
 
     const auto min_ppc = m_min_ppc;
-
+    const auto cluster_weight = m_cluster_weight;
     const auto mass = pc->getMass();
 
     // check if species mass > 0
@@ -79,21 +102,57 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
     );
 
     // create a GPU vector to hold the momentum cluster index for each particle
-    amrex::Gpu::DeviceVector<int> momentum_bin_number(bins.numItems());
+    amrex::Gpu::DeviceVector<int> momentum_bin_number(n_parts_in_tile);
     auto* momentum_bin_number_data = momentum_bin_number.data();
 
     // create a GPU vector to hold the index sorting for the momentum bins
-    amrex::Gpu::DeviceVector<int> sorted_indices(bins.numItems());
+    amrex::Gpu::DeviceVector<int> sorted_indices(n_parts_in_tile);
     auto* sorted_indices_data = sorted_indices.data();
 
-    const auto Ntheta = m_ntheta;
-    const auto Nphi = m_nphi;
-
-    const auto dr = m_delta_ur;
-    const auto dtheta = 2.0_prt * MathConst::pi / Ntheta;
-    const auto dphi = MathConst::pi / Nphi;
     constexpr auto c2 = PhysConst::c * PhysConst::c;
 
+    auto velocityBinCalculator = VelocityBinCalculator();
+    velocityBinCalculator.velocity_grid_type = m_velocity_grid_type;
+    if (m_velocity_grid_type == VelocityGridType::Spherical) {
+        velocityBinCalculator.dur = m_delta_ur;
+        velocityBinCalculator.n1 = m_ntheta;
+        velocityBinCalculator.n2 = m_nphi;
+        velocityBinCalculator.dutheta = 2.0_prt * MathConst::pi / m_ntheta;
+        velocityBinCalculator.duphi = MathConst::pi / m_nphi;
+    }
+    else if (m_velocity_grid_type == VelocityGridType::Cartesian) {
+        velocityBinCalculator.dux = m_delta_u[0];
+        velocityBinCalculator.duy = m_delta_u[1];
+        velocityBinCalculator.duz = m_delta_u[2];
+
+        // get the minimum and maximum velocities to determine the velocity space
+        // grid boundaries
+        {
+            using ReduceOpsT = amrex::TypeMultiplier<amrex::ReduceOps,
+                                                     amrex::ReduceOpMin[3],
+                                                     amrex::ReduceOpMax[2]>;
+            using ReduceDataT = amrex::TypeMultiplier<amrex::ReduceData, amrex::ParticleReal[5]>;
+            ReduceOpsT reduce_op;
+            ReduceDataT reduce_data(reduce_op);
+            using ReduceTuple = typename ReduceDataT::Type;
+            reduce_op.eval(n_parts_in_tile, reduce_data, [=] AMREX_GPU_DEVICE(int i) -> ReduceTuple {
+                return {ux[i], uy[i], uz[i], ux[i], uy[i]};
+            });
+            auto hv = reduce_data.value(reduce_op);
+            velocityBinCalculator.ux_min = amrex::get<0>(hv);
+            velocityBinCalculator.uy_min = amrex::get<1>(hv);
+            velocityBinCalculator.uz_min = amrex::get<2>(hv);
+            velocityBinCalculator.ux_max = amrex::get<3>(hv);
+            velocityBinCalculator.uy_max = amrex::get<4>(hv);
+        }
+
+        velocityBinCalculator.n1 = static_cast<int>(
+            std::ceil((velocityBinCalculator.ux_max - velocityBinCalculator.ux_min) / m_delta_u[0])
+        );
+        velocityBinCalculator.n2 = static_cast<int>(
+            std::ceil((velocityBinCalculator.uy_max - velocityBinCalculator.uy_min) / m_delta_u[1])
+        );
+    }
     auto heapSort = HeapSort();
 
     // Loop over cells
@@ -114,24 +173,10 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
 
             // Loop over particles and label them with the appropriate momentum bin
             // number. Also assign initial ordering to the sorted_indices array.
-            for (int i = cell_start; i < cell_stop; ++i)
-            {
-                // get polar components of the velocity vector
-                auto u_mag = std::sqrt(
-                    ux[indices[i]]*ux[indices[i]] +
-                    uy[indices[i]]*uy[indices[i]] +
-                    uz[indices[i]]*uz[indices[i]]
-                );
-                auto u_theta = std::atan2(uy[indices[i]], ux[indices[i]]) + MathConst::pi;
-                auto u_phi = std::acos(uz[indices[i]]/u_mag);
-
-                const auto ii = static_cast<int>(u_theta / dtheta);
-                const auto jj = static_cast<int>(u_phi / dphi);
-                const auto kk = static_cast<int>(u_mag / dr);
-
-                momentum_bin_number_data[i] = ii + jj * Ntheta + kk * Ntheta * Nphi;
-                sorted_indices_data[i] = i;
-            }
+            velocityBinCalculator(
+                ux, uy, uz, indices, momentum_bin_number_data, sorted_indices_data,
+                cell_start, cell_stop
+            );
 
             // sort indices based on comparing values in momentum_bin_number
             heapSort(sorted_indices_data, momentum_bin_number_data, cell_start, cell_numparts);
@@ -170,10 +215,13 @@ void VelocityCoincidenceThinning::operator() (WarpXParIter& pti, const int lev,
                     ux[part_idx], uy[part_idx], uz[part_idx], mass
                 );
 
-                // check if this is the last particle in the current momentum bin
+                // check if this is the last particle in the current momentum bin,
+                // or if the next particle would push the current cluster weight
+                // to exceed the maximum specified cluster weight
                 if (
                     (i == cell_stop - 1)
                     || (momentum_bin_number_data[sorted_indices_data[i]] != momentum_bin_number_data[sorted_indices_data[i + 1]])
+                    || (total_weight + w[indices[sorted_indices_data[i+1]]] > cluster_weight)
                 ) {
                     // check if the bin has more than 2 particles in it
                     if ( particles_in_bin > 2 && total_weight > std::numeric_limits<amrex::ParticleReal>::min() ){

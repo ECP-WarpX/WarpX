@@ -186,15 +186,16 @@ scrapeParticlesAtEB (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distan
 
                 int i, j, k;
                 amrex::Real W[AMREX_SPACEDIM][2];
-                ablastr::particles::compute_weights(xp, yp, zp, plo, dxi, i, j, k, W);
+                ablastr::particles::compute_weights<amrex::IndexType::NODE>(
+                    xp, yp, zp, plo, dxi, i, j, k, W);
                 amrex::Real phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, phi);
 
                 if (phi_value < -particle_removal_depth)
                 {
                     int ic, jc, kc; // Cell-centered indices
-                    [[maybe_unused]] int nodal;
                     amrex::Real Wc[AMREX_SPACEDIM][2]; // Cell-centered weights
-                    ablastr::particles::compute_weights(xp, yp, zp, plo, dxi, ic, jc, kc, Wc, nodal=0);
+                    ablastr::particles::compute_weights<amrex::IndexType::CELL>(
+                        xp, yp, zp, plo, dxi, ic, jc, kc, Wc);
                     amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, ic, jc, kc, Wc, phi, dxi);
                     DistanceToEB::normalize(normal);
                     amrex::RealVect pos;

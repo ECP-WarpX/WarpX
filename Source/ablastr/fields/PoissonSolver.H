@@ -15,7 +15,7 @@
 #include <ablastr/fields/Interpolate.H>
 #include <ablastr/profiler/ProfilerWrapper.H>
 
-#if defined(WARPX_USE_PSATD) && defined(WARPX_DIM_3D)
+#if defined(WARPX_USE_FFT) && defined(WARPX_DIM_3D)
 #include <ablastr/fields/IntegratedGreenFunctionSolver.H>
 #endif
 
@@ -82,7 +82,7 @@ namespace ablastr::fields {
  * \param[in] dmap the distribution mapping per level (e.g., from AmrMesh)
  * \param[in] grids the grids per level (e.g., from AmrMesh)
  * \param[in] boundary_handler a handler for boundary conditions, for example @see ElectrostaticSolver::PoissonBoundaryHandler
- * \param[in] is_solver_multigrid boolean to select the Poisson solver: 1 for Multigrid, 0 for FFT
+ * \param[in] is_solver_igf_on_lev0 boolean to select the Poisson solver: 1 for FFT on level 0 & Multigrid on other levels, 0 for Multigrid on all levels
  * \param[in] do_single_precision_comms perform communications in single precision
  * \param[in] rel_ref_ratio mesh refinement ratio between levels (default: 1)
  * \param[in] post_phi_calculation perform a calculation per level directly after phi was calculated; required for embedded boundaries (default: none)
@@ -106,7 +106,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
             amrex::Vector<amrex::DistributionMapping> const& dmap,
             amrex::Vector<amrex::BoxArray> const& grids,
             T_BoundaryHandler const boundary_handler,
-            [[maybe_unused]] bool is_solver_multigrid,
+            bool is_solver_igf_on_lev0,
             bool const do_single_precision_comms = false,
             std::optional<amrex::Vector<amrex::IntVect> > rel_ref_ratio = std::nullopt,
             [[maybe_unused]] T_PostPhiCalculationFunctor post_phi_calculation = std::nullopt,
@@ -116,7 +116,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 {
     using namespace amrex::literals;
 
-    ABLASTR_PROFILE("computePhi", false);
+    ABLASTR_PROFILE("computePhi");
 
     if (!rel_ref_ratio.has_value()) {
         ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(rho.size() == 1u,
@@ -160,9 +160,19 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
                 {{ beta[0], beta[1], beta[2] }};
 #endif
 
-#if (defined(WARPX_USE_PSATD)  && defined(WARPX_DIM_3D))
+#if !defined(WARPX_USE_FFT)
+        ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE( !is_solver_igf_on_lev0,
+        "Must compile with -DWarpX_FFT=ON to use the FFT solver!");
+#endif
+
+#if !defined(WARPX_DIM_3D)
+        ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE( !is_solver_igf_on_lev0,
+        "The FFT Poisson solver is currently only implemented for 3D!");
+#endif
+
+#if (defined(WARPX_USE_FFT)  && defined(WARPX_DIM_3D))
         // Use the Integrated Green Function solver (FFT) on the coarsest level if it was selected
-        if(!is_solver_multigrid && lev==0){
+        if(is_solver_igf_on_lev0 && lev==0){
             amrex::Array<amrex::Real,AMREX_SPACEDIM> const dx_igf
                     {AMREX_D_DECL(geom[lev].CellSize(0)/std::sqrt(1._rt-beta_solver[0]*beta_solver[0]),
                                 geom[lev].CellSize(1)/std::sqrt(1._rt-beta_solver[1]*beta_solver[1]),
@@ -305,7 +315,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         }
 
         // Run additional operations, such as calculation of the E field for embedded boundaries
-        if constexpr (!std::is_same<T_PostPhiCalculationFunctor, std::nullopt_t>::value) {
+        if constexpr (!std::is_same_v<T_PostPhiCalculationFunctor, std::nullopt_t>) {
             if (post_phi_calculation.has_value()) {
                 post_phi_calculation.value()(mlmg, lev);
             }

@@ -11,10 +11,10 @@ module load nano
 
 # optional: for PSATD in RZ geometry support
 SW_DIR="${HOME}/sw/lumi/gpu"
-export CMAKE_PREFIX_PATH=${SW_DIR}/blaspp-master:$CMAKE_PREFIX_PATH
-export CMAKE_PREFIX_PATH=${SW_DIR}/lapackpp-master:$CMAKE_PREFIX_PATH
-export LD_LIBRARY_PATH=${SW_DIR}/blaspp-master/lib64:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=${SW_DIR}/lapackpp-master/lib64:$LD_LIBRARY_PATH
+export CMAKE_PREFIX_PATH=${SW_DIR}/blaspp-2024.05.31:$CMAKE_PREFIX_PATH
+export CMAKE_PREFIX_PATH=${SW_DIR}/lapackpp-2024.05.31:$CMAKE_PREFIX_PATH
+export LD_LIBRARY_PATH=${SW_DIR}/blaspp-2024.05.31/lib64:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=${SW_DIR}/lapackpp-2024.05.31/lib64:$LD_LIBRARY_PATH
 
 # optional: for QED lookup table generation support
 module load Boost/1.82.0-cpeCray-23.09

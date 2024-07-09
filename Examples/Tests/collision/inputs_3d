@@ -22,6 +22,7 @@ boundary.field_hi = periodic periodic periodic
 warpx.serialize_initial_conditions = 1
 warpx.verbose = 1
 warpx.const_dt = 1.224744871e-07
+warpx.random_seed = 2034958209
 
 # Do not evolve the E and B fields
 algo.maxwell_solver = none
@@ -75,7 +76,7 @@ collision3.ndt = 10
 diagnostics.diags_names = diag1 diag_parser_filter diag_uniform_filter diag_random_filter
 diag1.intervals = 10
 diag1.diag_type = Full
-diag1.fields_to_plot = Ex Ey Ez Bx By Bz
+diag1.fields_to_plot = Ex Ey Ez Bx By Bz T_electron T_ion
 
 ## diag_parser_filter is a diag used to test the particle filter function.
 diag_parser_filter.intervals = 150:150:
