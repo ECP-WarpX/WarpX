@@ -212,15 +212,15 @@ public:
         amrex::Real reduce_value = amrex::get<0>(reduce_data.value());
 
         // MPI reduce
-        if (std::is_same<ReduceOp, amrex::ReduceOpMax>::value)
+        if (std::is_same_v<ReduceOp, amrex::ReduceOpMax>)
         {
             amrex::ParallelDescriptor::ReduceRealMax(reduce_value);
         }
-        if (std::is_same<ReduceOp, amrex::ReduceOpMin>::value)
+        if (std::is_same_v<ReduceOp, amrex::ReduceOpMin>)
         {
             amrex::ParallelDescriptor::ReduceRealMin(reduce_value);
         }
-        if (std::is_same<ReduceOp, amrex::ReduceOpSum>::value)
+        if (std::is_same_v<ReduceOp, amrex::ReduceOpSum>)
         {
             amrex::ParallelDescriptor::ReduceRealSum(reduce_value);
         // If reduction operation is a sum, multiply the value by the cell volume so that the

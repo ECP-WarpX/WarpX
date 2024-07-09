@@ -155,13 +155,13 @@ WarpX::PrintMainPICparameters ()
     amrex::Print() << "-------------------------------------------------------------------------------\n";
 
     // print warpx build information
-    if constexpr (std::is_same<Real, float>::value) {
+    if constexpr (std::is_same_v<Real, float>) {
       amrex::Print() << "Precision:            | SINGLE" << "\n";
     }
     else {
       amrex::Print() << "Precision:            | DOUBLE" << "\n";
     }
-    if constexpr (std::is_same<ParticleReal, float>::value) {
+    if constexpr (std::is_same_v<ParticleReal, float>) {
       amrex::Print() << "Particle precision:   | SINGLE" << "\n";
     }
     else {
