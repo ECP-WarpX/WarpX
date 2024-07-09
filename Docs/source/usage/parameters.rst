@@ -1805,13 +1805,13 @@ are applied to the particles directly, at each timestep. As a results, these fie
       Note that the position is defined in Cartesian coordinates, as a function of (x,y,z), even for RZ.
 
     * ``read_from_file``: load the external field from an openPMD file.
-        An additional parameter, indicating the path of an openPMD data file, ``warpx.read_fields_from_path``
+        An additional parameter, indicating the path of an openPMD data file, ``particles.read_fields_from_path``
         must be specified, from which the external E field data can be loaded into WarpX.
         One can refer to input files in ``Examples/Tests/LoadExternalField`` for more information.
         Regarding how to prepare the openPMD data file, one can refer to
         the `openPMD-example-datasets <https://github.com/openPMD/openPMD-example-datasets>`__.
         Note that if both ``B_ext_particle_init_style`` and ``E_ext_particle_init_style`` are set to
-        ``read_from_file``, the openPMD file specified by ``warpx.read_fields_from_path``
+        ``read_from_file``, the openPMD file specified by ``particles.read_fields_from_path``
         should contain both B and E external fields data.
 
         .. note::

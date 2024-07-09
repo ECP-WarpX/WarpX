@@ -1488,7 +1488,7 @@ class AnalyticInitialField(picmistandard.PICMI_AnalyticAppliedField):
 
 class LoadAppliedField(picmistandard.PICMI_LoadAppliedField):
     def applied_field_initialize_inputs(self):
-        pywarpx.warpx.read_fields_from_path = self.read_fields_from_path
+        pywarpx.particles.read_fields_from_path = self.read_fields_from_path
         if self.load_E:
             pywarpx.particles.E_ext_particle_init_style = 'read_from_file'
         if self.load_B:
