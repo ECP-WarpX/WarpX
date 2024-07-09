@@ -96,6 +96,7 @@ jobs:
         export CC=$(which clang-17)
         export CXXFLAGS="-fsanitize=thread"
 
+        rm -rf build
         cmake -S . -B build                 \
           -GNinja                           \
           -DCMAKE_VERBOSE_MAKEFILE=ON       \
