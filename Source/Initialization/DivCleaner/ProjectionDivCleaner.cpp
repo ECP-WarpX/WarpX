@@ -116,9 +116,10 @@ ProjectionDivCleaner::solve ()
     amrex::Array<LinOpBCType,AMREX_SPACEDIM> hibc({AMREX_D_DECL(LinOpBCType::bogus,
                                                                 LinOpBCType::bogus,
                                                                 LinOpBCType::bogus)});
-    int dim_start = 0;
 
 #ifdef WARPX_DIM_RZ
+    int dim_start = 0;
+
     if (geom[0].ProbLo(0) == 0){
         lobc[0] = LinOpBCType::Neumann;
 
@@ -137,6 +138,8 @@ ProjectionDivCleaner::solve ()
         }
         dim_start = 1;
     }
+#else
+    const int dim_start = 0;
 #endif
     for (int idim=dim_start; idim<AMREX_SPACEDIM; idim++){
         if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Periodic
