@@ -2319,20 +2319,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     AllocInitMultiFab(current_fp[lev][1], amrex::convert(ba, jy_nodal_flag), dm, ncomps, ngJ, lev, "current_fp[y]", 0.0_rt);
     AllocInitMultiFab(current_fp[lev][2], amrex::convert(ba, jz_nodal_flag), dm, ncomps, ngJ, lev, "current_fp[z]", 0.0_rt);
 
-    // Match external field MultiFabs to fine patch
-    if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::read_from_file
-        || m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::load_from_python) {
-        AllocInitMultiFab(Bfield_fp_external[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, lev, "Bfield_fp_external[x]", 0.0_rt);
-        AllocInitMultiFab(Bfield_fp_external[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, ngEB, lev, "Bfield_fp_external[y]", 0.0_rt);
-        AllocInitMultiFab(Bfield_fp_external[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngEB, lev, "Bfield_fp_external[z]", 0.0_rt);
-    }
-    if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::read_from_file
-        || m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::load_from_python) {
-        AllocInitMultiFab(Efield_fp_external[lev][0], amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, lev, "Efield_fp_external[x]", 0.0_rt);
-        AllocInitMultiFab(Efield_fp_external[lev][1], amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngEB, lev, "Efield_fp_external[y]", 0.0_rt);
-        AllocInitMultiFab(Efield_fp_external[lev][2], amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngEB, lev, "Efield_fp_external[z]", 0.0_rt);
-    }
-
     if (do_current_centering)
     {
         amrex::BoxArray const& nodal_ba = amrex::convert(ba, amrex::IntVect::TheNodeVector());
@@ -2605,7 +2591,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
 
     // The external fields that are read from file
-    if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::read_from_file) {
+    if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::read_from_file
+        || m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::load_from_python) {
         // These fields will be added directly to the grid, i.e. to fp, and need to match the index type
         AllocInitMultiFab(Bfield_fp_external[lev][0], amrex::convert(ba, Bfield_fp[lev][0]->ixType()),
             dm, ncomps, ngEB, lev, "Bfield_fp_external[x]", 0.0_rt);
@@ -2623,7 +2610,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         AllocInitMultiFab(B_external_particle_field[lev][2], amrex::convert(ba, Bfield_aux[lev][2]->ixType()),
             dm, ncomps, ngEB, lev, "B_external_particle_field[z]", 0.0_rt);
     }
-    if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::read_from_file) {
+    if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::read_from_file
+        || m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::load_from_python) {
         // These fields will be added directly to the grid, i.e. to fp, and need to match the index type
         AllocInitMultiFab(Efield_fp_external[lev][0], amrex::convert(ba, Efield_fp[lev][0]->ixType()),
             dm, ncomps, ngEB, lev, "Efield_fp_external[x]", 0.0_rt);
