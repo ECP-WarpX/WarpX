@@ -1404,7 +1404,7 @@ WarpX::LoadExternalFieldsFromFile (int const lev)
     // External particle fields
 
     if (mypc->m_B_ext_particle_s == "read_from_file") {
-        std::string external_fields_path = "";
+        std::string external_fields_path;
         const amrex::ParmParse pp_particles("particles");
         pp_particles.get("read_fields_from_path", external_fields_path );
 #if defined(WARPX_DIM_RZ)
