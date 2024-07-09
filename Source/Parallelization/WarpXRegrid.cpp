@@ -192,6 +192,12 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
             if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::read_from_file) {
                 RemakeMultiFab(Efield_fp_external[lev][idim], true);
             }
+            if (mypc->m_B_ext_particle_s == "read_from_file") {
+                RemakeMultiFab(B_external_particle_field[lev][idim], true);
+            }
+            if (mypc->m_E_ext_particle_s == "read_from_file") {
+                RemakeMultiFab(E_external_particle_field[lev][idim], true);
+            }
             RemakeMultiFab(current_fp[lev][idim], false);
             RemakeMultiFab(current_store[lev][idim], false);
             if (current_deposition_algo == CurrentDepositionAlgo::Vay) {
