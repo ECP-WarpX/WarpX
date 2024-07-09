@@ -544,15 +544,16 @@ WarpX::InitData ()
 void
 WarpX::AddExternalFields () {
     for (int lev = 0; lev <= finest_level; ++lev) {
+        // FIXME: RZ multimode has more than one component for all these
         if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::read_from_file) {
-            amrex::MultiFab::Add(*Efield_fp[lev][0], *Efield_fp_external[lev][0], 0, 0, Efield_fp_external[lev][0]->nComp(), guard_cells.ng_alloc_EB);
-            amrex::MultiFab::Add(*Efield_fp[lev][1], *Efield_fp_external[lev][1], 0, 0, Efield_fp_external[lev][1]->nComp(), guard_cells.ng_alloc_EB);
-            amrex::MultiFab::Add(*Efield_fp[lev][2], *Efield_fp_external[lev][2], 0, 0, Efield_fp_external[lev][2]->nComp(), guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Efield_fp[lev][0], *Efield_fp_external[lev][0], 0, 0, 1, guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Efield_fp[lev][1], *Efield_fp_external[lev][1], 0, 0, 1, guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Efield_fp[lev][2], *Efield_fp_external[lev][2], 0, 0, 1, guard_cells.ng_alloc_EB);
         }
         if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::read_from_file) {
-            amrex::MultiFab::Add(*Bfield_fp[lev][0], *Bfield_fp_external[lev][0], 0, 0, Bfield_fp_external[lev][0]->nComp(), guard_cells.ng_alloc_EB);
-            amrex::MultiFab::Add(*Bfield_fp[lev][1], *Bfield_fp_external[lev][1], 0, 0, Bfield_fp_external[lev][1]->nComp(), guard_cells.ng_alloc_EB);
-            amrex::MultiFab::Add(*Bfield_fp[lev][2], *Bfield_fp_external[lev][2], 0, 0, Bfield_fp_external[lev][2]->nComp(), guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Bfield_fp[lev][0], *Bfield_fp_external[lev][0], 0, 0, 1, guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Bfield_fp[lev][1], *Bfield_fp_external[lev][1], 0, 0, 1, guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Bfield_fp[lev][2], *Bfield_fp_external[lev][2], 0, 0, 1, guard_cells.ng_alloc_EB);
         }
     }
 }
@@ -1384,6 +1385,8 @@ WarpX::LoadExternalFieldsFromFile (int const lev)
     }
     if (mypc->m_B_ext_particle_s == "read_from_file") {
 #if defined(WARPX_DIM_RZ)
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
+                                         "External field reading is not implemented for more than one RZ mode (see #3829)");
         ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, B_external_particle_field[lev][0].get(), "B", "r");
         ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, B_external_particle_field[lev][1].get(), "B", "t");
         ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, B_external_particle_field[lev][2].get(), "B", "z");
@@ -1409,6 +1412,8 @@ WarpX::LoadExternalFieldsFromFile (int const lev)
     }
     if (mypc->m_E_ext_particle_s == "read_from_file") {
 #if defined(WARPX_DIM_RZ)
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
+                                         "External field reading is not implemented for more than one RZ mode (see #3829)");
         ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, E_external_particle_field[lev][0].get(), "E", "r");
         ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, E_external_particle_field[lev][1].get(), "E", "t");
         ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, E_external_particle_field[lev][2].get(), "E", "z");
