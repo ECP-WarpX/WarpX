@@ -62,7 +62,7 @@ ions = picmi.Species(
 ######## INITIAL FIELD ##########
 #################################
 
-initial_field = picmi.LoadInitialField(
+applied_field = picmi.LoadAppliedField(
         read_fields_from_path="../../../../openPMD-example-datasets/example-femm-3d.h5",
         load_E=False
         )
@@ -93,7 +93,7 @@ particle_diag = picmi.ParticleDiagnostic(
         species=[ions],
         data_list = ['ux', 'uy', 'uz', 'x', 'y', 'z', 'weighting'],
         write_dir='.',
-        warpx_file_prefix='Python_LoadExternalField3D_plt'
+        warpx_file_prefix='Python_LoadExternalParticleField3D_plt'
         )
 field_diag = picmi.FieldDiagnostic(
         name='diag1',
@@ -101,7 +101,7 @@ field_diag = picmi.FieldDiagnostic(
         period=300,
         data_list = ['Bx', 'By', 'Bz', 'Ex', 'Ey', 'Ez', 'Jx', 'Jy', 'Jz'],
         write_dir='.',
-        warpx_file_prefix='Python_LoadExternalField3D_plt'
+        warpx_file_prefix='Python_LoadExternalParticleField3D_plt'
         )
 
 #################################
@@ -120,7 +120,7 @@ sim = picmi.Simulation(
         particle_shape=particle_shape
         )
 
-sim.add_applied_field(initial_field)
+sim.add_applied_field(applied_field)
 
 sim.add_species(
         ions,
