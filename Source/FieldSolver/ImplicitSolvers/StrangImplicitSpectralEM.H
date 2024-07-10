@@ -67,14 +67,7 @@ public:
                       int              a_nl_iter,
                       bool             a_from_jacobian ) override;
 
-    [[nodiscard]] amrex::Real theta () const { return m_theta; }
-
 private:
-
-    /**
-     * \brief Time-biasing parameter for fields used on RHS to advance system
-     */
-    amrex::Real m_theta = 0.5;
 
     /**
      * \brief Solver vectors to be used in the nonlinear solver to solve for the

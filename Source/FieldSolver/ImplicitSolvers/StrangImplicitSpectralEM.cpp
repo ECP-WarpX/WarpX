@@ -46,7 +46,6 @@ void StrangImplicitSpectralEM::PrintParameters () const
     amrex::Print() << "------------------------------------------------------------------------" << std::endl;
     amrex::Print() << "----------- STRANG SPLIT IMPLICIT SPECTRAL EM SOLVER PARAMETERS --------" << std::endl;
     amrex::Print() << "------------------------------------------------------------------------" << std::endl;
-    amrex::Print() << "Time-bias parameter theta:  " << m_theta << std::endl;
     amrex::Print() << "max particle iterations:    " << m_max_particle_iterations << std::endl;
     amrex::Print() << "particle tolerance:         " << m_particle_tolerance << std::endl;
     if (m_nlsolver_type==NonlinearSolverType::Picard) {
@@ -108,7 +107,7 @@ void StrangImplicitSpectralEM::ComputeRHS ( WarpXSolverVec& a_Erhs,
                                             bool a_from_jacobian )
 {
     // update WarpX-owned Efield_fp and Bfield_fp using current state of E from
-    // the nonlinear solver at time n+theta
+    // the nonlinear solver at time n+1/2
     UpdateWarpXFields( a_E, a_time, a_dt );
 
     // Self consistently update particle positions and velocities using the
