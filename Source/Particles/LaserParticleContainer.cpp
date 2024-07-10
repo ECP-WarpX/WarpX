@@ -719,7 +719,7 @@ LaserParticleContainer::ComputeSpacing (int lev, Real& Sx, Real& Sy) const
 #if !defined(WARPX_DIM_RZ)
     constexpr float small_float_coeff = 1.e-25f;
     constexpr double small_double_coeff = 1.e-50;
-    constexpr Real small_coeff = std::is_same<Real,float>::value ?
+    constexpr Real small_coeff = std::is_same_v<Real,float> ?
         static_cast<Real>(small_float_coeff) :
         static_cast<Real>(small_double_coeff);
     const auto eps = static_cast<Real>(dx[0]*small_coeff);
