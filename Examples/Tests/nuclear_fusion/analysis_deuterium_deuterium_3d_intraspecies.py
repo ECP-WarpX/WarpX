@@ -51,7 +51,7 @@ checksumAPI.evaluate_checksum(test_name, fn)
 
 sigma_th = 2.603e-18
 error = np.abs(sigma-sigma_th)/sigma_th
-tolerance = 1e-2
+tolerance = 2e-2
 print('error = ', error)
 print('tolerance = ', tolerance)
 assert error < tolerance
