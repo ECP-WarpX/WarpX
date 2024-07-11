@@ -368,14 +368,12 @@ public:
                     // given by the `indices_1[cell_start_1:cell_stop_1]`
                     index_type const cell_start_1 = cell_offsets_1[i_cell];
                     index_type const cell_stop_1  = cell_offsets_1[i_cell+1];
-                    index_type const cell_half_1 = (cell_start_1+cell_stop_1)/2;
 
                     // Do not collide if there is only one particle in the cell
                     if ( cell_stop_1 - cell_start_1 <= 1 ) { return; }
 
                     // shuffle
-                    ShuffleFisherYates(
-                        indices_1, cell_start_1, cell_half_1, engine );
+                    ShuffleFisherYates(indices_1, cell_start_1, cell_stop_1, engine);
                 }
             );
 
