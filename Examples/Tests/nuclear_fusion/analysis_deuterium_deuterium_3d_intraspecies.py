@@ -45,13 +45,13 @@ nD = 1e26 # density in 1/m^3
 V = (2e-3)**3 # simulation volume in m^3
 sigma = dY_dt*(1+delta_ij)/(nD**2)/V*(1e2)**3
 
-# Compare checksums with benchmark
-test_name = os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, fn)
-
 sigma_th = 2.603e-18
 error = np.abs(sigma-sigma_th)/sigma_th
 tolerance = 2e-2
 print('error = ', error)
 print('tolerance = ', tolerance)
 assert error < tolerance
+
+# Compare checksums with benchmark
+test_name = os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, fn)
