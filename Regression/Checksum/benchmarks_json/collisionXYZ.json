@@ -6,7 +6,25 @@
     "Ex": 0.0,
     "Ey": 0.0,
     "Ez": 0.0,
-    "T_electron": 351570.64632548566,
-    "T_ion": 350085.3998917431
+    "T_electron": 353384.4616461907,
+    "T_ion": 348277.2774202612
+  },
+  "electron": {
+    "particle_momentum_x": 8.378820415249081e-19,
+    "particle_momentum_y": 8.238482720534644e-19,
+    "particle_momentum_z": 8.189221038447925e-19,
+    "particle_position_x": 21268719.554914076,
+    "particle_position_y": 21282437.437205918,
+    "particle_position_z": 21231947.47401523,
+    "particle_weight": 7.168263344048695e+28
+  },
+  "ion": {
+    "particle_momentum_x": 2.013855005436386e-18,
+    "particle_momentum_y": 1.8231305152698165e-18,
+    "particle_momentum_z": 1.8194149390229157e-18,
+    "particle_position_x": 21217737.157987915,
+    "particle_position_y": 21263096.30516862,
+    "particle_position_z": 21261343.069983635,
+    "particle_weight": 7.168263344048695e+28
   }
 }
