@@ -69,7 +69,7 @@ void ElasticCollisionPerez (
 
     // compute Debye length lmdD (if not using a fixed L = Coulomb log)
     T_PR lmdD = T_PR(-1.0);
-    if ( L <= T_PR(0.0) ) {
+    if ( L < T_PR(0.0) ) {
         lmdD = T_PR(1.0)/std::sqrt( n1*q1*q1/(T1*PhysConst::ep0) +
                                     n2*q2*q2/(T2*PhysConst::ep0) );
     }
@@ -80,6 +80,9 @@ void ElasticCollisionPerez (
 
     // bmax (screening length) cannot be smaller than atomic spacing
     const T_PR bmax = amrex::max(lmdD, rmin);
+
+    // set max cross section based on mfp = atomic spacing
+    const T_PR sigma_max = T_PR(1.0) / (maxn * rmin);
 
 #if (defined WARPX_DIM_RZ)
     T_PR * const AMREX_RESTRICT theta1 = soa_1.m_rdata[PIdx::theta];
@@ -124,10 +127,8 @@ void ElasticCollisionPerez (
           UpdateMomentumPerezElastic(
               u1x[ I1[i1] ], u1y[ I1[i1] ], u1z[ I1[i1] ],
               u2x[ I2[i2] ], u2y[ I2[i2] ], u2z[ I2[i2] ],
-              n1, n2, n12,
               q1, m1, w1[ I1[i1] ], q2, m2, w2[ I2[i2] ],
-              dt, L, bmax,
-              engine);
+              n12, sigma_max, L, bmax, dt, engine );
 
 #if (defined WARPX_DIM_RZ)
           T_PR const u1xbuf_new = u1x[I1[i1]];
