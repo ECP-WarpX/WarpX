@@ -1065,11 +1065,12 @@ Particle initialization
 
 * ``<species_name>.radial_weight_power`` (`float`) optional (default `1.`)
     With cylindrical geometry, specifies the radial power of the particle weight.
-    The particle weights will be proportional to :math:`r^p`, where :math:`r` is the particle initial radius and :math:`p` is the
-    specified value.
+    The particle weights will be proportional to :math:`(r/rmax)^p`, where :math:`r` is the particle initial radius,
+    :math:`rmax` the maximum radius that particles are loaded, and :math:`p` is the specified value.
     This must be less than 2.
     When the value is 1, the weight will increase with radius, producing a uniform number of particles per cell.
     When the value is 0, the weights of the particles will be uniform, with the number of particles per cell increasing with the radius.
+    When the value is not equal to 1, the :math:`rmax` must be set appropriately to get the correct scaling (it is set using <species_name>.xmax).
     The number of particles loaded along the radius will be :math:`rmax/dr*N_{percell}`, with :math:`rmax` the maximum radius that
     particles are loaded, :math:`dr` the radial grid cell size, and :math:`N_{percell}` the number of particles per cell.
 
