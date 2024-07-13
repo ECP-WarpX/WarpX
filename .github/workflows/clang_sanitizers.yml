@@ -134,7 +134,7 @@ jobs:
         cd Examples/Tests/embedded_circle
 
         # Note: warpx.self_fields_required_precision here is increased due to frequent failures of this test
-        mpirun -n 2 ../../../build/bin/warpx.2d inputs_2d warpx.serialize_initial_conditions = 0 warpx.self_fields_required_precision = 7e-06
+        mpirun -n 2 ../../../build/bin/warpx.2d inputs_2d warpx.serialize_initial_conditions = 0
 
   save_pr_number:
     if: github.event_name == 'pull_request'
