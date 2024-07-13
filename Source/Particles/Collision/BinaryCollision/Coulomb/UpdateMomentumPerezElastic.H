@@ -151,7 +151,7 @@ void UpdateMomentumPerezElastic (
         }
 
         // Compute s12 with sigma limited by sigma_max where mfp = atomic spacing)
-        const T_PR sigma_eff = amrex::min(MathConst::pi*b0*b0*lnLmd,sigma_max);
+        const T_PR sigma_eff = amrex::min(T_PR(MathConst::pi)*b0*b0*lnLmd,sigma_max);
         s12 = sigma_eff * n12 * dt * vrelst * g1s*g2s/(g1*g2);
 
     }
