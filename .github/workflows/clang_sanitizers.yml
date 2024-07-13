@@ -37,7 +37,7 @@ jobs:
 
         export CXX=$(which clang++-15)
         export CC=$(which clang-15)
-        export CXXFLAGS="-fsanitize=undefined -fno-sanitize-recover=all"
+        export CXXFLAGS="-fsanitize=undefined,address,pointer-compare -fno-sanitize-recover=all"
 
         cmake -S . -B build                 \
           -GNinja                           \
