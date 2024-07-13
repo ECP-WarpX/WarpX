@@ -37,11 +37,9 @@ mass = 1.992100316897910e-26
 
 # Separate macroparticles from group A (low weight) and group B (high weight)
 # by sorting based on weight
-sorted_indices = data["ions", "particle_weight"].argsort()
-sorted_wp = data["ions", "particle_weight"][sorted_indices].value
-sorted_px = data["ions", "particle_momentum_x"][sorted_indices].value
-sorted_py = data["ions", "particle_momentum_y"][sorted_indices].value
-sorted_pz = data["ions", "particle_momentum_z"][sorted_indices].value
+sorted_indices = data['ions','particle_weight'].argsort()
+sorted_wp = data['ions', 'particle_weight'][sorted_indices].value
+sorted_pz = data['ions', 'particle_momentum_z'][sorted_indices].value
 
 # Find the index 'Npmin' that separates macroparticles from group A and group B
 Np = len(sorted_wp)
