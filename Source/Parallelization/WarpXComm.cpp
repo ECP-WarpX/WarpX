@@ -18,6 +18,7 @@
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpXComm_K.H"
 #include "WarpXSumGuardCells.H"
+#include "Particles/MultiParticleContainer.H"
 
 #include <ablastr/coarsen/average.H>
 #include <ablastr/utils/Communication.H>
@@ -59,6 +60,21 @@ WarpX::UpdateAuxilaryData ()
     } else {
         UpdateAuxilaryDataStagToNodal();
     }
+
+    // When loading particle fields from file: add the external fields:
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        if (mypc->m_E_ext_particle_s == "read_from_file") {
+            amrex::MultiFab::Add(*Efield_aux[lev][0], *E_external_particle_field[lev][0], 0, 0, E_external_particle_field[lev][0]->nComp(), guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*Efield_aux[lev][1], *E_external_particle_field[lev][1], 0, 0, E_external_particle_field[lev][1]->nComp(), guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*Efield_aux[lev][2], *E_external_particle_field[lev][2], 0, 0, E_external_particle_field[lev][2]->nComp(), guard_cells.ng_FieldGather);
+        }
+        if (mypc->m_B_ext_particle_s == "read_from_file") {
+            amrex::MultiFab::Add(*Bfield_aux[lev][0], *B_external_particle_field[lev][0], 0, 0, B_external_particle_field[lev][0]->nComp(), guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*Bfield_aux[lev][1], *B_external_particle_field[lev][1], 0, 0, B_external_particle_field[lev][0]->nComp(), guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*Bfield_aux[lev][2], *B_external_particle_field[lev][2], 0, 0, B_external_particle_field[lev][0]->nComp(), guard_cells.ng_FieldGather);
+        }
+    }
+
 }
 
 void
@@ -293,6 +309,30 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
 void
 WarpX::UpdateAuxilaryDataSameType ()
 {
+    // Update aux field, including guard cells, up to ng_FieldGather
+    const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
+
+    // Level 0: Copy from fine to aux
+    // Note: in some configurations, Efield_aux/Bfield_aux and Efield_fp/Bfield_fp are simply aliases to the
+    // same MultiFab object. MultiFab::Copy operation automatically detects this and does nothing in this case.
+    if (WarpX::fft_do_time_averaging)
+    {
+        MultiFab::Copy(*Efield_aux[0][0], *Efield_avg_fp[0][0], 0, 0, Efield_aux[0][0]->nComp(), ng_src);
+        MultiFab::Copy(*Efield_aux[0][1], *Efield_avg_fp[0][1], 0, 0, Efield_aux[0][1]->nComp(), ng_src);
+        MultiFab::Copy(*Efield_aux[0][2], *Efield_avg_fp[0][2], 0, 0, Efield_aux[0][2]->nComp(), ng_src);
+        MultiFab::Copy(*Bfield_aux[0][0], *Bfield_avg_fp[0][0], 0, 0, Bfield_aux[0][0]->nComp(), ng_src);
+        MultiFab::Copy(*Bfield_aux[0][1], *Bfield_avg_fp[0][1], 0, 0, Bfield_aux[0][1]->nComp(), ng_src);
+        MultiFab::Copy(*Bfield_aux[0][2], *Bfield_avg_fp[0][2], 0, 0, Bfield_aux[0][2]->nComp(), ng_src);
+    }
+    else
+    {
+        MultiFab::Copy(*Efield_aux[0][0], *Efield_fp[0][0], 0, 0, Efield_aux[0][0]->nComp(), ng_src);
+        MultiFab::Copy(*Efield_aux[0][1], *Efield_fp[0][1], 0, 0, Efield_aux[0][1]->nComp(), ng_src);
+        MultiFab::Copy(*Efield_aux[0][2], *Efield_fp[0][2], 0, 0, Efield_aux[0][2]->nComp(), ng_src);
+        MultiFab::Copy(*Bfield_aux[0][0], *Bfield_fp[0][0], 0, 0, Bfield_aux[0][0]->nComp(), ng_src);
+        MultiFab::Copy(*Bfield_aux[0][1], *Bfield_fp[0][1], 0, 0, Bfield_aux[0][1]->nComp(), ng_src);
+        MultiFab::Copy(*Bfield_aux[0][2], *Bfield_fp[0][2], 0, 0, Bfield_aux[0][2]->nComp(), ng_src);
+    }
     for (int lev = 1; lev <= finest_level; ++lev)
     {
         const amrex::Periodicity& crse_period = Geom(lev-1).periodicity();
@@ -308,8 +348,6 @@ WarpX::UpdateAuxilaryDataSameType ()
             dBy.setVal(0.0);
             dBz.setVal(0.0);
 
-            // Guard cells may not be up to date beyond ng_FieldGather
-            const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
             // Copy Bfield_aux to the dB MultiFabs, using up to ng_src (=ng_FieldGather) guard
             // cells from Bfield_aux and filling up to ng (=nGrow) guard cells in the dB MultiFabs
 
@@ -379,8 +417,6 @@ WarpX::UpdateAuxilaryDataSameType ()
             dEy.setVal(0.0);
             dEz.setVal(0.0);
 
-            // Guard cells may not be up to date beyond ng_FieldGather
-            const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
             // Copy Efield_aux to the dE MultiFabs, using up to ng_src (=ng_FieldGather) guard
             // cells from Efield_aux and filling up to ng (=nGrow) guard cells in the dE MultiFabs
             ablastr::utils::communication::ParallelCopy(dEx, *Efield_aux[lev - 1][0], 0, 0,

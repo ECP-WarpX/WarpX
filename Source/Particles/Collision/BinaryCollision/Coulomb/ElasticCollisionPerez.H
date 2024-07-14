@@ -58,7 +58,7 @@ void ElasticCollisionPerez (
     const T_index NI1 = I1e - I1s;
     const T_index NI2 = I2e - I2s;
     const T_index max_N = amrex::max(NI1,NI2);
-    const T_index min_N = amrex::max(NI1,NI2);
+    const T_index min_N = amrex::min(NI1,NI2);
 
     T_PR * const AMREX_RESTRICT w1 = soa_1.m_rdata[PIdx::w];
     T_PR * const AMREX_RESTRICT u1x = soa_1.m_rdata[PIdx::ux];
@@ -74,12 +74,12 @@ void ElasticCollisionPerez (
     T_PR T1t; T_PR T2t;
     if ( T1 <= T_PR(0.0) && L <= T_PR(0.0) )
     {
-        T1t = ComputeTemperature(I1s,I1e,I1,u1x,u1y,u1z,m1);
+        T1t = ComputeTemperature(I1s,I1e,I1,w1,u1x,u1y,u1z,m1);
     }
     else { T1t = T1; }
     if ( T2 <= T_PR(0.0) && L <= T_PR(0.0) )
     {
-        T2t = ComputeTemperature(I2s,I2e,I2,u2x,u2y,u2z,m2);
+        T2t = ComputeTemperature(I2s,I2e,I2,w2,u2x,u2y,u2z,m2);
     }
     else { T2t = T2; }
 

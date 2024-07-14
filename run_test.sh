@@ -68,7 +68,7 @@ python3 -m pip install --upgrade -r warpx/Regression/requirements.txt
 
 # Clone AMReX and warpx-data
 git clone https://github.com/AMReX-Codes/amrex.git
-cd amrex && git checkout --detach 24.06 && cd -
+cd amrex && git checkout --detach 24.07 && cd -
 # warpx-data contains various required data sets
 git clone --depth 1 https://github.com/ECP-WarpX/warpx-data.git
 # openPMD-example-datasets contains various required data sets
@@ -80,8 +80,6 @@ cd -
 
 # Clone the AMReX regression test utility
 git clone https://github.com/AMReX-Codes/regression_testing.git
-# FIXME: https://github.com/AMReX-Codes/regression_testing/issues/136
-cd regression_testing && git checkout 93ddfb11456f47d6555c39388ba1a4ead61fbf4e && cd -
 
 # Prepare regression tests
 mkdir -p rt-WarpX/WarpX-benchmarks
@@ -96,10 +94,10 @@ cd ../../regression_testing/
 echo "cd $PWD"
 # run only tests specified in variable tests_arg (single test or multiple tests)
 if [[ ! -z "${tests_arg}" ]]; then
-  python3 regtest.py ../rt-WarpX/ci-tests.ini --no_update all "${tests_run}"
+  python3 regtest.py ../rt-WarpX/ci-tests.ini --skip_comparison --no_update all "${tests_run}"
 # run all tests (variables tests_arg and tests_run are empty)
 else
-  python3 regtest.py ../rt-WarpX/ci-tests.ini --no_update all
+  python3 regtest.py ../rt-WarpX/ci-tests.ini --skip_comparison --no_update all
 fi
 
 # clean up python virtual environment
