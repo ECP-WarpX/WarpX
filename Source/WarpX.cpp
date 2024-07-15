@@ -2579,13 +2579,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             }
         }
     } else {
-        AllocInitMultiFab(Bfield_aux[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, lev, "Bfield_aux[x]");
-        AllocInitMultiFab(Bfield_aux[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, ngEB, lev, "Bfield_aux[y]");
-        AllocInitMultiFab(Bfield_aux[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngEB, lev, "Bfield_aux[z]");
+        AllocInitMultiFab(Bfield_aux[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, lev, "Bfield_aux[x]", 0.0_rt);
+        AllocInitMultiFab(Bfield_aux[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, ngEB, lev, "Bfield_aux[y]", 0.0_rt);
+        AllocInitMultiFab(Bfield_aux[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngEB, lev, "Bfield_aux[z]", 0.0_rt);
 
-        AllocInitMultiFab(Efield_aux[lev][0], amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, lev, "Efield_aux[x]");
-        AllocInitMultiFab(Efield_aux[lev][1], amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngEB, lev, "Efield_aux[y]");
-        AllocInitMultiFab(Efield_aux[lev][2], amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngEB, lev, "Efield_aux[z]");
+        AllocInitMultiFab(Efield_aux[lev][0], amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, lev, "Efield_aux[x]", 0.0_rt);
+        AllocInitMultiFab(Efield_aux[lev][1], amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngEB, lev, "Efield_aux[y]", 0.0_rt);
+        AllocInitMultiFab(Efield_aux[lev][2], amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngEB, lev, "Efield_aux[z]", 0.0_rt);
     }
 
     // The external fields that are read from file
@@ -2736,22 +2736,22 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         if (n_field_gather_buffer > 0 || mypc->nSpeciesGatherFromMainGrid() > 0) {
             if (aux_is_nodal) {
                 BoxArray const& cnba = amrex::convert(cba,IntVect::TheNodeVector());
-                AllocInitMultiFab(Bfield_cax[lev][0], cnba,dm,ncomps,ngEB,lev, "Bfield_cax[x]");
-                AllocInitMultiFab(Bfield_cax[lev][1], cnba,dm,ncomps,ngEB,lev, "Bfield_cax[y]");
-                AllocInitMultiFab(Bfield_cax[lev][2], cnba,dm,ncomps,ngEB,lev, "Bfield_cax[z]");
-                AllocInitMultiFab(Efield_cax[lev][0], cnba,dm,ncomps,ngEB,lev, "Efield_cax[x]");
-                AllocInitMultiFab(Efield_cax[lev][1], cnba,dm,ncomps,ngEB,lev, "Efield_cax[y]");
-                AllocInitMultiFab(Efield_cax[lev][2], cnba,dm,ncomps,ngEB,lev, "Efield_cax[z]");
+                AllocInitMultiFab(Bfield_cax[lev][0], cnba,dm,ncomps,ngEB,lev, "Bfield_cax[x]", 0.0_rt);
+                AllocInitMultiFab(Bfield_cax[lev][1], cnba,dm,ncomps,ngEB,lev, "Bfield_cax[y]", 0.0_rt);
+                AllocInitMultiFab(Bfield_cax[lev][2], cnba,dm,ncomps,ngEB,lev, "Bfield_cax[z]", 0.0_rt);
+                AllocInitMultiFab(Efield_cax[lev][0], cnba,dm,ncomps,ngEB,lev, "Efield_cax[x]", 0.0_rt);
+                AllocInitMultiFab(Efield_cax[lev][1], cnba,dm,ncomps,ngEB,lev, "Efield_cax[y]", 0.0_rt);
+                AllocInitMultiFab(Efield_cax[lev][2], cnba,dm,ncomps,ngEB,lev, "Efield_cax[z]", 0.0_rt);
             } else {
                 // Create the MultiFabs for B
-                AllocInitMultiFab(Bfield_cax[lev][0], amrex::convert(cba,Bx_nodal_flag),dm,ncomps,ngEB,lev, "Bfield_cax[x]");
-                AllocInitMultiFab(Bfield_cax[lev][1], amrex::convert(cba,By_nodal_flag),dm,ncomps,ngEB,lev, "Bfield_cax[y]");
-                AllocInitMultiFab(Bfield_cax[lev][2], amrex::convert(cba,Bz_nodal_flag),dm,ncomps,ngEB,lev, "Bfield_cax[z]");
+                AllocInitMultiFab(Bfield_cax[lev][0], amrex::convert(cba,Bx_nodal_flag),dm,ncomps,ngEB,lev, "Bfield_cax[x]", 0.0_rt);
+                AllocInitMultiFab(Bfield_cax[lev][1], amrex::convert(cba,By_nodal_flag),dm,ncomps,ngEB,lev, "Bfield_cax[y]", 0.0_rt);
+                AllocInitMultiFab(Bfield_cax[lev][2], amrex::convert(cba,Bz_nodal_flag),dm,ncomps,ngEB,lev, "Bfield_cax[z]", 0.0_rt);
 
                 // Create the MultiFabs for E
-                AllocInitMultiFab(Efield_cax[lev][0], amrex::convert(cba,Ex_nodal_flag),dm,ncomps,ngEB,lev, "Efield_cax[x]");
-                AllocInitMultiFab(Efield_cax[lev][1], amrex::convert(cba,Ey_nodal_flag),dm,ncomps,ngEB,lev, "Efield_cax[y]");
-                AllocInitMultiFab(Efield_cax[lev][2], amrex::convert(cba,Ez_nodal_flag),dm,ncomps,ngEB,lev, "Efield_cax[z]");
+                AllocInitMultiFab(Efield_cax[lev][0], amrex::convert(cba,Ex_nodal_flag),dm,ncomps,ngEB,lev, "Efield_cax[x]", 0.0_rt);
+                AllocInitMultiFab(Efield_cax[lev][1], amrex::convert(cba,Ey_nodal_flag),dm,ncomps,ngEB,lev, "Efield_cax[y]", 0.0_rt);
+                AllocInitMultiFab(Efield_cax[lev][2], amrex::convert(cba,Ez_nodal_flag),dm,ncomps,ngEB,lev, "Efield_cax[z]", 0.0_rt);
             }
 
             AllocInitMultiFab(gather_buffer_masks[lev], ba, dm, ncomps, amrex::IntVect(1), lev, "gather_buffer_masks");
