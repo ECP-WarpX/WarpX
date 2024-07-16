@@ -68,15 +68,15 @@ barn_to_square_meter = 1.e-28
 m_p = 1.00782503223*scc.m_u # Proton mass
 m_b = 11.00930536*scc.m_u # Boron 11 mass
 m_reduced = m_p*m_b/(m_p+m_b)
-m_a = 4.00260325413*scc.m_u # Alpha mass
-m_be = 7.94748*scc.m_p +  scc.m_u * 0.00325283863
+m_a = 4.00260325413*scc.m_u # Alpha (He4) mass
+m_be = (8.0053095729+0.00325283863)*scc.m_u # Be8* mass (3.03 MeV ex. state)
 Z_boron = 5.
 Z_proton = 1.
 E_Gamow = (Z_boron*Z_proton*np.pi*scc.fine_structure)**2*2.*m_reduced*scc.c**2
 E_Gamow_MeV = E_Gamow/MeV_to_Joule
 E_Gamow_keV = E_Gamow/keV_to_Joule
-E_fusion = 5.557*MeV_to_Joule # Energy released during p + B -> alpha + Be*
-E_decay = 3.124*MeV_to_Joule # Energy released during Be* -> 2*alpha
+E_fusion = 5.55610759*MeV_to_Joule # Energy released during p + B -> alpha + Be*
+E_decay = 3.12600414*MeV_to_Joule # Energy released during Be* -> 2*alpha
 E_fusion_total = E_fusion + E_decay # Energy released during p + B -> 3*alpha
 
 ## Checks whether this is the 2D or the 3D test

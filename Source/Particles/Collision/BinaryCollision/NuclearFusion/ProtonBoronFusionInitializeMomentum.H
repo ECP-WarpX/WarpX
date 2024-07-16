@@ -74,13 +74,12 @@ namespace {
         constexpr amrex::ParticleReal mev_to_joule = PhysConst::q_e*1.e6_prt;
         // Energy produced in the fusion reaction proton + boron11 -> Beryllium8 + alpha
         // cf. https://doi.org/10.1016/j.radphyschem.2022.110727
-        // Dominant reaction channel is p + B11 -> alpha_1 + 8Be* -> alpha_1 + alpha_11 + alpha_12 + 8.58 MeV
-        // Fusion energy = Total Energy Released - Decay Energy (8.68 - 3.03 = 5.65 MeV)
+        // Dominant reaction channel is p + B11 -> alpha_1 + 8Be* -> alpha_1 + alpha_11 + alpha_12 + 8.68 MeV
         // cf. Kelley et al., (2017) http://dx.doi.org/10.1016/j.nuclphysa.2017.07.015
-        constexpr amrex::ParticleReal E_fusion = 5.557_prt*mev_to_joule;
+        constexpr amrex::ParticleReal E_fusion = 5.55610759_prt*mev_to_joule;
         // Energy produced when Beryllium8 decays into two alphas
         // cf. Kelley et al., (2017) http://dx.doi.org/10.1016/j.nuclphysa.2017.07.015
-        constexpr amrex::ParticleReal E_decay = 3.124_prt*mev_to_joule;
+        constexpr amrex::ParticleReal E_decay = 3.12600414_prt*mev_to_joule;
 
         // The constexprs ma_sq and mBe_sq underflow in single precision because we use SI units,
         // which can cause compilation to fail or generate a warning, so we're explicitly setting
@@ -88,7 +87,7 @@ namespace {
         // precision anyways.
         constexpr double m_alpha = PhysConst::m_u * 4.00260325413_prt;
         // mass of the Be8 excited state (3.03 MeV above ground state)
-        constexpr double m_beryllium = PhysConst::m_p * 7.94748_prt + PhysConst::m_u * 0.00325283863_prt;
+        constexpr double m_beryllium = PhysConst::m_u*(8.0053095729_prt+0.00325283863_prt);
         constexpr double mBe_sq = m_beryllium*m_beryllium;
         constexpr amrex::ParticleReal c_sq = PhysConst::c * PhysConst::c;
 
