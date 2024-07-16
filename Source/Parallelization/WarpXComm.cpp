@@ -54,6 +54,7 @@ void
 WarpX::UpdateAuxilaryData ()
 {
     WARPX_PROFILE("WarpX::UpdateAuxilaryData()");
+
     if (Bfield_aux[0][0]->ixType() == Bfield_fp[0][0]->ixType()) {
         UpdateAuxilaryDataSameType();
     } else {
@@ -207,7 +208,6 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                 const amrex::IntVect& By_cp_stag = Bfield_cp[lev][1]->ixType().toIntVect();
                 const amrex::IntVect& Bz_cp_stag = Bfield_cp[lev][2]->ixType().toIntVect();
 
-
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -235,7 +235,6 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                         warpx_interp(j, k, l, bz_aux, bz_fp, bz_cp, bz_c, Bz_fp_stag, Bz_cp_stag, refinement_ratio);
                     });
                 }
-
             }
             else {
                 const amrex::IntVect& Bx_fp_stag = Bfield_fp[lev][0]->ixType().toIntVect();
@@ -293,6 +292,7 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                     ablastr::utils::communication::ParallelCopy(*Etmp[i], *Efield_aux[lev - 1][i], 0, 0, 1,
                                                                 ng_src, ng, WarpX::do_single_precision_comms, cperiod);
                 }
+
                 const amrex::IntVect& refinement_ratio = refRatio(lev-1);
 
                 const amrex::IntVect& Ex_fp_stag = Efield_fp[lev][0]->ixType().toIntVect();
@@ -400,7 +400,6 @@ WarpX::UpdateAuxilaryDataSameType ()
                 MultiFab dBx(Bfield_cp[lev][0]->boxArray(), dm, Bfield_cp[lev][0]->nComp(), ng);
                 MultiFab dBy(Bfield_cp[lev][1]->boxArray(), dm, Bfield_cp[lev][1]->nComp(), ng);
                 MultiFab dBz(Bfield_cp[lev][2]->boxArray(), dm, Bfield_cp[lev][2]->nComp(), ng);
-
                 dBx.setVal(0.0);
                 dBy.setVal(0.0);
                 dBz.setVal(0.0);
@@ -442,11 +441,9 @@ WarpX::UpdateAuxilaryDataSameType ()
                     Array4<Real> const& bx_aux = Bfield_aux[lev][0]->array(mfi);
                     Array4<Real> const& by_aux = Bfield_aux[lev][1]->array(mfi);
                     Array4<Real> const& bz_aux = Bfield_aux[lev][2]->array(mfi);
-
                     Array4<Real const> const& bx_fp = Bfield_fp[lev][0]->const_array(mfi);
                     Array4<Real const> const& by_fp = Bfield_fp[lev][1]->const_array(mfi);
                     Array4<Real const> const& bz_fp = Bfield_fp[lev][2]->const_array(mfi);
-
                     Array4<Real const> const& bx_c = dBx.const_array(mfi);
                     Array4<Real const> const& by_c = dBy.const_array(mfi);
                     Array4<Real const> const& bz_c = dBz.const_array(mfi);
@@ -502,7 +499,6 @@ WarpX::UpdateAuxilaryDataSameType ()
                 MultiFab dEx(Efield_cp[lev][0]->boxArray(), dm, Efield_cp[lev][0]->nComp(), ng);
                 MultiFab dEy(Efield_cp[lev][1]->boxArray(), dm, Efield_cp[lev][1]->nComp(), ng);
                 MultiFab dEz(Efield_cp[lev][2]->boxArray(), dm, Efield_cp[lev][2]->nComp(), ng);
-
                 dEx.setVal(0.0);
                 dEy.setVal(0.0);
                 dEz.setVal(0.0);
@@ -531,6 +527,7 @@ WarpX::UpdateAuxilaryDataSameType ()
                 MultiFab::Subtract(dEx, *Efield_cp[lev][0], 0, 0, Efield_cp[lev][0]->nComp(), ng);
                 MultiFab::Subtract(dEy, *Efield_cp[lev][1], 0, 0, Efield_cp[lev][1]->nComp(), ng);
                 MultiFab::Subtract(dEz, *Efield_cp[lev][2], 0, 0, Efield_cp[lev][2]->nComp(), ng);
+
                 const amrex::IntVect& refinement_ratio = refRatio(lev-1);
 
                 const amrex::IntVect& Ex_stag = Efield_aux[lev-1][0]->ixType().toIntVect();
@@ -548,7 +545,6 @@ WarpX::UpdateAuxilaryDataSameType ()
                     Array4<Real const> const& ex_fp = Efield_fp[lev][0]->const_array(mfi);
                     Array4<Real const> const& ey_fp = Efield_fp[lev][1]->const_array(mfi);
                     Array4<Real const> const& ez_fp = Efield_fp[lev][2]->const_array(mfi);
-
                     Array4<Real const> const& ex_c = dEx.const_array(mfi);
                     Array4<Real const> const& ey_c = dEy.const_array(mfi);
                     Array4<Real const> const& ez_c = dEz.const_array(mfi);
@@ -599,6 +595,7 @@ WarpX::UpdateAuxilaryDataSameType ()
         }
     }
 }
+
 void WarpX::UpdateCurrentNodalToStag (amrex::MultiFab& dst, amrex::MultiFab const& src)
 {
     // If source and destination MultiFabs have the same index type, a simple copy is enough
