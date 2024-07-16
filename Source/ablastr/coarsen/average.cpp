@@ -47,7 +47,7 @@ namespace ablastr::coarsen::average
         }
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
         // Loop over boxes (or tiles if not on GPU)
         for (amrex::MFIter mfi(mf_dst, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {

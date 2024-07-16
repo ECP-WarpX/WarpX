@@ -144,7 +144,7 @@ void FieldMomentum::ComputeDiags (int step)
         amrex::ReduceData<Real, Real, Real> reduce_data(reduce_ops);
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
         // Loop over boxes, interpolate E,B data to cell centers
         // and compute sum over cells of (E x B) components

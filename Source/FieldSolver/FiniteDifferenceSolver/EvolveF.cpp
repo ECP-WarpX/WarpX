@@ -90,7 +90,7 @@ void FiniteDifferenceSolver::EvolveFCartesian (
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     for ( MFIter mfi(*Ffield, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
 
@@ -143,7 +143,7 @@ void FiniteDifferenceSolver::EvolveFCylindrical (
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     for ( MFIter mfi(*Ffield, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
 

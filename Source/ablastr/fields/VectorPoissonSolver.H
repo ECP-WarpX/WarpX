@@ -222,7 +222,7 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
 
                 // Local interpolation from A_cp to A[lev+1]
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
                 for (amrex::MFIter mfi(*A[lev+1][adim],amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
                 {

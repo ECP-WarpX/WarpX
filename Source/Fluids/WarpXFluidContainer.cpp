@@ -184,7 +184,7 @@ void WarpXFluidContainer::InitData(int lev, amrex::Box init_box, amrex::Real cur
 
     // Loop through cells and initialize their value
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
@@ -313,7 +313,7 @@ void WarpXFluidContainer::ApplyBcFluidsAndComms (int lev)
 
     // H&C push the momentum
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
@@ -456,7 +456,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
     // Fill edge values of N and U at the half timestep for MUSCL
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
@@ -739,7 +739,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
     // Given the values of `U_minus` and `U_plus`, compute fluxes in between nodes, and update N, NU accordingly
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
@@ -892,7 +892,7 @@ void WarpXFluidContainer::centrifugal_source_rz (int lev)
 
     // H&C push the momentum
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
@@ -1013,7 +1013,7 @@ void WarpXFluidContainer::GatherAndPush (
 
     // H&C push the momentum
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
@@ -1213,7 +1213,7 @@ void WarpXFluidContainer::DepositCharge (int lev, amrex::MultiFab &rho, int icom
 
     // Loop over and deposit charge density
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
@@ -1271,7 +1271,7 @@ void WarpXFluidContainer::DepositCurrent(
 
     // Calculate j at the nodes
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
@@ -1306,7 +1306,7 @@ void WarpXFluidContainer::DepositCurrent(
 
     // Interpolate j from the nodes to the simulation mesh (typically Yee mesh)
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {

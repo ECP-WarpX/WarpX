@@ -124,7 +124,7 @@ void ChargeOnEB::ComputeDiags (const int step)
 
     // Loop over boxes
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     for (amrex::MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {

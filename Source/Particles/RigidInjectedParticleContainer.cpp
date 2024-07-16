@@ -107,7 +107,7 @@ RigidInjectedParticleContainer::RemapParticles()
         for (int lev = 0; lev <= finestLevel(); lev++) {
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
             {
                 // Get the average beam velocity in the boosted frame.

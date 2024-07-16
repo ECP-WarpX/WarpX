@@ -894,7 +894,7 @@ MultiParticleContainer::doFieldIonization (int lev,
         auto info = getMFItInfo(*pc_source, *pc_product);
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
         for (WarpXParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
         {
@@ -1363,7 +1363,7 @@ MultiParticleContainer::doQEDSchwinger ()
     const MultiFab & Bz = warpx.getField(FieldType::Bfield_aux, level_0,2);
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     for (MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi )
     {
@@ -1531,7 +1531,7 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
         auto info = getMFItInfo(*pc_source, *pc_product_ele, *pc_product_pos);
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
         for (WarpXParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
         {
@@ -1608,7 +1608,7 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
         auto info = getMFItInfo(*pc_source, *pc_product_phot);
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
         for (WarpXParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
         {

@@ -78,7 +78,7 @@ void FiniteDifferenceSolver::EvolveGCartesian (
     amrex::Real constexpr c2 = PhysConst::c * PhysConst::c;
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
 
     // Loop over grids and over tiles within each grid

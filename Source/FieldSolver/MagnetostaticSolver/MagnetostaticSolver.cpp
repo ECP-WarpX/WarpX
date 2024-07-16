@@ -217,7 +217,7 @@ WarpX::setVectorPotentialBC ( amrex::Vector<amrex::Array<std::unique_ptr<amrex::
         domain.surroundingNodes();
         for (int adim=0; adim < 3; adim++) {
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
             for ( MFIter mfi(*A[lev][adim], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
                 // Extract the vector potential
@@ -371,7 +371,7 @@ void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::doInterp(const std
                                                 WarpX::do_single_precision_comms);
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     for (MFIter mfi(*dst, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {

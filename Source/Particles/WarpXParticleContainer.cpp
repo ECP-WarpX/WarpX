@@ -829,7 +829,7 @@ WarpXParticleContainer::DepositCurrent (
     {
         // Loop over particle tiles and deposit current on each level
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
         {
         const int thread_num = omp_get_thread_num();
 #else
@@ -1225,7 +1225,7 @@ WarpXParticleContainer::DepositCharge (std::unique_ptr<amrex::MultiFab>& rho,
 
     // Loop over particle tiles and deposit charge on each level
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
     {
     const int thread_num = omp_get_thread_num();
 #else
@@ -1310,7 +1310,7 @@ amrex::ParticleReal WarpXParticleContainer::sumParticleWeight(bool local) {
     const int nLevels = finestLevel();
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     for (int lev = 0; lev <= nLevels; ++lev) {
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
@@ -1465,7 +1465,7 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
     amrex::LayoutData<amrex::Real>* costs = WarpX::getCosts(lev);
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     {
 
@@ -1567,7 +1567,7 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
     for (int lev = 0; lev <= finestLevel(); ++lev)
     {
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {

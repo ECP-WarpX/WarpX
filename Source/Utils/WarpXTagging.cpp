@@ -36,7 +36,7 @@ WarpX::ErrorEst (int lev, TagBoxArray& tags, Real /*time*/, int /*ngrow*/)
     const auto ftlo = fine_tag_lo;
     const auto fthi = fine_tag_hi;
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     for (MFIter mfi(tags); mfi.isValid(); ++mfi)
     {
