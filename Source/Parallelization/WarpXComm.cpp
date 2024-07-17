@@ -396,7 +396,8 @@ WarpX::UpdateAuxilaryDataSameType ()
 
         // B field
         {
-            if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None) {
+            if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None)
+            {
                 MultiFab dBx(Bfield_cp[lev][0]->boxArray(), dm, Bfield_cp[lev][0]->nComp(), ng);
                 MultiFab dBy(Bfield_cp[lev][1]->boxArray(), dm, Bfield_cp[lev][1]->nComp(), ng);
                 MultiFab dBz(Bfield_cp[lev][2]->boxArray(), dm, Bfield_cp[lev][2]->nComp(), ng);
@@ -462,40 +463,18 @@ WarpX::UpdateAuxilaryDataSameType ()
                         warpx_interp(j, k, l, bz_aux, bz_fp, bz_c, Bz_stag, refinement_ratio);
                     });
                 }
-        } else
+            }
+            else // electrostatic
             {
-
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-            for (MFIter mfi(*Bfield_aux[lev][0]); mfi.isValid(); ++mfi)
-            {
-                Array4<Real> const& bx_aux = Bfield_aux[lev][0]->array(mfi);
-                Array4<Real> const& by_aux = Bfield_aux[lev][1]->array(mfi);
-                Array4<Real> const& bz_aux = Bfield_aux[lev][2]->array(mfi);
-                Array4<Real const> const& bx_fp = Bfield_fp[lev][0]->const_array(mfi);
-                Array4<Real const> const& by_fp = Bfield_fp[lev][1]->const_array(mfi);
-                Array4<Real const> const& bz_fp = Bfield_fp[lev][2]->const_array(mfi);
-
-                amrex::ParallelFor(Box(bx_aux), Box(by_aux), Box(bz_aux),
-                [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
-                {
-                    warpx_interp(j, k, l, bx_aux, bx_fp);
-                },
-                [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
-                {
-                    warpx_interp(j, k, l, by_aux, by_fp);
-                },
-                [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
-                {
-                    warpx_interp(j, k, l, bz_aux, bz_fp);
-                });
+                MultiFab::Copy(*Bfield_aux[lev][0], *Bfield_fp[lev][0], 0, 0, Bfield_aux[lev][0]->nComp(), Bfield_aux[lev][0]->nGrowVect());
+                MultiFab::Copy(*Bfield_aux[lev][1], *Bfield_fp[lev][1], 0, 0, Bfield_aux[lev][1]->nComp(), Bfield_aux[lev][1]->nGrowVect());
+                MultiFab::Copy(*Bfield_aux[lev][2], *Bfield_fp[lev][2], 0, 0, Bfield_aux[lev][2]->nComp(), Bfield_aux[lev][2]->nGrowVect());
             }
         }
-    }
         // E field
         {
-            if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None) {
+            if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None)
+            {
                 MultiFab dEx(Efield_cp[lev][0]->boxArray(), dm, Efield_cp[lev][0]->nComp(), ng);
                 MultiFab dEy(Efield_cp[lev][1]->boxArray(), dm, Efield_cp[lev][1]->nComp(), ng);
                 MultiFab dEz(Efield_cp[lev][2]->boxArray(), dm, Efield_cp[lev][2]->nComp(), ng);
@@ -564,33 +543,11 @@ WarpX::UpdateAuxilaryDataSameType ()
                     });
                 }
             }
-            else {
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-                for (MFIter mfi(*Efield_aux[lev][0]); mfi.isValid(); ++mfi)
-                {
-                    Array4<Real> const& ex_aux = Efield_aux[lev][0]->array(mfi);
-                    Array4<Real> const& ey_aux = Efield_aux[lev][1]->array(mfi);
-                    Array4<Real> const& ez_aux = Efield_aux[lev][2]->array(mfi);
-                    Array4<Real const> const& ex_fp = Efield_fp[lev][0]->const_array(mfi);
-                    Array4<Real const> const& ey_fp = Efield_fp[lev][1]->const_array(mfi);
-                    Array4<Real const> const& ez_fp = Efield_fp[lev][2]->const_array(mfi);
-
-                    amrex::ParallelFor(Box(ex_aux), Box(ey_aux), Box(ez_aux),
-                    [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
-                    {
-                        warpx_interp(j, k, l, ex_aux, ex_fp);
-                    },
-                    [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
-                    {
-                        warpx_interp(j, k, l, ey_aux, ey_fp);
-                    },
-                    [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
-                    {
-                        warpx_interp(j, k, l, ez_aux, ez_fp);
-                    });
-                }
+            else // electrostatic
+            {
+                MultiFab::Copy(*Efield_aux[lev][0], *Efield_fp[lev][0], 0, 0, Efield_aux[lev][0]->nComp(), Efield_aux[lev][0]->nGrowVect());
+                MultiFab::Copy(*Efield_aux[lev][1], *Efield_fp[lev][1], 0, 0, Efield_aux[lev][1]->nComp(), Efield_aux[lev][1]->nGrowVect());
+                MultiFab::Copy(*Efield_aux[lev][2], *Efield_fp[lev][2], 0, 0, Efield_aux[lev][2]->nComp(), Efield_aux[lev][2]->nGrowVect());
             }
         }
     }

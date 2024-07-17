@@ -375,25 +375,6 @@ void warpx_interp (int j, int k, int l,
 }
 
 /**
- * \brief Interpolation function called within WarpX::UpdateAuxilaryDataSameType
- * with electrostatic solver to interpolate data from the coarse and fine grids to the fine aux grid,
- * assuming that all grids have the same staggering (either collocated or staggered).
- *
- * \param[in] j index along x of the output array
- * \param[in] k index along y (in 3D) or z (in 2D) of the output array
- * \param[in] l index along z (in 3D, l=0 in 2D) of the output array
- * \param[in,out] arr_aux output array where interpolated values are stored
- * \param[in] arr_fine input fine-patch array storing the values to interpolate
- */
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-void warpx_interp (int j, int k, int l,
-                   amrex::Array4<amrex::Real      > const& arr_aux,
-                   amrex::Array4<amrex::Real const> const& arr_fine)
-{
-    arr_aux(j,k,l) = arr_fine(j,k,l);
-}
-
-/**
  * \brief Arbitrary-order interpolation function used to center a given MultiFab between two grids
  * with different staggerings. The arbitrary-order interpolation is based on the Fornberg coefficients.
  * The result is stored in the output array \c dst_arr.
