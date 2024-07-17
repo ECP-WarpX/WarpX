@@ -146,10 +146,19 @@ set_default_build_type("Release")
 
 # Option to enable interprocedural optimization
 # (also know as "link-time optimization" or "whole program optimization")
-option(WarpX_IPO                                "Compile WarpX with interprocedural optimization (will take more time)" OFF)
+set(_WarpX_IPO_DEFAULT OFF)
+set(_WarpX_PYTHON_IPO_DEFAULT ON)
+if(DEFINED CMAKE_INTERPROCEDURAL_OPTIMIZATION)
+    set(_WarpX_IPO_DEFAULT ${CMAKE_INTERPROCEDURAL_OPTIMIZATION})
+    set(_WarpX_PYTHON_IPO_DEFAULT ${CMAKE_INTERPROCEDURAL_OPTIMIZATION})
+endif()
+option(WarpX_IPO
+    "Compile WarpX with interprocedural optimization (will take more time)"
+    ${_WarpX_IPO_DEFAULT}
+)
 option(WarpX_PYTHON_IPO
     "Compile Python bindings with interprocedural optimization (IPO) / link-time optimization (LTO)"
-    ON
+    ${_WarpX_PYTHON_IPO_DEFAULT}
 )
 
 set(pyWarpX_VERSION_INFO "" CACHE STRING
@@ -455,7 +464,7 @@ endif()
 
 # Interprocedural optimization (IPO) / Link-Time Optimization (LTO)
 if(WarpX_IPO)
-    enable_IPO("${_ALL_TARGETS}")
+    warpx_enable_IPO("${_ALL_TARGETS}")
 endif()
 
 # link dependencies
@@ -488,7 +497,13 @@ foreach(D IN LISTS WarpX_DIMS)
     if(WarpX_PYTHON)
         target_link_libraries(pyWarpX_${SD} PRIVATE pybind11::module pybind11::windows_extras)
         if(WarpX_PYTHON_IPO)
-            target_link_libraries(pyWarpX_${SD} PRIVATE pybind11::lto)
+            if(DEFINED CMAKE_INTERPROCEDURAL_OPTIMIZATION)
+                warpx_enable_IPO(pyWarpX_${SD})
+            else()
+                # conditionally defined target in pybind11
+                # https://github.com/pybind/pybind11/blob/v2.12.0/tools/pybind11Common.cmake#L397-L403
+                target_link_libraries(pyWarpX_${SD} PRIVATE pybind11::lto)
+            endif()
         endif()
     endif()
 
