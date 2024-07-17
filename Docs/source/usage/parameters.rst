@@ -508,7 +508,7 @@ Domain Boundary Conditions
     * ``open``: For the electrostatic Poisson solver based on a Integrated Green Function method.
 
 * ``boundary.potential_lo_x/y/z`` and ``boundary.potential_hi_x/y/z`` (default `0`)
-    Gives the value of the electric potential at the boundaries, for ``pec`` boundaries. With electrostatic solvers
+    Gives the value of the electric potential, in Volts, at the boundaries, for ``pec`` boundaries. With electrostatic solvers
     (i.e., with ``warpx.do_electrostatic = ...``), this is used in order to compute the potential
     in the simulation volume at each timestep. When using other solvers (e.g. Maxwell solver),
     setting these variables will trigger an electrostatic solve at ``t=0``, to compute the initial
@@ -611,7 +611,7 @@ Whether the embedded boundary is defined with an analytical function or an STL f
 additionally define the electric potential at the embedded boundary with an analytical function:
 
 * ``warpx.eb_potential(x,y,z,t)`` (`string`)
-    Gives the value of the electric potential at the surface of the embedded boundary,
+    Gives the value of the electric potential, in Volts, at the surface of the embedded boundary,
     as a function of  `x`, `y`, `z` and `t`. With electrostatic solvers (i.e., with
     ``warpx.do_electrostatic = ...``), this is used in order to compute the potential
     in the simulation volume at each timestep. When using other solvers (e.g. Maxwell solver),
@@ -1164,8 +1164,8 @@ Particle initialization
     * ``gaussian_parse_momentum_function``: Gaussian momentum distribution where the mean and the standard deviation are given by functions of position in the input file.
       Both are assumed to be non-relativistic.
       The mean is the normalized momentum, :math:`u_m = \gamma v_m/c`.
-      The standard deviation is normalized, :math:`u_th = v_th/c`.
-      For example, this might be `u_th = sqrt(T*q_e/mass)/clight` given the temperature (in eV) and mass.
+      The standard deviation is normalized, :math:`u_{th} = v_{th}/c`.
+      For example, this might be ``u_th = sqrt(T*q_e/mass)/clight`` given the temperature (in eV) and mass.
       It requires the following arguments:
 
       * ``<species_name>.momentum_function_ux_m(x,y,z)``: mean :math:`u_{x}`
