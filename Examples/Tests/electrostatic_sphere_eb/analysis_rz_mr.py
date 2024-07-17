@@ -52,21 +52,20 @@ def get_fields(ts, level):
     er = []
     phi = []
     info = []
-    if level == 1:
-        er, info = ts.get_field('E_lvl1', 'r', iteration=0, plot=False)
-        phi, info = ts.get_field('phi_lvl1', iteration=0, plot=False)
-
-    elif level==0:
-        er, info = ts.get_field('E', 'r', iteration=0, plot=False)
-        phi, info = ts.get_field('phi', iteration=0, plot=False)
+    if level == 0:
+        er, info = ts.get_field('E', 'r', iteration=0)
+        phi, info = ts.get_field('phi', iteration=0)
+    else:
+        er, info = ts.get_field(f'E_lvl{level}', 'r', iteration=0)
+        phi, info = ts.get_field(f'phi_lvl{level}', iteration=0)
 
     return er, phi, info
 
 def get_error_per_lev(ts,level):
     er, phi, info = get_fields(ts, level)
 
-    nj = len(er[0,:])//2
-    dr = info.r[1] - info.r[0]
+    nj = info.r.shape[0] // 2
+    dr = info.dr
 
     er_patch = er[:,nj:]
     phi_patch = phi[:,nj:]
@@ -104,7 +103,9 @@ def get_error_per_lev(ts,level):
     assert(errmax_Er < tolerance)
 
 ts = OpenPMDTimeSeries(fn)
-for level in [0,1]:
+level_fields = [field for field in ts.avail_fields if 'lvl' in field]
+nlevels = 0 if level_fields == [] else int(level_fields[-1][-1])
+for level in range(nlevels+1):
     print('At level =', level, ':')
     get_error_per_lev(ts,level)
 
