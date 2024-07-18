@@ -44,6 +44,7 @@ Particle Accelerator & Beam Physics
 
    examples/gaussian_beam/README.rst
    examples/beam-beam_collision/README.rst
+   examples/thomson_parabola_spectrometer/README.rst
 
 
 High Energy Astrophysical Plasma Physics
