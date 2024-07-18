@@ -294,19 +294,19 @@ WarpX::PrintMainPICparameters ()
       "                      |  - v_comoving = (" << m_v_comoving[0] << "," <<
                               m_v_comoving[1] << "," << m_v_comoving[2] << ")\n";
       }
-    if (WarpX::update_with_rho==1) {
+    if (WarpX::update_with_rho) {
       amrex::Print() << "                      | - update with rho is ON \n";
       }
-    if (current_correction==1) {
+    if (current_correction) {
       amrex::Print() << "                      | - current correction is ON \n";
         }
-    if (WarpX::do_dive_cleaning==1) {
+    if (WarpX::do_dive_cleaning) {
       amrex::Print() << "                      | - div(E) cleaning is ON \n";
       }
-    if (WarpX::do_divb_cleaning==1) {
+    if (WarpX::do_divb_cleaning) {
       amrex::Print() << "                      | - div(B) cleaning is ON \n";
       }
-    if (do_multi_J == 1){
+    if (do_multi_J){
       amrex::Print() << "                      | - multi-J deposition is ON \n";
       amrex::Print() << "                      |   - do_multi_J_n_depositions = "
                                         << WarpX::do_multi_J_n_depositions << "\n";
@@ -323,7 +323,7 @@ WarpX::PrintMainPICparameters ()
         amrex::Print() << "                      |   - rho_in_time = constant \n";
       }
     }
-    if (fft_do_time_averaging == 1){
+    if (fft_do_time_averaging){
       amrex::Print()<<"                      | - time-averaged is ON \n";
     }
   #endif // WARPX_USE_FFT
