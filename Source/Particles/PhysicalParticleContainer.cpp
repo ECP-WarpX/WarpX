@@ -1560,7 +1560,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 #endif
     for (MFIter mfi = MakeMFIter(0, info); mfi.isValid(); ++mfi)
     {
-        const auto cost_tracker = warpx::load_balance::CostTracker(lev, mfi.index());
+        const auto cost_tracker = warpx::load_balance::CostTracker(0, mfi.index());
 
         const Box& tile_box = mfi.tilebox();
         const RealBox tile_realbox = WarpX::getRealBox(tile_box, 0);
@@ -2043,7 +2043,7 @@ PhysicalParticleContainer::Evolve (int lev,
 
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
-            const auto cost_tracker = warpx::load_balance::CostTracker(lev, mfi.index());
+            const auto cost_tracker = warpx::load_balance::CostTracker(lev, pti.index());
 
             const Box& box = pti.validbox();
 

@@ -35,6 +35,7 @@
 #include "Fluids/WarpXFluidContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "AcceleratorLattice/AcceleratorLattice.H"
+#include "LoadBalance/LoadBalance.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
@@ -88,6 +89,7 @@
 
 using namespace amrex;
 using namespace warpx::fields;
+using namespace warpx::load_balance;
 
 int WarpX::do_moving_window = 0;
 int WarpX::start_moving_window_step = 0;
@@ -120,7 +122,6 @@ ParticleReal WarpX::particle_tol_in_implicit_scheme = 1.e-10;
 short WarpX::psatd_solution_type;
 short WarpX::J_in_time;
 short WarpX::rho_in_time;
-short WarpX::load_balance_costs_update_algo;
 bool WarpX::do_dive_cleaning = false;
 bool WarpX::do_divb_cleaning = false;
 int WarpX::em_solver_medium;
@@ -417,7 +418,7 @@ WarpX::WarpX ()
     // Default values listed here for the case AMREX_USE_GPU are determined
     // from single-GPU tests on Summit.
     if (costs_heuristic_cells_wt<=0. && costs_heuristic_particles_wt<=0.
-        && WarpX::load_balance_costs_update_algo==LoadBalanceCostsUpdateAlgo::Heuristic)
+        && AllCosts::get_instance().get_update_algo()==CostsUpdateAlgo::Heuristic)
     {
 #ifdef AMREX_USE_GPU
         if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
@@ -1355,8 +1356,7 @@ WarpX::ReadParameters ()
         }
         utils::parser::queryWithParser(pp_algo, "load_balance_efficiency_ratio_threshold",
                         load_balance_efficiency_ratio_threshold);
-        load_balance_costs_update_algo = static_cast<short>(GetAlgorithmInteger(pp_algo, "load_balance_costs_update"));
-        if (WarpX::load_balance_costs_update_algo==LoadBalanceCostsUpdateAlgo::Heuristic) {
+        if (AllCosts::get_instance().get_update_algo()==CostsUpdateAlgo::Heuristic) {
             utils::parser::queryWithParser(
                 pp_algo, "costs_heuristic_cells_wt", costs_heuristic_cells_wt);
             utils::parser::queryWithParser(

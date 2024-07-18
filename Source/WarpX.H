@@ -183,10 +183,6 @@ public:
     static int max_particle_its_in_implicit_scheme;
     //! Relative tolerance used for self-consistent particle update in implicit particle-suppressed evolve schemes
     static amrex::ParticleReal particle_tol_in_implicit_scheme;
-    /** Records a number corresponding to the load balance cost update strategy
-     *  being used (0 or 1 corresponding to timers or heuristic).
-     */
-    static short load_balance_costs_update_algo;
     //! Integer that corresponds to electromagnetic Maxwell solver (vacuum - 0, macroscopic - 1)
     static int em_solver_medium;
     /** Integer that correspond to macroscopic Maxwell solver algorithm

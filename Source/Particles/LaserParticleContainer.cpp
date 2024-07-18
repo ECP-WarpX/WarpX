@@ -600,7 +600,7 @@ LaserParticleContainer::Evolve (int lev,
 
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
-            const auto cost_tracker = warpx::load_balance::CostTracker(lev, mfi.index());
+            const auto cost_tracker = warpx::load_balance::CostTracker(lev, pti.index());
 
             auto& attribs = pti.GetAttribs();
 

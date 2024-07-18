@@ -8,6 +8,7 @@
 
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
 #include "FieldSolver/Fields.H"
+#include "LoadBalance/LoadBalance.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -37,6 +38,7 @@
 
 using namespace amrex;
 using namespace warpx::fields;
+using namespace warpx::load_balance;
 
 namespace
 {
@@ -114,7 +116,7 @@ void LoadBalanceCosts::ComputeDiags (int step)
         costs[lev] = std::make_unique<LayoutData<Real>>(*WarpX::getCosts(lev));
     }
 
-    if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)
+    if (AllCosts::get_instance().get_update_algo() == CostsUpdateAlgo::Heuristic)
     {
         warpx.ComputeCostsHeuristic(costs);
     }

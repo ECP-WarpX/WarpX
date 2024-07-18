@@ -60,13 +60,13 @@ namespace warpx::load_balance
 
     protected:
         AllCosts ();
-        ~ AllCosts (){};
+        ~ AllCosts (){}
 
     private:
         CostsUpdateAlgo m_update_algo;
         amrex::Vector<std::unique_ptr<amrex::LayoutData<amrex::Real> > > m_costs;
     };
-};
+}
 
 
 #endif //WARPX_LOADBALANCE_LOADBALANCE_H_

@@ -291,7 +291,7 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, amrex::Real dt, Mult
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
         for (WarpXParIter pti(species1, lev); pti.isValid(); ++pti) {
-            const auto cost_tracker = warpx::load_balance::CostTracker(lev, mfi.index());
+            const auto cost_tracker = warpx::load_balance::CostTracker(lev, pti.index());
             doBackgroundCollisionsWithinTile(pti, cur_time);
         }
 
@@ -479,7 +479,7 @@ void BackgroundMCCCollision::doBackgroundIonization
 #endif
     for (WarpXParIter pti(species1, lev); pti.isValid(); ++pti) {
 
-        const auto cost_tracker = warpx::load_balance::CostTracker(lev, mfi.index());
+        const auto cost_tracker = warpx::load_balance::CostTracker(lev, pti.index());
 
         auto& elec_tile = species1.ParticlesAt(lev, pti);
         auto& ion_tile = species2.ParticlesAt(lev, pti);

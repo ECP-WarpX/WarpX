@@ -897,7 +897,7 @@ MultiParticleContainer::doFieldIonization (int lev,
 #endif
         for (WarpXParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
         {
-            const auto cost_tracker = warpx::load_balance::CostTracker(lev, mfi.index());
+            const auto cost_tracker = warpx::load_balance::CostTracker(lev, pti.index());
 
             auto& src_tile = pc_source ->ParticlesAt(lev, pti);
             auto& dst_tile = pc_product->ParticlesAt(lev, pti);
@@ -1521,7 +1521,7 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
 #endif
         for (WarpXParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
         {
-            const auto cost_tracker = warpx::load_balance::CostTracker(lev, mfi.index());
+            const auto cost_tracker = warpx::load_balance::CostTracker(lev, pti.index());
 
             auto Transform = PairGenerationTransformFunc(pair_gen_functor,
                                                          pti, lev, Ex.nGrowVect(),
@@ -1585,7 +1585,7 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
 #endif
         for (WarpXParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
         {
-            const auto cost_tracker = warpx::load_balance::CostTracker(lev, mfi.index());
+            const auto cost_tracker = warpx::load_balance::CostTracker(lev, pti.index());
 
             auto Transform = PhotonEmissionTransformFunc(
                   m_shr_p_qs_engine->build_optical_depth_functor(),

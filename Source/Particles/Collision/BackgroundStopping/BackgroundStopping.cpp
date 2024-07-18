@@ -112,7 +112,7 @@ BackgroundStopping::doCollisions (amrex::Real cur_time, amrex::Real dt, MultiPar
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
         for (WarpXParIter pti(species, lev); pti.isValid(); ++pti) {
-            const auto cost_tracker = warpx::load_balance::CostTracker(lev, mfi.index());
+            const auto cost_tracker = warpx::load_balance::CostTracker(lev, pti.index());
 
             if (background_type == BackgroundStoppingType::ELECTRONS) {
                 doBackgroundStoppingOnElectronsWithinTile(pti, dt, cur_time, species_mass, species_charge);

@@ -68,7 +68,7 @@ CostTracker::~CostTracker()
 
     amrex::Gpu::synchronize();
     m_wt = static_cast<amrex::Real>(amrex::second()) - m_wt;
-    auto cost = AllCosts::get_instance().m_costs[m_lev];
+    auto& cost = AllCosts::get_instance().m_costs[m_lev];
     amrex::HostDevice::Atomic::Add( &(*cost)[m_mfi_iter_index], m_wt);
 }
 

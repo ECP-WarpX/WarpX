@@ -13,6 +13,7 @@
 #include "EmbeddedBoundary/WarpXFaceInfoBox.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #include "Initialization/ExternalField.H"
+#include "LoadBalance/LoadBalance.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Particles/WarpXParticleContainer.H"
@@ -49,6 +50,7 @@
 #include <vector>
 
 using namespace amrex;
+using namespace warpx::load_balance;
 
 void
 WarpX::CheckLoadBalance (int step)
@@ -76,7 +78,7 @@ WarpX::LoadBalance ()
     AMREX_ALWAYS_ASSERT(costs[0] != nullptr);
 
 #ifdef AMREX_USE_MPI
-    if (load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)
+    if (AllCosts::get_instance().get_update_algo() == CostsUpdateAlgo::Heuristic)
     {
         // compute the costs on a per-rank basis
         ComputeCostsHeuristic(costs);
@@ -450,7 +452,7 @@ void
 WarpX::RescaleCosts (int step)
 {
     // rescale is only used for timers
-    if (WarpX::load_balance_costs_update_algo != LoadBalanceCostsUpdateAlgo::Timers)
+    if (AllCosts::get_instance().get_update_algo() != CostsUpdateAlgo::Timers)
     {
         return;
     }
