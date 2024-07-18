@@ -57,7 +57,12 @@ jobs:
 
     - name: run with UB sanitizer
       run: |
+
         export OMP_NUM_THREADS=2
+
+        #MPI implementations often leak memory
+        export "ASAN_OPTIONS=detect_leaks=0"
+
         mpirun -n 2 ./build/bin/warpx.rz Examples/Physics_applications/laser_acceleration/inputs_rz
         mpirun -n 2 ./build/bin/warpx.1d Examples/Physics_applications/laser_acceleration/inputs_1d
         mpirun -n 2 ./build/bin/warpx.2d Examples/Physics_applications/laser_acceleration/inputs_2d
