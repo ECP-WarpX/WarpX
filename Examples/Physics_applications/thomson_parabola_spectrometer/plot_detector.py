@@ -1,9 +1,8 @@
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.cm import ScalarMappable
 from openpmd_viewer import OpenPMDTimeSeries
-from scipy.constants import c, eV, m_p
+from scipy.constants import eV, c
 
 mpl.use('Agg')
 mpl.rcParams.update({'font.size': 18})
@@ -62,9 +61,12 @@ for s in range(N_species):
         X = np.append(X, x)
         Y = np.append(Y, y)
     print(np.min(E), np.max(E))
+    
     # sort particles according to energy for nicer plot
     sorted_indeces = np.argsort(E)
-    im = ax.scatter(X[sorted_indeces], Y[sorted_indeces], c=E[sorted_indeces], vmin=vmin, vmax=vmax, cmap=cmap[s])
+    ax.scatter(X[sorted_indeces], Y[sorted_indeces], c=E[sorted_indeces], vmin=vmin, vmax=vmax, cmap=cmap[s])
+    sorted_indeces = np.argsort(E)   
+    ax.scatter(X[sorted_indeces], Y[sorted_indeces], c=E[sorted_indeces], vmin=vmin, vmax=vmax, cmap=cmap[s])
 
 # dummy plot just to have a neutral colorbar
 im = ax.scatter(np.nan, np.nan, c=np.nan, cmap='Greys_r', vmin=vmin, vmax=vmax)
