@@ -791,12 +791,13 @@ endif()
 
 # Tests #######################################################################
 #
+if(BUILD_TESTING)
+    enable_testing()
 
-#if(BUILD_TESTING)
-#    enable_testing()
-#
-#    add_test(...)
-#endif()
+    if(WarpX_APP)
+        add_subdirectory(Examples)
+    endif()
+endif()
 
 
 # Status Summary for Build Options ############################################
