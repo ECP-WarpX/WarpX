@@ -33,11 +33,11 @@ namespace {
      * \brief This function initializes the momentum of the alpha particles produced from
      * proton-boron fusion. The momentum is initialized by assuming that the fusion of a proton
      * with a boron nucleus into 3 alphas takes place in two steps. In the first step, the proton
-     * and the boron fuse into a beryllium nucleus and an alpha particle. In the second step, the
-     * beryllium decays into two alpha particles. The first step produces 8.59009 MeV of kinetic
-     * energy while the second step produces 91.8984 keV of kinetic energy. This two-step process
+     * and the boron fuse into an excited beryllium nucleus and an alpha particle. In the second step, the
+     * excited beryllium decays into two alpha particles. The first step produces ~5.56 MeV of kinetic
+     * energy while the second step produces ~3.12 MeV of kinetic energy. This two-step process
      * is considered to be the dominant process of proton+boron fusion into alphas (see
-     * Becker et al., Zeitschrift für Physik A Atomic Nuclei, 327(3), 341-355 (1987)).
+     * D.R. Tilley et al. / Nuclear Physics A 745 (2004) 155–362).
      * For each step, we assume in this function that the particles are emitted isotropically in
      * the corresponding center of mass frame (center of mass frame of proton + boron for the
      * creation of first alpha+beryllium and rest frame of beryllium for the creation of second and
