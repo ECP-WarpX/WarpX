@@ -110,9 +110,9 @@ jobs:
           -DWarpX_QED=ON                    \
           -DWarpX_QED_TABLE_GEN=ON          \
           -DWarpX_OPENPMD=ON                \
-          -DWarpX_EB=ON                      \
-          -DWarpX_PRECISION=SINGLE          \
-          -DWarpX_PARTICLE_PRECISION=SINGLE
+          -DWarpX_EB=ON                     \
+          -DWarpX_PRECISION=DOUBLE          \
+          -DWarpX_PARTICLE_PRECISION=DOUBLE
         cmake --build build -j 4
 
         ccache -s
