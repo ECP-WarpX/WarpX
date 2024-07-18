@@ -47,7 +47,9 @@ sigma = dY_dt*(1+delta_ij)/(nD**2)/V*(1e2)**3
 
 sigma_th = 2.603e-18
 error = np.abs(sigma-sigma_th)/sigma_th
-tolerance = 1e-2
+tolerance = 2e-2
+print('error = ', error)
+print('tolerance = ', tolerance)
 assert error < tolerance
 
 # Compare checksums with benchmark

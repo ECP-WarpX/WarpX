@@ -109,7 +109,7 @@ public:
         }
         m_have_product_species = !m_product_species.empty();
 
-        if ((std::is_same<CopyTransformFunctor, NoParticleCreationFunc>::value) && (m_have_product_species)) {
+        if ((std::is_same_v<CopyTransformFunctor, NoParticleCreationFunc>) && (m_have_product_species)) {
             WARPX_ABORT_WITH_MESSAGE( "Binary collision " + collision_name +
                 " does not produce species. Thus, `product_species` should not be specified in the input script." );
         }
@@ -356,14 +356,12 @@ public:
                     // given by the `indices_1[cell_start_1:cell_stop_1]`
                     index_type const cell_start_1 = cell_offsets_1[i_cell];
                     index_type const cell_stop_1  = cell_offsets_1[i_cell+1];
-                    index_type const cell_half_1 = (cell_start_1+cell_stop_1)/2;
 
                     // Do not collide if there is only one particle in the cell
                     if ( cell_stop_1 - cell_start_1 <= 1 ) { return; }
 
                     // shuffle
-                    ShuffleFisherYates(
-                        indices_1, cell_start_1, cell_half_1, engine );
+                    ShuffleFisherYates(indices_1, cell_start_1, cell_stop_1, engine);
                 }
             );
 
