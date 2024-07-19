@@ -88,27 +88,34 @@ rm -rf ${build_dir}/adios2-osc-build
 rm -rf ${build_dir}
 
 # optional: prepare virtual environment for building python binding
-python3 -m pip install --upgrade --user virtualenv
-rm -rf ${SW_DIR}/venvs/warpx-pitzer
-python3 -m venv ${SW_DIR}/venvs/warpx-pitzer
-source ${SW_DIR}/venvs/warpx-pitzer/bin/activate
-python3 -m pip install --upgrade pip
-python3 -m pip cache purge
-python3 -m pip install --upgrade build
-python3 -m pip install --upgrade packaging
-python3 -m pip install --upgrade wheel
-python3 -m pip install --upgrade setuptools
-python3 -m pip install --upgrade cython
-python3 -m pip install --upgrade numpy
-python3 -m pip install --upgrade pandas
-python3 -m pip install --upgrade scipy
-python3 -m pip install --upgrade mpi4py --no-cache-dir --no-build-isolation --no-binary mpi4py
-python3 -m pip install --upgrade openpmd-api
-python3 -m pip install --upgrade matplotlib
-python3 -m pip install --upgrade yt
+function install_virtual_envs() {
+    local venv_name=$1
+    python3 -m pip install --upgrade --user virtualenv
+    rm -rf ${SW_DIR}/venvs/${venv_name}
+    python3 -m venv ${SW_DIR}/venvs/${venv_name}
+    source ${SW_DIR}/venvs/${venv_name}/bin/activate
+    python3 -m pip install --upgrade pip
+    python3 -m pip cache purge
+    python3 -m pip install --upgrade build
+    python3 -m pip install --upgrade packaging
+    python3 -m pip install --upgrade wheel
+    python3 -m pip install --upgrade setuptools
+    python3 -m pip install --upgrade cython
+    python3 -m pip install --upgrade numpy
+    python3 -m pip install --upgrade pandas
+    python3 -m pip install --upgrade scipy
+    python3 -m pip install --upgrade mpi4py --no-cache-dir --no-build-isolation --no-binary mpi4py
+    python3 -m pip install --upgrade openpmd-api
+    python3 -m pip install --upgrade matplotlib
+    python3 -m pip install --upgrade yt
 
-# install or update WarpX dependencies such as picmistandard
-python3 -m pip install --upgrade -r ${SRC_DIR}/warpx/requirements.txt
+    # install or update WarpX dependencies such as picmistandard
+    python3 -m pip install --upgrade -r ${SRC_DIR}/warpx/requirements.txt
 
-# ML dependencies
-python3 -m pip install --upgrade torch
+    # ML dependencies
+    python3 -m pip install --upgrade torch
+}
+
+# Call the function with different virtual environment names
+install_virtual_envs "warpx-pitzer"
+install_virtual_envs "warpx-pitzer-v100"
