@@ -1491,6 +1491,13 @@ class AnalyticInitialField(picmistandard.PICMI_AnalyticAppliedField):
                 expression = pywarpx.my_constants.mangle_expression(expression, self.mangle_dict)
                 pywarpx.warpx.__setattr__(f'B{sdir}_external_grid_function(x,y,z)', expression)
 
+class LoadAppliedField(picmistandard.PICMI_LoadAppliedField):
+    def applied_field_initialize_inputs(self):
+        pywarpx.particles.read_fields_from_path = self.read_fields_from_path
+        if self.load_E:
+            pywarpx.particles.E_ext_particle_init_style = 'read_from_file'
+        if self.load_B:
+            pywarpx.particles.B_ext_particle_init_style = 'read_from_file'
 
 class ConstantAppliedField(picmistandard.PICMI_ConstantAppliedField):
     def applied_field_initialize_inputs(self):

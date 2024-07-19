@@ -74,12 +74,12 @@ void ElasticCollisionPerez (
     T_PR T1t; T_PR T2t;
     if ( T1 <= T_PR(0.0) && L <= T_PR(0.0) )
     {
-        T1t = ComputeTemperature(I1s,I1e,I1,u1x,u1y,u1z,m1);
+        T1t = ComputeTemperature(I1s,I1e,I1,w1,u1x,u1y,u1z,m1);
     }
     else { T1t = T1; }
     if ( T2 <= T_PR(0.0) && L <= T_PR(0.0) )
     {
-        T2t = ComputeTemperature(I2s,I2e,I2,u2x,u2y,u2z,m2);
+        T2t = ComputeTemperature(I2s,I2e,I2,w2,u2x,u2y,u2z,m2);
     }
     else { T2t = T2; }
 
