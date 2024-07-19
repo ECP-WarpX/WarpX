@@ -430,6 +430,10 @@ public:
                            ++i1; if ( i1 == cell_half_1 ) { i1 = cell_start_1; }
                            ++i2; if ( i2 == cell_stop_1 ) { i2 = cell_half_1; }
                         }
+#if defined WARPX_DIM_RZ
+                        const int ri = (i_cell - i_cell%nz) / nz;
+                        auto dV = MathConst::pi*(2.0_prt*ri+1.0_prt)*dr*dr*dz;
+#endif
                         n12 = 2.0_prt * n12 / dV;
                         n12_in_each_cell[i_cell] = n12;
                     }
@@ -731,6 +735,10 @@ public:
                            ++i1; if ( i1 == cell_stop_1 ) { i1 = cell_start_1; }
                            ++i2; if ( i2 == cell_stop_2 ) { i2 = cell_start_2; }
                         }
+#if defined WARPX_DIM_RZ
+                        const int ri = (i_cell - i_cell%nz) / nz;
+                        auto dV = MathConst::pi*(2.0_prt*ri+1.0_prt)*dr*dr*dz;
+#endif
                         n12 = n12 / dV;
                         n12_in_each_cell[i_cell] = n12;
                     }
