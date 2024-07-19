@@ -251,6 +251,21 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core,
       species_name(name)
 {
     BackwardCompatibility();
+
+#ifdef WARPX_QED
+    if (!species_name.empty()) {  // TODO: remove this if once pc_tmp is removed from WarpX
+        const ParmParse pp_species_name(species_name);
+        pp_species_name.query("do_qed_quantum_sync", m_do_qed_quantum_sync);
+        if (m_do_qed_quantum_sync) {
+            AddRealComp("opticalDepthQSR");
+        }
+
+        if (m_do_qed_quantum_sync) {
+            pp_species_name.get("qed_quantum_sync_phot_product_species",
+                                m_qed_quantum_sync_phot_product_name);
+        }
+    }
+#endif
 }
 
 PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core)
@@ -399,23 +414,6 @@ void PhysicalParticleContainer::InitData ()
         WarpX::particle_pusher_algo == ParticlePusherAlgo::Boris,
         "Radiation reaction can be enabled only if Boris pusher is used");
     //_____________________________
-
-#ifdef WARPX_QED
-    pp_species_name.query("do_qed_quantum_sync", m_do_qed_quantum_sync);
-    if (m_do_qed_quantum_sync) {
-        AddRealComp("opticalDepthQSR");
-    }
-
-    pp_species_name.query("do_qed_breit_wheeler", m_do_qed_breit_wheeler);
-    if (m_do_qed_breit_wheeler) {
-        AddRealComp("opticalDepthBW");
-    }
-
-    if(m_do_qed_quantum_sync){
-        pp_species_name.get("qed_quantum_sync_phot_product_species",
-            m_qed_quantum_sync_phot_product_name);
-    }
-#endif
 
     // User-defined integer attributes
     pp_species_name.queryarr("addIntegerAttributes", m_user_int_attribs);
