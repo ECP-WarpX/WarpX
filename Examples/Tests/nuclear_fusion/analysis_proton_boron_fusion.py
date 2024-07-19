@@ -493,10 +493,11 @@ def check_initial_energy1(data, E_com):
         energy_alpha3_simulation = energy_alpha_slice[4::6]
 
         assert(np.all(is_close(energy_alpha1_simulation, energy_alpha1_theory, rtol=5.e-8)))
-        assert(is_close(np.amax(energy_alpha2_simulation), max_energy_alpha23, rtol=1.e-2))
-        assert(is_close(np.amin(energy_alpha2_simulation), min_energy_alpha23, atol=3.218e-15)) # 0.02 MeV abs tol
-        assert(is_close(np.amax(energy_alpha3_simulation), max_energy_alpha23, rtol=1.e-2))
-        assert(is_close(np.amin(energy_alpha3_simulation), min_energy_alpha23, atol=3.218e-15)) # 0.02 MeV abs tol
+        ## Check that the max / min value are less than but within 20 keV of analytical value.
+        assert(0 <= max_energy_alpha23 - np.amax(energy_alpha2_simulation) < 3.218e-15)
+        assert(0 <= np.amin(energy_alpha2_simulation) - min_energy_alpha23 < 3.218e-15)
+        assert(0 <= max_energy_alpha23 - np.amax(energy_alpha3_simulation) < 3.218e-15)
+        assert(0 <= np.amin(energy_alpha3_simulation) - min_energy_alpha23 < 3.218e-15)
 
 def check_initial_energy2(data):
     ## In WarpX, the initial momentum of the alphas is computed assuming that the fusion process
@@ -578,13 +579,14 @@ def check_initial_energy2(data):
 
         assert(is_close(np.amax(energy_alpha1_simulation), max_energy_alpha1, rtol=1.e-2))
         assert(is_close(np.amin(energy_alpha1_simulation), min_energy_alpha1, rtol=1.e-2))
+        ## Check that the max / min value are less than but within 200 keV of analytical value.
         ## Tolerance is quite high below because we don't have a lot of alphas to produce good
         ## statistics and an event like alpha1 emitted exactly in direction of proton & alpha2
         ## emitted exactly in direction opposite to Beryllium is somewhat rare.
-        assert(is_close(np.amax(energy_alpha2_simulation), max_energy_alpha23, rtol=2.5e-1))
-        assert(is_close(np.amin(energy_alpha2_simulation), min_energy_alpha23, atol=3.218e-14)) # 0.2 MeV abs tol
-        assert(is_close(np.amax(energy_alpha3_simulation), max_energy_alpha23, rtol=2.5e-1))
-        assert(is_close(np.amin(energy_alpha3_simulation), min_energy_alpha23, atol=3.218e-14)) # 0.2 MeV abs tol
+        assert(0 <= max_energy_alpha23 - np.amax(energy_alpha2_simulation) < 3.218e-14)
+        assert(0 <= np.amin(energy_alpha2_simulation) - min_energy_alpha23 < 3.218e-14)
+        assert(0 <= max_energy_alpha23 - np.amax(energy_alpha3_simulation) < 3.218e-14)
+        assert(0 <= np.amin(energy_alpha3_simulation) - min_energy_alpha23 < 3.218e-14)
 
 def check_xy_isotropy(data):
     ## Checks that the alpha particles are emitted isotropically in x and y
