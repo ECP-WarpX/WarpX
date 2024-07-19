@@ -2,7 +2,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from openpmd_viewer import OpenPMDTimeSeries
-from scipy.constants import c, eV
+from scipy.constants import eV, c
 
 mpl.use('Agg')
 mpl.rcParams.update({'font.size': 18})
@@ -61,11 +61,11 @@ for s in range(N_species):
         X = np.append(X, x)
         Y = np.append(Y, y)
     print(np.min(E), np.max(E))
-
+    
     # sort particles according to energy for nicer plot
     sorted_indeces = np.argsort(E)
     ax.scatter(X[sorted_indeces], Y[sorted_indeces], c=E[sorted_indeces], vmin=vmin, vmax=vmax, cmap=cmap[s])
-    sorted_indeces = np.argsort(E)
+    sorted_indeces = np.argsort(E)   
     ax.scatter(X[sorted_indeces], Y[sorted_indeces], c=E[sorted_indeces], vmin=vmin, vmax=vmax, cmap=cmap[s])
 
 # dummy plot just to have a neutral colorbar
