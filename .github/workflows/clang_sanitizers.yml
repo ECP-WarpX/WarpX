@@ -138,7 +138,6 @@ jobs:
         git clone https://github.com/ECP-WarpX/warpx-data ../warpx-data
         cd Examples/Tests/embedded_circle
 
-        # Note: warpx.self_fields_required_precision here is increased due to frequent failures of this test
         mpirun -n 2 ../../../build/bin/warpx.2d inputs_2d warpx.serialize_initial_conditions = 0
 
         # DEBUG
