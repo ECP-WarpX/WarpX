@@ -28,7 +28,7 @@ export LD_LIBRARY_PATH=${SW_DIR}/blaspp-2024.05.31/lib64:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=${SW_DIR}/lapackpp-2024.05.31/lib64:$LD_LIBRARY_PATH
 
 # optional: for Python bindings
-module load python/3.8.2
+module load python/3.11.5
 
 if [ -d "${SW_DIR}/venvs/warpx-lassen-toss3" ]
 then
