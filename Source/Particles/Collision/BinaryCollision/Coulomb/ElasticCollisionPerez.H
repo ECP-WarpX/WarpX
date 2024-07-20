@@ -32,7 +32,9 @@
  * @param[in] dt is the time step length between two collision calls.
  * @param[in] L is the Coulomb log and will be used if greater than zero,
  *            otherwise will be computed.
+ * @param[in] dV is the volume of the corresponding cell.
  * @param[in] engine the random number generator state & factory
+ * @param[in] isSameSpecies whether this is an intra-species collision process
  * @param[in] coll_idx is the collision index offset.
 */
 
