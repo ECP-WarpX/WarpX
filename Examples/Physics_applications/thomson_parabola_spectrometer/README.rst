@@ -17,6 +17,8 @@ The ions propagate along :math:`z` through 4 subsequent regions:
 
 The initial particle velocity :math:`v_0` is sampled from a uniform distribution in the range :math:`[v_{min}, v_{max}]` where :math:`v_{min} = \sqrt{E_{max}/m}`, :math:`v_{max} = \sqrt{2E_{max}/m}`, and :math:`E_{max}` is an input parameter for each species. We assume zero transverse momentum.
 
+The ions are assumed to be test particles embedded in prescribed external fields, meaning that we neglect the self-field due to the ions' motion and the ions do not interact with each other. 
+
 The detector is modeled using a ``BoundaryScrapingDiagnostic`` at the upper :math:`z` boundary of the domain, which stores the attributes of the particles when they exit the simulation box from the corresponding edge. Note that the transverse box size is large enough such that all particles exit the domain from the upper :math:`z` side.
 
 Run
@@ -49,6 +51,6 @@ The :math:`x` coordinate represents the electric deflection, while :math:`y` the
    :alt: Synthetic TPS screen.
    :width: 100%
 
-.. literalinclude:: plot_detector.py
+.. literalinclude:: analysis.py
    :language: ini
-   :caption: You can copy this file from ``Examples/Physics_applications/thomson_parabola_spectrometer/plot_detector.py``.
+   :caption: You can copy this file from ``Examples/Physics_applications/thomson_parabola_spectrometer/analysis.py``.
