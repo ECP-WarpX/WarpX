@@ -76,7 +76,7 @@ Finally, since Pitzer does not yet provide software modules for some of our depe
    :icon: info
    :animate: fade-in-slide-down
 
-   .. literalinclude:: ../../../../Tools/machines/pitzer-osc/install_v100_dependencies.sh
+   .. literalinclude:: ../../../../Tools/machines/pitzer-osc/install_dependencies.sh
       :language: bash
 
 .. _building-pitzer-compilation:
