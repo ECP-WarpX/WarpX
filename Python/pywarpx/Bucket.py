@@ -75,11 +75,11 @@ class Bucket(object):
                     continue
                 # --- For lists, tuples, and arrays make a space delimited string of the values.
                 # --- The lambda is needed in case this is a list of strings.
-                rhs = ' '.join(map(lambda s : str(s).strip("'"), value))
+                rhs = ' '.join(map(lambda s : f'{s}', value))
             elif isinstance(value, bool):
                 rhs = 1 if value else 0
             else:
                 rhs = value
-            attrstring = '{0}.{1} = {2}'.format(self.instancename, attr, str(rhs).strip("'"))
+            attrstring = f'{self.instancename}.{attr} = {rhs}'
             result += [attrstring]
         return result
