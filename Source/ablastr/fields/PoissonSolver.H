@@ -15,7 +15,7 @@
 #include <ablastr/fields/Interpolate.H>
 #include <ablastr/profiler/ProfilerWrapper.H>
 
-#if defined(WARPX_USE_FFT) && defined(WARPX_DIM_3D)
+#if defined(ABLASTR_USE_FFT) && defined(WARPX_DIM_3D)
 #include <ablastr/fields/IntegratedGreenFunctionSolver.H>
 #endif
 
@@ -160,9 +160,9 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
                 {{ beta[0], beta[1], beta[2] }};
 #endif
 
-#if !defined(WARPX_USE_FFT)
+#if !defined(ABLASTR_USE_FFT)
         ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE( !is_solver_igf_on_lev0,
-        "Must compile with -DWarpX_FFT=ON to use the FFT solver!");
+        "Must compile with FFT support to use the IGF solver!");
 #endif
 
 #if !defined(WARPX_DIM_3D)
@@ -170,7 +170,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         "The FFT Poisson solver is currently only implemented for 3D!");
 #endif
 
-#if (defined(WARPX_USE_FFT)  && defined(WARPX_DIM_3D))
+#if (defined(ABLASTR_USE_FFT)  && defined(WARPX_DIM_3D))
         // Use the Integrated Green Function solver (FFT) on the coarsest level if it was selected
         if(is_solver_igf_on_lev0 && lev==0){
             amrex::Array<amrex::Real,AMREX_SPACEDIM> const dx_igf

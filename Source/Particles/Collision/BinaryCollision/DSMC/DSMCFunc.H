@@ -96,6 +96,9 @@ public:
             index_type const* AMREX_RESTRICT I2,
             const SoaData_type& soa_1, const SoaData_type& soa_2,
             GetParticlePosition<PIdx> /*get_position_1*/, GetParticlePosition<PIdx> /*get_position_2*/,
+            amrex::ParticleReal const /*n1*/, amrex::ParticleReal const /*n2*/,
+            amrex::ParticleReal const /*n12*/,
+            amrex::ParticleReal const /*T1*/, amrex::ParticleReal const /*T2*/,
             amrex::ParticleReal const  /*q1*/, amrex::ParticleReal const  /*q2*/,
             amrex::ParticleReal const  m1, amrex::ParticleReal const  m2,
             amrex::Real const  dt, amrex::Real const dV, index_type coll_idx,
@@ -189,6 +192,8 @@ public:
         }
 
         int m_process_count;
+        bool m_computeSpeciesDensities = false;
+        bool m_computeSpeciesTemperatures = false;
         ScatteringProcess::Executor* m_scattering_processes_data;
     };
 

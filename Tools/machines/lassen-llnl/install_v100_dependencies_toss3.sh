@@ -119,9 +119,7 @@ python3 -m pip install --upgrade build
 python3 -m pip install --upgrade packaging
 python3 -m pip install --upgrade wheel
 python3 -m pip install --upgrade setuptools
-# Older version for h4py
-# https://github.com/h5py/h5py/issues/2268
-python3 -m pip install --upgrade "cython<3"
+python3 -m pip install --upgrade cython
 python3 -m pip install --upgrade numpy
 python3 -m pip install --upgrade pandas
 CMAKE_PREFIX_PATH=/usr/lib64:${CMAKE_PREFIX_PATH} python3 -m pip install --upgrade -Ccompile-args="-j10" -Csetup-args=-Dblas=BLAS -Csetup-args=-Dlapack=BLAS scipy
