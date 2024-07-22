@@ -59,7 +59,6 @@ class Bucket(object):
         for attr, value in self.argvattrs.items():
             if value is None:
                 continue
-            # --- The strip of "'" is then needed when value is a string.
             if isinstance(value, str):
                 if value.find('=') > -1:
                     # --- Expressions with temporary variables need to be inside quotes
