@@ -59,9 +59,9 @@ guardCellManager::Init (
     // When using subcycling, the particles on the fine level perform two pushes
     // before being redistributed ; therefore, we need one extra guard cell
     // (the particles may move by 2*c*dt)
-    int ngx_tmp = (max_level > 0 && do_subcycling == 1) ? nox+1 : nox;
-    int ngy_tmp = (max_level > 0 && do_subcycling == 1) ? nox+1 : nox;
-    int ngz_tmp = (max_level > 0 && do_subcycling == 1) ? nox+1 : nox;
+    int ngx_tmp = (max_level > 0 && do_subcycling) ? nox+1 : nox;
+    int ngy_tmp = (max_level > 0 && do_subcycling) ? nox+1 : nox;
+    int ngz_tmp = (max_level > 0 && do_subcycling) ? nox+1 : nox;
 
     const bool galilean = (v_galilean[0] != 0. || v_galilean[1] != 0. || v_galilean[2] != 0.);
     const bool comoving = (v_comoving[0] != 0. || v_comoving[1] != 0. || v_comoving[2] != 0.);
