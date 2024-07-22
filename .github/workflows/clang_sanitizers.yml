@@ -138,6 +138,8 @@ jobs:
         git clone https://github.com/ECP-WarpX/warpx-data ../warpx-data
         cd Examples/Tests/embedded_circle
 
+        ulimit -c unlimited
+
         mpirun -n 2 ../../../build/bin/warpx.2d inputs_2d warpx.serialize_initial_conditions = 0
 
     - name: Archive Results for Debug
@@ -146,6 +148,14 @@ jobs:
       with:
         name: thread_sanitizer_debug
         path: Examples/Tests/embedded_circle
+        retention-days: 1
+
+    - name: Archive ExecName for Debug
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: thread_sanitizer_executable
+        path: build/bin/warpx.2d
         retention-days: 1
 
   save_pr_number:
