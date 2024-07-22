@@ -156,10 +156,3 @@ jobs:
           name: pr_number
           path: pr_number.txt
           retention-days: 1
-
-      - name: DEBUG_TO_BE_DELETED
-      - uses: actions/upload-artifact@v4
-        with:
-          name: backtrace_sanitizers
-          path: Examples/Tests/embedded_circle/Backtrace*
-          retention-days: 1
