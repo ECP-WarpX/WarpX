@@ -59,7 +59,9 @@ class Bucket(object):
         for attr, value in self.argvattrs.items():
             if value is None:
                 continue
-            # --- repr is applied to value so that for floats, all of the digits are included.
+            # --- str (and repr) crop some digits for floats. TODO: we should format
+            #     floating point numbers & numpy scalars to the significant digits of the
+            #     precision of amrex::Real/ParticleReal
             # --- The strip of "'" is then needed when value is a string.
             if isinstance(value, str):
                 if value.find('=') > -1:
@@ -73,11 +75,11 @@ class Bucket(object):
                     continue
                 # --- For lists, tuples, and arrays make a space delimited string of the values.
                 # --- The lambda is needed in case this is a list of strings.
-                rhs = ' '.join(map(lambda s : repr(s).strip("'"), value))
+                rhs = ' '.join(map(lambda s : str(s).strip("'"), value))
             elif isinstance(value, bool):
                 rhs = 1 if value else 0
             else:
                 rhs = value
-            attrstring = '{0}.{1} = {2}'.format(self.instancename, attr, repr(rhs).strip("'"))
+            attrstring = '{0}.{1} = {2}'.format(self.instancename, attr, str(rhs).strip("'"))
             result += [attrstring]
         return result
