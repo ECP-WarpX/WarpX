@@ -103,6 +103,8 @@ jobs:
 
         cmake -S . -B build                 \
           -GNinja                           \
+          -DAMReX_ASSERTIONS=ON             \
+          -DAMReX_BOUND_CHECK=ON            \
           -DCMAKE_VERBOSE_MAKEFILE=ON       \
           -DCMAKE_BUILD_TYPE=RelWithDebInfo \
           -DWarpX_DIMS="RZ;1;2;3"           \
@@ -140,11 +142,6 @@ jobs:
 
         mpirun -n 2 ../../../build/bin/warpx.2d inputs_2d warpx.serialize_initial_conditions = 0
 
-        # DEBUG
-        ls -ltrh
-        less Backtrace.*
-        # DEBUG
-
   save_pr_number:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
@@ -158,4 +155,11 @@ jobs:
         with:
           name: pr_number
           path: pr_number.txt
+          retention-days: 1
+
+      - name: DEBUG_TO_BE_DELETED
+      - uses: actions/upload-artifact@v4
+        with:
+          name: backtrace_sanitizers
+          path: Examples/Tests/embedded_circle/Backtrace*
           retention-days: 1
