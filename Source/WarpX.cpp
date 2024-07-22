@@ -100,7 +100,6 @@ bool WarpX::fft_do_time_averaging = false;
 amrex::IntVect WarpX::m_fill_guards_fields  = amrex::IntVect(0);
 amrex::IntVect WarpX::m_fill_guards_current = amrex::IntVect(0);
 
-Real WarpX::quantum_xi_c2 = PhysConst::xi_c2;
 Real WarpX::gamma_boost = 1._rt;
 Real WarpX::beta_boost = 0._rt;
 Vector<int> WarpX::boost_direction = {0,0,0};
@@ -902,6 +901,9 @@ WarpX::ReadParameters ()
             pp_warpx, "n_field_gather_buffer", n_field_gather_buffer);
         utils::parser::queryWithParser(
             pp_warpx, "n_current_deposition_buffer", n_current_deposition_buffer);
+
+        //Default value for the quantum parameter used in Maxwell’s QED equations
+        quantum_xi_c2 = PhysConst::xi_c2;
 
         amrex::Real quantum_xi_tmp;
         const auto quantum_xi_is_specified =
