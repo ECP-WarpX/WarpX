@@ -59,9 +59,6 @@ class Bucket(object):
         for attr, value in self.argvattrs.items():
             if value is None:
                 continue
-            # --- str (and repr) crop some digits for floats. TODO: we should format
-            #     floating point numbers & numpy scalars to the significant digits of the
-            #     precision of amrex::Real/ParticleReal
             # --- The strip of "'" is then needed when value is a string.
             if isinstance(value, str):
                 if value.find('=') > -1:
