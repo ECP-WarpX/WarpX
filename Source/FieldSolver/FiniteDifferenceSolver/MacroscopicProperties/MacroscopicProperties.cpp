@@ -128,6 +128,7 @@ MacroscopicProperties::InitData (
     const amrex::IntVect& Ey_stag,
     const amrex::IntVect& Ez_stag)
 {
+    using namespace amrex::literals;
     amrex::Print() << Utils::TextMsg::Info("we are in init data of macro");
 
     // Define material property multifabs using ba and dmap from WarpX instance
@@ -158,11 +159,10 @@ MacroscopicProperties::InitData (
         geom.CellSizeArray(), geom.ProbDomain());
 
     }
-    // In the Maxwell solver, `epsilon` is used in the denominator.
-    // Therefore, it needs to be strictly positive
+    // In the Maxwell solver, `epsilon` needs to be non-negative.
     bool const local=true;
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_eps_mf->min(0,0,local) > 0,
-    "WarpX encountered zero or negative values for the relative permittivity `epsilon`. Please check the initialization of `epsilon`.");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_eps_mf->min(0,0,local) >= 0.0_rt,
+    "WarpX encountered negative values for the relative permittivity `epsilon`. Please check the initialization of `epsilon`.");
 
     // Initialize mu
     if (m_mu_s == "constant") {
