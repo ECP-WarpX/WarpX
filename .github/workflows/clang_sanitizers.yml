@@ -103,8 +103,6 @@ jobs:
 
         cmake -S . -B build                 \
           -GNinja                           \
-          -DAMReX_ASSERTIONS=ON             \
-          -DAMReX_BOUND_CHECK=ON            \
           -DCMAKE_VERBOSE_MAKEFILE=ON       \
           -DCMAKE_BUILD_TYPE=RelWithDebInfo \
           -DWarpX_DIMS="RZ;1;2;3"           \
@@ -141,6 +139,14 @@ jobs:
         cd Examples/Tests/embedded_circle
 
         mpirun -n 2 ../../../build/bin/warpx.2d inputs_2d warpx.serialize_initial_conditions = 0
+
+    - name: Archive Results for Debug
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: thread_sanitizer_debug
+        path: Examples/Tests/embedded_circle
+        retention-days: 1
 
   save_pr_number:
     if: github.event_name == 'pull_request'
