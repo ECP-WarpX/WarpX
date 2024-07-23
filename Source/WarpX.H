@@ -16,7 +16,7 @@
 #include "Diagnostics/MultiDiagnostics_fwd.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags_fwd.H"
 #include "EmbeddedBoundary/WarpXFaceInfoBox_fwd.H"
-#include "FieldSolver/ElectrostaticSolver/ImplicitDarwinSolver_fwd.H"
+#include "FieldSolver/ElectrostaticSolver/SemiImplicitSolver_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel_fwd.H"
@@ -1636,8 +1636,8 @@ private:
     // Hybrid PIC algorithm parameters
     std::unique_ptr<HybridPICModel> m_hybrid_pic_model;
 
-    // Implicit Darwin electrostatic algorithm
-    std::unique_ptr<ImplicitDarwinSolver> m_implicit_darwin_solver;
+    // Semi-implicit electrostatic algorithm
+    std::unique_ptr<SemiImplicitSolver> m_semi_implicit_solver;
 
     // Load balancing
     /** Load balancing intervals that reads the "load_balance_intervals" string int the input file

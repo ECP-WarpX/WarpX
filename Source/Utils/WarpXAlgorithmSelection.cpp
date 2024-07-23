@@ -53,7 +53,7 @@ const std::map<std::string, int> electrostatic_solver_algo_to_int = {
     {"relativistic", ElectrostaticSolverAlgo::Relativistic},
     {"labframe-electromagnetostatic", ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic},
     {"labframe", ElectrostaticSolverAlgo::LabFrame},
-    {"labframe-implicit", ElectrostaticSolverAlgo::LabFrameDarwinImplicit},
+    {"labframe-semi-implicit", ElectrostaticSolverAlgo::LabFrameSemiImplicit},
     {"default", ElectrostaticSolverAlgo::None }
 };
 

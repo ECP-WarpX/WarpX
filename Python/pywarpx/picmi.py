@@ -1551,7 +1551,7 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
         self.absolute_tolerance = kw.pop('warpx_absolute_tolerance', None)
         self.self_fields_verbosity = kw.pop('warpx_self_fields_verbosity', None)
         self.magnetostatic = kw.pop('warpx_magnetostatic', False)
-        self.darwin_labframe = kw.pop('warpx_darwin_labframe', False)
+        self.semi_implicit = kw.pop('warpx_semi_implicit', False)
         self.semi_implicit_factor = kw.pop('warpx_semi_implicit_factor', None)
 
     def solver_initialize_inputs(self):
@@ -1566,8 +1566,8 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
         else:
             if self.magnetostatic:
                 pywarpx.warpx.do_electrostatic = 'labframe-electromagnetostatic'
-            elif self.darwin_labframe:
-                pywarpx.warpx.do_electrostatic = 'labframe-implicit'
+            elif self.semi_implicit:
+                pywarpx.warpx.do_electrostatic = 'labframe-semi-implicit'
                 pywarpx.warpx.semi_implicit_factor = self.semi_implicit_factor
             else:
                 pywarpx.warpx.do_electrostatic = 'labframe'

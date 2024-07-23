@@ -7,7 +7,7 @@
 #include "WarpX.H"
 
 #include "FieldSolver/ElectrostaticSolver.H"
-#include "FieldSolver/ElectrostaticSolver/ImplicitDarwinSolver.H"
+#include "FieldSolver/ElectrostaticSolver/SemiImplicitSolver.H"
 #include "Fluids/MultiFluidContainer.H"
 #include "Fluids/WarpXFluidContainer.H"
 #include "Parallelization/GuardCellManager.H"
@@ -76,7 +76,7 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
 
     if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
         electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic ||
-        electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameDarwinImplicit ) {
+        electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameSemiImplicit ) {
         AddSpaceChargeFieldLabFrame();
     }
     else {
@@ -279,7 +279,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     } else {
 
 #if defined(WARPX_DIM_1D_Z)
-        if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameDarwinImplicit) {
+        if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameSemiImplicit) {
             amrex::Abort("Cannot use SI solver in 1d.");
         }
         // Use the tridiag solver with 1D
@@ -391,12 +391,12 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
     bool const is_solver_igf_on_lev0 =
         WarpX::poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction;
 
-    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameDarwinImplicit) {
-        m_implicit_darwin_solver->ComputeSigma();
+    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameSemiImplicit) {
+        m_semi_implicit_solver->ComputeSigma();
         ablastr::fields::computeSemiImplicitPhi(
             sorted_rho,
             sorted_phi,
-            m_implicit_darwin_solver->sigma,
+            m_semi_implicit_solver->sigma,
             required_precision,
             absolute_tolerance,
             max_iters,

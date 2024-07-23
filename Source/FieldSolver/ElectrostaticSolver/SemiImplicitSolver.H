@@ -7,10 +7,10 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_IMPLICITDARWINSOLVER_H_
-#define WARPX_IMPLICITDARWINSOLVER_H_
+#ifndef WARPX_SEMIIMPLICITSOLVER_H_
+#define WARPX_SEMIIMPLICITSOLVER_H_
 
-#include "ImplicitDarwinSolver_fwd.H"
+#include "SemiImplicitSolver_fwd.H"
 
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/Parser/ParserUtils.H"
@@ -27,10 +27,10 @@
  * \brief This class contains the parameters needed to evaluate the implicit
  * electrostatic Darwin model.
  */
-class ImplicitDarwinSolver
+class SemiImplicitSolver
 {
 public:
-    ImplicitDarwinSolver (int nlevs_max); // constructor
+    SemiImplicitSolver (int nlevs_max); // constructor
 
     /** Allocate multifabs needed for the Darwin model. Called in constructor. */
     void AllocateMFs (int nlevs_max);
@@ -48,4 +48,4 @@ public:
     amrex::Real m_C_SI = 6.0;
 };
 
-#endif // WARPX_IMPLICITDARWINSOLVER_H_
+#endif // WARPX_SEMIIMPLICITSOLVER_H_

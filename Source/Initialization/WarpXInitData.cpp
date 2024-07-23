@@ -267,9 +267,9 @@ WarpX::PrintMainPICparameters ()
       amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
       amrex::Print() << "                      | - laboratory frame, electrostatic + magnetostatic" << "\n";
     }
-    else if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameDarwinImplicit){
+    else if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameSemiImplicit){
       amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
-      amrex::Print() << "                      | - laboratory frame, Darwin implicit scheme" << "\n";
+      amrex::Print() << "                      | - laboratory frame, semi-implicit scheme" << "\n";
     }
     else{
       amrex::Print() << "Operation mode:       | Electromagnetic" << "\n";

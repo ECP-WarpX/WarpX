@@ -68,7 +68,7 @@ struct ElectrostaticSolverAlgo {
         Relativistic = 1,
         LabFrameElectroMagnetostatic = 2,
         LabFrame = 3,  // Non relativistic
-        LabFrameDarwinImplicit = 4
+        LabFrameSemiImplicit = 4
     };
 };
 

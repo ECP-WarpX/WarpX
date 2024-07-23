@@ -15,7 +15,7 @@
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "EmbeddedBoundary/WarpXFaceInfoBox.H"
-#include "FieldSolver/ElectrostaticSolver/ImplicitDarwinSolver.H"
+#include "FieldSolver/ElectrostaticSolver/SemiImplicitSolver.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
@@ -334,10 +334,10 @@ WarpX::WarpX ()
         vector_potential_grad_buf_b_stag.resize(nlevs_max);
     }
 
-    // Initialize the implicit Darwin electrostatic solver if required
-    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameDarwinImplicit)
+    // Initialize the semi-implicit electrostatic solver if required
+    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameSemiImplicit)
     {
-        m_implicit_darwin_solver = std::make_unique<ImplicitDarwinSolver>(nlevs_max);
+        m_semi_implicit_solver = std::make_unique<SemiImplicitSolver>(nlevs_max);
     }
 
     if (fft_do_time_averaging)
@@ -751,7 +751,7 @@ WarpX::ReadParameters ()
 
         if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
             electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic ||
-            electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameDarwinImplicit)
+            electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameSemiImplicit)
         {
             // Note that with the relativistic version, these parameters would be
             // input for each species.
@@ -2105,9 +2105,9 @@ WarpX::ClearLevel (int lev)
         current_buf[lev][i].reset();
     }
 
-    if (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameDarwinImplicit)
+    if (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameSemiImplicit)
     {
-        m_implicit_darwin_solver->ClearLevel(lev);
+        m_semi_implicit_solver->ClearLevel(lev);
     }
 
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
@@ -2370,10 +2370,10 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             dm, ncomps, ngEB, lev, "vector_potential_grad_buf_b_stag[z]", 0.0_rt);
     }
 
-    // Allocate extra multifabs needed by the implicit Darwin electrostatic algorithm.
-    if (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameDarwinImplicit)
+    // Allocate extra multifabs needed by the semi-implicit electrostatic algorithm.
+    if (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameSemiImplicit)
     {
-        m_implicit_darwin_solver->AllocateLevelMFs(
+        m_semi_implicit_solver->AllocateLevelMFs(
             lev, ba, dm, ncomps, ngRho, rho_nodal_flag
         );
     }
@@ -2462,7 +2462,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     int rho_ncomps = 0;
     if( (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) ||
         (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) ||
-        (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameDarwinImplicit) ||
+        (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameSemiImplicit) ||
         (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) ) {
         rho_ncomps = ncomps;
     }
@@ -2482,7 +2482,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
     if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
         electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic ||
-        electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameDarwinImplicit )
+        electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameSemiImplicit )
     {
         const IntVect ngPhi = IntVect( AMREX_D_DECL(1,1,1) );
         AllocInitMultiFab(phi_fp[lev], amrex::convert(ba, phi_nodal_flag), dm, ncomps, ngPhi, lev, "phi_fp", 0.0_rt);

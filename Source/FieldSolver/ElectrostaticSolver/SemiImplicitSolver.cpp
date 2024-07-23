@@ -7,11 +7,11 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#include "ImplicitDarwinSolver.H"
+#include "SemiImplicitSolver.H"
 
 using namespace amrex;
 
-ImplicitDarwinSolver::ImplicitDarwinSolver ( int nlevs_max )
+SemiImplicitSolver::SemiImplicitSolver ( int nlevs_max )
 {
     AllocateMFs(nlevs_max);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -24,12 +24,12 @@ ImplicitDarwinSolver::ImplicitDarwinSolver ( int nlevs_max )
     utils::parser::queryWithParser(pp_warpx, "semi_implicit_factor", m_C_SI);
 }
 
-void ImplicitDarwinSolver::AllocateMFs (int nlevs_max)
+void SemiImplicitSolver::AllocateMFs (int nlevs_max)
 {
     sigma.resize(nlevs_max);
 }
 
-void ImplicitDarwinSolver::AllocateLevelMFs (
+void SemiImplicitSolver::AllocateLevelMFs (
     int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
     int ncomps, const amrex::IntVect& ngRho, const amrex::IntVect& rho_nodal_flag)
 {
@@ -52,12 +52,12 @@ void ImplicitDarwinSolver::AllocateLevelMFs (
 #endif
 }
 
-void ImplicitDarwinSolver::ClearLevel (int lev)
+void SemiImplicitSolver::ClearLevel (int lev)
 {
     sigma[lev].reset();
 }
 
-void ImplicitDarwinSolver::ComputeSigma () {
+void SemiImplicitSolver::ComputeSigma () {
 
     int const lev = 0;
     sigma[lev]->setVal(1.0_rt);
