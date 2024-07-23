@@ -13,21 +13,15 @@ if(WarpX_MPI)
             set(MPI_ALLOW_ROOT --allow-run-as-root)
         endif()
     endif()
-    set(MPI_TEST_EXE
-        ${MPIEXEC_EXECUTABLE}
-        ${MPI_ALLOW_ROOT}
-        ${MPIEXEC_NUMPROC_FLAG} 2
-        ${MPIEXEC_POSTFLAGS}
-        ${MPIEXEC_PREFLAGS}
-    )
 endif()
 
 # Add a WarpX test set (with sub-tests)
 #
 function(add_warpx_test
     name
-    mpi
     dims
+    mpi
+    mpi_np
     inputs_base
     inputs_test
     analysis
@@ -44,7 +38,13 @@ function(add_warpx_test
 
     set(THIS_MPI_TEST_EXE)
     if(mpi)
-        set(THIS_MPI_TEST_EXE ${MPI_TEST_EXE})
+        set(THIS_MPI_TEST_EXE
+            ${MPIEXEC_EXECUTABLE}
+            ${MPI_ALLOW_ROOT}
+            ${MPIEXEC_NUMPROC_FLAG} ${mpi_np}
+            ${MPIEXEC_POSTFLAGS}
+            ${MPIEXEC_PREFLAGS}
+        )
     endif()
 
     # test run
@@ -93,83 +93,160 @@ endfunction()
 # Langmuir_multi_2d_MR ########################################################
 #
 if(2 IN_LIST WarpX_DIMS)
+    set(name Langmuir_multi_2d_MR)
+    set(dims 2)
+    set(mpi ON)
+    set(mpi_np 2)
+    set(inputs_base Examples/Tests/langmuir/inputs_2d_base)
+    set(inputs_test Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_MR)
+    set(analysis Examples/Tests/langmuir/analysis_2d.py)
+    set(output diags/diag1000080)
     add_warpx_test(
-        Langmuir_multi_2d_MR
-        ON
-        2
-        Examples/Tests/langmuir/inputs_2d_base
-        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_MR
-        Examples/Tests/langmuir/analysis_2d.py
-        diags/diag1000080
+        ${name}
+        ${dims}
+        ${mpi}
+        ${mpi_np}
+        ${inputs_base}
+        ${inputs_test}
+        ${analysis}
+        ${output}
     )
 endif()
 
 # Langmuir_multi_2d_MR_anisotropic ############################################
 #
 if(2 IN_LIST WarpX_DIMS)
+    set(name Langmuir_multi_2d_MR_anisotropic)
+    set(dims 2)
+    set(mpi ON)
+    set(mpi_np 2)
+    set(inputs_base Examples/Tests/langmuir/inputs_2d_base)
+    set(inputs_test Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_MR_anisotropic)
+    set(analysis Examples/Tests/langmuir/analysis_2d.py)
+    set(output diags/diag1000080)
     add_warpx_test(
-        Langmuir_multi_2d_MR_anisotropic
-        ON
-        2
-        Examples/Tests/langmuir/inputs_2d_base
-        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_MR_anisotropic
-        Examples/Tests/langmuir/analysis_2d.py
-        diags/diag1000080
+        ${name}
+        ${dims}
+        ${mpi}
+        ${mpi_np}
+        ${inputs_base}
+        ${inputs_test}
+        ${analysis}
+        ${output}
     )
 endif()
 
 # Langmuir_multi_2d_MR_momentum_conserving ####################################
 #
 if(2 IN_LIST WarpX_DIMS)
+    set(name Langmuir_multi_2d_MR_momentum_conserving)
+    set(dims 2)
+    set(mpi ON)
+    set(mpi_np 2)
+    set(inputs_base Examples/Tests/langmuir/inputs_2d_base)
+    set(inputs_test Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_MR_momentum_conserving)
+    set(analysis Examples/Tests/langmuir/analysis_2d.py)
+    set(output diags/diag1000080)
     add_warpx_test(
-        Langmuir_multi_2d_MR_momentum_conserving
-        ON
-        2
-        Examples/Tests/langmuir/inputs_2d_base
-        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_MR_momentum_conserving
-        Examples/Tests/langmuir/analysis_2d.py
-        diags/diag1000080
+        ${name}
+        ${dims}
+        ${mpi}
+        ${mpi_np}
+        ${inputs_base}
+        ${inputs_test}
+        ${analysis}
+        ${output}
     )
 endif()
 
 # Langmuir_multi_2d_MR_psatd ##################################################
 #
 if(2 IN_LIST WarpX_DIMS AND WarpX_FFT)
+    set(name Langmuir_multi_2d_MR_psatd)
+    set(dims 2)
+    set(mpi ON)
+    set(mpi_np 2)
+    set(inputs_base Examples/Tests/langmuir/inputs_2d_base)
+    set(inputs_test Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_MR_psatd)
+    set(analysis Examples/Tests/langmuir/analysis_2d.py)
+    set(output diags/diag1000080)
     add_warpx_test(
-        Langmuir_multi_2d_MR_psatd
-        ON
-        2
-        Examples/Tests/langmuir/inputs_2d_base
-        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_MR_psatd
-        Examples/Tests/langmuir/analysis_2d.py
-        diags/diag1000080
+        ${name}
+        ${dims}
+        ${mpi}
+        ${mpi_np}
+        ${inputs_base}
+        ${inputs_test}
+        ${analysis}
+        ${output}
     )
 endif()
 
 # Langmuir_multi_2d_nodal #####################################################
 #
 if(2 IN_LIST WarpX_DIMS)
+    set(name Langmuir_multi_2d_nodal)
+    set(dims 2)
+    set(mpi ON)
+    set(mpi_np 2)
+    set(inputs_base Examples/Tests/langmuir/inputs_2d_base)
+    set(inputs_test Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_nodal)
+    set(analysis Examples/Tests/langmuir/analysis_2d.py)
+    set(output diags/diag1000080)
     add_warpx_test(
-        Langmuir_multi_2d_nodal
-        ON
-        2
-        Examples/Tests/langmuir/inputs_2d_base
-        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_nodal
-        Examples/Tests/langmuir/analysis_2d.py
-        diags/diag1000080
+        ${name}
+        ${dims}
+        ${mpi}
+        ${mpi_np}
+        ${inputs_base}
+        ${inputs_test}
+        ${analysis}
+        ${output}
     )
 endif()
 
 # Langmuir_multi_2d_psatd #####################################################
 #
 if(2 IN_LIST WarpX_DIMS AND WarpX_FFT)
+    set(name Langmuir_multi_2d_psatd)
+    set(dims 2)
+    set(mpi ON)
+    set(mpi_np 2)
+    set(inputs_base Examples/Tests/langmuir/inputs_2d_base)
+    set(inputs_test Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd)
+    set(analysis Examples/Tests/langmuir/analysis_2d.py)
+    set(output diags/diag1000080)
     add_warpx_test(
-        Langmuir_multi_2d_psatd
-        ON
-        2
-        Examples/Tests/langmuir/inputs_2d_base
-        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd
-        Examples/Tests/langmuir/analysis_2d.py
-        diags/diag1000080
+        ${name}
+        ${dims}
+        ${mpi}
+        ${mpi_np}
+        ${inputs_base}
+        ${inputs_test}
+        ${analysis}
+        ${output}
+    )
+endif()
+
+# Langmuir_multi_2d_psatd_current_correction ##################################
+#
+if(2 IN_LIST WarpX_DIMS AND WarpX_FFT)
+    set(name Langmuir_multi_2d_psatd_current_correction)
+    set(dims 2)
+    set(mpi ON)
+    set(mpi_np 1)
+    set(inputs_base Examples/Tests/langmuir/inputs_2d_base)
+    set(inputs_test Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd_current_correction)
+    set(analysis Examples/Tests/langmuir/analysis_2d.py)
+    set(output diags/diag1000080)
+    add_warpx_test(
+        ${name}
+        ${dims}
+        ${mpi}
+        ${mpi_np}
+        ${inputs_base}
+        ${inputs_test}
+        ${analysis}
+        ${output}
     )
 endif()
