@@ -45,9 +45,7 @@
 #include <AMReX_REAL.H>
 #include <AMReX_SPACE.H>
 #include <AMReX_Vector.H>
-#if defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ)
-#   include <AMReX_MLEBNodeFDLaplacian.H>
-#endif
+#include <AMReX_MLEBNodeFDLaplacian.H>
 #ifdef AMREX_USE_EB
 #   include <AMReX_EBFabFactory.H>
 #endif
@@ -148,64 +146,38 @@ computeSemiImplicitPhi (amrex::Vector<amrex::MultiFab*> const & rho,
     const amrex::LPInfo info;
 #endif
 
+    ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE( !is_solver_igf_on_lev0,
+        "FFT solver cannot be used with semi-implicit Poisson solve");
+
     for (int lev=0; lev<=finest_level; lev++) {
 
-#if !defined(WARPX_USE_FFT)
-        ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE( !is_solver_igf_on_lev0,
-        "Must compile with -DWarpX_FFT=ON to use the FFT solver!");
-#endif
-
-#if !defined(WARPX_DIM_3D)
-        ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE( !is_solver_igf_on_lev0,
-        "The FFT Poisson solver is currently only implemented for 3D!");
-#endif
-
-#if (defined(WARPX_USE_FFT) && defined(WARPX_DIM_3D))
-        amrex::Abort("Cannot use SI solver with WARPX_USE_FFT=ON.");
-        // Use the Integrated Green Function solver (FFT) on the coarsest level if it was selected
-        // if(is_solver_igf_on_lev0 && lev==0){
-        //     amrex::Array<amrex::Real,AMREX_SPACEDIM> const dx_igf
-        //             {AMREX_D_DECL(geom[lev].CellSize(0)/std::sqrt(1._rt-beta_solver[0]*beta_solver[0]),
-        //                         geom[lev].CellSize(1)/std::sqrt(1._rt-beta_solver[1]*beta_solver[1]),
-        //                         geom[lev].CellSize(2)/std::sqrt(1._rt-beta_solver[2]*beta_solver[2]))};
-        //     if ( max_norm_b == 0 ) {
-        //         phi[lev]->setVal(0);
-        //     } else {
-        //         computePhiIGF( *rho[lev], *phi[lev], dx_igf, grids[lev] );
-        //     }
-        //     continue;
-        // }
-#endif
-
-        // Use the Multigrid (MLMG) solver if selected or on refined patches
-        // but first scale rho appropriately
+        // Use the Multigrid (MLMG) solver but first scale rho appropriately
         using namespace ablastr::constant::SI;
         rho[lev]->mult(-1._rt/ep0);  // TODO: when do we "un-multiply" this? We need to document this side-effect!
 
-#if !(defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ))
-        // Determine whether to use semi-coarsening
-        amrex::Array<amrex::Real,AMREX_SPACEDIM> dx_scaled
-                {AMREX_D_DECL(geom[lev].CellSize(0), geom[lev].CellSize(1), geom[lev].CellSize(2))};
-        int max_semicoarsening_level = 0;
-        int semicoarsening_direction = -1;
-        const auto min_dir = static_cast<int>(std::distance(dx_scaled.begin(),
-                                    std::min_element(dx_scaled.begin(),dx_scaled.end())));
-        const auto max_dir = static_cast<int>(std::distance(dx_scaled.begin(),
-                                    std::max_element(dx_scaled.begin(),dx_scaled.end())));
-        if (dx_scaled[max_dir] > dx_scaled[min_dir]) {
-            semicoarsening_direction = max_dir;
-            max_semicoarsening_level = static_cast<int>
-            (std::log2(dx_scaled[max_dir]/dx_scaled[min_dir]));
-        }
-        if (max_semicoarsening_level > 0) {
-            info.setSemicoarsening(true);
-            info.setMaxSemicoarseningLevel(max_semicoarsening_level);
-            info.setSemicoarseningDirection(semicoarsening_direction);
-        }
-#endif
+// #if !(defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ))
+//         // Determine whether to use semi-coarsening
+//         amrex::Array<amrex::Real,AMREX_SPACEDIM> dx_scaled
+//                 {AMREX_D_DECL(geom[lev].CellSize(0), geom[lev].CellSize(1), geom[lev].CellSize(2))};
+//         int max_semicoarsening_level = 0;
+//         int semicoarsening_direction = -1;
+//         const auto min_dir = static_cast<int>(std::distance(dx_scaled.begin(),
+//                                     std::min_element(dx_scaled.begin(),dx_scaled.end())));
+//         const auto max_dir = static_cast<int>(std::distance(dx_scaled.begin(),
+//                                     std::max_element(dx_scaled.begin(),dx_scaled.end())));
+//         if (dx_scaled[max_dir] > dx_scaled[min_dir]) {
+//             semicoarsening_direction = max_dir;
+//             max_semicoarsening_level = static_cast<int>
+//             (std::log2(dx_scaled[max_dir]/dx_scaled[min_dir]));
+//         }
+//         if (max_semicoarsening_level > 0) {
+//             info.setSemicoarsening(true);
+//             info.setMaxSemicoarseningLevel(max_semicoarsening_level);
+//             info.setSemicoarseningDirection(semicoarsening_direction);
+//         }
+// #endif
 
-#if defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ)
-        // In the presence of EB or RZ: use the EB enabled solver.
+        // Use the EB enabled solver.
         amrex::MLEBNodeFDLaplacian linop( {geom[lev]}, {grids[lev]}, {dmap[lev]}, info
 #if defined(AMREX_USE_EB)
             , {eb_farray_box_factory.value()[lev]}
@@ -220,11 +192,6 @@ computeSemiImplicitPhi (amrex::Vector<amrex::MultiFab*> const & rho,
         }
         else
             linop.setEBDirichlet(boundary_handler.getPhiEB(current_time.value()));
-#endif
-#else
-        // In the absence of EB and RZ: use a more generic solver
-        amrex::MLNodeLaplacian linop( {geom[lev]}, {grids[lev]},
-                                     {dmap[lev]}, info );
 #endif
         linop.setSigma(lev, *sigma[lev]);
 

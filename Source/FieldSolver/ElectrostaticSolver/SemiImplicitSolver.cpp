@@ -16,7 +16,7 @@ SemiImplicitSolver::SemiImplicitSolver ( int nlevs_max )
     AllocateMFs(nlevs_max);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         (nlevs_max == 1),
-        "Implicit Darwin solver only support one level at present"
+        "Semi-implicit electrostatic solver only supports one level at present"
     );
 
     // read input parameters
@@ -35,7 +35,7 @@ void SemiImplicitSolver::AllocateLevelMFs (
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         (rho_nodal_flag == IntVect::TheNodeVector()),
-        "Implicit Darwin solver only support a nodal charge density field at present"
+        "Semi-implicit electrostatic solver only supports a nodal charge density field"
     );
 
     // The "sigma" multifab stores the dressing of the Poisson equation. It
@@ -48,7 +48,7 @@ void SemiImplicitSolver::AllocateLevelMFs (
 #ifdef WARPX_DIM_RZ
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         (ncomps == 1),
-        "Implicit Darwin solver only support m = 0 azimuthal mode at present.");
+        "Semi-implicit electrostatic solver only supports m = 0 azimuthal mode at present.");
 #endif
 }
 
