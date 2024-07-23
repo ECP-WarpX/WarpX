@@ -75,30 +75,30 @@ cmake --build $HOME/src/lapackpp-frontier-gpu-build --target install --parallel 
 rm -rf $HOME/src/lapackpp-frontier-gpu-build
 
 # c-blosc (I/O compression, for OpenPMD)
-if [ -d $SHAREDHOMEDIR/src/c-blosc ]
+if [ -d $HOME/src/c-blosc ]
 then
   # git repository is already there
   :
 else
-  git clone -b v1.21.1 https://github.com/Blosc/c-blosc.git $SHAREDHOMEDIR/src/c-blosc
+  git clone -b v1.21.1 https://github.com/Blosc/c-blosc.git $HOME/src/c-blosc
 fi
-rm -rf $SHAREDHOMEDIR/src/c-blosc-frontier-build
-cmake -S $SHAREDHOMEDIR/src/c-blosc -B $SHAREDHOMEDIR/src/c-blosc-frontier-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=${SW_DIR}/c-blosc-1.21.1
-cmake --build $SHAREDHOMEDIR/src/c-blosc-frontier-build --target install --parallel 16
-rm -rf $SHAREDHOMEDIR/src/c-blosc-frontier-build
+rm -rf $HOME/src/c-blosc-frontier-build
+cmake -S $HOME/src/c-blosc -B $HOME/src/c-blosc-frontier-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=${SW_DIR}/c-blosc-1.21.1
+cmake --build $HOME/src/c-blosc-frontier-build --target install --parallel 16
+rm -rf $HOME/src/c-blosc-frontier-build
 
 # ADIOS2 v. 2.9.2 (for OpenPMD)
-if [ -d $SHAREDHOMEDIR/src/adios2 ]
+if [ -d $HOME/src/adios2 ]
 then
   # git repository is already there
   :
 else
-  git clone -b v2.9.2 https://github.com/ornladios/ADIOS2.git $SHAREDHOMEDIR/src/adios2
+  git clone -b v2.9.2 https://github.com/ornladios/ADIOS2.git $HOME/src/adios2
 fi
-rm -rf $SHAREDHOMEDIR/src/adios2-frontier-build
-cmake -S $SHAREDHOMEDIR/src/adios2 -B $SHAREDHOMEDIR/src/adios2-ad-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=${SW_DIR}/adios2-2.9.2
-cmake --build $SHAREDHOMEDIR/src/adios2-frontier-build --target install -j 16
-rm -rf $SHAREDHOMEDIR/src/adios2-frontier-build
+rm -rf $HOME/src/adios2-frontier-build
+cmake -S $HOME/src/adios2 -B $HOME/src/adios2-ad-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=${SW_DIR}/adios2-2.9.2
+cmake --build $HOME/src/adios2-frontier-build --target install -j 16
+rm -rf $HOME/src/adios2-frontier-build
 
 
 # Python ######################################################################
