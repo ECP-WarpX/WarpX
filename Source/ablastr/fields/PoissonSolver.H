@@ -316,7 +316,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 
                 details::PoissonInterpCPtoFP const interp(phi_fp_arr, phi_cp_arr, refratio);
 
-                amrex::Box const& b = mfi.growntilebox();
+                amrex::Box const& b = mfi.growntilebox(ng);
                 amrex::ParallelFor(b, interp);
             }
 
