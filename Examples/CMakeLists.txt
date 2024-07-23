@@ -101,8 +101,8 @@ add_warpx_test(
     2  # dims
     ON # mpi
     2  # mpi_np
-    Examples/Tests/langmuir/inputs_2d_base # inputs_base
-    Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_MR # inputs_test
+    Examples/Tests/langmuir/inputs_2d # inputs_base
+    Examples/Tests/langmuir/add_inputs_2d_Langmuir_multi_2d_MR # inputs_test
     Examples/Tests/langmuir/analysis_2d.py # analysis
     diags/diag1000080 # output
 )
@@ -114,8 +114,8 @@ add_warpx_test(
     2  # dims
     ON # mpi
     2  # mpi_np
-    Examples/Tests/langmuir/inputs_2d_base # inputs_base
-    Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_MR_anisotropic # inputs_test
+    Examples/Tests/langmuir/inputs_2d # inputs_base
+    Examples/Tests/langmuir/add_inputs_2d_Langmuir_multi_2d_MR_anisotropic # inputs_test
     Examples/Tests/langmuir/analysis_2d.py # analysis
     diags/diag1000080 # output
 )
@@ -127,8 +127,8 @@ add_warpx_test(
     2  # dims
     ON # mpi
     2  # mpi_np
-    Examples/Tests/langmuir/inputs_2d_base # inputs_base
-    Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_MR_momentum_conserving # inputs_test
+    Examples/Tests/langmuir/inputs_2d # inputs_base
+    Examples/Tests/langmuir/add_inputs_2d_Langmuir_multi_2d_MR_momentum_conserving # inputs_test
     Examples/Tests/langmuir/analysis_2d.py # analysis
     diags/diag1000080 # output
 )
@@ -141,8 +141,8 @@ if(WarpX_FFT)
         2  # dims
         ON # mpi
         2  # mpi_np
-        Examples/Tests/langmuir/inputs_2d_base # inputs_base
-        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_MR_psatd # inputs_test
+        Examples/Tests/langmuir/inputs_2d # inputs_base
+        Examples/Tests/langmuir/add_inputs_2d_Langmuir_multi_2d_MR_psatd # inputs_test
         Examples/Tests/langmuir/analysis_2d.py # analysis
         diags/diag1000080 # output
     )
@@ -155,8 +155,8 @@ add_warpx_test(
     2  # dims
     ON # mpi
     2  # mpi_np
-    Examples/Tests/langmuir/inputs_2d_base # inputs_base
-    Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_nodal # inputs_test
+    Examples/Tests/langmuir/inputs_2d # inputs_base
+    Examples/Tests/langmuir/add_inputs_2d_Langmuir_multi_2d_nodal # inputs_test
     Examples/Tests/langmuir/analysis_2d.py # analysis
     diags/diag1000080 # output
 )
@@ -169,8 +169,8 @@ if(WarpX_FFT)
         2  # dims
         ON # mpi
         2  # mpi_np
-        Examples/Tests/langmuir/inputs_2d_base # inputs_base
-        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd # inputs_test
+        Examples/Tests/langmuir/inputs_2d # inputs_base
+        Examples/Tests/langmuir/add_inputs_2d_Langmuir_multi_2d_psatd # inputs_test
         Examples/Tests/langmuir/analysis_2d.py # analysis
         diags/diag1000080 # output
     )
@@ -184,8 +184,8 @@ if(WarpX_FFT)
         2  # dims
         ON # mpi
         1  # mpi_np
-        Examples/Tests/langmuir/inputs_2d_base # inputs_base
-        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd_current_correction # inputs_test
+        Examples/Tests/langmuir/inputs_2d # inputs_base
+        Examples/Tests/langmuir/add_inputs_2d_Langmuir_multi_2d_psatd_current_correction # inputs_test
         Examples/Tests/langmuir/analysis_2d.py # analysis
         diags/diag1000080 # output
     )
@@ -199,8 +199,8 @@ if(WarpX_FFT)
         2  # dims
         ON # mpi
         1  # mpi_np
-        Examples/Tests/langmuir/inputs_2d_base # inputs_base
-        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd_current_correction_nodal # inputs_test
+        Examples/Tests/langmuir/inputs_2d # inputs_base
+        Examples/Tests/langmuir/add_inputs_2d_Langmuir_multi_2d_psatd_current_correction_nodal # inputs_test
         Examples/Tests/langmuir/analysis_2d.py # analysis
         diags/diag1000080 # output
     )
@@ -214,8 +214,8 @@ if(WarpX_FFT)
         2  # dims
         ON # mpi
         2  # mpi_np
-        Examples/Tests/langmuir/inputs_2d_base # inputs_base
-        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd_momentum_conserving # inputs_test
+        Examples/Tests/langmuir/inputs_2d # inputs_base
+        Examples/Tests/langmuir/add_inputs_2d_Langmuir_multi_2d_psatd_momentum_conserving # inputs_test
         Examples/Tests/langmuir/analysis_2d.py # analysis
         diags/diag1000080 # output
     )
