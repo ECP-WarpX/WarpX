@@ -37,8 +37,8 @@ grid = picmi.Cartesian2DGrid(
     upper_bound = [xmax, zmax],
     lower_boundary_conditions = ['dirichlet', 'dirichlet'],
     upper_boundary_conditions = ['dirichlet', 'dirichlet'],
-    lower_boundary_conditions_particles = ['pml', 'absorbing'],
-    upper_boundary_conditions_particles = ['pml', 'absorbing'],
+    lower_boundary_conditions_particles = ['open', 'absorbing'],
+    upper_boundary_conditions_particles = ['open', 'absorbing'],
     warpx_max_grid_size = 32
 )
 
