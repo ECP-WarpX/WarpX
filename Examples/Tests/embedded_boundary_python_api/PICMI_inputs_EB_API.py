@@ -25,8 +25,8 @@ zmax = 32*unit
 ##########################
 # numerics components
 ##########################
-lower_boundary_conditions = ['open', 'dirichlet', 'periodic']
-upper_boundary_conditions = ['open', 'dirichlet', 'periodic']
+lower_boundary_conditions = ['pml', 'dirichlet', 'periodic']
+upper_boundary_conditions = ['pml', 'dirichlet', 'periodic']
 
 grid = picmi.Cartesian3DGrid(
     number_of_cells = [nx, ny, nz],

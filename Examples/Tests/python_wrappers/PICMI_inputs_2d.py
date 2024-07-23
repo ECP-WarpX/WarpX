@@ -30,7 +30,7 @@ max_grid_size_z = 64
 # PML
 nxpml = 10
 nzpml = 10
-field_boundary = ['open', 'open']
+field_boundary = ['pml', 'pml']
 
 # Spectral order
 nox = 8

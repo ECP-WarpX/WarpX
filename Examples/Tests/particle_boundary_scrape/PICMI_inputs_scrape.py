@@ -56,8 +56,8 @@ grid = picmi.Cartesian3DGrid(
     upper_bound = [xmax, ymax, zmax],
     lower_boundary_conditions=['none', 'none', 'none'],
     upper_boundary_conditions=['none', 'none', 'none'],
-    lower_boundary_conditions_particles=['open', 'open', 'open'],
-    upper_boundary_conditions_particles=['open', 'open', 'open'],
+    lower_boundary_conditions_particles=['pml', 'pml', 'pml'],
+    upper_boundary_conditions_particles=['pml', 'pml', 'pml'],
     warpx_max_grid_size = 32
 )
 

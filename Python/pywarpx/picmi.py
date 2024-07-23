@@ -23,9 +23,15 @@ picmistandard.register_codename(codename)
 
 # dictionary to map field boundary conditions from picmistandard to WarpX
 BC_map = {
-    'open':'pml', 'dirichlet':'pec', 'periodic':'periodic', 'damped':'damped',
+    'open':'open',
+    'pml':'pml',
+    'dirichlet':'pec',
+    'periodic':'periodic',
+    'damped':'damped',
     'absorbing_silver_mueller':'absorbing_silver_mueller',
-    'neumann':'neumann', 'none':'none', None:'none'
+    'neumann':'neumann',
+    'none':'none',
+    None:'none'
 }
 
 class constants:
@@ -1371,6 +1377,8 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
             pywarpx.boundary.potential_hi_y = self.grid.potential_ymax
             pywarpx.boundary.potential_hi_z = self.grid.potential_zmax
 
+        print(f"method = {self.method}")
+        pywarpx.warpx.poisson_solver = self.method
 
 class GaussianLaser(picmistandard.PICMI_GaussianLaser):
     def laser_initialize_inputs(self):
