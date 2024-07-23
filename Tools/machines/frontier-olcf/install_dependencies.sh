@@ -108,8 +108,6 @@ CUPY_INSTALL_USE_HIP=1  \
 ROCM_HOME=${ROCM_PATH}  \
 HCC_AMDGPU_TARGET=${AMREX_AMD_ARCH}  \
   python3 -m pip install -v cupy
-# optional: for libEnsemble
-python3 -m pip install -r $HOME/src/warpx/Tools/LibEnsemble/requirements.txt
 # optional: for optimas (based on libEnsemble & ax->botorch->gpytorch->pytorch)
 #python3 -m pip install --upgrade torch --index-url https://download.pytorch.org/whl/rocm5.4.2
 #python3 -m pip install -r $HOME/src/warpx/Tools/optimas/requirements.txt
