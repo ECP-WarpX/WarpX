@@ -74,52 +74,6 @@ CXX=$(which CC) CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S $HOME/src/lapackpp -B 
 cmake --build $HOME/src/lapackpp-frontier-gpu-build --target install --parallel 16
 rm -rf $HOME/src/lapackpp-frontier-gpu-build
 
-# c-blosc (I/O compression, for OpenPMD)
-if [ -d $HOME/src/c-blosc ]
-then
-  # git repository is already there
-  :
-else
-  git clone -b v1.21.1 https://github.com/Blosc/c-blosc.git $HOME/src/c-blosc
-fi
-rm -rf $HOME/src/c-blosc-frontier-build
-cmake -S $HOME/src/c-blosc -B $HOME/src/c-blosc-frontier-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=${SW_DIR}/c-blosc-1.21.1
-cmake --build $HOME/src/c-blosc-frontier-build --target install --parallel 16
-rm -rf $HOME/src/c-blosc-frontier-build
-
-# HDF5 (for openPMD)
-if [ -d $HOME/src/hdf5 ]
-then
-  cd $HOME/src/hdf5
-  git fetch --prune
-  git checkout hdf5-1_14_1-2
-  cd -
-else
-  git clone -b hdf5-1_14_1-2 https://github.com/HDFGroup/hdf5.git $HOME/src/hdf5
-fi
-rm -rf $HOME/src/hdf5-frontier-build
-cmake -S $HOME/src/hdf5          \
-      -B $HOME/src/hdf5-frontier-build  \
-      -DBUILD_TESTING=OFF         \
-      -DHDF5_ENABLE_PARALLEL=ON   \
-      -DCMAKE_INSTALL_PREFIX=${SW_DIR}/hdf5-1.14.1.2
-cmake --build $HOME/src/hdf5-frontier-build --target install --parallel 10
-rm -rf $HOME/src/hdf5-frontier-build
-
-# ADIOS2 v. 2.9.2 (for OpenPMD)
-if [ -d $HOME/src/adios2 ]
-then
-  # git repository is already there
-  :
-else
-  git clone -b v2.9.2 https://github.com/ornladios/ADIOS2.git $HOME/src/adios2
-fi
-rm -rf $HOME/src/adios2-frontier-build
-cmake -S $HOME/src/adios2 -B $HOME/src/adios2-frontier-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=${SW_DIR}/adios2-2.9.2
-cmake --build $HOME/src/adios2-frontier-build --target install -j 16
-rm -rf $HOME/src/adios2-frontier-build
-
-
 # Python ######################################################################
 #
 python3 -m pip install --upgrade pip
