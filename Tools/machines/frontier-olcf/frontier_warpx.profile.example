@@ -29,9 +29,11 @@ export LD_LIBRARY_PATH=${HOME}/sw/frontier/gpu/lapackpp-2024.05.31/lib64:$LD_LIB
 module load boost/1.79.0
 
 # optional: for openPMD support
-export CMAKE_PREFIX_PATH=${SHAREDHOMEDIR}/sw/frontier/gpu/c-blosc-1.21.1:$CMAKE_PREFIX_PATH
-export CMAKE_PREFIX_PATH=${SHAREDHOMEDIR}/sw/frontier/gpu/adios2-2.9.2:$CMAKE_PREFIX_PATH
-module load hdf5/1.12.1-mpi
+export CMAKE_PREFIX_PATH=${HOME}/sw/frontier/gpu/c-blosc-1.21.1:$CMAKE_PREFIX_PATH
+export CMAKE_PREFIX_PATH=${HOME}/sw/frontier/gpu/hdf5-1.14.1.2:$CMAKE_PREFIX_PATH
+export CMAKE_PREFIX_PATH=${HOME}/sw/frontier/gpu/adios2-2.9.2:$CMAKE_PREFIX_PATH
+export PATH=${HOME}/sw/frontier/gpu/hdf5-1.14.1.2/bin:${PATH}
+export PATH=${HOME}/sw/frontier/gpu/adios2-2.9.2/bin:${PATH}
 
 # optional: for Python bindings or libEnsemble
 module load cray-python/3.11.5
