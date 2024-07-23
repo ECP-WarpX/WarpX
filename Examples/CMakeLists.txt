@@ -190,3 +190,33 @@ if(WarpX_FFT)
         diags/diag1000080 # output
     )
 endif()
+
+# Langmuir_multi_2d_psatd_current_correction_nodal ############################
+#
+if(WarpX_FFT)
+    add_warpx_test(
+        Langmuir_multi_2d_psatd_current_correction_nodal # name
+        2  # dims
+        ON # mpi
+        1  # mpi_np
+        Examples/Tests/langmuir/inputs_2d_base # inputs_base
+        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd_current_correction_nodal # inputs_test
+        Examples/Tests/langmuir/analysis_2d.py # analysis
+        diags/diag1000080 # output
+    )
+endif()
+
+# Langmuir_multi_2d_psatd_momentum_conserving #################################
+#
+if(WarpX_FFT)
+    add_warpx_test(
+        Langmuir_multi_2d_psatd_momentum_conserving # name
+        2  # dims
+        ON # mpi
+        2  # mpi_np
+        Examples/Tests/langmuir/inputs_2d_base # inputs_base
+        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd_momentum_conserving # inputs_test
+        Examples/Tests/langmuir/analysis_2d.py # analysis
+        diags/diag1000080 # output
+    )
+endif()
