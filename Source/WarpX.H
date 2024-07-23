@@ -665,7 +665,7 @@ public:
      */
     void Hybrid_QED_Push (int lev, PatchType patch_type, amrex::Real dt);
 
-    amrex::Real quantum_xi_c2;
+    amrex::Real m_quantum_xi_c2;
 
     /** Check and potentially compute load balancing
      */

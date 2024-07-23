@@ -903,14 +903,14 @@ WarpX::ReadParameters ()
             pp_warpx, "n_current_deposition_buffer", n_current_deposition_buffer);
 
         //Default value for the quantum parameter used in Maxwell’s QED equations
-        quantum_xi_c2 = PhysConst::xi_c2;
+        m_quantum_xi_c2 = PhysConst::xi_c2;
 
         amrex::Real quantum_xi_tmp;
         const auto quantum_xi_is_specified =
             utils::parser::queryWithParser(pp_warpx, "quantum_xi", quantum_xi_tmp);
         if (quantum_xi_is_specified) {
             double const quantum_xi = quantum_xi_tmp;
-            quantum_xi_c2 = static_cast<amrex::Real>(quantum_xi * PhysConst::c * PhysConst::c);
+            m_quantum_xi_c2 = static_cast<amrex::Real>(quantum_xi * PhysConst::c * PhysConst::c);
         }
 
         const auto at_least_one_boundary_is_pml =
