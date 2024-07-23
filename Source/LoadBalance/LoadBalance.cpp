@@ -48,7 +48,7 @@ namespace
     }
 }
 
-CostTracker::CostTracker(int lev, std::size_t mfi_iter_index):
+CostTracker::CostTracker (int lev, std::size_t mfi_iter_index):
     m_lev{lev},
     m_mfi_iter_index{mfi_iter_index},
     m_wt{0.0_rt}
@@ -61,15 +61,16 @@ CostTracker::CostTracker(int lev, std::size_t mfi_iter_index):
     m_wt = static_cast<amrex::Real>(amrex::second());
 }
 
-CostTracker::~CostTracker()
+void
+CostTracker::add () const noexcept
 {
     if (AllCosts::get_instance().get_update_algo() == CostsUpdateAlgo::Heuristic)
         return;
 
     amrex::Gpu::synchronize();
-    m_wt = static_cast<amrex::Real>(amrex::second()) - m_wt;
+    const auto time_diff = static_cast<amrex::Real>(amrex::second()) - m_wt;
     auto& cost = AllCosts::get_instance().m_costs[m_lev];
-    amrex::HostDevice::Atomic::Add( &(*cost)[m_mfi_iter_index], m_wt);
+    amrex::HostDevice::Atomic::Add( &(*cost)[m_mfi_iter_index], time_diff);
 }
 
 AllCosts::AllCosts ()

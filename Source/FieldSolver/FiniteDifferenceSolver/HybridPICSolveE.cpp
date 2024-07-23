@@ -232,6 +232,8 @@ void FiniteDifferenceSolver::CalculateCurrentAmpereCylindrical (
                 }
             }
         );
+
+        cost_tracker.add();
     }
 }
 
@@ -338,6 +340,8 @@ void FiniteDifferenceSolver::CalculateCurrentAmpereCartesian (
                 );
             }
         );
+
+        cost_tracker.add();
     }
 }
 #endif
@@ -501,6 +505,8 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                 - (jt_interp - jit_interp - Jextt(i, j, 0)) * Br_interp
             );
         });
+
+        cost_tracker.add();
     }
 
     // Loop through the grids, and over the tiles within each grid again
@@ -670,6 +676,8 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                 }
             }
         );
+
+        cost_tracker.add();
     }
 }
 
@@ -790,6 +798,8 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 - (jy_interp - jiy_interp - Jexty(i, j, k)) * Bx_interp
             );
         });
+
+        cost_tracker.add();
     }
 
     // Loop through the grids, and over the tiles within each grid again
@@ -953,6 +963,8 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 }
             }
         );
+
+        cost_tracker.add();
     }
 }
 #endif

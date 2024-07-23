@@ -1464,8 +1464,6 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
 
     if (do_not_push) { return; }
 
-    amrex::LayoutData<amrex::Real>* costs = WarpX::getCosts(lev);
-
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
@@ -1497,6 +1495,8 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
                                     SetPosition(i, x, y, z);
                 }
             );
+
+            cost_tracker.add();
         }
     }
 }

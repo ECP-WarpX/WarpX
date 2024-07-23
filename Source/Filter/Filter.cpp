@@ -51,6 +51,8 @@ Filter::ApplyStencil (MultiFab& dstmf, const MultiFab& srcmf, const int lev, int
 
         // Apply filter
         DoFilter(tbx, src, dst, scomp, dcomp, ncomp);
+
+        cost_tracker.add();
     }
 }
 
@@ -215,6 +217,8 @@ Filter::ApplyStencil (amrex::MultiFab& dstmf, const amrex::MultiFab& srcmf, cons
             tmpfab.copy(srcfab, ibx, scomp, ibx, 0, ncomp);
             // Apply filter
             DoFilter(tbx, tmpfab.array(), dstfab.array(), 0, dcomp, ncomp);
+
+            cost_tracker.add();
         }
     }
 }

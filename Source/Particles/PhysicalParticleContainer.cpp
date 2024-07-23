@@ -1468,6 +1468,8 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
         });
 
         amrex::Gpu::synchronize();
+
+        cost_tracker.add();
     }
 
     // Remove particles that are inside the embedded boundaries
@@ -1513,8 +1515,6 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
     scale_fac = dx[0]/num_ppc_real;
     if (plasma_injector.flux_normal_axis == 2) { scale_fac /= dx[0]; }
 #endif
-
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(0);
 
     // Create temporary particle container to which particles will be added;
     // we will then call Redistribute on this new container and finally
@@ -1956,6 +1956,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 
         amrex::Gpu::synchronize();
 
+        cost_tracker.add();
     }
 
     // Remove particles that are inside the embedded boundaries
@@ -2226,6 +2227,8 @@ PhysicalParticleContainer::Evolve (int lev,
             }
 
             amrex::Gpu::synchronize();
+
+            cost_tracker.add();
         }
     }
     // Split particles at the end of the timestep.

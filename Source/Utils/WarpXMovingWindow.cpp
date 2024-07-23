@@ -584,6 +584,9 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
         {
             dstfab(i,j,k,n) = srcfab(i+shift.x,j+shift.y,k+shift.z,n);
         })
+
+        if (update_cost_flag)
+            cost_tracker.add();
     }
 
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)

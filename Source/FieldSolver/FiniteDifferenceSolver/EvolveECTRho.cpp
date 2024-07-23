@@ -146,6 +146,8 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
 #ifdef WARPX_DIM_XZ
         amrex::ignore_unused(Ey, Rhox, Rhoz, ly);
 #endif
+
+        cost_tracker.add();
     }
 #else
     amrex::ignore_unused(Efield, edge_lengths, face_areas, ECTRhofield, lev);

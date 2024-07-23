@@ -30,7 +30,8 @@ namespace warpx::load_balance
     {
     public:
         CostTracker (int lev, std::size_t mfi_iter_index);
-        ~CostTracker ();
+
+        void add () const noexcept;
 
     private:
         int m_lev;

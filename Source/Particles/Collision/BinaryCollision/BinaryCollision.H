@@ -195,6 +195,8 @@ public:
 
                 doCollisionsWithinTile( dt, lev, mfi, species1, species2, product_species_vector,
                                         copy_species1_data, copy_species2_data);
+
+                cost_tracker.add();
             }
 
             if (m_have_product_species) {

@@ -685,6 +685,8 @@ LaserParticleContainer::Evolve (int lev,
 
             // This is necessary because of plane_Xp, plane_Yp and amplitude_E
             amrex::Gpu::synchronize();
+
+            cost_tracker.add();
         }
     }
 }

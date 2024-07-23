@@ -187,6 +187,8 @@ void FiniteDifferenceSolver::EvolveBCartesian (
                 }
             );
         }
+
+        cost_tracker.add();
     }
 }
 
@@ -340,6 +342,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
 
             });
 
+            cost_tracker.add();
         }
     }
 #else
@@ -449,6 +452,8 @@ void FiniteDifferenceSolver::EvolveBCylindrical (
             }
 
         );
+
+        cost_tracker.add();
     }
 }
 

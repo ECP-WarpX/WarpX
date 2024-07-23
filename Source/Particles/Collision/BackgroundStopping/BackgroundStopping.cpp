@@ -105,8 +105,6 @@ BackgroundStopping::doCollisions (amrex::Real cur_time, amrex::Real dt, MultiPar
     auto const flvl = species.finestLevel();
     for (int lev = 0; lev <= flvl; ++lev) {
 
-        auto *cost = WarpX::getCosts(lev);
-
         // loop over particles box by box
 #ifdef _OPENMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -119,6 +117,8 @@ BackgroundStopping::doCollisions (amrex::Real cur_time, amrex::Real dt, MultiPar
             } else if (background_type == BackgroundStoppingType::IONS) {
                 doBackgroundStoppingOnIonsWithinTile(pti, dt, cur_time, species_mass, species_charge);
             }
+
+            cost_tracker.add();
         }
 
     }

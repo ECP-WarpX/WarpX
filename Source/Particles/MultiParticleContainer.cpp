@@ -911,6 +911,8 @@ MultiParticleContainer::doFieldIonization (int lev,
                                                                    Filter, Copy, Transform);
 
             setNewParticleIDs(dst_tile, np_dst, num_added);
+
+            cost_tracker.add();
         }
     }
 }
@@ -1543,6 +1545,8 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
 
             setNewParticleIDs(dst_ele_tile, np_dst_ele, num_added);
             setNewParticleIDs(dst_pos_tile, np_dst_pos, num_added);
+
+            cost_tracker.add();
         }
     }
 }
@@ -1611,6 +1615,8 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
             cleanLowEnergyPhotons(
                                   dst_tile, np_dst, num_added,
                                   m_quantum_sync_photon_creation_energy_threshold);
+
+            cost_tracker.add();
         }
     }
 }

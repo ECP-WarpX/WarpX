@@ -176,5 +176,7 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, amrex::Real a_dt)
                     a_dt, xi_c2);
             }
         );
+
+        cost_tracker.add();
     }
 }

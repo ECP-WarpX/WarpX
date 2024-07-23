@@ -212,6 +212,8 @@ void FiniteDifferenceSolver::EvolveECartesian (
             );
 
         }
+
+        cost_tracker.add();
     }
 
 }
@@ -425,6 +427,8 @@ void FiniteDifferenceSolver::EvolveECylindrical (
             ); // end of loop over cells
 
         } // end of if condition for F
+
+        cost_tracker.add();
 
     } // end of loop over grid/tiles
 
