@@ -31,6 +31,7 @@ max_grid_size_z = 64
 nxpml = 10
 nzpml = 10
 field_boundary = ['pml', 'pml']
+particle_boundary = ['open', 'open']
 
 # Spectral order
 nox = 8
@@ -44,6 +45,8 @@ nzg = 8
 grid = picmi.Cartesian2DGrid(number_of_cells = [nx,nz],
                              lower_bound = [xmin,zmin],
                              upper_bound = [xmax,zmax],
+                             lower_boundary_conditions_particles = particle_boundary,
+                             upper_boundary_conditions_particles = particle_boundary,
                              lower_boundary_conditions = field_boundary,
                              upper_boundary_conditions = field_boundary,
                              guard_cells = [nxg,nzg],
