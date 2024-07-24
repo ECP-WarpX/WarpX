@@ -29,6 +29,8 @@ grid = picmi.Cartesian2DGrid(
     upper_bound = [xmax, zmax],
     lower_boundary_conditions = ['periodic', 'pml'],
     upper_boundary_conditions = ['periodic', 'pml'],
+    lower_boundary_conditions_particles = ['periodic', 'open'],
+    upper_boundary_conditions_particles = ['periodic', 'open'],
     warpx_max_grid_size = max_grid_size,
     warpx_blocking_factor = blocking_factor)
 
