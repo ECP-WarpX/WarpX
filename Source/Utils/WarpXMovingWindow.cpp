@@ -19,6 +19,7 @@
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 
 #include <ablastr/utils/Communication.H>
 
@@ -450,6 +451,21 @@ WarpX::MoveWindow (const int step, bool move_j)
             WarpXFluidContainer& fl = myfl->GetFluidContainer(i);
             fl.InitData( lev, injection_box, cur_time );
         }
+    }
+
+    // Recompute macroscopic properties of the medium
+    if (WarpX::em_solver_medium==1) {
+        const int lev_zero = 0;
+        amrex::Print() << Geom(lev_zero);
+        m_macroscopic_properties->InitData(
+            boxArray(lev_zero),
+            DistributionMap(lev_zero),
+            getngEB(),
+            Geom(lev_zero),
+            getField(warpx::fields::FieldType::Efield_fp, lev_zero,0).ixType().toIntVect(),
+            getField(warpx::fields::FieldType::Efield_fp, lev_zero,1).ixType().toIntVect(),
+            getField(warpx::fields::FieldType::Efield_fp, lev_zero,2).ixType().toIntVect()
+        );
     }
 
     return num_shift_base;
