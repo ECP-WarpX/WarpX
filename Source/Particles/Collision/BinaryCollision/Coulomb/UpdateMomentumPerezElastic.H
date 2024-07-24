@@ -105,7 +105,7 @@ void UpdateMomentumPerezElastic (
     T_PR const g1s = ( T_PR(1.0) - vcDv1*inv_c2 )*gc*g1;
     T_PR const g2s = ( T_PR(1.0) - vcDv2*inv_c2 )*gc*g2;
 
-    // Compute variant relative velocity in cm frame
+    // Compute variant relative velocity in center-of-mass frame
     T_PR const muRst = g1s*m1*g2s*m2/(g1s*m1 + g2s*m2);
     T_PR const vrelst = p1sm/muRst;
 
