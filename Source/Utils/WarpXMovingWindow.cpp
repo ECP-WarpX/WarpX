@@ -457,9 +457,6 @@ WarpX::MoveWindow (const int step, bool move_j)
     if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
         const int lev_zero = 0;
         m_macroscopic_properties->InitData(
-            boxArray(lev_zero),
-            DistributionMap(lev_zero),
-            getngEB(),
             Geom(lev_zero),
             getField(warpx::fields::FieldType::Efield_fp, lev_zero,0).ixType().toIntVect(),
             getField(warpx::fields::FieldType::Efield_fp, lev_zero,1).ixType().toIntVect(),
