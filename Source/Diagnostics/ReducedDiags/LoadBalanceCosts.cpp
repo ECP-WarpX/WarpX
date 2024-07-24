@@ -80,17 +80,19 @@ void LoadBalanceCosts::ComputeDiags (int step)
     // get a reference to WarpX instance
     auto& warpx = WarpX::GetInstance();
 
+    auto& load_balance = LoadBalance::get_instance();
+
     // judge if the diags should be done
     // costs is initialized only if we're doing load balance
     if (!m_intervals.contains(step+1) ||
-        !warpx.get_load_balance_intervals().isActivated() ) { return; }
+        !load_balance.get_intervals().isActivated() ) { return; }
 
     // get number of boxes over all levels
     auto nLevels = warpx.finestLevel() + 1;
     int nBoxes = 0;
     for (int lev = 0; lev < nLevels; ++lev)
     {
-        auto *const cost = WarpX::getCosts(lev);
+        const auto& cost = load_balance.get_costs(lev);
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             cost, "ERROR: costs are not initialized on level " + std::to_string(lev) + " !");
         nBoxes += cost->size();
@@ -116,7 +118,7 @@ void LoadBalanceCosts::ComputeDiags (int step)
         costs[lev] = std::make_unique<LayoutData<Real>>(*WarpX::getCosts(lev));
     }
 
-    if (AllCosts::get_instance().get_update_algo() == CostsUpdateAlgo::Heuristic)
+    if (LoadBalance::get_instance().get_update_algo() == CostsUpdateAlgo::Heuristic)
     {
         warpx.ComputeCostsHeuristic(costs);
     }

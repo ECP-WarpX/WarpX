@@ -497,7 +497,7 @@ namespace WarpXUtilLoadBalance
     {
         const bool consistent = cost && (dm == cost->DistributionMap()) &&
             (ba.CellEqual(cost->boxArray())) &&
-            (AllCosts::get_instance().get_update_algo() == CostsUpdateAlgo::Timers);
+            (LoadBalance::get_instance().get_update_algo() == CostsUpdateAlgo::Timers);
         return consistent;
     }
 }
