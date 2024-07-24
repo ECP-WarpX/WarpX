@@ -474,7 +474,7 @@ WarpX::InitData ()
 
     BuildBufferMasks();
 
-    if (WarpX::em_solver_medium==1) {
+    if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
         const int lev_zero = 0;
         m_macroscopic_properties->InitData(
             boxArray(lev_zero),

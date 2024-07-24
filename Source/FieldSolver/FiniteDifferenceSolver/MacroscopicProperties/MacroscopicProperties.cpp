@@ -128,8 +128,6 @@ MacroscopicProperties::InitData (
     const amrex::IntVect& Ey_stag,
     const amrex::IntVect& Ez_stag)
 {
-    amrex::Print() << Utils::TextMsg::Info("we are in init data of macro");
-
     // Define material property multifabs using ba and dmap from WarpX instance
     // sigma is cell-centered MultiFab
     m_sigma_mf = std::make_unique<amrex::MultiFab>(ba, dmap, 1, ng_EB_alloc);
