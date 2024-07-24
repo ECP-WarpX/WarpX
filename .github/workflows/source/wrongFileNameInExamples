@@ -19,7 +19,8 @@ do
        [[ ${file:0:8 } != analysis     ]] &&
        [[ ${file:  -4} != yaml         ]] &&
        [[ ${file:0:4 } != plot         ]] &&
-       [[ ${file:0:6 } != README       ]]
+       [[ ${file:0:6 } != README       ]] &&
+       [[ ${file:0:10} != CMakeLists   ]]
     then
         files+=($file)
         echo "$pathtofile does not have a proper name!"
@@ -36,6 +37,7 @@ then
     echo " - analysis     : for scripts testing the accuracy of a test"
     echo " - *.yaml       : for third-party input, e.g. Ascent in situ visualization"
     echo " - README       : for readme files"
+    echo " - CMakeLists   : for CMake files"
     echo ""
     echo "Please rename the file(s) to comply, or move to another folder"
 fi
