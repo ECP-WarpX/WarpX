@@ -20,7 +20,10 @@ my_constants.m_c12 = 12.*m_u - 6.*m_e
 #################################
 max_step = 600
 amr.n_cell = 180
+<<<<<<< HEAD
 amr.max_level = 0
+=======
+>>>>>>> 1c9ba63f0 (updating CI input/analysis)
 amr.blocking_factor = 4
 geometry.dims = 1
 geometry.prob_lo = 0.
