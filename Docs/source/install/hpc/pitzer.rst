@@ -32,52 +32,107 @@ Use the following commands to download the WarpX source code:
 
    git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
 
-On Pitzer, you can run either on GPU nodes with V100 GPUs or CPU nodes. They can use the same profile.
+On Pitzer, you can run either on GPU nodes with V100 GPUs or CPU nodes. 
 
-We use system software modules, add environment hints, and further dependencies via the file ``$HOME/pitzer_warpx.profile``. Create it now:
+.. tab-set::
 
-.. code-block:: bash
+   .. tab-item:: V100 GPUs
 
-   cp $HOME/src/warpx/Tools/machines/pitzer-osc/pitzer_warpx.profile.example $HOME/pitzer_warpx.profile
+      We use system software modules, add environment hints and further dependencies via the file ``$HOME/pitzer_v100_warpx.profile``.
+      Create it now:
 
-.. dropdown:: Script Details
-   :color: light
-   :icon: info
-   :animate: fade-in-slide-down
+      .. code-block:: bash
 
-   .. literalinclude:: ../../../../Tools/machines/pitzer-osc/pitzer_warpx.profile.example
-      :language: bash
+         cp $HOME/src/warpx/Tools/machines/pitzer-osc/pitzer_v100_warpx.profile.example $HOME/pitzer_v100_warpx.profile
 
-Edit the 2nd line of this script, which sets the ``export proj=""`` variable. For example, if you are a member of the project ``pas2024``, then run ``nano $HOME/pitzer_warpx.profile`` and edit line 2 to read:
+      .. dropdown:: Script Details
+         :color: light
+         :icon: info
+         :animate: fade-in-slide-down
 
-.. code-block:: bash
+         .. literalinclude:: ../../../../Tools/machines/pitzer-osc/pitzer_v100_warpx.profile.example
+            :language: bash
 
-   export proj="pas2024"
+      Edit the 2nd line of this script, which sets the ``export proj=""`` variable.
+      For example, if you are member of the project ``pas2024``, then run ``nano $HOME/pitzer_v100_warpx.profile`` and edit line 2 to read:
 
-Exit the ``nano`` editor with ``Ctrl`` + ``O`` (save) and then ``Ctrl`` + ``X`` (exit).
+      .. code-block:: bash
 
-.. important::
+         export proj="pas2024"
 
-   Now, and as the first step on future logins to Pitzer, activate these environment settings:
+      Exit the ``nano`` editor with ``Ctrl`` + ``O`` (save) and then ``Ctrl`` + ``X`` (exit).
 
-   .. code-block:: bash
+      .. important::
 
-      source $HOME/pitzer_warpx.profile
+         Now, and as the first step on future logins to pitzer, activate these environment settings:
 
-Finally, since Pitzer does not yet provide software modules for some of our dependencies, install them once:
+         .. code-block:: bash
 
-.. code-block:: bash
+            source $HOME/pitzer_v100_warpx.profile
 
-   bash $HOME/src/warpx/Tools/machines/pitzer-osc/install_v100_dependencies.sh
-   source $HOME/sw/pitzer/v100/venvs/warpx-pitzer/bin/activate
+      Finally, since pitzer does not yet provide software modules for some of our dependencies, install them once:
 
-.. dropdown:: Script Details
-   :color: light
-   :icon: info
-   :animate: fade-in-slide-down
+      .. code-block:: bash
 
-   .. literalinclude:: ../../../../Tools/machines/pitzer-osc/install_dependencies.sh
-      :language: bash
+         bash $HOME/src/warpx/Tools/machines/pitzer-osc/install_v100_dependencies.sh
+
+      .. dropdown:: Script Details
+         :color: light
+         :icon: info
+         :animate: fade-in-slide-down
+
+         .. literalinclude:: ../../../../Tools/machines/pitzer-osc/install_v100_dependencies.sh
+            :language: bash
+
+
+   .. tab-item:: CPU Nodes
+
+      We use system software modules, add environment hints and further dependencies via the file ``$HOME/pitzer_cpu_warpx.profile``.
+      Create it now:
+
+      .. code-block:: bash
+
+         cp $HOME/src/warpx/Tools/machines/pitzer-osc/pitzer_cpu_warpx.profile.example $HOME/pitzer_cpu_warpx.profile
+
+      .. dropdown:: Script Details
+         :color: light
+         :icon: info
+         :animate: fade-in-slide-down
+
+         .. literalinclude:: ../../../../Tools/machines/pitzer-osc/pitzer_cpu_warpx.profile.example
+            :language: bash
+
+      Edit the 2nd line of this script, which sets the ``export proj=""`` variable.
+      For example, if you are member of the project ``pas2024``, then run ``nano $HOME/pitzer_cpu_warpx.profile`` and edit line 2 to read:
+
+      .. code-block:: bash
+
+         export proj="pas2024"
+
+      Exit the ``nano`` editor with ``Ctrl`` + ``O`` (save) and then ``Ctrl`` + ``X`` (exit).
+
+      .. important::
+
+         Now, and as the first step on future logins to pitzer, activate these environment settings:
+
+         .. code-block:: bash
+
+            source $HOME/pitzer_cpu_warpx.profile
+
+      Finally, since pitzer does not yet provide software modules for some of our dependencies, install them once:
+
+      .. code-block:: bash
+
+         bash $HOME/src/warpx/Tools/machines/pitzer-osc/install_cpu_dependencies.sh
+
+      .. dropdown:: Script Details
+         :color: light
+         :icon: info
+         :animate: fade-in-slide-down
+
+         .. literalinclude:: ../../../../Tools/machines/pitzer-osc/install_cpu_dependencies.sh
+            :language: bash
+
 
 .. _building-pitzer-compilation:
 
@@ -93,10 +148,11 @@ Use the following :ref:`cmake commands <building-cmake>` to compile the applicat
          
          cd $HOME/src/warpx
          rm -rf build_v100
+         source $MY_V100_PROFILE
 
          export CUDAFLAGS="--host-linker-script=use-lcs" # https://github.com/ECP-WarpX/WarpX/pull/3673
-         export AMReX_CUDA_ARCH=7.0 # 7.0: V100, 8.0: A100, 9.0: H100 https://github.com/ECP-WarpX/WarpX/issues/3214
-         cmake -S . -B build_v100 -DWarpX_COMPUTE=CUDA -DWarpX_FFT=ON -DWarpX_DIMS="1;2;RZ;3"
+         export AMReX_CUDA_ARCH=7.0 # 7.0: V100, 8.0: V100, 9.0: H100 https://github.com/ECP-WarpX/WarpX/issues/3214
+         cmake -S . -B build_v100 -DWarpX_COMPUTE=CUDA -DWarpX_FFT=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_DIMS="1;2;RZ;3"
          cmake --build build_v100 -j 48
 
       The WarpX application executables are now in ``$HOME/src/warpx/build_v100/bin/``. Additionally, the following commands will install WarpX as a Python module:
@@ -105,9 +161,9 @@ Use the following :ref:`cmake commands <building-cmake>` to compile the applicat
 
          cd $HOME/src/warpx
          rm -rf build_v100_py
-         source $HOME/sw/pitzer/v100/venvs/warpx-pitzer-v100/bin/activate
+         source $MY_V100_PROFILE
 
-         cmake -S . -B build_v100_py -DWarpX_COMPUTE=CUDA -DWarpX_FFT=ON -DWarpX_PYTHON=ON -DWarpX_DIMS="1;2;RZ;3"
+         cmake -S . -B build_v100_py -DWarpX_COMPUTE=CUDA -DWarpX_FFT=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_APP=OFF -DWarpX_PYTHON=ON -DWarpX_DIMS="1;2;RZ;3"
          cmake --build build_v100_py -j 48 --target pip_install
 
    .. tab-item:: CPU Nodes
@@ -116,8 +172,9 @@ Use the following :ref:`cmake commands <building-cmake>` to compile the applicat
 
          cd $HOME/src/warpx
          rm -rf build
+         source $MY_CPU_PROFILE
 
-         cmake -S . -B build -DWarpX_FFT=ON -DWarpX_DIMS="1;2;RZ;3"
+         cmake -S . -B build -DWarpX_FFT=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_DIMS="1;2;RZ;3"
          cmake --build build -j 48
 
       The WarpX application executables are now in ``$HOME/src/warpx/build/bin/``.
@@ -126,9 +183,9 @@ Use the following :ref:`cmake commands <building-cmake>` to compile the applicat
 
          cd $HOME/src/warpx
          rm -rf build_py
-         source $HOME/sw/pitzer/v100/venvs/warpx-pitzer/bin/activate
+         source $MY_CPU_PROFILE
 
-         cmake -S . -B build_py -DWarpX_FFT=ON -DWarpX_PYTHON=ON -DWarpX_DIMS="1;2;RZ;3"
+         cmake -S . -B build_py -DWarpX_FFT=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_APP=OFF -DWarpX_PYTHON=ON -DWarpX_DIMS="1;2;RZ;3"
          cmake --build build_py -j 48 --target pip_install
 
 Now, you can :ref:`submit Pitzer compute jobs <running-pitzer>` for WarpX :ref:`Python (PICMI) scripts <usage-picmi>` (:ref:`example scripts <usage-examples>`). Or, you can use the WarpX executables to submit Pitzer jobs (:ref:`example inputs <usage-examples>`). For executables, you can reference their location in your :ref:`job script <running-pitzer>` or copy them to a location in ``/scratch``.
@@ -157,7 +214,7 @@ If you already installed WarpX in the past and want to update it, start by getti
 
 And, if needed,
 
-- :ref:`update the pitzer_warpx.profile file <building-pitzer-preparation>`,
+- :ref:`update the pitzer_cpu_warpx.profile file <building-pitzer-preparation>`,
 - log out and into the system, activate the now updated environment profile as usual,
 - :ref:`execute the dependency install scripts <building-pitzer-preparation>`.
 
