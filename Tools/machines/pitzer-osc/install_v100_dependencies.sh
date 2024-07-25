@@ -1,8 +1,35 @@
-
 rm -rf ${SW_DIR}
 mkdir -p ${SW_DIR}
 SRC_DIR="${HOME}/src"
 build_dir=$(mktemp -d)
+
+# intall cuda-aware openmpi/5.0.5
+cd ${SRC_DIR}
+wget https://download.open-mpi.org/release/open-mpi/v5.0/openmpi-5.0.5.tar.gz
+tar -xzvf openmpi-5.0.5.tar.gz
+rm -rf openmpi-5.0.5.tar.gz
+
+cd ${SRC_DIR}/openmpi-5.0.5
+./configure --with-cuda=$CUDA_HOME \
+            --enable-mpi-cuda \
+            --prefix=${SW_DIR}/openmpi-5.0.5
+
+make -j 16
+make install
+cd -
+
+# install hdf5/1.14.4-3 with parallel support
+cd ${SRC_DIR}
+wget https://github.com/HDFGroup/hdf5/releases/download/hdf5_1.14.4.3/hdf5-1.14.4-3.tar.gz
+tar -xzvf hdf5-1.14.4-3.tar.gz
+rm -rf hdf5-1.14.4-3.tar.gz
+
+cd ${SRC_DIR}/hdf5-1.14.4-3
+CC=mpicc ./configure --prefix=${SW_DIR}/hdf5-1.14.4-3 --enable-parallel
+make -j 16
+make install
+cd -
+
 
 # BLAS++ (for PSATD+RZ)
 if [ -d ${SRC_DIR}/blaspp ]; then
@@ -115,7 +142,4 @@ function install_virtual_envs() {
     # ML dependencies
     python3 -m pip install --upgrade torch
 }
-
-# Call the function with different virtual environment names
-install_virtual_envs "warpx-pitzer"
 install_virtual_envs "warpx-pitzer-v100"
