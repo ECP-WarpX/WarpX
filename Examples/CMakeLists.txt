@@ -94,6 +94,79 @@ endfunction()
 # Add tests (alphabetical order) ##############################################
 #
 
+# averaged_galilean_2d_psatd ##################################################
+#
+if(WarpX_FFT)
+    add_warpx_test(
+        averaged_galilean_2d_psatd # name
+        2  # dims
+        ON # mpi
+        1  # mpi_np
+        Examples/Tests/nci_psatd_stability/inputs_avg_2d_base # inputs_base
+        Examples/Tests/nci_psatd_stability/inputs_avg_2d_test_averaged_galilean_2d_psatd # inputs_test
+        Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
+        diags/diag1000400 # output
+    )
+endif()
+
+# averaged_galilean_2d_psatd_hybrid ###########################################
+#
+if(WarpX_FFT)
+    add_warpx_test(
+        averaged_galilean_2d_psatd_hybrid # name
+        2  # dims
+        ON # mpi
+        2  # mpi_np
+        Examples/Tests/nci_psatd_stability/inputs_avg_2d_base # inputs_base
+        Examples/Tests/nci_psatd_stability/inputs_avg_2d_test_averaged_galilean_2d_psatd_hybrid # inputs_test
+        Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
+        diags/diag1000400 # output
+    )
+endif()
+
+# averaged_galilean_3d_psatd ##################################################
+#
+if(WarpX_FFT)
+    add_warpx_test(
+        averaged_galilean_3d_psatd # name
+        3  # dims
+        ON # mpi
+        2  # mpi_np
+        Examples/Tests/nci_psatd_stability/inputs_avg_3d_base # inputs_base
+        Examples/Tests/nci_psatd_stability/inputs_avg_3d_test_averaged_galilean_3d_psatd # inputs_test
+        Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
+        diags/diag1000160 # output
+    )
+endif()
+
+# averaged_galilean_3d_psatd_hybrid ###########################################
+#
+if(WarpX_FFT)
+    add_warpx_test(
+        averaged_galilean_3d_psatd_hybrid # name
+        3  # dims
+        ON # mpi
+        2  # mpi_np
+        Examples/Tests/nci_psatd_stability/inputs_avg_3d_base # inputs_base
+        Examples/Tests/nci_psatd_stability/inputs_avg_3d_test_averaged_galilean_3d_psatd_hybrid # inputs_test
+        Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
+        diags/diag1000160 # output
+    )
+endif()
+
+# background_mcc ##############################################################
+#
+add_warpx_test(
+    background_mcc # name
+    2  # dims
+    ON # mpi
+    2  # mpi_np
+    Examples/Physics_applications/capacitive_discharge/inputs_2d_base # inputs_base
+    Examples/Physics_applications/capacitive_discharge/inputs_2d_test_background_mcc # inputs_test
+    Examples/analysis_default_regression.py # analysis
+    diags/diag1000050 # output
+)
+
 # Langmuir_multi_2d_MR ########################################################
 #
 add_warpx_test(
@@ -231,6 +304,82 @@ if(WarpX_FFT)
         2  # mpi_np
         Examples/Tests/langmuir/inputs_2d_base # inputs_base
         Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd_multiJ # inputs_test
+        Examples/Tests/langmuir/analysis_2d.py # analysis
+        diags/diag1000080 # output
+    )
+endif()
+
+# Langmuir_multi_2d_psatd_multiJ_nodal ########################################
+#
+if(WarpX_FFT)
+    add_warpx_test(
+        Langmuir_multi_2d_psatd_multiJ_nodal # name
+        2  # dims
+        ON # mpi
+        2  # mpi_np
+        Examples/Tests/langmuir/inputs_2d_base # inputs_base
+        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd_multiJ_nodal # inputs_test
+        Examples/Tests/langmuir/analysis_2d.py # analysis
+        diags/diag1000080 # output
+    )
+endif()
+
+# Langmuir_multi_2d_psatd_nodal ###############################################
+#
+if(WarpX_FFT)
+    add_warpx_test(
+        Langmuir_multi_2d_psatd_nodal # name
+        2  # dims
+        ON # mpi
+        2  # mpi_np
+        Examples/Tests/langmuir/inputs_2d_base # inputs_base
+        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd_nodal # inputs_test
+        Examples/Tests/langmuir/analysis_2d.py # analysis
+        diags/diag1000080 # output
+    )
+endif()
+
+# Langmuir_multi_2d_psatd_Vay_deposition ######################################
+#
+if(WarpX_FFT)
+    add_warpx_test(
+        Langmuir_multi_2d_psatd_Vay_deposition # name
+        2  # dims
+        ON # mpi
+        1  # mpi_np
+        Examples/Tests/langmuir/inputs_2d_base # inputs_base
+        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd_Vay_deposition # inputs_test
+        Examples/Tests/langmuir/analysis_2d.py # analysis
+        diags/diag1000080 # output
+    )
+endif()
+
+# Langmuir_multi_2d_psatd_Vay_deposition_particle_shape_4 #####################
+#
+# FIXME
+#if(WarpX_FFT)
+#    add_warpx_test(
+#        Langmuir_multi_2d_psatd_Vay_deposition_particle_shape_4 # name
+#        2  # dims
+#        ON # mpi
+#        1  # mpi_np
+#        Examples/Tests/langmuir/inputs_2d_base # inputs_base
+#        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd_Vay_deposition_particle_shape_4 # inputs_test
+#        Examples/Tests/langmuir/analysis_2d.py # analysis
+#        diags/diag1000080 # output
+#    )
+#endif()
+
+# Langmuir_multi_2d_psatd_Vay_deposition_nodal ################################
+#
+if(WarpX_FFT)
+    add_warpx_test(
+        Langmuir_multi_2d_psatd_Vay_deposition_nodal # name
+        2  # dims
+        ON # mpi
+        1  # mpi_np
+        Examples/Tests/langmuir/inputs_2d_base # inputs_base
+        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd_Vay_deposition_nodal # inputs_test
         Examples/Tests/langmuir/analysis_2d.py # analysis
         diags/diag1000080 # output
     )
