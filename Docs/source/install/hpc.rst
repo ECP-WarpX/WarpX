@@ -36,23 +36,22 @@ This section documents quick-start guides for a selection of supercomputers that
    hpc/crusher
    hpc/frontier
    hpc/fugaku
+   hpc/greatlakes
    hpc/hpc3
    hpc/juwels
    hpc/karolina
-   hpc/lassen
    hpc/lawrencium
    hpc/leonardo
    hpc/lumi
    hpc/lxplus
    hpc/ookami
    hpc/perlmutter
+   hpc/pitzer
    hpc/polaris
    hpc/quartz
    hpc/spock
    hpc/summit
    hpc/taurus
-   hpc/greatlakes
-   hpc/pitzer
 
 .. tip::
 

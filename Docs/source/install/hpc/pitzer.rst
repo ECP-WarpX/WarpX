@@ -1,7 +1,7 @@
 .. _building-pitzer:
 
 Pitzer (OSC)
-===================
+============
 
 The `Pitzer cluster <https://www.osc.edu/supercomputing/computing/pitzer>`__ is located at the Ohio Supercomputer Center (OSC). It is currently the main CPU/GPU cluster at OSC. However, the `Cardinal cluster <https://www.osc.edu/resources/technical_support/supercomputers/cardinal>`__ is soon going to take over Pitzer to become the next major CPU/GPU cluster at OSC in the second half of 2024. A list of all OSC clusters can be found `here <https://www.osc.edu/services/cluster_computing>`__.
 
@@ -13,7 +13,7 @@ Introduction
 If you are new to this system, **please see the following resources**:
 
 * `Pitzer user guide <https://www.osc.edu/resources/getting_started/new_user_resource_guide>`__
-* Batch system: `Slurm manual <https://www.osc.edu/resources/technical_support/slurm>`__ and `OSC specific guide <https://www.osc.edu/supercomputing/batch-processing-at-osc/job-submission>`__
+* Batch system: `Slurm <https://www.osc.edu/supercomputing/batch-processing-at-osc>`__
 * `Jupyter service <https://www.osc.edu/vocabulary/documentation/jupyter>`__
 * `Filesystems <https://www.osc.edu/supercomputing/storage-environment-at-osc/storage-hardware/overview_of_file_systems>`__:
 
@@ -90,6 +90,7 @@ Use the following :ref:`cmake commands <building-cmake>` to compile the applicat
    .. tab-item:: V100 GPUs
 
       .. code-block:: bash
+         
          cd $HOME/src/warpx
          rm -rf build_v100
 
@@ -112,6 +113,7 @@ Use the following :ref:`cmake commands <building-cmake>` to compile the applicat
    .. tab-item:: CPU Nodes
 
       .. code-block:: bash
+
          cd $HOME/src/warpx
          rm -rf build
 
@@ -212,6 +214,8 @@ Running
 
 Post-Processing
 ---------------
+
+For post-processing, many users prefer to use the online `Jupyter service <https://ondemand.osc.edu/pun/sys/dashboard/batch_connect/sessions>`__ (`documentation <https://www.osc.edu/vocabulary/documentation/jupyter>`__) that is directly connected to the cluster's fast filesystem.
 
 .. note::
    This section is a stub and contributions are welcome.
