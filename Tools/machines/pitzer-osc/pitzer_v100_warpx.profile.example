@@ -36,8 +36,10 @@ export CMAKE_PREFIX_PATH=${SW_DIR}/lapackpp-2024.05.31:$CMAKE_PREFIX_PATH
 export LD_LIBRARY_PATH=${SW_DIR}/blaspp-2024.05.31/lib64:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=${SW_DIR}/lapackpp-2024.05.31/lib64:$LD_LIBRARY_PATH
 
-# optional: for QED lookup table generation support (note: it will have compatibility issue with gnu compiler)
-# module load boost/1.75.0
+# optional: for QED lookup table generation support
+# use self-installed boost
+export CMAKE_PREFIX_PATH=${SW_DIR}/boost-1.82.0:$CMAKE_PREFIX_PATH
+export LD_LIBRARY_PATH=${SW_DIR}/boost-1.82.0/lib64:$LD_LIBRARY_PATH
 
 # optional: for openPMD support (hdf5 and adios2)
 # use self-installed hdf5

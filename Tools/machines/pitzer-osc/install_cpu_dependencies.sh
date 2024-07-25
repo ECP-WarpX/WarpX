@@ -3,6 +3,16 @@ mkdir -p ${SW_DIR}
 SRC_DIR="${HOME}/src"
 build_dir=$(mktemp -d)
 
+# install boost/1.82.0 (for QED table generation support)
+cd $SRC_DIR
+wget https://archives.boost.io/release/1.82.0/source/boost_1_82_0.tar.gz
+tar -xzvf boost_1_82_0.tar.gz
+rm -rf boost_1_82_0.tar.gz
+
+cd $SRC_DIR/boost_1_82_0
+./bootstrap.sh --prefix=$SW_DIR/boost-1.82.0
+./b2 install
+
 # BLAS++ (for PSATD+RZ)
 if [ -d ${SRC_DIR}/blaspp ]; then
   cd ${SRC_DIR}/blaspp
