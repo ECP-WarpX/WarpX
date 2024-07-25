@@ -288,6 +288,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
             const int ng = (WarpX::grid_type == GridType::Collocated) ? 1 : 0;
             amrex::MultiFab phi_cp(ba, phi[lev+1]->DistributionMap(), ncomp, ng);
             if (ng > 0) {
+                // Set all values outside the domain to zero
                 phi_cp.setDomainBndry(0.0_rt, geom[lev]);
             }
 

@@ -236,7 +236,7 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                     });
                 }
             }
-            else {
+            else { // electrostatic
                 const amrex::IntVect& Bx_fp_stag = Bfield_fp[lev][0]->ixType().toIntVect();
                 const amrex::IntVect& By_fp_stag = Bfield_fp[lev][1]->ixType().toIntVect();
                 const amrex::IntVect& Bz_fp_stag = Bfield_fp[lev][2]->ixType().toIntVect();
@@ -331,7 +331,7 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                     });
                 }
             }
-            else {
+            else { // electrostatic
                 const amrex::IntVect& Ex_fp_stag = Efield_fp[lev][0]->ixType().toIntVect();
                 const amrex::IntVect& Ey_fp_stag = Efield_fp[lev][1]->ixType().toIntVect();
                 const amrex::IntVect& Ez_fp_stag = Efield_fp[lev][2]->ixType().toIntVect();
