@@ -32,7 +32,7 @@ Use the following commands to download the WarpX source code:
 
    git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
 
-On Pitzer, you can run either on GPU nodes with V100 GPUs or CPU nodes. 
+On Pitzer, you can run either on GPU nodes with V100 GPUs or CPU nodes.
 
 .. tab-set::
 
@@ -145,7 +145,7 @@ Use the following :ref:`cmake commands <building-cmake>` to compile the applicat
    .. tab-item:: V100 GPUs
 
       .. code-block:: bash
-         
+
          cd $HOME/src/warpx
          rm -rf build_v100
          source $MY_V100_PROFILE
