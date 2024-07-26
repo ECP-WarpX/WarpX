@@ -202,7 +202,6 @@ add_warpx_test(
     Examples/Tests/single_particle/inputs_2d_base # inputs_base
     Examples/Tests/single_particle/analysis_bilinear_filter.py # analysis
     diags/diag1000001 # output
-    Examples/Tests/single_particle/inputs_2d_test_bilinear_filter # inputs_test
 )
 
 # BTD_rz ######################################################################
@@ -212,9 +211,22 @@ add_warpx_test(
     RZ # dims
     ON # mpi
     2  # mpi_np
-    Examples/Tests/btd_rz/inputs_rz_z_boosted_BTD # inputs_base
+    Examples/Tests/btd_rz/inputs_rz_z_boosted_BTD_base # inputs_base
     Examples/Tests/btd_rz/analysis_BTD_laser_antenna.py # analysis
     diags/diag1000289 # output
+)
+
+# collider_diagnostics ########################################################
+#
+add_warpx_test(
+    collider_diagnostics # name
+    3  # dims
+    ON # mpi
+    2  # mpi_np
+    Examples/Tests/collider_relevant_diags/inputs_3d_multiple_particles_base # inputs_base
+    Examples/Tests/collider_relevant_diags/analysis_multiple_particles.py # analysis
+    diags/diag1000001 # output
+    Examples/Tests/collider_relevant_diags/inputs_3d_multiple_particles_test_collider_diagnostics # inputs_test
 )
 
 # Langmuir_multi_2d_MR ########################################################

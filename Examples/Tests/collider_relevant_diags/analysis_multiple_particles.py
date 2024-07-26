@@ -54,7 +54,7 @@ def dL_dt():
         lumi.append(l)
     return lumi
 
-input_dict = parse_input_file('inputs_3d_multiple_particles')
+input_dict = parse_input_file('../../../../warpx/Examples/Tests/collider_relevant_diags/inputs_3d_multiple_particles_base')
 Ex, Ey, Ez = [float(w) for w in input_dict['particles.E_external_particle']]
 Bx, By, Bz = [float(w) for w in input_dict['particles.B_external_particle']]
 

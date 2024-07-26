@@ -14,6 +14,8 @@ boundary.field_hi = pec pec
 algo.charge_deposition = standard
 algo.field_gathering = energy-conserving
 warpx.cfl = 1.0
+warpx.use_filter = 1
+warpx.filter_npass_each_dir = 1 5
 
 # Order of particle shape factors
 algo.particle_shape = 1

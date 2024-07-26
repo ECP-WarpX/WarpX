@@ -1,3 +1,0 @@
-# additional runtime parameters
-warpx.filter_npass_each_dir = 1 5
-warpx.use_filter = 1
