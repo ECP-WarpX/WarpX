@@ -7,7 +7,6 @@
 #ifndef WARPX_PARTICLES_COLLISION_ELASTIC_COLLISION_PEREZ_H_
 #define WARPX_PARTICLES_COLLISION_ELASTIC_COLLISION_PEREZ_H_
 
-#include "ComputeTemperature.H"
 #include "UpdateMomentumPerezElastic.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXConst.H"
@@ -25,18 +24,16 @@
  * @param[in] I1e,I2e is the stop index for I1,I2 (exclusive).
  * @param[in] I1,I2 the index arrays. They determine all elements that will be used.
  * @param[in,out] soa_1,soa_2 the struct of array for species 1/2
+ * @param[in] n1,n2 density of species 1/2
+ * @param[in] n12 density parameter for s12
+ * @param[in] T1,T2 temperature [Joules] of species 1/2
+ *            only used if L <= 0
  * @param[in] q1,q2 charge of species 1/2
  * @param[in] m1,m2 mass of species 1/2
- * @param[in] T1 temperature (Joule) of species 1
- *            and will be used if greater than zero,
- *            otherwise will be computed.
- * @param[in] T2 temperature (Joule) of species 2, @see T1
  * @param[in] dt is the time step length between two collision calls.
  * @param[in] L is the Coulomb log and will be used if greater than zero,
  *            otherwise will be computed.
- * @param[in] dV is the volume of the corresponding cell.
  * @param[in] engine the random number generator state & factory
- * @param[in] isSameSpecies whether this is an intra-species collision process
  * @param[in] coll_idx is the collision index offset.
 */
 
@@ -48,12 +45,14 @@ void ElasticCollisionPerez (
     T_index const* AMREX_RESTRICT I1,
     T_index const* AMREX_RESTRICT I2,
     SoaData_type soa_1, SoaData_type soa_2,
+    T_PR const  n1, T_PR const  n2,
+    T_PR const  n12,
+    T_PR const  T1, T_PR const  T2,
     T_PR const  q1, T_PR const  q2,
     T_PR const  m1, T_PR const  m2,
-    T_PR const  T1, T_PR const  T2,
-    T_R const  dt, T_PR const   L, T_R const dV,
+    T_R const  dt, T_PR const  L,
     amrex::RandomEngine const& engine,
-    bool const isSameSpecies, T_index coll_idx)
+    T_index coll_idx)
 {
     const T_index NI1 = I1e - I1s;
     const T_index NI2 = I2e - I2s;
@@ -70,53 +69,11 @@ void ElasticCollisionPerez (
     T_PR * const AMREX_RESTRICT u2y = soa_2.m_rdata[PIdx::uy];
     T_PR * const AMREX_RESTRICT u2z = soa_2.m_rdata[PIdx::uz];
 
-    // get local T1t and T2t
-    T_PR T1t; T_PR T2t;
-    if ( T1 <= T_PR(0.0) && L <= T_PR(0.0) )
-    {
-        T1t = ComputeTemperature(I1s,I1e,I1,w1,u1x,u1y,u1z,m1);
-    }
-    else { T1t = T1; }
-    if ( T2 <= T_PR(0.0) && L <= T_PR(0.0) )
-    {
-        T2t = ComputeTemperature(I2s,I2e,I2,w2,u2x,u2y,u2z,m2);
-    }
-    else { T2t = T2; }
-
-    // local density
-    T_PR n1  = T_PR(0.0);
-    T_PR n2  = T_PR(0.0);
-    T_PR n12 = T_PR(0.0);
-    for (T_index i1=I1s; i1<I1e; ++i1) { n1 += w1[ I1[i1] ]; }
-    for (T_index i2=I2s; i2<I2e; ++i2) { n2 += w2[ I2[i2] ]; }
-    // Intra-species: the density is in fact the sum of the density of
-    // each sub-group of particles
-    if (isSameSpecies) {
-        n1 = n1 + n2;
-        n2 = n1;
-    }
-    n1 = n1 / dV; n2 = n2 / dV;
-    {
-      T_index i1 = I1s; T_index i2 = I2s;
-      for (T_index k = 0; k < max_N; ++k)
-      {
-        n12 += amrex::min( w1[ I1[i1] ], w2[ I2[i2] ] );
-        ++i1; if ( i1 == I1e ) { i1 = I1s; }
-        ++i2; if ( i2 == I2e ) { i2 = I2s; }
-      }
-      n12 = n12 / dV;
-    }
-    // Intra-species: Apply correction in collision rate
-    if (isSameSpecies) { n12 *= T_PR(2.0); }
-
     // compute Debye length lmdD
-    T_PR lmdD;
-    if ( T1t < T_PR(0.0) || T2t < T_PR(0.0) ) {
-        lmdD = T_PR(0.0);
-    }
-    else {
-        lmdD = T_PR(1.0)/std::sqrt( n1*q1*q1/(T1t*PhysConst::ep0) +
-                                    n2*q2*q2/(T2t*PhysConst::ep0) );
+    T_PR lmdD = T_PR(-1.0);
+    if ( L <= T_PR(0.0) ) {
+        lmdD = T_PR(1.0)/std::sqrt( n1*q1*q1/(T1*PhysConst::ep0) +
+                                    n2*q2*q2/(T2*PhysConst::ep0) );
     }
     T_PR rmin = std::pow( T_PR(4.0) * MathConst::pi / T_PR(3.0) *
                amrex::max(n1,n2), T_PR(-1.0/3.0) );
