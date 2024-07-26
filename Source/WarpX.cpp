@@ -2373,6 +2373,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         myfl->InitData(lev, geom[lev].Domain(),cur_time);
     }
 
+    // Allocate extra multifabs for macroscopic properties of the medium
+    if (em_solver_medium == MediumForEM::Macroscopic) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( lev==0,
+            "Macroscopic properties are not supported with mesh refinement.");
+        m_macroscopic_properties->AllocateLevelMFs(ba, dm, ngEB);
+    }
+
     if (fft_do_time_averaging)
     {
         AllocInitMultiFab(Bfield_avg_fp[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, lev, "Bfield_avg_fp[x]", 0.0_rt);
@@ -2457,7 +2464,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         AllocInitMultiFab(phi_fp[lev], amrex::convert(ba, phi_nodal_flag), dm, ncomps, ngPhi, lev, "phi_fp", 0.0_rt);
     }
 
-    if (do_subcycling == 1 && lev == 0)
+    if (do_subcycling && lev == 0)
     {
         AllocInitMultiFab(current_store[lev][0], amrex::convert(ba,jx_nodal_flag),dm,ncomps,ngJ,lev, "current_store[x]");
         AllocInitMultiFab(current_store[lev][1], amrex::convert(ba,jy_nodal_flag),dm,ncomps,ngJ,lev, "current_store[y]");
