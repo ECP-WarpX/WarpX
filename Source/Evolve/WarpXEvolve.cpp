@@ -693,7 +693,6 @@ WarpX::OneStep_psatd_JRm (const amrex::Real cur_time)
 
         if (J_in_time == JInTime::Quadratic)
         {
-            auto& current = (do_current_centering) ? current_fp_nodal : current_fp;
             PSATDMoveJNewToJMid();
             mypc->DepositCurrent(current, dt[0], t_deposit_current + 0.5_rt*sub_dt);
             SyncCurrent(current_fp, current_cp, current_buf);
