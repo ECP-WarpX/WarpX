@@ -1,13 +1,45 @@
+#!/bin/bash
+#
+# Copyright 2024 The WarpX Community
+#
+# This file is part of WarpX.
+#
+# Author: Zhongwei Wang
+# License: BSD-3-Clause-LBNL
+
+# Exit on first error encountered #############################################
+#
+set -eu -o pipefail
+
+# Check: ######################################################################
+#
+#   Was pitzer_cpu_warpx.profile sourced and configured correctly?
+if [ -z ${proj-} ]; then
+  echo "WARNING: The 'proj' variable is not yet set in your pitzer_cpu_warpx.profile file! Please edit its line 2 to continue!"
+  exit 1
+fi
+
+# Remove old dependencies #####################################################
+#
 rm -rf ${SW_DIR}
 mkdir -p ${SW_DIR}
+
+# remove common user mistakes in python, located in .local instead of a venv
+python3 -m pip uninstall -qq -y pywarpx
+python3 -m pip uninstall -qq -y warpx
+python3 -m pip uninstall -qqq -y mpi4py 2>/dev/null || true
+
+# General extra dependencies ##################################################
+#
 SRC_DIR="${HOME}/src"
 build_dir=$(mktemp -d)
 
-# intall cuda-aware openmpi/5.0.5
+# cuda-aware openmpi
 cd ${SRC_DIR}
 wget https://download.open-mpi.org/release/open-mpi/v5.0/openmpi-5.0.5.tar.gz
 tar -xzvf openmpi-5.0.5.tar.gz
 rm -rf openmpi-5.0.5.tar.gz
+cd -
 
 cd ${SRC_DIR}/openmpi-5.0.5
 ./configure --with-cuda=$CUDA_HOME \
@@ -18,11 +50,12 @@ make -j 16
 make install
 cd -
 
-# install hdf5/1.14.4-3 with parallel support
+# hdf5 with parallel support
 cd ${SRC_DIR}
 wget https://github.com/HDFGroup/hdf5/releases/download/hdf5_1.14.4.3/hdf5-1.14.4-3.tar.gz
 tar -xzvf hdf5-1.14.4-3.tar.gz
 rm -rf hdf5-1.14.4-3.tar.gz
+cd -
 
 cd ${SRC_DIR}/hdf5-1.14.4-3
 CC=mpicc ./configure --prefix=${SW_DIR}/hdf5-1.14.4-3 --enable-parallel
@@ -30,11 +63,12 @@ make -j 16
 make install
 cd -
 
-# install boost/1.82.0 (for QED table generation support)
+# boost (for QED table generation support)
 cd ${SRC_DIR}
 wget https://archives.boost.io/release/1.82.0/source/boost_1_82_0.tar.gz
 tar -xzvf boost_1_82_0.tar.gz
 rm -rf boost_1_82_0.tar.gz
+cd -
 
 cd ${SRC_DIR}/boost_1_82_0
 ./bootstrap.sh --prefix=${SW_DIR}/boost-1.82.0
@@ -124,7 +158,8 @@ rm -rf ${build_dir}/adios2-osc-build
 
 rm -rf ${build_dir}
 
-# optional: prepare virtual environment for building python binding
+# Python ######################################################################
+#
 python3 -m pip install --upgrade --user virtualenv
 rm -rf ${SW_DIR}/venvs/${VENV_NAME}
 python3 -m venv ${SW_DIR}/venvs/${VENV_NAME}

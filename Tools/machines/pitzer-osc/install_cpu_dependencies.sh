@@ -1,17 +1,50 @@
+#!/bin/bash
+#
+# Copyright 2024 The WarpX Community
+#
+# This file is part of WarpX.
+#
+# Author: Zhongwei Wang
+# License: BSD-3-Clause-LBNL
+
+# Exit on first error encountered #############################################
+#
+set -eu -o pipefail
+
+# Check: ######################################################################
+#
+#   Was pitzer_cpu_warpx.profile sourced and configured correctly?
+if [ -z ${proj-} ]; then
+  echo "WARNING: The 'proj' variable is not yet set in your pitzer_cpu_warpx.profile file! Please edit its line 2 to continue!"
+  exit 1
+fi
+
+# Remove old dependencies #####################################################
+#
 rm -rf ${SW_DIR}
 mkdir -p ${SW_DIR}
+
+# remove common user mistakes in python, located in .local instead of a venv
+python3 -m pip uninstall -qq -y pywarpx
+python3 -m pip uninstall -qq -y warpx
+python3 -m pip uninstall -qqq -y mpi4py 2>/dev/null || true
+
+# General extra dependencies ##################################################
+#
 SRC_DIR="${HOME}/src"
 build_dir=$(mktemp -d)
 
-# install boost/1.82.0 (for QED table generation support)
-cd $SRC_DIR
+# boost (for QED table generation support)
+cd ${SRC_DIR}
 wget https://archives.boost.io/release/1.82.0/source/boost_1_82_0.tar.gz
 tar -xzvf boost_1_82_0.tar.gz
 rm -rf boost_1_82_0.tar.gz
+cd -
 
-cd $SRC_DIR/boost_1_82_0
+cd ${SRC_DIR}/boost_1_82_0
 ./bootstrap.sh --prefix=$SW_DIR/boost-1.82.0
 ./b2 install
+cd -
 
 # BLAS++ (for PSATD+RZ)
 if [ -d ${SRC_DIR}/blaspp ]; then
@@ -96,7 +129,8 @@ rm -rf ${build_dir}/adios2-osc-build
 
 rm -rf ${build_dir}
 
-# optional: prepare virtual environment for building python binding
+# Python ######################################################################
+#
 python3 -m pip install --upgrade --user virtualenv
 rm -rf ${SW_DIR}/venvs/${VENV_NAME}
 python3 -m venv ${SW_DIR}/venvs/${VENV_NAME}
