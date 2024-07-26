@@ -33,7 +33,7 @@ using namespace amrex;
 void
 guardCellManager::Init (
     const amrex::Real dt,
-    const amrex::RealVect dx,
+    const amrex::Real *dx,
     const bool do_subcycling,
     const bool do_fdtd_nci_corr,
     const short grid_type,
@@ -44,8 +44,8 @@ guardCellManager::Init (
     const int nci_corr_stencil,
     const int electromagnetic_solver_id,
     const int max_level,
-    const amrex::Vector<amrex::Real> v_galilean,
-    const amrex::Vector<amrex::Real> v_comoving,
+    const amrex::Vector<amrex::Real>& v_galilean,
+    const amrex::Vector<amrex::Real>& v_comoving,
     const bool safe_guard_cells,
     const int do_psatd_JRm,
     const bool fft_do_time_averaging,
@@ -59,9 +59,9 @@ guardCellManager::Init (
     // When using subcycling, the particles on the fine level perform two pushes
     // before being redistributed ; therefore, we need one extra guard cell
     // (the particles may move by 2*c*dt)
-    int ngx_tmp = (max_level > 0 && do_subcycling == 1) ? nox+1 : nox;
-    int ngy_tmp = (max_level > 0 && do_subcycling == 1) ? nox+1 : nox;
-    int ngz_tmp = (max_level > 0 && do_subcycling == 1) ? nox+1 : nox;
+    int ngx_tmp = (max_level > 0 && do_subcycling) ? nox+1 : nox;
+    int ngy_tmp = (max_level > 0 && do_subcycling) ? nox+1 : nox;
+    int ngz_tmp = (max_level > 0 && do_subcycling) ? nox+1 : nox;
 
     const bool galilean = (v_galilean[0] != 0. || v_galilean[1] != 0. || v_galilean[2] != 0.);
     const bool comoving = (v_comoving[0] != 0. || v_comoving[1] != 0. || v_comoving[2] != 0.);
@@ -120,9 +120,11 @@ guardCellManager::Init (
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     ng_alloc_EB = IntVect(ngx,ngz);
     ng_alloc_J = IntVect(ngJx,ngJz);
+    amrex::ignore_unused(ngy, ngJy);
 #elif defined(WARPX_DIM_1D_Z)
     ng_alloc_EB = IntVect(ngz);
     ng_alloc_J = IntVect(ngJz);
+    amrex::ignore_unused(ngx, ngJx, ngy, ngJy);
 #endif
 
     // TODO Adding one cell for rho should not be necessary, given that the number of guard cells

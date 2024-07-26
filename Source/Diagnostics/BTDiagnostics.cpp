@@ -14,6 +14,7 @@
 #include "Diagnostics/Diagnostics.H"
 #include "Diagnostics/FlushFormats/FlushFormat.H"
 #include "ComputeDiagFunctors/BackTransformParticleFunctor.H"
+#include "FieldSolver/Fields.H"
 #include "Utils/Algorithms/IsIn.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
@@ -46,14 +47,15 @@
 #include <vector>
 
 using namespace amrex::literals;
+using namespace warpx::fields;
 
 namespace
 {
     constexpr int permission_flag_rwxrxrx = 0755;
 }
 
-BTDiagnostics::BTDiagnostics (int i, std::string name)
-    : Diagnostics(i, name)
+BTDiagnostics::BTDiagnostics (int i, const std::string& name)
+    : Diagnostics{i, name}
 {
     ReadParameters();
 }
@@ -129,7 +131,6 @@ void BTDiagnostics::DerivedInitData ()
         }
     }
     m_particles_buffer.resize(m_num_buffers);
-    m_totalParticles_flushed_already.resize(m_num_buffers);
     m_totalParticles_in_buffer.resize(m_num_buffers);
 
     // check that simulation can fill all BTD snapshots
@@ -566,23 +567,23 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
         m_cell_center_functors.at(lev).size());
     for (int comp=0; comp<m_cell_center_functors_at_lev_size; comp++){
         if        ( m_cellcenter_varnames[comp] == "Ex" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 0), lev, m_crse_ratio);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Efield_aux, lev, 0), lev, m_crse_ratio);
         } else if ( m_cellcenter_varnames[comp] == "Ey" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 1), lev, m_crse_ratio);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Efield_aux, lev, 1), lev, m_crse_ratio);
         } else if ( m_cellcenter_varnames[comp] == "Ez" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 2), lev, m_crse_ratio);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Efield_aux, lev, 2), lev, m_crse_ratio);
         } else if ( m_cellcenter_varnames[comp] == "Bx" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_aux(lev, 0), lev, m_crse_ratio);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Bfield_aux, lev, 0), lev, m_crse_ratio);
         } else if ( m_cellcenter_varnames[comp] == "By" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_aux(lev, 1), lev, m_crse_ratio);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Bfield_aux, lev, 1), lev, m_crse_ratio);
         } else if ( m_cellcenter_varnames[comp] == "Bz" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_aux(lev, 2), lev, m_crse_ratio);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Bfield_aux, lev, 2), lev, m_crse_ratio);
         } else if ( m_cellcenter_varnames[comp] == "jx" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 0), lev, m_crse_ratio);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::current_fp, lev, 0), lev, m_crse_ratio);
         } else if ( m_cellcenter_varnames[comp] == "jy" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 1), lev, m_crse_ratio);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::current_fp, lev, 1), lev, m_crse_ratio);
         } else if ( m_cellcenter_varnames[comp] == "jz" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 2), lev, m_crse_ratio);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::current_fp, lev, 2), lev, m_crse_ratio);
         } else if ( m_cellcenter_varnames[comp] == "rho" ){
             m_cell_center_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio);
         }
@@ -597,7 +598,7 @@ BTDiagnostics::UpdateVarnamesForRZopenPMD ()
 {
 #ifdef WARPX_DIM_RZ
     auto & warpx = WarpX::GetInstance();
-    const int ncomp_multimodefab = warpx.get_pointer_Efield_aux(0,0)->nComp();
+    const int ncomp_multimodefab = warpx.getFieldPointer(FieldType::Efield_aux, 0,0)->nComp();
     const int ncomp = ncomp_multimodefab;
 
 
@@ -656,7 +657,7 @@ BTDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
 {
 #ifdef WARPX_DIM_RZ
     auto & warpx = WarpX::GetInstance();
-    const int ncomp_multimodefab = warpx.get_pointer_Efield_aux(0,0)->nComp();
+    const int ncomp_multimodefab = warpx.getFieldPointer(FieldType::Efield_aux, 0,0)->nComp();
     const int ncomp = ncomp_multimodefab;
     // Clear any pre-existing vector to release stored data
     // This ensures that when domain is load-balanced, the functors point
@@ -682,25 +683,25 @@ BTDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
     const auto m_cell_center_functors_at_lev_size = static_cast<int>(m_cell_center_functors.at(lev).size());
     for (int comp=0; comp<m_cell_center_functors_at_lev_size; comp++){
         if        ( m_cellcenter_varnames_fields[comp] == "Er" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 0), lev, m_crse_ratio, false, ncomp);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Efield_aux, lev, 0), lev, m_crse_ratio, false, ncomp);
         } else if ( m_cellcenter_varnames_fields[comp] == "Et" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 1), lev, m_crse_ratio, false, ncomp);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Efield_aux, lev, 1), lev, m_crse_ratio, false, ncomp);
         } else if ( m_cellcenter_varnames_fields[comp] == "Ez" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 2), lev, m_crse_ratio, false, ncomp);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Efield_aux, lev, 2), lev, m_crse_ratio, false, ncomp);
         } else if ( m_cellcenter_varnames_fields[comp] == "Br" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_aux(lev, 0), lev, m_crse_ratio, false, ncomp);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Bfield_aux, lev, 0), lev, m_crse_ratio, false, ncomp);
         } else if ( m_cellcenter_varnames_fields[comp] == "Bt" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_aux(lev, 1), lev, m_crse_ratio, false, ncomp);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Bfield_aux, lev, 1), lev, m_crse_ratio, false, ncomp);
         } else if ( m_cellcenter_varnames_fields[comp] == "Bz" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_aux(lev, 2), lev, m_crse_ratio, false, ncomp);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Bfield_aux, lev, 2), lev, m_crse_ratio, false, ncomp);
         } else if ( m_cellcenter_varnames_fields[comp] == "jr" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 0), lev, m_crse_ratio, false, ncomp);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::current_fp, lev, 0), lev, m_crse_ratio, false, ncomp);
         } else if ( m_cellcenter_varnames_fields[comp] == "jt" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 1), lev, m_crse_ratio, false, ncomp);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::current_fp, lev, 1), lev, m_crse_ratio, false, ncomp);
         } else if ( m_cellcenter_varnames_fields[comp] == "jz" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 2), lev, m_crse_ratio, false, ncomp);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::current_fp, lev, 2), lev, m_crse_ratio, false, ncomp);
         } else if ( m_cellcenter_varnames_fields[comp] == "rho" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, -1, false, ncomp);
+            m_cell_center_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, false, -1, false, ncomp);
         }
     }
 
@@ -863,13 +864,14 @@ BTDiagnostics::PrepareFieldDataForOutput ()
 
 
 amrex::Real
-BTDiagnostics::dz_lab (amrex::Real dt, amrex::Real ref_ratio){
+BTDiagnostics::dz_lab (amrex::Real dt, amrex::Real ref_ratio) const
+{
     return PhysConst::c * dt * 1._rt/m_beta_boost * 1._rt/m_gamma_boost * 1._rt/ref_ratio;
 }
 
 
 int
-BTDiagnostics::k_index_zlab (int i_buffer, int lev)
+BTDiagnostics::k_index_zlab (int i_buffer, int lev) const
 {
     auto & warpx = WarpX::GetInstance();
     const amrex::Real prob_domain_zmin_lab = m_snapshot_domain_lab[i_buffer].lo( m_moving_window_dir );
@@ -901,7 +903,7 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
     const int hi_k_lab = m_buffer_k_index_hi[i_buffer];
     m_buffer_box[i_buffer].setSmall( m_moving_window_dir, hi_k_lab - m_buffer_size + 1);
     m_buffer_box[i_buffer].setBig( m_moving_window_dir, hi_k_lab );
-    amrex::BoxArray buffer_ba( m_buffer_box[i_buffer] );
+    const amrex::BoxArray buffer_ba( m_buffer_box[i_buffer] );
     // Generate a new distribution map for the back-transformed buffer multifab
     const amrex::DistributionMapping buffer_dmap(buffer_ba);
     // Number of guard cells for the output buffer is zero.
@@ -1040,7 +1042,7 @@ BTDiagnostics::Flush (int i_buffer, bool force_flush)
         m_buffer_box[i_buffer].setSmall(m_moving_window_dir, (m_buffer_box[i_buffer].smallEnd(m_moving_window_dir) - 1) );
         m_buffer_box[i_buffer].setBig(m_moving_window_dir, (m_buffer_box[i_buffer].bigEnd(m_moving_window_dir) + 1) );
         const amrex::Box particle_buffer_box = m_buffer_box[i_buffer];
-        amrex::BoxArray buffer_ba( particle_buffer_box );
+        const amrex::BoxArray buffer_ba( particle_buffer_box );
         m_particles_buffer[i_buffer][0]->SetParticleBoxArray(0, buffer_ba);
         for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
             // BTD output is single level. Setting particle geometry, dmap, boxarray to level0
@@ -1064,12 +1066,12 @@ BTDiagnostics::Flush (int i_buffer, bool force_flush)
         }
     }
     m_flush_format->WriteToFile(
-        m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
-        labtime, m_output_species[i_buffer], nlev_output, file_name, m_file_min_digits,
+        m_varnames, m_mf_output.at(i_buffer), m_geom_output.at(i_buffer), warpx.getistep(),
+        labtime,
+        m_output_species.at(i_buffer), nlev_output, file_name, m_file_min_digits,
         m_plot_raw_fields, m_plot_raw_fields_guards,
-        use_pinned_pc, isBTD, i_buffer, m_buffer_flush_counter[i_buffer],
-        m_max_buffer_multifabs[i_buffer], m_geom_snapshot[i_buffer][0], isLastBTDFlush,
-        m_totalParticles_flushed_already[i_buffer]);
+        use_pinned_pc, isBTD, i_buffer, m_buffer_flush_counter.at(i_buffer),
+        m_max_buffer_multifabs.at(i_buffer), m_geom_snapshot.at(i_buffer).at(0), isLastBTDFlush);
 
     // Rescaling the box for plotfile after WriteToFile. This is because, for plotfiles, when writing particles, amrex checks if the particles are within the bounds defined by the box. However, in BTD, particles can be (at max) 1 cell outside the bounds of the geometry. So we keep a one-cell bigger box for plotfile when writing out the particle data and rescale after.
     if (m_format == "plotfile") {
@@ -1103,7 +1105,6 @@ BTDiagnostics::Flush (int i_buffer, bool force_flush)
     NullifyFirstFlush(i_buffer);
     // if particles are selected for output then update and reset counters
     if (!m_output_species_names.empty()) {
-        UpdateTotalParticlesFlushed(i_buffer);
         ResetTotalParticlesInBuffer(i_buffer);
         ClearParticleBuffer(i_buffer);
     }
@@ -1270,10 +1271,10 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
                 InterleaveSpeciesHeader(recent_species_Header,snapshot_species_Header,
                                         m_output_species_names[i], m_buffer_flush_counter[i_snapshot]);
                 if (BufferSpeciesHeader.m_total_particles == 0) { continue; }
-                if (m_totalParticles_flushed_already[i_snapshot][i]==0) {
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                    std::rename(recent_ParticleHdrFilename.c_str(), snapshot_ParticleHdrFilename.c_str()) == 0,
-                    std::string("Renaming ").append(recent_ParticleHdrFilename).append(" to ").append(snapshot_ParticleHdrFilename).append(" has failed"));
+                if (!amrex::FileExists(snapshot_ParticleHdrFilename)) {
+                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                        std::rename(recent_ParticleHdrFilename.c_str(), snapshot_ParticleHdrFilename.c_str()) == 0,
+                        std::string("Renaming ").append(recent_ParticleHdrFilename).append(" to ").append(snapshot_ParticleHdrFilename).append(" has failed"));
                 } else {
                     InterleaveParticleDataHeader(recent_ParticleHdrFilename,
                                                  snapshot_ParticleHdrFilename);
@@ -1291,8 +1292,8 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
 }
 
 void
-BTDiagnostics::InterleaveBufferAndSnapshotHeader ( std::string buffer_Header_path,
-                                                   std::string snapshot_Header_path)
+BTDiagnostics::InterleaveBufferAndSnapshotHeader ( const std::string& buffer_Header_path,
+                                                   const std::string& snapshot_Header_path)
 {
     BTDPlotfileHeaderImpl snapshot_HeaderImpl(snapshot_Header_path);
     snapshot_HeaderImpl.ReadHeaderData();
@@ -1300,7 +1301,7 @@ BTDiagnostics::InterleaveBufferAndSnapshotHeader ( std::string buffer_Header_pat
     BTDPlotfileHeaderImpl buffer_HeaderImpl(buffer_Header_path);
     buffer_HeaderImpl.ReadHeaderData();
 
-    // Update timestamp of snapshot with recently flushed buffer
+    // Update step_scraped of snapshot with recently flushed buffer
     snapshot_HeaderImpl.set_time( buffer_HeaderImpl.time() );
     snapshot_HeaderImpl.set_timestep( buffer_HeaderImpl.timestep() );
 
@@ -1336,9 +1337,9 @@ BTDiagnostics::InterleaveBufferAndSnapshotHeader ( std::string buffer_Header_pat
 
 
 void
-BTDiagnostics::InterleaveFabArrayHeader (std::string Buffer_FabHeader_path,
-                                         std::string snapshot_FabHeader_path,
-                                         std::string newsnapshot_FabFilename)
+BTDiagnostics::InterleaveFabArrayHeader(const std::string& Buffer_FabHeader_path,
+                                        const std::string& snapshot_FabHeader_path,
+                                        const std::string& newsnapshot_FabFilename)
 {
     BTDMultiFabHeaderImpl snapshot_FabHeader(snapshot_FabHeader_path);
     snapshot_FabHeader.ReadMultiFabHeader();
@@ -1366,9 +1367,9 @@ BTDiagnostics::InterleaveFabArrayHeader (std::string Buffer_FabHeader_path,
 }
 
 void
-BTDiagnostics::InterleaveSpeciesHeader(std::string buffer_species_Header_path,
-                                       std::string snapshot_species_Header_path,
-                                       std::string species_name, const int new_data_index)
+BTDiagnostics::InterleaveSpeciesHeader(const std::string& buffer_species_Header_path,
+                                       const std::string& snapshot_species_Header_path,
+                                       const std::string& species_name, const int new_data_index)
 {
     BTDSpeciesHeaderImpl BufferSpeciesHeader(buffer_species_Header_path,
                                              species_name);
@@ -1390,8 +1391,8 @@ BTDiagnostics::InterleaveSpeciesHeader(std::string buffer_species_Header_path,
 }
 
 void
-BTDiagnostics::InterleaveParticleDataHeader(std::string buffer_ParticleHdrFilename,
-                                           std::string snapshot_ParticleHdrFilename)
+BTDiagnostics::InterleaveParticleDataHeader(const std::string& buffer_ParticleHdrFilename,
+                                            const std::string& snapshot_ParticleHdrFilename)
 {
     BTDParticleDataHeaderImpl BufferParticleHeader(buffer_ParticleHdrFilename);
     BufferParticleHeader.ReadHeader();
@@ -1434,10 +1435,8 @@ BTDiagnostics::InitializeParticleBuffer ()
     const MultiParticleContainer& mpc = warpx.GetPartContainer();
     for (int i = 0; i < m_num_buffers; ++i) {
         m_particles_buffer[i].resize(m_output_species_names.size());
-        m_totalParticles_flushed_already[i].resize(m_output_species_names.size());
         m_totalParticles_in_buffer[i].resize(m_output_species_names.size());
         for (int isp = 0; isp < m_particles_buffer[i].size(); ++isp) {
-            m_totalParticles_flushed_already[i][isp] = 0;
             m_totalParticles_in_buffer[i][isp] = 0;
             m_particles_buffer[i][isp] = std::make_unique<PinnedMemoryParticleContainer>(WarpX::GetInstance().GetParGDB());
             const int idx = mpc.getSpeciesID(m_output_species_names[isp]);
@@ -1470,7 +1469,7 @@ BTDiagnostics::PrepareParticleDataForOutput()
                             DefineFieldBufferMultiFab(i_buffer, lev);
                         }
                         const amrex::Box particle_buffer_box = m_buffer_box[i_buffer];
-                        amrex::BoxArray buffer_ba( particle_buffer_box );
+                        const amrex::BoxArray buffer_ba( particle_buffer_box );
                         const amrex::DistributionMapping buffer_dmap(buffer_ba);
                         m_particles_buffer[i_buffer][i]->SetParticleBoxArray(lev, buffer_ba);
                         m_particles_buffer[i_buffer][i]->SetParticleDistributionMap(lev, buffer_dmap);
@@ -1485,15 +1484,6 @@ BTDiagnostics::PrepareParticleDataForOutput()
                                              m_snapshot_full[i_buffer]);
             }
         }
-    }
-}
-
-void
-BTDiagnostics::UpdateTotalParticlesFlushed(int i_buffer)
-{
-    for (int isp = 0; isp < m_totalParticles_flushed_already[i_buffer].size(); ++isp) {
-        m_totalParticles_flushed_already[i_buffer][isp] += static_cast<int>(
-            m_particles_buffer[i_buffer][isp]->TotalNumberOfParticles());
     }
 }
 

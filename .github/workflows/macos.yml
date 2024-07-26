@@ -17,7 +17,7 @@ jobs:
       # For macOS, Ninja is slower than the default:
       #CMAKE_GENERATOR: Ninja
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: install dependencies
       run: |
         set +e
@@ -36,18 +36,15 @@ jobs:
         brew tap openpmd/openpmd
         brew install openpmd-api
 
-        python3 -m pip install --upgrade pip
-        python3 -m pip install --upgrade virtualenv
-
         python3 -m venv py-venv
         source py-venv/bin/activate
         python3 -m pip install --upgrade pip
         python3 -m pip install --upgrade build packaging setuptools wheel
         python3 -m pip install --upgrade mpi4py
     - name: CCache Cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
-        path: /Users/runner/Library/Caches/ccache
+        path: ~/Library/Caches/ccache
         key: ccache-${{ github.workflow }}-${{ github.job }}-git-${{ github.sha }}
         restore-keys: |
              ccache-${{ github.workflow }}-${{ github.job }}-git-
@@ -56,7 +53,7 @@ jobs:
         export CCACHE_COMPRESS=1
         export CCACHE_COMPRESSLEVEL=10
         export CCACHE_MAXSIZE=100M
-        export CCACHE_DEPEND=1
+        export CCACHE_SLOPPINESS=time_macros
         ccache -z
 
         source py-venv/bin/activate
@@ -79,6 +76,7 @@ jobs:
         cmake --build build_sp -j 3
         cmake --build build_sp --target pip_install
 
+        du -hs ~/Library/Caches/ccache
         ccache -s
 
     - name: run pywarpx
@@ -97,7 +95,7 @@ jobs:
           PR_NUMBER: ${{ github.event.number }}
         run: |
           echo $PR_NUMBER > pr_number.txt
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: pr_number
           path: pr_number.txt

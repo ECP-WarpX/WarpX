@@ -172,10 +172,9 @@ ExternalFieldParams::ExternalFieldParams(const amrex::ParmParse& pp_warpx)
     //
     //  External fields from file
     //
-
     if (E_ext_grid_type == ExternalFieldType::read_from_file ||
         B_ext_grid_type == ExternalFieldType::read_from_file){
-            std::string read_fields_from_path="./";
+            const std::string read_fields_from_path="./";
             pp_warpx.query("read_fields_from_path", external_fields_path);
     }
     //___________________________________________________________________________

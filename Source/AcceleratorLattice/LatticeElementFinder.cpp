@@ -60,7 +60,7 @@ LatticeElementFinder::UpdateIndices (int const lev, amrex::MFIter const& a_mfi,
     // Note that the current box is used since the box may have been updated since
     // the initialization in InitElementFinder.
     const amrex::Box box = a_mfi.tilebox();
-    m_zmin = WarpX::LowerCorner(box, lev, 0._rt)[2];
+    m_zmin = WarpX::LowerCorner(box, lev, 0._rt).z;
     m_time = warpx.gett_new(lev);
 
     if (accelerator_lattice.h_quad.nelements > 0) {
@@ -78,7 +78,7 @@ LatticeElementFinder::UpdateIndices (int const lev, amrex::MFIter const& a_mfi,
 
 LatticeElementFinderDevice
 LatticeElementFinder::GetFinderDeviceInstance (WarpXParIter const& a_pti, int const a_offset,
-                                              AcceleratorLattice const& accelerator_lattice)
+                                              AcceleratorLattice const& accelerator_lattice) const
 {
     LatticeElementFinderDevice result;
     result.InitLatticeElementFinderDevice(a_pti, a_offset, accelerator_lattice, *this);
@@ -124,7 +124,7 @@ LatticeElementFinderDevice::InitLatticeElementFinderDevice (WarpXParIter const& 
 void
 LatticeElementFinder::setup_lattice_indices (amrex::Gpu::DeviceVector<amrex::ParticleReal> const & zs,
                        amrex::Gpu::DeviceVector<amrex::ParticleReal> const & ze,
-                       amrex::Gpu::DeviceVector<int> & indices)
+                       amrex::Gpu::DeviceVector<int> & indices) const
 {
 
     using namespace amrex::literals;

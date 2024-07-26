@@ -10,6 +10,8 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "MultiParticleContainer.H"
+
+#include "FieldSolver/Fields.H"
 #include "Particles/ElementaryProcess/Ionization.H"
 #ifdef WARPX_QED
 #   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
@@ -80,6 +82,7 @@
 #include <vector>
 
 using namespace amrex;
+using namespace warpx::fields;
 
 namespace
 {
@@ -633,6 +636,14 @@ MultiParticleContainer::defineAllParticleTiles ()
 }
 
 void
+MultiParticleContainer::deleteInvalidParticles ()
+{
+    for (auto& pc : allcontainers) {
+        pc->deleteInvalidParticles();
+    }
+}
+
+void
 MultiParticleContainer::RedistributeLocal (const int num_ghost)
 {
     for (auto& pc : allcontainers) {
@@ -803,7 +814,7 @@ MultiParticleContainer::mapSpeciesProduct ()
 /* \brief Given a species name, return its ID.
  */
 int
-MultiParticleContainer::getSpeciesID (std::string product_str) const
+MultiParticleContainer::getSpeciesID (const std::string& product_str) const
 {
     auto species_and_lasers_names = GetSpeciesAndLasersNames();
     int i_product = 0;
@@ -832,7 +843,7 @@ MultiParticleContainer::SetDoBackTransformedParticles (const bool do_back_transf
 }
 
 void
-MultiParticleContainer::SetDoBackTransformedParticles (std::string species_name, const bool do_back_transformed_particles) {
+MultiParticleContainer::SetDoBackTransformedParticles (const std::string& species_name, const bool do_back_transformed_particles) {
     auto species_names_list = GetSpeciesNames();
     bool found = false;
     // Loop over species
@@ -945,11 +956,11 @@ void MultiParticleContainer::CheckIonizationProductSpecies()
     }
 }
 
-void MultiParticleContainer::ScrapeParticles (const amrex::Vector<const amrex::MultiFab*>& distance_to_eb)
+void MultiParticleContainer::ScrapeParticlesAtEB (const amrex::Vector<const amrex::MultiFab*>& distance_to_eb)
 {
 #ifdef AMREX_USE_EB
     for (auto& pc : allcontainers) {
-        scrapeParticles(*pc, distance_to_eb, ParticleBoundaryProcess::Absorb());
+        scrapeParticlesAtEB(*pc, distance_to_eb, ParticleBoundaryProcess::Absorb());
     }
 #else
     amrex::ignore_unused(distance_to_eb);
@@ -1344,12 +1355,12 @@ MultiParticleContainer::doQEDSchwinger ()
     pc_product_ele->defineAllParticleTiles();
     pc_product_pos->defineAllParticleTiles();
 
-    const MultiFab & Ex = warpx.getEfield(level_0,0);
-    const MultiFab & Ey = warpx.getEfield(level_0,1);
-    const MultiFab & Ez = warpx.getEfield(level_0,2);
-    const MultiFab & Bx = warpx.getBfield(level_0,0);
-    const MultiFab & By = warpx.getBfield(level_0,1);
-    const MultiFab & Bz = warpx.getBfield(level_0,2);
+    const MultiFab & Ex = warpx.getField(FieldType::Efield_aux, level_0,0);
+    const MultiFab & Ey = warpx.getField(FieldType::Efield_aux, level_0,1);
+    const MultiFab & Ez = warpx.getField(FieldType::Efield_aux, level_0,2);
+    const MultiFab & Bx = warpx.getField(FieldType::Bfield_aux, level_0,0);
+    const MultiFab & By = warpx.getField(FieldType::Bfield_aux, level_0,1);
+    const MultiFab & Bz = warpx.getField(FieldType::Bfield_aux, level_0,2);
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -1388,10 +1399,12 @@ MultiParticleContainer::doQEDSchwinger ()
 
         const auto Transform = SchwingerTransformFunc{m_qed_schwinger_y_size, PIdx::w};
 
+        const amrex::Geometry& geom_level_zero = warpx.Geom(level_0);
+
         const auto num_added = filterCreateTransformFromFAB<1>( *pc_product_ele, *pc_product_pos, dst_ele_tile,
                                dst_pos_tile, box, fieldsEB, np_ele_dst,
                                np_pos_dst,Filter, CreateEle, CreatePos,
-                               Transform);
+                               Transform, geom_level_zero);
 
         setNewParticleIDs(dst_ele_tile, np_ele_dst, num_added);
         setNewParticleIDs(dst_pos_tile, np_pos_dst, num_added);

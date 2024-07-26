@@ -9,7 +9,7 @@
 #include "WarpX.H"
 
 #include "BoundaryConditions/PML.H"
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
 #   include "BoundaryConditions/PML_RZ.H"
 #endif
 #include "Filter/BilinearFilter.H"
@@ -18,6 +18,7 @@
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpXComm_K.H"
 #include "WarpXSumGuardCells.H"
+#include "Particles/MultiParticleContainer.H"
 
 #include <ablastr/coarsen/average.H>
 #include <ablastr/utils/Communication.H>
@@ -59,12 +60,27 @@ WarpX::UpdateAuxilaryData ()
     } else {
         UpdateAuxilaryDataStagToNodal();
     }
+
+    // When loading particle fields from file: add the external fields:
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        if (mypc->m_E_ext_particle_s == "read_from_file") {
+            amrex::MultiFab::Add(*Efield_aux[lev][0], *E_external_particle_field[lev][0], 0, 0, E_external_particle_field[lev][0]->nComp(), guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*Efield_aux[lev][1], *E_external_particle_field[lev][1], 0, 0, E_external_particle_field[lev][1]->nComp(), guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*Efield_aux[lev][2], *E_external_particle_field[lev][2], 0, 0, E_external_particle_field[lev][2]->nComp(), guard_cells.ng_FieldGather);
+        }
+        if (mypc->m_B_ext_particle_s == "read_from_file") {
+            amrex::MultiFab::Add(*Bfield_aux[lev][0], *B_external_particle_field[lev][0], 0, 0, B_external_particle_field[lev][0]->nComp(), guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*Bfield_aux[lev][1], *B_external_particle_field[lev][1], 0, 0, B_external_particle_field[lev][0]->nComp(), guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*Bfield_aux[lev][2], *B_external_particle_field[lev][2], 0, 0, B_external_particle_field[lev][0]->nComp(), guard_cells.ng_FieldGather);
+        }
+    }
+
 }
 
 void
 WarpX::UpdateAuxilaryDataStagToNodal ()
 {
-#ifndef WARPX_USE_PSATD
+#ifndef WARPX_USE_FFT
     if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( false,
             "WarpX::UpdateAuxilaryDataStagToNodal: PSATD solver requires "
@@ -293,6 +309,30 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
 void
 WarpX::UpdateAuxilaryDataSameType ()
 {
+    // Update aux field, including guard cells, up to ng_FieldGather
+    const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
+
+    // Level 0: Copy from fine to aux
+    // Note: in some configurations, Efield_aux/Bfield_aux and Efield_fp/Bfield_fp are simply aliases to the
+    // same MultiFab object. MultiFab::Copy operation automatically detects this and does nothing in this case.
+    if (WarpX::fft_do_time_averaging)
+    {
+        MultiFab::Copy(*Efield_aux[0][0], *Efield_avg_fp[0][0], 0, 0, Efield_aux[0][0]->nComp(), ng_src);
+        MultiFab::Copy(*Efield_aux[0][1], *Efield_avg_fp[0][1], 0, 0, Efield_aux[0][1]->nComp(), ng_src);
+        MultiFab::Copy(*Efield_aux[0][2], *Efield_avg_fp[0][2], 0, 0, Efield_aux[0][2]->nComp(), ng_src);
+        MultiFab::Copy(*Bfield_aux[0][0], *Bfield_avg_fp[0][0], 0, 0, Bfield_aux[0][0]->nComp(), ng_src);
+        MultiFab::Copy(*Bfield_aux[0][1], *Bfield_avg_fp[0][1], 0, 0, Bfield_aux[0][1]->nComp(), ng_src);
+        MultiFab::Copy(*Bfield_aux[0][2], *Bfield_avg_fp[0][2], 0, 0, Bfield_aux[0][2]->nComp(), ng_src);
+    }
+    else
+    {
+        MultiFab::Copy(*Efield_aux[0][0], *Efield_fp[0][0], 0, 0, Efield_aux[0][0]->nComp(), ng_src);
+        MultiFab::Copy(*Efield_aux[0][1], *Efield_fp[0][1], 0, 0, Efield_aux[0][1]->nComp(), ng_src);
+        MultiFab::Copy(*Efield_aux[0][2], *Efield_fp[0][2], 0, 0, Efield_aux[0][2]->nComp(), ng_src);
+        MultiFab::Copy(*Bfield_aux[0][0], *Bfield_fp[0][0], 0, 0, Bfield_aux[0][0]->nComp(), ng_src);
+        MultiFab::Copy(*Bfield_aux[0][1], *Bfield_fp[0][1], 0, 0, Bfield_aux[0][1]->nComp(), ng_src);
+        MultiFab::Copy(*Bfield_aux[0][2], *Bfield_fp[0][2], 0, 0, Bfield_aux[0][2]->nComp(), ng_src);
+    }
     for (int lev = 1; lev <= finest_level; ++lev)
     {
         const amrex::Periodicity& crse_period = Geom(lev-1).periodicity();
@@ -308,8 +348,6 @@ WarpX::UpdateAuxilaryDataSameType ()
             dBy.setVal(0.0);
             dBz.setVal(0.0);
 
-            // Guard cells may not be up to date beyond ng_FieldGather
-            const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
             // Copy Bfield_aux to the dB MultiFabs, using up to ng_src (=ng_FieldGather) guard
             // cells from Bfield_aux and filling up to ng (=nGrow) guard cells in the dB MultiFabs
 
@@ -379,8 +417,6 @@ WarpX::UpdateAuxilaryDataSameType ()
             dEy.setVal(0.0);
             dEz.setVal(0.0);
 
-            // Guard cells may not be up to date beyond ng_FieldGather
-            const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
             // Copy Efield_aux to the dE MultiFabs, using up to ng_src (=ng_FieldGather) guard
             // cells from Efield_aux and filling up to ng (=nGrow) guard cells in the dE MultiFabs
             ablastr::utils::communication::ParallelCopy(dEx, *Efield_aux[lev - 1][0], 0, 0,
@@ -584,7 +620,7 @@ WarpX::FillBoundaryE (const int lev, const PatchType patch_type, const amrex::In
             pml[lev]->FillBoundaryE(patch_type, nodal_sync);
         }
 
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
         if (pml_rz[lev])
         {
             pml_rz[lev]->FillBoundaryE(patch_type, nodal_sync);
@@ -596,7 +632,7 @@ WarpX::FillBoundaryE (const int lev, const PatchType patch_type, const amrex::In
     for (int i = 0; i < 3; ++i)
     {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            ng <= mf[i]->nGrowVect(),
+            ng.allLE(mf[i]->nGrowVect()),
             "Error: in FillBoundaryE, requested more guard cells than allocated");
 
         const amrex::IntVect nghost = (safe_guard_cells) ? mf[i]->nGrowVect() : ng;
@@ -641,7 +677,7 @@ WarpX::FillBoundaryB (const int lev, const PatchType patch_type, const amrex::In
             pml[lev]->FillBoundaryB(patch_type, nodal_sync);
         }
 
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
         if (pml_rz[lev])
         {
             pml_rz[lev]->FillBoundaryB(patch_type, nodal_sync);
@@ -653,7 +689,7 @@ WarpX::FillBoundaryB (const int lev, const PatchType patch_type, const amrex::In
     for (int i = 0; i < 3; ++i)
     {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            ng <= mf[i]->nGrowVect(),
+            ng.allLE(mf[i]->nGrowVect()),
             "Error: in FillBoundaryB, requested more guard cells than allocated");
 
         const amrex::IntVect nghost = (safe_guard_cells) ? mf[i]->nGrowVect() : ng;
@@ -684,7 +720,7 @@ WarpX::FillBoundaryE_avg (int lev, PatchType patch_type, IntVect ng)
             ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period);
         } else {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng <= Efield_avg_fp[lev][0]->nGrowVect(),
+                ng.allLE(Efield_avg_fp[lev][0]->nGrowVect()),
                 "Error: in FillBoundaryE_avg, requested more guard cells than allocated");
             ablastr::utils::communication::FillBoundary(*Efield_avg_fp[lev][0], ng, WarpX::do_single_precision_comms, period);
             ablastr::utils::communication::FillBoundary(*Efield_avg_fp[lev][1], ng, WarpX::do_single_precision_comms, period);
@@ -705,7 +741,7 @@ WarpX::FillBoundaryE_avg (int lev, PatchType patch_type, IntVect ng)
 
         } else {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng <= Efield_avg_cp[lev][0]->nGrowVect(),
+                ng.allLE(Efield_avg_cp[lev][0]->nGrowVect()),
                 "Error: in FillBoundaryE, requested more guard cells than allocated");
             ablastr::utils::communication::FillBoundary(*Efield_avg_cp[lev][0], ng, WarpX::do_single_precision_comms, cperiod);
             ablastr::utils::communication::FillBoundary(*Efield_avg_cp[lev][1], ng, WarpX::do_single_precision_comms, cperiod);
@@ -737,7 +773,7 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
             ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period);
         } else {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng <= Bfield_fp[lev][0]->nGrowVect(),
+                ng.allLE(Bfield_fp[lev][0]->nGrowVect()),
                 "Error: in FillBoundaryB, requested more guard cells than allocated");
             ablastr::utils::communication::FillBoundary(*Bfield_avg_fp[lev][0], ng, WarpX::do_single_precision_comms, period);
             ablastr::utils::communication::FillBoundary(*Bfield_avg_fp[lev][1], ng, WarpX::do_single_precision_comms, period);
@@ -757,7 +793,7 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
             ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, cperiod);
         } else {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng <= Bfield_avg_cp[lev][0]->nGrowVect(),
+                ng.allLE(Bfield_avg_cp[lev][0]->nGrowVect()),
                 "Error: in FillBoundaryB_avg, requested more guard cells than allocated");
             ablastr::utils::communication::FillBoundary(*Bfield_avg_cp[lev][0], ng, WarpX::do_single_precision_comms, cperiod);
             ablastr::utils::communication::FillBoundary(*Bfield_avg_cp[lev][1], ng, WarpX::do_single_precision_comms, cperiod);
@@ -882,7 +918,7 @@ WarpX::SyncCurrent (
     WARPX_PROFILE("WarpX::SyncCurrent()");
 
     // If warpx.do_current_centering = 1, center currents from nodal grid to staggered grid
-    if (WarpX::do_current_centering)
+    if (do_current_centering)
     {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(finest_level <= 1,
                                          "warpx.do_current_centering=1 not supported with more than one fine levels");
@@ -1178,7 +1214,7 @@ void WarpX::SumBoundaryJ (
     const amrex::IntVect ng = J.nGrowVect();
     amrex::IntVect ng_depos_J = get_ng_depos_J();
 
-    if (WarpX::do_current_centering)
+    if (do_current_centering)
     {
 #if   defined(WARPX_DIM_1D_Z)
         ng_depos_J[0] += WarpX::current_centering_noz / 2;

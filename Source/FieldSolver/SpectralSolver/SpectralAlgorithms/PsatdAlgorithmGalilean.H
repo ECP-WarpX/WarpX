@@ -20,7 +20,7 @@
 #include <array>
 #include <memory>
 
-#if WARPX_USE_PSATD
+#if WARPX_USE_FFT
 /* \brief Class that updates the field in spectral space
  * and stores the coefficients of the corresponding update equation.
  */
@@ -136,5 +136,5 @@ class PsatdAlgorithmGalilean : public SpectralBaseAlgorithm
         bool m_update_with_rho;
         bool m_time_averaging;
 };
-#endif // WARPX_USE_PSATD
+#endif // WARPX_USE_FFT
 #endif // WARPX_PSATD_ALGORITHM_GALILEAN_H_

@@ -10,3 +10,5 @@ Workflows
    testing
    documentation
    checksum
+   local_compile
+   run_clang_tidy_locally

@@ -18,11 +18,14 @@ known analytic solution. While the radius r(t) is not analytically known, its
 inverse t(r) can be solved for exactly.
 """
 import os
+import re
 import sys
 
 import numpy as np
-from scipy.optimize import fsolve
 import yt
+from openpmd_viewer import OpenPMDTimeSeries
+from scipy.constants import c
+from scipy.optimize import fsolve
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
@@ -34,6 +37,15 @@ filename = sys.argv[1]
 ds = yt.load( filename )
 t_max = ds.current_time.item()  # time of simulation
 
+# Parse test name and check if particle_shape = 4 is used
+emass_10 = True if re.search('emass_10', filename) else False
+
+if emass_10:
+    l2_tolerance = 0.096
+    m_e = 10
+else:
+    l2_tolerance = 0.05
+    m_e = 9.10938356e-31 #Electron mass in kg
 ndims = np.count_nonzero(ds.domain_dimensions > 1)
 
 if ndims == 2:
@@ -58,7 +70,6 @@ iz0 = round((0. - zmin)/dz)
 
 # Constants
 eps_0 = 8.8541878128e-12  #Vacuum Permittivity in C/(V*m)
-m_e = 9.10938356e-31  #Electron mass in kg
 q_e = -1.60217662e-19  #Electron charge in C
 pi = np.pi  #Circular constant of the universe
 r_0 = 0.1  #Initial radius of sphere
@@ -125,7 +136,6 @@ def calculate_error(E_axis, xmin, dx, nx):
 
     return L2_error
 
-
 L2_error_x = calculate_error(Ex_axis, xmin, dx, nx)
 L2_error_y = calculate_error(Ey_axis, ymin, dy, ny)
 L2_error_z = calculate_error(Ez_axis, zmin, dz, nz)
@@ -133,9 +143,24 @@ print("L2 error along x-axis = %s" %L2_error_x)
 print("L2 error along y-axis = %s" %L2_error_y)
 print("L2 error along z-axis = %s" %L2_error_z)
 
-assert L2_error_x < 0.05
-assert L2_error_y < 0.05
-assert L2_error_z < 0.05
+assert L2_error_x < l2_tolerance
+assert L2_error_y < l2_tolerance
+assert L2_error_z < l2_tolerance
+
+# Check conservation of energy
+def return_energies(iteration):
+    ux, uy, uz, phi, m, q, w = ts.get_particle(['ux', 'uy', 'uz', 'phi', 'mass', 'charge', 'w'], iteration=iteration)
+    E_kinetic = (w*m*c**2 * (np.sqrt(1 + ux**2 + uy**2 + uz**2) - 1)).sum()
+    E_potential = 0.5*(w*q*phi).sum() # potential energy of particles in their own space-charge field: includes factor 1/2
+    return E_kinetic, E_potential
+ts = OpenPMDTimeSeries('./diags/diag2')
+if 'phi' in ts.avail_record_components['electron']:
+    # phi is only available when this script is run with the labframe poisson solver
+    print('Checking conservation of energy')
+    Ek_i, Ep_i = return_energies(0)
+    Ek_f, Ep_f = return_energies(30)
+    assert Ep_f < 0.7*Ep_i # Check that potential energy changes significantly
+    assert abs( (Ek_i + Ep_i) - (Ek_f + Ep_f) ) < 0.003 * (Ek_i + Ep_i) # Check conservation of energy
 
 # Checksum regression analysis
 test_name = os.path.split(os.getcwd())[1]

@@ -1,6 +1,6 @@
 foreach(D IN LISTS WarpX_DIMS)
   warpx_set_suffix_dims(SD ${D})
-  if(WarpX_PSATD STREQUAL ON)
+  if(ABLASTR_FFT STREQUAL ON)
     if(WarpX_COMPUTE STREQUAL CUDA)
       target_sources(ablastr_${SD} PRIVATE WrapCuFFT.cpp)
     elseif(WarpX_COMPUTE STREQUAL HIP)

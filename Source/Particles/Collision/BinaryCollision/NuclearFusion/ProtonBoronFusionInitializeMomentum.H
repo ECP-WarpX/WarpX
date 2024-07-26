@@ -5,8 +5,8 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef PROTON_BORON_FUSION_INITIALIZE_MOMENTUM_H
-#define PROTON_BORON_FUSION_INITIALIZE_MOMENTUM_H
+#ifndef WARPX_PROTON_BORON_FUSION_INITIALIZE_MOMENTUM_H
+#define WARPX_PROTON_BORON_FUSION_INITIALIZE_MOMENTUM_H
 
 #include "TwoProductFusionUtil.H"
 #include "Particles/WarpXParticleContainer.H"
@@ -22,10 +22,12 @@
 
 namespace {
     // Define shortcuts for frequently-used type names
-    using SoaData_type = WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
-    using ParticleType = WarpXParticleContainer::ParticleType;
-    using ParticleBins = amrex::DenseBins<ParticleType>;
-    using index_type = ParticleBins::index_type;
+    using SoaData_type = typename WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
+    using ParticleType = typename WarpXParticleContainer::ParticleType;
+    using ParticleTileType = typename WarpXParticleContainer::ParticleTileType;
+    using ParticleTileDataType = typename ParticleTileType::ParticleTileDataType;
+    using ParticleBins = amrex::DenseBins<ParticleTileDataType>;
+    using index_type = typename ParticleBins::index_type;
 
     /**
      * \brief This function initializes the momentum of the alpha particles produced from
@@ -175,4 +177,4 @@ namespace {
 
 }
 
-#endif // PROTON_BORON_FUSION_INITIALIZE_MOMENTUM_H
+#endif // WARPX_PROTON_BORON_FUSION_INITIALIZE_MOMENTUM_H

@@ -29,7 +29,7 @@
 #include <AMReX_REAL.H>
 #include <AMReX_Utility.H>
 
-#if WARPX_USE_PSATD
+#if WARPX_USE_FFT
 
 using namespace amrex;
 
@@ -487,4 +487,4 @@ SpectralFieldData::BackwardTransform (const int lev,
     }
 }
 
-#endif // WARPX_USE_PSATD
+#endif // WARPX_USE_FFT

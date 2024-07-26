@@ -10,8 +10,8 @@ import argparse
 import sys
 
 import dill
-from mpi4py import MPI as mpi
 import numpy as np
+from mpi4py import MPI as mpi
 
 from pywarpx import picmi
 
@@ -53,7 +53,7 @@ class CylindricalNormalModes(object):
     # Plasma resistivity - used to dampen the mode excitation
     eta = 5e-4
     # Number of substeps used to update B
-    substeps = 250
+    substeps = 20
 
     def __init__(self, test, verbose):
         """Get input parameters for the specific case desired."""
@@ -156,7 +156,7 @@ class CylindricalNormalModes(object):
             upper_bound=[self.Lr, self.Lz/2.0],
             lower_boundary_conditions = ['none', 'periodic'],
             upper_boundary_conditions = ['dirichlet', 'periodic'],
-            lower_boundary_conditions_particles = ['absorbing', 'periodic'],
+            lower_boundary_conditions_particles = ['none', 'periodic'],
             upper_boundary_conditions_particles = ['reflecting', 'periodic']
         )
         simulation.time_step_size = self.dt

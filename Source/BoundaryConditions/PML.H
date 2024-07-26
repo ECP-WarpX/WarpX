@@ -11,7 +11,9 @@
 
 #include "PML_fwd.H"
 
-#ifdef WARPX_USE_PSATD
+#include "Utils/WarpXAlgorithmSelection.H"
+
+#ifdef WARPX_USE_FFT
 #   include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #endif
 
@@ -131,13 +133,11 @@ private:
     amrex::Real dt_E = -1.e10;
 };
 
-enum struct PatchType : int;
-
 class PML
 {
 public:
-    PML (int lev,
-         const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
+    PML (int lev, const amrex::BoxArray& ba,
+         const amrex::DistributionMapping& dm, bool do_similar_dm_pml,
          const amrex::Geometry* geom, const amrex::Geometry* cgeom,
          int ncell, int delta, amrex::IntVect ref_ratio,
          amrex::Real dt, int nox_fft, int noy_fft, int noz_fft, short grid_type,
@@ -179,7 +179,7 @@ public:
         return *sigba_cp;
     }
 
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
     void PushPSATD (int lev);
 #endif
 
@@ -245,7 +245,7 @@ private:
     std::unique_ptr<MultiSigmaBox> sigba_fp;
     std::unique_ptr<MultiSigmaBox> sigba_cp;
 
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
     std::unique_ptr<SpectralSolver> spectral_solver_fp;
     std::unique_ptr<SpectralSolver> spectral_solver_cp;
 #endif
@@ -289,7 +289,7 @@ private:
     static void CopyToPML (amrex::MultiFab& pml, amrex::MultiFab& reg, const amrex::Geometry& geom);
 };
 
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
 void PushPMLPSATDSinglePatch( int lev,
     SpectralSolver& solver,
     std::array<std::unique_ptr<amrex::MultiFab>,3>& pml_E,

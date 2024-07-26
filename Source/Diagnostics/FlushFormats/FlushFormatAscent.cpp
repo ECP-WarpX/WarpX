@@ -21,7 +21,7 @@ FlushFormatAscent::WriteToFile (
     const bool /*use_pinned_pc*/,
     bool isBTD, int /*snapshotID*/, int /*bufferID*/, int /*numBuffers*/,
     const amrex::Geometry& /*full_BTD_snapshot*/,
-    bool /*isLastBTDFlush*/, const amrex::Vector<int>& /* totalParticlesFlushedAlready*/) const
+    bool /*isLastBTDFlush*/) const
 {
 #ifdef AMREX_USE_ASCENT
     WARPX_PROFILE("FlushFormatAscent::WriteToFile()");
@@ -93,9 +93,6 @@ FlushFormatAscent::WriteParticles(const amrex::Vector<ParticleDiag>& particle_di
 
         // get names of real comps
         std::map<std::string, int> real_comps_map = pc->getParticleComps();
-
-        // WarpXParticleContainer compile-time extra AoS attributes (Real): 0
-        // WarpXParticleContainer compile-time extra AoS attributes (int): 0
 
         // WarpXParticleContainer compile-time extra SoA attributes (Real): PIdx::nattribs
         // not an efficient search, but N is small...

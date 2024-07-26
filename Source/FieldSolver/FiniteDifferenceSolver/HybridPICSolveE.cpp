@@ -375,7 +375,7 @@ void FiniteDifferenceSolver::HybridPICSolveE (
     std::unique_ptr<amrex::MultiFab> const& Pefield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     int lev, HybridPICModel const* hybrid_model,
-    const bool include_resistivity_term )
+    const bool include_resistivity_term)
 {
     // Select algorithm (The choice of algorithm is a runtime option,
     // but we compile code for each algorithm, using templates)
@@ -432,7 +432,11 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
 
     // get hybrid model parameters
     const auto eta = hybrid_model->m_eta;
+    const auto eta_h = hybrid_model->m_eta_h;
     const auto rho_floor = hybrid_model->m_n_floor * PhysConst::q_e;
+    const auto resistivity_has_J_dependence = hybrid_model->m_resistivity_has_J_dependence;
+
+    const bool include_hyper_resistivity_term = (eta_h > 0.0) && include_resistivity_term;
 
     // Index type required for interpolating fields from their respective
     // staggering to the Ex, Ey, Ez locations
@@ -589,6 +593,15 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                 // Interpolate to get the appropriate charge density in space
                 Real rho_val = Interp(rho, nodal, Er_stag, coarsen, i, j, 0, 0);
 
+                // Interpolate current to appropriate staggering to match E field
+                Real jtot_val = 0._rt;
+                if (include_resistivity_term && resistivity_has_J_dependence) {
+                    const Real jr_val = Interp(Jr, Jr_stag, Er_stag, coarsen, i, j, 0, 0);
+                    const Real jt_val = Interp(Jt, Jt_stag, Er_stag, coarsen, i, j, 0, 0);
+                    const Real jz_val = Interp(Jz, Jz_stag, Er_stag, coarsen, i, j, 0, 0);
+                    jtot_val = std::sqrt(jr_val*jr_val + jt_val*jt_val + jz_val*jz_val);
+                }
+
                 // safety condition since we divide by rho_val later
                 if (rho_val < rho_floor) { rho_val = rho_floor; }
 
@@ -601,7 +614,15 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                 Er(i, j, 0) = (enE_r - grad_Pe) / rho_val;
 
                 // Add resistivity only if E field value is used to update B
-                if (include_resistivity_term) { Er(i, j, 0) += eta(rho_val) * Jr(i, j, 0); }
+                if (include_resistivity_term) { Er(i, j, 0) += eta(rho_val, jtot_val) * Jr(i, j, 0); }
+
+                if (include_hyper_resistivity_term) {
+                    // r on cell-centered point (Jr is cell-centered in r)
+                    Real const r = rmin + (i + 0.5_rt)*dr;
+
+                    auto nabla2Jr = T_Algo::Dr_rDr_over_r(Jr, r, dr, coefs_r, n_coefs_r, i, j, 0, 0);
+                    Er(i, j, 0) -= eta_h * nabla2Jr;
+                }
             },
 
             // Et calculation
@@ -622,6 +643,15 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                 // Interpolate to get the appropriate charge density in space
                 Real rho_val = Interp(rho, nodal, Er_stag, coarsen, i, j, 0, 0);
 
+                // Interpolate current to appropriate staggering to match E field
+                Real jtot_val = 0._rt;
+                if (include_resistivity_term && resistivity_has_J_dependence) {
+                    const Real jr_val = Interp(Jr, Jr_stag, Et_stag, coarsen, i, j, 0, 0);
+                    const Real jt_val = Interp(Jt, Jt_stag, Et_stag, coarsen, i, j, 0, 0);
+                    const Real jz_val = Interp(Jz, Jz_stag, Et_stag, coarsen, i, j, 0, 0);
+                    jtot_val = std::sqrt(jr_val*jr_val + jt_val*jt_val + jz_val*jz_val);
+                }
+
                 // safety condition since we divide by rho_val later
                 if (rho_val < rho_floor) { rho_val = rho_floor; }
 
@@ -635,31 +665,47 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                 Et(i, j, 0) = (enE_t - grad_Pe) / rho_val;
 
                 // Add resistivity only if E field value is used to update B
-                if (include_resistivity_term) { Et(i, j, 0) += eta(rho_val) * Jt(i, j, 0); }
+                if (include_resistivity_term) { Et(i, j, 0) += eta(rho_val, jtot_val) * Jt(i, j, 0); }
+
+                // Note: Hyper-resisitivity should be revisited here when modal decomposition is implemented
             },
 
             // Ez calculation
-            [=] AMREX_GPU_DEVICE (int i, int j, int k){
+            [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
 #ifdef AMREX_USE_EB
                 // Skip field solve if this cell is fully covered by embedded boundaries
                 if (lz(i,j,0) <= 0) { return; }
 #endif
                 // Interpolate to get the appropriate charge density in space
-                Real rho_val = Interp(rho, nodal, Ez_stag, coarsen, i, j, k, 0);
+                Real rho_val = Interp(rho, nodal, Ez_stag, coarsen, i, j, 0, 0);
+
+                // Interpolate current to appropriate staggering to match E field
+                Real jtot_val = 0._rt;
+                if (include_resistivity_term && resistivity_has_J_dependence) {
+                    const Real jr_val = Interp(Jr, Jr_stag, Ez_stag, coarsen, i, j, 0, 0);
+                    const Real jt_val = Interp(Jt, Jt_stag, Ez_stag, coarsen, i, j, 0, 0);
+                    const Real jz_val = Interp(Jz, Jz_stag, Ez_stag, coarsen, i, j, 0, 0);
+                    jtot_val = std::sqrt(jr_val*jr_val + jt_val*jt_val + jz_val*jz_val);
+                }
 
                 // safety condition since we divide by rho_val later
                 if (rho_val < rho_floor) { rho_val = rho_floor; }
 
                 // Get the gradient of the electron pressure
-                auto grad_Pe = T_Algo::UpwardDz(Pe, coefs_z, n_coefs_z, i, j, k, 0);
+                auto grad_Pe = T_Algo::UpwardDz(Pe, coefs_z, n_coefs_z, i, j, 0, 0);
 
                 // interpolate the nodal neE values to the Yee grid
-                auto enE_z = Interp(enE, nodal, Ez_stag, coarsen, i, j, k, 2);
+                auto enE_z = Interp(enE, nodal, Ez_stag, coarsen, i, j, 0, 2);
 
-                Ez(i, j, k) = (enE_z - grad_Pe) / rho_val;
+                Ez(i, j, 0) = (enE_z - grad_Pe) / rho_val;
 
                 // Add resistivity only if E field value is used to update B
-                if (include_resistivity_term) { Ez(i, j, k) += eta(rho_val) * Jz(i, j, k); }
+                if (include_resistivity_term) { Ez(i, j, 0) += eta(rho_val, jtot_val) * Jz(i, j, 0); }
+
+                if (include_hyper_resistivity_term) {
+                    auto nabla2Jz = T_Algo::Dzz(Jz, coefs_z, n_coefs_z, i, j, 0, 0);
+                    Ez(i, j, 0) -= eta_h * nabla2Jz;
+                }
             }
         );
 
@@ -698,7 +744,11 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
 
     // get hybrid model parameters
     const auto eta = hybrid_model->m_eta;
+    const auto eta_h = hybrid_model->m_eta_h;
     const auto rho_floor = hybrid_model->m_n_floor * PhysConst::q_e;
+    const auto resistivity_has_J_dependence = hybrid_model->m_resistivity_has_J_dependence;
+
+    const bool include_hyper_resistivity_term = (eta_h > 0.) && include_resistivity_term;
 
     // Index type required for interpolating fields from their respective
     // staggering to the Ex, Ey, Ez locations
@@ -853,6 +903,15 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 // Interpolate to get the appropriate charge density in space
                 Real rho_val = Interp(rho, nodal, Ex_stag, coarsen, i, j, k, 0);
 
+                // Interpolate current to appropriate staggering to match E field
+                Real jtot_val = 0._rt;
+                if (include_resistivity_term && resistivity_has_J_dependence) {
+                    const Real jx_val = Interp(Jx, Jx_stag, Ex_stag, coarsen, i, j, k, 0);
+                    const Real jy_val = Interp(Jy, Jy_stag, Ex_stag, coarsen, i, j, k, 0);
+                    const Real jz_val = Interp(Jz, Jz_stag, Ex_stag, coarsen, i, j, k, 0);
+                    jtot_val = std::sqrt(jx_val*jx_val + jy_val*jy_val + jz_val*jz_val);
+                }
+
                 // safety condition since we divide by rho_val later
                 if (rho_val < rho_floor) { rho_val = rho_floor; }
 
@@ -865,7 +924,12 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 Ex(i, j, k) = (enE_x - grad_Pe) / rho_val;
 
                 // Add resistivity only if E field value is used to update B
-                if (include_resistivity_term) { Ex(i, j, k) += eta(rho_val) * Jx(i, j, k); }
+                if (include_resistivity_term) { Ex(i, j, k) += eta(rho_val, jtot_val) * Jx(i, j, k); }
+
+                if (include_hyper_resistivity_term) {
+                    auto nabla2Jx = T_Algo::Dxx(Jx, coefs_x, n_coefs_x, i, j, k);
+                    Ex(i, j, k) -= eta_h * nabla2Jx;
+                }
             },
 
             // Ey calculation
@@ -883,6 +947,15 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 // Interpolate to get the appropriate charge density in space
                 Real rho_val = Interp(rho, nodal, Ey_stag, coarsen, i, j, k, 0);
 
+                // Interpolate current to appropriate staggering to match E field
+                Real jtot_val = 0._rt;
+                if (include_resistivity_term && resistivity_has_J_dependence) {
+                    const Real jx_val = Interp(Jx, Jx_stag, Ey_stag, coarsen, i, j, k, 0);
+                    const Real jy_val = Interp(Jy, Jy_stag, Ey_stag, coarsen, i, j, k, 0);
+                    const Real jz_val = Interp(Jz, Jz_stag, Ey_stag, coarsen, i, j, k, 0);
+                    jtot_val = std::sqrt(jx_val*jx_val + jy_val*jy_val + jz_val*jz_val);
+                }
+
                 // safety condition since we divide by rho_val later
                 if (rho_val < rho_floor) { rho_val = rho_floor; }
 
@@ -895,7 +968,12 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 Ey(i, j, k) = (enE_y - grad_Pe) / rho_val;
 
                 // Add resistivity only if E field value is used to update B
-                if (include_resistivity_term) { Ey(i, j, k) += eta(rho_val) * Jy(i, j, k); }
+                if (include_resistivity_term) { Ey(i, j, k) += eta(rho_val, jtot_val) * Jy(i, j, k); }
+
+                if (include_hyper_resistivity_term) {
+                    auto nabla2Jy = T_Algo::Dyy(Jy, coefs_y, n_coefs_y, i, j, k);
+                    Ey(i, j, k) -= eta_h * nabla2Jy;
+                }
             },
 
             // Ez calculation
@@ -906,6 +984,15 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
 #endif
                 // Interpolate to get the appropriate charge density in space
                 Real rho_val = Interp(rho, nodal, Ez_stag, coarsen, i, j, k, 0);
+
+                // Interpolate current to appropriate staggering to match E field
+                Real jtot_val = 0._rt;
+                if (include_resistivity_term && resistivity_has_J_dependence) {
+                    const Real jx_val = Interp(Jx, Jx_stag, Ez_stag, coarsen, i, j, k, 0);
+                    const Real jy_val = Interp(Jy, Jy_stag, Ez_stag, coarsen, i, j, k, 0);
+                    const Real jz_val = Interp(Jz, Jz_stag, Ez_stag, coarsen, i, j, k, 0);
+                    jtot_val = std::sqrt(jx_val*jx_val + jy_val*jy_val + jz_val*jz_val);
+                }
 
                 // safety condition since we divide by rho_val later
                 if (rho_val < rho_floor) { rho_val = rho_floor; }
@@ -919,7 +1006,12 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 Ez(i, j, k) = (enE_z - grad_Pe) / rho_val;
 
                 // Add resistivity only if E field value is used to update B
-                if (include_resistivity_term) { Ez(i, j, k) += eta(rho_val) * Jz(i, j, k); }
+                if (include_resistivity_term) { Ez(i, j, k) += eta(rho_val, jtot_val) * Jz(i, j, k); }
+
+                if (include_hyper_resistivity_term) {
+                    auto nabla2Jz = T_Algo::Dzz(Jz, coefs_z, n_coefs_z, i, j, k);
+                    Ez(i, j, k) -= eta_h * nabla2Jz;
+                }
             }
         );
 

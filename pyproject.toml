@@ -6,3 +6,7 @@ requires = [
     "packaging>=23",
 ]
 build-backend = "setuptools.build_meta"
+
+[tool.isort]
+known_first_party = ["amrex", "picmistandard", "pywarpx", "warpx"]
+profile = "black"

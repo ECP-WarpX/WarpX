@@ -20,7 +20,7 @@
 #include <array>
 #include <memory>
 
-#if WARPX_USE_PSATD
+#if WARPX_USE_FFT
 /*
  * \brief Class that updates the fields in spectral space according to the PSATD-JRm algorithm
  *        and stores the coefficients of the corresponding update equations. J is assumed to be
@@ -132,5 +132,5 @@ class PsatdAlgorithmJRm : public SpectralBaseAlgorithm
         int m_J_in_time;
         int m_rho_in_time;
 };
-#endif // WARPX_USE_PSATD
+#endif // WARPX_USE_FFT
 #endif // WARPX_PSATD_ALGORITHM_JRM_H_

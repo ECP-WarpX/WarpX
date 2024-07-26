@@ -24,8 +24,8 @@ import os
 import sys
 
 import numpy as np
-from openpmd_viewer import OpenPMDTimeSeries
 import yt
+from openpmd_viewer import OpenPMDTimeSeries
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
@@ -53,12 +53,20 @@ def n_remaining_particles( iteration ):
     w, = ts_full.get_particle(['w'], iteration=iteration)
     return len(w)
 def n_scraped_particles( iteration ):
-    timestamp = ts_scraping.get_particle( ['timestamp'], iteration=ts_scraping.iterations[0] )
-    return (timestamp <= iteration).sum()
+    step_scraped = ts_scraping.get_particle( ['stepScraped'], iteration=ts_scraping.iterations[0] )
+    return (step_scraped <= iteration).sum()
 n_remaining = np.array([ n_remaining_particles(iteration) for iteration in ts_full.iterations ])
 n_scraped = np.array([ n_scraped_particles(iteration) for iteration in ts_full.iterations ])
 n_total = n_remaining[0]
 assert np.all( n_scraped+n_remaining == n_total)
+
+# Check that the particle IDs match between the initial iteration
+# (all particles in the simulation domain) and the finall iteration (particles are either scraped or still in simulation box)
+id_initial, = ts_full.get_particle(['id'], iteration=0)
+id_final_scrape, = ts_scraping.get_particle(['id'], iteration=ts_scraping.iterations[0])
+id_final_box, = ts_full.get_particle(['id'], iteration=ts_full.iterations[-1])
+id_final = np.concatenate( (id_final_scrape, id_final_box))
+assert np.all( np.sort(id_initial) == np.sort(id_final) ) # Sort because particles may not be in the same order
 
 # Checksum test
 test_name = os.path.split(os.getcwd())[1]

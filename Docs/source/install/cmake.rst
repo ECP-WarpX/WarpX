@@ -89,7 +89,6 @@ CMake Option                  Default & Values                             Descr
 ``WarpX_COMPUTE``             NOACC/**OMP**/CUDA/SYCL/HIP                  On-node, accelerated computing backend
 ``WarpX_DIMS``                **3**/2/1/RZ                                 Simulation dimensionality. Use ``"1;2;RZ;3"`` for all.
 ``WarpX_EB``                  ON/**OFF**                                   Embedded boundary support (not supported in RZ yet)
-``WarpX_GPUCLOCK``            **ON**/OFF                                   Add GPU kernel timers (cost function, +4 registers/kernel)
 ``WarpX_IPO``                 ON/**OFF**                                   Compile WarpX with interprocedural optimization (aka LTO)
 ``WarpX_LIB``                 ON/**OFF**                                   Build WarpX as a library, e.g., for PICMI Python
 ``WarpX_MPI``                 **ON**/OFF                                   Multi-node support (message-passing)
@@ -97,10 +96,13 @@ CMake Option                  Default & Values                             Descr
 ``WarpX_OPENPMD``             **ON**/OFF                                   openPMD I/O (HDF5, ADIOS)
 ``WarpX_PRECISION``           SINGLE/**DOUBLE**                            Floating point precision (single/double)
 ``WarpX_PARTICLE_PRECISION``  SINGLE/**DOUBLE**                            Particle floating point precision (single/double), defaults to WarpX_PRECISION value if not set
-``WarpX_PSATD``               ON/**OFF**                                   Spectral solver
+``WarpX_FFT``                 ON/**OFF**                                   FFT-based solvers
+``WarpX_HEFFTE``              ON/**OFF**                                   Multi-Node FFT-based solvers
 ``WarpX_PYTHON``              ON/**OFF**                                   Python bindings
 ``WarpX_QED``                 **ON**/OFF                                   QED support (requires PICSAR)
 ``WarpX_QED_TABLE_GEN``       ON/**OFF**                                   QED table generation support (requires PICSAR and Boost)
+``WarpX_QED_TOOLS``           ON/**OFF**                                   Build external tool to generate QED lookup tables (requires PICSAR and Boost)
+``WarpX_QED_TABLES_GEN_OMP``  **AUTO**/ON/OFF                              Enables OpenMP support for QED lookup tables generation
 ``WarpX_SENSEI``              ON/**OFF**                                   SENSEI in situ visualization
 ============================= ============================================ =========================================================
 
@@ -116,7 +118,7 @@ By default, the most important dependencies of WarpX are automatically downloade
 CMake Option                  Default & Values                               Description
 ============================= ============================================== ===========================================================
 ``BUILD_SHARED_LIBS``         ON/**OFF**                                     `Build shared libraries for dependencies <https://cmake.org/cmake/help/latest/variable/BUILD_SHARED_LIBS.html>`__
-``CCACHE_PROGRAM``            First found ``ccache`` executable.             Set to ``-DCCACHE_PROGRAM=NO`` to disable CCache.
+``WarpX_CCACHE``              **ON**/OFF                                     Search and use CCache to speed up rebuilds.
 ``AMReX_CUDA_PTX_VERBOSE``    ON/**OFF**                                     Print CUDA code generation statistics from ``ptxas``.
 ``WarpX_amrex_src``           *None*                                         Path to AMReX source directory (preferred if set)
 ``WarpX_amrex_repo``          ``https://github.com/AMReX-Codes/amrex.git``   Repository URI to pull and build AMReX from
@@ -124,7 +126,7 @@ CMake Option                  Default & Values                               Des
 ``WarpX_amrex_internal``      **ON**/OFF                                     Needs a pre-installed AMReX library if set to ``OFF``
 ``WarpX_openpmd_src``         *None*                                         Path to openPMD-api source directory (preferred if set)
 ``WarpX_openpmd_repo``        ``https://github.com/openPMD/openPMD-api.git`` Repository URI to pull and build openPMD-api from
-``WarpX_openpmd_branch``      ``0.15.1``                                     Repository branch for ``WarpX_openpmd_repo``
+``WarpX_openpmd_branch``      ``0.15.2``                                     Repository branch for ``WarpX_openpmd_repo``
 ``WarpX_openpmd_internal``    **ON**/OFF                                     Needs a pre-installed openPMD-api library if set to ``OFF``
 ``WarpX_picsar_src``          *None*                                         Path to PICSAR source directory (preferred if set)
 ``WarpX_picsar_repo``         ``https://github.com/ECP-WarpX/picsar.git``    Repository URI to pull and build PICSAR from
@@ -147,10 +149,12 @@ Relative paths are also supported, e.g. ``-DWarpX_amrex_src=../amrex``.
 
 Or build against an AMReX feature branch of a colleague.
 Assuming your colleague pushed AMReX to ``https://github.com/WeiqunZhang/amrex/`` in a branch ``new-feature`` then pass to ``cmake`` the arguments: ``-DWarpX_amrex_repo=https://github.com/WeiqunZhang/amrex.git -DWarpX_amrex_branch=new-feature``.
+More details on this :ref:`workflow are described here <developers-local-compile-src>`.
 
 You can speed up the install further if you pre-install these dependencies, e.g. with a package manager.
 Set ``-DWarpX_<dependency-name>_internal=OFF`` and add installation prefix of the dependency to the environment variable `CMAKE_PREFIX_PATH <https://cmake.org/cmake/help/latest/envvar/CMAKE_PREFIX_PATH.html>`__.
 Please see the :ref:`introduction to CMake <building-cmake-intro>` if this sounds new to you.
+More details on this :ref:`workflow are described here <developers-local-compile-findpackage>`.
 
 If you re-compile often, consider installing the `Ninja <https://github.com/ninja-build/ninja/wiki/Pre-built-Ninja-packages>`__ build system.
 Pass ``-G Ninja`` to the CMake configuration call to speed up parallel compiles.
@@ -221,11 +225,11 @@ For PICMI Python bindings, configure WarpX to produce a library and call our ``p
 .. code-block:: bash
 
    # find dependencies & configure for all WarpX dimensionalities
-   cmake -S . -B build -DWarpX_DIMS="1;2;RZ;3" -DWarpX_PYTHON=ON
+   cmake -S . -B build_py -DWarpX_DIMS="1;2;RZ;3" -DWarpX_PYTHON=ON
 
 
    # build and then call "python3 -m pip install ..."
-   cmake --build build --target pip_install -j 4
+   cmake --build build_py --target pip_install -j 4
 
 **That's it!**
 You can now :ref:`run a first 3D PICMI script <usage-picmi>` from our :ref:`examples <usage-examples>`.
@@ -267,7 +271,8 @@ Environment Variable          Default & Values                             Descr
 ``WARPX_OPENPMD``             **ON**/OFF                                   openPMD I/O (HDF5, ADIOS)
 ``WARPX_PRECISION``           SINGLE/**DOUBLE**                            Floating point precision (single/double)
 ``WARPX_PARTICLE_PRECISION``  SINGLE/**DOUBLE**                            Particle floating point precision (single/double), defaults to WarpX_PRECISION value if not set
-``WARPX_PSATD``               ON/**OFF**                                   Spectral solver
+``WARPX_FFT``                 ON/**OFF**                                   FFT-based solvers
+``WARPX_HEFFTE``              ON/**OFF**                                   Multi-Node FFT-based solvers
 ``WARPX_QED``                 **ON**/OFF                                   PICSAR QED (requires PICSAR)
 ``WARPX_QED_TABLE_GEN``       ON/**OFF**                                   QED table generation (requires PICSAR and Boost)
 ``BUILD_PARALLEL``            ``2``                                        Number of threads to use for parallel builds
@@ -307,11 +312,11 @@ Some Developers like to code directly against a local copy of AMReX, changing bo
    WARPX_AMREX_SRC=$PWD/../amrex python3 -m pip install --force-reinstall --no-deps -v .
 
 Additional environment control as common for CMake (:ref:`see above <building-cmake-intro>`) can be set as well, e.g. ``CC``, `CXX``, and ``CMAKE_PREFIX_PATH`` hints.
-So another sophisticated example might be: use Clang as the compiler, build with local source copies of PICSAR and AMReX, support the PSATD solver, MPI and openPMD, hint a parallel HDF5 installation in ``$HOME/sw/hdf5-parallel-1.10.4``, and only build 2D and 3D geometry:
+So another sophisticated example might be: use Clang as the compiler, build with local source copies of PICSAR and AMReX, support the FFT-based solvers, MPI and openPMD, hint a parallel HDF5 installation in ``$HOME/sw/hdf5-parallel-1.10.4``, and only build 2D and 3D geometry:
 
 .. code-block:: bash
 
-   CC=$(which clang) CXX=$(which clang++) WARPX_AMREX_SRC=$PWD/../amrex WARPX_PICSAR_SRC=$PWD/../picsar WARPX_PSATD=ON WARPX_MPI=ON WARPX_DIMS="2;3" CMAKE_PREFIX_PATH=$HOME/sw/hdf5-parallel-1.10.4:$CMAKE_PREFIX_PATH python3 -m pip install --force-reinstall --no-deps -v .
+   CC=$(which clang) CXX=$(which clang++) WARPX_AMREX_SRC=$PWD/../amrex WARPX_PICSAR_SRC=$PWD/../picsar WARPX_FFT=ON WARPX_MPI=ON WARPX_DIMS="2;3" CMAKE_PREFIX_PATH=$HOME/sw/hdf5-parallel-1.10.4:$CMAKE_PREFIX_PATH python3 -m pip install --force-reinstall --no-deps -v .
 
 Here we wrote this all in one line, but one can also set all environment variables in a development environment and keep the pip call nice and short as in the beginning.
 Note that you need to use absolute paths for external source trees, because pip builds in a temporary directory, e.g. ``export WARPX_AMREX_SRC=$HOME/src/amrex``.
@@ -322,11 +327,12 @@ This is the workflow most developers will prefer as it allows rapid re-compiles:
 .. code-block:: bash
 
    # build WarpX executables and libraries
-   cmake -S . -B build -DWarpX_DIMS="1;2;RZ;3" -DWarpX_PYTHON=ON
+   cmake -S . -B build_py -DWarpX_DIMS="1;2;RZ;3" -DWarpX_PYTHON=ON
 
    # build & install Python only
-   cmake --build build -j 4 --target pip_install
+   cmake --build build_py -j 4 --target pip_install
 
+There is also a ``--target pip_install_nodeps`` option that :ref:`skips pip-based dependency checks <developers-local-compile-pylto>`.
 
 WarpX release managers might also want to generate a self-contained source package that can be distributed to exotic architectures:
 

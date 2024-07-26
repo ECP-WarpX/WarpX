@@ -3,11 +3,11 @@
 # --- Analysis script for the hybrid-PIC example producing EM modes.
 
 import dill
-from matplotlib import colors
 import matplotlib.pyplot as plt
 import numpy as np
-from openpmd_viewer import OpenPMDTimeSeries
 import scipy.fft as fft
+from matplotlib import colors
+from openpmd_viewer import OpenPMDTimeSeries
 from scipy.interpolate import RegularGridInterpolator
 from scipy.special import j1, jn, jn_zeros
 
@@ -154,7 +154,7 @@ else:
     amps = np.abs(F_kw[2, 1, len(kz)//2-2:len(kz)//2+2])
     print("Amplitude sample: ", amps)
     assert np.allclose(
-        amps, np.array([61.4170941, 19.39380715, 101.08640009, 11.09261815])
+        amps, np.array([ 61.02377286,  19.80026021, 100.47687017,  10.83331295])
     )
 
 if sim.test:
