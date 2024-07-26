@@ -151,7 +151,7 @@ Use the following :ref:`cmake commands <building-cmake>` to compile the applicat
          source $HOME/pitzer_v100_warpx.profile
 
          export CUDAFLAGS="--host-linker-script=use-lcs" # https://github.com/ECP-WarpX/WarpX/pull/3673
-         export AMReX_CUDA_ARCH=7.0 # 7.0: V100, 8.0: V100, 9.0: H100 https://github.com/ECP-WarpX/WarpX/issues/3214
+         export AMREX_CUDA_ARCH=7.0 # 7.0: V100, 8.0: V100, 9.0: H100 https://github.com/ECP-WarpX/WarpX/issues/3214
          cmake -S . -B build_v100 -DWarpX_COMPUTE=CUDA -DWarpX_FFT=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_DIMS="1;2;RZ;3"
          cmake --build build_v100 -j 48
 
@@ -163,6 +163,8 @@ Use the following :ref:`cmake commands <building-cmake>` to compile the applicat
          rm -rf build_v100_py
          source $HOME/pitzer_v100_warpx.profile
 
+         export CUDAFLAGS="--host-linker-script=use-lcs" 
+         export AMREX_CUDA_ARCH=7.0
          cmake -S . -B build_v100_py -DWarpX_COMPUTE=CUDA -DWarpX_FFT=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_APP=OFF -DWarpX_PYTHON=ON -DWarpX_DIMS="1;2;RZ;3"
          cmake --build build_v100_py -j 48 --target pip_install
 

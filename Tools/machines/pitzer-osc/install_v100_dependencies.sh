@@ -43,10 +43,9 @@ cd -
 
 cd ${SRC_DIR}/openmpi-5.0.5
 ./configure --with-cuda=$CUDA_HOME \
-  --enable-mpi-cuda \
   --prefix=${SW_DIR}/openmpi-5.0.5
 
-make -j 16
+make -j 48
 make install
 cd -
 
@@ -59,7 +58,7 @@ cd -
 
 cd ${SRC_DIR}/hdf5-1.14.4-3
 CC=mpicc ./configure --prefix=${SW_DIR}/hdf5-1.14.4-3 --enable-parallel
-make -j 16
+make -j 48
 make install
 cd -
 
@@ -91,7 +90,7 @@ CXX=$(which CC) cmake -S ${SRC_DIR}/blaspp \
   -Dgpu_backend=cuda \
   -DCMAKE_CXX_STANDARD=17 \
   -DCMAKE_INSTALL_PREFIX=${SW_DIR}/blaspp-2024.05.31
-cmake --build ${build_dir}/blaspp-pitzer-v100-build --target install --parallel 16
+cmake --build ${build_dir}/blaspp-pitzer-v100-build --target install --parallel 48
 rm -rf ${build_dir}/blaspp-pitzer-v100-build
 
 # LAPACK++ (for PSATD+RZ)
@@ -110,7 +109,7 @@ CXX=$(which CC) CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S ${SRC_DIR}/lapackpp \
   -Dbuild_tests=OFF \
   -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON \
   -DCMAKE_INSTALL_PREFIX=${SW_DIR}/lapackpp-2024.05.31
-cmake --build ${build_dir}/lapackpp-pitzer-v100-build --target install --parallel 16
+cmake --build ${build_dir}/lapackpp-pitzer-v100-build --target install --parallel 48
 rm -rf ${build_dir}/lapackpp-pitzer-v100-build
 
 # c-blosc (I/O compression, for openPMD)
@@ -129,7 +128,7 @@ cmake -S ${SRC_DIR}/c-blosc \
   -DBUILD_BENCHMARKS=OFF \
   -DDEACTIVATE_AVX2=OFF \
   -DCMAKE_INSTALL_PREFIX=${SW_DIR}/c-blosc-1.21.6
-cmake --build ${build_dir}/c-blosc-pitzer-build --target install --parallel 16
+cmake --build ${build_dir}/c-blosc-pitzer-build --target install --parallel 48
 rm -rf ${build_dir}/c-blosc-pitzer-build
 
 # ADIOS2 (for openPMD)
@@ -152,7 +151,7 @@ cmake -S ${SRC_DIR}/adios2 \
   -DADIOS2_USE_SST=OFF \
   -DADIOS2_USE_ZeroMQ=OFF \
   -DCMAKE_INSTALL_PREFIX=${SW_DIR}/adios2-2.10.1
-cmake --build ${build_dir}/adios2-pitzer-build --target install -j 16
+cmake --build ${build_dir}/adios2-pitzer-build --target install -j 48
 rm -rf ${build_dir}/adios2-pitzer-build
 
 rm -rf ${build_dir}
