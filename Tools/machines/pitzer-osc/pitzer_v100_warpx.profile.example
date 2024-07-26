@@ -21,7 +21,7 @@ export LD_LIBRARY_PATH=${SW_DIR}/openmpi-5.0.5/lib:$LD_LIBRARY_PATH
 
 # optional: for python binding support
 module load miniconda3/24.1.2-py310
-export VENV_NAME="warpx-pitzer"
+export VENV_NAME="warpx-pitzer-v100"
 if [ -d "${SW_DIR}/venvs/${VENV_NAME}" ]; then
   source ${SW_DIR}/venvs/${VENV_NAME}/bin/activate
 fi

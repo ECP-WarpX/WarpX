@@ -148,7 +148,7 @@ Use the following :ref:`cmake commands <building-cmake>` to compile the applicat
          
          cd $HOME/src/warpx
          rm -rf build_v100
-         source $MY_V100_PROFILE
+         source $HOME/pitzer_v100_warpx.profile
 
          export CUDAFLAGS="--host-linker-script=use-lcs" # https://github.com/ECP-WarpX/WarpX/pull/3673
          export AMReX_CUDA_ARCH=7.0 # 7.0: V100, 8.0: V100, 9.0: H100 https://github.com/ECP-WarpX/WarpX/issues/3214
@@ -161,7 +161,7 @@ Use the following :ref:`cmake commands <building-cmake>` to compile the applicat
 
          cd $HOME/src/warpx
          rm -rf build_v100_py
-         source $MY_V100_PROFILE
+         source $HOME/pitzer_v100_warpx.profile
 
          cmake -S . -B build_v100_py -DWarpX_COMPUTE=CUDA -DWarpX_FFT=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_APP=OFF -DWarpX_PYTHON=ON -DWarpX_DIMS="1;2;RZ;3"
          cmake --build build_v100_py -j 48 --target pip_install
@@ -172,18 +172,18 @@ Use the following :ref:`cmake commands <building-cmake>` to compile the applicat
 
          cd $HOME/src/warpx
          rm -rf build
-         source $MY_CPU_PROFILE
+         source $HOME/pitzer_cpu_warpx.profile
 
          cmake -S . -B build -DWarpX_FFT=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_DIMS="1;2;RZ;3"
          cmake --build build -j 48
 
-      The WarpX application executables are now in ``$HOME/src/warpx/build/bin/``.
+      The WarpX application executables are now in ``$HOME/src/warpx/build/bin/``. Additionally, the following commands will install WarpX as a Python module:
 
       .. code-block:: bash
 
          cd $HOME/src/warpx
          rm -rf build_py
-         source $MY_CPU_PROFILE
+         source $HOME/pitzer_cpu_warpx.profile
 
          cmake -S . -B build_py -DWarpX_FFT=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_APP=OFF -DWarpX_PYTHON=ON -DWarpX_DIMS="1;2;RZ;3"
          cmake --build build_py -j 48 --target pip_install
@@ -227,7 +227,7 @@ Running
 
 .. tab-set::
 
-   .. tab-item:: GPU Nodes
+   .. tab-item:: V100 GPUs
 
       Pitzer's GPU partition includes:
 
