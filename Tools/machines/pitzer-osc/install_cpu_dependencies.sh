@@ -49,41 +49,40 @@ cd -
 # BLAS++ (for PSATD+RZ)
 if [ -d ${SRC_DIR}/blaspp ]; then
   cd ${SRC_DIR}/blaspp
-  git fetch
+  git fetch --prune
   git checkout v2024.05.31
   cd -
 else
   git clone -b v2024.05.31 https://github.com/icl-utk-edu/blaspp.git ${SRC_DIR}/blaspp
 fi
-rm -rf ${build_dir}/blaspp-osc-gpu-build
-cmake -S ${SRC_DIR}/blaspp \
-  -B ${build_dir}/blaspp-osc-gpu-build \
+rm -rf ${build_dir}/blaspp-pitzer-cpu-build
+CXX=$(which CC) cmake -S ${SRC_DIR}/blaspp \
+  -B ${build_dir}/blaspp-pitzer-cpu-build \
   -Duse_openmp=ON \
-  -Dgpu_backend=cuda \
+  -Dgpu_backend=OFF \
   -DCMAKE_CXX_STANDARD=17 \
   -DCMAKE_INSTALL_PREFIX=${SW_DIR}/blaspp-2024.05.31
-cmake --build ${build_dir}/blaspp-osc-gpu-build --target install --parallel 16
-rm -rf ${build_dir}/blaspp-osc-gpu-build
+cmake --build ${build_dir}/blaspp-pitzer-cpu-build --target install --parallel 16
+rm -rf ${build_dir}/blaspp-pitzer-cpu-build
 
 # LAPACK++ (for PSATD+RZ)
 if [ -d ${SRC_DIR}/lapackpp ]; then
   cd ${SRC_DIR}/lapackpp
-  git fetch
+  git fetch --prune
   git checkout v2024.05.31
   cd -
 else
   git clone -b v2024.05.31 https://github.com/icl-utk-edu/lapackpp.git ${SRC_DIR}/lapackpp
 fi
-rm -rf ${build_dir}/lapackpp-osc-gpu-build
-CXXFLAGS="-DLAPACK_FORTRAN_ADD_"
-cmake -S ${SRC_DIR}/lapackpp \
-  -B ${build_dir}/lapackpp-osc-gpu-build \
+rm -rf ${build_dir}/lapackpp-pitzer-cpu-build
+CXX=$(which CC) CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S ${SRC_DIR}/lapackpp \
+  -B ${build_dir}/lapackpp-pitzer-cpu-build \
   -DCMAKE_CXX_STANDARD=17 \
   -Dbuild_tests=OFF \
   -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON \
   -DCMAKE_INSTALL_PREFIX=${SW_DIR}/lapackpp-2024.05.31
-cmake --build ${build_dir}/lapackpp-osc-gpu-build --target install --parallel 16
-rm -rf ${build_dir}/lapackpp-osc-gpu-build
+cmake --build ${build_dir}/lapackpp-pitzer-cpu-build --target install --parallel 16
+rm -rf ${build_dir}/lapackpp-pitzer-cpu-build
 
 # c-blosc (I/O compression, for openPMD)
 if [ -d ${SRC_DIR}/c-blosc ]; then
@@ -94,15 +93,15 @@ if [ -d ${SRC_DIR}/c-blosc ]; then
 else
   git clone -b v1.21.6 https://github.com/Blosc/c-blosc.git ${SRC_DIR}/c-blosc
 fi
-rm -rf ${build_dir}/c-blosc-osc-build
+rm -rf ${build_dir}/c-blosc-pitzer-build
 cmake -S ${SRC_DIR}/c-blosc \
-  -B ${build_dir}/c-blosc-osc-build \
+  -B ${build_dir}/c-blosc-pitzer-build \
   -DBUILD_TESTS=OFF \
   -DBUILD_BENCHMARKS=OFF \
   -DDEACTIVATE_AVX2=OFF \
   -DCMAKE_INSTALL_PREFIX=${SW_DIR}/c-blosc-1.21.6
-cmake --build ${build_dir}/c-blosc-osc-build --target install --parallel 16
-rm -rf ${build_dir}/c-blosc-osc-build
+cmake --build ${build_dir}/c-blosc-pitzer-build --target install --parallel 16
+rm -rf ${build_dir}/c-blosc-pitzer-build
 
 # ADIOS2 (for openPMD)
 if [ -d ${SRC_DIR}/adios2 ]; then
@@ -113,9 +112,9 @@ if [ -d ${SRC_DIR}/adios2 ]; then
 else
   git clone -b v2.10.1 https://github.com/ornladios/ADIOS2.git ${SRC_DIR}/adios2
 fi
-rm -rf ${build_dir}/adios2-osc-build
+rm -rf ${build_dir}/adios2-pitzer-build
 cmake -S ${SRC_DIR}/adios2 \
-  -B ${build_dir}/adios2-osc-build \
+  -B ${build_dir}/adios2-pitzer-build \
   -DBUILD_TESTING=OFF \
   -DADIOS2_BUILD_EXAMPLES=OFF \
   -DADIOS2_USE_Blosc=ON \
@@ -124,8 +123,8 @@ cmake -S ${SRC_DIR}/adios2 \
   -DADIOS2_USE_SST=OFF \
   -DADIOS2_USE_ZeroMQ=OFF \
   -DCMAKE_INSTALL_PREFIX=${SW_DIR}/adios2-2.10.1
-cmake --build ${build_dir}/adios2-osc-build --target install -j 16
-rm -rf ${build_dir}/adios2-osc-build
+cmake --build ${build_dir}/adios2-pitzer-build --target install -j 16
+rm -rf ${build_dir}/adios2-pitzer-build
 
 rm -rf ${build_dir}
 
