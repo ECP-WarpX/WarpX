@@ -48,7 +48,7 @@ void ElasticCollisionPerez (
     T_PR const  T1, T_PR const  T2,
     T_PR const  q1, T_PR const  q2,
     T_PR const  m1, T_PR const  m2,
-    T_R const  dt, T_PR const  L, T_PR const  dV,
+    T_R const  dt, T_PR const  L, T_R const  dV,
     amrex::RandomEngine const& engine,
     bool const isSameSpecies, T_index coll_idx)
 {
