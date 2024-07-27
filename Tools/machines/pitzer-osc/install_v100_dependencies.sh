@@ -13,9 +13,9 @@ set -eu -o pipefail
 
 # Check: ######################################################################
 #
-#   Was pitzer_cpu_warpx.profile sourced and configured correctly?
+#   Was pitzer_v100_warpx.profile sourced and configured correctly?
 if [ -z ${proj-} ]; then
-  echo "WARNING: The 'proj' variable is not yet set in your pitzer_cpu_warpx.profile file! Please edit its line 2 to continue!"
+  echo "WARNING: The 'proj' variable is not yet set in your pitzer_v100_warpx.profile file! Please edit its line 2 to continue!"
   exit 1
 fi
 

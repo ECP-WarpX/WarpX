@@ -17,12 +17,10 @@ export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
 echo "GPU Information:"
 nvidia-smi
 
-# pass this option to warpx executable only if compiled with mvapich2-gdr or openmpi-cuda
-# GPU_AWARE_MPI="amrex.use_gpu_aware_mpi=1"
+GPU_AWARE_MPI="amrex.use_gpu_aware_mpi=1"
 
 # executable & inputs file or python interpreter & PICMI script here
 EXE=${HOME}/src/warpx/build_v100/bin/warpx.2d
-EXE=${SW}
 INPUTS=inputs
 
-srun --cpu-bind=cores ${EXE} ${INPUTS} >./logs/${SLURM_JOB_NAME}_${SLURM_JOBID}.log 2>&1
+srun --cpu-bind=cores ${EXE} ${INPUTS} ${GPU_AWARE_MPI} >./logs/${SLURM_JOB_NAME}_${SLURM_JOBID}.log 2>&1

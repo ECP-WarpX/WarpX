@@ -259,15 +259,15 @@ Running
 
       To submit a job to the CPU partition, use the provided batch script. Ensure you have copied the script to your working directory.
 
-      .. literalinclude:: ../../../../Tools/machines/pitzer-osc/pitzer.sbatch
+      .. literalinclude:: ../../../../Tools/machines/pitzer-osc/pitzer_cpu.sbatch
          :language: bash
-         :caption: Copy this file from ``$HOME/src/warpx/Tools/machines/pitzer-osc/pitzer.sbatch``.
+         :caption: Copy this file from ``$HOME/src/warpx/Tools/machines/pitzer-osc/pitzer_cpu.sbatch``.
 
       Submit your job with:
 
       .. code-block:: bash
 
-         sbatch pitzer.sbatch
+         sbatch pitzer_cpu.sbatch
 
 .. _post-processing-osc:
 
