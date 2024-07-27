@@ -4,7 +4,7 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "PsatdAlgorithmJRm.H"
+#include "PsatdAlgorithmJRhom.H"
 
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -29,7 +29,7 @@
 
 using namespace amrex::literals;
 
-PsatdAlgorithmJRm::PsatdAlgorithmJRm(
+PsatdAlgorithmJRhom::PsatdAlgorithmJRhom(
     const SpectralKSpace& spectral_kspace,
     const amrex::DistributionMapping& dm,
     const SpectralFieldIndex& spectral_index,
@@ -82,7 +82,7 @@ PsatdAlgorithmJRm::PsatdAlgorithmJRm(
 }
 
 void
-PsatdAlgorithmJRm::pushSpectralFields (SpectralFieldData& f) const
+PsatdAlgorithmJRhom::pushSpectralFields (SpectralFieldData& f) const
 {
     const amrex::Real dt = m_dt;
     const bool update_with_rho = m_update_with_rho;
@@ -347,7 +347,7 @@ PsatdAlgorithmJRm::pushSpectralFields (SpectralFieldData& f) const
     }
 }
 
-void PsatdAlgorithmJRm::InitializeSpectralCoefficients (
+void PsatdAlgorithmJRhom::InitializeSpectralCoefficients (
     const SpectralKSpace& spectral_kspace,
     const amrex::DistributionMapping& dm,
     amrex::Real dt)
@@ -461,7 +461,7 @@ void PsatdAlgorithmJRm::InitializeSpectralCoefficients (
     }
 }
 
-void PsatdAlgorithmJRm::InitializeSpectralCoefficientsAveraging (
+void PsatdAlgorithmJRhom::InitializeSpectralCoefficientsAveraging (
     const SpectralKSpace& spectral_kspace,
     const amrex::DistributionMapping& dm,
     amrex::Real dt)
@@ -541,10 +541,10 @@ void PsatdAlgorithmJRm::InitializeSpectralCoefficientsAveraging (
     }
 }
 
-void PsatdAlgorithmJRm::CurrentCorrection (SpectralFieldData& field_data)
+void PsatdAlgorithmJRhom::CurrentCorrection (SpectralFieldData& field_data)
 {
     // Profiling
-    BL_PROFILE("PsatdAlgorithmJRm::CurrentCorrection");
+    BL_PROFILE("PsatdAlgorithmJRhom::CurrentCorrection");
 
     const bool J_constant = (m_J_in_time   == JInTime::Constant);
     const bool rho_linear = (m_rho_in_time == RhoInTime::Linear);
@@ -610,10 +610,10 @@ void PsatdAlgorithmJRm::CurrentCorrection (SpectralFieldData& field_data)
 }
 
 void
-PsatdAlgorithmJRm::VayDeposition (SpectralFieldData& field_data)
+PsatdAlgorithmJRhom::VayDeposition (SpectralFieldData& field_data)
 {
     // Profiling
-    BL_PROFILE("PsatdAlgorithmJRm::VayDeposition()");
+    BL_PROFILE("PsatdAlgorithmJRhom::VayDeposition()");
 
     const bool J_constant = (m_J_in_time   == JInTime::Constant);
     const bool rho_linear = (m_rho_in_time == RhoInTime::Linear);

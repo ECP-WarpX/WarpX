@@ -4,7 +4,7 @@ foreach(D IN LISTS WarpX_DIMS)
       PRIVATE
         PsatdAlgorithmFirstOrder.cpp
         PsatdAlgorithmGalilean.cpp
-        PsatdAlgorithmJRm.cpp
+        PsatdAlgorithmJRhom.cpp
         PsatdAlgorithmPml.cpp
         SpectralBaseAlgorithm.cpp
         PsatdAlgorithmComoving.cpp

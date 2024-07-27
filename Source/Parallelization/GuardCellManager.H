@@ -41,7 +41,7 @@ public:
      * \param v_galilean Velocity used in the Galilean PSATD scheme
      * \param v_comoving Velocity used in the comoving PSATD scheme
      * \param safe_guard_cells Run in safe mode, exchanging more guard cells, and more often in the PIC loop (for debugging).
-     * \param do_psatd_JRm Whether to use the PSATD-JRm scheme
+     * \param do_psatd_JRhom Whether to use the PSATD-JRhom scheme
      * \param fft_do_time_averaging Whether to average the E and B field in time (with PSATD) before interpolating them onto the macro-particles
      * \param do_pml whether pml is turned on (only used by RZ PSATD)
      * \param do_pml_in_domain whether pml is done in the domain (only used by RZ PSATD)
@@ -66,7 +66,7 @@ public:
         const amrex::Vector<amrex::Real>& v_galilean,
         const amrex::Vector<amrex::Real>& v_comoving,
         bool safe_guard_cells,
-        int do_psatd_JRm,
+        int do_psatd_JRhom,
         bool fft_do_time_averaging,
         bool do_pml,
         int do_pml_in_domain,
