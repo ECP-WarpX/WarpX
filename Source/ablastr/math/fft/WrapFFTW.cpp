@@ -82,6 +82,49 @@ namespace ablastr::math::anyfft
         return fft_plan;
     }
 
+    FFTplan CreatePlanMany(const int *real_size, amrex::Real * real_array,
+                           Complex * complex_array, const direction dir, const int dim, 
+                           int howmany, const int *inembed, int istride, int idist,
+                           const int *onembed, int ostride, int odist){
+
+        FFTplan fft_plan;
+
+#if defined(AMREX_USE_OMP) && defined(WarpX_FFTW_OMP)
+#   ifdef AMREX_USE_FLOAT
+        fftwf_init_threads();
+        fftwf_plan_with_nthreads(omp_get_max_threads());
+#   else
+        fftw_init_threads();
+        fftw_plan_with_nthreads(omp_get_max_threads());
+#   endif
+#endif
+
+        if (dir == direction::R2C){
+        
+            fft_plan.m_plan = fftw_plan_many_dft_r2c(dim, real_size, howmany,
+                                                real_array, inembed,
+                                                istride, idist,
+                                                complex_array, onembed,
+                                                ostride, odist, FFTW_ESTIMATE);
+        } else if (dir == direction::C2R){
+
+            fft_plan.m_plan = fftw_plan_many_dft_c2r(dim, real_size, howmany,
+                                                complex_array, inembed,
+                                                istride, idist,
+                                                real_array, onembed,
+                                                ostride, odist, FFTW_ESTIMATE);
+
+        }
+
+        // Store meta-data in fft_plan
+        fft_plan.m_real_array = real_array;
+        fft_plan.m_complex_array = complex_array;
+        fft_plan.m_dir = dir;
+        fft_plan.m_dim = dim;
+
+        return fft_plan;
+    }
+
     void DestroyPlan(FFTplan& fft_plan)
     {
 #  ifdef AMREX_USE_FLOAT

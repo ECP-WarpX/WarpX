@@ -28,11 +28,11 @@ namespace ablastr::fields
      * @param[in] y y-coordinate of given location
      * @param[in] z z-coordinate of given location
      *
-     * @return the integrated Green function G
+     * @return the integrated Green function G in 3D
      */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     amrex::Real
-    IntegratedPotential (amrex::Real x, amrex::Real y, amrex::Real z)
+    IntegratedPotential3D (amrex::Real x, amrex::Real y, amrex::Real z)
     {
         using namespace amrex::literals;
 
@@ -44,6 +44,28 @@ namespace ablastr::fields
             + y*z*std::asinh( x/std::sqrt(y*y + z*z) )
             + x*z*std::asinh( y/std::sqrt(x*x + z*z) )
             + x*y*std::asinh( z/std::sqrt(x*x + y*y) );
+        return G;
+    }
+
+    /** @brief Implements equation 2 in https://doi.org/10.1103/PhysRevSTAB.10.129901
+     *         with some modification to symmetrize the function.
+     *
+     * @param[in] x x-coordinate of given location
+     * @param[in] y y-coordinate of given location
+     *
+     * @return the integrated Green function G in 2D
+     */
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    amrex::Real
+    IntegratedPotential2D (amrex::Real x, amrex::Real y)
+    {
+        using namespace amrex::literals;
+
+        amrex::Real const G = 3*x*y 
+                              - x*x * std::atan(y/x)
+                              - y*y * std::atan(x/y)
+                              - x*y * std::log(x*x + y*y);
+
         return G;
     }
 
