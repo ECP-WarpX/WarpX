@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PSATD_ALGORITHM_JRM_H_
-#define WARPX_PSATD_ALGORITHM_JRM_H_
+#ifndef WARPX_PSATD_ALGORITHM_JRHOM_H_
+#define WARPX_PSATD_ALGORITHM_JRHOM_H_
 
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #include "FieldSolver/SpectralSolver/SpectralKSpace.H"
@@ -22,17 +22,17 @@
 
 #if WARPX_USE_FFT
 /*
- * \brief Class that updates the fields in spectral space according to the PSATD-JRm algorithm
+ * \brief Class that updates the fields in spectral space according to the PSATD-JRhom algorithm
  *        and stores the coefficients of the corresponding update equations. J is assumed to be
  *        linear in time and two currents, deposited at the beginning and the end of the time step,
  *        are used for the PSATD update equations, instead of only one current deposited at half time.
  */
-class PsatdAlgorithmJRm : public SpectralBaseAlgorithm
+class PsatdAlgorithmJRhom : public SpectralBaseAlgorithm
 {
     public:
 
         /**
-         * \brief Constructor of the class PsatdAlgorithmJRm
+         * \brief Constructor of the class PsatdAlgorithmJRhom
          *
          * \param[in] spectral_kspace spectral space
          * \param[in] dm distribution mapping
@@ -47,7 +47,7 @@ class PsatdAlgorithmJRm : public SpectralBaseAlgorithm
          * \param[in] dive_cleaning Update F as part of the field update, so that errors in divE=rho propagate away at the speed of light
          * \param[in] divb_cleaning Update G as part of the field update, so that errors in divB=0 propagate away at the speed of light
          */
-        PsatdAlgorithmJRm (
+        PsatdAlgorithmJRhom (
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
             const SpectralFieldIndex& spectral_index,
@@ -64,7 +64,7 @@ class PsatdAlgorithmJRm : public SpectralBaseAlgorithm
             int rho_in_time);
 
         /**
-         * \brief Updates the E and B fields in spectral space, according to the PSATD-JRm equations
+         * \brief Updates the E and B fields in spectral space, according to the PSATD-JRhom equations
          *
          * \param[in,out] f all the fields in spectral space
          */
@@ -133,4 +133,4 @@ class PsatdAlgorithmJRm : public SpectralBaseAlgorithm
         int m_rho_in_time;
 };
 #endif // WARPX_USE_FFT
-#endif // WARPX_PSATD_ALGORITHM_JRM_H_
+#endif // WARPX_PSATD_ALGORITHM_JRHOM_H_

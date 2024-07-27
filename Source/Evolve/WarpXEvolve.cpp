@@ -136,10 +136,10 @@ WarpX::Evolve (int numsteps)
             const bool skip_deposition = true;
             PushParticlesandDeposit(cur_time, skip_deposition);
         }
-        // Electromagnetic case: PSATD-JRm algorithm
-        else if (do_psatd_JRm)
+        // Electromagnetic case: PSATD-JRhom algorithm
+        else if (do_psatd_JRhom)
         {
-            OneStep_psatd_JRm(cur_time);
+            OneStep_psatd_JRhom(cur_time);
         }
         // Electromagnetic case: no subcycling or no mesh refinement
         else if ( !do_subcycling || (finest_level == 0))
@@ -602,13 +602,13 @@ void WarpX::SyncCurrentAndRho ()
 }
 
 void
-WarpX::OneStep_psatd_JRm (const amrex::Real cur_time)
+WarpX::OneStep_psatd_JRhom (const amrex::Real cur_time)
 {
 #ifdef WARPX_USE_FFT
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD,
-        "PSATD-JRm algorithm not implemented for FDTD"
+        "PSATD-JRhom algorithm not implemented for FDTD"
     );
 
     const int rho_mid = spectral_solver_fp[0]->m_spectral_index.rho_mid;
@@ -619,7 +619,7 @@ WarpX::OneStep_psatd_JRm (const amrex::Real cur_time)
     const bool skip_deposition = true;
     PushParticlesandDeposit(cur_time, skip_deposition);
 
-    // Initialize PSATD-JRm loop:
+    // Initialize PSATD-JRhom loop:
 
     // 1) Prepare E,B,F,G fields in spectral space
     PSATDForwardTransformEB(Efield_fp, Bfield_fp, Efield_cp, Bfield_cp);
@@ -659,14 +659,14 @@ WarpX::OneStep_psatd_JRm (const amrex::Real cur_time)
     }
 
     // Number of depositions for multi-J scheme
-    const int n_deposit = WarpX::do_psatd_JRm_n_depositions;
+    const int n_deposit = WarpX::do_psatd_JRhom_n_depositions;
     // Time sub-step for each multi-J deposition
     const amrex::Real sub_dt = dt[0] / static_cast<amrex::Real>(n_deposit);
     // Whether to perform multi-J depositions on a time interval that spans
     // one or two full time steps (from n*dt to (n+1)*dt, or from n*dt to (n+2)*dt)
     const int n_loop = (WarpX::fft_do_time_averaging) ? 2*n_deposit : n_deposit;
 
-    // Loop over PSATD-JRm depositions
+    // Loop over PSATD-JRhom depositions
     for (int i_deposit = 0; i_deposit < n_loop; i_deposit++)
     {
         // Move J from new to old if J is linear or quadratic in time
@@ -726,7 +726,7 @@ WarpX::OneStep_psatd_JRm (const amrex::Real cur_time)
         if (WarpX::current_correction)
         {
             WARPX_ABORT_WITH_MESSAGE(
-                "Current correction not implemented for PSATD-JRm algorithm.");
+                "Current correction not implemented for PSATD-JRhom algorithm.");
         }
 
         // Advance E,B,F,G fields in time and update the average fields
@@ -782,7 +782,7 @@ WarpX::OneStep_psatd_JRm (const amrex::Real cur_time)
 #else
     amrex::ignore_unused(cur_time);
     WARPX_ABORT_WITH_MESSAGE(
-        "PSATD-JRm algorithm not implemented for FDTD");
+        "PSATD-JRhom algorithm not implemented for FDTD");
 #endif // WARPX_USE_FFT
 }
 

@@ -306,10 +306,10 @@ WarpX::PrintMainPICparameters ()
     if (WarpX::do_divb_cleaning) {
       amrex::Print() << "                      | - div(B) cleaning is ON \n";
       }
-    if (do_psatd_JRm == 1){
-      amrex::Print() << "                      | - PSATD-JRm deposition is ON \n";
-      amrex::Print() << "                      |   - do_psatd_JRm_n_depositions = "
-                                        << WarpX::do_psatd_JRm_n_depositions << "\n";
+    if (do_psatd_JRhom == 1){
+      amrex::Print() << "                      | - PSATD-JRhom deposition is ON \n";
+      amrex::Print() << "                      |   - do_psatd_JRhom_n_depositions = "
+                                        << WarpX::do_psatd_JRhom_n_depositions << "\n";
       if (J_in_time == JInTime::Linear){
         amrex::Print() << "                      |   - J_in_time = linear \n";
       }
