@@ -62,7 +62,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
         {0,0,0},
         {nx, 2*ny-1, nz},
         amrex::IntVect::TheNodeVector() );
-#else 
+#else
     amrex::Box const realspace_box = amrex::Box(
         {domain.smallEnd(0), domain.smallEnd(1), domain.smallEnd(2)},
         {2*nx-1+domain.smallEnd(0), 2*ny-1+domain.smallEnd(1), 2*nz-1+domain.smallEnd(2)},
@@ -73,7 +73,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
         {nx, 2*ny-1, 2*nz-1},
         amrex::IntVect::TheNodeVector() );
 #endif
-    
+
     amrex::BoxArray const spectralspace_ba = amrex::BoxArray( spectralspace_box );
     // Define a distribution mapping for the global FFT, with only one box
     amrex::DistributionMapping dm_global_fft;
@@ -208,7 +208,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
 
 /*    FFTplan CreatePlanMany(const amrex::IntVect& real_size, amrex::Real * real_array,
-                           Complex * complex_array, const direction dir, const int dim, 
+                           Complex * complex_array, const direction dir, const int dim,
                            int howmany, const int *inembed, int istride, int idist,
                            const int *onembed, int ostride, int odist){*/
 #ifdef SLICED
@@ -218,15 +218,15 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
         forward_plan_rho[mfi] = ablastr::math::anyfft::CreatePlanMany(
                            fft_size, tmp_rho[mfi].dataPtr(),
-                           reinterpret_cast<ablastr::math::anyfft::Complex*>(tmp_rho_fft[mfi].dataPtr()), 
-                           ablastr::math::anyfft::direction::R2C, AMREX_SPACEDIM-1, 
+                           reinterpret_cast<ablastr::math::anyfft::Complex*>(tmp_rho_fft[mfi].dataPtr()),
+                           ablastr::math::anyfft::direction::R2C, AMREX_SPACEDIM-1,
                            nrz, NULL, 1, nrx*nry, NULL, 1, nsx*nsy);
 
         // FFT of G
         forward_plan_G[mfi] = ablastr::math::anyfft::CreatePlanMany(
                            fft_size, tmp_G[mfi].dataPtr(),
-                           reinterpret_cast<ablastr::math::anyfft::Complex*>(tmp_G_fft[mfi].dataPtr()), 
-                           ablastr::math::anyfft::direction::R2C, AMREX_SPACEDIM-1, 
+                           reinterpret_cast<ablastr::math::anyfft::Complex*>(tmp_G_fft[mfi].dataPtr()),
+                           ablastr::math::anyfft::direction::R2C, AMREX_SPACEDIM-1,
                            nrz, NULL, 1, nrx*nry, NULL, 1, nsx*nsy);
 #else
         // Note: the size of the real-space box and spectral-space box
@@ -263,12 +263,12 @@ computePhiIGF ( amrex::MultiFab const & rho,
     for ( amrex::MFIter mfi(spectralspace_ba, dm_global_fft); mfi.isValid(); ++mfi ){
 
 #ifdef SLICED
-        const int fft_size[] = {nry, nrx};        
+        const int fft_size[] = {nry, nrx};
         // Inverse FFT: is done in-place, in the array of G
         backward_plan[mfi] = ablastr::math::anyfft::CreatePlanMany(
             fft_size, tmp_G[mfi].dataPtr(),
             reinterpret_cast<ablastr::math::anyfft::Complex*>( tmp_G_fft[mfi].dataPtr() ),
-            ablastr::math::anyfft::direction::C2R, AMREX_SPACEDIM-1, 
+            ablastr::math::anyfft::direction::C2R, AMREX_SPACEDIM-1,
             nsz, NULL, 1, nsx*nsy, NULL, 1, nrx*nry);
 #else
         // Note: the size of the real-space box and spectral-space box

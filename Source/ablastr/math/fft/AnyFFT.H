@@ -124,7 +124,7 @@ namespace ablastr::math::anyfft
      * \param[in] dim direction, number of dimensions of the arrays. Must be <= AMREX_SPACEDIM.
      */
     FFTplan CreatePlanMany(const int *real_size, amrex::Real * real_array,
-                           Complex * complex_array, const direction dir, const int dim, 
+                           Complex * complex_array, const direction dir, const int dim,
                            int howmany, const int *inembed, int istride, int idist,
                            const int *onembed, int ostride, int odist);
 

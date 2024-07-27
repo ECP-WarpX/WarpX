@@ -83,7 +83,7 @@ namespace ablastr::math::anyfft
     }
 
     FFTplan CreatePlanMany(const int *real_size, amrex::Real * real_array,
-                           Complex * complex_array, const direction dir, const int dim, 
+                           Complex * complex_array, const direction dir, const int dim,
                            int howmany, const int *inembed, int istride, int idist,
                            const int *onembed, int ostride, int odist){
 
@@ -100,7 +100,7 @@ namespace ablastr::math::anyfft
 #endif
 
         if (dir == direction::R2C){
-        
+
             fft_plan.m_plan = fftw_plan_many_dft_r2c(dim, real_size, howmany,
                                                 real_array, inembed,
                                                 istride, idist,

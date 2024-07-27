@@ -61,7 +61,7 @@ namespace ablastr::fields
     {
         using namespace amrex::literals;
 
-        amrex::Real const G = 3*x*y 
+        amrex::Real const G = 3*x*y
                               - x*x * std::atan(y/x)
                               - y*y * std::atan(x/y)
                               - x*y * std::log(x*x + y*y);

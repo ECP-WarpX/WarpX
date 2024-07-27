@@ -71,7 +71,7 @@ namespace ablastr::math::anyfft
 
 
     FFTplan CreatePlanMany(const int *real_size, amrex::Real * real_array,
-                           Complex * complex_array, const direction dir, const int dim, 
+                           Complex * complex_array, const direction dir, const int dim,
                            int howmany, const int *inembed, int istride, int idist,
                            const int *onembed, int ostride, int odist){
 
@@ -79,8 +79,8 @@ namespace ablastr::math::anyfft
         ABLASTR_PROFILE("ablastr::math::anyfft::CreatePlan");
 
         // Initialize fft_plan.m_plan with the vendor fft plan.
-        cufftResult result;       
-        
+        cufftResult result;
+
         if (dir == direction::R2C){
             result = cufftPlan3d( &(fft_plan.m_plan), dim, real_size, inembed, istride, idist, onembed, ostride, odist, VendorR2C, howmany);
         }
