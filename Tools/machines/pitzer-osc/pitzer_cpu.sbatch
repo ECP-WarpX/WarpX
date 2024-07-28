@@ -9,11 +9,11 @@
 
 # Pitzer cluster has 224 CPU nodes equipped with dual Intel Xeon 6148 (40 cores per node) and 340 CPU nodes with dual Intel Xeon 8268 (48 cores per node). https://www.osc.edu/resources/technical_support/supercomputers/pitzer
 
-source ${HOME}/pitzer_warpx.profile
+source ${HOME}/pitzer_cpu_warpx.profile
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
 
 # executable & inputs file or python interpreter & PICMI script here
-EXE=${HOME}/src/warpx/build_v100/bin/warpx.2d
+EXE=${HOME}/src/warpx/build/bin/warpx.2d
 INPUTS=inputs
 
 srun --cpu-bind=cores ${EXE} ${INPUTS} >./logs/${SLURM_JOB_NAME}_${SLURM_JOBID}.log 2>&1

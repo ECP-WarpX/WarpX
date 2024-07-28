@@ -11,7 +11,7 @@
 
 # Pitzer cluster has 32 GPU nodes with dual Intel Xeon 6148 and dual V100 (16GB) GPUs and 42 nodes with dual Intel Xeon 8268 and dual V100 (32GB) GPUs. https://www.osc.edu/resources/technical_support/supercomputers/pitzer
 
-source ${HOME}/pitzer_warpx.profile
+source ${HOME}/pitzer_v100_warpx.profile
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
 
 echo "GPU Information:"
