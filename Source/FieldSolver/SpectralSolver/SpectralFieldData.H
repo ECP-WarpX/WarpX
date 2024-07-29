@@ -42,7 +42,7 @@ class SpectralFieldIndex
          *
          * \param[in] update_with_rho whether rho is used in the field update equations
          * \param[in] time_averaging  whether the time averaging algorithm is used
-         * \param[in] J_in_time       the multi-J algorithm used (hence two currents
+         * \param[in] J_in_time       the PSATD-JRhom algorithm used (hence two currents
          *                            computed at the beginning and the end of the time interval
          *                            instead of one current computed at half time)
          * \param[in] rho_in_time     the multi-rho algorithm used (hence two densities
