@@ -147,7 +147,7 @@ PsatdAlgorithmJRhom::pushSpectralFields (SpectralFieldData& f) const
 
             // Shortcuts for the values of rho
             Complex rho_old, rho_mid, rho_new;
-            if (rho_constant || rho_quadratic) rho_mid = fields(i,j,k,Idx.rho_mid);
+            if (rho_constant || rho_quadratic) { rho_mid = fields(i,j,k,Idx.rho_mid); }
             if (rho_linear || rho_quadratic)
             {
                 rho_old = fields(i,j,k,Idx.rho_old);
@@ -177,8 +177,8 @@ PsatdAlgorithmJRhom::pushSpectralFields (SpectralFieldData& f) const
             }
 
             Complex F_old, G_old;
-            if (dive_cleaning) F_old = fields(i,j,k,Idx.F);
-            if (divb_cleaning) G_old = fields(i,j,k,Idx.G);
+            if (dive_cleaning) { F_old = fields(i,j,k,Idx.F); }
+            if (divb_cleaning) { G_old = fields(i,j,k,Idx.G); }
 
             // k vector values
             const amrex::Real kx = modified_kx_arr[i];
@@ -561,7 +561,7 @@ void PsatdAlgorithmJRhom::CurrentCorrection (SpectralFieldData& field_data)
         const amrex::Box& bx = field_data.fields[mfi].box();
 
         // Extract arrays for the fields to be updated
-        amrex::Array4<Complex> fields = field_data.fields[mfi].array();
+        const amrex::Array4<Complex> fields = field_data.fields[mfi].array();
 
         // Extract pointers for the k vectors
         const amrex::Real* const modified_kx_arr = modified_kx_vec[mfi].dataPtr();
@@ -630,7 +630,7 @@ PsatdAlgorithmJRhom::VayDeposition (SpectralFieldData& field_data)
         const amrex::Box& bx = field_data.fields[mfi].box();
 
         // Extract arrays for the fields to be updated
-        amrex::Array4<Complex> fields = field_data.fields[mfi].array();
+        const amrex::Array4<Complex> fields = field_data.fields[mfi].array();
 
         // Extract pointers for the modified k vectors
         const amrex::Real* const modified_kx_arr = modified_kx_vec[mfi].dataPtr();
@@ -662,18 +662,18 @@ PsatdAlgorithmJRhom::VayDeposition (SpectralFieldData& field_data)
 #endif
 
             // Compute Jx
-            if (kx_mod != 0._rt) fields(i,j,k,Idx.Jx_mid) = I*Dx/kx_mod;
-            else                 fields(i,j,k,Idx.Jx_mid) = 0._rt;
+            if (kx_mod != 0._rt) { fields(i,j,k,Idx.Jx_mid) = I*Dx/kx_mod; }
+            else                 { fields(i,j,k,Idx.Jx_mid) = 0._rt; }
 
 #if defined(WARPX_DIM_3D)
             // Compute Jy
-            if (ky_mod != 0._rt) fields(i,j,k,Idx.Jy_mid) = I*Dy/ky_mod;
-            else                 fields(i,j,k,Idx.Jy_mid) = 0._rt;
+            if (ky_mod != 0._rt) { fields(i,j,k,Idx.Jy_mid) = I*Dy/ky_mod; }
+            else                 { fields(i,j,k,Idx.Jy_mid) = 0._rt; }
 #endif
 
             // Compute Jz
-            if (kz_mod != 0._rt) fields(i,j,k,Idx.Jz_mid) = I*Dz/kz_mod;
-            else                 fields(i,j,k,Idx.Jz_mid) = 0._rt;
+            if (kz_mod != 0._rt) { fields(i,j,k,Idx.Jz_mid) = I*Dz/kz_mod; }
+            else                 { fields(i,j,k,Idx.Jz_mid) = 0._rt; }
         });
     }
 }

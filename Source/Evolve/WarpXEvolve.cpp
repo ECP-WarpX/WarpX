@@ -670,7 +670,7 @@ WarpX::OneStep_psatd_JRhom (const amrex::Real cur_time)
     for (int i_deposit = 0; i_deposit < n_loop; i_deposit++)
     {
         // Move J from new to old if J is linear or quadratic in time
-        if (J_in_time != JInTime::Constant) PSATDMoveJNewToJOld();
+        if (J_in_time != JInTime::Constant) { PSATDMoveJNewToJOld(); }
 
         const amrex::Real t_deposit_current = (J_in_time == JInTime::Linear) ?
             (i_deposit-n_deposit+1)*sub_dt : (i_deposit-n_deposit+0.5_rt)*sub_dt;
