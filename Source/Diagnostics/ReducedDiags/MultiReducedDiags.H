@@ -53,6 +53,10 @@ public:
      *  @param[in] step current iteration time */
     void WriteToFile (int step);
 
+    bool MustRecomputeCosts(int step);
+
+private:
+    std::vector<size_t> m_load_balance_diags;
 };
 
 #endif

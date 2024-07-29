@@ -531,11 +531,13 @@ WarpX::InitData ()
         multi_diags->FilterComputePackFlush(istep[0] - 1);
 
         // Write reduced diagnostics before the first iteration.
-        //
-        //  TODO: conditionally recompute weights
-        //
         if (reduced_diags->m_plot_rd != 0)
         {
+            if (reduced_diags->MustRecomputeCosts(istep[0]-1)){
+                auto& load_balance = LoadBalance::get_instance();
+                load_balance.compute_costs_if_heuristic(
+                    finestLevel(), Efield_fp, *mypc);
+            }
             reduced_diags->ComputeDiags(istep[0] - 1);
             reduced_diags->WriteToFile(istep[0] - 1);
         }

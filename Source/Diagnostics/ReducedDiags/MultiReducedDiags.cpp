@@ -71,7 +71,7 @@ MultiReducedDiags::MultiReducedDiags ()
     };
     // loop over all reduced diags and fill m_multi_rd with requested reduced diags
     std::transform(m_rd_names.begin(), m_rd_names.end(), std::back_inserter(m_multi_rd),
-        [&](const auto& rd_name){
+        [&, idx = 0](const auto& rd_name) mutable {
             const ParmParse pp_rd_name(rd_name);
 
             // read reduced diags type
@@ -82,6 +82,10 @@ MultiReducedDiags::MultiReducedDiags ()
                 reduced_diags_dictionary.count(rd_type) != 0,
                 rd_type + " is not a valid type for reduced diagnostic " + rd_name
             );
+
+            if (rd_type == "LoadBalanceCosts" || "LoadBalanceEfficiency"){
+                m_load_balance_diags.push_back(idx++);
+            }
 
             return reduced_diags_dictionary.at(rd_type)(rd_name);
         });
@@ -137,4 +141,15 @@ void MultiReducedDiags::WriteToFile (int step)
     }
     // end loop over all reduced diags
 }
+
+bool MultiReducedDiags::MustRecomputeCosts(int step)
+{
+    for (const auto idx : m_load_balance_diags){
+        if ( m_multi_rd[idx]->m_intervals.contains(step+1)){
+            return true;
+        }
+    }
+    return false;
+}
+
 // end void MultiReducedDiags::WriteToFile
