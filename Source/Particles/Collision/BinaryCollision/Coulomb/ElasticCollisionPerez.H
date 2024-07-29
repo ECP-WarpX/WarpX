@@ -71,7 +71,7 @@ void ElasticCollisionPerez (
 
     // compute Debye length lmdD (if not using a fixed L = Coulomb log)
     T_PR lmdD = T_PR(-1.0);
-    if ( L < T_PR(0.0) ) {
+    if ( L <= T_PR(0.0) ) {
         lmdD = T_PR(1.0)/std::sqrt( n1*q1*q1/(T1*PhysConst::ep0) +
                                     n2*q2*q2/(T2*PhysConst::ep0) );
     }
