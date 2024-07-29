@@ -531,6 +531,9 @@ WarpX::InitData ()
         multi_diags->FilterComputePackFlush(istep[0] - 1);
 
         // Write reduced diagnostics before the first iteration.
+        //
+        //  TODO: conditionally recompute weights
+        //
         if (reduced_diags->m_plot_rd != 0)
         {
             reduced_diags->ComputeDiags(istep[0] - 1);

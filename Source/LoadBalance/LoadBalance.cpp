@@ -18,6 +18,7 @@
 
 #include <AMReX_Gpu.H>
 #include <AMReX_GpuAtomic.H>
+#include <AMReX_ParallelDescriptor.H>
 #include <AMReX_ParmParse.H>
 
 #include <string>
@@ -298,6 +299,14 @@ amrex::Real LoadBalance::get_efficiency (const int lev) const
     return  m_efficiency[lev];
 }
 
+[[nodiscard]]
+amrex::Real LoadBalance::get_efficiency_ratio_threshold () const
+{
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_initialized,
+        "LoadBalance must be initialized before calling get_efficiency_ratio_threshold");
+    return  m_efficiency_ratio_threshold;
+}
+
 void LoadBalance::reset_costs (const int finest_level)
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_initialized,
@@ -350,6 +359,7 @@ void LoadBalance::allocate (const int lev,
 
 void LoadBalance::compute_costs_if_heuristic (
     const int finest_level,
+    const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& efield_ref,
     const MultiParticleContainer& mypc_ref)
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_initialized,
@@ -374,11 +384,37 @@ void LoadBalance::compute_costs_if_heuristic (
         }
 
         // Cell loop
-        MultiFab* Ex = Efield_fp[lev][0].get();
-        for (MFIter mfi(*Ex, false); mfi.isValid(); ++mfi)
+        const auto Ex = efield_ref[lev][0].get();
+        for (amrex::MFIter mfi(*Ex, false); mfi.isValid(); ++mfi)
         {
-            const Box& gbx = mfi.growntilebox();
+            const amrex::Box& gbx = mfi.growntilebox();
             (*m_costs[lev])[mfi.index()] += m_costs_heuristic_cells_wt*gbx.numPts();
         }
     }
+}
+
+LoadBalanceResult LoadBalance::compute_new_distribution_mapping(int lev) const
+{
+    using namespace amrex;
+
+    const Real nboxes = m_costs[lev]->size();
+    const Real nprocs = ParallelContext::NProcsSub();
+    const int nmax = static_cast<int>(std::ceil(nboxes/nprocs*m_knapsack_factor));
+
+    // Compute the new distribution mapping
+    LoadBalanceResult res;
+
+    const bool broadcast_to_all_false = false;
+    res.dm = (m_strategy == LoadBalanceStrategy::SpaceFillingCurve)?
+        DistributionMapping::makeSFC(*m_costs[lev],
+            res.currentEfficiency, res.proposedEfficiency,
+            broadcast_to_all_false,
+            ParallelDescriptor::IOProcessorNumber()):
+        DistributionMapping::makeKnapSack(*m_costs[lev],
+            res.currentEfficiency, res.proposedEfficiency,
+            nmax,
+            broadcast_to_all_false,
+            ParallelDescriptor::IOProcessorNumber());
+
+    return res;
 }

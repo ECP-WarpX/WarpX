@@ -262,6 +262,9 @@ WarpX::Evolve (int numsteps)
         ExecutePythonCallback("afterstep");
 
         /// reduced diags
+        //
+        //  TODO: conditionally recompute weights
+        //
         if (reduced_diags->m_plot_rd != 0)
         {
             reduced_diags->LoadBalance();

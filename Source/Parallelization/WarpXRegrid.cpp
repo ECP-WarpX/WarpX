@@ -73,78 +73,58 @@ WarpX::LoadBalance ()
     WARPX_PROFILE_REGION("LoadBalance");
     WARPX_PROFILE("WarpX::LoadBalance()");
 
-    AMREX_ALWAYS_ASSERT(!costs.empty());
-    AMREX_ALWAYS_ASSERT(costs[0] != nullptr);
-
 #ifdef AMREX_USE_MPI
-    if (LoadBalance::get_instance().get_update_algo() == CostsUpdateAlgo::Heuristic)
-    {
-        // compute the costs on a per-rank basis
-        ComputeCostsHeuristic(costs);
-    }
 
     // By default, do not do a redistribute; this toggles to true if RemakeLevel
     // is called for any level
     int loadBalancedAnyLevel = false;
-
     const int nLevels = finestLevel();
+
+    auto& load_balance = LoadBalance::get_instance();
+    load_balance.compute_costs_if_heuristic(
+        nLevels, Efield_fp, *mypc);
+
     for (int lev = 0; lev <= nLevels; ++lev)
     {
         int doLoadBalance = false;
 
-        // Compute the new distribution mapping
-        DistributionMapping newdm;
-        const amrex::Real nboxes = costs[lev]->size();
-        const amrex::Real nprocs = ParallelContext::NProcsSub();
-        const int nmax = static_cast<int>(std::ceil(nboxes/nprocs*load_balance_knapsack_factor));
-        // These store efficiency (meaning, the  average 'cost' over all ranks,
-        // normalized to max cost) for current and proposed distribution mappings
-        amrex::Real currentEfficiency = 0.0;
-        amrex::Real proposedEfficiency = 0.0;
+        auto load_balance_result = load_balance.compute_new_distribution_mapping(lev);
 
-        newdm = (load_balance_with_sfc)
-            ? DistributionMapping::makeSFC(*costs[lev],
-                                           currentEfficiency, proposedEfficiency,
-                                           false,
-                                           ParallelDescriptor::IOProcessorNumber())
-            : DistributionMapping::makeKnapSack(*costs[lev],
-                                                currentEfficiency, proposedEfficiency,
-                                                nmax,
-                                                false,
-                                                ParallelDescriptor::IOProcessorNumber());
         // As specified in the above calls to makeSFC and makeKnapSack, the new
         // distribution mapping is NOT communicated to all ranks; the loadbalanced
         // dm is up-to-date only on root, and we can decide whether to broadcast
-        if ((load_balance_efficiency_ratio_threshold > 0.0)
+        if ((load_balance.get_efficiency_ratio_threshold() > 0.0)
             && (ParallelDescriptor::MyProc() == ParallelDescriptor::IOProcessorNumber()))
         {
-            doLoadBalance = (proposedEfficiency > load_balance_efficiency_ratio_threshold*currentEfficiency);
+            doLoadBalance = (load_balance_result.proposedEfficiency > load_balance_result.currentEfficiency);
         }
 
         ParallelDescriptor::Bcast(&doLoadBalance, 1,
-                                  ParallelDescriptor::IOProcessorNumber());
+            ParallelDescriptor::IOProcessorNumber());
 
         if (doLoadBalance)
         {
             Vector<int> pmap;
             if (ParallelDescriptor::MyProc() == ParallelDescriptor::IOProcessorNumber())
             {
-                pmap = newdm.ProcessorMap();
+                pmap = load_balance_result.dm.ProcessorMap();
             } else
             {
+                const auto& costs = load_balance.get_costs(lev);
+                const Real nboxes = costs->size();
                 pmap.resize(static_cast<std::size_t>(nboxes));
             }
             ParallelDescriptor::Bcast(pmap.data(), pmap.size(), ParallelDescriptor::IOProcessorNumber());
 
             if (ParallelDescriptor::MyProc() != ParallelDescriptor::IOProcessorNumber())
             {
-                newdm = DistributionMapping(pmap);
+                load_balance_result.dm = DistributionMapping(pmap);
             }
 
-            RemakeLevel(lev, t_new[lev], boxArray(lev), newdm);
+            RemakeLevel(lev, t_new[lev], boxArray(lev), load_balance_result.dm);
 
             // Record the load balance efficiency
-            setLoadBalanceEfficiency(lev, proposedEfficiency);
+            load_balance.set_efficiency(lev, load_balance_result.proposedEfficiency);
         }
 
         loadBalancedAnyLevel = loadBalancedAnyLevel || doLoadBalance;
@@ -375,16 +355,10 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         // Re-initialize the lattice element finder with the new ba and dm.
         m_accelerator_lattice[lev]->InitElementFinder(lev, ba, dm);
 
-        if (costs[lev] != nullptr)
-        {
-            costs[lev] = std::make_unique<LayoutData<Real>>(ba, dm);
-            const auto iarr = costs[lev]->IndexArray();
-            for (const auto& i : iarr)
-            {
-                (*costs[lev])[i] = 0.0;
-                setLoadBalanceEfficiency(lev, -1);
-            }
-        }
+        auto& load_balance = LoadBalance::get_instance();
+
+        load_balance.set_costs(lev, 0.0);
+        load_balance.set_efficiency(lev, -1);
 
         SetDistributionMap(lev, dm);
 

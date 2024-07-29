@@ -39,6 +39,16 @@ namespace warpx::load_balance
         SpaceFillingCurve
     };
 
+    struct LoadBalanceResult
+    {
+        amrex::DistributionMapping dm;
+
+        // These store efficiency (meaning, the  average 'cost' over all ranks,
+        // normalized to max cost) for current and proposed distribution mappings
+        amrex::Real currentEfficiency = 0.0;
+        amrex::Real proposedEfficiency = 0.0;
+    };
+
     class CostTracker
     {
     public:
@@ -76,8 +86,10 @@ namespace warpx::load_balance
 
         void set_efficiency (int lev, amrex::Real val);
 
-        [[nodiscard]]
         amrex::Real get_efficiency (int lev) const;
+
+        [[nodiscard]]
+        amrex::Real get_efficiency_ratio_threshold () const;
 
         [[nodiscard]]
         const std::unique_ptr<amrex::LayoutData<amrex::Real>>& get_costs (int lev) const;
@@ -101,7 +113,10 @@ namespace warpx::load_balance
         */
         void compute_costs_if_heuristic (
             int finest_level,
+            const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& efield_ref,
             const MultiParticleContainer& mypc_ref);
+
+        LoadBalanceResult compute_new_distribution_mapping(int lev) const;
 
     protected:
         LoadBalance (){};
@@ -140,8 +155,7 @@ namespace warpx::load_balance
         * here means the average cost per MPI rank.  */
         amrex::Real m_efficiency_ratio_threshold = 0.0;
 
-        /** Current load balance efficiency for each level.  */
-        amrex::Vector<amrex::Real> m_efficiency;
+        std::vector<amrex::Real> m_efficiency;
 
         /** Weight factor for cells in `Heuristic` costs update.
         * Default values on GPU are determined from single-GPU tests on Summit.
