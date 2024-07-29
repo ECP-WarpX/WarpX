@@ -125,9 +125,8 @@ PsatdAlgorithmGalilean::pushSpectralFields (SpectralFieldData& f) const
         const amrex::Array4<const Complex> X1_arr = X1_coef[mfi].array();
         const amrex::Array4<const Complex> X2_arr = X2_coef[mfi].array();
         const amrex::Array4<const Complex> X3_arr = X3_coef[mfi].array();
-
-        amrex::Array4<const Complex> X4_arr = X4_coef[mfi].array();
-        amrex::Array4<const Complex> T2_arr = T2_coef[mfi].array();
+        const amrex::Array4<const Complex> X4_arr = X4_coef[mfi].array();
+        const amrex::Array4<const Complex> T2_arr = T2_coef[mfi].array();
 
         // These coefficients are allocated only with averaged Galilean PSATD
         amrex::Array4<const Complex> Psi1_arr;
@@ -328,9 +327,8 @@ void PsatdAlgorithmGalilean::InitializeSpectralCoefficients (
         const amrex::Array4<Complex> X1 = X1_coef[mfi].array();
         const amrex::Array4<Complex> X2 = X2_coef[mfi].array();
         const amrex::Array4<Complex> X3 = X3_coef[mfi].array();
-
-        amrex::Array4<Complex> X4 = X4_coef[mfi].array();
-        amrex::Array4<Complex> T2 = T2_coef[mfi].array();
+        const amrex::Array4<Complex> X4 = X4_coef[mfi].array();
+        const amrex::Array4<Complex> T2 = T2_coef[mfi].array();
 
         // Extract Galilean velocity
         const amrex::Real vg_x = m_v_galilean[0];
