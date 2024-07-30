@@ -68,7 +68,7 @@ namespace ablastr::math::anyfft
 
         return fft_plan;
     }
-        
+
     FFTplan CreatePlanMany(int * real_size, amrex::Real * real_array,
                            Complex * complex_array, const direction dir, const int dim,
                            int howmany, int * inembed, int istride, int idist,
@@ -76,7 +76,7 @@ namespace ablastr::math::anyfft
 
         FFTplan fft_plan;
         ABLASTR_PROFILE("ablastr::math::anyfft::CreatePlan");
-        
+
         // Initialize fft_plan.m_plan with the vendor fft plan.
         cufftResult result;
 

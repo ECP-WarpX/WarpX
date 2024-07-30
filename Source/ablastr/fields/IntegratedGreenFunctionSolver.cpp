@@ -214,7 +214,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
 #ifdef SLICED
 
         // FFT of rho
-        int fft_size[] = {nry, nrx}; 
+        int fft_size[] = {nry, nrx};
         forward_plan_rho[mfi] = ablastr::math::anyfft::CreatePlanMany(
                            fft_size, tmp_rho[mfi].dataPtr(),
                            reinterpret_cast<ablastr::math::anyfft::Complex*>(tmp_rho_fft[mfi].dataPtr()),
