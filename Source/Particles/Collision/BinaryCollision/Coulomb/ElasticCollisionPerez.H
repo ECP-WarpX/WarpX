@@ -119,7 +119,7 @@ void ElasticCollisionPerez (
           // scattering path s12 in UpdateMomentumPerezElastic().
           // s12 is defined such that the expected value of the change in particle
           // velocity is equal to that from the full NxN pairing method, as described
-          // here https://arxiv.org/submit/5758216/view. This method is a direct extension
+          // here https://arxiv.org/abs/2407.19151. This method is a direct extension
           // of the original method by Takizuka and Abe JCP 25 (1977) to weighted particles.
           T_PR n12;
           const T_PR wpmax = amrex::max(w1[ I1[i1] ],w2[ I2[i2] ]);
