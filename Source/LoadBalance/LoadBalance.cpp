@@ -107,7 +107,9 @@ CostTracker::CostTracker (int lev, std::size_t mfi_iter_index):
     m_mfi_iter_index{mfi_iter_index},
     m_wt{0.0_rt}
 {
-    if (LoadBalance::get_instance().get_update_algo() == CostsUpdateAlgo::Heuristic)
+    const auto& load_balance = LoadBalance::get_instance();
+
+    if (!load_balance.cost_tracking_required())
         return;
 
     amrex::Gpu::synchronize();
@@ -124,7 +126,7 @@ CostTracker::add () const noexcept
         load_balance.m_initialized,
         "LoadBalance must be initialized before costs are updated");
 
-    if (load_balance.get_update_algo() == CostsUpdateAlgo::Heuristic)
+    if (!load_balance.cost_tracking_required())
         return;
 
     amrex::Gpu::synchronize();
@@ -305,6 +307,12 @@ amrex::Real LoadBalance::get_efficiency_ratio_threshold () const
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_initialized,
         "LoadBalance must be initialized before calling get_efficiency_ratio_threshold");
     return  m_efficiency_ratio_threshold;
+}
+
+[[nodiscard]]
+bool LoadBalance::cost_tracking_required () const
+{
+    return (m_intervals.isActivated() && (m_update_algo == CostsUpdateAlgo::Timers));
 }
 
 void LoadBalance::reset_costs (const int finest_level)

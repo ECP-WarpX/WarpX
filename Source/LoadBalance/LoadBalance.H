@@ -89,6 +89,9 @@ namespace warpx::load_balance
         amrex::Real get_efficiency (int lev) const;
 
         [[nodiscard]]
+        bool cost_tracking_required() const;
+
+        [[nodiscard]]
         amrex::Real get_efficiency_ratio_threshold () const;
 
         [[nodiscard]]
