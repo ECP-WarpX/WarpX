@@ -534,7 +534,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
 
-    for (amrex::MFIter mfi(tmpmf); mfi.isValid(); ++mfi )
+    for (amrex::MFIter mfi(tmpmf, TilingIfNotGPU()); mfi.isValid(); ++mfi )
     {
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
@@ -545,7 +545,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
         auto const& dstfab = mf.array(mfi);
         auto const& srcfab = tmpmf.array(mfi);
 
-        const amrex::Box& outbox = mfi.fabbox() & adjBox;
+        const amrex::Box& outbox = mfi.growntilebox() & adjBox;
 
         if (outbox.ok()) {
             if (!useparser) {

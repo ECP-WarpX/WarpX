@@ -306,7 +306,7 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-                for (MFIter mfi(*Efield_aux[lev][0]); mfi.isValid(); ++mfi)
+                for (MFIter mfi(*Efield_aux[lev][0], TilingIfNotGPU()); mfi.isValid(); ++mfi)
                 {
                     Array4<Real> const& ex_aux = Efield_aux[lev][0]->array(mfi);
                     Array4<Real> const& ey_aux = Efield_aux[lev][1]->array(mfi);
@@ -321,7 +321,7 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                     Array4<Real const> const& ey_c = Etmp[1]->const_array(mfi);
                     Array4<Real const> const& ez_c = Etmp[2]->const_array(mfi);
 
-                    const Box& bx = mfi.fabbox();
+                    const Box& bx = mfi.growntilebox();
                     amrex::ParallelFor(bx,
                     [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                     {
