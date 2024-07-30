@@ -2214,6 +2214,12 @@ Particle push, charge and current deposition, field gathering
 
     Note that this input parameter is not optional and must always be set in all input files provided that there is at least one particle species (set in input as ``particles.species_names``) or one laser species (set in input as ``lasers.names``) in the simulation. No default value is provided automatically.
 
+* ``warpx.nguards`` (`integers, one per space dimension`, optional)
+    The number of guard cells for the charge and current density arrays.
+    This overrides the default setting, which depends on the particle shape factor, the particle Courant limit, and other factors.
+    The intended use is with the implicit solver where the CFL for electromagnetic waves does not apply and particles can cross mupltiple cells per time step.
+    Warning, if this is set incorrectly (i.e. too small), out of bounds errors can occur crashing the simulation.
+
 Maxwell solver
 ^^^^^^^^^^^^^^
 

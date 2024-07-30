@@ -141,24 +141,30 @@ guardCellManager::Init (
     if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None &&
         electromagnetic_solver_id != ElectromagneticSolverAlgo::HybridPIC)
     {
-        for (int i = 0; i < AMREX_SPACEDIM; i++)
-        {
-            amrex::Real dt_Rho = dt;
-            amrex::Real dt_J = 0.5_rt*dt;
-            if (do_multi_J) {
-                // With multi_J + time averaging, particles can move during 2*dt per PIC cycle.
-                if (fft_do_time_averaging){
-                    dt_Rho = 2._rt*dt;
-                    dt_J = 2._rt*dt;
+        const ParmParse pp_warpx("warpx");
+        bool const nguards_specified = utils::parser::queryWithParser(pp_warpx, "nguards", ng_alloc_Rho);
+        if (nguards_specified) {
+            ng_alloc_J = ng_alloc_Rho;
+        } else {
+            for (int i = 0; i < AMREX_SPACEDIM; i++)
+            {
+                amrex::Real dt_Rho = dt;
+                amrex::Real dt_J = 0.5_rt*dt;
+                if (do_multi_J) {
+                    // With multi_J + time averaging, particles can move during 2*dt per PIC cycle.
+                    if (fft_do_time_averaging){
+                        dt_Rho = 2._rt*dt;
+                        dt_J = 2._rt*dt;
+                    }
+                    // With multi_J but without time averaging, particles can move during dt per PIC
+                    // cycle for the current deposition as well.
+                    else {
+                        dt_J = dt;
+                    }
                 }
-                // With multi_J but without time averaging, particles can move during dt per PIC
-                // cycle for the current deposition as well.
-                else {
-                    dt_J = dt;
-                }
+                ng_alloc_Rho[i] += static_cast<int>(std::ceil(PhysConst::c * dt_Rho / dx[i]));
+                ng_alloc_J[i]   += static_cast<int>(std::ceil(PhysConst::c * dt_J / dx[i]));
             }
-            ng_alloc_Rho[i] += static_cast<int>(std::ceil(PhysConst::c * dt_Rho / dx[i]));
-            ng_alloc_J[i]   += static_cast<int>(std::ceil(PhysConst::c * dt_J / dx[i]));
         }
     }
 
