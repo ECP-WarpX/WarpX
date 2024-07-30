@@ -262,7 +262,8 @@ add_warpx_test(
     1  # mpi_np
     Examples/Tests/collision/inputs_3d_base # inputs_base
     Examples/Tests/collision/analysis_collision_3d.py # analysis
-    diags/diag1000150 # output
+    collisionXYZ_plt000150 # output
+    Examples/Tests/collision/inputs_3d_test_collisionXYZ # inputs_test
 )
 
 # Langmuir_multi_2d_MR ########################################################
