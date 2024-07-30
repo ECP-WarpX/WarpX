@@ -229,6 +229,42 @@ add_warpx_test(
     Examples/Tests/collider_relevant_diags/inputs_3d_multiple_particles_test_collider_diagnostics # inputs_test
 )
 
+# collisionISO ################################################################
+#
+add_warpx_test(
+    collisionISO # name
+    3  # dims
+    ON # mpi
+    1  # mpi_np
+    Examples/Tests/collision/inputs_3d_isotropization_base # inputs_base
+    Examples/Tests/collision/analysis_collision_3d_isotropization.py # analysis
+    diags/diag1000100 # output
+)
+
+# collisionRZ #################################################################
+#
+add_warpx_test(
+    collisionRZ # name
+    RZ # dims
+    ON # mpi
+    1  # mpi_np
+    Examples/Tests/collision/inputs_rz_base # inputs_base
+    Examples/Tests/collision/analysis_collision_rz.py # analysis
+    diags/diag1000150 # output
+)
+
+# collisionXYZ ################################################################
+#
+add_warpx_test(
+    collisionXYZ # name
+    3 # dims
+    ON # mpi
+    1  # mpi_np
+    Examples/Tests/collision/inputs_3d_base # inputs_base
+    Examples/Tests/collision/analysis_collision_3d.py # analysis
+    diags/diag1000150 # output
+)
+
 # Langmuir_multi_2d_MR ########################################################
 #
 add_warpx_test(

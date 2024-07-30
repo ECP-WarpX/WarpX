@@ -30,8 +30,10 @@ import re
 import sys
 
 import numpy
-import post_processing_utils
 import yt
+
+sys.path.insert(1, '../../../../warpx/Regression/PostProcessingUtils/')
+import post_processing_utils
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
@@ -55,32 +57,24 @@ a =  0.041817463099883
 b = -0.083851393560288
 
 last_fn = sys.argv[1]
-# Remove trailing '/' from file name, if necessary
-last_fn.rstrip('/')
-# Find last iteration in file name, such as 'test_name_plt000001' (last_it = '000001')
-last_it = re.search('\d+', last_fn).group()
-# Find output prefix in file name, such as 'test_name_plt000001' (prefix = 'test_name_plt')
-prefix = last_fn[:-len(last_it)]
-# Collect all output files in fn_list (names match pattern prefix + arbitrary number)
-fn_list = glob.glob(prefix + '*[0-9]')
+last_it = "000150"
 
 error = 0.0
 nt = 0
-for fn in fn_list:
-    # load file
-    ds  = yt.load( fn )
-    ad  = ds.all_data()
-    pxe  = ad['electron', 'particle_momentum_x'].to_ndarray()
-    pxi  = ad['ion', 'particle_momentum_x'].to_ndarray()
-    # get time index j
-    j = int(fn[-5:])
-    # compute error
-    vxe = numpy.mean(pxe)/me/c
-    vxi = numpy.mean(pxi)/mi/c
-    vxd = vxe - vxi
-    fit = a*math.exp(b*j)
-    error = error + abs(fit-vxd)
-    nt = nt + 1
+# load file
+ds  = yt.load( last_fn )
+ad  = ds.all_data()
+pxe  = ad['electron', 'particle_momentum_x'].to_ndarray()
+pxi  = ad['ion', 'particle_momentum_x'].to_ndarray()
+# get time index j
+j = int(last_fn[-5:])
+# compute error
+vxe = numpy.mean(pxe)/me/c
+vxi = numpy.mean(pxi)/mi/c
+vxd = vxe - vxi
+fit = a*math.exp(b*j)
+error = error + abs(fit-vxd)
+nt = nt + 1
 
 error = error / nt
 
