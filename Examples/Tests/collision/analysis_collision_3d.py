@@ -23,10 +23,8 @@
 # tolerance: 0.001
 # Possible running time: ~ 30.0 s
 
-import glob
 import math
 import os
-import re
 import sys
 
 import numpy
