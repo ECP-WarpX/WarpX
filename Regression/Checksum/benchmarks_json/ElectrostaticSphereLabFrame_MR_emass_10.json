@@ -6,15 +6,15 @@
     "rho": 0.0
   },
   "lev=1": {
-    "Ex": 14.281015560380963,
-    "Ey": 14.281015560380965,
-    "Ez": 14.281015560380965,
+    "Ex": 7.170105936287823,
+    "Ey": 7.17010593628782,
+    "Ez": 7.170105936287821,
     "rho": 2.6092568008333786e-10
   },
   "electron": {
-    "particle_momentum_x": 1.80842228672388e-24,
-    "particle_momentum_y": 1.8084222867238806e-24,
-    "particle_momentum_z": 1.7598771525647628e-24,
+    "particle_momentum_x": 9.257577597262615e-25,
+    "particle_momentum_y": 9.257577597262618e-25,
+    "particle_momentum_z": 9.257577597262624e-25,
     "particle_position_x": 327.46875,
     "particle_position_y": 327.46875,
     "particle_position_z": 327.46875,
