@@ -1164,6 +1164,9 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 
     warpx_do_pml_j_damping: bool, default=False
         Whether to do damping of J in the PML
+
+    warpx_evolve_scheme: solver scheme instance, optional
+        Which solver scheme to use
     """
     def init(self, kw):
         assert self.method is None or self.method in ['Yee', 'CKC', 'PSATD', 'ECT'], Exception("Only 'Yee', 'CKC', 'PSATD', and 'ECT' are supported")
@@ -1181,6 +1184,8 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         self.do_pml_in_domain = kw.pop('warpx_do_pml_in_domain', None)
         self.pml_has_particles = kw.pop('warpx_pml_has_particles', None)
         self.do_pml_j_damping = kw.pop('warpx_do_pml_j_damping', None)
+
+        self.evolve_scheme = kw.pop('warpx_evolve_scheme', None)
 
     def solver_initialize_inputs(self):
 
@@ -1215,6 +1220,8 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 
         # --- Same method names are used, though mapped to lower case.
         pywarpx.algo.maxwell_solver = self.method
+        if self.evolve_scheme is not None:
+            self.evolve_scheme.solver_scheme_initialize_inputs()
 
         if self.cfl is not None:
             pywarpx.warpx.cfl = self.cfl
@@ -1231,6 +1238,187 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         pywarpx.warpx.do_pml_in_domain = self.do_pml_in_domain
         pywarpx.warpx.pml_has_particles = self.pml_has_particles
         pywarpx.warpx.do_pml_j_damping = self.do_pml_j_damping
+
+
+class ThetaImplicitEMEvolveScheme(picmistandard.base._ClassWithInit):
+    """
+    Sets up the "theta implicit" electromagnetic evolve scheme
+
+    Parameters
+    ----------
+    nonlinear_solver: nonlinear solver instance
+        The nonlinear solver to use for the iterations
+
+    theta: float, optional
+        The "theta" parameter, determining the level of implicitness
+    """
+    def __init__(self, nonlinear_solver, theta = None):
+        self.nonlinear_solver = nonlinear_solver
+        self.theta = theta
+
+    def solver_scheme_initialize_inputs(self):
+        pywarpx.algo.evolve_scheme = 'theta_implicit_em'
+        implicit_evolve = pywarpx.warpx.get_bucket('implicit_evolve')
+        implicit_evolve.theta = self.theta
+
+        self.nonlinear_solver.nonlinear_solver_initialize_inputs()
+
+
+class SemiImplicitEMEvolveScheme(picmistandard.base._ClassWithInit):
+    """
+    Sets up the "semi-implicit" electromagnetic evolve scheme
+
+    Parameters
+    ----------
+    nonlinear_solver: nonlinear solver instance
+        The nonlinear solver to use for the iterations
+    """
+    def __init__(self, nonlinear_solver):
+        self.nonlinear_solver = nonlinear_solver
+
+    def solver_scheme_initialize_inputs(self):
+        pywarpx.algo.evolve_scheme = 'semi_implicit_em'
+        implicit_evolve = pywarpx.warpx.get_bucket('implicit_evolve')
+
+        self.nonlinear_solver.nonlinear_solver_initialize_inputs()
+
+
+class PicardNonlinearSolver(picmistandard.base._ClassWithInit):
+    """
+    Sets up the iterative Picard nonlinear solver for the implicit evolve scheme
+
+    Parameters
+    ----------
+    verbose: bool, default=True
+        Whether there is verbose output from the solver
+
+    absolute_tolerance: float, default=0.
+        Absoluate tolerence of the convergence
+
+    relative_tolerance: float, default=1.e-6
+        Relative tolerance of the convergence
+
+    max_iterations: integer, default=100
+        Maximum number of iterations
+
+    require_convergence: bool, default True
+        Whether convergence is required. If True and convergence is not obtained, the code will exit.
+    """
+    def __init__(self, verbose=None, absolute_tolerance=None, relative_tolerance=None,
+                 max_iterations=None, require_convergence=None):
+        self.verbose = verbose
+        self.absolute_tolerance = absolute_tolerance
+        self.relative_tolerance = relative_tolerance
+        self.max_iterations = max_iterations
+        self.require_convergence = require_convergence
+
+    def nonlinear_solver_initialize_inputs(self):
+        implicit_evolve = pywarpx.warpx.get_bucket('implicit_evolve')
+        implicit_evolve.nonlinear_solver = 'picard'
+
+        picard = pywarpx.warpx.get_bucket('picard')
+        picard.verbose = self.verbose
+        picard.absolute_tolerance = self.absolute_tolerance
+        picard.relative_tolerance = self.relative_tolerance
+        picard.max_iterations = self.max_iterations
+        picard.require_convergence = self.require_convergence
+
+
+class NewtonNonlinearSolver(picmistandard.base._ClassWithInit):
+    """
+    Sets up the iterative Newton nonlinear solver for the implicit evolve scheme
+
+    Parameters
+    ----------
+    verbose: bool, default=True
+        Whether there is verbose output from the solver
+
+    absolute_tolerance: float, default=0.
+        Absoluate tolerence of the convergence
+
+    relative_tolerance: float, default=1.e-6
+        Relative tolerance of the convergence
+
+    max_iterations: integer, default=100
+        Maximum number of iterations
+
+    require_convergence: bool, default True
+        Whether convergence is required. If True and convergence is not obtained, the code will exit.
+
+    linear_solver: linear solver instance, optional
+        Specifies input arguments to the linear solver
+
+    max_particle_iterations: integer, optional
+        The maximum number of particle iterations
+
+    particle_tolerance: float, optional
+        The tolerance of parrticle quantities for convergence
+
+    """
+    def __init__(self, verbose=None, absolute_tolerance=None, relative_tolerance=None,
+                 max_iterations=None, require_convergence=None, linear_solver=None,
+                 max_particle_iterations=None, particle_tolerance=None):
+        self.verbose = verbose
+        self.absolute_tolerance = absolute_tolerance
+        self.relative_tolerance = relative_tolerance
+        self.max_iterations = max_iterations
+        self.require_convergence = require_convergence
+        self.linear_solver = linear_solver
+        self.max_particle_iterations = max_particle_iterations
+        self.particle_tolerance = particle_tolerance
+
+    def nonlinear_solver_initialize_inputs(self):
+        implicit_evolve = pywarpx.warpx.get_bucket('implicit_evolve')
+        implicit_evolve.nonlinear_solver = 'newton'
+        implicit_evolve.max_particle_iterations = self.max_particle_iterations
+        implicit_evolve.particle_tolerance = self.particle_tolerance
+
+        newton = pywarpx.warpx.get_bucket('newton')
+        newton.verbose = self.verbose
+        newton.absolute_tolerance = self.absolute_tolerance
+        newton.relative_tolerance = self.relative_tolerance
+        newton.max_iterations = self.max_iterations
+        newton.require_convergence = self.require_convergence
+
+        self.linear_solver.linear_solver_initialize_inputs()
+
+
+class GMRESLinearSolver(picmistandard.base._ClassWithInit):
+    """
+    Sets up the iterative GMRES linear solver for the implicit Newton nonlinear solver
+
+    Parameters
+    ----------
+    verbose_int: integer, default=2
+        Level of verbosity of output
+
+    restart_length: integer, default=30
+       How often to restart the GMRES iterations
+
+    absolute_tolerance: float, default=0.
+        Absoluate tolerence of the convergence
+
+    relative_tolerance: float, default=1.e-4
+        Relative tolerance of the convergence
+
+    max_iterations: integer, default=1000
+        Maximum number of iterations
+    """
+    def __init__(self, verbose_int=None, restart_length=None, absolute_tolerance=None, relative_tolerance=None,
+                 max_iterations=None):
+        self.verbose_int = verbose_int
+        self.restart_length = restart_length
+        self.absolute_tolerance = absolute_tolerance
+        self.relative_tolerance = relative_tolerance
+        self.max_iterations = max_iterations
+
+    def linear_solver_initialize_inputs(self):
+        gmres = pywarpx.warpx.get_bucket('gmres')
+        gmres.verbose_int = self.verbose_int
+        gmres.restart_length = self.restart_length
+        gmres.absolute_tolerance = self.absolute_tolerance
+        gmres.relative_tolerance = self.relative_tolerance
+        gmres.max_iterations = self.max_iterations
 
 
 class HybridPICSolver(picmistandard.base._ClassWithInit):
