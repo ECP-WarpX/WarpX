@@ -123,10 +123,10 @@ namespace ablastr::math::anyfft
      * \param[in] dir direction, either R2C or C2R
      * \param[in] dim direction, number of dimensions of the arrays. Must be <= AMREX_SPACEDIM.
      */
-    FFTplan CreatePlanMany(const int *real_size, amrex::Real * real_array,
+    FFTplan CreatePlanMany(int * real_size, amrex::Real * real_array,
                            Complex * complex_array, const direction dir, const int dim,
-                           int howmany, const int *inembed, int istride, int idist,
-                           const int *onembed, int ostride, int odist);
+                           int howmany, int * inembed, int istride, int idist,
+                           int * onembed, int ostride, int odist);
 
     /** \brief Destroy library FFT plan.
      * \param[out] fft_plan plan to destroy

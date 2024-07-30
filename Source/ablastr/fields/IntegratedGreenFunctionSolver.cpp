@@ -214,8 +214,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
 #ifdef SLICED
 
         // FFT of rho
-        const int fft_size[] = {nry, nrx};
-
+        int fft_size[] = {nry, nrx}; 
         forward_plan_rho[mfi] = ablastr::math::anyfft::CreatePlanMany(
                            fft_size, tmp_rho[mfi].dataPtr(),
                            reinterpret_cast<ablastr::math::anyfft::Complex*>(tmp_rho_fft[mfi].dataPtr()),
@@ -263,7 +262,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
     for ( amrex::MFIter mfi(spectralspace_ba, dm_global_fft); mfi.isValid(); ++mfi ){
 
 #ifdef SLICED
-        const int fft_size[] = {nry, nrx};
+        int fft_size[] = {nry, nrx};
         // Inverse FFT: is done in-place, in the array of G
         backward_plan[mfi] = ablastr::math::anyfft::CreatePlanMany(
             fft_size, tmp_G[mfi].dataPtr(),

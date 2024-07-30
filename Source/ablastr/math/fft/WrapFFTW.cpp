@@ -82,10 +82,10 @@ namespace ablastr::math::anyfft
         return fft_plan;
     }
 
-    FFTplan CreatePlanMany(const int *real_size, amrex::Real * real_array,
+    FFTplan CreatePlanMany(int * real_size, amrex::Real * real_array,
                            Complex * complex_array, const direction dir, const int dim,
-                           int howmany, const int *inembed, int istride, int idist,
-                           const int *onembed, int ostride, int odist){
+                           int howmany, int * inembed, int istride, int idist,
+                           int * onembed, int ostride, int odist){
 
         FFTplan fft_plan;
 
@@ -98,7 +98,6 @@ namespace ablastr::math::anyfft
         fftw_plan_with_nthreads(omp_get_max_threads());
 #   endif
 #endif
-
         if (dir == direction::R2C){
 
             fft_plan.m_plan = fftw_plan_many_dft_r2c(dim, real_size, howmany,
