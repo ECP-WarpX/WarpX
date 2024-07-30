@@ -1240,6 +1240,14 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         pywarpx.warpx.do_pml_j_damping = self.do_pml_j_damping
 
 
+class ExplicitEvolveScheme(picmistandard.base._ClassWithInit):
+    """
+    Sets up the explicit evolve scheme
+    """
+    def solver_scheme_initialize_inputs(self):
+        pywarpx.algo.evolve_scheme = 'explicit'
+
+
 class ThetaImplicitEMEvolveScheme(picmistandard.base._ClassWithInit):
     """
     Sets up the "theta implicit" electromagnetic evolve scheme
