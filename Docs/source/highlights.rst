@@ -14,6 +14,11 @@ Plasma-Based Acceleration
 
 Scientific works in laser-plasma and beam-plasma acceleration.
 
+#. Shrock JE, Rockafellow E, Miao B, Le M, Hollinger RC, Wang S, Gonsalves AJ, Picksley A, Rocca JJ, and Milchberg HM
+   **Guided Mode Evolution and Ionization Injection in Meter-Scale Multi-GeV Laser Wakefield Accelerators**.
+   Phys. Rev. Lett. **133**, 045002, 2024
+   `DOI:10.1103/PhysRevLett.133.045002 <https://link.aps.org/doi/10.1103/PhysRevLett.133.045002>`__
+
 #. Ross AJ, Chappell J, van de Wetering JJ, Cowley J, Archer E, Bourgeois N, Corner L, Emerson DR, Feder L, Gu XJ, Jakobsson O, Jones H, Picksley A, Reid L, Wang W, Walczak R, Hooker SM.
    **Resonant excitation of plasma waves in a plasma channel**.
    Phys. Rev. Research **6**, L022001, 2024

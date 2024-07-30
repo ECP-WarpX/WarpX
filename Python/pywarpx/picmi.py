@@ -1352,6 +1352,9 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
 
     def solver_initialize_inputs(self):
 
+        # Open BC means FieldBoundaryType::Open for electrostatic sims, rather than perfectly-matched layer
+        BC_map['open'] = 'open'
+
         self.grid.grid_initialize_inputs()
 
         if self.relativistic:
@@ -1371,6 +1374,8 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
             pywarpx.boundary.potential_hi_x = self.grid.potential_xmax
             pywarpx.boundary.potential_hi_y = self.grid.potential_ymax
             pywarpx.boundary.potential_hi_z = self.grid.potential_zmax
+
+        pywarpx.warpx.poisson_solver = self.method
 
 
 class GaussianLaser(picmistandard.PICMI_GaussianLaser):

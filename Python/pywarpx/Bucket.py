@@ -59,8 +59,6 @@ class Bucket(object):
         for attr, value in self.argvattrs.items():
             if value is None:
                 continue
-            # --- repr is applied to value so that for floats, all of the digits are included.
-            # --- The strip of "'" is then needed when value is a string.
             if isinstance(value, str):
                 if value.find('=') > -1:
                     # --- Expressions with temporary variables need to be inside quotes
@@ -73,11 +71,11 @@ class Bucket(object):
                     continue
                 # --- For lists, tuples, and arrays make a space delimited string of the values.
                 # --- The lambda is needed in case this is a list of strings.
-                rhs = ' '.join(map(lambda s : repr(s).strip("'"), value))
+                rhs = ' '.join(map(lambda s : f'{s}', value))
             elif isinstance(value, bool):
                 rhs = 1 if value else 0
             else:
                 rhs = value
-            attrstring = '{0}.{1} = {2}'.format(self.instancename, attr, repr(rhs).strip("'"))
+            attrstring = f'{self.instancename}.{attr} = {rhs}'
             result += [attrstring]
         return result
