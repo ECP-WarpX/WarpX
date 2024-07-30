@@ -109,6 +109,10 @@ CostTracker::CostTracker (int lev, std::size_t mfi_iter_index):
 {
     const auto& load_balance = LoadBalance::get_instance();
 
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        load_balance.m_initialized,
+        "LoadBalance must be initialized before costs are updated");
+
     if (!load_balance.cost_tracking_required())
         return;
 
@@ -121,10 +125,6 @@ void
 CostTracker::add () const noexcept
 {
     const auto& load_balance = LoadBalance::get_instance();
-
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        load_balance.m_initialized,
-        "LoadBalance must be initialized before costs are updated");
 
     if (!load_balance.cost_tracking_required())
         return;
