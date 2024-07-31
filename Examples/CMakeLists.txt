@@ -105,6 +105,8 @@ endfunction()
 # Add tests (alphabetical order) ##############################################
 #
 
+add_subdirectory(Physics_applications)
+
 # averaged_galilean_2d_psatd ##################################################
 #
 if(WarpX_FFT)
@@ -164,19 +166,6 @@ if(WarpX_FFT)
         Examples/Tests/nci_psatd_stability/inputs_avg_3d_test_averaged_galilean_3d_psatd_hybrid # inputs_test
     )
 endif()
-
-# background_mcc ##############################################################
-#
-add_warpx_test(
-    background_mcc # name
-    2  # dims
-    ON # mpi
-    2  # mpi_np
-    Examples/Physics_applications/capacitive_discharge/inputs_2d_base # inputs_base
-    Examples/analysis_default_regression.py # analysis
-    diags/diag1000050 # output
-    Examples/Physics_applications/capacitive_discharge/inputs_2d_test_background_mcc # inputs_test
-)
 
 # FIXME
 # background_mcc_dp_psp #######################################################
