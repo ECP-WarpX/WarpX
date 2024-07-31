@@ -277,5 +277,6 @@ Post-Processing
 For post-processing, many users prefer to use the online `Jupyter service <https://ondemand.osc.edu/pun/sys/dashboard/batch_connect/sessions>`__ (`documentation <https://www.osc.edu/vocabulary/documentation/jupyter>`__) that is directly connected to the cluster's fast filesystem.
 
 .. note::
+
    This section is a stub and contributions are welcome.
    We can document further details, e.g., which recommended post-processing Python software to install or how to customize Jupyter kernels here.
