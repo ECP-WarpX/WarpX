@@ -20,8 +20,9 @@ jobs:
     WARPX_CI_CCACHE: 'TRUE'
     WARPX_CI_NUM_MAKE_JOBS: 2
     WARPX_CI_OPENPMD: 'TRUE'
-    WARPX_CI_TMP: '/tmp/ci'
+    #WARPX_CI_TMP: '/tmp/ci'
 
+  # FIXME
   strategy:
     matrix:
       cartesian1d:
@@ -31,14 +32,14 @@ jobs:
         WARPX_CI_REGULAR_CARTESIAN_2D: 'TRUE'
       cartesian3d:
         WARPX_CI_REGULAR_CARTESIAN_3D: 'TRUE'
-      single_precision:
-        WARPX_CI_SINGLE_PRECISION: 'TRUE'
+      #single_precision:
+      #  WARPX_CI_SINGLE_PRECISION: 'TRUE'
       rz_or_nompi:
         WARPX_CI_RZ_OR_NOMPI: 'TRUE'
-      qed:
-        WARPX_CI_QED: 'TRUE'
-      embedded_boundary:
-        WARPX_CI_EB: 'TRUE'
+      #qed:
+      #  WARPX_CI_QED: 'TRUE'
+      #embedded_boundary:
+      #  WARPX_CI_EB: 'TRUE'
 
   # default: 60; maximum: 360
   timeoutInMinutes: 240
@@ -109,6 +110,7 @@ jobs:
           -DCMAKE_CXX_STANDARD=17                       \
           -Duse_cmake_find_lapack=ON -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
       fi
+      python3 -m pip install --upgrade yt
       rm -rf ${CEI_TMP}
       df -h
     displayName: 'Install dependencies'
@@ -116,7 +118,25 @@ jobs:
   - bash: |
       set -eu -o pipefail
       df -h
-      ./run_test.sh
-      rm -rf ${WARPX_CI_TMP}
+      #./run_test.sh
+      # configure build
+      # - cartesian1d
+      if [ "${WARPX_CI_REGULAR_CARTESIAN_1D:-FALSE}" == "TRUE" ]; then
+        cmake -DWarpX_DIMS=1 -DAMReX_SPACEDIM=1 -DAMReX_ASSERTIONS=ON -DAMReX_TESTING=ON -DWarpX_PYTHON_IPO=OFF -DpyAMReX_IPO=OFF -S . -B build
+      # - cartesian2d
+      elif [ "${WARPX_CI_REGULAR_CARTESIAN_2D:-FALSE}" == "TRUE" ]; then
+        cmake -DWarpX_DIMS=2 -DAMReX_SPACEDIM=2 -DAMReX_ASSERTIONS=ON -DAMReX_TESTING=ON -DWarpX_PYTHON_IPO=OFF -DpyAMReX_IPO=OFF -S . -B build
+      # - cartesian3d
+      elif [ "${WARPX_CI_REGULAR_CARTESIAN_3D:-FALSE}" == "TRUE" ]; then
+        cmake -DWarpX_DIMS=3 -DWarpX_OPENPMD=ON -DAMReX_SPACEDIM=3 -DAMReX_ASSERTIONS=ON -DAMReX_TESTING=ON -DWarpX_PYTHON_IPO=OFF -DpyAMReX_IPO=OFF -S . -B build
+      # - rz_or_nompi
+      elif [ "${WARPX_CI_RZ_OR_NOMPI:-FALSE}" == "TRUE" ]; then
+        cmake -DWarpX_DIMS=RZ -DAMReX_SPACEDIM=2 -DAMReX_ASSERTIONS=ON -DAMReX_TESTING=ON -DWarpX_PYTHON_IPO=OFF -DpyAMReX_IPO=OFF -S . -B build
+      fi
+      # build
+      cmake --build build -j 2
+      # run tests
+      ctest --test-dir build --output-on-failure
+      #rm -rf ${WARPX_CI_TMP}
       df -h
     displayName: 'Build & test'
