@@ -1351,6 +1351,9 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
 
     def solver_initialize_inputs(self):
 
+        # Open BC means FieldBoundaryType::Open for electrostatic sims, rather than perfectly-matched layer
+        BC_map['open'] = 'open'
+
         self.grid.grid_initialize_inputs()
 
         if self.relativistic:
@@ -1370,6 +1373,8 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
             pywarpx.boundary.potential_hi_x = self.grid.potential_xmax
             pywarpx.boundary.potential_hi_y = self.grid.potential_ymax
             pywarpx.boundary.potential_hi_z = self.grid.potential_zmax
+
+        pywarpx.warpx.poisson_solver = self.method
 
 
 class GaussianLaser(picmistandard.PICMI_GaussianLaser):
@@ -2324,6 +2329,11 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
     warpx_openpmd_backend: {bp, h5, json}, optional
         Openpmd backend file format
 
+    warpx_openpmd_encoding: 'v' (variable based), 'f' (file based) or 'g' (group based), optional
+        Only read if ``<diag_name>.format = openpmd``. openPMD file output encoding.
+        File based: one file per timestep (slower), group/variable based: one file for all steps (faster)).
+        Variable based is an experimental feature with ADIOS2. Default: `'f'`.
+
     warpx_file_prefix: string, optional
         Prefix on the diagnostic file name
 
@@ -2332,6 +2342,9 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
 
     warpx_dump_rz_modes: bool, optional
         Flag whether to dump the data for all RZ modes
+
+    warpx_dump_last_timestep: bool, optional
+        If true, the last timestep is dumped regardless of the diagnostic period/intervals.
 
     warpx_particle_fields_to_plot: list of ParticleFieldDiagnostics
         List of ParticleFieldDiagnostic classes to install in the simulation. Error
@@ -2350,9 +2363,11 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
         self.plot_crsepatch = kw.pop('warpx_plot_crsepatch', None)
         self.format = kw.pop('warpx_format', 'plotfile')
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
+        self.openpmd_encoding = kw.pop('warpx_openpmd_encoding', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
         self.file_min_digits = kw.pop('warpx_file_min_digits', None)
         self.dump_rz_modes = kw.pop('warpx_dump_rz_modes', None)
+        self.dump_last_timestep = kw.pop('warpx_dump_last_timestep', None)
         self.particle_fields_to_plot = kw.pop('warpx_particle_fields_to_plot', [])
         self.particle_fields_species = kw.pop('warpx_particle_fields_species', None)
 
@@ -2363,8 +2378,10 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
         self.diagnostic.diag_type = 'Full'
         self.diagnostic.format = self.format
         self.diagnostic.openpmd_backend = self.openpmd_backend
+        self.diagnostic.openpmd_encoding = self.openpmd_encoding
         self.diagnostic.file_min_digits = self.file_min_digits
         self.diagnostic.dump_rz_modes = self.dump_rz_modes
+        self.diagnostic.dump_last_timestep = self.dump_last_timestep
         self.diagnostic.intervals = self.period
         self.diagnostic.diag_lo = self.lower_bound
         self.diagnostic.diag_hi = self.upper_bound
@@ -2528,6 +2545,11 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
     warpx_openpmd_backend: {bp, h5, json}, optional
         Openpmd backend file format
 
+    warpx_openpmd_encoding: 'v' (variable based), 'f' (file based) or 'g' (group based), optional
+        Only read if ``<diag_name>.format = openpmd``. openPMD file output encoding.
+        File based: one file per timestep (slower), group/variable based: one file for all steps (faster)).
+        Variable based is an experimental feature with ADIOS2. Default: `'f'`.
+
     warpx_file_prefix: string, optional
         Prefix on the diagnostic file name
 
@@ -2546,6 +2568,9 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         a dictionary is given the keys should be species with the value
         specifying the stride for that species.
 
+    warpx_dump_last_timestep: bool, optional
+        If true, the last timestep is dumped regardless of the diagnostic period/intervals.
+
     warpx_plot_filter_function: string, optional
         Analytic expression to down select the particles to in the diagnostic
     """
@@ -2553,11 +2578,13 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
 
         self.format = kw.pop('warpx_format', 'plotfile')
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
+        self.openpmd_encoding = kw.pop('warpx_openpmd_encoding', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
         self.file_min_digits = kw.pop('warpx_file_min_digits', None)
         self.random_fraction = kw.pop('warpx_random_fraction', None)
         self.uniform_stride = kw.pop('warpx_uniform_stride', None)
         self.plot_filter_function = kw.pop('warpx_plot_filter_function', None)
+        self.dump_last_timestep = kw.pop('warpx_dump_last_timestep', None)
 
         self.user_defined_kw = {}
         if self.plot_filter_function is not None:
@@ -2577,7 +2604,9 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         self.diagnostic.diag_type = 'Full'
         self.diagnostic.format = self.format
         self.diagnostic.openpmd_backend = self.openpmd_backend
+        self.diagnostic.openpmd_encoding = self.openpmd_encoding
         self.diagnostic.file_min_digits = self.file_min_digits
+        self.diagnostic.dump_last_timestep = self.dump_last_timestep
         self.diagnostic.intervals = self.period
         self.diagnostic.set_or_replace_attr('write_species', True)
         if 'fields_to_plot' not in self.diagnostic.argvattrs:
@@ -2694,6 +2723,11 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
     warpx_openpmd_backend: string, optional
         Passed to <diagnostic name>.openpmd_backend
 
+    warpx_openpmd_encoding: 'f' (file based) or 'g' (group based), optional
+        Only read if ``<diag_name>.format = openpmd``. openPMD file output encoding.
+        File based: one file per timestep (slower), group/variable based: one file for all steps (faster)).
+        Default: `'f'`.
+
     warpx_file_prefix: string, optional
         Passed to <diagnostic name>.file_prefix
 
@@ -2718,6 +2752,7 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
 
         self.format = kw.pop('warpx_format', None)
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
+        self.openpmd_encoding = kw.pop('warpx_openpmd_encoding', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
         self.intervals = kw.pop('warpx_intervals', None)
         self.file_min_digits = kw.pop('warpx_file_min_digits', None)
@@ -2732,6 +2767,7 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
         self.diagnostic.diag_type = 'BackTransformed'
         self.diagnostic.format = self.format
         self.diagnostic.openpmd_backend = self.openpmd_backend
+        self.diagnostic.openpmd_encoding = self.openpmd_encoding
         self.diagnostic.file_min_digits = self.file_min_digits
         self.diagnostic.diag_lo = self.lower_bound
         self.diagnostic.diag_hi = self.upper_bound
@@ -2803,6 +2839,11 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
     warpx_openpmd_backend: string, optional
         Passed to <diagnostic name>.openpmd_backend
 
+    warpx_openpmd_encoding: 'f' (file based) or 'g' (group based), optional
+        Only read if ``<diag_name>.format = openpmd``. openPMD file output encoding.
+        File based: one file per timestep (slower), group/variable based: one file for all steps (faster)).
+        Default: `'f'`.
+
     warpx_file_prefix: string, optional
         Passed to <diagnostic name>.file_prefix
 
@@ -2819,6 +2860,7 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
     def init(self, kw):
         self.format = kw.pop('warpx_format', None)
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
+        self.openpmd_encoding = kw.pop('warpx_openpmd_encoding', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
         self.intervals = kw.pop('warpx_intervals', None)
         self.file_min_digits = kw.pop('warpx_file_min_digits', None)
@@ -2831,6 +2873,7 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
         self.diagnostic.diag_type = 'BackTransformed'
         self.diagnostic.format = self.format
         self.diagnostic.openpmd_backend = self.openpmd_backend
+        self.diagnostic.openpmd_encoding = self.openpmd_encoding
         self.diagnostic.file_min_digits = self.file_min_digits
 
         self.diagnostic.do_back_transformed_particles = True
