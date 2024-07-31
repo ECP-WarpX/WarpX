@@ -1279,7 +1279,6 @@ class SemiImplicitEMEvolveScheme(picmistandard.base._ClassWithInit):
 
     def solver_scheme_initialize_inputs(self):
         pywarpx.algo.evolve_scheme = 'semi_implicit_em'
-        implicit_evolve = pywarpx.warpx.get_bucket('implicit_evolve')
 
         self.nonlinear_solver.nonlinear_solver_initialize_inputs()
 
