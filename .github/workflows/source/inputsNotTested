@@ -6,6 +6,10 @@ set -eu -o pipefail
 
 ok=0
 
+# all calls to add_warpx_test(...) in CMakeLists.txt files
+registered_tests=$(grep -h -R -A5 "add_warpx_test" Examples/ | grep Examples)
+
+# go through each input file: C++ inputs or PICMI Python
 for file in $(find Examples -type f)
 do
     # Name of file without path
@@ -17,9 +21,7 @@ do
         cr=$'$'
         file_cr="$file$cr"
         # Search file name in test list
-        string_match=$(grep -m1 "$file_cr" Regression/WarpX-tests.ini || echo "")
-        # If match is empty, inputs examples is not tested
-        if [[ -z $string_match ]]
+        if [[ "${registered_tests,,}" != *"${file_cr}"* ]]
         then
             echo "$file is not tested!"
             ok=1
