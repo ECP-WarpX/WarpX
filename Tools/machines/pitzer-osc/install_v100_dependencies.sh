@@ -34,34 +34,6 @@ python3 -m pip uninstall -qqq -y mpi4py 2>/dev/null || true
 SRC_DIR="${HOME}/src"
 build_dir=$(mktemp -d)
 
-# cuda-aware openmpi
-cd ${SRC_DIR}
-wget https://download.open-mpi.org/release/open-mpi/v5.0/openmpi-5.0.5.tar.gz
-tar -xzvf openmpi-5.0.5.tar.gz
-rm -rf openmpi-5.0.5.tar.gz
-cd -
-
-cd ${SRC_DIR}/openmpi-5.0.5
-./configure --with-cuda=$CUDA_HOME \
-  --prefix=${SW_DIR}/openmpi-5.0.5
-
-make -j 16
-make install
-cd -
-
-# hdf5 with parallel support
-cd ${SRC_DIR}
-wget https://github.com/HDFGroup/hdf5/releases/download/hdf5_1.14.4.3/hdf5-1.14.4-3.tar.gz
-tar -xzvf hdf5-1.14.4-3.tar.gz
-rm -rf hdf5-1.14.4-3.tar.gz
-cd -
-
-cd ${SRC_DIR}/hdf5-1.14.4-3
-CC=mpicc ./configure --prefix=${SW_DIR}/hdf5-1.14.4-3 --enable-parallel
-make -j 16
-make install
-cd -
-
 # boost (for QED table generation support)
 cd ${SRC_DIR}
 wget https://archives.boost.io/release/1.82.0/source/boost_1_82_0.tar.gz
