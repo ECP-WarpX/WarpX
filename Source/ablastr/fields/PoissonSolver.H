@@ -263,10 +263,15 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         mlmg.setVerbose(verbosity);
         mlmg.setMaxIter(max_iters);
         mlmg.setAlwaysUseBNorm(always_use_bnorm);
+        if (WarpX::grid_type == GridType::Collocated) {
+            // In this case, computeE needs to use ghost nodes data. So we
+            // ask MLMG to fill BC for us after it solves the problem.
+            mlmg.setFinalFillBC(true);
+        }
 
         // Solve Poisson equation at lev
         mlmg.solve( {phi[lev]}, {rho[lev]},
-                    relative_tolerance, absolute_tolerance );
+                     relative_tolerance, absolute_tolerance );
 
         // needed for solving the levels by levels:
         // - coarser level is initial guess for finer level
@@ -280,10 +285,14 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
             const amrex::IntVect& refratio = rel_ref_ratio.value()[lev];
             ba.coarsen(refratio);
             const int ncomp = linop.getNComp();
-            amrex::MultiFab phi_cp(ba, phi[lev+1]->DistributionMap(), ncomp, 1);
+            const int ng = (WarpX::grid_type == GridType::Collocated) ? 1 : 0;
+            amrex::MultiFab phi_cp(ba, phi[lev+1]->DistributionMap(), ncomp, ng);
+            if (ng > 0) {
+                // Set all values outside the domain to zero
+                phi_cp.setDomainBndry(0.0_rt, geom[lev]);
+            }
 
             // Copy from phi[lev] to phi_cp (in parallel)
-            const amrex::IntVect& ng = amrex::IntVect::TheUnitVector();
             const amrex::Periodicity& crse_period = geom[lev].periodicity();
 
             ablastr::utils::communication::ParallelCopy(
@@ -292,8 +301,8 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
                 0,
                 0,
                 1,
-                ng,
-                ng,
+                amrex::IntVect(0),
+                amrex::IntVect(ng),
                 do_single_precision_comms,
                 crse_period
             );
@@ -308,7 +317,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 
                 details::PoissonInterpCPtoFP const interp(phi_fp_arr, phi_cp_arr, refratio);
 
-                amrex::Box const b = mfi.tilebox(phi[lev + 1]->ixType().toIntVect());
+                amrex::Box const& b = mfi.growntilebox(ng);
                 amrex::ParallelFor(b, interp);
             }
 
