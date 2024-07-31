@@ -246,6 +246,9 @@ WarpX::Evolve (int numsteps)
                     // This is currently a lab frame calculation.
                     ComputeMagnetostaticField();
                 }
+                // Since the fields were reset above, the external fields are added
+                // back on to the fine patch fields. This make it so that the net fields
+                // are the composite of the field solution and any external field.
                 AddExternalFields();
             } else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
                 // Hybrid-PIC case:

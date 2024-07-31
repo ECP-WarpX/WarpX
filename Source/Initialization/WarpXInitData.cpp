@@ -513,12 +513,6 @@ WarpX::InitData ()
         if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) {
             ComputeMagnetostaticField();
         }
-
-        // Set up an invariant condition through the rest of
-        // execution, that any code besides the field solver that
-        // looks at field values will see the composite of the field
-        // solution and any external field
-        AddExternalFields();
     }
 
     if (restart_chkfile.empty() || write_diagnostics_on_restart) {
@@ -542,15 +536,29 @@ void
 WarpX::AddExternalFields () {
     for (int lev = 0; lev <= finest_level; ++lev) {
         // FIXME: RZ multimode has more than one component for all these
-        if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::read_from_file) {
-            amrex::MultiFab::Add(*Efield_fp[lev][0], *Efield_fp_external[lev][0], 0, 0, 1, guard_cells.ng_alloc_EB);
-            amrex::MultiFab::Add(*Efield_fp[lev][1], *Efield_fp_external[lev][1], 0, 0, 1, guard_cells.ng_alloc_EB);
-            amrex::MultiFab::Add(*Efield_fp[lev][2], *Efield_fp_external[lev][2], 0, 0, 1, guard_cells.ng_alloc_EB);
+        if (m_p_ext_field_params->E_ext_grid_type != ExternalFieldType::default_zero) {
+            if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::constant) {
+                Efield_fp[lev][0]->plus(m_p_ext_field_params->E_external_grid[0], guard_cells.ng_alloc_EB.min());
+                Efield_fp[lev][1]->plus(m_p_ext_field_params->E_external_grid[1], guard_cells.ng_alloc_EB.min());
+                Efield_fp[lev][2]->plus(m_p_ext_field_params->E_external_grid[2], guard_cells.ng_alloc_EB.min());
+            }
+            else {
+                amrex::MultiFab::Add(*Efield_fp[lev][0], *Efield_fp_external[lev][0], 0, 0, 1, guard_cells.ng_alloc_EB);
+                amrex::MultiFab::Add(*Efield_fp[lev][1], *Efield_fp_external[lev][1], 0, 0, 1, guard_cells.ng_alloc_EB);
+                amrex::MultiFab::Add(*Efield_fp[lev][2], *Efield_fp_external[lev][2], 0, 0, 1, guard_cells.ng_alloc_EB);
+            }
         }
-        if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::read_from_file) {
-            amrex::MultiFab::Add(*Bfield_fp[lev][0], *Bfield_fp_external[lev][0], 0, 0, 1, guard_cells.ng_alloc_EB);
-            amrex::MultiFab::Add(*Bfield_fp[lev][1], *Bfield_fp_external[lev][1], 0, 0, 1, guard_cells.ng_alloc_EB);
-            amrex::MultiFab::Add(*Bfield_fp[lev][2], *Bfield_fp_external[lev][2], 0, 0, 1, guard_cells.ng_alloc_EB);
+        if (m_p_ext_field_params->B_ext_grid_type != ExternalFieldType::default_zero) {
+            if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::constant) {
+                Bfield_fp[lev][0]->plus(m_p_ext_field_params->B_external_grid[0], guard_cells.ng_alloc_EB.min());
+                Bfield_fp[lev][1]->plus(m_p_ext_field_params->B_external_grid[1], guard_cells.ng_alloc_EB.min());
+                Bfield_fp[lev][2]->plus(m_p_ext_field_params->B_external_grid[2], guard_cells.ng_alloc_EB.min());
+            }
+            else {
+                amrex::MultiFab::Add(*Bfield_fp[lev][0], *Bfield_fp_external[lev][0], 0, 0, 1, guard_cells.ng_alloc_EB);
+                amrex::MultiFab::Add(*Bfield_fp[lev][1], *Bfield_fp_external[lev][1], 0, 0, 1, guard_cells.ng_alloc_EB);
+                amrex::MultiFab::Add(*Bfield_fp[lev][2], *Bfield_fp_external[lev][2], 0, 0, 1, guard_cells.ng_alloc_EB);
+            }
         }
     }
 }
@@ -810,7 +818,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
             m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::default_zero;
         if ( is_B_ext_const && (lev <= maxlevel_extEMfield_init) )
         {
-            Bfield_fp[lev][i]->setVal(m_p_ext_field_params->B_external_grid[i]);
             if (fft_do_time_averaging) {
                 Bfield_avg_fp[lev][i]->setVal(m_p_ext_field_params->B_external_grid[i]);
             }
@@ -831,7 +838,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
             m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::default_zero;
         if ( is_E_ext_const && (lev <= maxlevel_extEMfield_init) )
         {
-            Efield_fp[lev][i]->setVal(m_p_ext_field_params->E_external_grid[i]);
             if (fft_do_time_averaging) {
                 Efield_avg_fp[lev][i]->setVal(m_p_ext_field_params->E_external_grid[i]);
             }
@@ -858,11 +864,11 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     if ((m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::parse_ext_grid_function)
          && (lev <= maxlevel_extEMfield_init)) {
 
-        // Initialize Bfield_fp with external function
+        // Initialize Bfield_fp_external with external function
         InitializeExternalFieldsOnGridUsingParser(
-            Bfield_fp[lev][0].get(),
-            Bfield_fp[lev][1].get(),
-            Bfield_fp[lev][2].get(),
+            Bfield_fp_external[lev][0].get(),
+            Bfield_fp_external[lev][1].get(),
+            Bfield_fp_external[lev][2].get(),
             m_p_ext_field_params->Bxfield_parser->compile<3>(),
             m_p_ext_field_params->Byfield_parser->compile<3>(),
             m_p_ext_field_params->Bzfield_parser->compile<3>(),
@@ -906,11 +912,11 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     if ((m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::parse_ext_grid_function)
         && (lev <= maxlevel_extEMfield_init)) {
 
-        // Initialize Efield_fp with external function
+        // Initialize Efield_fp_external with external function
         InitializeExternalFieldsOnGridUsingParser(
-            Efield_fp[lev][0].get(),
-            Efield_fp[lev][1].get(),
-            Efield_fp[lev][2].get(),
+            Efield_fp_external[lev][0].get(),
+            Efield_fp_external[lev][1].get(),
+            Efield_fp_external[lev][2].get(),
             m_p_ext_field_params->Exfield_parser->compile<3>(),
             m_p_ext_field_params->Eyfield_parser->compile<3>(),
             m_p_ext_field_params->Ezfield_parser->compile<3>(),
@@ -964,6 +970,8 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     }
 
     LoadExternalFieldsFromFile(lev);
+    // add the external fields to the fine patch fields as initial conditions for the fields
+    AddExternalFields();
 
     if (costs[lev]) {
         const auto iarr = costs[lev]->IndexArray();
