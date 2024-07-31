@@ -65,7 +65,6 @@ last_it = re.search('\d+', last_fn).group()
 prefix = last_fn[:-len(last_it)]
 # Collect all output files in fn_list (names match pattern prefix + arbitrary number)
 fn_list = glob.glob(prefix + '*[0-9]')
-print(fn_list)
 
 error = 0.0
 nt = 0
