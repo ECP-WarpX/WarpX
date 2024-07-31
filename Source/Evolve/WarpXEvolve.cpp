@@ -249,7 +249,9 @@ WarpX::Evolve (int numsteps)
                 // Since the fields were reset above, the external fields are added
                 // back on to the fine patch fields. This make it so that the net fields
                 // are the composite of the field solution and any external field.
-                AddExternalFields();
+                for (int lev = 0; lev <= max_level; ++lev) {
+                    AddExternalFields(lev);
+                }
             } else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
                 // Hybrid-PIC case:
                 // The particles are now at p^{n+1/2} and x^{n+1}. The fields
