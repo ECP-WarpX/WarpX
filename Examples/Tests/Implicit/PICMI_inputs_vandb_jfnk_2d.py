@@ -68,6 +68,9 @@ grid = picmi.Cartesian2DGrid(number_of_cells = [nx, ny],
                              warpx_max_grid_size = 8,
                              warpx_blocking_factor = 8)
 
+solver = picmi.ElectromagneticSolver(grid = grid,
+                                     method = 'Yee')
+
 GMRES_solver = picmi.GMRESLinearSolver(verbose_int = 2,
                                        max_iterations = 1000,
                                        relative_tolerance = 1.0e-8,
@@ -84,10 +87,6 @@ newton_solver = picmi.NewtonNonlinearSolver(verbose = True,
 
 evolve_scheme = picmi.ThetaImplicitEMEvolveScheme(theta = 0.5,
                                                   nonlinear_solver = newton_solver)
-
-solver = picmi.ElectromagneticSolver(grid = grid,
-                                     method = 'Yee',
-                                     warpx_evolve_scheme = evolve_scheme)
 
 ##########################
 # diagnostics
@@ -122,9 +121,9 @@ sim = picmi.Simulation(solver = solver,
                        time_step_size = dt,
                        max_steps = max_steps,
                        verbose = 1,
+                       warpx_evolve_scheme = evolve_scheme,
                        warpx_current_deposition_algo = 'villasenor',
                        warpx_particle_pusher_algo = 'boris',
-                       warpx_random_seed = 2349872,
                        warpx_serialize_initial_conditions = 1,
                        warpx_use_filter = 0)
 

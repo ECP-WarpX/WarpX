@@ -1164,9 +1164,6 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 
     warpx_do_pml_j_damping: bool, default=False
         Whether to do damping of J in the PML
-
-    warpx_evolve_scheme: solver scheme instance, optional
-        Which solver scheme to use
     """
     def init(self, kw):
         assert self.method is None or self.method in ['Yee', 'CKC', 'PSATD', 'ECT'], Exception("Only 'Yee', 'CKC', 'PSATD', and 'ECT' are supported")
@@ -1184,8 +1181,6 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         self.do_pml_in_domain = kw.pop('warpx_do_pml_in_domain', None)
         self.pml_has_particles = kw.pop('warpx_pml_has_particles', None)
         self.do_pml_j_damping = kw.pop('warpx_do_pml_j_damping', None)
-
-        self.evolve_scheme = kw.pop('warpx_evolve_scheme', None)
 
     def solver_initialize_inputs(self):
 
@@ -1220,8 +1215,6 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 
         # --- Same method names are used, though mapped to lower case.
         pywarpx.algo.maxwell_solver = self.method
-        if self.evolve_scheme is not None:
-            self.evolve_scheme.solver_scheme_initialize_inputs()
 
         if self.cfl is not None:
             pywarpx.warpx.cfl = self.cfl
@@ -2074,6 +2067,9 @@ class Simulation(picmistandard.PICMI_Simulation):
 
     Parameters
     ----------
+    warpx_evolve_scheme: solver scheme instance, optional
+        Which evolve scheme to use
+
     warpx_current_deposition_algo: {'direct', 'esirkepov', and 'vay'}, optional
         Current deposition algorithm. The default depends on conditions.
 
@@ -2237,6 +2233,7 @@ class Simulation(picmistandard.PICMI_Simulation):
 
     def init(self, kw):
 
+        self.evolve_scheme = kw.pop('warpx_evolve_scheme', None)
         self.current_deposition_algo = kw.pop('warpx_current_deposition_algo', None)
         self.charge_deposition_algo = kw.pop('warpx_charge_deposition_algo', None)
         self.field_gathering_algo = kw.pop('warpx_field_gathering_algo', None)
@@ -2303,6 +2300,9 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.warpx.sort_particles_for_deposition = self.sort_particles_for_deposition
         pywarpx.warpx.sort_idx_type = self.sort_idx_type
         pywarpx.warpx.sort_bin_size = self.sort_bin_size
+
+        if self.evolve_scheme is not None:
+            self.evolve_scheme.solver_scheme_initialize_inputs()
 
         pywarpx.algo.current_deposition = self.current_deposition_algo
         pywarpx.algo.charge_deposition = self.charge_deposition_algo
