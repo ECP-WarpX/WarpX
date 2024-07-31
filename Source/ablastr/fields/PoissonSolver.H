@@ -9,6 +9,7 @@
 
 #include <ablastr/constant.H>
 #include <ablastr/utils/Communication.H>
+#include <ablastr/utils/Enums.H>
 #include <ablastr/utils/TextMsg.H>
 #include <ablastr/warn_manager/WarnManager.H>
 #include <ablastr/math/fft/AnyFFT.H>
@@ -81,6 +82,7 @@ namespace ablastr::fields {
  * \param[in] geom the geometry per level (e.g., from AmrMesh)
  * \param[in] dmap the distribution mapping per level (e.g., from AmrMesh)
  * \param[in] grids the grids per level (e.g., from AmrMesh)
+ * \param[in] grid_type Integer that corresponds to the type of grid used in the simulation (collocated, staggered, hybrid)
  * \param[in] boundary_handler a handler for boundary conditions, for example @see ElectrostaticSolver::PoissonBoundaryHandler
  * \param[in] is_solver_igf_on_lev0 boolean to select the Poisson solver: 1 for FFT on level 0 & Multigrid on other levels, 0 for Multigrid on all levels
  * \param[in] do_single_precision_comms perform communications in single precision
@@ -105,6 +107,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
             amrex::Vector<amrex::Geometry> const& geom,
             amrex::Vector<amrex::DistributionMapping> const& dmap,
             amrex::Vector<amrex::BoxArray> const& grids,
+            utils::enums::GridType grid_type,
             T_BoundaryHandler const boundary_handler,
             bool is_solver_igf_on_lev0,
             bool const do_single_precision_comms = false,
@@ -263,7 +266,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         mlmg.setVerbose(verbosity);
         mlmg.setMaxIter(max_iters);
         mlmg.setAlwaysUseBNorm(always_use_bnorm);
-        if (WarpX::grid_type == GridType::Collocated) {
+        if (grid_type == utils::enums::GridType::Collocated) {
             // In this case, computeE needs to use ghost nodes data. So we
             // ask MLMG to fill BC for us after it solves the problem.
             mlmg.setFinalFillBC(true);
@@ -285,7 +288,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
             const amrex::IntVect& refratio = rel_ref_ratio.value()[lev];
             ba.coarsen(refratio);
             const int ncomp = linop.getNComp();
-            const int ng = (WarpX::grid_type == GridType::Collocated) ? 1 : 0;
+            const int ng = (grid_type == utils::enums::GridType::Collocated) ? 1 : 0;
             amrex::MultiFab phi_cp(ba, phi[lev+1]->DistributionMap(), ncomp, ng);
             if (ng > 0) {
                 // Set all values outside the domain to zero
