@@ -97,12 +97,14 @@ field_diag1 = picmi.FieldDiagnostic(name = 'diag1',
                                     period = diagnostic_intervals,
                                     data_list = ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'Jx', 'Jy', 'Jz', 'rho', 'divE'],
                                     write_dir = '.',
-                                    warpx_file_prefix = 'ThetaImplicitJFNK_VandB_2d_PICMI')
+                                    warpx_file_prefix = 'ThetaImplicitJFNK_VandB_2d_PICMI_plt')
 
 part_diag1 = picmi.ParticleDiagnostic(name = 'diag1',
                                       period = diagnostic_intervals,
                                       species = [electrons, protons],
-                                      data_list = ['weighting', 'position', 'momentum'])
+                                      data_list = ['weighting', 'position', 'momentum'],
+                                      write_dir = '.',
+                                      warpx_file_prefix = 'ThetaImplicitJFNK_VandB_2d_PICMI_plt')
 
 particle_energy_diag = picmi.ReducedDiagnostic(diag_type = 'ParticleEnergy',
                                                name = 'particle_energy',
