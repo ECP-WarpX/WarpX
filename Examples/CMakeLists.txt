@@ -178,9 +178,9 @@ add_warpx_test(
     Examples/Physics_applications/capacitive_discharge/inputs_2d_test_background_mcc # inputs_test
 )
 
+# FIXME
 # background_mcc_dp_psp #######################################################
 #
-# FIXME
 #add_warpx_test(
 #    background_mcc_dp_psp # name
 #    2  # dims
@@ -453,9 +453,9 @@ if(WarpX_FFT)
     )
 endif()
 
+# FIXME
 # Langmuir_multi_2d_psatd_Vay_deposition_particle_shape_4 #####################
 #
-# FIXME
 #if(WarpX_FFT)
 #    add_warpx_test(
 #        Langmuir_multi_2d_psatd_Vay_deposition_particle_shape_4 # name
