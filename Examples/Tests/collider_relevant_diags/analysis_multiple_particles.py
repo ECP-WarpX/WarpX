@@ -3,14 +3,12 @@
 import os
 import sys
 
+import checksumAPI
 import numpy as np
 import openpmd_api as io
 import pandas as pd
-from scipy.constants import c, e, hbar, m_e
-
-import checksumAPI
-
 from input_file_parser import parse_input_file
+from scipy.constants import c, e, hbar, m_e
 
 E_crit = m_e**2*c**3/(e*hbar)
 B_crit = m_e**2*c**2/(e*hbar)

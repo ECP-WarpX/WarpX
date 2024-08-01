@@ -20,10 +20,9 @@ import os
 import sys
 from glob import glob
 
+import checksumAPI
 import numpy as np
 import yt
-
-import checksumAPI
 
 tolerance = 1.0e-15
 

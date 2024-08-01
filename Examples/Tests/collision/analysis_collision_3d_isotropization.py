@@ -14,11 +14,10 @@
 import os
 import sys
 
+import checksumAPI
 import numpy as np
 import scipy.constants as sc
 import yt
-
-import checksumAPI
 
 e = sc.e
 pi = sc.pi

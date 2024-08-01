@@ -7,7 +7,6 @@
 # solver that directly solves the Poisson equation using matrix inversion
 # rather than the iterative approach from the MLMG solver.
 
-import sys
 
 import checksumAPI
 

@@ -29,12 +29,10 @@ import os
 import re
 import sys
 
-import numpy
-import yt
-
-import post_processing_utils
-
 import checksumAPI
+import numpy
+import post_processing_utils
+import yt
 
 tolerance = 0.001
 

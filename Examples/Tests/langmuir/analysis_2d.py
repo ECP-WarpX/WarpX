@@ -23,10 +23,9 @@ from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 
 yt.funcs.mylog.setLevel(50)
 
+import checksumAPI
 import numpy as np
 from scipy.constants import c, e, epsilon_0, m_e
-
-import checksumAPI
 
 # this will be the name of the plot file
 fn = sys.argv[1]
