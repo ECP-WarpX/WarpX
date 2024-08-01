@@ -31,14 +31,14 @@ jobs:
         WARPX_CMAKE_FLAGS: -DWarpX_DIMS='2'
       cartesian_3d:
         WARPX_CMAKE_FLAGS: -DWarpX_DIMS='3'
-      rz:
+      cylindrical_rz:
         WARPX_CMAKE_FLAGS: -DWarpX_DIMS='RZ'
-      single_precision:
-        WARPX_CMAKE_FLAGS: -DWarpX_PRECISION='SINGLE'
-      no_mpi:
-        WARPX_CMAKE_FLAGS: -DWarpX_MPI='OFF'
       embedded_boundary:
         WARPX_CMAKE_FLAGS: -DWarpX_EB='ON'
+      no_mpi:
+        WARPX_CMAKE_FLAGS: -DWarpX_MPI='OFF'
+      single_precision:
+        WARPX_CMAKE_FLAGS: -DWarpX_PRECISION='SINGLE'
 
   # default: 60; maximum: 360
   timeoutInMinutes: 240
