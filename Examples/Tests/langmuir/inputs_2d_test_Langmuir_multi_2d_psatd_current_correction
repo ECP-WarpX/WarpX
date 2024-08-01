@@ -1,4 +1,7 @@
-# additional runtime parameters
+# base input parameters
+FILE = inputs_2d_base
+
+# test input parameters
 algo.current_deposition = esirkepov
 algo.maxwell_solver = psatd
 amr.max_grid_size = 128

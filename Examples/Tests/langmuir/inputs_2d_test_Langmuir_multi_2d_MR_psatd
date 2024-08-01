@@ -1,4 +1,7 @@
-# additional runtime parameters
+# base input parameters
+FILE = inputs_2d_base
+
+# test input parameters
 algo.maxwell_solver = psatd
 amr.max_level = 1
 amr.ref_ratio = 4

@@ -8,7 +8,7 @@ add_warpx_test(
     RZ # dims
     ON # mpi
     2  # mpi_np
-    Examples/Tests/btd_rz/inputs_rz_z_boosted_BTD_base # inputs_base
+    Examples/Tests/btd_rz/inputs_rz_z_boosted_BTD_base # inputs
     Examples/Tests/btd_rz/analysis_BTD_laser_antenna.py # analysis
     diags/diag1000289 # output
 )

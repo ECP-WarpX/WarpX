@@ -1,4 +1,7 @@
-# additional runtime parameters
+# base input parameters
+FILE = inputs_2d_base
+
+# test input parameters
 algo.current_deposition = vay
 algo.maxwell_solver = psatd
 algo.particle_shape = 4

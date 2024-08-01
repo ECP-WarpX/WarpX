@@ -1,4 +1,7 @@
-# additional runtime parameters
+# base input parameters
+FILE = inputs_avg_2d_base
+
+# test input parameters
 amr.max_grid_size_x = 128
 amr.max_grid_size_y = 64
 psatd.current_correction = 0

@@ -8,10 +8,9 @@ add_warpx_test(
     2  # dims
     ON # mpi
     2  # mpi_np
-    Examples/Tests/langmuir/inputs_2d_base # inputs_base
+    Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_MR # inputs
     Examples/Tests/langmuir/analysis_2d.py # analysis
     diags/diag1000080 # output
-    Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_MR # inputs_test
 )
 
 # Langmuir_multi_2d_MR_anisotropic ############################################
@@ -21,10 +20,9 @@ add_warpx_test(
     2  # dims
     ON # mpi
     2  # mpi_np
-    Examples/Tests/langmuir/inputs_2d_base # inputs_base
+    Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_MR_anisotropic # inputs
     Examples/Tests/langmuir/analysis_2d.py # analysis
     diags/diag1000080 # output
-    Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_MR_anisotropic # inputs_test
 )
 
 # Langmuir_multi_2d_MR_momentum_conserving ####################################
@@ -34,10 +32,9 @@ add_warpx_test(
     2  # dims
     ON # mpi
     2  # mpi_np
-    Examples/Tests/langmuir/inputs_2d_base # inputs_base
+    Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_MR_momentum_conserving # inputs
     Examples/Tests/langmuir/analysis_2d.py # analysis
     diags/diag1000080 # output
-    Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_MR_momentum_conserving # inputs_test
 )
 
 # Langmuir_multi_2d_MR_psatd ##################################################
@@ -48,10 +45,9 @@ if(WarpX_FFT)
         2  # dims
         ON # mpi
         2  # mpi_np
-        Examples/Tests/langmuir/inputs_2d_base # inputs_base
+        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_MR_psatd # inputs
         Examples/Tests/langmuir/analysis_2d.py # analysis
         diags/diag1000080 # output
-        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_MR_psatd # inputs_test
     )
 endif()
 
@@ -62,10 +58,9 @@ add_warpx_test(
     2  # dims
     ON # mpi
     2  # mpi_np
-    Examples/Tests/langmuir/inputs_2d_base # inputs_base
+    Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_nodal # inputs
     Examples/Tests/langmuir/analysis_2d.py # analysis
     diags/diag1000080 # output
-    Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_nodal # inputs_test
 )
 
 
@@ -77,10 +72,9 @@ if(WarpX_FFT)
         2  # dims
         ON # mpi
         2  # mpi_np
-        Examples/Tests/langmuir/inputs_2d_base # inputs_base
+        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd # inputs
         Examples/Tests/langmuir/analysis_2d.py # analysis
         diags/diag1000080 # output
-        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd # inputs_test
     )
 endif()
 
@@ -92,10 +86,9 @@ if(WarpX_FFT)
         2  # dims
         ON # mpi
         1  # mpi_np
-        Examples/Tests/langmuir/inputs_2d_base # inputs_base
+        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd_current_correction # inputs
         Examples/Tests/langmuir/analysis_2d.py # analysis
         diags/diag1000080 # output
-        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd_current_correction # inputs_test
     )
 endif()
 
@@ -107,10 +100,9 @@ if(WarpX_FFT)
         2  # dims
         ON # mpi
         1  # mpi_np
-        Examples/Tests/langmuir/inputs_2d_base # inputs_base
+        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd_current_correction_nodal # inputs
         Examples/Tests/langmuir/analysis_2d.py # analysis
         diags/diag1000080 # output
-        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd_current_correction_nodal # inputs_test
     )
 endif()
 
@@ -122,10 +114,9 @@ if(WarpX_FFT)
         2  # dims
         ON # mpi
         2  # mpi_np
-        Examples/Tests/langmuir/inputs_2d_base # inputs_base
+        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd_momentum_conserving # inputs
         Examples/Tests/langmuir/analysis_2d.py # analysis
         diags/diag1000080 # output
-        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd_momentum_conserving # inputs_test
     )
 endif()
 
@@ -137,10 +128,9 @@ if(WarpX_FFT)
         2  # dims
         ON # mpi
         2  # mpi_np
-        Examples/Tests/langmuir/inputs_2d_base # inputs_base
+        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd_multiJ # inputs
         Examples/Tests/langmuir/analysis_2d.py # analysis
         diags/diag1000080 # output
-        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd_multiJ # inputs_test
     )
 endif()
 
@@ -152,10 +142,9 @@ if(WarpX_FFT)
         2  # dims
         ON # mpi
         2  # mpi_np
-        Examples/Tests/langmuir/inputs_2d_base # inputs_base
+        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd_multiJ_nodal # inputs
         Examples/Tests/langmuir/analysis_2d.py # analysis
         diags/diag1000080 # output
-        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd_multiJ_nodal # inputs_test
     )
 endif()
 
@@ -167,10 +156,9 @@ if(WarpX_FFT)
         2  # dims
         ON # mpi
         2  # mpi_np
-        Examples/Tests/langmuir/inputs_2d_base # inputs_base
+        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd_nodal # inputs
         Examples/Tests/langmuir/analysis_2d.py # analysis
         diags/diag1000080 # output
-        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd_nodal # inputs_test
     )
 endif()
 
@@ -182,10 +170,9 @@ if(WarpX_FFT)
         2  # dims
         ON # mpi
         1  # mpi_np
-        Examples/Tests/langmuir/inputs_2d_base # inputs_base
+        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd_Vay_deposition # inputs
         Examples/Tests/langmuir/analysis_2d.py # analysis
         diags/diag1000080 # output
-        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd_Vay_deposition # inputs_test
     )
 endif()
 
@@ -198,10 +185,9 @@ endif()
 #        2  # dims
 #        ON # mpi
 #        1  # mpi_np
-#        Examples/Tests/langmuir/inputs_2d_base # inputs_base
+#        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd_Vay_deposition_particle_shape_4 # inputs
 #        Examples/Tests/langmuir/analysis_2d.py # analysis
 #        diags/diag1000080 # output
-#        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd_Vay_deposition_particle_shape_4 # inputs_test
 #    )
 #endif()
 
@@ -213,9 +199,8 @@ if(WarpX_FFT)
         2  # dims
         ON # mpi
         1  # mpi_np
-        Examples/Tests/langmuir/inputs_2d_base # inputs_base
+        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd_Vay_deposition_nodal # inputs
         Examples/Tests/langmuir/analysis_2d.py # analysis
         diags/diag1000080 # output
-        Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_psatd_Vay_deposition_nodal # inputs_test
     )
 endif()

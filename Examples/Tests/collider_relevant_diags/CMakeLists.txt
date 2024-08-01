@@ -8,8 +8,7 @@ add_warpx_test(
     3  # dims
     ON # mpi
     2  # mpi_np
-    Examples/Tests/collider_relevant_diags/inputs_3d_multiple_particles_base # inputs_base
+    Examples/Tests/collider_relevant_diags/inputs_3d_multiple_particles_test_collider_diagnostics # inputs
     Examples/Tests/collider_relevant_diags/analysis_multiple_particles.py # analysis
     diags/diag1000001 # output
-    Examples/Tests/collider_relevant_diags/inputs_3d_multiple_particles_test_collider_diagnostics # inputs_test
 )

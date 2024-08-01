@@ -1,2 +1,5 @@
-# additional runtime parameters
+# base input parameters
+FILE = inputs_3d_base
+
+# test input parameters
 diag1.file_prefix = collisionXYZ_plt

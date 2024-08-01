@@ -1,4 +1,7 @@
-# additional runtime parameters
+# base input parameters
+FILE = inputs_2d_base
+
+# test input parameters
 algo.maxwell_solver = psatd
 diag1.electrons.variables = x z w ux uy uz
 diag1.positrons.variables = x z w ux uy uz

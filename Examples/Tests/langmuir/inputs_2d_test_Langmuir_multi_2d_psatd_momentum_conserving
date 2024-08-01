@@ -1,4 +1,7 @@
-# additional runtime parameters
+# base input parameters
+FILE = inputs_2d_base
+
+# test input parameters
 algo.field_gathering = momentum-conserving
 algo.maxwell_solver = psatd
 diag1.fields_to_plot = Ex Ey Ez jx jy jz part_per_cell

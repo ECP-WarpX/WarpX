@@ -22,10 +22,9 @@ function(add_warpx_test
     dims
     mpi
     mpi_np
-    inputs_base
+    inputs
     analysis
     output
-    #inputs_test (optional)
 )
     # cannot run MPI tests w/o MPI support
     if(mpi AND NOT WarpX_MPI)
@@ -43,6 +42,12 @@ function(add_warpx_test
     file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${name})
     set(THIS_WORKING_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${name})
 
+    # copy local input files to run directory
+    get_filename_component(INPUTS_PATH ${inputs} REALPATH BASE_DIR "${CMAKE_BINARYDIR}")
+    get_filename_component(INPUTS_DIR ${INPUTS_PATH} DIRECTORY)
+    file(GLOB TEST_FILES "${INPUTS_DIR}/inputs*")
+    file(COPY ${TEST_FILES} DESTINATION ${THIS_WORKING_DIR})
+
     set(THIS_MPI_TEST_EXE)
     if(mpi)
         set(THIS_MPI_TEST_EXE
@@ -54,6 +59,7 @@ function(add_warpx_test
         )
     endif()
 
+    # FIXME
     set(runtime_params
         "amrex.abort_on_unused_inputs = 1"
         "amrex.fpe_trap_invalid = 1"
@@ -61,17 +67,10 @@ function(add_warpx_test
         "amrex.fpe_trap_zero = 1"
         "amrex.throw_exception = 1"
         "warpx.always_warn_immediately = 1"
-        "warpx.abort_on_warning_threshold = low"
+        #"warpx.abort_on_warning_threshold = low"
         "warpx.do_dynamic_scheduling = 0"
         "warpx.serialize_initial_conditions = 1"
     )
-
-    # FILE parameter must be at the end,
-    # to possibly overwrite previous inputs
-    # FIXME Avoid magic numbers
-    if(${ARGC} GREATER 7)
-        list(APPEND runtime_params "FILE = ${WarpX_SOURCE_DIR}/${ARGV7}")
-    endif()
 
     # test run
     add_test(
@@ -79,7 +78,7 @@ function(add_warpx_test
         COMMAND
             ${THIS_MPI_TEST_EXE}
             $<TARGET_FILE:app_${SD}>
-            ${WarpX_SOURCE_DIR}/${inputs_base}
+            ${WarpX_SOURCE_DIR}/${inputs}
             ${runtime_params}
         WORKING_DIRECTORY ${THIS_WORKING_DIR}
     )

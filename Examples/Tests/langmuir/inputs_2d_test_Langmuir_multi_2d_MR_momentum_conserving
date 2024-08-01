@@ -1,4 +1,7 @@
-# additional runtime parameters
+# base input parameters
+FILE = inputs_2d_base
+
+# test input parameters
 algo.field_gathering = momentum-conserving
 algo.maxwell_solver = ckc
 amr.max_level = 1
