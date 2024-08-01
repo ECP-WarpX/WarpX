@@ -5,7 +5,6 @@ add_warpx_test(
     background_mcc # name
     2  # dims
     ON # mpi
-    2  # mpi_np
     Examples/Physics_applications/capacitive_discharge/inputs_2d_test_background_mcc # inputs
     Examples/analysis_default_regression.py # analysis
     diags/diag1000050 # output
@@ -18,7 +17,6 @@ add_warpx_test(
 #    background_mcc_dp_psp # name
 #    2  # dims
 #    ON # mpi
-#    2  # mpi_np
 #    Examples/Physics_applications/capacitive_discharge/inputs_2d_test_background_mcc_dp_psp # inputs
 #    Examples/analysis_default_regression.py # analysis
 #    diags/diag1000050 # output

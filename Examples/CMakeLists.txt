@@ -21,7 +21,6 @@ function(add_warpx_test
     name
     dims
     mpi
-    mpi_np
     inputs
     analysis
     output
@@ -53,7 +52,7 @@ function(add_warpx_test
         set(THIS_MPI_TEST_EXE
             ${MPIEXEC_EXECUTABLE}
             ${MPI_ALLOW_ROOT}
-            ${MPIEXEC_NUMPROC_FLAG} ${mpi_np}
+            ${MPIEXEC_NUMPROC_FLAG} 2
             ${MPIEXEC_POSTFLAGS}
             ${MPIEXEC_PREFLAGS}
         )
