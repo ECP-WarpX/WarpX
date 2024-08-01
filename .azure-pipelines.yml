@@ -22,7 +22,6 @@ jobs:
     WARPX_CI_OPENPMD: 'TRUE'
     WARPX_CI_TMP: '/tmp/ci'
 
-  # FIXME
   strategy:
     matrix:
       cartesian_1d:
