@@ -248,7 +248,7 @@ WarpX::Evolve (int numsteps)
                 }
                 // Since the fields were reset above, the external fields are added
                 // back on to the fine patch fields. This make it so that the net fields
-                // are the composite of the field solution and any external field.
+                // are the sum of the field solution and any external field.
                 for (int lev = 0; lev <= max_level; ++lev) {
                     AddExternalFields(lev);
                 }
