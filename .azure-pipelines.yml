@@ -25,17 +25,17 @@ jobs:
   # FIXME
   strategy:
     matrix:
-      cartesian1d:
+      cartesian_1d:
         WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1'
-      cartesian2d:
+      cartesian_2d:
         WARPX_CMAKE_FLAGS: -DWarpX_DIMS='2'
-      cartesian3d:
+      cartesian_3d:
         WARPX_CMAKE_FLAGS: -DWarpX_DIMS='3'
       rz:
         WARPX_CMAKE_FLAGS: -DWarpX_DIMS='RZ'
       single_precision:
         WARPX_CMAKE_FLAGS: -DWarpX_PRECISION='SINGLE'
-      nompi:
+      no_mpi:
         WARPX_CMAKE_FLAGS: -DWarpX_MPI='OFF'
       embedded_boundary:
         WARPX_CMAKE_FLAGS: -DWarpX_EB='ON'
