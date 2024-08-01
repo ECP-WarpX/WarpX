@@ -107,7 +107,9 @@ jobs:
           -DCMAKE_CXX_STANDARD=17                       \
           -Duse_cmake_find_lapack=ON -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
       fi
+      # Python modules required for test analysis
       python3 -m pip install --upgrade yt
+      python3 -m pip install --upgrade openpmd-viewer
       rm -rf ${CEI_TMP}
       df -h
     displayName: 'Install dependencies'
