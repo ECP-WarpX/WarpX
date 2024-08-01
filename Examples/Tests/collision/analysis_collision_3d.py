@@ -32,10 +32,8 @@ import sys
 import numpy
 import yt
 
-sys.path.insert(1, '../../../../warpx/Regression/PostProcessingUtils/')
 import post_processing_utils
 
-sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
 tolerance = 0.001

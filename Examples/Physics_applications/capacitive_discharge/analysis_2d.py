@@ -9,8 +9,6 @@
 
 import sys
 
-sys.path.append('../../../../warpx/Regression/Checksum/')
-
 import checksumAPI
 
 my_check = checksumAPI.evaluate_checksum(

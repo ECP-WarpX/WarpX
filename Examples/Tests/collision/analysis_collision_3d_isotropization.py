@@ -18,7 +18,6 @@ import numpy as np
 import scipy.constants as sc
 import yt
 
-sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
 e = sc.e

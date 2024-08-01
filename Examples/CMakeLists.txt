@@ -82,7 +82,6 @@ function(add_warpx_test
             ${runtime_params}
         WORKING_DIRECTORY ${THIS_WORKING_DIR}
     )
-
     if(mpi)
         set_property(TEST ${name}.run APPEND PROPERTY ENVIRONMENT "OMP_NUM_THREADS=1")
     endif()
@@ -96,7 +95,13 @@ function(add_warpx_test
                 ${output}
             WORKING_DIRECTORY ${THIS_WORKING_DIR}
         )
+        # test analysis depends on test run
         set_property(TEST ${name}.analysis APPEND PROPERTY DEPENDS "${name}.run")
+        # add paths for custom Python modules
+        set(PYTHONPATH "${PYTHONPATH}:${WarpX_SOURCE_DIR}/Regression/Checksum")
+        set(PYTHONPATH "${PYTHONPATH}:${WarpX_SOURCE_DIR}/Regression/PostProcessingUtils")
+        set(PYTHONPATH "${PYTHONPATH}:${WarpX_SOURCE_DIR}/Tools/Parser")
+        set_property(TEST ${name}.analysis APPEND PROPERTY ENVIRONMENT "PYTHONPATH=${PYTHONPATH}")
     endif()
 
 endfunction()

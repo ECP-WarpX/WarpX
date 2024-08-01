@@ -23,7 +23,6 @@ from glob import glob
 import numpy as np
 import yt
 
-sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
 tolerance = 1.0e-15
