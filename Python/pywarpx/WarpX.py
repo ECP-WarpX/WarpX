@@ -89,7 +89,18 @@ class WarpX(Bucket):
         for diagnostic in reduced_diagnostics._diagnostics_dict.values():
             argv += diagnostic.attrlist()
 
+        for bucket in self._bucket_dict.values():
+            argv += bucket.attrlist()
+
         return argv
+
+    def get_bucket(self, bucket_name):
+        try:
+            return self._bucket_dict[bucket_name]
+        except KeyError:
+            bucket = Bucket(bucket_name)
+            self._bucket_dict[bucket_name] = bucket
+            return bucket
 
     def init(self, mpi_comm=None, **kw):
         # note: argv[0] needs to be an absolute path so it works with AMReX backtraces
@@ -130,4 +141,4 @@ class WarpX(Bucket):
 
                 ff.write(f'{arg}\n')
 
-warpx = WarpX('warpx')
+warpx = WarpX('warpx', _bucket_dict = {})
