@@ -148,7 +148,6 @@ Use the following :ref:`cmake commands <building-cmake>` to compile the applicat
 
          cd $HOME/src/warpx
          rm -rf build_v100
-         source $HOME/pitzer_v100_warpx.profile
 
          cmake -S . -B build_v100 -DWarpX_COMPUTE=CUDA -DWarpX_FFT=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_DIMS="1;2;RZ;3"
          cmake --build build_v100 -j 48
@@ -159,7 +158,6 @@ Use the following :ref:`cmake commands <building-cmake>` to compile the applicat
 
          cd $HOME/src/warpx
          rm -rf build_v100_py
-         source $HOME/pitzer_v100_warpx.profile
 
          cmake -S . -B build_v100_py -DWarpX_COMPUTE=CUDA -DWarpX_FFT=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_APP=OFF -DWarpX_PYTHON=ON -DWarpX_DIMS="1;2;RZ;3"
          cmake --build build_v100_py -j 48 --target pip_install
@@ -170,7 +168,6 @@ Use the following :ref:`cmake commands <building-cmake>` to compile the applicat
 
          cd $HOME/src/warpx
          rm -rf build
-         source $HOME/pitzer_cpu_warpx.profile
 
          cmake -S . -B build -DWarpX_FFT=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_DIMS="1;2;RZ;3"
          cmake --build build -j 48
@@ -181,7 +178,6 @@ Use the following :ref:`cmake commands <building-cmake>` to compile the applicat
 
          cd $HOME/src/warpx
          rm -rf build_py
-         source $HOME/pitzer_cpu_warpx.profile
 
          cmake -S . -B build_py -DWarpX_FFT=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_APP=OFF -DWarpX_PYTHON=ON -DWarpX_DIMS="1;2;RZ;3"
          cmake --build build_py -j 48 --target pip_install
