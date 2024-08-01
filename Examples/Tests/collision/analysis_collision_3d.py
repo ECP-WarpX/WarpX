@@ -31,7 +31,6 @@ import sys
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
-
 import numpy
 import post_processing_utils
 import yt
