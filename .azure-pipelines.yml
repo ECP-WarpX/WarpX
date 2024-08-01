@@ -79,6 +79,8 @@ jobs:
         python3 python3-pandas python3-pip python3-venv python3-setuptools libblas-dev liblapack-dev
       ccache --set-config=max_size=10.0G
       python3 -m pip install --upgrade pip
+      python3 -m pip install --upgrade build
+      python3 -m pip install --upgrade packaging
       python3 -m pip install --upgrade setuptools
       python3 -m pip install --upgrade wheel
       python3 -m pip install --upgrade virtualenv
