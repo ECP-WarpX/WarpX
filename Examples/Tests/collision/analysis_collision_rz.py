@@ -20,6 +20,7 @@ import os
 import sys
 from glob import glob
 
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 import numpy as np
 import yt

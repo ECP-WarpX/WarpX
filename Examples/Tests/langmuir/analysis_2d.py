@@ -23,6 +23,7 @@ from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 
 yt.funcs.mylog.setLevel(50)
 
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 import numpy as np
 from scipy.constants import c, e, epsilon_0, m_e

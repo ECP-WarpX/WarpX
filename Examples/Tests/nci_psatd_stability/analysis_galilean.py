@@ -16,6 +16,7 @@ import os
 import re
 import sys
 
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 import numpy as np
 import scipy.constants as scc
