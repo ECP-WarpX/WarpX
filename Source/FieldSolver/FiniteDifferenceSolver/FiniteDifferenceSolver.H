@@ -17,6 +17,8 @@
 #include "HybridPICModel/HybridPICModel_fwd.H"
 #include "MacroscopicProperties/MacroscopicProperties_fwd.H"
 
+#include <ablastr/utils/Enums.H>
+
 #include <AMReX_GpuContainers.H>
 #include <AMReX_REAL.H>
 
@@ -47,7 +49,7 @@ class FiniteDifferenceSolver
         FiniteDifferenceSolver (
             int fdtd_algo,
             std::array<amrex::Real,3> cell_size,
-            short grid_type );
+            ablastr::utils::enums::GridType grid_type );
 
         void EvolveB ( std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
@@ -178,7 +180,7 @@ class FiniteDifferenceSolver
     private:
 
         int m_fdtd_algo;
-        short m_grid_type;
+        ablastr::utils::enums::GridType m_grid_type;
 
 #ifdef WARPX_DIM_RZ
         amrex::Real m_dr, m_rmin;

@@ -209,7 +209,7 @@ IntVect WarpX::filter_npass_each_dir(1);
 int WarpX::n_field_gather_buffer = -1;
 int WarpX::n_current_deposition_buffer = -1;
 
-short WarpX::grid_type;
+ablastr::utils::enums::GridType WarpX::grid_type;
 amrex::IntVect m_rho_nodal_flag;
 
 WarpX* WarpX::m_instance = nullptr;
@@ -1066,7 +1066,7 @@ WarpX::ReadParameters ()
 
         // Integer that corresponds to the type of grid used in the simulation
         // (collocated, staggered, hybrid)
-        grid_type = static_cast<short>(GetAlgorithmInteger(pp_warpx, "grid_type"));
+        grid_type = static_cast<ablastr::utils::enums::GridType>(GetAlgorithmInteger(pp_warpx, "grid_type"));
 
         // Use same shape factors in all directions, for gathering
         if (grid_type == GridType::Collocated) { galerkin_interpolation = false; }
@@ -3203,7 +3203,7 @@ WarpX::BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_ma
     });
 }
 
-amrex::Vector<amrex::Real> WarpX::getFornbergStencilCoefficients(const int n_order, const short a_grid_type)
+amrex::Vector<amrex::Real> WarpX::getFornbergStencilCoefficients (const int n_order, ablastr::utils::enums::GridType a_grid_type)
 {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_order % 2 == 0, "n_order must be even");
 
@@ -3265,7 +3265,7 @@ void WarpX::AllocateCenteringCoefficients (amrex::Gpu::DeviceVector<amrex::Real>
                                            const int centering_nox,
                                            const int centering_noy,
                                            const int centering_noz,
-                                           const short a_grid_type)
+                                           ablastr::utils::enums::GridType a_grid_type)
 {
     // Vectors of Fornberg stencil coefficients
     amrex::Vector<amrex::Real> Fornberg_stencil_coeffs_x;
