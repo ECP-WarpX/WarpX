@@ -1048,7 +1048,7 @@ public:
      * \brief Load field values from a user-specified openPMD file,
      * for the fields Ex, Ey, Ez, Bx, By, Bz
      */
-    void LoadExternalFieldsFromFile (int lev);
+    void LoadExternalFields (int lev);
 
     /**
      * \brief Load field values from a user-specified openPMD file

@@ -794,7 +794,7 @@ WarpX::PostRestart ()
 {
     mypc->PostRestart();
     for (int lev = 0; lev <= maxLevel(); ++lev) {
-        LoadExternalFieldsFromFile(lev);
+        LoadExternalFields(lev);
     }
 }
 
@@ -940,7 +940,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     }
 
     // load external grid fields into E/Bfield_fp_external multifabs
-    LoadExternalFieldsFromFile(lev);
+    LoadExternalFields(lev);
     // add the external fields to the fine patch fields as initial conditions for the fields
     AddExternalFields(lev);
 
@@ -1333,7 +1333,7 @@ void WarpX::CheckKnownIssues()
 }
 
 void
-WarpX::LoadExternalFieldsFromFile (int const lev)
+WarpX::LoadExternalFields (int const lev)
 {
     // External fields from file are currently not compatible with the moving window
     // In order to support the moving window, the MultiFab containing the external
