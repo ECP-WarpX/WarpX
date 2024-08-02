@@ -26,21 +26,21 @@ jobs:
   strategy:
     matrix:
       cartesian_1d:
-        WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1'
+        WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1' -DWarpX_FFT=ON
       cartesian_2d:
-        WARPX_CMAKE_FLAGS: -DWarpX_DIMS='2'
+        WARPX_CMAKE_FLAGS: -DWarpX_DIMS='2' -DWarpX_FFT=ON
       cartesian_3d:
-        WARPX_CMAKE_FLAGS: -DWarpX_DIMS='3'
+        WARPX_CMAKE_FLAGS: -DWarpX_DIMS='3' -DWarpX_FFT=ON
       cylindrical_rz:
-        WARPX_CMAKE_FLAGS: -DWarpX_DIMS='RZ'
+        WARPX_CMAKE_FLAGS: -DWarpX_DIMS='RZ' -DWarpX_FFT=ON
       embedded_boundary:
-        WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_EB='ON'
+        WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_FFT=ON -DWarpX_EB='ON'
       no_mpi:
-        WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_MPI='OFF'
+        WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_FFT=ON -DWarpX_MPI='OFF'
       python:
-        WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_APP='OFF' -DWarpX_PYTHON='ON'
+        WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_FFT=ON -DWarpX_PYTHON='ON' -DWarpX_APP='OFF'
       single_precision:
-        WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_PRECISION='SINGLE'
+        WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_FFT=ON -DWarpX_PRECISION='SINGLE'
 
   # default: 60; maximum: 360
   timeoutInMinutes: 240
