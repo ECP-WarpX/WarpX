@@ -17,16 +17,20 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
+#include <ablastr/utils/Enums.H>
+
 #include <memory>
 
 #if WARPX_USE_FFT
 
-SpectralSolver::SpectralSolver(
+SpectralSolver::SpectralSolver (
                 const int lev,
                 const amrex::BoxArray& realspace_ba,
                 const amrex::DistributionMapping& dm,
-                const int norder_x, const int norder_y,
-                const int norder_z, const short grid_type,
+                const int norder_x,
+                const int norder_y,
+                const int norder_z,
+                ablastr::utils::enums::GridType grid_type,
                 const amrex::Vector<amrex::Real>& v_galilean,
                 const amrex::Vector<amrex::Real>& v_comoving,
                 const amrex::RealVect dx, const amrex::Real dt,
