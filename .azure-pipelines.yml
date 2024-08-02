@@ -34,14 +34,19 @@ jobs:
         WARPX_CMAKE_FLAGS: -DWarpX_DIMS='3' -DWarpX_FFT=ON
       cylindrical_rz:
         WARPX_CMAKE_FLAGS: -DWarpX_DIMS='RZ' -DWarpX_FFT=ON
+        WARPX_RZ_FFT: 'TRUE'
       #embedded_boundary:
       #  WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_FFT=ON -DWarpX_EB='ON'
+      #  WARPX_RZ_FFT: 'TRUE'
       no_mpi:
         WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_FFT=ON -DWarpX_MPI='OFF'
+        WARPX_RZ_FFT: 'TRUE'
       python:
         WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_FFT=ON -DWarpX_PYTHON='ON' -DWarpX_APP='OFF'
+        WARPX_RZ_FFT: 'TRUE'
       #single_precision:
       #  WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_FFT=ON -DWarpX_PRECISION='SINGLE'
+      #  WARPX_RZ_FFT: 'TRUE'
 
   # default: 60; maximum: 360
   timeoutInMinutes: 240
@@ -102,14 +107,18 @@ jobs:
       #    -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_CLI_TOOLS=OFF
       #  python3 -m pip install --upgrade openpmd-api
       #fi
-      if [ "${WARPX_CI_RZ_OR_NOMPI:-FALSE}" == "TRUE" ]; then
-        cmake-easyinstall --prefix=/usr/local git+https://github.com/icl-utk-edu/blaspp.git \
+      if [ "${WARPX_RZ_FFT:-FALSE}" == "TRUE" ]; then
+        # BLAS++
+        cmake-easyinstall --prefix=/usr/local           \
+          git+https://github.com/icl-utk-edu/blaspp.git \
           -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache) \
           -DCMAKE_CXX_STANDARD=17                       \
           -Duse_openmp=OFF -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
-        cmake-easyinstall --prefix=/usr/local git+https://github.com/icl-utk-edu/lapackpp.git \
-          -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache) \
-          -DCMAKE_CXX_STANDARD=17                       \
+        # LAPACK++
+        cmake-easyinstall --prefix=/usr/local             \
+          git+https://github.com/icl-utk-edu/lapackpp.git \
+          -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache)   \
+          -DCMAKE_CXX_STANDARD=17                         \
           -Duse_cmake_find_lapack=ON -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
       fi
       # Python modules required for test analysis
