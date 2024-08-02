@@ -30,6 +30,12 @@ function(add_warpx_test
         return()
     endif()
 
+    # do not run no-MPI tests w/ MPI support
+    if(NOT mpi AND WarpX_MPI)
+        return()
+    endif()
+
+    # cannot run tests with unsupported geometry
     if(NOT dims IN_LIST WarpX_DIMS)
         return()
     endif()
