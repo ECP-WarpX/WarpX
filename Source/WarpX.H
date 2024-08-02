@@ -1050,7 +1050,7 @@ public:
      * \brief Load field values from a user-specified openPMD file,
      * for the fields Ex, Ey, Ez, Bx, By, Bz
      */
-    void LoadExternalFieldsFromFile (int lev);
+    void LoadExternalFields (int lev);
 
     /**
      * \brief Load field values from a user-specified openPMD file
@@ -1293,7 +1293,7 @@ private:
     void FillBoundaryB_avg (int lev, PatchType patch_type, amrex::IntVect ng);
     void FillBoundaryE_avg (int lev, PatchType patch_type, amrex::IntVect ng);
 
-    void AddExternalFields ();
+    void AddExternalFields (int lev);
 
     void OneStep_nosub (amrex::Real cur_time);
     void OneStep_sub1 (amrex::Real cur_time);
