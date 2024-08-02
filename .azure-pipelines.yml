@@ -111,7 +111,12 @@ jobs:
       # Python modules required for test analysis
       python3 -m pip install --upgrade -r Regression/requirements.txt
       # external repositories required for test analysis
+      ls -la .
+      cd ..
       git clone --depth 1 https://github.com/ECP-WarpX/warpx-data.git
+      ls -la .
+      cd -
+      ls -la .
       rm -rf ${CEI_TMP}
       df -h
     displayName: 'Install dependencies'
