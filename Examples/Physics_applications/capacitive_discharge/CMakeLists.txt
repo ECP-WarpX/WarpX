@@ -30,4 +30,3 @@ add_warpx_test(
     Examples/Physics_applications/capacitive_discharge/analysis_2d.py # analysis
     diags/diag1000050 # output
 )
-

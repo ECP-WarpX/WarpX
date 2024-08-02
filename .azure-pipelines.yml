@@ -36,7 +36,7 @@ jobs:
       embedded_boundary:
         WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_EB='ON'
       no_mpi:
-        WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_MPI='OFF' 
+        WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_MPI='OFF'
       python:
         WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_APP='OFF' -DWarpX_PYTHON='ON'
       single_precision:
