@@ -109,10 +109,7 @@ jobs:
           -Duse_cmake_find_lapack=ON -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
       fi
       # Python modules required for test analysis
-      python3 -m pip install --upgrade -r requirements.txt
-      python3 -m pip install --upgrade yt
-      python3 -m pip install --upgrade openpmd-viewer
-      python3 -m pip install --upgrade pandas
+      python3 -m pip install --upgrade -r Regression/requirements.txt
       # external repositories required for test analysis
       git clone --depth 1 https://github.com/ECP-WarpX/warpx-data.git
       rm -rf ${CEI_TMP}
