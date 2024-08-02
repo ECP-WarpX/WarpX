@@ -64,7 +64,6 @@ function(add_warpx_test
         )
     endif()
 
-    # FIXME
     set(runtime_params
         "amrex.abort_on_unused_inputs = 1"
         "amrex.fpe_trap_invalid = 1"
@@ -72,6 +71,7 @@ function(add_warpx_test
         "amrex.fpe_trap_zero = 1"
         "amrex.throw_exception = 1"
         "warpx.always_warn_immediately = 1"
+        # FIXME should come before input file
         #"warpx.abort_on_warning_threshold = low"
         "warpx.do_dynamic_scheduling = 0"
         "warpx.serialize_initial_conditions = 1"
