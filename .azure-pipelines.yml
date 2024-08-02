@@ -9,6 +9,7 @@ pr:
 
 jobs:
 - job:
+  # FIXME remove unused variables
   variables:
     BLASPP_HOME: '/usr/local'
     CEI_SUDO: 'sudo'
@@ -20,7 +21,6 @@ jobs:
     WARPX_CI_CCACHE: 'TRUE'
     WARPX_CI_NUM_MAKE_JOBS: 2
     WARPX_CI_OPENPMD: 'TRUE'
-    # TODO remove (unused)
     WARPX_CI_TMP: '/tmp/ci'
 
   strategy:
@@ -34,11 +34,13 @@ jobs:
       cylindrical_rz:
         WARPX_CMAKE_FLAGS: -DWarpX_DIMS='RZ'
       embedded_boundary:
-        WARPX_CMAKE_FLAGS: -DWarpX_EB='ON'
+        WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_EB='ON'
       no_mpi:
-        WARPX_CMAKE_FLAGS: -DWarpX_MPI='OFF' -DWarpX_DIMS='1;2;3;RZ'
+        WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_MPI='OFF' 
+      python:
+        WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_APP='OFF' -DWarpX_PYTHON='ON'
       single_precision:
-        WARPX_CMAKE_FLAGS: -DWarpX_PRECISION='SINGLE'
+        WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_PRECISION='SINGLE'
 
   # default: 60; maximum: 360
   timeoutInMinutes: 240
@@ -91,24 +93,24 @@ jobs:
       export PATH="$HOME/.local/bin:$PATH"
       sudo curl -L -o /usr/local/bin/cmake-easyinstall https://raw.githubusercontent.com/ax3l/cmake-easyinstall/main/cmake-easyinstall
       sudo chmod a+x /usr/local/bin/cmake-easyinstall
-      if [ "${WARPX_CI_OPENPMD:-FALSE}" == "TRUE" ]; then
-        cmake-easyinstall --prefix=/usr/local                   \
-          git+https://github.com/openPMD/openPMD-api.git@0.14.3 \
-          -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache)         \
-          -DCMAKE_VERBOSE_MAKEFILE=ON                           \
-          -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_CLI_TOOLS=OFF
-        python3 -m pip install --upgrade openpmd-api
-      fi
-      if [[ "${WARPX_CI_RZ_OR_NOMPI:-FALSE}" == "TRUE" ]]; then
-        cmake-easyinstall --prefix=/usr/local git+https://github.com/icl-utk-edu/blaspp.git \
-          -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache) \
-          -DCMAKE_CXX_STANDARD=17                       \
-          -Duse_openmp=OFF -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
-        cmake-easyinstall --prefix=/usr/local git+https://github.com/icl-utk-edu/lapackpp.git \
-          -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache) \
-          -DCMAKE_CXX_STANDARD=17                       \
-          -Duse_cmake_find_lapack=ON -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
-      fi
+      #if [ "${WARPX_CI_OPENPMD:-FALSE}" == "TRUE" ]; then
+      #  cmake-easyinstall --prefix=/usr/local                   \
+      #    git+https://github.com/openPMD/openPMD-api.git@0.14.3 \
+      #    -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache)         \
+      #    -DCMAKE_VERBOSE_MAKEFILE=ON                           \
+      #    -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_CLI_TOOLS=OFF
+      #  python3 -m pip install --upgrade openpmd-api
+      #fi
+      #if [[ "${WARPX_CI_RZ_OR_NOMPI:-FALSE}" == "TRUE" ]]; then
+      #  cmake-easyinstall --prefix=/usr/local git+https://github.com/icl-utk-edu/blaspp.git \
+      #    -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache) \
+      #    -DCMAKE_CXX_STANDARD=17                       \
+      #    -Duse_openmp=OFF -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
+      #  cmake-easyinstall --prefix=/usr/local git+https://github.com/icl-utk-edu/lapackpp.git \
+      #    -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache) \
+      #    -DCMAKE_CXX_STANDARD=17                       \
+      #    -Duse_cmake_find_lapack=ON -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
+      #fi
       # Python modules required for test analysis
       python3 -m pip install --upgrade -r Regression/requirements.txt
       # external repositories required for test analysis

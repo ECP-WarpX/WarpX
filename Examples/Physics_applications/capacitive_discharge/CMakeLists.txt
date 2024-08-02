@@ -21,3 +21,13 @@ add_warpx_test(
 #    Examples/analysis_default_regression.py # analysis
 #    diags/diag1000050 # output
 #)
+
+add_warpx_test(
+    Python_background_mcc # name
+    2  # dims
+    ON # mpi
+    Examples/Physics_applications/capacitive_discharge/PICMI_inputs_2d.py # inputs
+    Examples/Physics_applications/capacitive_discharge/analysis_2d.py # analysis
+    diags/diag1000050 # output
+)
+

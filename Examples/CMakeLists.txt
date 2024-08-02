@@ -40,6 +40,23 @@ function(add_warpx_test
         return()
     endif()
 
+    # Python test?
+    if(inputs MATCHES ".*\.py$")
+            set(python ON)
+    else()
+            set(python OFF)
+    endif()
+
+    # cannot run Python tests w/o Python support
+    if(python AND NOT WarpX_PYTHON)
+        return()
+    endif()
+
+    # do not run no-Python tests w/ Python support
+    if(NOT python AND WarpX_PYTHON)
+        return()
+    endif()
+
     # set dimension suffix
     warpx_set_suffix_dims(SD ${dims})
 
@@ -64,29 +81,46 @@ function(add_warpx_test
         )
     endif()
 
-    set(runtime_params
-        "amrex.abort_on_unused_inputs = 1"
-        "amrex.fpe_trap_invalid = 1"
-        "amrex.fpe_trap_overflow = 1"
-        "amrex.fpe_trap_zero = 1"
-        "amrex.throw_exception = 1"
-        "warpx.always_warn_immediately = 1"
-        # FIXME should come before input file
-        #"warpx.abort_on_warning_threshold = low"
-        "warpx.do_dynamic_scheduling = 0"
-        "warpx.serialize_initial_conditions = 1"
-    )
+    set(THIS_Python_EXE)
+    if(python)
+        set(THIS_Python_EXE ${Python_EXECUTABLE})
+    endif()
 
     # test run
-    add_test(
-        NAME ${name}.run
-        COMMAND
-            ${THIS_MPI_TEST_EXE}
-            $<TARGET_FILE:app_${SD}>
-            ${WarpX_SOURCE_DIR}/${inputs}
-            ${runtime_params}
-        WORKING_DIRECTORY ${THIS_WORKING_DIR}
-    )
+    if(python)
+        add_test(
+            NAME ${name}.run
+            COMMAND
+                ${THIS_MPI_TEST_EXE}
+                ${THIS_Python_EXE}
+                ${WarpX_SOURCE_DIR}/${inputs}
+            WORKING_DIRECTORY ${THIS_WORKING_DIR}
+        )
+        set_property(TEST ${name}.run APPEND PROPERTY ENVIRONMENT "PYTHONPATH=${CMAKE_PYTHON_OUTPUT_DIRECTORY}:$ENV{PYTHONPATH}")
+    else()
+        set(runtime_params
+            "amrex.abort_on_unused_inputs = 1"
+            "amrex.fpe_trap_invalid = 1"
+            "amrex.fpe_trap_overflow = 1"
+            "amrex.fpe_trap_zero = 1"
+            "amrex.throw_exception = 1"
+            "warpx.always_warn_immediately = 1"
+            # FIXME should come before input file
+            #"warpx.abort_on_warning_threshold = low"
+            "warpx.do_dynamic_scheduling = 0"
+            "warpx.serialize_initial_conditions = 1"
+        )
+        add_test(
+            NAME ${name}.run
+            COMMAND
+                ${THIS_MPI_TEST_EXE}
+                $<TARGET_FILE:app_${SD}>
+                ${WarpX_SOURCE_DIR}/${inputs}
+                ${runtime_params}
+            WORKING_DIRECTORY ${THIS_WORKING_DIR}
+        )
+    endif()
+
     if(mpi)
         set_property(TEST ${name}.run APPEND PROPERTY ENVIRONMENT "OMP_NUM_THREADS=1")
     endif()
@@ -103,10 +137,10 @@ function(add_warpx_test
         # test analysis depends on test run
         set_property(TEST ${name}.analysis APPEND PROPERTY DEPENDS "${name}.run")
         # add paths for custom Python modules
-        set(PYTHONPATH "${PYTHONPATH}:${WarpX_SOURCE_DIR}/Regression/Checksum")
-        set(PYTHONPATH "${PYTHONPATH}:${WarpX_SOURCE_DIR}/Regression/PostProcessingUtils")
-        set(PYTHONPATH "${PYTHONPATH}:${WarpX_SOURCE_DIR}/Tools/Parser")
-        set_property(TEST ${name}.analysis APPEND PROPERTY ENVIRONMENT "PYTHONPATH=${PYTHONPATH}")
+        set(PYTHONPATH "$ENV{PYTHONPATH}:${WarpX_SOURCE_DIR}/Regression/Checksum")
+        set(PYTHONPATH "$ENV{PYTHONPATH}:${WarpX_SOURCE_DIR}/Regression/PostProcessingUtils")
+        set(PYTHONPATH "$ENV{PYTHONPATH}:${WarpX_SOURCE_DIR}/Tools/Parser")
+        set_property(TEST ${name}.analysis APPEND PROPERTY ENVIRONMENT "PYTHONPATH=$ENV{PYTHONPATH}")
     endif()
 
 endfunction()
