@@ -1234,6 +1234,194 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         pywarpx.warpx.do_pml_j_damping = self.do_pml_j_damping
 
 
+class ExplicitEvolveScheme(picmistandard.base._ClassWithInit):
+    """
+    Sets up the explicit evolve scheme
+    """
+    def solver_scheme_initialize_inputs(self):
+        pywarpx.algo.evolve_scheme = 'explicit'
+
+
+class ThetaImplicitEMEvolveScheme(picmistandard.base._ClassWithInit):
+    """
+    Sets up the "theta implicit" electromagnetic evolve scheme
+
+    Parameters
+    ----------
+    nonlinear_solver: nonlinear solver instance
+        The nonlinear solver to use for the iterations
+
+    theta: float, optional
+        The "theta" parameter, determining the level of implicitness
+    """
+    def __init__(self, nonlinear_solver, theta = None):
+        self.nonlinear_solver = nonlinear_solver
+        self.theta = theta
+
+    def solver_scheme_initialize_inputs(self):
+        pywarpx.algo.evolve_scheme = 'theta_implicit_em'
+        implicit_evolve = pywarpx.warpx.get_bucket('implicit_evolve')
+        implicit_evolve.theta = self.theta
+
+        self.nonlinear_solver.nonlinear_solver_initialize_inputs()
+
+
+class SemiImplicitEMEvolveScheme(picmistandard.base._ClassWithInit):
+    """
+    Sets up the "semi-implicit" electromagnetic evolve scheme
+
+    Parameters
+    ----------
+    nonlinear_solver: nonlinear solver instance
+        The nonlinear solver to use for the iterations
+    """
+    def __init__(self, nonlinear_solver):
+        self.nonlinear_solver = nonlinear_solver
+
+    def solver_scheme_initialize_inputs(self):
+        pywarpx.algo.evolve_scheme = 'semi_implicit_em'
+
+        self.nonlinear_solver.nonlinear_solver_initialize_inputs()
+
+
+class PicardNonlinearSolver(picmistandard.base._ClassWithInit):
+    """
+    Sets up the iterative Picard nonlinear solver for the implicit evolve scheme
+
+    Parameters
+    ----------
+    verbose: bool, default=True
+        Whether there is verbose output from the solver
+
+    absolute_tolerance: float, default=0.
+        Absoluate tolerence of the convergence
+
+    relative_tolerance: float, default=1.e-6
+        Relative tolerance of the convergence
+
+    max_iterations: integer, default=100
+        Maximum number of iterations
+
+    require_convergence: bool, default True
+        Whether convergence is required. If True and convergence is not obtained, the code will exit.
+    """
+    def __init__(self, verbose=None, absolute_tolerance=None, relative_tolerance=None,
+                 max_iterations=None, require_convergence=None):
+        self.verbose = verbose
+        self.absolute_tolerance = absolute_tolerance
+        self.relative_tolerance = relative_tolerance
+        self.max_iterations = max_iterations
+        self.require_convergence = require_convergence
+
+    def nonlinear_solver_initialize_inputs(self):
+        implicit_evolve = pywarpx.warpx.get_bucket('implicit_evolve')
+        implicit_evolve.nonlinear_solver = 'picard'
+
+        picard = pywarpx.warpx.get_bucket('picard')
+        picard.verbose = self.verbose
+        picard.absolute_tolerance = self.absolute_tolerance
+        picard.relative_tolerance = self.relative_tolerance
+        picard.max_iterations = self.max_iterations
+        picard.require_convergence = self.require_convergence
+
+
+class NewtonNonlinearSolver(picmistandard.base._ClassWithInit):
+    """
+    Sets up the iterative Newton nonlinear solver for the implicit evolve scheme
+
+    Parameters
+    ----------
+    verbose: bool, default=True
+        Whether there is verbose output from the solver
+
+    absolute_tolerance: float, default=0.
+        Absoluate tolerence of the convergence
+
+    relative_tolerance: float, default=1.e-6
+        Relative tolerance of the convergence
+
+    max_iterations: integer, default=100
+        Maximum number of iterations
+
+    require_convergence: bool, default True
+        Whether convergence is required. If True and convergence is not obtained, the code will exit.
+
+    linear_solver: linear solver instance, optional
+        Specifies input arguments to the linear solver
+
+    max_particle_iterations: integer, optional
+        The maximum number of particle iterations
+
+    particle_tolerance: float, optional
+        The tolerance of parrticle quantities for convergence
+
+    """
+    def __init__(self, verbose=None, absolute_tolerance=None, relative_tolerance=None,
+                 max_iterations=None, require_convergence=None, linear_solver=None,
+                 max_particle_iterations=None, particle_tolerance=None):
+        self.verbose = verbose
+        self.absolute_tolerance = absolute_tolerance
+        self.relative_tolerance = relative_tolerance
+        self.max_iterations = max_iterations
+        self.require_convergence = require_convergence
+        self.linear_solver = linear_solver
+        self.max_particle_iterations = max_particle_iterations
+        self.particle_tolerance = particle_tolerance
+
+    def nonlinear_solver_initialize_inputs(self):
+        implicit_evolve = pywarpx.warpx.get_bucket('implicit_evolve')
+        implicit_evolve.nonlinear_solver = 'newton'
+        implicit_evolve.max_particle_iterations = self.max_particle_iterations
+        implicit_evolve.particle_tolerance = self.particle_tolerance
+
+        newton = pywarpx.warpx.get_bucket('newton')
+        newton.verbose = self.verbose
+        newton.absolute_tolerance = self.absolute_tolerance
+        newton.relative_tolerance = self.relative_tolerance
+        newton.max_iterations = self.max_iterations
+        newton.require_convergence = self.require_convergence
+
+        self.linear_solver.linear_solver_initialize_inputs()
+
+
+class GMRESLinearSolver(picmistandard.base._ClassWithInit):
+    """
+    Sets up the iterative GMRES linear solver for the implicit Newton nonlinear solver
+
+    Parameters
+    ----------
+    verbose_int: integer, default=2
+        Level of verbosity of output
+
+    restart_length: integer, default=30
+       How often to restart the GMRES iterations
+
+    absolute_tolerance: float, default=0.
+        Absoluate tolerence of the convergence
+
+    relative_tolerance: float, default=1.e-4
+        Relative tolerance of the convergence
+
+    max_iterations: integer, default=1000
+        Maximum number of iterations
+    """
+    def __init__(self, verbose_int=None, restart_length=None, absolute_tolerance=None, relative_tolerance=None,
+                 max_iterations=None):
+        self.verbose_int = verbose_int
+        self.restart_length = restart_length
+        self.absolute_tolerance = absolute_tolerance
+        self.relative_tolerance = relative_tolerance
+        self.max_iterations = max_iterations
+
+    def linear_solver_initialize_inputs(self):
+        gmres = pywarpx.warpx.get_bucket('gmres')
+        gmres.verbose_int = self.verbose_int
+        gmres.restart_length = self.restart_length
+        gmres.absolute_tolerance = self.absolute_tolerance
+        gmres.relative_tolerance = self.relative_tolerance
+        gmres.max_iterations = self.max_iterations
+
+
 class HybridPICSolver(picmistandard.base._ClassWithInit):
     """
     Hybrid-PIC solver based on Ohm's law.
@@ -1924,6 +2112,9 @@ class Simulation(picmistandard.PICMI_Simulation):
 
     Parameters
     ----------
+    warpx_evolve_scheme: solver scheme instance, optional
+        Which evolve scheme to use
+
     warpx_current_deposition_algo: {'direct', 'esirkepov', and 'vay'}, optional
         Current deposition algorithm. The default depends on conditions.
 
@@ -2087,6 +2278,7 @@ class Simulation(picmistandard.PICMI_Simulation):
 
     def init(self, kw):
 
+        self.evolve_scheme = kw.pop('warpx_evolve_scheme', None)
         self.current_deposition_algo = kw.pop('warpx_current_deposition_algo', None)
         self.charge_deposition_algo = kw.pop('warpx_charge_deposition_algo', None)
         self.field_gathering_algo = kw.pop('warpx_field_gathering_algo', None)
@@ -2153,6 +2345,9 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.warpx.sort_particles_for_deposition = self.sort_particles_for_deposition
         pywarpx.warpx.sort_idx_type = self.sort_idx_type
         pywarpx.warpx.sort_bin_size = self.sort_bin_size
+
+        if self.evolve_scheme is not None:
+            self.evolve_scheme.solver_scheme_initialize_inputs()
 
         pywarpx.algo.current_deposition = self.current_deposition_algo
         pywarpx.algo.charge_deposition = self.charge_deposition_algo
@@ -2370,6 +2565,11 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
     warpx_openpmd_backend: {bp, h5, json}, optional
         Openpmd backend file format
 
+    warpx_openpmd_encoding: 'v' (variable based), 'f' (file based) or 'g' (group based), optional
+        Only read if ``<diag_name>.format = openpmd``. openPMD file output encoding.
+        File based: one file per timestep (slower), group/variable based: one file for all steps (faster)).
+        Variable based is an experimental feature with ADIOS2. Default: `'f'`.
+
     warpx_file_prefix: string, optional
         Prefix on the diagnostic file name
 
@@ -2378,6 +2578,9 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
 
     warpx_dump_rz_modes: bool, optional
         Flag whether to dump the data for all RZ modes
+
+    warpx_dump_last_timestep: bool, optional
+        If true, the last timestep is dumped regardless of the diagnostic period/intervals.
 
     warpx_particle_fields_to_plot: list of ParticleFieldDiagnostics
         List of ParticleFieldDiagnostic classes to install in the simulation. Error
@@ -2396,9 +2599,11 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
         self.plot_crsepatch = kw.pop('warpx_plot_crsepatch', None)
         self.format = kw.pop('warpx_format', 'plotfile')
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
+        self.openpmd_encoding = kw.pop('warpx_openpmd_encoding', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
         self.file_min_digits = kw.pop('warpx_file_min_digits', None)
         self.dump_rz_modes = kw.pop('warpx_dump_rz_modes', None)
+        self.dump_last_timestep = kw.pop('warpx_dump_last_timestep', None)
         self.particle_fields_to_plot = kw.pop('warpx_particle_fields_to_plot', [])
         self.particle_fields_species = kw.pop('warpx_particle_fields_species', None)
 
@@ -2409,8 +2614,10 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
         self.diagnostic.diag_type = 'Full'
         self.diagnostic.format = self.format
         self.diagnostic.openpmd_backend = self.openpmd_backend
+        self.diagnostic.openpmd_encoding = self.openpmd_encoding
         self.diagnostic.file_min_digits = self.file_min_digits
         self.diagnostic.dump_rz_modes = self.dump_rz_modes
+        self.diagnostic.dump_last_timestep = self.dump_last_timestep
         self.diagnostic.intervals = self.period
         self.diagnostic.diag_lo = self.lower_bound
         self.diagnostic.diag_hi = self.upper_bound
@@ -2574,6 +2781,11 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
     warpx_openpmd_backend: {bp, h5, json}, optional
         Openpmd backend file format
 
+    warpx_openpmd_encoding: 'v' (variable based), 'f' (file based) or 'g' (group based), optional
+        Only read if ``<diag_name>.format = openpmd``. openPMD file output encoding.
+        File based: one file per timestep (slower), group/variable based: one file for all steps (faster)).
+        Variable based is an experimental feature with ADIOS2. Default: `'f'`.
+
     warpx_file_prefix: string, optional
         Prefix on the diagnostic file name
 
@@ -2592,6 +2804,9 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         a dictionary is given the keys should be species with the value
         specifying the stride for that species.
 
+    warpx_dump_last_timestep: bool, optional
+        If true, the last timestep is dumped regardless of the diagnostic period/intervals.
+
     warpx_plot_filter_function: string, optional
         Analytic expression to down select the particles to in the diagnostic
     """
@@ -2599,11 +2814,13 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
 
         self.format = kw.pop('warpx_format', 'plotfile')
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
+        self.openpmd_encoding = kw.pop('warpx_openpmd_encoding', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
         self.file_min_digits = kw.pop('warpx_file_min_digits', None)
         self.random_fraction = kw.pop('warpx_random_fraction', None)
         self.uniform_stride = kw.pop('warpx_uniform_stride', None)
         self.plot_filter_function = kw.pop('warpx_plot_filter_function', None)
+        self.dump_last_timestep = kw.pop('warpx_dump_last_timestep', None)
 
         self.user_defined_kw = {}
         if self.plot_filter_function is not None:
@@ -2623,7 +2840,9 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         self.diagnostic.diag_type = 'Full'
         self.diagnostic.format = self.format
         self.diagnostic.openpmd_backend = self.openpmd_backend
+        self.diagnostic.openpmd_encoding = self.openpmd_encoding
         self.diagnostic.file_min_digits = self.file_min_digits
+        self.diagnostic.dump_last_timestep = self.dump_last_timestep
         self.diagnostic.intervals = self.period
         self.diagnostic.set_or_replace_attr('write_species', True)
         if 'fields_to_plot' not in self.diagnostic.argvattrs:
@@ -2740,6 +2959,11 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
     warpx_openpmd_backend: string, optional
         Passed to <diagnostic name>.openpmd_backend
 
+    warpx_openpmd_encoding: 'f' (file based) or 'g' (group based), optional
+        Only read if ``<diag_name>.format = openpmd``. openPMD file output encoding.
+        File based: one file per timestep (slower), group/variable based: one file for all steps (faster)).
+        Default: `'f'`.
+
     warpx_file_prefix: string, optional
         Passed to <diagnostic name>.file_prefix
 
@@ -2764,6 +2988,7 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
 
         self.format = kw.pop('warpx_format', None)
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
+        self.openpmd_encoding = kw.pop('warpx_openpmd_encoding', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
         self.intervals = kw.pop('warpx_intervals', None)
         self.file_min_digits = kw.pop('warpx_file_min_digits', None)
@@ -2778,6 +3003,7 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
         self.diagnostic.diag_type = 'BackTransformed'
         self.diagnostic.format = self.format
         self.diagnostic.openpmd_backend = self.openpmd_backend
+        self.diagnostic.openpmd_encoding = self.openpmd_encoding
         self.diagnostic.file_min_digits = self.file_min_digits
         self.diagnostic.diag_lo = self.lower_bound
         self.diagnostic.diag_hi = self.upper_bound
@@ -2849,6 +3075,11 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
     warpx_openpmd_backend: string, optional
         Passed to <diagnostic name>.openpmd_backend
 
+    warpx_openpmd_encoding: 'f' (file based) or 'g' (group based), optional
+        Only read if ``<diag_name>.format = openpmd``. openPMD file output encoding.
+        File based: one file per timestep (slower), group/variable based: one file for all steps (faster)).
+        Default: `'f'`.
+
     warpx_file_prefix: string, optional
         Passed to <diagnostic name>.file_prefix
 
@@ -2865,6 +3096,7 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
     def init(self, kw):
         self.format = kw.pop('warpx_format', None)
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
+        self.openpmd_encoding = kw.pop('warpx_openpmd_encoding', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
         self.intervals = kw.pop('warpx_intervals', None)
         self.file_min_digits = kw.pop('warpx_file_min_digits', None)
@@ -2877,6 +3109,7 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
         self.diagnostic.diag_type = 'BackTransformed'
         self.diagnostic.format = self.format
         self.diagnostic.openpmd_backend = self.openpmd_backend
+        self.diagnostic.openpmd_encoding = self.openpmd_encoding
         self.diagnostic.file_min_digits = self.file_min_digits
 
         self.diagnostic.do_back_transformed_particles = True
