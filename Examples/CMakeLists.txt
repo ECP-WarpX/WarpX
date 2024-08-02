@@ -96,6 +96,7 @@ function(add_warpx_test
                 ${WarpX_SOURCE_DIR}/${inputs}
             WORKING_DIRECTORY ${THIS_WORKING_DIR}
         )
+        # FIXME Use helper function to handle Windows exceptions
         set_property(TEST ${name}.run APPEND PROPERTY ENVIRONMENT "PYTHONPATH=${PYTHONPATH}:${CMAKE_PYTHON_OUTPUT_DIRECTORY}")
     else()
         set(runtime_params

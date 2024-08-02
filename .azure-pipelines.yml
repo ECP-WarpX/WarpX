@@ -101,16 +101,16 @@ jobs:
       #    -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_CLI_TOOLS=OFF
       #  python3 -m pip install --upgrade openpmd-api
       #fi
-      #if [[ "${WARPX_CI_RZ_OR_NOMPI:-FALSE}" == "TRUE" ]]; then
-      #  cmake-easyinstall --prefix=/usr/local git+https://github.com/icl-utk-edu/blaspp.git \
-      #    -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache) \
-      #    -DCMAKE_CXX_STANDARD=17                       \
-      #    -Duse_openmp=OFF -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
-      #  cmake-easyinstall --prefix=/usr/local git+https://github.com/icl-utk-edu/lapackpp.git \
-      #    -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache) \
-      #    -DCMAKE_CXX_STANDARD=17                       \
-      #    -Duse_cmake_find_lapack=ON -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
-      #fi
+      if [ "${WARPX_CI_RZ_OR_NOMPI:-FALSE}" == "TRUE" ]; then
+        cmake-easyinstall --prefix=/usr/local git+https://github.com/icl-utk-edu/blaspp.git \
+          -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache) \
+          -DCMAKE_CXX_STANDARD=17                       \
+          -Duse_openmp=OFF -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
+        cmake-easyinstall --prefix=/usr/local git+https://github.com/icl-utk-edu/lapackpp.git \
+          -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache) \
+          -DCMAKE_CXX_STANDARD=17                       \
+          -Duse_cmake_find_lapack=ON -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
+      fi
       # Python modules required for test analysis
       python3 -m pip install --upgrade -r Regression/requirements.txt
       # external repositories required for test analysis
