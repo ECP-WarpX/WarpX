@@ -112,6 +112,7 @@ jobs:
       python3 -m pip install --upgrade -r requirements.txt
       python3 -m pip install --upgrade yt
       python3 -m pip install --upgrade openpmd-viewer
+      python3 -m pip install --upgrade pandas
       # external repositories required for test analysis
       git clone --depth 1 https://github.com/ECP-WarpX/warpx-data.git
       rm -rf ${CEI_TMP}
