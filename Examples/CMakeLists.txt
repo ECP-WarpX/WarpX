@@ -96,7 +96,7 @@ function(add_warpx_test
                 ${WarpX_SOURCE_DIR}/${inputs}
             WORKING_DIRECTORY ${THIS_WORKING_DIR}
         )
-        set_property(TEST ${name}.run APPEND PROPERTY ENVIRONMENT "PYTHONPATH=${CMAKE_PYTHON_OUTPUT_DIRECTORY}:$ENV{PYTHONPATH}")
+        set_property(TEST ${name}.run APPEND PROPERTY ENVIRONMENT "PYTHONPATH=${PYTHONPATH}:${CMAKE_PYTHON_OUTPUT_DIRECTORY}")
     else()
         set(runtime_params
             "amrex.abort_on_unused_inputs = 1"
@@ -137,10 +137,10 @@ function(add_warpx_test
         # test analysis depends on test run
         set_property(TEST ${name}.analysis APPEND PROPERTY DEPENDS "${name}.run")
         # add paths for custom Python modules
-        set(PYTHONPATH "$ENV{PYTHONPATH}:${WarpX_SOURCE_DIR}/Regression/Checksum")
-        set(PYTHONPATH "$ENV{PYTHONPATH}:${WarpX_SOURCE_DIR}/Regression/PostProcessingUtils")
-        set(PYTHONPATH "$ENV{PYTHONPATH}:${WarpX_SOURCE_DIR}/Tools/Parser")
-        set_property(TEST ${name}.analysis APPEND PROPERTY ENVIRONMENT "PYTHONPATH=$ENV{PYTHONPATH}")
+        set(PYTHONPATH "${PYTHONPATH}:${WarpX_SOURCE_DIR}/Regression/Checksum")
+        set(PYTHONPATH "${PYTHONPATH}:${WarpX_SOURCE_DIR}/Regression/PostProcessingUtils")
+        set(PYTHONPATH "${PYTHONPATH}:${WarpX_SOURCE_DIR}/Tools/Parser")
+        set_property(TEST ${name}.analysis APPEND PROPERTY ENVIRONMENT "PYTHONPATH=${PYTHONPATH}")
     endif()
 
 endfunction()
