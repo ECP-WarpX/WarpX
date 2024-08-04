@@ -201,9 +201,7 @@ class PlasmaExpansionSimulation(object):
                 'E', 'J', 'T_electrons', 'T_ions', 'phi',
                 'rho_electrons', 'rho_ions'
             ],
-            warpx_file_prefix='Python_si_electrostatic_plt',
-            warpx_format='openpmd',
-            warpx_openpmd_backend='h5'
+            warpx_file_prefix='Python_si_electrostatic_plt'
         )
         simulation.add_diagnostic(field_diag)
 

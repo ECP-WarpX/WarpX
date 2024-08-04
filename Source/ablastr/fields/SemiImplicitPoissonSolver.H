@@ -56,13 +56,13 @@
 
 namespace ablastr::fields {
 
-/** Compute the potential `phi` by solving the Poisson equation
+/** Compute the potential `phi` by solving the Poisson equation with a modifed dielectric function
  *
  * Uses `rho` as a source. This uses the AMReX solver.
  *
  * More specifically, this solves the equation
  * \f[
- *   ... \phi = -\frac{r \rho}{\epsilon_0}
+ *   ... \phi(r) = -\frac{r \rho(r)}{\epsilon(r)}
  * \f]
  *
  * \tparam T_BoundaryHandler handler for boundary conditions, for example @see ElectrostaticSolver::PoissonBoundaryHandler
@@ -102,7 +102,7 @@ computeSemiImplicitPhi (amrex::Vector<amrex::MultiFab*> const & rho,
                         amrex::Vector<amrex::Geometry> const& geom,
                         amrex::Vector<amrex::DistributionMapping> const& dmap,
                         amrex::Vector<amrex::BoxArray> const& grids,
-                        T_BoundaryHandler const boundary_handler,
+                        T_BoundaryHandler const & boundary_handler,
                         bool is_solver_igf_on_lev0,
                         bool const do_single_precision_comms = false,
                         std::optional<amrex::Vector<amrex::IntVect> > rel_ref_ratio = std::nullopt,
@@ -120,6 +120,8 @@ computeSemiImplicitPhi (amrex::Vector<amrex::MultiFab*> const & rho,
                                            "rel_ref_ratio must be set if mesh-refinement is used");
         rel_ref_ratio = amrex::Vector<amrex::IntVect>{{amrex::IntVect(AMREX_D_DECL(1, 1, 1))}};
     }
+    ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE( !is_solver_igf_on_lev0,
+        "FFT solver cannot be used with semi-implicit Poisson solve");
 
     auto const finest_level = static_cast<int>(rho.size() - 1);
 
@@ -140,42 +142,13 @@ computeSemiImplicitPhi (amrex::Vector<amrex::MultiFab*> const & rho,
         );
     }
 
-#if !(defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ))
-    amrex::LPInfo info;
-#else
     const amrex::LPInfo info;
-#endif
-
-    ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE( !is_solver_igf_on_lev0,
-        "FFT solver cannot be used with semi-implicit Poisson solve");
 
     for (int lev=0; lev<=finest_level; lev++) {
 
         // Use the Multigrid (MLMG) solver but first scale rho appropriately
         using namespace ablastr::constant::SI;
         rho[lev]->mult(-1._rt/ep0);  // TODO: when do we "un-multiply" this? We need to document this side-effect!
-
-// #if !(defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ))
-//         // Determine whether to use semi-coarsening
-//         amrex::Array<amrex::Real,AMREX_SPACEDIM> dx_scaled
-//                 {AMREX_D_DECL(geom[lev].CellSize(0), geom[lev].CellSize(1), geom[lev].CellSize(2))};
-//         int max_semicoarsening_level = 0;
-//         int semicoarsening_direction = -1;
-//         const auto min_dir = static_cast<int>(std::distance(dx_scaled.begin(),
-//                                     std::min_element(dx_scaled.begin(),dx_scaled.end())));
-//         const auto max_dir = static_cast<int>(std::distance(dx_scaled.begin(),
-//                                     std::max_element(dx_scaled.begin(),dx_scaled.end())));
-//         if (dx_scaled[max_dir] > dx_scaled[min_dir]) {
-//             semicoarsening_direction = max_dir;
-//             max_semicoarsening_level = static_cast<int>
-//             (std::log2(dx_scaled[max_dir]/dx_scaled[min_dir]));
-//         }
-//         if (max_semicoarsening_level > 0) {
-//             info.setSemicoarsening(true);
-//             info.setMaxSemicoarseningLevel(max_semicoarsening_level);
-//             info.setSemicoarseningDirection(semicoarsening_direction);
-//         }
-// #endif
 
         // Use the EB enabled solver.
         amrex::MLEBNodeFDLaplacian linop( {geom[lev]}, {grids[lev]}, {dmap[lev]}, info
