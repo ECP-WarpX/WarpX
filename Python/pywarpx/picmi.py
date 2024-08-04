@@ -560,6 +560,14 @@ class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution, DensityDist
     Parameters
     ----------
 
+    warpx_density_min: float
+        Minimum plasma density. No particle is injected where the density is
+        below this value.
+
+    warpx_density_max: float
+        Maximum plasma density. The density at each point is the minimum between
+        the value given in the profile, and density_max.
+
     warpx_momentum_spread_expressions: list of string
         Analytic expressions describing the gamma*velocity spread for each axis [m/s].
         Expressions should be in terms of the position, written as 'x', 'y', and 'z'.
