@@ -794,7 +794,7 @@ endif()
 if(BUILD_TESTING)
     enable_testing()
 
-    if(WarpX_APP)
+    if(WarpX_APP OR WarpX_PYTHON)
         add_subdirectory(Examples)
     endif()
 endif()

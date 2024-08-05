@@ -41,10 +41,9 @@ function(add_warpx_test
     endif()
 
     # Python test?
+    set(python OFF)
     if(inputs MATCHES ".*\.py$")
-            set(python ON)
-    else()
-            set(python OFF)
+        set(python ON)
     endif()
 
     # cannot run Python tests w/o Python support
