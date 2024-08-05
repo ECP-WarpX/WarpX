@@ -6,5 +6,6 @@ numpy
 openpmd-api
 openpmd-viewer
 pandas
+periodictable
 scipy
 yt
