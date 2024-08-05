@@ -7,5 +7,6 @@ openpmd-api
 openpmd-viewer
 pandas
 periodictable
+picmistandard
 scipy
 yt
