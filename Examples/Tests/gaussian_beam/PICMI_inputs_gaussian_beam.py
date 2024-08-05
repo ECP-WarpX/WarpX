@@ -65,9 +65,7 @@ field_diag1 = picmi.FieldDiagnostic(name = 'diag1',
                                     grid = grid,
                                     period = 10,
                                     data_list = args.fields_to_plot,
-                                    warpx_format = args.diagformat,
-                                    write_dir = '.',
-                                    warpx_file_prefix = 'Python_gaussian_beam_plt')
+                                    warpx_format = args.diagformat)
 
 part_diag1 = picmi.ParticleDiagnostic(name = 'diag1',
                                       period = 10,

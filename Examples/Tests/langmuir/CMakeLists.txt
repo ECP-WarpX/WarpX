@@ -189,3 +189,14 @@ if(WarpX_FFT)
         diags/diag1000080 # output
     )
 endif()
+
+# Python_Langmuir_rz_multimode ################################################
+#
+add_warpx_test(
+    Python_Langmuir_rz_multimode # name
+    RZ # dims
+    ON # mpi
+    Examples/Tests/langmuir/PICMI_inputs_rz.py # inputs
+    Examples/analysis_default_regression.py # analysis
+    diags/diag1000040 # output
+)
