@@ -82,20 +82,24 @@ void SemiImplicitSolver::ComputeSigma () {
     auto& warpx = WarpX::GetInstance();
     auto& mypc = warpx.GetPartContainer();
 
-    auto m_mult_factor = (
-        m_C_SI * warpx.getdt(lev) * warpx.getdt(lev)
-        / (16._rt * MathConst::pi * MathConst::pi * PhysConst::ep0)
+    // The semi-implicit dielectric function is given by
+    // \varepsilon_{SI} = \varepsilon * (1 + \sum_{i in species} C_{SI}*(w_pi * dt)^2/4)
+    // Note the use of the plasma frequency in rad/s (not Hz) and the factor of 1/4,
+    // these choices make it so that C_SI = 1 is the marginal stability threshold.
+    auto mult_factor = (
+        m_C_SI * warpx.getdt(lev) * warpx.getdt(lev) / (4._rt * PhysConst::ep0)
     );
 
     // Loop over each species to calculate the Poisson equation dressing
     for (auto const& pc : mypc) {
+        // grab the charge density for this species
         auto rho = pc->GetChargeDensity(lev, false);
-        // Handle the parallel transfers of guard cells and
-        // apply the filtering if requested - might not be needed...
+
+        // Handle the parallel transfer of guard cells and apply filtering
         warpx.ApplyFilterandSumBoundaryRho(lev, lev, *rho, 0, rho->nComp());
 
-        // multiply charge density by C_SI * dt**2 /4.0 q/(m \varepsilon_0)
-        rho->mult(m_mult_factor * pc->getCharge() / pc->getMass());
+        // get multiplication factor for this species
+        auto const mult_factor_pc = mult_factor * pc->getCharge() / pc->getMass();
 
         // update sigma
 #ifdef AMREX_USE_OMP
@@ -107,11 +111,13 @@ void SemiImplicitSolver::ComputeSigma () {
 
             // Loop over the cells and update the sigma field
             amrex::ParallelFor(mfi.tilebox(), [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                // Interpolate rho to cell-centered multifab to add to sigma.
-                auto const rho_interp = ablastr::coarsen::sample::Interp(
+                // Interpolate rho to cell-centered value
+                auto const rho_cc = ablastr::coarsen::sample::Interp(
                     rho_arr, nodal, cell_centered, coarsen, i, j, k, 0
                 );
-                sigma_arr(i, j, k, 0) += rho_interp;
+                // add species term to sigma:
+                // C_SI * w_p^2 * dt^2 / 4 = C_SI / 4 * q*rho/(m*eps0) * dt^2
+                sigma_arr(i, j, k, 0) += mult_factor_pc * rho_cc;
             });
 
         }

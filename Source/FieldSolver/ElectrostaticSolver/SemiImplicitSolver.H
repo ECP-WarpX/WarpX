@@ -45,7 +45,7 @@ public:
     // Declare multifabs specifically needed for the semi-implicit solver
     amrex::Vector<std::unique_ptr<amrex::MultiFab> > sigma;
 
-    amrex::Real m_C_SI = 6.0;
+    amrex::Real m_C_SI = 4.0;
 };
 
 #endif // WARPX_SEMIIMPLICITSOLVER_H_

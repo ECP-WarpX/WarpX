@@ -46,7 +46,7 @@ class PlasmaExpansionSimulation(object):
     DT           = 0.75 # Time step (electron CFL)
 
     # Solver parameter
-    C_SI = 20 # Semi-implicit factor
+    C_SI = 2 # Semi-implicit factor - marginal stability threshold = 1
 
     def __init__(self, test, verbose):
         """Get input parameters for the specific case desired."""
