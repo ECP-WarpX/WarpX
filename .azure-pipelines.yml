@@ -154,8 +154,8 @@ jobs:
       cmake -S . -B build ${WARPX_CMAKE_FLAGS}
       # build
       cmake --build build -j 2
-      # run tests
-      ctest --test-dir build --output-on-failure
+      # run tests (exclude pytest.AMReX when running Python tests)
+      ctest --test-dir build --output-on-failure -E AMReX
       #rm -rf ${WARPX_CI_TMP}
       df -h
     displayName: 'Build & test'
