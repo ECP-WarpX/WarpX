@@ -52,3 +52,42 @@ if(WarpX_FFT)
         diags/diag1000160 # output
     )
 endif()
+
+# galilean_2d_psatd ###########################################################
+#
+if(WarpX_FFT)
+    add_warpx_test(
+        galilean_2d_psatd # name
+        2   # dims
+        OFF # mpi
+        Examples/Tests/nci_psatd_stability/inputs_2d_test_galilean_2d_psatd # inputs
+        Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
+        diags/diag1000400 # output
+    )
+endif()
+
+# galilean_2d_psatd_current_correction ########################################
+#
+if(WarpX_FFT)
+    add_warpx_test(
+        galilean_2d_psatd_current_correction # name
+        2  # dims
+        ON # mpi
+        Examples/Tests/nci_psatd_stability/inputs_2d_test_galilean_2d_psatd_current_correction # inputs
+        Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
+        diags/diag1000400 # output
+    )
+endif()
+
+# galilean_2d_psatd_current_correction_psb ####################################
+#
+if(WarpX_FFT)
+    add_warpx_test(
+        galilean_2d_psatd_current_correction_psb # name
+        2   # dims
+        OFF # mpi
+        Examples/Tests/nci_psatd_stability/inputs_2d_test_galilean_2d_psatd_current_correction_psb # inputs
+        Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
+        diags/diag1000400 # output
+    )
+endif()

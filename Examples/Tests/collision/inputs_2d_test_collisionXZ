@@ -2,19 +2,19 @@
 ####### GENERAL PARAMETERS ######
 #################################
 max_step = 150
-amr.n_cell = 8 8 8
+amr.n_cell = 8 8
 amr.max_grid_size = 8
 amr.blocking_factor = 8
 amr.max_level = 0
-geometry.dims = 3
-geometry.prob_lo = 0.    0.    0.
-geometry.prob_hi = 4.154046151855669e2  4.154046151855669e2  4.154046151855669e2
+geometry.dims = 2
+geometry.prob_lo = 0.    0.
+geometry.prob_hi = 4.154046151855669e2  4.154046151855669e2
 
 #################################
 ###### Boundary Condition #######
 #################################
-boundary.field_lo = periodic periodic periodic
-boundary.field_hi = periodic periodic periodic
+boundary.field_lo = periodic periodic
+boundary.field_hi = periodic periodic
 
 #################################
 ############ NUMERICS ###########
@@ -22,7 +22,6 @@ boundary.field_hi = periodic periodic periodic
 warpx.serialize_initial_conditions = 1
 warpx.verbose = 1
 warpx.const_dt = 1.224744871e-07
-warpx.random_seed = 2034958209
 
 # Do not evolve the E and B fields
 algo.maxwell_solver = none
@@ -68,31 +67,29 @@ collision3.species = ion ion
 collision1.CoulombLog = 15.9
 collision2.CoulombLog = 15.9
 collision3.CoulombLog = 15.9
-collision1.ndt = 10
-collision2.ndt = 10
-collision3.ndt = 10
 
 # Diagnostics
 diagnostics.diags_names = diag1 diag_parser_filter diag_uniform_filter diag_random_filter
 diag1.intervals = 10
 diag1.diag_type = Full
-diag1.fields_to_plot = Ex Ey Ez Bx By Bz T_electron T_ion
+diag1.fields_to_plot = Ex Ey Ez Bx By Bz
+diag1.file_prefix = collisionXZ_plt
 
 ## diag_parser_filter is a diag used to test the particle filter function.
 diag_parser_filter.intervals = 150:150:
 diag_parser_filter.diag_type = Full
 diag_parser_filter.species = electron
-diag_parser_filter.electron.plot_filter_function(t,x,y,z,ux,uy,uz) = "(ux*uy*uz < 0) *
-                                                                      (sqrt(x**2+y**2+z**2)<100)"
+diag_parser_filter.electron.plot_filter_function(t,x,y,z,ux,uy,uz) = "(x > 200) * (z < 200) *
+                                                                      (ux-3*uz>0)"
 
 ## diag_uniform_filter is a diag used to test the particle uniform filter.
 diag_uniform_filter.intervals = 150:150:
 diag_uniform_filter.diag_type = Full
 diag_uniform_filter.species = electron
-diag_uniform_filter.electron.uniform_stride = 11
+diag_uniform_filter.electron.uniform_stride = 6
 
 ## diag_random_filter is a diag used to test the particle random filter.
 diag_random_filter.intervals = 150:150:
 diag_random_filter.diag_type = Full
 diag_random_filter.species = electron
-diag_random_filter.electron.random_fraction = 0.88
+diag_random_filter.electron.random_fraction = 0.77
