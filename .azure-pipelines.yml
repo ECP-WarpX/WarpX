@@ -34,19 +34,19 @@ jobs:
         WARPX_CMAKE_FLAGS: -DWarpX_DIMS=3 -DWarpX_FFT=ON
       cylindrical_rz:
         WARPX_CMAKE_FLAGS: -DWarpX_DIMS=RZ -DWarpX_FFT=ON
-        WARPX_RZ_FFT: "TRUE"
+        WARPX_RZ_FFT: 'TRUE'
       #embedded_boundary:
-      #  WARPX_CMAKE_FLAGS: -DWarpX_DIMS="1;2;3;RZ" -DWarpX_FFT=ON -DWarpX_EB=ON
-      #  WARPX_RZ_FFT: "TRUE"
+      #  WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_FFT=ON -DWarpX_EB=ON
+      #  WARPX_RZ_FFT: 'TRUE'
       no_mpi:
-        WARPX_CMAKE_FLAGS: -DWarpX_DIMS="1;2;3;RZ" -DWarpX_FFT=ON -DWarpX_MPI=OFF
-        WARPX_RZ_FFT: "TRUE"
+        WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_FFT=ON -DWarpX_MPI=OFF
+        WARPX_RZ_FFT: 'TRUE'
       python:
-        WARPX_CMAKE_FLAGS: -DWarpX_DIMS="1;2;3;RZ" -DWarpX_FFT=ON -DWarpX_PYTHON=ON -DWarpX_APP=OFF
-        WARPX_RZ_FFT: "TRUE"
+        WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_FFT=ON -DWarpX_PYTHON=ON -DWarpX_APP=OFF
+        WARPX_RZ_FFT: 'TRUE'
       #single_precision:
-      #  WARPX_CMAKE_FLAGS: -DWarpX_DIMS="1;2;3;RZ" -DWarpX_FFT=ON -DWarpX_PRECISION=SINGLE
-      #  WARPX_RZ_FFT: "TRUE"
+      #  WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_FFT=ON -DWarpX_PRECISION=SINGLE
+      #  WARPX_RZ_FFT: 'TRUE'
 
   # default: 60; maximum: 360
   timeoutInMinutes: 240
