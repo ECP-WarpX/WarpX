@@ -62,21 +62,21 @@ void SemiImplicitSolver::ComputeSigma () {
     int const lev = 0;
     sigma[lev]->setVal(1.0_rt);
 
-    // GetChargeDensity returns a nodal multifab
-    amrex::GpuArray<int, 3> nodal = {1, 1, 1};
     // sigma is a cell-centered array
-    amrex::GpuArray<int, 3> const& cell_centered = {0, 0, 0};
+    amrex::GpuArray<int, 3> const cell_centered = {0, 0, 0};
     // The "coarsening is just 1 i.e. no coarsening"
-    amrex::GpuArray<int, 3> const& coarsen = {1, 1, 1};
+    amrex::GpuArray<int, 3> const coarsen = {1, 1, 1};
 
+    // GetChargeDensity returns a nodal multifab
     // Below we set all the unused dimensions to have cell-centered values for
     // rho since these values will be interpolated onto a cell-centered grid
     // - if this is not done the Interp function returns nonsense values.
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_1D_Z)
-    nodal[2] = 0;
-#endif
-#if defined(WARPX_DIM_1D_Z)
-    nodal[1] = 0;
+#if defined(WARPX_DIM_3D)
+    amrex::GpuArray<int, 3> const nodal = {1, 1, 1};
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+    amrex::GpuArray<int, 3> const nodal = {1, 1, 0};
+#elif defined(WARPX_DIM_1D_Z)
+    amrex::GpuArray<int, 3> const nodal = {1, 0, 0};
 #endif
 
     auto& warpx = WarpX::GetInstance();
