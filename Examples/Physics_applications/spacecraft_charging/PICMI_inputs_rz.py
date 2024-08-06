@@ -194,7 +194,8 @@ e_dist2 = picmi.UniformFluxDistribution(
 electrons = picmi.Species(particle_type='electron',
                           name='electrons',
                           initial_distribution=[e_dist,e_dist2],
-                          warpx_save_particles_at_eb=1)
+                          warpx_save_particles_at_eb=1,
+                          warpx_save_particles_at_zhi=1)
 
 p_dist = picmi.UniformDistribution(density = n, rms_velocity=[v_pth, v_pth, v_pth] )
 p_dist2 = picmi.UniformFluxDistribution(
@@ -206,7 +207,8 @@ p_dist2 = picmi.UniformFluxDistribution(
 protons = picmi.Species(particle_type='proton',
                         name='protons',
                         initial_distribution=[p_dist,p_dist2],
-                        warpx_save_particles_at_eb=1)
+                        warpx_save_particles_at_eb=1,
+                        warpx_save_particles_at_zhi=1)
 
 
 ##########################
@@ -259,6 +261,14 @@ part_diag = picmi.ParticleDiagnostic(name = 'diag1',
     warpx_file_prefix = 'spacecraft_charging_plt'
 )
 
+part_scraping_boundary_diag = picmi.ParticleBoundaryScrapingDiagnostic(name = 'diag2',
+    period = diagnostic_interval,
+    species = [electrons, protons],
+    warpx_format = 'openpmd',
+    write_dir = '.',
+    warpx_file_prefix = 'spacecraft_charging_plt'
+)
+
 ##########################
 # simulation setup
 ##########################
@@ -284,6 +294,7 @@ sim.add_species(protons,
 
 sim.add_diagnostic(field_diag)
 sim.add_diagnostic(part_diag)
+sim.add_diagnostic(part_scraping_boundary_diag)
 
 ##########################
 # simulation run
