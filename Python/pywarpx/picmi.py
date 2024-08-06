@@ -1545,6 +1545,16 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
 
     warpx_self_fields_verbosity: integer, default=2
         Level of verbosity for the lab frame solver
+
+    warpx_magnetostatic: bool, default=False
+        Whether to use the magnetostatic solver
+
+    warpx_semi_implicit: bool, default=False
+        Whether to use the semi-implicit Poisson solver
+
+    warpx_semi_implicit_factor: float, default=4
+        If the semi-implicit Poisson solver is used, this sets the value
+        of C_SI (the method is marginally stable at C_SI = 1)
     """
     def init(self, kw):
         self.relativistic = kw.pop('warpx_relativistic', False)
