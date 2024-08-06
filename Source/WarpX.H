@@ -233,7 +233,7 @@ public:
 
     //! If true, a correction is applied to the current in Fourier space,
     //  to satisfy the continuity equation and charge conservation
-    bool current_correction;
+    bool current_correction = true;
 
     //! If true, the PSATD update equation for E contains both J and rho
     //! (default is false for standard PSATD and true for Galilean PSATD)
