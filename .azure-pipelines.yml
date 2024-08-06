@@ -116,7 +116,7 @@ jobs:
   - bash: |
       set -eu -o pipefail
       df -h
-      ./run_test.sh LaserInjectionFromLASYFile openbc_poisson_solver
+      ./run_test.sh
       rm -rf ${WARPX_CI_TMP}
       df -h
     displayName: 'Build & test'
