@@ -116,7 +116,7 @@ jobs:
   - bash: |
       set -eu -o pipefail
       df -h
-      ./run_test.sh
+      ./run_test.sh -c
       rm -rf ${WARPX_CI_TMP}
       df -h
     displayName: 'Build & test'

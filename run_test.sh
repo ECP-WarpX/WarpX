@@ -23,10 +23,25 @@
 
 set -eu -o pipefail
 
-# Parse command line arguments: if test names are given as command line arguments,
+# Parse command line arguments:
+# - if -c option is given, set clean=1 and call regtest.py with option --rm_testdir
+# in order to remove all subdirectories from each test directory, after each test
+# - if test names are given as command line arguments,
 # store them in variable tests_arg and define new command line argument to call
 # regtest.py with option --tests (works also for single test)
-tests_arg=$*
+clean=0
+while getopts c name
+do
+    case ${name} in
+    c)    clean=1;;
+    esac
+done
+tests_arg=""
+if [ ! -z "${clean}" ]; then
+    tests_arg=${*:2}
+else
+    tests_arg=$*
+fi
 tests_run=${tests_arg:+--tests=${tests_arg}}
 
 # environment options
@@ -80,7 +95,7 @@ curl -sOL https://github.com/openPMD/openPMD-example-datasets/raw/4ba1d257c5b489
 cd -
 
 # Clone the AMReX regression test utility
-git clone https://github.com/AMReX-Codes/regression_testing.git
+git clone -b EZoni_rm_testdir https://github.com/EZoni/regression_testing.git
 
 # Prepare regression tests
 mkdir -p rt-WarpX/WarpX-benchmarks
@@ -93,12 +108,22 @@ cp -r Checksum ../../regression_testing/
 # Run tests
 cd ../../regression_testing/
 echo "cd $PWD"
-# run only tests specified in variable tests_arg (single test or multiple tests)
-if [[ ! -z "${tests_arg}" ]]; then
-  python3 regtest.py ../rt-WarpX/ci-tests.ini --skip_comparison --no_update all "${tests_run}"
-# run all tests (variables tests_arg and tests_run are empty)
+if [ ! -z "${clean}" ]; then
+    # run only tests specified in variable tests_arg (single test or multiple tests)
+    if [ ! -z "${tests_arg}" ]; then
+      python3 regtest.py ../rt-WarpX/ci-tests.ini --rm_testdir --skip_comparison --no_update all "${tests_run}"
+    # run all tests (variables tests_arg and tests_run are empty)
+    else
+      python3 regtest.py ../rt-WarpX/ci-tests.ini --rm_testdir --skip_comparison --no_update all
+    fi
 else
-  python3 regtest.py ../rt-WarpX/ci-tests.ini --skip_comparison --no_update all
+    # run only tests specified in variable tests_arg (single test or multiple tests)
+    if [ ! -z "${tests_arg}" ]; then
+      python3 regtest.py ../rt-WarpX/ci-tests.ini --skip_comparison --no_update all "${tests_run}"
+    # run all tests (variables tests_arg and tests_run are empty)
+    else
+      python3 regtest.py ../rt-WarpX/ci-tests.ini --skip_comparison --no_update all
+    fi
 fi
 
 # clean up python virtual environment
