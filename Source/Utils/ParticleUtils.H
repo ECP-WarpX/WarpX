@@ -35,9 +35,8 @@ namespace ParticleUtils {
                                          amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& plo,
                                          amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi,
                                          amrex::Dim3 lo) {
-        int ii = 0;
-        [[maybe_unused]] int jj = 0;
-        [[maybe_unused]] int kk = 0;
+        int ii = 0, jj = 0, kk = 0;
+        amrex::ignore_unused(jj, kk);
 
         const amrex::Real lx = (xp - plo[0]) * dxi[0] - lo.x;
         ii = static_cast<int>(amrex::Math::floor(lx));
