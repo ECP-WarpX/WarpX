@@ -17,6 +17,15 @@
 
 namespace ParticleUtils {
 
+
+    /**
+     * \brief Determine which cell a particle lies in.
+     */
+    AMREX_GPU_HOST_DEVICE AMREX_INLINE
+    amrex::IntVect getParticleCellIndex (const WarpXParticleContainer::SuperParticleType& p,
+                                         amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& plo,
+                                         amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi);
+
     /**
      * \brief Find the particles and count the particles that are in each cell. More specifically
      * this function returns an amrex::DenseBins object containing an offset array and a permutation
