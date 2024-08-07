@@ -33,7 +33,7 @@ def evaluate_E(x, y, z):
 
 fn = sys.argv[1]
 
-path=os.path.join('diags', 'diag2')
+path = 'openbc_poisson_solver_plt'
 ts = OpenPMDTimeSeries(path)
 
 Ex, info = ts.get_field(field='E', coord='x', iteration=0, plot=False)
@@ -62,4 +62,4 @@ for k, z in enumerate(grid_z,start=1):
 test_name = os.path.split(os.getcwd())[1]
 
 # Run checksum regression test
-checksumAPI.evaluate_checksum(test_name, fn, rtol=1e-2)
+checksumAPI.evaluate_checksum(test_name, fn, rtol=1e-2, output_format='openpmd')
