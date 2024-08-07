@@ -108,20 +108,6 @@ TemperatureFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, const 
                 GetPosition.AsStored(ip, xp, yp, zp);
 
                 // Get position in AMReX convention to calculate corresponding index.
-#if 0
-                int ii = 0, jj = 0, kk = 0;
-                const amrex::Real lx = (xp - plo[0]) * dxi[0];
-                ii = static_cast<int>(amrex::Math::floor(lx));
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                const amrex::Real lz = (zp - plo[1]) * dxi[1];
-                jj = static_cast<int>(amrex::Math::floor(lz));
-#elif defined(WARPX_DIM_3D)
-                const amrex::Real ly = (yp - plo[1]) * dxi[1];
-                jj = static_cast<int>(amrex::Math::floor(ly));
-                const amrex::Real lz = (zp - plo[2]) * dxi[2];
-                kk = static_cast<int>(amrex::Math::floor(lz));
-#endif
-#endif
                 const auto cellIndex = ParticleUtils::getParticleCellIndex(xp, yp, zp, plo, dxi, amrex::Dim3{0, 0, 0}).dim3();
                 int ii = cellIndex.x;
                 int jj = cellIndex.y;
