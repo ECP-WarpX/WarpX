@@ -23,6 +23,8 @@
 
 set -eu -o pipefail
 
+df -h
+
 # Parse command line arguments: if test names are given as command line arguments,
 # store them in variable tests_arg and define new command line argument to call
 # regtest.py with option --tests (works also for single test)
@@ -57,6 +59,8 @@ ln -s ${tmp_dir} test_dir
 cd test_dir
 echo "cd $PWD"
 
+df -h
+
 # Prepare a virtual environment
 rm -rf py-venv
 python3 -m venv py-venv
@@ -66,6 +70,8 @@ python3 -m pip install --upgrade build packaging setuptools wheel
 python3 -m pip install --upgrade cmake
 python3 -m pip install --upgrade -r warpx/Regression/requirements.txt
 python3 -m pip cache purge
+
+df -h
 
 # Clone AMReX and warpx-data
 git clone https://github.com/AMReX-Codes/amrex.git
@@ -79,8 +85,12 @@ curl -sOL https://github.com/openPMD/openPMD-example-datasets/raw/4ba1d257c5b489
 curl -sOL https://github.com/openPMD/openPMD-example-datasets/raw/4ba1d257c5b4897c0a3cd57742bb0987343a902e/example-femm-3d.h5
 cd -
 
+df -h
+
 # Clone the AMReX regression test utility
 git clone https://github.com/AMReX-Codes/regression_testing.git
+
+df -h
 
 # Prepare regression tests
 mkdir -p rt-WarpX/WarpX-benchmarks
@@ -89,6 +99,8 @@ echo "cd $PWD"
 python3 prepare_file_ci.py
 cp ci-tests.ini ../../rt-WarpX
 cp -r Checksum ../../regression_testing/
+
+df -h
 
 # Run tests
 cd ../../regression_testing/
@@ -101,7 +113,11 @@ else
   python3 regtest.py ../rt-WarpX/ci-tests.ini --skip_comparison --no_update all
 fi
 
+df -h
+
 # clean up python virtual environment
 cd ../
 echo "cd $PWD"
 deactivate
+
+df -h
