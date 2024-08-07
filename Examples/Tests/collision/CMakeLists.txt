@@ -29,7 +29,7 @@ add_warpx_test(
     collisionRZ # name
     RZ  # dims
     OFF # mpi
-    Examples/Tests/collision/inputs_rz_base # inputs
+    Examples/Tests/collision/inputs_rz_test_collisionRZ # inputs
     Examples/Tests/collision/analysis_collision_rz.py # analysis
     diags/diag1000150 # output
 )
