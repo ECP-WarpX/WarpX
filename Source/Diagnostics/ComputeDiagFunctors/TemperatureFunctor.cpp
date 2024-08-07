@@ -55,9 +55,9 @@ TemperatureFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, const 
             {
                 // Get position in AMReX convention to calculate corresponding index.
                 const auto cellIndex = ParticleUtils::getParticleCellIndex(p.pos(0), p.pos(1), p.pos(2), plo, dxi, amrex::Dim3{0, 0, 0}).dim3();
-                int ii = cellIndex.x;
-                int jj = cellIndex.y;
-                int kk = cellIndex.z;
+                const int ii = cellIndex.x;
+                const int jj = cellIndex.y;
+                const int kk = cellIndex.z;
 
                 const amrex::ParticleReal w  = p.rdata(PIdx::w);
                 const amrex::ParticleReal ux = p.rdata(PIdx::ux);
@@ -109,9 +109,9 @@ TemperatureFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, const 
 
                 // Get position in AMReX convention to calculate corresponding index.
                 const auto cellIndex = ParticleUtils::getParticleCellIndex(xp, yp, zp, plo, dxi, amrex::Dim3{0, 0, 0}).dim3();
-                int ii = cellIndex.x;
-                int jj = cellIndex.y;
-                int kk = cellIndex.z;
+                const int ii = cellIndex.x;
+                const int jj = cellIndex.y;
+                const int kk = cellIndex.z;
 
                 const amrex::ParticleReal w  = wp[ip];
                 const amrex::ParticleReal ux = uxp[ip] - out_array(ii, jj, kk, 1);
