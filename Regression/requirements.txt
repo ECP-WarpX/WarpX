@@ -1,5 +1,5 @@
 dill
-lasy
+lasy==0.4.0
 matplotlib
 mpi4py
 numpy
