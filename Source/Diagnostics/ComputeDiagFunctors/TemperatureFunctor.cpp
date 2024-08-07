@@ -5,6 +5,7 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/Parser/ParserUtils.H"
+#include "Utils/ParticleUtils.H"
 #include "WarpX.H"
 
 #include <ablastr/coarsen/sample.H>
@@ -53,22 +54,10 @@ TemperatureFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, const 
                 amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi)
             {
                 // Get position in AMReX convention to calculate corresponding index.
-                // Ideally this will be replaced with the AMReX NGP interpolator
-                // Always do x direction.
-                int ii = 0, jj = 0, kk = 0;
-                const amrex::ParticleReal x = p.pos(0);
-                const amrex::Real lx = (x - plo[0]) * dxi[0];
-                ii = static_cast<int>(amrex::Math::floor(lx));
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
-                const amrex::ParticleReal y = p.pos(1);
-                const amrex::Real ly = (y - plo[1]) * dxi[1];
-                jj = static_cast<int>(amrex::Math::floor(ly));
-#endif
-#if defined(WARPX_DIM_3D)
-                const amrex::ParticleReal z = p.pos(2);
-                const amrex::Real lz = (z - plo[2]) * dxi[2];
-                kk = static_cast<int>(amrex::Math::floor(lz));
-#endif
+                const auto cellIndex = ParticleUtils::getParticleCellIndex(p.pos(0), p.pos(1), p.pos(2), plo, dxi, amrex::Dim3{0, 0, 0}).dim3();
+                int ii = cellIndex.x;
+                int jj = cellIndex.y;
+                int kk = cellIndex.z;
 
                 const amrex::ParticleReal w  = p.rdata(PIdx::w);
                 const amrex::ParticleReal ux = p.rdata(PIdx::ux);
@@ -119,6 +108,7 @@ TemperatureFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, const 
                 GetPosition.AsStored(ip, xp, yp, zp);
 
                 // Get position in AMReX convention to calculate corresponding index.
+#if 0
                 int ii = 0, jj = 0, kk = 0;
                 const amrex::Real lx = (xp - plo[0]) * dxi[0];
                 ii = static_cast<int>(amrex::Math::floor(lx));
@@ -131,6 +121,11 @@ TemperatureFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, const 
                 const amrex::Real lz = (zp - plo[2]) * dxi[2];
                 kk = static_cast<int>(amrex::Math::floor(lz));
 #endif
+#endif
+                const auto cellIndex = ParticleUtils::getParticleCellIndex(xp, yp, zp, plo, dxi, amrex::Dim3{0, 0, 0}).dim3();
+                int ii = cellIndex.x;
+                int jj = cellIndex.y;
+                int kk = cellIndex.z;
 
                 const amrex::ParticleReal w  = wp[ip];
                 const amrex::ParticleReal ux = uxp[ip] - out_array(ii, jj, kk, 1);

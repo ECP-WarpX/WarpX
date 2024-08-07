@@ -17,14 +17,57 @@
 
 namespace ParticleUtils {
 
+    /**
+     * \brief Determine which cell a particle lies in.
+     * Returns an amrex::IntVect with the i, j, k indices of the cell the particle lies within
+     *
+     * @param[in] x the particle's x position
+     * @param[in] y the particle's y position
+     * @param[in] z the particle's z position
+     * @param[in] plo the particle lower bounds
+     * @param[in] dxi the inverse cell size
+     * @param[in] lo
+     */
+    AMREX_GPU_HOST_DEVICE AMREX_INLINE
+    amrex::IntVect getParticleCellIndex (amrex::ParticleReal xp,
+                                         amrex::ParticleReal yp,
+                                         amrex::ParticleReal zp,
+                                         amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& plo,
+                                         amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi,
+                                         amrex::Dim3 lo) {
+        int ii = 0, jj = 0, kk = 0;
+        (void)yp, (void)zp, (void)jj, (void)kk;
+
+        const amrex::Real lx = (xp - plo[0]) * dxi[0] - lo.x;
+        ii = static_cast<int>(amrex::Math::floor(lx));
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+        const amrex::Real ly = (yp - plo[1]) * dxi[1] - lo.y;
+        jj = static_cast<int>(amrex::Math::floor(ly));
+#endif
+#if defined(WARPX_DIM_3D)
+        const amrex::Real lz = (zp - plo[2]) * dxi[2] - lo.z;
+        kk = static_cast<int>(amrex::Math::floor(lz));
+#endif
+
+        return amrex::IntVect(AMREX_D_DECL(ii, jj, kk));
+    }
 
     /**
      * \brief Determine which cell a particle lies in.
+     * Returns an amrex::IntVect with the i, j, k indices of the cell the particle lies within
+     *
+     * @param[in] p the particle whose cell index we are finding
+     * @param[in] plo the particle lower bounds
+     * @param[in] dxi the inverse cell size
+     * @param[in] lo
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
-    amrex::IntVect getParticleCellIndex (const WarpXParticleContainer::SuperParticleType& p,
+    amrex::IntVect getParticleCellIndex (const WarpXParticleContainer::ParticleType& p,
                                          amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& plo,
-                                         amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi);
+                                         amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi,
+                                         amrex::Dim3 lo) {
+        return getParticleCellIndex(p.pos(0), p.pos(1), p.pos(2), plo, dxi, lo);
+    }
 
     /**
      * \brief Find the particles and count the particles that are in each cell. More specifically
