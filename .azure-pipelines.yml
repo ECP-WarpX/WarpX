@@ -148,6 +148,7 @@ jobs:
     displayName: 'Install dependencies'
 
   - bash: |
+      # FIXME remove unused variables/commands
       set -eu -o pipefail
       df -h
       # configure
@@ -156,6 +157,7 @@ jobs:
       cmake --build build -j 2
       # run tests (exclude pytest.AMReX when running Python tests)
       ctest --test-dir build --output-on-failure -E AMReX
+      rm -rf build
       #rm -rf ${WARPX_CI_TMP}
       df -h
     displayName: 'Build & test'
