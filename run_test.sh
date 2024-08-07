@@ -65,6 +65,7 @@ python3 -m pip install --upgrade pip
 python3 -m pip install --upgrade build packaging setuptools wheel
 python3 -m pip install --upgrade cmake
 python3 -m pip install --upgrade -r warpx/Regression/requirements.txt
+python3 -m pip cache purge
 
 # Clone AMReX and warpx-data
 git clone https://github.com/AMReX-Codes/amrex.git
