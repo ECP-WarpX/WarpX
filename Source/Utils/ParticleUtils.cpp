@@ -34,6 +34,31 @@ namespace ParticleUtils
     using ParticleBins = DenseBins<ParticleTileDataType>;
     using index_type = typename ParticleBins::index_type;
 
+
+    AMREX_GPU_HOST_DEVICE AMREX_INLINE
+    IntVect getParticleCellIndex (const ParticleType& p,
+                                  GpuArray<Real,AMREX_SPACEDIM> const& plo,
+                                  GpuArray<Real,AMREX_SPACEDIM> const& dxi,
+                                  Dim3 lo) {
+
+        int ii = 0, jj = 0, kk = 0;
+        const ParticleReal x = p.pos(0);
+        const Real lx = (x - plo[0]) * dxi[0] - lo.x;
+        ii = static_cast<int>(Math::floor(lx));
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+        const ParticleReal y = p.pos(1);
+        const Real ly = (y - plo[1]) * dxi[1] - lo.y;
+        jj = static_cast<int>(Math::floor(ly));
+#endif
+#if defined(WARPX_DIM_3D)
+        const ParticleReal z = p.pos(2);
+        const Real lz = (z - plo[2]) * dxi[2] - lo.z;
+        kk = static_cast<int>(Math::floor(lz));
+#endif
+
+        return IntVect{AMREX_D_DECL(ii, jj, kk)};
+    }
+
     /* Find the particles and count the particles that are in each cell.
        Note that this does *not* rearrange particle arrays */
     ParticleBins
@@ -57,12 +82,9 @@ namespace ParticleUtils
         ParticleBins bins;
         bins.build(np, ptd, cbx,
             // Pass lambda function that returns the cell index
-            [=] AMREX_GPU_DEVICE (ParticleType const & p) noexcept -> amrex::IntVect
+            [=] AMREX_GPU_DEVICE (ParticleType const & p) noexcept -> IntVect
             {
-                return IntVect{AMREX_D_DECL(
-                                   static_cast<int>((p.pos(0)-plo[0])*dxi[0] - lo.x),
-                                   static_cast<int>((p.pos(1)-plo[1])*dxi[1] - lo.y),
-                                   static_cast<int>((p.pos(2)-plo[2])*dxi[2] - lo.z))};
+                return getParticleCellIndex(p, plo, dxi, lo);
             });
 
         return bins;
