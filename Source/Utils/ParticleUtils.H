@@ -30,13 +30,14 @@ namespace ParticleUtils {
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
     amrex::IntVect getParticleCellIndex (amrex::ParticleReal xp,
-                                         amrex::ParticleReal yp,
-                                         amrex::ParticleReal zp,
+                                         [[maybe_unused]] amrex::ParticleReal yp,
+                                         [[maybe_unused]] amrex::ParticleReal zp,
                                          amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& plo,
                                          amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi,
                                          amrex::Dim3 lo) {
-        int ii = 0, jj = 0, kk = 0;
-        amrex::ignore_unused(yp, zp, jj, kk);
+        int ii = 0;
+        [[maybe_unused]] int jj = 0;
+        [[maybe_unused]] int kk = 0;
 
         const amrex::Real lx = (xp - plo[0]) * dxi[0] - lo.x;
         ii = static_cast<int>(amrex::Math::floor(lx));
@@ -63,6 +64,23 @@ namespace ParticleUtils {
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
     amrex::IntVect getParticleCellIndex (const WarpXParticleContainer::ParticleType& p,
+                                         amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& plo,
+                                         amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi,
+                                         amrex::Dim3 lo) {
+        return getParticleCellIndex(p.pos(0), p.pos(1), p.pos(2), plo, dxi, lo);
+    }
+
+    /**
+     * \brief Determine which cell a particle lies in.
+     * Returns an amrex::IntVect with the i, j, k indices of the cell the particle lies within
+     *
+     * @param[in] p the particle whose cell index we are finding
+     * @param[in] plo the particle lower bounds
+     * @param[in] dxi the inverse cell size
+     * @param[in] lo
+     */
+    AMREX_GPU_HOST_DEVICE AMREX_INLINE
+    amrex::IntVect getParticleCellIndex (const WarpXParticleContainer::SuperParticleType& p,
                                          amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& plo,
                                          amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi,
                                          amrex::Dim3 lo) {
