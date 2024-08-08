@@ -110,7 +110,7 @@ particle_diag = picmi.ParticleDiagnostic(
     name='diag1',
     period=10,
     write_dir='.',
-    warpx_file_prefix='Python_collisionXZ_plt'
+    warpx_file_prefix='collision_xz_picmi_plt'
 )
 field_diag = picmi.FieldDiagnostic(
     name='diag1',
@@ -118,7 +118,7 @@ field_diag = picmi.FieldDiagnostic(
     period=10,
     data_list=[],
     write_dir='.',
-    warpx_file_prefix='Python_collisionXZ_plt'
+    warpx_file_prefix='collision_xz_picmi_plt'
 )
 
 #################################

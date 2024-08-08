@@ -1,0 +1,5 @@
+# base input parameters
+FILE = inputs_3d_base
+
+# test input parameters
+geometry.dims = 3

@@ -1,10 +1,19 @@
 # Add tests (alphabetical order) ##############################################
 #
 
+add_subdirectory(accelerator_lattice)
+add_subdirectory(boosted_diags)
+add_subdirectory(boundaries)
 add_subdirectory(btd_rz)
 add_subdirectory(collider_relevant_diags)
 add_subdirectory(collision)
+add_subdirectory(divb_cleaning)
+add_subdirectory(dive_cleaning)
+add_subdirectory(electrostatic_dirichlet_bc)
+add_subdirectory(electrostatic_sphere)
+add_subdirectory(energy_conserving_thermal_plasma)
 add_subdirectory(gaussian_beam)
 add_subdirectory(langmuir)
+add_subdirectory(nuclear_fusion)
 add_subdirectory(nci_psatd_stability)
 add_subdirectory(single_particle)

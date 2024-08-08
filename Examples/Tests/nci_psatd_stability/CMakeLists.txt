@@ -53,6 +53,19 @@ if(WarpX_FFT)
     )
 endif()
 
+# comoving_2d_psatd_hybrid ####################################################
+#
+if(WarpX_FFT)
+    add_warpx_test(
+        comoving_2d_psatd_hybrid # name
+        2  # dims
+        ON # mpi
+        Examples/Tests/nci_psatd_stability/inputs_2d_test_comoving_2d_psatd_hybrid # inputs
+        Examples/analysis_default_regression.py # analysis
+        diags/diag1000400 # output
+    )
+endif()
+
 # galilean_2d_psatd ###########################################################
 #
 if(WarpX_FFT)

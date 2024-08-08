@@ -23,6 +23,7 @@ algo.particle_pusher = vay
 algo.particle_shape = 3
 
 psatd.use_default_v_comoving = 1
+psatd.current_correction = 0
 
 warpx.cfl = 1.
 
@@ -40,6 +41,7 @@ warpx.use_filter = 1
 
 warpx.serialize_initial_conditions = 1
 warpx.verbose = 1
+warpx.abort_on_warning_threshold = medium
 
 particles.species_names = electrons ions beam
 particles.use_fdtd_nci_corr = 0
