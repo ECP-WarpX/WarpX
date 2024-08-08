@@ -68,7 +68,7 @@ Since this will automatically change the JSON file stored on the repo, make a se
 Automated reset of a list of test benchmarks
 --------------------------------------------
 
-You can set the environment variable ``export CHECKSUM_RESET=ON`` before running analysis scripts / test that verify checksums - in that case, the analysis will instead reset to the new values.
+If you set the environment variable ``export CHECKSUM_RESET=ON`` before running tests that are compared against existing benchmarks, the test analysis will reset the benchmarks to the new values, skipping the comparison.
 
 With `CTest <https://cmake.org/cmake/help/latest/manual/ctest.1.html>`__ (coming soon), select the test(s) to reset by `name <https://cmake.org/cmake/help/latest/manual/ctest.1.html#run-tests>`__ or `label <https://cmake.org/cmake/help/latest/manual/ctest.1.html#label-matching>`__.
 
