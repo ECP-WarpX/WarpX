@@ -48,7 +48,6 @@ namespace ParticleUtils
         // Extract box properties
         Geometry const& geom = WarpX::GetInstance().Geom(lev);
         Box const& cbx = mfi.tilebox(IntVect::TheZeroVector()); //Cell-centered box
-        const auto lo = lbound(cbx);
         const auto dxi = geom.InvCellSizeArray();
         const auto plo = geom.ProbLoArray();
 
