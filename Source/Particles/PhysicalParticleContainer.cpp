@@ -1065,7 +1065,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                 static_cast<int>(std::round((overlap_realbox.lo(dir)-problo[dir])/dx[dir]));
             // shifted is exact in non-moving-window direction.  That's all we care.
         }
-        if (no_overlap == 1) {
+        if (no_overlap) {
             continue; // Go to the next tile
         }
 
@@ -1640,7 +1640,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 // shifted is exact in non-moving-window direction.  That's all we care.
             }
         }
-        if (no_overlap == 1) {
+        if (no_overlap) {
             continue; // Go to the next tile
         }
 
