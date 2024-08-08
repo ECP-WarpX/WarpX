@@ -209,7 +209,7 @@ endmacro()
 
 # Enables interprocedural optimization for a list of targets
 #
-function(enable_IPO all_targets_list)
+function(warpx_enable_IPO all_targets_list)
     include(CheckIPOSupported)
     check_ipo_supported(RESULT is_IPO_available)
     if(is_IPO_available)

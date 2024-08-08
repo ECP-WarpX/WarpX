@@ -53,7 +53,7 @@ void FiniteDifferenceSolver::EvolveBPML (
     WARPX_ABORT_WITH_MESSAGE(
         "PML are not implemented in cylindrical geometry.");
 #else
-    if (m_grid_type == GridType::Collocated) {
+    if (m_grid_type == ablastr::utils::enums::GridType::Collocated) {
 
         EvolveBPMLCartesian <CartesianNodalAlgorithm> (Bfield, Efield, dt, dive_cleaning);
 
