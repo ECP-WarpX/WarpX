@@ -36,7 +36,7 @@ guardCellManager::Init (
     const amrex::Real *dx,
     const bool do_subcycling,
     const bool do_fdtd_nci_corr,
-    const short grid_type,
+    ablastr::utils::enums::GridType grid_type,
     const bool do_moving_window,
     const int moving_window_dir,
     const int nox,
@@ -200,6 +200,7 @@ guardCellManager::Init (
         // currents in the latter case). This does not seem to be necessary in x and y,
         // where it still seems fine to set half the number of guard cells of the nodal case.
 
+        using namespace ablastr::utils::enums;
         int ngFFt_x = (grid_type == GridType::Collocated) ? nox_fft : nox_fft / 2;
         int ngFFt_y = (grid_type == GridType::Collocated) ? noy_fft : noy_fft / 2;
         int ngFFt_z = (grid_type == GridType::Collocated || galilean) ? noz_fft : noz_fft / 2;
