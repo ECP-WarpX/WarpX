@@ -59,7 +59,7 @@ namespace ParticleUtils
             // Pass lambda function that returns the cell index
             [=] AMREX_GPU_DEVICE (ParticleType const & p) noexcept -> IntVect
             {
-                return getParticleCellIndex(p, plo, dxi, lo);
+                return getParticleCell(p, plo, dxi, cbx);
             });
 
         return bins;
