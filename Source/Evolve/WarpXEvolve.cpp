@@ -142,7 +142,7 @@ WarpX::Evolve (int numsteps)
             OneStep_multiJ(cur_time);
         }
         // Electromagnetic case: no subcycling or no mesh refinement
-        else if (do_subcycling == 0 || finest_level == 0)
+        else if ( !do_subcycling || (finest_level == 0))
         {
             OneStep_nosub(cur_time);
             // E: guard cells are up-to-date
@@ -150,7 +150,7 @@ WarpX::Evolve (int numsteps)
             // F: guard cells are NOT up-to-date
         }
         // Electromagnetic case: subcycling with one level of mesh refinement
-        else if (do_subcycling == 1 && finest_level == 1)
+        else if (do_subcycling && (finest_level == 1))
         {
             OneStep_sub1(cur_time);
         }
@@ -246,7 +246,12 @@ WarpX::Evolve (int numsteps)
                     // This is currently a lab frame calculation.
                     ComputeMagnetostaticField();
                 }
-                AddExternalFields();
+                // Since the fields were reset above, the external fields are added
+                // back on to the fine patch fields. This make it so that the net fields
+                // are the sum of the field solution and any external field.
+                for (int lev = 0; lev <= max_level; ++lev) {
+                    AddExternalFields(lev);
+                }
             } else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
                 // Hybrid-PIC case:
                 // The particles are now at p^{n+1/2} and x^{n+1}. The fields

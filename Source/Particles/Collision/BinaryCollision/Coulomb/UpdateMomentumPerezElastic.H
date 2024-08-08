@@ -18,9 +18,10 @@
 /* \brief Update particle velocities according to
  *        F. Perez et al., Phys.Plasmas.19.083104 (2012),
  *        which is based on Nanbu's method, PhysRevE.55.4642 (1997).
- *        @param[in] LmdD is max(Debye length, minimal interparticle distance).
+ *        @param[in] bmax is max(Debye length, minimal interparticle distance).
  *        @param[in] L is the Coulomb log. A fixed L will be used if L > 0,
  *        otherwise L will be calculated based on the algorithm.
+ *        @param[in] n12 = max(w1,w2)*min(N1,N2)/dV is the effective density used for s12
  *        To see if there are nan or inf updated velocities,
  *        compile with USE_ASSERTION=TRUE.
  *
@@ -36,7 +37,7 @@ void UpdateMomentumPerezElastic (
     T_PR const n1, T_PR const n2, T_PR const n12,
     T_PR const q1, T_PR const m1, T_PR const w1,
     T_PR const q2, T_PR const m2, T_PR const w2,
-    T_R const dt, T_PR const L, T_PR const lmdD,
+    T_R const dt, T_PR const L, T_PR const bmax,
     amrex::RandomEngine const& engine)
 {
 
@@ -128,13 +129,13 @@ void UpdateMomentumPerezElastic (
 
             // Compute the Coulomb log lnLmd
             lnLmd = amrex::max( T_PR(2.0),
-                    T_PR(0.5)*std::log(T_PR(1.0)+lmdD*lmdD/(bmin*bmin)) );
+                    T_PR(0.5)*std::log(T_PR(1.0) + bmax*bmax/(bmin*bmin)) );
         }
 
         // Compute s
         const auto tts = m1*g1s*m2*g2s/(inv_c2*p1sm*p1sm) + T_PR(1.0);
         const auto tts2 = tts*tts;
-        s = n1*n2/n12 * dt*lnLmd*q1*q1*q2*q2 /
+        s = n12 * dt*lnLmd*q1*q1*q2*q2 /
             ( T_PR(4.0) * MathConst::pi * PhysConst::ep0 * PhysConst::ep0 *
                 m1*g1*m2*g2/(inv_c2*inv_c2) ) * gc*p1sm/mass_g * tts2;
 
@@ -144,7 +145,7 @@ void UpdateMomentumPerezElastic (
         const auto coeff = static_cast<T_PR>(
             std::pow(4.0*MathConst::pi/3.0,1.0/3.0));
         T_PR const vrel = mass_g*p1sm/(m1*g1s*m2*g2s*gc);
-        T_PR const sp = coeff * n1*n2/n12 * dt * vrel * (m1+m2) /
+        T_PR const sp = coeff * n12 * dt * vrel * (m1+m2) /
             amrex::max( m1*cbrt_n1*cbrt_n1,
                         m2*cbrt_n2*cbrt_n2);
 
