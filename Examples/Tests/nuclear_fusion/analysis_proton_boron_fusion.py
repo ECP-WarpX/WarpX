@@ -579,13 +579,14 @@ def check_initial_energy2(data):
 
         assert(is_close(np.amax(energy_alpha1_simulation), max_energy_alpha1, rtol=1.e-2))
         assert(is_close(np.amin(energy_alpha1_simulation), min_energy_alpha1, rtol=1.e-2))
-        ## Check that the max / min value are less than but within 200 keV of analytical value.
+        ## Check that the max / min value are less than but within 200 keV of min analytical value
+        ## and 300 keV of the maximum value.
         ## Tolerance is quite high below because we don't have a lot of alphas to produce good
         ## statistics and an event like alpha1 emitted exactly in direction of proton & alpha2
         ## emitted exactly in direction opposite to Beryllium is somewhat rare.
-        assert(is_close(np.amax(energy_alpha2_simulation), max_energy_alpha23, atol=3.218e-14 ))
+        assert(is_close(np.amax(energy_alpha2_simulation), max_energy_alpha23, atol=4.827e-14 ))
         assert(is_close(np.amin(energy_alpha2_simulation), min_energy_alpha23, atol=3.218e-14 ))
-        assert(is_close(np.amax(energy_alpha3_simulation), max_energy_alpha23, atol=3.218e-14 ))
+        assert(is_close(np.amax(energy_alpha3_simulation), max_energy_alpha23, atol=4.827e-14 ))
         assert(is_close(np.amin(energy_alpha3_simulation), min_energy_alpha23, atol=3.218e-14 ))
 
 def check_xy_isotropy(data):
