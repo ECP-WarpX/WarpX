@@ -433,7 +433,7 @@ protected:
 
     amrex::ParticleReal charge;
     amrex::ParticleReal mass;
-    PhysicalSpecies physical_species;
+    PhysicalSpecies physical_species = PhysicalSpecies::unspecified;
 
     // Controls boundaries for particles exiting the domain
     ParticleBoundaries m_boundary_conditions;
