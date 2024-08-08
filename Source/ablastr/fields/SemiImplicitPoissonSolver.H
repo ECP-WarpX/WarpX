@@ -62,7 +62,7 @@ namespace ablastr::fields {
  *
  * More specifically, this solves the equation
  * \f[
- *   ... \phi(r) = -\frac{r \rho(r)}{\epsilon(r)}
+ *   \nabla \cdot \sigma \nabla \phi = - \rho/\epsilon_0
  * \f]
  *
  * \tparam T_BoundaryHandler handler for boundary conditions, for example @see ElectrostaticSolver::PoissonBoundaryHandler
