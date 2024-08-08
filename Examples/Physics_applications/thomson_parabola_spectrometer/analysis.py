@@ -9,11 +9,6 @@ mpl.rcParams.update({'font.size': 18})
 
 MeV=1e6*eV
 
-# some parameters from the inputfile
-Emax_hydrogen1_1 = 40*MeV
-Emax_carbon12_6 = 20*MeV
-Emax_carbon12_5 = 20*MeV
-
 # open the BoundaryScrapingDiagnostic that represents the detector
 series = OpenPMDTimeSeries('./diags/screen/particles_at_zhi/')
 # open the Full diagnostic at time zero
