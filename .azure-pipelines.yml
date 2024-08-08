@@ -18,6 +18,7 @@ jobs:
     LAPACKPP_HOME: '/usr/local'
     OMP_NUM_THREADS: 1
     WARPX_CI_CCACHE: 'TRUE'
+    WARPX_CI_CLEAN_TESTS: 'TRUE'
     WARPX_CI_NUM_MAKE_JOBS: 2
     WARPX_CI_OPENPMD: 'TRUE'
     WARPX_CI_TMP: '/tmp/ci'
@@ -116,7 +117,7 @@ jobs:
   - bash: |
       set -eu -o pipefail
       df -h
-      ./run_test.sh -c
+      ./run_test.sh
       rm -rf ${WARPX_CI_TMP}
       df -h
     displayName: 'Build & test'
