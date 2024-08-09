@@ -1,0 +1,7 @@
+# base input parameters
+FILE = inputs_3d_base
+
+# test input parameters
+algo.field_gathering = momentum-conserving
+algo.maxwell_solver = psatd
+warpx.cfl = 0.5773502691896258

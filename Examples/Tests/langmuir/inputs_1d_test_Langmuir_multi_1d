@@ -27,6 +27,7 @@ warpx.verbose = 1
 
 # Algorithms
 algo.field_gathering = energy-conserving
+algo.current_deposition = esirkepov
 warpx.use_filter = 0
 
 # Order of particle shape factors
@@ -79,6 +80,8 @@ positrons.momentum_function_uz(x,y,z) = "-epsilon * k/kp * cos(k*x) * cos(k*y) *
 diagnostics.diags_names = diag1 openpmd
 diag1.intervals = 40
 diag1.diag_type = Full
+diag1.electrons.variables = z w ux uy uz
+diag1.positrons.variables = z w ux uy uz
 
 openpmd.intervals = 40
 openpmd.diag_type = Full
