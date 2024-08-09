@@ -151,6 +151,9 @@ void UpdateMomentumPerezElastic (
         }
 
         // Compute s12 with sigma limited by sigma_max where mfp = atomic spacing
+        // See https://github.com/user-attachments/files/16555064/CoulombScattering_s12.pdf
+        // for a proof that this expression for s12 is the same as Eq. 9 of Perez 2012 when
+        // sigma_eff = pi*b0^2*lnLmd
         const T_PR sigma_eff = amrex::min(T_PR(MathConst::pi)*b0*b0*lnLmd,sigma_max);
         s12 = sigma_eff * n12 * dt * vrelst * g1s*g2s/(g1*g2);
 
