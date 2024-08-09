@@ -29,9 +29,10 @@ total_energy = field_energy[:,2] + particle_energy[:,2]
 delta_E = (total_energy - total_energy[0])/total_energy[0]
 max_delta_E = np.abs(delta_E).max()
 
-if re.match('SemiImplicitPicard_1d', fn):
+test_name = os.path.split(os.getcwd())[1]
+if re.match('semi_implicit_picard_1d', test_name):
     tolerance_rel = 2.5e-5
-elif re.match('ThetaImplicitPicard_1d', fn):
+elif re.match('theta_implicit_picard_1d', test_name):
     # This case should have near machine precision conservation of energy
     tolerance_rel = 1.e-14
 

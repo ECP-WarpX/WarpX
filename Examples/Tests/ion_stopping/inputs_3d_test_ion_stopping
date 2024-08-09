@@ -14,6 +14,7 @@ boundary.field_hi = periodic periodic periodic
 boundary.particle_lo = periodic periodic periodic
 boundary.particle_hi = periodic periodic periodic
 algo.particle_shape = 1
+warpx.cfl = 0.7
 
 particles.species_names = ions1 ions2 ions3 ions4
 

@@ -58,6 +58,16 @@ add_warpx_test(
     diags/diag1000080 # output
 )
 
+# Langmuir_multi_2d_picmi #####################################################
+#
+add_warpx_test(
+    Langmuir_multi_2d_picmi # name
+    2  # dims
+    ON # mpi
+    Examples/Tests/langmuir/inputs_2d_test_Langmuir_multi_2d_picmi.py # inputs
+    Examples/analysis_default_regression.py # analysis
+    diags/diag1000040 # output
+)
 
 # Langmuir_multi_2d_psatd #####################################################
 #
@@ -190,13 +200,24 @@ if(WarpX_FFT)
     )
 endif()
 
-# Python_Langmuir_rz_multimode ################################################
+# Langmuir_multi_3d_picmi #####################################################
 #
 add_warpx_test(
-    Python_Langmuir_rz_multimode # name
+    Langmuir_multi_3d_picmi # name
+    3   # dims
+    OFF # mpi
+    Examples/Tests/langmuir/inputs_3d_test_Langmuir_multi_3d_picmi.py # inputs
+    Examples/analysis_default_regression.py # analysis
+    diags/diag1000040 # output
+)
+
+# Langmuir_multi_rz_picmi #####################################################
+#
+add_warpx_test(
+    Langmuir_multi_rz_picmi # name
     RZ # dims
     ON # mpi
-    Examples/Tests/langmuir/PICMI_inputs_rz.py # inputs
+    Examples/Tests/langmuir/inputs_rz_test_Langmuir_multi_rz_picmi.py # inputs
     Examples/analysis_default_regression.py # analysis
     diags/diag1000040 # output
 )
