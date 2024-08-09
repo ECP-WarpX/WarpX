@@ -51,7 +51,7 @@ add_warpx_test(
     electrostatic_sphere_rz # name
     RZ # dims
     ON # mpi
-    Examples/Tests/electrostatic_sphere/inputs_3d_test_electrostatic_sphere_rz # inputs
+    Examples/Tests/electrostatic_sphere/inputs_rz_test_electrostatic_sphere_rz # inputs
     Examples/Tests/electrostatic_sphere/analysis_electrostatic_sphere.py # analysis
     diags/diag1000030 # output
 )
