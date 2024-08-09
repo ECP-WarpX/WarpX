@@ -89,9 +89,9 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
                             amrex::Real absolute_tolerance,
                             int const max_iters,
                             int const verbosity,
-                            amrex::Vector<amrex::Geometry> const geom,
-                            amrex::Vector<amrex::DistributionMapping> const dmap,
-                            amrex::Vector<amrex::BoxArray> const grids,
+                            amrex::Vector<amrex::Geometry> const& geom,
+                            amrex::Vector<amrex::DistributionMapping> const& dmap,
+                            amrex::Vector<amrex::BoxArray> const& grids,
                             T_BoundaryHandler const boundary_handler,
                             bool const do_single_precision_comms = false,
                             std::optional<amrex::Vector<amrex::IntVect> > rel_ref_ratio = std::nullopt,
@@ -241,7 +241,7 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
             curr[lev][adim]->mult(-1._rt/ablastr::constant::SI::mu0);
         } // Loop over adim
         // Run additional operations, such as calculation of the B fields for embedded boundaries
-        if constexpr (!std::is_same<T_PostACalculationFunctor, std::nullopt_t>::value) {
+        if constexpr (!std::is_same_v<T_PostACalculationFunctor, std::nullopt_t>) {
             if (post_A_calculation.has_value()) {
                     post_A_calculation.value()(mlmg, lev);
             }

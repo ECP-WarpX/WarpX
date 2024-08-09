@@ -26,7 +26,7 @@
 
 #include <cmath>
 
-#if WARPX_USE_PSATD
+#if WARPX_USE_FFT
 
 using namespace amrex;
 
@@ -37,7 +37,7 @@ PsatdAlgorithmPml::PsatdAlgorithmPml(
         int norder_x,
         int norder_y,
         int norder_z,
-        short grid_type,
+        ablastr::utils::enums::GridType grid_type,
         const amrex::Vector<amrex::Real>& v_galilean,
         Real dt,
         bool dive_cleaning,
@@ -466,4 +466,4 @@ void PsatdAlgorithmPml::VayDeposition (SpectralFieldData& /*field_data*/)
     WARPX_ABORT_WITH_MESSAGE("Vay deposition not implemented for PML PSATD");
 }
 
-#endif // WARPX_USE_PSATD
+#endif // WARPX_USE_FFT

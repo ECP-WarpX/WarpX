@@ -5,8 +5,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef DEFAULTINITIALIZATION_H_
-#define DEFAULTINITIALIZATION_H_
+#ifndef WARPX_DEFAULTINITIALIZATION_H_
+#define WARPX_DEFAULTINITIALIZATION_H_
 
 #include <WarpX.H>
 #ifdef WARPX_QED
@@ -280,4 +280,4 @@ void DefaultInitializeRuntimeAttributes (PTile& ptile,
 
 }
 
-#endif
+#endif //WARPX_DEFAULTINITIALIZATION_H_

@@ -12,6 +12,8 @@
 #include "SpectralAlgorithms/SpectralBaseAlgorithm.H"
 #include "SpectralFieldData.H"
 
+#include <ablastr/utils/Enums.H>
+
 #include <AMReX_Array.H>
 #include <AMReX_REAL.H>
 #include <AMReX_RealVect.H>
@@ -21,7 +23,7 @@
 #include <array>
 #include <memory>
 
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
 /**
  * \brief Top-level class for the electromagnetic spectral solver
  *
@@ -72,8 +74,10 @@ class SpectralSolver
         SpectralSolver (int lev,
                         const amrex::BoxArray& realspace_ba,
                         const amrex::DistributionMapping& dm,
-                        int norder_x, int norder_y,
-                        int norder_z, short grid_type,
+                        int norder_x,
+                        int norder_y,
+                        int norder_z,
+                        ablastr::utils::enums::GridType grid_type,
                         const amrex::Vector<amrex::Real>& v_galilean,
                         const amrex::Vector<amrex::Real>& v_comoving,
                         amrex::RealVect dx,
@@ -205,5 +209,5 @@ class SpectralSolver
         // to an instance of a sub-class defining a specific algorithm
         std::unique_ptr<SpectralBaseAlgorithm> algorithm;
 };
-#endif // WARPX_USE_PSATD
+#endif // WARPX_USE_FFT
 #endif // WARPX_SPECTRAL_SOLVER_H_

@@ -5,7 +5,6 @@
 
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "Particles/MultiParticleContainer.H"
-#include "WarpX.H"
 
 class FlushFormat
 {

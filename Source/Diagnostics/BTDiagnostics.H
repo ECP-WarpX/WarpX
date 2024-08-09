@@ -28,7 +28,7 @@ class BTDiagnostics final : public Diagnostics
 {
 public:
 
-    BTDiagnostics (int i, std::string name);
+    BTDiagnostics (int i, const std::string& name);
 
 private:
     /** Whether to plot raw (i.e., NOT cell-centered) fields */
@@ -176,9 +176,6 @@ private:
 
     /** Vector of lab-frame time corresponding to each snapshot */
     amrex::Vector<amrex::Real> m_t_lab;
-    /** Vector of user-defined physical region for diagnostics in lab-frame
-     *  for each back-transformed snapshot */
-    amrex::Vector<amrex::RealBox> m_snapshot_domain_lab;
     /** Vector of physical region corresponding to the buffer that spans a part
      *  of the full back-transformed snapshot */
     amrex::Vector<amrex::RealBox> m_buffer_domain_lab;
@@ -375,26 +372,26 @@ private:
     /** Interleave lab-frame meta-data of the buffers to be consistent
      *  with the merged plotfile lab-frame data.
      */
-    void InterleaveBufferAndSnapshotHeader ( std::string buffer_Header,
-                                             std::string snapshot_Header);
+    void InterleaveBufferAndSnapshotHeader (const std::string& buffer_Header,
+                                            const std::string& snapshot_Header);
     /** Interleave meta-data of the buffer multifabs to be consistent
      *  with the merged plotfile lab-frame data.
      */
-    void InterleaveFabArrayHeader (std::string Buffer_FabHeader_path,
-                                   std::string snapshot_FabHeader_path,
-                                   std::string newsnapshot_FabFilename);
+    void InterleaveFabArrayHeader (const std::string& Buffer_FabHeader_path,
+                                  const std::string& snapshot_FabHeader_path,
+                                  const std::string& newsnapshot_FabFilename);
     /** Interleave lab-frame metadata of the species header file in the buffers to
      *  be consistent with the merged plotfile lab-frame data
      */
-    void InterleaveSpeciesHeader(std::string buffer_species_Header_path,
-                                 std::string snapshot_species_Header_path,
-                                 std::string species_name, int new_data_index);
+    void InterleaveSpeciesHeader(const std::string& buffer_species_Header_path,
+                                 const std::string& snapshot_species_Header_path,
+                                 const std::string& species_name, int new_data_index);
 
     /** Interleave lab-frame metadata of the particle header file in the buffers to
      *  be consistent with the merged plotfile lab-frame data
      */
-    void InterleaveParticleDataHeader( std::string buffer_ParticleHdrFilename,
-                                       std::string snapshot_ParticleHdrFilename);
+    void InterleaveParticleDataHeader(const std::string& buffer_ParticleHdrFilename,
+                                      const std::string& snapshot_ParticleHdrFilename);
     /** Initialize particle functors for each species to compute the back-transformed
         lab-frame data. */
     void InitializeParticleFunctors () override;
