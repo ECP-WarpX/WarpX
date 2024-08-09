@@ -14,13 +14,5 @@
     "particle_position_x": 2656041.6379113654,
     "particle_position_y": 2669548.664572591,
     "particle_weight": 1.7256099431746894e+26
-  },
-  "electron": {
-    "particle_momentum_x": 1.0390618975838188e-19,
-    "particle_momentum_y": 1.0241645067704406e-19,
-    "particle_momentum_z": 1.0173387880649568e-19,
-    "particle_position_x": 2646162.5818311535,
-    "particle_position_y": 2661127.0162632912,
-    "particle_weight": 1.7256099431746894e+26
   }
 }
