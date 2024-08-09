@@ -90,16 +90,12 @@ particle_diag = picmi.ParticleDiagnostic(
     name = 'diag1',
     period = 10000,
     species = [electrons, ions],
-    data_list = ['ux', 'uy', 'uz', 'x', 'z', 'weighting', 'orig_z'],
-    write_dir = '.',
-    warpx_file_prefix = 'Python_ionization_plt')
+    data_list = ['ux', 'uy', 'uz', 'x', 'z', 'weighting', 'orig_z'])
 field_diag = picmi.FieldDiagnostic(
     name = 'diag1',
     grid = grid,
     period = 10000,
-    data_list = ['Bx', 'By', 'Bz', 'Ex', 'Ey', 'Ez', 'Jx', 'Jy', 'Jz'],
-    write_dir = '.',
-    warpx_file_prefix = 'Python_ionization_plt')
+    data_list = ['Bx', 'By', 'Bz', 'Ex', 'Ey', 'Ez', 'Jx', 'Jy', 'Jz'])
 
 # Set up simulation
 sim = picmi.Simulation(

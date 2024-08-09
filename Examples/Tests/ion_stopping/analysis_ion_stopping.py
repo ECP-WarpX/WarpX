@@ -74,7 +74,7 @@ def stopping_from_ions(dt, ni, Ti, mi, Zi, Zb, ion_mass, ion_energy):
     return ion_energy
 
 # Fetch background parameters and initial particle data
-ds0 = yt.load(f'{prefix}{len(last_it)*"0"}')
+ds0 = yt.load('diags/diag1000000')
 ad0 = ds0.all_data()
 
 Zb = 1.  # Ion charge state
