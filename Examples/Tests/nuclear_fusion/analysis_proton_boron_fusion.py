@@ -496,9 +496,9 @@ def check_initial_energy1(data, E_com):
         ## Check that the max / min value are comparable to the analytical value
         ## The minimum value is checked to be within 20 keV of the analytical value
         ## The maximum value is checked to be within 1% of the analytical value
-        assert(is_close(np.amax(energy_alpha2_simulation), max_energy_alpha23, rtol=1.e-1 ))
+        assert(is_close(np.amax(energy_alpha2_simulation), max_energy_alpha23, rtol=1.e-2 ))
         assert(is_close(np.amin(energy_alpha2_simulation), min_energy_alpha23, atol=3.218e-15 ))
-        assert(is_close(np.amax(energy_alpha3_simulation), max_energy_alpha23, rtol=1.e-1 ))
+        assert(is_close(np.amax(energy_alpha3_simulation), max_energy_alpha23, rtol=1.e-2 ))
         assert(is_close(np.amin(energy_alpha3_simulation), min_energy_alpha23, atol=3.218e-15 ))
 
 def check_initial_energy2(data):
