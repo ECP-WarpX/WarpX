@@ -322,7 +322,6 @@ if args.mode=='read' and update_perf_log_repo:
         git_repo.git.pull()
     os.chdir( perf_logs_repo )
     sys.path.append('./')
-    import write_csv
     git_repo.git.add('./logs_csv/' + csv_file[machine])
     git_repo.git.add('./logs_hdf5/' + perf_database_file)
     index = git_repo.index

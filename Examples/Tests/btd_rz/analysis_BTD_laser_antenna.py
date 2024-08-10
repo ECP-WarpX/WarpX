@@ -38,7 +38,7 @@ plotfile = sys.argv[1]
 
 # The values must be consistent with the values provided in the simulation input
 t_current = 80e-15   # Time of the snapshot1
-c = 299792458;
+c = 299792458
 z0_antenna = -1.e-6  # position of laser
 lambda0 = 0.8e-6     # wavelength of the signal
 tau0 = 10e-15        # duration of the signal
