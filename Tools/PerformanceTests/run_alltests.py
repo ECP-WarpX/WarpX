@@ -127,7 +127,7 @@ parser.add_argument( '--n_steps', dest = 'n_steps', default=None,
 args = parser.parse_args()
 
 log_file = args.log_file
-if args.commit == True:
+if args.commit is True:
     log_file = 'performance_log.txt'
 
 # Dictionaries
@@ -182,7 +182,7 @@ if args.mode == 'run':
         os.mkdir(res_dir_base)
 
 # Recompile if requested
-if args.recompile == True:
+if args.recompile is True:
     with open(cwd + 'GNUmakefile_perftest') as makefile_handler:
         makefile_text = makefile_handler.read()
     makefile_text = re.sub('\nCOMP.*', '\nCOMP=%s' %compiler_name[args.compiler], makefile_text)
@@ -214,7 +214,7 @@ def process_analysis():
     batch_string += 'python ' + __file__ + ' --no-recompile --compiler=' + \
                     args.compiler + ' --architecture=' + args.architecture + \
                     ' --mode=read' + ' --log_file=' + log_file
-    if args.commit == True:
+    if args.commit is True:
         batch_string += ' --commit'
     batch_string += '\n'
     batch_file = 'slurm_perfread'
@@ -315,7 +315,7 @@ if args.mode == 'read':
         updated_df.to_hdf(perf_database_file, key='all_data', mode='w')
 
     # Store test parameters for record if requested
-    if store_test == True:
+    if store_test is True:
         dir_record_base = './perf_warpx_record/'
         if not os.path.exists(dir_record_base):
             os.mkdir(dir_record_base)
@@ -329,7 +329,7 @@ if args.mode == 'read':
         for count, current_run in enumerate(test_list):
             shutil.copy(current_run[0], dir_record)
 
-    if do_rename == True:
+    if do_rename is True:
         # Rename files if requested
         for count, current_run in enumerate(test_list):
             run_name = current_run[0]
@@ -347,7 +347,7 @@ if args.mode == 'read':
             os.rename(res_dir, res_dir_arch)
 
     # Commit results to the Repo
-    if args.commit == True:
+    if args.commit is True:
         os.system('git add ' + log_dir + log_file + ';'\
                   'git commit -m "performance tests";'\
                   'git push -u origin development')

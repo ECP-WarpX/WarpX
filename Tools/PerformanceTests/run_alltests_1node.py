@@ -92,7 +92,7 @@ test_list.extend([[filename1, 1, 64, 2]]*n_repeat)
 # if flag --automated is used, test_list and do_commit are
 # overwritten
 
-if args.automated == True:
+if args.automated is True:
     test_list = []
     n_repeat = 2
     test_list.extend([['automated_test_1_uniform_rest_32ppc', 1, 16, 8]]*n_repeat)
@@ -105,7 +105,7 @@ if args.automated == True:
     run_name = 'automated_tests'
 
 n_tests   = len(test_list)
-if do_commit == True:
+if do_commit is True:
     log_file = 'performance_log.txt'
 
 # Dictionaries
@@ -159,7 +159,7 @@ if args.mode == 'run':
         os.mkdir(res_dir_base)
 
 # Recompile if requested
-if args.recompile == True:
+if args.recompile is True:
     with open(cwd + 'GNUmakefile_perftest') as makefile_handler:
         makefile_text = makefile_handler.read()
     makefile_text = re.sub('\nCOMP.*', '\nCOMP=%s' %compiler_name[args.compiler], makefile_text)
@@ -191,9 +191,9 @@ def process_analysis():
                     args.compiler + ' --architecture=' + args.architecture + \
                     ' --mode=read' + ' --log_file=' + log_file + \
                 ' --input_file=' + args.input_file
-    if do_commit == True:
+    if do_commit is True:
         batch_string += ' --commit'
-    if args.automated == True:
+    if args.automated is True:
         batch_string += ' --automated'
     batch_string += '\n'
     batch_file = 'slurm_perfread'
@@ -300,7 +300,7 @@ if args.mode == 'read':
     os.rename(res_dir, res_dir_arch)
 
     # Commit results to the Repo
-    if do_commit == True:
+    if do_commit is True:
         os.system('git add ' + log_dir + log_file + ';'\
                   'git commit -m "performance tests";'\
                   'git push -u origin development')

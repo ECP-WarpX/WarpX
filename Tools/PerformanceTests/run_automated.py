@@ -136,7 +136,7 @@ if args.mode == 'browse_output_files':
 if args.mode == 'read':
     browse_output_files = True
 
-if args.automated == True:
+if args.automated is True:
     run_name = 'automated_tests'
     perf_database_file = machine + '_results.h5'
     rename_archive = True
@@ -197,8 +197,8 @@ if args.mode == 'run':
 
     # Recompile if requested
     # ----------------------
-    if recompile == True:
-        if pull_3_repos == True:
+    if recompile is True:
+        if pull_3_repos is True:
             git_repo = git.cmd.Git( picsar_dir )
             git_repo.pull()
             git_repo = git.cmd.Git( amrex_dir  )
@@ -335,7 +335,7 @@ for n_node in n_node_list:
         res_dir += '_'.join([run_name, compiler,\
                              architecture, str(n_node)]) + '/'
         # Rename directory with precise date+hour for archive purpose
-        if rename_archive == True:
+        if rename_archive is True:
             loc_counter = 0
             res_dir_arch = res_dir_base
             res_dir_arch += '_'.join([year, month, day, run_name, compiler,\

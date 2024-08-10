@@ -48,7 +48,7 @@ def process_analysis(automated, cwd, compiler, architecture, n_node_list, start_
         ' --start_date=' + start_date + \
         ' --path_source=' + path_source + \
         ' --path_results=' + path_results
-    if automated == True:
+    if automated is True:
         batch_string += ' --automated'
     batch_string += '\n'
     batch_file = 'bsub_perfread'

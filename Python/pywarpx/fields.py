@@ -141,16 +141,12 @@ class _MultiFABWrapper(object):
         try:
             if libwarpx.geometry_dim == '3d':
                 idir = ['x', 'y', 'z'].index(direction)
-                celldir = idir
             elif libwarpx.geometry_dim == '2d':
                 idir = ['x', 'z'].index(direction)
-                celldir = 2*idir
             elif libwarpx.geometry_dim == 'rz':
                 idir = ['r', 'z'].index(direction)
-                celldir = 2*idir
             elif libwarpx.geometry_dim == '1d':
                 idir = ['z'].index(direction)
-                celldir = idir
         except ValueError:
             raise Exception('Inappropriate direction given')
 
