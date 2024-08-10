@@ -11,14 +11,8 @@ import re
 import shutil
 import time
 
+import functions_perftest as perftest
 import pandas as pd
-from functions_perftest import (
-    extract_dataframe,
-    get_nsteps,
-    read_run_perf,
-    run_batch_nnode,
-    write_perf_logfile,
-)
 
 # This script runs automated performance tests for WarpX.
 # It runs tests in list test_list defined below, and write
@@ -223,7 +217,7 @@ if args.mode == 'run':
     res_dir += '_'.join([run_name, args.compiler,\
                          args.architecture, str(n_node)]) + '/'
     # Run the simulation.
-    run_batch_nnode(test_list, res_dir, bin_name, config_command,\
+    perftest.run_batch_nnode(test_list, res_dir, bin_name, config_command,\
                     architecture=args.architecture, Cname=module_Cname[args.architecture], \
                     n_node=n_node)
     os.chdir(cwd)
@@ -249,23 +243,23 @@ if args.mode == 'read':
         # Do not read n_node = current_run[1], it is an external parameter
         n_mpi    = current_run[2]
         n_omp    = current_run[3]
-        n_steps  = get_nsteps(cwd  + input_file)
+        n_steps  = perftest.get_nsteps(cwd  + input_file)
         print('n_steps = ' + str(n_steps))
         res_dir = res_dir_base
         res_dir += '_'.join([run_name, args.compiler,\
                              args.architecture, str(n_node)]) + '/'
         # Read performance data from the output file
         output_filename = 'out_' + '_'.join([input_file, str(n_node), str(n_mpi), str(n_omp), str(count)]) + '.txt'
-        timing_list = read_run_perf(res_dir + output_filename, n_steps)
+        timing_list = perftest.read_run_perf(res_dir + output_filename, n_steps)
         # Write performance data to the performance log file
         log_line = ' '.join([year, month, day, input_file, args.compiler,\
                              args.architecture, str(n_node), str(n_mpi),\
                              str(n_omp)] +  timing_list + ['\n'])
-        write_perf_logfile(log_dir + log_file, log_line)
+        perftest.write_perf_logfile(log_dir + log_file, log_line)
         # Read data for all test to put in hdf5 a database
         # ------------------------------------------------
         # This is an hdf5 file containing ALL the simulation parameters and results. Might be too large for a repo
-        df_newline = extract_dataframe(res_dir + output_filename, n_steps)
+        df_newline = perftest.extract_dataframe(res_dir + output_filename, n_steps)
         # Add all simulation parameters to the dataframe
         df_newline['run_name'] = run_name
         df_newline['n_node'] = n_node

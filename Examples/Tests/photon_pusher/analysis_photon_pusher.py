@@ -152,7 +152,7 @@ def generate():
             f.write("{}.single_particle_u = {} {} {}\n".
                 format(name, velx, vely, velz))
             f.write("{}.single_particle_weight = 1.0\n".format(name))
-            f.write("\n".format())
+            f.write("\n")
 
 def main():
     if (len(sys.argv) < 2):
