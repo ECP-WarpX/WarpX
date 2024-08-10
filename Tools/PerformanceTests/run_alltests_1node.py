@@ -11,7 +11,14 @@ import re
 import shutil
 import time
 
-from functions_perftest import *
+import pandas as pd
+from functions_perftest import (
+    extract_dataframe,
+    get_nsteps,
+    read_run_perf,
+    run_batch_nnode,
+    write_perf_logfile,
+)
 
 # This script runs automated performance tests for WarpX.
 # It runs tests in list test_list defined below, and write
