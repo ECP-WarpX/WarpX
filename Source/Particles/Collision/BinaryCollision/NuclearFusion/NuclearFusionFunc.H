@@ -159,18 +159,9 @@ public:
 
             index_type pair_index = cell_start_pair + coll_idx;
 
-            // Because the number of particles of each species is not always equal (NI1 != NI2
-            // in general), some macroparticles will be paired with multiple macroparticles of the
-            // other species and we need to decrease their weight accordingly.
-            // c1 corresponds to the minimum number of times a particle of species 1 will be paired
-            // with a particle of species 2. Same for c2.
-            // index_type(1): https://github.com/AMReX-Codes/amrex/pull/3684
-            const index_type c1 = amrex::max(NI2/NI1, index_type(1));
-            const index_type c2 = amrex::max(NI1/NI2, index_type(1));
-
             // multiplier ratio to take into account unsampled pairs
             const auto multiplier_ratio = static_cast<int>(
-                m_isSameSpecies ? 2*max_N - 1 : max_N);
+                m_isSameSpecies ? min_N + max_N - 1 : min_N);
 
 #if (defined WARPX_DIM_RZ)
             amrex::ParticleReal * const AMREX_RESTRICT theta1 = soa_1.m_rdata[PIdx::theta];
@@ -182,10 +173,6 @@ public:
             // stride (smaller set size) until we do all collisions (larger set size)
             for (index_type k = coll_idx; k < max_N; k += min_N)
             {
-                // c1k : how many times the current particle of species 1 is paired with a particle
-                // of species 2. Same for c2k.
-                const index_type c1k = (k%NI1 < max_N%NI1) ? c1 + 1: c1;
-                const index_type c2k = (k%NI2 < max_N%NI2) ? c2 + 1: c2;
 
 #if (defined WARPX_DIM_RZ)
                 /* In RZ geometry, macroparticles can collide with other macroparticles
@@ -205,7 +192,7 @@ public:
                 SingleNuclearFusionEvent(
                     u1x[ I1[i1] ], u1y[ I1[i1] ], u1z[ I1[i1] ],
                     u2x[ I2[i2] ], u2y[ I2[i2] ], u2z[ I2[i2] ],
-                    m1, m2, w1[ I1[i1] ]/c1k, w2[ I2[i2] ]/c2k,
+                    m1, m2, w1[ I1[i1] ], w2[ I2[i2] ],
                     dt, dV, static_cast<int>(pair_index), p_mask, p_pair_reaction_weight,
                     m_fusion_multiplier, multiplier_ratio,
                     m_probability_threshold,
