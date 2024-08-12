@@ -69,8 +69,8 @@ namespace ParticleUtils {
         return getParticleCellIndex(p.pos(0), p.pos(1), p.pos(2), plo, dxi, lo);
     }
 
-    /**
-     * \brief Determine which cell a particle lies in.
+    /** Determine which cell a particle lies in.
+     *
      * Returns an amrex::IntVect with the i, j, k indices of the cell the particle lies within
      *
      * @param[in] p the particle whose cell index we are finding
