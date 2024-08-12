@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.20.0)
-project(WarpX VERSION 24.07)
+project(WarpX VERSION 24.08)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -711,7 +711,9 @@ endforeach()
 # pip helpers for the pywarpx package #########################################
 #
 if(WarpX_PYTHON)
-    set(PYINSTALLOPTIONS "" CACHE STRING
+    set(PY_PIP_OPTIONS "-v" CACHE STRING
+        "Additional parameters to pass to `pip`")
+    set(PY_PIP_INSTALL_OPTIONS "" CACHE STRING
         "Additional parameters to pass to `pip install`")
 
     # ensure all targets are built before we package them in a wheel
@@ -735,7 +737,7 @@ if(WarpX_PYTHON)
         ${CMAKE_COMMAND} -E rm -f -r warpx-whl
         COMMAND
             ${CMAKE_COMMAND} -E env PYWARPX_LIB_DIR=$<TARGET_FILE_DIR:pyWarpX_${WarpX_DIMS_LAST}>
-                ${Python_EXECUTABLE} -m pip wheel -v --no-build-isolation --no-deps --wheel-dir=warpx-whl ${WarpX_SOURCE_DIR}
+                ${Python_EXECUTABLE} -m pip ${PY_PIP_OPTIONS} wheel --no-build-isolation --no-deps --wheel-dir=warpx-whl ${WarpX_SOURCE_DIR}
         WORKING_DIRECTORY
             ${WarpX_BINARY_DIR}
         DEPENDS
@@ -749,7 +751,7 @@ if(WarpX_PYTHON)
         set(pyWarpX_REQUIREMENT_FILE "requirements.txt")
     endif()
     add_custom_target(${WarpX_CUSTOM_TARGET_PREFIX}pip_install_requirements
-        ${Python_EXECUTABLE} -m pip install ${PYINSTALLOPTIONS} -r "${WarpX_SOURCE_DIR}/${pyWarpX_REQUIREMENT_FILE}"
+        ${Python_EXECUTABLE} -m pip ${PY_PIP_OPTIONS} install ${PY_PIP_INSTALL_OPTIONS} -r "${WarpX_SOURCE_DIR}/${pyWarpX_REQUIREMENT_FILE}"
         WORKING_DIRECTORY
             ${WarpX_BINARY_DIR}
     )
@@ -766,7 +768,7 @@ if(WarpX_PYTHON)
     # because otherwise pip would also force reinstall all dependencies.
     add_custom_target(${WarpX_CUSTOM_TARGET_PREFIX}pip_install
         ${CMAKE_COMMAND} -E env WARPX_MPI=${WarpX_MPI}
-            ${Python_EXECUTABLE} -m pip install --force-reinstall --no-index --no-deps ${PYINSTALLOPTIONS} --find-links=warpx-whl pywarpx
+            ${Python_EXECUTABLE} -m pip ${PY_PIP_OPTIONS} install --force-reinstall --no-index --no-deps ${PY_PIP_INSTALL_OPTIONS} --find-links=warpx-whl pywarpx
         WORKING_DIRECTORY
             ${WarpX_BINARY_DIR}
         DEPENDS
@@ -779,7 +781,7 @@ if(WarpX_PYTHON)
     # this is for package managers only
     add_custom_target(${WarpX_CUSTOM_TARGET_PREFIX}pip_install_nodeps
         ${CMAKE_COMMAND} -E env WARPX_MPI=${WarpX_MPI}
-            ${Python_EXECUTABLE} -m pip install --force-reinstall --no-index --no-deps ${PYINSTALLOPTIONS} --find-links=warpx-whl pywarpx
+            ${Python_EXECUTABLE} -m pip ${PY_PIP_OPTIONS} install --force-reinstall --no-index --no-deps ${PY_PIP_INSTALL_OPTIONS} --find-links=warpx-whl pywarpx
         WORKING_DIRECTORY
             ${WarpX_BINARY_DIR}
         DEPENDS
