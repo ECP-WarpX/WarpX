@@ -17,8 +17,8 @@
 
 namespace ParticleUtils {
 
-    /**
-     * \brief Determine which cell a particle lies in.
+    /**  Determine which cell a particle lies in.
+     *
      * Returns an amrex::IntVect with the i, j, k indices of the cell the particle lies within
      *
      * @param[in] x the particle's x position
@@ -52,8 +52,8 @@ namespace ParticleUtils {
         return amrex::IntVect(AMREX_D_DECL(ii, jj, kk));
     }
 
-    /**
-     * \brief Determine which cell a particle lies in.
+    /** Determine which cell a particle lies in.
+     *
      * Returns an amrex::IntVect with the i, j, k indices of the cell the particle lies within
      *
      * @param[in] p the particle whose cell index we are finding
