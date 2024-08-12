@@ -4,7 +4,9 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#if defined(ABLASTR_FFT) && defined(ABLASTR_HEFFTE)
 #include <heffte.h>
+#endif
 
 #include "IntegratedGreenFunctionSolver.H"
 
