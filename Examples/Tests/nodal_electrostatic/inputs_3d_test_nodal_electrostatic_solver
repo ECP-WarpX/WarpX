@@ -35,6 +35,7 @@ boundary.field_hi = PEC PEC PEC
 warpx.do_electrostatic = relativistic
 warpx.const_dt = dt
 warpx.grid_type = collocated
+warpx.abort_on_warning_threshold = high
 algo.particle_pusher = vay
 algo.particle_shape = 3
 
