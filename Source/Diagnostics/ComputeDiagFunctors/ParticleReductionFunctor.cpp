@@ -5,6 +5,7 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/Parser/ParserUtils.H"
+#include "Utils/ParticleUtils.H"
 #include "WarpX.H"
 
 #include <ablastr/coarsen/sample.H>
@@ -69,23 +70,10 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
                 get_particle_position(p, xw, yw, zw);
 
                 // Get position in AMReX convention to calculate corresponding index.
-                // Ideally this will be replaced with the AMReX NGP interpolator
-                // Always do x direction. No RZ case because it's not implemented, and code
-                // will have aborted
-                int ii = 0, jj = 0, kk = 0;
-                const amrex::ParticleReal x = p.pos(0);
-                const amrex::Real lx = (x - plo[0]) * dxi[0];
-                ii = static_cast<int>(amrex::Math::floor(lx));
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
-                const amrex::ParticleReal y = p.pos(1);
-                const amrex::Real ly = (y - plo[1]) * dxi[1];
-                jj = static_cast<int>(amrex::Math::floor(ly));
-#endif
-#if defined(WARPX_DIM_3D)
-                const amrex::ParticleReal z = p.pos(2);
-                const amrex::Real lz = (z - plo[2]) * dxi[2];
-                kk = static_cast<int>(amrex::Math::floor(lz));
-#endif
+                const auto cellIndex = ParticleUtils::getParticleCellIndex(p, plo, dxi, amrex::Dim3{0,0,0}).dim3();
+                const int ii = cellIndex.x;
+                const int jj = cellIndex.y;
+                const int kk = cellIndex.z;
 
                 // Fix dimensions since parser assumes u = gamma * v / c
                 const amrex::ParticleReal ux = p.rdata(PIdx::ux) / PhysConst::c;
