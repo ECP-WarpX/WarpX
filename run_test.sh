@@ -83,7 +83,7 @@ curl -sOL https://github.com/openPMD/openPMD-example-datasets/raw/4ba1d257c5b489
 cd -
 
 # Clone the AMReX regression test utility
-git clone -b EZoni_rm_testdir https://github.com/EZoni/regression_testing.git
+git clone https://github.com/AMReX-Codes/regression_testing.git
 
 # Prepare regression tests
 mkdir -p rt-WarpX/WarpX-benchmarks
@@ -99,7 +99,7 @@ echo "cd $PWD"
 if [ -z "${WARPX_CI_CLEAN_TESTS}" ]; then
     test_rm_dir=""
 else
-    test_rm_dir="--rm_testdir"
+    test_rm_dir="--clean_testdir"
 fi
 # run only tests specified in variable tests_arg (single test or multiple tests)
 if [[ ! -z "${tests_arg}" ]]; then
