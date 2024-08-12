@@ -263,7 +263,7 @@ WarpX::FinishImplicitField( amrex::Vector<std::array< std::unique_ptr<amrex::Mul
     for (int lev = 0; lev <= finest_level; ++lev) {
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
        for ( amrex::MFIter mfi(*Field_fp[lev][0], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {

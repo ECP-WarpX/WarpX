@@ -90,7 +90,7 @@ JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buff
         // Loop through the grids, and over the tiles within each grid to
         // subtract the interpolated Jext from J_displacement.
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
         for ( MFIter mfi(Jdisp, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
 

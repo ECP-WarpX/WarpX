@@ -447,7 +447,7 @@ WarpX::setPhiBC ( amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi ) const
         domain.surroundingNodes();
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
         for ( MFIter mfi(*phi[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
             // Extract the potential
@@ -509,7 +509,7 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
         const Real* dx = Geom(lev).CellSize();
 
 #ifdef AMREX_USE_OMP
-#    pragma omp parallel if (Gpu::notInLaunchRegion())
+#    pragma omp parallel
 #endif
         for ( MFIter mfi(*phi[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {
@@ -689,7 +689,7 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
         const Real* dx = Geom(lev).CellSize();
 
 #ifdef AMREX_USE_OMP
-#    pragma omp parallel if (Gpu::notInLaunchRegion())
+#    pragma omp parallel
 #endif
         for ( MFIter mfi(*phi[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {

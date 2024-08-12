@@ -82,7 +82,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
     BL_PROFILE("Initialize Green function");
     amrex::BoxArray const domain_ba = amrex::BoxArray( domain );
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     for (amrex::MFIter mfi(domain_ba, dm_global_fft,amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
 

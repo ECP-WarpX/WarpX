@@ -521,7 +521,7 @@ MultiSigmaBox::ComputePMLFactorsB (const Real* dx, Real dt)
     dt_B = dt;
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     for (MFIter mfi(*this); mfi.isValid(); ++mfi)
     {
@@ -537,7 +537,7 @@ MultiSigmaBox::ComputePMLFactorsE (const Real* dx, Real dt)
     dt_E = dt;
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     for (MFIter mfi(*this); mfi.isValid(); ++mfi)
     {
@@ -1209,7 +1209,7 @@ PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
                                    WarpX::do_single_precision_comms,
                                                         period);
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
             for (MFIter mfi(reg); mfi.isValid(); ++mfi)
             {

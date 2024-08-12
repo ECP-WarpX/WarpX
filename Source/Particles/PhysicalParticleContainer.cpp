@@ -1018,7 +1018,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
     }
 
     MFItInfo info;
-    if (do_tiling && Gpu::notInLaunchRegion()) {
+    if (do_tiling) {
         info.EnableTiling(tile_size);
     }
 #ifdef AMREX_USE_OMP
@@ -1562,12 +1562,12 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 #endif
 
     MFItInfo info;
-    if (do_tiling && Gpu::notInLaunchRegion()) {
+    if (do_tiling) {
         info.EnableTiling(tile_size);
     }
 #ifdef AMREX_USE_OMP
     info.SetDynamic(true);
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     for (MFIter mfi = MakeMFIter(0, info); mfi.isValid(); ++mfi)
     {
@@ -1992,7 +1992,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
     // Add the particles to the current container, tile by tile
     for (int lev=0; lev<numLevels(); lev++) {
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
         for (MFIter mfi = MakeMFIter(lev, info); mfi.isValid(); ++mfi)
         {

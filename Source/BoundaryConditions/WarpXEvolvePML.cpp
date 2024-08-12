@@ -106,7 +106,7 @@ WarpX::DampPML_Cartesian (const int lev, PatchType patch_type)
         }
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
         for ( MFIter mfi(*pml_E[0], TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {
@@ -248,7 +248,7 @@ WarpX::DampJPML (int lev, PatchType patch_type)
                                                             : pml[lev]->GetMultiSigmaBox_cp();
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
         for ( MFIter mfi(*pml_j[0], TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {

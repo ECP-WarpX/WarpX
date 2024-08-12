@@ -167,7 +167,7 @@ FieldEnergy::ComputeNorm2RZ(const amrex::MultiFab& field, const int lev)
     using ReduceTuple = typename decltype(reduce_data)::Type;
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     for ( amrex::MFIter mfi(field, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi )
     {

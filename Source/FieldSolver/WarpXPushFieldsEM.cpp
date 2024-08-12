@@ -453,7 +453,7 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
 
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
         // Subtract average of cumulative sum from Jx
         for (amrex::MFIter mfi(Jx); mfi.isValid(); ++mfi)

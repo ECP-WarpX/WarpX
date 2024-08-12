@@ -106,7 +106,7 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
 
     // For level 0, we only need to do the average.
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     for (MFIter mfi(*Bfield_aux[0][0], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
@@ -209,7 +209,7 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                 const amrex::IntVect& Bz_cp_stag = Bfield_cp[lev][2]->ixType().toIntVect();
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
                 for (MFIter mfi(*Bfield_aux[lev][0], TilingIfNotGPU()); mfi.isValid(); ++mfi)
                 {
@@ -304,7 +304,7 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                 const amrex::IntVect& Ez_cp_stag = Efield_cp[lev][2]->ixType().toIntVect();
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
                 for (MFIter mfi(*Efield_aux[lev][0], TilingIfNotGPU()); mfi.isValid(); ++mfi)
                 {
@@ -435,7 +435,7 @@ WarpX::UpdateAuxilaryDataSameType ()
                 const amrex::IntVect& Bz_stag = Bfield_aux[lev-1][2]->ixType().toIntVect();
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
                 for (MFIter mfi(*Bfield_aux[lev][0]); mfi.isValid(); ++mfi)
                 {
@@ -514,7 +514,7 @@ WarpX::UpdateAuxilaryDataSameType ()
                 const amrex::IntVect& Ez_stag = Efield_aux[lev-1][2]->ixType().toIntVect();
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
                 for (MFIter mfi(*Efield_aux[lev][0]); mfi.isValid(); ++mfi)
                 {
@@ -569,7 +569,7 @@ void WarpX::UpdateCurrentNodalToStag (amrex::MultiFab& dst, amrex::MultiFab cons
     amrex::IntVect const& src_stag = amrex::IntVect::TheNodeVector();
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
 
     for (MFIter mfi(dst, TilingIfNotGPU()); mfi.isValid(); ++mfi)

@@ -287,7 +287,7 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, amrex::Real dt, Mult
         // firstly loop over particles box by box and do all particle conserving
         // scattering
 #ifdef _OPENMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
         for (WarpXParIter pti(species1, lev); pti.isValid(); ++pti) {
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
@@ -486,7 +486,7 @@ void BackgroundMCCCollision::doBackgroundIonization
     const amrex::ParticleReal sqrt_kb_m = std::sqrt(PhysConst::kb / m_background_mass);
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     for (WarpXParIter pti(species1, lev); pti.isValid(); ++pti) {
 

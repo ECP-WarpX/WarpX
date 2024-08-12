@@ -485,7 +485,7 @@ PEC::ApplyPECtoEfield (
     const int nComp_y = Efield[1]->nComp();
     const int nComp_z = Efield[2]->nComp();
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     for (amrex::MFIter mfi(*Efield[0], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
         // Extract field data
@@ -580,7 +580,7 @@ PEC::ApplyPECtoBfield (
     const int nComp_z = Bfield[2]->nComp();
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     for (amrex::MFIter mfi(*Bfield[0], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
 
@@ -710,7 +710,7 @@ PEC::ApplyReflectiveBoundarytoRhofield (
     const int nComp = rho->nComp();
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     for (amrex::MFIter mfi(*rho); mfi.isValid(); ++mfi) {
 
@@ -842,7 +842,7 @@ PEC::ApplyReflectiveBoundarytoJfield(
     // Each current component is handled separately below, starting with Jx.
     grown_domain_box.convert(Jx_nodal);
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     for (amrex::MFIter mfi(*Jx); mfi.isValid(); ++mfi) {
 
@@ -877,7 +877,7 @@ PEC::ApplyReflectiveBoundarytoJfield(
     // Handle Jy.
     grown_domain_box.convert(Jy_nodal);
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     for (amrex::MFIter mfi(*Jy); mfi.isValid(); ++mfi) {
 
@@ -912,7 +912,7 @@ PEC::ApplyReflectiveBoundarytoJfield(
     // Handle Jz.
     grown_domain_box.convert(Jz_nodal);
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     for (amrex::MFIter mfi(*Jz); mfi.isValid(); ++mfi) {
 
@@ -983,7 +983,7 @@ PEC::ApplyPECtoElectronPressure (
     const int nComp = Pefield->nComp();
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
     for (amrex::MFIter mfi(*Pefield); mfi.isValid(); ++mfi) {
 

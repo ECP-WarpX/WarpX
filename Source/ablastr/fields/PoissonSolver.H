@@ -312,7 +312,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 
             // Local interpolation from phi_cp to phi[lev+1]
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
             for (amrex::MFIter mfi(*phi[lev + 1], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
                 amrex::Array4<amrex::Real> const phi_fp_arr = phi[lev + 1]->array(mfi);

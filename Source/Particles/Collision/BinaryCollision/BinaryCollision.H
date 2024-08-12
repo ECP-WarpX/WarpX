@@ -179,7 +179,7 @@ public:
 
         // Enable tiling
         amrex::MFItInfo info;
-        if (amrex::Gpu::notInLaunchRegion()) { info.EnableTiling(species1.tile_size); }
+        { info.EnableTiling(species1.tile_size); }
 
         // Loop over refinement levels
         for (int lev = 0; lev <= species1.finestLevel(); ++lev){
@@ -189,7 +189,7 @@ public:
         // Loop over all grids/tiles at this level
 #ifdef AMREX_USE_OMP
             info.SetDynamic(true);
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
             for (amrex::MFIter mfi = species1.MakeMFIter(lev, info); mfi.isValid(); ++mfi){
                 if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)

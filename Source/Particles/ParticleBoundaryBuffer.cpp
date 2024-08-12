@@ -408,7 +408,7 @@ void ParticleBoundaryBuffer::gatherParticlesFromDomainBoundaries (MultiParticleC
 
                     const auto& plevel = pc.GetParticles(lev);
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
                     for(PIter pti(pc, lev); pti.isValid(); ++pti)
                     {
@@ -501,7 +501,7 @@ void ParticleBoundaryBuffer::gatherParticlesFromEmbeddedBoundaries (
             const auto& plevel = pc.GetParticles(lev);
             auto dxi = warpx_instance.Geom(lev).InvCellSizeArray();
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
             for(PIter pti(pc, lev); pti.isValid(); ++pti)
             {

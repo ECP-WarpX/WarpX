@@ -390,7 +390,7 @@ protected:
 
         MFItInfoCheckTiling(pc_src, pc_dsts...);
 
-        if (WarpXParticleContainer::do_tiling && amrex::Gpu::notInLaunchRegion()) {
+        if (WarpXParticleContainer::do_tiling) {
             info.EnableTiling(WarpXParticleContainer::tile_size);
         }
 
@@ -508,7 +508,7 @@ private:
     void MFItInfoCheckTiling(const WarpXParticleContainer& pc_src,
                              First const& pc_dst, Args const&... others) const noexcept
     {
-        if (WarpXParticleContainer::do_tiling && amrex::Gpu::notInLaunchRegion()) {
+        if (WarpXParticleContainer::do_tiling) {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(pc_dst.do_tiling,
                 "For particle creation processes, either all or none of the "
                 "particle species must use tiling.");

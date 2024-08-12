@@ -531,7 +531,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
 
     for (amrex::MFIter mfi(tmpmf, TilingIfNotGPU()); mfi.isValid(); ++mfi )

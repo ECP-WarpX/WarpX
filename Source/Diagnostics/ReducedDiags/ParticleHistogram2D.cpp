@@ -190,7 +190,7 @@ void ParticleHistogram2D::ComputeDiags (int step)
     int const nlevs = std::max(0, myspc.finestLevel()+1);
     for (int lev = 0; lev < nlevs; ++lev) {
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
         {
             for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti)

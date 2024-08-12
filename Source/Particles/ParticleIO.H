@@ -56,7 +56,7 @@ particlesConvertUnits (ConvertDirection convert_direction, T_ParticleContainer* 
     const int nLevels = pc->finestLevel();
     for (int lev=0; lev<=nLevels; lev++){
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
+#pragma omp parallel
 #endif
         for (PinnedParIter pti(*pc, lev); pti.isValid(); ++pti)
         {
