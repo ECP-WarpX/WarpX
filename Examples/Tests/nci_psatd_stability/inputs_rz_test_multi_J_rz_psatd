@@ -28,6 +28,7 @@ warpx.moving_window_v = 1.
 warpx.n_rz_azimuthal_modes = 1
 warpx.use_filter = 1
 warpx.verbose = 1
+warpx.abort_on_warning_threshold = medium
 
 warpx.cfl = 1.
 #warpx.gamma_boost = 1.
@@ -42,6 +43,7 @@ psatd.do_time_averaging = 1
 # PSATD
 psatd.update_with_rho = 1
 #psatd.v_galilean = 0. 0. -0.9373391857121336
+psatd.J_in_time = linear
 
 # Particles
 

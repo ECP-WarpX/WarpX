@@ -24,7 +24,7 @@ boundary.field_hi = periodic periodic
 algo.maxwell_solver = psatd
 warpx.verbose = 0
 warpx.use_filter = 1
-warpx.cfl = 1.
+warpx.cfl = 0.7071067811865475
 warpx.use_hybrid_QED = 1
 
 #################################

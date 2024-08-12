@@ -195,3 +195,16 @@ if(WarpX_FFT)
         diags/diag1000400 # output
     )
 endif()
+
+# multi_J_rz_psatd ####################################
+#
+if(WarpX_FFT)
+    add_warpx_test(
+        multi_J_rz_psatd # name
+        RZ # dims
+        ON # mpi
+        Examples/Tests/nci_psatd_stability/inputs_rz_test_multi_J_rz_psatd # inputs
+        Examples/analysis_default_regression.py # analysis
+        diags/diag1000050 # output
+    )
+endif()
