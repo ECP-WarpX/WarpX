@@ -72,7 +72,7 @@ python3 -m pip cache purge
 
 # Clone AMReX and warpx-data
 git clone https://github.com/AMReX-Codes/amrex.git
-cd amrex && git checkout --detach 20e6f2eadf0c297517588ba38973ec7c7084fa31 && cd -
+cd amrex && git checkout --detach 24.08 && cd -
 # warpx-data contains various required data sets
 git clone --depth 1 https://github.com/ECP-WarpX/warpx-data.git
 # openPMD-example-datasets contains various required data sets
