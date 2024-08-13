@@ -94,13 +94,11 @@ void Filter::DoFilter (const Box& tbx,
                        Array4<Real      > const& dst,
                        int scomp, int dcomp, int ncomp)
 {
-    amrex::Real const* AMREX_RESTRICT sx = stencil_x.data();
-#if AMREX_SPACEDIM >= 2
-    amrex::Real const* AMREX_RESTRICT sy = stencil_y.data();
-#endif
-#if AMREX_SPACEDIM == 3
+    AMREX_D_DECL(
+    amrex::Real const* AMREX_RESTRICT sx = stencil_x.data();,
+    amrex::Real const* AMREX_RESTRICT sy = stencil_y.data();,
     amrex::Real const* AMREX_RESTRICT sz = stencil_z.data();
-#endif
+    )
     Dim3 slen_local = slen;
 
 #if AMREX_SPACEDIM == 3
@@ -183,9 +181,6 @@ void Filter::DoFilter (const Box& tbx,
 
         dst(i,j,k,dcomp+n) = d;
     });
-#else
-    WARPX_ABORT_WITH_MESSAGE(
-        "Filter not implemented for the current geometry!");
 #endif
 }
 
@@ -278,13 +273,11 @@ void Filter::DoFilter (const Box& tbx,
     const auto lo = amrex::lbound(tbx);
     const auto hi = amrex::ubound(tbx);
     // tmp and dst are of type Array4 (Fortran ordering)
-    amrex::Real const* AMREX_RESTRICT sx = stencil_x.data();
-#if AMREX_SPACEDIM >= 2
-    amrex::Real const* AMREX_RESTRICT sy = stencil_y.data();
-#endif
-#if AMREX_SPACEDIM == 3
+    AMREX_D_DECL(
+    amrex::Real const* AMREX_RESTRICT sx = stencil_x.data();,
+    amrex::Real const* AMREX_RESTRICT sy = stencil_y.data();,
     amrex::Real const* AMREX_RESTRICT sz = stencil_z.data();
-#endif
+    )
     for (int n = 0; n < ncomp; ++n) {
         // Set dst value to 0.
         for         (int k = lo.z; k <= hi.z; ++k) {
@@ -298,13 +291,7 @@ void Filter::DoFilter (const Box& tbx,
         for         (int iz=0; iz < slen.z; ++iz){
             for     (int iy=0; iy < slen.y; ++iy){
                 for (int ix=0; ix < slen.x; ++ix){
-#if AMREX_SPACEDIM == 3
-                    const Real sss = sx[ix]*sy[iy]*sz[iz];
-#elif AMREX_SPACEDIM >= 2
-                    const Real sss = sx[ix]*sy[iy];
-#elif AMREX_SPACEDIM == 1
-                    const Real sss = sx[ix];
-#endif
+                    const Real sss = AMREX_D_TERM(sx[ix], *sy[iy], *sz[iz]);
                     // 3 nested loop on 3D array
                     for         (int k = lo.z; k <= hi.z; ++k) {
                         for     (int j = lo.y; j <= hi.y; ++j) {
@@ -319,7 +306,7 @@ void Filter::DoFilter (const Box& tbx,
                                                           +tmp(i+ix,j-iy,k+iz,scomp+n)
                                                           +tmp(i-ix,j+iy,k+iz,scomp+n)
                                                           +tmp(i+ix,j+iy,k+iz,scomp+n));
-#elif AMREX_SPACEDIM >= 2
+#elif AMREX_SPACEDIM == 2
                                 dst(i,j,k,dcomp+n) += sss*(tmp(i-ix,j-iy,k,scomp+n)
                                                           +tmp(i+ix,j-iy,k,scomp+n)
                                                           +tmp(i-ix,j+iy,k,scomp+n)
@@ -327,9 +314,6 @@ void Filter::DoFilter (const Box& tbx,
 #elif AMREX_SPACEDIM == 1
                                 dst(i,j,k,dcomp+n) += sss*(tmp(i-ix,j,k,scomp+n)
                                                           +tmp(i+ix,j,k,scomp+n));
-#else
-    WARPX_ABORT_WITH_MESSAGE(
-        "Filter not implemented for the current geometry!");
 #endif
                             }
                         }

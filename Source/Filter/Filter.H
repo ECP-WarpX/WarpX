@@ -21,9 +21,9 @@ public:
 
     // Apply stencil on MultiFab.
     // Guard cells are handled inside this function
-    void ApplyStencil(amrex::MultiFab& dstmf,
-                              const amrex::MultiFab& srcmf, int lev, int scomp=0,
-                              int dcomp=0, int ncomp=10000);
+    void ApplyStencil (amrex::MultiFab& dstmf,
+                       const amrex::MultiFab& srcmf, int lev, int scomp=0,
+                       int dcomp=0, int ncomp=10000);
 
     // Apply stencil on a FabArray.
     void ApplyStencil (amrex::FArrayBox& dstfab,
@@ -31,10 +31,10 @@ public:
                        int scomp=0, int dcomp=0, int ncomp=10000);
 
     // public for cuda
-    void DoFilter(const amrex::Box& tbx,
-                          amrex::Array4<amrex::Real const> const& tmp,
-                          amrex::Array4<amrex::Real      > const& dst,
-                          int scomp, int dcomp, int ncomp);
+    void DoFilter (const amrex::Box& tbx,
+                   amrex::Array4<amrex::Real const> const& tmp,
+                   amrex::Array4<amrex::Real      > const& dst,
+                   int scomp, int dcomp, int ncomp);
 
     // Length of stencil in each included direction
     amrex::IntVect stencil_length_each_dir;
