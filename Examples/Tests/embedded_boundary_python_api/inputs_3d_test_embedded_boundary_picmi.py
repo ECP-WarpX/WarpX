@@ -60,17 +60,13 @@ embedded_boundary = picmi.EmbeddedBoundary(
 
 particle_diag = picmi.ParticleDiagnostic(
     name = 'diag1',
-    period = 1,
-    write_dir = '.',
-    warpx_file_prefix = "embedded_boundary_python_API_plt"
+    period = 1
 )
 field_diag = picmi.FieldDiagnostic(
     name = 'diag1',
     grid = grid,
     period = 1,
     data_list = ['Ex'],
-    write_dir = '.',
-    warpx_file_prefix = "embedded_boundary_python_API_plt"
 )
 
 ##########################

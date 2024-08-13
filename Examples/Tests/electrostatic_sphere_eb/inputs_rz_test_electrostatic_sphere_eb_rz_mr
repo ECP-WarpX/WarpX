@@ -1,8 +1,12 @@
+amr.max_level = 1
+warpx.fine_tag_lo = 0.0  -0.25
+warpx.fine_tag_hi = 0.25  0.25
+
 max_step = 1
 amr.n_cell = 64 64
-amr.max_level = 0
 amr.blocking_factor = 8
 amr.max_grid_size = 128
+amr.ref_ratio_vect = 2 2 2
 boundary.field_lo = none periodic
 boundary.field_hi = pec periodic
 boundary.potential_lo_x = 0
@@ -20,6 +24,7 @@ warpx.do_electrostatic = labframe
 warpx.eb_implicit_function = "-(x**2-0.1**2)"
 warpx.eb_potential(x,y,z,t) = "1."
 warpx.self_fields_required_precision = 1.e-7
+warpx.abort_on_warning_threshold = medium
 
 algo.field_gathering = momentum-conserving
 
@@ -27,3 +32,4 @@ diagnostics.diags_names = diag1
 diag1.intervals = 1
 diag1.diag_type = Full
 diag1.fields_to_plot = Er phi
+diag1.format = openpmd
