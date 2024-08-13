@@ -55,9 +55,9 @@ protected:
     int m_linop_maxorder = 3;
     bool m_agglomeration = false;
     bool m_consolidation = false;
-    bool m_semicoarsening = false;
+    bool m_semicoarsening = true;
     int m_max_coarsening_level = 10;
-    int m_max_semicoarsening_level = 0;
+    int m_max_semicoarsening_level = 10;
     amrex::BottomSolver m_bottom_solver = amrex::BottomSolver::bicgstab;
 
 

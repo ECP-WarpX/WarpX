@@ -24,6 +24,8 @@
 #include <ablastr/utils/Communication.H>
 #include <Utils/WarpXProfilerWrapper.H>
 
+#include <map>
+
 using namespace amrex;
 
 namespace warpx::initialization {
@@ -117,72 +119,25 @@ ProjectionDivCleaner::solve ()
                                                                 LinOpBCType::bogus,
                                                                 LinOpBCType::bogus)});
 
-#ifdef WARPX_DIM_RZ
-    int dim_start = 0;
+    std::map<FieldBoundaryType, LinOpBCType> bcmap{
+        {FieldBoundaryType::PEC, LinOpBCType::Dirichlet},
+        {FieldBoundaryType::Neumann, LinOpBCType::Neumann},
+        {FieldBoundaryType::Periodic, LinOpBCType::Periodic},
+        {FieldBoundaryType::None, LinOpBCType::Neumann}
+    };
 
-    if (geom[0].ProbLo(0) == 0){
-        lobc[0] = LinOpBCType::Neumann;
-
-        // handle the r_max boundary explicitly
-        if (WarpX::field_boundary_hi[0] == FieldBoundaryType::PEC) {
-            hibc[0] = LinOpBCType::Dirichlet;
-        }
-        else if (WarpX::field_boundary_hi[0] == FieldBoundaryType::Neumann) {
-            hibc[0] = LinOpBCType::Neumann;
-        }
-        else {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-                "Field boundary condition at the outer radius must be either PEC or neumann "
-                "when using the Projection Divergence Cleaner"
+    for (int idim=0; idim<AMREX_SPACEDIM; idim++){
+        auto itlo = bcmap.find(WarpX::field_boundary_lo[idim]); 
+        auto ithi = bcmap.find(WarpX::field_boundary_hi[idim]);
+        if (itlo == bcmap.end() || ithi == bcmap.end()) {
+            WARPX_ABORT_WITH_MESSAGE(
+                "Field boundary conditions have to be either periodic, PEC or neumann "
+                "when using the MLMG projection based divergence cleaner solver."
             );
         }
-        dim_start = 1;
-    }
-#else
-    const int dim_start = 0;
-#endif
-    for (int idim=dim_start; idim<AMREX_SPACEDIM; idim++){
-        if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Periodic
-             && WarpX::field_boundary_hi[idim] == FieldBoundaryType::Periodic ) {
-            lobc[idim] = LinOpBCType::Periodic;
-            hibc[idim] = LinOpBCType::Periodic;
-        }
-        else {
-            if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC ) {
-                lobc[idim] = LinOpBCType::Dirichlet;
-            }
-            else if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Neumann ) {
-                lobc[idim] = LinOpBCType::Neumann;
-            }
-            else {
-                WARPX_ABORT_WITH_MESSAGE(
-                    "Field boundary conditions have to be either periodic, PEC or neumann "
-                    "when using the Projection based Divergence Cleaner,  but they are " + GetFieldBCTypeString(WarpX::field_boundary_lo[idim])
-                );
-            }
 
-            if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC ) {
-                hibc[idim] = LinOpBCType::Dirichlet;
-            }
-            else if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::Neumann ) {
-                hibc[idim] = LinOpBCType::Neumann;
-            }
-            else {
-                WARPX_ABORT_WITH_MESSAGE(
-                    "Field boundary conditions have to be either periodic, PEC or neumann "
-                    "when using the electrostatic Multigrid solver,  but they are " + GetFieldBCTypeString(WarpX::field_boundary_hi[idim])
-                );
-            }
-        }
-
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            (WarpX::field_boundary_lo[idim] != FieldBoundaryType::Open &&
-            WarpX::field_boundary_hi[idim] != FieldBoundaryType::Open &&
-            WarpX::field_boundary_lo[idim] != FieldBoundaryType::PML &&
-            WarpX::field_boundary_hi[idim] != FieldBoundaryType::PML) ,
-            "Open and PML field boundary conditions only work with "
-            "warpx.poisson_solver = fft."
-        );
+        lobc[idim] = bcmap[WarpX::field_boundary_lo[idim]];
+        hibc[idim] = bcmap[WarpX::field_boundary_hi[idim]];
     }
 
     LPInfo info;
@@ -355,13 +310,6 @@ WarpX::ProjectionCleanDivB() {
                 || WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
                 && WarpX::poisson_solver_id == PoissonSolverAlgo::Multigrid)) {
         amrex::Print() << Utils::TextMsg::Info( "Starting Projection B-Field divergence cleaner.");
-
-#if defined(WARPX_DIM_RZ)
-        ablastr::warn_manager::WMRecordWarning("Projection Div Cleaner",
-            "WarpX is running in RZ mode."
-            "Convergence of projection based div cleaner is not optimal.",
-            ablastr::warn_manager::WarnPriority::low);
-#endif
 
         if constexpr (!std::is_same<Real, double>::value) {
             ablastr::warn_manager::WMRecordWarning("Projection Div Cleaner",
