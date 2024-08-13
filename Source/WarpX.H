@@ -667,7 +667,7 @@ public:
      */
     void Hybrid_QED_Push (int lev, PatchType patch_type, amrex::Real dt);
 
-    static amrex::Real quantum_xi_c2;
+    amrex::Real m_quantum_xi_c2;
 
     /** Check and potentially compute load balancing
      */
@@ -1398,9 +1398,6 @@ private:
      * \brief Checks for known numerical issues involving different WarpX modules
      */
     void CheckKnownIssues();
-
-    /** Check the requested resources and write performance hints */
-    void PerformanceHints ();
 
     void BuildBufferMasks ();
 
