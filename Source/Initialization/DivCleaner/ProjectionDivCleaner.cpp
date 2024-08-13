@@ -127,7 +127,7 @@ ProjectionDivCleaner::solve ()
     };
 
     for (int idim=0; idim<AMREX_SPACEDIM; idim++){
-        auto itlo = bcmap.find(WarpX::field_boundary_lo[idim]); 
+        auto itlo = bcmap.find(WarpX::field_boundary_lo[idim]);
         auto ithi = bcmap.find(WarpX::field_boundary_hi[idim]);
         if (itlo == bcmap.end() || ithi == bcmap.end()) {
             WARPX_ABORT_WITH_MESSAGE(
