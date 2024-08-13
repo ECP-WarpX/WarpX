@@ -51,11 +51,6 @@ function(add_warpx_test
         return()
     endif()
 
-    # do not run no-Python tests w/ Python support
-    if(NOT python AND WarpX_PYTHON)
-        return()
-    endif()
-
     # set dimension suffix
     warpx_set_suffix_dims(SD ${dims})
 

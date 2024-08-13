@@ -28,38 +28,26 @@ jobs:
     matrix:
       # Cartesian 1D
       cartesian_1d:
-        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=1 -DWarpX_FFT=ON
-      cartesian_1d_python:
-        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=1 -DWarpX_FFT=ON -DWarpX_PYTHON=ON -DWarpX_APP=OFF
-      cartesian_1d_no_mpi:
-        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=1 -DWarpX_FFT=ON -DWarpX_MPI=OFF
+        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=1 -DWarpX_FFT=ON -DWarpX_EB=ON -DWarpX_PYTHON=ON
+      cartesian_1d_nompi:
+        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=1 -DWarpX_FFT=ON -DWarpX_EB=ON -DWarpX_PYTHON=ON -DWarpX_MPI=OFF
       # Cartesian 2D
       cartesian_2d:
-        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=2 -DWarpX_FFT=ON
-      cartesian_2d_python:
-        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=2 -DWarpX_FFT=ON -DWarpX_PYTHON=ON -DWarpX_APP=OFF
-      cartesian_2d_no_mpi:
-        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=2 -DWarpX_FFT=ON -DWarpX_MPI=OFF
+        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=2 -DWarpX_FFT=ON -DWarpX_EB=ON -DWarpX_PYTHON=ON
+      cartesian_2d_nompi:
+        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=2 -DWarpX_FFT=ON -DWarpX_EB=ON -DWarpX_PYTHON=ON -DWarpX_MPI=OFF
       # Cartesian 3D
       cartesian_3d:
-        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=3 -DWarpX_FFT=ON
-      cartesian_3d_python:
-        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=3 -DWarpX_FFT=ON -DWarpX_PYTHON=ON -DWarpX_APP=OFF
-      cartesian_3d_no_mpi:
-        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=3 -DWarpX_FFT=ON -DWarpX_MPI=OFF
+        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=3 -DWarpX_FFT=ON -DWarpX_EB=ON -DWarpX_PYTHON=ON
+      cartesian_3d_nompi:
+        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=3 -DWarpX_FFT=ON -DWarpX_EB=ON -DWarpX_PYTHON=ON -DWarpX_MPI=OFF
       # Cylindrical RZ
       cylindrical_rz:
-        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=RZ -DWarpX_FFT=ON
+        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=RZ -DWarpX_FFT=ON -DWarpX_EB=ON -DWarpX_PYTHON=ON
         WARPX_RZ_FFT: 'TRUE'
-      cylindrical_rz_python:
-        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=RZ -DWarpX_FFT=ON -DWarpX_PYTHON=ON -DWarpX_APP=OFF
+      cylindrical_rz_nompi:
+        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=RZ -DWarpX_FFT=ON -DWarpX_EB=ON -DWarpX_PYTHON=ON -DWarpX_MPI=OFF
         WARPX_RZ_FFT: 'TRUE'
-      cylindrical_rz_no_mpi:
-        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=RZ -DWarpX_FFT=ON -DWarpX_MPI=OFF
-        WARPX_RZ_FFT: 'TRUE'
-      #embedded_boundary:
-      #  WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_FFT=ON -DWarpX_EB=ON
-      #  WARPX_RZ_FFT: 'TRUE'
       #single_precision:
       #  WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_FFT=ON -DWarpX_PRECISION=SINGLE
       #  WARPX_RZ_FFT: 'TRUE'
