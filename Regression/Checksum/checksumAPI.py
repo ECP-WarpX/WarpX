@@ -42,6 +42,9 @@ def evaluate_checksum(test_name, output_file, output_format='plotfile', rtol=1.e
     Read checksum from output file, read benchmark
     corresponding to test_name, and assert their equality.
 
+    If the environment variable CHECKSUM_RESET is set while this function is run,
+    the evaluation will be replaced with a call to reset_benchmark (see below).
+
     Parameters
     ----------
     test_name: string
@@ -65,9 +68,17 @@ def evaluate_checksum(test_name, output_file, output_format='plotfile', rtol=1.e
     do_particles: bool, default=True
         Whether to compare particles in the checksum.
     """
-    test_checksum = Checksum(test_name, output_file, output_format,
-                             do_fields=do_fields, do_particles=do_particles)
-    test_checksum.evaluate(rtol=rtol, atol=atol)
+    # Reset benchmark?
+    reset = ( os.getenv('CHECKSUM_RESET', 'False').lower() in
+              ['true', '1', 't', 'y', 'yes', 'on'] )
+
+    if reset:
+        print(f"Environment variable CHECKSUM_RESET is set, resetting benchmark for {test_name}")
+        reset_benchmark(test_name, output_file, output_format, do_fields, do_particles)
+    else:
+        test_checksum = Checksum(test_name, output_file, output_format,
+                                 do_fields=do_fields, do_particles=do_particles)
+        test_checksum.evaluate(rtol=rtol, atol=atol)
 
 
 def reset_benchmark(test_name, output_file, output_format='plotfile', do_fields=True, do_particles=True):
