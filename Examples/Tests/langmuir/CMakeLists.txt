@@ -413,7 +413,7 @@ endif()
 #
 if(WarpX_FFT)
     add_warpx_test(
-        Langmuir_multi_rz_psatd_correction # name
+        Langmuir_multi_rz_psatd_current_correction # name
         RZ # dims
         1  # nprocs
         Examples/Tests/langmuir/inputs_rz_test_Langmuir_multi_rz_psatd_current_correction # inputs

@@ -62,7 +62,7 @@ function(add_warpx_test
     # copy local input files to run directory
     get_filename_component(INPUTS_PATH ${inputs} REALPATH BASE_DIR "${CMAKE_BINARYDIR}")
     get_filename_component(INPUTS_DIR ${INPUTS_PATH} DIRECTORY)
-    file(GLOB TEST_FILES "${INPUTS_DIR}/inputs*")
+    file(GLOB TEST_FILES "${INPUTS_DIR}/inputs*" "${INPUTS_DIR}/*.py")
     file(COPY ${TEST_FILES} DESTINATION ${THIS_WORKING_DIR})
 
     set(THIS_MPI_TEST_EXE

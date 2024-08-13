@@ -13,7 +13,7 @@ uniform electron beam with relativistic gamma of 10, and a beam current of 1 kA.
 The MLMG soltution from WarpX is computed and compared to the simple analytic
 solution.  The analytic and simulated values are plotted over one another for the
 electric field and magnetic field solutions after taking the gradient of phi and
-the curl of the vector potential A.  This runs in 3 dimensions, has a PEC boundary
+the curl of the vector potential A.  This runs in 2 dimensions in RZ, has a PEC boundary
 at z=0, and a Neumann boundary at z=1.  This exercises the domain boundary conditions
 as well as the embedded boundary conditions and will fail if the maximum error is too large.
 The script additionally outputs png images with the average fields in a subset of the beampipe
@@ -49,29 +49,28 @@ max_steps = 1
 
 # --- grid
 
-nx = 64
-ny = 64
-nz = 64
+nr = 128
+nz = 128
+rmin = 0.
+rmax = 0.25
 
-xmin = -0.25
-xmax = 0.25
-ymin = -0.25
-ymax = 0.25
 zmin = 0.
-zmax = 1.0
+zmax = 1
+
+r_pipe = 0.2
 
 ##########################
 # numerics components
 ##########################
 
-grid = picmi.Cartesian3DGrid(
-    number_of_cells = [nx, ny, nz],
-    lower_bound = [xmin, ymin, zmin],
-    upper_bound = [xmax, ymax, zmax],
-    lower_boundary_conditions = ['neumann', 'neumann', 'dirichlet'],
-    upper_boundary_conditions = ['neumann', 'neumann', 'neumann'],
-    lower_boundary_conditions_particles = ['absorbing', 'absorbing', 'absorbing'],
-    upper_boundary_conditions_particles = ['absorbing', 'absorbing', 'absorbing'],
+grid = picmi.CylindricalGrid(
+    number_of_cells = [nr, nz],
+    lower_bound = [rmin, zmin],
+    upper_bound = [rmax, zmax],
+    lower_boundary_conditions = ['none', 'dirichlet'],
+    upper_boundary_conditions = ['neumann', 'neumann'],
+    lower_boundary_conditions_particles = ['none', 'absorbing'],
+    upper_boundary_conditions_particles = ['absorbing', 'absorbing'],
     warpx_potential_lo_z = V_domain_boundary,
     warpx_blocking_factor=8,
     warpx_max_grid_size = 32
@@ -80,8 +79,6 @@ grid = picmi.Cartesian3DGrid(
 solver = picmi.ElectrostaticSolver(
     grid=grid, method='Multigrid', required_precision=1e-7,warpx_magnetostatic=True,warpx_self_fields_verbosity=3
 )
-
-r_pipe = 0.2
 
 embedded_boundary = picmi.EmbeddedBoundary(
     implicit_function="(x**2+y**2-radius**2)",
@@ -106,7 +103,7 @@ beam_dist = picmi.AnalyticDistribution(
     n0=n0,
     directed_velocity=[0., 0., beam_gamma*vz],
 )
-beam = picmi.Species(particle_type='electron', name='beam', initial_distribution=beam_dist)
+beam = picmi.Species(particle_type='electron', name='beam', initial_distribution=beam_dist, warpx_random_theta=False)
 beam_layout = picmi.GriddedLayout(n_macroparticle_per_cell=[2,2,2], grid=grid)
 
 ##########################
@@ -116,16 +113,12 @@ beam_layout = picmi.GriddedLayout(n_macroparticle_per_cell=[2,2,2], grid=grid)
 particle_diag = picmi.ParticleDiagnostic(
     name = 'diag1',
     period = 1,
-    write_dir = '.',
-    warpx_file_prefix = 'Python_magnetostatic_eb_3d_plt'
 )
 field_diag = picmi.FieldDiagnostic(
     name = 'diag1',
     grid = grid,
     period = 1,
-    data_list = ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz','Ax', 'Ay', 'Az', 'Jx', 'Jy', 'Jz', 'phi', 'rho'],
-    write_dir = '.',
-    warpx_file_prefix = 'Python_magnetostatic_eb_3d_plt'
+    data_list = ['Er', 'Bt', 'Az', 'Jz', 'phi', 'rho'],
 )
 
 ##########################
@@ -159,12 +152,9 @@ sim.step(max_steps)
 # Testing
 ##########################
 
-Ex = fields.ExWrapper()
-Ey = fields.EyWrapper()
-
-x_vec = Ex.mesh('x')
-y_vec = Ex.mesh('y')
-z_vec = Ex.mesh('z')
+Er = fields.ExWrapper()
+r_vec = Er.mesh('r')
+z_vec = Er.mesh('z')
 
 @np.vectorize
 def Er_an(r):
@@ -179,29 +169,17 @@ def Er_an(r):
 # compare to region from 0.5*zmax to 0.9*zmax
 z_idx = ((z_vec >= 0.5*zmax) & (z_vec < 0.9*zmax))
 
-Ex_dat = Ex[...]
-Ey_dat = Ey[...]
+Er_dat = Er[...]
 
-Ex_mean = Ex_dat[:,:,z_idx].mean(axis=2).T
-Ey_mean = Ey_dat[:,:,z_idx].mean(axis=2).T
+r_idx = (r_vec < 0.95*r_pipe)
+r_sub = r_vec[r_idx]
 
-Ex_nodal = Ex_mean
-Ey_nodal = Ey_mean
-
-XM, YM = np.meshgrid(x_vec, y_vec, indexing='xy')
-RM = np.sqrt(XM**2 + YM**2)
-THM = np.arctan2(YM,XM)
-
-Er_mean = np.cos(THM) * Ex_nodal + np.sin(THM) * Ey_nodal
-
-r_vec = np.sqrt(x_vec**2 + y_vec**2)
-
-r_idx = (RM < 0.95*r_pipe)
-r_sub = RM[r_idx]
+# Average Er along z_sub
+Er_mean = Er_dat[:,z_idx].mean(axis=1)
 
 plt.figure(1)
 plt.plot(r_vec, Er_an(r_vec))
-plt.plot(RM.flatten(), Er_mean.flatten(), '.')
+plt.plot(r_vec, Er_mean,'--')
 plt.legend(['Analytical', 'Electrostatic'])
 
 er_err = np.abs(Er_mean[r_idx] - Er_an(r_sub)).max()/np.abs(Er_an(r_sub)).max()
@@ -210,28 +188,24 @@ plt.ylabel('$E_r$ (V/m)')
 plt.xlabel('r (m)')
 plt.title("Max % Error: {} %".format(er_err*100.))
 plt.tight_layout()
-plt.savefig('er_3d.png')
+plt.savefig('er_rz.png')
 
-assert (er_err < 0.05), "Er Max Error increased above 5%"
+assert (er_err < 0.02), "Er Error increased above 2%"
 
 ########################
 # Check B field
 ########################
 
-Bx = fields.BxWrapper()
-By = fields.ByWrapper()
+Bth = fields.ByWrapper()
 
-x_vec = Bx.mesh('x')
-y_vec = Bx.mesh('y')
-z_vec = Bx.mesh('z')
+r_vec = Bth.mesh('r')
+z_vec = Bth.mesh('z')
 
-dx = x_vec[1] - x_vec[0]
-dy = y_vec[1] - y_vec[0]
-x_vec = x_vec + dx/2.
-y_vec = y_vec + dy/2.
+dr = r_vec[1]-r_vec[0]
+r_vec = r_vec + dr/2.
 
 @np.vectorize
-def Bt_an(r):
+def Bth_an(r):
     if r < beam_r:
         bt = -current * r * con.mu_0 / (2.*np.pi*beam_r**2)
     elif r >= beam_r and r < r_pipe:
@@ -244,43 +218,25 @@ def Bt_an(r):
 z_idx = ((z_vec >= 0.25*zmax) & (z_vec < 0.75*zmax))
 z_sub = z_vec[z_idx]
 
-Bx_dat = Bx[...]
-By_dat = By[...]
+Bth_dat = Bth[...]
 
-Bx_mean = Bx_dat[:,:,z_idx].mean(axis=2).T
-By_mean = By_dat[:,:,z_idx].mean(axis=2).T
+r_idx = (r_vec < 0.95*r_pipe)
+r_sub = r_vec[r_idx]
 
-# Interpolate B mesh to nodal points excluding last mesh point
-Bx_nodal = (Bx_mean[:-1,1:] + Bx_mean[:-1,:-1])/2.
-By_nodal = (By_mean[:-1,:-1] + By_mean[1:,:-1])/2.
-
-x_vec = x_vec[:-1]
-y_vec = y_vec[:-1]
-
-
-XM, YM = np.meshgrid(x_vec, y_vec, indexing='xy')
-RM = np.sqrt(XM**2 + YM**2)
-THM = np.arctan2(YM,XM)
-
-Bt_mean = - np.sin(THM) * Bx_nodal + np.cos(THM) * By_nodal
-
-
-r_vec = np.sqrt(x_vec**2 + y_vec**2)
-
-r_idx = (RM < 0.95*r_pipe)
-r_sub = RM[r_idx]
+# Average Bth along z_idx
+Bth_mean = Bth_dat[:,z_idx].mean(axis=1)
 
 plt.figure(2)
-plt.plot(r_vec, Bt_an(r_vec))
-plt.plot(RM[r_idx].flatten(), Bt_mean[r_idx].flatten(), '.')
+plt.plot(r_vec, Bth_an(r_vec))
+plt.plot(r_vec, Bth_mean,'--')
 plt.legend(['Analytical', 'Magnetostatic'])
 
-bt_err = np.abs(Bt_mean[r_idx] - Bt_an(r_sub)).max()/np.abs(Bt_an(r_sub)).max()
+bth_err = np.abs(Bth_mean[r_idx] - Bth_an(r_sub)).max()/np.abs(Bth_an(r_sub)).max()
 
 plt.ylabel('$B_{\Theta}$ (T)')
 plt.xlabel('r (m)')
-plt.title("Max % Error: {} %".format(bt_err*100.))
+plt.title("Max % Error: {} %".format(bth_err*100.))
 plt.tight_layout()
-plt.savefig('bt_3d.png')
+plt.savefig('bth_rz.png')
 
-assert (bt_err < 0.05), "Bt Max Error increased above 5%"
+assert (bth_err < 0.02), "Bth Error increased above 2%"

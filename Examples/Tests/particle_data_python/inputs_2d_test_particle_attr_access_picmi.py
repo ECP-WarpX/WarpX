@@ -73,16 +73,12 @@ electrons = picmi.Species(
 particle_diag = picmi.ParticleDiagnostic(
     name = 'diag1',
     period = 10,
-    write_dir = '.',
-    warpx_file_prefix = f"Python_particle_attr_access_{'unique_' if args.unique else ''}plt"
 )
 field_diag = picmi.FieldDiagnostic(
     name = 'diag1',
     grid = grid,
     period = 10,
     data_list = ['phi'],
-    write_dir = '.',
-    warpx_file_prefix = f"Python_particle_attr_access_{'unique_' if args.unique else ''}plt"
 )
 
 ##########################
