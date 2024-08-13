@@ -6,8 +6,8 @@
 if(WarpX_FFT)
     add_warpx_test(
         averaged_galilean_2d_psatd # name
-        2   # dims
-        OFF # mpi
+        2 # dims
+        1 # nprocs
         Examples/Tests/nci_psatd_stability/inputs_avg_2d_test_averaged_galilean_2d_psatd # inputs
         Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
         diags/diag1000400 # output
@@ -19,8 +19,8 @@ endif()
 if(WarpX_FFT)
     add_warpx_test(
         averaged_galilean_2d_psatd_hybrid # name
-        2  # dims
-        ON # mpi
+        2 # dims
+        2 # nprocs
         Examples/Tests/nci_psatd_stability/inputs_avg_2d_test_averaged_galilean_2d_psatd_hybrid # inputs
         Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
         diags/diag1000400 # output
@@ -32,8 +32,8 @@ endif()
 if(WarpX_FFT)
     add_warpx_test(
         averaged_galilean_3d_psatd # name
-        3  # dims
-        ON # mpi
+        3 # dims
+        2 # nprocs
         Examples/Tests/nci_psatd_stability/inputs_avg_3d_test_averaged_galilean_3d_psatd # inputs
         Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
         diags/diag1000160 # output
@@ -45,8 +45,8 @@ endif()
 if(WarpX_FFT)
     add_warpx_test(
         averaged_galilean_3d_psatd_hybrid # name
-        3  # dims
-        ON # mpi
+        3 # dims
+        2 # nprocs
         Examples/Tests/nci_psatd_stability/inputs_avg_3d_test_averaged_galilean_3d_psatd_hybrid # inputs
         Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
         diags/diag1000160 # output
@@ -58,8 +58,8 @@ endif()
 if(WarpX_FFT)
     add_warpx_test(
         comoving_2d_psatd_hybrid # name
-        2  # dims
-        ON # mpi
+        2 # dims
+        2 # nprocs
         Examples/Tests/nci_psatd_stability/inputs_2d_test_comoving_2d_psatd_hybrid # inputs
         Examples/analysis_default_regression.py # analysis
         diags/diag1000400 # output
@@ -71,8 +71,8 @@ endif()
 if(WarpX_FFT)
     add_warpx_test(
         galilean_2d_psatd # name
-        2   # dims
-        OFF # mpi
+        2 # dims
+        1 # nprocs
         Examples/Tests/nci_psatd_stability/inputs_2d_test_galilean_2d_psatd # inputs
         Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
         diags/diag1000400 # output
@@ -84,8 +84,8 @@ endif()
 if(WarpX_FFT)
     add_warpx_test(
         galilean_2d_psatd_current_correction # name
-        2  # dims
-        ON # mpi
+        2 # dims
+        2 # nprocs
         Examples/Tests/nci_psatd_stability/inputs_2d_test_galilean_2d_psatd_current_correction # inputs
         Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
         diags/diag1000400 # output
@@ -97,8 +97,8 @@ endif()
 if(WarpX_FFT)
     add_warpx_test(
         galilean_2d_psatd_current_correction_psb # name
-        2   # dims
-        OFF # mpi
+        2 # dims
+        1 # nprocs
         Examples/Tests/nci_psatd_stability/inputs_2d_test_galilean_2d_psatd_current_correction_psb # inputs
         Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
         diags/diag1000400 # output
@@ -110,8 +110,8 @@ endif()
 if(WarpX_FFT)
     add_warpx_test(
         galilean_2d_psatd_hybrid # name
-        2  # dims
-        ON # mpi
+        2 # dims
+        2 # nprocs
         Examples/Tests/nci_psatd_stability/inputs_2d_test_galilean_2d_psatd_hybrid # inputs
         Examples/analysis_default_regression.py # analysis
         diags/diag1000400 # output
@@ -123,8 +123,8 @@ endif()
 if(WarpX_FFT)
     add_warpx_test(
         galilean_3d_psatd # name
-        3  # dims
-        ON # mpi
+        3 # dims
+        2 # nprocs
         Examples/Tests/nci_psatd_stability/inputs_3d_test_galilean_3d_psatd # inputs
         Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
         diags/diag1000300 # output
@@ -136,8 +136,8 @@ endif()
 if(WarpX_FFT)
     add_warpx_test(
         galilean_3d_psatd_current_correction # name
-        3  # dims
-        ON # mpi
+        3 # dims
+        2 # nprocs
         Examples/Tests/nci_psatd_stability/inputs_3d_test_galilean_3d_psatd_current_correction # inputs
         Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
         diags/diag1000300 # output
@@ -149,8 +149,8 @@ endif()
 if(WarpX_FFT)
     add_warpx_test(
         galilean_3d_psatd_current_correction_psb # name
-        3   # dims
-        OFF # mpi
+        3 # dims
+        1 # nprocs
         Examples/Tests/nci_psatd_stability/inputs_3d_test_galilean_3d_psatd_current_correction_psb # inputs
         Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
         diags/diag1000300 # output
@@ -162,8 +162,8 @@ endif()
 if(WarpX_FFT)
     add_warpx_test(
         galilean_rz_psatd # name
-        RZ  # dims
-        OFF # mpi
+        RZ # dims
+        1  # nprocs
         Examples/Tests/nci_psatd_stability/inputs_rz_test_galilean_rz_psatd # inputs
         Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
         diags/diag1000400 # output
@@ -176,7 +176,7 @@ if(WarpX_FFT)
     add_warpx_test(
         galilean_rz_psatd_current_correction # name
         RZ # dims
-        ON # mpi
+        2  # nprocs
         Examples/Tests/nci_psatd_stability/inputs_rz_test_galilean_rz_psatd_current_correction # inputs
         Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
         diags/diag1000400 # output
@@ -188,8 +188,8 @@ endif()
 if(WarpX_FFT)
     add_warpx_test(
         galilean_rz_psatd_current_correction_psb # name
-        RZ  # dims
-        OFF # mpi
+        RZ # dims
+        1  # nprocs
         Examples/Tests/nci_psatd_stability/inputs_rz_test_galilean_rz_psatd_current_correction_psb # inputs
         Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
         diags/diag1000400 # output
@@ -202,7 +202,7 @@ if(WarpX_FFT)
     add_warpx_test(
         multi_J_rz_psatd # name
         RZ # dims
-        ON # mpi
+        2  # nprocs
         Examples/Tests/nci_psatd_stability/inputs_rz_test_multi_J_rz_psatd # inputs
         Examples/analysis_default_regression.py # analysis
         diags/diag1000050 # output

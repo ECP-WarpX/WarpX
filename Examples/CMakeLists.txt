@@ -20,20 +20,21 @@ endif()
 function(add_warpx_test
     name
     dims
-    mpi
+    nprocs
     inputs
     analysis
     output
 )
-    # cannot run MPI tests w/o MPI support
-    if(mpi AND NOT WarpX_MPI)
+    # cannot run MPI tests w/o MPI build
+    if(NOT WarpX_MPI)
+            message(WARNING "cannot run MPI tests without MPI build")
         return()
     endif()
 
-    # do not run no-MPI tests w/ MPI support
-    if(NOT mpi AND WarpX_MPI)
-        return()
-    endif()
+    ## do not run no-MPI tests w/ MPI build
+    #if(NOT mpi AND WarpX_MPI)
+    #    return()
+    #endif()
 
     # cannot run tests with unsupported geometry
     if(NOT dims IN_LIST WarpX_DIMS)
@@ -64,16 +65,13 @@ function(add_warpx_test
     file(GLOB TEST_FILES "${INPUTS_DIR}/inputs*")
     file(COPY ${TEST_FILES} DESTINATION ${THIS_WORKING_DIR})
 
-    set(THIS_MPI_TEST_EXE)
-    if(mpi)
-        set(THIS_MPI_TEST_EXE
-            ${MPIEXEC_EXECUTABLE}
-            ${MPI_ALLOW_ROOT}
-            ${MPIEXEC_NUMPROC_FLAG} 2
-            ${MPIEXEC_POSTFLAGS}
-            ${MPIEXEC_PREFLAGS}
-        )
-    endif()
+    set(THIS_MPI_TEST_EXE
+        ${MPIEXEC_EXECUTABLE}
+        ${MPI_ALLOW_ROOT}
+        ${MPIEXEC_NUMPROC_FLAG} ${nprocs}
+        ${MPIEXEC_POSTFLAGS}
+        ${MPIEXEC_PREFLAGS}
+    )
 
     set(THIS_Python_EXE)
     if(python)
@@ -116,9 +114,7 @@ function(add_warpx_test
         )
     endif()
 
-    if(mpi)
-        set_property(TEST ${name}.run APPEND PROPERTY ENVIRONMENT "OMP_NUM_THREADS=1")
-    endif()
+    set_property(TEST ${name}.run APPEND PROPERTY ENVIRONMENT "OMP_NUM_THREADS=1")
 
     # test analysis
     if(analysis)

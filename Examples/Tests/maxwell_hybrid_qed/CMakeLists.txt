@@ -6,10 +6,10 @@
 if(WarpX_FFT)
     add_warpx_test(
         maxwell_hybrid_qed_solver # name
-        2  # dims
-        ON # mpi
+        2 # dims
+        2 # nprocs
         Examples/Tests/maxwell_hybrid_qed/inputs_2d_test_maxwell_hybrid_qed_solver # inputs
-        Examples/Tests/maxwell_hybrid_qed/analysis_2d.py # analysis
+        Examples/Tests/maxwell_hybrid_qed/analysis.py # analysis
         diags/diag1000300 # output
     )
 endif()
