@@ -4,10 +4,6 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#if defined(ABLASTR_FFT) && defined(ABLASTR_HEFFTE)
-#include <heffte.h>
-#endif
-
 #include "IntegratedGreenFunctionSolver.H"
 
 #include <ablastr/constant.H>
@@ -31,6 +27,10 @@
 #include <AMReX_MultiFab.H>
 #include <AMReX_REAL.H>
 #include <AMReX_PlotFileUtil.H>
+
+#if defined(ABLASTR_FFT) && defined(ABLASTR_HEFFTE)
+#include <heffte.h>
+#endif
 
 #include <array>
 #include <fstream>
