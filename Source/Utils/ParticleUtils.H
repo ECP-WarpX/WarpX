@@ -33,19 +33,18 @@ namespace ParticleUtils {
                                          [[maybe_unused]] amrex::ParticleReal yp,
                                          [[maybe_unused]] amrex::ParticleReal zp,
                                          amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& plo,
-                                         amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi,
-                                         amrex::Dim3 lo) {
+                                         amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi) {
         int ii = 0, jj = 0, kk = 0;
         amrex::ignore_unused(jj, kk);
 
-        const amrex::Real lx = (xp - plo[0]) * dxi[0] - lo.x;
+        const amrex::Real lx = (xp - plo[0]) * dxi[0];
         ii = static_cast<int>(amrex::Math::floor(lx));
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
-        const amrex::Real ly = (yp - plo[1]) * dxi[1] - lo.y;
+        const amrex::Real ly = (yp - plo[1]) * dxi[1];
         jj = static_cast<int>(amrex::Math::floor(ly));
 #endif
 #if defined(WARPX_DIM_3D)
-        const amrex::Real lz = (zp - plo[2]) * dxi[2] - lo.z;
+        const amrex::Real lz = (zp - plo[2]) * dxi[2];
         kk = static_cast<int>(amrex::Math::floor(lz));
 #endif
 
@@ -59,14 +58,12 @@ namespace ParticleUtils {
      * @param[in] p the particle whose cell index we are finding
      * @param[in] plo the particle lower bounds
      * @param[in] dxi the inverse cell size
-     * @param[in] lo
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
     amrex::IntVect getParticleCellIndex (const WarpXParticleContainer::ParticleType& p,
                                          amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& plo,
-                                         amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi,
-                                         amrex::Dim3 lo) {
-        return getParticleCellIndex(p.pos(0), p.pos(1), p.pos(2), plo, dxi, lo);
+                                         amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi) {
+        return getParticleCellIndex(p.pos(0), p.pos(1), p.pos(2), plo, dxi);
     }
 
     /** Determine which cell a particle lies in.
@@ -76,14 +73,12 @@ namespace ParticleUtils {
      * @param[in] p the particle whose cell index we are finding
      * @param[in] plo the particle lower bounds
      * @param[in] dxi the inverse cell size
-     * @param[in] lo
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
     amrex::IntVect getParticleCellIndex (const WarpXParticleContainer::SuperParticleType& p,
                                          amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& plo,
-                                         amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi,
-                                         amrex::Dim3 lo) {
-        return getParticleCellIndex(p.pos(0), p.pos(1), p.pos(2), plo, dxi, lo);
+                                         amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi) {
+        return getParticleCellIndex(p.pos(0), p.pos(1), p.pos(2), plo, dxi);
     }
 
     /**

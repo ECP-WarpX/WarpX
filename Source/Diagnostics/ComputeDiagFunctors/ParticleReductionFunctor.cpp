@@ -70,7 +70,7 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
                 get_particle_position(p, xw, yw, zw);
 
                 // Get position in AMReX convention to calculate corresponding index.
-                const auto cellIndex = ParticleUtils::getParticleCellIndex(p, plo, dxi, amrex::Dim3{0,0,0}).dim3();
+                const auto cellIndex = ParticleUtils::getParticleCellIndex(p, plo, dxi).dim3();
                 const int ii = cellIndex.x;
                 const int jj = cellIndex.y;
                 const int kk = cellIndex.z;
