@@ -3583,7 +3583,7 @@ amrex::DistributionMapping
 WarpX::MakeDistributionMap (int lev, amrex::BoxArray const& ba)
 {
     bool roundrobin_sfc = false;
-    ParmParse pp("warpx");
+    const ParmParse pp("warpx");
     pp.query("roundrobin_sfc", roundrobin_sfc);
 
     // If this is true, AMReX's RRSFC strategy is used to make
