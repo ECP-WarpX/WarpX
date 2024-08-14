@@ -15,12 +15,12 @@
 namespace ablastr::math::anyfft
 {
 
-    void setup(){/*nothing to do*/}
+    void setup () {/*nothing to do*/}
 
-    void cleanup(){/*nothing to do*/}
+    void cleanup () {/*nothing to do*/}
 
-    FFTplan CreatePlan(const amrex::IntVect& real_size, amrex::Real * const real_array,
-                       Complex * const complex_array, const direction dir, const int dim)
+    FFTplan CreatePlan (const amrex::IntVect& real_size, amrex::Real * const real_array,
+                        Complex * const complex_array, const direction dir, const int dim)
     {
         FFTplan fft_plan;
         ABLASTR_PROFILE("ablastr::math::anyfft::CreatePlan");
@@ -68,7 +68,7 @@ namespace ablastr::math::anyfft
         return fft_plan;
     }
 
-    void DestroyPlan(FFTplan& fft_plan)
+    void DestroyPlan (FFTplan& fft_plan)
     {
         delete fft_plan.m_plan;
     }
