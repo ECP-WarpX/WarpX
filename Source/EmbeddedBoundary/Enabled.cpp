@@ -32,12 +32,6 @@ namespace EB
         std::string eb_stl;
         eb_enabled |= pp_eb2.query("geom_type", eb_stl);
 
-#if defined(WARPX_DIM_RZ)
-        if (eb_enabled) {
-            throw std::runtime_error("RZ Geometry does not yet support EBs, but EBs are enabled in runtime inputs.");
-        }
-#endif
-
         return eb_enabled;
 #endif
     }
