@@ -54,7 +54,7 @@ TemperatureFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, const 
                 amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi)
             {
                 // Get position in AMReX convention to calculate corresponding index.
-                const auto cellIndex = ParticleUtils::getParticleCellIndex(p, plo, dx).dim3();
+                const auto cellIndex = ParticleUtils::getParticleCellIndex(p, plo, dxi).dim3();
                 const int ii = cellIndex.x;
                 const int jj = cellIndex.y;
                 const int kk = cellIndex.z;
