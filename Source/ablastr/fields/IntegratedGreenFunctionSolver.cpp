@@ -216,7 +216,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
     fft.forward(tmp_rho[local_boxid].dataPtr(), rho_fft_data);
     fft.forward(tmp_G[local_boxid].dataPtr(), G_fft_data);
     BL_PROFILE_VAR_STOP(timer_ffts);
-    
+
     // Multiply tmp_G_fft and tmp_rho_fft in spectral space
     // Store the result in-place in Gtmp_G_fft, to save memory
     //amrex::Multiply( tmp_G_fft, tmp_rho_fft, 0, 0, 1, 0);
@@ -359,11 +359,11 @@ computePhiIGF ( amrex::MultiFab const & rho,
             reinterpret_cast<ablastr::math::anyfft::Complex*>(tmp_rho_fft[mfi].dataPtr()),
             ablastr::math::anyfft::direction::R2C, AMREX_SPACEDIM);
         BL_PROFILE_VAR_STOP(timer_plans);
-        
+
         BL_PROFILE_VAR_START(timer_ffts);
         ablastr::math::anyfft::Execute(forward_plan_rho[mfi]);
         BL_PROFILE_VAR_STOP(timer_ffts);
-        
+
         // FFT of G
         BL_PROFILE_VAR_START(timer_plans);
         forward_plan_G[mfi] = ablastr::math::anyfft::CreatePlan(
@@ -371,7 +371,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
             reinterpret_cast<ablastr::math::anyfft::Complex*>(tmp_G_fft[mfi].dataPtr()),
             ablastr::math::anyfft::direction::R2C, AMREX_SPACEDIM);
         BL_PROFILE_VAR_STOP(timer_plans);
-        
+
         BL_PROFILE_VAR_START(timer_ffts);
         ablastr::math::anyfft::Execute(forward_plan_G[mfi]);
         BL_PROFILE_VAR_STOP(timer_ffts);
@@ -386,7 +386,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
     // Perform inverse FFT
     auto backward_plan = ablastr::math::anyfft::FFTplans(spectralspace_ba, dm_global_fft);
     BL_PROFILE_VAR_STOP(timer_plans);
-    
+
     // Loop over boxes perform FFTs
     for ( amrex::MFIter mfi(spectralspace_ba, dm_global_fft); mfi.isValid(); ++mfi ){
 
