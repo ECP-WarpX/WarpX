@@ -48,6 +48,7 @@ namespace ParticleUtils
         // Extract box properties
         Geometry const& geom = WarpX::GetInstance().Geom(lev);
         Box const& cbx = mfi.tilebox(IntVect::TheZeroVector()); //Cell-centered box
+        const auto lo = lbound(cbx);
         const auto dxi = geom.InvCellSizeArray();
         const auto plo = geom.ProbLoArray();
 
@@ -56,9 +57,12 @@ namespace ParticleUtils
         ParticleBins bins;
         bins.build(np, ptd, cbx,
             // Pass lambda function that returns the cell index
-            [=] AMREX_GPU_DEVICE (ParticleType const & p) noexcept -> IntVect
+            [=] AMREX_GPU_DEVICE (ParticleType const & p) noexcept -> amrex::IntVect
             {
-                return getParticleCell(p, plo, dxi, cbx);
+                return IntVect{AMREX_D_DECL(
+                                   static_cast<int>((p.pos(0)-plo[0])*dxi[0] - lo.x),
+                                   static_cast<int>((p.pos(1)-plo[1])*dxi[1] - lo.y),
+                                   static_cast<int>((p.pos(2)-plo[2])*dxi[2] - lo.z))};
             });
 
         return bins;
