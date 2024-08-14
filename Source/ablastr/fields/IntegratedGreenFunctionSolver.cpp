@@ -28,7 +28,7 @@
 #include <AMReX_REAL.H>
 #include <AMReX_PlotFileUtil.H>
 
-#if defined(ABLASTR_FFT) && defined(ABLASTR_HEFFTE)
+#if defined(ABLASTR_USE_FFT) && defined(ABLASTR_USE_HEFFTE)
 #include <heffte.h>
 #endif
 
@@ -46,7 +46,11 @@ computePhiIGF ( amrex::MultiFab const & rho,
 {
     using namespace amrex::literals;
 
-#if defined(ABLASTR_FFT) && defined(ABLASTR_HEFFTE)
+    BL_PROFILE_VAR_NS("IGF FFTs", timer_ffts);
+    BL_PROFILE_VAR_NS("IGF FFT plans", timer_plans);
+    BL_PROFILE_VAR_NS("IGF parallel copies", timer_pcopies);
+
+#if defined(ABLASTR_USE_FFT) && defined(ABLASTR_USE_HEFFTE)
     {
     BL_PROFILE("Integrated Green Function Solver");
 
@@ -118,10 +122,12 @@ computePhiIGF ( amrex::MultiFab const & rho,
     amrex::MultiFab tmp_G = amrex::MultiFab(realspace_ba, realspace_dm, 1, 0);
     tmp_G.setVal(0);
 
+    BL_PROFILE_VAR_START(timer_pcopies);
     // Copy from rho including its ghost cells to tmp_rho
     // w.z.: please check. I think we need to use rho.nGrowVect() otherwise
     // the data outside the ba.minimalBox() will not be copied over.
     tmp_rho.ParallelCopy( rho, 0, 0, 1, rho.nGrowVect(), amrex::IntVect::TheZeroVector() );
+    BL_PROFILE_VAR_STOP(timer_pcopies);
 
 
     // Compute the integrated Green function
@@ -187,6 +193,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
     tmp_rho_fft.shift(realspace_box.smallEnd());
     tmp_G_fft.shift(realspace_box.smallEnd());
 
+    BL_PROFILE_VAR_START(timer_plans);
 #ifdef AMREX_USE_CUDA
     heffte::fft3d_r2c<heffte::backend::cufft> fft
 #elif AMREX_USE_HIP
@@ -199,15 +206,17 @@ computePhiIGF ( amrex::MultiFab const & rho,
          {{c_local_box.smallEnd(0),c_local_box.smallEnd(1), c_local_box.smallEnd(2)},
           {c_local_box.bigEnd(0)  ,c_local_box.bigEnd(1)  ,c_local_box.bigEnd(2)}},
          0, amrex::ParallelDescriptor::Communicator());
+    BL_PROFILE_VAR_STOP(timer_plans);
 
     using heffte_complex = typename heffte::fft_output<amrex::Real>::type;
     heffte_complex* rho_fft_data = (heffte_complex*) tmp_rho_fft.dataPtr();
     heffte_complex* G_fft_data = (heffte_complex*) tmp_G_fft.dataPtr();
 
-
+    BL_PROFILE_VAR_START(timer_ffts);
     fft.forward(tmp_rho[local_boxid].dataPtr(), rho_fft_data);
     fft.forward(tmp_G[local_boxid].dataPtr(), G_fft_data);
-
+    BL_PROFILE_VAR_STOP(timer_ffts);
+    
     // Multiply tmp_G_fft and tmp_rho_fft in spectral space
     // Store the result in-place in Gtmp_G_fft, to save memory
     //amrex::Multiply( tmp_G_fft, tmp_rho_fft, 0, 0, 1, 0);
@@ -217,17 +226,21 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
     // PRINT / SAVE G TIMES RHO
 
+    BL_PROFILE_VAR_START(timer_ffts);
     fft.backward(G_fft_data, tmp_G[local_boxid].dataPtr());
+    BL_PROFILE_VAR_STOP(timer_ffts);
 
      // Normalize, since (FFT + inverse FFT) results in a factor N
     const amrex::Real normalization = 1._rt / realspace_box.numPts();
     tmp_G.mult( normalization );
 
+    BL_PROFILE_VAR_START(timer_pcopies);
     // Copy from tmp_G to phi
     phi.ParallelCopy( tmp_G, 0, 0, 1, amrex::IntVect::TheZeroVector(), phi.nGrowVect());
+    BL_PROFILE_VAR_STOP(timer_pcopies);
 
     }
-#elif defined(ABLASTR_FFT)
+#elif defined(ABLASTR_USE_FFT) && !defined(ABLASTR_USE_HEFFTE)
     {
     BL_PROFILE("Integrated Green Function Solver");
 
@@ -265,8 +278,10 @@ computePhiIGF ( amrex::MultiFab const & rho,
     SpectralField tmp_rho_fft = SpectralField( spectralspace_ba, dm_global_fft, 1, 0 );
     SpectralField tmp_G_fft = SpectralField( spectralspace_ba, dm_global_fft, 1, 0 );
 
+    BL_PROFILE_VAR_START(timer_pcopies);
     // Copy from rho to tmp_rho
     tmp_rho.ParallelCopy( rho, 0, 0, 1, amrex::IntVect::TheZeroVector(), amrex::IntVect::TheZeroVector() );
+    BL_PROFILE_VAR_STOP(timer_pcopies);
 
     // Compute the integrated Green function
     {
@@ -323,9 +338,12 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
 
     }
+    BL_PROFILE_VAR_START(timer_plans);
     // Perform forward FFTs
     auto forward_plan_rho = ablastr::math::anyfft::FFTplans(spectralspace_ba, dm_global_fft);
     auto forward_plan_G = ablastr::math::anyfft::FFTplans(spectralspace_ba, dm_global_fft);
+    BL_PROFILE_VAR_STOP(timer_plans);
+
     // Loop over boxes perform FFTs
     for ( amrex::MFIter mfi(realspace_ba, dm_global_fft); mfi.isValid(); ++mfi ){
 
@@ -335,18 +353,28 @@ computePhiIGF ( amrex::MultiFab const & rho,
         const amrex::IntVect fft_size = realspace_ba[mfi].length();
 
         // FFT of rho
+        BL_PROFILE_VAR_START(timer_plans);
         forward_plan_rho[mfi] = ablastr::math::anyfft::CreatePlan(
             fft_size, tmp_rho[mfi].dataPtr(),
             reinterpret_cast<ablastr::math::anyfft::Complex*>(tmp_rho_fft[mfi].dataPtr()),
             ablastr::math::anyfft::direction::R2C, AMREX_SPACEDIM);
+        BL_PROFILE_VAR_STOP(timer_plans);
+        
+        BL_PROFILE_VAR_START(timer_ffts);
         ablastr::math::anyfft::Execute(forward_plan_rho[mfi]);
-
+        BL_PROFILE_VAR_STOP(timer_ffts);
+        
         // FFT of G
+        BL_PROFILE_VAR_START(timer_plans);
         forward_plan_G[mfi] = ablastr::math::anyfft::CreatePlan(
             fft_size, tmp_G[mfi].dataPtr(),
             reinterpret_cast<ablastr::math::anyfft::Complex*>(tmp_G_fft[mfi].dataPtr()),
             ablastr::math::anyfft::direction::R2C, AMREX_SPACEDIM);
+        BL_PROFILE_VAR_STOP(timer_plans);
+        
+        BL_PROFILE_VAR_START(timer_ffts);
         ablastr::math::anyfft::Execute(forward_plan_G[mfi]);
+        BL_PROFILE_VAR_STOP(timer_ffts);
 
     }
 
@@ -354,9 +382,11 @@ computePhiIGF ( amrex::MultiFab const & rho,
     // Store the result in-place in Gtmp_G_fft, to save memory
     amrex::Multiply( tmp_G_fft, tmp_rho_fft, 0, 0, 1, 0);
 
-
+    BL_PROFILE_VAR_START(timer_plans);
     // Perform inverse FFT
     auto backward_plan = ablastr::math::anyfft::FFTplans(spectralspace_ba, dm_global_fft);
+    BL_PROFILE_VAR_STOP(timer_plans);
+    
     // Loop over boxes perform FFTs
     for ( amrex::MFIter mfi(spectralspace_ba, dm_global_fft); mfi.isValid(); ++mfi ){
 
@@ -366,18 +396,25 @@ computePhiIGF ( amrex::MultiFab const & rho,
         const amrex::IntVect fft_size = realspace_ba[mfi].length();
 
         // Inverse FFT: is done in-place, in the array of G
+        BL_PROFILE_VAR_START(timer_plans);
         backward_plan[mfi] = ablastr::math::anyfft::CreatePlan(
             fft_size, tmp_G[mfi].dataPtr(),
             reinterpret_cast<ablastr::math::anyfft::Complex*>( tmp_G_fft[mfi].dataPtr()),
             ablastr::math::anyfft::direction::C2R, AMREX_SPACEDIM);
+        BL_PROFILE_VAR_STOP(timer_plans);
+
+        BL_PROFILE_VAR_START(timer_ffts);
         ablastr::math::anyfft::Execute(backward_plan[mfi]);
+        BL_PROFILE_VAR_STOP(timer_ffts);
     }
     // Normalize, since (FFT + inverse FFT) results in a factor N
     const amrex::Real normalization = 1._rt / realspace_box.numPts();
     tmp_G.mult( normalization );
 
+    BL_PROFILE_VAR_START(timer_pcopies);
     // Copy from tmp_G to phi
     phi.ParallelCopy( tmp_G, 0, 0, 1, amrex::IntVect::TheZeroVector(), phi.nGrowVect() );
+    BL_PROFILE_VAR_STOP(timer_pcopies);
 
     // Loop to destroy FFT plans
     for ( amrex::MFIter mfi(spectralspace_ba, dm_global_fft); mfi.isValid(); ++mfi ){
