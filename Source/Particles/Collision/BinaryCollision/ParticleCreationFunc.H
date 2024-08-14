@@ -197,12 +197,6 @@ public:
                     }
                 }
 
-                // Remove p_pair_reaction_weight[i] from the colliding particles' weights
-                BinaryCollisionUtils::remove_weight_from_colliding_particle(
-                    w1[p_pair_indices_1[i]], idcpu1[p_pair_indices_1[i]], p_pair_reaction_weight[i]);
-                BinaryCollisionUtils::remove_weight_from_colliding_particle(
-                    w2[p_pair_indices_2[i]], idcpu2[p_pair_indices_2[i]], p_pair_reaction_weight[i]);
-
                 // Initialize the product particles' momentum, using a function depending on the
                 // specific collision type
                 if (t_collision_type == CollisionType::ProtonBoronToAlphasFusion)
