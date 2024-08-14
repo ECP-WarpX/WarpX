@@ -10,8 +10,9 @@
 #include "WarpXAlgorithmSelection.H"
 #include "Utils/TextMsg.H"
 
-#include <AMReX.H>
+#include <ablastr/utils/Enums.H>
 
+#include <AMReX.H>
 #include <AMReX_ParmParse.H>
 
 #include <algorithm>
@@ -24,17 +25,17 @@
 // and corresponding integer for use inside the code
 
 const std::map<std::string, int> evolve_scheme_to_int = {
-    {"explicit",             EvolveScheme::Explicit },
-    {"implicit_picard",      EvolveScheme::ImplicitPicard },
-    {"semi_implicit_picard", EvolveScheme::SemiImplicitPicard },
-    {"default",              EvolveScheme::Explicit }
+    {"explicit",       EvolveScheme::Explicit },
+    {"theta_implicit_em", EvolveScheme::ThetaImplicitEM },
+    {"semi_implicit_em",  EvolveScheme::SemiImplicitEM },
+    {"default",        EvolveScheme::Explicit }
 };
 
 const std::map<std::string, int> grid_to_int = {
-    {"collocated", GridType::Collocated},
-    {"staggered", GridType::Staggered},
-    {"hybrid", GridType::Hybrid},
-    {"default", GridType::Staggered}
+    {"collocated", static_cast<int>(ablastr::utils::enums::GridType::Collocated)},
+    {"staggered", static_cast<int>(ablastr::utils::enums::GridType::Staggered)},
+    {"hybrid", static_cast<int>(ablastr::utils::enums::GridType::Hybrid)},
+    {"default", static_cast<int>(ablastr::utils::enums::GridType::Staggered)}
 };
 
 const std::map<std::string, int> electromagnetic_solver_algo_to_int = {
@@ -142,6 +143,7 @@ const std::map<std::string, ParticleBoundaryType> ParticleBCType_algo_to_enum = 
     {"reflecting", ParticleBoundaryType::Reflecting},
     {"periodic",   ParticleBoundaryType::Periodic},
     {"thermal",    ParticleBoundaryType::Thermal},
+    {"none",       ParticleBoundaryType::None},
     {"default",    ParticleBoundaryType::Absorbing}
 };
 
@@ -152,8 +154,8 @@ const std::map<std::string, int> ReductionType_algo_to_int = {
 };
 
 int
-GetAlgorithmInteger(const amrex::ParmParse& pp, const char* pp_search_key ){
-
+GetAlgorithmInteger(const amrex::ParmParse& pp, const char* pp_search_key )
+{
     // Read user input ; use "default" if it is not found
     std::string algo = "default";
     pp.query( pp_search_key, algo );

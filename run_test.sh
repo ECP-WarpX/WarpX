@@ -16,8 +16,10 @@
 # physically correct.
 
 # The tests can be influenced by environment variables:
+# Use `export WARPX_CI_CLEAN_TESTS=ON` in order to remove all subdirectories
+# from each test directory, directly after a test has passed.
 # Use `export WARPX_CI_DIM=3` or `export WARPX_CI_DIM=2` in order to
-# select only the tests that correspond to this dimension
+# select only the tests that correspond to this dimension.
 # Use `export WARPX_TEST_ARCH=CPU` or `export WARPX_TEST_ARCH=GPU` in order
 # to run the tests on CPU or GPU respectively.
 
@@ -30,6 +32,7 @@ tests_arg=$*
 tests_run=${tests_arg:+--tests=${tests_arg}}
 
 # environment options
+WARPX_CI_CLEAN_TESTS=${WARPX_CI_CLEAN_TESTS:-""}
 WARPX_CI_TMP=${WARPX_CI_TMP:-""}
 
 # Remove contents and link to a previous test directory (intentionally two arguments)
@@ -65,10 +68,11 @@ python3 -m pip install --upgrade pip
 python3 -m pip install --upgrade build packaging setuptools wheel
 python3 -m pip install --upgrade cmake
 python3 -m pip install --upgrade -r warpx/Regression/requirements.txt
+python3 -m pip cache purge
 
 # Clone AMReX and warpx-data
 git clone https://github.com/AMReX-Codes/amrex.git
-cd amrex && git checkout --detach d857968968ae2cdf18f39ee50df96529e326ff39 && cd -
+cd amrex && git checkout --detach 24.08 && cd -
 # warpx-data contains various required data sets
 git clone --depth 1 https://github.com/ECP-WarpX/warpx-data.git
 # openPMD-example-datasets contains various required data sets
@@ -80,8 +84,6 @@ cd -
 
 # Clone the AMReX regression test utility
 git clone https://github.com/AMReX-Codes/regression_testing.git
-# FIXME: https://github.com/AMReX-Codes/regression_testing/issues/136
-cd regression_testing && git checkout 93ddfb11456f47d6555c39388ba1a4ead61fbf4e && cd -
 
 # Prepare regression tests
 mkdir -p rt-WarpX/WarpX-benchmarks
@@ -94,12 +96,17 @@ cp -r Checksum ../../regression_testing/
 # Run tests
 cd ../../regression_testing/
 echo "cd $PWD"
+if [ -z "${WARPX_CI_CLEAN_TESTS}" ]; then
+    test_rm_dir=""
+else
+    test_rm_dir="--clean_testdir"
+fi
 # run only tests specified in variable tests_arg (single test or multiple tests)
 if [[ ! -z "${tests_arg}" ]]; then
-  python3 regtest.py ../rt-WarpX/ci-tests.ini --no_update all "${tests_run}"
+  python3 regtest.py ../rt-WarpX/ci-tests.ini ${test_rm_dir} --skip_comparison --no_update all "${tests_run}"
 # run all tests (variables tests_arg and tests_run are empty)
 else
-  python3 regtest.py ../rt-WarpX/ci-tests.ini --no_update all
+  python3 regtest.py ../rt-WarpX/ci-tests.ini ${test_rm_dir} --skip_comparison --no_update all
 fi
 
 # clean up python virtual environment

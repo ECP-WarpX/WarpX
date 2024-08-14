@@ -40,8 +40,8 @@ import scipy.constants as scc
 ## the initial number of protons and borons.
 ##
 ## The third test corresponds to a Maxwellian plasma with a 44 keV temperature. The alpha yield is
-## directly compared to the analytical fits of W.M. Nevins and R. Swain, Nuclear Fusion, 40, 865
-## (2000) for a thermal plasma.
+## directly compared to the analytical fits of A. Tentori and F. Belloni, Nuclear Fusion, 63, 086001
+## (2023) for a thermal plasma.
 ##
 ## The fourth test corresponds to a plasma with an extremely small boron density, so that all boron
 ## macroparticles should have disappeared by the end of the simulation, which we verify.
@@ -68,15 +68,15 @@ barn_to_square_meter = 1.e-28
 m_p = 1.00782503223*scc.m_u # Proton mass
 m_b = 11.00930536*scc.m_u # Boron 11 mass
 m_reduced = m_p*m_b/(m_p+m_b)
-m_a = 4.00260325413*scc.m_u # Alpha mass
-m_be = 7.94748*scc.m_p # Beryllium 8 mass
+m_a = 4.00260325413*scc.m_u # Alpha (He4) mass
+m_be = (8.0053095729+0.00325283863)*scc.m_u # Be8* mass (3.03 MeV ex. state)
 Z_boron = 5.
 Z_proton = 1.
 E_Gamow = (Z_boron*Z_proton*np.pi*scc.fine_structure)**2*2.*m_reduced*scc.c**2
 E_Gamow_MeV = E_Gamow/MeV_to_Joule
 E_Gamow_keV = E_Gamow/keV_to_Joule
-E_fusion = 8.59009*MeV_to_Joule # Energy released during p + B -> alpha + Be
-E_decay = 0.0918984*MeV_to_Joule # Energy released during Be -> 2*alpha
+E_fusion = 5.55610759*MeV_to_Joule # Energy released during p + B -> alpha + Be*
+E_decay = 3.12600414*MeV_to_Joule # Energy released during Be* -> 2*alpha
 E_fusion_total = E_fusion + E_decay # Energy released during p + B -> 3*alpha
 
 ## Checks whether this is the 2D or the 3D test
@@ -259,10 +259,10 @@ def check_isotropy(data, relative_tolerance):
 def astrophysical_factor_lowE(E):
     ## E is in keV
     ## Returns astrophysical factor in MeV b using the low energy fit in the range E < 400 keV
-    ## described in equation (2) of W.M. Nevins and R. Swain, Nuclear Fusion, 40, 865 (2000)
+    ## described in equation (3) of A. Tentori and F. Belloni, Nuclear Fusion, 63, 086001 (2023)
     C0 = 197.
-    C1 = 0.24
-    C2 = 2.31e-4
+    C1 = 0.269
+    C2 = 2.54e-4
     AL = 1.82e4
     EL = 148.
     dEL = 2.35
@@ -271,12 +271,12 @@ def astrophysical_factor_lowE(E):
 def astrophysical_factor_midE(E):
     ## E is in keV
     ## Returns astrophysical factor in MeV b using the mid energy fit in the range
-    ## 400 keV < E < 642 keV described in equation (3) of W.M. Nevins and R. Swain,
-    ## Nuclear Fusion, 40, 865 (2000)
-    D0 = 330.
-    D1 = 66.1
-    D2 = -20.3
-    D5 = -1.58
+    ## 400 keV < E < 668 keV described in equation (4) of A. Tentori and F. Belloni,
+    ## Nuclear Fusion, 63, 086001 (2023)
+    D0 = 346.
+    D1 = 150.
+    D2 = -59.9
+    D5 = -0.460
     E_400 = 400.
     E_100 = 100.
     E_norm = (E - E_400)/E_100
@@ -285,29 +285,29 @@ def astrophysical_factor_midE(E):
 def astrophysical_factor_highE(E):
     ## E is in keV
     ## Returns astrophysical factor in MeV b using the high energy fit in the range
-    ## 642 keV < E < 3500 keV described in equation (4) of W.M. Nevins and R. Swain,
-    ## Nuclear Fusion, 40, 865 (2000)
-    A0 = 2.57e6
-    A1 = 5.67e5
-    A2 = 1.34e5
-    A3 = 5.68e5
-    E0 = 581.3
-    E1 = 1083.
-    E2 = 2405.
-    E3 = 3344.
-    dE0 = 85.7
-    dE1 = 234.
-    dE2 = 138.
-    dE3 = 309.
-    B = 4.38
+    ## 668 keV < E < 9760 keV described in equation (5) of A. Tentori and F. Belloni,
+    ## Nuclear Fusion, 63, 086001 (2023)
+    A0 = 1.98e6
+    A1 = 3.89e6
+    A2 = 1.36e6
+    A3 = 3.71e6
+    E0 = 640.9
+    E1 = 1211.
+    E2 = 2340.
+    E3 = 3294.
+    dE0 = 85.5
+    dE1 = 414.
+    dE2 = 221.
+    dE3 = 351.
+    B = 0.381
     return A0/((E-E0)**2 + dE0**2) + A1/((E-E1)**2 + dE1**2) + \
            A2/((E-E2)**2 + dE2**2) + A3/((E-E3)**2 + dE3**2) + B
 
 def astrophysical_factor(E):
     ## E is in keV
-    ## Returns astrophysical factor in MeV b using the fits described in W.M. Nevins
-    ## and R. Swain, Nuclear Fusion, 40, 865 (2000)
-    conditions = [E <= 400, E <= 642, E > 642]
+    ## Returns astrophysical factor in MeV b using the fits described in A. Tentori
+    ## and F. Belloni, Nuclear Fusion, 63, 086001 (2023)
+    conditions = [E <= 400, E <= 668, E > 668]
     choices = [astrophysical_factor_lowE(E),
                astrophysical_factor_midE(E),
                astrophysical_factor_highE(E)]
@@ -316,20 +316,20 @@ def astrophysical_factor(E):
 def pb_cross_section_buck_fit(E):
     ## E is in MeV
     ## Returns cross section in b using a power law fit of the data presented in Buck et al.,
-    ## Nuclear Physics A, 398(2), 189-202 (1983) in the range E > 3.5 MeV.
-    E_start_fit = 3.5
+    ## Nuclear Physics A, 398(2), 189-202 (1983) in the range E > 9.76 MeV.
+    E_start_fit = 9.76
     ## Cross section at E = E_start_fit = 3.5 MeV
-    cross_section_start_fit = 0.2168440845211521
+    cross_section_start_fit = 0.01277998
     slope_fit = -2.661840717596765
     return cross_section_start_fit*(E/E_start_fit)**slope_fit
 
 def pb_cross_section(E):
     ## E is in keV
-    ## Returns cross section in b using the fits described in W.M. Nevins and R. Swain,
-    ## Nuclear Fusion, 40, 865 (2000) for E < 3.5 MeV and a power law fit of the data presented in
-    ## Buck et al., Nuclear Physics A, 398(2), 189-202 (1983) for E > 3.5 MeV.
+    ## Returns cross section in b using the fits described in A. Tentori and F. Belloni,
+    ## Nucl. Fusion, 63, 086001 (2023) for E < 9.76 MeV otherwise returns a power law fit
+    ## of the data in Buck et al., Nuclear Physics A, 398(2), 189-202 (1983)
     E_MeV = E/1.e3
-    conditions = [E <= 3500, E > 3500]
+    conditions = [E <= 9760, E > 9760]
     choices = [astrophysical_factor(E)/E_MeV * np.exp(-np.sqrt(E_Gamow_MeV / E_MeV)),
                pb_cross_section_buck_fit(E_MeV)]
     return np.select(conditions, choices)
@@ -493,10 +493,13 @@ def check_initial_energy1(data, E_com):
         energy_alpha3_simulation = energy_alpha_slice[4::6]
 
         assert(np.all(is_close(energy_alpha1_simulation, energy_alpha1_theory, rtol=5.e-8)))
-        assert(is_close(np.amax(energy_alpha2_simulation), max_energy_alpha23, rtol=1.e-2))
-        assert(is_close(np.amin(energy_alpha2_simulation), min_energy_alpha23, rtol=1.e-2))
-        assert(is_close(np.amax(energy_alpha3_simulation), max_energy_alpha23, rtol=1.e-2))
-        assert(is_close(np.amin(energy_alpha3_simulation), min_energy_alpha23, rtol=1.e-2))
+        ## Check that the max / min value are comparable to the analytical value
+        ## The minimum value is checked to be within 20 keV of the analytical value
+        ## The maximum value is checked to be within 1% of the analytical value
+        assert(is_close(np.amax(energy_alpha2_simulation), max_energy_alpha23, rtol=1.e-2 ))
+        assert(is_close(np.amin(energy_alpha2_simulation), min_energy_alpha23, atol=3.218e-15 ))
+        assert(is_close(np.amax(energy_alpha3_simulation), max_energy_alpha23, rtol=1.e-2 ))
+        assert(is_close(np.amin(energy_alpha3_simulation), min_energy_alpha23, atol=3.218e-15 ))
 
 def check_initial_energy2(data):
     ## In WarpX, the initial momentum of the alphas is computed assuming that the fusion process
@@ -578,13 +581,16 @@ def check_initial_energy2(data):
 
         assert(is_close(np.amax(energy_alpha1_simulation), max_energy_alpha1, rtol=1.e-2))
         assert(is_close(np.amin(energy_alpha1_simulation), min_energy_alpha1, rtol=1.e-2))
-        ## Tolerance is quite high below because we don't have a lot of alphas to produce good
+        ## Check that the max / min value are comparable to the analytical value
+        ## The minimum value is checked to be within 200 keV of the analytical value
+        ## The maximum value is checked to be within 5% of the analytical value
+        ## Tolerance is quite high because we don't have a lot of alphas to produce good
         ## statistics and an event like alpha1 emitted exactly in direction of proton & alpha2
         ## emitted exactly in direction opposite to Beryllium is somewhat rare.
-        assert(is_close(np.amax(energy_alpha2_simulation), max_energy_alpha23, rtol=2.5e-1))
-        assert(is_close(np.amin(energy_alpha2_simulation), min_energy_alpha23, rtol=2.5e-1))
-        assert(is_close(np.amax(energy_alpha3_simulation), max_energy_alpha23, rtol=2.5e-1))
-        assert(is_close(np.amin(energy_alpha3_simulation), min_energy_alpha23, rtol=2.5e-1))
+        assert(is_close(np.amax(energy_alpha2_simulation), max_energy_alpha23, rtol=5e-2 ))
+        assert(is_close(np.amin(energy_alpha2_simulation), min_energy_alpha23, atol=3.218e-14 ))
+        assert(is_close(np.amax(energy_alpha3_simulation), max_energy_alpha23, rtol=5e-2 ))
+        assert(is_close(np.amin(energy_alpha3_simulation), min_energy_alpha23, atol=3.218e-14 ))
 
 def check_xy_isotropy(data):
     ## Checks that the alpha particles are emitted isotropically in x and y
@@ -598,13 +604,13 @@ def check_xy_isotropy(data):
 def sigmav_thermal_fit_lowE_nonresonant(T):
     ## Temperature T is in keV
     ## Returns the nonresonant average of cross section multiplied by relative velocity in m^3/s,
-    ## in the range T <= 70 keV, as described by equation 9 of W.M. Nevins and R. Swain,
-    ## Nuclear Fusion, 40, 865 (2000).
+    ## in the range T <= 70 keV, as described by equations 10-14 of A. Tentori and F. Belloni,
+    ## Nuclear Fusion, 63, 086001 (2023).
     E0 = (E_Gamow_keV/4.)**(1./3.) * T**(2./3.)
     DE0 = 4.*np.sqrt(T*E0/3.)
     C0 = 197.*1.e3
-    C1 = 0.24*1.e3
-    C2 = 2.31e-4*1.e3
+    C1 = 0.269*1.e3
+    C2 = 2.54e-4*1.e3
     tau = 3.*E0/T
     Seff = C0*(1.+5./(12.*tau)) + C1*(E0+35./36.*T) + C2*(E0**2 + 89./36.*E0*T)
     ## nonresonant sigma times vrel, in barn meter per second
@@ -615,21 +621,21 @@ def sigmav_thermal_fit_lowE_nonresonant(T):
 def sigmav_thermal_fit_lowE_resonant(T):
     ## Temperature T is in keV
     ## Returns the resonant average of cross section multiplied by relative velocity in m^3/s,
-    ## in the range T <= 70 keV, as described by equation 11 of W.M. Nevins and R. Swain,
-    ## Nuclear Fusion, 40, 865 (2000).
+    ## in the range T <= 70 keV, as described by equation 15 of A. Tentori and F. Belloni,
+    ## Nuclear Fusion, 63, 086001 (2023).
     return 5.41e-21 * np.exp(-148./T) / T**(3./2.)
 
 def sigmav_thermal_fit_lowE(T):
     ## Temperature T is in keV
     ## Returns the average of cross section multiplied by relative velocity in m^3/s, using the
-    ## fits described in section 3.1 of W.M. Nevins and R. Swain, Nuclear Fusion, 40, 865 (2000).
+    ## fits described in section 2.2 of A. Tentori and F. Belloni, Nuclear Fusion, 63, 086001 (2023).
     ## The fits are valid for T <= 70 keV.
     return sigmav_thermal_fit_lowE_nonresonant(T) + sigmav_thermal_fit_lowE_resonant(T)
 
 def expected_alpha_thermal(T, proton_density, boron_density, dV, dt):
     ## Computes the expected number of produced alpha particles when the protons and borons follow
     ## a Maxwellian distribution with a temperature T, in keV. This uses the thermal fits described
-    ## in W.M. Nevins and R. Swain, Nuclear Fusion, 40, 865 (2000).
+    ## in A. Tentori and F. Belloni, Nuclear Fusion, 63, 086001 (2023).
 
     ## The fit used here is only valid in the range T <= 70 keV.
     assert((T >=0) and (T<=70))

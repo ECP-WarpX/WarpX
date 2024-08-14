@@ -9,7 +9,7 @@
 #include "WarpX.H"
 
 #include "BoundaryConditions/PML.H"
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
 #   include "BoundaryConditions/PML_RZ.H"
 #endif
 #include "Initialization/ExternalField.H"
@@ -19,6 +19,7 @@
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 
 #include <ablastr/utils/Communication.H>
 
@@ -252,7 +253,7 @@ WarpX::MoveWindow (const int step, bool move_j)
                 shiftMF(*pml_B[dim], geom[lev], num_shift, dir, lev, dont_update_cost);
                 shiftMF(*pml_E[dim], geom[lev], num_shift, dir, lev, dont_update_cost);
             }
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
             if (pml_rz[lev] && dim < 2) {
                 const std::array<amrex::MultiFab*, 2>& pml_rz_B = pml_rz[lev]->GetB_fp();
                 const std::array<amrex::MultiFab*, 2>& pml_rz_E = pml_rz[lev]->GetE_fp();
@@ -452,6 +453,17 @@ WarpX::MoveWindow (const int step, bool move_j)
         }
     }
 
+    // Recompute macroscopic properties of the medium
+    if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
+        const int lev_zero = 0;
+        m_macroscopic_properties->InitData(
+            Geom(lev_zero),
+            getField(warpx::fields::FieldType::Efield_fp, lev_zero,0).ixType().toIntVect(),
+            getField(warpx::fields::FieldType::Efield_fp, lev_zero,1).ixType().toIntVect(),
+            getField(warpx::fields::FieldType::Efield_fp, lev_zero,2).ixType().toIntVect()
+        );
+    }
+
     return num_shift_base;
 }
 
@@ -522,7 +534,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
 
-    for (amrex::MFIter mfi(tmpmf); mfi.isValid(); ++mfi )
+    for (amrex::MFIter mfi(tmpmf, TilingIfNotGPU()); mfi.isValid(); ++mfi )
     {
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
@@ -533,7 +545,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
         auto const& dstfab = mf.array(mfi);
         auto const& srcfab = tmpmf.array(mfi);
 
-        const amrex::Box& outbox = mfi.fabbox() & adjBox;
+        const amrex::Box& outbox = mfi.growntilebox() & adjBox;
 
         if (outbox.ok()) {
             if (!useparser) {
@@ -598,7 +610,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
         }
     }
 
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
     if (WarpX::GetInstance().getPMLRZ()) {
         // This does the exchange of data in the corner guard cells, the cells that are in the
         // guard region both radially and longitudinally. These are the PML cells in the overlapping

@@ -209,7 +209,7 @@ endmacro()
 
 # Enables interprocedural optimization for a list of targets
 #
-function(enable_IPO all_targets_list)
+function(warpx_enable_IPO all_targets_list)
     include(CheckIPOSupported)
     check_ipo_supported(RESULT is_IPO_available)
     if(is_IPO_available)
@@ -305,7 +305,7 @@ function(set_warpx_binary_name D)
             set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".OPMD")
         endif()
 
-        if(WarpX_PSATD)
+        if(WarpX_FFT)
             set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".PSATD")
         endif()
 
@@ -452,7 +452,8 @@ function(warpx_print_summary)
     endif()
     message("    PARTICLE PRECISION: ${WarpX_PARTICLE_PRECISION}")
     message("    PRECISION: ${WarpX_PRECISION}")
-    message("    PSATD: ${WarpX_PSATD}")
+    message("    FFT Solvers: ${WarpX_FFT}")
+    message("    heFFTe: ${WarpX_HEFFTE}")
     message("    PYTHON: ${WarpX_PYTHON}")
     if(WarpX_PYTHON)
         message("    PYTHON IPO: ${WarpX_PYTHON_IPO}")

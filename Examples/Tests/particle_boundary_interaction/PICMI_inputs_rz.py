@@ -39,7 +39,7 @@ grid = picmi.CylindricalGrid(
     upper_bound = [rmax, zmax],
     lower_boundary_conditions = ['none', 'dirichlet'],
     upper_boundary_conditions =  ['dirichlet', 'dirichlet'],
-    lower_boundary_conditions_particles = ['absorbing', 'reflecting'],
+    lower_boundary_conditions_particles = ['none', 'reflecting'],
     upper_boundary_conditions_particles =  ['absorbing', 'reflecting']
 )
 

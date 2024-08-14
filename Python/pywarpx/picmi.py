@@ -137,6 +137,9 @@ class Species(picmistandard.PICMI_Species):
         Cells with fewer particles than this number will be
         skipped during resampling.
 
+    warpx_resampling_algorithm_target_weight: float
+        Weight that the product particles from resampling will not exceed.
+
     warpx_resampling_trigger_intervals: bool, default=0
         Timesteps at which to resample
 
@@ -168,6 +171,14 @@ class Species(picmistandard.PICMI_Species):
         during grid-based merging, with `velocity_grid_type == "cartesian"`. If
         a single number is given the same du value will be used in all three
         directions.
+
+    warpx_add_int_attributes: dict
+        Dictionary of extra integer particle attributes initialized from an
+        expression that is a function of the variables (x, y, z, ux, uy, uz, t).
+
+    warpx_add_real_attributes: dict
+        Dictionary of extra real particle attributes initialized from an
+        expression that is a function of the variables (x, y, z, ux, uy, uz, t).
     """
     def init(self, kw):
 
@@ -249,13 +260,18 @@ class Species(picmistandard.PICMI_Species):
         self.resampling_min_ppc = kw.pop('warpx_resampling_min_ppc', None)
         self.resampling_trigger_intervals = kw.pop('warpx_resampling_trigger_intervals', None)
         self.resampling_triggering_max_avg_ppc = kw.pop('warpx_resampling_trigger_max_avg_ppc', None)
+        self.resampling_algorithm_target_weight = kw.pop('warpx_resampling_algorithm_target_weight', None)
         self.resampling_algorithm_velocity_grid_type = kw.pop('warpx_resampling_algorithm_velocity_grid_type', None)
         self.resampling_algorithm_delta_ur = kw.pop('warpx_resampling_algorithm_delta_ur', None)
         self.resampling_algorithm_n_theta = kw.pop('warpx_resampling_algorithm_n_theta', None)
         self.resampling_algorithm_n_phi = kw.pop('warpx_resampling_algorithm_n_phi', None)
         self.resampling_algorithm_delta_u = kw.pop('warpx_resampling_algorithm_delta_u', None)
-        if np.size(self.resampling_algorithm_delta_u) == 1:
+        if self.resampling_algorithm_delta_u is not None and np.size(self.resampling_algorithm_delta_u) == 1:
             self.resampling_algorithm_delta_u = [self.resampling_algorithm_delta_u]*3
+
+        # extra particle attributes
+        self.extra_int_attributes = kw.pop('warpx_add_int_attributes', None)
+        self.extra_real_attributes = kw.pop('warpx_add_real_attributes', None)
 
     def species_initialize_inputs(self, layout,
                                   initialize_self_fields = False,
@@ -298,6 +314,7 @@ class Species(picmistandard.PICMI_Species):
                                              resampling_min_ppc=self.resampling_min_ppc,
                                              resampling_trigger_intervals=self.resampling_trigger_intervals,
                                              resampling_trigger_max_avg_ppc=self.resampling_triggering_max_avg_ppc,
+                                             resampling_algorithm_target_weight=self.resampling_algorithm_target_weight,
                                              resampling_algorithm_velocity_grid_type=self.resampling_algorithm_velocity_grid_type,
                                              resampling_algorithm_delta_ur=self.resampling_algorithm_delta_ur,
                                              resampling_algorithm_n_theta=self.resampling_algorithm_n_theta,
@@ -312,6 +329,16 @@ class Species(picmistandard.PICMI_Species):
         self.species.add_new_attr("reflection_model_zlo(E)", self.reflection_model_zlo)
         self.species.add_new_attr("reflection_model_zhi(E)", self.reflection_model_zhi)
         # self.species.add_new_attr("reflection_model_eb(E)", self.reflection_model_eb)
+
+        # extra particle attributes
+        if self.extra_int_attributes is not None:
+            self.species.addIntegerAttributes = self.extra_int_attributes.keys()
+            for attr, function in self.extra_int_attributes.items():
+                self.species.add_new_attr('attribute.'+attr+'(x,y,z,ux,uy,uz,t)', function)
+        if self.extra_real_attributes is not None:
+            self.species.addRealAttributes = self.extra_real_attributes.keys()
+            for attr, function in self.extra_real_attributes.items():
+                self.species.add_new_attr('attribute.'+attr+'(x,y,z,ux,uy,uz,t)', function)
 
         pywarpx.Particles.particles_list.append(self.species)
 
@@ -477,6 +504,11 @@ class DensityDistributionBase(object):
             species.add_new_group_attr(source_name, 'uy', self.directed_velocity[1]/constants.c)
             species.add_new_group_attr(source_name, 'uz', self.directed_velocity[2]/constants.c)
 
+        if hasattr(self, 'density_min'):
+            species.add_new_group_attr(source_name, 'density_min', self.density_min)
+        if hasattr(self, 'density_max'):
+            species.add_new_group_attr(source_name, 'density_max', self.density_max)
+
     def setup_parse_momentum_functions(self, species, source_name, expressions, suffix, defaults):
         for sdir, idir in zip(['x', 'y', 'z'], [0, 1, 2]):
             if expressions[idir] is not None:
@@ -528,6 +560,14 @@ class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution, DensityDist
     Parameters
     ----------
 
+    warpx_density_min: float
+        Minimum plasma density. No particle is injected where the density is
+        below this value.
+
+    warpx_density_max: float
+        Maximum plasma density. The density at each point is the minimum between
+        the value given in the profile, and density_max.
+
     warpx_momentum_spread_expressions: list of string
         Analytic expressions describing the gamma*velocity spread for each axis [m/s].
         Expressions should be in terms of the position, written as 'x', 'y', and 'z'.
@@ -536,6 +576,8 @@ class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution, DensityDist
 
     """
     def init(self, kw):
+        self.density_min = kw.pop('warpx_density_min', None)
+        self.density_max = kw.pop('warpx_density_max', None)
         self.momentum_spread_expressions = kw.pop('warpx_momentum_spread_expressions', [None, None, None])
 
     def distribution_initialize_inputs(self, species_number, layout, species, density_scale, source_name):
@@ -1206,6 +1248,194 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         pywarpx.warpx.do_pml_j_damping = self.do_pml_j_damping
 
 
+class ExplicitEvolveScheme(picmistandard.base._ClassWithInit):
+    """
+    Sets up the explicit evolve scheme
+    """
+    def solver_scheme_initialize_inputs(self):
+        pywarpx.algo.evolve_scheme = 'explicit'
+
+
+class ThetaImplicitEMEvolveScheme(picmistandard.base._ClassWithInit):
+    """
+    Sets up the "theta implicit" electromagnetic evolve scheme
+
+    Parameters
+    ----------
+    nonlinear_solver: nonlinear solver instance
+        The nonlinear solver to use for the iterations
+
+    theta: float, optional
+        The "theta" parameter, determining the level of implicitness
+    """
+    def __init__(self, nonlinear_solver, theta = None):
+        self.nonlinear_solver = nonlinear_solver
+        self.theta = theta
+
+    def solver_scheme_initialize_inputs(self):
+        pywarpx.algo.evolve_scheme = 'theta_implicit_em'
+        implicit_evolve = pywarpx.warpx.get_bucket('implicit_evolve')
+        implicit_evolve.theta = self.theta
+
+        self.nonlinear_solver.nonlinear_solver_initialize_inputs()
+
+
+class SemiImplicitEMEvolveScheme(picmistandard.base._ClassWithInit):
+    """
+    Sets up the "semi-implicit" electromagnetic evolve scheme
+
+    Parameters
+    ----------
+    nonlinear_solver: nonlinear solver instance
+        The nonlinear solver to use for the iterations
+    """
+    def __init__(self, nonlinear_solver):
+        self.nonlinear_solver = nonlinear_solver
+
+    def solver_scheme_initialize_inputs(self):
+        pywarpx.algo.evolve_scheme = 'semi_implicit_em'
+
+        self.nonlinear_solver.nonlinear_solver_initialize_inputs()
+
+
+class PicardNonlinearSolver(picmistandard.base._ClassWithInit):
+    """
+    Sets up the iterative Picard nonlinear solver for the implicit evolve scheme
+
+    Parameters
+    ----------
+    verbose: bool, default=True
+        Whether there is verbose output from the solver
+
+    absolute_tolerance: float, default=0.
+        Absoluate tolerence of the convergence
+
+    relative_tolerance: float, default=1.e-6
+        Relative tolerance of the convergence
+
+    max_iterations: integer, default=100
+        Maximum number of iterations
+
+    require_convergence: bool, default True
+        Whether convergence is required. If True and convergence is not obtained, the code will exit.
+    """
+    def __init__(self, verbose=None, absolute_tolerance=None, relative_tolerance=None,
+                 max_iterations=None, require_convergence=None):
+        self.verbose = verbose
+        self.absolute_tolerance = absolute_tolerance
+        self.relative_tolerance = relative_tolerance
+        self.max_iterations = max_iterations
+        self.require_convergence = require_convergence
+
+    def nonlinear_solver_initialize_inputs(self):
+        implicit_evolve = pywarpx.warpx.get_bucket('implicit_evolve')
+        implicit_evolve.nonlinear_solver = 'picard'
+
+        picard = pywarpx.warpx.get_bucket('picard')
+        picard.verbose = self.verbose
+        picard.absolute_tolerance = self.absolute_tolerance
+        picard.relative_tolerance = self.relative_tolerance
+        picard.max_iterations = self.max_iterations
+        picard.require_convergence = self.require_convergence
+
+
+class NewtonNonlinearSolver(picmistandard.base._ClassWithInit):
+    """
+    Sets up the iterative Newton nonlinear solver for the implicit evolve scheme
+
+    Parameters
+    ----------
+    verbose: bool, default=True
+        Whether there is verbose output from the solver
+
+    absolute_tolerance: float, default=0.
+        Absoluate tolerence of the convergence
+
+    relative_tolerance: float, default=1.e-6
+        Relative tolerance of the convergence
+
+    max_iterations: integer, default=100
+        Maximum number of iterations
+
+    require_convergence: bool, default True
+        Whether convergence is required. If True and convergence is not obtained, the code will exit.
+
+    linear_solver: linear solver instance, optional
+        Specifies input arguments to the linear solver
+
+    max_particle_iterations: integer, optional
+        The maximum number of particle iterations
+
+    particle_tolerance: float, optional
+        The tolerance of parrticle quantities for convergence
+
+    """
+    def __init__(self, verbose=None, absolute_tolerance=None, relative_tolerance=None,
+                 max_iterations=None, require_convergence=None, linear_solver=None,
+                 max_particle_iterations=None, particle_tolerance=None):
+        self.verbose = verbose
+        self.absolute_tolerance = absolute_tolerance
+        self.relative_tolerance = relative_tolerance
+        self.max_iterations = max_iterations
+        self.require_convergence = require_convergence
+        self.linear_solver = linear_solver
+        self.max_particle_iterations = max_particle_iterations
+        self.particle_tolerance = particle_tolerance
+
+    def nonlinear_solver_initialize_inputs(self):
+        implicit_evolve = pywarpx.warpx.get_bucket('implicit_evolve')
+        implicit_evolve.nonlinear_solver = 'newton'
+        implicit_evolve.max_particle_iterations = self.max_particle_iterations
+        implicit_evolve.particle_tolerance = self.particle_tolerance
+
+        newton = pywarpx.warpx.get_bucket('newton')
+        newton.verbose = self.verbose
+        newton.absolute_tolerance = self.absolute_tolerance
+        newton.relative_tolerance = self.relative_tolerance
+        newton.max_iterations = self.max_iterations
+        newton.require_convergence = self.require_convergence
+
+        self.linear_solver.linear_solver_initialize_inputs()
+
+
+class GMRESLinearSolver(picmistandard.base._ClassWithInit):
+    """
+    Sets up the iterative GMRES linear solver for the implicit Newton nonlinear solver
+
+    Parameters
+    ----------
+    verbose_int: integer, default=2
+        Level of verbosity of output
+
+    restart_length: integer, default=30
+       How often to restart the GMRES iterations
+
+    absolute_tolerance: float, default=0.
+        Absoluate tolerence of the convergence
+
+    relative_tolerance: float, default=1.e-4
+        Relative tolerance of the convergence
+
+    max_iterations: integer, default=1000
+        Maximum number of iterations
+    """
+    def __init__(self, verbose_int=None, restart_length=None, absolute_tolerance=None, relative_tolerance=None,
+                 max_iterations=None):
+        self.verbose_int = verbose_int
+        self.restart_length = restart_length
+        self.absolute_tolerance = absolute_tolerance
+        self.relative_tolerance = relative_tolerance
+        self.max_iterations = max_iterations
+
+    def linear_solver_initialize_inputs(self):
+        gmres = pywarpx.warpx.get_bucket('gmres')
+        gmres.verbose_int = self.verbose_int
+        gmres.restart_length = self.restart_length
+        gmres.absolute_tolerance = self.absolute_tolerance
+        gmres.relative_tolerance = self.relative_tolerance
+        gmres.max_iterations = self.max_iterations
+
+
 class HybridPICSolver(picmistandard.base._ClassWithInit):
     """
     Hybrid-PIC solver based on Ohm's law.
@@ -1324,6 +1554,9 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
 
     def solver_initialize_inputs(self):
 
+        # Open BC means FieldBoundaryType::Open for electrostatic sims, rather than perfectly-matched layer
+        BC_map['open'] = 'open'
+
         self.grid.grid_initialize_inputs()
 
         if self.relativistic:
@@ -1343,6 +1576,8 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
             pywarpx.boundary.potential_hi_x = self.grid.potential_xmax
             pywarpx.boundary.potential_hi_y = self.grid.potential_ymax
             pywarpx.boundary.potential_hi_z = self.grid.potential_zmax
+
+        pywarpx.warpx.poisson_solver = self.method
 
 
 class GaussianLaser(picmistandard.PICMI_GaussianLaser):
@@ -1459,6 +1694,13 @@ class AnalyticInitialField(picmistandard.PICMI_AnalyticAppliedField):
                 expression = pywarpx.my_constants.mangle_expression(expression, self.mangle_dict)
                 pywarpx.warpx.__setattr__(f'B{sdir}_external_grid_function(x,y,z)', expression)
 
+class LoadAppliedField(picmistandard.PICMI_LoadAppliedField):
+    def applied_field_initialize_inputs(self):
+        pywarpx.particles.read_fields_from_path = self.read_fields_from_path
+        if self.load_E:
+            pywarpx.particles.E_ext_particle_init_style = 'read_from_file'
+        if self.load_B:
+            pywarpx.particles.B_ext_particle_init_style = 'read_from_file'
 
 class ConstantAppliedField(picmistandard.PICMI_ConstantAppliedField):
     def applied_field_initialize_inputs(self):
@@ -1844,6 +2086,9 @@ class Simulation(picmistandard.PICMI_Simulation):
 
     Parameters
     ----------
+    warpx_evolve_scheme: solver scheme instance, optional
+        Which evolve scheme to use
+
     warpx_current_deposition_algo: {'direct', 'esirkepov', and 'vay'}, optional
         Current deposition algorithm. The default depends on conditions.
 
@@ -2010,6 +2255,7 @@ class Simulation(picmistandard.PICMI_Simulation):
 
     def init(self, kw):
 
+        self.evolve_scheme = kw.pop('warpx_evolve_scheme', None)
         self.current_deposition_algo = kw.pop('warpx_current_deposition_algo', None)
         self.charge_deposition_algo = kw.pop('warpx_charge_deposition_algo', None)
         self.field_gathering_algo = kw.pop('warpx_field_gathering_algo', None)
@@ -2077,6 +2323,9 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.warpx.sort_particles_for_deposition = self.sort_particles_for_deposition
         pywarpx.warpx.sort_idx_type = self.sort_idx_type
         pywarpx.warpx.sort_bin_size = self.sort_bin_size
+
+        if self.evolve_scheme is not None:
+            self.evolve_scheme.solver_scheme_initialize_inputs()
 
         pywarpx.algo.current_deposition = self.current_deposition_algo
         pywarpx.algo.charge_deposition = self.charge_deposition_algo
@@ -2296,6 +2545,11 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
     warpx_openpmd_backend: {bp, h5, json}, optional
         Openpmd backend file format
 
+    warpx_openpmd_encoding: 'v' (variable based), 'f' (file based) or 'g' (group based), optional
+        Only read if ``<diag_name>.format = openpmd``. openPMD file output encoding.
+        File based: one file per timestep (slower), group/variable based: one file for all steps (faster)).
+        Variable based is an experimental feature with ADIOS2. Default: `'f'`.
+
     warpx_file_prefix: string, optional
         Prefix on the diagnostic file name
 
@@ -2304,6 +2558,9 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
 
     warpx_dump_rz_modes: bool, optional
         Flag whether to dump the data for all RZ modes
+
+    warpx_dump_last_timestep: bool, optional
+        If true, the last timestep is dumped regardless of the diagnostic period/intervals.
 
     warpx_particle_fields_to_plot: list of ParticleFieldDiagnostics
         List of ParticleFieldDiagnostic classes to install in the simulation. Error
@@ -2322,9 +2579,11 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
         self.plot_crsepatch = kw.pop('warpx_plot_crsepatch', None)
         self.format = kw.pop('warpx_format', 'plotfile')
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
+        self.openpmd_encoding = kw.pop('warpx_openpmd_encoding', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
         self.file_min_digits = kw.pop('warpx_file_min_digits', None)
         self.dump_rz_modes = kw.pop('warpx_dump_rz_modes', None)
+        self.dump_last_timestep = kw.pop('warpx_dump_last_timestep', None)
         self.particle_fields_to_plot = kw.pop('warpx_particle_fields_to_plot', [])
         self.particle_fields_species = kw.pop('warpx_particle_fields_species', None)
 
@@ -2335,8 +2594,10 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
         self.diagnostic.diag_type = 'Full'
         self.diagnostic.format = self.format
         self.diagnostic.openpmd_backend = self.openpmd_backend
+        self.diagnostic.openpmd_encoding = self.openpmd_encoding
         self.diagnostic.file_min_digits = self.file_min_digits
         self.diagnostic.dump_rz_modes = self.dump_rz_modes
+        self.diagnostic.dump_last_timestep = self.dump_last_timestep
         self.diagnostic.intervals = self.period
         self.diagnostic.diag_lo = self.lower_bound
         self.diagnostic.diag_hi = self.upper_bound
@@ -2389,6 +2650,9 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
                     fields_to_plot.add(dataname.lower())
                 elif dataname.startswith('rho_'):
                     # Adds rho_species diagnostic
+                    fields_to_plot.add(dataname)
+                elif dataname.startswith('T_'):
+                    # Adds T_species diagnostic
                     fields_to_plot.add(dataname)
                 elif dataname == 'dive':
                     fields_to_plot.add('divE')
@@ -2497,17 +2761,31 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
     warpx_openpmd_backend: {bp, h5, json}, optional
         Openpmd backend file format
 
+    warpx_openpmd_encoding: 'v' (variable based), 'f' (file based) or 'g' (group based), optional
+        Only read if ``<diag_name>.format = openpmd``. openPMD file output encoding.
+        File based: one file per timestep (slower), group/variable based: one file for all steps (faster)).
+        Variable based is an experimental feature with ADIOS2. Default: `'f'`.
+
     warpx_file_prefix: string, optional
         Prefix on the diagnostic file name
 
     warpx_file_min_digits: integer, optional
         Minimum number of digits for the time step number in the file name
 
-    warpx_random_fraction: float, optional
-        Random fraction of particles to include in the diagnostic
+    warpx_random_fraction: float or dict, optional
+        Random fraction of particles to include in the diagnostic. If a float
+        is given the same fraction will be used for all species, if a dictionary
+        is given the keys should be species with the value specifying the random
+        fraction for that species.
 
-    warpx_uniform_stride: integer, optional
-        Stride to down select to the particles to include in the diagnostic
+    warpx_uniform_stride: integer or dict, optional
+        Stride to down select to the particles to include in the diagnostic.
+        If an integer is given the same stride will be used for all species, if
+        a dictionary is given the keys should be species with the value
+        specifying the stride for that species.
+
+    warpx_dump_last_timestep: bool, optional
+        If true, the last timestep is dumped regardless of the diagnostic period/intervals.
 
     warpx_plot_filter_function: string, optional
         Analytic expression to down select the particles to in the diagnostic
@@ -2516,11 +2794,13 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
 
         self.format = kw.pop('warpx_format', 'plotfile')
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
+        self.openpmd_encoding = kw.pop('warpx_openpmd_encoding', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
         self.file_min_digits = kw.pop('warpx_file_min_digits', None)
         self.random_fraction = kw.pop('warpx_random_fraction', None)
         self.uniform_stride = kw.pop('warpx_uniform_stride', None)
         self.plot_filter_function = kw.pop('warpx_plot_filter_function', None)
+        self.dump_last_timestep = kw.pop('warpx_dump_last_timestep', None)
 
         self.user_defined_kw = {}
         if self.plot_filter_function is not None:
@@ -2540,7 +2820,9 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         self.diagnostic.diag_type = 'Full'
         self.diagnostic.format = self.format
         self.diagnostic.openpmd_backend = self.openpmd_backend
+        self.diagnostic.openpmd_encoding = self.openpmd_encoding
         self.diagnostic.file_min_digits = self.file_min_digits
+        self.diagnostic.dump_last_timestep = self.dump_last_timestep
         self.diagnostic.intervals = self.period
         self.diagnostic.set_or_replace_attr('write_species', True)
         if 'fields_to_plot' not in self.diagnostic.argvattrs:
@@ -2591,6 +2873,9 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
                         )
                     else:
                         variables.add(dataname)
+                else:
+                    # possibly add user defined attributes
+                    variables.add(dataname)
 
             # --- Convert the set to a sorted list so that the order
             # --- is the same on all processors.
@@ -2605,6 +2890,22 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         else:
             species_names = [self.species.name]
 
+        # check if random fraction is specified and whether a value is given per species
+        random_fraction = {}
+        random_fraction_default = self.random_fraction
+        if isinstance(self.random_fraction, dict):
+            random_fraction_default = 1.0
+            for key, val in self.random_fraction.items():
+                random_fraction[key.name] = val
+
+        # check if uniform stride is specified and whether a value is given per species
+        uniform_stride = {}
+        uniform_stride_default = self.uniform_stride
+        if isinstance(self.uniform_stride, dict):
+            uniform_stride_default = 1
+            for key, val in self.uniform_stride.items():
+                uniform_stride[key.name] = val
+
         if self.mangle_dict is None:
             # Only do this once so that the same variables are used in this distribution
             # is used multiple times
@@ -2613,8 +2914,8 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         for name in species_names:
             diag = pywarpx.Bucket.Bucket(self.name + '.' + name,
                                          variables = variables,
-                                         random_fraction = self.random_fraction,
-                                         uniform_stride = self.uniform_stride)
+                                         random_fraction = random_fraction.get(name, random_fraction_default),
+                                         uniform_stride = uniform_stride.get(name, uniform_stride_default))
             expression = pywarpx.my_constants.mangle_expression(self.plot_filter_function, self.mangle_dict)
             diag.__setattr__('plot_filter_function(t,x,y,z,ux,uy,uz)', expression)
             self.diagnostic._species_dict[name] = diag
@@ -2637,6 +2938,11 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
 
     warpx_openpmd_backend: string, optional
         Passed to <diagnostic name>.openpmd_backend
+
+    warpx_openpmd_encoding: 'f' (file based) or 'g' (group based), optional
+        Only read if ``<diag_name>.format = openpmd``. openPMD file output encoding.
+        File based: one file per timestep (slower), group/variable based: one file for all steps (faster)).
+        Default: `'f'`.
 
     warpx_file_prefix: string, optional
         Passed to <diagnostic name>.file_prefix
@@ -2662,6 +2968,7 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
 
         self.format = kw.pop('warpx_format', None)
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
+        self.openpmd_encoding = kw.pop('warpx_openpmd_encoding', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
         self.intervals = kw.pop('warpx_intervals', None)
         self.file_min_digits = kw.pop('warpx_file_min_digits', None)
@@ -2676,6 +2983,7 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
         self.diagnostic.diag_type = 'BackTransformed'
         self.diagnostic.format = self.format
         self.diagnostic.openpmd_backend = self.openpmd_backend
+        self.diagnostic.openpmd_encoding = self.openpmd_encoding
         self.diagnostic.file_min_digits = self.file_min_digits
         self.diagnostic.diag_lo = self.lower_bound
         self.diagnostic.diag_hi = self.upper_bound
@@ -2747,6 +3055,11 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
     warpx_openpmd_backend: string, optional
         Passed to <diagnostic name>.openpmd_backend
 
+    warpx_openpmd_encoding: 'f' (file based) or 'g' (group based), optional
+        Only read if ``<diag_name>.format = openpmd``. openPMD file output encoding.
+        File based: one file per timestep (slower), group/variable based: one file for all steps (faster)).
+        Default: `'f'`.
+
     warpx_file_prefix: string, optional
         Passed to <diagnostic name>.file_prefix
 
@@ -2763,6 +3076,7 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
     def init(self, kw):
         self.format = kw.pop('warpx_format', None)
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
+        self.openpmd_encoding = kw.pop('warpx_openpmd_encoding', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
         self.intervals = kw.pop('warpx_intervals', None)
         self.file_min_digits = kw.pop('warpx_file_min_digits', None)
@@ -2775,6 +3089,7 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
         self.diagnostic.diag_type = 'BackTransformed'
         self.diagnostic.format = self.format
         self.diagnostic.openpmd_backend = self.openpmd_backend
+        self.diagnostic.openpmd_encoding = self.openpmd_encoding
         self.diagnostic.file_min_digits = self.file_min_digits
 
         self.diagnostic.do_back_transformed_particles = True
