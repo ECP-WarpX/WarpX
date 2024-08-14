@@ -194,9 +194,9 @@ computePhiIGF ( amrex::MultiFab const & rho,
     tmp_G_fft.shift(realspace_box.smallEnd());
 
     BL_PROFILE_VAR_START(timer_plans);
-#ifdef AMREX_USE_CUDA
+#if defined(AMREX_USE_CUDA)
     heffte::fft3d_r2c<heffte::backend::cufft> fft
-#elif AMREX_USE_HIP
+#elif defined(AMREX_USE_HIP)
     heffte::fft3d_r2c<heffte::backend::rocfft> fft
 #else
     heffte::fft3d_r2c<heffte::backend::fftw> fft
