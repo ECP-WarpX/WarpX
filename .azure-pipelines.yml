@@ -28,16 +28,20 @@ jobs:
     matrix:
       # Cartesian 1D
       cartesian_1d:
-        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=1 -DWarpX_FFT=ON -DWarpX_EB=ON -DWarpX_PYTHON=ON
+        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=1 -DWarpX_FFT=ON -DWarpX_PYTHON=ON
       # Cartesian 2D
       cartesian_2d:
-        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=2 -DWarpX_FFT=ON -DWarpX_EB=ON -DWarpX_PYTHON=ON
+        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=2 -DWarpX_FFT=ON -DWarpX_PYTHON=ON
       # Cartesian 3D
       cartesian_3d:
-        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=3 -DWarpX_FFT=ON -DWarpX_EB=ON -DWarpX_PYTHON=ON
+        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=3 -DWarpX_FFT=ON -DWarpX_PYTHON=ON
       # Cylindrical RZ
       cylindrical_rz:
-        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=RZ -DWarpX_FFT=ON -DWarpX_EB=ON -DWarpX_PYTHON=ON
+        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=RZ -DWarpX_FFT=ON -DWarpX_PYTHON=ON
+        WARPX_RZ_FFT: 'TRUE'
+      # embedded boundaries
+      embedded_boundaries:
+        WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_FFT=ON -DWarpX_PYTHON=ON -DWarpX_EB=ON
         WARPX_RZ_FFT: 'TRUE'
       #single_precision:
       #  WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_FFT=ON -DWarpX_PRECISION=SINGLE

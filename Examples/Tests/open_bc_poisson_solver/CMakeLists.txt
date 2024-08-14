@@ -8,6 +8,7 @@ if(WarpX_FFT)
         open_bc_poisson_solver # name
         3 # dims
         2 # nprocs
+        OFF # eb
         Examples/Tests/open_bc_poisson_solver/inputs_3d_test_open_bc_poisson_solver # inputs
         Examples/Tests/open_bc_poisson_solver/analysis.py # analysis
         diags/diag1000001 # output

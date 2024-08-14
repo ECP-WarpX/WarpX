@@ -21,6 +21,7 @@ function(add_warpx_test
     name
     dims
     nprocs
+    eb
     inputs
     analysis
     output
@@ -35,6 +36,17 @@ function(add_warpx_test
     #if(NOT mpi AND WarpX_MPI)
     #    return()
     #endif()
+
+    # cannot run EB tests w/o EB build
+    if(eb AND NOT WarpX_EB)
+            message(WARNING "cannot run EB tests without EB build")
+        return()
+    endif()
+
+    # do not run no-EB tests w/ EB build
+    if(NOT eb AND WarpX_EB)
+        return()
+    endif()
 
     # cannot run tests with unsupported geometry
     if(NOT dims IN_LIST WarpX_DIMS)
