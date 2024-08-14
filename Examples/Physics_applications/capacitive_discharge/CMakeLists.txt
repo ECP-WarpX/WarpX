@@ -24,12 +24,14 @@ add_warpx_test(
 #    diags/diag1000050 # output
 #)
 
+# background_mcc_picmi ########################################################
+#
 add_warpx_test(
-    Python_background_mcc # name
+    background_mcc_picmi # name
     2 # dims
     2 # nprocs
     OFF # eb
-    Examples/Physics_applications/capacitive_discharge/PICMI_inputs_2d.py # inputs
+    Examples/Physics_applications/capacitive_discharge/inputs_2d_test_background_mcc_picmi.py # inputs
     Examples/Physics_applications/capacitive_discharge/analysis_2d.py # analysis
     diags/diag1000050 # output
 )

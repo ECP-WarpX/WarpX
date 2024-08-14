@@ -25,14 +25,14 @@ add_warpx_test(
     diags/diag1000030 # output
 )
 
-# electrostatic_sphere_lab_frame_MR_emass_10 ##################################
+# electrostatic_sphere_lab_frame_mr_emass_10 ##################################
 #
 add_warpx_test(
-    electrostatic_sphere_lab_frame_MR_emass_10 # name
+    electrostatic_sphere_lab_frame_mr_emass_10 # name
     3 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/electrostatic_sphere/inputs_3d_test_electrostatic_sphere_lab_frame_MR_emass_10 # inputs
+    Examples/Tests/electrostatic_sphere/inputs_3d_test_electrostatic_sphere_lab_frame_mr_emass_10 # inputs
     Examples/Tests/electrostatic_sphere/analysis_electrostatic_sphere.py # analysis
     diags/diag1000002 # output
 )
