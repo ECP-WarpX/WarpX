@@ -1152,8 +1152,6 @@ WarpX::ReadParameters ()
             maxLevel() == 0 || !do_current_centering,
             "Finite-order centering of currents is not implemented with mesh refinement"
         );
-
-        pp_warpx.query("roundrobin_sfc", roundrobin_sfc);
     }
 
     {
@@ -3584,6 +3582,18 @@ WarpX::getField(FieldType field_type, const int lev, const int direction) const
 amrex::DistributionMapping
 WarpX::MakeDistributionMap (int lev, amrex::BoxArray const& ba)
 {
+    bool roundrobin_sfc = false;
+    ParmParse pp("warpx");
+    pp.query("roundrobin_sfc", roundrobin_sfc);
+
+    // If this is true, AMReX's RRSFC strategy is used to make
+    // DistributionMapping. Note that the DistributionMapping made by the
+    // here could still be overridden by load balancing. In the RRSFC
+    // strategy, the Round robin method is used to distribute Boxes orderd
+    // by the space filling curve. This might help avoid some processes
+    // running out of memory due to having too many particles during
+    // initialization.
+
     if (roundrobin_sfc) {
         auto old_strategy = amrex::DistributionMapping::strategy();
         amrex::DistributionMapping::strategy(amrex::DistributionMapping::RRSFC);
