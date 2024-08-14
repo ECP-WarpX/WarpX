@@ -150,12 +150,16 @@ computeSemiImplicitPhi (amrex::Vector<amrex::MultiFab*> const & rho,
         using namespace ablastr::constant::SI;
         rho[lev]->mult(-1._rt/ep0);  // TODO: when do we "un-multiply" this? We need to document this side-effect!
 
+#if defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ)
         // Use the EB enabled solver.
         amrex::MLEBNodeFDLaplacian linop( {geom[lev]}, {grids[lev]}, {dmap[lev]}, info
 #if defined(AMREX_USE_EB)
             , {eb_farray_box_factory.value()[lev]}
 #endif
         );
+#else
+        amrex::MLNodeLaplacian linop( {geom[lev]}, {grids[lev]}, {dmap[lev]}, info);
+#endif
 
 #if defined(AMREX_USE_EB)
         // if the EB potential only depends on time, the potential can be passed

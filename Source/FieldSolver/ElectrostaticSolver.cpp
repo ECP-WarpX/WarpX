@@ -338,9 +338,9 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
         sorted_phi.emplace_back(phi[lev].get());
     }
 
+#if defined(AMREX_USE_EB)
     std::optional<ElectrostaticSolver::EBCalcEfromPhiPerLevel> post_phi_calculation;
 
-#if defined(AMREX_USE_EB)
     // EB: use AMReX to directly calculate the electric field since with EB's the
     // simple finite difference scheme in WarpX::computeE sometimes fails
     if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
@@ -383,34 +383,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
     }
     eb_farray_box_factory = factories;
 #else
-    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameSemiImplicit)
-    {
-        // TODO: maybe make this a helper function or pass Efield_fp directly
-        amrex::Vector<
-            amrex::Array<amrex::MultiFab *, AMREX_SPACEDIM>
-        > e_field;
-        for (int lev = 0; lev <= finest_level; ++lev) {
-            e_field.push_back(
-#   if defined(WARPX_DIM_1D_Z)
-                amrex::Array<amrex::MultiFab*, 1>{
-                    getFieldPointer(FieldType::Efield_fp, lev, 2)
-                }
-#   elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                amrex::Array<amrex::MultiFab*, 2>{
-                    getFieldPointer(FieldType::Efield_fp, lev, 0),
-                    getFieldPointer(FieldType::Efield_fp, lev, 2)
-                }
-#   elif defined(WARPX_DIM_3D)
-                amrex::Array<amrex::MultiFab *, 3>{
-                    getFieldPointer(FieldType::Efield_fp, lev, 0),
-                    getFieldPointer(FieldType::Efield_fp, lev, 1),
-                    getFieldPointer(FieldType::Efield_fp, lev, 2)
-                }
-#   endif
-            );
-        }
-        post_phi_calculation = ElectrostaticSolver::EBCalcEfromPhiPerLevel(e_field);
-    }
+    const std::optional<ElectrostaticSolver::EBCalcEfromPhiPerLevel> post_phi_calculation;
     const std::optional<amrex::Vector<amrex::FArrayBoxFactory const *> > eb_farray_box_factory;
 #endif
 
