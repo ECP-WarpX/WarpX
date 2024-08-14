@@ -51,36 +51,6 @@ namespace ParticleUtils {
         return amrex::IntVect(AMREX_D_DECL(ii, jj, kk));
     }
 
-    /** Determine which cell a particle lies in.
-     *
-     * Returns an amrex::IntVect with the i, j, k indices of the cell the particle lies within
-     *
-     * @param[in] p the particle whose cell index we are finding
-     * @param[in] plo the particle lower bounds
-     * @param[in] dxi the inverse cell size
-     */
-    AMREX_GPU_HOST_DEVICE AMREX_INLINE
-    amrex::IntVect getParticleCellIndex (const WarpXParticleContainer::ParticleType& p,
-                                         amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& plo,
-                                         amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi) {
-        return getParticleCellIndex(p.pos(0), p.pos(1), p.pos(2), plo, dxi);
-    }
-
-    /** Determine which cell a particle lies in.
-     *
-     * Returns an amrex::IntVect with the i, j, k indices of the cell the particle lies within
-     *
-     * @param[in] p the particle whose cell index we are finding
-     * @param[in] plo the particle lower bounds
-     * @param[in] dxi the inverse cell size
-     */
-    AMREX_GPU_HOST_DEVICE AMREX_INLINE
-    amrex::IntVect getParticleCellIndex (const WarpXParticleContainer::SuperParticleType& p,
-                                         amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& plo,
-                                         amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi) {
-        return getParticleCellIndex(p.pos(0), p.pos(1), p.pos(2), plo, dxi);
-    }
-
     /**
      * \brief Find the particles and count the particles that are in each cell. More specifically
      * this function returns an amrex::DenseBins object containing an offset array and a permutation
