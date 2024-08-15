@@ -11,7 +11,7 @@ series = OpenPMDTimeSeries('./diags/diag1')
 steps = series.iterations
 
 
-for slice_axis in ['x', 'y']: # slice the fields along x and y 
+for slice_axis in ['x', 'y']: # slice the fields along x and y
 
     for n in steps: # loop through the available timesteps
 
@@ -25,7 +25,7 @@ for slice_axis in ['x', 'y']: # slice the fields along x and y
         Bx, info = series.get_field(field='B', coord='x', iteration=n, plot=False, slice_across=slice_axis)
         By, info = series.get_field(field='B', coord='y', iteration=n, plot=False, slice_across=slice_axis)
         Bz, info = series.get_field(field='B', coord='z', iteration=n, plot=False, slice_across=slice_axis)
-        # get charge densities 
+        # get charge densities
         rho_beam1, info = series.get_field(field='rho_beam1', iteration=n, plot=False, slice_across=slice_axis)
         rho_beam2, info = series.get_field(field='rho_beam2', iteration=n, plot=False, slice_across=slice_axis)
         rho_ele1,  info = series.get_field(field='rho_ele1',  iteration=n, plot=False, slice_across=slice_axis)
@@ -45,7 +45,7 @@ for slice_axis in ['x', 'y']: # slice the fields along x and y
             ymin = info.x.min()
             ymax = info.x.max()
             ylabel = 'x [m]'
-        
+
         # plot E magnitude
         Emag = np.sqrt(Ex**2+Ey**2+Ez**2)
         im = ax[0,0].imshow(np.transpose(Emag), cmap='seismic', extent=[xmin, xmax, ymin, ymax], vmin=0, vmax=np.max(np.abs(Emag)))
@@ -62,7 +62,7 @@ for slice_axis in ['x', 'y']: # slice the fields along x and y
         cax = divider.append_axes('right', size='5%', pad=0.05)
         fig.colorbar(im, cax=cax, orientation='vertical')
 
-        # plot beam densities 
+        # plot beam densities
         rho_beams = rho_beam1+rho_beam2
         im = ax[0,1].imshow(np.transpose(rho_beams), cmap='seismic', extent=[xmin, xmax, ymin, ymax], vmin=-np.max(np.abs(rho_beams)), vmax=np.max(np.abs(rho_beams)))
         ax[0,1].set_title(r'$\rho$ beams [C/m$^3$]')
@@ -77,7 +77,7 @@ for slice_axis in ['x', 'y']: # slice the fields along x and y
         divider = make_axes_locatable(ax[1,1])
         cax = divider.append_axes('right', size='5%', pad=0.05)
         fig.colorbar(im, cax=cax, orientation='vertical')
-        
+
         for a in ax[-1,:].reshape(-1):
             a.set_xlabel(xlabel)
         for a in ax[:,0].reshape(-1):
