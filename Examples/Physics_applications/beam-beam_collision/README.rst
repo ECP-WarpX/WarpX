@@ -10,8 +10,8 @@ We consider a right-propagating electron bunch colliding against a left-propagat
 We turn on the Quantum Synchrotron QED module for photon emission (also known as beamstrahlung in the collider community) and
 the Breit-Wheeler QED module for the generation of electron-positron pairs (also known as coherent pair generation in the collider community).
 
-This solver computes the average velocity of each species, and solves the corresponding relativistic Poisson equation (see the WarpX documentation for ``warpx.do_electrostatic = relativistic`` for more details). This solver accurately reproduces the subtle cancellation that occurs for some components of ``E + v x B``, which is crucial in simulations of relativistic particles.
-
+This solver computes the average velocity of each species, and solves the corresponding relativistic Poisson equation (see the WarpX documentation for ``warpx.do_electrostatic = relativistic`` for more details). 
+This solver accurately reproduces the subtle cancellation that occurs for some components of ``E + v x B``, which is crucial in simulations of relativistic particles.
 
 This example is based on the following paper :cite:t:`ex-Yakimenko2019`.
 
@@ -31,13 +31,17 @@ For `MPI-parallel <https://www.mpi-forum.org>`__ runs, prefix these lines with `
 Visualize
 ---------
 
-The figure below shows the number of photons emitted per beam particle (left) and the number of secondary pairs generated per beam particle (right). We present the reduced diagnostics using the ``plot_reduced.py`` script and then further compare different results for the reduced diagnostics with some literature:
+The figure below shows the number of photons emitted per beam particle (left) and the number of secondary pairs generated per beam particle (right). 
+We compare different results for the reduced diagnostics with some literature:
 
 * (red) simplified WarpX simulation as the example stored in the directory ``/Examples/Physics_applications/beam-beam_collision``;
 * (blue) large-scale WarpX simulation (high resolution and ad hoc generated tables ;
 * (black) literature results from :cite:t:`ex-Yakimenko2019`.
 
-The small-scale simulation has been performed with a resolution of ``nx = 64, ny = 64, nz = 128`` grid cells, while the large-scale one has a much higher resolution of ``nx = 512, ny = 512, nz = 1024``. Moreover, the large-scale simulation uses dedicated QED lookup tables instead of the builtin tables. To generate the tables within WarpX, the code must be compiled with the flag ``-DWarpX_QED_TABLE_GEN=ON``. For the large-scale simulation we have used the following options:
+The small-scale simulation has been performed with a resolution of ``nx = 64, ny = 64, nz = 128`` grid cells, while the large-scale one with a much higher resolution of ``nx = 512, ny = 512, nz = 1024``. 
+Moreover, the large-scale simulation uses dedicated QED lookup tables instead of the builtin ones. 
+To generate the tables within WarpX, the code must be compiled with the flag ``-DWarpX_QED_TABLE_GEN=ON``. 
+For the large-scale simulation we have used the following options:
 
 .. code-block:: ini
 
@@ -67,40 +71,38 @@ The small-scale simulation has been performed with a resolution of ``nx = 64, ny
 
    Beam-beam collision benchmark against :cite:t:`ex-Yakimenko2019`.
 
+
+Below are two visualizations scripts that provide examples to graph the field and reduced diagnostics. 
+They are available in the ``Examples/Physics_applications/beam-beam_collision/`` folder and can be run as simply as ``python3 plot_fields.py`` and ``python3 plot_reduced.py``.
+
 .. tab-set::
 
-   .. tab-item:: Full Diagnostics
+   .. tab-item:: Field Diagnostics
 
-      This example can be run as a python script to visualize the fields evolution of the collision between two ultra-relativistic particle beams:
+      This script visualizes the evolution of the fields (:math:`|E|, |B|, \rho`) during the collision between the two ultra-relativistic lepton beams.
+      The magnitude of E and B and the charge densities of the primary beams and of the secondary pairs are sliced along either one of the two transverse coordinates (:math:`x` and `:math:`y`).
 
-      - **Python** script: ``python3 plot_full.py``
-
-      The python script loads WarpX simulation stored data (diags) using OpenPMDTimeSeries and iterates over each time step ``n = 65``, after which the fields ``E,B,rho`` components in ``x`` and ``y`` directions are extracted. There after, the plots to visualize the evolution of electric field ``E``, magnetic field ``B``, and charge density ``rho`` components of the two ultra-relativistic colliding particle beams are generated.
-
-      .. literalinclude:: plot_full.py
+      .. literalinclude:: plot_fields.py
          :language: python3
-         :caption: You can copy this file from ``Examples/Physics_applications/beam-beam_collision/plot_full.py``.
+         :caption: You can copy this file from ``Examples/Physics_applications/beam-beam_collision/plot_fields.py``.
 
-      .. figure:: https://gist.github.com/user-attachments/assets/7d41c5af-5347-4145-92c0-59279006a9de
-         :alt: Beam-beam collision fields at time step 90.
+      .. figure:: https://gist.github.com/user-attachments/assets/04c9c0ec-b580-446f-a11a-437c1b244a41
+         :alt: Slice across :math:`x` of different fields (:math:`|E|, |B|, \rho`) at timestep 45, in the middle of the collision.
          :width: 100%
 
-         Beam-beam collision fields at time step 90.
+         Slice across :math:`x` of different fields (:math:`|E|, |B|, \rho`) at timestep 45, in the middle of the collision.
 
 
    .. tab-item:: Reduced Diagnostics
 
-      This example can be run as a Python file in the same directory:
-
-      - **Python** script: ``python3 plot_reduced.py``
-      The python script below was used to produce the reduced diagnostics which was then further benchmarked with Yakimenko.
+      A similar script to the one below was used to produce the image showing the benchmark against :cite:t:`ex-Yakimenko2019`.
 
       .. literalinclude:: plot_reduced.py
          :language: python3
          :caption: You can copy this file from ``Examples/Physics_applications/beam-beam_collision/plot_reduced.py``.
 
       .. figure:: https://gist.github.com/user-attachments/assets/c280490a-f1f2-4329-ad3c-46817d245dc1
-         :alt: Beam-beam collision photon and pair production.
+         :alt: Photon and pair production rates in time throughout the collision.
          :width: 100%
 
-         Beam-beam collision photon and pair production.
+         Photon and pair production rates in time throughout the collision.
