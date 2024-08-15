@@ -137,6 +137,8 @@ jobs:
       # external repositories required for test analysis
       cd ..
       git clone --depth 1 https://github.com/ECP-WarpX/warpx-data.git
+      # FIXME do we want to select only specific datasets?
+      git clone --depth 1 https://github.com/openPMD/openPMD-example-datasets.git
       cd -
       rm -rf ${CEI_TMP}
       df -h

@@ -53,41 +53,50 @@ add_warpx_test(
     diags/diag1000300 # output
 )
 
-# FIXME
 # pml_x_psatd #################################################################
 #
-#add_warpx_test(
-#    pml_x_psatd # name
-#    2 # dims
-#    2 # nprocs
-#    OFF # eb
-#    Examples/Tests/pml/inputs_2d_test_pml_x_psatd # inputs
-#    Examples/Tests/pml/analysis_pml_psatd.py # analysis
-#    diags/diag1000300 # output
-#)
+add_warpx_test(
+    pml_x_psatd # name
+    2 # dims
+    2 # nprocs
+    OFF # eb
+    Examples/Tests/pml/inputs_2d_test_pml_x_psatd # inputs
+    Examples/Tests/pml/analysis_pml_psatd.py # analysis
+    diags/diag1000300 # output
+)
 
-# FIXME
+# pml_x_psatd_restart #########################################################
+#
+add_warpx_test(
+    pml_x_psatd_restart # name
+    2 # dims
+    2 # nprocs
+    OFF # eb
+    Examples/Tests/pml/inputs_2d_test_pml_x_psatd_restart # inputs
+    Examples/analysis_default_regression.py # analysis
+    diags/diag1000300 # output
+)
+
 # pml_x_yee ###################################################################
 #
-#add_warpx_test(
-#    pml_x_yee # name
-#    2 # dims
-#    2 # nprocs
-#    OFF # eb
-#    Examples/Tests/pml/inputs_2d_test_pml_x_yee # inputs
-#    Examples/Tests/pml/analysis_pml_yee.py # analysis
-#    diags/diag1000300 # output
-#)
+add_warpx_test(
+    pml_x_yee # name
+    2 # dims
+    2 # nprocs
+    OFF # eb
+    Examples/Tests/pml/inputs_2d_test_pml_x_yee # inputs
+    Examples/Tests/pml/analysis_pml_yee.py # analysis
+    diags/diag1000300 # output
+)
 
-# FIXME
-# pml_x_yee_eb ################################################################
+# pml_x_yee_restart ###########################################################
 #
-#add_warpx_test(
-#    pml_x_yee_eb # name
-#    2 # dims
-#    2 # nprocs
-#    ON # eb
-#    Examples/Tests/pml/inputs_2d_test_pml_x_yee_eb # inputs
-#    Examples/Tests/pml/analysis_pml_yee.py # analysis
-#    diags/diag1000300 # output
-#)
+add_warpx_test(
+    pml_x_yee_restart # name
+    2 # dims
+    2 # nprocs
+    OFF # eb
+    Examples/Tests/pml/inputs_2d_test_pml_x_yee_restart # inputs
+    Examples/analysis_default_regression.py # analysis
+    diags/diag1000300 # output
+)

@@ -3,5 +3,3 @@ FILE = inputs_2d_base
 
 # test input parameters
 algo.maxwell_solver = yee
-chk.file_prefix = pml_x_yee_chk
-chk.file_min_digits = 5

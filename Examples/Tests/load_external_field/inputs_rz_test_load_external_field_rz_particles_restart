@@ -1,0 +1,5 @@
+# base input parameters
+FILE = inputs_rz_test_load_external_field_rz_particles
+
+# test input parameters
+amr.restart = ../load_external_field_rz_particles/diags/chk000150
