@@ -233,7 +233,7 @@ public:
 
     //! If true, a correction is applied to the current in Fourier space,
     //  to satisfy the continuity equation and charge conservation
-    bool current_correction;
+    bool current_correction = true;
 
     //! If true, the PSATD update equation for E contains both J and rho
     //! (default is false for standard PSATD and true for Galilean PSATD)
@@ -667,7 +667,7 @@ public:
      */
     void Hybrid_QED_Push (int lev, PatchType patch_type, amrex::Real dt);
 
-    static amrex::Real quantum_xi_c2;
+    amrex::Real m_quantum_xi_c2;
 
     /** Check and potentially compute load balancing
      */
@@ -1398,9 +1398,6 @@ private:
      * \brief Checks for known numerical issues involving different WarpX modules
      */
     void CheckKnownIssues();
-
-    /** Check the requested resources and write performance hints */
-    void PerformanceHints ();
 
     void BuildBufferMasks ();
 
