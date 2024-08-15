@@ -25,8 +25,11 @@ warpx.do_pml_in_domain = 0
 ############ NUMERICS ###########
 #################################
 algo.maxwell_solver = psatd
+warpx.abort_on_warning_threshold = medium
+warpx.cfl = 0.7
 warpx.use_filter = 0
 algo.particle_shape = 1
+psatd.current_correction = 0
 
 #################################
 ############ PARTICLE ###########
