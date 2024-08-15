@@ -3,15 +3,17 @@
 
 # particle_absorption #########################################################
 #
-add_warpx_test(
-    particle_absorption # name
-    3 # dims
-    2 # nprocs
-    ON # eb
-    Examples/Tests/particle_boundary_process/inputs_3d_test_particle_absorption # inputs
-    Examples/Tests/particle_boundary_process/analysis_absorption.py # analysis
-    diags/diag1000060 # output
-)
+if(WarpX_EB)
+    add_warpx_test(
+        particle_absorption # name
+        3 # dims
+        2 # nprocs
+        ON # eb
+        Examples/Tests/particle_boundary_process/inputs_3d_test_particle_absorption # inputs
+        Examples/Tests/particle_boundary_process/analysis_absorption.py # analysis
+        diags/diag1000060 # output
+    )
+endif()
 
 # particle_reflection_picmi ###################################################
 #
