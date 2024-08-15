@@ -1,0 +1,5 @@
+# base input parameters
+FILE = inputs_3d_test_acceleration
+
+# test input parameters
+amr.restart = ../acceleration/diags/chk000005

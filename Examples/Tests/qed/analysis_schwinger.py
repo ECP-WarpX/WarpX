@@ -41,7 +41,8 @@ By_test = 0.
 Bz_test = 0.
 
 # Find which test we are doing
-test_number = re.search( 'qed_schwinger([1234])', filename ).group(1)
+test_name = os.path.split(os.getcwd())[1]
+test_number = re.search( 'qed_schwinger_([1234])', test_name ).group(1)
 if test_number == '1':
     # First Schwinger test with "weak" EM field. No pair should be created.
     Ex_test = 1.e16

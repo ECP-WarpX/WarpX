@@ -2,19 +2,19 @@
 ####### GENERAL PARAMETERS ######
 #################################
 max_step = 2
-amr.n_cell =  16 16 16
+amr.n_cell =  32 32
 amr.max_grid_size = 16   # maximum size of each AMReX box, used to decompose the domain
 amr.blocking_factor = 8 # minimum size of each AMReX box, used to decompose the domain
-geometry.dims = 3
-geometry.prob_lo     =  -0.25e-6   -0.25e-6  -0.25e-6  # physical domain
-geometry.prob_hi     =  0.25e-6   0.25e-6   0.25e-6
+geometry.dims = 2
+geometry.prob_lo     =  -0.25e-6   -0.25e-6  # physical domain
+geometry.prob_hi     =  0.25e-6   0.25e-6
 amr.max_level = 0 # Maximum level in hierarchy (1 might be unstable, >1 is not supported)
 
 #################################
 ####### Boundary condition ######
 #################################
-boundary.field_lo = periodic periodic periodic
-boundary.field_hi = periodic periodic periodic
+boundary.field_lo = periodic periodic
+boundary.field_hi = periodic periodic
 
 #################################
 ############ NUMERICS ###########
@@ -28,6 +28,7 @@ warpx.do_dive_cleaning = 0
 warpx.use_filter = 1
 warpx.cfl = 1. # if 1., the time step is set to its CFL limit
 warpx.serialize_initial_conditions = 1
+warpx.abort_on_warning_threshold = high
 
 # Order of particle shape factors
 algo.particle_shape = 3
@@ -42,7 +43,7 @@ particles.photon_species = qsp_1 qsp_2 qsp_3 qsp_4
 p1.species_type = "electron"
 p1.injection_style = "NUniformPerCell"
 p1.profile = "constant"
-p1.num_particles_per_cell_each_dim = 8 8 4
+p1.num_particles_per_cell_each_dim = 32 32
 p1.density = 1e1
 p1.momentum_distribution_type = "constant"
 p1.ux = 10.0
@@ -54,7 +55,7 @@ p1.qed_quantum_sync_phot_product_species = qsp_1
 p2.species_type = "electron"
 p2.injection_style = "NUniformPerCell"
 p2.profile = "constant"
-p2.num_particles_per_cell_each_dim = 8 8 4
+p2.num_particles_per_cell_each_dim = 32 32
 p2.density = 1e1
 p2.momentum_distribution_type = "constant"
 p2.uy = 100.0
@@ -66,7 +67,7 @@ p2.qed_quantum_sync_phot_product_species = qsp_2
 p3.species_type = "positron"
 p3.injection_style = "NUniformPerCell"
 p3.profile = "constant"
-p3.num_particles_per_cell_each_dim = 8 8 4
+p3.num_particles_per_cell_each_dim = 32 32
 p3.density = 1e1
 p3.momentum_distribution_type = "constant"
 p3.uz = 1000.0
@@ -78,7 +79,7 @@ p3.qed_quantum_sync_phot_product_species = qsp_3
 p4.species_type = "positron"
 p4.injection_style = "NUniformPerCell"
 p4.profile = "constant"
-p4.num_particles_per_cell_each_dim = 8 8 4
+p4.num_particles_per_cell_each_dim = 32 32
 p4.density = 1e1
 p4.momentum_distribution_type = "constant"
 p4.ux = 5773.502691896
@@ -178,12 +179,12 @@ diagnostics.diags_names = diag1
 diag1.intervals = 2
 diag1.diag_type = Full
 diag1.fields_to_plot = Ex
-diag1.p1.variables = x y z ux uy uz w opticalDepthQSR
-diag1.p2.variables = x y z ux uy uz w opticalDepthQSR
-diag1.p3.variables = x y z ux uy uz w opticalDepthQSR
-diag1.p4.variables = x y z ux uy uz w opticalDepthQSR
+diag1.p1.variables = x z ux uy uz w opticalDepthQSR
+diag1.p2.variables = x z ux uy uz w opticalDepthQSR
+diag1.p3.variables = x z ux uy uz w opticalDepthQSR
+diag1.p4.variables = x z ux uy uz w opticalDepthQSR
 
-diag1.qsp_1.variables = x y z ux uy uz w opticalDepthBW
-diag1.qsp_2.variables = x y z ux uy uz w opticalDepthBW
-diag1.qsp_3.variables = x y z ux uy uz w opticalDepthBW
-diag1.qsp_4.variables = x y z ux uy uz w opticalDepthBW
+diag1.qsp_1.variables = x z ux uy uz w opticalDepthBW
+diag1.qsp_2.variables = x z ux uy uz w opticalDepthBW
+diag1.qsp_3.variables = x z ux uy uz w opticalDepthBW
+diag1.qsp_4.variables = x z ux uy uz w opticalDepthBW

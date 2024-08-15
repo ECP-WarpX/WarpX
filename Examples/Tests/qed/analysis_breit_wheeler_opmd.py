@@ -9,7 +9,7 @@
 
 import sys
 
-import analysis_core as ac
+import analysis_breit_wheeler_core as ac
 import openpmd_api as io
 
 #sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
@@ -17,7 +17,7 @@ import openpmd_api as io
 
 
 # This script is a frontend for the analysis routines
-# in analysis_core.py (please refer to this file for
+# in analysis_breit_wheeler_core.py (please refer to this file for
 # a full description). It reads output files in openPMD
 # format and extracts the data needed for
 # the analysis routines.

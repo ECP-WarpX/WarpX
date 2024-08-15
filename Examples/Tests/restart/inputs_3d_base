@@ -1,7 +1,6 @@
 #################################
 ####### GENERAL PARAMETERS ######
 #################################
-#amr.restart = diags/chk00005/
 max_step = 10
 amr.n_cell = 32 32 256
 amr.max_grid_size = 64
