@@ -10,7 +10,7 @@ We consider a right-propagating electron bunch colliding against a left-propagat
 We turn on the Quantum Synchrotron QED module for photon emission (also known as beamstrahlung in the collider community) and
 the Breit-Wheeler QED module for the generation of electron-positron pairs (also known as coherent pair generation in the collider community).
 
-This solver computes the average velocity of each species, and solves the corresponding relativistic Poisson equation (see the WarpX documentation for ``warpx.do_electrostatic = relativistic`` for more details). 
+This solver computes the average velocity of each species, and solves the corresponding relativistic Poisson equation (see the WarpX documentation for ``warpx.do_electrostatic = relativistic`` for more details).
 This solver accurately reproduces the subtle cancellation that occurs for some components of ``E + v x B``, which is crucial in simulations of relativistic particles.
 
 This example is based on the following paper :cite:t:`ex-Yakimenko2019`.
@@ -31,16 +31,16 @@ For `MPI-parallel <https://www.mpi-forum.org>`__ runs, prefix these lines with `
 Visualize
 ---------
 
-The figure below shows the number of photons emitted per beam particle (left) and the number of secondary pairs generated per beam particle (right). 
+The figure below shows the number of photons emitted per beam particle (left) and the number of secondary pairs generated per beam particle (right).
 We compare different results for the reduced diagnostics with some literature:
 
 * (red) simplified WarpX simulation as the example stored in the directory ``/Examples/Physics_applications/beam-beam_collision``;
 * (blue) large-scale WarpX simulation (high resolution and ad hoc generated tables ;
 * (black) literature results from :cite:t:`ex-Yakimenko2019`.
 
-The small-scale simulation has been performed with a resolution of ``nx = 64, ny = 64, nz = 128`` grid cells, while the large-scale one with a much higher resolution of ``nx = 512, ny = 512, nz = 1024``. 
-Moreover, the large-scale simulation uses dedicated QED lookup tables instead of the builtin ones. 
-To generate the tables within WarpX, the code must be compiled with the flag ``-DWarpX_QED_TABLE_GEN=ON``. 
+The small-scale simulation has been performed with a resolution of ``nx = 64, ny = 64, nz = 128`` grid cells, while the large-scale one with a much higher resolution of ``nx = 512, ny = 512, nz = 1024``.
+Moreover, the large-scale simulation uses dedicated QED lookup tables instead of the builtin ones.
+To generate the tables within WarpX, the code must be compiled with the flag ``-DWarpX_QED_TABLE_GEN=ON``.
 For the large-scale simulation we have used the following options:
 
 .. code-block:: ini
@@ -72,7 +72,7 @@ For the large-scale simulation we have used the following options:
    Beam-beam collision benchmark against :cite:t:`ex-Yakimenko2019`.
 
 
-Below are two visualizations scripts that provide examples to graph the field and reduced diagnostics. 
+Below are two visualizations scripts that provide examples to graph the field and reduced diagnostics.
 They are available in the ``Examples/Physics_applications/beam-beam_collision/`` folder and can be run as simply as ``python3 plot_fields.py`` and ``python3 plot_reduced.py``.
 
 .. tab-set::
