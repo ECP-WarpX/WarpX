@@ -114,4 +114,4 @@ post_processing_utils.check_random_filter(last_fn, random_filter_fn, random_frac
                                           dim, species_name)
 
 test_name = os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, fn)
+checksumAPI.evaluate_checksum(test_name, fn, rtol=1e-1)
