@@ -25,6 +25,7 @@
 #       include <oneapi/mkl/dfti.hpp>
 #   else
 #       include <fftw3.h>
+#       include <complex>
 #   endif
 #endif
 
@@ -68,11 +69,8 @@ namespace ablastr::math::anyfft
 #   elif defined(AMREX_USE_SYCL)
         using Complex = amrex::GpuComplex<amrex::Real>;
 #   else
-#       ifdef AMREX_USE_FLOAT
-            using Complex = fftwf_complex;
-#       else
-            using Complex = fftw_complex;
-#       endif
+        // see: https://www.fftw.org/fftw3_doc/Complex-numbers.html
+        using Complex = std::complex<amrex::Real>;
 #   endif
 
     /** Library-dependent FFT plans type, which holds one fft plan per box
