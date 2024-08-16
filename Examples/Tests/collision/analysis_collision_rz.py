@@ -55,4 +55,4 @@ print('tolerance = ', tolerance)
 assert(error < tolerance)
 
 test_name = os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, fn, do_particles=False)
+checksumAPI.evaluate_checksum(test_name, last_fn, do_particles=False)
