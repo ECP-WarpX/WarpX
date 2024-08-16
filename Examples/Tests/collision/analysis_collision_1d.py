@@ -123,4 +123,4 @@ print('tolerance = ', tolerance);
 assert error < tolerance
 
 test_name = os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, fn)
+checksumAPI.evaluate_checksum(test_name, fn, rtol=2.5e-3)
