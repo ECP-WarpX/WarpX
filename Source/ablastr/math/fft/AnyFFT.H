@@ -15,12 +15,14 @@
 
 #   if defined(AMREX_USE_CUDA)
 #       include <cufft.h>
+#       include <cuComplex.h>
 #   elif defined(AMREX_USE_HIP)
 #       if __has_include(<rocfft/rocfft.h>)  // ROCm 5.3+
 #           include <rocfft/rocfft.h>
 #       else
 #           include <rocfft.h>
 #       endif
+#       include <hip/hip_complex.h>
 #   elif defined(AMREX_USE_SYCL)
 #       include <oneapi/mkl/dfti.hpp>
 #   else
@@ -73,6 +75,28 @@ namespace ablastr::math::anyfft
 #       else
             using Complex = fftw_complex;
 #       endif
+#   endif
+
+    /* Library-dependent multiply helpers */
+#   if defined(AMREX_USE_CUDA)
+#       ifdef AMREX_USE_FLOAT
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void multiply (Complex & c, Complex const & a, Complex const & b) { c = cuCmulf(a, b); }
+#       else
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void multiply (Complex & c, Complex const & a, Complex const & b) { c = cuCmul(a, b); }
+#       endif
+#   elif defined(AMREX_USE_HIP)
+    #   ifdef AMREX_USE_FLOAT
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void multiply (Complex & c, Complex const & a, Complex const & b) { c = hipCmulf(a, b); }
+#       else
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void multiply (Complex & c, Complex const & a, Complex const & b) { c = hipCmul(a, b); }
+#       endif
+#   elif defined(AMREX_USE_SYCL)
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void multiply (Complex & c, Complex const & a, Complex const & b) { c = a * b; }
+#   else
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void multiply (Complex & c, Complex const & a, Complex const & b) {
+        c[0] = a[0] * b[0] - a[1] * b[1];
+        c[1] = a[0] * b[1] + a[1] * b[0];
+    }
 #   endif
 
     /** Library-dependent FFT plans type, which holds one fft plan per box
