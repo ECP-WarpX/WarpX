@@ -26,7 +26,6 @@
 import glob
 import math
 import os
-import re
 import sys
 
 import numpy
@@ -55,12 +54,10 @@ a =  0.04330638981264072
 b = -0.11588277796546632
 
 last_fn = sys.argv[1]
-# Remove trailing '/' from file name, if necessary
-last_fn.rstrip('/')
-# Find last iteration in file name, such as 'test_name_plt000001' (last_it = '000001')
-last_it = re.search('\d+', last_fn).group()
-# Find output prefix in file name, such as 'test_name_plt000001' (prefix = 'test_name_plt')
-prefix = last_fn[:-len(last_it)]
+if (last_fn[-1] == "/"): last_fn = last_fn[:-1]
+last_it = last_fn[-6:] # i.e., 000150
+prefix = last_fn[:-6]  # i.e., diags/diag1
+
 # Collect all output files in fn_list (names match pattern prefix + arbitrary number)
 fn_list = glob.glob(prefix + '*[0-9]')
 
@@ -92,7 +89,7 @@ assert(error < tolerance)
 if "Python" in last_fn:
     exit()
 
-## In the second past of the test, we verify that the diagnostic particle filter function works as
+## In the second part of the test, we verify that the diagnostic particle filter function works as
 ## expected. For this, we only use the last simulation timestep.
 
 dim = "2d"
@@ -114,4 +111,4 @@ post_processing_utils.check_random_filter(last_fn, random_filter_fn, random_frac
                                           dim, species_name)
 
 test_name = os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, fn, rtol=1e-1)
+checksumAPI.evaluate_checksum(test_name, last_fn)
