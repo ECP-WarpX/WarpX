@@ -1658,7 +1658,7 @@ class LaserAntenna(picmistandard.PICMI_LaserAntenna):
 
 class LoadInitialField(picmistandard.PICMI_LoadGriddedField):
     def init(self, kw):
-        self.do_divb_cleaning_external = kw.pop('warpx_do_divb_cleaning_external', None)
+        self.do_divb_cleaning_external = kw.pop('warpx_do_divb_cleaning_external', True)
 
     def applied_field_initialize_inputs(self):
         pywarpx.warpx.read_fields_from_path = self.read_fields_from_path
@@ -1678,7 +1678,7 @@ class LoadInitialFieldFromPython:
 
     Parameters
     ----------
-    warpx_do_divb_cleaning_external: bool, default=False
+    warpx_do_divb_cleaning_external: bool, default=True
         Flag that controls whether or not to execute the Projection based B-field divergence cleaner.
 
     load_E: bool, default=True
@@ -1688,7 +1688,7 @@ class LoadInitialFieldFromPython:
         B field is expected to be loaded in the registered callback.
     """
     def __init__(self, **kw):
-        self.do_divb_cleaning_external = kw.pop('warpx_do_divb_cleaning_external', None)
+        self.do_divb_cleaning_external = kw.pop('warpx_do_divb_cleaning_external', True)
 
         # If using load_from_python, a function handle is expected for callback
         self.load_from_python = kw.pop('load_from_python')

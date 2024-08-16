@@ -2496,7 +2496,7 @@ Additional parameters
 
 * ``warpx.do_divb_cleaning_external`` (`0` or `1` ; default: 0)
     Whether to use projection method to scrub B field divergence in externally
-    loaded fields.
+    loaded fields. This is automatically turned on if external B fields are loaded.
 
 * ``warpx.do_subcycling`` (`0` or `1`; default: 0)
     Whether or not to use sub-cycling. Different refinement levels have a
