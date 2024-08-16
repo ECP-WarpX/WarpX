@@ -20,7 +20,7 @@ add_warpx_test(
     1 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/resampling/inputs_2d_test_resample_velocity_coincidence_thinning # inputs
+    Examples/Tests/resampling/inputs_1d_test_resample_velocity_coincidence_thinning # inputs
     Examples/analysis_default_regression.py # analysis
     diags/diag1000004 # output
 )
@@ -32,7 +32,7 @@ add_warpx_test(
     1 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/resampling/inputs_2d_test_resample_velocity_coincidence_thinning_cartesian # inputs
+    Examples/Tests/resampling/inputs_1d_test_resample_velocity_coincidence_thinning_cartesian # inputs
     Examples/analysis_default_regression.py # analysis
     diags/diag1000004 # output
 )

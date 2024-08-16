@@ -17,6 +17,7 @@ my_constants.dt = 0.1/wpe        # time step size, s
 
 max_step = 100
 amr.n_cell = nz
+amr.max_grid_size = 32
 amr.max_level = 0
 
 geometry.dims = 1

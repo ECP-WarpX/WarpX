@@ -1,14 +1,14 @@
 # Add tests (alphabetical order) ##############################################
 #
 
-# particle_boundary_interaction ###############################################
+# particle_boundary_interaction_picmi #########################################
 #
 add_warpx_test(
-    particle_boundary_interaction # name
+    particle_boundary_interaction_picmi # name
     RZ # dims
     2  # nprocs
-    OFF # eb
+    ON # eb
     Examples/Tests/particle_boundary_interaction/inputs_rz_test_particle_boundary_interaction_picmi.py # inputs
     Examples/Tests/particle_boundary_interaction/analysis.py # analysis
-    diags/diag1000023 # output
+    diags/diag1/ # output
 )

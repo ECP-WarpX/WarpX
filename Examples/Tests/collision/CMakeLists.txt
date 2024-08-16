@@ -46,7 +46,7 @@ add_warpx_test(
     OFF # eb
     Examples/Tests/collision/inputs_3d_test_collision_xyz # inputs
     Examples/Tests/collision/analysis_collision_3d.py # analysis
-    collision_xyz_plt000150 # output
+    diags/diag1000150 # output
 )
 
 # collision_xz ################################################################
@@ -58,7 +58,7 @@ add_warpx_test(
     OFF # eb
     Examples/Tests/collision/inputs_2d_test_collision_xz # inputs
     Examples/Tests/collision/analysis_collision_2d.py # analysis
-    collision_xz_plt000150 # output
+    diags/diag1000150 # output
 )
 
 # collision_xz_picmi ##########################################################
@@ -70,5 +70,5 @@ add_warpx_test(
     OFF # eb
     Examples/Tests/collision/inputs_2d_test_collision_xz_picmi.py # inputs
     Examples/Tests/collision/analysis_collision_2d.py # analysis
-    collision_xz_plt000150 # output
+    diags/diag1000150 # output
 )

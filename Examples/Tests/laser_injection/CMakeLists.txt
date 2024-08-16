@@ -34,5 +34,5 @@ add_warpx_test(
     OFF # eb
     Examples/Tests/laser_injection/inputs_3d_test_laser_injection_3d # inputs
     Examples/Tests/laser_injection/analysis_3d.py # analysis
-    diags/diag1001000 # output
+    diags/diag1000020 # output
 )

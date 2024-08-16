@@ -109,16 +109,12 @@ solver = picmi.ElectromagneticSolver(grid=grid, cfl=cfl)
 particle_diag = picmi.ParticleDiagnostic(
     name='diag1',
     period=10,
-    write_dir='.',
-    warpx_file_prefix='collision_xz_picmi_plt'
 )
 field_diag = picmi.FieldDiagnostic(
     name='diag1',
     grid=grid,
     period=10,
     data_list=[],
-    write_dir='.',
-    warpx_file_prefix='collision_xz_picmi_plt'
 )
 
 #################################
