@@ -75,6 +75,24 @@ namespace ablastr::math::anyfft
 #       endif
 #   endif
 
+    /* Library-dependent real/imag helpers */
+#   if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real & real (Complex & c) { return c.x; }
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real const & real (Complex const & c) { return c.x; }
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real & imag (Complex & c) { return c.y; }
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real const & imag (Complex const & c) { return c.y; }
+#   elif defined(AMREX_USE_SYCL)
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real & real (Complex & c) { return c.real(); }
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real const & real (Complex const & c) { return c.real(); }
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real & imag (Complex & c) { return c.imag(); }
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real const & imag (Complex const & c) { return c.imag(); }
+#   else
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real & real (Complex & c) { return c[0]; }
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real const & real (Complex const & c) { return c[0]; }
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real & imag (Complex & c) { return c[1]; }
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real const & imag (Complex const & c) { return c[1]; }
+#   endif
+
     /** Library-dependent FFT plans type, which holds one fft plan per box
      * (plans are only initialized for the boxes that are owned by the local MPI rank).
      */
