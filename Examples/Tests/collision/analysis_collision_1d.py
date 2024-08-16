@@ -26,8 +26,8 @@ sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
 # this will be the name of the plot file
-fn = sys.argv[1]
-ds = yt.load(fn)
+last_fn = sys.argv[1]
+ds = yt.load(last_fn)
 data = ds.covering_grid(level = 0, left_edge = ds.domain_left_edge, dims = ds.domain_dimensions)
 
 # carbon 12 ion (mass = 12*amu - 6*me)
@@ -123,4 +123,4 @@ print('tolerance = ', tolerance);
 assert error < tolerance
 
 test_name = os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, fn)
+checksumAPI.evaluate_checksum(test_name, last_fn)
