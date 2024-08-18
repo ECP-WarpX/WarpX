@@ -22,7 +22,7 @@ sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
 fn = sys.argv[1]
-use_MR = re.search( 'nci_correctorMR', fn ) != None
+use_MR = re.search( 'nci_correctorMR', fn ) is not None
 
 if use_MR:
     energy_corrector_off = 5.e32

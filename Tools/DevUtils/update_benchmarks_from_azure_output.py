@@ -46,7 +46,7 @@ with open(azure_output_filename, "r") as f:
             # "----------------"
             # which indicates that we have read the new file entirely
 
-            if not closing_string in line:
+            if closing_string not in line:
                 if not first_line_read:
                     # Raw Azure output comes with a prefix at the beginning of each line that we do
                     # not need here. The first line that we will read is the prefix followed by the

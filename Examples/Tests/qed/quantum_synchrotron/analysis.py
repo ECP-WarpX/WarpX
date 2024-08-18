@@ -93,7 +93,8 @@ def calc_chi_part(p, E, B):
 #Auxiliary functions
 @np.vectorize
 def IC_inner_alternative(y):
-    ff = lambda x : np.exp(-y*(1+(4*x**2)/3)*np.sqrt(1+x*x/3))*(9+36*x**2 + 16*x**4)/(3 + 4*x**2)/np.sqrt(1+(x**2)/3)
+    def ff(x):
+        return np.exp(-y * (1 + 4 * x ** 2 / 3) * np.sqrt(1 + x * x / 3)) * (9 + 36 * x ** 2 + 16 * x ** 4) / (3 + 4 * x ** 2) / np.sqrt(1 + x ** 2 / 3)
     # This integration may not converge in some cases, in which case a python warning message can
     # be issued. This is probably not a significant issue for this test case and these warnings can
     # be ignored.
