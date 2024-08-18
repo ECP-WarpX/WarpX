@@ -15,7 +15,6 @@ import sys
 import yt
 
 yt.funcs.mylog.setLevel(50)
-import numpy as np
 
 sys.path.insert(1, "../../../../warpx/Regression/Checksum/")
 import checksumAPI
@@ -28,7 +27,7 @@ ds = yt.load(fn)
 
 # count the number of particles
 ad = ds.all_data()
-np = ad["electrons", "particle_id"].size
+ps = ad["electrons", "particle_id"].size
 
 # the number of coarse particle streams
 n_coarse = 10
@@ -48,7 +47,7 @@ rr_longitudinal = 1
 
 np_expected = (n_coarse + n_fine * rr_longitudinal) * (n_0 + n_move)
 
-assert np == np_expected
+assert ps == np_expected
 
 # Test uniformity of rho, by taking a slice of rho that
 # crosses the edge of the refined injection region

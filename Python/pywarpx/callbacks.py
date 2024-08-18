@@ -342,9 +342,9 @@ def printcallbacktimers(tmin=1.0, lminmax=False, ff=None):
     if ff is None:
         ff = sys.stdout
     for c in callback_instances.values():
-        for fname, time in c.timers.items():
-            # vlist = numpy.array(gather(time))
-            vlist = numpy.array([time])
+        for fname, this_time in c.timers.items():
+            # vlist = numpy.array(gather(this_time))
+            vlist = numpy.array([this_time])
             # if me > 0: continue
             vsum = numpy.sum(vlist)
             if vsum <= tmin:

@@ -14,6 +14,7 @@
 
 import atexit
 import os
+import sys
 
 from .Geometry import geometry
 
