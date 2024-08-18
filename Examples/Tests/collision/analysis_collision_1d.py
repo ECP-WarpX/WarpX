@@ -11,7 +11,7 @@
 # run locally: python analysis_vandb_1d.py diags/diag1000600/
 #
 # This is a 1D intra-species Coulomb scattering relaxation test consisting
-# of a low density population streaming into a higher density population at rest.
+# of a low-density population streaming into a higher density population at rest.
 # Both populations belong to the same carbon12 ion species.
 # See test T1b from JCP 413 (2020) by D. Higginson, et al.
 #
