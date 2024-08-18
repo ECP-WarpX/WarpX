@@ -1,8 +1,13 @@
-/* Copyright 2024 Roelof Groenewald (TAE Technologies)
+/* Copyright 2024 The WarpX Community
  *
  * This file is part of WarpX.
  *
+ * Authors: Roelof Groenewald (TAE Technologies)
+ *
  * License: BSD-3-Clause-LBNL
+ */
+/*
+ * This file was copied and edited from PoissonSolver.H in the same directory.
  */
 #ifndef ABLASTR_SEMI_IMPLICIT_POISSON_SOLVER_H
 #define ABLASTR_SEMI_IMPLICIT_POISSON_SOLVER_H
