@@ -56,8 +56,8 @@ def dL_dt():
         series.flush()
         n1 = rho1 / q1
         n2 = rho2 / q2
-        l = 2 * np.sum(n1 * n2) * dV * c
-        lumi.append(l)
+        ln = 2 * np.sum(n1 * n2) * dV * c
+        lumi.append(ln)
     return lumi
 
 

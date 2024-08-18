@@ -35,7 +35,7 @@ data = data[:, 2:]
 n_data_fields = 0
 with open("./diags/reducedfiles/LBC.txt") as f:
     h = f.readlines()[0]
-    unique_headers = ["".join([l for l in w if not l.isdigit()]) for w in h.split()][
+    unique_headers = ["".join([ln for ln in w if not ln.isdigit()]) for w in h.split()][
         2::
     ]
     n_data_fields = len(set(unique_headers))

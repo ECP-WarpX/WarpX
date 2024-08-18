@@ -21,16 +21,16 @@ ts = OpenPMDTimeSeries("./EmbeddedBoundaryDiffraction_plt/")
 
 # Extract the intensity as a function of r and z
 Ex, info = ts.get_field("E", "x", iteration=300)
-I = gaussian_filter1d(
+In = gaussian_filter1d(
     Ex**2, sigma=5, axis=0
 )  # Extract intensity by averaging E^2 over wavelength
-irmax = np.argmax(I, axis=-1)
+irmax = np.argmax(In, axis=-1)
 
 
 # Find the radius of the first minimum, as a function of z
 def r_first_minimum(iz):
     ir = len(info.r) // 2
-    while I[iz, ir + 1] < I[iz, ir]:
+    while In[iz, ir + 1] < In[iz, ir]:
         ir += 1
     return info.r[ir]
 

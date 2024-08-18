@@ -204,7 +204,7 @@ def _read_field(raw_file, field_name):
                 f.readline()  # skip the first line
             arr = np.fromfile(f, "float64", np.product(shape))
             arr = arr.reshape(shape, order="F")
-            box_shape = [slice(l, h + 1) for l, h in zip(lo, hi)]
+            box_shape = [slice(low, hig + 1) for low, hig in zip(lo, hi)]
             if header.ncomp > 1:
                 box_shape += [slice(None)]
             data[tuple(box_shape)] = arr
@@ -234,7 +234,9 @@ def _read_buffer(snapshot, header_fn, _component_names):
             for i in range(header.ncomp):
                 comp_data = arr[i * size : (i + 1) * size].reshape(shape, order="F")
                 data = all_data[_component_names[i]]
-                data[tuple([slice(l, h + 1) for l, h in zip(lo, hi)])] = comp_data
+                data[tuple([slice(low, hig + 1) for low, hig in zip(lo, hi)])] = (
+                    comp_data
+                )
                 all_data[_component_names[i]] = data
     return all_data
 

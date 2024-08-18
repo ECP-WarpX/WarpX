@@ -68,7 +68,7 @@ class SimData:
         with open(directory) as f:
             h = f.readlines()[0]
             unique_headers = [
-                "".join([l for l in w if not l.isdigit()]) for w in h.split()
+                "".join([ln for ln in w if not ln.isdigit()]) for w in h.split()
             ][2::]
 
         # Either 9 or 10 depending if GPU

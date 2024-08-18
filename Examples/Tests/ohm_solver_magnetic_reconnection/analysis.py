@@ -151,7 +151,7 @@ if not sim.test:
     for path in get_field_lines(data0["Bx"], data0["Bz"]):
         path_x = path[0]
         path_z = path[1]
-        (l,) = axes[2].plot(path_x, path_z, "--", color="k")
+        (ln,) = axes[2].plot(path_x, path_z, "--", color="k")
         # draws arrows on the field lines
         # if path_x[10] > path_x[0]:
         axes[2].arrow(
@@ -166,7 +166,7 @@ if not sim.test:
             color="g",
         )
 
-        field_lines.append(l)
+        field_lines.append(ln)
 
     def animate(i):
         data = np.load(datafiles[i])
