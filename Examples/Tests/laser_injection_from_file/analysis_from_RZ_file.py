@@ -41,7 +41,6 @@ relative_error_threshold = 0.065
 # Physical parameters
 um = 1.0e-6
 fs = 1.0e-15
-c = 299792458
 
 # Parameters of the Laguerre Gaussian beam
 wavelength = 1.0 * um
