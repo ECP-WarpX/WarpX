@@ -31,7 +31,8 @@ filename = sys.argv[1]
 current_correction = False
 time_averaging = False
 periodic_single_box = False
-warpx_used_inputs = open("./warpx_used_inputs", "r").read()
+with open("./warpx_used_inputs", "r") as f:
+    warpx_used_inputs = f.read()
 if re.search("geometry.dims\s*=\s*2", warpx_used_inputs):
     dims = "2D"
 elif re.search("geometry.dims\s*=\s*RZ", warpx_used_inputs):

@@ -54,7 +54,8 @@ MeV_to_Joule = scc.e * 1e6
 barn_to_square_meter = 1.0e-28
 
 ## Checks whether this is the 2D or the 3D test
-warpx_used_inputs = open("./warpx_used_inputs", "r").read()
+with open("./warpx_used_inputs", "r") as f:
+    warpx_used_inputs = f.read()
 if re.search("geometry.dims = RZ", warpx_used_inputs):
     is_RZ = True
 else:
