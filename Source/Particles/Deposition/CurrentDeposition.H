@@ -739,13 +739,12 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
             double const z_new = (zp - xyzmin.z + (relative_time + 0.5_rt*dt)*uzp[ip]*gaminv)*dinv.z;
             double const z_old = z_new - dt*dinv.z*uzp[ip]*gaminv;
 
-// Only execute for EB (embedded boundary)
+            bool close_to_eb_old = false;
+            bool close_to_eb_new = false;
 #ifdef AMREX_USE_EB
             // Check whether the particle is close to the EB at the old and new position
             // TODO: abstract in a separate function (doGatherScalarFieldNodal)
             // TODO: check calculation for RZ
-            bool close_to_eb_old = false;
-            bool close_to_eb_new = false;
             {
                 int i, j, k;
                 amrex::Real W[AMREX_SPACEDIM][2];
