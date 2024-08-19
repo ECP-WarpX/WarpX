@@ -1658,7 +1658,7 @@ class LaserAntenna(picmistandard.PICMI_LaserAntenna):
 
 class LoadInitialField(picmistandard.PICMI_LoadGriddedField):
     def init(self, kw):
-        self.do_divb_cleaning_external = kw.pop('warpx_do_divb_cleaning_external', True)
+        self.do_divb_cleaning_external = kw.pop('warpx_do_divb_cleaning_external', None)
 
     def applied_field_initialize_inputs(self):
         pywarpx.warpx.read_fields_from_path = self.read_fields_from_path
