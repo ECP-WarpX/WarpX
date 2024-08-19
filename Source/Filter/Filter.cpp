@@ -94,7 +94,7 @@ void Filter::DoFilter (const Box& tbx,
                        Array4<Real      > const& dst,
                        int scomp, int dcomp, int ncomp)
 {
-    AMREX_D_DECL(
+    AMREX_D_TERM(
     amrex::Real const* AMREX_RESTRICT sx = stencil_x.data();,
     amrex::Real const* AMREX_RESTRICT sy = stencil_y.data();,
     amrex::Real const* AMREX_RESTRICT sz = stencil_z.data();
@@ -273,7 +273,7 @@ void Filter::DoFilter (const Box& tbx,
     const auto lo = amrex::lbound(tbx);
     const auto hi = amrex::ubound(tbx);
     // tmp and dst are of type Array4 (Fortran ordering)
-    AMREX_D_DECL(
+    AMREX_D_TERM(
     amrex::Real const* AMREX_RESTRICT sx = stencil_x.data();,
     amrex::Real const* AMREX_RESTRICT sy = stencil_y.data();,
     amrex::Real const* AMREX_RESTRICT sz = stencil_z.data();
