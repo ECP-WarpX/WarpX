@@ -1688,7 +1688,7 @@ class LoadInitialFieldFromPython:
         B field is expected to be loaded in the registered callback.
     """
     def __init__(self, **kw):
-        self.do_divb_cleaning_external = kw.pop('warpx_do_divb_cleaning_external', True)
+        self.do_divb_cleaning_external = kw.pop('warpx_do_divb_cleaning_external', None)
 
         # If using load_from_python, a function handle is expected for callback
         self.load_from_python = kw.pop('load_from_python')
