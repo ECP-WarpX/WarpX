@@ -779,8 +779,9 @@ WarpX::ReadParameters ()
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             (
-                !(do_magnetostatic_solve &&
-                poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction)
+                // Check for !(magnetostatic AND FFT solver), but clang-tidy
+                // forces the more complicated way.
+                (!do_magnetostatic_solve || poisson_solver_id != PoissonSolverAlgo::IntegratedGreenFunction)
             ),
             "The FFT Poisson solver is not implemented in labframe-electromagnetostatic mode yet."
         );
