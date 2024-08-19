@@ -48,4 +48,3 @@ diag1.diag_type = Full
 diag1.format = plotfile
 diag1.intervals = 1
 diag1.fields_to_plot = Az Bx By Ex Ey jz phi rho
-diag1.file_prefix = ./magnetostatic_eb_3d_mr_plt
