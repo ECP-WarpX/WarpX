@@ -34,12 +34,9 @@ import pybtex.plugin
 import sphinx_rtd_theme  # noqa
 from pybtex.style.formatting.unsrt import Style as UnsrtStyle
 
-sys.path.insert(
-    0,
-    os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "../../Regression/Checksum"
-    ),
-)
+module_path = os.path.dirname(os.path.abspath(__file__))
+checksum_path = os.path.join(module_path, "../../Regression/Checksum")
+sys.path.insert(0, checksum_path)
 
 # -- General configuration ------------------------------------------------
 
