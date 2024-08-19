@@ -122,16 +122,17 @@ void NCIGodfreyFilter::ComputeStencils()
     h_stencil_z[0] /= 2._rt;
 
     stencil_x.resize(h_stencil_x.size());
-#  if defined(WARPX_DIM_3D)
-    stencil_y.resize(h_stencil_y.size());
-#  endif
-    stencil_z.resize(h_stencil_z.size());
-
     Gpu::copyAsync(Gpu::hostToDevice,h_stencil_x.begin(),h_stencil_x.end(),stencil_x.begin());
 #  if defined(WARPX_DIM_3D)
+    stencil_y.resize(h_stencil_y.size());
+    stencil_z.resize(h_stencil_z.size());
     Gpu::copyAsync(Gpu::hostToDevice,h_stencil_y.begin(),h_stencil_y.end(),stencil_y.begin());
-#  endif
     Gpu::copyAsync(Gpu::hostToDevice,h_stencil_z.begin(),h_stencil_z.end(),stencil_z.begin());
+#  elif (AMREX_SPACEDIM == 2)
+    // In 2D, the filter applies stencil_y to the 2nd dimension
+    stencil_y.resize(h_stencil_z.size());
+    Gpu::copyAsync(Gpu::hostToDevice,h_stencil_z.begin(),h_stencil_z.end(),stencil_y.begin());
+#  endif
 
     Gpu::synchronize();
 }

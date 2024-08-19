@@ -133,7 +133,7 @@ void warpx_interp (int j, int k, int l,
 
     // Refinement ratio
     const int rj = rr[0];
-#if defined(WARPX_DIM_1D_Z)
+#if AMREX_SPACEDIM == 1
     constexpr int rk = 1;
     constexpr int rl = 1;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
@@ -155,7 +155,7 @@ void warpx_interp (int j, int k, int l,
 
     // Staggering of coarse array (0: cell-centered; 1: nodal)
     const int sj_cp = arr_coarse_stag[0];
-#if defined(WARPX_DIM_1D_Z)
+#if AMREX_SPACEDIM == 1
     constexpr int sk_cp = 0;
     constexpr int sl_cp = 0;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
@@ -182,7 +182,7 @@ void warpx_interp (int j, int k, int l,
     // 1) Interpolation from coarse nodal to fine nodal
 
     nj = 2;
-#if defined(WARPX_DIM_1D_Z)
+#if AMREX_SPACEDIM == 1
     nk = 1;
     nl = 1;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
@@ -212,7 +212,7 @@ void warpx_interp (int j, int k, int l,
     // 2) Interpolation from coarse staggered to fine nodal
 
     nj = 2;
-#if defined(WARPX_DIM_1D_Z)
+#if AMREX_SPACEDIM == 1
     nk = 1;
     nl = 1;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
@@ -250,7 +250,7 @@ void warpx_interp (int j, int k, int l,
     // 3) Interpolation from fine staggered to fine nodal
 
     nj = (sj_fp == 0) ? 2 : 1;
-#if defined(WARPX_DIM_1D_Z)
+#if AMREX_SPACEDIM == 1
     nk = 1;
     nl = 1;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
@@ -262,7 +262,7 @@ void warpx_interp (int j, int k, int l,
 #endif
 
     const int jm = (sj_fp == 0) ? j-1 : j;
-#if defined(WARPX_DIM_1D_Z)
+#if AMREX_SPACEDIM == 1
     const int km = k;
     const int lm = l;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
@@ -401,12 +401,12 @@ void warpx_interp (const int j,
                    amrex::Array4<amrex::Real const> const& src_arr,
                    const amrex::IntVect& dst_stag,
                    const amrex::IntVect& src_stag,
-                   const int nox = 2,
-                   const int noy = 2,
-                   const int noz = 2,
-                   amrex::Real const* stencil_coeffs_x = nullptr,
-                   amrex::Real const* stencil_coeffs_y = nullptr,
-                   amrex::Real const* stencil_coeffs_z = nullptr)
+                   [[maybe_unused]] const int nox = 2,
+                   [[maybe_unused]] const int noy = 2,
+                   [[maybe_unused]] const int noz = 2,
+                   [[maybe_unused]] amrex::Real const* stencil_coeffs_x = nullptr,
+                   [[maybe_unused]] amrex::Real const* stencil_coeffs_y = nullptr,
+                   [[maybe_unused]] amrex::Real const* stencil_coeffs_z = nullptr)
 {
     using namespace amrex;
 
@@ -416,13 +416,6 @@ void warpx_interp (const int j,
     {
         return src_arr.contains(jj,kk,ll) ? src_arr(jj,kk,ll) : 0.0_rt;
     };
-
-    // Avoid compiler warnings
-#if defined(WARPX_DIM_1D_Z)
-    amrex::ignore_unused(nox, noy, stencil_coeffs_x, stencil_coeffs_y);
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    amrex::ignore_unused(noy, stencil_coeffs_y);
-#endif
 
     // If dst_nodal = true , we are centering from a staggered grid to a nodal grid
     // If dst_nodal = false, we are centering from a nodal grid to a staggered grid
@@ -451,6 +444,8 @@ void warpx_interp (const int j,
 
 #if   defined(WARPX_DIM_1D_Z)
     const int noj = noz;
+#elif defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+    const int noj = nox;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     const int noj = nox;
     const int nok = noz;
@@ -462,7 +457,7 @@ void warpx_interp (const int j,
 
     // Additional normalization factor
     const amrex::Real wj = (interp_j) ? 0.5_rt : 1.0_rt;
-#if   defined(WARPX_DIM_1D_Z)
+#if AMREX_SPACEDIM == 1
     constexpr amrex::Real wk = 1.0_rt;
     constexpr amrex::Real wl = 1.0_rt;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
@@ -478,7 +473,7 @@ void warpx_interp (const int j,
     const int jmax = (interp_j) ? j + noj/2 + shift - 1 : j;
 
     // Min and max for interpolation loop along k
-#if defined(WARPX_DIM_1D_Z)
+#if AMREX_SPACEDIM == 1
     // k = 0 always
     const int kmin = k;
     const int kmax = k;
@@ -543,7 +538,7 @@ void warpx_interp (const int j,
 
     amrex::Real res = 0.0_rt;
 
-#if defined(WARPX_DIM_1D_Z)
+#if AMREX_SPACEDIM == 1
     amrex::Real const* scj = stencil_coeffs_z;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     amrex::Real const* scj = stencil_coeffs_x;

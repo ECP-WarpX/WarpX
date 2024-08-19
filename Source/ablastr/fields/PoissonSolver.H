@@ -156,7 +156,9 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         // Set the value of beta
         amrex::Array<amrex::Real,AMREX_SPACEDIM> beta_solver =
 #if defined(WARPX_DIM_1D_Z)
-                {{ beta[2] }};  // beta_x and beta_z
+                {{ beta[2] }};  // beta_z
+#elif defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+                {{ beta[0] }};  // beta_x
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 {{ beta[0], beta[2] }};  // beta_x and beta_z
 #else

@@ -226,7 +226,7 @@ void ColliderRelevant::ComputeDiags (int step)
         num_dens[i_s] = myspc.GetChargeDensity(0);
         num_dens[i_s]->mult(1._prt/q);
 
-#if defined(WARPX_DIM_1D_Z)
+#if (AMREX_SPACEDIM == 1)
         // w_tot
         amrex::Real w_tot = ReduceSum( myspc,
             [=] AMREX_GPU_HOST_DEVICE (const PType& p)

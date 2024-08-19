@@ -255,6 +255,12 @@ namespace detail
         // Fortran order of the index labels for the AMReX FArrayBox
 #if defined(WARPX_DIM_1D_Z)
         vs const axisLabels{"z"};  // z varies fastest in memory
+#elif defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+        // when we write individual modes of a field (default)
+        vs const circAxisLabels{"r"};  // r varies fastest in memory
+        // if we just write reconstructed 2D fields at theta=0
+        vs const cartAxisLabels{"x"};  // x varies fastest in memory
+        vs const axisLabels = var_in_theta_mode ? circAxisLabels : cartAxisLabels;
 #elif defined(WARPX_DIM_XZ)
         vs const axisLabels{"x", "z"};  // x varies fastest in memory
 #elif defined(WARPX_DIM_RZ)
@@ -317,7 +323,7 @@ namespace detail
         } else if( record_name == "weighting" ) {  // NOLINT(bugprone-branch-clone)
 #if defined(WARPX_DIM_1D_Z)
             return {{openPMD::UnitDimension::L, -2.}};
-#elif defined(WARPX_DIM_XZ)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RCYLINDER)
             return {{openPMD::UnitDimension::L, -1.}};
 #else  // 3D and RZ
             return {};
@@ -603,10 +609,12 @@ for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
 #if !defined (WARPX_DIM_1D_Z)
     real_names.push_back("position_x");
 #endif
-#if defined (WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+#if defined (WARPX_DIM_3D) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
     real_names.push_back("position_y");
 #endif
+#if !defined(WARPX_DIM_RCYLINDER)
     real_names.push_back("position_z");
+#endif
     real_names.push_back("weighting");
     real_names.push_back("momentum_x");
     real_names.push_back("momentum_y");
@@ -910,9 +918,10 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
     // here we the save the SoA properties (real)
     {
         auto const real_counter = std::min(write_real_comp.size(), real_comp_names.size());
+        int idx_start = 0;
 
-#if defined(WARPX_DIM_RZ)
-        // reconstruct Cartesian positions for RZ simulations
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+        // reconstruct Cartesian positions for cylindrical simulations
         // r,z,theta -> x,y,z
         // If each comp is being written, create a temporary array, otherwise create an empty array.
         std::shared_ptr<amrex::ParticleReal> const x(
@@ -923,6 +932,12 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
             new amrex::ParticleReal[(write_real_comp[1] ? numParticleOnTile : 0)],
             [](amrex::ParticleReal const *p) { delete[] p; }
         );
+#if !defined(WARPX_DIM_RCYLINDER)
+        std::shared_ptr<amrex::ParticleReal> const z(
+            new amrex::ParticleReal[(write_real_comp[1] ? numParticleOnTile : 0)],
+            [](amrex::ParticleReal const *p) { delete[] p; }
+        );
+#endif
 
         const auto& tile = pti.GetParticleTile();
         const auto& ptd = tile.getConstParticleTileData();
@@ -933,6 +948,9 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
             get_particle_position(p, xp, yp, zp);
             if (write_real_comp[0]) { x.get()[i] = xp; }
             if (write_real_comp[1]) { y.get()[i] = yp; }
+#if !defined(WARPX_DIM_RCYLINDER)
+            if (write_real_comp[2]) { z.get()[i] = zp; }
+#endif
         }
         if (write_real_comp[0]) {
             getComponentRecord(real_comp_names[0]).storeChunk(x, {offset}, {numParticleOnTile64});
@@ -940,23 +958,23 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
         if (write_real_comp[1]) {
             getComponentRecord(real_comp_names[1]).storeChunk(y, {offset}, {numParticleOnTile64});
         }
+#if !defined(WARPX_DIM_RCYLINDER)
+        if (write_real_comp[2]) {
+            getComponentRecord(real_comp_names[2]).storeChunk(z, {offset}, {numParticleOnTile64});
+        }
+#endif
+        // Skip over positions in loop below since they are taken care of here.
+        idx_start = PIdx::nattribs - 4;
 #endif
 
-        for (auto idx=0; idx<real_counter; idx++) {
-#if defined(WARPX_DIM_RZ)
-            // skip over x,y
-            if (idx < 2) {
-                continue;
-            }
-            // mak names and write flags to SoA real array number
-            int const soa_r_idx = idx - 1 < PIdx::theta ?
-                idx - 1 :  // z and momenta before theta (we added y)
-                idx        // jump over theta (skipped)
-            ;
-#else
-            int const soa_r_idx = idx;
-#endif
-            if (write_real_comp[idx]) {
+        int const cartesian_attributes = AMREX_SPACEDIM + 4; // position + w + velocities
+        int const extra_attributes = PIdx::nattribs - cartesian_attributes; // e.g. theta and phi
+        for (auto idx=idx_start; idx<real_counter; idx++) {
+            // make names and write flags to SoA real array number
+            int const soa_r_idx = (idx < PIdx::nattribs) ?
+                         idx - extra_attributes :
+                         idx;
+            if (write_real_comp[soa_r_idx]) {
                 getComponentRecord(real_comp_names[idx]).storeChunkRaw(
                     soa.GetRealData(soa_r_idx).data(), {offset}, {numParticleOnTile64});
             }
@@ -1018,6 +1036,10 @@ WarpXOpenPMDPlot::SetConstParticleRecordsEDPIC (
     currSpecies["positionOffset"]["x"].resetDataset( realType );
     currSpecies["positionOffset"]["y"].resetDataset( realType );
 #endif
+#if defined(WARPX_DIM_RCYLINDER)
+    currSpecies["position"]["z"].resetDataset( realType );
+    currSpecies["positionOffset"]["z"].resetDataset( realType );
+#endif
 #if defined(WARPX_DIM_XZ)
     currSpecies["position"]["y"].resetDataset( realType );
     currSpecies["positionOffset"]["y"].resetDataset( realType );
@@ -1036,6 +1058,10 @@ WarpXOpenPMDPlot::SetConstParticleRecordsEDPIC (
     currSpecies["position"]["y"].makeConstant( 0._prt );
     currSpecies["positionOffset"]["x"].makeConstant( 0._prt );
     currSpecies["positionOffset"]["y"].makeConstant( 0._prt );
+#endif
+#if defined(WARPX_DIM_RCYLINDER)
+    currSpecies["position"]["z"].makeConstant( 0._prt );
+    currSpecies["positionOffset"]["z"].makeConstant( 0._prt );
 #endif
 #if defined(WARPX_DIM_XZ)
     currSpecies["position"]["y"].makeConstant( 0._prt );
@@ -1069,13 +1095,17 @@ WarpXOpenPMDPlot::SetConstParticleRecordsEDPIC (
     // TODO allow this per direction in the openPMD standard, ED-PIC extension?
     currSpecies.setAttribute("particleShapes", []() {
         return std::vector<double>{
-#if AMREX_SPACEDIM >= 2
-                double(WarpX::nox),
-#endif
-#if defined(WARPX_DIM_3D)
-                double(WarpX::noy),
-#endif
+#if defined(WARPX_DIM_1D_Z)
                 double(WarpX::noz)
+#else
+                double(WarpX::nox)
+#if defined(WARPX_DIM_3D)
+                , double(WarpX::noy)
+#endif
+#if !defined(WARPX_DIM_RCYLINDER) && !defined(WARPX_DIM_RSPHERE)
+                , double(WarpX::noz)
+#endif
+#endif
         };
     }());
     currSpecies.setAttribute("particlePush", []() {
@@ -1173,7 +1203,7 @@ WarpXOpenPMDPlot::SetupFields ( openPMD::Container< openPMD::Mesh >& meshes,
         meshes.setAttribute("currentSmoothingParameters", []() {
             std::stringstream ss;
             ss << "period=1;compensator=false";
-#if (AMREX_SPACEDIM >= 2)
+#if !defined(WARPX_DIM_1D_Z)
             ss << ";numPasses_x=" << WarpX::filter_npass_each_dir[0];
 #endif
 #if defined(WARPX_DIM_3D)
@@ -1219,7 +1249,7 @@ WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
     std::vector<double> const grid_spacing = getReversedVec(full_geom.CellSize());
     // - Global offset
     std::vector<double> const global_offset = getReversedVec(full_geom.ProbLo());
-#if defined(WARPX_DIM_RZ)
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
     if (var_in_theta_mode) {
             global_size.emplace(global_size.begin(), WarpX::ncomps);
     }

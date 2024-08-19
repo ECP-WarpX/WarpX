@@ -513,7 +513,7 @@ PEC::ApplyPECtoEfield (
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
                 amrex::ignore_unused(k);
 #endif
-#if (defined WARPX_DIM_1D_Z)
+#if AMREX_SPACEDIM == 1
                 amrex::ignore_unused(j,k);
 #endif
                 const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
@@ -526,7 +526,7 @@ PEC::ApplyPECtoEfield (
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
                 amrex::ignore_unused(k);
 #endif
-#if (defined WARPX_DIM_1D_Z)
+#if AMREX_SPACEDIM == 1
                 amrex::ignore_unused(j,k);
 #endif
                 const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
@@ -539,7 +539,7 @@ PEC::ApplyPECtoEfield (
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
                 amrex::ignore_unused(k);
 #endif
-#if (defined WARPX_DIM_1D_Z)
+#if AMREX_SPACEDIM == 1
                 amrex::ignore_unused(j,k);
 #endif
                 const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
@@ -605,7 +605,7 @@ PEC::ApplyPECtoBfield (
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
                 amrex::ignore_unused(k);
 #endif
-#if (defined WARPX_DIM_1D_Z)
+#if AMREX_SPACEDIM == 1
                 amrex::ignore_unused(j,k);
 #endif
                 const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
@@ -618,7 +618,7 @@ PEC::ApplyPECtoBfield (
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
                 amrex::ignore_unused(k);
 #endif
-#if (defined WARPX_DIM_1D_Z)
+#if AMREX_SPACEDIM == 1
                 amrex::ignore_unused(j,k);
 #endif
                 const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
@@ -631,7 +631,7 @@ PEC::ApplyPECtoBfield (
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
                 amrex::ignore_unused(k);
 #endif
-#if (defined WARPX_DIM_1D_Z)
+#if AMREX_SPACEDIM == 1
                 amrex::ignore_unused(j,k);
 #endif
                 const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
@@ -729,7 +729,7 @@ PEC::ApplyReflectiveBoundarytoRhofield (
         [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
             amrex::ignore_unused(k);
-#elif (defined WARPX_DIM_1D_Z)
+#elif AMREX_SPACEDIM == 1
             amrex::ignore_unused(j,k);
 #endif
             // Store the array index
@@ -861,7 +861,7 @@ PEC::ApplyReflectiveBoundarytoJfield(
         [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
             amrex::ignore_unused(k);
-#elif (defined WARPX_DIM_1D_Z)
+#elif AMREX_SPACEDIM == 1
             amrex::ignore_unused(j,k);
 #endif
             // Store the array index
@@ -896,7 +896,7 @@ PEC::ApplyReflectiveBoundarytoJfield(
         [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
             amrex::ignore_unused(k);
-#elif (defined WARPX_DIM_1D_Z)
+#elif AMREX_SPACEDIM == 1
             amrex::ignore_unused(j,k);
 #endif
             // Store the array index
@@ -931,7 +931,7 @@ PEC::ApplyReflectiveBoundarytoJfield(
         [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
             amrex::ignore_unused(k);
-#elif (defined WARPX_DIM_1D_Z)
+#elif AMREX_SPACEDIM == 1
             amrex::ignore_unused(j,k);
 #endif
             // Store the array index
@@ -1002,7 +1002,7 @@ PEC::ApplyPECtoElectronPressure (
         [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
             amrex::ignore_unused(k);
-#elif (defined WARPX_DIM_1D_Z)
+#elif AMREX_SPACEDIM == 1
             amrex::ignore_unused(j,k);
 #endif
             // Store the array index

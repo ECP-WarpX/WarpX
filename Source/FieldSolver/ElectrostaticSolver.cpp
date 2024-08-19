@@ -427,8 +427,10 @@ WarpX::setPhiBC ( amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi ) const
     // get the boundary potentials at the current time
     amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo;
     amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_hi;
+#if defined(WARPX_ZINDEX)
     phi_bc_values_lo[WARPX_ZINDEX] = m_poisson_boundary_handler.potential_zlo(gett_new(0));
     phi_bc_values_hi[WARPX_ZINDEX] = m_poisson_boundary_handler.potential_zhi(gett_new(0));
+#endif
 #ifndef WARPX_DIM_1D_Z
     phi_bc_values_lo[0] = m_poisson_boundary_handler.potential_xlo(gett_new(0));
     phi_bc_values_hi[0] = m_poisson_boundary_handler.potential_xhi(gett_new(0));

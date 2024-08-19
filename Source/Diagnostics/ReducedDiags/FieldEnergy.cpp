@@ -36,6 +36,11 @@ FieldEnergy::FieldEnergy (const std::string& rd_name)
 : ReducedDiags{rd_name}
 {
 
+#if defined(WARPX_DIM_RSPHERE)
+    WARPX_ABORT_WITH_MESSAGE(
+        "FieldEnergy reduced diagnostics not implemented in 1D spherical geometry");
+#endif
+
     // read number of levels
     int nLevel = 0;
     const ParmParse pp_amr("amr");
@@ -102,7 +107,7 @@ void FieldEnergy::ComputeDiags (int step)
         const std::array<Real, 3> &dx = WarpX::CellSize(lev);
         const amrex::Real dV = dx[0]*dx[1]*dx[2];
 
-#if defined(WARPX_DIM_RZ)
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
         amrex::Real const tmpEx = ComputeNorm2RZ(Ex, lev);
         amrex::Real const tmpEy = ComputeNorm2RZ(Ey, lev);
         amrex::Real const tmpEz = ComputeNorm2RZ(Ez, lev);

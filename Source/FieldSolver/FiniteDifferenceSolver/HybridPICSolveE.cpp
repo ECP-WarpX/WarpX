@@ -9,7 +9,7 @@
 
 #include "FiniteDifferenceSolver.H"
 
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
 #   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #else
 #   include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
@@ -31,7 +31,7 @@ void FiniteDifferenceSolver::CalculateCurrentAmpere (
     // Select algorithm (The choice of algorithm is a runtime option,
     // but we compile code for each algorithm, using templates)
     if (m_fdtd_algo == ElectromagneticSolverAlgo::HybridPIC) {
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
         CalculateCurrentAmpereCylindrical <CylindricalYeeAlgorithm> (
             Jfield, Bfield, edge_lengths, lev
         );
@@ -55,7 +55,7 @@ void FiniteDifferenceSolver::CalculateCurrentAmpere (
 //   * \param[out] Jfield  vector of total current MultiFabs at a given level
 //   * \param[in] Bfield   vector of magnetic field MultiFabs at a given level
 //   */
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
 template<typename T_Algo>
 void FiniteDifferenceSolver::CalculateCurrentAmpereCylindrical (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
@@ -380,7 +380,7 @@ void FiniteDifferenceSolver::HybridPICSolveE (
     // Select algorithm (The choice of algorithm is a runtime option,
     // but we compile code for each algorithm, using templates)
     if (m_fdtd_algo == ElectromagneticSolverAlgo::HybridPIC) {
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
 
         HybridPICSolveECylindrical <CylindricalYeeAlgorithm> (
             Efield, Jfield, Jifield, Jextfield, Bfield, rhofield, Pefield,
@@ -401,7 +401,7 @@ void FiniteDifferenceSolver::HybridPICSolveE (
     }
 }
 
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
 template<typename T_Algo>
 void FiniteDifferenceSolver::HybridPICSolveECylindrical (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,

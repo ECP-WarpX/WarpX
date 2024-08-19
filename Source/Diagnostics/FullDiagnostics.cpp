@@ -171,7 +171,10 @@ FullDiagnostics::DoComputeAndPack (int step, bool force_flush)
 void
 FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
 {
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+#ifdef WARPX_DIM_RSPHERE
+This needs fixing
+#endif
 
     auto & warpx = WarpX::GetInstance();
     const int ncomp_multimodefab = warpx.getFieldPointer(FieldType::Efield_aux, 0, 0)->nComp();
@@ -491,7 +494,7 @@ FullDiagnostics::AddRZModesToDiags (int lev)
 
 void
 FullDiagnostics::AddRZModesToOutputNames (const std::string& field, int ncomp){
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
     // In cylindrical geometry, real and imag part of each mode are also
     // dumped to file separately, so they need to be added to m_varnames
     m_varnames.push_back( field + "_0_real" );
@@ -631,7 +634,7 @@ FullDiagnostics::InitializeBufferData (int i_buffer, int lev, bool restart ) {
 void
 FullDiagnostics::InitializeFieldFunctors (int lev)
 {
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
     // For RZ, with openPMD, we need a special initialization instead
     if (m_format == "openpmd") {
         InitializeFieldFunctorsRZopenPMD(lev);
@@ -700,7 +703,7 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
         }
         else {
 
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
             if        ( m_varnames[comp] == "Er" ){
                 m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Efield_aux, lev, 0), lev, m_crse_ratio);
             } else if ( m_varnames[comp] == "Et" ){
@@ -827,6 +830,11 @@ FullDiagnostics::MovingWindowAndGalileanDomainShift (int step)
     {
         new_lo[0] = current_lo[0] + warpx.m_galilean_shift[2];
         new_hi[0] = current_hi[0] + warpx.m_galilean_shift[2];
+    }
+#elif defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+    {
+        new_lo[0] = current_lo[0];
+        new_hi[0] = current_hi[0];
     }
 #endif
     // Update RealBox of geometry with galilean-shifted boundary.

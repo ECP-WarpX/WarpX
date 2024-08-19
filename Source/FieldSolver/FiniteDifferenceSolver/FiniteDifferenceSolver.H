@@ -182,7 +182,7 @@ class FiniteDifferenceSolver
         int m_fdtd_algo;
         ablastr::utils::enums::GridType m_grid_type;
 
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
         amrex::Real m_dr, m_rmin;
         int m_nmodes;
         // host-only
@@ -203,7 +203,7 @@ class FiniteDifferenceSolver
         // The member functions below contain extended __device__ lambda.
         // In order to compile with nvcc, they need to be public.
 
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
         template< typename T_Algo >
         void EvolveBCylindrical (
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,

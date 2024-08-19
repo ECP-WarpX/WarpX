@@ -283,19 +283,15 @@ public:
             auto get_position_1  = GetParticlePosition<PIdx>(ptile_1, getpos_offset);
 
             amrex::Geometry const& geom = WarpX::GetInstance().Geom(lev);
-#if defined WARPX_DIM_1D_Z
-            auto dV = geom.CellSize(0);
-#elif defined WARPX_DIM_XZ
-            auto dV = geom.CellSize(0) * geom.CellSize(1);
-#elif defined WARPX_DIM_RZ
+            auto const dV = AMREX_D_TERM(geom.CellSize(0), *geom.CellSize(1), *geom.CellSize(2));
+#if defined WARPX_DIM_RZ
             amrex::Box const& cbx = mfi.tilebox(amrex::IntVect::TheZeroVector()); //Cell-centered box
             const auto lo = lbound(cbx);
             const auto hi = ubound(cbx);
             int const nz = hi.y-lo.y+1;
             auto dr = geom.CellSize(0);
-            auto dz = geom.CellSize(1);
-#elif defined(WARPX_DIM_3D)
-            auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
+#elif defined WARPX_DIM_RCYLINDER || defined WARPX_DIM_RSPHERE
+            auto dr = geom.CellSize(0);
 #endif
 
             /*
@@ -445,7 +441,17 @@ public:
 
 #if defined WARPX_DIM_RZ
                     const int ri = (i_cell - i_cell%nz) / nz;
-                    auto dV = MathConst::pi*(2.0_prt*ri+1.0_prt)*dr*dr*dz;
+                    amrex::Real const rfactor = MathConst::pi*(2.0_prt*ri+1.0_prt)*dr;
+#elif defined WARPX_DIM_RCYLINDER
+                    const int ri = i_cell;
+                    amrex::Real const rfactor = MathConst::pi*(2.0_prt*ri+1.0_prt)*dr;
+#elif defined WARPX_DIM_RSPHERE
+                    // This needs double checking
+                    const int ri = i_cell;
+                    const int rr = 2.0_prt*ri+1.0_prt;
+                    amrex::Real const rfactor = 4._prt/3._prt*MathConst::pi*rr*rr*dr*dr;
+#else
+                    amrex::Real const rfactor = 1.;
 #endif
 
                     // Get the local density and temperature for this cell
@@ -467,7 +473,7 @@ public:
                         indices_1, indices_1,
                         soa_1, soa_1, get_position_1, get_position_1,
                         n1, n1, T1, T1,
-                        q1, q1, m1, m1, dt, dV, coll_idx,
+                        q1, q1, m1, m1, dt, dV*rfactor, coll_idx,
                         cell_start_pair, p_mask, p_pair_indices_1, p_pair_indices_2,
                         p_pair_reaction_weight, engine);
                 }
@@ -520,19 +526,15 @@ public:
             auto get_position_2  = GetParticlePosition<PIdx>(ptile_2, getpos_offset);
 
             amrex::Geometry const& geom = WarpX::GetInstance().Geom(lev);
-#if defined WARPX_DIM_1D_Z
-            auto dV = geom.CellSize(0);
-#elif defined WARPX_DIM_XZ
-            auto dV = geom.CellSize(0) * geom.CellSize(1);
-#elif defined WARPX_DIM_RZ
+            auto const dV = AMREX_D_TERM(geom.CellSize(0), *geom.CellSize(1), *geom.CellSize(2));
+#if defined WARPX_DIM_RZ
             amrex::Box const& cbx = mfi.tilebox(amrex::IntVect::TheZeroVector()); //Cell-centered box
             const auto lo = lbound(cbx);
             const auto hi = ubound(cbx);
             const int nz = hi.y-lo.y+1;
             auto dr = geom.CellSize(0);
-            auto dz = geom.CellSize(1);
-#elif defined(WARPX_DIM_3D)
-            auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
+#elif defined WARPX_DIM_RCYLINDER || defined WARPX_DIM_RSPHERE
+            auto dr = geom.CellSize(0);
 #endif
 
             /*
@@ -727,7 +729,17 @@ public:
 
 #if defined WARPX_DIM_RZ
                     const int ri = (i_cell - i_cell%nz) / nz;
-                    auto dV = MathConst::pi*(2.0_prt*ri+1.0_prt)*dr*dr*dz;
+                    amrex::Real const rfactor = MathConst::pi*(2.0_prt*ri+1.0_prt)*dr;
+#elif defined WARPX_DIM_RCYLINDER
+                    const int ri = i_cell;
+                    amrex::Real const rfactor = MathConst::pi*(2.0_prt*ri+1.0_prt)*dr;
+#elif defined WARPX_DIM_RSPHERE
+                    // This needs double checking
+                    const int ri = i_cell;
+                    const int rr = 2.0_prt*ri+1.0_prt;
+                    amrex::Real const rfactor = 4._prt/3._prt*MathConst::pi*rr*rr*dr*dr;
+#else
+                    amrex::Real const rfactor = 1.;
 #endif
 
                     // Get the local densities and temperatures for this cell
@@ -750,7 +762,7 @@ public:
                         indices_1, indices_2,
                         soa_1, soa_2, get_position_1, get_position_2,
                         n1, n2, T1, T2,
-                        q1, q2, m1, m2, dt, dV, coll_idx,
+                        q1, q2, m1, m2, dt, dV*rfactor, coll_idx,
                         cell_start_pair, p_mask, p_pair_indices_1, p_pair_indices_2,
                         p_pair_reaction_weight, engine);
                 }

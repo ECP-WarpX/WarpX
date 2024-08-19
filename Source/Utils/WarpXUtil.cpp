@@ -74,7 +74,7 @@ void ParseGeometryInput()
         pp_geometry, "prob_hi", prob_hi, 0, AMREX_SPACEDIM);
     AMREX_ALWAYS_ASSERT(prob_hi.size() == AMREX_SPACEDIM);
 
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
     const ParmParse pp_algo("algo");
     const int electromagnetic_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
     if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
@@ -85,7 +85,7 @@ void ParseGeometryInput()
     else
     {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(prob_lo[0] >= 0.,
-            "Lower bound of radial coordinate (prob_lo[0]) with RZ FDTD solver must be non-negative");
+            "Lower bound of radial coordinate (prob_lo[0]) with FDTD solver must be non-negative");
     }
 #endif
 
@@ -286,6 +286,10 @@ void CheckDims ()
     std::string const dims_compiled = "1";
 #elif defined(WARPX_DIM_RZ)
     std::string const dims_compiled = "RZ";
+#elif defined(WARPX_DIM_RCYLINDER)
+    std::string const dims_compiled = "RCYLINDER";
+#elif defined(WARPX_DIM_RSPHERE)
+    std::string const dims_compiled = "RSPHERE";
 #endif
     const ParmParse pp_geometry("geometry");
     std::string dims;

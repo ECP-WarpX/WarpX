@@ -51,8 +51,8 @@ struct InjectorPositionRandomPlane
         if (dir == 0) { return amrex::XDim3{0._rt, amrex::Random(engine), 0._rt}; }
         if (dir == 1) { return amrex::XDim3{amrex::Random(engine), amrex::Random(engine), 0._rt}; }
         else          { return amrex::XDim3{amrex::Random(engine), 0._rt, 0._rt }; }
-#elif (defined(WARPX_DIM_1D_Z))
-        // In 2D, the first components of the `XDim3` vector below correspond to z
+#elif (defined(WARPX_DIM_1D_Z) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE))
+        // In 1D, the first components of the `XDim3` vector below correspond to the first dimension
         if (dir == 0) { return amrex::XDim3{amrex::Random(engine), 0._rt, 0._rt}; }
         if (dir == 1) { return amrex::XDim3{amrex::Random(engine), 0._rt, 0._rt}; }
         else          { return amrex::XDim3{0._rt, 0._rt, 0._rt}; }
@@ -92,7 +92,7 @@ struct InjectorPositionRegular
         int const nx = ref_fac[0]*ppc.x;
         int const ny = ref_fac[1]*ppc.y;
         int const nz = 1;
-#elif (defined WARPX_DIM_1D_Z)
+#elif (defined(WARPX_DIM_1D_Z) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE))
         int const nx = ref_fac[0]*ppc.x;
         int const ny = 1;
         int const nz = 1;

@@ -33,17 +33,22 @@ void UpdatePosition(amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::Parti
     // Compute inverse Lorentz factor
     const amrex::ParticleReal inv_gamma = 1._prt/std::sqrt(1._prt + (ux*ux + uy*uy + uz*uz)*inv_c2);
     // Update positions over one time step
-#if (AMREX_SPACEDIM >= 2)
+#if !defined(WARPX_DIM_1D_Z)
     x += ux * inv_gamma * dt;
 #else
     amrex::ignore_unused(x);
 #endif
-#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ) // RZ pushes particles in 3D
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+    // Radial pushes particles in 3D
     y += uy * inv_gamma * dt;
 #else
     amrex::ignore_unused(y);
 #endif
+#if !defined(WARPX_DIM_RCYLINDER)
     z += uz * inv_gamma * dt;
+#else
+    amrex::ignore_unused(z);
+#endif
 }
 
 /** \brief Push the particle's positions over one timestep,
@@ -72,17 +77,22 @@ void UpdatePositionImplicit(amrex::ParticleReal& x, amrex::ParticleReal& y, amre
     const amrex::ParticleReal inv_gamma = 2.0_prt/(gamma_n + gamma_np1);
 
     // Update positions over one time step
-#if (AMREX_SPACEDIM >= 2)
+#if !defined(WARPX_DIM_1D_Z)
     x += ux * inv_gamma * dt;
 #else
     amrex::ignore_unused(x);
 #endif
-#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ) // RZ pushes particles in 3D
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+    // Radial pushes particles in 3D
     y += uy * inv_gamma * dt;
 #else
     amrex::ignore_unused(y);
 #endif
+#if !defined(WARPX_DIM_RCYLINDER)
     z += uz * inv_gamma * dt;
+#else
+    amrex::ignore_unused(z);
+#endif
 }
 
 /** \brief Check particle position for convergence. This is used by the theta-implicit
@@ -103,10 +113,17 @@ void PositionNorm( amrex::ParticleReal dxp, amrex::ParticleReal dyp, amrex::Part
 #if !defined(WARPX_DIM_3D)
     amrex::ignore_unused(dyp, dyp_save, idyg2);
 #endif
+#if defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+    amrex::ignore_unused(dzp, dzp_save, idzg2);
+#endif
 
     if (iter==0) { step_norm = 1.0_prt; }
     else {
+#if !defined(WARPX_DIM_RCYLINDER) && !defined(WARPX_DIM_RSPHERE)
         step_norm = (dzp - dzp_save)*(dzp - dzp_save)*idzg2;
+#else
+        step_norm = 0._prt;
+#endif
 #if !defined(WARPX_DIM_1D_Z)
         step_norm += (dxp - dxp_save)*(dxp - dxp_save)*idxg2;
 #endif
@@ -117,11 +134,13 @@ void PositionNorm( amrex::ParticleReal dxp, amrex::ParticleReal dyp, amrex::Part
 #endif
         step_norm = std::sqrt(step_norm);
     }
+#if !defined(WARPX_DIM_RCYLINDER)
     dzp_save = dzp;
+#endif
 #if !defined(WARPX_DIM_1D_Z)
     dxp_save = dxp;
 #endif
-#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
     dyp_save = dyp;
 #endif
 

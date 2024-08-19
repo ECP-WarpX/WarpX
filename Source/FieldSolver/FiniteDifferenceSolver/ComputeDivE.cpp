@@ -8,12 +8,12 @@
 
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
-#ifndef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
+#   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
+#else
 #   include "FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
 #   include "FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
 #   include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
-#else
-#   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
 
 #include <AMReX.H>
@@ -45,7 +45,7 @@ void FiniteDifferenceSolver::ComputeDivE (
 
     // Select algorithm (The choice of algorithm is a runtime option,
     // but we compile code for each algorithm, using templates)
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
     if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee ||
         m_fdtd_algo == ElectromagneticSolverAlgo::HybridPIC){
 
@@ -73,7 +73,7 @@ void FiniteDifferenceSolver::ComputeDivE (
 }
 
 
-#ifndef WARPX_DIM_RZ
+#if !defined(WARPX_DIM_RZ) && !defined(WARPX_DIM_RCYLINDER)
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::ComputeDivECartesian (
@@ -119,7 +119,7 @@ void FiniteDifferenceSolver::ComputeDivECartesian (
 
 }
 
-#else // corresponds to ifndef WARPX_DIM_RZ
+#elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::ComputeDivECylindrical (
@@ -191,4 +191,4 @@ void FiniteDifferenceSolver::ComputeDivECylindrical (
 
 }
 
-#endif // corresponds to ifndef WARPX_DIM_RZ
+#endif // corresponds to if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)

@@ -370,7 +370,7 @@ void WarpXFluidContainer::ApplyBcFluidsAndComms (int lev)
 
                 }
 
-#elif ( defined(WARPX_DIM_1D_Z) || defined(WARPX_DIM_XZ) || defined(WARPX_DIM_3D) )
+#elif !defined(WARPX_DIM_RZ)
 
                 // Upper end (index 0)
                 if ( (periodic_directions[0] != 1) && (i==domain.bigEnd(0)+1) ){

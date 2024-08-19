@@ -7,12 +7,12 @@
 #include "FiniteDifferenceSolver.H"
 
 #include "EmbeddedBoundary/WarpXFaceInfoBox.H"
-#ifndef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
+#   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
+#else
 #   include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #   include "FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
 #   include "FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
-#else
-#   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -59,13 +59,13 @@ void FiniteDifferenceSolver::EvolveB (
     std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
     int lev, amrex::Real const dt ) {
 
-#if defined(WARPX_DIM_RZ) || !defined(AMREX_USE_EB)
+#if (defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)) || !defined(AMREX_USE_EB)
   amrex::ignore_unused(area_mod, ECTRhofield, Venl, flag_info_cell, borrowing);
 #endif
 
     // Select algorithm (The choice of algorithm is a runtime option,
     // but we compile code for each algorithm, using templates)
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
     if ((m_fdtd_algo == ElectromagneticSolverAlgo::Yee)||
         (m_fdtd_algo == ElectromagneticSolverAlgo::HybridPIC)){
         ignore_unused(Gfield, face_areas);
@@ -100,7 +100,7 @@ void FiniteDifferenceSolver::EvolveB (
 }
 
 
-#ifndef WARPX_DIM_RZ
+#if !defined(WARPX_DIM_RZ) && !defined(WARPX_DIM_RCYLINDER)
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveBCartesian (
@@ -366,7 +366,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
 #endif
 }
 
-#else // corresponds to ifndef WARPX_DIM_RZ
+#elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveBCylindrical (
@@ -483,4 +483,4 @@ void FiniteDifferenceSolver::EvolveBCylindrical (
     }
 }
 
-#endif // corresponds to ifndef WARPX_DIM_RZ
+#endif // corresponds to if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)

@@ -6,7 +6,7 @@
  */
 #include "FiniteDifferenceSolver.H"
 
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
 #   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
 #include "Utils/TextMsg.H"
@@ -42,6 +42,10 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
     amrex::Vector<FieldBoundaryType> field_boundary_lo,
     amrex::Vector<FieldBoundaryType> field_boundary_hi) {
 
+#if defined(WARPX_DIM_RCYLINDER)
+    amrex::ignore_unused(field_boundary_lo);
+#endif
+
     // Ensure that we are using the Yee solver
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_fdtd_algo == ElectromagneticSolverAlgo::Yee,
@@ -51,13 +55,14 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
     // Ensure that we are using the cells the domain
     domain_box.enclosedCells();
 
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
     // Calculate relevant coefficients
     amrex::Real const cdt = PhysConst::c*dt;
     amrex::Real const cdt_over_dr = cdt*m_h_stencil_coefs_r[0];
     amrex::Real const coef1_r = (1._rt - cdt_over_dr)/(1._rt + cdt_over_dr);
     amrex::Real const coef2_r = 2._rt*cdt_over_dr/(1._rt + cdt_over_dr) / PhysConst::c;
     amrex::Real const coef3_r = cdt/(1._rt + cdt_over_dr) / PhysConst::c;
+#if defined(WARPX_DIM_RZ)
     amrex::Real const cdt_over_dz = cdt*m_h_stencil_coefs_z[0];
     amrex::Real const coef1_z = (1._rt - cdt_over_dz)/(1._rt + cdt_over_dz);
     amrex::Real const coef2_z = 2._rt*cdt_over_dz/(1._rt + cdt_over_dz) / PhysConst::c;
@@ -65,6 +70,7 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
     // Extract stencil coefficients
     Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
     auto const n_coefs_z = static_cast<int>(m_h_stencil_coefs_z.size());
+#endif
 
     // Extract cylindrical specific parameters
     Real const dr = m_dr;
@@ -73,8 +79,10 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
 
     // Infer whether the Silver-Mueller needs to be applied in each direction
     bool const apply_hi_r = (field_boundary_hi[0] == FieldBoundaryType::Absorbing_SilverMueller);
+#if defined(WARPX_DIM_RZ)
     bool const apply_lo_z = (field_boundary_lo[1] == FieldBoundaryType::Absorbing_SilverMueller);
     bool const apply_hi_z = (field_boundary_hi[1] == FieldBoundaryType::Absorbing_SilverMueller);
+#endif
 
     // tiling is usually set by TilingIfNotGPU()
     // but here, we set it to false because of potential race condition,
@@ -83,9 +91,11 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
         // Extract field data for this grid/tile
         Array4<Real> const& Er = Efield[0]->array(mfi);
         Array4<Real> const& Et = Efield[1]->array(mfi);
+#if defined(WARPX_DIM_RZ)
         Array4<Real> const& Ez = Efield[2]->array(mfi);
         Array4<Real> const& Br = Bfield[0]->array(mfi);
         Array4<Real> const& Bt = Bfield[1]->array(mfi);
+#endif
         Array4<Real> const& Bz = Bfield[2]->array(mfi);
 
         // Extract tileboxes for which to loop
@@ -104,6 +114,7 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
         amrex::ParallelFor(tbr, tbt, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
 
+#if defined(WARPX_DIM_RZ)
                 // At the +z boundary (innermost guard cell)
                 if ( apply_hi_z && (j==domain_box.bigEnd(1)+1) ){
                     for (int m=0; m<2*nmodes-1; m++) {
@@ -116,10 +127,14 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
                         Br(i,j,0,m) = coef1_z*Br(i,j,0,m) + coef2_z*Et(i,j+1,0,m);
                     }
                 }
+#else
+                amrex::ignore_unused(i,j);
+#endif
 
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
 
+#if defined(WARPX_DIM_RZ)
                 // At the +z boundary (innermost guard cell)
                 if ( apply_hi_z && (j==domain_box.bigEnd(1)+1) ){
                     for (int m=0; m<2*nmodes-1; m++) {
@@ -146,6 +161,9 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
                             + coef3_r*CylindricalYeeAlgorithm::UpwardDz(Er, coefs_z, n_coefs_z, i, j, 0, 2*m);
                     }
                 }
+#else
+                amrex::ignore_unused(i,j);
+#endif
 
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
@@ -345,5 +363,5 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
         );
 
     }
-#endif // WARPX_DIM_RZ
+#endif
 }

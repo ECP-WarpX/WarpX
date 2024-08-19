@@ -37,9 +37,13 @@ ParticleDiag::ParticleDiag (
         bool contains_positions = false;
         if (variables[0] != "none"){
             std::map<std::string, int> existing_variable_names = pc->getParticleComps();
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
             // we reconstruct to Cartesian x,y,z for RZ particle output
             existing_variable_names["y"] = PIdx::theta;
+#endif
+#if defined(WARPX_DIM_RSPHERE)
+            // we reconstruct to Cartesian x,y,z for RSPHERE particle output
+            existing_variable_names["z"] = PIdx::phi;
 #endif
             for (const auto& var : variables){
                 if (var == "phi") {
@@ -71,11 +75,15 @@ ParticleDiag::ParticleDiag (
         }
     }
 
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
     // Always write out theta, whether or not it's requested,
     // to be consistent with always writing out r and z.
     // TODO: openPMD does a reconstruction to Cartesian, so we can now skip force-writing this
     m_plot_flags[pc->getParticleComps().at("theta")] = 1;
+#endif
+#if defined(WARPX_DIM_RSPHERE)
+    // Always write out the angle phi, whether or not it's requested,
+    m_plot_flags[pc->getParticleComps().at("phi")] = 1;
 #endif
 
     // build filter functors

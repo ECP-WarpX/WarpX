@@ -55,7 +55,9 @@ struct CylindricalYeeAlgorithm {
             (n_rz_azimuthal_modes - 1._rt)*(n_rz_azimuthal_modes - 1._rt) - 0.4_rt; // Use a realistic extrapolation
         const amrex::Real delta_t = 1._rt / ( std::sqrt(
                                      (1._rt + multimode_alpha) / (dx[0]*dx[0])
+#ifdef WARPX_DIM_RZ
                                     + 1._rt / (dx[1]*dx[1])
+#endif
                               ) * PhysConst::c );
         return delta_t;
     }
@@ -162,8 +164,14 @@ struct CylindricalYeeAlgorithm {
 
         amrex::ignore_unused(n_coefs_z);
 
+#ifdef WARPX_DIM_RZ
         amrex::Real const inv_dz = coefs_z[0];
         return inv_dz*( F(i,j+1,k,comp) - F(i,j,k,comp) );
+#else
+        using namespace amrex::literals;
+        amrex::ignore_unused(F, coefs_z, i, j, k, comp);
+        return 0._rt;
+#endif
     }
 
     /**
@@ -176,8 +184,14 @@ struct CylindricalYeeAlgorithm {
 
         amrex::ignore_unused(n_coefs_z);
 
+#ifdef WARPX_DIM_RZ
         amrex::Real const inv_dz = coefs_z[0];
         return inv_dz*( F(i,j,k,comp) - F(i,j-1,k,comp) );
+#else
+        using namespace amrex::literals;
+        amrex::ignore_unused(F, coefs_z, i, j, k, comp);
+        return 0._rt;
+#endif
     }
 
     /**
@@ -190,9 +204,14 @@ struct CylindricalYeeAlgorithm {
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
-        Real const inv_dz2 = coefs_z[0]*coefs_z[0];
 
+#ifdef WARPX_DIM_RZ
+        Real const inv_dz2 = coefs_z[0]*coefs_z[0];
         return inv_dz2*( F(i,j-1,k,ncomp) - 2._rt*F(i,j,k,ncomp) + F(i,j+1,k,ncomp) );
+#else
+        amrex::ignore_unused(F, coefs_z, i, j, k, ncomp);
+        return 0._rt;
+#endif
     }
 
 };
