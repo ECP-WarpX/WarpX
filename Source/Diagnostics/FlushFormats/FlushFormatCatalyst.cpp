@@ -15,6 +15,7 @@
     #include "conduit_cpp_to_c.hpp"
 #endif
 
+#ifdef AMREX_USE_CATALYST
 namespace internal {
 
 void EmptyParticleData (
@@ -68,11 +69,12 @@ void EmptyParticleData (
 }
 
 } // namespace internal
+#endif
 
 using namespace amrex;
 
 FlushFormatCatalyst::FlushFormatCatalyst() {
-    ParmParse pp_catalyst("catalyst");
+    ParmParse const pp_catalyst("catalyst");
     std::string scriptPaths {""};
     std::string implementation {"paraview"};
     std::string searchPaths {""};
@@ -189,8 +191,8 @@ FlushFormatCatalyst::WriteToFile (
     amrex::ignore_unused(prefix, plot_raw_fields, file_min_digits, plot_raw_fields_guards);
 }
 
-FlushFormatCatalyst::~FlushFormatCatalyst() {
 #ifdef AMREX_USE_CATALYST
+FlushFormatCatalyst::~FlushFormatCatalyst() {
 
     conduit::Node node;
     catalyst_status err = catalyst_finalize(conduit::c_node(&node));
@@ -205,5 +207,5 @@ FlushFormatCatalyst::~FlushFormatCatalyst() {
         std::cout << "Successfully finalized Catalyst" << std::endl;
     }
 
-#endif // AMREX_USE_CATALYST
 }
+#endif // AMREX_USE_CATALYST

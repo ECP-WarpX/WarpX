@@ -49,8 +49,16 @@ public:
         const amrex::Geometry& full_BTD_snapshot = amrex::Geometry(),
         bool isLastBTDFlush = false)  const override;
 
-    // Finalize
+#ifdef AMREX_USE_CATALYST
     ~FlushFormatCatalyst() override;
+#else
+    ~FlushFormatCatalyst() override = default;
+#endif
+
+    FlushFormatCatalyst ( FlushFormatCatalyst const &)             = default;
+    FlushFormatCatalyst& operator= ( FlushFormatCatalyst const & ) = default;
+    FlushFormatCatalyst ( FlushFormatCatalyst&& )                  = default;
+    FlushFormatCatalyst& operator= ( FlushFormatCatalyst&& )       = default;
 };
 
 #endif
