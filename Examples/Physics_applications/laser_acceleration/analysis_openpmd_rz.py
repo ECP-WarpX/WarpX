@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-import numpy as np
 import sys
 
+import numpy as np
 import openpmd_api as io
 
 filename = sys.argv[1]
