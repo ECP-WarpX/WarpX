@@ -1673,7 +1673,7 @@ class LoadInitialFieldFromPython:
     Field Initializer that takes a function handle to be registered as a callback.
     The function is expected to write the E and/or B fields into the
     fields.Bx/y/zFPExternalWrapper() multifab. The callback is installed
-    in the beforeInitEsolve hook. This should operate identically to laoding from
+    in the beforeInitEsolve hook. This should operate identically to loading from
     a file.
 
     Parameters
