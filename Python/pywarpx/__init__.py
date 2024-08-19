@@ -23,26 +23,26 @@ if os.name == "nt":
         if os.path.exists(p_abs):
             os.add_dll_directory(p_abs)
 
-from ._libwarpx import libwarpx
-from .Algo import algo
-from .Amr import amr
-from .Amrex import amrex
-from .Boundary import boundary
-from .Collisions import collisions
-from .Constants import my_constants
-from .Diagnostics import diagnostics, reduced_diagnostics
-from .EB2 import eb2
-from .Geometry import geometry
-from .HybridPICModel import hybridpicmodel
-from .Interpolation import interpolation
-from .Lasers import lasers
-from .LoadThirdParty import load_cupy
-from .Particles import newspecies, particles
-from .PSATD import psatd
-from .WarpX import warpx
+from ._libwarpx import libwarpx  # noqa
+from .Algo import algo  # noqa
+from .Amr import amr  # noqa
+from .Amrex import amrex  # noqa
+from .Boundary import boundary  # noqa
+from .Collisions import collisions  # noqa
+from .Constants import my_constants  # noqa
+from .Diagnostics import diagnostics, reduced_diagnostics  # noqa
+from .EB2 import eb2  # noqa
+from .Geometry import geometry  # noqa
+from .HybridPICModel import hybridpicmodel  # noqa
+from .Interpolation import interpolation  # noqa
+from .Lasers import lasers  # noqa
+from .LoadThirdParty import load_cupy  # noqa
+from .Particles import newspecies, particles  # noqa
+from .PSATD import psatd  # noqa
+from .WarpX import warpx  # noqa
 
 # This is a circular import and must happen after the import of libwarpx
-from . import picmi  # isort:skip
+from . import picmi  # noqa  # isort:skip
 
 # intentionally query the value - only set once sim dimension is known
 def __getattr__(name):

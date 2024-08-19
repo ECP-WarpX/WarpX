@@ -106,10 +106,10 @@ def select_tests(blocks, match_string_list, do_test):
     """Remove or keep tests from list in WarpX-tests.ini according to do_test variable"""
     if do_test not in [True, False]:
         raise ValueError("do_test must be True or False")
-    if (do_test == False):
+    if (do_test is False):
         for match_string in match_string_list:
             print('Selecting tests without ' + match_string)
-            blocks = [ block for block in blocks if not match_string in block ]
+            blocks = [ block for block in blocks if match_string not in block ]
     else:
         for match_string in match_string_list:
             print('Selecting tests with ' + match_string)

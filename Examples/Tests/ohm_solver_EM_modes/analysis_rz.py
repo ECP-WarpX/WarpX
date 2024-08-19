@@ -16,7 +16,7 @@ from pywarpx import picmi
 constants = picmi.constants
 
 # load simulation parameters
-with open(f'sim_parameters.dpkl', 'rb') as f:
+with open('sim_parameters.dpkl', 'rb') as f:
     sim = dill.load(f)
 
 diag_dir = "diags/field_diags"
@@ -124,8 +124,8 @@ for ii, m in enumerate([1, 3, 6, 8]):
     omega_fast = sim.vA * np.sqrt(R2 + np.sqrt(R2**2 - P4))
     omega_slow = sim.vA * np.sqrt(R2 - np.sqrt(R2**2 - P4))
     # Upper right corner
-    ax.plot(k*sim.l_i, omega_fast/sim.w_ci, 'w--', label = f"$\omega_{{fast}}$")
-    ax.plot(k*sim.l_i, omega_slow/sim.w_ci, color='white', linestyle='--', label = f"$\omega_{{slow}}$")
+    ax.plot(k*sim.l_i, omega_fast/sim.w_ci, 'w--', label = "$\omega_{fast}$")
+    ax.plot(k*sim.l_i, omega_slow/sim.w_ci, color='white', linestyle='--', label = "$\omega_{slow}$")
     # Thermal resonance
     thermal_res = sim.w_ci + 3*sim.v_ti*k
     ax.plot(k*sim.l_i, thermal_res/sim.w_ci, color='magenta', linestyle='--', label = "$\omega = \Omega_i + 3v_{th,i}k$")

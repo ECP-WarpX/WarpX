@@ -148,7 +148,7 @@ def launch_analysis(executable):
 def main() :
 
     from lasy.laser import Laser
-    from lasy.profiles import CombinedLongitudinalTransverseProfile, GaussianProfile
+    from lasy.profiles import CombinedLongitudinalTransverseProfile
     from lasy.profiles.longitudinal import GaussianLongitudinalProfile
     from lasy.profiles.transverse import LaguerreGaussianTransverseProfile
 

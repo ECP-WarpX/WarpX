@@ -29,7 +29,7 @@ print(f"\nYour current source directory is: {REPO_DIR}")
 
 REPLY = input("Are you sure you want to continue? [y/N] ")
 print()
-if not REPLY in ["Y", "y"]:
+if REPLY not in ["Y", "y"]:
     print("You did not confirm with 'y', aborting.")
     sys.exit(1)
 
@@ -69,7 +69,7 @@ you want to require from PICSAR:\n""")
 
 print(f"Currently, WarpX builds against this PICSAR commit/branch/sha: {PICSAR_branch}")
 print(f"PICSAR HEAD commit (development branch): {PICSAR_HEAD}")
-PICSAR_new_branch = input(f"Update PICSAR commit/branch/sha: ").strip()
+PICSAR_new_branch = input("Update PICSAR commit/branch/sha: ").strip()
 if not PICSAR_new_branch:
     PICSAR_new_branch = PICSAR_branch
     print(f"--> Nothing entered, will keep: {PICSAR_branch}")
@@ -88,7 +88,7 @@ print(f"New minimal PICSAR version:   {PICSAR_new_minimal}\n")
 
 REPLY = input("Is this information correct? Will now start updating! [y/N] ")
 print()
-if not REPLY in ["Y", "y"]:
+if REPLY not in ["Y", "y"]:
     print("You did not confirm with 'y', aborting.")
     sys.exit(1)
 

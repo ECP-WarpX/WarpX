@@ -140,7 +140,6 @@ Maintenance
    :hidden:
 
    maintenance/release
-   maintenance/performance_tests
 
 Epilogue
 --------
