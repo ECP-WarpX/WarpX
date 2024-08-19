@@ -102,7 +102,7 @@ class ForceFreeSheetReconnection(object):
 
         # dump all the current attributes to a dill pickle file
         if comm.rank == 0:
-            with open(f'sim_parameters.dpkl', 'wb') as f:
+            with open('sim_parameters.dpkl', 'wb') as f:
                 dill.dump(self, f)
 
         # print out plasma parameters

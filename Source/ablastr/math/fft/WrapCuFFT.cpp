@@ -56,7 +56,6 @@ namespace ablastr::math::anyfft
                 result = cufftPlan2d(
                     &(fft_plan.m_plan), real_size[1], real_size[0], VendorC2R);
             } else if (dim == 1) {
-                int batch = 2;
                 result = cufftPlan1d(
                     &(fft_plan.m_plan), real_size[0], VendorC2R, 1);
             } else {

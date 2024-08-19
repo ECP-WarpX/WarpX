@@ -240,7 +240,7 @@ file_list.sort()
 nfiles = len(file_list)
 
 # Get list of particle species to plot
-pslist = get_species(file_list);
+pslist = get_species(file_list)
 
 rank = 0
 size = 1
