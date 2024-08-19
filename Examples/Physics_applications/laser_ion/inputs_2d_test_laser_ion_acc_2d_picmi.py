@@ -136,9 +136,8 @@ solver = picmi.ElectromagneticSolver(
 
 # Diagnostics
 particle_diag = picmi.ParticleDiagnostic(
-    name='Python_LaserIonAcc2d_plt',
+    name='diag1',
     period=100,
-    write_dir='./diags',
     warpx_format='openpmd',
     warpx_openpmd_backend='h5',
     # demonstration of a spatial and momentum filter
@@ -150,12 +149,11 @@ ncell_field = []
 for (ncell_comp, cr) in zip([nx,nz], coarsening_ratio):
     ncell_field.append(int(ncell_comp/cr))
 field_diag = picmi.FieldDiagnostic(
-    name='Python_LaserIonAcc2d_plt',
+    name='diag1',
     grid=grid,
     period=100,
     number_of_cells=ncell_field,
     data_list=['B', 'E', 'J', 'rho', 'rho_electrons', 'rho_hydrogen'],
-    write_dir='./diags',
     warpx_format='openpmd',
     warpx_openpmd_backend='h5'
 )
@@ -163,7 +161,6 @@ field_diag = picmi.FieldDiagnostic(
 particle_fw_diag = picmi.ParticleDiagnostic(
     name='openPMDfw',
     period=100,
-    write_dir='./diags',
     warpx_format='openpmd',
     warpx_openpmd_backend='h5',
     warpx_plot_filter_function='(uz>=0) * (x<1.0e-6) * (x>-1.0e-6)'
@@ -172,7 +169,6 @@ particle_fw_diag = picmi.ParticleDiagnostic(
 particle_bw_diag = picmi.ParticleDiagnostic(
     name='openPMDbw',
     period=100,
-    write_dir='./diags',
     warpx_format='openpmd',
     warpx_openpmd_backend='h5',
     warpx_plot_filter_function='(uz<0)'

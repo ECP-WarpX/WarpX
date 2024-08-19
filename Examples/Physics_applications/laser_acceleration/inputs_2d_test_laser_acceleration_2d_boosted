@@ -1,9 +1,9 @@
 #################################
 ######### BOX PARAMETERS ########
 #################################
-max_step = 2700
+max_step = 300 #2700
 # stop_time = 1.9e-12
-amr.n_cell =  128 1024
+amr.n_cell = 64 512 #128 1024
 amr.max_grid_size = 64
 amr.blocking_factor = 32
 amr.max_level = 0

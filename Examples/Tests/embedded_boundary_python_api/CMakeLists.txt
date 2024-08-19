@@ -1,7 +1,7 @@
 # Add tests (alphabetical order) ##############################################
 #
 
-# embedded_boundary_python_api ################################################
+# embedded_boundary_picmi #####################################################
 #
 if(WarpX_EB)
     add_warpx_test(

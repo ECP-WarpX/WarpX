@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 
 import numpy as np
+import sys
+
 import openpmd_api as io
 
-series = io.Series("LaserAccelerationRZ_opmd_plt/openpmd_%T.h5", io.Access.read_only)
+filename = sys.argv[1]
+series = io.Series(f"{filename}/openpmd_%T.h5", io.Access.read_only)
 
 assert len(series.iterations) == 3, 'improper number of iterations stored'
 
