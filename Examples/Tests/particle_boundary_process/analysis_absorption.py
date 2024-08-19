@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+
 import yt
 
 # This test shoots a beam of electrons at cubic embedded boundary geometry
