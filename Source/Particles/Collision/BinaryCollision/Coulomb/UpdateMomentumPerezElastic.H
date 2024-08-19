@@ -66,7 +66,7 @@ void UpdateMomentumPerezElastic (
     T_PR const p2y = u2y * m2;
     T_PR const p2z = u2z * m2;
 
-    // Compute center-of-mass (COM) velocity and gamma
+    // Compute center-of-momentum (COM) velocity and gamma
     T_PR const mass_g = m1 * g1 + m2 * g2;
     T_PR const vcx    = (p1x+p2x) / mass_g;
     T_PR const vcy    = (p1y+p2y) / mass_g;
@@ -105,13 +105,15 @@ void UpdateMomentumPerezElastic (
     T_PR const g1s = ( T_PR(1.0) - vcDv1*inv_c2 )*gc*g1;
     T_PR const g2s = ( T_PR(1.0) - vcDv2*inv_c2 )*gc*g2;
 
-    // Compute variant relative velocity in center-of-mass frame
+    // Compute relative velocity in center-of-momentum frame
+    // (not a Lorentz invariant quantity)
     T_PR const muRst = g1s*m1*g2s*m2/(g1s*m1 + g2s*m2);
-    T_PR const vrelst = p1sm/muRst;
+    T_PR const vrelst = p1sm/muRst; // |v1s - v2s|
 
-    // Compute invariant relative velocity (frame independent)
+    // Compute invariant relative velocity in center-of-momentum frame
+    // (Lorentz invariant quantity)
     T_PR const denom = T_PR(1.0) + p1sm*p1sm/(m1*g1s*m2*g2s)*inv_c2; // (1.0 - v1s*v2s/c^2)
-    T_PR const vrelst_invar = vrelst/denom;
+    T_PR const vrelst_invar = vrelst/denom; // |v1s - v2s|/(1.0 - v1s*v2s/c^2)
 
     // Compute s12
     T_PR s12 = 0;
