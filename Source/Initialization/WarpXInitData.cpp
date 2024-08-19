@@ -255,21 +255,28 @@ WarpX::PrintMainPICparameters ()
                      WarpX::n_rz_azimuthal_modes << "\n";
     #endif // WARPX_USE_RZ
     //Print solver's operation mode (e.g., EM or electrostatic)
-    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) {
-      amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
-      amrex::Print() << "                      | - laboratory frame" << "\n";
-    }
-    else if (electrostatic_solver_id == ElectrostaticSolverAlgo::Relativistic){
-      amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
-      amrex::Print() << "                      | - relativistic" << "\n";
-    }
-    else if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic){
-      amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
-      amrex::Print() << "                      | - laboratory frame, electrostatic + magnetostatic" << "\n";
-    }
-    else if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameSemiImplicit){
-      amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
-      amrex::Print() << "                      | - laboratory frame, semi-implicit scheme" << "\n";
+    if(electrostatic_solver_id != ElectrostaticSolverAlgo::None){
+        if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) {
+            amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
+            amrex::Print() << "                      | - laboratory frame" << "\n";
+        }
+        else if (electrostatic_solver_id == ElectrostaticSolverAlgo::Relativistic){
+            amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
+            amrex::Print() << "                      | - relativistic" << "\n";
+        }
+        else if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameSemiImplicit){
+            amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
+            amrex::Print() << "                      | - laboratory frame, semi-implicit" << "\n";
+        }
+        if (poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction){
+            amrex::Print() << "Poisson solver:       | FFT-based" << "\n";
+        }
+        else if(poisson_solver_id == PoissonSolverAlgo::Multigrid){
+            amrex::Print() << "Poisson solver:       | multigrid" << "\n";
+        }
+        if (do_magnetostatic_solve){
+            amrex::Print() << "                      | magnetostatic solve included" << "\n";
+        }
     }
     else{
       amrex::Print() << "Operation mode:       | Electromagnetic" << "\n";
@@ -287,14 +294,6 @@ WarpX::PrintMainPICparameters ()
     else if ((em_solver_medium == MediumForEM::Macroscopic) &&
             (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::BackwardEuler)){
       amrex::Print() << "                      |  - Backward Euler algorithm\n";
-    }
-    if(electrostatic_solver_id != ElectrostaticSolverAlgo::None){
-        if(poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction){
-            amrex::Print() << "Poisson solver:       | FFT-based" << "\n";
-        }
-        else if(poisson_solver_id == PoissonSolverAlgo::Multigrid){
-            amrex::Print() << "Poisson solver:       | multigrid" << "\n";
-        }
     }
 
     amrex::Print() << "-------------------------------------------------------------------------------\n";
@@ -579,7 +578,7 @@ WarpX::InitData ()
         ExecutePythonCallback("beforeInitEsolve");
         ComputeSpaceChargeField(reset_fields);
         ExecutePythonCallback("afterInitEsolve");
-        if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) {
+        if (do_magnetostatic_solve) {
             ComputeMagnetostaticField();
         }
     }

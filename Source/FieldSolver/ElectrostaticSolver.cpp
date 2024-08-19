@@ -75,7 +75,6 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
     }
 
     if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
-        electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic ||
         electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameSemiImplicit ) {
         AddSpaceChargeFieldLabFrame();
     }
@@ -344,7 +343,6 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
     // EB: use AMReX to directly calculate the electric field since with EB's the
     // simple finite difference scheme in WarpX::computeE sometimes fails
     if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
-        electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic ||
         electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameSemiImplicit)
     {
         // TODO: maybe make this a helper function or pass Efield_fp directly

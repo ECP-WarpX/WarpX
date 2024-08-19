@@ -927,6 +927,8 @@ public:
 
     static int electrostatic_solver_id;
     static int poisson_solver_id;
+    // Flag to set whether the magnetostatic solver should be called
+    static bool do_magnetostatic_solve;
 
     // Parameters for lab frame electrostatic
     static amrex::Real self_fields_required_precision;

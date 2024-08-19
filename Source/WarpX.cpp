@@ -195,6 +195,7 @@ Real WarpX::self_fields_required_precision = 1.e-11_rt;
 Real WarpX::self_fields_absolute_tolerance = 0.0_rt;
 int WarpX::self_fields_max_iters = 200;
 int WarpX::self_fields_verbosity = 2;
+bool WarpX::do_magnetostatic_solve = false;
 
 bool WarpX::do_subcycling = false;
 bool WarpX::do_multi_J = false;
@@ -327,7 +328,7 @@ WarpX::WarpX ()
     Bfield_fp.resize(nlevs_max);
 
     // Only allocate vector potential arrays when using the Magnetostatic Solver
-    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
+    if (do_magnetostatic_solve)
     {
         vector_potential_fp_nodal.resize(nlevs_max);
         vector_potential_grad_buf_e_stag.resize(nlevs_max);
@@ -750,9 +751,9 @@ WarpX::ReadParameters ()
         }
 
         if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
-            electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic ||
             electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameSemiImplicit)
         {
+            pp_warpx.query("do_magnetostatic", do_magnetostatic_solve);
             // Note that with the relativistic version, these parameters would be
             // input for each species.
             utils::parser::queryWithParser(
@@ -777,11 +778,11 @@ WarpX::ReadParameters ()
 #endif
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        (
-            electrostatic_solver_id!=ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic ||
-            poisson_solver_id!=PoissonSolverAlgo::IntegratedGreenFunction
-        ),
-        "The FFT Poisson solver is not implemented in labframe-electromagnetostatic mode yet."
+            (
+                !(do_magnetostatic_solve &&
+                poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction)
+            ),
+            "The FFT Poisson solver is not implemented in labframe-electromagnetostatic mode yet."
         );
 
         // Parse the input file for domain boundary potentials
@@ -2089,7 +2090,7 @@ WarpX::ClearLevel (int lev)
             current_fp_vay[lev][i].reset();
         }
 
-        if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
+        if (do_magnetostatic_solve)
         {
             vector_potential_fp_nodal[lev][i].reset();
             vector_potential_grad_buf_e_stag[lev][i].reset();
@@ -2260,7 +2261,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     jy_nodal_flag = IntVect(1,0,1);
     jz_nodal_flag = IntVect(1,1,0);
 #endif
-    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
+    if (do_magnetostatic_solve)
     {
         jx_nodal_flag  = IntVect::TheNodeVector();
         jy_nodal_flag  = IntVect::TheNodeVector();
@@ -2346,7 +2347,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         AllocInitMultiFab(current_fp_vay[lev][2], amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngJ, lev, "current_fp_vay[z]", 0.0_rt);
     }
 
-    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
+    if (do_magnetostatic_solve)
     {
         AllocInitMultiFab(vector_potential_fp_nodal[lev][0], amrex::convert(ba, rho_nodal_flag),
             dm, ncomps, ngRho, lev, "vector_potential_fp_nodal[x]", 0.0_rt);
@@ -2461,7 +2462,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
     int rho_ncomps = 0;
     if( (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) ||
-        (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) ||
         (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameSemiImplicit) ||
         (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) ) {
         rho_ncomps = ncomps;
@@ -2481,7 +2481,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
 
     if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
-        electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic ||
         electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameSemiImplicit )
     {
         const IntVect ngPhi = IntVect( AMREX_D_DECL(1,1,1) );
