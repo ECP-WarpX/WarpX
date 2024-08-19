@@ -39,8 +39,8 @@ jobs:
           -DWarpX_MPI=OFF              \
           -DWarpX_QED=OFF
         cmake --build build -j 4
-        ./build/bin/warpx.3d Examples/Physics_applications/laser_acceleration/inputs_3d
-        ./build/bin/warpx.rz Examples/Physics_applications/laser_acceleration/inputs_rz
+        ./build/bin/warpx.3d Examples/Physics_applications/laser_acceleration/inputs_3d_base
+        ./build/bin/warpx.rz Examples/Physics_applications/laser_acceleration/inputs_rz_base
 
         ccache -s
         du -hs ~/.cache/ccache
@@ -82,8 +82,8 @@ jobs:
           -DWarpX_QED_TOOLS=ON
 
         cmake --build build -j 4
-        ./build/bin/warpx.1d Examples/Physics_applications/laser_acceleration/inputs_1d
-        ./build/bin/warpx.2d Examples/Physics_applications/laser_acceleration/inputs_2d
+        ./build/bin/warpx.1d Examples/Physics_applications/laser_acceleration/inputs_1d_test_laser_acceleration_1d
+        ./build/bin/warpx.2d Examples/Physics_applications/laser_acceleration/inputs_2d_base
 
         ccache -s
         du -hs ~/.cache/ccache
@@ -133,8 +133,8 @@ jobs:
           -DWarpX_QED_TABLE_GEN=ON
 
         cmake --build build -j 4
-        ./build/bin/warpx.3d Examples/Physics_applications/laser_acceleration/inputs_3d
-        ./build/bin/warpx.rz Examples/Physics_applications/laser_acceleration/inputs_rz
+        ./build/bin/warpx.3d Examples/Physics_applications/laser_acceleration/inputs_3d_base
+        ./build/bin/warpx.rz Examples/Physics_applications/laser_acceleration/inputs_rz_base
 
         ccache -s
         du -hs ~/.cache/ccache

@@ -81,8 +81,9 @@ E_decay = 3.12600414*MeV_to_Joule # Energy released during Be* -> 2*alpha
 E_fusion_total = E_fusion + E_decay # Energy released during p + B -> 3*alpha
 
 ## Checks whether this is the 2D or the 3D test
-warpx_used_inputs = open('./warpx_used_inputs', 'r').read()
-is_2D = re.search('geometry.dims\s*=\s*2', warpx_used_inputs)
+warpx_used_inputs = open('./warpx_used_inputs', 'r')
+is_2D = re.search('geometry.dims\s*=\s*2', warpx_used_inputs.read())
+warpx_used_inputs.close()
 
 ## Some numerical parameters for this test
 size_x = 8
