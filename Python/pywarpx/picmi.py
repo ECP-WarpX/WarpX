@@ -1666,7 +1666,7 @@ class LoadInitialField(picmistandard.PICMI_LoadGriddedField):
             pywarpx.warpx.E_ext_grid_init_style = 'read_from_file'
         if self.load_B:
             pywarpx.warpx.B_ext_grid_init_style = 'read_from_file'
-            pywarpx.warpx.do_divb_cleaning_external = True
+            pywarpx.warpx.do_divb_cleaning_external = self.do_divb_cleaning_external
 
 class LoadInitialFieldFromPython:
     """
