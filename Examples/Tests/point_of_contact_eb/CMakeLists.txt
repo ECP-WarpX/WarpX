@@ -11,7 +11,7 @@ if(WarpX_EB)
         ON # eb
         Examples/Tests/point_of_contact_eb/inputs_3d_test_point_of_contact_eb_3d # inputs
         Examples/Tests/point_of_contact_eb/analysis.py # analysis
-        diags/diag1000003 # output
+        diags/diag1/ # output
     )
 endif()
 
@@ -25,6 +25,6 @@ if(WarpX_EB)
         ON # eb
         Examples/Tests/point_of_contact_eb/inputs_rz_test_point_of_contact_eb_rz # inputs
         Examples/Tests/point_of_contact_eb/analysis.py # analysis
-        diags/diag1000003 # output
+        diags/diag1/ # output
     )
 endif()
