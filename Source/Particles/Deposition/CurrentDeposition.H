@@ -10,6 +10,7 @@
 
 #include "Particles/Deposition/SharedDepositionUtils.H"
 #include "ablastr/parallelization/KernelTimer.H"
+#include "ablastr/particles/NodalFieldGather.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
 #include "Utils/TextMsg.H"
@@ -649,6 +650,9 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                                   const amrex::Array4<amrex::Real>& Jx_arr,
                                   const amrex::Array4<amrex::Real>& Jy_arr,
                                   const amrex::Array4<amrex::Real>& Jz_arr,
+#ifdef AMREX_USE_EB
+                                  const amrex::Array4<amrex::Real>& distance_to_eb_arr,
+#endif
                                   long np_to_deposit,
                                   amrex::Real dt,
                                   amrex::Real relative_time,
@@ -734,6 +738,31 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
             // Keep these double to avoid bug in single precision
             double const z_new = (zp - xyzmin.z + (relative_time + 0.5_rt*dt)*uzp[ip]*gaminv)*dinv.z;
             double const z_old = z_new - dt*dinv.z*uzp[ip]*gaminv;
+
+// Only execute for EB (embedded boundary)
+#ifdef AMREX_USE_EB
+            // Check whether the particle is close to the EB at the old and new position
+            // TODO: abstract in a separate function (doGatherScalarFieldNodal)
+            // TODO: check calculation for RZ
+            bool close_to_eb_old = false;
+            bool close_to_eb_new = false;
+            {
+                int i, j, k;
+                amrex::Real W[AMREX_SPACEDIM][2];
+                ablastr::particles::compute_weights<amrex::IndexType::NODE>(
+                    x_old, y_old, z_old, {AMREX_D_DECL(0,0,0)}, {AMREX_D_DECL(1,1,1)}, i, j, k, W);
+                amrex::Real distance = ablastr::particles::interp_field_nodal(i, j, k, W, distance_to_eb_arr);
+                close_to_eb_old = (distance < 1.0_rt); // TODO: tune depth
+            }
+            {
+                int i, j, k;
+                amrex::Real W[AMREX_SPACEDIM][2];
+                ablastr::particles::compute_weights<amrex::IndexType::NODE>(
+                    x_new, y_new, z_new, {AMREX_D_DECL(0,0,0)}, {AMREX_D_DECL(1,1,1)}, i, j, k, W);
+                amrex::Real distance = ablastr::particles::interp_field_nodal(i, j, k, W, distance_to_eb_arr);
+                close_to_eb_new = (distance < 1.0_rt); // TODO: tune depth
+            }
+#endif
 
 #if defined(WARPX_DIM_RZ)
             Real const vy = (-uxp[ip]*sintheta_mid + uyp[ip]*costheta_mid)*gaminv;
