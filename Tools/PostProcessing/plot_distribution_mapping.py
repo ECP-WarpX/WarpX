@@ -26,7 +26,7 @@ class SimData:
             print("No data_fields!")
             return
 
-        if not i in self.keys:
+        if i not in self.keys:
             print("Index is out of range!")
             print("Valid keys are ", self.keys)
             return

@@ -15,8 +15,6 @@
 import atexit
 import os
 
-import numpy as np
-
 from .Geometry import geometry
 
 

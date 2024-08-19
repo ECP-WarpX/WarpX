@@ -12,7 +12,7 @@ from matplotlib import colors
 plt.rcParams.update({'font.size': 20})
 
 # load simulation parameters
-with open(f'sim_parameters.dpkl', 'rb') as f:
+with open('sim_parameters.dpkl', 'rb') as f:
     sim = dill.load(f)
 
 x_idx = 2
@@ -20,7 +20,7 @@ z_idx = 4
 Ey_idx = 6
 Bx_idx = 8
 
-plane_data = np.loadtxt(f'diags/plane.dat', skiprows=1)
+plane_data = np.loadtxt('diags/plane.dat', skiprows=1)
 
 steps = np.unique(plane_data[:,0])
 num_steps = len(steps)

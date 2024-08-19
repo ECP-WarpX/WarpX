@@ -57,8 +57,8 @@ init_pos =  np.array([0.0, 0.0, 0.0])
 #________________________________________
 
 #Tolerance
-tol_pos = 1.0e-14;
-tol_mom = 0.0; #momentum should be conserved exactly
+tol_pos = 1.0e-14
+tol_mom = 0.0 #momentum should be conserved exactly
 #________________________________________
 
 #Input filename
@@ -152,7 +152,7 @@ def generate():
             f.write("{}.single_particle_u = {} {} {}\n".
                 format(name, velx, vely, velz))
             f.write("{}.single_particle_weight = 1.0\n".format(name))
-            f.write("\n".format(name))
+            f.write("\n")
 
 def main():
     if (len(sys.argv) < 2):
