@@ -239,7 +239,7 @@ WarpX::Evolve (int numsteps)
         }
 
         if (evolve_scheme == EvolveScheme::Explicit) {
-            if (cur_time + dt[0] >= stop_time - 1.e-3*dt[0] || step == numsteps_max-1) {
+            if (cur_time >= stop_time - 1.e-3*dt[0] || step == numsteps_max-1) {
                 // At the end of last step, push p by 0.5*dt to synchronize
                 FillBoundaryE(guard_cells.ng_FieldGather);
                 FillBoundaryB(guard_cells.ng_FieldGather);
