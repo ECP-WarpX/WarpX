@@ -94,14 +94,26 @@ jobs:
         cmake --build build -j 10
     - name: 2D Test
       run: |
-        cp Examples/Tests/ionization/inputs_2d_rt_catalyst .
-        cp Examples/Tests/ionization/sample_catalyst_pipeline.py .
-        mpiexec -n 2 ./build/bin/warpx.2d inputs_2d_rt_catalyst
+        cp Examples/Tests/ionization/inputs_2d_rt .
+        cp Examples/Tests/ionization/catalyst_pipeline.py .
+        mpiexec -n 2 ./build/bin/warpx.2d \
+          inputs_2d_rt \
+            catalyst.script_paths = catalyst_pipeline.py\
+            catalyst.implementation = paraview\
+            diag1.intervals = 16\
+            diag1.species = "electrons ions"\
+            diag1.format = catalyst
     - name: 3D Test
       run: |
-        cp Examples/Tests/electrostatic_sphere/inputs_3d_catalyst .
-        cp Examples/Tests/electrostatic_sphere/sample_catalyst_pipeline.py .
-        mpiexec -n 2 ./build/bin/warpx.3d inputs_3d_catalyst
+        cp Examples/Tests/electrostatic_sphere/inputs_3d .
+        cp Examples/Tests/electrostatic_sphere/catalyst_pipeline.py .
+        mpiexec -n 2 ./build/bin/warpx.3d \
+          inputs_3d \
+          catalyst.script_paths = catalyst_pipeline.py \
+          catalyst.implementation = paraview \
+          diagnostics.diags_names = diag1 \
+          diag1.format = catalyst\
+          diag1.intervals = 3
     - uses: actions/upload-artifact@v4
       with:
         name: catalyst-test-artifacts
