@@ -224,3 +224,17 @@ if(WarpX_FFT)
         diags/diag1000050 # output
     )
 endif()
+
+# uniform_plasma_multiJ #######################################################
+#
+if(WarpX_FFT)
+    add_warpx_test(
+        uniform_plasma_multiJ # name
+        3 # dims
+        2 # nprocs
+        OFF # eb
+        Examples/Tests/nci_psatd_stability/inputs_3d_test_uniform_plasma_multiJ # inputs
+        Examples/Tests/nci_psatd_stability/analysis_multiJ.py # analysis
+        diags/diag1000300 # output
+    )
+endif()

@@ -30,7 +30,7 @@ filename = sys.argv[1]
 test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename, output_format='openpmd')
 
-ts = OpenPMDTimeSeries('./spacecraft_charging_plt')
+ts = OpenPMDTimeSeries(filename)
 dt = 1.27e-8
 t=[]
 phi=[]
