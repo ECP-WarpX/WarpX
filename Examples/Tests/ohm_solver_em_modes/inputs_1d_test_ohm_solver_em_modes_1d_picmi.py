@@ -259,8 +259,6 @@ class EMModes(object):
             particle_diag = picmi.ParticleDiagnostic(
                 name='field_diag',
                 period=self.total_steps,
-                write_dir='.',
-                warpx_file_prefix='Python_ohms_law_solver_EM_modes_1d_plt',
                 # warpx_format = 'openpmd',
                 # warpx_openpmd_backend = 'h5'
             )
@@ -270,8 +268,6 @@ class EMModes(object):
                 grid=self.grid,
                 period=self.total_steps,
                 data_list=['B', 'E', 'J_displacement'],
-                write_dir='.',
-                warpx_file_prefix='Python_ohms_law_solver_EM_modes_1d_plt',
                 # warpx_format = 'openpmd',
                 # warpx_openpmd_backend = 'h5'
             )

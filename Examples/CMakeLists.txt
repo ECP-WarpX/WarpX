@@ -25,6 +25,7 @@ function(add_warpx_test
     inputs
     analysis
     output
+    # ${ARGV7} optional command line arguments for Python tests
 )
     # cannot run MPI tests w/o MPI build
     if(NOT WarpX_MPI)
@@ -92,12 +93,17 @@ function(add_warpx_test
 
     # test run
     if(python)
+        set(command_line_args "")
+        if(${ARGC} GREATER 7)
+            set(command_line_args ${ARGV7})
+        endif()
         add_test(
             NAME ${name}.run
             COMMAND
                 ${THIS_MPI_TEST_EXE}
                 ${THIS_Python_EXE}
                 ${WarpX_SOURCE_DIR}/${inputs}
+                ${command_line_args}
             WORKING_DIRECTORY ${THIS_WORKING_DIR}
         )
         # FIXME Use helper function to handle Windows exceptions
@@ -139,6 +145,8 @@ function(add_warpx_test
         )
         # test analysis depends on test run
         set_property(TEST ${name}.analysis APPEND PROPERTY DEPENDS "${name}.run")
+        # FIXME Use helper function to handle Windows exceptions
+        set(PYTHONPATH "${PYTHONPATH}:${CMAKE_PYTHON_OUTPUT_DIRECTORY}")
         # add paths for custom Python modules
         set(PYTHONPATH "${PYTHONPATH}:${WarpX_SOURCE_DIR}/Regression/Checksum")
         set(PYTHONPATH "${PYTHONPATH}:${WarpX_SOURCE_DIR}/Regression/PostProcessingUtils")
