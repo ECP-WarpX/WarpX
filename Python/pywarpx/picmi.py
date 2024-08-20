@@ -504,6 +504,11 @@ class DensityDistributionBase(object):
             species.add_new_group_attr(source_name, 'uy', self.directed_velocity[1]/constants.c)
             species.add_new_group_attr(source_name, 'uz', self.directed_velocity[2]/constants.c)
 
+        if hasattr(self, 'density_min'):
+            species.add_new_group_attr(source_name, 'density_min', self.density_min)
+        if hasattr(self, 'density_max'):
+            species.add_new_group_attr(source_name, 'density_max', self.density_max)
+
     def setup_parse_momentum_functions(self, species, source_name, expressions, suffix, defaults):
         for sdir, idir in zip(['x', 'y', 'z'], [0, 1, 2]):
             if expressions[idir] is not None:
@@ -555,6 +560,14 @@ class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution, DensityDist
     Parameters
     ----------
 
+    warpx_density_min: float
+        Minimum plasma density. No particle is injected where the density is
+        below this value.
+
+    warpx_density_max: float
+        Maximum plasma density. The density at each point is the minimum between
+        the value given in the profile, and density_max.
+
     warpx_momentum_spread_expressions: list of string
         Analytic expressions describing the gamma*velocity spread for each axis [m/s].
         Expressions should be in terms of the position, written as 'x', 'y', and 'z'.
@@ -563,6 +576,8 @@ class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution, DensityDist
 
     """
     def init(self, kw):
+        self.density_min = kw.pop('warpx_density_min', None)
+        self.density_max = kw.pop('warpx_density_max', None)
         self.momentum_spread_expressions = kw.pop('warpx_momentum_spread_expressions', [None, None, None])
 
     def distribution_initialize_inputs(self, species_number, layout, species, density_scale, source_name):
@@ -1652,11 +1667,11 @@ class LoadInitialField(picmistandard.PICMI_LoadGriddedField):
 class AnalyticInitialField(picmistandard.PICMI_AnalyticAppliedField):
     def init(self, kw):
         self.mangle_dict = None
-        self.maxlevel_extEMfield_init = kw.pop('warpx_maxlevel_extEMfield_init', None);
+        self.maxlevel_extEMfield_init = kw.pop('warpx_maxlevel_extEMfield_init', None)
 
     def applied_field_initialize_inputs(self):
         # Note that lower and upper_bound are not used by WarpX
-        pywarpx.warpx.maxlevel_extEMfield_init = self.maxlevel_extEMfield_init;
+        pywarpx.warpx.maxlevel_extEMfield_init = self.maxlevel_extEMfield_init
 
         if self.mangle_dict is None:
             # Only do this once so that the same variables are used in this distribution

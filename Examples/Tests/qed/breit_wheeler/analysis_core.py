@@ -96,7 +96,7 @@ def BW_inner(x):
 
 def BW_X(chi_phot, chi_ele):
     div = (chi_ele*(chi_phot-chi_ele))
-    div = np.where(np.logical_and(chi_phot > chi_ele, chi_ele != 0), div, 1.0);
+    div = np.where(np.logical_and(chi_phot > chi_ele, chi_ele != 0), div, 1.0)
     res = np.where(np.logical_and(chi_phot > chi_ele, chi_ele != 0), np.power(chi_phot/div, 2./3.), np.inf)
     return res
 

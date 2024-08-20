@@ -17,7 +17,7 @@ class CopyPreBuild(build):
         # clashes with directories many developers have in their source trees;
         # this can create confusing results with "pip install .", which clones
         # the whole source tree by default
-        self.build_base = '_tmppythonbuild'
+        self.build_base = os.path.join("_tmppythonbuild", "warpx")
 
     def run(self):
         # remove existing build directory
@@ -280,7 +280,7 @@ with open('./requirements.txt') as f:
 setup(
     name='pywarpx',
     # note PEP-440 syntax: x.y.zaN but x.y.z.devN
-    version = '24.07',
+    version = '24.08',
     packages = ['pywarpx'],
     package_dir = {'pywarpx': 'Python/pywarpx'},
     author='Jean-Luc Vay, David P. Grote, Maxence Thévenet, Rémi Lehe, Andrew Myers, Weiqun Zhang, Axel Huebl, et al.',

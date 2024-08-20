@@ -38,7 +38,7 @@ print(f"\nYour current source directory is: {REPO_DIR}")
 
 REPLY = input("Are you sure you want to continue? [y/N] ")
 print()
-if not REPLY in ["Y", "y"]:
+if REPLY not in ["Y", "y"]:
     print("You did not confirm with 'y', aborting.")
     sys.exit(1)
 
@@ -78,7 +78,7 @@ you want to require from AMReX:\n""")
 
 print(f"Currently, WarpX builds against this AMReX commit/branch/sha: {amrex_branch}")
 print(f"AMReX HEAD commit (development branch): {amrex_HEAD}")
-amrex_new_branch = input(f"Update AMReX commit/branch/sha: ").strip()
+amrex_new_branch = input("Update AMReX commit/branch/sha: ").strip()
 if not amrex_new_branch:
     amrex_new_branch = amrex_branch
     print(f"--> Nothing entered, will keep: {amrex_branch}")
@@ -97,7 +97,7 @@ print(f"New minimal AMReX version:   {amrex_new_minimal}\n")
 
 REPLY = input("Is this information correct? Will now start updating! [y/N] ")
 print()
-if not REPLY in ["Y", "y"]:
+if REPLY not in ["Y", "y"]:
     print("You did not confirm with 'y', aborting.")
     sys.exit(1)
 

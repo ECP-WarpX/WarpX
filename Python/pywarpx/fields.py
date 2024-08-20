@@ -141,16 +141,12 @@ class _MultiFABWrapper(object):
         try:
             if libwarpx.geometry_dim == '3d':
                 idir = ['x', 'y', 'z'].index(direction)
-                celldir = idir
             elif libwarpx.geometry_dim == '2d':
                 idir = ['x', 'z'].index(direction)
-                celldir = 2*idir
             elif libwarpx.geometry_dim == 'rz':
                 idir = ['r', 'z'].index(direction)
-                celldir = 2*idir
             elif libwarpx.geometry_dim == '1d':
                 idir = ['z'].index(direction)
-                celldir = idir
         except ValueError:
             raise Exception('Inappropriate direction given')
 
@@ -511,10 +507,14 @@ class _MultiFABWrapper(object):
             global_shape = list(value3d.shape)
             # The shape of 1 is added for the extra dimensions and when index is an integer
             # (in which case the dimension was not in the input array).
-            if not isinstance(ii[0], slice): global_shape[0:0] = [1]
-            if not isinstance(ii[1], slice): global_shape[1:1] = [1]
-            if not isinstance(ii[2], slice): global_shape[2:2] = [1]
-            if not isinstance(ic   , slice) or len(global_shape) < 4: global_shape[3:3] = [1]
+            if not isinstance(ii[0], slice):
+                global_shape[0:0] = [1]
+            if not isinstance(ii[1], slice):
+                global_shape[1:1] = [1]
+            if not isinstance(ii[2], slice):
+                global_shape[2:2] = [1]
+            if not isinstance(ic   , slice) or len(global_shape) < 4:
+                global_shape[3:3] = [1]
             value3d.shape = global_shape
 
             if libwarpx.libwarpx_so.Config.have_gpu:
