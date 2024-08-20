@@ -47,7 +47,6 @@ namespace ParticleUtils {
         const amrex::Real lz = (zp - plo[2]) * dxi[2];
         kk = static_cast<int>(amrex::Math::floor(lz));
 #endif
-
         return amrex::IntVect(AMREX_D_DECL(ii, jj, kk));
     }
 
