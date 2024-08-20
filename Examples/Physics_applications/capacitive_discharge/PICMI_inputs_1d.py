@@ -12,6 +12,7 @@ from scipy.sparse import csc_matrix
 from scipy.sparse import linalg as sla
 
 from pywarpx import callbacks, fields, libwarpx, particle_containers, picmi
+from pywarpx.LoadThirdParty import load_cupy
 
 constants = picmi.constants
 
@@ -404,12 +405,14 @@ class CapacitiveDischargeExample(object):
         uy_arrays = self.neutral_cont.uyp
         uz_arrays = self.neutral_cont.uzp
 
+        xp, _ = load_cupy()
+
         vel_std = np.sqrt(constants.kb * self.gas_temp / self.m_ion)
         for ii in range(len(ux_arrays)):
             nps = len(ux_arrays[ii])
-            ux_arrays[ii][:] = vel_std * self.rng.normal(size=nps)
-            uy_arrays[ii][:] = vel_std * self.rng.normal(size=nps)
-            uz_arrays[ii][:] = vel_std * self.rng.normal(size=nps)
+            ux_arrays[ii][:] = xp.array(vel_std * self.rng.normal(size=nps))
+            uy_arrays[ii][:] = xp.array(vel_std * self.rng.normal(size=nps))
+            uz_arrays[ii][:] = xp.array(vel_std * self.rng.normal(size=nps))
 
     def _get_rho_ions(self):
         # deposit the ion density in rho_fp
