@@ -1,0 +1,5 @@
+# base input parameters
+FILE = inputs_3d_base
+
+# test input parameters
+max_step = 5

@@ -1,11 +1,12 @@
 #################################
 ####### GENERAL PARAMETERS ######
 #################################
-stop_time = 3.7e-12
-amr.n_cell = 64 128
+#stop_time = 3.7e-12
+max_step = 400
+amr.n_cell = 32 512 #64 128
 amr.max_grid_size = 128
 amr.blocking_factor = 32
-amr.max_level = 0
+amr.max_level = 1
 geometry.dims = 2
 geometry.prob_lo     = -125.e-6 -149.e-6
 geometry.prob_hi     =  125.e-6    1.e-6
