@@ -6,7 +6,6 @@ amr.max_grid_size = 256
 geometry.dims = 3
 geometry.prob_lo     = -10 -10 -10
 geometry.prob_hi     =  10  10  10
-warpx.eb_particle_removal_depth = 1
 
 # Boundary condition
 boundary.field_lo = pec pec pec
