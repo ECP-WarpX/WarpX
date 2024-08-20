@@ -71,5 +71,5 @@ print('load balance efficiency (after load balance): ', efficiency_after)
 # than non-load balanced case
 assert(efficiency_before < efficiency_after)
 
-test_name = 'reduced_diags_loadbalancecosts_timers'
+test_name = 'reduced_diags_load_balance_costs_timers'
 checksumAPI.evaluate_checksum(test_name, fn)

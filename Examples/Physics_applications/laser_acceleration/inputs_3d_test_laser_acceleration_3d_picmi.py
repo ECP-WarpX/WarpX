@@ -114,16 +114,12 @@ solver = picmi.ElectromagneticSolver(
 diag_field_list = ['B', 'E', 'J', 'rho']
 particle_diag = picmi.ParticleDiagnostic(
     name = 'diag1',
-    period = 100,
-    write_dir = '.',
-    warpx_file_prefix = 'Python_LaserAcceleration_plt')
+    period = 100)
 field_diag = picmi.FieldDiagnostic(
     name = 'diag1',
     grid = grid,
     period = 100,
-    data_list = diag_field_list,
-    write_dir = '.',
-    warpx_file_prefix = 'Python_LaserAcceleration_plt')
+    data_list = diag_field_list)
 
 # Set up simulation
 sim = picmi.Simulation(

@@ -83,16 +83,12 @@ particle_diag = picmi.ParticleDiagnostic(
     period=3,
     species=[electrons],
     data_list = ['ux', 'uy', 'uz', 'x', 'y', 'z', 'weighting'],
-    write_dir='.',
-    warpx_file_prefix='Python_reduced_diags_loadbalancecosts_timers_plt'
 )
 field_diag = picmi.FieldDiagnostic(
     name='diag1',
     grid=grid,
     period=3,
     data_list = ['Bx', 'By', 'Bz', 'Ex', 'Ey', 'Ez', 'Jx', 'Jy', 'Jz'],
-    write_dir='.',
-    warpx_file_prefix='Python_reduced_diags_loadbalancecosts_timers_plt'
 )
 
 # Set up simulation
@@ -103,7 +99,8 @@ sim = picmi.Simulation(
     particle_shape=1,
     warpx_current_deposition_algo='esirkepov',
     warpx_field_gathering_algo='energy-conserving',
-    warpx_load_balance_intervals=2
+    warpx_load_balance_intervals=2,
+    warpx_load_balance_costs_update='timers'
 )
 
 # Add species

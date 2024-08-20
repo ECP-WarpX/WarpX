@@ -113,17 +113,13 @@ field_diag = picmi.FieldDiagnostic(
     grid = grid,
     period = 10,
     data_list = diag_field_list,
-    warpx_dump_rz_modes = 1,
-    write_dir = '.',
-    warpx_file_prefix = 'Python_LaserAccelerationRZ_plt')
+    warpx_dump_rz_modes = 1)
 diag_particle_list = ['weighting', 'momentum']
 particle_diag = picmi.ParticleDiagnostic(
     name = 'diag1',
     period = 10,
     species = [electrons, beam],
-    data_list = diag_particle_list,
-    write_dir = '.',
-    warpx_file_prefix = 'Python_LaserAccelerationRZ_plt')
+    data_list = diag_particle_list)
 
 # Set up simulation
 sim = picmi.Simulation(

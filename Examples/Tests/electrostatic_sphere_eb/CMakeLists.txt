@@ -29,6 +29,20 @@ if(WarpX_EB)
     )
 endif()
 
+# electrostatic_sphere_eb_picmi ###############################################
+#
+if(WarpX_EB)
+    add_warpx_test(
+        electrostatic_sphere_eb_picmi # name
+        3 # dims
+        2 # nprocs
+        ON # eb
+        Examples/Tests/electrostatic_sphere_eb/inputs_3d_test_electrostatic_sphere_eb_picmi.py # inputs
+        Examples/Tests/electrostatic_sphere_eb/analysis.py # analysis
+        diags/diag1000002 # output
+    )
+endif()
+
 # electrostatic_sphere_eb_rz ##################################################
 #
 if(WarpX_EB)

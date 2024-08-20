@@ -73,16 +73,12 @@ embedded_boundary = picmi.EmbeddedBoundary(
 particle_diag = picmi.ParticleDiagnostic(
     name = 'diag1',
     period = 1,
-    write_dir = '.',
-    warpx_file_prefix = 'Python_ElectrostaticSphereEB_plt'
 )
 field_diag = picmi.FieldDiagnostic(
     name = 'diag1',
     grid = grid,
     period = 1,
     data_list = ['Ex', 'Ey', 'Ez', 'phi', 'rho'],
-    write_dir = '.',
-    warpx_file_prefix = 'Python_ElectrostaticSphereEB_plt'
 )
 
 reduced_diag = picmi.ReducedDiagnostic(
