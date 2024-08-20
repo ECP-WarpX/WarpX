@@ -159,19 +159,17 @@ WarpX::computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<
     }
 
 #if defined(AMREX_USE_EB)
-    const std::optional<MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel> post_A_calculation({Bfield_fp,
-                                                                                               vector_potential_grad_buf_e_stag,
-                                                                                               vector_potential_grad_buf_b_stag});
-
     amrex::Vector<amrex::EBFArrayBoxFactory const *> factories;
     for (int lev = 0; lev <= finest_level; ++lev) {
         factories.push_back(&WarpX::fieldEBFactory(lev));
     }
     const std::optional<amrex::Vector<amrex::EBFArrayBoxFactory const *> > eb_farray_box_factory({factories});
 #else
-    const std::optional<MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel> post_A_calculation;
     const std::optional<amrex::Vector<amrex::FArrayBoxFactory const *> > eb_farray_box_factory;
 #endif
+    const std::optional<MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel> post_A_calculation(
+        {Bfield_fp, vector_potential_grad_buf_e_stag, vector_potential_grad_buf_b_stag}
+    );
 
     ablastr::fields::computeVectorPotential(
         sorted_curr,
