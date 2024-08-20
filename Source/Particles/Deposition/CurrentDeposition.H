@@ -748,13 +748,16 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
             {
                 amrex::Real distance = ablastr::particles::doGatherScalarFieldNodal(
                     x_old, y_old, z_old, distance_to_eb_arr, {AMREX_D_DECL(1,1,1)}, {AMREX_D_DECL(0,0,0)} );
-                close_to_eb_old = (distance < 1.0_rt); // TODO: tune depth
+                amrex::Print() << "Distance to EB: " << distance << "\n";
+                close_to_eb_old = (distance < 1.0_rt) ? true: false; // TODO: tune depth
             }
             {
                 amrex::Real distance = ablastr::particles::doGatherScalarFieldNodal(
                     x_new, y_new, z_new, distance_to_eb_arr, {AMREX_D_DECL(1,1,1)}, {AMREX_D_DECL(0,0,0)} );
-                close_to_eb_new = (distance < 1.0_rt); // TODO: tune depth
+                amrex::Print() << "Distance to EB: " << distance << "\n";
+                close_to_eb_new = (distance < 1.0_rt) ? true: false; // TODO: tune depth
             }
+            amrex::Print() << "Close to EB: " << close_to_eb_old << " " << close_to_eb_new << "\n";
 #endif
 
 #if defined(WARPX_DIM_RZ)
@@ -780,19 +783,19 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
 #if !defined(WARPX_DIM_1D_Z)
             double sx_new[depos_order + 3] = {0.};
             double sx_old[depos_order + 3] = {0.};
-            const int i_new = compute_shape_factor(sx_new+1, x_new);
-            const int i_old = compute_shifted_shape_factor(sx_old, x_old, i_new);
+            const int i_new = compute_shape_factor(sx_new+1, x_new, close_to_eb_new);
+            const int i_old = compute_shifted_shape_factor(sx_old, x_old, i_new, close_to_eb_old);
 #endif
 #if defined(WARPX_DIM_3D)
             double sy_new[depos_order + 3] = {0.};
             double sy_old[depos_order + 3] = {0.};
-            const int j_new = compute_shape_factor(sy_new+1, y_new);
-            const int j_old = compute_shifted_shape_factor(sy_old, y_old, j_new);
+            const int j_new = compute_shape_factor(sy_new+1, y_new, close_to_eb_new);
+            const int j_old = compute_shifted_shape_factor(sy_old, y_old, j_new, close_to_eb_old);
 #endif
             double sz_new[depos_order + 3] = {0.};
             double sz_old[depos_order + 3] = {0.};
-            const int k_new = compute_shape_factor(sz_new+1, z_new);
-            const int k_old = compute_shifted_shape_factor(sz_old, z_old, k_new);
+            const int k_new = compute_shape_factor(sz_new+1, z_new, close_to_eb_new);
+            const int k_old = compute_shifted_shape_factor(sz_old, z_old, k_new, close_to_eb_old);
 
             // computes min/max positions of current contributions
 #if !defined(WARPX_DIM_1D_Z)

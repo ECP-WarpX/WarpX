@@ -14,10 +14,10 @@ boundary.field_hi = pec pec pec
 algo.charge_deposition = standard
 algo.field_gathering = energy-conserving
 warpx.cfl = 1.0
-warpx.use_filter = 1
+warpx.use_filter = 0 # TODO: use filtering
 
 # Order of particle shape factors
-algo.particle_shape = 2
+algo.particle_shape = 3
 
 warpx.eb_implicit_function = "(x*x + y*y + z*z - 49)"
 
