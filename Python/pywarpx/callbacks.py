@@ -168,7 +168,7 @@ class CallbackFunctions(object):
                 print("if a function name had later been used as a variable name.")
                 print(self.name)
                 if isinstance(f, str):
-                    print("The name of the call back is %s" % f)
+                    print(f"The name of the call back is {f}")
                 print("\n\n")
                 continue
             yield result
