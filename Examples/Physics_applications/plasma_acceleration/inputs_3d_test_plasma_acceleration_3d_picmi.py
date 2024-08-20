@@ -19,7 +19,9 @@ zmax = +200.e-6
 
 moving_window_velocity = [0., 0., constants.c]
 
-number_per_cell_each_dim = [4, 4, 4]
+number_per_cell_each_dim = [2, 2, 1]
+
+max_steps = 10
 
 grid = picmi.Cartesian3DGrid(number_of_cells = [nx, ny, nz],
                              lower_bound = [xmin, ymin, zmin],
@@ -29,16 +31,9 @@ grid = picmi.Cartesian3DGrid(number_of_cells = [nx, ny, nz],
                              lower_boundary_conditions_particles = ['periodic', 'periodic', 'absorbing'],
                              upper_boundary_conditions_particles = ['periodic', 'periodic', 'absorbing'],
                              moving_window_velocity = moving_window_velocity,
-                             #refined_regions = [[1, [-25e-6, -25e-6, -200.e-6], [25e-6, 25e-6, 200.e-6]]],  # as argument
-                             warpx_max_grid_size=128, warpx_blocking_factor=16)
+                             warpx_max_grid_size=32)
 
-# --- As a separate function call (instead of refined_regions argument)
-grid.add_refined_region(level = 1,
-                        lo = [-25e-6, -25e-6, -200.e-6],
-                        hi = [25e-6, 25e-6, 200.e-6])
-
-solver = picmi.ElectromagneticSolver(grid=grid, cfl=1,
-                                     warpx_pml_ncell = 10)
+solver = picmi.ElectromagneticSolver(grid=grid, cfl=1)
 
 beam_distribution = picmi.UniformDistribution(density = 1.e23,
                                               lower_bound = [-20.e-6, -20.e-6, -150.e-6],
@@ -54,7 +49,7 @@ beam = picmi.Species(particle_type='electron', name='beam', initial_distribution
 plasma = picmi.Species(particle_type='electron', name='plasma', initial_distribution=plasma_distribution)
 
 sim = picmi.Simulation(solver = solver,
-                       max_steps = 2,
+                       max_steps = max_steps,
                        verbose = 1,
                        warpx_current_deposition_algo = 'esirkepov',
                        warpx_use_filter = 0)
@@ -64,13 +59,11 @@ sim.add_species(plasma, layout=picmi.GriddedLayout(grid=grid, n_macroparticle_pe
 
 field_diag = picmi.FieldDiagnostic(name = 'diag1',
                                    grid = grid,
-                                   period = 2,
-                                   data_list = ['Ex', 'Ey', 'Ez', 'Jx', 'Jy', 'Jz', 'part_per_cell'],
-                                   write_dir = '.',
-                                   warpx_file_prefix = 'Python_PlasmaAccelerationMR_plt')
+                                   period = max_steps,
+                                   data_list = ['Ex', 'Ey', 'Ez', 'Jx', 'Jy', 'Jz', 'part_per_cell'])
 
 part_diag = picmi.ParticleDiagnostic(name = 'diag1',
-                                     period = 2,
+                                     period = max_steps,
                                      species = [beam, plasma],
                                      data_list = ['ux', 'uy', 'uz', 'weighting'])
 
@@ -79,7 +72,7 @@ sim.add_diagnostic(part_diag)
 
 # write_inputs will create an inputs file that can be used to run
 # with the compiled version.
-#sim.write_input_file(file_name = 'inputs_from_PICMI.mr')
+#sim.write_input_file(file_name = 'inputs_from_PICMI')
 
 # Alternatively, sim.step will run WarpX, controlling it from Python
 sim.step()

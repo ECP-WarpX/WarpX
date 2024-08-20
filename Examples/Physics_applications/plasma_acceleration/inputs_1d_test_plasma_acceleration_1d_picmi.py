@@ -54,9 +54,7 @@ sim.add_species(plasma, layout=picmi.GriddedLayout(grid=grid, n_macroparticle_pe
 field_diag = picmi.FieldDiagnostic(name = 'diag1',
                                    grid = grid,
                                    period = max_steps,
-                                   data_list = ['Ex', 'Ey', 'Ez', 'Jx', 'Jy', 'Jz', 'part_per_cell'],
-                                   write_dir = '.',
-                                   warpx_file_prefix = 'Python_PlasmaAcceleration1d_plt')
+                                   data_list = ['Ex', 'Ey', 'Ez', 'Jx', 'Jy', 'Jz', 'part_per_cell'])
 
 part_diag = picmi.ParticleDiagnostic(name = 'diag1',
                                      period = max_steps,
