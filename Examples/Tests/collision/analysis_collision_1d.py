@@ -26,8 +26,8 @@ sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
 # this will be the name of the plot file
-fn = sys.argv[1]
-ds = yt.load(fn)
+last_fn = sys.argv[1]
+ds = yt.load(last_fn)
 data = ds.covering_grid(level = 0, left_edge = ds.domain_left_edge, dims = ds.domain_dimensions)
 
 # carbon 12 ion (mass = 12*amu - 6*me)
@@ -43,17 +43,17 @@ sorted_pz = data['ions', 'particle_momentum_z'][sorted_indices].value
 
 # Find the index 'Npmin' that separates macroparticles from group A and group B
 Np = len(sorted_wp)
-wpmin = sorted_wp.min();
-wpmax = sorted_wp.max();
+wpmin = sorted_wp.min()
+wpmax = sorted_wp.max()
 for i in range(len(sorted_wp)):
     if sorted_wp[i] > wpmin:
         Npmin = i
         break
 
 NpA = Npmin
-wpA = wpmin;
+wpA = wpmin
 NpB = Np - Npmin
-wpB = wpmax;
+wpB = wpmax
 NpAs = 0
 NpAe = Npmin
 NpBs = Npmin
@@ -61,10 +61,10 @@ NpBe = Np
 
 #############
 
-sorted_px_sum = np.abs(sorted_px).sum();
-sorted_py_sum = np.abs(sorted_py).sum();
-sorted_pz_sum = np.abs(sorted_pz).sum();
-sorted_wp_sum = np.abs(sorted_wp).sum();
+sorted_px_sum = np.abs(sorted_px).sum()
+sorted_py_sum = np.abs(sorted_py).sum()
+sorted_pz_sum = np.abs(sorted_pz).sum()
+sorted_wp_sum = np.abs(sorted_wp).sum()
 
 # compute mean velocities
 wAtot = wpA*NpA
@@ -118,9 +118,9 @@ TB = (TBx + TBy + TBz)/3.0
 TApar_30ps_soln = 6.15e3 # TA parallel solution at t = 30 ps
 error = np.abs(TApar-TApar_30ps_soln)/TApar_30ps_soln
 tolerance = 0.02
-print('TApar at 30ps error = ', error);
-print('tolerance = ', tolerance);
+print('TApar at 30ps error = ', error)
+print('tolerance = ', tolerance)
 assert error < tolerance
 
 test_name = os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, fn)
+checksumAPI.evaluate_checksum(test_name, last_fn)

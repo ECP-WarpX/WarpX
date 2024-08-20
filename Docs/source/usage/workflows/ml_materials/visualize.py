@@ -65,7 +65,7 @@ model = mynn.OneActNN(n_in = n_in,
                        act = activation_type
                   )
 model.load_state_dict(model_data['model_state_dict'])
-model.to(device=device);
+model.to(device=device)
 
 ###### load model data ###############
 dataset_filename = f'dataset_{species}.pt'

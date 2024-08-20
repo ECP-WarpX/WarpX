@@ -84,14 +84,15 @@ q_tot = -1e-15  #Total charge of sphere in C
 # r(0) = r_0, r'(0) = 0, and a = q_e*q_tot/(4*pi*eps_0*m_e)
 #
 # The E was calculated at the end of the last time step
-v_exact = lambda r: np.sqrt((q_e*q_tot)/(2*pi*m_e*eps_0)*(1/r_0-1/r))
-t_exact = lambda r: np.sqrt(r_0**3*2*pi*m_e*eps_0/(q_e*q_tot)) \
-    * (np.sqrt(r/r_0-1)*np.sqrt(r/r_0) \
-       + np.log(np.sqrt(r/r_0-1)+np.sqrt(r/r_0)))
-func = lambda rho: t_exact(rho) - t_max  #Objective function to find r(t_max)
+def v_exact(r):
+    return np.sqrt(q_e * q_tot / (2 * pi * m_e * eps_0) * (1 / r_0 - 1 / r))
+def t_exact(r):
+    return np.sqrt(r_0 ** 3 * 2 * pi * m_e * eps_0 / (q_e * q_tot)) * (np.sqrt(r / r_0 - 1) * np.sqrt(r / r_0) + np.log(np.sqrt(r / r_0 - 1) + np.sqrt(r / r_0)))
+def func(rho):
+    return t_exact(rho) - t_max  #Objective function to find r(t_max)
 r_end = fsolve(func,r_0)[0]  #Numerically solve for r(t_max)
-E_exact = lambda r: np.sign(r)*(q_tot/(4*pi*eps_0*r**2)*(abs(r)>=r_end) \
-    + q_tot*abs(r)/(4*pi*eps_0*r_end**3)*(abs(r)<r_end))
+def E_exact(r):
+    return np.sign(r) * (q_tot / (4 * pi * eps_0 * r ** 2) * (abs(r) >= r_end) + q_tot * abs(r) / (4 * pi * eps_0 * r_end ** 3) * (abs(r) < r_end))
 
 # Load data pertaining to fields
 data = ds.covering_grid(level=0,

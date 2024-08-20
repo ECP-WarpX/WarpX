@@ -17,7 +17,7 @@ class CopyPreBuild(build):
         # clashes with directories many developers have in their source trees;
         # this can create confusing results with "pip install .", which clones
         # the whole source tree by default
-        self.build_base = '_tmppythonbuild'
+        self.build_base = os.path.join("_tmppythonbuild", "warpx")
 
     def run(self):
         # remove existing build directory

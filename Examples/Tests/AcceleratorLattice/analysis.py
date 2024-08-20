@@ -42,7 +42,7 @@ if gamma_boost > 1.:
     # The simulation data is in the boosted frame.
     # Transform the z position to the lab frame.
     time = ds.current_time.value
-    zz_sim = gamma_boost*zz_sim + uz_boost*time;
+    zz_sim = gamma_boost*zz_sim + uz_boost*time
 
 # Fetch the quadrupole lattice data
 quad_starts = []

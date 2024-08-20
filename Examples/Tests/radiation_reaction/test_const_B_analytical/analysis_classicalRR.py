@@ -140,7 +140,6 @@ def check():
         for sp in spec_names])
 
     for cc in zip(cases, res_mom):
-        init_gamma = gamma(cc[0].init_mom)
         end_gamma = gamma(cc[1]/m_e/c)
         exp_gamma = exp_res(cc[0], sim_time)
 

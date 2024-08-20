@@ -85,7 +85,7 @@ training_time = 0
 train_loss_list = []
 test_loss_list = []
 
-model.to(device=device);
+model.to(device=device)
 
 ########## train and test functions ####
 # Manual: Train function START

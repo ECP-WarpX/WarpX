@@ -243,30 +243,32 @@ def cross_section( E_keV ):
     ## Returns cross section in b, using the analytical fits given
     ## in H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
     joule_to_keV = 1.e-3/scc.e
-    B_G = scc.pi * scc.alpha * np.sqrt( 2.*m_reduced * scc.c**2 * joule_to_keV );
+    B_G = scc.pi * scc.alpha * np.sqrt( 2.*m_reduced * scc.c**2 * joule_to_keV )
     if reaction_type == 'DT':
-        A1 = 6.927e4;
-        A2 = 7.454e8;
-        A3 = 2.050e6;
-        A4 = 5.2002e4;
-        A5 = 0;
-        B1 = 6.38e1;
-        B2 = -9.95e-1;
-        B3 = 6.981e-5;
-        B4 = 1.728e-4;
+        A1 = 6.927e4
+        A2 = 7.454e8
+        A3 = 2.050e6
+        A4 = 5.2002e4
+        A5 = 0
+        B1 = 6.38e1
+        B2 = -9.95e-1
+        B3 = 6.981e-5
+        B4 = 1.728e-4
     elif reaction_type == 'DD':
-        A1 = 5.3701e4;
-        A2 = 3.3027e2;
-        A3 = -1.2706e-1;
-        A4 = 2.9327e-5;
-        A5 = -2.5151e-9;
-        B1 = 0;
-        B2 = 0;
-        B3 = 0;
-        B4 = 0;
+        A1 = 5.3701e4
+        A2 = 3.3027e2
+        A3 = -1.2706e-1
+        A4 = 2.9327e-5
+        A5 = -2.5151e-9
+        B1 = 0
+        B2 = 0
+        B3 = 0
+        B4 = 0
+    else:
+        raise RuntimeError(f"Reaction type '{reaction_type}' not implemented.")
 
-    astrophysical_factor = (A1 + E_keV*(A2 + E_keV*(A3 + E_keV*(A4 + E_keV*A5)))) / (1 + E_keV*(B1 + E_keV*(B2 + E_keV*(B3 + E_keV*B4))));
-    millibarn_to_barn = 1.e-3;
+    astrophysical_factor = (A1 + E_keV*(A2 + E_keV*(A3 + E_keV*(A4 + E_keV*A5)))) / (1 + E_keV*(B1 + E_keV*(B2 + E_keV*(B3 + E_keV*B4))))
+    millibarn_to_barn = 1.e-3
     return millibarn_to_barn * astrophysical_factor/E_keV * np.exp(-B_G/np.sqrt(E_keV))
 
 def E_com_to_p_sq_com(m1, m2, E):
@@ -405,7 +407,7 @@ def main():
     ds_start = yt.load(filename_start)
     ad_end = ds_end.all_data()
     ad_start = ds_start.all_data()
-    dt = float(ds_end.current_time - ds_start.current_time)
+    dt = float(ds_end.current_time - ds_start.current_time)  # noqa
     field_data_end = ds_end.covering_grid(level=0, left_edge=ds_end.domain_left_edge,
                                           dims=ds_end.domain_dimensions)
     field_data_start = ds_start.covering_grid(level=0, left_edge=ds_start.domain_left_edge,

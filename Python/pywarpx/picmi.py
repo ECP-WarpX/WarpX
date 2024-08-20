@@ -1667,11 +1667,11 @@ class LoadInitialField(picmistandard.PICMI_LoadGriddedField):
 class AnalyticInitialField(picmistandard.PICMI_AnalyticAppliedField):
     def init(self, kw):
         self.mangle_dict = None
-        self.maxlevel_extEMfield_init = kw.pop('warpx_maxlevel_extEMfield_init', None);
+        self.maxlevel_extEMfield_init = kw.pop('warpx_maxlevel_extEMfield_init', None)
 
     def applied_field_initialize_inputs(self):
         # Note that lower and upper_bound are not used by WarpX
-        pywarpx.warpx.maxlevel_extEMfield_init = self.maxlevel_extEMfield_init;
+        pywarpx.warpx.maxlevel_extEMfield_init = self.maxlevel_extEMfield_init
 
         if self.mangle_dict is None:
             # Only do this once so that the same variables are used in this distribution
