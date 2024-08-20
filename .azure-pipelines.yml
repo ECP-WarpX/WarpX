@@ -18,7 +18,6 @@ jobs:
     FFTW_HOME: '/usr'
     LAPACKPP_HOME: '/usr/local'
     #OMP_NUM_THREADS: 1
-    AMReX_CMAKE_FLAGS: '-DAMReX_ASSERTIONS=ON -DAMReX_TESTING=ON'
     WARPX_CI_CCACHE: 'TRUE'
     #WARPX_CI_NUM_MAKE_JOBS: 2
     #WARPX_CI_OPENPMD: 'TRUE'
@@ -150,6 +149,7 @@ jobs:
       set -eu -o pipefail
       df -h
       # configure
+      export AMReX_CMAKE_FLAGS="-DAMReX_ASSERTIONS=ON -DAMReX_TESTING=ON"
       cmake -S . -B build ${AMReX_CMAKE_FLAGS} ${WARPX_CMAKE_FLAGS}
       # build
       cmake --build build -j 2
