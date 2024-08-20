@@ -746,19 +746,13 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
             // TODO: abstract in a separate function (doGatherScalarFieldNodal)
             // TODO: check calculation for RZ
             {
-                int i, j, k;
-                amrex::Real W[AMREX_SPACEDIM][2];
-                ablastr::particles::compute_weights<amrex::IndexType::NODE>(
-                    x_old, y_old, z_old, {AMREX_D_DECL(0,0,0)}, {AMREX_D_DECL(1,1,1)}, i, j, k, W);
-                amrex::Real distance = ablastr::particles::interp_field_nodal(i, j, k, W, distance_to_eb_arr);
+                amrex::Real distance = ablastr::particles::doGatherScalarFieldNodal(
+                    x_old, y_old, z_old, distance_to_eb_arr, {AMREX_D_DECL(1,1,1)}, {AMREX_D_DECL(0,0,0)} );
                 close_to_eb_old = (distance < 1.0_rt); // TODO: tune depth
             }
             {
-                int i, j, k;
-                amrex::Real W[AMREX_SPACEDIM][2];
-                ablastr::particles::compute_weights<amrex::IndexType::NODE>(
-                    x_new, y_new, z_new, {AMREX_D_DECL(0,0,0)}, {AMREX_D_DECL(1,1,1)}, i, j, k, W);
-                amrex::Real distance = ablastr::particles::interp_field_nodal(i, j, k, W, distance_to_eb_arr);
+                amrex::Real distance = ablastr::particles::doGatherScalarFieldNodal(
+                    x_new, y_new, z_new, distance_to_eb_arr, {AMREX_D_DECL(1,1,1)}, {AMREX_D_DECL(0,0,0)} );
                 close_to_eb_new = (distance < 1.0_rt); // TODO: tune depth
             }
 #endif
