@@ -3,7 +3,7 @@
 WarpX
 -----
 
-WarpX is an advanced, time-based, **electromagnetic & electrostatic Particle-In-Cell** code.
+WarpX is an advanced **electromagnetic & electrostatic Particle-In-Cell** code.
 
 It supports many features including:
 
