@@ -43,7 +43,14 @@ ProjectionDivCleaner::ProjectionDivCleaner(warpx::fields::FieldType a_field_type
     }
 
     auto& warpx = WarpX::GetInstance();
-    m_levels = warpx.finestLevel() + 1;
+
+    // Only div clean level 0
+    m_levels = 1;
+    if (warpx.finestLevel() > 0) {
+        ablastr::warn_manager::WMRecordWarning("Projection Div Cleaner",
+            "Multiple AMR levels detected, only first level has been cleaned.",
+            ablastr::warn_manager::WarnPriority::low);
+    }
 
     m_solution.resize(m_levels);
     m_source.resize(m_levels);
