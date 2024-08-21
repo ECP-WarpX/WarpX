@@ -1132,7 +1132,8 @@ WarpX::ReadParameters ()
 
         // Update default to external projection divb cleaner if external fields are loaded,
         // the grids are staggered, and the solver is compatible with the cleaner
-        if (m_p_ext_field_params->B_ext_grid_type != ExternalFieldType::default_zero
+        if (!do_divb_cleaning 
+            && m_p_ext_field_params->B_ext_grid_type != ExternalFieldType::default_zero
             && m_p_ext_field_params->B_ext_grid_type != ExternalFieldType::constant
             && grid_type != GridType::Collocated
             && (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee
