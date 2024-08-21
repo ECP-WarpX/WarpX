@@ -206,7 +206,7 @@ void DifferentialLuminosity::ComputeDiags (int step)
 
 
             // Loop over cells
-            amrex::ParallelFor( n_cells, 
+            amrex::ParallelFor( n_cells,
                 [=] AMREX_GPU_DEVICE (int i_cell) noexcept
             {
                 amrex::ParticleReal * const AMREX_RESTRICT w1  = soa_1.m_rdata[PIdx::w];
@@ -217,16 +217,16 @@ void DifferentialLuminosity::ComputeDiags (int step)
                 amrex::ParticleReal * const AMREX_RESTRICT w2  = soa_2.m_rdata[PIdx::w];
                 amrex::ParticleReal * const AMREX_RESTRICT u2x = soa_2.m_rdata[PIdx::ux];
                 amrex::ParticleReal * const AMREX_RESTRICT u2y = soa_2.m_rdata[PIdx::uy];
-                amrex::ParticleReal * const AMREX_RESTRICT u2z = soa_2.m_rdata[PIdx::uz];  
+                amrex::ParticleReal * const AMREX_RESTRICT u2z = soa_2.m_rdata[PIdx::uz];
 
-                
+
 
 
                 amrex::Print(0) << soa_1.m_size << " +++++++++ " << soa_2.m_size << std::endl;
 
                 for(int i_1=0; i_1<soa_1.m_size; i_1++){
                     for(int i_2=0; i_2<soa_2.m_size; i_2++){
-                    
+
                         Real m1_square = m1*m1*w1[i_1]*w1[i_1];
                         Real m2_square = m2*m2*w2[i_2]*w2[i_2];
                         Real gamma1 = std::sqrt(1. + u1x[i_1]*u1x[i_1] + u1y[i_1]*u1y[i_1] + u1z[i_1]*u1z[i_1]);
@@ -239,7 +239,7 @@ void DifferentialLuminosity::ComputeDiags (int step)
                         if ( bin<0 || bin>=num_bins ) { return; } // discard if out-of-range
 
                         // add value to dL_dEcom_dt bin
-                        amrex::HostDevice::Atomic::Add(&dptr_data[bin], w1[i_1]*w2[i_2]);   
+                        amrex::HostDevice::Atomic::Add(&dptr_data[bin], w1[i_1]*w2[i_2]);
 
                         amrex::Print(0) << w1[i_1] << " ooo " << w2[i_2] << std::endl;
                     } // particles species 2
@@ -259,8 +259,8 @@ void DifferentialLuminosity::ComputeDiags (int step)
     // normalize data
     for ( int i = 0; i < m_bin_num; ++i )
     {
-        m_data[i] *= 2._rt * PhysConst::c; 
-    }    
+        m_data[i] *= 2._rt * PhysConst::c;
+    }
 
 #endif // not RZ
 }
