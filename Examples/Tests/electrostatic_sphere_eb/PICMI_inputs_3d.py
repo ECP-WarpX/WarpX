@@ -39,31 +39,31 @@ zmax = 0.5
 ##########################
 
 grid = picmi.Cartesian3DGrid(
-    number_of_cells = [nx, ny, nz],
-    lower_bound = [xmin, ymin, zmin],
-    upper_bound = [xmax, ymax, zmax],
-    lower_boundary_conditions = ['dirichlet', 'dirichlet', 'dirichlet'],
-    upper_boundary_conditions = ['dirichlet', 'dirichlet', 'dirichlet'],
-    lower_boundary_conditions_particles = ['absorbing', 'absorbing', 'absorbing'],
-    upper_boundary_conditions_particles = ['absorbing', 'absorbing', 'absorbing'],
-    warpx_potential_lo_x = V_domain_boundary,
-    warpx_potential_hi_x = V_domain_boundary,
-    warpx_potential_lo_y = V_domain_boundary,
-    warpx_potential_hi_y = V_domain_boundary,
-    warpx_potential_lo_z = V_domain_boundary,
-    warpx_potential_hi_z = V_domain_boundary,
+    number_of_cells=[nx, ny, nz],
+    lower_bound=[xmin, ymin, zmin],
+    upper_bound=[xmax, ymax, zmax],
+    lower_boundary_conditions=["dirichlet", "dirichlet", "dirichlet"],
+    upper_boundary_conditions=["dirichlet", "dirichlet", "dirichlet"],
+    lower_boundary_conditions_particles=["absorbing", "absorbing", "absorbing"],
+    upper_boundary_conditions_particles=["absorbing", "absorbing", "absorbing"],
+    warpx_potential_lo_x=V_domain_boundary,
+    warpx_potential_hi_x=V_domain_boundary,
+    warpx_potential_lo_y=V_domain_boundary,
+    warpx_potential_hi_y=V_domain_boundary,
+    warpx_potential_lo_z=V_domain_boundary,
+    warpx_potential_hi_z=V_domain_boundary,
     warpx_blocking_factor=8,
-    warpx_max_grid_size = 128
+    warpx_max_grid_size=128,
 )
 
 solver = picmi.ElectrostaticSolver(
-    grid=grid, method='Multigrid', required_precision=1e-7
+    grid=grid, method="Multigrid", required_precision=1e-7
 )
 
 embedded_boundary = picmi.EmbeddedBoundary(
     implicit_function="-(x**2+y**2+z**2-radius**2)",
     potential=V_embedded_boundary,
-    radius = 0.1
+    radius=0.1,
 )
 
 ##########################
@@ -71,41 +71,41 @@ embedded_boundary = picmi.EmbeddedBoundary(
 ##########################
 
 particle_diag = picmi.ParticleDiagnostic(
-    name = 'diag1',
-    period = 1,
-    write_dir = '.',
-    warpx_file_prefix = 'Python_ElectrostaticSphereEB_plt'
+    name="diag1",
+    period=1,
+    write_dir=".",
+    warpx_file_prefix="Python_ElectrostaticSphereEB_plt",
 )
 field_diag = picmi.FieldDiagnostic(
-    name = 'diag1',
-    grid = grid,
-    period = 1,
-    data_list = ['Ex', 'Ey', 'Ez', 'phi', 'rho'],
-    write_dir = '.',
-    warpx_file_prefix = 'Python_ElectrostaticSphereEB_plt'
+    name="diag1",
+    grid=grid,
+    period=1,
+    data_list=["Ex", "Ey", "Ez", "phi", "rho"],
+    write_dir=".",
+    warpx_file_prefix="Python_ElectrostaticSphereEB_plt",
 )
 
 reduced_diag = picmi.ReducedDiagnostic(
-    diag_type = 'ChargeOnEB',
-    name = 'eb_charge',
-    period = 1)
+    diag_type="ChargeOnEB", name="eb_charge", period=1
+)
 
 reduced_diag_one_eighth = picmi.ReducedDiagnostic(
-    diag_type = 'ChargeOnEB',
-    name = 'eb_charge_one_eighth',
-    weighting_function = '(x>0)*(y>0)*(z>0)',
-    period = 1)
+    diag_type="ChargeOnEB",
+    name="eb_charge_one_eighth",
+    weighting_function="(x>0)*(y>0)*(z>0)",
+    period=1,
+)
 
 ##########################
 # simulation setup
 ##########################
 
 sim = picmi.Simulation(
-    solver = solver,
-    time_step_size = dt,
-    max_steps = max_steps,
+    solver=solver,
+    time_step_size=dt,
+    max_steps=max_steps,
     warpx_embedded_boundary=embedded_boundary,
-    warpx_field_gathering_algo='momentum-conserving'
+    warpx_field_gathering_algo="momentum-conserving",
 )
 
 sim.add_diagnostic(particle_diag)
