@@ -250,11 +250,11 @@ jobs:
       git clone https://github.com/spack/spack.git
       . spack/share/spack/setup-env.sh
       spack compiler find
-      spack install -v --fail-fast py-warpx %gcc@9.5.0
-      spack install -v --fail-fast py-warpx %gcc@9.5.0 ^warpx dims=2
-      spack install -v --fail-fast py-warpx %gcc@9.5.0 ^warpx dims=rz
+      spack install -v --fail-fast warpx +python %gcc@9.5.0
+      spack install -v --fail-fast warpx +python %gcc@9.5.0 ^warpx dims=2
+      spack install -v --fail-fast warpx +python %gcc@9.5.0 ^warpx dims=rz
 
-      spack load py-warpx ^warpx dims=rz
+      spack load warpx +python ^warpx dims=rz
 #      warpx.2d.MPI.OMP.DP.OPMD.QED
 #      warpx.3d.MPI.OMP.DP.OPMD.QED
 #      warpx.RZ.MPI.OMP.DP.OPMD.QED
@@ -273,11 +273,11 @@ jobs:
       . spack/share/spack/setup-env.sh
       spack compiler find
 
-      spack install -v --fail-fast py-warpx %gcc@9.5.0 ^warpx compute=cuda dims=rz
-      spack load py-warpx ^warpx compute=cuda dims=rz
+      spack install -v --fail-fast warpx +python %gcc@9.5.0 ^warpx compute=cuda dims=rz
+      spack load warpx +python ^warpx compute=cuda dims=rz
 
-#      spack install -v --fail-fast py-warpx %gcc@9.5.0 ^warpx compute=cuda
-#      spack install -v --fail-fast py-warpx %gcc@9.5.0 ^warpx compute=cuda dims=2
+#      spack install -v --fail-fast warpx +python %gcc@9.5.0 ^warpx compute=cuda
+#      spack install -v --fail-fast warpx +python %gcc@9.5.0 ^warpx compute=cuda dims=2
 
 - job: linux_spack_nompi
   displayName: Ubuntu spack w/o MPI
@@ -292,10 +292,10 @@ jobs:
       git clone https://github.com/spack/spack.git
       . spack/share/spack/setup-env.sh
       spack compiler find
-      spack install -v --fail-fast py-warpx -mpi
-      spack install -v --fail-fast py-warpx -mpi ^warpx dims=rz
+      spack install -v --fail-fast warpx +python -mpi
+      spack install -v --fail-fast warpx +python -mpi ^warpx dims=rz
 
-      spack load py-warpx ^warpx dims=rz
+      spack load warpx +python ^warpx dims=rz
 #      warpx.2d.MPI.OMP.DP.OPMD.QED
 #      warpx.3d.MPI.OMP.DP.OPMD.QED
 #      warpx.RZ.MPI.OMP.DP.OPMD.QED
@@ -316,7 +316,7 @@ jobs:
 #      spack compiler find
 #      spack bootstrap
 #      . spack/share/spack/setup-env.sh
-#      spack install -v --fail-fast py-warpx ^warpx +qed +openpmd %gcc@9.4.0
+#      spack install -v --fail-fast warpx +python ^warpx +qed +openpmd %gcc@9.4.0
 #
 #      spack load warpx
 #      warpx.2d.MPI.OMP.DP.OPMD.QED
@@ -692,9 +692,9 @@ jobs:
       . spack/share/spack/setup-env.sh
       spack compiler find
       spack install -v --fail-fast py-warpx
-      spack install -v --fail-fast py-warpx ^warpx dims=2
-      spack install -v --fail-fast py-warpx ^warpx dims=rz
-      spack load py-warpx ^warpx dims=rz
+      spack install -v --fail-fast warpx +python ^warpx dims=2
+      spack install -v --fail-fast warpx +python ^warpx dims=rz
+      spack load warpx +python ^warpx dims=rz
 #      warpx.2d.MPI.OMP.DP.OPMD.QED
 #      warpx.3d.MPI.OMP.DP.OPMD.QED
 #      warpx.RZ.MPI.OMP.DP.OPMD.QED
@@ -712,7 +712,7 @@ jobs:
       spack compiler find
       spack install -v --fail-fast py-warpx@develop -mpi
       spack install -v --fail-fast py-warpx@develop -mpi ^warpx dims=rz
-      spack load py-warpx ^warpx dims=rz
+      spack load warpx +python ^warpx dims=rz
 #      warpx.2d.MPI.OMP.DP.OPMD.QED
 #      warpx.3d.MPI.OMP.DP.OPMD.QED
 #      warpx.RZ.MPI.OMP.DP.OPMD.QED
@@ -729,7 +729,7 @@ jobs:
 #      git clone https://github.com/spack/spack.git
 #      . spack/share/spack/setup-env.sh
 #      spack compiler find
-#      spack install -v --fail-fast py-warpx ^warpx +qed +openpmd
+#      spack install -v --fail-fast warpx +python ^warpx +qed +openpmd
 #      spack load warpx
 #      warpx.2d.MPI.OMP.DP.OPMD.QED
 #      warpx.3d.MPI.OMP.DP.OPMD.QED
