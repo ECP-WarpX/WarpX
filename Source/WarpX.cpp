@@ -974,7 +974,7 @@ WarpX::ReadParameters ()
         // true for Cartesian PSATD solver, false otherwise
         do_pml_dive_cleaning = false;
         do_pml_divb_cleaning = false;
-#ifndef WARPX_DIM_RZ
+#if !defined(WARPX_DIM_RZ) && !defined(WARPX_DIM_RCYLINDER) && !defined(WARPX_DIM_RSPHERE)
         if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
         {
             do_pml_dive_cleaning = true;
