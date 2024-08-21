@@ -20,35 +20,33 @@ constants = picmi.constants
 
 comm = mpi.COMM_WORLD
 
-simulation = picmi.Simulation(
-    warpx_serialize_initial_conditions=True,
-    verbose=0
-)
+simulation = picmi.Simulation(warpx_serialize_initial_conditions=True, verbose=0)
 
 
 class IonLandauDamping(object):
-    '''This input is based on the ion Landau damping test as described by
+    """This input is based on the ion Landau damping test as described by
     Munoz et al. (2018).
-    '''
+    """
+
     # Applied field parameters
-    B0          = 0.1 # Initial magnetic field strength (T)
-    beta        = 2.0 # Plasma beta, used to calculate temperature
+    B0 = 0.1  # Initial magnetic field strength (T)
+    beta = 2.0  # Plasma beta, used to calculate temperature
 
     # Plasma species parameters
-    m_ion      = 100.0 # Ion mass (electron masses)
-    vA_over_c  = 1e-3 # ratio of Alfven speed and the speed of light
+    m_ion = 100.0  # Ion mass (electron masses)
+    vA_over_c = 1e-3  # ratio of Alfven speed and the speed of light
 
     # Spatial domain
-    Nz          = 256 # number of cells in z direction
-    Nx          = 4 # number of cells in x (and y) direction for >1 dimensions
+    Nz = 256  # number of cells in z direction
+    Nx = 4  # number of cells in x (and y) direction for >1 dimensions
 
     # Temporal domain (if not run as a CI test)
-    LT          = 40.0 # Simulation temporal length (ion cyclotron periods)
+    LT = 40.0  # Simulation temporal length (ion cyclotron periods)
 
     # Numerical parameters
-    NPPC        = [8192, 4096, 1024] # Seed number of particles per cell
-    DZ          = 1.0 / 6.0 # Cell size (ion skin depths)
-    DT          = 1e-3 # Time step (ion cyclotron periods)
+    NPPC = [8192, 4096, 1024]  # Seed number of particles per cell
+    DZ = 1.0 / 6.0  # Cell size (ion skin depths)
+    DT = 1e-3  # Time step (ion cyclotron periods)
 
     # density perturbation strength
     epsilon = 0.03
@@ -57,7 +55,6 @@ class IonLandauDamping(object):
     eta = 1e-7
     # Number of substeps used to update B
     substeps = 10
-
 
     def __init__(self, test, dim, m, T_ratio, verbose):
         """Get input parameters for the specific case desired."""
@@ -68,7 +65,7 @@ class IonLandauDamping(object):
         self.verbose = verbose or self.test
 
         # sanity check
-        assert (dim > 0 and dim < 4), f"{dim}-dimensions not a valid input"
+        assert dim > 0 and dim < 4, f"{dim}-dimensions not a valid input"
 
         # calculate various plasma parameters based on the simulation input
         self.get_plasma_quantities()
@@ -77,7 +74,7 @@ class IonLandauDamping(object):
         self.Lz = self.Nz * self.dz
         self.Lx = self.Nx * self.dz
 
-        diag_period = 1 / 16.0 # Output interval (ion cyclotron periods)
+        diag_period = 1 / 16.0  # Output interval (ion cyclotron periods)
         self.diag_steps = int(diag_period / self.DT)
 
         self.total_steps = int(np.ceil(self.LT / self.DT))
@@ -85,11 +82,11 @@ class IonLandauDamping(object):
         if self.test:
             self.total_steps = 100
 
-        self.dt = self.DT / self.w_ci # self.DT * self.t_ci
+        self.dt = self.DT / self.w_ci  # self.DT * self.t_ci
 
         # dump all the current attributes to a dill pickle file
         if comm.rank == 0:
-            with open('sim_parameters.dpkl', 'wb') as f:
+            with open("sim_parameters.dpkl", "wb") as f:
                 dill.dump(self, f)
 
         # print out plasma parameters
@@ -129,14 +126,12 @@ class IonLandauDamping(object):
 
         # Alfven speed (m/s): vA = B / sqrt(mu0 * n * (M + m)) = c * omega_ci / w_pi
         self.vA = self.vA_over_c * constants.c
-        self.n_plasma = (
-            (self.B0 / self.vA)**2 / (constants.mu0 * (self.M + constants.m_e))
+        self.n_plasma = (self.B0 / self.vA) ** 2 / (
+            constants.mu0 * (self.M + constants.m_e)
         )
 
         # Ion plasma frequency (Hz)
-        self.w_pi = np.sqrt(
-            constants.q_e**2 * self.n_plasma / (self.M * constants.ep0)
-        )
+        self.w_pi = np.sqrt(constants.q_e**2 * self.n_plasma / (self.M * constants.ep0))
 
         # Skin depth (m)
         self.l_i = constants.c / self.w_pi
@@ -145,7 +140,7 @@ class IonLandauDamping(object):
         self.v_ti = np.sqrt(self.beta / 2.0) * self.vA
 
         # Temperature (eV) from thermal speed: v_ti = sqrt(kT / M)
-        self.T_plasma = self.v_ti**2 * self.M / constants.q_e # eV
+        self.T_plasma = self.v_ti**2 * self.M / constants.q_e  # eV
 
         # Larmor radius (m)
         self.rho_i = self.v_ti / self.w_ci
@@ -165,17 +160,17 @@ class IonLandauDamping(object):
             grid_object = picmi.Cartesian3DGrid
 
         self.grid = grid_object(
-            number_of_cells=[self.Nx, self.Nx, self.Nz][-self.dim:],
+            number_of_cells=[self.Nx, self.Nx, self.Nz][-self.dim :],
             warpx_max_grid_size=self.Nz,
-            lower_bound=[-self.Lx/2.0, -self.Lx/2.0, 0][-self.dim:],
-            upper_bound=[self.Lx/2.0, self.Lx/2.0, self.Lz][-self.dim:],
-            lower_boundary_conditions=['periodic']*self.dim,
-            upper_boundary_conditions=['periodic']*self.dim,
-            warpx_blocking_factor=4
+            lower_bound=[-self.Lx / 2.0, -self.Lx / 2.0, 0][-self.dim :],
+            upper_bound=[self.Lx / 2.0, self.Lx / 2.0, self.Lz][-self.dim :],
+            lower_boundary_conditions=["periodic"] * self.dim,
+            upper_boundary_conditions=["periodic"] * self.dim,
+            warpx_blocking_factor=4,
         )
         simulation.time_step_size = self.dt
         simulation.max_steps = self.total_steps
-        simulation.current_deposition_algo = 'direct'
+        simulation.current_deposition_algo = "direct"
         simulation.particle_shape = 1
         simulation.verbose = self.verbose
 
@@ -184,10 +179,12 @@ class IonLandauDamping(object):
         #######################################################################
 
         self.solver = picmi.HybridPICSolver(
-            grid=self.grid, gamma=1.0,
-            Te=self.T_plasma/self.T_ratio,
+            grid=self.grid,
+            gamma=1.0,
+            Te=self.T_plasma / self.T_ratio,
             n0=self.n_plasma,
-            plasma_resistivity=self.eta, substeps=self.substeps
+            plasma_resistivity=self.eta,
+            substeps=self.substeps,
         )
         simulation.solver = self.solver
 
@@ -195,19 +192,21 @@ class IonLandauDamping(object):
         # Particle types setup                                                #
         #######################################################################
 
-        k_m = 2.0*np.pi*self.m / self.Lz
+        k_m = 2.0 * np.pi * self.m / self.Lz
         self.ions = picmi.Species(
-            name='ions', charge='q_e', mass=self.M,
+            name="ions",
+            charge="q_e",
+            mass=self.M,
             initial_distribution=picmi.AnalyticDistribution(
                 density_expression=f"{self.n_plasma}*(1+{self.epsilon}*cos({k_m}*z))",
-                rms_velocity=[self.v_ti]*3
-            )
+                rms_velocity=[self.v_ti] * 3,
+            ),
         )
         simulation.add_species(
             self.ions,
             layout=picmi.PseudoRandomLayout(
-                grid=self.grid, n_macroparticles_per_cell=self.NPPC[self.dim-1]
-            )
+                grid=self.grid, n_macroparticles_per_cell=self.NPPC[self.dim - 1]
+            ),
         )
 
         #######################################################################
@@ -218,25 +217,25 @@ class IonLandauDamping(object):
 
         if self.test:
             particle_diag = picmi.ParticleDiagnostic(
-                name='diag1',
+                name="diag1",
                 period=100,
-                write_dir='.',
+                write_dir=".",
                 species=[self.ions],
-                data_list = ['ux', 'uy', 'uz', 'x', 'z', 'weighting'],
-                warpx_file_prefix=f'Python_ohms_law_solver_landau_damping_{self.dim}d_plt',
+                data_list=["ux", "uy", "uz", "x", "z", "weighting"],
+                warpx_file_prefix=f"Python_ohms_law_solver_landau_damping_{self.dim}d_plt",
             )
             simulation.add_diagnostic(particle_diag)
             field_diag = picmi.FieldDiagnostic(
-                name='diag1',
+                name="diag1",
                 grid=self.grid,
                 period=100,
-                write_dir='.',
-                data_list = ['Bx', 'By', 'Bz', 'Ex', 'Ey', 'Ez', 'Jx', 'Jy', 'Jz'],
-                warpx_file_prefix=f'Python_ohms_law_solver_landau_damping_{self.dim}d_plt',
+                write_dir=".",
+                data_list=["Bx", "By", "Bz", "Ex", "Ey", "Ez", "Jx", "Jy", "Jz"],
+                warpx_file_prefix=f"Python_ohms_law_solver_landau_damping_{self.dim}d_plt",
             )
             simulation.add_diagnostic(field_diag)
 
-        self.output_file_name = 'field_data.txt'
+        self.output_file_name = "field_data.txt"
         # install a custom "reduced diagnostic" to save the average field
         callbacks.installafterEsolve(self._record_average_fields)
         try:
@@ -244,7 +243,7 @@ class IonLandauDamping(object):
         except OSError:
             # diags directory already exists
             pass
-        with open(f"diags/{self.output_file_name}", 'w') as f:
+        with open(f"diags/{self.output_file_name}", "w") as f:
             f.write("[0]step() [1]time(s) [2]z_coord(m) [3]Ez_lev0-(V/m)\n")
 
         self.prev_time = time.time()
@@ -259,9 +258,7 @@ class IonLandauDamping(object):
         simulation.initialize_warpx()
 
         # get ion particle container wrapper
-        self.ion_part_container = particle_containers.ParticleContainerWrapper(
-            'ions'
-        )
+        self.ion_part_container = particle_containers.ParticleContainerWrapper("ions")
 
     def text_diag(self):
         """Diagnostic function to print out timing data and particle numbers."""
@@ -275,12 +272,12 @@ class IonLandauDamping(object):
         step_rate = steps / wall_time
 
         status_dict = {
-            'step': step,
-            'nplive ions': self.ion_part_container.nps,
-            'wall_time': wall_time,
-            'step_rate': step_rate,
+            "step": step,
+            "nplive ions": self.ion_part_container.nps,
+            "wall_time": wall_time,
+            "step_rate": step_rate,
             "diag_steps": self.diag_steps,
-            'iproc': None
+            "iproc": None,
         }
 
         diag_string = (
@@ -321,11 +318,9 @@ class IonLandauDamping(object):
         else:
             Ez = np.mean(Ez_warpx, axis=(0, 1))
 
-        with open(f"diags/{self.output_file_name}", 'a') as f:
+        with open(f"diags/{self.output_file_name}", "a") as f:
             for ii in range(self.Nz):
-                f.write(
-                    f"{step:05d} {t:.10e} {z_vals[ii]:.10e} {Ez[ii]:+.10e}\n"
-                )
+                f.write(f"{step:05d} {t:.10e} {z_vals[ii]:.10e} {Ez[ii]:+.10e}\n")
 
 
 ##########################
@@ -334,29 +329,38 @@ class IonLandauDamping(object):
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    '-t', '--test', help='toggle whether this script is run as a short CI test',
-    action='store_true',
+    "-t",
+    "--test",
+    help="toggle whether this script is run as a short CI test",
+    action="store_true",
 )
 parser.add_argument(
-    '-d', '--dim', help='Simulation dimension', required=False, type=int,
-    default=1
+    "-d", "--dim", help="Simulation dimension", required=False, type=int, default=1
 )
 parser.add_argument(
-    '-m', help='Mode number to excite', required=False, type=int,
-    default=4
+    "-m", help="Mode number to excite", required=False, type=int, default=4
 )
 parser.add_argument(
-    '--temp_ratio', help='Ratio of ion to electron temperature', required=False,
-    type=float, default=1.0/3
+    "--temp_ratio",
+    help="Ratio of ion to electron temperature",
+    required=False,
+    type=float,
+    default=1.0 / 3,
 )
 parser.add_argument(
-    '-v', '--verbose', help='Verbose output', action='store_true',
+    "-v",
+    "--verbose",
+    help="Verbose output",
+    action="store_true",
 )
 args, left = parser.parse_known_args()
-sys.argv = sys.argv[:1]+left
+sys.argv = sys.argv[:1] + left
 
 run = IonLandauDamping(
-    test=args.test, dim=args.dim, m=args.m, T_ratio=args.temp_ratio,
-    verbose=args.verbose
+    test=args.test,
+    dim=args.dim,
+    m=args.m,
+    T_ratio=args.temp_ratio,
+    verbose=args.verbose,
 )
 simulation.step()

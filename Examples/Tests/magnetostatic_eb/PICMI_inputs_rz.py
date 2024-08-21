@@ -22,7 +22,7 @@ as well as the analytical solution.
 
 import matplotlib
 
-matplotlib.use('agg')
+matplotlib.use("agg")
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -51,10 +51,10 @@ max_steps = 1
 
 nr = 128
 nz = 128
-rmin = 0.
+rmin = 0.0
 rmax = 0.25
 
-zmin = 0.
+zmin = 0.0
 zmax = 1
 
 r_pipe = 0.2
@@ -64,65 +64,74 @@ r_pipe = 0.2
 ##########################
 
 grid = picmi.CylindricalGrid(
-    number_of_cells = [nr, nz],
-    lower_bound = [rmin, zmin],
-    upper_bound = [rmax, zmax],
-    lower_boundary_conditions = ['none', 'dirichlet'],
-    upper_boundary_conditions = ['neumann', 'neumann'],
-    lower_boundary_conditions_particles = ['none', 'absorbing'],
-    upper_boundary_conditions_particles = ['absorbing', 'absorbing'],
-    warpx_potential_lo_z = V_domain_boundary,
+    number_of_cells=[nr, nz],
+    lower_bound=[rmin, zmin],
+    upper_bound=[rmax, zmax],
+    lower_boundary_conditions=["none", "dirichlet"],
+    upper_boundary_conditions=["neumann", "neumann"],
+    lower_boundary_conditions_particles=["none", "absorbing"],
+    upper_boundary_conditions_particles=["absorbing", "absorbing"],
+    warpx_potential_lo_z=V_domain_boundary,
     warpx_blocking_factor=8,
-    warpx_max_grid_size = 32
+    warpx_max_grid_size=32,
 )
 
 solver = picmi.ElectrostaticSolver(
-    grid=grid, method='Multigrid', required_precision=1e-7,warpx_magnetostatic=True,warpx_self_fields_verbosity=3
+    grid=grid,
+    method="Multigrid",
+    required_precision=1e-7,
+    warpx_magnetostatic=True,
+    warpx_self_fields_verbosity=3,
 )
 
 embedded_boundary = picmi.EmbeddedBoundary(
     implicit_function="(x**2+y**2-radius**2)",
     potential=V_embedded_boundary,
-    radius = r_pipe
+    radius=r_pipe,
 )
 
 
 # Beam Current Density
 current = 1000  # A
-beam_r = 0.1 # m
+beam_r = 0.1  # m
 
-J = current/(np.pi * beam_r**2)
-beam_gamma = 10.
-vz = con.c*np.sqrt(1. - 1./beam_gamma**2)
-n0 = J/(con.e*vz)
+J = current / (np.pi * beam_r**2)
+beam_gamma = 10.0
+vz = con.c * np.sqrt(1.0 - 1.0 / beam_gamma**2)
+n0 = J / (con.e * vz)
 
 
 beam_dist = picmi.AnalyticDistribution(
-    density_expression='((x**2+y**2)<rmax**2)*n0',
+    density_expression="((x**2+y**2)<rmax**2)*n0",
     rmax=beam_r,
     n0=n0,
-    directed_velocity=[0., 0., beam_gamma*vz],
+    directed_velocity=[0.0, 0.0, beam_gamma * vz],
 )
-beam = picmi.Species(particle_type='electron', name='beam', initial_distribution=beam_dist, warpx_random_theta=False)
-beam_layout = picmi.GriddedLayout(n_macroparticle_per_cell=[2,2,2], grid=grid)
+beam = picmi.Species(
+    particle_type="electron",
+    name="beam",
+    initial_distribution=beam_dist,
+    warpx_random_theta=False,
+)
+beam_layout = picmi.GriddedLayout(n_macroparticle_per_cell=[2, 2, 2], grid=grid)
 
 ##########################
 # diagnostics
 ##########################
 
 particle_diag = picmi.ParticleDiagnostic(
-    name = 'diag1',
-    period = 1,
-    write_dir = '.',
-    warpx_file_prefix = 'Python_magnetostatic_eb_rz_plt'
+    name="diag1",
+    period=1,
+    write_dir=".",
+    warpx_file_prefix="Python_magnetostatic_eb_rz_plt",
 )
 field_diag = picmi.FieldDiagnostic(
-    name = 'diag1',
-    grid = grid,
-    period = 1,
-    data_list = ['Er', 'Bt', 'Az', 'Jz', 'phi', 'rho'],
-    write_dir = '.',
-    warpx_file_prefix = 'Python_magnetostatic_eb_rz_plt'
+    name="diag1",
+    grid=grid,
+    period=1,
+    data_list=["Er", "Bt", "Az", "Jz", "phi", "rho"],
+    write_dir=".",
+    warpx_file_prefix="Python_magnetostatic_eb_rz_plt",
 )
 
 ##########################
@@ -130,15 +139,15 @@ field_diag = picmi.FieldDiagnostic(
 ##########################
 
 sim = picmi.Simulation(
-    solver = solver,
-    time_step_size = dt,
-    max_steps = max_steps,
+    solver=solver,
+    time_step_size=dt,
+    max_steps=max_steps,
     warpx_embedded_boundary=embedded_boundary,
-    warpx_field_gathering_algo='momentum-conserving',
-    warpx_current_deposition_algo='direct',
+    warpx_field_gathering_algo="momentum-conserving",
+    warpx_current_deposition_algo="direct",
     warpx_use_filter=False,
     warpx_serialize_initial_conditions=True,
-    warpx_do_dynamic_scheduling=False
+    warpx_do_dynamic_scheduling=False,
 )
 
 sim.add_species(beam, layout=beam_layout, initialize_self_field=True)
@@ -157,44 +166,46 @@ sim.step(max_steps)
 ##########################
 
 Er = fields.ExWrapper()
-r_vec = Er.mesh('r')
-z_vec = Er.mesh('z')
+r_vec = Er.mesh("r")
+z_vec = Er.mesh("z")
+
 
 @np.vectorize
 def Er_an(r):
     if r < beam_r:
-        er = -current * r / (2.*np.pi*beam_r**2*con.epsilon_0*vz)
+        er = -current * r / (2.0 * np.pi * beam_r**2 * con.epsilon_0 * vz)
     elif r >= beam_r and r < r_pipe:
-        er = -current / (2.*np.pi*r*con.epsilon_0*vz)
+        er = -current / (2.0 * np.pi * r * con.epsilon_0 * vz)
     else:
         er = np.zeros_like(r)
     return er
 
+
 # compare to region from 0.5*zmax to 0.9*zmax
-z_idx = ((z_vec >= 0.5*zmax) & (z_vec < 0.9*zmax))
+z_idx = (z_vec >= 0.5 * zmax) & (z_vec < 0.9 * zmax)
 
 Er_dat = Er[...]
 
-r_idx = (r_vec < 0.95*r_pipe)
+r_idx = r_vec < 0.95 * r_pipe
 r_sub = r_vec[r_idx]
 
 # Average Er along z_sub
-Er_mean = Er_dat[:,z_idx].mean(axis=1)
+Er_mean = Er_dat[:, z_idx].mean(axis=1)
 
 plt.figure(1)
 plt.plot(r_vec, Er_an(r_vec))
-plt.plot(r_vec, Er_mean,'--')
-plt.legend(['Analytical', 'Electrostatic'])
+plt.plot(r_vec, Er_mean, "--")
+plt.legend(["Analytical", "Electrostatic"])
 
-er_err = np.abs(Er_mean[r_idx] - Er_an(r_sub)).max()/np.abs(Er_an(r_sub)).max()
+er_err = np.abs(Er_mean[r_idx] - Er_an(r_sub)).max() / np.abs(Er_an(r_sub)).max()
 
-plt.ylabel('$E_r$ (V/m)')
-plt.xlabel('r (m)')
-plt.title("Max % Error: {} %".format(er_err*100.))
+plt.ylabel("$E_r$ (V/m)")
+plt.xlabel("r (m)")
+plt.title("Max % Error: {} %".format(er_err * 100.0))
 plt.tight_layout()
-plt.savefig('er_rz.png')
+plt.savefig("er_rz.png")
 
-assert (er_err < 0.02), "Er Error increased above 2%"
+assert er_err < 0.02, "Er Error increased above 2%"
 
 ########################
 # Check B field
@@ -202,45 +213,47 @@ assert (er_err < 0.02), "Er Error increased above 2%"
 
 Bth = fields.ByWrapper()
 
-r_vec = Bth.mesh('r')
-z_vec = Bth.mesh('z')
+r_vec = Bth.mesh("r")
+z_vec = Bth.mesh("z")
 
-dr = r_vec[1]-r_vec[0]
-r_vec = r_vec + dr/2.
+dr = r_vec[1] - r_vec[0]
+r_vec = r_vec + dr / 2.0
+
 
 @np.vectorize
 def Bth_an(r):
     if r < beam_r:
-        bt = -current * r * con.mu_0 / (2.*np.pi*beam_r**2)
+        bt = -current * r * con.mu_0 / (2.0 * np.pi * beam_r**2)
     elif r >= beam_r and r < r_pipe:
-        bt = -current * con.mu_0 / (2.*np.pi*r)
+        bt = -current * con.mu_0 / (2.0 * np.pi * r)
     else:
         bt = np.zeros_like(r)
     return bt
 
+
 # compare to region from 0.25*zmax to 0.75*zmax
-z_idx = ((z_vec >= 0.25*zmax) & (z_vec < 0.75*zmax))
+z_idx = (z_vec >= 0.25 * zmax) & (z_vec < 0.75 * zmax)
 z_sub = z_vec[z_idx]
 
 Bth_dat = Bth[...]
 
-r_idx = (r_vec < 0.95*r_pipe)
+r_idx = r_vec < 0.95 * r_pipe
 r_sub = r_vec[r_idx]
 
 # Average Bth along z_idx
-Bth_mean = Bth_dat[:,z_idx].mean(axis=1)
+Bth_mean = Bth_dat[:, z_idx].mean(axis=1)
 
 plt.figure(2)
 plt.plot(r_vec, Bth_an(r_vec))
-plt.plot(r_vec, Bth_mean,'--')
-plt.legend(['Analytical', 'Magnetostatic'])
+plt.plot(r_vec, Bth_mean, "--")
+plt.legend(["Analytical", "Magnetostatic"])
 
-bth_err = np.abs(Bth_mean[r_idx] - Bth_an(r_sub)).max()/np.abs(Bth_an(r_sub)).max()
+bth_err = np.abs(Bth_mean[r_idx] - Bth_an(r_sub)).max() / np.abs(Bth_an(r_sub)).max()
 
-plt.ylabel('$B_{\Theta}$ (T)')
-plt.xlabel('r (m)')
-plt.title("Max % Error: {} %".format(bth_err*100.))
+plt.ylabel("$B_{\Theta}$ (T)")
+plt.xlabel("r (m)")
+plt.title("Max % Error: {} %".format(bth_err * 100.0))
 plt.tight_layout()
-plt.savefig('bth_rz.png')
+plt.savefig("bth_rz.png")
 
-assert (bth_err < 0.02), "Bth Error increased above 2%"
+assert bth_err < 0.02, "Bth Error increased above 2%"
