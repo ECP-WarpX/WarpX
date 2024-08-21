@@ -2712,7 +2712,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         )
         self.random_seed = kw.pop("warpx_random_seed", None)
         self.do_dynamic_scheduling = kw.pop("warpx_do_dynamic_scheduling", None)
-        self.roundrobin_sfc = kw.pop('warpx_roundrobin_sfc', None)
+        self.roundrobin_sfc = kw.pop("warpx_roundrobin_sfc", None)
         self.load_balance_intervals = kw.pop("warpx_load_balance_intervals", None)
         self.load_balance_efficiency_ratio_threshold = kw.pop(
             "warpx_load_balance_efficiency_ratio_threshold", None
