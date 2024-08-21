@@ -15,38 +15,36 @@ constants = picmi.constants
 
 comm = mpi.COMM_WORLD
 
-simulation = picmi.Simulation(
-    warpx_serialize_initial_conditions=True,
-    verbose=0
-)
+simulation = picmi.Simulation(warpx_serialize_initial_conditions=True, verbose=0)
 
 
 class PlasmaExpansionSimulation(object):
-    '''Simulation setup for an expanding plasma.'''
-    # Plasma parameters
-    m_ion        = 250.0 # Ion mass (electron masses)
-    n_plasma     = 1e18 # Plasma density (m^-3)
-    T_e          = 2.0 # Electron temperature (eV)
-    T_i          = 1.0 # Ion temperature (eV)
+    """Simulation setup for an expanding plasma."""
 
-    scale_fac    = 4.0 # scaling factor used to move between explicit and SI
+    # Plasma parameters
+    m_ion = 250.0  # Ion mass (electron masses)
+    n_plasma = 1e18  # Plasma density (m^-3)
+    T_e = 2.0  # Electron temperature (eV)
+    T_i = 1.0  # Ion temperature (eV)
+
+    scale_fac = 4.0  # scaling factor used to move between explicit and SI
 
     # Plasma size
-    plasma_radius = 20 # Plasma column radius (Debye lengths)
+    plasma_radius = 20  # Plasma column radius (Debye lengths)
 
     # Spatial domain
-    NZ           = 256 / scale_fac # Number of cells in x and z directions
+    NZ = 256 / scale_fac  # Number of cells in x and z directions
 
     # Temporal domain (if not run as a CI test)
-    LT           = 0.1 # Simulation temporal length in ion crossing times
+    LT = 0.1  # Simulation temporal length in ion crossing times
 
     # Numerical parameters
-    NPPC         = 750 # Seed number of particles per cell
-    DZ           = 1.0 * scale_fac # Cell size (Debye lengths)
-    DT           = 0.75 # Time step (electron CFL)
+    NPPC = 750  # Seed number of particles per cell
+    DZ = 1.0 * scale_fac  # Cell size (Debye lengths)
+    DT = 0.75  # Time step (electron CFL)
 
     # Solver parameter
-    C_SI = 2 # Semi-implicit factor - marginal stability threshold = 1
+    C_SI = 2  # Semi-implicit factor - marginal stability threshold = 1
 
     def __init__(self, test, verbose):
         """Get input parameters for the specific case desired."""
@@ -118,17 +116,17 @@ class PlasmaExpansionSimulation(object):
 
         self.grid = picmi.Cartesian2DGrid(
             number_of_cells=[self.NZ, self.NZ],
-            lower_bound=[-self.Lz/2.0, -self.Lz/2.0],
-            upper_bound=[self.Lz/2.0, self.Lz/2.0],
-            lower_boundary_conditions=['dirichlet']*2,
-            upper_boundary_conditions=['dirichlet']*2,
-            lower_boundary_conditions_particles=['absorbing']*2,
-            upper_boundary_conditions_particles=['absorbing']*2,
-            warpx_max_grid_size=self.NZ
+            lower_bound=[-self.Lz / 2.0, -self.Lz / 2.0],
+            upper_bound=[self.Lz / 2.0, self.Lz / 2.0],
+            lower_boundary_conditions=["dirichlet"] * 2,
+            upper_boundary_conditions=["dirichlet"] * 2,
+            lower_boundary_conditions_particles=["absorbing"] * 2,
+            upper_boundary_conditions_particles=["absorbing"] * 2,
+            warpx_max_grid_size=self.NZ,
         )
         simulation.time_step_size = self.dt
         simulation.max_steps = self.total_steps
-        simulation.current_deposition_algo = 'direct'
+        simulation.current_deposition_algo = "direct"
         simulation.particle_shape = 1
         simulation.verbose = self.verbose
 
@@ -147,9 +145,11 @@ class PlasmaExpansionSimulation(object):
         #######################################################################
 
         solver = picmi.ElectrostaticSolver(
-            grid=self.grid, method='Multigrid',
-            warpx_semi_implicit=True, warpx_semi_implicit_factor=self.C_SI,
-            warpx_self_fields_verbosity=0
+            grid=self.grid,
+            method="Multigrid",
+            warpx_semi_implicit=True,
+            warpx_semi_implicit_factor=self.C_SI,
+            warpx_self_fields_verbosity=0,
         )
         simulation.solver = solver
 
@@ -159,33 +159,36 @@ class PlasmaExpansionSimulation(object):
 
         density_expr = f"if(x**2+z**2<{self.plasma_radius**2},{self.n_plasma},0)"
         self.electrons = picmi.Species(
-            name='electrons', particle_type='electron',
+            name="electrons",
+            particle_type="electron",
             initial_distribution=picmi.AnalyticDistribution(
                 density_expression=density_expr,
-                warpx_momentum_spread_expressions=[self.v_te]*3,
-                warpx_density_min=self.n_plasma/10.0,
-            )
+                warpx_momentum_spread_expressions=[self.v_te] * 3,
+                warpx_density_min=self.n_plasma / 10.0,
+            ),
         )
         simulation.add_species(
             self.electrons,
             layout=picmi.PseudoRandomLayout(
                 grid=self.grid, n_macroparticles_per_cell=self.NPPC
-            )
+            ),
         )
 
         self.ions = picmi.Species(
-            name='ions', charge='q_e', mass=self.M,
+            name="ions",
+            charge="q_e",
+            mass=self.M,
             initial_distribution=picmi.AnalyticDistribution(
                 density_expression=density_expr,
-                warpx_momentum_spread_expressions=[self.v_ti]*3,
-                warpx_density_min=self.n_plasma/10.0,
-            )
+                warpx_momentum_spread_expressions=[self.v_ti] * 3,
+                warpx_density_min=self.n_plasma / 10.0,
+            ),
         )
         simulation.add_species(
             self.ions,
             layout=picmi.PseudoRandomLayout(
                 grid=self.grid, n_macroparticles_per_cell=self.NPPC
-            )
+            ),
         )
 
         #######################################################################
@@ -193,15 +196,20 @@ class PlasmaExpansionSimulation(object):
         #######################################################################
 
         field_diag = picmi.FieldDiagnostic(
-            name='field_diag',
+            name="field_diag",
             grid=self.grid,
             period=self.diag_steps,
-            write_dir='.',
+            write_dir=".",
             data_list=[
-                'E', 'J', 'T_electrons', 'T_ions', 'phi',
-                'rho_electrons', 'rho_ions'
+                "E",
+                "J",
+                "T_electrons",
+                "T_ions",
+                "phi",
+                "rho_electrons",
+                "rho_ions",
             ],
-            warpx_file_prefix='Python_si_electrostatic_plt'
+            warpx_file_prefix="Python_si_electrostatic_plt",
         )
         simulation.add_diagnostic(field_diag)
 
@@ -219,14 +227,19 @@ class PlasmaExpansionSimulation(object):
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    '-t', '--test', help='toggle whether this script is run as a short CI test',
-    action='store_true',
+    "-t",
+    "--test",
+    help="toggle whether this script is run as a short CI test",
+    action="store_true",
 )
 parser.add_argument(
-    '-v', '--verbose', help='Verbose output', action='store_true',
+    "-v",
+    "--verbose",
+    help="Verbose output",
+    action="store_true",
 )
 args, left = parser.parse_known_args()
-sys.argv = sys.argv[:1]+left
+sys.argv = sys.argv[:1] + left
 
 run = PlasmaExpansionSimulation(test=args.test, verbose=args.verbose)
 simulation.step()
