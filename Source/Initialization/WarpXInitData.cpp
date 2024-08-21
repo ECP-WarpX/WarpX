@@ -1413,6 +1413,9 @@ WarpX::LoadExternalFields (int const lev)
 #endif
     }
 
+    // Call Python callback which might write values to external field multifabs
+    ExecutePythonCallback("loadExternalFields");
+
     // External particle fields
 
     if (mypc->m_B_ext_particle_s == "read_from_file") {
