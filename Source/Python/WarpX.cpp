@@ -201,7 +201,7 @@ The physical fields in WarpX have the following naming:
         )
         .def_static("run_div_cleaner",
             [] () { WarpX::ProjectionCleanDivB(); },
-            "Executes projection based divergence cleaner on loaded B_aux."
+            "Executes projection based divergence cleaner on loaded Bfield_fp_external."
         )
     ;
 
