@@ -429,7 +429,7 @@ jobs:
 #- job: macOS_pip_pypi
 #  displayName: macOS pip from PyPI
 #  pool:
-#    vmImage: macOS-11
+#    vmImage: macOS-12
 #  steps:
 #  - script: |
 #      python3 -m pip install -U pip --user
@@ -441,7 +441,7 @@ jobs:
 #- job: macOS_pip_pypi_old
 #  displayName: macOS pip from PyPI (old)
 #  pool:
-#    vmImage: macOS-11
+#    vmImage: macOS-12
 #  steps:
 #  - script: |
 #      python3 -m pip install -U pip --user
@@ -453,7 +453,7 @@ jobs:
 #- job: macOS_pip_pypi_nobin
 #  displayName: macOS pip from PyPI w/o binary
 #  pool:
-#    vmImage: macOS-11
+#    vmImage: macOS-12
 #  steps:
 #  - script: |
 #      python3 -m pip install -U pip setuptools wheel cmake --user
@@ -465,7 +465,7 @@ jobs:
 #- job: macOS_pip_pypy_pypi
 #  displayName: macOS PyPy from PyPI
 #  pool:
-#    vmImage: macOS-11
+#    vmImage: macOS-12
 #  steps:
 #  - script: |
 #      brew update || true
@@ -494,7 +494,7 @@ jobs:
 #  displayName: macOS PyPy from dev
 #  timeoutInMinutes: 120
 #  pool:
-#    vmImage: macOS-11
+#    vmImage: macOS-12
 #  steps:
 #  - script: |
 #      brew update || true
@@ -510,7 +510,7 @@ jobs:
 #- job: macOS_pip_pypi_mpich
 #  displayName: macOS pip from PyPI w/ MPICH
 #  pool:
-#    vmImage: macOS-11
+#    vmImage: macOS-12
 #  steps:
 #  - script: |
 #      brew update || true
@@ -560,7 +560,7 @@ jobs:
 - job: macOS_conda
   displayName: macOS conda
   pool:
-    vmImage: macOS-11
+    vmImage: macOS-12
   steps:
   - bash: |
       echo "##vso[task.prependpath]$CONDA/bin"
@@ -579,7 +579,7 @@ jobs:
 #- job: macOS_conda_mpich
 #  displayName: macOS conda w/ MPICH
 #  pool:
-#    vmImage: macOS-11
+#    vmImage: macOS-12
 #  steps:
 #  - bash: |
 #      echo "##vso[task.prependpath]$CONDA/bin"
@@ -621,7 +621,7 @@ jobs:
 - job: macOS_mamba
   displayName: macOS mamba
   pool:
-    vmImage: macOS-11
+    vmImage: macOS-12
   steps:
   - bash: |
       echo "##vso[task.prependpath]$CONDA/bin"
@@ -640,7 +640,7 @@ jobs:
 #- job: macOS_mamba_mpich
 #  displayName: macOS mamba w/ MPICH
 #  pool:
-#    vmImage: macOS-11
+#    vmImage: macOS-12
 #  steps:
 #  - bash: |
 #      echo "##vso[task.prependpath]$CONDA/bin"
@@ -741,7 +741,7 @@ jobs:
 #- job: macOS_brew
 #  displayName: macOS homebrew
 #  pool:
-#    vmImage: macOS-11
+#    vmImage: macOS-12
 #  steps:
 #  - script: |
 #      rm -rf /usr/local/bin/2to3
