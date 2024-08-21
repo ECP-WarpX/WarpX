@@ -7,7 +7,7 @@ import sys
 
 import numpy as np
 
-sys.path.append('../../../../warpx/Regression/Checksum/')
+sys.path.append("../../../../warpx/Regression/Checksum/")
 
 import checksumAPI
 
@@ -17,6 +17,7 @@ test_name = os.path.split(os.getcwd())[1]
 
 my_check = checksumAPI.evaluate_checksum(test_name, fn, do_particles=True)
 
+# fmt: off
 ref_density = np.array([
     1.27942709e+14, 2.23579371e+14, 2.55384387e+14, 2.55660663e+14,
     2.55830911e+14, 2.55814337e+14, 2.55798906e+14, 2.55744891e+14,
@@ -52,7 +53,8 @@ ref_density = np.array([
     2.56611124e+14, 2.56344324e+14, 2.56244156e+14, 2.24183727e+14,
     1.27909856e+14
 ])
+# fmt: on
 
-density_data = np.load( 'ion_density_case_1.npy' )
+density_data = np.load("ion_density_case_1.npy")
 print(repr(density_data))
 assert np.allclose(density_data, ref_density)

@@ -4,7 +4,7 @@ import os
 import re
 import sys
 
-sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+sys.path.insert(1, "../../../../warpx/Regression/Checksum/")
 import checksumAPI
 
 # this will be the name of the plot file
@@ -19,8 +19,8 @@ if restart:
     test_name = test_name.replace("_restart", "")
 
 # Run checksum regression test
-if re.search( 'single_precision', fn ):
-    checksumAPI.evaluate_checksum(test_name, fn, rtol=2.e-6)
+if re.search("single_precision", fn):
+    checksumAPI.evaluate_checksum(test_name, fn, rtol=2.0e-6)
 else:
     if restart:
         checksumAPI.evaluate_checksum(test_name, fn, rtol=1e-12)
