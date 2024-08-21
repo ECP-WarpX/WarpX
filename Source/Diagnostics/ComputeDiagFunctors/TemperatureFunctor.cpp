@@ -5,7 +5,6 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/Parser/ParserUtils.H"
-#include "Utils/ParticleUtils.H"
 #include "WarpX.H"
 
 #include <ablastr/coarsen/sample.H>
