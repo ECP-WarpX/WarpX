@@ -274,7 +274,7 @@ public:
         auto const dr = geom.CellSize(0);
 #endif
 
-        auto volume_factor = [=](int i_cell) {
+        auto volume_factor = [=] AMREX_GPU_DEVICE(int i_cell) noexcept {
 #if defined WARPX_DIM_RZ
             // Return the radial factor for the volume element, dV
             int const ri = (i_cell - i_cell%nz)/nz;
