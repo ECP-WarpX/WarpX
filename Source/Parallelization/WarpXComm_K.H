@@ -338,7 +338,7 @@ void warpx_interp (int j, int k, int l,
     // 3) Interpolation from fine staggered to fine nodal
 
     nj = (sj_fp == 0) ? 2 : 1;
-#if defined(WARPX_DIM_1D_Z)
+#if defined(WARPX_DIM_1D_Z) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
     nk = 1;
     nl = 1;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
@@ -350,7 +350,7 @@ void warpx_interp (int j, int k, int l,
 #endif
 
     const int jm = (sj_fp == 0) ? j-1 : j;
-#if defined(WARPX_DIM_1D_Z)
+#if defined(WARPX_DIM_1D_Z) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
     const int km = k;
     const int lm = l;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)

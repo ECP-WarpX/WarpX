@@ -85,7 +85,7 @@ void doGatherShapeN ([[maybe_unused]] const amrex::ParticleReal xp,
     const amrex::Real rp = std::sqrt(xp*xp + yp*yp + zp*zp);
     const amrex::Real x = (rp - xyzmin.x)*dinv.x;
 #else
-    const amrex::Real x = (xp-xyzmin.x)*dinv.x;
+    const amrex::Real x = (xp - xyzmin.x)*dinv.x;
 #endif
 
     // j_[eb][xyz] leftmost grid point in x that the particle touches for the centering of each current
@@ -602,8 +602,8 @@ void doGatherShapeNEsirkepovStencilImplicit (
         sintheta_mid = 0._rt;
     }
     // Keep these double to avoid bug in single precision
-    double const x_new = (rp_new - xmin)*dxi;
-    double const x_old = (rp_old - xmin)*dxi;
+    double const x_new = (rp_new - xyzmin.x)*dinv.x;
+    double const x_old = (rp_old - xyzmin.x)*dinv.x;
 #if defined(WARPX_DIM_RZ)
     const Complex xy_mid0 = Complex{costheta_mid, sintheta_mid};
 #endif
@@ -1117,9 +1117,9 @@ void doGatherPicnicShapeN (
         sintheta_mid = 0._rt;
     }
     // Keep these double to avoid bug in single precision
-    double const x_new = (rp_new - xmin)*dxi;
-    double const x_old = (rp_old - xmin)*dxi;
-    double const x_bar = (rp_mid - xmin)*dxi;
+    double const x_new = (rp_new - xyzmin.x)*dinv.x;
+    double const x_old = (rp_old - xyzmin.x)*dinv.x;
+    double const x_bar = (rp_mid - xyzmin.x)*dinv.x;
 #if defined(WARPX_DIM_RZ)
     const Complex xy_mid0 = Complex{costheta_mid, sintheta_mid};
 #endif
