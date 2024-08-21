@@ -14,6 +14,7 @@
 #include "BoundaryConditions/PML.H"
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
+#include "EmbeddedBoundary/Enabled.H"
 #include "EmbeddedBoundary/WarpXFaceInfoBox.H"
 #include "FieldSolver/ElectrostaticSolver/SemiImplicitSolver.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
@@ -796,6 +797,13 @@ WarpX::ReadParameters ()
         potential_specified |= pp_boundary.query("potential_hi_z", m_poisson_boundary_handler.potential_zhi_str);
 #if defined(AMREX_USE_EB)
         potential_specified |= pp_warpx.query("eb_potential(x,y,z,t)", m_poisson_boundary_handler.potential_eb_str);
+
+        if (!EB::enabled()) {
+            throw std::runtime_error(
+                "Currently, users MUST use EB if it was compiled in. "
+                "This will change with https://github.com/ECP-WarpX/WarpX/pull/4865 ."
+            );
+        }
 #endif
         m_boundary_potential_specified = potential_specified;
         if (potential_specified & (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)) {
