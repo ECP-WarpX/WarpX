@@ -36,68 +36,70 @@ import sys
 import numpy as np
 import yt
 
-sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+sys.path.insert(1, "../../../../warpx/Regression/Checksum/")
 import checksumAPI
 
-#Input filename
+# Input filename
 inputname = "inputs"
-#________________________________________
+# ________________________________________
 
-#Physical constants
-c = 299792458.
+# Physical constants
+c = 299792458.0
 m_e = 9.1093837015e-31
 q_0 = 1.602176634e-19
 classical_electron_radius = 2.81794e-15
 reference_length = 1.0e-6
 very_small_dot_product = 1.0e-4
 very_small_weight = 1.0e-8
-#________________________________________
+# ________________________________________
 
-#Sim box data
+# Sim box data
 sim_size = 0.8e-6
 resolution = 64
 steps = 64
-init_pos = np.array([0.,0.,0.])
-#________________________________________
+init_pos = np.array([0.0, 0.0, 0.0])
+# ________________________________________
 
-#Momentum vals
-p_aux_0 = np.array([2.,3.,6.])
-p_aux_1 = np.array([1,0,0])
-p_aux_2 = np.array([0,1,0])
-Q, _ = np.linalg.qr(np.column_stack( [p_aux_0, p_aux_1, p_aux_2] )) #Gram-Schmidt
-p_0 = -Q[:,0]
-p_1 = -Q[:,1]
-p_2 = -Q[:,2]
+# Momentum vals
+p_aux_0 = np.array([2.0, 3.0, 6.0])
+p_aux_1 = np.array([1, 0, 0])
+p_aux_2 = np.array([0, 1, 0])
+Q, _ = np.linalg.qr(np.column_stack([p_aux_0, p_aux_1, p_aux_2]))  # Gram-Schmidt
+p_0 = -Q[:, 0]
+p_1 = -Q[:, 1]
+p_2 = -Q[:, 2]
 
-p_vals = [50,200,1000]
-#________________________________________
+p_vals = [50, 200, 1000]
+# ________________________________________
 
-#Field val
+# Field val
 B_val_norm = 300
-B_val = B_val_norm*m_e * 2.0 * np.pi * c /q_0/reference_length
+B_val = B_val_norm * m_e * 2.0 * np.pi * c / q_0 / reference_length
 B = p_0 * B_val
-#________________________________________
+# ________________________________________
 
-#Tolerance
+# Tolerance
 tolerance_rel = 0.05
-#________________________________________
+# ________________________________________
 
-#tau_c
-omega_c = q_0*B_val/m_e
-t0 = (2./3.)*classical_electron_radius/c
-tau_c = 1.0/omega_c/omega_c/t0
-#________________________________________
+# tau_c
+omega_c = q_0 * B_val / m_e
+t0 = (2.0 / 3.0) * classical_electron_radius / c
+tau_c = 1.0 / omega_c / omega_c / t0
+# ________________________________________
 
 
-#Simulation case struct
+# Simulation case struct
 class sim_case:
     def __init__(self, _name, _init_mom, _type):
         self.name = _name
         self.init_mom = _init_mom
         self.type = _type
-#________________________________________
 
-#All cases
+
+# ________________________________________
+
+# All cases
 cases = [
     sim_case("ele_para0", p_0 * p_vals[2], "-q_e"),
     sim_case("ele_perp0", p_1 * p_vals[0], "-q_e"),
@@ -105,21 +107,25 @@ cases = [
     sim_case("ele_perp2", p_1 * p_vals[2], "-q_e"),
     sim_case("pos_perp2", p_1 * p_vals[2], "q_e"),
 ]
-#________________________________________
+# ________________________________________
 
-#Auxiliary functions
-def gamma(p) :
-    return np.sqrt(1.0 + np.dot(p,p))
+
+# Auxiliary functions
+def gamma(p):
+    return np.sqrt(1.0 + np.dot(p, p))
+
 
 def exp_res(cc, time):
     if np.all(np.linalg.norm(np.cross(cc.init_mom, B)) < very_small_dot_product):
         return gamma(cc.init_mom)
-    else :
-        tt = time/tau_c
+    else:
+        tt = time / tau_c
         g0 = gamma(cc.init_mom)
-        C = -0.5 * np.log((g0+1)/(g0-1))
-        return 1.0/np.tanh(tt - C)
-#________________________________________
+        C = -0.5 * np.log((g0 + 1) / (g0 - 1))
+        return 1.0 / np.tanh(tt - C)
+
+
+# ________________________________________
 
 
 def check():
@@ -128,35 +134,41 @@ def check():
 
     sim_time = data_set_end.current_time.to_value()
 
-    #simulation results
-    all_data =  data_set_end.all_data()
+    # simulation results
+    all_data = data_set_end.all_data()
     spec_names = [cc.name for cc in cases]
 
-    #All momenta
-    res_mom = np.array([np.array([
-        all_data[sp, 'particle_momentum_x'].v[0],
-        all_data[sp, 'particle_momentum_y'].v[0],
-        all_data[sp, 'particle_momentum_z'].v[0]])
-        for sp in spec_names])
+    # All momenta
+    res_mom = np.array(
+        [
+            np.array(
+                [
+                    all_data[sp, "particle_momentum_x"].v[0],
+                    all_data[sp, "particle_momentum_y"].v[0],
+                    all_data[sp, "particle_momentum_z"].v[0],
+                ]
+            )
+            for sp in spec_names
+        ]
+    )
 
     for cc in zip(cases, res_mom):
-        init_gamma = gamma(cc[0].init_mom)
-        end_gamma = gamma(cc[1]/m_e/c)
+        end_gamma = gamma(cc[1] / m_e / c)
         exp_gamma = exp_res(cc[0], sim_time)
 
-        error_rel = np.abs(end_gamma-exp_gamma)/exp_gamma
+        error_rel = np.abs(end_gamma - exp_gamma) / exp_gamma
 
         print("error_rel    : " + str(error_rel))
         print("tolerance_rel: " + str(tolerance_rel))
 
-        assert( error_rel < tolerance_rel )
+        assert error_rel < tolerance_rel
 
     test_name = os.path.split(os.getcwd())[1]
     checksumAPI.evaluate_checksum(test_name, filename)
 
-def generate():
 
-    with open(inputname,'w') as f:
+def generate():
+    with open(inputname, "w") as f:
         f.write("#Automatically generated inputfile\n")
         f.write("#Run check.py without arguments to regenerate\n")
         f.write("#\n\n")
@@ -188,21 +200,31 @@ def generate():
             f.write("{}.charge = {}\n".format(cc.name, cc.type))
             f.write("{}.mass = m_e\n".format(cc.name))
             f.write('{}.injection_style = "SingleParticle"\n'.format(cc.name))
-            f.write("{}.single_particle_pos = {} {} {}\n".
-                format(cc.name, init_pos[0], init_pos[1], init_pos[2]))
-            f.write("{}.single_particle_u = {} {} {}\n".
-                format(cc.name, cc.init_mom[0], cc.init_mom[1], cc.init_mom[2]))
-            f.write("{}.single_particle_weight = {}\n".format(cc.name, very_small_weight))
+            f.write(
+                "{}.single_particle_pos = {} {} {}\n".format(
+                    cc.name, init_pos[0], init_pos[1], init_pos[2]
+                )
+            )
+            f.write(
+                "{}.single_particle_u = {} {} {}\n".format(
+                    cc.name, cc.init_mom[0], cc.init_mom[1], cc.init_mom[2]
+                )
+            )
+            f.write(
+                "{}.single_particle_weight = {}\n".format(cc.name, very_small_weight)
+            )
             f.write("{}.do_classical_radiation_reaction = 1\n".format(cc.name))
             f.write("\n")
 
         f.write("warpx.B_external_particle = {} {} {}\n".format(*B))
 
+
 def main():
-    if (len(sys.argv) < 2):
+    if len(sys.argv) < 2:
         generate()
     else:
         check()
+
 
 if __name__ == "__main__":
     main()

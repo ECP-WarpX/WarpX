@@ -27,7 +27,7 @@
     "particle_position_x": 4096178.1664224654,
     "particle_position_y": 4096499.7060386725,
     "particle_position_z": 8191465.586938233,
-    "particle_weight": 5.1196455431551905e+31
+    "particle_weight": 5.119677303391259e+31
   },
   "alpha2": {
     "particle_momentum_x": 4.172264972648105e-15,
@@ -58,13 +58,13 @@
     "particle_weight": 1023.9999999999999
   },
   "proton3": {
-    "particle_momentum_x": 1.6847282386883186e-15,
-    "particle_momentum_y": 1.6828065767793222e-15,
-    "particle_momentum_z": 1.6803456707569493e-15,
-    "particle_position_x": 2457343.371083716,
-    "particle_position_y": 2457033.3891170574,
-    "particle_position_z": 4914529.855222688,
-    "particle_weight": 1.023645543155193e+31
+    "particle_momentum_x": 1.6843593058271961e-15,
+    "particle_momentum_y": 1.6823892851456668e-15,
+    "particle_momentum_z": 1.6800222030208115e-15,
+    "particle_position_x": 2457072.7669634065,
+    "particle_position_y": 2456771.196542574,
+    "particle_position_z": 4914021.8271464575,
+    "particle_weight": 1.0236773033912632e+31
   },
   "proton4": {
     "particle_momentum_x": 0.0,
@@ -76,29 +76,29 @@
     "particle_weight": 1.0240000000000003e+38
   },
   "alpha3": {
-    "particle_momentum_x": 4.822525301678111e-16,
-    "particle_momentum_y": 4.78793407068675e-16,
-    "particle_momentum_z": 4.710411155693663e-16,
-    "particle_position_x": 50987.442011759704,
-    "particle_position_y": 48999.674675246955,
-    "particle_position_z": 101142.57224226737,
-    "particle_weight": 1.0633705344227063e+28
+    "particle_momentum_x": 4.529369912319074e-16,
+    "particle_momentum_y": 4.55762819982174e-16,
+    "particle_momentum_z": 4.501223434274883e-16,
+    "particle_position_x": 48732.63289890166,
+    "particle_position_y": 46262.85664926968,
+    "particle_position_z": 95593.72900482587,
+    "particle_weight": 9.680898262134895e+27
   },
   "alpha5": {
-    "particle_momentum_x": 2.3856918226484716e-14,
-    "particle_momentum_y": 2.3827536503955812e-14,
-    "particle_momentum_z": 2.405465166862308e-14,
-    "particle_position_x": 2457556.857163843,
-    "particle_position_y": 2457059.6353793247,
-    "particle_position_z": 4915847.043341331,
+    "particle_momentum_x": 2.3875154301762454e-14,
+    "particle_momentum_y": 2.3859525730749002e-14,
+    "particle_momentum_z": 2.4029799910201597e-14,
+    "particle_position_x": 2457556.8571638423,
+    "particle_position_y": 2457059.6353793237,
+    "particle_position_z": 4915847.043341332,
     "particle_weight": 3.0719999999999984e-18
   },
   "alpha4": {
-    "particle_momentum_x": 2.386438069023501e-14,
-    "particle_momentum_y": 2.3877492448396915e-14,
-    "particle_momentum_z": 2.4013650859080414e-14,
-    "particle_position_x": 2457367.458278153,
-    "particle_position_y": 2457512.0443730573,
+    "particle_momentum_x": 2.3842314895045605e-14,
+    "particle_momentum_y": 2.386245392919704e-14,
+    "particle_momentum_z": 2.4007606987094537e-14,
+    "particle_position_x": 2457367.4582781545,
+    "particle_position_y": 2457512.044373057,
     "particle_position_z": 4914475.7765130745,
     "particle_weight": 3072.000000000002
   },

@@ -21,7 +21,7 @@ import sys
 
 import numpy as np
 
-sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+sys.path.insert(1, "../../../../warpx/Regression/Checksum/")
 import checksumAPI
 
 # Command line argument
@@ -29,13 +29,15 @@ fn = sys.argv[1]
 
 # Load costs data
 data = np.genfromtxt("./diags/reducedfiles/LBC.txt")
-data = data[:,2:]
+data = data[:, 2:]
 
 # Compute the number of datafields saved per box
 n_data_fields = 0
 with open("./diags/reducedfiles/LBC.txt") as f:
     h = f.readlines()[0]
-    unique_headers=[''.join([l for l in w if not l.isdigit()]) for w in h.split()][2::]
+    unique_headers = ["".join([ln for ln in w if not ln.isdigit()]) for w in h.split()][
+        2::
+    ]
     n_data_fields = len(set(unique_headers))
     f.close()
 
@@ -46,11 +48,12 @@ with open("./diags/reducedfiles/LBC.txt") as f:
 #      ...
 #      cost_box_n, proc_box_n, lev_box_n, i_low_box_n, j_low_box_n, k_low_box_n(, gpu_ID_box_n if GPU run), hostname_box_n]
 
+
 # Function to get efficiency at an iteration i
 def get_efficiency(i):
     # First get the unique ranks
-    costs, ranks = data[i,0::n_data_fields], data[i,1::n_data_fields].astype(int)
-    rank_to_cost_map = {r:0. for r in set(ranks)}
+    costs, ranks = data[i, 0::n_data_fields], data[i, 1::n_data_fields].astype(int)
+    rank_to_cost_map = {r: 0.0 for r in set(ranks)}
 
     # Compute efficiency before/after load balance and check it is improved
     for c, r in zip(costs, ranks):
@@ -62,14 +65,15 @@ def get_efficiency(i):
 
     return efficiencies.mean()
 
+
 # The iteration i=2 is load balanced; examine before/after load balance
 efficiency_before, efficiency_after = get_efficiency(1), get_efficiency(2)
-print('load balance efficiency (before load balance): ', efficiency_before)
-print('load balance efficiency (after load balance): ', efficiency_after)
+print("load balance efficiency (before load balance): ", efficiency_before)
+print("load balance efficiency (after load balance): ", efficiency_after)
 
 # The load balanced case is expected to be more efficient
 # than non-load balanced case
-assert(efficiency_before < efficiency_after)
+assert efficiency_before < efficiency_after
 
-test_name = 'reduced_diags_loadbalancecosts_timers'
+test_name = "reduced_diags_loadbalancecosts_timers"
 checksumAPI.evaluate_checksum(test_name, fn)
