@@ -160,6 +160,18 @@ function(add_warpx_test
         set_property(TEST ${name}.analysis APPEND PROPERTY ENVIRONMENT "PYTHONPATH=${PYTHONPATH}")
     endif()
 
+    # CI: cleanup directly after run
+    if(WarpX_CI)
+        add_test(
+            NAME ${name}.cleanup
+            COMMAND ${CMAKE_COMMAND} -E rm -rf ${THIS_WORKING_DIR}
+        )
+        set_property(TEST ${name}.analysis APPEND PROPERTY DEPENDS "${name}.run")
+        if(analysis)
+            set_property(TEST ${name}.analysis APPEND PROPERTY DEPENDS "${name}.analysis")
+        endif()
+    endif()
+
 endfunction()
 
 # Add tests (alphabetical order) ##############################################

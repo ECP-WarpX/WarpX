@@ -74,6 +74,7 @@ set_default_install_dirs()
 include(CMakeDependentOption)
 option(WarpX_APP           "Build the WarpX executable application"     ON)
 option(WarpX_ASCENT        "Ascent in situ diagnostics"                 OFF)
+option(WarpX_CI            "This is a CI run"                           OFF)
 option(WarpX_EB            "Embedded boundary support"                  OFF)
 option(WarpX_LIB           "Build WarpX as a library"                   OFF)
 option(WarpX_MPI           "Multi-node support (message-passing)"       ON)
@@ -195,6 +196,7 @@ endif()
 
 # this defined the variable BUILD_TESTING which is ON by default
 #include(CTest)
+mark_as_advanced(WarpX_CI)
 
 
 # Dependencies ################################################################
