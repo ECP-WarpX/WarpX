@@ -14,13 +14,19 @@ files=()
 for pathtofile in $(find Examples -type f)
 do
     file=$(basename $pathtofile)
-    if [[ ${file:0:6 } != inputs       ]] &&
-       [[ ${file:0:12} != PICMI_inputs ]] &&
-       [[ ${file:0:8 } != analysis     ]] &&
-       [[ ${file:  -4} != yaml         ]] &&
-       [[ ${file:0:4 } != plot         ]] &&
-       [[ ${file:0:6 } != README       ]] &&
-       [[ ${file:0:10} != CMakeLists   ]]
+    if [[ ${file:0:14} != inputs_base_1d ]] &&
+       [[ ${file:0:14} != inputs_base_2d ]] &&
+       [[ ${file:0:14} != inputs_base_3d ]] &&
+       [[ ${file:0:14} != inputs_base_rz ]] &&
+       [[ ${file:0:14} != inputs_test_1d ]] &&
+       [[ ${file:0:14} != inputs_test_2d ]] &&
+       [[ ${file:0:14} != inputs_test_3d ]] &&
+       [[ ${file:0:14} != inputs_test_rz ]] &&
+       [[ ${file:0:8 } != analysis       ]] &&
+       [[ ${file:  -4} != yaml           ]] &&
+       [[ ${file:0:4 } != plot           ]] &&
+       [[ ${file:0:6 } != README         ]] &&
+       [[ ${file:0:10} != CMakeLists     ]]
     then
         files+=($file)
         echo "$pathtofile does not have a proper name!"
@@ -32,12 +38,12 @@ if [ $ok -ne 0 ]
 then
     echo ""
     echo "Files in Examples/ must start with one of:"
-    echo " - inputs       : for WarpX input files"
-    echo " - PICMI_inputs : for PICMI-compliant input scripts"
-    echo " - analysis     : for scripts testing the accuracy of a test"
-    echo " - *.yaml       : for third-party input, e.g. Ascent in situ visualization"
-    echo " - README       : for readme files"
-    echo " - CMakeLists   : for CMake files"
+    echo " - inputs_base_<1d;2d;3d;rz>: for base input files"
+    echo " - inputs_test_<1d;2d;3d;rz>: for test input files"
+    echo " - analysis                 : for analysis scripts"
+    echo " - *.yaml                   : for third-party inputs, e.g., Ascent in-situ visualization"
+    echo " - README                   : for README files"
+    echo " - CMakeLists               : for CMake files"
     echo ""
     echo "Please rename the file(s) to comply, or move to another folder"
 fi

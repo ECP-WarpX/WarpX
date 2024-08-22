@@ -8,20 +8,18 @@ ok=0
 
 # all calls to add_warpx_test(...) in CMakeLists.txt files
 registered_tests=$(grep -h -R -A5 "add_warpx_test" Examples/ | grep Examples)
+# FIXME we should exclude tests whose line starts with '#' (test commented out)
 
-# go through each input file: C++ inputs or PICMI Python
+# go through each input file
 for file in $(find Examples -type f)
 do
     # Name of file without path
     filename=$(basename $file)
-    # If file is an input file
-    if [[ ${filename:0:6 } =~ inputs       ]] ||
-       [[ ${filename:0:12} =~ PICMI_inputs ]]
+    # If file is a test input file
+    if [[ ${filename:0:11 } =~ inputs_test ]]
     then
-        cr=$'$'
-        file_cr="$file$cr"
         # Search file name in test list
-        if [[ "${registered_tests,,}" != *"${file_cr}"* ]]
+        if [[ "${registered_tests}" != *"${file}"* ]]
         then
             echo "$file is not tested!"
             ok=1
@@ -32,12 +30,8 @@ done
 if [ $ok -ne 0 ]
 then
     echo ""
-    echo "All files in Examples that start with one of"
-    echo " - inputs"
-    echo " - PICMI_inputs"
-    echo "must have an automated test."
-    echo "Please add a test in Regression/WarpX-tests.ini"
-    echo "for all files listed above."
+    echo "All files in Examples/ starting with 'inputs_test' must have an automated test."
+    echo "Please add a test in the corresponding CMakeLists.txt for all files listed above."
 fi
 
 exit $ok
