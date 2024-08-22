@@ -569,17 +569,16 @@ WarpX::InitData ()
     }
     WriteUsedInputsFile();
 
+    // Run div cleaner here on loaded external fields
+    if (WarpX::do_divb_cleaning_external) {
+        WarpX::ProjectionCleanDivB();
+    }
+
     if (restart_chkfile.empty())
     {
         // Loop through species and calculate their space-charge field
         bool const reset_fields = false; // Do not erase previous user-specified values on the grid
         ExecutePythonCallback("beforeInitEsolve");
-
-        // Run div cleaner here on the loaded fields
-        if (WarpX::do_divb_cleaning_external) {
-            WarpX::ProjectionCleanDivB();
-        }
-
         ComputeSpaceChargeField(reset_fields);
         ExecutePythonCallback("afterInitEsolve");
         if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) {
@@ -1420,9 +1419,10 @@ WarpX::LoadExternalFields (int const lev)
 #endif
     }
 
-    // Call Python callback which might write values to external field multifabs
-    ExecutePythonCallback("loadExternalFields");
-
+    if (lev == 0) {
+        // Call Python callback which might write values to external field multifabs
+        ExecutePythonCallback("loadExternalFields");
+    }
     // External particle fields
 
     if (mypc->m_B_ext_particle_s == "read_from_file") {

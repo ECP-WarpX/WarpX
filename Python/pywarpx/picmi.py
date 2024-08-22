@@ -2053,7 +2053,7 @@ class LoadInitialFieldFromPython:
             pywarpx.warpx.B_ext_grid_init_style = "load_from_python"
             pywarpx.warpx.do_divb_cleaning_external = self.do_divb_cleaning_external
 
-        pywarpx.callbacks.installbeforeInitEsolve(self.load_from_python)
+        pywarpx.callbacks.installloadExternalFields(self.load_from_python)
 
 
 class AnalyticInitialField(picmistandard.PICMI_AnalyticAppliedField):
