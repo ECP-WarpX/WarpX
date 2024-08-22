@@ -1988,20 +1988,19 @@ class LaserAntenna(picmistandard.PICMI_LaserAntenna):
         self.normal_vector = laser.laser.direction  # The plane normal direction
         if isinstance(laser, GaussianLaser):
             # Focal distance from the antenna (in meters)
-            laser.laser.profile_focal_distance = np.sqrt(
-                (laser.focal_position[0] - self.position[0]) ** 2
-                + (laser.focal_position[1] - self.position[1]) ** 2
-                + (laser.focal_position[2] - self.position[2]) ** 2
+            laser.laser.profile_focal_distance = (
+                (laser.focal_position[0] - self.position[0]) * self.normal_vector[0]
+                + (laser.focal_position[1] - self.position[1]) * self.normal_vector[1]
+                + (laser.focal_position[2] - self.position[2]) * self.normal_vector[2]
             )
             # The time at which the laser reaches its peak (in seconds)
             laser.laser.profile_t_peak = (
-                np.sqrt(
-                    (self.position[0] - laser.centroid_position[0]) ** 2
-                    + (self.position[1] - laser.centroid_position[1]) ** 2
-                    + (self.position[2] - laser.centroid_position[2]) ** 2
-                )
-                / constants.c
-            )
+                (self.position[0] - laser.centroid_position[0]) * self.normal_vector[0]
+                + (self.position[1] - laser.centroid_position[1])
+                * self.normal_vector[1]
+                + (self.position[2] - laser.centroid_position[2])
+                * self.normal_vector[2]
+            ) / constants.c
 
 
 class LoadInitialField(picmistandard.PICMI_LoadGriddedField):
