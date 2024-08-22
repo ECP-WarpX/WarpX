@@ -1419,7 +1419,7 @@ WarpX::LoadExternalFields (int const lev)
 #endif
     }
 
-    if (lev == 0) {
+    if (lev == finestLevel()) {
         // Call Python callback which might write values to external field multifabs
         ExecutePythonCallback("loadExternalFields");
     }
