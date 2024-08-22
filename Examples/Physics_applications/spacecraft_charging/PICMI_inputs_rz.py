@@ -280,8 +280,6 @@ part_scraping_boundary_diag = picmi.ParticleBoundaryScrapingDiagnostic(
     period=diagnostic_interval,
     species=[electrons, protons],
     warpx_format="openpmd",
-    write_dir=".",
-    warpx_file_prefix="spacecraft_charging_plt",
 )
 
 ##########################
