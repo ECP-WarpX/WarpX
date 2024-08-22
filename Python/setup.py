@@ -59,7 +59,7 @@ setup(name = 'pywarpx',
       package_dir = {'pywarpx': 'pywarpx'},
       description = """Wrapper of WarpX""",
       package_data = package_data,
-      install_requires = ['numpy', 'picmistandard @ git+https://github.com/oshapoval/picmi.git@add_boundary_scraping_diags_picmi', 'periodictable'],
+      install_requires = ['numpy', 'picmistandard==0.30.0', 'periodictable'],
       python_requires = '>=3.8',
       zip_safe=False
 )

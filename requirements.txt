@@ -4,9 +4,9 @@ periodictable~=1.5
 
 # PICMI
 # note: don't forget to update the version in Docs/requirements.txt, too
-#picmistandard==0.29.0
+picmistandard==0.30.0
 #   for development against an unreleased PICMI version, use:
-picmistandard @ git+https://github.com/oshapoval/picmi.git@add_boundary_scraping_diags_picmi
+#picmistandard @ git+https://github.com/picmi-standard/picmi.git#subdirectory=PICMI_Python
 
 # optional, some used for testing:
 # yt
