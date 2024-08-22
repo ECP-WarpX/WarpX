@@ -23,7 +23,7 @@
  *        otherwise L will be calculated based on the algorithm.
  *        @param[in] n12 = max(w1,w2)*min(N1,N2)/dV is the effective density used for s12
  *        @param[in] sigma_max is the maximum cross section based on mfp = atomic spacing
- *        used for the normalized scattering length s12
+ *        used for the normalized scattering length s12 (see Sec. II.C of Perez et al.)
  *        To see if there are nan or inf updated velocities,
  *        compile with USE_ASSERTION=TRUE.
  *
