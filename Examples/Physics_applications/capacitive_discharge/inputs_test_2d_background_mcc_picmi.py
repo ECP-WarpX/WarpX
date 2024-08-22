@@ -311,16 +311,12 @@ solver = PoissonSolverPseudo1D(grid=grid)
 particle_diag = picmi.ParticleDiagnostic(
     name="diag1",
     period=diagnostic_intervals,
-    write_dir=".",
-    warpx_file_prefix="Python_background_mcc_plt",
 )
 field_diag = picmi.FieldDiagnostic(
     name="diag1",
     grid=grid,
     period=diagnostic_intervals,
     data_list=["rho_electrons", "rho_he_ions"],
-    write_dir=".",
-    warpx_file_prefix="Python_background_mcc_plt",
 )
 
 ##########################

@@ -72,17 +72,16 @@ function(add_warpx_test
     file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${name})
     set(THIS_WORKING_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${name})
 
-    #file(GLOB TEST_FILES "${INPUTS_DIR}/inputs*" "${INPUTS_DIR}/*.py")
-    #file(COPY ${TEST_FILES} DESTINATION ${THIS_WORKING_DIR})
-    # copy test input files to run directory
     get_filename_component(INPUTS_PATH ${inputs} REALPATH BASE_DIR "${CMAKE_BINARYDIR}")
-    file(COPY ${INPUTS_PATH} DESTINATION ${THIS_WORKING_DIR})
-    # copy base input files to run directory
     get_filename_component(INPUTS_DIR ${INPUTS_PATH} DIRECTORY)
-    set(INPUTS_BASE ${INPUTS_DIR}/inputs_base_${SD})
-    if(EXISTS ${INPUTS_BASE})
-        file(COPY ${INPUTS_BASE} DESTINATION ${THIS_WORKING_DIR})
-    endif()
+    # copy base input files to run directory
+    file(GLOB INPUTS_BASE "${INPUTS_DIR}/inputs_base_${SD}*")
+    file(COPY ${INPUTS_BASE} DESTINATION ${THIS_WORKING_DIR})
+    # copy test input file to run directory
+    file(COPY ${INPUTS_PATH} DESTINATION ${THIS_WORKING_DIR})
+    # for restart tests, copy input file of original test (without "_restart" suffix)
+    string(REPLACE "_restart" "" INPUTS_PATH_NORESTART ${INPUTS_PATH})
+    file(COPY ${INPUTS_PATH_NORESTART} DESTINATION ${THIS_WORKING_DIR})
 
     set(THIS_MPI_TEST_EXE
         ${MPIEXEC_EXECUTABLE}
