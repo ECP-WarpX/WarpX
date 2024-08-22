@@ -1986,8 +1986,10 @@ class LaserAntenna(picmistandard.PICMI_LaserAntenna):
                 "specified antenna normal."
             )
         self.normal_vector = laser.laser.direction  # The plane normal direction
+        # Ensure the normal vector is a unit vector
+        self.normal_vector /= np.linalg.norm(self.normal_vector)
         if isinstance(laser, GaussianLaser):
-            # Focal distance from the antenna (in meters)
+            # Focal displacement from the antenna (in meters)
             laser.laser.profile_focal_distance = (
                 (laser.focal_position[0] - self.position[0]) * self.normal_vector[0]
                 + (laser.focal_position[1] - self.position[1]) * self.normal_vector[1]
