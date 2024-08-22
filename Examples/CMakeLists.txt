@@ -79,7 +79,7 @@ function(add_warpx_test
     file(COPY ${INPUTS_PATH} DESTINATION ${THIS_WORKING_DIR})
     # copy base input files to run directory
     get_filename_component(INPUTS_DIR ${INPUTS_PATH} DIRECTORY)
-    set(INPUTS_BASE ${INPUTS_DIR}/inputs_${SD}_base)
+    set(INPUTS_BASE ${INPUTS_DIR}/inputs_base_${SD})
     if(EXISTS ${INPUTS_BASE})
         file(COPY ${INPUTS_BASE} DESTINATION ${THIS_WORKING_DIR})
     endif()

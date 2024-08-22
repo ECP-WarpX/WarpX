@@ -1,5 +1,0 @@
-# base input parameters
-FILE = inputs_3d_test_acceleration_psatd
-
-# test input parameters
-amr.restart = ../acceleration_psatd/diags/chk000005

@@ -1,239 +1,205 @@
 # Add tests (alphabetical order) ##############################################
 #
 
-# averaged_galilean_2d_psatd ##################################################
-#
 if(WarpX_FFT)
     add_warpx_test(
-        averaged_galilean_2d_psatd # name
+        test_2d_averaged_galilean_psatd # name
         2 # dims
         1 # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_avg_2d_test_averaged_galilean_2d_psatd # inputs
+        Examples/Tests/nci_psatd_stability/inputs_test_2d_averaged_galilean_psatd # inputs
         Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
         diags/diag1000400 # output
     )
 endif()
 
-# averaged_galilean_2d_psatd_hybrid ###########################################
-#
 if(WarpX_FFT)
     add_warpx_test(
-        averaged_galilean_2d_psatd_hybrid # name
+        test_2d_averaged_galilean_psatd_hybrid # name
         2 # dims
         2 # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_avg_2d_test_averaged_galilean_2d_psatd_hybrid # inputs
+        Examples/Tests/nci_psatd_stability/inputs_test_2d_averaged_galilean_psatd_hybrid # inputs
         Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
         diags/diag1000400 # output
     )
 endif()
 
-# averaged_galilean_3d_psatd ##################################################
-#
 if(WarpX_FFT)
     add_warpx_test(
-        averaged_galilean_3d_psatd # name
+        test_3d_averaged_galilean_psatd # name
         3 # dims
         2 # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_avg_3d_test_averaged_galilean_3d_psatd # inputs
+        Examples/Tests/nci_psatd_stability/inputs_test_3d_averaged_galilean_psatd # inputs
         Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
         diags/diag1000160 # output
     )
 endif()
 
-# averaged_galilean_3d_psatd_hybrid ###########################################
-#
 if(WarpX_FFT)
     add_warpx_test(
-        averaged_galilean_3d_psatd_hybrid # name
+        test_3d_averaged_galilean_psatd_hybrid # name
         3 # dims
         2 # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_avg_3d_test_averaged_galilean_3d_psatd_hybrid # inputs
+        Examples/Tests/nci_psatd_stability/inputs_test_3d_averaged_galilean_psatd_hybrid # inputs
         Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
         diags/diag1000160 # output
     )
 endif()
 
-# comoving_2d_psatd_hybrid ####################################################
-#
 if(WarpX_FFT)
     add_warpx_test(
-        comoving_2d_psatd_hybrid # name
+        test_2d_comoving_psatd_hybrid # name
         2 # dims
         2 # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_2d_test_comoving_2d_psatd_hybrid # inputs
+        Examples/Tests/nci_psatd_stability/inputs_test_2d_comoving_psatd_hybrid # inputs
         Examples/analysis_default_regression.py # analysis
         diags/diag1000400 # output
     )
 endif()
 
-# galilean_2d_psatd ###########################################################
-#
 if(WarpX_FFT)
     add_warpx_test(
-        galilean_2d_psatd # name
+        test_2d_galilean_psatd # name
         2 # dims
         1 # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_2d_test_galilean_2d_psatd # inputs
+        Examples/Tests/nci_psatd_stability/inputs_test_2d_galilean_psatd # inputs
         Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
         diags/diag1000400 # output
     )
 endif()
 
-# galilean_2d_psatd_current_correction ########################################
-#
 if(WarpX_FFT)
     add_warpx_test(
-        galilean_2d_psatd_current_correction # name
+        test_2d_galilean_psatd_current_correction # name
         2 # dims
         2 # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_2d_test_galilean_2d_psatd_current_correction # inputs
+        Examples/Tests/nci_psatd_stability/inputs_test_2d_galilean_psatd_current_correction # inputs
         Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
         diags/diag1000400 # output
     )
 endif()
 
-# galilean_2d_psatd_current_correction_psb ####################################
-#
 if(WarpX_FFT)
     add_warpx_test(
-        galilean_2d_psatd_current_correction_psb # name
+        test_2d_galilean_psatd_current_correction_psb # name
         2 # dims
         1 # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_2d_test_galilean_2d_psatd_current_correction_psb # inputs
+        Examples/Tests/nci_psatd_stability/inputs_test_2d_galilean_psatd_current_correction_psb # inputs
         Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
         diags/diag1000400 # output
     )
 endif()
 
-# galilean_2d_psatd_hybrid ####################################################
-#
 if(WarpX_FFT)
     add_warpx_test(
-        galilean_2d_psatd_hybrid # name
+        test_2d_galilean_psatd_hybrid # name
         2 # dims
         2 # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_2d_test_galilean_2d_psatd_hybrid # inputs
+        Examples/Tests/nci_psatd_stability/inputs_test_2d_galilean_psatd_hybrid # inputs
         Examples/analysis_default_regression.py # analysis
         diags/diag1000400 # output
     )
 endif()
 
-# galilean_3d_psatd ###########################################################
-#
 if(WarpX_FFT)
     add_warpx_test(
-        galilean_3d_psatd # name
+        test_3d_galilean_psatd # name
         3 # dims
         2 # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_3d_test_galilean_3d_psatd # inputs
+        Examples/Tests/nci_psatd_stability/inputs_test_3d_galilean_psatd # inputs
         Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
         diags/diag1000300 # output
     )
 endif()
 
-# galilean_3d_psatd_current_correction ########################################
-#
 if(WarpX_FFT)
     add_warpx_test(
-        galilean_3d_psatd_current_correction # name
+        test_3d_galilean_psatd_current_correction # name
         3 # dims
         2 # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_3d_test_galilean_3d_psatd_current_correction # inputs
+        Examples/Tests/nci_psatd_stability/inputs_test_3d_galilean_psatd_current_correction # inputs
         Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
         diags/diag1000300 # output
     )
 endif()
 
-# galilean_3d_psatd_current_correction_psb ####################################
-#
 if(WarpX_FFT)
     add_warpx_test(
-        galilean_3d_psatd_current_correction_psb # name
+        test_3d_galilean_psatd_current_correction_psb # name
         3 # dims
         1 # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_3d_test_galilean_3d_psatd_current_correction_psb # inputs
+        Examples/Tests/nci_psatd_stability/inputs_test_3d_galilean_psatd_current_correction_psb # inputs
         Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
         diags/diag1000300 # output
     )
 endif()
 
-# galilean_rz_psatd ###########################################################
-#
 if(WarpX_FFT)
     add_warpx_test(
-        galilean_rz_psatd # name
+        test_rz_galilean_psatd # name
         RZ # dims
         1  # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_rz_test_galilean_rz_psatd # inputs
+        Examples/Tests/nci_psatd_stability/inputs_test_rz_galilean_psatd # inputs
         Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
         diags/diag1000400 # output
     )
 endif()
 
-# galilean_rz_psatd_current_correction ########################################
-#
 if(WarpX_FFT)
     add_warpx_test(
-        galilean_rz_psatd_current_correction # name
+        test_rz_galilean_psatd_current_correction # name
         RZ # dims
         2  # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_rz_test_galilean_rz_psatd_current_correction # inputs
+        Examples/Tests/nci_psatd_stability/inputs_test_rz_galilean_psatd_current_correction # inputs
         Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
         diags/diag1000400 # output
     )
 endif()
 
-# galilean_rz_psatd_current_correction_psb ####################################
-#
 if(WarpX_FFT)
     add_warpx_test(
-        galilean_rz_psatd_current_correction_psb # name
+        test_rz_galilean_psatd_current_correction_psb # name
         RZ # dims
         1  # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_rz_test_galilean_rz_psatd_current_correction_psb # inputs
+        Examples/Tests/nci_psatd_stability/inputs_test_rz_galilean_psatd_current_correction_psb # inputs
         Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
         diags/diag1000400 # output
     )
 endif()
 
-# multi_J_rz_psatd ####################################
-#
 if(WarpX_FFT)
     add_warpx_test(
-        multi_J_rz_psatd # name
+        test_rz_multiJ_psatd # name
         RZ # dims
         2  # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_rz_test_multi_J_rz_psatd # inputs
+        Examples/Tests/nci_psatd_stability/inputs_test_rz_multiJ_psatd # inputs
         Examples/analysis_default_regression.py # analysis
         diags/diag1000050 # output
     )
 endif()
 
-# uniform_plasma_multiJ #######################################################
-#
 if(WarpX_FFT)
     add_warpx_test(
-        uniform_plasma_multiJ # name
+        test_3d_uniform_plasma_multiJ # name
         3 # dims
         2 # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_3d_test_uniform_plasma_multiJ # inputs
+        Examples/Tests/nci_psatd_stability/inputs_test_3d_uniform_plasma_multiJ # inputs
         Examples/Tests/nci_psatd_stability/analysis_multiJ.py # analysis
         diags/diag1000300 # output
     )

@@ -1,7 +1,0 @@
-# base input parameters
-FILE = inputs_3d_base
-
-# test input parameters
-max_step = 25
-warpx.do_current_centering = 0
-warpx.grid_type = hybrid

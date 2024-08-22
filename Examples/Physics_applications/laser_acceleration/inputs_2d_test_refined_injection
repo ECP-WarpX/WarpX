@@ -1,6 +1,0 @@
-# base input parameters
-FILE = inputs_2d_base
-
-# test input parameters
-amr.ref_ratio_vect = 2 1
-warpx.refine_plasma = 1

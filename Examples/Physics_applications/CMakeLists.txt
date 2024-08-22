@@ -1,7 +1,7 @@
 # Add tests (alphabetical order) ##############################################
 #
 
-add_subdirectory(beam-beam_collision)
+add_subdirectory(beam_beam_collision)
 add_subdirectory(capacitive_discharge)
 add_subdirectory(laser_acceleration)
 add_subdirectory(laser_ion)

@@ -1,9 +1,0 @@
-# base input parameters
-FILE = inputs_rz_base
-
-# test input parameters
-diag1.fields_to_plot = Er Bt Bz jr jt jz rho part_per_cell part_per_grid rho_beam rho_electrons
-diag1.format = openpmd
-diag1.openpmd_backend = h5
-max_step = 20
-warpx.abort_on_warning_threshold = high

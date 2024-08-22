@@ -1,26 +1,22 @@
 # Add tests (alphabetical order) ##############################################
 #
 
-# dive_cleaning_2d ############################################################
-#
 add_warpx_test(
-    dive_cleaning_2d # name
+    test_2d_dive_cleaning # name
     2 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/dive_cleaning/inputs_2d_test_dive_cleaning_2d # inputs
+    Examples/Tests/dive_cleaning/inputs_test_2d_dive_cleaning # inputs
     Examples/Tests/dive_cleaning/analysis.py # analysis
     diags/diag1000128 # output
 )
 
-# dive_cleaning_3d ############################################################
-#
 add_warpx_test(
-    dive_cleaning_3d # name
+    test_3d_dive_cleaning # name
     3 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/dive_cleaning/inputs_3d_test_dive_cleaning_3d # inputs
+    Examples/Tests/dive_cleaning/inputs_test_3d_dive_cleaning # inputs
     Examples/Tests/dive_cleaning/analysis.py # analysis
     diags/diag1000128 # output
 )

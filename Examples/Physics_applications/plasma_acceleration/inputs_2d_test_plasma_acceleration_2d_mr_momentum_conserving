@@ -1,5 +1,0 @@
-# base input parameters
-FILE = inputs_2d_base
-
-# test input parameters
-algo.field_gathering = momentum-conserving

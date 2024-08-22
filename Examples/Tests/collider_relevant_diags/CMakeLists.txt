@@ -1,14 +1,12 @@
 # Add tests (alphabetical order) ##############################################
 #
 
-# collider_diagnostics ########################################################
-#
 add_warpx_test(
-    collider_diagnostics # name
+    test_3d_collider_diagnostics # name
     3 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/collider_relevant_diags/inputs_3d_test_collider_diagnostics # inputs
-    Examples/Tests/collider_relevant_diags/analysis_multiple_particles.py # analysis
+    Examples/Tests/collider_relevant_diags/inputs_test_3d_collider_diagnostics # inputs
+    Examples/Tests/collider_relevant_diags/analysis.py # analysis
     diags/diag1000001 # output
 )

@@ -1,14 +1,12 @@
 # Add tests (alphabetical order) ##############################################
 #
 
-# divb_cleaning_3d ############################################################
-#
 add_warpx_test(
-    divb_cleaning_3d # name
+    test_3d_divb_cleaning # name
     3 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/divb_cleaning/inputs_3d_test_divb_cleaning_3d # inputs
+    Examples/Tests/divb_cleaning/inputs_test_3d_divb_cleaning # inputs
     Examples/Tests/divb_cleaning/analysis.py # analysis
     diags/diag1000400 # output
 )
