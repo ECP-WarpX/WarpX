@@ -72,7 +72,8 @@ function(add_warpx_test
     file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${name})
     set(THIS_WORKING_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${name})
 
-    get_filename_component(INPUTS_PATH ${inputs} REALPATH BASE_DIR "${CMAKE_BINARYDIR}")
+    # input directory
+    get_filename_component(INPUTS_PATH ${WarpX_SOURCE_DIR}/${inputs} REALPATH)
     get_filename_component(INPUTS_DIR ${INPUTS_PATH} DIRECTORY)
     # copy base input files to run directory
     file(GLOB INPUTS_BASE "${INPUTS_DIR}/inputs_base_${SD}*")
