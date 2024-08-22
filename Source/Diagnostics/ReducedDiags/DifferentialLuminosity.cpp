@@ -101,15 +101,8 @@ DifferentialLuminosity::DifferentialLuminosity (const std::string& rd_name)
     m_bin_min = bin_min;
     m_bin_size = (bin_max - bin_min) / bin_num;
 
-    // get WarpX class object
-    auto& warpx = WarpX::GetInstance();
-
-    // get MultiParticleContainer class object
-    const MultiParticleContainer& mypc =  warpx.GetPartContainer();
-
-    // resize data array
+    // resize and zero-out data array
     m_data.resize(m_bin_num,0.0_rt);
-
 
     if (amrex::ParallelDescriptor::IOProcessor())
     {
@@ -149,11 +142,10 @@ void DifferentialLuminosity::ComputeDiags (int step)
     // Judge if the diags should be done
     if (!m_intervals.contains(step+1)) { return; }
 
+    Real c2 = PhysConst::c*PhysConst::c;
+
     // get a reference to WarpX instance
     auto& warpx = WarpX::GetInstance();
-
-    // get time at level 0
-    auto const t = warpx.gett_new(0);
 
     // get cell volume
     Geometry const & geom = warpx.Geom(0);
@@ -174,9 +166,15 @@ void DifferentialLuminosity::ComputeDiags (int step)
     const ParticleReal m2 = species_2.getMass();
 
     // zero-out old data on the host
-    std::fill(m_data.begin(), m_data.end(), Real(0.0));
-    Gpu::DeviceVector< Real > d_data( m_data.size(), 0.0 );
-    Real* const AMREX_RESTRICT dptr_data = d_data.dataPtr();
+    //std::fill(m_data.begin(), m_data.end(), amrex::Real(0.0));
+    //amrex::Gpu::DeviceVector< amrex::Real > d_data( m_data.size(), 0.0 );
+    //amrex::Real* const AMREX_RESTRICT dptr_data = d_data.dataPtr();
+
+    amrex::Gpu::DeviceVector< amrex::Real > d_data( m_data.size() );
+    amrex::Gpu::copy(amrex::Gpu::hostToDevice,
+        m_data.begin(), m_data.end(), d_data.begin());
+    amrex::Real* const AMREX_RESTRICT dptr_data = d_data.dataPtr();
+
 
     // Enable tiling
     amrex::MFItInfo info;
@@ -188,7 +186,6 @@ void DifferentialLuminosity::ComputeDiags (int step)
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
 
-        constexpr int getpos_offset = 0; // NOT SURE
         for (amrex::MFIter mfi = species_1.MakeMFIter(lev, info); mfi.isValid(); ++mfi){
 
             ParticleTileType& ptile_1 = species_1.ParticlesAt(lev, mfi);
@@ -197,56 +194,84 @@ void DifferentialLuminosity::ComputeDiags (int step)
             ParticleBins bins_1 = ParticleUtils::findParticlesInEachCell( lev, mfi, ptile_1 );
             ParticleBins bins_2 = ParticleUtils::findParticlesInEachCell( lev, mfi, ptile_2 );
 
+            // Species
+            const auto soa_1 = ptile_1.getParticleTileData();
+            index_type* AMREX_RESTRICT indices_1 = bins_1.permutationPtr();
+            index_type const* AMREX_RESTRICT cell_offsets_1 = bins_1.offsetsPtr();
+
+            // Particle data in the tile/box
+            amrex::ParticleReal * const AMREX_RESTRICT w1  = soa_1.m_rdata[PIdx::w];
+            amrex::ParticleReal * const AMREX_RESTRICT u1x = soa_1.m_rdata[PIdx::ux];
+            amrex::ParticleReal * const AMREX_RESTRICT u1y = soa_1.m_rdata[PIdx::uy]; // v*gamma=p/m
+            amrex::ParticleReal * const AMREX_RESTRICT u1z = soa_1.m_rdata[PIdx::uz];
+
+            const auto soa_2 = ptile_2.getParticleTileData();
+            index_type* AMREX_RESTRICT indices_2 = bins_2.permutationPtr();
+            index_type const* AMREX_RESTRICT cell_offsets_2 = bins_2.offsetsPtr();
+            
+            amrex::ParticleReal * const AMREX_RESTRICT w2  = soa_2.m_rdata[PIdx::w];
+            amrex::ParticleReal * const AMREX_RESTRICT u2x = soa_2.m_rdata[PIdx::ux];
+            amrex::ParticleReal * const AMREX_RESTRICT u2y = soa_2.m_rdata[PIdx::uy]; 
+            amrex::ParticleReal * const AMREX_RESTRICT u2z = soa_2.m_rdata[PIdx::uz];  
+
             // Extract low-level data
             auto const n_cells = static_cast<int>(bins_1.numBins());
 
-            // - Species 1
-            const auto soa_1 = ptile_1.getParticleTileData();
-            const auto soa_2 = ptile_2.getParticleTileData();
-
-
             // Loop over cells
-            amrex::ParallelFor( n_cells,
+            amrex::ParallelFor( n_cells, 
                 [=] AMREX_GPU_DEVICE (int i_cell) noexcept
             {
-                amrex::ParticleReal * const AMREX_RESTRICT w1  = soa_1.m_rdata[PIdx::w];
-                amrex::ParticleReal * const AMREX_RESTRICT u1x = soa_1.m_rdata[PIdx::ux];
-                amrex::ParticleReal * const AMREX_RESTRICT u1y = soa_1.m_rdata[PIdx::uy];
-                amrex::ParticleReal * const AMREX_RESTRICT u1z = soa_1.m_rdata[PIdx::uz];
+                // The particles from species1 that are in the cell `i_cell` are
+                // given by the `indices_1[cell_start_1:cell_stop_1]`
+                index_type const cell_start_1 = cell_offsets_1[i_cell];
+                index_type const cell_stop_1  = cell_offsets_1[i_cell+1];
+                // Same for species 2
+                index_type const cell_start_2 = cell_offsets_2[i_cell];
+                index_type const cell_stop_2  = cell_offsets_2[i_cell+1];
 
-                amrex::ParticleReal * const AMREX_RESTRICT w2  = soa_2.m_rdata[PIdx::w];
-                amrex::ParticleReal * const AMREX_RESTRICT u2x = soa_2.m_rdata[PIdx::ux];
-                amrex::ParticleReal * const AMREX_RESTRICT u2y = soa_2.m_rdata[PIdx::uy];
-                amrex::ParticleReal * const AMREX_RESTRICT u2z = soa_2.m_rdata[PIdx::uz];
+                for(index_type i_1=cell_start_1; i_1<cell_stop_1; ++i_1){
+                    for(index_type i_2=cell_start_2; i_2<cell_stop_2; ++i_2){
 
+                        index_type j_1 = indices_1[i_1];
+                        index_type j_2 = indices_2[i_2];
 
+                        Real u1_square =  u1x[j_1]*u1x[j_1] + u1y[j_1]*u1y[j_1] + u1z[j_1]*u1z[j_1];
+                        Real gamma1 = std::sqrt(1. + u1_square/c2);
+                        Real u2_square = u2x[j_2]*u2x[j_2] + u2y[j_2]*u2y[j_2] + u2z[j_2]*u2z[j_2];
+                        Real gamma2 = std::sqrt(1. + u2_square/c2);
+                        Real u1_dot_u2 = u1x[j_1]*u2x[j_2] + u1y[j_1]*u2y[j_2] + u1z[j_1]*u2z[j_2];
+                        
+                        // center of mass energy 
+                        Real E_com = c2 * std::sqrt(m1*m1 + m2*m2 + 2*m1*m2* (gamma1*gamma2 - u1_dot_u2/c2));
 
-
-                amrex::Print(0) << soa_1.m_size << " +++++++++ " << soa_2.m_size << std::endl;
-
-                for(int i_1=0; i_1<soa_1.m_size; i_1++){
-                    for(int i_2=0; i_2<soa_2.m_size; i_2++){
-
-                        Real m1_square = m1*m1*w1[i_1]*w1[i_1];
-                        Real m2_square = m2*m2*w2[i_2]*w2[i_2];
-                        Real gamma1 = std::sqrt(1. + u1x[i_1]*u1x[i_1] + u1y[i_1]*u1y[i_1] + u1z[i_1]*u1z[i_1]);
-                        Real gamma2 = std::sqrt(1. + u2x[i_2]*u2x[i_2] + u2y[i_2]*u2y[i_2] + u2z[i_2]*u2z[i_2]);
-                        Real u1_dot_u2 = u1x[i_1]*u2x[i_2] + u1y[i_1]*u2y[i_2] + u1z[i_1]*u2z[i_2];
-                        //Real E_com = PhysConst::c*PhysConst::c *std::sqrt(m1_square + m2_square + 2*m1*w1[i_1]*m2*w2[i_2] * (gamma1*gamma2 - u1_dot_u2)); // cancellation errors?
-                        Real E_com = PhysConst::c*PhysConst::c *std::sqrt(m1_square + m2_square + 2*m1*w1[i_1]*m2*w2[i_2] * (gamma1*gamma2 - u1_dot_u2)); // cancellation errors?
                         // determine particle bin
                         int const bin = int(Math::floor((E_com-bin_min)/bin_size));
+
                         if ( bin<0 || bin>=num_bins ) { return; } // discard if out-of-range
 
-                        // add value to dL_dEcom_dt bin
-                        amrex::HostDevice::Atomic::Add(&dptr_data[bin], w1[i_1]*w2[i_2]);
+                        Real v1_minus_v2_x = u1x[j_1]/gamma1 - u2x[j_2]/gamma2;
+                        Real v1_minus_v2_y = u1y[j_1]/gamma1 - u2y[j_2]/gamma2;
+                        Real v1_minus_v2_z = u1z[j_1]/gamma1 - u2z[j_2]/gamma2;
+                        Real v1_minus_v2_square = v1_minus_v2_x*v1_minus_v2_x + v1_minus_v2_y*v1_minus_v2_y + v1_minus_v2_z*v1_minus_v2_z; 
+ 
+                        Real u1_cross_u2_x = u1y[j_1]*u2z[j_2] - u1z[j_1]*u2y[j_2];
+                        Real u1_cross_u2_y = u1z[j_1]*u2x[j_2] - u1x[j_1]*u2z[j_2];
+                        Real u1_cross_u2_z = u1x[j_1]*u2y[j_2] - u1y[j_1]*u2x[j_2];
 
-                        amrex::Print(0) << w1[i_1] << " ooo " << w2[i_2] << std::endl;
+                        Real v1_cross_v2_square = (u1_cross_u2_x*u1_cross_u2_x + u1_cross_u2_y*u1_cross_u2_y + u1_cross_u2_z*u1_cross_u2_z) / (gamma1*gamma1*gamma2*gamma2);
+                        
+                        Real radicand = v1_minus_v2_square - v1_cross_v2_square / c2; 
+                        
+                        Real dL_dEcom = std::sqrt( radicand ) * w1[j_1] * w2[j_2] / dV / bin_size; // s^-1 m^-2 J^-1
+                        
+                        amrex::HostDevice::Atomic::Add(&dptr_data[bin], dL_dEcom);   
+
                     } // particles species 2
                 } // particles species 1
             }); // cells
         } // boxes
     } // levels
+
 
     // blocking copy from device to host
     amrex::Gpu::copy(amrex::Gpu::deviceToHost,
@@ -256,11 +281,6 @@ void DifferentialLuminosity::ComputeDiags (int step)
     ParallelDescriptor::ReduceRealSum
         (m_data.data(), static_cast<int>(m_data.size()), ParallelDescriptor::IOProcessorNumber());
 
-    // normalize data
-    for ( int i = 0; i < m_bin_num; ++i )
-    {
-        m_data[i] *= 2._rt * PhysConst::c;
-    }
-
 #endif // not RZ
+return;
 }
