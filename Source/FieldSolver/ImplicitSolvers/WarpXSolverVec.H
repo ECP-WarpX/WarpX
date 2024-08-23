@@ -15,7 +15,6 @@
 #include <AMReX.H>
 #include <AMReX_Array.H>
 #include <AMReX_BLassert.H>
-#include <AMReX_Geometry.H>
 #include <AMReX_IntVect.H>
 #include <AMReX_LayoutData.H>
 #include <AMReX_MultiFab.H>
@@ -46,6 +45,7 @@
  *  be used for other solver vectors, such as electrostatic (array size 1) or Darwin (array size 4).
  */
 
+class WarpX;
 class WarpXSolverVec
 {
 public:
@@ -61,34 +61,18 @@ public:
 
     [[nodiscard]] inline bool IsDefined () const { return m_is_defined; }
 
+    void Define ( WarpX*                    a_WarpX,
+            const warpx::fields::FieldType  a_solver_vec_type );
+
     inline
     void Define (const WarpXSolverVec& a_vec)
     {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             a_vec.IsDefined(),
             "WarpXSolverVec::Define(a_vec) called with undefined a_vec");
-        Define( a_vec.getVec(), a_vec.getVecType() );
+        Define( a_vec.m_WarpX, a_vec.getVecType() );
     }
 
-    inline
-    void Define ( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& a_solver_vec,
-                  const warpx::fields::FieldType                                           a_solver_vec_type )
-    {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            !IsDefined(),
-            "WarpXSolverVec::Define() called on undefined WarpXSolverVec");
-        m_solver_vec.resize(m_num_amr_levels);
-        const int lev = 0;
-        for (int n=0; n<3; n++) {
-            const amrex::MultiFab& mf_model = *a_solver_vec[lev][n];
-            m_solver_vec[lev][n] = std::make_unique<amrex::MultiFab>( mf_model.boxArray(), mf_model.DistributionMap(),
-                                                                      mf_model.nComp(), amrex::IntVect::TheZeroVector() );
-        }
-        m_solver_vec_type = a_solver_vec_type;
-        m_is_defined = true;
-    }
-
-    void SetDotMask( const amrex::Vector<amrex::Geometry>&  a_Geom );
     [[nodiscard]] RT dotProduct( const WarpXSolverVec&  a_X ) const;
 
     inline
@@ -258,8 +242,13 @@ private:
     static constexpr int m_ncomp = 1;
     static constexpr int m_num_amr_levels = 1;
 
+    inline static bool m_warpx_ptr_defined = false;
+    inline static WarpX* m_WarpX = nullptr;
+    void SetWarpXPointer( WarpX*  a_WarpX );
+
     inline static bool m_dot_mask_defined = false;
     inline static amrex::Vector<std::array<std::unique_ptr<amrex::iMultiFab>,3>> m_dotMask;
+    void SetDotMask();
 
 };
 

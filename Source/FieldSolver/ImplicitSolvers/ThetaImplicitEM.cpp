@@ -21,13 +21,8 @@ void ThetaImplicitEM::Define ( WarpX* const  a_WarpX )
     m_WarpX = a_WarpX;
 
     // Define E and Eold vectors
-    m_E.Define( m_WarpX->getMultiLevelField(FieldType::Efield_fp), FieldType::Efield_fp );
-    m_Eold.Define( m_WarpX->getMultiLevelField(FieldType::Efield_fp), FieldType::Efield_fp );
-
-    // Need to define the WarpXSolverVec owned dot_mask to do dot
-    // product correctly for linear and nonlinear solvers
-    const amrex::Vector<amrex::Geometry>& Geom = m_WarpX->Geom();
-    m_E.SetDotMask(Geom);
+    m_E.Define( m_WarpX, FieldType::Efield_fp );
+    m_Eold.Define( m_E );
 
     // Define Bold MultiFab
     const int num_levels = 1;
