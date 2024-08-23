@@ -16,6 +16,7 @@
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/TextMsg.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
 #include <AMReX_Algorithm.H>
@@ -137,6 +138,7 @@ void DifferentialLuminosity::ComputeDiags (int step)
 #if defined(WARPX_DIM_RZ)
     amrex::ignore_unused(step);
 #else
+    WARPX_PROFILE("DifferentialLuminosity::ComputeDiags");
 
     // Judge if the diags should be done
     if (!m_intervals.contains(step+1)) { return; }
