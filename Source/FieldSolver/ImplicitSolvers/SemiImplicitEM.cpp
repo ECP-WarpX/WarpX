@@ -20,8 +20,8 @@ void SemiImplicitEM::Define ( WarpX*  a_WarpX )
     m_WarpX = a_WarpX;
 
     // Define E and Eold vectors
-    m_E.Define( m_WarpX->getMultiLevelField(FieldType::Efield_fp) );
-    m_Eold.Define( m_WarpX->getMultiLevelField(FieldType::Efield_fp) );
+    m_E.Define( m_WarpX->getMultiLevelField(FieldType::Efield_fp), FieldType::Efield_fp );
+    m_Eold.Define( m_WarpX->getMultiLevelField(FieldType::Efield_fp), FieldType::Efield_fp );
 
     // Need to define the WarpXSolverVec owned dot_mask to do dot
     // product correctly for linear and nonlinear solvers
@@ -70,8 +70,9 @@ void SemiImplicitEM::OneStep ( amrex::Real  a_time,
     // Save up and xp at the start of the time step
     m_WarpX->SaveParticlesAtImplicitStepStart ( );
 
-    // Save Eg at the start of the time step
-    m_Eold.Copy( m_WarpX->getMultiLevelField(FieldType::Efield_fp) );
+    // Save the fields at the start of the step
+    m_Eold.Copy( m_WarpX->getMultiLevelField(FieldType::Efield_fp), FieldType::Efield_fp );
+    m_E.Copy(m_Eold); // initial guess for E
 
     // Advance WarpX owned Bfield_fp to t_{n+1/2}
     m_WarpX->EvolveB(a_dt, DtType::Full);

@@ -32,6 +32,8 @@
 #include <ostream>
 #include <vector>
 
+#include "FieldSolver/Fields.H"
+
 /**
  * \brief This is a wrapper class around a Vector of array of pointers to MultiFabs that
  *  contains basic math operators and functionality needed to interact with nonlinear
@@ -65,22 +67,24 @@ public:
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             a_vec.IsDefined(),
             "WarpXSolverVec::Define(a_vec) called with undefined a_vec");
-        Define( a_vec.getVec() );
+        Define( a_vec.getVec(), a_vec.getVecType() );
     }
 
     inline
-    void Define ( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& a_solver_vec )
+    void Define ( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& a_solver_vec,
+                  const warpx::fields::FieldType                                           a_solver_vec_type )
     {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             !IsDefined(),
             "WarpXSolverVec::Define() called on undefined WarpXSolverVec");
-        m_field_vec.resize(m_num_amr_levels);
+        m_solver_vec.resize(m_num_amr_levels);
         const int lev = 0;
         for (int n=0; n<3; n++) {
             const amrex::MultiFab& mf_model = *a_solver_vec[lev][n];
-            m_field_vec[lev][n] = std::make_unique<amrex::MultiFab>( mf_model.boxArray(), mf_model.DistributionMap(),
-                                                                     mf_model.nComp(), amrex::IntVect::TheZeroVector() );
+            m_solver_vec[lev][n] = std::make_unique<amrex::MultiFab>( mf_model.boxArray(), mf_model.DistributionMap(),
+                                                                      mf_model.nComp(), amrex::IntVect::TheZeroVector() );
         }
+        m_solver_vec_type = a_solver_vec_type;
         m_is_defined = true;
     }
 
@@ -88,14 +92,20 @@ public:
     [[nodiscard]] RT dotProduct( const WarpXSolverVec&  a_X ) const;
 
     inline
-    void Copy ( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& a_solver_vec )
+    void Copy ( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& a_solver_vec,
+                const warpx::fields::FieldType                                           a_solver_vec_type )
     {
-        AMREX_ASSERT_WITH_MESSAGE(
+
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             IsDefined(),
             "WarpXSolverVec::Copy() called on undefined WarpXSolverVec");
-        for (int lev = 0; lev < m_num_amr_levels; ++lev) {
-            for (int n = 0; n < 3; ++n) {
-                amrex::MultiFab::Copy(*m_field_vec[lev][n], *a_solver_vec[lev][n], 0, 0, m_ncomp, amrex::IntVect::TheZeroVector() );
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            a_solver_vec_type==m_solver_vec_type,
+            "WarpXSolverVec::Copy() called with vecs of different types");
+        for (int lev=0; lev<m_num_amr_levels; ++lev) {
+            for (int n=0; n<3; ++n) {
+                amrex::MultiFab::Copy( *m_solver_vec[lev][n], *a_solver_vec[lev][n], 0, 0, m_ncomp,
+                                       amrex::IntVect::TheZeroVector() );
             }
         }
     }
@@ -103,12 +113,17 @@ public:
     inline
     void Copy ( const WarpXSolverVec&  a_vec )
     {
-        AMREX_ASSERT_WITH_MESSAGE(
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             a_vec.IsDefined(),
             "WarpXSolverVec::Copy(a_vec) called with undefined a_vec");
-        if (!IsDefined()) { Define(a_vec); }
-        const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& field_vec = a_vec.getVec();
-        Copy(field_vec);
+        if (IsDefined()) {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                a_vec.m_solver_vec_type==m_solver_vec_type,
+                "WarpXSolverVec::Copy(a_vec) called with vecs of different types");
+        }
+        else { Define(a_vec); }
+        const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& solver_vec = a_vec.getVec();
+        Copy(solver_vec, a_vec.getVecType());
     }
 
     // Prohibit Copy assignment operator
@@ -119,7 +134,8 @@ public:
     WarpXSolverVec& operator= ( WarpXSolverVec&&  a_vec ) noexcept
     {
         if (this != &a_vec) {
-            m_field_vec = std::move(a_vec.m_field_vec);
+            m_solver_vec = std::move(a_vec.m_solver_vec);
+            m_solver_vec_type = a_vec.m_solver_vec_type;
             m_is_defined = true;
         }
         return *this;
@@ -128,9 +144,12 @@ public:
     inline
     void operator+= ( const WarpXSolverVec&  a_vec )
     {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            a_vec.m_solver_vec_type==m_solver_vec_type,
+            "WarpXSolverVec operator += a_vec called with solver vecs of different types");
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
             for (int n=0; n<3; n++) {
-                m_field_vec[lev][n]->plus(*(a_vec.getVec()[lev][n]), 0, 1, 0);
+                m_solver_vec[lev][n]->plus(*(a_vec.getVec()[lev][n]), 0, 1, 0);
             }
         }
     }
@@ -138,9 +157,12 @@ public:
     inline
     void operator-= (const WarpXSolverVec& a_vec)
     {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            a_vec.m_solver_vec_type==m_solver_vec_type,
+            "WarpXSolverVec operator -= a_vec called with solver vecs of different types");
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
             for (int n=0; n<3; n++) {
-                m_field_vec[lev][n]->minus(*(a_vec.getVec()[lev][n]), 0, 1, 0);
+                m_solver_vec[lev][n]->minus(*(a_vec.getVec()[lev][n]), 0, 1, 0);
             }
         }
     }
@@ -151,11 +173,15 @@ public:
     inline
     void linComb (const RT a, const WarpXSolverVec& X, const RT b, const WarpXSolverVec& Y)
     {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            X.m_solver_vec_type==m_solver_vec_type &&
+            Y.m_solver_vec_type==m_solver_vec_type,
+            "WarpXSolverVec::linComb(a,X,b,Y) called with solver vecs of different types");
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
             for (int n=0; n<3; n++) {
-                amrex::MultiFab::LinComb(*m_field_vec[lev][n], a, *X.getVec()[lev][n], 0,
-                                                               b, *Y.getVec()[lev][n], 0,
-                                                               0, 1, 0);
+                amrex::MultiFab::LinComb(*m_solver_vec[lev][n], a, *X.getVec()[lev][n], 0,
+                                                                b, *Y.getVec()[lev][n], 0,
+                                                                0, 1, 0);
             }
         }
     }
@@ -165,9 +191,12 @@ public:
      */
     void increment (const WarpXSolverVec& X, const RT a)
     {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            X.m_solver_vec_type==m_solver_vec_type,
+            "WarpXSolverVec::increment(X,z) called with solver vecs of different types");
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
             for (int n=0; n<3; n++) {
-                amrex::MultiFab::Saxpy( *m_field_vec[lev][n], a, *X.getVec()[lev][n],
+                amrex::MultiFab::Saxpy( *m_solver_vec[lev][n], a, *X.getVec()[lev][n],
                                         0, 0, 1, amrex::IntVect::TheZeroVector() );
             }
         }
@@ -181,7 +210,7 @@ public:
     {
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
             for (int n=0; n<3; n++) {
-                m_field_vec[lev][n]->mult(a_a, 0, 1);
+                m_solver_vec[lev][n]->mult(a_a, 0, 1);
             }
         }
     }
@@ -192,12 +221,12 @@ public:
     inline
     void setVal ( const RT  a_val )
     {
-        AMREX_ASSERT_WITH_MESSAGE(
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             IsDefined(),
             "WarpXSolverVec::ones() called on undefined WarpXSolverVec");
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
             for (int n=0; n<3; n++) {
-                m_field_vec[lev][n]->setVal(a_val);
+                m_solver_vec[lev][n]->setVal(a_val);
             }
         }
     }
@@ -208,8 +237,11 @@ public:
         return std::sqrt(norm);
     }
 
-    [[nodiscard]] const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& getVec() const {return m_field_vec;}
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& getVec() {return m_field_vec;}
+    [[nodiscard]] const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& getVec() const {return m_solver_vec;}
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& getVec() {return m_solver_vec;}
+
+    // solver vec types are for now limited to warpx::fields::FieldType
+    warpx::fields::FieldType getVecType () const { return m_solver_vec_type; }
 
     // clearDotMask() must be called by the highest class that owns WarpXSolverVec()
     // after it is done being used ( typically in the destructor ) to avoid the
@@ -219,8 +251,9 @@ public:
 
 private:
 
-    bool  m_is_defined = false;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_field_vec;
+    bool m_is_defined = false;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_solver_vec;
+    warpx::fields::FieldType m_solver_vec_type;
 
     static constexpr int m_ncomp = 1;
     static constexpr int m_num_amr_levels = 1;
