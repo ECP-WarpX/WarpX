@@ -12,14 +12,15 @@ from scipy.sparse import csc_matrix
 from scipy.sparse import linalg as sla
 
 from pywarpx import callbacks, fields, libwarpx, particle_containers, picmi
+from pywarpx.LoadThirdParty import load_cupy
 
 constants = picmi.constants
 
 
 class PoissonSolver1D(picmi.ElectrostaticSolver):
     """This solver is maintained as an example of the use of Python callbacks.
-       However, it is not necessarily needed since the 1D code has the direct tridiagonal
-       solver implemented."""
+    However, it is not necessarily needed since the 1D code has the direct tridiagonal
+    solver implemented."""
 
     def __init__(self, grid, **kwargs):
         """Direct solver for the Poisson equation using superLU. This solver is
@@ -31,11 +32,13 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
         """
         # Sanity check that this solver is appropriate to use
         if not isinstance(grid, picmi.Cartesian1DGrid):
-            raise RuntimeError('Direct solver can only be used on a 1D grid.')
+            raise RuntimeError("Direct solver can only be used on a 1D grid.")
 
         super(PoissonSolver1D, self).__init__(
-            grid=grid, method=kwargs.pop('method', 'Multigrid'),
-            required_precision=1, **kwargs
+            grid=grid,
+            method=kwargs.pop("method", "Multigrid"),
+            required_precision=1,
+            **kwargs,
         )
 
     def solver_initialize_inputs(self):
@@ -65,7 +68,7 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
         self.nxguardphi = 1
         self.nzguardphi = 1
 
-        self.phi = np.zeros(self.nz + 1 + 2*self.nzguardphi)
+        self.phi = np.zeros(self.nz + 1 + 2 * self.nzguardphi)
 
         self.decompose_matrix()
 
@@ -107,10 +110,8 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
 
         left_voltage = 0.0
         right_voltage = eval(
-            self.right_voltage, {
-                't': self.sim.extension.warpx.gett_new(0),
-                'sin': np.sin, 'pi': np.pi
-            }
+            self.right_voltage,
+            {"t": self.sim.extension.warpx.gett_new(0), "sin": np.sin, "pi": np.pi},
         )
 
         # Construct b vector
@@ -123,31 +124,31 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
 
         phi = self.lu.solve(b)
 
-        self.phi[self.nzguardphi:-self.nzguardphi] = phi
+        self.phi[self.nzguardphi : -self.nzguardphi] = phi
 
-        self.phi[:self.nzguardphi] = left_voltage
-        self.phi[-self.nzguardphi:] = right_voltage
+        self.phi[: self.nzguardphi] = left_voltage
+        self.phi[-self.nzguardphi :] = right_voltage
 
 
 class CapacitiveDischargeExample(object):
-    '''The following runs a simulation of a parallel plate capacitor seeded
+    """The following runs a simulation of a parallel plate capacitor seeded
     with a plasma in the spacing between the plates. A time varying voltage is
     applied across the capacitor. The groups of 4 values below correspond to
     the 4 cases simulated by Turner et al. (2013) in their benchmarks of
     PIC-MCC codes.
-    '''
+    """
 
-    gap = 0.067 # m
+    gap = 0.067  # m
 
-    freq = 13.56e6 # Hz
-    voltage = [450.0, 200.0, 150.0, 120.0] # V
+    freq = 13.56e6  # Hz
+    voltage = [450.0, 200.0, 150.0, 120.0]  # V
 
-    gas_density = [9.64e20, 32.1e20, 96.4e20, 321e20] # m^-3
-    gas_temp = 300.0 # K
-    m_ion = 6.67e-27 # kg
+    gas_density = [9.64e20, 32.1e20, 96.4e20, 321e20]  # m^-3
+    gas_temp = 300.0  # K
+    m_ion = 6.67e-27  # kg
 
-    plasma_density = [2.56e14, 5.12e14, 5.12e14, 3.84e14] # m^-3
-    elec_temp = 30000.0 # K
+    plasma_density = [2.56e14, 5.12e14, 5.12e14, 3.84e14]  # m^-3
+    elec_temp = 30000.0  # K
 
     seed_nppc = 16 * np.array([32, 16, 8, 4])
 
@@ -205,10 +206,10 @@ class CapacitiveDischargeExample(object):
             warpx_max_grid_size=128,
             lower_bound=[0],
             upper_bound=[self.gap],
-            lower_boundary_conditions=['dirichlet'],
-            upper_boundary_conditions=['dirichlet'],
-            lower_boundary_conditions_particles=['absorbing'],
-            upper_boundary_conditions_particles=['absorbing'],
+            lower_boundary_conditions=["dirichlet"],
+            upper_boundary_conditions=["dirichlet"],
+            lower_boundary_conditions_particles=["absorbing"],
+            upper_boundary_conditions_particles=["absorbing"],
             warpx_potential_hi_z=self.voltage,
         )
 
@@ -227,85 +228,93 @@ class CapacitiveDischargeExample(object):
         #######################################################################
 
         self.electrons = picmi.Species(
-            particle_type='electron', name='electrons',
+            particle_type="electron",
+            name="electrons",
             initial_distribution=picmi.UniformDistribution(
                 density=self.plasma_density,
-                rms_velocity=[np.sqrt(constants.kb * self.elec_temp / constants.m_e)]*3,
-            )
+                rms_velocity=[np.sqrt(constants.kb * self.elec_temp / constants.m_e)]
+                * 3,
+            ),
         )
         self.ions = picmi.Species(
-            particle_type='He', name='he_ions',
-            charge='q_e', mass=self.m_ion,
+            particle_type="He",
+            name="he_ions",
+            charge="q_e",
+            mass=self.m_ion,
             initial_distribution=picmi.UniformDistribution(
                 density=self.plasma_density,
-                rms_velocity=[np.sqrt(constants.kb * self.gas_temp / self.m_ion)]*3,
-            )
+                rms_velocity=[np.sqrt(constants.kb * self.gas_temp / self.m_ion)] * 3,
+            ),
         )
         if self.dsmc:
             self.neutrals = picmi.Species(
-                particle_type='He', name='neutrals',
-                charge=0, mass=self.m_ion,
+                particle_type="He",
+                name="neutrals",
+                charge=0,
+                mass=self.m_ion,
                 warpx_reflection_model_zlo=1.0,
                 warpx_reflection_model_zhi=1.0,
                 warpx_do_resampling=True,
-                warpx_resampling_trigger_max_avg_ppc=int(self.seed_nppc*1.5),
+                warpx_resampling_trigger_max_avg_ppc=int(self.seed_nppc * 1.5),
                 initial_distribution=picmi.UniformDistribution(
                     density=self.gas_density,
-                    rms_velocity=[np.sqrt(constants.kb * self.gas_temp / self.m_ion)]*3,
-                )
+                    rms_velocity=[np.sqrt(constants.kb * self.gas_temp / self.m_ion)]
+                    * 3,
+                ),
             )
 
         #######################################################################
         # Collision initialization                                            #
         #######################################################################
 
-        cross_sec_direc = '../../../../warpx-data/MCC_cross_sections/He/'
+        cross_sec_direc = "../../../../warpx-data/MCC_cross_sections/He/"
         electron_colls = picmi.MCCCollisions(
-            name='coll_elec',
+            name="coll_elec",
             species=self.electrons,
             background_density=self.gas_density,
             background_temperature=self.gas_temp,
             background_mass=self.ions.mass,
             ndt=self.mcc_subcycling_steps,
             scattering_processes={
-                'elastic' : {
-                    'cross_section' : cross_sec_direc+'electron_scattering.dat'
+                "elastic": {
+                    "cross_section": cross_sec_direc + "electron_scattering.dat"
                 },
-                'excitation1' : {
-                    'cross_section': cross_sec_direc+'excitation_1.dat',
-                    'energy' : 19.82
+                "excitation1": {
+                    "cross_section": cross_sec_direc + "excitation_1.dat",
+                    "energy": 19.82,
                 },
-                'excitation2' : {
-                    'cross_section': cross_sec_direc+'excitation_2.dat',
-                    'energy' : 20.61
+                "excitation2": {
+                    "cross_section": cross_sec_direc + "excitation_2.dat",
+                    "energy": 20.61,
                 },
-                'ionization' : {
-                    'cross_section' : cross_sec_direc+'ionization.dat',
-                    'energy' : 24.55,
-                    'species' : self.ions
+                "ionization": {
+                    "cross_section": cross_sec_direc + "ionization.dat",
+                    "energy": 24.55,
+                    "species": self.ions,
                 },
-            }
+            },
         )
 
-        ion_scattering_processes={
-            'elastic': {'cross_section': cross_sec_direc+'ion_scattering.dat'},
-            'back': {'cross_section': cross_sec_direc+'ion_back_scatter.dat'},
+        ion_scattering_processes = {
+            "elastic": {"cross_section": cross_sec_direc + "ion_scattering.dat"},
+            "back": {"cross_section": cross_sec_direc + "ion_back_scatter.dat"},
             # 'charge_exchange': {'cross_section': cross_sec_direc+'charge_exchange.dat'}
         }
         if self.dsmc:
             ion_colls = picmi.DSMCCollisions(
-                name='coll_ion',
+                name="coll_ion",
                 species=[self.ions, self.neutrals],
-                ndt=5, scattering_processes=ion_scattering_processes
+                ndt=5,
+                scattering_processes=ion_scattering_processes,
             )
         else:
             ion_colls = picmi.MCCCollisions(
-                name='coll_ion',
+                name="coll_ion",
                 species=self.ions,
                 background_density=self.gas_density,
                 background_temperature=self.gas_temp,
                 ndt=self.mcc_subcycling_steps,
-                scattering_processes=ion_scattering_processes
+                scattering_processes=ion_scattering_processes,
             )
 
         #######################################################################
@@ -317,28 +326,28 @@ class CapacitiveDischargeExample(object):
             time_step_size=self.dt,
             max_steps=self.max_steps,
             warpx_collisions=[electron_colls, ion_colls],
-            verbose=self.test
+            verbose=self.test,
         )
         self.solver.sim = self.sim
 
         self.sim.add_species(
             self.electrons,
-            layout = picmi.GriddedLayout(
+            layout=picmi.GriddedLayout(
                 n_macroparticle_per_cell=[self.seed_nppc], grid=self.grid
-            )
+            ),
         )
         self.sim.add_species(
             self.ions,
-            layout = picmi.GriddedLayout(
+            layout=picmi.GriddedLayout(
                 n_macroparticle_per_cell=[self.seed_nppc], grid=self.grid
-            )
+            ),
         )
         if self.dsmc:
             self.sim.add_species(
                 self.neutrals,
-                layout = picmi.GriddedLayout(
-                    n_macroparticle_per_cell=[self.seed_nppc//2], grid=self.grid
-                )
+                layout=picmi.GriddedLayout(
+                    n_macroparticle_per_cell=[self.seed_nppc // 2], grid=self.grid
+                ),
             )
         self.solver.sim_ext = self.sim.extension
 
@@ -351,30 +360,30 @@ class CapacitiveDischargeExample(object):
         #######################################################################
 
         if self.dsmc:
-            file_prefix = 'Python_dsmc_1d_plt'
+            file_prefix = "Python_dsmc_1d_plt"
         else:
             if self.pythonsolver:
-                file_prefix = 'Python_background_mcc_1d_plt'
+                file_prefix = "Python_background_mcc_1d_plt"
             else:
-                file_prefix = 'Python_background_mcc_1d_tridiag_plt'
+                file_prefix = "Python_background_mcc_1d_tridiag_plt"
 
         species = [self.electrons, self.ions]
         if self.dsmc:
             species.append(self.neutrals)
         particle_diag = picmi.ParticleDiagnostic(
             species=species,
-            name='diag1',
+            name="diag1",
             period=0,
-            write_dir='.',
-            warpx_file_prefix=file_prefix
+            write_dir=".",
+            warpx_file_prefix=file_prefix,
         )
         field_diag = picmi.FieldDiagnostic(
-            name='diag1',
+            name="diag1",
             grid=self.grid,
             period=0,
-            data_list=['rho_electrons', 'rho_he_ions'],
-            write_dir='.',
-            warpx_file_prefix=file_prefix
+            data_list=["rho_electrons", "rho_he_ions"],
+            write_dir=".",
+            warpx_file_prefix=file_prefix,
         )
         self.sim.add_diagnostic(particle_diag)
         self.sim.add_diagnostic(field_diag)
@@ -387,7 +396,7 @@ class CapacitiveDischargeExample(object):
         if step % 1000 != 10:
             return
 
-        if not hasattr(self, 'neutral_cont'):
+        if not hasattr(self, "neutral_cont"):
             self.neutral_cont = particle_containers.ParticleContainerWrapper(
                 self.neutrals.name
             )
@@ -396,23 +405,24 @@ class CapacitiveDischargeExample(object):
         uy_arrays = self.neutral_cont.uyp
         uz_arrays = self.neutral_cont.uzp
 
+        xp, _ = load_cupy()
+
         vel_std = np.sqrt(constants.kb * self.gas_temp / self.m_ion)
         for ii in range(len(ux_arrays)):
             nps = len(ux_arrays[ii])
-            ux_arrays[ii][:] = vel_std * self.rng.normal(size=nps)
-            uy_arrays[ii][:] = vel_std * self.rng.normal(size=nps)
-            uz_arrays[ii][:] = vel_std * self.rng.normal(size=nps)
+            ux_arrays[ii][:] = xp.array(vel_std * self.rng.normal(size=nps))
+            uy_arrays[ii][:] = xp.array(vel_std * self.rng.normal(size=nps))
+            uz_arrays[ii][:] = xp.array(vel_std * self.rng.normal(size=nps))
 
     def _get_rho_ions(self):
         # deposit the ion density in rho_fp
-        he_ions_wrapper = particle_containers.ParticleContainerWrapper('he_ions')
+        he_ions_wrapper = particle_containers.ParticleContainerWrapper("he_ions")
         he_ions_wrapper.deposit_charge_density(level=0)
 
         rho_data = self.rho_wrapper[...]
         self.ion_density_array += rho_data / constants.q_e / self.diag_steps
 
     def run_sim(self):
-
         self.sim.step(self.max_steps - self.diag_steps)
 
         self.rho_wrapper = fields.RhoFPWrapper(0, False)
@@ -422,15 +432,15 @@ class CapacitiveDischargeExample(object):
 
         if self.pythonsolver:
             # confirm that the external solver was run
-            assert hasattr(self.solver, 'phi')
+            assert hasattr(self.solver, "phi")
 
         if libwarpx.amr.ParallelDescriptor.MyProc() == 0:
-            np.save(f'ion_density_case_{self.n+1}.npy', self.ion_density_array)
+            np.save(f"ion_density_case_{self.n+1}.npy", self.ion_density_array)
 
         # query the particle z-coordinates if this is run during CI testing
         # to cover that functionality
         if self.test:
-            he_ions_wrapper = particle_containers.ParticleContainerWrapper('he_ions')
+            he_ions_wrapper = particle_containers.ParticleContainerWrapper("he_ions")
             nparts = he_ions_wrapper.get_particle_count(local=True)
             z_coords = np.concatenate(he_ions_wrapper.zp)
             assert len(z_coords) == nparts
@@ -443,28 +453,31 @@ class CapacitiveDischargeExample(object):
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    '-t', '--test', help='toggle whether this script is run as a short CI test',
-    action='store_true',
+    "-t",
+    "--test",
+    help="toggle whether this script is run as a short CI test",
+    action="store_true",
 )
 parser.add_argument(
-    '-n', help='Test number to run (1 to 4)', required=False, type=int,
-    default=1
+    "-n", help="Test number to run (1 to 4)", required=False, type=int, default=1
 )
 parser.add_argument(
-    '--pythonsolver', help='toggle whether to use the Python level solver',
-    action='store_true'
+    "--pythonsolver",
+    help="toggle whether to use the Python level solver",
+    action="store_true",
 )
 parser.add_argument(
-    '--dsmc', help='toggle whether to use DSMC for ions in place of MCC',
-    action='store_true'
+    "--dsmc",
+    help="toggle whether to use DSMC for ions in place of MCC",
+    action="store_true",
 )
 args, left = parser.parse_known_args()
-sys.argv = sys.argv[:1]+left
+sys.argv = sys.argv[:1] + left
 
 if args.n < 1 or args.n > 4:
-    raise AttributeError('Test number must be an integer from 1 to 4.')
+    raise AttributeError("Test number must be an integer from 1 to 4.")
 
 run = CapacitiveDischargeExample(
-    n=args.n-1, test=args.test, pythonsolver=args.pythonsolver, dsmc=args.dsmc
+    n=args.n - 1, test=args.test, pythonsolver=args.pythonsolver, dsmc=args.dsmc
 )
 run.run_sim()

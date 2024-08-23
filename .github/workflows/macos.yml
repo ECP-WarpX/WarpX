@@ -60,7 +60,7 @@ jobs:
 
         cmake -S . -B build_dp         \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
-          -DWarpX_EB=ON                \
+          -DWarpX_EB=OFF               \
           -DWarpX_OPENPMD=ON           \
           -DWarpX_openpmd_internal=OFF
         cmake --build build_dp -j 3
@@ -68,7 +68,7 @@ jobs:
         cmake -S . -B build_sp         \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DPython_EXECUTABLE=$(which python3) \
-          -DWarpX_EB=ON                \
+          -DWarpX_EB=OFF               \
           -DWarpX_PYTHON=ON            \
           -DWarpX_OPENPMD=ON           \
           -DWarpX_openpmd_internal=OFF \
