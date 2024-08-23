@@ -15,12 +15,14 @@ In order to use Catalyst with WarpX, you must `build Catalyst 2 <https://catalys
 Once AMReX is appropriately built, WarpX can be built with the following options:
 
 .. code-block:: cmake
+
     WarpX_amrex_internal=FALSE
     AMReX_DIR="/path/to/amrex/build"
 
 If they cannot be found, ``Conduit_DIR`` and ``Catalyst_DIR`` will have to be set again. Ensure that AMReX is built with all required options, some common ones being:
 
 .. code-block:: cmake
+
     AMReX_MPI=TRUE
     AMReX_MPI_THREAD_MULTIPLE=TRUE
     AMReX_LINEAR_SOLVERS=TRUE
@@ -52,6 +54,7 @@ The following script, :code:`simple_catalyst_pipeline.py`, automatically detects
 cases, these will be saved as ``.VTPC`` files which can be read with the ``XML Partitioned Dataset Collection Reader``.
 
 .. code-block:: python
+
     from paraview.simple import *
     from paraview import catalyst
 
@@ -124,6 +127,7 @@ The process for creating a pipeline is as follows:
 As an example for step four, here are a few lines from a script directly exported from ParaView:
 
 .. code-block:: python
+
     # create a new 'XML Image Data Reader'
     meshdatavti = XMLImageDataReader(registrationName='meshdata.vti', FileName=['/path/to/meshdata.vti'])
     meshdatavti.CellArrayStatus = ['Bx', 'By', 'Bz', 'Ex', 'Ey', 'Ez']
@@ -138,6 +142,7 @@ As an example for step four, here are a few lines from a script directly exporte
 In order to use it with the mesh data coming from the simulation, the above code would be changed to:
 
 .. code-block:: python
+
     # create the producer
     meshdata = PVTrivialProducer(registrationName='mesh')
     meshdata.CellArrayStatus = ['Bx', 'By', 'Bz', 'Ex', 'Ey', 'Ez']
