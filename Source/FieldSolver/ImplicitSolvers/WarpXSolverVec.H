@@ -96,10 +96,10 @@ public:
                 const warpx::fields::FieldType                                           a_solver_vec_type )
     {
 
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             IsDefined(),
             "WarpXSolverVec::Copy() called on undefined WarpXSolverVec");
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             a_solver_vec_type==m_solver_vec_type,
             "WarpXSolverVec::Copy() called with vecs of different types");
         for (int lev=0; lev<m_num_amr_levels; ++lev) {
@@ -113,11 +113,11 @@ public:
     inline
     void Copy ( const WarpXSolverVec&  a_vec )
     {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             a_vec.IsDefined(),
             "WarpXSolverVec::Copy(a_vec) called with undefined a_vec");
         if (IsDefined()) {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 a_vec.m_solver_vec_type==m_solver_vec_type,
                 "WarpXSolverVec::Copy(a_vec) called with vecs of different types");
         }
@@ -144,7 +144,7 @@ public:
     inline
     void operator+= ( const WarpXSolverVec&  a_vec )
     {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             a_vec.m_solver_vec_type==m_solver_vec_type,
             "WarpXSolverVec operator += a_vec called with solver vecs of different types");
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
@@ -157,7 +157,7 @@ public:
     inline
     void operator-= (const WarpXSolverVec& a_vec)
     {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             a_vec.m_solver_vec_type==m_solver_vec_type,
             "WarpXSolverVec operator -= a_vec called with solver vecs of different types");
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
@@ -173,7 +173,7 @@ public:
     inline
     void linComb (const RT a, const WarpXSolverVec& X, const RT b, const WarpXSolverVec& Y)
     {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             X.m_solver_vec_type==m_solver_vec_type &&
             Y.m_solver_vec_type==m_solver_vec_type,
             "WarpXSolverVec::linComb(a,X,b,Y) called with solver vecs of different types");
@@ -191,7 +191,7 @@ public:
      */
     void increment (const WarpXSolverVec& X, const RT a)
     {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             X.m_solver_vec_type==m_solver_vec_type,
             "WarpXSolverVec::increment(X,z) called with solver vecs of different types");
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
@@ -221,7 +221,7 @@ public:
     inline
     void setVal ( const RT  a_val )
     {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             IsDefined(),
             "WarpXSolverVec::ones() called on undefined WarpXSolverVec");
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
