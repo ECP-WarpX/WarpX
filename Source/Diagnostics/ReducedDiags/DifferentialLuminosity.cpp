@@ -146,7 +146,7 @@ void DifferentialLuminosity::ComputeDiags (int step)
 
     // get a reference to WarpX instance
     auto& warpx = WarpX::GetInstance();
-
+    Real dt = warpx.getdt(0);
     // get cell volume
     Geometry const & geom = warpx.Geom(0);
     const Real dV = AMREX_D_TERM(geom.CellSize(0), *geom.CellSize(1), *geom.CellSize(2));
@@ -262,7 +262,7 @@ void DifferentialLuminosity::ComputeDiags (int step)
                         
                         Real radicand = v1_minus_v2_square - v1_cross_v2_square / c2; 
                         
-                        Real dL_dEcom = std::sqrt( radicand ) * w1[j_1] * w2[j_2] / dV / bin_size; // s^-1 m^-2 J^-1
+                        Real dL_dEcom = std::sqrt( radicand ) * w1[j_1] * w2[j_2] / dV / bin_size * dt; // m^-2 J^-1
                         
                         amrex::HostDevice::Atomic::Add(&dptr_data[bin], dL_dEcom);   
 
