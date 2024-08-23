@@ -8,21 +8,21 @@
 #include "WarpX.H"
 
 void WarpXSolverVec::Define ( WarpX*                    a_WarpX,
-                        const warpx::fields::FieldType  a_solver_vec_type )
+                        const warpx::fields::FieldType  a_field_type )
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !IsDefined(),
         "WarpXSolverVec::Define(a_vec, a_type) called on already defined WarpXSolverVec");
 
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& a_solver_vec(a_WarpX->getMultiLevelField(a_solver_vec_type));
-    m_solver_vec.resize(m_num_amr_levels);
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& this_vec(a_WarpX->getMultiLevelField(a_field_type));
+    m_field_vec.resize(m_num_amr_levels);
     const int lev = 0;
     for (int n=0; n<3; n++) {
-        const amrex::MultiFab& mf_model = *a_solver_vec[lev][n];
-        m_solver_vec[lev][n] = std::make_unique<amrex::MultiFab>( mf_model.boxArray(), mf_model.DistributionMap(),
-                                                                  mf_model.nComp(), amrex::IntVect::TheZeroVector() );
+        const amrex::MultiFab& mf_model = *this_vec[lev][n];
+        m_field_vec[lev][n] = std::make_unique<amrex::MultiFab>( mf_model.boxArray(), mf_model.DistributionMap(),
+                                                                 mf_model.nComp(), amrex::IntVect::TheZeroVector() );
     }
-    m_solver_vec_type = a_solver_vec_type;
+    m_field_type = a_field_type;
     m_is_defined = true;
     SetWarpXPointer(a_WarpX);
     SetDotMask();
@@ -48,8 +48,8 @@ void WarpXSolverVec::SetDotMask()
     const amrex::Vector<amrex::Geometry>& Geom = m_WarpX->Geom();
     m_dotMask.resize(m_num_amr_levels);
     for ( int n = 0; n < 3; n++) {
-        const amrex::BoxArray& grids = m_solver_vec[0][n]->boxArray();
-        const amrex::MultiFab tmp( grids, m_solver_vec[0][n]->DistributionMap(),
+        const amrex::BoxArray& grids = m_field_vec[0][n]->boxArray();
+        const amrex::MultiFab tmp( grids, m_field_vec[0][n]->DistributionMap(),
                                    1, 0, amrex::MFInfo().SetAlloc(false) );
         const amrex::Periodicity& period = Geom[0].periodicity();
         m_dotMask[0][n] = tmp.OwnerMask(period);
@@ -68,7 +68,7 @@ void WarpXSolverVec::SetDotMask()
         m_dot_mask_defined,
         "WarpXSolverVec::dotProduct called with m_dotMask not yet defined");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        a_X.m_solver_vec_type==m_solver_vec_type,
+        a_X.m_field_type==m_field_type,
         "WarpXSolverVec::dotProduct(X) called with solver vecs of different types");
 
     amrex::Real result = 0.0;
@@ -76,7 +76,7 @@ void WarpXSolverVec::SetDotMask()
     const bool local = true;
     for (int n = 0; n < 3; ++n) {
         auto rtmp = amrex::MultiFab::Dot( *m_dotMask[lev][n],
-                                          *m_solver_vec[lev][n], 0,
+                                          *m_field_vec[lev][n], 0,
                                           *a_X.getVec()[lev][n], 0, 1, 0, local);
         result += rtmp;
     }
