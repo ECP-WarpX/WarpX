@@ -123,8 +123,7 @@ DifferentialLuminosity::DifferentialLuminosity (const std::string& rd_name)
                 ofs << m_sep;
                 ofs << "[" << off++ << "]";
                 const Real b = m_bin_min + m_bin_size*(Real(i)+0.5_rt);
-                ofs << "bin" + std::to_string(1+i)
-                             + "=" + std::to_string(b) + "()";
+                ofs << "bin" << 1+i << "=" << b << "(J)";
             }
             ofs << std::endl;
             // close file
