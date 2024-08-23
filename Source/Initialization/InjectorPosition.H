@@ -88,11 +88,19 @@ struct InjectorPositionRegular
         int const nx = ref_fac[0]*ppc.x;
         int const ny = ref_fac[1]*ppc.y;
         int const nz = ppc.z; // Number of particles in theta ; no refinement
+#elif (defined WARPX_DIM_RCYLINDER)
+        int const nx = ref_fac[0]*ppc.x;
+        int const ny = ppc.y;
+        int const nz = 1;
+#elif (defined WARPX_DIM_RSPHERE)
+        int const nx = ref_fac[0]*ppc.x;
+        int const ny = ppc.y; // Number of particles in theta ; no refinement
+        int const nz = ppc.z; // Number of particles in phi ; no refinement
 #elif (defined WARPX_DIM_XZ)
         int const nx = ref_fac[0]*ppc.x;
         int const ny = ref_fac[1]*ppc.y;
         int const nz = 1;
-#elif (defined(WARPX_DIM_1D_Z) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE))
+#elif (defined(WARPX_DIM_1D_Z)
         int const nx = ref_fac[0]*ppc.x;
         int const ny = 1;
         int const nz = 1;
