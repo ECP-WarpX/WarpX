@@ -96,11 +96,6 @@ public:
         const auto soa_1 = ptile1.getParticleTileData();
         const auto soa_2 = ptile2.getParticleTileData();
 
-        amrex::ParticleReal* AMREX_RESTRICT w1 = soa_1.m_rdata[PIdx::w];
-        amrex::ParticleReal* AMREX_RESTRICT w2 = soa_2.m_rdata[PIdx::w];
-        uint64_t* AMREX_RESTRICT idcpu1 = soa_1.m_idcpu;
-        uint64_t* AMREX_RESTRICT idcpu2 = soa_2.m_idcpu;
-
         // Create necessary GPU vectors, that will be used in the kernel below
         amrex::Vector<SoaData_type> soa_products;
         for (int i = 0; i < m_num_product_species; i++)
@@ -236,11 +231,6 @@ public:
                     soa_products_data[1].m_rdata[PIdx::uy][product2_index] = uy2;
                     soa_products_data[1].m_rdata[PIdx::uz][product2_index] = uz2;
 
-                    // Remove p_pair_reaction_weight[i] from the colliding particles' weights
-                    BinaryCollisionUtils::remove_weight_from_colliding_particle(
-                        w1[p_pair_indices_1[i]], idcpu1[p_pair_indices_1[i]], p_pair_reaction_weight[i]);
-                    BinaryCollisionUtils::remove_weight_from_colliding_particle(
-                        w2[p_pair_indices_2[i]], idcpu2[p_pair_indices_2[i]], p_pair_reaction_weight[i]);
                 }
                 else {
                     // Modify the colliding particles' velocities without splitting.

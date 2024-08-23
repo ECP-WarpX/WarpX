@@ -22,7 +22,7 @@ import sys
 import numpy as np
 import yt
 
-sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+sys.path.insert(1, "../../../../warpx/Regression/Checksum/")
 import checksumAPI
 
 tolerance = 1.0e-8
@@ -32,17 +32,17 @@ z0 = 4.31754477
 
 filename = sys.argv[1]
 
-ds = yt.load( filename )
+ds = yt.load(filename)
 ad = ds.all_data()
-x  = ad['proton','particle_position_x'].to_ndarray()
-y  = ad['proton','particle_position_y'].to_ndarray()
-z  = ad['proton','particle_position_z'].to_ndarray()
+x = ad["proton", "particle_position_x"].to_ndarray()
+y = ad["proton", "particle_position_y"].to_ndarray()
+z = ad["proton", "particle_position_z"].to_ndarray()
 
-error = np.min(np.sqrt((x-x0)**2+(y-y0)**2+(z-z0)**2))
+error = np.min(np.sqrt((x - x0) ** 2 + (y - y0) ** 2 + (z - z0) ** 2))
 
-print('error = ', error)
-print('tolerance = ', tolerance)
-assert(error < tolerance)
+print("error = ", error)
+print("tolerance = ", tolerance)
+assert error < tolerance
 
 test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)

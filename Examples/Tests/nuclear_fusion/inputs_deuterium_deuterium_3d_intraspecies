@@ -8,6 +8,8 @@
 #     plasma simulations. Journal of Computational Physics, 388, pp.439-453.
 #     DOI: https://doi.org/10.1016/j.jcp.2019.03.020
 
+warpx.random_seed = 1034958209
+
 # algo
 algo.particle_shape = 3
 

@@ -12,8 +12,8 @@ import sys
 import analysis_core as ac
 import openpmd_api as io
 
-#sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
-#import checksumAPI
+# sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+# import checksumAPI
 
 
 # This script is a frontend for the analysis routines
@@ -22,17 +22,18 @@ import openpmd_api as io
 # format and extracts the data needed for
 # the analysis routines.
 
+
 def main():
     print("Opening openPMD output")
     prefix = sys.argv[1]
-    series = io.Series(prefix+"/openpmd_%T.h5", io.Access.read_only)
+    series = io.Series(prefix + "/openpmd_%T.h5", io.Access.read_only)
     data_set_end = series.iterations[2]
 
     # get simulation time
     sim_time = data_set_end.time
     # no particles can be created on the first timestep so we have 2 timesteps in the test case,
     # with only the second one resulting in particle creation
-    dt = sim_time/2.
+    dt = sim_time / 2.0
 
     # get particle data
     particle_data = {}
@@ -46,12 +47,18 @@ def main():
         px = data_set_end.particles[spec_name]["momentum"]["x"][:]
         py = data_set_end.particles[spec_name]["momentum"]["y"][:]
         pz = data_set_end.particles[spec_name]["momentum"]["z"][:]
-        w = data_set_end.particles[spec_name]["weighting"][io.Mesh_Record_Component.SCALAR][:]
+        w = data_set_end.particles[spec_name]["weighting"][
+            io.Mesh_Record_Component.SCALAR
+        ][:]
 
-        if is_photon :
-            opt = data_set_end.particles[spec_name]["opticalDepthBW"][io.Mesh_Record_Component.SCALAR][:]
+        if is_photon:
+            opt = data_set_end.particles[spec_name]["opticalDepthBW"][
+                io.Mesh_Record_Component.SCALAR
+            ][:]
         else:
-            opt = data_set_end.particles[spec_name]["opticalDepthQSR"][io.Mesh_Record_Component.SCALAR][:]
+            opt = data_set_end.particles[spec_name]["opticalDepthQSR"][
+                io.Mesh_Record_Component.SCALAR
+            ][:]
 
         series.flush()
 
@@ -65,8 +72,9 @@ def main():
 
     ac.check(dt, particle_data)
 
-    #test_name = os.path.split(os.getcwd())[1]
-    #checksumAPI.evaluate_checksum(test_name, filename_end)
+    # test_name = os.path.split(os.getcwd())[1]
+    # checksumAPI.evaluate_checksum(test_name, filename_end)
+
 
 if __name__ == "__main__":
     main()

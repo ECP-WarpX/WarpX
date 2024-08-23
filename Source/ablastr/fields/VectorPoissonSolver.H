@@ -241,7 +241,7 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
             curr[lev][adim]->mult(-1._rt/ablastr::constant::SI::mu0);
         } // Loop over adim
         // Run additional operations, such as calculation of the B fields for embedded boundaries
-        if constexpr (!std::is_same<T_PostACalculationFunctor, std::nullopt_t>::value) {
+        if constexpr (!std::is_same_v<T_PostACalculationFunctor, std::nullopt_t>) {
             if (post_A_calculation.has_value()) {
                     post_A_calculation.value()(mlmg, lev);
             }

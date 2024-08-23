@@ -21,35 +21,33 @@ constants = picmi.constants
 
 comm = mpi.COMM_WORLD
 
-simulation = picmi.Simulation(
-    warpx_serialize_initial_conditions=True,
-    verbose=0
-)
+simulation = picmi.Simulation(warpx_serialize_initial_conditions=True, verbose=0)
 
 
 class HybridPICBeamInstability(object):
-    '''This input is based on the ion beam R instability test as described by
+    """This input is based on the ion beam R instability test as described by
     Munoz et al. (2018).
-    '''
+    """
+
     # Applied field parameters
-    B0          = 0.25 # Initial magnetic field strength (T)
-    beta        = 1.0 # Plasma beta, used to calculate temperature
+    B0 = 0.25  # Initial magnetic field strength (T)
+    beta = 1.0  # Plasma beta, used to calculate temperature
 
     # Plasma species parameters
-    m_ion      = 100.0 # Ion mass (electron masses)
-    vA_over_c  = 1e-4 # ratio of Alfven speed and the speed of light
+    m_ion = 100.0  # Ion mass (electron masses)
+    vA_over_c = 1e-4  # ratio of Alfven speed and the speed of light
 
     # Spatial domain
-    Nz          = 1024 # number of cells in z direction
-    Nx          = 8 # number of cells in x (and y) direction for >1 dimensions
+    Nz = 1024  # number of cells in z direction
+    Nx = 8  # number of cells in x (and y) direction for >1 dimensions
 
     # Temporal domain (if not run as a CI test)
-    LT          = 120.0 # Simulation temporal length (ion cyclotron periods)
+    LT = 120.0  # Simulation temporal length (ion cyclotron periods)
 
     # Numerical parameters
-    NPPC        = [1024, 256, 64] # Seed number of particles per cell
-    DZ          = 1.0 / 4.0 # Cell size (ion skin depths)
-    DT          = 0.01 # Time step (ion cyclotron periods)
+    NPPC = [1024, 256, 64]  # Seed number of particles per cell
+    DZ = 1.0 / 4.0  # Cell size (ion skin depths)
+    DT = 0.01  # Time step (ion cyclotron periods)
 
     # Plasma resistivity - used to dampen the mode excitation
     eta = 1e-7
@@ -58,7 +56,7 @@ class HybridPICBeamInstability(object):
 
     # Beam parameters
     n_beam = [0.02, 0.1]
-    U_bc = 10.0 # relative drifts between beam and core in Alfven speeds
+    U_bc = 10.0  # relative drifts between beam and core in Alfven speeds
 
     def __init__(self, test, dim, resonant, verbose):
         """Get input parameters for the specific case desired."""
@@ -68,7 +66,7 @@ class HybridPICBeamInstability(object):
         self.verbose = verbose or self.test
 
         # sanity check
-        assert (dim > 0 and dim < 4), f"{dim}-dimensions not a valid input"
+        assert dim > 0 and dim < 4, f"{dim}-dimensions not a valid input"
 
         # calculate various plasma parameters based on the simulation input
         self.get_plasma_quantities()
@@ -92,7 +90,7 @@ class HybridPICBeamInstability(object):
             self.volume = self.Lz
             self.N_cells = self.Nz
 
-        diag_period = 1 / 4.0 # Output interval (ion cyclotron periods)
+        diag_period = 1 / 4.0  # Output interval (ion cyclotron periods)
         self.diag_steps = int(diag_period / self.DT)
 
         # if this is a test case run for only 25 cyclotron periods
@@ -105,7 +103,7 @@ class HybridPICBeamInstability(object):
 
         # dump all the current attributes to a dill pickle file
         if comm.rank == 0:
-            with open('sim_parameters.dpkl', 'wb') as f:
+            with open("sim_parameters.dpkl", "wb") as f:
                 dill.dump(self, f)
 
         # print out plasma parameters
@@ -145,14 +143,12 @@ class HybridPICBeamInstability(object):
 
         # Alfven speed (m/s): vA = B / sqrt(mu0 * n * (M + m)) = c * omega_ci / w_pi
         self.vA = self.vA_over_c * constants.c
-        self.n_plasma = (
-            (self.B0 / self.vA)**2 / (constants.mu0 * (self.M + constants.m_e))
+        self.n_plasma = (self.B0 / self.vA) ** 2 / (
+            constants.mu0 * (self.M + constants.m_e)
         )
 
         # Ion plasma frequency (Hz)
-        self.w_pi = np.sqrt(
-            constants.q_e**2 * self.n_plasma / (self.M * constants.ep0)
-        )
+        self.w_pi = np.sqrt(constants.q_e**2 * self.n_plasma / (self.M * constants.ep0))
 
         # Skin depth (m)
         self.l_i = constants.c / self.w_pi
@@ -161,7 +157,7 @@ class HybridPICBeamInstability(object):
         self.v_ti = np.sqrt(self.beta / 2.0) * self.vA
 
         # Temperature (eV) from thermal speed: v_ti = sqrt(kT / M)
-        self.T_plasma = self.v_ti**2 * self.M / constants.q_e # eV
+        self.T_plasma = self.v_ti**2 * self.M / constants.q_e  # eV
 
         # Larmor radius (m)
         self.rho_i = self.v_ti / self.w_ci
@@ -181,16 +177,16 @@ class HybridPICBeamInstability(object):
             grid_object = picmi.Cartesian3DGrid
 
         self.grid = grid_object(
-            number_of_cells=[self.Nx, self.Nx, self.Nz][-self.dim:],
+            number_of_cells=[self.Nx, self.Nx, self.Nz][-self.dim :],
             warpx_max_grid_size=self.Nz,
-            lower_bound=[-self.Lx/2.0, -self.Lx/2.0, 0][-self.dim:],
-            upper_bound=[self.Lx/2.0, self.Lx/2.0, self.Lz][-self.dim:],
-            lower_boundary_conditions=['periodic']*self.dim,
-            upper_boundary_conditions=['periodic']*self.dim
+            lower_bound=[-self.Lx / 2.0, -self.Lx / 2.0, 0][-self.dim :],
+            upper_bound=[self.Lx / 2.0, self.Lx / 2.0, self.Lz][-self.dim :],
+            lower_boundary_conditions=["periodic"] * self.dim,
+            upper_boundary_conditions=["periodic"] * self.dim,
         )
         simulation.time_step_size = self.dt
         simulation.max_steps = self.total_steps
-        simulation.current_deposition_algo = 'direct'
+        simulation.current_deposition_algo = "direct"
         simulation.particle_shape = 1
         simulation.verbose = self.verbose
 
@@ -199,17 +195,17 @@ class HybridPICBeamInstability(object):
         #######################################################################
 
         self.solver = picmi.HybridPICSolver(
-            grid=self.grid, gamma=1.0,
-            Te=self.T_plasma/10.0,
-            n0=self.n_plasma+self.n_beam,
-            plasma_resistivity=self.eta, substeps=self.substeps
+            grid=self.grid,
+            gamma=1.0,
+            Te=self.T_plasma / 10.0,
+            n0=self.n_plasma + self.n_beam,
+            plasma_resistivity=self.eta,
+            substeps=self.substeps,
         )
         simulation.solver = self.solver
 
         B_ext = picmi.AnalyticInitialField(
-            Bx_expression=0.0,
-            By_expression=0.0,
-            Bz_expression=self.B0
+            Bx_expression=0.0, By_expression=0.0, Bz_expression=self.B0
         )
         simulation.add_applied_field(B_ext)
 
@@ -218,33 +214,36 @@ class HybridPICBeamInstability(object):
         #######################################################################
 
         self.ions = picmi.Species(
-            name='ions', charge='q_e', mass=self.M,
+            name="ions",
+            charge="q_e",
+            mass=self.M,
             initial_distribution=picmi.UniformDistribution(
                 density=self.n_plasma,
-                rms_velocity=[self.v_ti]*3,
-                directed_velocity=[0, 0, self.u_c]
-            )
+                rms_velocity=[self.v_ti] * 3,
+                directed_velocity=[0, 0, self.u_c],
+            ),
         )
         simulation.add_species(
             self.ions,
             layout=picmi.PseudoRandomLayout(
-                grid=self.grid, n_macroparticles_per_cell=self.NPPC[self.dim-1]
-            )
+                grid=self.grid, n_macroparticles_per_cell=self.NPPC[self.dim - 1]
+            ),
         )
         self.beam_ions = picmi.Species(
-            name='beam_ions', charge='q_e', mass=self.M,
+            name="beam_ions",
+            charge="q_e",
+            mass=self.M,
             initial_distribution=picmi.UniformDistribution(
                 density=self.n_beam,
-                rms_velocity=[self.v_ti]*3,
-                directed_velocity=[0, 0, self.u_beam]
-            )
+                rms_velocity=[self.v_ti] * 3,
+                directed_velocity=[0, 0, self.u_beam],
+            ),
         )
         simulation.add_species(
             self.beam_ions,
             layout=picmi.PseudoRandomLayout(
-                grid=self.grid,
-                n_macroparticles_per_cell=self.NPPC[self.dim-1]/2
-            )
+                grid=self.grid, n_macroparticles_per_cell=self.NPPC[self.dim - 1] / 2
+            ),
         )
 
         #######################################################################
@@ -256,48 +255,48 @@ class HybridPICBeamInstability(object):
 
         if self.test:
             part_diag = picmi.ParticleDiagnostic(
-                name='diag1',
+                name="diag1",
                 period=1250,
                 species=[self.ions, self.beam_ions],
-                data_list = ['ux', 'uy', 'uz', 'z', 'weighting'],
-                write_dir='.',
-                warpx_file_prefix='Python_ohms_law_solver_ion_beam_1d_plt',
+                data_list=["ux", "uy", "uz", "z", "weighting"],
+                write_dir=".",
+                warpx_file_prefix="Python_ohms_law_solver_ion_beam_1d_plt",
             )
             simulation.add_diagnostic(part_diag)
             field_diag = picmi.FieldDiagnostic(
-                name='diag1',
+                name="diag1",
                 grid=self.grid,
                 period=1250,
-                data_list = ['Bx', 'By', 'Bz', 'Ex', 'Ey', 'Ez', 'Jx', 'Jy', 'Jz'],
-                write_dir='.',
-                warpx_file_prefix='Python_ohms_law_solver_ion_beam_1d_plt',
+                data_list=["Bx", "By", "Bz", "Ex", "Ey", "Ez", "Jx", "Jy", "Jz"],
+                write_dir=".",
+                warpx_file_prefix="Python_ohms_law_solver_ion_beam_1d_plt",
             )
             simulation.add_diagnostic(field_diag)
 
         # output the full particle data at t*w_ci = 40
         step = int(40.0 / self.DT)
         parts_diag = picmi.ParticleDiagnostic(
-            name='parts_diag',
+            name="parts_diag",
             period=f"{step}:{step}",
             species=[self.ions, self.beam_ions],
-            write_dir='diags',
-            warpx_file_prefix='Python_hybrid_PIC_plt',
-            warpx_format = 'openpmd',
-            warpx_openpmd_backend = 'h5'
+            write_dir="diags",
+            warpx_file_prefix="Python_hybrid_PIC_plt",
+            warpx_format="openpmd",
+            warpx_openpmd_backend="h5",
         )
         simulation.add_diagnostic(parts_diag)
 
-        self.output_file_name = 'field_data.txt'
+        self.output_file_name = "field_data.txt"
         if self.dim == 1:
             line_diag = picmi.ReducedDiagnostic(
-                diag_type='FieldProbe',
-                probe_geometry='Line',
+                diag_type="FieldProbe",
+                probe_geometry="Line",
                 z_probe=0,
                 z1_probe=self.Lz,
                 resolution=self.Nz - 1,
                 name=self.output_file_name[:-4],
                 period=self.diag_steps,
-                path='diags/'
+                path="diags/",
             )
             simulation.add_diagnostic(line_diag)
         else:
@@ -308,9 +307,8 @@ class HybridPICBeamInstability(object):
             except OSError:
                 # diags directory already exists
                 pass
-            with open(f"diags/{self.output_file_name}", 'w') as f:
+            with open(f"diags/{self.output_file_name}", "w") as f:
                 f.write("[0]step() [1]time(s) [2]z_coord(m) [3]By_lev0-(T)\n")
-
 
         #######################################################################
         # Initialize simulation                                               #
@@ -335,7 +333,7 @@ class HybridPICBeamInstability(object):
 
         if libwarpx.amr.ParallelDescriptor.MyProc() == 0:
             # allocate arrays for storing energy values
-            self.energy_vals = np.zeros((self.total_steps//self.diag_steps, 4))
+            self.energy_vals = np.zeros((self.total_steps // self.diag_steps, 4))
 
     def text_diag(self):
         """Diagnostic function to print out timing data and particle numbers."""
@@ -352,13 +350,13 @@ class HybridPICBeamInstability(object):
         step_rate = steps / wall_time
 
         status_dict = {
-            'step': step,
-            'nplive beam ions': self.ion_container_wrapper.nps,
-            'nplive ions': self.beam_ion_container_wrapper.nps,
-            'wall_time': wall_time,
-            'step_rate': step_rate,
+            "step": step,
+            "nplive beam ions": self.ion_container_wrapper.nps,
+            "nplive ions": self.beam_ion_container_wrapper.nps,
+            "wall_time": wall_time,
+            "step_rate": step_rate,
             "diag_steps": self.diag_steps,
-            'iproc': None
+            "iproc": None,
         }
 
         diag_string = (
@@ -401,7 +399,7 @@ class HybridPICBeamInstability(object):
         self.energy_vals[idx, 3] = Eb_perp
 
         if step == self.total_steps:
-            np.save('diags/energies.npy', run.energy_vals)
+            np.save("diags/energies.npy", run.energy_vals)
 
     def _get_kinetic_energy(self, container_wrapper):
         """Utility function to retrieve the total kinetic energy in the
@@ -445,11 +443,9 @@ class HybridPICBeamInstability(object):
         else:
             By = np.mean(By_warpx[:-1], axis=(0, 1))
 
-        with open(f"diags/{self.output_file_name}", 'a') as f:
+        with open(f"diags/{self.output_file_name}", "a") as f:
             for ii in range(self.Nz):
-                f.write(
-                    f"{step:05d} {t:.10e} {z_vals[ii]:.10e} {By[ii]:+.10e}\n"
-                )
+                f.write(f"{step:05d} {t:.10e} {z_vals[ii]:.10e} {By[ii]:+.10e}\n")
 
 
 ##########################
@@ -458,22 +454,29 @@ class HybridPICBeamInstability(object):
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    '-t', '--test', help='toggle whether this script is run as a short CI test',
-    action='store_true',
+    "-t",
+    "--test",
+    help="toggle whether this script is run as a short CI test",
+    action="store_true",
 )
 parser.add_argument(
-    '-d', '--dim', help='Simulation dimension', required=False, type=int,
-    default=1
+    "-d", "--dim", help="Simulation dimension", required=False, type=int, default=1
 )
 parser.add_argument(
-    '-r', '--resonant', help='Run the resonant case', required=False,
-    action='store_true',
+    "-r",
+    "--resonant",
+    help="Run the resonant case",
+    required=False,
+    action="store_true",
 )
 parser.add_argument(
-    '-v', '--verbose', help='Verbose output', action='store_true',
+    "-v",
+    "--verbose",
+    help="Verbose output",
+    action="store_true",
 )
 args, left = parser.parse_known_args()
-sys.argv = sys.argv[:1]+left
+sys.argv = sys.argv[:1] + left
 
 run = HybridPICBeamInstability(
     test=args.test, dim=args.dim, resonant=args.resonant, verbose=args.verbose
