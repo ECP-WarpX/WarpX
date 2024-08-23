@@ -80,7 +80,7 @@ function(add_warpx_test
     list(JOIN INPUTS_FILE_ARGS " " INPUTS_FILE_ARGS)
 
     # get input file's directory
-    get_filename_component(INPUTS_DIR INPUTS_FILE DIRECTORY)
+    get_filename_component(INPUTS_DIR ${INPUTS_FILE} DIRECTORY)
 
     # copy base input files to run directory
     file(GLOB INPUTS_BASE "${INPUTS_DIR}/inputs_base_${SD}*")
