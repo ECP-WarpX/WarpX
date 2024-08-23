@@ -208,17 +208,17 @@ void DifferentialLuminosity::ComputeDiags (int step)
             const auto soa_2 = ptile_2.getParticleTileData();
             index_type* AMREX_RESTRICT indices_2 = bins_2.permutationPtr();
             index_type const* AMREX_RESTRICT cell_offsets_2 = bins_2.offsetsPtr();
-            
+
             amrex::ParticleReal * const AMREX_RESTRICT w2  = soa_2.m_rdata[PIdx::w];
             amrex::ParticleReal * const AMREX_RESTRICT u2x = soa_2.m_rdata[PIdx::ux];
-            amrex::ParticleReal * const AMREX_RESTRICT u2y = soa_2.m_rdata[PIdx::uy]; 
-            amrex::ParticleReal * const AMREX_RESTRICT u2z = soa_2.m_rdata[PIdx::uz];  
+            amrex::ParticleReal * const AMREX_RESTRICT u2y = soa_2.m_rdata[PIdx::uy];
+            amrex::ParticleReal * const AMREX_RESTRICT u2z = soa_2.m_rdata[PIdx::uz];
 
             // Extract low-level data
             auto const n_cells = static_cast<int>(bins_1.numBins());
 
             // Loop over cells
-            amrex::ParallelFor( n_cells, 
+            amrex::ParallelFor( n_cells,
                 [=] AMREX_GPU_DEVICE (int i_cell) noexcept
             {
                 // The particles from species1 that are in the cell `i_cell` are
@@ -240,8 +240,8 @@ void DifferentialLuminosity::ComputeDiags (int step)
                         Real u2_square = u2x[j_2]*u2x[j_2] + u2y[j_2]*u2y[j_2] + u2z[j_2]*u2z[j_2];
                         Real gamma2 = std::sqrt(1. + u2_square/c2);
                         Real u1_dot_u2 = u1x[j_1]*u2x[j_2] + u1y[j_1]*u2y[j_2] + u1z[j_1]*u2z[j_2];
-                        
-                        // center of mass energy 
+
+                        // center of mass energy
                         Real E_com = c2 * std::sqrt(m1*m1 + m2*m2 + 2*m1*m2* (gamma1*gamma2 - u1_dot_u2/c2));
 
                         // determine particle bin
@@ -252,19 +252,19 @@ void DifferentialLuminosity::ComputeDiags (int step)
                         Real v1_minus_v2_x = u1x[j_1]/gamma1 - u2x[j_2]/gamma2;
                         Real v1_minus_v2_y = u1y[j_1]/gamma1 - u2y[j_2]/gamma2;
                         Real v1_minus_v2_z = u1z[j_1]/gamma1 - u2z[j_2]/gamma2;
-                        Real v1_minus_v2_square = v1_minus_v2_x*v1_minus_v2_x + v1_minus_v2_y*v1_minus_v2_y + v1_minus_v2_z*v1_minus_v2_z; 
- 
+                        Real v1_minus_v2_square = v1_minus_v2_x*v1_minus_v2_x + v1_minus_v2_y*v1_minus_v2_y + v1_minus_v2_z*v1_minus_v2_z;
+
                         Real u1_cross_u2_x = u1y[j_1]*u2z[j_2] - u1z[j_1]*u2y[j_2];
                         Real u1_cross_u2_y = u1z[j_1]*u2x[j_2] - u1x[j_1]*u2z[j_2];
                         Real u1_cross_u2_z = u1x[j_1]*u2y[j_2] - u1y[j_1]*u2x[j_2];
 
                         Real v1_cross_v2_square = (u1_cross_u2_x*u1_cross_u2_x + u1_cross_u2_y*u1_cross_u2_y + u1_cross_u2_z*u1_cross_u2_z) / (gamma1*gamma1*gamma2*gamma2);
-                        
-                        Real radicand = v1_minus_v2_square - v1_cross_v2_square / c2; 
-                        
+
+                        Real radicand = v1_minus_v2_square - v1_cross_v2_square / c2;
+
                         Real dL_dEcom = std::sqrt( radicand ) * w1[j_1] * w2[j_2] / dV / bin_size * dt; // m^-2 J^-1
-                        
-                        amrex::HostDevice::Atomic::Add(&dptr_data[bin], dL_dEcom);   
+
+                        amrex::HostDevice::Atomic::Add(&dptr_data[bin], dL_dEcom);
 
                     } // particles species 2
                 } // particles species 1
