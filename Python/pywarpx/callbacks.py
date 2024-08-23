@@ -25,6 +25,7 @@ extra reference to the method's object is saved.
 
 Functions can be called at the following times:
 
+* ``loadExternalFields``: during ``WarpX::LoadExternalFields`` to write ``B/Efield_fp_external`` values
 * ``beforeInitEsolve``: before the initial solve for the E fields (i.e. before the PIC loop starts)
 * ``afterinit``: immediately after the init is complete
 * ``beforeEsolve``: before the solve for E fields
@@ -276,6 +277,7 @@ class CallbackFunctions(object):
 # =============================================================================
 
 callback_instances = {
+    "loadExternalFields": {},
     "beforeInitEsolve": {},
     "afterInitEsolve": {},
     "afterinit": {},
@@ -330,7 +332,7 @@ def clear_all():
         val.clearlist()
 
 
-# =============================================================================
+# ============================================================================
 
 
 def printcallbacktimers(tmin=1.0, lminmax=False, ff=None):
@@ -371,7 +373,17 @@ def printcallbacktimers(tmin=1.0, lminmax=False, ff=None):
             ff.write("\n")
 
 
-# =============================================================================
+# ============================================================================
+
+
+# ----------------------------------------------------------------------------
+def callfromloadExternalFields(f):
+    installcallback("loadExternalFields", f)
+    return f
+
+
+def installloadExternalFields(f):
+    installcallback("loadExternalFields", f)
 
 
 # ----------------------------------------------------------------------------
