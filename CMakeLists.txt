@@ -74,7 +74,6 @@ set_default_install_dirs()
 include(CMakeDependentOption)
 option(WarpX_APP           "Build the WarpX executable application"     ON)
 option(WarpX_ASCENT        "Ascent in situ diagnostics"                 OFF)
-option(WarpX_CI            "This is a CI run"                           OFF)
 option(WarpX_EB            "Embedded boundary support"                  OFF)
 option(WarpX_LIB           "Build WarpX as a library"                   OFF)
 option(WarpX_MPI           "Multi-node support (message-passing)"       ON)
@@ -88,6 +87,10 @@ option(WarpX_QED_TABLE_GEN "QED table generation (requires PICSAR and Boost)"
                                                                         OFF)
 option(WarpX_QED_TOOLS     "Build external tool to generate QED lookup tables (requires PICSAR and Boost)"
                                                                         OFF)
+
+# Advanced option to flag automated CI runs
+option(WarpX_CI "This is a CI run" OFF)
+mark_as_advanced(WarpX_CI)
 
 set(WarpX_DIMS_VALUES 1 2 3 RZ)
 set(WarpX_DIMS 3 CACHE STRING "Simulation dimensionality <1;2;3;RZ>")
@@ -196,7 +199,6 @@ endif()
 
 # this defined the variable BUILD_TESTING which is ON by default
 #include(CTest)
-mark_as_advanced(WarpX_CI)
 
 
 # Dependencies ################################################################
@@ -797,7 +799,6 @@ endif()
 #
 if(BUILD_TESTING)
     enable_testing()
-
     if(WarpX_APP OR WarpX_PYTHON)
         add_subdirectory(Examples)
     endif()

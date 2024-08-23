@@ -150,7 +150,7 @@ jobs:
       df -h
       # configure
       export AMReX_CMAKE_FLAGS="-DAMReX_ASSERTIONS=ON -DAMReX_TESTING=ON"
-      cmake -S . -B build ${AMReX_CMAKE_FLAGS} ${WARPX_CMAKE_FLAGS}
+      cmake -S . -B build ${AMReX_CMAKE_FLAGS} ${WARPX_CMAKE_FLAGS} -DWarpX_CI=ON
       # build
       cmake --build build -j 2
       # run tests (exclude pytest.AMReX when running Python tests)
