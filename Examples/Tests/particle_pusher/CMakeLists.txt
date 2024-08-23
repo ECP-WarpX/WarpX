@@ -6,6 +6,7 @@ add_warpx_test(
     3 # dims
     1 # nprocs
     OFF # eb
+    OFF # preparation script
     Examples/Tests/particle_pusher/inputs_test_3d_particle_pusher # inputs
     Examples/Tests/particle_pusher/analysis.py # analysis
     diags/diag1010000 # output

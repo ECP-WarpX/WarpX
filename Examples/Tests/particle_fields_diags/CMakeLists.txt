@@ -6,6 +6,7 @@ add_warpx_test(
     3 # dims
     2 # nprocs
     OFF # eb
+    OFF # preparation script
     Examples/Tests/particle_fields_diags/inputs_test_3d_particle_fields_diags # inputs
     Examples/Tests/particle_fields_diags/analysis_particle_diags.py # analysis
     diags/diag1000200 # output
@@ -17,6 +18,7 @@ add_warpx_test(
 #    3 # dims
 #    2 # nprocs
 #    OFF # eb
+#    OFF # preparation script
 #    Examples/Tests/particle_fields_diags/inputs_test_3d_particle_fields_diags_single_precision # inputs
 #    Examples/Tests/particle_fields_diags/analysis_particle_diags_single.py # analysis
 #    diags/diag1000200 # output

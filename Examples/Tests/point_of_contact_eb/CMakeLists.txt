@@ -7,6 +7,7 @@ if(WarpX_EB)
         3 # dims
         2 # nprocs
         ON # eb
+    OFF # preparation script
         Examples/Tests/point_of_contact_eb/inputs_test_3d_point_of_contact_eb # inputs
         Examples/Tests/point_of_contact_eb/analysis.py # analysis
         diags/diag1/ # output
@@ -19,6 +20,7 @@ if(WarpX_EB)
         RZ # dims
         2  # nprocs
         ON # eb
+    OFF # preparation script
         Examples/Tests/point_of_contact_eb/inputs_test_rz_point_of_contact_eb # inputs
         Examples/Tests/point_of_contact_eb/analysis.py # analysis
         diags/diag1/ # output

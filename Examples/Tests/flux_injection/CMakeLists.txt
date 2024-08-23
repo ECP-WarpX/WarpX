@@ -6,6 +6,7 @@ add_warpx_test(
     3 # dims
     2 # nprocs
     OFF # eb
+    OFF # preparation script
     Examples/Tests/flux_injection/inputs_test_3d_flux_injection # inputs
     Examples/Tests/flux_injection/analysis_flux_injection_3d.py # analysis
     diags/diag1000002 # output
@@ -16,6 +17,7 @@ add_warpx_test(
     RZ # dims
     2  # nprocs
     OFF # eb
+    OFF # preparation script
     Examples/Tests/flux_injection/inputs_test_rz_flux_injection # inputs
     Examples/Tests/flux_injection/analysis_flux_injection_rz.py # analysis
     diags/diag1000120 # output

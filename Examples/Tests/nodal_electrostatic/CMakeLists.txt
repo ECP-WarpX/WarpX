@@ -6,6 +6,7 @@ add_warpx_test(
     3 # dims
     1 # nprocs
     OFF # eb
+    OFF # preparation script
     Examples/Tests/nodal_electrostatic/inputs_test_3d_nodal_electrostatic_solver # inputs
     Examples/Tests/nodal_electrostatic/analysis.py # analysis
     diags/diag1000010 # output

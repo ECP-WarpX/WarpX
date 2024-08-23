@@ -6,6 +6,7 @@ add_warpx_test(
     3 # dims
     2 # nprocs
     OFF # eb
+    OFF # preparation script
     Examples/Tests/photon_pusher/inputs_test_3d_photon_pusher # inputs
     Examples/Tests/photon_pusher/analysis.py # analysis
     diags/diag1000050 # output

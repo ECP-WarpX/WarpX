@@ -6,6 +6,7 @@ add_warpx_test(
     3 # dims
     2 # nprocs
     OFF # eb
+    OFF # preparation script
     Examples/Tests/nuclear_fusion/inputs_test_3d_deuterium_deuterium_fusion # inputs
     Examples/Tests/nuclear_fusion/analysis_two_product_fusion.py # analysis
     diags/diag1000001 # output
@@ -16,6 +17,7 @@ add_warpx_test(
     3 # dims
     1 # nprocs
     OFF # eb
+    OFF # preparation script
     Examples/Tests/nuclear_fusion/inputs_test_3d_deuterium_deuterium_fusion_intraspecies # inputs
     Examples/Tests/nuclear_fusion/analysis_deuterium_deuterium_3d_intraspecies.py # analysis
     diags/diag1000010 # output
@@ -26,6 +28,7 @@ add_warpx_test(
     3 # dims
     2 # nprocs
     OFF # eb
+    OFF # preparation script
     Examples/Tests/nuclear_fusion/inputs_test_3d_deuterium_tritium_fusion # inputs
     Examples/Tests/nuclear_fusion/analysis_two_product_fusion.py # analysis
     diags/diag1000001 # output
@@ -36,6 +39,7 @@ add_warpx_test(
     RZ # dims
     2  # nprocs
     OFF # eb
+    OFF # preparation script
     Examples/Tests/nuclear_fusion/inputs_test_rz_deuterium_tritium_fusion # inputs
     Examples/Tests/nuclear_fusion/analysis_two_product_fusion.py # analysis
     diags/diag1000001 # output
@@ -46,6 +50,7 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
+    OFF # preparation script
     Examples/Tests/nuclear_fusion/inputs_test_2d_proton_boron_fusion # inputs
     Examples/Tests/nuclear_fusion/analysis_proton_boron_fusion.py # analysis
     diags/diag1000001 # output
@@ -56,6 +61,7 @@ add_warpx_test(
     3 # dims
     2 # nprocs
     OFF # eb
+    OFF # preparation script
     Examples/Tests/nuclear_fusion/inputs_test_3d_proton_boron_fusion # inputs
     Examples/Tests/nuclear_fusion/analysis_proton_boron_fusion.py # analysis
     diags/diag1000001 # output

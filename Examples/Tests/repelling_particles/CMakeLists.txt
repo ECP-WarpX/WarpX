@@ -6,6 +6,7 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
+    OFF # preparation script
     Examples/Tests/repelling_particles/inputs_test_2d_repelling_particles # inputs
     Examples/Tests/repelling_particles/analysis.py # analysis
     diags/diag1000200 # output

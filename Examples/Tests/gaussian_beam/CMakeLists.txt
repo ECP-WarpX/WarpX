@@ -6,6 +6,7 @@ add_warpx_test(
     3 # dims
     2 # nprocs
     OFF # eb
+    OFF # preparation script
     Examples/Tests/gaussian_beam/inputs_test_3d_focusing_gaussian_beam # inputs
     Examples/Tests/gaussian_beam/analysis.py # analysis
     diags/diag1000000 # output
@@ -16,6 +17,7 @@ add_warpx_test(
     3 # dims
     2 # nprocs
     OFF # eb
+    OFF # preparation script
     Examples/Tests/gaussian_beam/inputs_test_3d_gaussian_beam_picmi.py # inputs
     Examples/analysis_default_regression.py # analysis
     diags/diag1000010 # output

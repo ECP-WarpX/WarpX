@@ -22,10 +22,10 @@ function(add_warpx_test
     dims
     nprocs
     eb
+    preparation
     inputs
     analysis
     output
-    # ${ARGV7} optional command line arguments for Python tests
 )
     # cannot run MPI tests w/o MPI build
     if(NOT WarpX_MPI)
@@ -73,16 +73,21 @@ function(add_warpx_test
     set(THIS_WORKING_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${name})
 
     # input directory
-    get_filename_component(INPUTS_PATH ${WarpX_SOURCE_DIR}/${inputs} REALPATH)
-    get_filename_component(INPUTS_DIR ${INPUTS_PATH} DIRECTORY)
+    get_filename_component(INPUTS_ALL ${WarpX_SOURCE_DIR}/${inputs} REALPATH)
+    # separate input filename and potentially added arguments
+    separate_arguments(INPUTS_FILE_ARGS UNIX_COMMAND PROGRAM "${INPUTS_ALL}")
+    list(GET INPUTS_FILE_ARGS 0 INPUTS_FILE)
+    list(SUBLIST INPUTS_FILE_ARGS 1 -1 INPUTS_ARGS)
+    list(JOIN INPUTS_FILE_ARGS " " INPUTS_FILE_ARGS)
+    get_filename_component(INPUTS_DIR ${INPUTS_FILE} DIRECTORY)
     # copy base input files to run directory
     file(GLOB INPUTS_BASE "${INPUTS_DIR}/inputs_base_${SD}*")
     file(COPY ${INPUTS_BASE} DESTINATION ${THIS_WORKING_DIR})
     # copy test input file to run directory
-    file(COPY ${INPUTS_PATH} DESTINATION ${THIS_WORKING_DIR})
+    file(COPY ${INPUTS_FILE} DESTINATION ${THIS_WORKING_DIR})
     # for restart tests, copy input file of original test (without "_restart" suffix)
-    string(REPLACE "_restart" "" INPUTS_PATH_NORESTART ${INPUTS_PATH})
-    file(COPY ${INPUTS_PATH_NORESTART} DESTINATION ${THIS_WORKING_DIR})
+    string(REPLACE "_restart" "" INPUTS_FILE_NORESTART ${INPUTS_FILE})
+    file(COPY ${INPUTS_FILE_NORESTART} DESTINATION ${THIS_WORKING_DIR})
 
     set(THIS_MPI_TEST_EXE
         ${MPIEXEC_EXECUTABLE}
@@ -99,17 +104,13 @@ function(add_warpx_test
 
     # test run
     if(python)
-        set(command_line_args "")
-        if(${ARGC} GREATER 7)
-            set(command_line_args ${ARGV7})
-        endif()
         add_test(
             NAME ${name}.run
             COMMAND
                 ${THIS_MPI_TEST_EXE}
                 ${THIS_Python_EXE}
                 ${WarpX_SOURCE_DIR}/${inputs}
-                ${command_line_args}
+                ${INPUTS_FILE_ARGS}
             WORKING_DIRECTORY ${THIS_WORKING_DIR}
         )
         # FIXME Use helper function to handle Windows exceptions
@@ -134,18 +135,32 @@ function(add_warpx_test
                 $<TARGET_FILE:app_${SD}>
                 ${WarpX_SOURCE_DIR}/${inputs}
                 ${runtime_params}
+                ${INPUTS_FILE_ARGS}
             WORKING_DIRECTORY ${THIS_WORKING_DIR}
         )
     endif()
 
     set_property(TEST ${name}.run APPEND PROPERTY ENVIRONMENT "OMP_NUM_THREADS=1")
 
-    # test analysis
+    # preparation and test analysis
+    set(THIS_Python_SCRIPT_EXE)
+    if(is_python OR WIN32)
+        set(THIS_Python_SCRIPT_EXE ${Python_EXECUTABLE})
+    endif()
+    if(preparation)
+        add_test(
+                NAME ${name}.preparation
+                COMMAND
+                    ${THIS_Python_SCRIPT_EXE} ${WarpX_SOURCE_DIR}/${preparation}
+                WORKING_DIRECTORY ${THIS_WORKING_DIR}
+        )
+        set_property(TEST ${name}.run APPEND PROPERTY DEPENDS "${name}.preparation")
+    endif()
     if(analysis)
         add_test(
             NAME ${name}.analysis
             COMMAND
-                ${WarpX_SOURCE_DIR}/${analysis}
+                ${THIS_Python_SCRIPT_EXE} ${WarpX_SOURCE_DIR}/${analysis}
                 ${output}
             WORKING_DIRECTORY ${THIS_WORKING_DIR}
         )
