@@ -306,7 +306,11 @@ function(set_warpx_binary_name D)
         endif()
 
         if(WarpX_FFT)
-            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".PSATD")
+            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".FFT")
+        endif()
+
+        if(WarpX_HEFFTE)
+            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".HEFFTE")
         endif()
 
         if(WarpX_EB)
