@@ -144,7 +144,7 @@ function(add_warpx_test
 
     # preparation and test analysis
     set(THIS_Python_SCRIPT_EXE)
-    if(is_python OR WIN32)
+    if(python OR WIN32)
         set(THIS_Python_SCRIPT_EXE ${Python_EXECUTABLE})
     endif()
     if(preparation)
