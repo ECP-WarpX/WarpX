@@ -33,11 +33,6 @@ function(add_warpx_test
         return()
     endif()
 
-    ## do not run no-MPI tests w/ MPI build
-    #if(NOT mpi AND WarpX_MPI)
-    #    return()
-    #endif()
-
     # cannot run EB tests w/o EB build
     if(eb AND NOT WarpX_EB)
             message(WARNING "cannot run EB tests without EB build")
@@ -72,23 +67,33 @@ function(add_warpx_test
     file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${name})
     set(THIS_WORKING_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${name})
 
-    # input directory
     get_filename_component(INPUTS_ALL ${WarpX_SOURCE_DIR}/${inputs} REALPATH)
-    # separate input filename and potentially added arguments
+
+    # separate input file (full path) and optional command-line arguments
     separate_arguments(INPUTS_FILE_ARGS UNIX_COMMAND PROGRAM "${INPUTS_ALL}")
+
+    # get input file (full path)
     list(GET INPUTS_FILE_ARGS 0 INPUTS_FILE)
+
+    # get optional command-line arguments
     list(SUBLIST INPUTS_FILE_ARGS 1 -1 INPUTS_ARGS)
     list(JOIN INPUTS_FILE_ARGS " " INPUTS_FILE_ARGS)
-    get_filename_component(INPUTS_DIR ${INPUTS_FILE} DIRECTORY)
+
+    # get input file's directory
+    get_filename_component(INPUTS_DIR INPUTS_FILE DIRECTORY)
+
     # copy base input files to run directory
     file(GLOB INPUTS_BASE "${INPUTS_DIR}/inputs_base_${SD}*")
     file(COPY ${INPUTS_BASE} DESTINATION ${THIS_WORKING_DIR})
+
     # copy test input file to run directory
     file(COPY ${INPUTS_FILE} DESTINATION ${THIS_WORKING_DIR})
+
     # for restart tests, copy input file of original test (without "_restart" suffix)
     string(REPLACE "_restart" "" INPUTS_FILE_NORESTART ${INPUTS_FILE})
     file(COPY ${INPUTS_FILE_NORESTART} DESTINATION ${THIS_WORKING_DIR})
 
+    # set MPI executable
     set(THIS_MPI_TEST_EXE
         ${MPIEXEC_EXECUTABLE}
         ${MPI_ALLOW_ROOT}
@@ -97,6 +102,7 @@ function(add_warpx_test
         ${MPIEXEC_PREFLAGS}
     )
 
+    # set Python executable
     set(THIS_Python_EXE)
     if(python)
         set(THIS_Python_EXE ${Python_EXECUTABLE})
@@ -109,8 +115,8 @@ function(add_warpx_test
             COMMAND
                 ${THIS_MPI_TEST_EXE}
                 ${THIS_Python_EXE}
-                ${WarpX_SOURCE_DIR}/${inputs}
-                ${INPUTS_FILE_ARGS}
+                ${INPUTS_FILE}
+                ${INPUTS_ARGS}
             WORKING_DIRECTORY ${THIS_WORKING_DIR}
         )
         # FIXME Use helper function to handle Windows exceptions
@@ -133,20 +139,22 @@ function(add_warpx_test
             COMMAND
                 ${THIS_MPI_TEST_EXE}
                 $<TARGET_FILE:app_${SD}>
-                ${WarpX_SOURCE_DIR}/${inputs}
+                ${INPUTS_FILE}
                 ${runtime_params}
-                ${INPUTS_FILE_ARGS}
+                ${INPUTS_ARGS}
             WORKING_DIRECTORY ${THIS_WORKING_DIR}
         )
     endif()
 
+    # run all tests with 1 OpenMP thread by default
     set_property(TEST ${name}.run APPEND PROPERTY ENVIRONMENT "OMP_NUM_THREADS=1")
 
-    # preparation and test analysis
     set(THIS_Python_SCRIPT_EXE)
     if(python OR WIN32)
         set(THIS_Python_SCRIPT_EXE ${Python_EXECUTABLE})
     endif()
+
+    # preparation
     if(preparation)
         add_test(
             NAME ${name}.preparation
@@ -154,8 +162,11 @@ function(add_warpx_test
                 ${THIS_Python_SCRIPT_EXE} ${WarpX_SOURCE_DIR}/${preparation}
             WORKING_DIRECTORY ${THIS_WORKING_DIR}
         )
+        # test run depends on test preparation
         set_property(TEST ${name}.run APPEND PROPERTY DEPENDS "${name}.preparation")
     endif()
+
+    # test analysis
     if(analysis)
         add_test(
             NAME ${name}.analysis
@@ -182,8 +193,10 @@ function(add_warpx_test
             NAME ${name}.cleanup
             COMMAND ${CMAKE_COMMAND} -E rm -rf ${THIS_WORKING_DIR}
         )
+        # test cleanup depends on test run
         set_property(TEST ${name}.cleanup APPEND PROPERTY DEPENDS "${name}.run")
         if(analysis)
+            # test cleanup depends on test analysis
             set_property(TEST ${name}.cleanup APPEND PROPERTY DEPENDS "${name}.analysis")
         endif()
     endif()
