@@ -7,7 +7,7 @@ paraview.compatibility.major = 5
 paraview.compatibility.minor = 12
 
 #### import the simple module from the paraview
-from paraview.simple import *
+from paraview.simple import * # noqa: F403
 
 #### disable automatic camera reset on 'Show'
 paraview.simple._DisableFirstRenderCameraReset()
