@@ -22,6 +22,7 @@ w is the weight of the individual macroparticles
 d is the distance between them
 beta is the velocity normalized by the speed of light
 """
+
 import glob
 import os
 import re
@@ -36,22 +37,22 @@ yt.funcs.mylog.setLevel(0)
 
 # Check plotfile name specified in command line
 last_filename = sys.argv[1]
-filename_radical = re.findall(r'(.*?)\d+/*$', last_filename)[0]
+filename_radical = re.findall(r"(.*?)\d+/*$", last_filename)[0]
 
 # Loop through files, and extract the position and velocity of both particles
 x1 = []
 x2 = []
 beta1 = []
 beta2 = []
-for filename in sorted(glob.glob(filename_radical + '*')):
+for filename in sorted(glob.glob(filename_radical + "*")):
     print(filename)
     ds = yt.load(filename)
     ad = ds.all_data()
 
-    x1.append( float(ad[('electron1','particle_position_x')][0]) )
-    x2.append( float(ad[('electron2','particle_position_x')][0]) )
-    beta1.append( float(ad[('electron1','particle_momentum_x')][0])/(m_e*c) )
-    beta2.append( float(ad[('electron2','particle_momentum_x')][0])/(m_e*c) )
+    x1.append(float(ad[("electron1", "particle_position_x")][0]))
+    x2.append(float(ad[("electron2", "particle_position_x")][0]))
+    beta1.append(float(ad[("electron1", "particle_momentum_x")][0]) / (m_e * c))
+    beta2.append(float(ad[("electron2", "particle_momentum_x")][0]) / (m_e * c))
 
 # Convert to numpy array
 x1 = np.array(x1)
@@ -60,23 +61,23 @@ beta1 = np.array(beta1)
 beta2 = np.array(beta2)
 
 # Plot velocities, compare with theory
-w = 5.e12
-re = physical_constants['classical electron radius'][0]
-beta_th = np.sqrt( beta1[0]**2 - 2*w*re*np.log( (x2[0]-x1[0])/(x2-x1) ) )
-plt.plot( beta1, '+', label='Particle 1' )
-plt.plot( -beta2, 'x', label='Particle 2' )
-plt.plot( beta_th, '*', label='Theory' )
+w = 5.0e12
+re = physical_constants["classical electron radius"][0]
+beta_th = np.sqrt(beta1[0] ** 2 - 2 * w * re * np.log((x2[0] - x1[0]) / (x2 - x1)))
+plt.plot(beta1, "+", label="Particle 1")
+plt.plot(-beta2, "x", label="Particle 2")
+plt.plot(beta_th, "*", label="Theory")
 plt.legend(loc=0)
-plt.xlabel('Time (a.u.)')
-plt.ylabel('Normalized velocity')
-plt.savefig('Comparison.png')
+plt.xlabel("Time (a.u.)")
+plt.ylabel("Normalized velocity")
+plt.savefig("Comparison.png")
 
 # Check that the results are close to the theory
-assert np.allclose( beta1[1:], beta_th[1:], atol=0.01 )
-assert np.allclose( -beta2[1:], beta_th[1:], atol=0.01  )
+assert np.allclose(beta1[1:], beta_th[1:], atol=0.01)
+assert np.allclose(-beta2[1:], beta_th[1:], atol=0.01)
 
 # Run checksum regression test
-sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+sys.path.insert(1, "../../../../warpx/Regression/Checksum/")
 import checksumAPI
 
 test_name = os.path.split(os.getcwd())[1]

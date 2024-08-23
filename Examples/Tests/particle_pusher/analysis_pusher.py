@@ -27,19 +27,19 @@ import sys
 
 import yt
 
-sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+sys.path.insert(1, "../../../../warpx/Regression/Checksum/")
 import checksumAPI
 
 tolerance = 0.001
 
 filename = sys.argv[1]
-ds = yt.load( filename )
+ds = yt.load(filename)
 ad = ds.all_data()
-x  = ad['particle_position_x'].to_ndarray()
+x = ad["particle_position_x"].to_ndarray()
 
-print('error = ', abs(x))
-print('tolerance = ', tolerance)
-assert(abs(x) < tolerance)
+print("error = ", abs(x))
+print("tolerance = ", tolerance)
+assert abs(x) < tolerance
 
 test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)
