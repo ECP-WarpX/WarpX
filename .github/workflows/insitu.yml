@@ -17,6 +17,7 @@ jobs:
       CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code -Wno-error=pass-failed"
       CMAKE_GENERATOR: Ninja
       CMAKE_PREFIX_PATH: /root/install/sensei/v4.0.0/lib64/cmake
+      OMP_NUM_THREADS: 1
     container:
       image: senseiinsitu/ci:fedora35-amrex-20220613
     steps:
@@ -38,6 +39,7 @@ jobs:
       CXX: g++
       CC: gcc
       CMAKE_PREFIX_PATH: /ascent/install/lib/cmake/
+      OMP_NUM_THREADS: 1
     container:
       image: alpinedav/ascent:0.9.2
     steps:
@@ -79,6 +81,7 @@ jobs:
       CMAKE_PREFIX_PATH: "/opt/conduit:/opt/catalyst"
       CATALYST_DEBUG: 1
       CATALYST_IMPLEMENTATION_PATHS: /opt/paraview/lib/catalyst
+      OMP_NUM_THREADS: 1
 
     container:
       image: kitware/paraview:ci-catalyst-amrex-warpx-20240701
