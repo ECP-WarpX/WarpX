@@ -9,7 +9,7 @@ visualization and analysis capabilities, which is what this document will focus 
 
 Enabling Catalyst
 -----------------
-In order to use Catalyst with WarpX, you must `build Catalyst 2 <https://catalyst-in-situ.readthedocs.io/en/latest/build_and_install.html>`_ and `build <https://github.com/Kitware/ParaView/blob/master/Documentation/dev/build.md>`_ or `install <https://www.paraview.org/download/>`_ ParaView 5.9+. Afterward, AMReX must be built with ``AMReX_CONDUIT=TRUE``,
+In order to use Catalyst with WarpX, you must `build Catalyst 2 <https://catalyst-in-situ.readthedocs.io/en/latest/build_and_install.html>`_ and `build <https://github.com/Kitware/ParaView/blob/master/Documentation/dev/build.md>`__ or `install <https://www.paraview.org/download/>`__ ParaView 5.9+. Afterward, AMReX must be built with ``AMReX_CONDUIT=TRUE``,
 ``AMReX_CATALYST=TRUE``, ``Conduit_DIR=/path/to/conduit``, and ``Catalyst_DIR=/path/to/catalyst`` (``/path/to/catalyst`` should be the directory containing ``catalyst-config.cmake``, not the path to the implementation).
 
 Once AMReX is appropriately built, WarpX can be built with the following options:
