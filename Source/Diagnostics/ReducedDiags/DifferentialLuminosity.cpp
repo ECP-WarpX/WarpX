@@ -248,7 +248,7 @@ void DifferentialLuminosity::ComputeDiags (int step)
                         // determine particle bin
                         int const bin = int(Math::floor((E_com-bin_min)/bin_size));
 
-                        if ( bin<0 || bin>=num_bins ) { return; } // discard if out-of-range
+                        if ( bin<0 || bin>=num_bins ) { continue; } // discard if out-of-range
 
                         Real v1_minus_v2_x = u1x[j_1]/gamma1 - u2x[j_2]/gamma2;
                         Real v1_minus_v2_y = u1y[j_1]/gamma1 - u2y[j_2]/gamma2;
