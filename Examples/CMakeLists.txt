@@ -149,10 +149,10 @@ function(add_warpx_test
     endif()
     if(preparation)
         add_test(
-                NAME ${name}.preparation
-                COMMAND
-                    ${THIS_Python_SCRIPT_EXE} ${WarpX_SOURCE_DIR}/${preparation}
-                WORKING_DIRECTORY ${THIS_WORKING_DIR}
+            NAME ${name}.preparation
+            COMMAND
+                ${THIS_Python_SCRIPT_EXE} ${WarpX_SOURCE_DIR}/${preparation}
+            WORKING_DIRECTORY ${THIS_WORKING_DIR}
         )
         set_property(TEST ${name}.run APPEND PROPERTY DEPENDS "${name}.preparation")
     endif()
