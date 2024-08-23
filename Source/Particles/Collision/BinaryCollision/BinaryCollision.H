@@ -289,6 +289,7 @@ public:
             return 4._prt/3._prt*MathConst::pi*rr*rr*dr*dr;
 #else
             // No factor is needed for Cartesian
+            amrex::ignore_unused(i_cell);
             return 1._prt;
 #endif
         };
