@@ -716,7 +716,7 @@ public:
      */
     void DampFieldsInGuards (int lev, std::unique_ptr<amrex::MultiFab>& mf);
 
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
     void ApplyInverseVolumeScalingToCurrentDensity(amrex::MultiFab* Jx,
                                                    amrex::MultiFab* Jy,
                                                    amrex::MultiFab* Jz,

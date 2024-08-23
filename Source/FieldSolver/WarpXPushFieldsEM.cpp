@@ -1214,7 +1214,7 @@ void WarpX::DampFieldsInGuards(const int lev, std::unique_ptr<amrex::MultiFab>& 
     }
 }
 
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
 // This scales the current by the inverse volume and wraps around the deposition at negative radius.
 // It is faster to apply this on the grid than to do it particle by particle.
 // It is put here since there isn't another nice place for it.
@@ -1270,9 +1270,11 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
         tbr.growHi(0, ngJ[0]);
         tbt.growHi(0, ngJ[0]);
         tbz.growHi(0, ngJ[0]);
+#if defined(WARPX_DIM_RZ)
         tbr.grow(1, ngJ[1]);
         tbt.grow(1, ngJ[1]);
         tbz.grow(1, ngJ[1]);
+#endif
 
         // Rescale current in r-z mode since the inverse volume factor was not
         // included in the current deposition.
@@ -1429,7 +1431,9 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
            tb.growLo(0, ngRho[0]);
         }
         tb.growHi(0, ngRho[0]);
+#if defined(WARPX_DIM_RZ)
         tb.grow(1, ngRho[1]);
+#endif
 
         // Rescale charge in r-z mode since the inverse volume factor was not
         // included in the charge deposition.
