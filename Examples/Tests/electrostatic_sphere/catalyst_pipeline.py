@@ -1,9 +1,10 @@
 # script-version: 2.0
 # Catalyst state generated using paraview version 5.11.1-1332-ga0a402a54e
+# and validated with 5.12
 import paraview
 
 paraview.compatibility.major = 5
-paraview.compatibility.minor = 11
+paraview.compatibility.minor = 12
 
 #### import the simple module from the paraview
 from paraview.simple import *
