@@ -42,8 +42,8 @@ geometry.prob_hi =  0.5*Lx  0.5*Ly  0.5*Lz
 #################################
 ######## BOUNDARY CONDITION #####
 #################################
-boundary.field_lo = open open open 
-boundary.field_hi = open open open 
+boundary.field_lo = open open open
+boundary.field_hi = open open open
 boundary.particle_lo = Absorbing Absorbing Absorbing
 boundary.particle_hi = Absorbing Absorbing Absorbing
 
@@ -56,18 +56,18 @@ warpx.grid_type = collocated
 algo.particle_shape = 3
 algo.load_balance_intervals=100
 algo.particle_pusher = vay
-warpx.poisson_solver = fft 
+warpx.poisson_solver = fft
 
 #################################
 ########### PARTICLES ###########
 #################################
-particles.species_names = beam1 beam2 
+particles.species_names = beam1 beam2
 
 beam1.species_type = electron
 beam1.injection_style = gaussian_beam
 beam1.x_rms = sigmax
 beam1.y_rms = sigmay
-beam1.z_rms = sigmaz 
+beam1.z_rms = sigmaz
 beam1.x_m = 0
 beam1.y_m = 0
 beam1.z_m = muz
@@ -87,7 +87,7 @@ beam2.species_type = positron
 beam2.injection_style = gaussian_beam
 beam2.x_rms = sigmax
 beam2.y_rms = sigmay
-beam2.z_rms = sigmaz 
+beam2.z_rms = sigmaz
 beam2.x_m = 0
 beam2.y_m = 0
 beam2.z_m = -muz
