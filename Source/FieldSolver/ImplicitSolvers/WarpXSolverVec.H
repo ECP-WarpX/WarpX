@@ -75,24 +75,7 @@ public:
 
     [[nodiscard]] RT dotProduct( const WarpXSolverVec&  a_X ) const;
 
-    inline
-    void Copy ( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& a_field_vec,
-                const warpx::fields::FieldType                                           a_field_type )
-    {
-
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            IsDefined(),
-            "WarpXSolverVec::Copy() called on undefined WarpXSolverVec");
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            a_field_type==m_field_type,
-            "WarpXSolverVec::Copy() called with vecs of different types");
-        for (int lev=0; lev<m_num_amr_levels; ++lev) {
-            for (int n=0; n<3; ++n) {
-                amrex::MultiFab::Copy( *m_field_vec[lev][n], *a_field_vec[lev][n], 0, 0, m_ncomp,
-                                       amrex::IntVect::TheZeroVector() );
-            }
-        }
-    }
+    void Copy ( const warpx::fields::FieldType  a_field_type );
 
     inline
     void Copy ( const WarpXSolverVec&  a_solver_vec )
@@ -106,8 +89,14 @@ public:
                 "WarpXSolverVec::Copy(solver_vec) called with vecs of different types");
         }
         else { Define(a_solver_vec); }
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& solver_vec = a_solver_vec.getVec();
-        Copy(solver_vec, a_solver_vec.getVecType());
+
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& this_vec = a_solver_vec.getVec();
+        for (int lev=0; lev<m_num_amr_levels; ++lev) {
+            for (int n=0; n<3; ++n) {
+                amrex::MultiFab::Copy( *m_field_vec[lev][n], *this_vec[lev][n], 0, 0, m_ncomp,
+                                       amrex::IntVect::TheZeroVector() );
+            }
+        }
     }
 
     // Prohibit Copy assignment operator
