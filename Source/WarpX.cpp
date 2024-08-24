@@ -327,6 +327,10 @@ WarpX::WarpX ()
     Efield_fp.resize(nlevs_max);
     Bfield_fp.resize(nlevs_max);
 
+    Efield_dotMask.resize(nlevs_max);
+    Bfield_dotMask.resize(nlevs_max);
+    phi_dotMask.resize(nlevs_max);
+
     // Only allocate vector potential arrays when using the Magnetostatic Solver
     if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
     {
@@ -2095,6 +2099,9 @@ WarpX::ClearLevel (int lev)
         Efield_fp [lev][i].reset();
         Bfield_fp [lev][i].reset();
 
+        Efield_dotMask [lev][i].reset();
+        Bfield_dotMask [lev][i].reset();
+
         current_store[lev][i].reset();
 
         if (do_current_centering)
@@ -2140,6 +2147,8 @@ WarpX::ClearLevel (int lev)
     F_cp  [lev].reset();
     G_cp  [lev].reset();
     rho_cp[lev].reset();
+
+    phi_dotMask[lev].reset();
 
 #ifdef WARPX_USE_FFT
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
@@ -3669,4 +3678,46 @@ WarpX::getMultiLevelField(warpx::fields::FieldType field_type) const
             WARPX_ABORT_WITH_MESSAGE("Invalid field type");
             return Efield_fp;
     }
+}
+
+const amrex::iMultiFab*
+WarpX::getFieldDotMaskPointer (warpx::fields::FieldType field_type, const int lev, const int dir) const
+{
+    switch(field_type)
+    {
+        case FieldType::Efield_fp :
+            if (Efield_dotMask[lev][dir] == nullptr) {
+                SetDotMask( Efield_dotMask[lev][dir], field_type, lev, dir );
+            }
+            return Efield_dotMask[lev][dir].get();
+        case FieldType::Bfield_fp :
+            if (Bfield_dotMask[lev][dir] == nullptr) {
+                SetDotMask( Bfield_dotMask[lev][dir], field_type, lev, dir );
+            }
+            return Bfield_dotMask[lev][dir].get();
+        case FieldType::phi_fp :
+            if (phi_dotMask[lev] == nullptr) {
+                SetDotMask( phi_dotMask[lev], field_type, lev, 0 );
+            }
+            return phi_dotMask[lev].get();
+        default:
+            WARPX_ABORT_WITH_MESSAGE("Invalid field type for dotMask");
+            return Efield_dotMask[lev][dir].get();
+    }
+}
+
+void WarpX::SetDotMask( std::unique_ptr<amrex::iMultiFab>&  field_dotMask,
+                        warpx::fields::FieldType  field_type,
+                        const int  lev, const int  dir ) const
+{
+    // Define the dot mask for this field_type needed to properly compute dotProduct()
+    // for field values that have shared locations on different MPI ranks
+
+    const amrex::MultiFab* this_field = getFieldPointer(field_type,lev,dir);
+    const amrex::BoxArray& this_ba = this_field->boxArray();
+    const amrex::MultiFab tmp( this_ba, this_field->DistributionMap(),
+                               1, 0, amrex::MFInfo().SetAlloc(false) );
+    const amrex::Periodicity& period = Geom(lev).periodicity();
+    field_dotMask = tmp.OwnerMask(period);
+
 }

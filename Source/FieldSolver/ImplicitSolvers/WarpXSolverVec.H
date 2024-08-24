@@ -216,12 +216,6 @@ public:
     // solver vec types are for now limited to warpx::fields::FieldType
     warpx::fields::FieldType getVecType () const { return m_field_type; }
 
-    // clearDotMask() must be called by the highest class that owns WarpXSolverVec()
-    // after it is done being used ( typically in the destructor ) to avoid the
-    // following error message after the simulation finishes:
-    // malloc_consolidate(): unaligned fastbin chunk detected
-    static void clearDotMask() { m_dotMask.clear(); }
-
 private:
 
     bool m_is_defined = false;
@@ -234,10 +228,6 @@ private:
     inline static bool m_warpx_ptr_defined = false;
     inline static WarpX* m_WarpX = nullptr;
     void SetWarpXPointer( WarpX*  a_WarpX );
-
-    inline static bool m_dot_mask_defined = false;
-    inline static amrex::Vector<std::array<std::unique_ptr<amrex::iMultiFab>,3>> m_dotMask;
-    void SetDotMask();
 
 };
 
