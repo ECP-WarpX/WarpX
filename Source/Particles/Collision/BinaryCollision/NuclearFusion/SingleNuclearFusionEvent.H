@@ -26,7 +26,7 @@
  * nuclear fusion event, using the algorithm described in Higginson et al., Journal of
  * Computational Physics 388, 439-453 (2019). If nuclear fusion occurs, the mask is set to true
  * for that given pair of particles and the weight of the produced particles is stored in
- * p_pair_reaction_weight.
+ * p_pair_reaction_weight1 & p_pair_reaction_weight2.
  *
  * @tparam index_type type of the index argument
  * @param[in] u1x,u1y,u1z momenta of the first colliding particle
@@ -37,7 +37,7 @@
  * @param[in] dV is the volume of the corresponding cell.
  * @param[in] pair_index is the index of the colliding pair
  * @param[out] p_mask is a mask that will be set to true if fusion occurs for that pair
- * @param[out] p_pair_reaction_weight stores the weight of the product particles
+ * @param[out] p_pair_reaction_weight1,p_pair_reaction_weight2 stores the weight of the product particles
  * @param[in] fusion_multiplier factor used to increase the number of fusion events by
  * decreasing the weight of the produced particles
  * @param[in] multiplier_ratio factor used to take into account unsampled pairs (i.e. the fact
@@ -58,7 +58,8 @@ void SingleNuclearFusionEvent (const amrex::ParticleReal& u1x, const amrex::Part
                                amrex::ParticleReal w1, amrex::ParticleReal w2,
                                const amrex::Real& dt, const amrex::ParticleReal& dV, const int& pair_index,
                                index_type* AMREX_RESTRICT p_mask,
-                               amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight,
+                               amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight1,
+                               amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight2,
                                const amrex::ParticleReal& fusion_multiplier,
                                const int& multiplier_ratio,
                                const amrex::ParticleReal& probability_threshold,
@@ -123,7 +124,8 @@ void SingleNuclearFusionEvent (const amrex::ParticleReal& u1x, const amrex::Part
     if (random_number < probability)
     {
         p_mask[pair_index] = true;
-        p_pair_reaction_weight[pair_index] = w_min/fusion_multiplier_eff;
+        p_pair_reaction_weight1[pair_index] = w_min/fusion_multiplier_eff;
+        p_pair_reaction_weight2[pair_index] = w_min/fusion_multiplier_eff;
     }
     else
     {

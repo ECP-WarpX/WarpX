@@ -21,13 +21,13 @@
  * @param[in] u1x,u1y,u1z momenta of the first colliding particle.
  * @param[in] u2x,u2y,u2z momenta of the second colliding particle.
  * @param[in] m1,m2 masses.
- * @param[in] w1,w2 effective weight of the colliding particles.
+ * @param[in] w1,w2 weight of the colliding particles.
  * @param[in] dt is the time step length between two collision calls.
  * @param[in] dV is the volume of the corresponding cell.
  * @param[in] pair_index is the index of the colliding pair.
  * @param[out] p_mask is a mask that will be set to a non-zero integer if a
  *             collision occurs. The integer encodes the scattering process.
- * @param[out] p_pair_reaction_weight stores the weight of the product particles.
+ * @param[out] p_pair_reaction_weight1,p_pair_reaction_weight2 stores the weight of the product particles.
  * @param[in] multiplier factor by which the collision probability is increased to
  *            account for all other possible binary collision partners.
  * @param[in] process_count number of scattering processes to consider.
@@ -43,10 +43,12 @@ void CollisionPairFilter (const amrex::ParticleReal u1x, const amrex::ParticleRe
                           const amrex::ParticleReal w1, const amrex::ParticleReal w2,
                           const amrex::Real dt, const amrex::ParticleReal dV, const int pair_index,
                           index_type* AMREX_RESTRICT p_mask,
-                          amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight,
+                          amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight1,
+                          amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight2,
                           const int multiplier,
                           const int process_count,
                           const ScatteringProcess::Executor* scattering_processes,
+                          const amrex::ParticleReal minimum_splitting_weight_ratio,
                           const amrex::RandomEngine& engine)
 {
     amrex::ParticleReal E_coll, v_coll, lab_to_COM_factor;
@@ -98,7 +100,8 @@ void CollisionPairFilter (const amrex::ParticleReal u1x, const amrex::ParticleRe
             if (random_number <= sigma_sums[ii] / sigma_tot)
             {
                 p_mask[pair_index] = coll_type[ii];
-                p_pair_reaction_weight[pair_index] = w_min;
+                p_pair_reaction_weight1[pair_index] = (w1 / w_min > minimum_splitting_weight_ratio) ? w_min: w1;
+                p_pair_reaction_weight2[pair_index] = (w2 / w_min > minimum_splitting_weight_ratio) ? w_min: w2;
                 break;
             }
         }

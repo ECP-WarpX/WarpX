@@ -97,7 +97,8 @@ public:
             amrex::Real const  dt, amrex::Real const dV, index_type coll_idx,
             index_type const /*cell_start_pair*/, index_type* /*p_mask*/,
             index_type* /*p_pair_indices_1*/, index_type* /*p_pair_indices_2*/,
-            amrex::ParticleReal* /*p_pair_reaction_weight*/,
+            amrex::ParticleReal* /*p_pair_reaction_weight1*/,
+            amrex::ParticleReal* /*p_pair_reaction_weight2*/,
             amrex::RandomEngine const& engine) const
         {
             using namespace amrex::literals;

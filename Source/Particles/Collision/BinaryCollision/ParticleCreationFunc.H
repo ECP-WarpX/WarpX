@@ -87,7 +87,7 @@ public:
      * @param[in] p_pair_indices_2 array that stores the indices of the particles of the second
      * colliding species that were used in the binary collisions (i.e. particle with index
      * p_pair_indices_2[i] took part in collision i)
-     * @param[in] p_pair_reaction_weight array that stores the weight of the binary collisions.
+     * @param[in] p_pair_reaction_weight1,p_pair_reaction_weight2 array that stores the weight of the binary collisions.
      * This weight is removed from the parent particles and given to the product particles.
      */
     AMREX_INLINE
@@ -104,7 +104,8 @@ public:
                     const SmartCopy* AMREX_RESTRICT copy_species2,
                     const index_type* AMREX_RESTRICT p_pair_indices_1,
                     const index_type* AMREX_RESTRICT p_pair_indices_2,
-                    const amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight
+                    const amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight1,
+                    const amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight2
                     ) const
     {
         using namespace amrex::literals;
@@ -186,9 +187,9 @@ public:
 
                         // Set the weight of the new particles to p_pair_reaction_weight[i]/2
                         soa_products_data[j].m_rdata[PIdx::w][product_index] =
-                                                p_pair_reaction_weight[i]/amrex::ParticleReal(2.);
+                                                p_pair_reaction_weight1[i]/amrex::ParticleReal(2.);
                         soa_products_data[j].m_rdata[PIdx::w][product_index + 1] =
-                                                p_pair_reaction_weight[i]/amrex::ParticleReal(2.);
+                                                p_pair_reaction_weight2[i]/amrex::ParticleReal(2.);
                     }
                 }
 
@@ -295,7 +296,8 @@ public:
                     const index_type* /*p_mask*/, const amrex::Vector<index_type>& /*products_np*/,
                     const SmartCopy* /*copy_species1*/, const SmartCopy* /*copy_species2*/,
                     const index_type* /*p_pair_indices_1*/, const index_type* /*p_pair_indices_2*/,
-                    const amrex::ParticleReal* /*p_pair_reaction_weight*/
+                    const amrex::ParticleReal* /*p_pair_reaction_weight1*/,
+                    const amrex::ParticleReal* /*p_pair_reaction_weight2*/
                     ) const
     {
         return {};

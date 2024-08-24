@@ -63,13 +63,12 @@ public:
         const SmartCopy* AMREX_RESTRICT copy_species2,
         const index_type* AMREX_RESTRICT p_pair_indices_1,
         const index_type* AMREX_RESTRICT p_pair_indices_2,
-        const amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight ) const
+        const amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight1,
+        const amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight2 ) const
     {
         using namespace amrex::literals;
 
         if (n_total_pairs == 0) { return amrex::Vector<int>(m_num_product_species, 0); }
-
-        const amrex::ParticleReal min_splitting_weight = m_min_splitting_weight;
 
         amrex::Gpu::DeviceVector<index_type> offsets(n_total_pairs);
         index_type* AMREX_RESTRICT offsets_data = offsets.data();
@@ -79,7 +78,7 @@ public:
         // a standard cummulative sum is not appropriate since the mask is also
         // used to specify the type of collision and can therefore have values >1
         auto const total = amrex::Scan::PrefixSum<index_type>(n_total_pairs,
-            [=] AMREX_GPU_DEVICE (index_type i) -> index_type { return (mask[i] && (p_pair_reaction_weight[i] > min_splitting_weight)) ? 1 : 0; },
+            [=] AMREX_GPU_DEVICE (index_type i) -> index_type { return (mask[i]) ? 1 : 0; },
             [=] AMREX_GPU_DEVICE (index_type i, index_type s) { offsets_data[i] = s; },
             amrex::Scan::Type::exclusive, amrex::Scan::retSum
         );
@@ -204,113 +203,99 @@ public:
                 uy2 += uCOM_y;
                 uz2 += uCOM_z;
 
-                // If the reaction weight is more than the minimum set weight
-                // split the colliding weight off the colliding particles
-                if (p_pair_reaction_weight[i] > min_splitting_weight) {
-                    const auto product1_index = products_np_data[0] +
-                                            (p_offsets[i]*p_num_products_device[0] + 0);
-                    // Make a copy of the particle from species 1
-                    copy_species1[0](soa_products_data[0], soa_1, static_cast<int>(p_pair_indices_1[i]),
-                                    static_cast<int>(product1_index), engine);
-                    // Set the weight of the new particles to p_pair_reaction_weight[i]
-                    soa_products_data[0].m_rdata[PIdx::w][product1_index] = p_pair_reaction_weight[i];
+                // Create a new particle of species 1
+                const auto product1_index = products_np_data[0] +
+                                        (p_offsets[i]*p_num_products_device[0] + 0);
+                // Make a copy of the particle from species 1
+                copy_species1[0](soa_products_data[0], soa_1, static_cast<int>(p_pair_indices_1[i]),
+                                static_cast<int>(product1_index), engine);
+                // Set the weight of the new particle to p_pair_reaction_weight1[i]
+                soa_products_data[0].m_rdata[PIdx::w][product1_index] = p_pair_reaction_weight1[i];
+                // Set the velocity of the new particle to the post collision velocities
+                soa_products_data[0].m_rdata[PIdx::ux][product1_index] = ux1;
+                soa_products_data[0].m_rdata[PIdx::uy][product1_index] = uy1;
+                soa_products_data[0].m_rdata[PIdx::uz][product1_index] = uz1;
 
-                    const auto product2_index = products_np_data[1] +
-                                            (p_offsets[i]*p_num_products_device[1] + 0);
-                    // Make a copy of the particle from species 2
-                    copy_species2[1](soa_products_data[1], soa_2, static_cast<int>(p_pair_indices_2[i]),
-                                    static_cast<int>(product2_index), engine);
-                    // Set the weight of the new particles to p_pair_reaction_weight[i]
-                    soa_products_data[1].m_rdata[PIdx::w][product2_index] = p_pair_reaction_weight[i];
+                // Create a new particle of species 2
+                const auto product2_index = products_np_data[1] +
+                                        (p_offsets[i]*p_num_products_device[1] + 0);
+                // Make a copy of the particle from species 2
+                copy_species2[1](soa_products_data[1], soa_2, static_cast<int>(p_pair_indices_2[i]),
+                                static_cast<int>(product2_index), engine);
+                // Set the weight of the new particles to p_pair_reaction_weight2[i]
+                soa_products_data[1].m_rdata[PIdx::w][product2_index] = p_pair_reaction_weight2[i];
+                // Set the velocity of the new particle to the post collision velocities
+                soa_products_data[1].m_rdata[PIdx::ux][product2_index] = ux2;
+                soa_products_data[1].m_rdata[PIdx::uy][product2_index] = uy2;
+                soa_products_data[1].m_rdata[PIdx::uz][product2_index] = uz2;
 
-                    // set the new particles' velocties to the post collision velocities
-                    soa_products_data[0].m_rdata[PIdx::ux][product1_index] = ux1;
-                    soa_products_data[0].m_rdata[PIdx::uy][product1_index] = uy1;
-                    soa_products_data[0].m_rdata[PIdx::uz][product1_index] = uz1;
-                    soa_products_data[1].m_rdata[PIdx::ux][product2_index] = ux2;
-                    soa_products_data[1].m_rdata[PIdx::uy][product2_index] = uy2;
-                    soa_products_data[1].m_rdata[PIdx::uz][product2_index] = uz2;
-
+                // If the reaction weight is not the same for both species
+                // it means the weight difference represents a particle that
+                // should be merged into the appropriate product particle.
+                // Check firstly if this is the case:
+                if (p_pair_reaction_weight1[i] == p_pair_reaction_weight2[i]) {
+                    return;
                 }
-                else {
-                    // Modify the colliding particles' velocities without splitting.
-                    // The new velocities are rotated based on the scattered velocities
-                    // but conserves energy.
 
-                    const auto w1_frac = p_pair_reaction_weight[i] / w1[p_pair_indices_1[i]];
-                    const auto w2_frac = p_pair_reaction_weight[i] / w2[p_pair_indices_2[i]];
+                // Determine whether species 1 or species 2 should have the
+                // weight difference merged:
+                const bool merge_species1 = (p_pair_reaction_weight1[i] > p_pair_reaction_weight2[i]);
+                const auto m = (merge_species1) ? m1 : m2;
+                const auto ux_orig = (merge_species1) ?
+                    soa_1.m_rdata[PIdx::ux][p_pair_indices_1[i]] :
+                    soa_2.m_rdata[PIdx::ux][p_pair_indices_2[i]];
+                const auto uy_orig = (merge_species1) ?
+                    soa_1.m_rdata[PIdx::uy][p_pair_indices_1[i]] :
+                    soa_2.m_rdata[PIdx::uy][p_pair_indices_2[i]];
+                const auto uz_orig = (merge_species1) ?
+                    soa_1.m_rdata[PIdx::uz][p_pair_indices_1[i]] :
+                    soa_2.m_rdata[PIdx::uz][p_pair_indices_2[i]];
+                const auto w_origin = (merge_species1) ?
+                    p_pair_reaction_weight1[i] - p_pair_reaction_weight2[i] :
+                    p_pair_reaction_weight2[i] - p_pair_reaction_weight1[i];
 
-                    // Calculate energies of the parts of the colliding pairs
-                    // that did not participate in the collisions
-                    double Ek1, Ek2;
-                    ParticleUtils::getEnergy(
-                        soa_1.m_rdata[PIdx::ux][p_pair_indices_1[i]],
-                        soa_1.m_rdata[PIdx::uy][p_pair_indices_1[i]],
-                        soa_1.m_rdata[PIdx::uz][p_pair_indices_1[i]], m1, Ek1
-                    );
-                    Ek1 *= (1.0_prt - w1_frac);
-                    ParticleUtils::getEnergy(
-                        soa_2.m_rdata[PIdx::ux][p_pair_indices_2[i]],
-                        soa_2.m_rdata[PIdx::uy][p_pair_indices_2[i]],
-                        soa_2.m_rdata[PIdx::uz][p_pair_indices_2[i]], m2, Ek2
-                    );
-                    Ek2 *= (1.0_prt - w2_frac);
+                auto& ux_prod = (merge_species1) ? ux1 : ux2;
+                auto& uy_prod = (merge_species1) ? uy1 : uy2;
+                auto& uz_prod = (merge_species1) ? uz1 : uz2;
+                const auto w_prod = (merge_species1) ?
+                    p_pair_reaction_weight2[i] :
+                    p_pair_reaction_weight1[i];
 
-                    // Calculate energy of the product particles
-                    double Ek_product1, Ek_product2;
-                    ParticleUtils::getEnergy(ux1, uy1, uz1, m1, Ek_product1);
-                    Ek_product1 *= w1_frac;
-                    ParticleUtils::getEnergy(ux2, uy2, uz2, m2, Ek_product2);
-                    Ek_product2 *= w2_frac;
+                // Perform the merging to conserve energy
+                const auto w_frac = w_prod / (w_origin + w_prod);
 
-                    // Scatter velocities based on weighted sum
-                    soa_1.m_rdata[PIdx::ux][p_pair_indices_1[i]] *= 1.0_prt - w1_frac;
-                    soa_1.m_rdata[PIdx::uy][p_pair_indices_1[i]] *= 1.0_prt - w1_frac;
-                    soa_1.m_rdata[PIdx::uz][p_pair_indices_1[i]] *= 1.0_prt - w1_frac;
-                    soa_1.m_rdata[PIdx::ux][p_pair_indices_1[i]] += w1_frac * ux1;
-                    soa_1.m_rdata[PIdx::uy][p_pair_indices_1[i]] += w1_frac * uy1;
-                    soa_1.m_rdata[PIdx::uz][p_pair_indices_1[i]] += w1_frac * uz1;
+                // Calculate energy of the remaining original particle
+                double Ek_orig;
+                ParticleUtils::getEnergy(ux_orig, uy_orig, uz_orig, m, Ek_orig);
+                Ek_orig *= (1.0_prt - w_frac);
 
-                    soa_2.m_rdata[PIdx::ux][p_pair_indices_2[i]] *= 1.0_prt - w2_frac;
-                    soa_2.m_rdata[PIdx::uy][p_pair_indices_2[i]] *= 1.0_prt - w2_frac;
-                    soa_2.m_rdata[PIdx::uz][p_pair_indices_2[i]] *= 1.0_prt - w2_frac;
-                    soa_2.m_rdata[PIdx::ux][p_pair_indices_2[i]] += w2_frac * ux2;
-                    soa_2.m_rdata[PIdx::uy][p_pair_indices_2[i]] += w2_frac * uy2;
-                    soa_2.m_rdata[PIdx::uz][p_pair_indices_2[i]] += w2_frac * uz2;
+                // Calculate energy of the product particle
+                double Ek_prod;
+                ParticleUtils::getEnergy(ux_prod, uy_prod, uz_prod, m, Ek_prod);
+                Ek_prod *= w_frac;
 
-                    // rescale velocity vectors to conserve kinetic energy
-                    const amrex::ParticleReal up1_mag = std::sqrt(
-                        soa_1.m_rdata[PIdx::ux][p_pair_indices_1[i]]*soa_1.m_rdata[PIdx::ux][p_pair_indices_1[i]]
-                        + soa_1.m_rdata[PIdx::uy][p_pair_indices_1[i]]*soa_1.m_rdata[PIdx::uy][p_pair_indices_1[i]]
-                        + soa_1.m_rdata[PIdx::uz][p_pair_indices_1[i]]*soa_1.m_rdata[PIdx::uz][p_pair_indices_1[i]]
-                    );
-                    amrex::ParticleReal scale_fac1 = 1.0_prt;
-                    if (up1_mag > 0.0_prt) {
-                        const auto Etot1 = (Ek1 + Ek_product1) * PhysConst::q_e;
-                        scale_fac1 = static_cast<amrex::ParticleReal>(
-                            std::sqrt(Etot1 * (Etot1 + 2.0_prt*m1*c2) / c2) / m1
-                        ) / up1_mag;
-                    }
-                    soa_1.m_rdata[PIdx::ux][p_pair_indices_1[i]] *= scale_fac1;
-                    soa_1.m_rdata[PIdx::uy][p_pair_indices_1[i]] *= scale_fac1;
-                    soa_1.m_rdata[PIdx::uz][p_pair_indices_1[i]] *= scale_fac1;
+                // Scatter velocities based on weighted sum
+                ux_prod *= w_frac;
+                uy_prod *= w_frac;
+                uz_prod *= w_frac;
+                ux_prod += (1.0_prt - w_frac) * ux_orig;
+                uy_prod += (1.0_prt - w_frac) * uy_orig;
+                uz_prod += (1.0_prt - w_frac) * uz_orig;
 
-                    const amrex::ParticleReal up2_mag = std::sqrt(
-                        soa_2.m_rdata[PIdx::ux][p_pair_indices_2[i]]*soa_2.m_rdata[PIdx::ux][p_pair_indices_2[i]]
-                        + soa_2.m_rdata[PIdx::uy][p_pair_indices_2[i]]*soa_2.m_rdata[PIdx::uy][p_pair_indices_2[i]]
-                        + soa_2.m_rdata[PIdx::uz][p_pair_indices_2[i]]*soa_2.m_rdata[PIdx::uz][p_pair_indices_2[i]]
-                    );
-                    amrex::ParticleReal scale_fac2 = 1.0_prt;
-                    if (up2_mag > 0.0_prt) {
-                        const auto Etot2 = (Ek2 + Ek_product2) * PhysConst::q_e;
-                        scale_fac2 = static_cast<amrex::ParticleReal>(
-                            std::sqrt(Etot2 * (Etot2 + 2.0_prt*m2*c2) / c2) / m2
-                        ) / up2_mag;
-                    }
-                    soa_2.m_rdata[PIdx::ux][p_pair_indices_2[i]] *= scale_fac2;
-                    soa_2.m_rdata[PIdx::uy][p_pair_indices_2[i]] *= scale_fac2;
-                    soa_2.m_rdata[PIdx::uz][p_pair_indices_2[i]] *= scale_fac2;
+                // rescale velocity vectors to conserve kinetic energy
+                const amrex::ParticleReal up_mag = std::sqrt(
+                    ux_prod*ux_prod + uy_prod*uy_prod + uz_prod*uz_prod
+                );
+                amrex::ParticleReal scale_fac = 1.0_prt;
+                if (up_mag > 0.0_prt) {
+                    const auto Etot = (Ek_orig + Ek_prod) * PhysConst::q_e;
+                    scale_fac = static_cast<amrex::ParticleReal>(
+                        std::sqrt(Etot * (Etot + 2.0_prt*m*c2) / c2) / m
+                    ) / up_mag;
                 }
+                ux_prod *= scale_fac;
+                uy_prod *= scale_fac;
+                uz_prod *= scale_fac;
             }
         });
 
@@ -342,8 +327,6 @@ public:
 private:
     // How many different type of species the collision produces
     int m_num_product_species;
-    // Minimum reaction weight for which particles are split into new particles
-    amrex::ParticleReal m_min_splitting_weight = 0.0;
     // Vectors of size m_num_product_species storing how many particles of a given species are
     // produced by a collision event. These vectors are duplicated (one version for host and one
     // for device) which is necessary with GPUs but redundant on CPU.

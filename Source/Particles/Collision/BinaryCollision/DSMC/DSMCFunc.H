@@ -83,8 +83,8 @@ public:
          * @param[out] p_pair_indices_1,p_pair_indices_2 arrays that store the indices of the
          * particles of a given pair. They are only needed here to store information that will be used
          * later on when actually creating the product particles.
-         * @param[out] p_pair_reaction_weight stores the weight of the product particles. It is only
-         * needed here to store information that will be used later on when actually creating the
+         * @param[out] p_pair_reaction_weight1,p_pair_reaction_weight2 stores the weight of the product particles.
+         * It is only needed here to store information that will be used later on when actually creating the
          * product particles.
          * @param[in] engine the random engine.
          */
@@ -103,7 +103,8 @@ public:
             amrex::Real const  dt, amrex::Real const dV, index_type coll_idx,
             index_type const cell_start_pair, index_type* AMREX_RESTRICT p_mask,
             index_type* AMREX_RESTRICT p_pair_indices_1, index_type* AMREX_RESTRICT p_pair_indices_2,
-            amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight,
+            amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight1,
+            amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight2,
             amrex::RandomEngine const& engine) const
         {
             amrex::ParticleReal * const AMREX_RESTRICT w1 = soa_1.m_rdata[PIdx::w];
@@ -168,8 +169,9 @@ public:
                         u2x[ I2[i2] ], u2y[ I2[i2] ], u2z[ I2[i2] ],
                         m1, m2, w1[ I1[i1] ], w2[ I2[i2] ],
                         dt, dV, static_cast<int>(pair_index), p_mask,
-                        p_pair_reaction_weight, multiplier_ratio,
-                        m_process_count, m_scattering_processes_data, engine);
+                        p_pair_reaction_weight1, p_pair_reaction_weight2, multiplier_ratio,
+                        m_process_count, m_scattering_processes_data,
+                        m_min_splitting_weight_ratio, engine);
 
 #if (defined WARPX_DIM_RZ)
                     amrex::ParticleReal const u1xbuf_new = u1x[I1[i1]];
@@ -180,9 +182,9 @@ public:
                     // Remove pair reaction weight from the colliding particles' weights
                     if (p_mask[pair_index]) {
                         BinaryCollisionUtils::remove_weight_from_colliding_particle(
-                            w1[ I1[i1] ], idcpu1[ I1[i1] ], p_pair_reaction_weight[pair_index]);
+                            w1[ I1[i1] ], idcpu1[ I1[i1] ], p_pair_reaction_weight1[pair_index]);
                         BinaryCollisionUtils::remove_weight_from_colliding_particle(
-                            w2[ I2[i2] ], idcpu2[ I2[i2] ], p_pair_reaction_weight[pair_index]);
+                            w2[ I2[i2] ], idcpu2[ I2[i2] ], p_pair_reaction_weight2[pair_index]);
                     }
                 }
 
@@ -198,6 +200,7 @@ public:
         bool m_computeSpeciesDensities = false;
         bool m_computeSpeciesTemperatures = false;
         bool m_isSameSpecies = false;
+        amrex::ParticleReal m_min_splitting_weight_ratio;
         ScatteringProcess::Executor* m_scattering_processes_data;
     };
 
@@ -207,6 +210,8 @@ private:
     amrex::Vector<ScatteringProcess> m_scattering_processes;
     amrex::Gpu::DeviceVector<ScatteringProcess::Executor> m_scattering_processes_exe;
     bool m_isSameSpecies;
+    // Minimum reaction weight ratio for which particles are split into new particles
+    amrex::ParticleReal m_min_splitting_weight_ratio = 2.0;
 
     Executor m_exe;
 };

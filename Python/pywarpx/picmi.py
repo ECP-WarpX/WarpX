@@ -2324,9 +2324,10 @@ class DSMCCollisions(picmistandard.base._ClassWithInit):
     ndt: integer, optional
         The collisions will be applied every "ndt" steps. Must be 1 or larger.
 
-    minimum_splitting_weight: float, optional
-        The colliding particles will not be split when the reaction weight
-        is less than this number.
+    minimum_splitting_weight_ratio: float, default 2
+        If during a collision the ratio of a reacting particle's weight to the
+        reaction weight is less than or equal to this number, the left over
+        original and produced particles will be merged.
     """
 
     def __init__(

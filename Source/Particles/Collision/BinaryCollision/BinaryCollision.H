@@ -354,9 +354,12 @@ public:
             index_type* AMREX_RESTRICT p_pair_indices_2 = pair_indices_2.dataPtr();
             // How much weight should be given to the produced particles (and removed from the
             // reacting particles)
-            amrex::Gpu::DeviceVector<amrex::ParticleReal> pair_reaction_weight(n_total_pairs);
-            amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight =
-                                                               pair_reaction_weight.dataPtr();
+            amrex::Gpu::DeviceVector<amrex::ParticleReal> pair_reaction_weight1(n_total_pairs);
+            amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight1 =
+                                                               pair_reaction_weight1.dataPtr();
+            amrex::Gpu::DeviceVector<amrex::ParticleReal> pair_reaction_weight2(n_total_pairs);
+            amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight2 =
+                                                               pair_reaction_weight2.dataPtr();
             /*
               End of calculations only required when creating product particles
             */
@@ -460,7 +463,7 @@ public:
 
                     // Call the function in order to perform collisions
                     // If there are product species, mask, p_pair_indices_1/2, and
-                    // p_pair_reaction_weight are filled here
+                    // p_pair_reaction_weight1/2 are filled here
                     binary_collision_functor(
                         cell_start_1, cell_half_1,
                         cell_half_1, cell_stop_1,
@@ -469,7 +472,7 @@ public:
                         n1, n1, T1, T1,
                         q1, q1, m1, m1, dt, dV, coll_idx,
                         cell_start_pair, p_mask, p_pair_indices_1, p_pair_indices_2,
-                        p_pair_reaction_weight, engine);
+                        p_pair_reaction_weight1, p_pair_reaction_weight2, engine);
                 }
             );
 
@@ -483,7 +486,7 @@ public:
                                                     products_mass, p_mask, products_np,
                                                     copy_species1, copy_species2,
                                                     p_pair_indices_1, p_pair_indices_2,
-                                                    p_pair_reaction_weight);
+                                                    p_pair_reaction_weight1, p_pair_reaction_weight2);
 
             for (int i = 0; i < n_product_species; i++)
             {
@@ -604,9 +607,12 @@ public:
             index_type* AMREX_RESTRICT p_pair_indices_2 = pair_indices_2.dataPtr();
             // How much weight should be given to the produced particles (and removed from the
             // reacting particles)
-            amrex::Gpu::DeviceVector<amrex::ParticleReal> pair_reaction_weight(n_total_pairs);
-            amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight =
-                                                               pair_reaction_weight.dataPtr();
+            amrex::Gpu::DeviceVector<amrex::ParticleReal> pair_reaction_weight1(n_total_pairs);
+            amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight1 =
+                                                               pair_reaction_weight1.dataPtr();
+            amrex::Gpu::DeviceVector<amrex::ParticleReal> pair_reaction_weight2(n_total_pairs);
+            amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight2 =
+                                                               pair_reaction_weight2.dataPtr();
             /*
               End of calculations only required when creating product particles
             */
@@ -744,7 +750,7 @@ public:
 
                     // Call the function in order to perform collisions
                     // If there are product species, p_mask, p_pair_indices_1/2, and
-                    // p_pair_reaction_weight are filled here
+                    // p_pair_reaction_weight1/2 are filled here
                     binary_collision_functor(
                         cell_start_1, cell_stop_1, cell_start_2, cell_stop_2,
                         indices_1, indices_2,
@@ -752,7 +758,7 @@ public:
                         n1, n2, T1, T2,
                         q1, q2, m1, m2, dt, dV, coll_idx,
                         cell_start_pair, p_mask, p_pair_indices_1, p_pair_indices_2,
-                        p_pair_reaction_weight, engine);
+                        p_pair_reaction_weight1, p_pair_reaction_weight2, engine);
                 }
             );
 
@@ -766,7 +772,7 @@ public:
                                                     products_mass, p_mask, products_np,
                                                     copy_species1, copy_species2,
                                                     p_pair_indices_1, p_pair_indices_2,
-                                                    p_pair_reaction_weight);
+                                                    p_pair_reaction_weight1, p_pair_reaction_weight2);
 
             for (int i = 0; i < n_product_species; i++)
             {
