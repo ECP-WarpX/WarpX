@@ -14,12 +14,12 @@ add_warpx_test(
 
 # FIXME
 #add_warpx_test(
-#    test_2d_restart_runtime_components_picmi # name
+#    test_2d_runtime_components_picmi # name
 #    2 # dims
 #    1 # nprocs
 #    OFF # eb
 #    OFF # preparation script
-#    Examples/Tests/restart/inputs_test_2d_restart_runtime_components_picmi.py # inputs
+#    Examples/Tests/restart/inputs_test_2d_runtime_components_picmi.py # inputs
 #    Examples/analysis_default_regression.py # analysis
 #    diags/diag1000010 # output
 #)
