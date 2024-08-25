@@ -7,6 +7,8 @@
 #include "FieldSolver/ImplicitSolvers/WarpXSolverVec.H"
 #include "WarpX.H"
 
+using namespace warpx::fields;
+
 void WarpXSolverVec::Define ( WarpX*     a_WarpX,
                               FieldType  a_field_type,
                               FieldType  a_scalar_type )
