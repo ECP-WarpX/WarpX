@@ -15,7 +15,13 @@ void WarpXSolverVec::Define ( WarpX*     a_WarpX,
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !IsDefined(),
-        "WarpXSolverVec::Define(a_vec, a_type) called on already defined WarpXSolverVec");
+        "WarpXSolverVec::Define() called on already defined WarpXSolverVec");
+
+    // Define static member pointer to WarpX
+    if (!m_warpx_ptr_defined) {
+        m_WarpX = a_WarpX;
+        m_warpx_ptr_defined = true;
+    }
 
     m_array_type = a_array_type;
     m_scalar_type = a_scalar_type;
@@ -26,12 +32,17 @@ void WarpXSolverVec::Define ( WarpX*     a_WarpX,
     // Define the 3D vector field data container
     if (m_array_type != FieldType::None) {
 
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            isFieldArray(m_array_type),
+            "WarpXSolverVec::Define() called with array_type not an array field");
+
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
+            using arr_mf_type = std::array<const amrex::MultiFab* const, 3>;
+            const arr_mf_type this_array = m_WarpX->getFieldPointerArray(m_array_type, lev);
             for (int n = 0; n < 3; n++) {
-                const amrex::MultiFab* mf_model = a_WarpX->getFieldPointer(m_array_type,lev,n);
-                m_array_vec[lev][n] = std::make_unique<amrex::MultiFab>( mf_model->boxArray(),
-                                                                         mf_model->DistributionMap(),
-                                                                         mf_model->nComp(),
+                m_array_vec[lev][n] = std::make_unique<amrex::MultiFab>( this_array[n]->boxArray(),
+                                                                         this_array[n]->DistributionMap(),
+                                                                         this_array[n]->nComp(),
                                                                          amrex::IntVect::TheZeroVector() );
             }
         }
@@ -41,23 +52,21 @@ void WarpXSolverVec::Define ( WarpX*     a_WarpX,
     // Define the scalar data container
     if (m_scalar_type != FieldType::None) {
 
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            !isFieldArray(m_scalar_type),
+            "WarpXSolverVec::Define() called with scalar_type not a scalar field ");
+
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
-            const amrex::MultiFab* mf_model = a_WarpX->getFieldPointer(m_scalar_type,lev,0);
-            m_scalar_vec[lev] = std::make_unique<amrex::MultiFab>( mf_model->boxArray(),
-                                                                   mf_model->DistributionMap(),
-                                                                   mf_model->nComp(),
+            const amrex::MultiFab* this_mf = m_WarpX->getFieldPointer(m_scalar_type,lev,0);
+            m_scalar_vec[lev] = std::make_unique<amrex::MultiFab>( this_mf->boxArray(),
+                                                                   this_mf->DistributionMap(),
+                                                                   this_mf->nComp(),
                                                                    amrex::IntVect::TheZeroVector() );
         }
 
     }
 
     m_is_defined = true;
-
-    // Define static member pointer to WarpX
-    if (!m_warpx_ptr_defined) {
-        m_WarpX = a_WarpX;
-        m_warpx_ptr_defined = true;
-    }
 }
 
 void WarpXSolverVec::Copy ( FieldType  a_array_type,
@@ -73,9 +82,10 @@ void WarpXSolverVec::Copy ( FieldType  a_array_type,
 
     for (int lev = 0; lev < m_num_amr_levels; ++lev) {
         if (m_array_type != FieldType::None) {
+            using arr_mf_type = std::array<const amrex::MultiFab* const, 3>;
+            const arr_mf_type this_array = m_WarpX->getFieldPointerArray(m_array_type, lev);
             for (int n = 0; n < 3; ++n) {
-                const amrex::MultiFab* this_field = m_WarpX->getFieldPointer(m_array_type,lev,n);
-                amrex::MultiFab::Copy( *m_array_vec[lev][n], *this_field, 0, 0, m_ncomp,
+                amrex::MultiFab::Copy( *m_array_vec[lev][n], *this_array[n], 0, 0, m_ncomp,
                                        amrex::IntVect::TheZeroVector() );
             }
         }
