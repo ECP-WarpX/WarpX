@@ -34,15 +34,18 @@
 #include "FieldSolver/Fields.H"
 
 /**
- * \brief This is a wrapper class around a Vector of array of pointers to MultiFabs that
+ * \brief
+ *  This is a wrapper class around a Vector of pointers to MultiFabs that
  *  contains basic math operators and functionality needed to interact with nonlinear
- *  solvers in WarpX and linear solvers in AMReX, such as GMRES.
+ *  solvers in WarpX and linear solvers in AMReX, such as GMRES. The size of the
+ *  Vector is the number of amr levels. Hardcoded for 1 right now.
  *
- *  The size of the Vector is the number of amr levels. Hardcoded for 1 right now. The
- *  size of the array is the number of MultiFabs. It is hardcoded for 3 right now as it
- *  is only used for the electric field in the implicit electromagnetic time solvers. In
- *  the future, the array size can be made a template parameter so that this class can
- *  be used for other solver vectors, such as electrostatic (array size 1) or Darwin (array size 4).
+ *  A WarpXSolverVec can consist of an array size 3 of MultiFabs (for vector fields
+ *  such as E, B, and A) or of a single MultiFab for scalar fields.
+ *  Additionally, a WarpXSolverVec can in general contain both an array size 3 field and a
+ *  scalar field. For example, the array size 3 field can be used for the vector potential A
+ *  and the scalar field can be used for the scalar potential phi, which is the full state of
+ *  unknowns for a Darwin electromagnetic model.
  */
 
 class WarpX;
@@ -270,7 +273,7 @@ public:
     [[nodiscard]] const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& getScalarVec() const {return m_scalar_vec;}
     amrex::Vector<std::unique_ptr<amrex::MultiFab>>& getScalarVec() {return m_scalar_vec;}
 
-    // solver vec types are limited to warpx::fields::warpx::fields::FieldType
+    // solver vector types are type warpx::fields::FieldType
     [[nodiscard]] warpx::fields::FieldType getArrayVecType () const { return m_array_type; }
     [[nodiscard]] warpx::fields::FieldType getScalarVecType () const { return m_scalar_type; }
 
