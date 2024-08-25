@@ -329,6 +329,7 @@ WarpX::WarpX ()
 
     Efield_dotMask.resize(nlevs_max);
     Bfield_dotMask.resize(nlevs_max);
+    Afield_dotMask.resize(nlevs_max);
     phi_dotMask.resize(nlevs_max);
 
     // Only allocate vector potential arrays when using the Magnetostatic Solver
@@ -2101,6 +2102,7 @@ WarpX::ClearLevel (int lev)
 
         Efield_dotMask [lev][i].reset();
         Bfield_dotMask [lev][i].reset();
+        Afield_dotMask [lev][i].reset();
 
         current_store[lev][i].reset();
 
@@ -3695,6 +3697,11 @@ WarpX::getFieldDotMaskPointer ( FieldType field_type, int lev, int dir ) const
                 SetDotMask( Bfield_dotMask[lev][dir], field_type, lev, dir );
             }
             return Bfield_dotMask[lev][dir].get();
+        case FieldType::vector_potential_fp :
+            if (Afield_dotMask[lev][dir] == nullptr) {
+                SetDotMask( Afield_dotMask[lev][dir], field_type, lev, dir );
+            }
+            return Afield_dotMask[lev][dir].get();
         case FieldType::phi_fp :
             if (phi_dotMask[lev] == nullptr) {
                 SetDotMask( phi_dotMask[lev], field_type, lev, 0 );

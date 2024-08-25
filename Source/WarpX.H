@@ -1526,10 +1526,11 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_fp;
 
-    // Masks for computing global moments of fields when using grids that have
-    // shared locations across different ranks (e.g., a Yee grid)
+    // Masks for computing dot product and global moments of fields when using grids that
+    // have shared locations across different ranks (e.g., a Yee grid)
     mutable amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>,3 > > Efield_dotMask;
     mutable amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>,3 > > Bfield_dotMask;
+    mutable amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>,3 > > Afield_dotMask;
     mutable amrex::Vector<            std::unique_ptr<amrex::iMultiFab>     > phi_dotMask;
 
     // Memory buffers for computing magnetostatic fields
