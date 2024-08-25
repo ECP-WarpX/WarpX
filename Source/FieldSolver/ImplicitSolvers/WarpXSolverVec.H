@@ -41,7 +41,8 @@
  *  Vector is the number of amr levels. Hardcoded for 1 right now.
  *
  *  A WarpXSolverVec can consist of an array size 3 of MultiFabs (for vector fields
- *  such as E, B, and A) or of a single MultiFab for scalar fields.
+ *  such as E, B, and A) or of a single MultiFab for scalar fields. Both the array
+ *  size 3 and scalar fields must be of type warpx::fields::FieldType.
  *  Additionally, a WarpXSolverVec can in general contain both an array size 3 field and a
  *  scalar field. For example, the array size 3 field can be used for the vector potential A
  *  and the scalar field can be used for the scalar potential phi, which is the full state of
