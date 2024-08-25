@@ -52,7 +52,12 @@ void WarpXSolverVec::Define ( WarpX*     a_WarpX,
     }
 
     m_is_defined = true;
-    SetWarpXPointer(a_WarpX);
+
+    // Define static member pointer to WarpX
+    if (!m_warpx_ptr_defined) {
+        m_WarpX = a_WarpX;
+        m_warpx_ptr_defined = true;
+    }
 }
 
 void WarpXSolverVec::Copy ( FieldType  a_array_type,
@@ -80,13 +85,6 @@ void WarpXSolverVec::Copy ( FieldType  a_array_type,
                                    amrex::IntVect::TheZeroVector() );
         }
     }
-}
-
-void WarpXSolverVec::SetWarpXPointer( WarpX*  a_WarpX )
-{
-    if (m_warpx_ptr_defined) { return; }
-    m_WarpX = a_WarpX;
-    m_warpx_ptr_defined = true;
 }
 
 [[nodiscard]] amrex::Real WarpXSolverVec::dotProduct ( const WarpXSolverVec&  a_X ) const

@@ -291,7 +291,6 @@ private:
 
     inline static bool m_warpx_ptr_defined = false;
     inline static WarpX* m_WarpX = nullptr;
-    void SetWarpXPointer( WarpX*  a_WarpX );
 
 };
 
