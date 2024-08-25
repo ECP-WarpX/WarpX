@@ -48,15 +48,21 @@ for testname, testinput in zip(testnames, testinputs):
     if not testname.startswith(tuple(testname_prefix)):
         print(f"Wrong test  name: {testname}")
         wrong_testname = True
+    if "restart" in testname:
+        if not testname.endswith("_restart") and not testname.endswith("_restart.py"):
+            print(f"Wrong test  name: {testname}")
+            wrong_testname = True
     if not testinput == f"inputs_{testname}" and not testinput.endswith("_picmi.py"):
         print(f"Wrong input name: {testinput}")
         wrong_testinput = True
 
 if wrong_testname:
     print(f"NOTE: Test names must start with one of {testname_prefix}.")
+    print("      Test names must end with '_restart' for restart tests")
+    print("      (with the extension '.py' in the case of PICMI input scripts).")
 if wrong_testinput:
     print("NOTE: Test input names must start with 'inputs_' followed by the test name")
-    print("      (ending with the extension '.py' in the case of PICMI input scripts).")
+    print("      (with the extension '.py' in the case of PICMI input scripts).")
 
 # check that all input files in Examples/ are tested
 print("\nCheck that all test input files are tested...")
