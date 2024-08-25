@@ -11,6 +11,7 @@ namespace warpx::fields
 {
     enum struct FieldType : int
     {
+        None,
         Efield_aux,
         Bfield_aux,
         Efield_fp,
