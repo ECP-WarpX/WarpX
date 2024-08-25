@@ -10,26 +10,26 @@
 using namespace warpx::fields;
 
 void WarpXSolverVec::Define ( WarpX*     a_WarpX,
-                              FieldType  a_field_type,
+                              FieldType  a_array_type,
                               FieldType  a_scalar_type )
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !IsDefined(),
         "WarpXSolverVec::Define(a_vec, a_type) called on already defined WarpXSolverVec");
 
-    m_field_type = a_field_type;
+    m_array_type = a_array_type;
     m_scalar_type = a_scalar_type;
 
-    m_field_vec.resize(m_num_amr_levels);
+    m_array_vec.resize(m_num_amr_levels);
     m_scalar_vec.resize(m_num_amr_levels);
 
     // Define the 3D vector field data container
-    if (m_field_type != FieldType::None) {
+    if (m_array_type != FieldType::None) {
 
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
             for (int n = 0; n < 3; n++) {
-                const amrex::MultiFab* mf_model = a_WarpX->getFieldPointer(m_field_type,lev,n);
-                m_field_vec[lev][n] = std::make_unique<amrex::MultiFab>( mf_model->boxArray(),
+                const amrex::MultiFab* mf_model = a_WarpX->getFieldPointer(m_array_type,lev,n);
+                m_array_vec[lev][n] = std::make_unique<amrex::MultiFab>( mf_model->boxArray(),
                                                                          mf_model->DistributionMap(),
                                                                          mf_model->nComp(),
                                                                          amrex::IntVect::TheZeroVector() );
@@ -55,22 +55,22 @@ void WarpXSolverVec::Define ( WarpX*     a_WarpX,
     SetWarpXPointer(a_WarpX);
 }
 
-void WarpXSolverVec::Copy ( FieldType  a_field_type,
+void WarpXSolverVec::Copy ( FieldType  a_array_type,
                             FieldType  a_scalar_type )
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         IsDefined(),
         "WarpXSolverVec::Copy() called on undefined WarpXSolverVec");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        a_field_type==m_field_type &&
+        a_array_type==m_array_type &&
         a_scalar_type==m_scalar_type,
         "WarpXSolverVec::Copy() called with vecs of different types");
 
     for (int lev = 0; lev < m_num_amr_levels; ++lev) {
-        if (m_field_type != FieldType::None) {
+        if (m_array_type != FieldType::None) {
             for (int n = 0; n < 3; ++n) {
-                const amrex::MultiFab* this_field = m_WarpX->getFieldPointer(m_field_type,lev,n);
-                amrex::MultiFab::Copy( *m_field_vec[lev][n], *this_field, 0, 0, m_ncomp,
+                const amrex::MultiFab* this_field = m_WarpX->getFieldPointer(m_array_type,lev,n);
+                amrex::MultiFab::Copy( *m_array_vec[lev][n], *this_field, 0, 0, m_ncomp,
                                        amrex::IntVect::TheZeroVector() );
             }
         }
@@ -92,19 +92,19 @@ void WarpXSolverVec::SetWarpXPointer( WarpX*  a_WarpX )
 [[nodiscard]] amrex::Real WarpXSolverVec::dotProduct ( const WarpXSolverVec&  a_X ) const
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        a_X.getFieldVecType()==m_field_type &&
+        a_X.getArrayVecType()==m_array_type &&
         a_X.getScalarVecType()==m_scalar_type,
         "WarpXSolverVec::dotProduct(X) called with solver vecs of different types");
 
     amrex::Real result = 0.0;
     const bool local = true;
     for (int lev = 0; lev < m_num_amr_levels; ++lev) {
-        if (m_field_type != FieldType::None) {
+        if (m_array_type != FieldType::None) {
             for (int n = 0; n < 3; ++n) {
-                const amrex::iMultiFab* dotMask = m_WarpX->getFieldDotMaskPointer(m_field_type,lev,n);
+                const amrex::iMultiFab* dotMask = m_WarpX->getFieldDotMaskPointer(m_array_type,lev,n);
                 auto rtmp = amrex::MultiFab::Dot( *dotMask,
-                                                  *m_field_vec[lev][n], 0,
-                                                  *a_X.getFieldVec()[lev][n], 0, 1, 0, local);
+                                                  *m_array_vec[lev][n], 0,
+                                                  *a_X.getArrayVec()[lev][n], 0, 1, 0, local);
                 result += rtmp;
             }
         }
