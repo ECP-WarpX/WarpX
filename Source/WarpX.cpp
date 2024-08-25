@@ -3710,7 +3710,7 @@ void WarpX::SetDotMask( std::unique_ptr<amrex::iMultiFab>& field_dotMask,
 {
     // Define the dot mask for this field_type needed to properly compute dotProduct()
     // for field values that have shared locations on different MPI ranks
-    if (field_dotMask != nullptr) return;
+    if (field_dotMask != nullptr) { return; }
 
     const amrex::MultiFab* this_field = getFieldPointer(field_type,lev,dir);
     const amrex::BoxArray& this_ba = this_field->boxArray();
