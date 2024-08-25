@@ -3681,7 +3681,7 @@ WarpX::getMultiLevelField(warpx::fields::FieldType field_type) const
 }
 
 const amrex::iMultiFab*
-WarpX::getFieldDotMaskPointer (warpx::fields::FieldType field_type, const int lev, const int dir) const
+WarpX::getFieldDotMaskPointer ( FieldType field_type, int lev, int dir ) const
 {
     switch(field_type)
     {
@@ -3706,9 +3706,8 @@ WarpX::getFieldDotMaskPointer (warpx::fields::FieldType field_type, const int le
     }
 }
 
-void WarpX::SetDotMask( std::unique_ptr<amrex::iMultiFab>&  field_dotMask,
-                        warpx::fields::FieldType  field_type,
-                        const int  lev, const int  dir ) const
+void WarpX::SetDotMask( std::unique_ptr<amrex::iMultiFab>& field_dotMask,
+                        FieldType field_type, int lev, int dir ) const
 {
     // Define the dot mask for this field_type needed to properly compute dotProduct()
     // for field values that have shared locations on different MPI ranks

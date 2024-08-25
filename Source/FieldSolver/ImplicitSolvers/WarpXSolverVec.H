@@ -62,7 +62,7 @@ public:
     [[nodiscard]] inline bool IsDefined () const { return m_is_defined; }
 
     void Define ( WarpX*                    a_WarpX,
-            const warpx::fields::FieldType  a_field_type );
+                  warpx::fields::FieldType  a_field_type );
 
     inline
     void Define ( const WarpXSolverVec&  a_solver_vec )
@@ -70,12 +70,12 @@ public:
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             a_solver_vec.IsDefined(),
             "WarpXSolverVec::Define(solver_vec) called with undefined solver_vec");
-        Define( a_solver_vec.m_WarpX, a_solver_vec.getVecType() );
+        Define( WarpXSolverVec::m_WarpX, a_solver_vec.getVecType() );
     }
 
     [[nodiscard]] RT dotProduct( const WarpXSolverVec&  a_X ) const;
 
-    void Copy ( const warpx::fields::FieldType  a_field_type );
+    void Copy ( warpx::fields::FieldType  a_field_type );
 
     inline
     void Copy ( const WarpXSolverVec&  a_solver_vec )
@@ -214,7 +214,7 @@ public:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& getVec() {return m_field_vec;}
 
     // solver vec types are for now limited to warpx::fields::FieldType
-    warpx::fields::FieldType getVecType () const { return m_field_type; }
+    [[nodiscard]] warpx::fields::FieldType getVecType () const { return m_field_type; }
 
 private:
 
