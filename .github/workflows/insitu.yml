@@ -17,6 +17,7 @@ jobs:
       CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code -Wno-error=pass-failed"
       CMAKE_GENERATOR: Ninja
       CMAKE_PREFIX_PATH: /root/install/sensei/v4.0.0/lib64/cmake
+      OMP_NUM_THREADS: 1
     container:
       image: senseiinsitu/ci:fedora35-amrex-20220613
     steps:
@@ -38,6 +39,7 @@ jobs:
       CXX: g++
       CC: gcc
       CMAKE_PREFIX_PATH: /ascent/install/lib/cmake/
+      OMP_NUM_THREADS: 1
     container:
       image: alpinedav/ascent:0.9.2
     steps:
@@ -67,4 +69,57 @@ jobs:
         path: |
           *.png
           conduit_*
+        if-no-files-found: error
+
+  catalyst:
+    name: Catalyst
+    runs-on: ubuntu-20.04
+    if: github.event.pull_request.draft == false
+    env:
+      CXX: g++
+      CC: gcc
+      CMAKE_PREFIX_PATH: "/opt/conduit:/opt/catalyst"
+      CATALYST_DEBUG: 1
+      CATALYST_IMPLEMENTATION_PATHS: /opt/paraview/lib/catalyst
+      OMP_NUM_THREADS: 1
+
+    container:
+      image: kitware/paraview:ci-catalyst-amrex-warpx-20240701
+    steps:
+    - uses: actions/checkout@v4
+    - name: Configure
+      run: |
+        cmake -S . -B build   \
+            -DWarpX_DIMS="2;3" \
+            -DWarpX_CATALYST=ON
+    - name: Build
+      run: |
+        cmake --build build -j 10
+    - name: 2D Test
+      run: |
+        cp Examples/Tests/ionization/inputs_2d_rt .
+        cp Examples/Tests/ionization/catalyst_pipeline.py .
+        mpiexec -n 2 ./build/bin/warpx.2d \
+          inputs_2d_rt \
+            catalyst.script_paths = catalyst_pipeline.py\
+            catalyst.implementation = paraview\
+            diag1.intervals = 16\
+            diag1.species = "electrons ions"\
+            diag1.format = catalyst
+    - name: 3D Test
+      run: |
+        cp Examples/Tests/electrostatic_sphere/inputs_3d .
+        cp Examples/Tests/electrostatic_sphere/catalyst_pipeline.py .
+        mpiexec -n 2 ./build/bin/warpx.3d \
+          inputs_3d \
+          catalyst.script_paths = catalyst_pipeline.py \
+          catalyst.implementation = paraview \
+          diagnostics.diags_names = diag1 \
+          diag1.format = catalyst\
+          diag1.intervals = 3
+    - uses: actions/upload-artifact@v4
+      with:
+        name: catalyst-test-artifacts
+        path: |
+          datasets/*.png
         if-no-files-found: error

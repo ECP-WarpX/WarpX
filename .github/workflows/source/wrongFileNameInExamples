@@ -23,6 +23,7 @@ do
        [[ ${file:0:14} != inputs_test_3d ]] &&
        [[ ${file:0:14} != inputs_test_rz ]] &&
        [[ ${file:0:8 } != analysis       ]] &&
+       [[ ${file:0:8 } != catalyst     ]] &&
        [[ ${file:  -4} != yaml           ]] &&
        [[ ${file:0:4 } != plot           ]] &&
        [[ ${file:0:6 } != README         ]] &&
