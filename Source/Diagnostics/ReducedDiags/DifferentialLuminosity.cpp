@@ -79,18 +79,6 @@ DifferentialLuminosity::DifferentialLuminosity (const std::string& rd_name)
         "Collider-relevant diagnostics do not work in RZ geometry.");
 #endif
 
-    ablastr::warn_manager::WMRecordWarning(
-        "Diagnostics",
-        "The collider-relevant reduced diagnostic is meant for \
-        colliding species propagating along the z direction.",
-        ablastr::warn_manager::WarnPriority::low);
-
-    ablastr::warn_manager::WMRecordWarning(
-        "Diagnostics",
-        "The collider-relevant reduced diagnostic only considers the \
-        coarsest level of refinement for the calculations involving chi.",
-        ablastr::warn_manager::WarnPriority::low);
-
     // read bin parameters
     int bin_num = 0;
     amrex::Real bin_max = 0.0_rt, bin_min = 0.0_rt;
