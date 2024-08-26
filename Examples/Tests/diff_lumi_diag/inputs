@@ -118,7 +118,7 @@ diag1.dump_last_timestep = 1
 diag1.species = beam1 beam2
 
 # REDUCED
-warpx.reduced_diags_names = ParticleNumber ColliderRelevant_beam1_beam2 DifferentialLuminosity_beam1_beam2
+warpx.reduced_diags_names = DifferentialLuminosity_beam1_beam2
 
 DifferentialLuminosity_beam1_beam2.type = DifferentialLuminosity
 DifferentialLuminosity_beam1_beam2.intervals = 1
@@ -127,9 +127,3 @@ DifferentialLuminosity_beam1_beam2.bin_number = 128
 DifferentialLuminosity_beam1_beam2.bin_max = 2.1*beam_energy
 DifferentialLuminosity_beam1_beam2.bin_min = 1.9*beam_energy
 
-ColliderRelevant_beam1_beam2.type = ColliderRelevant
-ColliderRelevant_beam1_beam2.intervals = 1
-ColliderRelevant_beam1_beam2.species = beam1 beam2
-
-ParticleNumber.type = ParticleNumber
-ParticleNumber.intervals = 1

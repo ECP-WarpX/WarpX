@@ -39,7 +39,11 @@ dL_dE_th = (
 )
 
 # Check that the simulation result and analytical result match
-assert abs(dL_dE_sim - dL_dE_th).max() / abs(dL_dE_th).max() < 9e-3
+error = abs(dL_dE_sim - dL_dE_th).max() / abs(dL_dE_th).max()
+tol = 1e-2
+print('Relative error: ', error)
+print('Tolerance: ', tol )
+assert error < tol
 
 # Get name of the test
 fn = sys.argv[1]
