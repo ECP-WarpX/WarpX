@@ -99,10 +99,7 @@ void WarpXSolverVec::Copy ( FieldType  a_array_type,
 
 [[nodiscard]] amrex::Real WarpXSolverVec::dotProduct ( const WarpXSolverVec&  a_X ) const
 {
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        a_X.getArrayVecType()==m_array_type &&
-        a_X.getScalarVecType()==m_scalar_type,
-        "WarpXSolverVec::dotProduct(X) called with solver vecs of different types");
+    assertSameType( a_X );
 
     amrex::Real result = 0.0;
     const bool local = true;

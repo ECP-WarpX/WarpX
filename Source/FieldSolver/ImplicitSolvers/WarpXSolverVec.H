@@ -91,12 +91,7 @@ public:
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             a_solver_vec.IsDefined(),
             "WarpXSolverVec::Copy(solver_vec) called with undefined solver_vec");
-        if (IsDefined()) {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                a_solver_vec.getArrayVecType()==m_array_type &&
-                a_solver_vec.getScalarVecType()==m_scalar_type,
-                "WarpXSolverVec::Copy(solver_vec) called with vecs of different types");
-        }
+        if (IsDefined()) { assertSameType( a_solver_vec ); }
         else { Define(a_solver_vec); }
 
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
@@ -135,10 +130,7 @@ public:
     inline
     void operator+= ( const WarpXSolverVec&  a_solver_vec )
     {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            a_solver_vec.getArrayVecType()==m_array_type &&
-            a_solver_vec.getScalarVecType()==m_scalar_type,
-            "WarpXSolverVec operator += solver_vec called with solver vecs of different types");
+        assertSameType( a_solver_vec );
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
             if (m_array_type != warpx::fields::FieldType::None) {
                 m_array_vec[lev][0]->plus(*(a_solver_vec.getArrayVec()[lev][0]), 0, 1, 0);
@@ -154,10 +146,7 @@ public:
     inline
     void operator-= (const WarpXSolverVec& a_solver_vec)
     {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            a_solver_vec.getArrayVecType()==m_array_type &&
-            a_solver_vec.getScalarVecType()==m_scalar_type,
-            "WarpXSolverVec operator -= solver_vec called with solver vecs of different types");
+        assertSameType( a_solver_vec );
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
             if (m_array_type != warpx::fields::FieldType::None) {
                 m_array_vec[lev][0]->minus(*(a_solver_vec.getArrayVec()[lev][0]), 0, 1, 0);
@@ -176,14 +165,8 @@ public:
     inline
     void linComb (const RT a, const WarpXSolverVec& X, const RT b, const WarpXSolverVec& Y)
     {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            X.getArrayVecType()==m_array_type &&
-            X.getScalarVecType()==m_scalar_type,
-            "WarpXSolverVec::linComb(a,X,b,Y) called with solver vec X of different type");
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            Y.getArrayVecType()==m_array_type &&
-            Y.getScalarVecType()==m_scalar_type,
-            "WarpXSolverVec::linComb(a,X,b,Y) called with solver vec Y of different type");
+        assertSameType( X );
+        assertSameType( Y );
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
             if (m_array_type != warpx::fields::FieldType::None) {
                 for (int n = 0; n < 3; n++) {
@@ -205,10 +188,7 @@ public:
      */
     void increment (const WarpXSolverVec& X, const RT a)
     {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            X.getArrayVecType()==m_array_type &&
-            X.getScalarVecType()==m_scalar_type,
-            "WarpXSolverVec::increment(X,a) called with solver vecs of different types");
+        assertSameType( X );
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
             if (m_array_type != warpx::fields::FieldType::None) {
                 for (int n = 0; n < 3; n++) {
@@ -263,6 +243,15 @@ public:
                 m_scalar_vec[lev]->setVal(a_val);
             }
         }
+    }
+
+    inline
+    void assertSameType( const WarpXSolverVec&  a_solver_vec ) const
+    {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            a_solver_vec.getArrayVecType()==m_array_type &&
+            a_solver_vec.getScalarVecType()==m_scalar_type,
+            "WarpXSolverVec::function(X) called with WarpXSolverVec X of different type");
     }
 
     [[nodiscard]] inline RT norm2 () const
