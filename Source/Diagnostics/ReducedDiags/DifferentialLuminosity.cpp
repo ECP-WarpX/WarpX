@@ -92,6 +92,7 @@ DifferentialLuminosity::DifferentialLuminosity (const std::string& rd_name)
 
     // resize and zero-out data array
     m_data.resize(m_bin_num,0.0_rt);
+    d_data.resize(m_bin_num,0.0_rt);
 
     if (amrex::ParallelDescriptor::IOProcessor())
     {
@@ -154,16 +155,7 @@ void DifferentialLuminosity::ComputeDiags (int step)
     const ParticleReal m1 = species_1.getMass();
     const ParticleReal m2 = species_2.getMass();
 
-    // zero-out old data on the host
-    //std::fill(m_data.begin(), m_data.end(), amrex::Real(0.0));
-    //amrex::Gpu::DeviceVector< amrex::Real > d_data( m_data.size(), 0.0 );
-    //amrex::Real* const AMREX_RESTRICT dptr_data = d_data.dataPtr();
-
-    amrex::Gpu::DeviceVector< amrex::Real > d_data( m_data.size() );
-    amrex::Gpu::copy(amrex::Gpu::hostToDevice,
-        m_data.begin(), m_data.end(), d_data.begin());
     amrex::Real* const AMREX_RESTRICT dptr_data = d_data.dataPtr();
-
 
     // Enable tiling
     amrex::MFItInfo info;

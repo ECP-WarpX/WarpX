@@ -10,6 +10,7 @@
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_DIFFERENTIALLUMINOSITY_H_
 
 #include "ReducedDiags.H"
+#include <AMReX_GpuContainers.H>
 
 #include <map>
 #include <string>
@@ -66,6 +67,9 @@ private:
 
     /// map to store header texts and indices of the reduced diagnostics
     std::map<std::string, aux_header_index> m_headers_indices;
+
+    // Array in which to accumulate the luminosity across timesteps
+    amrex::Gpu::DeviceVector< amrex::Real > d_data;
 };
 
 #endif  // WARPX_DIAGNOSTICS_REDUCEDDIAGS_DIFFERENTIALLUMINOSITY_H_
