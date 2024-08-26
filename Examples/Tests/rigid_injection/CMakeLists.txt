@@ -9,7 +9,7 @@ add_warpx_test(
     Examples/Tests/rigid_injection/inputs_test_2d_rigid_injection_btd # inputs
     Examples/Tests/rigid_injection/analysis_rigid_injection_btd.py # analysis
     diags/diag1000001 # output
-    OFF # depend on this test
+    OFF # dependency
 )
 
 add_warpx_test(
@@ -20,5 +20,5 @@ add_warpx_test(
     Examples/Tests/rigid_injection/inputs_test_2d_rigid_injection_lab # inputs
     Examples/Tests/rigid_injection/analysis_rigid_injection_lab.py # analysis
     diags/diag1000289 # output
-    OFF # depend on this test
+    OFF # dependency
 )

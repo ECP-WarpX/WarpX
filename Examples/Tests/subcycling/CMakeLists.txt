@@ -9,5 +9,5 @@ add_warpx_test(
     Examples/Tests/subcycling/inputs_test_2d_subcycling_mr # inputs
     Examples/analysis_default_regression.py # analysis
     diags/diag1000250 # output
-    OFF # depend on this test
+    OFF # dependency
 )

@@ -10,6 +10,6 @@ if(WarpX_EB)
         Examples/Tests/embedded_boundary_diffraction/inputs_test_rz_embedded_boundary_diffraction # inputs
         Examples/Tests/embedded_boundary_diffraction/analysis_fields.py # analysis
         diags/diag1/ # output
-    OFF # depend on this test
+    OFF # dependency
     )
 endif()

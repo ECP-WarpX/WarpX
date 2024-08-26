@@ -9,7 +9,7 @@ add_warpx_test(
     Examples/Tests/flux_injection/inputs_test_3d_flux_injection # inputs
     Examples/Tests/flux_injection/analysis_flux_injection_3d.py # analysis
     diags/diag1000002 # output
-    OFF # depend on this test
+    OFF # dependency
 )
 
 add_warpx_test(
@@ -20,5 +20,5 @@ add_warpx_test(
     Examples/Tests/flux_injection/inputs_test_rz_flux_injection # inputs
     Examples/Tests/flux_injection/analysis_flux_injection_rz.py # analysis
     diags/diag1000120 # output
-    OFF # depend on this test
+    OFF # dependency
 )

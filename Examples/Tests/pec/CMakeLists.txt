@@ -9,7 +9,7 @@ add_warpx_test(
     Examples/Tests/pec/inputs_test_3d_pec_field # inputs
     Examples/Tests/pec/analysis_pec.py # analysis
     diags/diag1000125 # output
-    OFF # depend on this test
+    OFF # dependency
 )
 
 add_warpx_test(
@@ -20,7 +20,7 @@ add_warpx_test(
     Examples/Tests/pec/inputs_test_3d_pec_field_mr # inputs
     Examples/Tests/pec/analysis_pec_mr.py # analysis
     diags/diag1000125 # output
-    OFF # depend on this test
+    OFF # dependency
 )
 
 add_warpx_test(
@@ -31,5 +31,5 @@ add_warpx_test(
     Examples/Tests/pec/inputs_test_3d_pec_particle # inputs
     Examples/analysis_default_regression.py # analysis
     diags/diag1000020 # output
-    OFF # depend on this test
+    OFF # dependency
 )

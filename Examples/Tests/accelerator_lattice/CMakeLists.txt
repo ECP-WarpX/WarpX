@@ -9,7 +9,7 @@ add_warpx_test(
     Examples/Tests/accelerator_lattice/inputs_test_3d_hard_edged_quadrupoles # inputs
     Examples/Tests/accelerator_lattice/analysis.py # analysis
     diags/diag1000050 # output
-    OFF # depend on this test
+    OFF # dependency
 )
 
 add_warpx_test(
@@ -20,7 +20,7 @@ add_warpx_test(
     Examples/Tests/accelerator_lattice/inputs_test_3d_hard_edged_quadrupoles_boosted # inputs
     Examples/Tests/accelerator_lattice/analysis.py # analysis
     diags/diag1000050 # output
-    OFF # depend on this test
+    OFF # dependency
 )
 
 add_warpx_test(
@@ -31,5 +31,5 @@ add_warpx_test(
     Examples/Tests/accelerator_lattice/inputs_test_3d_hard_edged_quadrupoles_moving # inputs
     Examples/Tests/accelerator_lattice/analysis.py # analysis
     diags/diag1000050 # output
-    OFF # depend on this test
+    OFF # dependency
 )

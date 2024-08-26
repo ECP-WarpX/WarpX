@@ -10,5 +10,5 @@
 #    Examples/Tests/pass_mpi_communicator/inputs_test_2d_pass_mpi_comm_picmi.py # inputs
 #    Examples/Tests/pass_mpi_communicator/analysis.py # analysis
 #    diags/diag1000010 # output
-#    OFF # depend on this test
+#    OFF # dependency
 #)

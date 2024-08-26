@@ -9,7 +9,7 @@ add_warpx_test(
     Examples/Tests/nuclear_fusion/inputs_test_3d_deuterium_deuterium_fusion # inputs
     Examples/Tests/nuclear_fusion/analysis_two_product_fusion.py # analysis
     diags/diag1000001 # output
-    OFF # depend on this test
+    OFF # dependency
 )
 
 add_warpx_test(
@@ -20,7 +20,7 @@ add_warpx_test(
     Examples/Tests/nuclear_fusion/inputs_test_3d_deuterium_deuterium_fusion_intraspecies # inputs
     Examples/Tests/nuclear_fusion/analysis_deuterium_deuterium_3d_intraspecies.py # analysis
     diags/diag1000010 # output
-    OFF # depend on this test
+    OFF # dependency
 )
 
 add_warpx_test(
@@ -31,7 +31,7 @@ add_warpx_test(
     Examples/Tests/nuclear_fusion/inputs_test_3d_deuterium_tritium_fusion # inputs
     Examples/Tests/nuclear_fusion/analysis_two_product_fusion.py # analysis
     diags/diag1000001 # output
-    OFF # depend on this test
+    OFF # dependency
 )
 
 add_warpx_test(
@@ -42,7 +42,7 @@ add_warpx_test(
     Examples/Tests/nuclear_fusion/inputs_test_rz_deuterium_tritium_fusion # inputs
     Examples/Tests/nuclear_fusion/analysis_two_product_fusion.py # analysis
     diags/diag1000001 # output
-    OFF # depend on this test
+    OFF # dependency
 )
 
 add_warpx_test(
@@ -53,7 +53,7 @@ add_warpx_test(
     Examples/Tests/nuclear_fusion/inputs_test_2d_proton_boron_fusion # inputs
     Examples/Tests/nuclear_fusion/analysis_proton_boron_fusion.py # analysis
     diags/diag1000001 # output
-    OFF # depend on this test
+    OFF # dependency
 )
 
 add_warpx_test(
@@ -64,5 +64,5 @@ add_warpx_test(
     Examples/Tests/nuclear_fusion/inputs_test_3d_proton_boron_fusion # inputs
     Examples/Tests/nuclear_fusion/analysis_proton_boron_fusion.py # analysis
     diags/diag1000001 # output
-    OFF # depend on this test
+    OFF # dependency
 )

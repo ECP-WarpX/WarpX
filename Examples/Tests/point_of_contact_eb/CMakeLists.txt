@@ -10,7 +10,7 @@ if(WarpX_EB)
         Examples/Tests/point_of_contact_eb/inputs_test_3d_point_of_contact_eb # inputs
         Examples/Tests/point_of_contact_eb/analysis.py # analysis
         diags/diag1/ # output
-    OFF # depend on this test
+    OFF # dependency
     )
 endif()
 
@@ -23,6 +23,6 @@ if(WarpX_EB)
         Examples/Tests/point_of_contact_eb/inputs_test_rz_point_of_contact_eb # inputs
         Examples/Tests/point_of_contact_eb/analysis.py # analysis
         diags/diag1/ # output
-    OFF # depend on this test
+    OFF # dependency
     )
 endif()

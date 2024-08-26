@@ -9,5 +9,5 @@ add_warpx_test(
     Examples/Tests/relativistic_space_charge_initialization/inputs_test_3d_relativistic_space_charge_initialization # inputs
     Examples/Tests/relativistic_space_charge_initialization/analysis.py # analysis
     diags/diag1000001 # output
-    OFF # depend on this test
+    OFF # dependency
 )

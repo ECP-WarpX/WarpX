@@ -9,7 +9,7 @@ add_warpx_test(
     Examples/Tests/ionization/inputs_test_2d_ionization_boost # inputs
     Examples/Tests/ionization/analysis.py # analysis
     diags/diag1000420 # output
-    OFF # depend on this test
+    OFF # dependency
 )
 
 add_warpx_test(
@@ -20,7 +20,7 @@ add_warpx_test(
     Examples/Tests/ionization/inputs_test_2d_ionization_lab # inputs
     Examples/Tests/ionization/analysis.py # analysis
     diags/diag1001600 # output
-    OFF # depend on this test
+    OFF # dependency
 )
 
 add_warpx_test(
@@ -31,5 +31,5 @@ add_warpx_test(
     Examples/Tests/ionization/inputs_test_2d_ionization_picmi.py # inputs
     Examples/Tests/ionization/analysis.py # analysis
     diags/diag1001600 # output
-    OFF # depend on this test
+    OFF # dependency
 )

@@ -10,7 +10,7 @@ if(WarpX_FFT)
         Examples/Tests/vay_deposition/inputs_test_2d_vay_deposition # inputs
         Examples/Tests/vay_deposition/analysis.py # analysis
         diags/diag1000050 # output
-    OFF # depend on this test
+    OFF # dependency
     )
 endif()
 
@@ -23,6 +23,6 @@ if(WarpX_FFT)
         Examples/Tests/vay_deposition/inputs_test_3d_vay_deposition # inputs
         Examples/Tests/vay_deposition/analysis.py # analysis
         diags/diag1000025 # output
-    OFF # depend on this test
+    OFF # dependency
     )
 endif()

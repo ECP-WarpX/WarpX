@@ -9,5 +9,5 @@ add_warpx_test(
     Examples/Tests/collider_relevant_diags/inputs_test_3d_collider_diagnostics # inputs
     Examples/Tests/collider_relevant_diags/analysis.py # analysis
     diags/diag1000001 # output
-    OFF # depend on this test
+    OFF # dependency
 )

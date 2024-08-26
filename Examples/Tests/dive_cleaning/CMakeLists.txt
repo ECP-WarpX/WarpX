@@ -9,7 +9,7 @@ add_warpx_test(
     Examples/Tests/dive_cleaning/inputs_test_2d_dive_cleaning # inputs
     Examples/Tests/dive_cleaning/analysis.py # analysis
     diags/diag1000128 # output
-    OFF # depend on this test
+    OFF # dependency
 )
 
 add_warpx_test(
@@ -20,5 +20,5 @@ add_warpx_test(
     Examples/Tests/dive_cleaning/inputs_test_3d_dive_cleaning # inputs
     Examples/Tests/dive_cleaning/analysis.py # analysis
     diags/diag1000128 # output
-    OFF # depend on this test
+    OFF # dependency
 )

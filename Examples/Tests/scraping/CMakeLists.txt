@@ -10,7 +10,7 @@ if(WarpX_EB)
         Examples/Tests/scraping/inputs_test_rz_scraping # inputs
         Examples/Tests/scraping/analysis_rz.py # analysis
         diags/diag1000037 # output
-    OFF # depend on this test
+    OFF # dependency
     )
 endif()
 
@@ -23,6 +23,6 @@ if(WarpX_EB)
         Examples/Tests/scraping/inputs_test_rz_scraping_filter # inputs
         Examples/Tests/scraping/analysis_rz_filter.py # analysis
         diags/diag1000037 # output
-    OFF # depend on this test
+    OFF # dependency
     )
 endif()

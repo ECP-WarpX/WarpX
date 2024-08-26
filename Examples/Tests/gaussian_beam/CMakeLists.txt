@@ -9,7 +9,7 @@ add_warpx_test(
     Examples/Tests/gaussian_beam/inputs_test_3d_focusing_gaussian_beam # inputs
     Examples/Tests/gaussian_beam/analysis.py # analysis
     diags/diag1000000 # output
-    OFF # depend on this test
+    OFF # dependency
 )
 
 add_warpx_test(
@@ -20,5 +20,5 @@ add_warpx_test(
     Examples/Tests/gaussian_beam/inputs_test_3d_gaussian_beam_picmi.py # inputs
     Examples/analysis_default_regression.py # analysis
     diags/diag1000010 # output
-    OFF # depend on this test
+    OFF # dependency
 )

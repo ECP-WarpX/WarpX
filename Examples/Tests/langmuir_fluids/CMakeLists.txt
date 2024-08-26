@@ -9,7 +9,7 @@ add_warpx_test(
     Examples/Tests/langmuir_fluids/inputs_test_1d_langmuir_fluid # inputs
     Examples/Tests/langmuir_fluids/analysis_1d.py # analysis
     diags/diag1000080 # output
-    OFF # depend on this test
+    OFF # dependency
 )
 
 add_warpx_test(
@@ -20,7 +20,7 @@ add_warpx_test(
     Examples/Tests/langmuir_fluids/inputs_test_2d_langmuir_fluid # inputs
     Examples/Tests/langmuir_fluids/analysis_2d.py # analysis
     diags/diag1000080 # output
-    OFF # depend on this test
+    OFF # dependency
 )
 
 add_warpx_test(
@@ -31,7 +31,7 @@ add_warpx_test(
     Examples/Tests/langmuir_fluids/inputs_test_3d_langmuir_fluid # inputs
     Examples/Tests/langmuir_fluids/analysis_3d.py # analysis
     diags/diag1000040 # output
-    OFF # depend on this test
+    OFF # dependency
 )
 
 add_warpx_test(
@@ -42,5 +42,5 @@ add_warpx_test(
     Examples/Tests/langmuir_fluids/inputs_test_rz_langmuir_fluid # inputs
     Examples/Tests/langmuir_fluids/analysis_rz.py # analysis
     diags/diag1000080 # output
-    OFF # depend on this test
+    OFF # dependency
 )

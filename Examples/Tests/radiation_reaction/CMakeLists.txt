@@ -9,5 +9,5 @@ add_warpx_test(
     Examples/Tests/radiation_reaction/inputs_test_3d_radiation_reaction # inputs
     Examples/Tests/radiation_reaction/analysis.py # analysis
     diags/diag1000064 # output
-    OFF # depend on this test
+    OFF # dependency
 )

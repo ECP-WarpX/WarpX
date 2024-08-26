@@ -9,5 +9,5 @@ add_warpx_test(
     Examples/Tests/initial_distribution/inputs_test_3d_initial_distribution # inputs
     Examples/Tests/initial_distribution/analysis.py # analysis
     diags/diag1000001 # output
-    OFF # depend on this test
+    OFF # dependency
 )

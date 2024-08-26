@@ -10,6 +10,6 @@ if(WarpX_FFT)
         Examples/Tests/open_bc_poisson_solver/inputs_test_3d_open_bc_poisson_solver # inputs
         Examples/Tests/open_bc_poisson_solver/analysis.py # analysis
         diags/diag1000001 # output
-    OFF # depend on this test
+    OFF # dependency
     )
 endif()

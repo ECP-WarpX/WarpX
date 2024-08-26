@@ -9,7 +9,7 @@ add_warpx_test(
     Examples/Tests/laser_injection/inputs_test_1d_laser_injection # inputs
     Examples/Tests/laser_injection/analysis_1d.py # analysis
     diags/diag1000240 # output
-    OFF # depend on this test
+    OFF # dependency
 )
 
 add_warpx_test(
@@ -20,7 +20,7 @@ add_warpx_test(
     Examples/Tests/laser_injection/inputs_test_2d_laser_injection # inputs
     Examples/Tests/laser_injection/analysis_2d.py # analysis
     diags/diag1000240 # output
-    OFF # depend on this test
+    OFF # dependency
 )
 
 add_warpx_test(
@@ -31,5 +31,5 @@ add_warpx_test(
     Examples/Tests/laser_injection/inputs_test_3d_laser_injection # inputs
     Examples/Tests/laser_injection/analysis_3d.py # analysis
     diags/diag1000020 # output
-    OFF # depend on this test
+    OFF # dependency
 )

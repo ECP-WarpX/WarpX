@@ -9,5 +9,5 @@ add_warpx_test(
     Examples/Tests/larmor/inputs_test_2d_larmor # inputs
     Examples/analysis_default_regression.py # analysis
     diags/diag1000010 # output
-    OFF # depend on this test
+    OFF # dependency
 )

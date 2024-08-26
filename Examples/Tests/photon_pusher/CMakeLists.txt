@@ -9,5 +9,5 @@ add_warpx_test(
     Examples/Tests/photon_pusher/inputs_test_3d_photon_pusher # inputs
     Examples/Tests/photon_pusher/analysis.py # analysis
     diags/diag1000050 # output
-    OFF # depend on this test
+    OFF # dependency
 )

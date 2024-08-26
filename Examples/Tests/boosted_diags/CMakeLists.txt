@@ -9,5 +9,5 @@ add_warpx_test(
     Examples/Tests/boosted_diags/inputs_test_3d_laser_acceleration_btd # inputs
     Examples/Tests/boosted_diags/analysis.py # analysis
     diags/diag1000003 # output
-    OFF # depend on this test
+    OFF # dependency
 )

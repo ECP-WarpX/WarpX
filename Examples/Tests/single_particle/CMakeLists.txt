@@ -9,5 +9,5 @@ add_warpx_test(
     Examples/Tests/single_particle/inputs_test_2d_bilinear_filter # inputs
     Examples/Tests/single_particle/analysis.py # analysis
     diags/diag1000001 # output
-    OFF # depend on this test
+    OFF # dependency
 )

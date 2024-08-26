@@ -9,7 +9,7 @@ add_warpx_test(
     Examples/Tests/particle_data_python/inputs_test_2d_prev_positions_picmi.py # inputs
     Examples/analysis_default_regression.py # analysis
     diags/diag1000010 # output
-    OFF # depend on this test
+    OFF # dependency
 )
 
 add_warpx_test(
@@ -20,7 +20,7 @@ add_warpx_test(
     Examples/Tests/particle_data_python/inputs_test_2d_particle_attr_access_picmi.py # inputs
     Examples/Tests/particle_data_python/analysis.py # analysis
     diags/diag1000010 # output
-    OFF # depend on this test
+    OFF # dependency
 )
 
 # FIXME
@@ -32,5 +32,5 @@ add_warpx_test(
 #    Examples/Tests/particle_data_python/inputs_test_2d_particle_attr_access_picmi.py # inputs
 #    Examples/Tests/particle_data_python/analysis.py # analysis
 #    diags/diag1000010 # output
-#    OFF # depend on this test
+#    OFF # dependency
 #)

@@ -9,7 +9,7 @@ add_warpx_test(
     Examples/Tests/space_charge_initialization/inputs_test_2d_space_charge_initialization # inputs
     Examples/Tests/space_charge_initialization/analysis.py # analysis
     diags/diag1000001 # output
-    OFF # depend on this test
+    OFF # dependency
 )
 
 add_warpx_test(
@@ -20,5 +20,5 @@ add_warpx_test(
     Examples/Tests/space_charge_initialization/inputs_test_3d_space_charge_initialization # inputs
     Examples/Tests/space_charge_initialization/analysis.py # analysis
     diags/diag1000001 # output
-    OFF # depend on this test
+    OFF # dependency
 )

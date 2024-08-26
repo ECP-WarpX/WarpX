@@ -9,5 +9,5 @@ add_warpx_test(
     Examples/Tests/particle_thermal_boundary/inputs_test_2d_particle_thermal_boundary # inputs
     Examples/Tests/particle_thermal_boundary/analysis.py # analysis
     diags/diag1002000 # output
-    OFF # depend on this test
+    OFF # dependency
 )

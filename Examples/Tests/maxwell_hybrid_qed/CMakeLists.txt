@@ -10,6 +10,6 @@ if(WarpX_FFT)
         Examples/Tests/maxwell_hybrid_qed/inputs_test_2d_maxwell_hybrid_qed_solver # inputs
         Examples/Tests/maxwell_hybrid_qed/analysis.py # analysis
         diags/diag1000300 # output
-    OFF # depend on this test
+    OFF # dependency
     )
 endif()

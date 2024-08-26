@@ -9,7 +9,7 @@ add_warpx_test(
     Examples/Tests/restart/inputs_test_2d_id_cpu_read_picmi.py # inputs
     Examples/analysis_default_regression.py # analysis
     diags/diag1000010 # output
-    OFF # depend on this test
+    OFF # dependency
 )
 
 # FIXME
@@ -21,7 +21,7 @@ add_warpx_test(
 #    Examples/Tests/restart/inputs_test_2d_runtime_components_picmi.py # inputs
 #    Examples/analysis_default_regression.py # analysis
 #    diags/diag1000010 # output
-#    OFF # depend on this test
+#    OFF # dependency
 #)
 
 add_warpx_test(
@@ -32,7 +32,7 @@ add_warpx_test(
     Examples/Tests/restart/inputs_test_3d_acceleration # inputs
     Examples/analysis_default_regression.py # analysis
     diags/diag1000010 # output
-    OFF # depend on this test
+    OFF # dependency
 )
 
 add_warpx_test(
@@ -43,7 +43,7 @@ add_warpx_test(
     Examples/Tests/restart/inputs_test_3d_acceleration_restart # inputs
     Examples/analysis_default_regression.py # analysis
     diags/diag1000010 # output
-    test_3d_acceleration # depend on this test
+    test_3d_acceleration # dependency
 )
 
 if(WarpX_FFT)
@@ -55,7 +55,7 @@ if(WarpX_FFT)
         Examples/Tests/restart/inputs_test_3d_acceleration_psatd # inputs
         Examples/analysis_default_regression.py # analysis
         diags/diag1000010 # output
-        OFF # depend on this test
+        OFF # dependency
     )
 endif()
 
@@ -68,7 +68,7 @@ if(WarpX_FFT)
         Examples/Tests/restart/inputs_test_3d_acceleration_psatd_restart # inputs
         Examples/analysis_default_regression.py # analysis
         diags/diag1000010 # output
-        test_3d_acceleration_psatd # depend on this test
+        test_3d_acceleration_psatd # dependency
     )
 endif()
 
@@ -81,7 +81,7 @@ if(WarpX_FFT)
         Examples/Tests/restart/inputs_test_3d_acceleration_psatd_time_avg # inputs
         Examples/analysis_default_regression.py # analysis
         diags/diag1000010 # output
-        OFF # depend on this test
+        OFF # dependency
     )
 endif()
 
@@ -94,6 +94,6 @@ if(WarpX_FFT)
         Examples/Tests/restart/inputs_test_3d_acceleration_psatd_time_avg_restart # inputs
         Examples/analysis_default_regression.py # analysis
         diags/diag1000010 # output
-        test_3d_acceleration_psatd_time_avg # depend on this test
+        test_3d_acceleration_psatd_time_avg # dependency
     )
 endif()

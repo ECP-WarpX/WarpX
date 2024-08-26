@@ -9,5 +9,5 @@ add_warpx_test(
     Examples/Tests/nodal_electrostatic/inputs_test_3d_nodal_electrostatic_solver # inputs
     Examples/Tests/nodal_electrostatic/analysis.py # analysis
     diags/diag1000010 # output
-    OFF # depend on this test
+    OFF # dependency
 )

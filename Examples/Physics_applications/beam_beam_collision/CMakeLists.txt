@@ -9,5 +9,5 @@ add_warpx_test(
     Examples/Physics_applications/beam_beam_collision/inputs_test_3d_beam_beam_collision # inputs
     Examples/analysis_default_openpmd_regression.py # analysis
     diags/diag1/ # output
-    OFF # depend on this test
+    OFF # dependency
 )

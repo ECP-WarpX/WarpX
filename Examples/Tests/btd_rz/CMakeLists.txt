@@ -9,5 +9,5 @@ add_warpx_test(
     Examples/Tests/btd_rz/inputs_test_rz_btd # inputs
     Examples/Tests/btd_rz/analysis.py # analysis
     diags/diag1000289 # output
-    OFF # depend on this test
+    OFF # dependency
 )

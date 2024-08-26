@@ -9,7 +9,7 @@ add_warpx_test(
     Examples/Tests/nci_fdtd_stability/inputs_test_2d_nci_corrector # inputs
     Examples/Tests/nci_fdtd_stability/analysis_ncicorr.py # analysis
     diags/diag1000600 # output
-    OFF # depend on this test
+    OFF # dependency
 )
 
 add_warpx_test(
@@ -20,5 +20,5 @@ add_warpx_test(
     Examples/Tests/nci_fdtd_stability/inputs_test_2d_nci_corrector_mr # inputs
     Examples/Tests/nci_fdtd_stability/analysis_ncicorr.py # analysis
     diags/diag1000600 # output
-    OFF # depend on this test
+    OFF # dependency
 )

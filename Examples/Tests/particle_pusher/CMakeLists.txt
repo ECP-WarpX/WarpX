@@ -9,5 +9,5 @@ add_warpx_test(
     Examples/Tests/particle_pusher/inputs_test_3d_particle_pusher # inputs
     Examples/Tests/particle_pusher/analysis.py # analysis
     diags/diag1010000 # output
-    OFF # depend on this test
+    OFF # dependency
 )

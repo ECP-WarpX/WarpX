@@ -9,5 +9,5 @@ add_warpx_test(
     Examples/Tests/boundaries/inputs_test_3d_particle_boundaries # inputs
     Examples/Tests/boundaries/analysis.py # analysis
     diags/diag1000008 # output
-    OFF # depend on this test
+    OFF # dependency
 )
