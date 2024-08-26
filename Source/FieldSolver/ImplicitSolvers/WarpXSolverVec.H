@@ -229,6 +229,9 @@ public:
     inline
     void scale (RT a_a)
     {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            IsDefined(),
+            "WarpXSolverVec::scale() called on undefined WarpXSolverVec");
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
             if (m_array_type != warpx::fields::FieldType::None) {
                 m_array_vec[lev][0]->mult(a_a, 0, 1);
@@ -249,7 +252,7 @@ public:
     {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             IsDefined(),
-            "WarpXSolverVec::ones() called on undefined WarpXSolverVec");
+            "WarpXSolverVec::setVal() called on undefined WarpXSolverVec");
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
             if (m_array_type != warpx::fields::FieldType::None) {
                 m_array_vec[lev][0]->setVal(a_val);
