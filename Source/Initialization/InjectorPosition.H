@@ -100,7 +100,7 @@ struct InjectorPositionRegular
         int const nx = ref_fac[0]*ppc.x;
         int const ny = ref_fac[1]*ppc.y;
         int const nz = 1;
-#elif (defined(WARPX_DIM_1D_Z)
+#elif (defined WARPX_DIM_1D_Z)
         int const nx = ref_fac[0]*ppc.x;
         int const ny = 1;
         int const nz = 1;
