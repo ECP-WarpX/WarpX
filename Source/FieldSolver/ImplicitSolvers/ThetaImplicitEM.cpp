@@ -86,9 +86,9 @@ void ThetaImplicitEM::OneStep ( const amrex::Real  a_time,
     // Save up and xp at the start of the time step
     m_WarpX->SaveParticlesAtImplicitStepStart ( );
 
-    // Save electric field at the start of the step
+    // Save the fields at the start of the step
     m_Eold.Copy( FieldType::Efield_fp );
-    m_E.Copy( m_Eold ); // initial guess for E
+    m_E.Copy(m_Eold); // initial guess for E
 
     const int num_levels = static_cast<int>(m_Bold.size());
     for (int lev = 0; lev < num_levels; ++lev) {

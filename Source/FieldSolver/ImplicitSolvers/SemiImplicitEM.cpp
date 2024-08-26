@@ -65,9 +65,9 @@ void SemiImplicitEM::OneStep ( amrex::Real  a_time,
     // Save up and xp at the start of the time step
     m_WarpX->SaveParticlesAtImplicitStepStart ( );
 
-    // Save electric field at the start of the step
+    // Save the fields at the start of the step
     m_Eold.Copy( FieldType::Efield_fp );
-    m_E.Copy( m_Eold ); // initial guess for E
+    m_E.Copy(m_Eold); // initial guess for E
 
     // Compute Bfield at time n+1/2
     m_WarpX->EvolveB(a_dt, DtType::Full);
