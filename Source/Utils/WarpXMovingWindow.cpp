@@ -19,6 +19,7 @@
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 
 #include <ablastr/utils/Communication.H>
 
@@ -452,6 +453,17 @@ WarpX::MoveWindow (const int step, bool move_j)
         }
     }
 
+    // Recompute macroscopic properties of the medium
+    if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
+        const int lev_zero = 0;
+        m_macroscopic_properties->InitData(
+            Geom(lev_zero),
+            getField(warpx::fields::FieldType::Efield_fp, lev_zero,0).ixType().toIntVect(),
+            getField(warpx::fields::FieldType::Efield_fp, lev_zero,1).ixType().toIntVect(),
+            getField(warpx::fields::FieldType::Efield_fp, lev_zero,2).ixType().toIntVect()
+        );
+    }
+
     return num_shift_base;
 }
 
@@ -522,7 +534,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
 
-    for (amrex::MFIter mfi(tmpmf); mfi.isValid(); ++mfi )
+    for (amrex::MFIter mfi(tmpmf, TilingIfNotGPU()); mfi.isValid(); ++mfi )
     {
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
@@ -533,7 +545,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
         auto const& dstfab = mf.array(mfi);
         auto const& srcfab = tmpmf.array(mfi);
 
-        const amrex::Box& outbox = mfi.fabbox() & adjBox;
+        const amrex::Box& outbox = mfi.growntilebox() & adjBox;
 
         if (outbox.ok()) {
             if (!useparser) {
