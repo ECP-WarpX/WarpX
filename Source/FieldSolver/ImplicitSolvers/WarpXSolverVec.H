@@ -65,7 +65,7 @@ public:
 
     [[nodiscard]] inline bool IsDefined () const { return m_is_defined; }
 
-    void Define ( WarpX*     a_WarpX,
+    void Define ( WarpX*  a_WarpX,
                   warpx::fields::FieldType  a_array_type,
                   warpx::fields::FieldType  a_scalar_type = warpx::fields::FieldType::None );
 
@@ -282,8 +282,10 @@ public:
 private:
 
     bool m_is_defined = false;
+
     amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>> m_array_vec;
     amrex::Vector<std::unique_ptr<amrex::MultiFab>> m_scalar_vec;
+
     warpx::fields::FieldType m_array_type = warpx::fields::FieldType::None;
     warpx::fields::FieldType m_scalar_type = warpx::fields::FieldType::None;
 

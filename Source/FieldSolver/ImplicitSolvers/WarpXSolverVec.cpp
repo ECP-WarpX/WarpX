@@ -66,6 +66,11 @@ void WarpXSolverVec::Define ( WarpX*     a_WarpX,
 
     }
 
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        m_array_type != FieldType::None ||
+        m_scalar_type != FieldType::None,
+        "WarpXSolverVec cannot be defined with both array and scalar vecs FieldType::None");
+
     m_is_defined = true;
 }
 
