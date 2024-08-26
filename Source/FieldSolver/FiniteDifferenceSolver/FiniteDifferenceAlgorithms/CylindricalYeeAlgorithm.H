@@ -46,6 +46,7 @@ struct CylindricalYeeAlgorithm {
     static amrex::Real ComputeMaxDt ( amrex::Real const * const dx,
                                       int const n_rz_azimuthal_modes ) {
         using namespace amrex::literals;
+#ifdef WARPX_DIM_RZ
         // In the rz case, the Courant limit has been evaluated
         // semi-analytically by R. Lehe, and resulted in the following
         // coefficients.
@@ -55,10 +56,16 @@ struct CylindricalYeeAlgorithm {
             (n_rz_azimuthal_modes - 1._rt)*(n_rz_azimuthal_modes - 1._rt) - 0.4_rt; // Use a realistic extrapolation
         const amrex::Real delta_t = 1._rt / ( std::sqrt(
                                      (1._rt + multimode_alpha) / (dx[0]*dx[0])
-#ifdef WARPX_DIM_RZ
                                     + 1._rt / (dx[1]*dx[1])
-#endif
                               ) * PhysConst::c );
+#elif defined(WARPX_DIM_RCYLINDER)
+        // A slightly higher value of alpha is needed compared to RZ
+        amrex::ignore_unused(n_rz_azimuthal_modes);
+        const amrex::Real alpha = 0.211_rt;
+        const amrex::Real delta_t = 1._rt / ( std::sqrt(
+                                     (1._rt + alpha) / (dx[0]*dx[0])
+                              ) * PhysConst::c );
+#endif
         return delta_t;
     }
 
@@ -167,7 +174,7 @@ struct CylindricalYeeAlgorithm {
 #ifdef WARPX_DIM_RZ
         amrex::Real const inv_dz = coefs_z[0];
         return inv_dz*( F(i,j+1,k,comp) - F(i,j,k,comp) );
-#else
+#elif defined(WARPX_DIM_RCYLINDER)
         using namespace amrex::literals;
         amrex::ignore_unused(F, coefs_z, i, j, k, comp);
         return 0._rt;
@@ -187,7 +194,7 @@ struct CylindricalYeeAlgorithm {
 #ifdef WARPX_DIM_RZ
         amrex::Real const inv_dz = coefs_z[0];
         return inv_dz*( F(i,j,k,comp) - F(i,j-1,k,comp) );
-#else
+#elif defined(WARPX_DIM_RCYLINDER)
         using namespace amrex::literals;
         amrex::ignore_unused(F, coefs_z, i, j, k, comp);
         return 0._rt;
@@ -208,7 +215,7 @@ struct CylindricalYeeAlgorithm {
 #ifdef WARPX_DIM_RZ
         Real const inv_dz2 = coefs_z[0]*coefs_z[0];
         return inv_dz2*( F(i,j-1,k,ncomp) - 2._rt*F(i,j,k,ncomp) + F(i,j+1,k,ncomp) );
-#else
+#elif defined(WARPX_DIM_RCYLINDER)
         amrex::ignore_unused(F, coefs_z, i, j, k, ncomp);
         return 0._rt;
 #endif
