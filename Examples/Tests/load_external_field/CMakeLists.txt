@@ -42,7 +42,7 @@ add_warpx_test(
     Examples/Tests/load_external_field/inputs_test_rz_load_external_field_grid_restart # inputs
     Examples/analysis_default_regression.py # analysis
     diags/diag1000300 # output
-    OFF # depend on this test
+    test_rz_load_external_field_grid # depend on this test
 )
 
 add_warpx_test(
@@ -64,5 +64,5 @@ add_warpx_test(
     Examples/Tests/load_external_field/inputs_test_rz_load_external_field_particles_restart # inputs
     Examples/analysis_default_regression.py # analysis
     diags/diag1000300 # output
-    OFF # depend on this test
+    test_rz_load_external_field_particles # depend on this test
 )

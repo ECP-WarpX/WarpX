@@ -20,11 +20,11 @@ endif()
 # name: unique name of this test
 # dims: 1,2,RZ,3
 # nprocs: 1 or 2 (maybe refactor later on to just depend on WarpX_MPI)
-# eb: needs EB support? (temporary until runtime param)
-# inputs: inputs file or PICMI script - WarpX_MPI decides on w/wo MPI
-# analysis: analysis script - always run without MPI
-# output: output file to analyze
-# dependency: name of another test to run first
+# eb: needs EB support? (temporary until handled as runtime parameter)
+# inputs: inputs file or PICMI script, WarpX_MPI decides w/ or w/o MPI
+# analysis: analysis script, always run without MPI
+# output: output file (dir) to analyze
+# dependency: name of base test that must run first
 #
 function(add_warpx_test
     name
@@ -200,15 +200,13 @@ function(add_warpx_test
 
     # Do we depend on another test?
     if(dependency)
-        # test run depends on another test being run and analyzed
-        if(TARGET ${dependency}.run)
-            set_property(TEST ${name}.run APPEND PROPERTY DEPENDS "${dependency}.run")
-        endif()
-        if(TARGET ${dependency}.analysis)
+        # current test depends on dependency test run (and analysis)
+        set_property(TEST ${name}.run APPEND PROPERTY DEPENDS "${dependency}.run")
+        if(analysis)
             set_property(TEST ${name}.run APPEND PROPERTY DEPENDS "${dependency}.analysis")
         endif()
-        # do not clean up dependent before we are done
-        if(TARGET ${dependency}.cleanup)
+        if(WarpX_CI)
+            # do not clean up dependency test before current test is completed
             set_property(TEST ${dependency}.cleanup APPEND PROPERTY DEPENDS "${name}.cleanup")
         endif()
     endif()

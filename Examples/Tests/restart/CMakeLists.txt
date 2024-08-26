@@ -43,7 +43,7 @@ add_warpx_test(
     Examples/Tests/restart/inputs_test_3d_acceleration_restart # inputs
     Examples/analysis_default_regression.py # analysis
     diags/diag1000010 # output
-    OFF # depend on this test
+    test_3d_acceleration # depend on this test
 )
 
 if(WarpX_FFT)
@@ -68,7 +68,7 @@ if(WarpX_FFT)
         Examples/Tests/restart/inputs_test_3d_acceleration_psatd_restart # inputs
         Examples/analysis_default_regression.py # analysis
         diags/diag1000010 # output
-        OFF # depend on this test
+        test_3d_acceleration_psatd # depend on this test
     )
 endif()
 
@@ -94,6 +94,6 @@ if(WarpX_FFT)
         Examples/Tests/restart/inputs_test_3d_acceleration_psatd_time_avg_restart # inputs
         Examples/analysis_default_regression.py # analysis
         diags/diag1000010 # output
-        OFF # depend on this test
+        test_3d_acceleration_psatd_time_avg # depend on this test
     )
 endif()
