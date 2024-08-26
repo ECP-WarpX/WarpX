@@ -1422,25 +1422,47 @@ std::array<ParticleReal, 3> WarpXParticleContainer::meanParticleVelocity(bool lo
 
 amrex::ParticleReal WarpXParticleContainer::maxParticleVelocity(bool local) {
 
-    amrex::ParticleReal max_v = 0.0;
+    amrex::ParticleReal max_usq = 0.0;
+    const amrex::ParticleReal inv_clight_sq = 1.0_prt/(PhysConst::c*PhysConst::c);
 
     const int nLevels = finestLevel();
-    for (int lev = 0; lev <= nLevels; ++lev)
-    {
 
-#ifdef AMREX_USE_OMP
-#pragma omp parallel reduction(max:max_v)
+#ifdef AMREX_USE_GPU
+    if (Gpu::inLaunchRegion())
+    {
+        using PType = typename WarpXParticleContainer::ParticleType;
+        max_usq = amrex::ReduceMax(*this,
+                [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> amrex::ParticleReal
+                {
+                    auto ux = p.rdata(3);
+                    auto uy = p.rdata(4);
+                    auto uz = p.rdata(5);
+                    return (ux*ux + uy*uy + uz*uz) * inv_clight_sq;
+                });
+    }
+    else
 #endif
-        for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
+    {
+        for (int lev = 0; lev <= nLevels; ++lev)
         {
-            auto& ux = pti.GetAttribs(PIdx::ux);
-            auto& uy = pti.GetAttribs(PIdx::uy);
-            auto& uz = pti.GetAttribs(PIdx::uz);
-            for (unsigned long i = 0; i < ux.size(); i++) {
-                max_v = std::max(max_v, std::sqrt(ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i]));
+#ifdef AMREX_USE_OMP
+#pragma omp parallel reduction(max:max_usq)
+#endif
+            for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
+            {
+                auto& ux = pti.GetAttribs(PIdx::ux);
+                auto& uy = pti.GetAttribs(PIdx::uy);
+                auto& uz = pti.GetAttribs(PIdx::uz);
+                for (unsigned long i = 0; i < ux.size(); i++) {
+                    const amrex::ParticleReal usq = (ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i]) * inv_clight_sq;
+                    max_usq = std::max(max_usq, usq);
+                }
             }
         }
     }
+
+    const amrex::ParticleReal gaminv = 1.0_prt/std::sqrt(1.0_prt + max_usq);
+    amrex::ParticleReal max_v = gaminv * std::sqrt(max_usq) * PhysConst::c;
 
     if (!local) { ParallelAllReduce::Max(max_v, ParallelDescriptor::Communicator()); }
     return max_v;
