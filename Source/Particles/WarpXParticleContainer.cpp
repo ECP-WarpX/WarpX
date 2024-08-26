@@ -1422,48 +1422,21 @@ std::array<ParticleReal, 3> WarpXParticleContainer::meanParticleVelocity(bool lo
 
 amrex::ParticleReal WarpXParticleContainer::maxParticleVelocity(bool local) {
 
-    amrex::ParticleReal max_usq = 0.0;
     const amrex::ParticleReal inv_clight_sq = 1.0_prt/(PhysConst::c*PhysConst::c);
 
-    const int nLevels = finestLevel();
+    using PType = typename WarpXParticleContainer::SuperParticleType;
+    amrex::ReduceOps<amrex::ReduceOpMax> reduce_ops;
+    const auto reduce_res = amrex::ParticleReduce<amrex::ReduceData<amrex::ParticleReal>>(
+            *this,
+            [=] AMREX_GPU_HOST_DEVICE(const PType &p) noexcept -> amrex::GpuTuple<amrex::ParticleReal> {
+                const auto ux = p.rdata(PIdx::ux);
+                const auto uy = p.rdata(PIdx::uy);
+                const auto uz = p.rdata(PIdx::uz);
+                return (ux*ux + uy*uy + uz*uz) * inv_clight_sq;
+            },
+            reduce_ops);
 
-#ifdef AMREX_USE_GPU
-    if (Gpu::inLaunchRegion())
-    {
-        amrex::ReduceOps<amrex::ReduceOpMax> reduce_ops;
-        using PType = typename WarpXParticleContainer::SuperParticleType;
-        auto reduce_res = amrex::ParticleReduce<amrex::ReduceData<amrex::ParticleReal>>(
-                *this,
-                [=] AMREX_GPU_HOST_DEVICE(const PType &p) noexcept -> amrex::GpuTuple<amrex::ParticleReal> {
-                    const auto ux = p.rdata(PIdx::ux);
-                    const auto uy = p.rdata(PIdx::uy);
-                    const auto uz = p.rdata(PIdx::uz);
-                    return (ux*ux + uy*uy + uz*uz) * inv_clight_sq;
-                },
-                reduce_ops);
-        max_usq = amrex::get<0>(reduce_res);
-    }
-    else
-#endif
-    {
-        for (int lev = 0; lev <= nLevels; ++lev)
-        {
-#ifdef AMREX_USE_OMP
-#pragma omp parallel reduction(max:max_usq)
-#endif
-            for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
-            {
-                auto& ux = pti.GetAttribs(PIdx::ux);
-                auto& uy = pti.GetAttribs(PIdx::uy);
-                auto& uz = pti.GetAttribs(PIdx::uz);
-                for (unsigned long i = 0; i < ux.size(); i++) {
-                    const amrex::ParticleReal usq = (ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i]) * inv_clight_sq;
-                    max_usq = std::max(max_usq, usq);
-                }
-            }
-        }
-    }
-
+    const amrex::ParticleReal max_usq = amrex::get<0>(reduce_res);
     const amrex::ParticleReal gaminv = 1.0_prt/std::sqrt(1.0_prt + max_usq);
     amrex::ParticleReal max_v = gaminv * std::sqrt(max_usq) * PhysConst::c;
 
