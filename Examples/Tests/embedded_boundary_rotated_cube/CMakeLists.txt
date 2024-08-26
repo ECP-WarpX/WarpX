@@ -9,7 +9,8 @@ if(WarpX_EB)
         ON # eb
         Examples/Tests/embedded_boundary_rotated_cube/inputs_test_2d_embedded_boundary_rotated_cube # inputs
         Examples/Tests/embedded_boundary_rotated_cube/analysis_fields_2d.py # analysis
-        diags/diag1000068
+        diags/diag1000068 # output
+        OFF # depend on this test
     )
 endif()
 
@@ -21,6 +22,7 @@ if(WarpX_EB)
         ON # eb
         Examples/Tests/embedded_boundary_rotated_cube/inputs_test_3d_embedded_boundary_rotated_cube # inputs
         Examples/Tests/embedded_boundary_rotated_cube/analysis_fields_3d.py # analysis
-        diags/diag1000111
+        diags/diag1000111 # output
+        OFF # depend on this test
     )
 endif()
