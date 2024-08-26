@@ -72,9 +72,7 @@ public:
     inline
     void Define ( const WarpXSolverVec&  a_solver_vec )
     {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            a_solver_vec.IsDefined(),
-            "WarpXSolverVec::Define(solver_vec) called with undefined solver_vec");
+        assertIsDefined( a_solver_vec );
         Define( WarpXSolverVec::m_WarpX,
                 a_solver_vec.getArrayVecType(),
                 a_solver_vec.getScalarVecType() );
@@ -88,9 +86,7 @@ public:
     inline
     void Copy ( const WarpXSolverVec&  a_solver_vec )
     {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            a_solver_vec.IsDefined(),
-            "WarpXSolverVec::Copy(solver_vec) called with undefined solver_vec");
+        assertIsDefined( a_solver_vec );
         if (IsDefined()) { assertSameType( a_solver_vec ); }
         else { Define(a_solver_vec); }
 
@@ -130,6 +126,7 @@ public:
     inline
     void operator+= ( const WarpXSolverVec&  a_solver_vec )
     {
+        assertIsDefined( a_solver_vec );
         assertSameType( a_solver_vec );
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
             if (m_array_type != warpx::fields::FieldType::None) {
@@ -146,6 +143,7 @@ public:
     inline
     void operator-= (const WarpXSolverVec& a_solver_vec)
     {
+        assertIsDefined( a_solver_vec );
         assertSameType( a_solver_vec );
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
             if (m_array_type != warpx::fields::FieldType::None) {
@@ -165,6 +163,8 @@ public:
     inline
     void linComb (const RT a, const WarpXSolverVec& X, const RT b, const WarpXSolverVec& Y)
     {
+        assertIsDefined( X );
+        assertIsDefined( Y );
         assertSameType( X );
         assertSameType( Y );
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
@@ -188,6 +188,7 @@ public:
      */
     void increment (const WarpXSolverVec& X, const RT a)
     {
+        assertIsDefined( X );
         assertSameType( X );
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
             if (m_array_type != warpx::fields::FieldType::None) {
@@ -243,6 +244,14 @@ public:
                 m_scalar_vec[lev]->setVal(a_val);
             }
         }
+    }
+
+    inline
+    void assertIsDefined( const WarpXSolverVec&  a_solver_vec ) const
+    {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            a_solver_vec.IsDefined(),
+            "WarpXSolverVec::function(X) called with undefined WarpXSolverVec X");
     }
 
     inline

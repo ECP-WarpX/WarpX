@@ -99,6 +99,7 @@ void WarpXSolverVec::Copy ( FieldType  a_array_type,
 
 [[nodiscard]] amrex::Real WarpXSolverVec::dotProduct ( const WarpXSolverVec&  a_X ) const
 {
+    assertIsDefined( a_X );
     assertSameType( a_X );
 
     amrex::Real result = 0.0;
