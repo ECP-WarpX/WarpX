@@ -129,8 +129,9 @@ void DifferentialLuminosity::ComputeDiags (int step)
 #else
     WARPX_PROFILE("DifferentialLuminosity::ComputeDiags");
 
-    // Judge if the diags should be done
-    if (!m_intervals.contains(step+1)) { return; }
+    // Since this diagnostic *accumulates* the luminosity in the
+    // array d_data, we add contributions at *each timestep*, but
+    // we only write the data to file at intervals specified by the user.
 
     const Real c2 = PhysConst::c*PhysConst::c;
 
@@ -253,14 +254,18 @@ void DifferentialLuminosity::ComputeDiags (int step)
         } // boxes
     } // levels
 
+    // Only write to file at intervals specified by the user.
+    // At these intervals, the data needs to ready on the CPU,
+    // so we copy it from the GPU to the CPU and reduce across MPI ranks.
+    if (m_intervals.contains(step+1)) {
+        // blocking copy from device to host
+        amrex::Gpu::copy(amrex::Gpu::deviceToHost,
+            d_data.begin(), d_data.end(), m_data.begin());
 
-    // blocking copy from device to host
-    amrex::Gpu::copy(amrex::Gpu::deviceToHost,
-        d_data.begin(), d_data.end(), m_data.begin());
-
-    // reduced sum over mpi ranks
-    ParallelDescriptor::ReduceRealSum
-        (m_data.data(), static_cast<int>(m_data.size()), ParallelDescriptor::IOProcessorNumber());
+        // reduced sum over mpi ranks
+        ParallelDescriptor::ReduceRealSum
+            (m_data.data(), static_cast<int>(m_data.size()), ParallelDescriptor::IOProcessorNumber());
+    }
 
 #endif // not RZ
 return;
