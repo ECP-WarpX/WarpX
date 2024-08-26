@@ -80,7 +80,7 @@ beam1.uy_m = 0.0
 beam1.ux_m = 0.0
 beam1.ux_th = 0
 beam1.uy_th = 0
-beam1.uz_th = 0
+beam1.uz_th = 0.02*beam_gamma
 beam1.do_not_deposit = 1
 
 beam2.species_type = positron
@@ -100,7 +100,7 @@ beam2.uy_m = 0.0
 beam2.ux_m = 0.0
 beam2.ux_th = 0
 beam2.uy_th = 0
-beam2.uz_th = 0
+beam2.uz_th = 0.03*beam_gamma
 beam2.do_not_deposit = 1
 
 #################################
