@@ -42,15 +42,14 @@ namespace warpx::fields
     inline bool
     isFieldArray (const FieldType field_type)
     {
-        if (field_type == FieldType::Efield_aux || field_type == FieldType::Bfield_aux ||
-            field_type == FieldType::Efield_fp  || field_type == FieldType::Bfield_fp ||
-            field_type == FieldType::current_fp || field_type == FieldType::current_fp_nodal ||
-            field_type == FieldType::vector_potential_fp ||
-            field_type == FieldType::Efield_cp  || field_type == FieldType::Bfield_cp ||
-            field_type == FieldType::current_cp ||
-            field_type == FieldType::Efield_avg_fp || field_type == FieldType::Bfield_avg_fp ||
-            field_type == FieldType::Efield_avg_cp || field_type == FieldType::Bfield_avg_cp) { return true; }
-        else { return false; }
+        return (field_type == FieldType::Efield_aux || field_type == FieldType::Bfield_aux ||
+                field_type == FieldType::Efield_fp  || field_type == FieldType::Bfield_fp ||
+                field_type == FieldType::current_fp || field_type == FieldType::current_fp_nodal ||
+                field_type == FieldType::vector_potential_fp ||
+                field_type == FieldType::Efield_cp  || field_type == FieldType::Bfield_cp ||
+                field_type == FieldType::current_cp ||
+                field_type == FieldType::Efield_avg_fp || field_type == FieldType::Bfield_avg_fp ||
+                field_type == FieldType::Efield_avg_cp || field_type == FieldType::Bfield_avg_cp);
     }
 }
 
