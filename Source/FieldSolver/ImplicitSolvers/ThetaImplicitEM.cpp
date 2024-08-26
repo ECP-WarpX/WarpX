@@ -154,8 +154,8 @@ void ThetaImplicitEM::FinishFieldUpdate ( amrex::Real  a_new_time )
 {
     amrex::ignore_unused(a_new_time);
 
-    // Eg^{n+1} = (1/theta)*Eg^{n+theta} + (1-1/theta)*Eg^n
-    // Bg^{n+1} = (1/theta)*Bg^{n+theta} + (1-1/theta)*Bg^n
+    // Eg^{n+1} = (1/theta)*E_g^{n+theta} + (1-1/theta)*E_g^n
+    // Bg^{n+1} = (1/theta)*B_g^{n+theta} + (1-1/theta)*B_g^n
 
     const amrex::Real c0 = 1._rt/m_theta;
     const amrex::Real c1 = 1._rt - c0;
