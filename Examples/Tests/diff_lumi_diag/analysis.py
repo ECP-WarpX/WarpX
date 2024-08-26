@@ -41,8 +41,8 @@ dL_dE_th = (
 # Check that the simulation result and analytical result match
 error = abs(dL_dE_sim - dL_dE_th).max() / abs(dL_dE_th).max()
 tol = 1e-2
-print('Relative error: ', error)
-print('Tolerance: ', tol )
+print("Relative error: ", error)
+print("Tolerance: ", tol)
 assert error < tol
 
 # Get name of the test

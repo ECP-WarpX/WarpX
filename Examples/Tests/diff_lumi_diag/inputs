@@ -126,4 +126,3 @@ DifferentialLuminosity_beam1_beam2.species = beam1 beam2
 DifferentialLuminosity_beam1_beam2.bin_number = 128
 DifferentialLuminosity_beam1_beam2.bin_max = 2.1*beam_energy
 DifferentialLuminosity_beam1_beam2.bin_min = 1.9*beam_energy
-
