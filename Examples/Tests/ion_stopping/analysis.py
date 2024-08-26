@@ -12,7 +12,6 @@
 # particle energies.
 
 import os
-import re
 import sys
 
 import numpy as np
@@ -30,13 +29,7 @@ kb = k
 tolerance = 1.0e-7
 
 last_filename = sys.argv[1]
-
-# Remove trailing '/' from file name, if necessary
-last_filename.rstrip("/")
-# Find last iteration in file name, such as 'test_name_plt000001' (last_it = '000001')
-last_it = re.search("\d+$", last_filename).group()
-# Find output prefix in file name, such as 'test_name_plt000001' (prefix = 'test_name_plt')
-prefix = last_filename[: -len(last_it)]
+last_it = 10
 
 
 def stopping_from_electrons(ne, Te, Zb, ion_mass):
@@ -150,14 +143,14 @@ EE4 = 0.5 * ion_mass34 * (vx**2 + vy**2 + vz**2) / e
 
 ds = yt.load(last_filename)
 ad = ds.all_data()
-dt = ds.current_time.to_value() / int(last_it)
+dt = ds.current_time.to_value() / last_it
 
 # Step through the same number of time steps
 a_EE1 = EE1
 a_EE2 = EE2
 a_EE3 = EE3
 a_EE4 = EE4
-for it in range(int(last_it)):
+for it in range(last_it):
     dEdt1 = stopping_from_electrons(ne, Te, Zb, ion_mass12)
     a_EE1 *= np.exp(dEdt1 * dt)
     dEdt2 = stopping_from_electrons(ne2, Te2, Zb, ion_mass12)
