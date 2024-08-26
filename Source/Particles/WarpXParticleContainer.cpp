@@ -1430,16 +1430,18 @@ amrex::ParticleReal WarpXParticleContainer::maxParticleVelocity(bool local) {
 #ifdef AMREX_USE_GPU
     if (Gpu::inLaunchRegion())
     {
-        using PTDType = typename WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
-        max_usq = amrex::ReduceMax(*this,
-                [=] AMREX_GPU_HOST_DEVICE (const PTDType& ptd, const int i) -> amrex::ParticleReal
-                {
-                    const auto& aos = ptd.m_aos[i];
-                    auto ux = aos.rdata(3);
-                    auto uy = aos.rdata(4);
-                    auto uz = aos.rdata(5);
+        amrex::ReduceOps<amrex::ReduceOpMax> reduce_ops;
+        using PType = typename WarpXParticleContainer::SuperParticleType;
+        auto reduce_res = amrex::ParticleReduce<amrex::ReduceData<amrex::ParticleReal>>(
+                *this,
+                [=] AMREX_GPU_HOST_DEVICE(const PType &p) noexcept -> amrex::GpuTuple<amrex::ParticleReal> {
+                    const auto ux = p.rdata(PIdx::ux);
+                    const auto uy = p.rdata(PIdx::uy);
+                    const auto uz = p.rdata(PIdx::uz);
                     return (ux*ux + uy*uy + uz*uz) * inv_clight_sq;
-                });
+                },
+                reduce_ops);
+        max_usq = amrex::get<0>(reduce_res);
     }
     else
 #endif
