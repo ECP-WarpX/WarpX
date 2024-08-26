@@ -44,14 +44,16 @@ from .WarpX import warpx  # noqa
 # This is a circular import and must happen after the import of libwarpx
 from . import picmi  # noqa  # isort:skip
 
+
 # intentionally query the value - only set once sim dimension is known
 def __getattr__(name):
     # https://stackoverflow.com/a/57263518/2719194
-    if name == '__version__':
+    if name == "__version__":
         return libwarpx.__version__
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
+
 # TODO
-#__doc__ = cxx.__doc__
-#__license__ = cxx.__license__
-#__author__ = cxx.__author__
+# __doc__ = cxx.__doc__
+# __license__ = cxx.__license__
+# __author__ = cxx.__author__
