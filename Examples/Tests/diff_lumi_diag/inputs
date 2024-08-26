@@ -113,7 +113,6 @@ diag1.intervals = 1
 diag1.diag_type = Full
 diag1.write_species = 1
 diag1.fields_to_plot = rho_beam1 rho_beam2
-diag1.format = openpmd
 diag1.dump_last_timestep = 1
 diag1.species = beam1 beam2
 
