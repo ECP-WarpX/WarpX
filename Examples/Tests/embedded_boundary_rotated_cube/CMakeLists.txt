@@ -7,7 +7,6 @@ if(WarpX_EB)
         2 # dims
         1 # nprocs
         ON # eb
-    OFF # preparation script
         Examples/Tests/embedded_boundary_rotated_cube/inputs_test_2d_embedded_boundary_rotated_cube # inputs
         Examples/Tests/embedded_boundary_rotated_cube/analysis_fields_2d.py # analysis
         diags/diag1000068
@@ -20,7 +19,6 @@ if(WarpX_EB)
         3 # dims
         1 # nprocs
         ON # eb
-    OFF # preparation script
         Examples/Tests/embedded_boundary_rotated_cube/inputs_test_3d_embedded_boundary_rotated_cube # inputs
         Examples/Tests/embedded_boundary_rotated_cube/analysis_fields_3d.py # analysis
         diags/diag1000111

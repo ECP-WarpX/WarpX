@@ -7,9 +7,9 @@ if(WarpX_FFT)
         2 # dims
         2 # nprocs
         OFF # eb
-    OFF # preparation script
         Examples/Tests/maxwell_hybrid_qed/inputs_test_2d_maxwell_hybrid_qed_solver # inputs
         Examples/Tests/maxwell_hybrid_qed/analysis.py # analysis
         diags/diag1000300 # output
+    OFF # depend on this test
     )
 endif()

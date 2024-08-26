@@ -7,9 +7,9 @@ if(WarpX_EB)
         RZ # dims
         2  # nprocs
         ON # eb
-    OFF # preparation script
         Examples/Tests/particle_boundary_interaction/inputs_test_rz_particle_boundary_interaction_picmi.py # inputs
         Examples/Tests/particle_boundary_interaction/analysis.py # analysis
         diags/diag1/ # output
+    OFF # depend on this test
     )
 endif()

@@ -17,25 +17,34 @@ endif()
 
 # Add a WarpX test set (with sub-tests)
 #
+# name: unique name of this test
+# dims: 1,2,RZ,3
+# nprocs: 1 or 2 (maybe refactor later on to just depend on WarpX_MPI)
+# eb: needs EB support? (temporary until runtime param)
+# inputs: inputs file or PICMI script - WarpX_MPI decides on w/wo MPI
+# analysis: analysis script - always run without MPI
+# output: output file to analyze
+# dependency: name of another test to run first
+#
 function(add_warpx_test
     name
     dims
     nprocs
     eb
-    preparation
     inputs
     analysis
     output
+    dependency
 )
     # cannot run MPI tests w/o MPI build
-    if(NOT WarpX_MPI)
-            message(WARNING "cannot run MPI tests without MPI build")
+    if(nprocs GREATER_EQUAL 2 AND NOT WarpX_MPI)
+        message(WARNING "${name}: cannot run MPI tests without MPI build")
         return()
     endif()
 
     # cannot run EB tests w/o EB build
     if(eb AND NOT WarpX_EB)
-            message(WARNING "cannot run EB tests without EB build")
+        message(WARNING "${name}: cannot run EB tests without EB build")
         return()
     endif()
 
@@ -154,18 +163,6 @@ function(add_warpx_test
         set(THIS_Python_SCRIPT_EXE ${Python_EXECUTABLE})
     endif()
 
-    # preparation
-    if(preparation)
-        add_test(
-            NAME ${name}.preparation
-            COMMAND
-                ${THIS_Python_SCRIPT_EXE} ${WarpX_SOURCE_DIR}/${preparation}
-            WORKING_DIRECTORY ${THIS_WORKING_DIR}
-        )
-        # test run depends on test preparation
-        set_property(TEST ${name}.run APPEND PROPERTY DEPENDS "${name}.preparation")
-    endif()
-
     # test analysis
     if(analysis)
         add_test(
@@ -201,6 +198,20 @@ function(add_warpx_test
         endif()
     endif()
 
+    # Do we depend on another test?
+    if(dependency)
+        # test run depends on another test being run and analyzed
+        if(TARGET ${dependency}.run)
+            set_property(TEST ${name}.run APPEND PROPERTY DEPENDS "${dependency}.run")
+        endif()
+        if(TARGET ${dependency}.analysis)
+            set_property(TEST ${name}.run APPEND PROPERTY DEPENDS "${dependency}.analysis")
+        endif()
+        # do not clean up dependent before we are done
+        if(TARGET ${dependency}.cleanup)
+            set_property(TEST ${dependency}.cleanup APPEND PROPERTY DEPENDS "${name}.cleanup")
+        endif()
+    endif()
 endfunction()
 
 # Add tests (alphabetical order) ##############################################

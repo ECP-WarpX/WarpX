@@ -6,10 +6,10 @@ add_warpx_test(
     1 # dims
     2 # nprocs
     OFF # eb
-    OFF # preparation script
     Examples/Tests/langmuir/inputs_test_1d_langmuir_multi # inputs
     Examples/Tests/langmuir/analysis_1d.py # analysis
     diags/diag1000080 # output
+    OFF # depend on this test
 )
 
 add_warpx_test(
@@ -17,10 +17,10 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    OFF # preparation script
     Examples/Tests/langmuir/inputs_test_2d_langmuir_multi_mr # inputs
     Examples/Tests/langmuir/analysis_2d.py # analysis
     diags/diag1000080 # output
+    OFF # depend on this test
 )
 
 add_warpx_test(
@@ -28,10 +28,10 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    OFF # preparation script
     Examples/Tests/langmuir/inputs_test_2d_langmuir_multi_mr_anisotropic # inputs
     Examples/Tests/langmuir/analysis_2d.py # analysis
     diags/diag1000080 # output
+    OFF # depend on this test
 )
 
 add_warpx_test(
@@ -39,10 +39,10 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    OFF # preparation script
     Examples/Tests/langmuir/inputs_test_2d_langmuir_multi_mr_momentum_conserving # inputs
     Examples/Tests/langmuir/analysis_2d.py # analysis
     diags/diag1000080 # output
+    OFF # depend on this test
 )
 
 if(WarpX_FFT)
@@ -51,10 +51,10 @@ if(WarpX_FFT)
         2 # dims
         2 # nprocs
         OFF # eb
-    OFF # preparation script
         Examples/Tests/langmuir/inputs_test_2d_langmuir_multi_mr_psatd # inputs
         Examples/Tests/langmuir/analysis_2d.py # analysis
         diags/diag1000080 # output
+    OFF # depend on this test
     )
 endif()
 
@@ -63,10 +63,10 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    OFF # preparation script
     Examples/Tests/langmuir/inputs_test_2d_langmuir_multi_nodal # inputs
     Examples/Tests/langmuir/analysis_2d.py # analysis
     diags/diag1000080 # output
+    OFF # depend on this test
 )
 
 add_warpx_test(
@@ -74,10 +74,10 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    OFF # preparation script
     Examples/Tests/langmuir/inputs_test_2d_langmuir_multi_picmi.py # inputs
     Examples/analysis_default_regression.py # analysis
     diags/diag1000040 # output
+    OFF # depend on this test
 )
 
 if(WarpX_FFT)
@@ -86,10 +86,10 @@ if(WarpX_FFT)
         2 # dims
         2 # nprocs
         OFF # eb
-    OFF # preparation script
         Examples/Tests/langmuir/inputs_test_2d_langmuir_multi_psatd # inputs
         Examples/Tests/langmuir/analysis_2d.py # analysis
         diags/diag1000080 # output
+        OFF # depend on this test
     )
 endif()
 
@@ -99,10 +99,10 @@ if(WarpX_FFT)
         2 # dims
         1 # nprocs
         OFF # eb
-    OFF # preparation script
         Examples/Tests/langmuir/inputs_test_2d_langmuir_multi_psatd_current_correction # inputs
         Examples/Tests/langmuir/analysis_2d.py # analysis
         diags/diag1000080 # output
+        OFF # depend on this test
     )
 endif()
 
@@ -112,10 +112,10 @@ if(WarpX_FFT)
         2 # dims
         1 # nprocs
         OFF # eb
-    OFF # preparation script
         Examples/Tests/langmuir/inputs_test_2d_langmuir_multi_psatd_current_correction_nodal # inputs
         Examples/Tests/langmuir/analysis_2d.py # analysis
         diags/diag1000080 # output
+        OFF # depend on this test
     )
 endif()
 
@@ -125,10 +125,10 @@ if(WarpX_FFT)
         2 # dims
         2 # nprocs
         OFF # eb
-    OFF # preparation script
         Examples/Tests/langmuir/inputs_test_2d_langmuir_multi_psatd_momentum_conserving # inputs
         Examples/Tests/langmuir/analysis_2d.py # analysis
         diags/diag1000080 # output
+        OFF # depend on this test
     )
 endif()
 
@@ -138,10 +138,10 @@ if(WarpX_FFT)
         2 # dims
         2 # nprocs
         OFF # eb
-    OFF # preparation script
         Examples/Tests/langmuir/inputs_test_2d_langmuir_multi_psatd_multiJ # inputs
         Examples/Tests/langmuir/analysis_2d.py # analysis
         diags/diag1000080 # output
+        OFF # depend on this test
     )
 endif()
 
@@ -151,10 +151,10 @@ if(WarpX_FFT)
         2 # dims
         2 # nprocs
         OFF # eb
-    OFF # preparation script
         Examples/Tests/langmuir/inputs_test_2d_langmuir_multi_psatd_multiJ_nodal # inputs
         Examples/Tests/langmuir/analysis_2d.py # analysis
         diags/diag1000080 # output
+        OFF # depend on this test
     )
 endif()
 
@@ -164,10 +164,10 @@ if(WarpX_FFT)
         2 # dims
         2 # nprocs
         OFF # eb
-    OFF # preparation script
         Examples/Tests/langmuir/inputs_test_2d_langmuir_multi_psatd_nodal # inputs
         Examples/Tests/langmuir/analysis_2d.py # analysis
         diags/diag1000080 # output
+        OFF # depend on this test
     )
 endif()
 
@@ -177,10 +177,10 @@ if(WarpX_FFT)
         2 # dims
         1 # nprocs
         OFF # eb
-    OFF # preparation script
         Examples/Tests/langmuir/inputs_test_2d_langmuir_multi_psatd_vay_deposition # inputs
         Examples/Tests/langmuir/analysis_2d.py # analysis
         diags/diag1000080 # output
+        OFF # depend on this test
     )
 endif()
 
@@ -191,10 +191,10 @@ endif()
 #        2 # dims
 #        1 # nprocs
 #        OFF # eb
-#        OFF # preparation script
 #        Examples/Tests/langmuir/inputs_test_2d_langmuir_multi_psatd_vay_deposition_particle_shape_4 # inputs
 #        Examples/Tests/langmuir/analysis_2d.py # analysis
 #        diags/diag1000080 # output
+#        OFF # depend on this test
 #    )
 #endif()
 
@@ -204,10 +204,10 @@ if(WarpX_FFT)
         2 # dims
         1 # nprocs
         OFF # eb
-        OFF # preparation script
         Examples/Tests/langmuir/inputs_test_2d_langmuir_multi_psatd_vay_deposition_nodal # inputs
         Examples/Tests/langmuir/analysis_2d.py # analysis
         diags/diag1000080 # output
+    OFF # depend on this test
     )
 endif()
 
@@ -216,10 +216,10 @@ add_warpx_test(
     3 # dims
     2 # nprocs
     OFF # eb
-    OFF # preparation script
     Examples/Tests/langmuir/inputs_test_3d_langmuir_multi # inputs
     Examples/Tests/langmuir/analysis_3d.py # analysis
     diags/diag1000040 # output
+    OFF # depend on this test
 )
 
 add_warpx_test(
@@ -227,10 +227,10 @@ add_warpx_test(
     3 # dims
     2 # nprocs
     OFF # eb
-    OFF # preparation script
     Examples/Tests/langmuir/inputs_test_3d_langmuir_multi_nodal # inputs
     Examples/Tests/langmuir/analysis_3d.py # analysis
     diags/diag1000040 # output
+    OFF # depend on this test
 )
 
 add_warpx_test(
@@ -238,10 +238,10 @@ add_warpx_test(
     3 # dims
     1 # nprocs
     OFF # eb
-    OFF # preparation script
     Examples/Tests/langmuir/inputs_test_3d_langmuir_multi_picmi.py # inputs
     Examples/analysis_default_regression.py # analysis
     diags/diag1000040 # output
+    OFF # depend on this test
 )
 
 if(WarpX_FFT)
@@ -250,10 +250,10 @@ if(WarpX_FFT)
         3 # dims
         2 # nprocs
         OFF # eb
-    OFF # preparation script
         Examples/Tests/langmuir/inputs_test_3d_langmuir_multi_psatd # inputs
         Examples/Tests/langmuir/analysis_3d.py # analysis
         diags/diag1000040 # output
+    OFF # depend on this test
     )
 endif()
 
@@ -263,10 +263,10 @@ if(WarpX_FFT)
         3 # dims
         1 # nprocs
         OFF # eb
-    OFF # preparation script
         Examples/Tests/langmuir/inputs_test_3d_langmuir_multi_psatd_current_correction # inputs
         Examples/Tests/langmuir/analysis_3d.py # analysis
         diags/diag1000040 # output
+    OFF # depend on this test
     )
 endif()
 
@@ -276,10 +276,10 @@ if(WarpX_FFT)
         3 # dims
         1 # nprocs
         OFF # eb
-    OFF # preparation script
         Examples/Tests/langmuir/inputs_test_3d_langmuir_multi_psatd_current_correction_nodal # inputs
         Examples/Tests/langmuir/analysis_3d.py # analysis
         diags/diag1000040 # output
+    OFF # depend on this test
     )
 endif()
 
@@ -289,10 +289,10 @@ if(WarpX_FFT)
         3 # dims
         2 # nprocs
         OFF # eb
-    OFF # preparation script
         Examples/Tests/langmuir/inputs_test_3d_langmuir_multi_psatd_div_cleaning # inputs
         Examples/Tests/langmuir/analysis_3d.py # analysis
         diags/diag1000040 # output
+    OFF # depend on this test
     )
 endif()
 
@@ -302,10 +302,10 @@ if(WarpX_FFT)
         3 # dims
         2 # nprocs
         OFF # eb
-    OFF # preparation script
         Examples/Tests/langmuir/inputs_test_3d_langmuir_multi_psatd_momentum_conserving # inputs
         Examples/Tests/langmuir/analysis_3d.py # analysis
         diags/diag1000040 # output
+    OFF # depend on this test
     )
 endif()
 
@@ -315,10 +315,10 @@ if(WarpX_FFT)
         3 # dims
         2 # nprocs
         OFF # eb
-    OFF # preparation script
         Examples/Tests/langmuir/inputs_test_3d_langmuir_multi_psatd_multiJ # inputs
         Examples/Tests/langmuir/analysis_3d.py # analysis
         diags/diag1000040 # output
+    OFF # depend on this test
     )
 endif()
 
@@ -328,10 +328,10 @@ if(WarpX_FFT)
         3 # dims
         2 # nprocs
         OFF # eb
-    OFF # preparation script
         Examples/Tests/langmuir/inputs_test_3d_langmuir_multi_psatd_multiJ_nodal # inputs
         Examples/Tests/langmuir/analysis_3d.py # analysis
         diags/diag1000040 # output
+    OFF # depend on this test
     )
 endif()
 
@@ -341,10 +341,10 @@ if(WarpX_FFT)
         3 # dims
         2 # nprocs
         OFF # eb
-    OFF # preparation script
         Examples/Tests/langmuir/inputs_test_3d_langmuir_multi_psatd_nodal # inputs
         Examples/Tests/langmuir/analysis_3d.py # analysis
         diags/diag1000040 # output
+    OFF # depend on this test
     )
 endif()
 
@@ -354,10 +354,10 @@ if(WarpX_FFT)
         3 # dims
         1 # nprocs
         OFF # eb
-    OFF # preparation script
         Examples/Tests/langmuir/inputs_test_3d_langmuir_multi_psatd_vay_deposition # inputs
         Examples/Tests/langmuir/analysis_3d.py # analysis
         diags/diag1000040 # output
+    OFF # depend on this test
     )
 endif()
 
@@ -367,10 +367,10 @@ if(WarpX_FFT)
         3 # dims
         1 # nprocs
         OFF # eb
-    OFF # preparation script
         Examples/Tests/langmuir/inputs_test_3d_langmuir_multi_psatd_vay_deposition_nodal # inputs
         Examples/Tests/langmuir/analysis_3d.py # analysis
         diags/diag1000040 # output
+    OFF # depend on this test
     )
 endif()
 
@@ -379,10 +379,10 @@ add_warpx_test(
     RZ # dims
     2  # nprocs
     OFF # eb
-    OFF # preparation script
     Examples/Tests/langmuir/inputs_test_rz_langmuir_multi # inputs
     Examples/Tests/langmuir/analysis_rz.py # analysis
     diags/diag1000080 # output
+    OFF # depend on this test
 )
 
 add_warpx_test(
@@ -390,10 +390,10 @@ add_warpx_test(
     RZ # dims
     2  # nprocs
     OFF # eb
-    OFF # preparation script
     Examples/Tests/langmuir/inputs_test_rz_langmuir_multi_picmi.py # inputs
     Examples/analysis_default_regression.py # analysis
     diags/diag1000040 # output
+    OFF # depend on this test
 )
 
 if(WarpX_FFT)
@@ -402,10 +402,10 @@ if(WarpX_FFT)
         RZ # dims
         2  # nprocs
         OFF # eb
-    OFF # preparation script
         Examples/Tests/langmuir/inputs_test_rz_langmuir_multi_psatd # inputs
         Examples/Tests/langmuir/analysis_rz.py # analysis
         diags/diag1000080 # output
+    OFF # depend on this test
     )
 endif()
 
@@ -415,10 +415,10 @@ if(WarpX_FFT)
         RZ # dims
         1  # nprocs
         OFF # eb
-    OFF # preparation script
         Examples/Tests/langmuir/inputs_test_rz_langmuir_multi_psatd_current_correction # inputs
         Examples/Tests/langmuir/analysis_rz.py # analysis
         diags/diag1000080 # output
+    OFF # depend on this test
     )
 endif()
 
@@ -428,9 +428,9 @@ if(WarpX_FFT)
         RZ # dims
         2  # nprocs
         OFF # eb
-    OFF # preparation script
         Examples/Tests/langmuir/inputs_test_rz_langmuir_multi_psatd_multiJ # inputs
         Examples/Tests/langmuir/analysis_rz.py # analysis
         diags/diag1000080 # output
+    OFF # depend on this test
     )
 endif()

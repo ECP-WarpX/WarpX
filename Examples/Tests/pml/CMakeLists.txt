@@ -7,10 +7,10 @@ if(WarpX_FFT)
         3 # dims
         2 # nprocs
         OFF # eb
-        OFF # preparation script
         Examples/Tests/pml/inputs_test_3d_pml_psatd_dive_divb_cleaning # inputs
         Examples/analysis_default_regression.py # analysis
         diags/diag1000100 # output
+    OFF # depend on this test
     )
 endif()
 
@@ -20,10 +20,10 @@ if(WarpX_FFT)
         RZ # dims
         2  # nprocs
         OFF # eb
-        OFF # preparation script
         Examples/Tests/pml/inputs_test_rz_pml_psatd # inputs
         Examples/Tests/pml/analysis_pml_psatd_rz.py # analysis
         diags/diag1000500 # output
+    OFF # depend on this test
     )
 endif()
 
@@ -32,10 +32,10 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    OFF # preparation script
     Examples/Tests/pml/inputs_test_2d_pml_x_ckc # inputs
     Examples/Tests/pml/analysis_pml_ckc.py # analysis
     diags/diag1000300 # output
+    OFF # depend on this test
 )
 
 add_warpx_test(
@@ -43,10 +43,10 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    OFF # preparation script
     Examples/Tests/pml/inputs_test_2d_pml_x_galilean # inputs
     Examples/Tests/pml/analysis_pml_psatd.py # analysis
     diags/diag1000300 # output
+    OFF # depend on this test
 )
 
 add_warpx_test(
@@ -54,10 +54,10 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    OFF # preparation script
     Examples/Tests/pml/inputs_test_2d_pml_x_psatd # inputs
     Examples/Tests/pml/analysis_pml_psatd.py # analysis
     diags/diag1000300 # output
+    OFF # depend on this test
 )
 
 add_warpx_test(
@@ -65,10 +65,10 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    OFF # preparation script
     Examples/Tests/pml/inputs_test_2d_pml_x_psatd_restart # inputs
     Examples/analysis_default_regression.py # analysis
     diags/diag1000300 # output
+    OFF # depend on this test
 )
 
 add_warpx_test(
@@ -76,10 +76,10 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    OFF # preparation script
     Examples/Tests/pml/inputs_test_2d_pml_x_yee # inputs
     Examples/Tests/pml/analysis_pml_yee.py # analysis
     diags/diag1000300 # output
+    OFF # depend on this test
 )
 
 add_warpx_test(
@@ -87,8 +87,8 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    OFF # preparation script
     Examples/Tests/pml/inputs_test_2d_pml_x_yee_restart # inputs
     Examples/analysis_default_regression.py # analysis
     diags/diag1000300 # output
+    OFF # depend on this test
 )

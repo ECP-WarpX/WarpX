@@ -7,9 +7,9 @@ if(WarpX_EB)
         2 # dims
         2 # nprocs
         ON # eb
-    OFF # preparation script
         Examples/Tests/field_probe/inputs_test_2d_field_probe # inputs
         Examples/Tests/field_probe/analysis.py # analysis
         diags/diag1000544 # output
+    OFF # depend on this test
     )
 endif()

@@ -6,10 +6,10 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    OFF # preparation script
     Examples/Tests/nci_fdtd_stability/inputs_test_2d_nci_corrector # inputs
     Examples/Tests/nci_fdtd_stability/analysis_ncicorr.py # analysis
     diags/diag1000600 # output
+    OFF # depend on this test
 )
 
 add_warpx_test(
@@ -17,8 +17,8 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    OFF # preparation script
     Examples/Tests/nci_fdtd_stability/inputs_test_2d_nci_corrector_mr # inputs
     Examples/Tests/nci_fdtd_stability/analysis_ncicorr.py # analysis
     diags/diag1000600 # output
+    OFF # depend on this test
 )
