@@ -58,17 +58,6 @@ function(add_warpx_test
         return()
     endif()
 
-    # Python test?
-    set(python OFF)
-    if(inputs MATCHES ".*\.py$")
-        set(python ON)
-    endif()
-
-    # cannot run Python tests w/o Python support
-    if(python AND NOT WarpX_PYTHON)
-        return()
-    endif()
-
     # set dimension suffix
     warpx_set_suffix_dims(SD ${dims})
 
@@ -102,6 +91,17 @@ function(add_warpx_test
     string(REPLACE "_restart" "" INPUTS_FILE_NORESTART ${INPUTS_FILE})
     file(COPY ${INPUTS_FILE_NORESTART} DESTINATION ${THIS_WORKING_DIR})
 
+    # Python test?
+    set(python OFF)
+    if(${INPUTS_FILE} MATCHES ".*\.py$")
+        set(python ON)
+    endif()
+
+    # cannot run Python tests w/o Python support
+    if(python AND NOT WarpX_PYTHON)
+        return()
+    endif()
+
     # set MPI executable
     set(THIS_MPI_TEST_EXE
         ${MPIEXEC_EXECUTABLE}
@@ -119,6 +119,8 @@ function(add_warpx_test
 
     # test run
     if(python)
+        # for argparse, do not pass command-line arguments as one quoted string
+        separate_arguments(INPUTS_ARGS UNIX_COMMAND "${INPUTS_ARGS}")
         add_test(
             NAME ${name}.run
             COMMAND
