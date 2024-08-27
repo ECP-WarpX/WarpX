@@ -593,7 +593,10 @@ public:
     /** Determine the timestep of the simulation. */
     void ComputeDt ();
 
-    /** Determine the timestep of the simulation. */
+    /**
+     * Determine the simulation timestep from the maximum speed of all particles
+     * Sets timestep so that a particle can only cross cfl*dx cells per timestep.
+     */
     void UpdateDtFromParticleSpeeds ();
 
     /** Print main PIC parameters to stdout */

@@ -46,25 +46,15 @@ void
 WarpX::ComputeDt ()
 {
     // Handle cases where the timestep is not limited by the speed of light
-    if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
-        electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
-
+    // and no constant timestep is provided
+    if (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
         std::stringstream errorMsg;
-        if (electrostatic_solver_id != ElectrostaticSolverAlgo::None) {
-            errorMsg << "warpx.const_dt must be specified with the electrostatic solver.";
-        } else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
+        if (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
             errorMsg << "warpx.const_dt must be specified with the hybrid-PIC solver.";
         } else {
             errorMsg << "warpx.const_dt must be specified when not using a field solver.";
         }
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_const_dt.has_value(), errorMsg.str());
-
-        dt.resize(0);
-        dt_next.resize(0);
-        dt.resize(max_level+1, m_const_dt.value());
-        dt_next.resize(max_level+1, m_const_dt.value());
-
-        return;
     }
 
     // Determine the appropriate timestep as limited by the speed of light
@@ -73,7 +63,8 @@ WarpX::ComputeDt ()
 
     if (m_const_dt.has_value()) {
         deltat = m_const_dt.value();
-    } else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
+    } else if (electrostatic_solver_id  != ElectrostaticSolverAlgo::None ||
+               electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         // Computation of dt for spectral algorithm
         // (determined by the minimum cell size in all directions)
         deltat = cfl / PhysConst::c * minDim(dx);
@@ -100,7 +91,6 @@ WarpX::ComputeDt ()
 
     dt.resize(0);
     dt.resize(max_level+1,deltat);
-
     dt_next.resize(0);
     dt_next.resize(max_level+1,deltat);
 
@@ -112,6 +102,10 @@ WarpX::ComputeDt ()
     }
 }
 
+/**
+ * Determine the simulation timestep from the maximum speed of all particles
+ * Sets timestep so that a particle can only cross cfl*dx cells per timestep.
+ */
 void
 WarpX::UpdateDtFromParticleSpeeds ()
 {
