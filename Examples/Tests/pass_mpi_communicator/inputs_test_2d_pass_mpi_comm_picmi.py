@@ -91,7 +91,6 @@ field_diag = picmi.FieldDiagnostic(
     grid=grid,
     period=diagnostic_intervals,
     data_list=["Ex", "Jx"],
-    write_dir=".",
     warpx_file_prefix=f"Python_pass_mpi_comm_plt{color + 1}_",
 )
 

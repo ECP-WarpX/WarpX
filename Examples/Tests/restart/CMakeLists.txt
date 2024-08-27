@@ -12,17 +12,33 @@ add_warpx_test(
     OFF # dependency
 )
 
-# FIXME
-#add_warpx_test(
-#    test_2d_runtime_components_picmi # name
-#    2 # dims
-#    1 # nprocs
-#    OFF # eb
-#    Examples/Tests/restart/inputs_test_2d_runtime_components_picmi.py # inputs
-#    Examples/analysis_default_regression.py # analysis
-#    diags/diag1000010 # output
-#    OFF # dependency
-#)
+# TODO
+# - Add checksums file
+# - Enable analysis
+add_warpx_test(
+    test_2d_runtime_components_picmi # name
+    2 # dims
+    1 # nprocs
+    OFF # eb
+    Examples/Tests/restart/inputs_test_2d_runtime_components_picmi.py # inputs
+    OFF #Examples/analysis_default_regression.py # analysis
+    OFF #diags/diag1000010 # output
+    OFF # dependency
+)
+
+# TODO
+# - Add checksums file
+# - Enable analysis
+add_warpx_test(
+    test_2d_runtime_components_picmi_restart # name
+    2 # dims
+    1 # nprocs
+    OFF # eb
+    "Examples/Tests/restart/inputs_test_2d_runtime_components_picmi.py amr.restart=../test_2d_runtime_components_picmi/diags/chk000005" # inputs
+    OFF #Examples/analysis_default_regression.py # analysis
+    OFF #diags/diag1000010 # output
+    test_2d_runtime_components_picmi # dependency
+)
 
 add_warpx_test(
     test_3d_acceleration # name

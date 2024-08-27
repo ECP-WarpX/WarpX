@@ -66,25 +66,15 @@ electrons = picmi.Species(particle_type="electron", name="electrons")
 particle_diag = picmi.ParticleDiagnostic(
     name="diag1",
     period=10,
-    write_dir=".",
-    warpx_file_prefix="Python_restart_runtime_components_plt",
 )
 field_diag = picmi.FieldDiagnostic(
     name="diag1",
     grid=grid,
     period=10,
     data_list=["phi"],
-    write_dir=".",
-    warpx_file_prefix="Python_restart_runtime_components_plt",
 )
 
-checkpoint = picmi.Checkpoint(
-    name="chkpoint",
-    period=5,
-    write_dir=".",
-    warpx_file_min_digits=5,
-    warpx_file_prefix="Python_restart_runtime_components_chk",
-)
+checkpoint = picmi.Checkpoint(name="chk", period=5)
 
 ##########################
 # simulation setup
