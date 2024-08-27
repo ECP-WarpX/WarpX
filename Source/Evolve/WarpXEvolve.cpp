@@ -299,12 +299,15 @@ WarpX::Evolve (int numsteps)
                       << " s; Avg. per step = " << evolve_time/(step-step_begin+1) << " s\n\n";
         }
 
+        // Update timestep for electrostatic solver if a constant dt is not provided
+        if (electrostatic_solver_id != ElectrostaticSolverAlgo::None &&
+            !m_const_dt.has_value()) {
+            UpdateDtFromParticleSpeeds();
+        }
+
         if (checkStopSimulation(cur_time)) {
             break;
         }
-
-        UpdateDtFromParticleSpeeds();
-
     } // End loop on time steps
 
     // This if statement is needed for PICMI, which allows the Evolve routine to be
