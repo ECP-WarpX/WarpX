@@ -59,7 +59,7 @@ jobs:
         cp Examples/Physics_applications/laser_acceleration/inputs_base_3d .
         cp Examples/Physics_applications/laser_acceleration/3d_ascent_actions.yaml ascent_actions.yaml
         mpiexec -n 2 ./build/bin/warpx.3d \
-          inputs_base_3d               \
+            inputs_base_3d             \
             max_step = 40              \
             diag1.intervals = 30:40:10 \
             diag1.format = ascent
@@ -97,10 +97,10 @@ jobs:
         cmake --build build -j 10
     - name: 2D Test
       run: |
-        cp Examples/Tests/ionization/inputs_2d_rt .
+        cp Examples/Tests/ionization/inputs_test_2d_ionization_lab .
         cp Examples/Tests/ionization/catalyst_pipeline.py .
         mpiexec -n 2 ./build/bin/warpx.2d \
-          inputs_2d_rt \
+            inputs_test_2d_ionization_lab \
             catalyst.script_paths = catalyst_pipeline.py\
             catalyst.implementation = paraview\
             diag1.intervals = 16\
@@ -108,15 +108,15 @@ jobs:
             diag1.format = catalyst
     - name: 3D Test
       run: |
-        cp Examples/Tests/electrostatic_sphere/inputs_3d .
+        cp Examples/Tests/electrostatic_sphere/inputs_base_3d .
         cp Examples/Tests/electrostatic_sphere/catalyst_pipeline.py .
         mpiexec -n 2 ./build/bin/warpx.3d \
-          inputs_3d \
-          catalyst.script_paths = catalyst_pipeline.py \
-          catalyst.implementation = paraview \
-          diagnostics.diags_names = diag1 \
-          diag1.format = catalyst\
-          diag1.intervals = 3
+            inputs_base_3d \
+            catalyst.script_paths = catalyst_pipeline.py \
+            catalyst.implementation = paraview \
+            diagnostics.diags_names = diag1 \
+            diag1.format = catalyst\
+            diag1.intervals = 3
     - uses: actions/upload-artifact@v4
       with:
         name: catalyst-test-artifacts
