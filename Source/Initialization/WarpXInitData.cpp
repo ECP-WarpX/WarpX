@@ -269,13 +269,13 @@ WarpX::PrintMainPICparameters ()
             amrex::Print() << "                      | - laboratory frame, semi-implicit" << "\n";
         }
         if (poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction){
-            amrex::Print() << "Poisson solver:       | FFT-based" << "\n";
+            amrex::Print() << "Poisson solver:       | - FFT-based" << "\n";
         }
         else if(poisson_solver_id == PoissonSolverAlgo::Multigrid){
-            amrex::Print() << "Poisson solver:       | multigrid" << "\n";
+            amrex::Print() << "Poisson solver:       | - multigrid" << "\n";
         }
         if (do_magnetostatic_solve){
-            amrex::Print() << "                      | magnetostatic solve included" << "\n";
+            amrex::Print() << "                      | - magnetostatic solve included" << "\n";
         }
     }
     else{

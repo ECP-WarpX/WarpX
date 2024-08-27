@@ -331,9 +331,8 @@ WarpX::WarpX ()
     // Only allocate vector potential arrays when using the Magnetostatic Solver
     if (do_magnetostatic_solve)
     {
-        vector_potential_fp_nodal.resize(nlevs_max);
-        vector_potential_grad_buf_e_stag.resize(nlevs_max);
-        vector_potential_grad_buf_b_stag.resize(nlevs_max);
+        Afield_fp_nodal.resize(nlevs_max);
+        Afield_fp.resize(nlevs_max);
     }
 
     // Initialize the semi-implicit electrostatic solver if required
@@ -2103,9 +2102,8 @@ WarpX::ClearLevel (int lev)
 
         if (do_magnetostatic_solve)
         {
-            vector_potential_fp_nodal[lev][i].reset();
-            vector_potential_grad_buf_e_stag[lev][i].reset();
-            vector_potential_grad_buf_b_stag[lev][i].reset();
+            Afield_fp_nodal[lev][i].reset();
+            Afield_fp[lev][i].reset();
         }
 
         current_cp[lev][i].reset();
@@ -2222,7 +2220,6 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
 
     m_accelerator_lattice[lev] = std::make_unique<AcceleratorLattice>();
     m_accelerator_lattice[lev]->InitElementFinder(lev, ba, dm);
-
 }
 
 void
@@ -2272,6 +2269,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     jy_nodal_flag = IntVect(1,0,1);
     jz_nodal_flag = IntVect(1,1,0);
 #endif
+
     if (do_magnetostatic_solve)
     {
         jx_nodal_flag  = IntVect::TheNodeVector();
@@ -2360,26 +2358,12 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
     if (do_magnetostatic_solve)
     {
-        AllocInitMultiFab(vector_potential_fp_nodal[lev][0], amrex::convert(ba, rho_nodal_flag),
-            dm, ncomps, ngRho, lev, "vector_potential_fp_nodal[x]", 0.0_rt);
-        AllocInitMultiFab(vector_potential_fp_nodal[lev][1], amrex::convert(ba, rho_nodal_flag),
-            dm, ncomps, ngRho, lev, "vector_potential_fp_nodal[y]", 0.0_rt);
-        AllocInitMultiFab(vector_potential_fp_nodal[lev][2], amrex::convert(ba, rho_nodal_flag),
-            dm, ncomps, ngRho, lev, "vector_potential_fp_nodal[z]", 0.0_rt);
-
-        AllocInitMultiFab(vector_potential_grad_buf_e_stag[lev][0], amrex::convert(ba, Ex_nodal_flag),
-            dm, ncomps, ngEB, lev, "vector_potential_grad_buf_e_stag[x]", 0.0_rt);
-        AllocInitMultiFab(vector_potential_grad_buf_e_stag[lev][1], amrex::convert(ba, Ey_nodal_flag),
-            dm, ncomps, ngEB, lev, "vector_potential_grad_buf_e_stag[y]", 0.0_rt);
-        AllocInitMultiFab(vector_potential_grad_buf_e_stag[lev][2], amrex::convert(ba, Ez_nodal_flag),
-            dm, ncomps, ngEB, lev, "vector_potential_grad_buf_e_stag[z]", 0.0_rt);
-
-        AllocInitMultiFab(vector_potential_grad_buf_b_stag[lev][0], amrex::convert(ba, Bx_nodal_flag),
-            dm, ncomps, ngEB, lev, "vector_potential_grad_buf_b_stag[x]", 0.0_rt);
-        AllocInitMultiFab(vector_potential_grad_buf_b_stag[lev][1], amrex::convert(ba, By_nodal_flag),
-            dm, ncomps, ngEB, lev, "vector_potential_grad_buf_b_stag[y]", 0.0_rt);
-        AllocInitMultiFab(vector_potential_grad_buf_b_stag[lev][2], amrex::convert(ba, Bz_nodal_flag),
-            dm, ncomps, ngEB, lev, "vector_potential_grad_buf_b_stag[z]", 0.0_rt);
+        AllocInitMultiFab(Afield_fp_nodal[lev][0], amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngRho, lev, "Afield_fp_nodal[x]", 0.0_rt);
+        AllocInitMultiFab(Afield_fp_nodal[lev][1], amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngRho, lev, "Afield_fp_nodal[y]", 0.0_rt);
+        AllocInitMultiFab(Afield_fp_nodal[lev][2], amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngRho, lev, "Afield_fp_nodal[z]", 0.0_rt);
+        AllocInitMultiFab(Afield_fp[lev][0], amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, lev, "Afield_fp[x]", 0.0_rt);
+        AllocInitMultiFab(Afield_fp[lev][1], amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngEB, lev, "Afield_fp[y]", 0.0_rt);
+        AllocInitMultiFab(Afield_fp[lev][2], amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngEB, lev, "Afield_fp[z]", 0.0_rt);
     }
 
     // Allocate extra multifabs needed by the semi-implicit electrostatic algorithm.
@@ -3528,7 +3512,7 @@ WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, cons
             field_pointer = phi_fp[lev].get();
             break;
        case FieldType::vector_potential_fp :
-            field_pointer = vector_potential_fp_nodal[lev][direction].get();
+            field_pointer = Afield_fp_nodal[lev][direction].get();
             break;
        case FieldType::Efield_cp :
             field_pointer = Efield_cp[lev][direction].get();

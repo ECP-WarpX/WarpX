@@ -846,6 +846,27 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
 
 
 void
+WarpX::ComputeBfromVectorPotential ()
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        ComputeBfromVectorPotential(lev);
+    }
+}
+
+
+void
+WarpX::ComputeBfromVectorPotential (const int lev)
+{
+    // Calculate B = ∇ x A.
+    m_fdtd_solver_fp[lev]->CalcBfromVectorPotential(
+        Bfield_fp[lev], Afield_fp[lev], m_edge_lengths[lev], lev
+    );
+    ApplyBfieldBoundary(lev, PatchType::fine, DtType::Full);
+}
+
+
+void
 WarpX::EvolveE (amrex::Real a_dt)
 {
     for (int lev = 0; lev <= finest_level; ++lev)

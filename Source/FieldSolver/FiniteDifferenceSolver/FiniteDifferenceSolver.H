@@ -177,6 +177,22 @@ class FiniteDifferenceSolver
                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
                       int lev );
 
+        /**
+          * \brief Calculation of the magnetic field given a vector potential
+          * field from B = ∇ x A.
+          *
+          * \param[out] Bfield  vector of B-field MultiFabs at a given level
+          * \param[in] Afield   vector of vector potential MultiFabs at a given level
+          * \param[in] edge_lengths length of edges along embedded boundaries
+          * \param[in] lev  level number for the calculation
+          */
+        void CalcBfromVectorPotential (
+            amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield,
+            amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> const& Afield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+            int lev
+        );
+
     private:
 
         int m_fdtd_algo;
@@ -251,6 +267,14 @@ class FiniteDifferenceSolver
         void CalculateCurrentAmpereCylindrical (
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+            int lev
+        );
+
+        template<typename T_Algo>
+        void CalcBfromVectorPotentialCylindrical (
+            amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield,
+            amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> const& Afield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
             int lev
         );
@@ -356,6 +380,14 @@ class FiniteDifferenceSolver
         void CalculateCurrentAmpereCartesian (
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+            int lev
+        );
+
+        template<typename T_Algo>
+        void CalcBfromVectorPotentialCartesian (
+            amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield,
+            amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> const& Afield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
             int lev
         );

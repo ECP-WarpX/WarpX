@@ -1,6 +1,8 @@
-/* Copyright 2022 S. Eric Clark, LLNL
+/* Copyright 2022-2024 The WarpX Community
  *
  * This file is part of WarpX.
+ *
+ * Authors: S. Eric Clark (LLNL), Roelof Groenewald (TAE Technologies)
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -9,9 +11,7 @@
 #include "FieldSolver/MagnetostaticSolver/MagnetostaticSolver.H"
 #include "Parallelization/GuardCellManager.H"
 #include "Particles/MultiParticleContainer.H"
-#include "Particles/WarpXParticleContainer.H"
 #include "Python/callbacks.H"
-#include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXUtil.H"
@@ -62,54 +62,63 @@ WarpX::ComputeMagnetostaticField()
     // Fields have been reset in Electrostatic solver for this time step, these fields
     // are added into the B fields after electrostatic solve
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(this->max_level == 0, "Magnetostatic solver not implemented with mesh refinement.");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        this->max_level == 0,
+        "Magnetostatic solver not implemented with mesh refinement."
+    );
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        do_magnetostatic_solve,
+        "Magnetostatic solver called but warpx.do_magnetostatic is false."
+    );
 
-    AddMagnetostaticFieldLabFrame();
+    ComputeMagnetostaticFieldLabFrame();
 }
 
 void
-WarpX::AddMagnetostaticFieldLabFrame()
+WarpX::ComputeMagnetostaticFieldLabFrame()
 {
-    WARPX_PROFILE("WarpX::AddMagnetostaticFieldLabFrame");
-
-    // Store the boundary conditions for the field solver if they haven't been
-    // stored yet
-    if (!m_vector_poisson_boundary_handler.bcs_set) {
-        m_vector_poisson_boundary_handler.defineVectorPotentialBCs();
-    }
+    WARPX_PROFILE("WarpX::ComputeMagnetostaticFieldLabFrame");
 
 #ifdef WARPX_DIM_RZ
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
                                      "Error: RZ magnetostatic only implemented for a single mode");
 #endif
 
-    // reset current_fp before depositing current density for this step
-    for (int lev = 0; lev <= max_level; lev++) {
-        for (int dim=0; dim < 3; dim++) {
-            current_fp[lev][dim]->setVal(0.);
+    // Perform current deposition at t_{n+1/2} (source of Poisson solver).
+    mypc->DepositCurrent(current_fp, dt[0], -0.5_rt * dt[0]);
+
+    // Synchronize J and rho:
+    // filter (if used), exchange guard cells, interpolate across MR levels
+    // and apply boundary conditions
+    SyncCurrent(current_fp, current_cp, current_buf);
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        ApplyJfieldBoundary(
+            lev, current_fp[lev][0].get(), current_fp[lev][1].get(),
+            current_fp[lev][2].get(), PatchType::fine
+        );
+        if (lev > 0) {
+            ApplyJfieldBoundary(
+                lev, current_cp[lev][0].get(), current_cp[lev][1].get(),
+                current_cp[lev][2].get(), PatchType::coarse
+            );
         }
     }
 
-    // Deposit current density (source of Poisson solver)
-    for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
-        WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
-        if (!species.do_not_deposit) {
-            species.DepositCurrent(current_fp, dt[0], -0.5_rt*dt[0]);
+    // SyncCurrent does not include a call to FillBoundary
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        for (int idim = 0; idim < 3; ++idim) {
+            current_fp[lev][idim]->FillBoundary(Geom(lev).periodicity());
         }
     }
 
-#ifdef WARPX_DIM_RZ
-    for (int lev = 0; lev <= max_level; lev++) {
-        ApplyInverseVolumeScalingToCurrentDensity(current_fp[lev][0].get(),
-                                                  current_fp[lev][1].get(),
-                                                  current_fp[lev][2].get(), lev);
+    // Store the boundary conditions for the field solver if they haven't been
+    // stored yet
+    if (!m_vector_poisson_boundary_handler.bcs_set) {
+        m_vector_poisson_boundary_handler.defineVectorPotentialBCs();
     }
-#endif
-
-    SyncCurrent(current_fp, current_cp, current_buf); // Apply filter, perform MPI exchange, interpolate across levels
-
     // set the boundary and current density potentials
-    setVectorPotentialBC(vector_potential_fp_nodal);
+    setVectorPotentialBC(Afield_fp_nodal);
 
     // Compute the vector potential A, by solving the Poisson equation
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( !IsPythonCallbackInstalled("poissonsolver"),
@@ -117,9 +126,50 @@ WarpX::AddMagnetostaticFieldLabFrame()
 
     const amrex::Real magnetostatic_absolute_tolerance = self_fields_absolute_tolerance*PhysConst::c;
 
-    computeVectorPotential( current_fp, vector_potential_fp_nodal, self_fields_required_precision,
-                     magnetostatic_absolute_tolerance, self_fields_max_iters,
-                     self_fields_verbosity );
+    computeVectorPotential(
+        current_fp, Afield_fp_nodal,
+        self_fields_required_precision, magnetostatic_absolute_tolerance,
+        self_fields_max_iters, self_fields_verbosity
+    );
+
+    // Grab Interpolation Coefficients
+    // Order of finite-order centering of fields
+    const int fg_nox = WarpX::field_centering_nox;
+    const int fg_noy = WarpX::field_centering_noy;
+    const int fg_noz = WarpX::field_centering_noz;
+
+    // Device vectors of stencil coefficients used for finite-order centering of fields
+    amrex::Real const * stencil_coeffs_x = WarpX::device_field_centering_stencil_coeffs_x.data();
+    amrex::Real const * stencil_coeffs_y = WarpX::device_field_centering_stencil_coeffs_y.data();
+    amrex::Real const * stencil_coeffs_z = WarpX::device_field_centering_stencil_coeffs_z.data();
+
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        // interpolate Afield_fp_nodal[lev][i] to Afield_fp[lev][i]
+        for (int i = 0; i < 3; ++i) {
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+            for (MFIter mfi(*Afield_fp[lev][i], TilingIfNotGPU()); mfi.isValid(); ++mfi)
+            {
+                IntVect const src_stag = Afield_fp_nodal[lev][i]->ixType().toIntVect();
+                IntVect const dst_stag = Afield_fp[lev][i]->ixType().toIntVect();
+
+                Array4<amrex::Real const> const& src_arr = Afield_fp_nodal[lev][i]->const_array(mfi);
+                Array4<amrex::Real> const& dst_arr = Afield_fp[lev][i]->array(mfi);
+
+                const Box bx = mfi.tilebox();
+
+                ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+                {
+                    warpx_interp(j, k, l, dst_arr, src_arr, dst_stag, src_stag, fg_nox, fg_noy, fg_noz,
+                        stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
+                });
+            }
+        }
+    }
+
+    ComputeBfromVectorPotential();
 }
 
 /* Compute the vector potential `A` by solving the Poisson equation with `J` as
@@ -167,9 +217,6 @@ WarpX::computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<
 #else
     const std::optional<amrex::Vector<amrex::FArrayBoxFactory const *> > eb_farray_box_factory;
 #endif
-    const std::optional<MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel> post_A_calculation(
-        {Bfield_fp, vector_potential_grad_buf_e_stag, vector_potential_grad_buf_b_stag}
-    );
 
     ablastr::fields::computeVectorPotential(
         sorted_curr,
@@ -184,11 +231,10 @@ WarpX::computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<
         this->m_vector_poisson_boundary_handler,
         WarpX::do_single_precision_comms,
         this->ref_ratio,
-        post_A_calculation,
+        std::nullopt, // post_A_calculation,
         gett_new(0),
         eb_farray_box_factory
     );
-
 }
 
 
@@ -345,108 +391,4 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
         }
     }
     bcs_set = true;
-}
-
-void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::doInterp(const std::unique_ptr<amrex::MultiFab> &src,
-                                                                       const std::unique_ptr<amrex::MultiFab> &dst)
-{
-    WarpX &warpx = WarpX::GetInstance();
-
-    // Grab Interpolation Coefficients
-    // Order of finite-order centering of fields
-    const int fg_nox = WarpX::field_centering_nox;
-    const int fg_noy = WarpX::field_centering_noy;
-    const int fg_noz = WarpX::field_centering_noz;
-
-    // Device vectors of stencil coefficients used for finite-order centering of fields
-    amrex::Real const * stencil_coeffs_x = warpx.device_field_centering_stencil_coeffs_x.data();
-    amrex::Real const * stencil_coeffs_y = warpx.device_field_centering_stencil_coeffs_y.data();
-    amrex::Real const * stencil_coeffs_z = warpx.device_field_centering_stencil_coeffs_z.data();
-
-    // Synchronize the ghost cells, do halo exchange
-    ablastr::utils::communication::FillBoundary(*src,
-                                                src->nGrowVect(),
-                                                WarpX::do_single_precision_comms);
-
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-    for (MFIter mfi(*dst, TilingIfNotGPU()); mfi.isValid(); ++mfi)
-    {
-        IntVect const src_stag = src->ixType().toIntVect();
-        IntVect const dst_stag = dst->ixType().toIntVect();
-
-        Array4<amrex::Real const> const& src_arr = src->const_array(mfi);
-        Array4<amrex::Real> const& dst_arr = dst->array(mfi);
-
-        const Box bx = mfi.tilebox();
-
-        ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
-        {
-            warpx_interp(j, k, l, dst_arr, src_arr, dst_stag, src_stag, fg_nox, fg_noy, fg_noz,
-                stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
-        });
-    }
-}
-
-void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::operator()(amrex::Array<std::unique_ptr<amrex::MLMG>,3> & mlmg, int const lev)
-{
-    using namespace amrex::literals;
-
-    // This operator gets the gradient solution on the cell edges, aligned with E field staggered grid
-    // This routine interpolates to the B-field staggered grid,
-
-    const amrex::Array<amrex::MultiFab*, AMREX_SPACEDIM> buf_ptr =
-    {
-#if defined(WARPX_DIM_3D)
-        m_grad_buf_e_stag[lev][0].get(),
-        m_grad_buf_e_stag[lev][1].get(),
-        m_grad_buf_e_stag[lev][2].get()
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        m_grad_buf_e_stag[lev][0].get(),
-        m_grad_buf_e_stag[lev][2].get()
-#endif
-    };
-
-    // This will grab the gradient values for Ax
-    mlmg[0]->getGradSolution({buf_ptr});
-
-    // Interpolate dAx/dz to By grid buffer, then add to By
-    this->doInterp(m_grad_buf_e_stag[lev][2],
-                   m_grad_buf_b_stag[lev][1]);
-    MultiFab::Add(*(m_b_field[lev][1]), *(m_grad_buf_b_stag[lev][1]), 0, 0, 1, 0 );
-
-    // Interpolate dAx/dy to Bz grid buffer, then subtract from Bz
-    this->doInterp(m_grad_buf_e_stag[lev][1],
-                   m_grad_buf_b_stag[lev][2]);
-    m_grad_buf_b_stag[lev][2]->mult(-1._rt);
-    MultiFab::Add(*(m_b_field[lev][2]), *(m_grad_buf_b_stag[lev][2]), 0, 0, 1, 0 );
-
-    // This will grab the gradient values for Ay
-    mlmg[1]->getGradSolution({buf_ptr});
-
-    // Interpolate dAy/dx to Bz grid buffer, then add to Bz
-    this->doInterp(m_grad_buf_e_stag[lev][0],
-                   m_grad_buf_b_stag[lev][2]);
-    MultiFab::Add(*(m_b_field[lev][2]), *(m_grad_buf_b_stag[lev][2]), 0, 0, 1, 0 );
-
-    // Interpolate dAy/dz to Bx grid buffer, then subtract from Bx
-    this->doInterp(m_grad_buf_e_stag[lev][2],
-                   m_grad_buf_b_stag[lev][0]);
-    m_grad_buf_b_stag[lev][0]->mult(-1._rt);
-    MultiFab::Add(*(m_b_field[lev][0]), *(m_grad_buf_b_stag[lev][0]), 0, 0, 1, 0 );
-
-    // This will grab the gradient values for Az
-    mlmg[2]->getGradSolution({buf_ptr});
-
-    // Interpolate dAz/dy to Bx grid buffer, then add to Bx
-    this->doInterp(m_grad_buf_e_stag[lev][1],
-                   m_grad_buf_b_stag[lev][0]);
-    MultiFab::Add(*(m_b_field[lev][0]), *(m_grad_buf_b_stag[lev][0]), 0, 0, 1, 0 );
-
-    // Interpolate dAz/dx to By grid buffer, then subtract from By
-    this->doInterp(m_grad_buf_e_stag[lev][0],
-                   m_grad_buf_b_stag[lev][1]);
-    m_grad_buf_b_stag[lev][1]->mult(-1._rt);
-    MultiFab::Add(*(m_b_field[lev][1]), *(m_grad_buf_b_stag[lev][1]), 0, 0, 1, 0 );
 }
