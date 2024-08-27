@@ -7,6 +7,8 @@
 #ifndef WARPX_FIELDS_H_
 #define WARPX_FIELDS_H_
 
+#include <algorithm>
+
 namespace warpx::fields
 {
     enum struct FieldType : int
@@ -45,13 +47,11 @@ namespace warpx::fields
             FieldType::Efield_cp, FieldType::Bfield_cp, FieldType::current_cp,
             FieldType::Efield_avg_fp, FieldType::Bfield_avg_fp, FieldType::Efield_avg_cp, FieldType::Bfield_avg_cp};
 
-    constexpr bool
+    inline bool
     isFieldArray (const FieldType field_type)
     {
-        for (const auto& f : ArrayFieldTypes) {
-            if (f == field_type) { return true; }
-        }
-        return false;
+        return std::any_of( std::begin(ArrayFieldTypes), std::end(ArrayFieldTypes),
+            [field_type](const FieldType& f) { return f == field_type; });
     }
 
 }
