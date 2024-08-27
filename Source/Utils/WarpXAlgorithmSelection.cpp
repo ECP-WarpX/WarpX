@@ -106,12 +106,6 @@ const std::map<std::string, int> rho_in_time_to_int = {
     {"default", RhoInTime::Linear}
 };
 
-const std::map<std::string, int> load_balance_costs_update_algo_to_int = {
-    {"timers",    LoadBalanceCostsUpdateAlgo::Timers },
-    {"heuristic", LoadBalanceCostsUpdateAlgo::Heuristic },
-    {"default",   LoadBalanceCostsUpdateAlgo::Timers }
-};
-
 const std::map<std::string, int> MaxwellSolver_medium_algo_to_int = {
     {"vacuum", MediumForEM::Vacuum},
     {"macroscopic", MediumForEM::Macroscopic},
@@ -193,8 +187,6 @@ GetAlgorithmInteger(const amrex::ParmParse& pp, const char* pp_search_key )
         algo_to_int = J_in_time_to_int;
     } else if (0 == std::strcmp(pp_search_key, "rho_in_time")) {
         algo_to_int = rho_in_time_to_int;
-    } else if (0 == std::strcmp(pp_search_key, "load_balance_costs_update")) {
-        algo_to_int = load_balance_costs_update_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "em_solver_medium")) {
         algo_to_int = MaxwellSolver_medium_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "macroscopic_sigma_method")) {

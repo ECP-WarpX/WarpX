@@ -7,6 +7,7 @@
 #include "LoadBalanceEfficiency.H"
 
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
+#include "LoadBalance/LoadBalance.H"
 #include "WarpX.H"
 
 #include <AMReX_ParallelDescriptor.H>
@@ -18,6 +19,7 @@
 #include <vector>
 
 using namespace amrex;
+using namespace warpx::load_balance;
 
 // constructor
 LoadBalanceEfficiency::LoadBalanceEfficiency (const std::string& rd_name)
@@ -74,7 +76,8 @@ void LoadBalanceEfficiency::ComputeDiags (int step)
     for (int lev = 0; lev < nLevel; ++lev)
     {
         // save data
-        m_data[lev] = warpx.getLoadBalanceEfficiency(lev);
+        const auto& load_balance = LoadBalance::get_instance();
+        m_data[lev] = load_balance.get_efficiency(lev);
     }
     // end loop over refinement levels
 

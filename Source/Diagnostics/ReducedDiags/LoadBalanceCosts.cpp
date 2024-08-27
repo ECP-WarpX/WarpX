@@ -8,6 +8,7 @@
 
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
 #include "FieldSolver/Fields.H"
+#include "LoadBalance/LoadBalance.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -37,6 +38,7 @@
 
 using namespace amrex;
 using namespace warpx::fields;
+using namespace warpx::load_balance;
 
 namespace
 {
@@ -78,17 +80,19 @@ void LoadBalanceCosts::ComputeDiags (int step)
     // get a reference to WarpX instance
     auto& warpx = WarpX::GetInstance();
 
+    auto& load_balance = LoadBalance::get_instance();
+
     // judge if the diags should be done
     // costs is initialized only if we're doing load balance
     if (!m_intervals.contains(step+1) ||
-        !warpx.get_load_balance_intervals().isActivated() ) { return; }
+        !load_balance.get_intervals().isActivated() ) { return; }
 
     // get number of boxes over all levels
     auto nLevels = warpx.finestLevel() + 1;
     int nBoxes = 0;
     for (int lev = 0; lev < nLevels; ++lev)
     {
-        auto *const cost = WarpX::getCosts(lev);
+        const auto& cost = load_balance.get_costs(lev);
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             cost, "ERROR: costs are not initialized on level " + std::to_string(lev) + " !");
         nBoxes += cost->size();
@@ -105,20 +109,6 @@ void LoadBalanceCosts::ComputeDiags (int step)
     m_data.resize(dataSize, 0.0_rt);
     m_data.assign(dataSize, 0.0_rt);
 
-    // read in WarpX costs to local copy; compute if using `Heuristic` update
-    amrex::Vector<std::unique_ptr<amrex::LayoutData<amrex::Real> > > costs;
-
-    costs.resize(nLevels);
-    for (int lev = 0; lev < nLevels; ++lev)
-    {
-        costs[lev] = std::make_unique<LayoutData<Real>>(*WarpX::getCosts(lev));
-    }
-
-    if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)
-    {
-        warpx.ComputeCostsHeuristic(costs);
-    }
-
     // keep track of correct index in array over all boxes on all levels
     // shift index for m_data
     int shift_m_data = 0;
@@ -126,12 +116,15 @@ void LoadBalanceCosts::ComputeDiags (int step)
     // save data
     for (int lev = 0; lev < nLevels; ++lev)
     {
+        // read in WarpX costs
+        const auto& costs_at_lev = load_balance.get_costs(lev);
+
         const amrex::DistributionMapping& dm = warpx.DistributionMap(lev);
         const MultiFab & Ex = warpx.getField(FieldType::Efield_aux, lev,0);
         for (MFIter mfi(Ex, false); mfi.isValid(); ++mfi)
         {
             const Box& tbx = mfi.tilebox();
-            m_data[shift_m_data + mfi.index()*m_nDataFields + 0] = (*costs[lev])[mfi.index()];
+            m_data[shift_m_data + mfi.index()*m_nDataFields + 0] = (*costs_at_lev)[mfi.index()];
             m_data[shift_m_data + mfi.index()*m_nDataFields + 1] = dm[mfi.index()];
             m_data[shift_m_data + mfi.index()*m_nDataFields + 2] = lev;
             m_data[shift_m_data + mfi.index()*m_nDataFields + 3] = tbx.loVect()[0];
@@ -154,7 +147,7 @@ void LoadBalanceCosts::ComputeDiags (int step)
         }
 
         // we looped through all the boxes on level lev, update the shift index
-        shift_m_data += m_nDataFields*(costs[lev]->size());
+        shift_m_data += m_nDataFields*(costs_at_lev->size());
     }
 
     // parallel reduce to IO proc and get data over all procs

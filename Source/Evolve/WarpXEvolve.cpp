@@ -22,6 +22,7 @@
 #       include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #   endif
 #endif
+#include "LoadBalance/LoadBalance.H"
 #include "Parallelization/GuardCellManager.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Fluids/MultiFluidContainer.H"
@@ -58,6 +59,7 @@
 
 using namespace amrex;
 using ablastr::utils::SignalHandling;
+using namespace warpx::load_balance;
 
 void
 WarpX::Evolve (int numsteps)
@@ -269,6 +271,11 @@ WarpX::Evolve (int numsteps)
         /// reduced diags
         if (reduced_diags->m_plot_rd != 0)
         {
+            if (reduced_diags->MustRecomputeCosts(step)){
+                auto& load_balance = LoadBalance::get_instance();
+                load_balance.compute_costs_if_heuristic(
+                    finestLevel(), Efield_fp, *mypc);
+            }
             reduced_diags->LoadBalance();
             reduced_diags->ComputeDiags(step);
             reduced_diags->WriteToFile(step);

@@ -22,6 +22,7 @@
 #include "Filter/BilinearFilter.H"
 #include "Filter/NCIGodfreyFilter.H"
 #include "Initialization/ExternalField.H"
+#include "LoadBalance/LoadBalance.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/Algorithms/LinearInterpolation.H"
 #include "Utils/Logo/GetLogo.H"
@@ -83,6 +84,7 @@
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 
 using namespace amrex;
+using namespace warpx::load_balance;
 
 namespace
 {
@@ -592,6 +594,11 @@ WarpX::InitData ()
         // Write reduced diagnostics before the first iteration.
         if (reduced_diags->m_plot_rd != 0)
         {
+            if (reduced_diags->MustRecomputeCosts(istep[0]-1)){
+                auto& load_balance = LoadBalance::get_instance();
+                load_balance.compute_costs_if_heuristic(
+                    finestLevel(), Efield_fp, *mypc);
+            }
             reduced_diags->ComputeDiags(istep[0] - 1);
             reduced_diags->WriteToFile(istep[0] - 1);
         }
@@ -1019,13 +1026,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     // load external grid fields into E/Bfield_fp_external multifabs
     LoadExternalFields(lev);
 
-    if (costs[lev]) {
-        const auto iarr = costs[lev]->IndexArray();
-        for (const auto& i : iarr) {
-            (*costs[lev])[i] = 0.0;
-            WarpX::setLoadBalanceEfficiency(lev, -1);
-        }
-    }
+    auto& load_balance = LoadBalance::get_instance();
+    load_balance.set_costs(lev, 0.0_rt);
+    load_balance.set_efficiency(lev, -1);
 }
 
 void

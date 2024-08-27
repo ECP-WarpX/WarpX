@@ -7,6 +7,7 @@
  */
 #include "WarpX.H"
 
+#include "LoadBalance/LoadBalance.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "TextMsg.H"
 #include "WarpXAlgorithmSelection.H"
@@ -41,6 +42,7 @@
 #include <limits>
 
 using namespace amrex;
+using namespace warpx::load_balance;
 
 void PreparseAMReXInputIntArray(amrex::ParmParse& a_pp, char const * const input_str, const bool replace)
 {
@@ -495,7 +497,7 @@ namespace WarpXUtilLoadBalance
     {
         const bool consistent = cost && (dm == cost->DistributionMap()) &&
             (ba.CellEqual(cost->boxArray())) &&
-            (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers);
+            (LoadBalance::get_instance().get_update_algo() == CostsUpdateAlgo::Timers);
         return consistent;
     }
 }

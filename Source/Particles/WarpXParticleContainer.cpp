@@ -10,9 +10,11 @@
 #include "WarpXParticleContainer.H"
 
 #include "ablastr/particles/DepositCharge.H"
+
 #include "Deposition/ChargeDeposition.H"
 #include "Deposition/CurrentDeposition.H"
 #include "Deposition/SharedDepositionUtils.H"
+#include "LoadBalance/LoadBalance.H"
 #include "Pusher/GetAndSetPosition.H"
 #include "Pusher/UpdatePosition.H"
 #include "ParticleBoundaries_K.H"
@@ -1462,8 +1464,6 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
 
     if (do_not_push) { return; }
 
-    amrex::LayoutData<amrex::Real>* costs = WarpX::getCosts(lev);
-
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
@@ -1471,11 +1471,7 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
 
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
-            if (costs && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
-            {
-                amrex::Gpu::synchronize();
-            }
-            auto wt = static_cast<amrex::Real>(amrex::second());
+            const auto cost_tracker = warpx::load_balance::CostTracker(lev, pti.index());
 
             //
             // Particle Push
@@ -1500,12 +1496,7 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
                 }
             );
 
-            if (costs && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
-            {
-                amrex::Gpu::synchronize();
-                wt = static_cast<amrex::Real>(amrex::second()) - wt;
-                amrex::HostDevice::Atomic::Add( &(*costs)[pti.index()], wt);
-            }
+            cost_tracker.add();
         }
     }
 }
