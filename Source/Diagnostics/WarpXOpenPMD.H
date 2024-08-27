@@ -91,12 +91,12 @@ public:
    * @param authors a string specifying the authors of the simulation (can be empty)
    */
   WarpXOpenPMDPlot (openPMD::IterationEncoding ie,
-                    std::string filetype,
-                    std::string operator_type,
-                    std::map< std::string, std::string > operator_parameters,
-                    std::string engine_type,
-                    std::map< std::string, std::string > engine_parameters,
-                    std::vector<bool> fieldPMLdirections,
+                    const std::string& filetype,
+                    const std::string& operator_type,
+                    const std::map< std::string, std::string >& operator_parameters,
+                    const std::string& engine_type,
+                    const std::map< std::string, std::string >& engine_parameters,
+                    const std::vector<bool>& fieldPMLdirections,
                     const std::string& authors);
 
   ~WarpXOpenPMDPlot ();
@@ -188,9 +188,9 @@ private:
 
   void SetupMeshComp (
       openPMD::Mesh& mesh,
-      amrex::Geometry& full_geom,
-      std::string comp_name,
-      std::string field_name,
+      amrex::Geometry const& full_geom,
+      std::string const& comp_name,
+      std::string const& field_name,
       amrex::MultiFab const& mf,
       bool var_in_theta_mode
   ) const;
@@ -218,11 +218,13 @@ private:
   /** This function sets up the entries for storing the particle positions and global IDs
   *
   * @param[in] currSpecies Corresponding openPMD species
+  * @param[in] positionComponents user-selected components of the particle position
   * @param[in] np          Number of particles
   * @param[in] isBTD       Is this a back-transformed diagnostics output?
   */
   void SetupPos (
         openPMD::ParticleSpecies& currSpecies,
+        std::vector<std::string> const & positionComponents,
         const unsigned long long& np,
         bool isBTD = false);
 
@@ -231,12 +233,14 @@ private:
    * Sets the entries for storing particle position offset, constant records (charge, mass) and ED-PIC attributes.
    *
    * @param[in] currSpecies Corresponding openPMD species
+   * @param[in] positionComponents user-selected components of the particle position
    * @param[in] np          Number of particles
    * @param[in] charge      Charge of the particles (note: fix for ions)
    * @param[in] mass        Mass of the particles
    */
   void SetConstParticleRecordsEDPIC (
         openPMD::ParticleSpecies& currSpecies,
+        std::vector<std::string> const & positionComponents,
         const unsigned long long& np,
         amrex::ParticleReal charge,
         amrex::ParticleReal mass);
@@ -284,8 +288,8 @@ private:
    * @param[in] name species name
    * @param[in] iteration timestep
    * @param[in] write_real_comp The real attribute ids, from WarpX
-   * @param[in] real_comp_names The real attribute names, from WarpX
    * @param[in] write_int_comp The int attribute ids, from WarpX
+   * @param[in] real_comp_names The real attribute names, from WarpX
    * @param[in] int_comp_names The int attribute names, from WarpX
    * @param[in] charge         Charge of the particles (note: fix for ions)
    * @param[in] mass           Mass of the particles

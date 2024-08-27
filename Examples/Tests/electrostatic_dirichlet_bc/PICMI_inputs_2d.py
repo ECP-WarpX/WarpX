@@ -36,21 +36,21 @@ ymax = 0.004
 ##########################
 
 grid = picmi.Cartesian2DGrid(
-    number_of_cells = [nx, ny],
-    lower_bound = [xmin, ymin],
-    upper_bound = [xmax, ymax],
-    lower_boundary_conditions = ['dirichlet', 'periodic'],
-    upper_boundary_conditions = ['dirichlet', 'periodic'],
-    lower_boundary_conditions_particles = ['absorbing', 'periodic'],
-    upper_boundary_conditions_particles = ['absorbing', 'periodic'],
-    warpx_potential_lo_x = V_xmin,
-    warpx_potential_hi_x = V_xmax,
-    moving_window_velocity = None,
-    warpx_max_grid_size = 32
+    number_of_cells=[nx, ny],
+    lower_bound=[xmin, ymin],
+    upper_bound=[xmax, ymax],
+    lower_boundary_conditions=["dirichlet", "periodic"],
+    upper_boundary_conditions=["dirichlet", "periodic"],
+    lower_boundary_conditions_particles=["absorbing", "periodic"],
+    upper_boundary_conditions_particles=["absorbing", "periodic"],
+    warpx_potential_lo_x=V_xmin,
+    warpx_potential_hi_x=V_xmax,
+    moving_window_velocity=None,
+    warpx_max_grid_size=32,
 )
 
 solver = picmi.ElectrostaticSolver(
-    grid=grid, method='Multigrid', required_precision=1e-6
+    grid=grid, method="Multigrid", required_precision=1e-6
 )
 
 
@@ -59,18 +59,15 @@ solver = picmi.ElectrostaticSolver(
 ##########################
 
 particle_diag = picmi.ParticleDiagnostic(
-    name = 'diag1',
-    period = 4,
-    write_dir = '.',
-    warpx_file_prefix = 'Python_dirichletbc_plt'
+    name="diag1", period=4, write_dir=".", warpx_file_prefix="Python_dirichletbc_plt"
 )
 field_diag = picmi.FieldDiagnostic(
-    name = 'diag1',
-    grid = grid,
-    period = 4,
-    data_list = ['phi'],
-    write_dir = '.',
-    warpx_file_prefix = 'Python_dirichletbc_plt'
+    name="diag1",
+    grid=grid,
+    period=4,
+    data_list=["phi"],
+    write_dir=".",
+    warpx_file_prefix="Python_dirichletbc_plt",
 )
 
 ##########################
@@ -78,11 +75,11 @@ field_diag = picmi.FieldDiagnostic(
 ##########################
 
 sim = picmi.Simulation(
-    solver = solver,
-    time_step_size = dt,
-    max_steps = max_steps,
-    particle_shape = None,
-    verbose = 0
+    solver=solver,
+    time_step_size=dt,
+    max_steps=max_steps,
+    particle_shape=None,
+    verbose=0,
 )
 
 sim.add_diagnostic(particle_diag)
@@ -94,7 +91,7 @@ sim.add_diagnostic(field_diag)
 
 # write_inputs will create an inputs file that can be used to run
 # with the compiled version.
-#sim.write_input_file(file_name = 'inputs_from_PICMI')
+# sim.write_input_file(file_name = 'inputs_from_PICMI')
 
 # Alternatively, sim.step will run WarpX, controlling it from Python
 sim.step(max_steps)

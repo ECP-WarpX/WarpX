@@ -9,9 +9,16 @@
 
 #include <ablastr/constant.H>
 #include <ablastr/utils/Communication.H>
+#include <ablastr/utils/Enums.H>
 #include <ablastr/utils/TextMsg.H>
 #include <ablastr/warn_manager/WarnManager.H>
+#include <ablastr/math/fft/AnyFFT.H>
+#include <ablastr/fields/Interpolate.H>
+#include <ablastr/profiler/ProfilerWrapper.H>
 
+#if defined(ABLASTR_USE_FFT) && defined(WARPX_DIM_3D)
+#include <ablastr/fields/IntegratedGreenFunctionSolver.H>
+#endif
 
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
@@ -52,41 +59,6 @@
 
 namespace ablastr::fields {
 
-namespace details
-{
-    /** Local interpolation from phi_cp to phi[lev+1]
-     *
-     * This is needed to work-around an NVCC limitation in downstream code (ImpactX),
-     * when nesting lambdas. Otherwise this could be written directly into the
-     * ParallelFor.
-     *
-     * @param[out] phi_fp_arr phi on the fine level
-     * @param[in] phi_cp_arr phi on the coarse level
-     * @param[in] refratio refinement ration
-     */
-    struct PoissonInterpCPtoFP
-    {
-        PoissonInterpCPtoFP(
-                amrex::Array4<amrex::Real> const phi_fp_arr,
-                amrex::Array4<amrex::Real const> const phi_cp_arr,
-                amrex::IntVect const refratio)
-        : m_phi_fp_arr(phi_fp_arr), m_phi_cp_arr(phi_cp_arr), m_refratio(refratio)
-        {}
-
-        AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-        void
-        operator() (int i, int j, int k) const noexcept
-        {
-            amrex::mf_nodebilin_interp(i, j, k, 0, m_phi_fp_arr, 0, m_phi_cp_arr,
-                                       0, m_refratio);
-        }
-
-        amrex::Array4<amrex::Real> const m_phi_fp_arr;
-        amrex::Array4<amrex::Real const> const m_phi_cp_arr;
-        amrex::IntVect const m_refratio;
-    };
-}
-
 /** Compute the potential `phi` by solving the Poisson equation
  *
  * Uses `rho` as a source, assuming that the source moves at a
@@ -110,7 +82,9 @@ namespace details
  * \param[in] geom the geometry per level (e.g., from AmrMesh)
  * \param[in] dmap the distribution mapping per level (e.g., from AmrMesh)
  * \param[in] grids the grids per level (e.g., from AmrMesh)
+ * \param[in] grid_type Integer that corresponds to the type of grid used in the simulation (collocated, staggered, hybrid)
  * \param[in] boundary_handler a handler for boundary conditions, for example @see ElectrostaticSolver::PoissonBoundaryHandler
+ * \param[in] is_solver_igf_on_lev0 boolean to select the Poisson solver: 1 for FFT on level 0 & Multigrid on other levels, 0 for Multigrid on all levels
  * \param[in] do_single_precision_comms perform communications in single precision
  * \param[in] rel_ref_ratio mesh refinement ratio between levels (default: 1)
  * \param[in] post_phi_calculation perform a calculation per level directly after phi was calculated; required for embedded boundaries (default: none)
@@ -130,10 +104,12 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
             amrex::Real absolute_tolerance,
             int const max_iters,
             int const verbosity,
-            amrex::Vector<amrex::Geometry> const geom,
-            amrex::Vector<amrex::DistributionMapping> const dmap,
-            amrex::Vector<amrex::BoxArray> const grids,
+            amrex::Vector<amrex::Geometry> const& geom,
+            amrex::Vector<amrex::DistributionMapping> const& dmap,
+            amrex::Vector<amrex::BoxArray> const& grids,
+            utils::enums::GridType grid_type,
             T_BoundaryHandler const boundary_handler,
+            bool is_solver_igf_on_lev0,
             bool const do_single_precision_comms = false,
             std::optional<amrex::Vector<amrex::IntVect> > rel_ref_ratio = std::nullopt,
             [[maybe_unused]] T_PostPhiCalculationFunctor post_phi_calculation = std::nullopt,
@@ -143,6 +119,8 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 {
     using namespace amrex::literals;
 
+    ABLASTR_PROFILE("computePhi");
+
     if (!rel_ref_ratio.has_value()) {
         ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(rho.size() == 1u,
                                            "rel_ref_ratio must be set if mesh-refinement is used");
@@ -151,11 +129,9 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 
     auto const finest_level = static_cast<int>(rho.size() - 1);
 
-    // scale rho appropriately; also determine if rho is zero everywhere
+    // determine if rho is zero everywhere
     amrex::Real max_norm_b = 0.0;
     for (int lev=0; lev<=finest_level; lev++) {
-        using namespace ablastr::constant::SI;
-        rho[lev]->mult(-1._rt/ep0);  // TODO: when do we "un-multiply" this? We need to document this side-effect!
         max_norm_b = amrex::max(max_norm_b, rho[lev]->norm0());
     }
     amrex::ParallelDescriptor::ReduceRealMax(max_norm_b);
@@ -170,7 +146,12 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         );
     }
 
+#if !(defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ))
     amrex::LPInfo info;
+#else
+    const amrex::LPInfo info;
+#endif
+
     for (int lev=0; lev<=finest_level; lev++) {
         // Set the value of beta
         amrex::Array<amrex::Real,AMREX_SPACEDIM> beta_solver =
@@ -181,6 +162,37 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 #else
                 {{ beta[0], beta[1], beta[2] }};
 #endif
+
+#if !defined(ABLASTR_USE_FFT)
+        ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE( !is_solver_igf_on_lev0,
+        "Must compile with FFT support to use the IGF solver!");
+#endif
+
+#if !defined(WARPX_DIM_3D)
+        ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE( !is_solver_igf_on_lev0,
+        "The FFT Poisson solver is currently only implemented for 3D!");
+#endif
+
+#if (defined(ABLASTR_USE_FFT)  && defined(WARPX_DIM_3D))
+        // Use the Integrated Green Function solver (FFT) on the coarsest level if it was selected
+        if(is_solver_igf_on_lev0 && lev==0){
+            amrex::Array<amrex::Real,AMREX_SPACEDIM> const dx_igf
+                    {AMREX_D_DECL(geom[lev].CellSize(0)/std::sqrt(1._rt-beta_solver[0]*beta_solver[0]),
+                                geom[lev].CellSize(1)/std::sqrt(1._rt-beta_solver[1]*beta_solver[1]),
+                                geom[lev].CellSize(2)/std::sqrt(1._rt-beta_solver[2]*beta_solver[2]))};
+            if ( max_norm_b == 0 ) {
+                phi[lev]->setVal(0);
+            } else {
+                computePhiIGF( *rho[lev], *phi[lev], dx_igf, grids[lev] );
+            }
+            continue;
+        }
+#endif
+
+        // Use the Multigrid (MLMG) solver if selected or on refined patches
+        // but first scale rho appropriately
+        using namespace ablastr::constant::SI;
+        rho[lev]->mult(-1._rt/ep0);  // TODO: when do we "un-multiply" this? We need to document this side-effect!
 
 #if !(defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ))
         // Determine whether to use semi-coarsening
@@ -254,10 +266,15 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         mlmg.setVerbose(verbosity);
         mlmg.setMaxIter(max_iters);
         mlmg.setAlwaysUseBNorm(always_use_bnorm);
+        if (grid_type == utils::enums::GridType::Collocated) {
+            // In this case, computeE needs to use ghost nodes data. So we
+            // ask MLMG to fill BC for us after it solves the problem.
+            mlmg.setFinalFillBC(true);
+        }
 
         // Solve Poisson equation at lev
         mlmg.solve( {phi[lev]}, {rho[lev]},
-                    relative_tolerance, absolute_tolerance );
+                     relative_tolerance, absolute_tolerance );
 
         // needed for solving the levels by levels:
         // - coarser level is initial guess for finer level
@@ -271,10 +288,14 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
             const amrex::IntVect& refratio = rel_ref_ratio.value()[lev];
             ba.coarsen(refratio);
             const int ncomp = linop.getNComp();
-            amrex::MultiFab phi_cp(ba, phi[lev+1]->DistributionMap(), ncomp, 1);
+            const int ng = (grid_type == utils::enums::GridType::Collocated) ? 1 : 0;
+            amrex::MultiFab phi_cp(ba, phi[lev+1]->DistributionMap(), ncomp, ng);
+            if (ng > 0) {
+                // Set all values outside the domain to zero
+                phi_cp.setDomainBndry(0.0_rt, geom[lev]);
+            }
 
             // Copy from phi[lev] to phi_cp (in parallel)
-            const amrex::IntVect& ng = amrex::IntVect::TheUnitVector();
             const amrex::Periodicity& crse_period = geom[lev].periodicity();
 
             ablastr::utils::communication::ParallelCopy(
@@ -283,8 +304,8 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
                 0,
                 0,
                 1,
-                ng,
-                ng,
+                amrex::IntVect(0),
+                amrex::IntVect(ng),
                 do_single_precision_comms,
                 crse_period
             );
@@ -299,14 +320,14 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 
                 details::PoissonInterpCPtoFP const interp(phi_fp_arr, phi_cp_arr, refratio);
 
-                amrex::Box const b = mfi.tilebox(phi[lev + 1]->ixType().toIntVect());
+                amrex::Box const& b = mfi.growntilebox(ng);
                 amrex::ParallelFor(b, interp);
             }
 
         }
 
         // Run additional operations, such as calculation of the E field for embedded boundaries
-        if constexpr (!std::is_same<T_PostPhiCalculationFunctor, std::nullopt_t>::value) {
+        if constexpr (!std::is_same_v<T_PostPhiCalculationFunctor, std::nullopt_t>) {
             if (post_phi_calculation.has_value()) {
                 post_phi_calculation.value()(mlmg, lev);
             }

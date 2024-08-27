@@ -6,12 +6,16 @@
 
 #include "JFunctor.H"
 
+#include "FieldSolver/Fields.H"
 #include "Particles/MultiParticleContainer.H"
 #include "WarpX.H"
 
 #include <AMReX.H>
+#include <AMReX_Extension.H>
 #include <AMReX_IntVect.H>
 #include <AMReX_MultiFab.H>
+
+using namespace warpx::fields;
 
 JFunctor::JFunctor (const int dir, int lev,
                    amrex::IntVect crse_ratio,
@@ -27,7 +31,7 @@ JFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/
 {
     auto& warpx = WarpX::GetInstance();
     /** pointer to source multifab (can be multi-component) */
-    amrex::MultiFab* m_mf_src = warpx.get_pointer_current_fp(m_lev, m_dir);
+    amrex::MultiFab* m_mf_src = warpx.getFieldPointer(FieldType::current_fp, m_lev, m_dir);
 
     // Deposit current if no solver or the electrostatic solver is being used
     if (m_deposit_current)
@@ -36,16 +40,16 @@ JFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_temp;
         current_fp_temp.resize(1);
 
-        const auto& current_fp_x = warpx.getcurrent_fp(m_lev,0);
+        const auto& current_fp_x = warpx.getField(FieldType::current_fp, m_lev,0);
         current_fp_temp[0][0] = std::make_unique<amrex::MultiFab>(
             current_fp_x, amrex::make_alias, 0, current_fp_x.nComp()
         );
 
-        const auto& current_fp_y = warpx.getcurrent_fp(m_lev,1);
+        const auto& current_fp_y = warpx.getField(FieldType::current_fp, m_lev,1);
         current_fp_temp[0][1] = std::make_unique<amrex::MultiFab>(
             current_fp_y, amrex::make_alias, 0, current_fp_y.nComp()
         );
-        const auto& current_fp_z = warpx.getcurrent_fp(m_lev,2);
+        const auto& current_fp_z = warpx.getField(FieldType::current_fp, m_lev,2);
         current_fp_temp[0][2] = std::make_unique<amrex::MultiFab>(
             current_fp_z, amrex::make_alias, 0, current_fp_z.nComp()
         );
@@ -60,6 +64,10 @@ JFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/
         }
     }
 
-    InterpolateMFForDiag(mf_dst, *m_mf_src, dcomp, warpx.DistributionMap(m_lev),
-                         m_convertRZmodes2cartesian);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_mf_src != nullptr, "m_mf_src can't be a nullptr.");
+    AMREX_ASSUME(m_mf_src != nullptr);
+
+    InterpolateMFForDiag(
+        mf_dst, *m_mf_src, dcomp,
+        warpx.DistributionMap(m_lev), m_convertRZmodes2cartesian);
 }

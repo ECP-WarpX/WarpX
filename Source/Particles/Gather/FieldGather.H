@@ -5,8 +5,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef FIELDGATHER_H_
-#define FIELDGATHER_H_
+#ifndef WARPX_FIELDGATHER_H_
+#define WARPX_FIELDGATHER_H_
 
 #include "Particles/Gather/GetExternalFields.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
@@ -28,16 +28,16 @@
  * \param bx_arr,by_arr,bz_arr            Array4 of the magnetic field, either full array or tile.
  * \param ex_type,ey_type,ez_type         IndexType of the electric field
  * \param bx_type,by_type,bz_type         IndexType of the magnetic field
- * \param dx                        3D cell spacing
- * \param xyzmin                    Physical lower bounds of domain in x, y, z.
+ * \param dinv                      3D cell size inverse
+ * \param xyzmin                    The lower bounds of the domain
  * \param lo                        Index lower bounds of domain.
  * \param n_rz_azimuthal_modes       Number of azimuthal modes when using RZ geometry
  */
 template <int depos_order, int galerkin_interpolation>
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void doGatherShapeN (const amrex::ParticleReal xp,
-                     const amrex::ParticleReal yp,
-                     const amrex::ParticleReal zp,
+void doGatherShapeN ([[maybe_unused]] const amrex::ParticleReal xp,
+                     [[maybe_unused]] const amrex::ParticleReal yp,
+                     [[maybe_unused]] const amrex::ParticleReal zp,
                      amrex::ParticleReal& Exp,
                      amrex::ParticleReal& Eyp,
                      amrex::ParticleReal& Ezp,
@@ -56,40 +56,12 @@ void doGatherShapeN (const amrex::ParticleReal xp,
                      const amrex::IndexType bx_type,
                      const amrex::IndexType by_type,
                      const amrex::IndexType bz_type,
-                     const amrex::GpuArray<amrex::Real, 3>& dx,
-                     const amrex::GpuArray<amrex::Real, 3>& xyzmin,
+                     const amrex::XDim3 & dinv,
+                     const amrex::XDim3 & xyzmin,
                      const amrex::Dim3& lo,
-                     const int n_rz_azimuthal_modes)
+                     [[maybe_unused]] const int n_rz_azimuthal_modes)
 {
     using namespace amrex;
-
-#if defined(WARPX_DIM_XZ)
-    amrex::ignore_unused(yp);
-#endif
-
-#if defined(WARPX_DIM_1D_Z)
-    amrex::ignore_unused(xp,yp);
-#endif
-
-#ifndef WARPX_DIM_RZ
-    amrex::ignore_unused(n_rz_azimuthal_modes);
-#endif
-
-#if (AMREX_SPACEDIM >= 2)
-    const amrex::Real dxi = 1.0_rt/dx[0];
-#endif
-    const amrex::Real dzi = 1.0_rt/dx[2];
-#if defined(WARPX_DIM_3D)
-    const amrex::Real dyi = 1.0_rt/dx[1];
-#endif
-
-#if (AMREX_SPACEDIM >= 2)
-    const amrex::Real xmin = xyzmin[0];
-#endif
-#if defined(WARPX_DIM_3D)
-    const amrex::Real ymin = xyzmin[1];
-#endif
-    const amrex::Real zmin = xyzmin[2];
 
     constexpr int zdir = WARPX_ZINDEX;
     constexpr int NODE = amrex::IndexType::NODE;
@@ -105,9 +77,9 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     // Get particle position
 #ifdef WARPX_DIM_RZ
     const amrex::Real rp = std::sqrt(xp*xp + yp*yp);
-    const amrex::Real x = (rp - xmin)*dxi;
+    const amrex::Real x = (rp - xyzmin.x)*dinv.x;
 #else
-    const amrex::Real x = (xp-xmin)*dxi;
+    const amrex::Real x = (xp-xyzmin.x)*dinv.x;
 #endif
 
     // j_[eb][xyz] leftmost grid point in x that the particle touches for the centering of each current
@@ -151,7 +123,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
 
 #if defined(WARPX_DIM_3D)
     // y direction
-    const amrex::Real y = (yp-ymin)*dyi;
+    const amrex::Real y = (yp-xyzmin.y)*dinv.y;
     amrex::Real sy_node[depos_order + 1];
     amrex::Real sy_cell[depos_order + 1];
     amrex::Real sy_node_v[depos_order + 1 - galerkin_interpolation];
@@ -187,7 +159,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
 
 #endif
     // z direction
-    const amrex::Real z = (zp-zmin)*dzi;
+    const amrex::Real z = (zp-xyzmin.z)*dinv.z;
     amrex::Real sz_node[depos_order + 1];
     amrex::Real sz_cell[depos_order + 1];
     amrex::Real sz_node_v[depos_order + 1 - galerkin_interpolation];
@@ -464,10 +436,10 @@ void doGatherShapeN (const amrex::ParticleReal xp,
  * \param Bx_arr,By_arr,Bz_arr            Array4 of the magnetic field, either full array or tile.
  * \param Ex_type,Ey_type,Ez_type         IndexType of the electric field
  * \param Bx_type,By_type,Bz_type         IndexType of the magnetic field
- * \param dx                        3D cell spacing
- * \param xyzmin                    Physical lower bounds of domain in x, y, z.
+ * \param dinv                      3D cell size inverse
+ * \param xyzmin                    The lower bounds of the domain
  * \param lo                        Index lower bounds of domain.
- * \param n_rz_azimuthal_modes       Number of azimuthal modes when using RZ geometry
+ * \param n_rz_azimuthal_modes      Number of azimuthal modes when using RZ geometry
  */
 template <int depos_order>
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
@@ -496,8 +468,8 @@ void doGatherShapeNEsirkepovStencilImplicit (
                      [[maybe_unused]] const amrex::IndexType Bx_type,
                      [[maybe_unused]] const amrex::IndexType By_type,
                      [[maybe_unused]] const amrex::IndexType Bz_type,
-                     const amrex::GpuArray<amrex::Real, 3>& dx,
-                     const amrex::GpuArray<amrex::Real, 3>& xyzmin,
+                     const amrex::XDim3 & dinv,
+                     const amrex::XDim3 & xyzmin,
                      const amrex::Dim3& lo,
                      const int n_rz_azimuthal_modes)
 {
@@ -507,30 +479,17 @@ void doGatherShapeNEsirkepovStencilImplicit (
 #endif
 
 #if !defined(WARPX_DIM_1D_Z)
-    Real const dxi = 1.0_rt / dx[0];
-#endif
-#if !defined(WARPX_DIM_1D_Z)
-    Real const xmin = xyzmin[0];
-#endif
-#if defined(WARPX_DIM_3D)
-    Real const dyi = 1.0_rt / dx[1];
-    Real const ymin = xyzmin[1];
-#endif
-    Real const dzi = 1.0_rt / dx[2];
-    Real const zmin = xyzmin[2];
-
-#if !defined(WARPX_DIM_1D_Z)
     Real constexpr one_third = 1.0_rt / 3.0_rt;
     Real constexpr one_sixth = 1.0_rt / 6.0_rt;
 #endif
 
 #if !defined(WARPX_DIM_1D_Z)
-    ParticleReal xp_np1 = 2._prt*xp_nph - xp_n;
+    const ParticleReal xp_np1 = 2._prt*xp_nph - xp_n;
 #endif
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
-    ParticleReal yp_np1 = 2._prt*yp_nph - yp_n;
+    const ParticleReal yp_np1 = 2._prt*yp_nph - yp_n;
 #endif
-    ParticleReal zp_np1 = 2._prt*zp_nph - zp_n;
+    const ParticleReal zp_np1 = 2._prt*zp_nph - zp_n;
 
     // computes current and old position in grid units
 #if defined(WARPX_DIM_RZ)
@@ -553,23 +512,23 @@ void doGatherShapeNEsirkepovStencilImplicit (
     }
     const Complex xy_mid0 = Complex{costheta_mid, sintheta_mid};
     // Keep these double to avoid bug in single precision
-    double const x_new = (rp_new - xmin)*dxi;
-    double const x_old = (rp_old - xmin)*dxi;
+    double const x_new = (rp_new - xyzmin.x)*dinv.x;
+    double const x_old = (rp_old - xyzmin.x)*dinv.x;
 #else
 #if !defined(WARPX_DIM_1D_Z)
     // Keep these double to avoid bug in single precision
-    double const x_new = (xp_np1 - xmin)*dxi;
-    double const x_old = (xp_n - xmin)*dxi;
+    double const x_new = (xp_np1 - xyzmin.x)*dinv.x;
+    double const x_old = (xp_n - xyzmin.x)*dinv.x;
 #endif
 #endif
 #if defined(WARPX_DIM_3D)
     // Keep these double to avoid bug in single precision
-    double const y_new = (yp_np1 - ymin)*dyi;
-    double const y_old = (yp_n - ymin)*dyi;
+    double const y_new = (yp_np1 - xyzmin.y)*dinv.y;
+    double const y_old = (yp_n - xyzmin.y)*dinv.y;
 #endif
     // Keep these double to avoid bug in single precision
-    double const z_new = (zp_np1 - zmin)*dzi;
-    double const z_old = (zp_n - zmin)*dzi;
+    double const z_new = (zp_np1 - xyzmin.z)*dinv.z;
+    double const z_old = (zp_n - xyzmin.z)*dinv.z;
 
     // Shape factor arrays
     // Note that there are extra values above and below
@@ -610,8 +569,8 @@ void doGatherShapeNEsirkepovStencilImplicit (
     // --- Compute shape factors
     // Compute shape factors for position as they are now and at old positions
     // [ijk]_new: leftmost grid point that the particle touches
-    Compute_shape_factor< depos_order > compute_shape_factor;
-    Compute_shifted_shape_factor< depos_order > compute_shifted_shape_factor;
+    const Compute_shape_factor< depos_order > compute_shape_factor;
+    const Compute_shifted_shape_factor< depos_order > compute_shifted_shape_factor;
 
 #if !defined(WARPX_DIM_1D_Z)
     const int i_E_new = compute_shape_factor(sx_E_new+1, x_new);
@@ -661,8 +620,8 @@ void doGatherShapeNEsirkepovStencilImplicit (
 #endif
 
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    Compute_shape_factor< depos_order-1 > compute_shape_factor_By;
-    Compute_shifted_shape_factor< depos_order-1 > compute_shifted_shape_factor_By;
+    const Compute_shape_factor< depos_order-1 > compute_shape_factor_By;
+    const Compute_shifted_shape_factor< depos_order-1 > compute_shifted_shape_factor_By;
     const int i_By_new = compute_shape_factor_By(sx_By_new+1, x_new - 0.5_rt);
     const int i_By_old = compute_shifted_shape_factor_By(sx_By_old, x_old - 0.5_rt, i_By_new);
     const int k_By_new = compute_shape_factor_By(sz_By_new+1, z_new - 0.5_rt);
@@ -679,7 +638,7 @@ void doGatherShapeNEsirkepovStencilImplicit (
 
     for (int k=dkl_E; k<=depos_order+2-dku_E; k++) {
         for (int j=djl_E; j<=depos_order+2-dju_E; j++) {
-            amrex::Real sdzjk = one_third*(sy_E_new[j]*sz_E_new[k] + sy_E_old[j]*sz_E_old[k])
+            const amrex::Real sdzjk = one_third*(sy_E_new[j]*sz_E_new[k] + sy_E_old[j]*sz_E_old[k])
                                +one_sixth*(sy_E_new[j]*sz_E_old[k] + sy_E_old[j]*sz_E_new[k]);
             amrex::Real sdxi = 0._rt;
             for (int i=dil_E; i<=depos_order+1-diu_E; i++) {
@@ -691,7 +650,7 @@ void doGatherShapeNEsirkepovStencilImplicit (
     }
     for (int k=dkl_E; k<=depos_order+2-dku_E; k++) {
         for (int i=dil_E; i<=depos_order+2-diu_E; i++) {
-            amrex::Real sdyik = one_third*(sx_E_new[i]*sz_E_new[k] + sx_E_old[i]*sz_E_old[k])
+            const amrex::Real sdyik = one_third*(sx_E_new[i]*sz_E_new[k] + sx_E_old[i]*sz_E_old[k])
                                +one_sixth*(sx_E_new[i]*sz_E_old[k] + sx_E_old[i]*sz_E_new[k]);
             amrex::Real sdyj = 0._rt;
             for (int j=djl_E; j<=depos_order+1-dju_E; j++) {
@@ -703,7 +662,7 @@ void doGatherShapeNEsirkepovStencilImplicit (
     }
     for (int j=djl_E; j<=depos_order+2-dju_E; j++) {
         for (int i=dil_E; i<=depos_order+2-diu_E; i++) {
-            amrex::Real sdzij = one_third*(sx_E_new[i]*sy_E_new[j] + sx_E_old[i]*sy_E_old[j])
+            const amrex::Real sdzij = one_third*(sx_E_new[i]*sy_E_new[j] + sx_E_old[i]*sy_E_old[j])
                                +one_sixth*(sx_E_new[i]*sy_E_old[j] + sx_E_old[i]*sy_E_new[j]);
             amrex::Real sdzk = 0._rt;
             for (int k=dkl_E; k<=depos_order+1-dku_E; k++) {
@@ -715,7 +674,7 @@ void doGatherShapeNEsirkepovStencilImplicit (
     }
     for (int k=dkl_B; k<=depos_order+2-dku_B; k++) {
         for (int j=djl_B; j<=depos_order+2-dju_B; j++) {
-            amrex::Real sdzjk = one_third*(sy_B_new[j]*sz_B_new[k] + sy_B_old[j]*sz_B_old[k])
+            const amrex::Real sdzjk = one_third*(sy_B_new[j]*sz_B_new[k] + sy_B_old[j]*sz_B_old[k])
                                +one_sixth*(sy_B_new[j]*sz_B_old[k] + sy_B_old[j]*sz_B_new[k]);
             amrex::Real sdxi = 0._rt;
             for (int i=dil_B; i<=depos_order+1-diu_B; i++) {
@@ -727,7 +686,7 @@ void doGatherShapeNEsirkepovStencilImplicit (
     }
     for (int k=dkl_B; k<=depos_order+2-dku_B; k++) {
         for (int i=dil_B; i<=depos_order+2-diu_B; i++) {
-            amrex::Real sdyik = one_third*(sx_B_new[i]*sz_B_new[k] + sx_B_old[i]*sz_B_old[k])
+            const amrex::Real sdyik = one_third*(sx_B_new[i]*sz_B_new[k] + sx_B_old[i]*sz_B_old[k])
                                +one_sixth*(sx_B_new[i]*sz_B_old[k] + sx_B_old[i]*sz_B_new[k]);
             amrex::Real sdyj = 0._rt;
             for (int j=djl_B; j<=depos_order+1-dju_B; j++) {
@@ -739,7 +698,7 @@ void doGatherShapeNEsirkepovStencilImplicit (
     }
     for (int j=djl_B; j<=depos_order+2-dju_B; j++) {
         for (int i=dil_B; i<=depos_order+2-diu_B; i++) {
-            amrex::Real sdzij = one_third*(sx_B_new[i]*sy_B_new[j] + sx_B_old[i]*sy_B_old[j])
+            const amrex::Real sdzij = one_third*(sx_B_new[i]*sy_B_new[j] + sx_B_old[i]*sy_B_old[j])
                                +one_sixth*(sx_B_new[i]*sy_B_old[j] + sx_B_old[i]*sy_B_new[j]);
             amrex::Real sdzk = 0._rt;
             for (int k=dkl_B; k<=depos_order+1-dku_B; k++) {
@@ -753,7 +712,7 @@ void doGatherShapeNEsirkepovStencilImplicit (
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
     for (int k=dkl_E; k<=depos_order+2-dku_E; k++) {
-        amrex::Real sdzk = 0.5_rt*(sz_E_new[k] + sz_E_old[k]);
+        const amrex::Real sdzk = 0.5_rt*(sz_E_new[k] + sz_E_old[k]);
         amrex::Real sdxi = 0._rt;
         for (int i=dil_E; i<=depos_order+1-diu_E; i++) {
             sdxi += (sx_E_old[i] - sx_E_new[i]);
@@ -771,7 +730,7 @@ void doGatherShapeNEsirkepovStencilImplicit (
         }
     }
     for (int i=dil_E; i<=depos_order+2-diu_E; i++) {
-        amrex::Real sdxi = 0.5_rt*(sx_E_new[i] + sx_E_old[i]);
+        const amrex::Real sdxi = 0.5_rt*(sx_E_new[i] + sx_E_old[i]);
         amrex::Real sdzk = 0._rt;
         for (int k=dkl_E; k<=depos_order+1-dku_E; k++) {
             sdzk += (sz_E_old[k] - sz_E_new[k]);
@@ -797,7 +756,7 @@ void doGatherShapeNEsirkepovStencilImplicit (
         // Gather field on particle Exp from field on grid ex_arr
         // Gather field on particle Bzp from field on grid bz_arr
         for (int k=dkl_E; k<=depos_order+2-dku_E; k++) {
-            amrex::Real sdzk = 0.5_rt*(sz_E_new[k] + sz_E_old[k]);
+            const amrex::Real sdzk = 0.5_rt*(sz_E_new[k] + sz_E_old[k]);
             amrex::Real sdxi = 0._rt;
             for (int i=dil_E; i<=depos_order+1-diu_E; i++) {
                 sdxi += (sx_E_old[i] - sx_E_new[i]);
@@ -824,7 +783,7 @@ void doGatherShapeNEsirkepovStencilImplicit (
         // Gather field on particle Ezp from field on grid ez_arr
         // Gather field on particle Bxp from field on grid bx_arr
         for (int i=dil_E; i<=depos_order+2-diu_E; i++) {
-            amrex::Real sdxi = 0.5_rt*(sx_E_new[i] + sx_E_old[i]);
+            const amrex::Real sdxi = 0.5_rt*(sx_E_new[i] + sx_E_old[i]);
             amrex::Real sdzk = 0._rt;
             for (int k=dkl_E; k<=depos_order+1-dku_E; k++) {
                 sdzk += (sz_E_old[k] - sz_E_new[k]);
@@ -894,8 +853,8 @@ void doGatherShapeNEsirkepovStencilImplicit (
  * \param Bx_arr,By_arr,Bz_arr      Array4 of the magnetic field, either full array or tile.
  * \param Ex_type,Ey_type,Ez_type   IndexType of the electric field
  * \param Bx_type,By_type,Bz_type   IndexType of the magnetic field
- * \param dx                        3D cell spacing
- * \param xyzmin                    Physical lower bounds of domain in x, y, z.
+ * \param dinv                      3D cell size inverse
+ * \param xyzmin                    The lower bounds of the domain
  * \param lo                        Index lower bounds of domain.
  * \param n_rz_azimuthal_modes      Number of azimuthal modes when using RZ geometry
  */
@@ -926,8 +885,8 @@ void doGatherPicnicShapeN (
                      [[maybe_unused]] const amrex::IndexType Bx_type,
                      [[maybe_unused]] const amrex::IndexType By_type,
                      [[maybe_unused]] const amrex::IndexType Bz_type,
-                     const amrex::GpuArray<amrex::Real, 3>& dx,
-                     const amrex::GpuArray<amrex::Real, 3>& xyzmin,
+                     const amrex::XDim3 & dinv,
+                     const amrex::XDim3 & xyzmin,
                      const amrex::Dim3& lo,
                      const int n_rz_azimuthal_modes)
 {
@@ -937,25 +896,12 @@ void doGatherPicnicShapeN (
 #endif
 
 #if !defined(WARPX_DIM_1D_Z)
-    Real const dxi = 1.0_rt / dx[0];
-#endif
-#if !defined(WARPX_DIM_1D_Z)
-    Real const xmin = xyzmin[0];
-#endif
-#if defined(WARPX_DIM_3D)
-    Real const dyi = 1.0_rt / dx[1];
-    Real const ymin = xyzmin[1];
-#endif
-    Real const dzi = 1.0_rt / dx[2];
-    Real const zmin = xyzmin[2];
-
-#if !defined(WARPX_DIM_1D_Z)
-    ParticleReal xp_np1 = 2._prt*xp_nph - xp_n;
+    const ParticleReal xp_np1 = 2._prt*xp_nph - xp_n;
 #endif
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
-    ParticleReal yp_np1 = 2._prt*yp_nph - yp_n;
+    const ParticleReal yp_np1 = 2._prt*yp_nph - yp_n;
 #endif
-    ParticleReal zp_np1 = 2._prt*zp_nph - zp_n;
+    const ParticleReal zp_np1 = 2._prt*zp_nph - zp_n;
 
 #if !defined(WARPX_DIM_1D_Z)
     Real constexpr one_third = 1.0_rt / 3.0_rt;
@@ -983,25 +929,25 @@ void doGatherPicnicShapeN (
     }
     const Complex xy_mid0 = Complex{costheta_mid, sintheta_mid};
     // Keep these double to avoid bug in single precision
-    double const x_new = (rp_new - xmin)*dxi;
-    double const x_old = (rp_old - xmin)*dxi;
-    double const x_bar = (rp_mid - xmin)*dxi;
+    double const x_new = (rp_new - xyzmin.x)*dinv.x;
+    double const x_old = (rp_old - xyzmin.x)*dinv.x;
+    double const x_bar = (rp_mid - xyzmin.x)*dinv.x;
 #elif !defined(WARPX_DIM_1D_Z)
     // Keep these double to avoid bug in single precision
-    double const x_new = (xp_np1 - xmin)*dxi;
-    double const x_old = (xp_n - xmin)*dxi;
-    double const x_bar = (xp_nph - xmin)*dxi;
+    double const x_new = (xp_np1 - xyzmin.x)*dinv.x;
+    double const x_old = (xp_n - xyzmin.x)*dinv.x;
+    double const x_bar = (xp_nph - xyzmin.x)*dinv.x;
 #endif
 #if defined(WARPX_DIM_3D)
     // Keep these double to avoid bug in single precision
-    double const y_new = (yp_np1 - ymin)*dyi;
-    double const y_old = (yp_n   - ymin)*dyi;
-    double const y_bar = (yp_nph - ymin)*dyi;
+    double const y_new = (yp_np1 - xyzmin.y)*dinv.y;
+    double const y_old = (yp_n   - xyzmin.y)*dinv.y;
+    double const y_bar = (yp_nph - xyzmin.y)*dinv.y;
 #endif
     // Keep these double to avoid bug in single precision
-    double const z_new = (zp_np1 - zmin)*dzi;
-    double const z_old = (zp_n   - zmin)*dzi;
-    double const z_bar = (zp_nph - zmin)*dzi;
+    double const z_new = (zp_np1 - xyzmin.z)*dinv.z;
+    double const z_old = (zp_n   - xyzmin.z)*dinv.z;
+    double const z_bar = (zp_nph - xyzmin.z)*dinv.z;
 
     // 1) Determine the number of segments.
     // 2) Loop over segments and gather electric field.
@@ -1019,19 +965,19 @@ void doGatherPicnicShapeN (
     // compute cell crossings in X-direction
     const auto i_old = static_cast<int>(x_old-shift);
     const auto i_new = static_cast<int>(x_new-shift);
-    int cell_crossings_x = std::abs(i_new-i_old);
+    const int cell_crossings_x = std::abs(i_new-i_old);
     num_segments += cell_crossings_x;
 
     // compute cell crossings in Y-direction
     const auto j_old = static_cast<int>(y_old-shift);
     const auto j_new = static_cast<int>(y_new-shift);
-    int cell_crossings_y = std::abs(j_new-j_old);
+    const int cell_crossings_y = std::abs(j_new-j_old);
     num_segments += cell_crossings_y;
 
     // compute cell crossings in Z-direction
     const auto k_old = static_cast<int>(z_old-shift);
     const auto k_new = static_cast<int>(z_new-shift);
-    int cell_crossings_z = std::abs(k_new-k_old);
+    const int cell_crossings_z = std::abs(k_new-k_old);
     num_segments += cell_crossings_z;
 
     // need to assert that the number of cell crossings in each direction
@@ -1054,8 +1000,8 @@ void doGatherPicnicShapeN (
     }
 
     // loop over the number of segments and deposit
-    Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
-    Compute_shape_factor_pair< depos_order > compute_shape_factors_node;
+    const Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
+    const Compute_shape_factor_pair< depos_order > compute_shape_factors_node;
     double dxp_seg, dyp_seg, dzp_seg;
     double x0_new, y0_new, z0_new;
     double x0_old = x_old;
@@ -1125,7 +1071,7 @@ void doGatherPicnicShapeN (
         const int k0_cell = compute_shape_factor_cell( sz_cell, z0_bar-0.5 );
 
         if constexpr (depos_order >= 3) { // higher-order correction to the cell-based weights
-            Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
+            const Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
             double sx_old_cell[depos_order] = {0.};
             double sx_new_cell[depos_order] = {0.};
             double sy_old_cell[depos_order] = {0.};
@@ -1205,7 +1151,7 @@ void doGatherPicnicShapeN (
 
     // gather magnetic field
     const int depos_order_B = 1; // second template parameter?
-    Compute_shape_factor< depos_order_B > compute_shape_factor_B;
+    const Compute_shape_factor< depos_order_B > compute_shape_factor_B;
     double sz_bar_node[depos_order_B+1] = {0.};
     double sz_bar_cell[depos_order_B+1] = {0.};
     const int k_bar_node = compute_shape_factor_B(sz_bar_node, z_bar);
@@ -1240,13 +1186,13 @@ void doGatherPicnicShapeN (
     // compute cell crossings in X-direction
     const auto i_old = static_cast<int>(x_old-shift);
     const auto i_new = static_cast<int>(x_new-shift);
-    int cell_crossings_x = std::abs(i_new-i_old);
+    const int cell_crossings_x = std::abs(i_new-i_old);
     num_segments += cell_crossings_x;
 
     // compute cell crossings in Z-direction
     const auto k_old = static_cast<int>(z_old-shift);
     const auto k_new = static_cast<int>(z_new-shift);
-    int cell_crossings_z = std::abs(k_new-k_old);
+    const int cell_crossings_z = std::abs(k_new-k_old);
     num_segments += cell_crossings_z;
 
     // need to assert that the number of cell crossings in each direction
@@ -1266,8 +1212,8 @@ void doGatherPicnicShapeN (
     }
 
     // loop over the number of segments and deposit
-    Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
-    Compute_shape_factor_pair< depos_order > compute_shape_factors_node;
+    const Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
+    const Compute_shape_factor_pair< depos_order > compute_shape_factors_node;
     double dxp_seg, dzp_seg;
     double x0_new, z0_new;
     double x0_old = x_old;
@@ -1316,7 +1262,7 @@ void doGatherPicnicShapeN (
         const int k0_cell = compute_shape_factor_cell(sz_cell, z0_bar-0.5);
 
         if constexpr (depos_order >= 3) { // higher-order correction to the cell-based weights
-            Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
+            const Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
             double sx_old_cell[depos_order] = {0.};
             double sx_new_cell[depos_order] = {0.};
             double sz_old_cell[depos_order] = {0.};
@@ -1404,7 +1350,7 @@ void doGatherPicnicShapeN (
 
     // gather magnetic field and out-of-plane electric field
     const int depos_order_B = 1; // second template parameter?
-    Compute_shape_factor< depos_order_B > compute_shape_factor_B;
+    const Compute_shape_factor< depos_order_B > compute_shape_factor_B;
     double sz_bar_node[depos_order_B+1] = {0.};
     double sz_bar_cell[depos_order_B+1] = {0.};
     const int k_bar_node = compute_shape_factor_B(sz_bar_node, z_bar);
@@ -1459,7 +1405,7 @@ void doGatherPicnicShapeN (
     // compute cell crossings in Z-direction
     const auto k_old = static_cast<int>(z_old-shift);
     const auto k_new = static_cast<int>(z_new-shift);
-    int cell_crossings_z = std::abs(k_new-k_old);
+    const int cell_crossings_z = std::abs(k_new-k_old);
     num_segments += cell_crossings_z;
 
     // need to assert that the number of cell crossings in each direction
@@ -1472,8 +1418,8 @@ void doGatherPicnicShapeN (
     double Zcell = static_cast<double>(k_old) + shift + 0.5*(1.-dirZ_sign);
 
     // loop over the number of segments and deposit
-    Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
-    Compute_shape_factor_pair< depos_order > compute_shape_factors_node;
+    const Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
+    const Compute_shape_factor_pair< depos_order > compute_shape_factors_node;
     double dzp_seg;
     double z0_new;
     double z0_old = z_old;
@@ -1499,7 +1445,7 @@ void doGatherPicnicShapeN (
         const int k0_cell = compute_shape_factor_cell( sz_cell, z0_bar-0.5 );
 
         if constexpr (depos_order >= 3) { // higher-order correction to the cell-based weights
-            Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
+            const Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
             double sz_old_cell[depos_order] = {0.};
             double sz_new_cell[depos_order] = {0.};
             const int k0_cell_2 = compute_shape_factors_cell( sz_old_cell, sz_new_cell, z0_old-0.5, z0_new-0.5 );
@@ -1536,7 +1482,7 @@ void doGatherPicnicShapeN (
 
     // gather magnetic field
     const int depos_order_B = 1; // second template parameter?
-    Compute_shape_factor< depos_order_B > compute_shape_factor_B;
+    const Compute_shape_factor< depos_order_B > compute_shape_factor_B;
     double sz_bar_node[depos_order_B+1] = {0.};
     double sz_bar_cell[depos_order_B+1] = {0.};
     const int k_bar_node = compute_shape_factor_B(sz_bar_node, z_bar);
@@ -1567,8 +1513,8 @@ void doGatherPicnicShapeN (
  * \param exfab,eyfab,ezfab    Array4 of the electric field, either full array or tile.
  * \param bxfab,byfab,bzfab    Array4 of the magnetic field, either full array or tile.
  * \param np_to_gather         Number of particles for which field is gathered.
- * \param dx                   3D cell size
- * \param xyzmin               Physical lower bounds of domain.
+ * \param dinv                 3D cell size inverse
+ * \param xyzmin               The lower bounds of the domain
  * \param lo                   Index lower bounds of domain.
  * \param n_rz_azimuthal_modes Number of azimuthal modes when using RZ geometry
  */
@@ -1585,14 +1531,11 @@ void doGatherShapeN(const GetParticlePosition<PIdx>& getPosition,
                     amrex::FArrayBox const * const byfab,
                     amrex::FArrayBox const * const bzfab,
                     const long np_to_gather,
-                    const std::array<amrex::Real, 3>& dx,
-                    const std::array<amrex::Real, 3> xyzmin,
+                    const amrex::XDim3 & dinv,
+                    const amrex::XDim3 & xyzmin,
                     const amrex::Dim3 lo,
                     const int n_rz_azimuthal_modes)
 {
-
-    amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
-    amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
 
     amrex::Array4<const amrex::Real> const& ex_arr = exfab->array();
     amrex::Array4<const amrex::Real> const& ey_arr = eyfab->array();
@@ -1622,7 +1565,7 @@ void doGatherShapeN(const GetParticlePosition<PIdx>& getPosition,
                 xp, yp, zp, Exp[ip], Eyp[ip], Ezp[ip], Bxp[ip], Byp[ip], Bzp[ip],
                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                 ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+                dinv, xyzmin, lo, n_rz_azimuthal_modes);
         }
         );
 }
@@ -1637,8 +1580,8 @@ void doGatherShapeN(const GetParticlePosition<PIdx>& getPosition,
  * \param bx_arr,by_arr,bz_arr    Array4 of the magnetic field, either full array or tile.
  * \param ex_type,ey_type,ez_type IndexType of the electric field
  * \param bx_type,by_type,bz_type IndexType of the magnetic field
- * \param dx_arr                  3D cell spacing
- * \param xyzmin_arr              Physical lower bounds of domain in x, y, z.
+ * \param dinv                    3D cell size inverse
+ * \param xyzmin                  The lower bounds of the domain
  * \param lo                      Index lower bounds of domain.
  * \param n_rz_azimuthal_modes    Number of azimuthal modes when using RZ geometry
  * \param nox                     order of the particle shape function
@@ -1666,8 +1609,8 @@ void doGatherShapeN (const amrex::ParticleReal xp,
                      const amrex::IndexType bx_type,
                      const amrex::IndexType by_type,
                      const amrex::IndexType bz_type,
-                     const amrex::GpuArray<amrex::Real, 3>& dx_arr,
-                     const amrex::GpuArray<amrex::Real, 3>& xyzmin_arr,
+                     const amrex::XDim3 & dinv,
+                     const amrex::XDim3 & xyzmin,
                      const amrex::Dim3& lo,
                      const int n_rz_azimuthal_modes,
                      const int nox,
@@ -1678,44 +1621,44 @@ void doGatherShapeN (const amrex::ParticleReal xp,
             doGatherShapeN<1,1>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                 ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+                                dinv, xyzmin, lo, n_rz_azimuthal_modes);
         } else if (nox == 2) {
             doGatherShapeN<2,1>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                 ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+                                dinv, xyzmin, lo, n_rz_azimuthal_modes);
         } else if (nox == 3) {
             doGatherShapeN<3,1>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                 ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+                                dinv, xyzmin, lo, n_rz_azimuthal_modes);
         } else if (nox == 4) {
             doGatherShapeN<4,1>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                 ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+                                dinv, xyzmin, lo, n_rz_azimuthal_modes);
         }
     } else {
         if (nox == 1) {
             doGatherShapeN<1,0>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                 ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+                                dinv, xyzmin, lo, n_rz_azimuthal_modes);
         } else if (nox == 2) {
             doGatherShapeN<2,0>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                 ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+                                dinv, xyzmin, lo, n_rz_azimuthal_modes);
         } else if (nox == 3) {
             doGatherShapeN<3,0>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                 ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+                                dinv, xyzmin, lo, n_rz_azimuthal_modes);
         } else if (nox == 4) {
             doGatherShapeN<4,0>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                 ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+                                dinv, xyzmin, lo, n_rz_azimuthal_modes);
         }
     }
 }
@@ -1732,8 +1675,8 @@ void doGatherShapeN (const amrex::ParticleReal xp,
  * \param bx_arr,by_arr,bz_arr    Array4 of the magnetic field, either full array or tile.
  * \param ex_type,ey_type,ez_type IndexType of the electric field
  * \param bx_type,by_type,bz_type IndexType of the magnetic field
- * \param dx_arr                  3D cell spacing
- * \param xyzmin_arr              Physical lower bounds of domain in x, y, z.
+ * \param dinv                    3D cell size inverse
+ * \param xyzmin                  The lower bounds of the domain
  * \param lo                      Index lower bounds of domain.
  * \param n_rz_azimuthal_modes    Number of azimuthal modes when using RZ geometry
  * \param nox                     order of the particle shape function
@@ -1766,8 +1709,8 @@ void doGatherShapeNImplicit (
                      const amrex::IndexType bx_type,
                      const amrex::IndexType by_type,
                      const amrex::IndexType bz_type,
-                     const amrex::GpuArray<amrex::Real, 3>& dx_arr,
-                     const amrex::GpuArray<amrex::Real, 3>& xyzmin_arr,
+                     const amrex::XDim3 & dinv,
+                     const amrex::XDim3 & xyzmin,
                      const amrex::Dim3& lo,
                      const int n_rz_azimuthal_modes,
                      const int nox,
@@ -1779,25 +1722,25 @@ void doGatherShapeNImplicit (
                                                       Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                                       ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                                       ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                                      dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+                                                      dinv, xyzmin, lo, n_rz_azimuthal_modes);
         } else if (nox == 2) {
             doGatherShapeNEsirkepovStencilImplicit<2>(xp_n, yp_n, zp_n, xp_nph, yp_nph, zp_nph,
                                                       Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                                       ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                                       ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                                      dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+                                                      dinv, xyzmin, lo, n_rz_azimuthal_modes);
         } else if (nox == 3) {
             doGatherShapeNEsirkepovStencilImplicit<3>(xp_n, yp_n, zp_n, xp_nph, yp_nph, zp_nph,
                                                       Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                                       ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                                       ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                                      dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+                                                      dinv, xyzmin, lo, n_rz_azimuthal_modes);
         } else if (nox == 4) {
             doGatherShapeNEsirkepovStencilImplicit<4>(xp_n, yp_n, zp_n, xp_nph, yp_nph, zp_nph,
                                                       Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                                       ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                                       ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                                      dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+                                                      dinv, xyzmin, lo, n_rz_azimuthal_modes);
         }
     }
     else if (depos_type==3) { // CurrentDepositionAlgo::Villasenor
@@ -1806,25 +1749,25 @@ void doGatherShapeNImplicit (
                                     Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                     ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                     ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                    dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+                                    dinv, xyzmin, lo, n_rz_azimuthal_modes);
         } else if (nox == 2) {
             doGatherPicnicShapeN<2>(xp_n, yp_n, zp_n, xp_nph, yp_nph, zp_nph,
                                     Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                     ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                     ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                    dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+                                    dinv, xyzmin, lo, n_rz_azimuthal_modes);
         } else if (nox == 3) {
             doGatherPicnicShapeN<3>(xp_n, yp_n, zp_n, xp_nph, yp_nph, zp_nph,
                                     Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                     ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                     ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                    dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+                                    dinv, xyzmin, lo, n_rz_azimuthal_modes);
         } else if (nox == 4) {
             doGatherPicnicShapeN<4>(xp_n, yp_n, zp_n, xp_nph, yp_nph, zp_nph,
                                     Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                     ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                     ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                    dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+                                    dinv, xyzmin, lo, n_rz_azimuthal_modes);
         }
     }
     else if (depos_type==1) { // CurrentDepositionAlgo::Direct
@@ -1832,24 +1775,24 @@ void doGatherShapeNImplicit (
             doGatherShapeN<1,0>(xp_nph, yp_nph, zp_nph, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                 ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+                                dinv, xyzmin, lo, n_rz_azimuthal_modes);
         } else if (nox == 2) {
             doGatherShapeN<2,0>(xp_nph, yp_nph, zp_nph, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                 ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+                                dinv, xyzmin, lo, n_rz_azimuthal_modes);
         } else if (nox == 3) {
             doGatherShapeN<3,0>(xp_nph, yp_nph, zp_nph, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                 ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+                                dinv, xyzmin, lo, n_rz_azimuthal_modes);
         } else if (nox == 4) {
             doGatherShapeN<4,0>(xp_nph, yp_nph, zp_nph, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                 ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+                                dinv, xyzmin, lo, n_rz_azimuthal_modes);
         }
     }
 }
 
-#endif // FIELDGATHER_H_
+#endif // WARPX_FIELDGATHER_H_

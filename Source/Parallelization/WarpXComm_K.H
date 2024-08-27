@@ -12,7 +12,7 @@
 
 /**
  * \brief Interpolation function called within WarpX::UpdateAuxilaryDataSameType
- * to interpolate data from the coarse and fine grids to the fine aux grid,
+ * with electromagnetic solver to interpolate data from the coarse and fine grids to the fine aux grid,
  * assuming that all grids have the same staggering (either collocated or staggered).
  *
  * \param[in] j index along x of the output array
@@ -179,10 +179,6 @@ void warpx_interp (int j, int k, int l,
     amrex::Real fine = 0.0_rt;
     amrex::Real coarse = 0.0_rt;
 
-    amrex::Real wj;
-    amrex::Real wk;
-    amrex::Real wl;
-
     // 1) Interpolation from coarse nodal to fine nodal
 
     nj = 2;
@@ -197,20 +193,18 @@ void warpx_interp (int j, int k, int l,
     nl = 2;
 #endif
 
-    wj = 1.0_rt;
-    wk = 1.0_rt;
-    wl = 1.0_rt;
     for         (int jj = 0; jj < nj; jj++) {
         for     (int kk = 0; kk < nk; kk++) {
             for (int ll = 0; ll < nl; ll++) {
-                wj = (rj - amrex::Math::abs(j - (jc + jj) * rj)) / static_cast<amrex::Real>(rj);
+                auto c =  arr_tmp_zeropad(jc+jj,kc+kk,lc+ll);
+                c *= (rj - amrex::Math::abs(j - (jc + jj) * rj)) / static_cast<amrex::Real>(rj);
 #if (AMREX_SPACEDIM >= 2)
-                wk = (rk - amrex::Math::abs(k - (kc + kk) * rk)) / static_cast<amrex::Real>(rk);
+                c *= (rk - amrex::Math::abs(k - (kc + kk) * rk)) / static_cast<amrex::Real>(rk);
 #endif
 #if (AMREX_SPACEDIM == 3)
-                wl = (rl - amrex::Math::abs(l - (lc + ll) * rl)) / static_cast<amrex::Real>(rl);
+                c *= (rl - amrex::Math::abs(l - (lc + ll) * rl)) / static_cast<amrex::Real>(rl);
 #endif
-                tmp += wj * wk * wl * arr_tmp_zeropad(jc+jj,kc+kk,lc+ll);
+                tmp += c;
             }
         }
     }
@@ -237,20 +231,18 @@ void warpx_interp (int j, int k, int l,
     kc = amrex::coarsen(kn, rk);
     lc = amrex::coarsen(ln, rl);
 
-    wj = 1.0_rt;
-    wk = 1.0_rt;
-    wl = 1.0_rt;
     for         (int jj = 0; jj < nj; jj++) {
         for     (int kk = 0; kk < nk; kk++) {
             for (int ll = 0; ll < nl; ll++) {
-                wj = (rj - amrex::Math::abs(jn - (jc + jj) * rj)) / static_cast<amrex::Real>(rj);
+                auto c = arr_coarse_zeropad(jc+jj,kc+kk,lc+ll);
+                c *= (rj - amrex::Math::abs(jn - (jc + jj) * rj)) / static_cast<amrex::Real>(rj);
 #if (AMREX_SPACEDIM >= 2)
-                wk = (rk - amrex::Math::abs(kn - (kc + kk) * rk)) / static_cast<amrex::Real>(rk);
+                c *= (rk - amrex::Math::abs(kn - (kc + kk) * rk)) / static_cast<amrex::Real>(rk);
 #endif
 #if (AMREX_SPACEDIM == 3)
-                wl = (rl - amrex::Math::abs(ln - (lc + ll) * rl)) / static_cast<amrex::Real>(rl);
+                c *= (rl - amrex::Math::abs(ln - (lc + ll) * rl)) / static_cast<amrex::Real>(rl);
 #endif
-                coarse += wj * wk * wl * arr_coarse_zeropad(jc+jj,kc+kk,lc+ll);
+                coarse += c;
             }
         }
     }
@@ -284,16 +276,102 @@ void warpx_interp (int j, int k, int l,
     for         (int jj = 0; jj < nj; jj++) {
         for     (int kk = 0; kk < nk; kk++) {
             for (int ll = 0; ll < nl; ll++) {
-                wj = 1.0_rt / static_cast<amrex::Real>(nj);
-                wk = 1.0_rt / static_cast<amrex::Real>(nk);
-                wl = 1.0_rt / static_cast<amrex::Real>(nl);
-                fine += wj * wk * wl * arr_fine_zeropad(jm+jj,km+kk,lm+ll);
+                fine += arr_fine_zeropad(jm+jj,km+kk,lm+ll);
             }
         }
     }
+    fine = fine/static_cast<amrex::Real>(nj*nk*nl);
 
     // Final result
     arr_aux(j,k,l) = tmp + (fine - coarse);
+}
+/**
+ * \brief Interpolation function called within WarpX::UpdateAuxilaryDataStagToNodal
+ * to interpolate data from the coarse and fine grids to the fine aux grid,
+ * with momentum-conserving field gathering, hence between grids with different staggering,
+ * and assuming that the aux grid is collocated.
+ *
+ * \param[in] j index along x of the output array
+ * \param[in] k index along y (in 3D) or z (in 2D) of the output array
+ * \param[in] l index along z (in 3D, l=0 in 2D) of the output array
+ * \param[in,out] arr_aux output array where interpolated values are stored
+ * \param[in] arr_fine input fine-patch array storing the values to interpolate
+ * \param[in] arr_fine_stag IndexType of the fine-patch arrays
+ */
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+void warpx_interp (int j, int k, int l,
+                   amrex::Array4<amrex::Real      > const& arr_aux,
+                   amrex::Array4<amrex::Real const> const& arr_fine,
+                   const amrex::IntVect& arr_fine_stag)
+{
+    using namespace amrex;
+
+    // Pad input arrays with zeros beyond ghost cells
+    // for out-of-bound accesses due to large-stencil operations
+    const auto arr_fine_zeropad = [arr_fine] (const int jj, const int kk, const int ll) noexcept
+    {
+        return arr_fine.contains(jj,kk,ll) ? arr_fine(jj,kk,ll) : 0.0_rt;
+    };
+
+    // NOTE Indices (j,k,l) in the following refer to:
+    // - (z,-,-) in 1D
+    // - (x,z,-) in 2D
+    // - (r,z,-) in RZ
+    // - (x,y,z) in 3D
+
+    // Staggering of fine array (0: cell-centered; 1: nodal)
+    const int sj_fp = arr_fine_stag[0];
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+    const int sk_fp = arr_fine_stag[1];
+#elif defined(WARPX_DIM_3D)
+    const int sk_fp = arr_fine_stag[1];
+    const int sl_fp = arr_fine_stag[2];
+#endif
+
+    // Number of points used for interpolation from coarse grid to fine grid
+    int nj;
+    int nk;
+    int nl;
+
+    amrex::Real fine = 0.0_rt;
+
+    // 3) Interpolation from fine staggered to fine nodal
+
+    nj = (sj_fp == 0) ? 2 : 1;
+#if defined(WARPX_DIM_1D_Z)
+    nk = 1;
+    nl = 1;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+    nk = (sk_fp == 0) ? 2 : 1;
+    nl = 1;
+#else
+    nk = (sk_fp == 0) ? 2 : 1;
+    nl = (sl_fp == 0) ? 2 : 1;
+#endif
+
+    const int jm = (sj_fp == 0) ? j-1 : j;
+#if defined(WARPX_DIM_1D_Z)
+    const int km = k;
+    const int lm = l;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+    const int km = (sk_fp == 0) ? k-1 : k;
+    const int lm = l;
+#else
+    const int km = (sk_fp == 0) ? k-1 : k;
+    const int lm = (sl_fp == 0) ? l-1 : l;
+#endif
+
+    for         (int jj = 0; jj < nj; jj++) {
+        for     (int kk = 0; kk < nk; kk++) {
+            for (int ll = 0; ll < nl; ll++) {
+                fine += arr_fine_zeropad(jm+jj,km+kk,lm+ll);
+            }
+        }
+    }
+    fine = fine/static_cast<amrex::Real>(nj*nk*nl);
+
+    // Final result
+    arr_aux(j,k,l) = fine;
 }
 
 /**

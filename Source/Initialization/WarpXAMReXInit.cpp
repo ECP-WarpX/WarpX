@@ -7,11 +7,14 @@
 
 #include "Initialization/WarpXAMReXInit.H"
 
+#include "Utils/TextMsg.H"
+
 #include <AMReX.H>
 #include <AMReX_ccse-mpi.H>
 #include <AMReX_ParmParse.H>
+#include <AMReX_TinyProfiler.H>
 
-#include <memory>
+#include <string>
 
 namespace {
     /** Overwrite defaults in AMReX Inputs
@@ -44,6 +47,22 @@ namespace {
         {
             amrex::ParmParse pp_amr("amr");
             pp_amr.add("blocking_factor", 1);
+        }
+
+        //See https://github.com/AMReX-Codes/amrex/pull/3763
+#ifdef AMREX_USE_GPU
+        bool warpx_do_device_synchronize = true;
+#else
+        bool warpx_do_device_synchronize = false;
+#endif
+        pp_warpx.query("do_device_synchronize", warpx_do_device_synchronize);
+        bool do_device_synchronize = warpx_do_device_synchronize;
+        amrex::ParmParse pp_tiny_profiler("tiny_profiler");
+        if (pp_tiny_profiler.queryAdd("device_synchronize_around_region", do_device_synchronize) )
+        {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                do_device_synchronize == warpx_do_device_synchronize,
+                "tiny_profiler.device_synchronize_around_region overrides warpx.do_device_synchronize.");
         }
 
         // Here we override the default tiling option for particles, which is always

@@ -14,18 +14,27 @@ function(find_picsar)
         set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
         # Enable or disable QED lookup tables generation
-
-        # If table generation is enabled, enable or disable
-        # openMP support depending on WarpX_COMPUTE
-        if(WarpX_QED_TABLE_GEN)
+        if(WarpX_QED_TABLE_GEN OR WarpX_QED_TOOLS)
             set(PXRMP_QED_TABLEGEN ON CACHE INTERNAL "")
-            if(WarpX_COMPUTE STREQUAL OMP)
-                set(PXRMP_QED_OMP ON CACHE INTERNAL "")
-            else()
-                set(PXRMP_QED_OMP OFF CACHE INTERNAL "")
-            endif()
         else()
             set(PXRMP_QED_TABLEGEN OFF CACHE INTERNAL "")
+        endif()
+
+        # Enable or disable OpenMP for lookup tables generation
+        if(PXRMP_QED_TABLEGEN)
+            if(WarpX_QED_TABLES_GEN_OMP STREQUAL AUTO)
+                find_package(OpenMP REQUIRED CXX)
+                if(OpenMP_CXX_FOUND)
+                    set(PXRMP_QED_OMP ON CACHE INTERNAL "")
+                else()
+                    set(PXRMP_QED_OMP OFF CACHE INTERNAL "")
+                endif()
+            elseif(WarpX_QED_TABLES_GEN_OMP STREQUAL ON)
+                    set(PXRMP_QED_OMP ON CACHE INTERNAL "")
+            else()
+                    set(PXRMP_QED_OMP OFF CACHE INTERNAL "")
+            endif()
+        else()
             set(PXRMP_QED_OMP OFF CACHE INTERNAL "")
         endif()
 
@@ -106,7 +115,7 @@ if(WarpX_QED)
     set(WarpX_picsar_repo "https://github.com/ECP-WarpX/picsar.git"
         CACHE STRING
         "Repository URI to pull and build PICSAR from if(WarpX_picsar_internal)")
-    set(WarpX_picsar_branch "aa54e985398c1d575abc7e6737cdbc660a13765f"
+    set(WarpX_picsar_branch "44a2dfdf0f8cae93f12328664e055703989e7185"
         CACHE STRING
         "Repository branch for WarpX_picsar_repo if(WarpX_picsar_internal)")
 

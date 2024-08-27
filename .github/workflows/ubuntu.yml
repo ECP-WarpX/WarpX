@@ -46,7 +46,7 @@ jobs:
         du -hs ~/.cache/ccache
 
   build_1D_2D:
-    name: GCC 1D & 2D w/ MPI
+    name: GCC 1D & 2D w/ MPI, QED tools
     runs-on: ubuntu-22.04
     if: github.event.pull_request.draft == false
     env:
@@ -77,14 +77,20 @@ jobs:
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_DIMS="1;2"           \
           -DWarpX_EB=OFF               \
-          -DWarpX_PSATD=ON             \
-          -DWarpX_QED_TABLE_GEN=ON
+          -DWarpX_FFT=ON               \
+          -DWarpX_QED_TABLE_GEN=ON     \
+          -DWarpX_QED_TOOLS=ON
+
         cmake --build build -j 4
         ./build/bin/warpx.1d Examples/Physics_applications/laser_acceleration/inputs_1d
         ./build/bin/warpx.2d Examples/Physics_applications/laser_acceleration/inputs_2d
 
         ccache -s
         du -hs ~/.cache/ccache
+
+    - name: run QED table tools
+      run: |
+        .github/workflows/scripts/checkQEDTableGenerator.sh
 
   build_3D_sp:
     name: GCC 3D & RZ w/ MPI, single precision
@@ -121,7 +127,7 @@ jobs:
           -DCMAKE_VERBOSE_MAKEFILE=ON       \
           -DWarpX_DIMS="RZ;3"               \
           -DWarpX_EB=OFF                    \
-          -DWarpX_PSATD=ON                  \
+          -DWarpX_FFT=ON                    \
           -DWarpX_PRECISION=SINGLE          \
           -DWarpX_PARTICLE_PRECISION=SINGLE \
           -DWarpX_QED_TABLE_GEN=ON
@@ -205,7 +211,7 @@ jobs:
         cmake -S . -B build            \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_APP=OFF              \
-          -DWarpX_PSATD=ON             \
+          -DWarpX_FFT=ON               \
           -DWarpX_PYTHON=ON            \
           -DWarpX_QED_TABLE_GEN=ON
         cmake --build build -j 4 --target pip_install

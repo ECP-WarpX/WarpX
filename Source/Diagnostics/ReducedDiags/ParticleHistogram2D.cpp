@@ -54,7 +54,7 @@ using namespace amrex;
 
 
 // constructor
-ParticleHistogram2D::ParticleHistogram2D (std::string rd_name)
+ParticleHistogram2D::ParticleHistogram2D (const std::string& rd_name)
         : ReducedDiags{rd_name}
 {
     ParmParse pp_rd_name(rd_name);
@@ -138,7 +138,7 @@ void ParticleHistogram2D::ComputeDiags (int step)
     Array<int,2> tlo{0,0}; // lower bounds
     Array<int,2> thi{m_bin_num_abs-1, m_bin_num_ord-1}; // inclusive upper bounds
     amrex::TableData<amrex::Real,2> d_data_2D(tlo, thi);
-    m_h_data_2D = amrex::TableData<amrex::Real,2> (tlo, thi, The_Pinned_Arena());
+    m_h_data_2D.resize(tlo, thi, The_Pinned_Arena());
     auto const& h_table_data = m_h_data_2D.table();
 
     // Initialize data on the host
@@ -267,10 +267,12 @@ void ParticleHistogram2D::WriteToFile (int step) const
     const std::string fileSuffix = std::string("_%0") + std::to_string(m_file_min_digits) + std::string("T");
     filename = filename.append(fileSuffix).append(".").append(m_openpmd_backend);
 
-    std::string filepath = m_path + m_rd_name + "/" + filename;
     // transform paths for Windows
     #ifdef _WIN32
-        filepath = openPMD::auxiliary::replace_all(filepath, "/", "\\");
+        const std::string filepath = openPMD::auxiliary::replace_all(
+            m_path + m_rd_name + "/" + filename, "/", "\\");
+    #else
+        const std::string filepath = m_path + m_rd_name + "/" + filename;
     #endif
 
     // Create the OpenPMD series
@@ -314,6 +316,8 @@ void ParticleHistogram2D::WriteToFile (int step) const
             {static_cast<unsigned long>(m_bin_num_ord), static_cast<unsigned long>(m_bin_num_abs)});
 
     series.flush();
+    i.close();
+    series.close();
 #else
     amrex::ignore_unused(step);
     WARPX_ABORT_WITH_MESSAGE("ParticleHistogram2D: Needs openPMD-api compiled into WarpX, but was not found!");

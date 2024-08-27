@@ -57,7 +57,7 @@ public:
      */
     static
     void readCrossSectionFile (
-                               std::string cross_section_file,
+                               const std::string& cross_section_file,
                                amrex::Vector<amrex::ParticleReal>& energies,
                                amrex::Gpu::HostVector<amrex::ParticleReal>& sigmas
                                );

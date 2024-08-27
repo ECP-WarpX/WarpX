@@ -31,10 +31,18 @@ boundary.particle_hi = periodic
 ############ NUMERICS ###########
 #################################
 
+warpx.verbose = 1
 warpx.const_dt = dt
-algo.evolve_scheme = implicit_picard
-algo.max_picard_iterations = 31
-algo.picard_iteration_tolerance = 0.
+algo.evolve_scheme = theta_implicit_em
+
+implicit_evolve.nonlinear_solver = "picard"
+
+picard.verbose = true
+picard.max_iterations = 31
+picard.relative_tolerance = 0.0
+picard.absolute_tolerance = 0.0
+picard.require_convergence = false
+
 algo.current_deposition = esirkepov
 algo.field_gathering = energy-conserving
 algo.particle_shape = 2
@@ -71,8 +79,8 @@ diagnostics.diags_names = diag1
 diag1.intervals = 100
 diag1.diag_type = Full
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho divE
-diag1.electrons.variables = w ux uy uz
-diag1.protons.variables = w ux uy uz
+diag1.electrons.variables = z w ux uy uz
+diag1.protons.variables = z w ux uy uz
 
 warpx.reduced_diags_names = particle_energy field_energy
 particle_energy.type = ParticleEnergy

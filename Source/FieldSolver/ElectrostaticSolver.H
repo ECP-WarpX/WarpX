@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef ELECTROSTATICSOLVER_H_
-#define ELECTROSTATICSOLVER_H_
+#ifndef WARPX_ELECTROSTATICSOLVER_H_
+#define WARPX_ELECTROSTATICSOLVER_H_
 
 #include <AMReX_Array.H>
 #include <AMReX_Geometry.H>
@@ -56,7 +56,7 @@ namespace ElectrostaticSolver {
          *
          * \param [in] potential The string value of the potential
          */
-        void setPotentialEB (std::string potential) {
+        void setPotentialEB(const std::string& potential) {
             potential_eb_str = potential;
             buildParsersEB();
         }
@@ -122,4 +122,4 @@ namespace ElectrostaticSolver {
     };
 } // namespace ElectrostaticSolver
 
-#endif // ELECTROSTATICSOLVER_H_
+#endif // WARPX_ELECTROSTATICSOLVER_H_

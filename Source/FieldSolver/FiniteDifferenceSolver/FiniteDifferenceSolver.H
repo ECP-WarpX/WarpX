@@ -10,11 +10,14 @@
 
 #include "EmbeddedBoundary/WarpXFaceInfoBox_fwd.H"
 #include "FiniteDifferenceSolver_fwd.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 
 #include "BoundaryConditions/PML_fwd.H"
 #include "Evolve/WarpXDtType.H"
 #include "HybridPICModel/HybridPICModel_fwd.H"
 #include "MacroscopicProperties/MacroscopicProperties_fwd.H"
+
+#include <ablastr/utils/Enums.H>
 
 #include <AMReX_GpuContainers.H>
 #include <AMReX_REAL.H>
@@ -46,7 +49,7 @@ class FiniteDifferenceSolver
         FiniteDifferenceSolver (
             int fdtd_algo,
             std::array<amrex::Real,3> cell_size,
-            short grid_type );
+            ablastr::utils::enums::GridType grid_type );
 
         void EvolveB ( std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
@@ -89,8 +92,8 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
             amrex::Box domain_box,
             amrex::Real dt,
-            amrex::Vector<int> field_boundary_lo,
-            amrex::Vector<int> field_boundary_hi);
+            amrex::Vector<FieldBoundaryType> field_boundary_lo,
+            amrex::Vector<FieldBoundaryType> field_boundary_hi);
 
         void ComputeDivE ( const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                            amrex::MultiFab& divE );
@@ -177,7 +180,7 @@ class FiniteDifferenceSolver
     private:
 
         int m_fdtd_algo;
-        short m_grid_type;
+        ablastr::utils::enums::GridType m_grid_type;
 
 #ifdef WARPX_DIM_RZ
         amrex::Real m_dr, m_rmin;
@@ -213,6 +216,7 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
             std::unique_ptr<amrex::MultiFab> const& Ffield,
             int lev,
             amrex::Real dt );

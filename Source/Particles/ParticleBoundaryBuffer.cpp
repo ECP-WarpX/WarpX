@@ -1,5 +1,5 @@
 /* Copyright 2021 Andrew Myers
- *
+ * modified by Remi Lehe, Eya Dammak 2023
  * This file is part of WarpX.
  *
  * License: BSD-3-Clause-LBNL
@@ -22,6 +22,8 @@
 #include <AMReX_Tuple.H>
 #include <AMReX.H>
 #include <AMReX_Algorithm.H>
+#include <AMReX_RealVect.H>
+using namespace amrex::literals;
 
 struct IsOutsideDomainBoundary {
     amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> m_plo;
@@ -47,7 +49,7 @@ struct IsOutsideDomainBoundary {
 #ifdef AMREX_USE_EB
 struct FindEmbeddedBoundaryIntersection {
     const int m_step_index;
-    const int m_time_index;
+    const int m_delta_index;
     const int m_normal_index;
     const int m_step;
     const amrex::Real m_dt;
@@ -96,14 +98,15 @@ struct FindEmbeddedBoundaryIntersection {
                 amrex::Real W[AMREX_SPACEDIM][2];
                 amrex::ParticleReal x_temp=xp, y_temp=yp, z_temp=zp;
                 UpdatePosition(x_temp, y_temp, z_temp, ux, uy, uz, -dt_frac*dt);
-                ablastr::particles::compute_weights(x_temp, y_temp, z_temp, plo, dxi, i, j, k, W);
+                ablastr::particles::compute_weights<amrex::IndexType::NODE>(
+                    x_temp, y_temp, z_temp, plo, dxi, i, j, k, W);
                 amrex::Real phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, phiarr);
                 return phi_value;
             } );
 
         // Also record the real time on the destination
         dst.m_runtime_idata[m_step_index][dst_i] = m_step;
-        dst.m_runtime_rdata[m_time_index][dst_i] = m_step*m_dt + (1- dt_fraction)*m_dt;
+        dst.m_runtime_rdata[m_delta_index][dst_i] = (1._rt- dt_fraction)*m_dt;
 
         // Now that dt_fraction has be obtained (with bisect)
         // Save the corresponding position of the particle at the boundary
@@ -113,11 +116,12 @@ struct FindEmbeddedBoundaryIntersection {
         // record the components of the normal on the destination
         int i, j, k;
         amrex::Real W[AMREX_SPACEDIM][2];
-        ablastr::particles::compute_weights(x_temp, y_temp, z_temp, plo, dxi, i, j, k, W);
+        ablastr::particles::compute_weights<amrex::IndexType::NODE>(
+            x_temp, y_temp, z_temp, plo, dxi, i, j, k, W);
         int ic, jc, kc; // Cell-centered indices
-        int nodal;
         amrex::Real Wc[AMREX_SPACEDIM][2]; // Cell-centered weight
-        ablastr::particles::compute_weights(x_temp, y_temp, z_temp, plo, dxi, ic, jc, kc, Wc, nodal=0); // nodal=0 to calculate the weights with respect to the cell-centered nodes
+        ablastr::particles::compute_weights<amrex::IndexType::CELL>(
+            x_temp, y_temp, z_temp, plo, dxi, ic, jc, kc, Wc);
         amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, ic, jc, kc, Wc, phiarr, dxi);
         DistanceToEB::normalize(normal);
 
@@ -156,15 +160,22 @@ struct FindEmbeddedBoundaryIntersection {
 #else
         amrex::ignore_unused(x_temp, y_temp, z_temp,normal);
 #endif
+
+        // flip id to positive in destination
+        amrex::ParticleIDWrapper{dst.m_idcpu[dst_i]}.make_valid();
     }
 };
 #endif
 
 struct CopyAndTimestamp {
     int m_step_index;
-    int m_time_index;
+    int m_delta_index;
+    int m_normal_index;
     int m_step;
     const amrex::Real m_dt;
+    int m_idim;
+    int m_iside;
+
 
     template <typename DstData, typename SrcData>
     AMREX_GPU_HOST_DEVICE
@@ -181,8 +192,19 @@ struct CopyAndTimestamp {
         for (int j = 0; j < src.m_num_runtime_int; ++j) {
             dst.m_runtime_idata[j][dst_i] = src.m_runtime_idata[j][src_i];
         }
+
         dst.m_runtime_idata[m_step_index][dst_i] = m_step;
-        dst.m_runtime_rdata[m_time_index][dst_i] = m_step*m_dt;
+        dst.m_runtime_rdata[m_delta_index][dst_i] = 0._rt; //delta_fraction is initialized to zero
+
+        //calculation of the normal to the boundary
+        std::array<double, 3> n = {0.0, 0.0, 0.0};
+        n[m_idim]=1-2*m_iside;
+        dst.m_runtime_rdata[m_normal_index][dst_i]= n[0];
+        dst.m_runtime_rdata[m_normal_index+1][dst_i]= n[1];
+        dst.m_runtime_rdata[m_normal_index+2][dst_i]= n[2];
+
+        // flip id to positive in destination
+        amrex::ParticleIDWrapper{dst.m_idcpu[dst_i]}.make_valid();
     }
 };
 
@@ -340,8 +362,7 @@ void ParticleBoundaryBuffer::clearParticles (int const i) {
     }
 }
 
-void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
-                                              const amrex::Vector<const amrex::MultiFab*>& distance_to_eb)
+void ParticleBoundaryBuffer::gatherParticlesFromDomainBoundaries (MultiParticleContainer& mypc)
 {
     WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles");
 
@@ -350,7 +371,6 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
     const amrex::Geometry& geom = warpx_instance.Geom(0);
     auto plo = geom.ProbLoArray();
     auto phi = geom.ProbHiArray();
-
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
     {
         if (geom.isPeriodic(idim)) { continue; }
@@ -364,12 +384,28 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 if (!buffer[i].isDefined())
                 {
                     buffer[i] = pc.make_alike<amrex::PinnedArenaAllocator>();
-                    buffer[i].AddIntComp("step_scraped", false);
-                    buffer[i].AddRealComp("time_scraped", false);
+                    buffer[i].AddIntComp("stepScraped", false);
+                    buffer[i].AddRealComp("deltaTimeScraped", false);
+                    buffer[i].AddRealComp("nx", false);
+                    buffer[i].AddRealComp("ny", false);
+                    buffer[i].AddRealComp("nz", false);
                 }
+
                 auto& species_buffer = buffer[i];
+                for (int lev = 0; lev < pc.numLevels(); ++lev){
+                    for(PIter pti(pc, lev); pti.isValid(); ++pti){
+                        species_buffer.DefineAndReturnParticleTile(
+                            lev, pti.index(), pti.LocalTileIndex());
+                    }
+                }
+
                 for (int lev = 0; lev < pc.numLevels(); ++lev)
                 {
+                    for (PIter pti(pc, lev); pti.isValid(); ++pti) {
+                        species_buffer.DefineAndReturnParticleTile(
+                            lev, pti.index(), pti.LocalTileIndex());
+                    }
+
                     const auto& plevel = pc.GetParticles(lev);
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -377,10 +413,10 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                     for(PIter pti(pc, lev); pti.isValid(); ++pti)
                     {
                         auto index = std::make_pair(pti.index(), pti.LocalTileIndex());
-                        if(plevel.find(index) == plevel.end()) { continue; }
 
-                        auto& ptile_buffer = species_buffer.DefineAndReturnParticleTile(
-                                                        lev, pti.index(), pti.LocalTileIndex());
+                        auto& ptile_buffer =
+                            species_buffer.ParticlesAt(lev, pti.index(), pti.LocalTileIndex());
+
                         const auto& ptile = plevel.at(index);
                         auto np = ptile.numParticles();
                         if (np == 0) { continue; }
@@ -408,14 +444,14 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                           auto& warpx = WarpX::GetInstance();
                           const auto dt = warpx.getdt(pti.GetLevel());
                           auto string_to_index_intcomp = buffer[i].getParticleRuntimeiComps();
-                          const int step_scraped_index = string_to_index_intcomp.at("step_scraped");
+                          const int step_scraped_index = string_to_index_intcomp.at("stepScraped");
                           auto string_to_index_realcomp = buffer[i].getParticleRuntimeComps();
-                          const int time_scraped_index = string_to_index_realcomp.at("time_scraped");
+                          const int delta_index = string_to_index_realcomp.at("deltaTimeScraped");
+                          const int normal_index = string_to_index_realcomp.at("nx");
                           const int step = warpx_instance.getistep(0);
-
                           amrex::filterAndTransformParticles(ptile_buffer, ptile,
                                                              predicate,
-                                                             CopyAndTimestamp{step_scraped_index,time_scraped_index, step,dt},
+                                                             CopyAndTimestamp{step_scraped_index, delta_index, normal_index, step, dt, idim, iside},
                                                              0, dst_index);
                         }
                     }
@@ -423,9 +459,18 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
             }
         }
     }
+}
 
+void ParticleBoundaryBuffer::gatherParticlesFromEmbeddedBoundaries (
+    MultiParticleContainer& mypc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb)
+{
 #ifdef AMREX_USE_EB
     WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::EB");
+
+    using PIter = amrex::ParConstIterSoA<PIdx::nattribs, 0>;
+    const auto& warpx_instance = WarpX::GetInstance();
+    const amrex::Geometry& geom = warpx_instance.Geom(0);
+    auto plo = geom.ProbLoArray();
 
     auto& buffer = m_particle_containers[m_particle_containers.size()-1];
     for (int i = 0; i < numSpecies(); ++i)
@@ -435,13 +480,22 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
         if (!buffer[i].isDefined())
         {
             buffer[i] = pc.make_alike<amrex::PinnedArenaAllocator>();
-            buffer[i].AddIntComp("step_scraped", false);
-            buffer[i].AddRealComp("time_scraped", false);
+            buffer[i].AddIntComp("stepScraped", false);
+            buffer[i].AddRealComp("deltaTimeScraped", false);
             buffer[i].AddRealComp("nx", false);
             buffer[i].AddRealComp("ny", false);
             buffer[i].AddRealComp("nz", false);
+
         }
+
         auto& species_buffer = buffer[i];
+        for (int lev = 0; lev < pc.numLevels(); ++lev){
+            for(PIter pti(pc, lev); pti.isValid(); ++pti){
+                species_buffer.DefineAndReturnParticleTile(
+                    lev, pti.index(), pti.LocalTileIndex());
+            }
+        }
+
         for (int lev = 0; lev < pc.numLevels(); ++lev)
         {
             const auto& plevel = pc.GetParticles(lev);
@@ -493,27 +547,28 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 auto& warpx = WarpX::GetInstance();
                 const auto dt = warpx.getdt(pti.GetLevel());
                 auto string_to_index_intcomp = buffer[i].getParticleRuntimeiComps();
-                const int step_scraped_index = string_to_index_intcomp.at("step_scraped");
+                const int step_scraped_index = string_to_index_intcomp.at("stepScraped");
                 auto string_to_index_realcomp = buffer[i].getParticleRuntimeComps();
-                const int time_scraped_index = string_to_index_realcomp.at("time_scraped");
+                const int delta_index = string_to_index_realcomp.at("deltaTimeScraped");
                 const int normal_index = string_to_index_realcomp.at("nx");
                 const int step = warpx_instance.getistep(0);
 
                 {
                   WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::filterTransformEB");
                   amrex::filterAndTransformParticles(ptile_buffer, ptile, predicate,
-                                                     FindEmbeddedBoundaryIntersection{step_scraped_index,time_scraped_index, normal_index, step, dt, phiarr, dxi, plo}, 0, dst_index);
+                                                     FindEmbeddedBoundaryIntersection{step_scraped_index,delta_index, normal_index, step, dt, phiarr, dxi, plo}, 0, dst_index);
+
                 }
             }
         }
     }
 #else
-    amrex::ignore_unused(distance_to_eb);
+    amrex::ignore_unused(mypc, distance_to_eb);
 #endif
 }
 
 int ParticleBoundaryBuffer::getNumParticlesInContainer(
-        const std::string species_name, int boundary, bool local) {
+        const std::string& species_name, int boundary, bool local) {
 
     auto& buffer = m_particle_containers[boundary];
     auto index = WarpX::GetInstance().GetPartContainer().getSpeciesID(species_name);
@@ -527,7 +582,7 @@ int ParticleBoundaryBuffer::getNumParticlesInContainer(
 }
 
 PinnedMemoryParticleContainer &
-ParticleBoundaryBuffer::getParticleBuffer(const std::string species_name, int boundary) {
+ParticleBoundaryBuffer::getParticleBuffer(const std::string& species_name, int boundary) {
 
     auto& buffer = m_particle_containers[boundary];
     auto index = WarpX::GetInstance().GetPartContainer().getSpeciesID(species_name);
@@ -542,7 +597,7 @@ ParticleBoundaryBuffer::getParticleBuffer(const std::string species_name, int bo
 }
 
 PinnedMemoryParticleContainer *
-ParticleBoundaryBuffer::getParticleBufferPointer(const std::string species_name, int boundary) {
+ParticleBoundaryBuffer::getParticleBufferPointer(const std::string& species_name, int boundary) {
 
     auto& buffer = m_particle_containers[boundary];
     auto index = WarpX::GetInstance().GetPartContainer().getSpeciesID(species_name);
