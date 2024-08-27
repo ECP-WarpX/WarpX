@@ -184,19 +184,18 @@ if(WarpX_FFT)
     )
 endif()
 
-# FIXME
-#if(WarpX_FFT)
-#    add_warpx_test(
-#        test_2d_langmuir_multi_psatd_vay_deposition_particle_shape_4 # name
-#        2 # dims
-#        1 # nprocs
-#        OFF # eb
-#        Examples/Tests/langmuir/inputs_test_2d_langmuir_multi_psatd_vay_deposition_particle_shape_4 # inputs
-#        Examples/Tests/langmuir/analysis_2d.py # analysis
-#        diags/diag1000080 # output
-#        OFF # dependency
-#    )
-#endif()
+if(WarpX_FFT)
+    add_warpx_test(
+        test_2d_langmuir_multi_psatd_vay_deposition_particle_shape_4 # name
+        2 # dims
+        1 # nprocs
+        OFF # eb
+        Examples/Tests/langmuir/inputs_test_2d_langmuir_multi_psatd_vay_deposition_particle_shape_4 # inputs
+        Examples/Tests/langmuir/analysis_2d.py # analysis
+        diags/diag1000080 # output
+        OFF # dependency
+    )
+endif()
 
 if(WarpX_FFT)
     add_warpx_test(
