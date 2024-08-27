@@ -13,6 +13,7 @@
 #else
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
+#include "Particles/MultiParticleContainer.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
@@ -26,6 +27,18 @@
 
 #include <algorithm>
 #include <memory>
+
+AMREX_FORCE_INLINE amrex::Real
+minDim (const amrex::Real* x)
+{
+#if defined(WARPX_DIM_1D_Z)
+    return x[0];
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+    return std::min(x[0], x[1]);
+#else
+    return std::min(x[0], std::min(x[1], x[2]));
+#endif
+}
 
 /**
  * Determine the timestep of the simulation. */
@@ -46,9 +59,11 @@ WarpX::ComputeDt ()
         }
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_const_dt.has_value(), errorMsg.str());
 
-        for (int lev=0; lev<=max_level; lev++) {
-            dt[lev] = m_const_dt.value();
-        }
+        dt.resize(0);
+        dt_next.resize(0);
+        dt.resize(max_level+1, m_const_dt.value());
+        dt_next.resize(max_level+1, m_const_dt.value());
+
         return;
     }
 
@@ -61,13 +76,7 @@ WarpX::ComputeDt ()
     } else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         // Computation of dt for spectral algorithm
         // (determined by the minimum cell size in all directions)
-#if defined(WARPX_DIM_1D_Z)
-        deltat = cfl * dx[0] / PhysConst::c;
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        deltat = cfl * std::min(dx[0], dx[1]) / PhysConst::c;
-#else
-        deltat = cfl * std::min(dx[0], std::min(dx[1], dx[2])) / PhysConst::c;
-#endif
+        deltat = cfl / PhysConst::c * minDim(dx);
     } else {
         // Computation of dt for FDTD algorithm
 #ifdef WARPX_DIM_RZ
@@ -92,9 +101,37 @@ WarpX::ComputeDt ()
     dt.resize(0);
     dt.resize(max_level+1,deltat);
 
+    dt_next.resize(0);
+    dt_next.resize(max_level+1,deltat);
+
     if (do_subcycling) {
         for (int lev = max_level-1; lev >= 0; --lev) {
             dt[lev] = dt[lev+1] * refRatio(lev)[0];
+            dt_next[lev] = dt_next[lev+1] * refRatio(lev)[0];
+        }
+    }
+}
+
+void
+WarpX::UpdateDtFromParticleSpeeds ()
+{
+    const amrex::Real* dx = geom[max_level].CellSize();
+    amrex::Real dx_min = minDim(dx);
+
+    const amrex::ParticleReal max_v = mypc->maxParticleVelocity();
+    const amrex::Real deltat_new = cfl * dx_min / max_v;
+
+    // Set present dt to previous next dt
+    dt[max_level] = dt_next[max_level];
+    dt_next[max_level] = deltat_new;
+
+    for (int lev = max_level-1; lev >= 0; --lev) {
+        if (do_subcycling) {
+            dt[lev] = dt[lev+1] * refRatio(lev)[0];
+            dt_next[lev] = dt_next[lev+1] * refRatio(lev)[0];
+        } else {
+            dt[lev] = dt[lev+1];
+            dt_next[lev] = dt_next[lev+1];
         }
     }
 }

@@ -593,6 +593,9 @@ public:
     /** Determine the timestep of the simulation. */
     void ComputeDt ();
 
+    /** Determine the timestep of the simulation. */
+    void UpdateDtFromParticleSpeeds ();
+
     /** Print main PIC parameters to stdout */
     void PrintMainPICparameters ();
 
@@ -1497,6 +1500,7 @@ private:
     amrex::Vector<amrex::Real> t_new;
     amrex::Vector<amrex::Real> t_old;
     amrex::Vector<amrex::Real> dt;
+    amrex::Vector<amrex::Real> dt_next;
 
     // Particle container
     std::unique_ptr<MultiParticleContainer> mypc;
