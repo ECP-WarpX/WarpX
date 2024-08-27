@@ -8,6 +8,7 @@
 #define WarpXSolverVec_H_
 
 #include "Utils/TextMsg.H"
+#include "FieldSolver/Fields.H"
 
 #include <ablastr/utils/SignalHandling.H>
 #include <ablastr/warn_manager/WarnManager.H>
@@ -30,8 +31,6 @@
 #include <memory>
 #include <ostream>
 #include <vector>
-
-#include "FieldSolver/Fields.H"
 
 /**
  * \brief
