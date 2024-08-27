@@ -31,5 +31,5 @@ add_warpx_test(
     Examples/Physics_applications/uniform_plasma/inputs_test_3d_uniform_plasma_restart # inputs
     Examples/analysis_default_regression.py # analysis
     diags/diag1000010 # output
-    OFF # dependency
+    test_3d_uniform_plasma # dependency
 )
