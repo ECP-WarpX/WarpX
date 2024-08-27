@@ -39,18 +39,21 @@ namespace warpx::fields
         Bfield_avg_cp
     };
 
-    inline bool
+    constexpr FieldType ArrayFieldTypes[] = {
+            FieldType::Efield_aux, FieldType::Bfield_aux, FieldType::Efield_fp, FieldType::Bfield_fp,
+            FieldType::current_fp, FieldType::current_fp_nodal, FieldType::vector_potential_fp,
+            FieldType::Efield_cp, FieldType::Bfield_cp, FieldType::current_cp,
+            FieldType::Efield_avg_fp, FieldType::Bfield_avg_fp, FieldType::Efield_avg_cp, FieldType::Bfield_avg_cp};
+
+    constexpr bool
     isFieldArray (const FieldType field_type)
     {
-        return (field_type == FieldType::Efield_aux || field_type == FieldType::Bfield_aux ||
-                field_type == FieldType::Efield_fp  || field_type == FieldType::Bfield_fp ||
-                field_type == FieldType::current_fp || field_type == FieldType::current_fp_nodal ||
-                field_type == FieldType::vector_potential_fp ||
-                field_type == FieldType::Efield_cp  || field_type == FieldType::Bfield_cp ||
-                field_type == FieldType::current_cp ||
-                field_type == FieldType::Efield_avg_fp || field_type == FieldType::Bfield_avg_fp ||
-                field_type == FieldType::Efield_avg_cp || field_type == FieldType::Bfield_avg_cp);
+        for (const auto& f : ArrayFieldTypes) {
+            if (f == field_type) { return true; }
+        }
+        return false;
     }
+
 }
 
 #endif //WARPX_FIELDS_H_
