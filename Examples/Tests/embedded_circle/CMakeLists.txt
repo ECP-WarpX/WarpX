@@ -7,9 +7,9 @@ if(WarpX_EB)
         2 # dims
         2 # nprocs
         ON # eb
-    OFF # preparation script
         Examples/Tests/embedded_circle/inputs_test_2d_embedded_circle # inputs
         Examples/Tests/embedded_circle/analysis.py # analysis
         diags/diag1000011
+        OFF # dependency
     )
 endif()
