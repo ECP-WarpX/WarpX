@@ -135,6 +135,7 @@ public:
                          const amrex::MultiFab* cBz,
                          amrex::Real t,
                          amrex::Real dt,
+                         amrex::Real dt_next,
                          DtType a_dt_type=DtType::Full,
                          bool skip_deposition=false,
                          PushType push_type=PushType::Explicit) override;
@@ -150,7 +151,9 @@ public:
                          long offset,
                          long np_to_push,
                          int lev, int gather_lev,
-                         amrex::Real dt, ScaleFields scaleFields,
+                         amrex::Real dt,
+                         amrex::Real dt_next,
+                         ScaleFields scaleFields,
                          DtType a_dt_type=DtType::Full);
 
     void ImplicitPushXP (WarpXParIter& pti,

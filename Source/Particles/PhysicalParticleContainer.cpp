@@ -2020,7 +2020,7 @@ PhysicalParticleContainer::Evolve (int lev,
                                    MultiFab* rho, MultiFab* crho,
                                    const MultiFab* cEx, const MultiFab* cEy, const MultiFab* cEz,
                                    const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
-                                   Real /*t*/, Real dt, DtType a_dt_type, bool skip_deposition,
+                                   Real /*t*/, Real dt, Real dt_next, DtType a_dt_type, bool skip_deposition,
                                    PushType push_type)
 {
 
@@ -2154,7 +2154,7 @@ PhysicalParticleContainer::Evolve (int lev,
                     PushPX(pti, exfab, eyfab, ezfab,
                            bxfab, byfab, bzfab,
                            Ex.nGrowVect(), e_is_nodal,
-                           0, np_to_push, lev, gather_lev, dt, ScaleFields(false), a_dt_type);
+                           0, np_to_push, lev, gather_lev, dt, dt_next, ScaleFields(false), a_dt_type);
                 } else if (push_type == PushType::Implicit) {
                     ImplicitPushXP(pti, exfab, eyfab, ezfab,
                                    bxfab, byfab, bzfab,
@@ -2196,7 +2196,7 @@ PhysicalParticleContainer::Evolve (int lev,
                                cbxfab, cbyfab, cbzfab,
                                cEx->nGrowVect(), e_is_nodal,
                                nfine_gather, np-nfine_gather,
-                               lev, lev-1, dt, ScaleFields(false), a_dt_type);
+                               lev, lev-1, dt, dt_next, ScaleFields(false), a_dt_type);
                     } else if (push_type == PushType::Implicit) {
                         ImplicitPushXP(pti, cexfab, ceyfab, cezfab,
                                        cbxfab, cbyfab, cbzfab,
@@ -2742,7 +2742,9 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                                    const long offset,
                                    const long np_to_push,
                                    int lev, int gather_lev,
-                                   amrex::Real dt, ScaleFields scaleFields,
+                                   amrex::Real dt,
+                                   amrex::Real dt_next,
+                                   ScaleFields scaleFields,
                                    DtType a_dt_type)
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE((gather_lev==(lev-1)) ||
@@ -2931,7 +2933,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 #endif
                                       dt);
 
-            UpdatePosition(xp, yp, zp, ux[ip], uy[ip], uz[ip], dt);
+            UpdatePosition(xp, yp, zp, ux[ip], uy[ip], uz[ip], 0.5 * (dt + dt_next));
             setPosition(ip, xp, yp, zp);
         }
 #ifdef WARPX_QED
@@ -2949,7 +2951,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                                           t_chi_max,
                                           dt);
 
-                UpdatePosition(xp, yp, zp, ux[ip], uy[ip], uz[ip], dt);
+                UpdatePosition(xp, yp, zp, ux[ip], uy[ip], uz[ip], 0.5 * (dt + dt_next));
                 setPosition(ip, xp, yp, zp);
             }
         }

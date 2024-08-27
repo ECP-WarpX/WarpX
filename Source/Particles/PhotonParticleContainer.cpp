@@ -91,7 +91,8 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
                                  const long offset,
                                  const long np_to_push,
                                  int lev, int gather_lev,
-                                 amrex::Real dt, ScaleFields /*scaleFields*/, DtType a_dt_type)
+                                 amrex::Real dt, amrex::Real /*dt_next*/,
+                                 ScaleFields /*scaleFields*/, DtType a_dt_type)
 {
     // Get inverse cell size on gather_lev
     const amrex::XDim3 dinv = WarpX::InvCellSize(std::max(gather_lev,0));
@@ -237,7 +238,7 @@ PhotonParticleContainer::Evolve (int lev,
                                  MultiFab* rho, MultiFab* crho,
                                  const MultiFab* cEx, const MultiFab* cEy, const MultiFab* cEz,
                                  const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
-                                 Real t, Real dt, DtType a_dt_type, bool skip_deposition,
+                                 Real t, Real dt, Real dt_next, DtType a_dt_type, bool skip_deposition,
                                  PushType push_type)
 {
     // This does gather, push and deposit.
@@ -250,6 +251,6 @@ PhotonParticleContainer::Evolve (int lev,
                                        rho, crho,
                                        cEx, cEy, cEz,
                                        cBx, cBy, cBz,
-                                       t, dt, a_dt_type, skip_deposition, push_type);
+                                       t, dt, dt_next, a_dt_type, skip_deposition, push_type);
 
 }
