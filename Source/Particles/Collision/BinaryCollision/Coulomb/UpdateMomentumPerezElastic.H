@@ -84,9 +84,9 @@ void UpdateMomentumPerezElastic (
     // avoid loss of precision when gc is close to 1
     T_PR const lorentz_transform_factor =
             ( gc*gc*vcDv1*inv_c2/(T_PR(1.0) + gc) - gc )*m1*g1;
-    T_PR p1sx = p1x + vcx*lorentz_transform_factor;
-    T_PR p1sy = p1y + vcy*lorentz_transform_factor;
-    T_PR p1sz = p1z + vcz*lorentz_transform_factor;
+    T_PR const p1sx = p1x + vcx*lorentz_transform_factor;
+    T_PR const p1sy = p1y + vcy*lorentz_transform_factor;
+    T_PR const p1sz = p1z + vcz*lorentz_transform_factor;
     T_PR const p1sm = std::sqrt( p1sx*p1sx + p1sy*p1sy + p1sz*p1sz );
 
     // Compute gamma star
