@@ -51,7 +51,7 @@ add_warpx_test(
     1 # dims
     2 # nprocs
     OFF # eb
-    "Examples/Physics_applications/capacitive_discharge/inputs_base_1d_picmi.py --test -dsmc" # inputs
+    "Examples/Physics_applications/capacitive_discharge/inputs_base_1d_picmi.py --test --dsmc" # inputs
     Examples/Physics_applications/capacitive_discharge/analysis_dsmc.py # analysis
     diags/diag1000050 # output
     OFF # dependency
