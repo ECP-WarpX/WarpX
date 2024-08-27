@@ -1271,9 +1271,9 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
             if (rz_random_theta) { theta_offset = amrex::Random(engine) * 2._rt * MathConst::pi; }
 #endif
 
-            Real scale_fac = 0.0_rt;
+            amrex::Real scale_fac = 0.0_rt;
             if( pcounts[index] != 0) {
-                amrex::Real dV = AMREX_D_TERM(dx[0], *dx[1], *dx[2]);
+                amrex::Real const dV = AMREX_D_TERM(dx[0], *dx[1], *dx[2]);
                 scale_fac = dV/pcounts[index];
             }
 

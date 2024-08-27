@@ -918,7 +918,6 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
     // here we the save the SoA properties (real)
     {
         auto const real_counter = std::min(write_real_comp.size(), real_comp_names.size());
-        int idx_start = 0;
 
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
         // reconstruct Cartesian positions for cylindrical simulations
@@ -964,7 +963,9 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
         }
 #endif
         // Skip over positions in loop below since they are taken care of here.
-        idx_start = PIdx::nattribs - 4;
+        int const idx_start = PIdx::nattribs - 4;
+#else // Cartesian
+        int const idx_start = 0;
 #endif
 
         int const cartesian_attributes = AMREX_SPACEDIM + 4; // position + w + velocities
