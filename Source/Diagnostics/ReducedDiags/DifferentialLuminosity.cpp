@@ -71,12 +71,12 @@ DifferentialLuminosity::DifferentialLuminosity (const std::string& rd_name)
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_beam_name.size() == 2u,
-        "Collider-relevant diagnostics must involve exactly two species");
+        "DifferentialLuminosity diagnostics must involve exactly two species");
 
     // RZ coordinate is not supported
 #if (defined WARPX_DIM_RZ)
     WARPX_ABORT_WITH_MESSAGE(
-        "Collider-relevant diagnostics do not work in RZ geometry.");
+        "DifferentialLuminosity diagnostics do not work in RZ geometry.");
 #endif
 
     // read bin parameters
