@@ -160,7 +160,7 @@ void DifferentialLuminosity::ComputeDiags (int step)
 
     // Enable tiling
     amrex::MFItInfo info;
-    if (amrex::Gpu::notInLaunchRegion()) { info.EnableTiling(species_1.tile_size); }
+    if (amrex::Gpu::notInLaunchRegion()) { info.EnableTiling(WarpXParticleContainer::tile_size); }
 
     int const nlevs = std::max(0, species_1.finestLevel()+1); // species_1 ?
     for (int lev = 0; lev < nlevs; ++lev) {
@@ -218,9 +218,9 @@ void DifferentialLuminosity::ComputeDiags (int step)
                         index_type const j_2 = indices_2[i_2];
 
                         Real const u1_square =  u1x[j_1]*u1x[j_1] + u1y[j_1]*u1y[j_1] + u1z[j_1]*u1z[j_1];
-                        Real const gamma1 = std::sqrt(1. + u1_square/c2);
+                        Real const gamma1 = std::sqrt(1._rt + u1_square/c2);
                         Real const u2_square = u2x[j_2]*u2x[j_2] + u2y[j_2]*u2y[j_2] + u2z[j_2]*u2z[j_2];
-                        Real const gamma2 = std::sqrt(1. + u2_square/c2);
+                        Real const gamma2 = std::sqrt(1._rt + u2_square/c2);
                         Real const u1_dot_u2 = u1x[j_1]*u2x[j_2] + u1y[j_1]*u2y[j_2] + u1z[j_1]*u2z[j_2];
 
                         // center of mass energy
@@ -268,5 +268,5 @@ void DifferentialLuminosity::ComputeDiags (int step)
     }
 
 #endif // not RZ
-return;
+
 }
