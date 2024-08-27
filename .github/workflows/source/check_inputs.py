@@ -8,8 +8,7 @@ import sys
 testname_prefix = ["test_1d_", "test_2d_", "test_3d_", "test_rz_"]
 
 # collect all test names and test input filenames from CMakeLists.txt files
-testnames = []
-testinputs = []
+tests = []
 # walk through all files under Examples/, including subdirectories
 for dirpath, dirnames, filenames in os.walk(top="./Examples"):
     # loop over CMakeLists.txt files
@@ -25,9 +24,10 @@ for dirpath, dirnames, filenames in os.walk(top="./Examples"):
                 if re.match("add_warpx_test", line):
                     # strip leading whitespaces, remove end-of-line comments
                     testname = next(f).lstrip().split(" ")[0]
-                    testnames.append(testname)
                     # skip lines related to other function arguments
-                    for _ in range(4):
+                    # NOTE: update range call to reflect changes
+                    #       in the interface of 'add_warpx_test'
+                    for _ in range(3):
                         next(f)
                     # strip leading whitespaces, remove end-of-line comments
                     testinput = next(f).lstrip().split(" ")[0]
@@ -38,22 +38,30 @@ for dirpath, dirnames, filenames in os.walk(top="./Examples"):
                         testinput = re.sub('"', "", testinput)
                     # extract filename from path
                     testinput = os.path.split(testinput)[1]
-                    testinputs.append(testinput)
+                    tests.append(
+                        {"name": testname, "input": testinput, "path": filepath}
+                    )
 
 # check consistency of test names and test input filenames
 print("\nCheck that test names and input names are correct...")
 wrong_testname = False
 wrong_testinput = False
-for testname, testinput in zip(testnames, testinputs):
+for test in tests:
+    testname = test["name"].rstrip()
+    testinput = test["input"].rstrip()
+    testpath = test["path"].rstrip()
     if not testname.startswith(tuple(testname_prefix)):
         print(f"Wrong test  name: {testname}")
+        print(f"(from {testpath})")
         wrong_testname = True
     if "restart" in testname:
         if not testname.endswith("_restart") and not testname.endswith("_restart.py"):
             print(f"Wrong test  name: {testname}")
+            print(f"(from {testpath})")
             wrong_testname = True
     if not testinput == f"inputs_{testname}" and not testinput.endswith("_picmi.py"):
         print(f"Wrong input name: {testinput}")
+        print(f"(from {testpath})")
         wrong_testinput = True
 
 if wrong_testname:
@@ -73,7 +81,7 @@ for dirpath, dirnames, filenames in os.walk(top="./Examples"):
     for name in [
         filename for filename in filenames if filename.startswith("inputs_test_")
     ]:
-        if name not in testinputs:
+        if name not in [test["input"] for test in tests]:
             print(f"Input not tested: {os.path.join(dirpath, name)}")
             missing_input = True
 
