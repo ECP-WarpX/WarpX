@@ -1887,12 +1887,16 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
         self.absolute_tolerance = kw.pop("warpx_absolute_tolerance", None)
         self.self_fields_verbosity = kw.pop("warpx_self_fields_verbosity", None)
         self.magnetostatic = kw.pop("warpx_magnetostatic", False)
+        self.cfl = kw.pop("warpx_cfl", None)
 
     def solver_initialize_inputs(self):
         # Open BC means FieldBoundaryType::Open for electrostatic sims, rather than perfectly-matched layer
         BC_map["open"] = "open"
 
         self.grid.grid_initialize_inputs()
+
+        if self.cfl is not None:
+            pywarpx.warpx.cfl = self.cfl
 
         if self.relativistic:
             pywarpx.warpx.do_electrostatic = "relativistic"
