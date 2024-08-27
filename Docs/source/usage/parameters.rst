@@ -3431,9 +3431,27 @@ Reduced Diagnostics
 
         [18], ..., [32]: Analogous quantities for species 2.
 
-        For 2D-XZ, :math:`y`-related quantities are not outputted.
-        For 1D-Z, :math:`x`-related and :math:`y`-related quantities are not outputted.
-        RZ geometry is not supported yet.
+* ``DifferentialLuminosity``
+    This type computes the differential luminosity between two species, defined as:
+
+    .. math::
+
+        \frac{d\mathcal{L}}{d\mathcal{E}^*}(\mathcal{E}^*, t) = \int_0^t dt'\int d\boldsymbol{x}\,d\boldsymbol{p}_1 d\boldsymbol{p}_2\;
+         \sqrt{ |\boldsymbol{v}_1 - \boldsymbol{v}_2|^2 - |\boldsymbol{v}_1\times\boldsymbol{v}_2|^2/c^2} \\ f_1(\boldsymbol{x}, \boldsymbol{p}_1, t')f_2(\boldsymbol{x}, \boldsymbol{p}_2, t') \delta(\mathcal{E}^* - \mathcal{E}^*(\boldsymbol{p}_1, \boldsymbol{p}_2))
+
+    where :math:`\mathcal{E}^*(\boldsymbol{p}_1, \boldsymbol{p}_2) = \sqrt{m_1^2c^4 + m_2^2c^4 + 2(m_1 m_2 c^4
+    \gamma_1 \gamma_2 - \boldsymbol{p}_1\cdot\boldsymbol{p}_2 c^2)}` is the energy in the center-of-mass frame,
+    and :math:`f_i` is the distribution function of species :math:`i`. Note that, if :math:`\sigma^*(\mathcal{E}^*)`
+    is the center-of-mass cross-section of a given collision process, then
+    :math:`\int d\mathcal{E}^* \frac{d\mathcal{L}}{d\mathcal{E}^*} (\mathcal{E}^*, t)\sigma^*(\mathcal{E}^*)`
+    gives the total number of collisions of that process (from the beginning of the simulation up until time :math:`t`).
+
+    The differential luminosity is given in units of :math:`\text{m}^{-2}\text{J}^{-1}`. For collider-relevant WarpX simulations
+    involving two crossing, high-energy beams of particels, the differential luminosity in :math:`\text{s}^{-1}\text{m}^{-2}\text{J}^{-1}`
+    can be obtained by multiplying the above differential luminosity by the expected repetition rate of the beams.
+
+    evaluation with macroparticles and bins
+    parameters
 
 * ``<reduced_diags_name>.intervals`` (`string`)
     Using the `Intervals Parser`_ syntax, this string defines the timesteps at which reduced
