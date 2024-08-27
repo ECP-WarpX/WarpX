@@ -302,6 +302,9 @@ WarpX::Evolve (int numsteps)
         if (checkStopSimulation(cur_time)) {
             break;
         }
+
+        UpdateDtFromParticleSpeeds();
+
     } // End loop on time steps
 
     // This if statement is needed for PICMI, which allows the Evolve routine to be
@@ -1030,7 +1033,7 @@ WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type,
                  rho_fp[lev].get(), charge_buf[lev].get(),
                  Efield_cax[lev][0].get(), Efield_cax[lev][1].get(), Efield_cax[lev][2].get(),
                  Bfield_cax[lev][0].get(), Bfield_cax[lev][1].get(), Bfield_cax[lev][2].get(),
-                 cur_time, dt[lev], a_dt_type, skip_current, push_type);
+                 cur_time, dt[lev], dt_next[lev], a_dt_type, skip_current, push_type);
     if (! skip_current) {
 #ifdef WARPX_DIM_RZ
         // This is called after all particles have deposited their current and charge.
