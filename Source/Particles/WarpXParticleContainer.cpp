@@ -1420,7 +1420,7 @@ std::array<ParticleReal, 3> WarpXParticleContainer::meanParticleVelocity(bool lo
     return mean_v;
 }
 
-amrex::ParticleReal WarpXParticleContainer::maxParticleVelocity(bool local) {
+amrex::ParticleReal WarpXParticleContainer::maxParticleVelocity(bool local) const {
 
     const amrex::ParticleReal inv_clight_sq = 1.0_prt/(PhysConst::c*PhysConst::c);
 
@@ -1428,11 +1428,12 @@ amrex::ParticleReal WarpXParticleContainer::maxParticleVelocity(bool local) {
     amrex::ReduceOps<amrex::ReduceOpMax> reduce_ops;
     const auto reduce_res = amrex::ParticleReduce<amrex::ReduceData<amrex::ParticleReal>>(
             *this,
-            [=] AMREX_GPU_HOST_DEVICE(const PType &p) noexcept -> amrex::GpuTuple<amrex::ParticleReal> {
+            [=] AMREX_GPU_HOST_DEVICE(const PType &p) noexcept -> amrex::GpuTuple<amrex::ParticleReal>
+            {
                 const auto ux = p.rdata(PIdx::ux);
                 const auto uy = p.rdata(PIdx::uy);
                 const auto uz = p.rdata(PIdx::uz);
-                return (ux*ux + uy*uy + uz*uz) * inv_clight_sq;
+                return {(ux*ux + uy*uy + uz*uz) * inv_clight_sq,};
             },
             reduce_ops);
 

@@ -284,7 +284,7 @@ public:
 
     std::array<amrex::ParticleReal, 3> meanParticleVelocity(bool local = false);
 
-    amrex::ParticleReal maxParticleVelocity(bool local = false);
+    amrex::ParticleReal maxParticleVelocity(bool local = false) const;
 
     /**
      * \brief Adds n particles to the simulation
