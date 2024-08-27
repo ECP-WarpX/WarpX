@@ -219,19 +219,15 @@ class IonLandauDamping(object):
             particle_diag = picmi.ParticleDiagnostic(
                 name="diag1",
                 period=100,
-                write_dir=".",
                 species=[self.ions],
                 data_list=["ux", "uy", "uz", "x", "z", "weighting"],
-                warpx_file_prefix=f"Python_ohms_law_solver_landau_damping_{self.dim}d_plt",
             )
             simulation.add_diagnostic(particle_diag)
             field_diag = picmi.FieldDiagnostic(
                 name="diag1",
                 grid=self.grid,
                 period=100,
-                write_dir=".",
                 data_list=["Bx", "By", "Bz", "Ex", "Ey", "Ez", "Jx", "Jy", "Jz"],
-                warpx_file_prefix=f"Python_ohms_law_solver_landau_damping_{self.dim}d_plt",
             )
             simulation.add_diagnostic(field_diag)
 

@@ -259,8 +259,6 @@ class HybridPICBeamInstability(object):
                 period=1250,
                 species=[self.ions, self.beam_ions],
                 data_list=["ux", "uy", "uz", "z", "weighting"],
-                write_dir=".",
-                warpx_file_prefix="Python_ohms_law_solver_ion_beam_1d_plt",
             )
             simulation.add_diagnostic(part_diag)
             field_diag = picmi.FieldDiagnostic(
@@ -268,8 +266,6 @@ class HybridPICBeamInstability(object):
                 grid=self.grid,
                 period=1250,
                 data_list=["Bx", "By", "Bz", "Ex", "Ey", "Ez", "Jx", "Jy", "Jz"],
-                write_dir=".",
-                warpx_file_prefix="Python_ohms_law_solver_ion_beam_1d_plt",
             )
             simulation.add_diagnostic(field_diag)
 
