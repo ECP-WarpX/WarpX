@@ -1,17 +1,27 @@
 # Add tests (alphabetical order) ##############################################
 #
 
-# FIXME
-#add_warpx_test(
-#    test_2d_laser_injection_from_binary_file # name
-#    2 # dims
-#    1 # nprocs
-#    OFF # eb
-#    Examples/Tests/laser_injection_from_file/inputs_test_2d_laser_injection_from_binary_file # inputs
-#    Examples/Tests/laser_injection_from_file/analysis_2d_binary.py # analysis
-#    diags/diag1000250 # output
-#    OFF # dependency
-#)
+add_warpx_test(
+    test_2d_laser_injection_from_binary_file_prepare # name
+    2 # dims
+    1 # nprocs
+    OFF # eb
+    Examples/Tests/laser_injection_from_file/inputs_test_2d_laser_injection_from_binary_file_prepare.py # inputs
+    OFF # analysis
+    OFF # output
+    OFF # dependency
+)
+
+add_warpx_test(
+    test_2d_laser_injection_from_binary_file # name
+    2 # dims
+    1 # nprocs
+    OFF # eb
+    Examples/Tests/laser_injection_from_file/inputs_test_2d_laser_injection_from_binary_file # inputs
+    Examples/Tests/laser_injection_from_file/analysis_2d_binary.py # analysis
+    diags/diag1000250 # output
+    test_2d_laser_injection_from_binary_file_prepare # dependency
+)
 
 add_warpx_test(
     test_1d_laser_injection_from_lasy_file_prepare # name
