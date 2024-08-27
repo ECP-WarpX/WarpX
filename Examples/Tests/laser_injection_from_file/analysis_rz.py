@@ -24,7 +24,6 @@ import numpy as np
 import yt
 from scipy.constants import c, epsilon_0
 from scipy.signal import hilbert
-from scipy.special import genlaguerre
 
 yt.funcs.mylog.setLevel(50)
 
@@ -38,7 +37,7 @@ relative_error_threshold = 0.065
 um = 1.0e-6
 fs = 1.0e-15
 
-# Parameters of the Laguerre Gaussian beam
+# Parameters of the gaussian beam
 wavelength = 1.0 * um
 w0 = 12.0 * um
 tt = 10.0 * fs
@@ -51,27 +50,21 @@ E_max = np.sqrt(
 
 
 # Function for the envelope
-def laguerre_env(T, X, Y, Z, p, m):
-    if m > 0:
-        complex_position = X - 1j * Y
-    else:
-        complex_position = X + 1j * Y
-    inv_w0_2 = 1.0 / (w0**2)
-    inv_tau2 = 1.0 / (tt**2)
-    radius = abs(complex_position)
-    scaled_rad_squared = (radius**2) * inv_w0_2
-    envelope = (
-        (np.sqrt(2) * complex_position / w0) ** m
-        * genlaguerre(p, m)(2 * scaled_rad_squared)
-        * np.exp(-scaled_rad_squared)
-        * np.exp(-(inv_tau2 / (c**2)) * (Z - T * c) ** 2)
+def gauss_env(T, X, Y, Z):
+    # Function to compute the theory for the envelope
+    inv_tau2 = 1.0 / tt / tt
+    inv_w_2 = 1.0 / (w0 * w0)
+    exp_arg = (
+        -(X * X) * inv_w_2
+        - (Y * Y) * inv_w_2
+        - inv_tau2 / c / c * (Z - T * c) * (Z - T * c)
     )
-    return E_max * np.real(envelope)
+    return E_max * np.real(np.exp(exp_arg))
 
 
 filename = sys.argv[1]
 compname = "comp_unf.pdf"
-steps = 612
+steps = 252
 ds = yt.load(filename)
 dt = ds.current_time.to_value() / steps
 
@@ -90,9 +83,9 @@ z = np.linspace(
 X, Y, Z = np.meshgrid(x, y, z, sparse=False, indexing="ij")
 
 # Compute the theory for envelope
-env_theory = laguerre_env(
-    +t_c - ds.current_time.to_value(), X, Y, Z, p=0, m=1
-) + laguerre_env(-t_c + ds.current_time.to_value(), X, Y, Z, p=0, m=1)
+env_theory = gauss_env(+t_c - ds.current_time.to_value(), X, Y, Z) + gauss_env(
+    -t_c + ds.current_time.to_value(), X, Y, Z
+)
 
 # Read laser field in PIC simulation, and compute envelope
 all_data_level_0 = ds.covering_grid(

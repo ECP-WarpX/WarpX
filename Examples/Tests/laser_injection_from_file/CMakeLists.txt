@@ -101,26 +101,46 @@ add_warpx_test(
     test_3d_laser_injection_from_lasy_file_prepare # dependency
 )
 
-# FIXME
-#add_warpx_test(
-#    test_rz_laser_injection_from_lasy_file # name
-#    RZ # dims
-#    1  # nprocs
-#    OFF # eb
-#    Examples/Tests/laser_injection_from_file/inputs_test_rz_laser_injection_from_lasy_file # inputs
-#    Examples/Tests/laser_injection_from_file/analysis_RZ.py # analysis
-#    diags/diag1000250 # output
-#    OFF # dependency
-#)
+add_warpx_test(
+    test_rz_laser_injection_from_lasy_file_prepare # name
+    RZ # dims
+    1  # nprocs
+    OFF # eb
+    Examples/Tests/laser_injection_from_file/inputs_test_rz_laser_injection_from_lasy_file_prepare.py # inputs
+    OFF # analysis
+    OFF # output
+    OFF # dependency
+)
 
-# FIXME
-#add_warpx_test(
-#    test_rz_laser_injection_from_RZ_lasy_file # name
-#    RZ # dims
-#    1  # nprocs
-#    OFF # eb
-#    Examples/Tests/laser_injection_from_file/inputs_test_rz_laser_injection_from_RZ_lasy_file # inputs
-#    Examples/Tests/laser_injection_from_file/analysis_from_RZ_file.py # analysis
-#    diags/diag1000250 # output
-#    OFF # dependency
-#)
+add_warpx_test(
+    test_rz_laser_injection_from_lasy_file # name
+    RZ # dims
+    1  # nprocs
+    OFF # eb
+    Examples/Tests/laser_injection_from_file/inputs_test_rz_laser_injection_from_lasy_file # inputs
+    Examples/Tests/laser_injection_from_file/analysis_rz.py # analysis
+    diags/diag1000252 # output
+    test_rz_laser_injection_from_lasy_file_prepare # dependency
+)
+
+add_warpx_test(
+    test_rz_laser_injection_from_RZ_lasy_file_prepare # name
+    RZ # dims
+    1  # nprocs
+    OFF # eb
+    Examples/Tests/laser_injection_from_file/inputs_test_rz_laser_injection_from_RZ_lasy_file_prepare.py # inputs
+    OFF # analysis
+    OFF # output
+    OFF # dependency
+)
+
+add_warpx_test(
+    test_rz_laser_injection_from_RZ_lasy_file # name
+    RZ # dims
+    1  # nprocs
+    OFF # eb
+    Examples/Tests/laser_injection_from_file/inputs_test_rz_laser_injection_from_RZ_lasy_file # inputs
+    Examples/Tests/laser_injection_from_file/analysis_from_RZ_file.py # analysis
+    diags/diag1000612 # output
+    test_rz_laser_injection_from_RZ_lasy_file_prepare # dependency
+)
