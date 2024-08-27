@@ -54,23 +54,36 @@ for test in tests:
         print(f"Wrong test  name: {testname}")
         print(f"(from {testpath})")
         wrong_testname = True
+    # PICMI tests
+    if "picmi" in testname:
+        if not testname.endswith("_picmi"):
+            print(f"Wrong test  name: {testname}")
+            print(f"(from {testpath})")
+            wrong_testname = True
+    # restart tests
     if "restart" in testname:
         if not testname.endswith("_restart") and not testname.endswith("_restart.py"):
             print(f"Wrong test  name: {testname}")
             print(f"(from {testpath})")
             wrong_testname = True
-    if not testinput == f"inputs_{testname}" and not testinput.endswith("_picmi.py"):
-        print(f"Wrong input name: {testinput}")
-        print(f"(from {testpath})")
-        wrong_testinput = True
+    # test input file names
+    if (
+        not testinput == f"inputs_{testname}"
+        and not testinput == f"inputs_{testname}.py"
+    ):
+        # we may be using a base input file/script
+        if not testinput.startswith("inputs_base"):
+            print(f"Wrong input name: {testinput}")
+            print(f"(from {testpath})")
+            wrong_testinput = True
 
 if wrong_testname:
     print(f"NOTE: Test names must start with one of {testname_prefix}.")
-    print("      Test names must end with '_restart' for restart tests")
-    print("      (with the extension '.py' in the case of PICMI input scripts).")
+    print("      Test names must end with '_restart' for restart tests.")
+    print("      Test names must end with '_picmi' for PICMI tests.")
 if wrong_testinput:
-    print("NOTE: Test input names must start with 'inputs_' followed by the test name")
-    print("      (with the extension '.py' in the case of PICMI input scripts).")
+    print("NOTE: Test input names must start with 'inputs_' followed by the test name.")
+    print("      Test input names must end with '.py' for PICMI tests.")
 
 # check that all input files in Examples/ are tested
 print("\nCheck that all test input files are tested...")
