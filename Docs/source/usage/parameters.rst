@@ -3431,6 +3431,10 @@ Reduced Diagnostics
 
         [18], ..., [32]: Analogous quantities for species 2.
 
+        For 2D-XZ, :math:`y`-related quantities are not outputted.
+        For 1D-Z, :math:`x`-related and :math:`y`-related quantities are not outputted.
+        RZ geometry is not supported yet.
+
 * ``DifferentialLuminosity``
     This type computes the differential luminosity between two species, defined as:
 
