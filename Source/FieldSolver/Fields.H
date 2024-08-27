@@ -8,6 +8,7 @@
 #define WARPX_FIELDS_H_
 
 #include <algorithm>
+#include <iterator>
 
 namespace warpx::fields
 {
