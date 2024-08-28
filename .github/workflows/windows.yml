@@ -91,7 +91,7 @@ jobs:
               -DCMAKE_BUILD_TYPE=Release    ^
               -DCMAKE_VERBOSE_MAKEFILE=ON   ^
               -DWarpX_COMPUTE=OMP           ^
-              -DWarpX_EB=ON                 ^
+              -DWarpX_EB=OFF                ^
               -DWarpX_PYTHON=ON             ^
               -DWarpX_MPI=OFF               ^
               -DWarpX_OPENPMD=ON

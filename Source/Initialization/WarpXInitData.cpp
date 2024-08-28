@@ -106,6 +106,71 @@ namespace
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(vc.allGT(gc), ss_msg.str());
         }
     }
+
+    /**
+     * \brief Check the requested resources and write performance hints
+     *
+     * @param[in] total_nboxes total number of boxes in the simulation
+     * @param[in] nprocs number of MPI processes
+     */
+    void PerformanceHints (const amrex::Long total_nboxes, const amrex::Long nprocs)
+    {
+        // Check: are there more MPI ranks than Boxes?
+        if (nprocs > total_nboxes) {
+            std::stringstream warnMsg;
+            warnMsg << "Too many resources / too little work!\n"
+                << "  It looks like you requested more compute resources than "
+                << "there are total number of boxes of cells available ("
+                << total_nboxes << "). "
+                << "You started with (" << nprocs
+                << ") MPI ranks, so (" << nprocs - total_nboxes
+                << ") rank(s) will have no work.\n"
+    #ifdef AMREX_USE_GPU
+                << "  On GPUs, consider using 1-8 boxes per GPU that together fill "
+                << "each GPU's memory sufficiently. If you do not rely on dynamic "
+                << "load-balancing, then one large box per GPU is ideal.\n"
+    #endif
+                << "Consider decreasing the amr.blocking_factor and "
+                << "amr.max_grid_size parameters and/or using fewer MPI ranks.\n"
+                << "  More information:\n"
+                << "  https://warpx.readthedocs.io/en/latest/usage/workflows/parallelization.html\n";
+
+            ablastr::warn_manager::WMRecordWarning(
+            "Performance", warnMsg.str(), ablastr::warn_manager::WarnPriority::high);
+        }
+
+    #ifdef AMREX_USE_GPU
+        // Check: Are there more than 12 boxes per GPU?
+        if (total_nboxes > nprocs * 12) {
+            std::stringstream warnMsg;
+            warnMsg << "Too many boxes per GPU!\n"
+                << "  It looks like you split your simulation domain "
+                << "in too many boxes (" << total_nboxes << "), which "
+                << "results in an average number of ("
+                << amrex::Long(total_nboxes/nprocs) << ") per GPU. "
+                << "This causes severe overhead in the communication of "
+                << "border/guard regions.\n"
+                << "  On GPUs, consider using 1-8 boxes per GPU that together fill "
+                << "each GPU's memory sufficiently. If you do not rely on dynamic "
+                << "load-balancing, then one large box per GPU is ideal.\n"
+                << "Consider increasing the amr.blocking_factor and "
+                << "amr.max_grid_size parameters and/or using more MPI ranks.\n"
+                << "  More information:\n"
+                << "  https://warpx.readthedocs.io/en/latest/usage/workflows/parallelization.html\n";
+
+            ablastr::warn_manager::WMRecordWarning(
+            "Performance", warnMsg.str(), ablastr::warn_manager::WarnPriority::high);
+        }
+    #endif
+
+        // TODO: warn if some ranks have disproportionally more work than all others
+        //       tricky: it can be ok to assign "vacuum" boxes to some ranks w/o slowing down
+        //               all other ranks; we need to measure this with our load-balancing
+        //               routines and issue a warning only of some ranks stall all other ranks
+        // TODO: check MPI-rank to GPU ratio (should be 1:1)
+        // TODO: check memory per MPI rank, especially if GPUs are underutilized
+        // TODO: CPU tiling hints with OpenMP
+    }
 }
 
 void
@@ -474,12 +539,9 @@ WarpX::InitData ()
 
     BuildBufferMasks();
 
-    if (WarpX::em_solver_medium==1) {
+    if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
         const int lev_zero = 0;
         m_macroscopic_properties->InitData(
-            boxArray(lev_zero),
-            DistributionMap(lev_zero),
-            getngEB(),
             Geom(lev_zero),
             getField(warpx::fields::FieldType::Efield_fp, lev_zero,0).ixType().toIntVect(),
             getField(warpx::fields::FieldType::Efield_fp, lev_zero,1).ixType().toIntVect(),
@@ -516,12 +578,11 @@ WarpX::InitData ()
         if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) {
             ComputeMagnetostaticField();
         }
-
-        // Set up an invariant condition through the rest of
-        // execution, that any code besides the field solver that
-        // looks at field values will see the composite of the field
-        // solution and any external field
-        AddExternalFields();
+        // Add external fields to the fine patch fields. This makes it so that the
+        // net fields are the sum of the field solutions and any external fields.
+        for (int lev = 0; lev <= max_level; ++lev) {
+            AddExternalFields(lev);
+        }
     }
 
     if (restart_chkfile.empty() || write_diagnostics_on_restart) {
@@ -536,21 +597,40 @@ WarpX::InitData ()
         }
     }
 
-    PerformanceHints();
+    // Computes available boxes on all levels.
+    amrex::Long total_nboxes = 0;
+    for (int ilev = 0; ilev <= finestLevel(); ++ilev) {
+        total_nboxes += boxArray(ilev).size();
+    }
+    auto const nprocs = ParallelDescriptor::NProcs();
+
+    ::PerformanceHints(total_nboxes, nprocs);
 
     CheckKnownIssues();
 }
 
 void
-WarpX::AddExternalFields () {
-    for (int lev = 0; lev <= finest_level; ++lev) {
-        // FIXME: RZ multimode has more than one component for all these
-        if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::read_from_file) {
+WarpX::AddExternalFields (int const lev) {
+    // FIXME: RZ multimode has more than one component for all these
+    if (m_p_ext_field_params->E_ext_grid_type != ExternalFieldType::default_zero) {
+        if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::constant) {
+            Efield_fp[lev][0]->plus(m_p_ext_field_params->E_external_grid[0], guard_cells.ng_alloc_EB.min());
+            Efield_fp[lev][1]->plus(m_p_ext_field_params->E_external_grid[1], guard_cells.ng_alloc_EB.min());
+            Efield_fp[lev][2]->plus(m_p_ext_field_params->E_external_grid[2], guard_cells.ng_alloc_EB.min());
+        }
+        else {
             amrex::MultiFab::Add(*Efield_fp[lev][0], *Efield_fp_external[lev][0], 0, 0, 1, guard_cells.ng_alloc_EB);
             amrex::MultiFab::Add(*Efield_fp[lev][1], *Efield_fp_external[lev][1], 0, 0, 1, guard_cells.ng_alloc_EB);
             amrex::MultiFab::Add(*Efield_fp[lev][2], *Efield_fp_external[lev][2], 0, 0, 1, guard_cells.ng_alloc_EB);
         }
-        if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::read_from_file) {
+    }
+    if (m_p_ext_field_params->B_ext_grid_type != ExternalFieldType::default_zero) {
+        if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::constant) {
+            Bfield_fp[lev][0]->plus(m_p_ext_field_params->B_external_grid[0], guard_cells.ng_alloc_EB.min());
+            Bfield_fp[lev][1]->plus(m_p_ext_field_params->B_external_grid[1], guard_cells.ng_alloc_EB.min());
+            Bfield_fp[lev][2]->plus(m_p_ext_field_params->B_external_grid[2], guard_cells.ng_alloc_EB.min());
+        }
+        else {
             amrex::MultiFab::Add(*Bfield_fp[lev][0], *Bfield_fp_external[lev][0], 0, 0, 1, guard_cells.ng_alloc_EB);
             amrex::MultiFab::Add(*Bfield_fp[lev][1], *Bfield_fp_external[lev][1], 0, 0, 1, guard_cells.ng_alloc_EB);
             amrex::MultiFab::Add(*Bfield_fp[lev][2], *Bfield_fp_external[lev][2], 0, 0, 1, guard_cells.ng_alloc_EB);
@@ -791,7 +871,7 @@ WarpX::PostRestart ()
 {
     mypc->PostRestart();
     for (int lev = 0; lev <= maxLevel(); ++lev) {
-        LoadExternalFieldsFromFile(lev);
+        LoadExternalFields(lev);
     }
 }
 
@@ -813,7 +893,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
             m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::default_zero;
         if ( is_B_ext_const && (lev <= maxlevel_extEMfield_init) )
         {
-            Bfield_fp[lev][i]->setVal(m_p_ext_field_params->B_external_grid[i]);
             if (fft_do_time_averaging) {
                 Bfield_avg_fp[lev][i]->setVal(m_p_ext_field_params->B_external_grid[i]);
             }
@@ -834,7 +913,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
             m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::default_zero;
         if ( is_E_ext_const && (lev <= maxlevel_extEMfield_init) )
         {
-            Efield_fp[lev][i]->setVal(m_p_ext_field_params->E_external_grid[i]);
             if (fft_do_time_averaging) {
                 Efield_avg_fp[lev][i]->setVal(m_p_ext_field_params->E_external_grid[i]);
             }
@@ -859,13 +937,12 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     // Externally imposed fields are only initialized until the user-defined maxlevel_extEMfield_init.
     // The default maxlevel_extEMfield_init value is the total number of levels in the simulation
     if ((m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::parse_ext_grid_function)
-         && (lev <= maxlevel_extEMfield_init)) {
+         && (lev > 0) && (lev <= maxlevel_extEMfield_init)) {
 
-        // Initialize Bfield_fp with external function
         InitializeExternalFieldsOnGridUsingParser(
-            Bfield_fp[lev][0].get(),
-            Bfield_fp[lev][1].get(),
-            Bfield_fp[lev][2].get(),
+            Bfield_aux[lev][0].get(),
+            Bfield_aux[lev][1].get(),
+            Bfield_aux[lev][2].get(),
             m_p_ext_field_params->Bxfield_parser->compile<3>(),
             m_p_ext_field_params->Byfield_parser->compile<3>(),
             m_p_ext_field_params->Bzfield_parser->compile<3>(),
@@ -874,31 +951,17 @@ WarpX::InitLevelData (int lev, Real /*time*/)
             'B',
             lev, PatchType::fine);
 
-        if (lev > 0) {
-            InitializeExternalFieldsOnGridUsingParser(
-                Bfield_aux[lev][0].get(),
-                Bfield_aux[lev][1].get(),
-                Bfield_aux[lev][2].get(),
-                m_p_ext_field_params->Bxfield_parser->compile<3>(),
-                m_p_ext_field_params->Byfield_parser->compile<3>(),
-                m_p_ext_field_params->Bzfield_parser->compile<3>(),
-                m_edge_lengths[lev],
-                m_face_areas[lev],
-                'B',
-                lev, PatchType::fine);
-
-            InitializeExternalFieldsOnGridUsingParser(
-                Bfield_cp[lev][0].get(),
-                Bfield_cp[lev][1].get(),
-                Bfield_cp[lev][2].get(),
-                m_p_ext_field_params->Bxfield_parser->compile<3>(),
-                m_p_ext_field_params->Byfield_parser->compile<3>(),
-                m_p_ext_field_params->Bzfield_parser->compile<3>(),
-                m_edge_lengths[lev],
-                m_face_areas[lev],
-                'B',
-                lev, PatchType::coarse);
-        }
+        InitializeExternalFieldsOnGridUsingParser(
+            Bfield_cp[lev][0].get(),
+            Bfield_cp[lev][1].get(),
+            Bfield_cp[lev][2].get(),
+            m_p_ext_field_params->Bxfield_parser->compile<3>(),
+            m_p_ext_field_params->Byfield_parser->compile<3>(),
+            m_p_ext_field_params->Bzfield_parser->compile<3>(),
+            m_edge_lengths[lev],
+            m_face_areas[lev],
+            'B',
+            lev, PatchType::coarse);
     }
 
     // if the input string for the E-field is "parse_e_ext_grid_function",
@@ -908,19 +971,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     // The default maxlevel_extEMfield_init value is the total number of levels in the simulation
     if ((m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::parse_ext_grid_function)
         && (lev <= maxlevel_extEMfield_init)) {
-
-        // Initialize Efield_fp with external function
-        InitializeExternalFieldsOnGridUsingParser(
-            Efield_fp[lev][0].get(),
-            Efield_fp[lev][1].get(),
-            Efield_fp[lev][2].get(),
-            m_p_ext_field_params->Exfield_parser->compile<3>(),
-            m_p_ext_field_params->Eyfield_parser->compile<3>(),
-            m_p_ext_field_params->Ezfield_parser->compile<3>(),
-            m_edge_lengths[lev],
-            m_face_areas[lev],
-            'E',
-            lev, PatchType::fine);
 
 #ifdef AMREX_USE_EB
         // We initialize ECTRhofield consistently with the Efield
@@ -966,7 +1016,8 @@ WarpX::InitLevelData (int lev, Real /*time*/)
        }
     }
 
-    LoadExternalFieldsFromFile(lev);
+    // load external grid fields into E/Bfield_fp_external multifabs
+    LoadExternalFields(lev);
 
     if (costs[lev]) {
         const auto iarr = costs[lev]->IndexArray();
@@ -1139,73 +1190,6 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
     }
 }
 
-void
-WarpX::PerformanceHints ()
-{
-    // Check requested MPI ranks and available boxes
-    amrex::Long total_nboxes = 0; // on all MPI ranks
-    for (int ilev = 0; ilev <= finestLevel(); ++ilev) {
-        total_nboxes += boxArray(ilev).size();
-    }
-    auto const nprocs = ParallelDescriptor::NProcs();
-
-    // Check: are there more MPI ranks than Boxes?
-    if (nprocs > total_nboxes) {
-        std::stringstream warnMsg;
-        warnMsg << "Too many resources / too little work!\n"
-            << "  It looks like you requested more compute resources than "
-            << "there are total number of boxes of cells available ("
-            << total_nboxes << "). "
-            << "You started with (" << nprocs
-            << ") MPI ranks, so (" << nprocs - total_nboxes
-            << ") rank(s) will have no work.\n"
-#ifdef AMREX_USE_GPU
-            << "  On GPUs, consider using 1-8 boxes per GPU that together fill "
-            << "each GPU's memory sufficiently. If you do not rely on dynamic "
-            << "load-balancing, then one large box per GPU is ideal.\n"
-#endif
-            << "Consider decreasing the amr.blocking_factor and "
-            << "amr.max_grid_size parameters and/or using fewer MPI ranks.\n"
-            << "  More information:\n"
-            << "  https://warpx.readthedocs.io/en/latest/usage/workflows/parallelization.html\n";
-
-        ablastr::warn_manager::WMRecordWarning(
-          "Performance", warnMsg.str(), ablastr::warn_manager::WarnPriority::high);
-    }
-
-#ifdef AMREX_USE_GPU
-    // Check: Are there more than 12 boxes per GPU?
-    if (total_nboxes > nprocs * 12) {
-        std::stringstream warnMsg;
-        warnMsg << "Too many boxes per GPU!\n"
-            << "  It looks like you split your simulation domain "
-            << "in too many boxes (" << total_nboxes << "), which "
-            << "results in an average number of ("
-            << amrex::Long(total_nboxes/nprocs) << ") per GPU. "
-            << "This causes severe overhead in the communication of "
-            << "border/guard regions.\n"
-            << "  On GPUs, consider using 1-8 boxes per GPU that together fill "
-            << "each GPU's memory sufficiently. If you do not rely on dynamic "
-            << "load-balancing, then one large box per GPU is ideal.\n"
-            << "Consider increasing the amr.blocking_factor and "
-            << "amr.max_grid_size parameters and/or using more MPI ranks.\n"
-            << "  More information:\n"
-            << "  https://warpx.readthedocs.io/en/latest/usage/workflows/parallelization.html\n";
-
-        ablastr::warn_manager::WMRecordWarning(
-          "Performance", warnMsg.str(), ablastr::warn_manager::WarnPriority::high);
-    }
-#endif
-
-    // TODO: warn if some ranks have disproportionally more work than all others
-    //       tricky: it can be ok to assign "vacuum" boxes to some ranks w/o slowing down
-    //               all other ranks; we need to measure this with our load-balancing
-    //               routines and issue a warning only of some ranks stall all other ranks
-    // TODO: check MPI-rank to GPU ratio (should be 1:1)
-    // TODO: check memory per MPI rank, especially if GPUs are underutilized
-    // TODO: CPU tiling hints with OpenMP
-}
-
 void WarpX::CheckGuardCells()
 {
     for (int lev = 0; lev <= finest_level; ++lev)
@@ -1357,7 +1341,7 @@ void WarpX::CheckKnownIssues()
 }
 
 void
-WarpX::LoadExternalFieldsFromFile (int const lev)
+WarpX::LoadExternalFields (int const lev)
 {
     // External fields from file are currently not compatible with the moving window
     // In order to support the moving window, the MultiFab containing the external
@@ -1373,8 +1357,21 @@ WarpX::LoadExternalFieldsFromFile (int const lev)
     }
 
     // External grid fields
-
-    if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::read_from_file) {
+    if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::parse_ext_grid_function) {
+        // Initialize Bfield_fp_external with external function
+        InitializeExternalFieldsOnGridUsingParser(
+            Bfield_fp_external[lev][0].get(),
+            Bfield_fp_external[lev][1].get(),
+            Bfield_fp_external[lev][2].get(),
+            m_p_ext_field_params->Bxfield_parser->compile<3>(),
+            m_p_ext_field_params->Byfield_parser->compile<3>(),
+            m_p_ext_field_params->Bzfield_parser->compile<3>(),
+            m_edge_lengths[lev],
+            m_face_areas[lev],
+            'B',
+            lev, PatchType::fine);
+    }
+    else if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::read_from_file) {
 #if defined(WARPX_DIM_RZ)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
                                          "External field reading is not implemented for more than one RZ mode (see #3829)");
@@ -1387,7 +1384,22 @@ WarpX::LoadExternalFieldsFromFile (int const lev)
         ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Bfield_fp_external[lev][2].get(), "B", "z");
 #endif
     }
-    if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::read_from_file) {
+
+    if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::parse_ext_grid_function) {
+        // Initialize Efield_fp_external with external function
+        InitializeExternalFieldsOnGridUsingParser(
+            Efield_fp_external[lev][0].get(),
+            Efield_fp_external[lev][1].get(),
+            Efield_fp_external[lev][2].get(),
+            m_p_ext_field_params->Exfield_parser->compile<3>(),
+            m_p_ext_field_params->Eyfield_parser->compile<3>(),
+            m_p_ext_field_params->Ezfield_parser->compile<3>(),
+            m_edge_lengths[lev],
+            m_face_areas[lev],
+            'E',
+            lev, PatchType::fine);
+    }
+    else if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::read_from_file) {
 #if defined(WARPX_DIM_RZ)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
                                          "External field reading is not implemented for more than one RZ mode (see #3829)");
@@ -1400,6 +1412,9 @@ WarpX::LoadExternalFieldsFromFile (int const lev)
         ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Efield_fp_external[lev][2].get(), "E", "z");
 #endif
     }
+
+    // Call Python callback which might write values to external field multifabs
+    ExecutePythonCallback("loadExternalFields");
 
     // External particle fields
 

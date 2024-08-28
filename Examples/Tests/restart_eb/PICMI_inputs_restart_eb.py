@@ -34,16 +34,22 @@ zmax = 1e-6
 ##########################
 
 uniform_plasma_elec = picmi.UniformDistribution(
-    density = 1e23, # number of electrons per m^3
-    lower_bound = [-1e-5, -1e-5, -149e-6],
-    upper_bound = [1e-5, 1e-5, -129e-6],
-    directed_velocity = [0., 0., 2000.*picmi.constants.c] # uth the std of the (unitless) momentum
+    density=1e23,  # number of electrons per m^3
+    lower_bound=[-1e-5, -1e-5, -149e-6],
+    upper_bound=[1e-5, 1e-5, -129e-6],
+    directed_velocity=[
+        0.0,
+        0.0,
+        2000.0 * picmi.constants.c,
+    ],  # uth the std of the (unitless) momentum
 )
 
 electrons = picmi.Species(
-    particle_type='electron', name='electrons',
+    particle_type="electron",
+    name="electrons",
     initial_distribution=uniform_plasma_elec,
-    warpx_save_particles_at_xhi=1, warpx_save_particles_at_eb=1
+    warpx_save_particles_at_xhi=1,
+    warpx_save_particles_at_eb=1,
 )
 
 ##########################
@@ -51,19 +57,17 @@ electrons = picmi.Species(
 ##########################
 
 grid = picmi.Cartesian3DGrid(
-    number_of_cells = [nx, ny, nz],
-    lower_bound = [xmin, ymin, zmin],
-    upper_bound = [xmax, ymax, zmax],
-    lower_boundary_conditions=['none', 'none', 'none'],
-    upper_boundary_conditions=['none', 'none', 'none'],
-    lower_boundary_conditions_particles=['open', 'open', 'open'],
-    upper_boundary_conditions_particles=['open', 'open', 'open'],
-    warpx_max_grid_size = 32
+    number_of_cells=[nx, ny, nz],
+    lower_bound=[xmin, ymin, zmin],
+    upper_bound=[xmax, ymax, zmax],
+    lower_boundary_conditions=["none", "none", "none"],
+    upper_boundary_conditions=["none", "none", "none"],
+    lower_boundary_conditions_particles=["open", "open", "open"],
+    upper_boundary_conditions_particles=["open", "open", "open"],
+    warpx_max_grid_size=32,
 )
 
-solver = picmi.ElectromagneticSolver(
-    grid=grid, cfl=cfl
-)
+solver = picmi.ElectromagneticSolver(grid=grid, cfl=cfl)
 
 embedded_boundary = picmi.EmbeddedBoundary(
     implicit_function="-max(max(max(x-12.5e-6,-12.5e-6-x),max(y-12.5e-6,-12.5e-6-y)),max(z-(-6.15e-5),-8.65e-5-z))"
@@ -74,26 +78,26 @@ embedded_boundary = picmi.EmbeddedBoundary(
 ##########################
 
 particle_diag = picmi.ParticleDiagnostic(
-    name = 'diag1',
-    period = diagnostic_intervals,
-    write_dir = '.',
-    warpx_file_prefix = 'Python_restart_eb_plt'
+    name="diag1",
+    period=diagnostic_intervals,
+    write_dir=".",
+    warpx_file_prefix="Python_restart_eb_plt",
 )
 field_diag = picmi.FieldDiagnostic(
-    name = 'diag1',
-    grid = grid,
-    period = diagnostic_intervals,
-    data_list = ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz'],
-    write_dir = '.',
-    warpx_file_prefix = 'Python_restart_eb_plt'
+    name="diag1",
+    grid=grid,
+    period=diagnostic_intervals,
+    data_list=["Ex", "Ey", "Ez", "Bx", "By", "Bz"],
+    write_dir=".",
+    warpx_file_prefix="Python_restart_eb_plt",
 )
 
 checkpoint = picmi.Checkpoint(
-    name = 'chkpoint',
-    period = diagnostic_intervals,
-    write_dir = '.',
-    warpx_file_min_digits = 5,
-    warpx_file_prefix = f'Python_restart_eb_chk'
+    name="chkpoint",
+    period=diagnostic_intervals,
+    write_dir=".",
+    warpx_file_min_digits=5,
+    warpx_file_prefix="Python_restart_eb_chk",
 )
 
 ##########################
@@ -101,19 +105,16 @@ checkpoint = picmi.Checkpoint(
 ##########################
 
 sim = picmi.Simulation(
-    solver = solver,
-    max_steps = max_steps,
+    solver=solver,
+    max_steps=max_steps,
     warpx_embedded_boundary=embedded_boundary,
     verbose=True,
     warpx_load_balance_intervals=40,
-    warpx_load_balance_efficiency_ratio_threshold=0.9
+    warpx_load_balance_efficiency_ratio_threshold=0.9,
 )
 
 sim.add_species(
-    electrons,
-    layout = picmi.GriddedLayout(
-        n_macroparticle_per_cell=[1, 1, 1], grid=grid
-    )
+    electrons, layout=picmi.GriddedLayout(n_macroparticle_per_cell=[1, 1, 1], grid=grid)
 )
 
 for arg in sys.argv:

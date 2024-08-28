@@ -14,6 +14,7 @@
 #include "BoundaryConditions/PML.H"
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
+#include "EmbeddedBoundary/Enabled.H"
 #include "EmbeddedBoundary/WarpXFaceInfoBox.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
@@ -100,7 +101,6 @@ bool WarpX::fft_do_time_averaging = false;
 amrex::IntVect WarpX::m_fill_guards_fields  = amrex::IntVect(0);
 amrex::IntVect WarpX::m_fill_guards_current = amrex::IntVect(0);
 
-Real WarpX::quantum_xi_c2 = PhysConst::xi_c2;
 Real WarpX::gamma_boost = 1._rt;
 Real WarpX::beta_boost = 0._rt;
 Vector<int> WarpX::boost_direction = {0,0,0};
@@ -209,7 +209,7 @@ IntVect WarpX::filter_npass_each_dir(1);
 int WarpX::n_field_gather_buffer = -1;
 int WarpX::n_current_deposition_buffer = -1;
 
-short WarpX::grid_type;
+ablastr::utils::enums::GridType WarpX::grid_type;
 amrex::IntVect m_rho_nodal_flag;
 
 WarpX* WarpX::m_instance = nullptr;
@@ -285,7 +285,7 @@ WarpX::WarpX ()
 
     // Loop over species (particles and lasers)
     // and set current injection position per species
-     if (do_moving_window){
+    if (do_moving_window){
         const int n_containers = mypc->nContainers();
         for (int i=0; i<n_containers; i++)
         {
@@ -341,8 +341,8 @@ WarpX::WarpX ()
     }
 
     // Same as Bfield_fp/Efield_fp for reading external field data
-    Bfield_fp_external.resize(1);
-    Efield_fp_external.resize(1);
+    Bfield_fp_external.resize(nlevs_max);
+    Efield_fp_external.resize(nlevs_max);
     B_external_particle_field.resize(1);
     E_external_particle_field.resize(1);
 
@@ -789,6 +789,13 @@ WarpX::ReadParameters ()
         potential_specified |= pp_boundary.query("potential_hi_z", m_poisson_boundary_handler.potential_zhi_str);
 #if defined(AMREX_USE_EB)
         potential_specified |= pp_warpx.query("eb_potential(x,y,z,t)", m_poisson_boundary_handler.potential_eb_str);
+
+        if (!EB::enabled()) {
+            throw std::runtime_error(
+                "Currently, users MUST use EB if it was compiled in. "
+                "This will change with https://github.com/ECP-WarpX/WarpX/pull/4865 ."
+            );
+        }
 #endif
         m_boundary_potential_specified = potential_specified;
         if (potential_specified & (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)) {
@@ -903,12 +910,15 @@ WarpX::ReadParameters ()
         utils::parser::queryWithParser(
             pp_warpx, "n_current_deposition_buffer", n_current_deposition_buffer);
 
+        //Default value for the quantum parameter used in Maxwell’s QED equations
+        m_quantum_xi_c2 = PhysConst::xi_c2;
+
         amrex::Real quantum_xi_tmp;
         const auto quantum_xi_is_specified =
             utils::parser::queryWithParser(pp_warpx, "quantum_xi", quantum_xi_tmp);
         if (quantum_xi_is_specified) {
             double const quantum_xi = quantum_xi_tmp;
-            quantum_xi_c2 = static_cast<amrex::Real>(quantum_xi * PhysConst::c * PhysConst::c);
+            m_quantum_xi_c2 = static_cast<amrex::Real>(quantum_xi * PhysConst::c * PhysConst::c);
         }
 
         const auto at_least_one_boundary_is_pml =
@@ -1066,7 +1076,7 @@ WarpX::ReadParameters ()
 
         // Integer that corresponds to the type of grid used in the simulation
         // (collocated, staggered, hybrid)
-        grid_type = static_cast<short>(GetAlgorithmInteger(pp_warpx, "grid_type"));
+        grid_type = static_cast<ablastr::utils::enums::GridType>(GetAlgorithmInteger(pp_warpx, "grid_type"));
 
         // Use same shape factors in all directions, for gathering
         if (grid_type == GridType::Collocated) { galerkin_interpolation = false; }
@@ -1544,7 +1554,6 @@ WarpX::ReadParameters ()
         // Current correction activated by default, unless a charge-conserving
         // current deposition (Esirkepov, Vay) or the div(E) cleaning scheme
         // are used
-        current_correction = true;
         if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov ||
             WarpX::current_deposition_algo == CurrentDepositionAlgo::Villasenor ||
             WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay ||
@@ -2373,6 +2382,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         myfl->InitData(lev, geom[lev].Domain(),cur_time);
     }
 
+    // Allocate extra multifabs for macroscopic properties of the medium
+    if (em_solver_medium == MediumForEM::Macroscopic) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( lev==0,
+            "Macroscopic properties are not supported with mesh refinement.");
+        m_macroscopic_properties->AllocateLevelMFs(ba, dm, ngEB);
+    }
+
     if (fft_do_time_averaging)
     {
         AllocInitMultiFab(Bfield_avg_fp[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, lev, "Bfield_avg_fp[x]", 0.0_rt);
@@ -2589,7 +2605,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
 
     // The external fields that are read from file
-    if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::read_from_file) {
+    if (m_p_ext_field_params->B_ext_grid_type != ExternalFieldType::default_zero && m_p_ext_field_params->B_ext_grid_type != ExternalFieldType::constant) {
         // These fields will be added directly to the grid, i.e. to fp, and need to match the index type
         AllocInitMultiFab(Bfield_fp_external[lev][0], amrex::convert(ba, Bfield_fp[lev][0]->ixType()),
             dm, ncomps, ngEB, lev, "Bfield_fp_external[x]", 0.0_rt);
@@ -2607,7 +2623,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         AllocInitMultiFab(B_external_particle_field[lev][2], amrex::convert(ba, Bfield_aux[lev][2]->ixType()),
             dm, ncomps, ngEB, lev, "B_external_particle_field[z]", 0.0_rt);
     }
-    if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::read_from_file) {
+    if (m_p_ext_field_params->E_ext_grid_type != ExternalFieldType::default_zero && m_p_ext_field_params->E_ext_grid_type != ExternalFieldType::constant) {
         // These fields will be added directly to the grid, i.e. to fp, and need to match the index type
         AllocInitMultiFab(Efield_fp_external[lev][0], amrex::convert(ba, Efield_fp[lev][0]->ixType()),
             dm, ncomps, ngEB, lev, "Efield_fp_external[x]", 0.0_rt);
@@ -3196,7 +3212,7 @@ WarpX::BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_ma
     });
 }
 
-amrex::Vector<amrex::Real> WarpX::getFornbergStencilCoefficients(const int n_order, const short a_grid_type)
+amrex::Vector<amrex::Real> WarpX::getFornbergStencilCoefficients (const int n_order, ablastr::utils::enums::GridType a_grid_type)
 {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_order % 2 == 0, "n_order must be even");
 
@@ -3258,7 +3274,7 @@ void WarpX::AllocateCenteringCoefficients (amrex::Gpu::DeviceVector<amrex::Real>
                                            const int centering_nox,
                                            const int centering_noy,
                                            const int centering_noz,
-                                           const short a_grid_type)
+                                           ablastr::utils::enums::GridType a_grid_type)
 {
     // Vectors of Fornberg stencil coefficients
     amrex::Vector<amrex::Real> Fornberg_stencil_coeffs_x;

@@ -49,6 +49,8 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/export.H"
 
+#include <ablastr/utils/Enums.H>
+
 #include <AMReX.H>
 #include <AMReX_AmrCore.H>
 #include <AMReX_Array.H>
@@ -231,7 +233,7 @@ public:
 
     //! If true, a correction is applied to the current in Fourier space,
     //  to satisfy the continuity equation and charge conservation
-    bool current_correction;
+    bool current_correction = true;
 
     //! If true, the PSATD update equation for E contains both J and rho
     //! (default is false for standard PSATD and true for Galilean PSATD)
@@ -371,7 +373,7 @@ public:
 
     //! Integer that corresponds to the type of grid used in the simulation
     //! (collocated, staggered, hybrid)
-    static short grid_type;
+    static ablastr::utils::enums::GridType grid_type;
 
     // Global rho nodal flag to know about rho index type when rho MultiFab is not allocated
     amrex::IntVect m_rho_nodal_flag;
@@ -665,7 +667,7 @@ public:
      */
     void Hybrid_QED_Push (int lev, PatchType patch_type, amrex::Real dt);
 
-    static amrex::Real quantum_xi_c2;
+    amrex::Real m_quantum_xi_c2;
 
     /** Check and potentially compute load balancing
      */
@@ -1048,7 +1050,7 @@ public:
      * \brief Load field values from a user-specified openPMD file,
      * for the fields Ex, Ey, Ez, Bx, By, Bz
      */
-    void LoadExternalFieldsFromFile (int lev);
+    void LoadExternalFields (int lev);
 
     /**
      * \brief Load field values from a user-specified openPMD file
@@ -1085,7 +1087,7 @@ public:
      * \param[in] n_order order of the finite-difference approximation
      * \param[in] a_grid_type type of grid (collocated or not)
      */
-    static amrex::Vector<amrex::Real> getFornbergStencilCoefficients(int n_order, short a_grid_type);
+    static amrex::Vector<amrex::Real> getFornbergStencilCoefficients (int n_order, ablastr::utils::enums::GridType a_grid_type);
 
     // Device vectors of stencil coefficients used for finite-order centering of fields
     amrex::Gpu::DeviceVector<amrex::Real> device_field_centering_stencil_coeffs_x;
@@ -1291,7 +1293,7 @@ private:
     void FillBoundaryB_avg (int lev, PatchType patch_type, amrex::IntVect ng);
     void FillBoundaryE_avg (int lev, PatchType patch_type, amrex::IntVect ng);
 
-    void AddExternalFields ();
+    void AddExternalFields (int lev);
 
     void OneStep_nosub (amrex::Real cur_time);
     void OneStep_sub1 (amrex::Real cur_time);
@@ -1397,9 +1399,6 @@ private:
      */
     void CheckKnownIssues();
 
-    /** Check the requested resources and write performance hints */
-    void PerformanceHints ();
-
     void BuildBufferMasks ();
 
     [[nodiscard]] const amrex::iMultiFab* getCurrentBufferMasks (int lev) const {
@@ -1441,7 +1440,7 @@ private:
                                         int centering_nox,
                                         int centering_noy,
                                         int centering_noz,
-                                        short a_grid_type);
+                                        ablastr::utils::enums::GridType a_grid_type);
 
     void AllocLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
                         const amrex::IntVect& ngEB, amrex::IntVect& ngJ,
