@@ -30,7 +30,7 @@ using namespace amrex;
 
 namespace warpx::initialization {
 
-ProjectionDivCleaner::ProjectionDivCleaner(warpx::fields::FieldType a_field_type) : 
+ProjectionDivCleaner::ProjectionDivCleaner(warpx::fields::FieldType a_field_type) :
     m_field_type(a_field_type),
     m_levels(1)
 {
