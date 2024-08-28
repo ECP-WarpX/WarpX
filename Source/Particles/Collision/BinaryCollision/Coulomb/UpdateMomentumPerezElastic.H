@@ -43,8 +43,9 @@ void UpdateMomentumPerezElastic (
     T_R const dt, amrex::RandomEngine const& engine )
 {
 
-    // Compute Lorentz factor gamma
     T_PR constexpr inv_c2 = T_PR(1.0) / ( PhysConst::c * PhysConst::c );
+
+    // Compute Lorentz factor gamma
     T_PR const gb1sq = (u1x*u1x + u1y*u1y + u1z*u1z)*inv_c2;
     T_PR const gb2sq = (u2x*u2x + u2y*u2y + u2z*u2z)*inv_c2;
     T_PR const g1 = std::sqrt( T_PR(1.0) + gb1sq );
