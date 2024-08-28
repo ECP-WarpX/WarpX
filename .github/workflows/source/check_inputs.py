@@ -56,13 +56,13 @@ for test in tests:
         wrong_testname = True
     # PICMI tests
     if "picmi" in testname:
-        if not testname.endswith("_picmi"):
+        if not testname.endswith("_picmi") and not testname.endswith("_picmi_restart"):
             print(f"Wrong test  name: {testname}")
             print(f"(from {testpath})")
             wrong_testname = True
     # restart tests
     if "restart" in testname:
-        if not testname.endswith("_restart") and not testname.endswith("_restart.py"):
+        if not testname.endswith("_restart"):
             print(f"Wrong test  name: {testname}")
             print(f"(from {testpath})")
             wrong_testname = True
@@ -71,8 +71,10 @@ for test in tests:
         not testinput == f"inputs_{testname}"
         and not testinput == f"inputs_{testname}.py"
     ):
-        # we may be using a base input file/script
-        if not testinput.startswith("inputs_base"):
+        # we may be running a base input file/script or a restart PICMI test
+        if not testinput.startswith("inputs_base") and not testinput.endswith(
+            "_picmi.py"
+        ):
             print(f"Wrong input name: {testinput}")
             print(f"(from {testpath})")
             wrong_testinput = True
