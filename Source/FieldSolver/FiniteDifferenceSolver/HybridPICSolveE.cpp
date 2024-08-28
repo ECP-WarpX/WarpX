@@ -1,8 +1,9 @@
-/* Copyright 2023 The WarpX Community
+/* Copyright 2023-2024 The WarpX Community
  *
  * This file is part of WarpX.
  *
  * Authors: Roelof Groenewald (TAE Technologies)
+ *          S. Eric Clark (Helion Energy)
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -753,6 +754,18 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
 
     const bool include_hyper_resistivity_term = (eta_h > 0.) && solve_for_Faraday;
 
+    const bool include_B_ext_part = hybrid_model->m_add_ext_particle_B_field;
+    const auto Bx_part = hybrid_model->m_B_external[0];
+    const auto By_part = hybrid_model->m_B_external[1];
+    const auto Bz_part = hybrid_model->m_B_external[2];
+
+    auto & warpx = WarpX::GetInstance();
+    auto t = warpx.gett_new(lev);
+
+    auto dx_lev = warpx.Geom(lev).CellSizeArray();
+    const RealBox& real_box = warpx.Geom(lev).ProbDomain();
+    const auto nodal_flag = IntVect::TheNodeVector();
+
     // Index type required for interpolating fields from their respective
     // staggering to the Ex, Ey, Ez locations
     amrex::GpuArray<int, 3> const& Ex_stag = hybrid_model->Ex_IndexType;
@@ -826,9 +839,23 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
             auto const jiz_interp = Interp(Jiz, Jz_stag, nodal, coarsen, i, j, k, 0);
 
             // interpolate the B field to a nodal grid
-            auto const Bx_interp = Interp(Bx, Bx_stag, nodal, coarsen, i, j, k, 0);
-            auto const By_interp = Interp(By, By_stag, nodal, coarsen, i, j, k, 0);
-            auto const Bz_interp = Interp(Bz, Bz_stag, nodal, coarsen, i, j, k, 0);
+            auto Bx_interp = Interp(Bx, Bx_stag, nodal, coarsen, i, j, k, 0);
+            auto By_interp = Interp(By, By_stag, nodal, coarsen, i, j, k, 0);
+            auto Bz_interp = Interp(Bz, Bz_stag, nodal, coarsen, i, j, k, 0);
+
+            if (include_B_ext_part) {
+                // Determine r and z on nodal mesh at i and j
+                const amrex::Real fac_x = (1._rt - nodal_flag[0]) * dx_lev[0] * 0.5_rt;
+                const amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
+                const amrex::Real fac_y = (1._rt - nodal_flag[1]) * dx_lev[1] * 0.5_rt;
+                const amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_y;
+                const amrex::Real fac_z = (1._rt - nodal_flag[2]) * dx_lev[2] * 0.5_rt;
+                const amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
+
+                Br_interp += Bx_part(x,y,z,t);
+                Bt_interp += By_part(x,y,z,t);
+                Bz_interp += Bz_part(x,y,z,t);
+            }
 
             // calculate enE = (J - Ji) x B
             enE_nodal(i, j, k, 0) = (
