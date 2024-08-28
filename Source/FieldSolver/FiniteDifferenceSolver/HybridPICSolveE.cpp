@@ -542,10 +542,10 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
         Array4<Real const> const& rho = rhofield->const_array(mfi);
         Array4<Real> const& Pe = Pefield->array(mfi);
 
-        amrex::Array4<amrex::Real> lr, lt, lz;
+        amrex::Array4<amrex::Real> lr, lz;
         if (EB::enabled()) {
             lr = edge_lengths[0]->array(mfi);
-            lt = edge_lengths[1]->array(mfi);
+            //   edge_lengths[1] is `lt` and is not needed
             lz = edge_lengths[2]->array(mfi);
         }
 
@@ -609,7 +609,6 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
             // Et calculation
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
                 // In RZ Et is associated with a mesh node, so we need to check if the mesh node is covered
-                amrex::ignore_unused(lt);
                 if (lr && (lr(i, j, 0)<=0 || lr(i-1, j, 0)<=0 || lz(i, j-1, 0)<=0 || lz(i, j, 0)<=0)) { return; }
 
                 // r on a nodal grid (Et is nodal in r)

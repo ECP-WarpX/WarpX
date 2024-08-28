@@ -679,14 +679,19 @@ PML::PML (const int lev, const BoxArray& grid_ba,
 
 #ifdef AMREX_USE_EB
     if (eb_enabled) {
-        pml_field_factory = amrex::makeEBFabFactory(*geom, ba, dm,
-                                                  {max_guard_EB, max_guard_EB, max_guard_EB},
-                                                  amrex::EBSupport::full);
-    }
-#else
-    amrex::ignore_unused(max_guard_EB);
-    pml_field_factory = std::make_unique<FArrayBoxFactory>();
+        pml_field_factory = amrex::makeEBFabFactory(
+            *geom,
+            ba,
+            dm,
+            {max_guard_EB, max_guard_EB, max_guard_EB},
+            amrex::EBSupport::full
+        );
+    } else
 #endif
+    {
+        amrex::ignore_unused(max_guard_EB);
+        pml_field_factory = std::make_unique<FArrayBoxFactory>();
+    }
 
     // Allocate diagonal components (xx,yy,zz) only with divergence cleaning
     const int ncompe = (m_dive_cleaning) ? 3 : 2;

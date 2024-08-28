@@ -146,6 +146,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
             ly = edge_lengths[1]->array(mfi);
             lz = edge_lengths[2]->array(mfi);
         }
+#ifdef WARPX_DIM_XZ
+        amrex::ignore_unused(ly);
+#endif
 
         // material prop //
         amrex::Array4<amrex::Real> const& sigma_arr = sigma_mf.array(mfi);
@@ -198,7 +201,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                 if (ly && ly(i,j,k) <= 0) { return; }
 #elif defined(WARPX_DIM_XZ)
                 //In XZ Ey is associated with a mesh node, so we need to check if the mesh node is covered
-                amrex::ignore_unused(ly);
                 if (lx && (lx(i, j, k)<=0 || lx(i-1, j, k)<=0 || lz(i, j, k)<=0 || lz(i, j-1, k)<=0)) { return; }
 #endif
 

@@ -496,7 +496,7 @@ void WarpX::HandleParticlesAtBoundaries (int step, amrex::Real cur_time, int num
     mypc->ContinuousFluxInjection(cur_time, dt[0]);
 
     mypc->ApplyBoundaryConditions();
-    if (m_eb_enabled) { m_particle_boundary_buffer->gatherParticlesFromDomainBoundaries(*mypc); }
+    m_particle_boundary_buffer->gatherParticlesFromDomainBoundaries(*mypc);
 
     // Non-Maxwell solver: particles can move by an arbitrary number of cells
     if( electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
