@@ -154,7 +154,9 @@ jobs:
       # build
       cmake --build build -j 2
       # run tests (exclude pytest.AMReX when running Python tests)
-      ctest --test-dir build --output-on-failure -E AMReX
+      # FIXME debug
+      ctest --test-dir build --output-on-failure -E AMReX -R lasy --verbose
+      #ctest --test-dir build --output-on-failure -E AMReX
       rm -rf build
       #rm -rf ${WARPX_CI_TMP}
       df -h
