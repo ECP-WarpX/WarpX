@@ -694,6 +694,9 @@ WarpX::ReadParameters ()
         {
 #if defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
             WARPX_ABORT_WITH_MESSAGE("Moving window not supported with RCYLINDER and RSPHERE");
+            // Even though this is never used, it needs to have a valid value to avoid
+            // complaints from the compiler
+            moving_window_dir = 0;
 #endif
             utils::parser::queryWithParser(
                 pp_warpx, "start_moving_window_step", start_moving_window_step);
