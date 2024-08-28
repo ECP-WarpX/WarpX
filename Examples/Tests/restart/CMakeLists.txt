@@ -35,7 +35,7 @@ add_warpx_test(
     1 # nprocs
     OFF # eb
     "Examples/Tests/restart/inputs_test_2d_runtime_components_picmi.py amr.restart=../test_2d_runtime_components_picmi/diags/chk000005" # inputs
-    OFF #Examples/analysis_default_regression.py # analysis
+    OFF #Examples/analysis_default_restart.py # analysis
     OFF #diags/diag1000010 # output
     test_2d_runtime_components_picmi # dependency
 )
@@ -57,7 +57,7 @@ add_warpx_test(
     2 # nprocs
     OFF # eb
     Examples/Tests/restart/inputs_test_3d_acceleration_restart # inputs
-    Examples/analysis_default_regression.py # analysis
+    Examples/analysis_default_restart.py # analysis
     diags/diag1000010 # output
     test_3d_acceleration # dependency
 )
@@ -82,7 +82,7 @@ if(WarpX_FFT)
         2 # nprocs
         OFF # eb
         Examples/Tests/restart/inputs_test_3d_acceleration_psatd_restart # inputs
-        Examples/analysis_default_regression.py # analysis
+        Examples/analysis_default_restart.py # analysis
         diags/diag1000010 # output
         test_3d_acceleration_psatd # dependency
     )
@@ -108,7 +108,7 @@ if(WarpX_FFT)
         2 # nprocs
         OFF # eb
         Examples/Tests/restart/inputs_test_3d_acceleration_psatd_time_avg_restart # inputs
-        Examples/analysis_default_regression.py # analysis
+        Examples/analysis_default_restart.py # analysis
         diags/diag1000010 # output
         test_3d_acceleration_psatd_time_avg # dependency
     )

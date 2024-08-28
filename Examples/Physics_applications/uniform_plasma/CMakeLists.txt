@@ -29,7 +29,7 @@ add_warpx_test(
     2 # nprocs
     OFF # eb
     Examples/Physics_applications/uniform_plasma/inputs_test_3d_uniform_plasma_restart # inputs
-    Examples/analysis_default_regression.py # analysis
+    Examples/analysis_default_restart.py # analysis
     diags/diag1000010 # output
     test_3d_uniform_plasma # dependency
 )

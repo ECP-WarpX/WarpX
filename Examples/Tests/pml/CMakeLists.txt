@@ -66,7 +66,7 @@ add_warpx_test(
     2 # nprocs
     OFF # eb
     Examples/Tests/pml/inputs_test_2d_pml_x_psatd_restart # inputs
-    Examples/analysis_default_regression.py # analysis
+    Examples/analysis_default_restart.py # analysis
     diags/diag1000300 # output
     test_2d_pml_x_psatd # dependency
 )
@@ -88,7 +88,7 @@ add_warpx_test(
     2 # nprocs
     OFF # eb
     Examples/Tests/pml/inputs_test_2d_pml_x_yee_restart # inputs
-    Examples/analysis_default_regression.py # analysis
+    Examples/analysis_default_restart.py # analysis
     diags/diag1000300 # output
     test_2d_pml_x_yee # dependency
 )

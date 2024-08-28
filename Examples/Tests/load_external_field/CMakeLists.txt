@@ -40,7 +40,7 @@ add_warpx_test(
     1  # nprocs
     OFF # eb
     Examples/Tests/load_external_field/inputs_test_rz_load_external_field_grid_restart # inputs
-    Examples/analysis_default_regression.py # analysis
+    Examples/analysis_default_restart.py # analysis
     diags/diag1000300 # output
     test_rz_load_external_field_grid # dependency
 )
@@ -62,7 +62,7 @@ add_warpx_test(
     1  # nprocs
     OFF # eb
     Examples/Tests/load_external_field/inputs_test_rz_load_external_field_particles_restart # inputs
-    Examples/analysis_default_regression.py # analysis
+    Examples/analysis_default_restart.py # analysis
     diags/diag1000300 # output
     test_rz_load_external_field_particles # dependency
 )
