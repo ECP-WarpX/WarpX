@@ -1594,17 +1594,19 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
         {
             auto GetPosition = GetParticlePosition<PIdx>(pti);
             auto SetPosition = SetParticlePosition<PIdx>(pti);
+            amrex::XDim3 gridmin;
+            amrex::XDim3 gridmax;
 #ifndef WARPX_DIM_1D_Z
-            const Real xmin = Geom(lev).ProbLo(0);
-            const Real xmax = Geom(lev).ProbHi(0);
+            gridmin.x = Geom(lev).ProbLo(0);
+            gridmax.x = Geom(lev).ProbHi(0);
 #endif
 #ifdef WARPX_DIM_3D
-            const Real ymin = Geom(lev).ProbLo(1);
-            const Real ymax = Geom(lev).ProbHi(1);
+            gridmin.y = Geom(lev).ProbLo(1);
+            gridmax.y = Geom(lev).ProbHi(1);
 #endif
 #if defined(WARPX_ZINDEX)
-            const Real zmin = Geom(lev).ProbLo(WARPX_ZINDEX);
-            const Real zmax = Geom(lev).ProbHi(WARPX_ZINDEX);
+            gridmin.z = Geom(lev).ProbLo(WARPX_ZINDEX);
+            gridmax.z = Geom(lev).ProbHi(WARPX_ZINDEX);
 #endif
 
             ParticleTileType& ptile = ParticlesAt(lev, pti);
@@ -1628,22 +1630,7 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
                     // Note that for RZ, (x, y, z) is actually (r, theta, z), or (r, theta, phi).
 
                     bool particle_lost = false;
-                    ApplyParticleBoundaries::apply_boundaries(
-#ifndef WARPX_DIM_1D_Z
-                                                              x, xmin, xmax,
-#endif
-#if (defined WARPX_DIM_3D) || (defined WARPX_DIM_RZ) || (defined WARPX_DIM_RCYLINDER) || (defined WARPX_DIM_RSPHERE)
-                                                              y,
-#endif
-#if (defined WARPX_DIM_3D)
-                                                              ymin, ymax,
-#endif
-#if !defined(WARPX_DIM_RCYLINDER)
-                                                              z,
-#endif
-#if defined(WARPX_ZINDEX)
-                                                              zmin, zmax,
-#endif
+                    ApplyParticleBoundaries::apply_boundaries(x, y, z, gridmin, gridmax,
                                                               ux[i], uy[i], uz[i], particle_lost,
                                                               boundary_conditions, engine);
 
