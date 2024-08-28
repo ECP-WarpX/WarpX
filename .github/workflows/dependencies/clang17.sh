@@ -42,6 +42,9 @@ sudo apt-get install -y \
     ccache              \
     pkg-config
 
+# ccache
+$(dirname "$0")/ccache.sh
+
 # Use clang 17
 export CXX=$(which clang++-17)
 export CC=$(which clang-17)
