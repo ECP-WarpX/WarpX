@@ -87,7 +87,7 @@ FieldMomentum::FieldMomentum (const std::string& rd_name)
                 ofs << "momentum_z_lev" << lev << "(kg*m/s)";
             }
 
-            ofs << std::endl;
+            ofs << "\n";
             ofs.close();
         }
     }

@@ -225,7 +225,7 @@ FieldProbe::FieldProbe (const std::string& rd_name)
                 ofs << m_sep;
                 ofs << "[" << c++ << "]part_S_lev" + std::to_string(lev) + u_map[FieldProbePIdx::S];
             }
-            ofs << std::endl;
+            ofs << "\n";
 
             // close file
             ofs.close();
@@ -678,7 +678,7 @@ void FieldProbe::WriteToFile (int step) const
             ofs << m_sep;
             ofs << sorted_data[i * noutputs + k];
         }
-        ofs << std::endl;
+        ofs << "\n";
     } // end loop over data size
     // close file
     ofs.close();

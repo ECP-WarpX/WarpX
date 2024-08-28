@@ -79,7 +79,7 @@ FieldReduction::FieldReduction (const std::string& rd_name)
             ofs << m_sep;
             ofs << "[" << c++ << "]" + reduction_type_string + " of " + parser_string + " (SI units)";
 
-            ofs << std::endl;
+            ofs << "\n";
             // close file
             ofs.close();
         }

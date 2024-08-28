@@ -181,7 +181,7 @@ ColliderRelevant::ColliderRelevant (const std::string& rd_name)
                 const auto& el = m_headers_indices[name];
                 ofs << m_sep << "[" << el.idx + off << "]" << el.header;
             }
-            ofs << std::endl;
+            ofs << "\n";
             // close file
             ofs.close();
         }

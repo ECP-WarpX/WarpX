@@ -466,7 +466,7 @@ void WarpXOpenPMDPlot::CloseStep (bool isBTD, bool isLastBTDFlush)
             std::string const filename = GetFileName(filepath);
 
             std::ofstream pv_helper_file(m_dirPrefix + "/paraview.pmd");
-            pv_helper_file << filename << std::endl;
+            pv_helper_file << filename << "\n";
             pv_helper_file.close();
         }
     }
