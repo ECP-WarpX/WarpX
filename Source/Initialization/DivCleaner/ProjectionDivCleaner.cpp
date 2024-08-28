@@ -30,14 +30,15 @@ using namespace amrex;
 
 namespace warpx::initialization {
 
-ProjectionDivCleaner::ProjectionDivCleaner(warpx::fields::FieldType a_field_type) : m_field_type(a_field_type)
+ProjectionDivCleaner::ProjectionDivCleaner(warpx::fields::FieldType a_field_type) : 
+    m_field_type(a_field_type),
+    m_levels(1)
 {
     ReadParameters();
 
     auto& warpx = WarpX::GetInstance();
 
     // Only div clean level 0
-    m_levels = 1;
     if (warpx.finestLevel() > 0) {
         ablastr::warn_manager::WMRecordWarning("Projection Div Cleaner",
             "Multiple AMR levels detected, only first level has been cleaned.",

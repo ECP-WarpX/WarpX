@@ -45,7 +45,6 @@ class ProjectionDivCleaner
 protected:
     int m_levels;
 
-    int m_max_level = 1;
     int m_ref_ratio = 1;
 
     // For MLMG solver
