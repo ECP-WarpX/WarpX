@@ -79,26 +79,14 @@ void UpdateMomentumPerezElastic (
     T_PR const vcDv2 = (vcx*u2x + vcy*u2y + vcz*u2z) / g2;
 
     // Compute p1 star
-    T_PR p1sx;
-    T_PR p1sy;
-    T_PR p1sz;
-    if ( vcms > std::numeric_limits<T_PR>::min() )
-    {
-        /* lorentz_transform_factor = ( (gc-1.0)/vcms*vcDv1 - gc )*m1*g1;
-         * Rewrite to avoid loss of precision from subtracting similar
-         * numbers when gc is close to 1 */
-        T_PR const lorentz_transform_factor =
-            ( (gc*gc*vcms*inv_c2/(T_PR(1.0) + gc))/vcms*vcDv1 - gc )*m1*g1;
-        p1sx = p1x + vcx*lorentz_transform_factor;
-        p1sy = p1y + vcy*lorentz_transform_factor;
-        p1sz = p1z + vcz*lorentz_transform_factor;
-    }
-    else // If vcms = 0, don't do Lorentz-transform.
-    {
-        p1sx = p1x;
-        p1sy = p1y;
-        p1sz = p1z;
-    }
+    // lorentz_transform_factor = ( (gc-1.0)/vcms*vcDv1 - gc )*m1*g1
+    // Rewrite by multiplying and dividing first term by (gc+1) to
+    // avoid loss of precision when gc is close to 1
+    T_PR const lorentz_transform_factor =
+            ( gc*gc*vcDv1*inv_c2/(T_PR(1.0) + gc) - gc )*m1*g1;
+    T_PR const p1sx = p1x + vcx*lorentz_transform_factor;
+    T_PR const p1sy = p1y + vcy*lorentz_transform_factor;
+    T_PR const p1sz = p1z + vcz*lorentz_transform_factor;
     T_PR const p1sm = std::sqrt( p1sx*p1sx + p1sy*p1sy + p1sz*p1sz );
 
     // Compute gamma star
