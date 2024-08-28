@@ -277,7 +277,7 @@ part_diag = picmi.ParticleDiagnostic(
 
 part_scraping_boundary_diag = picmi.ParticleBoundaryScrapingDiagnostic(
     name="diag2",
-    period=diagnostic_interval,
+    period=-1, # only at the end, because we also use the buffers in this test
     species=[electrons, protons],
     warpx_format="openpmd",
 )
