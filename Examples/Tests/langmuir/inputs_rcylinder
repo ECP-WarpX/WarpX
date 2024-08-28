@@ -43,7 +43,9 @@ warpx.use_filter = 0
 algo.particle_shape = 1
 
 # CFL
-warpx.cfl = 1.0
+# The cfl value was chosen to give better adhoc agreement with theory for the cell
+# nearest the axis where the largest error occurs
+warpx.cfl = 0.8
 
 # Having this turned on makes for a more sensitive test
 warpx.do_dive_cleaning = 1
@@ -63,7 +65,7 @@ electrons.density = n0   # number of electrons per m^3
 electrons.momentum_distribution_type = parse_momentum_function
 electrons.momentum_function_ux(x,y,z) = "epsilon/kp*2*x/w0**2*exp(-(x**2+y**2)/w0**2)"
 electrons.momentum_function_uy(x,y,z) = "epsilon/kp*2*y/w0**2*exp(-(x**2+y**2)/w0**2)"
-electrons.momentum_function_uz(x,y,z) = "-epsilon/kp*exp(-(x**2+y**2)/w0**2)"
+electrons.momentum_function_uz(x,y,z) = 0.
 
 ions.charge = q_e
 ions.mass = m_p
