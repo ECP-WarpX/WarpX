@@ -36,6 +36,7 @@
 #include <AMReX_Vector.H>
 
 #include <FieldSolver/Fields.H>
+#include "Utils/Parser/ParserUtils.H"
 
 namespace warpx::initialization {
 
@@ -84,6 +85,8 @@ public:
 
     // Default Constructor
     ProjectionDivCleaner (warpx::fields::FieldType a_field_type);
+
+    void ReadParameters ();
 
     void solve ();
     void setSourceFromBfield ();

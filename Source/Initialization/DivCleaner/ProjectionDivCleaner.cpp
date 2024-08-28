@@ -32,15 +32,7 @@ namespace warpx::initialization {
 
 ProjectionDivCleaner::ProjectionDivCleaner(warpx::fields::FieldType a_field_type) : m_field_type(a_field_type)
 {
-    // Initialize tolerance based on field precision
-    if constexpr (std::is_same<Real, float>::value) {
-        m_rtol = 5e-5;
-        m_atol = 0.0;
-    }
-    else {
-        m_rtol = 1e-12;
-        m_atol = 0.0;
-    }
+    ReadParameters();
 
     auto& warpx = WarpX::GetInstance();
 
@@ -105,6 +97,26 @@ ProjectionDivCleaner::ProjectionDivCleaner(warpx::fields::FieldType a_field_type
                           m_h_stencil_coefs_z.begin(), m_h_stencil_coefs_z.end(),
                           m_stencil_coefs_z.begin());
     amrex::Gpu::synchronize();
+}
+
+void
+ProjectionDivCleaner::ReadParameters ()
+{
+    // Initialize tolerance based on field precision
+    if constexpr (std::is_same<Real, float>::value) {
+        m_rtol = 5e-5;
+        m_atol = 0.0;
+    }
+    else {
+        m_rtol = 5e-12;
+        m_atol = 0.0;
+    }
+
+    const ParmParse pp_divb_cleaner("projection_divb_cleaner");
+    
+    // Defaults to rtol 5e-12 for double fields and 5e-5 for single
+    utils::parser::queryWithParser(pp_divb_cleaner, "atol", m_atol);
+    utils::parser::queryWithParser(pp_divb_cleaner, "rtol", m_rtol);
 }
 
 void

@@ -2008,6 +2008,8 @@ class LaserAntenna(picmistandard.PICMI_LaserAntenna):
 class LoadInitialField(picmistandard.PICMI_LoadGriddedField):
     def init(self, kw):
         self.do_divb_cleaning_external = kw.pop("warpx_do_divb_cleaning_external", None)
+        self.divb_cleaner_atol = kw.pop("warpx_projection_divb_cleaner_atol", None)
+        self.divb_cleaner_rtol = kw.pop("warpx_projection_divb_cleaner_rtol", None)
 
     def applied_field_initialize_inputs(self):
         pywarpx.warpx.read_fields_from_path = self.read_fields_from_path
@@ -2016,6 +2018,9 @@ class LoadInitialField(picmistandard.PICMI_LoadGriddedField):
         if self.load_B:
             pywarpx.warpx.B_ext_grid_init_style = "read_from_file"
             pywarpx.warpx.do_divb_cleaning_external = self.do_divb_cleaning_external
+            pywarpx.projectiondivbcleaner.atol = self.divb_cleaner_atol
+            pywarpx.projectiondivbcleaner.rtol = self.divb_cleaner_rtol
+
 
 
 class LoadInitialFieldFromPython:
@@ -2040,6 +2045,8 @@ class LoadInitialFieldFromPython:
 
     def __init__(self, **kw):
         self.do_divb_cleaning_external = kw.pop("warpx_do_divb_cleaning_external", None)
+        self.divb_cleaner_atol = kw.pop("warpx_projection_divb_cleaner_atol", None)
+        self.divb_cleaner_rtol = kw.pop("warpx_projection_divb_cleaner_rtol", None)
 
         # If using load_from_python, a function handle is expected for callback
         self.load_from_python = kw.pop("load_from_python")
@@ -2052,6 +2059,8 @@ class LoadInitialFieldFromPython:
         if self.load_B:
             pywarpx.warpx.B_ext_grid_init_style = "load_from_python"
             pywarpx.warpx.do_divb_cleaning_external = self.do_divb_cleaning_external
+            pywarpx.projectiondivbcleaner.atol = self.divb_cleaner_atol
+            pywarpx.projectiondivbcleaner.rtol = self.divb_cleaner_rtol
 
         pywarpx.callbacks.installloadExternalFields(self.load_from_python)
 
