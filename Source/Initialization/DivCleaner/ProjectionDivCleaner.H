@@ -43,7 +43,7 @@ namespace warpx::initialization {
 class ProjectionDivCleaner
 {
 protected:
-    int m_levels;
+    int m_levels = 1; // Hard coded to 1 for now, will only clean first level
 
     int m_ref_ratio = 1;
 
