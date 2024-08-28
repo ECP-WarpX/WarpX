@@ -419,6 +419,18 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
 
     const bool include_hyper_resistivity_term = (eta_h > 0.0) && solve_for_Faraday;
 
+    const bool include_B_ext_part = hybrid_model->m_add_ext_particle_B_field;
+    const auto Br_part = hybrid_model->m_B_external[0];
+    const auto Bt_part = hybrid_model->m_B_external[1];
+    const auto Bz_part = hybrid_model->m_B_external[2];
+
+    auto & warpx = WarpX::GetInstance();
+    auto t = warpx.gett_new(lev);
+
+    auto dx_lev = warpx.Geom(lev).CellSizeArray();
+    const RealBox& real_box = warpx.Geom(lev).ProbDomain();
+    const auto nodal_flag = IntVect::TheNodeVector();
+
     // Index type required for interpolating fields from their respective
     // staggering to the Ex, Ey, Ez locations
     amrex::GpuArray<int, 3> const& Er_stag = hybrid_model->Ex_IndexType;
@@ -492,9 +504,22 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
             auto const jiz_interp = Interp(Jiz, Jz_stag, nodal, coarsen, i, j, 0, 0);
 
             // interpolate the B field to a nodal grid
-            auto const Br_interp = Interp(Br, Br_stag, nodal, coarsen, i, j, 0, 0);
-            auto const Bt_interp = Interp(Bt, Bt_stag, nodal, coarsen, i, j, 0, 0);
-            auto const Bz_interp = Interp(Bz, Bz_stag, nodal, coarsen, i, j, 0, 0);
+            auto Br_interp = Interp(Br, Br_stag, nodal, coarsen, i, j, 0, 0);
+            auto Bt_interp = Interp(Bt, Bt_stag, nodal, coarsen, i, j, 0, 0);
+            auto Bz_interp = Interp(Bz, Bz_stag, nodal, coarsen, i, j, 0, 0);
+
+            if (include_B_ext_part) {
+                // Determine r and z on nodal mesh at i and j
+                const amrex::Real fac_x = (1._rt - nodal_flag[0]) * dx_lev[0] * 0.5_rt;
+                const amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
+                const amrex::Real y = 0._rt;
+                const amrex::Real fac_z = (1._rt - nodal_flag[1]) * dx_lev[1] * 0.5_rt;
+                const amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
+
+                Br_interp += Br_part(x,y,z,t);
+                Bt_interp += Bt_part(x,y,z,t);
+                Bz_interp += Bz_part(x,y,z,t);
+            }
 
             // calculate enE = (J - Ji) x B
             enE_nodal(i, j, 0, 0) = (

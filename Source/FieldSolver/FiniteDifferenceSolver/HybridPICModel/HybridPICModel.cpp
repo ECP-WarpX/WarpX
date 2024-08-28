@@ -11,6 +11,7 @@
 
 #include "EmbeddedBoundary/Enabled.H"
 #include "FieldSolver/Fields.H"
+#include "Particles/MultiParticleContainer.H"
 #include "WarpX.H"
 
 using namespace amrex;
@@ -153,6 +154,16 @@ void HybridPICModel::InitData ()
     }
 
     auto & warpx = WarpX::GetInstance();
+    const auto& mypc = warpx.GetPartContainer();
+
+    if ( mypc.m_B_ext_particle_s == "parse_b_ext_particle_function") {
+        constexpr auto num_arguments = 4; //x,y,z,t
+        m_B_external[0] = mypc.m_Bx_particle_parser->compile<num_arguments>();
+        m_B_external[1] = mypc.m_By_particle_parser->compile<num_arguments>();
+        m_B_external[2] = mypc.m_Bz_particle_parser->compile<num_arguments>();
+
+        m_add_ext_particle_B_field = true;
+    }
 
     // Get the grid staggering of the fields involved in calculating E
     amrex::IntVect Jx_stag = warpx.getField(FieldType::current_fp, 0,0).ixType().toIntVect();
