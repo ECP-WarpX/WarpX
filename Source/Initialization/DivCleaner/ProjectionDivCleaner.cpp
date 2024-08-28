@@ -113,7 +113,7 @@ ProjectionDivCleaner::ReadParameters ()
     }
 
     const ParmParse pp_divb_cleaner("projection_divb_cleaner");
-    
+
     // Defaults to rtol 5e-12 for double fields and 5e-5 for single
     utils::parser::queryWithParser(pp_divb_cleaner, "atol", m_atol);
     utils::parser::queryWithParser(pp_divb_cleaner, "rtol", m_rtol);

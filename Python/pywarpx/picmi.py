@@ -2023,7 +2023,6 @@ class LoadInitialField(picmistandard.PICMI_LoadGriddedField):
             pywarpx.projectiondivbcleaner.rtol = self.divb_cleaner_rtol
 
 
-
 class LoadInitialFieldFromPython:
     """
     Field Initializer that takes a function handle to be registered as a callback.
