@@ -30,7 +30,9 @@ struct FieldProbePIdx
 #if defined (WARPX_DIM_3D)
         y,
 #endif
+#if !defined(WARPX_DIM_RCYLINDER) || !defined(WARPX_DIM_RSPHERE)
         z,
+#endif
         Ex, Ey, Ez,
         Bx, By, Bz,
         S, //!< the Poynting vector
