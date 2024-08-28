@@ -2594,6 +2594,9 @@ class Simulation(picmistandard.PICMI_Simulation):
     warpx_do_dynamic_scheduling: bool, default=True
         Whether to do dynamic scheduling with OpenMP
 
+    warpx_roundrobin_sfc: bool, default=False
+        Whether to use the RRSFC strategy for making DistributionMapping
+
     warpx_load_balance_intervals: string, default='0'
         The intervals for doing load balancing
 
@@ -2710,6 +2713,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         )
         self.random_seed = kw.pop("warpx_random_seed", None)
         self.do_dynamic_scheduling = kw.pop("warpx_do_dynamic_scheduling", None)
+        self.roundrobin_sfc = kw.pop("warpx_roundrobin_sfc", None)
         self.load_balance_intervals = kw.pop("warpx_load_balance_intervals", None)
         self.load_balance_efficiency_ratio_threshold = kw.pop(
             "warpx_load_balance_efficiency_ratio_threshold", None
@@ -2804,6 +2808,8 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.warpx.used_inputs_file = self.used_inputs_file
 
         pywarpx.warpx.do_dynamic_scheduling = self.do_dynamic_scheduling
+
+        pywarpx.warpx.roundrobin_sfc = self.roundrobin_sfc
 
         pywarpx.particles.use_fdtd_nci_corr = self.use_fdtd_nci_corr
 

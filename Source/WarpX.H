@@ -1242,6 +1242,10 @@ protected:
     //! This function is called in amrex::AmrCore::InitFromScratch.
     void PostProcessBaseGrids (amrex::BoxArray& ba0) const final;
 
+    //! Use this function to override how DistributionMapping is made.
+    [[nodiscard]] amrex::DistributionMapping
+    MakeDistributionMap (int lev, amrex::BoxArray const& ba) final;
+
     //! Make a new level from scratch using provided BoxArray and
     //! DistributionMapping.  Only used during initialization.  Called
     //! by AmrCoreInitFromScratch.
