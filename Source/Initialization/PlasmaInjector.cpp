@@ -51,11 +51,11 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name,
 {
 
 #ifdef AMREX_USE_GPU
-    static_assert(std::is_trivially_copyable<InjectorPosition>::value,
+    static_assert(std::is_trivially_copyable_v<InjectorPosition>,
                   "InjectorPosition must be trivially copyable");
-    static_assert(std::is_trivially_copyable<InjectorDensity>::value,
+    static_assert(std::is_trivially_copyable_v<InjectorDensity>,
                   "InjectorDensity must be trivially copyable");
-    static_assert(std::is_trivially_copyable<InjectorMomentum>::value,
+    static_assert(std::is_trivially_copyable_v<InjectorMomentum>,
                   "InjectorMomentum must be trivially copyable");
 #endif
 

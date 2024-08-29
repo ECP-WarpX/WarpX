@@ -22,6 +22,7 @@
 #include "Filter/BilinearFilter.H"
 #include "Filter/NCIGodfreyFilter.H"
 #include "Initialization/ExternalField.H"
+#include "Initialization/DivCleaner/ProjectionDivCleaner.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/Algorithms/LinearInterpolation.H"
 #include "Utils/Logo/GetLogo.H"
@@ -567,6 +568,11 @@ WarpX::InitData ()
         m_implicit_solver->PrintParameters();
     }
     WriteUsedInputsFile();
+
+    // Run div cleaner here on loaded external fields
+    if (WarpX::do_divb_cleaning_external) {
+        WarpX::ProjectionCleanDivB();
+    }
 
     if (restart_chkfile.empty())
     {
@@ -1413,9 +1419,10 @@ WarpX::LoadExternalFields (int const lev)
 #endif
     }
 
-    // Call Python callback which might write values to external field multifabs
-    ExecutePythonCallback("loadExternalFields");
-
+    if (lev == finestLevel()) {
+        // Call Python callback which might write values to external field multifabs
+        ExecutePythonCallback("loadExternalFields");
+    }
     // External particle fields
 
     if (mypc->m_B_ext_particle_s == "read_from_file") {
