@@ -838,7 +838,7 @@ WarpX::computeMaxStepBoostAccelerator() {
 void
 WarpX::InitNCICorrector ()
 {
-#if AMREX_SPACEDIM == 1
+#if AMREX_SPACEDIM > 1
     if (WarpX::use_fdtd_nci_corr)
     {
         for (int lev = 0; lev <= max_level; ++lev)
