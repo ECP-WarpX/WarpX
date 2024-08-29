@@ -552,14 +552,14 @@ void FiniteDifferenceSolver::CalcBfromVectorPotentialCylindrical (
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
                 Real const r = rmin + i*dr; // r on nodal point (Br is nodal in r)
                 if (r != 0) { // Off-axis, regular Maxwell equations
-                    Br(i, j, 0, 0) += T_Algo::UpwardDz(At, coefs_z, n_coefs_z, i, j, 0, 0); // Mode m=0
+                    Br(i, j, 0, 0) -= T_Algo::UpwardDz(At, coefs_z, n_coefs_z, i, j, 0, 0); // Mode m=0
                     for (int m=1; m<nmodes; m++) { // Higher-order modes
                         Br(i, j, 0, 2*m-1) += (
-                            T_Algo::UpwardDz(At, coefs_z, n_coefs_z, i, j, 0, 2*m-1)
-                            - m * Az(i, j, 0, 2*m  )/r );  // Real part
+                            -T_Algo::UpwardDz(At, coefs_z, n_coefs_z, i, j, 0, 2*m-1)
+                            + m * Az(i, j, 0, 2*m  )/r );  // Real part
                         Br(i, j, 0, 2*m  ) += (
-                            T_Algo::UpwardDz(At, coefs_z, n_coefs_z, i, j, 0, 2*m  )
-                            + m * Az(i, j, 0, 2*m-1)/r ); // Imaginary part
+                            -T_Algo::UpwardDz(At, coefs_z, n_coefs_z, i, j, 0, 2*m  )
+                            - m * Az(i, j, 0, 2*m-1)/r ); // Imaginary part
                     }
                 } else { // r==0: On-axis corrections
                     // Ensure that Br remains 0 on axis (except for m=1)
@@ -569,11 +569,11 @@ void FiniteDifferenceSolver::CalcBfromVectorPotentialCylindrical (
                             // For m==1, Az is linear in r, for small r
                             // Therefore, the formula below regularizes the singularity
                             Br(i, j, 0, 2*m-1) += (
-                                T_Algo::UpwardDz(At, coefs_z, n_coefs_z, i, j, 0, 2*m-1)
-                                - m * Az(i+1, j, 0, 2*m  )/dr );  // Real part
+                                -T_Algo::UpwardDz(At, coefs_z, n_coefs_z, i, j, 0, 2*m-1)
+                                + m * Az(i+1, j, 0, 2*m  )/dr );  // Real part
                             Br(i, j, 0, 2*m  ) += (
-                                T_Algo::UpwardDz(At, coefs_z, n_coefs_z, i, j, 0, 2*m  )
-                                + m * Az(i+1, j, 0, 2*m-1)/dr ); // Imaginary part
+                                -T_Algo::UpwardDz(At, coefs_z, n_coefs_z, i, j, 0, 2*m  )
+                                - m * Az(i+1, j, 0, 2*m-1)/dr ); // Imaginary part
                         } else {
                             Br(i, j, 0, 2*m-1) = 0.;
                             Br(i, j, 0, 2*m  ) = 0.;
@@ -584,26 +584,26 @@ void FiniteDifferenceSolver::CalcBfromVectorPotentialCylindrical (
 
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
                 Bt(i, j, 0, 0) += (
-                    T_Algo::UpwardDr(Az, coefs_r, n_coefs_r, i, j, 0, 0)
-                    - T_Algo::UpwardDz(Ar, coefs_z, n_coefs_z, i, j, 0, 0)); // Mode m=0
+                    T_Algo::UpwardDz(Ar, coefs_z, n_coefs_z, i, j, 0, 0)
+                    - T_Algo::UpwardDr(Az, coefs_r, n_coefs_r, i, j, 0, 0)); // Mode m=0
                 for (int m=1 ; m<nmodes ; m++) { // Higher-order modes
                     Bt(i, j, 0, 2*m-1) += (
-                        T_Algo::UpwardDr(Az, coefs_r, n_coefs_r, i, j, 0, 2*m-1)
-                        - T_Algo::UpwardDz(Ar, coefs_z, n_coefs_z, i, j, 0, 2*m-1)); // Real part
+                        T_Algo::UpwardDz(Ar, coefs_z, n_coefs_z, i, j, 0, 2*m-1)
+                        - T_Algo::UpwardDr(Az, coefs_r, n_coefs_r, i, j, 0, 2*m-1)); // Real part
                     Bt(i, j, 0, 2*m  ) += (
-                        T_Algo::UpwardDr(Az, coefs_r, n_coefs_r, i, j, 0, 2*m  )
-                        - T_Algo::UpwardDz(Ar, coefs_z, n_coefs_z, i, j, 0, 2*m  )); // Imaginary part
+                        T_Algo::UpwardDz(Ar, coefs_z, n_coefs_z, i, j, 0, 2*m  )
+                        - T_Algo::UpwardDr(Az, coefs_r, n_coefs_r, i, j, 0, 2*m  )); // Imaginary part
                 }
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
                 Real const r = rmin + (i + 0.5_rt)*dr; // r on a cell-centered grid (Bz is cell-centered in r)
-                Bz(i, j, 0, 0) += ( - T_Algo::UpwardDrr_over_r(At, r, dr, coefs_r, n_coefs_r, i, j, 0, 0));
+                Bz(i, j, 0, 0) += T_Algo::UpwardDrr_over_r(At, r, dr, coefs_r, n_coefs_r, i, j, 0, 0);
                 for (int m=1 ; m<nmodes ; m++) { // Higher-order modes
-                    Bz(i, j, 0, 2*m-1) += ( m * Ar(i, j, 0, 2*m  )/r
-                        - T_Algo::UpwardDrr_over_r(At, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m-1)); // Real part
-                    Bz(i, j, 0, 2*m  ) += (-m * Ar(i, j, 0, 2*m-1)/r
-                        - T_Algo::UpwardDrr_over_r(At, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m  )); // Imaginary part
+                    Bz(i, j, 0, 2*m-1) += ( -m * Ar(i, j, 0, 2*m  )/r
+                        + T_Algo::UpwardDrr_over_r(At, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m-1)); // Real part
+                    Bz(i, j, 0, 2*m  ) += ( m * Ar(i, j, 0, 2*m-1)/r
+                        + T_Algo::UpwardDrr_over_r(At, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m  )); // Imaginary part
                 }
             }
 
@@ -650,22 +650,22 @@ void FiniteDifferenceSolver::CalcBfromVectorPotentialCartesian (
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
 
-                Bx(i, j, k) += T_Algo::UpwardDz(Ay, coefs_z, n_coefs_z, i, j, k)
-                             - T_Algo::UpwardDy(Az, coefs_y, n_coefs_y, i, j, k);
+                Bx(i, j, k) += T_Algo::UpwardDy(Az, coefs_y, n_coefs_y, i, j, k)
+                             - T_Algo::UpwardDz(Ay, coefs_z, n_coefs_z, i, j, k);
 
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
 
-                By(i, j, k) += T_Algo::UpwardDx(Az, coefs_x, n_coefs_x, i, j, k)
-                             - T_Algo::UpwardDz(Ax, coefs_z, n_coefs_z, i, j, k);
+                By(i, j, k) += T_Algo::UpwardDz(Ax, coefs_z, n_coefs_z, i, j, k)
+                             - T_Algo::UpwardDx(Az, coefs_x, n_coefs_x, i, j, k);
 
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
 
-                Bz(i, j, k) += T_Algo::UpwardDy(Ax, coefs_y, n_coefs_y, i, j, k)
-                             - T_Algo::UpwardDx(Ay, coefs_x, n_coefs_x, i, j, k);
+                Bz(i, j, k) += T_Algo::UpwardDx(Ay, coefs_x, n_coefs_x, i, j, k)
+                             - T_Algo::UpwardDy(Ax, coefs_y, n_coefs_y, i, j, k);
 
             }
         );
