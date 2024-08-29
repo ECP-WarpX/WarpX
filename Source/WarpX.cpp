@@ -3587,6 +3587,32 @@ WarpX::getField(FieldType field_type, const int lev, const int direction) const
     return *getFieldPointer(field_type, lev, direction);
 }
 
+amrex::DistributionMapping
+WarpX::MakeDistributionMap (int lev, amrex::BoxArray const& ba)
+{
+    bool roundrobin_sfc = false;
+    const ParmParse pp("warpx");
+    pp.query("roundrobin_sfc", roundrobin_sfc);
+
+    // If this is true, AMReX's RRSFC strategy is used to make
+    // DistributionMapping. Note that the DistributionMapping made by the
+    // here could still be overridden by load balancing. In the RRSFC
+    // strategy, the Round robin method is used to distribute Boxes orderd
+    // by the space filling curve. This might help avoid some processes
+    // running out of memory due to having too many particles during
+    // initialization.
+
+    if (roundrobin_sfc) {
+        auto old_strategy = amrex::DistributionMapping::strategy();
+        amrex::DistributionMapping::strategy(amrex::DistributionMapping::RRSFC);
+        amrex::DistributionMapping dm(ba);
+        amrex::DistributionMapping::strategy(old_strategy);
+        return dm;
+    } else {
+        return amrex::AmrCore::MakeDistributionMap(lev, ba);
+    }
+}
+
 const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>,3>>&
 WarpX::getMultiLevelField(warpx::fields::FieldType field_type) const
 {

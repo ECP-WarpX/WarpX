@@ -50,7 +50,6 @@ This section documents quick-start guides for a selection of supercomputers that
    hpc/pitzer
    hpc/polaris
    hpc/quartz
-   hpc/spock
    hpc/summit
    hpc/taurus
 
