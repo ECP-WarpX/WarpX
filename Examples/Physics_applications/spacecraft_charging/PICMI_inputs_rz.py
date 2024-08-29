@@ -275,6 +275,13 @@ part_diag = picmi.ParticleDiagnostic(
     warpx_file_prefix="spacecraft_charging_plt",
 )
 
+part_scraping_boundary_diag = picmi.ParticleBoundaryScrapingDiagnostic(
+    name="diag2",
+    period=-1,  # only at the end, because we also use the buffers in this test
+    species=[electrons, protons],
+    warpx_format="openpmd",
+)
+
 ##########################
 # simulation setup
 ##########################
@@ -298,6 +305,7 @@ sim.add_species(protons, layout=[layout1, layout2])
 
 sim.add_diagnostic(field_diag)
 sim.add_diagnostic(part_diag)
+sim.add_diagnostic(part_scraping_boundary_diag)
 
 ##########################
 # simulation run
