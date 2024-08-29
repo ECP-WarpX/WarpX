@@ -846,15 +846,15 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
             if (include_B_ext_part) {
                 // Determine r and z on nodal mesh at i and j
                 const amrex::Real fac_x = (1._rt - nodal_flag[0]) * dx_lev[0] * 0.5_rt;
-                const amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
+                const amrex::Real xx = i*dx_lev[0] + real_box.lo(0) + fac_x;
                 const amrex::Real fac_y = (1._rt - nodal_flag[1]) * dx_lev[1] * 0.5_rt;
-                const amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_y;
+                const amrex::Real yy = j*dx_lev[1] + real_box.lo(1) + fac_y;
                 const amrex::Real fac_z = (1._rt - nodal_flag[2]) * dx_lev[2] * 0.5_rt;
-                const amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
+                const amrex::Real zz = k*dx_lev[2] + real_box.lo(2) + fac_z;
 
-                Br_interp += Bx_part(x,y,z,t);
-                Bt_interp += By_part(x,y,z,t);
-                Bz_interp += Bz_part(x,y,z,t);
+                Bx_interp += Bx_part(xx,yy,zz,t);
+                By_interp += By_part(xx,yy,zz,t);
+                Bz_interp += Bz_part(xx,yy,zz,t);
             }
 
             // calculate enE = (J - Ji) x B
