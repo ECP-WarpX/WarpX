@@ -201,7 +201,7 @@ void UpdateMomentumPerezElastic (
         sinXs = std::sqrt(T_PR(1.0) - cosXs*cosXs);
 
         // Get random azimuthal angle
-        auto const [sinphis, cosphis] = amrex::Math::sincospi(amrex::Random(engine) * T_PR(2.0));
+        auto const [sinphis, cosphis] = amrex::Math::sincos(amrex::Random(engine) * T_PR(2.0*MathConst::pi));
 
         // Compute post-collision momenta pfs in COM
         T_PR p1fsx;

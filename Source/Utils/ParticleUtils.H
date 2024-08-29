@@ -145,7 +145,7 @@ namespace ParticleUtils {
 
         z = 2.0_prt * amrex::Random(engine) - 1.0_prt;
         auto const xy = sqrt(1_prt - z*z);
-        auto const [sin_theta, cos_theta] = amrex::Math::sincospi(amrex::Random(engine) * 2.0_prt);
+        auto const [sin_theta, cos_theta] = amrex::Math::sincos(amrex::Random(engine) * 2.0_prt*MathConst::pi);
         x = xy * cos_theta;
         y = xy * sin_theta;
     }

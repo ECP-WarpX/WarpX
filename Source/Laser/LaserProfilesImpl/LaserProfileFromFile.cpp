@@ -434,7 +434,7 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform_cartes
 {
     // Copy member variables to tmp copies
     // and get pointers to underlying data for GPU.
-    const auto [omega_im, omega_real] = amrex::Math::sincospi(-2._rt*PhysConst::c*t/m_common_params.wavelength);
+    const auto [omega_im, omega_real] = amrex::Math::sincos(-2._rt*MathConst::pi*PhysConst::c*t/m_common_params.wavelength);
     const Complex exp_omega_t = Complex{ omega_real, omega_im };
     const auto tmp_x_min = m_params.x_min;
     const auto tmp_x_max = m_params.x_max;
@@ -519,7 +519,7 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform_cylind
 {
     // Copy member variables to tmp copies
     // and get pointers to underlying data for GPU.
-    const auto [omega_im, omega_real] = amrex::Math::sincospi(-2._rt*PhysConst::c*t/m_common_params.wavelength);
+    const auto [omega_im, omega_real] = amrex::Math::sincos(-2._rt*MathConst::pi*PhysConst::c*t/m_common_params.wavelength);
     const Complex exp_omega_t = Complex{ omega_real, omega_im };
     const auto tmp_r_min = m_params.r_min;
     const auto tmp_r_max = m_params.r_max;

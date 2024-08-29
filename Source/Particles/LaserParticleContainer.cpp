@@ -523,7 +523,7 @@ LaserParticleContainer::InitData (int lev)
                     const auto n_spokes =
                         static_cast<int>((WarpX::n_rz_azimuthal_modes - 1)*m_min_particles_per_mode);
                     for (int spoke = 0 ; spoke < n_spokes ; spoke++) {
-                        auto const [sin_phase, cos_phase] = amrex::Math::sincospi(2._rt*spoke/n_spokes);
+                        auto const [sin_phase, cos_phase] = amrex::Math::sincos(2._rt*MathConst::pi*spoke/n_spokes);
                         for (int k = 0; k<2; ++k) {
                             particle_x.push_back(pos[0]*cos_phase);
                             particle_y.push_back(pos[0]*sin_phase);
