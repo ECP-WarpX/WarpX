@@ -20,7 +20,7 @@ jobs:
     #OMP_NUM_THREADS: 1
     WARPX_CI_CCACHE: 'TRUE'
     #WARPX_CI_NUM_MAKE_JOBS: 2
-    #WARPX_CI_OPENPMD: 'TRUE'
+    WARPX_CI_OPENPMD: 'TRUE'
     #WARPX_CI_TMP: '/tmp/ci'
 
   strategy:
@@ -98,14 +98,14 @@ jobs:
       export PATH="$HOME/.local/bin:$PATH"
       sudo curl -L -o /usr/local/bin/cmake-easyinstall https://raw.githubusercontent.com/ax3l/cmake-easyinstall/main/cmake-easyinstall
       sudo chmod a+x /usr/local/bin/cmake-easyinstall
-      #if [ "${WARPX_CI_OPENPMD:-FALSE}" == "TRUE" ]; then
-      #  cmake-easyinstall --prefix=/usr/local                   \
-      #    git+https://github.com/openPMD/openPMD-api.git@0.14.3 \
-      #    -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache)         \
-      #    -DCMAKE_VERBOSE_MAKEFILE=ON                           \
-      #    -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_CLI_TOOLS=OFF
-      #  python3 -m pip install --upgrade openpmd-api
-      #fi
+      if [ "${WARPX_CI_OPENPMD:-FALSE}" == "TRUE" ]; then
+        cmake-easyinstall --prefix=/usr/local                   \
+          git+https://github.com/openPMD/openPMD-api.git@0.14.3 \
+          -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache)         \
+          -DCMAKE_VERBOSE_MAKEFILE=ON                           \
+          -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_CLI_TOOLS=OFF
+        #python3 -m pip install --upgrade openpmd-api
+      fi
       if [ "${WARPX_RZ_FFT:-FALSE}" == "TRUE" ]; then
         # BLAS++
         cmake-easyinstall --prefix=/usr/local           \
@@ -154,7 +154,8 @@ jobs:
       # build
       cmake --build build -j 2
       # run tests (exclude pytest.AMReX when running Python tests)
-      ctest --test-dir build --output-on-failure -E AMReX
+      #ctest --test-dir build --output-on-failure -E AMReX
+      ctest --test-dir build --output-on-failure -R lasy --verbose
       rm -rf build
       #rm -rf ${WARPX_CI_TMP}
       df -h
