@@ -109,4 +109,4 @@ print("tolerance_rel: " + str(tolerance_rel))
 
 assert error_rel < tolerance_rel
 
-checksumAPI.reset_benchmark(test_name, fn)
+checksumAPI.evaluate_checksum(test_name, fn)
