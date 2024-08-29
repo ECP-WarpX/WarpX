@@ -1,5 +1,6 @@
+-r ../requirements.txt
 dill
-lasy
+lasy>=0.5.0
 matplotlib
 mpi4py
 numpy
@@ -7,6 +8,5 @@ openpmd-api
 openpmd-viewer
 pandas
 periodictable
-picmistandard
 scipy
 yt
