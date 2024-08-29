@@ -304,7 +304,7 @@ void NewtonSolver<Vec,Ops>::Solve ( Vec&         a_U,
                          " and the relative tolerance is " << m_rtol <<
                          ". Absolute norm is " << norm_abs <<
                          " and the absolute tolerance is " << m_atol;
-       if (this->m_verbose) { amrex::Print() << convergenceMsg.str() << "\n"; }
+       if (this->m_verbose) { amrex::Print() << convergenceMsg.str() << std::endl; }
        if (m_require_convergence) {
            WARPX_ABORT_WITH_MESSAGE(convergenceMsg.str());
        } else {
