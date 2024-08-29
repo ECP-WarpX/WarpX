@@ -58,6 +58,11 @@ function(add_warpx_test
         return()
     endif()
 
+    # cannot run tests with unfulfilled dependencies
+    if(dependency AND NOT TEST ${dependency}.run)
+        return()
+    endif()
+
     # set dimension suffix
     warpx_set_suffix_dims(SD ${dims})
 
