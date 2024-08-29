@@ -231,7 +231,6 @@ WarpX::computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<
         this->m_vector_poisson_boundary_handler,
         WarpX::do_single_precision_comms,
         this->ref_ratio,
-        std::nullopt, // post_A_calculation,
         gett_new(0),
         eb_farray_box_factory
     );
