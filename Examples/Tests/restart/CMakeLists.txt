@@ -34,7 +34,7 @@ add_warpx_test(
     2 # dims
     1 # nprocs
     OFF # eb
-    "Examples/Tests/restart/inputs_test_2d_runtime_components_picmi.py amr.restart=../test_2d_runtime_components_picmi/diags/chk000005" # inputs
+    "Examples/Tests/restart/inputs_test_2d_runtime_components_picmi.py amr.restart='../test_2d_runtime_components_picmi/diags/chk000005'" # inputs
     OFF #Examples/analysis_default_restart.py # analysis
     OFF #diags/diag1000010 # output
     test_2d_runtime_components_picmi # dependency

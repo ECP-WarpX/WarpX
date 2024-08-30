@@ -2,4 +2,4 @@
 FILE = inputs_test_3d_acceleration_psatd_time_avg
 
 # test input parameters
-amr.restart = ../test_3d_acceleration_psatd_time_avg/diags/chk000005
+amr.restart = "../test_3d_acceleration_psatd_time_avg/diags/chk000005"

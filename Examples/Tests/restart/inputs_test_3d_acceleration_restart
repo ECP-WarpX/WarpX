@@ -2,4 +2,4 @@
 FILE = inputs_test_3d_acceleration
 
 # test input parameters
-amr.restart = ../test_3d_acceleration/diags/chk000005
+amr.restart = "../test_3d_acceleration/diags/chk000005"

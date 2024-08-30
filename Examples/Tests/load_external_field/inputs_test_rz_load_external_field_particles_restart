@@ -2,4 +2,4 @@
 FILE = inputs_test_rz_load_external_field_particles
 
 # test input parameters
-amr.restart = ../test_rz_load_external_field_particles/diags/chk000150
+amr.restart = "../test_rz_load_external_field_particles/diags/chk000150"
