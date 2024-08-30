@@ -22,6 +22,7 @@
 #include "Filter/BilinearFilter.H"
 #include "Filter/NCIGodfreyFilter.H"
 #include "Initialization/ExternalField.H"
+#include "Initialization/DivCleaner/ProjectionDivCleaner.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/Algorithms/LinearInterpolation.H"
 #include "Utils/Logo/GetLogo.H"
@@ -568,6 +569,11 @@ WarpX::InitData ()
     }
     WriteUsedInputsFile();
 
+    // Run div cleaner here on loaded external fields
+    if (WarpX::do_divb_cleaning_external) {
+        WarpX::ProjectionCleanDivB();
+    }
+
     if (restart_chkfile.empty())
     {
         // Loop through species and calculate their space-charge field
@@ -577,6 +583,11 @@ WarpX::InitData ()
         ExecutePythonCallback("afterInitEsolve");
         if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) {
             ComputeMagnetostaticField();
+        }
+        // Add external fields to the fine patch fields. This makes it so that the
+        // net fields are the sum of the field solutions and any external fields.
+        for (int lev = 0; lev <= max_level; ++lev) {
+            AddExternalFields(lev);
         }
     }
 
@@ -1013,8 +1024,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 
     // load external grid fields into E/Bfield_fp_external multifabs
     LoadExternalFields(lev);
-    // add the external fields to the fine patch fields as initial conditions for the fields
-    AddExternalFields(lev);
 
     if (costs[lev]) {
         const auto iarr = costs[lev]->IndexArray();
@@ -1410,6 +1419,10 @@ WarpX::LoadExternalFields (int const lev)
 #endif
     }
 
+    if (lev == finestLevel()) {
+        // Call Python callback which might write values to external field multifabs
+        ExecutePythonCallback("loadExternalFields");
+    }
     // External particle fields
 
     if (mypc->m_B_ext_particle_s == "read_from_file") {

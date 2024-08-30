@@ -22,32 +22,28 @@ constants = picmi.constants
 
 comm = mpi.COMM_WORLD
 
-simulation = picmi.Simulation(
-    warpx_serialize_initial_conditions=True,
-    verbose=0
-)
+simulation = picmi.Simulation(warpx_serialize_initial_conditions=True, verbose=0)
 
 
 class ForceFreeSheetReconnection(object):
-
     # B0 is chosen with all other quantities scaled by it
-    B0 = 0.1 # Initial magnetic field strength (T)
+    B0 = 0.1  # Initial magnetic field strength (T)
 
     # Physical parameters
-    m_ion = 400.0 # Ion mass (electron masses)
+    m_ion = 400.0  # Ion mass (electron masses)
 
     beta_e = 0.1
-    Bg = 0.3 # times B0 - guiding field
-    dB = 0.01 # times B0 - initial perturbation to seed reconnection
+    Bg = 0.3  # times B0 - guiding field
+    dB = 0.01  # times B0 - initial perturbation to seed reconnection
 
-    T_ratio = 5.0 # T_i / T_e
+    T_ratio = 5.0  # T_i / T_e
 
     # Domain parameters
-    LX = 40 # ion skin depths
-    LZ = 20 # ion skin depths
+    LX = 40  # ion skin depths
+    LZ = 20  # ion skin depths
 
-    LT = 50 # ion cyclotron periods
-    DT = 1e-3 # ion cyclotron periods
+    LT = 50  # ion cyclotron periods
+    DT = 1e-3  # ion cyclotron periods
 
     # Resolution parameters
     NX = 512
@@ -62,7 +58,6 @@ class ForceFreeSheetReconnection(object):
     substeps = 20
 
     def __init__(self, test, verbose):
-
         self.test = test
         self.verbose = verbose or self.test
 
@@ -93,8 +88,7 @@ class ForceFreeSheetReconnection(object):
             f"*sin({np.pi/self.Lz}*z)"
         )
         self.By = (
-            f"sqrt({self.Bg**2 + self.B0**2}-"
-            f"({self.B0}*tanh(z*{1.0/self.l_i}))**2)"
+            f"sqrt({self.Bg**2 + self.B0**2}-" f"({self.B0}*tanh(z*{1.0/self.l_i}))**2)"
         )
         self.Bz = f"{self.dB}*sin({2.0*np.pi/self.Lx}*x)*cos({np.pi/self.Lz}*z)"
 
@@ -102,7 +96,7 @@ class ForceFreeSheetReconnection(object):
 
         # dump all the current attributes to a dill pickle file
         if comm.rank == 0:
-            with open(f'sim_parameters.dpkl', 'wb') as f:
+            with open("sim_parameters.dpkl", "wb") as f:
                 dill.dump(self, f)
 
         # print out plasma parameters
@@ -146,14 +140,10 @@ class ForceFreeSheetReconnection(object):
         self.w_pe = 2.0 * self.w_ce
 
         # calculate plasma density based on electron plasma frequency
-        self.n_plasma = (
-            self.w_pe**2 * constants.m_e * constants.ep0 / constants.q_e**2
-        )
+        self.n_plasma = self.w_pe**2 * constants.m_e * constants.ep0 / constants.q_e**2
 
         # Ion plasma frequency (Hz)
-        self.w_pi = np.sqrt(
-            constants.q_e**2 * self.n_plasma / (self.M * constants.ep0)
-        )
+        self.w_pi = np.sqrt(constants.q_e**2 * self.n_plasma / (self.M * constants.ep0))
 
         # Ion skin depth (m)
         self.l_i = constants.c / self.w_pi
@@ -165,7 +155,9 @@ class ForceFreeSheetReconnection(object):
 
         # calculate Te based on beta
         self.Te = (
-            self.beta_e * self.B0**2 / (2.0 * constants.mu0 * self.n_plasma)
+            self.beta_e
+            * self.B0**2
+            / (2.0 * constants.mu0 * self.n_plasma)
             / constants.q_e
         )
         self.Ti = self.Te * self.T_ratio
@@ -190,17 +182,17 @@ class ForceFreeSheetReconnection(object):
         # Create grid
         self.grid = picmi.Cartesian2DGrid(
             number_of_cells=[self.NX, self.NZ],
-            lower_bound=[-self.Lx/2.0, -self.Lz/2.0],
-            upper_bound=[self.Lx/2.0, self.Lz/2.0],
-            lower_boundary_conditions=['periodic', 'dirichlet'],
-            upper_boundary_conditions=['periodic', 'dirichlet'],
-            lower_boundary_conditions_particles=['periodic', 'reflecting'],
-            upper_boundary_conditions_particles=['periodic', 'reflecting'],
-            warpx_max_grid_size=self.NZ
+            lower_bound=[-self.Lx / 2.0, -self.Lz / 2.0],
+            upper_bound=[self.Lx / 2.0, self.Lz / 2.0],
+            lower_boundary_conditions=["periodic", "dirichlet"],
+            upper_boundary_conditions=["periodic", "dirichlet"],
+            lower_boundary_conditions_particles=["periodic", "reflecting"],
+            upper_boundary_conditions_particles=["periodic", "reflecting"],
+            warpx_max_grid_size=self.NZ,
         )
         simulation.time_step_size = self.dt
         simulation.max_steps = self.total_steps
-        simulation.current_deposition_algo = 'direct'
+        simulation.current_deposition_algo = "direct"
         simulation.particle_shape = 1
         simulation.use_filter = False
         simulation.verbose = self.verbose
@@ -210,17 +202,18 @@ class ForceFreeSheetReconnection(object):
         #######################################################################
 
         self.solver = picmi.HybridPICSolver(
-            grid=self.grid, gamma=1.0,
-            Te=self.Te, n0=self.n_plasma, n_floor=0.1*self.n_plasma,
-            plasma_resistivity=self.eta*self.eta0,
-            substeps=self.substeps
+            grid=self.grid,
+            gamma=1.0,
+            Te=self.Te,
+            n0=self.n_plasma,
+            n_floor=0.1 * self.n_plasma,
+            plasma_resistivity=self.eta * self.eta0,
+            substeps=self.substeps,
         )
         simulation.solver = self.solver
 
         B_ext = picmi.AnalyticInitialField(
-            Bx_expression=self.Bx,
-            By_expression=self.By,
-            Bz_expression=self.Bz
+            Bx_expression=self.Bx, By_expression=self.By, Bz_expression=self.Bz
         )
         simulation.add_applied_field(B_ext)
 
@@ -229,18 +222,19 @@ class ForceFreeSheetReconnection(object):
         #######################################################################
 
         self.ions = picmi.Species(
-            name='ions', charge='q_e', mass=self.M,
+            name="ions",
+            charge="q_e",
+            mass=self.M,
             initial_distribution=picmi.UniformDistribution(
                 density=self.n_plasma,
-                rms_velocity=[self.vi_th]*3,
-            )
+                rms_velocity=[self.vi_th] * 3,
+            ),
         )
         simulation.add_species(
             self.ions,
             layout=picmi.PseudoRandomLayout(
-                grid=self.grid,
-                n_macroparticles_per_cell=self.NPPC
-            )
+                grid=self.grid, n_macroparticles_per_cell=self.NPPC
+            ),
         )
 
         #######################################################################
@@ -251,42 +245,44 @@ class ForceFreeSheetReconnection(object):
 
         if self.test:
             particle_diag = picmi.ParticleDiagnostic(
-                name='diag1',
+                name="diag1",
                 period=self.total_steps,
-                write_dir='.',
+                write_dir=".",
                 species=[self.ions],
-                data_list=['ux', 'uy', 'uz', 'x', 'z', 'weighting'],
-                warpx_file_prefix='Python_ohms_law_solver_magnetic_reconnection_2d_plt',
+                data_list=["ux", "uy", "uz", "x", "z", "weighting"],
+                warpx_file_prefix="Python_ohms_law_solver_magnetic_reconnection_2d_plt",
                 # warpx_format='openpmd',
                 # warpx_openpmd_backend='h5',
             )
             simulation.add_diagnostic(particle_diag)
             field_diag = picmi.FieldDiagnostic(
-                name='diag1',
+                name="diag1",
                 grid=self.grid,
                 period=self.total_steps,
-                data_list=['Bx', 'By', 'Bz', 'Ex', 'Ey', 'Ez'],
-                write_dir='.',
-                warpx_file_prefix='Python_ohms_law_solver_magnetic_reconnection_2d_plt',
+                data_list=["Bx", "By", "Bz", "Ex", "Ey", "Ez"],
+                write_dir=".",
+                warpx_file_prefix="Python_ohms_law_solver_magnetic_reconnection_2d_plt",
                 # warpx_format='openpmd',
                 # warpx_openpmd_backend='h5',
             )
             simulation.add_diagnostic(field_diag)
-
 
         # reduced diagnostics for reconnection rate calculation
         # create a 2 l_i box around the X-point on which to measure
         # magnetic flux changes
         plane = picmi.ReducedDiagnostic(
             diag_type="FieldProbe",
-            name='plane',
+            name="plane",
             period=self.diag_steps,
-            path='diags/',
-            extension='dat',
-            probe_geometry='Plane',
+            path="diags/",
+            extension="dat",
+            probe_geometry="Plane",
             resolution=60,
-            x_probe=0.0, z_probe=0.0, detector_radius=self.l_i,
-            target_up_x=0, target_up_z=1.0
+            x_probe=0.0,
+            z_probe=0.0,
+            detector_radius=self.l_i,
+            target_up_x=0,
+            target_up_z=1.0,
         )
         simulation.add_diagnostic(plane)
 
@@ -304,13 +300,12 @@ class ForceFreeSheetReconnection(object):
         simulation.initialize_warpx()
 
     def check_fields(self):
-
         step = simulation.extension.warpx.getistep(lev=0) - 1
 
-        if not (step == 1 or step%self.diag_steps == 0):
+        if not (step == 1 or step % self.diag_steps == 0):
             return
 
-        rho = fields.RhoFPWrapper(include_ghosts=False)[:,:]
+        rho = fields.RhoFPWrapper(include_ghosts=False)[:, :]
         Jiy = fields.JyFPWrapper(include_ghosts=False)[...] / self.J0
         Jy = fields.JyFPAmpereWrapper(include_ghosts=False)[...] / self.J0
         Bx = fields.BxFPWrapper(include_ghosts=False)[...] / self.B0
@@ -321,8 +316,9 @@ class ForceFreeSheetReconnection(object):
             return
 
         # save the fields to file
-        with open(f"diags/fields/fields_{step:06d}.npz", 'wb') as f:
+        with open(f"diags/fields/fields_{step:06d}.npz", "wb") as f:
             np.savez(f, rho=rho, Jiy=Jiy, Jy=Jy, Bx=Bx, By=By, Bz=Bz)
+
 
 ##########################
 # parse input parameters
@@ -330,14 +326,19 @@ class ForceFreeSheetReconnection(object):
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    '-t', '--test', help='toggle whether this script is run as a short CI test',
-    action='store_true',
+    "-t",
+    "--test",
+    help="toggle whether this script is run as a short CI test",
+    action="store_true",
 )
 parser.add_argument(
-    '-v', '--verbose', help='Verbose output', action='store_true',
+    "-v",
+    "--verbose",
+    help="Verbose output",
+    action="store_true",
 )
 args, left = parser.parse_known_args()
-sys.argv = sys.argv[:1]+left
+sys.argv = sys.argv[:1] + left
 
 run = ForceFreeSheetReconnection(test=args.test, verbose=args.verbose)
 simulation.step()

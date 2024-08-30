@@ -12,7 +12,7 @@ import sys
 
 import yt
 
-sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+sys.path.insert(1, "../../../../warpx/Regression/Checksum/")
 import analysis_core as ac
 import checksumAPI
 
@@ -22,6 +22,8 @@ import checksumAPI
 # format and extracts the data needed for
 # the analysis routines.
 yt
+
+
 def main():
     print("Opening yt output")
     filename_end = sys.argv[1]
@@ -31,7 +33,7 @@ def main():
     sim_time = data_set_end.current_time.to_value()
     # no particles can be created on the first timestep so we have 2 timesteps in the test case,
     # with only the second one resulting in particle creation
-    dt = sim_time/2.
+    dt = sim_time / 2.0
 
     # get particle data
     all_data_end = data_set_end.all_data()
@@ -42,13 +44,13 @@ def main():
         spec_name = spec_name_type[0]
         is_photon = spec_name_type[1]
         data = {}
-        data["px"] = all_data_end[spec_name,"particle_momentum_x"].v
-        data["py"] = all_data_end[spec_name,"particle_momentum_y"].v
-        data["pz"] = all_data_end[spec_name,"particle_momentum_z"].v
-        data["w"] = all_data_end[spec_name,"particle_weighting"].v
+        data["px"] = all_data_end[spec_name, "particle_momentum_x"].v
+        data["py"] = all_data_end[spec_name, "particle_momentum_y"].v
+        data["pz"] = all_data_end[spec_name, "particle_momentum_z"].v
+        data["w"] = all_data_end[spec_name, "particle_weighting"].v
 
-        if is_photon :
-            data["opt"] =  all_data_end[spec_name, "particle_opticalDepthBW"].v
+        if is_photon:
+            data["opt"] = all_data_end[spec_name, "particle_opticalDepthBW"].v
         else:
             data["opt"] = all_data_end[spec_name, "particle_opticalDepthQSR"].v
 
@@ -58,6 +60,7 @@ def main():
 
     test_name = os.path.split(os.getcwd())[1]
     checksumAPI.evaluate_checksum(test_name, filename_end)
+
 
 if __name__ == "__main__":
     main()
