@@ -737,7 +737,7 @@ def GFPWrapper(level=0, include_ghosts=False):
 
 def AxFPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Afield_fp_nodal[x]",
+        mf_name="Afield_fp[x]",
         level=level,
         include_ghosts=include_ghosts,
     )
@@ -745,7 +745,7 @@ def AxFPWrapper(level=0, include_ghosts=False):
 
 def AyFPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Afield_fp_nodal[y]",
+        mf_name="Afield_fp[y]",
         level=level,
         include_ghosts=include_ghosts,
     )
@@ -753,7 +753,7 @@ def AyFPWrapper(level=0, include_ghosts=False):
 
 def AzFPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Afield_fp_nodal[z]",
+        mf_name="Afield_fp[z]",
         level=level,
         include_ghosts=include_ghosts,
     )

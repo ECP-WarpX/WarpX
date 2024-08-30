@@ -23,7 +23,7 @@ namespace warpx::fields
         F_fp,
         G_fp,
         phi_fp,
-        vector_potential_fp,
+        Afield_fp,
         Efield_cp,
         Bfield_cp,
         current_cp,

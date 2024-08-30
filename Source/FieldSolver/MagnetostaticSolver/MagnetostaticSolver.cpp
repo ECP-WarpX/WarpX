@@ -6,17 +6,15 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "WarpX.H"
-
 #include "FieldSolver/MagnetostaticSolver/MagnetostaticSolver.H"
 #include "Parallelization/GuardCellManager.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Python/callbacks.H"
 #include "Utils/WarpXConst.H"
-#include "Utils/TextMsg.H"
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Parallelization/WarpXComm_K.H"
+#include "WarpX.H"
 
 #include <ablastr/utils/Communication.H>
 #include <ablastr/warn_manager/WarnManager.H>
@@ -87,7 +85,7 @@ WarpX::ComputeMagnetostaticFieldLabFrame()
     // Perform current deposition at t_{n+1/2} (source of Poisson solver).
     mypc->DepositCurrent(current_fp, dt[0], -0.5_rt * dt[0]);
 
-    // Synchronize J and rho:
+    // Synchronize J:
     // filter (if used), exchange guard cells, interpolate across MR levels
     // and apply boundary conditions
     SyncCurrent(current_fp, current_cp, current_buf);
@@ -97,12 +95,6 @@ WarpX::ComputeMagnetostaticFieldLabFrame()
             lev, current_fp[lev][0].get(), current_fp[lev][1].get(),
             current_fp[lev][2].get(), PatchType::fine
         );
-        if (lev > 0) {
-            ApplyJfieldBoundary(
-                lev, current_cp[lev][0].get(), current_cp[lev][1].get(),
-                current_cp[lev][2].get(), PatchType::coarse
-            );
-        }
     }
 
     // SyncCurrent does not include a call to FillBoundary
@@ -112,24 +104,39 @@ WarpX::ComputeMagnetostaticFieldLabFrame()
         }
     }
 
-    // Store the boundary conditions for the field solver if they haven't been
-    // stored yet
-    if (!m_vector_poisson_boundary_handler.bcs_set) {
-        m_vector_poisson_boundary_handler.defineVectorPotentialBCs();
+    // Reference magnetostatic multifabs
+    auto& Afield_fp_nodal = m_magnetostatic_solver->Afield_fp_nodal;
+    auto& current_fp_temp = m_magnetostatic_solver->current_fp_temp;
+
+    // At this point J^{n-1/2} is stored in `current_fp_temp` and J^{n+1/2}
+    // in `current_fp`. In order to calculate B^{n+1} we need to obtain
+    // J^{n+1}. Use extrapolation for this:
+    // J^{n+1} = 1/2 * J_i^{n-1/2} + 3/2 * J_i^{n+1/2}.
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        for (int idim = 0; idim < 3; ++idim) {
+            MultiFab::LinComb(
+                *current_fp_temp[lev][idim],
+                0.5_rt, *current_fp_temp[lev][idim], 0,
+                1.5_rt, *current_fp[lev][idim], 0,
+                0, 1, current_fp_temp[lev][idim]->nGrowVect()
+            );
+        }
     }
+
     // set the boundary and current density potentials
-    setVectorPotentialBC(Afield_fp_nodal);
+    setVectorPotentialBC(m_magnetostatic_solver->Afield_fp_nodal);
 
     // Compute the vector potential A, by solving the Poisson equation
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( !IsPythonCallbackInstalled("poissonsolver"),
         "Python Level Poisson Solve not supported for Magnetostatic implementation.");
 
-    const amrex::Real magnetostatic_absolute_tolerance = self_fields_absolute_tolerance*PhysConst::c;
-
     computeVectorPotential(
-        current_fp, Afield_fp_nodal,
-        self_fields_required_precision, magnetostatic_absolute_tolerance,
-        self_fields_max_iters, self_fields_verbosity
+        current_fp_temp, Afield_fp_nodal,
+        m_magnetostatic_solver->required_precision,
+        m_magnetostatic_solver->absolute_tolerance,
+        m_magnetostatic_solver->max_iters,
+        m_magnetostatic_solver->verbosity
     );
 
     // Grab Interpolation Coefficients
@@ -169,7 +176,20 @@ WarpX::ComputeMagnetostaticFieldLabFrame()
         }
     }
 
+    // At this point Afield_fp contains the vector potential at t = n+1 and
+    // we are ready to obtain B^{n+1}.
     ComputeBfromVectorPotential();
+
+    // copy J^{n+1/2} to current_fp_temp so that it is available at the next
+    // step as J^{n-1/2}
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        // copy 1 component value starting at index 0 to index 0
+        for (int idim = 0; idim < 3; ++idim) {
+            MultiFab::Copy(*current_fp_temp[lev][idim], *current_fp[lev][idim],
+                           0, 0, 1, current_fp_temp[lev][idim]->nGrowVect());
+        }
+    }
 }
 
 /* Compute the vector potential `A` by solving the Poisson equation with `J` as
@@ -228,7 +248,7 @@ WarpX::computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<
         this->geom,
         this->dmap,
         this->grids,
-        this->m_vector_poisson_boundary_handler,
+        m_magnetostatic_solver->m_boundary_handler,
         WarpX::do_single_precision_comms,
         this->ref_ratio,
         gett_new(0),
@@ -249,9 +269,9 @@ void
 WarpX::setVectorPotentialBC ( amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>,3>>& A ) const
 {
     // check if any dimension has non-periodic boundary conditions
-    if (!m_vector_poisson_boundary_handler.has_non_periodic) { return; }
+    if (!m_magnetostatic_solver->m_boundary_handler.has_non_periodic) { return; }
 
-    auto dirichlet_flag = m_vector_poisson_boundary_handler.dirichlet_flag;
+    auto dirichlet_flag = m_magnetostatic_solver->m_boundary_handler.dirichlet_flag;
 
     // loop over all mesh refinement levels and set the boundary values
     for (int lev=0; lev <= max_level; lev++) {
@@ -299,95 +319,84 @@ WarpX::setVectorPotentialBC ( amrex::Vector<amrex::Array<std::unique_ptr<amrex::
     } // lev
 }
 
-void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs ( )
+
+MagnetostaticSolver::MagnetostaticSolver ( int nlevs_max )
 {
-    for (int adim = 0; adim < 3; adim++) {
-#ifdef WARPX_DIM_RZ
-        int dim_start = 0;
-        WarpX& warpx = WarpX::GetInstance();
-        auto geom = warpx.Geom(0);
-        if (geom.ProbLo(0) == 0){
-            lobc[adim][0] = LinOpBCType::Neumann;
-            dirichlet_flag[adim][0] = false;
-            dim_start = 1;
+    ReadParameters();
+    AllocateMFs(nlevs_max);
+}
 
-            // handle the r_max boundary explicitly
-            if (WarpX::field_boundary_hi[0] == FieldBoundaryType::PEC) {
-                if (adim == 0) {
-                    hibc[adim][0] = LinOpBCType::Neumann;
-                    dirichlet_flag[adim][1] = false;
-                } else{
-                    hibc[adim][0] = LinOpBCType::Dirichlet;
-                    dirichlet_flag[adim][1] = true;
-                }
-            }
-            else if (WarpX::field_boundary_hi[0] == FieldBoundaryType::Neumann) {
-                hibc[adim][0] = LinOpBCType::Neumann;
-                dirichlet_flag[adim][1] = false;
-            }
-        }
-#else
-        const int dim_start = 0;
-#endif
-        bool ndotA = false;
-        for (int idim=dim_start; idim<AMREX_SPACEDIM; idim++){
-            ndotA = (adim == idim);
+void MagnetostaticSolver::ReadParameters ()
+{
+    const ParmParse pp_warpx("warpx");
 
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-            if (idim == 1) { ndotA = (adim == 2); }
-#endif
+    // Grab solver tolerances from input parameters
+    utils::parser::queryWithParser(
+        pp_warpx, "self_fields_required_precision", required_precision);
+    utils::parser::queryWithParser(
+        pp_warpx, "self_fields_absolute_tolerance", absolute_tolerance);
+    absolute_tolerance *= PhysConst::c;
+    utils::parser::queryWithParser(pp_warpx, "self_fields_max_iters", max_iters);
 
-            if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Periodic
-                && WarpX::field_boundary_hi[idim] == FieldBoundaryType::Periodic ) {
-                lobc[adim][idim] = LinOpBCType::Periodic;
-                hibc[adim][idim] = LinOpBCType::Periodic;
-                dirichlet_flag[adim][idim*2] = false;
-                dirichlet_flag[adim][idim*2+1] = false;
-            }
-            else {
-                has_non_periodic = true;
-                if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC ) {
-                    if (ndotA) {
-                        lobc[adim][idim] = LinOpBCType::Neumann;
-                        dirichlet_flag[adim][idim*2] = false;
-                    } else {
-                        lobc[adim][idim] = LinOpBCType::Dirichlet;
-                        dirichlet_flag[adim][idim*2] = true;
-                    }
-                }
+    pp_warpx.query("self_fields_verbosity", verbosity);
+}
 
-                else if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Neumann ) {
-                    lobc[adim][idim] = LinOpBCType::Neumann;
-                    dirichlet_flag[adim][idim*2] = false;
-                }
-                else {
-                    WARPX_ABORT_WITH_MESSAGE(
-                        "Field boundary conditions have to be either periodic, PEC or neumann "
-                        "when using the magnetostatic solver,  but they are " + GetFieldBCTypeString(WarpX::field_boundary_lo[idim])
-                    );
-                }
+void MagnetostaticSolver::AllocateMFs (int nlevs_max)
+{
+    Afield_fp_nodal.resize(nlevs_max);
+    current_fp_temp.resize(nlevs_max);
+}
 
-                if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC ) {
-                    if (ndotA) {
-                        hibc[adim][idim] = LinOpBCType::Neumann;
-                        dirichlet_flag[adim][idim*2+1] = false;
-                    } else {
-                        hibc[adim][idim] = LinOpBCType::Dirichlet;
-                        dirichlet_flag[adim][idim*2+1] = true;
-                    }
-                }
-                else if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::Neumann ) {
-                    hibc[adim][idim] = LinOpBCType::Neumann;
-                    dirichlet_flag[adim][idim*2+1] = false;
-                }
-                else {
-                    WARPX_ABORT_WITH_MESSAGE(
-                        "Field boundary conditions have to be either periodic, PEC or neumann "
-                        "when using the magnetostatic solver,  but they are " + GetFieldBCTypeString(WarpX::field_boundary_lo[idim])
-                    );
-                }
-            }
-        }
+void MagnetostaticSolver::AllocateLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm,
+                                            const int ncomps, const IntVect& ngJ, const IntVect& ngRho,
+                                            const IntVect& jx_nodal_flag,
+                                            const IntVect& jy_nodal_flag,
+                                            const IntVect& jz_nodal_flag,
+                                            const IntVect& rho_nodal_flag)
+{
+    // The "Afield_fp_nodal" multifab is used to store the vector potential
+    // as obtained from the linear solver.
+    WarpX::AllocInitMultiFab(Afield_fp_nodal[lev][0], amrex::convert(ba, rho_nodal_flag),
+        dm, ncomps, ngRho, lev, "Afield_fp_nodal[x]", 0.0_rt);
+    WarpX::AllocInitMultiFab(Afield_fp_nodal[lev][1], amrex::convert(ba, rho_nodal_flag),
+        dm, ncomps, ngRho, lev, "Afield_fp_nodal[y]", 0.0_rt);
+    WarpX::AllocInitMultiFab(Afield_fp_nodal[lev][2], amrex::convert(ba, rho_nodal_flag),
+        dm, ncomps, ngRho, lev, "Afield_fp_nodal[z]", 0.0_rt);
+
+    // The "current_fp_temp" multifab is used to store the current density
+    // interpolated or extrapolated to appropriate timesteps.
+    WarpX::AllocInitMultiFab(current_fp_temp[lev][0], amrex::convert(ba, jx_nodal_flag),
+        dm, ncomps, ngJ, lev, "current_fp_temp[x]", 0.0_rt);
+    WarpX::AllocInitMultiFab(current_fp_temp[lev][1], amrex::convert(ba, jy_nodal_flag),
+        dm, ncomps, ngJ, lev, "current_fp_temp[y]", 0.0_rt);
+    WarpX::AllocInitMultiFab(current_fp_temp[lev][2], amrex::convert(ba, jz_nodal_flag),
+        dm, ncomps, ngJ, lev, "current_fp_temp[z]", 0.0_rt);
+
+    // the external current density multifab is made nodal to avoid needing to interpolate
+    // to a nodal grid as has to be done for the ion and total current density multifabs
+    // this also allows the external current multifab to not have any ghost cells
+    // WarpX::AllocInitMultiFab(current_fp_external[lev][0], amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
+    //     dm, ncomps, IntVect(AMREX_D_DECL(0,0,0)), lev, "current_fp_external[x]", 0.0_rt);
+    // WarpX::AllocInitMultiFab(current_fp_external[lev][1], amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
+    //     dm, ncomps, IntVect(AMREX_D_DECL(0,0,0)), lev, "current_fp_external[y]", 0.0_rt);
+    // WarpX::AllocInitMultiFab(current_fp_external[lev][2], amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
+    //     dm, ncomps, IntVect(AMREX_D_DECL(0,0,0)), lev, "current_fp_external[z]", 0.0_rt);
+
+}
+
+void MagnetostaticSolver::ClearLevel (int lev)
+{
+    for (int i = 0; i < 3; ++i) {
+        Afield_fp_nodal[lev][i].reset();
+        current_fp_temp[lev][i].reset();
     }
-    bcs_set = true;
+}
+
+void MagnetostaticSolver::InitData () {
+    // Store the boundary conditions for the field solver
+    auto& warpx = WarpX::GetInstance();
+    m_boundary_handler.defineVectorPotentialBCs(
+        warpx.field_boundary_lo, warpx.field_boundary_hi, warpx.Geom(0).ProbLo(0)
+    );
+
 }

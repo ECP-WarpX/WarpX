@@ -20,6 +20,7 @@
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
+#include "FieldSolver/MagnetostaticSolver/MagnetostaticSolver.H"
 #ifdef WARPX_USE_FFT
 #   include "FieldSolver/SpectralSolver/SpectralKSpace.H"
 #   ifdef WARPX_DIM_RZ
@@ -329,17 +330,17 @@ WarpX::WarpX ()
     Efield_fp.resize(nlevs_max);
     Bfield_fp.resize(nlevs_max);
 
-    // Only allocate vector potential arrays when using the Magnetostatic Solver
-    if (do_magnetostatic_solve)
-    {
-        Afield_fp_nodal.resize(nlevs_max);
-        Afield_fp.resize(nlevs_max);
-    }
-
     // Initialize the semi-implicit electrostatic solver if required
     if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameSemiImplicit)
     {
         m_semi_implicit_solver = std::make_unique<SemiImplicitSolver>(nlevs_max);
+    }
+    // Initialize the magnetostatic solver if required
+    // Only allocate vector potential arrays when using the Magnetostatic Solver
+    if (do_magnetostatic_solve)
+    {
+        m_magnetostatic_solver = std::make_unique<MagnetostaticSolver>(nlevs_max);
+        Afield_fp.resize(nlevs_max);
     }
 
     if (fft_do_time_averaging)
@@ -2118,12 +2119,6 @@ WarpX::ClearLevel (int lev)
             current_fp_vay[lev][i].reset();
         }
 
-        if (do_magnetostatic_solve)
-        {
-            Afield_fp_nodal[lev][i].reset();
-            Afield_fp[lev][i].reset();
-        }
-
         current_cp[lev][i].reset();
         Efield_cp [lev][i].reset();
         Bfield_cp [lev][i].reset();
@@ -2136,6 +2131,13 @@ WarpX::ClearLevel (int lev)
     if (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameSemiImplicit)
     {
         m_semi_implicit_solver->ClearLevel(lev);
+    }
+    if (do_magnetostatic_solve)
+    {
+        m_magnetostatic_solver->ClearLevel(lev);
+        for (int i = 0; i < 3; ++i) {
+            Afield_fp[lev][i].reset();
+        }
     }
 
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
@@ -2376,9 +2378,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
     if (do_magnetostatic_solve)
     {
-        AllocInitMultiFab(Afield_fp_nodal[lev][0], amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngRho, lev, "Afield_fp_nodal[x]", 0.0_rt);
-        AllocInitMultiFab(Afield_fp_nodal[lev][1], amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngRho, lev, "Afield_fp_nodal[y]", 0.0_rt);
-        AllocInitMultiFab(Afield_fp_nodal[lev][2], amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngRho, lev, "Afield_fp_nodal[z]", 0.0_rt);
         AllocInitMultiFab(Afield_fp[lev][0], amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, lev, "Afield_fp[x]", 0.0_rt);
         AllocInitMultiFab(Afield_fp[lev][1], amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngEB, lev, "Afield_fp[y]", 0.0_rt);
         AllocInitMultiFab(Afield_fp[lev][2], amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngEB, lev, "Afield_fp[z]", 0.0_rt);
@@ -2389,6 +2388,15 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     {
         m_semi_implicit_solver->AllocateLevelMFs(
             lev, ba, dm, ncomps, ngRho, rho_nodal_flag
+        );
+    }
+
+    // Allocate extra multifabs needed by the magnetostatic algorithm.
+    if (do_magnetostatic_solve)
+    {
+        m_magnetostatic_solver->AllocateLevelMFs(
+            lev, ba, dm, ncomps, ngJ, ngRho, jx_nodal_flag, jy_nodal_flag,
+            jz_nodal_flag, rho_nodal_flag
         );
     }
 
@@ -3535,8 +3543,8 @@ WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, cons
         case FieldType::phi_fp :
             field_pointer = phi_fp[lev].get();
             break;
-       case FieldType::vector_potential_fp :
-            field_pointer = Afield_fp_nodal[lev][direction].get();
+       case FieldType::Afield_fp :
+            field_pointer = Afield_fp[lev][direction].get();
             break;
         case FieldType::Efield_cp :
             field_pointer = Efield_cp[lev][direction].get();

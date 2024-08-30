@@ -16,10 +16,15 @@
 #include "Diagnostics/MultiDiagnostics_fwd.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags_fwd.H"
 #include "EmbeddedBoundary/WarpXFaceInfoBox_fwd.H"
+#include "FieldSolver/ElectrostaticSolver.H"
 #include "FieldSolver/ElectrostaticSolver/SemiImplicitSolver_fwd.H"
+#include "FieldSolver/Fields.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel_fwd.H"
+#include "FieldSolver/ImplicitSolvers/ImplicitSolver.H"
+#include "FieldSolver/ImplicitSolvers/WarpXSolverVec.H"
+#include "FieldSolver/MagnetostaticSolver/MagnetostaticSolver_fwd.H"
 #include "Filter/NCIGodfreyFilter_fwd.H"
 #include "Initialization/ExternalField_fwd.H"
 #include "Particles/ParticleBoundaryBuffer_fwd.H"
@@ -39,11 +44,6 @@
 #include "AcceleratorLattice/AcceleratorLattice.H"
 #include "Evolve/WarpXDtType.H"
 #include "Evolve/WarpXPushType.H"
-#include "FieldSolver/Fields.H"
-#include "FieldSolver/ElectrostaticSolver.H"
-#include "FieldSolver/MagnetostaticSolver/MagnetostaticSolver.H"
-#include "FieldSolver/ImplicitSolvers/ImplicitSolver.H"
-#include "FieldSolver/ImplicitSolvers/WarpXSolverVec.H"
 #include "Filter/BilinearFilter.H"
 #include "Parallelization/GuardCellManager.H"
 #include "Utils/Parser/IntervalsParser.H"
@@ -1012,7 +1012,6 @@ public:
                                       amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi) const;
 
     // Magnetostatic Solver Interface
-    MagnetostaticSolver::VectorPoissonBoundaryHandler m_vector_poisson_boundary_handler;
     void ComputeMagnetostaticField ();
     void ComputeMagnetostaticFieldLabFrame ();
     void computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> >& curr,
@@ -1521,7 +1520,6 @@ private:
     // Memory buffers for computing magnetostatic fields
     // Vector Potential A and previous step.  Time buffer needed for computing dA/dt to first order
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Afield_fp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Afield_fp_nodal;
 
     // Same as Bfield_fp/Efield_fp for reading external field data
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp_external;
@@ -1647,11 +1645,14 @@ private:
     // Macroscopic properties
     std::unique_ptr<MacroscopicProperties> m_macroscopic_properties;
 
-    // Hybrid PIC algorithm parameters
+    // Hybrid PIC algorithm class
     std::unique_ptr<HybridPICModel> m_hybrid_pic_model;
 
     // Semi-implicit electrostatic algorithm
     std::unique_ptr<SemiImplicitSolver> m_semi_implicit_solver;
+
+    // Magnetostatic algorithm class
+    std::unique_ptr<MagnetostaticSolver> m_magnetostatic_solver;
 
     // Load balancing
     /** Load balancing intervals that reads the "load_balance_intervals" string int the input file
