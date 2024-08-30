@@ -733,6 +733,14 @@ Distribution across MPI ranks and parallelization
 * ``warpx.do_dynamic_scheduling`` (`0` or `1`) optional (default `1`)
     Whether to activate OpenMP dynamic scheduling.
 
+* ``warpx.roundrobin_sfc`` (`0` or `1`) optional (default `0`)
+    Whether to use AMReX's RRSFS strategy for making DistributionMapping to
+    override the default space filling curve (SFC) strategy. If this is
+    enabled, the round robin method is used to distribute Boxes ordered by
+    SFC. This could potentially mitigate the load imbalance issue during
+    initialization by avoiding putting neighboring boxes on the same
+    process.
+
 .. _running-cpp-parameters-parser:
 
 Math parser and user-defined constants
@@ -2493,6 +2501,10 @@ Additional parameters
     using mesh refinement. These modified Maxwell equation will cause the error
     to propagate (at the speed of light) to the boundaries of the simulation
     domain, where it can be absorbed.
+
+* ``warpx.do_divb_cleaning_external`` (`0` or `1` ; default: 0)
+    Whether to use projection method to scrub B field divergence in externally
+    loaded fields. This is automatically turned on if external B fields are loaded.
 
 * ``warpx.do_subcycling`` (`0` or `1`; default: 0)
     Whether or not to use sub-cycling. Different refinement levels have a
