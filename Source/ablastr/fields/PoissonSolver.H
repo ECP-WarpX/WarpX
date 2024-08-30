@@ -157,11 +157,11 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         // Set the value of beta
         amrex::Array<amrex::Real, AMREX_SPACEDIM> beta_solver =
 #if defined(WARPX_DIM_1D_Z)
-                {{beta[2]}};  // beta_x and beta_z
+            {{ beta[2] }};  // beta_x and beta_z
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        {{ beta[0], beta[2] }};  // beta_x and beta_z
+            {{ beta[0], beta[2] }};  // beta_x and beta_z
 #else
-        {{ beta[0], beta[1], beta[2] }};
+            {{ beta[0], beta[1], beta[2] }};
 #endif
 
 #if !defined(ABLASTR_USE_FFT)
@@ -179,8 +179,8 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         if(is_solver_igf_on_lev0 && lev==0){
             amrex::Array<amrex::Real,AMREX_SPACEDIM> const dx_igf
                     {AMREX_D_DECL(geom[lev].CellSize(0)/std::sqrt(1._rt-beta_solver[0]*beta_solver[0]),
-                                geom[lev].CellSize(1)/std::sqrt(1._rt-beta_solver[1]*beta_solver[1]),
-                                geom[lev].CellSize(2)/std::sqrt(1._rt-beta_solver[2]*beta_solver[2]))};
+                                  geom[lev].CellSize(1)/std::sqrt(1._rt-beta_solver[1]*beta_solver[1]),
+                                  geom[lev].CellSize(2)/std::sqrt(1._rt-beta_solver[2]*beta_solver[2]))};
             if ( max_norm_b == 0 ) {
                 phi[lev]->setVal(0);
             } else {
@@ -215,8 +215,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
                                                                 std::max_element(dx_scaled.begin(), dx_scaled.end())));
             if (dx_scaled[max_dir] > dx_scaled[min_dir]) {
                 semicoarsening_direction = max_dir;
-                max_semicoarsening_level = static_cast<int>
-                (std::log2(dx_scaled[max_dir] / dx_scaled[min_dir]));
+                max_semicoarsening_level = static_cast<int>(std::log2(dx_scaled[max_dir] / dx_scaled[min_dir]));
             }
             if (max_semicoarsening_level > 0) {
                 info.setSemicoarsening(true);
@@ -286,12 +285,12 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
                 amrex::Vector<amrex::DistributionMapping>{dmap[lev]},
                 info
             );
-            linop_tenslap->setBeta( beta_solver ); // for the non-axis-aligned solver
+            linop_tenslap->setBeta(beta_solver); // for the non-axis-aligned solver
             linop = std::move(linop_tenslap);
         }
 
         // Solve the Poisson equation
-        linop->setDomainBC( boundary_handler.lobc, boundary_handler.hibc );
+        linop->setDomainBC(boundary_handler.lobc, boundary_handler.hibc);
 
         amrex::MLMG mlmg(*linop); // actual solver defined here
         mlmg.setVerbose(verbosity);

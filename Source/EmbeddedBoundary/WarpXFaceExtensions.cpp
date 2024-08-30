@@ -174,7 +174,7 @@ WarpX::CountExtFaces () {
         // In 2D we change the extrema of the for loop so that we only have the case idim=1
         for(int idim = 1; idim < AMREX_SPACEDIM; ++idim) {
 #elif defined(WARPX_DIM_3D)
-            for(int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        for(int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
 #else
             WARPX_ABORT_WITH_MESSAGE(
                 "CountExtFaces: Only implemented in 2D3V and 3D3V");
