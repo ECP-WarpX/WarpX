@@ -117,7 +117,7 @@ function(add_warpx_test
     )
 
     # set Python executable
-    set(THIS_Python_EXE)
+    set(THIS_Python_EXE) # FIXME unsetting a variable can expose a cache variable that was previously hidden
     if(python)
         set(THIS_Python_EXE ${Python_EXECUTABLE})
     endif()
@@ -138,18 +138,24 @@ function(add_warpx_test
         # FIXME Use helper function to handle Windows exceptions
         set_property(TEST ${name}.run APPEND PROPERTY ENVIRONMENT "PYTHONPATH=${PYTHONPATH}:${CMAKE_PYTHON_OUTPUT_DIRECTORY}")
     else()
+        # TODO Use these for Python tests too
         set(runtime_params
             "amrex.abort_on_unused_inputs = 1"
-            "amrex.fpe_trap_invalid = 1"
-            "amrex.fpe_trap_overflow = 1"
-            "amrex.fpe_trap_zero = 1"
             "amrex.throw_exception = 1"
             "warpx.always_warn_immediately = 1"
-            # FIXME should come before input file
-            #"warpx.abort_on_warning_threshold = low"
             "warpx.do_dynamic_scheduling = 0"
             "warpx.serialize_initial_conditions = 1"
+            # FIXME should go before input file
+            #"warpx.abort_on_warning_threshold = low"
         )
+        set(runtime_params_fpetrap "")
+        if(WarpX_TEST_FPETRAP)
+            set(runtime_params_fpetrap
+                "amrex.fpe_trap_invalid = 1"
+                "amrex.fpe_trap_overflow = 1"
+                "amrex.fpe_trap_zero = 1"
+            )
+        endif()
         add_test(
             NAME ${name}.run
             COMMAND
@@ -157,6 +163,7 @@ function(add_warpx_test
                 $<TARGET_FILE:app_${SD}>
                 ${INPUTS_FILE}
                 ${runtime_params}
+                ${runtime_params_fpetrap}
                 ${INPUTS_ARGS}
             WORKING_DIRECTORY ${THIS_WORKING_DIR}
         )
@@ -165,7 +172,7 @@ function(add_warpx_test
     # run all tests with 1 OpenMP thread by default
     set_property(TEST ${name}.run APPEND PROPERTY ENVIRONMENT "OMP_NUM_THREADS=1")
 
-    set(THIS_Python_SCRIPT_EXE)
+    set(THIS_Python_SCRIPT_EXE) # FIXME unsetting a variable can expose a cache variable that was previously hidden
     if(python OR WIN32)
         set(THIS_Python_SCRIPT_EXE ${Python_EXECUTABLE})
     endif()

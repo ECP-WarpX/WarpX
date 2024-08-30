@@ -93,6 +93,10 @@ option(WarpX_QED_TOOLS     "Build external tool to generate QED lookup tables (r
 option(WarpX_TEST_CLEANUP "Clean up CI test directories" OFF)
 mark_as_advanced(WarpX_TEST_CLEANUP)
 
+# Advanced option to run CI tests with FPE-trapping runtime parameters
+option(WarpX_TEST_FPETRAP "Run CI tests with FPE-trapping runtime parameters" OFF)
+mark_as_advanced(WarpX_TEST_FPETRAP)
+
 set(WarpX_DIMS_VALUES 1 2 3 RZ)
 set(WarpX_DIMS 3 CACHE STRING "Simulation dimensionality <1;2;3;RZ>")
 list(REMOVE_DUPLICATES WarpX_DIMS)
