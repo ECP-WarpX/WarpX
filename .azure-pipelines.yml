@@ -17,11 +17,8 @@ jobs:
     CMAKE_GENERATOR: 'Ninja'
     FFTW_HOME: '/usr'
     LAPACKPP_HOME: '/usr/local'
-    #OMP_NUM_THREADS: 1
     WARPX_CI_CCACHE: 'TRUE'
-    #WARPX_CI_NUM_MAKE_JOBS: 2
     #WARPX_CI_OPENPMD: 'TRUE'
-    #WARPX_CI_TMP: '/tmp/ci'
 
   strategy:
     # FIXME uncomment all variants
@@ -44,7 +41,7 @@ jobs:
         WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_FFT=ON -DWarpX_PYTHON=ON -DWarpX_EB=ON
         WARPX_RZ_FFT: 'TRUE'
       #single_precision:
-      #  WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_FFT=ON -DWarpX_PRECISION=SINGLE
+      #  WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_FFT=ON -DWarpX_PYTHON=ON -DWarpX_PRECISION=SINGLE
       #  WARPX_RZ_FFT: 'TRUE'
 
   # default: 60; maximum: 360
@@ -145,7 +142,6 @@ jobs:
     displayName: 'Install dependencies'
 
   - bash: |
-      # FIXME remove unused variables/commands
       set -eu -o pipefail
       df -h
       # configure
@@ -156,6 +152,5 @@ jobs:
       # run tests (exclude pytest.AMReX when running Python tests)
       ctest --test-dir build --output-on-failure -E AMReX
       rm -rf build
-      #rm -rf ${WARPX_CI_TMP}
       df -h
     displayName: 'Build & test'
