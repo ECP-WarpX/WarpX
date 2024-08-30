@@ -40,14 +40,18 @@ public:
     /** Allocate member multifabs. Called in constructor. */
     void AllocateMFs (int nlevs_max);
     void AllocateLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
-                           int ncomps, const amrex::IntVect& ngJ, const amrex::IntVect& ngRho,
-                           const amrex::IntVect& jx_nodal_flag, const amrex::IntVect& jy_nodal_flag,
-                           const amrex::IntVect& jz_nodal_flag, const amrex::IntVect& rho_nodal_flag);
+                           int ncomps, const amrex::IntVect& ngJ, const amrex::IntVect& ngEB,
+                           const amrex::IntVect& Ex_nodal_flag, const amrex::IntVect& Ey_nodal_flag,
+                           const amrex::IntVect& Ez_nodal_flag);
 
     /** Helper function to clear values from member multifabs. */
     void ClearLevel (int lev);
 
     void InitData ();
+
+    void UpdateEfromInductance (amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>& Efield,
+                                amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> const& Afield,
+                                Real dt, const int lev);
 
     /** Boundary Handler for the Vector Potential Poisson Solver
      * This only will handle homogeneous Dirichlet boundary conditions on
@@ -165,6 +169,7 @@ public:
 
     // Declare multifabs specifically needed for the magnetostatic solver
     Vector<std::array< std::unique_ptr<MultiFab>, 3 > > Afield_fp_nodal;
+    Vector<std::array< std::unique_ptr<MultiFab>, 3 > > Afield_fp_old;
     Vector<std::array< std::unique_ptr<MultiFab>, 3 > > current_fp_temp;
 };
 #endif //WARPX_MAGNETOSTATICSOLVER_H_

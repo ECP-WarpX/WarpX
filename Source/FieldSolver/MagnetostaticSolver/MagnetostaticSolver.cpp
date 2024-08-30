@@ -190,6 +190,14 @@ WarpX::ComputeMagnetostaticFieldLabFrame()
                            0, 0, 1, current_fp_temp[lev][idim]->nGrowVect());
         }
     }
+
+    // update E-field from the B-field inductance
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        m_magnetostatic_solver->UpdateEfromInductance(
+            Efield_fp[lev], Afield_fp[lev], getdt(lev), lev
+        );
+    }
 }
 
 /* Compute the vector potential `A` by solving the Poisson equation with `J` as
@@ -344,50 +352,49 @@ void MagnetostaticSolver::ReadParameters ()
 void MagnetostaticSolver::AllocateMFs (int nlevs_max)
 {
     Afield_fp_nodal.resize(nlevs_max);
+    Afield_fp_old.resize(nlevs_max);
     current_fp_temp.resize(nlevs_max);
 }
 
 void MagnetostaticSolver::AllocateLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm,
-                                            const int ncomps, const IntVect& ngJ, const IntVect& ngRho,
-                                            const IntVect& jx_nodal_flag,
-                                            const IntVect& jy_nodal_flag,
-                                            const IntVect& jz_nodal_flag,
-                                            const IntVect& rho_nodal_flag)
+                                            const int ncomps, const IntVect& ngJ, const IntVect& ngEB,
+                                            const IntVect& Ex_nodal_flag,
+                                            const IntVect& Ey_nodal_flag,
+                                            const IntVect& Ez_nodal_flag)
 {
     // The "Afield_fp_nodal" multifab is used to store the vector potential
     // as obtained from the linear solver.
-    WarpX::AllocInitMultiFab(Afield_fp_nodal[lev][0], amrex::convert(ba, rho_nodal_flag),
-        dm, ncomps, ngRho, lev, "Afield_fp_nodal[x]", 0.0_rt);
-    WarpX::AllocInitMultiFab(Afield_fp_nodal[lev][1], amrex::convert(ba, rho_nodal_flag),
-        dm, ncomps, ngRho, lev, "Afield_fp_nodal[y]", 0.0_rt);
-    WarpX::AllocInitMultiFab(Afield_fp_nodal[lev][2], amrex::convert(ba, rho_nodal_flag),
-        dm, ncomps, ngRho, lev, "Afield_fp_nodal[z]", 0.0_rt);
+    WarpX::AllocInitMultiFab(Afield_fp_nodal[lev][0], amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
+        dm, ncomps, ngJ, lev, "Afield_fp_nodal[x]", 0.0_rt);
+    WarpX::AllocInitMultiFab(Afield_fp_nodal[lev][1], amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
+        dm, ncomps, ngJ, lev, "Afield_fp_nodal[y]", 0.0_rt);
+    WarpX::AllocInitMultiFab(Afield_fp_nodal[lev][2], amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
+        dm, ncomps, ngJ, lev, "Afield_fp_nodal[z]", 0.0_rt);
+
+    // The "Afield_fp_old" multifab is used to store the vector potential
+    // from the previous solve.
+    WarpX::AllocInitMultiFab(Afield_fp_old[lev][0], amrex::convert(ba, Ex_nodal_flag),
+        dm, ncomps, ngEB, lev, "Afield_fp_old[x]", 0.0_rt);
+    WarpX::AllocInitMultiFab(Afield_fp_old[lev][1], amrex::convert(ba, Ey_nodal_flag),
+        dm, ncomps, ngEB, lev, "Afield_fp_old[y]", 0.0_rt);
+    WarpX::AllocInitMultiFab(Afield_fp_old[lev][2], amrex::convert(ba, Ez_nodal_flag),
+        dm, ncomps, ngEB, lev, "Afield_fp_old[z]", 0.0_rt);
 
     // The "current_fp_temp" multifab is used to store the current density
     // interpolated or extrapolated to appropriate timesteps.
-    WarpX::AllocInitMultiFab(current_fp_temp[lev][0], amrex::convert(ba, jx_nodal_flag),
+    WarpX::AllocInitMultiFab(current_fp_temp[lev][0], amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
         dm, ncomps, ngJ, lev, "current_fp_temp[x]", 0.0_rt);
-    WarpX::AllocInitMultiFab(current_fp_temp[lev][1], amrex::convert(ba, jy_nodal_flag),
+    WarpX::AllocInitMultiFab(current_fp_temp[lev][1], amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
         dm, ncomps, ngJ, lev, "current_fp_temp[y]", 0.0_rt);
-    WarpX::AllocInitMultiFab(current_fp_temp[lev][2], amrex::convert(ba, jz_nodal_flag),
+    WarpX::AllocInitMultiFab(current_fp_temp[lev][2], amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
         dm, ncomps, ngJ, lev, "current_fp_temp[z]", 0.0_rt);
-
-    // the external current density multifab is made nodal to avoid needing to interpolate
-    // to a nodal grid as has to be done for the ion and total current density multifabs
-    // this also allows the external current multifab to not have any ghost cells
-    // WarpX::AllocInitMultiFab(current_fp_external[lev][0], amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
-    //     dm, ncomps, IntVect(AMREX_D_DECL(0,0,0)), lev, "current_fp_external[x]", 0.0_rt);
-    // WarpX::AllocInitMultiFab(current_fp_external[lev][1], amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
-    //     dm, ncomps, IntVect(AMREX_D_DECL(0,0,0)), lev, "current_fp_external[y]", 0.0_rt);
-    // WarpX::AllocInitMultiFab(current_fp_external[lev][2], amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
-    //     dm, ncomps, IntVect(AMREX_D_DECL(0,0,0)), lev, "current_fp_external[z]", 0.0_rt);
-
 }
 
 void MagnetostaticSolver::ClearLevel (int lev)
 {
     for (int i = 0; i < 3; ++i) {
         Afield_fp_nodal[lev][i].reset();
+        Afield_fp_old[lev][i].reset();
         current_fp_temp[lev][i].reset();
     }
 }
@@ -398,5 +405,34 @@ void MagnetostaticSolver::InitData () {
     m_boundary_handler.defineVectorPotentialBCs(
         warpx.field_boundary_lo, warpx.field_boundary_hi, warpx.Geom(0).ProbLo(0)
     );
+}
 
+void MagnetostaticSolver::UpdateEfromInductance (
+    amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>& Efield,
+    amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> const& Afield,
+    Real dt, const int lev
+) {
+    auto dt_inv = 1.0_rt / dt;
+    // The E-field due to inductance (-dA/dt) is added to the E-field, which
+    // already contains the capacitive part from the electrostatic potential.
+    // Here we assume that the time derivative of A does not change over one
+    // step since we only have access to A^{n-1} and A^{n+1}, but should
+    // really find A^{n+3/2} in order to accurately calculate (dA/dt)^{n+1}.
+    // Afield contains A^{n+1} and Afield_fp_old contains A^{n}.
+    // E_ind = -dA/dt = -(Afield - Afield_fp_old) / dt
+    for (int idim = 0; idim < 3; ++idim) {
+        // Use Afield_fp_old as an intermediate storage location to calculate E_ind
+        MultiFab::LinComb(
+            *Afield_fp_old[lev][idim],
+            dt_inv, *Afield_fp_old[lev][idim], 0,
+            -dt_inv, *Afield[idim], 0,
+            0, 1, Afield_fp_old[lev][idim]->nGrowVect()
+        );
+        // Add E_ind to existing E-field
+        MultiFab::Add(*Efield[idim], *Afield_fp_old[lev][idim], 0, 0, 1, Afield_fp_old[lev][idim]->nGrowVect());
+        // Set Afield_fp_old to the current Afield value so that it is available
+        // on the next step as the old A-field
+        MultiFab::Copy(*Afield_fp_old[lev][idim], *Afield[idim],
+                        0, 0, 1, Afield_fp_old[lev][idim]->nGrowVect());
+    }
 }

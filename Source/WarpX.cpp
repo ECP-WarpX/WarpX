@@ -2395,8 +2395,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     if (do_magnetostatic_solve)
     {
         m_magnetostatic_solver->AllocateLevelMFs(
-            lev, ba, dm, ncomps, ngJ, ngRho, jx_nodal_flag, jy_nodal_flag,
-            jz_nodal_flag, rho_nodal_flag
+            lev, ba, dm, ncomps, ngJ, ngEB, Ex_nodal_flag, Ey_nodal_flag,
+            Ez_nodal_flag
         );
     }
 
