@@ -857,7 +857,7 @@ WarpX::ReadParameters ()
 
         // TODO When k-space filtering will be implemented also for Cartesian geometries,
         // this code block will have to be applied in all cases (remove #ifdef condition)
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
         if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
             // With RZ spectral, only use k-space filtering
             use_kspace_filter = use_filter;
@@ -868,7 +868,7 @@ WarpX::ReadParameters ()
             // Filter currently not working with FDTD solver in RZ geometry along R
             // (see https://github.com/ECP-WarpX/WarpX/issues/1943)
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!use_filter || filter_npass_each_dir[0] == 0,
-                "In RZ geometry with FDTD, filtering can only be apply along z. This can be controlled by setting warpx.filter_npass_each_dir");
+                "In cylindrical and spherical geometry with FDTD, filtering can not be done in the radial direction. This can be controlled by setting warpx.filter_npass_each_dir");
         }
 #endif
 
@@ -1140,7 +1140,7 @@ WarpX::ReadParameters ()
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             grid_type != GridType::Hybrid,
-            "warpx.grid_type=hybrid is not implemented in RZ geometry");
+            "warpx.grid_type=hybrid is not implemented in cylindrical and spherical geometry");
 #endif
 
         // If true, the current is deposited on a nodal grid and centered onto
@@ -1181,7 +1181,7 @@ WarpX::ReadParameters ()
         const ParmParse pp_algo("algo");
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( electromagnetic_solver_id != ElectromagneticSolverAlgo::CKC,
-            "algo.maxwell_solver = ckc is not (yet) available for RZ geometry");
+            "algo.maxwell_solver = ckc is not (yet) available for cylindrical and spherical geometry");
 #endif
 #ifndef WARPX_USE_FFT
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD,
@@ -1192,7 +1192,7 @@ WarpX::ReadParameters ()
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(Geom(0).isPeriodic(0) == 0,
             "The problem must not be periodic in the radial direction");
 
-        // Ensure code aborts if PEC is specified at r=0 for RZ
+        // Ensure code aborts if "none" is not specified at r=0 for cylindrical and spherical
         if (Geom(0).ProbLo(0) == 0){
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 WarpX::field_boundary_lo[0] == FieldBoundaryType::None,
@@ -1206,7 +1206,9 @@ WarpX::ReadParameters ()
             }
 
         }
+#endif
 
+#if defined(WARPX_DIM_RZ)
         if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
             // Force grid_type=collocated (neither staggered nor hybrid)
             // and use same shape factors in all directions for gathering
@@ -2264,7 +2266,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     jx_nodal_flag = IntVect(0);
     jy_nodal_flag = IntVect(1);
     jz_nodal_flag = IntVect(1);
-#elif   defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif  defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     // AMReX convention: x = first dimension, y = missing dimension, z = second dimension
     Ex_nodal_flag = IntVect(0,1);
     Ey_nodal_flag = IntVect(1,1);
@@ -2893,7 +2895,7 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
 {
 #if defined(WARPX_DIM_3D)
     const RealVect dx_vect(dx[0], dx[1], dx[2]);
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(WARPX_DIM_XZ)
     const RealVect dx_vect(dx[0], dx[2]);
 #elif defined(WARPX_DIM_1D_Z)
     const RealVect dx_vect(dx[2]);

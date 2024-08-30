@@ -90,7 +90,7 @@ void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
         }
     }
 
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
     if (patch_type == PatchType::fine) {
         ApplyFieldBoundaryOnAxis(getFieldPointer(FieldType::Efield_fp, lev, 0),
                                  getFieldPointer(FieldType::Efield_fp, lev, 1),
@@ -139,7 +139,7 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
         }
     }
 
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
     if (patch_type == PatchType::fine) {
         ApplyFieldBoundaryOnAxis(getFieldPointer(FieldType::Bfield_fp, lev, 0),
                                  getFieldPointer(FieldType::Bfield_fp, lev, 1),
@@ -181,7 +181,7 @@ void WarpX::ApplyJfieldBoundary (const int lev, amrex::MultiFab* Jx,
     }
 }
 
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
 // Applies the boundary conditions that are specific to the axis when in RZ.
 void
 WarpX::ApplyFieldBoundaryOnAxis (amrex::MultiFab* Er, amrex::MultiFab* Et, amrex::MultiFab* Ez, int lev) const
@@ -225,9 +225,11 @@ WarpX::ApplyFieldBoundaryOnAxis (amrex::MultiFab* Er, amrex::MultiFab* Et, amrex
         tbr.setRange(0, -ngE[0], ngE[0]);
         tbt.setRange(0, -ngE[0], ngE[0]);
         tbz.setRange(0, -ngE[0], ngE[0]);
+#ifdef WARPX_DIM_RZ
         tbr.grow(1, ngE[1]);
         tbt.grow(1, ngE[1]);
         tbz.grow(1, ngE[1]);
+#endif
 
         const int nmodes = n_rz_azimuthal_modes;
 

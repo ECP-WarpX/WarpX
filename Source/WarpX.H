@@ -746,7 +746,7 @@ public:
     void ApplyEfieldBoundary (int lev, PatchType patch_type);
     void ApplyBfieldBoundary (int lev, PatchType patch_type, DtType dt_type);
 
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
     // Applies the boundary conditions that are specific to the axis when in RZ.
     void ApplyFieldBoundaryOnAxis (amrex::MultiFab* Er, amrex::MultiFab* Et, amrex::MultiFab* Ez, int lev) const;
 #endif
