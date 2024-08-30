@@ -32,6 +32,10 @@
 #include <ostream>
 #include <vector>
 
+
+// forward declaration
+class WarpX;
+
 /**
  * \brief
  *  This is a wrapper class around a Vector of pointers to MultiFabs that
@@ -47,8 +51,6 @@
  *  and the scalar field can be used for the scalar potential phi, which is the full state of
  *  unknowns for a Darwin electromagnetic model.
  */
-
-class WarpX;
 class WarpXSolverVec
 {
 public:
