@@ -503,6 +503,7 @@ void FiniteDifferenceSolver::CalcBfromVectorPotential (
         );
 #endif
     } else {
+        amrex::ignore_unused(Bfield, Afield, edge_lengths, lev);
         WARPX_ABORT_WITH_MESSAGE("CalcBfromVectorPotential: Unknown algorithm");
     }
 }
@@ -512,8 +513,8 @@ template<typename T_Algo>
 void FiniteDifferenceSolver::CalcBfromVectorPotentialCylindrical (
     amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield,
     amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> const& Afield,
-    [[maybe_unused]] std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-    [[maybe_unused]] const int lev
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& /*edge_lengths*/,
+    const int /*lev*/
 )
 {
     // Loop through the grids, and over the tiles within each grid
@@ -615,8 +616,8 @@ template<typename T_Algo>
 void FiniteDifferenceSolver::CalcBfromVectorPotentialCartesian (
     amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield,
     amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> const& Afield,
-    [[maybe_unused]] std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-    [[maybe_unused]] const int lev
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& /*edge_lengths*/,
+    const int /*lev*/
 )
 {
 // Loop through the grids, and over the tiles within each grid
