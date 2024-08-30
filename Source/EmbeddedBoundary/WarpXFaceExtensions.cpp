@@ -463,7 +463,7 @@ WarpX::ComputeOneWayExtensions ()
             auto &borrowing = (*m_borrowing[maxLevel()][idim])[mfi];
             auto const &borrowing_inds_pointer = borrowing.inds_pointer.array();
             auto const &borrowing_size = borrowing.size.array();
-            amrex::Long ncells = box.numPts();
+            amrex::Long const ncells = box.numPts();
             int* borrowing_inds = borrowing.inds.data();
             FaceInfoBox::Neighbours* borrowing_neigh_faces = borrowing.neigh_faces.data();
             amrex::Real* borrowing_area = borrowing.area.data();
@@ -514,7 +514,7 @@ WarpX::ComputeOneWayExtensions ()
                     for (int i_n = -1; i_n < 2; i_n++) {
                         for (int j_n = -1; j_n < 2; j_n++) {
                             //This if makes sure that we don't visit the "diagonal neighbours"
-                            if( !(i_n == j_n || i_n == -j_n)){
+                            if (i_n != j_n && i_n != -j_n){
                                 // Here a face is available if it doesn't need to be extended itself and if its
                                 // area exceeds Sz_ext. Here we need to take into account if the intruded face
                                 // has given away already some area, so we use Sz_red rather than Sz.
@@ -562,6 +562,8 @@ WarpX::ComputeEightWaysExtensions ()
         throw std::runtime_error("ComputeEightWaysExtensions only works when EBs are enabled at runtime");
     }
 #ifdef AMREX_USE_EB
+    using namespace amrex::literals;
+
 #ifndef WARPX_DIM_RZ
     auto const &cell_size = CellSize(maxLevel());
 
@@ -589,7 +591,7 @@ WarpX::ComputeEightWaysExtensions ()
             auto &borrowing = (*m_borrowing[maxLevel()][idim])[mfi];
             auto const &borrowing_inds_pointer = borrowing.inds_pointer.array();
             auto const &borrowing_size = borrowing.size.array();
-            amrex::Long ncells = box.numPts();
+            amrex::Long const ncells = box.numPts();
             int* borrowing_inds = borrowing.inds.data();
             FaceInfoBox::Neighbours* borrowing_neigh_faces = borrowing.neigh_faces.data();
             amrex::Real* borrowing_area = borrowing.area.data();
@@ -665,7 +667,7 @@ WarpX::ComputeEightWaysExtensions ()
                         neg_face = false;
                         for (int i_n = -1; i_n < 2; i_n++) {
                             for (int j_n = -1; j_n < 2; j_n++) {
-                                if(local_avail(i_n + 1, j_n + 1)){
+                                if (local_avail(i_n + 1, j_n + 1) != 0_rt){
                                     const amrex::Real patch = S_ext * GetNeigh(S, i, j, k, i_n, j_n, idim) / denom;
                                     if(GetNeigh(S_mod, i, j, k, i_n, j_n, idim) - patch <= 0) {
                                         neg_face = true;
@@ -690,7 +692,7 @@ WarpX::ComputeEightWaysExtensions ()
                         int count = 0;
                         for (int i_n = -1; i_n < 2; i_n++) {
                             for (int j_n = -1; j_n < 2; j_n++) {
-                                if(local_avail(i_n + 1, j_n + 1)){
+                                if(local_avail(i_n + 1, j_n + 1) != 0_rt){
                                     const amrex::Real patch = S_ext * GetNeigh(S, i, j, k, i_n, j_n, idim) / denom;
                                     borrowing_inds[ps + count] = ps + count;
                                     FaceInfoBox::addConnectedNeighbor(i_n, j_n, ps + count,

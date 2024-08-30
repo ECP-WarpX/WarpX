@@ -142,9 +142,9 @@ void ChargeOnEB::ComputeDiags (const int step)
 
         // Skip boxes that do not intersect with the embedded boundary
         // (i.e. either fully covered or fully regular)
-        amrex::FabType fab_type = eb_flag[mfi].getType(box);
-        if (fab_type == amrex::FabType::regular) continue;
-        if (fab_type == amrex::FabType::covered) continue;
+        const amrex::FabType fab_type = eb_flag[mfi].getType(box);
+        if (fab_type == amrex::FabType::regular) { continue; }
+        if (fab_type == amrex::FabType::covered) { continue; }
 
         // Extract data for electric field
         const amrex::Array4<const amrex::Real> & Ex_arr = Ex.array(mfi);
@@ -163,7 +163,7 @@ void ChargeOnEB::ComputeDiags (const int step)
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
 
                 // Only cells that are partially covered do contribute to the integral
-                if (eb_flag_arr(i,j,k).isRegular() || eb_flag_arr(i,j,k).isCovered()) return;
+                if (eb_flag_arr(i,j,k).isRegular() || eb_flag_arr(i,j,k).isCovered()) { return; }
 
                 // Find nodal point which is outside of the EB
                 // (eb_normal points towards the *interior* of the EB)
@@ -174,14 +174,14 @@ void ChargeOnEB::ComputeDiags (const int step)
                 // Find cell-centered point which is outside of the EB
                 // (eb_normal points towards the *interior* of the EB)
                 int i_c = i;
-                if ((eb_bnd_normal_arr(i,j,k,0)>0) && (eb_bnd_cent_arr(i,j,k,0)<=0)) i_c -= 1;
-                if ((eb_bnd_normal_arr(i,j,k,0)<0) && (eb_bnd_cent_arr(i,j,k,0)>=0)) i_c += 1;
+                if ((eb_bnd_normal_arr(i,j,k,0)>0) && (eb_bnd_cent_arr(i,j,k,0)<=0)) { i_c -= 1; }
+                if ((eb_bnd_normal_arr(i,j,k,0)<0) && (eb_bnd_cent_arr(i,j,k,0)>=0)) { i_c += 1; }
                 int j_c = j;
-                if ((eb_bnd_normal_arr(i,j,k,1)>0) && (eb_bnd_cent_arr(i,j,k,1)<=0)) j_c -= 1;
-                if ((eb_bnd_normal_arr(i,j,k,1)<0) && (eb_bnd_cent_arr(i,j,k,1)>=0)) j_c += 1;
+                if ((eb_bnd_normal_arr(i,j,k,1)>0) && (eb_bnd_cent_arr(i,j,k,1)<=0)) { j_c -= 1; }
+                if ((eb_bnd_normal_arr(i,j,k,1)<0) && (eb_bnd_cent_arr(i,j,k,1)>=0)) { j_c += 1; }
                 int k_c = k;
-                if ((eb_bnd_normal_arr(i,j,k,2)>0) && (eb_bnd_cent_arr(i,j,k,2)<=0)) k_c -= 1;
-                if ((eb_bnd_normal_arr(i,j,k,2)<0) && (eb_bnd_cent_arr(i,j,k,2)>=0)) k_c += 1;
+                if ((eb_bnd_normal_arr(i,j,k,2)>0) && (eb_bnd_cent_arr(i,j,k,2)<=0)) { k_c -= 1; }
+                if ((eb_bnd_normal_arr(i,j,k,2)<0) && (eb_bnd_cent_arr(i,j,k,2)>=0)) { k_c += 1; }
 
                 // Compute contribution to the surface integral $\int dS \cdot E$)
                 amrex::Real local_integral_contribution = 0;
@@ -192,9 +192,9 @@ void ChargeOnEB::ComputeDiags (const int step)
                 // Add weighting if requested by user
                 if (do_parser_weighting) {
                     // Get the 3D position of the centroid of surface element
-                    amrex::Real x = (i + 0.5_rt + eb_bnd_cent_arr(i,j,k,0))*dx[0] + real_box.lo(0);
-                    amrex::Real y = (j + 0.5_rt + eb_bnd_cent_arr(i,j,k,1))*dx[1] + real_box.lo(1);
-                    amrex::Real z = (k + 0.5_rt + eb_bnd_cent_arr(i,j,k,2))*dx[2] + real_box.lo(2);
+                    const amrex::Real x = (i + 0.5_rt + eb_bnd_cent_arr(i,j,k,0))*dx[0] + real_box.lo(0);
+                    const amrex::Real y = (j + 0.5_rt + eb_bnd_cent_arr(i,j,k,1))*dx[1] + real_box.lo(1);
+                    const amrex::Real z = (k + 0.5_rt + eb_bnd_cent_arr(i,j,k,2))*dx[2] + real_box.lo(2);
                     // Apply weighting
                     local_integral_contribution *= fun_weightingparser(x, y, z);
                 }

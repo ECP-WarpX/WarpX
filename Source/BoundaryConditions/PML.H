@@ -261,7 +261,7 @@ private:
     }
 
 #ifdef AMREX_USE_EB
-    amrex::EBFArrayBoxFactory const& fieldEBFactory () const noexcept {
+    [[nodiscard]] amrex::EBFArrayBoxFactory const& fieldEBFactory () const noexcept {
         return static_cast<amrex::EBFArrayBoxFactory const&>(*pml_field_factory);
     }
 #endif

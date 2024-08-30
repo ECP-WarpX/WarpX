@@ -231,9 +231,9 @@ void HybridPICModel::InitData ()
         auto edge_lengths = std::array<std::unique_ptr<amrex::MultiFab>, 3>();
 #ifdef AMREX_USE_EB
         if (EB::enabled()) {
-            auto& edge_lengths_x = warpx.getField(FieldType::edge_lengths, lev, 0);
-            auto& edge_lengths_y = warpx.getField(FieldType::edge_lengths, lev, 1);
-            auto& edge_lengths_z = warpx.getField(FieldType::edge_lengths, lev, 2);
+            auto const & edge_lengths_x = warpx.getField(FieldType::edge_lengths, lev, 0);
+            auto const & edge_lengths_y = warpx.getField(FieldType::edge_lengths, lev, 1);
+            auto const & edge_lengths_z = warpx.getField(FieldType::edge_lengths, lev, 2);
 
             edge_lengths = std::array< std::unique_ptr<amrex::MultiFab>, 3 >{
                 std::make_unique<amrex::MultiFab>(

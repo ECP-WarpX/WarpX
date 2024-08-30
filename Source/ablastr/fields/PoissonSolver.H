@@ -271,8 +271,9 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
                 // as a float instead of a callable
                 if (boundary_handler.phi_EB_only_t) {
                     linop_nodelap->setEBDirichlet(boundary_handler.potential_eb_t(current_time.value()));
-                } else
+                } else {
                     linop_nodelap->setEBDirichlet(boundary_handler.getPhiEB(current_time.value()));
+                }
             }
 #endif
             linop = std::move(linop_nodelap);

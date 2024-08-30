@@ -148,7 +148,7 @@ struct FindEmbeddedBoundaryIntersection {
         dst.m_rdata[PIdx::z][dst_i] = z_temp;
         dst.m_rdata[PIdx::theta][dst_i] = std::atan2(y_temp, x_temp);
         //save normal components
-        amrex::Real theta=std::atan2(y_temp, x_temp);
+        amrex::Real const theta = std::atan2(y_temp, x_temp);
         dst.m_runtime_rdata[m_normal_index][dst_i] = normal[0]*std::cos(theta);
         dst.m_runtime_rdata[m_normal_index+1][dst_i] = normal[0]*std::sin(theta);
         dst.m_runtime_rdata[m_normal_index+2][dst_i] = normal[1];

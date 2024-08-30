@@ -2212,7 +2212,7 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
 
         if (m_eb_enabled) {
 #ifdef AMREX_USE_EB
-            int max_guard = guard_cells.ng_FieldSolver.max();
+            int const max_guard = guard_cells.ng_FieldSolver.max();
             m_field_factory[lev] = amrex::makeEBFabFactory(Geom(lev), ba, dm,
                                                            {max_guard, max_guard, max_guard},
                                                            amrex::EBSupport::full);
