@@ -11,6 +11,7 @@
 #include "Utils/WarpXConst.H"
 
 #include <AMReX_DenseBins.H>
+#include <AMReX_Math.H>
 #include <AMReX_Particles.H>
 
 #include <AMReX_BaseFwd.H>
@@ -138,15 +139,13 @@ namespace ParticleUtils {
                            amrex::ParticleReal& z, amrex::RandomEngine const& engine )
     {
         using std::sqrt;
-        using std::cos;
-        using std::sin;
         using namespace amrex::literals;
 
-        auto const theta = amrex::Random(engine) * 2.0_prt * MathConst::pi;
         z = 2.0_prt * amrex::Random(engine) - 1.0_prt;
         auto const xy = sqrt(1_prt - z*z);
-        x = xy * cos(theta);
-        y = xy * sin(theta);
+        auto const [sin_theta, cos_theta] = amrex::Math::sincospi(amrex::Random(engine) * 2.0_rt);
+        x = xy * cos_theta;
+        y = xy * sin_theta;
     }
 
 
