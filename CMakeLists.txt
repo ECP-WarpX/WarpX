@@ -89,9 +89,9 @@ option(WarpX_QED_TABLE_GEN "QED table generation (requires PICSAR and Boost)"
 option(WarpX_QED_TOOLS     "Build external tool to generate QED lookup tables (requires PICSAR and Boost)"
                                                                         OFF)
 
-# Advanced option to flag automated CI runs
-option(WarpX_CI "This is a CI run" OFF)
-mark_as_advanced(WarpX_CI)
+# Advanced option to automatically clean up CI test directories
+option(WarpX_TEST_CLEANUP "Clean up CI test directories" OFF)
+mark_as_advanced(WarpX_TEST_CLEANUP)
 
 set(WarpX_DIMS_VALUES 1 2 3 RZ)
 set(WarpX_DIMS 3 CACHE STRING "Simulation dimensionality <1;2;3;RZ>")

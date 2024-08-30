@@ -192,7 +192,7 @@ function(add_warpx_test
     endif()
 
     # CI: remove test directory after run
-    if(WarpX_CI)
+    if(WarpX_TEST_CLEANUP)
         add_test(
             NAME ${name}.cleanup
             COMMAND ${CMAKE_COMMAND} -E rm -rf ${THIS_WORKING_DIR}
@@ -212,7 +212,7 @@ function(add_warpx_test
         if(analysis)
             set_property(TEST ${name}.run APPEND PROPERTY DEPENDS "${dependency}.analysis")
         endif()
-        if(WarpX_CI)
+        if(WarpX_TEST_CLEANUP)
             # do not clean up dependency test before current test is completed
             set_property(TEST ${dependency}.cleanup APPEND PROPERTY DEPENDS "${name}.cleanup")
         endif()
