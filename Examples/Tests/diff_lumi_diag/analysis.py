@@ -9,7 +9,6 @@ import sys
 
 import numpy as np
 from read_raw_data import read_reduced_diags_histogram
-from scipy.constants import eV
 
 sys.path.insert(1, "../../../../warpx/Regression/Checksum/")
 import checksumAPI
@@ -22,7 +21,7 @@ dL_dE_sim = bin_data[-1]  # Differential luminosity at the end of the simulation
 
 # Beam parameters
 N = 1.2e10
-E_beam = 125e9 * eV
+E_beam = 125e9  # in eV
 sigma_x = 500e-9
 sigma_y = 10e-9
 

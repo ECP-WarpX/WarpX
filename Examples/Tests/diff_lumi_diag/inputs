@@ -1,12 +1,11 @@
 #################################
 ########## MY CONSTANTS #########
 #################################
-my_constants.mc2 = m_e*clight*clight
-my_constants.GeV = q_e*1.e9
+my_constants.mc2_eV = m_e*clight*clight/q_e
 
 # BEAMS
-my_constants.beam_energy = 125.*GeV
-my_constants.beam_gamma = beam_energy/(mc2)
+my_constants.beam_energy_eV = 125.e9
+my_constants.beam_gamma = beam_energy_eV/(mc2_eV)
 my_constants.beam_charge = 1.2e10*q_e
 my_constants.sigmax = 500e-9
 my_constants.sigmay = 10e-9
@@ -123,5 +122,5 @@ DifferentialLuminosity_beam1_beam2.type = DifferentialLuminosity
 DifferentialLuminosity_beam1_beam2.intervals = 5
 DifferentialLuminosity_beam1_beam2.species = beam1 beam2
 DifferentialLuminosity_beam1_beam2.bin_number = 128
-DifferentialLuminosity_beam1_beam2.bin_max = 2.1*beam_energy
-DifferentialLuminosity_beam1_beam2.bin_min = 1.9*beam_energy
+DifferentialLuminosity_beam1_beam2.bin_max = 2.1*beam_energy_eV
+DifferentialLuminosity_beam1_beam2.bin_min = 1.9*beam_energy_eV
