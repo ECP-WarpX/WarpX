@@ -178,12 +178,10 @@ class ProjectionDivCleanerTest(object):
         #######################################################################
 
         field_diag = picmi.FieldDiagnostic(
-            name="field_diag",
+            name="diag1",
             grid=self.grid,
             period=self.diag_steps,
             data_list=["B"],
-            write_dir=".",
-            warpx_file_prefix="Python_projection_divb_cleaner_callback_3d_plt",
             warpx_format="plotfile",
         )
         simulation.add_diagnostic(field_diag)

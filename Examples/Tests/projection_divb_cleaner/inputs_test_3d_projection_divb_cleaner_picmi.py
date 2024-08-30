@@ -69,8 +69,6 @@ field_diag = picmi.FieldDiagnostic(
     grid=grid,
     period=1,
     data_list=["Bx", "By", "Bz"],
-    write_dir=".",
-    warpx_file_prefix="Python_projection_divb_cleaner_3d_plt",
     warpx_plot_raw_fields=True,
     warpx_plot_raw_fields_guards=True,
 )
@@ -107,7 +105,7 @@ sim.step(1)
 ##### SIMULATION ANALYSIS ######
 #################################
 
-filename = "Python_projection_divb_cleaner_3d_plt000001"
+filename = "diags/diag1000001"
 
 ds = yt.load(filename)
 grid0 = ds.index.grids[0]
