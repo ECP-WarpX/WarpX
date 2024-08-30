@@ -138,7 +138,8 @@ public:
             amrex::Real const  dt, amrex::Real const dV, index_type coll_idx,
             index_type const cell_start_pair, index_type* AMREX_RESTRICT p_mask,
             index_type* AMREX_RESTRICT p_pair_indices_1, index_type* AMREX_RESTRICT p_pair_indices_2,
-            amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight,
+            amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight1,
+            amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight2,
             amrex::RandomEngine const& engine) const
         {
             amrex::ParticleReal * const AMREX_RESTRICT w1 = soa_1.m_rdata[PIdx::w];
@@ -203,7 +204,9 @@ public:
                         u1x[ I1[i1] ], u1y[ I1[i1] ], u1z[ I1[i1] ],
                         u2x[ I2[i2] ], u2y[ I2[i2] ], u2z[ I2[i2] ],
                         m1, m2, w1[ I1[i1] ], w2[ I2[i2] ],
-                        dt, dV, static_cast<int>(pair_index), p_mask, p_pair_reaction_weight,
+                        dt, dV, static_cast<int>(pair_index), p_mask,
+                        p_pair_reaction_weight1,
+                        p_pair_reaction_weight2,
                         m_fusion_multiplier, multiplier_ratio,
                         m_probability_threshold,
                         m_probability_target_value,
@@ -218,9 +221,9 @@ public:
                     // Remove pair reaction weight from the colliding particles' weights
                     if (p_mask[pair_index]) {
                         BinaryCollisionUtils::remove_weight_from_colliding_particle(
-                            w1[ I1[i1] ], idcpu1[ I1[i1] ], p_pair_reaction_weight[pair_index]);
+                            w1[ I1[i1] ], idcpu1[ I1[i1] ], p_pair_reaction_weight1[pair_index]);
                         BinaryCollisionUtils::remove_weight_from_colliding_particle(
-                            w2[ I2[i2] ], idcpu2[ I2[i2] ], p_pair_reaction_weight[pair_index]);
+                            w2[ I2[i2] ], idcpu2[ I2[i2] ], p_pair_reaction_weight2[pair_index]);
                     }
 
                 }

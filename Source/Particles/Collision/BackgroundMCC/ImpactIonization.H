@@ -198,8 +198,7 @@ public:
         auto& i_uz = dst2.m_rdata[PIdx::uz][i_dst2];
 
         // calculate kinetic energy
-        const ParticleReal u_coll2 = ux*ux + uy*uy + uz*uz;
-        ParticleUtils::getEnergy(u_coll2, m_mass1, E_coll);
+        ParticleUtils::getEnergy(ux, uy, uz, m_mass1, E_coll);
 
         // each electron gets half the energy (could change this later)
         const auto E_out = static_cast<amrex::ParticleReal>((E_coll - m_energy_cost) / 2.0_prt * PhysConst::q_e);

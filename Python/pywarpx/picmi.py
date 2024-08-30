@@ -2374,13 +2374,27 @@ class DSMCCollisions(picmistandard.base._ClassWithInit):
 
     ndt: integer, optional
         The collisions will be applied every "ndt" steps. Must be 1 or larger.
+
+    minimum_splitting_weight_ratio: float, default 2
+        If during a collision the ratio of a reacting particle's weight to the
+        reaction weight is less than or equal to this number, the left over
+        original and produced particles will be merged.
     """
 
-    def __init__(self, name, species, scattering_processes, ndt=None, **kw):
+    def __init__(
+        self,
+        name,
+        species,
+        scattering_processes,
+        ndt=None,
+        minimum_splitting_weight_ratio=None,
+        **kw,
+    ):
         self.name = name
         self.species = species
         self.scattering_processes = scattering_processes
         self.ndt = ndt
+        self.minimum_splitting_weight_ratio = minimum_splitting_weight_ratio
 
         self.handle_init(kw)
 
@@ -2389,6 +2403,7 @@ class DSMCCollisions(picmistandard.base._ClassWithInit):
         collision.type = "dsmc"
         collision.species = [species.name for species in self.species]
         collision.ndt = self.ndt
+        collision.minimum_splitting_weight_ratio = self.minimum_splitting_weight_ratio
 
         collision.scattering_processes = self.scattering_processes.keys()
         for process, kw in self.scattering_processes.items():

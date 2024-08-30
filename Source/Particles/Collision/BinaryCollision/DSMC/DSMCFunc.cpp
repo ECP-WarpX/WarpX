@@ -73,8 +73,12 @@ DSMCFunc::DSMCFunc (
     }
 #endif
 
+    // get the minimum reaction weight ratio at which particles should be split
+    pp_collision_name.query("minimum_splitting_weight_ratio", m_min_splitting_weight_ratio);
+
     // Link executor to appropriate ScatteringProcess executors
     m_exe.m_scattering_processes_data = m_scattering_processes_exe.data();
     m_exe.m_process_count = process_count;
     m_exe.m_isSameSpecies = m_isSameSpecies;
+    m_exe.m_min_splitting_weight_ratio = m_min_splitting_weight_ratio;
 }

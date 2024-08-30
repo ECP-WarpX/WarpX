@@ -54,6 +54,24 @@ namespace ParticleUtils {
     }
 
     /**
+     * \brief Return (relativistic) particle energy given velocity vector and mass.
+     * Note the use of `double` since this calculation is prone to error with
+     * single precision.
+     *
+     * @param[in] ux, uy, uz particle velocity components
+     * @param[in] mass particle mass
+     * @param[out] energy particle energy in eV
+     */
+    AMREX_GPU_HOST_DEVICE AMREX_INLINE
+    void getEnergy ( amrex::ParticleReal const ux, amrex::ParticleReal const uy,
+                     amrex::ParticleReal const uz, double const mass,
+                     double& energy )
+    {
+        const amrex::ParticleReal u2 = ux*ux + uy*uy + uz*uz;
+        getEnergy(u2, mass, energy);
+    }
+
+    /**
      * \brief Return (relativistic) collision energy assuming the target (with
      * mass M) is stationary and the projectile is approaching with the
      * the given speed and mass m. Note the use of `double` since this

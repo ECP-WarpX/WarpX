@@ -306,6 +306,7 @@ class CapacitiveDischargeExample(object):
                 species=[self.ions, self.neutrals],
                 ndt=5,
                 scattering_processes=ion_scattering_processes,
+                minimum_splitting_weight_ratio=5.0,
             )
         else:
             ion_colls = picmi.MCCCollisions(
