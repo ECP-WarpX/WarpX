@@ -83,8 +83,7 @@ curl -sOL https://github.com/openPMD/openPMD-example-datasets/raw/4ba1d257c5b489
 cd -
 
 # Clone the AMReX regression test utility
-#git clone https://github.com/AMReX-Codes/regression_testing.git
-git clone -b write_cmake_output https://github.com/dpgrote/regression_testing.git
+git clone https://github.com/AMReX-Codes/regression_testing.git
 
 # Prepare regression tests
 mkdir -p rt-WarpX/WarpX-benchmarks
