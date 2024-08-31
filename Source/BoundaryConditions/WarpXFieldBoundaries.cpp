@@ -182,7 +182,7 @@ void WarpX::ApplyJfieldBoundary (const int lev, amrex::MultiFab* Jx,
 }
 
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
-// Applies the boundary conditions that are specific to the axis when in RZ.
+// Applies the boundary conditions that are specific to the axis when in cylinderical or spherical
 void
 WarpX::ApplyFieldBoundaryOnAxis (amrex::MultiFab* Er, amrex::MultiFab* Et, amrex::MultiFab* Ez, int lev) const
 {

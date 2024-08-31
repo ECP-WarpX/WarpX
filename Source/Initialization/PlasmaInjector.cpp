@@ -382,6 +382,8 @@ void PlasmaInjector::setupNFluxPerCell (amrex::ParmParse const& pp_species)
 void PlasmaInjector::setupNuniformPerCell (amrex::ParmParse const& pp_species)
 {
     // Note that for RZ, three numbers are expected, r, theta, and z.
+    // For RCYLINDER, two numbers are expected, r, theta.
+    // For RSPHERE, three numbers are expected, r, theta, and phi
     // For 2D, only two are expected. The third is overwritten with 1.
     // For 1D, only one is expected. The second and third are overwritten with 1.
 #if defined(WARPX_DIM_1D_Z)
