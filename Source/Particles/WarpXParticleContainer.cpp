@@ -1269,7 +1269,7 @@ WarpXParticleContainer::DepositCharge (std::unique_ptr<amrex::MultiFab>& rho,
     }
 #endif
 
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
     if (apply_boundary_and_scale_volume)
     {
         WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho.get(), lev);
@@ -1287,7 +1287,7 @@ WarpXParticleContainer::DepositCharge (std::unique_ptr<amrex::MultiFab>& rho,
         );
     }
 
-#ifndef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
     if (apply_boundary_and_scale_volume)
     {
         // Reflect density over PEC boundaries, if needed.
@@ -1627,7 +1627,8 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
 
                     ParticleReal x, y, z;
                     GetPosition.AsStored(i, x, y, z);
-                    // Note that for RZ, (x, y, z) is actually (r, theta, z), or (r, theta, phi).
+                    // Note that for RZ and RCYLINDER, (x, y, z) is actually (r, theta, z),
+                    // and for RSPHERE (r, theta, phi).
 
                     bool particle_lost = false;
                     ApplyParticleBoundaries::apply_boundaries(x, y, z, gridmin, gridmax,

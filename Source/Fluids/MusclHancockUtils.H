@@ -197,7 +197,7 @@ void plus_index_offsets (int i, int j, int k, int& ip, int& jp, int& kp, int com
     if (comp == 0) { //z
         ip =  i - 1; jp =  j; kp = k;
     }
-#elif defined(WARPX_DIM_1D)
+#elif defined(WARPX_DIM_1D_Z)
     if (comp == 2) { //z
         ip =  i - 1; jp =  j; kp = k;
     }
@@ -303,7 +303,7 @@ amrex::Real DownDx_N (const amrex::Array4<amrex::Real>& N, int i, int j, int k)
 {
     using namespace amrex::literals;
     // Write the correct differences
-#if defined(WARPX_DIM_1D)
+#if defined(WARPX_DIM_1D_Z)
     amrex::ignore_unused(N, i, j, k);
     return 0.0_rt;
 #else
@@ -316,7 +316,7 @@ amrex::Real UpDx_N (const amrex::Array4<amrex::Real>& N, int i, int j, int k)
 {
     using namespace amrex::literals;
     // Write the correct differences
-#if defined(WARPX_DIM_1D)
+#if defined(WARPX_DIM_1D_Z)
     amrex::ignore_unused(N, i, j, k);
     return 0.0_rt;
 #else
@@ -359,7 +359,7 @@ amrex::Real DownDz_N (const amrex::Array4<amrex::Real>& N, int i, int j, int k)
     return N(i,j,k) -  N(i,j,k-1);
 #elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
     return N(i,j,k) -  N(i,j-1,k);
-#elif defined(WARPX_DIM_1D)
+#elif defined(WARPX_DIM_1D_Z)
     return N(i,j,k) -  N(i-1,j,k);
 #else
     amrex::ignore_unused(N, i, j, k);
@@ -376,7 +376,7 @@ amrex::Real UpDz_N (const amrex::Array4<amrex::Real>& N, int i, int j, int k)
     return N(i,j,k+1) -  N(i,j,k);
 #elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
     return N(i,j+1,k) -  N(i,j,k);
-#elif defined(WARPX_DIM_1D)
+#elif defined(WARPX_DIM_1D_Z)
     return N(i+1,j,k) -  N(i,j,k);
 #else
     amrex::ignore_unused(N, i, j, k);
@@ -392,7 +392,7 @@ const amrex::Array4<amrex::Real>& NU, amrex::Real& U, int i, int j, int k)
 {
     using namespace amrex::literals;
     // Write the correct differences
-#if defined(WARPX_DIM_1D)
+#if defined(WARPX_DIM_1D_Z)
     amrex::ignore_unused(N, NU, U, i, j, k);
     return 0.0_rt;
 #else
@@ -409,7 +409,7 @@ const amrex::Array4<amrex::Real>& NU, amrex::Real& U, int i, int j, int k)
 {
     using namespace amrex::literals;
     // Write the correct differences
-#if defined(WARPX_DIM_1D)
+#if defined(WARPX_DIM_1D_Z)
     amrex::ignore_unused(N, NU, U, i, j, k);
     return 0.0_rt;
 #else
@@ -469,7 +469,7 @@ const amrex::Array4<amrex::Real>& NU, amrex::Real& U, int i, int j, int k)
     if (N(i,j,k-1) > 0) { U_m = NU(i,j,k-1)/N(i,j,k-1); }
 #elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
     if (N(i,j-1,k) > 0) { U_m = NU(i,j-1,k)/N(i,j-1,k); }
-#elif defined(WARPX_DIM_1D)
+#elif defined(WARPX_DIM_1D_Z)
     if (N(i-1,j,k) > 0) { U_m = NU(i-1,j,k)/N(i-1,j,k); }
 #else
     amrex::ignore_unused(N, NU, U, i, j, k);
@@ -493,7 +493,7 @@ const amrex::Array4<amrex::Real>& NU, amrex::Real& U, int i, int j, int k)
     if (N(i,j,k+1) > 0) { U_p = NU(i,j,k+1)/N(i,j,k+1); }
 #elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
     if (N(i,j+1,k) > 0) { U_p = NU(i,j+1,k)/N(i,j+1,k); }
-#elif defined(WARPX_DIM_1D)
+#elif defined(WARPX_DIM_1D_Z)
     if (N(i+1,j,k) > 0) { U_p = NU(i+1,j,k)/N(i+1,j,k); }
 #else
     amrex::ignore_unused(N, NU, U, i, j, k);

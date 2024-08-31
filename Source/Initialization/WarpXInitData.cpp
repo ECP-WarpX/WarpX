@@ -675,7 +675,7 @@ WarpX::InitFromScratch ()
 
         // Add space to save the positions and velocities at the start of the time steps
         for (auto const& pc : *mypc) {
-#if !defined(WARPX_DIM_1D)
+#if !defined(WARPX_DIM_1D_Z)
             pc->AddRealComp("x_n");
 #endif
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)

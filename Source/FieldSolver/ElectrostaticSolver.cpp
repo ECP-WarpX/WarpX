@@ -253,7 +253,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
         }
     }
     SyncRho(rho_fp, rho_cp, charge_buf); // Apply filter, perform MPI exchange, interpolate across levels
-#ifndef WARPX_DIM_RZ
+#if !defined(WARPX_DIM_RZ) && !defined(WARPX_DIM_RCYLINDER) && !defined(WARPX_DIM_RSPHERE)
     for (int lev = 0; lev <= finestLevel(); lev++) {
         // Reflect density over PEC boundaries, if needed.
         ApplyRhofieldBoundary(lev, rho_fp[lev].get(), PatchType::fine);

@@ -74,7 +74,7 @@ public:
     /** Construct a NamedComponentParticleContainer from an AmrParGDB object
      *
      * In this case, the only components are the default ones:
-     * weight, momentum and (in RZ geometry) theta.
+     * weight, momentum, (in RZ and RCYLINDER geometry) theta, and (in RSPHERE) phi.
      *
      * @param amr_pgdb A pointer to a ParGDBBase, which contains pointers to
      * the Geometry, DistributionMapping, and BoxArray objects that define the

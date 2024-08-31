@@ -259,7 +259,7 @@ WarpX::setVectorPotentialBC ( amrex::Vector<amrex::Array<std::unique_ptr<amrex::
 void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs ( )
 {
     for (int adim = 0; adim < 3; adim++) {
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
         int dim_start = 0;
         WarpX& warpx = WarpX::GetInstance();
         auto geom = warpx.Geom(0);

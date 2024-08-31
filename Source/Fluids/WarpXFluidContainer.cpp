@@ -209,7 +209,7 @@ void WarpXFluidContainer::InitData(int lev, amrex::Box init_box, amrex::Real cur
                 const amrex::Real x = problo[0] + i * dx[0];
                 const amrex::Real y = 0.0_rt;
                 amrex::Real z = problo[1] + j * dx[1];
-#elif defined(WARPX_DIM_1D)
+#elif defined(WARPX_DIM_1D_Z)
                 const amrex::Real x = 0.0_rt;
                 const amrex::Real y = 0.0_rt;
                 amrex::Real z = problo[0] + i * dx[0];
@@ -431,7 +431,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
     const amrex::Real dt_over_dx_half = 0.5_rt*(dt/dx[0]);
     const amrex::Real dt_over_dz_half = 0.5_rt*(dt/dx[1]);
     const amrex::Box& domain = geom.Domain();
-#elif defined(WARPX_DIM_1D)
+#elif defined(WARPX_DIM_1D_Z)
     const amrex::Real dt_over_dz = (dt/dx[0]);
     const amrex::Real dt_over_dz_half = 0.5_rt*(dt/dx[0]);
 #elif defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
@@ -455,7 +455,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
     amrex::MultiFab tmp_U_plus_x( amrex::convert(ba, IntVect(0,1)), N[lev]->DistributionMap(), 4, 1);
     amrex::MultiFab tmp_U_minus_z( amrex::convert(ba, IntVect(1,0)), N[lev]->DistributionMap(), 4, 1);
     amrex::MultiFab tmp_U_plus_z( amrex::convert(ba, IntVect(1,0)), N[lev]->DistributionMap(), 4, 1);
-#elif defined(WARPX_DIM_1D)
+#elif defined(WARPX_DIM_1D_Z)
     amrex::MultiFab tmp_U_minus_z( amrex::convert(ba, IntVect(0)), N[lev]->DistributionMap(), 4, 1);
     amrex::MultiFab tmp_U_plus_z( amrex::convert(ba, IntVect(0)), N[lev]->DistributionMap(), 4, 1);
 #elif defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
@@ -501,7 +501,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         amrex::Box const box_x = amrex::convert( box, tmp_U_minus_x.ixType() );
         amrex::Box const box_z = amrex::convert( box, tmp_U_minus_z.ixType() );
-#elif defined(WARPX_DIM_1D)
+#elif defined(WARPX_DIM_1D_Z)
         amrex::Box const box_z = amrex::convert( box, tmp_U_minus_z.ixType() );
 #elif defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
         amrex::Box const box_x = amrex::convert( box, tmp_U_minus_x.ixType() );
@@ -524,7 +524,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
         const amrex::Array4<amrex::Real> U_plus_x = tmp_U_plus_x.array(mfi);
         const amrex::Array4<amrex::Real> U_minus_z = tmp_U_minus_z.array(mfi);
         const amrex::Array4<amrex::Real> U_plus_z = tmp_U_plus_z.array(mfi);
-#elif defined(WARPX_DIM_1D)
+#elif defined(WARPX_DIM_1D_Z)
         const amrex::Array4<amrex::Real> U_minus_z = tmp_U_minus_z.array(mfi);
         const amrex::Array4<amrex::Real> U_plus_z = tmp_U_plus_z.array(mfi);
 #elif defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
@@ -553,7 +553,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     // J represents are 4x4 matrices that show up in the advection
                     // equations written as a function of U = {N, Ux, Uy, Uz}:
                     // \partial_t U + Jx \partial_x U + Jy \partial_y U + Jz \partial_z U = 0
-#if !defined(WARPX_DIM_1D)
+#if !defined(WARPX_DIM_1D_Z)
                     const amrex::Real Vx = Ux/gamma;
                     // Compute the non-zero element of Jx
                     const amrex::Real J00x = Vx;
@@ -737,7 +737,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     positivity_limiter (U_plus_x, U_minus_x,  N_arr, i, j, k, box_x, Ux, Uy, Uz, 0);
     #endif
 
-#elif defined(WARPX_DIM_1D)
+#elif defined(WARPX_DIM_1D_Z)
 
                     // Compute U ([ N, U]) at the halfsteps (U_tilde) using the slopes (dU)
                     const amrex::Real  JdU0z = J00z*dU0z + J01z*dU1z + J02z*dU2z + J03z*dU3z;
@@ -766,7 +766,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 #elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
                     set_U_edges_to_zero(U_minus_x, U_plus_x, i, j, k, box_x, 0);
                     set_U_edges_to_zero(U_minus_z, U_plus_z, i, j, k, box_z, 2);
-#elif defined(WARPX_DIM_1D)
+#elif defined(WARPX_DIM_1D_Z)
                     set_U_edges_to_zero(U_minus_z, U_plus_z, i, j, k, box_z, 2);
 #elif defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
                     set_U_edges_to_zero(U_minus_x, U_plus_x, i, j, k, box_x, 2);
@@ -800,7 +800,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
         amrex::Array4<amrex::Real> const &U_plus_x = tmp_U_plus_x.array(mfi);
         amrex::Array4<amrex::Real> const &U_minus_z = tmp_U_minus_z.array(mfi);
         amrex::Array4<amrex::Real> const &U_plus_z = tmp_U_plus_z.array(mfi);
-#elif defined(WARPX_DIM_1D)
+#elif defined(WARPX_DIM_1D_Z)
         amrex::Array4<amrex::Real> const &U_minus_z = tmp_U_minus_z.array(mfi);
         amrex::Array4<amrex::Real> const &U_plus_z = tmp_U_plus_z.array(mfi);
 #elif defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
@@ -962,7 +962,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                 NUy_arr(i,j,k) = NUy_arr(i,j,k) - (dt/Vij)*(F2_plusx - F2_minusx);
                 NUz_arr(i,j,k) = NUz_arr(i,j,k) - (dt/Vij)*(F3_plusx - F3_minusx);
 
-#elif defined(WARPX_DIM_1D)
+#elif defined(WARPX_DIM_1D_Z)
 
                 // Update the conserved variables Q = [N, NU] from tn -> tn + dt
                 N_arr(i,j,k) = N_arr(i,j,k) - dt_over_dz*dF(U_minus_z,U_plus_z,i,j,k,clight,0,2);
@@ -1174,7 +1174,7 @@ void WarpXFluidContainer::GatherAndPush (
                             const amrex::Real x = problo[0] + i * dx[0];
                             const amrex::Real y = 0.0_rt;
                             const amrex::Real z = problo[1] + j * dx[1];
-#elif defined(WARPX_DIM_1D)
+#elif defined(WARPX_DIM_1D_Z)
                             const amrex::Real x = 0.0_rt;
                             const amrex::Real y = 0.0_rt;
                             const amrex::Real z = problo[0] + i * dx[0];
@@ -1239,7 +1239,7 @@ void WarpXFluidContainer::GatherAndPush (
                             const amrex::Real x = problo[0] + i * dx[0];
                             const amrex::Real y = 0.0_rt;
                             const amrex::Real z = problo[1] + j * dx[1];
-#elif defined(WARPX_DIM_1D)
+#elif defined(WARPX_DIM_1D_Z)
                             const amrex::Real x = 0.0_rt;
                             const amrex::Real y = 0.0_rt;
                             const amrex::Real z = problo[0] + i * dx[0];
@@ -1264,7 +1264,7 @@ void WarpXFluidContainer::GatherAndPush (
                             const amrex::Real x = problo[0] + i * dx[0];
                             const amrex::Real y = 0.0_rt;
                             const amrex::Real z = problo[1] + j * dx[1];
-#elif defined(WARPX_DIM_1D)
+#elif defined(WARPX_DIM_1D_Z)
                             const amrex::Real x = 0.0_rt;
                             const amrex::Real y = 0.0_rt;
                             const amrex::Real z = problo[0] + i * dx[0];
