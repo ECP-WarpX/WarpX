@@ -112,6 +112,7 @@ void ParseGeometryInput()
 void ReadBoostedFrameParameters(Real& gamma_boost, Real& beta_boost,
                                 Vector<int>& boost_direction)
 {
+#if !defined(WARPX_DIM_RCYLINDER) && !defined(WARPX_DIM_RSPHERE)
     const ParmParse pp_warpx("warpx");
     utils::parser::queryWithParser(pp_warpx, "gamma_boost", gamma_boost);
     if( gamma_boost > 1. ) {
@@ -136,6 +137,9 @@ void ReadBoostedFrameParameters(Real& gamma_boost, Real& beta_boost,
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( s == "z" || s == "Z" ,
             "The boost must be in the z direction.");
     }
+#else
+    amrex::ignore_unused(gamma_boost, beta_boost, boost_direction);
+#endif
 }
 
 void ConvertLabParamsToBoost()
