@@ -73,9 +73,9 @@ ColliderRelevant::ColliderRelevant (const std::string& rd_name)
         "Collider-relevant diagnostics must involve exactly two species");
 
     // RZ coordinate is not supported
-#if (defined WARPX_DIM_RZ)
+#if (defined WARPX_DIM_RZ) || (defined WARPX_DIM_RCYLINDER) || (defined WARPX_DIM_RSPHERE)
     WARPX_ABORT_WITH_MESSAGE(
-        "Collider-relevant diagnostics do not work in RZ geometry.");
+        "Collider-relevant diagnostics do not work in cylindrical and spherical geometry.");
 #endif
 
     ablastr::warn_manager::WMRecordWarning(
@@ -190,7 +190,7 @@ ColliderRelevant::ColliderRelevant (const std::string& rd_name)
 
 void ColliderRelevant::ComputeDiags (int step)
 {
-#if defined(WARPX_DIM_RZ)
+#if (defined WARPX_DIM_RZ) || (defined WARPX_DIM_RCYLINDER) || (defined WARPX_DIM_RSPHERE)
     amrex::ignore_unused(step);
 #else
 

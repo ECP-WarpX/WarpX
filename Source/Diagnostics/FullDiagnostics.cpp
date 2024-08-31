@@ -494,7 +494,7 @@ FullDiagnostics::AddRZModesToDiags (int lev)
 
 void
 FullDiagnostics::AddRZModesToOutputNames (const std::string& field, int ncomp){
-#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+#if defined(WARPX_DIM_RZ)
     // In cylindrical geometry, real and imag part of each mode are also
     // dumped to file separately, so they need to be added to m_varnames
     m_varnames.push_back( field + "_0_real" );
@@ -833,6 +833,7 @@ FullDiagnostics::MovingWindowAndGalileanDomainShift (int step)
     }
 #elif defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
     {
+        // No shift is applied
         new_lo[0] = current_lo[0];
         new_hi[0] = current_hi[0];
     }

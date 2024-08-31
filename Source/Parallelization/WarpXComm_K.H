@@ -315,6 +315,7 @@ void warpx_interp (int j, int k, int l,
 
     // NOTE Indices (j,k,l) in the following refer to:
     // - (z,-,-) in 1D
+    // - (r,-,-) in RCYLINDER and RSPHERE
     // - (x,z,-) in 2D
     // - (r,z,-) in RZ
     // - (x,y,z) in 3D

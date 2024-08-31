@@ -325,7 +325,7 @@ namespace detail
             return {{openPMD::UnitDimension::L, -2.}};
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RCYLINDER)
             return {{openPMD::UnitDimension::L, -1.}};
-#else  // 3D and RZ
+#else  // 3D, RZ, and RSPHERE
             return {};
 #endif
         } else if( record_name == "E" ) {
@@ -1250,7 +1250,7 @@ WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
     std::vector<double> const grid_spacing = getReversedVec(full_geom.CellSize());
     // - Global offset
     std::vector<double> const global_offset = getReversedVec(full_geom.ProbLo());
-#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+#if defined(WARPX_DIM_RZ)
     if (var_in_theta_mode) {
             global_size.emplace(global_size.begin(), WarpX::ncomps);
     }
