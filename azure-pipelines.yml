@@ -27,8 +27,10 @@ jobs:
 #    vmImage: ubuntu-20.04
 #  steps:
 #  - script: |
-#      python3 -m pip install -U pip --user
-#      python3 -m pip install pywarpx --user
+#      python3 -m pip install -U pip
+#      python3 -m pip install -U build packaging setuptools wheel
+#      python3 -m pip install -U cmake
+#      python3 -m pip install pywarpx
 #  - script: |
 #      python3 -c "import pywarpx as api; print(api.variants)"
 #      python3 -m pywarpx --help
@@ -40,9 +42,11 @@ jobs:
 #    vmImage: ubuntu-20.04
 #  steps:
 #  - script: |
-#      python3 -m pip install -U pip setuptools wheel --user
-#      python3 -m pip install -U cmake --user
-#      python3 -m pip install pywarpx --no-binary pywarpx --user
+#      python3 -m pip install -U pip
+#      python3 -m pip install -U build packaging setuptools wheel
+#      python3 -m pip install -U cmake
+#      python3 -m pip install -U cmake
+#      python3 -m pip install pywarpx --no-binary pywarpx
 #  - script: |
 #      python3 -c "from pywarpx import picmi; print(api.variants)"
 #      python3 -m pywarpx --help
@@ -58,8 +62,10 @@ jobs:
 #      sudo apt-get install -y pypy3
 #      wget https://bootstrap.pypa.io/get-pip.py
 #      pypy3 get-pip.py
-#      pypy3 -m pip install -U pip --user
-#      pypy3 -m pip install pywarpx --user
+#      python3 -m pip install -U pip
+#      python3 -m pip install -U build packaging setuptools wheel
+#      python3 -m pip install -U cmake
+#      pypy3 -m pip install pywarpx
 #  - script: pypy3 -c "from pywarpx import picmi; print(api.variants)"
 
 #- job: linux_pypy_pypi_nobin
@@ -72,9 +78,11 @@ jobs:
 #      sudo apt-get install -y pypy3
 #      wget https://bootstrap.pypa.io/get-pip.py
 #      pypy3 get-pip.py
-#      pypy3 -m pip install -U pip setuptools wheel --user
-#      pypy3 -m pip install -U cmake --user
-#      pypy3 -m pip install pywarpx --no-binary pywarpx --user
+#      python3 -m pip install -U pip
+#      python3 -m pip install -U build packaging setuptools wheel
+#      python3 -m pip install -U cmake
+#      pypy3 -m pip install -U cmake
+#      pypy3 -m pip install pywarpx --no-binary pywarpx
 #  - script: pypy3 -c "from pywarpx import picmi; print(api.variants)"
 
 #- job: linux_pip_pypi_mpich
@@ -85,9 +93,11 @@ jobs:
 #  - script: |
 #      sudo apt-get update
 #      sudo apt-get install -y libmpich-dev
-#      python3 -m pip install -U pip setuptools wheel --user
-#      python3 -m pip install -U cmake --user
-#      WARPX_MPI=ON python3 -m pip install pywarpx --no-binary pywarpx --user
+#      python3 -m pip install -U pip
+#      python3 -m pip install -U build packaging setuptools wheel
+#      python3 -m pip install -U cmake
+#      python3 -m pip install -U cmake
+#      WARPX_MPI=ON python3 -m pip install pywarpx --no-binary pywarpx
 #  - script: |
 #      python3 -c "from pywarpx import picmi; print(api.variants)"
 #      python3 -m pywarpx --help
@@ -102,10 +112,11 @@ jobs:
   - script: |
       sudo apt-get update
       sudo apt-get install -y libopenmpi-dev
-      python3 -m pip install -U pip setuptools wheel --user
-      python3 -m pip install -U cmake --user
+      python3 -m pip install -U pip
+      python3 -m pip install -U build packaging setuptools wheel
+      python3 -m pip install -U cmake
       python3 --version
-      WARPX_MPI=ON python3 -m pip install git+https://github.com/ECP-WarpX/WarpX.git@development --user
+      WARPX_MPI=ON python3 -m pip install git+https://github.com/ECP-WarpX/WarpX.git@development
   - script: |
       python3 -c "from pywarpx import picmi"
 #      python3 -m pywarpx --help
@@ -118,8 +129,10 @@ jobs:
     vmImage: ubuntu-latest
   steps:
   - script: |
-      python3 -m pip install -U pip setuptools wheel --user
-      python3 -m pip install git+https://github.com/ECP-WarpX/WarpX.git@development --user
+      python3 -m pip install -U pip
+      python3 -m pip install -U build packaging setuptools wheel
+      python3 -m pip install -U cmake
+      python3 -m pip install git+https://github.com/ECP-WarpX/WarpX.git@development
   - script: |
       python3 -c "from pywarpx import picmi"
 #      python3 -m pywarpx --help
@@ -251,10 +264,8 @@ jobs:
       . spack/share/spack/setup-env.sh
       spack compiler find
       spack install -v --fail-fast warpx +python %gcc@9.5.0
-      spack install -v --fail-fast warpx +python %gcc@9.5.0 ^warpx dims=2
-      spack install -v --fail-fast warpx +python %gcc@9.5.0 ^warpx dims=rz
 
-      spack load warpx +python ^warpx dims=rz
+      spack load warpx +python
 #      warpx.2d.MPI.OMP.DP.OPMD.QED
 #      warpx.3d.MPI.OMP.DP.OPMD.QED
 #      warpx.RZ.MPI.OMP.DP.OPMD.QED
@@ -273,11 +284,8 @@ jobs:
       . spack/share/spack/setup-env.sh
       spack compiler find
 
-      spack install -v --fail-fast warpx +python %gcc@9.5.0 ^warpx compute=cuda dims=rz
-      spack load warpx +python ^warpx compute=cuda dims=rz
-
-#      spack install -v --fail-fast warpx +python %gcc@9.5.0 ^warpx compute=cuda
-#      spack install -v --fail-fast warpx +python %gcc@9.5.0 ^warpx compute=cuda dims=2
+      spack install -v --fail-fast warpx +python %gcc@9.5.0 compute=cuda dims=rz
+      spack load warpx +python compute=cuda dims=rz
 
 - job: linux_spack_nompi
   displayName: Ubuntu spack w/o MPI
@@ -293,9 +301,8 @@ jobs:
       . spack/share/spack/setup-env.sh
       spack compiler find
       spack install -v --fail-fast warpx +python -mpi
-      spack install -v --fail-fast warpx +python -mpi ^warpx dims=rz
 
-      spack load warpx +python ^warpx dims=rz
+      spack load warpx +python
 #      warpx.2d.MPI.OMP.DP.OPMD.QED
 #      warpx.3d.MPI.OMP.DP.OPMD.QED
 #      warpx.RZ.MPI.OMP.DP.OPMD.QED
@@ -316,7 +323,7 @@ jobs:
 #      spack compiler find
 #      spack bootstrap
 #      . spack/share/spack/setup-env.sh
-#      spack install -v --fail-fast warpx +python ^warpx +qed +openpmd %gcc@9.4.0
+#      spack install -v --fail-fast warpx +python +qed +openpmd %gcc@9.4.0
 #
 #      spack load warpx
 #      warpx.2d.MPI.OMP.DP.OPMD.QED
@@ -432,8 +439,10 @@ jobs:
 #    vmImage: macOS-12
 #  steps:
 #  - script: |
-#      python3 -m pip install -U pip --user
-#      python3 -m pip install pywarpx --user
+#      python3 -m pip install -U pip
+#      python3 -m pip install -U build packaging setuptools wheel
+#      python3 -m pip install -U cmake
+#      python3 -m pip install pywarpx
 #  - script: |
 #      python3 -c "from pywarpx import picmi"
 #      python3 -m pywarpx --help
@@ -444,8 +453,10 @@ jobs:
 #    vmImage: macOS-12
 #  steps:
 #  - script: |
-#      python3 -m pip install -U pip --user
-#      python3 -m pip install pywarpx --user
+#      python3 -m pip install -U pip
+#      python3 -m pip install -U build packaging setuptools wheel
+#      python3 -m pip install -U cmake
+#      python3 -m pip install pywarpx
 #  - script: |
 #      python3 -c "from pywarpx import picmi"
 #      python3 -m pywarpx --help
@@ -456,8 +467,10 @@ jobs:
 #    vmImage: macOS-12
 #  steps:
 #  - script: |
-#      python3 -m pip install -U pip setuptools wheel cmake --user
-#      python3 -m pip install pywarpx --no-binary pywarpx --user
+#      python3 -m pip install -U pip
+#      python3 -m pip install -U build packaging setuptools wheel
+#      python3 -m pip install -U cmake
+#      python3 -m pip install pywarpx --no-binary pywarpx
 #  - script: |
 #      python3 -c "from pywarpx import picmi"
 #      python3 -m pywarpx --help
@@ -470,8 +483,8 @@ jobs:
 #  - script: |
 #      brew update || true
 #      brew install pypy3
-#      pypy3 -m pip install -U pip --user
-#      pypy3 -m pip install pywarpx --user
+#      pypy3 -m pip install -U pip
+#      pypy3 -m pip install pywarpx
 #  - script: |
 #      pypy3 -c "from pywarpx import picmi"
 #      pypy3 -m pywarpx --help
@@ -484,8 +497,10 @@ jobs:
 #  - script: |
 #      brew update || true
 #      brew install pypy3
-#      pypy3 -m pip install -U pip setuptools wheel cmake --user
-#      pypy3 -m pip install pywarpx --no-binary pywarpx --user
+#      python3 -m pip install -U pip
+#      python3 -m pip install -U build packaging setuptools wheel
+#      python3 -m pip install -U cmake
+#      pypy3 -m pip install pywarpx --no-binary pywarpx
 #  - script: |
 #      pypy3 -c "from pywarpx import picmi"
 #      pypy3 -m pywarpx --help
@@ -501,8 +516,10 @@ jobs:
 #      brew install pypy3 gcc libomp openblas
 #      export OPENBLAS="$(brew --prefix openblas)"
 #      export PATH=${PATH}:"$(brew --prefix gcc)"/bin
-#      pypy3 -m pip install -U pip --user
-#      pypy3 -m pip install git+https://github.com/ECP-WarpX/WarpX.git@development --user
+#      python3 -m pip install -U pip
+#      python3 -m pip install -U build packaging setuptools wheel
+#      python3 -m pip install -U cmake
+#      pypy3 -m pip install git+https://github.com/ECP-WarpX/WarpX.git@development
 #  - script: |
 #      pypy3 -c "from pywarpx import picmi"
 ##      pypy3 -m pywarpx --help
@@ -515,8 +532,8 @@ jobs:
 #  - script: |
 #      brew update || true
 #      brew install mpich
-#      python3 -m pip install -U pip setuptools wheel cmake --user
-#      WARPX_MPI=ON python3 -m pip install pywarpx --no-binary pywarpx --user
+#      python3 -m pip install -U pip setuptools wheel cmake
+#      WARPX_MPI=ON python3 -m pip install pywarpx --no-binary pywarpx
 #  - script: |
 #      python3 -c "from pywarpx import picmi"
 #      python3 -m pywarpx --help
@@ -533,7 +550,8 @@ jobs:
       brew install openmpi
       brew install libomp
       brew link --force libomp
-      python3 -m pip install -U pip --user
+      python3 -m pip install -U pip
+      python3 -m pip install -U build packaging setuptools wheel
       python3 -m pip install -U cmake
       WARPX_MPI=ON python3 -m pip install git+https://github.com/ECP-WarpX/WarpX.git@development
   - script: |
@@ -547,7 +565,8 @@ jobs:
     vmImage: macOS-latest
   steps:
   - script: |
-      python3 -m pip install -U pip --user
+      python3 -m pip install -U pip
+      python3 -m pip install -U build packaging setuptools wheel
       python3 -m pip install -U cmake
       WARPX_COMPUTE=NOACC python3 -m pip install git+https://github.com/ECP-WarpX/WarpX.git@development
   - script: |
@@ -691,10 +710,8 @@ jobs:
       git clone https://github.com/spack/spack.git
       . spack/share/spack/setup-env.sh
       spack compiler find
-      spack install -v --fail-fast py-warpx
-      spack install -v --fail-fast warpx +python ^warpx dims=2
-      spack install -v --fail-fast warpx +python ^warpx dims=rz
-      spack load warpx +python ^warpx dims=rz
+      spack install -v --fail-fast warpx +python
+      spack load warpx +python
 #      warpx.2d.MPI.OMP.DP.OPMD.QED
 #      warpx.3d.MPI.OMP.DP.OPMD.QED
 #      warpx.RZ.MPI.OMP.DP.OPMD.QED
@@ -710,9 +727,8 @@ jobs:
       git clone https://github.com/spack/spack.git
       . spack/share/spack/setup-env.sh
       spack compiler find
-      spack install -v --fail-fast py-warpx@develop -mpi
-      spack install -v --fail-fast py-warpx@develop -mpi ^warpx dims=rz
-      spack load warpx +python ^warpx dims=rz
+      spack install -v --fail-fast warpx@develop +python -mpi
+      spack load warpx +python
 #      warpx.2d.MPI.OMP.DP.OPMD.QED
 #      warpx.3d.MPI.OMP.DP.OPMD.QED
 #      warpx.RZ.MPI.OMP.DP.OPMD.QED
@@ -729,7 +745,7 @@ jobs:
 #      git clone https://github.com/spack/spack.git
 #      . spack/share/spack/setup-env.sh
 #      spack compiler find
-#      spack install -v --fail-fast warpx +python ^warpx +qed +openpmd
+#      spack install -v --fail-fast warpx +python +qed +openpmd
 #      spack load warpx
 #      warpx.2d.MPI.OMP.DP.OPMD.QED
 #      warpx.3d.MPI.OMP.DP.OPMD.QED
@@ -770,8 +786,10 @@ jobs:
 #      architecture: 'x64'
 #  - script: |
 #      which python
-#      python -m pip install -U pip --user
-#      python -m pip install -v pywarpx --user
+#      python3 -m pip install -U pip
+#      python3 -m pip install -U build packaging setuptools wheel
+#      python3 -m pip install -U cmake
+#      python -m pip install -v pywarpx
 #  - script: |
 #      python -c "from pywarpx import picmi"
 ##      python -m pywarpx --help
@@ -787,8 +805,10 @@ jobs:
 #      architecture: 'x64'
 #  - script: |
 #      which python
-#      python -m pip install -U pip setuptools wheel cmake --user
-#      python -m pip install -v pywarpx --no-binary pywarpx --user
+#      python3 -m pip install -U pip
+#      python3 -m pip install -U build packaging setuptools wheel
+#      python3 -m pip install -U cmake
+#      python -m pip install -v pywarpx --no-binary pywarpx
 #  - script: |
 #      python -c "from pywarpx import picmi"
 ##      python -m pywarpx --help
@@ -805,9 +825,11 @@ jobs:
       architecture: 'x64'
   - script: |
       which python
-      python -m pip install -U pip --user
+      python3 -m pip install -U pip
+      python3 -m pip install -U build packaging setuptools wheel
+      python3 -m pip install -U cmake
       set WARPX_COMPUTE=NOACC
-      python -m pip install -v git+https://github.com/ECP-WarpX/WarpX.git@development --user
+      python -m pip install -v git+https://github.com/ECP-WarpX/WarpX.git@development
   - script: |
       python -c "from pywarpx import picmi"
 #      python -m pywarpx --help
