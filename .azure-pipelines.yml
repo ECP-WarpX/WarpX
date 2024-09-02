@@ -10,7 +10,11 @@ pr:
 jobs:
 - job:
   variables:
-    AMREX_CMAKE_FLAGS: -DAMReX_ASSERTIONS=ON -DAMReX_TESTING=ON -DpyAMReX_IPO=OFF
+    # TODO: fpe_trap_invalid broken in HDF5 1.14.3
+    #       Remove "-DWarpX_TEST_FPETRAP_ARGS=..." once 1.14.4 is available.
+    #       https://github.com/HDFGroup/hdf5/issues/4801
+    #       https://github.com/conda-forge/hdf5-feedstock/pull/231
+    AMREX_CMAKE_FLAGS: -DAMReX_ASSERTIONS=ON -DAMReX_TESTING=ON -DpyAMReX_IPO=OFF -DWarpX_TEST_FPETRAP_ARGS=amrex.fpe_trap_overflow=1 amrex.fpe_trap_zero=1"
     CMAKE_BUILD_PARALLEL_LEVEL: 2
     CMAKE_GENERATOR: Ninja
     CXXFLAGS: -Wno-array-bounds  # many false positives in g++ 12
