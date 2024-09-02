@@ -9,8 +9,10 @@ from pywarpx import callbacks, libwarpx, particle_containers, picmi
 # Create the parser and add the argument
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    '-u', '--unique', action='store_true',
-    help="Whether injected particles should be treated as unique"
+    "-u",
+    "--unique",
+    action="store_true",
+    help="Whether injected particles should be treated as unique",
 )
 
 # Parse the input
@@ -42,65 +44,57 @@ ymax = 0.03
 ##########################
 
 grid = picmi.Cartesian2DGrid(
-    number_of_cells = [nx, ny],
-    lower_bound = [xmin, ymin],
-    upper_bound = [xmax, ymax],
-    lower_boundary_conditions = ['dirichlet', 'periodic'],
-    upper_boundary_conditions = ['dirichlet', 'periodic'],
-    lower_boundary_conditions_particles = ['absorbing', 'periodic'],
-    upper_boundary_conditions_particles = ['absorbing', 'periodic'],
-    moving_window_velocity = None,
-    warpx_max_grid_size = 32
+    number_of_cells=[nx, ny],
+    lower_bound=[xmin, ymin],
+    upper_bound=[xmax, ymax],
+    lower_boundary_conditions=["dirichlet", "periodic"],
+    upper_boundary_conditions=["dirichlet", "periodic"],
+    lower_boundary_conditions_particles=["absorbing", "periodic"],
+    upper_boundary_conditions_particles=["absorbing", "periodic"],
+    moving_window_velocity=None,
+    warpx_max_grid_size=32,
 )
 
 solver = picmi.ElectrostaticSolver(
-    grid=grid, method='Multigrid', required_precision=1e-6,
-    warpx_self_fields_verbosity=0
+    grid=grid,
+    method="Multigrid",
+    required_precision=1e-6,
+    warpx_self_fields_verbosity=0,
 )
 
 ##########################
 # physics components
 ##########################
 
-electrons = picmi.Species(
-    particle_type='electron', name='electrons'
-)
+electrons = picmi.Species(particle_type="electron", name="electrons")
 
 ##########################
 # diagnostics
 ##########################
 
 particle_diag = picmi.ParticleDiagnostic(
-    name = 'diag1',
-    period = 10,
-    write_dir = '.',
-    warpx_file_prefix = f"Python_particle_attr_access_{'unique_' if args.unique else ''}plt"
+    name="diag1",
+    period=10,
+    write_dir=".",
+    warpx_file_prefix=f"Python_particle_attr_access_{'unique_' if args.unique else ''}plt",
 )
 field_diag = picmi.FieldDiagnostic(
-    name = 'diag1',
-    grid = grid,
-    period = 10,
-    data_list = ['phi'],
-    write_dir = '.',
-    warpx_file_prefix = f"Python_particle_attr_access_{'unique_' if args.unique else ''}plt"
+    name="diag1",
+    grid=grid,
+    period=10,
+    data_list=["phi"],
+    write_dir=".",
+    warpx_file_prefix=f"Python_particle_attr_access_{'unique_' if args.unique else ''}plt",
 )
 
 ##########################
 # simulation setup
 ##########################
 
-sim = picmi.Simulation(
-    solver = solver,
-    time_step_size = dt,
-    max_steps = max_steps,
-    verbose = 1
-)
+sim = picmi.Simulation(solver=solver, time_step_size=dt, max_steps=max_steps, verbose=1)
 
 sim.add_species(
-    electrons,
-    layout = picmi.GriddedLayout(
-        n_macroparticle_per_cell=[0, 0], grid=grid
-    )
+    electrons, layout=picmi.GriddedLayout(n_macroparticle_per_cell=[0, 0], grid=grid)
 )
 sim.add_diagnostic(particle_diag)
 sim.add_diagnostic(field_diag)
@@ -116,13 +110,13 @@ sim.initialize_warpx()
 # below will be reproducible from run to run
 np.random.seed(30025025)
 
-elec_wrapper = particle_containers.ParticleContainerWrapper('electrons')
-elec_wrapper.add_real_comp('newPid')
+elec_wrapper = particle_containers.ParticleContainerWrapper("electrons")
+elec_wrapper.add_real_comp("newPid")
 
 my_id = libwarpx.amr.ParallelDescriptor.MyProc()
 
-def add_particles():
 
+def add_particles():
     nps = 10 * (my_id + 1)
     x = np.linspace(0.005, 0.025, nps)
     y = np.zeros(nps)
@@ -134,10 +128,17 @@ def add_particles():
     newPid = 5.0
 
     elec_wrapper.add_particles(
-        x=x, y=y, z=z, ux=ux, uy=uy, uz=uz,
-        w=w, newPid=newPid,
-        unique_particles=args.unique
+        x=x,
+        y=y,
+        z=z,
+        ux=ux,
+        uy=uy,
+        uz=uz,
+        w=w,
+        newPid=newPid,
+        unique_particles=args.unique,
     )
+
 
 callbacks.installbeforestep(add_particles)
 
@@ -152,11 +153,11 @@ sim.step(max_steps - 1)
 # are properly set
 ##########################
 
-assert (elec_wrapper.nps == 270 / (2 - args.unique))
-assert (elec_wrapper.particle_container.get_comp_index('w') == 2)
-assert (elec_wrapper.particle_container.get_comp_index('newPid') == 6)
+assert elec_wrapper.nps == 270 / (2 - args.unique)
+assert elec_wrapper.particle_container.get_comp_index("w") == 2
+assert elec_wrapper.particle_container.get_comp_index("newPid") == 6
 
-new_pid_vals = elec_wrapper.get_particle_real_arrays('newPid', 0)
+new_pid_vals = elec_wrapper.get_particle_real_arrays("newPid", 0)
 for vals in new_pid_vals:
     assert np.allclose(vals, 5)
 

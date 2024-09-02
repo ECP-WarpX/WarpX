@@ -390,9 +390,22 @@ void ParticleBoundaryBuffer::gatherParticlesFromDomainBoundaries (MultiParticleC
                     buffer[i].AddRealComp("ny", false);
                     buffer[i].AddRealComp("nz", false);
                 }
+
                 auto& species_buffer = buffer[i];
+                for (int lev = 0; lev < pc.numLevels(); ++lev){
+                    for(PIter pti(pc, lev); pti.isValid(); ++pti){
+                        species_buffer.DefineAndReturnParticleTile(
+                            lev, pti.index(), pti.LocalTileIndex());
+                    }
+                }
+
                 for (int lev = 0; lev < pc.numLevels(); ++lev)
                 {
+                    for (PIter pti(pc, lev); pti.isValid(); ++pti) {
+                        species_buffer.DefineAndReturnParticleTile(
+                            lev, pti.index(), pti.LocalTileIndex());
+                    }
+
                     const auto& plevel = pc.GetParticles(lev);
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -400,10 +413,10 @@ void ParticleBoundaryBuffer::gatherParticlesFromDomainBoundaries (MultiParticleC
                     for(PIter pti(pc, lev); pti.isValid(); ++pti)
                     {
                         auto index = std::make_pair(pti.index(), pti.LocalTileIndex());
-                        if(plevel.find(index) == plevel.end()) { continue; }
 
-                        auto& ptile_buffer = species_buffer.DefineAndReturnParticleTile(
-                                                        lev, pti.index(), pti.LocalTileIndex());
+                        auto& ptile_buffer =
+                            species_buffer.ParticlesAt(lev, pti.index(), pti.LocalTileIndex());
+
                         const auto& ptile = plevel.at(index);
                         auto np = ptile.numParticles();
                         if (np == 0) { continue; }
@@ -474,7 +487,15 @@ void ParticleBoundaryBuffer::gatherParticlesFromEmbeddedBoundaries (
             buffer[i].AddRealComp("nz", false);
 
         }
+
         auto& species_buffer = buffer[i];
+        for (int lev = 0; lev < pc.numLevels(); ++lev){
+            for(PIter pti(pc, lev); pti.isValid(); ++pti){
+                species_buffer.DefineAndReturnParticleTile(
+                    lev, pti.index(), pti.LocalTileIndex());
+            }
+        }
+
         for (int lev = 0; lev < pc.numLevels(); ++lev)
         {
             const auto& plevel = pc.GetParticles(lev);

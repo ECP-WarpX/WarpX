@@ -17,6 +17,7 @@ do
     if [[ ${file:0:6 } != inputs       ]] &&
        [[ ${file:0:12} != PICMI_inputs ]] &&
        [[ ${file:0:8 } != analysis     ]] &&
+       [[ ${file:0:8 } != catalyst     ]] &&
        [[ ${file:  -4} != yaml         ]] &&
        [[ ${file:0:4 } != plot         ]] &&
        [[ ${file:0:6 } != README       ]]

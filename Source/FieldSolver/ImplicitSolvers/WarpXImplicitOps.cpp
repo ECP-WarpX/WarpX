@@ -11,14 +11,8 @@
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "Evolve/WarpXDtType.H"
 #include "Evolve/WarpXPushType.H"
+#include "FieldSolver/Fields.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
-#ifdef WARPX_USE_PSATD
-#   ifdef WARPX_DIM_RZ
-#       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
-#   else
-#       include "FieldSolver/SpectralSolver/SpectralSolver.H"
-#   endif
-#endif
 #include "Parallelization/GuardCellManager.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
@@ -75,7 +69,11 @@ WarpX::ImplicitPreRHSOp ( amrex::Real  a_cur_time,
 void
 WarpX::SetElectricFieldAndApplyBCs ( const WarpXSolverVec&  a_E )
 {
-    const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Evec = a_E.getVec();
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        a_E.getArrayVecType()==warpx::fields::FieldType::Efield_fp,
+        "WarpX::SetElectricFieldAndApplyBCs() must be called with Efield_fp type");
+
+    const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Evec = a_E.getArrayVec();
     amrex::MultiFab::Copy(*Efield_fp[0][0], *Evec[0][0], 0, 0, ncomps, Evec[0][0]->nGrowVect());
     amrex::MultiFab::Copy(*Efield_fp[0][1], *Evec[0][1], 0, 0, ncomps, Evec[0][1]->nGrowVect());
     amrex::MultiFab::Copy(*Efield_fp[0][2], *Evec[0][2], 0, 0, ncomps, Evec[0][2]->nGrowVect());
@@ -323,22 +321,26 @@ WarpX::ImplicitComputeRHSE (int lev, amrex::Real a_dt, WarpXSolverVec&  a_Erhs_v
 void
 WarpX::ImplicitComputeRHSE (int lev, PatchType patch_type, amrex::Real a_dt, WarpXSolverVec&  a_Erhs_vec)
 {
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        a_Erhs_vec.getArrayVecType()==warpx::fields::FieldType::Efield_fp,
+        "WarpX::ImplicitComputeRHSE() must be called with Efield_fp type");
+
     // set RHS to zero value
-    a_Erhs_vec.getVec()[lev][0]->setVal(0.0);
-    a_Erhs_vec.getVec()[lev][1]->setVal(0.0);
-    a_Erhs_vec.getVec()[lev][2]->setVal(0.0);
+    a_Erhs_vec.getArrayVec()[lev][0]->setVal(0.0);
+    a_Erhs_vec.getArrayVec()[lev][1]->setVal(0.0);
+    a_Erhs_vec.getArrayVec()[lev][2]->setVal(0.0);
 
     // Compute Efield_rhs in regular cells by calling EvolveE. Because
     // a_Erhs_vec is set to zero above, calling EvolveE below results in
     // a_Erhs_vec storing only the RHS of the update equation. I.e.,
     // c^2*dt*(curl(B^{n+theta} - mu0*J^{n+1/2})
     if (patch_type == PatchType::fine) {
-        m_fdtd_solver_fp[lev]->EvolveE( a_Erhs_vec.getVec()[lev], Bfield_fp[lev],
+        m_fdtd_solver_fp[lev]->EvolveE( a_Erhs_vec.getArrayVec()[lev], Bfield_fp[lev],
                                         current_fp[lev], m_edge_lengths[lev],
                                         m_face_areas[lev], ECTRhofield[lev],
                                         F_fp[lev], lev, a_dt );
     } else {
-        m_fdtd_solver_cp[lev]->EvolveE( a_Erhs_vec.getVec()[lev], Bfield_cp[lev],
+        m_fdtd_solver_cp[lev]->EvolveE( a_Erhs_vec.getArrayVec()[lev], Bfield_cp[lev],
                                         current_cp[lev], m_edge_lengths[lev],
                                         m_face_areas[lev], ECTRhofield[lev],
                                         F_cp[lev], lev, a_dt );

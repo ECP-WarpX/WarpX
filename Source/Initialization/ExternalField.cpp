@@ -47,6 +47,9 @@ namespace
         else if ( s == "read_from_file"){
             return ExternalFieldType::read_from_file;
         }
+        else if ( s == "load_from_python"){
+            return ExternalFieldType::load_from_python;
+        }
         else{
             WARPX_ABORT_WITH_MESSAGE(
                 "'" + s + "' is an unknown external field type!");
@@ -172,7 +175,6 @@ ExternalFieldParams::ExternalFieldParams(const amrex::ParmParse& pp_warpx)
     //
     //  External fields from file
     //
-
     if (E_ext_grid_type == ExternalFieldType::read_from_file ||
         B_ext_grid_type == ExternalFieldType::read_from_file){
             const std::string read_fields_from_path="./";

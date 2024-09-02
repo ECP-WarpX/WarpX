@@ -29,9 +29,9 @@ new_comm = comm_world.Split(color)
 ##########################
 
 # different communicators will be passed different plasma density
-plasma_density = [1.e18, 1.e19]
-plasma_xmin = 0.
-plasma_x_velocity = 0.1*constants.c
+plasma_density = [1.0e18, 1.0e19]
+plasma_xmin = 0.0
+plasma_x_velocity = 0.1 * constants.c
 
 ##########################
 # numerics parameters
@@ -45,64 +45,80 @@ diagnostic_intervals = "::10"
 nx = 64
 ny = 64
 
-xmin = -20.e-6
-ymin = -20.e-6
-xmax = +20.e-6
-ymax = +20.e-6
+xmin = -20.0e-6
+ymin = -20.0e-6
+xmax = +20.0e-6
+ymax = +20.0e-6
 
-number_per_cell_each_dim = [2,2]
+number_per_cell_each_dim = [2, 2]
 
 ##########################
 # physics components
 ##########################
 
-uniform_plasma = picmi.UniformDistribution(density = plasma_density[color],
-                                        upper_bound = [0., None, None],
-                                        directed_velocity = [0.1*constants.c, 0., 0.])
+uniform_plasma = picmi.UniformDistribution(
+    density=plasma_density[color],
+    upper_bound=[0.0, None, None],
+    directed_velocity=[0.1 * constants.c, 0.0, 0.0],
+)
 
-electrons = picmi.Species(particle_type='electron', name='electrons', initial_distribution=uniform_plasma)
+electrons = picmi.Species(
+    particle_type="electron", name="electrons", initial_distribution=uniform_plasma
+)
 
 ##########################
 # numerics components
 ##########################
 
-grid = picmi.Cartesian2DGrid(number_of_cells = [nx, ny],
-                            lower_bound = [xmin, ymin],
-                            upper_bound = [xmax, ymax],
-                            lower_boundary_conditions = ['periodic', 'periodic'],
-                            upper_boundary_conditions = ['periodic', 'periodic'],
-                            moving_window_velocity = [0., 0., 0.],
-                            warpx_max_grid_size = 32)
+grid = picmi.Cartesian2DGrid(
+    number_of_cells=[nx, ny],
+    lower_bound=[xmin, ymin],
+    upper_bound=[xmax, ymax],
+    lower_boundary_conditions=["periodic", "periodic"],
+    upper_boundary_conditions=["periodic", "periodic"],
+    moving_window_velocity=[0.0, 0.0, 0.0],
+    warpx_max_grid_size=32,
+)
 
-solver = picmi.ElectromagneticSolver(grid=grid, cfl=1.)
+solver = picmi.ElectromagneticSolver(grid=grid, cfl=1.0)
 
 ##########################
 # diagnostics
 ##########################
 
-field_diag = picmi.FieldDiagnostic(name = f'diag{color + 1}',
-                                    grid = grid,
-                                    period = diagnostic_intervals,
-                                    data_list = ['Ex', 'Jx'],
-                                    write_dir = '.',
-                                    warpx_file_prefix = f'Python_pass_mpi_comm_plt{color + 1}_')
+field_diag = picmi.FieldDiagnostic(
+    name=f"diag{color + 1}",
+    grid=grid,
+    period=diagnostic_intervals,
+    data_list=["Ex", "Jx"],
+    write_dir=".",
+    warpx_file_prefix=f"Python_pass_mpi_comm_plt{color + 1}_",
+)
 
-part_diag = picmi.ParticleDiagnostic(name = f'diag{color + 1}',
-                                    period = diagnostic_intervals,
-                                    species = [electrons],
-                                    data_list = ['weighting', 'ux'])
+part_diag = picmi.ParticleDiagnostic(
+    name=f"diag{color + 1}",
+    period=diagnostic_intervals,
+    species=[electrons],
+    data_list=["weighting", "ux"],
+)
 
 ##########################
 # simulation setup
 ##########################
 
-sim = picmi.Simulation(solver = solver,
-                    max_steps = max_steps,
-                    verbose = 1,
-                    warpx_current_deposition_algo = 'direct')
+sim = picmi.Simulation(
+    solver=solver,
+    max_steps=max_steps,
+    verbose=1,
+    warpx_current_deposition_algo="direct",
+)
 
-sim.add_species(electrons,
-                layout = picmi.GriddedLayout(n_macroparticle_per_cell=number_per_cell_each_dim, grid=grid))
+sim.add_species(
+    electrons,
+    layout=picmi.GriddedLayout(
+        n_macroparticle_per_cell=number_per_cell_each_dim, grid=grid
+    ),
+)
 
 sim.add_diagnostic(field_diag)
 sim.add_diagnostic(part_diag)
@@ -114,7 +130,7 @@ sim.add_diagnostic(part_diag)
 # TODO: Enable in pyAMReX, then enable lines in PICMI_inputs_2d.py again
 # https://github.com/AMReX-Codes/pyamrex/issues/163
 
-#sim.step(max_steps, mpi_comm=new_comm)
+# sim.step(max_steps, mpi_comm=new_comm)
 
 ##########################
 # test
@@ -128,19 +144,19 @@ sim.add_diagnostic(part_diag)
 
 # TODO: Enable in pyAMReX, then enable lines in PICMI_inputs_2d.py again
 # https://github.com/AMReX-Codes/pyamrex/issues/163
-#comm_world_size = comm_world.size
-#new_comm_size = new_comm.size
+# comm_world_size = comm_world.size
+# new_comm_size = new_comm.size
 
-#if color == 0:
+# if color == 0:
 #    # verify that communicator contains correct number of procs (1)
 #    assert sim.extension.getNProcs() == comm_world_size - 1
 #    assert sim.extension.getNProcs() == new_comm_size
 
-#else:
+# else:
 #    # verify that amrex initialized with 1 fewer proc than comm world
 #    assert sim.extension.getNProcs() == comm_world_size - 1
 #    assert sim.extension.getNProcs() == new_comm_size
 
-    # verify that amrex proc ranks are offset by -1 from
-    # world comm proc ranks
+# verify that amrex proc ranks are offset by -1 from
+# world comm proc ranks
 #    assert libwarpx.amr.ParallelDescriptor.MyProc() == rank - 1
