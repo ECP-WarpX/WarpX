@@ -174,7 +174,7 @@ public:
     BoundaryHandler m_boundary_handler = BoundaryHandler();
 
     // numerical parameters
-    amrex::Real t_filter_param = 0.25_rt;
+    amrex::Real t_filter_param = 0.1_rt;
     amrex::Real required_precision = 1.e-11_rt;
     amrex::Real absolute_tolerance = 0.0_rt;
     int max_iters = 200;

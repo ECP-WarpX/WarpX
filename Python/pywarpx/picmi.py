@@ -1884,7 +1884,7 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
     warpx_magnetostatic: bool, default=False
         Whether to use the magnetostatic solver
 
-    warpx_magnetostatic_t_filtering_parameter: float, default=0.25
+    warpx_magnetostatic_t_filtering_parameter: float, default=0.1
         Low pass filter parameter for A-field used with the magnetostatic
         solver.
 
