@@ -208,8 +208,3 @@ Plasma Thrusters and Electric Propulsion
    **Hall thruster simulations in WarpX**.
    38th International Electric Propulsion Conference, Toulouse, France, 2024.
    `DOI:10.7302/234915 <https://doi.org/10.7302/23491>`__
-
-#. Boeuf J-P, Smolyakov A.
-   **Physics and instabilities of low-temperature E × B plasmas for spacecraft propulsion and other applications**.
-   Physics of Plasmas **30**, 050901, 2023.
-   `DOI:10.1063/5.0145536 <https://doi.org/10.1063/5.0145536>`__
