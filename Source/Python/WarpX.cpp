@@ -201,6 +201,13 @@ The physical fields in WarpX have the following naming:
             py::arg("potential"),
             "Sets the EB potential string and updates the function parser."
         )
+        .def("set_magnetostatic_time_filter_param",
+            [](WarpX& wx, amrex::Real time_filter_param) {
+                wx.GetMagnetostaticSolver().t_filter_param = time_filter_param;
+            },
+            py::arg("time_filter_param"),
+            "Sets the low pass filter parameter for the magnetostatic solver."
+        )
         .def_static("run_div_cleaner",
             [] () { WarpX::ProjectionCleanDivB(); },
             "Executes projection based divergence cleaner on loaded Bfield_fp_external."
