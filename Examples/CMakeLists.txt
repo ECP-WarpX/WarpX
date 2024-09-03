@@ -117,9 +117,10 @@ function(add_warpx_test
     )
 
     # set Python executable
-    set(THIS_Python_EXE) # FIXME unsetting a variable can expose a cache variable that was previously hidden
     if(python)
         set(THIS_Python_EXE ${Python_EXECUTABLE})
+    else()
+        set(THIS_Python_EXE "")
     endif()
 
     # test run
@@ -172,9 +173,10 @@ function(add_warpx_test
     # run all tests with 1 OpenMP thread by default
     set_property(TEST ${name}.run APPEND PROPERTY ENVIRONMENT "OMP_NUM_THREADS=1")
 
-    set(THIS_Python_SCRIPT_EXE) # FIXME unsetting a variable can expose a cache variable that was previously hidden
     if(python OR WIN32)
         set(THIS_Python_SCRIPT_EXE ${Python_EXECUTABLE})
+    else()
+        set(THIS_Python_SCRIPT_EXE "")
     endif()
 
     # test analysis
