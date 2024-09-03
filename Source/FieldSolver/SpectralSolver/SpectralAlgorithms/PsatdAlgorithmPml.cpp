@@ -21,6 +21,7 @@
 #include <AMReX_GpuComplex.H>
 #include <AMReX_GpuLaunch.H>
 #include <AMReX_GpuQualifiers.H>
+#include <AMReX_Math.H>
 #include <AMReX_MFIter.H>
 #include <AMReX_PODVector.H>
 
@@ -443,8 +444,10 @@ void PsatdAlgorithmPml::InitializeSpectralCoefficients (
             // Coefficients for knorm = 0 do not need to be set
             if (knorm != 0._rt)
             {
-                C(i,j,k) = std::cos(c*knorm*dt);
-                S_ck(i,j,k) = std::sin(c*knorm*dt) / (c*knorm);
+                auto const phi = c*knorm*dt;
+                auto const [sin_phi, cos_phi] = amrex::Math::sincos(phi);
+                C(i,j,k) = cos_phi;
+                S_ck(i,j,k) = sin_phi / (c*knorm);
                 inv_k2(i,j,k) = 1._rt / (knorm*knorm);
 
                 if (is_galilean)

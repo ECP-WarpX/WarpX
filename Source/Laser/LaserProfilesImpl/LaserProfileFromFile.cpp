@@ -22,6 +22,7 @@
 #include <AMReX_GpuDevice.H>
 #include <AMReX_GpuLaunch.H>
 #include <AMReX_GpuQualifiers.H>
+#include <AMReX_Math.H>
 #include <AMReX_PODVector.H>
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_ParmParse.H>
@@ -433,8 +434,8 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform_cartes
 {
     // Copy member variables to tmp copies
     // and get pointers to underlying data for GPU.
-    const amrex::Real omega_t = 2._rt*MathConst::pi*PhysConst::c*t/m_common_params.wavelength;
-    const Complex exp_omega_t = Complex{ std::cos(-omega_t), std::sin(-omega_t) };
+    const auto [omega_im, omega_real] = amrex::Math::sincos(-2._rt*MathConst::pi*PhysConst::c*t/m_common_params.wavelength);
+    const Complex exp_omega_t = Complex{ omega_real, omega_im };
     const auto tmp_x_min = m_params.x_min;
     const auto tmp_x_max = m_params.x_max;
     const auto tmp_y_min = m_params.y_min;
@@ -518,8 +519,8 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform_cylind
 {
     // Copy member variables to tmp copies
     // and get pointers to underlying data for GPU.
-    const amrex::Real omega_t = 2._rt*MathConst::pi*PhysConst::c*t/m_common_params.wavelength;
-    const Complex exp_omega_t = Complex{ std::cos(-omega_t), std::sin(-omega_t) };
+    const auto [omega_im, omega_real] = amrex::Math::sincos(-2._rt*MathConst::pi*PhysConst::c*t/m_common_params.wavelength);
+    const Complex exp_omega_t = Complex{ omega_real, omega_im };
     const auto tmp_r_min = m_params.r_min;
     const auto tmp_r_max = m_params.r_max;
     const auto tmp_nr = m_params.nr;

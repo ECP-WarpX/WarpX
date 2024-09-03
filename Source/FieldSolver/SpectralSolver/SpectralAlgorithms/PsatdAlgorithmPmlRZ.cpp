@@ -11,6 +11,8 @@
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
+#include <AMReX_Math.H>
+
 #include <cmath>
 
 using namespace amrex::literals;
@@ -148,8 +150,10 @@ void PsatdAlgorithmPmlRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ co
             // Calculate coefficients
             constexpr amrex::Real c = PhysConst::c;
             if (k_norm != 0._rt){
-                C(i,j,k,mode) = std::cos(c*k_norm*dt);
-                S_ck(i,j,k,mode) = std::sin(c*k_norm*dt)/(c*k_norm);
+                auto const phi = c*k_norm*dt;
+                auto const [sin_phi, cos_phi] = amrex::Math::sincos(phi);
+                C(i,j,k,mode) = cos_phi;
+                S_ck(i,j,k,mode) = sin_phi/(c*k_norm);
             } else { // Handle k_norm = 0, by using the analytical limit
                 C(i,j,k,mode) = 1._rt;
                 S_ck(i,j,k,mode) = dt;

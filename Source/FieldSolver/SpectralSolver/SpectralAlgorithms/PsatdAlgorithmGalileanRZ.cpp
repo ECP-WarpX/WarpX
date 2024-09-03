@@ -11,6 +11,8 @@
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
+#include <AMReX_Math.H>
+
 #include <cmath>
 
 using namespace amrex::literals;
@@ -221,8 +223,10 @@ void PsatdAlgorithmGalileanRZ::InitializeSpectralCoefficients (SpectralFieldData
             // Calculate coefficients
             if (k_norm != 0._rt){
 
-                C(i,j,k,mode) = std::cos(c*k_norm*dt);
-                S_ck(i,j,k,mode) = std::sin(c*k_norm*dt)/(c*k_norm);
+                auto const phi = c*k_norm*dt;
+                auto const [sin_phi, cos_phi] = amrex::Math::sincos(phi);
+                C(i,j,k,mode) = cos_phi;
+                S_ck(i,j,k,mode) = sin_phi/(c*k_norm);
 
                 // Calculate dot product with galilean velocity
                 amrex::Real const kv = kz*vz;
@@ -230,7 +234,7 @@ void PsatdAlgorithmGalileanRZ::InitializeSpectralCoefficients (SpectralFieldData
                 amrex::Real const nu = kv/(k_norm*c);
                 Complex const theta = amrex::exp( 0.5_rt*I*kv*dt );
                 Complex const theta_star = amrex::exp( -0.5_rt*I*kv*dt );
-                Complex const e_theta = amrex::exp( I*c*k_norm*dt );
+                Complex const e_theta = amrex::exp( I*phi );
 
                 Theta2(i,j,k,mode) = theta*theta;
 
@@ -267,10 +271,10 @@ void PsatdAlgorithmGalileanRZ::InitializeSpectralCoefficients (SpectralFieldData
                     X4(i,j,k,mode) = -S_ck(i,j,k,mode)/ep0;
 
                 } else if ( nu == 1._rt) {
-                    X1(i,j,k,mode) = (1._rt - e_theta*e_theta + 2._rt*I*c*k_norm*dt) / (4._rt*c*c*ep0*k_norm*k_norm);
-                    X2(i,j,k,mode) = (3._rt - 4._rt*e_theta + e_theta*e_theta + 2._rt*I*c*k_norm*dt) / (4._rt*ep0*k_norm*k_norm*(1._rt - e_theta));
-                    X3(i,j,k,mode) = (3._rt - 2._rt/e_theta - 2._rt*e_theta + e_theta*e_theta - 2._rt*I*c*k_norm*dt) / (4._rt*ep0*(e_theta - 1._rt)*k_norm*k_norm);
-                    X4(i,j,k,mode) = I*(-1._rt + e_theta*e_theta + 2._rt*I*c*k_norm*dt) / (4._rt*ep0*c*k_norm);
+                    X1(i,j,k,mode) = (1._rt - e_theta*e_theta + 2._rt*I*phi) / (4._rt*c*c*ep0*k_norm*k_norm);
+                    X2(i,j,k,mode) = (3._rt - 4._rt*e_theta + e_theta*e_theta + 2._rt*I*phi) / (4._rt*ep0*k_norm*k_norm*(1._rt - e_theta));
+                    X3(i,j,k,mode) = (3._rt - 2._rt/e_theta - 2._rt*e_theta + e_theta*e_theta - 2._rt*I*phi) / (4._rt*ep0*(e_theta - 1._rt)*k_norm*k_norm);
+                    X4(i,j,k,mode) = I*(-1._rt + e_theta*e_theta + 2._rt*I*phi) / (4._rt*ep0*c*k_norm);
                 }
 
             } else { // Handle k_norm = 0, by using the analytical limit

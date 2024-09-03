@@ -1257,8 +1257,8 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
             const IntVect iv = IntVect(AMREX_D_DECL(i, j, k));
             const auto index = overlap_box.index(iv);
 #ifdef WARPX_DIM_RZ
-            Real theta_offset = 0._rt;
-            if (rz_random_theta) { theta_offset = amrex::Random(engine) * 2._rt * MathConst::pi; }
+            Real tt_offset = 0._rt;
+            if (rz_random_theta) { tt_offset = amrex::Random(engine) * 2._rt; }
 #endif
 
             Real scale_fac = 0.0_rt;
@@ -1328,10 +1328,11 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                 // With only 1 mode, the angle doesn't matter so
                 // choose it randomly.
                 const Real theta = (nmodes == 1 && rz_random_theta)?
-                    (2._rt*MathConst::pi*amrex::Random(engine)):
-                    (2._rt*MathConst::pi*r.y + theta_offset);
-                pos.x = xb*std::cos(theta);
-                pos.y = xb*std::sin(theta);
+                    (2._rt*amrex::Random(engine)):
+                    (2._rt*r.y + tt_offset);
+                auto const [sin_theta, cos_theta] = amrex::Math::sincos(MathConst::pi*theta);
+                pos.x = xb*cos_theta;
+                pos.y = xb*sin_theta;
 #endif
 
                 Real dens;
@@ -1871,10 +1872,9 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 // With only 1 mode, the angle doesn't matter so
                 // choose it randomly.
                 const Real theta = (nmodes == 1 && rz_random_theta)?
-                    (2._prt*MathConst::pi*amrex::Random(engine)):
-                    (2._prt*MathConst::pi*r.y);
-                Real const cos_theta = std::cos(theta);
-                Real const sin_theta = std::sin(theta);
+                    (2._prt*amrex::Random(engine)):
+                    (2._prt*r.y);
+                auto const [sin_theta, cos_theta] = amrex::Math::sincos(MathConst::pi*theta);
                 // Rotate the position
                 const amrex::Real radial_position = ppos.x;
                 ppos.x = radial_position*cos_theta;

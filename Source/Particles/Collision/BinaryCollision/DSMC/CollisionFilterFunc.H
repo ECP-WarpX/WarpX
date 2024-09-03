@@ -12,6 +12,7 @@
 #include "Particles/Collision/BinaryCollision/BinaryCollisionUtils.H"
 #include "Particles/Collision/ScatteringProcess.H"
 
+#include <AMReX_Math.H>
 #include <AMReX_Random.H>
 
 /**

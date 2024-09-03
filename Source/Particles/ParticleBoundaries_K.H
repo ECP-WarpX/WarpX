@@ -11,6 +11,7 @@
 #include "Initialization/SampleGaussianFluxDistribution.H"
 
 #include <AMReX_AmrCore.H>
+#include <AMReX_Math.H>
 
 namespace ApplyParticleBoundaries {
     using namespace amrex::literals;
@@ -165,11 +166,12 @@ namespace ApplyParticleBoundaries {
         } else if (change_sign_ux) {
             // Reflect only ur
             // Note that y is theta
-            amrex::Real ur = ux*std::cos(y) + uy*std::sin(y);
-            const amrex::Real ut = -ux*std::sin(y) + uy*std::cos(y);
+            auto const [siny, cosy] = amrex::Math::sincos(y);
+            amrex::Real ur = ux*cosy + uy*siny;
+            const amrex::Real ut = -ux*siny + uy*cosy;
             ur = -ur;
-            ux = ur*std::cos(y) - ut*std::sin(y);
-            uy = ur*std::sin(y) + ut*std::cos(y);
+            ux = ur*cosy - ut*siny;
+            uy = ur*siny + ut*cosy;
         }
 #else
         if (change_sign_ux) { ux = -ux; }

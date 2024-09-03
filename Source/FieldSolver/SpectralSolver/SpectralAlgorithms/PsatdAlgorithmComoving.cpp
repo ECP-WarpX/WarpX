@@ -242,13 +242,15 @@ void PsatdAlgorithmComoving::InitializeSpectralCoefficients (const SpectralKSpac
                 const amrex::Real om2_mod = om_mod * om_mod;
                 const amrex::Real om  = c * knorm;
                 const amrex::Real om2 = om * om;
-                const Complex tmp1 = amrex::exp(  I * om_mod * dt);
-                const Complex tmp2 = amrex::exp(- I * om_mod * dt);
-                const Complex tmp1_sqrt = amrex::exp(  I * om_mod * dt * 0.5_rt);
-                const Complex tmp2_sqrt = amrex::exp(- I * om_mod * dt * 0.5_rt);
+                const auto phi = om_mod * dt;
+                const Complex tmp1 = amrex::exp(  I * phi);
+                const Complex tmp2 = amrex::exp(- I * phi);
+                const Complex tmp1_sqrt = amrex::exp(  I * phi * 0.5_rt);
+                const Complex tmp2_sqrt = amrex::exp(- I * phi * 0.5_rt);
 
-                C   (i,j,k) = std::cos(om_mod * dt);
-                S_ck(i,j,k) = std::sin(om_mod * dt) / om_mod;
+                auto const [sin_phi, cos_phi] = amrex::Math::sincos(phi);
+                C   (i,j,k) = cos_phi;
+                S_ck(i,j,k) = sin_phi / om_mod;
 
                 const amrex::Real nu = - kv / om;
                 const Complex theta      = amrex::exp(  I * nu * om * dt * 0.5_rt);
@@ -331,8 +333,10 @@ void PsatdAlgorithmComoving::InitializeSpectralCoefficients (const SpectralKSpac
                 const amrex::Real om_mod  = c * knorm_mod;
                 const amrex::Real om2_mod = om_mod * om_mod;
 
-                C   (i,j,k) = std::cos(om_mod * dt);
-                S_ck(i,j,k) = std::sin(om_mod * dt) / om_mod;
+                const auto phi = om_mod * dt;
+                auto const [sin_phi, cos_phi] = amrex::Math::sincos(phi);
+                C   (i,j,k) = cos_phi;
+                S_ck(i,j,k) = sin_phi / om_mod;
                 T2(i,j,k) = 1._rt;
 
                 // X1 multiplies i*(k \times J) in the update equation for B

@@ -13,6 +13,7 @@
 #include "WarpX.H"
 
 #include <AMReX_GpuQualifiers.H>
+#include <AMReX_Math.H>
 #include <AMReX_PODVector.H>
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_ParmParse.H>

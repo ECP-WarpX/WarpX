@@ -20,6 +20,7 @@
 #include <AMReX_Config.H>
 #include <AMReX_Dim3.H>
 #include <AMReX_GpuQualifiers.H>
+#include <AMReX_Math.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Parser.H>
 #include <AMReX_Random.H>
@@ -336,8 +337,9 @@ struct InjectorMomentumJuttner
         x2 = amrex::Random(engine);
         // Direction dir is an input parameter that sets the boost direction:
         // 'x' -> d = 0, 'y' -> d = 1, 'z' -> d = 2.
-        u[(dir+1)%3] = 2._rt*u[dir]*std::sqrt(x1*(1._rt-x1))*std::sin(2._rt*MathConst::pi*x2);
-        u[(dir+2)%3] = 2._rt*u[dir]*std::sqrt(x1*(1._rt-x1))*std::cos(2._rt*MathConst::pi*x2);
+        auto const [sin_phi, cos_phi] = amrex::Math::sincospi(2._rt*x2);
+        u[(dir+1)%3] = 2._rt*u[dir]*std::sqrt(x1*(1._rt-x1))*sin_phi;
+        u[(dir+2)%3] = 2._rt*u[dir]*std::sqrt(x1*(1._rt-x1))*cos_phi;
         // The value of dir is the boost direction to be transformed.
         u[dir] = u[dir]*(2._rt*x1-1._rt);
         x1 = amrex::Random(engine);
