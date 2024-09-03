@@ -85,6 +85,11 @@ Laser-Plasma Interaction
 
 Scientific works in laser-ion acceleration and laser-matter interaction.
 
+#. Garten M, Bulanov SS, Hakimi S, Obst-Huebl L, Mitchell CE, Schroeder CB, Esarey E, Geddes CGR, Vay J-L, Huebl A.
+   **Laser-plasma ion beam booster based on hollow-channel magnetic vortex acceleration**.
+   Physical Review Research **6**, 033148, 2024.
+   `DOI:10.1103/PhysRevResearch.6.033148 <https://doi.org/10.1103/PhysRevResearch.6.033148>`__
+
 #. Knight B, Gautam C, Stoner C, Egner B, Smith J, Orban C, Manfredi J, Frische K, Dexter M, Chowdhury E, Patnaik A (2023).
    **Detailed Characterization of a kHz-rate Laser-Driven Fusion at a Thin Liquid Sheet with a Neutron Detection Suite**.
    High Power Laser Science and Engineering, 1-13, 2023.
@@ -145,6 +150,26 @@ Scientific works in astrophysical plasma modeling.
    `DOI:10.48550/arXiv.2304.10566 <https://doi.org/10.48550/arXiv.2304.10566>`__
 
 
+Plasma Propulsion
+*****************
+
+#. Xie L, Luo X, Zhou Z, Zhao Y.
+   **Effect of plasma initialization on 3D PIC simulation of Hall thruster azimuthal instability**
+   Physica Scripta, 99.9, 095602, 2024.
+   `DOI:10.1088/1402-4896/ad69e5 <https://doi.org/10.1088/1402-4896/ad69e5>`__
+
+#. Marks T, Gorodetsky A.
+   **Hall thruster simulations in WarpX**.
+   *38th International Electric Propulsion Conference*, Toulouse (France), 2024.
+   `DOI:10.7302/23491 <https://doi.org/10.7302/23491>`__
+
+#. Boeuf J-P, Smolyakov A.
+   **Physics and instabilities of low-temperature E × B plasmas for spacecraft propulsion and other applications**.
+   Physics of Plasmas **30**, 050901, 2023.
+   `DOI:10.1063/5.0145536 <https://doi.org/10.1063/5.0145536>`__
+
+
+
 Microelectronics
 ****************
 
@@ -172,6 +197,7 @@ High-Performance Computing and Numerics
 Scientific works in High-Performance Computing, applied mathematics and numerics.
 
 Please see :ref:`this section <acknowledge_warpx_all_refs>`.
+
 
 Nuclear Fusion - Magnetically Confined Plasmas
 **********************************************
