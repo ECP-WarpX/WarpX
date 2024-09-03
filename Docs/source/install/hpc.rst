@@ -52,6 +52,7 @@ This section documents quick-start guides for a selection of supercomputers that
    hpc/quartz
    hpc/summit
    hpc/taurus
+   hpc/tioga
 
 .. tip::
 
