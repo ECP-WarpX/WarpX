@@ -85,9 +85,9 @@ Laser-Plasma Interaction
 
 Scientific works in laser-ion acceleration and laser-matter interaction.
 
-#. Garten M, Bulanov S S, Hakimi S, Obst-Huebl L, Mitchell C E, Schroeder C B, Esarey E, Geddes C G R, Vay J-L, and Huebl A.
+#. Garten M, Bulanov S S, Hakimi S, Obst-Huebl L, Mitchell C E, Schroeder C B, Esarey E, Geddes C G R, Vay J-L, Huebl A.
    **Laser-plasma ion beam booster based on hollow-channel magnetic vortex acceleration**.
-   Phys. Rev. Research **6**, 033148, 2024.
+   Physical Review Research **6**, 033148, 2024.
    `DOI:10.1103/PhysRevResearch.6.033148 <https://doi.org/10.1103/PhysRevResearch.6.033148>`__
 
 #. Knight B, Gautam C, Stoner C, Egner B, Smith J, Orban C, Manfredi J, Frische K, Dexter M, Chowdhury E, Patnaik A (2023).
