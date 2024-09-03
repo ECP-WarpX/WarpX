@@ -1671,6 +1671,9 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 
             if (flux_pos->overlapsWith(lo, hi))
             {
+
+                // TODO: EBInjection: call getBndArea ; infer how many particles to inject from the area
+
                 auto index = overlap_box.index(iv);
                 int r;
                 if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
@@ -1864,6 +1867,8 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                     continue;
                 }
 
+                // TODO: EBInjection: rotate the momentum: make it perpendicular to the surface
+
 #ifdef WARPX_DIM_RZ
                 // Conversion from cylindrical to Cartesian coordinates
                 // Replace the x and y, setting an angle theta.
@@ -1927,6 +1932,9 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 // For cylindrical emission (flux_normal_axis==0
                 // or flux_normal_axis==2), the emission surface depends on
                 // the radius ; thus, the calculation is finalized here
+
+                // TODO: EBInjection: check that this is fine
+
                 Real t_weight = flux * scale_fac * dt;
                 if (loc_flux_normal_axis != 1) {
                     if (radially_weighted) {
