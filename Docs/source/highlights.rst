@@ -146,8 +146,8 @@ Scientific works in astrophysical plasma modeling.
 
 #. Klion H, Jambunathan R, Rowan ME, Yang E, Willcox D, Vay J-L, Lehe R, Myers A, Huebl A, Zhang W.
    **Particle-in-Cell simulations of relativistic magnetic reconnection with advanced Maxwell solver algorithms**.
-   arXiv pre-print, 2023.
-   `DOI:10.48550/arXiv.2304.10566 <https://doi.org/10.48550/arXiv.2304.10566>`__
+   The Astrophysical Journal **952** 8, 2023.
+   `DOI:10.3847/1538-4357/acd75b <https://doi.org/10.3847/1538-4357/acd75b>`__
 
 
 Microelectronics
