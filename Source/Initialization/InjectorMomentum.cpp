@@ -17,6 +17,9 @@ void InjectorMomentum::clear () // NOLINT(readability-make-member-function-const
     case Type::gaussian:
     case Type::gaussianparser:
     case Type::gaussianflux:
+#ifdef AMREX_USE_EB
+    case Type::stlgaussianflux:
+#endif
     case Type::uniform:
     case Type::boltzmann:
     case Type::juttner:
