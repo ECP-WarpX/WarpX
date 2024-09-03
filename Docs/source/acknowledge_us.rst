@@ -53,7 +53,7 @@ Prior WarpX references
 
 If your project uses a specific algorithm or component, please consider citing the respective publications in addition.
 
-- Shapoval O, Zoni Z, Lehe R, Thévenet M, and Vay J-L
+- Shapoval O, Zoni E, Lehe R, Thévenet M, and Vay J-L
   **Pseudospectral particle-in-cell formulation with arbitrary charge and current-density time dependencies for the modeling of relativistic plasmas**.
   Physical Review E **110**, 025206, 2024.
   `DOI:10.1103/PhysRevE.110.025206 <https://doi.org/10.1103/PhysRevE.110.025206>`__
