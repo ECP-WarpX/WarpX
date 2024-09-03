@@ -3472,8 +3472,8 @@ Reduced Diagnostics
     :math:`\int d\mathcal{E}^* \frac{d\mathcal{L}}{d\mathcal{E}^*} (\mathcal{E}^*, t)\sigma^*(\mathcal{E}^*)`
     gives the total number of collisions of that process (from the beginning of the simulation up until time :math:`t`).
 
-    The differential luminosity is given in units of :math:`\text{m}^{-2}.\text{J}^{-1}`. For collider-relevant WarpX simulations
-    involving two crossing, high-energy beams of particles, the differential luminosity in :math:`\text{s}^{-1}.\text{m}^{-2}.\text{J}^{-1}`
+    The differential luminosity is given in units of :math:`\text{m}^{-2}.\text{eV}^{-1}`. For collider-relevant WarpX simulations
+    involving two crossing, high-energy beams of particles, the differential luminosity in :math:`\text{s}^{-1}.\text{m}^{-2}.\text{eV}^{-1}`
     can be obtained by multiplying the above differential luminosity by the expected repetition rate of the beams.
 
     In practice, the above expression of the differential luminosity is evaluated over discrete bins in energy :math:`\mathcal{E}^*`,
@@ -3485,10 +3485,10 @@ Reduced Diagnostics
     * ``<reduced_diags_name>.bin_number`` (`int` > 0)
         The number of bins in energy :math:`\mathcal{E}^*`
 
-    * ``<reduced_diags_name>.bin_max`` (`float`, in Joules)
+    * ``<reduced_diags_name>.bin_max`` (`float`, in eV)
         The minimum value of :math:`\mathcal{E}^*` for which the differential luminosity is computed.
 
-    * ``<reduced_diags_name>.bin_min`` (`float`, in Joules)
+    * ``<reduced_diags_name>.bin_min`` (`float`, in eV)
         The maximum value of :math:`\mathcal{E}^*` for which the differential luminosity is computed.
 
 * ``<reduced_diags_name>.intervals`` (`string`)
