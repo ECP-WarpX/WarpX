@@ -1499,8 +1499,8 @@ WarpX::ReadParameters ()
         // gathered from the collocated grid) and no fields centering occurs.
         // If the magnetostatic solver is used, B-fields are interpolated from
         // the E-field staggering to B-field staggering which needs the stencils.
-        if ((WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving &&
-            WarpX::grid_type != GridType::Collocated) || do_magnetostatic_solve)
+        if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving &&
+            WarpX::grid_type != GridType::Collocated)
         {
             utils::parser::queryWithParser(
                 pp_warpx, "field_centering_nox", field_centering_nox);

@@ -7,59 +7,24 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "FieldSolver/MagnetostaticSolver/MagnetostaticSolver.H"
-#include "Parallelization/GuardCellManager.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Python/callbacks.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#include "Parallelization/WarpXComm_K.H"
 #include "WarpX.H"
 
+#include <ablastr/coarsen/sample.H>
 #include <ablastr/utils/Communication.H>
-#include <ablastr/warn_manager/WarnManager.H>
 #include <ablastr/fields/VectorPoissonSolver.H>
 
-#include <AMReX_Array.H>
-#include <AMReX_Array4.H>
-#include <AMReX_BLassert.H>
-#include <AMReX_Box.H>
-#include <AMReX_BoxArray.H>
-#include <AMReX_Config.H>
-#include <AMReX_DistributionMapping.H>
-#include <AMReX_FArrayBox.H>
-#include <AMReX_FabArray.H>
-#include <AMReX_Geometry.H>
-#include <AMReX_GpuControl.H>
-#include <AMReX_GpuLaunch.H>
-#include <AMReX_GpuQualifiers.H>
-#include <AMReX_IndexType.H>
-#include <AMReX_IntVect.H>
-#include <AMReX_LO_BCTYPES.H>
-#include <AMReX_MFIter.H>
-#include <AMReX_MLMG.H>
-#include <AMReX_MultiFab.H>
-#include <AMReX_REAL.H>
-#include <AMReX_SPACE.H>
-#include <AMReX_Vector.H>
-#include <AMReX_MFInterp_C.H>
-#ifdef AMREX_USE_EB
-#   include <AMReX_EBFabFactory.H>
-#endif
-
-#include <array>
-#include <memory>
-#include <string>
 
 using namespace amrex;
 
 void
-WarpX::ComputeMagnetostaticField()
+WarpX::ComputeInitialMagnetostaticField()
 {
-    WARPX_PROFILE("WarpX::ComputeMagnetostaticField");
-    // Fields have been reset in Electrostatic solver for this time step, these fields
-    // are added into the B fields after electrostatic solve
-
+    // First check setup appropriateness
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         this->max_level == 0,
         "Magnetostatic solver not implemented with mesh refinement."
@@ -68,7 +33,102 @@ WarpX::ComputeMagnetostaticField()
         do_magnetostatic_solve,
         "Magnetostatic solver called but warpx.do_magnetostatic is false."
     );
+#ifdef WARPX_DIM_RZ
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        n_rz_azimuthal_modes == 1,
+        "Error: RZ magnetostatic only implemented for a single mode"
+    );
+#endif
 
+    // This function is specially setup for the initial magnetostatic solve
+    // where particles and their velocities are synchronized. The goal is to
+    // calculate the plasma contribution to the B-field. It is assumed that the
+    // B-field is steady in time, i.e. dB/dt = 0 and therefore there is no
+    // inductive E-field component.
+
+    // Perform current deposition at t_0 (source of Poisson solver).
+    mypc->DepositCurrent(current_fp, dt[0], 0.0_rt);
+
+    // Synchronize J:
+    // filter (if used), exchange guard cells, interpolate across MR levels
+    // and apply boundary conditions
+    SyncCurrent(current_fp, current_cp, current_buf);
+    // SyncCurrent does not include a call to FillBoundary
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        for (int idim = 0; idim < 3; ++idim) {
+            current_fp[lev][idim]->FillBoundary(Geom(lev).periodicity());
+        }
+        ApplyJfieldBoundary(
+            lev, current_fp[lev][0].get(), current_fp[lev][1].get(),
+            current_fp[lev][2].get(), PatchType::fine
+        );
+    }
+
+    // Reference magnetostatic multifabs
+    auto& Afield_fp_nodal = m_magnetostatic_solver->Afield_fp_nodal;
+    auto& Afield_fp_old = m_magnetostatic_solver->Afield_fp_old;
+    auto& current_fp_temp = m_magnetostatic_solver->current_fp_temp;
+
+    // Copy current_fp values to current_fp_temp which stores the currents at
+    // the previous time step. This in line with the assumption of initial
+    // steady state.
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        for (int idim = 0; idim < 3; ++idim) {
+            MultiFab::Copy(
+                *current_fp_temp[lev][idim], *current_fp[lev][idim],
+                0, 0, 1, current_fp_temp[lev][idim]->nGrowVect()
+            );
+        }
+    }
+
+    // set the boundary and current density potentials
+    setVectorPotentialBC(m_magnetostatic_solver->Afield_fp_nodal);
+
+    // Compute the vector potential A, by solving the Poisson equation
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( !IsPythonCallbackInstalled("poissonsolver"),
+        "Python Level Poisson Solve not supported for Magnetostatic implementation.");
+
+    computeVectorPotential(
+        current_fp_temp, Afield_fp_nodal,
+        m_magnetostatic_solver->required_precision,
+        m_magnetostatic_solver->absolute_tolerance,
+        m_magnetostatic_solver->max_iters,
+        m_magnetostatic_solver->verbosity
+    );
+
+    // interpolate A from a nodal multifab to an appropriately staggered one
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        m_magnetostatic_solver->InterpolateAfield(Afield_fp[lev], lev);
+        Afield_fp[lev][0]->FillBoundary(Geom(lev).periodicity());
+        Afield_fp[lev][1]->FillBoundary(Geom(lev).periodicity());
+        Afield_fp[lev][2]->FillBoundary(Geom(lev).periodicity());
+    }
+
+    // Copy Afield_fp values to Afield_fp_old, such that the initial dA/dt is 0.
+    for (int lev = 0; lev <= maxLevel(); lev++)
+    {
+        for (int idim = 0; idim < 3; ++idim) {
+            MultiFab::Copy(
+                *Afield_fp_old[lev][idim], *Afield_fp[lev][idim],
+                0, 0, 1, Afield_fp_old[lev][idim]->nGrowVect()
+            );
+        }
+    }
+
+    // At this point Afield_fp contains the vector potential at t = 0 and
+    // we are ready to obtain B^0.
+    ComputeBfromVectorPotential();
+}
+
+void
+WarpX::ComputeMagnetostaticField()
+{
+    WARPX_PROFILE("WarpX::ComputeMagnetostaticField");
+
+    // Fields have been reset in Electrostatic solver for this time step, these
+    // fields are added into the B and E fields after electrostatic solve
     ComputeMagnetostaticFieldLabFrame();
 }
 
@@ -77,11 +137,6 @@ WarpX::ComputeMagnetostaticFieldLabFrame()
 {
     WARPX_PROFILE("WarpX::ComputeMagnetostaticFieldLabFrame");
 
-#ifdef WARPX_DIM_RZ
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
-                                     "Error: RZ magnetostatic only implemented for a single mode");
-#endif
-
     // Perform current deposition at t_{n+1/2} (source of Poisson solver).
     mypc->DepositCurrent(current_fp, dt[0], -0.5_rt * dt[0]);
 
@@ -89,23 +144,20 @@ WarpX::ComputeMagnetostaticFieldLabFrame()
     // filter (if used), exchange guard cells, interpolate across MR levels
     // and apply boundary conditions
     SyncCurrent(current_fp, current_cp, current_buf);
-    for (int lev = 0; lev <= finest_level; ++lev)
-    {
+    // SyncCurrent does not include a call to FillBoundary
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        for (int idim = 0; idim < 3; ++idim) {
+            current_fp[lev][idim]->FillBoundary(Geom(lev).periodicity());
+        }
         ApplyJfieldBoundary(
             lev, current_fp[lev][0].get(), current_fp[lev][1].get(),
             current_fp[lev][2].get(), PatchType::fine
         );
     }
 
-    // SyncCurrent does not include a call to FillBoundary
-    for (int lev = 0; lev <= finest_level; ++lev) {
-        for (int idim = 0; idim < 3; ++idim) {
-            current_fp[lev][idim]->FillBoundary(Geom(lev).periodicity());
-        }
-    }
-
     // Reference magnetostatic multifabs
     auto& Afield_fp_nodal = m_magnetostatic_solver->Afield_fp_nodal;
+    auto& Afield_fp_old = m_magnetostatic_solver->Afield_fp_old;
     auto& current_fp_temp = m_magnetostatic_solver->current_fp_temp;
 
     // At this point J^{n-1/2} is stored in `current_fp_temp` and J^{n+1/2}
@@ -139,39 +191,29 @@ WarpX::ComputeMagnetostaticFieldLabFrame()
         m_magnetostatic_solver->verbosity
     );
 
-    // Grab Interpolation Coefficients
-    // Order of finite-order centering of fields
-    const int fg_nox = WarpX::field_centering_nox;
-    const int fg_noy = WarpX::field_centering_noy;
-    const int fg_noz = WarpX::field_centering_noz;
-
-    // Device vectors of stencil coefficients used for finite-order centering of fields
-    amrex::Real const * stencil_coeffs_x = WarpX::device_field_centering_stencil_coeffs_x.data();
-    amrex::Real const * stencil_coeffs_y = WarpX::device_field_centering_stencil_coeffs_y.data();
-    amrex::Real const * stencil_coeffs_z = WarpX::device_field_centering_stencil_coeffs_z.data();
-
+    // interpolate A from a nodal multifab to an appropriately staggered one
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        // interpolate Afield_fp_nodal[lev][i] to Afield_fp[lev][i]
-        for (int i = 0; i < 3; ++i) {
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-            for (MFIter mfi(*Afield_fp[lev][i], TilingIfNotGPU()); mfi.isValid(); ++mfi)
-            {
-                IntVect const src_stag = Afield_fp_nodal[lev][i]->ixType().toIntVect();
-                IntVect const dst_stag = Afield_fp[lev][i]->ixType().toIntVect();
+        m_magnetostatic_solver->InterpolateAfield(Afield_fp[lev], lev);
+        Afield_fp[lev][0]->FillBoundary(Geom(lev).periodicity());
+        Afield_fp[lev][1]->FillBoundary(Geom(lev).periodicity());
+        Afield_fp[lev][2]->FillBoundary(Geom(lev).periodicity());
 
-                Array4<amrex::Real const> const& src_arr = Afield_fp_nodal[lev][i]->const_array(mfi);
-                Array4<amrex::Real> const& dst_arr = Afield_fp[lev][i]->array(mfi);
-
-                const Box bx = mfi.tilebox();
-
-                ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
-                {
-                    warpx_interp(j, k, l, dst_arr, src_arr, dst_stag, src_stag, fg_nox, fg_noy, fg_noz,
-                        stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
-                });
+        // Time filter A to avoid high frequency noise in the B-field becoming
+        // large E-fields. A low-pass filter is used in which the A-field
+        // solution is constructed as a linear combination of the new and old
+        // solutions.
+        if (m_magnetostatic_solver->t_filter_param < 1.0_rt)
+        {
+            for (int idim = 0; idim < 3; ++idim) {
+                MultiFab::LinComb(
+                    *Afield_fp[lev][idim],
+                    (1.0_rt - m_magnetostatic_solver->t_filter_param),
+                    *Afield_fp_old[lev][idim], 0,
+                    m_magnetostatic_solver->t_filter_param,
+                    *Afield_fp[lev][idim], 0,
+                    0, 1, Afield_fp[lev][idim]->nGrowVect()
+                );
             }
         }
     }
@@ -180,23 +222,30 @@ WarpX::ComputeMagnetostaticFieldLabFrame()
     // we are ready to obtain B^{n+1}.
     ComputeBfromVectorPotential();
 
-    // copy J^{n+1/2} to current_fp_temp so that it is available at the next
-    // step as J^{n-1/2}
-    for (int lev = 0; lev <= finest_level; ++lev)
+    // update E-field from the B-field inductance, but only if time-filtering
+    // of A is done otherwise the algorithm is unstable
+    if (m_magnetostatic_solver->t_filter_param < 1.0_rt)
     {
-        // copy 1 component value starting at index 0 to index 0
-        for (int idim = 0; idim < 3; ++idim) {
-            MultiFab::Copy(*current_fp_temp[lev][idim], *current_fp[lev][idim],
-                           0, 0, 1, current_fp_temp[lev][idim]->nGrowVect());
+        for (int lev = 0; lev <= finest_level; ++lev)
+        {
+            m_magnetostatic_solver->UpdateEfromInductance(
+                Efield_fp[lev], Afield_fp[lev], getdt(lev), lev
+            );
         }
     }
 
-    // update E-field from the B-field inductance
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        m_magnetostatic_solver->UpdateEfromInductance(
-            Efield_fp[lev], Afield_fp[lev], getdt(lev), lev
-        );
+        for (int idim = 0; idim < 3; ++idim) {
+            // Copy J^{n+1/2} to current_fp_temp so that it is available at the
+            // next step as J^{n-1/2}
+            MultiFab::Copy(*current_fp_temp[lev][idim], *current_fp[lev][idim],
+                           0, 0, 1, current_fp_temp[lev][idim]->nGrowVect());
+            // Copy A^{n+1/2} to Afield_fp_old so that is is available at the
+            // next step as A^{n-1/2}
+            MultiFab::Copy(*Afield_fp_old[lev][idim], *Afield_fp[lev][idim],
+                           0, 0, 1, Afield_fp_old[lev][idim]->nGrowVect());
+        }
     }
 }
 
@@ -347,6 +396,15 @@ void MagnetostaticSolver::ReadParameters ()
     utils::parser::queryWithParser(pp_warpx, "self_fields_max_iters", max_iters);
 
     pp_warpx.query("self_fields_verbosity", verbosity);
+
+    utils::parser::queryWithParser(
+        pp_warpx, "magnetostatic_t_filtering_parameter", t_filter_param);
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        t_filter_param > 0.0_rt,
+        "Using `t_filter_parameter = 0` with the magnetostatic solver is "
+        "equivalent to not using the magnetostatic solver at all."
+    );
 }
 
 void MagnetostaticSolver::AllocateMFs (int nlevs_max)
@@ -405,6 +463,67 @@ void MagnetostaticSolver::InitData () {
     m_boundary_handler.defineVectorPotentialBCs(
         warpx.field_boundary_lo, warpx.field_boundary_hi, warpx.Geom(0).ProbLo(0)
     );
+
+    // get appropriate staggering for interpolation of nodal A-field to the
+    // E-field staggering (which already matches the set staggering for
+    // Afield_fp_old).
+    auto Ex_stag = Afield_fp_old[0][0]->ixType().toIntVect();
+    auto Ey_stag = Afield_fp_old[0][1]->ixType().toIntVect();
+    auto Ez_stag = Afield_fp_old[0][2]->ixType().toIntVect();
+
+    // copy data to device
+    for ( int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        E_IndexType[0][idim] = Ex_stag[idim];
+        E_IndexType[1][idim] = Ey_stag[idim];
+        E_IndexType[2][idim] = Ez_stag[idim];
+    }
+
+    // Below we set all the unused dimensions to have nodal values
+    // since these values will be interpolated from a nodal grid - if this is
+    // not done the Interp function returns nonsense values.
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_1D_Z)
+    E_IndexType[0][2] = 1;
+    E_IndexType[1][2] = 1;
+    E_IndexType[2][2] = 1;
+#endif
+#if defined(WARPX_DIM_1D_Z)
+    E_IndexType[0][1] = 1;
+    E_IndexType[1][1] = 1;
+    E_IndexType[2][1] = 1;
+#endif
+}
+
+void MagnetostaticSolver::InterpolateAfield (
+    amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>& Afield,
+    const int lev
+) {
+    using namespace ablastr::coarsen::sample;
+
+    // Parameters for `interp` that maps from Yee to nodal mesh and back
+    amrex::GpuArray<int, 3> const& nodal = {1, 1, 1};
+    // The "coarsening is just 1 i.e. no coarsening"
+    amrex::GpuArray<int, 3> const& coarsen = {1, 1, 1};
+
+    // interpolate Afield_fp_nodal[lev][i] to Afield[lev][i]
+    for (int idim = 0; idim < 3; idim++) {
+        auto dst_stag = E_IndexType[idim];
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+        for (MFIter mfi(*Afield[idim], TilingIfNotGPU()); mfi.isValid(); ++mfi)
+        {
+            Array4<amrex::Real const> const& src_arr = Afield_fp_nodal[lev][idim]->const_array(mfi);
+            Array4<amrex::Real> const& dst_arr = Afield[idim]->array(mfi);
+
+            const Box bx = mfi.tilebox();
+
+            ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+            {
+                dst_arr(i, j, k) = Interp(src_arr, nodal, dst_stag, coarsen, i, j, k, 0);
+            });
+        }
+    }
 }
 
 void MagnetostaticSolver::UpdateEfromInductance (
@@ -416,7 +535,7 @@ void MagnetostaticSolver::UpdateEfromInductance (
     // The E-field due to inductance (-dA/dt) is added to the E-field, which
     // already contains the capacitive part from the electrostatic potential.
     // Here we assume that the time derivative of A does not change over one
-    // step since we only have access to A^{n-1} and A^{n+1}, but should
+    // step since we only have access to A^{n} and A^{n+1}, but should
     // really find A^{n+3/2} in order to accurately calculate (dA/dt)^{n+1}.
     // Afield contains A^{n+1} and Afield_fp_old contains A^{n}.
     // E_ind = -dA/dt = -(Afield - Afield_fp_old) / dt
@@ -429,10 +548,9 @@ void MagnetostaticSolver::UpdateEfromInductance (
             0, 1, Afield_fp_old[lev][idim]->nGrowVect()
         );
         // Add E_ind to existing E-field
-        MultiFab::Add(*Efield[idim], *Afield_fp_old[lev][idim], 0, 0, 1, Afield_fp_old[lev][idim]->nGrowVect());
-        // Set Afield_fp_old to the current Afield value so that it is available
-        // on the next step as the old A-field
-        MultiFab::Copy(*Afield_fp_old[lev][idim], *Afield[idim],
-                        0, 0, 1, Afield_fp_old[lev][idim]->nGrowVect());
+        MultiFab::Add(
+            *Efield[idim], *Afield_fp_old[lev][idim], 0, 0, 1,
+            Afield_fp_old[lev][idim]->nGrowVect()
+        );
     }
 }

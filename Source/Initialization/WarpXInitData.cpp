@@ -590,7 +590,7 @@ WarpX::InitData ()
         ComputeSpaceChargeField(reset_fields);
         ExecutePythonCallback("afterInitEsolve");
         if (do_magnetostatic_solve) {
-            ComputeMagnetostaticField();
+            ComputeInitialMagnetostaticField();
         }
         // Add external fields to the fine patch fields. This makes it so that the
         // net fields are the sum of the field solutions and any external fields.

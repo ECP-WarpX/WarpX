@@ -49,11 +49,23 @@ public:
 
     void InitData ();
 
+    /**
+     * Function that interpolates the A-field solution from the initial nodal
+     * field to the appropriate A-field staggering (matching the E-field).
+     */
+    void InterpolateAfield (amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>& Afield,
+                            const int lev);
+
+    /**
+     * Function to calculate the time derivative of the vector potential and add
+     * it to the E-field (inductive term of the E-field).
+     */
     void UpdateEfromInductance (amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>& Efield,
                                 amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> const& Afield,
                                 Real dt, const int lev);
 
-    /** Boundary Handler for the Vector Potential Poisson Solver
+    /**
+     * Boundary Handler for the Vector Potential Poisson Solver
      * This only will handle homogeneous Dirichlet boundary conditions on
      * embedded boundaries, and homogeneous dirichlet/Neumann or periodic
      * boundary conditions on domain boundaries.
@@ -162,6 +174,7 @@ public:
     BoundaryHandler m_boundary_handler = BoundaryHandler();
 
     // numerical parameters
+    amrex::Real t_filter_param = 0.25_rt;
     amrex::Real required_precision = 1.e-11_rt;
     amrex::Real absolute_tolerance = 0.0_rt;
     int max_iters = 200;
@@ -171,5 +184,8 @@ public:
     Vector<std::array< std::unique_ptr<MultiFab>, 3 > > Afield_fp_nodal;
     Vector<std::array< std::unique_ptr<MultiFab>, 3 > > Afield_fp_old;
     Vector<std::array< std::unique_ptr<MultiFab>, 3 > > current_fp_temp;
+
+    /** Array of Gpu Vectors with index type of the Ex, Ey and Ez multifabs */
+    std::array<amrex::GpuArray<int, 3>, 3> E_IndexType;
 };
 #endif //WARPX_MAGNETOSTATICSOLVER_H_

@@ -1013,6 +1013,7 @@ public:
 
     // Magnetostatic Solver Interface
     void ComputeMagnetostaticField ();
+    void ComputeInitialMagnetostaticField ();
     void ComputeMagnetostaticFieldLabFrame ();
     void computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> >& curr,
                                  amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> >& A,
