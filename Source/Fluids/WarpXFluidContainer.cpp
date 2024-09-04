@@ -1035,8 +1035,20 @@ void WarpXFluidContainer::GatherAndPush (
         // Here, we do not perform any coarsening.
         const amrex::GpuArray<int, 3U> coarsening_ratio = {1, 1, 1};
 
-        amrex::ParallelFor(tile_box,
-            [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+        enum exte_flags : int { no_exte, has_exte };
+        enum extb_flags : int { no_extb, has_extb };
+        enum boost_flags : int { no_gamma_boost, has_gamma_boost };
+        const int exte_runtime_flag = external_e_fields ? has_exte : no_exte;
+        const int extb_runtime_flag = external_b_fields ? has_extb : no_extb;
+        const int boost_runtime_flag = (gamma_boost > 1._rt) ? has_gamma_boost : no_gamma_boost;
+
+        amrex::ParallelFor(TypeList<CompileTimeOptions<no_exte, has_exte>,
+                                    CompileTimeOptions<no_extb, has_extb>,
+                                    CompileTimeOptions<no_gamma_boost, has_gamma_boost>>{},
+                           {exte_runtime_flag, extb_runtime_flag, boost_runtime_flag},
+                           tile_box,
+            [=] AMREX_GPU_DEVICE(int i, int j, int k,
+                                 auto exte_control, auto extb_control, auto boost_control) noexcept
             {
 
                 // Only run if density is positive
@@ -1056,8 +1068,13 @@ void WarpXFluidContainer::GatherAndPush (
                     amrex::Real Bz_Nodal = ablastr::coarsen::sample::Interp(Bz_arr,
                         Bz_type, Nodal_type, coarsening_ratio, i, j, k, 0);
 
-                    if (gamma_boost > 1._rt) { // Lorentz transform fields due to moving frame
-                        if ( ( external_b_fields ) || ( external_e_fields ) ){
+#ifdef AMREX_USE_CUDA
+                    amrex::ignore_unused(Exfield_parser,Eyfield_parser,Ezfield_parser,
+                                         Bxfield_parser,Byfield_parser,Bzfield_parser,gamma_boost);
+#endif
+
+                    if constexpr (boost_control == has_gamma_boost) { // Lorentz transform fields due to moving frame
+                        if constexpr (exte_control == has_exte || extb_control == has_extb) {
 
                             // Lorentz transform z (from boosted to lab frame)
                             amrex::Real Ex_ext_boost, Ey_ext_boost, Ez_ext_boost;
@@ -1086,7 +1103,7 @@ void WarpXFluidContainer::GatherAndPush (
                             const amrex::Real z_lab = gamma_boost*(z + beta_boost*PhysConst::c*t);
 
                             // Grab the external fields in the lab frame:
-                            if ( external_e_fields ) {
+                            if ( exte_control == has_exte ) {
                                 Ex_ext_lab = Exfield_parser(x, y, z_lab, t_lab);
                                 Ey_ext_lab = Eyfield_parser(x, y, z_lab, t_lab);
                                 Ez_ext_lab = Ezfield_parser(x, y, z_lab, t_lab);
@@ -1095,7 +1112,7 @@ void WarpXFluidContainer::GatherAndPush (
                                 Ey_ext_lab = 0.0;
                                 Ez_ext_lab = 0.0;
                             }
-                            if ( external_b_fields ) {
+                            if ( extb_control == has_extb ) {
                                 Bx_ext_lab = Bxfield_parser(x, y, z_lab, t_lab);
                                 By_ext_lab = Byfield_parser(x, y, z_lab, t_lab);
                                 Bz_ext_lab = Bzfield_parser(x, y, z_lab, t_lab);
@@ -1126,7 +1143,7 @@ void WarpXFluidContainer::GatherAndPush (
                     } else {
 
                         // Added external e fields:
-                        if ( external_e_fields ){
+                        if constexpr ( exte_control == has_exte ){
 #if defined(WARPX_DIM_3D)
                             const amrex::Real x = problo[0] + i * dx[0];
                             const amrex::Real y = problo[1] + j * dx[1];
@@ -1147,7 +1164,7 @@ void WarpXFluidContainer::GatherAndPush (
                         }
 
                         // Added external b fields:
-                        if ( external_b_fields ){
+                        if ( extb_control == has_extb ){
 #if defined(WARPX_DIM_3D)
                             const amrex::Real x = problo[0] + i * dx[0];
                             const amrex::Real y = problo[1] + j * dx[1];
