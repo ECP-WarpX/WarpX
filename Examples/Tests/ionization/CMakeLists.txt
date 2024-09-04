@@ -6,8 +6,8 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/ionization/inputs_test_2d_ionization_boost # inputs
-    Examples/Tests/ionization/analysis.py # analysis
+    inputs_test_2d_ionization_boost # inputs
+    analysis.py # analysis
     diags/diag1000420 # output
     OFF # dependency
 )
@@ -17,8 +17,8 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/ionization/inputs_test_2d_ionization_lab # inputs
-    Examples/Tests/ionization/analysis.py # analysis
+    inputs_test_2d_ionization_lab # inputs
+    analysis.py # analysis
     diags/diag1001600 # output
     OFF # dependency
 )
@@ -28,8 +28,8 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/ionization/inputs_test_2d_ionization_picmi.py # inputs
-    Examples/Tests/ionization/analysis.py # analysis
+    inputs_test_2d_ionization_picmi.py # inputs
+    analysis.py # analysis
     diags/diag1001600 # output
     OFF # dependency
 )

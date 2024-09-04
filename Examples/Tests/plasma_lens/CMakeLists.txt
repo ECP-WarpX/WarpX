@@ -6,8 +6,8 @@ add_warpx_test(
     3 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/plasma_lens/inputs_test_3d_plasma_lens # inputs
-    Examples/Tests/plasma_lens/analysis.py # analysis
+    inputs_test_3d_plasma_lens # inputs
+    analysis.py # analysis
     diags/diag1000084 # output
     OFF # dependency
 )
@@ -17,8 +17,8 @@ add_warpx_test(
     3 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/plasma_lens/inputs_test_3d_plasma_lens_boosted # inputs
-    Examples/Tests/plasma_lens/analysis.py # analysis
+    inputs_test_3d_plasma_lens_boosted # inputs
+    analysis.py # analysis
     diags/diag1000084 # output
     OFF # dependency
 )
@@ -28,8 +28,8 @@ add_warpx_test(
     3 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/plasma_lens/inputs_test_3d_plasma_lens_hard_edged # inputs
-    Examples/Tests/plasma_lens/analysis.py # analysis
+    inputs_test_3d_plasma_lens_hard_edged # inputs
+    analysis.py # analysis
     diags/diag1000084 # output
     OFF # dependency
 )
@@ -39,8 +39,8 @@ add_warpx_test(
     3 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/plasma_lens/inputs_test_3d_plasma_lens_picmi.py # inputs
-    Examples/Tests/plasma_lens/analysis.py # analysis
+    inputs_test_3d_plasma_lens_picmi.py # inputs
+    analysis.py # analysis
     diags/diag1000084 # output
     OFF # dependency
 )
@@ -50,8 +50,8 @@ add_warpx_test(
     3 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/plasma_lens/inputs_test_3d_plasma_lens_short # inputs
-    Examples/Tests/plasma_lens/analysis.py # analysis
+    inputs_test_3d_plasma_lens_short # inputs
+    analysis.py # analysis
     diags/diag1000084 # output
     OFF # dependency
 )

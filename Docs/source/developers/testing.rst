@@ -95,7 +95,7 @@ Each test directory must contain a file named ``CMakeLists.txt`` where all tests
 
 A new test can be added by adding a corresponding entry in ``CMakeLists.txt`` as illustrated in the examples below:
 
-* Add the **regular test** ``test_1d_laser_acceleration``, with input file and analysis script in ``Examples/Tests/laser_acceleration/``:
+* Add the **regular test** ``test_1d_laser_acceleration``:
 
   .. code-block:: sh
 
@@ -104,13 +104,13 @@ A new test can be added by adding a corresponding entry in ``CMakeLists.txt`` as
            1 # dims
            2 # nprocs
            OFF # eb
-           Examples/Tests/laser_acceleration/inputs_test_1d_laser_acceleration # inputs
-           Examples/Tests/laser_acceleration/analysis.py # analysis
+           inputs_test_1d_laser_acceleration # inputs
+           analysis.py # analysis
            diags/diag1000100 # output (plotfile)
            OFF # dependency
        )
 
-* Add the **PICMI test** ``test_2d_laser_acceleration_picmi``, with input file and analysis script in ``Examples/Tests/laser_acceleration/``:
+* Add the **PICMI test** ``test_2d_laser_acceleration_picmi``:
 
   .. code-block:: sh
 
@@ -119,13 +119,13 @@ A new test can be added by adding a corresponding entry in ``CMakeLists.txt`` as
            2 # dims
            2 # nprocs
            OFF # eb
-           Examples/Tests/laser_acceleration/inputs_test_2d_laser_acceleration_picmi.py # inputs
-           Examples/Tests/laser_acceleration/analysis.py # analysis
+           inputs_test_2d_laser_acceleration_picmi.py # inputs
+           analysis.py # analysis
            diags/diag1000100 # output (plotfile)
            OFF # dependency
        )
 
-* Add the **restart test** ``test_3d_laser_acceleration_restart``, with input file in ``Examples/Tests/laser_acceleration/`` and default restart analysis script provided by WarpX:
+* Add the **restart test** ``test_3d_laser_acceleration_restart``:
 
   .. code-block:: sh
 
@@ -134,15 +134,15 @@ A new test can be added by adding a corresponding entry in ``CMakeLists.txt`` as
            3 # dims
            2 # nprocs
            OFF # eb
-           Examples/Tests/laser_acceleration/inputs_test_3d_laser_acceleration_restart # inputs
-           Examples/analysis_default_restart.py # analysis
+           inputs_test_3d_laser_acceleration_restart # inputs
+           analysis_default_restart.py # analysis
            diags/diag1000100 # output (plotfile)
            test_3d_laser_acceleration # dependency
        )
 
   Note that the restart has an explicit dependency, namely it can run only provided that the original test, from which the restart checkpoint files will be read, runs first.
 
-* A more complex example. Add the **PICMI test** ``test_rz_laser_acceleration_picmi``, with custom command-line arguments ``--test`` and ``dir``, input file and analysis script in ``Examples/Tests/laser_acceleration/``, and openPMD time series output:
+* A more complex example. Add the **PICMI test** ``test_rz_laser_acceleration_picmi``, with custom command-line arguments ``--test`` and ``dir``, and openPMD time series output:
 
   .. code-block:: sh
 
@@ -151,8 +151,8 @@ A new test can be added by adding a corresponding entry in ``CMakeLists.txt`` as
            RZ # dims
            2  # nprocs
            OFF # eb
-           "Examples/Tests/laser_acceleration/inputs_test_rz_laser_acceleration_picmi.py --test --dir 1" # inputs
-           Examples/Tests/laser_acceleration/analysis.py # analysis
+           "inputs_test_rz_laser_acceleration_picmi.py --test --dir 1" # inputs
+           analysis.py # analysis
            diags/diag1/ # output (openPMD time series)
            OFF # dependency
        )

@@ -7,8 +7,8 @@ if(WarpX_FFT)
         2 # dims
         1 # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_test_2d_averaged_galilean_psatd # inputs
-        Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
+        inputs_test_2d_averaged_galilean_psatd # inputs
+        analysis_galilean.py # analysis
         diags/diag1000400 # output
     OFF # dependency
     )
@@ -20,8 +20,8 @@ if(WarpX_FFT)
         2 # dims
         2 # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_test_2d_averaged_galilean_psatd_hybrid # inputs
-        Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
+        inputs_test_2d_averaged_galilean_psatd_hybrid # inputs
+        analysis_galilean.py # analysis
         diags/diag1000400 # output
     OFF # dependency
     )
@@ -33,8 +33,8 @@ if(WarpX_FFT)
         3 # dims
         2 # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_test_3d_averaged_galilean_psatd # inputs
-        Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
+        inputs_test_3d_averaged_galilean_psatd # inputs
+        analysis_galilean.py # analysis
         diags/diag1000160 # output
     OFF # dependency
     )
@@ -46,8 +46,8 @@ if(WarpX_FFT)
         3 # dims
         2 # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_test_3d_averaged_galilean_psatd_hybrid # inputs
-        Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
+        inputs_test_3d_averaged_galilean_psatd_hybrid # inputs
+        analysis_galilean.py # analysis
         diags/diag1000160 # output
     OFF # dependency
     )
@@ -59,8 +59,8 @@ if(WarpX_FFT)
         2 # dims
         2 # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_test_2d_comoving_psatd_hybrid # inputs
-        Examples/analysis_default_regression.py # analysis
+        inputs_test_2d_comoving_psatd_hybrid # inputs
+        analysis_default_regression.py # analysis
         diags/diag1000400 # output
     OFF # dependency
     )
@@ -72,8 +72,8 @@ if(WarpX_FFT)
         2 # dims
         1 # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_test_2d_galilean_psatd # inputs
-        Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
+        inputs_test_2d_galilean_psatd # inputs
+        analysis_galilean.py # analysis
         diags/diag1000400 # output
     OFF # dependency
     )
@@ -85,8 +85,8 @@ if(WarpX_FFT)
         2 # dims
         2 # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_test_2d_galilean_psatd_current_correction # inputs
-        Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
+        inputs_test_2d_galilean_psatd_current_correction # inputs
+        analysis_galilean.py # analysis
         diags/diag1000400 # output
     OFF # dependency
     )
@@ -98,8 +98,8 @@ if(WarpX_FFT)
         2 # dims
         1 # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_test_2d_galilean_psatd_current_correction_psb # inputs
-        Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
+        inputs_test_2d_galilean_psatd_current_correction_psb # inputs
+        analysis_galilean.py # analysis
         diags/diag1000400 # output
     OFF # dependency
     )
@@ -111,8 +111,8 @@ if(WarpX_FFT)
         2 # dims
         2 # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_test_2d_galilean_psatd_hybrid # inputs
-        Examples/analysis_default_regression.py # analysis
+        inputs_test_2d_galilean_psatd_hybrid # inputs
+        analysis_default_regression.py # analysis
         diags/diag1000400 # output
     OFF # dependency
     )
@@ -124,8 +124,8 @@ if(WarpX_FFT)
         3 # dims
         2 # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_test_3d_galilean_psatd # inputs
-        Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
+        inputs_test_3d_galilean_psatd # inputs
+        analysis_galilean.py # analysis
         diags/diag1000300 # output
     OFF # dependency
     )
@@ -137,8 +137,8 @@ if(WarpX_FFT)
         3 # dims
         2 # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_test_3d_galilean_psatd_current_correction # inputs
-        Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
+        inputs_test_3d_galilean_psatd_current_correction # inputs
+        analysis_galilean.py # analysis
         diags/diag1000300 # output
     OFF # dependency
     )
@@ -150,8 +150,8 @@ if(WarpX_FFT)
         3 # dims
         1 # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_test_3d_galilean_psatd_current_correction_psb # inputs
-        Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
+        inputs_test_3d_galilean_psatd_current_correction_psb # inputs
+        analysis_galilean.py # analysis
         diags/diag1000300 # output
     OFF # dependency
     )
@@ -163,8 +163,8 @@ if(WarpX_FFT)
         RZ # dims
         1  # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_test_rz_galilean_psatd # inputs
-        Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
+        inputs_test_rz_galilean_psatd # inputs
+        analysis_galilean.py # analysis
         diags/diag1000400 # output
     OFF # dependency
     )
@@ -176,8 +176,8 @@ if(WarpX_FFT)
         RZ # dims
         2  # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_test_rz_galilean_psatd_current_correction # inputs
-        Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
+        inputs_test_rz_galilean_psatd_current_correction # inputs
+        analysis_galilean.py # analysis
         diags/diag1000400 # output
     OFF # dependency
     )
@@ -189,8 +189,8 @@ if(WarpX_FFT)
         RZ # dims
         1  # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_test_rz_galilean_psatd_current_correction_psb # inputs
-        Examples/Tests/nci_psatd_stability/analysis_galilean.py # analysis
+        inputs_test_rz_galilean_psatd_current_correction_psb # inputs
+        analysis_galilean.py # analysis
         diags/diag1000400 # output
     OFF # dependency
     )
@@ -202,8 +202,8 @@ if(WarpX_FFT)
         RZ # dims
         2  # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_test_rz_multiJ_psatd # inputs
-        Examples/analysis_default_regression.py # analysis
+        inputs_test_rz_multiJ_psatd # inputs
+        analysis_default_regression.py # analysis
         diags/diag1000050 # output
     OFF # dependency
     )
@@ -215,8 +215,8 @@ if(WarpX_FFT)
         3 # dims
         2 # nprocs
         OFF # eb
-        Examples/Tests/nci_psatd_stability/inputs_test_3d_uniform_plasma_multiJ # inputs
-        Examples/Tests/nci_psatd_stability/analysis_multiJ.py # analysis
+        inputs_test_3d_uniform_plasma_multiJ # inputs
+        analysis_multiJ.py # analysis
         diags/diag1000300 # output
     OFF # dependency
     )

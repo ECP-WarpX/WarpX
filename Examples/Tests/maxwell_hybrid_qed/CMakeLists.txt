@@ -7,8 +7,8 @@ if(WarpX_FFT)
         2 # dims
         2 # nprocs
         OFF # eb
-        Examples/Tests/maxwell_hybrid_qed/inputs_test_2d_maxwell_hybrid_qed_solver # inputs
-        Examples/Tests/maxwell_hybrid_qed/analysis.py # analysis
+        inputs_test_2d_maxwell_hybrid_qed_solver # inputs
+        analysis.py # analysis
         diags/diag1000300 # output
     OFF # dependency
     )

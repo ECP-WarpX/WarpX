@@ -7,8 +7,8 @@ add_warpx_test(
     RZ # dims
     2  # nprocs
     ON # eb
-    Examples/Physics_applications/spacecraft_charging/inputs_test_rz_spacecraft_charging_picmi.py # inputs
-    Examples/Physics_applications/spacecraft_charging/analysis.py # analysis
+    inputs_test_rz_spacecraft_charging_picmi.py # inputs
+    analysis.py # analysis
     diags/diag1/ # output
     OFF # dependency
 )

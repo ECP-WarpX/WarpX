@@ -6,8 +6,8 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/particle_thermal_boundary/inputs_test_2d_particle_thermal_boundary # inputs
-    Examples/Tests/particle_thermal_boundary/analysis.py # analysis
+    inputs_test_2d_particle_thermal_boundary # inputs
+    analysis.py # analysis
     diags/diag1002000 # output
     OFF # dependency
 )

@@ -10,8 +10,8 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/pass_mpi_communicator/inputs_test_2d_pass_mpi_comm_picmi.py # inputs
-    OFF #Examples/Tests/pass_mpi_communicator/analysis.py # analysis
+    inputs_test_2d_pass_mpi_comm_picmi.py # inputs
+    OFF #analysis.py # analysis
     OFF # output
     OFF # dependency
 )

@@ -6,8 +6,8 @@ add_warpx_test(
     1 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/implicit/inputs_test_1d_semi_implicit_picard # inputs
-    Examples/Tests/implicit/analysis_1d.py # analysis
+    inputs_test_1d_semi_implicit_picard # inputs
+    analysis_1d.py # analysis
     diags/diag1000100 # output
     OFF # dependency
 )
@@ -17,8 +17,8 @@ add_warpx_test(
     1 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/implicit/inputs_test_1d_theta_implicit_picard # inputs
-    Examples/Tests/implicit/analysis_1d.py # analysis
+    inputs_test_1d_theta_implicit_picard # inputs
+    analysis_1d.py # analysis
     diags/diag1000100 # output
     OFF # dependency
 )
@@ -28,8 +28,8 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/implicit/inputs_test_2d_theta_implicit_jfnk_vandb # inputs
-    Examples/Tests/implicit/analysis_vandb_jfnk_2d.py # analysis
+    inputs_test_2d_theta_implicit_jfnk_vandb # inputs
+    analysis_vandb_jfnk_2d.py # analysis
     diags/diag1000020 # output
     OFF # dependency
 )
@@ -39,8 +39,8 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/implicit/inputs_test_2d_theta_implicit_jfnk_vandb_picmi.py # inputs
-    Examples/Tests/implicit/analysis_vandb_jfnk_2d.py # analysis
+    inputs_test_2d_theta_implicit_jfnk_vandb_picmi.py # inputs
+    analysis_vandb_jfnk_2d.py # analysis
     diags/diag1000020 # output
     OFF # dependency
 )

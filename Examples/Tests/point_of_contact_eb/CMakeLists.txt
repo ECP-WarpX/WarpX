@@ -7,8 +7,8 @@ if(WarpX_EB)
         3 # dims
         2 # nprocs
         ON # eb
-        Examples/Tests/point_of_contact_eb/inputs_test_3d_point_of_contact_eb # inputs
-        Examples/Tests/point_of_contact_eb/analysis.py # analysis
+        inputs_test_3d_point_of_contact_eb # inputs
+        analysis.py # analysis
         diags/diag1/ # output
     OFF # dependency
     )
@@ -20,8 +20,8 @@ if(WarpX_EB)
         RZ # dims
         2  # nprocs
         ON # eb
-        Examples/Tests/point_of_contact_eb/inputs_test_rz_point_of_contact_eb # inputs
-        Examples/Tests/point_of_contact_eb/analysis.py # analysis
+        inputs_test_rz_point_of_contact_eb # inputs
+        analysis.py # analysis
         diags/diag1/ # output
     OFF # dependency
     )

@@ -6,8 +6,8 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/dive_cleaning/inputs_test_2d_dive_cleaning # inputs
-    Examples/Tests/dive_cleaning/analysis.py # analysis
+    inputs_test_2d_dive_cleaning # inputs
+    analysis.py # analysis
     diags/diag1000128 # output
     OFF # dependency
 )
@@ -17,8 +17,8 @@ add_warpx_test(
     3 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/dive_cleaning/inputs_test_3d_dive_cleaning # inputs
-    Examples/Tests/dive_cleaning/analysis.py # analysis
+    inputs_test_3d_dive_cleaning # inputs
+    analysis.py # analysis
     diags/diag1000128 # output
     OFF # dependency
 )

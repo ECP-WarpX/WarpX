@@ -150,6 +150,7 @@ jobs:
       cmake -S . -B build       \
         ${AMReX_CMAKE_FLAGS}    \
         ${WARPX_CMAKE_FLAGS}    \
+        -DWarpX_amrex_repo=https://github.com/ax3l/amrex.git -DWarpX_amrex_branch=topic-pp-prefix \ # FIXME remove line
         -DWarpX_TEST_CLEANUP=ON \
         -DWarpX_TEST_FPETRAP=ON
       # build

@@ -6,8 +6,8 @@ add_warpx_test(
     3 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/particle_fields_diags/inputs_test_3d_particle_fields_diags # inputs
-    Examples/Tests/particle_fields_diags/analysis_particle_diags.py # analysis
+    inputs_test_3d_particle_fields_diags # inputs
+    analysis_particle_diags.py # analysis
     diags/diag1000200 # output
     OFF # dependency
 )
@@ -18,8 +18,8 @@ add_warpx_test(
 #    3 # dims
 #    2 # nprocs
 #    OFF # eb
-#    Examples/Tests/particle_fields_diags/inputs_test_3d_particle_fields_diags # inputs
-#    Examples/Tests/particle_fields_diags/analysis_particle_diags_single.py # analysis
+#    inputs_test_3d_particle_fields_diags # inputs
+#    analysis_particle_diags_single.py # analysis
 #    diags/diag1000200 # output
 #    OFF # dependency
 #)

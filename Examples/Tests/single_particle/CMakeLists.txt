@@ -6,8 +6,8 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/single_particle/inputs_test_2d_bilinear_filter # inputs
-    Examples/Tests/single_particle/analysis.py # analysis
+    inputs_test_2d_bilinear_filter # inputs
+    analysis.py # analysis
     diags/diag1000001 # output
     OFF # dependency
 )

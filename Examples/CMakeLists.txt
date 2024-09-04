@@ -23,7 +23,7 @@ endif()
 # eb: needs EB support? (temporary until handled as runtime parameter)
 # inputs: inputs file or PICMI script, WarpX_MPI decides w/ or w/o MPI
 # analysis: analysis script, always run without MPI
-# output: output file (dir) to analyze
+# output: output file(s) to analyze
 # dependency: name of base test that must run first
 #
 function(add_warpx_test
@@ -70,36 +70,35 @@ function(add_warpx_test
     file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${name})
     set(THIS_WORKING_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${name})
 
-    get_filename_component(INPUTS_ALL ${WarpX_SOURCE_DIR}/${inputs} REALPATH)
+    # get input file/script and optional command-line arguments
+    separate_arguments(INPUTS_LIST UNIX_COMMAND "${inputs}")
+    list(GET INPUTS_LIST 0 INPUTS_FILE)
+    list(LENGTH INPUTS_LIST INPUTS_LIST_LENGTH)
+    if(INPUTS_LIST_LENGTH GREATER 1)
+        list(SUBLIST INPUTS_LIST 1 -1 INPUTS_ARGS)
+        list(JOIN INPUTS_ARGS " " INPUTS_ARGS)
+    else()
+        set(INPUTS_ARGS "")
+    endif()
 
-    # separate input file (full path) and optional command-line arguments
-    separate_arguments(INPUTS_FILE_ARGS UNIX_COMMAND PROGRAM "${INPUTS_ALL}")
-
-    # get input file (full path)
-    list(GET INPUTS_FILE_ARGS 0 INPUTS_FILE)
-
-    # get optional command-line arguments
-    list(SUBLIST INPUTS_FILE_ARGS 1 -1 INPUTS_ARGS)
-    list(JOIN INPUTS_FILE_ARGS " " INPUTS_FILE_ARGS)
-
-    # get input file's directory
-    get_filename_component(INPUTS_DIR ${INPUTS_FILE} DIRECTORY)
-
-    # copy base input files to run directory
-    file(GLOB INPUTS_BASE "${INPUTS_DIR}/inputs_base_${SD}*")
-    file(COPY ${INPUTS_BASE} DESTINATION ${THIS_WORKING_DIR})
-
-    # copy test input file to run directory
-    file(COPY ${INPUTS_FILE} DESTINATION ${THIS_WORKING_DIR})
-
-    # for restart tests, copy input file of original test (without "_restart" suffix)
-    string(REPLACE "_restart" "" INPUTS_FILE_NORESTART ${INPUTS_FILE})
-    file(COPY ${INPUTS_FILE_NORESTART} DESTINATION ${THIS_WORKING_DIR})
+    # get analysis script and optional command-line arguments
+    separate_arguments(ANALYSIS_LIST UNIX_COMMAND "${analysis}")
+    list(GET ANALYSIS_LIST 0 ANALYSIS_FILE)
+    cmake_path(SET ANALYSIS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/${ANALYSIS_FILE}")
+    # TODO Enable lines below to handle command-line arguments
+    #list(LENGTH ANALYSIS_LIST ANALYSIS_LIST_LENGTH)
+    #if(ANALYSIS_LIST_LENGTH GREATER 1)
+    #    list(SUBLIST ANALYSIS_LIST 1 -1 ANALYSIS_ARGS)
+    #    list(JOIN ANALYSIS_ARGS " " ANALYSIS_ARGS)
+    #else()
+    #    set(ANALYSIS_ARGS "")
+    #endif()
 
     # Python test?
     set(python OFF)
     if(${INPUTS_FILE} MATCHES ".*\.py$")
         set(python ON)
+        cmake_path(SET INPUTS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/${INPUTS_FILE}")
     endif()
 
     # cannot run Python tests w/o Python support
@@ -137,7 +136,7 @@ function(add_warpx_test
             WORKING_DIRECTORY ${THIS_WORKING_DIR}
         )
         # FIXME Use helper function to handle Windows exceptions
-        set_property(TEST ${name}.run APPEND PROPERTY ENVIRONMENT "PYTHONPATH=${PYTHONPATH}:${CMAKE_PYTHON_OUTPUT_DIRECTORY}")
+        set_property(TEST ${name}.run APPEND PROPERTY ENVIRONMENT "PYTHONPATH=$ENV{PYTHONPATH}:${CMAKE_PYTHON_OUTPUT_DIRECTORY}")
     else()
         # TODO Use these for Python tests too
         set(runtime_params
@@ -170,6 +169,9 @@ function(add_warpx_test
         )
     endif()
 
+    # AMReX ParmParse prefix: FILE = <prefix><filename>
+    set_property(TEST ${name}.run APPEND PROPERTY ENVIRONMENT "AMREX_INPUTS_FILE_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/")
+
     # run all tests with 1 OpenMP thread by default
     set_property(TEST ${name}.run APPEND PROPERTY ENVIRONMENT "OMP_NUM_THREADS=1")
 
@@ -184,14 +186,14 @@ function(add_warpx_test
         add_test(
             NAME ${name}.analysis
             COMMAND
-                ${THIS_Python_SCRIPT_EXE} ${WarpX_SOURCE_DIR}/${analysis}
+                ${THIS_Python_SCRIPT_EXE} ${ANALYSIS_FILE}
                 ${output}
             WORKING_DIRECTORY ${THIS_WORKING_DIR}
         )
         # test analysis depends on test run
         set_property(TEST ${name}.analysis APPEND PROPERTY DEPENDS "${name}.run")
         # FIXME Use helper function to handle Windows exceptions
-        set(PYTHONPATH "${PYTHONPATH}:${CMAKE_PYTHON_OUTPUT_DIRECTORY}")
+        set(PYTHONPATH "$ENV{PYTHONPATH}:${CMAKE_PYTHON_OUTPUT_DIRECTORY}")
         # add paths for custom Python modules
         set(PYTHONPATH "${PYTHONPATH}:${WarpX_SOURCE_DIR}/Regression/Checksum")
         set(PYTHONPATH "${PYTHONPATH}:${WarpX_SOURCE_DIR}/Regression/PostProcessingUtils")

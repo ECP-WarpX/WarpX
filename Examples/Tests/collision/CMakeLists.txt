@@ -6,8 +6,8 @@ add_warpx_test(
     1 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/collision/inputs_test_1d_collision_z # inputs
-    Examples/Tests/collision/analysis_collision_1d.py # analysis
+    inputs_test_1d_collision_z # inputs
+    analysis_collision_1d.py # analysis
     diags/diag1000600 # output
     OFF # dependency
 )
@@ -17,8 +17,8 @@ add_warpx_test(
     3 # dims
     1 # nprocs
     OFF # eb
-    Examples/Tests/collision/inputs_test_3d_collision_iso # inputs
-    Examples/Tests/collision/analysis_collision_3d_isotropization.py # analysis
+    inputs_test_3d_collision_iso # inputs
+    analysis_collision_3d_isotropization.py # analysis
     diags/diag1000100 # output
     OFF # dependency
 )
@@ -28,8 +28,8 @@ add_warpx_test(
     RZ # dims
     1  # nprocs
     OFF # eb
-    Examples/Tests/collision/inputs_test_rz_collision # inputs
-    Examples/Tests/collision/analysis_collision_rz.py # analysis
+    inputs_test_rz_collision # inputs
+    analysis_collision_rz.py # analysis
     diags/diag1000150 # output
     OFF # dependency
 )
@@ -39,8 +39,8 @@ add_warpx_test(
     3 # dims
     1 # nprocs
     OFF # eb
-    Examples/Tests/collision/inputs_test_3d_collision_xyz # inputs
-    Examples/Tests/collision/analysis_collision_3d.py # analysis
+    inputs_test_3d_collision_xyz # inputs
+    analysis_collision_3d.py # analysis
     diags/diag1000150 # output
     OFF # dependency
 )
@@ -50,8 +50,8 @@ add_warpx_test(
     2 # dims
     1 # nprocs
     OFF # eb
-    Examples/Tests/collision/inputs_test_2d_collision_xz # inputs
-    Examples/Tests/collision/analysis_collision_2d.py # analysis
+    inputs_test_2d_collision_xz # inputs
+    analysis_collision_2d.py # analysis
     diags/diag1000150 # output
     OFF # dependency
 )
@@ -61,8 +61,8 @@ add_warpx_test(
     2 # dims
     1 # nprocs
     OFF # eb
-    Examples/Tests/collision/inputs_test_2d_collision_xz_picmi.py # inputs
-    Examples/Tests/collision/analysis_collision_2d.py # analysis
+    inputs_test_2d_collision_xz_picmi.py # inputs
+    analysis_collision_2d.py # analysis
     diags/diag1000150 # output
     OFF # dependency
 )

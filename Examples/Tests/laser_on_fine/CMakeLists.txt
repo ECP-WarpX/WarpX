@@ -6,8 +6,8 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/laser_on_fine/inputs_test_2d_laser_on_fine # inputs
-    Examples/analysis_default_regression.py # analysis
+    inputs_test_2d_laser_on_fine # inputs
+    analysis_default_regression.py # analysis
     diags/diag1000050 # output
     OFF # dependency
 )

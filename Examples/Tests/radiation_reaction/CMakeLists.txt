@@ -6,8 +6,8 @@ add_warpx_test(
     3 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/radiation_reaction/inputs_test_3d_radiation_reaction # inputs
-    Examples/Tests/radiation_reaction/analysis.py # analysis
+    inputs_test_3d_radiation_reaction # inputs
+    analysis.py # analysis
     diags/diag1000064 # output
     OFF # dependency
 )

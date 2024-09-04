@@ -6,8 +6,8 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/energy_conserving_thermal_plasma/inputs_test_2d_energy_conserving_thermal_plasma # inputs
-    Examples/Tests/energy_conserving_thermal_plasma/analysis.py # analysis
+    inputs_test_2d_energy_conserving_thermal_plasma # inputs
+    analysis.py # analysis
     diags/diag1000500 # output
     OFF # dependency
 )

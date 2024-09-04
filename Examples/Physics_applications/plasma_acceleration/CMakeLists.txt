@@ -6,8 +6,8 @@ add_warpx_test(
     1 # dims
     2 # nprocs
     OFF # eb
-    Examples/Physics_applications/plasma_acceleration/inputs_test_1d_plasma_acceleration_picmi.py # inputs
-    Examples/analysis_default_regression.py # analysis
+    inputs_test_1d_plasma_acceleration_picmi.py # inputs
+    analysis_default_regression.py # analysis
     diags/diag1001000 # output
     OFF # dependency
 )
@@ -17,8 +17,8 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    Examples/Physics_applications/plasma_acceleration/inputs_test_2d_plasma_acceleration_mr # inputs
-    Examples/analysis_default_regression.py # analysis
+    inputs_test_2d_plasma_acceleration_mr # inputs
+    analysis_default_regression.py # analysis
     diags/diag1000400 # output
     OFF # dependency
 )
@@ -28,8 +28,8 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    Examples/Physics_applications/plasma_acceleration/inputs_test_2d_plasma_acceleration_mr_momentum_conserving # inputs
-    Examples/analysis_default_regression.py # analysis
+    inputs_test_2d_plasma_acceleration_mr_momentum_conserving # inputs
+    analysis_default_regression.py # analysis
     diags/diag1000400 # output
     OFF # dependency
 )
@@ -39,8 +39,8 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    Examples/Physics_applications/plasma_acceleration/inputs_test_2d_plasma_acceleration_boosted # inputs
-    Examples/analysis_default_regression.py # analysis
+    inputs_test_2d_plasma_acceleration_boosted # inputs
+    analysis_default_regression.py # analysis
     diags/diag1000020 # output
     OFF # dependency
 )
@@ -50,8 +50,8 @@ add_warpx_test(
     3 # dims
     2 # nprocs
     OFF # eb
-    Examples/Physics_applications/plasma_acceleration/inputs_test_3d_plasma_acceleration_boosted # inputs
-    Examples/analysis_default_regression.py # analysis
+    inputs_test_3d_plasma_acceleration_boosted # inputs
+    analysis_default_regression.py # analysis
     diags/diag1000005 # output
     OFF # dependency
 )
@@ -61,8 +61,8 @@ add_warpx_test(
     3 # dims
     2 # nprocs
     OFF # eb
-    Examples/Physics_applications/plasma_acceleration/inputs_test_3d_plasma_acceleration_boosted_hybrid # inputs
-    Examples/analysis_default_regression.py # analysis
+    inputs_test_3d_plasma_acceleration_boosted_hybrid # inputs
+    analysis_default_regression.py # analysis
     diags/diag1000025 # output
     OFF # dependency
 )
@@ -72,8 +72,8 @@ add_warpx_test(
     3 # dims
     2 # nprocs
     OFF # eb
-    Examples/Physics_applications/plasma_acceleration/inputs_test_3d_plasma_acceleration_picmi.py # inputs
-    Examples/analysis_default_regression.py # analysis
+    inputs_test_3d_plasma_acceleration_picmi.py # inputs
+    analysis_default_regression.py # analysis
     diags/diag1000010 # output
     OFF # dependency
 )
@@ -83,8 +83,8 @@ add_warpx_test(
     3 # dims
     2 # nprocs
     OFF # eb
-    Examples/Physics_applications/plasma_acceleration/inputs_test_3d_plasma_acceleration_mr_picmi.py # inputs
-    Examples/analysis_default_regression.py # analysis
+    inputs_test_3d_plasma_acceleration_mr_picmi.py # inputs
+    analysis_default_regression.py # analysis
     diags/diag1000002 # output
     OFF # dependency
 )

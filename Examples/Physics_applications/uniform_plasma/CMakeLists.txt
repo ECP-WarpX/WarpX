@@ -6,8 +6,8 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    Examples/Physics_applications/uniform_plasma/inputs_test_2d_uniform_plasma # inputs
-    Examples/analysis_default_regression.py # analysis
+    inputs_test_2d_uniform_plasma # inputs
+    analysis_default_regression.py # analysis
     diags/diag1000010 # output
     OFF # dependency
 )
@@ -17,8 +17,8 @@ add_warpx_test(
     3 # dims
     2 # nprocs
     OFF # eb
-    Examples/Physics_applications/uniform_plasma/inputs_test_3d_uniform_plasma # inputs
-    Examples/analysis_default_regression.py # analysis
+    inputs_test_3d_uniform_plasma # inputs
+    analysis_default_regression.py # analysis
     diags/diag1000010 # output
     OFF # dependency
 )
@@ -28,8 +28,8 @@ add_warpx_test(
     3 # dims
     2 # nprocs
     OFF # eb
-    Examples/Physics_applications/uniform_plasma/inputs_test_3d_uniform_plasma_restart # inputs
-    Examples/analysis_default_restart.py # analysis
+    inputs_test_3d_uniform_plasma_restart # inputs
+    analysis_default_restart.py # analysis
     diags/diag1000010 # output
     test_3d_uniform_plasma # dependency
 )

@@ -6,8 +6,8 @@ add_warpx_test(
     3 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/reduced_diags/inputs_test_3d_reduced_diags # inputs
-    Examples/Tests/reduced_diags/analysis_reduced_diags.py # analysis
+    inputs_test_3d_reduced_diags # inputs
+    analysis_reduced_diags.py # analysis
     diags/diag1000200 # output
     OFF # dependency
 )
@@ -17,8 +17,8 @@ add_warpx_test(
     3 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/reduced_diags/inputs_test_3d_reduced_diags_load_balance_costs_heuristic # inputs
-    Examples/Tests/reduced_diags/analysis_reduced_diags_load_balance_costs.py # analysis
+    inputs_test_3d_reduced_diags_load_balance_costs_heuristic # inputs
+    analysis_reduced_diags_load_balance_costs.py # analysis
     diags/diag1000003 # output
     OFF # dependency
 )
@@ -28,8 +28,8 @@ add_warpx_test(
     3 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/reduced_diags/inputs_test_3d_reduced_diags_load_balance_costs_timers # inputs
-    Examples/Tests/reduced_diags/analysis_reduced_diags_load_balance_costs.py # analysis
+    inputs_test_3d_reduced_diags_load_balance_costs_timers # inputs
+    analysis_reduced_diags_load_balance_costs.py # analysis
     diags/diag1000003 # output
     OFF # dependency
 )
@@ -39,8 +39,8 @@ add_warpx_test(
     3 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/reduced_diags/inputs_test_3d_reduced_diags_load_balance_costs_timers_picmi.py # inputs
-    Examples/Tests/reduced_diags/analysis_reduced_diags_load_balance_costs.py # analysis
+    inputs_test_3d_reduced_diags_load_balance_costs_timers_picmi.py # inputs
+    analysis_reduced_diags_load_balance_costs.py # analysis
     diags/diag1000003 # output
     OFF # dependency
 )
@@ -51,8 +51,8 @@ if(WarpX_FFT)
         3 # dims
         2 # nprocs
         OFF # eb
-        Examples/Tests/reduced_diags/inputs_test_3d_reduced_diags_load_balance_costs_timers_psatd # inputs
-        Examples/Tests/reduced_diags/analysis_reduced_diags_load_balance_costs.py # analysis
+        inputs_test_3d_reduced_diags_load_balance_costs_timers_psatd # inputs
+        analysis_reduced_diags_load_balance_costs.py # analysis
         diags/diag1000003 # output
     OFF # dependency
     )

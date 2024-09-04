@@ -7,8 +7,8 @@ if(WarpX_EB)
         3 # dims
         2 # nprocs
         ON # eb
-        Examples/Tests/electrostatic_sphere_eb/inputs_test_3d_electrostatic_sphere_eb # inputs
-        Examples/Tests/electrostatic_sphere_eb/analysis.py # analysis
+        inputs_test_3d_electrostatic_sphere_eb # inputs
+        analysis.py # analysis
         diags/diag1000001 # output
     OFF # dependency
     )
@@ -20,8 +20,8 @@ if(WarpX_EB)
         3 # dims
         2 # nprocs
         ON # eb
-        Examples/Tests/electrostatic_sphere_eb/inputs_test_3d_electrostatic_sphere_eb_mixed_bc # inputs
-        Examples/analysis_default_regression.py # analysis
+        inputs_test_3d_electrostatic_sphere_eb_mixed_bc # inputs
+        analysis_default_regression.py # analysis
         diags/diag1000001 # output
     OFF # dependency
     )
@@ -33,8 +33,8 @@ if(WarpX_EB)
         3 # dims
         2 # nprocs
         ON # eb
-        Examples/Tests/electrostatic_sphere_eb/inputs_test_3d_electrostatic_sphere_eb_picmi.py # inputs
-        Examples/Tests/electrostatic_sphere_eb/analysis.py # analysis
+        inputs_test_3d_electrostatic_sphere_eb_picmi.py # inputs
+        analysis.py # analysis
         diags/diag1000002 # output
     OFF # dependency
     )
@@ -46,8 +46,8 @@ if(WarpX_EB)
         RZ # dims
         2  # nprocs
         ON # eb
-        Examples/Tests/electrostatic_sphere_eb/inputs_test_rz_electrostatic_sphere_eb # inputs
-        Examples/Tests/electrostatic_sphere_eb/analysis_rz.py # analysis
+        inputs_test_rz_electrostatic_sphere_eb # inputs
+        analysis_rz.py # analysis
         diags/diag1000001 # output
     OFF # dependency
     )
@@ -59,8 +59,8 @@ if(WarpX_EB)
         RZ # dims
         2  # nprocs
         ON # eb
-        Examples/Tests/electrostatic_sphere_eb/inputs_test_rz_electrostatic_sphere_eb_mr # inputs
-        Examples/Tests/electrostatic_sphere_eb/analysis_rz_mr.py # analysis
+        inputs_test_rz_electrostatic_sphere_eb_mr # inputs
+        analysis_rz_mr.py # analysis
         diags/diag1/ # output
     OFF # dependency
     )

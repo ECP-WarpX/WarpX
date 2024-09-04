@@ -6,8 +6,8 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/rigid_injection/inputs_test_2d_rigid_injection_btd # inputs
-    Examples/Tests/rigid_injection/analysis_rigid_injection_btd.py # analysis
+    inputs_test_2d_rigid_injection_btd # inputs
+    analysis_rigid_injection_btd.py # analysis
     diags/diag1000001 # output
     OFF # dependency
 )
@@ -17,8 +17,8 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/rigid_injection/inputs_test_2d_rigid_injection_lab # inputs
-    Examples/Tests/rigid_injection/analysis_rigid_injection_lab.py # analysis
+    inputs_test_2d_rigid_injection_lab # inputs
+    analysis_rigid_injection_lab.py # analysis
     diags/diag1000289 # output
     OFF # dependency
 )

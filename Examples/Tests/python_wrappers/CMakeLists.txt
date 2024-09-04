@@ -7,8 +7,8 @@ if(WarpX_FFT)
         2 # dims
         2 # nprocs
         OFF # eb
-        Examples/Tests/python_wrappers/inputs_test_2d_python_wrappers_picmi.py # inputs
-        Examples/analysis_default_regression.py # analysis
+        inputs_test_2d_python_wrappers_picmi.py # inputs
+        analysis_default_regression.py # analysis
         diags/diag1000100 # output
     OFF # dependency
     )

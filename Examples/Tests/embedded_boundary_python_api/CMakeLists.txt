@@ -7,8 +7,8 @@ if(WarpX_EB)
         3 # dims
         1 # nprocs
         ON # eb
-        Examples/Tests/embedded_boundary_python_api/inputs_test_3d_embedded_boundary_picmi.py # inputs
-        Examples/Tests/embedded_boundary_python_api/analysis.py # analysis
+        inputs_test_3d_embedded_boundary_picmi.py # inputs
+        analysis.py # analysis
         diags/diag1000002 # output
         OFF # dependency
     )

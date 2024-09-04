@@ -6,8 +6,8 @@ add_warpx_test(
     2 # dims
     2 # nprocs
     OFF # eb
-    Examples/Tests/subcycling/inputs_test_2d_subcycling_mr # inputs
-    Examples/analysis_default_regression.py # analysis
+    inputs_test_2d_subcycling_mr # inputs
+    analysis_default_regression.py # analysis
     diags/diag1000250 # output
     OFF # dependency
 )
