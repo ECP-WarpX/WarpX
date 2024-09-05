@@ -326,7 +326,7 @@ WarpX::ProjectionCleanDivB() {
     } else if ( WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee
             ||  WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC
             ||  ( (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame
-                || WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
+                || WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameSemiImplicit)
                 && WarpX::poisson_solver_id == PoissonSolverAlgo::Multigrid)) {
         amrex::Print() << Utils::TextMsg::Info( "Starting Projection B-Field divergence cleaner.");
 

@@ -11,9 +11,11 @@
 #include <Diagnostics/MultiDiagnostics.H>
 #include <Diagnostics/ReducedDiags/MultiReducedDiags.H>
 #include <EmbeddedBoundary/WarpXFaceInfoBox.H>
+#include "FieldSolver/ElectrostaticSolver/SemiImplicitSolver.H"
 #include <FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H>
 #include <FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H>
 #include <FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H>
+#include "FieldSolver/MagnetostaticSolver/MagnetostaticSolver.H"
 #ifdef WARPX_USE_FFT
 #   include <FieldSolver/SpectralSolver/SpectralKSpace.H>
 #   ifdef WARPX_DIM_RZ
@@ -198,6 +200,13 @@ The physical fields in WarpX have the following naming:
             },
             py::arg("potential"),
             "Sets the EB potential string and updates the function parser."
+        )
+        .def("set_magnetostatic_time_filter_param",
+            [](WarpX& wx, amrex::Real time_filter_param) {
+                wx.GetMagnetostaticSolver().t_filter_param = time_filter_param;
+            },
+            py::arg("time_filter_param"),
+            "Sets the low pass filter parameter for the magnetostatic solver."
         )
         .def_static("run_div_cleaner",
             [] () { WarpX::ProjectionCleanDivB(); },

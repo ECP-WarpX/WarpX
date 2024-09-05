@@ -247,9 +247,9 @@ storePhiOnParticles ( PinnedMemoryParticleContainer& tmp,
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) ||
-        (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic),
+        (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameSemiImplicit),
         "Output of the electrostatic potential (phi) on the particles was requested, "
-        "but this is only available for `warpx.do_electrostatic=labframe` or `labframe-electromagnetostatic`.");
+        "but this is only available for `warpx.do_electrostatic=labframe` or `labframe-semi-implicit`.");
     // When this is not a full diagnostic, the particles are not written at the same physical time (i.e. PIC iteration)
     // that they were collected. This happens for diagnostics that use buffering (e.g. BackTransformed, BoundaryScraping).
     // Here `phi` is gathered at the iteration when particles are written (not collected) and is thus mismatched.

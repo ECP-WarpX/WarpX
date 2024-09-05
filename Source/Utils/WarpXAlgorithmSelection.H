@@ -66,8 +66,8 @@ struct ElectrostaticSolverAlgo {
     enum {
         None = 0,
         Relativistic = 1,
-        LabFrameElectroMagnetostatic = 2,
-        LabFrame = 3  // Non relativistic
+        LabFrame = 2,  // Non relativistic
+        LabFrameSemiImplicit = 3
     };
 };
 

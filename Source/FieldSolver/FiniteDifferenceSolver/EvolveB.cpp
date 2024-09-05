@@ -484,3 +484,192 @@ void FiniteDifferenceSolver::EvolveBCylindrical (
 }
 
 #endif // corresponds to ifndef WARPX_DIM_RZ
+
+
+void FiniteDifferenceSolver::CalcBfromVectorPotential (
+    amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield,
+    amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> const& Afield,
+    std::array<std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+    const int lev )
+{
+    if (m_fdtd_algo != ElectromagneticSolverAlgo::CKC && m_fdtd_algo != ElectromagneticSolverAlgo::PSATD) {
+#ifdef WARPX_DIM_RZ
+        CalcBfromVectorPotentialCylindrical <CylindricalYeeAlgorithm> (
+            Bfield, Afield, edge_lengths, lev
+        );
+#else
+        CalcBfromVectorPotentialCartesian <CartesianYeeAlgorithm> (
+            Bfield, Afield, edge_lengths, lev
+        );
+#endif
+    } else {
+        amrex::ignore_unused(Bfield, Afield, edge_lengths, lev);
+        WARPX_ABORT_WITH_MESSAGE("CalcBfromVectorPotential: Unknown algorithm");
+    }
+}
+
+#ifdef WARPX_DIM_RZ
+template<typename T_Algo>
+void FiniteDifferenceSolver::CalcBfromVectorPotentialCylindrical (
+    amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield,
+    amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> const& Afield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& /*edge_lengths*/,
+    const int /*lev*/
+)
+{
+    // Loop through the grids, and over the tiles within each grid
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for ( MFIter mfi(*Bfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+
+        // Extract field data for this grid/tile
+        Array4<Real> const& Br = Bfield[0]->array(mfi);
+        Array4<Real> const& Bt = Bfield[1]->array(mfi);
+        Array4<Real> const& Bz = Bfield[2]->array(mfi);
+        Array4<Real> const& Ar = Afield[0]->array(mfi);
+        Array4<Real> const& At = Afield[1]->array(mfi);
+        Array4<Real> const& Az = Afield[2]->array(mfi);
+
+        // Extract stencil coefficients
+        Real const * const AMREX_RESTRICT coefs_r = m_stencil_coefs_r.dataPtr();
+        auto const n_coefs_r = static_cast<int>(m_stencil_coefs_r.size());
+        Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
+        auto const n_coefs_z = static_cast<int>(m_stencil_coefs_z.size());
+
+        // Extract cylindrical specific parameters
+        Real const dr = m_dr;
+        int const nmodes = m_nmodes;
+        Real const rmin = m_rmin;
+
+        // Extract tileboxes for which to loop
+        Box const& tbr  = mfi.tilebox(Bfield[0]->ixType().toIntVect());
+        Box const& tbt  = mfi.tilebox(Bfield[1]->ixType().toIntVect());
+        Box const& tbz  = mfi.tilebox(Bfield[2]->ixType().toIntVect());
+
+        // Loop over the cells and update the fields
+        amrex::ParallelFor(tbr, tbt, tbz,
+
+            [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
+                Real const r = rmin + i*dr; // r on nodal point (Br is nodal in r)
+                if (r != 0) { // Off-axis, regular Maxwell equations
+                    Br(i, j, 0, 0) -= T_Algo::UpwardDz(At, coefs_z, n_coefs_z, i, j, 0, 0); // Mode m=0
+                    for (int m=1; m<nmodes; m++) { // Higher-order modes
+                        Br(i, j, 0, 2*m-1) += (
+                            -T_Algo::UpwardDz(At, coefs_z, n_coefs_z, i, j, 0, 2*m-1)
+                            + m * Az(i, j, 0, 2*m  )/r );  // Real part
+                        Br(i, j, 0, 2*m  ) += (
+                            -T_Algo::UpwardDz(At, coefs_z, n_coefs_z, i, j, 0, 2*m  )
+                            - m * Az(i, j, 0, 2*m-1)/r ); // Imaginary part
+                    }
+                } else { // r==0: On-axis corrections
+                    // Ensure that Br remains 0 on axis (except for m=1)
+                    Br(i, j, 0, 0) = 0.; // Mode m=0
+                    for (int m=1; m<nmodes; m++) { // Higher-order modes
+                        if (m == 1){
+                            // For m==1, Az is linear in r, for small r
+                            // Therefore, the formula below regularizes the singularity
+                            Br(i, j, 0, 2*m-1) += (
+                                -T_Algo::UpwardDz(At, coefs_z, n_coefs_z, i, j, 0, 2*m-1)
+                                + m * Az(i+1, j, 0, 2*m  )/dr );  // Real part
+                            Br(i, j, 0, 2*m  ) += (
+                                -T_Algo::UpwardDz(At, coefs_z, n_coefs_z, i, j, 0, 2*m  )
+                                - m * Az(i+1, j, 0, 2*m-1)/dr ); // Imaginary part
+                        } else {
+                            Br(i, j, 0, 2*m-1) = 0.;
+                            Br(i, j, 0, 2*m  ) = 0.;
+                        }
+                    }
+                }
+            },
+
+            [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
+                Bt(i, j, 0, 0) += (
+                    T_Algo::UpwardDz(Ar, coefs_z, n_coefs_z, i, j, 0, 0)
+                    - T_Algo::UpwardDr(Az, coefs_r, n_coefs_r, i, j, 0, 0)); // Mode m=0
+                for (int m=1 ; m<nmodes ; m++) { // Higher-order modes
+                    Bt(i, j, 0, 2*m-1) += (
+                        T_Algo::UpwardDz(Ar, coefs_z, n_coefs_z, i, j, 0, 2*m-1)
+                        - T_Algo::UpwardDr(Az, coefs_r, n_coefs_r, i, j, 0, 2*m-1)); // Real part
+                    Bt(i, j, 0, 2*m  ) += (
+                        T_Algo::UpwardDz(Ar, coefs_z, n_coefs_z, i, j, 0, 2*m  )
+                        - T_Algo::UpwardDr(Az, coefs_r, n_coefs_r, i, j, 0, 2*m  )); // Imaginary part
+                }
+            },
+
+            [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
+                Real const r = rmin + (i + 0.5_rt)*dr; // r on a cell-centered grid (Bz is cell-centered in r)
+                Bz(i, j, 0, 0) += T_Algo::UpwardDrr_over_r(At, r, dr, coefs_r, n_coefs_r, i, j, 0, 0);
+                for (int m=1 ; m<nmodes ; m++) { // Higher-order modes
+                    Bz(i, j, 0, 2*m-1) += ( -m * Ar(i, j, 0, 2*m  )/r
+                        + T_Algo::UpwardDrr_over_r(At, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m-1)); // Real part
+                    Bz(i, j, 0, 2*m  ) += ( m * Ar(i, j, 0, 2*m-1)/r
+                        + T_Algo::UpwardDrr_over_r(At, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m  )); // Imaginary part
+                }
+            }
+
+        );
+    }
+}
+#else
+template<typename T_Algo>
+void FiniteDifferenceSolver::CalcBfromVectorPotentialCartesian (
+    amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield,
+    amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> const& Afield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& /*edge_lengths*/,
+    const int /*lev*/
+)
+{
+// Loop through the grids, and over the tiles within each grid
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for ( MFIter mfi(*Bfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+        // Extract field data for this grid/tile
+        Array4<Real> const& Bx = Bfield[0]->array(mfi);
+        Array4<Real> const& By = Bfield[1]->array(mfi);
+        Array4<Real> const& Bz = Bfield[2]->array(mfi);
+        Array4<Real> const& Ax = Afield[0]->array(mfi);
+        Array4<Real> const& Ay = Afield[1]->array(mfi);
+        Array4<Real> const& Az = Afield[2]->array(mfi);
+
+        // Extract stencil coefficients
+        Real const * const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
+        auto const n_coefs_x = static_cast<int>(m_stencil_coefs_x.size());
+        Real const * const AMREX_RESTRICT coefs_y = m_stencil_coefs_y.dataPtr();
+        auto const n_coefs_y = static_cast<int>(m_stencil_coefs_y.size());
+        Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
+        auto const n_coefs_z = static_cast<int>(m_stencil_coefs_z.size());
+
+        // Extract tileboxes for which to loop
+        Box const& tbx  = mfi.tilebox(Bfield[0]->ixType().toIntVect());
+        Box const& tby  = mfi.tilebox(Bfield[1]->ixType().toIntVect());
+        Box const& tbz  = mfi.tilebox(Bfield[2]->ixType().toIntVect());
+
+        // Loop over the cells and update the fields
+        amrex::ParallelFor(tbx, tby, tbz,
+
+            [=] AMREX_GPU_DEVICE (int i, int j, int k){
+
+                Bx(i, j, k) += T_Algo::UpwardDy(Az, coefs_y, n_coefs_y, i, j, k)
+                             - T_Algo::UpwardDz(Ay, coefs_z, n_coefs_z, i, j, k);
+
+            },
+
+            [=] AMREX_GPU_DEVICE (int i, int j, int k){
+
+                By(i, j, k) += T_Algo::UpwardDz(Ax, coefs_z, n_coefs_z, i, j, k)
+                             - T_Algo::UpwardDx(Az, coefs_x, n_coefs_x, i, j, k);
+
+            },
+
+            [=] AMREX_GPU_DEVICE (int i, int j, int k){
+
+                Bz(i, j, k) += T_Algo::UpwardDx(Ay, coefs_x, n_coefs_x, i, j, k)
+                             - T_Algo::UpwardDy(Ax, coefs_y, n_coefs_y, i, j, k);
+
+            }
+        );
+    }
+}
+#endif // corresponds to ifndef WARPX_DIM_RZ

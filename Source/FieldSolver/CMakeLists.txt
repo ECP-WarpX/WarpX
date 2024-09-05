@@ -9,6 +9,7 @@ foreach(D IN LISTS WarpX_DIMS)
     )
 endforeach()
 
+add_subdirectory(ElectrostaticSolver)
 add_subdirectory(FiniteDifferenceSolver)
 add_subdirectory(MagnetostaticSolver)
 add_subdirectory(ImplicitSolvers)

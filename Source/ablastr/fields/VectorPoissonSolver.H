@@ -34,6 +34,7 @@
 #include <AMReX_MLEBNodeFDLaplacian.H>
 #include <AMReX_MLLinOp.H>
 #include <AMReX_MLMG.H>
+#include <AMReX_MLNodeTensorLaplacian.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
@@ -95,7 +96,6 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
                             T_BoundaryHandler const boundary_handler,
                             bool const do_single_precision_comms = false,
                             std::optional<amrex::Vector<amrex::IntVect> > rel_ref_ratio = std::nullopt,
-                            [[maybe_unused]] T_PostACalculationFunctor post_A_calculation = std::nullopt,
                             [[maybe_unused]] std::optional<amrex::Real const> current_time = std::nullopt, // only used for EB
                             [[maybe_unused]] std::optional<amrex::Vector<T_FArrayBoxFactory const *> > eb_farray_box_factory = std::nullopt // only used for EB
 )
@@ -120,20 +120,23 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
     }
     amrex::ParallelDescriptor::ReduceRealMax(max_comp_J);
 
-    const bool always_use_bnorm = (max_comp_J > 0);
-    if (!always_use_bnorm) {
-        if (absolute_tolerance == 0.0) { absolute_tolerance = amrex::Real(1e-6); }
-        ablastr::warn_manager::WMRecordWarning(
-                "MagnetostaticSolver",
-                "Max norm of J is 0",
-                ablastr::warn_manager::WarnPriority::low
-        );
+    // return early if there are no currents
+    if (max_comp_J == 0) {
+        for (int lev=0; lev<=finest_level; lev++) {
+            for (int adim=0; adim<3; adim++) {
+                A[lev][adim]->setVal(0._rt);
+            }
+        }
+        return;
     }
+
+    const bool always_use_bnorm = true;
 
     const amrex::LPInfo& info = amrex::LPInfo();
 
     // Loop over dimensions of A to solve each component individually
     for (int lev=0; lev<=finest_level; lev++) {
+#if defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ)
         amrex::MLEBNodeFDLaplacian linopx(
             {geom[lev]}, {grids[lev]}, {dmap[lev]}, info
 #if defined(AMREX_USE_EB)
@@ -154,6 +157,19 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
         );
 
         amrex::Array<amrex::MLEBNodeFDLaplacian*,3> linop = {&linopx,&linopy,&linopz};
+#else
+        // In the absence of EB and RZ: use a more generic solver
+        amrex::MLNodeTensorLaplacian linopx(
+            {geom[lev]}, {grids[lev]}, {dmap[lev]}, info
+        );
+        amrex::MLNodeTensorLaplacian linopy(
+            {geom[lev]}, {grids[lev]}, {dmap[lev]}, info
+        );
+        amrex::MLNodeTensorLaplacian linopz(
+            {geom[lev]}, {grids[lev]}, {dmap[lev]}, info
+        );
+        amrex::Array<amrex::MLNodeTensorLaplacian*,3> linop = {&linopx,&linopy,&linopz};
+#endif
         amrex::Array<std::unique_ptr<amrex::MLMG>,3> mlmg;
 
         for (int adim=0; adim<3; adim++) {
@@ -161,7 +177,11 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
             // This is solving the self fields using the magnetostatic solver in the lab frame
 
             // Note: this assumes that beta is zero
+#if defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ)
             linop[adim]->setSigma({AMREX_D_DECL(1._rt, 1._rt, 1._rt)});
+#else
+            linop[adim]->setBeta({AMREX_D_DECL(0._rt, 0._rt, 0._rt)});
+#endif
 
 #if defined(AMREX_USE_EB)
             // Set Homogeneous Dirichlet Boundary on EB
@@ -240,12 +260,6 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
             // Unscale current
             curr[lev][adim]->mult(-1._rt/ablastr::constant::SI::mu0);
         } // Loop over adim
-        // Run additional operations, such as calculation of the B fields for embedded boundaries
-        if constexpr (!std::is_same_v<T_PostACalculationFunctor, std::nullopt_t>) {
-            if (post_A_calculation.has_value()) {
-                    post_A_calculation.value()(mlmg, lev);
-            }
-        }
     } // loop over lev(els)
 }
 }  // namepace Magnetostatic

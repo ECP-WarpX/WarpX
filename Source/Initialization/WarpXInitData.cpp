@@ -19,6 +19,7 @@
 #include "FieldSolver/Fields.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
+#include "FieldSolver/MagnetostaticSolver/MagnetostaticSolver.H"
 #include "Filter/BilinearFilter.H"
 #include "Filter/NCIGodfreyFilter.H"
 #include "Initialization/ExternalField.H"
@@ -256,17 +257,28 @@ WarpX::PrintMainPICparameters ()
                      WarpX::n_rz_azimuthal_modes << "\n";
     #endif // WARPX_USE_RZ
     //Print solver's operation mode (e.g., EM or electrostatic)
-    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) {
-      amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
-      amrex::Print() << "                      | - laboratory frame" << "\n";
-    }
-    else if (electrostatic_solver_id == ElectrostaticSolverAlgo::Relativistic){
-      amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
-      amrex::Print() << "                      | - relativistic" << "\n";
-    }
-    else if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic){
-      amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
-      amrex::Print() << "                      | - laboratory frame, electrostatic + magnetostatic" << "\n";
+    if(electrostatic_solver_id != ElectrostaticSolverAlgo::None){
+        if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) {
+            amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
+            amrex::Print() << "                      | - laboratory frame" << "\n";
+        }
+        else if (electrostatic_solver_id == ElectrostaticSolverAlgo::Relativistic){
+            amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
+            amrex::Print() << "                      | - relativistic" << "\n";
+        }
+        else if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameSemiImplicit){
+            amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
+            amrex::Print() << "                      | - laboratory frame, semi-implicit" << "\n";
+        }
+        if (poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction){
+            amrex::Print() << "Poisson solver:       | - FFT-based" << "\n";
+        }
+        else if(poisson_solver_id == PoissonSolverAlgo::Multigrid){
+            amrex::Print() << "Poisson solver:       | - multigrid" << "\n";
+        }
+        if (do_magnetostatic_solve){
+            amrex::Print() << "                      | - magnetostatic solve included" << "\n";
+        }
     }
     else{
       amrex::Print() << "Operation mode:       | Electromagnetic" << "\n";
@@ -284,14 +296,6 @@ WarpX::PrintMainPICparameters ()
     else if ((em_solver_medium == MediumForEM::Macroscopic) &&
             (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::BackwardEuler)){
       amrex::Print() << "                      |  - Backward Euler algorithm\n";
-    }
-    if(electrostatic_solver_id != ElectrostaticSolverAlgo::None){
-        if(poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction){
-            amrex::Print() << "Poisson solver:       | FFT-based" << "\n";
-        }
-        else if(poisson_solver_id == PoissonSolverAlgo::Multigrid){
-            amrex::Print() << "Poisson solver:       | multigrid" << "\n";
-        }
     }
 
     amrex::Print() << "-------------------------------------------------------------------------------\n";
@@ -554,6 +558,10 @@ WarpX::InitData ()
         m_hybrid_pic_model->InitData();
     }
 
+    if (do_magnetostatic_solve) {
+        m_magnetostatic_solver->InitData();
+    }
+
     if (ParallelDescriptor::IOProcessor()) {
         std::cout << "\nGrids Summary:\n";
         printGridSummary(std::cout, 0, finestLevel());
@@ -581,8 +589,8 @@ WarpX::InitData ()
         ExecutePythonCallback("beforeInitEsolve");
         ComputeSpaceChargeField(reset_fields);
         ExecutePythonCallback("afterInitEsolve");
-        if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) {
-            ComputeMagnetostaticField();
+        if (do_magnetostatic_solve) {
+            ComputeInitialMagnetostaticField();
         }
         // Add external fields to the fine patch fields. This makes it so that the
         // net fields are the sum of the field solutions and any external fields.
@@ -1423,8 +1431,8 @@ WarpX::LoadExternalFields (int const lev)
         // Call Python callback which might write values to external field multifabs
         ExecutePythonCallback("loadExternalFields");
     }
-    // External particle fields
 
+    // External particle fields
     if (mypc->m_B_ext_particle_s == "read_from_file") {
         std::string external_fields_path;
         const amrex::ParmParse pp_particles("particles");

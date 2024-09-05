@@ -27,7 +27,7 @@ namespace warpx::fields
         F_fp,
         G_fp,
         phi_fp,
-        vector_potential_fp,
+        Afield_fp,
         Efield_cp,
         Bfield_cp,
         current_cp,
@@ -44,7 +44,7 @@ namespace warpx::fields
 
     constexpr FieldType ArrayFieldTypes[] = {
             FieldType::Efield_aux, FieldType::Bfield_aux, FieldType::Efield_fp, FieldType::Bfield_fp,
-            FieldType::current_fp, FieldType::current_fp_nodal, FieldType::vector_potential_fp,
+            FieldType::current_fp, FieldType::current_fp_nodal, FieldType::Afield_fp,
             FieldType::Efield_cp, FieldType::Bfield_cp, FieldType::current_cp,
             FieldType::Efield_avg_fp, FieldType::Bfield_avg_fp, FieldType::Efield_avg_cp, FieldType::Bfield_avg_cp};
 

@@ -16,9 +16,15 @@
 #include "Diagnostics/MultiDiagnostics_fwd.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags_fwd.H"
 #include "EmbeddedBoundary/WarpXFaceInfoBox_fwd.H"
+#include "FieldSolver/ElectrostaticSolver.H"
+#include "FieldSolver/ElectrostaticSolver/SemiImplicitSolver_fwd.H"
+#include "FieldSolver/Fields.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel_fwd.H"
+#include "FieldSolver/ImplicitSolvers/ImplicitSolver.H"
+#include "FieldSolver/ImplicitSolvers/WarpXSolverVec.H"
+#include "FieldSolver/MagnetostaticSolver/MagnetostaticSolver_fwd.H"
 #include "Filter/NCIGodfreyFilter_fwd.H"
 #include "Initialization/ExternalField_fwd.H"
 #include "Particles/ParticleBoundaryBuffer_fwd.H"
@@ -38,11 +44,6 @@
 #include "AcceleratorLattice/AcceleratorLattice.H"
 #include "Evolve/WarpXDtType.H"
 #include "Evolve/WarpXPushType.H"
-#include "FieldSolver/Fields.H"
-#include "FieldSolver/ElectrostaticSolver.H"
-#include "FieldSolver/MagnetostaticSolver/MagnetostaticSolver.H"
-#include "FieldSolver/ImplicitSolvers/ImplicitSolver.H"
-#include "FieldSolver/ImplicitSolvers/WarpXSolverVec.H"
 #include "Filter/BilinearFilter.H"
 #include "Parallelization/GuardCellManager.H"
 #include "Utils/Parser/IntervalsParser.H"
@@ -142,6 +143,7 @@ public:
     MultiParticleContainer& GetPartContainer () { return *mypc; }
     MultiFluidContainer& GetFluidContainer () { return *myfl; }
     MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
+    MagnetostaticSolver& GetMagnetostaticSolver () { return *m_magnetostatic_solver; }
     HybridPICModel& GetHybridPICModel () { return *m_hybrid_pic_model; }
     [[nodiscard]] HybridPICModel * get_pointer_HybridPICModel () const { return m_hybrid_pic_model.get(); }
     MultiDiagnostics& GetMultiDiags () {return *multi_diags;}
@@ -944,6 +946,8 @@ public:
 
     static int electrostatic_solver_id;
     static int poisson_solver_id;
+    // Flag to set whether the magnetostatic solver should be called
+    static bool do_magnetostatic_solve;
 
     // Parameters for lab frame electrostatic
     static amrex::Real self_fields_required_precision;
@@ -1023,9 +1027,9 @@ public:
                                       amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi) const;
 
     // Magnetostatic Solver Interface
-    MagnetostaticSolver::VectorPoissonBoundaryHandler m_vector_poisson_boundary_handler;
     void ComputeMagnetostaticField ();
-    void AddMagnetostaticFieldLabFrame ();
+    void ComputeInitialMagnetostaticField ();
+    void ComputeMagnetostaticFieldLabFrame ();
     void computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> >& curr,
                                  amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> >& A,
                                  amrex::Real required_precision=amrex::Real(1.e-11),
@@ -1034,6 +1038,9 @@ public:
                                  int verbosity=2) const;
 
     void setVectorPotentialBC (amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> >& A) const;
+
+    void ComputeBfromVectorPotential ();
+    void ComputeBfromVectorPotential (const int lev);
 
     /**
      * \brief
@@ -1535,9 +1542,7 @@ private:
 
     // Memory buffers for computing magnetostatic fields
     // Vector Potential A and previous step.  Time buffer needed for computing dA/dt to first order
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_fp_nodal;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_grad_buf_e_stag;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_grad_buf_b_stag;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Afield_fp;
 
     // Same as Bfield_fp/Efield_fp for reading external field data
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp_external;
@@ -1663,8 +1668,14 @@ private:
     // Macroscopic properties
     std::unique_ptr<MacroscopicProperties> m_macroscopic_properties;
 
-    // Hybrid PIC algorithm parameters
+    // Hybrid PIC algorithm class
     std::unique_ptr<HybridPICModel> m_hybrid_pic_model;
+
+    // Semi-implicit electrostatic algorithm
+    std::unique_ptr<SemiImplicitSolver> m_semi_implicit_solver;
+
+    // Magnetostatic algorithm class
+    std::unique_ptr<MagnetostaticSolver> m_magnetostatic_solver;
 
     // Load balancing
     /** Load balancing intervals that reads the "load_balance_intervals" string int the input file

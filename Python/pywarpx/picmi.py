@@ -1880,6 +1880,20 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
 
     warpx_self_fields_verbosity: integer, default=2
         Level of verbosity for the lab frame solver
+
+    warpx_magnetostatic: bool, default=False
+        Whether to use the magnetostatic solver
+
+    warpx_magnetostatic_t_filtering_parameter: float, default=0.1
+        Low pass filter parameter for A-field used with the magnetostatic
+        solver.
+
+    warpx_semi_implicit: bool, default=False
+        Whether to use the semi-implicit Poisson solver
+
+    warpx_semi_implicit_factor: float, default=4
+        If the semi-implicit Poisson solver is used, this sets the value
+        of C_SI (the method is marginally stable at C_SI = 1)
     """
 
     def init(self, kw):
@@ -1887,6 +1901,11 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
         self.absolute_tolerance = kw.pop("warpx_absolute_tolerance", None)
         self.self_fields_verbosity = kw.pop("warpx_self_fields_verbosity", None)
         self.magnetostatic = kw.pop("warpx_magnetostatic", False)
+        self.magnetostatic_t_filer_param = kw.pop(
+            "warpx_magnetostatic_t_filtering_parameter", None
+        )
+        self.semi_implicit = kw.pop("warpx_semi_implicit", False)
+        self.semi_implicit_factor = kw.pop("warpx_semi_implicit_factor", None)
 
     def solver_initialize_inputs(self):
         # Open BC means FieldBoundaryType::Open for electrostatic sims, rather than perfectly-matched layer
@@ -1898,7 +1917,13 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
             pywarpx.warpx.do_electrostatic = "relativistic"
         else:
             if self.magnetostatic:
-                pywarpx.warpx.do_electrostatic = "labframe-electromagnetostatic"
+                pywarpx.warpx.do_magnetostatic = self.magnetostatic
+                pywarpx.warpx.magnetostatic_t_filtering_parameter = (
+                    self.magnetostatic_t_filer_param
+                )
+            if self.semi_implicit:
+                pywarpx.warpx.do_electrostatic = "labframe-semi-implicit"
+                pywarpx.warpx.semi_implicit_factor = self.semi_implicit_factor
             else:
                 pywarpx.warpx.do_electrostatic = "labframe"
             pywarpx.warpx.self_fields_required_precision = self.required_precision
