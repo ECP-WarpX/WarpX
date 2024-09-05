@@ -165,6 +165,15 @@ void HybridPICModel::InitData ()
         m_add_ext_particle_B_field = true;
     }
 
+    if ( mypc.m_B_ext_particle_s == "parse_e_ext_particle_function") {
+        constexpr auto num_arguments = 4; //x,y,z,t
+        m_E_external[0] = mypc.m_Ex_particle_parser->compile<num_arguments>();
+        m_E_external[1] = mypc.m_Ey_particle_parser->compile<num_arguments>();
+        m_E_external[2] = mypc.m_Ez_particle_parser->compile<num_arguments>();
+
+        m_add_ext_particle_E_field = true;
+    }
+
     // Get the grid staggering of the fields involved in calculating E
     amrex::IntVect Jx_stag = warpx.getField(FieldType::current_fp, 0,0).ixType().toIntVect();
     amrex::IntVect Jy_stag = warpx.getField(FieldType::current_fp, 0,1).ixType().toIntVect();

@@ -1339,8 +1339,9 @@ void WarpX::CheckKnownIssues()
         );
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             (!external_particle_field_used 
-            || mypc->m_B_ext_particle_s == "parse_b_ext_particle_function"),
-            "The hybrid-PIC algorithm only works with analytical external B fields "
+            || mypc->m_B_ext_particle_s == "parse_b_ext_particle_function"
+            || mypc->m_E_ext_particle_s == "parse_e_ext_particle_function"),
+            "The hybrid-PIC algorithm only works with analytical external E/B fields "
             "applied directly to particles."
         );
     }

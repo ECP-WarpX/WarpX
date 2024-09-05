@@ -425,6 +425,11 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
     const auto Bt_part = hybrid_model->m_B_external[1];
     const auto Bz_part = hybrid_model->m_B_external[2];
 
+    const bool include_E_ext_part = hybrid_model->m_add_ext_particle_E_field;
+    const auto Er_part = hybrid_model->m_E_external[0];
+    const auto Et_part = hybrid_model->m_E_external[1];
+    const auto Ez_part = hybrid_model->m_E_external[2];
+
     auto & warpx = WarpX::GetInstance();
     auto t = warpx.gett_new(lev);
 
@@ -632,6 +637,17 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                     auto nabla2Jr = T_Algo::Dr_rDr_over_r(Jr, r, dr, coefs_r, n_coefs_r, i, j, 0, 0);
                     Er(i, j, 0) -= eta_h * nabla2Jr;
                 }
+
+                if (include_E_ext_part) {
+                    // Determine r and z on nodal mesh at i and j
+                    const amrex::Real fac_x = (1._rt - Er_stag[0]) * dx_lev[0] * 0.5_rt;
+                    const amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
+                    const amrex::Real y = 0._rt;
+                    const amrex::Real fac_z = (1._rt - Er_stag[1]) * dx_lev[1] * 0.5_rt;
+                    const amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
+
+                    Er(i, j, 0) -= Er_part(x,y,z,t);
+                }
             },
 
             // Et calculation
@@ -675,6 +691,17 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                 if (solve_for_Faraday) { Et(i, j, 0) += eta(rho_val, jtot_val) * Jt(i, j, 0); }
 
                 // Note: Hyper-resisitivity should be revisited here when modal decomposition is implemented
+
+                if (include_E_ext_part) {
+                    // Determine r and z on nodal mesh at i and j
+                    const amrex::Real fac_x = (1._rt - Et_stag[0]) * dx_lev[0] * 0.5_rt;
+                    const amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
+                    const amrex::Real y = 0._rt;
+                    const amrex::Real fac_z = (1._rt - Et_stag[1]) * dx_lev[1] * 0.5_rt;
+                    const amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
+
+                    Et(i, j, 0) -= Et_part(x,y,z,t);
+                }
             },
 
             // Ez calculation
@@ -713,6 +740,17 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                 if (include_hyper_resistivity_term) {
                     auto nabla2Jz = T_Algo::Dzz(Jz, coefs_z, n_coefs_z, i, j, 0, 0);
                     Ez(i, j, 0) -= eta_h * nabla2Jz;
+                }
+
+                if (include_E_ext_part) {
+                    // Determine r and z on nodal mesh at i and j
+                    const amrex::Real fac_x = (1._rt - Ez_stag[0]) * dx_lev[0] * 0.5_rt;
+                    const amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
+                    const amrex::Real y = 0._rt;
+                    const amrex::Real fac_z = (1._rt - Ez_stag[1]) * dx_lev[1] * 0.5_rt;
+                    const amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
+
+                    Ez(i, j, 0) -= Ez_part(x,y,z,t);
                 }
             }
         );
@@ -758,6 +796,11 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
     const auto Bx_part = hybrid_model->m_B_external[0];
     const auto By_part = hybrid_model->m_B_external[1];
     const auto Bz_part = hybrid_model->m_B_external[2];
+
+    const bool include_E_ext_part = hybrid_model->m_add_ext_particle_E_field;
+    const auto Ex_part = hybrid_model->m_E_external[0];
+    const auto Ey_part = hybrid_model->m_E_external[1];
+    const auto Ez_part = hybrid_model->m_E_external[2];
 
     auto & warpx = WarpX::GetInstance();
     auto t = warpx.gett_new(lev);
@@ -962,6 +1005,18 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                     auto nabla2Jx = T_Algo::Dxx(Jx, coefs_x, n_coefs_x, i, j, k);
                     Ex(i, j, k) -= eta_h * nabla2Jx;
                 }
+
+                if (include_E_ext_part) {
+                    // Determine x, y, and z on nodal mesh at i, j, & k
+                    const amrex::Real fac_x = (1._rt - Ex_stag[0]) * dx_lev[0] * 0.5_rt;
+                    const amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
+                    const amrex::Real fac_y = (1._rt - Ex_stag[1]) * dx_lev[1] * 0.5_rt;
+                    const amrex::Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
+                    const amrex::Real fac_z = (1._rt - Ex_stag[2]) * dx_lev[2] * 0.5_rt;
+                    const amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
+
+                    Ex(i, j, k) -= Ex_part(x,y,z,t);
+                }
             },
 
             // Ey calculation
@@ -1006,6 +1061,18 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                     auto nabla2Jy = T_Algo::Dyy(Jy, coefs_y, n_coefs_y, i, j, k);
                     Ey(i, j, k) -= eta_h * nabla2Jy;
                 }
+
+                if (include_E_ext_part) {
+                    // Determine x, y, and z on nodal mesh at i, j, & k
+                    const amrex::Real fac_x = (1._rt - Ey_stag[0]) * dx_lev[0] * 0.5_rt;
+                    const amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
+                    const amrex::Real fac_y = (1._rt - Ey_stag[1]) * dx_lev[1] * 0.5_rt;
+                    const amrex::Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
+                    const amrex::Real fac_z = (1._rt - Ey_stag[2]) * dx_lev[2] * 0.5_rt;
+                    const amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
+
+                    Ey(i, j, k) -= Ey_part(x,y,z,t);
+                }
             },
 
             // Ez calculation
@@ -1045,6 +1112,18 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 if (include_hyper_resistivity_term) {
                     auto nabla2Jz = T_Algo::Dzz(Jz, coefs_z, n_coefs_z, i, j, k);
                     Ez(i, j, k) -= eta_h * nabla2Jz;
+                }
+
+                if (include_E_ext_part) {
+                    // Determine x, y, and z on nodal mesh at i, j, & k
+                    const amrex::Real fac_x = (1._rt - Ez_stag[0]) * dx_lev[0] * 0.5_rt;
+                    const amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
+                    const amrex::Real fac_y = (1._rt - Ez_stag[1]) * dx_lev[1] * 0.5_rt;
+                    const amrex::Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
+                    const amrex::Real fac_z = (1._rt - Ez_stag[2]) * dx_lev[2] * 0.5_rt;
+                    const amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
+
+                    Ez(i, j, k) -= Ez_part(x,y,z,t);
                 }
             }
         );

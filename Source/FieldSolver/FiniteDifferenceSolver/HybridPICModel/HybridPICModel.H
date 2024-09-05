@@ -187,9 +187,12 @@ public:
     std::array< amrex::ParserExecutor<4>, 3> m_J_external;
     bool m_external_field_has_time_dependence = false;
 
-    /** External B field */
+    /** External E/B fields */
     bool m_add_ext_particle_B_field = false;
     std::array< amrex::ParserExecutor<4>, 3> m_B_external;
+
+    bool m_add_ext_particle_E_field = false;
+    std::array< amrex::ParserExecutor<4>, 3> m_E_external;
 
     // Declare multifabs specifically needed for the hybrid-PIC model
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_fp_temp;
