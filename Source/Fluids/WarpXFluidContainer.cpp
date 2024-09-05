@@ -1055,6 +1055,7 @@ void WarpXFluidContainer::GatherAndPush (
                 if (N_arr(i,j,k)>0.0) {
 
                     // Interpolate fields from tmp to Nodal points
+                    // NOLINTBEGIN(misc-const-correctness)
                     amrex::Real Ex_Nodal = ablastr::coarsen::sample::Interp(Ex_arr,
                         Ex_type, Nodal_type, coarsening_ratio, i, j, k, 0);
                     amrex::Real Ey_Nodal = ablastr::coarsen::sample::Interp(Ey_arr,
@@ -1067,10 +1068,11 @@ void WarpXFluidContainer::GatherAndPush (
                         By_type, Nodal_type, coarsening_ratio, i, j, k, 0);
                     amrex::Real Bz_Nodal = ablastr::coarsen::sample::Interp(Bz_arr,
                         Bz_type, Nodal_type, coarsening_ratio, i, j, k, 0);
+                    // NOLINTEND(misc-const-correctness)
 
 #ifdef AMREX_USE_CUDA
-                    amrex::ignore_unused(Exfield_parser,Eyfield_parser,Ezfield_parser,
-                                         Bxfield_parser,Byfield_parser,Bzfield_parser,gamma_boost);
+                    amrex::ignore_unused(Exfield_parser, Eyfield_parser, Ezfield_parser,
+                                         Bxfield_parser, Byfield_parser, Bzfield_parser, gamma_boost);
 #endif
 
                     if constexpr (boost_control == has_gamma_boost) { // Lorentz transform fields due to moving frame
