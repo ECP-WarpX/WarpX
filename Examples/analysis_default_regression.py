@@ -17,4 +17,5 @@ test_name = os.path.split(os.getcwd())[1]
 if re.search("single_precision", fn):
     checksumAPI.evaluate_checksum(test_name, fn, rtol=2.0e-6)
 else:
+    # using default relative tolerance
     checksumAPI.evaluate_checksum(test_name, fn)
