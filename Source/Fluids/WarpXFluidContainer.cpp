@@ -1072,7 +1072,8 @@ void WarpXFluidContainer::GatherAndPush (
 
 #ifdef AMREX_USE_CUDA
                     amrex::ignore_unused(Exfield_parser, Eyfield_parser, Ezfield_parser,
-                                         Bxfield_parser, Byfield_parser, Bzfield_parser, gamma_boost);
+                                         Bxfield_parser, Byfield_parser, Bzfield_parser,
+                                         gamma_boost, problo, dx, t, beta_boost);
 #endif
 
                     if constexpr (boost_control == has_gamma_boost) { // Lorentz transform fields due to moving frame
