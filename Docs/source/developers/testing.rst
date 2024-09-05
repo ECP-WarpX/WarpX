@@ -43,43 +43,43 @@ For easier debugging, it can be convenient to run the tests on your local machin
 
   .. code-block:: sh
 
-        ctest --test-dir build -N
+       ctest --test-dir build -N
 
 * Run tests available for the current build options:
 
   .. code-block:: sh
 
-        ctest --test-dir build
+       ctest --test-dir build
 
 * Run tests available for the current build options in parallel (while preserving existing dependencies between tests):
 
   .. code-block:: sh
 
-        ctest --test-dir build -j 2
+       ctest --test-dir build -j 2
 
 * Run tests available for the current build options and output anything outputted by the test program if the test should fail:
 
   .. code-block:: sh
 
-        ctest --test-dir build --output-on-failure
+       ctest --test-dir build --output-on-failure
 
 * Run tests available for the current build options with verbose output:
 
   .. code-block:: sh
 
-        ctest --test-dir build --verbose
+       ctest --test-dir build --verbose
 
 * Run tests matching the regular expression ``laser_acceleration``:
 
   .. code-block:: sh
 
-        ctest --test-dir build -R laser_acceleration
+       ctest --test-dir build -R laser_acceleration
 
 * Run tests except those matching the regular expression ``laser_acceleration``:
 
   .. code-block:: sh
 
-        ctest --test-dir build -E laser_acceleration
+       ctest --test-dir build -E laser_acceleration
 
 Once the execution of CTest is completed, you can find all files associated with each test in its corresponding directory under ``build/bin/``.
 For example, if you run the single test ``test_3d_laser_acceleration``, you can find all files associated with this test in the directory ``build/bin/test_3d_laser_acceleration/``.
