@@ -160,18 +160,3 @@ jobs:
         ulimit -c unlimited
 
         mpirun -n 2 ../../../build_EB/bin/warpx.2d inputs_test_2d_embedded_circle warpx.serialize_initial_conditions = 0
-
-  save_pr_number:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Save PR number
-        env:
-          PR_NUMBER: ${{ github.event.number }}
-        run: |
-          echo $PR_NUMBER > pr_number.txt
-      - uses: actions/upload-artifact@v4
-        with:
-          name: pr_number
-          path: pr_number.txt
-          retention-days: 1

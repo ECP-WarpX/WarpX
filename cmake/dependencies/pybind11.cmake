@@ -21,12 +21,7 @@ function(find_pybind11)
                 GIT_TAG        ${WarpX_pybind11_branch}
                 BUILD_IN_SOURCE 0
             )
-            FetchContent_GetProperties(fetchedpybind11)
-
-            if(NOT fetchedpybind11_POPULATED)
-                FetchContent_Populate(fetchedpybind11)
-                add_subdirectory(${fetchedpybind11_SOURCE_DIR} ${fetchedpybind11_BINARY_DIR})
-            endif()
+            FetchContent_MakeAvailable(fetchedpybind11)
 
             # advanced fetch options
             mark_as_advanced(FETCHCONTENT_BASE_DIR)

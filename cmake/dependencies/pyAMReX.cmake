@@ -47,12 +47,7 @@ function(find_pyamrex)
                 GIT_TAG        ${WarpX_pyamrex_branch}
                 BUILD_IN_SOURCE 0
             )
-            FetchContent_GetProperties(fetchedpyamrex)
-
-            if(NOT fetchedpyamrex_POPULATED)
-                FetchContent_Populate(fetchedpyamrex)
-                add_subdirectory(${fetchedpyamrex_SOURCE_DIR} ${fetchedpyamrex_BINARY_DIR})
-            endif()
+            FetchContent_MakeAvailable(fetchedpyamrex)
 
             # advanced fetch options
             mark_as_advanced(FETCHCONTENT_BASE_DIR)
