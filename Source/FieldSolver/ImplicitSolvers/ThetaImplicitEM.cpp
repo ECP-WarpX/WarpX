@@ -75,8 +75,7 @@ void ThetaImplicitEM::PrintParameters () const
         amrex::Print() << "Nonlinear solver type:      Newton\n";
     }
     m_nlsolver->PrintParams();
-    amrex::Print() << "-----------------------------------------------------------\n";
-    amrex::Print() << "\n";
+    amrex::Print() << "-----------------------------------------------------------\n\n";
 }
 
 void ThetaImplicitEM::OneStep ( const amrex::Real  a_time,
