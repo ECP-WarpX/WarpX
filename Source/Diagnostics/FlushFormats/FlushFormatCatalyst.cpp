@@ -204,7 +204,7 @@ FlushFormatCatalyst::~FlushFormatCatalyst() {
         amrex::Abort(message);
     } else {
         // Temporary, remove for final
-        std::cout << "Successfully finalized Catalyst" << "\n";
+        std::cout << "Successfully finalized Catalyst\n";
     }
 
 }
