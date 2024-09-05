@@ -145,6 +145,7 @@ jobs:
   - bash: |
       set -eu -o pipefail
       df -h
+
       # configure
       export AMReX_CMAKE_FLAGS="-DAMReX_ASSERTIONS=ON -DAMReX_TESTING=ON"
       # FIXME update after https://github.com/AMReX-Codes/amrex/pull/4126
@@ -155,10 +156,15 @@ jobs:
         -DWarpX_amrex_branch=topic-pp-prefix                 \
         -DWarpX_TEST_CLEANUP=ON \
         -DWarpX_TEST_FPETRAP=ON
+
       # build
       cmake --build build -j 2
+      df -h
+    displayName: 'Build'
+
+  - bash: |
+      set -eu -o pipefail
+
       # run tests (exclude pytest.AMReX when running Python tests)
       ctest --test-dir build --output-on-failure -E AMReX
-      rm -rf build
-      df -h
-    displayName: 'Build & test'
+    displayName: 'Test'
