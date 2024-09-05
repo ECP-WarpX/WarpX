@@ -196,7 +196,7 @@ if(WarpX_HEFFTE)
 endif()
 
 # this defined the variable BUILD_TESTING which is ON by default
-#include(CTest)
+include(CTest)
 
 
 # Dependencies ################################################################
