@@ -181,7 +181,7 @@ void BTDiagnostics::DerivedInitData ()
         }
         if (warpx.maxStep() == std::numeric_limits<int>::max() && warpx.stopTime() == std::numeric_limits<amrex::Real>::max()) {
             amrex::Print()<<"max_step unspecified and stop time unspecified.  Setting max step to "
-                <<final_snapshot_fill_iteration<< " to fill all BTD snapshots." << "\n";
+                <<final_snapshot_fill_iteration<< " to fill all BTD snapshots.\n";
             warpx.updateMaxStep(final_snapshot_fill_iteration);
         }
 
