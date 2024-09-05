@@ -97,64 +97,64 @@ A new test can be added by adding a corresponding entry in ``CMakeLists.txt`` as
 
 * Add the **regular test** ``test_1d_laser_acceleration``:
 
-  .. code-block:: sh
+  .. code-block:: cmake
 
        add_warpx_test(
-           test_1d_laser_acceleration # name
-           1 # dims
-           2 # nprocs
-           OFF # eb
-           inputs_test_1d_laser_acceleration # inputs
-           analysis.py # analysis
-           diags/diag1000100 # output (plotfile)
-           OFF # dependency
+           test_1d_laser_acceleration  # name
+           1  # dims
+           2  # nprocs
+           OFF  # eb
+           inputs_test_1d_laser_acceleration  # inputs
+           analysis.py  # analysis
+           diags/diag1000100  # output (plotfile)
+           OFF  # dependency
        )
 
 * Add the **PICMI test** ``test_2d_laser_acceleration_picmi``:
 
-  .. code-block:: sh
+  .. code-block:: cmake
 
        add_warpx_test(
-           test_2d_laser_acceleration_picmi # name
-           2 # dims
-           2 # nprocs
-           OFF # eb
-           inputs_test_2d_laser_acceleration_picmi.py # inputs
-           analysis.py # analysis
-           diags/diag1000100 # output (plotfile)
-           OFF # dependency
+           test_2d_laser_acceleration_picmi  # name
+           2  # dims
+           2  # nprocs
+           OFF  # eb
+           inputs_test_2d_laser_acceleration_picmi.py  # inputs
+           analysis.py  # analysis
+           diags/diag1000100  # output (plotfile)
+           OFF  # dependency
        )
 
 * Add the **restart test** ``test_3d_laser_acceleration_restart``:
 
-  .. code-block:: sh
+  .. code-block:: cmake
 
        add_warpx_test(
-           test_3d_laser_acceleration_restart # name
-           3 # dims
-           2 # nprocs
-           OFF # eb
-           inputs_test_3d_laser_acceleration_restart # inputs
-           analysis_default_restart.py # analysis
-           diags/diag1000100 # output (plotfile)
-           test_3d_laser_acceleration # dependency
+           test_3d_laser_acceleration_restart  # name
+           3  # dims
+           2  # nprocs
+           OFF  # eb
+           inputs_test_3d_laser_acceleration_restart  # inputs
+           analysis_default_restart.py  # analysis
+           diags/diag1000100  # output (plotfile)
+           test_3d_laser_acceleration  # dependency
        )
 
   Note that the restart has an explicit dependency, namely it can run only provided that the original test, from which the restart checkpoint files will be read, runs first.
 
 * A more complex example. Add the **PICMI test** ``test_rz_laser_acceleration_picmi``, with custom command-line arguments ``--test`` and ``dir``, and openPMD time series output:
 
-  .. code-block:: sh
+  .. code-block:: cmake
 
        add_warpx_test(
-           test_rz_laser_acceleration_picmi # name
-           RZ # dims
-           2  # nprocs
-           OFF # eb
-           "inputs_test_rz_laser_acceleration_picmi.py --test --dir 1" # inputs
-           analysis.py # analysis
-           diags/diag1/ # output (openPMD time series)
-           OFF # dependency
+           test_rz_laser_acceleration_picmi  # name
+           RZ  # dims
+           2   # nprocs
+           OFF  # eb
+           "inputs_test_rz_laser_acceleration_picmi.py --test --dir 1"  # inputs
+           analysis.py  # analysis
+           diags/diag1/  # output (openPMD time series)
+           OFF  # dependency
        )
 
 If you need a new Python package dependency for testing, please add it in `Regression/requirements.txt <https://github.com/ECP-WarpX/WarpX/blob/development/Regression/requirements.txt>`__.
@@ -164,7 +164,7 @@ Sometimes, two tests share a large number of input parameters. The shared input 
 Naming conventions for automated tests
 --------------------------------------
 
-Note that we currently obey the following snake\_case naming conventions for test names and test input files (which make automation tasks easier, e.g., parsing visually, parsing through code, sorting alphabetically, filtering tests in CTest via -R, etc.):
+Note that we currently obey the following snake\_case naming conventions for test names and test input files (which make automation tasks easier, e.g., parsing visually, parsing through code, sorting alphabetically, filtering tests in CTest via ``-R``, etc.):
 
 #. **Regular test names** start with the string ``test_1d_``, ``test_2d_``, ``test_3d_`` or ``test_rz_``, followed by a string that is descriptive of the test. For example, ``test_3d_laser_acceleration``.
 
@@ -173,6 +173,8 @@ Note that we currently obey the following snake\_case naming conventions for tes
 #. **Restart test names** end with the string ``_restart``. For example, ``test_3d_laser_acceleration_restart``.
 
 #. **Test input files** start with the string ``inputs_`` followed by the test name. For example, ``inputs_test_3d_laser_acceleration`` or ``inputs_test_3d_laser_acceleration_picmi.py`` or ``inputs_test_3d_laser_acceleration_restart``.
+
+#. **Base input files** (that is, files collecting input parameters shared between two or more tests) are typically named ``inputs_base_1d``, ``inputs_base_2d``, ``inputs_base_3d`` or ``inputs_base_rz``, possibly followed by additional strings if need be.
 
 Useful tool for plotfile comparison: ``fcompare``
 -------------------------------------------------
