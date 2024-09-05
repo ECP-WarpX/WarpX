@@ -72,7 +72,7 @@ ChargeOnEB::ChargeOnEB (const std::string& rd_name)
             ofs << m_sep;
             ofs << "[" << c++ << "]time(s)";
             ofs << m_sep;
-            ofs << "[" << c++ << "]Charge (C)";
+            ofs << "[" << c++ << "]Charge (C)\n";
             ofs << "\n";
             // close file
             ofs.close();
