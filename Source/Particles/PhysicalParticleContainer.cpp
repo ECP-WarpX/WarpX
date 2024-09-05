@@ -3259,7 +3259,7 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
 #if !defined(AMREX_USE_GPU)
                 std::stringstream convergenceMsg;
                 convergenceMsg << "Picard solver for particle failed to converge after " <<
-                    iter << " iterations. " << "\n";
+                    iter << " iterations.\n";
                 convergenceMsg << "Position step norm is " << step_norm <<
                     " and the tolerance is " << particle_tolerance << "\n";
                 convergenceMsg << " ux = " << ux[ip] << ", uy = " << uy[ip] << ", uz = " << uz[ip] << "\n";
