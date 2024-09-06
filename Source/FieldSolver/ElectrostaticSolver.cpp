@@ -333,7 +333,6 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
 
     std::optional<ElectrostaticSolver::EBCalcEfromPhiPerLevel> post_phi_calculation;
 #ifdef AMREX_USE_EB
-    // TODO: double check no overhead occurs on "m_eb_enabled == false"
     std::optional<amrex::Vector<amrex::EBFArrayBoxFactory const *> > eb_farray_box_factory;
 #else
     std::optional<amrex::Vector<amrex::FArrayBoxFactory const *> > const eb_farray_box_factory;
