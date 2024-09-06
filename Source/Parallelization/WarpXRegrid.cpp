@@ -10,6 +10,7 @@
 
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
+#include "EmbeddedBoundary/Enabled.H"
 #include "EmbeddedBoundary/WarpXFaceInfoBox.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #include "Initialization/ExternalField.H"
@@ -177,6 +178,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         mf = std::move(pmf);
     };
 
+    bool const eb_enabled = EB::enabled();
     if (ba == boxArray(lev))
     {
         if (ParallelDescriptor::NProcs() == 1) { return; }
@@ -215,7 +217,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                 RemakeMultiFab(m_hybrid_pic_model->current_fp_ampere[lev][idim], false);
                 RemakeMultiFab(m_hybrid_pic_model->current_fp_external[lev][idim],true);
             }
-            if (m_eb_enabled) {
+            if (eb_enabled) {
                 if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) {
                     RemakeMultiFab(m_edge_lengths[lev][idim], false);
                     RemakeMultiFab(m_face_areas[lev][idim], false);
@@ -242,7 +244,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
             RemakeMultiFab(m_hybrid_pic_model->electron_pressure_fp[lev], false);
         }
 
-        if (m_eb_enabled) {
+        if (eb_enabled) {
             RemakeMultiFab(m_distance_to_eb[lev], false);
 
 #ifdef AMREX_USE_EB

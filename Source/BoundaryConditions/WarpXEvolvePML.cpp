@@ -11,6 +11,7 @@
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
 #   include "BoundaryConditions/PML_RZ.H"
 #endif
+#include "EmbeddedBoundary/Enabled.H"
 #include "PML_current.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX_PML_kernels.H"
@@ -271,7 +272,7 @@ WarpX::DampJPML (int lev, PatchType patch_type)
 
             // Skip the field update if this gridpoint is inside the embedded boundary
             amrex::Array4<amrex::Real> eb_lxfab, eb_lyfab, eb_lzfab;
-            if (m_eb_enabled) {
+            if (EB::enabled()) {
                 const auto &pml_edge_lenghts = pml[lev]->Get_edge_lengths();
 
                 eb_lxfab = pml_edge_lenghts[0]->array(mfi);
