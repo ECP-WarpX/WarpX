@@ -9,11 +9,10 @@
 
 import sys
 
-sys.path.append('../../../../warpx/Regression/Checksum/')
+sys.path.append("../../../../warpx/Regression/Checksum/")
 
 import checksumAPI
 
 my_check = checksumAPI.evaluate_checksum(
-    'background_mcc', 'Python_background_mcc_plt000050',
-    do_particles=True, rtol=5e-3
+    "test_2d_background_mcc", "diags/diag1000050", do_particles=True, rtol=5e-3
 )

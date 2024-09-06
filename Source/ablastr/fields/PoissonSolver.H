@@ -9,6 +9,7 @@
 
 #include <ablastr/constant.H>
 #include <ablastr/utils/Communication.H>
+#include <ablastr/utils/Enums.H>
 #include <ablastr/utils/TextMsg.H>
 #include <ablastr/warn_manager/WarnManager.H>
 #include <ablastr/math/fft/AnyFFT.H>
@@ -81,6 +82,7 @@ namespace ablastr::fields {
  * \param[in] geom the geometry per level (e.g., from AmrMesh)
  * \param[in] dmap the distribution mapping per level (e.g., from AmrMesh)
  * \param[in] grids the grids per level (e.g., from AmrMesh)
+ * \param[in] grid_type Integer that corresponds to the type of grid used in the simulation (collocated, staggered, hybrid)
  * \param[in] boundary_handler a handler for boundary conditions, for example @see ElectrostaticSolver::PoissonBoundaryHandler
  * \param[in] is_solver_igf_on_lev0 boolean to select the Poisson solver: 1 for FFT on level 0 & Multigrid on other levels, 0 for Multigrid on all levels
  * \param[in] do_single_precision_comms perform communications in single precision
@@ -105,6 +107,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
             amrex::Vector<amrex::Geometry> const& geom,
             amrex::Vector<amrex::DistributionMapping> const& dmap,
             amrex::Vector<amrex::BoxArray> const& grids,
+            utils::enums::GridType grid_type,
             T_BoundaryHandler const boundary_handler,
             bool is_solver_igf_on_lev0,
             bool const do_single_precision_comms = false,
@@ -263,10 +266,15 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         mlmg.setVerbose(verbosity);
         mlmg.setMaxIter(max_iters);
         mlmg.setAlwaysUseBNorm(always_use_bnorm);
+        if (grid_type == utils::enums::GridType::Collocated) {
+            // In this case, computeE needs to use ghost nodes data. So we
+            // ask MLMG to fill BC for us after it solves the problem.
+            mlmg.setFinalFillBC(true);
+        }
 
         // Solve Poisson equation at lev
         mlmg.solve( {phi[lev]}, {rho[lev]},
-                    relative_tolerance, absolute_tolerance );
+                     relative_tolerance, absolute_tolerance );
 
         // needed for solving the levels by levels:
         // - coarser level is initial guess for finer level
@@ -280,10 +288,14 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
             const amrex::IntVect& refratio = rel_ref_ratio.value()[lev];
             ba.coarsen(refratio);
             const int ncomp = linop.getNComp();
-            amrex::MultiFab phi_cp(ba, phi[lev+1]->DistributionMap(), ncomp, 1);
+            const int ng = (grid_type == utils::enums::GridType::Collocated) ? 1 : 0;
+            amrex::MultiFab phi_cp(ba, phi[lev+1]->DistributionMap(), ncomp, ng);
+            if (ng > 0) {
+                // Set all values outside the domain to zero
+                phi_cp.setDomainBndry(0.0_rt, geom[lev]);
+            }
 
             // Copy from phi[lev] to phi_cp (in parallel)
-            const amrex::IntVect& ng = amrex::IntVect::TheUnitVector();
             const amrex::Periodicity& crse_period = geom[lev].periodicity();
 
             ablastr::utils::communication::ParallelCopy(
@@ -292,8 +304,8 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
                 0,
                 0,
                 1,
-                ng,
-                ng,
+                amrex::IntVect(0),
+                amrex::IntVect(ng),
                 do_single_precision_comms,
                 crse_period
             );
@@ -308,7 +320,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 
                 details::PoissonInterpCPtoFP const interp(phi_fp_arr, phi_cp_arr, refratio);
 
-                amrex::Box const b = mfi.tilebox(phi[lev + 1]->ixType().toIntVect());
+                amrex::Box const& b = mfi.growntilebox(ng);
                 amrex::ParallelFor(b, interp);
             }
 

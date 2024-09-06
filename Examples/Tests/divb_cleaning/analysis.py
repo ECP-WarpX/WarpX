@@ -8,7 +8,7 @@
 
 import sys
 
-sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+sys.path.insert(1, "../../../../warpx/Regression/Checksum/")
 import os
 
 import numpy as np
@@ -24,17 +24,23 @@ from scipy.constants import c
 fn = sys.argv[1]
 
 # Load yt data
-ds_old = yt.load('divb_cleaning_3d_plt000398')
-ds_mid = yt.load('divb_cleaning_3d_plt000399')
-ds_new = yt.load(fn) # this is the last plotfile
+ds_old = yt.load("diags/diag1000398")
+ds_mid = yt.load("diags/diag1000399")
+ds_new = yt.load(fn)  # this is the last plotfile
 
-ad_old = ds_old.covering_grid(level = 0, left_edge = ds_old.domain_left_edge, dims = ds_old.domain_dimensions)
-ad_mid = ds_mid.covering_grid(level = 0, left_edge = ds_mid.domain_left_edge, dims = ds_mid.domain_dimensions)
-ad_new = ds_new.covering_grid(level = 0, left_edge = ds_new.domain_left_edge, dims = ds_new.domain_dimensions)
+ad_old = ds_old.covering_grid(
+    level=0, left_edge=ds_old.domain_left_edge, dims=ds_old.domain_dimensions
+)
+ad_mid = ds_mid.covering_grid(
+    level=0, left_edge=ds_mid.domain_left_edge, dims=ds_mid.domain_dimensions
+)
+ad_new = ds_new.covering_grid(
+    level=0, left_edge=ds_new.domain_left_edge, dims=ds_new.domain_dimensions
+)
 
-G_old = ad_old['boxlib', 'G'].v.squeeze()
-G_new = ad_new['boxlib', 'G'].v.squeeze()
-divB  = ad_mid['boxlib', 'divB'].v.squeeze()
+G_old = ad_old["boxlib", "G"].v.squeeze()
+G_new = ad_new["boxlib", "G"].v.squeeze()
+divB = ad_mid["boxlib", "divB"].v.squeeze()
 
 # Check max norm of error on c2 * div(B) = dG/dt
 # (the time interval between old and new is 2*dt)
@@ -45,11 +51,11 @@ y = divB * 2 * dt * c**2
 rel_error = np.amax(abs(x - y)) / np.amax(abs(y))
 tolerance = 1e-1
 
-assert(rel_error < tolerance)
+assert rel_error < tolerance
 
 test_name = os.path.split(os.getcwd())[1]
 
-if re.search('single_precision', fn):
-    checksumAPI.evaluate_checksum(test_name, fn, rtol=1.e-3)
+if re.search("single_precision", fn):
+    checksumAPI.evaluate_checksum(test_name, fn, rtol=1.0e-3)
 else:
     checksumAPI.evaluate_checksum(test_name, fn)
