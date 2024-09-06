@@ -246,7 +246,7 @@ void DifferentialLuminosity::ComputeDiags (int step)
                         }
 
                         // center of mass energy in eV
-                        Real const E_com = c_over_qe * std::sqrt(m1*m1*c2 + m2*m2*c2 + 2*(p1t*p2t - p1x*p2x - p1y*p2y - p1z*p2z));
+                        Real const E_com = c_over_qe * std::sqrt(m1*m1*c_sq + m2*m2*c_sq + 2*(p1t*p2t - p1x*p2x - p1y*p2y - p1z*p2z));
 
                         // determine particle bin
                         int const bin = int(Math::floor((E_com-bin_min)/bin_size));
@@ -258,7 +258,7 @@ void DifferentialLuminosity::ComputeDiags (int step)
 
                         Real const beta1_sq = (p1x*p1x + p1y*p1y + p1z*p1z) * inv_p1t*inv_p1t;
                         Real const beta2_sq = (p2x*p2x + p2y*p2y + p2z*p2z) * inv_p2t*inv_p2t;
-                        Real const beta1_dot_beta2 = (p1x*p2x + p1y*p2y + p1z*p2) * inv_p1t*inv_p2t;
+                        Real const beta1_dot_beta2 = (p1x*p2x + p1y*p2y + p1z*p2z) * inv_p1t*inv_p2t;
 
                         // Here we use the fact that:
                         // (v1 - v2)^2 = v1^2 + v2^2 - 2 v1.v2
