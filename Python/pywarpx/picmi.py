@@ -1522,9 +1522,6 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         # --- Same method names are used, though mapped to lower case.
         pywarpx.algo.maxwell_solver = self.method
 
-        if self.cfl is not None:
-            pywarpx.warpx.cfl = self.cfl
-
         if self.source_smoother is not None:
             self.source_smoother.smoother_initialize_inputs(self)
 

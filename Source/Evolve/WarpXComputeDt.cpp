@@ -28,16 +28,13 @@
 #include <algorithm>
 #include <memory>
 
+/**
+ * Compute the minimum of array x, where x has dimension AMREX_SPACEDIM
+ */
 AMREX_FORCE_INLINE amrex::Real
 minDim (const amrex::Real* x)
 {
-#if defined(WARPX_DIM_1D_Z)
-    return x[0];
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    return std::min(x[0], x[1]);
-#else
-    return std::min(x[0], std::min(x[1], x[2]));
-#endif
+    return std::min({AMREX_D_DECL(x[0], x[1], x[2])});
 }
 
 /**
@@ -49,11 +46,7 @@ WarpX::ComputeDt ()
     // and no constant timestep is provided
     if (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
         std::stringstream errorMsg;
-        if (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
-            errorMsg << "warpx.const_dt must be specified with the hybrid-PIC solver.";
-        } else {
-            errorMsg << "warpx.const_dt must be specified when not using a field solver.";
-        }
+        errorMsg << "warpx.const_dt must be specified with the hybrid-PIC solver.";
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_const_dt.has_value(), errorMsg.str());
     }
 
@@ -120,11 +113,10 @@ WarpX::UpdateDtFromParticleSpeeds ()
     dt_next[max_level] = deltat_new;
 
     for (int lev = max_level-1; lev >= 0; --lev) {
+        dt[lev] = dt_next[lev];
         if (do_subcycling) {
-            dt[lev] = dt[lev+1] * refRatio(lev)[0];
             dt_next[lev] = dt_next[lev+1] * refRatio(lev)[0];
         } else {
-            dt[lev] = dt[lev+1];
             dt_next[lev] = dt_next[lev+1];
         }
     }
