@@ -206,6 +206,7 @@ WarpX::Evolve (int numsteps)
 
         // sync up time
         for (int i = 0; i <= max_level; ++i) {
+            t_old[i] = t_new[i];
             t_new[i] = cur_time;
         }
         multi_diags->FilterComputePackFlush( step, false, true );

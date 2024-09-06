@@ -123,6 +123,7 @@ short WarpX::rho_in_time;
 short WarpX::load_balance_costs_update_algo;
 bool WarpX::do_dive_cleaning = false;
 bool WarpX::do_divb_cleaning = false;
+bool WarpX::do_divb_cleaning_external = false;
 int WarpX::em_solver_medium;
 int WarpX::macroscopic_solver_algo;
 bool WarpX::do_single_precision_comms = false;
@@ -325,6 +326,11 @@ WarpX::WarpX ()
     current_fp.resize(nlevs_max);
     Efield_fp.resize(nlevs_max);
     Bfield_fp.resize(nlevs_max);
+
+    Efield_dotMask.resize(nlevs_max);
+    Bfield_dotMask.resize(nlevs_max);
+    Afield_dotMask.resize(nlevs_max);
+    phi_dotMask.resize(nlevs_max);
 
     // Only allocate vector potential arrays when using the Magnetostatic Solver
     if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
@@ -905,6 +911,7 @@ WarpX::ReadParameters ()
         pp_warpx.query("refine_plasma", refine_plasma);
         pp_warpx.query("do_dive_cleaning", do_dive_cleaning);
         pp_warpx.query("do_divb_cleaning", do_divb_cleaning);
+
         utils::parser::queryWithParser(
             pp_warpx, "n_field_gather_buffer", n_field_gather_buffer);
         utils::parser::queryWithParser(
@@ -1127,6 +1134,22 @@ WarpX::ReadParameters ()
             grid_type != GridType::Hybrid,
             "warpx.grid_type=hybrid is not implemented in RZ geometry");
 #endif
+
+        // Update default to external projection divb cleaner if external fields are loaded,
+        // the grids are staggered, and the solver is compatible with the cleaner
+        if (!do_divb_cleaning
+            && m_p_ext_field_params->B_ext_grid_type != ExternalFieldType::default_zero
+            && m_p_ext_field_params->B_ext_grid_type != ExternalFieldType::constant
+            && grid_type != GridType::Collocated
+            && (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee
+            ||  WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC
+            ||  ( (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame
+                || WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
+                && WarpX::poisson_solver_id == PoissonSolverAlgo::Multigrid)))
+        {
+            do_divb_cleaning_external = true;
+        }
+        pp_warpx.query("do_divb_cleaning_external", do_divb_cleaning_external);
 
         // If true, the current is deposited on a nodal grid and centered onto
         // a staggered grid. Setting warpx.do_current_centering=1 makes sense
@@ -2077,6 +2100,10 @@ WarpX::ClearLevel (int lev)
         Efield_fp [lev][i].reset();
         Bfield_fp [lev][i].reset();
 
+        Efield_dotMask [lev][i].reset();
+        Bfield_dotMask [lev][i].reset();
+        Afield_dotMask [lev][i].reset();
+
         current_store[lev][i].reset();
 
         if (do_current_centering)
@@ -2122,6 +2149,8 @@ WarpX::ClearLevel (int lev)
     F_cp  [lev].reset();
     G_cp  [lev].reset();
     rho_cp[lev].reset();
+
+    phi_dotMask[lev].reset();
 
 #ifdef WARPX_USE_FFT
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
@@ -3475,70 +3504,76 @@ WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, cons
         case FieldType::Efield_aux :
             field_pointer = Efield_aux[lev][direction].get();
             break;
-       case FieldType::Bfield_aux :
+        case FieldType::Bfield_aux :
             field_pointer = Bfield_aux[lev][direction].get();
             break;
-       case FieldType::Efield_fp :
+        case FieldType::Efield_fp :
             field_pointer = Efield_fp[lev][direction].get();
             break;
-       case FieldType::Bfield_fp :
+        case FieldType::Bfield_fp :
             field_pointer = Bfield_fp[lev][direction].get();
             break;
-       case FieldType::current_fp :
+        case FieldType::Efield_fp_external :
+            field_pointer = Efield_fp_external[lev][direction].get();
+            break;
+        case FieldType::Bfield_fp_external :
+            field_pointer = Bfield_fp_external[lev][direction].get();
+            break;
+        case FieldType::current_fp :
             field_pointer = current_fp[lev][direction].get();
             break;
-       case FieldType::current_fp_nodal :
+        case FieldType::current_fp_nodal :
             field_pointer = current_fp_nodal[lev][direction].get();
             break;
-       case FieldType::rho_fp :
+        case FieldType::rho_fp :
             field_pointer = rho_fp[lev].get();
             break;
-       case FieldType::F_fp :
+        case FieldType::F_fp :
             field_pointer = F_fp[lev].get();
             break;
-       case FieldType::G_fp :
+        case FieldType::G_fp :
             field_pointer = G_fp[lev].get();
             break;
-       case FieldType::phi_fp :
+        case FieldType::phi_fp :
             field_pointer = phi_fp[lev].get();
             break;
-       case FieldType::vector_potential_fp :
+        case FieldType::vector_potential_fp :
             field_pointer = vector_potential_fp_nodal[lev][direction].get();
             break;
-       case FieldType::Efield_cp :
+        case FieldType::Efield_cp :
             field_pointer = Efield_cp[lev][direction].get();
             break;
-       case FieldType::Bfield_cp :
+        case FieldType::Bfield_cp :
             field_pointer = Bfield_cp[lev][direction].get();
             break;
-       case FieldType::current_cp :
+        case FieldType::current_cp :
             field_pointer = current_cp[lev][direction].get();
             break;
-       case FieldType::rho_cp :
+        case FieldType::rho_cp :
             field_pointer = rho_cp[lev].get();
             break;
-       case FieldType::F_cp :
+        case FieldType::F_cp :
             field_pointer = F_cp[lev].get();
             break;
-       case FieldType::G_cp :
+        case FieldType::G_cp :
             field_pointer = G_cp[lev].get();
             break;
-       case FieldType::edge_lengths :
+        case FieldType::edge_lengths :
             field_pointer = m_edge_lengths[lev][direction].get();
             break;
-       case FieldType::face_areas :
+        case FieldType::face_areas :
             field_pointer = m_face_areas[lev][direction].get();
             break;
-       case FieldType::Efield_avg_fp :
+        case FieldType::Efield_avg_fp :
             field_pointer = Efield_avg_fp[lev][direction].get();
             break;
-       case FieldType::Bfield_avg_fp :
+        case FieldType::Bfield_avg_fp :
             field_pointer = Bfield_avg_fp[lev][direction].get();
             break;
-       case FieldType::Efield_avg_cp :
+        case FieldType::Efield_avg_cp :
             field_pointer = Efield_avg_cp[lev][direction].get();
             break;
-       case FieldType::Bfield_avg_cp :
+        case FieldType::Bfield_avg_cp :
             field_pointer = Bfield_avg_cp[lev][direction].get();
             break;
         default:
@@ -3571,6 +3606,7 @@ WarpX::getFieldPointerArray (const FieldType field_type, const int lev) const
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         (field_type == FieldType::Efield_aux) || (field_type == FieldType::Bfield_aux) ||
         (field_type == FieldType::Efield_fp) || (field_type == FieldType::Bfield_fp) ||
+        (field_type == FieldType::Efield_fp_external) || (field_type == FieldType::Bfield_fp_external) ||
         (field_type == FieldType::current_fp) || (field_type == FieldType::current_fp_nodal) ||
         (field_type == FieldType::Efield_cp) || (field_type == FieldType::Bfield_cp) ||
         (field_type == FieldType::current_cp), "Requested field type is not a vector.");
@@ -3587,6 +3623,32 @@ WarpX::getField(FieldType field_type, const int lev, const int direction) const
     return *getFieldPointer(field_type, lev, direction);
 }
 
+amrex::DistributionMapping
+WarpX::MakeDistributionMap (int lev, amrex::BoxArray const& ba)
+{
+    bool roundrobin_sfc = false;
+    const ParmParse pp("warpx");
+    pp.query("roundrobin_sfc", roundrobin_sfc);
+
+    // If this is true, AMReX's RRSFC strategy is used to make
+    // DistributionMapping. Note that the DistributionMapping made by the
+    // here could still be overridden by load balancing. In the RRSFC
+    // strategy, the Round robin method is used to distribute Boxes orderd
+    // by the space filling curve. This might help avoid some processes
+    // running out of memory due to having too many particles during
+    // initialization.
+
+    if (roundrobin_sfc) {
+        auto old_strategy = amrex::DistributionMapping::strategy();
+        amrex::DistributionMapping::strategy(amrex::DistributionMapping::RRSFC);
+        amrex::DistributionMapping dm(ba);
+        amrex::DistributionMapping::strategy(old_strategy);
+        return dm;
+    } else {
+        return amrex::AmrCore::MakeDistributionMap(lev, ba);
+    }
+}
+
 const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>,3>>&
 WarpX::getMultiLevelField(warpx::fields::FieldType field_type) const
 {
@@ -3598,8 +3660,12 @@ WarpX::getMultiLevelField(warpx::fields::FieldType field_type) const
             return Bfield_aux;
         case FieldType::Efield_fp :
             return Efield_fp;
+        case FieldType::Efield_fp_external :
+            return Efield_fp_external;
         case FieldType::Bfield_fp :
             return Bfield_fp;
+        case FieldType::Bfield_fp_external :
+            return Bfield_fp_external;
         case FieldType::current_fp :
             return current_fp;
         case FieldType::current_fp_nodal :
@@ -3614,4 +3680,43 @@ WarpX::getMultiLevelField(warpx::fields::FieldType field_type) const
             WARPX_ABORT_WITH_MESSAGE("Invalid field type");
             return Efield_fp;
     }
+}
+
+const amrex::iMultiFab*
+WarpX::getFieldDotMaskPointer ( FieldType field_type, int lev, int dir ) const
+{
+    switch(field_type)
+    {
+        case FieldType::Efield_fp :
+            SetDotMask( Efield_dotMask[lev][dir], field_type, lev, dir );
+            return Efield_dotMask[lev][dir].get();
+        case FieldType::Bfield_fp :
+            SetDotMask( Bfield_dotMask[lev][dir], field_type, lev, dir );
+            return Bfield_dotMask[lev][dir].get();
+        case FieldType::vector_potential_fp :
+            SetDotMask( Afield_dotMask[lev][dir], field_type, lev, dir );
+            return Afield_dotMask[lev][dir].get();
+        case FieldType::phi_fp :
+            SetDotMask( phi_dotMask[lev], field_type, lev, 0 );
+            return phi_dotMask[lev].get();
+        default:
+            WARPX_ABORT_WITH_MESSAGE("Invalid field type for dotMask");
+            return Efield_dotMask[lev][dir].get();
+    }
+}
+
+void WarpX::SetDotMask( std::unique_ptr<amrex::iMultiFab>& field_dotMask,
+                        FieldType field_type, int lev, int dir ) const
+{
+    // Define the dot mask for this field_type needed to properly compute dotProduct()
+    // for field values that have shared locations on different MPI ranks
+    if (field_dotMask != nullptr) { return; }
+
+    const amrex::MultiFab* this_field = getFieldPointer(field_type,lev,dir);
+    const amrex::BoxArray& this_ba = this_field->boxArray();
+    const amrex::MultiFab tmp( this_ba, this_field->DistributionMap(),
+                               1, 0, amrex::MFInfo().SetAlloc(false) );
+    const amrex::Periodicity& period = Geom(lev).periodicity();
+    field_dotMask = tmp.OwnerMask(period);
+
 }

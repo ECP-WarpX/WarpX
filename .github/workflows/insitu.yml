@@ -22,6 +22,8 @@ jobs:
       image: senseiinsitu/ci:fedora35-amrex-20220613
     steps:
     - uses: actions/checkout@v4
+    - name: Setup cmake
+      uses: jwlawson/actions-setup-cmake@v2
     - name: Configure
       run: |
         cmake -S . -B build     \
@@ -73,7 +75,7 @@ jobs:
 
   catalyst:
     name: Catalyst
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     if: github.event.pull_request.draft == false
     env:
       CXX: g++
@@ -83,8 +85,10 @@ jobs:
       CATALYST_IMPLEMENTATION_PATHS: /opt/paraview/lib/catalyst
       OMP_NUM_THREADS: 1
 
+    # Container build scripts:
+    # https://gitlab.kitware.com/christos.tsolakis/catalyst-amrex-docker-images
     container:
-      image: kitware/paraview:ci-catalyst-amrex-warpx-20240701
+      image: kitware/paraview:ci-catalyst-amrex-warpx-20240828
     steps:
     - uses: actions/checkout@v4
     - name: Configure

@@ -226,7 +226,7 @@ FlushFormatPlotfile::WriteJobInfo(const std::string& dir) const
         jobInfoFile << " Inputs File Parameters\n";
         jobInfoFile << PrettyLine;
 
-        ParmParse::dumpTable(jobInfoFile, true);
+        ParmParse::prettyPrintTable(jobInfoFile);
 
         jobInfoFile.close();
     }
