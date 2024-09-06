@@ -132,9 +132,9 @@ void DifferentialLuminosity::ComputeDiags (int step)
     // Since this diagnostic *accumulates* the luminosity in the
     // array d_data, we add contributions at *each timestep*, but
     // we only write the data to file at intervals specified by the user.
-
-    const Real c2_over_qe = PhysConst::c*PhysConst::c/PhysConst::q_e;
-    const Real inv_c2 = 1._rt/(PhysConst::c*PhysConst::c);
+    const Real c2 = PhysConst::c*PhysConst::c;
+    const Real c_over_qe = PhysConst::c/PhysConst::q_e;
+    const Real inv_c2 = 1._rt/c2;
 
     // get a reference to WarpX instance
     auto& warpx = WarpX::GetInstance();
@@ -218,30 +218,52 @@ void DifferentialLuminosity::ComputeDiags (int step)
                         index_type const j_1 = indices_1[i_1];
                         index_type const j_2 = indices_2[i_2];
 
+                        Real p1t=0, p1x=0, p1y=0, p1z=0; // components of 4-momentum of particle 1
                         Real const u1_square =  u1x[j_1]*u1x[j_1] + u1y[j_1]*u1y[j_1] + u1z[j_1]*u1z[j_1];
-                        Real const gamma1 = std::sqrt(1._rt + u1_square*inv_c2);
-                        Real const u2_square = u2x[j_2]*u2x[j_2] + u2y[j_2]*u2y[j_2] + u2z[j_2]*u2z[j_2];
-                        Real const gamma2 = std::sqrt(1._rt + u2_square*inv_c2);
-                        Real const u1_dot_u2 = u1x[j_1]*u2x[j_2] + u1y[j_1]*u2y[j_2] + u1z[j_1]*u2z[j_2];
+                        if (m1 != 0) {
+                            p1t = m1*std::sqrt( c2 + u1_square );
+                            p1x = m1*u1x[j_1];
+                            p1y = m1*u1y[j_1];
+                            p1z = m1*u1z[j_1];
+                        } else { // photon case (momentum is normalized by m_e)
+                            p1t = PhysConst::m_e*std::sqrt( u1_square );
+                            p1x = PhysConst::m_e*u1x[j_1];
+                            p1y = PhysConst::m_e*u1y[j_1];
+                            p1z = PhysConst::m_e*u1z[j_1];
+                        }
+
+                        Real p2t=0, p2x=0, p2y=0, p2z=0; // components of 4-momentum of particle 2
+                        Real const u2_square =  u2x[j_2]*u2x[j_2] + u2y[j_2]*u2y[j_2] + u2z[j_2]*u2z[j_2];
+                        if (m2 != 0) {
+                            p2t = m2*std::sqrt( c2 + u1_square );
+                            p2x = m2*u2x[j_2];
+                            p2y = m2*u2y[j_2];
+                            p2z = m2*u2z[j_2];
+                        } else { // photon case (momentum is normalized by m_e)
+                            p2t = PhysConst::m_e*std::sqrt(u2_square);
+                            p2x = PhysConst::m_e*u2x[j_2];
+                            p2y = PhysConst::m_e*u2y[j_2];
+                            p2z = PhysConst::m_e*u2z[j_2];
+                        }
 
                         // center of mass energy in eV
-                        Real const E_com = c2_over_qe * std::sqrt(m1*m1 + m2*m2 + 2*m1*m2* (gamma1*gamma2 - u1_dot_u2*inv_c2));
+                        Real const E_com = c_over_qe * std::sqrt(m1*m1*c2 + m2*m2*c2 + 2*(p1t*p2t - p1x*p2x - p1y*p2y - p1z*p2z));
 
                         // determine particle bin
                         int const bin = int(Math::floor((E_com-bin_min)/bin_size));
 
                         if ( bin<0 || bin>=num_bins ) { continue; } // discard if out-of-range
 
-                        Real const v1_minus_v2_x = u1x[j_1]/gamma1 - u2x[j_2]/gamma2;
-                        Real const v1_minus_v2_y = u1y[j_1]/gamma1 - u2y[j_2]/gamma2;
-                        Real const v1_minus_v2_z = u1z[j_1]/gamma1 - u2z[j_2]/gamma2;
+                        Real const v1_minus_v2_x = p1x/p1t - p2x/p2t;
+                        Real const v1_minus_v2_y = p1y/p1t - p2y/p2t;
+                        Real const v1_minus_v2_z = p1z/p1t - p2z/p2t;
                         Real const v1_minus_v2_square = v1_minus_v2_x*v1_minus_v2_x + v1_minus_v2_y*v1_minus_v2_y + v1_minus_v2_z*v1_minus_v2_z;
 
-                        Real const u1_cross_u2_x = u1y[j_1]*u2z[j_2] - u1z[j_1]*u2y[j_2];
-                        Real const u1_cross_u2_y = u1z[j_1]*u2x[j_2] - u1x[j_1]*u2z[j_2];
-                        Real const u1_cross_u2_z = u1x[j_1]*u2y[j_2] - u1y[j_1]*u2x[j_2];
+                        Real const p1_cross_p2_x = p1y*p2z - p1z*p2y;
+                        Real const p1_cross_p2_y = p1z*p2x - p1x*p2z;
+                        Real const p1_cross_p2_z = p1x*p2y - p1y*p2x;
 
-                        Real const v1_cross_v2_square = (u1_cross_u2_x*u1_cross_u2_x + u1_cross_u2_y*u1_cross_u2_y + u1_cross_u2_z*u1_cross_u2_z) / (gamma1*gamma1*gamma2*gamma2);
+                        Real const v1_cross_v2_square = (p1_cross_p2_x*p1_cross_p2_x + p1_cross_p2_y*p1_cross_p2_y + p1_cross_p2_z*p1_cross_p2_z) / (p1t*p1t*p2t*p2t);
 
                         Real const radicand = v1_minus_v2_square - v1_cross_v2_square * inv_c2;
 
