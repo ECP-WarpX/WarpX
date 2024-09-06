@@ -393,7 +393,7 @@ WarpX::InitFromCheckpoint ()
         }
     }
 
-    InitializeEBGridData(maxLevel());
+    if (m_eb_enabled) { InitializeEBGridData(maxLevel()); }
 
     // Initialize particles
     mypc->AllocData();

@@ -6,6 +6,7 @@
  */
 
 #include "BoundaryScrapingDiagnostics.H"
+#include "EmbeddedBoundary/Enabled.H"
 #include "ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include "Diagnostics/Diagnostics.H"
 #include "Diagnostics/FlushFormats/FlushFormat.H"
@@ -39,11 +40,11 @@ BoundaryScrapingDiagnostics::ReadParameters ()
 
     // num_buffers corresponds to the number of boundaries
     // (upper/lower domain boundary in each dimension)
-    // + the EB boundary if available
     m_num_buffers = AMREX_SPACEDIM*2;
-#ifdef AMREX_USE_EB
-    m_num_buffers += 1;
-#endif
+
+    // + the EB boundary if available
+    bool const eb_enabled = EB::enabled();
+    if (eb_enabled) { m_num_buffers += 1; }
 
     // Do a few checks
 #ifndef WARPX_USE_OPENPMD

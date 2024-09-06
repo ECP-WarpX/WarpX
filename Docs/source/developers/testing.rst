@@ -103,7 +103,6 @@ A new test can be added by adding a corresponding entry in ``CMakeLists.txt`` as
            test_1d_laser_acceleration  # name
            1  # dims
            2  # nprocs
-           OFF  # eb
            inputs_test_1d_laser_acceleration  # inputs
            analysis.py  # analysis
            diags/diag1000100  # output (plotfile)
@@ -118,7 +117,6 @@ A new test can be added by adding a corresponding entry in ``CMakeLists.txt`` as
            test_2d_laser_acceleration_picmi  # name
            2  # dims
            2  # nprocs
-           OFF  # eb
            inputs_test_2d_laser_acceleration_picmi.py  # inputs
            analysis.py  # analysis
            diags/diag1000100  # output (plotfile)
@@ -133,7 +131,6 @@ A new test can be added by adding a corresponding entry in ``CMakeLists.txt`` as
            test_3d_laser_acceleration_restart  # name
            3  # dims
            2  # nprocs
-           OFF  # eb
            inputs_test_3d_laser_acceleration_restart  # inputs
            analysis_default_restart.py  # analysis
            diags/diag1000100  # output (plotfile)
@@ -150,7 +147,6 @@ A new test can be added by adding a corresponding entry in ``CMakeLists.txt`` as
            test_rz_laser_acceleration_picmi  # name
            RZ  # dims
            2   # nprocs
-           OFF  # eb
            "inputs_test_rz_laser_acceleration_picmi.py --test --dir 1"  # inputs
            analysis.py  # analysis
            diags/diag1/  # output (openPMD time series)
