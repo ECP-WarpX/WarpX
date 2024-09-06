@@ -134,7 +134,6 @@ void DifferentialLuminosity::ComputeDiags (int step)
     // we only write the data to file at intervals specified by the user.
     const Real c2 = PhysConst::c*PhysConst::c;
     const Real c_over_qe = PhysConst::c/PhysConst::q_e;
-    const Real inv_c2 = 1._rt/c2;
 
     // get a reference to WarpX instance
     auto& warpx = WarpX::GetInstance();
@@ -254,20 +253,23 @@ void DifferentialLuminosity::ComputeDiags (int step)
 
                         if ( bin<0 || bin>=num_bins ) { continue; } // discard if out-of-range
 
-                        Real const v1_minus_v2_x = PhysConst::c*(p1x/p1t - p2x/p2t);
-                        Real const v1_minus_v2_y = PhysConst::c*(p1y/p1t - p2y/p2t);
-                        Real const v1_minus_v2_z = PhysConst::c*(p1z/p1t - p2z/p2t);
-                        Real const v1_minus_v2_square = v1_minus_v2_x*v1_minus_v2_x + v1_minus_v2_y*v1_minus_v2_y + v1_minus_v2_z*v1_minus_v2_z;
+                        Real const inv_p1t = 1.0_rt/p1t;
+                        Real const inv_p2t = 1.0_rt/p2t;
 
-                        Real const p1_cross_p2_x = p1y*p2z - p1z*p2y;
-                        Real const p1_cross_p2_y = p1z*p2x - p1x*p2z;
-                        Real const p1_cross_p2_z = p1x*p2y - p1y*p2x;
+                        Real const beta1_minus_beta2_x = p1x * inv_p1t - p2x * inv_p2t;
+                        Real const beta1_minus_beta2_y = p1y * inv_p1t - p2y * inv_p2t;
+                        Real const beta1_minus_beta2_z = p1z * inv_p1t - p2z * inv_p2t;
+                        Real const beta1_minus_beta2_square = beta1_minus_beta2_x*beta1_minus_beta2_x + beta1_minus_beta2_y*beta1_minus_beta2_y + beta1_minus_beta2_z*beta1_minus_beta2_z;
 
-                        Real const v1_cross_v2_square = c2*c2*(p1_cross_p2_x*p1_cross_p2_x + p1_cross_p2_y*p1_cross_p2_y + p1_cross_p2_z*p1_cross_p2_z) / (p1t*p1t*p2t*p2t);
+                        Real const beta1_cross_beta2_x = (p1y*p2z - p1z*p2y) * inv_p1t*inv_p2t;
+                        Real const beta1_cross_beta2_y = (p1z*p2x - p1x*p2z) * inv_p1t*inv_p2t;
+                        Real const beta1_cross_beta2_z = (p1x*p2y - p1y*p2x) * inv_p1t*inv_p2t;
 
-                        Real const radicand = v1_minus_v2_square - v1_cross_v2_square * inv_c2;
+                        Real const beta1_cross_beta2_square = (beta1_cross_beta2_x*beta1_cross_beta2_x + beta1_cross_beta2_y*beta1_cross_beta2_y + beta1_cross_beta2_z*beta1_cross_beta2_z);
 
-                        Real const dL_dEcom = std::sqrt( radicand ) * w1[j_1] * w2[j_2] / dV / bin_size * dt; // m^-2 eV^-1
+                        Real const radicand = beta1_minus_beta2_square - beta1_cross_beta2_square;
+
+                        Real const dL_dEcom = PhysConst::c * std::sqrt( radicand ) * w1[j_1] * w2[j_2] / dV / bin_size * dt; // m^-2 eV^-1
 
                         amrex::HostDevice::Atomic::Add(&dptr_data[bin], dL_dEcom);
 
