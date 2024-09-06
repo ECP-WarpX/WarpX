@@ -132,7 +132,7 @@ void DifferentialLuminosity::ComputeDiags (int step)
     // Since this diagnostic *accumulates* the luminosity in the
     // array d_data, we add contributions at *each timestep*, but
     // we only write the data to file at intervals specified by the user.
-    const Real c2 = PhysConst::c*PhysConst::c;
+    const Real c_sq = PhysConst::c*PhysConst::c;
     const Real c_over_qe = PhysConst::c/PhysConst::q_e;
 
     // get a reference to WarpX instance
@@ -218,28 +218,28 @@ void DifferentialLuminosity::ComputeDiags (int step)
                         index_type const j_2 = indices_2[i_2];
 
                         Real p1t=0, p1x=0, p1y=0, p1z=0; // components of 4-momentum of particle 1
-                        Real const u1_square =  u1x[j_1]*u1x[j_1] + u1y[j_1]*u1y[j_1] + u1z[j_1]*u1z[j_1];
+                        Real const u1_sq =  u1x[j_1]*u1x[j_1] + u1y[j_1]*u1y[j_1] + u1z[j_1]*u1z[j_1];
                         if (m1 != 0) {
-                            p1t = m1*std::sqrt( c2 + u1_square );
+                            p1t = m1*std::sqrt( c_sq + u1_sq );
                             p1x = m1*u1x[j_1];
                             p1y = m1*u1y[j_1];
                             p1z = m1*u1z[j_1];
                         } else { // photon case (momentum is normalized by m_e)
-                            p1t = PhysConst::m_e*std::sqrt( u1_square );
+                            p1t = PhysConst::m_e*std::sqrt( u1_sq );
                             p1x = PhysConst::m_e*u1x[j_1];
                             p1y = PhysConst::m_e*u1y[j_1];
                             p1z = PhysConst::m_e*u1z[j_1];
                         }
 
                         Real p2t=0, p2x=0, p2y=0, p2z=0; // components of 4-momentum of particle 2
-                        Real const u2_square =  u2x[j_2]*u2x[j_2] + u2y[j_2]*u2y[j_2] + u2z[j_2]*u2z[j_2];
+                        Real const u2_sq =  u2x[j_2]*u2x[j_2] + u2y[j_2]*u2y[j_2] + u2z[j_2]*u2z[j_2];
                         if (m2 != 0) {
-                            p2t = m2*std::sqrt( c2 + u2_square );
+                            p2t = m2*std::sqrt( c_sq + u2_sq );
                             p2x = m2*u2x[j_2];
                             p2y = m2*u2y[j_2];
                             p2z = m2*u2z[j_2];
                         } else { // photon case (momentum is normalized by m_e)
-                            p2t = PhysConst::m_e*std::sqrt(u2_square);
+                            p2t = PhysConst::m_e*std::sqrt(u2_sq);
                             p2x = PhysConst::m_e*u2x[j_2];
                             p2y = PhysConst::m_e*u2y[j_2];
                             p2z = PhysConst::m_e*u2z[j_2];
@@ -256,18 +256,16 @@ void DifferentialLuminosity::ComputeDiags (int step)
                         Real const inv_p1t = 1.0_rt/p1t;
                         Real const inv_p2t = 1.0_rt/p2t;
 
-                        Real const beta1_minus_beta2_x = p1x * inv_p1t - p2x * inv_p2t;
-                        Real const beta1_minus_beta2_y = p1y * inv_p1t - p2y * inv_p2t;
-                        Real const beta1_minus_beta2_z = p1z * inv_p1t - p2z * inv_p2t;
-                        Real const beta1_minus_beta2_square = beta1_minus_beta2_x*beta1_minus_beta2_x + beta1_minus_beta2_y*beta1_minus_beta2_y + beta1_minus_beta2_z*beta1_minus_beta2_z;
+                        Real const beta1_sq = (p1x*p1x + p1y*p1y + p1z*p1z) * inv_p1t*inv_p1t;
+                        Real const beta2_sq = (p2x*p2x + p2y*p2y + p2z*p2z) * inv_p2t*inv_p2t;
+                        Real const beta1_dot_beta2 = (p1x*p2x + p1y*p2y + p1z*p2) * inv_p1t*inv_p2t;
 
-                        Real const beta1_cross_beta2_x = (p1y*p2z - p1z*p2y) * inv_p1t*inv_p2t;
-                        Real const beta1_cross_beta2_y = (p1z*p2x - p1x*p2z) * inv_p1t*inv_p2t;
-                        Real const beta1_cross_beta2_z = (p1x*p2y - p1y*p2x) * inv_p1t*inv_p2t;
+                        // Here we use the fact that:
+                        // (v1 - v2)^2 = v1^2 + v2^2 - 2 v1.v2
+                        // and (v1 x v2)^2 = v1^2 v2^2 - (v1.v2)^2
+                        // we also use beta=v/c instead of v
 
-                        Real const beta1_cross_beta2_square = (beta1_cross_beta2_x*beta1_cross_beta2_x + beta1_cross_beta2_y*beta1_cross_beta2_y + beta1_cross_beta2_z*beta1_cross_beta2_z);
-
-                        Real const radicand = beta1_minus_beta2_square - beta1_cross_beta2_square;
+                        Real const radicand = beta1_sq + beta2_sq - 2*beta1_dot_beta2 - beta1_sq*beta2_sq + beta1_dot_beta2*beta1_dot_beta2;
 
                         Real const dL_dEcom = PhysConst::c * std::sqrt( radicand ) * w1[j_1] * w2[j_2] / dV / bin_size * dt; // m^-2 eV^-1
 
