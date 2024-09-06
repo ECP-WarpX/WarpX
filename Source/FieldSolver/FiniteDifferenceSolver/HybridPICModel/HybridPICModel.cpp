@@ -480,31 +480,24 @@ void HybridPICModel::HybridPICSolveE (
     warpx.ApplyEfieldBoundary(lev, patch_type);
 }
 
-void HybridPICModel::CalculateElectronPressure(DtType a_dt_type)
+void HybridPICModel::CalculateElectronPressure()
 {
     auto& warpx = WarpX::GetInstance();
     for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
     {
-        CalculateElectronPressure(lev, a_dt_type);
+        CalculateElectronPressure(lev);
     }
 }
 
-void HybridPICModel::CalculateElectronPressure(const int lev, DtType a_dt_type)
+void HybridPICModel::CalculateElectronPressure(const int lev)
 {
     WARPX_PROFILE("WarpX::CalculateElectronPressure()");
 
     auto& warpx = WarpX::GetInstance();
-    // The full step uses rho^{n+1}, otherwise use the old or averaged
-    // charge density.
-    if (a_dt_type == DtType::Full) {
-        FillElectronPressureMF(
-            electron_pressure_fp[lev], warpx.getFieldPointer(FieldType::rho_fp, lev)
-        );
-    } else {
-        FillElectronPressureMF(
-            electron_pressure_fp[lev], rho_fp_temp[lev].get()
-        );
-    }
+    // Calculate the electron pressure using rho^{n+1}.
+    FillElectronPressureMF(
+        electron_pressure_fp[lev], warpx.getFieldPointer(FieldType::rho_fp, lev)
+    );
     warpx.ApplyElectronPressureBoundary(lev, PatchType::fine);
     electron_pressure_fp[lev]->FillBoundary(warpx.Geom(lev).periodicity());
 }

@@ -138,12 +138,11 @@ public:
 
     /**
      * \brief
-     * Function to calculate the electron pressure at a given timestep type
-     * using the simulation charge density. Used in the Ohm's law solver
-     * (kinetic-fluid hybrid model).
+     * Function to calculate the electron pressure using the simulation charge
+     * density. Used in the Ohm's law solver (kinetic-fluid hybrid model).
      */
-    void CalculateElectronPressure (          DtType a_dt_type);
-    void CalculateElectronPressure (int lev,  DtType a_dt_type);
+    void CalculateElectronPressure ();
+    void CalculateElectronPressure (int lev);
 
     /**
      * \brief Fill the electron pressure multifab given the kinetic particle
