@@ -235,7 +235,7 @@ void DifferentialLuminosity::ComputeDiags (int step)
                         Real p2t=0, p2x=0, p2y=0, p2z=0; // components of 4-momentum of particle 2
                         Real const u2_square =  u2x[j_2]*u2x[j_2] + u2y[j_2]*u2y[j_2] + u2z[j_2]*u2z[j_2];
                         if (m2 != 0) {
-                            p2t = m2*std::sqrt( c2 + u1_square );
+                            p2t = m2*std::sqrt( c2 + u2_square );
                             p2x = m2*u2x[j_2];
                             p2y = m2*u2y[j_2];
                             p2z = m2*u2z[j_2];
@@ -254,16 +254,16 @@ void DifferentialLuminosity::ComputeDiags (int step)
 
                         if ( bin<0 || bin>=num_bins ) { continue; } // discard if out-of-range
 
-                        Real const v1_minus_v2_x = p1x/p1t - p2x/p2t;
-                        Real const v1_minus_v2_y = p1y/p1t - p2y/p2t;
-                        Real const v1_minus_v2_z = p1z/p1t - p2z/p2t;
+                        Real const v1_minus_v2_x = PhysConst::c*(p1x/p1t - p2x/p2t);
+                        Real const v1_minus_v2_y = PhysConst::c*(p1y/p1t - p2y/p2t);
+                        Real const v1_minus_v2_z = PhysConst::c*(p1z/p1t - p2z/p2t);
                         Real const v1_minus_v2_square = v1_minus_v2_x*v1_minus_v2_x + v1_minus_v2_y*v1_minus_v2_y + v1_minus_v2_z*v1_minus_v2_z;
 
                         Real const p1_cross_p2_x = p1y*p2z - p1z*p2y;
                         Real const p1_cross_p2_y = p1z*p2x - p1x*p2z;
                         Real const p1_cross_p2_z = p1x*p2y - p1y*p2x;
 
-                        Real const v1_cross_v2_square = (p1_cross_p2_x*p1_cross_p2_x + p1_cross_p2_y*p1_cross_p2_y + p1_cross_p2_z*p1_cross_p2_z) / (p1t*p1t*p2t*p2t);
+                        Real const v1_cross_v2_square = c2*c2*(p1_cross_p2_x*p1_cross_p2_x + p1_cross_p2_y*p1_cross_p2_y + p1_cross_p2_z*p1_cross_p2_z) / (p1t*p1t*p2t*p2t);
 
                         Real const radicand = v1_minus_v2_square - v1_cross_v2_square * inv_c2;
 
