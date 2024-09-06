@@ -27,8 +27,6 @@ jobs:
       run: .github/workflows/source/hasEOLwhiteSpace
     - name: Check test input files
       run: .github/workflows/source/check_inputs.py
-    - name: Check that the test matrix for CI includes all tests
-      run: .github/workflows/source/test_ci_matrix.sh
     - name: Doxygen
       run: |
         sudo apt-get install -y --no-install-recommends doxygen
