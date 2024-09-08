@@ -45,7 +45,7 @@
 #include "FieldSolver/ImplicitSolvers/WarpXSolverVec.H"
 #include "Filter/BilinearFilter.H"
 #include "Parallelization/GuardCellManager.H"
-#include "Utils/Parser/IntervalsParser.H"
+#include "ablastr/utils/IntervalsParser.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/export.H"
 

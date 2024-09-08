@@ -8,7 +8,7 @@
 #include "ReducedDiags.H"
 
 #include "WarpX.H"
-#include "Utils/Parser/IntervalsParser.H"
+#include "ablastr/utils/IntervalsParser.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 

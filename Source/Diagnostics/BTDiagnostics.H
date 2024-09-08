@@ -10,7 +10,7 @@
 #include "Diagnostics.H"
 #include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include "Utils/WarpXConst.H"
-#include "Utils/Parser/IntervalsParser.H"
+#include "ablastr/utils/IntervalsParser.H"
 
 #include <AMReX_Box.H>
 #include <AMReX_Geometry.H>
