@@ -9,14 +9,10 @@
 
 
 # This file is part of the WarpX automated test suite. It is used to test the
-# injection of a laser pulse from an external binary file.
-#
-# - Generate an input binary file with a gaussian laser pulse.
-# - Run the WarpX simulation for time T, when the pulse is fully injected
+# injection of a laser pulse from an external binary file:
 # - Compute the theory for laser envelope at time T
 # - Compare theory and simulation in 2D, for both envelope and central frequency
 
-import glob
 import os
 import sys
 
@@ -62,30 +58,6 @@ tcoords = np.linspace(t_l, t_r, t_points)
 xcoords = np.linspace(x_l, x_r, x_points)
 
 
-def gauss(T, X, Y, opt):
-    """Compute the electric field for a Gaussian laser pulse.
-    This is used to write the binary input file.
-    """
-
-    k0 = 2.0 * np.pi / wavelength
-    inv_tau2 = 1.0 / tt / tt
-    osc_phase = k0 * c * (T - t_c)
-
-    diff_factor = 1.0 + 1.0j * foc_dist * 2 / (k0 * w0 * w0)
-    inv_w_2 = 1.0 / (w0 * w0 * diff_factor)
-
-    pre_fact = np.exp(1.0j * osc_phase)
-
-    if opt == "3d":
-        pre_fact = pre_fact / diff_factor
-    else:
-        pre_fact = pre_fact / np.sqrt(diff_factor)
-
-    exp_arg = -(X * X + Y * Y) * inv_w_2 - inv_tau2 * (T - t_c) * (T - t_c)
-
-    return np.real(pre_fact * np.exp(exp_arg))
-
-
 # Function for the envelope
 def gauss_env(T, XX, ZZ):
     """Function to compute the theory for the envelope"""
@@ -99,134 +71,80 @@ def gauss_env(T, XX, ZZ):
     return E_max * np.real(np.exp(exp_arg))
 
 
-def write_file(fname, x, y, t, E):
-    """For a given filename fname, space coordinates x and y, time coordinate t
-    and field E, write a WarpX-compatible input binary file containing the
-    profile of the laser pulse. This function should be used in the case
-    of a uniform spatio-temporal mesh
-    """
+filename = sys.argv[1]
+compname = "comp_unf.pdf"
+steps = 250
+ds = yt.load(filename)
 
-    with open(fname, "wb") as file:
-        flag_unif = 1
-        file.write(flag_unif.to_bytes(1, byteorder="little"))
-        file.write((len(t)).to_bytes(4, byteorder="little", signed=False))
-        file.write((len(x)).to_bytes(4, byteorder="little", signed=False))
-        file.write((len(y)).to_bytes(4, byteorder="little", signed=False))
-        file.write(t[0].tobytes())
-        file.write(t[-1].tobytes())
-        file.write(x[0].tobytes())
-        file.write(x[-1].tobytes())
-        if len(y) == 1:
-            file.write(y[0].tobytes())
-        else:
-            file.write(y[0].tobytes())
-            file.write(y[-1].tobytes())
-        file.write(E.tobytes())
+dt = ds.current_time.to_value() / steps
 
+# Define 2D meshes
+x = np.linspace(
+    ds.domain_left_edge[0], ds.domain_right_edge[0], ds.domain_dimensions[0]
+).v
+z = np.linspace(
+    ds.domain_left_edge[ds.dimensionality - 1],
+    ds.domain_right_edge[ds.dimensionality - 1],
+    ds.domain_dimensions[ds.dimensionality - 1],
+).v
+X, Z = np.meshgrid(x, z, sparse=False, indexing="ij")
 
-def create_gaussian_2d():
-    T, X, Y = np.meshgrid(tcoords, xcoords, np.array([0.0]), indexing="ij")
-    E_t = gauss(T, X, Y, "2d")
-    write_file("gauss_2d", xcoords, np.array([0.0]), tcoords, E_t)
+# Compute the theory for envelope
+env_theory = gauss_env(+t_c - ds.current_time.to_value(), X, Z) + gauss_env(
+    -t_c + ds.current_time.to_value(), X, Z
+)
 
+# Read laser field in PIC simulation, and compute envelope
+all_data_level_0 = ds.covering_grid(
+    level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions
+)
+F_laser = all_data_level_0["boxlib", "Ey"].v.squeeze()
+env = abs(hilbert(F_laser))
+extent = [
+    ds.domain_left_edge[ds.dimensionality - 1],
+    ds.domain_right_edge[ds.dimensionality - 1],
+    ds.domain_left_edge[0],
+    ds.domain_right_edge[0],
+]
 
-def do_analysis(fname, compname, steps):
-    ds = yt.load(fname)
+# Plot results
+plt.figure(figsize=(8, 6))
+plt.subplot(221)
+plt.title("PIC field")
+plt.imshow(F_laser, extent=extent)
+plt.colorbar()
+plt.subplot(222)
+plt.title("PIC envelope")
+plt.imshow(env, extent=extent)
+plt.colorbar()
+plt.subplot(223)
+plt.title("Theory envelope")
+plt.imshow(env_theory, extent=extent)
+plt.colorbar()
+plt.subplot(224)
+plt.title("Difference")
+plt.imshow(env - env_theory, extent=extent)
+plt.colorbar()
+plt.tight_layout()
+plt.savefig(compname, bbox_inches="tight")
 
-    dt = ds.current_time.to_value() / steps
+relative_error_env = np.sum(np.abs(env - env_theory)) / np.sum(np.abs(env))
+print("Relative error envelope: ", relative_error_env)
+assert relative_error_env < relative_error_threshold
 
-    # Define 2D meshes
-    x = np.linspace(
-        ds.domain_left_edge[0], ds.domain_right_edge[0], ds.domain_dimensions[0]
-    ).v
-    z = np.linspace(
-        ds.domain_left_edge[ds.dimensionality - 1],
-        ds.domain_right_edge[ds.dimensionality - 1],
-        ds.domain_dimensions[ds.dimensionality - 1],
-    ).v
-    X, Z = np.meshgrid(x, z, sparse=False, indexing="ij")
+fft_F_laser = np.fft.fft2(F_laser)
 
-    # Compute the theory for envelope
-    env_theory = gauss_env(+t_c - ds.current_time.to_value(), X, Z) + gauss_env(
-        -t_c + ds.current_time.to_value(), X, Z
-    )
+freq_rows = np.fft.fftfreq(F_laser.shape[0], dt)
+freq_cols = np.fft.fftfreq(F_laser.shape[1], dt)
 
-    # Read laser field in PIC simulation, and compute envelope
-    all_data_level_0 = ds.covering_grid(
-        level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions
-    )
-    F_laser = all_data_level_0["boxlib", "Ey"].v.squeeze()
-    env = abs(hilbert(F_laser))
-    extent = [
-        ds.domain_left_edge[ds.dimensionality - 1],
-        ds.domain_right_edge[ds.dimensionality - 1],
-        ds.domain_left_edge[0],
-        ds.domain_right_edge[0],
-    ]
+pos_max = np.unravel_index(np.abs(fft_F_laser).argmax(), fft_F_laser.shape)
 
-    # Plot results
-    plt.figure(figsize=(8, 6))
-    plt.subplot(221)
-    plt.title("PIC field")
-    plt.imshow(F_laser, extent=extent)
-    plt.colorbar()
-    plt.subplot(222)
-    plt.title("PIC envelope")
-    plt.imshow(env, extent=extent)
-    plt.colorbar()
-    plt.subplot(223)
-    plt.title("Theory envelope")
-    plt.imshow(env_theory, extent=extent)
-    plt.colorbar()
-    plt.subplot(224)
-    plt.title("Difference")
-    plt.imshow(env - env_theory, extent=extent)
-    plt.colorbar()
-    plt.tight_layout()
-    plt.savefig(compname, bbox_inches="tight")
+freq = np.sqrt((freq_rows[pos_max[0]]) ** 2 + (freq_cols[pos_max[1]] ** 2))
+exp_freq = c / wavelength
 
-    relative_error_env = np.sum(np.abs(env - env_theory)) / np.sum(np.abs(env))
-    print("Relative error envelope: ", relative_error_env)
-    assert relative_error_env < relative_error_threshold
+relative_error_freq = np.abs(freq - exp_freq) / exp_freq
+print("Relative error frequency: ", relative_error_freq)
+assert relative_error_freq < relative_error_threshold
 
-    fft_F_laser = np.fft.fft2(F_laser)
-
-    freq_rows = np.fft.fftfreq(F_laser.shape[0], dt)
-    freq_cols = np.fft.fftfreq(F_laser.shape[1], dt)
-
-    pos_max = np.unravel_index(np.abs(fft_F_laser).argmax(), fft_F_laser.shape)
-
-    freq = np.sqrt((freq_rows[pos_max[0]]) ** 2 + (freq_cols[pos_max[1]] ** 2))
-    exp_freq = c / wavelength
-
-    relative_error_freq = np.abs(freq - exp_freq) / exp_freq
-    print("Relative error frequency: ", relative_error_freq)
-    assert relative_error_freq < relative_error_threshold
-
-
-def launch_analysis(executable):
-    create_gaussian_2d()
-    os.system(
-        "./"
-        + executable
-        + " inputs.2d_test_binary diag1.file_prefix=diags/plotfiles/plt"
-    )
-    do_analysis("diags/plotfiles/plt000250/", "comp_unf.pdf", 250)
-
-
-def main():
-    executables = glob.glob("*.ex")
-    if len(executables) == 1:
-        launch_analysis(executables[0])
-    else:
-        assert False
-
-    # Do the checksum test
-    filename_end = "diags/plotfiles/plt000250/"
-    test_name = "LaserInjectionFromBINARYFile"
-    checksumAPI.evaluate_checksum(test_name, filename_end)
-    print("Passed")
-
-
-if __name__ == "__main__":
-    main()
+test_name = os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, filename)

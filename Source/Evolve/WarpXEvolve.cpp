@@ -206,6 +206,7 @@ WarpX::Evolve (int numsteps)
 
         // sync up time
         for (int i = 0; i <= max_level; ++i) {
+            t_old[i] = t_new[i];
             t_new[i] = cur_time;
         }
         multi_diags->FilterComputePackFlush( step, false, true );
@@ -524,11 +525,12 @@ void WarpX::HandleParticlesAtBoundaries (int step, amrex::Real cur_time, int num
     }
 
     // interact the particles with EB walls (if present)
-#ifdef AMREX_USE_EB
-    mypc->ScrapeParticlesAtEB(amrex::GetVecOfConstPtrs(m_distance_to_eb));
-    m_particle_boundary_buffer->gatherParticlesFromEmbeddedBoundaries(*mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
-    mypc->deleteInvalidParticles();
-#endif
+    if (m_eb_enabled) {
+        mypc->ScrapeParticlesAtEB(amrex::GetVecOfConstPtrs(m_distance_to_eb));
+        m_particle_boundary_buffer->gatherParticlesFromEmbeddedBoundaries(
+            *mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
+        mypc->deleteInvalidParticles();
+    }
 
     if (sort_intervals.contains(step+1)) {
         if (verbose) {

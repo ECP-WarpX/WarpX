@@ -269,13 +269,16 @@ WarpX::DampJPML (int lev, PatchType patch_type)
             const Real* sigma_star_cumsum_fac_j_z = sigba[mfi].sigma_star_cumsum_fac[1].data();
 #endif
 
-#ifdef AMREX_USE_EB
-            const auto& pml_edge_lenghts = pml[lev]->Get_edge_lengths();
+            amrex::Array4<amrex::Real> pml_lxfab, pml_lyfab, pml_lzfab;
+            if (m_eb_enabled) {
+                const auto &pml_edge_lenghts = pml[lev]->Get_edge_lengths();
 
-            auto const& pml_lxfab = pml_edge_lenghts[0]->array(mfi);
-            auto const& pml_lyfab = pml_edge_lenghts[1]->array(mfi);
-            auto const& pml_lzfab = pml_edge_lenghts[2]->array(mfi);
-#endif
+                pml_lxfab = pml_edge_lenghts[0]->array(mfi);
+                pml_lyfab = pml_edge_lenghts[1]->array(mfi);
+                pml_lzfab = pml_edge_lenghts[2]->array(mfi);
+            } else {
+                amrex::ignore_unused(pml_lxfab, pml_lyfab, pml_lzfab);
+            }
 
             const Box& tjx  = mfi.tilebox( pml_j[0]->ixType().toIntVect() );
             const Box& tjy  = mfi.tilebox( pml_j[1]->ixType().toIntVect() );
@@ -301,27 +304,21 @@ WarpX::DampJPML (int lev, PatchType patch_type)
 
             amrex::ParallelFor( tjx, tjy, tjz,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-#ifdef AMREX_USE_EB
-                    if(pml_lxfab(i, j, k) <= 0) return;
-#endif
+                    if (pml_lxfab && pml_lxfab(i, j, k) <= 0) { return; }
 
                     damp_jx_pml(i, j, k, pml_jxfab, sigma_star_cumsum_fac_j_x,
                                 sigma_cumsum_fac_j_y, sigma_cumsum_fac_j_z,
                                 xs_lo,y_lo, z_lo);
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-#ifdef AMREX_USE_EB
-                    if(pml_lyfab(i, j, k) <= 0) return;
-#endif
+                    if (pml_lyfab && pml_lyfab(i, j, k) <= 0) { return; }
 
                     damp_jy_pml(i, j, k, pml_jyfab, sigma_cumsum_fac_j_x,
                                 sigma_star_cumsum_fac_j_y, sigma_cumsum_fac_j_z,
                                 x_lo,ys_lo, z_lo);
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-#ifdef AMREX_USE_EB
-                    if(pml_lzfab(i, j, k)<=0) return;
-#endif
+                    if (pml_lzfab && pml_lzfab(i, j, k)<=0) { return; }
 
                     damp_jz_pml(i, j, k, pml_jzfab, sigma_cumsum_fac_j_x,
                                 sigma_cumsum_fac_j_y, sigma_star_cumsum_fac_j_z,

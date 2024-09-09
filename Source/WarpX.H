@@ -266,6 +266,10 @@ public:
     //! Solve additional Maxwell equation for G in order to control errors in magnetic Gauss' law
     static bool do_divb_cleaning;
 
+    //! Solve Poisson equation when loading an external magnetic field to clean divergence
+    //! This is useful to remove errors that could lead to non-zero B field divergence
+    static bool do_divb_cleaning_external;
+
     //! Order of the particle shape factors (splines) along x
     static int nox;
     //! Order of the particle shape factors (splines) along y
@@ -534,6 +538,20 @@ public:
      */
     [[nodiscard]] const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>,3>>&
     getMultiLevelField(warpx::fields::FieldType field_type) const;
+
+    /**
+     * \brief
+     * Get pointer to the amrex::MultiFab containing the dotMask for the specified field
+     */
+    [[nodiscard]] const amrex::iMultiFab*
+    getFieldDotMaskPointer (warpx::fields::FieldType field_type, int lev, int dir) const;
+
+    /**
+     * \brief
+     * Set the dotMask container
+     */
+    void SetDotMask( std::unique_ptr<amrex::iMultiFab>& field_dotMask,
+                     warpx::fields::FieldType field_type, int lev, int dir ) const;
 
     [[nodiscard]] bool DoPML () const {return do_pml;}
     [[nodiscard]] bool DoFluidSpecies () const {return do_fluid_species;}
@@ -961,6 +979,8 @@ public:
 
     void ComputeDivE(amrex::MultiFab& divE, int lev);
 
+    static void ProjectionCleanDivB ();
+
     [[nodiscard]] amrex::IntVect getngEB() const { return guard_cells.ng_alloc_EB; }
     [[nodiscard]] amrex::IntVect getngF() const { return guard_cells.ng_alloc_F; }
     [[nodiscard]] amrex::IntVect getngUpdateAux() const { return guard_cells.ng_UpdateAux; }
@@ -977,6 +997,8 @@ public:
      */
     [[nodiscard]] amrex::IntVect get_numprocs() const {return numprocs;}
 
+    /** Enable embedded boundaries */
+    bool m_eb_enabled = false;
     bool m_boundary_potential_specified = false;
     ElectrostaticSolver::PoissonBoundaryHandler m_poisson_boundary_handler;
     void ComputeSpaceChargeField (bool reset_fields);
@@ -1043,7 +1065,7 @@ public:
          amrex::ParserExecutor<3> const& zfield_parser,
          std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
          std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
-         char field,
+         [[maybe_unused]] char field,
          int lev, PatchType patch_type);
 
     /**
@@ -1110,7 +1132,7 @@ public:
     void BuildBufferMasksInBox ( amrex::Box tbx, amrex::IArrayBox &buffer_mask,
                                  const amrex::IArrayBox &guard_mask, int ng );
 #ifdef AMREX_USE_EB
-    amrex::EBFArrayBoxFactory const& fieldEBFactory (int lev) const noexcept {
+    [[nodiscard]] amrex::EBFArrayBoxFactory const& fieldEBFactory (int lev) const noexcept {
         return static_cast<amrex::EBFArrayBoxFactory const&>(*m_field_factory[lev]);
     }
 #endif
@@ -1241,6 +1263,10 @@ protected:
     //! Use this function to override the Level 0 grids made by AMReX.
     //! This function is called in amrex::AmrCore::InitFromScratch.
     void PostProcessBaseGrids (amrex::BoxArray& ba0) const final;
+
+    //! Use this function to override how DistributionMapping is made.
+    [[nodiscard]] amrex::DistributionMapping
+    MakeDistributionMap (int lev, amrex::BoxArray const& ba) final;
 
     //! Make a new level from scratch using provided BoxArray and
     //! DistributionMapping.  Only used during initialization.  Called
@@ -1501,6 +1527,13 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_fp;
+
+    // Masks for computing dot product and global moments of fields when using grids that
+    // have shared locations across different ranks (e.g., a Yee grid)
+    mutable amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>,3 > > Efield_dotMask;
+    mutable amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>,3 > > Bfield_dotMask;
+    mutable amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>,3 > > Afield_dotMask;
+    mutable amrex::Vector<            std::unique_ptr<amrex::iMultiFab>     > phi_dotMask;
 
     // Memory buffers for computing magnetostatic fields
     // Vector Potential A and previous step.  Time buffer needed for computing dA/dt to first order
