@@ -9,10 +9,6 @@
 class RelativisticExplicitES : public ElectrostaticBase 
 {
 public: 
-    RelativisticExplicitES (); // constructor
-
-    /** Read user-defined model parameters. Called in constructor. */
-    void ReadParameters ();
 
     void
     RelativisticExplicitES::ComputeSpaceChargeField (amrex::Vector<std::unique_ptr<amrex::MultiFab> > charge_buf,
