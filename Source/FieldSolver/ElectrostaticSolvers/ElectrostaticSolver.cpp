@@ -3,5 +3,5 @@
 
 ElectrostaticSolver::ElectrostaticSolver ()
 {
-    m_boundaryhandler = std::make_unique<PoissonBoundaryHandler>();
+    m_poisson_boundary_handler = std::make_unique<PoissonBoundaryHandler>();
 }

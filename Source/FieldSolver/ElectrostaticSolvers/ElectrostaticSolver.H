@@ -15,7 +15,7 @@ class ElectrostaticSolver
 
     ComputeRHS() = default;
 
-    PoissonBoundaryHandler m_poissonboundaryhandler;
+    PoissonBoundaryHandler m_poisson_boundary_handler;
 
 }
 
