@@ -7,9 +7,13 @@
 #ifndef Electrostatic_Solver_H_
 #define Electrostatic_Solver_H_
 
+#inlcude "ExplicitES.H"
+#include "PoissonBoundaryHandler.H"
+#include "WarpX.H"
+
 class ElectrostaticSolver
 {
-    public:
+public:
 
     ElectrostaticSolver() = default;
 
@@ -18,7 +22,11 @@ class ElectrostaticSolver
     PoissonBoundaryHandler m_poisson_boundary_handler;
 
     ExplicitES m_explicit_es;
+
+    ComputeSpaceChargeField (
+        std::array<amrex::Vector<std::unique_ptr<amrex::MultiFab> >, 3>& E_field
+    );
+
 }
 
 #endif
-
