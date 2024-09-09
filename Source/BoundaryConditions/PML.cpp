@@ -711,9 +711,9 @@ PML::PML (const int lev, const BoxArray& grid_ba,
     WarpX::AllocInitMultiFab(pml_B_fp[1], ba_By, dm, ncompb, ngb, lev, "pml_B_fp[y]", 0.0_rt);
     WarpX::AllocInitMultiFab(pml_B_fp[2], ba_Bz, dm, ncompb, ngb, lev, "pml_B_fp[z]", 0.0_rt);
 
-    const amrex::BoxArray ba_jx = amrex::convert(ba, WarpX::GetInstance().getField(FieldType::current_fp, 0,0).ixType().toIntVect());
-    const amrex::BoxArray ba_jy = amrex::convert(ba, WarpX::GetInstance().getField(FieldType::current_fp, 0,1).ixType().toIntVect());
-    const amrex::BoxArray ba_jz = amrex::convert(ba, WarpX::GetInstance().getField(FieldType::current_fp, 0,2).ixType().toIntVect());
+    const amrex::BoxArray ba_jx = amrex::convert(ba, WarpX::GetInstance().m_fields.get("current_fp[x]", 0)->ixType().toIntVect());
+    const amrex::BoxArray ba_jy = amrex::convert(ba, WarpX::GetInstance().m_fields.get("current_fp[y]", 0)->ixType().toIntVect());
+    const amrex::BoxArray ba_jz = amrex::convert(ba, WarpX::GetInstance().m_fields.get("current_fp[z]", 0)->ixType().toIntVect());
     WarpX::AllocInitMultiFab(pml_j_fp[0], ba_jx, dm, 1, ngb, lev, "pml_j_fp[x]", 0.0_rt);
     WarpX::AllocInitMultiFab(pml_j_fp[1], ba_jy, dm, 1, ngb, lev, "pml_j_fp[y]", 0.0_rt);
     WarpX::AllocInitMultiFab(pml_j_fp[2], ba_jz, dm, 1, ngb, lev, "pml_j_fp[z]", 0.0_rt);

@@ -339,12 +339,16 @@ WarpX::CopyJPML ()
     for (int lev = 0; lev <= finest_level; ++lev)
     {
         if (pml[lev] && pml[lev]->ok()){
-            pml[lev]->CopyJtoPMLs({ current_fp[lev][0].get(),
-                                  current_fp[lev][1].get(),
-                                  current_fp[lev][2].get() },
-                                { current_cp[lev][0].get(),
-                                  current_cp[lev][1].get(),
-                                  current_cp[lev][2].get() });
+            pml[lev]->CopyJtoPMLs({
+                m_fields.get("current_fp[x]", lev),
+                m_fields.get("current_fp[y]", lev),
+                m_fields.get("current_fp[z]", lev)
+                }, {
+                m_fields.get("current_cp[x]", lev),
+                m_fields.get("current_cp[y]", lev),
+                m_fields.get("current_cp[z]", lev)
+                }
+            );
         }
     }
 }
