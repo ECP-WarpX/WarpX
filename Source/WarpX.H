@@ -49,6 +49,7 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/export.H"
 
+#include <ablastr/fields/MultiFabRegister.H>
 #include <ablastr/utils/Enums.H>
 
 #include <AMReX.H>
@@ -1499,6 +1500,9 @@ private:
     amrex::Vector<amrex::Real> t_new;
     amrex::Vector<amrex::Real> t_old;
     amrex::Vector<amrex::Real> dt;
+
+    // Field container
+    ablastr::fields::MultiFabRegister m_multifab;
 
     // Particle container
     std::unique_ptr<MultiParticleContainer> mypc;
