@@ -105,9 +105,9 @@ public:
     WarpX& operator= ( WarpX const & ) = delete;
 
     /** Move constructor */
-    WarpX ( WarpX && ) = default;
+    WarpX ( WarpX && ) = delete;
     /** Move operator */
-    WarpX& operator= ( WarpX && ) = default;
+    WarpX& operator= ( WarpX && ) = delete;
 
     static std::string Version (); //!< Version of WarpX executable
     static std::string PicsarVersion (); //!< Version of PICSAR dependency
