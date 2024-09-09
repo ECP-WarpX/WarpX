@@ -170,17 +170,17 @@ public:
 
     // Algorithms
     //! Integer that corresponds to the current deposition algorithm (Esirkepov, direct, Vay, Villasenor)
-    static short current_deposition_algo;
+    static inline auto current_deposition_algo = CurrentDepositionAlgo::Default;
     //! Integer that corresponds to the charge deposition algorithm (only standard deposition)
-    static short charge_deposition_algo;
+    static inline auto charge_deposition_algo = ChargeDepositionAlgo::Default;
     //! Integer that corresponds to the field gathering algorithm (energy-conserving, momentum-conserving)
-    static short field_gathering_algo;
+    static inline auto field_gathering_algo = GatheringAlgo::Default;
     //! Integer that corresponds to the particle push algorithm (Boris, Vay, Higuera-Cary)
-    static short particle_pusher_algo;
+    static inline auto particle_pusher_algo = ParticlePusherAlgo::Default;
     //! Integer that corresponds to the type of Maxwell solver (Yee, CKC, PSATD, ECT)
-    static short electromagnetic_solver_id;
+    static inline auto electromagnetic_solver_id = ElectromagneticSolverAlgo::Default;
     //! Integer that corresponds to the evolve scheme (explicit, semi_implicit_em, theta_implicit_em)
-    static short evolve_scheme;
+    static inline auto evolve_scheme = EvolveScheme::Default;
     //! Maximum iterations used for self-consistent particle update in implicit particle-suppressed evolve schemes
     static int max_particle_its_in_implicit_scheme;
     //! Relative tolerance used for self-consistent particle update in implicit particle-suppressed evolve schemes
@@ -188,43 +188,55 @@ public:
     /** Records a number corresponding to the load balance cost update strategy
      *  being used (0 or 1 corresponding to timers or heuristic).
      */
-    static short load_balance_costs_update_algo;
+    static inline auto load_balance_costs_update_algo = LoadBalanceCostsUpdateAlgo::Default;
     //! Integer that corresponds to electromagnetic Maxwell solver (vacuum - 0, macroscopic - 1)
-    static int em_solver_medium;
+    static inline auto em_solver_medium = MediumForEM::Default;
     /** Integer that correspond to macroscopic Maxwell solver algorithm
      *  (BackwardEuler - 0, Lax-Wendroff - 1)
      */
-    static int macroscopic_solver_algo;
+    static inline auto macroscopic_solver_algo = MacroscopicSolverAlgo::Default;
     /** Integers that correspond to boundary condition applied to fields at the
      *  lower domain boundaries
      *  (0 to 6 correspond to PML, Periodic, PEC, PMC, Damped, Absorbing Silver-Mueller, None)
      */
-    static amrex::Vector<FieldBoundaryType> field_boundary_lo;
+    static inline amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>
+        field_boundary_lo {AMREX_D_DECL(FieldBoundaryType::Default,
+                                        FieldBoundaryType::Default,
+                                        FieldBoundaryType::Default)};
     /** Integers that correspond to boundary condition applied to fields at the
      *  upper domain boundaries
      *  (0 to 6 correspond to PML, Periodic, PEC, PMC, Damped, Absorbing Silver-Mueller, None)
      */
-    static amrex::Vector<FieldBoundaryType> field_boundary_hi;
+    static inline amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>
+        field_boundary_hi {AMREX_D_DECL(FieldBoundaryType::Default,
+                                        FieldBoundaryType::Default,
+                                        FieldBoundaryType::Default)};
     /** Integers that correspond to boundary condition applied to particles at the
      *  lower domain boundaries
      *  (0 to 4 correspond to Absorbing, Open, Reflecting, Periodic, Thermal)
      */
-    static amrex::Vector<ParticleBoundaryType> particle_boundary_lo;
+    static inline amrex::Array<ParticleBoundaryType,AMREX_SPACEDIM>
+        particle_boundary_lo {AMREX_D_DECL(ParticleBoundaryType::Default,
+                                           ParticleBoundaryType::Default,
+                                           ParticleBoundaryType::Default)};
     /** Integers that correspond to boundary condition applied to particles at the
      *  upper domain boundaries
      *  (0 to 4 correspond to Absorbing, Open, Reflecting, Periodic, Thermal)
      */
-    static amrex::Vector<ParticleBoundaryType> particle_boundary_hi;
+    static inline amrex::Array<ParticleBoundaryType,AMREX_SPACEDIM>
+        particle_boundary_hi {AMREX_D_DECL(ParticleBoundaryType::Default,
+                                           ParticleBoundaryType::Default,
+                                           ParticleBoundaryType::Default)};
 
     //! Integer that corresponds to the order of the PSATD solution
     //! (whether the PSATD equations are derived from first-order or
     //! second-order solution)
-    static short psatd_solution_type;
+    static inline auto psatd_solution_type = PSATDSolutionType::Default;
 
     //! Integers that correspond to the time dependency of J (constant, linear)
     //! and rho (linear, quadratic) for the PSATD algorithm
-    static short J_in_time;
-    static short rho_in_time;
+    static inline auto J_in_time = JInTime::Default;
+    static inline auto rho_in_time = RhoInTime::Default;
 
     //! If true, the current is deposited on a nodal grid and then centered onto a staggered grid
     //! using finite centering of order given by #current_centering_nox, #current_centering_noy,
@@ -377,7 +389,7 @@ public:
 
     //! Integer that corresponds to the type of grid used in the simulation
     //! (collocated, staggered, hybrid)
-    static ablastr::utils::enums::GridType grid_type;
+    static inline auto grid_type = ablastr::utils::enums::GridType::Default;
 
     // Global rho nodal flag to know about rho index type when rho MultiFab is not allocated
     amrex::IntVect m_rho_nodal_flag;
@@ -942,8 +954,8 @@ public:
     static const amrex::iMultiFab* CurrentBufferMasks (int lev);
     static const amrex::iMultiFab* GatherBufferMasks (int lev);
 
-    static int electrostatic_solver_id;
-    static int poisson_solver_id;
+    static inline auto electrostatic_solver_id = ElectrostaticSolverAlgo::Default;
+    static inline auto poisson_solver_id = PoissonSolverAlgo::Default;
 
     // Parameters for lab frame electrostatic
     static amrex::Real self_fields_required_precision;

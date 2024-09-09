@@ -1059,7 +1059,7 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs (const amrex::Geo
             else {
                 WARPX_ABORT_WITH_MESSAGE(
                     "Field boundary conditions have to be either periodic, PEC or neumann "
-                    "when using the electrostatic Multigrid solver,  but they are " + GetFieldBCTypeString(WarpX::field_boundary_lo[idim])
+                    "when using the electrostatic Multigrid solver,  but they are " + amrex::getEnumNameString(WarpX::field_boundary_lo[idim])
                 );
             }
 
@@ -1074,7 +1074,7 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs (const amrex::Geo
             else {
                 WARPX_ABORT_WITH_MESSAGE(
                     "Field boundary conditions have to be either periodic, PEC or neumann "
-                    "when using the electrostatic Multigrid solver,  but they are " + GetFieldBCTypeString(WarpX::field_boundary_hi[idim])
+                    "when using the electrostatic Multigrid solver,  but they are " + amrex::getEnumNameString(WarpX::field_boundary_hi[idim])
                 );
             }
         }

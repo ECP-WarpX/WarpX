@@ -47,7 +47,7 @@ class FiniteDifferenceSolver
          * \param grid_type Whether the solver is applied to a collocated or staggered grid
          */
         FiniteDifferenceSolver (
-            int fdtd_algo,
+            ElectromagneticSolverAlgo fdtd_algo,
             std::array<amrex::Real,3> cell_size,
             ablastr::utils::enums::GridType grid_type );
 
@@ -92,8 +92,8 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
             amrex::Box domain_box,
             amrex::Real dt,
-            amrex::Vector<FieldBoundaryType> field_boundary_lo,
-            amrex::Vector<FieldBoundaryType> field_boundary_hi);
+            amrex::Array<FieldBoundaryType,AMREX_SPACEDIM> field_boundary_lo,
+            amrex::Array<FieldBoundaryType,AMREX_SPACEDIM> field_boundary_hi);
 
         void ComputeDivE ( const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                            amrex::MultiFab& divE );
@@ -179,7 +179,7 @@ class FiniteDifferenceSolver
 
     private:
 
-        int m_fdtd_algo;
+        ElectromagneticSolverAlgo m_fdtd_algo;
         ablastr::utils::enums::GridType m_grid_type;
 
 #ifdef WARPX_DIM_RZ
