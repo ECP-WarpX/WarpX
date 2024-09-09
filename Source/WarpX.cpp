@@ -3054,36 +3054,7 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
                     const std::array<const amrex::MultiFab* const, 3>& B,
                     const std::array<amrex::Real,3>& dx)
 {
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(grid_type != GridType::Collocated,
-        "ComputeDivB not implemented with warpx.grid_type=Collocated.");
-
-    const Real dxinv = 1._rt/dx[0], dyinv = 1._rt/dx[1], dzinv = 1._rt/dx[2];
-
-#ifdef WARPX_DIM_RZ
-    const Real rmin = GetInstance().Geom(0).ProbLo(0);
-#endif
-
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-    for (MFIter mfi(divB, TilingIfNotGPU()); mfi.isValid(); ++mfi)
-    {
-        const Box& bx = mfi.tilebox();
-        amrex::Array4<const amrex::Real> const& Bxfab = B[0]->array(mfi);
-        amrex::Array4<const amrex::Real> const& Byfab = B[1]->array(mfi);
-        amrex::Array4<const amrex::Real> const& Bzfab = B[2]->array(mfi);
-        amrex::Array4<amrex::Real> const& divBfab = divB.array(mfi);
-
-        ParallelFor(bx,
-        [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
-        {
-            warpx_computedivb(i, j, k, dcomp, divBfab, Bxfab, Byfab, Bzfab, dxinv, dyinv, dzinv
-#ifdef WARPX_DIM_RZ
-                              ,rmin
-#endif
-                              );
-        });
-    }
+    ComputeDivB(divB, dcomp, B, dx, IntVect::TheZeroVector());
 }
 
 void
