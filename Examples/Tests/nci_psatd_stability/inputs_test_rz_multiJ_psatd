@@ -1,8 +1,8 @@
 # Iterations
-max_step = 50
+max_step = 20
 
 # Domain
-amr.n_cell = 64 128
+amr.n_cell = 32 64
 amr.max_level = 0
 warpx.numprocs = 1 2
 
