@@ -1914,26 +1914,8 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
     // are in the right tile.)
     tmp_pc.Redistribute();
 
-    // Add the particles to the current container, tile by tile
-    for (int lev=0; lev<numLevels(); lev++) {
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
-#endif
-        for (MFIter mfi = MakeMFIter(lev, info); mfi.isValid(); ++mfi)
-        {
-            // Extract tiles
-            const int grid_id = mfi.index();
-            const int tile_id = mfi.LocalTileIndex();
-            auto& src_tile = tmp_pc.DefineAndReturnParticleTile(lev, grid_id, tile_id);
-            auto& dst_tile = DefineAndReturnParticleTile(lev, grid_id, tile_id);
-
-            // Resize container and copy particles
-            auto old_size = dst_tile.numParticles();
-            auto n_new = src_tile.numParticles();
-            dst_tile.resize( old_size+n_new );
-            amrex::copyParticles(dst_tile, src_tile, 0, old_size, n_new);
-        }
-    }
+    // Add the particles to the current container
+    this->addParticles(tmp_pc, true);
 }
 
 void
