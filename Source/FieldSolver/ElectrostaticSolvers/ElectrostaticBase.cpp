@@ -92,6 +92,119 @@ void ElectrostaticBase::setPhiBC ( amrex::Vector<std::unique_ptr<amrex::MultiFab
     }} // lev & MFIter
 }
 
+
+/* Compute the potential `phi` by solving the Poisson equation with `rho` as
+   a source, assuming that the source moves at a constant speed \f$\vec{\beta}\f$.
+   This uses the amrex solver.
+
+   More specifically, this solves the equation
+   \f[
+       \vec{\nabla}^2 r \phi - (\vec{\beta}\cdot\vec{\nabla})^2 r \phi = -\frac{r \rho}{\epsilon_0}
+   \f]
+
+   \param[in] rho The charge density a given species
+   \param[out] phi The potential to be computed by this function
+   \param[in] beta Represents the velocity of the source of `phi`
+   \param[in] required_precision The relative convergence threshold for the MLMG solver
+   \param[in] absolute_tolerance The absolute convergence threshold for the MLMG solver
+   \param[in] max_iters The maximum number of iterations allowed for the MLMG solver
+   \param[in] verbosity The verbosity setting for the MLMG solver
+*/
+void
+ElectrostaticBase::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+                   amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                   std::array<Real, 3> const beta,
+                   Real const required_precision,
+                   Real absolute_tolerance,
+                   int const max_iters,
+                   int const verbosity) const {
+    // create a vector to our fields, sorted by level
+    amrex::Vector<amrex::MultiFab *> sorted_rho;
+    amrex::Vector<amrex::MultiFab *> sorted_phi;
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        sorted_rho.emplace_back(rho[lev].get());
+        sorted_phi.emplace_back(phi[lev].get());
+    }
+
+    std::optional<ElectrostaticSolver::EBCalcEfromPhiPerLevel> post_phi_calculation;
+#ifdef AMREX_USE_EB
+    // TODO: double check no overhead occurs on "m_eb_enabled == false"
+    std::optional<amrex::Vector<amrex::EBFArrayBoxFactory const *> > eb_farray_box_factory;
+#else
+    std::optional<amrex::Vector<amrex::FArrayBoxFactory const *> > const eb_farray_box_factory;
+#endif
+    if (m_eb_enabled)
+    {
+        // EB: use AMReX to directly calculate the electric field since with EB's the
+        // simple finite difference scheme in WarpX::computeE sometimes fails
+        if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
+            electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
+        {
+            // TODO: maybe make this a helper function or pass Efield_fp directly
+            amrex::Vector<
+                amrex::Array<amrex::MultiFab *, AMREX_SPACEDIM>
+            > e_field;
+            for (int lev = 0; lev <= finest_level; ++lev) {
+                e_field.push_back(
+#   if defined(WARPX_DIM_1D_Z)
+                    amrex::Array<amrex::MultiFab*, 1>{
+                        getFieldPointer(FieldType::Efield_fp, lev, 2)
+                    }
+#   elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                    amrex::Array<amrex::MultiFab*, 2>{
+                        getFieldPointer(FieldType::Efield_fp, lev, 0),
+                        getFieldPointer(FieldType::Efield_fp, lev, 2)
+                    }
+#   elif defined(WARPX_DIM_3D)
+                    amrex::Array<amrex::MultiFab *, 3>{
+                        getFieldPointer(FieldType::Efield_fp, lev, 0),
+                        getFieldPointer(FieldType::Efield_fp, lev, 1),
+                        getFieldPointer(FieldType::Efield_fp, lev, 2)
+                    }
+#   endif
+                );
+            }
+            post_phi_calculation = ElectrostaticSolver::EBCalcEfromPhiPerLevel(e_field);
+        }
+
+#ifdef AMREX_USE_EB
+        amrex::Vector<
+            amrex::EBFArrayBoxFactory const *
+        > factories;
+        for (int lev = 0; lev <= finest_level; ++lev) {
+            factories.push_back(&WarpX::fieldEBFactory(lev));
+        }
+        eb_farray_box_factory = factories;
+#endif
+    }
+
+    bool const is_solver_igf_on_lev0 =
+        WarpX::poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction;
+
+    ablastr::fields::computePhi(
+        sorted_rho,
+        sorted_phi,
+        beta,
+        required_precision,
+        absolute_tolerance,
+        max_iters,
+        verbosity,
+        this->geom,
+        this->dmap,
+        this->grids,
+        WarpX::grid_type,
+        this->m_poisson_boundary_handler,
+        is_solver_igf_on_lev0,
+        m_eb_enabled,
+        WarpX::do_single_precision_comms,
+        this->ref_ratio,
+        post_phi_calculation,
+        gett_new(0),
+        eb_farray_box_factory
+    );
+
+}
+
 /* \brief Compute the electric field that corresponds to `phi`, and
         add it to the set of MultiFab `E`.
 

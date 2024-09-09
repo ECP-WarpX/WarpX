@@ -23,6 +23,16 @@ public:
 
     void setPhiBC (amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi ) const;
 
+    void WarpX::computePhi (
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+        amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+        std::array<Real, 3> const beta,
+        Real const required_precision,
+        Real absolute_tolerance,
+        int const max_iters,
+        int const verbosity
+    ) const;
+
     void computeE (
         amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
         const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
