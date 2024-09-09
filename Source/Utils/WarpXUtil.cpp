@@ -231,7 +231,7 @@ void ConvertLabParamsToBoost()
     {
         if (boost_direction[dim_map[idim]]) {
             amrex::Real convert_factor;
-            amrex::Real beta_window = 0;
+            amrex::Real beta_window = beta_boost;
             if (WarpX::do_moving_window && idim == WarpX::moving_window_dir) {
                 beta_window = WarpX::moving_window_v / PhysConst::c;
             }
