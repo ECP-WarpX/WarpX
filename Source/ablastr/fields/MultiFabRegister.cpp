@@ -22,9 +22,7 @@ namespace ablastr::fields
         bool redistribute
     )
     {
-        // create name
-        //     Add the suffix "[level=level]"
-        name.append("[level=").append(std::to_string(level)).append("]");
+        name = mf_name(name, level);
 
         // Checks
         // TODO: does the key already exist? error
@@ -54,9 +52,12 @@ namespace ablastr::fields
 
     void
     MultiFabRegister::alloc_like (
-        std::string /* other_key */
+        std::string /* other_key */,
+        int /* other_level */
     )
     {
+        // other_key = mf_name(other_key, other_level);
+
         throw std::runtime_error("MultiFabRegister::alloc_like not yet implemented");
 
         // Checks
@@ -65,25 +66,23 @@ namespace ablastr::fields
 
     bool
     MultiFabRegister::contains (
-        std::string name
+        std::string name,
+        int level
     )
     {
+        name = mf_name(name, level);
+
         return m_mf_register.count(name) > 0;
     }
 
-    /** title
-     *
-     * body body
-     * body
-     *
-     * @param name ...
-     * @return ...
-     */
     amrex::MultiFab*
     MultiFabRegister::get (
-        std::string name
+        std::string name,
+        int level
     )
     {
+        name = mf_name(name, level);
+
         if (m_mf_register.count(name) == 0) {
             throw std::runtime_error("MultiFabRegister::get name does not exist in register: " + name);
         }
@@ -92,13 +91,6 @@ namespace ablastr::fields
         return &mf;
     }
 
-    /** title
-     *
-     * body body
-     * body
-     *
-     * @return ...
-     */
     std::vector<std::string>
     MultiFabRegister::list ()
     {
@@ -109,25 +101,30 @@ namespace ablastr::fields
         return names;
     }
 
-
-    /** title
-     *
-     * body body
-     * body
-     *
-     * @param name ...
-     * @return ...
-     */
     void
     MultiFabRegister::erase (
-        std::string name
+        std::string name,
+        int level
     )
     {
+        name = mf_name(name, level);
+
         if (m_mf_register.count(name) != 1) {
             throw std::runtime_error("MultiFabRegister::remove name does not exist in register: " + name);
         }
         m_mf_register.erase(name);
     }
 
+    std::string
+    MultiFabRegister::mf_name (
+        std::string name,
+        int level
+    )
+    {
+        // Add the suffix "[level=level]"
+        return name.append("[level=")
+                .append(std::to_string(level))
+                .append("]");
+    }
 
 } // namespace ablastr::fields

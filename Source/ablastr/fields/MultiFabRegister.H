@@ -74,10 +74,12 @@ namespace ablastr::fields
          * body
          *
          * @param name ...
+         * @param other_level ...
          */
         void
         alloc_like (
-            std::string other_key
+            std::string other_key,
+            int other_level
         );
 
         /** title
@@ -86,11 +88,13 @@ namespace ablastr::fields
          * body
          *
          * @param name ...
+         * @param level ...
          * @return true if contained, otherwise false
          */
         bool
         contains (
-            std::string name
+            std::string name,
+            int level
         );
 
         /** title
@@ -99,11 +103,13 @@ namespace ablastr::fields
          * body
          *
          * @param name ...
+         * @param level ...
          * @return ...
          */
         amrex::MultiFab*
         get (
-            std::string name
+            std::string name,
+            int level
         );
 
         /** title
@@ -122,14 +128,32 @@ namespace ablastr::fields
          * body
          *
          * @param name ...
+         * @param level ...
          * @return ...
          */
         void
         erase (
-            std::string name
+            std::string name,
+            int level
+        );
+
+        /** title
+         *
+         * body body
+         * body
+         *
+         * @param name ...
+         * @param level ...
+         * @return ...
+         */
+        std::string
+        mf_name (
+            std::string name,
+            int level
         );
 
     private:
+        /** data storage: ownership and lifetime control */
         std::map<
             std::string,
             MultiFabOwner
