@@ -230,13 +230,13 @@ WarpX::PSATDForwardTransformG ()
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (m_multifab_map.contains("G_fp", lev)) {
+        if (m_multifab_map.has("G_fp", lev)) {
             spectral_solver_fp[lev]->ForwardTransform(lev, *m_multifab_map.get("G_fp", lev), Idx.G);
         }
 
         if (spectral_solver_cp[lev])
         {
-            if (m_multifab_map.contains("G_cp", lev)) {
+            if (m_multifab_map.has("G_cp", lev)) {
                 spectral_solver_fp[lev]->ForwardTransform(lev, *m_multifab_map.get("G_cp", lev), Idx.G);
             }
         }
@@ -250,7 +250,7 @@ WarpX::PSATDBackwardTransformG ()
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (m_multifab_map.contains("G_fp", lev)) {
+        if (m_multifab_map.has("G_fp", lev)) {
             MultiFab* G_fp = m_multifab_map.get("G_fp", lev);
 #ifdef WARPX_DIM_RZ
             spectral_solver_fp[lev]->BackwardTransform(lev, *G_fp, Idx.G);
@@ -263,7 +263,7 @@ WarpX::PSATDBackwardTransformG ()
 
         if (spectral_solver_cp[lev])
         {
-            if (m_multifab_map.contains("G_cp", lev)) {
+            if (m_multifab_map.has("G_cp", lev)) {
                 MultiFab* G_cp = m_multifab_map.get("G_cp", lev);
 #ifdef WARPX_DIM_RZ
                 spectral_solver_fp[lev]->BackwardTransform(lev, *G_cp, Idx.G);

@@ -932,13 +932,13 @@ void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng, std::optio
     {
         if (do_pml && pml[lev] && pml[lev]->ok())
         {
-            if (m_multifab_map.contains("G_fp",lev)) {
+            if (m_multifab_map.has("G_fp",lev)) {
                 pml[lev]->ExchangeG(patch_type, m_multifab_map.get("G_fp",lev), do_pml_in_domain);
             }
             pml[lev]->FillBoundaryG(patch_type, nodal_sync);
         }
 
-        if (m_multifab_map.contains("G_fp",lev))
+        if (m_multifab_map.has("G_fp",lev))
         {
             const amrex::Periodicity& period = Geom(lev).periodicity();
             MultiFab* G_fp = m_multifab_map.get("G_fp",lev);
@@ -950,13 +950,13 @@ void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng, std::optio
     {
         if (do_pml && pml[lev] && pml[lev]->ok())
         {
-            if (m_multifab_map.contains("G_cp",lev)) {
+            if (m_multifab_map.has("G_cp",lev)) {
                 pml[lev]->ExchangeG(patch_type, m_multifab_map.get("G_cp",lev), do_pml_in_domain);
             }
             pml[lev]->FillBoundaryG(patch_type, nodal_sync);
         }
 
-        if (m_multifab_map.contains("G_cp",lev))
+        if (m_multifab_map.has("G_cp",lev))
         {
             const amrex::Periodicity& period = Geom(lev-1).periodicity();
             MultiFab* G_cp = m_multifab_map.get("G_cp",lev);

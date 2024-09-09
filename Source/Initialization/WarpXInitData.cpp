@@ -1226,7 +1226,7 @@ void WarpX::CheckGuardCells()
             ::CheckGuardCells(*F_fp[lev]);
         }
 
-        if (m_multifab_map.contains("G_fp", lev))
+        if (m_multifab_map.has("G_fp", lev))
         {
             ::CheckGuardCells( *m_multifab_map.get("G_fp", lev) );
         }
@@ -1257,7 +1257,7 @@ void WarpX::CheckGuardCells()
                 ::CheckGuardCells(*F_cp[lev]);
             }
 
-            if (m_multifab_map.contains("G_cp", lev))
+            if (m_multifab_map.has("G_cp", lev))
             {
                 ::CheckGuardCells( *m_multifab_map.get("G_cp", lev) );
             }
