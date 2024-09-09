@@ -1,4 +1,4 @@
-/* Copyright 2024 Roelof Groenwald, Arriana Formenti, Revathi Jambunathan
+/* Copyright 2024 Roelof Groenwald, Arianna Formenti, Revathi Jambunathan
  *
  * This file is part of WarpX.
  *
@@ -17,6 +17,7 @@ class ElectrostaticSolver
 
     PoissonBoundaryHandler m_poisson_boundary_handler;
 
+    ExplicitES m_explicit_es;
 }
 
 #endif
