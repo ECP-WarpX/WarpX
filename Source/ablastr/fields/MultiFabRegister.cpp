@@ -52,20 +52,20 @@ namespace ablastr::fields
 
     void
     MultiFabRegister::alloc_like (
-        std::string /* other_key */,
+        std::string /* other_name */,
         int /* other_level */
     )
     {
-        // other_key = mf_name(other_key, other_level);
+        // other_name = mf_name(other_name, other_level);
 
         throw std::runtime_error("MultiFabRegister::alloc_like not yet implemented");
 
         // Checks
-        // TODO: does the key already exist? error
+        // TODO: does the other_name already exist? error
     }
 
     bool
-    MultiFabRegister::contains (
+    MultiFabRegister::has (
         std::string name,
         int level
     )

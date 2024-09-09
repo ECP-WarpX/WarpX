@@ -40,6 +40,14 @@ namespace ablastr::fields
      */
     struct MultiFabRegister
     {
+        // Avoid accidental copies when passing to member functions
+        MultiFabRegister() = default;
+        MultiFabRegister(MultiFabRegister const &) = delete;
+        MultiFabRegister(MultiFabRegister&&) = delete;
+        MultiFabRegister& operator=(MultiFabRegister const &) = delete;
+        MultiFabRegister& operator=(MultiFabRegister&&) = delete;
+        ~MultiFabRegister() = default;
+
         /** title
          *
          * body body
@@ -73,12 +81,12 @@ namespace ablastr::fields
          * body body
          * body
          *
-         * @param name ...
+         * @param other_name ...
          * @param other_level ...
          */
         void
         alloc_like (
-            std::string other_key,
+            std::string other_name,
             int other_level
         );
 
@@ -92,7 +100,7 @@ namespace ablastr::fields
          * @return true if contained, otherwise false
          */
         bool
-        contains (
+        has (
             std::string name,
             int level
         );

@@ -110,6 +110,13 @@ void init_WarpX (py::module& m)
             //py::overload_cast< int >(&WarpX::boxArray, py::const_),
             py::arg("lev")
         )
+        .def("field",
+             [](WarpX const & wx) {
+                 return wx.multifab_map;
+             },
+             py::return_value_policy::reference_internal,
+             R"doc(Registry to all WarpX MultiFab (fields).)doc"
+        )
         .def("multifab",
             [](WarpX const & wx, std::string const multifab_name) {
                 if (wx.multifab_map.count(multifab_name) > 0) {
