@@ -1043,30 +1043,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
         RealBox overlap_realbox;
         Box overlap_box;
         IntVect shifted;
-        bool no_overlap = false;
-
-        for (int dir=0; dir<AMREX_SPACEDIM; dir++) {
-            if ( tile_realbox.lo(dir) <= part_realbox.hi(dir) ) {
-                const Real ncells_adjust = std::floor( (tile_realbox.lo(dir) - part_realbox.lo(dir))/dx[dir] );
-                overlap_realbox.setLo( dir, part_realbox.lo(dir) + std::max(ncells_adjust, 0._rt) * dx[dir]);
-            } else {
-                no_overlap = true; break;
-            }
-            if ( tile_realbox.hi(dir) >= part_realbox.lo(dir) ) {
-                const Real ncells_adjust = std::floor( (part_realbox.hi(dir) - tile_realbox.hi(dir))/dx[dir] );
-                overlap_realbox.setHi( dir, part_realbox.hi(dir) - std::max(ncells_adjust, 0._rt) * dx[dir]);
-            } else {
-                no_overlap = true; break;
-            }
-            // Count the number of cells in this direction in overlap_realbox
-            overlap_box.setSmall( dir, 0 );
-            overlap_box.setBig( dir,
-                int( std::round((overlap_realbox.hi(dir)-overlap_realbox.lo(dir))
-                                /dx[dir] )) - 1);
-            shifted[dir] =
-                static_cast<int>(std::round((overlap_realbox.lo(dir)-problo[dir])/dx[dir]));
-            // shifted is exact in non-moving-window direction.  That's all we care.
-        }
+        bool no_overlap = find_overlap(tile_realbox, part_realbox, dx, problo, overlap_realbox, overlap_box, shifted);
         if (no_overlap) {
             continue; // Go to the next tile
         }
@@ -1561,61 +1538,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         RealBox overlap_realbox;
         Box overlap_box;
         IntVect shifted;
-        bool no_overlap = false;
-
-        for (int dir=0; dir<AMREX_SPACEDIM; dir++) {
-#if (defined(WARPX_DIM_3D))
-            if (dir == plasma_injector.flux_normal_axis) {
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-            if (2*dir == plasma_injector.flux_normal_axis) {
-            // The above formula captures the following cases:
-            // - flux_normal_axis=0 (emission along x/r) and dir=0
-            // - flux_normal_axis=2 (emission along z) and dir=1
-#elif defined(WARPX_DIM_1D_Z)
-            if ( (dir==0) && (plasma_injector.flux_normal_axis==2) ) {
-#endif
-                if (plasma_injector.flux_direction > 0) {
-                    if (plasma_injector.surface_flux_pos <  tile_realbox.lo(dir) ||
-                        plasma_injector.surface_flux_pos >= tile_realbox.hi(dir)) {
-                            no_overlap = true;
-                            break;
-                    }
-                } else {
-                    if (plasma_injector.surface_flux_pos <= tile_realbox.lo(dir) ||
-                        plasma_injector.surface_flux_pos >  tile_realbox.hi(dir)) {
-                            no_overlap = true;
-                            break;
-                    }
-                }
-                overlap_realbox.setLo( dir, plasma_injector.surface_flux_pos );
-                overlap_realbox.setHi( dir, plasma_injector.surface_flux_pos );
-                overlap_box.setSmall( dir, 0 );
-                overlap_box.setBig( dir, 0 );
-                shifted[dir] =
-                    static_cast<int>(std::round((overlap_realbox.lo(dir)-problo[dir])/dx[dir]));
-            } else {
-                if ( tile_realbox.lo(dir) <= part_realbox.hi(dir) ) {
-                    const Real ncells_adjust = std::floor( (tile_realbox.lo(dir) - part_realbox.lo(dir))/dx[dir] );
-                    overlap_realbox.setLo( dir, part_realbox.lo(dir) + std::max(ncells_adjust, 0._rt) * dx[dir]);
-                } else {
-                    no_overlap = true; break;
-                }
-                if ( tile_realbox.hi(dir) >= part_realbox.lo(dir) ) {
-                    const Real ncells_adjust = std::floor( (part_realbox.hi(dir) - tile_realbox.hi(dir))/dx[dir] );
-                    overlap_realbox.setHi( dir, part_realbox.hi(dir) - std::max(ncells_adjust, 0._rt) * dx[dir]);
-                } else {
-                    no_overlap = true; break;
-                }
-                // Count the number of cells in this direction in overlap_realbox
-                overlap_box.setSmall( dir, 0 );
-                overlap_box.setBig( dir,
-                    int( std::round((overlap_realbox.hi(dir)-overlap_realbox.lo(dir))
-                                    /dx[dir] )) - 1);
-                shifted[dir] =
-                    static_cast<int>(std::round((overlap_realbox.lo(dir)-problo[dir])/dx[dir]));
-                // shifted is exact in non-moving-window direction.  That's all we care.
-            }
-        }
+        bool no_overlap = find_overlap_flux(tile_realbox, part_realbox, dx, problo, plasma_injector, overlap_realbox, overlap_box, shifted);
         if (no_overlap) {
             continue; // Go to the next tile
         }

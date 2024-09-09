@@ -7,9 +7,24 @@
 #ifndef WARPX_ADDPLASMAUTILITIES_H_
 #define WARPX_ADDPLASMAUTILITIES_H_
 
+#include "Initialization/PlasmaInjector.H"
+
 #include <AMReX_Array.H>
+#include <AMReX_Box.H>
 #include <AMReX_IntVect.H>
 #include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+
+bool find_overlap (const amrex::RealBox& tile_real_box, const amrex::RealBox& part_realbox,
+                   const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>& dx,
+                   const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>& prob_lo,
+                   amrex::RealBox& overlap_realbox, amrex::Box& overlap_box, amrex::IntVect& shifted);
+
+bool find_overlap_flux (const amrex::RealBox& tile_real_box, const amrex::RealBox& part_realbox,
+                        const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>& dx,
+                        const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>& prob_lo,
+                        const PlasmaInjector& plasma_injector,
+                        amrex::RealBox& overlap_realbox, amrex::Box& overlap_box, amrex::IntVect& shifted);
 
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real compute_scale_fac_volume (const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>& dx,
