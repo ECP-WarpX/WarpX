@@ -8,7 +8,9 @@
 #ifndef ABLASTR_FIELDS_MF_REGISTER_H
 #define ABLASTR_FIELDS_MF_REGISTER_H
 
-
+#include <AMReX_BoxArray.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_IntVect.H>
 #include <AMReX_MultiFab.H>
 
 #include <map>

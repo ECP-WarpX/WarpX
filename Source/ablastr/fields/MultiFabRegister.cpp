@@ -5,15 +5,11 @@
  * License: BSD-3-Clause-LBNL
  * Authors: Axel Huebl, ...
  */
-
-
 #include "MultiFabRegister.H"
-
 
 
 namespace ablastr::fields
 {
-
     amrex::MultiFab*
     MultiFabRegister::alloc_init (
         std::string name,
