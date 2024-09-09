@@ -25,7 +25,6 @@ namespace warpx::fields
         current_fp_nodal,
         rho_fp,
         F_fp,
-        G_fp,
         phi_fp,
         vector_potential_fp,
         Efield_cp,
