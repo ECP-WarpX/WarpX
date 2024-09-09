@@ -1,5 +1,5 @@
 # Iterations
-max_step = 20
+max_step = 25
 
 # Domain
 amr.n_cell = 32 64
@@ -115,7 +115,7 @@ plasma_p.do_continuous_injection = 1
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.intervals = 50
+diag1.intervals = 25
 diag1.diag_type = Full
 diag1.fields_to_plot = Er Ez Bt jr jz rho rho_driver rho_plasma_e rho_plasma_p
 diag1.species = driver plasma_e plasma_p
