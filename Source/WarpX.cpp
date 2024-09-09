@@ -376,6 +376,12 @@ WarpX::WarpX ()
         current_fp_vay.resize(nlevs_max);
     }
 
+    if (WarpX::electrostatic_solver_id != ElectrostaticSolverAlgo::None)
+    {
+        // Create Electrostatic Solver object if needed
+        m_electrostatic_solver = std::make_unique<ElectrostaticSolver>(nlevs_max);
+    }
+
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
     {
         // Create hybrid-PIC model object if needed
@@ -2124,6 +2130,11 @@ WarpX::ClearLevel (int lev)
         current_buf[lev][i].reset();
     }
 
+    if (WarpX::electrostatic_solver_id != ElectrostaticSolverAlgo::None)
+    {
+        m_electrostatic_solver->ClearLevel(lev);
+    }
+
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
     {
         m_hybrid_pic_model->ClearLevel(lev);
@@ -2387,6 +2398,14 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             dm, ncomps, ngEB, lev, "vector_potential_grad_buf_b_stag[y]", 0.0_rt);
         AllocInitMultiFab(vector_potential_grad_buf_b_stag[lev][2], amrex::convert(ba, Bz_nodal_flag),
             dm, ncomps, ngEB, lev, "vector_potential_grad_buf_b_stag[z]", 0.0_rt);
+    }
+
+    // Allocate extra multifabs needed by the electrostatic algorithm.
+    if (WarpX::electrostatic_solver_id != ElectrostaticSolverAlgo::None)
+    {
+        m_electrostatic_solver->AllocateLevelMFs(
+            lev, ba, dm, ncomps, ngRho, rho_nodal_flag
+        );
     }
 
     // Allocate extra multifabs needed by the kinetic-fluid hybrid algorithm.

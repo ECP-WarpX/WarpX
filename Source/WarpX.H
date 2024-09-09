@@ -16,6 +16,7 @@
 #include "Diagnostics/MultiDiagnostics_fwd.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags_fwd.H"
 #include "EmbeddedBoundary/WarpXFaceInfoBox_fwd.H"
+#include "FieldSolver/ElectrostaticSolvers/ElectrostaticSolver_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel_fwd.H"
@@ -999,8 +1000,6 @@ public:
 
     /** Enable embedded boundaries */
     bool m_eb_enabled = false;
-    bool m_boundary_potential_specified = false;
-    ElectrostaticSolver::PoissonBoundaryHandler m_poisson_boundary_handler;
     void ComputeSpaceChargeField (bool reset_fields);
     void AddBoundaryField ();
     void AddSpaceChargeField (WarpXParticleContainer& pc);
@@ -1664,6 +1663,9 @@ private:
 
     // Macroscopic properties
     std::unique_ptr<MacroscopicProperties> m_macroscopic_properties;
+
+    // Electrostatic solver
+    std::unique_ptr<ElectrostaticSolver> m_electrostatic_solver;
 
     // Hybrid PIC algorithm parameters
     std::unique_ptr<HybridPICModel> m_hybrid_pic_model;
