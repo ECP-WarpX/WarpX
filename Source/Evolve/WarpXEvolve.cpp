@@ -86,6 +86,12 @@ WarpX::Evolve (int numsteps)
 
         multi_diags->NewIteration();
 
+        // Update timestep for electrostatic solver if a constant dt is not provided
+        if (electrostatic_solver_id != ElectrostaticSolverAlgo::None &&
+            !m_const_dt.has_value()) {
+            UpdateDtFromParticleSpeeds();
+        }
+
         // Start loop on time steps
         if (verbose) {
             amrex::Print() << "STEP " << step+1 << " starts ...\n";
@@ -297,12 +303,6 @@ WarpX::Evolve (int numsteps)
             amrex::Print()<< "Evolve time = " << evolve_time
                       << " s; This step = " << evolve_time_end_step-evolve_time_beg_step
                       << " s; Avg. per step = " << evolve_time/(step-step_begin+1) << " s\n\n";
-        }
-
-        // Update timestep for electrostatic solver if a constant dt is not provided
-        if (electrostatic_solver_id != ElectrostaticSolverAlgo::None &&
-            !m_const_dt.has_value()) {
-            UpdateDtFromParticleSpeeds();
         }
 
         if (checkStopSimulation(cur_time)) {
