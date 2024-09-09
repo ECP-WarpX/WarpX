@@ -14,9 +14,10 @@ class ElectrostaticSolver
 {
 public:
 
-    ElectrostaticSolver() = default;
+    ElectrostaticSolver (int nlevs_max); // constructor
 
-    ComputeRHS() = default;
+    ComputeRHS () = default;
+
 
     ExplicitES m_explicit_es;
 
