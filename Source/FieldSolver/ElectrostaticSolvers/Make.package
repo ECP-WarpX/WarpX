@@ -1,0 +1,4 @@
+CEXE_sources += BoundaryHandler.cpp
+CEXE_sources += ExplicitES.cpp
+
+VPATH_LOCATIONS   += $(WARPX_HOME)/Source/FieldSolver/ElectrostaticSolvers
