@@ -8,7 +8,6 @@
 #define Electrostatic_Solver_H_
 
 #inlcude "ExplicitES.H"
-#include "PoissonBoundaryHandler.H"
 #include "WarpX.H"
 
 class ElectrostaticSolver
@@ -18,8 +17,6 @@ public:
     ElectrostaticSolver() = default;
 
     ComputeRHS() = default;
-
-    PoissonBoundaryHandler m_poisson_boundary_handler;
 
     ExplicitES m_explicit_es;
 

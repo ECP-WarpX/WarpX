@@ -75,7 +75,9 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
         }
     }
 
-    m_electrostatic_solver->ComputeSpaceChargeField(Efield_fp, Bfield_fp);
+    m_electrostatic_solver->ComputeSpaceChargeField(
+        rho_fp, rho_cp, charge_buf, phi_fp, mypc, myfl, Efield_fp, Bfield_fp
+    );
 
     if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
         electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) {
