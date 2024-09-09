@@ -15,6 +15,7 @@
 #include "Initialization/InjectorMomentum.H"
 #include "Initialization/InjectorPosition.H"
 #include "MultiParticleContainer.H"
+#include "Particles/AddPlasmaUtilities.H"
 #ifdef WARPX_QED
 #   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
 #   include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
@@ -1262,17 +1263,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
             if (rz_random_theta) { theta_offset = amrex::Random(engine) * 2._rt * MathConst::pi; }
 #endif
 
-            Real scale_fac = 0.0_rt;
-            if( pcounts[index] != 0) {
-#if defined(WARPX_DIM_3D)
-                scale_fac = dx[0]*dx[1]*dx[2]/pcounts[index];
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                scale_fac = dx[0]*dx[1]/pcounts[index];
-#elif defined(WARPX_DIM_1D_Z)
-                scale_fac = dx[0]/pcounts[index];
-#endif
-            }
-
+            Real scale_fac = compute_scale_fac_volume(dx, pcounts[index]);
             for (int i_part = 0; i_part < pcounts[index]; ++i_part)
             {
                 long ip = poffset[index] + i_part;
@@ -1510,25 +1501,6 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
     const auto dx = geom.CellSizeArray();
     const auto problo = geom.ProbLoArray();
 
-    Real scale_fac = 0._rt;
-    // Scale particle weight by the area of the emitting surface, within one cell
-#if defined(WARPX_DIM_3D)
-    scale_fac = dx[0]*dx[1]*dx[2]/dx[plasma_injector.flux_normal_axis]/num_ppc_real;
-#elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
-    scale_fac = dx[0]*dx[1]/num_ppc_real;
-    // When emission is in the r direction, the emitting surface is a cylinder.
-    // The factor 2*pi*r is added later below.
-    if (plasma_injector.flux_normal_axis == 0) { scale_fac /= dx[0]; }
-    // When emission is in the z direction, the emitting surface is an annulus
-    // The factor 2*pi*r is added later below.
-    if (plasma_injector.flux_normal_axis == 2) { scale_fac /= dx[1]; }
-    // When emission is in the theta direction (flux_normal_axis == 1),
-    // the emitting surface is a rectangle, within the plane of the simulation
-#elif defined(WARPX_DIM_1D_Z)
-    scale_fac = dx[0]/num_ppc_real;
-    if (plasma_injector.flux_normal_axis == 2) { scale_fac /= dx[0]; }
-#endif
-
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(0);
 
     // Create temporary particle container to which particles will be added;
@@ -1661,6 +1633,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         Gpu::DeviceVector<int> offset(overlap_box.numPts());
         auto *pcounts = counts.data();
         const amrex::IntVect lrrfac = rrfac;
+        int flux_normal_axis = plasma_injector.flux_normal_axis;
         Box fine_overlap_box; // default Box is NOT ok().
         if (refine_injection) {
             fine_overlap_box = overlap_box & amrex::shift(fine_injection_box, -shifted);
@@ -1678,7 +1651,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 auto index = overlap_box.index(iv);
                 int r;
                 if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
-                    r = AMREX_D_TERM(lrrfac[0],*lrrfac[1],*lrrfac[2]);
+                    r = compute_area_weights(lrrfac, flux_normal_axis);
                 } else {
                     r = 1;
                 }
@@ -1816,6 +1789,28 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         {
             const IntVect iv = IntVect(AMREX_D_DECL(i, j, k));
             const auto index = overlap_box.index(iv);
+
+            Real scale_fac = compute_scale_fac_area(dx, num_ppc_real, flux_normal_axis);
+
+            auto lo = getCellCoords(overlap_corner, dx, {0._rt, 0._rt, 0._rt}, iv);
+            auto hi = getCellCoords(overlap_corner, dx, {1._rt, 1._rt, 1._rt}, iv);
+
+            if (flux_pos->overlapsWith(lo, hi))
+            {
+                int r;
+                if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
+                    r = compute_area_weights(lrrfac, flux_normal_axis);
+                } else {
+                    r = 1;
+                }
+                scale_fac /= r;
+            }
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+            amrex::ignore_unused(k);
+#elif defined(WARPX_DIM_1D_Z)
+            amrex::ignore_unused(j,k);
+#endif
+
             for (int i_part = 0; i_part < pcounts[index]; ++i_part)
             {
                 const long ip = poffset[index] + i_part;
