@@ -14,6 +14,7 @@
 #include "WarpXProfilerWrapper.H"
 #include "WarpXUtil.H"
 
+#include <ablastr/fields/MultiFabRegister.H>
 #include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX.H>
@@ -220,16 +221,23 @@ void ConvertLabParamsToBoost()
 
 }
 
-/* \brief Function that sets the value of MultiFab MF to zero for z between
- * zmin and zmax.
- */
-void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax){
+void NullifyMF (
+    ablastr::fields::MultiFabRegister& multifab_map,
+    std::string mf_name,
+    int lev,
+    amrex::Real zmin,
+    amrex::Real zmax
+)
+{
     WARPX_PROFILE("WarpXUtil::NullifyMF()");
-    int const ncomp = mf.nComp();
+    if (!multifab_map.has(mf_name, lev)) { return; }
+
+    auto * mf = multifab_map.get(mf_name, lev);
+    int const ncomp = mf->nComp();
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-    for(amrex::MFIter mfi(mf, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi){
+    for(amrex::MFIter mfi(*mf, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi){
         const amrex::Box& bx = mfi.tilebox();
         // Get box lower and upper physical z bound, and dz
         const amrex::Real zmin_box = WarpX::LowerCorner(bx, lev, 0._rt).z;
@@ -245,7 +253,7 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax)
 #endif
         // Check if box intersect with [zmin, zmax]
         if ( (zmax>zmin_box && zmin<=zmax_box) ){
-            const Array4<Real> arr = mf[mfi].array();
+            const Array4<Real> arr = (*mf)[mfi].array();
             // Set field to 0 between zmin and zmax
             ParallelFor(bx, ncomp,
                 [=] AMREX_GPU_DEVICE(int i, int j, int k, int n) noexcept{

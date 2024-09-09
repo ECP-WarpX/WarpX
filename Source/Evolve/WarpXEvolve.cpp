@@ -1096,51 +1096,31 @@ WarpX::applyMirrors (Real time)
             const amrex::Real dz = WarpX::CellSize(lev)[2];
             const amrex::Real z_max = std::max(z_max_tmp, z_min+mirror_z_npoints[i_mirror]*dz);
 
-            // Get fine patch field MultiFabs
-            amrex::MultiFab& Ex = *Efield_fp[lev][0].get();
-            amrex::MultiFab& Ey = *Efield_fp[lev][1].get();
-            amrex::MultiFab& Ez = *Efield_fp[lev][2].get();
-            amrex::MultiFab& Bx = *Bfield_fp[lev][0].get();
-            amrex::MultiFab& By = *Bfield_fp[lev][1].get();
-            amrex::MultiFab& Bz = *Bfield_fp[lev][2].get();
-
-            // Set each field to zero between z_min and z_max
-            NullifyMF(Ex, lev, z_min, z_max);
-            NullifyMF(Ey, lev, z_min, z_max);
-            NullifyMF(Ez, lev, z_min, z_max);
-            NullifyMF(Bx, lev, z_min, z_max);
-            NullifyMF(By, lev, z_min, z_max);
-            NullifyMF(Bz, lev, z_min, z_max);
+            // Set each field on the fine patch to zero between z_min and z_max
+            NullifyMF(m_multifab_map, "Efield_fp[0]", lev, z_min, z_max);
+            NullifyMF(m_multifab_map, "Efield_fp[1]", lev, z_min, z_max);
+            NullifyMF(m_multifab_map, "Efield_fp[2]", lev, z_min, z_max);
+            NullifyMF(m_multifab_map, "Bfield_fp[0]", lev, z_min, z_max);
+            NullifyMF(m_multifab_map, "Bfield_fp[1]", lev, z_min, z_max);
+            NullifyMF(m_multifab_map, "Bfield_fp[2]", lev, z_min, z_max);
 
             // If div(E)/div(B) cleaning are used, set F/G field to zero
-            if (F_fp[lev]) { NullifyMF(*F_fp[lev], lev, z_min, z_max); }
-            if (m_multifab_map.has("G_fp", lev)) {
-                NullifyMF(*m_multifab_map.get("G_fp", lev), lev, z_min, z_max);
-            }
+            NullifyMF(m_multifab_map, "F_fp", lev, z_min, z_max);
+            NullifyMF(m_multifab_map, "G_fp", lev, z_min, z_max);
 
             if (lev>0)
             {
-                // Get coarse patch field MultiFabs
-                amrex::MultiFab& cEx = *Efield_cp[lev][0].get();
-                amrex::MultiFab& cEy = *Efield_cp[lev][1].get();
-                amrex::MultiFab& cEz = *Efield_cp[lev][2].get();
-                amrex::MultiFab& cBx = *Bfield_cp[lev][0].get();
-                amrex::MultiFab& cBy = *Bfield_cp[lev][1].get();
-                amrex::MultiFab& cBz = *Bfield_cp[lev][2].get();
-
-                // Set each field to zero between z_min and z_max
-                NullifyMF(cEx, lev, z_min, z_max);
-                NullifyMF(cEy, lev, z_min, z_max);
-                NullifyMF(cEz, lev, z_min, z_max);
-                NullifyMF(cBx, lev, z_min, z_max);
-                NullifyMF(cBy, lev, z_min, z_max);
-                NullifyMF(cBz, lev, z_min, z_max);
+                // Set each field on the coarse patch to zero between z_min and z_max
+                NullifyMF(m_multifab_map, "Efield_cp[0]", lev, z_min, z_max);
+                NullifyMF(m_multifab_map, "Efield_cp[1]", lev, z_min, z_max);
+                NullifyMF(m_multifab_map, "Efield_cp[2]", lev, z_min, z_max);
+                NullifyMF(m_multifab_map, "Bfield_cp[0]", lev, z_min, z_max);
+                NullifyMF(m_multifab_map, "Bfield_cp[1]", lev, z_min, z_max);
+                NullifyMF(m_multifab_map, "Bfield_cp[2]", lev, z_min, z_max);
 
                 // If div(E)/div(B) cleaning are used, set F/G field to zero
-                if (F_cp[lev]) { NullifyMF(*F_cp[lev], lev, z_min, z_max); }
-                if (m_multifab_map.has("G_cp", lev)) {
-                    NullifyMF(*m_multifab_map.get("G_cp", lev), lev, z_min, z_max);
-                }
+                NullifyMF(m_multifab_map, "F_cp", lev, z_min, z_max);
+                NullifyMF(m_multifab_map, "G_cp", lev, z_min, z_max);
             }
         }
     }

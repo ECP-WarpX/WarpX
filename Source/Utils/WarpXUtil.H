@@ -8,6 +8,8 @@
 #ifndef WARPX_UTILS_H_
 #define WARPX_UTILS_H_
 
+#include <ablastr/fields/MultiFabRegister.H>
+
 #include <AMReX_BoxArray.H>
 #include <AMReX_DistributionMapping.H>
 #include <AMReX_Extension.H>
@@ -53,9 +55,17 @@ void CheckDims ();
  */
 void CheckGriddingForRZSpectral ();
 
-void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin,
-               amrex::Real zmax);
-
+/** Function that sets the value of MultiFab MF to zero.
+ *
+ * For z between zmin and zmax.
+ */
+void NullifyMF (
+    ablastr::fields::MultiFabRegister& multifab_map,
+    std::string mf_name,
+    int lev,
+    amrex::Real zmin,
+    amrex::Real zmax
+);
 
 namespace WarpXUtilIO{
 /**
