@@ -48,32 +48,25 @@ using namespace amrex;
  * \brief Update the B field, over one timestep
  */
 void FiniteDifferenceSolver::EvolveB (
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
-    std::unique_ptr<amrex::MultiFab> const& Gfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_mod,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Venl,
-    std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_cell,
-    std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
-    int lev, amrex::Real const dt ) {
-
-#if defined(WARPX_DIM_RZ) || !defined(AMREX_USE_EB)
-  amrex::ignore_unused(area_mod, ECTRhofield, Venl, flag_info_cell, borrowing);
-#endif
+    [[maybe_unused]] std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
+    [[maybe_unused]] std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
+    [[maybe_unused]] std::unique_ptr<amrex::MultiFab> const& Gfield,
+    [[maybe_unused]] std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+    [[maybe_unused]] std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_mod,
+    [[maybe_unused]] std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
+    [[maybe_unused]] std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Venl,
+    [[maybe_unused]] std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_cell,
+    [[maybe_unused]] std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
+    [[maybe_unused]] int lev,
+    [[maybe_unused]] amrex::Real const dt ) {
 
     // Select algorithm (The choice of algorithm is a runtime option,
     // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
     if ((m_fdtd_algo == ElectromagneticSolverAlgo::Yee)||
         (m_fdtd_algo == ElectromagneticSolverAlgo::HybridPIC)){
-        ignore_unused(Gfield, face_areas);
         EvolveBCylindrical <CylindricalYeeAlgorithm> ( Bfield, Efield, lev, dt );
 #else
-    if(m_grid_type == GridType::Collocated || m_fdtd_algo != ElectromagneticSolverAlgo::ECT){
-        amrex::ignore_unused(face_areas);
-    }
 
     if (m_grid_type == GridType::Collocated) {
 
