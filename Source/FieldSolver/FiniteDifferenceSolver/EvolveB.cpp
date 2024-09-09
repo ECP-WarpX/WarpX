@@ -50,7 +50,7 @@ using namespace amrex;
 void FiniteDifferenceSolver::EvolveB (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
-    std::unique_ptr<amrex::MultiFab> const& Gfield,
+    amrex::MultiFab * Gfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_mod,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
@@ -103,7 +103,7 @@ template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveBCartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
-    std::unique_ptr<amrex::MultiFab> const& Gfield,
+    amrex::MultiFab * Gfield, // FIXME should be const
     int lev, amrex::Real const dt ) {
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
@@ -169,7 +169,7 @@ void FiniteDifferenceSolver::EvolveBCartesian (
         if (Gfield)
         {
             // Extract field data for this grid/tile
-            const Array4<Real> G = Gfield->array(mfi);
+            Array4<Real> G = Gfield->array(mfi);
 
             // Loop over cells and update G
             amrex::ParallelFor(tbx, tby, tbz,

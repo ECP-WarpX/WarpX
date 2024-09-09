@@ -219,7 +219,7 @@ WarpX::PSATDBackwardTransformF ()
     // Damp the field in the guard cells
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        DampFieldsInGuards(lev, F_fp[lev]);
+        DampFieldsInGuards(lev, F_fp[lev].get());
     }
 }
 
@@ -230,11 +230,15 @@ WarpX::PSATDForwardTransformG ()
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (G_fp[lev]) { spectral_solver_fp[lev]->ForwardTransform(lev, *G_fp[lev], Idx.G); }
+        if (m_multifab_map.contains("G_fp", lev)) {
+            spectral_solver_fp[lev]->ForwardTransform(lev, *m_multifab_map.get("G_fp", lev), Idx.G);
+        }
 
         if (spectral_solver_cp[lev])
         {
-            if (G_cp[lev]) { spectral_solver_cp[lev]->ForwardTransform(lev, *G_cp[lev], Idx.G); }
+            if (m_multifab_map.contains("G_cp", lev)) {
+                spectral_solver_fp[lev]->ForwardTransform(lev, *m_multifab_map.get("G_cp", lev), Idx.G);
+            }
         }
     }
 }
@@ -246,26 +250,28 @@ WarpX::PSATDBackwardTransformG ()
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
+        if (m_multifab_map.contains("G_fp", lev)) {
+            MultiFab* G_fp = m_multifab_map.get("G_fp", lev);
 #ifdef WARPX_DIM_RZ
-        if (G_fp[lev]) { spectral_solver_fp[lev]->BackwardTransform(lev, *G_fp[lev], Idx.G); }
+            spectral_solver_fp[lev]->BackwardTransform(lev, *G_fp, Idx.G);
 #else
-        if (G_fp[lev]) { spectral_solver_fp[lev]->BackwardTransform(lev, *G_fp[lev], Idx.G, m_fill_guards_fields); }
+            spectral_solver_fp[lev]->BackwardTransform(lev, *G_fp, Idx.G, m_fill_guards_fields);
 #endif
+
+            DampFieldsInGuards(lev, G_fp);
+        }
 
         if (spectral_solver_cp[lev])
         {
+            if (m_multifab_map.contains("G_cp", lev)) {
+                MultiFab* G_cp = m_multifab_map.get("G_cp", lev);
 #ifdef WARPX_DIM_RZ
-            if (G_cp[lev]) { spectral_solver_cp[lev]->BackwardTransform(lev, *G_cp[lev], Idx.G); }
+                spectral_solver_fp[lev]->BackwardTransform(lev, *G_cp, Idx.G);
 #else
-            if (G_cp[lev]) { spectral_solver_cp[lev]->BackwardTransform(lev, *G_cp[lev], Idx.G, m_fill_guards_fields); }
+                spectral_solver_fp[lev]->BackwardTransform(lev, *G_cp, Idx.G, m_fill_guards_fields);
 #endif
+            }
         }
-    }
-
-    // Damp the field in the guard cells
-    for (int lev = 0; lev <= finest_level; ++lev)
-    {
-        DampFieldsInGuards(lev, G_fp[lev]);
     }
 }
 
@@ -821,11 +827,13 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
 
     // Evolve B field in regular cells
     if (patch_type == PatchType::fine) {
-        m_fdtd_solver_fp[lev]->EvolveB(Bfield_fp[lev], Efield_fp[lev], G_fp[lev],
+        m_fdtd_solver_fp[lev]->EvolveB(Bfield_fp[lev], Efield_fp[lev],
+                                       m_multifab_map.get("G_fp", lev),
                                        m_face_areas[lev], m_area_mod[lev], ECTRhofield[lev], Venl[lev],
                                        m_flag_info_face[lev], m_borrowing[lev], lev, a_dt);
     } else {
-        m_fdtd_solver_cp[lev]->EvolveB(Bfield_cp[lev], Efield_cp[lev], G_cp[lev],
+        m_fdtd_solver_cp[lev]->EvolveB(Bfield_cp[lev], Efield_cp[lev],
+                                       m_multifab_map.get("G_fp", lev),
                                        m_face_areas[lev], m_area_mod[lev], ECTRhofield[lev], Venl[lev],
                                        m_flag_info_face[lev], m_borrowing[lev], lev, a_dt);
     }
@@ -1005,11 +1013,15 @@ WarpX::EvolveG (int lev, PatchType patch_type, amrex::Real a_dt, DtType /*a_dt_t
     // Evolve G field in regular cells
     if (patch_type == PatchType::fine)
     {
-        m_fdtd_solver_fp[lev]->EvolveG(G_fp[lev], Bfield_fp[lev], a_dt);
+        m_fdtd_solver_fp[lev]->EvolveG(
+            m_multifab_map.get("G_fp", lev),
+            Bfield_fp[lev], a_dt);
     }
     else // coarse patch
     {
-        m_fdtd_solver_cp[lev]->EvolveG(G_cp[lev], Bfield_cp[lev], a_dt);
+        m_fdtd_solver_cp[lev]->EvolveG(
+            m_multifab_map.get("G_cp", lev),
+            Bfield_cp[lev], a_dt);
     }
 
     // TODO Evolution in PML cells will go here
@@ -1169,7 +1181,7 @@ WarpX::DampFieldsInGuards(const int lev,
     }
 }
 
-void WarpX::DampFieldsInGuards(const int lev, std::unique_ptr<amrex::MultiFab>& mf)
+void WarpX::DampFieldsInGuards(const int lev, amrex::MultiFab* mf)
 {
     // Loop over dimensions
     for (int dampdir = 0; dampdir < AMREX_SPACEDIM; dampdir++)

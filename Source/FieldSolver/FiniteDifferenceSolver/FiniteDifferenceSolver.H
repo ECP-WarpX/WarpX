@@ -53,7 +53,7 @@ class FiniteDifferenceSolver
 
         void EvolveB ( std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
-                       std::unique_ptr<amrex::MultiFab> const& Gfield,
+                       amrex::MultiFab * Gfield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_mod,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
@@ -77,7 +77,7 @@ class FiniteDifferenceSolver
                        int rhocomp,
                        amrex::Real dt );
 
-        void EvolveG (std::unique_ptr<amrex::MultiFab>& Gfield,
+        void EvolveG (amrex::MultiFab* Gfield,
                       std::array<std::unique_ptr<amrex::MultiFab>,3> const& Bfield,
                       amrex::Real dt);
 
@@ -260,7 +260,7 @@ class FiniteDifferenceSolver
         void EvolveBCartesian (
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
-            std::unique_ptr<amrex::MultiFab> const& Gfield,
+            amrex::MultiFab * Gfield, // FIXME: should be const
             int lev, amrex::Real dt );
 
         template< typename T_Algo >
@@ -282,7 +282,7 @@ class FiniteDifferenceSolver
 
         template< typename T_Algo >
         void EvolveGCartesian (
-            std::unique_ptr<amrex::MultiFab>& Gfield,
+            amrex::MultiFab* Gfield,
             std::array<std::unique_ptr<amrex::MultiFab>,3> const& Bfield,
             amrex::Real dt);
 

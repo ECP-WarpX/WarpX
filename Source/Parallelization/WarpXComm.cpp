@@ -932,30 +932,36 @@ void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng, std::optio
     {
         if (do_pml && pml[lev] && pml[lev]->ok())
         {
-            if (G_fp[lev]) { pml[lev]->ExchangeG(patch_type, G_fp[lev].get(), do_pml_in_domain); }
+            if (m_multifab_map.contains("G_fp",lev)) {
+                pml[lev]->ExchangeG(patch_type, m_multifab_map.get("G_fp",lev), do_pml_in_domain);
+            }
             pml[lev]->FillBoundaryG(patch_type, nodal_sync);
         }
 
-        if (G_fp[lev])
+        if (m_multifab_map.contains("G_fp",lev))
         {
             const amrex::Periodicity& period = Geom(lev).periodicity();
-            const amrex::IntVect& nghost = (safe_guard_cells) ? G_fp[lev]->nGrowVect() : ng;
-            ablastr::utils::communication::FillBoundary(*G_fp[lev], nghost, WarpX::do_single_precision_comms, period, nodal_sync);
+            MultiFab* G_fp = m_multifab_map.get("G_fp",lev);
+            const amrex::IntVect& nghost = (safe_guard_cells) ? G_fp->nGrowVect() : ng;
+            ablastr::utils::communication::FillBoundary(*G_fp, nghost, WarpX::do_single_precision_comms, period, nodal_sync);
         }
     }
     else if (patch_type == PatchType::coarse)
     {
         if (do_pml && pml[lev] && pml[lev]->ok())
         {
-            if (G_cp[lev]) { pml[lev]->ExchangeG(patch_type, G_cp[lev].get(), do_pml_in_domain); }
+            if (m_multifab_map.contains("G_cp",lev)) {
+                pml[lev]->ExchangeG(patch_type, m_multifab_map.get("G_cp",lev), do_pml_in_domain);
+            }
             pml[lev]->FillBoundaryG(patch_type, nodal_sync);
         }
 
-        if (G_cp[lev])
+        if (m_multifab_map.contains("G_cp",lev))
         {
             const amrex::Periodicity& period = Geom(lev-1).periodicity();
-            const amrex::IntVect& nghost = (safe_guard_cells) ? G_cp[lev]->nGrowVect() : ng;
-            ablastr::utils::communication::FillBoundary(*G_cp[lev], nghost, WarpX::do_single_precision_comms, period, nodal_sync);
+            MultiFab* G_cp = m_multifab_map.get("G_cp",lev);
+            const amrex::IntVect& nghost = (safe_guard_cells) ? G_cp->nGrowVect() : ng;
+            ablastr::utils::communication::FillBoundary(*G_cp, nghost, WarpX::do_single_precision_comms, period, nodal_sync);
         }
     }
 }

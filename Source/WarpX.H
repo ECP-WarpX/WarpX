@@ -733,7 +733,7 @@ public:
      * can appear in parallel simulations. This will be called
      * when FieldBoundaryType is set to damped. Scalar version.
      */
-    void DampFieldsInGuards (int lev, std::unique_ptr<amrex::MultiFab>& mf);
+    void DampFieldsInGuards (int lev, amrex::MultiFab* mf);
 
 #ifdef WARPX_DIM_RZ
     void ApplyInverseVolumeScalingToCurrentDensity(amrex::MultiFab* Jx,
@@ -1502,7 +1502,7 @@ private:
     amrex::Vector<amrex::Real> dt;
 
     // Field container
-    ablastr::fields::MultiFabRegister m_multifab;
+    ablastr::fields::MultiFabRegister m_multifab_map;
 
     // Particle container
     std::unique_ptr<MultiParticleContainer> mypc;
@@ -1522,7 +1522,6 @@ private:
 
     // Fine patch
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > F_fp;
-    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > G_fp;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_fp;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > phi_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp;
@@ -1603,7 +1602,6 @@ private:
 
     // Coarse patch
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > F_cp;
-    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > G_cp;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_cp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_cp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_cp;

@@ -322,14 +322,14 @@ WarpX::MoveWindow (const int step, bool move_j)
 
         // Shift scalar field G with div(B) cleaning in valid domain
         // TODO: shift G from pml_rz for RZ geometry with PSATD, once implemented
-        if (G_fp[lev])
+        if (m_multifab_map.contains("G_fp", lev))
         {
             // Fine grid
-            shiftMF(*G_fp[lev], geom[lev], num_shift, dir, lev, do_update_cost);
+            shiftMF(*m_multifab_map.get("G_fp", lev), geom[lev], num_shift, dir, lev, do_update_cost);
             if (lev > 0)
             {
                 // Coarse grid
-                shiftMF(*G_cp[lev], geom[lev-1], num_shift_crse, dir, lev, do_update_cost);
+                shiftMF(*m_multifab_map.get("G_cp", lev), geom[lev-1], num_shift_crse, dir, lev, do_update_cost);
             }
         }
 

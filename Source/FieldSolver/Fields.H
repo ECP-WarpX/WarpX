@@ -33,7 +33,6 @@ namespace warpx::fields
         current_cp,
         rho_cp,
         F_cp,
-        G_cp,
         edge_lengths,
         face_areas,
         Efield_avg_fp,
