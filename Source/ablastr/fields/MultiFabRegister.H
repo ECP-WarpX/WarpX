@@ -52,20 +52,20 @@ namespace ablastr::fields
          * @param ncomp ...
          * @param ngrow ...
          * @param level ...
-         * @param redistribute ...
          * @param initial_value ...
+         * @param redistribute follow the default domain decomposition of the simulation
          * @return pointer to newly allocated MultiFab
          */
         amrex::MultiFab*
         alloc_init (
             std::string name,
-            const amrex::BoxArray& ba,
-            const amrex::DistributionMapping& dm,
-            const int ncomp,
-            const amrex::IntVect& ngrow,
-            const int level,
-            bool redistribute = true,
-            std::optional<const amrex::Real> initial_value = std::nullopt
+            amrex::BoxArray const & ba,
+            amrex::DistributionMapping const & dm,
+            int ncomp,
+            amrex::IntVect const & ngrow,
+            int level,
+            std::optional<const amrex::Real> initial_value = std::nullopt,
+            bool redistribute = true
         );
 
         /** title
@@ -78,6 +78,19 @@ namespace ablastr::fields
         void
         alloc_like (
             std::string other_key
+        );
+
+        /** title
+         *
+         * body body
+         * body
+         *
+         * @param name ...
+         * @return true if contained, otherwise false
+         */
+        bool
+        contains (
+            std::string name
         );
 
         /** title

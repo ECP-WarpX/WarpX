@@ -13,13 +13,13 @@ namespace ablastr::fields
     amrex::MultiFab*
     MultiFabRegister::alloc_init (
         std::string name,
-        const amrex::BoxArray& ba,
-        const amrex::DistributionMapping& dm,
-        const int ncomp,
-        const amrex::IntVect& ngrow,
-        const int level,
-        bool redistribute,
-        std::optional<const amrex::Real> initial_value
+        amrex::BoxArray const & ba,
+        amrex::DistributionMapping const & dm,
+        int ncomp,
+        amrex::IntVect const & ngrow,
+        int level,
+        std::optional<const amrex::Real> initial_value,
+        bool redistribute
     )
     {
         // create name
@@ -61,6 +61,14 @@ namespace ablastr::fields
 
         // Checks
         // TODO: does the key already exist? error
+    }
+
+    bool
+    MultiFabRegister::contains (
+        std::string name
+    )
+    {
+        return m_mf_register.count(name) > 0;
     }
 
     /** title
