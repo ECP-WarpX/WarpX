@@ -13,6 +13,7 @@
 #include "Deposition/ChargeDeposition.H"
 #include "Deposition/CurrentDeposition.H"
 #include "Deposition/SharedDepositionUtils.H"
+#include "EmbeddedBoundary/Enabled.H"
 #include "Pusher/GetAndSetPosition.H"
 #include "Pusher/UpdatePosition.H"
 #include "ParticleBoundaries_K.H"
@@ -300,9 +301,11 @@ WarpXParticleContainer::AddNParticles (int /*lev*/, long n,
 
     // Remove particles that are inside the embedded boundaries
 #ifdef AMREX_USE_EB
-    auto & distance_to_eb = WarpX::GetInstance().GetDistanceToEB();
-    scrapeParticlesAtEB( *this, amrex::GetVecOfConstPtrs(distance_to_eb), ParticleBoundaryProcess::Absorb());
-    deleteInvalidParticles();
+    if (EB::enabled()) {
+        auto & distance_to_eb = WarpX::GetInstance().GetDistanceToEB();
+        scrapeParticlesAtEB( *this, amrex::GetVecOfConstPtrs(distance_to_eb), ParticleBoundaryProcess::Absorb());
+        deleteInvalidParticles();
+    }
 #endif
 }
 

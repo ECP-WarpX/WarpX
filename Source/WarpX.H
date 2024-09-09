@@ -1003,6 +1003,8 @@ public:
      */
     [[nodiscard]] amrex::IntVect get_numprocs() const {return numprocs;}
 
+    /** Enable embedded boundaries */
+    bool m_eb_enabled = false;
     bool m_boundary_potential_specified = false;
     ElectrostaticSolver::PoissonBoundaryHandler m_poisson_boundary_handler;
     void ComputeSpaceChargeField (bool reset_fields);
@@ -1069,7 +1071,7 @@ public:
          amrex::ParserExecutor<3> const& zfield_parser,
          std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
          std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
-         char field,
+         [[maybe_unused]] char field,
          int lev, PatchType patch_type);
 
     /**
@@ -1136,7 +1138,7 @@ public:
     void BuildBufferMasksInBox ( amrex::Box tbx, amrex::IArrayBox &buffer_mask,
                                  const amrex::IArrayBox &guard_mask, int ng );
 #ifdef AMREX_USE_EB
-    amrex::EBFArrayBoxFactory const& fieldEBFactory (int lev) const noexcept {
+    [[nodiscard]] amrex::EBFArrayBoxFactory const& fieldEBFactory (int lev) const noexcept {
         return static_cast<amrex::EBFArrayBoxFactory const&>(*m_field_factory[lev]);
     }
 #endif

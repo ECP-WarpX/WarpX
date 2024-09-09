@@ -35,10 +35,11 @@ import checksumAPI
 # this will be the name of the plot file
 fn = sys.argv[1]
 
+# test name
 test_name = os.path.split(os.getcwd())[1]
 
 # Parse test name and check if current correction (psatd.current_correction) is applied
-current_correction = True if re.search("current_correction", fn) else False
+current_correction = True if re.search("current_correction", test_name) else False
 
 # Parameters (these parameters must match the parameters in `inputs.multi.rz.rt`)
 epsilon = 0.01

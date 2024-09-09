@@ -84,4 +84,4 @@ jobs:
         source py-venv/bin/activate
         export OMP_NUM_THREADS=1
 
-        mpirun -n 2 Examples/Physics_applications/laser_acceleration/PICMI_inputs_3d.py
+        mpirun -n 2 Examples/Physics_applications/laser_acceleration/inputs_test_3d_laser_acceleration_picmi.py

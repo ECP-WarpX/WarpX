@@ -184,6 +184,7 @@ WarpX::computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<
         this->dmap,
         this->grids,
         this->m_vector_poisson_boundary_handler,
+        m_eb_enabled,
         WarpX::do_single_precision_comms,
         this->ref_ratio,
         post_A_calculation,
