@@ -1226,9 +1226,9 @@ void WarpX::CheckGuardCells()
             ::CheckGuardCells(*F_fp[lev]);
         }
 
-        if (m_multifab_map.has("G_fp", lev))
+        if (m_fields.has("G_fp", lev))
         {
-            ::CheckGuardCells( *m_multifab_map.get("G_fp", lev) );
+            ::CheckGuardCells( *m_fields.get("G_fp", lev) );
         }
 
         // MultiFabs on coarse patch
@@ -1257,9 +1257,9 @@ void WarpX::CheckGuardCells()
                 ::CheckGuardCells(*F_cp[lev]);
             }
 
-            if (m_multifab_map.has("G_cp", lev))
+            if (m_fields.has("G_cp", lev))
             {
-                ::CheckGuardCells( *m_multifab_map.get("G_cp", lev) );
+                ::CheckGuardCells( *m_fields.get("G_cp", lev) );
             }
         }
     }

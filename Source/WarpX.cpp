@@ -2147,7 +2147,7 @@ WarpX::ClearLevel (int lev)
     gather_buffer_masks[lev].reset();
 
     F_fp  [lev].reset();
-    m_multifab_map.erase( "G_fp", lev );
+    m_fields.erase( "G_fp", lev );
 
     rho_fp[lev].reset();
     phi_fp[lev].reset();
@@ -2553,7 +2553,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
     if (do_divb_cleaning)
     {
-        m_multifab_map.alloc_init(
+        m_fields.alloc_init(
             "G_fp", amrex::convert(ba, G_nodal_flag), dm,
             ncomps, ngG, lev, 0.0_rt);
     }
@@ -2758,13 +2758,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         {
             if (grid_type == GridType::Collocated)
             {
-                m_multifab_map.alloc_init(
+                m_fields.alloc_init(
                     "G_cp", amrex::convert(ba, IntVect::TheUnitVector()), dm,
                     ncomps, ngG, lev, 0.0_rt);
             }
             else // grid_type=staggered or grid_type=hybrid
             {
-                m_multifab_map.alloc_init(
+                m_fields.alloc_init(
                     "G_cp", amrex::convert(ba, IntVect::TheZeroVector()), dm,
                     ncomps, ngG, lev, 0.0_rt);
             }

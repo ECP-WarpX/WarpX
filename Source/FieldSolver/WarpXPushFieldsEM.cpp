@@ -230,14 +230,14 @@ WarpX::PSATDForwardTransformG ()
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (m_multifab_map.has("G_fp", lev)) {
-            spectral_solver_fp[lev]->ForwardTransform(lev, *m_multifab_map.get("G_fp", lev), Idx.G);
+        if (m_fields.has("G_fp", lev)) {
+            spectral_solver_fp[lev]->ForwardTransform(lev, *m_fields.get("G_fp", lev), Idx.G);
         }
 
         if (spectral_solver_cp[lev])
         {
-            if (m_multifab_map.has("G_cp", lev)) {
-                spectral_solver_fp[lev]->ForwardTransform(lev, *m_multifab_map.get("G_cp", lev), Idx.G);
+            if (m_fields.has("G_cp", lev)) {
+                spectral_solver_fp[lev]->ForwardTransform(lev, *m_fields.get("G_cp", lev), Idx.G);
             }
         }
     }
@@ -250,8 +250,8 @@ WarpX::PSATDBackwardTransformG ()
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (m_multifab_map.has("G_fp", lev)) {
-            MultiFab* G_fp = m_multifab_map.get("G_fp", lev);
+        if (m_fields.has("G_fp", lev)) {
+            MultiFab* G_fp = m_fields.get("G_fp", lev);
 #ifdef WARPX_DIM_RZ
             spectral_solver_fp[lev]->BackwardTransform(lev, *G_fp, Idx.G);
 #else
@@ -263,8 +263,8 @@ WarpX::PSATDBackwardTransformG ()
 
         if (spectral_solver_cp[lev])
         {
-            if (m_multifab_map.has("G_cp", lev)) {
-                MultiFab* G_cp = m_multifab_map.get("G_cp", lev);
+            if (m_fields.has("G_cp", lev)) {
+                MultiFab* G_cp = m_fields.get("G_cp", lev);
 #ifdef WARPX_DIM_RZ
                 spectral_solver_fp[lev]->BackwardTransform(lev, *G_cp, Idx.G);
 #else
@@ -828,12 +828,12 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
     // Evolve B field in regular cells
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->EvolveB(Bfield_fp[lev], Efield_fp[lev],
-                                       m_multifab_map.get("G_fp", lev),
+                                       m_fields.get("G_fp", lev),
                                        m_face_areas[lev], m_area_mod[lev], ECTRhofield[lev], Venl[lev],
                                        m_flag_info_face[lev], m_borrowing[lev], lev, a_dt);
     } else {
         m_fdtd_solver_cp[lev]->EvolveB(Bfield_cp[lev], Efield_cp[lev],
-                                       m_multifab_map.get("G_fp", lev),
+                                       m_fields.get("G_fp", lev),
                                        m_face_areas[lev], m_area_mod[lev], ECTRhofield[lev], Venl[lev],
                                        m_flag_info_face[lev], m_borrowing[lev], lev, a_dt);
     }
@@ -1014,13 +1014,13 @@ WarpX::EvolveG (int lev, PatchType patch_type, amrex::Real a_dt, DtType /*a_dt_t
     if (patch_type == PatchType::fine)
     {
         m_fdtd_solver_fp[lev]->EvolveG(
-            m_multifab_map.get("G_fp", lev),
+            m_fields.get("G_fp", lev),
             Bfield_fp[lev], a_dt);
     }
     else // coarse patch
     {
         m_fdtd_solver_cp[lev]->EvolveG(
-            m_multifab_map.get("G_cp", lev),
+            m_fields.get("G_cp", lev),
             Bfield_cp[lev], a_dt);
     }
 

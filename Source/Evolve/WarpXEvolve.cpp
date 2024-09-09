@@ -1114,8 +1114,8 @@ WarpX::applyMirrors (Real time)
 
             // If div(E)/div(B) cleaning are used, set F/G field to zero
             if (F_fp[lev]) { NullifyMF(*F_fp[lev], lev, z_min, z_max); }
-            if (m_multifab_map.has("G_fp", lev)) {
-                NullifyMF(*m_multifab_map.get("G_fp", lev), lev, z_min, z_max);
+            if (m_fields.has("G_fp", lev)) {
+                NullifyMF(*m_fields.get("G_fp", lev), lev, z_min, z_max);
             }
 
             if (lev>0)
@@ -1138,8 +1138,8 @@ WarpX::applyMirrors (Real time)
 
                 // If div(E)/div(B) cleaning are used, set F/G field to zero
                 if (F_cp[lev]) { NullifyMF(*F_cp[lev], lev, z_min, z_max); }
-                if (m_multifab_map.has("G_cp", lev)) {
-                    NullifyMF(*m_multifab_map.get("G_cp", lev), lev, z_min, z_max);
+                if (m_fields.has("G_cp", lev)) {
+                    NullifyMF(*m_fields.get("G_cp", lev), lev, z_min, z_max);
                 }
             }
         }

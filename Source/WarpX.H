@@ -1233,7 +1233,7 @@ public:
     FiniteDifferenceSolver * get_pointer_fdtd_solver_fp (int lev) { return m_fdtd_solver_fp[lev].get(); }
 
     // Field container
-    ablastr::fields::MultiFabRegister m_multifab_map;
+    ablastr::fields::MultiFabRegister m_fields;
 
 protected:
 
