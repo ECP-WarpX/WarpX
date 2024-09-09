@@ -40,6 +40,14 @@ namespace ablastr::fields
      */
     struct MultiFabRegister
     {
+        // Avoid accidental copies when passing to member functions
+        MultiFabRegister() = default;
+        MultiFabRegister(MultiFabRegister const &) = delete;
+        MultiFabRegister(MultiFabRegister&&) = delete;
+        MultiFabRegister& operator=(MultiFabRegister const &) = delete;
+        MultiFabRegister& operator=(MultiFabRegister&&) = delete;
+        ~MultiFabRegister() = default;
+
         /** title
          *
          * body body
