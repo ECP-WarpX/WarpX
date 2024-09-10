@@ -32,7 +32,7 @@ RelativisticExplicitES::ComputeSpaceChargeField (
     amrex::Vector< std::array< std::unique_ptr<amrex::MultiFab>, 3> >& Bfield_fp
 ) {
     WARPX_PROFILE("WarpX::ComputeSpaceChargeField");
-
+    amrex::ignore_unused(rho_fp, rho_cp, phi_fp, mfl);
     // Loop over the species and add their space-charge contribution to E and B.
     // Note that the fields calculated here does not include the E field
     // due to simulation boundary potentials
