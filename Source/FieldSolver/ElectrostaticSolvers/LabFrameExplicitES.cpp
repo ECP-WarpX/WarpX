@@ -98,7 +98,7 @@ void LabFrameExplicitES::ComputeSpaceChargeField (
 void
 LabFrameExplicitES::computePhiTriDiagonal (
     const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-    amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi) const
+    amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi)
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(max_level == 0,
     "The tridiagonal solver cannot be used with mesh refinement");

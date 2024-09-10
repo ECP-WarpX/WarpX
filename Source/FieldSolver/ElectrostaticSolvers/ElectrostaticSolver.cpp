@@ -34,7 +34,7 @@ void ElectrostaticSolver::ComputeSpaceChargeField (
     if (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame)
     {
         m_labframe_explicit_es->ComputeSpaceChargeField(
-            rho_fp, rho_cp, charge_buf, phi_fp, mpc, mfl, Efield_fp, Bfield_fp
+            rho_fp, rho_cp, charge_buf, phi_fp, mpc, mfl, Efield_fp
         );
     }
 }

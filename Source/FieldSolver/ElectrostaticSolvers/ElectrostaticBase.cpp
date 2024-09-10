@@ -8,7 +8,7 @@
  */
 
 #include "ElectrostaticBase.H"
-
+#include <ablastr/fields/PoissonSolver.H>
 ElectrostaticBase::ElectrostaticBase (int nlevs_max)
 {
     max_level = nlevs_max;
@@ -178,7 +178,7 @@ ElectrostaticBase::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiF
             amrex::EBFArrayBoxFactory const *
         > factories;
         for (int lev = 0; lev <= max_level; ++lev) {
-            factories.push_back(&WarpX::fieldEBFactory(lev));
+            factories.push_back(&warpx.fieldEBFactory(lev));
         }
         eb_farray_box_factory = factories;
 #endif
@@ -187,7 +187,7 @@ ElectrostaticBase::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiF
     bool const is_solver_igf_on_lev0 =
         WarpX::poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction;
 
-    WarpX::ablastr::fields::computePhi(
+    ablastr::fields::computePhi(
         sorted_rho,
         sorted_phi,
         beta,
@@ -195,15 +195,15 @@ ElectrostaticBase::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiF
         absolute_tolerance,
         max_iters,
         verbosity,
-        this->geom,
-        this->dmap,
-        this->grids,
+        warpx.Geom(),
+        warpx.DistributionMap(),
+        warpx.boxArray(),
         WarpX::grid_type,
-        this->m_poisson_boundary_handler,
+        m_poisson_boundary_handler,
         is_solver_igf_on_lev0,
         warpx.m_eb_enabled,
         WarpX::do_single_precision_comms,
-        this->ref_ratio,
+        warpx.refRatio(),
         post_phi_calculation,
         warpx.gett_new(0),
         eb_farray_box_factory
@@ -410,9 +410,10 @@ void ElectrostaticBase::computeB (amrex::Vector<std::array<std::unique_ptr<amrex
     // return early if beta is 0 since there will be no B-field
     if ((beta[0] == 0._rt) && (beta[1] == 0._rt) && (beta[2] == 0._rt)) { return; }
 
+    auto & warpx = WarpX::GetInstance();
     for (int lev = 0; lev <= max_level; lev++) {
 
-        const Real* dx = Geom(lev).CellSize();
+        const Real* dx = warpx.Geom(lev).CellSize();
 
 #ifdef AMREX_USE_OMP
 #    pragma omp parallel if (Gpu::notInLaunchRegion())

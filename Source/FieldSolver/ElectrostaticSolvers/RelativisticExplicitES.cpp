@@ -65,7 +65,7 @@ RelativisticExplicitES::AddSpaceChargeField (amrex::Vector<std::unique_ptr<amrex
     Vector<std::unique_ptr<MultiFab> > rho_coarse(num_levels); // Used in order to interpolate between levels
     Vector<std::unique_ptr<MultiFab> > phi(num_levels);
     // Use number of guard cells used for local deposition of rho
-    const amrex::IntVect ng = warpx.guard_cells.ng_depos_rho;
+    const amrex::IntVect ng = warpx.get_ng_depos_rho;
     for (int lev = 0; lev <= max_level; lev++) {
         BoxArray nba = warpx.boxArray(lev);
         nba.surroundingNodes();
@@ -131,6 +131,7 @@ RelativisticExplicitES::AddBoundaryField (amrex::Vector<std::array< std::unique_
 {
     WARPX_PROFILE("WarpX::AddBoundaryField");
 
+    auto & warpx = WarpX::GetInstance();
     // Store the boundary conditions for the field solver if they haven't been
     // stored yet
     if (!m_poisson_boundary_handler.bcs_set) {
@@ -139,20 +140,19 @@ RelativisticExplicitES::AddBoundaryField (amrex::Vector<std::array< std::unique_
 
     // Allocate fields for charge and potential
     const int num_levels = max_level + 1;
-    Vector<std::unique_ptr<MultiFab> > rho(num_levels);
-    Vector<std::unique_ptr<MultiFab> > phi(num_levels);
+    amrex::Vector<std::unique_ptr<amrex::MultiFab> > rho(num_levels);
+    amrex::Vector<std::unique_ptr<amrex::MultiFab> > phi(num_levels);
     // Use number of guard cells used for local deposition of rho
     const amrex::IntVect ng = guard_cells.ng_depos_rho;
     for (int lev = 0; lev <= max_level; lev++) {
         BoxArray nba = boxArray(lev);
         nba.surroundingNodes();
-        rho[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, ng);
+        rho[lev] = std::make_unique<amrex::MultiFab>(nba, warpx.DistributionMap(lev), 1, ng);
         rho[lev]->setVal(0.);
-        phi[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, 1);
+        phi[lev] = std::make_unique<amrex::MultiFab>(nba, warpx.DistributionMap(lev), 1, 1);
         phi[lev]->setVal(0.);
     }
 
-    auto & warpx = WarpX::GetInstance();
     // Set the boundary potentials appropriately
     setPhiBC(phi, warpx.gett_new(0));
 

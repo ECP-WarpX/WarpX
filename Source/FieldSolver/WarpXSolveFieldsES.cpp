@@ -7,57 +7,8 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpX.H"
-
-#include "FieldSolver/ElectrostaticSolvers/ElectrostaticSolver.H"
-#include "Fluids/MultiFluidContainer.H"
-#include "Fluids/WarpXFluidContainer.H"
-#include "Parallelization/GuardCellManager.H"
-#include "Particles/MultiParticleContainer.H"
-#include "Particles/WarpXParticleContainer.H"
-#include "Utils/Parser/ParserUtils.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXConst.H"
-#include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
-
-#include <ablastr/fields/PoissonSolver.H>
-#include <ablastr/utils/Communication.H>
-#include <ablastr/warn_manager/WarnManager.H>
-
-#include <AMReX_Array.H>
-#include <AMReX_Array4.H>
-#include <AMReX_BLassert.H>
-#include <AMReX_Box.H>
-#include <AMReX_BoxArray.H>
-#include <AMReX_Config.H>
-#include <AMReX_DistributionMapping.H>
-#include <AMReX_FArrayBox.H>
-#include <AMReX_FabArray.H>
-#include <AMReX_Geometry.H>
-#include <AMReX_GpuControl.H>
-#include <AMReX_GpuLaunch.H>
-#include <AMReX_GpuQualifiers.H>
-#include <AMReX_IndexType.H>
-#include <AMReX_IntVect.H>
-#include <AMReX_LO_BCTYPES.H>
-#include <AMReX_MFIter.H>
-#include <AMReX_MLMG.H>
-#include <AMReX_MultiFab.H>
-#include <AMReX_REAL.H>
-#include <AMReX_SPACE.H>
-#include <AMReX_Vector.H>
-#include <AMReX_MFInterp_C.H>
-#ifdef AMREX_USE_EB
-#   include <AMReX_EBFabFactory.H>
-#endif
-
-#include <array>
-#include <memory>
-#include <string>
-
-using namespace amrex;
-using namespace warpx::fields;
-
+#include "FieldSolver/ElectrostaticSolvers/ElectrostaticSolver.H"
 
 void
 WarpX::ComputeSpaceChargeField (bool const reset_fields)
@@ -75,6 +26,6 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
     }
 
     m_electrostatic_solver->ComputeSpaceChargeField(
-        rho_fp, rho_cp, charge_buf, phi_fp, mypc, myfl, Efield_fp, Bfield_fp
+        rho_fp, rho_cp, charge_buf, phi_fp, *mypc, myfl.get(), Efield_fp, Bfield_fp
     );
 }

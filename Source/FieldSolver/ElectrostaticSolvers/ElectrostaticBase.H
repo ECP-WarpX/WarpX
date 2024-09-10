@@ -6,6 +6,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#ifndef WARPX_ELECTROSTATIC_BASE_H_
+#define WARPX_ELECTROSTATIC_BASE_H_
 
 #include "PoissonBoundaryHandler.H"
 #include "Fluids/MultiFluidContainer.H"
@@ -64,3 +66,5 @@ public:
     int max_level;
     std::unique_ptr<PoissonBoundaryHandler> m_poisson_boundary_handler;
 };
+
+#endif
