@@ -23,6 +23,23 @@
 
 namespace ablastr::fields
 {
+
+    /** Components (base vector directions) of vector/tensor fields.
+     *
+     * Because of different staggering, the components of vector/tensor fields are stored
+     * in separate (i)MultiFab. This
+     */
+    struct Direction
+    {
+        int dir = 0;
+    };
+
+    /** title
+     *
+     * body body
+     * body
+     * body
+     */
     struct MultiFabOwner
     {
         // TODO: also add iMultiFab via std::variant
@@ -136,7 +153,7 @@ namespace ablastr::fields
         amrex::MultiFab*
         get (
             std::string name,
-            int dir,
+            Direction dir,
             int level
         );
 
@@ -166,7 +183,7 @@ namespace ablastr::fields
         std::vector<amrex::MultiFab*>
         get_mr_levels (
             std::string name,
-            int dir,
+            Direction dir,
             int finest_level
         );
 
@@ -233,7 +250,7 @@ namespace ablastr::fields
         std::string
         mf_name (
             std::string name,
-            int dir,
+            Direction dir,
             int level
         );
 
