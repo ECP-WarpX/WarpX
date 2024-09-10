@@ -7,6 +7,7 @@
 #include "WarpX.H"
 
 #include "FieldSolver/ElectrostaticSolver.H"
+#include "EmbeddedBoundary/Enabled.H"
 #include "Fluids/MultiFluidContainer.H"
 #include "Fluids/WarpXFluidContainer.H"
 #include "Parallelization/GuardCellManager.H"
@@ -141,7 +142,7 @@ WarpX::AddBoundaryField ()
     // Compute the corresponding electric and magnetic field, from the potential phi.
     computeE( Efield_fp, phi, beta );
     computeB( Bfield_fp, phi, beta );
- 
+
     // de-allocate temporary
     for (int lev = 0; lev <= max_level; lev++) {
         m_fields.erase("phi_temp",lev);
@@ -228,7 +229,7 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     // Compute the corresponding electric and magnetic field, from the potential phi
     computeE( Efield_fp, phi, beta );
     computeB( Bfield_fp, phi, beta );
-    
+
     // de-allocate temporary
     for (int lev = 0; lev <= max_level; lev++) {
         m_fields.erase("phi_temp",lev);
@@ -303,7 +304,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
 
     // Compute the electric field. Note that if an EB is used the electric
     // field will be calculated in the computePhi call.
-    if (!m_eb_enabled) { computeE( Efield_fp, phi_fp, beta ); }
+    if (!EB::enabled()) { computeE( Efield_fp, phi_fp, beta ); }
     else {
         if (IsPythonCallbackInstalled("poissonsolver")) { computeE(Efield_fp, phi_fp, beta); }
     }
@@ -347,12 +348,11 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
 
     std::optional<ElectrostaticSolver::EBCalcEfromPhiPerLevel> post_phi_calculation;
 #ifdef AMREX_USE_EB
-    // TODO: double check no overhead occurs on "m_eb_enabled == false"
     std::optional<amrex::Vector<amrex::EBFArrayBoxFactory const *> > eb_farray_box_factory;
 #else
     std::optional<amrex::Vector<amrex::FArrayBoxFactory const *> > const eb_farray_box_factory;
 #endif
-    if (m_eb_enabled)
+    if (EB::enabled())
     {
         // EB: use AMReX to directly calculate the electric field since with EB's the
         // simple finite difference scheme in WarpX::computeE sometimes fails
@@ -414,7 +414,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
         WarpX::grid_type,
         this->m_poisson_boundary_handler,
         is_solver_igf_on_lev0,
-        m_eb_enabled,
+        EB::enabled(),
         WarpX::do_single_precision_comms,
         this->ref_ratio,
         post_phi_calculation,

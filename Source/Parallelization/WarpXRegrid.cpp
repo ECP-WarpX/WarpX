@@ -10,6 +10,7 @@
 
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
+#include "EmbeddedBoundary/Enabled.H"
 #include "EmbeddedBoundary/WarpXFaceInfoBox.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #include "Initialization/ExternalField.H"
@@ -168,6 +169,7 @@ void
 WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const DistributionMapping& dm)
 {
 
+    bool const eb_enabled = EB::enabled();
     if (ba == boxArray(lev))
     {
         if (ParallelDescriptor::NProcs() == 1) { return; }
@@ -175,7 +177,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         // Fine patch
         for (int idim=0; idim < 3; ++idim)
         {
-            if (m_eb_enabled) {
+            if (eb_enabled) {
                 if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) {
                     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
                         m_borrowing[lev][idim] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(ba, Bfield_fp[lev][idim]->ixType().toIntVect()), dm);
@@ -184,8 +186,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
             }
         }
 
-        if (m_eb_enabled) {
-
+        if (eb_enabled) {
 #ifdef AMREX_USE_EB
             int const max_guard = guard_cells.ng_FieldSolver.max();
             m_field_factory[lev] = amrex::makeEBFabFactory(Geom(lev), ba, dm,
