@@ -222,10 +222,7 @@ namespace ablastr::fields
         for (int lvl = 0; lvl <= finest_level; lvl++)
         {
             // insert a new level
-            field_on_level.push_back(std::map<
-                Direction,
-                amrex::MultiFab*
-            >{});
+            field_on_level.push_back(VectorField{});
 
             // insert components
             for (Direction dir : all_dirs)
@@ -311,12 +308,7 @@ namespace ablastr::fields
     {
         int const finest_level = old_vector_on_levels.size() - 1u;
 
-        std::vector<
-            std::map<
-                Direction,
-                amrex::MultiFab*
-            >
-        > field_on_level;
+        MultiLevelVectorField field_on_level;
         field_on_level.reserve(finest_level+1);
 
         std::vector<Direction> all_dirs = {Direction{0}, Direction{1}, Direction{2}};
@@ -324,10 +316,7 @@ namespace ablastr::fields
         for (int lvl = 0; lvl <= finest_level; lvl++)
         {
             // insert a new level
-            field_on_level.push_back(std::map<
-                    Direction,
-                    amrex::MultiFab*
-            >{});
+            field_on_level.push_back(VectorField{});
 
             // insert components
             for (auto dir : {0, 1, 2})

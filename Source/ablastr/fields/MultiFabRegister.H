@@ -8,6 +8,8 @@
 #ifndef ABLASTR_FIELDS_MF_REGISTER_H
 #define ABLASTR_FIELDS_MF_REGISTER_H
 
+#include "ablastr/utils/ConstMap.H"
+
 #include <AMReX_BoxArray.H>
 #include <AMReX_DistributionMapping.H>
 #include <AMReX_IntVect.H>
@@ -39,11 +41,8 @@ namespace ablastr::fields
     };
 
     /** A vector field of three MultiFab
-     *
-     * TODO: std::map has two issues: operator[] has no const overload and access with missing keys inserts new
-     *       values. We want to use another type.
      */
-    using VectorField = std::map<Direction, amrex::MultiFab*>;
+    using VectorField = ablastr::utils::ConstMap<Direction, amrex::MultiFab*>;
 
     /** A multi-level scalar field
      *
@@ -54,10 +53,8 @@ namespace ablastr::fields
     /** A multi-level vector field
     *
     * TODO: use amrex::Vector again for bound checks in debug mode
-    * TODO: std::map has two issues: operator[] has no const overload and access with missing keys inserts new
-    *       values. We want to use another type.
     */
-    using MultiLevelVectorField = std::vector<std::map<Direction, amrex::MultiFab*>>;
+    using MultiLevelVectorField = std::vector<ablastr::utils::ConstMap<Direction, amrex::MultiFab*>>;
 
     /** title
      *
