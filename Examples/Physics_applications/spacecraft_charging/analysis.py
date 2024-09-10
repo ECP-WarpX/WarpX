@@ -6,7 +6,7 @@ a conducting sphere (spacecraft) immersed in an initially static
 thermal plasma. The potential on the spacecraft decreases over
 the time to reach an equilibrium floating potential.
 
-An input Python file PICMI_inputs_rz.py is used.
+An input Python file inputs_test_rz_spacecraft_charging_picmi.py is used.
 
 The test will check the curve fitting parameters v0 and tau defined
 by the following exponential function: phi(t)=v0(1-exp(-t/tau))
