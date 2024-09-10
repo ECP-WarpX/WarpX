@@ -5,6 +5,21 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
 
+void LabFrameExplicitES::ReadParameters () {
+
+    ParmParse const pp_warpx("warpx");
+
+    // Note that with the relativistic version, these parameters would be
+    // input for each species.
+    utils::parser::queryWithParser(
+        pp_warpx, "self_fields_required_precision", self_fields_required_precision);
+    utils::parser::queryWithParser(
+        pp_warpx, "self_fields_absolute_tolerance", self_fields_absolute_tolerance);
+    utils::parser::queryWithParser(
+        pp_warpx, "self_fields_max_iters", self_fields_max_iters);
+    pp_warpx.query("self_fields_verbosity", self_fields_verbosity);
+}
+
 void
 RelativisticExplicitES::ComputeSpaceChargeField (
     amrex::Vector< std::unique_ptr<amrex::MultiFab> > rho_fp,
@@ -37,8 +52,8 @@ RelativisticExplicitES::ComputeSpaceChargeField (
 void
 RelativisticExplicitES::AddSpaceChargeField (amrex::Vector<std::unique_ptr<amrex::MultiFab> > charge_buf,
                                              WarpXParticleContainer& pc,
-                                             amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
-                                             amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield)
+                                             amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield_fp,
+                                             amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield_fp)
 {
     WARPX_PROFILE("WarpX::AddSpaceChargeField");
 
@@ -65,7 +80,7 @@ RelativisticExplicitES::AddSpaceChargeField (amrex::Vector<std::unique_ptr<amrex
     Vector<std::unique_ptr<MultiFab> > rho_coarse(num_levels); // Used in order to interpolate between levels
     Vector<std::unique_ptr<MultiFab> > phi(num_levels);
     // Use number of guard cells used for local deposition of rho
-    const amrex::IntVect ng = warpx.get_ng_depos_rho;
+    const amrex::IntVect ng = warpx.get_ng_depos_rho();
     for (int lev = 0; lev <= max_level; lev++) {
         BoxArray nba = warpx.boxArray(lev);
         nba.surroundingNodes();
@@ -76,7 +91,7 @@ RelativisticExplicitES::AddSpaceChargeField (amrex::Vector<std::unique_ptr<amrex
         if (lev > 0) {
             // For MR levels: allocated the coarsened version of rho
             BoxArray cba = nba;
-            cba.coarsen(refRatio(lev-1));
+            cba.coarsen(warpx.refRatio(lev-1));
             rho_coarse[lev] = std::make_unique<MultiFab>(cba, warpx.DistributionMap(lev), 1, ng);
             rho_coarse[lev]->setVal(0.);
         }
@@ -126,16 +141,16 @@ RelativisticExplicitES::AddSpaceChargeField (amrex::Vector<std::unique_ptr<amrex
    E field due to that `phi` to `Efield_fp`.
 */
 void
-RelativisticExplicitES::AddBoundaryField (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
-                                          amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield)
+RelativisticExplicitES::AddBoundaryField (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield_fp,
+                                          amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield_fp)
 {
     WARPX_PROFILE("WarpX::AddBoundaryField");
 
     auto & warpx = WarpX::GetInstance();
     // Store the boundary conditions for the field solver if they haven't been
     // stored yet
-    if (!m_poisson_boundary_handler.bcs_set) {
-        m_poisson_boundary_handler.definePhiBCs(Geom(0));
+    if (!m_poisson_boundary_handler->bcs_set) {
+        m_poisson_boundary_handler->DefinePhiBCs(warpx.Geom(0));
     }
 
     // Allocate fields for charge and potential
@@ -143,9 +158,9 @@ RelativisticExplicitES::AddBoundaryField (amrex::Vector<std::array< std::unique_
     amrex::Vector<std::unique_ptr<amrex::MultiFab> > rho(num_levels);
     amrex::Vector<std::unique_ptr<amrex::MultiFab> > phi(num_levels);
     // Use number of guard cells used for local deposition of rho
-    const amrex::IntVect ng = guard_cells.ng_depos_rho;
+    const amrex::IntVect ng = warpx.get_ng_depos_rho();
     for (int lev = 0; lev <= max_level; lev++) {
-        BoxArray nba = boxArray(lev);
+        BoxArray nba = warpx.boxArray(lev);
         nba.surroundingNodes();
         rho[lev] = std::make_unique<amrex::MultiFab>(nba, warpx.DistributionMap(lev), 1, ng);
         rho[lev]->setVal(0.);

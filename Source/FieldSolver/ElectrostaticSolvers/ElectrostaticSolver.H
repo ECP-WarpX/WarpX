@@ -4,9 +4,10 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef Electrostatic_Solver_H_
-#define Electrostatic_Solver_H_
+#ifndef WARPX_ELECTROSTATICSOLVER_H_
+#define WARPX_ELECTROSTATICSOLVER_H_
 
+#include "ElectrostaticBase.H"
 #include "LabFrameExplicitES.H"
 
 class ElectrostaticSolver
@@ -36,4 +37,4 @@ public:
     std::unique_ptr<LabFrameExplicitES> m_labframe_explicit_es;
 };
 
-#endif
+#endif // WARPX_ELECTROSTATICSOLVER_H_

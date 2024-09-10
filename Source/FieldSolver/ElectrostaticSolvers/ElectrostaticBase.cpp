@@ -9,6 +9,8 @@
 
 #include "ElectrostaticBase.H"
 #include <ablastr/fields/PoissonSolver.H>
+
+
 ElectrostaticBase::ElectrostaticBase (int nlevs_max)
 {
     max_level = nlevs_max;
@@ -199,7 +201,7 @@ ElectrostaticBase::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiF
         warpx.DistributionMap(),
         warpx.boxArray(),
         WarpX::grid_type,
-        m_poisson_boundary_handler,
+        *m_poisson_boundary_handler,
         is_solver_igf_on_lev0,
         warpx.m_eb_enabled,
         WarpX::do_single_precision_comms,

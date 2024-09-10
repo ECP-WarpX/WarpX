@@ -8,11 +8,12 @@
  */
 #ifndef WARPX_LABFRAME_EXPLICITES_H_
 #define WARPX_LABFRAME_EXPLICITES_H_
+
 #include "ElectrostaticBase.H"
 
 class LabFrameExplicitES : public ElectrostaticBase
 {
-    public:
+public:
 
     void ReadParameters ();
     void ComputeSpaceChargeField (
@@ -31,12 +32,6 @@ class LabFrameExplicitES : public ElectrostaticBase
     // Multifab for electrostatic potential
     // amrex::Vector< std::unique_ptr<amrex::MultiFab> > m_phi_fp;
     // amrex::Vector< std::unique_ptr<amrex::MultiFab> > m_rho_fp;
-
-    // Parameters for lab frame electrostatic
-    amrex::Real self_fields_required_precision = 1e-11_rt;
-    amrex::Real self_fields_absolute_tolerance = 0.0_rt;
-    int self_fields_max_iters = 200;
-    int self_fields_verbosity = 2;
 };
 
 #endif

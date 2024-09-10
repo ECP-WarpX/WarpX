@@ -61,7 +61,7 @@ namespace ablastr::fields {
 
 amrex::Real
 getMaxNormRho (amrex::Vector<amrex::MultiFab*> const & rho,
-            int finest_level, 
+            int finest_level,
                   amrex::Real & absolute_tolerance)
 {
     amrex::Real max_norm_b = 0.0;
@@ -134,7 +134,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
             amrex::Vector<amrex::DistributionMapping> const& dmap,
             amrex::Vector<amrex::BoxArray> const& grids,
             utils::enums::GridType grid_type,
-            T_BoundaryHandler const boundary_handler,
+            T_BoundaryHandler const& boundary_handler,
             bool is_solver_igf_on_lev0,
             bool eb_enabled = false,
             bool do_single_precision_comms = false,
@@ -160,7 +160,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 #endif
 
     auto const finest_level = static_cast<int>(rho.size() - 1);
-    
+
     // determine if rho is zero everywhere
     amrex::Real always_use_bnorm = getMaxNormRho(rho, finest_level, absolute_tolerance);
 
