@@ -22,7 +22,7 @@ using namespace amrex;
 class ElectrostaticBase
 {
 public:
-    // ElectrostaticBase() = default;
+    ElectrostaticBase() = default;
 
     virtual ~ElectrostaticBase() = default;
 

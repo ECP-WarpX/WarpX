@@ -24,14 +24,14 @@ public:
 
 
     void ComputeSpaceChargeField (
-        amrex::Vector< std::unique_ptr<amrex::MultiFab> > rho_fp,
-        amrex::Vector< std::unique_ptr<amrex::MultiFab> > rho_cp,
-        amrex::Vector< std::unique_ptr<amrex::MultiFab> > charge_buf,
-        amrex::Vector< std::unique_ptr<amrex::MultiFab> > phi_fp,
+        amrex::Vector< std::unique_ptr<amrex::MultiFab> >& rho_fp,
+        amrex::Vector< std::unique_ptr<amrex::MultiFab> >& rho_cp,
+        amrex::Vector< std::unique_ptr<amrex::MultiFab> >& charge_buf,
+        amrex::Vector< std::unique_ptr<amrex::MultiFab> >& phi_fp,
         MultiParticleContainer& mpc,
         MultiFluidContainer* mfl,
-        amrex::Vector< std::array< std::unique_ptr<amrex::MultiFab>, 3> > Efield_fp,
-        amrex::Vector< std::array< std::unique_ptr<amrex::MultiFab>, 3> > Bfield_fp
+        amrex::Vector< std::array< std::unique_ptr<amrex::MultiFab>, 3> >& Efield_fp,
+        amrex::Vector< std::array< std::unique_ptr<amrex::MultiFab>, 3> >& Bfield_fp
     );
 
     std::unique_ptr<LabFrameExplicitES> m_labframe_explicit_es;
