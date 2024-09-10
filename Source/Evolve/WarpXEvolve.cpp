@@ -543,6 +543,8 @@ void WarpX::HandleParticlesAtBoundaries (int step, amrex::Real cur_time, int num
 
 void WarpX::SyncCurrentAndRho ()
 {
+    using ablastr::fields::va2vm;
+
     if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
     {
         if (fft_periodic_single_box)
@@ -552,12 +554,12 @@ void WarpX::SyncCurrentAndRho ()
             if (current_deposition_algo == CurrentDepositionAlgo::Vay)
             {
                 // TODO Replace current_cp with current_cp_vay once Vay deposition is implemented with MR
-                SyncCurrent(current_fp_vay, current_cp, current_buf);
+                SyncCurrent(va2vm(current_fp_vay), va2vm(current_cp), va2vm(current_buf));
                 SyncRho();
             }
             else
             {
-                SyncCurrent(current_fp, current_cp, current_buf);
+                SyncCurrent(va2vm(current_fp), va2vm(current_cp), va2vm(current_buf));
                 SyncRho();
             }
         }
@@ -569,7 +571,7 @@ void WarpX::SyncCurrentAndRho ()
             if (!current_correction &&
                 current_deposition_algo != CurrentDepositionAlgo::Vay)
             {
-                SyncCurrent(current_fp, current_cp, current_buf);
+                SyncCurrent(va2vm(current_fp), va2vm(current_cp), va2vm(current_buf));
                 SyncRho();
             }
 
@@ -577,13 +579,13 @@ void WarpX::SyncCurrentAndRho ()
             {
                 // TODO This works only without mesh refinement
                 const int lev = 0;
-                if (use_filter) { ApplyFilterJ(current_fp_vay, lev); }
+                if (use_filter) { ApplyFilterJ(va2vm(current_fp_vay), lev); }
             }
         }
     }
     else // FDTD
     {
-        SyncCurrent(current_fp, current_cp, current_buf);
+        SyncCurrent(va2vm(current_fp), va2vm(current_cp), va2vm(current_buf));
         SyncRho();
     }
 
@@ -664,7 +666,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         // namely 'current_fp_nodal': SyncCurrent stores the result of its centering
         // into 'current_fp' and then performs both filtering, if used, and exchange
         // of guard cells.
-        SyncCurrent(current_fp, current_cp, current_buf);
+        SyncCurrent(va2vm(current_fp), va2vm(current_cp), va2vm(current_buf));
         // Forward FFT of J
         PSATDForwardTransformJ(current_fp, current_cp);
     }
@@ -698,7 +700,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         // namely 'current_fp_nodal': SyncCurrent stores the result of its centering
         // into 'current_fp' and then performs both filtering, if used, and exchange
         // of guard cells.
-        SyncCurrent(current_fp, current_cp, current_buf);
+        SyncCurrent(va2vm(current_fp), va2vm(current_cp), va2vm(current_buf));
         // Forward FFT of J
         PSATDForwardTransformJ(current_fp, current_cp);
 
@@ -802,6 +804,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
 void
 WarpX::OneStep_sub1 (Real cur_time)
 {
+    using ablastr::fields::va2vm;
+
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         electrostatic_solver_id == ElectrostaticSolverAlgo::None,
         "Electrostatic solver cannot be used with sub-cycling."
@@ -817,8 +821,8 @@ WarpX::OneStep_sub1 (Real cur_time)
     PushParticlesandDeposit(fine_lev, cur_time, DtType::FirstHalf);
     RestrictCurrentFromFineToCoarsePatch(current_fp, current_cp, fine_lev);
     RestrictRhoFromFineToCoarsePatch(fine_lev);
-    if (use_filter) { ApplyFilterJ(current_fp, fine_lev); }
-    SumBoundaryJ(current_fp, fine_lev, Geom(fine_lev).periodicity());
+    if (use_filter) { ApplyFilterJ( va2vm(current_fp), fine_lev); }
+    SumBoundaryJ( va2vm(current_fp), fine_lev, Geom(fine_lev).periodicity());
 
     ApplyFilterandSumBoundaryRho(
         m_fields.get_mr_levels("rho_fp", finest_level),

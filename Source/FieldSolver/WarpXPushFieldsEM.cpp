@@ -737,7 +737,7 @@ WarpX::PushPSATD ()
             PSATDBackwardTransformJ(current_fp, current_cp);
 
             // Synchronize J and rho
-            SyncCurrent(current_fp, current_cp, current_buf);
+            SyncCurrent(va2vm(current_fp), va2vm(current_cp), va2vm(current_buf));
             SyncRho();
         }
         else if (current_deposition_algo == CurrentDepositionAlgo::Vay)

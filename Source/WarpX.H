@@ -85,7 +85,6 @@ class WARPX_EXPORT WarpX
     : public amrex::AmrCore
 {
 public:
-
     static WarpX& GetInstance ();
 
     static void ResetInstance ();
@@ -875,9 +874,9 @@ public:
      * \param[in,out] J_buffer reference to buffer current \c MultiFab (all MR levels)
      */
     void SyncCurrent (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_buffer);
+        const ablastr::fields::MultiLevelVectorField& J_fp,
+        const ablastr::fields::MultiLevelVectorField& J_cp,
+        const ablastr::fields::MultiLevelVectorField& J_buffer);
 
     void SyncRho ();
 
@@ -1344,19 +1343,19 @@ private:
     void StoreCurrent (int lev);
     void RestoreCurrent (int lev);
     void ApplyFilterJ (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+        const std::vector<std::map<ablastr::fields::Direction, amrex::MultiFab*>>& current,
         int lev,
         int idim);
     void ApplyFilterJ (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+        const std::vector<std::map<ablastr::fields::Direction, amrex::MultiFab*>>& current,
         int lev);
     void SumBoundaryJ (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+        const std::vector<std::map<ablastr::fields::Direction, amrex::MultiFab*>>& current,
         int lev,
         int idim,
         const amrex::Periodicity& period);
     void SumBoundaryJ (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+        const std::vector<std::map<ablastr::fields::Direction, amrex::MultiFab*>>& current,
         int lev,
         const amrex::Periodicity& period);
     void NodalSyncJ (

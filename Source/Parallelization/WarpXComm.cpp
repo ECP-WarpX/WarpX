@@ -989,22 +989,26 @@ WarpX::FillBoundaryAux (int lev, IntVect ng)
 
 void
 WarpX::SyncCurrent (
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_buffer)
+    const ablastr::fields::MultiLevelVectorField& J_fp,
+    const ablastr::fields::MultiLevelVectorField& J_cp,
+    const ablastr::fields::MultiLevelVectorField& J_buffer)
 {
+    using ablastr::fields::Direction;
+
     WARPX_PROFILE("WarpX::SyncCurrent()");
 
     // If warpx.do_current_centering = 1, center currents from nodal grid to staggered grid
     if (do_current_centering)
     {
+        std::vector<std::map<ablastr::fields::Direction, amrex::MultiFab*>> J_fp_nodal = m_fields.get_mr_levels_alldirs("current_fp_nodal", finest_level+1);
+
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(finest_level <= 1,
                                          "warpx.do_current_centering=1 not supported with more than one fine levels");
         for (int lev = 0; lev <= finest_level; lev++)
         {
-            WarpX::UpdateCurrentNodalToStag(*J_fp[lev][0], *current_fp_nodal[lev][0]);
-            WarpX::UpdateCurrentNodalToStag(*J_fp[lev][1], *current_fp_nodal[lev][1]);
-            WarpX::UpdateCurrentNodalToStag(*J_fp[lev][2], *current_fp_nodal[lev][2]);
+            WarpX::UpdateCurrentNodalToStag(*J_fp[lev][Direction{0}], *J_fp_nodal[lev][Direction{0}]);
+            WarpX::UpdateCurrentNodalToStag(*J_fp[lev][Direction{1}], *J_fp_nodal[lev][Direction{1}]);
+            WarpX::UpdateCurrentNodalToStag(*J_fp[lev][Direction{2}], *J_fp_nodal[lev][Direction{2}]);
         }
     }
 
@@ -1079,7 +1083,7 @@ WarpX::SyncCurrent (
     {
         for (int lev = finest_level; lev >= 0; --lev)
         {
-            const int ncomp = J_fp[lev][idim]->nComp();
+            const int ncomp = J_fp[lev][Direction{idim}]->nComp();
             auto const& period = Geom(lev).periodicity();
 
             if (lev < finest_level)
@@ -1087,8 +1091,8 @@ WarpX::SyncCurrent (
                 // On a coarse level, the data in mf_comm comes from the
                 // coarse patch of the fine level. They are unfiltered and uncommunicated.
                 // We need to add it to the fine patch of the current level.
-                MultiFab fine_lev_cp(J_fp[lev][idim]->boxArray(),
-                                     J_fp[lev][idim]->DistributionMap(),
+                MultiFab fine_lev_cp(J_fp[lev][Direction{idim}]->boxArray(),
+                                     J_fp[lev][Direction{idim}]->DistributionMap(),
                                      ncomp, 0);
                 fine_lev_cp.setVal(0.0);
                 fine_lev_cp.ParallelAdd(*mf_comm, 0, 0, ncomp, mf_comm->nGrowVect(),
@@ -1097,7 +1101,7 @@ WarpX::SyncCurrent (
                 auto owner_mask = amrex::OwnerMask(fine_lev_cp, period);
                 auto const& mma = owner_mask->const_arrays();
                 auto const& sma = fine_lev_cp.const_arrays();
-                auto const& dma = J_fp[lev][idim]->arrays();
+                auto const& dma = J_fp[lev][Direction{idim}]->arrays();
                 amrex::ParallelFor(fine_lev_cp, IntVect(0), ncomp,
                 [=] AMREX_GPU_DEVICE (int bno, int i, int j, int k, int n)
                 {
@@ -1120,23 +1124,23 @@ WarpX::SyncCurrent (
                 // filtering depends on the level. This is also done before any
                 // same-level communication because it's easier this way to
                 // avoid double counting.
-                J_cp[lev][idim]->setVal(0.0);
-                ablastr::coarsen::average::Coarsen(*J_cp[lev][idim],
-                                                   *J_fp[lev][idim],
+                J_cp[lev][Direction{idim}]->setVal(0.0);
+                ablastr::coarsen::average::Coarsen(*J_cp[lev][Direction{idim}],
+                                                   *J_fp[lev][Direction{idim}],
                                                    refRatio(lev-1));
-                if (J_buffer[lev][idim])
+                if (J_buffer[lev][Direction{idim}])
                 {
-                    IntVect const& ng = J_cp[lev][idim]->nGrowVect();
-                    AMREX_ASSERT(ng.allLE(J_buffer[lev][idim]->nGrowVect()));
-                    MultiFab::Add(*J_buffer[lev][idim], *J_cp[lev][idim],
+                    IntVect const& ng = J_cp[lev][Direction{idim}]->nGrowVect();
+                    AMREX_ASSERT(ng.allLE(J_buffer[lev][Direction{idim}]->nGrowVect()));
+                    MultiFab::Add(*J_buffer[lev][Direction{idim}], *J_cp[lev][Direction{idim}],
                                   0, 0, ncomp, ng);
                     mf_comm = std::make_unique<MultiFab>
-                        (*J_buffer[lev][idim], amrex::make_alias, 0, ncomp);
+                        (*J_buffer[lev][Direction{idim}], amrex::make_alias, 0, ncomp);
                 }
                 else
                 {
                     mf_comm = std::make_unique<MultiFab>
-                        (*J_cp[lev][idim], amrex::make_alias, 0, ncomp);
+                        (*J_cp[lev][Direction{idim}], amrex::make_alias, 0, ncomp);
                 }
             }
 
@@ -1258,11 +1262,13 @@ void WarpX::RestrictCurrentFromFineToCoarsePatch (
 }
 
 void WarpX::ApplyFilterJ (
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+    const std::vector<std::map<ablastr::fields::Direction, amrex::MultiFab*>>& current,
     const int lev,
     const int idim)
 {
-    amrex::MultiFab& J = *current[lev][idim];
+    using ablastr::fields::Direction;
+
+    amrex::MultiFab& J = *current[lev][Direction{idim}];
 
     const int ncomp = J.nComp();
     const amrex::IntVect ngrow = J.nGrowVect();
@@ -1275,7 +1281,7 @@ void WarpX::ApplyFilterJ (
 }
 
 void WarpX::ApplyFilterJ (
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+    const std::vector<std::map<ablastr::fields::Direction, amrex::MultiFab*>>& current,
     const int lev)
 {
     for (int idim=0; idim<3; ++idim)
@@ -1285,7 +1291,7 @@ void WarpX::ApplyFilterJ (
 }
 
 void WarpX::SumBoundaryJ (
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+    const std::vector<std::map<ablastr::fields::Direction, amrex::MultiFab*>>& current,
     const int lev,
     const int idim,
     const amrex::Periodicity& period)
@@ -1323,7 +1329,7 @@ void WarpX::SumBoundaryJ (
 }
 
 void WarpX::SumBoundaryJ (
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+    const std::vector<std::map<ablastr::fields::Direction, amrex::MultiFab*>>& current,
     const int lev,
     const amrex::Periodicity& period)
 {
