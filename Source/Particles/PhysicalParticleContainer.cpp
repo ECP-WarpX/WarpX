@@ -993,13 +993,6 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
     const bool radially_weighted = plasma_injector.radially_weighted;
 #endif
 
-    auto n_user_int_attribs = static_cast<int>(m_user_int_attribs.size());
-    auto n_user_real_attribs = static_cast<int>(m_user_real_attribs.size());
-    PlasmaParserHelper plasma_parser_helper (m_user_int_attribs.size(),
-                                             m_user_real_attribs.size(),
-                                             m_user_int_attrib_parser,
-                                             m_user_real_attrib_parser);
-
     MFItInfo info;
     if (do_tiling && Gpu::notInLaunchRegion()) {
         info.EnableTiling(tile_size);
@@ -1119,6 +1112,13 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
             pa[ia] = soa.GetRealData(ia).data() + old_size;
         }
         uint64_t * AMREX_RESTRICT pa_idcpu = soa.GetIdCPUData().data() + old_size;
+
+        auto n_user_int_attribs = static_cast<int>(m_user_int_attribs.size());
+        auto n_user_real_attribs = static_cast<int>(m_user_real_attribs.size());
+        PlasmaParserHelper plasma_parser_helper (m_user_int_attribs.size(),
+                                                 m_user_real_attribs.size(),
+                                                 m_user_int_attrib_parser,
+                                                 m_user_real_attrib_parser);
 
         plasma_parser_helper.prepareData(soa, old_size, m_user_int_attribs, m_user_real_attribs, particle_icomps, particle_comps);
         int** pa_user_int_data = plasma_parser_helper.getUserIntDataPtrs();
@@ -1446,13 +1446,6 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
     const bool radially_weighted = plasma_injector.radially_weighted;
 #endif
 
-    auto n_user_int_attribs = static_cast<int>(m_user_int_attribs.size());
-    auto n_user_real_attribs = static_cast<int>(m_user_real_attribs.size());
-    PlasmaParserHelper plasma_parser_helper (m_user_int_attribs.size(),
-                                             m_user_real_attribs.size(),
-                                             m_user_int_attrib_parser,
-                                             m_user_real_attrib_parser);
-
     MFItInfo info;
     if (do_tiling && Gpu::notInLaunchRegion()) {
         info.EnableTiling(tile_size);
@@ -1554,6 +1547,12 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         }
         uint64_t * AMREX_RESTRICT pa_idcpu = soa.GetIdCPUData().data() + old_size;
 
+        auto n_user_int_attribs = static_cast<int>(m_user_int_attribs.size());
+        auto n_user_real_attribs = static_cast<int>(m_user_real_attribs.size());
+        PlasmaParserHelper plasma_parser_helper (m_user_int_attribs.size(),
+                                                 m_user_real_attribs.size(),
+                                                 m_user_int_attrib_parser,
+                                                 m_user_real_attrib_parser);
         plasma_parser_helper.prepareData(soa, old_size, m_user_int_attribs, m_user_real_attribs, particle_icomps, particle_comps);
         int** pa_user_int_data = plasma_parser_helper.getUserIntDataPtrs();
         ParticleReal** pa_user_real_data = plasma_parser_helper.getUserRealDataPtrs();
