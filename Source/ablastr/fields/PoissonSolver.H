@@ -59,8 +59,8 @@ namespace ablastr::fields {
 
 amrex::Real
 getMaxNormRho (amrex::Vector<amrex::MultiFab*> const & rho,
-            int finest_level, 
-                  amrex::Real & absolute_tolerance)
+               int finest_level, 
+               amrex::Real & absolute_tolerance)
 {
     amrex::Real max_norm_b = 0.0;
     for (int lev=0; lev<=finest_level; lev++) {
@@ -78,6 +78,55 @@ getMaxNormRho (amrex::Vector<amrex::MultiFab*> const & rho,
         );
     }
     return max_norm_b;
+}
+
+void
+interpolatePhiBetweenLevels (amrex::MultiFab* const & phi_lev,
+                             amrex::MultiFab* const & phi_lev_plus_one,
+                             amrex::Geometry geom_lev, 
+                             bool do_single_precision_comms,
+                             const amrex::IntVect& refratio, 
+                             const int ncomp, 
+                             const int ng
+                             )
+{
+    // Allocate phi_cp for lev+1
+    amrex::BoxArray ba = phi_lev_plus_one->boxArray();
+    ba.coarsen(refratio);
+    amrex::MultiFab phi_cp(ba, phi_lev_plus_one->DistributionMap(), ncomp, ng);
+    if (ng > 0) {
+        // Set all values outside the domain to zero
+        phi_cp.setDomainBndry(0.0_rt, geom_lev);
+    }
+
+    // Copy from phi[lev] to phi_cp (in parallel)
+    const amrex::Periodicity& crse_period = geom_lev.periodicity();
+
+    ablastr::utils::communication::ParallelCopy(
+        phi_cp,
+        *phi_lev,
+        0,
+        0,
+        1,
+        amrex::IntVect(0),
+        amrex::IntVect(ng),
+        do_single_precision_comms,
+        crse_period
+    );
+
+    // Local interpolation from phi_cp to phi[lev+1]
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for (amrex::MFIter mfi(*phi_lev_plus_one, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+        amrex::Array4<amrex::Real> const phi_fp_arr = phi_lev_plus_one->array(mfi);
+        amrex::Array4<amrex::Real const> const phi_cp_arr = phi_cp.array(mfi);
+
+        details::PoissonInterpCPtoFP const interp(phi_fp_arr, phi_cp_arr, refratio);
+
+        amrex::Box const& b = mfi.growntilebox(ng);
+        amrex::ParallelFor(b, interp);
+    }
 }
 
 /** Compute the potential `phi` by solving the Poisson equation
@@ -311,55 +360,27 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         mlmg.solve( {phi[lev]}, {rho[lev]},
                      relative_tolerance, absolute_tolerance );
 
+
+        const amrex::IntVect& refratio = rel_ref_ratio.value()[lev];
+        const int ncomp = linop->getNComp();
+        const int ng = (grid_type == utils::enums::GridType::Collocated) ? 1 : 0;
+
         // needed for solving the levels by levels:
         // - coarser level is initial guess for finer level
         // - coarser level provides boundary values for finer level patch
         // Interpolation from phi[lev] to phi[lev+1]
         // (This provides both the boundary conditions and initial guess for phi[lev+1])
-        if (lev < finest_level) {
+        if (lev < finest_level) { interpolatePhiBetweenLevels(phi[lev], 
+                                                              phi[lev+1], 
+                                                              geom[lev],
+                                                              do_single_precision_comms,
+                                                              refratio,  
+                                                              ncomp, 
+                                                              ng) ;}
 
-            // Allocate phi_cp for lev+1
-            amrex::BoxArray ba = phi[lev+1]->boxArray();
-            const amrex::IntVect& refratio = rel_ref_ratio.value()[lev];
-            ba.coarsen(refratio);
-            const int ncomp = linop->getNComp();
-            const int ng = (grid_type == utils::enums::GridType::Collocated) ? 1 : 0;
-            amrex::MultiFab phi_cp(ba, phi[lev+1]->DistributionMap(), ncomp, ng);
-            if (ng > 0) {
-                // Set all values outside the domain to zero
-                phi_cp.setDomainBndry(0.0_rt, geom[lev]);
-            }
 
-            // Copy from phi[lev] to phi_cp (in parallel)
-            const amrex::Periodicity& crse_period = geom[lev].periodicity();
 
-            ablastr::utils::communication::ParallelCopy(
-                phi_cp,
-                *phi[lev],
-                0,
-                0,
-                1,
-                amrex::IntVect(0),
-                amrex::IntVect(ng),
-                do_single_precision_comms,
-                crse_period
-            );
 
-            // Local interpolation from phi_cp to phi[lev+1]
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
-#endif
-            for (amrex::MFIter mfi(*phi[lev + 1], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
-                amrex::Array4<amrex::Real> const phi_fp_arr = phi[lev + 1]->array(mfi);
-                amrex::Array4<amrex::Real const> const phi_cp_arr = phi_cp.array(mfi);
-
-                details::PoissonInterpCPtoFP const interp(phi_fp_arr, phi_cp_arr, refratio);
-
-                amrex::Box const& b = mfi.growntilebox(ng);
-                amrex::ParallelFor(b, interp);
-            }
-
-        }
 
         // Run additional operations, such as calculation of the E field for embedded boundaries
         if constexpr (!std::is_same_v<T_PostPhiCalculationFunctor, std::nullopt_t>) {
