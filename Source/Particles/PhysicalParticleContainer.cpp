@@ -1634,11 +1634,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 }
                 scale_fac /= r;
             }
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-            amrex::ignore_unused(k);
-#elif defined(WARPX_DIM_1D_Z)
             amrex::ignore_unused(j,k);
-#endif
 
             for (int i_part = 0; i_part < pcounts[index]; ++i_part)
             {
@@ -3256,6 +3252,28 @@ void PhysicalParticleContainer::resample (const int timestep, const bool verbose
     WARPX_PROFILE_VAR_STOP(blp_resample_actual);
 }
 
+bool
+PhysicalParticleContainer::findRefinedInjectionBox (amrex::Box& a_fine_injection_box, amrex::IntVect& a_rrfac)
+{
+    WARPX_PROFILE("PhysicalParticleContainer::findRefinedInjectionBox");
+
+    // This does not work if the mesh is dynamic.  But in that case, we should
+    // not use refined injected either.  We also assume there is only one fine level.
+    static bool refine_injection = false;
+    static Box fine_injection_box;
+    static amrex::IntVect rrfac(AMREX_D_DECL(1,1,1));
+    if (!refine_injection and WarpX::moving_window_active(WarpX::GetInstance().getistep(0)+1) and WarpX::refine_plasma and do_continuous_injection and numLevels() == 2) {
+        refine_injection = true;
+        fine_injection_box = ParticleBoxArray(1).minimalBox();
+        fine_injection_box.setSmall(WarpX::moving_window_dir, std::numeric_limits<int>::lowest()/2);
+        fine_injection_box.setBig(WarpX::moving_window_dir, std::numeric_limits<int>::max()/2);
+        rrfac = m_gdb->refRatio(0);
+        fine_injection_box.coarsen(rrfac);
+    }
+    a_fine_injection_box = fine_injection_box;
+    a_rrfac = rrfac;
+    return refine_injection;
+}
 
 #ifdef WARPX_QED
 
@@ -3297,29 +3315,5 @@ PhysicalParticleContainer::getPairGenerationFilterFunc ()
     WARPX_PROFILE("PhysicalParticleContainer::getPairGenerationFunc()");
     return PairGenerationFilterFunc{particle_runtime_comps["opticalDepthBW"]};
 }
-
-bool
-PhysicalParticleContainer::findRefinedInjectionBox (amrex::Box& a_fine_injection_box, amrex::IntVect& a_rrfac)
-{
-    WARPX_PROFILE("PhysicalParticleContainer::findRefinedInjectionBox");
-
-    // This does not work if the mesh is dynamic.  But in that case, we should
-    // not use refined injected either.  We also assume there is only one fine level.
-    static bool refine_injection = false;
-    static Box fine_injection_box;
-    static amrex::IntVect rrfac(AMREX_D_DECL(1,1,1));
-    if (!refine_injection and WarpX::moving_window_active(WarpX::GetInstance().getistep(0)+1) and WarpX::refine_plasma and do_continuous_injection and numLevels() == 2) {
-        refine_injection = true;
-        fine_injection_box = ParticleBoxArray(1).minimalBox();
-        fine_injection_box.setSmall(WarpX::moving_window_dir, std::numeric_limits<int>::lowest()/2);
-        fine_injection_box.setBig(WarpX::moving_window_dir, std::numeric_limits<int>::max()/2);
-        rrfac = m_gdb->refRatio(0);
-        fine_injection_box.coarsen(rrfac);
-    }
-    a_fine_injection_box = fine_injection_box;
-    a_rrfac = rrfac;
-    return refine_injection;
-}
-
 
 #endif
