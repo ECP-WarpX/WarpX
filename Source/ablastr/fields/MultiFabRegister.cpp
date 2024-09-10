@@ -314,4 +314,42 @@ namespace ablastr::fields
         );
     }
 
+    std::vector<
+        std::map<
+            Direction,
+            amrex::MultiFab*
+        >
+    >
+    va2vm (
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > const & old_vector_on_levels
+    )
+    {
+        int const finest_level = old_vector_on_levels.size() - 1u;
+
+        std::vector<
+            std::map<
+                Direction,
+                amrex::MultiFab*
+            >
+        > field_on_level;
+        field_on_level.reserve(finest_level+1);
+
+        std::vector<Direction> all_dirs = {Direction{0}, Direction{1}, Direction{2}};
+
+        for (int lvl = 0; lvl <= finest_level; lvl++)
+        {
+            // insert a new level
+            field_on_level.push_back(std::map<
+                    Direction,
+                    amrex::MultiFab*
+            >{});
+
+            // insert components
+            for (auto dir : {0, 1, 2})
+            {
+                field_on_level[lvl][Direction{dir}] = old_vector_on_levels[lvl][dir].get();
+            }
+        }
+        return field_on_level;
+    }
 } // namespace ablastr::fields

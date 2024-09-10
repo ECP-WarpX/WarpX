@@ -322,6 +322,22 @@ namespace ablastr::fields
         > m_mf_register;
     };
 
+    /** TODO: temporary, remove me
+     *
+     * Convert get_mr_levels_alldirs type to legacy amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >.
+     *
+     * @return
+     */
+    std::vector<
+        std::map<
+                Direction,
+                amrex::MultiFab*
+        >
+    >
+    va2vm (
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > const & old_vector_on_levels
+    );
+
 } // namespace ablastr::fields
 
 #endif  // ABLASTR_FIELDS_MF_REGISTER_H
