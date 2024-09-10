@@ -320,7 +320,6 @@ WarpX::WarpX ()
     Efield_aux.resize(nlevs_max);
     Bfield_aux.resize(nlevs_max);
 
-    F_fp.resize(nlevs_max);
     rho_fp.resize(nlevs_max);
     Efield_fp.resize(nlevs_max);
     Bfield_fp.resize(nlevs_max);
@@ -379,7 +378,6 @@ WarpX::WarpX ()
         m_hybrid_pic_model = std::make_unique<HybridPICModel>(nlevs_max);
     }
 
-    F_cp.resize(nlevs_max);
     rho_cp.resize(nlevs_max);
     current_cp.resize(nlevs_max);
     Efield_cp.resize(nlevs_max);
@@ -2503,7 +2501,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
     if (do_dive_cleaning)
     {
-        AllocInitMultiFab(F_fp[lev], amrex::convert(ba, F_nodal_flag), dm, ncomps, ngF, lev, "F_fp", 0.0_rt);
+        m_fields.alloc_init(
+            "F_fp", lev, amrex::convert(ba, F_nodal_flag), dm,
+            ncomps, ngF, 0.0_rt);
     }
 
     if (do_divb_cleaning)
@@ -2706,7 +2706,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
         if (do_dive_cleaning)
         {
-            AllocInitMultiFab(F_cp[lev], amrex::convert(cba, IntVect::TheUnitVector()), dm, ncomps, ngF, lev, "F_cp", 0.0_rt);
+            m_fields.alloc_init(
+                "F_cp", lev, amrex::convert(cba, IntVect::TheUnitVector()), dm,
+                ncomps, ngF, 0.0_rt);
         }
 
         if (do_divb_cleaning)
@@ -3497,9 +3499,6 @@ WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, cons
         case FieldType::rho_fp :
             field_pointer = rho_fp[lev].get();
             break;
-        case FieldType::F_fp :
-            field_pointer = F_fp[lev].get();
-            break;
         case FieldType::vector_potential_fp :
             field_pointer = vector_potential_fp_nodal[lev][direction].get();
             break;
@@ -3514,9 +3513,6 @@ WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, cons
             break;
         case FieldType::rho_cp :
             field_pointer = rho_cp[lev].get();
-            break;
-        case FieldType::F_cp :
-            field_pointer = F_cp[lev].get();
             break;
         case FieldType::edge_lengths :
             field_pointer = m_edge_lengths[lev][direction].get();

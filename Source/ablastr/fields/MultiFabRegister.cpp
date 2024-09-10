@@ -109,6 +109,33 @@ namespace ablastr::fields
         // TODO: does the other_name already exist? error
     }
 
+    void
+    MultiFabRegister::remake_level (
+        int level,
+        amrex::DistributionMapping const & new_dm
+    )
+    {
+        for (auto & element : m_mf_register )
+        {
+            MultiFabOwner & mf_owner = element.second;
+            if (mf_owner.level == level) {
+                amrex::MultiFab & mf = mf_owner.m_mf;
+                amrex::IntVect const & ng = mf.nGrowVect();
+                const auto tag = amrex::MFInfo().SetTag(mf.tags()[0]);
+                amrex::MultiFab new_mf(mf.boxArray(), new_dm, mf.nComp(), ng, tag);
+
+                // copy data to new MultiFab: Only done for persistent data like E and B field, not for
+                // temporary things like currents, etc.
+                if (mf_owner.redistribute_on_remake) {
+                    new_mf.Redistribute(mf, 0, 0, mf.nComp(), ng);
+                }
+
+                // replace old MultiFab with new one, deallocate old one
+                mf_owner.m_mf = std::move(new_mf);
+            }
+        }
+    }
+
     bool
     MultiFabRegister::has (
         std::string name,
@@ -287,4 +314,42 @@ namespace ablastr::fields
         );
     }
 
+    std::vector<
+        std::map<
+            Direction,
+            amrex::MultiFab*
+        >
+    >
+    va2vm (
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > const & old_vector_on_levels
+    )
+    {
+        int const finest_level = old_vector_on_levels.size() - 1u;
+
+        std::vector<
+            std::map<
+                Direction,
+                amrex::MultiFab*
+            >
+        > field_on_level;
+        field_on_level.reserve(finest_level+1);
+
+        std::vector<Direction> all_dirs = {Direction{0}, Direction{1}, Direction{2}};
+
+        for (int lvl = 0; lvl <= finest_level; lvl++)
+        {
+            // insert a new level
+            field_on_level.push_back(std::map<
+                    Direction,
+                    amrex::MultiFab*
+            >{});
+
+            // insert components
+            for (auto dir : {0, 1, 2})
+            {
+                field_on_level[lvl][Direction{dir}] = old_vector_on_levels[lvl][dir].get();
+            }
+        }
+        return field_on_level;
+    }
 } // namespace ablastr::fields

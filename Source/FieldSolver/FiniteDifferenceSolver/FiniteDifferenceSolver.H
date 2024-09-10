@@ -68,10 +68,10 @@ class FiniteDifferenceSolver
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
-                       std::unique_ptr<amrex::MultiFab> const& Ffield,
+                       amrex::MultiFab const* Ffield,
                        int lev, amrex::Real dt );
 
-        void EvolveF ( std::unique_ptr<amrex::MultiFab>& Ffield,
+        void EvolveF ( amrex::MultiFab* Ffield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
                        std::unique_ptr<amrex::MultiFab> const& rhofield,
                        int rhocomp,
@@ -217,13 +217,13 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-            std::unique_ptr<amrex::MultiFab> const& Ffield,
+            amrex::MultiFab const* Ffield,
             int lev,
             amrex::Real dt );
 
         template< typename T_Algo >
         void EvolveFCylindrical (
-            std::unique_ptr<amrex::MultiFab>& Ffield,
+            amrex::MultiFab* Ffield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
             std::unique_ptr<amrex::MultiFab> const& rhofield,
             int rhocomp,
@@ -269,12 +269,12 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-            std::unique_ptr<amrex::MultiFab> const& Ffield,
+            amrex::MultiFab const* Ffield,
             int lev, amrex::Real dt );
 
         template< typename T_Algo >
         void EvolveFCartesian (
-            std::unique_ptr<amrex::MultiFab>& Ffield,
+            amrex::MultiFab* Ffield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
             std::unique_ptr<amrex::MultiFab> const& rhofield,
             int rhocomp,

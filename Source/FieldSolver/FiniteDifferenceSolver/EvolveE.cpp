@@ -53,7 +53,7 @@ void FiniteDifferenceSolver::EvolveE (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
-    std::unique_ptr<amrex::MultiFab> const& Ffield,
+    amrex::MultiFab const* Ffield,
     int lev, amrex::Real const dt ) {
 
     if (m_fdtd_algo != ElectromagneticSolverAlgo::ECT) {
@@ -94,7 +94,7 @@ void FiniteDifferenceSolver::EvolveECartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-    std::unique_ptr<amrex::MultiFab> const& Ffield,
+    amrex::MultiFab const* Ffield,
     int lev, amrex::Real const dt ) {
 
 #ifndef AMREX_USE_EB
@@ -191,7 +191,7 @@ void FiniteDifferenceSolver::EvolveECartesian (
         if (Ffield) {
 
             // Extract field data for this grid/tile
-            const Array4<Real> F = Ffield->array(mfi);
+            Array4<Real const> F = Ffield->array(mfi);
 
             // Loop over the cells and update the fields
             amrex::ParallelFor(tex, tey, tez,
@@ -228,7 +228,7 @@ void FiniteDifferenceSolver::EvolveECylindrical (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-    std::unique_ptr<amrex::MultiFab> const& Ffield,
+    amrex::MultiFab const* Ffield,
     int lev, amrex::Real const dt ) {
 
 #ifndef AMREX_USE_EB
@@ -391,7 +391,7 @@ void FiniteDifferenceSolver::EvolveECylindrical (
         if (Ffield) {
 
             // Extract field data for this grid/tile
-            const Array4<Real> F = Ffield->array(mfi);
+            Array4<Real const> F = Ffield->array(mfi);
 
             // Loop over the cells and update the fields
             amrex::ParallelFor(ter, tet, tez,

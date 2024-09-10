@@ -21,6 +21,8 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
+#include <ablastr/fields/MultiFabRegister.H>
+
 #include <AMReX.H>
 #include <AMReX_BLassert.H>
 #include <AMReX_Box.H>
@@ -173,6 +175,8 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
     if (ba == boxArray(lev))
     {
         if (ParallelDescriptor::NProcs() == 1) { return; }
+
+        m_fields.remake_level(lev, dm);
 
         // Fine patch
         for (int idim=0; idim < 3; ++idim)

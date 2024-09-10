@@ -269,6 +269,19 @@ namespace ablastr::fields
             int level
         );
 
+        /** Remake all (i)MultiFab with a new distribution mapping.
+         *
+         * If redistribute is true, we also copy from the old data into the new.
+         *
+         * @param level the MR level to erase all MultiFabs from
+         * @param new_dm new distribution mapping
+         */
+        void
+        remake_level (
+            int other_level,
+            amrex::DistributionMapping const & new_dm
+        );
+
         /** title
          *
          * body body
@@ -308,6 +321,22 @@ namespace ablastr::fields
             MultiFabOwner
         > m_mf_register;
     };
+
+    /** TODO: temporary, remove me
+     *
+     * Convert get_mr_levels_alldirs type to legacy amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >.
+     *
+     * @return
+     */
+    std::vector<
+        std::map<
+                Direction,
+                amrex::MultiFab*
+        >
+    >
+    va2vm (
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > const & old_vector_on_levels
+    );
 
 } // namespace ablastr::fields
 
