@@ -813,7 +813,11 @@ WarpX::OneStep_sub1 (Real cur_time)
     RestrictRhoFromFineToCoarsePatch(fine_lev);
     if (use_filter) { ApplyFilterJ(current_fp, fine_lev); }
     SumBoundaryJ(current_fp, fine_lev, Geom(fine_lev).periodicity());
-    ApplyFilterandSumBoundaryRho(rho_fp, rho_cp, fine_lev, PatchType::fine, 0, 2*ncomps);
+
+    ApplyFilterandSumBoundaryRho(
+        m_fields.get_mr_levels("rho_fp", finest_level),
+        m_fields.get_mr_levels("rho_cp", finest_level),
+        fine_lev, PatchType::fine, 0, 2*ncomps);
 
     EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::FirstHalf);
     EvolveF(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::FirstHalf);
@@ -842,7 +846,9 @@ WarpX::OneStep_sub1 (Real cur_time)
     PushParticlesandDeposit(coarse_lev, cur_time, DtType::Full);
     StoreCurrent(coarse_lev);
     AddCurrentFromFineLevelandSumBoundary(current_fp, current_cp, current_buf, coarse_lev);
-    AddRhoFromFineLevelandSumBoundary(rho_fp, rho_cp, charge_buf, coarse_lev, 0, ncomps);
+    AddRhoFromFineLevelandSumBoundary(
+        m_fields.get_mr_levels("rho_fp", finest_level),
+        m_fields.get_mr_levels("rho_cp", finest_level), charge_buf, coarse_lev, 0, ncomps);
 
     EvolveB(fine_lev, PatchType::coarse, dt[fine_lev], DtType::FirstHalf);
     EvolveF(fine_lev, PatchType::coarse, dt[fine_lev], DtType::FirstHalf);
@@ -871,10 +877,13 @@ WarpX::OneStep_sub1 (Real cur_time)
     // iv) Push particles and fields on the fine patch (second fine step)
     PushParticlesandDeposit(fine_lev, cur_time + dt[fine_lev], DtType::SecondHalf);
     RestrictCurrentFromFineToCoarsePatch(current_fp, current_cp, fine_lev);
-    RestrictRhoFromFineToCoarsePatch(rho_fp, rho_cp, fine_lev);
+    RestrictRhoFromFineToCoarsePatch(fine_lev);
     if (use_filter) { ApplyFilterJ(current_fp, fine_lev); }
     SumBoundaryJ(current_fp, fine_lev, Geom(fine_lev).periodicity());
-    ApplyFilterandSumBoundaryRho(rho_fp, rho_cp, fine_lev, PatchType::fine, 0, ncomps);
+    ApplyFilterandSumBoundaryRho(
+        m_fields.get_mr_levels("rho_fp", finest_level),
+        m_fields.get_mr_levels("rho_cp", finest_level),
+        fine_lev, PatchType::fine, 0, ncomps);
 
     EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::FirstHalf);
     EvolveF(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::FirstHalf);
@@ -902,7 +911,9 @@ WarpX::OneStep_sub1 (Real cur_time)
     // by only half a coarse step (second half)
     RestoreCurrent(coarse_lev);
     AddCurrentFromFineLevelandSumBoundary(current_fp, current_cp, current_buf, coarse_lev);
-    AddRhoFromFineLevelandSumBoundary(rho_fp, rho_cp, charge_buf, coarse_lev, ncomps, ncomps);
+    AddRhoFromFineLevelandSumBoundary(
+        m_fields.get_mr_levels("rho_fp", finest_level),
+        m_fields.get_mr_levels("rho_cp", finest_level), charge_buf, coarse_lev, ncomps, ncomps);
 
     EvolveE(fine_lev, PatchType::coarse, dt[fine_lev]);
     FillBoundaryE(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolver,

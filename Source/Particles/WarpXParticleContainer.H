@@ -212,12 +212,12 @@ public:
      * \param[in] interpolate_across_levels whether to average down from the fine patch to the coarse patch
      * \param[in] icomp component of the MultiFab where rho is deposited (old, new)
      */
-    void DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+    void DepositCharge (const std::vector<amrex::MultiFab*>& rho,
                         bool local = false, bool reset = false,
                         bool apply_boundary_and_scale_volume = false,
                         bool interpolate_across_levels = true,
                         int icomp = 0);
-    void DepositCharge (std::unique_ptr<amrex::MultiFab>& rho, int lev,
+    void DepositCharge (const std::vector<amrex::MultiFab*>& rho, int lev,
                         bool local = false, bool reset = false,
                         bool apply_boundary_and_scale_volume = false,
                         int icomp = 0);

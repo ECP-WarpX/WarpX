@@ -1151,13 +1151,16 @@ WarpX::SyncCurrent (
 
 void
 WarpX::SyncRho () {
-    SyncRho(rho_fp, rho_cp, charge_buf);
+    SyncRho(
+        m_fields.get_mr_levels("rho_fp", finest_level),
+        m_fields.get_mr_levels("rho_cp", finest_level),
+        charge_buf);
 }
 
 void
 WarpX::SyncRho (
-    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
-    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+    const std::vector<amrex::MultiFab*>& charge_fp,
+    const std::vector<amrex::MultiFab*>& charge_cp,
     const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_buffer)
 {
     WARPX_PROFILE("WarpX::SyncRho()");
@@ -1431,15 +1434,15 @@ void WarpX::RestrictRhoFromFineToCoarsePatch ( const int lev )
 }
 
 void WarpX::ApplyFilterandSumBoundaryRho (
-    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
-    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+    const std::vector<amrex::MultiFab*>& charge_fp,
+    const std::vector<amrex::MultiFab*>& charge_cp,
     const int lev,
     PatchType patch_type,
     const int icomp,
     const int ncomp)
 {
     const int glev = (patch_type == PatchType::fine) ? lev : lev-1;
-    const std::unique_ptr<amrex::MultiFab>& rho = (patch_type == PatchType::fine) ?
+    amrex::MultiFab* rho = (patch_type == PatchType::fine) ?
                                                   charge_fp[lev] : charge_cp[lev];
     if (rho == nullptr) { return; }
     ApplyFilterandSumBoundaryRho(lev, glev, *rho, icomp, ncomp);
@@ -1477,8 +1480,8 @@ void WarpX::ApplyFilterandSumBoundaryRho (int /*lev*/, int glev, amrex::MultiFab
 * patch (and buffer region) of `lev+1`
 */
 void WarpX::AddRhoFromFineLevelandSumBoundary (
-    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
-    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+    const std::vector<amrex::MultiFab*>& charge_fp,
+    const std::vector<amrex::MultiFab*>& charge_cp,
     const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_buffer,
     const int lev,
     const int icomp,

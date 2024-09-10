@@ -147,7 +147,7 @@ public:
      *                          the time of the deposition.
      */
     void
-    DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+    DepositCharge (const std::vector<amrex::MultiFab*>& rho,
                    amrex::Real relative_time);
 
     /**

@@ -882,8 +882,8 @@ public:
     void SyncRho ();
 
     void SyncRho (
-        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
-        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+        const std::vector<amrex::MultiFab*>& charge_fp,
+        const std::vector<amrex::MultiFab*>& charge_cp,
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_buffer);
 
     [[nodiscard]] amrex::Vector<int> getnsubsteps () const {return nsubsteps;}
@@ -1005,7 +1005,7 @@ public:
     void AddBoundaryField ();
     void AddSpaceChargeField (WarpXParticleContainer& pc);
     void AddSpaceChargeFieldLabFrame ();
-    void computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+    void computePhi (const std::vector<amrex::MultiFab*>& rho,
                      std::vector<amrex::MultiFab*>& phi,
                      std::array<amrex::Real, 3> beta = {{0,0,0}},
                      amrex::Real required_precision=amrex::Real(1.e-11),
@@ -1367,15 +1367,15 @@ private:
 
     void RestrictRhoFromFineToCoarsePatch (int lev );
     void ApplyFilterandSumBoundaryRho (
-        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
-        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+        const std::vector<amrex::MultiFab*>& charge_fp,
+        const std::vector<amrex::MultiFab*>& charge_cp,
         int lev,
         PatchType patch_type,
         int icomp,
         int ncomp);
     void AddRhoFromFineLevelandSumBoundary (
-        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
-        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+        const std::vector<amrex::MultiFab*>& charge_fp,
+        const std::vector<amrex::MultiFab*>& charge_cp,
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_buffer,
         int lev,
         int icomp,
