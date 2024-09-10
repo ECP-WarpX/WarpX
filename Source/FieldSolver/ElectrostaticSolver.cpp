@@ -114,13 +114,8 @@ WarpX::AddBoundaryField ()
 
     // Allocate fields for charge and potential
     const int num_levels = max_level + 1;
-<<<<<<< HEAD
-    Vector<std::unique_ptr<MultiFab> > rho(num_levels);
-    std::vector<MultiFab*> phi(num_levels);
-=======
-    Vector<std::unique_ptr<MultiFab>> rho(num_levels);
-    Vector<std::unique_ptr<MultiFab> > phi(num_levels);
->>>>>>> f719adaa9 (continue implementing new strategy to get rho)
+    amrex::Vector<std::unique_ptr<MultiFab>> rho(num_levels);
+    amrex::Vector<std::unique_ptr<MultiFab>> phi(num_levels);
     // Use number of guard cells used for local deposition of rho
     const amrex::IntVect ng = guard_cells.ng_depos_rho;
     for (int lev = 0; lev <= max_level; lev++) {
@@ -128,8 +123,7 @@ WarpX::AddBoundaryField ()
         nba.surroundingNodes();
         rho[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, ng);
         rho[lev]->setVal(0.);
-        phi[lev] = m_fields.alloc_init( "phi_temp", lev, nba, DistributionMap(lev), 1,
-                                        IntVect::TheUnitVector());
+        phi[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, 1);
         phi[lev]->setVal(0.);
     }
 
@@ -140,19 +134,13 @@ WarpX::AddBoundaryField ()
     const std::array<Real, 3> beta = {0._rt};
 
     // Compute the potential phi, by solving the Poisson equation
-    computePhi( amrex::GetVecOfPtrs(rho), phi, beta, self_fields_required_precision,
+    computePhi( amrex::GetVecOfPtrs(rho), amrex::GetVecOfPtrs(phi), beta, self_fields_required_precision,
                 self_fields_absolute_tolerance, self_fields_max_iters,
                 self_fields_verbosity );
 
     // Compute the corresponding electric and magnetic field, from the potential phi.
     computeE( Efield_fp, phi, beta );
     computeB( Bfield_fp, phi, beta );
-
-    // de-allocate temporary
-    for (int lev = 0; lev <= max_level; lev++) {
-        m_fields.erase("phi_temp",lev);
-    }
-
 }
 
 void

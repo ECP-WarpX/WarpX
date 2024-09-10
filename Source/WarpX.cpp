@@ -2480,8 +2480,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     if (rho_ncomps > 0)
     {
         m_fields.alloc_init(
-            "rho_fp", amrex::convert(ba, rho_nodal_flag), dm,
-            rho_ncomps, ngRho, lev, 0.0_rt);
+            "rho_fp", lev, amrex::convert(ba, rho_nodal_flag), dm,
+            rho_ncomps, ngRho, 0.0_rt);
     }
 
     if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
@@ -2702,8 +2702,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
         if (rho_ncomps > 0) {
             m_fields.alloc_init(
-                "rho_cp", amrex::convert(cba, rho_nodal_flag), dm,
-                rho_ncomps, ngRho, lev, 0.0_rt);
+                "rho_cp", lev, amrex::convert(cba, rho_nodal_flag), dm,
+                rho_ncomps, ngRho, 0.0_rt);
         }
 
         if (do_dive_cleaning)
