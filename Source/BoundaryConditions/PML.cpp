@@ -570,6 +570,8 @@ PML::PML (const int lev, const BoxArray& grid_ba,
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!eb_enabled, "PML: eb_enabled is true but was not compiled in.");
 #endif
 
+    using ablastr::fields::Direction;
+
     // When `do_pml_in_domain` is true, the PML overlap with the last `ncell` of the physical domain or fine patch(es)
     // (instead of extending `ncell` outside of the physical domain or fine patch(es))
     // In order to implement this, we define a new reduced Box Array ensuring that it does not
@@ -711,9 +713,9 @@ PML::PML (const int lev, const BoxArray& grid_ba,
     WarpX::AllocInitMultiFab(pml_B_fp[1], ba_By, dm, ncompb, ngb, lev, "pml_B_fp[y]", 0.0_rt);
     WarpX::AllocInitMultiFab(pml_B_fp[2], ba_Bz, dm, ncompb, ngb, lev, "pml_B_fp[z]", 0.0_rt);
 
-    const amrex::BoxArray ba_jx = amrex::convert(ba, WarpX::GetInstance().m_fields.get("current_fp[x]", 0)->ixType().toIntVect());
-    const amrex::BoxArray ba_jy = amrex::convert(ba, WarpX::GetInstance().m_fields.get("current_fp[y]", 0)->ixType().toIntVect());
-    const amrex::BoxArray ba_jz = amrex::convert(ba, WarpX::GetInstance().m_fields.get("current_fp[z]", 0)->ixType().toIntVect());
+    const amrex::BoxArray ba_jx = amrex::convert(ba, WarpX::GetInstance().m_fields.get("current_fp", Direction{0}, 0)->ixType().toIntVect());
+    const amrex::BoxArray ba_jy = amrex::convert(ba, WarpX::GetInstance().m_fields.get("current_fp", Direction{1}, 0)->ixType().toIntVect());
+    const amrex::BoxArray ba_jz = amrex::convert(ba, WarpX::GetInstance().m_fields.get("current_fp", Direction{2}, 0)->ixType().toIntVect());
     WarpX::AllocInitMultiFab(pml_j_fp[0], ba_jx, dm, 1, ngb, lev, "pml_j_fp[x]", 0.0_rt);
     WarpX::AllocInitMultiFab(pml_j_fp[1], ba_jy, dm, 1, ngb, lev, "pml_j_fp[y]", 0.0_rt);
     WarpX::AllocInitMultiFab(pml_j_fp[2], ba_jz, dm, 1, ngb, lev, "pml_j_fp[z]", 0.0_rt);
@@ -864,9 +866,9 @@ PML::PML (const int lev, const BoxArray& grid_ba,
             WarpX::AllocInitMultiFab( pml_G_cp, cba_G_nodal, cdm, 3, ngf, lev, "pml_G_cp", 0.0_rt);
         }
 
-        const amrex::BoxArray cba_jx = amrex::convert(cba, WarpX::GetInstance().m_fields.get("current_cp[x]", 0)->ixType().toIntVect());
-        const amrex::BoxArray cba_jy = amrex::convert(cba, WarpX::GetInstance().m_fields.get("current_cp[y]", 0)->ixType().toIntVect());
-        const amrex::BoxArray cba_jz = amrex::convert(cba, WarpX::GetInstance().m_fields.get("current_cp[z]", 0)->ixType().toIntVect());
+        const amrex::BoxArray cba_jx = amrex::convert(cba, WarpX::GetInstance().m_fields.get("current_cp", Direction{0}, 0)->ixType().toIntVect());
+        const amrex::BoxArray cba_jy = amrex::convert(cba, WarpX::GetInstance().m_fields.get("current_cp", Direction{1}, 0)->ixType().toIntVect());
+        const amrex::BoxArray cba_jz = amrex::convert(cba, WarpX::GetInstance().m_fields.get("current_cp", Direction{2}, 0)->ixType().toIntVect());
         WarpX::AllocInitMultiFab(pml_j_cp[0], cba_jx, cdm, 1, ngb, lev, "pml_j_cp[x]", 0.0_rt);
         WarpX::AllocInitMultiFab(pml_j_cp[1], cba_jy, cdm, 1, ngb, lev, "pml_j_cp[y]", 0.0_rt);
         WarpX::AllocInitMultiFab(pml_j_cp[2], cba_jz, cdm, 1, ngb, lev, "pml_j_cp[z]", 0.0_rt);

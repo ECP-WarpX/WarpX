@@ -336,17 +336,19 @@ WarpX::DampJPML (int lev, PatchType patch_type)
 void
 WarpX::CopyJPML ()
 {
+    using ablastr::fields::Direction;
+
     for (int lev = 0; lev <= finest_level; ++lev)
     {
         if (pml[lev] && pml[lev]->ok()){
             pml[lev]->CopyJtoPMLs({
-                m_fields.get("current_fp[x]", lev),
-                m_fields.get("current_fp[y]", lev),
-                m_fields.get("current_fp[z]", lev)
+                m_fields.get("current_fp", Direction{0}, lev),
+                m_fields.get("current_fp", Direction{1}, lev),
+                m_fields.get("current_fp", Direction{2}, lev)
                 }, {
-                m_fields.get("current_cp[x]", lev),
-                m_fields.get("current_cp[y]", lev),
-                m_fields.get("current_cp[z]", lev)
+                m_fields.get("current_cp", Direction{0}, lev),
+                m_fields.get("current_cp", Direction{1}, lev),
+                m_fields.get("current_cp", Direction{2}, lev)
                 }
             );
         }
