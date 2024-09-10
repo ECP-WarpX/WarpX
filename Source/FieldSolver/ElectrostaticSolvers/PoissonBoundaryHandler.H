@@ -9,6 +9,9 @@
 #ifndef WARPX_BOUNDARYHANDLER_H_
 #define WARPX_BOUNDARYHANDLER_H_
 
+#include "Utils/Parser/ParserUtils.H"
+#include "WarpX.H"
+
 #include <AMReX_Array.H>
 #include <AMReX_Geometry.H>
 #include <AMReX_MultiFab.H>
@@ -19,6 +22,8 @@
 #include <array>
 #include <string>
 #include <utility>
+
+using namespace amrex;
 
 class PoissonBoundaryHandler
 {
@@ -101,31 +106,28 @@ private:
     amrex::Parser potential_eb_parser;
 };
 
-namespace ElectrostaticSolver {
+/** use amrex to directly calculate the electric field since with EB's the
+ *
+ * simple finite difference scheme in WarpX::computeE sometimes fails
+ */
+class EBCalcEfromPhiPerLevel {
+    private:
+    amrex::Vector<
+        amrex::Array<amrex::MultiFab *, AMREX_SPACEDIM>
+    > m_e_field;
 
-    /** use amrex to directly calculate the electric field since with EB's the
-     *
-     * simple finite difference scheme in WarpX::computeE sometimes fails
-     */
-    class EBCalcEfromPhiPerLevel {
-      private:
-        amrex::Vector<
-            amrex::Array<amrex::MultiFab *, AMREX_SPACEDIM>
-        > m_e_field;
+    public:
+    EBCalcEfromPhiPerLevel(amrex::Vector<amrex::Array<amrex::MultiFab *, AMREX_SPACEDIM> > e_field)
+            : m_e_field(std::move(e_field)) {}
 
-      public:
-        EBCalcEfromPhiPerLevel(amrex::Vector<amrex::Array<amrex::MultiFab *, AMREX_SPACEDIM> > e_field)
-                : m_e_field(std::move(e_field)) {}
+    void operator()(amrex::MLMG & mlmg, int const lev) {
+        using namespace amrex::literals;
 
-        void operator()(amrex::MLMG & mlmg, int const lev) {
-            using namespace amrex::literals;
-
-            mlmg.getGradSolution({m_e_field[lev]});
-            for (auto &field: m_e_field[lev]) {
-                field->mult(-1._rt);
-            }
+        mlmg.getGradSolution({m_e_field[lev]});
+        for (auto &field: m_e_field[lev]) {
+            field->mult(-1._rt);
         }
-    };
-} // namespace ElectrostaticSolver
+    }
+};
 
 #endif // WARPX_BOUNDARYHANDLER_H_

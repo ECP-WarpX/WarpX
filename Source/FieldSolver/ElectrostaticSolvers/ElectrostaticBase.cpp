@@ -9,8 +9,10 @@
 
 #include "ElectrostaticBase.H"
 
-void ElectrostaticBase::ElectrostaticBase (int nlevs_max)
+ElectrostaticBase::ElectrostaticBase (int nlevs_max)
 {
+    max_level = nlevs_max;
+
     AllocateMFs (nlevs_max);
 
     // Create an instance of the boundary handler to properly set boundary
@@ -27,31 +29,36 @@ void ElectrostaticBase::ElectrostaticBase (int nlevs_max)
 \param[inout] phi The electrostatic potential
 \param[in] idim The dimension for which the Dirichlet boundary condition is set
 */
-void ElectrostaticBase::setPhiBC ( amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi ) const
+void ElectrostaticBase::setPhiBC (
+    amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi,
+    amrex::Real t
+) const
 {
     // check if any dimension has non-periodic boundary conditions
-    if (!m_poisson_boundary_handler.has_non_periodic) { return; }
+    if (!m_poisson_boundary_handler->has_non_periodic) { return; }
 
     // get the boundary potentials at the current time
     amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo;
     amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_hi;
-    phi_bc_values_lo[WARPX_ZINDEX] = m_poisson_boundary_handler.potential_zlo(gett_new(0));
-    phi_bc_values_hi[WARPX_ZINDEX] = m_poisson_boundary_handler.potential_zhi(gett_new(0));
+    phi_bc_values_lo[WARPX_ZINDEX] = m_poisson_boundary_handler->potential_zlo(t);
+    phi_bc_values_hi[WARPX_ZINDEX] = m_poisson_boundary_handler->potential_zhi(t);
 #ifndef WARPX_DIM_1D_Z
-    phi_bc_values_lo[0] = m_poisson_boundary_handler.potential_xlo(gett_new(0));
-    phi_bc_values_hi[0] = m_poisson_boundary_handler.potential_xhi(gett_new(0));
+    phi_bc_values_lo[0] = m_poisson_boundary_handler->potential_xlo(t);
+    phi_bc_values_hi[0] = m_poisson_boundary_handler->potential_xhi(t);
 #endif
 #if defined(WARPX_DIM_3D)
-    phi_bc_values_lo[1] = m_poisson_boundary_handler.potential_ylo(gett_new(0));
-    phi_bc_values_hi[1] = m_poisson_boundary_handler.potential_yhi(gett_new(0));
+    phi_bc_values_lo[1] = m_poisson_boundary_handler->potential_ylo(t);
+    phi_bc_values_hi[1] = m_poisson_boundary_handler->potential_yhi(t);
 #endif
 
-    auto dirichlet_flag = m_poisson_boundary_handler.dirichlet_flag;
+    auto dirichlet_flag = m_poisson_boundary_handler->dirichlet_flag;
+
+    auto & warpx = WarpX::GetInstance();
 
     // loop over all mesh refinement levels and set the boundary values
     for (int lev=0; lev <= max_level; lev++) {
 
-        amrex::Box domain = Geom(lev).Domain();
+        amrex::Box domain = warpx.Geom(lev).Domain();
         domain.surroundingNodes();
 
 #ifdef AMREX_USE_OMP
@@ -121,57 +128,55 @@ ElectrostaticBase::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiF
     // create a vector to our fields, sorted by level
     amrex::Vector<amrex::MultiFab *> sorted_rho;
     amrex::Vector<amrex::MultiFab *> sorted_phi;
-    for (int lev = 0; lev <= finest_level; ++lev) {
+    for (int lev = 0; lev <= max_level; ++lev) {
         sorted_rho.emplace_back(rho[lev].get());
         sorted_phi.emplace_back(phi[lev].get());
     }
 
-    std::optional<ElectrostaticSolver::EBCalcEfromPhiPerLevel> post_phi_calculation;
+    std::optional<EBCalcEfromPhiPerLevel> post_phi_calculation;
 #ifdef AMREX_USE_EB
     // TODO: double check no overhead occurs on "m_eb_enabled == false"
     std::optional<amrex::Vector<amrex::EBFArrayBoxFactory const *> > eb_farray_box_factory;
 #else
     std::optional<amrex::Vector<amrex::FArrayBoxFactory const *> > const eb_farray_box_factory;
 #endif
-    if (m_eb_enabled)
+    auto & warpx = WarpX::GetInstance();
+    if (warpx.m_eb_enabled)
     {
         // EB: use AMReX to directly calculate the electric field since with EB's the
         // simple finite difference scheme in WarpX::computeE sometimes fails
-        if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
-            electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
-        {
-            // TODO: maybe make this a helper function or pass Efield_fp directly
-            amrex::Vector<
-                amrex::Array<amrex::MultiFab *, AMREX_SPACEDIM>
-            > e_field;
-            for (int lev = 0; lev <= finest_level; ++lev) {
-                e_field.push_back(
-#   if defined(WARPX_DIM_1D_Z)
-                    amrex::Array<amrex::MultiFab*, 1>{
-                        getFieldPointer(FieldType::Efield_fp, lev, 2)
-                    }
-#   elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                    amrex::Array<amrex::MultiFab*, 2>{
-                        getFieldPointer(FieldType::Efield_fp, lev, 0),
-                        getFieldPointer(FieldType::Efield_fp, lev, 2)
-                    }
-#   elif defined(WARPX_DIM_3D)
-                    amrex::Array<amrex::MultiFab *, 3>{
-                        getFieldPointer(FieldType::Efield_fp, lev, 0),
-                        getFieldPointer(FieldType::Efield_fp, lev, 1),
-                        getFieldPointer(FieldType::Efield_fp, lev, 2)
-                    }
-#   endif
-                );
-            }
-            post_phi_calculation = ElectrostaticSolver::EBCalcEfromPhiPerLevel(e_field);
+
+        // TODO: maybe make this a helper function or pass Efield_fp directly
+        amrex::Vector<
+            amrex::Array<amrex::MultiFab *, AMREX_SPACEDIM>
+        > e_field;
+        for (int lev = 0; lev <= max_level; ++lev) {
+            e_field.push_back(
+#if defined(WARPX_DIM_1D_Z)
+                amrex::Array<amrex::MultiFab*, 1>{
+                    getFieldPointer(warpx::fields::FieldType::Efield_fp, lev, 2)
+                }
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                amrex::Array<amrex::MultiFab*, 2>{
+                    getFieldPointer(warpx::fields::FieldType::Efield_fp, lev, 0),
+                    getFieldPointer(warpx::fields::FieldType::Efield_fp, lev, 2)
+                }
+#elif defined(WARPX_DIM_3D)
+                amrex::Array<amrex::MultiFab *, 3>{
+                    getFieldPointer(warpx::fields::FieldType::Efield_fp, lev, 0),
+                    getFieldPointer(warpx::fields::FieldType::Efield_fp, lev, 1),
+                    getFieldPointer(warpx::fields::FieldType::Efield_fp, lev, 2)
+                }
+#endif
+            );
         }
+        post_phi_calculation = EBCalcEfromPhiPerLevel(e_field);
 
 #ifdef AMREX_USE_EB
         amrex::Vector<
             amrex::EBFArrayBoxFactory const *
         > factories;
-        for (int lev = 0; lev <= finest_level; ++lev) {
+        for (int lev = 0; lev <= max_level; ++lev) {
             factories.push_back(&WarpX::fieldEBFactory(lev));
         }
         eb_farray_box_factory = factories;

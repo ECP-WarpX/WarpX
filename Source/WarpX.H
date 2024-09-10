@@ -40,7 +40,6 @@
 #include "Evolve/WarpXDtType.H"
 #include "Evolve/WarpXPushType.H"
 #include "FieldSolver/Fields.H"
-#include "FieldSolver/ElectrostaticSolver.H"
 #include "FieldSolver/MagnetostaticSolver/MagnetostaticSolver.H"
 #include "FieldSolver/ImplicitSolvers/ImplicitSolver.H"
 #include "FieldSolver/ImplicitSolvers/WarpXSolverVec.H"

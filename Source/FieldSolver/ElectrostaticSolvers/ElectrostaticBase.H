@@ -8,6 +8,9 @@
  */
 
 #include "PoissonBoundaryHandler.H"
+#include "Fluids/MultiFluidContainer.H"
+#include "Particles/MultiParticleContainer.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
 #include <AMReX_Array.H>
@@ -17,13 +20,26 @@ using namespace amrex;
 class ElectrostaticBase
 {
 public:
-    void ElectrostaticBase( int nlevs_max );
+    ElectrostaticBase() = default;
 
-    virtual void AllocateMFs ( int nlevs_max ) {};
+    virtual ~ElectrostaticBase() = default;
 
-    void setPhiBC (amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi ) const;
+    // Prohibit Move and Copy operations
+    ElectrostaticBase(const ElectrostaticBase&) = delete;
+    ElectrostaticBase& operator=(const ElectrostaticBase&) = delete;
+    ElectrostaticBase(ElectrostaticBase&&) = delete;
+    ElectrostaticBase& operator=(ElectrostaticBase&&) = delete;
 
-    void WarpX::computePhi (
+    ElectrostaticBase( int nlevs_max );
+
+    virtual void AllocateMFs ( int nlevs_max );
+
+    void setPhiBC (
+        amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi,
+        amrex::Real t
+    ) const;
+
+    void computePhi (
         const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
         amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
         std::array<Real, 3> const beta,
@@ -44,5 +60,6 @@ public:
         std::array<amrex::Real, 3> const beta
     ) const;
 
-    PoissonBoundaryHandler m_poisson_boundary_handler;
-}
+    int max_level;
+    std::unique_ptr<PoissonBoundaryHandler> m_poisson_boundary_handler;
+};

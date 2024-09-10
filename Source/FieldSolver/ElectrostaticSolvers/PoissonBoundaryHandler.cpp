@@ -7,9 +7,9 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#include "BoundaryHandler.H"
+#include "PoissonBoundaryHandler.H"
 
-void PoissonBoundaryHandler::PoissonBoundaryHandler ()
+PoissonBoundaryHandler::PoissonBoundaryHandler ()
 {
     ReadParameters();
     BuildParsers();
@@ -149,7 +149,7 @@ void PoissonBoundaryHandler::BuildParsers ()
     potential_zlo = potential_zlo_parser.compile<1>();
     potential_zhi = potential_zhi_parser.compile<1>();
 
-    buildParsersEB();
+    BuildParsersEB();
 }
 
 void PoissonBoundaryHandler::BuildParsersEB ()

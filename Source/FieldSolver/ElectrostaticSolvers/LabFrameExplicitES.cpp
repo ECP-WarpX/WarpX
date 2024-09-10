@@ -1,24 +1,34 @@
+/* Copyright 2024 The WarpX Community
+ *
+ * This file is part of WarpX.
+ *
+ * Authors: Roelof Groenwald, Arianna Formenti, Revathi Jambunathan
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include "LabFrameExplicitES.H"
 #include "Fluids/MultiFluidContainer_fwd.H"
 #include "Particles/MultiParticleContainer_fwd.H"
+#include "Python/callbacks.H"
 #include "WarpX.H"
 
 
-void
-LabFrameExplicitES::ComputeSpaceChargeField (amrex::Vector< std::array< std::unique_ptr<amrex::MultiFab>, 3> > Efield_fp,
-                                             amrex::Vector< std::unique_ptr<amrex::MultiFab> > rho_fp,
-                                             amrex::Vector< std::unique_ptr<amrex::MultiFab> > rho_cp,
-                                             amrex::Vector< std::unique_ptr<amrex::MultiFab> > charge_buf,
-                                             amrex::Vector< std::unique_ptr<amrex::MultiFab> > phi_fp,
-                                             MultiParticleContainer& mpc,
-                                             MultiFluidContainer mfl,
-                                             amrex::Vector< std::array< std::unique_ptr<amrex::MultiFab>, 3> > Efield_fp )
-{
-    mpc->DepositCharge(rho_fp, 0.0_rt);
+void LabFrameExplicitES::ComputeSpaceChargeField (
+    amrex::Vector< std::unique_ptr<amrex::MultiFab> > rho_fp,
+    amrex::Vector< std::unique_ptr<amrex::MultiFab> > rho_cp,
+    amrex::Vector< std::unique_ptr<amrex::MultiFab> > charge_buf,
+    amrex::Vector< std::unique_ptr<amrex::MultiFab> > phi_fp,
+    MultiParticleContainer& mpc,
+    MultiFluidContainer* mfl,
+    amrex::Vector< std::array< std::unique_ptr<amrex::MultiFab>, 3> > Efield_fp
+) {
+    mpc.DepositCharge(rho_fp, 0.0_rt);
     if (!mfl) {
         const int lev = 0;
         mfl->DepositCharge(lev, *rho_fp[lev]);
     }
+
+    auto & warpx = WarpX::GetInstance();
     for (int lev = 0; lev <= max_level; lev++) {
         if (lev > 0) {
             if (charge_buf[lev]) {
@@ -26,12 +36,12 @@ LabFrameExplicitES::ComputeSpaceChargeField (amrex::Vector< std::array< std::uni
             }
         }
     }
-    WarpX::SyncRho(rho_fp, rho_cp, charge_buf); // Apply filter, perform MPI exchange, interpolate across levels
+    warpx.SyncRho(rho_fp, rho_cp, charge_buf); // Apply filter, perform MPI exchange, interpolate across levels
 
 #ifndef WARPX_DIM_RZ
-    for (int lev = 0; lev <= finestLevel(); lev++) {
+    for (int lev = 0; lev <= max_level; lev++) {
         // Reflect density over PEC boundaries, if needed.
-        WarpX::ApplyRhofieldBoundary(lev, rho_fp[lev].get(), PatchType::fine);
+        warpx.ApplyRhofieldBoundary(lev, rho_fp[lev].get(), PatchType::fine);
     }
 
     // beta is zero in lab frame
@@ -39,7 +49,7 @@ LabFrameExplicitES::ComputeSpaceChargeField (amrex::Vector< std::array< std::uni
     const std::array<Real, 3> beta = {0._rt};
 
     // set the boundary potentials appropriately
-    setPhiBC(phi_fp);
+    setPhiBC(phi_fp, warpx.gett_new(0));
 
     // Compute the potential phi, by solving the Poisson equation
     if (IsPythonCallbackInstalled("poissonsolver")) {
@@ -233,4 +243,4 @@ LabFrameExplicitES::computePhiTriDiagonal (
 }
 
 
-~                                                                          
+~
