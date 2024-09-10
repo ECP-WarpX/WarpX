@@ -122,6 +122,20 @@ namespace ablastr::fields
 
         /** title
          *
+         * Same as get above, but returns all levels for a name.
+         *
+         * @param name ...
+         * @param finest_level ...
+         * @return ...
+         */
+        std::vector<amrex::MultiFab*>
+        get_mr_levels (
+            std::string name,
+            int finest_level
+        );
+
+        /** title
+         *
          * body body
          * body
          *

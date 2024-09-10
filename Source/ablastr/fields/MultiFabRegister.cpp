@@ -91,6 +91,21 @@ namespace ablastr::fields
         return &mf;
     }
 
+    std::vector<amrex::MultiFab*>
+    MultiFabRegister::get_mr_levels (
+        std::string name,
+        int finest_level
+    )
+    {
+        std::vector<amrex::MultiFab*> field_on_level;
+        field_on_level.reserve(finest_level+1);
+        for (int lvl = 0; lvl<= finest_level; lvl++)
+        {
+            field_on_level.push_back(get(name, lvl));
+        }
+        return field_on_level;
+    }
+
     std::vector<std::string>
     MultiFabRegister::list ()
     {

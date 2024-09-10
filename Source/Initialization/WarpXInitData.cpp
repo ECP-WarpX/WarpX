@@ -34,6 +34,7 @@
 #include "Utils/WarpXUtil.H"
 #include "Python/callbacks.H"
 
+#include <ablastr/fields/MultiFabRegister.H>
 #include <ablastr/parallelization/MPIInitHelpers.H>
 #include <ablastr/utils/Communication.H>
 #include <ablastr/utils/UsedInputsFile.H>
@@ -91,8 +92,15 @@ namespace
      * \brief Check that the number of guard cells is smaller than the number of valid cells,
      * for a given MultiFab, and abort otherwise.
      */
-    void CheckGuardCells(amrex::MultiFab const& mf)
+    void CheckGuardCells (
+        ablastr::fields::MultiFabRegister& fields,
+        std::string mf_name,
+        int lev
+    )
     {
+        if (!fields.has(mf_name, lev)) { return; }
+        auto & mf = *fields.get(mf_name, lev);
+
         for (amrex::MFIter mfi(mf); mfi.isValid(); ++mfi)
         {
             const amrex::IntVect vc = mfi.validbox().enclosedCells().size();
@@ -1205,62 +1213,40 @@ void WarpX::CheckGuardCells()
     {
         for (int dim = 0; dim < 3; ++dim)
         {
-            ::CheckGuardCells(*Efield_fp[lev][dim]);
-            ::CheckGuardCells(*Bfield_fp[lev][dim]);
-            ::CheckGuardCells(*current_fp[lev][dim]);
+            ::CheckGuardCells(m_fields, "Efield_fp[" + std::to_string(dim) + "]", lev);
+            ::CheckGuardCells(m_fields, "Bfield_fp[" + std::to_string(dim) + "]", lev);
+            ::CheckGuardCells(m_fields, "current_fp[" + std::to_string(dim) + "]", lev);
 
             if (WarpX::fft_do_time_averaging)
             {
-                ::CheckGuardCells(*Efield_avg_fp[lev][dim]);
-                ::CheckGuardCells(*Bfield_avg_fp[lev][dim]);
+                ::CheckGuardCells(m_fields, "Efield_avg_fp[" + std::to_string(dim) + "]", lev);
+                ::CheckGuardCells(m_fields, "Bfield_avg_fp[" + std::to_string(dim) + "]", lev);
             }
         }
 
-        if (rho_fp[lev])
-        {
-            ::CheckGuardCells(*rho_fp[lev]);
-        }
-
-        if (F_fp[lev])
-        {
-            ::CheckGuardCells(*F_fp[lev]);
-        }
-
-        if (m_fields.has("G_fp", lev))
-        {
-            ::CheckGuardCells( *m_fields.get("G_fp", lev) );
-        }
+        ::CheckGuardCells(m_fields, "rho_fp", lev);
+        ::CheckGuardCells(m_fields, "F_fp", lev);
+        ::CheckGuardCells(m_fields, "G_fp", lev);
 
         // MultiFabs on coarse patch
         if (lev > 0)
         {
             for (int dim = 0; dim < 3; ++dim)
             {
-                ::CheckGuardCells(*Efield_cp[lev][dim]);
-                ::CheckGuardCells(*Bfield_cp[lev][dim]);
-                ::CheckGuardCells(*current_cp[lev][dim]);
+                ::CheckGuardCells(m_fields, "Efield_cp[" + std::to_string(dim) + "]", lev);
+                ::CheckGuardCells(m_fields, "Bfield_cp[" + std::to_string(dim) + "]", lev);
+                ::CheckGuardCells(m_fields, "current_cp[" + std::to_string(dim) + "]", lev);
 
                 if (WarpX::fft_do_time_averaging)
                 {
-                    ::CheckGuardCells(*Efield_avg_cp[lev][dim]);
-                    ::CheckGuardCells(*Bfield_avg_cp[lev][dim]);
+                    ::CheckGuardCells(m_fields, "Efield_avg_cp[" + std::to_string(dim) + "]", lev);
+                    ::CheckGuardCells(m_fields, "Bfield_avg_cp[" + std::to_string(dim) + "]", lev);
                 }
             }
 
-            if (rho_cp[lev])
-            {
-                ::CheckGuardCells(*rho_cp[lev]);
-            }
-
-            if (F_cp[lev])
-            {
-                ::CheckGuardCells(*F_cp[lev]);
-            }
-
-            if (m_fields.has("G_cp", lev))
-            {
-                ::CheckGuardCells( *m_fields.get("G_cp", lev) );
-            }
+            ::CheckGuardCells(m_fields, "rho_cp", lev);
+            ::CheckGuardCells(m_fields, "F_cp", lev);
+            ::CheckGuardCells(m_fields, "G_cp", lev);
         }
     }
 }
