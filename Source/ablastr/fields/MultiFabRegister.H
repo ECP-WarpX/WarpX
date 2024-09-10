@@ -38,7 +38,11 @@ namespace ablastr::fields
         }
     };
 
-    /** A vector field of three MultiFab */
+    /** A vector field of three MultiFab
+     *
+     * TODO: std::map has two issues: operator[] has no const overload and access with missing keys inserts new
+     *       values. We want to use another type.
+     */
     using VectorField = std::map<Direction, amrex::MultiFab*>;
 
     /** A multi-level scalar field
@@ -50,6 +54,8 @@ namespace ablastr::fields
     /** A multi-level vector field
     *
     * TODO: use amrex::Vector again for bound checks in debug mode
+    * TODO: std::map has two issues: operator[] has no const overload and access with missing keys inserts new
+    *       values. We want to use another type.
     */
     using MultiLevelVectorField = std::vector<std::map<Direction, amrex::MultiFab*>>;
 
