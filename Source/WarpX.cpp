@@ -320,7 +320,6 @@ WarpX::WarpX ()
     Efield_aux.resize(nlevs_max);
     Bfield_aux.resize(nlevs_max);
 
-    rho_fp.resize(nlevs_max);
     Efield_fp.resize(nlevs_max);
     Bfield_fp.resize(nlevs_max);
 
@@ -378,7 +377,6 @@ WarpX::WarpX ()
         m_hybrid_pic_model = std::make_unique<HybridPICModel>(nlevs_max);
     }
 
-    rho_cp.resize(nlevs_max);
     current_cp.resize(nlevs_max);
     Efield_cp.resize(nlevs_max);
     Bfield_cp.resize(nlevs_max);
@@ -2481,7 +2479,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
     if (rho_ncomps > 0)
     {
-        AllocInitMultiFab(rho_fp[lev], amrex::convert(ba, rho_nodal_flag), dm, rho_ncomps, ngRho, lev, "rho_fp", 0.0_rt);
+        m_fields.alloc_init(
+            "rho_fp", amrex::convert(ba, rho_nodal_flag), dm,
+            rho_ncomps, ngRho, lev, 0.0_rt);
     }
 
     if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
@@ -2701,7 +2701,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         m_fields.alloc_init( "current_cp", Direction{2}, lev, amrex::convert(cba, jz_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
 
         if (rho_ncomps > 0) {
-            AllocInitMultiFab(rho_cp[lev], amrex::convert(cba, rho_nodal_flag), dm, rho_ncomps, ngRho, lev, "rho_cp", 0.0_rt);
+            m_fields.alloc_init(
+                "rho_cp", amrex::convert(cba, rho_nodal_flag), dm,
+                rho_ncomps, ngRho, lev, 0.0_rt);
         }
 
         if (do_dive_cleaning)
@@ -2808,7 +2810,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             m_fields.alloc_init("current_buf", Direction{0}, lev, amrex::convert(cba,jx_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
             m_fields.alloc_init("current_buf", Direction{1}, lev, amrex::convert(cba,jy_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
             m_fields.alloc_init("current_buf", Direction{2}, lev, amrex::convert(cba,jz_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
-            if (rho_cp[lev]) {
+            if (m_fields.has("rho_cp", lev)) {
                 AllocInitMultiFab(charge_buf[lev], amrex::convert(cba,rho_nodal_flag),dm,2*ncomps,ngRho,lev, "charge_buf");
             }
             AllocInitMultiFab(current_buffer_masks[lev], ba, dm, ncomps, amrex::IntVect(1), lev, "current_buffer_masks");
@@ -3496,9 +3498,6 @@ WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, cons
         case FieldType::current_fp_nodal :
             field_pointer = current_fp_nodal[lev][direction].get();
             break;
-        case FieldType::rho_fp :
-            field_pointer = rho_fp[lev].get();
-            break;
         case FieldType::vector_potential_fp :
             field_pointer = vector_potential_fp_nodal[lev][direction].get();
             break;
@@ -3510,9 +3509,6 @@ WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, cons
             break;
         case FieldType::current_cp :
             field_pointer = current_cp[lev][direction].get();
-            break;
-        case FieldType::rho_cp :
-            field_pointer = rho_cp[lev].get();
             break;
         case FieldType::edge_lengths :
             field_pointer = m_edge_lengths[lev][direction].get();

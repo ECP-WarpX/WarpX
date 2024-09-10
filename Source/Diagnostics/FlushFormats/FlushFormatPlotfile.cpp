@@ -587,12 +587,12 @@ FlushFormatPlotfile::WriteAllRawFields(
         {
             WriteRawMF(*warpx.m_fields.get("F_fp", lev), dm, raw_pltname, default_level_prefix, "F_fp", lev, plot_raw_fields_guards);
         }
-        if (warpx.isFieldInitialized(FieldType::rho_fp, lev))
+        if (warpx.m_fields.has("rho_fp", lev))
         {
             // rho_fp will have either ncomps or 2*ncomps (2 being the old and new). When 2, return the new so
             // there is time synchronization.
-            const int nstart = warpx.getField(FieldType::rho_fp, lev).nComp() - WarpX::ncomps;
-            const MultiFab rho_new(warpx.getField(FieldType::rho_fp, lev), amrex::make_alias, nstart, WarpX::ncomps);
+            const int nstart = warpx.m_fields.get("rho_fp", lev)->nComp() - WarpX::ncomps;
+            const MultiFab rho_new(*warpx.m_fields.get("rho_fp", lev), amrex::make_alias, nstart, WarpX::ncomps);
             WriteRawMF(rho_new, dm, raw_pltname, default_level_prefix, "rho_fp", lev, plot_raw_fields_guards);
         }
         if (warpx.m_fields.has("phi_fp", lev)) {
@@ -640,10 +640,10 @@ FlushFormatPlotfile::WriteAllRawFields(
                 WriteCoarseScalar("F", warpx.m_fields.get("F_cp", lev), warpx.m_fields.get("F_fp", lev),
                     dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards, 0);
             }
-            if (warpx.isFieldInitialized(FieldType::rho_fp, lev) && warpx.isFieldInitialized(FieldType::rho_cp, lev))
+            if (warpx.m_fields.has("rho_fp", lev) && warpx.m_fields.has("rho_cp", lev))
             {
                 // Use the component 1 of `rho_cp`, i.e. rho_new for time synchronization
-                WriteCoarseScalar("rho", warpx.getFieldPointer(FieldType::rho_cp, lev), warpx.getFieldPointer(FieldType::rho_fp, lev),
+                WriteCoarseScalar("rho", warpx.m_fields.get("rho_cp", lev), warpx.m_fields.get("rho_fp", lev),
                     dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards, 1);
             }
         }

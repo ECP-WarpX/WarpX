@@ -496,7 +496,7 @@ void HybridPICModel::CalculateElectronPressure(const int lev)
     auto& warpx = WarpX::GetInstance();
     // Calculate the electron pressure using rho^{n+1}.
     FillElectronPressureMF(
-        electron_pressure_fp[lev], warpx.getFieldPointer(FieldType::rho_fp, lev)
+        electron_pressure_fp[lev], warpx.m_fields.get("rho_fp", lev)
     );
     warpx.ApplyElectronPressureBoundary(lev, PatchType::fine);
     electron_pressure_fp[lev]->FillBoundary(warpx.Geom(lev).periodicity());

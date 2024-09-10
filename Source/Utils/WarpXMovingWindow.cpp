@@ -355,7 +355,7 @@ WarpX::MoveWindow (const int step, bool move_j)
 
         // Shift scalar component rho
         if (move_j) {
-            if (rho_fp[lev]){
+            if (m_fields.has("rho_fp", lev)) {
                 // Fine grid
                 shiftMF(*rho_fp[lev],   geom[lev], num_shift, dir, lev, do_update_cost);
                 if (lev > 0){

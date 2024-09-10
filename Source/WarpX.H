@@ -1365,10 +1365,7 @@ private:
         int lev,
         PatchType patch_type);
 
-    void RestrictRhoFromFineToCoarsePatch (
-        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
-        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
-        int lev);
+    void RestrictRhoFromFineToCoarsePatch (int lev );
     void ApplyFilterandSumBoundaryRho (
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
@@ -1520,7 +1517,6 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_aux;
 
     // Fine patch
-    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_vay;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp;
@@ -1598,7 +1594,6 @@ private:
     amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>> current_fp_nodal;
 
     // Coarse patch
-    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_cp ;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_cp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_cp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_cp;

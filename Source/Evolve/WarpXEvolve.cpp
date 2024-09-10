@@ -553,12 +553,12 @@ void WarpX::SyncCurrentAndRho ()
             {
                 // TODO Replace current_cp with current_cp_vay once Vay deposition is implemented with MR
                 SyncCurrent(current_fp_vay, current_cp, current_buf);
-                SyncRho(rho_fp, rho_cp, charge_buf);
+                SyncRho();
             }
             else
             {
                 SyncCurrent(current_fp, current_cp, current_buf);
-                SyncRho(rho_fp, rho_cp, charge_buf);
+                SyncRho();
             }
         }
         else // no periodic single box
@@ -570,7 +570,7 @@ void WarpX::SyncCurrentAndRho ()
                 current_deposition_algo != CurrentDepositionAlgo::Vay)
             {
                 SyncCurrent(current_fp, current_cp, current_buf);
-                SyncRho(rho_fp, rho_cp, charge_buf);
+                SyncRho();
             }
 
             if (current_deposition_algo == CurrentDepositionAlgo::Vay)
@@ -584,22 +584,22 @@ void WarpX::SyncCurrentAndRho ()
     else // FDTD
     {
         SyncCurrent(current_fp, current_cp, current_buf);
-        SyncRho(rho_fp, rho_cp, charge_buf);
+        SyncRho();
     }
 
     // Reflect charge and current density over PEC boundaries, if needed.
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (rho_fp[lev]) {
-            ApplyRhofieldBoundary(lev, rho_fp[lev].get(), PatchType::fine);
+        if (m_fields.has("rho_fp", lev)) {
+            ApplyRhofieldBoundary(lev, m_fields.get("rho_fp",lev), PatchType::fine);
         }
         ApplyJfieldBoundary(
             lev, current_fp[lev][0].get(), current_fp[lev][1].get(),
             current_fp[lev][2].get(), PatchType::fine
         );
         if (lev > 0) {
-            if (rho_cp[lev]) {
-                ApplyRhofieldBoundary(lev, rho_cp[lev].get(), PatchType::coarse);
+            if (m_fields.has("rho_cp", lev)) {
+                ApplyRhofieldBoundary(lev, m_fields.get("rho_cp",lev), PatchType::coarse);
             }
             ApplyJfieldBoundary(
                 lev, current_cp[lev][0].get(), current_cp[lev][1].get(),
@@ -645,7 +645,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         // (dt[0] denotes the time step on mesh refinement level 0)
         mypc->DepositCharge(rho_fp, -dt[0]);
         // Filter, exchange boundary, and interpolate across levels
-        SyncRho(rho_fp, rho_cp, charge_buf);
+        SyncRho();
         // Forward FFT of rho
         PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_new);
     }
@@ -709,7 +709,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             // Deposit rho at relative time t_deposit_charge
             mypc->DepositCharge(rho_fp, t_deposit_charge);
             // Filter, exchange boundary, and interpolate across levels
-            SyncRho(rho_fp, rho_cp, charge_buf);
+            SyncRho(;
             // Forward FFT of rho
             const int rho_idx = (rho_in_time == RhoInTime::Linear) ? rho_new : rho_mid;
             PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_idx);
@@ -810,7 +810,7 @@ WarpX::OneStep_sub1 (Real cur_time)
     // i) Push particles and fields on the fine patch (first fine step)
     PushParticlesandDeposit(fine_lev, cur_time, DtType::FirstHalf);
     RestrictCurrentFromFineToCoarsePatch(current_fp, current_cp, fine_lev);
-    RestrictRhoFromFineToCoarsePatch(rho_fp, rho_cp, fine_lev);
+    RestrictRhoFromFineToCoarsePatch(fine_lev);
     if (use_filter) { ApplyFilterJ(current_fp, fine_lev); }
     SumBoundaryJ(current_fp, fine_lev, Geom(fine_lev).periodicity());
     ApplyFilterandSumBoundaryRho(rho_fp, rho_cp, fine_lev, PatchType::fine, 0, 2*ncomps);
@@ -1029,7 +1029,7 @@ WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type,
                  *Bfield_aux[lev][0], *Bfield_aux[lev][1], *Bfield_aux[lev][2],
                  *current_x, *current_y, *current_z,
                  current_buf[lev][0].get(), current_buf[lev][1].get(), current_buf[lev][2].get(),
-                 rho_fp[lev].get(), charge_buf[lev].get(),
+                 m_fields.get("rho_fp",lev), charge_buf[lev].get(),
                  Efield_cax[lev][0].get(), Efield_cax[lev][1].get(), Efield_cax[lev][2].get(),
                  Bfield_cax[lev][0].get(), Bfield_cax[lev][1].get(), Bfield_cax[lev][2].get(),
                  cur_time, dt[lev], a_dt_type, skip_current, push_type);
@@ -1040,8 +1040,8 @@ WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type,
         if (current_buf[lev][0].get()) {
             ApplyInverseVolumeScalingToCurrentDensity(current_buf[lev][0].get(), current_buf[lev][1].get(), current_buf[lev][2].get(), lev-1);
         }
-        if (rho_fp[lev]) {
-            ApplyInverseVolumeScalingToChargeDensity(rho_fp[lev].get(), lev);
+        if (m_fields.has("rho_fp", lev)) {
+            ApplyInverseVolumeScalingToChargeDensity(m_fields.get("rho_fp", lev).get(), lev);
             if (charge_buf[lev]) {
                 ApplyInverseVolumeScalingToChargeDensity(charge_buf[lev].get(), lev-1);
             }
@@ -1058,7 +1058,7 @@ WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type,
             myfl->Evolve(lev,
                          *Efield_aux[lev][0], *Efield_aux[lev][1], *Efield_aux[lev][2],
                          *Bfield_aux[lev][0], *Bfield_aux[lev][1], *Bfield_aux[lev][2],
-                         rho_fp[lev].get(), *current_x, *current_y, *current_z, cur_time, skip_current);
+                         m_fields.get("rho_fp", lev), *current_x, *current_y, *current_z, cur_time, skip_current);
         }
     }
 }

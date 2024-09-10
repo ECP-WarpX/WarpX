@@ -1421,15 +1421,12 @@ void WarpX::AddCurrentFromFineLevelandSumBoundary (
     }
 }
 
-void WarpX::RestrictRhoFromFineToCoarsePatch (
-    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
-    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
-    const int lev)
+void WarpX::RestrictRhoFromFineToCoarsePatch ( const int lev )
 {
-    if (charge_fp[lev]) {
-        charge_cp[lev]->setVal(0.0);
+    if (m_fields.has("rho_fp", lev)) {
+        m_fields.get("rho_cp", lev)->setVal(0.0);
         const IntVect& refinement_ratio = refRatio(lev-1);
-        ablastr::coarsen::average::Coarsen(*charge_cp[lev], *charge_fp[lev], refinement_ratio );
+        ablastr::coarsen::average::Coarsen(*m_fields.get("rho_cp", lev), *m_fields.get("rho_fp", lev), refinement_ratio );
     }
 }
 
