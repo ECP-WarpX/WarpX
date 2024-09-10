@@ -36,6 +36,17 @@ public:
     void ReadParameters ();
     virtual void AllocateMFs ( [[maybe_unused]] int nlevs_max ) {}
 
+    virtual void ComputeSpaceChargeField (
+        [[maybe_unused]] amrex::Vector< std::unique_ptr<amrex::MultiFab> >& rho_fp,
+        [[maybe_unused]] amrex::Vector< std::unique_ptr<amrex::MultiFab> >& rho_cp,
+        [[maybe_unused]] amrex::Vector< std::unique_ptr<amrex::MultiFab> >& charge_buf,
+        [[maybe_unused]] amrex::Vector< std::unique_ptr<amrex::MultiFab> >& phi_fp,
+        [[maybe_unused]] MultiParticleContainer& mpc,
+        [[maybe_unused]] MultiFluidContainer* mfl,
+        [[maybe_unused]] amrex::Vector< std::array< std::unique_ptr<amrex::MultiFab>, 3> >& Efield_fp,
+        [[maybe_unused]] amrex::Vector< std::array< std::unique_ptr<amrex::MultiFab>, 3> >& Bfield_fp
+    ) = 0;
+
     void setPhiBC (
         amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi,
         amrex::Real t

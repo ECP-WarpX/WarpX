@@ -35,8 +35,7 @@ public:
         amrex::Vector< std::array< std::unique_ptr<amrex::MultiFab>, 3> >& Bfield_fp
     );
 
-    std::unique_ptr<LabFrameExplicitES> m_labframe_explicit_es;
-    std::unique_ptr<RelativisticExplicitES> m_relativistic_explicit_es;
+    std::unique_ptr<ElectrostaticBase> m_electrostatic_solver;
 };
 
 #endif // WARPX_ELECTROSTATICSOLVER_H_

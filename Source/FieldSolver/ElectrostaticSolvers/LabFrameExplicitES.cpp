@@ -21,7 +21,8 @@ void LabFrameExplicitES::ComputeSpaceChargeField (
     amrex::Vector< std::unique_ptr<amrex::MultiFab> >& phi_fp,
     MultiParticleContainer& mpc,
     MultiFluidContainer* mfl,
-    amrex::Vector< std::array< std::unique_ptr<amrex::MultiFab>, 3> >& Efield_fp
+    amrex::Vector< std::array< std::unique_ptr<amrex::MultiFab>, 3> >& Efield_fp,
+    amrex::Vector< std::array< std::unique_ptr<amrex::MultiFab>, 3> >& /*Bfield_fp*/
 ) {
     mpc.DepositCharge(rho_fp, 0.0_rt);
     if (!mfl) {

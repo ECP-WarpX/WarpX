@@ -13,15 +13,15 @@ public:
     RelativisticExplicitES (int nlevs_max) : ElectrostaticBase (nlevs_max) { ReadParameters();}
 
     void ComputeSpaceChargeField (
-        amrex::Vector< std::unique_ptr<amrex::MultiFab> >& rho_fp,
-        amrex::Vector< std::unique_ptr<amrex::MultiFab> >& rho_cp,
-        amrex::Vector< std::unique_ptr<amrex::MultiFab> >& charge_buf,
-        amrex::Vector< std::unique_ptr<amrex::MultiFab> >& phi_fp,
-        MultiParticleContainer& mpc,
-        MultiFluidContainer* mfl,
-        amrex::Vector< std::array< std::unique_ptr<amrex::MultiFab>, 3> >& Efield_fp,
-        amrex::Vector< std::array< std::unique_ptr<amrex::MultiFab>, 3> >& Bfield_fp
-    );
+        [[maybe_unused]] amrex::Vector< std::unique_ptr<amrex::MultiFab> >& rho_fp,
+        [[maybe_unused]] amrex::Vector< std::unique_ptr<amrex::MultiFab> >& rho_cp,
+        [[maybe_unused]] amrex::Vector< std::unique_ptr<amrex::MultiFab> >& charge_buf,
+        [[maybe_unused]] amrex::Vector< std::unique_ptr<amrex::MultiFab> >& phi_fp,
+        [[maybe_unused]] MultiParticleContainer& mpc,
+        [[maybe_unused]] MultiFluidContainer* mfl,
+        [[maybe_unused]] amrex::Vector< std::array< std::unique_ptr<amrex::MultiFab>, 3> >& Efield_fp,
+        [[maybe_unused]] amrex::Vector< std::array< std::unique_ptr<amrex::MultiFab>, 3> >& Bfield_fp
+    ) override;
 
     void AddSpaceChargeField (
         amrex::Vector<std::unique_ptr<amrex::MultiFab> >& charge_buf,
