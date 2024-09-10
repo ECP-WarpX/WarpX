@@ -227,7 +227,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
     auto const finest_level = static_cast<int>(rho.size() - 1);
     
     // determine if rho is zero everywhere
-    amrex::Real always_use_bnorm = getMaxNormRho(rho, finest_level, absolute_tolerance);
+    amrex::Real max_norm_b = getMaxNormRho(rho, finest_level, absolute_tolerance);
 
     amrex::LPInfo info;
 
@@ -349,7 +349,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         amrex::MLMG mlmg(*linop); // actual solver defined here
         mlmg.setVerbose(verbosity);
         mlmg.setMaxIter(max_iters);
-        mlmg.setAlwaysUseBNorm(always_use_bnorm);
+        mlmg.setAlwaysUseBNorm((max_norm_b > 0));
         if (grid_type == utils::enums::GridType::Collocated) {
             // In this case, computeE needs to use ghost nodes data. So we
             // ask MLMG to fill BC for us after it solves the problem.
