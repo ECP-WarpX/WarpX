@@ -395,7 +395,6 @@ WarpX::WarpX ()
     Bfield_cax.resize(nlevs_max);
     current_buffer_masks.resize(nlevs_max);
     gather_buffer_masks.resize(nlevs_max);
-    current_buf.resize(nlevs_max);
     charge_buf.resize(nlevs_max);
 
     pml.resize(nlevs_max);
@@ -2804,9 +2803,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         }
 
         if (n_current_deposition_buffer > 0) {
-            AllocInitMultiFab(current_buf[lev][0], amrex::convert(cba,jx_nodal_flag),dm,ncomps,ngJ,lev, "current_buf[x]");
-            AllocInitMultiFab(current_buf[lev][1], amrex::convert(cba,jy_nodal_flag),dm,ncomps,ngJ,lev, "current_buf[y]");
-            AllocInitMultiFab(current_buf[lev][2], amrex::convert(cba,jz_nodal_flag),dm,ncomps,ngJ,lev, "current_buf[z]");
+            m_fields.alloc_init("current_buf", Direction{0}, lev, amrex::convert(cba,jx_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
+            m_fields.alloc_init("current_buf", Direction{1}, lev, amrex::convert(cba,jy_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
+            m_fields.alloc_init("current_buf", Direction{2}, lev, amrex::convert(cba,jz_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
             if (rho_cp[lev]) {
                 AllocInitMultiFab(charge_buf[lev], amrex::convert(cba,rho_nodal_flag),dm,2*ncomps,ngRho,lev, "charge_buf");
             }
