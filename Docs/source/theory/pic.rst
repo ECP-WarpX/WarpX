@@ -434,6 +434,78 @@ of this model can be found in the section
 
 .. _current_deposition:
 
+Pseudo Spectral Analytical Time Domain with arbitrary charge and current-density time dependencies (PSATD-JRhom)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The modified Maxwell’s equations in Fourier space are given by
+
+.. math:: \frac{\partial\mathbf{\tilde{E}}}{\partial t} = i\mathbf{k}\times\mathbf{\tilde{B}}-\mathbf{\tilde{J}} + i\mathbf{k}{\tilde{F}}
+.. math:: \frac{\partial\mathbf{\tilde{B}}}{\partial t} = -i\mathbf{k}\times\mathbf{\tilde{E}}
+.. math:: \frac{\partial{\tilde{F}}}{\partial t} = i\mathbf{k}\mathbf{\tilde{E}} - \tilde{\rho}
+
+In addition to the usual Maxwell-Faraday and Ampere-Maxwell equations, the system contains an extra equation for
+the scalar field :math:`\tilde{F}`, which propagates deviations to Gauss' law.
+(Note that, in the case where Gauss' law is verified in the PIC simulation, :math:`\frac{\partial{\tilde{F}}}{\partial t}` leads to :math:`\tilde{F}=0`,
+and the system of equations reduce to the standard Maxwell's equations.)
+These additional terms were introduced in :cite:p:`Vayfed1996` from the potential formulation in the Lorentz gauge
+and used as a propagative divergence cleaning procedure, as an alternate to the Langdon-Marder :cite:p:`pt-Langdoncpc92`
+or :cite:p:`pt-Marderjcp87` diffusive ones.
+
+While the abovementioned earlier works :cite:p:`pt-Vayfed1996,pt-Munzjcp2000` considered this
+formulation in the context of the standard PIC method using FDTD discretization,
+PSATD-JRhom introduced in :cite:`pt-shapovalPRE2024` focuses on PSATD discretization of the modified Maxwell's equations.
+In the standard PSATD algorithm :cite:p:`pt-Haber1973,pt-VayJCP13`, :math:`\mathbf{\tilde{J}}` is assumed to constant in time,
+and :math:`\tilde{\rho}` is assumed to be linear in time, within a given timestep :math:`\Delta t`.
+
+In PSATD-JRhom we consider more general time dependencies for :math:`\mathbf{\tilde{J}}` and :math:`\tilde{\rho}` within one timestep,
+which is divided into :math:`m` subintervals of equal size :math:`\delta t = \Delta t/m`.
+During these subintervals, :math:`\mathbf{\tilde{J}}` and :math:`\tilde{\rho}` are considered to be either piecewise constant,
+piecewise linear, or piecewise quadratic in time.
+
+
+Specifically for each :math:`\ell`th time subinterval :math:`\ell \in \mathbb{Z} \cap [0,m-1]`:
+.. math::
+
+   \begin{itemize}
+   \begin{linenomath}
+   \[ \hat{\rho}(t) = \hat{\rho}^{n+(\ell+1/2)/m},\quad t\in[ n\Delta t + \ell\delta t, n\Delta t + (\ell+1)\delta t]. \]
+   \end{linenomath}
+
+.. math::
+   \begin{linenomath}
+   \begin{align*}
+   \hat{\rho}(t) =& \frac{\hat{\rho}^{n+(\ell+1)/m}-\hat{\rho}^{n+\ell/m}}{\delta t}(t-t_{n+(\ell+1/2)/m}) + \frac{\hat{\rho}^{n+(\ell+1)/m}+\hat{\rho}^{n+\ell/m}}{2},\\
+   &t\in[ n\Delta t + \ell\delta t, n\Delta t + (\ell+1)\delta t].
+   \end{align*}
+   \end{linenomath}
+
+.. math::
+   \begin{linenomath}
+   \begin{align*}
+   \hat{\rho}(t) =& \frac{2(\rho^{n+(\ell+1)/m}-2\hat{\rho}^{n+(\ell+1/2)/m}+\rho^{n+\ell/m})}{\delta t^2}(t-t_{n+(\ell+1/2)/m})^2 \\
+   &+ \frac{\hat{\rho}^{n+(\ell+1)/m}-\hat{\rho}^{n+\ell/m}}{\delta t}(t-t_{n+(\ell+1/2)/m}) + \rho^{n+(\ell+1/2)/m}, \\
+   &t\in[ n\Delta t + \ell\delta t, n\Delta t + (\ell+1)\delta t],
+   \end{align*}
+   \end{linenomath}
+   \end{itemize}
+
+Final discretized equations write as:
+
+.. math::
+
+   \begin{linenomath}
+   \begin{subequations}
+   \label{Maxwell_discrete}
+   \begin{align}
+   \hat{\mathbf{\tilde{E}}}^{n+(\ell+1)/m} & = C\hat{\mathbf{\tilde{J}}}^{n+\ell/m}+ic^2\frac{S}{ck}\kb\times\hat{\mathbf{\tilde{J}}}^{n+\ell/m}+ic^2\frac{S}{ck}\hat{F}^{n+\ell/m}\kb+\frac{1}{\eps_0 ck}\left(Y_3\ab_J+Y_2\bb_J-S\cb_J\right) \nonumber \\
+   & \quad +\frac{ic^2}{\eps_0 c^2k^2}\left({Y_1}a_{\rho}-Y_{5}b_{\rho}-Y_{4}c_{\rho}\right)\kb \,,  \\[5pt] 
+   \hat \mathbf{\tilde{B}}^{n+(\ell+1)/m} & = C\hat {\mathbf{\tilde{B}}}^{n+\ell/m}-i\frac{S}{ckÂ }\kb\times\hat{\mathbf{\tilde{E}}}^{n+\ell/m}-\frac{i}{\eps_0 c^2k^2}\kb\times\left(Y_1\ab_J-Y_5\bb_J-Y_4\cb_J\right) \,,
+   \hat{F}^{n+(\ell+1)/m} & = C \hat{F}^{n+\ell/m}+i\frac{S}{ck}\kb\cdot\wh \Eb^{n+\ell/m}+\frac{i}{\eps_0 c^2k^2}\kb\cdot\left(Y_1\ab_J-Y_5\bb_J-Y_4\cb_J\right) \nonumber \\
+   & \quad +\frac{1}{\eps_0 ck}\left({Y_3}a_{\rho}+{Y_2}b_{\rho}-Sc_{\rho}\right) \,
+   \end{align}
+   \end{subequations}
+   \end{linenomath}
+
 Current deposition
 ------------------
 
