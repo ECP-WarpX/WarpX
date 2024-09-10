@@ -393,6 +393,11 @@ public:
 
 protected:
 
+    /*
+       Finds the box defining the region where refine injection should be used, if that
+       option is enabled. Currently this only works for numLevels() == 2 and static mesh
+       refinement.
+    */
     bool findRefinedInjectionBox (amrex::Box& fine_injection_box, amrex::IntVect& rrfac);
 
     std::string species_name;

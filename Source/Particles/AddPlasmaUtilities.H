@@ -16,17 +16,30 @@
 #include <AMReX_REAL.H>
 #include <AMReX_RealBox.H>
 
+/*
+  Finds the overlap region between the given tile_realbox and part_realbox, returning true
+  if an overlap exists and false if otherwise. This also sets the parameters overlap_realbox,
+  overlap_box, and shifted to the appropriate values.
+ */
 bool find_overlap (const amrex::RealBox& tile_realbox, const amrex::RealBox& part_realbox,
                    const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>& dx,
                    const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>& prob_lo,
                    amrex::RealBox& overlap_realbox, amrex::Box& overlap_box, amrex::IntVect& shifted);
 
+/*
+  Finds the overlap region between the given tile_realbox, part_realbox and the surface used for
+  flux injection, returning true if an overlap exists and false if otherwise. This also sets the
+  parameters overlap_realbox, overlap_box, and shifted to the appropriate values.
+ */
 bool find_overlap_flux (const amrex::RealBox& tile_realbox, const amrex::RealBox& part_realbox,
                         const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>& dx,
                         const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>& prob_lo,
                         const PlasmaInjector& plasma_injector,
                         amrex::RealBox& overlap_realbox, amrex::Box& overlap_box, amrex::IntVect& shifted);
 
+/*
+  This computes the scale_fac (used for setting the particle weights) on a volumetric basis.
+ */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real compute_scale_fac_volume (const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>& dx,
                                       const amrex::Long pcount) {
@@ -34,6 +47,10 @@ amrex::Real compute_scale_fac_volume (const amrex::GpuArray<amrex::Real, AMREX_S
     return (pcount != 0) ? AMREX_D_TERM(dx[0],*dx[1],*dx[2])/pcount : 0.0_rt;
 }
 
+/*
+  Given a refinement ratio, this computes the total increase in resolution for a plane
+  defined by the normal_axis.
+ */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 int compute_area_weights (const amrex::IntVect& iv, const int normal_axis) {
     int r = AMREX_D_TERM(iv[0],*iv[1],*iv[2]);
@@ -48,6 +65,10 @@ int compute_area_weights (const amrex::IntVect& iv, const int normal_axis) {
     return r;
 }
 
+/*
+  This computes the scale_fac (used for setting the particle weights) on a on area basis
+  (used for flux injection).
+ */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real compute_scale_fac_area (const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>& dx,
                                     const amrex::Real num_ppc_real, const int flux_normal_axis) {
@@ -71,6 +92,10 @@ amrex::Real compute_scale_fac_area (const amrex::GpuArray<amrex::Real, AMREX_SPA
     return scale_fac;
 }
 
+/*
+  This struct encapsulates several data structures needed for using the parser during plasma
+  injection.
+ */
 struct PlasmaParserHelper
 {
     PlasmaParserHelper (std::size_t a_num_user_int_attribs,
