@@ -456,7 +456,7 @@ WarpX::ComputeOneWayExtensions ()
         for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
 
             amrex::Box const &box = mfi.validbox();
-
+            m_fields.get("face_areas", maxLevel());
             auto const &S = m_face_areas[maxLevel()][idim]->array(mfi);
             auto const &flag_ext_face = m_flag_ext_face[maxLevel()][idim]->array(mfi);
             auto const &flag_info_face = m_flag_info_face[maxLevel()][idim]->array(mfi);
