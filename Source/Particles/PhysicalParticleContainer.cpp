@@ -975,22 +975,9 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
-    const int nlevs = numLevels();
-    static bool refine_injection = false;
-    static Box fine_injection_box;
-    static amrex::IntVect rrfac(AMREX_D_DECL(1,1,1));
-    // This does not work if the mesh is dynamic.  But in that case, we should
-    // not use refined injected either.  We also assume there is only one fine level.
-    if (WarpX::moving_window_active(WarpX::GetInstance().getistep(0)+1) and WarpX::refine_plasma
-        and do_continuous_injection and nlevs == 2)
-    {
-        refine_injection = true;
-        fine_injection_box = ParticleBoxArray(1).minimalBox();
-        fine_injection_box.setSmall(WarpX::moving_window_dir, std::numeric_limits<int>::lowest()/2);
-        fine_injection_box.setBig(WarpX::moving_window_dir, std::numeric_limits<int>::max()/2);
-        rrfac = m_gdb->refRatio(0);
-        fine_injection_box.coarsen(rrfac);
-    }
+    Box fine_injection_box;
+    amrex::IntVect rrfac(AMREX_D_DECL(1,1,1));
+    bool refine_injection = findRefinedInjectionBox(fine_injection_box, rrfac);
 
     InjectorPosition* inj_pos = plasma_injector.getInjectorPosition();
     InjectorDensity*  inj_rho = plasma_injector.getInjectorDensity();
@@ -1037,7 +1024,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
         RealBox overlap_realbox;
         Box overlap_box;
         IntVect shifted;
-        bool no_overlap = find_overlap(tile_realbox, part_realbox, dx, problo, overlap_realbox, overlap_box, shifted);
+        const bool no_overlap = find_overlap(tile_realbox, part_realbox, dx, problo, overlap_realbox, overlap_box, shifted);
         if (no_overlap) {
             continue; // Go to the next tile
         }
@@ -1201,7 +1188,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
             if (rz_random_theta) { theta_offset = amrex::Random(engine) * 2._rt * MathConst::pi; }
 #endif
 
-            Real scale_fac = compute_scale_fac_volume(dx, pcounts[index]);
+            const Real scale_fac = compute_scale_fac_volume(dx, pcounts[index]);
             for (int i_part = 0; i_part < pcounts[index]; ++i_part)
             {
                 long ip = poffset[index] + i_part;
@@ -1449,19 +1436,9 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
     for (int ic = 0; ic < NumRuntimeIntComps(); ++ic) { tmp_pc.AddIntComp(false); }
     tmp_pc.defineAllParticleTiles();
 
-    const int nlevs = numLevels();
-    static bool refine_injection = false;
-    static Box fine_injection_box;
-    static amrex::IntVect rrfac(AMREX_D_DECL(1,1,1));
-    // This does not work if the mesh is dynamic.  But in that case, we should
-    // not use refined injected either.  We also assume there is only one fine level.
-    if (WarpX::refine_plasma && nlevs == 2)
-    {
-        refine_injection = true;
-        fine_injection_box = ParticleBoxArray(1).minimalBox();
-        rrfac = m_gdb->refRatio(0);
-        fine_injection_box.coarsen(rrfac);
-    }
+    Box fine_injection_box;
+    amrex::IntVect rrfac(AMREX_D_DECL(1,1,1));
+    bool refine_injection = findRefinedInjectionBox(fine_injection_box, rrfac);
 
     InjectorPosition* flux_pos = plasma_injector.getInjectorFluxPosition();
     InjectorFlux*  inj_flux = plasma_injector.getInjectorFlux();
@@ -1506,7 +1483,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         RealBox overlap_realbox;
         Box overlap_box;
         IntVect shifted;
-        bool no_overlap = find_overlap_flux(tile_realbox, part_realbox, dx, problo, plasma_injector, overlap_realbox, overlap_box, shifted);
+        const bool no_overlap = find_overlap_flux(tile_realbox, part_realbox, dx, problo, plasma_injector, overlap_realbox, overlap_box, shifted);
         if (no_overlap) {
             continue; // Go to the next tile
         }
@@ -1524,7 +1501,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         Gpu::DeviceVector<int> offset(overlap_box.numPts());
         auto *pcounts = counts.data();
         const amrex::IntVect lrrfac = rrfac;
-        int flux_normal_axis = plasma_injector.flux_normal_axis;
+        const int flux_normal_axis = plasma_injector.flux_normal_axis;
         Box fine_overlap_box; // default Box is NOT ok().
         if (refine_injection) {
             fine_overlap_box = overlap_box & amrex::shift(fine_injection_box, -shifted);
@@ -3320,5 +3297,29 @@ PhysicalParticleContainer::getPairGenerationFilterFunc ()
     WARPX_PROFILE("PhysicalParticleContainer::getPairGenerationFunc()");
     return PairGenerationFilterFunc{particle_runtime_comps["opticalDepthBW"]};
 }
+
+bool
+PhysicalParticleContainer::findRefinedInjectionBox (amrex::Box& a_fine_injection_box, amrex::IntVect& a_rrfac)
+{
+    WARPX_PROFILE("PhysicalParticleContainer::findRefinedInjectionBox");
+
+    // This does not work if the mesh is dynamic.  But in that case, we should
+    // not use refined injected either.  We also assume there is only one fine level.
+    static bool refine_injection = false;
+    static Box fine_injection_box;
+    static amrex::IntVect rrfac(AMREX_D_DECL(1,1,1));
+    if (!refine_injection and WarpX::moving_window_active(WarpX::GetInstance().getistep(0)+1) and WarpX::refine_plasma and do_continuous_injection and numLevels() == 2) {
+        refine_injection = true;
+        fine_injection_box = ParticleBoxArray(1).minimalBox();
+        fine_injection_box.setSmall(WarpX::moving_window_dir, std::numeric_limits<int>::lowest()/2);
+        fine_injection_box.setBig(WarpX::moving_window_dir, std::numeric_limits<int>::max()/2);
+        rrfac = m_gdb->refRatio(0);
+        fine_injection_box.coarsen(rrfac);
+    }
+    a_fine_injection_box = fine_injection_box;
+    a_rrfac = rrfac;
+    return refine_injection;
+}
+
 
 #endif

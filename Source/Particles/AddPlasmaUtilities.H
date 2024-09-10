@@ -16,12 +16,12 @@
 #include <AMReX_REAL.H>
 #include <AMReX_RealBox.H>
 
-bool find_overlap (const amrex::RealBox& tile_real_box, const amrex::RealBox& part_realbox,
+bool find_overlap (const amrex::RealBox& tile_realbox, const amrex::RealBox& part_realbox,
                    const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>& dx,
                    const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>& prob_lo,
                    amrex::RealBox& overlap_realbox, amrex::Box& overlap_box, amrex::IntVect& shifted);
 
-bool find_overlap_flux (const amrex::RealBox& tile_real_box, const amrex::RealBox& part_realbox,
+bool find_overlap_flux (const amrex::RealBox& tile_realbox, const amrex::RealBox& part_realbox,
                         const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>& dx,
                         const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>& prob_lo,
                         const PlasmaInjector& plasma_injector,
@@ -73,8 +73,8 @@ amrex::Real compute_scale_fac_area (const amrex::GpuArray<amrex::Real, AMREX_SPA
 
 struct PlasmaParserHelper
 {
-    PlasmaParserHelper (const std::size_t a_num_user_int_attribs,
-                        const std::size_t a_num_user_real_attribs,
+    PlasmaParserHelper (std::size_t a_num_user_int_attribs,
+                        std::size_t a_num_user_real_attribs,
                         const amrex::Vector< std::unique_ptr<amrex::Parser> >& a_user_int_attrib_parser,
                         const amrex::Vector< std::unique_ptr<amrex::Parser> >& a_user_real_attrib_parser);
 
