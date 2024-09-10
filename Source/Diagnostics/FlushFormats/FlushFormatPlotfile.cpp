@@ -13,6 +13,8 @@
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
+#include <ablastr/fields/MultiFabRegister.H>
+
 #include <AMReX.H>
 #include <AMReX_Box.H>
 #include <AMReX_BoxArray.H>
@@ -574,18 +576,28 @@ FlushFormatPlotfile::WriteAllRawFields(
         WriteRawMF( warpx.getField(FieldType::Bfield_aux, lev, 2), dm, raw_pltname, default_level_prefix, "Bz_aux", lev, plot_raw_fields_guards);
 
         // fine patch
-        WriteRawMF( warpx.getField(FieldType::Efield_fp, lev, 0), dm, raw_pltname, default_level_prefix, "Ex_fp", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getField(FieldType::Efield_fp, lev, 1), dm, raw_pltname, default_level_prefix, "Ey_fp", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getField(FieldType::Efield_fp, lev, 2), dm, raw_pltname, default_level_prefix, "Ez_fp", lev, plot_raw_fields_guards);
-        WriteRawMF( *warpx.m_fields.get("current_fp",Direction{0}, lev), dm, raw_pltname, default_level_prefix, "jx_fp", lev,plot_raw_fields_guards);
-        WriteRawMF( *warpx.m_fields.get("current_fp",Direction{1}, lev), dm, raw_pltname, default_level_prefix, "jy_fp", lev,plot_raw_fields_guards);
-        WriteRawMF( *warpx.m_fields.get("current_fp",Direction{2}, lev), dm, raw_pltname, default_level_prefix, "jz_fp", lev,plot_raw_fields_guards);
-        WriteRawMF( warpx.getField(FieldType::Bfield_fp, lev, 0), dm, raw_pltname, default_level_prefix, "Bx_fp", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getField(FieldType::Bfield_fp, lev, 1), dm, raw_pltname, default_level_prefix, "By_fp", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getField(FieldType::Bfield_fp, lev, 2), dm, raw_pltname, default_level_prefix, "Bz_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( *warpx.m_fields.get("Efield_fp", Direction{0}, lev), dm, raw_pltname,
+                    default_level_prefix, "Ex_fp", lev, plot_raw_fields_guards );
+        WriteRawMF( *warpx.m_fields.get("Efield_fp", Direction{1}, lev), dm, raw_pltname,
+                    default_level_prefix, "Ey_fp", lev, plot_raw_fields_guards );
+        WriteRawMF( *warpx.m_fields.get("Efield_fp", Direction{2}, lev), dm, raw_pltname,
+                    default_level_prefix, "Ez_fp", lev, plot_raw_fields_guards );
+        WriteRawMF( *warpx.m_fields.get("current_fp",Direction{0}, lev), dm, raw_pltname,
+                    default_level_prefix, "jx_fp", lev,plot_raw_fields_guards );
+        WriteRawMF( *warpx.m_fields.get("current_fp",Direction{1}, lev), dm, raw_pltname,
+                    default_level_prefix, "jy_fp", lev,plot_raw_fields_guards );
+        WriteRawMF( *warpx.m_fields.get("current_fp",Direction{2}, lev), dm, raw_pltname,
+                    default_level_prefix, "jz_fp", lev,plot_raw_fields_guards );
+        WriteRawMF( warpx.getField(FieldType::Bfield_fp, lev, 0), dm, raw_pltname,
+                    default_level_prefix, "Bx_fp", lev, plot_raw_fields_guards );
+        WriteRawMF( warpx.getField(FieldType::Bfield_fp, lev, 1), dm, raw_pltname,
+                    default_level_prefix, "By_fp", lev, plot_raw_fields_guards );
+        WriteRawMF( warpx.getField(FieldType::Bfield_fp, lev, 2), dm, raw_pltname,
+                    default_level_prefix, "Bz_fp", lev, plot_raw_fields_guards );
         if (warpx.m_fields.has("F_fp", lev))
         {
-            WriteRawMF(*warpx.m_fields.get("F_fp", lev), dm, raw_pltname, default_level_prefix, "F_fp", lev, plot_raw_fields_guards);
+            WriteRawMF( *warpx.m_fields.get("F_fp", lev), dm, raw_pltname,
+                        default_level_prefix, "F_fp", lev, plot_raw_fields_guards );
         }
         if (warpx.m_fields.has("rho_fp", lev))
         {
@@ -596,7 +608,8 @@ FlushFormatPlotfile::WriteAllRawFields(
             WriteRawMF(rho_new, dm, raw_pltname, default_level_prefix, "rho_fp", lev, plot_raw_fields_guards);
         }
         if (warpx.m_fields.has("phi_fp", lev)) {
-            WriteRawMF(*warpx.m_fields.get("phi_fp", lev), dm, raw_pltname, default_level_prefix, "phi_fp", lev, plot_raw_fields_guards);
+            WriteRawMF( *warpx.m_fields.get("phi_fp", lev), dm, raw_pltname,
+                        default_level_prefix, "phi_fp", lev, plot_raw_fields_guards );
         }
 
         // Averaged fields on fine patch
