@@ -13,11 +13,11 @@ Run
 The same input script can be used for 1d, 2d or 3d Cartesian simulations as well
 as replicating either the parallel propagating or ion-Bernstein modes as indicated below.
 
-.. dropdown:: Script ``PICMI_inputs.py``
+.. dropdown:: Script ``inputs_test_1d_ohm_solver_em_modes_picmi.py``
 
-   .. literalinclude:: PICMI_inputs.py
+   .. literalinclude:: inputs_test_1d_ohm_solver_em_modes_picmi.py
       :language: python3
-      :caption: You can copy this file from ``Examples/Tests/ohm_solver_EM_modes/PICMI_inputs.py``.
+      :caption: You can copy this file from ``Examples/Tests/ohm_solver_EM_modes/inputs_test_1d_ohm_solver_em_modes_picmi.py``.
 
 For `MPI-parallel <https://www.mpi-forum.org>`__ runs, prefix these lines with ``mpiexec -n 4 ...`` or ``srun -n 4 ...``, depending on the system.
 
@@ -29,7 +29,7 @@ For `MPI-parallel <https://www.mpi-forum.org>`__ runs, prefix these lines with `
 
       .. code-block:: bash
 
-         python3 PICMI_inputs.py -dim {1/2/3} --bdir z
+         python3 inputs_test_1d_ohm_solver_em_modes_picmi.py -dim {1/2/3} --bdir z
 
    .. tab-item:: Perpendicular propagating waves
 
@@ -37,7 +37,7 @@ For `MPI-parallel <https://www.mpi-forum.org>`__ runs, prefix these lines with `
 
       .. code-block:: bash
 
-         python3 PICMI_inputs.py -dim {1/2/3} --bdir {x/y}
+         python3 inputs_test_1d_ohm_solver_em_modes_picmi.py -dim {1/2/3} --bdir {x/y}
 
 Analyze
 -------
@@ -82,17 +82,17 @@ Run
 The following script initializes a thermal plasma in a metallic cylinder with
 periodic boundaries at the cylinder ends.
 
-.. dropdown:: Script ``PICMI_inputs_rz.py``
+.. dropdown:: Script ``inputs_test_rz_ohm_solver_em_modes_picmi.py``
 
-   .. literalinclude:: PICMI_inputs_rz.py
+   .. literalinclude:: inputs_test_rz_ohm_solver_em_modes_picmi.py
       :language: python3
-      :caption: You can copy this file from ``Examples/Tests/ohm_solver_EM_modes/PICMI_inputs_rz.py``.
+      :caption: You can copy this file from ``Examples/Tests/ohm_solver_EM_modes/inputs_test_rz_ohm_solver_em_modes_picmi.py``.
 
 The example can be executed using:
 
 .. code-block:: bash
 
-   python3 PICMI_inputs_rz.py
+   python3 inputs_test_rz_ohm_solver_em_modes_picmi.py
 
 Analyze
 -------
