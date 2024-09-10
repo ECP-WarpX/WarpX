@@ -322,7 +322,6 @@ WarpX::WarpX ()
 
     F_fp.resize(nlevs_max);
     rho_fp.resize(nlevs_max);
-    phi_fp.resize(nlevs_max);
     current_fp.resize(nlevs_max);
     Efield_fp.resize(nlevs_max);
     Bfield_fp.resize(nlevs_max);
@@ -2103,6 +2102,14 @@ WarpX::ClearLevel (int lev)
         m_hybrid_pic_model->ClearLevel(lev);
     }
 
+    for (int i = 0; i < 3; ++i) {
+        Efield_dotMask [lev][i].reset();
+        Bfield_dotMask [lev][i].reset();
+        Afield_dotMask [lev][i].reset();
+    }
+
+    phi_dotMask[lev].reset();
+
 #ifdef WARPX_USE_FFT
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         spectral_solver_fp[lev].reset();
@@ -2483,7 +2490,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
     {
         const IntVect ngPhi = IntVect( AMREX_D_DECL(1,1,1) );
-        AllocInitMultiFab(phi_fp[lev], amrex::convert(ba, phi_nodal_flag), dm, ncomps, ngPhi, lev, "phi_fp", 0.0_rt);
+        m_multifab_map.alloc_init( "phi_fp", amrex::convert(ba, phi_nodal_flag), dm,
+                                    ncomps, ngPhi, lev, 0.0_rt );
     }
 
     if (do_subcycling && lev == 0)
@@ -3493,7 +3501,7 @@ WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, cons
             field_pointer = F_fp[lev].get();
             break;
         case FieldType::phi_fp :
-            field_pointer = phi_fp[lev].get();
+            field_pointer = m_fields.get("phi_fp",lev);
             break;
         case FieldType::vector_potential_fp :
             field_pointer = vector_potential_fp_nodal[lev][direction].get();

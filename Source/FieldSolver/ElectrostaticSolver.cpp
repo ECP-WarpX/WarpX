@@ -114,7 +114,7 @@ WarpX::AddBoundaryField ()
     // Allocate fields for charge and potential
     const int num_levels = max_level + 1;
     Vector<std::unique_ptr<MultiFab> > rho(num_levels);
-    Vector<std::unique_ptr<MultiFab> > phi(num_levels);
+    std::vector<MultiFab*> phi(num_levels);
     // Use number of guard cells used for local deposition of rho
     const amrex::IntVect ng = guard_cells.ng_depos_rho;
     for (int lev = 0; lev <= max_level; lev++) {
@@ -122,7 +122,7 @@ WarpX::AddBoundaryField ()
         nba.surroundingNodes();
         rho[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, ng);
         rho[lev]->setVal(0.);
-        phi[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, 1);
+        phi[lev] = warpx.m_fields.alloc_init("phi_temp", nba, DistributionMap(lev), 1, 1, lev);
         phi[lev]->setVal(0.);
     }
 
@@ -140,6 +140,12 @@ WarpX::AddBoundaryField ()
     // Compute the corresponding electric and magnetic field, from the potential phi.
     computeE( Efield_fp, phi, beta );
     computeB( Bfield_fp, phi, beta );
+ 
+    // de-allocate temporary
+    for (int lev = 0; lev <= max_level; lev++) {
+        warpx.m_fields.erase("phi_temp",lev);
+    }
+
 }
 
 void
@@ -166,7 +172,7 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     const int num_levels = max_level + 1;
     Vector<std::unique_ptr<MultiFab> > rho(num_levels);
     Vector<std::unique_ptr<MultiFab> > rho_coarse(num_levels); // Used in order to interpolate between levels
-    Vector<std::unique_ptr<MultiFab> > phi(num_levels);
+    std::vector<MultiFab*> phi(num_levels);
     // Use number of guard cells used for local deposition of rho
     const amrex::IntVect ng = guard_cells.ng_depos_rho;
     for (int lev = 0; lev <= max_level; lev++) {
@@ -174,7 +180,7 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
         nba.surroundingNodes();
         rho[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, ng);
         rho[lev]->setVal(0.);
-        phi[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, 1);
+        phi[lev] = warpx.m_fields.alloc_init("phi_temp", nba, DistributionMap(lev), 1, 1, lev);
         phi[lev]->setVal(0.);
         if (lev > 0) {
             // For MR levels: allocated the coarsened version of rho
@@ -220,6 +226,11 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     // Compute the corresponding electric and magnetic field, from the potential phi
     computeE( Efield_fp, phi, beta );
     computeB( Bfield_fp, phi, beta );
+    
+    // de-allocate temporary
+    for (int lev = 0; lev <= max_level; lev++) {
+        warpx.m_fields.erase("phi_temp",lev);
+    }
 
 }
 
@@ -265,6 +276,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     const std::array<Real, 3> beta = {0._rt};
 
     // set the boundary potentials appropriately
+    auto phi_fp = warpx.m_fields.get_mr_levels("phi_fp",max_level);
     setPhiBC(phi_fp);
 
     // Compute the potential phi, by solving the Poisson equation
@@ -317,7 +329,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
 */
 void
 WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                   amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                   std::vector<amrex::MultiFab*>& phi,
                    std::array<Real, 3> const beta,
                    Real const required_precision,
                    Real absolute_tolerance,
@@ -325,10 +337,10 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                    int const verbosity) const {
     // create a vector to our fields, sorted by level
     amrex::Vector<amrex::MultiFab *> sorted_rho;
-    amrex::Vector<amrex::MultiFab *> sorted_phi;
+    std::vector<amrex::MultiFab *> sorted_phi;
     for (int lev = 0; lev <= finest_level; ++lev) {
         sorted_rho.emplace_back(rho[lev].get());
-        sorted_phi.emplace_back(phi[lev].get());
+        sorted_phi.emplace_back(phi[lev]);
     }
 
     std::optional<ElectrostaticSolver::EBCalcEfromPhiPerLevel> post_phi_calculation;
@@ -421,7 +433,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
    \param[in] idim The dimension for which the Dirichlet boundary condition is set
 */
 void
-WarpX::setPhiBC ( amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi ) const
+WarpX::setPhiBC ( std::vector<amrex::MultiFab*>& phi ) const
 {
     // check if any dimension has non-periodic boundary conditions
     if (!m_poisson_boundary_handler.has_non_periodic) { return; }
@@ -503,7 +515,7 @@ WarpX::setPhiBC ( amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi ) const
 */
 void
 WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
-                 const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                 const std::vector<amrex::MultiFab*>& phi,
                  std::array<amrex::Real, 3> const beta ) const
 {
     for (int lev = 0; lev <= max_level; lev++) {
@@ -680,7 +692,7 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 */
 void
 WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& B,
-                 const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                 const std::vector<amrex::MultiFab*>& phi,
                  std::array<amrex::Real, 3> const beta ) const
 {
     // return early if beta is 0 since there will be no B-field
@@ -849,7 +861,7 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 */
 void
 WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                              amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi) const
+                              std::vector<amrex::MultiFab*>& phi) const
 {
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(max_level == 0,
