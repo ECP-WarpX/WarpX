@@ -2501,8 +2501,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     if (do_divb_cleaning)
     {
         m_fields.alloc_init(
-            "G_fp", amrex::convert(ba, G_nodal_flag), dm,
-            ncomps, ngG, lev, 0.0_rt);
+            "G_fp", lev, amrex::convert(ba, G_nodal_flag), dm,
+            ncomps, ngG, 0.0_rt);
     }
 
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
@@ -2706,14 +2706,14 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             if (grid_type == GridType::Collocated)
             {
                 m_fields.alloc_init(
-                    "G_cp", amrex::convert(ba, IntVect::TheUnitVector()), dm,
-                    ncomps, ngG, lev, 0.0_rt);
+                    "G_cp", lev, amrex::convert(ba, IntVect::TheUnitVector()), dm,
+                    ncomps, ngG, 0.0_rt);
             }
             else // grid_type=staggered or grid_type=hybrid
             {
                 m_fields.alloc_init(
-                    "G_cp", amrex::convert(ba, IntVect::TheZeroVector()), dm,
-                    ncomps, ngG, lev, 0.0_rt);
+                    "G_cp", lev, amrex::convert(ba, IntVect::TheZeroVector()), dm,
+                    ncomps, ngG, 0.0_rt);
             }
         }
 
