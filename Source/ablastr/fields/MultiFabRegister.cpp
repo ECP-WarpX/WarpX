@@ -192,13 +192,13 @@ namespace ablastr::fields
         return &mf;
     }
 
-    std::vector<amrex::MultiFab*>
+    MultiLevelScalarField
     MultiFabRegister::get_mr_levels (
         std::string name,
         int finest_level
     )
     {
-        std::vector<amrex::MultiFab*> field_on_level;
+        MultiLevelScalarField field_on_level;
         field_on_level.reserve(finest_level+1);
         for (int lvl = 0; lvl <= finest_level; lvl++)
         {
@@ -207,23 +207,13 @@ namespace ablastr::fields
         return field_on_level;
     }
 
-    std::vector<
-        std::map<
-            Direction,
-            amrex::MultiFab*
-        >
-    >
+    MultiLevelVectorField
     MultiFabRegister::get_mr_levels_alldirs  (
         std::string name,
         int finest_level
     )
     {
-        std::vector<
-            std::map<
-                Direction,
-                amrex::MultiFab*
-            >
-        > field_on_level;
+        MultiLevelVectorField field_on_level;
         field_on_level.reserve(finest_level+1);
 
         // TODO: Technically, we should search field_on_level via std::unique_copy
@@ -314,12 +304,7 @@ namespace ablastr::fields
         );
     }
 
-    std::vector<
-        std::map<
-            Direction,
-            amrex::MultiFab*
-        >
-    >
+    MultiLevelVectorField
     va2vm (
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > const & old_vector_on_levels
     )

@@ -23,7 +23,6 @@
 
 namespace ablastr::fields
 {
-
     /** Components (base vector directions) of vector/tensor fields.
      *
      * Because of different staggering, the components of vector/tensor fields are stored
@@ -38,6 +37,21 @@ namespace ablastr::fields
             return other.dir < this->dir;
         }
     };
+
+    /** A vector field of three MultiFab */
+    using VectorField = std::map<Direction, amrex::MultiFab*>;
+
+    /** A multi-level scalar field
+     *
+     * TODO: use amrex::Vector again for bound checks in debug mode
+     */
+    using MultiLevelScalarField = std::vector<amrex::MultiFab*>;
+
+    /** A multi-level vector field
+    *
+    * TODO: use amrex::Vector again for bound checks in debug mode
+    */
+    using MultiLevelVectorField = std::vector<std::map<Direction, amrex::MultiFab*>>;
 
     /** title
      *
@@ -208,7 +222,7 @@ namespace ablastr::fields
          * @param finest_level ...
          * @return ...
          */
-        std::vector<amrex::MultiFab*>
+        MultiLevelScalarField
         get_mr_levels (
             std::string name,
             int finest_level
@@ -223,12 +237,7 @@ namespace ablastr::fields
          * @param finest_level ...
          * @return ...
          */
-        std::vector<
-            std::map<
-                Direction,
-                amrex::MultiFab*
-            >
-        >
+        MultiLevelVectorField
         get_mr_levels_alldirs (
             std::string name,
             int finest_level
@@ -328,12 +337,7 @@ namespace ablastr::fields
      *
      * @return
      */
-    std::vector<
-        std::map<
-                Direction,
-                amrex::MultiFab*
-        >
-    >
+    MultiLevelVectorField
     va2vm (
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > const & old_vector_on_levels
     );
