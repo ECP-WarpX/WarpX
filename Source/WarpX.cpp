@@ -2304,9 +2304,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     AllocInitMultiFab(Bfield_fp[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, ngEB, lev, "Bfield_fp[y]", 0.0_rt);
     AllocInitMultiFab(Bfield_fp[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngEB, lev, "Bfield_fp[z]", 0.0_rt);
 
-    AllocInitMultiFab(Efield_fp[lev][0], amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, lev, "Efield_fp[x]", 0.0_rt);
-    AllocInitMultiFab(Efield_fp[lev][1], amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngEB, lev, "Efield_fp[y]", 0.0_rt);
-    AllocInitMultiFab(Efield_fp[lev][2], amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngEB, lev, "Efield_fp[z]", 0.0_rt);
+    m_fields.alloc_init( "Efield_fp", Direction{0}, lev, amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+    m_fields.alloc_init( "Efield_fp", Direction{1}, lev, amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+    m_fields.alloc_init( "Efield_fp", Direction{2}, lev, amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
 
     m_fields.alloc_init( "current_fp", Direction{0}, lev, amrex::convert(ba, jx_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
     m_fields.alloc_init( "current_fp", Direction{1}, lev, amrex::convert(ba, jy_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
@@ -2612,9 +2612,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                 AllocInitMultiFab(Efield_aux[lev][2], amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngEB, lev, "Efield_aux[z]");
             } else {
                 // In this case, the aux grid is simply an alias of the fp grid (most common case in WarpX)
-                AliasInitMultiFab(Efield_aux[lev][0], *Efield_fp[lev][0], 0, ncomps, lev, "Efield_aux[x]", 0.0_rt);
-                AliasInitMultiFab(Efield_aux[lev][1], *Efield_fp[lev][1], 0, ncomps, lev, "Efield_aux[y]", 0.0_rt);
-                AliasInitMultiFab(Efield_aux[lev][2], *Efield_fp[lev][2], 0, ncomps, lev, "Efield_aux[z]", 0.0_rt);
+                AliasInitMultiFab(Efield_aux[lev][0], *m_fields.get("Efield_fp",Direction{0},lev), 0, ncomps, lev, "Efield_aux[x]", 0.0_rt);
+                AliasInitMultiFab(Efield_aux[lev][1], *m_fields.get("Efield_fp",Direction{1},lev), 0, ncomps, lev, "Efield_aux[y]", 0.0_rt);
+                AliasInitMultiFab(Efield_aux[lev][2], *m_fields.get("Efield_fp",Direction{2},lev), 0, ncomps, lev, "Efield_aux[z]", 0.0_rt);
             }
         }
     } else {
@@ -2648,11 +2648,11 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
     if (m_p_ext_field_params->E_ext_grid_type != ExternalFieldType::default_zero && m_p_ext_field_params->E_ext_grid_type != ExternalFieldType::constant) {
         // These fields will be added directly to the grid, i.e. to fp, and need to match the index type
-        AllocInitMultiFab(Efield_fp_external[lev][0], amrex::convert(ba, Efield_fp[lev][0]->ixType()),
+        AllocInitMultiFab(Efield_fp_external[lev][0], amrex::convert(ba, m_fields.get("Efield_fp",Direction{0},lev)->ixType()),
             dm, ncomps, ngEB, lev, "Efield_fp_external[x]", 0.0_rt);
-        AllocInitMultiFab(Efield_fp_external[lev][1], amrex::convert(ba, Efield_fp[lev][1]->ixType()),
+        AllocInitMultiFab(Efield_fp_external[lev][1], amrex::convert(ba, m_fields.get("Efield_fp",Direction{1},lev)->ixType()),
             dm, ncomps, ngEB, lev, "Efield_fp_external[y]", 0.0_rt);
-        AllocInitMultiFab(Efield_fp_external[lev][2], amrex::convert(ba, Efield_fp[lev][2]->ixType()),
+        AllocInitMultiFab(Efield_fp_external[lev][2], amrex::convert(ba, m_fields.get("Efield_fp",Direction{2},lev)->ixType()),
             dm, ncomps, ngEB, lev, "Efield_fp_external[z]", 0.0_rt);
     }
     if (mypc->m_E_ext_particle_s == "read_from_file") {
