@@ -142,7 +142,7 @@ WarpX::AddBoundaryField ()
     // Compute the corresponding electric and magnetic field, from the potential phi.
     computeE( Efield_fp, phi, beta );
     computeB( Bfield_fp, phi, beta );
- 
+
     // de-allocate temporary
     for (int lev = 0; lev <= max_level; lev++) {
         m_fields.erase("phi_temp",lev);
