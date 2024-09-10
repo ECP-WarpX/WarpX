@@ -1211,7 +1211,7 @@ WarpXParticleContainer::DepositCharge (std::vector<amrex::MultiFab*>& rho,
 }
 
 void
-WarpXParticleContainer::DepositCharge (std::unique_ptr<amrex::MultiFab>& rho,
+WarpXParticleContainer::DepositCharge (amrex::MultiFab* rho,
                                        const int lev, const bool local, const bool reset,
                                        const bool apply_boundary_and_scale_volume,
                                        const int icomp)
@@ -1245,7 +1245,7 @@ WarpXParticleContainer::DepositCharge (std::unique_ptr<amrex::MultiFab>& rho,
             ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
         }
 
-        DepositCharge(pti, wp, ion_lev, rho.get(), icomp, 0, np, thread_num, lev, lev);
+        DepositCharge(pti, wp, ion_lev, rho, icomp, 0, np, thread_num, lev, lev);
     }
 #ifdef AMREX_USE_OMP
     }

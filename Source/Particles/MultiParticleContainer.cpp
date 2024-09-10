@@ -557,7 +557,7 @@ MultiParticleContainer::DepositCurrent (
 
 void
 MultiParticleContainer::DepositCharge (
-    std::vector<amrex::MultiFab*>& rho,
+    const std::vector<amrex::MultiFab*>& rho,
     const amrex::Real relative_time)
 {
     // Reset the rho array

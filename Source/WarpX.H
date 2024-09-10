@@ -1021,7 +1021,7 @@ public:
     void computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& B,
                    const std::vector<amrex::MultiFab*>& phi,
                    std::array<amrex::Real, 3> beta = {{0,0,0}} ) const;
-    void computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+    void computePhiTriDiagonal (const std::vector<amrex::MultiFab*>& rho,
                                       std::vector<amrex::MultiFab*>& phi) const;
 
     // Magnetostatic Solver Interface

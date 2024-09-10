@@ -1052,7 +1052,7 @@ WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type,
             ApplyInverseVolumeScalingToCurrentDensity(current_buf[lev][0].get(), current_buf[lev][1].get(), current_buf[lev][2].get(), lev-1);
         }
         if (m_fields.has("rho_fp", lev)) {
-            ApplyInverseVolumeScalingToChargeDensity(m_fields.get("rho_fp", lev).get(), lev);
+            ApplyInverseVolumeScalingToChargeDensity(m_fields.get("rho_fp", lev), lev);
             if (charge_buf[lev]) {
                 ApplyInverseVolumeScalingToChargeDensity(charge_buf[lev].get(), lev-1);
             }

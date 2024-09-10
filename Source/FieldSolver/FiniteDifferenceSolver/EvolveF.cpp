@@ -137,7 +137,7 @@ template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveFCylindrical (
     amrex::MultiFab* Ffield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
-    std::unique_ptr<amrex::MultiFab> const& rhofield,
+    amrex::MultiFab* const rhofield,
     int const rhocomp,
     amrex::Real const dt ) {
 

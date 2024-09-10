@@ -114,8 +114,8 @@ WarpX::AddBoundaryField ()
 
     // Allocate fields for charge and potential
     const int num_levels = max_level + 1;
-    amrex::Vector<std::unique_ptr<MultiFab>> rho(num_levels);
-    amrex::Vector<std::unique_ptr<MultiFab>> phi(num_levels);
+    Vector<std::unique_ptr<MultiFab> > rho(num_levels);
+    std::vector<MultiFab*> phi(num_levels);
     // Use number of guard cells used for local deposition of rho
     const amrex::IntVect ng = guard_cells.ng_depos_rho;
     for (int lev = 0; lev <= max_level; lev++) {
@@ -123,24 +123,31 @@ WarpX::AddBoundaryField ()
         nba.surroundingNodes();
         rho[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, ng);
         rho[lev]->setVal(0.);
-        phi[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, 1);
+        phi[lev] = m_fields.alloc_init( "phi_temp", lev, nba, DistributionMap(lev), 1,
+                                        IntVect::TheUnitVector());
         phi[lev]->setVal(0.);
     }
 
     // Set the boundary potentials appropriately
-    setPhiBC(amrex::GetVecOfPtrs(phi));
+    setPhiBC(phi);
 
     // beta is zero for boundaries
     const std::array<Real, 3> beta = {0._rt};
 
     // Compute the potential phi, by solving the Poisson equation
-    computePhi( amrex::GetVecOfPtrs(rho), amrex::GetVecOfPtrs(phi), beta, self_fields_required_precision,
+    computePhi( amrex::GetVecOfPtrs(rho), phi, beta, self_fields_required_precision,
                 self_fields_absolute_tolerance, self_fields_max_iters,
                 self_fields_verbosity );
 
     // Compute the corresponding electric and magnetic field, from the potential phi.
     computeE( Efield_fp, phi, beta );
     computeB( Bfield_fp, phi, beta );
+ 
+    // de-allocate temporary
+    for (int lev = 0; lev <= max_level; lev++) {
+        m_fields.erase("phi_temp",lev);
+    }
+
 }
 
 void
@@ -285,7 +292,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
 
 #if defined(WARPX_DIM_1D_Z)
         // Use the tridiag solver with 1D
-        computePhiTriDiagonal(rho_fp, phi_fp);
+        computePhiTriDiagonal(m_fields.get_mr_levels("rho_fp", finest_level), phi_fp);
 #else
         // Use the AMREX MLMG or the FFT (IGF) solver otherwise
         computePhi(m_fields.get_mr_levels("rho_fp", finest_level), phi_fp, beta, self_fields_required_precision,
@@ -335,8 +342,8 @@ WarpX::computePhi (const std::vector<amrex::MultiFab*>& rho,
     amrex::Vector<amrex::MultiFab *> sorted_rho;
     std::vector<amrex::MultiFab *> sorted_phi;
     for (int lev = 0; lev <= finest_level; ++lev) {
-        sorted_rho.emplace_back(rho[lev].get());
-        sorted_phi.emplace_back(amrex::GetVecOfPtrs(phi)[lev]);
+        sorted_rho.emplace_back(rho[lev]);
+        sorted_phi.emplace_back(phi[lev]);
     }
 
     std::optional<ElectrostaticSolver::EBCalcEfromPhiPerLevel> post_phi_calculation;
@@ -855,7 +862,7 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
    \param[out] phi The potential to be computed by this function
 */
 void
-WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+WarpX::computePhiTriDiagonal (const std::vector<amrex::MultiFab*>& rho,
                               std::vector<amrex::MultiFab*>& phi) const
 {
 
