@@ -122,6 +122,23 @@ namespace ablastr::fields
 
         /** title
          *
+         * body body
+         * body
+         *
+         * @param name ...
+         * @param dir ...
+         * @param level ...
+         * @return ...
+         */
+        amrex::MultiFab*
+        get (
+            std::string name,
+            int dir,
+            int level
+        );
+
+        /** title
+         *
          * Same as get above, but returns all levels for a name.
          *
          * @param name ...
@@ -133,6 +150,22 @@ namespace ablastr::fields
             std::string name,
             int finest_level
         );
+
+        /** title
+         *
+         * Same as get above, but returns all levels for a name.
+         *
+         * @param name ...
+         * @param dir ...
+         * @param finest_level ...
+         * @return ...
+         */
+        std::vector<amrex::MultiFab*>
+        get_mr_levels (
+            std::string name,
+            int dir,
+            int finest_level
+    );
 
         /** title
          *
@@ -171,6 +204,23 @@ namespace ablastr::fields
         std::string
         mf_name (
             std::string name,
+            int level
+        );
+
+        /** title
+         *
+         * body body
+         * body
+         *
+         * @param name ...
+         * @param dir ...
+         * @param level ...
+         * @return ...
+         */
+        std::string
+        mf_name (
+            std::string name,
+            int dir,
             int level
         );
 
