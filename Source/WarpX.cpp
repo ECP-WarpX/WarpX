@@ -323,7 +323,6 @@ WarpX::WarpX ()
     F_fp.resize(nlevs_max);
     rho_fp.resize(nlevs_max);
     phi_fp.resize(nlevs_max);
-    current_fp.resize(nlevs_max);
     Efield_fp.resize(nlevs_max);
     Bfield_fp.resize(nlevs_max);
 
@@ -2096,11 +2095,15 @@ WarpX::MakeNewLevelFromCoarse (int /*lev*/, amrex::Real /*time*/, const amrex::B
 void
 WarpX::ClearLevel (int lev)
 {
+
+    m_fields.erase( "current_fp[x]", lev );
+    m_fields.erase( "current_fp[y]", lev );
+    m_fields.erase( "current_fp[z]", lev );
+
     for (int i = 0; i < 3; ++i) {
         Efield_aux[lev][i].reset();
         Bfield_aux[lev][i].reset();
 
-        current_fp[lev][i].reset();
         Efield_fp [lev][i].reset();
         Bfield_fp [lev][i].reset();
 
@@ -2358,9 +2361,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     AllocInitMultiFab(Efield_fp[lev][1], amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngEB, lev, "Efield_fp[y]", 0.0_rt);
     AllocInitMultiFab(Efield_fp[lev][2], amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngEB, lev, "Efield_fp[z]", 0.0_rt);
 
-    AllocInitMultiFab(current_fp[lev][0], amrex::convert(ba, jx_nodal_flag), dm, ncomps, ngJ, lev, "current_fp[x]", 0.0_rt);
-    AllocInitMultiFab(current_fp[lev][1], amrex::convert(ba, jy_nodal_flag), dm, ncomps, ngJ, lev, "current_fp[y]", 0.0_rt);
-    AllocInitMultiFab(current_fp[lev][2], amrex::convert(ba, jz_nodal_flag), dm, ncomps, ngJ, lev, "current_fp[z]", 0.0_rt);
+    m_fields.alloc_init( "current_fp[x]", amrex::convert(ba, jx_nodal_flag), dm, ncomps, ngJ, lev, 0.0_rt);
+    m_fields.alloc_init( "current_fp[y]", amrex::convert(ba, jy_nodal_flag), dm, ncomps, ngJ, lev, 0.0_rt);
+    m_fields.alloc_init( "current_fp[z]", amrex::convert(ba, jz_nodal_flag), dm, ncomps, ngJ, lev, 0.0_rt);
 
     if (do_current_centering)
     {
