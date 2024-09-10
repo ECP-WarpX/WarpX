@@ -830,18 +830,19 @@ WarpX::EvolveB (int lev, amrex::Real a_dt, DtType a_dt_type)
 void
 WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_type)
 {
+    auto face_areas_lev = m_fields.get_mr_levels_alldirs("face_areas", finest_level)[lev];
 
     // Evolve B field in regular cells
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->EvolveB(Bfield_fp[lev], Efield_fp[lev],
-                                       m_fields.get("G_fp", lev),
-                                       m_face_areas[lev], m_area_mod[lev], ECTRhofield[lev], Venl[lev],
-                                       m_flag_info_face[lev], m_borrowing[lev], lev, a_dt);
+            m_fields.get("G_fp", lev),
+            face_areas_lev, m_area_mod[lev], ECTRhofield[lev], Venl[lev],
+            m_flag_info_face[lev], m_borrowing[lev], lev, a_dt);
     } else {
         m_fdtd_solver_cp[lev]->EvolveB(Bfield_cp[lev], Efield_cp[lev],
-                                       m_fields.get("G_fp", lev),
-                                       m_face_areas[lev], m_area_mod[lev], ECTRhofield[lev], Venl[lev],
-                                       m_flag_info_face[lev], m_borrowing[lev], lev, a_dt);
+            m_fields.get("G_fp", lev),
+            face_areas_lev, m_area_mod[lev], ECTRhofield[lev], Venl[lev],
+            m_flag_info_face[lev], m_borrowing[lev], lev, a_dt);
     }
 
     // Evolve B field in PML cells
