@@ -66,20 +66,34 @@ namespace ablastr::fields
     {
         // TODO: also add iMultiFab via std::variant
 
-        /** owned (i)MultiFab data */
+        /** owned (i)MultiFab */
         amrex::MultiFab m_mf;
 
         /** Components (base vector directions) of this (i)MultiFab */
-        std::optional<Direction> dir = std::nullopt;
+        std::optional<Direction> m_dir = std::nullopt;
 
         /** the MR level of this (i)MultiFab */
-        int level = 0;
+        int m_level = 0;
 
         /** redistribute */
-        bool redistribute = true;
+        bool m_redistribute = true;
 
         /** redistribute on @see amrex::AmrCore::RemakeLevel */
-        bool redistribute_on_remake = true;
+        bool m_redistribute_on_remake = true;
+
+        /** if m_mf is a non-owning alias, this string tracks the name of the owner */
+        std::string m_owner;
+
+        /** Is this part of a vector/tensor? */
+        bool
+        is_vector () { return m_dir.has_value(); }
+
+        /** Is this an alias MultiFab?
+         *
+         * If yes, that means we do not own the memory.
+         */
+        bool
+        is_alias () { return !m_owner.empty(); }
     };
 
     /** This is a register of fields aka amrex::(i)MultiFabs.
@@ -137,6 +151,22 @@ namespace ablastr::fields
             std::optional<const amrex::Real> initial_value = std::nullopt,
             bool redistribute = true,
             bool redistribute_on_remake = true
+        );
+
+        /** Create an alias
+         *
+         * @param new_name new name
+         * @param alias_name owner to alias to
+         * @param level ...
+         * @param initial_value ...
+         * @return
+         */
+        amrex::MultiFab*
+        alias_init (
+            std::string new_name,
+            std::string alias_name,
+            int level,
+            std::optional<const amrex::Real> initial_value = std::nullopt
         );
 
         /** title

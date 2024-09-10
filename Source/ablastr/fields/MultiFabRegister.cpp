@@ -7,6 +7,8 @@
  */
 #include "MultiFabRegister.H"
 
+#include "ablastr/utils/TextMsg.H"
+
 #include <algorithm>
 
 
@@ -35,7 +37,14 @@ namespace ablastr::fields
         auto [it, success] = m_mf_register.emplace(
             std::make_pair(
                 name,
-                MultiFabOwner{{ba, dm, ncomp, ngrow, tag}, std::nullopt, level, redistribute, redistribute_on_remake}
+                MultiFabOwner{
+                    {ba, dm, ncomp, ngrow, tag},
+                    std::nullopt,  // scalar: no direction
+                    level,
+                    redistribute,
+                    redistribute_on_remake,
+                    ""   // we own the memory
+                }
             )
         );
         if (!success) {
@@ -77,7 +86,14 @@ namespace ablastr::fields
         auto [it, success] = m_mf_register.emplace(
             std::make_pair(
                 name,
-                MultiFabOwner{{ba, dm, ncomp, ngrow, tag}, dir, level, redistribute, redistribute_on_remake}
+                MultiFabOwner{
+                    {ba, dm, ncomp, ngrow, tag},
+                    dir,
+                    level,
+                    redistribute,
+                    redistribute_on_remake,
+                    ""   // we own the memory
+                }
             )
         );
         if (!success) {
@@ -109,16 +125,63 @@ namespace ablastr::fields
         // TODO: does the other_name already exist? error
     }
 
+    amrex::MultiFab*
+    MultiFabRegister::alias_init (
+        std::string new_name,
+        std::string alias_name,
+        int level,
+        std::optional<const amrex::Real> initial_value
+    )
+    {
+        new_name = mf_name(new_name, level);
+        alias_name = mf_name(alias_name, level);
+
+        // Checks
+        // TODO: does the key already exist? error
+
+        MultiFabOwner & alias = m_mf_register[alias_name];
+        amrex::MultiFab & mf_alias = alias.m_mf;
+
+        // allocate
+        auto [it, success] = m_mf_register.emplace(
+            std::make_pair(
+                new_name,
+                MultiFabOwner{
+                    {mf_alias, amrex::make_alias, 0, mf_alias.nComp()},
+                    std::nullopt,  // scalar: no direction
+                    level,
+                    alias.m_redistribute,
+                    alias.m_redistribute_on_remake,
+                    alias_name
+                }
+            )
+        );
+        if (!success) {
+            throw std::runtime_error("MultiFabRegister::alias_init failed for " + new_name);
+        }
+
+        // a short-hand alias for the code below
+        amrex::MultiFab & mf = it->second.m_mf;
+
+        // initialize with value
+        if (initial_value) {
+            mf.setVal(*initial_value);
+        }
+
+        return &mf;
+    }
+
     void
     MultiFabRegister::remake_level (
         int level,
         amrex::DistributionMapping const & new_dm
     )
     {
+        // Owning MultiFabs
         for (auto & element : m_mf_register )
         {
             MultiFabOwner & mf_owner = element.second;
-            if (mf_owner.level == level) {
+            if (mf_owner.m_level == level && !mf_owner.is_alias()) {
                 amrex::MultiFab & mf = mf_owner.m_mf;
                 amrex::IntVect const & ng = mf.nGrowVect();
                 const auto tag = amrex::MFInfo().SetTag(mf.tags()[0]);
@@ -126,9 +189,24 @@ namespace ablastr::fields
 
                 // copy data to new MultiFab: Only done for persistent data like E and B field, not for
                 // temporary things like currents, etc.
-                if (mf_owner.redistribute_on_remake) {
+                if (mf_owner.m_redistribute_on_remake) {
                     new_mf.Redistribute(mf, 0, 0, mf.nComp(), ng);
                 }
+
+                // replace old MultiFab with new one, deallocate old one
+                mf_owner.m_mf = std::move(new_mf);
+            }
+        }
+
+        // Aliases
+        for (auto & element : m_mf_register )
+        {
+            MultiFabOwner & mf_owner = element.second;
+            if (mf_owner.m_level == level && mf_owner.is_alias()) {
+                amrex::MultiFab & mf = mf_owner.m_mf;
+                amrex::MultiFab new_mf(mf, amrex::make_alias, 0, mf.nComp());
+
+                // no copy via Redistribute: the owner was already redistributed
 
                 // replace old MultiFab with new one, deallocate old one
                 mf_owner.m_mf = std::move(new_mf);
@@ -265,7 +343,7 @@ namespace ablastr::fields
         // C++20: Replace with std::erase_if
         for (auto first = m_mf_register.begin(), last = m_mf_register.end(); first != last;)
         {
-            if (first->second.level == level)
+            if (first->second.m_level == level)
                 first = m_mf_register.erase(first);
             else
                 ++first;
