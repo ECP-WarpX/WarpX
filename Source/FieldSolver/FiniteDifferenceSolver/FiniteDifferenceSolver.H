@@ -18,6 +18,7 @@
 #include "MacroscopicProperties/MacroscopicProperties_fwd.H"
 
 #include <ablastr/utils/Enums.H>
+#include <ablastr/fields/MultiFabRegister.H>
 
 #include <AMReX_GpuContainers.H>
 #include <AMReX_REAL.H>
@@ -88,7 +89,7 @@ class FiniteDifferenceSolver
                             int lev );
 
         void ApplySilverMuellerBoundary(
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
+            std::map< ablastr::fields::Direction, amrex::MultiFab* >& Efield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
             amrex::Box domain_box,
             amrex::Real dt,

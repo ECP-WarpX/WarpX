@@ -42,13 +42,15 @@ PML_RZ::PML_RZ (const int lev, const amrex::BoxArray& grid_ba, const amrex::Dist
       m_do_pml_in_domain(do_pml_in_domain),
       m_geom(geom)
 {
+    auto& warpx = WarpX::GetInstance();
+    using ablastr::fields::Direction;
 
-    const amrex::MultiFab & Er_fp = WarpX::GetInstance().getField(FieldType::Efield_fp, lev,0);
-    const amrex::MultiFab & Et_fp = WarpX::GetInstance().getField(FieldType::Efield_fp, lev,1);
+    const amrex::MultiFab & Er_fp = *warpx.m_fields.get("Efield_fp",Direction{0},lev);
+    const amrex::MultiFab & Et_fp = *warpx.m_fields.get("Efield_fp",Direction{1},lev);
     const amrex::BoxArray ba_Er = amrex::convert(grid_ba, Er_fp.ixType().toIntVect());
     const amrex::BoxArray ba_Et = amrex::convert(grid_ba, Et_fp.ixType().toIntVect());
-    WarpX::AllocInitMultiFab(pml_E_fp[0], ba_Er, grid_dm, Er_fp.nComp(), Er_fp.nGrowVect(), lev, "pml_E_fp[0]", 0.0_rt);
-    WarpX::AllocInitMultiFab(pml_E_fp[1], ba_Et, grid_dm, Et_fp.nComp(), Et_fp.nGrowVect(), lev, "pml_E_fp[1]", 0.0_rt);
+    warpx.m_fields.alloc_init("pml_E_fp", Direction{0}, lev, ba_Er, dm, Er_fp.nComp(), Er_fp.nGrowVect(), 0.0_rt);
+    warpx.m_fields.alloc_init("pml_E_fp", Direction{1}, lev, ba_Et, dm, Et_fp.nComp(), Et_fp.nGrowVect(), 0.0_rt);
 
     const amrex::MultiFab & Br_fp = WarpX::GetInstance().getField(FieldType::Bfield_fp, lev,0);
     const amrex::MultiFab & Bt_fp = WarpX::GetInstance().getField(FieldType::Bfield_fp, lev,1);

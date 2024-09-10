@@ -105,9 +105,9 @@ void ChargeOnEB::ComputeDiags (const int step)
     int const lev = 0;
 
     // get MultiFab data at lev
-    const amrex::MultiFab & Ex = warpx.getField(FieldType::Efield_fp, lev,0);
-    const amrex::MultiFab & Ey = warpx.getField(FieldType::Efield_fp, lev,1);
-    const amrex::MultiFab & Ez = warpx.getField(FieldType::Efield_fp, lev,2);
+    const amrex::MultiFab & Ex = *warpx.m_fields.get("Efield_fp",Direction{0},lev);
+    const amrex::MultiFab & Ey = *warpx.m_fields.get("Efield_fp",Direction{1},lev);
+    const amrex::MultiFab & Ez = *warpx.m_fields.get("Efield_fp",Direction{2},lev);
 
     // get EB structures
     amrex::EBFArrayBoxFactory const& eb_box_factory = warpx.fieldEBFactory(lev);

@@ -699,12 +699,15 @@ PML::PML (const int lev, const BoxArray& grid_ba,
     const int ncompe = (m_dive_cleaning) ? 3 : 2;
     const int ncompb = (m_divb_cleaning) ? 3 : 2;
 
-    const amrex::BoxArray ba_Ex = amrex::convert(ba, WarpX::GetInstance().getField(FieldType::Efield_fp, 0,0).ixType().toIntVect());
-    const amrex::BoxArray ba_Ey = amrex::convert(ba, WarpX::GetInstance().getField(FieldType::Efield_fp, 0,1).ixType().toIntVect());
-    const amrex::BoxArray ba_Ez = amrex::convert(ba, WarpX::GetInstance().getField(FieldType::Efield_fp, 0,2).ixType().toIntVect());
-    WarpX::AllocInitMultiFab(pml_E_fp[0], ba_Ex, dm, ncompe, nge, lev, "pml_E_fp[x]", 0.0_rt);
-    WarpX::AllocInitMultiFab(pml_E_fp[1], ba_Ey, dm, ncompe, nge, lev, "pml_E_fp[y]", 0.0_rt);
-    WarpX::AllocInitMultiFab(pml_E_fp[2], ba_Ez, dm, ncompe, nge, lev, "pml_E_fp[z]", 0.0_rt);
+    auto& warpx = WarpX::GetInstance();
+    using ablastr::fields::Direction;
+
+    const amrex::BoxArray ba_Ex = amrex::convert(ba, warpx.m_fields.get("Efield_fp",Direction{0},0)->ixType().toIntVect());
+    const amrex::BoxArray ba_Ey = amrex::convert(ba, warpx.m_fields.get("Efield_fp",Direction{1},0)->ixType().toIntVect());
+    const amrex::BoxArray ba_Ez = amrex::convert(ba, warpx.m_fields.get("Efield_fp",Direction{2},0)->ixType().toIntVect());
+    warpx.m_fields.alloc_init("pml_E_fp", Direction{0}, lev, ba_Ex, dm, ncompe, nge, 0.0_rt);
+    warpx.m_fields.alloc_init("pml_E_fp", Direction{1}, lev, ba_Ey, dm, ncompe, nge, 0.0_rt);
+    warpx.m_fields.alloc_init("pml_E_fp", Direction{2}, lev, ba_Ez, dm, ncompe, nge, 0.0_rt);
 
     const amrex::BoxArray ba_Bx = amrex::convert(ba, WarpX::GetInstance().getField(FieldType::Bfield_fp, 0,0).ixType().toIntVect());
     const amrex::BoxArray ba_By = amrex::convert(ba, WarpX::GetInstance().getField(FieldType::Bfield_fp, 0,1).ixType().toIntVect());
