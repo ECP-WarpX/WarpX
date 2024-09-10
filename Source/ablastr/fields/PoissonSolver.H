@@ -193,8 +193,10 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 
     ABLASTR_PROFILE("computePhi");
 
+    auto const finest_level = static_cast<int>(rho.size() - 1);
+
     if (!rel_ref_ratio.has_value()) {
-        ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(rho.size() == 1u,
+        ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(finest_level == 0u,
                                            "rel_ref_ratio must be set if mesh-refinement is used");
         rel_ref_ratio = amrex::Vector<amrex::IntVect>{{amrex::IntVect(AMREX_D_DECL(1, 1, 1))}};
     }
@@ -223,8 +225,6 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 #else
             {{ beta[0], beta[1], beta[2] }};
 #endif
-
-    auto const finest_level = static_cast<int>(rho.size() - 1);
 
     // determine if rho is zero everywhere
     amrex::Real max_norm_b = getMaxNormRho(rho, finest_level, absolute_tolerance);
@@ -350,7 +350,9 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         mlmg.setVerbose(verbosity);
         mlmg.setMaxIter(max_iters);
         mlmg.setAlwaysUseBNorm((max_norm_b > 0));
-        if (grid_type == utils::enums::GridType::Collocated) {
+
+        const int ng = int(grid_type == utils::enums::GridType::Collocated); // ghost cells
+        if (ng) {
             // In this case, computeE needs to use ghost nodes data. So we
             // ask MLMG to fill BC for us after it solves the problem.
             mlmg.setFinalFillBC(true);
@@ -360,10 +362,8 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         mlmg.solve( {phi[lev]}, {rho[lev]},
                      relative_tolerance, absolute_tolerance );
 
-
         const amrex::IntVect& refratio = rel_ref_ratio.value()[lev];
         const int ncomp = linop->getNComp();
-        const int ng = (grid_type == utils::enums::GridType::Collocated) ? 1 : 0;
 
         // needed for solving the levels by levels:
         // - coarser level is initial guess for finer level
@@ -376,11 +376,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
                                                               do_single_precision_comms,
                                                               refratio,
                                                               ncomp,
-                                                              ng) ;}
-
-
-
-
+                                                              ng);}
 
         // Run additional operations, such as calculation of the E field for embedded boundaries
         if constexpr (!std::is_same_v<T_PostPhiCalculationFunctor, std::nullopt_t>) {
@@ -388,7 +384,6 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
                 post_phi_calculation.value()(mlmg, lev);
             }
         }
-
     } // loop over lev(els)
 }
 
