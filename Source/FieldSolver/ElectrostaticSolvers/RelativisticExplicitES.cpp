@@ -69,15 +69,15 @@ RelativisticExplicitES::AddSpaceChargeField (amrex::Vector<std::unique_ptr<amrex
     for (int lev = 0; lev <= max_level; lev++) {
         BoxArray nba = warpx.boxArray(lev);
         nba.surroundingNodes();
-        rho[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, ng);
+        rho[lev] = std::make_unique<MultiFab>(nba, warpx.DistributionMap(lev), 1, ng);
         rho[lev]->setVal(0.);
-        phi[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, 1);
+        phi[lev] = std::make_unique<MultiFab>(nba, warpx.DistributionMap(lev), 1, 1);
         phi[lev]->setVal(0.);
         if (lev > 0) {
             // For MR levels: allocated the coarsened version of rho
             BoxArray cba = nba;
             cba.coarsen(refRatio(lev-1));
-            rho_coarse[lev] = std::make_unique<MultiFab>(cba, DistributionMap(lev), 1, ng);
+            rho_coarse[lev] = std::make_unique<MultiFab>(cba, warpx.DistributionMap(lev), 1, ng);
             rho_coarse[lev]->setVal(0.);
         }
     }
