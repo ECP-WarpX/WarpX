@@ -1,7 +1,7 @@
-.. _developers-qed:
+.. _multiphysics-qed:
 
-QED
-====================
+Quantum Electrodynamics (QED)
+=============================
 
 Quantum synchrotron
 -------------------
@@ -28,7 +28,8 @@ electron-positron pairs can be created in vacuum in the function
 
 ``MultiParticleContainer::doQEDSchwinger`` in turn calls the function ``filterCreateTransformFromFAB``:
 
-.. doxygenfunction:: filterCreateTransformFromFAB(DstTile&, DstTile&, const amrex::Box, const FABs&, const Index, const Index, FilterFunc&&, CreateFunc1&&, CreateFunc2&&, TransFunc&&)
+Filter Create Transform Function
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``filterCreateTransformFromFAB`` proceeds in three steps.
 In the filter phase, we loop on every cell and calculate the number of physical pairs created within

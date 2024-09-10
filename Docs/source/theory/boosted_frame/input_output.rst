@@ -1,4 +1,4 @@
-.. _theory-io:
+.. _boosted_frame-io:
 
 Inputs and Outputs
 ==================
