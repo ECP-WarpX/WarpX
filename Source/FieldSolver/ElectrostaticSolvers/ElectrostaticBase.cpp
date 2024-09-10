@@ -9,7 +9,7 @@
 
 #include "ElectrostaticBase.H"
 #include <ablastr/fields/PoissonSolver.H>
-
+#include "EmbeddedBoundary/Enabled.H"
 
 ElectrostaticBase::ElectrostaticBase (int nlevs_max)
 {
@@ -145,7 +145,7 @@ ElectrostaticBase::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiF
     std::optional<amrex::Vector<amrex::FArrayBoxFactory const *> > const eb_farray_box_factory;
 #endif
     auto & warpx = WarpX::GetInstance();
-    if (warpx.m_eb_enabled)
+    if (EB::enabled())
     {
         // EB: use AMReX to directly calculate the electric field since with EB's the
         // simple finite difference scheme in WarpX::computeE sometimes fails
@@ -204,7 +204,7 @@ ElectrostaticBase::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiF
         WarpX::grid_type,
         *m_poisson_boundary_handler,
         is_solver_igf_on_lev0,
-        warpx.m_eb_enabled,
+        EB::enabled(),
         WarpX::do_single_precision_comms,
         warpx.refRatio(),
         post_phi_calculation,

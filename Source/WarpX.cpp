@@ -786,6 +786,7 @@ WarpX::ReadParameters ()
 #endif
 
 #ifdef WARPX_DIM_RZ
+        const ParmParse pp_boundary("boundary");
         pp_boundary.query("verboncoeur_axis_correction", verboncoeur_axis_correction);
 #endif
 

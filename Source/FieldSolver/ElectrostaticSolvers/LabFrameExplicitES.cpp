@@ -8,10 +8,10 @@
  */
 #include "LabFrameExplicitES.H"
 #include "Fluids/MultiFluidContainer_fwd.H"
+#include "EmbeddedBoundary/Enabled.H"
 #include "Particles/MultiParticleContainer_fwd.H"
 #include "Python/callbacks.H"
 #include "WarpX.H"
-
 
 void LabFrameExplicitES::ReadParameters () {
 
@@ -88,7 +88,7 @@ void LabFrameExplicitES::ComputeSpaceChargeField (
 
     // Compute the electric field. Note that if an EB is used the electric
     // field will be calculated in the computePhi call.
-    if (!warpx.m_eb_enabled) { computeE( Efield_fp, phi_fp, beta ); }
+    if (!EB::enabled()) { computeE( Efield_fp, phi_fp, beta ); }
     else {
         if (IsPythonCallbackInstalled("poissonsolver")) { computeE(Efield_fp, phi_fp, beta); }
     }
