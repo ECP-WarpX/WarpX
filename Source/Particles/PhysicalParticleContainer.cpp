@@ -1006,18 +1006,12 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
     const bool radially_weighted = plasma_injector.radially_weighted;
 #endif
 
-
-    // User-defined integer and real attributes: prepare parsers
-    const auto n_user_int_attribs = static_cast<int>(m_user_int_attribs.size());
-    const auto n_user_real_attribs = static_cast<int>(m_user_real_attribs.size());
-    amrex::Gpu::PinnedVector< amrex::ParserExecutor<7> > user_int_attrib_parserexec_pinned(n_user_int_attribs);
-    amrex::Gpu::PinnedVector< amrex::ParserExecutor<7> > user_real_attrib_parserexec_pinned(n_user_real_attribs);
-    for (int ia = 0; ia < n_user_int_attribs; ++ia) {
-        user_int_attrib_parserexec_pinned[ia] = m_user_int_attrib_parser[ia]->compile<7>();
-    }
-    for (int ia = 0; ia < n_user_real_attribs; ++ia) {
-        user_real_attrib_parserexec_pinned[ia] = m_user_real_attrib_parser[ia]->compile<7>();
-    }
+    auto n_user_int_attribs = static_cast<int>(m_user_int_attribs.size());
+    auto n_user_real_attribs = static_cast<int>(m_user_real_attribs.size());
+    PlasmaParserHelper plasma_parser_helper (m_user_int_attribs.size(),
+                                             m_user_real_attribs.size(),
+                                             m_user_int_attrib_parser,
+                                             m_user_real_attrib_parser);
 
     MFItInfo info;
     if (do_tiling && Gpu::notInLaunchRegion()) {
@@ -1143,40 +1137,12 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
             pa[ia] = soa.GetRealData(ia).data() + old_size;
         }
         uint64_t * AMREX_RESTRICT pa_idcpu = soa.GetIdCPUData().data() + old_size;
-        // user-defined integer and real attributes
-        amrex::Gpu::PinnedVector<int*> pa_user_int_pinned(n_user_int_attribs);
-        amrex::Gpu::PinnedVector<ParticleReal*> pa_user_real_pinned(n_user_real_attribs);
-        for (int ia = 0; ia < n_user_int_attribs; ++ia) {
-            pa_user_int_pinned[ia] = soa.GetIntData(particle_icomps[m_user_int_attribs[ia]]).data() + old_size;
-        }
-        for (int ia = 0; ia < n_user_real_attribs; ++ia) {
-            pa_user_real_pinned[ia] = soa.GetRealData(particle_comps[m_user_real_attribs[ia]]).data() + old_size;
-        }
-#ifdef AMREX_USE_GPU
-        // To avoid using managed memory, we first define pinned memory vector, initialize on cpu,
-        // and them memcpy to device from host
-        amrex::Gpu::DeviceVector<int*> d_pa_user_int(n_user_int_attribs);
-        amrex::Gpu::DeviceVector<ParticleReal*> d_pa_user_real(n_user_real_attribs);
-        amrex::Gpu::DeviceVector< amrex::ParserExecutor<7> > d_user_int_attrib_parserexec(n_user_int_attribs);
-        amrex::Gpu::DeviceVector< amrex::ParserExecutor<7> > d_user_real_attrib_parserexec(n_user_real_attribs);
-        amrex::Gpu::copyAsync(Gpu::hostToDevice, pa_user_int_pinned.begin(),
-                              pa_user_int_pinned.end(), d_pa_user_int.begin());
-        amrex::Gpu::copyAsync(Gpu::hostToDevice, pa_user_real_pinned.begin(),
-                              pa_user_real_pinned.end(), d_pa_user_real.begin());
-        amrex::Gpu::copyAsync(Gpu::hostToDevice, user_int_attrib_parserexec_pinned.begin(),
-                              user_int_attrib_parserexec_pinned.end(), d_user_int_attrib_parserexec.begin());
-        amrex::Gpu::copyAsync(Gpu::hostToDevice, user_real_attrib_parserexec_pinned.begin(),
-                              user_real_attrib_parserexec_pinned.end(), d_user_real_attrib_parserexec.begin());
-        int** pa_user_int_data = d_pa_user_int.dataPtr();
-        ParticleReal** pa_user_real_data = d_pa_user_real.dataPtr();
-        amrex::ParserExecutor<7> const* user_int_parserexec_data = d_user_int_attrib_parserexec.dataPtr();
-        amrex::ParserExecutor<7> const* user_real_parserexec_data = d_user_real_attrib_parserexec.dataPtr();
-#else
-        int** pa_user_int_data = pa_user_int_pinned.dataPtr();
-        ParticleReal** pa_user_real_data = pa_user_real_pinned.dataPtr();
-        amrex::ParserExecutor<7> const* user_int_parserexec_data = user_int_attrib_parserexec_pinned.dataPtr();
-        amrex::ParserExecutor<7> const* user_real_parserexec_data = user_real_attrib_parserexec_pinned.dataPtr();
-#endif
+
+        plasma_parser_helper.prepareData(soa, old_size, m_user_int_attribs, m_user_real_attribs, particle_icomps, particle_comps);
+        int** pa_user_int_data = plasma_parser_helper.getUserIntDataPtrs();
+        ParticleReal** pa_user_real_data = plasma_parser_helper.getUserRealDataPtrs();
+        amrex::ParserExecutor<7> const* user_int_parserexec_data = plasma_parser_helper.getUserIntParserExecData();
+        amrex::ParserExecutor<7> const* user_real_parserexec_data = plasma_parser_helper.getUserRealParserExecData();
 
         int* pi = nullptr;
         if (do_field_ionization) {
@@ -1509,6 +1475,13 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
     const bool radially_weighted = plasma_injector.radially_weighted;
 #endif
 
+    auto n_user_int_attribs = static_cast<int>(m_user_int_attribs.size());
+    auto n_user_real_attribs = static_cast<int>(m_user_real_attribs.size());
+    PlasmaParserHelper plasma_parser_helper (m_user_int_attribs.size(),
+                                             m_user_real_attribs.size(),
+                                             m_user_int_attrib_parser,
+                                             m_user_real_attrib_parser);
+
     MFItInfo info;
     if (do_tiling && Gpu::notInLaunchRegion()) {
         info.EnableTiling(tile_size);
@@ -1610,46 +1583,11 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         }
         uint64_t * AMREX_RESTRICT pa_idcpu = soa.GetIdCPUData().data() + old_size;
 
-        // user-defined integer and real attributes
-        const auto n_user_int_attribs = static_cast<int>(m_user_int_attribs.size());
-        const auto n_user_real_attribs = static_cast<int>(m_user_real_attribs.size());
-        amrex::Gpu::PinnedVector<int*> pa_user_int_pinned(n_user_int_attribs);
-        amrex::Gpu::PinnedVector<ParticleReal*> pa_user_real_pinned(n_user_real_attribs);
-        amrex::Gpu::PinnedVector< amrex::ParserExecutor<7> > user_int_attrib_parserexec_pinned(n_user_int_attribs);
-        amrex::Gpu::PinnedVector< amrex::ParserExecutor<7> > user_real_attrib_parserexec_pinned(n_user_real_attribs);
-        for (int ia = 0; ia < n_user_int_attribs; ++ia) {
-            pa_user_int_pinned[ia] = soa.GetIntData(particle_icomps[m_user_int_attribs[ia]]).data() + old_size;
-            user_int_attrib_parserexec_pinned[ia] = m_user_int_attrib_parser[ia]->compile<7>();
-        }
-        for (int ia = 0; ia < n_user_real_attribs; ++ia) {
-            pa_user_real_pinned[ia] = soa.GetRealData(particle_comps[m_user_real_attribs[ia]]).data() + old_size;
-            user_real_attrib_parserexec_pinned[ia] = m_user_real_attrib_parser[ia]->compile<7>();
-        }
-#ifdef AMREX_USE_GPU
-        // To avoid using managed memory, we first define pinned memory vector, initialize on cpu,
-        // and them memcpy to device from host
-        amrex::Gpu::DeviceVector<int*> d_pa_user_int(n_user_int_attribs);
-        amrex::Gpu::DeviceVector<ParticleReal*> d_pa_user_real(n_user_real_attribs);
-        amrex::Gpu::DeviceVector< amrex::ParserExecutor<7> > d_user_int_attrib_parserexec(n_user_int_attribs);
-        amrex::Gpu::DeviceVector< amrex::ParserExecutor<7> > d_user_real_attrib_parserexec(n_user_real_attribs);
-        amrex::Gpu::copyAsync(Gpu::hostToDevice, pa_user_int_pinned.begin(),
-                              pa_user_int_pinned.end(), d_pa_user_int.begin());
-        amrex::Gpu::copyAsync(Gpu::hostToDevice, pa_user_real_pinned.begin(),
-                              pa_user_real_pinned.end(), d_pa_user_real.begin());
-        amrex::Gpu::copyAsync(Gpu::hostToDevice, user_int_attrib_parserexec_pinned.begin(),
-                              user_int_attrib_parserexec_pinned.end(), d_user_int_attrib_parserexec.begin());
-        amrex::Gpu::copyAsync(Gpu::hostToDevice, user_real_attrib_parserexec_pinned.begin(),
-                              user_real_attrib_parserexec_pinned.end(), d_user_real_attrib_parserexec.begin());
-        int** pa_user_int_data = d_pa_user_int.dataPtr();
-        ParticleReal** pa_user_real_data = d_pa_user_real.dataPtr();
-        amrex::ParserExecutor<7> const* user_int_parserexec_data = d_user_int_attrib_parserexec.dataPtr();
-        amrex::ParserExecutor<7> const* user_real_parserexec_data = d_user_real_attrib_parserexec.dataPtr();
-#else
-        int** pa_user_int_data = pa_user_int_pinned.dataPtr();
-        ParticleReal** pa_user_real_data = pa_user_real_pinned.dataPtr();
-        amrex::ParserExecutor<7> const* user_int_parserexec_data = user_int_attrib_parserexec_pinned.dataPtr();
-        amrex::ParserExecutor<7> const* user_real_parserexec_data = user_real_attrib_parserexec_pinned.dataPtr();
-#endif
+        plasma_parser_helper.prepareData(soa, old_size, m_user_int_attribs, m_user_real_attribs, particle_icomps, particle_comps);
+        int** pa_user_int_data = plasma_parser_helper.getUserIntDataPtrs();
+        ParticleReal** pa_user_real_data = plasma_parser_helper.getUserRealDataPtrs();
+        amrex::ParserExecutor<7> const* user_int_parserexec_data = plasma_parser_helper.getUserIntParserExecData();
+        amrex::ParserExecutor<7> const* user_real_parserexec_data = plasma_parser_helper.getUserRealParserExecData();
 
         int* p_ion_level = nullptr;
         if (do_field_ionization) {
