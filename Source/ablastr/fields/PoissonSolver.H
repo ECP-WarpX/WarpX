@@ -57,8 +57,6 @@
 
 namespace ablastr::fields {
 
-
-
 amrex::Real
 getMaxNormRho (amrex::Vector<amrex::MultiFab*> const & rho,
             int finest_level, 
@@ -81,8 +79,6 @@ getMaxNormRho (amrex::Vector<amrex::MultiFab*> const & rho,
     }
     return max_norm_b;
 }
-
-
 
 /** Compute the potential `phi` by solving the Poisson equation
  *
@@ -159,17 +155,8 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
                                        "Embedded boundary solve requested but not compiled in");
 #endif
 
-    auto const finest_level = static_cast<int>(rho.size() - 1);
-    
-    // determine if rho is zero everywhere
-    amrex::Real always_use_bnorm = getMaxNormRho(rho, finest_level, absolute_tolerance);
-
-
-    amrex::LPInfo info;
-
-    for (int lev=0; lev<=finest_level; lev++) {
-        // Set the value of beta
-        amrex::Array<amrex::Real, AMREX_SPACEDIM> beta_solver =
+    // Set the value of beta
+    amrex::Array<amrex::Real, AMREX_SPACEDIM> beta_solver =
 #if defined(WARPX_DIM_1D_Z)
             {{ beta[2] }};  // beta_x and beta_z
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
@@ -187,6 +174,15 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE( !is_solver_igf_on_lev0,
         "The FFT Poisson solver is currently only implemented for 3D!");
 #endif
+
+    auto const finest_level = static_cast<int>(rho.size() - 1);
+    
+    // determine if rho is zero everywhere
+    amrex::Real always_use_bnorm = getMaxNormRho(rho, finest_level, absolute_tolerance);
+
+    amrex::LPInfo info;
+
+    for (int lev=0; lev<=finest_level; lev++) {
 
 #if (defined(ABLASTR_USE_FFT) && defined(WARPX_DIM_3D))
         // Use the Integrated Green Function solver (FFT) on the coarsest level if it was selected
