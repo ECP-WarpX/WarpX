@@ -964,7 +964,7 @@ WarpX::EvolveF (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
 
     // Evolve F field in regular cells
     if (patch_type == PatchType::fine) {
-        m_fdtd_solver_fp[lev]->EvolveF( m_fields.get("F_fp", lev),, Efield_fp[lev],
+        m_fdtd_solver_fp[lev]->EvolveF( m_fields.get("F_fp", lev), Efield_fp[lev],
                                         m_fields.get("rho_fp",lev), rhocomp, a_dt );
     } else {
         m_fdtd_solver_cp[lev]->EvolveF( m_fields.get("F_cp", lev), Efield_cp[lev],

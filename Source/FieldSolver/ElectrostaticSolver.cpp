@@ -128,7 +128,7 @@ WarpX::AddBoundaryField ()
     }
 
     // Set the boundary potentials appropriately
-    setPhiBC(phi);
+    setPhiBC(amrex::GetVecOfPtrs(phi));
 
     // beta is zero for boundaries
     const std::array<Real, 3> beta = {0._rt};
