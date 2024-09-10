@@ -59,7 +59,7 @@ namespace ablastr::fields {
 
 amrex::Real
 getMaxNormRho (amrex::Vector<amrex::MultiFab*> const & rho,
-               int finest_level, 
+               int finest_level,
                amrex::Real & absolute_tolerance)
 {
     amrex::Real max_norm_b = 0.0;
@@ -83,10 +83,10 @@ getMaxNormRho (amrex::Vector<amrex::MultiFab*> const & rho,
 void
 interpolatePhiBetweenLevels (amrex::MultiFab* const & phi_lev,
                              amrex::MultiFab* const & phi_lev_plus_one,
-                             amrex::Geometry geom_lev, 
+                             amrex::Geometry geom_lev,
                              bool do_single_precision_comms,
-                             const amrex::IntVect& refratio, 
-                             const int ncomp, 
+                             const amrex::IntVect& refratio,
+                             const int ncomp,
                              const int ng
                              )
 {
@@ -225,7 +225,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 #endif
 
     auto const finest_level = static_cast<int>(rho.size() - 1);
-    
+
     // determine if rho is zero everywhere
     amrex::Real max_norm_b = getMaxNormRho(rho, finest_level, absolute_tolerance);
 
@@ -370,12 +370,12 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         // - coarser level provides boundary values for finer level patch
         // Interpolation from phi[lev] to phi[lev+1]
         // (This provides both the boundary conditions and initial guess for phi[lev+1])
-        if (lev < finest_level) { interpolatePhiBetweenLevels(phi[lev], 
-                                                              phi[lev+1], 
+        if (lev < finest_level) { interpolatePhiBetweenLevels(phi[lev],
+                                                              phi[lev+1],
                                                               geom[lev],
                                                               do_single_precision_comms,
-                                                              refratio,  
-                                                              ncomp, 
+                                                              refratio,
+                                                              ncomp,
                                                               ng) ;}
 
 
