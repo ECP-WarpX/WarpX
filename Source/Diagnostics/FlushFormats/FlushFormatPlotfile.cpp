@@ -554,6 +554,8 @@ FlushFormatPlotfile::WriteAllRawFields(
     const bool plot_raw_fields, const int nlevels, const std::string& plotfilename,
     const bool plot_raw_fields_guards) const
 {
+    using ablastr::fields::Direction;
+
     if (!plot_raw_fields) { return; }
     auto & warpx = WarpX::GetInstance();
     for (int lev = 0; lev < nlevels; ++lev)
@@ -575,9 +577,9 @@ FlushFormatPlotfile::WriteAllRawFields(
         WriteRawMF( warpx.getField(FieldType::Efield_fp, lev, 0), dm, raw_pltname, default_level_prefix, "Ex_fp", lev, plot_raw_fields_guards);
         WriteRawMF( warpx.getField(FieldType::Efield_fp, lev, 1), dm, raw_pltname, default_level_prefix, "Ey_fp", lev, plot_raw_fields_guards);
         WriteRawMF( warpx.getField(FieldType::Efield_fp, lev, 2), dm, raw_pltname, default_level_prefix, "Ez_fp", lev, plot_raw_fields_guards);
-        WriteRawMF( *warpx.m_fields.get("current_fp", 0, lev), dm, raw_pltname, default_level_prefix, "jx_fp", lev, plot_raw_fields_guards);
-        WriteRawMF( *warpx.m_fields.get("current_fp", 1, lev), dm, raw_pltname, default_level_prefix, "jy_fp", lev, plot_raw_fields_guards);
-        WriteRawMF( *warpx.m_fields.get("current_fp", 2, lev), dm, raw_pltname, default_level_prefix, "jz_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( *warpx.m_fields.get("current_fp",Direction{0}, lev), dm, raw_pltname, default_level_prefix, "jx_fp", lev,plot_raw_fields_guards);
+        WriteRawMF( *warpx.m_fields.get("current_fp",Direction{1}, lev), dm, raw_pltname, default_level_prefix, "jy_fp", lev,plot_raw_fields_guards);
+        WriteRawMF( *warpx.m_fields.get("current_fp",Direction{2}, lev), dm, raw_pltname, default_level_prefix, "jz_fp", lev,plot_raw_fields_guards);
         WriteRawMF( warpx.getField(FieldType::Bfield_fp, lev, 0), dm, raw_pltname, default_level_prefix, "Bx_fp", lev, plot_raw_fields_guards);
         WriteRawMF( warpx.getField(FieldType::Bfield_fp, lev, 1), dm, raw_pltname, default_level_prefix, "By_fp", lev, plot_raw_fields_guards);
         WriteRawMF( warpx.getField(FieldType::Bfield_fp, lev, 2), dm, raw_pltname, default_level_prefix, "Bz_fp", lev, plot_raw_fields_guards);
@@ -630,8 +632,8 @@ FlushFormatPlotfile::WriteAllRawFields(
                                warpx.getFieldPointer(FieldType::Bfield_fp, lev, 0), warpx.getFieldPointer(FieldType::Bfield_fp, lev, 1), warpx.getFieldPointer(FieldType::Bfield_fp, lev, 2),
                                dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards);
             WriteCoarseVector( "j",
-                               warpx.m_fields.get("current_cp", 0, lev), warpx.m_fields.get("current_cp", 1, lev), warpx.m_fields.get("current_cp", 2, lev),
-                               warpx.m_fields.get("current_fp", 0, lev), warpx.m_fields.get("current_fp", 1, lev), warpx.m_fields.get("current_fp", 2, lev),
+                               warpx.m_fields.get("current_cp", Direction{0}, lev), warpx.m_fields.get("current_cp", Direction{1}, lev), warpx.m_fields.get("current_cp", Direction{2}, lev),
+                               warpx.m_fields.get("current_fp", Direction{0}, lev), warpx.m_fields.get("current_fp", Direction{1}, lev), warpx.m_fields.get("current_fp", Direction{2}, lev),
                                dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards);
             if (warpx.isFieldInitialized(FieldType::F_fp, lev) && warpx.isFieldInitialized(FieldType::F_cp, lev))
             {

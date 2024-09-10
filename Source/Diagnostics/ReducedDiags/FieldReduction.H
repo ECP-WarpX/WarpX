@@ -87,6 +87,7 @@ public:
     template<typename ReduceOp>
     void ComputeFieldReduction()
     {
+        using ablastr::fields::Direction;
         using namespace amrex::literals;
 
         // get a reference to WarpX instance
@@ -105,9 +106,9 @@ public:
         const amrex::MultiFab & Bx = warpx.getField(warpx::fields::FieldType::Bfield_aux, lev,0);
         const amrex::MultiFab & By = warpx.getField(warpx::fields::FieldType::Bfield_aux, lev,1);
         const amrex::MultiFab & Bz = warpx.getField(warpx::fields::FieldType::Bfield_aux, lev,2);
-        const amrex::MultiFab & jx = *warpx.m_fields.get("current_fp", 0, lev);
-        const amrex::MultiFab & jy = *warpx.m_fields.get("current_fp", 1, lev);
-        const amrex::MultiFab & jz = *warpx.m_fields.get("current_fp", 2, lev);
+        const amrex::MultiFab & jx = *warpx.m_fields.get("current_fp",Direction{0},lev);
+        const amrex::MultiFab & jy = *warpx.m_fields.get("current_fp",Direction{1},lev);
+        const amrex::MultiFab & jz = *warpx.m_fields.get("current_fp",Direction{2},lev);
 
 
         // General preparation of interpolation and reduction operations

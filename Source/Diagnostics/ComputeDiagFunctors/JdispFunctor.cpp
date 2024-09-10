@@ -27,11 +27,13 @@ JdispFunctor::JdispFunctor (int dir, int lev,
 void
 JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/) const
 {
+    using ablastr::fields::Direction;
+
     auto& warpx = WarpX::GetInstance();
     auto* hybrid_pic_model = warpx.get_pointer_HybridPICModel();
 
     /** pointer to total simulation current (J) multifab */
-    amrex::MultiFab* mf_j = warpx.m_fields.get("current_fp", m_dir, m_lev);
+    amrex::MultiFab* mf_j = warpx.m_fields.get("current_fp",Direction{m_dir},m_lev);
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(hybrid_pic_model,
         "Displacement current diagnostic is only implemented for the HybridPICModel.");

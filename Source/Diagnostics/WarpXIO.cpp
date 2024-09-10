@@ -87,6 +87,8 @@ WarpX::GetRestartDMap (const std::string& chkfile, const amrex::BoxArray& ba, in
 void
 WarpX::InitFromCheckpoint ()
 {
+    using ablastr::fields::Direction;
+
     WARPX_PROFILE("WarpX::InitFromCheckpoint()");
 
     amrex::Print()<< Utils::TextMsg::Info(
@@ -278,7 +280,7 @@ WarpX::InitFromCheckpoint ()
     for (int lev = 0; lev < nlevs; ++lev)
     {
         for (int i = 0; i < 3; ++i) {
-            m_fields.get("current_fp", i, lev)->setVal(0.0);
+            m_fields.get("current_fp",Direction{i},lev)->setVal(0.0);
             current_fp[lev][i]->setVal(0.0);
             Efield_fp[lev][i]->setVal(0.0);
             Bfield_fp[lev][i]->setVal(0.0);
