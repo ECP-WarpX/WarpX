@@ -11,11 +11,11 @@
 
 #include "ElectrostaticBase.H"
 
-class LabFrameExplicitES : public ElectrostaticBase
+class LabFrameExplicitES final : public ElectrostaticBase
 {
 public:
 
-    LabFrameExplicitES (int nlevs_max) : ElectrostaticBase (nlevs_max) {};
+    LabFrameExplicitES (int nlevs_max) : ElectrostaticBase (nlevs_max) {ReadParameters();};
 
     void ReadParameters ();
     void ComputeSpaceChargeField (

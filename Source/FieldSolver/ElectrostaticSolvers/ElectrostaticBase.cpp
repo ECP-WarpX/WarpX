@@ -15,7 +15,7 @@ ElectrostaticBase::ElectrostaticBase (int nlevs_max)
 {
     max_level = nlevs_max;
 
-    ReadParameters ();
+//    ReadParameters ();
     AllocateMFs (nlevs_max);
 
     // Create an instance of the boundary handler to properly set boundary
@@ -23,6 +23,7 @@ ElectrostaticBase::ElectrostaticBase (int nlevs_max)
     m_poisson_boundary_handler = std::make_unique<PoissonBoundaryHandler>();
 }
 
+ElectrostaticBase::~ElectrostaticBase () = default;
 /* \brief Set Dirichlet boundary conditions for the electrostatic solver.
 
     The given potential's values are fixed on the boundaries of the given

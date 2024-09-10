@@ -2,15 +2,15 @@
 #ifndef WARPX_RELATIVISTICEXPLICITSOLVERES_H_
 #define WARPX_RELATIVISTICEXPLICITSOLVERES_H_
 
-#include "ElectrostaticSolver.H"
+#include "ElectrostaticBase.H"
 #include "Particles/WarpXParticleContainer.H"
 
 
-class RelativisticExplicitES : public ElectrostaticBase
+class RelativisticExplicitES final : public ElectrostaticBase
 {
 public:
 
-    RelativisticExplicitES (int nlevs_max) : ElectrostaticBase (nlevs_max) {};
+    RelativisticExplicitES (int nlevs_max) : ElectrostaticBase (nlevs_max) { ReadParameters();}
 
     void ReadParameters ();
     void ComputeSpaceChargeField (

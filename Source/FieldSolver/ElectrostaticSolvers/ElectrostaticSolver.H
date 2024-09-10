@@ -17,11 +17,11 @@ public:
 
     ElectrostaticSolver (int nlevs_max); // constructor
 
-    void ClearLevel ( int lev );
+    void ClearLevel ( int lev ) {};
     void AllocateLevelMFs (
         int lev, const BoxArray& ba, const DistributionMapping& dm,
         const int ncomps, const IntVect& ngJ, const IntVect& rho_nodal_flag
-    );
+    ) {};
 
 
     void ComputeSpaceChargeField (

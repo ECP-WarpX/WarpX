@@ -23,8 +23,9 @@ class ElectrostaticBase
 {
 public:
     ElectrostaticBase() = default;
+    ElectrostaticBase( int nlevs_max );
 
-    virtual ~ElectrostaticBase() = default;
+    virtual ~ElectrostaticBase();
 
     // Prohibit Move and Copy operations
     ElectrostaticBase(const ElectrostaticBase&) = delete;
@@ -32,10 +33,9 @@ public:
     ElectrostaticBase(ElectrostaticBase&&) = delete;
     ElectrostaticBase& operator=(ElectrostaticBase&&) = delete;
 
-    ElectrostaticBase( int nlevs_max );
 
-    virtual void ReadParameters ();
-    virtual void AllocateMFs ( int nlevs_max );
+    virtual void ReadParameters () {};
+    virtual void AllocateMFs ( int nlevs_max ) {};
 
     void setPhiBC (
         amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi,
