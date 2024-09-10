@@ -5,7 +5,7 @@ This script tests the coordinates of the point of contact of an electron hitting
 It compares the numerical results with the analytical solutions.
 The sphere is centered on O and has a radius of 0.2 (EB)
 The electron is initially at: (-0.25,0,0) and moves with a normalized momentum: (1,0.5,0)
-An input file PICMI_inputs_3d.py is used.
+An input file inputs_test_3d_point_of_contact_eb is used.
 """
 
 import os

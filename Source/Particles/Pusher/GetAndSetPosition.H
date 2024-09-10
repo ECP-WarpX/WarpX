@@ -216,12 +216,7 @@ struct SetParticlePosition
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator() (const long i, RType x, RType y, RType z) const noexcept
     {
-#if defined(WARPX_DIM_XZ)
-        amrex::ignore_unused(y);
-#endif
-#if defined(WARPX_DIM_1D_Z)
-        amrex::ignore_unused(x,y);
-#endif
+        amrex::ignore_unused(x,y,z);
 #ifdef WARPX_DIM_RZ
         m_theta[i] = std::atan2(y, x);
         m_x[i] = std::sqrt(x*x + y*y);
@@ -245,12 +240,7 @@ struct SetParticlePosition
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void AsStored (const long i, RType x, RType y, RType z) const noexcept
     {
-#if defined(WARPX_DIM_XZ)
-        amrex::ignore_unused(y);
-#endif
-#if defined(WARPX_DIM_1D_Z)
-        amrex::ignore_unused(x,y);
-#endif
+        amrex::ignore_unused(x,y,z);
 #ifdef WARPX_DIM_RZ
         m_x[i] = x;
         m_theta[i] = y;

@@ -11,6 +11,7 @@
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
 #    include "BoundaryConditions/PML_RZ.H"
 #endif
+#include "EmbeddedBoundary/Enabled.H"
 #include "FieldIO.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/TextMsg.H"
@@ -393,7 +394,7 @@ WarpX::InitFromCheckpoint ()
         }
     }
 
-    if (m_eb_enabled) { InitializeEBGridData(maxLevel()); }
+    if (EB::enabled()) { InitializeEBGridData(maxLevel()); }
 
     // Initialize particles
     mypc->AllocData();
