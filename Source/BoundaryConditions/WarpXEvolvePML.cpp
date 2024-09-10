@@ -11,6 +11,7 @@
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
 #   include "BoundaryConditions/PML_RZ.H"
 #endif
+#include "EmbeddedBoundary/Enabled.H"
 #include "PML_current.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX_PML_kernels.H"
@@ -269,15 +270,16 @@ WarpX::DampJPML (int lev, PatchType patch_type)
             const Real* sigma_star_cumsum_fac_j_z = sigba[mfi].sigma_star_cumsum_fac[1].data();
 #endif
 
-            amrex::Array4<amrex::Real> pml_lxfab, pml_lyfab, pml_lzfab;
-            if (m_eb_enabled) {
+            // Skip the field update if this gridpoint is inside the embedded boundary
+            amrex::Array4<amrex::Real> eb_lxfab, eb_lyfab, eb_lzfab;
+            if (EB::enabled()) {
                 const auto &pml_edge_lenghts = pml[lev]->Get_edge_lengths();
 
-                pml_lxfab = pml_edge_lenghts[0]->array(mfi);
-                pml_lyfab = pml_edge_lenghts[1]->array(mfi);
-                pml_lzfab = pml_edge_lenghts[2]->array(mfi);
+                eb_lxfab = pml_edge_lenghts[0]->array(mfi);
+                eb_lyfab = pml_edge_lenghts[1]->array(mfi);
+                eb_lzfab = pml_edge_lenghts[2]->array(mfi);
             } else {
-                amrex::ignore_unused(pml_lxfab, pml_lyfab, pml_lzfab);
+                amrex::ignore_unused(eb_lxfab, eb_lyfab, eb_lzfab);
             }
 
             const Box& tjx  = mfi.tilebox( pml_j[0]->ixType().toIntVect() );
@@ -304,21 +306,21 @@ WarpX::DampJPML (int lev, PatchType patch_type)
 
             amrex::ParallelFor( tjx, tjy, tjz,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                    if (pml_lxfab && pml_lxfab(i, j, k) <= 0) { return; }
+                    if (eb_lxfab && eb_lxfab(i, j, k) <= 0) { return; }
 
                     damp_jx_pml(i, j, k, pml_jxfab, sigma_star_cumsum_fac_j_x,
                                 sigma_cumsum_fac_j_y, sigma_cumsum_fac_j_z,
                                 xs_lo,y_lo, z_lo);
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                    if (pml_lyfab && pml_lyfab(i, j, k) <= 0) { return; }
+                    if (eb_lyfab && eb_lyfab(i, j, k) <= 0) { return; }
 
                     damp_jy_pml(i, j, k, pml_jyfab, sigma_cumsum_fac_j_x,
                                 sigma_star_cumsum_fac_j_y, sigma_cumsum_fac_j_z,
                                 x_lo,ys_lo, z_lo);
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                    if (pml_lzfab && pml_lzfab(i, j, k)<=0) { return; }
+                    if (eb_lzfab && eb_lzfab(i, j, k) <= 0) { return; }
 
                     damp_jz_pml(i, j, k, pml_jzfab, sigma_cumsum_fac_j_x,
                                 sigma_cumsum_fac_j_y, sigma_star_cumsum_fac_j_z,

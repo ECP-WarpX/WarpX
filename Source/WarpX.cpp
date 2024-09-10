@@ -260,7 +260,7 @@ WarpX::WarpX ()
 
     BackwardCompatibility();
 
-    if (m_eb_enabled) { InitEB(); }
+    if (EB::enabled()) { InitEB(); }
 
     ablastr::utils::SignalHandling::InitSignalHandling();
 
@@ -788,10 +788,10 @@ WarpX::ReadParameters ()
         "The FFT Poisson solver is not implemented in labframe-electromagnetostatic mode yet."
         );
 
-        m_eb_enabled = EB::enabled();
+        bool const eb_enabled = EB::enabled();
 #if !defined(AMREX_USE_EB)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            !m_eb_enabled,
+            !eb_enabled,
             "Embedded boundaries are requested via warpx.eb_enabled but were not compiled!"
         );
 #endif
@@ -806,7 +806,7 @@ WarpX::ReadParameters ()
         potential_specified |= pp_boundary.query("potential_hi_y", m_poisson_boundary_handler.potential_yhi_str);
         potential_specified |= pp_boundary.query("potential_lo_z", m_poisson_boundary_handler.potential_zlo_str);
         potential_specified |= pp_boundary.query("potential_hi_z", m_poisson_boundary_handler.potential_zhi_str);
-        if (m_eb_enabled) {
+        if (eb_enabled) {
             potential_specified |= pp_warpx.query("eb_potential(x,y,z,t)", m_poisson_boundary_handler.potential_eb_str);
         }
         m_boundary_potential_specified = potential_specified;
@@ -2208,18 +2208,18 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         use_filter,
         bilinear_filter.stencil_length_each_dir);
 
-
-
-        if (m_eb_enabled) {
 #ifdef AMREX_USE_EB
-            int const max_guard = guard_cells.ng_FieldSolver.max();
-            m_field_factory[lev] = amrex::makeEBFabFactory(Geom(lev), ba, dm,
-                                                           {max_guard, max_guard, max_guard},
-                                                           amrex::EBSupport::full);
+    bool const eb_enabled = EB::enabled();
+    if (eb_enabled) {
+        int const max_guard = guard_cells.ng_FieldSolver.max();
+        m_field_factory[lev] = amrex::makeEBFabFactory(Geom(lev), ba, dm,
+                                                       {max_guard, max_guard, max_guard},
+                                                       amrex::EBSupport::full);
+    } else
 #endif
-        } else {
-            m_field_factory[lev] = std::make_unique<FArrayBoxFactory>();
-        }
+    {
+        m_field_factory[lev] = std::make_unique<FArrayBoxFactory>();
+    }
 
 
     if (mypc->nSpeciesDepositOnMainGrid() && n_current_deposition_buffer == 0) {
@@ -2438,7 +2438,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         AllocInitMultiFab(Efield_avg_fp[lev][2], amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngEB, lev, "Efield_avg_fp[z]", 0.0_rt);
     }
 
-    if (m_eb_enabled) {
+    if (EB::enabled()) {
         constexpr int nc_ls = 1;
         amrex::IntVect const ng_ls(2);
         AllocInitMultiFab(m_distance_to_eb[lev], amrex::convert(ba, IntVect::TheNodeVector()), dm, nc_ls, ng_ls, lev,
