@@ -63,9 +63,10 @@ WarpX::DampPML (const int lev, PatchType patch_type)
     WARPX_PROFILE("WarpX::DampPML()");
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
     if (pml_rz[lev]) {
-        pml_rz[lev]->ApplyDamping(Efield_fp[lev][1].get(), Efield_fp[lev][2].get(),
-                                  Bfield_fp[lev][1].get(), Bfield_fp[lev][2].get(),
-                                  dt[lev]);
+        pml_rz[lev]->ApplyDamping( m_fields.get("Efield_fp",Direction{1},lev),
+                                   m_fields.get("Efield_fp",Direction{2},lev),
+                                   Bfield_fp[lev][1].get(), Bfield_fp[lev][2].get(),
+                                   dt[lev]);
     }
 #endif
     if (pml[lev]) {
