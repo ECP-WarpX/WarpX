@@ -132,14 +132,14 @@ WarpX::ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ed
 
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
     auto const &edge_centroid = eb_fact.getEdgeCent();
-    for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi){
-        for (int idim = 0; idim < 3; ++idim){
+    for (int idim = 0; idim < 3; ++idim){
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-            if (idim == 1) {
-                edge_lengths[1]->setVal(0.);
-                continue;
-            }
+        if (idim == 1) {
+            edge_lengths[1]->setVal(0.);
+            continue;
+        }
 #endif
+        for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi){
             amrex::Box const box = mfi.tilebox(edge_lengths[idim]->ixType().toIntVect(),
                                                edge_lengths[idim]->nGrowVect());
             amrex::FabType const fab_type = flags[mfi].getType(box);
@@ -200,14 +200,14 @@ WarpX::ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face
     auto const &area_frac = eb_fact.getAreaFrac();
 #endif
 
-    for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi) {
-        for (int idim = 0; idim < 3; ++idim) {
+    for (int idim = 0; idim < 3; ++idim) {
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-            if (idim == 0 || idim == 2) {
-                face_areas[idim]->setVal(0.);
-                continue;
-            }
+        if (idim == 0 || idim == 2) {
+            face_areas[idim]->setVal(0.);
+            continue;
+        }
 #endif
+        for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi) {
             amrex::Box const box = mfi.tilebox(face_areas[idim]->ixType().toIntVect(),
                                                face_areas[idim]->nGrowVect());
             amrex::FabType const fab_type = flags[mfi].getType(box);
@@ -246,11 +246,11 @@ WarpX::ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengt
     WARPX_ABORT_WITH_MESSAGE("ScaleEdges only implemented in 2D and 3D");
 #endif
 
-    for (amrex::MFIter mfi(*edge_lengths[0]); mfi.isValid(); ++mfi) {
-        for (int idim = 0; idim < 3; ++idim){
+    for (int idim = 0; idim < 3; ++idim){
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-            if (idim == 1) { continue; }
+        if (idim == 1) { continue; }
 #endif
+        for (amrex::MFIter mfi(*edge_lengths[0]); mfi.isValid(); ++mfi) {
             const amrex::Box& box = mfi.tilebox(edge_lengths[idim]->ixType().toIntVect(),
                                                 edge_lengths[idim]->nGrowVect() );
             auto const &edge_lengths_dim = edge_lengths[idim]->array(mfi);
@@ -270,11 +270,11 @@ WarpX::ScaleAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas
     WARPX_ABORT_WITH_MESSAGE("ScaleAreas only implemented in 2D and 3D");
 #endif
 
-    for (amrex::MFIter mfi(*face_areas[0]); mfi.isValid(); ++mfi) {
-        for (int idim = 0; idim < 3; ++idim) {
+    for (int idim = 0; idim < 3; ++idim) {
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-            if (idim == 0 || idim == 2) { continue; }
+        if (idim == 0 || idim == 2) { continue; }
 #endif
+        for (amrex::MFIter mfi(*face_areas[0]); mfi.isValid(); ++mfi) {
             const amrex::Box& box = mfi.tilebox(face_areas[idim]->ixType().toIntVect(),
                                                 face_areas[idim]->nGrowVect() );
             amrex::Real const full_area = cell_size[(idim+1)%3]*cell_size[(idim+2)%3];
