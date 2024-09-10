@@ -13,20 +13,6 @@
 #include "Python/callbacks.H"
 #include "WarpX.H"
 
-void LabFrameExplicitES::ReadParameters () {
-
-    ParmParse const pp_warpx("warpx");
-
-    // Note that with the relativistic version, these parameters would be
-    // input for each species.
-    utils::parser::queryWithParser(
-        pp_warpx, "self_fields_required_precision", self_fields_required_precision);
-    utils::parser::queryWithParser(
-        pp_warpx, "self_fields_absolute_tolerance", self_fields_absolute_tolerance);
-    utils::parser::queryWithParser(
-        pp_warpx, "self_fields_max_iters", self_fields_max_iters);
-    pp_warpx.query("self_fields_verbosity", self_fields_verbosity);
-}
 
 void LabFrameExplicitES::ComputeSpaceChargeField (
     amrex::Vector< std::unique_ptr<amrex::MultiFab> >& rho_fp,

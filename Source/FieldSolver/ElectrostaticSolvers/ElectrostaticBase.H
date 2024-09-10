@@ -33,8 +33,7 @@ public:
     ElectrostaticBase(ElectrostaticBase&&) = delete;
     ElectrostaticBase& operator=(ElectrostaticBase&&) = delete;
 
-
-    virtual void ReadParameters () {}
+    void ReadParameters ();
     virtual void AllocateMFs ( [[maybe_unused]] int nlevs_max ) {}
 
     void setPhiBC (

@@ -5,20 +5,6 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
 
-void RelativisticExplicitES::ReadParameters () {
-
-    ParmParse const pp_warpx("warpx");
-
-    // Note that with the relativistic version, these parameters would be
-    // input for each species.
-    utils::parser::queryWithParser(
-        pp_warpx, "self_fields_required_precision", self_fields_required_precision);
-    utils::parser::queryWithParser(
-        pp_warpx, "self_fields_absolute_tolerance", self_fields_absolute_tolerance);
-    utils::parser::queryWithParser(
-        pp_warpx, "self_fields_max_iters", self_fields_max_iters);
-    pp_warpx.query("self_fields_verbosity", self_fields_verbosity);
-}
 
 void
 RelativisticExplicitES::ComputeSpaceChargeField (
@@ -44,9 +30,7 @@ RelativisticExplicitES::ComputeSpaceChargeField (
     }
 
     // Add the field due to the boundary potentials
-    // if (m_poisson_boundary_handler->m_boundary_potential_specified){
-        AddBoundaryField(Efield_fp, Bfield_fp);
-    // }
+    AddBoundaryField(Efield_fp, Bfield_fp);
 }
 
 void

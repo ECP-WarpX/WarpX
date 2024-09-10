@@ -24,6 +24,22 @@ ElectrostaticBase::ElectrostaticBase (int nlevs_max)
 }
 
 ElectrostaticBase::~ElectrostaticBase () = default;
+
+void ElectrostaticBase::ReadParameters () {
+
+    ParmParse const pp_warpx("warpx");
+
+    // Note that with the relativistic version, these parameters would be
+    // input for each species.
+    utils::parser::queryWithParser(
+        pp_warpx, "self_fields_required_precision", self_fields_required_precision);
+    utils::parser::queryWithParser(
+        pp_warpx, "self_fields_absolute_tolerance", self_fields_absolute_tolerance);
+    utils::parser::queryWithParser(
+        pp_warpx, "self_fields_max_iters", self_fields_max_iters);
+    pp_warpx.query("self_fields_verbosity", self_fields_verbosity);
+}
+
 /* \brief Set Dirichlet boundary conditions for the electrostatic solver.
 
     The given potential's values are fixed on the boundaries of the given

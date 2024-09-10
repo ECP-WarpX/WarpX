@@ -777,7 +777,7 @@ WarpX::ReadParameters ()
         "The FFT Poisson solver is not implemented in labframe-electromagnetostatic mode yet."
         );
 
-        bool const eb_enabled = EB::enabled();
+        [[maybe_unused]] bool const eb_enabled = EB::enabled();
 #if !defined(AMREX_USE_EB)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             !eb_enabled,

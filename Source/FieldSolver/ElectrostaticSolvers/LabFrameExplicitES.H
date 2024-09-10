@@ -17,7 +17,6 @@ public:
 
     LabFrameExplicitES (int nlevs_max) : ElectrostaticBase (nlevs_max) {ReadParameters();}
 
-    void ReadParameters ();
     void ComputeSpaceChargeField (
         amrex::Vector< std::unique_ptr<amrex::MultiFab> >& rho_fp,
         amrex::Vector< std::unique_ptr<amrex::MultiFab> >& rho_cp,
