@@ -2931,6 +2931,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                 copyAttribs(ip);
             }
 
+            // Push momentum from t^{n-1/2} to t^{n+1/2}
             doParticleMomentumPush<0>(ux[ip], uy[ip], uz[ip],
                                       Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                       ion_lev ? ion_lev[ip] : 1,
@@ -2938,9 +2939,10 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 #ifdef WARPX_QED
                                       t_chi_max,
 #endif
-                                      dt);
+                                      0.5_rt * (dt + dt_next));
 
-            UpdatePosition(xp, yp, zp, ux[ip], uy[ip], uz[ip], 0.5_rt * (dt + dt_next));
+            // Push position from t^n to t^{n+1}
+            UpdatePosition(xp, yp, zp, ux[ip], uy[ip], uz[ip], dt);
             setPosition(ip, xp, yp, zp);
         }
 #ifdef WARPX_QED

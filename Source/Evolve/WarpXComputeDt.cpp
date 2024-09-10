@@ -60,7 +60,11 @@ WarpX::ComputeDt ()
                electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         // Computation of dt for spectral algorithm
         // (determined by the minimum cell size in all directions)
-        deltat = cfl / PhysConst::c * minDim(dx);
+        if (m_max_dt.has_value()) {
+            deltat = m_max_dt.value();
+        } else {
+            deltat = cfl / PhysConst::c * minDim(dx);
+        }
     } else {
         // Computation of dt for FDTD algorithm
 #ifdef WARPX_DIM_RZ
@@ -106,12 +110,12 @@ WarpX::UpdateDtFromParticleSpeeds ()
     amrex::Real dx_min = minDim(dx);
 
     const amrex::ParticleReal max_v = mypc->maxParticleVelocity();
-    amrex::Real deltat_new;
+    amrex::Real deltat_new = 0.;
 
     // Protections from overly-large timesteps
     if (max_v == 0) {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_max_dt.has_value(), "Particles at rest and no maximum timestep specified. Aborting.");
-        deltat_new == m_max_dt.value();
+        deltat_new = m_max_dt.value();
     }
 
     deltat_new = cfl * dx_min / max_v;
