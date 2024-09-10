@@ -1079,12 +1079,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                     }
                     return 0;
                 };
-                const int flag_pcount = checker();
-                if (flag_pcount == 1) {
-                    pcounts[index] = num_ppc*r;
-                } else {
-                    pcounts[index] = 0;
-                }
+                pcounts[index] = checker() ? num_ppc*r : 0;
             }
             amrex::ignore_unused(j,k);
         });
@@ -1182,6 +1177,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
         [=] AMREX_GPU_DEVICE (int i, int j, int k, amrex::RandomEngine const& engine) noexcept
         {
             const IntVect iv = IntVect(AMREX_D_DECL(i, j, k));
+            amrex::ignore_unused(j,k);
             const auto index = overlap_box.index(iv);
 #ifdef WARPX_DIM_RZ
             Real theta_offset = 0._rt;
@@ -1211,7 +1207,6 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                     continue;
                 }
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                amrex::ignore_unused(k);
                 if (!tile_realbox.contains(XDim3{pos.x,pos.z,0.0_rt})) {
                     ZeroInitializeAndSetNegativeID(pa_idcpu, pa, ip, loc_do_field_ionization, pi
 #ifdef WARPX_QED
@@ -1222,7 +1217,6 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                     continue;
                 }
 #else
-                amrex::ignore_unused(j,k);
                 if (!tile_realbox.contains(XDim3{pos.z,0.0_rt,0.0_rt})) {
                     ZeroInitializeAndSetNegativeID(pa_idcpu, pa, ip, loc_do_field_ionization, pi
 #ifdef WARPX_QED
