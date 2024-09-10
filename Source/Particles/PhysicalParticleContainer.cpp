@@ -1105,12 +1105,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                     pcounts[index] = 0;
                 }
             }
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-            amrex::ignore_unused(k);
-#endif
-#if defined(WARPX_DIM_1D_Z)
             amrex::ignore_unused(j,k);
-#endif
         });
 
         // Max number of new particles. All of them are created,
@@ -1580,11 +1575,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 }
                 pcounts[index] = num_ppc_int*r;
             }
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-            amrex::ignore_unused(k);
-#elif defined(WARPX_DIM_1D_Z)
             amrex::ignore_unused(j,k);
-#endif
         });
 
         // Max number of new particles. All of them are created,
