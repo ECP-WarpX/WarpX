@@ -327,7 +327,7 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
                 AddRZModesToOutputNames(std::string("G"), ncomp);
             }
         } else if ( m_varnames_fields[comp] == "phi" ){
-            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::phi_fp, lev), lev, m_crse_ratio,
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("phi_fp", lev), lev, m_crse_ratio,
                                                         false, ncomp);
             if (update_varnames) {
                 AddRZModesToOutputNames(std::string("phi"), ncomp);
@@ -690,7 +690,7 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
         } else if ( m_varnames[comp] == "G" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("G_fp", lev), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "phi" ){
-            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::phi_fp, lev), lev, m_crse_ratio);
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("phi_fp", lev), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "part_per_cell" ){
             m_all_field_functors[lev][comp] = std::make_unique<PartPerCellFunctor>(nullptr, lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "part_per_grid" ){

@@ -322,7 +322,6 @@ WarpX::WarpX ()
 
     F_fp.resize(nlevs_max);
     rho_fp.resize(nlevs_max);
-    phi_fp.resize(nlevs_max);
     Efield_fp.resize(nlevs_max);
     Bfield_fp.resize(nlevs_max);
 
@@ -2102,6 +2101,14 @@ WarpX::ClearLevel (int lev)
         m_hybrid_pic_model->ClearLevel(lev);
     }
 
+    for (int i = 0; i < 3; ++i) {
+        Efield_dotMask [lev][i].reset();
+        Bfield_dotMask [lev][i].reset();
+        Afield_dotMask [lev][i].reset();
+    }
+
+    phi_dotMask[lev].reset();
+
 #ifdef WARPX_USE_FFT
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         spectral_solver_fp[lev].reset();
@@ -2195,6 +2202,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                       const IntVect& ngEB, IntVect& ngJ, const IntVect& ngRho,
                       const IntVect& ngF, const IntVect& ngG, const bool aux_is_nodal)
 {
+    using ablastr::fields::Direction;
+
     // Declare nodal flags
     IntVect Ex_nodal_flag, Ey_nodal_flag, Ez_nodal_flag;
     IntVect Bx_nodal_flag, By_nodal_flag, Bz_nodal_flag;
@@ -2304,9 +2313,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     AllocInitMultiFab(Efield_fp[lev][1], amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngEB, lev, "Efield_fp[y]", 0.0_rt);
     AllocInitMultiFab(Efield_fp[lev][2], amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngEB, lev, "Efield_fp[z]", 0.0_rt);
 
-    m_fields.alloc_init( "current_fp[x]", amrex::convert(ba, jx_nodal_flag), dm, ncomps, ngJ, lev, 0.0_rt);
-    m_fields.alloc_init( "current_fp[y]", amrex::convert(ba, jy_nodal_flag), dm, ncomps, ngJ, lev, 0.0_rt);
-    m_fields.alloc_init( "current_fp[z]", amrex::convert(ba, jz_nodal_flag), dm, ncomps, ngJ, lev, 0.0_rt);
+    m_fields.alloc_init( "current_fp", Direction{0}, lev, amrex::convert(ba, jx_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
+    m_fields.alloc_init( "current_fp", Direction{1}, lev, amrex::convert(ba, jy_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
+    m_fields.alloc_init( "current_fp", Direction{2}, lev, amrex::convert(ba, jz_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
 
     if (do_current_centering)
     {
@@ -2482,7 +2491,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
     {
         const IntVect ngPhi = IntVect( AMREX_D_DECL(1,1,1) );
-        AllocInitMultiFab(phi_fp[lev], amrex::convert(ba, phi_nodal_flag), dm, ncomps, ngPhi, lev, "phi_fp", 0.0_rt);
+        m_fields.alloc_init( "phi_fp", lev, amrex::convert(ba, phi_nodal_flag), dm,
+                             ncomps, ngPhi, 0.0_rt );
     }
 
     if (do_subcycling && lev == 0)
@@ -2500,8 +2510,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     if (do_divb_cleaning)
     {
         m_fields.alloc_init(
-            "G_fp", amrex::convert(ba, G_nodal_flag), dm,
-            ncomps, ngG, lev, 0.0_rt);
+            "G_fp", lev, amrex::convert(ba, G_nodal_flag), dm,
+            ncomps, ngG, 0.0_rt);
     }
 
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
@@ -2687,9 +2697,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         }
 
         // Create the MultiFabs for the current
-        m_fields.alloc_init( "current_cp[x]", amrex::convert(cba, jx_nodal_flag), dm, ncomps, ngJ, lev, 0.0_rt);
-        m_fields.alloc_init( "current_cp[y]", amrex::convert(cba, jy_nodal_flag), dm, ncomps, ngJ, lev, 0.0_rt);
-        m_fields.alloc_init( "current_cp[z]", amrex::convert(cba, jz_nodal_flag), dm, ncomps, ngJ, lev, 0.0_rt);
+        m_fields.alloc_init( "current_cp", Direction{0}, lev, amrex::convert(cba, jx_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
+        m_fields.alloc_init( "current_cp", Direction{1}, lev, amrex::convert(cba, jy_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
+        m_fields.alloc_init( "current_cp", Direction{2}, lev, amrex::convert(cba, jz_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
 
         if (rho_ncomps > 0) {
             AllocInitMultiFab(rho_cp[lev], amrex::convert(cba, rho_nodal_flag), dm, rho_ncomps, ngRho, lev, "rho_cp", 0.0_rt);
@@ -2705,14 +2715,14 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             if (grid_type == GridType::Collocated)
             {
                 m_fields.alloc_init(
-                    "G_cp", amrex::convert(ba, IntVect::TheUnitVector()), dm,
-                    ncomps, ngG, lev, 0.0_rt);
+                    "G_cp", lev, amrex::convert(ba, IntVect::TheUnitVector()), dm,
+                    ncomps, ngG, 0.0_rt);
             }
             else // grid_type=staggered or grid_type=hybrid
             {
                 m_fields.alloc_init(
-                    "G_cp", amrex::convert(ba, IntVect::TheZeroVector()), dm,
-                    ncomps, ngG, lev, 0.0_rt);
+                    "G_cp", lev, amrex::convert(ba, IntVect::TheZeroVector()), dm,
+                    ncomps, ngG, 0.0_rt);
             }
         }
 
@@ -3490,9 +3500,6 @@ WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, cons
             break;
         case FieldType::F_fp :
             field_pointer = F_fp[lev].get();
-            break;
-        case FieldType::phi_fp :
-            field_pointer = phi_fp[lev].get();
             break;
         case FieldType::vector_potential_fp :
             field_pointer = vector_potential_fp_nodal[lev][direction].get();

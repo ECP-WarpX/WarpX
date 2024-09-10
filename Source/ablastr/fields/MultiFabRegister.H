@@ -32,6 +32,11 @@ namespace ablastr::fields
     struct Direction
     {
         int dir = 0;
+
+        bool operator<(const Direction& other) const
+        {
+            return other.dir < this->dir;
+        }
     };
 
     /** title
@@ -47,11 +52,17 @@ namespace ablastr::fields
         /** owned (i)MultiFab data */
         amrex::MultiFab m_mf;
 
+        /** Components (base vector directions) of this (i)MultiFab */
+        std::optional<Direction> dir = std::nullopt;
+
         /** the MR level of this (i)MultiFab */
         int level = 0;
 
         /** redistribute */
         bool redistribute = true;
+
+        /** redistribute on @see amrex::AmrCore::RemakeLevel */
+        bool redistribute_on_remake = true;
     };
 
     /** This is a register of fields aka amrex::(i)MultiFabs.
@@ -75,25 +86,40 @@ namespace ablastr::fields
          * body
          *
          * @param name ...
+         * @param level ...
          * @param ba ...
          * @param dm ...
          * @param ncomp ...
          * @param ngrow ...
-         * @param level ...
          * @param initial_value ...
          * @param redistribute follow the default domain decomposition of the simulation
+         * @param redistribute_on_remake redistribute on @see amrex::AmrCore::RemakeLevel
          * @return pointer to newly allocated MultiFab
          */
         amrex::MultiFab*
         alloc_init (
             std::string name,
+            int level,
             amrex::BoxArray const & ba,
             amrex::DistributionMapping const & dm,
             int ncomp,
             amrex::IntVect const & ngrow,
-            int level,
             std::optional<const amrex::Real> initial_value = std::nullopt,
-            bool redistribute = true
+            bool redistribute = true,
+            bool redistribute_on_remake = true
+        );
+        amrex::MultiFab*
+        alloc_init (
+            std::string name,
+            Direction dir,
+            int level,
+            amrex::BoxArray const & ba,
+            amrex::DistributionMapping const & dm,
+            int ncomp,
+            amrex::IntVect const & ngrow,
+            std::optional<const amrex::Real> initial_value = std::nullopt,
+            bool redistribute = true,
+            bool redistribute_on_remake = true
         );
 
         /** title
@@ -122,6 +148,23 @@ namespace ablastr::fields
         bool
         has (
             std::string name,
+            int level
+        );
+
+        /** title
+         *
+         * body body
+         * body
+         *
+         * @param name ...
+         * @param dir ...
+         * @param level ...
+         * @return true if contained, otherwise false
+         */
+        bool
+        has (
+            std::string name,
+            Direction dir,
             int level
         );
 
@@ -171,19 +214,23 @@ namespace ablastr::fields
             int finest_level
         );
 
-        /** title
+        /** Return a vector field on all MR levels.
          *
-         * Same as get above, but returns all levels for a name.
+         * Out loop: MR levels.
+         * Inner loop: directions (components).
          *
          * @param name ...
-         * @param dir ...
          * @param finest_level ...
          * @return ...
          */
-        std::vector<amrex::MultiFab*>
-        get_mr_levels (
+        std::vector<
+            std::map<
+                Direction,
+                amrex::MultiFab*
+            >
+        >
+        get_mr_levels_alldirs (
             std::string name,
-            Direction dir,
             int finest_level
         );
 

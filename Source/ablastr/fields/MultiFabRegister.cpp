@@ -15,13 +15,14 @@ namespace ablastr::fields
     amrex::MultiFab*
     MultiFabRegister::alloc_init (
         std::string name,
+        int level,
         amrex::BoxArray const & ba,
         amrex::DistributionMapping const & dm,
         int ncomp,
         amrex::IntVect const & ngrow,
-        int level,
         std::optional<const amrex::Real> initial_value,
-        bool redistribute
+        bool redistribute,
+        bool redistribute_on_remake
     )
     {
         name = mf_name(name, level);
@@ -34,7 +35,49 @@ namespace ablastr::fields
         auto [it, success] = m_mf_register.emplace(
             std::make_pair(
                 name,
-                MultiFabOwner{{ba, dm, ncomp, ngrow, tag}, level, redistribute}
+                MultiFabOwner{{ba, dm, ncomp, ngrow, tag}, std::nullopt, level, redistribute, redistribute_on_remake}
+            )
+        );
+        if (!success) {
+            throw std::runtime_error("MultiFabRegister::alloc_init failed for " + name);
+        }
+
+        // a short-hand alias for the code below
+        amrex::MultiFab & mf = it->second.m_mf;
+
+        // initialize with value
+        if (initial_value) {
+            mf.setVal(*initial_value);
+        }
+
+        return &mf;
+    }
+
+    amrex::MultiFab*
+    MultiFabRegister::alloc_init (
+        std::string name,
+        Direction dir,
+        int level,
+        amrex::BoxArray const & ba,
+        amrex::DistributionMapping const & dm,
+        int ncomp,
+        amrex::IntVect const & ngrow,
+        std::optional<const amrex::Real> initial_value,
+        bool redistribute,
+        bool redistribute_on_remake
+    )
+    {
+        name = mf_name(name, level);
+
+        // Checks
+        // TODO: does the key already exist? error
+
+        // allocate
+        const auto tag = amrex::MFInfo().SetTag(name);
+        auto [it, success] = m_mf_register.emplace(
+            std::make_pair(
+                name,
+                MultiFabOwner{{ba, dm, ncomp, ngrow, tag}, dir, level, redistribute, redistribute_on_remake}
             )
         );
         if (!success) {
@@ -73,6 +116,18 @@ namespace ablastr::fields
     )
     {
         name = mf_name(name, level);
+
+        return m_mf_register.count(name) > 0;
+    }
+
+    bool
+    MultiFabRegister::has (
+        std::string name,
+        Direction dir,
+        int level
+    )
+    {
+        name = mf_name(name, dir, level);
 
         return m_mf_register.count(name) > 0;
     }
@@ -118,25 +173,48 @@ namespace ablastr::fields
     {
         std::vector<amrex::MultiFab*> field_on_level;
         field_on_level.reserve(finest_level+1);
-        for (int lvl = 0; lvl<= finest_level; lvl++)
+        for (int lvl = 0; lvl <= finest_level; lvl++)
         {
             field_on_level.push_back(get(name, lvl));
         }
         return field_on_level;
     }
 
-    std::vector<amrex::MultiFab*>
-    MultiFabRegister::get_mr_levels (
+    std::vector<
+        std::map<
+            Direction,
+            amrex::MultiFab*
+        >
+    >
+    MultiFabRegister::get_mr_levels_alldirs  (
         std::string name,
-        Direction dir,
         int finest_level
     )
     {
-        std::vector<amrex::MultiFab*> field_on_level;
+        std::vector<
+            std::map<
+                Direction,
+                amrex::MultiFab*
+            >
+        > field_on_level;
         field_on_level.reserve(finest_level+1);
-        for (int lvl = 0; lvl<= finest_level; lvl++)
+
+        // TODO: Technically, we should search field_on_level via std::unique_copy
+        std::vector<Direction> all_dirs = {Direction{0}, Direction{1}, Direction{2}};
+
+        for (int lvl = 0; lvl <= finest_level; lvl++)
         {
-            field_on_level.push_back(get(name, dir, lvl));
+            // insert a new level
+            field_on_level.push_back(std::map<
+                Direction,
+                amrex::MultiFab*
+            >{});
+
+            // insert components
+            for (Direction dir : all_dirs)
+            {
+                field_on_level[lvl][dir] = get(name, dir, lvl);
+            }
         }
         return field_on_level;
     }

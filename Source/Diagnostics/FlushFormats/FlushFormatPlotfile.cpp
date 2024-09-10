@@ -595,8 +595,8 @@ FlushFormatPlotfile::WriteAllRawFields(
             const MultiFab rho_new(warpx.getField(FieldType::rho_fp, lev), amrex::make_alias, nstart, WarpX::ncomps);
             WriteRawMF(rho_new, dm, raw_pltname, default_level_prefix, "rho_fp", lev, plot_raw_fields_guards);
         }
-        if (warpx.isFieldInitialized(FieldType::phi_fp, lev)) {
-            WriteRawMF(warpx.getField(FieldType::phi_fp, lev), dm, raw_pltname, default_level_prefix, "phi_fp", lev, plot_raw_fields_guards);
+        if (warpx.m_fields.has("phi_fp", lev)) {
+            WriteRawMF(*warpx.m_fields.get("phi_fp", lev), dm, raw_pltname, default_level_prefix, "phi_fp", lev, plot_raw_fields_guards);
         }
 
         // Averaged fields on fine patch

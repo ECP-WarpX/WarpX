@@ -1007,23 +1007,23 @@ public:
     void AddSpaceChargeField (WarpXParticleContainer& pc);
     void AddSpaceChargeFieldLabFrame ();
     void computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                     amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                     std::vector<amrex::MultiFab*>& phi,
                      std::array<amrex::Real, 3> beta = {{0,0,0}},
                      amrex::Real required_precision=amrex::Real(1.e-11),
                      amrex::Real absolute_tolerance=amrex::Real(0.0),
                      int max_iters=200,
                      int verbosity=2) const;
 
-    void setPhiBC (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi ) const;
+    void setPhiBC (std::vector<amrex::MultiFab*>& phi ) const;
 
     void computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
-                   const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                   const std::vector<amrex::MultiFab*>& phi,
                    std::array<amrex::Real, 3> beta = {{0,0,0}} ) const;
     void computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& B,
-                   const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                   const std::vector<amrex::MultiFab*>& phi,
                    std::array<amrex::Real, 3> beta = {{0,0,0}} ) const;
     void computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                                      amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi) const;
+                                      std::vector<amrex::MultiFab*>& phi) const;
 
     // Magnetostatic Solver Interface
     MagnetostaticSolver::VectorPoissonBoundaryHandler m_vector_poisson_boundary_handler;
@@ -1523,7 +1523,6 @@ private:
     // Fine patch
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > F_fp;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_fp;
-    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > phi_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_vay;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp;
