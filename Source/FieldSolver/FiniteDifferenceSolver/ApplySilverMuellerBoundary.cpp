@@ -35,12 +35,14 @@ using namespace amrex;
  * \brief Update the B field at the boundary, using the Silver-Mueller condition
  */
 void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
+    std::map< ablastr::fields::Direction, amrex::MultiFab* >& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
     amrex::Box domain_box,
     amrex::Real const dt,
     amrex::Vector<FieldBoundaryType> field_boundary_lo,
     amrex::Vector<FieldBoundaryType> field_boundary_hi) {
+
+    using ablastr::fields::Direction;
 
     // Ensure that we are using the Yee solver
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -79,11 +81,11 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
     // tiling is usually set by TilingIfNotGPU()
     // but here, we set it to false because of potential race condition,
     // since we grow the tiles by one guard cell after creating them.
-    for ( MFIter mfi(*Efield[0], false); mfi.isValid(); ++mfi ) {
+    for ( MFIter mfi(*Efield[Direction{0}], false); mfi.isValid(); ++mfi ) {
         // Extract field data for this grid/tile
-        Array4<Real> const& Er = Efield[0]->array(mfi);
-        Array4<Real> const& Et = Efield[1]->array(mfi);
-        Array4<Real> const& Ez = Efield[2]->array(mfi);
+        Array4<Real> const& Er = Efield[Direction{0}]->array(mfi);
+        Array4<Real> const& Et = Efield[Direction{1}]->array(mfi);
+        Array4<Real> const& Ez = Efield[Direction{2}]->array(mfi);
         Array4<Real> const& Br = Bfield[0]->array(mfi);
         Array4<Real> const& Bt = Bfield[1]->array(mfi);
         Array4<Real> const& Bz = Bfield[2]->array(mfi);
@@ -203,13 +205,13 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
     // tiling is usually set by TilingIfNotGPU()
     // but here, we set it to false because of potential race condition,
     // since we grow the tiles by one guard cell after creating them.
-    for ( MFIter mfi(*Efield[0], false); mfi.isValid(); ++mfi ) {
+    for ( MFIter mfi(*Efield[Direction{0}], false); mfi.isValid(); ++mfi ) {
 
         // Extract field data for this grid/tile
-        Array4<Real> const& Ex = Efield[0]->array(mfi);
-        Array4<Real> const& Ey = Efield[1]->array(mfi);
+        Array4<Real> const& Ex = Efield[Direction{0}]->array(mfi);
+        Array4<Real> const& Ey = Efield[Direction{1}]->array(mfi);
 #ifndef WARPX_DIM_1D_Z
-        Array4<Real> const& Ez = Efield[2]->array(mfi);
+        Array4<Real> const& Ez = Efield[Direction{2}]->array(mfi);
 #endif
         Array4<Real> const& Bx = Bfield[0]->array(mfi);
         Array4<Real> const& By = Bfield[1]->array(mfi);
