@@ -338,12 +338,12 @@ WarpX::ImplicitComputeRHSE (int lev, PatchType patch_type, amrex::Real a_dt, War
         m_fdtd_solver_fp[lev]->EvolveE( a_Erhs_vec.getArrayVec()[lev], Bfield_fp[lev],
                                         current_fp[lev], m_edge_lengths[lev],
                                         m_face_areas[lev], ECTRhofield[lev],
-                                        F_fp[lev], lev, a_dt );
+                                        m_fields.get("F_fp", lev), lev, a_dt );
     } else {
         m_fdtd_solver_cp[lev]->EvolveE( a_Erhs_vec.getArrayVec()[lev], Bfield_cp[lev],
                                         current_cp[lev], m_edge_lengths[lev],
                                         m_face_areas[lev], ECTRhofield[lev],
-                                        F_cp[lev], lev, a_dt );
+                                        m_fields.get("F_cp", lev), lev, a_dt );
     }
 
     // Compute Efield_rhs in PML cells by calling EvolveEPML

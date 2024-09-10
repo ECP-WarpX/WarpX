@@ -583,9 +583,9 @@ FlushFormatPlotfile::WriteAllRawFields(
         WriteRawMF( warpx.getField(FieldType::Bfield_fp, lev, 0), dm, raw_pltname, default_level_prefix, "Bx_fp", lev, plot_raw_fields_guards);
         WriteRawMF( warpx.getField(FieldType::Bfield_fp, lev, 1), dm, raw_pltname, default_level_prefix, "By_fp", lev, plot_raw_fields_guards);
         WriteRawMF( warpx.getField(FieldType::Bfield_fp, lev, 2), dm, raw_pltname, default_level_prefix, "Bz_fp", lev, plot_raw_fields_guards);
-        if (warpx.isFieldInitialized(FieldType::F_fp, lev))
+        if (warpx.m_fields.has("F_fp", lev))
         {
-            WriteRawMF(warpx.getField(FieldType::F_fp, lev), dm, raw_pltname, default_level_prefix, "F_fp", lev, plot_raw_fields_guards);
+            WriteRawMF(*warpx.m_fields.get("F_fp", lev), dm, raw_pltname, default_level_prefix, "F_fp", lev, plot_raw_fields_guards);
         }
         if (warpx.isFieldInitialized(FieldType::rho_fp, lev))
         {
@@ -635,9 +635,9 @@ FlushFormatPlotfile::WriteAllRawFields(
                                warpx.m_fields.get("current_cp", Direction{0}, lev), warpx.m_fields.get("current_cp", Direction{1}, lev), warpx.m_fields.get("current_cp", Direction{2}, lev),
                                warpx.m_fields.get("current_fp", Direction{0}, lev), warpx.m_fields.get("current_fp", Direction{1}, lev), warpx.m_fields.get("current_fp", Direction{2}, lev),
                                dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards);
-            if (warpx.isFieldInitialized(FieldType::F_fp, lev) && warpx.isFieldInitialized(FieldType::F_cp, lev))
+            if (warpx.m_fields.has("F_fp", lev) && warpx.m_fields.has("F_cp", lev))
             {
-                WriteCoarseScalar("F", warpx.getFieldPointer(FieldType::F_cp, lev), warpx.getFieldPointer(FieldType::F_fp, lev),
+                WriteCoarseScalar("F", warpx.m_fields.get("F_cp", lev), warpx.m_fields.get("F_fp", lev),
                     dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards, 0);
             }
             if (warpx.isFieldInitialized(FieldType::rho_fp, lev) && warpx.isFieldInitialized(FieldType::rho_cp, lev))

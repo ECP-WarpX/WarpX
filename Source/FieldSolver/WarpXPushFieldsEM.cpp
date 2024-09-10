@@ -184,11 +184,15 @@ WarpX::PSATDForwardTransformF ()
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (F_fp[lev]) { spectral_solver_fp[lev]->ForwardTransform(lev, *F_fp[lev], Idx.F); }
+        if (m_fields.has("F_fp", lev)) {
+            spectral_solver_fp[lev]->ForwardTransform(lev, *m_fields.get("F_fp", lev), Idx.F);
+        }
 
         if (spectral_solver_cp[lev])
         {
-            if (F_cp[lev]) { spectral_solver_cp[lev]->ForwardTransform(lev, *F_cp[lev], Idx.F); }
+            if (m_fields.has("F_cp", lev)) {
+                spectral_solver_cp[lev]->ForwardTransform(lev, *m_fields.get("F_cp", lev), Idx.F);
+            }
         }
     }
 }
@@ -201,17 +205,17 @@ WarpX::PSATDBackwardTransformF ()
     for (int lev = 0; lev <= finest_level; ++lev)
     {
 #ifdef WARPX_DIM_RZ
-        if (F_fp[lev]) { spectral_solver_fp[lev]->BackwardTransform(lev, *F_fp[lev], Idx.F); }
+        if (m_fields.has("F_fp", lev)) { spectral_solver_fp[lev]->BackwardTransform(lev, *m_fields.get("F_fp", lev), Idx.F); }
 #else
-        if (F_fp[lev]) { spectral_solver_fp[lev]->BackwardTransform(lev, *F_fp[lev], Idx.F, m_fill_guards_fields); }
+        if (m_fields.has("F_fp", lev)) { spectral_solver_fp[lev]->BackwardTransform(lev, *m_fields.get("F_fp", lev), Idx.F, m_fill_guards_fields); }
 #endif
 
         if (spectral_solver_cp[lev])
         {
 #ifdef WARPX_DIM_RZ
-            if (F_cp[lev]) { spectral_solver_cp[lev]->BackwardTransform(lev, *F_cp[lev], Idx.F); }
+            if (m_fields.has("F_cp", lev)) { spectral_solver_cp[lev]->BackwardTransform(lev, *m_fields.get("F_cp", lev), Idx.F); }
 #else
-            if (F_cp[lev]) { spectral_solver_cp[lev]->BackwardTransform(lev, *F_cp[lev], Idx.F, m_fill_guards_fields); }
+            if (m_fields.has("F_cp", lev)) { spectral_solver_cp[lev]->BackwardTransform(lev, *m_fields.get("F_cp", lev), Idx.F, m_fill_guards_fields); }
 #endif
         }
     }
@@ -219,7 +223,7 @@ WarpX::PSATDBackwardTransformF ()
     // Damp the field in the guard cells
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        DampFieldsInGuards(lev, F_fp[lev].get());
+        DampFieldsInGuards(lev, m_fields.get("F_fp", lev));
     }
 }
 
@@ -884,12 +888,12 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
         m_fdtd_solver_fp[lev]->EvolveE(Efield_fp[lev], Bfield_fp[lev],
                                        current_fp[lev], m_edge_lengths[lev],
                                        m_face_areas[lev], ECTRhofield[lev],
-                                       F_fp[lev], lev, a_dt );
+                                       m_fields.get("F_fp", lev), lev, a_dt );
     } else {
         m_fdtd_solver_cp[lev]->EvolveE(Efield_cp[lev], Bfield_cp[lev],
                                        current_cp[lev], m_edge_lengths[lev],
                                        m_face_areas[lev], ECTRhofield[lev],
-                                       F_cp[lev], lev, a_dt );
+                                       m_fields.get("F_cp", lev), lev, a_dt );
     }
 
     // Evolve E field in PML cells
@@ -960,10 +964,10 @@ WarpX::EvolveF (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
 
     // Evolve F field in regular cells
     if (patch_type == PatchType::fine) {
-        m_fdtd_solver_fp[lev]->EvolveF( F_fp[lev], Efield_fp[lev],
+        m_fdtd_solver_fp[lev]->EvolveF( m_fields.get("F_fp", lev), Efield_fp[lev],
                                         rho_fp[lev], rhocomp, a_dt );
     } else {
-        m_fdtd_solver_cp[lev]->EvolveF( F_cp[lev], Efield_cp[lev],
+        m_fdtd_solver_cp[lev]->EvolveF( m_fields.get("F_cp", lev), Efield_cp[lev],
                                         rho_cp[lev], rhocomp, a_dt );
     }
 

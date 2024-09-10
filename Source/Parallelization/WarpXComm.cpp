@@ -888,30 +888,30 @@ WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng, std::optional<b
     {
         if (do_pml && pml[lev] && pml[lev]->ok())
         {
-            if (F_fp[lev]) { pml[lev]->ExchangeF(patch_type, F_fp[lev].get(), do_pml_in_domain); }
+            if (m_fields.has("F_fp", lev)) { pml[lev]->ExchangeF(patch_type, m_fields.get("F_fp", lev), do_pml_in_domain); }
             pml[lev]->FillBoundaryF(patch_type, nodal_sync);
         }
 
-        if (F_fp[lev])
+        if (m_fields.has("F_fp", lev))
         {
             const amrex::Periodicity& period = Geom(lev).periodicity();
-            const amrex::IntVect& nghost = (safe_guard_cells) ? F_fp[lev]->nGrowVect() : ng;
-            ablastr::utils::communication::FillBoundary(*F_fp[lev], nghost, WarpX::do_single_precision_comms, period, nodal_sync);
+            const amrex::IntVect& nghost = (safe_guard_cells) ? m_fields.get("F_fp", lev)->nGrowVect() : ng;
+            ablastr::utils::communication::FillBoundary(*m_fields.get("F_fp", lev), nghost, WarpX::do_single_precision_comms, period, nodal_sync);
         }
     }
     else if (patch_type == PatchType::coarse)
     {
         if (do_pml && pml[lev] && pml[lev]->ok())
         {
-            if (F_cp[lev]) { pml[lev]->ExchangeF(patch_type, F_cp[lev].get(), do_pml_in_domain); }
+            if (m_fields.has("F_cp", lev)) { pml[lev]->ExchangeF(patch_type, m_fields.get("F_cp", lev), do_pml_in_domain); }
             pml[lev]->FillBoundaryF(patch_type, nodal_sync);
         }
 
-        if (F_cp[lev])
+        if (m_fields.has("F_cp", lev))
         {
             const amrex::Periodicity& period = Geom(lev-1).periodicity();
-            const amrex::IntVect& nghost = (safe_guard_cells) ? F_cp[lev]->nGrowVect() : ng;
-            ablastr::utils::communication::FillBoundary(*F_cp[lev], nghost, WarpX::do_single_precision_comms, period, nodal_sync);
+            const amrex::IntVect& nghost = (safe_guard_cells) ? m_fields.get("F_cp", lev)->nGrowVect() : ng;
+            ablastr::utils::communication::FillBoundary(*m_fields.get("F_cp", lev), nghost, WarpX::do_single_precision_comms, period, nodal_sync);
         }
     }
 }
