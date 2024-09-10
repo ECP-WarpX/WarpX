@@ -977,7 +977,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
 
     Box fine_injection_box;
     amrex::IntVect rrfac(AMREX_D_DECL(1,1,1));
-    bool refine_injection = findRefinedInjectionBox(fine_injection_box, rrfac);
+    const bool refine_injection = findRefinedInjectionBox(fine_injection_box, rrfac);
 
     InjectorPosition* inj_pos = plasma_injector.getInjectorPosition();
     InjectorDensity*  inj_rho = plasma_injector.getInjectorDensity();
@@ -1432,7 +1432,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 
     Box fine_injection_box;
     amrex::IntVect rrfac(AMREX_D_DECL(1,1,1));
-    bool refine_injection = findRefinedInjectionBox(fine_injection_box, rrfac);
+    const bool refine_injection = findRefinedInjectionBox(fine_injection_box, rrfac);
 
     InjectorPosition* flux_pos = plasma_injector.getInjectorFluxPosition();
     InjectorFlux*  inj_flux = plasma_injector.getInjectorFlux();
