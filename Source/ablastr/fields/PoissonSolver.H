@@ -155,16 +155,6 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
                                        "Embedded boundary solve requested but not compiled in");
 #endif
 
-    // Set the value of beta
-    amrex::Array<amrex::Real, AMREX_SPACEDIM> beta_solver =
-#if defined(WARPX_DIM_1D_Z)
-            {{ beta[2] }};  // beta_x and beta_z
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-            {{ beta[0], beta[2] }};  // beta_x and beta_z
-#else
-            {{ beta[0], beta[1], beta[2] }};
-#endif
-
 #if !defined(ABLASTR_USE_FFT)
         ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE( !is_solver_igf_on_lev0,
         "Must compile with FFT support to use the IGF solver!");
@@ -173,6 +163,16 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 #if !defined(WARPX_DIM_3D)
         ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE( !is_solver_igf_on_lev0,
         "The FFT Poisson solver is currently only implemented for 3D!");
+#endif
+
+    // Set the value of beta
+    amrex::Array<amrex::Real, AMREX_SPACEDIM> beta_solver =
+#if defined(WARPX_DIM_1D_Z)
+            {{ beta[2] }};  // beta_x and beta_z
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+            {{ beta[0], beta[2] }};  // beta_x and beta_z
+#else
+            {{ beta[0], beta[1], beta[2] }};
 #endif
 
     auto const finest_level = static_cast<int>(rho.size() - 1);
