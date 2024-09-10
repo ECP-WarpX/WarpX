@@ -456,8 +456,7 @@ WarpX::ComputeOneWayExtensions ()
         for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
 
             amrex::Box const &box = mfi.validbox();
-            m_fields.get("face_areas", maxLevel());
-            auto const &S = m_face_areas[maxLevel()][idim]->array(mfi);
+            auto const &S = m_fields.get("face_areas", Direction{idim}, maxLevel())->array(mfi);
             auto const &flag_ext_face = m_flag_ext_face[maxLevel()][idim]->array(mfi);
             auto const &flag_info_face = m_flag_info_face[maxLevel()][idim]->array(mfi);
             auto &borrowing = (*m_borrowing[maxLevel()][idim])[mfi];
@@ -585,7 +584,7 @@ WarpX::ComputeEightWaysExtensions ()
 
             amrex::Box const &box = mfi.validbox();
 
-            auto const &S = m_face_areas[maxLevel()][idim]->array(mfi);
+            auto const &S = m_fields.get("face_areas", Direction{idim}, maxLevel())->array(mfi);
             auto const &flag_ext_face = m_flag_ext_face[maxLevel()][idim]->array(mfi);
             auto const &flag_info_face = m_flag_info_face[maxLevel()][idim]->array(mfi);
             auto &borrowing = (*m_borrowing[maxLevel()][idim])[mfi];
@@ -737,10 +736,10 @@ WarpX::ApplyBCKCorrection (const int idim)
         const amrex::Box &box = mfi.tilebox();
         const amrex::Array4<int> &flag_ext_face = m_flag_ext_face[maxLevel()][idim]->array(mfi);
         const amrex::Array4<int> &flag_info_face = m_flag_info_face[maxLevel()][idim]->array(mfi);
-        const amrex::Array4<amrex::Real> &S = m_face_areas[maxLevel()][idim]->array(mfi);
-        const amrex::Array4<amrex::Real> &lx = m_face_areas[maxLevel()][0]->array(mfi);
-        const amrex::Array4<amrex::Real> &ly = m_face_areas[maxLevel()][1]->array(mfi);
-        const amrex::Array4<amrex::Real> &lz = m_face_areas[maxLevel()][2]->array(mfi);
+        const amrex::Array4<amrex::Real> &S =  m_fields.get("face_areas", Direction{idim}, maxLevel())->array(mfi);
+        const amrex::Array4<amrex::Real> &lx = m_fields.get("face_areas", Direction{0}, maxLevel())->array(mfi);;
+        const amrex::Array4<amrex::Real> &ly = m_fields.get("face_areas", Direction{1}, maxLevel())->array(mfi);;
+        const amrex::Array4<amrex::Real> &lz = m_fields.get("face_areas", Direction{2}, maxLevel())->array(mfi);;
 
         amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
             if (flag_ext_face(i, j, k)) {
