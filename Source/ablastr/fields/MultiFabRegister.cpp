@@ -109,6 +109,33 @@ namespace ablastr::fields
         // TODO: does the other_name already exist? error
     }
 
+    void
+    MultiFabRegister::remake_level (
+        int level,
+        amrex::DistributionMapping const & new_dm
+    )
+    {
+        for (auto & element : m_mf_register )
+        {
+            MultiFabOwner & mf_owner = element.second;
+            if (mf_owner.level == level) {
+                amrex::MultiFab & mf = mf_owner.m_mf;
+                amrex::IntVect const & ng = mf.nGrowVect();
+                const auto tag = amrex::MFInfo().SetTag(mf.tags()[0]);
+                amrex::MultiFab new_mf(mf.boxArray(), new_dm, mf.nComp(), ng, tag);
+
+                // copy data to new MultiFab: Only done for persistent data like E and B field, not for
+                // temporary things like currents, etc.
+                if (mf_owner.redistribute_on_remake) {
+                    new_mf.Redistribute(mf, 0, 0, mf.nComp(), ng);
+                }
+
+                // replace old MultiFab with new one, deallocate old one
+                mf_owner.m_mf = std::move(new_mf);
+            }
+        }
+    }
+
     bool
     MultiFabRegister::has (
         std::string name,

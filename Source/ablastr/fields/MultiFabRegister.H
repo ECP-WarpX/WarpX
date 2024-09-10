@@ -269,6 +269,19 @@ namespace ablastr::fields
             int level
         );
 
+        /** Remake all (i)MultiFab with a new distribution mapping.
+         *
+         * If redistribute is true, we also copy from the old data into the new.
+         *
+         * @param level the MR level to erase all MultiFabs from
+         * @param new_dm new distribution mapping
+         */
+        void
+        remake_level (
+            int other_level,
+            amrex::DistributionMapping const & new_dm
+        );
+
         /** title
          *
          * body body
