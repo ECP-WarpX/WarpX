@@ -375,19 +375,16 @@ WarpX::WarpX ()
         current_fp_vay.resize(nlevs_max);
     }
 
-    if (WarpX::electrostatic_solver_id != ElectrostaticSolverAlgo::None)
+    // Create Electrostatic Solver object if needed
+    if (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame)
     {
-        // Create Electrostatic Solver object if needed
-        if (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame)
-        {
-            std::unique_ptr<LabFrameExplicitES> labframe_explicit_es = std::make_unique<LabFrameExplicitES>(nlevs_max);
-            m_electrostatic_solver = std::move(labframe_explicit_es);
-        }
-        else if (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::Relativistic)
-        {
-            std::unique_ptr<RelativisticExplicitES> relativistic_explicit_es = std::make_unique<RelativisticExplicitES>(nlevs_max);
-            m_electrostatic_solver = std::move(relativistic_explicit_es);
-        }
+        std::unique_ptr<LabFrameExplicitES> labframe_explicit_es = std::make_unique<LabFrameExplicitES>(nlevs_max);
+        m_electrostatic_solver = std::move(labframe_explicit_es);
+    }
+    else
+    {
+        std::unique_ptr<RelativisticExplicitES> relativistic_explicit_es = std::make_unique<RelativisticExplicitES>(nlevs_max);
+        m_electrostatic_solver = std::move(relativistic_explicit_es);
     }
 
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)

@@ -15,7 +15,6 @@ ElectrostaticSolver::ElectrostaticSolver (int nlevs_max)
 {
     max_level = nlevs_max;
 
-//    ReadParameters ();
     AllocateMFs (nlevs_max);
 
     // Create an instance of the boundary handler to properly set boundary

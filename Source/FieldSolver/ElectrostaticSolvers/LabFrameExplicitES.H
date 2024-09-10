@@ -32,9 +32,7 @@ public:
         const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
         amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi
     );
-    // Multifab for electrostatic potential
-    // amrex::Vector< std::unique_ptr<amrex::MultiFab> > m_phi_fp;
-    // amrex::Vector< std::unique_ptr<amrex::MultiFab> > m_rho_fp;
+
 };
 
 #endif
