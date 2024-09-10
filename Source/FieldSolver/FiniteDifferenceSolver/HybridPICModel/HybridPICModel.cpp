@@ -426,14 +426,14 @@ void HybridPICModel::HybridPICSolveE (
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Bfield,
     amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
-    const bool include_resistivity_term)
+    const bool solve_for_Faraday)
 {
     auto& warpx = WarpX::GetInstance();
     for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
     {
         HybridPICSolveE(
             Efield[lev], Jfield[lev], Bfield[lev], rhofield[lev],
-            edge_lengths[lev], lev, include_resistivity_term
+            edge_lengths[lev], lev, solve_for_Faraday
         );
     }
 }
@@ -444,13 +444,13 @@ void HybridPICModel::HybridPICSolveE (
     std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
     std::unique_ptr<amrex::MultiFab> const& rhofield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
-    const int lev, const bool include_resistivity_term)
+    const int lev, const bool solve_for_Faraday)
 {
     WARPX_PROFILE("WarpX::HybridPICSolveE()");
 
     HybridPICSolveE(
         Efield, Jfield, Bfield, rhofield, edge_lengths, lev,
-        PatchType::fine, include_resistivity_term
+        PatchType::fine, solve_for_Faraday
     );
     if (lev > 0)
     {
@@ -466,7 +466,7 @@ void HybridPICModel::HybridPICSolveE (
     std::unique_ptr<amrex::MultiFab> const& rhofield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
     const int lev, PatchType patch_type,
-    const bool include_resistivity_term)
+    const bool solve_for_Faraday)
 {
     auto& warpx = WarpX::GetInstance();
 
@@ -475,36 +475,29 @@ void HybridPICModel::HybridPICSolveE (
         Efield, current_fp_ampere[lev], Jfield, current_fp_external[lev],
         Bfield, rhofield,
         electron_pressure_fp[lev],
-        edge_lengths, lev, this, include_resistivity_term
+        edge_lengths, lev, this, solve_for_Faraday
     );
     warpx.ApplyEfieldBoundary(lev, patch_type);
 }
 
-void HybridPICModel::CalculateElectronPressure(DtType a_dt_type)
+void HybridPICModel::CalculateElectronPressure()
 {
     auto& warpx = WarpX::GetInstance();
     for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
     {
-        CalculateElectronPressure(lev, a_dt_type);
+        CalculateElectronPressure(lev);
     }
 }
 
-void HybridPICModel::CalculateElectronPressure(const int lev, DtType a_dt_type)
+void HybridPICModel::CalculateElectronPressure(const int lev)
 {
     WARPX_PROFILE("WarpX::CalculateElectronPressure()");
 
     auto& warpx = WarpX::GetInstance();
-    // The full step uses rho^{n+1}, otherwise use the old or averaged
-    // charge density.
-    if (a_dt_type == DtType::Full) {
-        FillElectronPressureMF(
-            electron_pressure_fp[lev], warpx.getFieldPointer(FieldType::rho_fp, lev)
-        );
-    } else {
-        FillElectronPressureMF(
-            electron_pressure_fp[lev], rho_fp_temp[lev].get()
-        );
-    }
+    // Calculate the electron pressure using rho^{n+1}.
+    FillElectronPressureMF(
+        electron_pressure_fp[lev], warpx.getFieldPointer(FieldType::rho_fp, lev)
+    );
     warpx.ApplyElectronPressureBoundary(lev, PatchType::fine);
     electron_pressure_fp[lev]->FillBoundary(warpx.Geom(lev).periodicity());
 }

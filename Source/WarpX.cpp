@@ -257,7 +257,7 @@ WarpX::WarpX ()
 
     BackwardCompatibility();
 
-    if (m_eb_enabled) { InitEB(); }
+    if (EB::enabled()) { InitEB(); }
 
     ablastr::utils::SignalHandling::InitSignalHandling();
 
@@ -777,10 +777,10 @@ WarpX::ReadParameters ()
         "The FFT Poisson solver is not implemented in labframe-electromagnetostatic mode yet."
         );
 
-        m_eb_enabled = EB::enabled();
+        bool const eb_enabled = EB::enabled();
 #if !defined(AMREX_USE_EB)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            !m_eb_enabled,
+            !eb_enabled,
             "Embedded boundaries are requested via warpx.eb_enabled but were not compiled!"
         );
 #endif
@@ -2171,18 +2171,18 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         use_filter,
         bilinear_filter.stencil_length_each_dir);
 
-
-
-        if (m_eb_enabled) {
 #ifdef AMREX_USE_EB
-            int const max_guard = guard_cells.ng_FieldSolver.max();
-            m_field_factory[lev] = amrex::makeEBFabFactory(Geom(lev), ba, dm,
-                                                           {max_guard, max_guard, max_guard},
-                                                           amrex::EBSupport::full);
+    bool const eb_enabled = EB::enabled();
+    if (eb_enabled) {
+        int const max_guard = guard_cells.ng_FieldSolver.max();
+        m_field_factory[lev] = amrex::makeEBFabFactory(Geom(lev), ba, dm,
+                                                       {max_guard, max_guard, max_guard},
+                                                       amrex::EBSupport::full);
+    } else
 #endif
-        } else {
-            m_field_factory[lev] = std::make_unique<FArrayBoxFactory>();
-        }
+    {
+        m_field_factory[lev] = std::make_unique<FArrayBoxFactory>();
+    }
 
 
     if (mypc->nSpeciesDepositOnMainGrid() && n_current_deposition_buffer == 0) {
@@ -2409,7 +2409,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         AllocInitMultiFab(Efield_avg_fp[lev][2], amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngEB, lev, "Efield_avg_fp[z]", 0.0_rt);
     }
 
-    if (m_eb_enabled) {
+    if (EB::enabled()) {
         constexpr int nc_ls = 1;
         amrex::IntVect const ng_ls(2);
         AllocInitMultiFab(m_distance_to_eb[lev], amrex::convert(ba, IntVect::TheNodeVector()), dm, nc_ls, ng_ls, lev,
@@ -3025,36 +3025,7 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
                     const std::array<const amrex::MultiFab* const, 3>& B,
                     const std::array<amrex::Real,3>& dx)
 {
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(grid_type != GridType::Collocated,
-        "ComputeDivB not implemented with warpx.grid_type=Collocated.");
-
-    const Real dxinv = 1._rt/dx[0], dyinv = 1._rt/dx[1], dzinv = 1._rt/dx[2];
-
-#ifdef WARPX_DIM_RZ
-    const Real rmin = GetInstance().Geom(0).ProbLo(0);
-#endif
-
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-    for (MFIter mfi(divB, TilingIfNotGPU()); mfi.isValid(); ++mfi)
-    {
-        const Box& bx = mfi.tilebox();
-        amrex::Array4<const amrex::Real> const& Bxfab = B[0]->array(mfi);
-        amrex::Array4<const amrex::Real> const& Byfab = B[1]->array(mfi);
-        amrex::Array4<const amrex::Real> const& Bzfab = B[2]->array(mfi);
-        amrex::Array4<amrex::Real> const& divBfab = divB.array(mfi);
-
-        ParallelFor(bx,
-        [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
-        {
-            warpx_computedivb(i, j, k, dcomp, divBfab, Bxfab, Byfab, Bzfab, dxinv, dyinv, dzinv
-#ifdef WARPX_DIM_RZ
-                              ,rmin
-#endif
-                              );
-        });
-    }
+    ComputeDivB(divB, dcomp, B, dx, IntVect::TheZeroVector());
 }
 
 void
