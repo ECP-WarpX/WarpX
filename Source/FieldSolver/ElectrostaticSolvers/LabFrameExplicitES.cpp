@@ -25,7 +25,7 @@ void LabFrameExplicitES::ComputeSpaceChargeField (
     amrex::Vector< std::array< std::unique_ptr<amrex::MultiFab>, 3> >& /*Bfield_fp*/
 ) {
     mpc.DepositCharge(rho_fp, 0.0_rt);
-    if (!mfl) {
+    if (mfl) {
         const int lev = 0;
         mfl->DepositCharge(lev, *rho_fp[lev]);
     }
