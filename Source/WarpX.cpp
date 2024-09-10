@@ -2095,69 +2095,12 @@ WarpX::MakeNewLevelFromCoarse (int /*lev*/, amrex::Real /*time*/, const amrex::B
 void
 WarpX::ClearLevel (int lev)
 {
-
-    m_fields.erase( "current_fp[x]", lev );
-    m_fields.erase( "current_fp[y]", lev );
-    m_fields.erase( "current_fp[z]", lev );
-
-    for (int i = 0; i < 3; ++i) {
-        Efield_aux[lev][i].reset();
-        Bfield_aux[lev][i].reset();
-
-        Efield_fp [lev][i].reset();
-        Bfield_fp [lev][i].reset();
-
-        Efield_dotMask [lev][i].reset();
-        Bfield_dotMask [lev][i].reset();
-        Afield_dotMask [lev][i].reset();
-
-        current_store[lev][i].reset();
-
-        if (do_current_centering)
-        {
-            current_fp_nodal[lev][i].reset();
-        }
-
-        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
-        {
-            current_fp_vay[lev][i].reset();
-        }
-
-        if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
-        {
-            vector_potential_fp_nodal[lev][i].reset();
-            vector_potential_grad_buf_e_stag[lev][i].reset();
-            vector_potential_grad_buf_b_stag[lev][i].reset();
-        }
-
-        current_cp[lev][i].reset();
-        Efield_cp [lev][i].reset();
-        Bfield_cp [lev][i].reset();
-
-        Efield_cax[lev][i].reset();
-        Bfield_cax[lev][i].reset();
-        current_buf[lev][i].reset();
-    }
+    m_fields.clear_level(lev);
 
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
     {
         m_hybrid_pic_model->ClearLevel(lev);
     }
-
-    charge_buf[lev].reset();
-
-    current_buffer_masks[lev].reset();
-    gather_buffer_masks[lev].reset();
-
-    F_fp  [lev].reset();
-    m_fields.erase( "G_fp", lev );
-
-    rho_fp[lev].reset();
-    phi_fp[lev].reset();
-    F_cp  [lev].reset();
-    rho_cp[lev].reset();
-
-    phi_dotMask[lev].reset();
 
 #ifdef WARPX_USE_FFT
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {

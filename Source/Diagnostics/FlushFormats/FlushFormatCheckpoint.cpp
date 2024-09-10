@@ -138,11 +138,11 @@ FlushFormatCheckpoint::WriteToFile (
 
             if (warpx.getis_synchronized()) {
                 // Need to save j if synchronized because after restart we need j to evolve E by dt/2.
-                VisMF::Write(warpx.getField(FieldType::current_cp, lev, 0),
+                VisMF::Write(*warpx.m_fields.get("current_cp", 0, lev),
                              amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "jx_cp"));
-                VisMF::Write(warpx.getField(FieldType::current_cp, lev, 1),
+                VisMF::Write(*warpx.m_fields.get("current_cp", 1, lev),
                              amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "jy_cp"));
-                VisMF::Write(warpx.getField(FieldType::current_cp, lev, 2),
+                VisMF::Write(*warpx.m_fields.get("current_cp", 2, lev),
                              amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "jz_cp"));
             }
         }

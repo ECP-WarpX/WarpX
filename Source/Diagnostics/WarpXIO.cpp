@@ -278,6 +278,7 @@ WarpX::InitFromCheckpoint ()
     for (int lev = 0; lev < nlevs; ++lev)
     {
         for (int i = 0; i < 3; ++i) {
+            m_fields.get("current_fp", i, lev)->setVal(0.0);
             current_fp[lev][i]->setVal(0.0);
             Efield_fp[lev][i]->setVal(0.0);
             Bfield_fp[lev][i]->setVal(0.0);

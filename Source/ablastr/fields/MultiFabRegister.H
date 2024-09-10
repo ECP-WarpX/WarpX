@@ -30,6 +30,9 @@ namespace ablastr::fields
         /** owned (i)MultiFab data */
         amrex::MultiFab m_mf;
 
+        /** the MR level of this (i)MultiFab */
+        int level = 0;
+
         /** redistribute */
         bool redistribute = true;
     };
@@ -165,7 +168,7 @@ namespace ablastr::fields
             std::string name,
             int dir,
             int finest_level
-    );
+        );
 
         /** title
          *
@@ -184,11 +187,21 @@ namespace ablastr::fields
          *
          * @param name ...
          * @param level ...
-         * @return ...
          */
         void
         erase (
             std::string name,
+            int level
+        );
+
+        /** Erase all MultiFabs on a specific MR level.
+         *
+         * Calls @see erase for all MultiFabs on a specific level.
+         *
+         * @param level the MR level to erase all MultiFabs from
+         */
+        void
+        clear_level (
             int level
         );
 
