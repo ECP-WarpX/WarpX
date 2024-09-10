@@ -1029,13 +1029,13 @@ public:
     void ComputeMagnetostaticField ();
     void AddMagnetostaticFieldLabFrame ();
     void computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> >& curr,
-                                 std::vector<std::map<ablastr::fields::Direction, amrex::MultiFab*>> A,
+                                 std::vector<ablastr::utils::ConstMap<ablastr::fields::Direction, amrex::MultiFab*>> const& A,
                                  amrex::Real required_precision=amrex::Real(1.e-11),
                                  amrex::Real absolute_tolerance=amrex::Real(0.0),
                                  int max_iters=200,
                                  int verbosity=2) const;
 
-    void setVectorPotentialBC (std::vector<std::map<ablastr::fields::Direction, amrex::MultiFab*>> A) const;
+    void setVectorPotentialBC (std::vector<ablastr::utils::ConstMap<ablastr::fields::Direction, amrex::MultiFab*>> const& A) const;
 
     /**
      * \brief
