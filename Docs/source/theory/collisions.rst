@@ -45,7 +45,7 @@ where :math:`u` is the speed of the particle as tracked in WarpX (i.e.
 :math:`u = \gamma v` with :math:`v` the particle speed), while :math:`m` and
 :math:`M` are the rest masses of the simulation and background species,
 respectively. The Lorentz factor is defined in the usual way,
-:math:`\gamma \def \sqrt{1 + u^2/c^2}`. Note that if :math:`\gamma\to1` the above
+:math:`\gamma \equiv \sqrt{1 + u^2/c^2}`. Note that if :math:`\gamma\to1` the above
 expression reduces to the classical equation
 :math:`E_{coll} = \frac{1}{2}\frac{Mm}{M+m} u^2`. The collision cross-sections
 for all scattering processes are evaluated at the energy as calculated above.
