@@ -17,6 +17,8 @@
 #include "EmbeddedBoundary/Enabled.H"
 #include "EmbeddedBoundary/WarpXFaceInfoBox.H"
 #include "FieldSolver/ElectrostaticSolvers/ElectrostaticSolver.H"
+#include "FieldSolver/ElectrostaticSolvers/LabFrameExplicitES.H"
+#include "FieldSolver/ElectrostaticSolvers/RelativisticExplicitES.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
@@ -376,7 +378,16 @@ WarpX::WarpX ()
     if (WarpX::electrostatic_solver_id != ElectrostaticSolverAlgo::None)
     {
         // Create Electrostatic Solver object if needed
-        m_electrostatic_solver = std::make_unique<ElectrostaticSolver>(nlevs_max);
+        if (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame)
+        {
+            std::unique_ptr<LabFrameExplicitES> labframe_explicit_es = std::make_unique<LabFrameExplicitES>(nlevs_max);
+            m_electrostatic_solver = std::move(labframe_explicit_es);
+        }
+        else if (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::Relativistic)
+        {
+            std::unique_ptr<RelativisticExplicitES> relativistic_explicit_es = std::make_unique<RelativisticExplicitES>(nlevs_max);
+            m_electrostatic_solver = std::move(relativistic_explicit_es);
+        }
     }
 
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)

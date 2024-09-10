@@ -9,13 +9,13 @@
 #ifndef WARPX_LABFRAME_EXPLICITES_H_
 #define WARPX_LABFRAME_EXPLICITES_H_
 
-#include "ElectrostaticBase.H"
+#include "ElectrostaticSolver.H"
 
-class LabFrameExplicitES final : public ElectrostaticBase
+class LabFrameExplicitES final : public ElectrostaticSolver
 {
 public:
 
-    LabFrameExplicitES (int nlevs_max) : ElectrostaticBase (nlevs_max) {ReadParameters();}
+    LabFrameExplicitES (int nlevs_max) : ElectrostaticSolver (nlevs_max) {ReadParameters();}
 
     void ComputeSpaceChargeField (
         [[maybe_unused]] amrex::Vector< std::unique_ptr<amrex::MultiFab> >& rho_fp,
