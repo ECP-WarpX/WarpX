@@ -16,6 +16,7 @@
 #endif
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
+#include "EmbeddedBoundary/Enabled.H"
 #include "FieldSolver/Fields.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
@@ -702,6 +703,7 @@ WarpX::InitPML ()
     if (finest_level > 0) { do_pml = 1; }
     if (do_pml)
     {
+        bool const eb_enabled = EB::enabled();
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
         do_pml_Lo[0][0] = 0; // no PML at r=0, in cylindrical geometry
         pml_rz[0] = std::make_unique<PML_RZ>(0, boxArray(0), DistributionMap(0), &Geom(0), pml_ncell, do_pml_in_domain);
@@ -717,7 +719,7 @@ WarpX::InitPML ()
             psatd_solution_type, J_in_time, rho_in_time,
             do_pml_dive_cleaning, do_pml_divb_cleaning,
             amrex::IntVect(0), amrex::IntVect(0),
-            m_eb_enabled,
+            eb_enabled,
             guard_cells.ng_FieldSolver.max(),
             v_particle_pml,
             do_pml_Lo[0], do_pml_Hi[0]);
@@ -757,7 +759,7 @@ WarpX::InitPML ()
                 do_moving_window, pml_has_particles, do_pml_in_domain,
                 psatd_solution_type, J_in_time, rho_in_time, do_pml_dive_cleaning, do_pml_divb_cleaning,
                 amrex::IntVect(0), amrex::IntVect(0),
-                m_eb_enabled,
+                eb_enabled,
                 guard_cells.ng_FieldSolver.max(),
                 v_particle_pml,
                 do_pml_Lo[lev], do_pml_Hi[lev]);
@@ -936,7 +938,8 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     }
 
 #ifdef AMREX_USE_EB
-    if (m_eb_enabled) { InitializeEBGridData(lev); }
+    bool const eb_enabled = EB::enabled();
+    if (eb_enabled) { InitializeEBGridData(lev); }
 #endif
 
     // if the input string for the B-field is "parse_b_ext_grid_function",
@@ -981,7 +984,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         && (lev <= maxlevel_extEMfield_init)) {
 
 #ifdef AMREX_USE_EB
-        if (m_eb_enabled) {
+        if (eb_enabled) {
             // We initialize ECTRhofield consistently with the Efield
             if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
                 m_fdtd_solver_fp[lev]->EvolveECTRho(
@@ -1016,7 +1019,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                 'E',
                 lev, PatchType::coarse);
 #ifdef AMREX_USE_EB
-            if (m_eb_enabled) {
+            if (eb_enabled) {
                 if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
                     // We initialize ECTRhofield consistently with the Efield
                     m_fdtd_solver_cp[lev]->EvolveECTRho(Efield_cp[lev], m_edge_lengths[lev],
@@ -1063,6 +1066,8 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
     const amrex::IntVect y_nodal_flag = mfy->ixType().toIntVect();
     const amrex::IntVect z_nodal_flag = mfz->ixType().toIntVect();
 
+    bool const eb_enabled = EB::enabled();
+
     for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi) {
         const amrex::Box &tbx = mfi.tilebox(x_nodal_flag, mfx->nGrowVect());
         const amrex::Box &tby = mfi.tilebox(y_nodal_flag, mfy->nGrowVect());
@@ -1073,7 +1078,7 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
         auto const &mfzfab = mfz->array(mfi);
 
         amrex::Array4<amrex::Real> lx, ly, lz, Sx, Sy, Sz;
-        if (m_eb_enabled) {
+        if (eb_enabled) {
             lx = edge_lengths[0]->array(mfi);
             ly = edge_lengths[1]->array(mfi);
             lz = edge_lengths[2]->array(mfi);
@@ -1085,7 +1090,7 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         amrex::Dim3 lx_lo, lx_hi, lz_lo, lz_hi;
 #endif
-        if (m_eb_enabled) {
+        if (eb_enabled) {
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             lx_lo = amrex::lbound(lx);
             lx_hi = amrex::ubound(lx);
@@ -1271,7 +1276,7 @@ void WarpX::InitializeEBGridData (int lev)
     if (lev == maxLevel()) {
 
         // Throw a warning if EB is on and particle_shape > 1
-        if ((nox > 1 or noy > 1 or noz > 1) and m_eb_enabled)
+        if ((nox > 1 or noy > 1 or noz > 1) and EB::enabled())
         {
             ablastr::warn_manager::WMRecordWarning("Particles",
               "when algo.particle_shape > 1, numerical artifacts will be present when\n"
