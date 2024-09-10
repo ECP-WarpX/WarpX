@@ -92,13 +92,13 @@ struct PlasmaParserHelper
         }
 
 #ifdef AMREX_USE_GPU
-        amrex::Gpu::copyAsync(Gpu::hostToDevice, m_pa_user_int_pinned.begin(),
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, m_pa_user_int_pinned.begin(),
                               m_pa_user_int_pinned.end(), m_d_pa_user_int.begin());
-        amrex::Gpu::copyAsync(Gpu::hostToDevice, m_pa_user_real_pinned.begin(),
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, m_pa_user_real_pinned.begin(),
                               m_pa_user_real_pinned.end(), m_d_pa_user_real.begin());
-        amrex::Gpu::copyAsync(Gpu::hostToDevice, m_user_int_attrib_parserexec_pinned.begin(),
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, m_user_int_attrib_parserexec_pinned.begin(),
                               m_user_int_attrib_parserexec_pinned.end(), m_d_user_int_attrib_parserexec.begin());
-        amrex::Gpu::copyAsync(Gpu::hostToDevice, m_user_real_attrib_parserexec_pinned.begin(),
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, m_user_real_attrib_parserexec_pinned.begin(),
                               m_user_real_attrib_parserexec_pinned.end(), m_d_user_real_attrib_parserexec.begin());
 #endif
     }
