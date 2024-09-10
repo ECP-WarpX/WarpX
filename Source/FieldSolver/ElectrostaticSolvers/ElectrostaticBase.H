@@ -35,7 +35,7 @@ public:
 
 
     virtual void ReadParameters () {}
-    virtual void AllocateMFs ( int nlevs_max ) {}
+    virtual void AllocateMFs ( [[maybe_unused]] int nlevs_max ) {}
 
     void setPhiBC (
         amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi,

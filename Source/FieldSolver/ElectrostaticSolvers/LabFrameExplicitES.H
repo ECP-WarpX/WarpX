@@ -15,7 +15,7 @@ class LabFrameExplicitES final : public ElectrostaticBase
 {
 public:
 
-    LabFrameExplicitES (int nlevs_max) : ElectrostaticBase (nlevs_max) {ReadParameters();};
+    LabFrameExplicitES (int nlevs_max) : ElectrostaticBase (nlevs_max) {ReadParameters();}
 
     void ReadParameters ();
     void ComputeSpaceChargeField (

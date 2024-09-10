@@ -58,7 +58,7 @@ void LabFrameExplicitES::ComputeSpaceChargeField (
         // Reflect density over PEC boundaries, if needed.
         warpx.ApplyRhofieldBoundary(lev, rho_fp[lev].get(), PatchType::fine);
     }
-
+#endif
     // beta is zero in lab frame
     // Todo: use simpler finite difference form with beta=0
     const std::array<Real, 3> beta = {0._rt};
@@ -86,7 +86,12 @@ void LabFrameExplicitES::ComputeSpaceChargeField (
 
     }
 
-#endif
+    // Compute the electric field. Note that if an EB is used the electric
+    // field will be calculated in the computePhi call.
+    if (!warpx.m_eb_enabled) { computeE( Efield_fp, phi_fp, beta ); }
+    else {
+        if (IsPythonCallbackInstalled("poissonsolver")) { computeE(Efield_fp, phi_fp, beta); }
+    }
 }
 
 /* \brief Compute the potential by solving Poisson's equation with
