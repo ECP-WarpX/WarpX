@@ -498,7 +498,7 @@ Final discretized equations write as:
    \label{Maxwell_discrete}
    \begin{align}
    \hat{\mathbf{\tilde{E}}}^{n+(\ell+1)/m} & = C\hat{\mathbf{\tilde{J}}}^{n+\ell/m}+ic^2\frac{S}{ck}\kb\times\hat{\mathbf{\tilde{J}}}^{n+\ell/m}+ic^2\frac{S}{ck}\hat{F}^{n+\ell/m}\kb+\frac{1}{\eps_0 ck}\left(Y_3\ab_J+Y_2\bb_J-S\cb_J\right) \nonumber \\
-   & \quad +\frac{ic^2}{\eps_0 c^2k^2}\left({Y_1}a_{\rho}-Y_{5}b_{\rho}-Y_{4}c_{\rho}\right)\kb \,,  \\[5pt] 
+   & \quad +\frac{ic^2}{\eps_0 c^2k^2}\left({Y_1}a_{\rho}-Y_{5}b_{\rho}-Y_{4}c_{\rho}\right)\kb \,,  \\[5pt]
    \hat \mathbf{\tilde{B}}^{n+(\ell+1)/m} & = C\hat {\mathbf{\tilde{B}}}^{n+\ell/m}-i\frac{S}{ckÂ }\kb\times\hat{\mathbf{\tilde{E}}}^{n+\ell/m}-\frac{i}{\eps_0 c^2k^2}\kb\times\left(Y_1\ab_J-Y_5\bb_J-Y_4\cb_J\right) \,,
    \hat{F}^{n+(\ell+1)/m} & = C \hat{F}^{n+\ell/m}+i\frac{S}{ck}\kb\cdot\wh \Eb^{n+\ell/m}+\frac{i}{\eps_0 c^2k^2}\kb\cdot\left(Y_1\ab_J-Y_5\bb_J-Y_4\cb_J\right) \nonumber \\
    & \quad +\frac{1}{\eps_0 ck}\left({Y_3}a_{\rho}+{Y_2}b_{\rho}-Sc_{\rho}\right) \,
