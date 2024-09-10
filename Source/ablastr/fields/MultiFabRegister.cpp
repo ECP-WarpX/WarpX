@@ -7,6 +7,8 @@
  */
 #include "MultiFabRegister.H"
 
+#include <algorithm>
+
 
 namespace ablastr::fields
 {
@@ -32,7 +34,7 @@ namespace ablastr::fields
         auto [it, success] = m_mf_register.emplace(
             std::make_pair(
                 name,
-                MultiFabOwner{{ba, dm, ncomp, ngrow, tag}, redistribute}
+                MultiFabOwner{{ba, dm, ncomp, ngrow, tag}, level, redistribute}
             )
         );
         if (!success) {
@@ -161,6 +163,21 @@ namespace ablastr::fields
             throw std::runtime_error("MultiFabRegister::remove name does not exist in register: " + name);
         }
         m_mf_register.erase(name);
+    }
+
+    void
+    MultiFabRegister::clear_level (
+        int level
+    )
+    {
+        // C++20: Replace with std::erase_if
+        for (auto first = m_mf_register.begin(), last = m_mf_register.end(); first != last;)
+        {
+            if (first->second.level == level)
+                first = m_mf_register.erase(first);
+            else
+                ++first;
+        }
     }
 
     std::string
