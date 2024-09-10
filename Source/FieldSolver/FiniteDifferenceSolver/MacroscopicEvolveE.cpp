@@ -198,10 +198,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
 #ifdef WARPX_DIM_3D
-                if (ly && ly(i,j,k) <= 0) { return; }
+                if (eb_ly && eb_ly(i,j,k) <= 0) { return; }
 #elif defined(WARPX_DIM_XZ)
                 //In XZ Ey is associated with a mesh node, so we need to check if the mesh node is covered
-                if (lx && (lx(i, j, k)<=0 || lx(i-1, j, k)<=0 || lz(i, j, k)<=0 || lz(i, j-1, k)<=0)) { return; }
+                if (eb_lx && (eb_lx(i, j, k)<=0 || eb_lx(i-1, j, k)<=0 || eb_lz(i, j, k)<=0 || eb_lz(i, j-1, k)<=0)) { return; }
 #endif
 
                 // Interpolate conductivity, sigma, to Ey position on the grid
