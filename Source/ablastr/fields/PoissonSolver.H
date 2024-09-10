@@ -183,23 +183,22 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
     amrex::LPInfo info;
 
     for (int lev=0; lev<=finest_level; lev++) {
+        amrex::Array<amrex::Real,AMREX_SPACEDIM> const dx_scaled
+                {AMREX_D_DECL(geom[lev].CellSize(0)/std::sqrt(1._rt-beta_solver[0]*beta_solver[0]),
+                              geom[lev].CellSize(1)/std::sqrt(1._rt-beta_solver[1]*beta_solver[1]),
+                              geom[lev].CellSize(2)/std::sqrt(1._rt-beta_solver[2]*beta_solver[2]))};
 
 #if (defined(ABLASTR_USE_FFT) && defined(WARPX_DIM_3D))
         // Use the Integrated Green Function solver (FFT) on the coarsest level if it was selected
         if(is_solver_igf_on_lev0 && lev==0){
-            amrex::Array<amrex::Real,AMREX_SPACEDIM> const dx_igf
-                    {AMREX_D_DECL(geom[lev].CellSize(0)/std::sqrt(1._rt-beta_solver[0]*beta_solver[0]),
-                                  geom[lev].CellSize(1)/std::sqrt(1._rt-beta_solver[1]*beta_solver[1]),
-                                  geom[lev].CellSize(2)/std::sqrt(1._rt-beta_solver[2]*beta_solver[2]))};
             if ( max_norm_b == 0 ) {
                 phi[lev]->setVal(0);
             } else {
-                computePhiIGF( *rho[lev], *phi[lev], dx_igf, grids[lev] );
+                computePhiIGF( *rho[lev], *phi[lev], dx_scaled, grids[lev] );
             }
             continue;
         }
 #endif
-
         // Use the Multigrid (MLMG) solver if selected or on refined patches
         // but first scale rho appropriately
         using namespace ablastr::constant::SI;
@@ -213,10 +212,6 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 
         if (!eb_enabled && !is_rz) {
             // Determine whether to use semi-coarsening
-            amrex::Array<amrex::Real, AMREX_SPACEDIM> dx_scaled
-                    {AMREX_D_DECL(geom[lev].CellSize(0) / std::sqrt(1._rt - beta_solver[0] * beta_solver[0]),
-                                  geom[lev].CellSize(1) / std::sqrt(1._rt - beta_solver[1] * beta_solver[1]),
-                                  geom[lev].CellSize(2) / std::sqrt(1._rt - beta_solver[2] * beta_solver[2]))};
             int max_semicoarsening_level = 0;
             int semicoarsening_direction = -1;
             const auto min_dir = static_cast<int>(std::distance(dx_scaled.begin(),
