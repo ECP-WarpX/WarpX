@@ -282,7 +282,7 @@ WarpX::InitFromCheckpoint ()
     {
         for (int i = 0; i < 3; ++i) {
             m_fields.get("current_fp",Direction{i},lev)->setVal(0.0);
-            Efield_fp[lev][i]->setVal(0.0);
+            m_fields.get("Efield_fp",Direction{i},lev)->setVal(0.0);
             Bfield_fp[lev][i]->setVal(0.0);
         }
 
@@ -297,11 +297,11 @@ WarpX::InitFromCheckpoint ()
             }
         }
 
-        VisMF::Read(*Efield_fp[lev][0],
+        VisMF::Read(*m_fields.get("Efield_fp", Direction{0}, lev),
                     amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Ex_fp"));
-        VisMF::Read(*Efield_fp[lev][1],
+        VisMF::Read(*m_fields.get("Efield_fp", Direction{1}, lev),
                     amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Ey_fp"));
-        VisMF::Read(*Efield_fp[lev][2],
+        VisMF::Read(*m_fields.get("Efield_fp", Direction{2}, lev),
                     amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Ez_fp"));
 
         VisMF::Read(*Bfield_fp[lev][0],

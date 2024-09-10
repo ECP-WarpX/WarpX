@@ -11,6 +11,8 @@
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
+#include <ablastr/fields/MultiFabRegister.H>
+
 #include <AMReX_MultiFab.H>
 #include <AMReX_ParticleIO.H>
 #include <AMReX_PlotFileUtil.H>
@@ -66,11 +68,11 @@ FlushFormatCheckpoint::WriteToFile (
 
     for (int lev = 0; lev < nlev; ++lev)
     {
-        VisMF::Write(warpx.getField(FieldType::Efield_fp, lev, 0),
+        VisMF::Write(*warpx.m_fields.get("Efield_fp", Direction{0}, lev),
                      amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Ex_fp"));
-        VisMF::Write(warpx.getField(FieldType::Efield_fp, lev, 1),
+        VisMF::Write(*warpx.m_fields.get("Efield_fp", Direction{1}, lev),
                      amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Ey_fp"));
-        VisMF::Write(warpx.getField(FieldType::Efield_fp, lev, 2),
+        VisMF::Write(*warpx.m_fields.get("Efield_fp", Direction{2}, lev),
                      amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Ez_fp"));
         VisMF::Write(warpx.getField(FieldType::Bfield_fp, lev, 0),
                      amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Bx_fp"));
