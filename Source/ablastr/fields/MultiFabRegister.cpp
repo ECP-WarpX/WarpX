@@ -96,7 +96,7 @@ namespace ablastr::fields
     amrex::MultiFab*
     MultiFabRegister::get (
         std::string name,
-        int dir,
+        Direction dir,
         int level
     )
     {
@@ -128,7 +128,7 @@ namespace ablastr::fields
     std::vector<amrex::MultiFab*>
     MultiFabRegister::get_mr_levels (
         std::string name,
-        int dir,
+        Direction dir,
         int finest_level
     )
     {
@@ -195,7 +195,7 @@ namespace ablastr::fields
     std::string
     MultiFabRegister::mf_name (
         std::string name,
-        int dir,
+        Direction dir,
         int level
     )
     {
@@ -203,7 +203,7 @@ namespace ablastr::fields
         return mf_name(
             name
             .append("[dir=")
-            .append(std::to_string(dir))
+            .append(std::to_string(dir.dir))
             .append("]"),
             level
         );
