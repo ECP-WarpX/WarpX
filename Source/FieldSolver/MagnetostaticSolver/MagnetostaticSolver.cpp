@@ -19,6 +19,7 @@
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Parallelization/WarpXComm_K.H"
 
+#include <ablastr/fields/MultiFabRegister.H>
 #include <ablastr/utils/Communication.H>
 #include <ablastr/warn_manager/WarnManager.H>
 #include <ablastr/fields/VectorPoissonSolver.H>
@@ -55,6 +56,8 @@
 #include <string>
 
 using namespace amrex;
+
+//using ablastr::fields::Direction; // FIXME
 
 void
 WarpX::ComputeMagnetostaticField()
@@ -110,7 +113,7 @@ WarpX::AddMagnetostaticFieldLabFrame()
     SyncCurrent(current_fp, current_cp, current_buf); // Apply filter, perform MPI exchange, interpolate across levels
 
     // set the boundary and current density potentials
-    setVectorPotentialBC(vector_potential_fp_nodal);
+    setVectorPotentialBC(m_fields.get_mr_levels_alldirs("vector_potential_fp_nodal", finest_level));
 
     // Compute the vector potential A, by solving the Poisson equation
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( !IsPythonCallbackInstalled("poissonsolver"),
@@ -118,9 +121,10 @@ WarpX::AddMagnetostaticFieldLabFrame()
 
     const amrex::Real magnetostatic_absolute_tolerance = self_fields_absolute_tolerance*PhysConst::c;
 
-    computeVectorPotential( current_fp, vector_potential_fp_nodal, self_fields_required_precision,
-                     magnetostatic_absolute_tolerance, self_fields_max_iters,
-                     self_fields_verbosity );
+    computeVectorPotential(
+        current_fp, m_fields.get_mr_levels_alldirs("vector_potential_fp_nodal", finest_level),
+        self_fields_required_precision, magnetostatic_absolute_tolerance, self_fields_max_iters,
+        self_fields_verbosity);
 }
 
 /* Compute the vector potential `A` by solving the Poisson equation with `J` as
@@ -141,12 +145,14 @@ WarpX::AddMagnetostaticFieldLabFrame()
 */
 void
 WarpX::computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>,3> >& curr,
-                                amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>,3> >& A,
-                                Real const required_precision,
-                                Real absolute_tolerance,
-                                int const max_iters,
-                                int const verbosity) const
+                               std::vector<std::map<ablastr::fields::Direction, amrex::MultiFab*>> A,
+                               Real const required_precision,
+                               Real absolute_tolerance,
+                               int const max_iters,
+                               int const verbosity) const
 {
+    using ablastr::fields::Direction;
+
     // create a vector to our fields, sorted by level
     amrex::Vector<amrex::Array<amrex::MultiFab*,3>> sorted_curr;
     amrex::Vector<amrex::Array<amrex::MultiFab*,3>> sorted_A;
@@ -154,9 +160,9 @@ WarpX::computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<
         sorted_curr.emplace_back(amrex::Array<amrex::MultiFab*,3> ({curr[lev][0].get(),
                                                                     curr[lev][1].get(),
                                                                     curr[lev][2].get()}));
-        sorted_A.emplace_back(amrex::Array<amrex::MultiFab*,3> ({A[lev][0].get(),
-                                                                 A[lev][1].get(),
-                                                                 A[lev][2].get()}));
+        sorted_A.emplace_back(amrex::Array<amrex::MultiFab*,3> ({A[lev][Direction{0}],
+                                                                 A[lev][Direction{1}],
+                                                                 A[lev][Direction{2}]}));
     }
 
 #if defined(AMREX_USE_EB)
@@ -205,8 +211,10 @@ WarpX::computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<
    \param[inout] A The vector potential
 */
 void
-WarpX::setVectorPotentialBC ( amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>,3>>& A ) const
+WarpX::setVectorPotentialBC (std::vector<std::map<ablastr::fields::Direction, amrex::MultiFab*>> A) const
 {
+    using ablastr::fields::Direction;
+
     // check if any dimension has non-periodic boundary conditions
     if (!m_vector_poisson_boundary_handler.has_non_periodic) { return; }
 
@@ -221,11 +229,11 @@ WarpX::setVectorPotentialBC ( amrex::Vector<amrex::Array<std::unique_ptr<amrex::
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-            for ( MFIter mfi(*A[lev][adim], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+            for ( MFIter mfi(*A[lev][Direction{adim}], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
                 // Extract the vector potential
-                auto A_arr = A[lev][adim]->array(mfi);
+                auto A_arr = A[lev][Direction{adim}]->array(mfi);
                 // Extract tileboxes for which to loop
-                const Box& tb  = mfi.tilebox( A[lev][adim]->ixType().toIntVect());
+                const Box& tb  = mfi.tilebox( A[lev][Direction{adim}]->ixType().toIntVect());
 
                 // loop over dimensions
                 for (int idim=0; idim<AMREX_SPACEDIM; idim++){
