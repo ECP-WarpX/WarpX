@@ -1910,8 +1910,8 @@ private:
      *                                (only used in RZ geometry to avoid double filtering)
      */
     void PSATDForwardTransformRho (
-        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
-        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+        std::vector<amrex::MultiFab*> const & charge_fp,
+        std::vector<amrex::MultiFab*> const & charge_cp,
         int icomp, int dcomp, bool apply_kspace_filter=true);
 
     /**

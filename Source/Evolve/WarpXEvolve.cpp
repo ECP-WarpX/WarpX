@@ -639,8 +639,11 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
 
     // 3) Deposit rho (in rho_new, since it will be moved during the loop)
     //    (after checking that pointer to rho_fp on MR level 0 is not null)
-    if (rho_fp[0] && rho_in_time == RhoInTime::Linear)
+    if (m_fields.has("rho_fp", 0) && rho_in_time == RhoInTime::Linear)
     {
+        ablastr::fields::MultiLevelScalarField rho_fp = m_fields.get_mr_levels("rho_fp", finest_level);
+        ablastr::fields::MultiLevelScalarField rho_cp = m_fields.get_mr_levels("rho_fp", finest_level);
+
         // Deposit rho at relative time -dt
         // (dt[0] denotes the time step on mesh refinement level 0)
         mypc->DepositCharge(rho_fp, -dt[0]);
@@ -701,15 +704,18 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
 
         // Deposit new rho
         // (after checking that pointer to rho_fp on MR level 0 is not null)
-        if (rho_fp[0])
+        if (m_fields.has("rho_fp", 0))
         {
+            ablastr::fields::MultiLevelScalarField rho_fp = m_fields.get_mr_levels("rho_fp", finest_level);
+            ablastr::fields::MultiLevelScalarField rho_cp = m_fields.get_mr_levels("rho_cp", finest_level);
+
             // Move rho from new to old if rho is linear in time
             if (rho_in_time == RhoInTime::Linear) { PSATDMoveRhoNewToRhoOld(); }
 
             // Deposit rho at relative time t_deposit_charge
             mypc->DepositCharge(rho_fp, t_deposit_charge);
             // Filter, exchange boundary, and interpolate across levels
-            SyncRho(;
+            SyncRho();
             // Forward FFT of rho
             const int rho_idx = (rho_in_time == RhoInTime::Linear) ? rho_new : rho_mid;
             PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_idx);

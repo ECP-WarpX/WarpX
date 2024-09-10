@@ -377,8 +377,8 @@ void WarpX::PSATDBackwardTransformJ (
 }
 
 void WarpX::PSATDForwardTransformRho (
-    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
-    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+    std::vector<amrex::MultiFab*> const & charge_fp,
+    std::vector<amrex::MultiFab*> const & charge_cp,
     const int icomp, const int dcomp, const bool apply_kspace_filter)
 {
     if (charge_fp[0] == nullptr) { return; }
@@ -667,6 +667,8 @@ WarpX::PushPSATD ()
 
     const int rho_old = spectral_solver_fp[0]->m_spectral_index.rho_old;
     const int rho_new = spectral_solver_fp[0]->m_spectral_index.rho_new;
+    ablastr::fields::MultiLevelScalarField rho_fp = m_fields.get_mr_levels("rho_fp", finest_level);
+    ablastr::fields::MultiLevelScalarField rho_cp = m_fields.get_mr_levels("rho_fp", finest_level);
 
     if (fft_periodic_single_box)
     {
