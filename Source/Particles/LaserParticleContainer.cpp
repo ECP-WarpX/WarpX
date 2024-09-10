@@ -181,10 +181,11 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
 
     if (WarpX::gamma_boost > 1.) {
         // Check that the laser direction is equal to the boost direction
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(  m_nvec[0]*WarpX::boost_direction[0]
-                                         + m_nvec[1]*WarpX::boost_direction[1]
-                                         + m_nvec[2]*WarpX::boost_direction[2] - 1. < 1.e-12,
-                                           "The Lorentz boost should be in the same direction as the laser propagation");
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            (m_nvec[0]-WarpX::boost_direction[0])*(m_nvec[0]-WarpX::boost_direction[0]) +
+            (m_nvec[1]-WarpX::boost_direction[1])*(m_nvec[1]-WarpX::boost_direction[1]) +
+            (m_nvec[2]-WarpX::boost_direction[2])*(m_nvec[2]-WarpX::boost_direction[2]) < 1.e-12,
+            "The Lorentz boost should be in the same direction as the laser propagation");
         // Get the position of the plane, along the boost direction, in the lab frame
         // and convert the position of the antenna to the boosted frame
         m_Z0_lab = m_nvec[0]*m_position[0] + m_nvec[1]*m_position[1] + m_nvec[2]*m_position[2];
@@ -246,8 +247,10 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
         windir[dir] = 1.0;
 #endif
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-            (m_nvec[0]-windir[0]) + (m_nvec[1]-windir[1]) + (m_nvec[2]-windir[2])
-            < 1.e-12, "do_continous_injection for laser particle only works" +
+            (m_nvec[0]-windir[0])*(m_nvec[0]-windir[0]) +
+            (m_nvec[1]-windir[1])*(m_nvec[1]-windir[1]) +
+            (m_nvec[2]-windir[2])*(m_nvec[2]-windir[2]) < 1.e-12,
+            "do_continous_injection for laser particle only works" +
             " if moving window direction and laser propagation direction are the same");
         if ( WarpX::gamma_boost>1 ){
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -719,7 +722,7 @@ LaserParticleContainer::ComputeSpacing (int lev, Real& Sx, Real& Sy) const
 #if !defined(WARPX_DIM_RZ)
     constexpr float small_float_coeff = 1.e-25f;
     constexpr double small_double_coeff = 1.e-50;
-    constexpr Real small_coeff = std::is_same<Real,float>::value ?
+    constexpr Real small_coeff = std::is_same_v<Real,float> ?
         static_cast<Real>(small_float_coeff) :
         static_cast<Real>(small_double_coeff);
     const auto eps = static_cast<Real>(dx[0]*small_coeff);

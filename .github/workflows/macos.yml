@@ -44,7 +44,7 @@ jobs:
     - name: CCache Cache
       uses: actions/cache@v4
       with:
-        path: /Users/runner/Library/Caches/ccache
+        path: ~/Library/Caches/ccache
         key: ccache-${{ github.workflow }}-${{ github.job }}-git-${{ github.sha }}
         restore-keys: |
              ccache-${{ github.workflow }}-${{ github.job }}-git-
@@ -53,14 +53,14 @@ jobs:
         export CCACHE_COMPRESS=1
         export CCACHE_COMPRESSLEVEL=10
         export CCACHE_MAXSIZE=100M
-        export CCACHE_DEPEND=1
+        export CCACHE_SLOPPINESS=time_macros
         ccache -z
 
         source py-venv/bin/activate
 
         cmake -S . -B build_dp         \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
-          -DWarpX_EB=ON                \
+          -DWarpX_EB=OFF               \
           -DWarpX_OPENPMD=ON           \
           -DWarpX_openpmd_internal=OFF
         cmake --build build_dp -j 3
@@ -68,7 +68,7 @@ jobs:
         cmake -S . -B build_sp         \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DPython_EXECUTABLE=$(which python3) \
-          -DWarpX_EB=ON                \
+          -DWarpX_EB=OFF               \
           -DWarpX_PYTHON=ON            \
           -DWarpX_OPENPMD=ON           \
           -DWarpX_openpmd_internal=OFF \
@@ -76,6 +76,7 @@ jobs:
         cmake --build build_sp -j 3
         cmake --build build_sp --target pip_install
 
+        du -hs ~/Library/Caches/ccache
         ccache -s
 
     - name: run pywarpx
@@ -83,19 +84,4 @@ jobs:
         source py-venv/bin/activate
         export OMP_NUM_THREADS=1
 
-        mpirun -n 2 Examples/Physics_applications/laser_acceleration/PICMI_inputs_3d.py
-
-  save_pr_number:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Save PR number
-        env:
-          PR_NUMBER: ${{ github.event.number }}
-        run: |
-          echo $PR_NUMBER > pr_number.txt
-      - uses: actions/upload-artifact@v4
-        with:
-          name: pr_number
-          path: pr_number.txt
-          retention-days: 1
+        mpirun -n 2 Examples/Physics_applications/laser_acceleration/inputs_test_3d_laser_acceleration_picmi.py

@@ -7,6 +7,7 @@
 
 #include "WarpX.H"
 
+#include "EmbeddedBoundary/Enabled.H"
 #ifdef AMREX_USE_EB
 #  include "Utils/Parser/ParserUtils.H"
 #  include "Utils/TextMsg.H"
@@ -57,6 +58,8 @@ namespace {
         ParserIF& operator= (const ParserIF& rhs) = delete;
         ParserIF& operator= (ParserIF&& rhs) = delete;
 
+        ~ParserIF() = default;
+
         AMREX_GPU_HOST_DEVICE inline
         amrex::Real operator() (AMREX_D_DECL(amrex::Real x, amrex::Real y,
                                              amrex::Real z)) const noexcept {
@@ -80,6 +83,9 @@ namespace {
 void
 WarpX::InitEB ()
 {
+    if (!EB::enabled()) {
+        throw std::runtime_error("InitEB only works when EBs are enabled at runtime");
+    }
 #ifdef AMREX_USE_EB
     BL_PROFILE("InitEB");
 
@@ -88,7 +94,7 @@ WarpX::InitEB ()
     pp_warpx.query("eb_implicit_function", impf);
     if (! impf.empty()) {
         auto eb_if_parser = utils::parser::makeParser(impf, {"x", "y", "z"});
-        ParserIF pif(eb_if_parser.compile<3>());
+        ParserIF const pif(eb_if_parser.compile<3>());
         auto gshop = amrex::EB2::makeShop(pif, eb_if_parser);
          // The last argument of amrex::EB2::Build is the maximum coarsening level
          // to which amrex should try to coarsen the EB.  It will stop after coarsening
@@ -100,13 +106,12 @@ WarpX::InitEB ()
     } else {
         amrex::ParmParse pp_eb2("eb2");
         if (!pp_eb2.contains("geom_type")) {
-            std::string geom_type = "all_regular";
+            std::string const geom_type = "all_regular";
             pp_eb2.add("geom_type", geom_type); // use all_regular by default
         }
         // See the comment above on amrex::EB2::Build for the hard-wired number 20.
         amrex::EB2::Build(Geom(maxLevel()), maxLevel(), maxLevel()+20);
     }
-
 #endif
 }
 
@@ -124,16 +129,16 @@ WarpX::ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ed
     for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi){
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         for (int idim = 0; idim < 3; ++idim){
-            if(idim == 1) continue;
+            if(idim == 1) { continue; }
 #elif defined(WARPX_DIM_3D)
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim){
 #else
         WARPX_ABORT_WITH_MESSAGE(
             "ComputeEdgeLengths: Only implemented in 2D3V and 3D3V");
 #endif
-            amrex::Box box = mfi.tilebox(edge_lengths[idim]->ixType().toIntVect(),
-                                         edge_lengths[idim]->nGrowVect());
-            amrex::FabType fab_type = flags[mfi].getType(box);
+            amrex::Box const box = mfi.tilebox(edge_lengths[idim]->ixType().toIntVect(),
+                                               edge_lengths[idim]->nGrowVect());
+            amrex::FabType const fab_type = flags[mfi].getType(box);
             auto const &edge_lengths_dim = edge_lengths[idim]->array(mfi);
 
             if (fab_type == amrex::FabType::regular) {
@@ -149,7 +154,7 @@ WarpX::ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ed
             } else {
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 int idim_amrex = idim;
-                if(idim == 2) idim_amrex = 1;
+                if(idim == 2) { idim_amrex = 1; }
                 auto const &edge_cent = edge_centroid[idim_amrex]->const_array(mfi);
 #elif defined(WARPX_DIM_3D)
                 auto const &edge_cent = edge_centroid[idim]->const_array(mfi);
@@ -207,9 +212,9 @@ WarpX::ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face
         WARPX_ABORT_WITH_MESSAGE(
             "ComputeFaceAreas: Only implemented in 2D3V and 3D3V");
 #endif
-            amrex::Box box = mfi.tilebox(face_areas[idim]->ixType().toIntVect(),
-                                         face_areas[idim]->nGrowVect());
-            amrex::FabType fab_type = flags[mfi].getType(box);
+            amrex::Box const box = mfi.tilebox(face_areas[idim]->ixType().toIntVect(),
+                                               face_areas[idim]->nGrowVect());
+            amrex::FabType const fab_type = flags[mfi].getType(box);
             auto const &face_areas_dim = face_areas[idim]->array(mfi);
             if (fab_type == amrex::FabType::regular) {
                 // every cell in box is all regular
@@ -247,7 +252,7 @@ WarpX::ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengt
     for (amrex::MFIter mfi(*edge_lengths[0]); mfi.isValid(); ++mfi) {
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         for (int idim = 0; idim < 3; ++idim){
-            if(idim == 1) continue;
+            if(idim == 1) { continue; }
 #elif defined(WARPX_DIM_3D)
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim){
 #else
@@ -397,7 +402,11 @@ WarpX::MarkCells(){
 #endif
 
 void
-WarpX::ComputeDistanceToEB () {
+WarpX::ComputeDistanceToEB ()
+{
+    if (!EB::enabled()) {
+        throw std::runtime_error("ComputeDistanceToEB only works when EBs are enabled at runtime");
+    }
 #ifdef AMREX_USE_EB
     BL_PROFILE("ComputeDistanceToEB");
     const amrex::EB2::IndexSpace& eb_is = amrex::EB2::IndexSpace::top();

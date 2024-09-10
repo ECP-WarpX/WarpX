@@ -12,6 +12,9 @@
 #include "SpectralAlgorithms/SpectralBaseAlgorithmRZ.H"
 #include "SpectralFieldDataRZ.H"
 
+#include <ablastr/utils/Enums.H>
+
+
 /* \brief Top-level class for the electromagnetic spectral solver
  *
  * Stores the field in spectral space, and has member functions
@@ -31,7 +34,8 @@ class SpectralSolverRZ
                           amrex::BoxArray const & realspace_ba,
                           amrex::DistributionMapping const & dm,
                           int n_rz_azimuthal_modes,
-                          int norder_z, short grid_type,
+                          int norder_z,
+                          ablastr::utils::enums::GridType grid_type,
                           const amrex::Vector<amrex::Real>& v_galilean,
                           amrex::RealVect dx, amrex::Real dt,
                           bool with_pml,

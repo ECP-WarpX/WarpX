@@ -13,7 +13,7 @@ import yt
 
 yt.funcs.mylog.setLevel(50)
 
-sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+sys.path.insert(1, "../../../../warpx/Regression/Checksum/")
 import checksumAPI
 
 # Name of the plotfile

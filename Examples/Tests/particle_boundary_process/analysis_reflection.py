@@ -9,7 +9,7 @@
 
 import yt
 
-plotfile = 'Python_particle_reflection_plt000010'
-ds = yt.load( plotfile )  # noqa
+plotfile = "Python_particle_reflection_plt000010"
+ds = yt.load(plotfile)  # noqa
 
 assert True

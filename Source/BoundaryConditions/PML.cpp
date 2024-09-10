@@ -22,6 +22,7 @@
 #include "WarpX.H"
 
 #include <ablastr/utils/Communication.H>
+#include <ablastr/utils/Enums.H>
 
 #include <AMReX.H>
 #include <AMReX_Algorithm.H>
@@ -548,12 +549,14 @@ PML::PML (const int lev, const BoxArray& grid_ba,
           const DistributionMapping& grid_dm, const bool do_similar_dm_pml,
           const Geometry* geom, const Geometry* cgeom,
           int ncell, int delta, amrex::IntVect ref_ratio,
-          Real dt, int nox_fft, int noy_fft, int noz_fft, short grid_type,
+          Real dt, int nox_fft, int noy_fft, int noz_fft,
+          ablastr::utils::enums::GridType grid_type,
           int do_moving_window, int /*pml_has_particles*/, int do_pml_in_domain,
           const int psatd_solution_type, const int J_in_time, const int rho_in_time,
           const bool do_pml_dive_cleaning, const bool do_pml_divb_cleaning,
           const amrex::IntVect& fill_guards_fields,
           const amrex::IntVect& fill_guards_current,
+          bool eb_enabled,
           int max_guard_EB, const amrex::Real v_sigma_sb,
           const amrex::IntVect do_pml_Lo, const amrex::IntVect do_pml_Hi)
     : m_dive_cleaning(do_pml_dive_cleaning),
@@ -563,6 +566,10 @@ PML::PML (const int lev, const BoxArray& grid_ba,
       m_geom(geom),
       m_cgeom(cgeom)
 {
+#ifndef AMREX_USE_EB
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!eb_enabled, "PML: eb_enabled is true but was not compiled in.");
+#endif
+
     // When `do_pml_in_domain` is true, the PML overlap with the last `ncell` of the physical domain or fine patch(es)
     // (instead of extending `ncell` outside of the physical domain or fine patch(es))
     // In order to implement this, we define a new reduced Box Array ensuring that it does not
@@ -631,6 +638,8 @@ PML::PML (const int lev, const BoxArray& grid_ba,
     }
 
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
+        using namespace ablastr::utils::enums;
+
         // Increase the number of guard cells, in order to fit the extent
         // of the stencil for the spectral solver
         int ngFFt_x = (grid_type == GridType::Collocated) ? nox_fft : nox_fft/2;
@@ -669,13 +678,20 @@ PML::PML (const int lev, const BoxArray& grid_ba,
     }
 
 #ifdef AMREX_USE_EB
-    pml_field_factory = amrex::makeEBFabFactory(*geom, ba, dm,
-                                              {max_guard_EB, max_guard_EB, max_guard_EB},
-                                              amrex::EBSupport::full);
-#else
-    amrex::ignore_unused(max_guard_EB);
-    pml_field_factory = std::make_unique<FArrayBoxFactory>();
+    if (eb_enabled) {
+        pml_field_factory = amrex::makeEBFabFactory(
+            *geom,
+            ba,
+            dm,
+            {max_guard_EB, max_guard_EB, max_guard_EB},
+            amrex::EBSupport::full
+        );
+    } else
 #endif
+    {
+        amrex::ignore_unused(max_guard_EB);
+        pml_field_factory = std::make_unique<FArrayBoxFactory>();
+    }
 
     // Allocate diagonal components (xx,yy,zz) only with divergence cleaning
     const int ncompe = (m_dive_cleaning) ? 3 : 2;
@@ -703,20 +719,22 @@ PML::PML (const int lev, const BoxArray& grid_ba,
     WarpX::AllocInitMultiFab(pml_j_fp[2], ba_jz, dm, 1, ngb, lev, "pml_j_fp[z]", 0.0_rt);
 
 #ifdef AMREX_USE_EB
-    const amrex::IntVect max_guard_EB_vect = amrex::IntVect(max_guard_EB);
-    WarpX::AllocInitMultiFab(pml_edge_lengths[0], ba_Ex, dm, WarpX::ncomps, max_guard_EB_vect, lev, "pml_edge_lengths[x]", 0.0_rt);
-    WarpX::AllocInitMultiFab(pml_edge_lengths[1], ba_Ey, dm, WarpX::ncomps, max_guard_EB_vect, lev, "pml_edge_lengths[y]", 0.0_rt);
-    WarpX::AllocInitMultiFab(pml_edge_lengths[2], ba_Ez, dm, WarpX::ncomps, max_guard_EB_vect, lev, "pml_edge_lengths[z]", 0.0_rt);
+    if (eb_enabled) {
+        const amrex::IntVect max_guard_EB_vect = amrex::IntVect(max_guard_EB);
+        WarpX::AllocInitMultiFab(pml_edge_lengths[0], ba_Ex, dm, WarpX::ncomps, max_guard_EB_vect, lev, "pml_edge_lengths[x]", 0.0_rt);
+        WarpX::AllocInitMultiFab(pml_edge_lengths[1], ba_Ey, dm, WarpX::ncomps, max_guard_EB_vect, lev, "pml_edge_lengths[y]", 0.0_rt);
+        WarpX::AllocInitMultiFab(pml_edge_lengths[2], ba_Ez, dm, WarpX::ncomps, max_guard_EB_vect, lev, "pml_edge_lengths[z]", 0.0_rt);
 
-    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
-        WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC ||
-        WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
+        if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
+            WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC ||
+            WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
 
-        auto const eb_fact = fieldEBFactory();
+            auto const eb_fact = fieldEBFactory();
 
-        WarpX::ComputeEdgeLengths(pml_edge_lengths, eb_fact);
-        WarpX::ScaleEdges(pml_edge_lengths, WarpX::CellSize(lev));
+            WarpX::ComputeEdgeLengths(pml_edge_lengths, eb_fact);
+            WarpX::ScaleEdges(pml_edge_lengths, WarpX::CellSize(lev));
 
+        }
     }
 #endif
 

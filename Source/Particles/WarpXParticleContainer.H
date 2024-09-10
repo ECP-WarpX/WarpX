@@ -354,7 +354,7 @@ public:
     amrex::Vector<amrex::ParticleReal> m_E_external_particle;
 
     //! Current injection position
-    amrex::Real m_current_injection_position;
+    amrex::Real m_current_injection_position = 0.;
 
     // split along diagonals (0) or axes (1)
     int split_type = 0;
@@ -433,7 +433,7 @@ protected:
 
     amrex::ParticleReal charge;
     amrex::ParticleReal mass;
-    PhysicalSpecies physical_species;
+    PhysicalSpecies physical_species = PhysicalSpecies::unspecified;
 
     // Controls boundaries for particles exiting the domain
     ParticleBoundaries m_boundary_conditions;

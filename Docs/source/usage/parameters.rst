@@ -86,9 +86,9 @@ Overall simulation parameters
 
     * ``explicit``: Use an explicit solver, such as the standard FDTD or PSATD
 
-    * ``theta_implicit_em``: Use a fully implicit electromagnetic solver with a time-biasing parameter theta bound between 0.5 and 1.0. Exact energy conservation is achieved using theta = 0.5. Maximal damping of high-k modes is obtained using theta = 1.0. Choices for the nonlinear solver include a Picard iteration scheme and particle-suppressed (PS) JNFK.
+    * ``theta_implicit_em``: Use a fully implicit electromagnetic solver with a time-biasing parameter theta bound between 0.5 and 1.0. Exact energy conservation is achieved using theta = 0.5. Maximal damping of high-k modes is obtained using theta = 1.0. Choices for the nonlinear solver include a Picard iteration scheme and particle-suppressed (PS) JFNK.
       The algorithm itself is numerical stable for large time steps. That is, it does not require time steps that resolve the plasma period or the CFL condition for light waves. However, the practicality of using a large time step depends on the nonlinear solver. Note that the Picard solver is for demonstration only. It is inefficient and will most like not converge when
-      :math:`\omega_{pe} \Delta t` is close to or greater than one or when the CFL condition for light waves is violated. The PS-JFNK method must be used in order to use large time steps. However, the current implementation of PS-JFNK is still inefficient because the JFNK solver is not preconditioned and there is no use of the mass matrices to minimize the cost of a linear iteration. The time step is limited by how many cells a particle can cross in a time step (MPI-related) and by the need to resolve the relavent physics.
+      :math:`\omega_{pe} \Delta t` is close to or greater than one or when the CFL condition for light waves is violated. The PS-JFNK method must be used in order to use large time steps. However, the current implementation of PS-JFNK is still inefficient because the JFNK solver is not preconditioned and there is no use of the mass matrices to minimize the cost of a linear iteration. The time step is limited by how many cells a particle can cross in a time step (MPI-related) and by the need to resolve the relevant physics.
       The Picard method is described in `Angus et al., On numerical energy conservation for an implicit particle-in-cell method coupled with a binary Monte-Carlo algorithm for Coulomb collisions <https://doi.org/10.1016/j.jcp.2022.111030>`__.
       The PS-JFNK method is described in `Angus et al., An implicit particle code with exact energy and charge conservation for electromagnetic studies of dense plasmas <https://doi.org/10.1016/j.jcp.2023.112383>`__ . (The version implemented in WarpX is an updated version that includes the relativistic gamma factor for the particles.) Also see `Chen et al., An energy- and charge-conserving, implicit, electrostatic particle-in-cell algorithm. <https://doi.org/10.1016/j.jcp.2011.05.031>`__ .
       Exact energy conservation requires that the interpolation stencil used for the field gather match that used for the current deposition. ``algo.current_deposition = direct`` must be used with ``interpolation.galerkin_scheme = 0``, and ``algo.current_deposition = Esirkepov`` must be used with ``interpolation.galerkin_scheme = 1``. If using ``algo.current_deposition = villasenor``, the corresponding field gather routine will automatically be selected and the ``interpolation.galerkin_scheme`` flag does not need to be specified. The Esirkepov and villasenor deposition schemes are charge-conserving.
@@ -500,7 +500,7 @@ Domain Boundary Conditions
     * ``open``: For the electrostatic Poisson solver based on a Integrated Green Function method.
 
 * ``boundary.potential_lo_x/y/z`` and ``boundary.potential_hi_x/y/z`` (default `0`)
-    Gives the value of the electric potential at the boundaries, for ``pec`` boundaries. With electrostatic solvers
+    Gives the value of the electric potential, in Volts, at the boundaries, for ``pec`` boundaries. With electrostatic solvers
     (i.e., with ``warpx.do_electrostatic = ...``), this is used in order to compute the potential
     in the simulation volume at each timestep. When using other solvers (e.g. Maxwell solver),
     setting these variables will trigger an electrostatic solve at ``t=0``, to compute the initial
@@ -581,14 +581,30 @@ Additional PML parameters
 Embedded Boundary Conditions
 ----------------------------
 
-* ``warpx.eb_implicit_function`` (`string`)
-    A function of `x`, `y`, `z` that defines the surface of the embedded
-    boundary. That surface lies where the function value is 0 ;
-    the physics simulation area is where the function value is negative ;
-    the interior of the embeddded boundary is where the function value is positive.
+In WarpX, the embedded boundary can be defined in either of two ways:
+
+    - **From an analytical function:**
+        In that case, you will need to set the following parameter in the input file.
+
+        * ``warpx.eb_implicit_function`` (`string`)
+            A function of `x`, `y`, `z` that defines the surface of the embedded
+            boundary. That surface lies where the function value is 0 ;
+            the physics simulation area is where the function value is negative ;
+            the interior of the embedded boundary is where the function value is positive.
+
+    - **From an STL file:**
+        In that case, you will need to set the following parameters in the input file.
+
+        * ``eb2.stl_file`` (`string`)
+            The path to an `STL file <https://en.wikipedia.org/wiki/STL_(file_format)>`__.
+            In addition, you also need to set ``eb2.geom_type = stl``, in order for the file to be read by WarpX.
+            `See the AMReX documentation for more details <https://amrex-codes.github.io/amrex/docs_html/EB.html>`__.
+
+Whether the embedded boundary is defined with an analytical function or an STL file, you can
+additionally define the electric potential at the embedded boundary with an analytical function:
 
 * ``warpx.eb_potential(x,y,z,t)`` (`string`)
-    Gives the value of the electric potential at the surface of the embedded boundary,
+    Gives the value of the electric potential, in Volts, at the surface of the embedded boundary,
     as a function of  `x`, `y`, `z` and `t`. With electrostatic solvers (i.e., with
     ``warpx.do_electrostatic = ...``), this is used in order to compute the potential
     in the simulation volume at each timestep. When using other solvers (e.g. Maxwell solver),
@@ -717,6 +733,14 @@ Distribution across MPI ranks and parallelization
 
 * ``warpx.do_dynamic_scheduling`` (`0` or `1`) optional (default `1`)
     Whether to activate OpenMP dynamic scheduling.
+
+* ``warpx.roundrobin_sfc`` (`0` or `1`) optional (default `0`)
+    Whether to use AMReX's RRSFS strategy for making DistributionMapping to
+    override the default space filling curve (SFC) strategy. If this is
+    enabled, the round robin method is used to distribute Boxes ordered by
+    SFC. This could potentially mitigate the load imbalance issue during
+    initialization by avoiding putting neighboring boxes on the same
+    process.
 
 .. _running-cpp-parameters-parser:
 
@@ -1141,8 +1165,8 @@ Particle initialization
     * ``gaussian_parse_momentum_function``: Gaussian momentum distribution where the mean and the standard deviation are given by functions of position in the input file.
       Both are assumed to be non-relativistic.
       The mean is the normalized momentum, :math:`u_m = \gamma v_m/c`.
-      The standard deviation is normalized, :math:`u_th = v_th/c`.
-      For example, this might be `u_th = sqrt(T*q_e/mass)/clight` given the temperature (in eV) and mass.
+      The standard deviation is normalized, :math:`u_{th} = v_{th}/c`.
+      For example, this might be ``u_th = sqrt(T*q_e/mass)/clight`` given the temperature (in eV) and mass.
       It requires the following arguments:
 
       * ``<species_name>.momentum_function_ux_m(x,y,z)``: mean :math:`u_{x}`
@@ -1732,8 +1756,8 @@ are applied to the grid directly. In particular, these fields can be seen in the
     One can refer to input files in ``Examples/Tests/LoadExternalField`` for more information.
     Regarding how to prepare the openPMD data file, one can refer to
     the `openPMD-example-datasets <https://github.com/openPMD/openPMD-example-datasets>`__.
-    Note that if both `B_ext_grid_init_style` and `E_ext_grid_init_style` are set to
-    `read_from_file`, the openPMD file specified by `warpx.read_fields_from_path`
+    Note that if both ``B_ext_grid_init_style`` and ``E_ext_grid_init_style`` are set to
+    ``read_from_file``, the openPMD file specified by ``warpx.read_fields_from_path``
     should contain both B and E external fields data.
 
 * ``warpx.E_external_grid`` & ``warpx.B_external_grid`` (list of `3 floats`)
@@ -1788,6 +1812,21 @@ are applied to the particles directly, at each timestep. As a results, these fie
         * ``particles.Bz_external_particle_function(x,y,z,t)``
 
       Note that the position is defined in Cartesian coordinates, as a function of (x,y,z), even for RZ.
+
+    * ``read_from_file``: load the external field from an openPMD file.
+        An additional parameter, indicating the path of an openPMD data file, ``particles.read_fields_from_path``
+        must be specified, from which the external E field data can be loaded into WarpX.
+        One can refer to input files in ``Examples/Tests/LoadExternalField`` for more information.
+        Regarding how to prepare the openPMD data file, one can refer to
+        the `openPMD-example-datasets <https://github.com/openPMD/openPMD-example-datasets>`__.
+        Note that if both ``B_ext_particle_init_style`` and ``E_ext_particle_init_style`` are set to
+        ``read_from_file``, the openPMD file specified by ``particles.read_fields_from_path``
+        should contain both B and E external fields data.
+
+        .. note::
+
+            When using ``read_from_file``, the fields loaded from the file will be interpolated
+            to the resolution of the grid used for the simulation.
 
     * ``repeated_plasma_lens``: apply a series of plasma lenses.
       The properties of the lenses are defined in the lab frame by the input parameters:
@@ -2431,7 +2470,7 @@ Grid types (collocated, staggered, hybrid)
     For example, :math:`E_z` is gathered using ``algo.particle_shape`` along :math:`(x,y)` and ``algo.particle_shape - 1`` along :math:`z`.
     See equations (21)-(23) of :cite:t:`param-Godfrey2013` and associated references for details.
 
-    Default: ``interpolation.galerkin_scheme = 0`` with collocated grids and/or momentum-conserving field gathering, ``interpolation.galerkin_scheme = 1`` otherwise.
+    Default: ``interpolation.galerkin_scheme = 0`` with collocated grids, or momentum-conserving field gathering, or when ``algo.current_deposition = direct`` ; ``interpolation.galerkin_scheme = 1`` otherwise.
 
     .. warning::
 
@@ -2463,6 +2502,10 @@ Additional parameters
     using mesh refinement. These modified Maxwell equation will cause the error
     to propagate (at the speed of light) to the boundaries of the simulation
     domain, where it can be absorbed.
+
+* ``warpx.do_divb_cleaning_external`` (`0` or `1` ; default: 0)
+    Whether to use projection method to scrub B field divergence in externally
+    loaded fields. This is automatically turned on if external B fields are loaded.
 
 * ``warpx.do_subcycling`` (`0` or `1`; default: 0)
     Whether or not to use sub-cycling. Different refinement levels have a
@@ -3404,6 +3447,40 @@ Reduced Diagnostics
         For 2D-XZ, :math:`y`-related quantities are not outputted.
         For 1D-Z, :math:`x`-related and :math:`y`-related quantities are not outputted.
         RZ geometry is not supported yet.
+
+* ``DifferentialLuminosity``
+    This type computes the differential luminosity between two species, defined as:
+
+    .. math::
+
+        \frac{d\mathcal{L}}{d\mathcal{E}^*}(\mathcal{E}^*, t) = \int_0^t dt'\int d\boldsymbol{x}\,d\boldsymbol{p}_1 d\boldsymbol{p}_2\;
+         \sqrt{ |\boldsymbol{v}_1 - \boldsymbol{v}_2|^2 - |\boldsymbol{v}_1\times\boldsymbol{v}_2|^2/c^2} \\ f_1(\boldsymbol{x}, \boldsymbol{p}_1, t')f_2(\boldsymbol{x}, \boldsymbol{p}_2, t') \delta(\mathcal{E}^* - \mathcal{E}^*(\boldsymbol{p}_1, \boldsymbol{p}_2))
+
+    where :math:`\mathcal{E}^*(\boldsymbol{p}_1, \boldsymbol{p}_2) = \sqrt{m_1^2c^4 + m_2^2c^4 + 2(m_1 m_2 c^4
+    \gamma_1 \gamma_2 - \boldsymbol{p}_1\cdot\boldsymbol{p}_2 c^2)}` is the energy in the center-of-mass frame,
+    and :math:`f_i` is the distribution function of species :math:`i`. Note that, if :math:`\sigma^*(\mathcal{E}^*)`
+    is the center-of-mass cross-section of a given collision process, then
+    :math:`\int d\mathcal{E}^* \frac{d\mathcal{L}}{d\mathcal{E}^*} (\mathcal{E}^*, t)\sigma^*(\mathcal{E}^*)`
+    gives the total number of collisions of that process (from the beginning of the simulation up until time :math:`t`).
+
+    The differential luminosity is given in units of :math:`\text{m}^{-2}.\text{eV}^{-1}`. For collider-relevant WarpX simulations
+    involving two crossing, high-energy beams of particles, the differential luminosity in :math:`\text{s}^{-1}.\text{m}^{-2}.\text{eV}^{-1}`
+    can be obtained by multiplying the above differential luminosity by the expected repetition rate of the beams.
+
+    In practice, the above expression of the differential luminosity is evaluated over discrete bins in energy :math:`\mathcal{E}^*`,
+    and by summing over macroparticles.
+
+    * ``<reduced_diags_name>.species`` (`list of two strings`)
+        The names of the two species for which the differential luminosity is computed.
+
+    * ``<reduced_diags_name>.bin_number`` (`int` > 0)
+        The number of bins in energy :math:`\mathcal{E}^*`
+
+    * ``<reduced_diags_name>.bin_max`` (`float`, in eV)
+        The minimum value of :math:`\mathcal{E}^*` for which the differential luminosity is computed.
+
+    * ``<reduced_diags_name>.bin_min`` (`float`, in eV)
+        The maximum value of :math:`\mathcal{E}^*` for which the differential luminosity is computed.
 
 * ``<reduced_diags_name>.intervals`` (`string`)
     Using the `Intervals Parser`_ syntax, this string defines the timesteps at which reduced

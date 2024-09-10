@@ -12,6 +12,8 @@
 #include "SpectralAlgorithms/SpectralBaseAlgorithm.H"
 #include "SpectralFieldData.H"
 
+#include <ablastr/utils/Enums.H>
+
 #include <AMReX_Array.H>
 #include <AMReX_REAL.H>
 #include <AMReX_RealVect.H>
@@ -72,8 +74,10 @@ class SpectralSolver
         SpectralSolver (int lev,
                         const amrex::BoxArray& realspace_ba,
                         const amrex::DistributionMapping& dm,
-                        int norder_x, int norder_y,
-                        int norder_z, short grid_type,
+                        int norder_x,
+                        int norder_y,
+                        int norder_z,
+                        ablastr::utils::enums::GridType grid_type,
                         const amrex::Vector<amrex::Real>& v_galilean,
                         const amrex::Vector<amrex::Real>& v_comoving,
                         amrex::RealVect dx,

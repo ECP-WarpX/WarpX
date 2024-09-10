@@ -117,7 +117,7 @@ template<typename RealType>
 void ReadTableBW (const string& input_file, const string& outfile_name)
 {
     cout << "    Reading BW table " <<
-        (is_same<RealType, double>::value ? "(double "s : "(single "s) << " precision)\n"s;
+        (is_same_v<RealType, double> ? "(double "s : "(single "s) << " precision)\n"s;
 
     auto ifs = ifstream(input_file, std::ios::binary);
     auto raw_data = vector<char>(istreambuf_iterator<char>(ifs), {});
@@ -161,7 +161,7 @@ void ReadTableQS (
     const string& input_file, const string& outfile_name)
 {
     cout << "    Reading QS table " <<
-        (is_same<RealType, double>::value ? "(double "s : "(single "s) << " precision)\n"s;
+        (is_same_v<RealType, double> ? "(double "s : "(single "s) << " precision)\n"s;
 
     auto ifs = ifstream(input_file, std::ios::binary);
     auto raw_data = vector<char>(istreambuf_iterator<char>(ifs), {});

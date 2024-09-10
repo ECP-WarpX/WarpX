@@ -11,6 +11,8 @@
 #include "FieldSolver/SpectralSolver/SpectralKSpace.H"
 #include "SpectralBaseAlgorithm.H"
 
+#include <ablastr/utils/Enums.H>
+
 #include <AMReX_Array.H>
 #include <AMReX_Config.H>
 #include <AMReX_REAL.H>
@@ -50,7 +52,7 @@ class PsatdAlgorithmFirstOrder : public SpectralBaseAlgorithm
             int norder_x,
             int norder_y,
             int norder_z,
-            short grid_type,
+            ablastr::utils::enums::GridType grid_type,
             amrex::Real dt,
             bool div_cleaning,
             int J_in_time,

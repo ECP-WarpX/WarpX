@@ -49,6 +49,8 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/export.H"
 
+#include <ablastr/utils/Enums.H>
+
 #include <AMReX.H>
 #include <AMReX_AmrCore.H>
 #include <AMReX_Array.H>
@@ -231,7 +233,7 @@ public:
 
     //! If true, a correction is applied to the current in Fourier space,
     //  to satisfy the continuity equation and charge conservation
-    bool current_correction;
+    bool current_correction = true;
 
     //! If true, the PSATD update equation for E contains both J and rho
     //! (default is false for standard PSATD and true for Galilean PSATD)
@@ -263,6 +265,10 @@ public:
     static bool do_dive_cleaning;
     //! Solve additional Maxwell equation for G in order to control errors in magnetic Gauss' law
     static bool do_divb_cleaning;
+
+    //! Solve Poisson equation when loading an external magnetic field to clean divergence
+    //! This is useful to remove errors that could lead to non-zero B field divergence
+    static bool do_divb_cleaning_external;
 
     //! Order of the particle shape factors (splines) along x
     static int nox;
@@ -371,7 +377,7 @@ public:
 
     //! Integer that corresponds to the type of grid used in the simulation
     //! (collocated, staggered, hybrid)
-    static short grid_type;
+    static ablastr::utils::enums::GridType grid_type;
 
     // Global rho nodal flag to know about rho index type when rho MultiFab is not allocated
     amrex::IntVect m_rho_nodal_flag;
@@ -533,6 +539,20 @@ public:
     [[nodiscard]] const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>,3>>&
     getMultiLevelField(warpx::fields::FieldType field_type) const;
 
+    /**
+     * \brief
+     * Get pointer to the amrex::MultiFab containing the dotMask for the specified field
+     */
+    [[nodiscard]] const amrex::iMultiFab*
+    getFieldDotMaskPointer (warpx::fields::FieldType field_type, int lev, int dir) const;
+
+    /**
+     * \brief
+     * Set the dotMask container
+     */
+    void SetDotMask( std::unique_ptr<amrex::iMultiFab>& field_dotMask,
+                     warpx::fields::FieldType field_type, int lev, int dir ) const;
+
     [[nodiscard]] bool DoPML () const {return do_pml;}
     [[nodiscard]] bool DoFluidSpecies () const {return do_fluid_species;}
 
@@ -665,7 +685,7 @@ public:
      */
     void Hybrid_QED_Push (int lev, PatchType patch_type, amrex::Real dt);
 
-    static amrex::Real quantum_xi_c2;
+    amrex::Real m_quantum_xi_c2;
 
     /** Check and potentially compute load balancing
      */
@@ -895,6 +915,7 @@ public:
         amrex::Vector<amrex::Geometry>& output_geom ) const;
 
     static std::array<amrex::Real,3> CellSize (int lev);
+    static amrex::XDim3 InvCellSize (int lev);
     static amrex::RealBox getRealBox(const amrex::Box& bx, int lev);
 
     /**
@@ -905,7 +926,7 @@ public:
      *                         (when v_galilean is not zero)
      * \return An array of the position coordinates
      */
-    static std::array<amrex::Real,3> LowerCorner (const amrex::Box& bx, int lev, amrex::Real time_shift_delta);
+    static amrex::XDim3 LowerCorner (const amrex::Box& bx, int lev, amrex::Real time_shift_delta);
     /**
      * \brief Return the upper corner of the box in real units.
      * \param bx The box
@@ -914,7 +935,7 @@ public:
      *                         (when v_galilean is not zero)
      * \return An array of the position coordinates
      */
-    static std::array<amrex::Real,3> UpperCorner (const amrex::Box& bx, int lev, amrex::Real time_shift_delta);
+    static amrex::XDim3 UpperCorner (const amrex::Box& bx, int lev, amrex::Real time_shift_delta);
 
     static amrex::IntVect RefRatio (int lev);
 
@@ -958,6 +979,8 @@ public:
 
     void ComputeDivE(amrex::MultiFab& divE, int lev);
 
+    static void ProjectionCleanDivB ();
+
     [[nodiscard]] amrex::IntVect getngEB() const { return guard_cells.ng_alloc_EB; }
     [[nodiscard]] amrex::IntVect getngF() const { return guard_cells.ng_alloc_F; }
     [[nodiscard]] amrex::IntVect getngUpdateAux() const { return guard_cells.ng_UpdateAux; }
@@ -974,6 +997,7 @@ public:
      */
     [[nodiscard]] amrex::IntVect get_numprocs() const {return numprocs;}
 
+    /** Enable embedded boundaries */
     bool m_boundary_potential_specified = false;
     ElectrostaticSolver::PoissonBoundaryHandler m_poisson_boundary_handler;
     void ComputeSpaceChargeField (bool reset_fields);
@@ -1040,14 +1064,14 @@ public:
          amrex::ParserExecutor<3> const& zfield_parser,
          std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
          std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
-         char field,
+         [[maybe_unused]] char field,
          int lev, PatchType patch_type);
 
     /**
      * \brief Load field values from a user-specified openPMD file,
      * for the fields Ex, Ey, Ez, Bx, By, Bz
      */
-    void LoadExternalFieldsFromFile (int lev);
+    void LoadExternalFields (int lev);
 
     /**
      * \brief Load field values from a user-specified openPMD file
@@ -1084,7 +1108,7 @@ public:
      * \param[in] n_order order of the finite-difference approximation
      * \param[in] a_grid_type type of grid (collocated or not)
      */
-    static amrex::Vector<amrex::Real> getFornbergStencilCoefficients(int n_order, short a_grid_type);
+    static amrex::Vector<amrex::Real> getFornbergStencilCoefficients (int n_order, ablastr::utils::enums::GridType a_grid_type);
 
     // Device vectors of stencil coefficients used for finite-order centering of fields
     amrex::Gpu::DeviceVector<amrex::Real> device_field_centering_stencil_coeffs_x;
@@ -1107,7 +1131,7 @@ public:
     void BuildBufferMasksInBox ( amrex::Box tbx, amrex::IArrayBox &buffer_mask,
                                  const amrex::IArrayBox &guard_mask, int ng );
 #ifdef AMREX_USE_EB
-    amrex::EBFArrayBoxFactory const& fieldEBFactory (int lev) const noexcept {
+    [[nodiscard]] amrex::EBFArrayBoxFactory const& fieldEBFactory (int lev) const noexcept {
         return static_cast<amrex::EBFArrayBoxFactory const&>(*m_field_factory[lev]);
     }
 #endif
@@ -1239,6 +1263,10 @@ protected:
     //! This function is called in amrex::AmrCore::InitFromScratch.
     void PostProcessBaseGrids (amrex::BoxArray& ba0) const final;
 
+    //! Use this function to override how DistributionMapping is made.
+    [[nodiscard]] amrex::DistributionMapping
+    MakeDistributionMap (int lev, amrex::BoxArray const& ba) final;
+
     //! Make a new level from scratch using provided BoxArray and
     //! DistributionMapping.  Only used during initialization.  Called
     //! by AmrCoreInitFromScratch.
@@ -1290,7 +1318,7 @@ private:
     void FillBoundaryB_avg (int lev, PatchType patch_type, amrex::IntVect ng);
     void FillBoundaryE_avg (int lev, PatchType patch_type, amrex::IntVect ng);
 
-    void AddExternalFields ();
+    void AddExternalFields (int lev);
 
     void OneStep_nosub (amrex::Real cur_time);
     void OneStep_sub1 (amrex::Real cur_time);
@@ -1396,9 +1424,6 @@ private:
      */
     void CheckKnownIssues();
 
-    /** Check the requested resources and write performance hints */
-    void PerformanceHints ();
-
     void BuildBufferMasks ();
 
     [[nodiscard]] const amrex::iMultiFab* getCurrentBufferMasks (int lev) const {
@@ -1440,7 +1465,7 @@ private:
                                         int centering_nox,
                                         int centering_noy,
                                         int centering_noz,
-                                        short a_grid_type);
+                                        ablastr::utils::enums::GridType a_grid_type);
 
     void AllocLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
                         const amrex::IntVect& ngEB, amrex::IntVect& ngJ,
@@ -1502,6 +1527,13 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_fp;
 
+    // Masks for computing dot product and global moments of fields when using grids that
+    // have shared locations across different ranks (e.g., a Yee grid)
+    mutable amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>,3 > > Efield_dotMask;
+    mutable amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>,3 > > Bfield_dotMask;
+    mutable amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>,3 > > Afield_dotMask;
+    mutable amrex::Vector<            std::unique_ptr<amrex::iMultiFab>     > phi_dotMask;
+
     // Memory buffers for computing magnetostatic fields
     // Vector Potential A and previous step.  Time buffer needed for computing dA/dt to first order
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_fp_nodal;
@@ -1511,6 +1543,8 @@ private:
     // Same as Bfield_fp/Efield_fp for reading external field data
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp_external;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp_external;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > E_external_particle_field;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > B_external_particle_field;
 
     //! EB: Lengths of the mesh edges
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths;
