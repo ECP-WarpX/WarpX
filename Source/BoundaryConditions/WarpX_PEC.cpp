@@ -510,12 +510,7 @@ PEC::ApplyPECtoEfield (
         amrex::ParallelFor(
             tex, nComp_x,
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-                amrex::ignore_unused(k);
-#endif
-#if (defined WARPX_DIM_1D_Z)
                 amrex::ignore_unused(j,k);
-#endif
                 const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 0;
                 ::SetEfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
@@ -523,12 +518,7 @@ PEC::ApplyPECtoEfield (
             },
             tey, nComp_y,
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-                amrex::ignore_unused(k);
-#endif
-#if (defined WARPX_DIM_1D_Z)
                 amrex::ignore_unused(j,k);
-#endif
                 const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 1;
                 ::SetEfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
@@ -536,12 +526,7 @@ PEC::ApplyPECtoEfield (
             },
             tez, nComp_z,
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-                amrex::ignore_unused(k);
-#endif
-#if (defined WARPX_DIM_1D_Z)
                 amrex::ignore_unused(j,k);
-#endif
                 const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 2;
                 ::SetEfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
@@ -602,12 +587,7 @@ PEC::ApplyPECtoBfield (
         amrex::ParallelFor(
             tbx, nComp_x,
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-                amrex::ignore_unused(k);
-#endif
-#if (defined WARPX_DIM_1D_Z)
                 amrex::ignore_unused(j,k);
-#endif
                 const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 0;
                 ::SetBfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
@@ -615,12 +595,7 @@ PEC::ApplyPECtoBfield (
             },
             tby, nComp_y,
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-                amrex::ignore_unused(k);
-#endif
-#if (defined WARPX_DIM_1D_Z)
                 amrex::ignore_unused(j,k);
-#endif
                 const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 1;
                 ::SetBfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
@@ -628,12 +603,7 @@ PEC::ApplyPECtoBfield (
             },
             tbz, nComp_z,
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-                amrex::ignore_unused(k);
-#endif
-#if (defined WARPX_DIM_1D_Z)
                 amrex::ignore_unused(j,k);
-#endif
                 const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 2;
                 ::SetBfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
@@ -727,11 +697,7 @@ PEC::ApplyReflectiveBoundarytoRhofield (
         // Loop over valid cells (i.e. cells inside the domain)
         amrex::ParallelFor(mfi.validbox(), nComp,
         [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-            amrex::ignore_unused(k);
-#elif (defined WARPX_DIM_1D_Z)
             amrex::ignore_unused(j,k);
-#endif
             // Store the array index
             const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 
@@ -859,11 +825,7 @@ PEC::ApplyReflectiveBoundarytoJfield(
         // Loop over valid cells (i.e. cells inside the domain)
         amrex::ParallelFor(mfi.validbox(), Jx->nComp(),
         [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-            amrex::ignore_unused(k);
-#elif (defined WARPX_DIM_1D_Z)
             amrex::ignore_unused(j,k);
-#endif
             // Store the array index
             const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 
@@ -894,11 +856,7 @@ PEC::ApplyReflectiveBoundarytoJfield(
         // Loop over valid cells (i.e. cells inside the domain)
         amrex::ParallelFor(mfi.validbox(), Jy->nComp(),
         [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-            amrex::ignore_unused(k);
-#elif (defined WARPX_DIM_1D_Z)
             amrex::ignore_unused(j,k);
-#endif
             // Store the array index
             const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 
@@ -929,11 +887,7 @@ PEC::ApplyReflectiveBoundarytoJfield(
         // Loop over valid cells (i.e. cells inside the domain)
         amrex::ParallelFor(mfi.validbox(), Jz->nComp(),
         [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-            amrex::ignore_unused(k);
-#elif (defined WARPX_DIM_1D_Z)
             amrex::ignore_unused(j,k);
-#endif
             // Store the array index
             const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 
@@ -1000,11 +954,7 @@ PEC::ApplyPECtoElectronPressure (
         // Loop over valid cells (i.e. cells inside the domain)
         amrex::ParallelFor(mfi.validbox(), nComp,
         [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-            amrex::ignore_unused(k);
-#elif (defined WARPX_DIM_1D_Z)
             amrex::ignore_unused(j,k);
-#endif
             // Store the array index
             const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 
