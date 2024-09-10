@@ -122,8 +122,8 @@ WarpX::AddBoundaryField ()
         nba.surroundingNodes();
         rho[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, ng);
         rho[lev]->setVal(0.);
-        phi[lev] = m_fields.alloc_init( "phi_temp", nba, DistributionMap(lev), 1,
-                                        IntVect::TheUnitVector(), lev);
+        phi[lev] = m_fields.alloc_init( "phi_temp", lev, nba, DistributionMap(lev), 1,
+                                        IntVect::TheUnitVector());
         phi[lev]->setVal(0.);
     }
 
@@ -181,8 +181,8 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
         nba.surroundingNodes();
         rho[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, ng);
         rho[lev]->setVal(0.);
-        phi[lev] = m_fields.alloc_init( "phi_temp", nba, DistributionMap(lev), 1,
-                                        IntVect::TheUnitVector(), lev);
+        phi[lev] = m_fields.alloc_init( "phi_temp", lev, nba, DistributionMap(lev), 1,
+                                        IntVect::TheUnitVector());
         phi[lev]->setVal(0.);
         if (lev > 0) {
             // For MR levels: allocated the coarsened version of rho
