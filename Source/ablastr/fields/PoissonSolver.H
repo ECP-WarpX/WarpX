@@ -57,6 +57,33 @@
 
 namespace ablastr::fields {
 
+
+
+amrex::Real
+getMaxNormRho (amrex::Vector<amrex::MultiFab*> const & rho,
+            int finest_level, 
+                  amrex::Real & absolute_tolerance)
+{
+    amrex::Real max_norm_b = 0.0;
+    for (int lev=0; lev<=finest_level; lev++) {
+        max_norm_b = amrex::max(max_norm_b, rho[lev]->norm0());
+    }
+    amrex::ParallelDescriptor::ReduceRealMax(max_norm_b);
+
+    const bool always_use_bnorm = (max_norm_b > 0);
+    if (!always_use_bnorm) {
+        if (absolute_tolerance == 0.0) { absolute_tolerance = amrex::Real(1e-6); }
+        ablastr::warn_manager::WMRecordWarning(
+                "ElectrostaticSolver",
+                "Max norm of rho is 0",
+                ablastr::warn_manager::WarnPriority::low
+        );
+    }
+    return max_norm_b;
+}
+
+
+
 /** Compute the potential `phi` by solving the Poisson equation
  *
  * Uses `rho` as a source, assuming that the source moves at a
@@ -133,23 +160,10 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 #endif
 
     auto const finest_level = static_cast<int>(rho.size() - 1);
-
+    
     // determine if rho is zero everywhere
-    amrex::Real max_norm_b = 0.0;
-    for (int lev=0; lev<=finest_level; lev++) {
-        max_norm_b = amrex::max(max_norm_b, rho[lev]->norm0());
-    }
-    amrex::ParallelDescriptor::ReduceRealMax(max_norm_b);
+    amrex::Real always_use_bnorm = getMaxNormRho(rho, finest_level, absolute_tolerance);
 
-    const bool always_use_bnorm = (max_norm_b > 0);
-    if (!always_use_bnorm) {
-        if (absolute_tolerance == 0.0) { absolute_tolerance = amrex::Real(1e-6); }
-        ablastr::warn_manager::WMRecordWarning(
-                "ElectrostaticSolver",
-                "Max norm of rho is 0",
-                ablastr::warn_manager::WarnPriority::low
-        );
-    }
 
     amrex::LPInfo info;
 
@@ -365,6 +379,22 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 
     } // loop over lev(els)
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 } // namespace ablastr::fields
 
