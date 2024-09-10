@@ -164,5 +164,3 @@ amrex::ParserExecutor<7> const* PlasmaParserHelper::getUserRealParserExecData ()
     return m_user_real_attrib_parserexec_pinned.dataPtr();
 #endif
 }
-
-
