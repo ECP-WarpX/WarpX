@@ -2687,9 +2687,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         }
 
         // Create the MultiFabs for the current
-        AllocInitMultiFab(current_cp[lev][0], amrex::convert(cba, jx_nodal_flag), dm, ncomps, ngJ, lev, "current_cp[x]", 0.0_rt);
-        AllocInitMultiFab(current_cp[lev][1], amrex::convert(cba, jy_nodal_flag), dm, ncomps, ngJ, lev, "current_cp[y]", 0.0_rt);
-        AllocInitMultiFab(current_cp[lev][2], amrex::convert(cba, jz_nodal_flag), dm, ncomps, ngJ, lev, "current_cp[z]", 0.0_rt);
+        m_fields.alloc_init( "current_cp[x]", amrex::convert(cba, jx_nodal_flag), dm, ncomps, ngJ, lev, 0.0_rt);
+        m_fields.alloc_init( "current_cp[y]", amrex::convert(cba, jy_nodal_flag), dm, ncomps, ngJ, lev, 0.0_rt);
+        m_fields.alloc_init( "current_cp[z]", amrex::convert(cba, jz_nodal_flag), dm, ncomps, ngJ, lev, 0.0_rt);
 
         if (rho_ncomps > 0) {
             AllocInitMultiFab(rho_cp[lev], amrex::convert(cba, rho_nodal_flag), dm, rho_ncomps, ngRho, lev, "rho_cp", 0.0_rt);
