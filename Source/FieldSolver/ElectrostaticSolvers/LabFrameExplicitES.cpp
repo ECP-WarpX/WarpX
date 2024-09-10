@@ -13,6 +13,21 @@
 #include "WarpX.H"
 
 
+void LabFrameExplicitES::ReadParameters () {
+
+    ParmParse const pp_warpx("warpx");
+
+    // Note that with the relativistic version, these parameters would be
+    // input for each species.
+    utils::parser::queryWithParser(
+        pp_warpx, "self_fields_required_precision", self_fields_required_precision);
+    utils::parser::queryWithParser(
+        pp_warpx, "self_fields_absolute_tolerance", self_fields_absolute_tolerance);
+    utils::parser::queryWithParser(
+        pp_warpx, "self_fields_max_iters", self_fields_max_iters);
+    pp_warpx.query("self_fields_verbosity", self_fields_verbosity);
+}
+
 void LabFrameExplicitES::ComputeSpaceChargeField (
     amrex::Vector< std::unique_ptr<amrex::MultiFab> > rho_fp,
     amrex::Vector< std::unique_ptr<amrex::MultiFab> > rho_cp,
@@ -89,10 +104,11 @@ LabFrameExplicitES::computePhiTriDiagonal (
     "The tridiagonal solver cannot be used with mesh refinement");
 
     const int lev = 0;
+    auto & warpx = WarpX::GetInstance();
 
-    const amrex::Real* dx = Geom(lev).CellSize();
-    const amrex::Real xmin = Geom(lev).ProbLo(0);
-    const amrex::Real xmax = Geom(lev).ProbHi(0);
+    const amrex::Real* dx = warpx.Geom(lev).CellSize();
+    const amrex::Real xmin = warpx.Geom(lev).ProbLo(0);
+    const amrex::Real xmax = warpx.Geom(lev).ProbHi(0);
     const int nx_full_domain = static_cast<int>( (xmax - xmin)/dx[0] + 0.5_rt );
 
     int nx_solve_min = 1;

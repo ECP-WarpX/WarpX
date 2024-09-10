@@ -945,12 +945,6 @@ public:
     static int electrostatic_solver_id;
     static int poisson_solver_id;
 
-    // Parameters for lab frame electrostatic
-    static amrex::Real self_fields_required_precision;
-    static amrex::Real self_fields_absolute_tolerance;
-    static int self_fields_max_iters;
-    static int self_fields_verbosity;
-
     static int do_moving_window; // boolean
     static int start_moving_window_step; // the first step to move window
     static int end_moving_window_step; // the last step to move window

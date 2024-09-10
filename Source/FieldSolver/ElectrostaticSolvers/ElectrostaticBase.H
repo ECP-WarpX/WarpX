@@ -32,6 +32,7 @@ public:
 
     ElectrostaticBase( int nlevs_max );
 
+    virtual void ReadParameters ();
     virtual void AllocateMFs ( int nlevs_max );
 
     void setPhiBC (

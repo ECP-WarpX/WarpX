@@ -13,6 +13,7 @@ ElectrostaticBase::ElectrostaticBase (int nlevs_max)
 {
     max_level = nlevs_max;
 
+    ReadParameters ();
     AllocateMFs (nlevs_max);
 
     // Create an instance of the boundary handler to properly set boundary
@@ -154,18 +155,18 @@ ElectrostaticBase::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiF
             e_field.push_back(
 #if defined(WARPX_DIM_1D_Z)
                 amrex::Array<amrex::MultiFab*, 1>{
-                    getFieldPointer(warpx::fields::FieldType::Efield_fp, lev, 2)
+                    warpx.getFieldPointer(warpx::fields::FieldType::Efield_fp, lev, 2)
                 }
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 amrex::Array<amrex::MultiFab*, 2>{
-                    getFieldPointer(warpx::fields::FieldType::Efield_fp, lev, 0),
-                    getFieldPointer(warpx::fields::FieldType::Efield_fp, lev, 2)
+                    warpx.getFieldPointer(warpx::fields::FieldType::Efield_fp, lev, 0),
+                    warpx.getFieldPointer(warpx::fields::FieldType::Efield_fp, lev, 2)
                 }
 #elif defined(WARPX_DIM_3D)
                 amrex::Array<amrex::MultiFab *, 3>{
-                    getFieldPointer(warpx::fields::FieldType::Efield_fp, lev, 0),
-                    getFieldPointer(warpx::fields::FieldType::Efield_fp, lev, 1),
-                    getFieldPointer(warpx::fields::FieldType::Efield_fp, lev, 2)
+                    warpx.getFieldPointer(warpx::fields::FieldType::Efield_fp, lev, 0),
+                    warpx.getFieldPointer(warpx::fields::FieldType::Efield_fp, lev, 1),
+                    warpx.getFieldPointer(warpx::fields::FieldType::Efield_fp, lev, 2)
                 }
 #endif
             );
@@ -186,7 +187,7 @@ ElectrostaticBase::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiF
     bool const is_solver_igf_on_lev0 =
         WarpX::poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction;
 
-    ablastr::fields::computePhi(
+    WarpX::ablastr::fields::computePhi(
         sorted_rho,
         sorted_phi,
         beta,
@@ -200,11 +201,11 @@ ElectrostaticBase::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiF
         WarpX::grid_type,
         this->m_poisson_boundary_handler,
         is_solver_igf_on_lev0,
-        m_eb_enabled,
+        warpx.m_eb_enabled,
         WarpX::do_single_precision_comms,
         this->ref_ratio,
         post_phi_calculation,
-        gett_new(0),
+        warpx.gett_new(0),
         eb_farray_box_factory
     );
 
@@ -229,9 +230,10 @@ void ElectrostaticBase::computeE (amrex::Vector<std::array<std::unique_ptr<amrex
             const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
             std::array<amrex::Real, 3> const beta ) const
 {
+    auto & warpx = WarpX::GetInstance();
     for (int lev = 0; lev <= max_level; lev++) {
 
-        const Real* dx = Geom(lev).CellSize();
+        const Real* dx = warpx.Geom(lev).CellSize();
 
 #ifdef AMREX_USE_OMP
 #    pragma omp parallel if (Gpu::notInLaunchRegion())

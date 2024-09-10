@@ -194,10 +194,6 @@ bool WarpX::do_dynamic_scheduling = true;
 
 int WarpX::electrostatic_solver_id;
 int WarpX::poisson_solver_id;
-Real WarpX::self_fields_required_precision = 1.e-11_rt;
-Real WarpX::self_fields_absolute_tolerance = 0.0_rt;
-int WarpX::self_fields_max_iters = 200;
-int WarpX::self_fields_verbosity = 2;
 
 bool WarpX::do_subcycling = false;
 bool WarpX::do_multi_J = false;
@@ -759,20 +755,6 @@ WarpX::ReadParameters ()
         // if an electrostatic solver is used, set the Maxwell solver to None
         if (electrostatic_solver_id != ElectrostaticSolverAlgo::None) {
             electromagnetic_solver_id = ElectromagneticSolverAlgo::None;
-        }
-
-        if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
-            electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
-        {
-            // Note that with the relativistic version, these parameters would be
-            // input for each species.
-            utils::parser::queryWithParser(
-                pp_warpx, "self_fields_required_precision", self_fields_required_precision);
-            utils::parser::queryWithParser(
-                pp_warpx, "self_fields_absolute_tolerance", self_fields_absolute_tolerance);
-            utils::parser::queryWithParser(
-                pp_warpx, "self_fields_max_iters", self_fields_max_iters);
-            pp_warpx.query("self_fields_verbosity", self_fields_verbosity);
         }
 
         poisson_solver_id = GetAlgorithmInteger(pp_warpx, "poisson_solver");

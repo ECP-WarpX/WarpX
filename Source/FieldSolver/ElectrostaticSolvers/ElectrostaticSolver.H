@@ -15,7 +15,12 @@ public:
 
     ElectrostaticSolver (int nlevs_max); // constructor
 
-    std::unique_ptr<LabFrameExplicitES> m_labframe_explicit_es;
+    void ClearLevel ( int lev );
+    void AllocateLevelMFs (
+        int lev, const BoxArray& ba, const DistributionMapping& dm,
+        const int ncomps, const IntVect& ngJ, const IntVect& rho_nodal_flag
+    );
+
 
     void ComputeSpaceChargeField (
         amrex::Vector< std::unique_ptr<amrex::MultiFab> > rho_fp,
@@ -27,6 +32,8 @@ public:
         amrex::Vector< std::array< std::unique_ptr<amrex::MultiFab>, 3> > Efield_fp,
         amrex::Vector< std::array< std::unique_ptr<amrex::MultiFab>, 3> > Bfield_fp
     );
+
+    std::unique_ptr<LabFrameExplicitES> m_labframe_explicit_es;
 };
 
 #endif
