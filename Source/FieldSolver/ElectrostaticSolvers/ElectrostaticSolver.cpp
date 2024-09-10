@@ -14,10 +14,10 @@ ElectrostaticSolver::ElectrostaticSolver (int nlevs_max)
     {
         m_labframe_explicit_es = std::make_unique<LabFrameExplicitES>(nlevs_max);
     }
-    // else if (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::Relativistic)
-    // {
-
-    // }
+    else if (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::Relativistic)
+    {
+        m_relativistic_explicit_es = std::make_unique<RelativisticExplicitES>(nlevs_max);
+    }
 }
 
 void ElectrostaticSolver::ComputeSpaceChargeField (
@@ -35,6 +35,12 @@ void ElectrostaticSolver::ComputeSpaceChargeField (
     {
         m_labframe_explicit_es->ComputeSpaceChargeField(
             rho_fp, rho_cp, charge_buf, phi_fp, mpc, mfl, Efield_fp
+        );
+    }
+    else if (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::Relativistic)
+    {
+        m_relativistic_explicit_es->ComputeSpaceChargeField(
+            rho_fp, rho_cp, charge_buf, phi_fp, mpc, mfl, Efield_fp, Bfield_fp
         );
     }
 }

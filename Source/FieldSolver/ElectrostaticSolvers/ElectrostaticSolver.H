@@ -9,6 +9,7 @@
 
 #include "ElectrostaticBase.H"
 #include "LabFrameExplicitES.H"
+#include "RelativisticExplicitES.H"
 
 class ElectrostaticSolver
 {
@@ -35,6 +36,7 @@ public:
     );
 
     std::unique_ptr<LabFrameExplicitES> m_labframe_explicit_es;
+    std::unique_ptr<RelativisticExplicitES> m_relativistic_explicit_es;
 };
 
 #endif // WARPX_ELECTROSTATICSOLVER_H_

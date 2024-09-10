@@ -5,7 +5,7 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
 
-void LabFrameExplicitES::ReadParameters () {
+void RelativisticExplicitES::ReadParameters () {
 
     ParmParse const pp_warpx("warpx");
 
@@ -50,7 +50,7 @@ RelativisticExplicitES::ComputeSpaceChargeField (
 }
 
 void
-RelativisticExplicitES::AddSpaceChargeField (amrex::Vector<std::unique_ptr<amrex::MultiFab> > charge_buf,
+RelativisticExplicitES::AddSpaceChargeField (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& charge_buf,
                                              WarpXParticleContainer& pc,
                                              amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield_fp,
                                              amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield_fp)
