@@ -587,7 +587,7 @@ MultiParticleContainer::DepositCharge (
 #ifdef WARPX_DIM_RZ
     for (int lev = 0; lev < rho.size(); ++lev)
     {
-        WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho[lev].get(), lev);
+        WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho[lev], lev);
     }
 #endif
 }

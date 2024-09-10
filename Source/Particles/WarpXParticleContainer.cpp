@@ -1170,7 +1170,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
 }
 
 void
-WarpXParticleContainer::DepositCharge (std::vector<amrex::MultiFab*>& rho,
+WarpXParticleContainer::DepositCharge (const std::vector<amrex::MultiFab*>& rho,
                                        const bool local, const bool reset,
                                        const bool apply_boundary_and_scale_volume,
                                        const bool interpolate_across_levels,
@@ -1254,7 +1254,7 @@ WarpXParticleContainer::DepositCharge (amrex::MultiFab* rho,
 #ifdef WARPX_DIM_RZ
     if (apply_boundary_and_scale_volume)
     {
-        WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho.get(), lev);
+        WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho, lev);
     }
 #endif
 
@@ -1273,7 +1273,7 @@ WarpXParticleContainer::DepositCharge (amrex::MultiFab* rho,
     if (apply_boundary_and_scale_volume)
     {
         // Reflect density over PEC boundaries, if needed.
-        WarpX::GetInstance().ApplyRhofieldBoundary(lev, rho.get(), PatchType::fine);
+        WarpX::GetInstance().ApplyRhofieldBoundary(lev, rho, PatchType::fine);
     }
 #endif
 }
@@ -1300,7 +1300,7 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
     const int ng_rho = warpx.get_ng_depos_rho().max();
 
     auto rho = std::make_unique<MultiFab>(nba, dm, WarpX::ncomps,ng_rho);
-    DepositCharge(rho, lev, local, true, true, 0);
+    DepositCharge(rho.get(), lev, local, true, true, 0);
     return rho;
 }
 

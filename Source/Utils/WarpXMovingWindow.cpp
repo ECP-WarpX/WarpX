@@ -357,10 +357,10 @@ WarpX::MoveWindow (const int step, bool move_j)
         if (move_j) {
             if (m_fields.has("rho_fp", lev)) {
                 // Fine grid
-                shiftMF(*rho_fp[lev],   geom[lev], num_shift, dir, lev, do_update_cost);
+                shiftMF(*m_fields.get("rho_fp",lev),   geom[lev], num_shift, dir, lev, do_update_cost);
                 if (lev > 0){
                     // Coarse grid
-                    shiftMF(*rho_cp[lev], geom[lev-1], num_shift_crse, dir, lev, do_update_cost);
+                    shiftMF(*m_fields.get("rho_cp",lev), geom[lev-1], num_shift_crse, dir, lev, do_update_cost);
                 }
             }
         }
