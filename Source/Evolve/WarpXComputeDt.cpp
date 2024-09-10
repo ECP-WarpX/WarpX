@@ -90,7 +90,7 @@ WarpX::ComputeDt ()
     if (do_subcycling) {
         for (int lev = max_level-1; lev >= 0; --lev) {
             dt[lev] = dt[lev+1] * refRatio(lev)[0];
-            dt_next[lev] = dt_next[lev+1] * refRatio(lev)[0];
+            dt_next[lev] = dt[lev];
         }
     }
 }
@@ -106,7 +106,20 @@ WarpX::UpdateDtFromParticleSpeeds ()
     amrex::Real dx_min = minDim(dx);
 
     const amrex::ParticleReal max_v = mypc->maxParticleVelocity();
-    const amrex::Real deltat_new = cfl * dx_min / max_v;
+    amrex::Real deltat_new;
+
+    // Protections from overly-large timesteps
+    if (max_v == 0) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_max_dt.has_value(), "Particles at rest and no maximum timestep specified. Aborting.");
+        deltat_new == m_max_dt.value();
+    }
+
+    deltat_new = cfl * dx_min / max_v;
+
+    // Restrict to be less than user-specified maximum timestep, if present
+    if (m_max_dt.has_value()) {
+        deltat_new = std::min(deltat_new, m_max_dt.value());
+    }
 
     // Set present dt to previous next dt
     dt[max_level] = dt_next[max_level];

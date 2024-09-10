@@ -1666,7 +1666,9 @@ private:
     int num_injected_species = -1;
     amrex::Vector<int> injected_plasma_species;
 
+    // Timestepping parameters
     std::optional<amrex::Real> m_const_dt;
+    std::optional<amrex::Real> m_max_dt;
 
     // Macroscopic properties
     std::unique_ptr<MacroscopicProperties> m_macroscopic_properties;

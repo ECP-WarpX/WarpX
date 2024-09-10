@@ -2740,6 +2740,9 @@ class Simulation(picmistandard.PICMI_Simulation):
 
     warpx_used_inputs_file: string, optional
         The name of the text file that the used input parameters is written to,
+
+    warpx_max_dt: float, optional
+        The maximum allowable timestep when using adaptive timestepping (only available for non-electromagnetic solvers)
     """
 
     # Set the C++ WarpX interface (see _libwarpx.LibWarpX) as an extension to
@@ -2818,6 +2821,9 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.warpx.verbose = self.verbose
         if self.time_step_size is not None:
             pywarpx.warpx.const_dt = self.time_step_size
+
+        if self.warpx_max_dt is not None:
+            pywarpx.warpx.max_dt = self.warpx_max_dt
 
         if self.gamma_boost is not None:
             pywarpx.warpx.gamma_boost = self.gamma_boost

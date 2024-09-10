@@ -831,7 +831,9 @@ WarpX::ReadParameters ()
         pp_boundary.query("verboncoeur_axis_correction", verboncoeur_axis_correction);
 #endif
 
+        // Read timestepping options
         utils::parser::queryWithParser(pp_warpx, "const_dt", m_const_dt);
+        utils::parser::queryWithParser(pp_warpx, "max_dt", m_max_dt);
 
         // Filter currently not working with FDTD solver in RZ geometry: turn OFF by default
         // (see https://github.com/ECP-WarpX/WarpX/issues/1943)
