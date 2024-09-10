@@ -594,7 +594,7 @@ FlushFormatPlotfile::WriteAllRawFields(
             WriteRawMF(rho_new, dm, raw_pltname, default_level_prefix, "rho_fp", lev, plot_raw_fields_guards);
         }
         if (warpx.m_fields.has("phi_fp", lev)) {
-            WriteRawMF(warpx.m_fields.get("phi_fp", lev), dm, raw_pltname, default_level_prefix, "phi_fp", lev, plot_raw_fields_guards);
+            WriteRawMF(*warpx.m_fields.get("phi_fp", lev), dm, raw_pltname, default_level_prefix, "phi_fp", lev, plot_raw_fields_guards);
         }
 
         // Averaged fields on fine patch

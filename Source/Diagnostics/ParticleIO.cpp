@@ -268,7 +268,7 @@ storePhiOnParticles ( PinnedMemoryParticleContainer& tmp,
         const amrex::Geometry& geom = warpx.Geom(lev);
         auto plo = geom.ProbLoArray();
         auto dxi = geom.InvCellSizeArray();
-        anrex::MultiFab const& phi = *m_fields.get("phi_fp", lev);
+        amrex::MultiFab const& phi = *warpx.m_fields.get("phi_fp", lev);
 
         for (PinnedParIter pti(tmp, lev); pti.isValid(); ++pti) {
 

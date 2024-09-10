@@ -122,7 +122,8 @@ WarpX::AddBoundaryField ()
         nba.surroundingNodes();
         rho[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, ng);
         rho[lev]->setVal(0.);
-        phi[lev] = warpx.m_fields.alloc_init("phi_temp", nba, DistributionMap(lev), 1, 1, lev);
+        phi[lev] = m_fields.alloc_init( "phi_temp", nba, DistributionMap(lev), 1,
+                                        IntVect::TheUnitVector(), lev);
         phi[lev]->setVal(0.);
     }
 
@@ -143,7 +144,7 @@ WarpX::AddBoundaryField ()
  
     // de-allocate temporary
     for (int lev = 0; lev <= max_level; lev++) {
-        warpx.m_fields.erase("phi_temp",lev);
+        m_fields.erase("phi_temp",lev);
     }
 
 }
@@ -180,7 +181,8 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
         nba.surroundingNodes();
         rho[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, ng);
         rho[lev]->setVal(0.);
-        phi[lev] = warpx.m_fields.alloc_init("phi_temp", nba, DistributionMap(lev), 1, 1, lev);
+        phi[lev] = m_fields.alloc_init( "phi_temp", nba, DistributionMap(lev), 1,
+                                        IntVect::TheUnitVector(), lev);
         phi[lev]->setVal(0.);
         if (lev > 0) {
             // For MR levels: allocated the coarsened version of rho
@@ -229,7 +231,7 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     
     // de-allocate temporary
     for (int lev = 0; lev <= max_level; lev++) {
-        warpx.m_fields.erase("phi_temp",lev);
+        m_fields.erase("phi_temp",lev);
     }
 
 }
@@ -276,7 +278,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     const std::array<Real, 3> beta = {0._rt};
 
     // set the boundary potentials appropriately
-    auto phi_fp = warpx.m_fields.get_mr_levels("phi_fp",max_level);
+    auto phi_fp = m_fields.get_mr_levels("phi_fp",max_level);
     setPhiBC(phi_fp);
 
     // Compute the potential phi, by solving the Poisson equation

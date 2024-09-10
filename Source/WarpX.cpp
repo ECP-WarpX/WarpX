@@ -2490,8 +2490,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
     {
         const IntVect ngPhi = IntVect( AMREX_D_DECL(1,1,1) );
-        m_multifab_map.alloc_init( "phi_fp", amrex::convert(ba, phi_nodal_flag), dm,
-                                    ncomps, ngPhi, lev, 0.0_rt );
+        m_fields.alloc_init( "phi_fp", amrex::convert(ba, phi_nodal_flag), dm,
+                             ncomps, ngPhi, lev, 0.0_rt );
     }
 
     if (do_subcycling && lev == 0)
@@ -3500,9 +3500,9 @@ WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, cons
         case FieldType::F_fp :
             field_pointer = F_fp[lev].get();
             break;
-        case FieldType::phi_fp :
-            field_pointer = m_fields.get("phi_fp",lev);
-            break;
+        //case FieldType::phi_fp : // JRA
+        //    field_pointer = m_fields.get("phi_fp",lev);
+        //    break;
         case FieldType::vector_potential_fp :
             field_pointer = vector_potential_fp_nodal[lev][direction].get();
             break;
@@ -3659,7 +3659,7 @@ WarpX::getFieldDotMaskPointer ( FieldType field_type, int lev, int dir ) const
         case FieldType::vector_potential_fp :
             SetDotMask( Afield_dotMask[lev][dir], field_type, lev, dir );
             return Afield_dotMask[lev][dir].get();
-        case FieldType::phi_fp :
+        case FieldType::phi_fp : // JRA
             SetDotMask( phi_dotMask[lev], field_type, lev, 0 );
             return phi_dotMask[lev].get();
         default:

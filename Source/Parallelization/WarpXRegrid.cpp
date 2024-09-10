@@ -168,7 +168,7 @@ void
 WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const DistributionMapping& dm)
 {
 
-    const auto RemakeMultiFab = [&](MultiFab* mf, const bool redistribute){
+    const auto RemakeMultiFab = [&](auto& mf, const bool redistribute){
         if (mf == nullptr) { return; }
         const IntVect& ng = mf->nGrowVect();
         auto pmf = std::remove_reference_t<decltype(mf)>{};
@@ -184,58 +184,58 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         // Fine patch
         for (int idim=0; idim < 3; ++idim)
         {
-            RemakeMultiFab(Bfield_fp[lev][idim].get(), true);
-            RemakeMultiFab(Efield_fp[lev][idim].get(), true);
+            RemakeMultiFab(Bfield_fp[lev][idim], true);
+            RemakeMultiFab(Efield_fp[lev][idim], true);
             if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::read_from_file) {
-                RemakeMultiFab(Bfield_fp_external[lev][idim].get(), true);
+                RemakeMultiFab(Bfield_fp_external[lev][idim], true);
             }
             if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::read_from_file) {
-                RemakeMultiFab(Efield_fp_external[lev][idim].get(), true);
+                RemakeMultiFab(Efield_fp_external[lev][idim], true);
             }
             if (mypc->m_B_ext_particle_s == "read_from_file") {
-                RemakeMultiFab(B_external_particle_field[lev][idim].get(), true);
+                RemakeMultiFab(B_external_particle_field[lev][idim], true);
             }
             if (mypc->m_E_ext_particle_s == "read_from_file") {
-                RemakeMultiFab(E_external_particle_field[lev][idim].get(), true);
+                RemakeMultiFab(E_external_particle_field[lev][idim], true);
             }
-            RemakeMultiFab(current_fp[lev][idim].get(), false);
-            RemakeMultiFab(current_store[lev][idim].get(), false);
+            RemakeMultiFab(current_fp[lev][idim], false);
+            RemakeMultiFab(current_store[lev][idim], false);
             if (current_deposition_algo == CurrentDepositionAlgo::Vay) {
-                RemakeMultiFab(current_fp_vay[lev][idim].get(), false);
+                RemakeMultiFab(current_fp_vay[lev][idim], false);
             }
             if (do_current_centering) {
-                RemakeMultiFab(current_fp_nodal[lev][idim].get(), false);
+                RemakeMultiFab(current_fp_nodal[lev][idim], false);
             }
             if (fft_do_time_averaging) {
-                RemakeMultiFab(Efield_avg_fp[lev][idim].get(), true);
-                RemakeMultiFab(Bfield_avg_fp[lev][idim].get(), true);
+                RemakeMultiFab(Efield_avg_fp[lev][idim], true);
+                RemakeMultiFab(Bfield_avg_fp[lev][idim], true);
             }
             if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
-                RemakeMultiFab(m_hybrid_pic_model->current_fp_temp[lev][idim].get(), true);
-                RemakeMultiFab(m_hybrid_pic_model->current_fp_ampere[lev][idim].get(), false);
-                RemakeMultiFab(m_hybrid_pic_model->current_fp_external[lev][idim].get(),true);
+                RemakeMultiFab(m_hybrid_pic_model->current_fp_temp[lev][idim], true);
+                RemakeMultiFab(m_hybrid_pic_model->current_fp_ampere[lev][idim], false);
+                RemakeMultiFab(m_hybrid_pic_model->current_fp_external[lev][idim],true);
             }
             if (m_eb_enabled) {
                 if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) {
-                    RemakeMultiFab(m_edge_lengths[lev][idim].get(), false);
-                    RemakeMultiFab(m_face_areas[lev][idim].get(), false);
+                    RemakeMultiFab(m_edge_lengths[lev][idim], false);
+                    RemakeMultiFab(m_face_areas[lev][idim], false);
                     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
-                        RemakeMultiFab(Venl[lev][idim].get(), false);
-                        RemakeMultiFab(m_flag_info_face[lev][idim].get(), false);
-                        RemakeMultiFab(m_flag_ext_face[lev][idim].get(), false);
-                        RemakeMultiFab(m_area_mod[lev][idim].get(), false);
-                        RemakeMultiFab(ECTRhofield[lev][idim].get(), false);
+                        RemakeMultiFab(Venl[lev][idim], false);
+                        RemakeMultiFab(m_flag_info_face[lev][idim], false);
+                        RemakeMultiFab(m_flag_ext_face[lev][idim], false);
+                        RemakeMultiFab(m_area_mod[lev][idim], false);
+                        RemakeMultiFab(ECTRhofield[lev][idim], false);
                         m_borrowing[lev][idim] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(ba, Bfield_fp[lev][idim]->ixType().toIntVect()), dm);
                     }
                 }
             }
         }
 
-        RemakeMultiFab(F_fp[lev].get(), true);
-        RemakeMultiFab(rho_fp[lev].get(), false);
+        RemakeMultiFab(F_fp[lev], true);
+        RemakeMultiFab(rho_fp[lev], false);
         // phi_fp should be redistributed since we use the solution from
         // the last step as the initial guess for the next solve
-        RemakeMultiFab(warpx.m_fields.get("phi_fp",lev), true);
+        //RemakeMultiFab(phi_fp[lev], true); // JRA
 
         if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
             RemakeMultiFab(m_hybrid_pic_model->rho_fp_temp[lev], true);
