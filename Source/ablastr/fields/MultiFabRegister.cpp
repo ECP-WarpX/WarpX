@@ -91,6 +91,23 @@ namespace ablastr::fields
         return &mf;
     }
 
+    amrex::MultiFab*
+    MultiFabRegister::get (
+        std::string name,
+        int dir,
+        int level
+    )
+    {
+        name = mf_name(name, dir, level);
+
+        if (m_mf_register.count(name) == 0) {
+            throw std::runtime_error("MultiFabRegister::get name does not exist in register: " + name);
+        }
+        amrex::MultiFab & mf = m_mf_register[name].m_mf;
+
+        return &mf;
+    }
+
     std::vector<amrex::MultiFab*>
     MultiFabRegister::get_mr_levels (
         std::string name,
@@ -102,6 +119,22 @@ namespace ablastr::fields
         for (int lvl = 0; lvl<= finest_level; lvl++)
         {
             field_on_level.push_back(get(name, lvl));
+        }
+        return field_on_level;
+    }
+
+    std::vector<amrex::MultiFab*>
+    MultiFabRegister::get_mr_levels (
+        std::string name,
+        int dir,
+        int finest_level
+    )
+    {
+        std::vector<amrex::MultiFab*> field_on_level;
+        field_on_level.reserve(finest_level+1);
+        for (int lvl = 0; lvl<= finest_level; lvl++)
+        {
+            field_on_level.push_back(get(name, dir, lvl));
         }
         return field_on_level;
     }
@@ -140,6 +173,23 @@ namespace ablastr::fields
         return name.append("[level=")
                 .append(std::to_string(level))
                 .append("]");
+    }
+
+    std::string
+    MultiFabRegister::mf_name (
+        std::string name,
+        int dir,
+        int level
+    )
+    {
+        // Add the suffix "[level=level]"
+        return mf_name(
+            name
+            .append("[dir=")
+            .append(std::to_string(dir))
+            .append("]"),
+            level
+        );
     }
 
 } // namespace ablastr::fields
