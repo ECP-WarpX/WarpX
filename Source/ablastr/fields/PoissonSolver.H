@@ -250,8 +250,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 #endif
         // Use the Multigrid (MLMG) solver if selected or on refined patches
         // but first scale rho appropriately
-        using namespace ablastr::constant::SI;
-        rho[lev]->mult(-1._rt / ep0);  // TODO: when do we "un-multiply" this? We need to document this side-effect!
+        rho[lev]->mult(-1._rt / ablastr::constant::SI::ep0);  // TODO: when do we "un-multiply" this? We need to document this side-effect!
 
 #ifdef WARPX_DIM_RZ
         constexpr bool is_rz = true;
