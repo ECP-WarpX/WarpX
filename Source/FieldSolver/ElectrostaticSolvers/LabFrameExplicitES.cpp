@@ -257,6 +257,3 @@ LabFrameExplicitES::computePhiTriDiagonal (
     // Copy phi1d to phi
     phi[lev]->ParallelCopy(phi1d_mf, 0, 0, 1);
 }
-
-
-~
