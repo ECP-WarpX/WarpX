@@ -1015,13 +1015,8 @@ public:
 
     void setPhiBC (ablastr::fields::MultiLevelScalarField& phi ) const;
 
-<<<<<<< HEAD
-    void computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
-                   const ablastr::fields::MultiLevelScalarField& phi,
-=======
     void computeE (ablastr::fields::MultiLevelVectorField& E,
-                   const std::vector<amrex::MultiFab*>& phi,
->>>>>>> 52d85c86c (Efield_fp refactor ElectrotaticSolver)
+                   const ablastr::fields::MultiLevelScalarField& phi,
                    std::array<amrex::Real, 3> beta = {{0,0,0}} ) const;
     void computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& B,
                    const ablastr::fields::MultiLevelScalarField& phi,

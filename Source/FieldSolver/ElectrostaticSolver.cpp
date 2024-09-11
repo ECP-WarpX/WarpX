@@ -524,7 +524,6 @@ WarpX::setPhiBC ( ablastr::fields::MultiLevelScalarField& phi ) const
 void
 WarpX::computeE (ablastr::fields::MultiLevelVectorField& E,
                  const ablastr::fields::MultiLevelScalarField& phi,
-                 const std::vector<amrex::MultiFab*>& phi,
                  std::array<amrex::Real, 3> const beta ) const
 {
     using ablastr::fields::Direction;
