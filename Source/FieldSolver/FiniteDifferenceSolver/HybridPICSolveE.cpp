@@ -26,7 +26,7 @@ using namespace amrex;
 void FiniteDifferenceSolver::CalculateCurrentAmpere (
     std::array< std::unique_ptr<amrex::MultiFab>, 3>& Jfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+    ablastr::fields::VectorField const& edge_lengths,
     int lev )
 {
     // Select algorithm (The choice of algorithm is a runtime option,
@@ -244,7 +244,7 @@ template<typename T_Algo>
 void FiniteDifferenceSolver::CalculateCurrentAmpereCartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+    ablastr::fields::VectorField const& edge_lengths,
     int lev
 )
 {

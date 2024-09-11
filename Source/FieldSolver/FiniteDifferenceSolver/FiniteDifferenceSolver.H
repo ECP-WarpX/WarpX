@@ -178,7 +178,7 @@ class FiniteDifferenceSolver
         void CalculateCurrentAmpere (
                       std::array< std::unique_ptr<amrex::MultiFab>, 3>& Jfield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
-                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+                      ablastr::fields::VectorField const& edge_lengths,
                       int lev );
 
     private:
@@ -318,7 +318,7 @@ class FiniteDifferenceSolver
             ablastr::fields::VectorField Efield,
             std::array< std::unique_ptr< amrex::MultiFab>, 3> const& Bfield,
             std::array< std::unique_ptr< amrex::MultiFab>, 3> const& Jfield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+            ablastr::fields::VectorField const& edge_lengths,
             amrex::Real dt,
             std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
 
@@ -361,7 +361,7 @@ class FiniteDifferenceSolver
         void CalculateCurrentAmpereCartesian (
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+            ablastr::fields::VectorField const& edge_lengths,
             int lev
         );
 #endif

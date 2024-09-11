@@ -75,11 +75,11 @@ public:
      */
     void CalculateCurrentAmpere (
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Bfield,
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths
+        ablastr::fields::MultiLevelVectorField const& edge_lengths
     );
     void CalculateCurrentAmpere (
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
-        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+        ablastr::fields::VectorField const& edge_lengths,
         int lev
     );
 

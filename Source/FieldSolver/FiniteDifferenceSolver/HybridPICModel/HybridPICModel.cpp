@@ -393,7 +393,7 @@ void HybridPICModel::GetCurrentExternal (
 
 void HybridPICModel::CalculateCurrentAmpere (
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Bfield,
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths)
+    ablastr::fields::MultiLevelVectorField const& edge_lengths)
 {
     auto& warpx = WarpX::GetInstance();
     for (int lev = 0; lev <= warpx.finestLevel(); ++lev)

@@ -337,13 +337,17 @@ WarpX::ImplicitComputeRHSE (int lev, PatchType patch_type, amrex::Real a_dt, War
     const auto face_area_lev = m_fields.get_mr_levels_alldirs("face_areas", finest_level)[lev];
     if (patch_type == PatchType::fine) { // JRA FIX
         //m_fdtd_solver_fp[lev]->EvolveE( a_Erhs_vec.getArrayVec()[lev], Bfield_fp[lev],
-        //                                current_fp[lev], m_edge_lengths[lev],
-        //                                face_area_lev, ECTRhofield[lev],
+        //                                current_fp[lev],
+        //                                m_fields.get_alldirs("edge_lengths", lev),
+        //                                m_fields.get_alldirs("face_areas", lev),
+        //                                ECTRhofield[lev],
         //                                m_fields.get("F_fp", lev), lev, a_dt );
     } else {
         //m_fdtd_solver_cp[lev]->EvolveE( a_Erhs_vec.getArrayVec()[lev], Bfield_cp[lev],
-        //                                current_cp[lev], m_edge_lengths[lev],
-        //                                face_area_lev, ECTRhofield[lev],
+        //                                current_cp[lev],
+        //                                m_fields.get_alldirs("edge_lengths", lev),
+        //                                m_fields.get_alldirs("face_areas", lev),
+        //                                ECTRhofield[lev],
         //                                m_fields.get("F_cp", lev), lev, a_dt );
     }
 
