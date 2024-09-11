@@ -144,7 +144,7 @@ ElectrostaticSolver::computePhi (const amrex::Vector<std::unique_ptr<amrex::Mult
         amrex::Vector<
             amrex::Array<amrex::MultiFab *, AMREX_SPACEDIM>
         > e_field;
-        for (int lev = 0; lev <= num_levels; ++lev) {
+        for (int lev = 0; lev < num_levels; ++lev) {
             e_field.push_back(
 #if defined(WARPX_DIM_1D_Z)
                 amrex::Array<amrex::MultiFab*, 1>{
