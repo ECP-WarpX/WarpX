@@ -995,10 +995,10 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
 
     auto n_user_int_attribs = static_cast<int>(m_user_int_attribs.size());
     auto n_user_real_attribs = static_cast<int>(m_user_real_attribs.size());
-    PlasmaParserWrapper plasma_parser_wrapper (m_user_int_attribs.size(),
-                                               m_user_real_attribs.size(),
-                                               m_user_int_attrib_parser,
-                                               m_user_real_attrib_parser);
+    const PlasmaParserWrapper plasma_parser_wrapper (m_user_int_attribs.size(),
+                                                     m_user_real_attribs.size(),
+                                                     m_user_int_attrib_parser,
+                                                     m_user_real_attrib_parser);
 
     MFItInfo info;
     if (do_tiling && Gpu::notInLaunchRegion()) {
@@ -1448,10 +1448,10 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 
     auto n_user_int_attribs = static_cast<int>(m_user_int_attribs.size());
     auto n_user_real_attribs = static_cast<int>(m_user_real_attribs.size());
-    PlasmaParserWrapper plasma_parser_wrapper (m_user_int_attribs.size(),
-                                               m_user_real_attribs.size(),
-                                               m_user_int_attrib_parser,
-                                               m_user_real_attrib_parser);
+    const PlasmaParserWrapper plasma_parser_wrapper (m_user_int_attribs.size(),
+                                                     m_user_real_attribs.size(),
+                                                     m_user_int_attrib_parser,
+                                                     m_user_real_attrib_parser);
 
     MFItInfo info;
     if (do_tiling && Gpu::notInLaunchRegion()) {

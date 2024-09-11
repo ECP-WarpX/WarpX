@@ -115,8 +115,8 @@ struct PlasmaParserHelper
                         const std::vector<std::string>& a_user_real_attribs,
                         std::map<std::string,int>& a_particle_icomps,
                         std::map<std::string,int>& a_particle_comps,
-                        const PlasmaParserWrapper& wrapper) {
-        m_wrapper_ptr = &wrapper;
+                        const PlasmaParserWrapper& wrapper) :
+        m_wrapper(&wrapper) {
         m_pa_user_int_pinned.resize(a_user_int_attribs.size());
         m_pa_user_real_pinned.resize(a_user_real_attribs.size());
 
