@@ -551,17 +551,15 @@ void WarpX::SyncCurrentAndRho ()
         {
             // With periodic single box, synchronize J and rho here,
             // even with current correction or Vay deposition
-            if (current_deposition_algo == CurrentDepositionAlgo::Vay)
-            {
-                // TODO Replace current_cp with current_cp_vay once Vay deposition is implemented with MR
-                SyncCurrent(va2vm(current_fp_vay), va2vm(current_cp), va2vm(current_buf));
-                SyncRho();
-            }
-            else
-            {
-                SyncCurrent(va2vm(current_fp), va2vm(current_cp), va2vm(current_buf));
-                SyncRho();
-            }
+            std::string const current_fp_string = (current_deposition_algo == CurrentDepositionAlgo::Vay)
+                ? "current_fp_vay" : "current_fp";
+            // TODO Replace current_cp with current_cp_vay once Vay deposition is implemented with MR
+
+            SyncCurrent( m_fields.get_mr_levels_alldirs(current_fp_string, finest_level),
+                         m_fields.get_mr_levels_alldirs("current_cp", finest_level),
+                         m_fields.get_mr_levels_alldirs("current_buf", finest_level) );
+            SyncRho();
+
         }
         else // no periodic single box
         {
