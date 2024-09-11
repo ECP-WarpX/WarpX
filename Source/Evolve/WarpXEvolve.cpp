@@ -909,7 +909,9 @@ WarpX::OneStep_sub1 (Real cur_time)
         m_fields.get_mr_levels_alldirs("current_buf", finest_level), coarse_lev);
     AddRhoFromFineLevelandSumBoundary(
         m_fields.get_mr_levels("rho_fp", finest_level),
-        m_fields.get_mr_levels("rho_cp", finest_level), charge_buf, coarse_lev, 0, ncomps);
+        m_fields.get_mr_levels("rho_cp", finest_level),
+        m_fields.get_mr_levels("rho_buf", finest_level),
+        coarse_lev, 0, ncomps);
 
     EvolveB(fine_lev, PatchType::coarse, dt[fine_lev], DtType::FirstHalf);
     EvolveF(fine_lev, PatchType::coarse, dt[fine_lev], DtType::FirstHalf);
@@ -982,7 +984,9 @@ WarpX::OneStep_sub1 (Real cur_time)
         coarse_lev);
     AddRhoFromFineLevelandSumBoundary(
         m_fields.get_mr_levels("rho_fp", finest_level),
-        m_fields.get_mr_levels("rho_cp", finest_level), charge_buf, coarse_lev, ncomps, ncomps);
+        m_fields.get_mr_levels("rho_cp", finest_level),
+        m_fields.get_mr_levels("rho_buf", finest_level),
+        coarse_lev, ncomps, ncomps);
 
     EvolveE(fine_lev, PatchType::coarse, dt[fine_lev]);
     FillBoundaryE(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolver,
@@ -1126,7 +1130,8 @@ WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type,
                  m_fields.get("current_buf", Direction{0}, lev),
                  m_fields.get("current_buf", Direction{1}, lev),
                  m_fields.get("current_buf", Direction{2}, lev),
-                 m_fields.get("rho_fp",lev), charge_buf[lev].get(),
+                 m_fields.get("rho_fp",lev),
+                 m_fields.get("rho_buf", lev),
                  Efield_cax[lev][0].get(), Efield_cax[lev][1].get(), Efield_cax[lev][2].get(),
                  Bfield_cax[lev][0].get(), Bfield_cax[lev][1].get(), Bfield_cax[lev][2].get(),
                  cur_time, dt[lev], a_dt_type, skip_current, push_type);
@@ -1147,8 +1152,8 @@ WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type,
         }
         if (m_fields.has("rho_fp", lev)) {
             ApplyInverseVolumeScalingToChargeDensity(m_fields.get("rho_fp", lev), lev);
-            if (charge_buf[lev]) {
-                ApplyInverseVolumeScalingToChargeDensity(charge_buf[lev].get(), lev-1);
+            if (m_fields.has("rho_buf", lev)) {
+                ApplyInverseVolumeScalingToChargeDensity(m_fields.get("rho_buf", lev), lev-1);
             }
         }
 // #else

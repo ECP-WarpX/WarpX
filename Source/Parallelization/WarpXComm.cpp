@@ -312,7 +312,7 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                 const amrex::IntVect& Ex_fp_stag = m_fields.get("Efield_fp",Direction{0},lev)->ixType().toIntVect();
                 const amrex::IntVect& Ey_fp_stag = m_fields.get("Efield_fp",Direction{1},lev)->ixType().toIntVect();
                 const amrex::IntVect& Ez_fp_stag = m_fields.get("Efield_fp",Direction{2},lev)->ixType().toIntVect();
-                
+
                 const amrex::IntVect& Ex_cp_stag = m_fields.get("Efield_cp",Direction{0},lev)->ixType().toIntVect();
                 const amrex::IntVect& Ey_cp_stag = m_fields.get("Efield_cp",Direction{1},lev)->ixType().toIntVect();
                 const amrex::IntVect& Ez_cp_stag = m_fields.get("Efield_cp",Direction{2},lev)->ixType().toIntVect();
@@ -1208,14 +1208,14 @@ WarpX::SyncRho () {
     SyncRho(
         m_fields.get_mr_levels("rho_fp", finest_level),
         m_fields.get_mr_levels("rho_cp", finest_level),
-        charge_buf);
+        m_fields.get_mr_levels("rho_buf", finest_level));
 }
 
 void
 WarpX::SyncRho (
     const ablastr::fields::MultiLevelScalarField& charge_fp,
     const ablastr::fields::MultiLevelScalarField& charge_cp,
-    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_buffer)
+    ablastr::fields::MultiLevelScalarField const & charge_buffer)
 {
     WARPX_PROFILE("WarpX::SyncRho()");
 
@@ -1540,7 +1540,7 @@ void WarpX::ApplyFilterandSumBoundaryRho (int /*lev*/, int glev, amrex::MultiFab
 void WarpX::AddRhoFromFineLevelandSumBoundary (
     const ablastr::fields::MultiLevelScalarField& charge_fp,
     const ablastr::fields::MultiLevelScalarField& charge_cp,
-    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_buffer,
+    ablastr::fields::MultiLevelScalarField const & charge_buffer,
     const int lev,
     const int icomp,
     const int ncomp)

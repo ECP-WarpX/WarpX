@@ -208,12 +208,12 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     }
     for (int lev = 0; lev <= max_level; lev++) {
         if (lev > 0) {
-            if (charge_buf[lev]) {
-                charge_buf[lev]->setVal(0.);
+            if (m_fields.has("rho_buf", lev)) {
+                m_fields.get("rho_buf", lev)->setVal(0.);
             }
         }
     }
-    SyncRho(amrex::GetVecOfPtrs(rho), amrex::GetVecOfPtrs(rho_coarse), charge_buf); // Apply filter, perform MPI exchange, interpolate across levels
+    SyncRho(amrex::GetVecOfPtrs(rho), amrex::GetVecOfPtrs(rho_coarse), m_fields.get_mr_levels("rho_buf", finest_level)); // Apply filter, perform MPI exchange, interpolate across levels
 
     // Get the particle beta vector
     bool const local_average = false; // Average across all MPI ranks
@@ -264,8 +264,8 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     }
     for (int lev = 0; lev <= max_level; lev++) {
         if (lev > 0) {
-            if (charge_buf[lev]) {
-                charge_buf[lev]->setVal(0.);
+            if (m_fields.has("rho_buf", lev)) {
+                m_fields.get("rho_buf", lev)->setVal(0.);
             }
         }
     }
