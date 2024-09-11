@@ -107,7 +107,7 @@ Analyze
 
 .. dropdown:: Script ``analysis.py``
 
-   .. literalinclude:: analysis.py
+   .. literalinclude:: ../../../../Examples/Tests/ionization/analysis.py
       :language: python3
       :caption: You can copy this file from ``Examples/Tests/ionization/analysis.py``.
 
