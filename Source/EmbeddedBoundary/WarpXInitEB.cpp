@@ -41,6 +41,8 @@
 #  include <cstdlib>
 #  include <string>
 
+using namespace ablastr::fields;
+
 #endif
 
 #ifdef AMREX_USE_EB
@@ -183,7 +185,7 @@ WarpX::ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ed
 
 
 void
-WarpX::ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+WarpX::ComputeFaceAreas (VectorField& face_areas,
                          const amrex::EBFArrayBoxFactory& eb_fact) {
     BL_PROFILE("ComputeFaceAreas");
 
@@ -270,7 +272,7 @@ WarpX::ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengt
 }
 
 void
-WarpX::ScaleAreas(std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+WarpX::ScaleAreas(ablastr::fields::VectorField& face_areas,
                   const std::array<amrex::Real,3>& cell_size) {
     BL_PROFILE("ScaleAreas");
 

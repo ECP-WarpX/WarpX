@@ -887,15 +887,16 @@ void
 WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
 {
     // Evolve E field in regular cells
+    auto face_areas_lev = m_fields.get_mr_levels_alldirs("face_areas", finest_level)[lev];
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->EvolveE(Efield_fp[lev], Bfield_fp[lev],
                                        current_fp[lev], m_edge_lengths[lev],
-                                       m_face_areas[lev], ECTRhofield[lev],
+                                       face_areas_lev, ECTRhofield[lev],
                                        m_fields.get("F_fp", lev), lev, a_dt );
     } else {
         m_fdtd_solver_cp[lev]->EvolveE(Efield_cp[lev], Bfield_cp[lev],
                                        current_cp[lev], m_edge_lengths[lev],
-                                       m_face_areas[lev], ECTRhofield[lev],
+                                       face_areas_lev, ECTRhofield[lev],
                                        m_fields.get("F_cp", lev), lev, a_dt );
     }
 
@@ -926,10 +927,10 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
         if (patch_type == PatchType::fine) {
             m_fdtd_solver_fp[lev]->EvolveECTRho(Efield_fp[lev], m_edge_lengths[lev],
-                                                m_face_areas[lev], ECTRhofield[lev], lev);
+                                                face_areas_lev, ECTRhofield[lev], lev);
         } else {
             m_fdtd_solver_cp[lev]->EvolveECTRho(Efield_cp[lev], m_edge_lengths[lev],
-                                                m_face_areas[lev], ECTRhofield[lev], lev);
+                                                face_areas_lev, ECTRhofield[lev], lev);
         }
     }
 #endif

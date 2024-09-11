@@ -101,9 +101,9 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
         amrex::Array4<amrex::Real> const &lx = edge_lengths[0]->array(mfi);
         amrex::Array4<amrex::Real> const &ly = edge_lengths[1]->array(mfi);
         amrex::Array4<amrex::Real> const &lz = edge_lengths[2]->array(mfi);
-        amrex::Array4<amrex::Real> const &Sx = face_areas[Direction{0}]->array(mfi);
-        amrex::Array4<amrex::Real> const &Sy = face_areas[Direction{1}]->array(mfi);
-        amrex::Array4<amrex::Real> const &Sz = face_areas[Direction{2}]->array(mfi);
+        amrex::Array4<amrex::Real> const &Sx = face_areas[0]->array(mfi);
+        amrex::Array4<amrex::Real> const &Sy = face_areas[1]->array(mfi);
+        amrex::Array4<amrex::Real> const &Sz = face_areas[2]->array(mfi);
 
         // Extract tileboxes for which to loop
         amrex::Box const &trhox = mfi.tilebox(ECTRhofield[0]->ixType().toIntVect());

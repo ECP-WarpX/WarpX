@@ -11,10 +11,13 @@
 #include "WarpX.H"
 
 #include <ablastr/warn_manager/WarnManager.H>
+#include <ablastr/fields/MultiFabRegister.H>
 
 #include <AMReX_Scan.H>
 #include <AMReX_iMultiFab.H>
 #include <AMReX_MultiFab.H>
+
+using namespace ablastr::fields;
 
 /**
 * \brief Get the value of arr in the neighbor (i_n, j_n) on the plane with normal 'dim'.

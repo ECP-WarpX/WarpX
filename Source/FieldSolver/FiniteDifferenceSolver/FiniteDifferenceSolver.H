@@ -67,7 +67,7 @@ class FiniteDifferenceSolver
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+                       ablastr::fields::VectorField const& face_areas,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
                        amrex::MultiFab const* Ffield,
                        int lev, amrex::Real dt );
@@ -84,7 +84,7 @@ class FiniteDifferenceSolver
 
         void EvolveECTRho ( std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
                             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-                            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+                            ablastr::fields::VectorField const&  face_areas,
                             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
                             int lev );
 
