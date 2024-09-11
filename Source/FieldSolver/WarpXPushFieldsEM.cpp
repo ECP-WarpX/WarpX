@@ -451,9 +451,9 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
     {
         const std::array<amrex::Real,3>& dx = WarpX::CellSize(lev);
 
-        amrex::MultiFab const& Dx = *current_fp_vay[lev][0];
-        amrex::MultiFab const& Dy = *current_fp_vay[lev][1];
-        amrex::MultiFab const& Dz = *current_fp_vay[lev][2];
+        amrex::MultiFab const& Dx = *m_fields.get("current_fp_vay", Direction{0}, lev);
+        amrex::MultiFab const& Dy = *m_fields.get("current_fp_vay", Direction{1}, lev);
+        amrex::MultiFab const& Dz = *m_fields.get("current_fp_vay", Direction{2}, lev);
 
 #if defined (WARPX_DIM_XZ)
         amrex::ignore_unused(Dy);

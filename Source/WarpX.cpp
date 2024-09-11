@@ -359,11 +359,6 @@ WarpX::WarpX ()
         current_fp_nodal.resize(nlevs_max);
     }
 
-    if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
-    {
-        current_fp_vay.resize(nlevs_max);
-    }
-
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
     {
         // Create hybrid-PIC model object if needed
