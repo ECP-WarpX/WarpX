@@ -86,7 +86,7 @@ public:
      * Function to update the E-field using Ohm's law (hybrid-PIC model).
      */
     void HybridPICSolveE (
-        ablastr::fields::MultiLevelVectorField const& Efield,
+        ablastr::fields::MultiLevelVectorField Efield,
         ablastr::fields::MultiLevelVectorField const& Jfield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Bfield,
         ablastr::fields::MultiLevelScalarField const& rhofield,
@@ -94,7 +94,7 @@ public:
         bool solve_for_Faraday);
 
     void HybridPICSolveE (
-        ablastr::fields::VectorField const& Efield,
+        ablastr::fields::VectorField Efield,
         ablastr::fields::VectorField const& Jfield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
         amrex::MultiFab* const rhofield,
@@ -102,7 +102,7 @@ public:
         int lev, bool solve_for_Faraday);
 
     void HybridPICSolveE (
-        ablastr::fields::VectorField const& Efield,
+        ablastr::fields::VectorField Efield,
         ablastr::fields::VectorField const& Jfield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
         amrex::MultiFab* const rhofield,
@@ -111,7 +111,7 @@ public:
 
     void BfieldEvolveRK (
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
-        ablastr::fields::MultiLevelVectorField const& Efield,
+        ablastr::fields::MultiLevelVectorField Efield,
         ablastr::fields::MultiLevelVectorField const& Jfield,
         ablastr::fields::MultiLevelScalarField const& rhofield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
@@ -120,7 +120,7 @@ public:
 
     void BfieldEvolveRK (
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
-        ablastr::fields::MultiLevelVectorField const& Efield,
+        ablastr::fields::MultiLevelVectorField Efield,
         ablastr::fields::MultiLevelVectorField const& Jfield,
         ablastr::fields::MultiLevelScalarField const& rhofield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,

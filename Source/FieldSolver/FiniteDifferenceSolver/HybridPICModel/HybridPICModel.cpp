@@ -422,7 +422,7 @@ void HybridPICModel::CalculateCurrentAmpere (
 }
 
 void HybridPICModel::HybridPICSolveE (
-    ablastr::fields::MultiLevelVectorField const& Efield,
+    ablastr::fields::MultiLevelVectorField Efield,
     ablastr::fields::MultiLevelVectorField const& Jfield,
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Bfield,
     ablastr::fields::MultiLevelScalarField const& rhofield,
@@ -440,7 +440,7 @@ void HybridPICModel::HybridPICSolveE (
 }
 
 void HybridPICModel::HybridPICSolveE (
-    ablastr::fields::VectorField const& Efield,
+    ablastr::fields::VectorField Efield,
     ablastr::fields::VectorField const& Jfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
     amrex::MultiFab* const rhofield,
@@ -461,7 +461,7 @@ void HybridPICModel::HybridPICSolveE (
 }
 
 void HybridPICModel::HybridPICSolveE (
-    ablastr::fields::VectorField const& Efield,
+    ablastr::fields::VectorField Efield,
     ablastr::fields::VectorField const& Jfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
     amrex::MultiFab* const rhofield,
