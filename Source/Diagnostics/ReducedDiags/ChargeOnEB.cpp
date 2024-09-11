@@ -98,6 +98,8 @@ void ChargeOnEB::ComputeDiags (const int step)
         throw std::runtime_error("ChargeOnEB::ComputeDiags only works when EBs are enabled at runtime");
     }
 #if ((defined WARPX_DIM_3D) && (defined AMREX_USE_EB))
+    using ablastr::fields::Direction;
+
     // get a reference to WarpX instance
     auto & warpx = WarpX::GetInstance();
 
