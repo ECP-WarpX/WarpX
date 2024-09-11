@@ -340,7 +340,7 @@ WarpX::computePhi (const ablastr::fields::MultiLevelScalarField& rho,
                    int const verbosity) const {
     // create a vector to our fields, sorted by level
     amrex::Vector<amrex::MultiFab *> sorted_rho;
-    std::vector<amrex::MultiFab *> sorted_phi;
+    ablastr::fields::MultiLevelScalarField sorted_phi;
     for (int lev = 0; lev <= finest_level; ++lev) {
         sorted_rho.emplace_back(rho[lev]);
         sorted_phi.emplace_back(phi[lev]);
