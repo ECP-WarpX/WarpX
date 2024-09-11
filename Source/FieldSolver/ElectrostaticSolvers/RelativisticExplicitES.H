@@ -67,11 +67,9 @@ public:
        simulation specific boundary conditions and boundary values, then add the
        E field due to that `phi` to `Efield_fp`.
     * \param[in] Efield Efield updated to include potential gradient from boundary condition
-    * \param[in] Bfield Bfield updated to include potential from boundary condition
     */
     void AddBoundaryField (
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield
     );
 };
 

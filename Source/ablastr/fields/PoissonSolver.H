@@ -340,7 +340,6 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
                 1._rt-beta_solver[2]*beta_solver[2])});
 #endif
 
-#if defined(AMREX_USE_EB)
             if (eb_enabled) {
                 // if the EB potential only depends on time, the potential can be passed
                 // as a float instead of a callable
@@ -350,7 +349,6 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
                     linop_nodelap->setEBDirichlet(boundary_handler.getPhiEB(current_time.value()));
                 }
             }
-#endif
             linop = std::move(linop_nodelap);
         } else {
             // In the absence of EB and RZ: use a more generic solver

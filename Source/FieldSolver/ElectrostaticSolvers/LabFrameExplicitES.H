@@ -2,7 +2,7 @@
  *
  * This file is part of WarpX.
  *
- * Authors: Roelof Groenwald, Arianna Formenti, Revathi Jambunathan
+ * Authors: Roelof Groenewald, Arianna Formenti, Revathi Jambunathan
  *
  * License: BSD-3-Clause-LBNL
  */

@@ -9,12 +9,13 @@
 void
 RelativisticExplicitES::InitData () {
     auto & warpx = WarpX::GetInstance();
-    bool prepare_field_solve = false;
+    bool prepare_field_solve = (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::Relativistic);
     // check if any of the particle containers have initialize_self_fields = True
     for (auto const& species : warpx.GetPartContainer()) {
         prepare_field_solve |= species->initialize_self_fields;
     }
     prepare_field_solve |= m_poisson_boundary_handler->m_boundary_potential_specified;
+
     if (prepare_field_solve) {
         m_poisson_boundary_handler->DefinePhiBCs(warpx.Geom(0));
     }
@@ -44,7 +45,7 @@ RelativisticExplicitES::ComputeSpaceChargeField (
 
     // Add the field due to the boundary potentials
     if (m_poisson_boundary_handler->m_boundary_potential_specified) {
-        AddBoundaryField(Efield_fp, Bfield_fp);
+        AddBoundaryField(Efield_fp);
     }
 }
 
@@ -56,9 +57,7 @@ RelativisticExplicitES::AddSpaceChargeField (amrex::Vector<std::unique_ptr<amrex
 {
     WARPX_PROFILE("RelativisticExplicitES::AddSpaceChargeField");
 
-    if (pc.getCharge() == 0) {
-        return;
-    }
+    if (pc.getCharge() == 0) { return; }
 
 #ifdef WARPX_DIM_RZ
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::n_rz_azimuthal_modes == 1,
@@ -86,6 +85,9 @@ RelativisticExplicitES::AddSpaceChargeField (amrex::Vector<std::unique_ptr<amrex
             cba.coarsen(warpx.refRatio(lev-1));
             rho_coarse[lev] = std::make_unique<MultiFab>(cba, warpx.DistributionMap(lev), 1, ng);
             rho_coarse[lev]->setVal(0.);
+            if (charge_buf[lev]) {
+                charge_buf[lev]->setVal(0.);
+            }
         }
     }
     // Deposit particle charge density (source of Poisson solver)
@@ -97,14 +99,6 @@ RelativisticExplicitES::AddSpaceChargeField (amrex::Vector<std::unique_ptr<amrex
     if ( !pc.do_not_deposit) {
         pc.DepositCharge(rho, local, reset, apply_boundary_and_scale_volume,
                               interpolate_across_levels);
-    }
-
-    for (int lev = 0; lev < num_levels; lev++) {
-        if (lev > 0) {
-            if (charge_buf[lev]) {
-                charge_buf[lev]->setVal(0.);
-            }
-        }
     }
     warpx.SyncRho(rho, rho_coarse, charge_buf); // Apply filter, perform MPI exchange, interpolate across levels
 
@@ -128,8 +122,7 @@ RelativisticExplicitES::AddSpaceChargeField (amrex::Vector<std::unique_ptr<amrex
 }
 
 void
-RelativisticExplicitES::AddBoundaryField (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield_fp,
-                                          amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield_fp)
+RelativisticExplicitES::AddBoundaryField (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield_fp)
 {
     WARPX_PROFILE("RelativisticExplicitES::AddBoundaryField");
 
@@ -160,7 +153,6 @@ RelativisticExplicitES::AddBoundaryField (amrex::Vector<std::array< std::unique_
                 self_fields_absolute_tolerance, self_fields_max_iters,
                 self_fields_verbosity );
 
-    // Compute the corresponding electric and magnetic field, from the potential phi.
+    // Compute the corresponding electric field, from the potential phi.
     computeE( Efield_fp, phi, beta );
-    computeB( Bfield_fp, phi, beta );
 }

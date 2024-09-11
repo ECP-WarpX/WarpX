@@ -2,7 +2,7 @@
  *
  * This file is part of WarpX.
  *
- * Authors: Remi Lehe, Roelof Groenwald, Arianna Formenti, Revathi Jambunathan
+ * Authors: Remi Lehe, Roelof Groenewald, Arianna Formenti, Revathi Jambunathan
  *
  * License: BSD-3-Clause-LBNL
  */
