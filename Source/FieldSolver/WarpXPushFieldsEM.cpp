@@ -800,7 +800,10 @@ WarpX::PushPSATD ()
     PSATDPushSpectralFields();
 
     // Inverse FFT of E, B, F, and G
-    PSATDBackwardTransformEB(Efield_fp, Bfield_fp, Efield_cp, Bfield_cp);
+    PSATDBackwardTransformEB( m_fields.get_mr_levels_alldirs("Efield_fp",finest_level),
+                              Bfield_fp,
+                              m_fields.get_mr_levels_alldirs("Efield_cp",finest_level),
+                              Bfield_cp);
     if (WarpX::fft_do_time_averaging) {
         auto Efield_avg_fp = m_fields.get_mr_levels_alldirs("Efield_avg_fp", finest_level);
         auto Bfield_avg_fp = m_fields.get_mr_levels_alldirs("Bfield_avg_fp", finest_level);
