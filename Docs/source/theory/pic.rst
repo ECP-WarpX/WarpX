@@ -436,14 +436,14 @@ of this model can be found in the section
 
 Pseudo Spectral Analytical Time Domain with arbitrary charge and current-density time dependencies (PSATD-JRhom)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The modified Maxwell’s equations in Fourier space are given by
+In :cite:`pt-shapovalPRE2024` we introduce a formulation of the particle-in-cell (PIC) method for the modeling of relativistic plasmas, which leverages the ability of the pseudo-spectral analytical time-domain solver (PSATD) to handle arbitrary time dependencies of the charge and current densities during one PIC cycle (applied to second order polynomial dependencies here). 
+The formulation is applied to a modified set of Maxwell's equations (given in Fourier space),
 
 .. math:: \frac{\partial\mathbf{\tilde{E}}}{\partial t} = i\mathbf{k}\times\mathbf{\tilde{B}}-\mathbf{\tilde{J}} + i\mathbf{k}{\tilde{F}}
 .. math:: \frac{\partial\mathbf{\tilde{B}}}{\partial t} = -i\mathbf{k}\times\mathbf{\tilde{E}}
 .. math:: \frac{\partial{\tilde{F}}}{\partial t} = i\mathbf{k}\mathbf{\tilde{E}} - \tilde{\rho}
 
-In addition to the usual Maxwell-Faraday and Ampere-Maxwell equations, the system contains an extra equation for
+Here, in addition to the usual Maxwell-Faraday and Ampere-Maxwell equations, the system contains an extra equation for
 the scalar field :math:`\tilde{F}`, which propagates deviations to Gauss' law.
 (Note that, in the case where Gauss' law is verified in the PIC simulation, :math:`\tilde{F}=0`, the modified Maxwell’s equations to the standard Maxwell's equations.)
 These additional terms were introduced in :cite:p:`pt-Vayfed1996` from the potential formulation in the Lorentz gauge
@@ -451,7 +451,7 @@ and used as a propagative divergence cleaning procedure, as an alternate to the 
 or :cite:p:`pt-Marderjcp87` diffusive ones. The abovementioned earlier works :cite:p:`pt-Vayfed1996,pt-Munzjcp2000` considered this
 formulation in the context of the standard PIC method using FDTD discretization, while PSATD-JRhom introduced in :cite:`pt-shapovalPRE2024`
 exploits the PSATD discretization of the modified Maxwell's equations.
-In contrast to the standard PSATD algorithm :cite:p:`pt-VayJCP13`, where :math:`\mathbf{\tilde{J}}` is assumed to be constant in time,
+In contrast to the standard PSATD algorithm :cite:p:`pt-VayJCP2013`, where :math:`\mathbf{\tilde{J}}` is assumed to be constant in time,
 and :math:`\tilde{\rho}` is assumed to be linear in time, within a given timestep :math:`\Delta t`, the PSATD-JRhom provides more general time dependencies for :math:`\mathbf{\tilde{J}}` and :math:`\tilde{\rho}` within one timestep,
 which is divided into :math:`m` subintervals of equal size :math:`\delta t = \Delta t/m`. During these subintervals, :math:`\mathbf{\tilde{J}}` and :math:`\tilde{\rho}` are considered to be either **piecewise constant** (macroparticles deposit their charge density in the middle of each time subinterval),
 **piecewise linear** (macroparticles deposit their charge density at the edge of each time subinterval), or **piecewise quadratic** (macroparticles deposit their charge density at the edge of each time subinterval) in time.
@@ -463,28 +463,55 @@ which is divided into :math:`m` subintervals of equal size :math:`\delta t = \De
 
    Diagrams illustrating various time dependencies of the current density :math:`\mathbf{\tilde{J}}` and charge density :math:`\tilde{\rho}` for constant/linear (CL), both constant (CC), linear (LL) and quadratic (QQ) dependencies with :math:`m` subintervals: (first column) :math:`m=1`, (second) :math:`m=2` and (third) :math:`m=4`. CL1 corresponds to the standard PSATD PIC method. The triangle and circle glyphs represent the times at which the macroparticles deposit :math:`\mathbf{\tilde{J}}` and :math:`\tilde{\rho}` on the grid, respectively. The dashed and solid lines represent the assumed time dependency of :math:`\mathbf{\tilde{J}}` and :math:`\tilde{\rho}` within one timestep, when integrating the Maxwell equations analytically.
 
-Using the piecewise definition of :math:`\hat{\rho}` and :math:`\mathbf{\tilde{J}}`, the modified Maxwell's equations can be integrated analytically over one timestep :math:`\Delta t`, i.e., from :math:`t=n\Delta t` to :math:`t=(n+1)\Delta t`. In practice, this is done by sequentially integrating these equations over each subinterval :math:`\ell \in [0,m-1]`:
+Using the piecewise definition of :math:`\hat{\rho}` and :math:`\mathbf{\tilde{J}}`, the modified Maxwell's equations can be integrated analytically over one timestep :math:`\Delta t`, i.e., from :math:`t=n\Delta t` to :math:`t=(n+1)\Delta t`. In practice, this is done by sequentially integrating these equations over each subinterval :math:`\ell \in [0,m-1]`.
 Final discretized equations write as:
 
 .. math::
 
    \begin{align}
    \begin{split}
-   {\mathbf{\tilde{E}}}^{n+(\ell+1)/m} & = C{\mathbf{\tilde{J}}}^{n+\ell/m}+ic^2\frac{S}{ck}\mathbf{k}\times{\mathbf{\tilde{J}}}^{n+\ell/m}+ic^2\frac{S}{ck}\hat{F}^{n+\ell/m}\mathbf{k} \\
+   {\mathbf{\tilde{E}}}^{n+(\ell+1)/m} & = C{\mathbf{\tilde{J}}}^{n+\ell/m}+ic^2\frac{S}{ck}\mathbf{k}\times{\mathbf{\tilde{J}}}^{n+\ell/m}+ic^2\frac{S}{ck}\tilde{F}^{n+\ell/m}\mathbf{k} \\
    &+ \frac{1}{\varepsilon_0 ck}\left(Y_3\mathbf{a_J} + Y_2\mathbf{b_J} - S\mathbf{c_J}\right)
-   + \frac{ic^2}{\varepsilon_0 c^2k^2}\left({Y_1}a_{\rho}-Y_{5}b_{\rho}-Y_{4}c_{\rho}\right)\mathbf{k}
+   + \frac{ic^2}{\varepsilon_0 c^2k^2}\left({Y_1}a_{\rho}-Y_{5}b_{\rho}-Y_{4}c_{\rho}\right)\mathbf{k},
    \\[4pt]
    \end{split}
    \\[4pt]
-      \begin{split}
-         {\mathbf{\tilde{B}}}^{n+(\ell+1)/m} & = C {\mathbf{\tilde{B}}}^{n+\ell/m}-i\frac{S}{ck}\mathbf{k}\times{\mathbf{\tilde{E}}}^{n+\ell/m}-\frac{i}{\eps_0 c^2k^2}\kb\times\left(Y_1\mathbf{a_J} -Y_5\mathbf{b_J} -Y_4\mathbf{c_J} \right)
-      \end{split}
+   \begin{split}
+   {\mathbf{\tilde{B}}}^{n+(\ell+1)/m} & = C {\mathbf{\tilde{B}}}^{n+\ell/m}-i\frac{S}{ck}\mathbf{k}\times{\mathbf{\tilde{E}}}^{n+\ell/m}
+   - \frac{i}{\varepsilon_0 c^2k^2}\mathbf{k}\times\left(Y_1\mathbf{a_J} -Y_5\mathbf{b_J} -Y_4\mathbf{c_J} \right),
+   \end{split}
    \\[4pt]
-   ..    \begin{split}
-   ..       {{\tilde{F}}}^{n+(\ell+1)/m} & = C \tilde{F}^{n+\ell/m}+i\frac{S}{ck}\mathbf{k} \cdot\wh {\mathbf{\tilde{E}}}^{n+\ell/m}+\frac{i}{\eps_0 c^2k^2}\kb\cdot\left(Y_1\mathbf{a_J}-Y_5\mathbf{b_J}-Y_4\mathbf{c_J}\right)
-   .. &+ \frac{1}{\varepsilon_0 ck}\left({Y_3}a_{\rho}+{Y_2}b_{\rho}-Sc_{\rho}\right)
-   ..    \end{split}
+   \begin{split}
+      {{\tilde{F}}}^{n+(\ell+1)/m} & = C \tilde{F}^{n+\ell/m}+i\frac{S}{ck}\mathbf{k} \cdot {\mathbf{\tilde{E}}}^{n+\ell/m}+\frac{i}{\varepsilon_0 c^2k^2}\mathbf{k}\cdot\left(Y_1\mathbf{a_J}-Y_5\mathbf{b_J}-Y_4\mathbf{c_J}\right) \\
+   &+ \frac{1}{\varepsilon_0 ck}\left({Y_3}a_{\rho}+{Y_2}b_{\rho}-Sc_{\rho}\right),
+   \end{split}
    \end{align}
+
+where 
+
+.. math::
+
+   \begin{aligned}
+   C &= \cos(ck\delta t), \ S = \sin(ck\delta t), 
+   \\
+   Y_1 & = \frac{(1-C)(8-c^2k^2\delta t^2)-4Sck\delta t}{2 c^2 k^2 \delta t^2},
+   \\
+   Y_2 & = \frac{2(C-1)+ S ck\delta t }{2 ck\delta t},
+   \\
+   Y_3 & = \frac{S(8- c^2k^2\delta t^2 ) - 4ck\delta t(1+C)}{2c^2 k^2 \delta t^2},
+   \\
+   Y_4 &= (1-C), \ Y_5 = \frac{(1+C) ck\delta t - 2S}{2ck \delta t}.
+   \end{aligned}
+
+Here, :math:`\mathbf{a_J}, \mathbf{b_J}, \mathbf{c_J}, a_{\rho}, b_{\rho}, c_{\rho}` are polynomial coefficients based on the time dependencies of the current  and charge densities, given in Table I:
+
+.. _fig-j_rho_table:
+
+.. figure:: j_rho_table.png
+   :alt: [fig:j_rho_table] Polynomial coefficients based on the time dependency of the current and charge densities :math:`{\mathbf{\tilde{J}}}(t)` and :math:`\rho(t)` over one time subinterval, :math:`\delta t = \Delta t/m`}. 
+Polynomial coefficients based on the time dependency of the current and charge densities :math:`{\mathbf{\tilde{J}}}(a)` and :math:`\rho(t)` over one time subinterval, :math:`\delta t = \Delta t/m`.
+
+Detailed analysis and testings revealed that, under some condition, the formulation can expand the range of numerical parameters under which PIC simulations are stable and accurate when modeling relativistic plasmas such as, e.g., plasma-based particle accelerators. 
 
 Current deposition
 ------------------
