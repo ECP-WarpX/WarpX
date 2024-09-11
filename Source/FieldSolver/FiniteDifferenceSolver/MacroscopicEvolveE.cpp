@@ -36,7 +36,7 @@
 using namespace amrex;
 
 void FiniteDifferenceSolver::MacroscopicEvolveE (
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
+    ablastr::fields::VectorField Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
@@ -99,7 +99,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
 
 template<typename T_Algo, typename T_MacroAlgo>
 void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
+    ablastr::fields::VectorField Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,

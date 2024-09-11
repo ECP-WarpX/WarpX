@@ -42,7 +42,7 @@ using namespace amrex;
  */
 void FiniteDifferenceSolver::EvolveBPML (
     std::array< amrex::MultiFab*, 3 > Bfield,
-    std::array< amrex::MultiFab*, 3 > const Efield,
+    ablastr::fields::VectorField const Efield,
     amrex::Real const dt,
     const bool dive_cleaning) {
 
@@ -78,7 +78,7 @@ void FiniteDifferenceSolver::EvolveBPML (
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveBPMLCartesian (
     std::array< amrex::MultiFab*, 3 > Bfield,
-    std::array< amrex::MultiFab*, 3 > const Efield,
+    ablastr::fields::VectorField const Efield,
     amrex::Real const dt,
     const bool dive_cleaning) {
 

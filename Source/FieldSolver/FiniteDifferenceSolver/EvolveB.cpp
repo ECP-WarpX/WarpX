@@ -49,7 +49,7 @@ using namespace amrex;
  */
 void FiniteDifferenceSolver::EvolveB (
     [[maybe_unused]] std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
-    [[maybe_unused]] std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
+    [[maybe_unused]] ablastr::fields::VectorField const& Efield,
     [[maybe_unused]] amrex::MultiFab const * Gfield,
     [[maybe_unused]] ablastr::fields::VectorField const& face_areas,
     [[maybe_unused]] std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_mod,
@@ -95,7 +95,7 @@ void FiniteDifferenceSolver::EvolveB (
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveBCartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
+    ablastr::fields::VectorField const& Efield,
     amrex::MultiFab const * Gfield,
     int lev, amrex::Real const dt ) {
 
@@ -360,7 +360,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveBCylindrical (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
+    ablastr::fields::VectorField const& Efield,
     int lev, amrex::Real const dt ) {
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
