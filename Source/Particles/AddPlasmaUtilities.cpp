@@ -107,23 +107,14 @@ bool find_overlap_flux (const amrex::RealBox& tile_realbox, const amrex::RealBox
     return no_overlap;
 }
 
-PlasmaParserHelper::PlasmaParserHelper (const std::size_t a_num_user_int_attribs,
-                                        const std::size_t a_num_user_real_attribs,
-                                        const amrex::Vector< std::unique_ptr<amrex::Parser> >& a_user_int_attrib_parser,
-                                        const amrex::Vector< std::unique_ptr<amrex::Parser> >& a_user_real_attrib_parser)
+PlasmaParserWrapper::PlasmaParserWrapper (const std::size_t a_num_user_int_attribs,
+                                          const std::size_t a_num_user_real_attribs,
+                                          const amrex::Vector< std::unique_ptr<amrex::Parser> >& a_user_int_attrib_parser,
+                                          const amrex::Vector< std::unique_ptr<amrex::Parser> >& a_user_real_attrib_parser)
 
 {
     m_user_int_attrib_parserexec_pinned.resize(a_num_user_int_attribs);
     m_user_real_attrib_parserexec_pinned.resize(a_num_user_real_attribs);
-    m_pa_user_int_pinned.resize(a_num_user_int_attribs);
-    m_pa_user_real_pinned.resize(a_num_user_real_attribs);
-
-#ifdef AMREX_USE_GPU
-    m_d_pa_user_int.resize(a_num_user_int_attribs);
-    m_d_pa_user_real.resize(a_num_user_real_attribs);
-    m_d_user_int_attrib_parserexec.resize(a_num_user_int_attribs);
-    m_d_user_real_attrib_parserexec.resize(a_num_user_real_attribs);
-#endif
 
     for (std::size_t ia = 0; ia < a_num_user_int_attribs; ++ia) {
         m_user_int_attrib_parserexec_pinned[ia] = a_user_int_attrib_parser[ia]->compile<7>();
@@ -153,7 +144,7 @@ amrex::ParserExecutor<7> const* PlasmaParserHelper::getUserIntParserExecData () 
 #ifdef AMREX_USE_GPU
     return m_d_user_int_attrib_parserexec.dataPtr();
 #else
-    return m_user_int_attrib_parserexec_pinned.dataPtr();
+    return m_wrapper_ptr->m_user_int_attrib_parserexec_pinned.dataPtr();
 #endif
 }
 
@@ -161,6 +152,6 @@ amrex::ParserExecutor<7> const* PlasmaParserHelper::getUserRealParserExecData ()
 #ifdef AMREX_USE_GPU
     return m_d_user_real_attrib_parserexec.dataPtr();
 #else
-    return m_user_real_attrib_parserexec_pinned.dataPtr();
+    return m_wrapper_ptr->m_user_real_attrib_parserexec_pinned.dataPtr();
 #endif
 }

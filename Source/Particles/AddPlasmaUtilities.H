@@ -93,22 +93,40 @@ amrex::Real compute_scale_fac_area (const amrex::GpuArray<amrex::Real, AMREX_SPA
 }
 
 /*
-  This struct encapsulates several data structures needed for using the parser during plasma
+  These structs encapsulates several data structures needed for using the parser during plasma
   injection.
  */
+struct PlasmaParserWrapper
+{
+    PlasmaParserWrapper (std::size_t a_num_user_int_attribs,
+                         std::size_t a_num_user_real_attribs,
+                         const amrex::Vector< std::unique_ptr<amrex::Parser> >& a_user_int_attrib_parser,
+                         const amrex::Vector< std::unique_ptr<amrex::Parser> >& a_user_real_attrib_parser);
+
+    amrex::Gpu::PinnedVector< amrex::ParserExecutor<7> > m_user_int_attrib_parserexec_pinned;
+    amrex::Gpu::PinnedVector< amrex::ParserExecutor<7> > m_user_real_attrib_parserexec_pinned;
+};
+
 struct PlasmaParserHelper
 {
-    PlasmaParserHelper (std::size_t a_num_user_int_attribs,
-                        std::size_t a_num_user_real_attribs,
-                        const amrex::Vector< std::unique_ptr<amrex::Parser> >& a_user_int_attrib_parser,
-                        const amrex::Vector< std::unique_ptr<amrex::Parser> >& a_user_real_attrib_parser);
-
     template <typename SoAType>
-    void prepareData (SoAType& a_soa, std::size_t old_size,
-                      const std::vector<std::string>& a_user_int_attribs,
-                      const std::vector<std::string>& a_user_real_attribs,
-                      std::map<std::string,int>& a_particle_icomps,
-                      std::map<std::string,int>& a_particle_comps) {
+    PlasmaParserHelper (SoAType& a_soa, std::size_t old_size,
+                        const std::vector<std::string>& a_user_int_attribs,
+                        const std::vector<std::string>& a_user_real_attribs,
+                        std::map<std::string,int>& a_particle_icomps,
+                        std::map<std::string,int>& a_particle_comps,
+                        const PlasmaParserWrapper& wrapper) {
+        m_wrapper_ptr = &wrapper;
+        m_pa_user_int_pinned.resize(a_user_int_attribs.size());
+        m_pa_user_real_pinned.resize(a_user_real_attribs.size());
+
+#ifdef AMREX_USE_GPU
+        m_d_pa_user_int.resize(a_user_int_attribs.size());
+        m_d_pa_user_real.resize(a_user_real_attribs.size());
+        m_d_user_int_attrib_parserexec.resize(a_user_int_attribs.size());
+        m_d_user_real_attrib_parserexec.resize(a_user_real_attribs.size());
+#endif
+
         for (std::size_t ia = 0; ia < a_user_int_attribs.size(); ++ia) {
             m_pa_user_int_pinned[ia] = a_soa.GetIntData(a_particle_icomps[a_user_int_attribs[ia]]).data() + old_size;
         }
@@ -121,9 +139,9 @@ struct PlasmaParserHelper
                               m_pa_user_int_pinned.end(), m_d_pa_user_int.begin());
         amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, m_pa_user_real_pinned.begin(),
                               m_pa_user_real_pinned.end(), m_d_pa_user_real.begin());
-        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, m_user_int_attrib_parserexec_pinned.begin(),
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, wrapper.m_user_int_attrib_parserexec_pinned.begin(),
                               m_user_int_attrib_parserexec_pinned.end(), m_d_user_int_attrib_parserexec.begin());
-        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, m_user_real_attrib_parserexec_pinned.begin(),
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, wrapper.m_user_real_attrib_parserexec_pinned.begin(),
                               m_user_real_attrib_parserexec_pinned.end(), m_d_user_real_attrib_parserexec.begin());
 #endif
     }
@@ -133,8 +151,6 @@ struct PlasmaParserHelper
     amrex::ParserExecutor<7> const* getUserIntParserExecData ();
     amrex::ParserExecutor<7> const* getUserRealParserExecData ();
 
-    amrex::Gpu::PinnedVector< amrex::ParserExecutor<7> > m_user_int_attrib_parserexec_pinned;
-    amrex::Gpu::PinnedVector< amrex::ParserExecutor<7> > m_user_real_attrib_parserexec_pinned;
     amrex::Gpu::PinnedVector<int*> m_pa_user_int_pinned;
     amrex::Gpu::PinnedVector<amrex::ParticleReal*> m_pa_user_real_pinned;
 
@@ -146,6 +162,7 @@ struct PlasmaParserHelper
     amrex::Gpu::DeviceVector< amrex::ParserExecutor<7> > m_d_user_int_attrib_parserexec;
     amrex::Gpu::DeviceVector< amrex::ParserExecutor<7> > m_d_user_real_attrib_parserexec;
 #endif
+    const PlasmaParserWrapper* m_wrapper_ptr;
 };
 
 #endif /*WARPX_ADDPLASMAUTILITIES_H_*/
