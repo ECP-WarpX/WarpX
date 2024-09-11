@@ -503,6 +503,7 @@ WarpX::InitData ()
 {
     WARPX_PROFILE("WarpX::InitData()");
     ablastr::parallelization::check_mpi_thread_level();
+    using ablastr::fields::Direction;
 
 #ifdef WARPX_QED
     Print() << "PICSAR (" << WarpX::PicsarVersion() << ")\n";
@@ -553,9 +554,9 @@ WarpX::InitData ()
         const int lev_zero = 0;
         m_macroscopic_properties->InitData(
             Geom(lev_zero),
-            getField(warpx::fields::FieldType::Efield_fp, lev_zero,0).ixType().toIntVect(),
-            getField(warpx::fields::FieldType::Efield_fp, lev_zero,1).ixType().toIntVect(),
-            getField(warpx::fields::FieldType::Efield_fp, lev_zero,2).ixType().toIntVect()
+            m_fields.get("Efield_fp",Direction{0},lev_zero)->ixType().toIntVect(),
+            m_fields.get("Efield_fp",Direction{1},lev_zero)->ixType().toIntVect(),
+            m_fields.get("Efield_fp",Direction{2},lev_zero)->ixType().toIntVect()
         );
     }
 

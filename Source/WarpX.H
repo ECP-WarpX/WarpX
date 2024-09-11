@@ -1011,11 +1011,11 @@ public:
                      amrex::Real required_precision=amrex::Real(1.e-11),
                      amrex::Real absolute_tolerance=amrex::Real(0.0),
                      int max_iters=200,
-                     int verbosity=2) const;
+                     int verbosity=2);
 
     void setPhiBC (ablastr::fields::MultiLevelScalarField& phi ) const;
 
-    void computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
+    void computeE (ablastr::fields::MultiLevelVectorField& E,
                    const ablastr::fields::MultiLevelScalarField& phi,
                    std::array<amrex::Real, 3> beta = {{0,0,0}} ) const;
     void computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& B,
