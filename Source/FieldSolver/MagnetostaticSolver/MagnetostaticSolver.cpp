@@ -74,8 +74,6 @@ WarpX::ComputeMagnetostaticField()
 void
 WarpX::AddMagnetostaticFieldLabFrame()
 {
-    using ablastr::fields::va2vm;
-
     WARPX_PROFILE("WarpX::AddMagnetostaticFieldLabFrame");
 
     // Store the boundary conditions for the field solver if they haven't been
@@ -112,7 +110,10 @@ WarpX::AddMagnetostaticFieldLabFrame()
     }
 #endif
 
-    SyncCurrent(va2vm(current_fp), va2vm(current_cp), va2vm(current_buf)); // Apply filter, perform MPI exchange, interpolate across levels
+    SyncCurrent(
+        m_fields.get_mr_levels_alldirs("current_fp", finest_level),
+        m_fields.get_mr_levels_alldirs("current_cp", finest_level),
+        m_fields.get_mr_levels_alldirs("current_buf", finest_level) );
 
     // set the boundary and current density potentials
     setVectorPotentialBC(m_fields.get_mr_levels_alldirs("vector_potential_fp_nodal", finest_level));

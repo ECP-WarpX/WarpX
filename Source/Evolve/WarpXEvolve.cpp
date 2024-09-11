@@ -543,7 +543,6 @@ void WarpX::HandleParticlesAtBoundaries (int step, amrex::Real cur_time, int num
 
 void WarpX::SyncCurrentAndRho ()
 {
-    using ablastr::fields::va2vm;
     using ablastr::fields::Direction;
 
     if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
@@ -825,8 +824,6 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
 void
 WarpX::OneStep_sub1 (Real cur_time)
 {
-    using ablastr::fields::va2vm;
-
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         electrostatic_solver_id == ElectrostaticSolverAlgo::None,
         "Electrostatic solver cannot be used with sub-cycling."
