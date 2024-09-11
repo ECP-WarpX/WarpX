@@ -1296,7 +1296,9 @@ void WarpX::SumBoundaryJ (
     const int idim,
     const amrex::Periodicity& period)
 {
-    amrex::MultiFab& J = *current[lev][idim];
+    using ablastr::fields::Direction;
+
+    amrex::MultiFab& J = *current[lev][Direction{idim}];
 
     const amrex::IntVect ng = J.nGrowVect();
     amrex::IntVect ng_depos_J = get_ng_depos_J();
@@ -1358,13 +1360,15 @@ void WarpX::AddCurrentFromFineLevelandSumBoundary (
     const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_buffer,
     const int lev)
 {
+    using ablastr::fields::va2vm;
+
     const amrex::Periodicity& period = Geom(lev).periodicity();
 
     if (use_filter)
     {
-        ApplyFilterJ(J_fp, lev);
+        ApplyFilterJ(va2vm(J_fp), lev);
     }
-    SumBoundaryJ(J_fp, lev, period);
+    SumBoundaryJ(va2vm(J_fp), lev, period);
 
     if (lev < finest_level)
     {
@@ -1381,8 +1385,8 @@ void WarpX::AddCurrentFromFineLevelandSumBoundary (
 
             if (use_filter && J_buffer[lev+1][idim])
             {
-                ApplyFilterJ(J_cp, lev+1, idim);
-                ApplyFilterJ(J_buffer, lev+1, idim);
+                ApplyFilterJ(va2vm(J_cp), lev+1, idim);
+                ApplyFilterJ(va2vm(J_buffer), lev+1, idim);
 
                 MultiFab::Add(
                     *J_buffer[lev+1][idim], *J_cp[lev+1][idim],
@@ -1396,7 +1400,7 @@ void WarpX::AddCurrentFromFineLevelandSumBoundary (
             }
             else if (use_filter) // but no buffer
             {
-                ApplyFilterJ(J_cp, lev+1, idim);
+                ApplyFilterJ(va2vm(J_cp), lev+1, idim);
 
                 ablastr::utils::communication::ParallelAdd(
                     mf, *J_cp[lev+1][idim], 0, 0,
@@ -1424,7 +1428,7 @@ void WarpX::AddCurrentFromFineLevelandSumBoundary (
                     ng, amrex::IntVect(0),
                     do_single_precision_comms, period);
             }
-            SumBoundaryJ(J_cp, lev+1, idim, period);
+            SumBoundaryJ(va2vm(J_cp), lev+1, idim, period);
             MultiFab::Add(*J_fp[lev][idim], mf, 0, 0, J_fp[lev+1][idim]->nComp(), 0);
         }
     }
