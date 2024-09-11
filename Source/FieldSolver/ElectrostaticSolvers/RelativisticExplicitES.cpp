@@ -127,10 +127,6 @@ RelativisticExplicitES::AddSpaceChargeField (amrex::Vector<std::unique_ptr<amrex
 
 }
 
-/* Compute the potential `phi` by solving the Poisson equation with the
-   simulation specific boundary conditions and boundary values, then add the
-   E field due to that `phi` to `Efield_fp`.
-*/
 void
 RelativisticExplicitES::AddBoundaryField (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield_fp,
                                           amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield_fp)

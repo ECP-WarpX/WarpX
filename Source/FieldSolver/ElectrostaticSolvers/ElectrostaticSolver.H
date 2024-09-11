@@ -45,6 +45,15 @@ public:
 
     virtual void InitData () {}
 
+    /**
+     * \brief Computes charge density, rho, and solves Poisson's equation
+     *        to obtain the associated electrostatic potential, phi.
+     *        Using the electrostatic potential, the electric field is computed
+     *        in lab frame, and if relativistic, then the electric and magnetic
+     *        fields are computed using potential, phi, and
+     *        velocity of source for potential, beta.
+     *        This function must be defined in the derived classes.
+     */
     virtual void ComputeSpaceChargeField (
         [[maybe_unused]] amrex::Vector< std::unique_ptr<amrex::MultiFab> >& rho_fp,
         [[maybe_unused]] amrex::Vector< std::unique_ptr<amrex::MultiFab> >& rho_cp,
