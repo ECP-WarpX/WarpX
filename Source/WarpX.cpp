@@ -3325,18 +3325,11 @@ void
 WarpX::StoreCurrent (int lev)
 {
     using ablastr::fields::Direction;
-<<<<<<< HEAD
     for (int idim = 0; idim < 3; ++idim) {
-        if (m_fields.get("current_store",Direction{idim},lev)) {
-            MultiFab::Copy(*m_fields.get("current_store",Direction{idim},lev), *current_fp[lev][idim],
-                           0, 0, 1, m_fields.get("current_store",Direction{idim},lev)->nGrowVect());
-=======
-
-    for (int idim = 0; idim < 3; ++idim) {
-        if (current_store[lev][idim]) {
-            MultiFab::Copy(*current_store[lev][idim], *m_fields.get("current_fp", Direction{idim}, lev),
-                           0, 0, 1, current_store[lev][idim]->nGrowVect());
->>>>>>> 13525fccc0592c1d45b029cf653d5696da69ee32
+        if (m_fields.get("current_store", Direction{idim},lev)) {
+            MultiFab::Copy(*m_fields.get("current_store", Direction{idim}, lev), 
+                           *m_fields.get("current_fp", Direction{idim}, lev),
+                           0, 0, 1, m_fields.get("current_store", Direction{idim}, lev)->nGrowVect());
         }
     }
 }
@@ -3345,19 +3338,13 @@ void
 WarpX::RestoreCurrent (int lev)
 {
     using ablastr::fields::Direction;
-<<<<<<< HEAD
-    for (int idim = 0; idim < 3; ++idim) {
-        if (m_fields.get("current_store",Direction{idim},lev)) {
-            std::swap(current_fp[lev][idim], m_fields.get("current_store",Direction{idim},lev));
-=======
 
     for (int idim = 0; idim < 3; ++idim) {
-        if (current_store[lev][idim]) {
+        if (m_fields.get("current_store", Direction{idim}, lev)) {
             std::swap(
                 *m_fields.get("current_fp", Direction{idim}, lev),
-                *current_store[lev][idim]
+                *m_fields.get("current_store", Direction{idim}, lev)
             );
->>>>>>> 13525fccc0592c1d45b029cf653d5696da69ee32
         }
     }
 }
