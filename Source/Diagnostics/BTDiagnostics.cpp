@@ -601,7 +601,7 @@ BTDiagnostics::UpdateVarnamesForRZopenPMD ()
 {
 #ifdef WARPX_DIM_RZ
     auto & warpx = WarpX::GetInstance();
-    const int ncomp_multimodefab = warpx.getFieldPointer(FieldType::Efield_aux, 0,0)->nComp();
+    const int ncomp_multimodefab = warpx.m_fields.get("Efield_aux", 0, 0)->nComp();
     const int ncomp = ncomp_multimodefab;
 
 
