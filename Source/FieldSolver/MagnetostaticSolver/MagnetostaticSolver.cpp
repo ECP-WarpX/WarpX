@@ -145,7 +145,7 @@ WarpX::AddMagnetostaticFieldLabFrame()
 */
 void
 WarpX::computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>,3>>& curr,
-                               std::vector<ablastr::utils::ConstMap<ablastr::fields::Direction, amrex::MultiFab*>> const& A,
+                               ablastr::fields::MultiLevelVectorField const& A,
                                Real const required_precision,
                                Real absolute_tolerance,
                                int const max_iters,
@@ -211,7 +211,7 @@ WarpX::computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<
    \param[inout] A The vector potential
 */
 void
-WarpX::setVectorPotentialBC (std::vector<ablastr::utils::ConstMap<ablastr::fields::Direction, amrex::MultiFab*>> const& A) const
+WarpX::setVectorPotentialBC (ablastr::fields::MultiLevelVectorField const& A) const
 {
     using ablastr::fields::Direction;
 
