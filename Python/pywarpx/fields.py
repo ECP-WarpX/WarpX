@@ -829,19 +829,19 @@ def GCPWrapper(level=0, include_ghosts=False):
 
 def EdgeLengthsxWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="m_edge_lengths[x]", level=level, include_ghosts=include_ghosts
+        mf_name="edge_lengths[x]", level=level, include_ghosts=include_ghosts
     )
 
 
 def EdgeLengthsyWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="m_edge_lengths[y]", level=level, include_ghosts=include_ghosts
+        mf_name="edge_lengths[y]", level=level, include_ghosts=include_ghosts
     )
 
 
 def EdgeLengthszWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="m_edge_lengths[z]", level=level, include_ghosts=include_ghosts
+        mf_name="edge_lengths[z]", level=level, include_ghosts=include_ghosts
     )
 
 

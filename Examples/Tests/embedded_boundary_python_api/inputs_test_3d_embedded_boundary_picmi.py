@@ -94,7 +94,7 @@ face_areas_x = fields.FaceAreasxWrapper()
 face_areas_y = fields.FaceAreasyWrapper()
 face_areas_z = fields.FaceAreaszWrapper()
 
-print("======== Testing the wrappers of m_edge_lengths =========")
+print("======== Testing the wrappers of edge_lengths =========")
 
 ly_slice_x = edge_lengths_y[nx // 2, :, :]
 lz_slice_x = edge_lengths_z[nx // 2, :, :]
