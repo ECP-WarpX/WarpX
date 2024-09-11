@@ -74,6 +74,8 @@ WarpX::ComputeMagnetostaticField()
 void
 WarpX::AddMagnetostaticFieldLabFrame()
 {
+    using ablastr::fields::Direction;
+
     WARPX_PROFILE("WarpX::AddMagnetostaticFieldLabFrame");
 
     // Store the boundary conditions for the field solver if they haven't been
@@ -90,7 +92,7 @@ WarpX::AddMagnetostaticFieldLabFrame()
     // reset current_fp before depositing current density for this step
     for (int lev = 0; lev <= max_level; lev++) {
         for (int dim=0; dim < 3; dim++) {
-            current_fp[lev][dim]->setVal(0.);
+            m_fields.get("current_fp", Direction{dim}, lev)->setVal(0.);
         }
     }
 
@@ -127,7 +129,8 @@ WarpX::AddMagnetostaticFieldLabFrame()
     const amrex::Real magnetostatic_absolute_tolerance = self_fields_absolute_tolerance*PhysConst::c;
 
     computeVectorPotential(
-        current_fp, m_fields.get_mr_levels_alldirs("vector_potential_fp_nodal", finest_level),
+        m_fields.get_mr_levels_alldirs("current_fp", finest_level),
+        m_fields.get_mr_levels_alldirs("vector_potential_fp_nodal", finest_level),
         self_fields_required_precision, magnetostatic_absolute_tolerance, self_fields_max_iters,
         self_fields_verbosity);
 }
@@ -149,7 +152,7 @@ WarpX::AddMagnetostaticFieldLabFrame()
    \param[in] verbosity The verbosity setting for the MLMG solver
 */
 void
-WarpX::computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>,3>>& curr,
+WarpX::computeVectorPotential (const ablastr::fields::MultiLevelVectorField& curr,
                                ablastr::fields::MultiLevelVectorField const& A,
                                Real const required_precision,
                                Real absolute_tolerance,

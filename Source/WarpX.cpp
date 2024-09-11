@@ -3324,9 +3324,11 @@ WarpX::GatherBufferMasks (int lev)
 void
 WarpX::StoreCurrent (int lev)
 {
+    using ablastr::fields::Direction;
+
     for (int idim = 0; idim < 3; ++idim) {
         if (current_store[lev][idim]) {
-            MultiFab::Copy(*current_store[lev][idim], *current_fp[lev][idim],
+            MultiFab::Copy(*current_store[lev][idim], *m_fields.get("current_fp", Direction{idim}, lev),
                            0, 0, 1, current_store[lev][idim]->nGrowVect());
         }
     }
@@ -3335,9 +3337,14 @@ WarpX::StoreCurrent (int lev)
 void
 WarpX::RestoreCurrent (int lev)
 {
+    using ablastr::fields::Direction;
+
     for (int idim = 0; idim < 3; ++idim) {
         if (current_store[lev][idim]) {
-            std::swap(current_fp[lev][idim], current_store[lev][idim]);
+            std::swap(
+                *m_fields.get("current_fp", Direction{idim}, lev),
+                *current_store[lev][idim]
+            );
         }
     }
 }
@@ -3467,9 +3474,6 @@ WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, cons
         case FieldType::Bfield_fp_external :
             field_pointer = Bfield_fp_external[lev][direction].get();
             break;
-        case FieldType::current_fp :
-            field_pointer = current_fp[lev][direction].get();
-            break;
         case FieldType::Efield_cp :
             field_pointer = Efield_cp[lev][direction].get();
             break;
@@ -3564,8 +3568,6 @@ WarpX::getMultiLevelField(warpx::fields::FieldType field_type) const
             return Bfield_fp;
         case FieldType::Bfield_fp_external :
             return Bfield_fp_external;
-        case FieldType::current_fp :
-            return current_fp;
         case FieldType::Efield_cp :
             return Efield_cp;
         case FieldType::Bfield_cp :

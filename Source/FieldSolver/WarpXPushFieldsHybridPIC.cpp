@@ -21,6 +21,8 @@ using namespace amrex;
 
 void WarpX::HybridPICEvolveFields ()
 {
+    using ablastr::fields::Direction;
+
     WARPX_PROFILE("WarpX::HybridPICEvolveFields()");
 
     // The below deposition is hard coded for a single level simulation
@@ -38,7 +40,10 @@ void WarpX::HybridPICEvolveFields ()
     if (do_fluid_species) {
         int const lev = 0;
         myfl->DepositCharge(lev, *m_fields.get("rho_fp", lev));
-        myfl->DepositCurrent(lev, *current_fp[lev][0], *current_fp[lev][1], *current_fp[lev][2]);
+        myfl->DepositCurrent(lev,
+            *m_fields.get("current_fp", Direction{0}, lev),
+            *m_fields.get("current_fp", Direction{1}, lev),
+            *m_fields.get("current_fp", Direction{2}, lev));
     }
 
     // Synchronize J and rho:
@@ -51,7 +56,7 @@ void WarpX::HybridPICEvolveFields ()
     // a nodal grid
     for (int lev = 0; lev <= finest_level; ++lev) {
         for (int idim = 0; idim < 3; ++idim) {
-            current_fp[lev][idim]->FillBoundary(Geom(lev).periodicity());
+            m_fields.get("current_fp", Direction{idim}, lev)->FillBoundary(Geom(lev).periodicity());
         }
     }
 
