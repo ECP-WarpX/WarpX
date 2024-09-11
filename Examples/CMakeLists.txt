@@ -217,6 +217,22 @@ function(add_warpx_test
     endif()
 endfunction()
 
+# Add a CTest label to an WarpX test set.
+#
+# Labeling it here will add the label to the run test, its analysis and its cleanup.
+#
+# name: unique name of this test
+# label: ctest LABELS property value to be added
+#
+function(label_warpx_test name label)
+    set(_test_names "${name}.run;${name}.analysis;${name}.cleanup")
+    foreach(_test_name IN LISTS _test_names)
+        if(TEST ${_test_name})
+            set_property(TEST ${_test_name} APPEND PROPERTY LABELS "${label}")
+        endif()
+    endforeach()
+endfunction()
+
 # Add tests (alphabetical order) ##############################################
 #
 
