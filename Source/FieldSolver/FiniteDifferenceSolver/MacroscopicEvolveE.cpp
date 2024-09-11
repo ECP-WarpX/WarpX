@@ -34,12 +34,13 @@
 #include <memory>
 
 using namespace amrex;
+using namespace ablastr::fields;
 
 void FiniteDifferenceSolver::MacroscopicEvolveE (
     ablastr::fields::VectorField Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     ablastr::fields::VectorField const& Jfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+    VectorField const& edge_lengths,
     amrex::Real const dt,
     std::unique_ptr<MacroscopicProperties> const& macroscopic_properties)
 {
@@ -102,7 +103,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
     ablastr::fields::VectorField Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     ablastr::fields::VectorField const& Jfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+    ablastr::fields::VectorField const& edge_lengths,
     amrex::Real const dt,
     std::unique_ptr<MacroscopicProperties> const& macroscopic_properties)
 {

@@ -1062,8 +1062,8 @@ public:
          amrex::ParserExecutor<3> const& xfield_parser,
          amrex::ParserExecutor<3> const& yfield_parser,
          amrex::ParserExecutor<3> const& zfield_parser,
-         std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-         std::array<amrex::MultiFab*, 3 > const& face_areas,
+         ablastr::fields::VectorField const& edge_lengths,
+         ablastr::fields::VectorField const& face_areas,
          [[maybe_unused]] char field,
          int lev, PatchType patch_type);
 
@@ -1143,7 +1143,7 @@ public:
     * \brief Compute the length of the mesh edges. Here the length is a value in [0, 1].
     *        An edge of length 0 is fully covered.
     */
-    static void ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+    static void ComputeEdgeLengths (ablastr::fields::VectorField& edge_lengths,
                                     const amrex::EBFArrayBoxFactory& eb_fact);
     /**
     * \brief Compute the area of the mesh faces. Here the area is a value in [0, 1].
@@ -1155,7 +1155,7 @@ public:
     /**
     * \brief Scale the edges lengths by the mesh width to obtain the real lengths.
     */
-    static void ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+    static void ScaleEdges (ablastr::fields::VectorField& edge_lengths,
                             const std::array<amrex::Real,3>& cell_size);
     /**
     * \brief Scale the edges areas by the mesh width to obtain the real areas.
@@ -1530,9 +1530,6 @@ private:
     // Same as Bfield_fp/Efield_fp for reading external field data
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > E_external_particle_field;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > B_external_particle_field;
-
-    //! EB: Lengths of the mesh edges
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths;
 
     /** EB: for every mesh face flag_info_face contains a:
      *          * 0 if the face needs to be extended
