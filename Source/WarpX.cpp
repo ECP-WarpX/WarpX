@@ -3468,12 +3468,6 @@ WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, cons
         case FieldType::Bfield_fp :
             field_pointer = Bfield_fp[lev][direction].get();
             break;
-        case FieldType::Efield_fp_external :
-            field_pointer = Efield_fp_external[lev][direction].get();
-            break;
-        case FieldType::Bfield_fp_external :
-            field_pointer = Bfield_fp_external[lev][direction].get();
-            break;
         case FieldType::Efield_cp :
             field_pointer = Efield_cp[lev][direction].get();
             break;
@@ -3512,7 +3506,6 @@ WarpX::getFieldPointerArray (const FieldType field_type, const int lev) const
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         (field_type == FieldType::Efield_fp) || (field_type == FieldType::Bfield_fp) ||
-        (field_type == FieldType::Efield_fp_external) || (field_type == FieldType::Bfield_fp_external) ||
         (field_type == FieldType::current_fp) || (field_type == FieldType::current_fp_nodal) ||
         (field_type == FieldType::Efield_cp) || (field_type == FieldType::Bfield_cp) ||
         (field_type == FieldType::current_cp), "Requested field type is not a vector.");
@@ -3562,12 +3555,8 @@ WarpX::getMultiLevelField(warpx::fields::FieldType field_type) const
     {
         case FieldType::Efield_fp :
             return Efield_fp;
-        case FieldType::Efield_fp_external :
-            return Efield_fp_external;
         case FieldType::Bfield_fp :
             return Bfield_fp;
-        case FieldType::Bfield_fp_external :
-            return Bfield_fp_external;
         case FieldType::Efield_cp :
             return Efield_cp;
         case FieldType::Bfield_cp :
