@@ -2338,7 +2338,7 @@ PhysicalParticleContainer::SplitParticles (int lev)
     long np_split;
     if(split_type==0)
     {
-        np_split = std::pow(2, AMREX_SPACEDIM);
+        np_split = amrex::Math::powi<AMREX_SPACEDIM>(2);
     } else {
         np_split = 2*AMREX_SPACEDIM;
     }
