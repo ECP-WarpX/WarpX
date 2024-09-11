@@ -1332,13 +1332,13 @@ private:
     void OneStep_multiJ (amrex::Real cur_time);
 
     void RestrictCurrentFromFineToCoarsePatch (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+        const ablastr::fields::MultiLevelVectorField& J_fp,
+        const ablastr::fields::MultiLevelVectorField& J_cp,
         int lev);
     void AddCurrentFromFineLevelandSumBoundary (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_buffer,
+        const ablastr::fields::MultiLevelVectorField& J_fp,
+        const ablastr::fields::MultiLevelVectorField& J_cp,
+        const ablastr::fields::MultiLevelVectorField& J_buffer,
         int lev);
     void StoreCurrent (int lev);
     void RestoreCurrent (int lev);
@@ -1359,8 +1359,8 @@ private:
         int lev,
         const amrex::Periodicity& period);
     void NodalSyncJ (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+        const ablastr::fields::MultiLevelVectorField& J_fp,
+        const ablastr::fields::MultiLevelVectorField& J_cp,
         int lev,
         PatchType patch_type);
 
@@ -1861,10 +1861,10 @@ private:
      *                 storing the coarse patch averaged magnetic field to be transformed
      */
     void PSATDBackwardTransformEBavg (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_avg_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_avg_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_avg_cp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_avg_cp);
+        const ablastr::fields::MultiLevelVectorField& E_avg_fp,
+        const ablastr::fields::MultiLevelVectorField& B_avg_fp,
+        const ablastr::fields::MultiLevelVectorField& E_avg_cp,
+        const ablastr::fields::MultiLevelVectorField& B_avg_cp);
 
     /**
      * \brief Forward FFT of J on all mesh refinement levels,
@@ -1878,8 +1878,8 @@ private:
      *                                (only used in RZ geometry to avoid double filtering)
      */
     void PSATDForwardTransformJ (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+        ablastr::fields::MultiLevelVectorField const& J_fp,
+        ablastr::fields::MultiLevelVectorField const& J_cp,
         bool apply_kspace_filter=true);
 
     /**

@@ -2313,16 +2313,16 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     if (do_current_centering)
     {
         amrex::BoxArray const& nodal_ba = amrex::convert(ba, amrex::IntVect::TheNodeVector());
-        AllocInitMultiFab(current_fp_nodal[lev][0], nodal_ba, dm, ncomps, ngJ, lev, "current_fp_nodal[x]", 0.0_rt);
-        AllocInitMultiFab(current_fp_nodal[lev][1], nodal_ba, dm, ncomps, ngJ, lev, "current_fp_nodal[y]", 0.0_rt);
-        AllocInitMultiFab(current_fp_nodal[lev][2], nodal_ba, dm, ncomps, ngJ, lev, "current_fp_nodal[z]", 0.0_rt);
+        m_fields.alloc_init( "current_fp_nodal", Direction{0}, lev, nodal_ba, dm, ncomps, ngJ, 0.0_rt);
+        m_fields.alloc_init( "current_fp_nodal", Direction{1}, lev, nodal_ba, dm, ncomps, ngJ, 0.0_rt);
+        m_fields.alloc_init( "current_fp_nodal", Direction{2}, lev, nodal_ba, dm, ncomps, ngJ, 0.0_rt);
     }
 
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
     {
-        AllocInitMultiFab(current_fp_vay[lev][0], amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngJ, lev, "current_fp_vay[x]", 0.0_rt);
-        AllocInitMultiFab(current_fp_vay[lev][1], amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngJ, lev, "current_fp_vay[y]", 0.0_rt);
-        AllocInitMultiFab(current_fp_vay[lev][2], amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngJ, lev, "current_fp_vay[z]", 0.0_rt);
+        m_fields.alloc_init( "current_fp_vay", Direction{0}, lev, amrex::convert(ba, jx_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
+        m_fields.alloc_init( "current_fp_vay", Direction{1}, lev, amrex::convert(ba, jy_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
+        m_fields.alloc_init( "current_fp_vay", Direction{2}, lev, amrex::convert(ba, jz_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
     }
 
     if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)

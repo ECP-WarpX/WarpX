@@ -1247,8 +1247,8 @@ WarpX::SyncRho (
  *  averaging the values of the current of the fine patch (on the same level).
  */
 void WarpX::RestrictCurrentFromFineToCoarsePatch (
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+    const ablastr::fields::MultiLevelVectorField& J_fp,
+    const ablastr::fields::MultiLevelVectorField& J_cp,
     const int lev)
 {
     J_cp[lev][0]->setVal(0.0);
@@ -1257,12 +1257,12 @@ void WarpX::RestrictCurrentFromFineToCoarsePatch (
 
     const IntVect& refinement_ratio = refRatio(lev-1);
 
-    std::array<const MultiFab*,3> fine { J_fp[lev][0].get(),
-                                         J_fp[lev][1].get(),
-                                         J_fp[lev][2].get() };
-    std::array<      MultiFab*,3> crse { J_cp[lev][0].get(),
-                                         J_cp[lev][1].get(),
-                                         J_cp[lev][2].get() };
+    std::array<const MultiFab*,3> fine { J_fp[lev][0],
+                                         J_fp[lev][1],
+                                         J_fp[lev][2] };
+    std::array<      MultiFab*,3> crse { J_cp[lev][0],
+                                         J_cp[lev][1],
+                                         J_cp[lev][2] };
     ablastr::coarsen::average::Coarsen(*crse[0], *fine[0], refinement_ratio );
     ablastr::coarsen::average::Coarsen(*crse[1], *fine[1], refinement_ratio );
     ablastr::coarsen::average::Coarsen(*crse[2], *fine[2], refinement_ratio );
@@ -1362,20 +1362,18 @@ void WarpX::SumBoundaryJ (
 * patch (and buffer region) of `lev+1`
 */
 void WarpX::AddCurrentFromFineLevelandSumBoundary (
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_buffer,
+    const ablastr::fields::MultiLevelVectorField& J_fp,
+    const ablastr::fields::MultiLevelVectorField& J_cp,
+    const ablastr::fields::MultiLevelVectorField& J_buffer,
     const int lev)
 {
-    using ablastr::fields::va2vm;
-
     const amrex::Periodicity& period = Geom(lev).periodicity();
 
     if (use_filter)
     {
-        ApplyFilterJ(va2vm(J_fp), lev);
+        ApplyFilterJ(J_fp, lev);
     }
-    SumBoundaryJ(va2vm(J_fp), lev, period);
+    SumBoundaryJ(J_fp, lev, period);
 
     if (lev < finest_level)
     {
@@ -1392,8 +1390,8 @@ void WarpX::AddCurrentFromFineLevelandSumBoundary (
 
             if (use_filter && J_buffer[lev+1][idim])
             {
-                ApplyFilterJ(va2vm(J_cp), lev+1, idim);
-                ApplyFilterJ(va2vm(J_buffer), lev+1, idim);
+                ApplyFilterJ(J_cp, lev+1, idim);
+                ApplyFilterJ(J_buffer, lev+1, idim);
 
                 MultiFab::Add(
                     *J_buffer[lev+1][idim], *J_cp[lev+1][idim],
@@ -1407,7 +1405,7 @@ void WarpX::AddCurrentFromFineLevelandSumBoundary (
             }
             else if (use_filter) // but no buffer
             {
-                ApplyFilterJ(va2vm(J_cp), lev+1, idim);
+                ApplyFilterJ(J_cp, lev+1, idim);
 
                 ablastr::utils::communication::ParallelAdd(
                     mf, *J_cp[lev+1][idim], 0, 0,
@@ -1435,7 +1433,7 @@ void WarpX::AddCurrentFromFineLevelandSumBoundary (
                     ng, amrex::IntVect(0),
                     do_single_precision_comms, period);
             }
-            SumBoundaryJ(va2vm(J_cp), lev+1, idim, period);
+            SumBoundaryJ(J_cp, lev+1, idim, period);
             MultiFab::Add(*J_fp[lev][idim], mf, 0, 0, J_fp[lev+1][idim]->nComp(), 0);
         }
     }
@@ -1578,8 +1576,8 @@ void WarpX::AddRhoFromFineLevelandSumBoundary (
 }
 
 void WarpX::NodalSyncJ (
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+    const ablastr::fields::MultiLevelVectorField& J_fp,
+    const ablastr::fields::MultiLevelVectorField& J_cp,
     const int lev,
     PatchType patch_type)
 {

@@ -580,7 +580,9 @@ void WarpX::SyncCurrentAndRho ()
             {
                 // TODO This works only without mesh refinement
                 const int lev = 0;
-                if (use_filter) { ApplyFilterJ(va2vm(current_fp_vay), lev); }
+                if (use_filter) {
+                    ApplyFilterJ(m_fields.get_mr_levels_alldirs("current_fp_vay", finest_level), lev);
+                }
             }
         }
     }
@@ -838,10 +840,16 @@ WarpX::OneStep_sub1 (Real cur_time)
 
     // i) Push particles and fields on the fine patch (first fine step)
     PushParticlesandDeposit(fine_lev, cur_time, DtType::FirstHalf);
-    RestrictCurrentFromFineToCoarsePatch(current_fp, current_cp, fine_lev);
+    RestrictCurrentFromFineToCoarsePatch(
+        m_fields.get_mr_levels_alldirs("current_fp", finest_level),
+        m_fields.get_mr_levels_alldirs("current_cp", finest_level), fine_lev);
     RestrictRhoFromFineToCoarsePatch(fine_lev);
-    if (use_filter) { ApplyFilterJ( va2vm(current_fp), fine_lev); }
-    SumBoundaryJ( va2vm(current_fp), fine_lev, Geom(fine_lev).periodicity());
+    if (use_filter) {
+        ApplyFilterJ( m_fields.get_mr_levels_alldirs("current_fp", finest_level), fine_lev);
+    }
+    SumBoundaryJ(
+        m_fields.get_mr_levels_alldirs("current_fp", finest_level),
+        fine_lev, Geom(fine_lev).periodicity());
 
     ApplyFilterandSumBoundaryRho(
         m_fields.get_mr_levels("rho_fp", finest_level),
@@ -874,7 +882,10 @@ WarpX::OneStep_sub1 (Real cur_time)
     // by only half a coarse step (first half)
     PushParticlesandDeposit(coarse_lev, cur_time, DtType::Full);
     StoreCurrent(coarse_lev);
-    AddCurrentFromFineLevelandSumBoundary(current_fp, current_cp, current_buf, coarse_lev);
+    AddCurrentFromFineLevelandSumBoundary(
+        m_fields.get_mr_levels_alldirs("current_fp", finest_level),
+        m_fields.get_mr_levels_alldirs("current_cp", finest_level),
+        m_fields.get_mr_levels_alldirs("current_buf", finest_level), coarse_lev);
     AddRhoFromFineLevelandSumBoundary(
         m_fields.get_mr_levels("rho_fp", finest_level),
         m_fields.get_mr_levels("rho_cp", finest_level), charge_buf, coarse_lev, 0, ncomps);
@@ -905,10 +916,14 @@ WarpX::OneStep_sub1 (Real cur_time)
 
     // iv) Push particles and fields on the fine patch (second fine step)
     PushParticlesandDeposit(fine_lev, cur_time + dt[fine_lev], DtType::SecondHalf);
-    RestrictCurrentFromFineToCoarsePatch(current_fp, current_cp, fine_lev);
+    RestrictCurrentFromFineToCoarsePatch(
+        m_fields.get_mr_levels_alldirs("current_fp", finest_level),
+        m_fields.get_mr_levels_alldirs("current_cp", finest_level), fine_lev);
     RestrictRhoFromFineToCoarsePatch(fine_lev);
-    if (use_filter) { ApplyFilterJ( va2vm(current_fp), fine_lev); }
-    SumBoundaryJ( va2vm(current_fp), fine_lev, Geom(fine_lev).periodicity());
+    if (use_filter) {
+        ApplyFilterJ( m_fields.get_mr_levels_alldirs("current_fp", finest_level), fine_lev);
+    }
+    SumBoundaryJ( m_fields.get_mr_levels_alldirs("current_fp", finest_level), fine_lev, Geom(fine_lev).periodicity());
     ApplyFilterandSumBoundaryRho(
         m_fields.get_mr_levels("rho_fp", finest_level),
         m_fields.get_mr_levels("rho_cp", finest_level),
@@ -939,7 +954,11 @@ WarpX::OneStep_sub1 (Real cur_time)
     // v) Push the fields on the coarse patch and mother grid
     // by only half a coarse step (second half)
     RestoreCurrent(coarse_lev);
-    AddCurrentFromFineLevelandSumBoundary(current_fp, current_cp, current_buf, coarse_lev);
+    AddCurrentFromFineLevelandSumBoundary(
+        m_fields.get_mr_levels_alldirs("current_fp", finest_level),
+        m_fields.get_mr_levels_alldirs("current_cp", finest_level),
+        m_fields.get_mr_levels_alldirs("current_buf", finest_level),
+        coarse_lev);
     AddRhoFromFineLevelandSumBoundary(
         m_fields.get_mr_levels("rho_fp", finest_level),
         m_fields.get_mr_levels("rho_cp", finest_level), charge_buf, coarse_lev, ncomps, ncomps);
