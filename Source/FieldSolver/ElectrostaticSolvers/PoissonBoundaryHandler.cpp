@@ -30,6 +30,22 @@ void PoissonBoundaryHandler::ReadParameters()
 
     const ParmParse pp_warpx("warpx");
     m_boundary_potential_specified |= pp_warpx.query("eb_potential(x,y,z,t)", potential_eb_str);
+
+    if (m_boundary_potential_specified & (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)) {
+        ablastr::warn_manager::WMRecordWarning(
+            "Algorithms",
+            "The input script specifies the electric potential (phi) at the boundary, but \
+            also uses the hybrid PIC solver based on Ohm’s law. When using this solver, the \
+            electric potential does not have any impact on the simulation.",
+            ablastr::warn_manager::WarnPriority::low);
+    }
+    else if (m_boundary_potential_specified & (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::None)) {
+        ablastr::warn_manager::WMRecordWarning(
+            "Algorithms",
+            "The input script specifies the electric potential (phi) at the boundary so \
+            an initial Poisson solve will be performed.",
+            ablastr::warn_manager::WarnPriority::low);
+    }
 }
 
 void PoissonBoundaryHandler::DefinePhiBCs (const amrex::Geometry& geom)

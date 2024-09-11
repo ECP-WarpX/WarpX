@@ -2379,9 +2379,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     // Allocate extra multifabs needed by the electrostatic algorithm.
     if (WarpX::electrostatic_solver_id != ElectrostaticSolverAlgo::None)
     {
-        m_electrostatic_solver->AllocateLevelMFs(
-            // lev, ba, dm, ncomps, ngRho, rho_nodal_flag
-        );
+        m_electrostatic_solver->AllocateLevelMFs();
     }
 
     // Allocate extra multifabs needed by the kinetic-fluid hybrid algorithm.
