@@ -148,8 +148,8 @@ struct PlasmaParserHelper
 
     int** getUserIntDataPtrs ();
     amrex::ParticleReal** getUserRealDataPtrs ();
-    amrex::ParserExecutor<7> const* getUserIntParserExecData () const;
-    amrex::ParserExecutor<7> const* getUserRealParserExecData () const;
+    [[nodiscard]] amrex::ParserExecutor<7> const* getUserIntParserExecData () const;
+    [[nodiscard]] amrex::ParserExecutor<7> const* getUserRealParserExecData () const;
 
     amrex::Gpu::PinnedVector<int*> m_pa_user_int_pinned;
     amrex::Gpu::PinnedVector<amrex::ParticleReal*> m_pa_user_real_pinned;
