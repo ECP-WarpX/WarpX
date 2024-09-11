@@ -331,7 +331,6 @@ WarpX::WarpX ()
     // Only allocate vector potential arrays when using the Magnetostatic Solver
     if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
     {
-        vector_potential_fp_nodal.resize(nlevs_max);
         vector_potential_grad_buf_e_stag.resize(nlevs_max);
         vector_potential_grad_buf_b_stag.resize(nlevs_max);
     }
@@ -2329,12 +2328,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
     if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
     {
-        AllocInitMultiFab(vector_potential_fp_nodal[lev][0], amrex::convert(ba, rho_nodal_flag),
-            dm, ncomps, ngRho, lev, "vector_potential_fp_nodal[x]", 0.0_rt);
-        AllocInitMultiFab(vector_potential_fp_nodal[lev][1], amrex::convert(ba, rho_nodal_flag),
-            dm, ncomps, ngRho, lev, "vector_potential_fp_nodal[y]", 0.0_rt);
-        AllocInitMultiFab(vector_potential_fp_nodal[lev][2], amrex::convert(ba, rho_nodal_flag),
-            dm, ncomps, ngRho, lev, "vector_potential_fp_nodal[z]", 0.0_rt);
+        m_fields.alloc_init( "vector_potential_fp_nodal", Direction{0}, lev, amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngRho, 0.0_rt);
+        m_fields.alloc_init( "vector_potential_fp_nodal", Direction{1}, lev, amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngRho, 0.0_rt);
+        m_fields.alloc_init( "vector_potential_fp_nodal", Direction{2}, lev, amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngRho, 0.0_rt);
 
         AllocInitMultiFab(vector_potential_grad_buf_e_stag[lev][0], amrex::convert(ba, Ex_nodal_flag),
             dm, ncomps, ngEB, lev, "vector_potential_grad_buf_e_stag[x]", 0.0_rt);
@@ -3497,9 +3493,6 @@ WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, cons
             break;
         case FieldType::current_fp_nodal :
             field_pointer = current_fp_nodal[lev][direction].get();
-            break;
-        case FieldType::vector_potential_fp :
-            field_pointer = vector_potential_fp_nodal[lev][direction].get();
             break;
         case FieldType::Efield_cp :
             field_pointer = Efield_cp[lev][direction].get();

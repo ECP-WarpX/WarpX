@@ -171,6 +171,24 @@ namespace ablastr::fields
             std::optional<const amrex::Real> initial_value = std::nullopt
         );
 
+        /** Create an alias
+         *
+         * @param new_name new name
+         * @param alias_name owner to alias to
+         * @param dir ...
+         * @param level ...
+         * @param initial_value ...
+         * @return
+         */
+        amrex::MultiFab*
+        alias_init (
+                std::string new_name,
+                std::string alias_name,
+                Direction dir,
+                int level,
+                std::optional<const amrex::Real> initial_value = std::nullopt
+        );
+
         /** title
          *
          * body body
@@ -261,6 +279,20 @@ namespace ablastr::fields
         get_mr_levels (
             std::string name,
             int finest_level
+        );
+
+        /** title
+         *
+         * Same as get above, but returns all levels for a name.
+         *
+         * @param name ...
+         * @param level ...
+         * @return ...
+         */
+        VectorField
+        get_alldirs  (
+            std::string name,
+            int level
         );
 
         /** Return a vector field on all MR levels.

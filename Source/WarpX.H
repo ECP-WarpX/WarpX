@@ -1028,13 +1028,13 @@ public:
     void ComputeMagnetostaticField ();
     void AddMagnetostaticFieldLabFrame ();
     void computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> >& curr,
-                                 amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> >& A,
+                                 ablastr::fields::MultiLevelVectorField const& A,
                                  amrex::Real required_precision=amrex::Real(1.e-11),
                                  amrex::Real absolute_tolerance=amrex::Real(0.0),
                                  int max_iters=200,
                                  int verbosity=2) const;
 
-    void setVectorPotentialBC (amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> >& A) const;
+    void setVectorPotentialBC (ablastr::fields::MultiLevelVectorField const& A) const;
 
     /**
      * \brief
@@ -1532,7 +1532,6 @@ private:
 
     // Memory buffers for computing magnetostatic fields
     // Vector Potential A and previous step.  Time buffer needed for computing dA/dt to first order
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_fp_nodal;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_grad_buf_e_stag;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_grad_buf_b_stag;
 
