@@ -1827,7 +1827,7 @@ private:
      *             storing the coarse patch magnetic field to be transformed
      */
     void PSATDForwardTransformEB (
-        const std::vector<std::map<amrex::MultiFab*>>& E_fp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_fp,
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_fp,
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_cp,
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_cp);
