@@ -170,6 +170,9 @@ WarpX::LoadBalance ()
 void
 WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const DistributionMapping& dm)
 {
+
+    using ablastr::fields::Direction;
+
     bool const eb_enabled = EB::enabled();
     if (ba == boxArray(lev))
     {
@@ -310,6 +313,8 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
 void
 WarpX::ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::LayoutData<amrex::Real> > >& a_costs)
 {
+    using ablastr::fields::Direction;
+
     for (int lev = 0; lev <= finest_level; ++lev)
     {
         const auto & mypc_ref = GetInstance().GetPartContainer();
@@ -328,7 +333,7 @@ WarpX::ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::LayoutData<am
         }
 
         // Cell loop
-        MultiFab* Ex = Efield_fp[lev][0].get();
+        MultiFab* Ex = m_fields.get("Efield_fp",Direction{0},lev);
         for (MFIter mfi(*Ex, false); mfi.isValid(); ++mfi)
         {
             const Box& gbx = mfi.growntilebox();

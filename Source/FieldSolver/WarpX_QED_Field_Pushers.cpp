@@ -77,12 +77,14 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, amrex::Real a_dt)
     const Real dy = dx_vec[1];
     const Real dz = dx_vec[2];
 
+    using ablastr::fields::Direction;
+
     MultiFab *Ex, *Ey, *Ez, *Bx, *By, *Bz, *Jx, *Jy, *Jz;
     if (patch_type == PatchType::fine)
     {
-        Ex = Efield_fp[lev][0].get();
-        Ey = Efield_fp[lev][1].get();
-        Ez = Efield_fp[lev][2].get();
+        Ex = m_fields.get("Efield_fp",Direction{0},lev);
+        Ey = m_fields.get("Efield_fp",Direction{1},lev);
+        Ez = m_fields.get("Efield_fp",Direction{2},lev);
         Bx = Bfield_fp[lev][0].get();
         By = Bfield_fp[lev][1].get();
         Bz = Bfield_fp[lev][2].get();
