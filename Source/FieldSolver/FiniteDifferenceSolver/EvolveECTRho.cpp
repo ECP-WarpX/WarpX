@@ -42,6 +42,7 @@
 #include <memory>
 
 using namespace amrex;
+using namespace ablastr::fields;
 
 /**
  * \brief Update the B field, over one timestep
@@ -49,7 +50,7 @@ using namespace amrex;
 void FiniteDifferenceSolver::EvolveECTRho (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+    ablastr::fields::VectorField const& face_areas,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
     const int lev) {
 
@@ -69,7 +70,7 @@ void FiniteDifferenceSolver::EvolveECTRho (
 void FiniteDifferenceSolver::EvolveRhoCartesianECT (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+    ablastr::fields::VectorField const& face_areas,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield, const int lev ) {
 #ifdef AMREX_USE_EB
 
@@ -100,9 +101,9 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
         amrex::Array4<amrex::Real> const &lx = edge_lengths[0]->array(mfi);
         amrex::Array4<amrex::Real> const &ly = edge_lengths[1]->array(mfi);
         amrex::Array4<amrex::Real> const &lz = edge_lengths[2]->array(mfi);
-        amrex::Array4<amrex::Real> const &Sx = face_areas[0]->array(mfi);
-        amrex::Array4<amrex::Real> const &Sy = face_areas[1]->array(mfi);
-        amrex::Array4<amrex::Real> const &Sz = face_areas[2]->array(mfi);
+        amrex::Array4<amrex::Real> const &Sx = face_areas[Direction{0}]->array(mfi);
+        amrex::Array4<amrex::Real> const &Sy = face_areas[Direction{1}]->array(mfi);
+        amrex::Array4<amrex::Real> const &Sz = face_areas[Direction{2}]->array(mfi);
 
         // Extract tileboxes for which to loop
         amrex::Box const &trhox = mfi.tilebox(ECTRhofield[0]->ixType().toIntVect());
