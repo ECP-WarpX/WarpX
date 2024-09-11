@@ -346,14 +346,14 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
             }
         } else if ( m_varnames_fields[comp] == "divB" ){
             m_all_field_functors[lev][comp] = std::make_unique<DivBFunctor>(
-                warpx.getFieldPointerArray(FieldType::Bfield_aux, lev),
+                warpx.m_fields.get_alldirs("Bfield_aux", lev),
                 lev, m_crse_ratio, false, ncomp);
             if (update_varnames) {
                 AddRZModesToOutputNames(std::string("divB"), ncomp);
             }
         } else if ( m_varnames_fields[comp] == "divE" ){
             m_all_field_functors[lev][comp] = std::make_unique<DivEFunctor>(
-                warpx.getFieldPointerArray(FieldType::Efield_aux, lev),
+                warpx.m_fields.get_alldirs("Efield_aux", lev),
                 lev, m_crse_ratio, false, ncomp);
             if (update_varnames) {
                 AddRZModesToOutputNames(std::string("divE"), ncomp);
@@ -470,7 +470,7 @@ FullDiagnostics::AddRZModesToDiags (int lev)
     // divE
     if (divE_requested) {
         m_all_field_functors[lev].push_back(std::make_unique<DivEFunctor>(
-            warpx.getFieldPointerArray(FieldType::Efield_aux, lev),
+            warpx.m_fields.get_alldirs("Efield_aux", lev),
             lev, m_crse_ratio, false, ncomp_multimodefab));
         AddRZModesToOutputNames(std::string("divE"), ncomp_multimodefab);
     }
