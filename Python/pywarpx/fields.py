@@ -847,19 +847,19 @@ def EdgeLengthszWrapper(level=0, include_ghosts=False):
 
 def FaceAreasxWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="m_face_areas[x]", level=level, include_ghosts=include_ghosts
+        mf_name="face_areas[x]", level=level, include_ghosts=include_ghosts
     )
 
 
 def FaceAreasyWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="m_face_areas[y]", level=level, include_ghosts=include_ghosts
+        mf_name="face_areas[y]", level=level, include_ghosts=include_ghosts
     )
 
 
 def FaceAreaszWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="m_face_areas[z]", level=level, include_ghosts=include_ghosts
+        mf_name="face_areas[z]", level=level, include_ghosts=include_ghosts
     )
 
 

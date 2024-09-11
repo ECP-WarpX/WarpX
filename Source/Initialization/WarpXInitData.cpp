@@ -967,7 +967,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
             m_p_ext_field_params->Byfield_parser->compile<3>(),
             m_p_ext_field_params->Bzfield_parser->compile<3>(),
             m_edge_lengths[lev],
-            m_face_areas[lev],
+            m_fields.get_mr_levels_alldirs("face_areas", finest_level)[lev],
             'B',
             lev, PatchType::fine);
 
@@ -979,7 +979,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
             m_p_ext_field_params->Byfield_parser->compile<3>(),
             m_p_ext_field_params->Bzfield_parser->compile<3>(),
             m_edge_lengths[lev],
-            m_face_areas[lev],
+            m_fields.get_mr_levels_alldirs("face_areas", finest_level)[lev],
             'B',
             lev, PatchType::coarse);
     }
@@ -998,7 +998,8 @@ WarpX::InitLevelData (int lev, Real /*time*/)
             if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
                 m_fdtd_solver_fp[lev]->EvolveECTRho(
                     Efield_fp[lev], m_edge_lengths[lev],
-                    m_face_areas[lev], ECTRhofield[lev], lev);
+                    m_fields.get_mr_levels_alldirs("face_areas", finest_level)[lev],
+                    ECTRhofield[lev], lev);
             }
         }
 #endif
@@ -1012,7 +1013,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                 m_p_ext_field_params->Eyfield_parser->compile<3>(),
                 m_p_ext_field_params->Ezfield_parser->compile<3>(),
                 m_edge_lengths[lev],
-                m_face_areas[lev],
+                m_fields.get_mr_levels_alldirs("face_areas", finest_level)[lev],
                 'E',
                 lev, PatchType::fine);
 
@@ -1024,16 +1025,17 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                 m_p_ext_field_params->Eyfield_parser->compile<3>(),
                 m_p_ext_field_params->Ezfield_parser->compile<3>(),
                 m_edge_lengths[lev],
-                m_face_areas[lev],
+                m_fields.get_mr_levels_alldirs("face_areas", finest_level)[lev],
                 'E',
                 lev, PatchType::coarse);
 #ifdef AMREX_USE_EB
             if (eb_enabled) {
                 if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
                     // We initialize ECTRhofield consistently with the Efield
-                    m_fdtd_solver_cp[lev]->EvolveECTRho(Efield_cp[lev], m_edge_lengths[lev],
-                                                        m_face_areas[lev], ECTRhofield[lev], lev);
-
+                    m_fdtd_solver_cp[lev]->EvolveECTRho(
+                        Efield_cp[lev], m_edge_lengths[lev],
+                        m_fields.get_mr_levels_alldirs("face_areas", finest_level)[lev],
+                        ECTRhofield[lev], lev);
                 }
             }
 #endif
@@ -1058,7 +1060,7 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
        ParserExecutor<3> const& xfield_parser, ParserExecutor<3> const& yfield_parser,
        ParserExecutor<3> const& zfield_parser,
        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+       ablastr::fields::VectorField const& face_areas,
        [[maybe_unused]] const char field,
        const int lev, PatchType patch_type)
 {
@@ -1276,8 +1278,10 @@ void WarpX::InitializeEBGridData (int lev)
 
             ComputeEdgeLengths(m_edge_lengths[lev], eb_fact);
             ScaleEdges(m_edge_lengths[lev], CellSize(lev));
-            ComputeFaceAreas(m_face_areas[lev], eb_fact);
-            ScaleAreas(m_face_areas[lev], CellSize(lev));
+
+            auto face_areas_lev = m_fields.get_mr_levels_alldirs("face_areas", finest_level)[lev];
+            ComputeFaceAreas(face_areas_lev, eb_fact);
+            ScaleAreas(face_areas_lev, CellSize(lev));
 
             if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
                 MarkCells();
@@ -1366,7 +1370,7 @@ WarpX::LoadExternalFields (int const lev)
             m_p_ext_field_params->Byfield_parser->compile<3>(),
             m_p_ext_field_params->Bzfield_parser->compile<3>(),
             m_edge_lengths[lev],
-            m_face_areas[lev],
+            m_fields.get_mr_levels_alldirs("face_areas", finest_level)[lev],
             'B',
             lev, PatchType::fine);
     }
@@ -1394,7 +1398,7 @@ WarpX::LoadExternalFields (int const lev)
             m_p_ext_field_params->Eyfield_parser->compile<3>(),
             m_p_ext_field_params->Ezfield_parser->compile<3>(),
             m_edge_lengths[lev],
-            m_face_areas[lev],
+            m_fields.get_mr_levels_alldirs("face_areas", finest_level)[lev],
             'E',
             lev, PatchType::fine);
     }

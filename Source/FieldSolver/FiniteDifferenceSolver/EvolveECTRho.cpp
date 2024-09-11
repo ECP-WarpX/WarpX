@@ -42,6 +42,7 @@
 #include <memory>
 
 using namespace amrex;
+using namespace ablastr::fields;
 
 /**
  * \brief Update the B field, over one timestep
@@ -49,7 +50,7 @@ using namespace amrex;
 void FiniteDifferenceSolver::EvolveECTRho (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+    ablastr::fields::VectorField const& face_areas,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
     const int lev) {
 
@@ -69,7 +70,7 @@ void FiniteDifferenceSolver::EvolveECTRho (
 void FiniteDifferenceSolver::EvolveRhoCartesianECT (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+    ablastr::fields::VectorField const& face_areas,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield, const int lev ) {
 #ifdef AMREX_USE_EB
 

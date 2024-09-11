@@ -159,7 +159,7 @@ perimeter_slice_z_true = L_cavity * 4
 print("Perimeter of the middle z-slice:", perimeter_slice_z)
 assert np.isclose(perimeter_slice_z, perimeter_slice_z_true, rtol=1e-05, atol=1e-08)
 
-print("======== Testing the wrappers of m_face_areas =========")
+print("======== Testing the wrappers of face_areas =========")
 
 Sx_slice = np.sum(face_areas_x[nx // 2, :, :])
 dx = (xmax - xmin) / nx

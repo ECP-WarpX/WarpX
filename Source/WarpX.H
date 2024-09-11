@@ -1063,7 +1063,7 @@ public:
          amrex::ParserExecutor<3> const& yfield_parser,
          amrex::ParserExecutor<3> const& zfield_parser,
          std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-         std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+         std::array<amrex::MultiFab*, 3 > const& face_areas,
          [[maybe_unused]] char field,
          int lev, PatchType patch_type);
 
@@ -1149,7 +1149,7 @@ public:
     * \brief Compute the area of the mesh faces. Here the area is a value in [0, 1].
     *        An edge of area 0 is fully covered.
     */
-    static void ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+    static void ComputeFaceAreas (ablastr::fields::VectorField& face_areas,
                                   const amrex::EBFArrayBoxFactory& eb_fact);
 
     /**
@@ -1160,7 +1160,7 @@ public:
     /**
     * \brief Scale the edges areas by the mesh width to obtain the real areas.
     */
-    static void ScaleAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+    static void ScaleAreas (ablastr::fields::VectorField& face_areas,
                             const std::array<amrex::Real,3>& cell_size);
     /**
     * \brief Initialize information for cell extensions.
@@ -1543,8 +1543,6 @@ private:
 
     //! EB: Lengths of the mesh edges
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths;
-    //! EB: Areas of the mesh faces
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_face_areas;
 
     /** EB: for every mesh face flag_info_face contains a:
      *          * 0 if the face needs to be extended

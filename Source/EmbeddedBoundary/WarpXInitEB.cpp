@@ -41,6 +41,8 @@
 #  include <cstdlib>
 #  include <string>
 
+using namespace ablastr::fields;
+
 #endif
 
 #ifdef AMREX_USE_EB
@@ -183,7 +185,7 @@ WarpX::ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ed
 
 
 void
-WarpX::ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+WarpX::ComputeFaceAreas (VectorField& face_areas,
                          const amrex::EBFArrayBoxFactory& eb_fact) {
     BL_PROFILE("ComputeFaceAreas");
 
@@ -270,7 +272,7 @@ WarpX::ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengt
 }
 
 void
-WarpX::ScaleAreas(std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+WarpX::ScaleAreas(ablastr::fields::VectorField& face_areas,
                   const std::array<amrex::Real,3>& cell_size) {
     BL_PROFILE("ScaleAreas");
 
@@ -332,11 +334,13 @@ WarpX::MarkCells(){
         "MarkCells: Only implemented in 2D3V and 3D3V");
 #endif
         for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
-            //amrex::Box const &box = mfi.tilebox(m_face_areas[maxLevel()][idim]->ixType().toIntVect());
-            const amrex::Box& box = mfi.tilebox(m_face_areas[maxLevel()][idim]->ixType().toIntVect(),
-                                                m_face_areas[maxLevel()][idim]->nGrowVect() );
+            auto* face_areas_idim_max_lev =
+                m_fields.get("face_areas", Direction{idim}, maxLevel());
 
-            auto const &S = m_face_areas[maxLevel()][idim]->array(mfi);
+            const amrex::Box& box = mfi.tilebox(face_areas_idim_max_lev->ixType().toIntVect(),
+                                                face_areas_idim_max_lev->nGrowVect() );
+
+            auto const &S = face_areas_idim_max_lev->array(mfi);
             auto const &flag_info_face = m_flag_info_face[maxLevel()][idim]->array(mfi);
             auto const &flag_ext_face = m_flag_ext_face[maxLevel()][idim]->array(mfi);
             const auto &lx = m_edge_lengths[maxLevel()][0]->array(mfi);

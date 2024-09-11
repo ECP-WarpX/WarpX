@@ -334,15 +334,16 @@ WarpX::ImplicitComputeRHSE (int lev, PatchType patch_type, amrex::Real a_dt, War
     // a_Erhs_vec is set to zero above, calling EvolveE below results in
     // a_Erhs_vec storing only the RHS of the update equation. I.e.,
     // c^2*dt*(curl(B^{n+theta} - mu0*J^{n+1/2})
+    const auto face_area_lev = m_fields.get_mr_levels_alldirs("face_areas", finest_level)[lev];
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->EvolveE( a_Erhs_vec.getArrayVec()[lev], Bfield_fp[lev],
                                         current_fp[lev], m_edge_lengths[lev],
-                                        m_face_areas[lev], ECTRhofield[lev],
+                                        face_area_lev, ECTRhofield[lev],
                                         m_fields.get("F_fp", lev), lev, a_dt );
     } else {
         m_fdtd_solver_cp[lev]->EvolveE( a_Erhs_vec.getArrayVec()[lev], Bfield_cp[lev],
                                         current_cp[lev], m_edge_lengths[lev],
-                                        m_face_areas[lev], ECTRhofield[lev],
+                                        face_area_lev, ECTRhofield[lev],
                                         m_fields.get("F_cp", lev), lev, a_dt );
     }
 

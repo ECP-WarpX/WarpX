@@ -348,7 +348,6 @@ WarpX::WarpX ()
     E_external_particle_field.resize(1);
 
     m_edge_lengths.resize(nlevs_max);
-    m_face_areas.resize(nlevs_max);
     m_distance_to_eb.resize(nlevs_max);
     m_flag_info_face.resize(nlevs_max);
     m_flag_ext_face.resize(nlevs_max);
@@ -2397,12 +2396,14 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                                   guard_cells.ng_FieldSolver, lev, "m_edge_lengths[y]");
                 AllocInitMultiFab(m_edge_lengths[lev][2], amrex::convert(ba, Ez_nodal_flag), dm, ncomps,
                                   guard_cells.ng_FieldSolver, lev, "m_edge_lengths[z]");
-                AllocInitMultiFab(m_face_areas[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps,
-                                  guard_cells.ng_FieldSolver, lev, "m_face_areas[x]");
-                AllocInitMultiFab(m_face_areas[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps,
-                                  guard_cells.ng_FieldSolver, lev, "m_face_areas[y]");
-                AllocInitMultiFab(m_face_areas[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps,
-                                  guard_cells.ng_FieldSolver, lev, "m_face_areas[z]");
+
+                //! EB: Areas of the mesh faces
+                m_fields.alloc_init( "face_areas", Direction{0}, lev, amrex::convert(ba, Bx_nodal_flag),
+                    dm, ncomps, guard_cells.ng_FieldSolver, 0.0_rt);
+                m_fields.alloc_init( "face_areas", Direction{1}, lev, amrex::convert(ba, By_nodal_flag),
+                    dm, ncomps, guard_cells.ng_FieldSolver, 0.0_rt);
+                m_fields.alloc_init( "face_areas", Direction{2}, lev, amrex::convert(ba, Bz_nodal_flag),
+                    dm, ncomps, guard_cells.ng_FieldSolver, 0.0_rt);
             }
             if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
                 AllocInitMultiFab(m_edge_lengths[lev][0], amrex::convert(ba, Ex_nodal_flag), dm, ncomps,
@@ -2411,12 +2412,15 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                                   guard_cells.ng_FieldSolver, lev, "m_edge_lengths[y]");
                 AllocInitMultiFab(m_edge_lengths[lev][2], amrex::convert(ba, Ez_nodal_flag), dm, ncomps,
                                   guard_cells.ng_FieldSolver, lev, "m_edge_lengths[z]");
-                AllocInitMultiFab(m_face_areas[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps,
-                                  guard_cells.ng_FieldSolver, lev, "m_face_areas[x]");
-                AllocInitMultiFab(m_face_areas[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps,
-                                  guard_cells.ng_FieldSolver, lev, "m_face_areas[y]");
-                AllocInitMultiFab(m_face_areas[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps,
-                                  guard_cells.ng_FieldSolver, lev, "m_face_areas[z]");
+
+                //! EB: Areas of the mesh faces
+                m_fields.alloc_init( "face_areas", Direction{0}, lev, amrex::convert(ba, Bx_nodal_flag),
+                    dm, ncomps, guard_cells.ng_FieldSolver, 0.0_rt);
+                m_fields.alloc_init( "face_areas", Direction{1}, lev, amrex::convert(ba, By_nodal_flag),
+                    dm, ncomps, guard_cells.ng_FieldSolver, 0.0_rt);
+                m_fields.alloc_init( "face_areas", Direction{2}, lev, amrex::convert(ba, Bz_nodal_flag),
+                    dm, ncomps, guard_cells.ng_FieldSolver, 0.0_rt);
+
                 AllocInitMultiFab(m_flag_info_face[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps,
                                   guard_cells.ng_FieldSolver, lev, "m_flag_info_face[x]");
                 AllocInitMultiFab(m_flag_info_face[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps,
@@ -3505,9 +3509,6 @@ WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, cons
             break;
         case FieldType::edge_lengths :
             field_pointer = m_edge_lengths[lev][direction].get();
-            break;
-        case FieldType::face_areas :
-            field_pointer = m_face_areas[lev][direction].get();
             break;
         case FieldType::Efield_avg_fp :
             field_pointer = Efield_avg_fp[lev][direction].get();
