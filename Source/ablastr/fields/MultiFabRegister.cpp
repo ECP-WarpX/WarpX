@@ -332,6 +332,26 @@ namespace ablastr::fields
         return field_on_level;
     }
 
+    VectorField
+    MultiFabRegister::get_alldirs  (
+        std::string name,
+        int level
+    )
+    {
+        // TODO: Technically, we should search field_on_level via std::unique_copy
+        std::vector<Direction> all_dirs = {Direction{0}, Direction{1}, Direction{2}};
+
+        // insert a new level
+        VectorField vectorField;
+
+        // insert components
+        for (Direction dir : all_dirs)
+        {
+            vectorField[dir] = get(name, dir, level);
+        }
+        return vectorField;
+    }
+
     MultiLevelVectorField
     MultiFabRegister::get_mr_levels_alldirs  (
         std::string name,

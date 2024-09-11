@@ -281,6 +281,20 @@ namespace ablastr::fields
             int finest_level
         );
 
+        /** title
+         *
+         * Same as get above, but returns all levels for a name.
+         *
+         * @param name ...
+         * @param level ...
+         * @return ...
+         */
+        VectorField
+        get_alldirs  (
+            std::string name,
+            int level
+        );
+
         /** Return a vector field on all MR levels.
          *
          * Out loop: MR levels.
