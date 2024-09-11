@@ -544,6 +544,7 @@ void WarpX::HandleParticlesAtBoundaries (int step, amrex::Real cur_time, int num
 void WarpX::SyncCurrentAndRho ()
 {
     using ablastr::fields::va2vm;
+    using ablastr::fields::Direction;
 
     if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
     {
@@ -555,9 +556,9 @@ void WarpX::SyncCurrentAndRho ()
                 ? "current_fp_vay" : "current_fp";
             // TODO Replace current_cp with current_cp_vay once Vay deposition is implemented with MR
 
-            SyncCurrent( m_fields.get_mr_levels_alldirs(current_fp_string, finest_level),
-                         m_fields.get_mr_levels_alldirs("current_cp", finest_level),
-                         m_fields.get_mr_levels_alldirs("current_buf", finest_level) );
+            SyncCurrent(m_fields.get_mr_levels_alldirs(current_fp_string, finest_level),
+                        m_fields.get_mr_levels_alldirs("current_cp", finest_level),
+                        m_fields.get_mr_levels_alldirs("current_buf", finest_level) );
             SyncRho();
 
         }
@@ -569,7 +570,9 @@ void WarpX::SyncCurrentAndRho ()
             if (!current_correction &&
                 current_deposition_algo != CurrentDepositionAlgo::Vay)
             {
-                SyncCurrent(va2vm(current_fp), va2vm(current_cp), va2vm(current_buf));
+                SyncCurrent(m_fields.get_mr_levels_alldirs("current_fp", finest_level),
+                            m_fields.get_mr_levels_alldirs("current_cp", finest_level),
+                            m_fields.get_mr_levels_alldirs("current_buf", finest_level) );
                 SyncRho();
             }
 
@@ -583,7 +586,9 @@ void WarpX::SyncCurrentAndRho ()
     }
     else // FDTD
     {
-        SyncCurrent(va2vm(current_fp), va2vm(current_cp), va2vm(current_buf));
+        SyncCurrent(m_fields.get_mr_levels_alldirs("current_fp", finest_level),
+                    m_fields.get_mr_levels_alldirs("current_cp", finest_level),
+                    m_fields.get_mr_levels_alldirs("current_buf", finest_level) );
         SyncRho();
     }
 
@@ -593,18 +598,20 @@ void WarpX::SyncCurrentAndRho ()
         if (m_fields.has("rho_fp", lev)) {
             ApplyRhofieldBoundary(lev, m_fields.get("rho_fp",lev), PatchType::fine);
         }
-        ApplyJfieldBoundary(
-            lev, current_fp[lev][0].get(), current_fp[lev][1].get(),
-            current_fp[lev][2].get(), PatchType::fine
-        );
+        ApplyJfieldBoundary(lev,
+            m_fields.get("current_fp",Direction{0},lev),
+            m_fields.get("current_fp",Direction{1},lev),
+            m_fields.get("current_fp",Direction{2},lev),
+            PatchType::fine);
         if (lev > 0) {
             if (m_fields.has("rho_cp", lev)) {
                 ApplyRhofieldBoundary(lev, m_fields.get("rho_cp",lev), PatchType::coarse);
             }
-            ApplyJfieldBoundary(
-                lev, current_cp[lev][0].get(), current_cp[lev][1].get(),
-                current_cp[lev][2].get(), PatchType::coarse
-            );
+            ApplyJfieldBoundary(lev,
+                m_fields.get("current_cp",Direction{0},lev),
+                m_fields.get("current_cp",Direction{1},lev),
+                m_fields.get("current_cp",Direction{2},lev),
+                PatchType::coarse);
         }
     }
 }

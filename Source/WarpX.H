@@ -1893,8 +1893,8 @@ private:
      *             storing the coarse patch current to be transformed
      */
     void PSATDBackwardTransformJ (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp);
+        ablastr::fields::MultiLevelVectorField const & J_fp,
+        ablastr::fields::MultiLevelVectorField const & J_cp);
 
     /**
      * \brief Forward FFT of rho on all mesh refinement levels,
