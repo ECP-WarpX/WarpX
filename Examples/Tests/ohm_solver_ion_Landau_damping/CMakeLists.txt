@@ -10,3 +10,4 @@ add_warpx_test(
     diags/diag1000100  # output
     OFF  # dependency
 )
+label_warpx_test(test_2d_ohm_solver_landau_damping_picmi slow)

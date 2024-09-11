@@ -10,3 +10,4 @@ add_warpx_test(
     diags/diag1002500  # output
     OFF  # dependency
 )
+label_warpx_test(test_1d_ohm_solver_ion_beam_picmi slow)

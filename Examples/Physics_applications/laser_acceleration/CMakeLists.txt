@@ -30,6 +30,7 @@ add_warpx_test(
     diags/diag1000001  # output
     OFF  # dependency
 )
+label_warpx_test(test_1d_laser_acceleration_fluid_boosted slow)
 
 add_warpx_test(
     test_1d_laser_acceleration_picmi  # name
@@ -140,3 +141,4 @@ add_warpx_test(
     diags/diag1000010  # output
     OFF  # dependency
 )
+label_warpx_test(test_rz_laser_acceleration_picmi slow)
