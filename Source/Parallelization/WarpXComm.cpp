@@ -781,6 +781,11 @@ WarpX::FillBoundaryE_avg (int lev, PatchType patch_type, IntVect ng)
 {
     if (patch_type == PatchType::fine)
     {
+        if (do_pml && pml[lev]->ok())
+        {
+            WARPX_ABORT_WITH_MESSAGE("Averaged Galilean PSATD with PML is not yet implemented");
+        }
+
         const amrex::Periodicity& period = Geom(lev).periodicity();
         if ( safe_guard_cells ){
             const Vector<MultiFab*> mf{Efield_avg_fp[lev][0].get(),Efield_avg_fp[lev][1].get(),Efield_avg_fp[lev][2].get()};
@@ -796,6 +801,11 @@ WarpX::FillBoundaryE_avg (int lev, PatchType patch_type, IntVect ng)
     }
     else if (patch_type == PatchType::coarse)
     {
+        if (do_pml && pml[lev]->ok())
+        {
+            WARPX_ABORT_WITH_MESSAGE("Averaged Galilean PSATD with PML is not yet implemented");
+        }
+
         const amrex::Periodicity& cperiod = Geom(lev-1).periodicity();
         if ( safe_guard_cells ) {
             const Vector<MultiFab*> mf{Efield_avg_cp[lev][0].get(),Efield_avg_cp[lev][1].get(),Efield_avg_cp[lev][2].get()};
@@ -825,6 +835,10 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
 {
     if (patch_type == PatchType::fine)
     {
+        if (do_pml && pml[lev]->ok())
+        {
+            WARPX_ABORT_WITH_MESSAGE("Averaged Galilean PSATD with PML is not yet implemented");
+        }
         const amrex::Periodicity& period = Geom(lev).periodicity();
         if ( safe_guard_cells ) {
             const Vector<MultiFab*> mf{Bfield_avg_fp[lev][0].get(),Bfield_avg_fp[lev][1].get(),Bfield_avg_fp[lev][2].get()};
@@ -840,6 +854,11 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
     }
     else if (patch_type == PatchType::coarse)
     {
+        if (do_pml && pml[lev]->ok())
+        {
+            WARPX_ABORT_WITH_MESSAGE("Averaged Galilean PSATD with PML is not yet implemented");
+        }
+
         const amrex::Periodicity& cperiod = Geom(lev-1).periodicity();
         if ( safe_guard_cells ){
             const Vector<MultiFab*> mf{Bfield_avg_cp[lev][0].get(),Bfield_avg_cp[lev][1].get(),Bfield_avg_cp[lev][2].get()};
