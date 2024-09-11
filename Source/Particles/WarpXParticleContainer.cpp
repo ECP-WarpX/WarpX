@@ -853,7 +853,7 @@ WarpXParticleContainer::DepositCurrent (
             }
 
             DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev,
-                           J[lev][0].get(), J[lev][1].get(), J[lev][2].get(),
+                           J[lev][0], J[lev][1], J[lev][2],
                            0, np, thread_num, lev, lev, dt, relative_time, PushType::Explicit);
         }
 #ifdef AMREX_USE_OMP
