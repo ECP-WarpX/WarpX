@@ -57,18 +57,26 @@
 
 namespace ablastr::fields {
 
+/** Compute the L-infinity norm of the charge density `rho` across all MR levels
+ * to determine if `rho` is zero everywhere  
+ *
+ * \param[in] rho The charge density a given species
+ * \param[in] finest_level The most refined mesh refinement level
+ * \param[in] absolute_tolerance The absolute convergence threshold for the MLMG solver
+ * \param[out] max_norm_rho The maximum L-infinity norm of `rho` across all levels 
+ */
 amrex::Real
 getMaxNormRho (amrex::Vector<amrex::MultiFab*> const & rho,
                int finest_level,
                amrex::Real & absolute_tolerance)
 {
-    amrex::Real max_norm_b = 0.0;
+    amrex::Real max_norm_rho = 0.0;
     for (int lev=0; lev<=finest_level; lev++) {
-        max_norm_b = amrex::max(max_norm_b, rho[lev]->norm0());
+        max_norm_rho = amrex::max(max_norm_rho, rho[lev]->norm0());
     }
-    amrex::ParallelDescriptor::ReduceRealMax(max_norm_b);
+    amrex::ParallelDescriptor::ReduceRealMax(max_norm_rho);
 
-    const bool always_use_bnorm = (max_norm_b > 0);
+    const bool always_use_bnorm = (max_norm_rho > 0);
     if (!always_use_bnorm) {
         if (absolute_tolerance == 0.0) { absolute_tolerance = amrex::Real(1e-6); }
         ablastr::warn_manager::WMRecordWarning(
@@ -77,9 +85,24 @@ getMaxNormRho (amrex::Vector<amrex::MultiFab*> const & rho,
                 ablastr::warn_manager::WarnPriority::low
         );
     }
-    return max_norm_b;
+    return max_norm_rho;
 }
 
+/** Interpolate the potential `phi` from level `lev` to `lev+1`
+ * 
+ * Needed to solve Poisson equation on `lev+1`
+ * The coarser level `lev` provides both 
+ * the boundary values and initial guess for `phi` 
+ * on the finer level `lev+1`
+ *
+ * \param[in] phi_lev  The potential on a given mesh refinement level `lev` 
+ * \param[in] phi_lev_plus_one The potential on the next level `lev+1`
+ * \param[in] geom_lev The geometry of level `lev`
+ * \param[in] do_single_precision_comms perform communications in single precision
+ * \param[in] refratio mesh refinement ratio between level `lev` and `lev+1`
+ * \param[in] ncomp Number of components of the multifab (1) 
+ * \param[in] ng Number of ghost cells (1 if collocated, 0 otherwise)
+ */
 void
 interpolatePhiBetweenLevels (amrex::MultiFab* const phi_lev,
                              amrex::MultiFab* const phi_lev_plus_one,
@@ -384,24 +407,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
             }
         }
     } // loop over lev(els)
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+} // computePhi 
 } // namespace ablastr::fields
 
 #endif // ABLASTR_POISSON_SOLVER_H
