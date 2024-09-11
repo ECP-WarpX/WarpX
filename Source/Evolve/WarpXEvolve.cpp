@@ -637,7 +637,11 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     // Initialize multi-J loop:
 
     // 1) Prepare E,B,F,G fields in spectral space
-    PSATDForwardTransformEB(Efield_fp, Bfield_fp, Efield_cp, Bfield_cp);
+    PSATDForwardTransformEB(
+        m_fields.get_mr_levels_alldirs("Efield_fp", finest_level),
+        m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level),
+        m_fields.get_mr_levels_alldirs("Efield_cp", finest_level),
+        m_fields.get_mr_levels_alldirs("Bfield_cp", finest_level) );
     if (WarpX::do_dive_cleaning) { PSATDForwardTransformF(); }
     if (WarpX::do_divb_cleaning) { PSATDForwardTransformG(); }
 
@@ -664,16 +668,21 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     //    (dt[0] denotes the time step on mesh refinement level 0)
     if (J_in_time == JInTime::Linear)
     {
-        auto& current = (do_current_centering) ? current_fp_nodal : current_fp;
-        mypc->DepositCurrent(current, dt[0], -dt[0]);
+        std::string const current_string = (do_current_centering) ? "current_fp_nodal" : "current_fp";
+        //RL TODO mypc->DepositCurrent( m_fields.get_mr_levels(current_string, finest_level), dt[0], -dt[0]);
         // Synchronize J: filter, exchange boundary, and interpolate across levels.
         // With current centering, the nodal current is deposited in 'current',
         // namely 'current_fp_nodal': SyncCurrent stores the result of its centering
         // into 'current_fp' and then performs both filtering, if used, and exchange
         // of guard cells.
-        SyncCurrent(va2vm(current_fp), va2vm(current_cp), va2vm(current_buf));
+        SyncCurrent(
+            m_fields.get_mr_levels_alldirs( "current_fp", finest_level),
+            m_fields.get_mr_levels_alldirs( "current_cp", finest_level),
+            m_fields.get_mr_levels_alldirs( "current_buf", finest_level) );
         // Forward FFT of J
-        PSATDForwardTransformJ(current_fp, current_cp);
+        PSATDForwardTransformJ(
+            m_fields.get_mr_levels_alldirs( "current_fp", finest_level),
+            m_fields.get_mr_levels_alldirs( "current_cp", finest_level) );
     }
 
     // Number of depositions for multi-J scheme
@@ -698,16 +707,21 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
 
         // Deposit new J at relative time t_deposit_current with time step dt
         // (dt[0] denotes the time step on mesh refinement level 0)
-        auto& current = (do_current_centering) ? current_fp_nodal : current_fp;
-        mypc->DepositCurrent(current, dt[0], t_deposit_current);
+        std::string const current_string = (do_current_centering) ? "current_fp_nodal" : "current_fp";
+        //RL TODO mypc->DepositCurrent( m_fields.get_mr_levels(current_string, finest_level), dt[0], t_deposit_current);
         // Synchronize J: filter, exchange boundary, and interpolate across levels.
         // With current centering, the nodal current is deposited in 'current',
         // namely 'current_fp_nodal': SyncCurrent stores the result of its centering
         // into 'current_fp' and then performs both filtering, if used, and exchange
         // of guard cells.
-        SyncCurrent(va2vm(current_fp), va2vm(current_cp), va2vm(current_buf));
+        SyncCurrent(
+            m_fields.get_mr_levels_alldirs( "current_fp", finest_level),
+            m_fields.get_mr_levels_alldirs( "current_cp", finest_level),
+            m_fields.get_mr_levels_alldirs( "current_buf", finest_level) );
         // Forward FFT of J
-        PSATDForwardTransformJ(current_fp, current_cp);
+        PSATDForwardTransformJ(
+            m_fields.get_mr_levels_alldirs( "current_fp", finest_level),
+            m_fields.get_mr_levels_alldirs( "current_cp", finest_level) );
 
         // Deposit new rho
         // (after checking that pointer to rho_fp on MR level 0 is not null)

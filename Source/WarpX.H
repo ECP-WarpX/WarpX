@@ -722,8 +722,8 @@ public:
      * when FieldBoundaryType is set to damped. Vector version.
      */
     void DampFieldsInGuards (int lev,
-                             const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
-                             const std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield);
+                             const ablastr::fields::VectorField& Efield,
+                             const ablastr::fields::VectorField& Bfield);
 
     /**
      * \brief Private function for spectral solver
@@ -1826,10 +1826,10 @@ private:
      *             storing the coarse patch magnetic field to be transformed
      */
     void PSATDForwardTransformEB (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_cp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_cp);
+        const ablastr::fields::MultiLevelVectorField& E_fp,
+        const ablastr::fields::MultiLevelVectorField& B_fp,
+        const ablastr::fields::MultiLevelVectorField& E_cp,
+        const ablastr::fields::MultiLevelVectorField& B_cp);
 
     /**
      * \brief Backward FFT of E,B on all mesh refinement levels,
@@ -1845,10 +1845,10 @@ private:
      *             storing the coarse patch magnetic field to be transformed
      */
     void PSATDBackwardTransformEB (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_cp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_cp);
+        const ablastr::fields::MultiLevelVectorField& E_fp,
+        const ablastr::fields::MultiLevelVectorField& B_fp,
+        const ablastr::fields::MultiLevelVectorField& E_cp,
+        const ablastr::fields::MultiLevelVectorField& B_cp);
 
     /**
      * \brief Backward FFT of averaged E,B on all mesh refinement levels

@@ -64,7 +64,7 @@ namespace {
 #else
         SpectralSolver& solver,
 #endif
-        const std::array<std::unique_ptr<amrex::MultiFab>,3>& vector_field,
+        const ablastr::fields::VectorField& vector_field,
         const int compx, const int compy, const int compz)
     {
 #ifdef WARPX_DIM_RZ
@@ -84,7 +84,7 @@ namespace {
 #else
         SpectralSolver& solver,
 #endif
-        const std::array<std::unique_ptr<amrex::MultiFab>,3>& vector_field,
+        const ablastr::fields::VectorField& vector_field,
         const int compx, const int compy, const int compz,
         const amrex::IntVect& fill_guards)
     {
@@ -101,10 +101,10 @@ namespace {
 }
 
 void WarpX::PSATDForwardTransformEB (
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_fp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_fp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_cp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_cp)
+    const ablastr::fields::MultiLevelVectorField& E_fp,
+    const ablastr::fields::MultiLevelVectorField& B_fp,
+    const ablastr::fields::MultiLevelVectorField& E_cp,
+    const ablastr::fields::MultiLevelVectorField& B_cp)
 {
     const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
@@ -122,10 +122,10 @@ void WarpX::PSATDForwardTransformEB (
 }
 
 void WarpX::PSATDBackwardTransformEB (
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_fp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_fp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_cp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_cp)
+    const ablastr::fields::MultiLevelVectorField& E_fp,
+    const ablastr::fields::MultiLevelVectorField& B_fp,
+    const ablastr::fields::MultiLevelVectorField& E_cp,
+    const ablastr::fields::MultiLevelVectorField& B_cp)
 {
     const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
@@ -280,8 +280,8 @@ WarpX::PSATDBackwardTransformG ()
 }
 
 void WarpX::PSATDForwardTransformJ (
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+    const ablastr::fields::MultiLevelVectorField& J_fp,
+    const ablastr::fields::MultiLevelVectorField& J_cp,
     const bool apply_kspace_filter)
 {
     SpectralFieldIndex Idx;
@@ -769,7 +769,11 @@ WarpX::PushPSATD ()
     }
 
     // FFT of E and B
-    PSATDForwardTransformEB(Efield_fp, Bfield_fp, Efield_cp, Bfield_cp);
+    PSATDForwardTransformEB(
+        m_fields.get_mr_levels_alldirs("Efield_fp", finest_level),
+        m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level),
+        m_fields.get_mr_levels_alldirs("Efield_cp", finest_level),
+        m_fields.get_mr_levels_alldirs("Bfield_cp", finest_level) );
 
 #ifdef WARPX_DIM_RZ
     if (pml_rz[0]) { pml_rz[0]->PushPSATD(0); }
@@ -1090,8 +1094,8 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
 
 void
 WarpX::DampFieldsInGuards(const int lev,
-                          const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
-                          const std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield) {
+                          const ablastr::fields::VectorField& Efield,
+                          const ablastr::fields::VectorField& Bfield) {
 
     // Loop over dimensions
     for (int dampdir = 0 ; dampdir < AMREX_SPACEDIM ; dampdir++)
