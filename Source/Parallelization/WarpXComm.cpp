@@ -103,6 +103,8 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
     ablastr::fields::MultiLevelVectorField Bfield_avg_fp = m_fields.get_mr_levels_alldirs("Bfield_avg_fp", finest_level);
     ablastr::fields::MultiLevelVectorField Efield_aux = m_fields.get_mr_levels_alldirs("Efield_aux", finest_level);
     ablastr::fields::MultiLevelVectorField Bfield_aux = m_fields.get_mr_levels_alldirs("Bfield_aux", finest_level);
+    ablastr::fields::MultiLevelVectorField Efield_cax = m_fields.get_mr_levels_alldirs("Efield_cax", finest_level);
+    ablastr::fields::MultiLevelVectorField Bfield_cax = m_fields.get_mr_levels_alldirs("Bfield_cax", finest_level);
 
     ablastr::fields::MultiLevelVectorField const & Bmf = WarpX::fft_do_time_averaging ? Bfield_avg_fp : Bfield_fp;
     ablastr::fields::MultiLevelVectorField const & Emf = WarpX::fft_do_time_averaging ? Efield_avg_fp : Efield_fp; // JRA, do this one when doing Efield_avg_fp refactor to new style
@@ -388,6 +390,8 @@ WarpX::UpdateAuxilaryDataSameType ()
     ablastr::fields::MultiLevelVectorField Bfield_cp = m_fields.get_mr_levels_alldirs("Bfield_cp", finest_level);
     ablastr::fields::MultiLevelVectorField Efield_aux = m_fields.get_mr_levels_alldirs("Efield_aux", finest_level);
     ablastr::fields::MultiLevelVectorField Bfield_aux = m_fields.get_mr_levels_alldirs("Bfield_aux", finest_level);
+    ablastr::fields::MultiLevelVectorField Efield_cax = m_fields.get_mr_levels_alldirs("Efield_cax", finest_level);
+    ablastr::fields::MultiLevelVectorField Bfield_cax = m_fields.get_mr_levels_alldirs("Bfield_cax", finest_level);
     ablastr::fields::MultiLevelVectorField Efield_avg_fp = m_fields.get_mr_levels_alldirs("Efield_avg_fp", finest_level);
     ablastr::fields::MultiLevelVectorField Bfield_avg_fp = m_fields.get_mr_levels_alldirs("Bfield_avg_fp", finest_level);
     ablastr::fields::MultiLevelVectorField Efield_avg_cp = m_fields.get_mr_levels_alldirs("Efield_avg_cp", finest_level);
