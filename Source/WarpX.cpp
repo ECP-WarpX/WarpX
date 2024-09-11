@@ -362,7 +362,6 @@ WarpX::WarpX ()
     Bfield_cax.resize(nlevs_max);
     current_buffer_masks.resize(nlevs_max);
     gather_buffer_masks.resize(nlevs_max);
-    charge_buf.resize(nlevs_max);
 
     pml.resize(nlevs_max);
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
@@ -2791,7 +2790,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             m_fields.alloc_init("current_buf", Direction{1}, lev, amrex::convert(cba,jy_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
             m_fields.alloc_init("current_buf", Direction{2}, lev, amrex::convert(cba,jz_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
             if (m_fields.has("rho_cp", lev)) {
-                AllocInitMultiFab(charge_buf[lev], amrex::convert(cba,rho_nodal_flag),dm,2*ncomps,ngRho,lev, "charge_buf");
+                m_fields.alloc_init("rho_buf", lev, amrex::convert(cba,rho_nodal_flag), dm, 2*ncomps, ngRho, 0.0_rt);
             }
             AllocInitMultiFab(current_buffer_masks[lev], ba, dm, ncomps, amrex::IntVect(1), lev, "current_buffer_masks");
             // Current buffer masks have 1 ghost cell, because of the fact

@@ -883,7 +883,7 @@ public:
     void SyncRho (
         const ablastr::fields::MultiLevelScalarField& charge_fp,
         const ablastr::fields::MultiLevelScalarField& charge_cp,
-        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_buffer);
+        ablastr::fields::MultiLevelScalarField const & charge_buffer);
 
     [[nodiscard]] amrex::Vector<int> getnsubsteps () const {return nsubsteps;}
     [[nodiscard]] int getnsubsteps (int lev) const {return nsubsteps[lev];}
@@ -1375,7 +1375,7 @@ private:
     void AddRhoFromFineLevelandSumBoundary (
         const ablastr::fields::MultiLevelScalarField& charge_fp,
         const ablastr::fields::MultiLevelScalarField& charge_cp,
-        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_buffer,
+        ablastr::fields::MultiLevelScalarField const & charge_buffer,
         int lev,
         int icomp,
         int ncomp);
@@ -1590,7 +1590,6 @@ private:
 
     // If charge/current deposition buffers are used
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_buf;
-    amrex::Vector<std::unique_ptr<amrex::MultiFab> > charge_buf;
 
     /**
      * \brief
