@@ -246,7 +246,7 @@ void HybridPICModel::InitData ()
             };
         }
 #endif
-        GetCurrentExternal(edge_lengths, lev);
+        (edge_lengths, lev);
     }
 }
 
@@ -404,7 +404,7 @@ void HybridPICModel::CalculateCurrentAmpere (
 
 void HybridPICModel::CalculateCurrentAmpere (
     std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+    ablastr::fields::VectorField const& edge_lengths,
     const int lev)
 {
     WARPX_PROFILE("WarpX::CalculateCurrentAmpere()");
@@ -426,7 +426,7 @@ void HybridPICModel::HybridPICSolveE (
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Bfield,
     ablastr::fields::MultiLevelScalarField const& rhofield,
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
+    ablastr::fields::MultiLevelVectorField const& edge_lengths,
     const bool solve_for_Faraday)
 {
     auto& warpx = WarpX::GetInstance();
@@ -444,7 +444,7 @@ void HybridPICModel::HybridPICSolveE (
     std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
     amrex::MultiFab* const rhofield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+    ablastr::fields::VectorField const& edge_lengths,
     const int lev, const bool solve_for_Faraday)
 {
     WARPX_PROFILE("WarpX::HybridPICSolveE()");
@@ -465,7 +465,7 @@ void HybridPICModel::HybridPICSolveE (
     std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
     amrex::MultiFab* const rhofield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+    ablastr::fields::VectorField const& edge_lengths,
     const int lev, PatchType patch_type,
     const bool solve_for_Faraday)
 {
@@ -537,7 +537,7 @@ void HybridPICModel::BfieldEvolveRK (
     ablastr::fields::MultiLevelVectorField Efield,
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
     ablastr::fields::MultiLevelScalarField const& rhofield,
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
+    ablastr::fields::MultiLevelVectorField  const& edge_lengths,
     amrex::Real dt, DtType dt_type,
     IntVect ng, std::optional<bool> nodal_sync )
 {
@@ -556,7 +556,7 @@ void HybridPICModel::BfieldEvolveRK (
     ablastr::fields::MultiLevelVectorField Efield,
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
     ablastr::fields::MultiLevelScalarField const& rhofield,
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
+    ablastr::fields::MultiLevelVectorField const& edge_lengths,
     amrex::Real dt, int lev, DtType dt_type,
     IntVect ng, std::optional<bool> nodal_sync )
 {
@@ -669,7 +669,7 @@ void HybridPICModel::FieldPush (
     ablastr::fields::MultiLevelVectorField& Efield,
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
     ablastr::fields::MultiLevelScalarField const& rhofield,
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
+    ablastr::fields::MultiLevelVectorField const& edge_lengths,
     amrex::Real dt, DtType dt_type,
     IntVect ng, std::optional<bool> nodal_sync )
 {

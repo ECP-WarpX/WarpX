@@ -358,7 +358,7 @@ void FiniteDifferenceSolver::HybridPICSolveE (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     amrex::MultiFab* const rhofield,
     std::unique_ptr<amrex::MultiFab> const& Pefield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+    ablastr::fields::VectorField const& edge_lengths,
     int lev, HybridPICModel const* hybrid_model,
     const bool solve_for_Faraday)
 {

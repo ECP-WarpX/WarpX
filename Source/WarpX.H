@@ -1062,8 +1062,8 @@ public:
          amrex::ParserExecutor<3> const& xfield_parser,
          amrex::ParserExecutor<3> const& yfield_parser,
          amrex::ParserExecutor<3> const& zfield_parser,
-         std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-         std::array<amrex::MultiFab*, 3 > const& face_areas,
+         ablastr::fields::VectorField const& edge_lengths,
+         ablastr::fields::VectorField const& face_areas,
          [[maybe_unused]] char field,
          int lev, PatchType patch_type);
 

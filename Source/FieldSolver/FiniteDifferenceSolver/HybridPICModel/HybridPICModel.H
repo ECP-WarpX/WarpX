@@ -60,7 +60,7 @@ public:
         ablastr::fields::MultiLevelVectorField const& edge_lengths
     );
     void GetCurrentExternal (
-        ablastr::fields::MultiLevelVectorField const& edge_lengths,
+        ablastr::fields::VectorField const& edge_lengths,
         int lev
     );
 
