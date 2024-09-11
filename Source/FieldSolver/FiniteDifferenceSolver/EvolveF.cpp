@@ -136,7 +136,7 @@ void FiniteDifferenceSolver::EvolveFCartesian (
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveFCylindrical (
     amrex::MultiFab* Ffield,
-    ablastr::fields::VectorField const& Efield,
+    ablastr::fields::VectorField const & Efield,
     amrex::MultiFab* const rhofield,
     int const rhocomp,
     amrex::Real const dt ) {

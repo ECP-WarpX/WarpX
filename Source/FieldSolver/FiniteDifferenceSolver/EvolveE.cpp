@@ -227,7 +227,7 @@ void FiniteDifferenceSolver::EvolveECartesian (
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveECylindrical (
-    ablastr::fields::VectorField& Efield,
+    ablastr::fields::VectorField Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
     ablastr::fields::VectorField const& edge_lengths,

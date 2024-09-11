@@ -65,7 +65,7 @@ void FiniteDifferenceSolver::EvolveB (
 #ifdef WARPX_DIM_RZ
     if ((m_fdtd_algo == ElectromagneticSolverAlgo::Yee)||
         (m_fdtd_algo == ElectromagneticSolverAlgo::HybridPIC)){
-        EvolveBCylindrical <CylindricalYeeAlgorithm> ( Bfield, Efield, lev, dt );
+        EvolveBCylindrical <CylindricalYeeAlgorithm> ( ablastr::fields::va2vm(Bfield), ablastr::fields::va2vm(Efield), lev, dt );
 #else
 
     if (m_grid_type == GridType::Collocated) {
@@ -359,7 +359,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveBCylindrical (
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
+    ablastr::fields::VectorField Bfield,
     ablastr::fields::VectorField const& Efield,
     int lev, amrex::Real const dt ) {
 
