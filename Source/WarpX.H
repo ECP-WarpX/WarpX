@@ -1143,7 +1143,7 @@ public:
     * \brief Compute the length of the mesh edges. Here the length is a value in [0, 1].
     *        An edge of length 0 is fully covered.
     */
-    static void ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+    static void ComputeEdgeLengths (ablastr::fields::VectorField& edge_lengths,
                                     const amrex::EBFArrayBoxFactory& eb_fact);
     /**
     * \brief Compute the area of the mesh faces. Here the area is a value in [0, 1].
@@ -1155,7 +1155,7 @@ public:
     /**
     * \brief Scale the edges lengths by the mesh width to obtain the real lengths.
     */
-    static void ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+    static void ScaleEdges (ablastr::fields::VectorField& edge_lengths,
                             const std::array<amrex::Real,3>& cell_size);
     /**
     * \brief Scale the edges areas by the mesh width to obtain the real areas.

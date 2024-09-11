@@ -1284,15 +1284,14 @@ void WarpX::InitializeEBGridData (int lev)
         if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD ) {
 
             auto const eb_fact = fieldEBFactory(lev);
-            ComputeEdgeLengths(
-                m_fields.get_alldirs("edge_lengths", lev), eb_fact);
-            ScaleEdges(
-                m_fields.get_alldirs("edge_lengths", lev), CellSize(lev));
 
-            ComputeFaceAreas(
-                m_fields.get_alldirs("face_areas", lev), eb_fact);
-            ScaleAreas(
-                m_fields.get_alldirs("face_areas", lev), CellSize(lev));
+            auto edge_lengths_lev = m_fields.get_alldirs("edge_lengths", lev);
+            ComputeEdgeLengths(edge_lengths_lev, eb_fact);
+            ScaleEdges(edge_lengths_lev, CellSize(lev));
+
+            auto face_areas_lev = m_fields.get_alldirs("face_areas", lev);
+            ComputeFaceAreas(face_areas_lev, eb_fact);
+            ScaleAreas(face_areas_lev, CellSize(lev));
 
             if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
                 MarkCells();
@@ -1382,8 +1381,8 @@ WarpX::LoadExternalFields (int const lev)
             m_p_ext_field_params->Bxfield_parser->compile<3>(),
             m_p_ext_field_params->Byfield_parser->compile<3>(),
             m_p_ext_field_params->Bzfield_parser->compile<3>(),
-            m_edge_lengths[lev],
-            m_fields.get_mr_levels_alldirs("face_areas", finest_level)[lev],
+            m_fields.get_alldirs("edge_lengths", lev),
+            m_fields.get_alldirs("face_areas", lev),
             'B',
             lev, PatchType::fine);
     }

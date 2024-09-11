@@ -119,7 +119,7 @@ WarpX::InitEB ()
 
 #ifdef AMREX_USE_EB
 void
-WarpX::ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+WarpX::ComputeEdgeLengths (ablastr::fields::VectorField& edge_lengths,
                            const amrex::EBFArrayBoxFactory& eb_fact) {
     BL_PROFILE("ComputeEdgeLengths");
 
@@ -247,7 +247,7 @@ WarpX::ComputeFaceAreas (VectorField& face_areas,
 
 
 void
-WarpX::ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+WarpX::ScaleEdges (ablastr::fields::VectorField& edge_lengths,
                    const std::array<amrex::Real,3>& cell_size) {
     BL_PROFILE("ScaleEdges");
 
