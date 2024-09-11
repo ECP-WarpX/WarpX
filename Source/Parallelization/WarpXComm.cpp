@@ -313,9 +313,9 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                 const amrex::IntVect& Ey_fp_stag = m_fields.get("Efield_fp",Direction{1},lev)->ixType().toIntVect();
                 const amrex::IntVect& Ez_fp_stag = m_fields.get("Efield_fp",Direction{2},lev)->ixType().toIntVect();
 
-                const amrex::IntVect& Ex_cp_stag = Efield_cp[lev][0]->ixType().toIntVect();
-                const amrex::IntVect& Ey_cp_stag = Efield_cp[lev][1]->ixType().toIntVect();
-                const amrex::IntVect& Ez_cp_stag = Efield_cp[lev][2]->ixType().toIntVect();
+                const amrex::IntVect& Ex_cp_stag = m_fields.get("Efield_cp",Direction{0},lev)->ixType().toIntVect();
+                const amrex::IntVect& Ey_cp_stag = m_fields.get("Efield_cp",Direction{1},lev)->ixType().toIntVect();
+                const amrex::IntVect& Ez_cp_stag = m_fields.get("Efield_cp",Direction{2},lev)->ixType().toIntVect();
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -328,9 +328,9 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                     Array4<Real const> const& ex_fp = m_fields.get("Efield_fp",Direction{0},lev)->const_array(mfi);
                     Array4<Real const> const& ey_fp = m_fields.get("Efield_fp",Direction{1},lev)->const_array(mfi);
                     Array4<Real const> const& ez_fp = m_fields.get("Efield_fp",Direction{2},lev)->const_array(mfi);
-                    Array4<Real const> const& ex_cp = Efield_cp[lev][0]->const_array(mfi);
-                    Array4<Real const> const& ey_cp = Efield_cp[lev][1]->const_array(mfi);
-                    Array4<Real const> const& ez_cp = Efield_cp[lev][2]->const_array(mfi);
+                    Array4<Real const> const& ex_cp = m_fields.get("Efield_cp",Direction{0},lev)->const_array(mfi);
+                    Array4<Real const> const& ey_cp = m_fields.get("Efield_cp",Direction{1},lev)->const_array(mfi);
+                    Array4<Real const> const& ez_cp = m_fields.get("Efield_cp",Direction{2},lev)->const_array(mfi);
                     Array4<Real const> const& ex_c = Etmp[0]->const_array(mfi);
                     Array4<Real const> const& ey_c = Etmp[1]->const_array(mfi);
                     Array4<Real const> const& ez_c = Etmp[2]->const_array(mfi);
@@ -501,9 +501,12 @@ WarpX::UpdateAuxilaryDataSameType ()
         {
             if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None)
             {
-                MultiFab dEx(Efield_cp[lev][0]->boxArray(), dm, Efield_cp[lev][0]->nComp(), ng);
-                MultiFab dEy(Efield_cp[lev][1]->boxArray(), dm, Efield_cp[lev][1]->nComp(), ng);
-                MultiFab dEz(Efield_cp[lev][2]->boxArray(), dm, Efield_cp[lev][2]->nComp(), ng);
+                MultiFab dEx(m_fields.get("Efield_cp",Direction{0},lev)->boxArray(), dm,
+                             m_fields.get("Efield_cp",Direction{0},lev)->nComp(), ng);
+                MultiFab dEy(m_fields.get("Efield_cp",Direction{1},lev)->boxArray(), dm,
+                             m_fields.get("Efield_cp",Direction{1},lev)->nComp(), ng);
+                MultiFab dEz(m_fields.get("Efield_cp",Direction{2},lev)->boxArray(), dm,
+                             m_fields.get("Efield_cp",Direction{2},lev)->nComp(), ng);
                 dEx.setVal(0.0);
                 dEy.setVal(0.0);
                 dEz.setVal(0.0);
@@ -529,9 +532,12 @@ WarpX::UpdateAuxilaryDataSameType ()
                     MultiFab::Copy(*Efield_cax[lev][1], dEy, 0, 0, Efield_cax[lev][1]->nComp(), ng);
                     MultiFab::Copy(*Efield_cax[lev][2], dEz, 0, 0, Efield_cax[lev][2]->nComp(), ng);
                 }
-                MultiFab::Subtract(dEx, *Efield_cp[lev][0], 0, 0, Efield_cp[lev][0]->nComp(), ng);
-                MultiFab::Subtract(dEy, *Efield_cp[lev][1], 0, 0, Efield_cp[lev][1]->nComp(), ng);
-                MultiFab::Subtract(dEz, *Efield_cp[lev][2], 0, 0, Efield_cp[lev][2]->nComp(), ng);
+                MultiFab::Subtract(dEx, *m_fields.get("Efield_cp",Direction{0},lev),
+                                   0, 0, m_fields.get("Efield_cp",Direction{0},lev)->nComp(), ng);
+                MultiFab::Subtract(dEy, *m_fields.get("Efield_cp",Direction{1},lev),
+                                   0, 0, m_fields.get("Efield_cp",Direction{1},lev)->nComp(), ng);
+                MultiFab::Subtract(dEz, *m_fields.get("Efield_cp",Direction{2},lev),
+                                   0, 0, m_fields.get("Efield_cp",Direction{2},lev)->nComp(), ng);
 
                 const amrex::IntVect& refinement_ratio = refRatio(lev-1);
 
@@ -705,7 +711,9 @@ WarpX::FillBoundaryE (const int lev, const PatchType patch_type, const amrex::In
     }
     else // coarse patch
     {
-        mf     = {Efield_cp[lev][0].get(), Efield_cp[lev][1].get(), Efield_cp[lev][2].get()};
+        mf     = {m_fields.get("Efield_cp",Direction{0},lev),
+                  m_fields.get("Efield_cp",Direction{1},lev),
+                  m_fields.get("Efield_cp",Direction{2},lev)};
         period = Geom(lev-1).periodicity();
     }
 
@@ -1200,14 +1208,14 @@ WarpX::SyncRho () {
     SyncRho(
         m_fields.get_mr_levels("rho_fp", finest_level),
         m_fields.get_mr_levels("rho_cp", finest_level),
-        charge_buf);
+        m_fields.get_mr_levels("rho_buf", finest_level));
 }
 
 void
 WarpX::SyncRho (
     const ablastr::fields::MultiLevelScalarField& charge_fp,
     const ablastr::fields::MultiLevelScalarField& charge_cp,
-    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_buffer)
+    ablastr::fields::MultiLevelScalarField const & charge_buffer)
 {
     WARPX_PROFILE("WarpX::SyncRho()");
 
@@ -1532,7 +1540,7 @@ void WarpX::ApplyFilterandSumBoundaryRho (int /*lev*/, int glev, amrex::MultiFab
 void WarpX::AddRhoFromFineLevelandSumBoundary (
     const ablastr::fields::MultiLevelScalarField& charge_fp,
     const ablastr::fields::MultiLevelScalarField& charge_cp,
-    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_buffer,
+    ablastr::fields::MultiLevelScalarField const & charge_buffer,
     const int lev,
     const int icomp,
     const int ncomp)

@@ -45,7 +45,7 @@ using namespace amrex;
  */
 void FiniteDifferenceSolver::EvolveF (
     amrex::MultiFab* Ffield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
+    ablastr::fields::VectorField const& Efield,
     amrex::MultiFab* const rhofield,
     int const rhocomp,
     amrex::Real const dt ) {
@@ -83,7 +83,7 @@ void FiniteDifferenceSolver::EvolveF (
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveFCartesian (
     amrex::MultiFab* Ffield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
+    ablastr::fields::VectorField const Efield,
     amrex::MultiFab* const rhofield,
     int const rhocomp,
     amrex::Real const dt ) {
@@ -136,7 +136,7 @@ void FiniteDifferenceSolver::EvolveFCartesian (
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveFCylindrical (
     amrex::MultiFab* Ffield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
+    ablastr::fields::VectorField const& Efield,
     amrex::MultiFab* const rhofield,
     int const rhocomp,
     amrex::Real const dt ) {

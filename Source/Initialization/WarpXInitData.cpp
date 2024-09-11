@@ -1004,7 +1004,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
             // We initialize ECTRhofield consistently with the Efield
             if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
                 m_fdtd_solver_fp[lev]->EvolveECTRho(
-                    Efield_fp[lev], m_edge_lengths[lev],
+                    m_fields.get_alldirs("Efield_fp",lev), m_edge_lengths[lev],
                     m_fields.get_mr_levels_alldirs("face_areas", finest_level)[lev],
                     ECTRhofield[lev], lev);
             }
@@ -1040,7 +1040,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                 if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
                     // We initialize ECTRhofield consistently with the Efield
                     m_fdtd_solver_cp[lev]->EvolveECTRho(
-                        Efield_cp[lev], m_edge_lengths[lev],
+                        m_fields.get_alldirs("Efield_cp",lev), m_edge_lengths[lev],
                         m_fields.get_mr_levels_alldirs("face_areas", finest_level)[lev],
                         ECTRhofield[lev], lev);
                 }

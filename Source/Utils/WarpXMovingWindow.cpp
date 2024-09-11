@@ -139,6 +139,8 @@ WarpX::MoveWindow (const int step, bool move_j)
 {
     WARPX_PROFILE("WarpX::MoveWindow");
 
+    using ablastr::fields::Direction;
+
     if (step == start_moving_window_step) {
         amrex::Print() << Utils::TextMsg::Info("Starting moving window");
     }
@@ -243,7 +245,7 @@ WarpX::MoveWindow (const int step, bool move_j)
             }
             shiftMF(*Bfield_fp[lev][dim], geom[lev], num_shift, dir, lev, do_update_cost,
                 m_p_ext_field_params->B_external_grid[dim], use_Bparser, Bfield_parser);
-            shiftMF(*Efield_fp[lev][dim], geom[lev], num_shift, dir, lev, do_update_cost,
+            shiftMF(*m_fields.get("Efield_fp",Direction{0},lev), geom[lev], num_shift, dir, lev, do_update_cost,
                 m_p_ext_field_params->E_external_grid[dim], use_Eparser, Efield_parser);
             if (fft_do_time_averaging) {
                 shiftMF(*Bfield_avg_fp[lev][dim], geom[lev], num_shift, dir, lev, do_update_cost,
@@ -272,7 +274,7 @@ WarpX::MoveWindow (const int step, bool move_j)
                 // coarse grid
                 shiftMF(*Bfield_cp[lev][dim], geom[lev-1], num_shift_crse, dir, lev, do_update_cost,
                     m_p_ext_field_params->B_external_grid[dim], use_Bparser, Bfield_parser);
-                shiftMF(*Efield_cp[lev][dim], geom[lev-1], num_shift_crse, dir, lev, do_update_cost,
+                shiftMF(*m_fields.get("Efield_cp",Direction{0},lev), geom[lev], num_shift, dir, lev, do_update_cost,
                     m_p_ext_field_params->E_external_grid[dim], use_Eparser, Efield_parser);
                 shiftMF(*Bfield_aux[lev][dim], geom[lev], num_shift, dir, lev, do_update_cost);
                 shiftMF(*Efield_aux[lev][dim], geom[lev], num_shift, dir, lev, do_update_cost);
@@ -465,9 +467,9 @@ WarpX::MoveWindow (const int step, bool move_j)
         const int lev_zero = 0;
         m_macroscopic_properties->InitData(
             Geom(lev_zero),
-            getField(warpx::fields::FieldType::Efield_fp, lev_zero,0).ixType().toIntVect(),
-            getField(warpx::fields::FieldType::Efield_fp, lev_zero,1).ixType().toIntVect(),
-            getField(warpx::fields::FieldType::Efield_fp, lev_zero,2).ixType().toIntVect()
+            m_fields.get("Efield_fp",Direction{0},lev_zero)->ixType().toIntVect(),
+            m_fields.get("Efield_fp",Direction{1},lev_zero)->ixType().toIntVect(),
+            m_fields.get("Efield_fp",Direction{2},lev_zero)->ixType().toIntVect()
         );
     }
 

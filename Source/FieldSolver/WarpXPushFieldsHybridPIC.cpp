@@ -96,7 +96,9 @@ void WarpX::HybridPICEvolveFields ()
     for (int sub_step = 0; sub_step < sub_steps; sub_step++)
     {
         m_hybrid_pic_model->BfieldEvolveRK(
-            Bfield_fp, Efield_fp, current_fp_temp, amrex::GetVecOfPtrs(rho_fp_temp),
+            Bfield_fp,
+            m_fields.get_mr_levels_alldirs("Efield_fp", finest_level),
+            current_fp_temp, amrex::GetVecOfPtrs(rho_fp_temp),
             m_edge_lengths, 0.5_rt/sub_steps*dt[0],
             DtType::FirstHalf, guard_cells.ng_FieldSolver,
             WarpX::sync_nodal_points
@@ -119,7 +121,9 @@ void WarpX::HybridPICEvolveFields ()
     for (int sub_step = 0; sub_step < sub_steps; sub_step++)
     {
         m_hybrid_pic_model->BfieldEvolveRK(
-            Bfield_fp, Efield_fp, current_fp, amrex::GetVecOfPtrs(rho_fp_temp),
+            Bfield_fp,
+            m_fields.get_mr_levels_alldirs("Efield_fp", finest_level),
+            current_fp, amrex::GetVecOfPtrs(rho_fp_temp),
             m_edge_lengths, 0.5_rt/sub_steps*dt[0],
             DtType::SecondHalf, guard_cells.ng_FieldSolver,
             WarpX::sync_nodal_points
@@ -150,7 +154,8 @@ void WarpX::HybridPICEvolveFields ()
     // Update the E field to t=n+1 using the extrapolated J_i^n+1 value
     m_hybrid_pic_model->CalculateCurrentAmpere(Bfield_fp, m_edge_lengths);
     m_hybrid_pic_model->HybridPICSolveE(
-        Efield_fp, current_fp_temp, Bfield_fp, m_fields.get_mr_levels("rho_fp", finest_level), m_edge_lengths, false
+        m_fields.get_mr_levels_alldirs("Efield_fp", finest_level),
+        current_fp_temp, Bfield_fp, m_fields.get_mr_levels("rho_fp", finest_level), m_edge_lengths, false
     );
     FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
@@ -177,7 +182,7 @@ void WarpX::HybridPICDepositInitialRhoAndJ ()
     auto& current_fp_temp = m_hybrid_pic_model->current_fp_temp;
     mypc->DepositCharge(amrex::GetVecOfPtrs(rho_fp_temp), 0._rt);
     mypc->DepositCurrent(va2vm(current_fp_temp), dt[0], 0._rt);
-    SyncRho(amrex::GetVecOfPtrs(rho_fp_temp), m_fields.get_mr_levels("rho_cp", finest_level), charge_buf);
+    SyncRho(amrex::GetVecOfPtrs(rho_fp_temp), m_fields.get_mr_levels("rho_cp", finest_level), m_fields.get_mr_levels("rho_buf", finest_level));
     SyncCurrent(
         m_fields.get_mr_levels_alldirs("current_fp", finest_level),
         m_fields.get_mr_levels_alldirs("current_cp", finest_level),
