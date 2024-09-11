@@ -671,6 +671,7 @@ WarpX::PushPSATD ()
     ablastr::fields::MultiLevelScalarField rho_cp = m_fields.get_mr_levels("rho_fp", finest_level);
     ablastr::fields::MultiLevelVectorField current_fp = m_fields.get_mr_levels_alldirs("current_fp", finest_level);
     ablastr::fields::MultiLevelVectorField current_cp = m_fields.get_mr_levels_alldirs("current_cp", finest_level);
+    ablastr::fields::MultiLevelVectorField current_buf = m_fields.get_mr_levels_alldirs("current_buf", finest_level);
 
     if (fft_periodic_single_box)
     {
@@ -691,7 +692,8 @@ WarpX::PushPSATD ()
         {
             // FFT of D and rho (if used)
             // TODO Replace current_cp with current_cp_vay once Vay deposition is implemented with MR
-            PSATDForwardTransformJ(current_fp_vay, current_cp);
+            PSATDForwardTransformJ(
+                m_fields.get_mr_levels_alldirs("current_fp_vay", finest_level), current_cp);
             PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_old);
             PSATDForwardTransformRho(rho_fp, rho_cp, 1, rho_new);
 
@@ -745,7 +747,8 @@ WarpX::PushPSATD ()
         else if (current_deposition_algo == CurrentDepositionAlgo::Vay)
         {
             // FFT of D
-            PSATDForwardTransformJ(current_fp_vay, current_cp);
+            PSATDForwardTransformJ(
+                m_fields.get_mr_levels_alldirs("current_fp_vay", finest_level), current_cp);
 
             // Compute J from D in k-space
             PSATDVayDeposition();
