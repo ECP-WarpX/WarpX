@@ -627,6 +627,8 @@ WarpX::InitData ()
 
 void
 WarpX::AddExternalFields (int const lev) {
+    using ablastr::fields::Direction;
+
     // FIXME: RZ multimode has more than one component for all these
     if (m_p_ext_field_params->E_ext_grid_type != ExternalFieldType::default_zero) {
         if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::constant) {
@@ -635,9 +637,9 @@ WarpX::AddExternalFields (int const lev) {
             Efield_fp[lev][2]->plus(m_p_ext_field_params->E_external_grid[2], guard_cells.ng_alloc_EB.min());
         }
         else {
-            amrex::MultiFab::Add(*Efield_fp[lev][0], *Efield_fp_external[lev][0], 0, 0, 1, guard_cells.ng_alloc_EB);
-            amrex::MultiFab::Add(*Efield_fp[lev][1], *Efield_fp_external[lev][1], 0, 0, 1, guard_cells.ng_alloc_EB);
-            amrex::MultiFab::Add(*Efield_fp[lev][2], *Efield_fp_external[lev][2], 0, 0, 1, guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Efield_fp[lev][0], *m_fields.get("Efield_fp_external",Direction{0},lev), 0, 0, 1, guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Efield_fp[lev][1], *m_fields.get("Efield_fp_external",Direction{1},lev), 0, 0, 1, guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Efield_fp[lev][2], *m_fields.get("Efield_fp_external",Direction{2},lev), 0, 0, 1, guard_cells.ng_alloc_EB);
         }
     }
     if (m_p_ext_field_params->B_ext_grid_type != ExternalFieldType::default_zero) {
@@ -647,9 +649,9 @@ WarpX::AddExternalFields (int const lev) {
             Bfield_fp[lev][2]->plus(m_p_ext_field_params->B_external_grid[2], guard_cells.ng_alloc_EB.min());
         }
         else {
-            amrex::MultiFab::Add(*Bfield_fp[lev][0], *Bfield_fp_external[lev][0], 0, 0, 1, guard_cells.ng_alloc_EB);
-            amrex::MultiFab::Add(*Bfield_fp[lev][1], *Bfield_fp_external[lev][1], 0, 0, 1, guard_cells.ng_alloc_EB);
-            amrex::MultiFab::Add(*Bfield_fp[lev][2], *Bfield_fp_external[lev][2], 0, 0, 1, guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Bfield_fp[lev][0], *m_fields.get("Bfield_fp_external",Direction{0},lev), 0, 0, 1, guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Bfield_fp[lev][1], *m_fields.get("Bfield_fp_external",Direction{1},lev), 0, 0, 1, guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Bfield_fp[lev][2], *m_fields.get("Bfield_fp_external",Direction{2},lev), 0, 0, 1, guard_cells.ng_alloc_EB);
         }
     }
 }
@@ -1346,6 +1348,8 @@ void WarpX::CheckKnownIssues()
 void
 WarpX::LoadExternalFields (int const lev)
 {
+    using ablastr::fields::Direction;
+    
     // External fields from file are currently not compatible with the moving window
     // In order to support the moving window, the MultiFab containing the external
     // fields should be updated every time the window moves.
@@ -1363,9 +1367,9 @@ WarpX::LoadExternalFields (int const lev)
     if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::parse_ext_grid_function) {
         // Initialize Bfield_fp_external with external function
         InitializeExternalFieldsOnGridUsingParser(
-            Bfield_fp_external[lev][0].get(),
-            Bfield_fp_external[lev][1].get(),
-            Bfield_fp_external[lev][2].get(),
+            m_fields.get("Bfield_fp_external",Direction{0},lev),
+            m_fields.get("Bfield_fp_external",Direction{1},lev),
+            m_fields.get("Bfield_fp_external",Direction{2},lev),
             m_p_ext_field_params->Bxfield_parser->compile<3>(),
             m_p_ext_field_params->Byfield_parser->compile<3>(),
             m_p_ext_field_params->Bzfield_parser->compile<3>(),
@@ -1378,22 +1382,22 @@ WarpX::LoadExternalFields (int const lev)
 #if defined(WARPX_DIM_RZ)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
                                          "External field reading is not implemented for more than one RZ mode (see #3829)");
-        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Bfield_fp_external[lev][0].get(), "B", "r");
-        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Bfield_fp_external[lev][1].get(), "B", "t");
-        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Bfield_fp_external[lev][2].get(), "B", "z");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get("Bfield_fp_external",Direction{0},lev), "B", "r");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get("Bfield_fp_external",Direction{1},lev), "B", "t");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get("Bfield_fp_external",Direction{2},lev), "B", "z");
 #else
-        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Bfield_fp_external[lev][0].get(), "B", "x");
-        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Bfield_fp_external[lev][1].get(), "B", "y");
-        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Bfield_fp_external[lev][2].get(), "B", "z");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get("Bfield_fp_external",Direction{0},lev), "B", "x");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get("Bfield_fp_external",Direction{1},lev), "B", "y");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get("Bfield_fp_external",Direction{2},lev), "B", "z");
 #endif
     }
 
     if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::parse_ext_grid_function) {
         // Initialize Efield_fp_external with external function
         InitializeExternalFieldsOnGridUsingParser(
-            Efield_fp_external[lev][0].get(),
-            Efield_fp_external[lev][1].get(),
-            Efield_fp_external[lev][2].get(),
+            m_fields.get("Efield_fp_external",Direction{0},lev),
+            m_fields.get("Efield_fp_external",Direction{1},lev),
+            m_fields.get("Efield_fp_external",Direction{2},lev),
             m_p_ext_field_params->Exfield_parser->compile<3>(),
             m_p_ext_field_params->Eyfield_parser->compile<3>(),
             m_p_ext_field_params->Ezfield_parser->compile<3>(),
@@ -1406,13 +1410,13 @@ WarpX::LoadExternalFields (int const lev)
 #if defined(WARPX_DIM_RZ)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
                                          "External field reading is not implemented for more than one RZ mode (see #3829)");
-        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Efield_fp_external[lev][0].get(), "E", "r");
-        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Efield_fp_external[lev][1].get(), "E", "t");
-        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Efield_fp_external[lev][2].get(), "E", "z");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get("Efield_fp_external",Direction{0},lev), "E", "r");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get("Efield_fp_external",Direction{1},lev), "E", "t");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get("Efield_fp_external",Direction{2},lev), "E", "z");
 #else
-        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Efield_fp_external[lev][0].get(), "E", "x");
-        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Efield_fp_external[lev][1].get(), "E", "y");
-        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Efield_fp_external[lev][2].get(), "E", "z");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get("Efield_fp_external",Direction{0},lev), "E", "x");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get("Efield_fp_external",Direction{1},lev), "E", "y");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get("Efield_fp_external",Direction{2},lev), "E", "z");
 #endif
     }
 
