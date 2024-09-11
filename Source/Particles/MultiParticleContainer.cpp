@@ -44,6 +44,7 @@
 
 #include "WarpX.H"
 
+#include <ablastr/fields/MultiFabRegister.H>
 #include <ablastr/utils/Communication.H>
 #include <ablastr/warn_manager/WarnManager.H>
 
@@ -1358,12 +1359,13 @@ MultiParticleContainer::doQEDSchwinger ()
     pc_product_ele->defineAllParticleTiles();
     pc_product_pos->defineAllParticleTiles();
 
-    const MultiFab & Ex = warpx.getField(FieldType::Efield_aux, level_0,0);
-    const MultiFab & Ey = warpx.getField(FieldType::Efield_aux, level_0,1);
-    const MultiFab & Ez = warpx.getField(FieldType::Efield_aux, level_0,2);
-    const MultiFab & Bx = warpx.getField(FieldType::Bfield_aux, level_0,0);
-    const MultiFab & By = warpx.getField(FieldType::Bfield_aux, level_0,1);
-    const MultiFab & Bz = warpx.getField(FieldType::Bfield_aux, level_0,2);
+    using ablastr::fields::Direction;
+    const MultiFab & Ex = *warpx.m_fields.get("Efield_aux", Direction{0}, level_0);
+    const MultiFab & Ey = *warpx.m_fields.get("Efield_aux", Direction{1}, level_0);
+    const MultiFab & Ez = *warpx.m_fields.get("Efield_aux", Direction{2}, level_0);
+    const MultiFab & Bx = *warpx.m_fields.get("Bfield_aux", Direction{0}, level_0);
+    const MultiFab & By = *warpx.m_fields.get("Bfield_aux", Direction{1}, level_0);
+    const MultiFab & Bz = *warpx.m_fields.get("Bfield_aux", Direction{2}, level_0);
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())

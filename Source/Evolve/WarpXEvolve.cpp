@@ -66,6 +66,8 @@ WarpX::Evolve (int numsteps)
     WARPX_PROFILE_REGION("WarpX::Evolve()");
     WARPX_PROFILE("WarpX::Evolve()");
 
+    using ablastr::fields::Direction;
+
     Real cur_time = t_new[0];
 
     // Note that the default argument is numsteps = -1
@@ -187,11 +189,16 @@ WarpX::Evolve (int numsteps)
                 UpdateAuxilaryData();
                 FillBoundaryAux(guard_cells.ng_UpdateAux);
                 for (int lev = 0; lev <= finest_level; ++lev) {
-                    mypc->PushP(lev, 0.5_rt*dt[lev],
-                                *Efield_aux[lev][0],*Efield_aux[lev][1],
-                                *Efield_aux[lev][2],
-                                *Bfield_aux[lev][0],*Bfield_aux[lev][1],
-                                *Bfield_aux[lev][2]);
+                    mypc->PushP(
+                        lev,
+                        0.5_rt*dt[lev],
+                        *m_fields.get("Efield_aux", Direction{0}, lev),
+                        *m_fields.get("Efield_aux", Direction{1}, lev),
+                        *m_fields.get("Efield_aux", Direction{2}, lev),
+                        *m_fields.get("Bfield_aux", Direction{0}, lev),
+                        *m_fields.get("Bfield_aux", Direction{1}, lev),
+                        *m_fields.get("Bfield_aux", Direction{2}, lev)
+                    );
                 }
                 is_synchronized = true;
             }
@@ -447,6 +454,8 @@ void WarpX::ExplicitFillBoundaryEBUpdateAux ()
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(evolve_scheme == EvolveScheme::Explicit,
         "Cannot call WarpX::ExplicitFillBoundaryEBUpdateAux wihtout Explicit evolve scheme set!");
 
+    using ablastr::fields::Direction;
+
     // At the beginning, we have B^{n} and E^{n}.
     // Particles have p^{n} and x^{n}.
     // is_synchronized is true.
@@ -461,9 +470,16 @@ void WarpX::ExplicitFillBoundaryEBUpdateAux ()
         // on first step, push p by -0.5*dt
         for (int lev = 0; lev <= finest_level; ++lev)
         {
-            mypc->PushP(lev, -0.5_rt*dt[lev],
-                        *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
-                        *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2]);
+            mypc->PushP(
+                lev,
+                -0.5_rt*dt[lev],
+                *m_fields.get("Efield_aux", Direction{0}, lev),
+                *m_fields.get("Efield_aux", Direction{1}, lev),
+                *m_fields.get("Efield_aux", Direction{2}, lev),
+                *m_fields.get("Bfield_aux", Direction{0}, lev),
+                *m_fields.get("Bfield_aux", Direction{1}, lev),
+                *m_fields.get("Bfield_aux", Direction{2}, lev)
+            );
         }
         is_synchronized = false;
 
@@ -1022,9 +1038,17 @@ WarpX::doFieldIonization ()
 void
 WarpX::doFieldIonization (int lev)
 {
-    mypc->doFieldIonization(lev,
-                            *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
-                            *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2]);
+    using ablastr::fields::Direction;
+
+    mypc->doFieldIonization(
+        lev,
+        *m_fields.get("Efield_aux", Direction{0}, lev),
+        *m_fields.get("Efield_aux", Direction{1}, lev),
+        *m_fields.get("Efield_aux", Direction{2}, lev),
+        *m_fields.get("Bfield_aux", Direction{0}, lev),
+        *m_fields.get("Bfield_aux", Direction{1}, lev),
+        *m_fields.get("Bfield_aux", Direction{2}, lev)
+    );
 }
 
 #ifdef WARPX_QED
@@ -1039,9 +1063,17 @@ WarpX::doQEDEvents ()
 void
 WarpX::doQEDEvents (int lev)
 {
-    mypc->doQedEvents(lev,
-                      *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
-                      *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2]);
+    using ablastr::fields::Direction;
+
+    mypc->doQedEvents(
+        lev,
+        *m_fields.get("Efield_aux", Direction{0}, lev),
+        *m_fields.get("Efield_aux", Direction{1}, lev),
+        *m_fields.get("Efield_aux", Direction{2}, lev),
+        *m_fields.get("Bfield_aux", Direction{0}, lev),
+        *m_fields.get("Bfield_aux", Direction{1}, lev),
+        *m_fields.get("Bfield_aux", Direction{2}, lev)
+    );
 }
 #endif
 
@@ -1059,6 +1091,8 @@ void
 WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type, bool skip_current,
                                PushType push_type)
 {
+    using ablastr::fields::Direction;
+
     amrex::MultiFab* current_x = nullptr;
     amrex::MultiFab* current_y = nullptr;
     amrex::MultiFab* current_z = nullptr;
@@ -1084,8 +1118,12 @@ WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type,
     }
 
     mypc->Evolve(lev,
-                 *Efield_aux[lev][0], *Efield_aux[lev][1], *Efield_aux[lev][2],
-                 *Bfield_aux[lev][0], *Bfield_aux[lev][1], *Bfield_aux[lev][2],
+                 *m_fields.get("Efield_aux", Direction{0}, lev),
+                 *m_fields.get("Efield_aux", Direction{1}, lev),
+                 *m_fields.get("Efield_aux", Direction{2}, lev),
+                 *m_fields.get("Bfield_aux", Direction{0}, lev),
+                 *m_fields.get("Bfield_aux", Direction{1}, lev),
+                 *m_fields.get("Bfield_aux", Direction{2}, lev),
                  *current_x, *current_y, *current_z,
                  current_buf[lev][0].get(), current_buf[lev][1].get(), current_buf[lev][2].get(),
                  m_fields.get("rho_fp",lev), charge_buf[lev].get(),
@@ -1115,9 +1153,19 @@ WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type,
 #endif
         if (do_fluid_species) {
             myfl->Evolve(lev,
-                         *Efield_aux[lev][0], *Efield_aux[lev][1], *Efield_aux[lev][2],
-                         *Bfield_aux[lev][0], *Bfield_aux[lev][1], *Bfield_aux[lev][2],
-                         m_fields.get("rho_fp", lev), *current_x, *current_y, *current_z, cur_time, skip_current);
+                         *m_fields.get("Efield_aux", Direction{0}, lev),
+                         *m_fields.get("Efield_aux", Direction{1}, lev),
+                         *m_fields.get("Efield_aux", Direction{2}, lev),
+                         *m_fields.get("Bfield_aux", Direction{0}, lev),
+                         *m_fields.get("Bfield_aux", Direction{1}, lev),
+                         *m_fields.get("Bfield_aux", Direction{2}, lev),
+                         m_fields.get("rho_fp", lev),
+                         *current_x,
+                         *current_y,
+                         *current_z,
+                         cur_time,
+                         skip_current
+            );
         }
     }
 }

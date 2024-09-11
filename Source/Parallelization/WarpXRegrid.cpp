@@ -170,7 +170,6 @@ WarpX::LoadBalance ()
 void
 WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const DistributionMapping& dm)
 {
-
     bool const eb_enabled = EB::enabled();
     if (ba == boxArray(lev))
     {
@@ -235,21 +234,6 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
             }
         }
 #endif
-
-        // Aux patch
-        if (lev == 0 && Bfield_aux[0][0]->ixType() == Bfield_fp[0][0]->ixType())
-        {
-            for (int idim = 0; idim < 3; ++idim) {
-                Bfield_aux[lev][idim] = std::make_unique<MultiFab>(*Bfield_fp[lev][idim], amrex::make_alias, 0, Bfield_aux[lev][idim]->nComp());
-                Efield_aux[lev][idim] = std::make_unique<MultiFab>(*Efield_fp[lev][idim], amrex::make_alias, 0, Efield_aux[lev][idim]->nComp());
-            }
-        } else {
-            for (int idim=0; idim < 3; ++idim)
-            {
-                //RemakeMultiFab(Bfield_aux[lev][idim], false);
-                //RemakeMultiFab(Efield_aux[lev][idim], false);
-            }
-        }
 
         // Coarse patch
         if (lev > 0) {

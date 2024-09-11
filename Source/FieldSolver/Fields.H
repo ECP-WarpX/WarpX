@@ -15,8 +15,6 @@ namespace warpx::fields
     enum struct FieldType : int
     {
         None,
-        Efield_aux,
-        Bfield_aux,
         Efield_fp,
         Bfield_fp,
         Efield_fp_external,
@@ -37,7 +35,7 @@ namespace warpx::fields
     };
 
     constexpr FieldType ArrayFieldTypes[] = {
-            FieldType::Efield_aux, FieldType::Bfield_aux, FieldType::Efield_fp, FieldType::Bfield_fp,
+            FieldType::Efield_fp, FieldType::Bfield_fp,
             FieldType::current_fp, FieldType::current_fp_nodal, FieldType::vector_potential_fp,
             FieldType::Efield_cp, FieldType::Bfield_cp, FieldType::current_cp,
             FieldType::Efield_avg_fp, FieldType::Bfield_avg_fp, FieldType::Efield_avg_cp, FieldType::Bfield_avg_cp};

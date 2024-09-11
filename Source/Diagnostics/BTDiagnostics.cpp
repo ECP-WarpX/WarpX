@@ -21,6 +21,7 @@
 #include "Utils/WarpXConst.H"
 #include "WarpX.H"
 
+#include <ablastr/fields/MultiFabRegister.H>
 #include <ablastr/coarsen/sample.H>
 #include <ablastr/utils/Communication.H>
 #include <ablastr/utils/SignalHandling.H>
@@ -569,17 +570,17 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
         m_cell_center_functors.at(lev).size());
     for (int comp=0; comp<m_cell_center_functors_at_lev_size; comp++){
         if        ( m_cellcenter_varnames[comp] == "Ex" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Efield_aux, lev, 0), lev, m_crse_ratio);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("Efield_aux", Direction{0}, lev), lev, m_crse_ratio);
         } else if ( m_cellcenter_varnames[comp] == "Ey" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Efield_aux, lev, 1), lev, m_crse_ratio);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("Efield_aux", Direction{1}, lev), lev, m_crse_ratio);
         } else if ( m_cellcenter_varnames[comp] == "Ez" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Efield_aux, lev, 2), lev, m_crse_ratio);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("Efield_aux", Direction{2}, lev), lev, m_crse_ratio);
         } else if ( m_cellcenter_varnames[comp] == "Bx" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Bfield_aux, lev, 0), lev, m_crse_ratio);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("Bfield_aux", Direction{0}, lev), lev, m_crse_ratio);
         } else if ( m_cellcenter_varnames[comp] == "By" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Bfield_aux, lev, 1), lev, m_crse_ratio);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("Bfield_aux", Direction{1}, lev), lev, m_crse_ratio);
         } else if ( m_cellcenter_varnames[comp] == "Bz" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Bfield_aux, lev, 2), lev, m_crse_ratio);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("Bfield_aux", Direction{2}, lev), lev, m_crse_ratio);
         } else if ( m_cellcenter_varnames[comp] == "jx" ){
             m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("current_fp",Direction{0}, lev), lev, m_crse_ratio);
         } else if ( m_cellcenter_varnames[comp] == "jy" ){

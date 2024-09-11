@@ -20,6 +20,8 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "WarpX.H"
 
+#include <ablastr/fields/MultiFabRegister.H>
+
 #include <AMReX.H>
 #include <AMReX_Array.H>
 #include <AMReX_BLassert.H>
@@ -660,13 +662,15 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
     // diagnostic output
     bool deposit_current = !m_solver_deposits_current;
 
+    using ablastr::fields::Direction;
+
     m_all_field_functors[lev].resize(ntot);
     // Fill vector of functors for all components except individual cylindrical modes.
     for (int comp=0; comp<nvar; comp++){
         if        ( m_varnames[comp] == "Ez" ){
-            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Efield_aux, lev, 2), lev, m_crse_ratio);
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("Efield_aux", Direction{2}, lev), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "Bz" ){
-            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Bfield_aux, lev, 2), lev, m_crse_ratio);
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("Bfield_aux", Direction{2}, lev), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "jz" ){
             m_all_field_functors[lev][comp] = std::make_unique<JFunctor>(2, lev, m_crse_ratio, true, deposit_current);
             deposit_current = false;
@@ -696,9 +700,9 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
         } else if ( m_varnames[comp] == "part_per_grid" ){
             m_all_field_functors[lev][comp] = std::make_unique<PartPerGridFunctor>(nullptr, lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "divB" ){
-            m_all_field_functors[lev][comp] = std::make_unique<DivBFunctor>(warpx.getFieldPointerArray(FieldType::Bfield_aux, lev), lev, m_crse_ratio);
+            m_all_field_functors[lev][comp] = std::make_unique<DivBFunctor>(warpx.m_fields.get_alldirs("Bfield_aux", lev), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "divE" ){
-            m_all_field_functors[lev][comp] = std::make_unique<DivEFunctor>(warpx.getFieldPointerArray(FieldType::Efield_aux, lev), lev, m_crse_ratio);
+            m_all_field_functors[lev][comp] = std::make_unique<DivEFunctor>(warpx.m_fields.get_alldirs("Efield_aux", lev), lev, m_crse_ratio);
         }
         else {
 
@@ -731,13 +735,13 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
 #else
         // Valid transverse fields in Cartesian coordinates
             if        ( m_varnames[comp] == "Ex" ){
-                m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Efield_aux, lev, 0), lev, m_crse_ratio);
+                m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("Efield_aux", Direction{0}, lev), lev, m_crse_ratio);
             } else if ( m_varnames[comp] == "Ey" ){
-                m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Efield_aux, lev, 1), lev, m_crse_ratio);
+                m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("Efield_aux", Direction{1}, lev), lev, m_crse_ratio);
             } else if ( m_varnames[comp] == "Bx" ){
-                m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Bfield_aux, lev, 0), lev, m_crse_ratio);
+                m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("Bfield_aux", Direction{0}, lev), lev, m_crse_ratio);
             } else if ( m_varnames[comp] == "By" ){
-                m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Bfield_aux, lev, 1), lev, m_crse_ratio);
+                m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("Efield_aux", Direction{1}, lev), lev, m_crse_ratio);
             } else if ( m_varnames[comp] == "jx" ){
                 m_all_field_functors[lev][comp] = std::make_unique<JFunctor>(0, lev, m_crse_ratio, true, deposit_current);
                 deposit_current = false;

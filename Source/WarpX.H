@@ -970,11 +970,11 @@ public:
 
     // these should be private, but can't due to Cuda limitations
     static void ComputeDivB (amrex::MultiFab& divB, int dcomp,
-                             const std::array<const amrex::MultiFab* const, 3>& B,
+                             ablastr::fields::VectorField const & B,
                              const std::array<amrex::Real,3>& dx);
 
     static void ComputeDivB (amrex::MultiFab& divB, int dcomp,
-                             const std::array<const amrex::MultiFab* const, 3>& B,
+                             ablastr::fields::VectorField const & B,
                              const std::array<amrex::Real,3>& dx, amrex::IntVect ngrow);
 
     void ComputeDivE(amrex::MultiFab& divE, int lev);
@@ -1510,10 +1510,6 @@ private:
     //
     // Fields: First array for level, second for direction
     //
-
-    // Full solution
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_aux;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_aux;
 
     // Fine patch
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp;

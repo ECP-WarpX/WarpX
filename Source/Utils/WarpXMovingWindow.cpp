@@ -147,6 +147,9 @@ WarpX::MoveWindow (const int step, bool move_j)
     }
     if (!moving_window_active(step)) { return 0; }
 
+    ablastr::fields::MultiLevelVectorField Efield_aux = m_fields.get_mr_levels_alldirs("Efield_aux", finest_level);
+    ablastr::fields::MultiLevelVectorField Bfield_aux = m_fields.get_mr_levels_alldirs("Bfield_aux", finest_level);
+
     // Update the continuous position of the moving window,
     // and of the plasma injection
     moving_window_x += (moving_window_v - WarpX::beta_boost * PhysConst::c)/(1 - moving_window_v * WarpX::beta_boost / PhysConst::c) * dt[0];

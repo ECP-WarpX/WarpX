@@ -55,7 +55,11 @@ WarpX::UpdateAuxilaryData ()
 {
     WARPX_PROFILE("WarpX::UpdateAuxilaryData()");
 
-    if (Bfield_aux[0][0]->ixType() == Bfield_fp[0][0]->ixType()) {
+    using ablastr::fields::Direction;
+
+    auto Bfield_aux_lvl0_0 = m_fields.get("Bfield_aux", Direction{0}, 0);
+
+    if (Bfield_aux_lvl0_0->ixType() == Bfield_fp[0][0]->ixType()) {
         UpdateAuxilaryDataSameType();
     } else {
         UpdateAuxilaryDataStagToNodal();
@@ -63,15 +67,19 @@ WarpX::UpdateAuxilaryData ()
 
     // When loading particle fields from file: add the external fields:
     for (int lev = 0; lev <= finest_level; ++lev) {
+        auto Bfield_aux_lvl_0 = m_fields.get("Bfield_aux", Direction{0}, lev);
+        auto Bfield_aux_lvl_1 = m_fields.get("Bfield_aux", Direction{1}, lev);
+        auto Bfield_aux_lvl_2 = m_fields.get("Bfield_aux", Direction{2}, lev);
+
         if (mypc->m_E_ext_particle_s == "read_from_file") {
-            amrex::MultiFab::Add(*Efield_aux[lev][0], *E_external_particle_field[lev][0], 0, 0, E_external_particle_field[lev][0]->nComp(), guard_cells.ng_FieldGather);
-            amrex::MultiFab::Add(*Efield_aux[lev][1], *E_external_particle_field[lev][1], 0, 0, E_external_particle_field[lev][1]->nComp(), guard_cells.ng_FieldGather);
-            amrex::MultiFab::Add(*Efield_aux[lev][2], *E_external_particle_field[lev][2], 0, 0, E_external_particle_field[lev][2]->nComp(), guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*Bfield_aux_lvl_0, *E_external_particle_field[lev][0], 0, 0, E_external_particle_field[lev][0]->nComp(), guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*Bfield_aux_lvl_1, *E_external_particle_field[lev][1], 0, 0, E_external_particle_field[lev][1]->nComp(), guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*Bfield_aux_lvl_2, *E_external_particle_field[lev][2], 0, 0, E_external_particle_field[lev][2]->nComp(), guard_cells.ng_FieldGather);
         }
         if (mypc->m_B_ext_particle_s == "read_from_file") {
-            amrex::MultiFab::Add(*Bfield_aux[lev][0], *B_external_particle_field[lev][0], 0, 0, B_external_particle_field[lev][0]->nComp(), guard_cells.ng_FieldGather);
-            amrex::MultiFab::Add(*Bfield_aux[lev][1], *B_external_particle_field[lev][1], 0, 0, B_external_particle_field[lev][0]->nComp(), guard_cells.ng_FieldGather);
-            amrex::MultiFab::Add(*Bfield_aux[lev][2], *B_external_particle_field[lev][2], 0, 0, B_external_particle_field[lev][0]->nComp(), guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*Bfield_aux_lvl_0, *B_external_particle_field[lev][0], 0, 0, B_external_particle_field[lev][0]->nComp(), guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*Bfield_aux_lvl_1, *B_external_particle_field[lev][1], 0, 0, B_external_particle_field[lev][0]->nComp(), guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*Bfield_aux_lvl_2, *B_external_particle_field[lev][2], 0, 0, B_external_particle_field[lev][0]->nComp(), guard_cells.ng_FieldGather);
         }
     }
 
@@ -88,6 +96,9 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
     }
 #endif
     using ablastr::fields::Direction;
+
+    ablastr::fields::MultiLevelVectorField Efield_aux = m_fields.get_mr_levels_alldirs("Efield_aux", finest_level);
+    ablastr::fields::MultiLevelVectorField Bfield_aux = m_fields.get_mr_levels_alldirs("Bfield_aux", finest_level);
 
     amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>> const & Bmf = WarpX::fft_do_time_averaging ?
                                                                                 Bfield_avg_fp : Bfield_fp;
@@ -369,6 +380,8 @@ WarpX::UpdateAuxilaryDataSameType ()
     const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
 
     using ablastr::fields::Direction;
+    ablastr::fields::MultiLevelVectorField Efield_aux = m_fields.get_mr_levels_alldirs("Efield_aux", finest_level);
+    ablastr::fields::MultiLevelVectorField Bfield_aux = m_fields.get_mr_levels_alldirs("Bfield_aux", finest_level);
 
     // Level 0: Copy from fine to aux
     // Note: in some configurations, Efield_aux/Bfield_aux and Efield_fp/Bfield_fp are simply aliases to the
@@ -985,6 +998,9 @@ WarpX::FillBoundaryAux (IntVect ng)
 void
 WarpX::FillBoundaryAux (int lev, IntVect ng)
 {
+    ablastr::fields::MultiLevelVectorField Efield_aux = m_fields.get_mr_levels_alldirs("Efield_aux", finest_level);
+    ablastr::fields::MultiLevelVectorField Bfield_aux = m_fields.get_mr_levels_alldirs("Bfield_aux", finest_level);
+
     const amrex::Periodicity& period = Geom(lev).periodicity();
     ablastr::utils::communication::FillBoundary(*Efield_aux[lev][0], ng, WarpX::do_single_precision_comms, period);
     ablastr::utils::communication::FillBoundary(*Efield_aux[lev][1], ng, WarpX::do_single_precision_comms, period);

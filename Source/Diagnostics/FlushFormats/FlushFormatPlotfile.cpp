@@ -568,12 +568,12 @@ FlushFormatPlotfile::WriteAllRawFields(
 
         // Auxiliary patch
 
-        WriteRawMF( warpx.getField(FieldType::Efield_aux, lev, 0), dm, raw_pltname, default_level_prefix, "Ex_aux", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getField(FieldType::Efield_aux, lev, 1), dm, raw_pltname, default_level_prefix, "Ey_aux", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getField(FieldType::Efield_aux, lev, 2), dm, raw_pltname, default_level_prefix, "Ez_aux", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getField(FieldType::Bfield_aux, lev, 0), dm, raw_pltname, default_level_prefix, "Bx_aux", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getField(FieldType::Bfield_aux, lev, 1), dm, raw_pltname, default_level_prefix, "By_aux", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getField(FieldType::Bfield_aux, lev, 2), dm, raw_pltname, default_level_prefix, "Bz_aux", lev, plot_raw_fields_guards);
+        WriteRawMF( *warpx.m_fields.get("Efield_aux", Direction{0}, lev), dm, raw_pltname, default_level_prefix, "Ex_aux", lev, plot_raw_fields_guards);
+        WriteRawMF( *warpx.m_fields.get("Efield_aux", Direction{1}, lev), dm, raw_pltname, default_level_prefix, "Ey_aux", lev, plot_raw_fields_guards);
+        WriteRawMF( *warpx.m_fields.get("Efield_aux", Direction{2}, lev), dm, raw_pltname, default_level_prefix, "Ez_aux", lev, plot_raw_fields_guards);
+        WriteRawMF( *warpx.m_fields.get("Bfield_aux", Direction{0}, lev), dm, raw_pltname, default_level_prefix, "Bx_aux", lev, plot_raw_fields_guards);
+        WriteRawMF( *warpx.m_fields.get("Bfield_aux", Direction{1}, lev), dm, raw_pltname, default_level_prefix, "By_aux", lev, plot_raw_fields_guards);
+        WriteRawMF( *warpx.m_fields.get("Bfield_aux", Direction{2}, lev), dm, raw_pltname, default_level_prefix, "Bz_aux", lev, plot_raw_fields_guards);
 
         // fine patch
         WriteRawMF( *warpx.m_fields.get("Efield_fp", Direction{0}, lev), dm, raw_pltname,
