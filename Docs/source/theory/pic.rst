@@ -436,7 +436,7 @@ of this model can be found in the section
 
 Pseudo Spectral Analytical Time Domain with arbitrary charge and current-density time dependencies (PSATD-JRhom)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-In :cite:`pt-shapovalPRE2024` we introduce a formulation of the particle-in-cell (PIC) method for the modeling of relativistic plasmas, which leverages the ability of the pseudo-spectral analytical time-domain solver (PSATD) to handle arbitrary time dependencies of the charge and current densities during one PIC cycle (applied to second order polynomial dependencies here). 
+In :cite:`pt-shapovalPRE2024` we introduce a formulation of the particle-in-cell (PIC) method for the modeling of relativistic plasmas, which leverages the ability of the pseudo-spectral analytical time-domain solver (PSATD) to handle arbitrary time dependencies of the charge and current densities during one PIC cycle (applied to second order polynomial dependencies here).
 The formulation is applied to a modified set of Maxwell's equations (given in Fourier space),
 
 .. math:: \frac{\partial\mathbf{\tilde{E}}}{\partial t} = i\mathbf{k}\times\mathbf{\tilde{B}}-\mathbf{\tilde{J}} + i\mathbf{k}{\tilde{F}}
@@ -487,12 +487,12 @@ Final discretized equations write as:
    \end{split}
    \end{align}
 
-where 
+where
 
 .. math::
 
    \begin{aligned}
-   C &= \cos(ck\delta t), \ S = \sin(ck\delta t), 
+   C &= \cos(ck\delta t), \ S = \sin(ck\delta t),
    \\
    Y_1 & = \frac{(1-C)(8-c^2k^2\delta t^2)-4Sck\delta t}{2 c^2 k^2 \delta t^2},
    \\
@@ -508,10 +508,10 @@ Here, :math:`\mathbf{a_J}, \mathbf{b_J}, \mathbf{c_J}, a_{\rho}, b_{\rho}, c_{\r
 .. _fig-j_rho_table:
 
 .. figure:: j_rho_table.png
-   :alt: [fig:j_rho_table] Polynomial coefficients based on the time dependency of the current and charge densities :math:`{\mathbf{\tilde{J}}}(t)` and :math:`\rho(t)` over one time subinterval, :math:`\delta t = \Delta t/m`}. 
+   :alt: [fig:j_rho_table] Polynomial coefficients based on the time dependency of the current and charge densities :math:`{\mathbf{\tilde{J}}}(t)` and :math:`\rho(t)` over one time subinterval, :math:`\delta t = \Delta t/m`}.
 Polynomial coefficients based on the time dependency of the current and charge densities :math:`{\mathbf{\tilde{J}}}(a)` and :math:`\rho(t)` over one time subinterval, :math:`\delta t = \Delta t/m`.
 
-Detailed analysis and testings revealed that, under some condition, the formulation can expand the range of numerical parameters under which PIC simulations are stable and accurate when modeling relativistic plasmas such as, e.g., plasma-based particle accelerators. 
+Detailed analysis and testings revealed that, under some condition, the formulation can expand the range of numerical parameters under which PIC simulations are stable and accurate when modeling relativistic plasmas such as, e.g., plasma-based particle accelerators.
 
 Current deposition
 ------------------
