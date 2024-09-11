@@ -1000,7 +1000,7 @@ WarpX::SyncCurrent (
     // If warpx.do_current_centering = 1, center currents from nodal grid to staggered grid
     if (do_current_centering)
     {
-        std::vector<std::map<ablastr::fields::Direction, amrex::MultiFab*>> J_fp_nodal = m_fields.get_mr_levels_alldirs("current_fp_nodal", finest_level+1);
+        ablastr::fields::MultiLevelVectorField J_fp_nodal = m_fields.get_mr_levels_alldirs("current_fp_nodal", finest_level+1);
 
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(finest_level <= 1,
                                          "warpx.do_current_centering=1 not supported with more than one fine levels");
@@ -1262,7 +1262,7 @@ void WarpX::RestrictCurrentFromFineToCoarsePatch (
 }
 
 void WarpX::ApplyFilterJ (
-    const std::vector<std::map<ablastr::fields::Direction, amrex::MultiFab*>>& current,
+    const ablastr::fields::MultiLevelVectorField& current,
     const int lev,
     const int idim)
 {
@@ -1281,7 +1281,7 @@ void WarpX::ApplyFilterJ (
 }
 
 void WarpX::ApplyFilterJ (
-    const std::vector<std::map<ablastr::fields::Direction, amrex::MultiFab*>>& current,
+    const ablastr::fields::MultiLevelVectorField& current,
     const int lev)
 {
     for (int idim=0; idim<3; ++idim)
@@ -1291,7 +1291,7 @@ void WarpX::ApplyFilterJ (
 }
 
 void WarpX::SumBoundaryJ (
-    const std::vector<std::map<ablastr::fields::Direction, amrex::MultiFab*>>& current,
+    const ablastr::fields::MultiLevelVectorField& current,
     const int lev,
     const int idim,
     const amrex::Periodicity& period)
@@ -1329,7 +1329,7 @@ void WarpX::SumBoundaryJ (
 }
 
 void WarpX::SumBoundaryJ (
-    const std::vector<std::map<ablastr::fields::Direction, amrex::MultiFab*>>& current,
+    const ablastr::fields::MultiLevelVectorField& current,
     const int lev,
     const amrex::Periodicity& period)
 {
