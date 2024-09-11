@@ -59,7 +59,8 @@ void WarpX::HybridPICEvolveFields ()
     const int sub_steps = m_hybrid_pic_model->m_substeps;
 
     // Get the external current
-    m_hybrid_pic_model->GetCurrentExternal(m_edge_lengths);
+    m_hybrid_pic_model->GetCurrentExternal(
+        m_fields.get_mr_levels_alldirs("edge_lengths", finest_level));
 
     // Reference hybrid-PIC multifabs
     auto& rho_fp_temp = m_hybrid_pic_model->rho_fp_temp;
@@ -99,7 +100,8 @@ void WarpX::HybridPICEvolveFields ()
             Bfield_fp,
             m_fields.get_mr_levels_alldirs("Efield_fp", finest_level),
             current_fp_temp, amrex::GetVecOfPtrs(rho_fp_temp),
-            m_edge_lengths, 0.5_rt/sub_steps*dt[0],
+            m_fields.get_mr_levels_alldirs("edge_lenghts", finest_level),
+            0.5_rt/sub_steps*dt[0],
             DtType::FirstHalf, guard_cells.ng_FieldSolver,
             WarpX::sync_nodal_points
         );
@@ -124,7 +126,8 @@ void WarpX::HybridPICEvolveFields ()
             Bfield_fp,
             m_fields.get_mr_levels_alldirs("Efield_fp", finest_level),
             current_fp, amrex::GetVecOfPtrs(rho_fp_temp),
-            m_edge_lengths, 0.5_rt/sub_steps*dt[0],
+            m_fields.get_mr_levels_alldirs("edge_lenghts", finest_level),
+            0.5_rt/sub_steps*dt[0],
             DtType::SecondHalf, guard_cells.ng_FieldSolver,
             WarpX::sync_nodal_points
         );
@@ -152,10 +155,13 @@ void WarpX::HybridPICEvolveFields ()
     m_hybrid_pic_model->CalculateElectronPressure();
 
     // Update the E field to t=n+1 using the extrapolated J_i^n+1 value
-    m_hybrid_pic_model->CalculateCurrentAmpere(Bfield_fp, m_edge_lengths);
+    m_hybrid_pic_model->CalculateCurrentAmpere(
+        Bfield_fp,
+        m_fields.get_mr_levels_alldirs("edge_lengths", finest_level));
     m_hybrid_pic_model->HybridPICSolveE(
         m_fields.get_mr_levels_alldirs("Efield_fp", finest_level),
-        current_fp_temp, Bfield_fp, m_fields.get_mr_levels("rho_fp", finest_level), m_edge_lengths, false
+        current_fp_temp, Bfield_fp, m_fields.get_mr_levels("rho_fp", finest_level),
+        m_fields.get_mr_levels_alldirs("edge_lengths", finest_level), false
     );
     FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 

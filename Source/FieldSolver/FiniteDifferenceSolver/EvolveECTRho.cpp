@@ -49,7 +49,7 @@ using namespace ablastr::fields;
  */
 void FiniteDifferenceSolver::EvolveECTRho (
     ablastr::fields::VectorField const Efield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+    ablastr::fields::VectorField const& edge_lengths,
     ablastr::fields::VectorField const& face_areas,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
     const int lev) {
@@ -69,7 +69,7 @@ void FiniteDifferenceSolver::EvolveECTRho (
 #ifndef WARPX_DIM_RZ
 void FiniteDifferenceSolver::EvolveRhoCartesianECT (
     ablastr::fields::VectorField const Efield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+    ablastr::fields::VectorField const& edge_lengths,
     ablastr::fields::VectorField const& face_areas,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield, const int lev ) {
 #ifdef AMREX_USE_EB

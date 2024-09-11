@@ -119,7 +119,7 @@ WarpX::InitEB ()
 
 #ifdef AMREX_USE_EB
 void
-WarpX::ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+WarpX::ComputeEdgeLengths (ablastr::fields::VectorField& edge_lengths,
                            const amrex::EBFArrayBoxFactory& eb_fact) {
     BL_PROFILE("ComputeEdgeLengths");
 
@@ -247,7 +247,7 @@ WarpX::ComputeFaceAreas (VectorField& face_areas,
 
 
 void
-WarpX::ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+WarpX::ScaleEdges (ablastr::fields::VectorField& edge_lengths,
                    const std::array<amrex::Real,3>& cell_size) {
     BL_PROFILE("ScaleEdges");
 
@@ -343,9 +343,9 @@ WarpX::MarkCells(){
             auto const &S = face_areas_idim_max_lev->array(mfi);
             auto const &flag_info_face = m_flag_info_face[maxLevel()][idim]->array(mfi);
             auto const &flag_ext_face = m_flag_ext_face[maxLevel()][idim]->array(mfi);
-            const auto &lx = m_edge_lengths[maxLevel()][0]->array(mfi);
-            const auto &ly = m_edge_lengths[maxLevel()][1]->array(mfi);
-            const auto &lz = m_edge_lengths[maxLevel()][2]->array(mfi);
+            const auto &lx = m_fields.get_alldirs("edge_lengths", maxLevel())[0]->array(mfi);
+            const auto &ly = m_fields.get_alldirs("edge_lengths", maxLevel())[1]->array(mfi);
+            const auto &lz = m_fields.get_alldirs("edge_lengths", maxLevel())[2]->array(mfi);
             auto const &mod_areas_dim = m_area_mod[maxLevel()][idim]->array(mfi);
 
             const amrex::Real dx = cell_size[0];

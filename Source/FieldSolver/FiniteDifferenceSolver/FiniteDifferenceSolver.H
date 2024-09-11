@@ -66,7 +66,7 @@ class FiniteDifferenceSolver
         void EvolveE ( ablastr::fields::VectorField Efield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
-                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+                       ablastr::fields::VectorField const& edge_lengths,
                        ablastr::fields::VectorField const& face_areas,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
                        amrex::MultiFab const* Ffield,
@@ -83,8 +83,8 @@ class FiniteDifferenceSolver
                       amrex::Real dt);
 
         void EvolveECTRho ( ablastr::fields::VectorField const Efield,
-                            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-                            ablastr::fields::VectorField const&  face_areas,
+                            ablastr::fields::VectorField const& edge_lengths,
+                            ablastr::fields::VectorField const& face_areas,
                             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
                             int lev );
 
@@ -116,7 +116,7 @@ class FiniteDifferenceSolver
         void MacroscopicEvolveE ( ablastr::fields::VectorField Efield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
-                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+                      ablastr::fields::VectorField const& edge_lengths,
                       amrex::Real dt,
                       std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
 
@@ -162,7 +162,7 @@ class FiniteDifferenceSolver
                       std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
                       amrex::MultiFab* const rhofield,
                       std::unique_ptr<amrex::MultiFab> const& Pefield,
-                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+                      ablastr::fields::VectorField const& edge_lengths,
                       int lev, HybridPICModel const* hybrid_model,
                       bool solve_for_Faraday );
 
@@ -178,7 +178,7 @@ class FiniteDifferenceSolver
         void CalculateCurrentAmpere (
                       std::array< std::unique_ptr<amrex::MultiFab>, 3>& Jfield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
-                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+                      ablastr::fields::VectorField const& edge_lengths,
                       int lev );
 
     private:
@@ -220,7 +220,7 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+            ablastr::fields::VectorField const& edge_lengths,
             amrex::MultiFab const* Ffield,
             int lev,
             amrex::Real dt );
@@ -248,7 +248,7 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
             amrex::MultiFab* const rhofield,
             std::unique_ptr<amrex::MultiFab> const& Pefield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+            ablastr::fields::VectorField const& edge_lengths,
             int lev, HybridPICModel const* hybrid_model,
             bool solve_for_Faraday );
 
@@ -256,7 +256,7 @@ class FiniteDifferenceSolver
         void CalculateCurrentAmpereCylindrical (
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+            ablastr::fields::VectorField const& edge_lengths,
             int lev
         );
 
@@ -273,7 +273,7 @@ class FiniteDifferenceSolver
             ablastr::fields::VectorField& Efield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+            ablastr::fields::VectorField const& edge_lengths,
             amrex::MultiFab const* Ffield,
             int lev, amrex::Real dt );
 
@@ -293,7 +293,7 @@ class FiniteDifferenceSolver
 
         void EvolveRhoCartesianECT (
             ablastr::fields::VectorField const Efield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+            ablastr::fields::VectorField const& edge_lengths,
             ablastr::fields::VectorField const& face_areas,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield, int lev);
 
@@ -318,7 +318,7 @@ class FiniteDifferenceSolver
             ablastr::fields::VectorField Efield,
             std::array< std::unique_ptr< amrex::MultiFab>, 3> const& Bfield,
             std::array< std::unique_ptr< amrex::MultiFab>, 3> const& Jfield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+            ablastr::fields::VectorField const& edge_lengths,
             amrex::Real dt,
             std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
 
@@ -353,7 +353,7 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
             amrex::MultiFab* const rhofield,
             std::unique_ptr<amrex::MultiFab> const& Pefield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+            ablastr::fields::VectorField const& edge_lengths,
             int lev, HybridPICModel const* hybrid_model,
             bool solve_for_Faraday );
 
@@ -361,7 +361,7 @@ class FiniteDifferenceSolver
         void CalculateCurrentAmpereCartesian (
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+            ablastr::fields::VectorField const& edge_lengths,
             int lev
         );
 #endif

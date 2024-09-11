@@ -19,6 +19,8 @@
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
+#include <ablastr/fields/MultiFabRegister.H>
+
 #include <AMReX_Array.H>
 #include <AMReX_REAL.H>
 
@@ -55,10 +57,10 @@ public:
      * of time and therefore this should be re-evaluated at every step.
      */
     void GetCurrentExternal (
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths
+        ablastr::fields::MultiLevelVectorField const& edge_lengths
     );
     void GetCurrentExternal (
-        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+        ablastr::fields::VectorField const& edge_lengths,
         int lev
     );
 
@@ -73,11 +75,11 @@ public:
      */
     void CalculateCurrentAmpere (
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Bfield,
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths
+        ablastr::fields::MultiLevelVectorField const& edge_lengths
     );
     void CalculateCurrentAmpere (
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
-        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+        ablastr::fields::VectorField const& edge_lengths,
         int lev
     );
 
@@ -90,7 +92,7 @@ public:
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Bfield,
         ablastr::fields::MultiLevelScalarField const& rhofield,
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
+        ablastr::fields::MultiLevelVectorField const& edge_lengths,
         bool solve_for_Faraday);
 
     void HybridPICSolveE (
@@ -98,7 +100,7 @@ public:
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
         amrex::MultiFab* const rhofield,
-        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+        ablastr::fields::VectorField const& edge_lengths,
         int lev, bool solve_for_Faraday);
 
     void HybridPICSolveE (
@@ -106,7 +108,7 @@ public:
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
         amrex::MultiFab* const rhofield,
-        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+        ablastr::fields::VectorField const& edge_lengths,
         int lev, PatchType patch_type, bool solve_for_Faraday);
 
     void BfieldEvolveRK (
@@ -114,7 +116,7 @@ public:
         ablastr::fields::MultiLevelVectorField Efield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
         ablastr::fields::MultiLevelScalarField const& rhofield,
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
+        ablastr::fields::MultiLevelVectorField const& edge_lengths,
         amrex::Real dt, DtType a_dt_type,
         amrex::IntVect ng, std::optional<bool> nodal_sync);
 
@@ -123,7 +125,7 @@ public:
         ablastr::fields::MultiLevelVectorField Efield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
         ablastr::fields::MultiLevelScalarField const& rhofield,
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
+        ablastr::fields::MultiLevelVectorField const& edge_lengths,
         amrex::Real dt, int lev, DtType dt_type,
         amrex::IntVect ng, std::optional<bool> nodal_sync);
 
@@ -132,7 +134,7 @@ public:
         ablastr::fields::MultiLevelVectorField& Efield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
         ablastr::fields::MultiLevelScalarField const& rhofield,
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
+        ablastr::fields::MultiLevelVectorField const& edge_lengths,
         amrex::Real dt, DtType dt_type,
         amrex::IntVect ng, std::optional<bool> nodal_sync);
 
