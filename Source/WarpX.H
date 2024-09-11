@@ -1343,19 +1343,19 @@ private:
     void StoreCurrent (int lev);
     void RestoreCurrent (int lev);
     void ApplyFilterJ (
-        const std::vector<std::map<ablastr::fields::Direction, amrex::MultiFab*>>& current,
+        const ablastr::fields::MultiLevelVectorField& current,
         int lev,
         int idim);
     void ApplyFilterJ (
-        const std::vector<std::map<ablastr::fields::Direction, amrex::MultiFab*>>& current,
+        const ablastr::fields::MultiLevelVectorField& current,
         int lev);
     void SumBoundaryJ (
-        const std::vector<std::map<ablastr::fields::Direction, amrex::MultiFab*>>& current,
+        const ablastr::fields::MultiLevelVectorField& current,
         int lev,
         int idim,
         const amrex::Periodicity& period);
     void SumBoundaryJ (
-        const std::vector<std::map<ablastr::fields::Direction, amrex::MultiFab*>>& current,
+        const ablastr::fields::MultiLevelVectorField& current,
         int lev,
         const amrex::Periodicity& period);
     void NodalSyncJ (

@@ -888,8 +888,8 @@ WarpX::OneStep_sub1 (Real cur_time)
     PushParticlesandDeposit(fine_lev, cur_time + dt[fine_lev], DtType::SecondHalf);
     RestrictCurrentFromFineToCoarsePatch(current_fp, current_cp, fine_lev);
     RestrictRhoFromFineToCoarsePatch(fine_lev);
-    if (use_filter) { ApplyFilterJ(current_fp, fine_lev); }
-    SumBoundaryJ(current_fp, fine_lev, Geom(fine_lev).periodicity());
+    if (use_filter) { ApplyFilterJ( va2vm(current_fp), fine_lev); }
+    SumBoundaryJ( va2vm(current_fp), fine_lev, Geom(fine_lev).periodicity());
     ApplyFilterandSumBoundaryRho(
         m_fields.get_mr_levels("rho_fp", finest_level),
         m_fields.get_mr_levels("rho_cp", finest_level),
