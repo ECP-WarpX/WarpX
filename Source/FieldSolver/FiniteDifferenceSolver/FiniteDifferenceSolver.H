@@ -234,8 +234,9 @@ class FiniteDifferenceSolver
 
         template< typename T_Algo >
         void ComputeDivECylindrical (
-            const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
-            amrex::MultiFab& divE );
+            ablastr::fields::VectorField const & Efield,
+            amrex::MultiFab& divE
+        );
 
         template<typename T_Algo>
         void HybridPICSolveECylindrical (
