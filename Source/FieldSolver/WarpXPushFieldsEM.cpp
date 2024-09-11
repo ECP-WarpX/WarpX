@@ -153,10 +153,10 @@ void WarpX::PSATDBackwardTransformEB (
 }
 
 void WarpX::PSATDBackwardTransformEBavg (
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_avg_fp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_avg_fp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_avg_cp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_avg_cp)
+    const ablastr::fields::MultiLevelVectorField& E_avg_fp,
+    const ablastr::fields::MultiLevelVectorField& B_avg_fp,
+    const ablastr::fields::MultiLevelVectorField& E_avg_cp,
+    const ablastr::fields::MultiLevelVectorField& B_avg_cp)
 {
     const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
