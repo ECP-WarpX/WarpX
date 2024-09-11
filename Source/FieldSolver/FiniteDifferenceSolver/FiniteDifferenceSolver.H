@@ -96,8 +96,10 @@ class FiniteDifferenceSolver
             amrex::Vector<FieldBoundaryType> field_boundary_lo,
             amrex::Vector<FieldBoundaryType> field_boundary_hi);
 
-        void ComputeDivE ( const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
-                           amrex::MultiFab& divE );
+        void ComputeDivE (
+            ablastr::fields::VectorField const & Efield,
+            amrex::MultiFab& divE
+        );
 
         /**
           * \brief Macroscopic E-update for non-vacuum medium using the user-selected
@@ -306,7 +308,7 @@ class FiniteDifferenceSolver
 
         template< typename T_Algo >
         void ComputeDivECartesian (
-            const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
+            ablastr::fields::VectorField const & Efield,
             amrex::MultiFab& divE );
 
         template< typename T_Algo, typename T_MacroAlgo >

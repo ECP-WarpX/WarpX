@@ -900,6 +900,9 @@ WarpX::PostRestart ()
 void
 WarpX::InitLevelData (int lev, Real /*time*/)
 {
+    ablastr::fields::MultiLevelVectorField Efield_aux = m_fields.get_mr_levels_alldirs("Efield_aux", finest_level);
+    ablastr::fields::MultiLevelVectorField Bfield_aux = m_fields.get_mr_levels_alldirs("Bfield_aux", finest_level);
+
     // initialize the averaged fields only if the averaged algorithm
     // is activated ('psatd.do_time_averaging=1')
     const ParmParse pp_psatd("psatd");
@@ -962,9 +965,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
          && (lev > 0) && (lev <= maxlevel_extEMfield_init)) {
 
         InitializeExternalFieldsOnGridUsingParser(
-            Bfield_aux[lev][0].get(),
-            Bfield_aux[lev][1].get(),
-            Bfield_aux[lev][2].get(),
+            Bfield_aux[lev][0],
+            Bfield_aux[lev][1],
+            Bfield_aux[lev][2],
             m_p_ext_field_params->Bxfield_parser->compile<3>(),
             m_p_ext_field_params->Byfield_parser->compile<3>(),
             m_p_ext_field_params->Bzfield_parser->compile<3>(),
@@ -1008,9 +1011,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 
         if (lev > 0) {
             InitializeExternalFieldsOnGridUsingParser(
-                Efield_aux[lev][0].get(),
-                Efield_aux[lev][1].get(),
-                Efield_aux[lev][2].get(),
+                Efield_aux[lev][0],
+                Efield_aux[lev][1],
+                Efield_aux[lev][2],
                 m_p_ext_field_params->Exfield_parser->compile<3>(),
                 m_p_ext_field_params->Eyfield_parser->compile<3>(),
                 m_p_ext_field_params->Ezfield_parser->compile<3>(),

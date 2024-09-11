@@ -317,9 +317,6 @@ WarpX::WarpX ()
         myfl = std::make_unique<MultiFluidContainer>(nlevs_max);
     }
 
-    Efield_aux.resize(nlevs_max);
-    Bfield_aux.resize(nlevs_max);
-
     Efield_fp.resize(nlevs_max);
     Bfield_fp.resize(nlevs_max);
 
@@ -2577,52 +2574,52 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         // Create aux multifabs on Nodal Box Array
         BoxArray const nba = amrex::convert(ba,IntVect::TheNodeVector());
 
-        AllocInitMultiFab(Bfield_aux[lev][0], nba, dm, ncomps, ngEB, lev, "Bfield_aux[x]", 0.0_rt);
-        AllocInitMultiFab(Bfield_aux[lev][1], nba, dm, ncomps, ngEB, lev, "Bfield_aux[y]", 0.0_rt);
-        AllocInitMultiFab(Bfield_aux[lev][2], nba, dm, ncomps, ngEB, lev, "Bfield_aux[z]", 0.0_rt);
+        m_fields.alloc_init("Bfield_aux", Direction{0}, lev, nba, dm, ncomps, ngEB, 0.0_rt);
+        m_fields.alloc_init("Bfield_aux", Direction{1}, lev, nba, dm, ncomps, ngEB, 0.0_rt);
+        m_fields.alloc_init("Bfield_aux", Direction{2}, lev, nba, dm, ncomps, ngEB, 0.0_rt);
 
-        AllocInitMultiFab(Efield_aux[lev][0], nba, dm, ncomps, ngEB, lev, "Efield_aux[x]", 0.0_rt);
-        AllocInitMultiFab(Efield_aux[lev][1], nba, dm, ncomps, ngEB, lev, "Efield_aux[y]", 0.0_rt);
-        AllocInitMultiFab(Efield_aux[lev][2], nba, dm, ncomps, ngEB, lev, "Efield_aux[z]", 0.0_rt);
+        m_fields.alloc_init("Efield_aux", Direction{0}, lev, nba, dm, ncomps, ngEB, 0.0_rt);
+        m_fields.alloc_init("Efield_aux", Direction{1}, lev, nba, dm, ncomps, ngEB, 0.0_rt);
+        m_fields.alloc_init("Efield_aux", Direction{2}, lev, nba, dm, ncomps, ngEB, 0.0_rt);
     } else if (lev == 0) {
         if (WarpX::fft_do_time_averaging) {
-            AliasInitMultiFab(Bfield_aux[lev][0], *Bfield_avg_fp[lev][0], 0, ncomps, lev, "Bfield_aux[x]", 0.0_rt);
-            AliasInitMultiFab(Bfield_aux[lev][1], *Bfield_avg_fp[lev][1], 0, ncomps, lev, "Bfield_aux[y]", 0.0_rt);
-            AliasInitMultiFab(Bfield_aux[lev][2], *Bfield_avg_fp[lev][2], 0, ncomps, lev, "Bfield_aux[z]", 0.0_rt);
+            m_fields.alias_init("Bfield_aux", "Bfield_avg_fp", Direction{0}, lev, 0.0_rt);
+            m_fields.alias_init("Bfield_aux", "Bfield_avg_fp", Direction{1}, lev, 0.0_rt);
+            m_fields.alias_init("Bfield_aux", "Bfield_avg_fp", Direction{2}, lev, 0.0_rt);
 
-            AliasInitMultiFab(Efield_aux[lev][0], *Efield_avg_fp[lev][0], 0, ncomps, lev, "Efield_aux[x]", 0.0_rt);
-            AliasInitMultiFab(Efield_aux[lev][1], *Efield_avg_fp[lev][1], 0, ncomps, lev, "Efield_aux[y]", 0.0_rt);
-            AliasInitMultiFab(Efield_aux[lev][2], *Efield_avg_fp[lev][2], 0, ncomps, lev, "Efield_aux[z]", 0.0_rt);
+            m_fields.alias_init("Efield_aux", "Efield_avg_fp", Direction{0}, lev, 0.0_rt);
+            m_fields.alias_init("Efield_aux", "Efield_avg_fp", Direction{1}, lev, 0.0_rt);
+            m_fields.alias_init("Efield_aux", "Efield_avg_fp", Direction{2}, lev, 0.0_rt);
         } else {
             if (mypc->m_B_ext_particle_s == "read_from_file") {
-                AllocInitMultiFab(Bfield_aux[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, lev, "Bfield_aux[x]");
-                AllocInitMultiFab(Bfield_aux[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, ngEB, lev, "Bfield_aux[y]");
-                AllocInitMultiFab(Bfield_aux[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngEB, lev, "Bfield_aux[z]");
+                m_fields.alloc_init("Bfield_aux", Direction{0}, lev, amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+                m_fields.alloc_init("Bfield_aux", Direction{1}, lev, amrex::convert(ba, By_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+                m_fields.alloc_init("Bfield_aux", Direction{2}, lev, amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
             } else {
                 // In this case, the aux grid is simply an alias of the fp grid (most common case in WarpX)
-                AliasInitMultiFab(Bfield_aux[lev][0], *Bfield_fp[lev][0], 0, ncomps, lev, "Bfield_aux[x]", 0.0_rt);
-                AliasInitMultiFab(Bfield_aux[lev][1], *Bfield_fp[lev][1], 0, ncomps, lev, "Bfield_aux[y]", 0.0_rt);
-                AliasInitMultiFab(Bfield_aux[lev][2], *Bfield_fp[lev][2], 0, ncomps, lev, "Bfield_aux[z]", 0.0_rt);
+                m_fields.alias_init("Bfield_aux", "Bfield_avg_fp", Direction{0}, lev, 0.0_rt);
+                m_fields.alias_init("Bfield_aux", "Bfield_avg_fp", Direction{1}, lev, 0.0_rt);
+                m_fields.alias_init("Bfield_aux", "Bfield_avg_fp", Direction{2}, lev, 0.0_rt);
             }
             if (mypc->m_E_ext_particle_s == "read_from_file") {
-                AllocInitMultiFab(Efield_aux[lev][0], amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, lev, "Efield_aux[x]");
-                AllocInitMultiFab(Efield_aux[lev][1], amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngEB, lev, "Efield_aux[y]");
-                AllocInitMultiFab(Efield_aux[lev][2], amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngEB, lev, "Efield_aux[z]");
+                m_fields.alloc_init("Efield_aux", Direction{0}, lev, amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+                m_fields.alloc_init("Efield_aux", Direction{1}, lev, amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+                m_fields.alloc_init("Efield_aux", Direction{2}, lev, amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
             } else {
                 // In this case, the aux grid is simply an alias of the fp grid (most common case in WarpX)
-                AliasInitMultiFab(Efield_aux[lev][0], *m_fields.get("Efield_fp",Direction{0},lev), 0, ncomps, lev, "Efield_aux[x]", 0.0_rt);
-                AliasInitMultiFab(Efield_aux[lev][1], *m_fields.get("Efield_fp",Direction{1},lev), 0, ncomps, lev, "Efield_aux[y]", 0.0_rt);
-                AliasInitMultiFab(Efield_aux[lev][2], *m_fields.get("Efield_fp",Direction{2},lev), 0, ncomps, lev, "Efield_aux[z]", 0.0_rt);
+                m_fields.alias_init("Efield_aux", "Efield_avg_fp", Direction{0}, lev, 0.0_rt);
+                m_fields.alias_init("Efield_aux", "Efield_avg_fp", Direction{1}, lev, 0.0_rt);
+                m_fields.alias_init("Efield_aux", "Efield_avg_fp", Direction{2}, lev, 0.0_rt);
             }
         }
     } else {
-        AllocInitMultiFab(Bfield_aux[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, lev, "Bfield_aux[x]", 0.0_rt);
-        AllocInitMultiFab(Bfield_aux[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, ngEB, lev, "Bfield_aux[y]", 0.0_rt);
-        AllocInitMultiFab(Bfield_aux[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngEB, lev, "Bfield_aux[z]", 0.0_rt);
+        m_fields.alloc_init("Bfield_aux", Direction{0}, lev, amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+        m_fields.alloc_init("Bfield_aux", Direction{1}, lev, amrex::convert(ba, By_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+        m_fields.alloc_init("Bfield_aux", Direction{2}, lev, amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
 
-        AllocInitMultiFab(Efield_aux[lev][0], amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, lev, "Efield_aux[x]", 0.0_rt);
-        AllocInitMultiFab(Efield_aux[lev][1], amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngEB, lev, "Efield_aux[y]", 0.0_rt);
-        AllocInitMultiFab(Efield_aux[lev][2], amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngEB, lev, "Efield_aux[z]", 0.0_rt);
+        m_fields.alloc_init("Efield_aux", Direction{0}, lev, amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+        m_fields.alloc_init("Efield_aux", Direction{1}, lev, amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+        m_fields.alloc_init("Efield_aux", Direction{2}, lev, amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
     }
 
     // The external fields that are read from file
@@ -2638,11 +2635,14 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
     if (mypc->m_B_ext_particle_s == "read_from_file") {
         //  These fields will be added to the fields that the particles see, and need to match the index type
-        AllocInitMultiFab(B_external_particle_field[lev][0], amrex::convert(ba, Bfield_aux[lev][0]->ixType()),
+        auto Bfield_aux_levl_0 = m_fields.get("Bfield_aux", Direction{0}, lev);
+        auto Bfield_aux_levl_1 = m_fields.get("Bfield_aux", Direction{1}, lev);
+        auto Bfield_aux_levl_2 = m_fields.get("Bfield_aux", Direction{2}, lev);
+        AllocInitMultiFab(B_external_particle_field[lev][0], amrex::convert(ba, Bfield_aux_levl_0->ixType()),
             dm, ncomps, ngEB, lev, "B_external_particle_field[x]", 0.0_rt);
-        AllocInitMultiFab(B_external_particle_field[lev][1], amrex::convert(ba, Bfield_aux[lev][1]->ixType()),
+        AllocInitMultiFab(B_external_particle_field[lev][1], amrex::convert(ba, Bfield_aux_levl_1->ixType()),
             dm, ncomps, ngEB, lev, "B_external_particle_field[y]", 0.0_rt);
-        AllocInitMultiFab(B_external_particle_field[lev][2], amrex::convert(ba, Bfield_aux[lev][2]->ixType()),
+        AllocInitMultiFab(B_external_particle_field[lev][2], amrex::convert(ba, Bfield_aux_levl_2->ixType()),
             dm, ncomps, ngEB, lev, "B_external_particle_field[z]", 0.0_rt);
     }
     if (m_p_ext_field_params->E_ext_grid_type != ExternalFieldType::default_zero && m_p_ext_field_params->E_ext_grid_type != ExternalFieldType::constant) {
@@ -2656,11 +2656,14 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
     if (mypc->m_E_ext_particle_s == "read_from_file") {
         //  These fields will be added to the fields that the particles see, and need to match the index type
-        AllocInitMultiFab(E_external_particle_field[lev][0], amrex::convert(ba, Efield_aux[lev][0]->ixType()),
+        auto Efield_aux_levl_0 = m_fields.get("Efield_aux", Direction{0}, lev);
+        auto Efield_aux_levl_1 = m_fields.get("Efield_aux", Direction{1}, lev);
+        auto Efield_aux_levl_2 = m_fields.get("Efield_aux", Direction{2}, lev);
+        AllocInitMultiFab(E_external_particle_field[lev][0], amrex::convert(ba, Efield_aux_levl_0->ixType()),
             dm, ncomps, ngEB, lev, "E_external_particle_field[x]", 0.0_rt);
-        AllocInitMultiFab(E_external_particle_field[lev][1], amrex::convert(ba, Efield_aux[lev][1]->ixType()),
+        AllocInitMultiFab(E_external_particle_field[lev][1], amrex::convert(ba, Efield_aux_levl_1->ixType()),
             dm, ncomps, ngEB, lev, "E_external_particle_field[y]", 0.0_rt);
-        AllocInitMultiFab(E_external_particle_field[lev][2], amrex::convert(ba, Efield_aux[lev][2]->ixType()),
+        AllocInitMultiFab(E_external_particle_field[lev][2], amrex::convert(ba, Efield_aux_levl_2->ixType()),
             dm, ncomps, ngEB, lev, "E_external_particle_field[z]", 0.0_rt);
     }
 
@@ -3013,7 +3016,7 @@ WarpX::RefRatio (int lev)
 
 void
 WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
-                    const std::array<const amrex::MultiFab* const, 3>& B,
+                    ablastr::fields::VectorField const& B,
                     const std::array<amrex::Real,3>& dx)
 {
     ComputeDivB(divB, dcomp, B, dx, IntVect::TheZeroVector());
@@ -3021,7 +3024,7 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
 
 void
 WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
-                    const std::array<const amrex::MultiFab* const, 3>& B,
+                    ablastr::fields::VectorField const& B,
                     const std::array<amrex::Real,3>& dx, IntVect const ngrow)
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(grid_type != GridType::Collocated,
@@ -3061,13 +3064,15 @@ WarpX::ComputeDivE(amrex::MultiFab& divE, const int lev)
 {
     if ( WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD ) {
 #ifdef WARPX_USE_FFT
-        spectral_solver_fp[lev]->ComputeSpectralDivE( lev, Efield_aux[lev], divE );
+        ablastr::fields::VectorField Efield_aux_lev = m_fields.get_alldirs("Efield_aux", lev);
+        spectral_solver_fp[lev]->ComputeSpectralDivE(lev, Efield_aux_lev, divE);
 #else
         WARPX_ABORT_WITH_MESSAGE(
             "ComputeDivE: PSATD requested but not compiled");
 #endif
     } else {
-        m_fdtd_solver_fp[lev]->ComputeDivE( Efield_aux[lev], divE );
+        ablastr::fields::VectorField Efield_aux_lev = m_fields.get_alldirs("Efield_aux", lev);
+        m_fdtd_solver_fp[lev]->ComputeDivE(Efield_aux_lev, divE);
     }
 }
 
@@ -3473,12 +3478,6 @@ WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, cons
 
     switch(field_type)
     {
-        case FieldType::Efield_aux :
-            field_pointer = Efield_aux[lev][direction].get();
-            break;
-        case FieldType::Bfield_aux :
-            field_pointer = Bfield_aux[lev][direction].get();
-            break;
         case FieldType::Efield_fp :
             field_pointer = Efield_fp[lev][direction].get();
             break;
@@ -3549,7 +3548,6 @@ std::array<const amrex::MultiFab* const, 3>
 WarpX::getFieldPointerArray (const FieldType field_type, const int lev) const
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        (field_type == FieldType::Efield_aux) || (field_type == FieldType::Bfield_aux) ||
         (field_type == FieldType::Efield_fp) || (field_type == FieldType::Bfield_fp) ||
         (field_type == FieldType::Efield_fp_external) || (field_type == FieldType::Bfield_fp_external) ||
         (field_type == FieldType::current_fp) || (field_type == FieldType::current_fp_nodal) ||
@@ -3599,10 +3597,6 @@ WarpX::getMultiLevelField(warpx::fields::FieldType field_type) const
 {
     switch(field_type)
     {
-        case FieldType::Efield_aux :
-            return Efield_aux;
-        case FieldType::Bfield_aux :
-            return Bfield_aux;
         case FieldType::Efield_fp :
             return Efield_fp;
         case FieldType::Efield_fp_external :

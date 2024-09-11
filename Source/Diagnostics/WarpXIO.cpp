@@ -288,8 +288,8 @@ WarpX::InitFromCheckpoint ()
 
         if (lev > 0) {
             for (int i = 0; i < 3; ++i) {
-                Efield_aux[lev][i]->setVal(0.0);
-                Bfield_aux[lev][i]->setVal(0.0);
+                m_fields.get("Efield_aux", Direction{i}, lev)->setVal(0.0);
+                m_fields.get("Bfield_aux", Direction{i}, lev)->setVal(0.0);
 
                 m_fields.get("current_cp",Direction{i},lev)->setVal(0.0);
                 Efield_cp[lev][i]->setVal(0.0);

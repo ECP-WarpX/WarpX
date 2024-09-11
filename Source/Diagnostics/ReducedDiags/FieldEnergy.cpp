@@ -13,6 +13,8 @@
 #include "Utils/WarpXConst.H"
 #include "WarpX.H"
 
+#include <ablastr/fields/MultiFabRegister.H>
+
 #include <AMReX_Array4.H>
 #include <AMReX_Config.H>
 #include <AMReX_FArrayBox.H>
@@ -87,16 +89,18 @@ void FieldEnergy::ComputeDiags (int step)
     // get number of level
     const auto nLevel = warpx.finestLevel() + 1;
 
+    using ablastr::fields::Direction;
+
     // loop over refinement levels
     for (int lev = 0; lev < nLevel; ++lev)
     {
         // get MultiFab data at lev
-        const MultiFab & Ex = warpx.getField(FieldType::Efield_aux, lev,0);
-        const MultiFab & Ey = warpx.getField(FieldType::Efield_aux, lev,1);
-        const MultiFab & Ez = warpx.getField(FieldType::Efield_aux, lev,2);
-        const MultiFab & Bx = warpx.getField(FieldType::Bfield_aux, lev,0);
-        const MultiFab & By = warpx.getField(FieldType::Bfield_aux, lev,1);
-        const MultiFab & Bz = warpx.getField(FieldType::Bfield_aux, lev,2);
+        const MultiFab & Ex = *warpx.m_fields.get("Efield_aux", Direction{0}, lev);
+        const MultiFab & Ey = *warpx.m_fields.get("Efield_aux", Direction{1}, lev);
+        const MultiFab & Ez = *warpx.m_fields.get("Efield_aux", Direction{2}, lev);
+        const MultiFab & Bx = *warpx.m_fields.get("Bfield_aux", Direction{0}, lev);
+        const MultiFab & By = *warpx.m_fields.get("Bfield_aux", Direction{1}, lev);
+        const MultiFab & Bz = *warpx.m_fields.get("Bfield_aux", Direction{2}, lev);
 
         // get cell volume
         const std::array<Real, 3> &dx = WarpX::CellSize(lev);

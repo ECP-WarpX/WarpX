@@ -100,12 +100,12 @@ public:
         const auto dx = geom.CellSizeArray();
 
         // get MultiFab data
-        const amrex::MultiFab & Ex = warpx.getField(warpx::fields::FieldType::Efield_aux, lev,0);
-        const amrex::MultiFab & Ey = warpx.getField(warpx::fields::FieldType::Efield_aux, lev,1);
-        const amrex::MultiFab & Ez = warpx.getField(warpx::fields::FieldType::Efield_aux, lev,2);
-        const amrex::MultiFab & Bx = warpx.getField(warpx::fields::FieldType::Bfield_aux, lev,0);
-        const amrex::MultiFab & By = warpx.getField(warpx::fields::FieldType::Bfield_aux, lev,1);
-        const amrex::MultiFab & Bz = warpx.getField(warpx::fields::FieldType::Bfield_aux, lev,2);
+        const amrex::MultiFab & Ex = *warpx.m_fields.get("Efield_aux", Direction{0}, lev);
+        const amrex::MultiFab & Ey = *warpx.m_fields.get("Efield_aux", Direction{1}, lev);
+        const amrex::MultiFab & Ez = *warpx.m_fields.get("Efield_aux", Direction{2}, lev);
+        const amrex::MultiFab & Bx = *warpx.m_fields.get("Bfield_aux", Direction{0}, lev);
+        const amrex::MultiFab & By = *warpx.m_fields.get("Bfield_aux", Direction{1}, lev);
+        const amrex::MultiFab & Bz = *warpx.m_fields.get("Bfield_aux", Direction{2}, lev);
         const amrex::MultiFab & jx = *warpx.m_fields.get("current_fp",Direction{0},lev);
         const amrex::MultiFab & jy = *warpx.m_fields.get("current_fp",Direction{1},lev);
         const amrex::MultiFab & jz = *warpx.m_fields.get("current_fp",Direction{2},lev);

@@ -13,6 +13,8 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "WarpX.H"
 
+#include <ablastr/fields/MultiFabRegister.H>
+
 #include <AMReX_Box.H>
 #include <AMReX_Config.H>
 #include <AMReX_DistributionMapping.H>
@@ -123,11 +125,13 @@ void LoadBalanceCosts::ComputeDiags (int step)
     // shift index for m_data
     int shift_m_data = 0;
 
+    using ablastr::fields::Direction;
+
     // save data
     for (int lev = 0; lev < nLevels; ++lev)
     {
         const amrex::DistributionMapping& dm = warpx.DistributionMap(lev);
-        const MultiFab & Ex = warpx.getField(FieldType::Efield_aux, lev,0);
+        const MultiFab & Ex = *warpx.m_fields.get("Efield_aux", Direction{0}, lev);
         for (MFIter mfi(Ex, false); mfi.isValid(); ++mfi)
         {
             const Box& tbx = mfi.tilebox();
