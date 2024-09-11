@@ -30,7 +30,9 @@ namespace ablastr::fields
     /** Components (base vector directions) of vector/tensor fields.
      *
      * Because of different staggering, the components of vector/tensor fields are stored
-     * in separate (i)MultiFab. This
+     * in separate (i)MultiFab.
+     *
+     * @todo: synchronize with AMReX "enum class Direction"
      */
     struct Direction
     {
@@ -45,6 +47,12 @@ namespace ablastr::fields
         operator int() { return dir; }
     };
 
+    /** A scalar field (a MultiFab)
+     *
+     * Note: might still have components, e.g., for copies at different times.
+     */
+    using ScalarField = amrex::MultiFab*;
+
     /** A vector field of three MultiFab
      */
     //using VectorField = ablastr::utils::ConstMap<Direction, amrex::MultiFab*>;
@@ -52,7 +60,7 @@ namespace ablastr::fields
 
     /** A multi-level scalar field
      */
-    using MultiLevelScalarField = amrex::Vector<amrex::MultiFab*>;
+    using MultiLevelScalarField = amrex::Vector<ScalarField>;
 
     /** A multi-level vector field
     */
