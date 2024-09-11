@@ -30,7 +30,9 @@ RelativisticExplicitES::ComputeSpaceChargeField (
     }
 
     // Add the field due to the boundary potentials
-    AddBoundaryField(Efield_fp, Bfield_fp);
+    if (m_poisson_boundary_handler->m_boundary_potential_specified) {
+        AddBoundaryField(Efield_fp, Bfield_fp);
+    }
 }
 
 void
