@@ -34,17 +34,21 @@ RelativisticExplicitES::ComputeSpaceChargeField (
 ) {
     WARPX_PROFILE("RelativisticExplicitES::ComputeSpaceChargeField");
     amrex::ignore_unused(rho_fp, rho_cp, phi_fp, mfl);
+
+    const bool always_run_solve = (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::Relativistic);
+
     // Loop over the species and add their space-charge contribution to E and B.
     // Note that the fields calculated here does not include the E field
     // due to simulation boundary potentials
     for (auto const& species : mpc) {
-        if (species->initialize_self_fields) {
+        if ((species->initialize_self_fields) || always_run_solve) {
             AddSpaceChargeField(charge_buf, *species.get(), Efield_fp, Bfield_fp);
         }
     }
 
     // Add the field due to the boundary potentials
-    if (m_poisson_boundary_handler->m_boundary_potential_specified) {
+    if ((m_poisson_boundary_handler->m_boundary_potential_specified)
+        || always_run_solve) {
         AddBoundaryField(Efield_fp);
     }
 }
