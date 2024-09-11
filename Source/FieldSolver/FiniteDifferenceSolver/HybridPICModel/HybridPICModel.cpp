@@ -251,7 +251,7 @@ void HybridPICModel::InitData ()
 }
 
 void HybridPICModel::GetCurrentExternal (
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths)
+    ablastr::fields::MultiLevelVectorField const& edge_lengths)
 {
     if (!m_external_field_has_time_dependence) { return; }
 
@@ -264,7 +264,7 @@ void HybridPICModel::GetCurrentExternal (
 
 
 void HybridPICModel::GetCurrentExternal (
-    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+    ablastr::fields::VectorField const& edge_lengths,
     int lev)
 {
     // This logic matches closely to WarpX::InitializeExternalFieldsOnGridUsingParser
