@@ -97,7 +97,7 @@ public:
     void computePhi (
         const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
         amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-        std::array<Real, 3> const beta = {{0,0,0}},
+        std::array<Real, 3> const beta,
         amrex::Real required_precision,
         amrex::Real absolute_tolerance,
         int const max_iters,
