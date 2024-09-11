@@ -1170,7 +1170,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
 }
 
 void
-WarpXParticleContainer::DepositCharge (const std::vector<amrex::MultiFab*>& rho,
+WarpXParticleContainer::DepositCharge (const ablastr::fields::MultiLevelScalarField& rho,
                                        const bool local, const bool reset,
                                        const bool apply_boundary_and_scale_volume,
                                        const bool interpolate_across_levels,
