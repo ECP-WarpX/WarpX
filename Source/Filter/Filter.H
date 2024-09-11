@@ -41,7 +41,7 @@ public:
 
 protected:
     // Stencil along each direction.
-    amrex::Gpu::DeviceVector<amrex::Real> stencil_x, stencil_y, stencil_z;
+    amrex::Gpu::DeviceVector<amrex::Real> m_stencil_0, m_stencil_1, m_stencil_2;
     // Length of each stencil, 1 for dimensions not included
     amrex::Dim3 slen;
 
