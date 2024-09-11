@@ -209,16 +209,16 @@ class FiniteDifferenceSolver
 #ifdef WARPX_DIM_RZ
         template< typename T_Algo >
         void EvolveBCylindrical (
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
+            ablastr::fields::VectorField Bfield,
+            ablastr::fields::VectorField const & Efield,
             int lev,
             amrex::Real dt );
 
         template< typename T_Algo >
         void EvolveECylindrical (
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
-            ablastr::fields::VectorField const& Jfield,
+            ablastr::fields::VectorField Efield,
+            ablastr::fields::VectorField const& Bfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
             ablastr::fields::VectorField const& edge_lengths,
             amrex::MultiFab const* Ffield,
             int lev,
@@ -227,7 +227,7 @@ class FiniteDifferenceSolver
         template< typename T_Algo >
         void EvolveFCylindrical (
             amrex::MultiFab* Ffield,
-            ablastr::fields::VectorField const Efield,
+            ablastr::fields::VectorField const & Efield,
             amrex::MultiFab* const rhofield,
             int rhocomp,
             amrex::Real dt );

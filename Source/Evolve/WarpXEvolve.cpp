@@ -1132,8 +1132,12 @@ WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type,
                  m_fields.get("current_buf", Direction{2}, lev),
                  m_fields.get("rho_fp",lev),
                  m_fields.get("rho_buf", lev),
-                 Efield_cax[lev][0].get(), Efield_cax[lev][1].get(), Efield_cax[lev][2].get(),
-                 Bfield_cax[lev][0].get(), Bfield_cax[lev][1].get(), Bfield_cax[lev][2].get(),
+                 m_fields.get("Efield_cax", Direction{0}, lev),
+                 m_fields.get("Efield_cax", Direction{1}, lev),
+                 m_fields.get("Efield_cax", Direction{2}, lev),
+                 m_fields.get("Bfield_cax", Direction{0}, lev),
+                 m_fields.get("Bfield_cax", Direction{1}, lev),
+                 m_fields.get("Bfield_cax", Direction{2}, lev),
                  cur_time, dt[lev], a_dt_type, skip_current, push_type);
     if (! skip_current) {
 #ifdef WARPX_DIM_RZ
