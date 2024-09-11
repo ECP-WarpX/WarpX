@@ -909,12 +909,14 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
     auto face_areas_lev = m_fields.get_mr_levels_alldirs("face_areas", finest_level)[lev];
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->EvolveE(Efield_fp[lev], Bfield_fp[lev],
-                                       current_fp[lev], m_edge_lengths[lev],
+                                       m_fields.get_alldirs("current_fp", lev),
+                                       m_edge_lengths[lev],
                                        face_areas_lev, ECTRhofield[lev],
                                        m_fields.get("F_fp", lev), lev, a_dt );
     } else {
         m_fdtd_solver_cp[lev]->EvolveE(Efield_cp[lev], Bfield_cp[lev],
-                                       current_cp[lev], m_edge_lengths[lev],
+                                       m_fields.get_alldirs("current_fp", lev),
+                                       m_edge_lengths[lev],
                                        face_areas_lev, ECTRhofield[lev],
                                        m_fields.get("F_cp", lev), lev, a_dt );
     }

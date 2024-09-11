@@ -69,6 +69,8 @@ WarpX::Hybrid_QED_Push (int lev, amrex::Real a_dt)
 void
 WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, amrex::Real a_dt)
 {
+    using ablastr::fields::Direction;
+
     const int patch_level = (patch_type == PatchType::fine) ? lev : lev-1;
     const std::array<Real,3>& dx_vec= WarpX::CellSize(patch_level);
     const Real dx = dx_vec[0];
@@ -84,9 +86,9 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, amrex::Real a_dt)
         Bx = Bfield_fp[lev][0].get();
         By = Bfield_fp[lev][1].get();
         Bz = Bfield_fp[lev][2].get();
-        Jx = current_fp[lev][0].get();
-        Jy = current_fp[lev][1].get();
-        Jz = current_fp[lev][2].get();
+        Jx = m_fields.get("current_fp", Direction{0}, lev);
+        Jy = m_fields.get("current_fp", Direction{1}, lev);
+        Jz = m_fields.get("current_fp", Direction{2}, lev);
     }
     else
     {
@@ -96,9 +98,9 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, amrex::Real a_dt)
         Bx = Bfield_cp[lev][0].get();
         By = Bfield_cp[lev][1].get();
         Bz = Bfield_cp[lev][2].get();
-        Jx = current_cp[lev][0].get();
-        Jy = current_cp[lev][1].get();
-        Jz = current_cp[lev][2].get();
+        Jx = m_fields.get("current_cp", Direction{0}, lev);
+        Jy = m_fields.get("current_cp", Direction{1}, lev);
+        Jz = m_fields.get("current_cp", Direction{2}, lev);
     }
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);

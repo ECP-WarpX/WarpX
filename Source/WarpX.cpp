@@ -360,7 +360,6 @@ WarpX::WarpX ()
         m_hybrid_pic_model = std::make_unique<HybridPICModel>(nlevs_max);
     }
 
-    current_cp.resize(nlevs_max);
     Efield_cp.resize(nlevs_max);
     Bfield_cp.resize(nlevs_max);
 
@@ -3489,9 +3488,6 @@ WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, cons
         case FieldType::Bfield_cp :
             field_pointer = Bfield_cp[lev][direction].get();
             break;
-        case FieldType::current_cp :
-            field_pointer = current_cp[lev][direction].get();
-            break;
         case FieldType::edge_lengths :
             field_pointer = m_edge_lengths[lev][direction].get();
             break;
@@ -3598,8 +3594,6 @@ WarpX::getMultiLevelField(warpx::fields::FieldType field_type) const
             return Efield_cp;
         case FieldType::Bfield_cp :
             return Bfield_cp;
-        case FieldType::current_cp :
-            return current_cp;
         default:
             WARPX_ABORT_WITH_MESSAGE("Invalid field type");
             return Efield_fp;
