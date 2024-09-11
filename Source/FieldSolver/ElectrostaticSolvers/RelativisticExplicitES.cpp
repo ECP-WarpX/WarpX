@@ -41,14 +41,14 @@ RelativisticExplicitES::ComputeSpaceChargeField (
     // Note that the fields calculated here does not include the E field
     // due to simulation boundary potentials
     for (auto const& species : mpc) {
-        if ((species->initialize_self_fields) || always_run_solve) {
+        if (always_run_solve || (species->initialize_self_fields)) {
             AddSpaceChargeField(charge_buf, *species.get(), Efield_fp, Bfield_fp);
         }
     }
 
     // Add the field due to the boundary potentials
-    if ((m_poisson_boundary_handler->m_boundary_potential_specified)
-        || always_run_solve) {
+    if (always_run_solve || (m_poisson_boundary_handler->m_boundary_potential_specified))
+    {
         AddBoundaryField(Efield_fp);
     }
 }

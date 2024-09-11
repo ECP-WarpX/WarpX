@@ -137,35 +137,38 @@ ElectrostaticSolver::computePhi (const amrex::Vector<std::unique_ptr<amrex::Mult
     auto & warpx = WarpX::GetInstance();
     if (EB::enabled())
     {
-        // EB: use AMReX to directly calculate the electric field since with EB's the
-        // simple finite difference scheme in WarpX::computeE sometimes fails
+        if (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
+            WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
+        {
+            // EB: use AMReX to directly calculate the electric field since with EB's the
+            // simple finite difference scheme in WarpX::computeE sometimes fails
 
-        // TODO: maybe make this a helper function or pass Efield_fp directly
-        amrex::Vector<
-            amrex::Array<amrex::MultiFab *, AMREX_SPACEDIM>
-        > e_field;
-        for (int lev = 0; lev < num_levels; ++lev) {
-            e_field.push_back(
+            // TODO: maybe make this a helper function or pass Efield_fp directly
+            amrex::Vector<
+                amrex::Array<amrex::MultiFab *, AMREX_SPACEDIM>
+            > e_field;
+            for (int lev = 0; lev < num_levels; ++lev) {
+                e_field.push_back(
 #if defined(WARPX_DIM_1D_Z)
-                amrex::Array<amrex::MultiFab*, 1>{
-                    warpx.getFieldPointer(warpx::fields::FieldType::Efield_fp, lev, 2)
-                }
+                    amrex::Array<amrex::MultiFab*, 1>{
+                        warpx.getFieldPointer(warpx::fields::FieldType::Efield_fp, lev, 2)
+                    }
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                amrex::Array<amrex::MultiFab*, 2>{
-                    warpx.getFieldPointer(warpx::fields::FieldType::Efield_fp, lev, 0),
-                    warpx.getFieldPointer(warpx::fields::FieldType::Efield_fp, lev, 2)
-                }
+                    amrex::Array<amrex::MultiFab*, 2>{
+                        warpx.getFieldPointer(warpx::fields::FieldType::Efield_fp, lev, 0),
+                        warpx.getFieldPointer(warpx::fields::FieldType::Efield_fp, lev, 2)
+                    }
 #elif defined(WARPX_DIM_3D)
-                amrex::Array<amrex::MultiFab *, 3>{
-                    warpx.getFieldPointer(warpx::fields::FieldType::Efield_fp, lev, 0),
-                    warpx.getFieldPointer(warpx::fields::FieldType::Efield_fp, lev, 1),
-                    warpx.getFieldPointer(warpx::fields::FieldType::Efield_fp, lev, 2)
-                }
+                    amrex::Array<amrex::MultiFab *, 3>{
+                        warpx.getFieldPointer(warpx::fields::FieldType::Efield_fp, lev, 0),
+                        warpx.getFieldPointer(warpx::fields::FieldType::Efield_fp, lev, 1),
+                        warpx.getFieldPointer(warpx::fields::FieldType::Efield_fp, lev, 2)
+                    }
 #endif
-            );
+                );
+            }
+            post_phi_calculation = EBCalcEfromPhiPerLevel(e_field);
         }
-        post_phi_calculation = EBCalcEfromPhiPerLevel(e_field);
-
 #ifdef AMREX_USE_EB
         amrex::Vector<
             amrex::EBFArrayBoxFactory const *
