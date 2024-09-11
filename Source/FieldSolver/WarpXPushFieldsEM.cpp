@@ -782,11 +782,10 @@ WarpX::PushPSATD ()
 
     // FFT of E and B
     PSATDForwardTransformEB(
-        Efield_fp,
-        Bfield_fp,
-        Efield_cp,
-        Bfield_cp
-    );
+        m_fields.get_mr_levels_alldirs("Efield_fp", finest_level),
+        m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level),
+        m_fields.get_mr_levels_alldirs("Efield_cp", finest_level),
+        m_fields.get_mr_levels_alldirs("Bfield_cp", finest_level) );
 
 #ifdef WARPX_DIM_RZ
     if (pml_rz[0]) { pml_rz[0]->PushPSATD(0); }
