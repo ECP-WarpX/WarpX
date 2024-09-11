@@ -342,6 +342,22 @@ namespace ablastr::fields
             int level
         );
 
+        /** title
+         *
+         * body body
+         * body
+         *
+         * @param name ...
+         * @param dir ...
+         * @param level ...
+         */
+        void
+        erase (
+            std::string name,
+            Direction dir,
+            int level
+        );
+
         /** Erase all MultiFabs on a specific MR level.
          *
          * Calls @see erase for all MultiFabs on a specific level.

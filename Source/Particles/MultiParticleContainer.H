@@ -26,6 +26,8 @@
 #include "WarpXParticleContainer.H"
 #include "ParticleBoundaries.H"
 
+#include <ablastr/fields/MultiFabRegister.H>
+
 #include <AMReX_BLassert.H>
 #include <AMReX_Box.H>
 #include <AMReX_Config.H>
@@ -162,7 +164,7 @@ public:
      *                          the time of the deposition.
      */
     void
-    DepositCurrent (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
+    DepositCurrent (ablastr::fields::MultiLevelVectorField J,
                     amrex::Real dt, amrex::Real relative_time);
 
     ///

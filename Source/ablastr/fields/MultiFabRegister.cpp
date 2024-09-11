@@ -403,6 +403,21 @@ namespace ablastr::fields
     }
 
     void
+    MultiFabRegister::erase (
+        std::string name,
+        Direction dir,
+        int level
+    )
+    {
+        name = mf_name(name, dir, level);
+
+        if (m_mf_register.count(name) != 1) {
+            throw std::runtime_error("MultiFabRegister::remove name does not exist in register: " + name);
+        }
+        m_mf_register.erase(name);
+    }
+
+    void
     MultiFabRegister::clear_level (
         int level
     )
