@@ -1529,8 +1529,6 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_grad_buf_b_stag;
 
     // Same as Bfield_fp/Efield_fp for reading external field data
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp_external;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp_external;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > E_external_particle_field;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > B_external_particle_field;
 
