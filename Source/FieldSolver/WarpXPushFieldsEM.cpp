@@ -153,10 +153,10 @@ void WarpX::PSATDBackwardTransformEB (
 }
 
 void WarpX::PSATDBackwardTransformEBavg (
-    const ablastr::fields::MultiLevelVectorField& E_avg_fp,
-    const ablastr::fields::MultiLevelVectorField& B_avg_fp,
-    const ablastr::fields::MultiLevelVectorField& E_avg_cp,
-    const ablastr::fields::MultiLevelVectorField& B_avg_cp)
+    ablastr::fields::MultiLevelVectorField const& E_avg_fp,
+    ablastr::fields::MultiLevelVectorField const& B_avg_fp,
+    ablastr::fields::MultiLevelVectorField const& E_avg_cp,
+    ablastr::fields::MultiLevelVectorField const& B_avg_cp)
 {
     const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
@@ -440,6 +440,8 @@ void WarpX::PSATDVayDeposition ()
 
 void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
 {
+    using ablastr::fields::Direction;
+
     // Subtraction of cumulative sum for Vay deposition
     // implemented only in 2D and 3D Cartesian geometry
 #if !defined (WARPX_DIM_1D_Z) && !defined (WARPX_DIM_RZ)

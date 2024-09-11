@@ -1515,8 +1515,6 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_fp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_fp;
 
     // Masks for computing dot product and global moments of fields when using grids that
     // have shared locations across different ranks (e.g., a Yee grid)
@@ -1584,8 +1582,6 @@ private:
     // Coarse patch
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_cp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_cp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_cp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_cp;
 
     // Copy of the coarse aux
     amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3 > > Efield_cax;
@@ -1852,10 +1848,10 @@ private:
      *                 storing the coarse patch averaged magnetic field to be transformed
      */
     void PSATDBackwardTransformEBavg (
-        const ablastr::fields::MultiLevelVectorField& E_avg_fp,
-        const ablastr::fields::MultiLevelVectorField& B_avg_fp,
-        const ablastr::fields::MultiLevelVectorField& E_avg_cp,
-        const ablastr::fields::MultiLevelVectorField& B_avg_cp);
+        ablastr::fields::MultiLevelVectorField const& E_avg_fp,
+        ablastr::fields::MultiLevelVectorField const& B_avg_fp,
+        ablastr::fields::MultiLevelVectorField const& E_avg_cp,
+        ablastr::fields::MultiLevelVectorField const& B_avg_cp);
 
     /**
      * \brief Forward FFT of J on all mesh refinement levels,

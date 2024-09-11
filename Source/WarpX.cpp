@@ -332,12 +332,6 @@ WarpX::WarpX ()
         vector_potential_grad_buf_b_stag.resize(nlevs_max);
     }
 
-    if (fft_do_time_averaging)
-    {
-        Efield_avg_fp.resize(nlevs_max);
-        Bfield_avg_fp.resize(nlevs_max);
-    }
-
     // Same as Bfield_fp/Efield_fp for reading external field data
     B_external_particle_field.resize(1);
     E_external_particle_field.resize(1);
@@ -362,12 +356,6 @@ WarpX::WarpX ()
 
     Efield_cp.resize(nlevs_max);
     Bfield_cp.resize(nlevs_max);
-
-    if (fft_do_time_averaging)
-    {
-        Efield_avg_cp.resize(nlevs_max);
-        Bfield_avg_cp.resize(nlevs_max);
-    }
 
     Efield_cax.resize(nlevs_max);
     Bfield_cax.resize(nlevs_max);
@@ -2356,13 +2344,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
     if (fft_do_time_averaging)
     {
-        AllocInitMultiFab(Bfield_avg_fp[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, lev, "Bfield_avg_fp[x]", 0.0_rt);
-        AllocInitMultiFab(Bfield_avg_fp[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, ngEB, lev, "Bfield_avg_fp[y]", 0.0_rt);
-        AllocInitMultiFab(Bfield_avg_fp[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngEB, lev, "Bfield_avg_fp[z]", 0.0_rt);
+        m_fields.alloc_init( "Bfield_avg_fp", Direction{0}, lev, amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+        m_fields.alloc_init( "Bfield_avg_fp", Direction{1}, lev, amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+        m_fields.alloc_init( "Bfield_avg_fp", Direction{2}, lev, amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
 
-        AllocInitMultiFab(Efield_avg_fp[lev][0], amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, lev, "Efield_avg_fp[x]", 0.0_rt);
-        AllocInitMultiFab(Efield_avg_fp[lev][1], amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngEB, lev, "Efield_avg_fp[y]", 0.0_rt);
-        AllocInitMultiFab(Efield_avg_fp[lev][2], amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngEB, lev, "Efield_avg_fp[z]", 0.0_rt);
+        m_fields.alloc_init( "Efield_avg_fp", Direction{0}, lev, amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+        m_fields.alloc_init( "Efield_avg_fp", Direction{1}, lev, amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+        m_fields.alloc_init( "Efield_avg_fp", Direction{2}, lev, amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
     }
 
     if (EB::enabled()) {
@@ -2677,13 +2665,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
         if (fft_do_time_averaging)
         {
-            AllocInitMultiFab(Bfield_avg_cp[lev][0], amrex::convert(cba, Bx_nodal_flag), dm, ncomps, ngEB, lev, "Bfield_avg_cp[x]", 0.0_rt);
-            AllocInitMultiFab(Bfield_avg_cp[lev][1], amrex::convert(cba, By_nodal_flag), dm, ncomps, ngEB, lev, "Bfield_avg_cp[y]", 0.0_rt);
-            AllocInitMultiFab(Bfield_avg_cp[lev][2], amrex::convert(cba, Bz_nodal_flag), dm, ncomps, ngEB, lev, "Bfield_avg_cp[z]", 0.0_rt);
+            m_fields.alloc_init("Bfield_avg_cp", Direction{0}, lev, amrex::convert(cba, Bx_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+            m_fields.alloc_init("Bfield_avg_cp", Direction{1}, lev, amrex::convert(cba, Bx_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+            m_fields.alloc_init("Bfield_avg_cp", Direction{2}, lev, amrex::convert(cba, Bx_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
 
-            AllocInitMultiFab(Efield_avg_cp[lev][0], amrex::convert(cba, Ex_nodal_flag), dm, ncomps, ngEB, lev, "Efield_avg_cp[x]", 0.0_rt);
-            AllocInitMultiFab(Efield_avg_cp[lev][1], amrex::convert(cba, Ey_nodal_flag), dm, ncomps, ngEB, lev, "Efield_avg_cp[y]", 0.0_rt);
-            AllocInitMultiFab(Efield_avg_cp[lev][2], amrex::convert(cba, Ez_nodal_flag), dm, ncomps, ngEB, lev, "Efield_avg_cp[z]", 0.0_rt);
+            m_fields.alloc_init("Efield_avg_cp", Direction{0}, lev, amrex::convert(cba, Ex_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+            m_fields.alloc_init("Efield_avg_cp", Direction{1}, lev, amrex::convert(cba, Ex_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+            m_fields.alloc_init("Efield_avg_cp", Direction{2}, lev, amrex::convert(cba, Ex_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
         }
 
         // Create the MultiFabs for the current
@@ -3490,18 +3478,6 @@ WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, cons
             break;
         case FieldType::edge_lengths :
             field_pointer = m_edge_lengths[lev][direction].get();
-            break;
-        case FieldType::Efield_avg_fp :
-            field_pointer = Efield_avg_fp[lev][direction].get();
-            break;
-        case FieldType::Bfield_avg_fp :
-            field_pointer = Bfield_avg_fp[lev][direction].get();
-            break;
-        case FieldType::Efield_avg_cp :
-            field_pointer = Efield_avg_cp[lev][direction].get();
-            break;
-        case FieldType::Bfield_avg_cp :
-            field_pointer = Bfield_avg_cp[lev][direction].get();
             break;
         default:
             WARPX_ABORT_WITH_MESSAGE("Invalid field type");

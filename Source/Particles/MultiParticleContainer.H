@@ -164,7 +164,7 @@ public:
      *                          the time of the deposition.
      */
     void
-    DepositCurrent (ablastr::fields::MultiLevelVectorField const & J,
+    DepositCurrent (ablastr::fields::MultiLevelVectorField const& J,
                     amrex::Real dt, amrex::Real relative_time);
 
     ///
