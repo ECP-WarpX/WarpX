@@ -171,14 +171,15 @@ void WarpX::HybridPICEvolveFields ()
 
 void WarpX::HybridPICDepositInitialRhoAndJ ()
 {
-    using ablastr::fields::va2vm;
-
     auto& rho_fp_temp = m_hybrid_pic_model->rho_fp_temp;
     auto& current_fp_temp = m_hybrid_pic_model->current_fp_temp;
     mypc->DepositCharge(amrex::GetVecOfPtrs(rho_fp_temp), 0._rt);
     mypc->DepositCurrent(current_fp_temp, dt[0], 0._rt);
     SyncRho(amrex::GetVecOfPtrs(rho_fp_temp), m_fields.get_mr_levels("rho_cp", finest_level), charge_buf);
-    SyncCurrent(va2vm(current_fp_temp), va2vm(current_cp), va2vm(current_buf));
+    SyncCurrent(
+        m_fields.get_mr_levels_alldirs("current_fp", finest_level),
+        m_fields.get_mr_levels_alldirs("current_cp", finest_level),
+        m_fields.get_mr_levels_alldirs("current_buf", finest_level) );
     for (int lev=0; lev <= finest_level; ++lev) {
         // SyncCurrent does not include a call to FillBoundary, but it is needed
         // for the hybrid-PIC solver since current values are interpolated to
