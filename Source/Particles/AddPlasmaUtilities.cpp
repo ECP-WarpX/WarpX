@@ -140,7 +140,7 @@ amrex::ParticleReal** PlasmaParserHelper::getUserRealDataPtrs () {
 #endif
 }
 
-amrex::ParserExecutor<7> const* PlasmaParserHelper::getUserIntParserExecData () {
+amrex::ParserExecutor<7> const* PlasmaParserHelper::getUserIntParserExecData () const {
 #ifdef AMREX_USE_GPU
     return m_d_user_int_attrib_parserexec.dataPtr();
 #else
@@ -148,7 +148,7 @@ amrex::ParserExecutor<7> const* PlasmaParserHelper::getUserIntParserExecData () 
 #endif
 }
 
-amrex::ParserExecutor<7> const* PlasmaParserHelper::getUserRealParserExecData () {
+amrex::ParserExecutor<7> const* PlasmaParserHelper::getUserRealParserExecData () const {
 #ifdef AMREX_USE_GPU
     return m_d_user_real_attrib_parserexec.dataPtr();
 #else
