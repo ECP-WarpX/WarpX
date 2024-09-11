@@ -424,6 +424,15 @@ namespace ablastr::fields
 
     /** TODO: temporary, remove me
      *
+     * @return
+     */
+    VectorField
+    a2m (
+        const std::array< std::unique_ptr<amrex::MultiFab>, 3 > & old_vectorfield
+    );
+
+    /** TODO: temporary, remove me
+     *
      * Convert get_mr_levels_alldirs type to legacy amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >.
      *
      * @return
