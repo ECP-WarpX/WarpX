@@ -18,6 +18,7 @@
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "EmbeddedBoundary/Enabled.H"
 #include "FieldSolver/Fields.H"
+#include "FieldSolver/ElectrostaticSolvers/ElectrostaticSolver.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #include "Filter/BilinearFilter.H"
@@ -550,6 +551,8 @@ WarpX::InitData ()
             getField(warpx::fields::FieldType::Efield_fp, lev_zero,2).ixType().toIntVect()
         );
     }
+
+    m_electrostatic_solver->InitData();
 
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
         m_hybrid_pic_model->InitData();

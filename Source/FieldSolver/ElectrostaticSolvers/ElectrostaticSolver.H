@@ -43,6 +43,8 @@ public:
     void ClearLevel ( [[maybe_unused]] int lev ) {}
     void AllocateLevelMFs () {}
 
+    virtual void InitData () {}
+
     virtual void ComputeSpaceChargeField (
         [[maybe_unused]] amrex::Vector< std::unique_ptr<amrex::MultiFab> >& rho_fp,
         [[maybe_unused]] amrex::Vector< std::unique_ptr<amrex::MultiFab> >& rho_cp,
@@ -136,7 +138,7 @@ public:
     ) const;
 
     /** Maximum levels for the electrostatic solver grid */
-    int max_level;
+    int num_levels;
 
     /** Boundary handler object to set potential for EB and on the domain boundary */
     std::unique_ptr<PoissonBoundaryHandler> m_poisson_boundary_handler;

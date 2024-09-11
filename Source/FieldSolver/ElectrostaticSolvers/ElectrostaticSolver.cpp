@@ -13,7 +13,7 @@
 
 ElectrostaticSolver::ElectrostaticSolver (int nlevs_max)
 {
-    max_level = nlevs_max;
+    num_levels = nlevs_max;
 
     AllocateMFs (nlevs_max);
 
@@ -67,7 +67,7 @@ ElectrostaticSolver::setPhiBC (
     auto & warpx = WarpX::GetInstance();
 
     // loop over all mesh refinement levels and set the boundary values
-    for (int lev=0; lev <= max_level; lev++) {
+    for (int lev=0; lev < num_levels; lev++) {
 
         amrex::Box domain = warpx.Geom(lev).Domain();
         domain.surroundingNodes();
@@ -122,7 +122,7 @@ ElectrostaticSolver::computePhi (const amrex::Vector<std::unique_ptr<amrex::Mult
     // create a vector to our fields, sorted by level
     amrex::Vector<amrex::MultiFab *> sorted_rho;
     amrex::Vector<amrex::MultiFab *> sorted_phi;
-    for (int lev = 0; lev <= max_level; ++lev) {
+    for (int lev = 0; lev < num_levels; ++lev) {
         sorted_rho.emplace_back(rho[lev].get());
         sorted_phi.emplace_back(phi[lev].get());
     }
@@ -144,7 +144,7 @@ ElectrostaticSolver::computePhi (const amrex::Vector<std::unique_ptr<amrex::Mult
         amrex::Vector<
             amrex::Array<amrex::MultiFab *, AMREX_SPACEDIM>
         > e_field;
-        for (int lev = 0; lev <= max_level; ++lev) {
+        for (int lev = 0; lev <= num_levels; ++lev) {
             e_field.push_back(
 #if defined(WARPX_DIM_1D_Z)
                 amrex::Array<amrex::MultiFab*, 1>{
@@ -170,7 +170,7 @@ ElectrostaticSolver::computePhi (const amrex::Vector<std::unique_ptr<amrex::Mult
         amrex::Vector<
             amrex::EBFArrayBoxFactory const *
         > factories;
-        for (int lev = 0; lev <= max_level; ++lev) {
+        for (int lev = 0; lev < num_levels; ++lev) {
             factories.push_back(&warpx.fieldEBFactory(lev));
         }
         eb_farray_box_factory = factories;
@@ -210,7 +210,7 @@ ElectrostaticSolver::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::M
             std::array<amrex::Real, 3> const beta ) const
 {
     auto & warpx = WarpX::GetInstance();
-    for (int lev = 0; lev <= max_level; lev++) {
+    for (int lev = 0; lev < num_levels; lev++) {
 
         const Real* dx = warpx.Geom(lev).CellSize();
 
@@ -376,7 +376,7 @@ void ElectrostaticSolver::computeB (amrex::Vector<std::array<std::unique_ptr<amr
     if ((beta[0] == 0._rt) && (beta[1] == 0._rt) && (beta[2] == 0._rt)) { return; }
 
     auto & warpx = WarpX::GetInstance();
-    for (int lev = 0; lev <= max_level; lev++) {
+    for (int lev = 0; lev < num_levels; lev++) {
 
         const Real* dx = warpx.Geom(lev).CellSize();
 

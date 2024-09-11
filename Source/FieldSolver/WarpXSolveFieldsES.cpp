@@ -6,12 +6,11 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "WarpX.H"
-#include "Utils/WarpXProfilerWrapper.H"
 #include "FieldSolver/ElectrostaticSolvers/ElectrostaticSolver.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#include "WarpX.H"
 
-void
-WarpX::ComputeSpaceChargeField (bool const reset_fields)
+void WarpX::ComputeSpaceChargeField (bool const reset_fields)
 {
     WARPX_PROFILE("WarpX::ComputeSpaceChargeField");
     if (reset_fields) {

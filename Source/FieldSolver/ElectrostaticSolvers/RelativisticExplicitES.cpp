@@ -7,6 +7,20 @@
 
 
 void
+RelativisticExplicitES::InitData () {
+    auto & warpx = WarpX::GetInstance();
+    bool prepare_field_solve = false;
+    // check if any of the particle containers have initialize_self_fields = True
+    for (auto const& species : warpx.GetPartContainer()) {
+        prepare_field_solve |= species->initialize_self_fields;
+    }
+    prepare_field_solve |= m_poisson_boundary_handler->m_boundary_potential_specified;
+    if (prepare_field_solve) {
+        m_poisson_boundary_handler->DefinePhiBCs(warpx.Geom(0));
+    }
+}
+
+void
 RelativisticExplicitES::ComputeSpaceChargeField (
     amrex::Vector< std::unique_ptr<amrex::MultiFab> >& rho_fp,
     amrex::Vector< std::unique_ptr<amrex::MultiFab> >& rho_cp,
@@ -17,15 +31,14 @@ RelativisticExplicitES::ComputeSpaceChargeField (
     amrex::Vector< std::array< std::unique_ptr<amrex::MultiFab>, 3> >& Efield_fp,
     amrex::Vector< std::array< std::unique_ptr<amrex::MultiFab>, 3> >& Bfield_fp
 ) {
-    WARPX_PROFILE("WarpX::ComputeSpaceChargeField");
+    WARPX_PROFILE("RelativisticExplicitES::ComputeSpaceChargeField");
     amrex::ignore_unused(rho_fp, rho_cp, phi_fp, mfl);
     // Loop over the species and add their space-charge contribution to E and B.
     // Note that the fields calculated here does not include the E field
     // due to simulation boundary potentials
-    for (int ispecies=0; ispecies<mpc.nSpecies(); ispecies++){
-        WarpXParticleContainer& species = mpc.GetParticleContainer(ispecies);
-        if (species.initialize_self_fields) {
-            AddSpaceChargeField(charge_buf, species, Efield_fp, Bfield_fp);
+    for (auto const& species : mpc) {
+        if (species->initialize_self_fields) {
+            AddSpaceChargeField(charge_buf, *species.get(), Efield_fp, Bfield_fp);
         }
     }
 
@@ -41,18 +54,10 @@ RelativisticExplicitES::AddSpaceChargeField (amrex::Vector<std::unique_ptr<amrex
                                              amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield_fp,
                                              amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield_fp)
 {
-    WARPX_PROFILE("WarpX::AddSpaceChargeField");
+    WARPX_PROFILE("RelativisticExplicitES::AddSpaceChargeField");
 
     if (pc.getCharge() == 0) {
         return;
-    }
-
-    auto & warpx = WarpX::GetInstance();
-
-    // Store the boundary conditions for the field solver if they haven't been
-    // stored yet
-    if (!m_poisson_boundary_handler->bcs_set) {
-        m_poisson_boundary_handler->DefinePhiBCs(warpx.Geom(0));
     }
 
 #ifdef WARPX_DIM_RZ
@@ -60,14 +65,15 @@ RelativisticExplicitES::AddSpaceChargeField (amrex::Vector<std::unique_ptr<amrex
                                      "Error: RZ electrostatic only implemented for a single mode");
 #endif
 
+    auto & warpx = WarpX::GetInstance();
+
     // Allocate fields for charge and potential
-    const int num_levels = max_level + 1;
     Vector<std::unique_ptr<MultiFab> > rho(num_levels);
     Vector<std::unique_ptr<MultiFab> > rho_coarse(num_levels); // Used in order to interpolate between levels
     Vector<std::unique_ptr<MultiFab> > phi(num_levels);
     // Use number of guard cells used for local deposition of rho
     const amrex::IntVect ng = warpx.get_ng_depos_rho();
-    for (int lev = 0; lev <= max_level; lev++) {
+    for (int lev = 0; lev < num_levels; lev++) {
         BoxArray nba = warpx.boxArray(lev);
         nba.surroundingNodes();
         rho[lev] = std::make_unique<MultiFab>(nba, warpx.DistributionMap(lev), 1, ng);
@@ -82,7 +88,6 @@ RelativisticExplicitES::AddSpaceChargeField (amrex::Vector<std::unique_ptr<amrex
             rho_coarse[lev]->setVal(0.);
         }
     }
-
     // Deposit particle charge density (source of Poisson solver)
     // The options below are identical to those in MultiParticleContainer::DepositCharge
     bool const local = true;
@@ -94,7 +99,7 @@ RelativisticExplicitES::AddSpaceChargeField (amrex::Vector<std::unique_ptr<amrex
                               interpolate_across_levels);
     }
 
-    for (int lev = 0; lev <= max_level; lev++) {
+    for (int lev = 0; lev < num_levels; lev++) {
         if (lev > 0) {
             if (charge_buf[lev]) {
                 charge_buf[lev]->setVal(0.);
@@ -130,22 +135,16 @@ void
 RelativisticExplicitES::AddBoundaryField (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield_fp,
                                           amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield_fp)
 {
-    WARPX_PROFILE("WarpX::AddBoundaryField");
+    WARPX_PROFILE("RelativisticExplicitES::AddBoundaryField");
 
     auto & warpx = WarpX::GetInstance();
-    // Store the boundary conditions for the field solver if they haven't been
-    // stored yet
-    if (!m_poisson_boundary_handler->bcs_set) {
-        m_poisson_boundary_handler->DefinePhiBCs(warpx.Geom(0));
-    }
 
     // Allocate fields for charge and potential
-    const int num_levels = max_level + 1;
     amrex::Vector<std::unique_ptr<amrex::MultiFab> > rho(num_levels);
     amrex::Vector<std::unique_ptr<amrex::MultiFab> > phi(num_levels);
     // Use number of guard cells used for local deposition of rho
     const amrex::IntVect ng = warpx.get_ng_depos_rho();
-    for (int lev = 0; lev <= max_level; lev++) {
+    for (int lev = 0; lev < num_levels; lev++) {
         BoxArray nba = warpx.boxArray(lev);
         nba.surroundingNodes();
         rho[lev] = std::make_unique<amrex::MultiFab>(nba, warpx.DistributionMap(lev), 1, ng);

@@ -15,7 +15,11 @@ class LabFrameExplicitES final : public ElectrostaticSolver
 {
 public:
 
-    LabFrameExplicitES (int nlevs_max) : ElectrostaticSolver (nlevs_max) {ReadParameters();}
+    LabFrameExplicitES (int nlevs_max) : ElectrostaticSolver (nlevs_max) {
+        ReadParameters();
+    }
+
+    void InitData () override;
 
     void ComputeSpaceChargeField (
         [[maybe_unused]] amrex::Vector< std::unique_ptr<amrex::MultiFab> >& rho_fp,

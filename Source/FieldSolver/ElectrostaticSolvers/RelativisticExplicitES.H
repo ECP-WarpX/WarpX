@@ -10,7 +10,11 @@ class RelativisticExplicitES final : public ElectrostaticSolver
 {
 public:
 
-    RelativisticExplicitES (int nlevs_max) : ElectrostaticSolver (nlevs_max) { ReadParameters();}
+    RelativisticExplicitES (int nlevs_max) : ElectrostaticSolver (nlevs_max) {
+        ReadParameters();
+    }
+
+    void InitData () override;
 
     void ComputeSpaceChargeField (
         [[maybe_unused]] amrex::Vector< std::unique_ptr<amrex::MultiFab> >& rho_fp,

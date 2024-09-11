@@ -33,15 +33,24 @@ public:
     /** Read runtime parameters. Called in constructor. */
     void ReadParameters ();
 
+    /**
+     * \brief Read the input settings and set the boundary conditions used
+     * on each domain boundary for the Poisson solver.
+     */
     void DefinePhiBCs (const amrex::Geometry& geom);
 
+    /**
+     * \brief Initialize amrex::Parser objects to get the boundary potential
+     * values at specified times.
+     */
     void BuildParsers ();
     void BuildParsersEB ();
 
-    /* \brief Sets the EB potential string and updates the function parser
-        *
-        * \param [in] potential The string value of the potential
-        */
+    /**
+     * \brief Sets the EB potential string and updates the function parser.
+     *
+     * \param [in] potential The string value of the potential
+     */
     void setPotentialEB(const std::string& potential) {
         potential_eb_str = potential;
         BuildParsersEB();
@@ -92,7 +101,6 @@ public:
     amrex::ParserExecutor<4> potential_eb;
 
     amrex::Array<amrex::LinOpBCType, AMREX_SPACEDIM> lobc, hibc;
-    bool bcs_set = false;
     std::array<bool, AMREX_SPACEDIM * 2> dirichlet_flag;
     bool has_non_periodic = false;
     bool phi_EB_only_t = true;

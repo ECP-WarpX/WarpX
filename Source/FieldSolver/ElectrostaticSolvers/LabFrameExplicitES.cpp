@@ -14,6 +14,11 @@
 #include "WarpX.H"
 
 
+void LabFrameExplicitES::InitData() {
+    auto & warpx = WarpX::GetInstance();
+    m_poisson_boundary_handler->DefinePhiBCs(warpx.Geom(0));
+}
+
 void LabFrameExplicitES::ComputeSpaceChargeField (
     amrex::Vector< std::unique_ptr<amrex::MultiFab> >& rho_fp,
     amrex::Vector< std::unique_ptr<amrex::MultiFab> >& rho_cp,
@@ -31,7 +36,7 @@ void LabFrameExplicitES::ComputeSpaceChargeField (
     }
 
     auto & warpx = WarpX::GetInstance();
-    for (int lev = 0; lev <= max_level; lev++) {
+    for (int lev = 0; lev < num_levels; lev++) {
         if (lev > 0) {
             if (charge_buf[lev]) {
                 charge_buf[lev]->setVal(0.);
@@ -41,7 +46,7 @@ void LabFrameExplicitES::ComputeSpaceChargeField (
     warpx.SyncRho(rho_fp, rho_cp, charge_buf); // Apply filter, perform MPI exchange, interpolate across levels
 
 #ifndef WARPX_DIM_RZ
-    for (int lev = 0; lev <= max_level; lev++) {
+    for (int lev = 0; lev < num_levels; lev++) {
         // Reflect density over PEC boundaries, if needed.
         warpx.ApplyRhofieldBoundary(lev, rho_fp[lev].get(), PatchType::fine);
     }
@@ -92,7 +97,7 @@ LabFrameExplicitES::computePhiTriDiagonal (
     const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
     amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi)
 {
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(max_level == 0,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(num_levels == 1,
     "The tridiagonal solver cannot be used with mesh refinement");
 
     const int lev = 0;

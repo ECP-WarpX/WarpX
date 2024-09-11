@@ -61,57 +61,57 @@ void PoissonBoundaryHandler::DefinePhiBCs (const amrex::Geometry& geom)
     amrex::ignore_unused(geom);
 #endif
     for (int idim=dim_start; idim<AMREX_SPACEDIM; idim++){
-    if (WarpX::poisson_solver_id == PoissonSolverAlgo::Multigrid){
-        if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Periodic
-             && WarpX::field_boundary_hi[idim] == FieldBoundaryType::Periodic ) {
-            lobc[idim] = LinOpBCType::Periodic;
-            hibc[idim] = LinOpBCType::Periodic;
-            dirichlet_flag[idim*2] = false;
-            dirichlet_flag[idim*2+1] = false;
-        }
-        else {
-            has_non_periodic = true;
-            if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC ) {
-                lobc[idim] = LinOpBCType::Dirichlet;
-                dirichlet_flag[idim*2] = true;
-            }
-            else if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Neumann ) {
-                lobc[idim] = LinOpBCType::Neumann;
+        if (WarpX::poisson_solver_id == PoissonSolverAlgo::Multigrid){
+            if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Periodic
+                    && WarpX::field_boundary_hi[idim] == FieldBoundaryType::Periodic ) {
+                lobc[idim] = LinOpBCType::Periodic;
+                hibc[idim] = LinOpBCType::Periodic;
                 dirichlet_flag[idim*2] = false;
-            }
-            else {
-                WARPX_ABORT_WITH_MESSAGE(
-                    "Field boundary conditions have to be either periodic, PEC or neumann "
-                    "when using the electrostatic Multigrid solver,  but they are " + GetFieldBCTypeString(WarpX::field_boundary_lo[idim])
-                );
-            }
-
-            if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC ) {
-                hibc[idim] = LinOpBCType::Dirichlet;
-                dirichlet_flag[idim*2+1] = true;
-            }
-            else if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::Neumann ) {
-                hibc[idim] = LinOpBCType::Neumann;
                 dirichlet_flag[idim*2+1] = false;
             }
             else {
-                WARPX_ABORT_WITH_MESSAGE(
-                    "Field boundary conditions have to be either periodic, PEC or neumann "
-                    "when using the electrostatic Multigrid solver,  but they are " + GetFieldBCTypeString(WarpX::field_boundary_hi[idim])
-                );
-            }
-        }
+                has_non_periodic = true;
+                if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC ) {
+                    lobc[idim] = LinOpBCType::Dirichlet;
+                    dirichlet_flag[idim*2] = true;
+                }
+                else if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Neumann ) {
+                    lobc[idim] = LinOpBCType::Neumann;
+                    dirichlet_flag[idim*2] = false;
+                }
+                else {
+                    WARPX_ABORT_WITH_MESSAGE(
+                        "Field boundary conditions have to be either periodic, PEC or neumann "
+                        "when using the electrostatic Multigrid solver,  but they are " + GetFieldBCTypeString(WarpX::field_boundary_lo[idim])
+                    );
+                }
 
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            (WarpX::field_boundary_lo[idim] != FieldBoundaryType::Open &&
-            WarpX::field_boundary_hi[idim] != FieldBoundaryType::Open &&
-            WarpX::field_boundary_lo[idim] != FieldBoundaryType::PML &&
-            WarpX::field_boundary_hi[idim] != FieldBoundaryType::PML) ,
-            "Open and PML field boundary conditions only work with "
-            "warpx.poisson_solver = fft."
-        );
-    }
-    else if (WarpX::poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction){
+                if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC ) {
+                    hibc[idim] = LinOpBCType::Dirichlet;
+                    dirichlet_flag[idim*2+1] = true;
+                }
+                else if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::Neumann ) {
+                    hibc[idim] = LinOpBCType::Neumann;
+                    dirichlet_flag[idim*2+1] = false;
+                }
+                else {
+                    WARPX_ABORT_WITH_MESSAGE(
+                        "Field boundary conditions have to be either periodic, PEC or neumann "
+                        "when using the electrostatic Multigrid solver,  but they are " + GetFieldBCTypeString(WarpX::field_boundary_hi[idim])
+                    );
+                }
+            }
+
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                (WarpX::field_boundary_lo[idim] != FieldBoundaryType::Open &&
+                WarpX::field_boundary_hi[idim] != FieldBoundaryType::Open &&
+                WarpX::field_boundary_lo[idim] != FieldBoundaryType::PML &&
+                WarpX::field_boundary_hi[idim] != FieldBoundaryType::PML) ,
+                "Open and PML field boundary conditions only work with "
+                "warpx.poisson_solver = fft."
+            );
+        }
+        else if (WarpX::poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction){
             if (WarpX::electrostatic_solver_id != ElectrostaticSolverAlgo::None){
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                     (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Open &&
@@ -128,9 +128,8 @@ void PoissonBoundaryHandler::DefinePhiBCs (const amrex::Geometry& geom)
                     "to initialize the self-fields of the species in electromagnetic mode."
                 );
             }
+        }
     }
-    }
-    bcs_set = true;
 }
 
 void PoissonBoundaryHandler::BuildParsers ()
