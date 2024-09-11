@@ -82,13 +82,13 @@ For `MPI-parallel <https://www.mpi-forum.org>`__ runs, prefix these lines with `
 
             .. tab-item:: Python: Script
 
-                .. literalinclude:: inputs_test_2d_ionization_picmi.py
+                .. literalinclude:: ../../../../Examples/Tests/ionization/inputs_test_2d_ionization_picmi.py
                 :language: python3
                 :caption: You can copy this file from ``Examples/Tests/ionization/inputs_test_2d_ionization_picmi.py``.
 
             .. tab-item:: Executable: Input File
 
-                .. literalinclude:: inputs_test_2d_ionization_lab
+                .. literalinclude:: ../../../../Examples/Tests/ionization/inputs_test_2d_ionization_lab
                 :language: ini
                 :caption: You can copy this file from ``Examples/Tests/ionization/inputs_test_2d_ionization_lab``.
 
@@ -98,7 +98,7 @@ For `MPI-parallel <https://www.mpi-forum.org>`__ runs, prefix these lines with `
 
         * WarpX **executable** using an input file: ``warpx.2d inputs_test_2d_ionization_boost max_step=420``
 
-        .. literalinclude:: inputs_test_2d_ionization_boost
+        .. literalinclude:: ../../../../Examples/Tests/ionization/inputs_test_2d_ionization_boost
         :language: ini
         :caption: You can copy this file from ``Examples/Tests/ionization/inputs_test_2d_ionization_boost``.
 
@@ -111,6 +111,8 @@ Analyze
       :language: python3
       :caption: You can copy this file from ``Examples/Tests/ionization/analysis.py``.
 
+.. figure:: https://gist.githubusercontent.com/johvandewetering/48d092c003915f1d1689b507caa2865b/raw/29f5d12ed77831047ca12f456a07dbf3b99770d5/image_ionization.png
+   :alt: Electric field of the laser pulse with (top) ions with ionization levels and (bottom) ionized electrons.
 
 .. bibliography::
     :keyprefix: mpion-
