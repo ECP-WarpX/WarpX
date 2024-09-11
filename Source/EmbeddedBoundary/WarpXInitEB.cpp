@@ -317,6 +317,8 @@ WarpX::ScaleAreas(ablastr::fields::VectorField& face_areas,
 
 void
 WarpX::MarkCells(){
+    using ablastr::fields::Direction;
+
 #ifndef WARPX_DIM_RZ
     auto const &cell_size = CellSize(maxLevel());
 

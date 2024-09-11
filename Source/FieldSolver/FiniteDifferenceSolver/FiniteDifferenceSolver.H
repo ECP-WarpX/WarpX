@@ -63,8 +63,8 @@ class FiniteDifferenceSolver
                        std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
                        int lev, amrex::Real dt );
 
-        void EvolveE ( ablastr::fields::VectorField Efield,
-                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+        void EvolveE ( ablastr::fields::VectorField const& Efield,
+                       ablastr::fields::VectorField const& Bfield,
                        ablastr::fields::VectorField const& Jfield,
                        ablastr::fields::VectorField const& edge_lengths,
                        ablastr::fields::VectorField const& face_areas,
@@ -90,7 +90,7 @@ class FiniteDifferenceSolver
 
         void ApplySilverMuellerBoundary (
             ablastr::fields::VectorField & Efield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
+            ablastr::fields::VectorField & Bfield,
             amrex::Box domain_box,
             amrex::Real dt,
             amrex::Vector<FieldBoundaryType> field_boundary_lo,
@@ -269,8 +269,8 @@ class FiniteDifferenceSolver
 
         template< typename T_Algo >
         void EvolveECartesian (
-            ablastr::fields::VectorField& Efield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+            ablastr::fields::VectorField const& Efield,
+            ablastr::fields::VectorField const& Bfield,
             ablastr::fields::VectorField const& Jfield,
             ablastr::fields::VectorField const& edge_lengths,
             amrex::MultiFab const* Ffield,

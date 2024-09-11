@@ -52,8 +52,8 @@ PML_RZ::PML_RZ (const int lev, const amrex::BoxArray& grid_ba, const amrex::Dist
     warpx.m_fields.alloc_init("pml_E_fp", Direction{0}, lev, ba_Er, grid_dm, Er_fp.nComp(), Er_fp.nGrowVect(), 0.0_rt);
     warpx.m_fields.alloc_init("pml_E_fp", Direction{1}, lev, ba_Et, grid_dm, Et_fp.nComp(), Et_fp.nGrowVect(), 0.0_rt);
 
-    const amrex::MultiFab & Br_fp = WarpX::GetInstance().getField(FieldType::Bfield_fp, lev,0);
-    const amrex::MultiFab & Bt_fp = WarpX::GetInstance().getField(FieldType::Bfield_fp, lev,1);
+    const amrex::MultiFab & Br_fp = *warpx.m_fields.get("Bfield_XX",Direction{0},lev);
+    const amrex::MultiFab & Bt_fp = *warpx.m_fields.get("Bfield_XX",Direction{1},lev);
     const amrex::BoxArray ba_Br = amrex::convert(grid_ba, Br_fp.ixType().toIntVect());
     const amrex::BoxArray ba_Bt = amrex::convert(grid_ba, Bt_fp.ixType().toIntVect());
     WarpX::AllocInitMultiFab(pml_B_fp[0], ba_Br, grid_dm, Br_fp.nComp(), Br_fp.nGrowVect(), lev, "pml_B_fp[0]", 0.0_rt);

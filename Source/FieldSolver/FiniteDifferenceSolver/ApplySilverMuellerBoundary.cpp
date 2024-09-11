@@ -36,7 +36,7 @@ using namespace amrex;
  */
 void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
     ablastr::fields::VectorField& Efield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
+    ablastr::fields::VectorField& Bfield,
     amrex::Box domain_box,
     amrex::Real const dt,
     amrex::Vector<FieldBoundaryType> field_boundary_lo,
@@ -86,9 +86,9 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
         Array4<Real> const& Er = Efield[Direction{0}]->array(mfi);
         Array4<Real> const& Et = Efield[Direction{1}]->array(mfi);
         Array4<Real> const& Ez = Efield[Direction{2}]->array(mfi);
-        Array4<Real> const& Br = Bfield[0]->array(mfi);
-        Array4<Real> const& Bt = Bfield[1]->array(mfi);
-        Array4<Real> const& Bz = Bfield[2]->array(mfi);
+        Array4<Real> const& Br = Bfield[Direction{0}]->array(mfi);
+        Array4<Real> const& Bt = Bfield[Direction{1}]->array(mfi);
+        Array4<Real> const& Bz = Bfield[Direction{2}]->array(mfi);
 
         // Extract tileboxes for which to loop
         Box tbr  = mfi.tilebox(Bfield[0]->ixType().toIntVect());
@@ -213,10 +213,10 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
 #ifndef WARPX_DIM_1D_Z
         Array4<Real> const& Ez = Efield[Direction{2}]->array(mfi);
 #endif
-        Array4<Real> const& Bx = Bfield[0]->array(mfi);
-        Array4<Real> const& By = Bfield[1]->array(mfi);
+        Array4<Real> const& Bx = Bfield[Direction{0}]->array(mfi);
+        Array4<Real> const& By = Bfield[Direction{1}]->array(mfi);
 #ifndef WARPX_DIM_1D_Z
-        Array4<Real> const& Bz = Bfield[2]->array(mfi);
+        Array4<Real> const& Bz = Bfield[Direction{2}]->array(mfi);
 #endif
 
         // Extract the tileboxes for which to loop

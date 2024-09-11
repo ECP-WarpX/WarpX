@@ -85,9 +85,10 @@ void
 WarpX::UpdateMagneticFieldAndApplyBCs( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >&  a_Bn,
                             amrex::Real                                                         a_thetadt )
 {
-    amrex::MultiFab::Copy(*Bfield_fp[0][0], *a_Bn[0][0], 0, 0, ncomps, a_Bn[0][0]->nGrowVect());
-    amrex::MultiFab::Copy(*Bfield_fp[0][1], *a_Bn[0][1], 0, 0, ncomps, a_Bn[0][1]->nGrowVect());
-    amrex::MultiFab::Copy(*Bfield_fp[0][2], *a_Bn[0][2], 0, 0, ncomps, a_Bn[0][2]->nGrowVect());
+    using ablastr::fields::Direction;
+    amrex::MultiFab::Copy(*m_fields.get("Bfield_XX", Direction{0}, 0), *a_Bn[0][0], 0, 0, ncomps, a_Bn[0][0]->nGrowVect());
+    amrex::MultiFab::Copy(*m_fields.get("Bfield_XX", Direction{1}, 0), *a_Bn[0][1], 0, 0, ncomps, a_Bn[0][1]->nGrowVect());
+    amrex::MultiFab::Copy(*m_fields.get("Bfield_XX", Direction{2}, 0), *a_Bn[0][2], 0, 0, ncomps, a_Bn[0][2]->nGrowVect());
     EvolveB(a_thetadt, DtType::Full);
     ApplyMagneticFieldBCs();
 }
@@ -96,7 +97,7 @@ void
 WarpX::FinishMagneticFieldAndApplyBCs( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >&  a_Bn,
                             amrex::Real                                                         a_theta )
 {
-    FinishImplicitField(Bfield_fp, a_Bn, a_theta);
+    FinishImplicitField(m_fields.get_mr_levels_alldirs("Bfield_XX", 0), a_Bn, a_theta);
     ApplyMagneticFieldBCs();
 }
 
@@ -248,7 +249,7 @@ WarpX::FinishImplicitParticleUpdate ()
 }
 
 void
-WarpX::FinishImplicitField( amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_fp,
+WarpX::FinishImplicitField( const ablastr::fields::MultiLevelVectorField& Field_fp,
                       const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_n,
                       amrex::Real theta )
 {
@@ -335,14 +336,16 @@ WarpX::ImplicitComputeRHSE (int lev, PatchType patch_type, amrex::Real a_dt, War
     // a_Erhs_vec storing only the RHS of the update equation. I.e.,
     // c^2*dt*(curl(B^{n+theta} - mu0*J^{n+1/2})
     if (patch_type == PatchType::fine) { // JRA FIX
-        //m_fdtd_solver_fp[lev]->EvolveE( a_Erhs_vec.getArrayVec()[lev], Bfield_fp[lev],
+        //m_fdtd_solver_fp[lev]->EvolveE( a_Erhs_vec.getArrayVec()[lev],
+        //                                m_fields.get_alldirs("Bfield_fp", lev),
         //                                m_fields.get_alldirs("current_fp", lev),
         //                                m_fields.get_alldirs("edge_lengths", lev),
         //                                m_fields.get_alldirs("face_areas", lev),
         //                                ECTRhofield[lev],
         //                                m_fields.get("F_fp", lev), lev, a_dt );
     } else {
-        //m_fdtd_solver_cp[lev]->EvolveE( a_Erhs_vec.getArrayVec()[lev], Bfield_cp[lev],
+        //m_fdtd_solver_cp[lev]->EvolveE( a_Erhs_vec.getArrayVec()[lev],
+        //                                m_fields.get_alldirs("Bfield_cp", lev),
         //                                m_fields.get_alldirs("current_cp", lev),
         //                                m_fields.get_alldirs("edge_lengths", lev),
         //                                m_fields.get_alldirs("face_areas", lev),

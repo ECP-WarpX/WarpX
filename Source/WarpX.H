@@ -132,7 +132,7 @@ public:
     void ApplyMagneticFieldBCs ();
     void FinishMagneticFieldAndApplyBCs ( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& a_Bn,
                                amrex::Real a_theta );
-    void FinishImplicitField ( amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_fp,
+    void FinishImplicitField ( const ablastr::fields::MultiLevelVectorField& Field_fp,
                          const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_n,
                          amrex::Real theta );
     void ImplicitComputeRHSE (         amrex::Real dt, WarpXSolverVec& a_Erhs_vec);
@@ -1017,7 +1017,7 @@ public:
     void computeE (ablastr::fields::MultiLevelVectorField& E,
                    const ablastr::fields::MultiLevelScalarField& phi,
                    std::array<amrex::Real, 3> beta = {{0,0,0}} ) const;
-    void computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& B,
+    void computeB (ablastr::fields::MultiLevelVectorField& B,
                    const ablastr::fields::MultiLevelScalarField& phi,
                    std::array<amrex::Real, 3> beta = {{0,0,0}} ) const;
     void computePhiTriDiagonal (const ablastr::fields::MultiLevelScalarField& rho,

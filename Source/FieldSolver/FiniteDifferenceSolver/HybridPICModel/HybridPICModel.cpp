@@ -159,9 +159,9 @@ void HybridPICModel::InitData ()
     amrex::IntVect Jx_stag = warpx.getField(FieldType::current_fp, 0,0).ixType().toIntVect();
     amrex::IntVect Jy_stag = warpx.getField(FieldType::current_fp, 0,1).ixType().toIntVect();
     amrex::IntVect Jz_stag = warpx.getField(FieldType::current_fp, 0,2).ixType().toIntVect();
-    amrex::IntVect Bx_stag = warpx.getField(FieldType::Bfield_fp, 0,0).ixType().toIntVect();
-    amrex::IntVect By_stag = warpx.getField(FieldType::Bfield_fp, 0,1).ixType().toIntVect();
-    amrex::IntVect Bz_stag = warpx.getField(FieldType::Bfield_fp, 0,2).ixType().toIntVect();
+    amrex::IntVect Bx_stag = warpx.m_fields.get("Bfield_XX",Direction{0},0)->ixType().toIntVect();
+    amrex::IntVect By_stag = warpx.m_fields.get("Bfield_XX",Direction{1},0)->ixType().toIntVect();
+    amrex::IntVect Bz_stag = warpx.m_fields.get("Bfield_XX",Direction{2},0)->ixType().toIntVect();
     amrex::IntVect Ex_stag = warpx.m_fields.get("Efield_fp",Direction{0},0)->ixType().toIntVect();
     amrex::IntVect Ey_stag = warpx.m_fields.get("Efield_fp",Direction{1},0)->ixType().toIntVect();
     amrex::IntVect Ez_stag = warpx.m_fields.get("Efield_fp",Direction{2},0)->ixType().toIntVect();
