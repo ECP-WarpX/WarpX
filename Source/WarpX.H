@@ -85,7 +85,6 @@ class WARPX_EXPORT WarpX
     : public amrex::AmrCore
 {
 public:
-
     static WarpX& GetInstance ();
 
     static void ResetInstance ();
@@ -723,8 +722,8 @@ public:
      * when FieldBoundaryType is set to damped. Vector version.
      */
     void DampFieldsInGuards (int lev,
-                             const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
-                             const std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield);
+                             const ablastr::fields::VectorField& Efield,
+                             const ablastr::fields::VectorField& Bfield);
 
     /**
      * \brief Private function for spectral solver
@@ -875,9 +874,9 @@ public:
      * \param[in,out] J_buffer reference to buffer current \c MultiFab (all MR levels)
      */
     void SyncCurrent (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_buffer);
+        const ablastr::fields::MultiLevelVectorField& J_fp,
+        const ablastr::fields::MultiLevelVectorField& J_cp,
+        const ablastr::fields::MultiLevelVectorField& J_buffer);
 
     void SyncRho ();
 
@@ -1011,11 +1010,11 @@ public:
                      amrex::Real required_precision=amrex::Real(1.e-11),
                      amrex::Real absolute_tolerance=amrex::Real(0.0),
                      int max_iters=200,
-                     int verbosity=2) const;
+                     int verbosity=2);
 
     void setPhiBC (ablastr::fields::MultiLevelScalarField& phi ) const;
 
-    void computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
+    void computeE (ablastr::fields::MultiLevelVectorField& E,
                    const ablastr::fields::MultiLevelScalarField& phi,
                    std::array<amrex::Real, 3> beta = {{0,0,0}} ) const;
     void computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& B,
@@ -1029,13 +1028,13 @@ public:
     void ComputeMagnetostaticField ();
     void AddMagnetostaticFieldLabFrame ();
     void computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> >& curr,
-                                 amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> >& A,
+                                 ablastr::fields::MultiLevelVectorField const& A,
                                  amrex::Real required_precision=amrex::Real(1.e-11),
                                  amrex::Real absolute_tolerance=amrex::Real(0.0),
                                  int max_iters=200,
                                  int verbosity=2) const;
 
-    void setVectorPotentialBC (amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> >& A) const;
+    void setVectorPotentialBC (ablastr::fields::MultiLevelVectorField const& A) const;
 
     /**
      * \brief
@@ -1064,7 +1063,7 @@ public:
          amrex::ParserExecutor<3> const& yfield_parser,
          amrex::ParserExecutor<3> const& zfield_parser,
          std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-         std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+         std::array<amrex::MultiFab*, 3 > const& face_areas,
          [[maybe_unused]] char field,
          int lev, PatchType patch_type);
 
@@ -1150,7 +1149,7 @@ public:
     * \brief Compute the area of the mesh faces. Here the area is a value in [0, 1].
     *        An edge of area 0 is fully covered.
     */
-    static void ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+    static void ComputeFaceAreas (ablastr::fields::VectorField& face_areas,
                                   const amrex::EBFArrayBoxFactory& eb_fact);
 
     /**
@@ -1161,7 +1160,7 @@ public:
     /**
     * \brief Scale the edges areas by the mesh width to obtain the real areas.
     */
-    static void ScaleAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+    static void ScaleAreas (ablastr::fields::VectorField& face_areas,
                             const std::array<amrex::Real,3>& cell_size);
     /**
     * \brief Initialize information for cell extensions.
@@ -1344,19 +1343,19 @@ private:
     void StoreCurrent (int lev);
     void RestoreCurrent (int lev);
     void ApplyFilterJ (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+        const ablastr::fields::MultiLevelVectorField& current,
         int lev,
         int idim);
     void ApplyFilterJ (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+        const ablastr::fields::MultiLevelVectorField& current,
         int lev);
     void SumBoundaryJ (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+        const ablastr::fields::MultiLevelVectorField& current,
         int lev,
         int idim,
         const amrex::Periodicity& period);
     void SumBoundaryJ (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+        const ablastr::fields::MultiLevelVectorField& current,
         int lev,
         const amrex::Periodicity& period);
     void NodalSyncJ (
@@ -1533,7 +1532,6 @@ private:
 
     // Memory buffers for computing magnetostatic fields
     // Vector Potential A and previous step.  Time buffer needed for computing dA/dt to first order
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_fp_nodal;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_grad_buf_e_stag;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_grad_buf_b_stag;
 
@@ -1545,8 +1543,6 @@ private:
 
     //! EB: Lengths of the mesh edges
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths;
-    //! EB: Areas of the mesh faces
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_face_areas;
 
     /** EB: for every mesh face flag_info_face contains a:
      *          * 0 if the face needs to be extended
@@ -1828,10 +1824,10 @@ private:
      *             storing the coarse patch magnetic field to be transformed
      */
     void PSATDForwardTransformEB (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_cp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_cp);
+        const ablastr::fields::MultiLevelVectorField& E_fp,
+        const ablastr::fields::MultiLevelVectorField& B_fp,
+        const ablastr::fields::MultiLevelVectorField& E_cp,
+        const ablastr::fields::MultiLevelVectorField& B_cp);
 
     /**
      * \brief Backward FFT of E,B on all mesh refinement levels,
@@ -1847,10 +1843,10 @@ private:
      *             storing the coarse patch magnetic field to be transformed
      */
     void PSATDBackwardTransformEB (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_cp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_cp);
+        const ablastr::fields::MultiLevelVectorField& E_fp,
+        const ablastr::fields::MultiLevelVectorField& B_fp,
+        const ablastr::fields::MultiLevelVectorField& E_cp,
+        const ablastr::fields::MultiLevelVectorField& B_cp);
 
     /**
      * \brief Backward FFT of averaged E,B on all mesh refinement levels
@@ -1895,8 +1891,8 @@ private:
      *             storing the coarse patch current to be transformed
      */
     void PSATDBackwardTransformJ (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp);
+        ablastr::fields::MultiLevelVectorField const & J_fp,
+        ablastr::fields::MultiLevelVectorField const & J_cp);
 
     /**
      * \brief Forward FFT of rho on all mesh refinement levels,

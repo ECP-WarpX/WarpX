@@ -153,6 +153,7 @@ void HybridPICModel::InitData ()
     }
 
     auto & warpx = WarpX::GetInstance();
+    using ablastr::fields::Direction;
 
     // Get the grid staggering of the fields involved in calculating E
     amrex::IntVect Jx_stag = warpx.getField(FieldType::current_fp, 0,0).ixType().toIntVect();
@@ -161,9 +162,9 @@ void HybridPICModel::InitData ()
     amrex::IntVect Bx_stag = warpx.getField(FieldType::Bfield_fp, 0,0).ixType().toIntVect();
     amrex::IntVect By_stag = warpx.getField(FieldType::Bfield_fp, 0,1).ixType().toIntVect();
     amrex::IntVect Bz_stag = warpx.getField(FieldType::Bfield_fp, 0,2).ixType().toIntVect();
-    amrex::IntVect Ex_stag = warpx.getField(FieldType::Efield_fp, 0,0).ixType().toIntVect();
-    amrex::IntVect Ey_stag = warpx.getField(FieldType::Efield_fp, 0,1).ixType().toIntVect();
-    amrex::IntVect Ez_stag = warpx.getField(FieldType::Efield_fp, 0,2).ixType().toIntVect();
+    amrex::IntVect Ex_stag = warpx.m_fields.get("Efield_fp",Direction{0},0)->ixType().toIntVect();
+    amrex::IntVect Ey_stag = warpx.m_fields.get("Efield_fp",Direction{1},0)->ixType().toIntVect();
+    amrex::IntVect Ez_stag = warpx.m_fields.get("Efield_fp",Direction{2},0)->ixType().toIntVect();
 
     // Check that the grid types are appropriate
     const bool appropriate_grids = (

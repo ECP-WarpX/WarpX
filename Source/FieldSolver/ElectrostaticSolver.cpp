@@ -62,12 +62,13 @@ void
 WarpX::ComputeSpaceChargeField (bool const reset_fields)
 {
     WARPX_PROFILE("WarpX::ComputeSpaceChargeField");
+    using ablastr::fields::Direction;
     if (reset_fields) {
         // Reset all E and B fields to 0, before calculating space-charge fields
         WARPX_PROFILE("WarpX::ComputeSpaceChargeField::reset_fields");
         for (int lev = 0; lev <= max_level; lev++) {
             for (int comp=0; comp<3; comp++) {
-                Efield_fp[lev][comp]->setVal(0);
+                m_fields.get("Efield_fp",Direction{comp},lev)->setVal(0);
                 Bfield_fp[lev][comp]->setVal(0);
             }
         }
@@ -140,7 +141,8 @@ WarpX::AddBoundaryField ()
                 self_fields_verbosity );
 
     // Compute the corresponding electric and magnetic field, from the potential phi.
-    computeE( Efield_fp, phi, beta );
+    auto Efield_fp_new = m_fields.get_mr_levels_alldirs("Efield_fp",max_level); // JRA, new to prevent shadow
+    computeE( Efield_fp_new, phi, beta );
     computeB( Bfield_fp, phi, beta );
 
     // de-allocate temporary
@@ -227,7 +229,8 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
                 pc.self_fields_verbosity );
 
     // Compute the corresponding electric and magnetic field, from the potential phi
-    computeE( Efield_fp, phi, beta );
+    auto Efield_fp_new = m_fields.get_mr_levels_alldirs("Efield_fp",max_level); // JRA, new to prevent shadow
+    computeE( Efield_fp_new, phi, beta );
     computeB( Bfield_fp, phi, beta );
 
     // de-allocate temporary
@@ -304,9 +307,10 @@ WarpX::AddSpaceChargeFieldLabFrame ()
 
     // Compute the electric field. Note that if an EB is used the electric
     // field will be calculated in the computePhi call.
-    if (!EB::enabled()) { computeE( Efield_fp, phi_fp, beta ); }
+    auto Efield_fp_new = m_fields.get_mr_levels_alldirs("Efield_fp",max_level); // JRA, new to prevent shadow
+    if (!EB::enabled()) { computeE( Efield_fp_new, phi_fp, beta ); }
     else {
-        if (IsPythonCallbackInstalled("poissonsolver")) { computeE(Efield_fp, phi_fp, beta); }
+        if (IsPythonCallbackInstalled("poissonsolver")) { computeE(Efield_fp_new, phi_fp, beta); }
     }
 
     // Compute the magnetic field
@@ -337,14 +341,16 @@ WarpX::computePhi (const ablastr::fields::MultiLevelScalarField& rho,
                    Real const required_precision,
                    Real absolute_tolerance,
                    int const max_iters,
-                   int const verbosity) const {
+                   int const verbosity) {
     // create a vector to our fields, sorted by level
     amrex::Vector<amrex::MultiFab *> sorted_rho;
-    std::vector<amrex::MultiFab *> sorted_phi;
+    ablastr::fields::MultiLevelScalarField sorted_phi;
     for (int lev = 0; lev <= finest_level; ++lev) {
         sorted_rho.emplace_back(rho[lev]);
         sorted_phi.emplace_back(phi[lev]);
     }
+
+    using ablastr::fields::Direction;
 
     std::optional<ElectrostaticSolver::EBCalcEfromPhiPerLevel> post_phi_calculation;
 #ifdef AMREX_USE_EB
@@ -367,18 +373,18 @@ WarpX::computePhi (const ablastr::fields::MultiLevelScalarField& rho,
                 e_field.push_back(
 #   if defined(WARPX_DIM_1D_Z)
                     amrex::Array<amrex::MultiFab*, 1>{
-                        getFieldPointer(FieldType::Efield_fp, lev, 2)
+                        m_fields.get("Efield_fp",Direction{2},lev)
                     }
 #   elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                     amrex::Array<amrex::MultiFab*, 2>{
-                        getFieldPointer(FieldType::Efield_fp, lev, 0),
-                        getFieldPointer(FieldType::Efield_fp, lev, 2)
+                        m_fields.get("Efield_fp",Direction{0},lev),
+                        m_fields.get("Efield_fp",Direction{2},lev)
                     }
 #   elif defined(WARPX_DIM_3D)
                     amrex::Array<amrex::MultiFab *, 3>{
-                        getFieldPointer(FieldType::Efield_fp, lev, 0),
-                        getFieldPointer(FieldType::Efield_fp, lev, 1),
-                        getFieldPointer(FieldType::Efield_fp, lev, 2)
+                        m_fields.get("Efield_fp",Direction{0},lev),
+                        m_fields.get("Efield_fp",Direction{1},lev),
+                        m_fields.get("Efield_fp",Direction{2},lev)
                     }
 #   endif
                 );
@@ -516,10 +522,12 @@ WarpX::setPhiBC ( ablastr::fields::MultiLevelScalarField& phi ) const
    \param[in] beta Represents the velocity of the source of `phi`
 */
 void
-WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
+WarpX::computeE (ablastr::fields::MultiLevelVectorField& E,
                  const ablastr::fields::MultiLevelScalarField& phi,
                  std::array<amrex::Real, 3> const beta ) const
 {
+    using ablastr::fields::Direction;
+
     for (int lev = 0; lev <= max_level; lev++) {
 
         const Real* dx = Geom(lev).CellSize();
@@ -539,18 +547,18 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 #else
             const Real inv_dz = 1._rt/dx[0];
 #endif
-            const amrex::IntVect ex_type = E[lev][0]->ixType().toIntVect();
-            const amrex::IntVect ey_type = E[lev][1]->ixType().toIntVect();
-            const amrex::IntVect ez_type = E[lev][2]->ixType().toIntVect();
+            const amrex::IntVect ex_type = E[lev][Direction{0}]->ixType().toIntVect();
+            const amrex::IntVect ey_type = E[lev][Direction{1}]->ixType().toIntVect();
+            const amrex::IntVect ez_type = E[lev][Direction{2}]->ixType().toIntVect();
 
             const amrex::Box& tbx = mfi.tilebox(ex_type);
             const amrex::Box& tby = mfi.tilebox(ey_type);
             const amrex::Box& tbz = mfi.tilebox(ez_type);
 
             const auto& phi_arr = phi[lev]->array(mfi);
-            const auto& Ex_arr = (*E[lev][0])[mfi].array();
-            const auto& Ey_arr = (*E[lev][1])[mfi].array();
-            const auto& Ez_arr = (*E[lev][2])[mfi].array();
+            const auto& Ex_arr = (*E[lev][Direction{0}])[mfi].array();
+            const auto& Ey_arr = (*E[lev][Direction{1}])[mfi].array();
+            const auto& Ez_arr = (*E[lev][Direction{2}])[mfi].array();
 
             const Real beta_x = beta[0];
             const Real beta_y = beta[1];

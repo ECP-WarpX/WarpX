@@ -64,7 +64,7 @@ namespace {
 #else
         SpectralSolver& solver,
 #endif
-        const std::array<std::unique_ptr<amrex::MultiFab>,3>& vector_field,
+        const ablastr::fields::VectorField& vector_field,
         const int compx, const int compy, const int compz)
     {
 #ifdef WARPX_DIM_RZ
@@ -84,7 +84,7 @@ namespace {
 #else
         SpectralSolver& solver,
 #endif
-        const std::array<std::unique_ptr<amrex::MultiFab>,3>& vector_field,
+        const ablastr::fields::VectorField& vector_field,
         const int compx, const int compy, const int compz,
         const amrex::IntVect& fill_guards)
     {
@@ -101,10 +101,10 @@ namespace {
 }
 
 void WarpX::PSATDForwardTransformEB (
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_fp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_fp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_cp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_cp)
+    const ablastr::fields::MultiLevelVectorField& E_fp,
+    const ablastr::fields::MultiLevelVectorField& B_fp,
+    const ablastr::fields::MultiLevelVectorField& E_cp,
+    const ablastr::fields::MultiLevelVectorField& B_cp)
 {
     const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
@@ -122,10 +122,10 @@ void WarpX::PSATDForwardTransformEB (
 }
 
 void WarpX::PSATDBackwardTransformEB (
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_fp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_fp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_cp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_cp)
+    const ablastr::fields::MultiLevelVectorField& E_fp,
+    const ablastr::fields::MultiLevelVectorField& B_fp,
+    const ablastr::fields::MultiLevelVectorField& E_cp,
+    const ablastr::fields::MultiLevelVectorField& B_cp)
 {
     const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
@@ -280,8 +280,8 @@ WarpX::PSATDBackwardTransformG ()
 }
 
 void WarpX::PSATDForwardTransformJ (
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+    const ablastr::fields::MultiLevelVectorField& J_fp,
+    const ablastr::fields::MultiLevelVectorField& J_cp,
     const bool apply_kspace_filter)
 {
     SpectralFieldIndex Idx;
@@ -341,8 +341,8 @@ void WarpX::PSATDForwardTransformJ (
 }
 
 void WarpX::PSATDBackwardTransformJ (
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp)
+    ablastr::fields::MultiLevelVectorField const & J_fp,
+    ablastr::fields::MultiLevelVectorField const & J_cp)
 {
     SpectralFieldIndex Idx;
     int idx_jx, idx_jy, idx_jz;
@@ -737,7 +737,7 @@ WarpX::PushPSATD ()
             PSATDBackwardTransformJ(current_fp, current_cp);
 
             // Synchronize J and rho
-            SyncCurrent(current_fp, current_cp, current_buf);
+            SyncCurrent(va2vm(current_fp), va2vm(current_cp), va2vm(current_buf));
             SyncRho();
         }
         else if (current_deposition_algo == CurrentDepositionAlgo::Vay)
@@ -769,7 +769,11 @@ WarpX::PushPSATD ()
     }
 
     // FFT of E and B
-    PSATDForwardTransformEB(Efield_fp, Bfield_fp, Efield_cp, Bfield_cp);
+    PSATDForwardTransformEB(
+        m_fields.get_mr_levels_alldirs("Efield_fp", finest_level),
+        m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level),
+        m_fields.get_mr_levels_alldirs("Efield_cp", finest_level),
+        m_fields.get_mr_levels_alldirs("Bfield_cp", finest_level) );
 
 #ifdef WARPX_DIM_RZ
     if (pml_rz[0]) { pml_rz[0]->PushPSATD(0); }
@@ -830,18 +834,19 @@ WarpX::EvolveB (int lev, amrex::Real a_dt, DtType a_dt_type)
 void
 WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_type)
 {
+    auto face_areas_lev = m_fields.get_mr_levels_alldirs("face_areas", finest_level)[lev];
 
     // Evolve B field in regular cells
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->EvolveB(Bfield_fp[lev], Efield_fp[lev],
-                                       m_fields.get("G_fp", lev),
-                                       m_face_areas[lev], m_area_mod[lev], ECTRhofield[lev], Venl[lev],
-                                       m_flag_info_face[lev], m_borrowing[lev], lev, a_dt);
+            m_fields.get("G_fp", lev),
+            face_areas_lev, m_area_mod[lev], ECTRhofield[lev], Venl[lev],
+            m_flag_info_face[lev], m_borrowing[lev], lev, a_dt);
     } else {
         m_fdtd_solver_cp[lev]->EvolveB(Bfield_cp[lev], Efield_cp[lev],
-                                       m_fields.get("G_fp", lev),
-                                       m_face_areas[lev], m_area_mod[lev], ECTRhofield[lev], Venl[lev],
-                                       m_flag_info_face[lev], m_borrowing[lev], lev, a_dt);
+            m_fields.get("G_fp", lev),
+            face_areas_lev, m_area_mod[lev], ECTRhofield[lev], Venl[lev],
+            m_flag_info_face[lev], m_borrowing[lev], lev, a_dt);
     }
 
     // Evolve B field in PML cells
@@ -886,15 +891,16 @@ void
 WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
 {
     // Evolve E field in regular cells
+    auto face_areas_lev = m_fields.get_mr_levels_alldirs("face_areas", finest_level)[lev];
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->EvolveE(Efield_fp[lev], Bfield_fp[lev],
                                        current_fp[lev], m_edge_lengths[lev],
-                                       m_face_areas[lev], ECTRhofield[lev],
+                                       face_areas_lev, ECTRhofield[lev],
                                        m_fields.get("F_fp", lev), lev, a_dt );
     } else {
         m_fdtd_solver_cp[lev]->EvolveE(Efield_cp[lev], Bfield_cp[lev],
                                        current_cp[lev], m_edge_lengths[lev],
-                                       m_face_areas[lev], ECTRhofield[lev],
+                                       face_areas_lev, ECTRhofield[lev],
                                        m_fields.get("F_cp", lev), lev, a_dt );
     }
 
@@ -925,10 +931,10 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
         if (patch_type == PatchType::fine) {
             m_fdtd_solver_fp[lev]->EvolveECTRho(Efield_fp[lev], m_edge_lengths[lev],
-                                                m_face_areas[lev], ECTRhofield[lev], lev);
+                                                face_areas_lev, ECTRhofield[lev], lev);
         } else {
             m_fdtd_solver_cp[lev]->EvolveECTRho(Efield_cp[lev], m_edge_lengths[lev],
-                                                m_face_areas[lev], ECTRhofield[lev], lev);
+                                                face_areas_lev, ECTRhofield[lev], lev);
         }
     }
 #endif
@@ -1090,8 +1096,8 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
 
 void
 WarpX::DampFieldsInGuards(const int lev,
-                          const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
-                          const std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield) {
+                          const ablastr::fields::VectorField& Efield,
+                          const ablastr::fields::VectorField& Bfield) {
 
     // Loop over dimensions
     for (int dampdir = 0 ; dampdir < AMREX_SPACEDIM ; dampdir++)

@@ -10,11 +10,13 @@
 
 #include "ablastr/utils/ConstMap.H"
 
+#include <AMReX_Array.H>
 #include <AMReX_BoxArray.H>
 #include <AMReX_DistributionMapping.H>
 #include <AMReX_IntVect.H>
 #include <AMReX_MultiFab.H>
 
+#include <array>
 #include <map>
 #include <memory>
 #include <optional>
@@ -28,7 +30,9 @@ namespace ablastr::fields
     /** Components (base vector directions) of vector/tensor fields.
      *
      * Because of different staggering, the components of vector/tensor fields are stored
-     * in separate (i)MultiFab. This
+     * in separate (i)MultiFab.
+     *
+     * @todo: synchronize with AMReX "enum class Direction"
      */
     struct Direction
     {
@@ -38,23 +42,29 @@ namespace ablastr::fields
         {
             return other.dir < this->dir;
         }
+
+        /* TODO: just temporary int compatibility */
+        operator int() { return dir; }
     };
+
+    /** A scalar field (a MultiFab)
+     *
+     * Note: might still have components, e.g., for copies at different times.
+     */
+    using ScalarField = amrex::MultiFab*;
 
     /** A vector field of three MultiFab
      */
-    using VectorField = ablastr::utils::ConstMap<Direction, amrex::MultiFab*>;
+    //using VectorField = ablastr::utils::ConstMap<Direction, amrex::MultiFab*>;
+    using VectorField = std::array<amrex::MultiFab*, 3>;
 
     /** A multi-level scalar field
-     *
-     * TODO: use amrex::Vector again for bound checks in debug mode
      */
-    using MultiLevelScalarField = std::vector<amrex::MultiFab*>;
+    using MultiLevelScalarField = amrex::Vector<ScalarField>;
 
     /** A multi-level vector field
-    *
-    * TODO: use amrex::Vector again for bound checks in debug mode
     */
-    using MultiLevelVectorField = std::vector<VectorField>;
+    using MultiLevelVectorField = amrex::Vector<VectorField>;
 
     /** title
      *
@@ -169,6 +179,24 @@ namespace ablastr::fields
             std::optional<const amrex::Real> initial_value = std::nullopt
         );
 
+        /** Create an alias
+         *
+         * @param new_name new name
+         * @param alias_name owner to alias to
+         * @param dir ...
+         * @param level ...
+         * @param initial_value ...
+         * @return
+         */
+        amrex::MultiFab*
+        alias_init (
+                std::string new_name,
+                std::string alias_name,
+                Direction dir,
+                int level,
+                std::optional<const amrex::Real> initial_value = std::nullopt
+        );
+
         /** title
          *
          * body body
@@ -259,6 +287,20 @@ namespace ablastr::fields
         get_mr_levels (
             std::string name,
             int finest_level
+        );
+
+        /** title
+         *
+         * Same as get above, but returns all levels for a name.
+         *
+         * @param name ...
+         * @param level ...
+         * @return ...
+         */
+        VectorField
+        get_alldirs  (
+            std::string name,
+            int level
         );
 
         /** Return a vector field on all MR levels.

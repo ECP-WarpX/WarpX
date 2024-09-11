@@ -171,6 +171,53 @@ namespace ablastr::fields
         return &mf;
     }
 
+    amrex::MultiFab*
+    MultiFabRegister::alias_init (
+            std::string new_name,
+            std::string alias_name,
+            Direction dir,
+            int level,
+            std::optional<const amrex::Real> initial_value
+    )
+    {
+        new_name = mf_name(new_name, dir, level);
+        alias_name = mf_name(alias_name, dir, level);
+
+        // Checks
+        // TODO: does the key already exist? error
+
+        MultiFabOwner & alias = m_mf_register[alias_name];
+        amrex::MultiFab & mf_alias = alias.m_mf;
+
+        // allocate
+        auto [it, success] = m_mf_register.emplace(
+            std::make_pair(
+                new_name,
+                MultiFabOwner{
+                    {mf_alias, amrex::make_alias, 0, mf_alias.nComp()},
+                    dir,
+                    level,
+                    alias.m_redistribute,
+                    alias.m_redistribute_on_remake,
+                    alias_name
+                }
+            )
+        );
+        if (!success) {
+            throw std::runtime_error("MultiFabRegister::alias_init failed for " + new_name);
+        }
+
+        // a short-hand alias for the code below
+        amrex::MultiFab & mf = it->second.m_mf;
+
+        // initialize with value
+        if (initial_value) {
+            mf.setVal(*initial_value);
+        }
+
+        return &mf;
+    }
+
     void
     MultiFabRegister::remake_level (
         int level,
@@ -283,6 +330,26 @@ namespace ablastr::fields
             field_on_level.push_back(get(name, lvl));
         }
         return field_on_level;
+    }
+
+    VectorField
+    MultiFabRegister::get_alldirs  (
+        std::string name,
+        int level
+    )
+    {
+        // TODO: Technically, we should search field_on_level via std::unique_copy
+        std::vector<Direction> all_dirs = {Direction{0}, Direction{1}, Direction{2}};
+
+        // insert a new level
+        VectorField vectorField;
+
+        // insert components
+        for (Direction dir : all_dirs)
+        {
+            vectorField[dir] = get(name, dir, level);
+        }
+        return vectorField;
     }
 
     MultiLevelVectorField

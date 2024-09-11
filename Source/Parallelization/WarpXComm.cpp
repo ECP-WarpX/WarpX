@@ -87,11 +87,12 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
             "WarpX build with spectral solver support.");
     }
 #endif
+    using ablastr::fields::Direction;
 
     amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>> const & Bmf = WarpX::fft_do_time_averaging ?
                                                                                 Bfield_avg_fp : Bfield_fp;
     amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>> const & Emf = WarpX::fft_do_time_averaging ?
-                                                                                Efield_avg_fp : Efield_fp;
+                                                                                Efield_avg_fp : Efield_fp; // JRA, do this one when doing Efield_avg_fp refactor to new style
 
     const amrex::IntVect& Bx_stag = Bmf[0][0]->ixType().toIntVect();
     const amrex::IntVect& By_stag = Bmf[0][1]->ixType().toIntVect();
@@ -295,9 +296,9 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
 
                 const amrex::IntVect& refinement_ratio = refRatio(lev-1);
 
-                const amrex::IntVect& Ex_fp_stag = Efield_fp[lev][0]->ixType().toIntVect();
-                const amrex::IntVect& Ey_fp_stag = Efield_fp[lev][1]->ixType().toIntVect();
-                const amrex::IntVect& Ez_fp_stag = Efield_fp[lev][2]->ixType().toIntVect();
+                const amrex::IntVect& Ex_fp_stag = m_fields.get("Efield_fp",Direction{0},lev)->ixType().toIntVect();
+                const amrex::IntVect& Ey_fp_stag = m_fields.get("Efield_fp",Direction{1},lev)->ixType().toIntVect();
+                const amrex::IntVect& Ez_fp_stag = m_fields.get("Efield_fp",Direction{2},lev)->ixType().toIntVect();
 
                 const amrex::IntVect& Ex_cp_stag = Efield_cp[lev][0]->ixType().toIntVect();
                 const amrex::IntVect& Ey_cp_stag = Efield_cp[lev][1]->ixType().toIntVect();
@@ -311,9 +312,9 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                     Array4<Real> const& ex_aux = Efield_aux[lev][0]->array(mfi);
                     Array4<Real> const& ey_aux = Efield_aux[lev][1]->array(mfi);
                     Array4<Real> const& ez_aux = Efield_aux[lev][2]->array(mfi);
-                    Array4<Real const> const& ex_fp = Efield_fp[lev][0]->const_array(mfi);
-                    Array4<Real const> const& ey_fp = Efield_fp[lev][1]->const_array(mfi);
-                    Array4<Real const> const& ez_fp = Efield_fp[lev][2]->const_array(mfi);
+                    Array4<Real const> const& ex_fp = m_fields.get("Efield_fp",Direction{0},lev)->const_array(mfi);
+                    Array4<Real const> const& ey_fp = m_fields.get("Efield_fp",Direction{1},lev)->const_array(mfi);
+                    Array4<Real const> const& ez_fp = m_fields.get("Efield_fp",Direction{2},lev)->const_array(mfi);
                     Array4<Real const> const& ex_cp = Efield_cp[lev][0]->const_array(mfi);
                     Array4<Real const> const& ey_cp = Efield_cp[lev][1]->const_array(mfi);
                     Array4<Real const> const& ez_cp = Efield_cp[lev][2]->const_array(mfi);
@@ -332,9 +333,9 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                 }
             }
             else { // electrostatic
-                const amrex::IntVect& Ex_fp_stag = Efield_fp[lev][0]->ixType().toIntVect();
-                const amrex::IntVect& Ey_fp_stag = Efield_fp[lev][1]->ixType().toIntVect();
-                const amrex::IntVect& Ez_fp_stag = Efield_fp[lev][2]->ixType().toIntVect();
+                const amrex::IntVect& Ex_fp_stag = m_fields.get("Efield_fp",Direction{0},lev)->ixType().toIntVect();
+                const amrex::IntVect& Ey_fp_stag = m_fields.get("Efield_fp",Direction{1},lev)->ixType().toIntVect();
+                const amrex::IntVect& Ez_fp_stag = m_fields.get("Efield_fp",Direction{2},lev)->ixType().toIntVect();
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -343,9 +344,9 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                     Array4<Real> const& ex_aux = Efield_aux[lev][0]->array(mfi);
                     Array4<Real> const& ey_aux = Efield_aux[lev][1]->array(mfi);
                     Array4<Real> const& ez_aux = Efield_aux[lev][2]->array(mfi);
-                    Array4<Real const> const& ex_fp = Efield_fp[lev][0]->const_array(mfi);
-                    Array4<Real const> const& ey_fp = Efield_fp[lev][1]->const_array(mfi);
-                    Array4<Real const> const& ez_fp = Efield_fp[lev][2]->const_array(mfi);
+                    Array4<Real const> const& ex_fp = m_fields.get("Efield_fp",Direction{0},lev)->const_array(mfi);
+                    Array4<Real const> const& ey_fp = m_fields.get("Efield_fp",Direction{1},lev)->const_array(mfi);
+                    Array4<Real const> const& ez_fp = m_fields.get("Efield_fp",Direction{2},lev)->const_array(mfi);
 
                     const Box& bx = mfi.growntilebox();
                     amrex::ParallelFor(bx,
@@ -367,6 +368,8 @@ WarpX::UpdateAuxilaryDataSameType ()
     // Update aux field, including guard cells, up to ng_FieldGather
     const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
 
+    using ablastr::fields::Direction;
+
     // Level 0: Copy from fine to aux
     // Note: in some configurations, Efield_aux/Bfield_aux and Efield_fp/Bfield_fp are simply aliases to the
     // same MultiFab object. MultiFab::Copy operation automatically detects this and does nothing in this case.
@@ -381,9 +384,9 @@ WarpX::UpdateAuxilaryDataSameType ()
     }
     else
     {
-        MultiFab::Copy(*Efield_aux[0][0], *Efield_fp[0][0], 0, 0, Efield_aux[0][0]->nComp(), ng_src);
-        MultiFab::Copy(*Efield_aux[0][1], *Efield_fp[0][1], 0, 0, Efield_aux[0][1]->nComp(), ng_src);
-        MultiFab::Copy(*Efield_aux[0][2], *Efield_fp[0][2], 0, 0, Efield_aux[0][2]->nComp(), ng_src);
+        MultiFab::Copy(*Efield_aux[0][0], *m_fields.get("Efield_fp",Direction{0},0), 0, 0, Efield_aux[0][0]->nComp(), ng_src);
+        MultiFab::Copy(*Efield_aux[0][1], *m_fields.get("Efield_fp",Direction{1},0), 0, 0, Efield_aux[0][1]->nComp(), ng_src);
+        MultiFab::Copy(*Efield_aux[0][2], *m_fields.get("Efield_fp",Direction{2},0), 0, 0, Efield_aux[0][2]->nComp(), ng_src);
         MultiFab::Copy(*Bfield_aux[0][0], *Bfield_fp[0][0], 0, 0, Bfield_aux[0][0]->nComp(), ng_src);
         MultiFab::Copy(*Bfield_aux[0][1], *Bfield_fp[0][1], 0, 0, Bfield_aux[0][1]->nComp(), ng_src);
         MultiFab::Copy(*Bfield_aux[0][2], *Bfield_fp[0][2], 0, 0, Bfield_aux[0][2]->nComp(), ng_src);
@@ -521,9 +524,9 @@ WarpX::UpdateAuxilaryDataSameType ()
                     Array4<Real> const& ex_aux = Efield_aux[lev][0]->array(mfi);
                     Array4<Real> const& ey_aux = Efield_aux[lev][1]->array(mfi);
                     Array4<Real> const& ez_aux = Efield_aux[lev][2]->array(mfi);
-                    Array4<Real const> const& ex_fp = Efield_fp[lev][0]->const_array(mfi);
-                    Array4<Real const> const& ey_fp = Efield_fp[lev][1]->const_array(mfi);
-                    Array4<Real const> const& ez_fp = Efield_fp[lev][2]->const_array(mfi);
+                    Array4<Real const> const& ex_fp = m_fields.get("Efield_fp",Direction{0},lev)->const_array(mfi);
+                    Array4<Real const> const& ey_fp = m_fields.get("Efield_fp",Direction{1},lev)->const_array(mfi);
+                    Array4<Real const> const& ez_fp = m_fields.get("Efield_fp",Direction{2},lev)->const_array(mfi);
                     Array4<Real const> const& ex_c = dEx.const_array(mfi);
                     Array4<Real const> const& ey_c = dEy.const_array(mfi);
                     Array4<Real const> const& ez_c = dEz.const_array(mfi);
@@ -545,9 +548,9 @@ WarpX::UpdateAuxilaryDataSameType ()
             }
             else // electrostatic
             {
-                MultiFab::Copy(*Efield_aux[lev][0], *Efield_fp[lev][0], 0, 0, Efield_aux[lev][0]->nComp(), Efield_aux[lev][0]->nGrowVect());
-                MultiFab::Copy(*Efield_aux[lev][1], *Efield_fp[lev][1], 0, 0, Efield_aux[lev][1]->nComp(), Efield_aux[lev][1]->nGrowVect());
-                MultiFab::Copy(*Efield_aux[lev][2], *Efield_fp[lev][2], 0, 0, Efield_aux[lev][2]->nComp(), Efield_aux[lev][2]->nGrowVect());
+                MultiFab::Copy(*Efield_aux[lev][0], *m_fields.get("Efield_fp",Direction{0},lev), 0, 0, Efield_aux[lev][0]->nComp(), Efield_aux[lev][0]->nGrowVect());
+                MultiFab::Copy(*Efield_aux[lev][1], *m_fields.get("Efield_fp",Direction{1},lev), 0, 0, Efield_aux[lev][1]->nComp(), Efield_aux[lev][1]->nGrowVect());
+                MultiFab::Copy(*Efield_aux[lev][2], *m_fields.get("Efield_fp",Direction{2},lev), 0, 0, Efield_aux[lev][2]->nComp(), Efield_aux[lev][2]->nGrowVect());
             }
         }
     }
@@ -668,9 +671,13 @@ WarpX::FillBoundaryE (const int lev, const PatchType patch_type, const amrex::In
     std::array<amrex::MultiFab*,3> mf;
     amrex::Periodicity period;
 
+    using ablastr::fields::Direction;
+
     if (patch_type == PatchType::fine)
     {
-        mf     = {Efield_fp[lev][0].get(), Efield_fp[lev][1].get(), Efield_fp[lev][2].get()};
+        mf     = {m_fields.get("Efield_fp",Direction{0},lev),
+                  m_fields.get("Efield_fp",Direction{1},lev),
+                  m_fields.get("Efield_fp",Direction{2},lev)};
         period = Geom(lev).periodicity();
     }
     else // coarse patch
@@ -989,22 +996,26 @@ WarpX::FillBoundaryAux (int lev, IntVect ng)
 
 void
 WarpX::SyncCurrent (
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_buffer)
+    const ablastr::fields::MultiLevelVectorField& J_fp,
+    const ablastr::fields::MultiLevelVectorField& J_cp,
+    const ablastr::fields::MultiLevelVectorField& J_buffer)
 {
+    using ablastr::fields::Direction;
+
     WARPX_PROFILE("WarpX::SyncCurrent()");
 
     // If warpx.do_current_centering = 1, center currents from nodal grid to staggered grid
     if (do_current_centering)
     {
+        ablastr::fields::MultiLevelVectorField J_fp_nodal = m_fields.get_mr_levels_alldirs("current_fp_nodal", finest_level+1);
+
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(finest_level <= 1,
                                          "warpx.do_current_centering=1 not supported with more than one fine levels");
         for (int lev = 0; lev <= finest_level; lev++)
         {
-            WarpX::UpdateCurrentNodalToStag(*J_fp[lev][0], *current_fp_nodal[lev][0]);
-            WarpX::UpdateCurrentNodalToStag(*J_fp[lev][1], *current_fp_nodal[lev][1]);
-            WarpX::UpdateCurrentNodalToStag(*J_fp[lev][2], *current_fp_nodal[lev][2]);
+            WarpX::UpdateCurrentNodalToStag(*J_fp[lev][Direction{0}], *J_fp_nodal[lev][Direction{0}]);
+            WarpX::UpdateCurrentNodalToStag(*J_fp[lev][Direction{1}], *J_fp_nodal[lev][Direction{1}]);
+            WarpX::UpdateCurrentNodalToStag(*J_fp[lev][Direction{2}], *J_fp_nodal[lev][Direction{2}]);
         }
     }
 
@@ -1079,7 +1090,7 @@ WarpX::SyncCurrent (
     {
         for (int lev = finest_level; lev >= 0; --lev)
         {
-            const int ncomp = J_fp[lev][idim]->nComp();
+            const int ncomp = J_fp[lev][Direction{idim}]->nComp();
             auto const& period = Geom(lev).periodicity();
 
             if (lev < finest_level)
@@ -1087,8 +1098,8 @@ WarpX::SyncCurrent (
                 // On a coarse level, the data in mf_comm comes from the
                 // coarse patch of the fine level. They are unfiltered and uncommunicated.
                 // We need to add it to the fine patch of the current level.
-                MultiFab fine_lev_cp(J_fp[lev][idim]->boxArray(),
-                                     J_fp[lev][idim]->DistributionMap(),
+                MultiFab fine_lev_cp(J_fp[lev][Direction{idim}]->boxArray(),
+                                     J_fp[lev][Direction{idim}]->DistributionMap(),
                                      ncomp, 0);
                 fine_lev_cp.setVal(0.0);
                 fine_lev_cp.ParallelAdd(*mf_comm, 0, 0, ncomp, mf_comm->nGrowVect(),
@@ -1097,7 +1108,7 @@ WarpX::SyncCurrent (
                 auto owner_mask = amrex::OwnerMask(fine_lev_cp, period);
                 auto const& mma = owner_mask->const_arrays();
                 auto const& sma = fine_lev_cp.const_arrays();
-                auto const& dma = J_fp[lev][idim]->arrays();
+                auto const& dma = J_fp[lev][Direction{idim}]->arrays();
                 amrex::ParallelFor(fine_lev_cp, IntVect(0), ncomp,
                 [=] AMREX_GPU_DEVICE (int bno, int i, int j, int k, int n)
                 {
@@ -1120,23 +1131,23 @@ WarpX::SyncCurrent (
                 // filtering depends on the level. This is also done before any
                 // same-level communication because it's easier this way to
                 // avoid double counting.
-                J_cp[lev][idim]->setVal(0.0);
-                ablastr::coarsen::average::Coarsen(*J_cp[lev][idim],
-                                                   *J_fp[lev][idim],
+                J_cp[lev][Direction{idim}]->setVal(0.0);
+                ablastr::coarsen::average::Coarsen(*J_cp[lev][Direction{idim}],
+                                                   *J_fp[lev][Direction{idim}],
                                                    refRatio(lev-1));
-                if (J_buffer[lev][idim])
+                if (J_buffer[lev][Direction{idim}])
                 {
-                    IntVect const& ng = J_cp[lev][idim]->nGrowVect();
-                    AMREX_ASSERT(ng.allLE(J_buffer[lev][idim]->nGrowVect()));
-                    MultiFab::Add(*J_buffer[lev][idim], *J_cp[lev][idim],
+                    IntVect const& ng = J_cp[lev][Direction{idim}]->nGrowVect();
+                    AMREX_ASSERT(ng.allLE(J_buffer[lev][Direction{idim}]->nGrowVect()));
+                    MultiFab::Add(*J_buffer[lev][Direction{idim}], *J_cp[lev][Direction{idim}],
                                   0, 0, ncomp, ng);
                     mf_comm = std::make_unique<MultiFab>
-                        (*J_buffer[lev][idim], amrex::make_alias, 0, ncomp);
+                        (*J_buffer[lev][Direction{idim}], amrex::make_alias, 0, ncomp);
                 }
                 else
                 {
                     mf_comm = std::make_unique<MultiFab>
-                        (*J_cp[lev][idim], amrex::make_alias, 0, ncomp);
+                        (*J_cp[lev][Direction{idim}], amrex::make_alias, 0, ncomp);
                 }
             }
 
@@ -1258,11 +1269,13 @@ void WarpX::RestrictCurrentFromFineToCoarsePatch (
 }
 
 void WarpX::ApplyFilterJ (
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+    const ablastr::fields::MultiLevelVectorField& current,
     const int lev,
     const int idim)
 {
-    amrex::MultiFab& J = *current[lev][idim];
+    using ablastr::fields::Direction;
+
+    amrex::MultiFab& J = *current[lev][Direction{idim}];
 
     const int ncomp = J.nComp();
     const amrex::IntVect ngrow = J.nGrowVect();
@@ -1275,7 +1288,7 @@ void WarpX::ApplyFilterJ (
 }
 
 void WarpX::ApplyFilterJ (
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+    const ablastr::fields::MultiLevelVectorField& current,
     const int lev)
 {
     for (int idim=0; idim<3; ++idim)
@@ -1285,12 +1298,14 @@ void WarpX::ApplyFilterJ (
 }
 
 void WarpX::SumBoundaryJ (
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+    const ablastr::fields::MultiLevelVectorField& current,
     const int lev,
     const int idim,
     const amrex::Periodicity& period)
 {
-    amrex::MultiFab& J = *current[lev][idim];
+    using ablastr::fields::Direction;
+
+    amrex::MultiFab& J = *current[lev][Direction{idim}];
 
     const amrex::IntVect ng = J.nGrowVect();
     amrex::IntVect ng_depos_J = get_ng_depos_J();
@@ -1323,7 +1338,7 @@ void WarpX::SumBoundaryJ (
 }
 
 void WarpX::SumBoundaryJ (
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+    const ablastr::fields::MultiLevelVectorField& current,
     const int lev,
     const amrex::Periodicity& period)
 {
@@ -1352,13 +1367,15 @@ void WarpX::AddCurrentFromFineLevelandSumBoundary (
     const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_buffer,
     const int lev)
 {
+    using ablastr::fields::va2vm;
+
     const amrex::Periodicity& period = Geom(lev).periodicity();
 
     if (use_filter)
     {
-        ApplyFilterJ(J_fp, lev);
+        ApplyFilterJ(va2vm(J_fp), lev);
     }
-    SumBoundaryJ(J_fp, lev, period);
+    SumBoundaryJ(va2vm(J_fp), lev, period);
 
     if (lev < finest_level)
     {
@@ -1375,8 +1392,8 @@ void WarpX::AddCurrentFromFineLevelandSumBoundary (
 
             if (use_filter && J_buffer[lev+1][idim])
             {
-                ApplyFilterJ(J_cp, lev+1, idim);
-                ApplyFilterJ(J_buffer, lev+1, idim);
+                ApplyFilterJ(va2vm(J_cp), lev+1, idim);
+                ApplyFilterJ(va2vm(J_buffer), lev+1, idim);
 
                 MultiFab::Add(
                     *J_buffer[lev+1][idim], *J_cp[lev+1][idim],
@@ -1390,7 +1407,7 @@ void WarpX::AddCurrentFromFineLevelandSumBoundary (
             }
             else if (use_filter) // but no buffer
             {
-                ApplyFilterJ(J_cp, lev+1, idim);
+                ApplyFilterJ(va2vm(J_cp), lev+1, idim);
 
                 ablastr::utils::communication::ParallelAdd(
                     mf, *J_cp[lev+1][idim], 0, 0,
@@ -1418,7 +1435,7 @@ void WarpX::AddCurrentFromFineLevelandSumBoundary (
                     ng, amrex::IntVect(0),
                     do_single_precision_comms, period);
             }
-            SumBoundaryJ(J_cp, lev+1, idim, period);
+            SumBoundaryJ(va2vm(J_cp), lev+1, idim, period);
             MultiFab::Add(*J_fp[lev][idim], mf, 0, 0, J_fp[lev+1][idim]->nComp(), 0);
         }
     }
