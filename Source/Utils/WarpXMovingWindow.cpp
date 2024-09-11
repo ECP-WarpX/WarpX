@@ -149,6 +149,10 @@ WarpX::MoveWindow (const int step, bool move_j)
 
     ablastr::fields::MultiLevelVectorField Efield_aux = m_fields.get_mr_levels_alldirs("Efield_aux", finest_level);
     ablastr::fields::MultiLevelVectorField Bfield_aux = m_fields.get_mr_levels_alldirs("Bfield_aux", finest_level);
+    ablastr::fields::MultiLevelVectorField Efield_avg_fp = m_fields.get_mr_levels_alldirs("Efield_avg_fp", finest_level);
+    ablastr::fields::MultiLevelVectorField Bfield_avg_fp = m_fields.get_mr_levels_alldirs("Bfield_avg_fp", finest_level);
+    ablastr::fields::MultiLevelVectorField Efield_avg_cp = m_fields.get_mr_levels_alldirs("Efield_avg_cp", finest_level);
+    ablastr::fields::MultiLevelVectorField Bfield_avg_cp = m_fields.get_mr_levels_alldirs("Bfield_avg_cp", finest_level);
 
     // Update the continuous position of the moving window,
     // and of the plasma injection

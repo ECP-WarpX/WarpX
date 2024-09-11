@@ -97,13 +97,15 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
 #endif
     using ablastr::fields::Direction;
 
+    ablastr::fields::MultiLevelVectorField Efield_fp = m_fields.get_mr_levels_alldirs("Efield_fp", finest_level);
+    ablastr::fields::MultiLevelVectorField Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
+    ablastr::fields::MultiLevelVectorField Efield_avg_fp = m_fields.get_mr_levels_alldirs("Efield_avg_fp", finest_level);
+    ablastr::fields::MultiLevelVectorField Bfield_avg_fp = m_fields.get_mr_levels_alldirs("Bfield_avg_fp", finest_level);
     ablastr::fields::MultiLevelVectorField Efield_aux = m_fields.get_mr_levels_alldirs("Efield_aux", finest_level);
     ablastr::fields::MultiLevelVectorField Bfield_aux = m_fields.get_mr_levels_alldirs("Bfield_aux", finest_level);
 
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>> const & Bmf = WarpX::fft_do_time_averaging ?
-                                                                                Bfield_avg_fp : Bfield_fp;
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>> const & Emf = WarpX::fft_do_time_averaging ?
-                                                                                Efield_avg_fp : Efield_fp; // JRA, do this one when doing Efield_avg_fp refactor to new style
+    ablastr::fields::MultiLevelVectorField const & Bmf = WarpX::fft_do_time_averaging ? Bfield_avg_fp : Bfield_fp;
+    ablastr::fields::MultiLevelVectorField const & Emf = WarpX::fft_do_time_averaging ? Efield_avg_fp : Efield_fp; // JRA, do this one when doing Efield_avg_fp refactor to new style
 
     const amrex::IntVect& Bx_stag = Bmf[0][0]->ixType().toIntVect();
     const amrex::IntVect& By_stag = Bmf[0][1]->ixType().toIntVect();
@@ -380,8 +382,16 @@ WarpX::UpdateAuxilaryDataSameType ()
     const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
 
     using ablastr::fields::Direction;
+    ablastr::fields::MultiLevelVectorField Efield_fp = m_fields.get_mr_levels_alldirs("Efield_fp", finest_level);
+    ablastr::fields::MultiLevelVectorField Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
+    ablastr::fields::MultiLevelVectorField Efield_cp = m_fields.get_mr_levels_alldirs("Efield_cp", finest_level);
+    ablastr::fields::MultiLevelVectorField Bfield_cp = m_fields.get_mr_levels_alldirs("Bfield_cp", finest_level);
     ablastr::fields::MultiLevelVectorField Efield_aux = m_fields.get_mr_levels_alldirs("Efield_aux", finest_level);
     ablastr::fields::MultiLevelVectorField Bfield_aux = m_fields.get_mr_levels_alldirs("Bfield_aux", finest_level);
+    ablastr::fields::MultiLevelVectorField Efield_avg_fp = m_fields.get_mr_levels_alldirs("Efield_avg_fp", finest_level);
+    ablastr::fields::MultiLevelVectorField Bfield_avg_fp = m_fields.get_mr_levels_alldirs("Bfield_avg_fp", finest_level);
+    ablastr::fields::MultiLevelVectorField Efield_avg_cp = m_fields.get_mr_levels_alldirs("Efield_avg_cp", finest_level);
+    ablastr::fields::MultiLevelVectorField Bfield_avg_cp = m_fields.get_mr_levels_alldirs("Bfield_avg_cp", finest_level);
 
     // Level 0: Copy from fine to aux
     // Note: in some configurations, Efield_aux/Bfield_aux and Efield_fp/Bfield_fp are simply aliases to the
@@ -397,9 +407,9 @@ WarpX::UpdateAuxilaryDataSameType ()
     }
     else
     {
-        MultiFab::Copy(*Efield_aux[0][0], *m_fields.get("Efield_fp",Direction{0},0), 0, 0, Efield_aux[0][0]->nComp(), ng_src);
-        MultiFab::Copy(*Efield_aux[0][1], *m_fields.get("Efield_fp",Direction{1},0), 0, 0, Efield_aux[0][1]->nComp(), ng_src);
-        MultiFab::Copy(*Efield_aux[0][2], *m_fields.get("Efield_fp",Direction{2},0), 0, 0, Efield_aux[0][2]->nComp(), ng_src);
+        MultiFab::Copy(*Efield_aux[0][0], *Efield_fp[0][0], 0, 0, Efield_aux[0][0]->nComp(), ng_src);
+        MultiFab::Copy(*Efield_aux[0][1], *Efield_fp[0][1], 0, 0, Efield_aux[0][1]->nComp(), ng_src);
+        MultiFab::Copy(*Efield_aux[0][2], *Efield_fp[0][2], 0, 0, Efield_aux[0][2]->nComp(), ng_src);
         MultiFab::Copy(*Bfield_aux[0][0], *Bfield_fp[0][0], 0, 0, Bfield_aux[0][0]->nComp(), ng_src);
         MultiFab::Copy(*Bfield_aux[0][1], *Bfield_fp[0][1], 0, 0, Bfield_aux[0][1]->nComp(), ng_src);
         MultiFab::Copy(*Bfield_aux[0][2], *Bfield_fp[0][2], 0, 0, Bfield_aux[0][2]->nComp(), ng_src);
@@ -806,9 +816,11 @@ WarpX::FillBoundaryE_avg (int lev, PatchType patch_type, IntVect ng)
             WARPX_ABORT_WITH_MESSAGE("Averaged Galilean PSATD with PML is not yet implemented");
         }
 
+        ablastr::fields::MultiLevelVectorField Efield_avg_fp = m_fields.get_mr_levels_alldirs("Efield_avg_fp", finest_level);
+
         const amrex::Periodicity& period = Geom(lev).periodicity();
         if ( safe_guard_cells ){
-            const Vector<MultiFab*> mf{Efield_avg_fp[lev][0].get(),Efield_avg_fp[lev][1].get(),Efield_avg_fp[lev][2].get()};
+            const Vector<MultiFab*> mf{Efield_avg_fp[lev][0],Efield_avg_fp[lev][1],Efield_avg_fp[lev][2]};
             ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period);
         } else {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -826,9 +838,11 @@ WarpX::FillBoundaryE_avg (int lev, PatchType patch_type, IntVect ng)
             WARPX_ABORT_WITH_MESSAGE("Averaged Galilean PSATD with PML is not yet implemented");
         }
 
+        ablastr::fields::MultiLevelVectorField Efield_avg_cp = m_fields.get_mr_levels_alldirs("Efield_avg_cp", finest_level);
+
         const amrex::Periodicity& cperiod = Geom(lev-1).periodicity();
         if ( safe_guard_cells ) {
-            const Vector<MultiFab*> mf{Efield_avg_cp[lev][0].get(),Efield_avg_cp[lev][1].get(),Efield_avg_cp[lev][2].get()};
+            const Vector<MultiFab*> mf{Efield_avg_cp[lev][0],Efield_avg_cp[lev][1],Efield_avg_cp[lev][2]};
             ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, cperiod);
 
         } else {
@@ -859,9 +873,12 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
         {
             WARPX_ABORT_WITH_MESSAGE("Averaged Galilean PSATD with PML is not yet implemented");
         }
+
+        ablastr::fields::MultiLevelVectorField Bfield_avg_fp = m_fields.get_mr_levels_alldirs("Bfield_avg_fp", finest_level);
+
         const amrex::Periodicity& period = Geom(lev).periodicity();
         if ( safe_guard_cells ) {
-            const Vector<MultiFab*> mf{Bfield_avg_fp[lev][0].get(),Bfield_avg_fp[lev][1].get(),Bfield_avg_fp[lev][2].get()};
+            const Vector<MultiFab*> mf{Bfield_avg_fp[lev][0],Bfield_avg_fp[lev][1],Bfield_avg_fp[lev][2]};
             ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period);
         } else {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -879,9 +896,11 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
             WARPX_ABORT_WITH_MESSAGE("Averaged Galilean PSATD with PML is not yet implemented");
         }
 
+        ablastr::fields::MultiLevelVectorField Bfield_avg_cp = m_fields.get_mr_levels_alldirs("Bfield_avg_cp", finest_level);
+
         const amrex::Periodicity& cperiod = Geom(lev-1).periodicity();
         if ( safe_guard_cells ){
-            const Vector<MultiFab*> mf{Bfield_avg_cp[lev][0].get(),Bfield_avg_cp[lev][1].get(),Bfield_avg_cp[lev][2].get()};
+            const Vector<MultiFab*> mf{Bfield_avg_cp[lev][0],Bfield_avg_cp[lev][1],Bfield_avg_cp[lev][2]};
             ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, cperiod);
         } else {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(

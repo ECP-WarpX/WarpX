@@ -900,6 +900,8 @@ WarpX::PostRestart ()
 void
 WarpX::InitLevelData (int lev, Real /*time*/)
 {
+    using ablastr::fields::Direction;
+
     ablastr::fields::MultiLevelVectorField Efield_aux = m_fields.get_mr_levels_alldirs("Efield_aux", finest_level);
     ablastr::fields::MultiLevelVectorField Bfield_aux = m_fields.get_mr_levels_alldirs("Bfield_aux", finest_level);
 
@@ -918,14 +920,14 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         if ( is_B_ext_const && (lev <= maxlevel_extEMfield_init) )
         {
             if (fft_do_time_averaging) {
-                Bfield_avg_fp[lev][i]->setVal(m_p_ext_field_params->B_external_grid[i]);
+                m_fields.get("Bfield_avg_fp", Direction{i}, lev)->setVal(m_p_ext_field_params->B_external_grid[i]);
             }
 
            if (lev > 0) {
                 Bfield_aux[lev][i]->setVal(m_p_ext_field_params->B_external_grid[i]);
                 Bfield_cp[lev][i]->setVal(m_p_ext_field_params->B_external_grid[i]);
                 if (fft_do_time_averaging) {
-                    Bfield_avg_cp[lev][i]->setVal(m_p_ext_field_params->B_external_grid[i]);
+                    m_fields.get("Bfield_avg_cp", Direction{i}, lev)->setVal(m_p_ext_field_params->B_external_grid[i]);
                 }
            }
         }
@@ -938,14 +940,14 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         if ( is_E_ext_const && (lev <= maxlevel_extEMfield_init) )
         {
             if (fft_do_time_averaging) {
-                Efield_avg_fp[lev][i]->setVal(m_p_ext_field_params->E_external_grid[i]);
+                m_fields.get("Efield_avg_fp", Direction{i}, lev)->setVal(m_p_ext_field_params->E_external_grid[i]);
             }
 
             if (lev > 0) {
                 Efield_aux[lev][i]->setVal(m_p_ext_field_params->E_external_grid[i]);
                 Efield_cp[lev][i]->setVal(m_p_ext_field_params->E_external_grid[i]);
                 if (fft_do_time_averaging) {
-                    Efield_avg_cp[lev][i]->setVal(m_p_ext_field_params->E_external_grid[i]);
+                    m_fields.get("Efield_avg_cp", Direction{i}, lev)->setVal(m_p_ext_field_params->E_external_grid[i]);
                 }
             }
         }
@@ -1352,7 +1354,7 @@ void
 WarpX::LoadExternalFields (int const lev)
 {
     using ablastr::fields::Direction;
-    
+
     // External fields from file are currently not compatible with the moving window
     // In order to support the moving window, the MultiFab containing the external
     // fields should be updated every time the window moves.

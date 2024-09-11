@@ -786,7 +786,12 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     {
         // We summed the integral of the field over 2*dt
         PSATDScaleAverageFields(1._rt / (2._rt*dt[0]));
-        PSATDBackwardTransformEBavg(Efield_avg_fp, Bfield_avg_fp, Efield_avg_cp, Bfield_avg_cp);
+        PSATDBackwardTransformEBavg(
+            m_fields.get_mr_levels_alldirs("Efield_avg_fp", finest_level),
+            m_fields.get_mr_levels_alldirs("Bfield_avg_fp", finest_level),
+            m_fields.get_mr_levels_alldirs("Efield_avg_cp", finest_level),
+            m_fields.get_mr_levels_alldirs("Bfield_avg_cp", finest_level)
+        );
     }
 
     // Evolve fields in PML
