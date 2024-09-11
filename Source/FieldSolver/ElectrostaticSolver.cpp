@@ -349,7 +349,7 @@ WarpX::computePhi (const ablastr::fields::MultiLevelScalarField& rho,
         sorted_rho.emplace_back(rho[lev]);
         sorted_phi.emplace_back(phi[lev]);
     }
-    
+
     using ablastr::fields::Direction;
 
     std::optional<ElectrostaticSolver::EBCalcEfromPhiPerLevel> post_phi_calculation;

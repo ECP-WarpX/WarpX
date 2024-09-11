@@ -367,7 +367,7 @@ WarpX::UpdateAuxilaryDataSameType ()
 {
     // Update aux field, including guard cells, up to ng_FieldGather
     const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
-    
+
     using ablastr::fields::Direction;
 
     // Level 0: Copy from fine to aux
@@ -670,7 +670,7 @@ WarpX::FillBoundaryE (const int lev, const PatchType patch_type, const amrex::In
 {
     std::array<amrex::MultiFab*,3> mf;
     amrex::Periodicity period;
-    
+
     using ablastr::fields::Direction;
 
     if (patch_type == PatchType::fine)
