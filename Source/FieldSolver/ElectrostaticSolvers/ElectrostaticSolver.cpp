@@ -39,16 +39,8 @@ void ElectrostaticSolver::ReadParameters () {
     pp_warpx.query("self_fields_verbosity", self_fields_verbosity);
 }
 
-/* \brief Set Dirichlet boundary conditions for the electrostatic solver.
-
-    The given potential's values are fixed on the boundaries of the given
-    dimension according to the desired values from the simulation input file,
-    boundary.potential_lo and boundary.potential_hi.
-
-\param[inout] phi The electrostatic potential
-\param[in] idim The dimension for which the Dirichlet boundary condition is set
-*/
-void ElectrostaticSolver::setPhiBC (
+void
+ElectrostaticSolver::setPhiBC (
     amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi,
     amrex::Real t
 ) const
@@ -119,23 +111,6 @@ void ElectrostaticSolver::setPhiBC (
 }
 
 
-/* Compute the potential `phi` by solving the Poisson equation with `rho` as
-   a source, assuming that the source moves at a constant speed \f$\vec{\beta}\f$.
-   This uses the amrex solver.
-
-   More specifically, this solves the equation
-   \f[
-       \vec{\nabla}^2 r \phi - (\vec{\beta}\cdot\vec{\nabla})^2 r \phi = -\frac{r \rho}{\epsilon_0}
-   \f]
-
-   \param[in] rho The charge density a given species
-   \param[out] phi The potential to be computed by this function
-   \param[in] beta Represents the velocity of the source of `phi`
-   \param[in] required_precision The relative convergence threshold for the MLMG solver
-   \param[in] absolute_tolerance The absolute convergence threshold for the MLMG solver
-   \param[in] max_iters The maximum number of iterations allowed for the MLMG solver
-   \param[in] verbosity The verbosity setting for the MLMG solver
-*/
 void
 ElectrostaticSolver::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                    amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
@@ -229,22 +204,8 @@ ElectrostaticSolver::computePhi (const amrex::Vector<std::unique_ptr<amrex::Mult
 
 }
 
-/* \brief Compute the electric field that corresponds to `phi`, and
-        add it to the set of MultiFab `E`.
-
-The electric field is calculated by assuming that the source that
-produces the `phi` potential is moving with a constant speed \f$\vec{\beta}\f$:
-\f[
-    \vec{E} = -\vec{\nabla}\phi + \vec{\beta}(\vec{\beta} \cdot \vec{\nabla}\phi)
-\f]
-(where the second term represent the term \f$\partial_t \vec{A}\f$, in
-    the case of a moving source)
-
-\param[inout] E Electric field on the grid
-\param[in] phi The potential from which to compute the electric field
-\param[in] beta Represents the velocity of the source of `phi`
-*/
-void ElectrostaticSolver::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
+void
+ElectrostaticSolver::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
             const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
             std::array<amrex::Real, 3> const beta ) const
 {
@@ -407,20 +368,6 @@ void ElectrostaticSolver::computeE (amrex::Vector<std::array<std::unique_ptr<amr
 }
 
 
-/* \brief Compute the magnetic field that corresponds to `phi`, and
-        add it to the set of MultiFab `B`.
-
-The magnetic field is calculated by assuming that the source that
-produces the `phi` potential is moving with a constant speed \f$\vec{\beta}\f$:
-\f[
-    \vec{B} = -\frac{1}{c}\vec{\beta}\times\vec{\nabla}\phi
-\f]
-(this represents the term \f$\vec{\nabla} \times \vec{A}\f$, in the case of a moving source)
-
-\param[inout] E Electric field on the grid
-\param[in] phi The potential from which to compute the electric field
-\param[in] beta Represents the velocity of the source of `phi`
-*/
 void ElectrostaticSolver::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& B,
             const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
             std::array<amrex::Real, 3> const beta ) const
