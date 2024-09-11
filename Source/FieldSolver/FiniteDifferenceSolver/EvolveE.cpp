@@ -230,7 +230,7 @@ void FiniteDifferenceSolver::EvolveECylindrical (
     ablastr::fields::VectorField& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+    ablastr::fields::VectorField const& edge_lengths,
     amrex::MultiFab const* Ffield,
     int lev, amrex::Real const dt ) {
 

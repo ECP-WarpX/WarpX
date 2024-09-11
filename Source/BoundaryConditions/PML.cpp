@@ -736,8 +736,9 @@ PML::PML (const int lev, const BoxArray& grid_ba,
 
             auto const eb_fact = fieldEBFactory();
 
-            WarpX::ComputeEdgeLengths(ablastr::fields::va2vm(pml_edge_lengths), eb_fact);
-            WarpX::ScaleEdges(ablastr::fields::va2vm(pml_edge_lengths), WarpX::CellSize(lev));
+            auto t_pml_edge_lengths = ablastr::fields::a2m(pml_edge_lengths);
+            WarpX::ComputeEdgeLengths(t_pml_edge_lengths, eb_fact);
+            WarpX::ScaleEdges(t_pml_edge_lengths, WarpX::CellSize(lev));
 
         }
     }

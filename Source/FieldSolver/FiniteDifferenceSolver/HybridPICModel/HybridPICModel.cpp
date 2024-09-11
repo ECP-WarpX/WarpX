@@ -246,7 +246,7 @@ void HybridPICModel::InitData ()
             };
         }
 #endif
-        (edge_lengths, lev);
+        GetCurrentExternal(ablastr::fields::a2m(edge_lengths), lev);
     }
 }
 
