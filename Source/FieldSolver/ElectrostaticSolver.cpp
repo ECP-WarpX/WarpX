@@ -142,9 +142,9 @@ WarpX::AddBoundaryField ()
 
     // Compute the corresponding electric and magnetic field, from the potential phi.
     auto Efield_fp_new = m_fields.get_mr_levels_alldirs("Efield_fp",max_level); // JRA, new to prevent shadow
-    auto Bfield_fp_new = m_fields.get_mr_levels_alldirs("Bfield_fp",max_level);
+    auto Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp",max_level);
     computeE( Efield_fp_new, phi, beta );
-    computeB( Bfield_fp_new, phi, beta );
+    computeB( Bfield_fp, phi, beta );
 
     // de-allocate temporary
     for (int lev = 0; lev <= max_level; lev++) {
@@ -231,9 +231,9 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
 
     // Compute the corresponding electric and magnetic field, from the potential phi
     auto Efield_fp_new = m_fields.get_mr_levels_alldirs("Efield_fp",max_level); // JRA, new to prevent shadow
-    auto Bfield_fp_new = m_fields.get_mr_levels_alldirs("Bfield_fp",max_level);
+    auto Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp",max_level);
     computeE( Efield_fp_new, phi, beta );
-    computeB( Bfield_fp_new, phi, beta );
+    computeB( Bfield_fp, phi, beta );
 
     // de-allocate temporary
     for (int lev = 0; lev <= max_level; lev++) {
@@ -310,14 +310,14 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     // Compute the electric field. Note that if an EB is used the electric
     // field will be calculated in the computePhi call.
     auto Efield_fp_new = m_fields.get_mr_levels_alldirs("Efield_fp",max_level); // JRA, new to prevent shadow
-    auto Bfield_fp_new = m_fields.get_mr_levels_alldirs("Bfield_fp",max_level);
+    auto Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp",max_level);
     if (!EB::enabled()) { computeE( Efield_fp_new, phi_fp, beta ); }
     else {
         if (IsPythonCallbackInstalled("poissonsolver")) { computeE(Efield_fp_new, phi_fp, beta); }
     }
 
     // Compute the magnetic field
-    computeB( Bfield_fp_new, phi_fp, beta );
+    computeB( Bfield_fp, phi_fp, beta );
 }
 
 /* Compute the potential `phi` by solving the Poisson equation with `rho` as

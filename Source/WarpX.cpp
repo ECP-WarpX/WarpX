@@ -318,7 +318,7 @@ WarpX::WarpX ()
     }
 
     Efield_fp.resize(nlevs_max);
-    Bfield_fp.resize(nlevs_max);
+    /* Bfield_fp.resize(nlevs_max); */
 
     Efield_dotMask.resize(nlevs_max);
     Bfield_dotMask.resize(nlevs_max);
@@ -3468,9 +3468,6 @@ WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, cons
         case FieldType::Efield_fp :
             field_pointer = Efield_fp[lev][direction].get();
             break;
-        case FieldType::Bfield_fp :
-            field_pointer = Bfield_fp[lev][direction].get();
-            break;
         case FieldType::Efield_cp :
             field_pointer = Efield_cp[lev][direction].get();
             break;
@@ -3555,8 +3552,6 @@ WarpX::getMultiLevelField(warpx::fields::FieldType field_type) const
     {
         case FieldType::Efield_fp :
             return Efield_fp;
-        case FieldType::Bfield_fp :
-            return Bfield_fp;
         case FieldType::Efield_cp :
             return Efield_cp;
         case FieldType::Bfield_cp :

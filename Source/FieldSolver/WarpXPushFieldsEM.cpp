@@ -1057,10 +1057,10 @@ WarpX::EvolveG (int lev, PatchType patch_type, amrex::Real a_dt, DtType /*a_dt_t
     // Evolve G field in regular cells
     if (patch_type == PatchType::fine)
     {
-        ablastr::fields::MultiLevelVectorField const& Bfield_fp_new = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
+        ablastr::fields::MultiLevelVectorField const& Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
         m_fdtd_solver_fp[lev]->EvolveG(
             m_fields.get("G_fp", lev),
-            Bfield_fp_new[lev], a_dt);
+            Bfield_fp[lev], a_dt);
     }
     else // coarse patch
     {
@@ -1102,7 +1102,7 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
         "Macroscopic EvolveE is not implemented for lev>0, yet."
     );
 
-    ablastr::fields::MultiLevelVectorField const& Bfield_fp_new = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
+    ablastr::fields::MultiLevelVectorField const& Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
     m_fdtd_solver_fp[lev]->MacroscopicEvolveE(
         m_fields.get_alldirs("Efield_fp", lev),
         m_fields.get_alldirs("Bfield_fp", lev),

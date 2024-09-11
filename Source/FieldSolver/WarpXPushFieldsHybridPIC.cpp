@@ -97,7 +97,7 @@ void WarpX::HybridPICEvolveFields ()
         }
     }
 
-    ablastr::fields::MultiLevelVectorField const& Bfield_fp_new = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
+    ablastr::fields::MultiLevelVectorField const& Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
 
     // Push the B field from t=n to t=n+1/2 using the current and density
     // at t=n, while updating the E field along with B using the electron

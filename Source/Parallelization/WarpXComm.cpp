@@ -59,9 +59,9 @@ WarpX::UpdateAuxilaryData ()
 
     auto Bfield_aux_lvl0_0 = m_fields.get("Bfield_aux", Direction{0}, 0);
 
-    ablastr::fields::MultiLevelVectorField const& Bfield_fp_new = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
+    ablastr::fields::MultiLevelVectorField const& Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
 
-    if (Bfield_aux_lvl0_0->ixType() == Bfield_fp_new[0][0]->ixType()) {
+    if (Bfield_aux_lvl0_0->ixType() == Bfield_fp[0][0]->ixType()) {
         UpdateAuxilaryDataSameType();
     } else {
         UpdateAuxilaryDataStagToNodal();
@@ -401,6 +401,8 @@ WarpX::UpdateAuxilaryDataSameType ()
     ablastr::fields::MultiLevelVectorField Bfield_avg_fp = m_fields.get_mr_levels_alldirs("Bfield_avg_fp", finest_level);
     ablastr::fields::MultiLevelVectorField Efield_avg_cp = m_fields.get_mr_levels_alldirs("Efield_avg_cp", finest_level);
     ablastr::fields::MultiLevelVectorField Bfield_avg_cp = m_fields.get_mr_levels_alldirs("Bfield_avg_cp", finest_level);
+
+    ablastr::fields::MultiLevelVectorField Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
 
     // Level 0: Copy from fine to aux
     // Note: in some configurations, Efield_aux/Bfield_aux and Efield_fp/Bfield_fp are simply aliases to the
@@ -774,12 +776,14 @@ WarpX::FillBoundaryB (const int lev, const PatchType patch_type, const amrex::In
 
     if (patch_type == PatchType::fine)
     {
-        mf     = {Bfield_fp[lev][0].get(), Bfield_fp[lev][1].get(), Bfield_fp[lev][2].get()};
+        ablastr::fields::MultiLevelVectorField const& Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
+        mf     = {Bfield_fp[lev][0], Bfield_fp[lev][1], Bfield_fp[lev][2]};
         period = Geom(lev).periodicity();
     }
     else // coarse patch
     {
-        mf     = {Bfield_cp[lev][0].get(), Bfield_cp[lev][1].get(), Bfield_cp[lev][2].get()};
+        ablastr::fields::MultiLevelVectorField const& Bfield_cp_new = m_fields.get_mr_levels_alldirs("Bfield_cp", finest_level);
+        mf     = {Bfield_cp_new[lev][0], Bfield_cp_new[lev][1], Bfield_cp_new[lev][2]};
         period = Geom(lev-1).periodicity();
     }
 
@@ -884,6 +888,8 @@ WarpX::FillBoundaryB_avg (int lev, IntVect ng)
 void
 WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
 {
+    using ablastr::fields::Direction;
+
     if (patch_type == PatchType::fine)
     {
         if (do_pml && pml[lev]->ok())
@@ -899,7 +905,7 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
             ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period);
         } else {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng.allLE(Bfield_fp[lev][0]->nGrowVect()),
+                ng.allLE(m_fields.get("Bfield_fp",Direction{0},lev)->nGrowVect()),
                 "Error: in FillBoundaryB, requested more guard cells than allocated");
             ablastr::utils::communication::FillBoundary(*Bfield_avg_fp[lev][0], ng, WarpX::do_single_precision_comms, period);
             ablastr::utils::communication::FillBoundary(*Bfield_avg_fp[lev][1], ng, WarpX::do_single_precision_comms, period);

@@ -1513,7 +1513,6 @@ private:
 
     // Fine patch
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp;
 
     // Masks for computing dot product and global moments of fields when using grids that
     // have shared locations across different ranks (e.g., a Yee grid)
