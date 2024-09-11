@@ -54,7 +54,7 @@ RelativisticExplicitES::AddSpaceChargeField (amrex::Vector<std::unique_ptr<amrex
     }
 
 #ifdef WARPX_DIM_RZ
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::n_rz_azimuthal_modes == 1,
                                      "Error: RZ electrostatic only implemented for a single mode");
 #endif
 

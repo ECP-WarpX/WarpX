@@ -81,9 +81,9 @@ getMaxNormRho (amrex::Vector<amrex::MultiFab*> const & rho,
 }
 
 void
-interpolatePhiBetweenLevels (amrex::MultiFab* const & phi_lev,
-                             amrex::MultiFab* const & phi_lev_plus_one,
-                             amrex::Geometry& geom_lev,
+interpolatePhiBetweenLevels (amrex::MultiFab* const phi_lev,
+                             amrex::MultiFab* const phi_lev_plus_one,
+                             amrex::Geometry const geom_lev,
                              bool do_single_precision_comms,
                              const amrex::IntVect& refratio,
                              const int ncomp,
