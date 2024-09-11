@@ -685,8 +685,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     //    (dt[0] denotes the time step on mesh refinement level 0)
     if (J_in_time == JInTime::Linear)
     {
-        std::string const current_string = (do_current_centering) ? "current_fp_nodal" : "current_fp";
-        mypc->DepositCurrent( m_fields.get_mr_levels(current_string, finest_level), dt[0], -dt[0]);
+        std::string const current_fp_string = (do_current_centering) ? "current_fp_nodal" : "current_fp";
+        mypc->DepositCurrent( m_fields.get_mr_levels(current_fp_string, finest_level), dt[0], -dt[0]);
         // Synchronize J: filter, exchange boundary, and interpolate across levels.
         // With current centering, the nodal current is deposited in 'current',
         // namely 'current_fp_nodal': SyncCurrent stores the result of its centering
@@ -724,8 +724,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
 
         // Deposit new J at relative time t_deposit_current with time step dt
         // (dt[0] denotes the time step on mesh refinement level 0)
-        std::string const current_string = (do_current_centering) ? "current_fp_nodal" : "current_fp";
-        mypc->DepositCurrent( m_fields.get_mr_levels(current_string, finest_level), dt[0], t_deposit_current);
+        std::string const current_fp_string = (do_current_centering) ? "current_fp_nodal" : "current_fp";
+        mypc->DepositCurrent( m_fields.get_mr_levels(current_fp_string, finest_level), dt[0], t_deposit_current);
         // Synchronize J: filter, exchange boundary, and interpolate across levels.
         // With current centering, the nodal current is deposited in 'current',
         // namely 'current_fp_nodal': SyncCurrent stores the result of its centering
@@ -1093,28 +1093,19 @@ WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type,
 {
     using ablastr::fields::Direction;
 
-    amrex::MultiFab* current_x = nullptr;
-    amrex::MultiFab* current_y = nullptr;
-    amrex::MultiFab* current_z = nullptr;
+    std::string current_fp_string;
 
     if (WarpX::do_current_centering)
     {
-        current_x = current_fp_nodal[lev][0].get();
-        current_y = current_fp_nodal[lev][1].get();
-        current_z = current_fp_nodal[lev][2].get();
+        current_fp_string = "current_fp_nodal";
     }
     else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
     {
-        // Note that Vay deposition is supported only for PSATD and the code currently aborts otherwise
-        current_x = current_fp_vay[lev][0].get();
-        current_y = current_fp_vay[lev][1].get();
-        current_z = current_fp_vay[lev][2].get();
+        current_fp_string = "current_fp_vay";
     }
     else
     {
-        current_x = current_fp[lev][0].get();
-        current_y = current_fp[lev][1].get();
-        current_z = current_fp[lev][2].get();
+        current_fp_string = "current_fp";
     }
 
     mypc->Evolve(lev,
@@ -1124,8 +1115,12 @@ WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type,
                  *m_fields.get("Bfield_aux", Direction{0}, lev),
                  *m_fields.get("Bfield_aux", Direction{1}, lev),
                  *m_fields.get("Bfield_aux", Direction{2}, lev),
-                 *current_x, *current_y, *current_z,
-                 current_buf[lev][0].get(), current_buf[lev][1].get(), current_buf[lev][2].get(),
+                 *m_fields.get(current_fp_string, Direction{0}, lev),
+                 *m_fields.get(current_fp_string, Direction{1}, lev),
+                 *m_fields.get(current_fp_string, Direction{2}, lev),
+                 m_fields.get("current_buf", Direction{0}, lev),
+                 m_fields.get("current_buf", Direction{1}, lev),
+                 m_fields.get("current_buf", Direction{2}, lev),
                  m_fields.get("rho_fp",lev), charge_buf[lev].get(),
                  Efield_cax[lev][0].get(), Efield_cax[lev][1].get(), Efield_cax[lev][2].get(),
                  Bfield_cax[lev][0].get(), Bfield_cax[lev][1].get(), Bfield_cax[lev][2].get(),
@@ -1133,9 +1128,17 @@ WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type,
     if (! skip_current) {
 #ifdef WARPX_DIM_RZ
         // This is called after all particles have deposited their current and charge.
-        ApplyInverseVolumeScalingToCurrentDensity(current_fp[lev][0].get(), current_fp[lev][1].get(), current_fp[lev][2].get(), lev);
+        ApplyInverseVolumeScalingToCurrentDensity(
+            m_fields.get("current_fp", Direction{0}, lev),
+            m_fields.get("current_fp", Direction{1}, lev),
+            m_fields.get("current_fp", Direction{2}, lev),
+            lev);
         if (current_buf[lev][0].get()) {
-            ApplyInverseVolumeScalingToCurrentDensity(current_buf[lev][0].get(), current_buf[lev][1].get(), current_buf[lev][2].get(), lev-1);
+            ApplyInverseVolumeScalingToCurrentDensity(
+                m_fields.get("current_buf", Direction{0}, lev),
+                m_fields.get("current_buf", Direction{1}, lev),
+                m_fields.get("current_buf", Direction{2}, lev),
+                lev-1);
         }
         if (m_fields.has("rho_fp", lev)) {
             ApplyInverseVolumeScalingToChargeDensity(m_fields.get("rho_fp", lev), lev);
@@ -1160,9 +1163,9 @@ WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type,
                          *m_fields.get("Bfield_aux", Direction{1}, lev),
                          *m_fields.get("Bfield_aux", Direction{2}, lev),
                          m_fields.get("rho_fp", lev),
-                         *current_x,
-                         *current_y,
-                         *current_z,
+                         *m_fields.get(current_fp_string, Direction{0}, lev),
+                         *m_fields.get(current_fp_string, Direction{1}, lev),
+                         *m_fields.get(current_fp_string, Direction{2}, lev),
                          cur_time,
                          skip_current
             );
