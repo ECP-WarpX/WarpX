@@ -169,9 +169,16 @@ struct SetParticlePosition
 {
     using RType = amrex::ParticleReal;
 
+#if defined(WARPX_DIM_3D)
     RType* AMREX_RESTRICT m_x;
     RType* AMREX_RESTRICT m_y;
     RType* AMREX_RESTRICT m_z;
+#elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
+    RType* AMREX_RESTRICT m_x;
+    RType* AMREX_RESTRICT m_z;
+#elif defined(WARPX_DIM_1D_Z)
+    RType* AMREX_RESTRICT m_z;
+#endif
 
 #if defined(WARPX_DIM_RZ)
     RType* AMREX_RESTRICT m_theta;
