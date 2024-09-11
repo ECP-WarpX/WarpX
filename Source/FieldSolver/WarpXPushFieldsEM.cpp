@@ -461,7 +461,7 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
         amrex::ignore_unused(Dy);
 #endif
 
-    amrex::MultiFab& Jx = *current_fp[lev][0];
+    amrex::MultiFab& Jx = *m_fields.get("current_fp", Direction{0}, lev);
 
 
 #ifdef AMREX_USE_OMP
@@ -492,7 +492,7 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
 
 #if defined (WARPX_DIM_3D)
         // Subtract average of cumulative sum from Jy
-        amrex::MultiFab& Jy = *current_fp[lev][1];
+        amrex::MultiFab& Jy = *m_fields.get("current_fp", Direction{1}, lev);;
         for (amrex::MFIter mfi(Jy); mfi.isValid(); ++mfi)
         {
             const amrex::Box& bx = mfi.fabbox();
@@ -517,7 +517,7 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
 #endif
 
         // Subtract average of cumulative sum from Jz
-        amrex::MultiFab& Jz = *current_fp[lev][2];
+        amrex::MultiFab& Jz = *m_fields.get("current_fp", Direction{2}, lev);
         for (amrex::MFIter mfi(Jz); mfi.isValid(); ++mfi)
         {
             const amrex::Box& bx = mfi.fabbox();
@@ -915,17 +915,19 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
     const auto face_areas_lev = m_fields.get_mr_levels_alldirs("face_areas", finest_level)[lev];
     const auto edge_lengths_lev = m_fields.get_mr_levels_alldirs("edge_lengths", finest_level)[lev];
     if (patch_type == PatchType::fine) {
-        m_fdtd_solver_fp[lev]->EvolveE(m_fields.get_alldirs("Efield_fp",lev),
-                                       Bfield_fp[lev],
-                                       current_fp[lev], edge_lengths_lev,
-                                       face_areas_lev, ECTRhofield[lev],
-                                       m_fields.get("F_fp", lev), lev, a_dt );
+        m_fdtd_solver_fp[lev]->EvolveE( m_fields.get_alldirs("Efield_fp",lev),
+                                        Bfield_fp[lev],
+                                        m_fields.get_alldirs("current_fp", lev),
+                                        m_fields.get_alldirs("edge_lengths", lev),
+                                        face_areas_lev, ECTRhofield[lev],
+                                        m_fields.get("F_fp", lev), lev, a_dt );
     } else {
-        m_fdtd_solver_cp[lev]->EvolveE(m_fields.get_alldirs("Efield_cp",lev),
-                                       Bfield_cp[lev],
-                                       current_cp[lev], edge_lengths_lev,
-                                       face_areas_lev, ECTRhofield[lev],
-                                       m_fields.get("F_cp", lev), lev, a_dt );
+        m_fdtd_solver_cp[lev]->EvolveE( m_fields.get_alldirs("Efield_cp",lev),
+                                        Bfield_cp[lev],
+                                        m_fields.get_alldirs("current_cp", lev),
+                                        m_fields.get_alldirs("edge_lengths", lev),
+                                        face_areas_lev, ECTRhofield[lev],
+                                        m_fields.get("F_cp", lev), lev, a_dt );
     }
 
     // Evolve E field in PML cells
@@ -1099,7 +1101,7 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
     m_fdtd_solver_fp[lev]->MacroscopicEvolveE(
         m_fields.get_alldirs("Efield_fp", lev),
         Bfield_fp[lev],
-        current_fp[lev],
+        m_fields.get_alldirs("current_fp", lev),
         m_fields.get_alldirs("edge_lengths", lev),
         a_dt, m_macroscopic_properties);
 

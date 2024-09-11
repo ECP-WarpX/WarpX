@@ -352,7 +352,6 @@ WarpX::WarpX ()
         m_hybrid_pic_model = std::make_unique<HybridPICModel>(nlevs_max);
     }
 
-    current_cp.resize(nlevs_max);
     Efield_cp.resize(nlevs_max);
     Bfield_cp.resize(nlevs_max);
 
@@ -3326,10 +3325,18 @@ void
 WarpX::StoreCurrent (int lev)
 {
     using ablastr::fields::Direction;
+<<<<<<< HEAD
     for (int idim = 0; idim < 3; ++idim) {
         if (m_fields.get("current_store",Direction{idim},lev)) {
             MultiFab::Copy(*m_fields.get("current_store",Direction{idim},lev), *current_fp[lev][idim],
                            0, 0, 1, m_fields.get("current_store",Direction{idim},lev)->nGrowVect());
+=======
+
+    for (int idim = 0; idim < 3; ++idim) {
+        if (current_store[lev][idim]) {
+            MultiFab::Copy(*current_store[lev][idim], *m_fields.get("current_fp", Direction{idim}, lev),
+                           0, 0, 1, current_store[lev][idim]->nGrowVect());
+>>>>>>> 13525fccc0592c1d45b029cf653d5696da69ee32
         }
     }
 }
@@ -3338,9 +3345,19 @@ void
 WarpX::RestoreCurrent (int lev)
 {
     using ablastr::fields::Direction;
+<<<<<<< HEAD
     for (int idim = 0; idim < 3; ++idim) {
         if (m_fields.get("current_store",Direction{idim},lev)) {
             std::swap(current_fp[lev][idim], m_fields.get("current_store",Direction{idim},lev));
+=======
+
+    for (int idim = 0; idim < 3; ++idim) {
+        if (current_store[lev][idim]) {
+            std::swap(
+                *m_fields.get("current_fp", Direction{idim}, lev),
+                *current_store[lev][idim]
+            );
+>>>>>>> 13525fccc0592c1d45b029cf653d5696da69ee32
         }
     }
 }
@@ -3464,17 +3481,11 @@ WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, cons
         case FieldType::Bfield_fp :
             field_pointer = Bfield_fp[lev][direction].get();
             break;
-        case FieldType::current_fp :
-            field_pointer = current_fp[lev][direction].get();
-            break;
         case FieldType::Efield_cp :
             field_pointer = Efield_cp[lev][direction].get();
             break;
         case FieldType::Bfield_cp :
             field_pointer = Bfield_cp[lev][direction].get();
-            break;
-        case FieldType::current_cp :
-            field_pointer = current_cp[lev][direction].get();
             break;
         default:
             WARPX_ABORT_WITH_MESSAGE("Invalid field type");
@@ -3556,14 +3567,10 @@ WarpX::getMultiLevelField(warpx::fields::FieldType field_type) const
             return Efield_fp;
         case FieldType::Bfield_fp :
             return Bfield_fp;
-        case FieldType::current_fp :
-            return current_fp;
         case FieldType::Efield_cp :
             return Efield_cp;
         case FieldType::Bfield_cp :
             return Bfield_cp;
-        case FieldType::current_cp :
-            return current_cp;
         default:
             WARPX_ABORT_WITH_MESSAGE("Invalid field type");
             return Efield_fp;

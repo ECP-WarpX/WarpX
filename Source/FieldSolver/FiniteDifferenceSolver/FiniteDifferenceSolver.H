@@ -65,7 +65,7 @@ class FiniteDifferenceSolver
 
         void EvolveE ( ablastr::fields::VectorField Efield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
-                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
+                       ablastr::fields::VectorField const& Jfield,
                        ablastr::fields::VectorField const& edge_lengths,
                        ablastr::fields::VectorField const& face_areas,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
@@ -115,7 +115,7 @@ class FiniteDifferenceSolver
           */
         void MacroscopicEvolveE ( ablastr::fields::VectorField Efield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
-                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
+                      ablastr::fields::VectorField const& Jfield,
                       ablastr::fields::VectorField const& edge_lengths,
                       amrex::Real dt,
                       std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
@@ -154,10 +154,9 @@ class FiniteDifferenceSolver
           * \param[in] hybrid_model instance of the hybrid-PIC model
           * \param[in] solve_for_Faraday boolean flag for whether the E-field is solved to be used in Faraday's equation
           */
-        void HybridPICSolveE (
-                      ablastr::fields::VectorField& Efield,
-                      std::array< std::unique_ptr<amrex::MultiFab>, 3>& Jfield,
-                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield,
+        void HybridPICSolveE ( ablastr::fields::VectorField& Efield,
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > & Jfield,
+                      ablastr::fields::VectorField const& Jifield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jextfield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
                       amrex::MultiFab* const rhofield,
@@ -243,7 +242,7 @@ class FiniteDifferenceSolver
         void HybridPICSolveECylindrical (
             ablastr::fields::VectorField& Efield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jifield,
+            ablastr::fields::VectorField const& Jifield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jextfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
             amrex::MultiFab* const rhofield,
@@ -272,7 +271,7 @@ class FiniteDifferenceSolver
         void EvolveECartesian (
             ablastr::fields::VectorField& Efield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
+            ablastr::fields::VectorField const& Jfield,
             ablastr::fields::VectorField const& edge_lengths,
             amrex::MultiFab const* Ffield,
             int lev, amrex::Real dt );
@@ -317,7 +316,7 @@ class FiniteDifferenceSolver
         void MacroscopicEvolveECartesian (
             ablastr::fields::VectorField Efield,
             std::array< std::unique_ptr< amrex::MultiFab>, 3> const& Bfield,
-            std::array< std::unique_ptr< amrex::MultiFab>, 3> const& Jfield,
+            ablastr::fields::VectorField const& Jfield,
             ablastr::fields::VectorField const& edge_lengths,
             amrex::Real dt,
             std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
@@ -347,8 +346,8 @@ class FiniteDifferenceSolver
         template<typename T_Algo>
         void HybridPICSolveECartesian (
             ablastr::fields::VectorField& Efield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jifield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
+            ablastr::fields::VectorField const& Jifield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jextfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
             amrex::MultiFab* const rhofield,

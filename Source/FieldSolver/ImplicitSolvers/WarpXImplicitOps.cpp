@@ -336,14 +336,14 @@ WarpX::ImplicitComputeRHSE (int lev, PatchType patch_type, amrex::Real a_dt, War
     // c^2*dt*(curl(B^{n+theta} - mu0*J^{n+1/2})
     if (patch_type == PatchType::fine) { // JRA FIX
         //m_fdtd_solver_fp[lev]->EvolveE( a_Erhs_vec.getArrayVec()[lev], Bfield_fp[lev],
-        //                                current_fp[lev],
+        //                                m_fields.get_alldirs("current_fp", lev),
         //                                m_fields.get_alldirs("edge_lengths", lev),
         //                                m_fields.get_alldirs("face_areas", lev),
         //                                ECTRhofield[lev],
         //                                m_fields.get("F_fp", lev), lev, a_dt );
     } else {
         //m_fdtd_solver_cp[lev]->EvolveE( a_Erhs_vec.getArrayVec()[lev], Bfield_cp[lev],
-        //                                current_cp[lev],
+        //                                m_fields.get_alldirs("current_cp", lev),
         //                                m_fields.get_alldirs("edge_lengths", lev),
         //                                m_fields.get_alldirs("face_areas", lev),
         //                                ECTRhofield[lev],

@@ -39,7 +39,7 @@ using namespace ablastr::fields;
 void FiniteDifferenceSolver::MacroscopicEvolveE (
     ablastr::fields::VectorField Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
+    ablastr::fields::VectorField const& Jfield,
     VectorField const& edge_lengths,
     amrex::Real const dt,
     std::unique_ptr<MacroscopicProperties> const& macroscopic_properties)
@@ -102,7 +102,7 @@ template<typename T_Algo, typename T_MacroAlgo>
 void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
     ablastr::fields::VectorField Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
+    ablastr::fields::VectorField const& Jfield,
     ablastr::fields::VectorField const& edge_lengths,
     amrex::Real const dt,
     std::unique_ptr<MacroscopicProperties> const& macroscopic_properties)

@@ -21,6 +21,9 @@ using namespace amrex;
 
 void WarpX::HybridPICEvolveFields ()
 {
+    using ablastr::fields::Direction;
+    using ablastr::fields::va2vm;
+
     WARPX_PROFILE("WarpX::HybridPICEvolveFields()");
 
     // The below deposition is hard coded for a single level simulation
@@ -38,7 +41,10 @@ void WarpX::HybridPICEvolveFields ()
     if (do_fluid_species) {
         int const lev = 0;
         myfl->DepositCharge(lev, *m_fields.get("rho_fp", lev));
-        myfl->DepositCurrent(lev, *current_fp[lev][0], *current_fp[lev][1], *current_fp[lev][2]);
+        myfl->DepositCurrent(lev,
+            *m_fields.get("current_fp", Direction{0}, lev),
+            *m_fields.get("current_fp", Direction{1}, lev),
+            *m_fields.get("current_fp", Direction{2}, lev));
     }
 
     // Synchronize J and rho:
@@ -51,7 +57,7 @@ void WarpX::HybridPICEvolveFields ()
     // a nodal grid
     for (int lev = 0; lev <= finest_level; ++lev) {
         for (int idim = 0; idim < 3; ++idim) {
-            current_fp[lev][idim]->FillBoundary(Geom(lev).periodicity());
+            m_fields.get("current_fp", Direction{idim}, lev)->FillBoundary(Geom(lev).periodicity());
         }
     }
 
@@ -85,7 +91,7 @@ void WarpX::HybridPICEvolveFields ()
             MultiFab::LinComb(
                 *current_fp_temp[lev][idim],
                 0.5_rt, *current_fp_temp[lev][idim], 0,
-                0.5_rt, *current_fp[lev][idim], 0,
+                0.5_rt, *m_fields.get("current_fp", Direction{idim}, lev), 0,
                 0, 1, current_fp_temp[lev][idim]->nGrowVect()
             );
         }
@@ -99,7 +105,7 @@ void WarpX::HybridPICEvolveFields ()
         m_hybrid_pic_model->BfieldEvolveRK(
             Bfield_fp,
             m_fields.get_mr_levels_alldirs("Efield_fp", finest_level),
-            current_fp_temp, amrex::GetVecOfPtrs(rho_fp_temp),
+            va2vm(current_fp_temp), amrex::GetVecOfPtrs(rho_fp_temp),
             m_fields.get_mr_levels_alldirs("edge_lenghts", finest_level),
             0.5_rt/sub_steps*dt[0],
             DtType::FirstHalf, guard_cells.ng_FieldSolver,
@@ -125,7 +131,8 @@ void WarpX::HybridPICEvolveFields ()
         m_hybrid_pic_model->BfieldEvolveRK(
             Bfield_fp,
             m_fields.get_mr_levels_alldirs("Efield_fp", finest_level),
-            current_fp, amrex::GetVecOfPtrs(rho_fp_temp),
+            m_fields.get_mr_levels_alldirs("current_fp", finest_level),
+            amrex::GetVecOfPtrs(rho_fp_temp),
             m_fields.get_mr_levels_alldirs("edge_lenghts", finest_level),
             0.5_rt/sub_steps*dt[0],
             DtType::SecondHalf, guard_cells.ng_FieldSolver,
@@ -145,7 +152,7 @@ void WarpX::HybridPICEvolveFields ()
             MultiFab::LinComb(
                 *current_fp_temp[lev][idim],
                 -1._rt, *current_fp_temp[lev][idim], 0,
-                2._rt, *current_fp[lev][idim], 0,
+                2._rt, *m_fields.get("current_fp", Direction{idim}, lev), 0,
                 0, 1, current_fp_temp[lev][idim]->nGrowVect()
             );
         }
@@ -160,7 +167,7 @@ void WarpX::HybridPICEvolveFields ()
         m_fields.get_mr_levels_alldirs("edge_lengths", finest_level));
     m_hybrid_pic_model->HybridPICSolveE(
         m_fields.get_mr_levels_alldirs("Efield_fp", finest_level),
-        current_fp_temp, Bfield_fp, m_fields.get_mr_levels("rho_fp", finest_level),
+        va2vm(current_fp_temp), Bfield_fp, m_fields.get_mr_levels("rho_fp", finest_level),
         m_fields.get_mr_levels_alldirs("edge_lengths", finest_level), false
     );
     FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
@@ -174,7 +181,7 @@ void WarpX::HybridPICEvolveFields ()
         MultiFab::Copy(*rho_fp_temp[lev], *m_fields.get("rho_fp", lev),
                         0, 0, 1, rho_fp_temp[lev]->nGrowVect());
         for (int idim = 0; idim < 3; ++idim) {
-            MultiFab::Copy(*current_fp_temp[lev][idim], *current_fp[lev][idim],
+            MultiFab::Copy(*current_fp_temp[lev][idim], *m_fields.get("current_fp", Direction{idim}, lev),
                            0, 0, 1, current_fp_temp[lev][idim]->nGrowVect());
         }
     }

@@ -423,7 +423,7 @@ void HybridPICModel::CalculateCurrentAmpere (
 
 void HybridPICModel::HybridPICSolveE (
     ablastr::fields::MultiLevelVectorField Efield,
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
+    ablastr::fields::MultiLevelVectorField const& Jfield,
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Bfield,
     ablastr::fields::MultiLevelScalarField const& rhofield,
     ablastr::fields::MultiLevelVectorField const& edge_lengths,
@@ -441,7 +441,7 @@ void HybridPICModel::HybridPICSolveE (
 
 void HybridPICModel::HybridPICSolveE (
     ablastr::fields::VectorField Efield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
+    ablastr::fields::VectorField const& Jfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
     amrex::MultiFab* const rhofield,
     ablastr::fields::VectorField const& edge_lengths,
@@ -462,13 +462,15 @@ void HybridPICModel::HybridPICSolveE (
 
 void HybridPICModel::HybridPICSolveE (
     ablastr::fields::VectorField Efield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
+    ablastr::fields::VectorField const& Jfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
     amrex::MultiFab* const rhofield,
     ablastr::fields::VectorField const& edge_lengths,
     const int lev, PatchType patch_type,
     const bool solve_for_Faraday)
 {
+    using ablastr::fields::va2vm;
+
     auto& warpx = WarpX::GetInstance();
 
     // Solve E field in regular cells
@@ -535,7 +537,7 @@ void HybridPICModel::FillElectronPressureMF (
 void HybridPICModel::BfieldEvolveRK (
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
     ablastr::fields::MultiLevelVectorField Efield,
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
+    ablastr::fields::MultiLevelVectorField const& Jfield,
     ablastr::fields::MultiLevelScalarField const& rhofield,
     ablastr::fields::MultiLevelVectorField  const& edge_lengths,
     amrex::Real dt, DtType dt_type,
@@ -554,7 +556,7 @@ void HybridPICModel::BfieldEvolveRK (
 void HybridPICModel::BfieldEvolveRK (
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
     ablastr::fields::MultiLevelVectorField Efield,
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
+    ablastr::fields::MultiLevelVectorField const& Jfield,
     ablastr::fields::MultiLevelScalarField const& rhofield,
     ablastr::fields::MultiLevelVectorField const& edge_lengths,
     amrex::Real dt, int lev, DtType dt_type,
@@ -667,7 +669,7 @@ void HybridPICModel::BfieldEvolveRK (
 void HybridPICModel::FieldPush (
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
     ablastr::fields::MultiLevelVectorField& Efield,
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
+    ablastr::fields::MultiLevelVectorField const& Jfield,
     ablastr::fields::MultiLevelScalarField const& rhofield,
     ablastr::fields::MultiLevelVectorField const& edge_lengths,
     amrex::Real dt, DtType dt_type,

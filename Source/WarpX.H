@@ -1027,7 +1027,7 @@ public:
     MagnetostaticSolver::VectorPoissonBoundaryHandler m_vector_poisson_boundary_handler;
     void ComputeMagnetostaticField ();
     void AddMagnetostaticFieldLabFrame ();
-    void computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> >& curr,
+    void computeVectorPotential (ablastr::fields::MultiLevelVectorField const& curr,
                                  ablastr::fields::MultiLevelVectorField const& A,
                                  amrex::Real required_precision=amrex::Real(1.e-11),
                                  amrex::Real absolute_tolerance=amrex::Real(0.0),
@@ -1512,7 +1512,6 @@ private:
     //
 
     // Fine patch
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp;
 
@@ -1574,16 +1573,12 @@ private:
     // store fine patch
 
     // Coarse patch
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_cp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_cp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_cp;
 
     // Copy of the coarse aux
     amrex::Vector<std::unique_ptr<amrex::iMultiFab> > current_buffer_masks;
     amrex::Vector<std::unique_ptr<amrex::iMultiFab> > gather_buffer_masks;
-
-    // If charge/current deposition buffers are used
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_buf;
 
     /**
      * \brief

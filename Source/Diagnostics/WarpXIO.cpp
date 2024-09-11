@@ -371,11 +371,11 @@ WarpX::InitFromCheckpoint ()
             }
 
             if (is_synchronized) {
-                VisMF::Read(*current_cp[lev][0],
+                VisMF::Read(*m_fields.get("current_cp", Direction{0}, lev),
                             amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "jx_cp"));
-                VisMF::Read(*current_cp[lev][1],
+                VisMF::Read(*m_fields.get("current_cp", Direction{1}, lev),
                             amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "jy_cp"));
-                VisMF::Read(*current_cp[lev][2],
+                VisMF::Read(*m_fields.get("current_cp", Direction{2}, lev),
                             amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "jz_cp"));
             }
         }

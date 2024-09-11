@@ -137,6 +137,8 @@ WarpX::UpdateInjectionPosition (const amrex::Real a_dt)
 int
 WarpX::MoveWindow (const int step, bool move_j)
 {
+    using ablastr::fields::Direction;
+
     WARPX_PROFILE("WarpX::MoveWindow");
 
     using ablastr::fields::Direction;
@@ -254,7 +256,7 @@ WarpX::MoveWindow (const int step, bool move_j)
                    m_p_ext_field_params-> E_external_grid[dim], use_Eparser, Efield_parser);
             }
             if (move_j) {
-                shiftMF(*current_fp[lev][dim], geom[lev], num_shift, dir, lev, do_update_cost);
+                shiftMF(*m_fields.get("current_cp", Direction{dim}, lev), geom[lev], num_shift, dir, lev, do_update_cost);
             }
             if (pml[lev] && pml[lev]->ok()) {
                 const std::array<amrex::MultiFab*, 3>& pml_B = pml[lev]->GetB_fp();
@@ -285,7 +287,7 @@ WarpX::MoveWindow (const int step, bool move_j)
                         m_p_ext_field_params->E_external_grid[dim], use_Eparser, Efield_parser);
                 }
                 if (move_j) {
-                    shiftMF(*current_cp[lev][dim], geom[lev-1], num_shift_crse, dir, lev, do_update_cost);
+                    shiftMF(*m_fields.get("current_cp", Direction{dim}, lev), geom[lev-1], num_shift_crse, dir, lev, do_update_cost);
                 }
                 if (do_pml && pml[lev]->ok()) {
                     const std::array<amrex::MultiFab*, 3>& pml_B = pml[lev]->GetB_cp();

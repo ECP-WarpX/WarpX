@@ -74,6 +74,8 @@ WarpX::ComputeMagnetostaticField()
 void
 WarpX::AddMagnetostaticFieldLabFrame()
 {
+    using ablastr::fields::Direction;
+
     WARPX_PROFILE("WarpX::AddMagnetostaticFieldLabFrame");
 
     // Store the boundary conditions for the field solver if they haven't been
@@ -90,7 +92,7 @@ WarpX::AddMagnetostaticFieldLabFrame()
     // reset current_fp before depositing current density for this step
     for (int lev = 0; lev <= max_level; lev++) {
         for (int dim=0; dim < 3; dim++) {
-            current_fp[lev][dim]->setVal(0.);
+            m_fields.get("current_fp", Direction{dim}, lev)->setVal(0.);
         }
     }
 
@@ -106,9 +108,11 @@ WarpX::AddMagnetostaticFieldLabFrame()
 
 #ifdef WARPX_DIM_RZ
     for (int lev = 0; lev <= max_level; lev++) {
-        ApplyInverseVolumeScalingToCurrentDensity(current_fp[lev][0].get(),
-                                                  current_fp[lev][1].get(),
-                                                  current_fp[lev][2].get(), lev);
+        ApplyInverseVolumeScalingToCurrentDensity(
+            m_fields.get("current_fp", Direction{0}, lev),
+            m_fields.get("current_fp", Direction{1}, lev),
+            m_fields.get("current_fp", Direction{2}, lev),
+            lev );
     }
 #endif
 
@@ -127,7 +131,8 @@ WarpX::AddMagnetostaticFieldLabFrame()
     const amrex::Real magnetostatic_absolute_tolerance = self_fields_absolute_tolerance*PhysConst::c;
 
     computeVectorPotential(
-        current_fp, m_fields.get_mr_levels_alldirs("vector_potential_fp_nodal", finest_level),
+        m_fields.get_mr_levels_alldirs("current_fp", finest_level),
+        m_fields.get_mr_levels_alldirs("vector_potential_fp_nodal", finest_level),
         self_fields_required_precision, magnetostatic_absolute_tolerance, self_fields_max_iters,
         self_fields_verbosity);
 }
@@ -149,7 +154,7 @@ WarpX::AddMagnetostaticFieldLabFrame()
    \param[in] verbosity The verbosity setting for the MLMG solver
 */
 void
-WarpX::computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>,3>>& curr,
+WarpX::computeVectorPotential (const ablastr::fields::MultiLevelVectorField& curr,
                                ablastr::fields::MultiLevelVectorField const& A,
                                Real const required_precision,
                                Real absolute_tolerance,
@@ -162,9 +167,9 @@ WarpX::computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<
     amrex::Vector<amrex::Array<amrex::MultiFab*,3>> sorted_curr;
     amrex::Vector<amrex::Array<amrex::MultiFab*,3>> sorted_A;
     for (int lev = 0; lev <= finest_level; ++lev) {
-        sorted_curr.emplace_back(amrex::Array<amrex::MultiFab*,3> ({curr[lev][0].get(),
-                                                                    curr[lev][1].get(),
-                                                                    curr[lev][2].get()}));
+        sorted_curr.emplace_back(amrex::Array<amrex::MultiFab*,3> ({curr[lev][Direction{0}],
+                                                                    curr[lev][Direction{1}],
+                                                                    curr[lev][Direction{2}]}));
         sorted_A.emplace_back(amrex::Array<amrex::MultiFab*,3> ({A[lev][Direction{0}],
                                                                  A[lev][Direction{1}],
                                                                  A[lev][Direction{2}]}));
