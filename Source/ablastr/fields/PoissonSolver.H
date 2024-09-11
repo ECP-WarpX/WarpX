@@ -58,12 +58,12 @@
 namespace ablastr::fields {
 
 /** Compute the L-infinity norm of the charge density `rho` across all MR levels
- * to determine if `rho` is zero everywhere  
+ * to determine if `rho` is zero everywhere
  *
  * \param[in] rho The charge density a given species
  * \param[in] finest_level The most refined mesh refinement level
  * \param[in] absolute_tolerance The absolute convergence threshold for the MLMG solver
- * \param[out] max_norm_rho The maximum L-infinity norm of `rho` across all levels 
+ * \param[out] max_norm_rho The maximum L-infinity norm of `rho` across all levels
  */
 amrex::Real
 getMaxNormRho (amrex::Vector<amrex::MultiFab*> const & rho,
@@ -89,18 +89,18 @@ getMaxNormRho (amrex::Vector<amrex::MultiFab*> const & rho,
 }
 
 /** Interpolate the potential `phi` from level `lev` to `lev+1`
- * 
+ *
  * Needed to solve Poisson equation on `lev+1`
- * The coarser level `lev` provides both 
- * the boundary values and initial guess for `phi` 
+ * The coarser level `lev` provides both
+ * the boundary values and initial guess for `phi`
  * on the finer level `lev+1`
  *
- * \param[in] phi_lev  The potential on a given mesh refinement level `lev` 
+ * \param[in] phi_lev  The potential on a given mesh refinement level `lev`
  * \param[in] phi_lev_plus_one The potential on the next level `lev+1`
  * \param[in] geom_lev The geometry of level `lev`
  * \param[in] do_single_precision_comms perform communications in single precision
  * \param[in] refratio mesh refinement ratio between level `lev` and `lev+1`
- * \param[in] ncomp Number of components of the multifab (1) 
+ * \param[in] ncomp Number of components of the multifab (1)
  * \param[in] ng Number of ghost cells (1 if collocated, 0 otherwise)
  */
 void
@@ -407,7 +407,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
             }
         }
     } // loop over lev(els)
-} // computePhi 
+} // computePhi
 } // namespace ablastr::fields
 
 #endif // ABLASTR_POISSON_SOLVER_H
