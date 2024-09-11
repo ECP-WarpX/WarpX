@@ -9,6 +9,17 @@
 
 using namespace warpx::fields;
 
+WarpXSolverVec::~WarpXSolverVec ()
+{
+    for (auto & lvl : m_array_vec)
+    {
+        for (int i =0; i<3; ++i)
+        {
+            delete lvl[i];
+        }
+    }
+}
+
 void WarpXSolverVec::Define ( WarpX*     a_WarpX,
                               FieldType  a_array_type,
                               FieldType  a_scalar_type )
@@ -36,14 +47,15 @@ void WarpXSolverVec::Define ( WarpX*     a_WarpX,
             isFieldArray(m_array_type),
             "WarpXSolverVec::Define() called with array_type not an array field");
 
+        //m_array_vec.reserve(m_num_amr_levels);
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
             using arr_mf_type = std::array<const amrex::MultiFab* const, 3>;
             const arr_mf_type this_array = m_WarpX->getFieldPointerArray(m_array_type, lev);
             for (int n = 0; n < 3; n++) {
-                m_array_vec[lev][n] = std::make_unique<amrex::MultiFab>( this_array[n]->boxArray(),
-                                                                         this_array[n]->DistributionMap(),
-                                                                         this_array[n]->nComp(),
-                                                                         amrex::IntVect::TheZeroVector() );
+                m_array_vec[lev][n] = new amrex::MultiFab( this_array[n]->boxArray(),
+                                                           this_array[n]->DistributionMap(),
+                                                           this_array[n]->nComp(),
+                                                           amrex::IntVect::TheZeroVector() );
             }
         }
 
@@ -56,12 +68,13 @@ void WarpXSolverVec::Define ( WarpX*     a_WarpX,
             !isFieldArray(m_scalar_type),
             "WarpXSolverVec::Define() called with scalar_type not a scalar field ");
 
+        //m_scalar_vec.reserve(m_num_amr_levels);
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
             const amrex::MultiFab* this_mf = m_WarpX->getFieldPointer(m_scalar_type,lev,0);
-            m_scalar_vec[lev] = std::make_unique<amrex::MultiFab>( this_mf->boxArray(),
-                                                                   this_mf->DistributionMap(),
-                                                                   this_mf->nComp(),
-                                                                   amrex::IntVect::TheZeroVector() );
+            m_scalar_vec[lev] = new amrex::MultiFab( this_mf->boxArray(),
+                                                     this_mf->DistributionMap(),
+                                                     this_mf->nComp(),
+                                                     amrex::IntVect::TheZeroVector() );
         }
 
     }

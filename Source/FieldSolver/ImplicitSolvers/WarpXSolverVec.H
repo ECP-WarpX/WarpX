@@ -12,6 +12,7 @@
 
 #include <ablastr/utils/SignalHandling.H>
 #include <ablastr/warn_manager/WarnManager.H>
+#include <ablastr/fields/MultiFabRegister.H>
 
 #include <AMReX.H>
 #include <AMReX_Array.H>
@@ -59,7 +60,7 @@ public:
 
     WarpXSolverVec(const WarpXSolverVec&) = delete;
 
-    ~WarpXSolverVec() = default;
+    ~WarpXSolverVec();
 
     using value_type = amrex::Real;
     using RT = value_type;
@@ -94,13 +95,13 @@ public:
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
             if (m_array_type != warpx::fields::FieldType::None) {
                 for (int n = 0; n < 3; ++n) {
-                    const std::unique_ptr<amrex::MultiFab>& this_field = a_solver_vec.getArrayVec()[lev][n];
+                    const amrex::MultiFab* this_field = a_solver_vec.getArrayVec()[lev][n];
                     amrex::MultiFab::Copy( *m_array_vec[lev][n], *this_field, 0, 0, m_ncomp,
                                            amrex::IntVect::TheZeroVector() );
                 }
             }
             if (m_scalar_type != warpx::fields::FieldType::None) {
-                const std::unique_ptr<amrex::MultiFab>& this_scalar = a_solver_vec.getScalarVec()[lev];
+                const amrex::MultiFab* this_scalar = a_solver_vec.getScalarVec()[lev];
                 amrex::MultiFab::Copy( *m_scalar_vec[lev], *this_scalar, 0, 0, m_ncomp,
                                        amrex::IntVect::TheZeroVector() );
             }
@@ -270,22 +271,23 @@ public:
         return std::sqrt(norm);
     }
 
-    [[nodiscard]] const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& getArrayVec() const {return m_array_vec;}
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& getArrayVec() {return m_array_vec;}
+    [[nodiscard]] const ablastr::fields::MultiLevelVectorField& getArrayVec() const {return m_array_vec;}
+    ablastr::fields::MultiLevelVectorField& getArrayVec() {return m_array_vec;}
 
-    [[nodiscard]] const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& getScalarVec() const {return m_scalar_vec;}
-    amrex::Vector<std::unique_ptr<amrex::MultiFab>>& getScalarVec() {return m_scalar_vec;}
+    [[nodiscard]] const ablastr::fields::MultiLevelScalarField& getScalarVec() const {return m_scalar_vec;}
+    ablastr::fields::MultiLevelScalarField& getScalarVec() {return m_scalar_vec;}
 
     // solver vector types are type warpx::fields::FieldType
     [[nodiscard]] warpx::fields::FieldType getArrayVecType () const { return m_array_type; }
     [[nodiscard]] warpx::fields::FieldType getScalarVecType () const { return m_scalar_type; }
 
+
 private:
 
     bool m_is_defined = false;
 
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>> m_array_vec;
-    amrex::Vector<std::unique_ptr<amrex::MultiFab>> m_scalar_vec;
+    ablastr::fields::MultiLevelVectorField m_array_vec;
+    ablastr::fields::MultiLevelScalarField m_scalar_vec;
 
     warpx::fields::FieldType m_array_type = warpx::fields::FieldType::None;
     warpx::fields::FieldType m_scalar_type = warpx::fields::FieldType::None;
