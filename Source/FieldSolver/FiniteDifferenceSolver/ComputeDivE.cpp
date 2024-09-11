@@ -126,9 +126,10 @@ void FiniteDifferenceSolver::ComputeDivECartesian (
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::ComputeDivECylindrical (
-    const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
-    amrex::MultiFab& divEfield ) {
-
+    ablastr::fields::VectorField const & Efield,
+    amrex::MultiFab& divEfield
+)
+{
     // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())

@@ -187,7 +187,7 @@ public:
     std::array< amrex::ParserExecutor<4>, 3> m_J_external;
     bool m_external_field_has_time_dependence = false;
 
-    // Declare multifabs specifically needed for the hybrid-PIC model
+    // Declare multifabs specifically needed for the hybrid-PIC model (FIXME: remove me)
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_fp_temp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_temp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_ampere;
