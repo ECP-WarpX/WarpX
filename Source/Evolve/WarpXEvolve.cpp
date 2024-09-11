@@ -632,8 +632,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     // Initialize multi-J loop:
 
     // 1) Prepare E,B,F,G fields in spectral space
-    auto const Efield_fp_new = m_fields.get_mr_levels_alldirs("Efield_fp",max_level); // JRA, new to prevent shadow
-    PSATDForwardTransformEB(Efield_fp_new, Bfield_fp, Efield_cp, Bfield_cp);
+    PSATDForwardTransformEB(Efield_fp, Bfield_fp, Efield_cp, Bfield_cp);
     if (WarpX::do_dive_cleaning) { PSATDForwardTransformF(); }
     if (WarpX::do_divb_cleaning) { PSATDForwardTransformG(); }
 
@@ -737,7 +736,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         // (the relative time reached here coincides with an integer full time step)
         if (i_deposit == n_deposit-1)
         {
-            PSATDBackwardTransformEB(Efield_fp_new, Bfield_fp, Efield_cp, Bfield_cp);
+            PSATDBackwardTransformEB(Efield_fp, Bfield_fp, Efield_cp, Bfield_cp);
             if (WarpX::do_dive_cleaning) { PSATDBackwardTransformF(); }
             if (WarpX::do_divb_cleaning) { PSATDBackwardTransformG(); }
         }

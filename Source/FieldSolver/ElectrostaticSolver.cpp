@@ -115,7 +115,7 @@ WarpX::AddBoundaryField ()
     // Allocate fields for charge and potential
     const int num_levels = max_level + 1;
     Vector<std::unique_ptr<MultiFab> > rho(num_levels);
-    std::vector<MultiFab*> phi(num_levels);
+    ablastr::fields::MultiLevelScalarField phi(num_levels);
     // Use number of guard cells used for local deposition of rho
     const amrex::IntVect ng = guard_cells.ng_depos_rho;
     for (int lev = 0; lev <= max_level; lev++) {
@@ -174,7 +174,7 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     const int num_levels = max_level + 1;
     Vector<std::unique_ptr<MultiFab> > rho(num_levels);
     Vector<std::unique_ptr<MultiFab> > rho_coarse(num_levels); // Used in order to interpolate between levels
-    std::vector<MultiFab*> phi(num_levels);
+    ablastr::fields::MultiLevelScalarField phi(num_levels);
     // Use number of guard cells used for local deposition of rho
     const amrex::IntVect ng = guard_cells.ng_depos_rho;
     for (int lev = 0; lev <= max_level; lev++) {
@@ -331,8 +331,8 @@ WarpX::AddSpaceChargeFieldLabFrame ()
    \param[in] verbosity The verbosity setting for the MLMG solver
 */
 void
-WarpX::computePhi (const std::vector<amrex::MultiFab*>& rho,
-                   std::vector<amrex::MultiFab*>& phi,
+WarpX::computePhi (const ablastr::fields::MultiLevelScalarField& rho,
+                   ablastr::fields::MultiLevelScalarField& phi,
                    std::array<Real, 3> const beta,
                    Real const required_precision,
                    Real absolute_tolerance,
@@ -435,7 +435,7 @@ WarpX::computePhi (const std::vector<amrex::MultiFab*>& rho,
    \param[in] idim The dimension for which the Dirichlet boundary condition is set
 */
 void
-WarpX::setPhiBC ( std::vector<amrex::MultiFab*>& phi ) const
+WarpX::setPhiBC ( ablastr::fields::MultiLevelScalarField& phi ) const
 {
     // check if any dimension has non-periodic boundary conditions
     if (!m_poisson_boundary_handler.has_non_periodic) { return; }
@@ -517,7 +517,7 @@ WarpX::setPhiBC ( std::vector<amrex::MultiFab*>& phi ) const
 */
 void
 WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
-                 const std::vector<amrex::MultiFab*>& phi,
+                 const ablastr::fields::MultiLevelScalarField& phi,
                  std::array<amrex::Real, 3> const beta ) const
 {
     for (int lev = 0; lev <= max_level; lev++) {
@@ -694,7 +694,7 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 */
 void
 WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& B,
-                 const std::vector<amrex::MultiFab*>& phi,
+                 const ablastr::fields::MultiLevelScalarField& phi,
                  std::array<amrex::Real, 3> const beta ) const
 {
     // return early if beta is 0 since there will be no B-field
@@ -862,8 +862,8 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
    \param[out] phi The potential to be computed by this function
 */
 void
-WarpX::computePhiTriDiagonal (const std::vector<amrex::MultiFab*>& rho,
-                              std::vector<amrex::MultiFab*>& phi) const
+WarpX::computePhiTriDiagonal (const ablastr::fields::MultiLevelScalarField& rho,
+                              ablastr::fields::MultiLevelScalarField& phi) const
 {
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(max_level == 0,

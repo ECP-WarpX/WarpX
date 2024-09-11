@@ -377,8 +377,8 @@ void WarpX::PSATDBackwardTransformJ (
 }
 
 void WarpX::PSATDForwardTransformRho (
-    std::vector<amrex::MultiFab*> const & charge_fp,
-    std::vector<amrex::MultiFab*> const & charge_cp,
+    ablastr::fields::MultiLevelScalarField const & charge_fp,
+    ablastr::fields::MultiLevelScalarField const & charge_cp,
     const int icomp, const int dcomp, const bool apply_kspace_filter)
 {
     if (charge_fp[0] == nullptr) { return; }

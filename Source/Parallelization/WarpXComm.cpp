@@ -1163,8 +1163,8 @@ WarpX::SyncRho () {
 
 void
 WarpX::SyncRho (
-    const std::vector<amrex::MultiFab*>& charge_fp,
-    const std::vector<amrex::MultiFab*>& charge_cp,
+    const ablastr::fields::MultiLevelScalarField& charge_fp,
+    const ablastr::fields::MultiLevelScalarField& charge_cp,
     const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_buffer)
 {
     WARPX_PROFILE("WarpX::SyncRho()");
@@ -1440,8 +1440,8 @@ void WarpX::RestrictRhoFromFineToCoarsePatch ( const int lev )
 }
 
 void WarpX::ApplyFilterandSumBoundaryRho (
-    const std::vector<amrex::MultiFab*>& charge_fp,
-    const std::vector<amrex::MultiFab*>& charge_cp,
+    const ablastr::fields::MultiLevelScalarField& charge_fp,
+    const ablastr::fields::MultiLevelScalarField& charge_cp,
     const int lev,
     PatchType patch_type,
     const int icomp,
@@ -1486,8 +1486,8 @@ void WarpX::ApplyFilterandSumBoundaryRho (int /*lev*/, int glev, amrex::MultiFab
 * patch (and buffer region) of `lev+1`
 */
 void WarpX::AddRhoFromFineLevelandSumBoundary (
-    const std::vector<amrex::MultiFab*>& charge_fp,
-    const std::vector<amrex::MultiFab*>& charge_cp,
+    const ablastr::fields::MultiLevelScalarField& charge_fp,
+    const ablastr::fields::MultiLevelScalarField& charge_cp,
     const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_buffer,
     const int lev,
     const int icomp,

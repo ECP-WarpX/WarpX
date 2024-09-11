@@ -881,8 +881,8 @@ public:
     void SyncRho ();
 
     void SyncRho (
-        const std::vector<amrex::MultiFab*>& charge_fp,
-        const std::vector<amrex::MultiFab*>& charge_cp,
+        const ablastr::fields::MultiLevelScalarField& charge_fp,
+        const ablastr::fields::MultiLevelScalarField& charge_cp,
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_buffer);
 
     [[nodiscard]] amrex::Vector<int> getnsubsteps () const {return nsubsteps;}
@@ -1004,24 +1004,24 @@ public:
     void AddBoundaryField ();
     void AddSpaceChargeField (WarpXParticleContainer& pc);
     void AddSpaceChargeFieldLabFrame ();
-    void computePhi (const std::vector<amrex::MultiFab*>& rho,
-                     std::vector<amrex::MultiFab*>& phi,
+    void computePhi (const ablastr::fields::MultiLevelScalarField& rho,
+                     ablastr::fields::MultiLevelScalarField& phi,
                      std::array<amrex::Real, 3> beta = {{0,0,0}},
                      amrex::Real required_precision=amrex::Real(1.e-11),
                      amrex::Real absolute_tolerance=amrex::Real(0.0),
                      int max_iters=200,
                      int verbosity=2) const;
 
-    void setPhiBC (std::vector<amrex::MultiFab*>& phi ) const;
+    void setPhiBC (ablastr::fields::MultiLevelScalarField& phi ) const;
 
     void computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
-                   const std::vector<amrex::MultiFab*>& phi,
+                   const ablastr::fields::MultiLevelScalarField& phi,
                    std::array<amrex::Real, 3> beta = {{0,0,0}} ) const;
     void computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& B,
-                   const std::vector<amrex::MultiFab*>& phi,
+                   const ablastr::fields::MultiLevelScalarField& phi,
                    std::array<amrex::Real, 3> beta = {{0,0,0}} ) const;
-    void computePhiTriDiagonal (const std::vector<amrex::MultiFab*>& rho,
-                                      std::vector<amrex::MultiFab*>& phi) const;
+    void computePhiTriDiagonal (const ablastr::fields::MultiLevelScalarField& rho,
+                                      ablastr::fields::MultiLevelScalarField& phi) const;
 
     // Magnetostatic Solver Interface
     MagnetostaticSolver::VectorPoissonBoundaryHandler m_vector_poisson_boundary_handler;
@@ -1366,15 +1366,15 @@ private:
 
     void RestrictRhoFromFineToCoarsePatch (int lev );
     void ApplyFilterandSumBoundaryRho (
-        const std::vector<amrex::MultiFab*>& charge_fp,
-        const std::vector<amrex::MultiFab*>& charge_cp,
+        const ablastr::fields::MultiLevelScalarField& charge_fp,
+        const ablastr::fields::MultiLevelScalarField& charge_cp,
         int lev,
         PatchType patch_type,
         int icomp,
         int ncomp);
     void AddRhoFromFineLevelandSumBoundary (
-        const std::vector<amrex::MultiFab*>& charge_fp,
-        const std::vector<amrex::MultiFab*>& charge_cp,
+        const ablastr::fields::MultiLevelScalarField& charge_fp,
+        const ablastr::fields::MultiLevelScalarField& charge_cp,
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_buffer,
         int lev,
         int icomp,
@@ -1827,7 +1827,7 @@ private:
      *             storing the coarse patch magnetic field to be transformed
      */
     void PSATDForwardTransformEB (
-        const std::vector<std::map<amrex::MultiFab*>>& E_fp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_fp,
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_fp,
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_cp,
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_cp);
@@ -1909,8 +1909,8 @@ private:
      *                                (only used in RZ geometry to avoid double filtering)
      */
     void PSATDForwardTransformRho (
-        std::vector<amrex::MultiFab*> const & charge_fp,
-        std::vector<amrex::MultiFab*> const & charge_cp,
+        ablastr::fields::MultiLevelScalarField const & charge_fp,
+        ablastr::fields::MultiLevelScalarField const & charge_cp,
         int icomp, int dcomp, bool apply_kspace_filter=true);
 
     /**

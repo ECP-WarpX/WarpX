@@ -54,7 +54,7 @@ namespace ablastr::fields
     *
     * TODO: use amrex::Vector again for bound checks in debug mode
     */
-    using MultiLevelVectorField = std::vector<ablastr::utils::ConstMap<Direction, amrex::MultiFab*>>;
+    using MultiLevelVectorField = std::vector<VectorField>;
 
     /** title
      *
@@ -372,7 +372,7 @@ namespace ablastr::fields
      */
     MultiLevelVectorField
     va2vm (
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > const & old_vector_on_levels
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > old_vector_on_levels
     );
 
 } // namespace ablastr::fields
