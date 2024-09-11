@@ -2863,14 +2863,19 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     }
 #endif
 
-    const auto t_do_not_gather = do_not_gather;
-
+    enum save_previous_position_flags : int {dont_save_previous_position, do_save_previous_position};
+    enum gather_flags : int {no_gather, has_gather};
+    enum copy_flags : int {no_copy, has_copy};
     enum exteb_flags : int { no_exteb, has_exteb };
     enum qed_flags : int { no_qed, has_qed };
 
-    const int exteb_runtime_flag = getExternalEB.isNoOp() ? no_exteb : has_exteb;
+    const auto save_previous_position_flag =
+        (save_previous_position) ? do_save_previous_position : dont_save_previous_position;
+    const auto gather_flag = (do_not_gather) ? no_gather : has_gather;
+    const auto copy_flag = (do_copy) ? has_copy : no_copy;
+    const auto exteb_runtime_flag = getExternalEB.isNoOp() ? no_exteb : has_exteb;
 #ifdef WARPX_QED
-    const int qed_runtime_flag = (local_has_quantum_sync || do_sync) ? has_qed : no_qed;
+    const auto qed_runtime_flag = (local_has_quantum_sync || do_sync) ? has_qed : no_qed;
 #else
     int qed_runtime_flag = no_qed;
 #endif
@@ -2879,15 +2884,29 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     // improves performance when qed or external EB are not used by reducing
     // register pressure.
     amrex::ParallelFor(
-        TypeList<CompileTimeOptions<no_exteb,has_exteb>, CompileTimeOptions<no_qed  ,has_qed>>{},
-        {exteb_runtime_flag, qed_runtime_flag},
+        TypeList<
+            CompileTimeOptions<dont_save_previous_position,do_save_previous_position>,
+            CompileTimeOptions<no_gather,has_gather>,
+            CompileTimeOptions<no_copy,has_copy>,
+            CompileTimeOptions<no_exteb,has_exteb>,
+            CompileTimeOptions<no_qed  ,has_qed>>{},
+        {save_previous_position_flag,
+        gather_flag,
+        copy_flag,
+        exteb_runtime_flag,
+        qed_runtime_flag},
         np_to_push,
-        [=] AMREX_GPU_DEVICE (long ip, auto exteb_control, auto qed_control)
+        [=] AMREX_GPU_DEVICE (long ip,
+            const auto save_previous_position_control,
+            const auto gather_control,
+            const auto copy_control,
+            const auto exteb_control,
+            const auto qed_control)
     {
         amrex::ParticleReal xp, yp, zp;
         getPosition(ip, xp, yp, zp);
 
-        if (save_previous_position) {
+        if constexpr (save_previous_position_control == do_save_previous_position) {
 #if (AMREX_SPACEDIM >= 2)
             x_old[ip] = xp;
 #endif
@@ -2904,7 +2923,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         amrex::ParticleReal Byp = By_external_particle;
         amrex::ParticleReal Bzp = Bz_external_particle;
 
-        if(!t_do_not_gather){
+        if constexpr (gather_control == has_gather){
             // first gather E and B to the particle positions
             doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                            ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
@@ -2924,7 +2943,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         if (!do_sync)
 #endif
         {
-            if (do_copy) {
+            if constexpr (copy_control == has_copy) {
                 //  Copy the old x and u for the BTD
                 copyAttribs(ip);
             }
@@ -2944,7 +2963,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 #ifdef WARPX_QED
         else {
             if constexpr (qed_control == has_qed) {
-                if (do_copy) {
+                if constexpr (copy_control == has_copy) {
                     //  Copy the old x and u for the BTD
                     copyAttribs(ip);
                 }
