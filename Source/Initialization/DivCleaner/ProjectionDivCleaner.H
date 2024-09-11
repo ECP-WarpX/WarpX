@@ -64,7 +64,6 @@ protected:
     amrex::Real m_rtol;
     amrex::Real m_atol;
 
-    //warpx::fields::FieldType m_field_type;
     std::string m_field_name;
 
 public:
@@ -84,7 +83,6 @@ public:
     amrex::Gpu::DeviceVector<amrex::Real> m_stencil_coefs_z;
 
     // Default Constructor
-    //ProjectionDivCleaner (warpx::fields::FieldType a_field_type);
     ProjectionDivCleaner (std::string a_field_name);
 
     void ReadParameters ();
