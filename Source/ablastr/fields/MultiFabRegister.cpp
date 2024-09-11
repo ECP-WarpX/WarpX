@@ -461,6 +461,23 @@ namespace ablastr::fields
         );
     }
 
+    VectorField
+    a2m (
+        const std::array< std::unique_ptr<amrex::MultiFab>, 3 > & old_vectorfield
+    )
+    {
+        std::vector<Direction> all_dirs = {Direction{0}, Direction{1}, Direction{2}};
+
+        VectorField field_on_level;
+
+        // insert components
+        for (auto dir : {0, 1, 2})
+        {
+            field_on_level[Direction{dir}] = old_vectorfield[dir].get();
+        }
+        return field_on_level;
+    }
+
     MultiLevelVectorField
     va2vm (
         const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& old_vector_on_levels
