@@ -155,8 +155,8 @@ class FiniteDifferenceSolver
           * \param[in] solve_for_Faraday boolean flag for whether the E-field is solved to be used in Faraday's equation
           */
         void HybridPICSolveE ( std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
-                      std::array< std::unique_ptr<amrex::MultiFab>, 3>& Jfield,
-                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield,
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > & Jfield,
+                      ablastr::fields::VectorField const& Jifield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jextfield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
                       amrex::MultiFab* const rhofield,
@@ -345,8 +345,8 @@ class FiniteDifferenceSolver
         template<typename T_Algo>
         void HybridPICSolveECartesian (
             std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jifield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
+            ablastr::fields::VectorField const& Jifield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jextfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
             amrex::MultiFab* const rhofield,

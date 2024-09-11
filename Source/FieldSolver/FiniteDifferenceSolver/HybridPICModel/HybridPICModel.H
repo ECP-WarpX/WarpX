@@ -87,7 +87,7 @@ public:
      */
     void HybridPICSolveE (
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
+        ablastr::fields::MultiLevelVectorField const& Jfield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Bfield,
         ablastr::fields::MultiLevelScalarField const& rhofield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
@@ -95,7 +95,7 @@ public:
 
     void HybridPICSolveE (
         std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
-        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
+        ablastr::fields::VectorField const& Jfield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
         amrex::MultiFab* const rhofield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
@@ -103,7 +103,7 @@ public:
 
     void HybridPICSolveE (
         std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
-        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
+        ablastr::fields::VectorField const& Jfield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
         amrex::MultiFab* const rhofield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
@@ -112,7 +112,7 @@ public:
     void BfieldEvolveRK (
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
+        ablastr::fields::MultiLevelVectorField const& Jfield,
         ablastr::fields::MultiLevelScalarField const& rhofield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
         amrex::Real dt, DtType a_dt_type,
@@ -121,7 +121,7 @@ public:
     void BfieldEvolveRK (
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
+        ablastr::fields::MultiLevelVectorField const& Jfield,
         ablastr::fields::MultiLevelScalarField const& rhofield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
         amrex::Real dt, int lev, DtType dt_type,
@@ -130,7 +130,7 @@ public:
     void FieldPush (
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
+        ablastr::fields::MultiLevelVectorField const& Jfield,
         ablastr::fields::MultiLevelScalarField const& rhofield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
         amrex::Real dt, DtType dt_type,

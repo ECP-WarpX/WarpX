@@ -165,9 +165,9 @@ WarpX::computeVectorPotential (const ablastr::fields::MultiLevelVectorField& cur
     amrex::Vector<amrex::Array<amrex::MultiFab*,3>> sorted_curr;
     amrex::Vector<amrex::Array<amrex::MultiFab*,3>> sorted_A;
     for (int lev = 0; lev <= finest_level; ++lev) {
-        sorted_curr.emplace_back(amrex::Array<amrex::MultiFab*,3> ({curr[lev][0].get(),
-                                                                    curr[lev][1].get(),
-                                                                    curr[lev][2].get()}));
+        sorted_curr.emplace_back(amrex::Array<amrex::MultiFab*,3> ({curr[lev][Direction{0}],
+                                                                    curr[lev][Direction{1}],
+                                                                    curr[lev][Direction{2}]}));
         sorted_A.emplace_back(amrex::Array<amrex::MultiFab*,3> ({A[lev][Direction{0}],
                                                                  A[lev][Direction{1}],
                                                                  A[lev][Direction{2}]}));

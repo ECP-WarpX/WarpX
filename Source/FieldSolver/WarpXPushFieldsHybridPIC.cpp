@@ -22,6 +22,7 @@ using namespace amrex;
 void WarpX::HybridPICEvolveFields ()
 {
     using ablastr::fields::Direction;
+    using ablastr::fields::va2vm;
 
     WARPX_PROFILE("WarpX::HybridPICEvolveFields()");
 
@@ -89,7 +90,7 @@ void WarpX::HybridPICEvolveFields ()
             MultiFab::LinComb(
                 *current_fp_temp[lev][idim],
                 0.5_rt, *current_fp_temp[lev][idim], 0,
-                0.5_rt, *current_fp[lev][idim], 0,
+                0.5_rt, *m_fields.get("current_fp", Direction{idim}, lev), 0,
                 0, 1, current_fp_temp[lev][idim]->nGrowVect()
             );
         }
@@ -101,7 +102,7 @@ void WarpX::HybridPICEvolveFields ()
     for (int sub_step = 0; sub_step < sub_steps; sub_step++)
     {
         m_hybrid_pic_model->BfieldEvolveRK(
-            Bfield_fp, Efield_fp, current_fp_temp, amrex::GetVecOfPtrs(rho_fp_temp),
+            Bfield_fp, Efield_fp, va2vm(current_fp_temp), amrex::GetVecOfPtrs(rho_fp_temp),
             m_edge_lengths, 0.5_rt/sub_steps*dt[0],
             DtType::FirstHalf, guard_cells.ng_FieldSolver,
             WarpX::sync_nodal_points
@@ -124,7 +125,9 @@ void WarpX::HybridPICEvolveFields ()
     for (int sub_step = 0; sub_step < sub_steps; sub_step++)
     {
         m_hybrid_pic_model->BfieldEvolveRK(
-            Bfield_fp, Efield_fp, current_fp, amrex::GetVecOfPtrs(rho_fp_temp),
+            Bfield_fp, Efield_fp,
+            m_fields.get_mr_levels_alldirs("current_fp", finest_level),
+            amrex::GetVecOfPtrs(rho_fp_temp),
             m_edge_lengths, 0.5_rt/sub_steps*dt[0],
             DtType::SecondHalf, guard_cells.ng_FieldSolver,
             WarpX::sync_nodal_points
@@ -143,7 +146,7 @@ void WarpX::HybridPICEvolveFields ()
             MultiFab::LinComb(
                 *current_fp_temp[lev][idim],
                 -1._rt, *current_fp_temp[lev][idim], 0,
-                2._rt, *current_fp[lev][idim], 0,
+                2._rt, *m_fields.get("current_fp", Direction{idim}, lev), 0,
                 0, 1, current_fp_temp[lev][idim]->nGrowVect()
             );
         }
@@ -155,7 +158,7 @@ void WarpX::HybridPICEvolveFields ()
     // Update the E field to t=n+1 using the extrapolated J_i^n+1 value
     m_hybrid_pic_model->CalculateCurrentAmpere(Bfield_fp, m_edge_lengths);
     m_hybrid_pic_model->HybridPICSolveE(
-        Efield_fp, current_fp_temp, Bfield_fp, m_fields.get_mr_levels("rho_fp", finest_level), m_edge_lengths, false
+        Efield_fp, va2vm(current_fp_temp), Bfield_fp, m_fields.get_mr_levels("rho_fp", finest_level), m_edge_lengths, false
     );
     FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
@@ -168,7 +171,7 @@ void WarpX::HybridPICEvolveFields ()
         MultiFab::Copy(*rho_fp_temp[lev], *m_fields.get("rho_fp", lev),
                         0, 0, 1, rho_fp_temp[lev]->nGrowVect());
         for (int idim = 0; idim < 3; ++idim) {
-            MultiFab::Copy(*current_fp_temp[lev][idim], *current_fp[lev][idim],
+            MultiFab::Copy(*current_fp_temp[lev][idim], *m_fields.get("current_fp", Direction{idim}, lev),
                            0, 0, 1, current_fp_temp[lev][idim]->nGrowVect());
         }
     }
