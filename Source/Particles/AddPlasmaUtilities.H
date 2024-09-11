@@ -140,9 +140,9 @@ struct PlasmaParserHelper
         amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, m_pa_user_real_pinned.begin(),
                               m_pa_user_real_pinned.end(), m_d_pa_user_real.begin());
         amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, wrapper.m_user_int_attrib_parserexec_pinned.begin(),
-                              m_user_int_attrib_parserexec_pinned.end(), m_d_user_int_attrib_parserexec.begin());
+                              wrapper.m_user_int_attrib_parserexec_pinned.end(), m_d_user_int_attrib_parserexec.begin());
         amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, wrapper.m_user_real_attrib_parserexec_pinned.begin(),
-                              m_user_real_attrib_parserexec_pinned.end(), m_d_user_real_attrib_parserexec.begin());
+                              wrapper.m_user_real_attrib_parserexec_pinned.end(), m_d_user_real_attrib_parserexec.begin());
 #endif
     }
 
