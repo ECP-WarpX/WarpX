@@ -433,6 +433,15 @@ namespace ablastr::fields
         const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& old_vector_on_levels
     );
 
+    /** TODO: temporary, remove me
+     *
+     * @return
+     */
+    MultiLevelScalarField
+    va2vm (
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& old_scalar_on_levels
+    );
+
 } // namespace ablastr::fields
 
 #endif  // ABLASTR_FIELDS_MF_REGISTER_H

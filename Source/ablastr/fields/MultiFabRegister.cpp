@@ -486,4 +486,23 @@ namespace ablastr::fields
         }
         return field_on_level;
     }
+
+    MultiLevelScalarField
+    va2vm (
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& old_scalar_on_levels
+    )
+    {
+        int const finest_level = old_scalar_on_levels.size() - 1u;
+
+        MultiLevelScalarField field_on_level;
+        field_on_level.reserve(finest_level+1);
+
+        for (int lvl = 0; lvl <= finest_level; lvl++)
+        {
+            // insert a scalar field on a level
+            field_on_level.push_back(ScalarField{old_scalar_on_levels[lvl].get()});
+
+        }
+        return field_on_level;
+    }
 } // namespace ablastr::fields
