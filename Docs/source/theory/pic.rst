@@ -471,17 +471,17 @@ Final discretized equations write as:
    \begin{align}
    \begin{split}
    {\mathbf{\tilde{E}}}^{n+(\ell+1)/m} & = C{\mathbf{\tilde{J}}}^{n+\ell/m}+ic^2\frac{S}{ck}\mathbf{k}\times{\mathbf{\tilde{J}}}^{n+\ell/m}+ic^2\frac{S}{ck}\hat{F}^{n+\ell/m}\mathbf{k} \\
-   &+ \frac{1}{\varepsilon_0 ck}\left(Y_3\mathbf{a_J} + Y_2\mathbf{b_J} - S\mathbf{c_J}\right) 
-   + \frac{ic^2}{\varepsilon_0 c^2k^2}\left({Y_1}a_{\rho}-Y_{5}b_{\rho}-Y_{4}c_{\rho}\right)\mathbf{k} 
+   &+ \frac{1}{\varepsilon_0 ck}\left(Y_3\mathbf{a_J} + Y_2\mathbf{b_J} - S\mathbf{c_J}\right)
+   + \frac{ic^2}{\varepsilon_0 c^2k^2}\left({Y_1}a_{\rho}-Y_{5}b_{\rho}-Y_{4}c_{\rho}\right)\mathbf{k}
    \\[4pt]
    \end{split}
    \\[4pt]
       \begin{split}
-         {\mathbf{\tilde{B}}}^{n+(\ell+1)/m} & = C {\mathbf{\tilde{B}}}^{n+\ell/m}-i\frac{S}{ck}\mathbf{k}\times{\mathbf{\tilde{E}}}^{n+\ell/m}-\frac{i}{\eps_0 c^2k^2}\kb\times\left(Y_1\mathbf{a_J} -Y_5\mathbf{b_J} -Y_4\mathbf{c_J} \right) 
+         {\mathbf{\tilde{B}}}^{n+(\ell+1)/m} & = C {\mathbf{\tilde{B}}}^{n+\ell/m}-i\frac{S}{ck}\mathbf{k}\times{\mathbf{\tilde{E}}}^{n+\ell/m}-\frac{i}{\eps_0 c^2k^2}\kb\times\left(Y_1\mathbf{a_J} -Y_5\mathbf{b_J} -Y_4\mathbf{c_J} \right)
       \end{split}
    \\[4pt]
    ..    \begin{split}
-   ..       {{\tilde{F}}}^{n+(\ell+1)/m} & = C \tilde{F}^{n+\ell/m}+i\frac{S}{ck}\mathbf{k} \cdot\wh {\mathbf{\tilde{E}}}^{n+\ell/m}+\frac{i}{\eps_0 c^2k^2}\kb\cdot\left(Y_1\mathbf{a_J}-Y_5\mathbf{b_J}-Y_4\mathbf{c_J}\right) 
+   ..       {{\tilde{F}}}^{n+(\ell+1)/m} & = C \tilde{F}^{n+\ell/m}+i\frac{S}{ck}\mathbf{k} \cdot\wh {\mathbf{\tilde{E}}}^{n+\ell/m}+\frac{i}{\eps_0 c^2k^2}\kb\cdot\left(Y_1\mathbf{a_J}-Y_5\mathbf{b_J}-Y_4\mathbf{c_J}\right)
    .. &+ \frac{1}{\varepsilon_0 ck}\left({Y_3}a_{\rho}+{Y_2}b_{\rho}-Sc_{\rho}\right)
    ..    \end{split}
    \end{align}
