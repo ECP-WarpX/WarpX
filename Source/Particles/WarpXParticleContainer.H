@@ -25,6 +25,8 @@
 #include "MultiParticleContainer_fwd.H"
 #include "NamedComponentParticleContainer.H"
 
+#include <ablastr/fields/MultiFabRegister.H>
+
 #include <AMReX_Array.H>
 #include <AMReX_FArrayBox.H>
 #include <AMReX_GpuAllocators.H>
@@ -212,7 +214,7 @@ public:
      * \param[in] interpolate_across_levels whether to average down from the fine patch to the coarse patch
      * \param[in] icomp component of the MultiFab where rho is deposited (old, new)
      */
-    void DepositCharge (const std::vector<amrex::MultiFab*>& rho,
+    void DepositCharge (const ablastr::fields::MultiLevelScalarField& rho,
                         bool local = false, bool reset = false,
                         bool apply_boundary_and_scale_volume = false,
                         bool interpolate_across_levels = true,

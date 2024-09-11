@@ -89,7 +89,7 @@ public:
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Bfield,
-        std::vector<amrex::MultiFab*> const& rhofield,
+        ablastr::fields::MultiLevelScalarField const& rhofield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
         bool solve_for_Faraday);
 
@@ -113,7 +113,7 @@ public:
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
-        std::vector<amrex::MultiFab*> const& rhofield,
+        ablastr::fields::MultiLevelScalarField const& rhofield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
         amrex::Real dt, DtType a_dt_type,
         amrex::IntVect ng, std::optional<bool> nodal_sync);
@@ -122,7 +122,7 @@ public:
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
-        std::vector<amrex::MultiFab*> const& rhofield,
+        ablastr::fields::MultiLevelScalarField const& rhofield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
         amrex::Real dt, int lev, DtType dt_type,
         amrex::IntVect ng, std::optional<bool> nodal_sync);
@@ -131,7 +131,7 @@ public:
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
-        std::vector<amrex::MultiFab*> const& rhofield,
+        ablastr::fields::MultiLevelScalarField const& rhofield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
         amrex::Real dt, DtType dt_type,
         amrex::IntVect ng, std::optional<bool> nodal_sync);

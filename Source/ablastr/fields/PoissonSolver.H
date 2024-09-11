@@ -97,7 +97,7 @@ template<
 >
 void
 computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
-            std::vector<amrex::MultiFab*> & phi,
+            ablastr::fields::MultiLevelScalarField & phi,
             std::array<amrex::Real, 3> const beta,
             amrex::Real relative_tolerance,
             amrex::Real absolute_tolerance,
