@@ -98,10 +98,10 @@ public:
         const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
         amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
         std::array<Real, 3> const beta = {{0,0,0}},
-        amrex::Real required_precision=amrex::Real(1.e-11),
-        amrex::Real absolute_tolerance=amrex::Real(0._rt),
-        int const max_iters=200,
-        int const verbosity=2
+        amrex::Real required_precision,
+        amrex::Real absolute_tolerance,
+        int const max_iters,
+        int const verbosity
     ) const;
 
     /**
