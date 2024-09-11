@@ -171,6 +171,24 @@ namespace ablastr::fields
             std::optional<const amrex::Real> initial_value = std::nullopt
         );
 
+        /** Create an alias
+         *
+         * @param new_name new name
+         * @param alias_name owner to alias to
+         * @param dir ...
+         * @param level ...
+         * @param initial_value ...
+         * @return
+         */
+        amrex::MultiFab*
+        alias_init (
+                std::string new_name,
+                std::string alias_name,
+                Direction dir,
+                int level,
+                std::optional<const amrex::Real> initial_value = std::nullopt
+        );
+
         /** title
          *
          * body body
