@@ -242,7 +242,7 @@ class FiniteDifferenceSolver
         void HybridPICSolveECylindrical (
             std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jifield,
+            ablastr::fields::VectorField const& Jifield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jextfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
             amrex::MultiFab* const rhofield,

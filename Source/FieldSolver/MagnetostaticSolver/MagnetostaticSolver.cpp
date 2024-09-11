@@ -108,9 +108,11 @@ WarpX::AddMagnetostaticFieldLabFrame()
 
 #ifdef WARPX_DIM_RZ
     for (int lev = 0; lev <= max_level; lev++) {
-        ApplyInverseVolumeScalingToCurrentDensity(current_fp[lev][0].get(),
-                                                  current_fp[lev][1].get(),
-                                                  current_fp[lev][2].get(), lev);
+        ApplyInverseVolumeScalingToCurrentDensity(
+            m_fields.get("current_fp", Direction{0}, lev),
+            m_fields.get("current_fp", Direction{1}, lev),
+            m_fields.get("current_fp", Direction{2}, lev),
+            lev );
     }
 #endif
 

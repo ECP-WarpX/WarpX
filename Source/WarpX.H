@@ -1589,7 +1589,6 @@ private:
     amrex::Vector<std::unique_ptr<amrex::iMultiFab> > gather_buffer_masks;
 
     // If charge/current deposition buffers are used
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_buf;
     amrex::Vector<std::unique_ptr<amrex::MultiFab> > charge_buf;
 
     /**

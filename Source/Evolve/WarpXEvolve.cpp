@@ -1138,7 +1138,7 @@ WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type,
             m_fields.get("current_fp", Direction{1}, lev),
             m_fields.get("current_fp", Direction{2}, lev),
             lev);
-        if (current_buf[lev][0].get()) {
+        if (m_fields.has("current_buf", Direction{0}, lev)) {
             ApplyInverseVolumeScalingToCurrentDensity(
                 m_fields.get("current_buf", Direction{0}, lev),
                 m_fields.get("current_buf", Direction{1}, lev),
