@@ -756,7 +756,10 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         // (the relative time reached here coincides with an integer full time step)
         if (i_deposit == n_deposit-1)
         {
-            PSATDBackwardTransformEB(Efield_fp, Bfield_fp, Efield_cp, Bfield_cp);
+            PSATDBackwardTransformEB(m_fields.get_mr_levels_alldirs("Efield_fp", max_level),
+                                     m_fields.get_mr_levels_alldirs("Bfield_fp", max_level),
+                                     m_fields.get_mr_levels_alldirs("Efield_cp", max_level),
+                                     m_fields.get_mr_levels_alldirs("Bfield_cp", max_level));
             if (WarpX::do_dive_cleaning) { PSATDBackwardTransformF(); }
             if (WarpX::do_divb_cleaning) { PSATDBackwardTransformG(); }
         }
