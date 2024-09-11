@@ -335,7 +335,7 @@ WarpX::MarkCells(){
     WARPX_ABORT_WITH_MESSAGE(
         "MarkCells: Only implemented in 2D3V and 3D3V");
 #endif
-        for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
+        for (amrex::MFIter mfi(*m_fields.get("Bfield_XX",Direction{idim},maxLevel())); mfi.isValid(); ++mfi) {
             auto* face_areas_idim_max_lev =
                 m_fields.get("face_areas", Direction{idim}, maxLevel());
 
