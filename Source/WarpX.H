@@ -1581,9 +1581,6 @@ private:
     // store fine patch
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_store;
 
-    // Nodal MultiFab for nodal current deposition if warpx.do_current_centering = 1
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>> current_fp_nodal;
-
     // Coarse patch
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_cp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_cp;

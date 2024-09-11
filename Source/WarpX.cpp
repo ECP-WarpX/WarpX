@@ -354,11 +354,6 @@ WarpX::WarpX ()
 
     current_store.resize(nlevs_max);
 
-    if (do_current_centering)
-    {
-        current_fp_nodal.resize(nlevs_max);
-    }
-
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
     {
         // Create hybrid-PIC model object if needed
@@ -3488,9 +3483,6 @@ WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, cons
         case FieldType::current_fp :
             field_pointer = current_fp[lev][direction].get();
             break;
-        case FieldType::current_fp_nodal :
-            field_pointer = current_fp_nodal[lev][direction].get();
-            break;
         case FieldType::Efield_cp :
             field_pointer = Efield_cp[lev][direction].get();
             break;
@@ -3602,8 +3594,6 @@ WarpX::getMultiLevelField(warpx::fields::FieldType field_type) const
             return Bfield_fp_external;
         case FieldType::current_fp :
             return current_fp;
-        case FieldType::current_fp_nodal :
-            return current_fp_nodal;
         case FieldType::Efield_cp :
             return Efield_cp;
         case FieldType::Bfield_cp :
