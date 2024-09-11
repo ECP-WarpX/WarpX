@@ -10,11 +10,13 @@
 
 #include "ablastr/utils/ConstMap.H"
 
+#include <AMReX_Array.H>
 #include <AMReX_BoxArray.H>
 #include <AMReX_DistributionMapping.H>
 #include <AMReX_IntVect.H>
 #include <AMReX_MultiFab.H>
 
+#include <array>
 #include <map>
 #include <memory>
 #include <optional>
@@ -38,23 +40,23 @@ namespace ablastr::fields
         {
             return other.dir < this->dir;
         }
+
+        /* TODO: just temporary int compatibility */
+        operator int() { return dir; }
     };
 
     /** A vector field of three MultiFab
      */
-    using VectorField = ablastr::utils::ConstMap<Direction, amrex::MultiFab*>;
+    //using VectorField = ablastr::utils::ConstMap<Direction, amrex::MultiFab*>;
+    using VectorField = std::array<amrex::MultiFab*, 3>;
 
     /** A multi-level scalar field
-     *
-     * TODO: use amrex::Vector again for bound checks in debug mode
      */
-    using MultiLevelScalarField = std::vector<amrex::MultiFab*>;
+    using MultiLevelScalarField = amrex::Vector<amrex::MultiFab*>;
 
     /** A multi-level vector field
-    *
-    * TODO: use amrex::Vector again for bound checks in debug mode
     */
-    using MultiLevelVectorField = std::vector<VectorField>;
+    using MultiLevelVectorField = amrex::Vector<VectorField>;
 
     /** title
      *

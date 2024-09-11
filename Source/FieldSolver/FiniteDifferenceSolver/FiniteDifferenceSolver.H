@@ -88,8 +88,8 @@ class FiniteDifferenceSolver
                             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
                             int lev );
 
-        void ApplySilverMuellerBoundary(
-            std::map< ablastr::fields::Direction, amrex::MultiFab* >& Efield,
+        void ApplySilverMuellerBoundary (
+            ablastr::fields::VectorField & Efield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
             amrex::Box domain_box,
             amrex::Real dt,

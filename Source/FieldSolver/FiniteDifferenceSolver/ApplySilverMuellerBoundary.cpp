@@ -35,7 +35,7 @@ using namespace amrex;
  * \brief Update the B field at the boundary, using the Silver-Mueller condition
  */
 void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
-    std::map< ablastr::fields::Direction, amrex::MultiFab* >& Efield,
+    ablastr::fields::VectorField& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
     amrex::Box domain_box,
     amrex::Real const dt,
