@@ -32,7 +32,7 @@ void WarpX::HybridPICEvolveFields ()
     // Perform charge deposition in component 0 of rho_fp at t_{n+1}.
     mypc->DepositCharge(m_fields.get_mr_levels("rho_fp", finest_level), 0._rt);
     // Perform current deposition at t_{n+1/2}.
-    mypc->DepositCurrent(current_fp, dt[0], -0.5_rt * dt[0]);
+    mypc->DepositCurrent(m_fields.get_mr_levels_alldirs("current_fp", finest_level), dt[0], -0.5_rt * dt[0]);
 
     // Deposit cold-relativistic fluid charge and current
     if (do_fluid_species) {
@@ -171,10 +171,12 @@ void WarpX::HybridPICEvolveFields ()
 
 void WarpX::HybridPICDepositInitialRhoAndJ ()
 {
+    using ablastr::fields::va2vm;
+
     auto& rho_fp_temp = m_hybrid_pic_model->rho_fp_temp;
     auto& current_fp_temp = m_hybrid_pic_model->current_fp_temp;
     mypc->DepositCharge(amrex::GetVecOfPtrs(rho_fp_temp), 0._rt);
-    mypc->DepositCurrent(current_fp_temp, dt[0], 0._rt);
+    mypc->DepositCurrent( va2vm(current_fp_temp), dt[0], 0._rt);
     SyncRho(amrex::GetVecOfPtrs(rho_fp_temp), m_fields.get_mr_levels("rho_cp", finest_level), charge_buf);
     SyncCurrent(
         m_fields.get_mr_levels_alldirs("current_fp", finest_level),

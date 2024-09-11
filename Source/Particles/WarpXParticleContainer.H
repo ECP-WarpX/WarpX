@@ -201,7 +201,7 @@ public:
      *                          the particle position will be temporarily modified to match
      *                          the time of the deposition.
      */
-    void DepositCurrent (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
+    void DepositCurrent (ablastr::fields::MultiLevelVectorField const & J,
                          amrex::Real dt, amrex::Real relative_time);
 
     /**

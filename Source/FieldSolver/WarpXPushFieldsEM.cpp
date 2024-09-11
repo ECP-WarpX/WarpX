@@ -773,12 +773,18 @@ WarpX::PushPSATD ()
         PSATDForwardTransformRho(rho_fp, rho_cp, 1, rho_new);
     }
 
+    auto Efield_fp = m_fields.get_mr_levels_alldirs("Efield_fp", finest_level);
+    auto Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
+    auto Efield_cp = m_fields.get_mr_levels_alldirs("Efield_cp", finest_level);
+    auto Bfield_cp = m_fields.get_mr_levels_alldirs("Bfield_cp", finest_level);
+
     // FFT of E and B
     PSATDForwardTransformEB(
-        m_fields.get_mr_levels_alldirs("Efield_fp", finest_level),
-        m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level),
-        m_fields.get_mr_levels_alldirs("Efield_cp", finest_level),
-        m_fields.get_mr_levels_alldirs("Bfield_cp", finest_level) );
+        Efield_fp,
+        Bfield_fp,
+        Efield_cp,
+        Bfield_cp
+    );
 
 #ifdef WARPX_DIM_RZ
     if (pml_rz[0]) { pml_rz[0]->PushPSATD(0); }
@@ -794,6 +800,10 @@ WarpX::PushPSATD ()
     // Inverse FFT of E, B, F, and G
     PSATDBackwardTransformEB(Efield_fp, Bfield_fp, Efield_cp, Bfield_cp);
     if (WarpX::fft_do_time_averaging) {
+        auto Efield_avg_fp = m_fields.get_mr_levels_alldirs("Efield_avg_fp", finest_level);
+        auto Bfield_avg_fp = m_fields.get_mr_levels_alldirs("Bfield_avg_fp", finest_level);
+        auto Efield_avg_cp = m_fields.get_mr_levels_alldirs("Efield_avg_cp", finest_level);
+        auto Bfield_avg_cp = m_fields.get_mr_levels_alldirs("Bfield_avg_cp", finest_level);
         PSATDBackwardTransformEBavg(Efield_avg_fp, Bfield_avg_fp, Efield_avg_cp, Bfield_avg_cp);
     }
     if (WarpX::do_dive_cleaning) { PSATDBackwardTransformF(); }

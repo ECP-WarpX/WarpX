@@ -685,8 +685,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     //    (dt[0] denotes the time step on mesh refinement level 0)
     if (J_in_time == JInTime::Linear)
     {
-        std::string const current_fp_string = (do_current_centering) ? "current_fp_nodal" : "current_fp";
-        mypc->DepositCurrent( m_fields.get_mr_levels(current_fp_string, finest_level), dt[0], -dt[0]);
+        std::string const current_string = (do_current_centering) ? "current_fp_nodal" : "current_fp";
+        mypc->DepositCurrent( m_fields.get_mr_levels_alldirs(current_string, finest_level), dt[0], -dt[0]);
         // Synchronize J: filter, exchange boundary, and interpolate across levels.
         // With current centering, the nodal current is deposited in 'current',
         // namely 'current_fp_nodal': SyncCurrent stores the result of its centering
@@ -724,8 +724,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
 
         // Deposit new J at relative time t_deposit_current with time step dt
         // (dt[0] denotes the time step on mesh refinement level 0)
-        std::string const current_fp_string = (do_current_centering) ? "current_fp_nodal" : "current_fp";
-        mypc->DepositCurrent( m_fields.get_mr_levels(current_fp_string, finest_level), dt[0], t_deposit_current);
+        std::string const current_string = (do_current_centering) ? "current_fp_nodal" : "current_fp";
+        mypc->DepositCurrent( m_fields.get_mr_levels_alldirs(current_string, finest_level), dt[0], t_deposit_current);
         // Synchronize J: filter, exchange boundary, and interpolate across levels.
         // With current centering, the nodal current is deposited in 'current',
         // namely 'current_fp_nodal': SyncCurrent stores the result of its centering

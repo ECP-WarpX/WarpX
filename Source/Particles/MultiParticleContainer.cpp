@@ -530,7 +530,7 @@ MultiParticleContainer::GetZeroChargeDensity (const int lev)
 
 void
 MultiParticleContainer::DepositCurrent (
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
+    ablastr::fields::MultiLevelVectorField const & J,
     const amrex::Real dt, const amrex::Real relative_time)
 {
     // Reset the J arrays

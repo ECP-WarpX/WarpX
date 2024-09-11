@@ -10,6 +10,8 @@
 #include "Particles/MultiParticleContainer.H"
 #include "WarpX.H"
 
+#include <ablastr/fields/MultiFabRegister.H>
+
 #include <AMReX.H>
 #include <AMReX_Extension.H>
 #include <AMReX_IntVect.H>
@@ -39,22 +41,12 @@ JFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/
     if (m_deposit_current)
     {
         // allocate temporary multifab to deposit current density into
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_temp;
-        current_fp_temp.resize(1);
+        using ablastr::fields::Direction;
+        ablastr::fields::MultiLevelVectorField current_fp_temp;
 
-        const auto& current_fp_x = *warpx.m_fields.get("current_fp",Direction{0},m_lev);
-        current_fp_temp[0][0] = std::make_unique<amrex::MultiFab>(
-            current_fp_x, amrex::make_alias, 0, current_fp_x.nComp()
-        );
-
-        const auto& current_fp_y = *warpx.m_fields.get("current_fp",Direction{1},m_lev);
-        current_fp_temp[0][1] = std::make_unique<amrex::MultiFab>(
-            current_fp_y, amrex::make_alias, 0, current_fp_y.nComp()
-        );
-        const auto& current_fp_z = *warpx.m_fields.get("current_fp",Direction{2},m_lev);
-        current_fp_temp[0][2] = std::make_unique<amrex::MultiFab>(
-            current_fp_z, amrex::make_alias, 0, current_fp_z.nComp()
-        );
+        warpx.m_fields.alias_init("current_fp_temp", "current_fp", Direction{0}, 0);
+        warpx.m_fields.alias_init("current_fp_temp", "current_fp", Direction{1}, 0);
+        warpx.m_fields.alias_init("current_fp_temp", "current_fp", Direction{2}, 0);
 
         auto& mypc = warpx.GetPartContainer();
         mypc.DepositCurrent(current_fp_temp, warpx.getdt(m_lev), 0.0);
@@ -64,6 +56,11 @@ JFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/
         for (int idim = 0; idim < 3; ++idim) {
             current_fp_temp[0][idim]->FillBoundary(warpx.Geom(m_lev).periodicity());
         }
+
+        // remove aliases again
+        warpx.m_fields.erase("current_fp_temp", Direction{0}, 0);
+        warpx.m_fields.erase("current_fp_temp", Direction{1}, 0);
+        warpx.m_fields.erase("current_fp_temp", Direction{2}, 0);
     }
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_mf_src != nullptr, "m_mf_src can't be a nullptr.");
