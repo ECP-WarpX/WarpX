@@ -21,15 +21,15 @@ void PoissonBoundaryHandler::ReadParameters()
     const ParmParse pp_boundary("boundary");
 
     // Read potentials from input file
-    pp_boundary.query("potential_lo_x", potential_xlo_str);
-    pp_boundary.query("potential_hi_x", potential_xhi_str);
-    pp_boundary.query("potential_lo_y", potential_ylo_str);
-    pp_boundary.query("potential_hi_y", potential_yhi_str);
-    pp_boundary.query("potential_lo_z", potential_zlo_str);
-    pp_boundary.query("potential_hi_z", potential_zhi_str);
+    m_boundary_potential_specified |= pp_boundary.query("potential_lo_x", potential_xlo_str);
+    m_boundary_potential_specified |= pp_boundary.query("potential_hi_x", potential_xhi_str);
+    m_boundary_potential_specified |= pp_boundary.query("potential_lo_y", potential_ylo_str);
+    m_boundary_potential_specified |= pp_boundary.query("potential_hi_y", potential_yhi_str);
+    m_boundary_potential_specified |= pp_boundary.query("potential_lo_z", potential_zlo_str);
+    m_boundary_potential_specified |= pp_boundary.query("potential_hi_z", potential_zhi_str);
 
     const ParmParse pp_warpx("warpx");
-    pp_warpx.query("eb_potential(x,y,z,t)", potential_eb_str);
+    m_boundary_potential_specified |= pp_warpx.query("eb_potential(x,y,z,t)", potential_eb_str);
 }
 
 void PoissonBoundaryHandler::DefinePhiBCs (const amrex::Geometry& geom)

@@ -70,6 +70,8 @@ public:
         return PhiCalculatorEB{t, potential_eb};
     }
 
+    bool m_boundary_potential_specified = false;
+
     // set default potentials to zero in order for current tests to pass
     // but forcing the user to specify a potential might be better
     std::string potential_xlo_str = "0";
