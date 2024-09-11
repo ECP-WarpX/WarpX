@@ -1575,7 +1575,6 @@ private:
     amrex::Vector<std::unique_ptr<amrex::MultiFab> > m_distance_to_eb;
 
     // store fine patch
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_store;
 
     // Coarse patch
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_cp;

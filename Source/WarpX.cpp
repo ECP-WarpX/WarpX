@@ -346,7 +346,6 @@ WarpX::WarpX ()
     ECTRhofield.resize(nlevs_max);
     Venl.resize(nlevs_max);
 
-    current_store.resize(nlevs_max);
 
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
     {
@@ -2467,9 +2466,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
     if (do_subcycling && lev == 0)
     {
-        AllocInitMultiFab(current_store[lev][0], amrex::convert(ba,jx_nodal_flag),dm,ncomps,ngJ,lev, "current_store[x]");
-        AllocInitMultiFab(current_store[lev][1], amrex::convert(ba,jy_nodal_flag),dm,ncomps,ngJ,lev, "current_store[y]");
-        AllocInitMultiFab(current_store[lev][2], amrex::convert(ba,jz_nodal_flag),dm,ncomps,ngJ,lev, "current_store[z]");
+        m_fields.alloc_init("current_store", Direction{0}, lev, amrex::convert(ba,jx_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
+        m_fields.alloc_init("current_store", Direction{1}, lev, amrex::convert(ba,jy_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
+        m_fields.alloc_init("current_store", Direction{2}, lev, amrex::convert(ba,jz_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
     }
 
     if (do_dive_cleaning)
@@ -3325,10 +3324,11 @@ WarpX::GatherBufferMasks (int lev)
 void
 WarpX::StoreCurrent (int lev)
 {
+    using ablastr::fields::Direction;
     for (int idim = 0; idim < 3; ++idim) {
-        if (current_store[lev][idim]) {
-            MultiFab::Copy(*current_store[lev][idim], *current_fp[lev][idim],
-                           0, 0, 1, current_store[lev][idim]->nGrowVect());
+        if (m_fields.get("current_store",Direction{idim},lev)) {
+            MultiFab::Copy(*m_fields.get("current_store",Direction{idim},lev), *current_fp[lev][idim],
+                           0, 0, 1, m_fields.get("current_store",Direction{idim},lev)->nGrowVect());
         }
     }
 }
@@ -3336,9 +3336,10 @@ WarpX::StoreCurrent (int lev)
 void
 WarpX::RestoreCurrent (int lev)
 {
+    using ablastr::fields::Direction;
     for (int idim = 0; idim < 3; ++idim) {
-        if (current_store[lev][idim]) {
-            std::swap(current_fp[lev][idim], current_store[lev][idim]);
+        if (m_fields.get("current_store",Direction{idim},lev)) {
+            std::swap(current_fp[lev][idim], m_fields.get("current_store",Direction{idim},lev));
         }
     }
 }
