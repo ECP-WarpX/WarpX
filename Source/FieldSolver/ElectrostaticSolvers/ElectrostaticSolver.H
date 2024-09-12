@@ -37,7 +37,7 @@ public:
     ElectrostaticSolver& operator=(ElectrostaticSolver&&) = delete;
 
     void ReadParameters ();
-    virtual void AllocateMFs ( [[maybe_unused]] int nlevs_max ) {}
+    virtual void AllocateMFs () {}
 
     void ClearLevel ( [[maybe_unused]] int lev ) {}
     void AllocateLevelMFs () {}
@@ -97,11 +97,11 @@ public:
     void computePhi (
         const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
         amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-        std::array<Real, 3> const beta,
+        std::array<amrex::Real, 3> beta,
         amrex::Real required_precision,
         amrex::Real absolute_tolerance,
-        int const max_iters,
-        int const verbosity
+        int max_iters,
+        int verbosity
     ) const;
 
     /**
@@ -122,7 +122,7 @@ public:
     void computeE (
         amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
         const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-        std::array<amrex::Real, 3> const beta
+        std::array<amrex::Real, 3> beta
     ) const;
 
     /**
@@ -142,7 +142,7 @@ public:
     void computeB (
         amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& B,
         const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-        std::array<amrex::Real, 3> const beta
+        std::array<amrex::Real, 3> beta
     ) const;
 
     /** Maximum levels for the electrostatic solver grid */
@@ -152,8 +152,8 @@ public:
     std::unique_ptr<PoissonBoundaryHandler> m_poisson_boundary_handler;
 
     /** Parameters for MLMG Poisson solve */
-    amrex::Real self_fields_required_precision = 1e-11_rt;
-    amrex::Real self_fields_absolute_tolerance = 0.0_rt;
+    amrex::Real self_fields_required_precision = 1e-11;
+    amrex::Real self_fields_absolute_tolerance = 0.0;
     /** Limit on number of MLMG iterations */
     int self_fields_max_iters = 200;
     /** Verbosity for the MLMG solver.

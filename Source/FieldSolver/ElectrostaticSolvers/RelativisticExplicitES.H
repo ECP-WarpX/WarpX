@@ -15,6 +15,7 @@ public:
     }
 
     void InitData () override;
+    void AllocateMFs () override {}
 
     /**
      * \brief Computes electrostatic fields for species

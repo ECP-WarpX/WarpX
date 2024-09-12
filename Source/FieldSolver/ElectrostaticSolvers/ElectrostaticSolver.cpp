@@ -11,11 +11,11 @@
 #include <ablastr/fields/PoissonSolver.H>
 #include "EmbeddedBoundary/Enabled.H"
 
-ElectrostaticSolver::ElectrostaticSolver (int nlevs_max)
-{
-    num_levels = nlevs_max;
+using namespace amrex;
 
-    AllocateMFs (nlevs_max);
+ElectrostaticSolver::ElectrostaticSolver (int nlevs_max) : num_levels{nlevs_max}
+{
+    AllocateMFs ();
 
     // Create an instance of the boundary handler to properly set boundary
     // conditions

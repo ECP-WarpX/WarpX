@@ -20,6 +20,7 @@ public:
     }
 
     void InitData () override;
+    void AllocateMFs () override {}
 
     void ComputeSpaceChargeField (
         amrex::Vector< std::unique_ptr<amrex::MultiFab> >& rho_fp,

@@ -13,6 +13,7 @@
 #include "Python/callbacks.H"
 #include "WarpX.H"
 
+using namespace amrex;
 
 void LabFrameExplicitES::InitData() {
     auto & warpx = WarpX::GetInstance();
@@ -92,8 +93,7 @@ void LabFrameExplicitES::ComputeSpaceChargeField (
    \param[in] rho The charge density a given species
    \param[out] phi The potential to be computed by this function
 */
-void
-LabFrameExplicitES::computePhiTriDiagonal (
+void LabFrameExplicitES::computePhiTriDiagonal (
     const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
     amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi)
 {

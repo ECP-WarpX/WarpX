@@ -9,6 +9,8 @@
 
 #include "PoissonBoundaryHandler.H"
 
+using namespace amrex;
+
 PoissonBoundaryHandler::PoissonBoundaryHandler ()
 {
     ReadParameters();

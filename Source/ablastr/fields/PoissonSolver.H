@@ -65,10 +65,10 @@ namespace ablastr::fields {
  * \param[in] absolute_tolerance The absolute convergence threshold for the MLMG solver
  * \param[out] max_norm_rho The maximum L-infinity norm of `rho` across all levels
  */
-amrex::Real
-getMaxNormRho (amrex::Vector<amrex::MultiFab*> const & rho,
-               int finest_level,
-               amrex::Real & absolute_tolerance)
+inline amrex::Real getMaxNormRho (
+    amrex::Vector<amrex::MultiFab*> const & rho,
+    int finest_level,
+    amrex::Real & absolute_tolerance)
 {
     amrex::Real max_norm_rho = 0.0;
     for (int lev=0; lev<=finest_level; lev++) {
@@ -103,16 +103,17 @@ getMaxNormRho (amrex::Vector<amrex::MultiFab*> const & rho,
  * \param[in] ncomp Number of components of the multifab (1)
  * \param[in] ng Number of ghost cells (1 if collocated, 0 otherwise)
  */
-void
-interpolatePhiBetweenLevels (amrex::MultiFab* const phi_lev,
-                             amrex::MultiFab* const phi_lev_plus_one,
-                             amrex::Geometry const & geom_lev,
-                             bool do_single_precision_comms,
-                             const amrex::IntVect& refratio,
-                             const int ncomp,
-                             const int ng
-                             )
+inline void interpolatePhiBetweenLevels (
+    amrex::MultiFab* const phi_lev,
+    amrex::MultiFab* const phi_lev_plus_one,
+    amrex::Geometry const & geom_lev,
+    bool do_single_precision_comms,
+    const amrex::IntVect& refratio,
+    const int ncomp,
+    const int ng)
 {
+    using namespace amrex::literals;
+
     // Allocate phi_cp for lev+1
     amrex::BoxArray ba = phi_lev_plus_one->boxArray();
     ba.coarsen(refratio);
@@ -250,7 +251,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 #endif
 
     // determine if rho is zero everywhere
-    amrex::Real max_norm_b = getMaxNormRho(rho, finest_level, absolute_tolerance);
+    const amrex::Real max_norm_b = getMaxNormRho(rho, finest_level, absolute_tolerance);
 
     amrex::LPInfo info;
 

@@ -23,7 +23,6 @@
 #include <string>
 #include <utility>
 
-using namespace amrex;
 
 class PoissonBoundaryHandler
 {

@@ -5,9 +5,9 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
 
+using namespace amrex;
 
-void
-RelativisticExplicitES::InitData () {
+void RelativisticExplicitES::InitData () {
     auto & warpx = WarpX::GetInstance();
     bool prepare_field_solve = (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::Relativistic);
     // check if any of the particle containers have initialize_self_fields = True
@@ -21,8 +21,7 @@ RelativisticExplicitES::InitData () {
     }
 }
 
-void
-RelativisticExplicitES::ComputeSpaceChargeField (
+void RelativisticExplicitES::ComputeSpaceChargeField (
     amrex::Vector< std::unique_ptr<amrex::MultiFab> >& rho_fp,
     amrex::Vector< std::unique_ptr<amrex::MultiFab> >& rho_cp,
     amrex::Vector< std::unique_ptr<amrex::MultiFab> >& charge_buf,
@@ -42,7 +41,7 @@ RelativisticExplicitES::ComputeSpaceChargeField (
     // due to simulation boundary potentials
     for (auto const& species : mpc) {
         if (always_run_solve || (species->initialize_self_fields)) {
-            AddSpaceChargeField(charge_buf, *species.get(), Efield_fp, Bfield_fp);
+            AddSpaceChargeField(charge_buf, *species, Efield_fp, Bfield_fp);
         }
     }
 
@@ -53,11 +52,11 @@ RelativisticExplicitES::ComputeSpaceChargeField (
     }
 }
 
-void
-RelativisticExplicitES::AddSpaceChargeField (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& charge_buf,
-                                             WarpXParticleContainer& pc,
-                                             amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield_fp,
-                                             amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield_fp)
+void RelativisticExplicitES::AddSpaceChargeField (
+    amrex::Vector<std::unique_ptr<amrex::MultiFab> >& charge_buf,
+    WarpXParticleContainer& pc,
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield_fp,
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield_fp)
 {
     WARPX_PROFILE("RelativisticExplicitES::AddSpaceChargeField");
 
@@ -125,8 +124,7 @@ RelativisticExplicitES::AddSpaceChargeField (amrex::Vector<std::unique_ptr<amrex
 
 }
 
-void
-RelativisticExplicitES::AddBoundaryField (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield_fp)
+void RelativisticExplicitES::AddBoundaryField (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield_fp)
 {
     WARPX_PROFILE("RelativisticExplicitES::AddBoundaryField");
 
