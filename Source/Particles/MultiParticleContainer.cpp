@@ -964,7 +964,8 @@ void MultiParticleContainer::CheckIonizationProductSpecies()
     }
 }
 
-void MultiParticleContainer::ScrapeParticlesAtEB (const amrex::Vector<const amrex::MultiFab*>& distance_to_eb)
+void MultiParticleContainer::ScrapeParticlesAtEB (
+    ablastr::fields::MultiLevelScalarField const& distance_to_eb)
 {
     for (auto& pc : allcontainers) {
         scrapeParticlesAtEB(*pc, distance_to_eb, ParticleBoundaryProcess::Absorb());

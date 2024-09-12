@@ -543,9 +543,9 @@ void WarpX::HandleParticlesAtBoundaries (int step, amrex::Real cur_time, int num
 
     // interact the particles with EB walls (if present)
     if (EB::enabled()) {
-        mypc->ScrapeParticlesAtEB(amrex::GetVecOfConstPtrs(m_distance_to_eb));
+        mypc->ScrapeParticlesAtEB(m_fields.get_mr_levels("distance_to_e", finest_level));
         m_particle_boundary_buffer->gatherParticlesFromEmbeddedBoundaries(
-            *mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
+            *mypc, m_fields.get_mr_levels("distance_to_e", finest_level));
         mypc->deleteInvalidParticles();
     }
 

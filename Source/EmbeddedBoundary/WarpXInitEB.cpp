@@ -391,7 +391,7 @@ WarpX::ComputeDistanceToEB ()
     for (int lev=0; lev<=maxLevel(); lev++) {
         const amrex::EB2::Level& eb_level = eb_is.getLevel(Geom(lev));
         auto const eb_fact = fieldEBFactory(lev);
-        amrex::FillSignedDistance(*m_distance_to_eb[lev], eb_level, eb_fact, 1);
+        amrex::FillSignedDistance(*m_fields.get("distance_to_e", lev), eb_level, eb_fact, 1);
     }
 #endif
 }

@@ -462,7 +462,7 @@ void ParticleBoundaryBuffer::gatherParticlesFromDomainBoundaries (MultiParticleC
 }
 
 void ParticleBoundaryBuffer::gatherParticlesFromEmbeddedBoundaries (
-    MultiParticleContainer& mypc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb)
+    MultiParticleContainer& mypc, ablastr::fields::MultiLevelScalarField const& distance_to_eb)
 {
     if (EB::enabled()) {
         WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::EB");

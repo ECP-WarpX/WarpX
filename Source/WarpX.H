@@ -146,7 +146,9 @@ public:
     [[nodiscard]] HybridPICModel * get_pointer_HybridPICModel () const { return m_hybrid_pic_model.get(); }
     MultiDiagnostics& GetMultiDiags () {return *multi_diags;}
 #ifdef AMREX_USE_EB
-    amrex::Vector<std::unique_ptr<amrex::MultiFab> >& GetDistanceToEB () {return m_distance_to_eb;}
+    ablastr::fields::MultiLevelScalarField GetDistanceToEB () {
+        return m_fields.get_mr_levels("distance_to_eb", finestLevel());
+        }
 #endif
     ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_boundary_buffer; }
 
@@ -1493,9 +1495,6 @@ private:
      * contains the info of which neighbors are being intruded (and the amount of borrowed area).
      * This is only used for the ECT solver.*/
     amrex::Vector<std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 > > m_borrowing;
-
-    //EB level set
-    amrex::Vector<std::unique_ptr<amrex::MultiFab> > m_distance_to_eb;
 
     // Copy of the coarse aux
     amrex::Vector<std::unique_ptr<amrex::iMultiFab> > current_buffer_masks;

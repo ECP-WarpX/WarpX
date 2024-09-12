@@ -1486,8 +1486,11 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
 #ifdef AMREX_USE_EB
     if (EB::enabled())
     {
-        auto &distance_to_eb = WarpX::GetInstance().GetDistanceToEB();
-        scrapeParticlesAtEB(*this, amrex::GetVecOfConstPtrs(distance_to_eb), ParticleBoundaryProcess::Absorb());
+        auto & warpx = WarpX::GetInstance();
+        scrapeParticlesAtEB(
+            *this,
+            warpx.m_fields.get_mr_levels("distance_to_eb", warpx.finestLevel()),
+            ParticleBoundaryProcess::Absorb());
     }
 #endif
 
@@ -1986,8 +1989,11 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 #ifdef AMREX_USE_EB
     if (EB::enabled())
     {
-        auto & distance_to_eb = WarpX::GetInstance().GetDistanceToEB();
-        scrapeParticlesAtEB(tmp_pc, amrex::GetVecOfConstPtrs(distance_to_eb), ParticleBoundaryProcess::Absorb());
+        auto & warpx = WarpX::GetInstance();
+        scrapeParticlesAtEB(
+            tmp_pc,
+            warpx.m_fields.get_mr_levels("distance_to_eb", warpx.finestLevel()),
+            ParticleBoundaryProcess::Absorb());
     }
 #endif
 

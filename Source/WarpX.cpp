@@ -322,7 +322,6 @@ WarpX::WarpX ()
     Afield_dotMask.resize(nlevs_max);
     phi_dotMask.resize(nlevs_max);
 
-    m_distance_to_eb.resize(nlevs_max);
     m_flag_info_face.resize(nlevs_max);
     m_flag_ext_face.resize(nlevs_max);
     m_borrowing.resize(nlevs_max);
@@ -2325,8 +2324,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     if (EB::enabled()) {
         constexpr int nc_ls = 1;
         amrex::IntVect const ng_ls(2);
-        AllocInitMultiFab(m_distance_to_eb[lev], amrex::convert(ba, IntVect::TheNodeVector()), dm, nc_ls, ng_ls, lev,
-                          "m_distance_to_eb");
+        //EB level set
+        m_fields.alloc_init("distance_to_eb", lev, amrex::convert(ba, IntVect::TheNodeVector()), dm, nc_ls, ng_ls, 0.0_rt);
 
         // EB info are needed only at the finest level
         if (lev == maxLevel()) {
