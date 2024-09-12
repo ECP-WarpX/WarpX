@@ -15,8 +15,6 @@ using namespace amrex;
 
 ElectrostaticSolver::ElectrostaticSolver (int nlevs_max) : num_levels{nlevs_max}
 {
-    AllocateMFs ();
-
     // Create an instance of the boundary handler to properly set boundary
     // conditions
     m_poisson_boundary_handler = std::make_unique<PoissonBoundaryHandler>();

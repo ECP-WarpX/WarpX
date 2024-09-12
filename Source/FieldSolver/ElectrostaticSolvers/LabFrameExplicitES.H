@@ -17,6 +17,7 @@ public:
 
     LabFrameExplicitES (int nlevs_max) : ElectrostaticSolver (nlevs_max) {
         ReadParameters();
+        AllocateMFs();
     }
 
     void InitData () override;
