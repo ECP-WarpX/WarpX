@@ -615,22 +615,22 @@ FlushFormatPlotfile::WriteAllRawFields(
         // Averaged fields on fine patch
         if (WarpX::fft_do_time_averaging)
         {
-            WriteRawMF(warpx.getField(FieldType::Efield_avg_fp, lev, 0) , dm, raw_pltname, default_level_prefix,
+            WriteRawMF(*warpx.m_fields.get("Efield_avg_fp", Direction{0}, lev) , dm, raw_pltname, default_level_prefix,
                        "Ex_avg_fp", lev, plot_raw_fields_guards);
 
-            WriteRawMF(warpx.getField(FieldType::Efield_avg_fp, lev, 1) , dm, raw_pltname, default_level_prefix,
+            WriteRawMF(*warpx.m_fields.get("Efield_avg_fp", Direction{1}, lev) , dm, raw_pltname, default_level_prefix,
                        "Ey_avg_fp", lev, plot_raw_fields_guards);
 
-            WriteRawMF(warpx.getField(FieldType::Efield_avg_fp, lev, 2) , dm, raw_pltname, default_level_prefix,
+            WriteRawMF(*warpx.m_fields.get("Efield_avg_fp", Direction{2}, lev) , dm, raw_pltname, default_level_prefix,
                        "Ez_avg_fp", lev, plot_raw_fields_guards);
 
-            WriteRawMF(warpx.getField(FieldType::Bfield_avg_fp, lev, 0) , dm, raw_pltname, default_level_prefix,
+            WriteRawMF(*warpx.m_fields.get("Bfield_avg_fp", Direction{0}, lev) , dm, raw_pltname, default_level_prefix,
                        "Bx_avg_fp", lev, plot_raw_fields_guards);
 
-            WriteRawMF(warpx.getField(FieldType::Bfield_avg_fp, lev, 1) , dm, raw_pltname, default_level_prefix,
+            WriteRawMF(*warpx.m_fields.get("Bfield_avg_fp", Direction{1}, lev) , dm, raw_pltname, default_level_prefix,
                        "By_avg_fp", lev, plot_raw_fields_guards);
 
-            WriteRawMF(warpx.getField(FieldType::Bfield_avg_fp, lev, 2) , dm, raw_pltname, default_level_prefix,
+            WriteRawMF(*warpx.m_fields.get("Bfield_avg_fp", Direction{2}, lev) , dm, raw_pltname, default_level_prefix,
                        "Bz_avg_fp", lev, plot_raw_fields_guards);
         }
 
