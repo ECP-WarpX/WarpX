@@ -107,7 +107,7 @@ void
 WarpX::UpdateDtFromParticleSpeeds ()
 {
     const amrex::Real* dx = geom[max_level].CellSize();
-    amrex::Real dx_min = minDim(dx);
+    const amrex::Real dx_min = minDim(dx);
 
     const amrex::ParticleReal max_v = mypc->maxParticleVelocity();
     amrex::Real deltat_new = 0.;
@@ -116,13 +116,13 @@ WarpX::UpdateDtFromParticleSpeeds ()
     if (max_v == 0) {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_max_dt.has_value(), "Particles at rest and no maximum timestep specified. Aborting.");
         deltat_new = m_max_dt.value();
+    } else {
+        deltat_new = cfl * dx_min / max_v;
     }
-
-    deltat_new = cfl * dx_min / max_v;
 
     // Restrict to be less than user-specified maximum timestep, if present
     if (m_max_dt.has_value()) {
-        deltat_new = std::min(deltat_new, m_max_dt.value());
+        deltat_new = std::min(deltat_new, cfl * dx_min / max_v);
     }
 
     // Set present dt to previous next dt
