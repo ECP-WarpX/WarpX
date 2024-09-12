@@ -1532,10 +1532,7 @@ private:
      * and in WarpX::ComputeEightWaysExtensions
      * This is only used for the ECT solver.*/
     amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_ext_face;
-    /** EB: m_area_mod contains the modified areas of the mesh faces, i.e. if a face is enlarged it
-     * contains the area of the enlarged face
-     * This is only used for the ECT solver.*/
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_area_mod;
+
     /** EB: m_borrowing contains the info about the enlarged cells, i.e. for every enlarged cell it
      * contains the info of which neighbors are being intruded (and the amount of borrowed area).
      * This is only used for the ECT solver.*/

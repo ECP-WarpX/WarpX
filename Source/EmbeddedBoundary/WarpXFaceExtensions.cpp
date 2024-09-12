@@ -471,11 +471,11 @@ WarpX::ComputeOneWayExtensions ()
             amrex::Real* borrowing_area = borrowing.area.data();
             int& vecs_size = borrowing.vecs_size;
 
-            auto const &S_mod = m_area_mod[maxLevel()][idim]->array(mfi);
+            auto const &S_mod = m_fields.get("area_mod", Direction{idim}, maxLevel())->array(mfi);
 
-            const auto &lx = m_fields.get_alldirs("edge_lengths", maxLevel())[0]->array(mfi);
-            const auto &ly = m_fields.get_alldirs("edge_lengths", maxLevel())[1]->array(mfi);
-            const auto &lz = m_fields.get_alldirs("edge_lengths", maxLevel())[2]->array(mfi);
+            const auto &lx = m_fields.get("edge_lengths", Direction{0}, maxLevel())->array(mfi);
+            const auto &ly = m_fields.get("edge_lengths", Direction{1}, maxLevel())->array(mfi);
+            const auto &lz = m_fields.get("edge_lengths", Direction{2}, maxLevel())->array(mfi);
 
             vecs_size = amrex::Scan::PrefixSum<int>(ncells,
                                                     [=] AMREX_GPU_DEVICE (int icell) {
@@ -599,10 +599,11 @@ WarpX::ComputeEightWaysExtensions ()
             amrex::Real* borrowing_area = borrowing.area.data();
             int& vecs_size = borrowing.vecs_size;
 
-            auto const &S_mod = m_area_mod[maxLevel()][idim]->array(mfi);
-            const auto &lx = m_fields.get_alldirs("edge_lengths", maxLevel())[0]->array(mfi);
-            const auto &ly = m_fields.get_alldirs("edge_lengths", maxLevel())[1]->array(mfi);
-            const auto &lz = m_fields.get_alldirs("edge_lengths", maxLevel())[2]->array(mfi);
+            auto const &S_mod = m_fields.get("area_mod", Direction{idim}, maxLevel())->array(mfi);
+
+            const auto &lx = m_fields.get("edge_lengths", Direction{0}, maxLevel())->array(mfi);
+            const auto &ly = m_fields.get("edge_lengths", Direction{1}, maxLevel())->array(mfi);
+            const auto &lz = m_fields.get("edge_lengths", Direction{2}, maxLevel())->array(mfi);
 
             vecs_size += amrex::Scan::PrefixSum<int>(ncells,
                                                      [=] AMREX_GPU_DEVICE (int icell){

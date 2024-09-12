@@ -52,7 +52,7 @@ void FiniteDifferenceSolver::EvolveB (
     [[maybe_unused]] ablastr::fields::VectorField const& Efield,
     [[maybe_unused]] amrex::MultiFab const * Gfield,
     [[maybe_unused]] ablastr::fields::VectorField const& face_areas,
-    [[maybe_unused]] std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_mod,
+    [[maybe_unused]] ablastr::fields::VectorField const& area_mod,
     [[maybe_unused]] std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
     [[maybe_unused]] std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Venl,
     [[maybe_unused]] std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_cell,
@@ -195,7 +195,7 @@ void FiniteDifferenceSolver::EvolveBCartesian (
 void FiniteDifferenceSolver::EvolveBCartesianECT (
     ablastr::fields::VectorField const& Bfield,
     ablastr::fields::VectorField const& face_areas,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_mod,
+    ablastr::fields::VectorField const& area_mod,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Venl,
     std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_cell,

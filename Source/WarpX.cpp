@@ -326,7 +326,6 @@ WarpX::WarpX ()
     m_flag_info_face.resize(nlevs_max);
     m_flag_ext_face.resize(nlevs_max);
     m_borrowing.resize(nlevs_max);
-    m_area_mod.resize(nlevs_max);
 
     ECTRhofield.resize(nlevs_max);
     Venl.resize(nlevs_max);
@@ -2384,12 +2383,17 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                                   guard_cells.ng_FieldSolver, lev, "m_flag_ext_face[y]");
                 AllocInitMultiFab(m_flag_ext_face[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps,
                                   guard_cells.ng_FieldSolver, lev, "m_flag_ext_face[z]");
-                AllocInitMultiFab(m_area_mod[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps,
-                                  guard_cells.ng_FieldSolver, lev, "m_area_mod[x]");
-                AllocInitMultiFab(m_area_mod[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps,
-                                  guard_cells.ng_FieldSolver, lev, "m_area_mod[y]");
-                AllocInitMultiFab(m_area_mod[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps,
-                                  guard_cells.ng_FieldSolver, lev, "m_area_mod[z]");
+
+                /** EB: area_mod contains the modified areas of the mesh faces, i.e. if a face is enlarged it
+                * contains the area of the enlarged face
+                * This is only used for the ECT solver.*/
+                m_fields.alloc_init( "area_mod", Direction{0}, lev, amrex::convert(ba, Bx_nodal_flag),
+                    dm, ncomps, guard_cells.ng_FieldSolver, 0.0_rt);
+                m_fields.alloc_init( "area_mod", Direction{1}, lev, amrex::convert(ba, By_nodal_flag),
+                    dm, ncomps, guard_cells.ng_FieldSolver, 0.0_rt);
+                m_fields.alloc_init( "area_mod", Direction{2}, lev, amrex::convert(ba, Bz_nodal_flag),
+                    dm, ncomps, guard_cells.ng_FieldSolver, 0.0_rt);
+
                 m_borrowing[lev][0] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(
                         amrex::convert(ba, Bx_nodal_flag), dm);
                 m_borrowing[lev][1] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(

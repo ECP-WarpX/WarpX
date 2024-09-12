@@ -56,7 +56,7 @@ class FiniteDifferenceSolver
                        ablastr::fields::VectorField const& Efield,
                        amrex::MultiFab const * Gfield,
                        ablastr::fields::VectorField const& face_areas,
-                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_mod,
+                       ablastr::fields::VectorField const& area_mod,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Venl,
                        std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_cell,
@@ -300,7 +300,7 @@ class FiniteDifferenceSolver
         void EvolveBCartesianECT (
             ablastr::fields::VectorField const& Bfield,
             ablastr::fields::VectorField const& face_areas,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_mod,
+            ablastr::fields::VectorField const& area_mod,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Venl,
             std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_cell,
