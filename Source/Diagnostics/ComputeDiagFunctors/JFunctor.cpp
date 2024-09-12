@@ -42,7 +42,7 @@ JFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/
     {
         // allocate temporary multifab to deposit current density into
         ablastr::fields::MultiLevelVectorField current_fp_temp {
-            warpx.m_fields.get_alldirs("current_fp_temp", m_lev)
+            warpx.m_fields.get_alldirs("current_fp", m_lev)
         };
 
         auto& mypc = warpx.GetPartContainer();
