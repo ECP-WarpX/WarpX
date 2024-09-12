@@ -123,10 +123,10 @@ endif()
 
 if(WarpX_FFT)
     add_warpx_test(
-        test_2d_langmuir_multi_psatd_psatd_JRhom  # name
+        test_2d_langmuir_multi_psatd_JRhom  # name
         2  # dims
         2  # nprocs
-        inputs_test_2d_langmuir_multi_psatd_psatd_JRhom  # inputs
+        inputs_test_2d_langmuir_multi_psatd_JRhom  # inputs
         analysis_2d.py  # analysis
         diags/diag1000080  # output
         OFF  # dependency
@@ -135,10 +135,10 @@ endif()
 
 if(WarpX_FFT)
     add_warpx_test(
-        test_2d_langmuir_multi_psatd_psatd_JRhom_nodal  # name
+        test_2d_langmuir_multi_psatd_JRhom_nodal  # name
         2  # dims
         2  # nprocs
-        inputs_test_2d_langmuir_multi_psatd_psatd_JRhom_nodal  # inputs
+        inputs_test_2d_langmuir_multi_psatd_JRhom_nodal  # inputs
         analysis_2d.py  # analysis
         diags/diag1000080  # output
         OFF  # dependency
@@ -285,10 +285,10 @@ endif()
 
 if(WarpX_FFT)
     add_warpx_test(
-        test_3d_langmuir_multi_psatd_psatd_JRhom  # name
+        test_3d_langmuir_multi_psatd_JRhom  # name
         3  # dims
         2  # nprocs
-        inputs_test_3d_langmuir_multi_psatd_psatd_JRhom  # inputs
+        inputs_test_3d_langmuir_multi_psatd_JRhom  # inputs
         analysis_3d.py  # analysis
         diags/diag1000040  # output
         OFF  # dependency
@@ -297,10 +297,10 @@ endif()
 
 if(WarpX_FFT)
     add_warpx_test(
-        test_3d_langmuir_multi_psatd_psatd_JRhom_nodal  # name
+        test_3d_langmuir_multi_psatd_JRhom_nodal  # name
         3  # dims
         2  # nprocs
-        inputs_test_3d_langmuir_multi_psatd_psatd_JRhom_nodal  # inputs
+        inputs_test_3d_langmuir_multi_psatd_JRhom_nodal  # inputs
         analysis_3d.py  # analysis
         diags/diag1000040  # output
         OFF  # dependency
@@ -389,10 +389,10 @@ endif()
 
 if(WarpX_FFT)
     add_warpx_test(
-        test_rz_langmuir_multi_psatd_psatd_JRhom  # name
+        test_rz_langmuir_multi_psatd_JRhom  # name
         RZ  # dims
         2  # nprocs
-        inputs_test_rz_langmuir_multi_psatd_psatd_JRhom  # inputs
+        inputs_test_rz_langmuir_multi_psatd_JRhom  # inputs
         analysis_rz.py  # analysis
         diags/diag1000080  # output
         OFF  # dependency
