@@ -488,17 +488,6 @@ public:
 
     /**
      * \brief
-     * Get a constant reference to the specified vector field on the different MR levels
-     *
-     * \param field_type[in] the field type
-     *
-     * \return a vector (which one element per MR level) of arrays of three pointers (for 3 vector components) amrex::MultiFab* containing the field data
-     */
-    [[nodiscard]] const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>,3>>&
-    getMultiLevelField(warpx::fields::FieldType field_type) const;
-
-    /**
-     * \brief
      * Get pointer to the amrex::MultiFab containing the dotMask for the specified field
      */
     [[nodiscard]] const amrex::iMultiFab*
