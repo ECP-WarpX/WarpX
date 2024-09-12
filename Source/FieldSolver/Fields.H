@@ -17,26 +17,14 @@ namespace warpx::fields
         None,
         Efield_fp,
         Bfield_fp,
-        current_fp,
-        current_fp_nodal,
-        phi_fp,
         vector_potential_fp,
-        Efield_cp,
-        Bfield_cp,
-        current_cp,
-        edge_lengths,
-        face_areas,
-        Efield_avg_fp,
-        Bfield_avg_fp,
-        Efield_avg_cp,
-        Bfield_avg_cp
+        phi_fp
     };
 
     constexpr FieldType ArrayFieldTypes[] = {
-            FieldType::Efield_fp, FieldType::Bfield_fp,
-            FieldType::current_fp, FieldType::current_fp_nodal, FieldType::vector_potential_fp,
-            FieldType::Efield_cp, FieldType::Bfield_cp, FieldType::current_cp,
-            FieldType::Efield_avg_fp, FieldType::Bfield_avg_fp, FieldType::Efield_avg_cp, FieldType::Bfield_avg_cp};
+            FieldType::Efield_fp,
+            FieldType::Bfield_fp,
+            FieldType::vector_potential_fp };
 
     inline bool
     isFieldArray (const FieldType field_type)
