@@ -3431,6 +3431,8 @@ WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, cons
 
     amrex::MultiFab* field_pointer = nullptr;
 
+    amrex::ignore_unused(lev, direction);
+
     switch(field_type)
     {
         default:
