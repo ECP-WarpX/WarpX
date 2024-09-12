@@ -1,6 +1,14 @@
 
-#ifndef WARPX_RELATIVISTICEXPLICITSOLVERES_H_
-#define WARPX_RELATIVISTICEXPLICITSOLVERES_H_
+/* Copyright 2024 The WarpX Community
+ *
+ * This file is part of WarpX.
+ *
+ * Authors: Remi Lehe, Roelof Groenewald, Arianna Formenti, Revathi Jambunathan
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+#ifndef WARPX_RELATIVISTICEXPLICITES_H_
+#define WARPX_RELATIVISTICEXPLICITES_H_
 
 #include "ElectrostaticSolver.H"
 #include "Particles/WarpXParticleContainer.H"
@@ -75,4 +83,4 @@ public:
     );
 };
 
-#endif // WARPX_RELATIVISTICEXPLICITSOLVERES_H_
+#endif // WARPX_RELATIVISTICEXPLICITES_H_

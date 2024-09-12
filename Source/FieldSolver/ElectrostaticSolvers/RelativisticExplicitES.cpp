@@ -1,3 +1,11 @@
+/* Copyright 2024 The WarpX Community
+ *
+ * This file is part of WarpX.
+ *
+ * Authors: Remi Lehe, Roelof Groenewald, Arianna Formenti, Revathi Jambunathan
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include "WarpX.H"
 
 #include "RelativisticExplicitES.H"

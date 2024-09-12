@@ -6,8 +6,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_LABFRAME_EXPLICITES_H_
-#define WARPX_LABFRAME_EXPLICITES_H_
+#ifndef WARPX_LABFRAMEEXPLICITES_H_
+#define WARPX_LABFRAMEEXPLICITES_H_
 
 #include "ElectrostaticSolver.H"
 
@@ -41,4 +41,4 @@ public:
 
 };
 
-#endif
+#endif  // WARPX_LABFRAMEEXPLICITES_H_
