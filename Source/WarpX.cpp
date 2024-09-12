@@ -3491,21 +3491,21 @@ WarpX::MakeDistributionMap (int lev, amrex::BoxArray const& ba)
 }
 
 const amrex::iMultiFab*
-WarpX::getFieldDotMaskPointer ( FieldType field_type, int lev, int dir ) const
+WarpX::getFieldDotMaskPointer ( FieldType field_type, int lev, int dir )
 {
     switch(field_type)
     {
         case FieldType::Efield_fp :
-            SetDotMask( Efield_dotMask[lev][dir], field_type, lev, dir );
+            SetDotMask( Efield_dotMask[lev][dir], "Efield_fp", lev, dir );
             return Efield_dotMask[lev][dir].get();
         case FieldType::Bfield_fp :
-            SetDotMask( Bfield_dotMask[lev][dir], field_type, lev, dir );
+            SetDotMask( Bfield_dotMask[lev][dir], "Bfield_fp", lev, dir );
             return Bfield_dotMask[lev][dir].get();
         case FieldType::vector_potential_fp :
-            SetDotMask( Afield_dotMask[lev][dir], field_type, lev, dir );
+            SetDotMask( Afield_dotMask[lev][dir], "vector_potential_fp", lev, dir );
             return Afield_dotMask[lev][dir].get();
         case FieldType::phi_fp :
-            SetDotMask( phi_dotMask[lev], field_type, lev, 0 );
+            SetDotMask( phi_dotMask[lev], "phi_fp", lev, 0 );
             return phi_dotMask[lev].get();
         default:
             WARPX_ABORT_WITH_MESSAGE("Invalid field type for dotMask");
@@ -3514,15 +3514,15 @@ WarpX::getFieldDotMaskPointer ( FieldType field_type, int lev, int dir ) const
 }
 
 void WarpX::SetDotMask( std::unique_ptr<amrex::iMultiFab>& field_dotMask,
-                        FieldType field_type, int lev, int dir ) const
+                        std::string field_name, int lev, int dir )
 {
     // Define the dot mask for this field_type needed to properly compute dotProduct()
     // for field values that have shared locations on different MPI ranks
     if (field_dotMask != nullptr) { return; }
 
-    const amrex::MultiFab* this_field = getFieldPointer(field_type,lev,dir);
-    const amrex::BoxArray& this_ba = this_field->boxArray();
-    const amrex::MultiFab tmp( this_ba, this_field->DistributionMap(),
+    ablastr::fields::VectorField const& this_field = m_fields.get_alldirs(field_name,lev);
+    const amrex::BoxArray& this_ba = this_field[dir]->boxArray();
+    const amrex::MultiFab tmp( this_ba, this_field[dir]->DistributionMap(),
                                1, 0, amrex::MFInfo().SetAlloc(false) );
     const amrex::Periodicity& period = Geom(lev).periodicity();
     field_dotMask = tmp.OwnerMask(period);
