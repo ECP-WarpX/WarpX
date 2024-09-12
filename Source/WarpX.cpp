@@ -2564,9 +2564,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                 m_fields.alloc_init("Efield_aux", Direction{2}, lev, amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
             } else {
                 // In this case, the aux grid is simply an alias of the fp grid (most common case in WarpX)
-                m_fields.alias_init("Efield_aux", "Efield_avg_fp", Direction{0}, lev, 0.0_rt);
-                m_fields.alias_init("Efield_aux", "Efield_avg_fp", Direction{1}, lev, 0.0_rt);
-                m_fields.alias_init("Efield_aux", "Efield_avg_fp", Direction{2}, lev, 0.0_rt);
+                m_fields.alias_init("Efield_aux", "Efield_fp", Direction{0}, lev, 0.0_rt);
+                m_fields.alias_init("Efield_aux", "Efield_fp", Direction{1}, lev, 0.0_rt);
+                m_fields.alias_init("Efield_aux", "Efield_fp", Direction{2}, lev, 0.0_rt);
             }
         }
     } else {
