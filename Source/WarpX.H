@@ -479,19 +479,6 @@ public:
 
     /**
      * \brief
-     * Check if a field is initialized.
-     *
-     * \param field_type[in] the field type
-     * \param lev[in] the mesh refinement level
-     * \param direction[in] the field component (0 by default)
-     *
-     * \return true if the field is initialized, false otherwise
-     */
-    [[nodiscard]] bool
-    isFieldInitialized (warpx::fields::FieldType field_type, int lev, int direction = 0) const;
-
-    /**
-     * \brief
      * Get a pointer to the field data.
      *
      * \param field_type[in] the field type
