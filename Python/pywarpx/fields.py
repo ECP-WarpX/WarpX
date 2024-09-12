@@ -120,7 +120,7 @@ class _MultiFABWrapper(object):
         else:
             # Always fetch this anew in case the C++ MultiFab is recreated
             warpx = libwarpx.libwarpx_so.get_instance()
-            if self.mf_name.startswith('pml'):
+            if self.mf_name.startswith("pml"):
                 # Temporary until pml are updated to new method
                 name = f"{self.mf_name}[level={self.level}]"
             else:
@@ -749,7 +749,8 @@ def GFPWrapper(level=0, include_ghosts=False):
 
 def AxFPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="vector_potential_fp_nodal", idir=0,
+        mf_name="vector_potential_fp_nodal",
+        idir=0,
         level=level,
         include_ghosts=include_ghosts,
     )
@@ -757,7 +758,8 @@ def AxFPWrapper(level=0, include_ghosts=False):
 
 def AyFPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="vector_potential_fp_nodal", idir=1,
+        mf_name="vector_potential_fp_nodal",
+        idir=1,
         level=level,
         include_ghosts=include_ghosts,
     )
@@ -765,7 +767,8 @@ def AyFPWrapper(level=0, include_ghosts=False):
 
 def AzFPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="vector_potential_fp_nodal", idir=2,
+        mf_name="vector_potential_fp_nodal",
+        idir=2,
         level=level,
         include_ghosts=include_ghosts,
     )
