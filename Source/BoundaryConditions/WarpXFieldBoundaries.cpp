@@ -73,9 +73,9 @@ void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
             }
         } else {
             PEC::ApplyPECtoEfield(
-                {getFieldPointer(FieldType::Efield_cp, lev, 0),
-                getFieldPointer(FieldType::Efield_cp, lev, 1),
-                getFieldPointer(FieldType::Efield_cp, lev, 2)},
+                {m_fields.get("Efield_cp",Direction{0},lev),
+                 m_fields.get("Efield_cp",Direction{1},lev),
+                 m_fields.get("Efield_cp",Direction{2},lev)},
                 field_boundary_lo, field_boundary_hi,
                 get_ng_fieldgather(), Geom(lev),
                 lev, patch_type, ref_ratio);
@@ -98,9 +98,9 @@ void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
                                  m_fields.get("Efield_fp",Direction{1},lev),
                                  m_fields.get("Efield_fp",Direction{2},lev), lev);
     } else {
-        ApplyFieldBoundaryOnAxis(getFieldPointer(FieldType::Efield_cp, lev, 0),
-                                 getFieldPointer(FieldType::Efield_cp, lev, 1),
-                                 getFieldPointer(FieldType::Efield_cp, lev, 2), lev);
+        ApplyFieldBoundaryOnAxis(m_fields.get("Efield_cp",Direction{0},lev),
+                                 m_fields.get("Efield_cp",Direction{1},lev),
+                                 m_fields.get("Efield_cp",Direction{2},lev), lev);
     }
 #endif
 }
@@ -120,9 +120,9 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
                 lev, patch_type, ref_ratio);
         } else {
             PEC::ApplyPECtoBfield( {
-                getFieldPointer(FieldType::Bfield_cp, lev, 0),
-                getFieldPointer(FieldType::Bfield_cp, lev, 1),
-                getFieldPointer(FieldType::Bfield_cp, lev, 2)},
+                m_fields.get("Bfield_cp",Direction{0},lev),
+                m_fields.get("Bfield_cp",Direction{1},lev),
+                m_fields.get("Bfield_cp",Direction{2},lev) },
                 field_boundary_lo, field_boundary_hi,
                 get_ng_fieldgather(), Geom(lev),
                 lev, patch_type, ref_ratio);
@@ -151,9 +151,9 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
                                  m_fields.get("Bfield_fp",Direction{1},lev),
                                  m_fields.get("Bfield_fp",Direction{2},lev), lev);
     } else {
-        ApplyFieldBoundaryOnAxis(getFieldPointer(FieldType::Bfield_cp, lev, 0),
-                                 getFieldPointer(FieldType::Bfield_cp, lev, 1),
-                                 getFieldPointer(FieldType::Bfield_cp, lev, 2), lev);
+        ApplyFieldBoundaryOnAxis(m_fields.get("Bfield_cp",Direction{0},lev),
+                                 m_fields.get("Bfield_cp",Direction{1},lev),
+                                 m_fields.get("Bfield_cp",Direction{2},lev), lev);
     }
 #endif
 }
