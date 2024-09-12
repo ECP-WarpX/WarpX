@@ -23,6 +23,8 @@ MultiDiagnostics::MultiDiagnostics ()
     for (int i=0; i<ndiags; i++){
         if ( diags_types[i] == DiagTypes::Full ){
             alldiags[i] = std::make_unique<FullDiagnostics>(i, diags_names[i]);
+        } else if ( diags_types[i] == DiagTypes::TimeAveraged ){
+            alldiags[i] = std::make_unique<FullDiagnostics>(i, diags_names[i]);
         } else if ( diags_types[i] == DiagTypes::BackTransformed ){
             alldiags[i] = std::make_unique<BTDiagnostics>(i, diags_names[i]);
         } else if ( diags_types[i] == DiagTypes::BoundaryScraping ){

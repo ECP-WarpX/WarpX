@@ -267,6 +267,8 @@ protected:
      */
     amrex::Vector< amrex::Vector< amrex::MultiFab > >  m_mf_output;
 
+    amrex::Vector< amrex::Vector <amrex::MultiFab > > m_sum_mf_output;
+
     /** Geometry that defines the domain attributes corresponding to output multifab.
      *  Specifically, the user-defined physical co-ordinates for the diagnostics
      *  is used to construct the geometry information for each MultiFab at
