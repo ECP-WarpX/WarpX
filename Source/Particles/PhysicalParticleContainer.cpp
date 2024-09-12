@@ -218,8 +218,7 @@ namespace
         const GpuArray<ParticleReal*,PIdx::nattribs>& pa, long& ip,
         const bool& do_field_ionization, int* pi
 #ifdef WARPX_QED
-        ,const bool& has_quantum_sync, amrex::ParticleReal* AMREX_RESTRICT p_optical_depth_QSR
-        ,const bool& has_breit_wheeler, amrex::ParticleReal* AMREX_RESTRICT p_optical_depth_BW
+        ,const QEDHelper& qed_helper
 #endif
         ) noexcept
     {
@@ -228,8 +227,8 @@ namespace
         }
         if (do_field_ionization) {pi[ip] = 0;}
 #ifdef WARPX_QED
-        if (has_quantum_sync) {p_optical_depth_QSR[ip] = 0._rt;}
-        if (has_breit_wheeler) {p_optical_depth_BW[ip] = 0._rt;}
+        if (qed_helper.has_quantum_sync) {qed_helper.p_optical_depth_QSR[ip] = 0._rt;}
+        if (qed_helper.has_breit_wheeler) {qed_helper.p_optical_depth_BW[ip] = 0._rt;}
 #endif
 
         idcpu[ip] = amrex::ParticleIdCpus::Invalid;
@@ -1122,9 +1121,9 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
         }
 
 #ifdef WARPX_QED
-        QEDHelper qed_helper(soa, old_size, particle_comps,
-                             has_quantum_sync(), has_breit_wheeler(),
-                             m_shr_p_qs_engine, m_shr_p_bw_engine);
+        const QEDHelper qed_helper(soa, old_size, particle_comps,
+                                   has_quantum_sync(), has_breit_wheeler(),
+                                   m_shr_p_qs_engine, m_shr_p_bw_engine);
 #endif
 
         const bool loc_do_field_ionization = do_field_ionization;
@@ -1173,8 +1172,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                 if (!box_contains) {
                     ZeroInitializeAndSetNegativeID(pa_idcpu, pa, ip, loc_do_field_ionization, pi
 #ifdef WARPX_QED
-                                                   ,qed_helper.has_quantum_sync, qed_helper.p_optical_depth_QSR
-                                                   ,qed_helper.has_breit_wheeler, qed_helper.p_optical_depth_BW
+                                                   ,qed_helper
 #endif
                                                    );
                     continue;
@@ -1211,8 +1209,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                     if (!inj_pos->insideBounds(xb, yb, z0)) {
                         ZeroInitializeAndSetNegativeID(pa_idcpu, pa, ip, loc_do_field_ionization, pi
 #ifdef WARPX_QED
-                                                       ,qed_helper.has_quantum_sync, qed_helper.p_optical_depth_QSR
-                                                       ,qed_helper.has_breit_wheeler, qed_helper.p_optical_depth_BW
+                                                   ,qed_helper
 #endif
                                                    );
                         continue;
@@ -1225,8 +1222,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                     if ( dens < density_min ){
                         ZeroInitializeAndSetNegativeID(pa_idcpu, pa, ip, loc_do_field_ionization, pi
 #ifdef WARPX_QED
-                                                       ,qed_helper.has_quantum_sync, qed_helper.p_optical_depth_QSR
-                                                       ,qed_helper.has_breit_wheeler, qed_helper.p_optical_depth_BW
+                                                   ,qed_helper
 #endif
                                                    );
                         continue;
@@ -1243,8 +1239,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                     if (!inj_pos->insideBounds(xb, yb, z0_lab)) {
                         ZeroInitializeAndSetNegativeID(pa_idcpu, pa, ip, loc_do_field_ionization, pi
 #ifdef WARPX_QED
-                                                       ,qed_helper.has_quantum_sync, qed_helper.p_optical_depth_QSR
-                                                       ,qed_helper.has_breit_wheeler, qed_helper.p_optical_depth_BW
+                                                   ,qed_helper
 #endif
                                                    );
                         continue;
@@ -1255,8 +1250,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                     if ( dens < density_min ){
                         ZeroInitializeAndSetNegativeID(pa_idcpu, pa, ip, loc_do_field_ionization, pi
 #ifdef WARPX_QED
-                                                       ,qed_helper.has_quantum_sync, qed_helper.p_optical_depth_QSR
-                                                       ,qed_helper.has_breit_wheeler, qed_helper.p_optical_depth_BW
+                                                   ,qed_helper
 #endif
                                                    );
                         continue;
@@ -1519,9 +1513,9 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         }
 
 #ifdef WARPX_QED
-        QEDHelper qed_helper(soa, old_size, particle_comps,
-                             has_quantum_sync(), has_breit_wheeler(),
-                             m_shr_p_qs_engine, m_shr_p_bw_engine);
+        const QEDHelper qed_helper(soa, old_size, particle_comps,
+                                   has_quantum_sync(), has_breit_wheeler(),
+                                   m_shr_p_qs_engine, m_shr_p_bw_engine);
 #endif
 
         const bool loc_do_field_ionization = do_field_ionization;

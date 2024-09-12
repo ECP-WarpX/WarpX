@@ -179,8 +179,7 @@ struct QEDHelper
                bool a_has_quantum_sync, bool a_has_breit_wheeler,
                const std::shared_ptr<QuantumSynchrotronEngine>& a_shr_p_qs_engine,
                const std::shared_ptr<BreitWheelerEngine>& a_shr_p_bw_engine)
-        : p_optical_depth_QSR(nullptr), p_optical_depth_BW(nullptr),
-          has_quantum_sync(a_has_quantum_sync), has_breit_wheeler(a_has_breit_wheeler)
+        : has_quantum_sync(a_has_quantum_sync), has_breit_wheeler(a_has_breit_wheeler)
     {
         if(has_quantum_sync){
             quantum_sync_get_opt =
