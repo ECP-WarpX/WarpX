@@ -860,7 +860,8 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
                                         m_fields.get("G_fp", lev),
                                         m_fields.get_alldirs("face_areas", lev),
                                         m_fields.get_alldirs("area_mod", lev),
-                                        ECTRhofield[lev], Venl[lev],
+                                        m_fields.get_alldirs("ECTRhofield", lev),
+                                        Venl[lev],
                                         m_flag_info_face[lev], m_borrowing[lev], lev, a_dt );
     } else {
         m_fdtd_solver_cp[lev]->EvolveB( m_fields.get_alldirs("Bfield_cp",lev),
@@ -868,7 +869,8 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
                                         m_fields.get("G_fp", lev),
                                         m_fields.get_alldirs("face_areas", lev),
                                         m_fields.get_alldirs("area_mod", lev),
-                                        ECTRhofield[lev], Venl[lev],
+                                        m_fields.get_alldirs("ECTRhofield", lev),
+                                        Venl[lev],
                                         m_flag_info_face[lev], m_borrowing[lev], lev, a_dt );
     }
 
@@ -920,7 +922,7 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
                                         m_fields.get_alldirs("current_fp", lev),
                                         m_fields.get_alldirs("edge_lengths", lev),
                                         m_fields.get_alldirs("face_areas", lev),
-                                        ECTRhofield[lev],
+                                        m_fields.get_alldirs("ECTRhofield", lev),
                                         m_fields.get("F_fp", lev), lev, a_dt );
     } else {
         m_fdtd_solver_cp[lev]->EvolveE( m_fields.get_alldirs("Efield_cp",lev),
@@ -928,7 +930,7 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
                                         m_fields.get_alldirs("current_cp", lev),
                                         m_fields.get_alldirs("edge_lengths", lev),
                                         m_fields.get_alldirs("face_areas", lev),
-                                        ECTRhofield[lev],
+                                        m_fields.get_alldirs("ECTRhofield", lev),
                                         m_fields.get("F_cp", lev), lev, a_dt );
     }
 
@@ -961,12 +963,14 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
             m_fdtd_solver_fp[lev]->EvolveECTRho( m_fields.get_alldirs("Efield_fp",lev),
                                                  m_fields.get_alldirs("edge_lengths", lev),
                                                  m_fields.get_alldirs("face_areas", lev),
-                                                 ECTRhofield[lev], lev );
+                                                 m_fields.get_alldirs("ECTRhofield", lev),
+                                                 lev );
         } else {
             m_fdtd_solver_cp[lev]->EvolveECTRho( m_fields.get_alldirs("Efield_cp",lev),
                                                  m_fields.get_alldirs("edge_lengths", lev),
                                                  m_fields.get_alldirs("face_areas", lev),
-                                                 ECTRhofield[lev], lev);
+                                                 m_fields.get_alldirs("ECTRhofield", lev),
+                                                 lev);
         }
     }
 #endif

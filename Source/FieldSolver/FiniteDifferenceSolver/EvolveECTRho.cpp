@@ -51,7 +51,7 @@ void FiniteDifferenceSolver::EvolveECTRho (
     ablastr::fields::VectorField const Efield,
     ablastr::fields::VectorField const& edge_lengths,
     ablastr::fields::VectorField const& face_areas,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
+    ablastr::fields::VectorField const& ECTRhofield,
     const int lev) {
 
 #if !defined(WARPX_DIM_RZ) and defined(AMREX_USE_EB)
@@ -71,7 +71,7 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
     ablastr::fields::VectorField const Efield,
     ablastr::fields::VectorField const& edge_lengths,
     ablastr::fields::VectorField const& face_areas,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield, const int lev ) {
+    ablastr::fields::VectorField const& ECTRhofield, const int lev ) {
 #ifdef AMREX_USE_EB
 
 #if !(defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ))

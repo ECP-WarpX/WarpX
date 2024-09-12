@@ -342,7 +342,7 @@ WarpX::ImplicitComputeRHSE (int lev, PatchType patch_type, amrex::Real a_dt, War
                                         m_fields.get_alldirs("current_fp", lev),
                                         m_fields.get_alldirs("edge_lengths", lev),
                                         m_fields.get_alldirs("face_areas", lev),
-                                        ECTRhofield[lev],
+                                        m_fields.get_alldirs("ECTRhofield", lev),
                                         m_fields.get("F_fp", lev), lev, a_dt );
     } else {
         m_fdtd_solver_cp[lev]->EvolveE( a_Erhs_vec.getArrayVec()[lev],
@@ -350,7 +350,7 @@ WarpX::ImplicitComputeRHSE (int lev, PatchType patch_type, amrex::Real a_dt, War
                                         m_fields.get_alldirs("current_cp", lev),
                                         m_fields.get_alldirs("edge_lengths", lev),
                                         m_fields.get_alldirs("face_areas", lev),
-                                        ECTRhofield[lev],
+                                        m_fields.get_alldirs("ECTRhofield", lev),
                                         m_fields.get("F_cp", lev), lev, a_dt );
     }
 

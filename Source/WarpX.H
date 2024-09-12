@@ -1506,14 +1506,6 @@ private:
      * This is only used for the ECT solver.*/
     amrex::Vector<std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 > > m_borrowing;
 
-    /** ECTRhofield is needed only by the ect
-     * solver and it contains the electromotive force density for every mesh face.
-     * The name ECTRhofield has been used to comply with the notation of the paper
-     * https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4463918 (page 9, equation 4
-     * and below).
-     * Although it's called rho it has nothing to do with the charge density!
-     * This is only used for the ECT solver.*/
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > ECTRhofield;
     /** Venl contains the electromotive force for every mesh face, i.e. every entry is
      * the corresponding entry in ECTRhofield multiplied by the total area (possibly with enlargement)
      * This is only used for the ECT solver.*/

@@ -327,7 +327,6 @@ WarpX::WarpX ()
     m_flag_ext_face.resize(nlevs_max);
     m_borrowing.resize(nlevs_max);
 
-    ECTRhofield.resize(nlevs_max);
     Venl.resize(nlevs_max);
 
 
@@ -2404,12 +2403,19 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                 AllocInitMultiFab(Venl[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps,
                                   guard_cells.ng_FieldSolver, lev, "Venl[z]");
 
-                AllocInitMultiFab(ECTRhofield[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps,
-                                  guard_cells.ng_FieldSolver, lev, "ECTRhofield[x]", 0.0_rt);
-                AllocInitMultiFab(ECTRhofield[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps,
-                                  guard_cells.ng_FieldSolver, lev, "ECTRhofield[y]", 0.0_rt);
-                AllocInitMultiFab(ECTRhofield[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps,
-                                  guard_cells.ng_FieldSolver, lev, "ECTRhofield[z]", 0.0_rt);
+                /** ECTRhofield is needed only by the ect
+                * solver and it contains the electromotive force density for every mesh face.
+                * The name ECTRhofield has been used to comply with the notation of the paper
+                * https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4463918 (page 9, equation 4
+                * and below).
+                * Although it's called rho it has nothing to do with the charge density!
+                * This is only used for the ECT solver.*/
+                m_fields.alloc_init( "ECTRhofield", Direction{0}, lev, amrex::convert(ba, Bx_nodal_flag),
+                    dm, ncomps, guard_cells.ng_FieldSolver, 0.0_rt);
+                m_fields.alloc_init( "ECTRhofield", Direction{1}, lev, amrex::convert(ba, By_nodal_flag),
+                    dm, ncomps, guard_cells.ng_FieldSolver, 0.0_rt);
+                m_fields.alloc_init( "ECTRhofield", Direction{2}, lev, amrex::convert(ba, Bz_nodal_flag),
+                    dm, ncomps, guard_cells.ng_FieldSolver, 0.0_rt);
             }
         }
     }

@@ -1008,7 +1008,8 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                     m_fields.get_alldirs("Efield_fp",lev),
                     m_fields.get_alldirs("edge_lengths", lev),
                     m_fields.get_mr_levels_alldirs("face_areas", finest_level)[lev],
-                    ECTRhofield[lev], lev);
+                    m_fields.get_alldirs("ECTRhofield", lev),
+                    lev);
             }
         }
 #endif
@@ -1045,7 +1046,8 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                         m_fields.get_alldirs("Efield_cp",lev),
                         m_fields.get_alldirs("edge_lengths", lev),
                         m_fields.get_mr_levels_alldirs("face_areas", finest_level)[lev],
-                        ECTRhofield[lev], lev);
+                        m_fields.get_alldirs("ECTRhofield", lev),
+                        lev);
                 }
             }
 #endif

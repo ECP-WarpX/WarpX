@@ -55,7 +55,7 @@ void FiniteDifferenceSolver::EvolveE (
     ablastr::fields::VectorField const& Jfield,
     VectorField const& edge_lengths,
     VectorField const& face_areas,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
+    VectorField const& ECTRhofield,
     amrex::MultiFab const* Ffield,
     int lev, amrex::Real const dt ) {
 
