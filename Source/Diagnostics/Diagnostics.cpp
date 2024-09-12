@@ -535,6 +535,11 @@ Diagnostics::InitBaseData ()
     for (int i = 0; i < m_num_buffers; ++i) {
         m_mf_output[i].resize( nmax_lev );
     }
+    m_sum_mf_output.resize(m_num_buffers);
+    for (int i = 0; i < m_num_buffers; ++i) {
+        m_sum_mf_output[i].resize( nmax_lev );
+    }
+
 
     // allocate vector of geometry objects corresponding to each output multifab.
     m_geom_output.resize( m_num_buffers );
@@ -559,6 +564,8 @@ Diagnostics::ComputeAndPack ()
 
     auto & warpx = WarpX::GetInstance();
 
+    bool do_sum_now = cur_step >= time_ave 
+
     // compute the necessary fields and store result in m_mf_output.
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
         for(int lev=0; lev<nlev_output; lev++){
@@ -569,7 +576,11 @@ Diagnostics::ComputeAndPack ()
                 // a diagnostics and writes in one or more components of the output
                 // multifab m_mf_output[lev].
                 m_all_field_functors[lev][icomp]->operator()(m_mf_output[i_buffer][lev], icomp_dst, i_buffer);
+                if (do_sum_now)
                 // update the index of the next component to fill
+                int scalar_a = 1;
+                // call amrex sax operation to do the following
+                m_sum_mf_output[i_buffer][lev] += scalar_a * m_mf_output[i_buffer][lev]
                 icomp_dst += m_all_field_functors[lev][icomp]->nComp();
             }
             // Check that the proper number of components of mf_avg were updated.
