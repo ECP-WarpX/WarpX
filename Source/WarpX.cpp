@@ -332,10 +332,6 @@ WarpX::WarpX ()
         vector_potential_grad_buf_b_stag.resize(nlevs_max);
     }
 
-    // Same as Bfield_fp/Efield_fp for reading external field data
-    B_external_particle_field.resize(1);
-    E_external_particle_field.resize(1);
-
     m_distance_to_eb.resize(nlevs_max);
     m_flag_info_face.resize(nlevs_max);
     m_flag_ext_face.resize(nlevs_max);
@@ -2612,12 +2608,14 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         auto Bfield_aux_levl_0 = m_fields.get("Bfield_aux", Direction{0}, lev);
         auto Bfield_aux_levl_1 = m_fields.get("Bfield_aux", Direction{1}, lev);
         auto Bfield_aux_levl_2 = m_fields.get("Bfield_aux", Direction{2}, lev);
-        AllocInitMultiFab(B_external_particle_field[lev][0], amrex::convert(ba, Bfield_aux_levl_0->ixType()),
-            dm, ncomps, ngEB, lev, "B_external_particle_field[x]", 0.0_rt);
-        AllocInitMultiFab(B_external_particle_field[lev][1], amrex::convert(ba, Bfield_aux_levl_1->ixType()),
-            dm, ncomps, ngEB, lev, "B_external_particle_field[y]", 0.0_rt);
-        AllocInitMultiFab(B_external_particle_field[lev][2], amrex::convert(ba, Bfield_aux_levl_2->ixType()),
-            dm, ncomps, ngEB, lev, "B_external_particle_field[z]", 0.0_rt);
+
+        // Same as Bfield_fp for reading external field data
+        m_fields.alloc_init( "B_external_particle_field", Direction{0}, lev, amrex::convert(ba, Bfield_aux_levl_0->ixType()),
+            dm, ncomps, ngEB, 0.0_rt);
+        m_fields.alloc_init( "B_external_particle_field", Direction{1}, lev, amrex::convert(ba, Bfield_aux_levl_1->ixType()),
+            dm, ncomps, ngEB, 0.0_rt);
+        m_fields.alloc_init( "B_external_particle_field", Direction{2}, lev, amrex::convert(ba, Bfield_aux_levl_2->ixType()),
+            dm, ncomps, ngEB, 0.0_rt);
     }
     if (m_p_ext_field_params->E_ext_grid_type != ExternalFieldType::default_zero && m_p_ext_field_params->E_ext_grid_type != ExternalFieldType::constant) {
         // These fields will be added directly to the grid, i.e. to fp, and need to match the index type
@@ -2633,12 +2631,14 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         auto Efield_aux_levl_0 = m_fields.get("Efield_aux", Direction{0}, lev);
         auto Efield_aux_levl_1 = m_fields.get("Efield_aux", Direction{1}, lev);
         auto Efield_aux_levl_2 = m_fields.get("Efield_aux", Direction{2}, lev);
-        AllocInitMultiFab(E_external_particle_field[lev][0], amrex::convert(ba, Efield_aux_levl_0->ixType()),
-            dm, ncomps, ngEB, lev, "E_external_particle_field[x]", 0.0_rt);
-        AllocInitMultiFab(E_external_particle_field[lev][1], amrex::convert(ba, Efield_aux_levl_1->ixType()),
-            dm, ncomps, ngEB, lev, "E_external_particle_field[y]", 0.0_rt);
-        AllocInitMultiFab(E_external_particle_field[lev][2], amrex::convert(ba, Efield_aux_levl_2->ixType()),
-            dm, ncomps, ngEB, lev, "E_external_particle_field[z]", 0.0_rt);
+
+        // Same as Efield_fp for reading external field data
+        m_fields.alloc_init( "E_external_particle_field", Direction{0}, lev, amrex::convert(ba, Efield_aux_levl_0->ixType()),
+            dm, ncomps, ngEB, 0.0_rt);
+        m_fields.alloc_init( "E_external_particle_field", Direction{1}, lev, amrex::convert(ba, Efield_aux_levl_1->ixType()),
+            dm, ncomps, ngEB, 0.0_rt);
+        m_fields.alloc_init( "E_external_particle_field", Direction{2}, lev, amrex::convert(ba, Efield_aux_levl_2->ixType()),
+            dm, ncomps, ngEB, 0.0_rt);
     }
 
     //
