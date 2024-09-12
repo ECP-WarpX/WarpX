@@ -1522,6 +1522,8 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         # --- Same method names are used, though mapped to lower case.
         pywarpx.algo.maxwell_solver = self.method
 
+        pywarpx.warpx.cfl = self.cfl
+
         if self.source_smoother is not None:
             self.source_smoother.smoother_initialize_inputs(self)
 
@@ -1869,6 +1871,9 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
 
     Parameters
     ----------
+    warpx_cfl: float, optional
+        Fraction of the CFL condition for particle velocity vs grid size, used to set the timestep
+
     warpx_relativistic: bool, default=False
         Whether to use the relativistic solver or lab frame solver
 
@@ -1892,8 +1897,8 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
 
         self.grid.grid_initialize_inputs()
 
-        if self.cfl is not None:
-            pywarpx.warpx.cfl = self.cfl
+        # set CFL number
+        pywarpx.warpx.cfl = self.cfl
 
         if self.relativistic:
             pywarpx.warpx.do_electrostatic = "relativistic"
