@@ -41,12 +41,9 @@ JFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/
     if (m_deposit_current)
     {
         // allocate temporary multifab to deposit current density into
-        using ablastr::fields::Direction;
-        ablastr::fields::MultiLevelVectorField current_fp_temp;
-
-        warpx.m_fields.alias_init("current_fp_temp", "current_fp", Direction{0}, 0);
-        warpx.m_fields.alias_init("current_fp_temp", "current_fp", Direction{1}, 0);
-        warpx.m_fields.alias_init("current_fp_temp", "current_fp", Direction{2}, 0);
+        ablastr::fields::MultiLevelVectorField current_fp_temp {
+            warpx.m_fields.get_alldirs("current_fp_temp", m_lev)
+        };
 
         auto& mypc = warpx.GetPartContainer();
         mypc.DepositCurrent(current_fp_temp, warpx.getdt(m_lev), 0.0);
@@ -56,11 +53,6 @@ JFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/
         for (int idim = 0; idim < 3; ++idim) {
             current_fp_temp[0][idim]->FillBoundary(warpx.Geom(m_lev).periodicity());
         }
-
-        // remove aliases again
-        warpx.m_fields.erase("current_fp_temp", Direction{0}, 0);
-        warpx.m_fields.erase("current_fp_temp", Direction{1}, 0);
-        warpx.m_fields.erase("current_fp_temp", Direction{2}, 0);
     }
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_mf_src != nullptr, "m_mf_src can't be a nullptr.");
