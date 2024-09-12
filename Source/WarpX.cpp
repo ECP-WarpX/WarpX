@@ -3462,9 +3462,6 @@ WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, cons
 
     switch(field_type)
     {
-        case FieldType::Bfield_fp :
-            field_pointer = Bfield_fp[lev][direction].get();
-            break;
         case FieldType::Efield_cp :
             field_pointer = Efield_cp[lev][direction].get();
             break;
@@ -3547,15 +3544,13 @@ WarpX::getMultiLevelField(warpx::fields::FieldType field_type) const
 {
     switch(field_type)
     {
-        case FieldType::Bfield_fp :
-            return Bfield_fp;
         case FieldType::Efield_cp :
             return Efield_cp;
         case FieldType::Bfield_cp :
             return Bfield_cp;
         default:
             WARPX_ABORT_WITH_MESSAGE("Invalid field type");
-            return Bfield_fp;
+            return Efield_cp;
     }
 }
 
