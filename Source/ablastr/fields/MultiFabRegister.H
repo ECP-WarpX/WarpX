@@ -13,6 +13,7 @@
 #include <AMReX_Array.H>
 #include <AMReX_BoxArray.H>
 #include <AMReX_DistributionMapping.H>
+#include <AMReX_Extension.H>
 #include <AMReX_IntVect.H>
 #include <AMReX_MultiFab.H>
 
@@ -53,24 +54,43 @@ namespace ablastr::fields
      */
     using ScalarField = amrex::MultiFab*;
 
+    /** A read-only scalar field (a MultiFab)
+     *
+     * Note: might still have components, e.g., for copies at different times.
+     */
+    using ConstScalarField = amrex::MultiFab const *;
+
     /** A vector field of three MultiFab
      */
-    //using VectorField = ablastr::utils::ConstMap<Direction, amrex::MultiFab*>;
-    using VectorField = std::array<amrex::MultiFab*, 3>;
+    //using VectorField = ablastr::utils::ConstMap<Direction, amrex::MultiFab *>;
+    using VectorField = std::array<amrex::MultiFab *, 3>;
+
+    /** A read-only vector field of three MultiFab
+     */
+    //using VectorField = ablastr::utils::ConstMap<Direction, amrex::MultiFab const *>;
+    using ConstVectorField = std::array<amrex::MultiFab const *, 3>;
 
     /** A multi-level scalar field
      */
     using MultiLevelScalarField = amrex::Vector<ScalarField>;
 
+    /** A read-only multi-level scalar field
+     */
+    using ConstMultiLevelScalarField = amrex::Vector<ConstScalarField>;
+
     /** A multi-level vector field
     */
     using MultiLevelVectorField = amrex::Vector<VectorField>;
 
-    /** title
+    /** A read-only multi-level vector field
+    */
+    using ConstMultiLevelVectorField = amrex::Vector<ConstVectorField>;
+
+    /** A class to control the lifetime and properties of a MultiFab (field).
      *
-     * body body
-     * body
-     * body
+     * This class is used to own the lifetime of an amrex::MultiFab and to store
+     * associated information around it regarding unique naming, scalar/vector/tensor
+     * properties, aliasing, load balancing, etc.
      */
     struct MultiFabOwner
     {
@@ -95,20 +115,23 @@ namespace ablastr::fields
         std::string m_owner;
 
         /** Is this part of a vector/tensor? */
+        AMREX_INLINE
         bool
-        is_vector () { return m_dir.has_value(); }
+        is_vector () const { return m_dir.has_value(); }
 
         /** Is this an alias MultiFab?
          *
          * If yes, that means we do not own the memory.
          */
+        AMREX_INLINE
         bool
-        is_alias () { return !m_owner.empty(); }
+        is_alias () const { return !m_owner.empty(); }
     };
 
     /** This is a register of fields aka amrex::(i)MultiFabs.
      *
      * This is owned by a simulation instance. All used fields should be registered here.
+     * Internally, this contains @see MultiFabOwner values.
      */
     struct MultiFabRegister
     {
@@ -224,7 +247,7 @@ namespace ablastr::fields
         has (
             std::string name,
             int level
-        );
+        ) const;
 
         /** title
          *
@@ -241,7 +264,7 @@ namespace ablastr::fields
             std::string name,
             Direction dir,
             int level
-        );
+        ) const;
 
         /** title
          *
@@ -274,6 +297,38 @@ namespace ablastr::fields
             Direction dir,
             int level
         );
+
+        /** title
+         *
+         * body body
+         * body
+         *
+         * @param name ...
+         * @param level ...
+         * @return ...
+         */
+        amrex::MultiFab const *
+        get (
+            std::string name,
+            int level
+        ) const;
+
+        /** title
+         *
+         * body body
+         * body
+         *
+         * @param name ...
+         * @param dir ...
+         * @param level ...
+         * @return ...
+         */
+        amrex::MultiFab const *
+        get (
+            std::string name,
+            Direction dir,
+            int level
+        ) const;
 
         /** title
          *
@@ -395,7 +450,7 @@ namespace ablastr::fields
         mf_name (
             std::string name,
             int level
-        );
+        ) const;
 
         /** title
          *
@@ -412,9 +467,18 @@ namespace ablastr::fields
             std::string name,
             Direction dir,
             int level
-        );
+        ) const;
 
     private:
+        amrex::MultiFab*
+        internal_get (
+                std::string key
+        );
+        amrex::MultiFab const *
+        internal_get (
+                std::string key
+        ) const;
+
         /** data storage: ownership and lifetime control */
         std::map<
             std::string,
