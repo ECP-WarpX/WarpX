@@ -94,12 +94,12 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, amrex::Real a_dt)
     }
     else
     {
-        Ex = Efield_cp[lev][0].get();
-        Ey = Efield_cp[lev][1].get();
-        Ez = Efield_cp[lev][2].get();
-        Bx = Bfield_cp[lev][0].get();
-        By = Bfield_cp[lev][1].get();
-        Bz = Bfield_cp[lev][2].get();
+        Ex = m_fields.get("Efield_cp",Direction{0},lev);
+        Ey = m_fields.get("Efield_cp",Direction{1},lev);
+        Ez = m_fields.get("Efield_cp",Direction{2},lev);
+        Bx = m_fields.get("Bfield_cp",Direction{0},lev);
+        By = m_fields.get("Bfield_cp",Direction{1},lev);
+        Bz = m_fields.get("Bfield_cp",Direction{2},lev);
         Jx = m_fields.get("current_cp", Direction{0}, lev);
         Jy = m_fields.get("current_cp", Direction{1}, lev);
         Jz = m_fields.get("current_cp", Direction{2}, lev);
