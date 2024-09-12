@@ -3457,7 +3457,7 @@ WarpX::MakeDistributionMap (int lev, amrex::BoxArray const& ba)
 }
 
 const amrex::iMultiFab*
-WarpX::getFieldDotMaskPointer ( FieldType field_type, int lev, int dir )
+WarpX::getFieldDotMaskPointer ( FieldType field_type, int lev, int dir ) const
 {
     switch(field_type)
     {
@@ -3480,13 +3480,13 @@ WarpX::getFieldDotMaskPointer ( FieldType field_type, int lev, int dir )
 }
 
 void WarpX::SetDotMask( std::unique_ptr<amrex::iMultiFab>& field_dotMask,
-                        std::string field_name, int lev, int dir )
+                        std::string field_name, int lev, int dir ) const
 {
     // Define the dot mask for this field_type needed to properly compute dotProduct()
     // for field values that have shared locations on different MPI ranks
     if (field_dotMask != nullptr) { return; }
 
-    ablastr::fields::VectorField const& this_field = m_fields.get_alldirs(field_name,lev);
+    ablastr::fields::ConstVectorField const& this_field = m_fields.get_alldirs(field_name,lev);
     const amrex::BoxArray& this_ba = this_field[dir]->boxArray();
     const amrex::MultiFab tmp( this_ba, this_field[dir]->DistributionMap(),
                                1, 0, amrex::MFInfo().SetAlloc(false) );
