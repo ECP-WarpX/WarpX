@@ -73,15 +73,14 @@ WarpX::UpdateAuxilaryData ()
         auto Bfield_aux_lvl_1 = m_fields.get("Bfield_aux", Direction{1}, lev);
         auto Bfield_aux_lvl_2 = m_fields.get("Bfield_aux", Direction{2}, lev);
 
-        const auto& E_ext_lev = m_fields.get_alldirs("E_external_particle_field", lev);
-        const auto& B_ext_lev = m_fields.get_alldirs("B_external_particle_field", lev);
-
         if (mypc->m_E_ext_particle_s == "read_from_file") {
+            const auto& E_ext_lev = m_fields.get_alldirs("E_external_particle_field", lev);
             amrex::MultiFab::Add(*Bfield_aux_lvl_0, *E_ext_lev[0], 0, 0, E_ext_lev[0]->nComp(), guard_cells.ng_FieldGather);
             amrex::MultiFab::Add(*Bfield_aux_lvl_1, *E_ext_lev[1], 0, 0, E_ext_lev[1]->nComp(), guard_cells.ng_FieldGather);
             amrex::MultiFab::Add(*Bfield_aux_lvl_2, *E_ext_lev[2], 0, 0, E_ext_lev[2]->nComp(), guard_cells.ng_FieldGather);
         }
         if (mypc->m_B_ext_particle_s == "read_from_file") {
+            const auto& B_ext_lev = m_fields.get_alldirs("B_external_particle_field", lev);
             amrex::MultiFab::Add(*Bfield_aux_lvl_0, *B_ext_lev[0], 0, 0, B_ext_lev[0]->nComp(), guard_cells.ng_FieldGather);
             amrex::MultiFab::Add(*Bfield_aux_lvl_1, *B_ext_lev[1], 0, 0, B_ext_lev[1]->nComp(), guard_cells.ng_FieldGather);
             amrex::MultiFab::Add(*Bfield_aux_lvl_2, *B_ext_lev[2], 0, 0, B_ext_lev[2]->nComp(), guard_cells.ng_FieldGather);
@@ -196,10 +195,10 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
         {
             if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None) {
                 Array<std::unique_ptr<MultiFab>,3> Btmp;
-                if (Bfield_cax[lev][0]) {
+                if (m_fields.has("Bfield_cax", Direction{0}, lev)) {
                     for (int i = 0; i < 3; ++i) {
                         Btmp[i] = std::make_unique<MultiFab>(
-                            *Bfield_cax[lev][i], amrex::make_alias, 0, 1);
+                            *m_fields.get("Bfield_cax", Direction{i}, lev), amrex::make_alias, 0, 1);
                     }
                 } else {
                     const IntVect ngtmp = Bfield_aux[lev-1][0]->nGrowVect();
@@ -290,10 +289,10 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
         {
             if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None) {
                 Array<std::unique_ptr<MultiFab>,3> Etmp;
-                if (Efield_cax[lev][0]) {
+                if (m_fields.has("Efield_cax", Direction{0}, lev)) {
                     for (int i = 0; i < 3; ++i) {
                         Etmp[i] = std::make_unique<MultiFab>(
-                            *Efield_cax[lev][i], amrex::make_alias, 0, 1);
+                            *m_fields.get("Efield_cax", Direction{i}, lev), amrex::make_alias, 0, 1);
                     }
                 } else {
                     const IntVect ngtmp = Efield_aux[lev-1][0]->nGrowVect();
@@ -393,28 +392,20 @@ WarpX::UpdateAuxilaryDataSameType ()
     using ablastr::fields::Direction;
     ablastr::fields::MultiLevelVectorField Efield_fp = m_fields.get_mr_levels_alldirs("Efield_fp", finest_level);
     ablastr::fields::MultiLevelVectorField Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
-    ablastr::fields::MultiLevelVectorField Efield_cp = m_fields.get_mr_levels_alldirs("Efield_cp", finest_level);
-    ablastr::fields::MultiLevelVectorField Bfield_cp = m_fields.get_mr_levels_alldirs("Bfield_cp", finest_level);
     ablastr::fields::MultiLevelVectorField Efield_aux = m_fields.get_mr_levels_alldirs("Efield_aux", finest_level);
     ablastr::fields::MultiLevelVectorField Bfield_aux = m_fields.get_mr_levels_alldirs("Bfield_aux", finest_level);
-    ablastr::fields::MultiLevelVectorField Efield_cax = m_fields.get_mr_levels_alldirs("Efield_cax", finest_level);
-    ablastr::fields::MultiLevelVectorField Bfield_cax = m_fields.get_mr_levels_alldirs("Bfield_cax", finest_level);
-    ablastr::fields::MultiLevelVectorField Efield_avg_fp = m_fields.get_mr_levels_alldirs("Efield_avg_fp", finest_level);
-    ablastr::fields::MultiLevelVectorField Bfield_avg_fp = m_fields.get_mr_levels_alldirs("Bfield_avg_fp", finest_level);
-    ablastr::fields::MultiLevelVectorField Efield_avg_cp = m_fields.get_mr_levels_alldirs("Efield_avg_cp", finest_level);
-    ablastr::fields::MultiLevelVectorField Bfield_avg_cp = m_fields.get_mr_levels_alldirs("Bfield_avg_cp", finest_level);
 
     // Level 0: Copy from fine to aux
     // Note: in some configurations, Efield_aux/Bfield_aux and Efield_fp/Bfield_fp are simply aliases to the
     // same MultiFab object. MultiFab::Copy operation automatically detects this and does nothing in this case.
     if (WarpX::fft_do_time_averaging)
     {
-        MultiFab::Copy(*Efield_aux[0][0], *Efield_avg_fp[0][0], 0, 0, Efield_aux[0][0]->nComp(), ng_src);
-        MultiFab::Copy(*Efield_aux[0][1], *Efield_avg_fp[0][1], 0, 0, Efield_aux[0][1]->nComp(), ng_src);
-        MultiFab::Copy(*Efield_aux[0][2], *Efield_avg_fp[0][2], 0, 0, Efield_aux[0][2]->nComp(), ng_src);
-        MultiFab::Copy(*Bfield_aux[0][0], *Bfield_avg_fp[0][0], 0, 0, Bfield_aux[0][0]->nComp(), ng_src);
-        MultiFab::Copy(*Bfield_aux[0][1], *Bfield_avg_fp[0][1], 0, 0, Bfield_aux[0][1]->nComp(), ng_src);
-        MultiFab::Copy(*Bfield_aux[0][2], *Bfield_avg_fp[0][2], 0, 0, Bfield_aux[0][2]->nComp(), ng_src);
+        MultiFab::Copy(*Efield_aux[0][0], *m_fields.get("Efield_avg_fp", Direction{0}, 0), 0, 0, Efield_aux[0][0]->nComp(), ng_src);
+        MultiFab::Copy(*Efield_aux[0][1], *m_fields.get("Efield_avg_fp", Direction{1}, 0), 0, 0, Efield_aux[0][1]->nComp(), ng_src);
+        MultiFab::Copy(*Efield_aux[0][2], *m_fields.get("Efield_avg_fp", Direction{2}, 0), 0, 0, Efield_aux[0][2]->nComp(), ng_src);
+        MultiFab::Copy(*Bfield_aux[0][0], *m_fields.get("Bfield_avg_fp", Direction{0}, 0), 0, 0, Bfield_aux[0][0]->nComp(), ng_src);
+        MultiFab::Copy(*Bfield_aux[0][1], *m_fields.get("Bfield_avg_fp", Direction{1}, 0), 0, 0, Bfield_aux[0][1]->nComp(), ng_src);
+        MultiFab::Copy(*Bfield_aux[0][2], *m_fields.get("Bfield_avg_fp", Direction{2}, 0), 0, 0, Bfield_aux[0][2]->nComp(), ng_src);
     }
     else
     {
@@ -428,19 +419,19 @@ WarpX::UpdateAuxilaryDataSameType ()
     for (int lev = 1; lev <= finest_level; ++lev)
     {
         const amrex::Periodicity& crse_period = Geom(lev-1).periodicity();
-        const IntVect& ng = Bfield_cp[lev][0]->nGrowVect();
-        const DistributionMapping& dm = Bfield_cp[lev][0]->DistributionMap();
+        const IntVect& ng = m_fields.get("Bfield_cp", Direction{0}, lev)->nGrowVect();
+        const DistributionMapping& dm = m_fields.get("Bfield_cp", Direction{0}, lev)->DistributionMap();
 
         // B field
         {
             if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None)
             {
-                MultiFab dBx(Bfield_cp[lev][0]->boxArray(), dm, Bfield_cp[lev][0]->nComp(), ng);
-                MultiFab dBy(Bfield_cp[lev][1]->boxArray(), dm, Bfield_cp[lev][1]->nComp(), ng);
-                MultiFab dBz(Bfield_cp[lev][2]->boxArray(), dm, Bfield_cp[lev][2]->nComp(), ng);
-                dBx.setVal(0.0);
-                dBy.setVal(0.0);
-                dBz.setVal(0.0);
+                MultiFab dBx(m_fields.get("Bfield_cp",Direction{0},lev)->boxArray(), dm,
+                             m_fields.get("Bfield_cp",Direction{0},lev)->nComp(), ng);
+                MultiFab dBy(m_fields.get("Bfield_cp",Direction{1},lev)->boxArray(), dm,
+                             m_fields.get("Bfield_cp",Direction{1},lev)->nComp(), ng);
+                MultiFab dBz(m_fields.get("Bfield_cp",Direction{2},lev)->boxArray(), dm,
+                             m_fields.get("Bfield_cp",Direction{2},lev)->nComp(), ng);
 
                 // Copy Bfield_aux to the dB MultiFabs, using up to ng_src (=ng_FieldGather) guard
                 // cells from Bfield_aux and filling up to ng (=nGrow) guard cells in the dB MultiFabs
@@ -455,15 +446,18 @@ WarpX::UpdateAuxilaryDataSameType ()
                                                             Bfield_aux[lev - 1][2]->nComp(), ng_src, ng, WarpX::do_single_precision_comms,
                                                             crse_period);
 
-                if (Bfield_cax[lev][0])
+                if (m_fields.has("Bfield_cax", Direction{0}, lev))
                 {
-                    MultiFab::Copy(*Bfield_cax[lev][0], dBx, 0, 0, Bfield_cax[lev][0]->nComp(), ng);
-                    MultiFab::Copy(*Bfield_cax[lev][1], dBy, 0, 0, Bfield_cax[lev][1]->nComp(), ng);
-                    MultiFab::Copy(*Bfield_cax[lev][2], dBz, 0, 0, Bfield_cax[lev][2]->nComp(), ng);
+                    MultiFab::Copy(*m_fields.get("Bfield_cax", Direction{0}, lev), dBx, 0, 0, m_fields.get("Bfield_cax", Direction{0}, lev)->nComp(), ng);
+                    MultiFab::Copy(*m_fields.get("Bfield_cax", Direction{1}, lev), dBy, 0, 0, m_fields.get("Bfield_cax", Direction{1}, lev)->nComp(), ng);
+                    MultiFab::Copy(*m_fields.get("Bfield_cax", Direction{2}, lev), dBz, 0, 0, m_fields.get("Bfield_cax", Direction{2}, lev)->nComp(), ng);
                 }
-                MultiFab::Subtract(dBx, *Bfield_cp[lev][0], 0, 0, Bfield_cp[lev][0]->nComp(), ng);
-                MultiFab::Subtract(dBy, *Bfield_cp[lev][1], 0, 0, Bfield_cp[lev][1]->nComp(), ng);
-                MultiFab::Subtract(dBz, *Bfield_cp[lev][2], 0, 0, Bfield_cp[lev][2]->nComp(), ng);
+                MultiFab::Subtract(dBx, *m_fields.get("Bfield_cp",Direction{0},lev),
+                                   0, 0, m_fields.get("Bfield_cp",Direction{0},lev)->nComp(), ng);
+                MultiFab::Subtract(dBy, *m_fields.get("Bfield_cp",Direction{1},lev),
+                                   0, 0, m_fields.get("Bfield_cp",Direction{1},lev)->nComp(), ng);
+                MultiFab::Subtract(dBz, *m_fields.get("Bfield_cp",Direction{2},lev),
+                                   0, 0, m_fields.get("Bfield_cp",Direction{2},lev)->nComp(), ng);
 
                 const amrex::IntVect& refinement_ratio = refRatio(lev-1);
 
@@ -537,11 +531,11 @@ WarpX::UpdateAuxilaryDataSameType ()
                                                             WarpX::do_single_precision_comms,
                                                             crse_period);
 
-                if (Efield_cax[lev][0])
+                if (m_fields.has("Efield_cax", Direction{0}, lev))
                 {
-                    MultiFab::Copy(*Efield_cax[lev][0], dEx, 0, 0, Efield_cax[lev][0]->nComp(), ng);
-                    MultiFab::Copy(*Efield_cax[lev][1], dEy, 0, 0, Efield_cax[lev][1]->nComp(), ng);
-                    MultiFab::Copy(*Efield_cax[lev][2], dEz, 0, 0, Efield_cax[lev][2]->nComp(), ng);
+                    MultiFab::Copy(*m_fields.get("Efield_cax", Direction{0}, lev), dEx, 0, 0, m_fields.get("Efield_cax", Direction{0}, lev)->nComp(), ng);
+                    MultiFab::Copy(*m_fields.get("Efield_cax", Direction{1}, lev), dEy, 0, 0, m_fields.get("Efield_cax", Direction{1}, lev)->nComp(), ng);
+                    MultiFab::Copy(*m_fields.get("Efield_cax", Direction{2}, lev), dEz, 0, 0, m_fields.get("Efield_cax", Direction{2}, lev)->nComp(), ng);
                 }
                 MultiFab::Subtract(dEx, *m_fields.get("Efield_cp",Direction{0},lev),
                                    0, 0, m_fields.get("Efield_cp",Direction{0},lev)->nComp(), ng);
