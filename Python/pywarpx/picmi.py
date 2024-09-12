@@ -2754,7 +2754,9 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.particle_pusher_algo = kw.pop("warpx_particle_pusher_algo", None)
         self.use_filter = kw.pop("warpx_use_filter", None)
         self.do_psatd_JRhom = kw.pop("warpx_do_psatd_JRhom", None)
-        self.do_psatd_JRhom_n_depositions = kw.pop("warpx_do_psatd_JRhom_n_depositions", None)
+        self.do_psatd_JRhom_n_depositions = kw.pop(
+            "warpx_do_psatd_JRhom_n_depositions", None
+        )
         self.grid_type = kw.pop("warpx_grid_type", None)
         self.do_current_centering = kw.pop("warpx_do_current_centering", None)
         self.field_centering_order = kw.pop("warpx_field_centering_order", None)
