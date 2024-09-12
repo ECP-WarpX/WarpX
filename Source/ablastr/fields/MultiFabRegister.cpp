@@ -151,6 +151,13 @@ namespace ablastr::fields
                 " already exists."
             );
         }
+        if (!has(alias_name, level)) {
+            throw std::runtime_error(
+                    "MultiFabRegister::alias_init failed because " +
+                    mf_name(alias_name, level) +
+                    " does not exist."
+            );
+        }
 
         // fully qualified name
         new_name = mf_name(new_name, level);
@@ -203,6 +210,13 @@ namespace ablastr::fields
                 "MultiFabRegister::alias_init failed because " +
                 mf_name(new_name, dir, level) +
                 " already exists."
+            );
+        }
+        if (!has(alias_name, dir, level)) {
+            throw std::runtime_error(
+                "MultiFabRegister::alias_init failed because " +
+                mf_name(alias_name, dir, level) +
+                " does not exist."
             );
         }
 
@@ -317,6 +331,7 @@ namespace ablastr::fields
         name = mf_name(name, level);
 
         if (m_mf_register.count(name) == 0) {
+            // FIXME: temporary, throw a std::runtime_error
             return nullptr;
         }
         amrex::MultiFab & mf = m_mf_register[name].m_mf;
@@ -334,6 +349,7 @@ namespace ablastr::fields
         name = mf_name(name, dir, level);
 
         if (m_mf_register.count(name) == 0) {
+            // FIXME: temporary, throw a std::runtime_error
             return nullptr;
         }
         amrex::MultiFab & mf = m_mf_register[name].m_mf;
