@@ -1132,34 +1132,9 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
         }
 
 #ifdef WARPX_QED
-        //Pointer to the optical depth component
-        amrex::ParticleReal* p_optical_depth_QSR = nullptr;
-        amrex::ParticleReal* p_optical_depth_BW  = nullptr;
-
-        // If a QED effect is enabled, the corresponding optical depth
-        // has to be initialized
-        const bool loc_has_quantum_sync = has_quantum_sync();
-        const bool loc_has_breit_wheeler = has_breit_wheeler();
-        if (loc_has_quantum_sync) {
-            p_optical_depth_QSR = soa.GetRealData(
-                particle_comps["opticalDepthQSR"]).data() + old_size;
-        }
-        if(loc_has_breit_wheeler) {
-            p_optical_depth_BW = soa.GetRealData(
-                particle_comps["opticalDepthBW"]).data() + old_size;
-        }
-
-        //If needed, get the appropriate functors from the engines
-        QuantumSynchrotronGetOpticalDepth quantum_sync_get_opt;
-        BreitWheelerGetOpticalDepth breit_wheeler_get_opt;
-        if(loc_has_quantum_sync){
-            quantum_sync_get_opt =
-                m_shr_p_qs_engine->build_optical_depth_functor();
-        }
-        if(loc_has_breit_wheeler){
-            breit_wheeler_get_opt =
-                m_shr_p_bw_engine->build_optical_depth_functor();
-        }
+        QEDHelper qed_helper(soa, old_size, particle_comps,
+                             has_quantum_sync(), has_breit_wheeler(),
+                             m_shr_p_qs_engine, m_shr_p_bw_engine);
 #endif
 
         const bool loc_do_field_ionization = do_field_ionization;
@@ -1200,8 +1175,8 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                 if (!tile_realbox.contains(XDim3{pos.x,pos.y,pos.z})) {
                     ZeroInitializeAndSetNegativeID(pa_idcpu, pa, ip, loc_do_field_ionization, pi
 #ifdef WARPX_QED
-                                                   ,loc_has_quantum_sync, p_optical_depth_QSR
-                                                   ,loc_has_breit_wheeler, p_optical_depth_BW
+                                                   ,qed_helper.has_quantum_sync, qed_helper.p_optical_depth_QSR
+                                                   ,qed_helper.has_breit_wheeler, qed_helper.p_optical_depth_BW
 #endif
                                                    );
                     continue;
@@ -1210,8 +1185,8 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                 if (!tile_realbox.contains(XDim3{pos.x,pos.z,0.0_rt})) {
                     ZeroInitializeAndSetNegativeID(pa_idcpu, pa, ip, loc_do_field_ionization, pi
 #ifdef WARPX_QED
-                                                   ,loc_has_quantum_sync, p_optical_depth_QSR
-                                                   ,loc_has_breit_wheeler, p_optical_depth_BW
+                                                   ,qed_helper.has_quantum_sync, qed_helper.p_optical_depth_QSR
+                                                   ,qed_helper.has_breit_wheeler, qed_helper.p_optical_depth_BW
 #endif
                                                    );
                     continue;
@@ -1220,8 +1195,8 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                 if (!tile_realbox.contains(XDim3{pos.z,0.0_rt,0.0_rt})) {
                     ZeroInitializeAndSetNegativeID(pa_idcpu, pa, ip, loc_do_field_ionization, pi
 #ifdef WARPX_QED
-                                                   ,loc_has_quantum_sync, p_optical_depth_QSR
-                                                   ,loc_has_breit_wheeler, p_optical_depth_BW
+                                                   ,qed_helper.has_quantum_sync, qed_helper.p_optical_depth_QSR
+                                                   ,qed_helper.has_breit_wheeler, qed_helper.p_optical_depth_BW
 #endif
                                                    );
                     continue;
@@ -1259,8 +1234,8 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                     if (!inj_pos->insideBounds(xb, yb, z0)) {
                         ZeroInitializeAndSetNegativeID(pa_idcpu, pa, ip, loc_do_field_ionization, pi
 #ifdef WARPX_QED
-                                                   ,loc_has_quantum_sync, p_optical_depth_QSR
-                                                   ,loc_has_breit_wheeler, p_optical_depth_BW
+                                                       ,qed_helper.has_quantum_sync, qed_helper.p_optical_depth_QSR
+                                                       ,qed_helper.has_breit_wheeler, qed_helper.p_optical_depth_BW
 #endif
                                                    );
                         continue;
@@ -1273,8 +1248,8 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                     if ( dens < density_min ){
                         ZeroInitializeAndSetNegativeID(pa_idcpu, pa, ip, loc_do_field_ionization, pi
 #ifdef WARPX_QED
-                                                   ,loc_has_quantum_sync, p_optical_depth_QSR
-                                                   ,loc_has_breit_wheeler, p_optical_depth_BW
+                                                       ,qed_helper.has_quantum_sync, qed_helper.p_optical_depth_QSR
+                                                       ,qed_helper.has_breit_wheeler, qed_helper.p_optical_depth_BW
 #endif
                                                    );
                         continue;
@@ -1291,8 +1266,8 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                     if (!inj_pos->insideBounds(xb, yb, z0_lab)) {
                         ZeroInitializeAndSetNegativeID(pa_idcpu, pa, ip, loc_do_field_ionization, pi
 #ifdef WARPX_QED
-                                                   ,loc_has_quantum_sync, p_optical_depth_QSR
-                                                   ,loc_has_breit_wheeler, p_optical_depth_BW
+                                                       ,qed_helper.has_quantum_sync, qed_helper.p_optical_depth_QSR
+                                                       ,qed_helper.has_breit_wheeler, qed_helper.p_optical_depth_BW
 #endif
                                                    );
                         continue;
@@ -1303,8 +1278,8 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                     if ( dens < density_min ){
                         ZeroInitializeAndSetNegativeID(pa_idcpu, pa, ip, loc_do_field_ionization, pi
 #ifdef WARPX_QED
-                                                   ,loc_has_quantum_sync, p_optical_depth_QSR
-                                                   ,loc_has_breit_wheeler, p_optical_depth_BW
+                                                       ,qed_helper.has_quantum_sync, qed_helper.p_optical_depth_QSR
+                                                       ,qed_helper.has_breit_wheeler, qed_helper.p_optical_depth_BW
 #endif
                                                    );
                         continue;
@@ -1328,12 +1303,12 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                 }
 
 #ifdef WARPX_QED
-                if(loc_has_quantum_sync){
-                    p_optical_depth_QSR[ip] = quantum_sync_get_opt(engine);
+                if(qed_helper.has_quantum_sync){
+                    qed_helper.p_optical_depth_QSR[ip] = qed_helper.quantum_sync_get_opt(engine);
                 }
 
-                if(loc_has_breit_wheeler){
-                    p_optical_depth_BW[ip] = breit_wheeler_get_opt(engine);
+                if(qed_helper.has_breit_wheeler){
+                    qed_helper.p_optical_depth_BW[ip] = qed_helper.breit_wheeler_get_opt(engine);
                 }
 #endif
                 // Initialize user-defined integers with user-defined parser
@@ -1566,34 +1541,9 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         }
 
 #ifdef WARPX_QED
-        //Pointer to the optical depth component
-        amrex::ParticleReal* p_optical_depth_QSR = nullptr;
-        amrex::ParticleReal* p_optical_depth_BW  = nullptr;
-
-        // If a QED effect is enabled, the corresponding optical depth
-        // has to be initialized
-        const bool loc_has_quantum_sync = has_quantum_sync();
-        const bool loc_has_breit_wheeler = has_breit_wheeler();
-        if (loc_has_quantum_sync) {
-            p_optical_depth_QSR = soa.GetRealData(
-                particle_comps["opticalDepthQSR"]).data() + old_size;
-        }
-        if(loc_has_breit_wheeler) {
-            p_optical_depth_BW = soa.GetRealData(
-                particle_comps["opticalDepthBW"]).data() + old_size;
-        }
-
-        //If needed, get the appropriate functors from the engines
-        QuantumSynchrotronGetOpticalDepth quantum_sync_get_opt;
-        BreitWheelerGetOpticalDepth breit_wheeler_get_opt;
-        if(loc_has_quantum_sync){
-            quantum_sync_get_opt =
-                m_shr_p_qs_engine->build_optical_depth_functor();
-        }
-        if(loc_has_breit_wheeler){
-            breit_wheeler_get_opt =
-                m_shr_p_bw_engine->build_optical_depth_functor();
-        }
+        QEDHelper qed_helper(soa, old_size, particle_comps,
+                             has_quantum_sync(), has_breit_wheeler(),
+                             m_shr_p_qs_engine, m_shr_p_bw_engine);
 #endif
 
         const bool loc_do_field_ionization = do_field_ionization;
@@ -1721,14 +1671,15 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 }
 
 #ifdef WARPX_QED
-                if (loc_has_quantum_sync) {
-                    p_optical_depth_QSR[ip] = quantum_sync_get_opt(engine);
+                if(qed_helper.has_quantum_sync){
+                    qed_helper.p_optical_depth_QSR[ip] = qed_helper.quantum_sync_get_opt(engine);
                 }
 
-                if(loc_has_breit_wheeler){
-                    p_optical_depth_BW[ip] = breit_wheeler_get_opt(engine);
+                if(qed_helper.has_breit_wheeler){
+                    qed_helper.p_optical_depth_BW[ip] = qed_helper.breit_wheeler_get_opt(engine);
                 }
 #endif
+
                 // Initialize user-defined integers with user-defined parser
                 for (int ia = 0; ia < n_user_int_attribs; ++ia) {
                     pa_user_int_data[ia][ip] = static_cast<int>(user_int_parserexec_data[ia](pos.x, pos.y, pos.z, u.x, u.y, u.z, t));
