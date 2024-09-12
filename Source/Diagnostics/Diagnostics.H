@@ -266,7 +266,11 @@ protected:
      *  The second vector is loops over the total number of levels.
      */
     amrex::Vector< amrex::Vector< amrex::MultiFab > >  m_mf_output;
-
+    /** summation multifab, where all fields (computed, cell-centered, and stacked)
+     *  are summed for every step in a time averaging period.
+     *  The first vector is for total number of snapshots. (=1 for FullDiagnostics)
+     *  The second vector is loops over the total number of levels.
+     */
     amrex::Vector< amrex::Vector <amrex::MultiFab > > m_sum_mf_output;
 
     /** Geometry that defines the domain attributes corresponding to output multifab.

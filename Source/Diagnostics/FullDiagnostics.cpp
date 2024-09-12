@@ -144,10 +144,13 @@ FullDiagnostics::Flush ( int i_buffer, bool /* force_flush */ )
         m_output_species.at(i_buffer), nlev_output, m_file_prefix,
         m_file_min_digits, m_plot_raw_fields, m_plot_raw_fields_guards);
 
-    if (time_average) {
-       //call amrex option to 
-       m_sum_mf_output.at(i_buffer).mult(1./time_average_step);
-           m_flush_format->WriteToFile(
+    if (m_time_averaging == "fixed_start" || m_time_averaging == "dynamic_start") {
+        // Loop over the output levels and divide by the number of steps in the averaging period
+        for (int lev = 0; lev < nlev_output; ++lev) {
+            m_sum_mf_output.at(i_buffer).at(lev).mult(1./m_average_period_steps);
+        }
+
+        m_flush_format->WriteToFile(
         m_varnames, m_sum_mf_output.at(i_buffer), m_geom_output.at(i_buffer), warpx.getistep(),
         warpx.gett_new(0),
         m_output_species.at(i_buffer), nlev_output, m_file_prefix,
@@ -177,10 +180,18 @@ FullDiagnostics::DoDump (int step, int /*i_buffer*/, bool force_flush)
 bool
 FullDiagnostics::DoComputeAndPack (int step, bool force_flush)
 {
+    if (m_time_averaging == "dynamic_start")
+        m_average_start_step = m_intervals.nextContains(step) - m_average_period_steps;
+
+    // add logic here to do compute and pack if m_intervals.contains (step+1-time_average_period) or if (cur_step>time_average_startstep)
+    bool in_averaging_period = false;
+    if (step > m_intervals.nextContains(step) - m_average_start_step && step <= m_intervals.nextContains(step))
+        in_averaging_period = true;
+
     // Data must be computed and packed for full diagnostics
     // whenever the data needs to be flushed.
-    return (force_flush || m_intervals.contains(step+1));
-    // add logic here to do compute and pack if m_intervals.containes (step+1-time_average_period) or if (cur_step>time_average_startstep)
+    return (force_flush || m_intervals.contains(step+1) || in_averaging_period);
+
 }
 
 void
@@ -626,7 +637,9 @@ FullDiagnostics::InitializeBufferData (int i_buffer, int lev, bool restart ) {
     const int ngrow = (m_format == "sensei" || m_format == "ascent") ? 1 : 0;
     int const ncomp = static_cast<int>(m_varnames.size());
     m_mf_output[i_buffer][lev] = amrex::MultiFab(ba, dmap, ncomp, ngrow);
+    // Allocate MultiFab for cell-centered field output accumulation. The data will be averaged before flushing.
     m_sum_mf_output[i_buffer][lev] = amrex::MultiFab(ba, dmap, ncomp, ngrow);
+    // Initialize to zero because we add data.
     m_sum_mf_output[i_buffer][lev].setVal(0.);
     if (lev == 0) {
         // The extent of the domain covered by the diag multifab, m_mf_output
