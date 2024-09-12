@@ -2809,6 +2809,8 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.checkpoint_signals = kw.pop("warpx_checkpoint_signals", None)
         self.numprocs = kw.pop("warpx_numprocs", None)
 
+        self.max_dt = kw.pop("warpx_max_dt", None)
+
         self.inputs_initialized = False
         self.warpx_initialized = False
 
@@ -2822,8 +2824,8 @@ class Simulation(picmistandard.PICMI_Simulation):
         if self.time_step_size is not None:
             pywarpx.warpx.const_dt = self.time_step_size
 
-        if self.warpx_max_dt is not None:
-            pywarpx.warpx.max_dt = self.warpx_max_dt
+        if self.max_dt is not None:
+            pywarpx.warpx.max_dt = self.max_dt
 
         if self.gamma_boost is not None:
             pywarpx.warpx.gamma_boost = self.gamma_boost
