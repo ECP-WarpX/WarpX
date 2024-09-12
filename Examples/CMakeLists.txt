@@ -217,7 +217,7 @@ function(add_warpx_test
     endif()
 endfunction()
 
-# Add a CTest label to an WarpX test set.
+# Add a CTest label to a WarpX test set.
 #
 # Labeling it here will add the label to the run test, its analysis and its cleanup.
 #

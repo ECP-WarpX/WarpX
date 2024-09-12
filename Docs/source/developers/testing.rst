@@ -81,11 +81,11 @@ For easier debugging, it can be convenient to run the tests on your local machin
 
        ctest --test-dir build -E laser_acceleration
 
-* Run tests labeled with the ``slow`` label:
+* Run only tests not labeled with the ``slow`` label:
 
   .. code-block:: sh
 
-       ctest --test-dir build -L slow
+       ctest --test-dir build -LE slow
 
 Once the execution of CTest is completed, you can find all files associated with each test in its corresponding directory under ``build/bin/``.
 For example, if you run the single test ``test_3d_laser_acceleration``, you can find all files associated with this test in the directory ``build/bin/test_3d_laser_acceleration/``.
