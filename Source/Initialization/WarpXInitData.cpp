@@ -946,7 +946,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
             }
             if (lev > 0) {
                 Efield_aux[lev][i]->setVal(m_p_ext_field_params->E_external_grid[i]);
-                m_fields.get("Efield_avg_cp", Direction{i}, lev)->setVal(m_p_ext_field_params->E_external_grid[i]);
+                m_fields.get("Efield_cp", Direction{i}, lev)->setVal(m_p_ext_field_params->E_external_grid[i]);
                 if (fft_do_time_averaging) {
                     m_fields.get("Efield_avg_cp", Direction{i}, lev)->setVal(m_p_ext_field_params->E_external_grid[i]);
                 }
