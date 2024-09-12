@@ -103,7 +103,7 @@ void init_MultiFabRegister (py::module & m)
              py::overload_cast<
                  std::string,
                  int
-             >(&MultiFabRegister::has),
+             >(&MultiFabRegister::has, py::const_),
              py::arg("name"),
              py::arg("level")
         )
@@ -113,7 +113,7 @@ void init_MultiFabRegister (py::module & m)
                  std::string,
                  ablastr::fields::Direction,
                  int
-             >(&MultiFabRegister::has),
+             >(&MultiFabRegister::has, py::const_),
              py::arg("name"),
              py::arg("dir"),
              py::arg("level")
