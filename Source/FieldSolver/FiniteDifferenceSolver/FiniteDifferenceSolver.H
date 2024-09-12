@@ -58,7 +58,7 @@ class FiniteDifferenceSolver
                        ablastr::fields::VectorField const& face_areas,
                        ablastr::fields::VectorField const& area_mod,
                        ablastr::fields::VectorField const& ECTRhofield,
-                       std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Venl,
+                       ablastr::fields::VectorField const& Venl,
                        std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_cell,
                        std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
                        int lev, amrex::Real dt );
@@ -302,7 +302,7 @@ class FiniteDifferenceSolver
             ablastr::fields::VectorField const& face_areas,
             ablastr::fields::VectorField const& area_mod,
             ablastr::fields::VectorField const& ECTRhofield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Venl,
+            ablastr::fields::VectorField const& Venl,
             std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_cell,
             std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
             int lev, amrex::Real dt

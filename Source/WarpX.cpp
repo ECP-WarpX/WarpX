@@ -327,9 +327,6 @@ WarpX::WarpX ()
     m_flag_ext_face.resize(nlevs_max);
     m_borrowing.resize(nlevs_max);
 
-    Venl.resize(nlevs_max);
-
-
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
     {
         // Create hybrid-PIC model object if needed
@@ -2396,12 +2393,16 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                         amrex::convert(ba, By_nodal_flag), dm);
                 m_borrowing[lev][2] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(
                         amrex::convert(ba, Bz_nodal_flag), dm);
-                AllocInitMultiFab(Venl[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps,
-                                  guard_cells.ng_FieldSolver, lev, "Venl[x]");
-                AllocInitMultiFab(Venl[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps,
-                                  guard_cells.ng_FieldSolver, lev, "Venl[y]");
-                AllocInitMultiFab(Venl[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps,
-                                  guard_cells.ng_FieldSolver, lev, "Venl[z]");
+
+                /** Venl contains the electromotive force for every mesh face, i.e. every entry is
+                * the corresponding entry in ECTRhofield multiplied by the total area (possibly with enlargement)
+                * This is only used for the ECT solver.*/
+                m_fields.alloc_init( "Venl", Direction{0}, lev, amrex::convert(ba, Bx_nodal_flag),
+                    dm, ncomps, guard_cells.ng_FieldSolver, 0.0_rt);
+                m_fields.alloc_init( "Venl", Direction{1}, lev, amrex::convert(ba, By_nodal_flag),
+                    dm, ncomps, guard_cells.ng_FieldSolver, 0.0_rt);
+                m_fields.alloc_init( "Venl", Direction{2}, lev, amrex::convert(ba, Bz_nodal_flag),
+                    dm, ncomps, guard_cells.ng_FieldSolver, 0.0_rt);
 
                 /** ECTRhofield is needed only by the ect
                 * solver and it contains the electromotive force density for every mesh face.

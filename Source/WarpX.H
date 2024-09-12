@@ -1494,11 +1494,6 @@ private:
      * This is only used for the ECT solver.*/
     amrex::Vector<std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 > > m_borrowing;
 
-    /** Venl contains the electromotive force for every mesh face, i.e. every entry is
-     * the corresponding entry in ECTRhofield multiplied by the total area (possibly with enlargement)
-     * This is only used for the ECT solver.*/
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Venl;
-
     //EB level set
     amrex::Vector<std::unique_ptr<amrex::MultiFab> > m_distance_to_eb;
 
