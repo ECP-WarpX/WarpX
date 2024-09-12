@@ -176,11 +176,10 @@ class SpectralFieldData
         ablastr::math::anyfft::FFTplans forward_plan, backward_plan;
         // Correcting "shift" factors when performing FFT from/to
         // a cell-centered grid in real space, instead of a nodal grid
-        SpectralShiftFactor xshift_FFTfromCell, xshift_FFTtoCell,
-                            zshift_FFTfromCell, zshift_FFTtoCell;
-#if defined(WARPX_DIM_3D)
-        SpectralShiftFactor yshift_FFTfromCell, yshift_FFTtoCell;
-#endif
+        // (0,1,2) is the dimension number
+        SpectralShiftFactor shift0_FFTfromCell, shift0_FFTtoCell,
+                            shift1_FFTfromCell, shift1_FFTtoCell,
+                            shift2_FFTfromCell, shift2_FFTtoCell;
 
         bool m_periodic_single_box;
 };

@@ -360,7 +360,7 @@ void FiniteDifferenceSolver::HybridPICSolveE (
     std::unique_ptr<amrex::MultiFab> const& Pefield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     int lev, HybridPICModel const* hybrid_model,
-    const bool include_resistivity_term)
+    const bool solve_for_Faraday)
 {
     // Select algorithm (The choice of algorithm is a runtime option,
     // but we compile code for each algorithm, using templates)
@@ -369,14 +369,14 @@ void FiniteDifferenceSolver::HybridPICSolveE (
 
         HybridPICSolveECylindrical <CylindricalYeeAlgorithm> (
             Efield, Jfield, Jifield, Jextfield, Bfield, rhofield, Pefield,
-            edge_lengths, lev, hybrid_model, include_resistivity_term
+            edge_lengths, lev, hybrid_model, solve_for_Faraday
         );
 
 #else
 
         HybridPICSolveECartesian <CartesianYeeAlgorithm> (
             Efield, Jfield, Jifield, Jextfield, Bfield, rhofield, Pefield,
-            edge_lengths, lev, hybrid_model, include_resistivity_term
+            edge_lengths, lev, hybrid_model, solve_for_Faraday
         );
 
 #endif
@@ -398,7 +398,7 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
     std::unique_ptr<amrex::MultiFab> const& Pefield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     int lev, HybridPICModel const* hybrid_model,
-    const bool include_resistivity_term )
+    const bool solve_for_Faraday )
 {
     // Both steps below do not currently support m > 0 and should be
     // modified if such support wants to be added
@@ -417,7 +417,7 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
     const auto rho_floor = hybrid_model->m_n_floor * PhysConst::q_e;
     const auto resistivity_has_J_dependence = hybrid_model->m_resistivity_has_J_dependence;
 
-    const bool include_hyper_resistivity_term = (eta_h > 0.0) && include_resistivity_term;
+    const bool include_hyper_resistivity_term = (eta_h > 0.0) && solve_for_Faraday;
 
     // Index type required for interpolating fields from their respective
     // staggering to the Ex, Ey, Ez locations
@@ -576,7 +576,7 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
 
                 // Interpolate current to appropriate staggering to match E field
                 Real jtot_val = 0._rt;
-                if (include_resistivity_term && resistivity_has_J_dependence) {
+                if (solve_for_Faraday && resistivity_has_J_dependence) {
                     const Real jr_val = Interp(Jr, Jr_stag, Er_stag, coarsen, i, j, 0, 0);
                     const Real jt_val = Interp(Jt, Jt_stag, Er_stag, coarsen, i, j, 0, 0);
                     const Real jz_val = Interp(Jz, Jz_stag, Er_stag, coarsen, i, j, 0, 0);
@@ -586,8 +586,10 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                 // safety condition since we divide by rho_val later
                 if (rho_val < rho_floor) { rho_val = rho_floor; }
 
-                // Get the gradient of the electron pressure
-                auto grad_Pe = T_Algo::UpwardDr(Pe, coefs_r, n_coefs_r, i, j, 0, 0);
+                // Get the gradient of the electron pressure if the longitudinal part of
+                // the E-field should be included, otherwise ignore it since curl x (grad Pe) = 0
+                Real grad_Pe = 0._rt;
+                if (!solve_for_Faraday) { grad_Pe = T_Algo::UpwardDr(Pe, coefs_r, n_coefs_r, i, j, 0, 0); }
 
                 // interpolate the nodal neE values to the Yee grid
                 auto enE_r = Interp(enE, nodal, Er_stag, coarsen, i, j, 0, 0);
@@ -595,7 +597,7 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                 Er(i, j, 0) = (enE_r - grad_Pe) / rho_val;
 
                 // Add resistivity only if E field value is used to update B
-                if (include_resistivity_term) { Er(i, j, 0) += eta(rho_val, jtot_val) * Jr(i, j, 0); }
+                if (solve_for_Faraday) { Er(i, j, 0) += eta(rho_val, jtot_val) * Jr(i, j, 0); }
 
                 if (include_hyper_resistivity_term) {
                     // r on cell-centered point (Jr is cell-centered in r)
@@ -624,7 +626,7 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
 
                 // Interpolate current to appropriate staggering to match E field
                 Real jtot_val = 0._rt;
-                if (include_resistivity_term && resistivity_has_J_dependence) {
+                if (solve_for_Faraday && resistivity_has_J_dependence) {
                     const Real jr_val = Interp(Jr, Jr_stag, Et_stag, coarsen, i, j, 0, 0);
                     const Real jt_val = Interp(Jt, Jt_stag, Et_stag, coarsen, i, j, 0, 0);
                     const Real jz_val = Interp(Jz, Jz_stag, Et_stag, coarsen, i, j, 0, 0);
@@ -644,7 +646,7 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                 Et(i, j, 0) = (enE_t - grad_Pe) / rho_val;
 
                 // Add resistivity only if E field value is used to update B
-                if (include_resistivity_term) { Et(i, j, 0) += eta(rho_val, jtot_val) * Jt(i, j, 0); }
+                if (solve_for_Faraday) { Et(i, j, 0) += eta(rho_val, jtot_val) * Jt(i, j, 0); }
 
                 // Note: Hyper-resisitivity should be revisited here when modal decomposition is implemented
             },
@@ -659,7 +661,7 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
 
                 // Interpolate current to appropriate staggering to match E field
                 Real jtot_val = 0._rt;
-                if (include_resistivity_term && resistivity_has_J_dependence) {
+                if (solve_for_Faraday && resistivity_has_J_dependence) {
                     const Real jr_val = Interp(Jr, Jr_stag, Ez_stag, coarsen, i, j, 0, 0);
                     const Real jt_val = Interp(Jt, Jt_stag, Ez_stag, coarsen, i, j, 0, 0);
                     const Real jz_val = Interp(Jz, Jz_stag, Ez_stag, coarsen, i, j, 0, 0);
@@ -669,8 +671,10 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                 // safety condition since we divide by rho_val later
                 if (rho_val < rho_floor) { rho_val = rho_floor; }
 
-                // Get the gradient of the electron pressure
-                auto grad_Pe = T_Algo::UpwardDz(Pe, coefs_z, n_coefs_z, i, j, 0, 0);
+                // Get the gradient of the electron pressure if the longitudinal part of
+                // the E-field should be included, otherwise ignore it since curl x (grad Pe) = 0
+                Real grad_Pe = 0._rt;
+                if (!solve_for_Faraday) { grad_Pe = T_Algo::UpwardDz(Pe, coefs_z, n_coefs_z, i, j, 0, 0); }
 
                 // interpolate the nodal neE values to the Yee grid
                 auto enE_z = Interp(enE, nodal, Ez_stag, coarsen, i, j, 0, 2);
@@ -678,7 +682,7 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                 Ez(i, j, 0) = (enE_z - grad_Pe) / rho_val;
 
                 // Add resistivity only if E field value is used to update B
-                if (include_resistivity_term) { Ez(i, j, 0) += eta(rho_val, jtot_val) * Jz(i, j, 0); }
+                if (solve_for_Faraday) { Ez(i, j, 0) += eta(rho_val, jtot_val) * Jz(i, j, 0); }
 
                 if (include_hyper_resistivity_term) {
                     auto nabla2Jz = T_Algo::Dzz(Jz, coefs_z, n_coefs_z, i, j, 0, 0);
@@ -709,7 +713,7 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
     std::unique_ptr<amrex::MultiFab> const& Pefield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     int lev, HybridPICModel const* hybrid_model,
-    const bool include_resistivity_term )
+    const bool solve_for_Faraday )
 {
     // for the profiler
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
@@ -722,7 +726,7 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
     const auto rho_floor = hybrid_model->m_n_floor * PhysConst::q_e;
     const auto resistivity_has_J_dependence = hybrid_model->m_resistivity_has_J_dependence;
 
-    const bool include_hyper_resistivity_term = (eta_h > 0.) && include_resistivity_term;
+    const bool include_hyper_resistivity_term = (eta_h > 0.) && solve_for_Faraday;
 
     // Index type required for interpolating fields from their respective
     // staggering to the Ex, Ey, Ez locations
@@ -879,7 +883,7 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
 
                 // Interpolate current to appropriate staggering to match E field
                 Real jtot_val = 0._rt;
-                if (include_resistivity_term && resistivity_has_J_dependence) {
+                if (solve_for_Faraday && resistivity_has_J_dependence) {
                     const Real jx_val = Interp(Jx, Jx_stag, Ex_stag, coarsen, i, j, k, 0);
                     const Real jy_val = Interp(Jy, Jy_stag, Ex_stag, coarsen, i, j, k, 0);
                     const Real jz_val = Interp(Jz, Jz_stag, Ex_stag, coarsen, i, j, k, 0);
@@ -889,8 +893,10 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 // safety condition since we divide by rho_val later
                 if (rho_val < rho_floor) { rho_val = rho_floor; }
 
-                // Get the gradient of the electron pressure
-                auto grad_Pe = T_Algo::UpwardDx(Pe, coefs_x, n_coefs_x, i, j, k);
+                // Get the gradient of the electron pressure if the longitudinal part of
+                // the E-field should be included, otherwise ignore it since curl x (grad Pe) = 0
+                Real grad_Pe = 0._rt;
+                if (!solve_for_Faraday) { grad_Pe = T_Algo::UpwardDx(Pe, coefs_x, n_coefs_x, i, j, k); }
 
                 // interpolate the nodal neE values to the Yee grid
                 auto enE_x = Interp(enE, nodal, Ex_stag, coarsen, i, j, k, 0);
@@ -898,7 +904,7 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 Ex(i, j, k) = (enE_x - grad_Pe) / rho_val;
 
                 // Add resistivity only if E field value is used to update B
-                if (include_resistivity_term) { Ex(i, j, k) += eta(rho_val, jtot_val) * Jx(i, j, k); }
+                if (solve_for_Faraday) { Ex(i, j, k) += eta(rho_val, jtot_val) * Jx(i, j, k); }
 
                 if (include_hyper_resistivity_term) {
                     auto nabla2Jx = T_Algo::Dxx(Jx, coefs_x, n_coefs_x, i, j, k);
@@ -921,7 +927,7 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
 
                 // Interpolate current to appropriate staggering to match E field
                 Real jtot_val = 0._rt;
-                if (include_resistivity_term && resistivity_has_J_dependence) {
+                if (solve_for_Faraday && resistivity_has_J_dependence) {
                     const Real jx_val = Interp(Jx, Jx_stag, Ey_stag, coarsen, i, j, k, 0);
                     const Real jy_val = Interp(Jy, Jy_stag, Ey_stag, coarsen, i, j, k, 0);
                     const Real jz_val = Interp(Jz, Jz_stag, Ey_stag, coarsen, i, j, k, 0);
@@ -931,8 +937,10 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 // safety condition since we divide by rho_val later
                 if (rho_val < rho_floor) { rho_val = rho_floor; }
 
-                // Get the gradient of the electron pressure
-                auto grad_Pe = T_Algo::UpwardDy(Pe, coefs_y, n_coefs_y, i, j, k);
+                // Get the gradient of the electron pressure if the longitudinal part of
+                // the E-field should be included, otherwise ignore it since curl x (grad Pe) = 0
+                Real grad_Pe = 0._rt;
+                if (!solve_for_Faraday) { grad_Pe = T_Algo::UpwardDy(Pe, coefs_y, n_coefs_y, i, j, k); }
 
                 // interpolate the nodal neE values to the Yee grid
                 auto enE_y = Interp(enE, nodal, Ey_stag, coarsen, i, j, k, 1);
@@ -940,7 +948,7 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 Ey(i, j, k) = (enE_y - grad_Pe) / rho_val;
 
                 // Add resistivity only if E field value is used to update B
-                if (include_resistivity_term) { Ey(i, j, k) += eta(rho_val, jtot_val) * Jy(i, j, k); }
+                if (solve_for_Faraday) { Ey(i, j, k) += eta(rho_val, jtot_val) * Jy(i, j, k); }
 
                 if (include_hyper_resistivity_term) {
                     auto nabla2Jy = T_Algo::Dyy(Jy, coefs_y, n_coefs_y, i, j, k);
@@ -959,7 +967,7 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
 
                 // Interpolate current to appropriate staggering to match E field
                 Real jtot_val = 0._rt;
-                if (include_resistivity_term && resistivity_has_J_dependence) {
+                if (solve_for_Faraday && resistivity_has_J_dependence) {
                     const Real jx_val = Interp(Jx, Jx_stag, Ez_stag, coarsen, i, j, k, 0);
                     const Real jy_val = Interp(Jy, Jy_stag, Ez_stag, coarsen, i, j, k, 0);
                     const Real jz_val = Interp(Jz, Jz_stag, Ez_stag, coarsen, i, j, k, 0);
@@ -969,8 +977,10 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 // safety condition since we divide by rho_val later
                 if (rho_val < rho_floor) { rho_val = rho_floor; }
 
-                // Get the gradient of the electron pressure
-                auto grad_Pe = T_Algo::UpwardDz(Pe, coefs_z, n_coefs_z, i, j, k);
+                // Get the gradient of the electron pressure if the longitudinal part of
+                // the E-field should be included, otherwise ignore it since curl x (grad Pe) = 0
+                Real grad_Pe = 0._rt;
+                if (!solve_for_Faraday) { grad_Pe = T_Algo::UpwardDz(Pe, coefs_z, n_coefs_z, i, j, k); }
 
                 // interpolate the nodal neE values to the Yee grid
                 auto enE_z = Interp(enE, nodal, Ez_stag, coarsen, i, j, k, 2);
@@ -978,7 +988,7 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 Ez(i, j, k) = (enE_z - grad_Pe) / rho_val;
 
                 // Add resistivity only if E field value is used to update B
-                if (include_resistivity_term) { Ez(i, j, k) += eta(rho_val, jtot_val) * Jz(i, j, k); }
+                if (solve_for_Faraday) { Ez(i, j, k) += eta(rho_val, jtot_val) * Jz(i, j, k); }
 
                 if (include_hyper_resistivity_term) {
                     auto nabla2Jz = T_Algo::Dzz(Jz, coefs_z, n_coefs_z, i, j, k);
