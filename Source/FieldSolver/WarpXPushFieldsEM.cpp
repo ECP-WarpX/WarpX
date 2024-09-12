@@ -859,14 +859,16 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
                                         m_fields.get_alldirs("Efield_fp",lev),
                                         m_fields.get("G_fp", lev),
                                         m_fields.get_alldirs("face_areas", lev),
-                                        m_area_mod[lev], ECTRhofield[lev], Venl[lev],
+                                        m_fields.get_alldirs("area_mod", lev),
+                                        ECTRhofield[lev], Venl[lev],
                                         m_flag_info_face[lev], m_borrowing[lev], lev, a_dt );
     } else {
         m_fdtd_solver_cp[lev]->EvolveB( m_fields.get_alldirs("Bfield_cp",lev),
                                         m_fields.get_alldirs("Efield_cp",lev),
                                         m_fields.get("G_fp", lev),
                                         m_fields.get_alldirs("face_areas", lev),
-                                        m_area_mod[lev], ECTRhofield[lev], Venl[lev],
+                                        m_fields.get_alldirs("area_mod", lev),
+                                        ECTRhofield[lev], Venl[lev],
                                         m_flag_info_face[lev], m_borrowing[lev], lev, a_dt );
     }
 

@@ -322,18 +322,10 @@ WarpX::WarpX ()
     Afield_dotMask.resize(nlevs_max);
     phi_dotMask.resize(nlevs_max);
 
-    // Only allocate vector potential arrays when using the Magnetostatic Solver
-    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
-    {
-        vector_potential_grad_buf_e_stag.resize(nlevs_max);
-        vector_potential_grad_buf_b_stag.resize(nlevs_max);
-    }
-
     m_distance_to_eb.resize(nlevs_max);
     m_flag_info_face.resize(nlevs_max);
     m_flag_ext_face.resize(nlevs_max);
     m_borrowing.resize(nlevs_max);
-    m_area_mod.resize(nlevs_max);
 
     ECTRhofield.resize(nlevs_max);
     Venl.resize(nlevs_max);
@@ -2284,23 +2276,19 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
     if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
     {
-        m_fields.alloc_init( "vector_potential_fp_nodal", Direction{0}, lev, amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngRho, 0.0_rt);
-        m_fields.alloc_init( "vector_potential_fp_nodal", Direction{1}, lev, amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngRho, 0.0_rt);
-        m_fields.alloc_init( "vector_potential_fp_nodal", Direction{2}, lev, amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngRho, 0.0_rt);
+        m_fields.alloc_init("vector_potential_fp_nodal", Direction{0}, lev, amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngRho, 0.0_rt);
+        m_fields.alloc_init("vector_potential_fp_nodal", Direction{1}, lev, amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngRho, 0.0_rt);
+        m_fields.alloc_init("vector_potential_fp_nodal", Direction{2}, lev, amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngRho, 0.0_rt);
 
-        AllocInitMultiFab(vector_potential_grad_buf_e_stag[lev][0], amrex::convert(ba, Ex_nodal_flag),
-            dm, ncomps, ngEB, lev, "vector_potential_grad_buf_e_stag[x]", 0.0_rt);
-        AllocInitMultiFab(vector_potential_grad_buf_e_stag[lev][1], amrex::convert(ba, Ey_nodal_flag),
-            dm, ncomps, ngEB, lev, "vector_potential_grad_buf_e_stag[y]", 0.0_rt);
-        AllocInitMultiFab(vector_potential_grad_buf_e_stag[lev][2], amrex::convert(ba, Ez_nodal_flag),
-            dm, ncomps, ngEB, lev, "vector_potential_grad_buf_e_stag[z]", 0.0_rt);
+        // Memory buffers for computing magnetostatic fields
+        // Vector Potential A and previous step.  Time buffer needed for computing dA/dt to first order
+        m_fields.alloc_init("vector_potential_grad_buf_e_stag", Direction{0}, lev, amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+        m_fields.alloc_init("vector_potential_grad_buf_e_stag", Direction{1}, lev, amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+        m_fields.alloc_init("vector_potential_grad_buf_e_stag", Direction{2}, lev, amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
 
-        AllocInitMultiFab(vector_potential_grad_buf_b_stag[lev][0], amrex::convert(ba, Bx_nodal_flag),
-            dm, ncomps, ngEB, lev, "vector_potential_grad_buf_b_stag[x]", 0.0_rt);
-        AllocInitMultiFab(vector_potential_grad_buf_b_stag[lev][1], amrex::convert(ba, By_nodal_flag),
-            dm, ncomps, ngEB, lev, "vector_potential_grad_buf_b_stag[y]", 0.0_rt);
-        AllocInitMultiFab(vector_potential_grad_buf_b_stag[lev][2], amrex::convert(ba, Bz_nodal_flag),
-            dm, ncomps, ngEB, lev, "vector_potential_grad_buf_b_stag[z]", 0.0_rt);
+        m_fields.alloc_init("vector_potential_grad_buf_b_stag", Direction{0}, lev, amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+        m_fields.alloc_init("vector_potential_grad_buf_b_stag", Direction{1}, lev, amrex::convert(ba, By_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+        m_fields.alloc_init("vector_potential_grad_buf_b_stag", Direction{2}, lev, amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
     }
 
     // Allocate extra multifabs needed by the kinetic-fluid hybrid algorithm.
@@ -2392,12 +2380,17 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                                   guard_cells.ng_FieldSolver, lev, "m_flag_ext_face[y]");
                 AllocInitMultiFab(m_flag_ext_face[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps,
                                   guard_cells.ng_FieldSolver, lev, "m_flag_ext_face[z]");
-                AllocInitMultiFab(m_area_mod[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps,
-                                  guard_cells.ng_FieldSolver, lev, "m_area_mod[x]");
-                AllocInitMultiFab(m_area_mod[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps,
-                                  guard_cells.ng_FieldSolver, lev, "m_area_mod[y]");
-                AllocInitMultiFab(m_area_mod[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps,
-                                  guard_cells.ng_FieldSolver, lev, "m_area_mod[z]");
+
+                /** EB: area_mod contains the modified areas of the mesh faces, i.e. if a face is enlarged it
+                * contains the area of the enlarged face
+                * This is only used for the ECT solver.*/
+                m_fields.alloc_init( "area_mod", Direction{0}, lev, amrex::convert(ba, Bx_nodal_flag),
+                    dm, ncomps, guard_cells.ng_FieldSolver, 0.0_rt);
+                m_fields.alloc_init( "area_mod", Direction{1}, lev, amrex::convert(ba, By_nodal_flag),
+                    dm, ncomps, guard_cells.ng_FieldSolver, 0.0_rt);
+                m_fields.alloc_init( "area_mod", Direction{2}, lev, amrex::convert(ba, Bz_nodal_flag),
+                    dm, ncomps, guard_cells.ng_FieldSolver, 0.0_rt);
+
                 m_borrowing[lev][0] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(
                         amrex::convert(ba, Bx_nodal_flag), dm);
                 m_borrowing[lev][1] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(

@@ -1505,11 +1505,6 @@ private:
     mutable amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>,3 > > Afield_dotMask;
     mutable amrex::Vector<            std::unique_ptr<amrex::iMultiFab>     > phi_dotMask;
 
-    // Memory buffers for computing magnetostatic fields
-    // Vector Potential A and previous step.  Time buffer needed for computing dA/dt to first order
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_grad_buf_e_stag;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_grad_buf_b_stag;
-
     /** EB: for every mesh face flag_info_face contains a:
      *          * 0 if the face needs to be extended
      *          * 1 if the face is large enough to lend area to other faces
@@ -1524,10 +1519,7 @@ private:
      * and in WarpX::ComputeEightWaysExtensions
      * This is only used for the ECT solver.*/
     amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_ext_face;
-    /** EB: m_area_mod contains the modified areas of the mesh faces, i.e. if a face is enlarged it
-     * contains the area of the enlarged face
-     * This is only used for the ECT solver.*/
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_area_mod;
+
     /** EB: m_borrowing contains the info about the enlarged cells, i.e. for every enlarged cell it
      * contains the info of which neighbors are being intruded (and the amount of borrowed area).
      * This is only used for the ECT solver.*/
@@ -1680,17 +1672,11 @@ private:
 
     guardCellManager guard_cells;
 
-    //Slice Parameters
+    // Slice Parameters
     int slice_max_grid_size;
     int slice_plot_int = -1;
     amrex::RealBox slice_realbox;
     amrex::IntVect slice_cr_ratio;
-    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > F_slice;
-    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > G_slice;
-    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_slice;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_slice;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_slice;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_slice;
 
     bool fft_periodic_single_box = false;
     int nox_fft = 16;
