@@ -27,10 +27,13 @@ namespace ablastr::fields
         bool redistribute_on_remake
     )
     {
-        name = mf_name(name, level);
+        // checks
+        if (has(name, level)) {
+            throw std::runtime_error("MultiFabRegister::alloc_init failed because " + name + " already exists.");
+        }
 
-        // Checks
-        // TODO: does the key already exist? error
+        // fully qualified name
+        name = mf_name(name, level);
 
         // allocate
         const auto tag = amrex::MFInfo().SetTag(name);
@@ -76,10 +79,17 @@ namespace ablastr::fields
         bool redistribute_on_remake
     )
     {
-        name = mf_name(name, level);
+        // checks
+        if (has(name, dir, level)) {
+            throw std::runtime_error(
+                "MultiFabRegister::alloc_init failed because " +
+                mf_name(name, dir, level) +
+                " already exists."
+            );
+        }
 
-        // Checks
-        // TODO: does the key already exist? error
+        // fully qualified name
+        name = mf_name(name, dir, level);
 
         // allocate
         const auto tag = amrex::MFInfo().SetTag(name);
@@ -133,11 +143,18 @@ namespace ablastr::fields
         std::optional<const amrex::Real> initial_value
     )
     {
+        // checks
+        if (has(new_name, level)) {
+            throw std::runtime_error(
+                "MultiFabRegister::alias_init failed because " +
+                mf_name(new_name, level) +
+                " already exists."
+            );
+        }
+
+        // fully qualified name
         new_name = mf_name(new_name, level);
         alias_name = mf_name(alias_name, level);
-
-        // Checks
-        // TODO: does the key already exist? error
 
         MultiFabOwner & alias = m_mf_register[alias_name];
         amrex::MultiFab & mf_alias = alias.m_mf;
@@ -180,11 +197,18 @@ namespace ablastr::fields
             std::optional<const amrex::Real> initial_value
     )
     {
+        // checks
+        if (has(new_name, dir, level)) {
+            throw std::runtime_error(
+                "MultiFabRegister::alias_init failed because " +
+                mf_name(new_name, dir, level) +
+                " already exists."
+            );
+        }
+
+        // fully qualified name
         new_name = mf_name(new_name, dir, level);
         alias_name = mf_name(alias_name, dir, level);
-
-        // Checks
-        // TODO: does the key already exist? error
 
         MultiFabOwner & alias = m_mf_register[alias_name];
         amrex::MultiFab & mf_alias = alias.m_mf;
