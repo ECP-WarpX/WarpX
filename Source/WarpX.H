@@ -452,25 +452,6 @@ public:
         const std::string& name,
         std::optional<const amrex::Real> initial_value);
 
-    /**
-     * \brief
-     * Allocate the MultiFab so that is like the specified MultiFab (same ba and dm)
-     * and optionally initialize it. This also adds the MultiFab
-     * to the map of MultiFabs (used to ease the access to MultiFabs from the Python
-     * interface
-     *
-     * \param mf[out] The MultiFab unique pointer to be allocated
-     * \param mf_model[in] The MultiFab to model
-     * \param name[in] The name of the MultiFab to use in the map
-     * \param initial_value[in] The optional initial value
-     */
-    static void AllocInitMultiFabFromModel (
-        std::unique_ptr<amrex::MultiFab>& mf,
-        amrex::MultiFab& mf_model,
-        int level,
-        const std::string& name,
-        std::optional<const amrex::Real> initial_value = {});
-
     // Maps of all of the MultiFabs and iMultiFabs used (this can include MFs from other classes)
     // This is a convenience for the Python interface, allowing all MultiFabs
     // to be easily referenced from Python.
