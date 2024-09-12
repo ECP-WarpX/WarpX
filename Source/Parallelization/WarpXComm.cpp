@@ -104,6 +104,8 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
 
     ablastr::fields::MultiLevelVectorField const& Efield_fp = m_fields.get_mr_levels_alldirs("Efield_fp", finest_level);
     ablastr::fields::MultiLevelVectorField const& Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
+    ablastr::fields::MultiLevelVectorField const& Efield_cp = m_fields.get_mr_levels_alldirs("Efield_cp", finest_level);
+    ablastr::fields::MultiLevelVectorField const& Bfield_cp = m_fields.get_mr_levels_alldirs("Bfield_cp", finest_level);
     ablastr::fields::MultiLevelVectorField const& Efield_avg_fp = m_fields.get_mr_levels_alldirs("Efield_avg_fp", finest_level);
     ablastr::fields::MultiLevelVectorField const& Bfield_avg_fp = m_fields.get_mr_levels_alldirs("Bfield_avg_fp", finest_level);
     ablastr::fields::MultiLevelVectorField const& Efield_aux = m_fields.get_mr_levels_alldirs("Efield_aux", finest_level);

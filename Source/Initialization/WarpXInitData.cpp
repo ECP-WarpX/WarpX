@@ -980,9 +980,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
             lev, PatchType::fine);
 
         InitializeExternalFieldsOnGridUsingParser(
-            m_fields.get_alldirs("Bfield_cp", Direction{0}, lev),
-            m_fields.get_alldirs("Bfield_cp", Direction{1}, lev),
-            m_fields.get_alldirs("Bfield_cp", Direction{2}, lev),
+            m_fields.get("Bfield_cp", Direction{0}, lev),
+            m_fields.get("Bfield_cp", Direction{1}, lev),
+            m_fields.get("Bfield_cp", Direction{2}, lev),
             m_p_ext_field_params->Bxfield_parser->compile<3>(),
             m_p_ext_field_params->Byfield_parser->compile<3>(),
             m_p_ext_field_params->Bzfield_parser->compile<3>(),
@@ -1027,9 +1027,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                 lev, PatchType::fine);
 
             InitializeExternalFieldsOnGridUsingParser(
-                m_fields.get_alldirs("Efield_cp", Direction{0}, lev),
-                m_fields.get_alldirs("Efield_cp", Direction{1}, lev),
-                m_fields.get_alldirs("Efield_cp", Direction{2}, lev),
+                m_fields.get("Efield_cp", Direction{0}, lev),
+                m_fields.get("Efield_cp", Direction{1}, lev),
+                m_fields.get("Efield_cp", Direction{2}, lev),
                 m_p_ext_field_params->Exfield_parser->compile<3>(),
                 m_p_ext_field_params->Eyfield_parser->compile<3>(),
                 m_p_ext_field_params->Ezfield_parser->compile<3>(),
