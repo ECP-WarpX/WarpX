@@ -48,7 +48,7 @@ using namespace amrex;
  * \brief Update the B field, over one timestep
  */
 void FiniteDifferenceSolver::EvolveB (
-    [[maybe_unused]] std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
+    [[maybe_unused]] ablastr::fields::VectorField const& Bfield,
     [[maybe_unused]] ablastr::fields::VectorField const& Efield,
     [[maybe_unused]] amrex::MultiFab const * Gfield,
     [[maybe_unused]] ablastr::fields::VectorField const& face_areas,
@@ -94,7 +94,7 @@ void FiniteDifferenceSolver::EvolveB (
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveBCartesian (
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
+    ablastr::fields::VectorField const& Bfield,
     ablastr::fields::VectorField const& Efield,
     amrex::MultiFab const * Gfield,
     int lev, amrex::Real const dt ) {
@@ -193,7 +193,7 @@ void FiniteDifferenceSolver::EvolveBCartesian (
 
 
 void FiniteDifferenceSolver::EvolveBCartesianECT (
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
+    ablastr::fields::VectorField const& Bfield,
     ablastr::fields::VectorField const& face_areas,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_mod,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
@@ -359,7 +359,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveBCylindrical (
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
+    ablastr::fields::VectorField const& Bfield,
     ablastr::fields::VectorField const& Efield,
     int lev, amrex::Real const dt ) {
 

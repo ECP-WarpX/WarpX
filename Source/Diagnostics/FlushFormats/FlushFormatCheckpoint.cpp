@@ -74,11 +74,11 @@ FlushFormatCheckpoint::WriteToFile (
                      amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Ey_fp"));
         VisMF::Write(*warpx.m_fields.get("Efield_fp", Direction{2}, lev),
                      amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Ez_fp"));
-        VisMF::Write(warpx.getField(FieldType::Bfield_fp, lev, 0),
+        VisMF::Write(*warpx.m_fields.get("Bfield_fp", Direction{0}, lev),
                      amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Bx_fp"));
-        VisMF::Write(warpx.getField(FieldType::Bfield_fp, lev, 1),
+        VisMF::Write(*warpx.m_fields.get("Bfield_fp", Direction{1}, lev),
                      amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "By_fp"));
-        VisMF::Write(warpx.getField(FieldType::Bfield_fp, lev, 2),
+        VisMF::Write(*warpx.m_fields.get("Bfield_fp", Direction{2}, lev),
                      amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Bz_fp"));
 
         if (WarpX::fft_do_time_averaging)

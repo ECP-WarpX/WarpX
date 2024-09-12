@@ -25,7 +25,7 @@ using namespace amrex;
 
 void FiniteDifferenceSolver::CalculateCurrentAmpere (
     std::array< std::unique_ptr<amrex::MultiFab>, 3>& Jfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+    ablastr::fields::VectorField const& Bfield,
     ablastr::fields::VectorField const& edge_lengths,
     int lev )
 {
@@ -60,7 +60,7 @@ void FiniteDifferenceSolver::CalculateCurrentAmpere (
 template<typename T_Algo>
 void FiniteDifferenceSolver::CalculateCurrentAmpereCylindrical (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+    ablastr::fields::VectorField const& Bfield,
     ablastr::fields::VectorField const& edge_lengths,
     int lev
 )
@@ -243,7 +243,7 @@ void FiniteDifferenceSolver::CalculateCurrentAmpereCylindrical (
 template<typename T_Algo>
 void FiniteDifferenceSolver::CalculateCurrentAmpereCartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+    ablastr::fields::VectorField const& Bfield,
     ablastr::fields::VectorField const& edge_lengths,
     int lev
 )
@@ -355,7 +355,7 @@ void FiniteDifferenceSolver::HybridPICSolveE (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
     ablastr::fields::VectorField const& Jifield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jextfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+    ablastr::fields::VectorField const& Bfield,
     amrex::MultiFab* const rhofield,
     std::unique_ptr<amrex::MultiFab> const& Pefield,
     ablastr::fields::VectorField const& edge_lengths,
@@ -393,7 +393,7 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
     ablastr::fields::VectorField const& Jifield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jextfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+    ablastr::fields::VectorField const& Bfield,
     amrex::MultiFab* const rhofield,
     std::unique_ptr<amrex::MultiFab> const& Pefield,
     ablastr::fields::VectorField const& edge_lengths,
@@ -708,7 +708,7 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
     ablastr::fields::VectorField const& Jifield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jextfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+    ablastr::fields::VectorField const& Bfield,
     amrex::MultiFab* const rhofield,
     std::unique_ptr<amrex::MultiFab> const& Pefield,
     ablastr::fields::VectorField const& edge_lengths,

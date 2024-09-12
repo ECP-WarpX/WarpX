@@ -69,7 +69,7 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
         for (int lev = 0; lev <= max_level; lev++) {
             for (int comp=0; comp<3; comp++) {
                 m_fields.get("Efield_fp",Direction{comp},lev)->setVal(0);
-                Bfield_fp[lev][comp]->setVal(0);
+                m_fields.get("Bfield_fp",Direction{comp},lev)->setVal(0);
             }
         }
     }
@@ -142,6 +142,7 @@ WarpX::AddBoundaryField ()
 
     // Compute the corresponding electric and magnetic field, from the potential phi.
     auto Efield_fp_new = m_fields.get_mr_levels_alldirs("Efield_fp",max_level); // JRA, new to prevent shadow
+    auto Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp",max_level);
     computeE( Efield_fp_new, phi, beta );
     computeB( Bfield_fp, phi, beta );
 
@@ -230,6 +231,7 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
 
     // Compute the corresponding electric and magnetic field, from the potential phi
     auto Efield_fp_new = m_fields.get_mr_levels_alldirs("Efield_fp",max_level); // JRA, new to prevent shadow
+    auto Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp",max_level);
     computeE( Efield_fp_new, phi, beta );
     computeB( Bfield_fp, phi, beta );
 
@@ -308,6 +310,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     // Compute the electric field. Note that if an EB is used the electric
     // field will be calculated in the computePhi call.
     auto Efield_fp_new = m_fields.get_mr_levels_alldirs("Efield_fp",max_level); // JRA, new to prevent shadow
+    auto Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp",max_level);
     if (!EB::enabled()) { computeE( Efield_fp_new, phi_fp, beta ); }
     else {
         if (IsPythonCallbackInstalled("poissonsolver")) { computeE(Efield_fp_new, phi_fp, beta); }
@@ -701,7 +704,7 @@ WarpX::computeE (ablastr::fields::MultiLevelVectorField& E,
    \param[in] beta Represents the velocity of the source of `phi`
 */
 void
-WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& B,
+WarpX::computeB (ablastr::fields::MultiLevelVectorField& B,
                  const ablastr::fields::MultiLevelScalarField& phi,
                  std::array<amrex::Real, 3> const beta ) const
 {

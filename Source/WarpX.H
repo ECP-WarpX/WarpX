@@ -132,7 +132,7 @@ public:
     void ApplyMagneticFieldBCs ();
     void FinishMagneticFieldAndApplyBCs ( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& a_Bn,
                                amrex::Real a_theta );
-    void FinishImplicitField ( amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_fp,
+    void FinishImplicitField ( const ablastr::fields::MultiLevelVectorField& Field_fp,
                          const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_n,
                          amrex::Real theta );
     void ImplicitComputeRHSE (         amrex::Real dt, WarpXSolverVec& a_Erhs_vec);
@@ -1017,7 +1017,7 @@ public:
     void computeE (ablastr::fields::MultiLevelVectorField& E,
                    const ablastr::fields::MultiLevelScalarField& phi,
                    std::array<amrex::Real, 3> beta = {{0,0,0}} ) const;
-    void computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& B,
+    void computeB (ablastr::fields::MultiLevelVectorField& B,
                    const ablastr::fields::MultiLevelScalarField& phi,
                    std::array<amrex::Real, 3> beta = {{0,0,0}} ) const;
     void computePhiTriDiagonal (const ablastr::fields::MultiLevelScalarField& rho,
@@ -1032,7 +1032,7 @@ public:
                                  amrex::Real required_precision=amrex::Real(1.e-11),
                                  amrex::Real absolute_tolerance=amrex::Real(0.0),
                                  int max_iters=200,
-                                 int verbosity=2) const;
+                                 int verbosity=2); // const;
 
     void setVectorPotentialBC (ablastr::fields::MultiLevelVectorField const& A) const;
 
@@ -1513,7 +1513,6 @@ private:
 
     // Fine patch
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp;
 
     // Masks for computing dot product and global moments of fields when using grids that
     // have shared locations across different ranks (e.g., a Yee grid)

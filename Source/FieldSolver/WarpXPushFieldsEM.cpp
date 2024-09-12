@@ -853,20 +853,20 @@ WarpX::EvolveB (int lev, amrex::Real a_dt, DtType a_dt_type)
 void
 WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_type)
 {
-    auto face_areas_lev = m_fields.get_mr_levels_alldirs("face_areas", finest_level)[lev];
-
     // Evolve B field in regular cells
     if (patch_type == PatchType::fine) {
-        m_fdtd_solver_fp[lev]->EvolveB( Bfield_fp[lev],
+        m_fdtd_solver_fp[lev]->EvolveB( m_fields.get_alldirs("Bfield_fp",lev),
                                         m_fields.get_alldirs("Efield_fp",lev),
                                         m_fields.get("G_fp", lev),
-                                        face_areas_lev, m_area_mod[lev], ECTRhofield[lev], Venl[lev],
+                                        m_fields.get("face_areas", lev),
+                                        m_area_mod[lev], ECTRhofield[lev], Venl[lev],
                                         m_flag_info_face[lev], m_borrowing[lev], lev, a_dt );
     } else {
-        m_fdtd_solver_cp[lev]->EvolveB( Bfield_cp[lev],
+        m_fdtd_solver_cp[lev]->EvolveB( m_fields.get_alldirs("Bfield_cp",lev),
                                         m_fields.get_alldirs("Efield_cp",lev),
                                         m_fields.get("G_fp", lev),
-                                        face_areas_lev, m_area_mod[lev], ECTRhofield[lev], Venl[lev],
+                                        m_fields.get("face_areas", lev),
+                                        m_area_mod[lev], ECTRhofield[lev], Venl[lev],
                                         m_flag_info_face[lev], m_borrowing[lev], lev, a_dt );
     }
 
@@ -914,7 +914,7 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
     // Evolve E field in regular cells
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->EvolveE( m_fields.get_alldirs("Efield_fp",lev),
-                                        Bfield_fp[lev],
+                                        m_fields.get_alldirs("Bfield_fp", lev),
                                         m_fields.get_alldirs("current_fp", lev),
                                         m_fields.get_alldirs("edge_lengths", lev),
                                         m_fields.get_alldirs("face_areas", lev),
@@ -922,7 +922,7 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
                                         m_fields.get("F_fp", lev), lev, a_dt );
     } else {
         m_fdtd_solver_cp[lev]->EvolveE( m_fields.get_alldirs("Efield_cp",lev),
-                                        Bfield_cp[lev],
+                                        m_fields.get_alldirs("Bfield_cp", lev),
                                         m_fields.get_alldirs("current_cp", lev),
                                         m_fields.get_alldirs("edge_lengths", lev),
                                         m_fields.get_alldirs("face_areas", lev),
@@ -1057,15 +1057,17 @@ WarpX::EvolveG (int lev, PatchType patch_type, amrex::Real a_dt, DtType /*a_dt_t
     // Evolve G field in regular cells
     if (patch_type == PatchType::fine)
     {
+        ablastr::fields::MultiLevelVectorField const& Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
         m_fdtd_solver_fp[lev]->EvolveG(
             m_fields.get("G_fp", lev),
             Bfield_fp[lev], a_dt);
     }
     else // coarse patch
     {
+        ablastr::fields::MultiLevelVectorField const& Bfield_cp_new = m_fields.get_mr_levels_alldirs("Bfield_cp", finest_level);
         m_fdtd_solver_cp[lev]->EvolveG(
             m_fields.get("G_cp", lev),
-            Bfield_cp[lev], a_dt);
+            Bfield_cp_new[lev], a_dt);
     }
 
     // TODO Evolution in PML cells will go here
@@ -1100,9 +1102,10 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
         "Macroscopic EvolveE is not implemented for lev>0, yet."
     );
 
+    ablastr::fields::MultiLevelVectorField const& Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
     m_fdtd_solver_fp[lev]->MacroscopicEvolveE(
         m_fields.get_alldirs("Efield_fp", lev),
-        Bfield_fp[lev],
+        m_fields.get_alldirs("Bfield_fp", lev),
         m_fields.get_alldirs("current_fp", lev),
         m_fields.get_alldirs("edge_lengths", lev),
         a_dt, m_macroscopic_properties);
