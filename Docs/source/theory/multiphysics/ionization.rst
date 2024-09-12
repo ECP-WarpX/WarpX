@@ -48,7 +48,7 @@ Here, :math:`\vec{u} = (u_x, u_y, u_z)` is the momentum normalized to the partic
                 \left[ 2 \frac{E_\mathrm{a}}{E_\mathrm{dc}} \left( \frac{U_\mathrm{ion}}{U_\mathrm{H}} \right)^{3/2} \right]^{2n^*-1}
                 \times \exp\left[ - \frac{2}{3} \frac{E_\mathrm{a}}{E_\mathrm{dc}} \left( \frac{U_\mathrm{ion}}{U_\mathrm{H}} \right)^{3/2} \right]
         \\
-        \mathcal{C}^2_{n^* l^*} = \frac{2^{2n^*}}{n^* \Gamma(n^* + l^* + 1) \Gamma(n^* - l^*)}
+        \mathcal{C}^2_{n^* l^*} &= \frac{2^{2n^*}}{n^* \Gamma(n^* + l^* + 1) \Gamma(n^* - l^*)}
     \end{aligned}
 
 The quantities are: :math:`\omega_\mathrm{a}`, the atomic unit frequency, :math:`U_\mathrm{ion}`, the ionization potential, :math:`U_\mathrm{H}`, Hydrogen ground state ionization potential, :math:`E_\mathrm{a}`, the atomic unit electric field, :math:`n^* = Z \sqrt{U_\mathrm{H}/U_\mathrm{ion}}`, the effective principal quantum number (*Attention!* :math:`Z` is the ionization state *after ionization*.) , :math:`l^* = n_0^* - 1`, the effective orbital quantum number.
