@@ -127,14 +127,14 @@ public:
     void SaveParticlesAtImplicitStepStart ();
     void FinishImplicitParticleUpdate ();
     void SetElectricFieldAndApplyBCs ( const WarpXSolverVec&  a_E );
-    void UpdateMagneticFieldAndApplyBCs ( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& a_Bn,
-                               amrex::Real a_thetadt );
+    void UpdateMagneticFieldAndApplyBCs ( ablastr::fields::MultiLevelVectorField const&  a_Bn,
+                                          amrex::Real  a_thetadt );
     void ApplyMagneticFieldBCs ();
-    void FinishMagneticFieldAndApplyBCs ( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& a_Bn,
-                               amrex::Real a_theta );
-    void FinishImplicitField ( const ablastr::fields::MultiLevelVectorField& Field_fp,
-                         const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_n,
-                         amrex::Real theta );
+    void FinishMagneticFieldAndApplyBCs ( ablastr::fields::MultiLevelVectorField const&  a_Bn,
+                                          amrex::Real  a_theta );
+    void FinishImplicitField ( const ablastr::fields::MultiLevelVectorField&  Field_fp,
+                               const ablastr::fields::MultiLevelVectorField&  Field_n,
+                               amrex::Real  theta );
     void ImplicitComputeRHSE (         amrex::Real dt, WarpXSolverVec& a_Erhs_vec);
     void ImplicitComputeRHSE (int lev, amrex::Real dt, WarpXSolverVec& a_Erhs_vec);
     void ImplicitComputeRHSE (int lev, PatchType patch_type, amrex::Real dt, WarpXSolverVec& a_Erhs_vec);

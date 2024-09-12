@@ -83,20 +83,23 @@ WarpX::SetElectricFieldAndApplyBCs ( const WarpXSolverVec&  a_E )
 }
 
 void
-WarpX::UpdateMagneticFieldAndApplyBCs( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >&  a_Bn,
-                            amrex::Real                                                         a_thetadt )
+WarpX::UpdateMagneticFieldAndApplyBCs( ablastr::fields::MultiLevelVectorField const&  a_Bn,
+                                       amrex::Real                                    a_thetadt )
 {
     using ablastr::fields::Direction;
-    amrex::MultiFab::Copy(*m_fields.get("Bfield_fp", Direction{0}, 0), *a_Bn[0][0], 0, 0, ncomps, a_Bn[0][0]->nGrowVect());
-    amrex::MultiFab::Copy(*m_fields.get("Bfield_fp", Direction{1}, 0), *a_Bn[0][1], 0, 0, ncomps, a_Bn[0][1]->nGrowVect());
-    amrex::MultiFab::Copy(*m_fields.get("Bfield_fp", Direction{2}, 0), *a_Bn[0][2], 0, 0, ncomps, a_Bn[0][2]->nGrowVect());
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        ablastr::fields::VectorField Bfp = m_fields.get_alldirs("Bfield_fp",lev);
+        amrex::MultiFab::Copy(*Bfp[0], *a_Bn[lev][0], 0, 0, ncomps, a_Bn[lev][0]->nGrowVect());
+        amrex::MultiFab::Copy(*Bfp[1], *a_Bn[lev][1], 0, 0, ncomps, a_Bn[lev][1]->nGrowVect());
+        amrex::MultiFab::Copy(*Bfp[2], *a_Bn[lev][2], 0, 0, ncomps, a_Bn[lev][2]->nGrowVect());
+    }
     EvolveB(a_thetadt, DtType::Full);
     ApplyMagneticFieldBCs();
 }
 
 void
-WarpX::FinishMagneticFieldAndApplyBCs( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >&  a_Bn,
-                            amrex::Real                                                         a_theta )
+WarpX::FinishMagneticFieldAndApplyBCs( ablastr::fields::MultiLevelVectorField const&  a_Bn,
+                                       amrex::Real                                    a_theta )
 {
     FinishImplicitField(m_fields.get_mr_levels_alldirs("Bfield_fp", 0), a_Bn, a_theta);
     ApplyMagneticFieldBCs();
@@ -250,9 +253,9 @@ WarpX::FinishImplicitParticleUpdate ()
 }
 
 void
-WarpX::FinishImplicitField( const ablastr::fields::MultiLevelVectorField& Field_fp,
-                      const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_n,
-                      amrex::Real theta )
+WarpX::FinishImplicitField( ablastr::fields::MultiLevelVectorField const&  Field_fp,
+                            ablastr::fields::MultiLevelVectorField const&  Field_n,
+                            amrex::Real  theta )
 {
     using namespace amrex::literals;
 

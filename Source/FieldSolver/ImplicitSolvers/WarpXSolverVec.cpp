@@ -129,8 +129,8 @@ void WarpXSolverVec::Copy ( FieldType  a_array_type,
             }
         }
         if (m_scalar_type != FieldType::None) {
-            const amrex::MultiFab* this_scalar = m_WarpX->getFieldPointer(m_scalar_type,lev,0);
-            amrex::MultiFab::Copy( *m_scalar_vec[lev], *this_scalar, 0, 0, m_ncomp,
+            const amrex::MultiFab* this_mf = m_WarpX->m_fields.get(m_scalar_type_name,lev);
+            amrex::MultiFab::Copy( *m_scalar_vec[lev], *this_mf, 0, 0, m_ncomp,
                                    amrex::IntVect::TheZeroVector() );
         }
     }
