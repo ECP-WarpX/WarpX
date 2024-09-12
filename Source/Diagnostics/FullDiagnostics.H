@@ -4,6 +4,8 @@
 #include "Diagnostics.H"
 #include "Utils/Parser/IntervalsParser.H"
 
+#include <AMReX_REAL.H>
+
 #include <string>
 
 class FullDiagnostics final : public Diagnostics
@@ -25,6 +27,16 @@ private:
      * before writing the diagnostic.
      */
     bool m_solver_deposits_current = true;
+    /** Whether the diagnostics are averaging data over time or not
+     * Valid options are "fixed_start" and "dynamic_start".
+     */
+    std::string m_time_averaging = "none";
+    /** Period to average fields over: in steps */
+    unsigned int m_average_period_steps = 0;
+    /** Period to average fields over: in seconds */
+    amrex::Real m_average_period_seconds = 0;
+    /** Time step to start averaging */
+    unsigned int m_average_start_step = 0;
     /** Flush m_mf_output and particles to file for the i^th buffer */
     void Flush (int i_buffer, bool /* force_flush */) override;
     /** Flush raw data */

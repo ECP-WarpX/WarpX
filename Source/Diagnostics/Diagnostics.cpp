@@ -564,7 +564,8 @@ Diagnostics::ComputeAndPack ()
 
     auto & warpx = WarpX::GetInstance();
 
-    bool do_sum_now = cur_step >= time_ave 
+    // We sum up fields for later averaging and output when we are inside the averaging period
+    bool do_sum_now = cur_step >= time_ave
 
     // compute the necessary fields and store result in m_mf_output.
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
