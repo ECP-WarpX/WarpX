@@ -840,16 +840,16 @@ PML::PML (const int lev, const BoxArray& grid_ba,
             cdm.define(cba);
         }
 
-        const amrex::BoxArray cba_Ex = amrex::convert(cba, WarpX::GetInstance().getField(FieldType::Efield_cp, 1,0).ixType().toIntVect());
-        const amrex::BoxArray cba_Ey = amrex::convert(cba, WarpX::GetInstance().getField(FieldType::Efield_cp, 1,1).ixType().toIntVect());
-        const amrex::BoxArray cba_Ez = amrex::convert(cba, WarpX::GetInstance().getField(FieldType::Efield_cp, 1,2).ixType().toIntVect());
+        const amrex::BoxArray cba_Ex = amrex::convert(cba, WarpX::GetInstance().m_fields.get("Efield_cp", Direction{0}, 1)->ixType().toIntVect());
+        const amrex::BoxArray cba_Ey = amrex::convert(cba, WarpX::GetInstance().m_fields.get("Efield_cp", Direction{1}, 1)->ixType().toIntVect());
+        const amrex::BoxArray cba_Ez = amrex::convert(cba, WarpX::GetInstance().m_fields.get("Efield_cp", Direction{2}, 1)->ixType().toIntVect());
         WarpX::AllocInitMultiFab(pml_E_cp[0], cba_Ex, cdm, ncompe, nge, lev, "pml_E_cp[x]", 0.0_rt);
         WarpX::AllocInitMultiFab(pml_E_cp[1], cba_Ey, cdm, ncompe, nge, lev, "pml_E_cp[y]", 0.0_rt);
         WarpX::AllocInitMultiFab(pml_E_cp[2], cba_Ez, cdm, ncompe, nge, lev, "pml_E_cp[z]", 0.0_rt);
 
-        const amrex::BoxArray cba_Bx = amrex::convert(cba, WarpX::GetInstance().getField(FieldType::Bfield_cp, 1,0).ixType().toIntVect());
-        const amrex::BoxArray cba_By = amrex::convert(cba, WarpX::GetInstance().getField(FieldType::Bfield_cp, 1,1).ixType().toIntVect());
-        const amrex::BoxArray cba_Bz = amrex::convert(cba, WarpX::GetInstance().getField(FieldType::Bfield_cp, 1,2).ixType().toIntVect());
+        const amrex::BoxArray cba_Bx = amrex::convert(cba, WarpX::GetInstance().m_fields.get("Bfield_cp", Direction{0}, 1)->ixType().toIntVect());
+        const amrex::BoxArray cba_By = amrex::convert(cba, WarpX::GetInstance().m_fields.get("Bfield_cp", Direction{1}, 1)->ixType().toIntVect());
+        const amrex::BoxArray cba_Bz = amrex::convert(cba, WarpX::GetInstance().m_fields.get("Bfield_cp", Direction{2}, 1)->ixType().toIntVect());
         WarpX::AllocInitMultiFab(pml_B_cp[0], cba_Bx, cdm, ncompb, ngb, lev, "pml_B_cp[x]", 0.0_rt);
         WarpX::AllocInitMultiFab(pml_B_cp[1], cba_By, cdm, ncompb, ngb, lev, "pml_B_cp[y]", 0.0_rt);
         WarpX::AllocInitMultiFab(pml_B_cp[2], cba_Bz, cdm, ncompb, ngb, lev, "pml_B_cp[z]", 0.0_rt);
