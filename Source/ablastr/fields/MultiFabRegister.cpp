@@ -303,7 +303,7 @@ namespace ablastr::fields
     MultiFabRegister::has (
         std::string name,
         int level
-    )
+    ) const
     {
         name = mf_name(name, level);
 
@@ -315,11 +315,39 @@ namespace ablastr::fields
         std::string name,
         Direction dir,
         int level
-    )
+    ) const
     {
         name = mf_name(name, dir, level);
 
         return m_mf_register.count(name) > 0;
+    }
+
+    amrex::MultiFab*
+    MultiFabRegister::internal_get (
+        std::string key
+    )
+    {
+        if (m_mf_register.count(key) == 0) {
+            // FIXME: temporary, throw a std::runtime_error
+            return nullptr;
+        }
+        amrex::MultiFab & mf = m_mf_register.at(key).m_mf;
+
+        return &mf;
+    }
+
+    amrex::MultiFab const *
+    MultiFabRegister::internal_get (
+        std::string key
+    ) const
+    {
+        if (m_mf_register.count(key) == 0) {
+            // FIXME: temporary, throw a std::runtime_error
+            return nullptr;
+        }
+        amrex::MultiFab const & mf = m_mf_register.at(key).m_mf;
+
+        return &mf;
     }
 
     amrex::MultiFab*
@@ -329,14 +357,7 @@ namespace ablastr::fields
     )
     {
         name = mf_name(name, level);
-
-        if (m_mf_register.count(name) == 0) {
-            // FIXME: temporary, throw a std::runtime_error
-            return nullptr;
-        }
-        amrex::MultiFab & mf = m_mf_register[name].m_mf;
-
-        return &mf;
+        return internal_get(name);
     }
 
     amrex::MultiFab*
@@ -347,14 +368,28 @@ namespace ablastr::fields
     )
     {
         name = mf_name(name, dir, level);
+        return internal_get(name);
+    }
 
-        if (m_mf_register.count(name) == 0) {
-            // FIXME: temporary, throw a std::runtime_error
-            return nullptr;
-        }
-        amrex::MultiFab & mf = m_mf_register[name].m_mf;
+    amrex::MultiFab const *
+    MultiFabRegister::get (
+        std::string name,
+        int level
+    ) const
+    {
+        name = mf_name(name, level);
+        return internal_get(name);
+    }
 
-        return &mf;
+    amrex::MultiFab const *
+    MultiFabRegister::get (
+        std::string name,
+        Direction dir,
+        int level
+    ) const
+    {
+        name = mf_name(name, dir, level);
+        return internal_get(name);
     }
 
     MultiLevelScalarField
@@ -364,6 +399,21 @@ namespace ablastr::fields
     )
     {
         MultiLevelScalarField field_on_level;
+        field_on_level.reserve(finest_level+1);
+        for (int lvl = 0; lvl <= finest_level; lvl++)
+        {
+            field_on_level.push_back(get(name, lvl));
+        }
+        return field_on_level;
+    }
+
+    ConstMultiLevelScalarField
+    MultiFabRegister::get_mr_levels (
+        std::string name,
+        int finest_level
+    ) const
+    {
+        ConstMultiLevelScalarField field_on_level;
         field_on_level.reserve(finest_level+1);
         for (int lvl = 0; lvl <= finest_level; lvl++)
         {
@@ -383,6 +433,26 @@ namespace ablastr::fields
 
         // insert a new level
         VectorField vectorField;
+
+        // insert components
+        for (Direction dir : all_dirs)
+        {
+            vectorField[dir] = get(name, dir, level);
+        }
+        return vectorField;
+    }
+
+    ConstVectorField
+    MultiFabRegister::get_alldirs  (
+        std::string name,
+        int level
+    ) const
+    {
+        // TODO: Technically, we should search field_on_level via std::unique_copy
+        std::vector<Direction> all_dirs = {Direction{0}, Direction{1}, Direction{2}};
+
+        // insert a new level
+        ConstVectorField vectorField;
 
         // insert components
         for (Direction dir : all_dirs)
@@ -418,8 +488,34 @@ namespace ablastr::fields
         return field_on_level;
     }
 
+    ConstMultiLevelVectorField
+    MultiFabRegister::get_mr_levels_alldirs  (
+        std::string name,
+        int finest_level
+    ) const
+    {
+        ConstMultiLevelVectorField field_on_level;
+        field_on_level.reserve(finest_level+1);
+
+        // TODO: Technically, we should search field_on_level via std::unique_copy
+        std::vector<Direction> all_dirs = {Direction{0}, Direction{1}, Direction{2}};
+
+        for (int lvl = 0; lvl <= finest_level; lvl++)
+        {
+            // insert a new level
+            field_on_level.push_back(ConstVectorField{});
+
+            // insert components
+            for (Direction dir : all_dirs)
+            {
+                field_on_level[lvl][dir] = get(name, dir, lvl);
+            }
+        }
+        return field_on_level;
+    }
+
     std::vector<std::string>
-    MultiFabRegister::list ()
+    MultiFabRegister::list () const
     {
         std::vector<std::string> names;
         names.reserve(m_mf_register.size());
@@ -476,7 +572,7 @@ namespace ablastr::fields
     MultiFabRegister::mf_name (
         std::string name,
         int level
-    )
+    ) const
     {
         // Add the suffix "[level=level]"
         return name.append("[level=")
@@ -489,9 +585,9 @@ namespace ablastr::fields
         std::string name,
         Direction dir,
         int level
-    )
+    ) const
     {
-        // Add the suffix "[level=level]"
+        // Add the suffix "[dir=dir]"
         return mf_name(
             name
             .append("[dir=")
