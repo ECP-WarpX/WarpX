@@ -741,7 +741,7 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             } else if ( m_varnames[comp] == "Bx" ){
                 m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("Bfield_aux", Direction{0}, lev), lev, m_crse_ratio);
             } else if ( m_varnames[comp] == "By" ){
-                m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("Efield_aux", Direction{1}, lev), lev, m_crse_ratio);
+                m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("Bfield_aux", Direction{1}, lev), lev, m_crse_ratio);
             } else if ( m_varnames[comp] == "jx" ){
                 m_all_field_functors[lev][comp] = std::make_unique<JFunctor>(0, lev, m_crse_ratio, true, deposit_current);
                 deposit_current = false;
