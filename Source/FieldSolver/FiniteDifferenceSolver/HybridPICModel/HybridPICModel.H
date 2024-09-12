@@ -78,7 +78,7 @@ public:
         ablastr::fields::MultiLevelVectorField const& edge_lengths
     );
     void CalculateCurrentAmpere (
-        ablastr::fields::MultiLevelVectorField const& Bfield,
+        ablastr::fields::VectorField const& Bfield,
         ablastr::fields::VectorField const& edge_lengths,
         int lev
     );
