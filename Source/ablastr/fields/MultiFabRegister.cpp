@@ -317,7 +317,7 @@ namespace ablastr::fields
         name = mf_name(name, level);
 
         if (m_mf_register.count(name) == 0) {
-            throw std::runtime_error("MultiFabRegister::get name does not exist in register: " + name);
+            return nullptr;
         }
         amrex::MultiFab & mf = m_mf_register[name].m_mf;
 
@@ -334,7 +334,7 @@ namespace ablastr::fields
         name = mf_name(name, dir, level);
 
         if (m_mf_register.count(name) == 0) {
-            throw std::runtime_error("MultiFabRegister::get name does not exist in register: " + name);
+            return nullptr;
         }
         amrex::MultiFab & mf = m_mf_register[name].m_mf;
 
