@@ -462,32 +462,6 @@ public:
 
     /**
      * \brief
-     * Get a pointer to the field data.
-     *
-     * \param field_type[in] the field type
-     * \param lev[in] the mesh refinement level
-     * \param direction[in] the field component (0 by default)
-     *
-     * \return the pointer to an amrex::MultiFab containing the field data
-     */
-    [[nodiscard]] amrex::MultiFab*
-    getFieldPointer (warpx::fields::FieldType field_type, int lev, int direction = 0) const;
-
-    /**
-     * \brief
-     * Get a constant reference to the field data.
-     *
-     * \param field_type[in] the field type
-     * \param lev[in] the mesh refinement level
-     * \param direction[in] the field component (0 by default)
-     *
-     * \return a constant refernce to an amrex::MultiFab containing the field data
-     */
-    [[nodiscard]] const amrex::MultiFab&
-    getField(warpx::fields::FieldType field_type, int lev, int direction = 0) const;
-
-    /**
-     * \brief
      * Get pointer to the amrex::MultiFab containing the dotMask for the specified field
      */
     [[nodiscard]] const amrex::iMultiFab*
@@ -1488,20 +1462,6 @@ private:
     // Copy of the coarse aux
     amrex::Vector<std::unique_ptr<amrex::iMultiFab> > current_buffer_masks;
     amrex::Vector<std::unique_ptr<amrex::iMultiFab> > gather_buffer_masks;
-
-    /**
-     * \brief
-     * Get a pointer to the field data. Does not check if the pointer
-     * is not nullptr.
-     *
-     * \param field_type[in] the field type
-     * \param lev[in] the mesh refinement level
-     * \param direction[in] the field component (0 by default)
-     *
-     * \return the pointer to an amrex::MultiFab containing the field data
-     */
-    [[nodiscard]] amrex::MultiFab*
-    getFieldPointerUnchecked (warpx::fields::FieldType field_type, int lev, int direction = 0) const;
 
     // PML
     int do_pml = 0;
