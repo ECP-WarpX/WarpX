@@ -1,0 +1,17 @@
+{
+  "lev=0": {
+    "Ex": 6.506693947590733,
+    "Ey": 6.506693947080617,
+    "Ez": 6.506693947486778,
+    "rho": 2.6092567413231304e-10
+  },
+  "electron": {
+    "particle_momentum_x": 9.686609803282714e-24,
+    "particle_momentum_y": 9.686609801152154e-24,
+    "particle_momentum_z": 9.686609801429006e-24,
+    "particle_position_x": 512.8986106449738,
+    "particle_position_y": 512.8986108927056,
+    "particle_position_z": 512.898610747885,
+    "particle_weight": 6212.501525878906
+  }
+}
