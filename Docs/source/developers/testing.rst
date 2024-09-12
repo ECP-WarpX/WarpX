@@ -73,13 +73,25 @@ For easier debugging, it can be convenient to run the tests on your local machin
 
   .. code-block:: sh
 
-       ctest --test-dir build -R laser_acceleration
+       ctest --test-dir build -R "laser_acceleration"
 
 * Run tests except those matching the regular expression ``laser_acceleration``:
 
   .. code-block:: sh
 
-       ctest --test-dir build -E laser_acceleration
+       ctest --test-dir build -E "laser_acceleration"
+
+* Sometimes two or more tests share a large number of input parameters and differ by a small set of options.
+  Such tests typically also share a base string in their names.
+  For example, you can find three different tests named ``test_3d_langmuir_multi``, ``test_3d_langmuir_multi_nodal`` and ``test_3d_langmuir_multi_picmi``.
+  In such a case, if you wish to run the test ``test_3d_langmuir_multi`` only, this can be done again with the ``-R`` regular expression filter via
+
+  .. code-block:: sh
+
+       ctest --test-dir build -R "test_3d_langmuir_multi\..*"
+
+  Note that filtering with ``-R "test_3d_langmuir_multi"`` would include the other existing tests and would not be sufficient.
+  Note also that the escaping ``\.`` in the regular expression is necessary in order to take into account the fact that each test is automatically appended with the strings ``.run``, ``.analysis`` and possibly ``.cleanup``.
 
 Once the execution of CTest is completed, you can find all files associated with each test in its corresponding directory under ``build/bin/``.
 For example, if you run the single test ``test_3d_laser_acceleration``, you can find all files associated with this test in the directory ``build/bin/test_3d_laser_acceleration/``.
@@ -155,7 +167,7 @@ A new test can be added by adding a corresponding entry in ``CMakeLists.txt`` as
 
 If you need a new Python package dependency for testing, please add it in `Regression/requirements.txt <https://github.com/ECP-WarpX/WarpX/blob/development/Regression/requirements.txt>`__.
 
-Sometimes, two tests share a large number of input parameters. The shared input parameters can be collected in a "base" input file that can be passed as a runtime parameter in the actual test input files through the parameter ``FILE``.
+Sometimes two or more tests share a large number of input parameters. The shared input parameters can be collected in a "base" input file that can be passed as a runtime parameter in the actual test input files through the parameter ``FILE``.
 
 Naming conventions for automated tests
 --------------------------------------
