@@ -71,9 +71,11 @@ void init_MultiFabRegister (py::module & m)
                  std::string,
                  int,
                  std::optional<const amrex::Real>
-             >(&MultiFabRegister::alias_init)
-             // ... py::arg("name")
-             // "..."
+             >(&MultiFabRegister::alias_init),
+             py::arg("new_name"),
+             py::arg("alias_name"),
+             py::arg("level"),
+             py::arg("initial_value")
         )
 
         .def("alias_init",
@@ -83,25 +85,27 @@ void init_MultiFabRegister (py::module & m)
                  ablastr::fields::Direction,
                  int,
                  std::optional<const amrex::Real>
-             >(&MultiFabRegister::alias_init)
-             // ... py::arg("name")
-             // "..."
+             >(&MultiFabRegister::alias_init),
+             py::arg("new_name"),
+             py::arg("alias_name"),
+             py::arg("dir"),
+             py::arg("level"),
+             py::arg("initial_value")
         )
 
         .def("alloc_like",
              &MultiFabRegister::alloc_like,
              py::arg("other_name"),
              py::arg("other_level")
-             // "..."
         )
 
         .def("has",
              py::overload_cast<
                  std::string,
                  int
-             >(&MultiFabRegister::has)
-             //py::arg("name"),
-             // "..."
+             >(&MultiFabRegister::has),
+             py::arg("name"),
+             py::arg("level")
         )
 
         .def("has",
@@ -109,18 +113,19 @@ void init_MultiFabRegister (py::module & m)
                  std::string,
                  ablastr::fields::Direction,
                  int
-             >(&MultiFabRegister::has)
-             //py::arg("name"),
-             // "..."
+             >(&MultiFabRegister::has),
+             py::arg("name"),
+             py::arg("dir"),
+             py::arg("level")
         )
 
         .def("get",
              py::overload_cast<
                  std::string,
                  int
-             >(&MultiFabRegister::get)
-             //py::arg("name"),
-             // "..."
+             >(&MultiFabRegister::get),
+             py::arg("name"),
+             py::arg("level")
         )
 
         .def("get",
@@ -128,9 +133,10 @@ void init_MultiFabRegister (py::module & m)
                  std::string,
                  ablastr::fields::Direction,
                  int
-             >(&MultiFabRegister::get)
-             //py::arg("name"),
-             // "..."
+             >(&MultiFabRegister::get),
+             py::arg("name"),
+             py::arg("dir"),
+             py::arg("level")
         )
 
         //.def("list",
@@ -142,9 +148,9 @@ void init_MultiFabRegister (py::module & m)
              py::overload_cast<
                  std::string,
                  int
-             >(&MultiFabRegister::erase)
-             //py::arg("name"),
-             // "..."
+             >(&MultiFabRegister::erase),
+             py::arg("name"),
+             py::arg("level")
         )
 
         .def("erase",
@@ -152,9 +158,10 @@ void init_MultiFabRegister (py::module & m)
                  std::string,
                  ablastr::fields::Direction,
                  int
-             >(&MultiFabRegister::erase)
-             //py::arg("name"),
-             // "..."
+             >(&MultiFabRegister::erase),
+             py::arg("name"),
+             py::arg("dir"),
+             py::arg("level")
         )
     ;
 }
