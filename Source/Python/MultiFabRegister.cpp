@@ -13,7 +13,10 @@
 
 void init_MultiFabRegister (py::module & m)
 {
-    using ablastr::fields::MultiFabRegister;
+    using namespace ablastr::fields;
+
+    py::class_<ablastr::fields::Direction>(m, "Direction")
+        .def(py::init<int>());
 
     py::class_<ablastr::fields::MultiFabRegister>(m, "MultiFabRegister")
 
