@@ -45,8 +45,8 @@ Here, :math:`\vec{u} = (u_x, u_y, u_z)` is the momentum normalized to the partic
         P &= 1 - \mathrm{e}^{-W\mathrm{d}\tau}
         \\
         W &= \omega_\mathrm{a} \mathcal{C}^2_{n^* l^*} \frac{U_\mathrm{ion}}{2 U_H}
-                \left[ 2 \frac{E_\mathrm{a}}{E_\mathrm{dc}} \left( \frac{U_\mathrm{ion}}{U_\mathrm{H}} \right)^{3/2}} \right]^{2n^*-1}
-                \times \exp\left[ - \frac{2}{3} \frac{E_\mathrm{a}}{E_\mathrm{dc}} \left( \frac{U_\mathrm{ion}}{U_\mathrm{H}} \right)^\frac{3/2}{} \right]
+                \left[ 2 \frac{E_\mathrm{a}}{E_\mathrm{dc}} \left( \frac{U_\mathrm{ion}}{U_\mathrm{H}} \right)^{3/2} \right]^{2n^*-1}
+                \times \exp\left[ - \frac{2}{3} \frac{E_\mathrm{a}}{E_\mathrm{dc}} \left( \frac{U_\mathrm{ion}}{U_\mathrm{H}} \right)^{3/2} \right]
         \\
         \mathcal{C}^2_{n^* l^*} = \frac{2^{2n^*}}{n^* \Gamma(n^* + l^* + 1) \Gamma(n^* - l^*)}
     \end{aligned}
