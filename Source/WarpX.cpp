@@ -3430,40 +3430,6 @@ WarpX::AliasInitMultiFab (
     multifab_map[name_with_suffix] = mf.get();
 }
 
-amrex::MultiFab*
-WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, const int direction) const
-{
-    // This function does *not* check if the returned field pointer is != nullptr
-
-    amrex::MultiFab* field_pointer = nullptr;
-
-    amrex::ignore_unused(lev, direction);
-
-    switch(field_type)
-    {
-        default:
-            WARPX_ABORT_WITH_MESSAGE("Invalid field type");
-            break;
-    }
-
-    return field_pointer;
-}
-
-amrex::MultiFab*
-WarpX::getFieldPointer (const FieldType field_type, const int lev, const int direction) const
-{
-    auto* const field_pointer = getFieldPointerUnchecked(field_type, lev, direction);
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        field_pointer != nullptr, "Requested field is not initialized!");
-    return field_pointer;
-}
-
-const amrex::MultiFab&
-WarpX::getField(FieldType field_type, const int lev, const int direction) const
-{
-    return *getFieldPointer(field_type, lev, direction);
-}
-
 amrex::DistributionMapping
 WarpX::MakeDistributionMap (int lev, amrex::BoxArray const& ba)
 {
@@ -3491,7 +3457,7 @@ WarpX::MakeDistributionMap (int lev, amrex::BoxArray const& ba)
 }
 
 const amrex::iMultiFab*
-WarpX::getFieldDotMaskPointer ( FieldType field_type, int lev, int dir )
+WarpX::getFieldDotMaskPointer ( FieldType field_type, int lev, int dir ) const
 {
     switch(field_type)
     {
@@ -3514,13 +3480,13 @@ WarpX::getFieldDotMaskPointer ( FieldType field_type, int lev, int dir )
 }
 
 void WarpX::SetDotMask( std::unique_ptr<amrex::iMultiFab>& field_dotMask,
-                        std::string field_name, int lev, int dir )
+                        std::string field_name, int lev, int dir ) const
 {
     // Define the dot mask for this field_type needed to properly compute dotProduct()
     // for field values that have shared locations on different MPI ranks
     if (field_dotMask != nullptr) { return; }
 
-    ablastr::fields::VectorField const& this_field = m_fields.get_alldirs(field_name,lev);
+    ablastr::fields::ConstVectorField const& this_field = m_fields.get_alldirs(field_name,lev);
     const amrex::BoxArray& this_ba = this_field[dir]->boxArray();
     const amrex::MultiFab tmp( this_ba, this_field[dir]->DistributionMap(),
                                1, 0, amrex::MFInfo().SetAlloc(false) );
