@@ -3449,22 +3449,6 @@ WarpX::AllocInitMultiFabFromModel (
     multifab_map[name_with_suffix] = mf.get();
 }
 
-bool
-WarpX::isFieldInitialized (const FieldType field_type, const int lev, const int direction) const
-{
-    const bool is_field_init = (getFieldPointerUnchecked(field_type, lev, direction) != nullptr);
-    return is_field_init;
-}
-
-amrex::MultiFab*
-WarpX::getFieldPointer (const FieldType field_type, const int lev, const int direction) const
-{
-    auto* const field_pointer = getFieldPointerUnchecked(field_type, lev, direction);
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        field_pointer != nullptr, "Requested field is not initialized!");
-    return field_pointer;
-}
-
 std::array<const amrex::MultiFab* const, 3>
 WarpX::getFieldPointerArray (const FieldType field_type, const int lev) const
 {
