@@ -427,8 +427,8 @@ void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::operator()(amrex::
         m_grad_buf_e_stag[lev][1],
         m_grad_buf_e_stag[lev][2]
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        m_grad_buf_e_stag[lev][0].get(),
-        m_grad_buf_e_stag[lev][2].get()
+        m_grad_buf_e_stag[lev][0],
+        m_grad_buf_e_stag[lev][2]
 #endif
     };
 
