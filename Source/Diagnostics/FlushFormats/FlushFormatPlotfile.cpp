@@ -648,7 +648,7 @@ FlushFormatPlotfile::WriteAllRawFields(
                                warpx.m_fields.get("Bfield_cp", Direction{0}, lev),
                                warpx.m_fields.get("Bfield_cp", Direction{1}, lev),
                                warpx.m_fields.get("Bfield_cp", Direction{2}, lev),
-                               warpx.m_fields.get("Bfield_cp", Direction{0}, lev),
+                               warpx.m_fields.get("Bfield_fp", Direction{0}, lev),
                                warpx.m_fields.get("Bfield_fp", Direction{1}, lev),
                                warpx.m_fields.get("Bfield_fp", Direction{2}, lev),
                                dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards);
