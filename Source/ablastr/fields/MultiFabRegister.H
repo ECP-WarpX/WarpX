@@ -343,6 +343,11 @@ namespace ablastr::fields
             std::string name,
             int finest_level
         );
+        ConstMultiLevelScalarField
+        get_mr_levels (
+            std::string name,
+            int finest_level
+        ) const;
 
         /** title
          *
@@ -357,6 +362,11 @@ namespace ablastr::fields
             std::string name,
             int level
         );
+        ConstVectorField
+        get_alldirs  (
+            std::string name,
+            int level
+        ) const;
 
         /** Return a vector field on all MR levels.
          *
@@ -372,6 +382,11 @@ namespace ablastr::fields
             std::string name,
             int finest_level
         );
+        ConstMultiLevelVectorField
+        get_mr_levels_alldirs (
+            std::string name,
+            int finest_level
+        ) const;
 
         /** title
          *
@@ -381,7 +396,7 @@ namespace ablastr::fields
          * @return ...
          */
         std::vector<std::string>
-        list ();
+        list () const;
 
         /** title
          *
@@ -470,7 +485,7 @@ namespace ablastr::fields
         ) const;
 
     private:
-        amrex::MultiFab*
+        amrex::MultiFab *
         internal_get (
                 std::string key
         );

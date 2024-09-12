@@ -407,6 +407,21 @@ namespace ablastr::fields
         return field_on_level;
     }
 
+    ConstMultiLevelScalarField
+    MultiFabRegister::get_mr_levels (
+        std::string name,
+        int finest_level
+    ) const
+    {
+        ConstMultiLevelScalarField field_on_level;
+        field_on_level.reserve(finest_level+1);
+        for (int lvl = 0; lvl <= finest_level; lvl++)
+        {
+            field_on_level.push_back(get(name, lvl));
+        }
+        return field_on_level;
+    }
+
     VectorField
     MultiFabRegister::get_alldirs  (
         std::string name,
@@ -418,6 +433,26 @@ namespace ablastr::fields
 
         // insert a new level
         VectorField vectorField;
+
+        // insert components
+        for (Direction dir : all_dirs)
+        {
+            vectorField[dir] = get(name, dir, level);
+        }
+        return vectorField;
+    }
+
+    ConstVectorField
+    MultiFabRegister::get_alldirs  (
+        std::string name,
+        int level
+    ) const
+    {
+        // TODO: Technically, we should search field_on_level via std::unique_copy
+        std::vector<Direction> all_dirs = {Direction{0}, Direction{1}, Direction{2}};
+
+        // insert a new level
+        ConstVectorField vectorField;
 
         // insert components
         for (Direction dir : all_dirs)
@@ -453,8 +488,34 @@ namespace ablastr::fields
         return field_on_level;
     }
 
+    ConstMultiLevelVectorField
+    MultiFabRegister::get_mr_levels_alldirs  (
+        std::string name,
+        int finest_level
+    ) const
+    {
+        ConstMultiLevelVectorField field_on_level;
+        field_on_level.reserve(finest_level+1);
+
+        // TODO: Technically, we should search field_on_level via std::unique_copy
+        std::vector<Direction> all_dirs = {Direction{0}, Direction{1}, Direction{2}};
+
+        for (int lvl = 0; lvl <= finest_level; lvl++)
+        {
+            // insert a new level
+            field_on_level.push_back(ConstVectorField{});
+
+            // insert components
+            for (Direction dir : all_dirs)
+            {
+                field_on_level[lvl][dir] = get(name, dir, lvl);
+            }
+        }
+        return field_on_level;
+    }
+
     std::vector<std::string>
-    MultiFabRegister::list ()
+    MultiFabRegister::list () const
     {
         std::vector<std::string> names;
         names.reserve(m_mf_register.size());
