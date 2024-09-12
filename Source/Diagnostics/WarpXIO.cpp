@@ -292,8 +292,8 @@ WarpX::InitFromCheckpoint ()
                 m_fields.get("Bfield_aux", Direction{i}, lev)->setVal(0.0);
 
                 m_fields.get("current_cp",Direction{i},lev)->setVal(0.0);
-                Efield_cp[lev][i]->setVal(0.0);
-                Bfield_cp[lev][i]->setVal(0.0);
+                m_fields.get("Efield_cp",Direction{i},lev)->setVal(0.0);
+                m_fields.get("Bfield_cp",Direction{i},lev)->setVal(0.0);
             }
         }
 
@@ -339,18 +339,18 @@ WarpX::InitFromCheckpoint ()
 
         if (lev > 0)
         {
-            VisMF::Read(*Efield_cp[lev][0],
+            VisMF::Read(*m_fields.get("Efield_fp", Direction{0}, lev),
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Ex_cp"));
-            VisMF::Read(*Efield_cp[lev][1],
+            VisMF::Read(*m_fields.get("Efield_fp", Direction{1}, lev),
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Ey_cp"));
-            VisMF::Read(*Efield_cp[lev][2],
+            VisMF::Read(*m_fields.get("Efield_fp", Direction{2}, lev),
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Ez_cp"));
 
-            VisMF::Read(*Bfield_cp[lev][0],
+            VisMF::Read(*m_fields.get("Bfield_fp", Direction{0}, lev),
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bx_cp"));
-            VisMF::Read(*Bfield_cp[lev][1],
+            VisMF::Read(*m_fields.get("Bfield_fp", Direction{1}, lev),
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "By_cp"));
-            VisMF::Read(*Bfield_cp[lev][2],
+            VisMF::Read(*m_fields.get("Bfield_fp", Direction{2}, lev),
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bz_cp"));
 
             if (WarpX::fft_do_time_averaging)

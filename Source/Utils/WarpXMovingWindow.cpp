@@ -274,9 +274,9 @@ WarpX::MoveWindow (const int step, bool move_j)
 #endif
             if (lev > 0) {
                 // coarse grid
-                shiftMF(*Bfield_cp[lev][dim], geom[lev-1], num_shift_crse, dir, lev, do_update_cost,
+                shiftMF(*m_fields.get("Bfield_cp",Direction{0},lev), geom[lev-1], num_shift_crse, dir, lev, do_update_cost,
                     m_p_ext_field_params->B_external_grid[dim], use_Bparser, Bfield_parser);
-                shiftMF(*m_fields.get("Efield_cp",Direction{0},lev), geom[lev], num_shift, dir, lev, do_update_cost,
+                shiftMF(*m_fields.get("Efield_cp",Direction{0},lev), geom[lev-1], num_shift, dir, lev, do_update_cost,
                     m_p_ext_field_params->E_external_grid[dim], use_Eparser, Efield_parser);
                 shiftMF(*Bfield_aux[lev][dim], geom[lev], num_shift, dir, lev, do_update_cost);
                 shiftMF(*Efield_aux[lev][dim], geom[lev], num_shift, dir, lev, do_update_cost);

@@ -345,9 +345,6 @@ WarpX::WarpX ()
         m_hybrid_pic_model = std::make_unique<HybridPICModel>(nlevs_max);
     }
 
-    Efield_cp.resize(nlevs_max);
-    Bfield_cp.resize(nlevs_max);
-
     current_buffer_masks.resize(nlevs_max);
     gather_buffer_masks.resize(nlevs_max);
 
@@ -2650,9 +2647,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         const std::array<Real,3> cdx = CellSize(lev-1);
 
         // Create the MultiFabs for B
-        AllocInitMultiFab(Bfield_cp[lev][0], amrex::convert(cba, Bx_nodal_flag), dm, ncomps, ngEB, lev, "Bfield_cp[x]", 0.0_rt);
-        AllocInitMultiFab(Bfield_cp[lev][1], amrex::convert(cba, By_nodal_flag), dm, ncomps, ngEB, lev, "Bfield_cp[y]", 0.0_rt);
-        AllocInitMultiFab(Bfield_cp[lev][2], amrex::convert(cba, Bz_nodal_flag), dm, ncomps, ngEB, lev, "Bfield_cp[z]", 0.0_rt);
+        m_fields.alloc_init( "Bfield_cp", Direction{0}, lev, amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+        m_fields.alloc_init( "Bfield_cp", Direction{1}, lev, amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+        m_fields.alloc_init( "Bfield_cp", Direction{2}, lev, amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
 
         // Create the MultiFabs for E
         m_fields.alloc_init( "Efield_cp", Direction{0}, lev, amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
@@ -3326,7 +3323,7 @@ WarpX::StoreCurrent (int lev)
     using ablastr::fields::Direction;
     for (int idim = 0; idim < 3; ++idim) {
         if (m_fields.get("current_store", Direction{idim},lev)) {
-            MultiFab::Copy(*m_fields.get("current_store", Direction{idim}, lev), 
+            MultiFab::Copy(*m_fields.get("current_store", Direction{idim}, lev),
                            *m_fields.get("current_fp", Direction{idim}, lev),
                            0, 0, 1, m_fields.get("current_store", Direction{idim}, lev)->nGrowVect());
         }
@@ -3452,29 +3449,6 @@ WarpX::AllocInitMultiFabFromModel (
     multifab_map[name_with_suffix] = mf.get();
 }
 
-amrex::MultiFab*
-WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, const int direction) const
-{
-    // This function does *not* check if the returned field pointer is != nullptr
-
-    amrex::MultiFab* field_pointer = nullptr;
-
-    switch(field_type)
-    {
-        case FieldType::Efield_cp :
-            field_pointer = Efield_cp[lev][direction].get();
-            break;
-        case FieldType::Bfield_cp :
-            field_pointer = Bfield_cp[lev][direction].get();
-            break;
-        default:
-            WARPX_ABORT_WITH_MESSAGE("Invalid field type");
-            break;
-    }
-
-    return field_pointer;
-}
-
 bool
 WarpX::isFieldInitialized (const FieldType field_type, const int lev, const int direction) const
 {
@@ -3535,21 +3509,6 @@ WarpX::MakeDistributionMap (int lev, amrex::BoxArray const& ba)
         return dm;
     } else {
         return amrex::AmrCore::MakeDistributionMap(lev, ba);
-    }
-}
-
-const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>,3>>&
-WarpX::getMultiLevelField(warpx::fields::FieldType field_type) const
-{
-    switch(field_type)
-    {
-        case FieldType::Efield_cp :
-            return Efield_cp;
-        case FieldType::Bfield_cp :
-            return Bfield_cp;
-        default:
-            WARPX_ABORT_WITH_MESSAGE("Invalid field type");
-            return Efield_cp;
     }
 }
 

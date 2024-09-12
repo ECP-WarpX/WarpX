@@ -927,7 +927,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 
            if (lev > 0) {
                 Bfield_aux[lev][i]->setVal(m_p_ext_field_params->B_external_grid[i]);
-                Bfield_cp[lev][i]->setVal(m_p_ext_field_params->B_external_grid[i]);
+                m_fields.get("Bfield_cp", Direction{i}, lev)->setVal(m_p_ext_field_params->B_external_grid[i]);
                 if (fft_do_time_averaging) {
                     m_fields.get("Bfield_avg_cp", Direction{i}, lev)->setVal(m_p_ext_field_params->B_external_grid[i]);
                 }
@@ -944,10 +944,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
             if (fft_do_time_averaging) {
                 m_fields.get("Efield_avg_fp", Direction{i}, lev)->setVal(m_p_ext_field_params->E_external_grid[i]);
             }
-
             if (lev > 0) {
                 Efield_aux[lev][i]->setVal(m_p_ext_field_params->E_external_grid[i]);
-                Efield_cp[lev][i]->setVal(m_p_ext_field_params->E_external_grid[i]);
+                m_fields.get("Efield_avg_cp", Direction{i}, lev)->setVal(m_p_ext_field_params->E_external_grid[i]);
                 if (fft_do_time_averaging) {
                     m_fields.get("Efield_avg_cp", Direction{i}, lev)->setVal(m_p_ext_field_params->E_external_grid[i]);
                 }
@@ -981,9 +980,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
             lev, PatchType::fine);
 
         InitializeExternalFieldsOnGridUsingParser(
-            Bfield_cp[lev][0].get(),
-            Bfield_cp[lev][1].get(),
-            Bfield_cp[lev][2].get(),
+            m_fields.get_alldirs("Bfield_cp", Direction{0}, lev),
+            m_fields.get_alldirs("Bfield_cp", Direction{1}, lev),
+            m_fields.get_alldirs("Bfield_cp", Direction{2}, lev),
             m_p_ext_field_params->Bxfield_parser->compile<3>(),
             m_p_ext_field_params->Byfield_parser->compile<3>(),
             m_p_ext_field_params->Bzfield_parser->compile<3>(),
@@ -1028,9 +1027,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                 lev, PatchType::fine);
 
             InitializeExternalFieldsOnGridUsingParser(
-                Efield_cp[lev][0].get(),
-                Efield_cp[lev][1].get(),
-                Efield_cp[lev][2].get(),
+                m_fields.get_alldirs("Efield_cp", Direction{0}, lev),
+                m_fields.get_alldirs("Efield_cp", Direction{1}, lev),
+                m_fields.get_alldirs("Efield_cp", Direction{2}, lev),
                 m_p_ext_field_params->Exfield_parser->compile<3>(),
                 m_p_ext_field_params->Eyfield_parser->compile<3>(),
                 m_p_ext_field_params->Ezfield_parser->compile<3>(),
