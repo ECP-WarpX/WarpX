@@ -2269,9 +2269,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
     {
-        m_fields.alloc_init( "current_fp_vay", Direction{0}, lev, amrex::convert(ba, jx_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
-        m_fields.alloc_init( "current_fp_vay", Direction{1}, lev, amrex::convert(ba, jy_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
-        m_fields.alloc_init( "current_fp_vay", Direction{2}, lev, amrex::convert(ba, jz_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
+        m_fields.alloc_init( "current_fp_vay", Direction{0}, lev, amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
+        m_fields.alloc_init( "current_fp_vay", Direction{1}, lev, amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
+        m_fields.alloc_init( "current_fp_vay", Direction{2}, lev, amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
     }
 
     if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
