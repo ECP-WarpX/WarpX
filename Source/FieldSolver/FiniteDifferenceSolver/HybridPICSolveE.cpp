@@ -433,6 +433,14 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
     auto & warpx = WarpX::GetInstance();
     auto t = warpx.gett_new(lev);
 
+    // amrex::Print() 
+    //     << "Bz = " << Bz_part(0,0,0,t)
+    //     << ", Br = " << Br_part(0,0,0,t) 
+    //     << ", Et = " << Et_part(0,0,0,t) 
+    //     << ", t=" << t 
+    //     << ", include E?: " << include_E_ext_part
+    //     << std::endl;
+
     auto dx_lev = warpx.Geom(lev).CellSizeArray();
     const RealBox& real_box = warpx.Geom(lev).ProbDomain();
     const auto nodal_flag = IntVect::TheNodeVector();

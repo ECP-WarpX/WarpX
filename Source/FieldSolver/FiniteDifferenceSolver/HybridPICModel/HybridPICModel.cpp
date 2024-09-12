@@ -165,7 +165,7 @@ void HybridPICModel::InitData ()
         m_add_ext_particle_B_field = true;
     }
 
-    if ( mypc.m_B_ext_particle_s == "parse_e_ext_particle_function") {
+    if ( mypc.m_E_ext_particle_s == "parse_e_ext_particle_function") {
         constexpr auto num_arguments = 4; //x,y,z,t
         m_E_external[0] = mypc.m_Ex_particle_parser->compile<num_arguments>();
         m_E_external[1] = mypc.m_Ey_particle_parser->compile<num_arguments>();
