@@ -345,7 +345,7 @@ WarpX::ProjectionCleanDivB() {
         }
 
         warpx::initialization::ProjectionDivCleaner dc("Bfield_fp_external");
-        
+
 
         dc.setSourceFromBfield();
         dc.solve();
