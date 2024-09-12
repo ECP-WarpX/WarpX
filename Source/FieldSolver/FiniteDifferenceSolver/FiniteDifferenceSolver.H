@@ -113,7 +113,8 @@ class FiniteDifferenceSolver
           * \param[in] dt       timestep of the simulation
           * \param[in] macroscopic_properties contains user-defined properties of the medium.
           */
-        void MacroscopicEvolveE ( ablastr::fields::VectorField Efield,
+        void MacroscopicEvolveE (
+                      ablastr::fields::VectorField const& Efield,
                       ablastr::fields::VectorField const& Bfield,
                       ablastr::fields::VectorField const& Jfield,
                       ablastr::fields::VectorField const& edge_lengths,
