@@ -156,9 +156,9 @@ void HybridPICModel::InitData ()
     using ablastr::fields::Direction;
 
     // Get the grid staggering of the fields involved in calculating E
-    amrex::IntVect Jx_stag = warpx.getField(FieldType::current_fp, 0,0).ixType().toIntVect();
-    amrex::IntVect Jy_stag = warpx.getField(FieldType::current_fp, 0,1).ixType().toIntVect();
-    amrex::IntVect Jz_stag = warpx.getField(FieldType::current_fp, 0,2).ixType().toIntVect();
+    amrex::IntVect Jx_stag = warpx.m_fields.get("current_fp",Direction{0},0)->ixType().toIntVect();
+    amrex::IntVect Jy_stag = warpx.m_fields.get("current_fp",Direction{1},0)->ixType().toIntVect();
+    amrex::IntVect Jz_stag = warpx.m_fields.get("current_fp",Direction{2},0)->ixType().toIntVect();
     amrex::IntVect Bx_stag = warpx.getField(FieldType::Bfield_fp, 0,0).ixType().toIntVect();
     amrex::IntVect By_stag = warpx.getField(FieldType::Bfield_fp, 0,1).ixType().toIntVect();
     amrex::IntVect Bz_stag = warpx.getField(FieldType::Bfield_fp, 0,2).ixType().toIntVect();
