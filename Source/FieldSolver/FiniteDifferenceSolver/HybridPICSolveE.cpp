@@ -351,7 +351,7 @@ void FiniteDifferenceSolver::CalculateCurrentAmpereCartesian (
 
 
 void FiniteDifferenceSolver::HybridPICSolveE (
-    ablastr::fields::VectorField& Efield,
+    ablastr::fields::VectorField const& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
     ablastr::fields::VectorField const& Jifield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jextfield,
@@ -389,7 +389,7 @@ void FiniteDifferenceSolver::HybridPICSolveE (
 #ifdef WARPX_DIM_RZ
 template<typename T_Algo>
 void FiniteDifferenceSolver::HybridPICSolveECylindrical (
-    ablastr::fields::VectorField& Efield,
+    ablastr::fields::VectorField const& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
     ablastr::fields::VectorField const& Jifield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jextfield,

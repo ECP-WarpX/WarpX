@@ -155,7 +155,7 @@ class FiniteDifferenceSolver
           * \param[in] hybrid_model instance of the hybrid-PIC model
           * \param[in] solve_for_Faraday boolean flag for whether the E-field is solved to be used in Faraday's equation
           */
-        void HybridPICSolveE ( ablastr::fields::VectorField& Efield,
+        void HybridPICSolveE ( ablastr::fields::VectorField const& Efield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > & Jfield,
                       ablastr::fields::VectorField const& Jifield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jextfield,
@@ -241,7 +241,7 @@ class FiniteDifferenceSolver
 
         template<typename T_Algo>
         void HybridPICSolveECylindrical (
-            ablastr::fields::VectorField& Efield,
+            ablastr::fields::VectorField const& Efield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
             ablastr::fields::VectorField const& Jifield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jextfield,
