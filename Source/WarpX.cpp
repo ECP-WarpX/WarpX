@@ -3458,21 +3458,6 @@ WarpX::getFieldPointer (const FieldType field_type, const int lev, const int dir
     return field_pointer;
 }
 
-std::array<const amrex::MultiFab* const, 3>
-WarpX::getFieldPointerArray (const FieldType field_type, const int lev) const
-{
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        (field_type == FieldType::Efield_fp) || (field_type == FieldType::Bfield_fp) ||
-        (field_type == FieldType::current_fp) || (field_type == FieldType::current_fp_nodal) ||
-        (field_type == FieldType::Efield_cp) || (field_type == FieldType::Bfield_cp) ||
-        (field_type == FieldType::current_cp), "Requested field type is not a vector.");
-
-    return std::array<const amrex::MultiFab* const, 3>{
-        getFieldPointer(field_type, lev, 0),
-        getFieldPointer(field_type, lev, 1),
-        getFieldPointer(field_type, lev, 2)};
-}
-
 const amrex::MultiFab&
 WarpX::getField(FieldType field_type, const int lev, const int direction) const
 {

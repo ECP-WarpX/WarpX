@@ -473,18 +473,6 @@ public:
 
     /**
      * \brief
-     * For vector fields, get an array of three pointers to the field data.
-     *
-     * \param field_type[in] the field type
-     * \param lev[in] the mesh refinement level
-     *
-     * \return an array of three pointers amrex::MultiFab* containing the field data
-     */
-    [[nodiscard]] std::array<const amrex::MultiFab* const, 3>
-    getFieldPointerArray (warpx::fields::FieldType field_type, int lev) const;
-
-    /**
-     * \brief
      * Get a constant reference to the field data.
      *
      * \param field_type[in] the field type

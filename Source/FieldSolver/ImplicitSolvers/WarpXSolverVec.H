@@ -68,16 +68,16 @@ public:
     [[nodiscard]] inline bool IsDefined () const { return m_is_defined; }
 
     void Define ( WarpX*  a_WarpX,
-                  warpx::fields::FieldType  a_array_type,
-                  warpx::fields::FieldType  a_scalar_type = warpx::fields::FieldType::None );
+             std::string  a_vector_type_name,
+             std::string  a_scalar_type_name = "none" );
 
     inline
     void Define ( const WarpXSolverVec&  a_solver_vec )
     {
         assertIsDefined( a_solver_vec );
         Define( WarpXSolverVec::m_WarpX,
-                a_solver_vec.getArrayVecType(),
-                a_solver_vec.getScalarVecType() );
+                a_solver_vec.getVectorType(),
+                a_solver_vec.getScalarType() );
     }
 
     [[nodiscard]] RT dotProduct( const WarpXSolverVec&  a_X ) const;
@@ -281,6 +281,10 @@ public:
     [[nodiscard]] warpx::fields::FieldType getArrayVecType () const { return m_array_type; }
     [[nodiscard]] warpx::fields::FieldType getScalarVecType () const { return m_scalar_type; }
 
+    // solver vector type names
+    [[nodiscard]] std::string getVectorType () const { return m_vector_type_name; }
+    [[nodiscard]] std::string getScalarType () const { return m_scalar_type_name; }
+
 
 private:
 
@@ -291,6 +295,9 @@ private:
 
     warpx::fields::FieldType m_array_type = warpx::fields::FieldType::None;
     warpx::fields::FieldType m_scalar_type = warpx::fields::FieldType::None;
+
+    std::string m_vector_type_name = "none";
+    std::string m_scalar_type_name = "none";
 
     static constexpr int m_ncomp = 1;
     static constexpr int m_num_amr_levels = 1;
