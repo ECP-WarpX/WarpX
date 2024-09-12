@@ -88,7 +88,7 @@ WarpX::Evolve (int numsteps)
         multi_diags->NewIteration();
 
         // Update timestep for electrostatic solver if a constant dt is not provided
-        if (electrostatic_solver_id != ElectrostaticSolverAlgo::None &&
+        if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None &&
             !m_const_dt.has_value()) {
             UpdateDtFromParticleSpeeds();
         }
