@@ -181,9 +181,9 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
     // Make sure all multifabs have the same number of components
     for (int dim=0; dim<3; dim++){
         AMREX_ALWAYS_ASSERT(
-            warpx.m_fields.get("Efield_aux", Direction{lev}, dim)->nComp() == ncomp_multimodefab );
+            warpx.m_fields.get("Efield_aux", Direction{dim}, lev)->nComp() == ncomp_multimodefab );
         AMREX_ALWAYS_ASSERT(
-            warpx.m_fields.get("Bfield_aux", Direction{lev}, dim)->nComp() == ncomp_multimodefab );
+            warpx.m_fields.get("Bfield_aux", Direction{dim}, lev)->nComp() == ncomp_multimodefab );
         AMREX_ALWAYS_ASSERT(
             warpx.m_fields.get("current_fp", Direction{dim}, lev)->nComp() == ncomp_multimodefab );
     }
