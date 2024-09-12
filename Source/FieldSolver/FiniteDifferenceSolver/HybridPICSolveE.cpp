@@ -704,7 +704,7 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::HybridPICSolveECartesian (
-    ablastr::fields::VectorField& Efield,
+    ablastr::fields::VectorField const& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
     ablastr::fields::VectorField const& Jifield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jextfield,
