@@ -317,9 +317,6 @@ WarpX::WarpX ()
         myfl = std::make_unique<MultiFluidContainer>(nlevs_max);
     }
 
-    Efield_fp.resize(nlevs_max);
-    /* Bfield_fp.resize(nlevs_max); */
-
     Efield_dotMask.resize(nlevs_max);
     Bfield_dotMask.resize(nlevs_max);
     Afield_dotMask.resize(nlevs_max);
@@ -3465,9 +3462,6 @@ WarpX::getFieldPointerUnchecked (const FieldType field_type, const int lev, cons
 
     switch(field_type)
     {
-        case FieldType::Efield_fp :
-            field_pointer = Efield_fp[lev][direction].get();
-            break;
         case FieldType::Efield_cp :
             field_pointer = Efield_cp[lev][direction].get();
             break;
@@ -3550,15 +3544,13 @@ WarpX::getMultiLevelField(warpx::fields::FieldType field_type) const
 {
     switch(field_type)
     {
-        case FieldType::Efield_fp :
-            return Efield_fp;
         case FieldType::Efield_cp :
             return Efield_cp;
         case FieldType::Bfield_cp :
             return Bfield_cp;
         default:
             WARPX_ABORT_WITH_MESSAGE("Invalid field type");
-            return Efield_fp;
+            return Efield_cp;
     }
 }
 
