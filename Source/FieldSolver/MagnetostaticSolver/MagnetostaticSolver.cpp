@@ -159,7 +159,7 @@ WarpX::computeVectorPotential (const ablastr::fields::MultiLevelVectorField& cur
                                Real const required_precision,
                                Real absolute_tolerance,
                                int const max_iters,
-                               int const verbosity) const
+                               int const verbosity) // const // This breaks non-const m_fields.get_mr_levels_alldirs
 {
     using ablastr::fields::Direction;
 
@@ -176,7 +176,8 @@ WarpX::computeVectorPotential (const ablastr::fields::MultiLevelVectorField& cur
     }
 
 #if defined(AMREX_USE_EB)
-    const std::optional<MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel> post_A_calculation({Bfield_fp,
+    ablastr::fields::MultiLevelVectorField Bfield_fp_new = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
+    const std::optional<MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel> post_A_calculation({Bfield_fp_new,
                                                                                                vector_potential_grad_buf_e_stag,
                                                                                                vector_potential_grad_buf_b_stag});
 

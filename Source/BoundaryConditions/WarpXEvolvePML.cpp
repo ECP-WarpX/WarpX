@@ -68,8 +68,8 @@ WarpX::DampPML (const int lev, PatchType patch_type)
         using ablastr::fields::Direction;
         pml_rz[lev]->ApplyDamping( m_fields.get("Efield_fp",Direction{1},lev),
                                    m_fields.get("Efield_fp",Direction{2},lev),
-                                   m_fields.get("Bfield_XX",Direction{1},lev),
-                                   m_fields.get("Bfield_XX",Direction{2},lev),
+                                   m_fields.get("Bfield_fp",Direction{1},lev),
+                                   m_fields.get("Bfield_fp",Direction{2},lev),
                                    dt[lev]);
     }
 #endif

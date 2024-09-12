@@ -86,9 +86,9 @@ WarpX::UpdateMagneticFieldAndApplyBCs( const amrex::Vector<std::array< std::uniq
                             amrex::Real                                                         a_thetadt )
 {
     using ablastr::fields::Direction;
-    amrex::MultiFab::Copy(*m_fields.get("Bfield_XX", Direction{0}, 0), *a_Bn[0][0], 0, 0, ncomps, a_Bn[0][0]->nGrowVect());
-    amrex::MultiFab::Copy(*m_fields.get("Bfield_XX", Direction{1}, 0), *a_Bn[0][1], 0, 0, ncomps, a_Bn[0][1]->nGrowVect());
-    amrex::MultiFab::Copy(*m_fields.get("Bfield_XX", Direction{2}, 0), *a_Bn[0][2], 0, 0, ncomps, a_Bn[0][2]->nGrowVect());
+    amrex::MultiFab::Copy(*m_fields.get("Bfield_fp", Direction{0}, 0), *a_Bn[0][0], 0, 0, ncomps, a_Bn[0][0]->nGrowVect());
+    amrex::MultiFab::Copy(*m_fields.get("Bfield_fp", Direction{1}, 0), *a_Bn[0][1], 0, 0, ncomps, a_Bn[0][1]->nGrowVect());
+    amrex::MultiFab::Copy(*m_fields.get("Bfield_fp", Direction{2}, 0), *a_Bn[0][2], 0, 0, ncomps, a_Bn[0][2]->nGrowVect());
     EvolveB(a_thetadt, DtType::Full);
     ApplyMagneticFieldBCs();
 }
@@ -97,7 +97,7 @@ void
 WarpX::FinishMagneticFieldAndApplyBCs( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >&  a_Bn,
                             amrex::Real                                                         a_theta )
 {
-    FinishImplicitField(m_fields.get_mr_levels_alldirs("Bfield_XX", 0), a_Bn, a_theta);
+    FinishImplicitField(m_fields.get_mr_levels_alldirs("Bfield_fp", 0), a_Bn, a_theta);
     ApplyMagneticFieldBCs();
 }
 

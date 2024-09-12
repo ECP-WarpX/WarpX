@@ -112,9 +112,9 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
     if (::isAnyBoundary<FieldBoundaryType::PEC>(field_boundary_lo, field_boundary_hi)) {
         if (patch_type == PatchType::fine) {
             PEC::ApplyPECtoBfield( {
-                m_fields.get("Bfield_XX",Direction{0},lev),
-                m_fields.get("Bfield_XX",Direction{1},lev),
-                m_fields.get("Bfield_XX",Direction{2},lev) },
+                m_fields.get("Bfield_fp",Direction{0},lev),
+                m_fields.get("Bfield_fp",Direction{1},lev),
+                m_fields.get("Bfield_fp",Direction{2},lev) },
                 field_boundary_lo, field_boundary_hi,
                 get_ng_fieldgather(), Geom(lev),
                 lev, patch_type, ref_ratio);
@@ -136,7 +136,7 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
         if (a_dt_type == DtType::FirstHalf) {
             if(::isAnyBoundary<FieldBoundaryType::Absorbing_SilverMueller>(field_boundary_lo, field_boundary_hi)){
                 auto Efield_fp_new = m_fields.get_mr_levels_alldirs("Efield_fp",max_level); // JRA, new to prevent shadow
-                auto Bfield_fp_new = m_fields.get_mr_levels_alldirs("Bfield_XX",max_level);
+                auto Bfield_fp_new = m_fields.get_mr_levels_alldirs("Bfield_fp",max_level);
                 m_fdtd_solver_fp[0]->ApplySilverMuellerBoundary(
                 Efield_fp_new[lev], Bfield_fp_new[lev],
                 Geom(lev).Domain(), dt[lev],
@@ -147,9 +147,9 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
 
 #ifdef WARPX_DIM_RZ
     if (patch_type == PatchType::fine) {
-        ApplyFieldBoundaryOnAxis(m_fields.get("Bfield_XX",Direction{0},lev),
-                                 m_fields.get("Bfield_XX",Direction{1},lev),
-                                 m_fields.get("Bfield_XX",Direction{2},lev), lev);
+        ApplyFieldBoundaryOnAxis(m_fields.get("Bfield_fp",Direction{0},lev),
+                                 m_fields.get("Bfield_fp",Direction{1},lev),
+                                 m_fields.get("Bfield_fp",Direction{2},lev), lev);
     } else {
         ApplyFieldBoundaryOnAxis(getFieldPointer(FieldType::Bfield_cp, lev, 0),
                                  getFieldPointer(FieldType::Bfield_cp, lev, 1),

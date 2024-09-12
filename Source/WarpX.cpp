@@ -2262,9 +2262,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     //
     const std::array<Real,3> dx = CellSize(lev);
 
-    m_fields.alloc_init( "Bfield_XX", Direction{0}, lev, amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
-    m_fields.alloc_init( "Bfield_XX", Direction{1}, lev, amrex::convert(ba, By_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
-    m_fields.alloc_init( "Bfield_XX", Direction{2}, lev, amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+    m_fields.alloc_init( "Bfield_fp", Direction{0}, lev, amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+    m_fields.alloc_init( "Bfield_fp", Direction{1}, lev, amrex::convert(ba, By_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+    m_fields.alloc_init( "Bfield_fp", Direction{2}, lev, amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
 
     m_fields.alloc_init( "Efield_fp", Direction{0}, lev, amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
     m_fields.alloc_init( "Efield_fp", Direction{1}, lev, amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
@@ -2596,11 +2596,14 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     // The external fields that are read from file
     if (m_p_ext_field_params->B_ext_grid_type != ExternalFieldType::default_zero && m_p_ext_field_params->B_ext_grid_type != ExternalFieldType::constant) {
         // These fields will be added directly to the grid, i.e. to fp, and need to match the index type
-        m_fields.alloc_init( "Bfield_fp_external", Direction{0}, lev, amrex::convert(ba, m_fields.get("Bfield_fp",Direction{0},lev)->ixType()),
+        m_fields.alloc_init( "Bfield_fp_external", Direction{0}, lev,
+            amrex::convert(ba, m_fields.get("Bfield_fp",Direction{0},lev)->ixType()),
             dm, ncomps, ngEB, 0.0_rt);
-        m_fields.alloc_init( "Bfield_fp_external", Direction{1}, lev, amrex::convert(ba, m_fields.get("Bfield_fp",Direction{1},lev)->ixType()),
+        m_fields.alloc_init( "Bfield_fp_external", Direction{1}, lev,
+            amrex::convert(ba, m_fields.get("Bfield_fp",Direction{1},lev)->ixType()),
             dm, ncomps, ngEB, 0.0_rt);
-        m_fields.alloc_init( "Bfield_fp_external", Direction{2}, lev, amrex::convert(ba, m_fields.get("Bfield_fp",Direction{2},lev)->ixType()),
+        m_fields.alloc_init( "Bfield_fp_external", Direction{2}, lev,
+            amrex::convert(ba, m_fields.get("Bfield_fp",Direction{2},lev)->ixType()),
             dm, ncomps, ngEB, 0.0_rt);
     }
     if (mypc->m_B_ext_particle_s == "read_from_file") {

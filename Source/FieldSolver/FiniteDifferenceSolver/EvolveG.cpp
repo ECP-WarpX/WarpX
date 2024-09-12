@@ -39,7 +39,7 @@ using namespace amrex;
 
 void FiniteDifferenceSolver::EvolveG (
     amrex::MultiFab* Gfield,
-    std::array<std::unique_ptr<amrex::MultiFab>,3> const& Bfield,
+    ablastr::fields::VectorField const& Bfield,
     amrex::Real const dt)
 {
 #ifdef WARPX_DIM_RZ
@@ -71,7 +71,7 @@ void FiniteDifferenceSolver::EvolveG (
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveGCartesian (
     amrex::MultiFab* Gfield,
-    std::array<std::unique_ptr<amrex::MultiFab>,3> const& Bfield,
+    ablastr::fields::VectorField const& Bfield,
     amrex::Real const dt)
 {
 

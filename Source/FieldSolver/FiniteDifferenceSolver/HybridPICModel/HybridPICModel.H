@@ -74,11 +74,11 @@ public:
      * \param[in] edge_lengths Length of cell edges taking embedded boundaries into account
      */
     void CalculateCurrentAmpere (
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Bfield,
+        ablastr::fields::MultiLevelVectorField const& Bfield,
         ablastr::fields::MultiLevelVectorField const& edge_lengths
     );
     void CalculateCurrentAmpere (
-        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+        ablastr::fields::MultiLevelVectorField const& Bfield,
         ablastr::fields::VectorField const& edge_lengths,
         int lev
     );
@@ -88,32 +88,32 @@ public:
      * Function to update the E-field using Ohm's law (hybrid-PIC model).
      */
     void HybridPICSolveE (
-        ablastr::fields::MultiLevelVectorField Efield,
+        ablastr::fields::MultiLevelVectorField const& Efield,
         ablastr::fields::MultiLevelVectorField const& Jfield,
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Bfield,
+        ablastr::fields::MultiLevelVectorField const& Bfield,
         ablastr::fields::MultiLevelScalarField const& rhofield,
         ablastr::fields::MultiLevelVectorField const& edge_lengths,
         bool solve_for_Faraday);
 
     void HybridPICSolveE (
-        ablastr::fields::VectorField Efield,
+        ablastr::fields::VectorField const& Efield,
         ablastr::fields::VectorField const& Jfield,
-        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+        ablastr::fields::VectorField const& Bfield,
         amrex::MultiFab* const rhofield,
         ablastr::fields::VectorField const& edge_lengths,
         int lev, bool solve_for_Faraday);
 
     void HybridPICSolveE (
-        ablastr::fields::VectorField Efield,
+        ablastr::fields::VectorField const& Efield,
         ablastr::fields::VectorField const& Jfield,
-        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+        ablastr::fields::VectorField const& Bfield,
         amrex::MultiFab* const rhofield,
         ablastr::fields::VectorField const& edge_lengths,
         int lev, PatchType patch_type, bool solve_for_Faraday);
 
     void BfieldEvolveRK (
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
-        ablastr::fields::MultiLevelVectorField Efield,
+        ablastr::fields::MultiLevelVectorField const& Bfield,
+        ablastr::fields::MultiLevelVectorField const& Efield,
         ablastr::fields::MultiLevelVectorField const& Jfield,
         ablastr::fields::MultiLevelScalarField const& rhofield,
         ablastr::fields::MultiLevelVectorField const& edge_lengths,
@@ -121,8 +121,8 @@ public:
         amrex::IntVect ng, std::optional<bool> nodal_sync);
 
     void BfieldEvolveRK (
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
-        ablastr::fields::MultiLevelVectorField Efield,
+        ablastr::fields::MultiLevelVectorField const& Bfield,
+        ablastr::fields::MultiLevelVectorField const& Efield,
         ablastr::fields::MultiLevelVectorField const& Jfield,
         ablastr::fields::MultiLevelScalarField const& rhofield,
         ablastr::fields::MultiLevelVectorField const& edge_lengths,
@@ -130,8 +130,8 @@ public:
         amrex::IntVect ng, std::optional<bool> nodal_sync);
 
     void FieldPush (
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
-        ablastr::fields::MultiLevelVectorField& Efield,
+        ablastr::fields::MultiLevelVectorField const& Bfield,
+        ablastr::fields::MultiLevelVectorField const& Efield,
         ablastr::fields::MultiLevelVectorField const& Jfield,
         ablastr::fields::MultiLevelScalarField const& rhofield,
         ablastr::fields::MultiLevelVectorField const& edge_lengths,

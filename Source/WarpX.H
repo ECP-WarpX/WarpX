@@ -1032,7 +1032,7 @@ public:
                                  amrex::Real required_precision=amrex::Real(1.e-11),
                                  amrex::Real absolute_tolerance=amrex::Real(0.0),
                                  int max_iters=200,
-                                 int verbosity=2) const;
+                                 int verbosity=2); // const;
 
     void setVectorPotentialBC (ablastr::fields::MultiLevelVectorField const& A) const;
 

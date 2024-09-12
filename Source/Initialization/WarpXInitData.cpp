@@ -643,10 +643,11 @@ WarpX::AddExternalFields (int const lev) {
         }
     }
     if (m_p_ext_field_params->B_ext_grid_type != ExternalFieldType::default_zero) {
+        ablastr::fields::MultiLevelVectorField const& Bfield_fp_new = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
         if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::constant) {
-            Bfield_fp[lev][0]->plus(m_p_ext_field_params->B_external_grid[0], guard_cells.ng_alloc_EB.min());
-            Bfield_fp[lev][1]->plus(m_p_ext_field_params->B_external_grid[1], guard_cells.ng_alloc_EB.min());
-            Bfield_fp[lev][2]->plus(m_p_ext_field_params->B_external_grid[2], guard_cells.ng_alloc_EB.min());
+            Bfield_fp_new[lev][0]->plus(m_p_ext_field_params->B_external_grid[0], guard_cells.ng_alloc_EB.min());
+            Bfield_fp_new[lev][1]->plus(m_p_ext_field_params->B_external_grid[1], guard_cells.ng_alloc_EB.min());
+            Bfield_fp_new[lev][2]->plus(m_p_ext_field_params->B_external_grid[2], guard_cells.ng_alloc_EB.min());
         }
         else {
             amrex::MultiFab::Add(*Bfield_fp[lev][0], *m_fields.get("Bfield_fp_external",Direction{0},lev), 0, 0, 1, guard_cells.ng_alloc_EB);

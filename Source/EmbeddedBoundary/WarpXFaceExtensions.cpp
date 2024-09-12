@@ -286,7 +286,7 @@ WarpX::ComputeFaceExtensions ()
 void
 WarpX::InitBorrowing() {
     int idim = 0;
-    for (amrex::MFIter mfi(*m_fields.get("Bfield_XX", Direction{idim}, maxLevel())); mfi.isValid(); ++mfi) {
+    for (amrex::MFIter mfi(*m_fields.get("Bfield_fp", Direction{idim}, maxLevel())); mfi.isValid(); ++mfi) {
         amrex::Box const &box = mfi.validbox();
         auto &borrowing_x = (*m_borrowing[maxLevel()][idim])[mfi];
         borrowing_x.inds_pointer.resize(box);
@@ -302,7 +302,7 @@ WarpX::InitBorrowing() {
     }
 
     idim = 1;
-    for (amrex::MFIter mfi(*m_fields.get("Bfield_XX", Direction{idim}, maxLevel())); mfi.isValid(); ++mfi) {
+    for (amrex::MFIter mfi(*m_fields.get("Bfield_fp", Direction{idim}, maxLevel())); mfi.isValid(); ++mfi) {
         amrex::Box const &box = mfi.validbox();
         auto &borrowing_y = (*m_borrowing[maxLevel()][idim])[mfi];
         borrowing_y.inds_pointer.resize(box);
@@ -315,7 +315,7 @@ WarpX::InitBorrowing() {
     }
 
     idim = 2;
-    for (amrex::MFIter mfi(*m_fields.get("Bfield_XX", Direction{idim}, maxLevel())); mfi.isValid(); ++mfi) {
+    for (amrex::MFIter mfi(*m_fields.get("Bfield_fp", Direction{idim}, maxLevel())); mfi.isValid(); ++mfi) {
         amrex::Box const &box = mfi.validbox();
         auto &borrowing_z = (*m_borrowing[maxLevel()][idim])[mfi];
         borrowing_z.inds_pointer.resize(box);
@@ -456,7 +456,7 @@ WarpX::ComputeOneWayExtensions ()
         WARPX_ABORT_WITH_MESSAGE(
             "ComputeOneWayExtensions: Only implemented in 2D3V and 3D3V");
 #endif
-        for (amrex::MFIter mfi(*m_fields.get("Bfield_XX", Direction{idim}, maxLevel())); mfi.isValid(); ++mfi) {
+        for (amrex::MFIter mfi(*m_fields.get("Bfield_fp", Direction{idim}, maxLevel())); mfi.isValid(); ++mfi) {
 
             amrex::Box const &box = mfi.validbox();
             auto const &S = m_fields.get("face_areas", Direction{idim}, maxLevel())->array(mfi);
@@ -583,7 +583,7 @@ WarpX::ComputeEightWaysExtensions ()
         WARPX_ABORT_WITH_MESSAGE(
             "ComputeEightWaysExtensions: Only implemented in 2D3V and 3D3V");
 #endif
-        for (amrex::MFIter mfi(*m_fields.get("Bfield_XX", Direction{idim}, maxLevel())); mfi.isValid(); ++mfi) {
+        for (amrex::MFIter mfi(*m_fields.get("Bfield_fp", Direction{idim}, maxLevel())); mfi.isValid(); ++mfi) {
 
             amrex::Box const &box = mfi.validbox();
 
@@ -734,7 +734,7 @@ WarpX::ApplyBCKCorrection (const int idim)
     const amrex::Real dy = cell_size[1];
     const amrex::Real dz = cell_size[2];
 
-    for (amrex::MFIter mfi(*m_fields.get("Bfield_XX", Direction{idim}, maxLevel()), amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+    for (amrex::MFIter mfi(*m_fields.get("Bfield_fp", Direction{idim}, maxLevel()), amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
 
         const amrex::Box &box = mfi.tilebox();
         const amrex::Array4<int> &flag_ext_face = m_flag_ext_face[maxLevel()][idim]->array(mfi);
@@ -762,7 +762,7 @@ void
 WarpX::ShrinkBorrowing ()
 {
     for(int idim = 0; idim < AMREX_SPACEDIM; idim++) {
-        for (amrex::MFIter mfi(*m_fields.get("Bfield_XX", Direction{idim}, maxLevel())); mfi.isValid(); ++mfi) {
+        for (amrex::MFIter mfi(*m_fields.get("Bfield_fp", Direction{idim}, maxLevel())); mfi.isValid(); ++mfi) {
             auto &borrowing = (*m_borrowing[maxLevel()][idim])[mfi];
             borrowing.inds.resize(borrowing.vecs_size);
             borrowing.neigh_faces.resize(borrowing.vecs_size);
