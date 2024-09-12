@@ -85,9 +85,9 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, amrex::Real a_dt)
         Ex = m_fields.get("Efield_fp",Direction{0},lev);
         Ey = m_fields.get("Efield_fp",Direction{1},lev);
         Ez = m_fields.get("Efield_fp",Direction{2},lev);
-        Bx = Bfield_fp[lev][0].get();
-        By = Bfield_fp[lev][1].get();
-        Bz = Bfield_fp[lev][2].get();
+        Bx = m_fields.get("Bfield_fp",Direction{0},lev);
+        By = m_fields.get("Bfield_fp",Direction{1},lev);
+        Bz = m_fields.get("Bfield_fp",Direction{2},lev);
         Jx = m_fields.get("current_fp", Direction{0}, lev);
         Jy = m_fields.get("current_fp", Direction{1}, lev);
         Jz = m_fields.get("current_fp", Direction{2}, lev);

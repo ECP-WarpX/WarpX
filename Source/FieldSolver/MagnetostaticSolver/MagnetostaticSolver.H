@@ -34,12 +34,12 @@ namespace MagnetostaticSolver {
      */
     class EBCalcBfromVectorPotentialPerLevel {
       private:
-        const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>>& m_b_field;
+        const ablastr::fields::MultiLevelVectorField& m_b_field;
         const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>>& m_grad_buf_e_stag;
         const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>>& m_grad_buf_b_stag;
 
       public:
-        EBCalcBfromVectorPotentialPerLevel(const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>>& b_field,
+        EBCalcBfromVectorPotentialPerLevel(const ablastr::fields::MultiLevelVectorField& b_field,
                                            const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>>& grad_buf_e_stag,
                                            const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>>& grad_buf_b_stag)
                 : m_b_field(b_field),

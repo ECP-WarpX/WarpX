@@ -631,6 +631,7 @@ WarpX::AddExternalFields (int const lev) {
 
     // FIXME: RZ multimode has more than one component for all these
     if (m_p_ext_field_params->E_ext_grid_type != ExternalFieldType::default_zero) {
+        ablastr::fields::MultiLevelVectorField Efield_fp = m_fields.get_mr_levels_alldirs("Efield_fp",finest_level);
         if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::constant) {
             Efield_fp[lev][0]->plus(m_p_ext_field_params->E_external_grid[0], guard_cells.ng_alloc_EB.min());
             Efield_fp[lev][1]->plus(m_p_ext_field_params->E_external_grid[1], guard_cells.ng_alloc_EB.min());
@@ -643,6 +644,7 @@ WarpX::AddExternalFields (int const lev) {
         }
     }
     if (m_p_ext_field_params->B_ext_grid_type != ExternalFieldType::default_zero) {
+        ablastr::fields::MultiLevelVectorField const& Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
         if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::constant) {
             Bfield_fp[lev][0]->plus(m_p_ext_field_params->B_external_grid[0], guard_cells.ng_alloc_EB.min());
             Bfield_fp[lev][1]->plus(m_p_ext_field_params->B_external_grid[1], guard_cells.ng_alloc_EB.min());

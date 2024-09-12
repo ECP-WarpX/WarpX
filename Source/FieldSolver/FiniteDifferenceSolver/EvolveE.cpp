@@ -50,8 +50,8 @@ using namespace ablastr::fields;
  * \brief Update the E field, over one timestep
  */
 void FiniteDifferenceSolver::EvolveE (
-    ablastr::fields::VectorField Efield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+    ablastr::fields::VectorField const& Efield,
+    ablastr::fields::VectorField const& Bfield,
     ablastr::fields::VectorField const& Jfield,
     VectorField const& edge_lengths,
     VectorField const& face_areas,
@@ -93,8 +93,8 @@ void FiniteDifferenceSolver::EvolveE (
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveECartesian (
-    ablastr::fields::VectorField& Efield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+    ablastr::fields::VectorField const& Efield,
+    ablastr::fields::VectorField const& Bfield,
     ablastr::fields::VectorField const& Jfield,
     VectorField const& edge_lengths,
     amrex::MultiFab const* Ffield,
@@ -227,8 +227,8 @@ void FiniteDifferenceSolver::EvolveECartesian (
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveECylindrical (
-    ablastr::fields::VectorField Efield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+    ablastr::fields::VectorField const& Efield,
+    ablastr::fields::VectorField const& Bfield,
     ablastr::fields::VectorField const& Jfield,
     ablastr::fields::VectorField const& edge_lengths,
     amrex::MultiFab const* Ffield,
