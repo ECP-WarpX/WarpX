@@ -1699,17 +1699,11 @@ private:
 
     guardCellManager guard_cells;
 
-    //Slice Parameters
+    // Slice Parameters
     int slice_max_grid_size;
     int slice_plot_int = -1;
     amrex::RealBox slice_realbox;
     amrex::IntVect slice_cr_ratio;
-    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > F_slice;
-    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > G_slice;
-    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_slice;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_slice;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_slice;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_slice;
 
     bool fft_periodic_single_box = false;
     int nox_fft = 16;
