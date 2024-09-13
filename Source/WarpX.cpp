@@ -358,13 +358,11 @@ WarpX::WarpX ()
     if ((WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame)
         || (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic))
     {
-        std::unique_ptr<LabFrameExplicitES> labframe_explicit_es = std::make_unique<LabFrameExplicitES>(nlevs_max);
-        m_electrostatic_solver = std::move(labframe_explicit_es);
+        m_electrostatic_solver = std::make_unique<LabFrameExplicitES>(nlevs_max);
     }
     else
     {
-        std::unique_ptr<RelativisticExplicitES> relativistic_explicit_es = std::make_unique<RelativisticExplicitES>(nlevs_max);
-        m_electrostatic_solver = std::move(relativistic_explicit_es);
+        m_electrostatic_solver = std::make_unique<RelativisticExplicitES>(nlevs_max);
     }
 
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
