@@ -1,6 +1,0 @@
-# base inputs
-FILE = inputs_base_3d
-
-# inputs for tests using constant dt
-max_step = 30
-warpx.const_dt = 1e-6

@@ -47,7 +47,7 @@ add_warpx_test(
     2  # nprocs
     inputs_test_3d_electrostatic_sphere_adaptive  # inputs
     analysis_electrostatic_sphere.py  # analysis
-    diags/diag1000018  # output
+    diags/diag1000054  # output
     OFF  # dependency
 )
 

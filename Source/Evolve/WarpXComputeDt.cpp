@@ -50,8 +50,8 @@ WarpX::ComputeDt ()
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_const_dt.has_value(), errorMsg.str());
     } else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None) {
         std::stringstream errorMsg;
-        errorMsg << "warpx.const_dt must be specified with the electrostatic solver, or the warpx.timestep_adaptation_interval must be > 0.";
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_const_dt.has_value() || timestep_adaptation_interval > 0, errorMsg.str());
+        errorMsg << "warpx.const_dt must be specified with the electrostatic solver, or the warpx.dt_update_interval must be > 0.";
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_const_dt.has_value() || dt_update_interval.isActivated(), errorMsg.str());
     }
 
     // Determine the appropriate timestep as limited by the speed of light
@@ -64,7 +64,7 @@ WarpX::ComputeDt ()
                electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         // Computation of dt for spectral algorithm
         // (determined by the minimum cell size in all directions)
-        if (m_max_dt.has_value() && electrostatic_solver_id == ElectrostaticSolverAlgo::None) {
+        if (m_max_dt.has_value() && electromagnetic_solver_id == ElectromagneticSolverAlgo::None) {
             deltat = m_max_dt.value();
         } else {
             deltat = cfl / PhysConst::c * minDim(dx);
@@ -123,7 +123,7 @@ WarpX::UpdateDtFromParticleSpeeds ()
 
     // Restrict to be less than user-specified maximum timestep, if present
     if (m_max_dt.has_value()) {
-        deltat_new = std::min(deltat_new, cfl * dx_min / max_v);
+        deltat_new = std::min(deltat_new, m_max_dt.value());
     }
 
     // Update dt

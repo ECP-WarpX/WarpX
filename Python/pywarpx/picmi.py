@@ -1871,12 +1871,6 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
 
     Parameters
     ----------
-    warpx_cfl: float, optional
-        Fraction of the CFL condition for particle velocity vs grid size, used to set the timestep when employing adaptive timestepping
-
-    warpx_max_dt: float, optional
-        The maximum allowable timestep when using adaptive timestepping (only available for non-electromagnetic solvers)
-
     warpx_relativistic: bool, default=False
         Whether to use the relativistic solver or lab frame solver
 
@@ -1885,6 +1879,16 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
 
     warpx_self_fields_verbosity: integer, default=2
         Level of verbosity for the lab frame solver
+
+    warpx_dt_update_interval: string, optional (default = -1)
+        How frequently the timestep is updated. Adaptive timestepping is disabled when this is <= 0.
+
+    warpx_cfl: float, optional
+        Fraction of the CFL condition for particle velocity vs grid size, used to set the timestep when `dt_update_interval > 0`.
+
+    warpx_max_dt: float, optional
+        The maximum allowable timestep when `dt_update_interval > 0`.
+
     """
 
     def init(self, kw):
@@ -1893,6 +1897,7 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
         self.self_fields_verbosity = kw.pop("warpx_self_fields_verbosity", None)
         self.magnetostatic = kw.pop("warpx_magnetostatic", False)
         self.cfl = kw.pop("warpx_cfl", None)
+        self.dt_update_interval = kw.pop("dt_update_interval", None)
         self.max_dt = kw.pop("warpx_max_dt", None)
 
     def solver_initialize_inputs(self):
@@ -1903,6 +1908,7 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
 
         # set adaptive timestepping parameters
         pywarpx.warpx.cfl = self.cfl
+        pywarpx.warpx.dt_update_interval = self.dt_update_interval
         pywarpx.warpx.max_dt = self.max_dt
 
         if self.relativistic:

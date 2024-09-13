@@ -1,5 +1,5 @@
 # base input parameters
-FILE = inputs_base_constdt_3d
+FILE = inputs_base_3d
 
 # test input parameters
 amr.max_level = 1

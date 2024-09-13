@@ -2139,7 +2139,7 @@ Time step
     This can be used with the electromagnetic solver, overriding ``warpx.cfl``, but
     it is up to the user to ensure that the CFL condition is met.
 
-* ``warpx.timestep_adaptation_interval`` (`float`) optional (default `0`)
+* ``warpx.dt_update_interval`` (`string`) optional (default `-1`)
     How many iterations pass between timestep adaptations when using the electrostatic solver.
     Must be greater than `0` to use adaptive timestepping, or else ``warpx.const_dt`` must be specified.
 
