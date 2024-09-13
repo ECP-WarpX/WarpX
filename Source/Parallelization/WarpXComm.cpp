@@ -103,14 +103,10 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
 
     ablastr::fields::MultiLevelVectorField const& Efield_fp = m_fields.get_mr_levels_alldirs("Efield_fp", finest_level);
     ablastr::fields::MultiLevelVectorField const& Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
-    ablastr::fields::MultiLevelVectorField const& Efield_cp = m_fields.get_mr_levels_alldirs("Efield_cp", finest_level);
-    ablastr::fields::MultiLevelVectorField const& Bfield_cp = m_fields.get_mr_levels_alldirs("Bfield_cp", finest_level);
     ablastr::fields::MultiLevelVectorField const& Efield_avg_fp = m_fields.get_mr_levels_alldirs("Efield_avg_fp", finest_level);
     ablastr::fields::MultiLevelVectorField const& Bfield_avg_fp = m_fields.get_mr_levels_alldirs("Bfield_avg_fp", finest_level);
     ablastr::fields::MultiLevelVectorField const& Efield_aux = m_fields.get_mr_levels_alldirs("Efield_aux", finest_level);
     ablastr::fields::MultiLevelVectorField const& Bfield_aux = m_fields.get_mr_levels_alldirs("Bfield_aux", finest_level);
-    ablastr::fields::MultiLevelVectorField const& Efield_cax = m_fields.get_mr_levels_alldirs("Efield_cax", finest_level);
-    ablastr::fields::MultiLevelVectorField const& Bfield_cax = m_fields.get_mr_levels_alldirs("Bfield_cax", finest_level);
 
     ablastr::fields::MultiLevelVectorField const & Bmf = WarpX::fft_do_time_averaging ? Bfield_avg_fp : Bfield_fp;
     ablastr::fields::MultiLevelVectorField const & Emf = WarpX::fft_do_time_averaging ? Efield_avg_fp : Efield_fp;
@@ -222,13 +218,13 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
 
                 const amrex::IntVect& refinement_ratio = refRatio(lev-1);
 
-                const amrex::IntVect& Bx_fp_stag = Bfield_fp[lev][0]->ixType().toIntVect();
-                const amrex::IntVect& By_fp_stag = Bfield_fp[lev][1]->ixType().toIntVect();
-                const amrex::IntVect& Bz_fp_stag = Bfield_fp[lev][2]->ixType().toIntVect();
+                const amrex::IntVect& Bx_fp_stag = m_fields.get("Bfield_fp",Direction{0},lev)->ixType().toIntVect();
+                const amrex::IntVect& By_fp_stag = m_fields.get("Bfield_fp",Direction{1},lev)->ixType().toIntVect();
+                const amrex::IntVect& Bz_fp_stag = m_fields.get("Bfield_fp",Direction{2},lev)->ixType().toIntVect();
 
-                const amrex::IntVect& Bx_cp_stag = Bfield_cp[lev][0]->ixType().toIntVect();
-                const amrex::IntVect& By_cp_stag = Bfield_cp[lev][1]->ixType().toIntVect();
-                const amrex::IntVect& Bz_cp_stag = Bfield_cp[lev][2]->ixType().toIntVect();
+                const amrex::IntVect& Bx_cp_stag = m_fields.get("Bfield_cp",Direction{0},lev)->ixType().toIntVect();
+                const amrex::IntVect& By_cp_stag = m_fields.get("Bfield_cp",Direction{1},lev)->ixType().toIntVect();
+                const amrex::IntVect& Bz_cp_stag = m_fields.get("Bfield_cp",Direction{2},lev)->ixType().toIntVect();
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -238,12 +234,12 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                     Array4<Real> const& bx_aux = Bfield_aux[lev][0]->array(mfi);
                     Array4<Real> const& by_aux = Bfield_aux[lev][1]->array(mfi);
                     Array4<Real> const& bz_aux = Bfield_aux[lev][2]->array(mfi);
-                    Array4<Real const> const& bx_fp = Bfield_fp[lev][0]->const_array(mfi);
-                    Array4<Real const> const& by_fp = Bfield_fp[lev][1]->const_array(mfi);
-                    Array4<Real const> const& bz_fp = Bfield_fp[lev][2]->const_array(mfi);
-                    Array4<Real const> const& bx_cp = Bfield_cp[lev][0]->const_array(mfi);
-                    Array4<Real const> const& by_cp = Bfield_cp[lev][1]->const_array(mfi);
-                    Array4<Real const> const& bz_cp = Bfield_cp[lev][2]->const_array(mfi);
+                    Array4<Real const> const& bx_fp = m_fields.get("Bfield_fp",Direction{0},lev)->const_array(mfi);
+                    Array4<Real const> const& by_fp = m_fields.get("Bfield_fp",Direction{1},lev)->const_array(mfi);
+                    Array4<Real const> const& bz_fp = m_fields.get("Bfield_fp",Direction{2},lev)->const_array(mfi);
+                    Array4<Real const> const& bx_cp = m_fields.get("Bfield_cp",Direction{0},lev)->const_array(mfi);
+                    Array4<Real const> const& by_cp = m_fields.get("Bfield_cp",Direction{1},lev)->const_array(mfi);
+                    Array4<Real const> const& bz_cp = m_fields.get("Bfield_cp",Direction{2},lev)->const_array(mfi);
                     Array4<Real const> const& bx_c = Btmp[0]->const_array(mfi);
                     Array4<Real const> const& by_c = Btmp[1]->const_array(mfi);
                     Array4<Real const> const& bz_c = Btmp[2]->const_array(mfi);
