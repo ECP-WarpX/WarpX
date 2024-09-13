@@ -135,7 +135,6 @@ public:
                          const amrex::MultiFab* cBz,
                          amrex::Real t,
                          amrex::Real dt,
-                         amrex::Real dt_next,
                          DtType a_dt_type=DtType::Full,
                          bool skip_deposition=false,
                          PushType push_type=PushType::Explicit) override;
@@ -151,9 +150,7 @@ public:
                          long offset,
                          long np_to_push,
                          int lev, int gather_lev,
-                         amrex::Real dt,
-                         amrex::Real dt_next,
-                         ScaleFields scaleFields,
+                         amrex::Real dt, ScaleFields scaleFields,
                          DtType a_dt_type=DtType::Full);
 
     void ImplicitPushXP (WarpXParIter& pti,
@@ -395,6 +392,14 @@ public:
     }
 
 protected:
+
+    /*
+       Finds the box defining the region where refine injection should be used, if that
+       option is enabled. Currently this only works for numLevels() == 2 and static mesh
+       refinement.
+    */
+    bool findRefinedInjectionBox (amrex::Box& fine_injection_box, amrex::IntVect& rrfac);
+
     std::string species_name;
     std::vector<std::unique_ptr<PlasmaInjector>> plasma_injectors;
 

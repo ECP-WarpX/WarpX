@@ -48,6 +48,10 @@ WarpX::ComputeDt ()
         std::stringstream errorMsg;
         errorMsg << "warpx.const_dt must be specified with the hybrid-PIC solver.";
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_const_dt.has_value(), errorMsg.str());
+    } else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None) {
+        std::stringstream errorMsg;
+        errorMsg << "warpx.const_dt must be specified with the electrostatic solver, or the warpx.timestep_adaptation_interval must be > 0.";
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_const_dt.has_value() || timestep_adaptation_interval > 0, errorMsg.str());
     }
 
     // Determine the appropriate timestep as limited by the speed of light
@@ -60,7 +64,7 @@ WarpX::ComputeDt ()
                electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         // Computation of dt for spectral algorithm
         // (determined by the minimum cell size in all directions)
-        if (m_max_dt.has_value()) {
+        if (m_max_dt.has_value() && electrostatic_solver_id == ElectrostaticSolverAlgo::None) {
             deltat = m_max_dt.value();
         } else {
             deltat = cfl / PhysConst::c * minDim(dx);
@@ -88,13 +92,10 @@ WarpX::ComputeDt ()
 
     dt.resize(0);
     dt.resize(max_level+1,deltat);
-    dt_next.resize(0);
-    dt_next.resize(max_level+1,deltat);
 
     if (do_subcycling) {
         for (int lev = max_level-1; lev >= 0; --lev) {
             dt[lev] = dt[lev+1] * refRatio(lev)[0];
-            dt_next[lev] = dt[lev];
         }
     }
 }
@@ -125,17 +126,11 @@ WarpX::UpdateDtFromParticleSpeeds ()
         deltat_new = std::min(deltat_new, cfl * dx_min / max_v);
     }
 
-    // Set present dt to previous next dt
-    dt[max_level] = dt_next[max_level];
-    dt_next[max_level] = deltat_new;
+    // Update dt
+    dt[max_level] = deltat_new;
 
     for (int lev = max_level-1; lev >= 0; --lev) {
-        dt[lev] = dt_next[lev];
-        if (do_subcycling) {
-            dt_next[lev] = dt_next[lev+1] * refRatio(lev)[0];
-        } else {
-            dt_next[lev] = dt_next[lev+1];
-        }
+        dt[lev] = dt[lev+1] * refRatio(lev)[0];
     }
 }
 

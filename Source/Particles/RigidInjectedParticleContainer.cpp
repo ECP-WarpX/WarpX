@@ -166,8 +166,7 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
                                         const long offset,
                                         const long np_to_push,
                                         int lev, int gather_lev,
-                                        amrex::Real dt, amrex::Real /*dt_next*/,
-                                        ScaleFields /*scaleFields*/,
+                                        amrex::Real dt, ScaleFields /*scaleFields*/,
                                         DtType a_dt_type)
 {
     auto& attribs = pti.GetAttribs();
@@ -243,7 +242,7 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
     const bool do_scale = not done_injecting_lev;
     const Real v_boost = WarpX::beta_boost*PhysConst::c;
     PhysicalParticleContainer::PushPX(pti, exfab, eyfab, ezfab, bxfab, byfab, bzfab,
-                                      ngEB, e_is_nodal, offset, np_to_push, lev, gather_lev, dt, dt,
+                                      ngEB, e_is_nodal, offset, np_to_push, lev, gather_lev, dt,
                                       ScaleFields(do_scale, dt, zinject_plane_lev_previous,
                                                   vzbeam_ave_boosted, v_boost),
                                       a_dt_type);
@@ -300,7 +299,7 @@ RigidInjectedParticleContainer::Evolve (int lev,
                                         MultiFab* rho, MultiFab* crho,
                                         const MultiFab* cEx, const MultiFab* cEy, const MultiFab* cEz,
                                         const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
-                                        Real t, Real dt, Real dt_next, DtType a_dt_type, bool skip_deposition,
+                                        Real t, Real dt, DtType a_dt_type, bool skip_deposition,
                                         PushType push_type)
 {
 
@@ -326,7 +325,7 @@ RigidInjectedParticleContainer::Evolve (int lev,
                                        rho, crho,
                                        cEx, cEy, cEz,
                                        cBx, cBy, cBz,
-                                       t, dt, dt_next, a_dt_type, skip_deposition, push_type);
+                                       t, dt, a_dt_type, skip_deposition, push_type);
 }
 
 void

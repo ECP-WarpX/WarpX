@@ -162,11 +162,6 @@ WarpX::InitFromCheckpoint ()
                 lis >> word;
                 dt_lev = static_cast<Real>(std::stod(word));
             }
-            // set dt_next
-            dt_next.resize(dt.size(), dt[0]);
-            for (int lev = 0; lev <= max_level; lev++) {
-                dt_next[lev] = dt[lev];
-            }
         }
 
         amrex::Real moving_window_x_checkpoint;

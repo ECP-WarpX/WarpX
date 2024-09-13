@@ -116,6 +116,7 @@ public:
     void InitData ();
 
     void Evolve (int numsteps = -1);
+    void Synchronize ();
 
     //
     // Functions used by implicit solvers
@@ -1504,7 +1505,7 @@ private:
     amrex::Vector<amrex::Real> t_new;
     amrex::Vector<amrex::Real> t_old;
     amrex::Vector<amrex::Real> dt;
-    amrex::Vector<amrex::Real> dt_next;
+    int timestep_adaptation_interval = 0; // How often to update the timestep when using adaptive timestepping
 
     // Particle container
     std::unique_ptr<MultiParticleContainer> mypc;
