@@ -141,9 +141,9 @@ WarpX::AddBoundaryField ()
                 self_fields_verbosity );
 
     // Compute the corresponding electric and magnetic field, from the potential phi.
-    auto Efield_fp_new = m_fields.get_mr_levels_alldirs("Efield_fp",max_level); // JRA, new to prevent shadow
+    auto Efield_fp = m_fields.get_mr_levels_alldirs("Efield_fp",max_level);
     auto Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp",max_level);
-    computeE( Efield_fp_new, phi, beta );
+    computeE( Efield_fp, phi, beta );
     computeB( Bfield_fp, phi, beta );
 
     // de-allocate temporary
@@ -230,9 +230,9 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
                 pc.self_fields_verbosity );
 
     // Compute the corresponding electric and magnetic field, from the potential phi
-    auto Efield_fp_new = m_fields.get_mr_levels_alldirs("Efield_fp",max_level); // JRA, new to prevent shadow
+    auto Efield_fp = m_fields.get_mr_levels_alldirs("Efield_fp",max_level);
     auto Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp",max_level);
-    computeE( Efield_fp_new, phi, beta );
+    computeE( Efield_fp, phi, beta );
     computeB( Bfield_fp, phi, beta );
 
     // de-allocate temporary
@@ -309,11 +309,11 @@ WarpX::AddSpaceChargeFieldLabFrame ()
 
     // Compute the electric field. Note that if an EB is used the electric
     // field will be calculated in the computePhi call.
-    auto Efield_fp_new = m_fields.get_mr_levels_alldirs("Efield_fp",max_level); // JRA, new to prevent shadow
+    auto Efield_fp = m_fields.get_mr_levels_alldirs("Efield_fp",max_level);
     auto Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp",max_level);
-    if (!EB::enabled()) { computeE( Efield_fp_new, phi_fp, beta ); }
+    if (!EB::enabled()) { computeE( Efield_fp, phi_fp, beta ); }
     else {
-        if (IsPythonCallbackInstalled("poissonsolver")) { computeE(Efield_fp_new, phi_fp, beta); }
+        if (IsPythonCallbackInstalled("poissonsolver")) { computeE(Efield_fp, phi_fp, beta); }
     }
 
     // Compute the magnetic field
