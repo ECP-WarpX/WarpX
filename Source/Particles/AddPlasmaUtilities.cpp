@@ -1,8 +1,9 @@
-/* Copyright 2024 Andrew Myers
+/* Copyright 2024 The WarpX Community
  *
  * This file is part of WarpX.
  *
  * License: BSD-3-Clause-LBNL
+ * Authors: Andrew Myers
  */
 #include "AddPlasmaUtilities.H"
 

@@ -1,8 +1,9 @@
-/* Copyright 2024 Andrew Myers
+/* Copyright 2024 The WarpX Community
  *
  * This file is part of WarpX.
  *
  * License: BSD-3-Clause-LBNL
+ * Authors: Andrew Myers
  */
 #ifndef WARPX_ADDPLASMAUTILITIES_H_
 #define WARPX_ADDPLASMAUTILITIES_H_
