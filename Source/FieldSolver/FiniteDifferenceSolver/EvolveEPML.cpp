@@ -45,21 +45,29 @@ using namespace amrex;
  * \brief Update the E field, over one timestep
  */
 void FiniteDifferenceSolver::EvolveEPML (
-    std::array< amrex::MultiFab*, 3 > Efield,
-    std::array< amrex::MultiFab*, 3 > const Bfield,
-    std::array< amrex::MultiFab*, 3 > const Jfield,
-    std::array< amrex::MultiFab*, 3 > const edge_lengths,
-    amrex::MultiFab* const Ffield,
+    ablastr::fields::MultiFabRegister& fields,
+    PatchType patch_type,
+    int level,
     MultiSigmaBox const& sigba,
     amrex::Real const dt, bool pml_has_particles ) {
 
     // Select algorithm (The choice of algorithm is a runtime option,
     // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
-    amrex::ignore_unused(Efield, Bfield, Jfield, Ffield, sigba, dt, pml_has_particles, edge_lengths);
+    amrex::ignore_unused(fields, patch_type, level, sigba, dt, pml_has_particles);
     WARPX_ABORT_WITH_MESSAGE(
         "PML are not implemented in cylindrical geometry.");
 #else
+    ablastr::fields::VectorField Efield = (patch_type == PatchType::fine) ?
+        fields.get_alldirs("pml_E_fp", level) : fields.get_alldirs("pml_E_cp", level);
+    ablastr::fields::VectorField Bfield = (patch_type == PatchType::fine) ?
+        fields.get_alldirs("pml_B_fp", level) : fields.get_alldirs("pml_B_cp", level);
+    ablastr::fields::VectorField Jfield = (patch_type == PatchType::fine) ?
+        fields.get_alldirs("pml_j_fp", level) : fields.get_alldirs("pml_j_cp", level);
+    ablastr::fields::VectorField edge_lengths = fields.get_alldirs("pml_edge_lengths", level);
+    amrex::MultiFab* const Ffield = (patch_type == PatchType::fine) ?
+        fields.get("pml_F_fp", level) : fields.get("pml_F_cp", level);
+
     if (m_grid_type == GridType::Collocated) {
 
         EvolveEPMLCartesian <CartesianNodalAlgorithm> (

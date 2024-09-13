@@ -386,7 +386,7 @@ WarpX::InitFromCheckpoint ()
     {
         for (int lev = 0; lev < nlevs; ++lev) {
             if (pml[lev]) {
-                pml[lev]->Restart(amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "pml"));
+                pml[lev]->Restart(m_fields, amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "pml"));
             }
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
             if (pml_rz[lev]) {

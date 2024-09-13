@@ -65,7 +65,7 @@ void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
                 // apply pec on split E-fields in PML region
                 const bool split_pml_field = true;
                 PEC::ApplyPECtoEfield(
-                    pml[lev]->GetE_fp(),
+                    m_fields.get_alldirs("pml_E_fp",lev),
                     field_boundary_lo, field_boundary_hi,
                     get_ng_fieldgather(), Geom(lev),
                     lev, patch_type, ref_ratio,
@@ -83,7 +83,7 @@ void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
                 // apply pec on split E-fields in PML region
                 const bool split_pml_field = true;
                 PEC::ApplyPECtoEfield(
-                    pml[lev]->GetE_cp(),
+                    m_fields.get_alldirs("pml_E_cp",lev),
                     field_boundary_lo, field_boundary_hi,
                     get_ng_fieldgather(), Geom(lev),
                     lev, patch_type, ref_ratio,

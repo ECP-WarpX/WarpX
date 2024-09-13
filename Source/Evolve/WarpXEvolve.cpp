@@ -799,7 +799,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     {
         if (do_pml && pml[lev]->ok())
         {
-            pml[lev]->PushPSATD(lev);
+            pml[lev]->PushPSATD(m_fields, lev);
         }
         ApplyEfieldBoundary(lev, PatchType::fine);
         if (lev > 0) { ApplyEfieldBoundary(lev, PatchType::coarse); }

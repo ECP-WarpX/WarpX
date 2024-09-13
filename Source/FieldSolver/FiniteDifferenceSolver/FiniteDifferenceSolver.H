@@ -121,18 +121,22 @@ class FiniteDifferenceSolver
                       amrex::Real dt,
                       std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
 
-        void EvolveBPML ( std::array< amrex::MultiFab*, 3 > Bfield,
-                          ablastr::fields::VectorField const Efield,
-                      amrex::Real dt,
-                      bool dive_cleaning);
+        void EvolveBPML (
+            ablastr::fields::MultiFabRegister& fields,
+            PatchType patch_type,
+            int level,
+            amrex::Real dt,
+            bool dive_cleaning
+        );
 
-       void EvolveEPML ( ablastr::fields::VectorField Efield,
-                      std::array< amrex::MultiFab*, 3 > Bfield,
-                      std::array< amrex::MultiFab*, 3 > Jfield,
-                      std::array< amrex::MultiFab*, 3 >  edge_lengths,
-                      amrex::MultiFab* Ffield,
-                      MultiSigmaBox const& sigba,
-                      amrex::Real dt, bool pml_has_particles );
+       void EvolveEPML (
+            ablastr::fields::MultiFabRegister& fields,
+            PatchType patch_type,
+            int level,
+            MultiSigmaBox const& sigba,
+            amrex::Real dt,
+            bool pml_has_particles
+        );
 
        void EvolveFPML ( amrex::MultiFab* Ffield,
                          ablastr::fields::VectorField Efield,

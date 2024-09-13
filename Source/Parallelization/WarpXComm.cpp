@@ -729,10 +729,12 @@ WarpX::FillBoundaryE (const int lev, const PatchType patch_type, const amrex::In
         if (pml[lev] && pml[lev]->ok())
         {
             const std::array<amrex::MultiFab*,3> mf_pml =
-                (patch_type == PatchType::fine) ? pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
+                (patch_type == PatchType::fine) ?
+                m_fields.get_alldirs("pml_E_fp", finest_level) :
+                m_fields.get_alldirs("pml_E_cp", finest_level);
 
             pml[lev]->Exchange(mf_pml, mf, patch_type, do_pml_in_domain);
-            pml[lev]->FillBoundaryE(patch_type, nodal_sync);
+            pml[lev]->FillBoundary(mf_pml, patch_type, nodal_sync);
         }
 
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
@@ -788,10 +790,12 @@ WarpX::FillBoundaryB (const int lev, const PatchType patch_type, const amrex::In
         if (pml[lev] && pml[lev]->ok())
         {
             const std::array<amrex::MultiFab*,3> mf_pml =
-                (patch_type == PatchType::fine) ? pml[lev]->GetB_fp() : pml[lev]->GetB_cp();
+                (patch_type == PatchType::fine) ?
+                m_fields.get_alldirs("pml_B_fp", finest_level) :
+                m_fields.get_alldirs("pml_B_cp", finest_level);
 
             pml[lev]->Exchange(mf_pml, mf, patch_type, do_pml_in_domain);
-            pml[lev]->FillBoundaryB(patch_type, nodal_sync);
+            pml[lev]->FillBoundary(mf_pml, patch_type, nodal_sync);
         }
 
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
@@ -944,8 +948,8 @@ WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng, std::optional<b
     {
         if (do_pml && pml[lev] && pml[lev]->ok())
         {
-            if (m_fields.has("F_fp", lev)) { pml[lev]->ExchangeF(patch_type, m_fields.get("F_fp", lev), do_pml_in_domain); }
-            pml[lev]->FillBoundaryF(patch_type, nodal_sync);
+            if (m_fields.has("pml_F_fp", lev) && m_fields.has("F_fp", lev)) { pml[lev]->Exchange(m_fields.get("pml_F_fp", lev), m_fields.get("F_fp", lev), patch_type, do_pml_in_domain); }
+            pml[lev]->FillBoundary(*m_fields.get("pml_F_fp", lev), patch_type, nodal_sync);
         }
 
         if (m_fields.has("F_fp", lev))
@@ -959,8 +963,8 @@ WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng, std::optional<b
     {
         if (do_pml && pml[lev] && pml[lev]->ok())
         {
-            if (m_fields.has("F_cp", lev)) { pml[lev]->ExchangeF(patch_type, m_fields.get("F_cp", lev), do_pml_in_domain); }
-            pml[lev]->FillBoundaryF(patch_type, nodal_sync);
+            if (m_fields.has("pml_F_cp", lev) && m_fields.has("F_cp", lev)) { pml[lev]->Exchange(m_fields.get("pml_F_cp", lev), m_fields.get("F_cp", lev), patch_type, do_pml_in_domain); }
+            pml[lev]->FillBoundary(*m_fields.get("pml_F_cp", lev), patch_type, nodal_sync);
         }
 
         if (m_fields.has("F_cp", lev))
@@ -988,10 +992,10 @@ void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng, std::optio
     {
         if (do_pml && pml[lev] && pml[lev]->ok())
         {
-            if (m_fields.has("G_fp",lev)) {
-                pml[lev]->ExchangeG(patch_type, m_fields.get("G_fp",lev), do_pml_in_domain);
+            if (m_fields.has("pml_G_fp",lev) && m_fields.has("G_fp",lev)) {
+                pml[lev]->Exchange(m_fields.get("pml_G_fp", lev), m_fields.get("G_fp", lev), patch_type, do_pml_in_domain);
             }
-            pml[lev]->FillBoundaryG(patch_type, nodal_sync);
+            pml[lev]->FillBoundary(*m_fields.get("pml_G_fp", lev), patch_type, nodal_sync);
         }
 
         if (m_fields.has("G_fp",lev))
@@ -1006,10 +1010,10 @@ void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng, std::optio
     {
         if (do_pml && pml[lev] && pml[lev]->ok())
         {
-            if (m_fields.has("G_cp",lev)) {
-                pml[lev]->ExchangeG(patch_type, m_fields.get("G_cp",lev), do_pml_in_domain);
+            if (m_fields.has("pml_G_cp",lev) && m_fields.has("G_cp",lev)) {
+                pml[lev]->Exchange(m_fields.get("pml_G_cp", lev), m_fields.get("G_cp", lev), patch_type, do_pml_in_domain);
             }
-            pml[lev]->FillBoundaryG(patch_type, nodal_sync);
+            pml[lev]->FillBoundary(*m_fields.get("pml_G_cp", lev), patch_type, nodal_sync);
         }
 
         if (m_fields.has("G_cp",lev))

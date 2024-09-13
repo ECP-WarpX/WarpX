@@ -259,8 +259,8 @@ WarpX::MoveWindow (const int step, bool move_j)
                 shiftMF(*m_fields.get("current_fp", Direction{dim}, lev), geom[lev], num_shift, dir, lev, do_update_cost);
             }
             if (pml[lev] && pml[lev]->ok()) {
-                const std::array<amrex::MultiFab*, 3>& pml_B = pml[lev]->GetB_fp();
-                const std::array<amrex::MultiFab*, 3>& pml_E = pml[lev]->GetE_fp();
+                const std::array<amrex::MultiFab*, 3>& pml_B = m_fields.get_alldirs("pml_B_fp", lev);
+                const std::array<amrex::MultiFab*, 3>& pml_E = m_fields.get_alldirs("pml_E_fp", lev);
                 shiftMF(*pml_B[dim], geom[lev], num_shift, dir, lev, dont_update_cost);
                 shiftMF(*pml_E[dim], geom[lev], num_shift, dir, lev, dont_update_cost);
             }
@@ -290,8 +290,8 @@ WarpX::MoveWindow (const int step, bool move_j)
                     shiftMF(*m_fields.get("current_cp", Direction{dim}, lev), geom[lev-1], num_shift_crse, dir, lev, do_update_cost);
                 }
                 if (do_pml && pml[lev]->ok()) {
-                    const std::array<amrex::MultiFab*, 3>& pml_B = pml[lev]->GetB_cp();
-                    const std::array<amrex::MultiFab*, 3>& pml_E = pml[lev]->GetE_cp();
+                    const std::array<amrex::MultiFab*, 3>& pml_B = m_fields.get_alldirs("pml_B_cp", lev);
+                    const std::array<amrex::MultiFab*, 3>& pml_E = m_fields.get_alldirs("pml_E_cp", lev);
                     shiftMF(*pml_B[dim], geom[lev-1], num_shift_crse, dir, lev, dont_update_cost);
                     shiftMF(*pml_E[dim], geom[lev-1], num_shift_crse, dir, lev, dont_update_cost);
                 }
@@ -317,7 +317,7 @@ WarpX::MoveWindow (const int step, bool move_j)
             // Fine grid
             if (do_pml && pml[lev]->ok())
             {
-                amrex::MultiFab* pml_F = pml[lev]->GetF_fp();
+                amrex::MultiFab* pml_F = m_fields.get("pml_F_fp", lev);
                 shiftMF(*pml_F, geom[lev], num_shift, dir, lev, dont_update_cost);
             }
             if (lev > 0)
@@ -325,7 +325,7 @@ WarpX::MoveWindow (const int step, bool move_j)
                 // Coarse grid
                 if (do_pml && pml[lev]->ok())
                 {
-                    amrex::MultiFab* pml_F = pml[lev]->GetF_cp();
+                    amrex::MultiFab* pml_F = m_fields.get("pml_F_cp", lev);
                     shiftMF(*pml_F, geom[lev-1], num_shift_crse, dir, lev, dont_update_cost);
                 }
             }
@@ -350,7 +350,7 @@ WarpX::MoveWindow (const int step, bool move_j)
             // Fine grid
             if (do_pml && pml[lev]->ok())
             {
-                amrex::MultiFab* pml_G = pml[lev]->GetG_fp();
+                amrex::MultiFab* pml_G = m_fields.get("pml_G_fp", lev);
                 shiftMF(*pml_G, geom[lev], num_shift, dir, lev, dont_update_cost);
             }
             if (lev > 0)
@@ -358,7 +358,7 @@ WarpX::MoveWindow (const int step, bool move_j)
                 // Coarse grid
                 if (do_pml && pml[lev]->ok())
                 {
-                    amrex::MultiFab* pml_G = pml[lev]->GetG_cp();
+                    amrex::MultiFab* pml_G = m_fields.get("pml_G_cp", lev);
                     shiftMF(*pml_G, geom[lev-1], num_shift_crse, dir, lev, dont_update_cost);
                 }
             }
