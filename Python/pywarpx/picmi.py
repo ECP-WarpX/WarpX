@@ -2597,14 +2597,14 @@ class Simulation(picmistandard.PICMI_Simulation):
     warpx_use_filter: bool, optional
         Whether to use filtering. The default depends on the conditions.
 
-    warpx_do_multi_J: bool, default=0
-        Whether to use the multi-J algorithm, where current deposition and
+    warpx_do_psatd_JRhom: bool, default=0
+        Whether to use the PSATD-JRhom algorithm, where current deposition and
         field update are performed multiple times within each time step.
 
-    warpx_do_multi_J_n_depositions: integer
-        Number of sub-steps to use with the multi-J algorithm, when ``warpx_do_multi_J=1``.
+    warpx_do_psatd_JRhom_n_depositions: integer
+        Number of sub-steps to use with the PSATD-JRhom algorithm, when ``warpx_do_psatd_JRhom=1``.
         Note that this input parameter is not optional and must always be set in all
-        input files where ``warpx.do_multi_J=1``. No default value is provided automatically.
+        input files where ``warpx.do_psatd_JRhom=1``. No default value is provided automatically.
 
     warpx_grid_type: {'collocated', 'staggered', 'hybrid'}, default='staggered'
         Whether to use a collocated grid (all fields defined at the cell nodes),
@@ -2753,8 +2753,10 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.field_gathering_algo = kw.pop("warpx_field_gathering_algo", None)
         self.particle_pusher_algo = kw.pop("warpx_particle_pusher_algo", None)
         self.use_filter = kw.pop("warpx_use_filter", None)
-        self.do_multi_J = kw.pop("warpx_do_multi_J", None)
-        self.do_multi_J_n_depositions = kw.pop("warpx_do_multi_J_n_depositions", None)
+        self.do_psatd_JRhom = kw.pop("warpx_do_psatd_JRhom", None)
+        self.do_psatd_JRhom_n_depositions = kw.pop(
+            "warpx_do_psatd_JRhom_n_depositions", None
+        )
         self.grid_type = kw.pop("warpx_grid_type", None)
         self.do_current_centering = kw.pop("warpx_do_current_centering", None)
         self.field_centering_order = kw.pop("warpx_field_centering_order", None)
@@ -2852,8 +2854,8 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.warpx.grid_type = self.grid_type
         pywarpx.warpx.do_current_centering = self.do_current_centering
         pywarpx.warpx.use_filter = self.use_filter
-        pywarpx.warpx.do_multi_J = self.do_multi_J
-        pywarpx.warpx.do_multi_J_n_depositions = self.do_multi_J_n_depositions
+        pywarpx.warpx.do_psatd_JRhom = self.do_psatd_JRhom
+        pywarpx.warpx.do_psatd_JRhom_n_depositions = self.do_psatd_JRhom_n_depositions
         pywarpx.warpx.serialize_initial_conditions = self.serialize_initial_conditions
         pywarpx.warpx.random_seed = self.random_seed
         pywarpx.warpx.used_inputs_file = self.used_inputs_file

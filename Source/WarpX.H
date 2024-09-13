@@ -360,8 +360,8 @@ public:
     static amrex::IntVect sort_idx_type;
 
     static bool do_subcycling;
-    static bool do_multi_J;
-    static int do_multi_J_n_depositions;
+    static bool do_psatd_JRhom;
+    static int do_psatd_JRhom_n_depositions;
 
     static bool do_device_synchronize;
     static bool safe_guard_cells;
@@ -1326,7 +1326,7 @@ private:
     /**
      * \brief Perform one PIC iteration, with the multiple J deposition per time step
      */
-    void OneStep_multiJ (amrex::Real cur_time);
+    void OneStep_psatd_JRhom (amrex::Real cur_time);
 
     void RestrictCurrentFromFineToCoarsePatch (
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
