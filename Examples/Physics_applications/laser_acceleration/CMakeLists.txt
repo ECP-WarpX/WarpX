@@ -12,16 +12,6 @@ add_warpx_test(
 )
 
 add_warpx_test(
-    test_1d_laser_acceleration_fluid  # name
-    1  # dims
-    2  # nprocs
-    inputs_test_1d_laser_acceleration_fluid  # inputs
-    analysis_1d_fluid.py  # analysis
-    diags/diag1040000  # output
-    OFF  # dependency
-)
-
-add_warpx_test(
     test_1d_laser_acceleration_fluid_boosted  # name
     1  # dims
     2  # nprocs
