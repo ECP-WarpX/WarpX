@@ -64,55 +64,10 @@ For hydrogen, WarpX offers the modified empirical ADK extension to the Over-the-
 
 The parameters :math:`a_1` through :math:`a_3` are independent of :math:`E` and can be found in the same reference. :math:`E_\mathrm{b}` is the classical Barrier Suppresion Ionization (BSI) field strength :math:`E_\mathrm{b} = U_\mathrm{ion}^2 / (4 Z)` given here in atomic units (AU). For a detailed description of conversion between unit systems consider the book by :cite:t:`mpion-Mulser2010`.
 
-Run Test
---------
+Testing
+^^^^^^^
 
-For `MPI-parallel <https://www.mpi-forum.org>`__ runs, prefix these lines with ``mpiexec -n 4 ...`` or ``srun -n 4 ...``, depending on the system.
-
-.. tab-set::
-
-   .. tab-item:: lab frame
-
-        This example can be run **either** as:
-
-        * **Python** script: ``python3 inputs_test_2d_ionization_picmi.py`` or
-        * WarpX **executable** using an input file: ``warpx.2d inputs_test_2d_ionization_lab max_step=1600``
-
-        .. tab-set::
-
-            .. tab-item:: Python: Script
-
-                .. literalinclude:: ../../../../Examples/Tests/ionization/inputs_test_2d_ionization_picmi.py
-                :language: python3
-                :caption: You can copy this file from ``Examples/Tests/ionization/inputs_test_2d_ionization_picmi.py``.
-
-            .. tab-item:: Executable: Input File
-
-                .. literalinclude:: ../../../../Examples/Tests/ionization/inputs_test_2d_ionization_lab
-                :language: ini
-                :caption: You can copy this file from ``Examples/Tests/ionization/inputs_test_2d_ionization_lab``.
-
-   .. tab-item:: boosted frame
-
-        This example can be run as:
-
-        * WarpX **executable** using an input file: ``warpx.2d inputs_test_2d_ionization_boost max_step=420``
-
-        .. literalinclude:: ../../../../Examples/Tests/ionization/inputs_test_2d_ionization_boost
-        :language: ini
-        :caption: You can copy this file from ``Examples/Tests/ionization/inputs_test_2d_ionization_boost``.
-
-Analyze
--------
-
-.. dropdown:: Script ``analysis.py``
-
-   .. literalinclude:: ../../../../Examples/Tests/ionization/analysis.py
-      :language: python3
-      :caption: You can copy this file from ``Examples/Tests/ionization/analysis.py``.
-
-.. figure:: https://gist.githubusercontent.com/johvandewetering/48d092c003915f1d1689b507caa2865b/raw/29f5d12ed77831047ca12f456a07dbf3b99770d5/image_ionization.png
-   :alt: Electric field of the laser pulse with (top) ions with ionization levels and (bottom) ionized electrons.
+* `Testing the field ionization module <../../../../Examples/Tests/field_ionization/README.rst>`_.
 
 .. bibliography::
     :keyprefix: mpion-
