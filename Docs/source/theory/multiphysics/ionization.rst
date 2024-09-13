@@ -42,7 +42,7 @@ Here, :math:`\vec{u} = (u_x, u_y, u_z)` is the momentum normalized to the partic
 .. math::
 
     \begin{aligned}
-        P &= 1 - \mathrm{e}^{-W\mathrm{d}\tau}
+        P &= 1 - \mathrm{e}^{-W\mathrm{d}\tau/\gamma}
         \\
         W &= \omega_\mathrm{a} \mathcal{C}^2_{n^* l^*} \frac{U_\mathrm{ion}}{2 U_H}
                 \left[ 2 \frac{E_\mathrm{a}}{E_\mathrm{dc}} \left( \frac{U_\mathrm{ion}}{U_\mathrm{H}} \right)^{3/2} \right]^{2n^*-1}
@@ -51,7 +51,7 @@ Here, :math:`\vec{u} = (u_x, u_y, u_z)` is the momentum normalized to the partic
         \mathcal{C}^2_{n^* l^*} &= \frac{2^{2n^*}}{n^* \Gamma(n^* + l^* + 1) \Gamma(n^* - l^*)}
     \end{aligned}
 
-The quantities are: :math:`\omega_\mathrm{a}`, the atomic unit frequency, :math:`U_\mathrm{ion}`, the ionization potential, :math:`U_\mathrm{H}`, Hydrogen ground state ionization potential, :math:`E_\mathrm{a}`, the atomic unit electric field, :math:`n^* = Z \sqrt{U_\mathrm{H}/U_\mathrm{ion}}`, the effective principal quantum number (*Attention!* :math:`Z` is the ionization state *after ionization*.) , :math:`l^* = n_0^* - 1`, the effective orbital quantum number.
+where :math:`\mathrm{d}\tau` is the simulation timestep, which is divided by the particle :math:`\gamma` to account for time dilation. The quantities are: :math:`\omega_\mathrm{a}`, the atomic unit frequency, :math:`U_\mathrm{ion}`, the ionization potential, :math:`U_\mathrm{H}`, Hydrogen ground state ionization potential, :math:`E_\mathrm{a}`, the atomic unit electric field, :math:`n^* = Z \sqrt{U_\mathrm{H}/U_\mathrm{ion}}`, the effective principal quantum number (*Attention!* :math:`Z` is the ionization state *after ionization*.) , :math:`l^* = n_0^* - 1`, the effective orbital quantum number.
 
 Empirical Extension to Over-the-Barrier Regime for Hydrogen
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
