@@ -84,7 +84,7 @@ For easier debugging, it can be convenient to run the tests on your local machin
 * Sometimes two or more tests share a large number of input parameters and differ by a small set of options.
   Such tests typically also share a base string in their names.
   For example, you can find three different tests named ``test_3d_langmuir_multi``, ``test_3d_langmuir_multi_nodal`` and ``test_3d_langmuir_multi_picmi``.
-  In such a case, if you wish to run the test ``test_3d_langmuir_multi`` only, this can be done again with the ``-R`` regular expression filter via
+  In such a case, if you wish to run the test ``test_3d_langmuir_multi`` only, this can be done again with the ``-R`` regular `expression filter <https://regex101.com>`__ via
 
   .. code-block:: sh
 
