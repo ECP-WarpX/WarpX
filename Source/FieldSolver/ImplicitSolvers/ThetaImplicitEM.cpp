@@ -77,6 +77,7 @@ void ThetaImplicitEM::PrintParameters () const
 void ThetaImplicitEM::OneStep ( const amrex::Real  a_time,
                                 const amrex::Real  a_dt,
                                 const int          a_step )
+// DocDiagram::[Level 1][ThetaImplicit_OneStep]
 {
     amrex::ignore_unused(a_step);
 
@@ -84,6 +85,7 @@ void ThetaImplicitEM::OneStep ( const amrex::Real  a_time,
     // Particles have up^{n} and xp^{n}.
 
     // Save up and xp at the start of the time step
+    // DocDiagram::[Level 2][ThetaImplicit_OneStep][SaveParticlesAtImplicitStepStart]
     m_WarpX->SaveParticlesAtImplicitStepStart ( );
 
     // Save Eg at the start of the time step
@@ -102,19 +104,24 @@ void ThetaImplicitEM::OneStep ( const amrex::Real  a_time,
 
     // Solve nonlinear system for Eg at t_{n+theta}
     // Particles will be advanced to t_{n+1/2}
+    // DocDiagram::[Level 1][ThetaImplicit_OneStep][Solve Eg t_n+theta]
     m_E.Copy(m_Eold); // initial guess for Eg^{n+theta}
     m_nlsolver->Solve( m_E, m_Eold, theta_time, a_dt );
 
     // Update WarpX owned Efield_fp and Bfield_fp to t_{n+theta}
+    // DocDiagram::[Level 1][ThetaImplicit_OneStep][UpdateWarpXFields]
     UpdateWarpXFields( m_E, theta_time, a_dt );
 
     // Advance particles from time n+1/2 to time n+1
+    // DocDiagram::[Level 1][ThetaImplicit_OneStep][FinishImplicitParticleUpdate]
     m_WarpX->FinishImplicitParticleUpdate();
 
     // Advance Eg and Bg from time n+theta to time n+1
+    // DocDiagram::[Level 1][ThetaImplicit_OneStep][FinishFieldUpdate]
     const amrex::Real new_time = a_time + a_dt;
     FinishFieldUpdate( new_time );
 
+// DocDiagram::[Level 1][ThetaImplicit_OneStep][Return]
 }
 
 void ThetaImplicitEM::ComputeRHS ( WarpXSolverVec&  a_RHS,
