@@ -67,7 +67,7 @@ The parameters :math:`a_1` through :math:`a_3` are independent of :math:`E` and 
 Testing
 ^^^^^^^
 
-* `Testing the field ionization module <../../../../Examples/Tests/field_ionization/README.rst>`_.
+* `Testing the field ionization module <../../../../en/latest/usage/examples/field_ionization/README.html>`_.
 
 .. bibliography::
     :keyprefix: mpion-
