@@ -37,10 +37,6 @@ public:
     ElectrostaticSolver& operator=(ElectrostaticSolver&&) = delete;
 
     void ReadParameters ();
-    virtual void AllocateMFs () {}
-
-    void ClearLevel ( [[maybe_unused]] int lev ) {}
-    void AllocateLevelMFs () {}
 
     virtual void InitData () {}
 

@@ -20,11 +20,9 @@ public:
 
     RelativisticExplicitES (int nlevs_max) : ElectrostaticSolver (nlevs_max) {
         ReadParameters();
-        AllocateMFs();
     }
 
     void InitData () override;
-    void AllocateMFs () override {}
 
     /**
      * \brief Computes electrostatic fields for species

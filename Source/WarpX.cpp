@@ -2088,8 +2088,6 @@ WarpX::ClearLevel (int lev)
         current_buf[lev][i].reset();
     }
 
-    m_electrostatic_solver->ClearLevel(lev);
-
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
     {
         m_hybrid_pic_model->ClearLevel(lev);
@@ -2354,9 +2352,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         AllocInitMultiFab(vector_potential_grad_buf_b_stag[lev][2], amrex::convert(ba, Bz_nodal_flag),
             dm, ncomps, ngEB, lev, "vector_potential_grad_buf_b_stag[z]", 0.0_rt);
     }
-
-    // Allocate extra multifabs needed by the electrostatic algorithm.
-    m_electrostatic_solver->AllocateLevelMFs();
 
     // Allocate extra multifabs needed by the kinetic-fluid hybrid algorithm.
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
