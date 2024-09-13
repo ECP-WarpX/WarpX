@@ -548,7 +548,7 @@ namespace ablastr::fields
         name = mf_name(name, level);
 
         if (m_mf_register.count(name) != 1) {
-            throw std::runtime_error("MultiFabRegister::remove name does not exist in register: " + name);
+            throw std::runtime_error("MultiFabRegister::erase name does not exist in register: " + name);
         }
         m_mf_register.erase(name);
     }
@@ -563,7 +563,7 @@ namespace ablastr::fields
         name = mf_name(name, dir, level);
 
         if (m_mf_register.count(name) != 1) {
-            throw std::runtime_error("MultiFabRegister::remove name does not exist in register: " + name);
+            throw std::runtime_error("MultiFabRegister::erase name does not exist in register: " + name);
         }
         m_mf_register.erase(name);
     }
