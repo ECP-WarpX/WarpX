@@ -48,6 +48,7 @@ void warpx_interp (int j, int k, int l,
     const int rl = (AMREX_SPACEDIM > 2) ? rr[2] : 1;
 
     // Staggering (0: cell-centered; 1: nodal)
+    // Unused dimensions are considered nodal.
     const int sj = arr_stag[0];
     const int sk = (AMREX_SPACEDIM > 1) ? arr_stag[1] : 1;
     const int sl = (AMREX_SPACEDIM > 2) ? arr_stag[2] : 1;
@@ -137,11 +138,13 @@ void warpx_interp (int j, int k, int l,
     const int rl = (AMREX_SPACEDIM > 2) ? rr[2] : 1;
 
     // Staggering of fine array (0: cell-centered; 1: nodal)
+    // Unused dimensions are considered nodal.
     const int sj_fp = arr_fine_stag[0];
     const int sk_fp = (AMREX_SPACEDIM > 1) ? arr_fine_stag[1] : 1;
     const int sl_fp = (AMREX_SPACEDIM > 2) ? arr_fine_stag[2] : 1;
 
     // Staggering of coarse array (0: cell-centered; 1: nodal)
+    // Unused dimensions are considered nodal.
     const int sj_cp = arr_coarse_stag[0];
     const int sk_cp = (AMREX_SPACEDIM > 1) ? arr_coarse_stag[1] : 1;
     const int sl_cp = (AMREX_SPACEDIM > 2) ? arr_coarse_stag[2] : 1;
@@ -269,6 +272,7 @@ void warpx_interp (int j, int k, int l,
     // - (x,y,z) in 3D
 
     // Staggering of fine array (0: cell-centered; 1: nodal)
+    // Unused dimensions are considered nodal.
     const int sj_fp = arr_fine_stag[0];
     const int sk_fp = (AMREX_SPACEDIM > 1) ? arr_fine_stag[1] : 1;
     const int sl_fp = (AMREX_SPACEDIM > 2) ? arr_fine_stag[2] : 1;
@@ -357,6 +361,7 @@ void warpx_interp (const int j,
     const int shift = (dst_nodal) ? 0 : 1;
 
     // Staggering (s = 0 if cell-centered, s = 1 if nodal)
+    // Unused dimensions are considered nodal.
     const int sj = (dst_nodal) ? src_stag[0] : dst_stag[0];
     const int sk = (AMREX_SPACEDIM > 1) ? ((dst_nodal) ? src_stag[1] : dst_stag[1]) : 1;
     const int sl = (AMREX_SPACEDIM > 2) ? ((dst_nodal) ? src_stag[2] : dst_stag[2]) : 1;
