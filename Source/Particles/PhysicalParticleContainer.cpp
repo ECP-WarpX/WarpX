@@ -2025,14 +2025,9 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 }
 
 void
-PhysicalParticleContainer::Evolve (int lev,
-                                   const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
-                                   const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
-                                   MultiFab& jx, MultiFab& jy, MultiFab& jz,
-                                   MultiFab* cjx, MultiFab* cjy, MultiFab* cjz,
-                                   MultiFab* rho, MultiFab* crho,
-                                   const MultiFab* cEx, const MultiFab* cEy, const MultiFab* cEz,
-                                   const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
+PhysicalParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
+                                   int lev,
+                                   std::string current_fp_string,
                                    Real /*t*/, Real dt, DtType a_dt_type, bool skip_deposition,
                                    PushType push_type)
 {
@@ -2047,7 +2042,18 @@ PhysicalParticleContainer::Evolve (int lev,
     const iMultiFab* current_masks = WarpX::CurrentBufferMasks(lev);
     const iMultiFab* gather_masks = WarpX::GatherBufferMasks(lev);
 
-    const bool has_buffer = cEx || cjx;
+    using ablastr::fields::Direction;
+    const bool has_rho = fields.has("rho_fp", lev);
+    const bool has_cjx = fields.has("current_buf", Direction{0}, lev);
+    const bool has_cEx = fields.has("Efield_cax", Direction{0}, lev);
+    const bool has_buffer = has_cEx || has_cjx;
+
+    amrex::MultiFab & Ex = *fields.get("Efield_aux", Direction{0}, lev);
+    amrex::MultiFab & Ey = *fields.get("Efield_aux", Direction{1}, lev);
+    amrex::MultiFab & Ez = *fields.get("Efield_aux", Direction{2}, lev);
+    amrex::MultiFab & Bx = *fields.get("Bfield_aux", Direction{0}, lev);
+    amrex::MultiFab & By = *fields.get("Bfield_aux", Direction{1}, lev);
+    amrex::MultiFab & Bz = *fields.get("Bfield_aux", Direction{2}, lev);
 
     if (m_do_back_transformed_particles)
     {
@@ -2135,17 +2141,19 @@ PhysicalParticleContainer::Evolve (int lev,
                     pti, lev, current_masks, gather_masks );
             }
 
-            const long np_current = (cjx) ? nfine_current : np;
+            const long np_current = has_cjx ? nfine_current : np;
 
-            if (rho && ! skip_deposition && ! do_not_deposit) {
+            if (has_rho && ! skip_deposition && ! do_not_deposit) {
                 // Deposit charge before particle push, in component 0 of MultiFab rho.
 
                 const int* const AMREX_RESTRICT ion_lev = (do_field_ionization)?
                     pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr():nullptr;
 
+                amrex::MultiFab* rho = fields.get("rho_fp", lev);
                 DepositCharge(pti, wp, ion_lev, rho, 0, 0,
                               np_current, thread_num, lev, lev);
                 if (has_buffer){
+                    amrex::MultiFab* crho = fields.get("rho_buf", lev);
                     DepositCharge(pti, wp, ion_lev, crho, 0, np_current,
                                   np-np_current, thread_num, lev, lev-1);
                 }
@@ -2153,7 +2161,7 @@ PhysicalParticleContainer::Evolve (int lev,
 
             if (! do_not_push)
             {
-                const long np_gather = (cEx) ? nfine_gather : np;
+                const long np_gather = has_cEx ? nfine_gather : np;
 
                 int e_is_nodal = Ex.is_nodal() and Ey.is_nodal() and Ez.is_nodal();
 
@@ -2180,13 +2188,20 @@ PhysicalParticleContainer::Evolve (int lev,
                     const IntVect& ref_ratio = WarpX::RefRatio(lev-1);
                     const Box& cbox = amrex::coarsen(box,ref_ratio);
 
+                    amrex::MultiFab & cEx = *fields.get("Efield_cax", Direction{0}, lev);
+                    amrex::MultiFab & cEy = *fields.get("Efield_cax", Direction{1}, lev);
+                    amrex::MultiFab & cEz = *fields.get("Efield_cax", Direction{2}, lev);
+                    amrex::MultiFab & cBx = *fields.get("Bfield_cax", Direction{0}, lev);
+                    amrex::MultiFab & cBy = *fields.get("Bfield_cax", Direction{1}, lev);
+                    amrex::MultiFab & cBz = *fields.get("Bfield_cax", Direction{2}, lev);
+
                     // Data on the grid
-                    FArrayBox const* cexfab = &(*cEx)[pti];
-                    FArrayBox const* ceyfab = &(*cEy)[pti];
-                    FArrayBox const* cezfab = &(*cEz)[pti];
-                    FArrayBox const* cbxfab = &(*cBx)[pti];
-                    FArrayBox const* cbyfab = &(*cBy)[pti];
-                    FArrayBox const* cbzfab = &(*cBz)[pti];
+                    FArrayBox const* cexfab = &cEx[pti];
+                    FArrayBox const* ceyfab = &cEy[pti];
+                    FArrayBox const* cezfab = &cEz[pti];
+                    FArrayBox const* cbxfab = &cBx[pti];
+                    FArrayBox const* cbyfab = &cBy[pti];
+                    FArrayBox const* cbzfab = &cBz[pti];
 
                     if (WarpX::use_fdtd_nci_corr)
                     {
@@ -2197,23 +2212,23 @@ PhysicalParticleContainer::Evolve (int lev,
                         applyNCIFilter(lev-1, cbox, exeli, eyeli, ezeli, bxeli, byeli, bzeli,
                                        filtered_Ex, filtered_Ey, filtered_Ez,
                                        filtered_Bx, filtered_By, filtered_Bz,
-                                       (*cEx)[pti], (*cEy)[pti], (*cEz)[pti],
-                                       (*cBx)[pti], (*cBy)[pti], (*cBz)[pti],
+                                       cEx[pti], cEy[pti], cEz[pti],
+                                       cBx[pti], cBy[pti], cBz[pti],
                                        cexfab, ceyfab, cezfab, cbxfab, cbyfab, cbzfab);
                     }
 
                     // Field gather and push for particles in gather buffers
-                    e_is_nodal = cEx->is_nodal() and cEy->is_nodal() and cEz->is_nodal();
+                    e_is_nodal = cEx.is_nodal() and cEy.is_nodal() and cEz.is_nodal();
                     if (push_type == PushType::Explicit) {
                         PushPX(pti, cexfab, ceyfab, cezfab,
                                cbxfab, cbyfab, cbzfab,
-                               cEx->nGrowVect(), e_is_nodal,
+                               cEx.nGrowVect(), e_is_nodal,
                                nfine_gather, np-nfine_gather,
                                lev, lev-1, dt, ScaleFields(false), a_dt_type);
                     } else if (push_type == PushType::Implicit) {
                         ImplicitPushXP(pti, cexfab, ceyfab, cezfab,
                                        cbxfab, cbyfab, cbzfab,
-                                       cEx->nGrowVect(), e_is_nodal,
+                                       cEx.nGrowVect(), e_is_nodal,
                                        nfine_gather, np-nfine_gather,
                                        lev, lev-1, dt, ScaleFields(false), a_dt_type);
                     }
@@ -2231,13 +2246,19 @@ PhysicalParticleContainer::Evolve (int lev,
                         pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr():nullptr;
 
                     // Deposit inside domains
-                    DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
+                    amrex::MultiFab * jx = fields.get(current_fp_string, Direction{0}, lev);
+                    amrex::MultiFab * jy = fields.get(current_fp_string, Direction{1}, lev);
+                    amrex::MultiFab * jz = fields.get(current_fp_string, Direction{2}, lev);
+                    DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, jx, jy, jz,
                                    0, np_current, thread_num,
                                    lev, lev, dt, relative_time, push_type);
 
                     if (has_buffer)
                     {
                         // Deposit in buffers
+                        amrex::MultiFab * cjx = fields.get("current_buf", Direction{0}, lev);
+                        amrex::MultiFab * cjy = fields.get("current_buf", Direction{1}, lev);
+                        amrex::MultiFab * cjz = fields.get("current_buf", Direction{2}, lev);
                         DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
                                        np_current, np-np_current, thread_num,
                                        lev, lev-1, dt, relative_time, push_type);
@@ -2245,10 +2266,11 @@ PhysicalParticleContainer::Evolve (int lev,
                 } // end of "if electrostatic_solver_id == ElectrostaticSolverAlgo::None"
             } // end of "if do_not_push"
 
-            if (rho && ! skip_deposition && ! do_not_deposit) {
+            if (has_rho && ! skip_deposition && ! do_not_deposit) {
                 // Deposit charge after particle push, in component 1 of MultiFab rho.
                 // (Skipped for electrostatic solver, as this may lead to out-of-bounds)
                 if (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::None) {
+                    amrex::MultiFab* rho = fields.get("rho_fp", lev);
                     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(rho->nComp() >= 2,
                         "Cannot deposit charge in rho component 1: only component 0 is allocated!");
 
@@ -2258,6 +2280,7 @@ PhysicalParticleContainer::Evolve (int lev,
                     DepositCharge(pti, wp, ion_lev, rho, 1, 0,
                                   np_current, thread_num, lev, lev);
                     if (has_buffer){
+                        amrex::MultiFab* crho = fields.get("rho_buf", lev);
                         DepositCharge(pti, wp, ion_lev, crho, 1, np_current,
                                       np-np_current, thread_num, lev, lev-1);
                     }

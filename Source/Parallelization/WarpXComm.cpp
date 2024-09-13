@@ -995,7 +995,9 @@ void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng, std::optio
             if (m_fields.has("pml_G_fp",lev) && m_fields.has("G_fp",lev)) {
                 pml[lev]->Exchange(m_fields.get("pml_G_fp", lev), m_fields.get("G_fp", lev), patch_type, do_pml_in_domain);
             }
-            pml[lev]->FillBoundary(*m_fields.get("pml_G_fp", lev), patch_type, nodal_sync);
+            if (m_fields.has("pml_G_fp",lev)) {
+                pml[lev]->FillBoundary(*m_fields.get("pml_G_fp", lev), patch_type, nodal_sync);
+            }
         }
 
         if (m_fields.has("G_fp",lev))
@@ -1051,14 +1053,13 @@ WarpX::FillBoundaryAux (int lev, IntVect ng)
 }
 
 void
-WarpX::SyncCurrent (
-    const ablastr::fields::MultiLevelVectorField& J_fp,
-    const ablastr::fields::MultiLevelVectorField& J_cp,
-    const ablastr::fields::MultiLevelVectorField& J_buffer)
+WarpX::SyncCurrent (std::string current_fp_string)
 {
     using ablastr::fields::Direction;
 
     WARPX_PROFILE("WarpX::SyncCurrent()");
+
+    ablastr::fields::MultiLevelVectorField J_fp = m_fields.get_mr_levels_alldirs(current_fp_string, finest_level);
 
     // If warpx.do_current_centering = 1, center currents from nodal grid to staggered grid
     if (do_current_centering)
@@ -1173,6 +1174,7 @@ WarpX::SyncCurrent (
                     }
                 });
                 // Now it's safe to apply filter and sumboundary on J_cp
+                ablastr::fields::MultiLevelVectorField J_cp = m_fields.get_mr_levels_alldirs("current_cp", finest_level);
                 if (use_filter)
                 {
                     ApplyFilterJ(J_cp, lev+1, idim);
@@ -1187,12 +1189,15 @@ WarpX::SyncCurrent (
                 // filtering depends on the level. This is also done before any
                 // same-level communication because it's easier this way to
                 // avoid double counting.
+                ablastr::fields::MultiLevelVectorField J_cp = m_fields.get_mr_levels_alldirs("current_cp", finest_level);
                 J_cp[lev][Direction{idim}]->setVal(0.0);
                 ablastr::coarsen::average::Coarsen(*J_cp[lev][Direction{idim}],
                                                    *J_fp[lev][Direction{idim}],
                                                    refRatio(lev-1));
-                if (J_buffer[lev][Direction{idim}])
+                if (m_fields.has("current_buf", Direction{idim}, lev))
                 {
+                    ablastr::fields::MultiLevelVectorField J_buffer = m_fields.get_mr_levels_alldirs("current_buf", finest_level);
+
                     IntVect const& ng = J_cp[lev][Direction{idim}]->nGrowVect();
                     AMREX_ASSERT(ng.allLE(J_buffer[lev][Direction{idim}]->nGrowVect()));
                     MultiFab::Add(*J_buffer[lev][Direction{idim}], *J_cp[lev][Direction{idim}],
@@ -1218,10 +1223,14 @@ WarpX::SyncCurrent (
 
 void
 WarpX::SyncRho () {
-    SyncRho(
-        m_fields.get_mr_levels("rho_fp", finest_level),
-        m_fields.get_mr_levels("rho_cp", finest_level),
-        m_fields.get_mr_levels("rho_buf", finest_level));
+    ablastr::fields::MultiLevelScalarField rho_fp = m_fields.has("rho_fp", 0) ?
+        m_fields.get_mr_levels("rho_fp", finest_level) : ablastr::fields::MultiLevelScalarField{1};
+    ablastr::fields::MultiLevelScalarField rho_cp = m_fields.has("rho_cp", 0) ?
+        m_fields.get_mr_levels("rho_cp", finest_level) : ablastr::fields::MultiLevelScalarField{1};
+    ablastr::fields::MultiLevelScalarField rho_buf = m_fields.has("rho_buf", 0) ?
+        m_fields.get_mr_levels("rho_buf", finest_level) : ablastr::fields::MultiLevelScalarField{1};
+
+    SyncRho(rho_fp, rho_cp, rho_buf);
 }
 
 void

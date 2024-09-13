@@ -558,14 +558,9 @@ LaserParticleContainer::InitData (int lev)
 }
 
 void
-LaserParticleContainer::Evolve (int lev,
-                                const MultiFab&, const MultiFab&, const MultiFab&,
-                                const MultiFab&, const MultiFab&, const MultiFab&,
-                                MultiFab& jx, MultiFab& jy, MultiFab& jz,
-                                MultiFab* cjx, MultiFab* cjy, MultiFab* cjz,
-                                MultiFab* rho, MultiFab* crho,
-                                const MultiFab*, const MultiFab*, const MultiFab*,
-                                const MultiFab*, const MultiFab*, const MultiFab*,
+LaserParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
+                                int lev,
+                                std::string current_fp_string,
                                 Real t, Real dt, DtType /*a_dt_type*/, bool skip_deposition, PushType push_type)
 {
     WARPX_PROFILE("LaserParticleContainer::Evolve()");
@@ -588,7 +583,8 @@ LaserParticleContainer::Evolve (int lev,
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
-    const bool has_buffer = cjx;
+    const bool has_rho = fields.has("rho_fp", lev);
+    const bool has_buffer = fields.has("current_buf", lev);
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -628,11 +624,13 @@ LaserParticleContainer::Evolve (int lev,
                 np_current = 0;
             }
 
-            if (rho && ! skip_deposition && ! do_not_deposit) {
+            if (has_rho && ! skip_deposition && ! do_not_deposit) {
                 int* AMREX_RESTRICT ion_lev = nullptr;
+                amrex::MultiFab* rho = fields.get("rho_fp", lev);
                 DepositCharge(pti, wp, ion_lev, rho, 0, 0,
                               np_current, thread_num, lev, lev);
                 if (has_buffer) {
+                    amrex::MultiFab* crho = fields.get("rho_buf", lev);
                     DepositCharge(pti, wp, ion_lev, crho, 0, np_current,
                                   np-np_current, thread_num, lev, lev-1);
                 }
@@ -660,6 +658,7 @@ LaserParticleContainer::Evolve (int lev,
             WARPX_PROFILE_VAR_STOP(blp_pp);
 
             // Current Deposition
+            using ablastr::fields::Direction;
             if (!skip_deposition)
             {
                 // Deposit at t_{n+1/2}
@@ -667,13 +666,19 @@ LaserParticleContainer::Evolve (int lev,
 
                 int* ion_lev = nullptr;
                 // Deposit inside domains
-                DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
+                amrex::MultiFab * jx = fields.get(current_fp_string, Direction{0}, lev);
+                amrex::MultiFab * jy = fields.get(current_fp_string, Direction{1}, lev);
+                amrex::MultiFab * jz = fields.get(current_fp_string, Direction{2}, lev);
+                DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, jx, jy, jz,
                                0, np_current, thread_num,
                                lev, lev, dt, relative_time, push_type);
 
                 if (has_buffer)
                 {
                     // Deposit in buffers
+                    amrex::MultiFab * cjx = fields.get("current_buf", Direction{0}, lev);
+                    amrex::MultiFab * cjy = fields.get("current_buf", Direction{1}, lev);
+                    amrex::MultiFab * cjz = fields.get("current_buf", Direction{2}, lev);
                     DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
                                    np_current, np-np_current, thread_num,
                                    lev, lev-1, dt, relative_time, push_type);
@@ -681,11 +686,13 @@ LaserParticleContainer::Evolve (int lev,
             }
 
 
-            if (rho && ! skip_deposition && ! do_not_deposit) {
+            if (has_rho && ! skip_deposition && ! do_not_deposit) {
                 int* AMREX_RESTRICT ion_lev = nullptr;
+                amrex::MultiFab* rho = fields.get("rho_fp", lev);
                 DepositCharge(pti, wp, ion_lev, rho, 1, 0,
                               np_current, thread_num, lev, lev);
                 if (has_buffer) {
+                    amrex::MultiFab* crho = fields.get("rho_buf", lev);
                     DepositCharge(pti, wp, ion_lev, crho, 1, np_current,
                                   np-np_current, thread_num, lev, lev-1);
                 }

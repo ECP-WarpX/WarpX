@@ -790,14 +790,9 @@ public:
      * Then, for each MR level, including level 0, apply filter and sum guard
      * cells across levels.
      *
-     * \param[in,out] J_fp reference to fine-patch current \c MultiFab (all MR levels)
-     * \param[in,out] J_cp reference to coarse-patch current \c MultiFab (all MR levels)
-     * \param[in,out] J_buffer reference to buffer current \c MultiFab (all MR levels)
+     * \param[in] current_fp_string the coarse of fine patch to use for current
      */
-    void SyncCurrent (
-        const ablastr::fields::MultiLevelVectorField& J_fp,
-        const ablastr::fields::MultiLevelVectorField& J_cp,
-        const ablastr::fields::MultiLevelVectorField& J_buffer);
+    void SyncCurrent (std::string current_fp_string);
 
     void SyncRho ();
 

@@ -458,30 +458,26 @@ MultiParticleContainer::InitMultiPhysicsModules ()
 }
 
 void
-MultiParticleContainer::Evolve (int lev,
-                                const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
-                                const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
-                                MultiFab& jx, MultiFab& jy, MultiFab& jz,
-                                MultiFab* cjx,  MultiFab* cjy, MultiFab* cjz,
-                                MultiFab* rho, MultiFab* crho,
-                                const MultiFab* cEx, const MultiFab* cEy, const MultiFab* cEz,
-                                const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
+MultiParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
+                                int lev,
+                                std::string current_fp_string,
                                 Real t, Real dt, DtType a_dt_type, bool skip_deposition,
                                 PushType push_type)
 {
     if (! skip_deposition) {
-        jx.setVal(0.0);
-        jy.setVal(0.0);
-        jz.setVal(0.0);
-        if (cjx) { cjx->setVal(0.0); }
-        if (cjy) { cjy->setVal(0.0); }
-        if (cjz) { cjz->setVal(0.0); }
-        if (rho) { rho->setVal(0.0); }
-        if (crho) { crho->setVal(0.0); }
+        using ablastr::fields::Direction;
+
+        fields.get(current_fp_string, Direction{0}, lev)->setVal(0.0);
+        fields.get(current_fp_string, Direction{1}, lev)->setVal(0.0);
+        fields.get(current_fp_string, Direction{2}, lev)->setVal(0.0);
+        if (fields.has("current_buf", Direction{0}, lev)) { fields.get("current_buf", Direction{0}, lev)->setVal(0.0); }
+        if (fields.has("current_buf", Direction{1}, lev)) { fields.get("current_buf", Direction{1}, lev)->setVal(0.0); }
+        if (fields.has("current_buf", Direction{1}, lev)) { fields.get("current_buf", Direction{2}, lev)->setVal(0.0); }
+        if (fields.has("rho_fp", lev)) { fields.get("rho_fp", lev)->setVal(0.0); }
+        if (fields.has("rho_buf", lev)) { fields.get("rho_buf", lev)->setVal(0.0); }
     }
     for (auto& pc : allcontainers) {
-        pc->Evolve(lev, Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, cjx, cjy, cjz,
-                   rho, crho, cEx, cEy, cEz, cBx, cBy, cBz, t, dt, a_dt_type, skip_deposition, push_type);
+        pc->Evolve(fields, lev, current_fp_string, t, dt, a_dt_type, skip_deposition, push_type);
     }
 }
 

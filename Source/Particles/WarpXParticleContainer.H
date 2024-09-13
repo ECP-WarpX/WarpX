@@ -147,14 +147,9 @@ public:
      * particles for a time dt (typically one timestep). It is a pure virtual
      * function for flexibility.
      */
-    virtual void Evolve (int lev,
-                         const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
-                         const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz,
-                         amrex::MultiFab& jx, amrex::MultiFab& jy, amrex::MultiFab& jz,
-                         amrex::MultiFab* cjx, amrex::MultiFab* cjy, amrex::MultiFab* cjz,
-                         amrex::MultiFab* rho, amrex::MultiFab* crho,
-                         const amrex::MultiFab* cEx, const amrex::MultiFab* cEy, const amrex::MultiFab* cEz,
-                         const amrex::MultiFab* cBx, const amrex::MultiFab* cBy, const amrex::MultiFab* cBz,
+    virtual void Evolve (ablastr::fields::MultiFabRegister& fields,
+                         int lev,
+                         std::string current_fp_string,
                          amrex::Real t, amrex::Real dt, DtType a_dt_type=DtType::Full, bool skip_deposition=false,
                          PushType push_type=PushType::Explicit) = 0;
 

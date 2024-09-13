@@ -571,9 +571,7 @@ void WarpX::SyncCurrentAndRho ()
                 ? "current_fp_vay" : "current_fp";
             // TODO Replace current_cp with current_cp_vay once Vay deposition is implemented with MR
 
-            SyncCurrent(m_fields.get_mr_levels_alldirs(current_fp_string, finest_level),
-                        m_fields.get_mr_levels_alldirs("current_cp", finest_level),
-                        m_fields.get_mr_levels_alldirs("current_buf", finest_level) );
+            SyncCurrent(current_fp_string);
             SyncRho();
 
         }
@@ -585,9 +583,7 @@ void WarpX::SyncCurrentAndRho ()
             if (!current_correction &&
                 current_deposition_algo != CurrentDepositionAlgo::Vay)
             {
-                SyncCurrent(m_fields.get_mr_levels_alldirs("current_fp", finest_level),
-                            m_fields.get_mr_levels_alldirs("current_cp", finest_level),
-                            m_fields.get_mr_levels_alldirs("current_buf", finest_level) );
+                SyncCurrent("current_fp");
                 SyncRho();
             }
 
@@ -603,9 +599,7 @@ void WarpX::SyncCurrentAndRho ()
     }
     else // FDTD
     {
-        SyncCurrent(m_fields.get_mr_levels_alldirs("current_fp", finest_level),
-                    m_fields.get_mr_levels_alldirs("current_cp", finest_level),
-                    m_fields.get_mr_levels_alldirs("current_buf", finest_level) );
+        SyncCurrent("current_fp");
         SyncRho();
     }
 
@@ -692,10 +686,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         // namely 'current_fp_nodal': SyncCurrent stores the result of its centering
         // into 'current_fp' and then performs both filtering, if used, and exchange
         // of guard cells.
-        SyncCurrent(
-            m_fields.get_mr_levels_alldirs( "current_fp", finest_level),
-            m_fields.get_mr_levels_alldirs( "current_cp", finest_level),
-            m_fields.get_mr_levels_alldirs( "current_buf", finest_level) );
+        SyncCurrent("current_fp");
         // Forward FFT of J
         PSATDForwardTransformJ(
             m_fields.get_mr_levels_alldirs( "current_fp", finest_level),
@@ -731,10 +722,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         // namely 'current_fp_nodal': SyncCurrent stores the result of its centering
         // into 'current_fp' and then performs both filtering, if used, and exchange
         // of guard cells.
-        SyncCurrent(
-            m_fields.get_mr_levels_alldirs( "current_fp", finest_level),
-            m_fields.get_mr_levels_alldirs( "current_cp", finest_level),
-            m_fields.get_mr_levels_alldirs( "current_buf", finest_level) );
+        SyncCurrent("current_fp");
         // Forward FFT of J
         PSATDForwardTransformJ(
             m_fields.get_mr_levels_alldirs( "current_fp", finest_level),
@@ -1117,28 +1105,16 @@ WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type,
         current_fp_string = "current_fp";
     }
 
-    mypc->Evolve(lev,
-                 *m_fields.get("Efield_aux", Direction{0}, lev),
-                 *m_fields.get("Efield_aux", Direction{1}, lev),
-                 *m_fields.get("Efield_aux", Direction{2}, lev),
-                 *m_fields.get("Bfield_aux", Direction{0}, lev),
-                 *m_fields.get("Bfield_aux", Direction{1}, lev),
-                 *m_fields.get("Bfield_aux", Direction{2}, lev),
-                 *m_fields.get(current_fp_string, Direction{0}, lev),
-                 *m_fields.get(current_fp_string, Direction{1}, lev),
-                 *m_fields.get(current_fp_string, Direction{2}, lev),
-                 m_fields.get("current_buf", Direction{0}, lev),
-                 m_fields.get("current_buf", Direction{1}, lev),
-                 m_fields.get("current_buf", Direction{2}, lev),
-                 m_fields.get("rho_fp",lev),
-                 m_fields.get("rho_buf", lev),
-                 m_fields.get("Efield_cax", Direction{0}, lev),
-                 m_fields.get("Efield_cax", Direction{1}, lev),
-                 m_fields.get("Efield_cax", Direction{2}, lev),
-                 m_fields.get("Bfield_cax", Direction{0}, lev),
-                 m_fields.get("Bfield_cax", Direction{1}, lev),
-                 m_fields.get("Bfield_cax", Direction{2}, lev),
-                 cur_time, dt[lev], a_dt_type, skip_current, push_type);
+    mypc->Evolve(
+        m_fields,
+        lev,
+        current_fp_string,
+        cur_time,
+        dt[lev],
+        a_dt_type,
+        skip_current,
+        push_type
+    );
     if (! skip_current) {
 #ifdef WARPX_DIM_RZ
         // This is called after all particles have deposited their current and charge.

@@ -52,16 +52,12 @@ class FiniteDifferenceSolver
             std::array<amrex::Real,3> cell_size,
             ablastr::utils::enums::GridType grid_type );
 
-        void EvolveB ( ablastr::fields::VectorField const& Bfield,
-                       ablastr::fields::VectorField const& Efield,
-                       amrex::MultiFab const * Gfield,
-                       ablastr::fields::VectorField const& face_areas,
-                       ablastr::fields::VectorField const& area_mod,
-                       ablastr::fields::VectorField const& ECTRhofield,
-                       ablastr::fields::VectorField const& Venl,
+        void EvolveB ( ablastr::fields::MultiFabRegister& fields,
+                       int lev,
+                       PatchType patch_type,
                        std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_cell,
                        std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
-                       int lev, amrex::Real dt );
+                       amrex::Real dt );
 
         void EvolveE ( ablastr::fields::VectorField const& Efield,
                        ablastr::fields::VectorField const& Bfield,

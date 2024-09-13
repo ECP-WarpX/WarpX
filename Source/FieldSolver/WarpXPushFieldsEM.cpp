@@ -743,7 +743,7 @@ WarpX::PushPSATD ()
             PSATDBackwardTransformJ(current_fp, current_cp);
 
             // Synchronize J and rho
-            SyncCurrent(current_fp, current_cp, current_buf);
+            SyncCurrent("current_fp");
             SyncRho();
         }
         else if (current_deposition_algo == CurrentDepositionAlgo::Vay)
@@ -855,23 +855,15 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
 {
     // Evolve B field in regular cells
     if (patch_type == PatchType::fine) {
-        m_fdtd_solver_fp[lev]->EvolveB( m_fields.get_alldirs("Bfield_fp",lev),
-                                        m_fields.get_alldirs("Efield_fp",lev),
-                                        m_fields.get("G_fp", lev),
-                                        m_fields.get_alldirs("face_areas", lev),
-                                        m_fields.get_alldirs("area_mod", lev),
-                                        m_fields.get_alldirs("ECTRhofield", lev),
-                                        m_fields.get_alldirs("Venl", lev),
-                                        m_flag_info_face[lev], m_borrowing[lev], lev, a_dt );
+        m_fdtd_solver_fp[lev]->EvolveB( m_fields,
+                                        lev,
+                                        patch_type,
+                                        m_flag_info_face[lev], m_borrowing[lev], a_dt );
     } else {
-        m_fdtd_solver_cp[lev]->EvolveB( m_fields.get_alldirs("Bfield_cp",lev),
-                                        m_fields.get_alldirs("Efield_cp",lev),
-                                        m_fields.get("G_fp", lev),
-                                        m_fields.get_alldirs("face_areas", lev),
-                                        m_fields.get_alldirs("area_mod", lev),
-                                        m_fields.get_alldirs("ECTRhofield", lev),
-                                        m_fields.get_alldirs("Venl", lev),
-                                        m_flag_info_face[lev], m_borrowing[lev], lev, a_dt );
+        m_fdtd_solver_cp[lev]->EvolveB( m_fields,
+                                        lev,
+                                        patch_type,
+                                        m_flag_info_face[lev], m_borrowing[lev], a_dt );
     }
 
     // Evolve B field in PML cells
