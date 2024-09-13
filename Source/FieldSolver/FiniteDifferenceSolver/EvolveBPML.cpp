@@ -52,7 +52,7 @@ void FiniteDifferenceSolver::EvolveBPML (
     // Select algorithm (The choice of algorithm is a runtime option,
     // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
-    amrex::ignore_unused(fields, dt, dive_cleaning);
+    amrex::ignore_unused(fields, patch_type, level, dt, dive_cleaning);
     WARPX_ABORT_WITH_MESSAGE(
         "PML are not implemented in cylindrical geometry.");
 #else
