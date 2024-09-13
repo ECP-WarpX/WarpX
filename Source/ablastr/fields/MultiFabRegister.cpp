@@ -301,7 +301,7 @@ namespace ablastr::fields
             }
 
             if (mf_owner.m_level == level && mf_owner.is_alias()) {
-                amrex::MultiFab & mf = mf_owner.m_mf;
+                amrex::MultiFab & mf = m_mf_register[mf_owner.m_owner].m_mf;
                 amrex::MultiFab new_mf(mf, amrex::make_alias, 0, mf.nComp());
 
                 // no copy via Redistribute: the owner was already redistributed
