@@ -564,9 +564,6 @@ Diagnostics::ComputeAndPack ()
 
     auto & warpx = WarpX::GetInstance();
 
-    // We sum up fields for later averaging and output when we are inside the averaging period
-    //bool do_sum_now = cur_step >= time_ave
-
     // compute the necessary fields and store result in m_mf_output.
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
         for(int lev=0; lev<nlev_output; lev++){
@@ -577,15 +574,20 @@ Diagnostics::ComputeAndPack ()
                 // a diagnostics and writes in one or more components of the output
                 // multifab m_mf_output[lev].
                 m_all_field_functors[lev][icomp]->operator()(m_mf_output[i_buffer][lev], icomp_dst, i_buffer);
-                //if (do_sum_now)
-                //// update the index of the next component to fill
-                //int scalar_a = 1;
-                // call amrex sax operation to do the following
-                //m_sum_mf_output[i_buffer][lev] += scalar_a * m_mf_output[i_buffer][lev]
                 icomp_dst += m_all_field_functors[lev][icomp]->nComp();
             }
             // Check that the proper number of components of mf_avg were updated.
             AMREX_ALWAYS_ASSERT( icomp_dst == m_varnames.size() );
+
+            if (m_do_timeaverage) {
+                // update the index of the next component to fill
+                amrex::Real real_a = 1.0;
+                // call amrex sax operation to do the following
+                amrex::MultiFab::Saxpy(
+                        m_sum_mf_output[i_buffer][lev], real_a, m_mf_output[i_buffer][lev], 0, 0, m_mf_output[i_buffer][lev].nComp(), m_mf_output[i_buffer][lev].nGrowVect());
+            }
+
+            m_sum_mf_output[i_buffer][lev] += scalar_a * m_mf_output[i_buffer][lev]
 
             // needed for contour plots of rho, i.e. ascent/sensei
             if (m_format == "sensei" || m_format == "ascent") {
