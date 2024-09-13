@@ -76,8 +76,7 @@ inline amrex::Real getMaxNormRho (
     }
     amrex::ParallelDescriptor::ReduceRealMax(max_norm_rho);
 
-    const bool always_use_bnorm = (max_norm_rho > 0);
-    if (!always_use_bnorm) {
+    if (max_norm_rho == 0) {
         if (absolute_tolerance == 0.0) { absolute_tolerance = amrex::Real(1e-6); }
         ablastr::warn_manager::WMRecordWarning(
                 "ElectrostaticSolver",
