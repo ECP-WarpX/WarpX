@@ -104,8 +104,8 @@ inline amrex::Real getMaxNormRho (
  * \param[in] ng Number of ghost cells (1 if collocated, 0 otherwise)
  */
 inline void interpolatePhiBetweenLevels (
-    amrex::MultiFab* const phi_lev,
-    amrex::MultiFab* const phi_lev_plus_one,
+    amrex::MultiFab const* phi_lev,
+    amrex::MultiFab* phi_lev_plus_one,
     amrex::Geometry const & geom_lev,
     bool do_single_precision_comms,
     const amrex::IntVect& refratio,
