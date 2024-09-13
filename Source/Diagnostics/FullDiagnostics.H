@@ -11,7 +11,9 @@
 class FullDiagnostics final : public Diagnostics
 {
 public:
-    FullDiagnostics (int i, const std::string& name);
+    FullDiagnostics (int i, const std::string& name, DiagTypes diag_type);
+//    bool m_do_timeaverage = false;
+//    enum TimeAverageType {None, Static, Dynamic};
 private:
     /** Read user-requested parameters for full diagnostics */
     void ReadParameters ();
