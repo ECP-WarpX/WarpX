@@ -45,9 +45,6 @@ public:
                            const amrex::IntVect& jx_nodal_flag, const amrex::IntVect& jy_nodal_flag,
                            const amrex::IntVect& jz_nodal_flag, const amrex::IntVect& rho_nodal_flag);
 
-    /** Helper function to clear values from hybrid-PIC specific multifabs. */
-    void ClearLevel (ablastr::fields::MultiFabRegister & fields, int lev);
-
     void InitData ();
 
     /**

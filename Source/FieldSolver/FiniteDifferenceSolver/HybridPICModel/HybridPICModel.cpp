@@ -119,19 +119,6 @@ void HybridPICModel::AllocateLevelMFs (ablastr::fields::MultiFabRegister & field
 #endif
 }
 
-void HybridPICModel::ClearLevel (ablastr::fields::MultiFabRegister & fields, int lev)
-{
-    using ablastr::fields::Direction;
-
-    fields.erase("hybrid_electron_pressure_fp", lev);
-    fields.erase("hybrid_rho_fp_temp", lev);
-    for (int i = 0; i < 3; ++i) {
-        fields.erase("hybrid_current_fp_temp", Direction{i}, lev);
-        fields.erase("hybrid_current_fp_ampere", Direction{i}, lev);
-        fields.erase("hybrid_current_fp_external", Direction{i}, lev);
-    }
-}
-
 void HybridPICModel::InitData ()
 {
     m_resistivity_parser = std::make_unique<amrex::Parser>(

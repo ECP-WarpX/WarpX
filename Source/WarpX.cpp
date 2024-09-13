@@ -2033,11 +2033,6 @@ WarpX::ClearLevel (int lev)
 {
     m_fields.clear_level(lev);
 
-    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
-    {
-        m_hybrid_pic_model->ClearLevel(m_fields, lev);
-    }
-
     for (int i = 0; i < 3; ++i) {
         Efield_dotMask [lev][i].reset();
         Bfield_dotMask [lev][i].reset();
