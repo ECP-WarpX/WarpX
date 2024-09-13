@@ -1009,13 +1009,13 @@ WarpX::EvolveF (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
     if (do_pml && pml[lev]->ok()) {
         if (patch_type == PatchType::fine) {
             m_fdtd_solver_fp[lev]->EvolveFPML(
-                m_fields.get("F_fp", lev),
-                m_fields.get_alldirs("Efield_fp", lev),
+                m_fields.get("pml_F_fp", lev),
+                m_fields.get_alldirs("pml_E_fp", lev),
                 a_dt );
         } else {
             m_fdtd_solver_cp[lev]->EvolveFPML(
-                m_fields.get("F_cp", lev),
-                m_fields.get_alldirs("Efield_cp", lev),
+                m_fields.get("pml_F_cp", lev),
+                m_fields.get_alldirs("pml_E_cp", lev),
                 a_dt );
         }
     }
