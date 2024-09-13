@@ -1004,9 +1004,6 @@ public:
      */
     [[nodiscard]] amrex::IntVect get_numprocs() const {return numprocs;}
 
-    /** Enable embedded boundaries */
-    bool m_eb_enabled = false;
-
     /** Electrostatic solve call */
     void ComputeSpaceChargeField (bool reset_fields);
 
