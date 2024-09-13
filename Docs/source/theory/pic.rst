@@ -511,7 +511,7 @@ Here, :math:`\mathbf{a_J}, \mathbf{b_J}, \mathbf{c_J}, a_{\rho}, b_{\rho}, c_{\r
 .. figure::
    https://gist.githubusercontent.com/oshapoval/88a73cada764364ad4ffce13563cedf1/raw/ebc249f8e875a952c65a5319fd523821baccfd5a/j_rho_table.png
    :alt: [fig:j_rho_table] Polynomial coefficients based on the time dependency of the current and charge densities :math:`{\mathbf{\tilde{J}}}(t)` and :math:`\rho(t)` over one time subinterval, :math:`\delta t = \Delta t/m`}.
-Polynomial coefficients based on the time dependency of the current and charge densities :math:`{\mathbf{\tilde{J}}}(a)` and :math:`\rho(t)` over one time subinterval, :math:`\delta t = \Delta t/m`.
+Polynomial coefficients based on the time dependency of the current and charge densities :math:`{\mathbf{\tilde{J}}(t)` and :math:`\rho(t)` over one time subinterval, :math:`\delta t = \Delta t/m`.
 
 Detailed analysis and testings revealed that, under some condition, the formulation can expand the range of numerical parameters under which PIC simulations are stable and accurate when modeling relativistic plasmas such as, e.g., plasma-based particle accelerators.
 
