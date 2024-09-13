@@ -135,10 +135,10 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
     if (lev == 0) {
         if (a_dt_type == DtType::FirstHalf) {
             if(::isAnyBoundary<FieldBoundaryType::Absorbing_SilverMueller>(field_boundary_lo, field_boundary_hi)){
-                auto Efield_fp_new = m_fields.get_mr_levels_alldirs("Efield_fp",max_level); // JRA, new to prevent shadow
+                auto Efield_fp = m_fields.get_mr_levels_alldirs("Efield_fp",max_level); // JRA, new to prevent shadow
                 auto Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp",max_level);
                 m_fdtd_solver_fp[0]->ApplySilverMuellerBoundary(
-                Efield_fp_new[lev], Bfield_fp[lev],
+                Efield_fp[lev], Bfield_fp[lev],
                 Geom(lev).Domain(), dt[lev],
                 field_boundary_lo, field_boundary_hi);
             }
