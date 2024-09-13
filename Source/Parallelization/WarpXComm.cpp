@@ -948,8 +948,12 @@ WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng, std::optional<b
     {
         if (do_pml && pml[lev] && pml[lev]->ok())
         {
-            if (m_fields.has("pml_F_fp", lev) && m_fields.has("F_fp", lev)) { pml[lev]->Exchange(m_fields.get("pml_F_fp", lev), m_fields.get("F_fp", lev), patch_type, do_pml_in_domain); }
-            pml[lev]->FillBoundary(*m_fields.get("pml_F_fp", lev), patch_type, nodal_sync);
+            if (m_fields.has("pml_F_fp", lev) && m_fields.has("F_fp", lev)) {
+                pml[lev]->Exchange(m_fields.get("pml_F_fp", lev), m_fields.get("F_fp", lev), patch_type, do_pml_in_domain);
+            }
+            if (m_fields.has("pml_F_fp", lev)) {
+                pml[lev]->FillBoundary(*m_fields.get("pml_F_fp", lev), patch_type, nodal_sync);
+            }
         }
 
         if (m_fields.has("F_fp", lev))
@@ -963,8 +967,12 @@ WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng, std::optional<b
     {
         if (do_pml && pml[lev] && pml[lev]->ok())
         {
-            if (m_fields.has("pml_F_cp", lev) && m_fields.has("F_cp", lev)) { pml[lev]->Exchange(m_fields.get("pml_F_cp", lev), m_fields.get("F_cp", lev), patch_type, do_pml_in_domain); }
-            pml[lev]->FillBoundary(*m_fields.get("pml_F_cp", lev), patch_type, nodal_sync);
+            if (m_fields.has("pml_F_cp", lev) && m_fields.has("F_cp", lev)) {
+                pml[lev]->Exchange(m_fields.get("pml_F_cp", lev), m_fields.get("F_cp", lev), patch_type, do_pml_in_domain);
+            }
+            if (m_fields.has("pml_F_cp", lev)) {
+                pml[lev]->FillBoundary(*m_fields.get("pml_F_cp", lev), patch_type, nodal_sync);
+            }
         }
 
         if (m_fields.has("F_cp", lev))
