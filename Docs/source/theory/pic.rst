@@ -451,13 +451,12 @@ Here, in addition to the usual Maxwell-Faraday and Ampere-Maxwell equations, the
 These additional terms were introduced in :cite:p:`pt-Vayfed1996` from the potential formulation in the Lorenz gauge and used as a propagative divergence cleaning procedure, as an alternative to the Langdon-Marder :cite:p:`pt-Langdoncpc92` or :cite:p:`pt-Marderjcp87` diffusive procedures.
 The above-mentioned earlier works :cite:p:`pt-Vayfed1996,pt-Munzjcp2000` considered this formulation in the context of the standard PIC method using FDTD discretization, while the PSATD-JRhom method introduced in :cite:`pt-shapovalPRE2024` exploits the PSATD discretization of the modified Maxwell's equations.
 In contrast to the standard PSATD algorithm :cite:p:`pt-VayJCP2013`, where :math:`\boldsymbol{\widetilde{J}}` is assumed to be constant in time and :math:`\widetilde{\rho}` is assumed to be linear in time, within a given time step :math:`\Delta t`, the PSATD-JRhom provides more general time dependencies for :math:`\boldsymbol{\widetilde{J}}` and :math:`\widetilde{\rho}` within one timestep, which can be divided into :math:`m` subintervals of equal size :math:`\delta t = \Delta t/m`.
-During these subintervals, :math:`\boldsymbol{\widetilde{J}}` and :math:`\widetilde{\rho}` are considered to be either **piecewise constant** (macro-particles deposit their charge density in the middle of each time subinterval), **piecewise linear** (macro-particles deposit their charge density at the edge of each time subinterval), or **piecewise quadratic** (macro-particles deposit their charge density at the edge of each time subinterval) in time.
+During these subintervals, :math:`\boldsymbol{\widetilde{J}}` and :math:`\widetilde{\rho}` are considered to be either **piecewise constant** (macro-particles deposit their density in the middle of each time subinterval), **piecewise linear** (macro-particles deposit their density at the edge of each time subinterval), or **piecewise quadratic** (macro-particles deposit their density at the edge of each time subinterval) in time.
 
 .. _fig-psatd_jrhom:
 
-.. figure::
-   https://private-user-images.githubusercontent.com/30510597/367434274-f784b1f4-e776-4703-900e-19b63ba4ef80.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MjYyNTg4NzEsIm5iZiI6MTcyNjI1ODU3MSwicGF0aCI6Ii8zMDUxMDU5Ny8zNjc0MzQyNzQtZjc4NGIxZjQtZTc3Ni00NzAzLTkwMGUtMTliNjNiYTRlZjgwLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNDA5MTMlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjQwOTEzVDIwMTYxMVomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTM0ZDRjMzQ1ZGNhNjk1NWVjNzFjNDM0NWYzNmQ3ZWRhYzIyZmYzNTcwODhiZDhlODI1ZjNmMjU1OTFmZGNjY2EmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JmFjdG9yX2lkPTAma2V5X2lkPTAmcmVwb19pZD0wIn0.zfo7WUkFJhXXJobqttqJoLaAUaomS1Go1-DiVB2ny5c
-   :alt: figure not found, display only caption
+.. figure:: https://gist.githubusercontent.com/oshapoval/88a73cada764364ad4ffce13563cedf1/raw/697ce1897cde0416bebdde8f1c1e8fcf859cb419/psatd_jrhom.png
+   :alt: figure not found, caption only
 
    Diagrams illustrating various time dependencies of the current density :math:`\boldsymbol{\widetilde{J}}` and charge density :math:`\widetilde{\rho}` for constant/linear (CL), both constant (CC), linear (LL) and quadratic (QQ) dependencies with :math:`m` subintervals: (first column) :math:`m=1`, (second) :math:`m=2` and (third) :math:`m=4`. CL1 corresponds to the standard PSATD PIC method. The triangle and circle glyphs represent the times at which the macroparticles deposit :math:`\boldsymbol{\widetilde{J}}` and :math:`\widetilde{\rho}` on the grid, respectively. The dashed and solid lines represent the assumed time dependency of :math:`\boldsymbol{\widetilde{J}}` and :math:`\widetilde{\rho}` within one time step, when integrating the Maxwell equations analytically.
 
@@ -505,9 +504,10 @@ Here, :math:`\boldsymbol{a_J}, \boldsymbol{b_J}, \boldsymbol{c_J}, a_{\rho}, b_{
 .. _fig-j_rho_table:
 
 .. figure::
-   https://private-user-images.githubusercontent.com/30510597/367436072-805219dc-d909-4bbe-866e-8def0d265a7c.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MjYyNTkyODIsIm5iZiI6MTcyNjI1ODk4MiwicGF0aCI6Ii8zMDUxMDU5Ny8zNjc0MzYwNzItODA1MjE5ZGMtZDkwOS00YmJlLTg2NmUtOGRlZjBkMjY1YTdjLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNDA5MTMlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjQwOTEzVDIwMjMwMlomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTM4Yzc4ZDVkOWNlNTI4N2RmZDNiMGY2MTkyZjg1MWQwMjJhMGEzMzhlNTllMjljOTJiYjJmZDJkMzE0NzQ1N2QmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JmFjdG9yX2lkPTAma2V5X2lkPTAmcmVwb19pZD0wIn0.fzxU5k93BzYt0PqUIUj4awaGcXliUTmGb67CKlt8LzE
-   :alt: [fig:j_rho_table] Polynomial coefficients based on the time dependency of the current and charge densities :math:`{\mathbf{\tilde{J}}}(t)` and :math:`\rho(t)` over one time subinterval, :math:`\delta t = \Delta t/m`}.
-Polynomial coefficients based on the time dependency of the current and charge densities :math:`{\mathbf{\widetilde{J}}}(a)` and :math:`\rho(t)` over one time subinterval, :math:`\delta t = \Delta t/m`.
+   https://gist.githubusercontent.com/oshapoval/88a73cada764364ad4ffce13563cedf1/raw/ebc249f8e875a952c65a5319fd523821baccfd5a/j_rho_table.png
+   :alt: figure not found, caption only
+
+   Polynomial coefficients based on the time dependency of the current and charge densities :math:`{\mathbf{\widetilde{J}}}(t)` and :math:`\rho(t)` over one time subinterval, :math:`\delta t = \Delta t/m`.
 
 Detailed analysis and tests revealed that, under certain conditions, the formulation can expand the range of numerical parameters under which PIC simulations are stable and accurate when modeling relativistic plasmas, such as, e.g., plasma-based particle accelerators.
 
