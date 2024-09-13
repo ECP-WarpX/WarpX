@@ -57,4 +57,3 @@ Visualize
    :alt: Electric field of the laser pulse with (top) ions with ionization levels and (bottom) ionized electrons.
 
    Electric field of the laser pulse with (top) ions with ionization levels and (bottom) ionized electrons.
-
