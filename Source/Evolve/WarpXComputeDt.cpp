@@ -114,7 +114,7 @@ WarpX::UpdateDtFromParticleSpeeds ()
 
     // Protections from overly-large timesteps
     if (max_v == 0) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_max_dt.has_value(), "Particles at rest and no maximum timestep specified. Aborting.");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_max_dt.has_value(), "Particles at rest and no constant or maximum timestep specified. Aborting.");
         deltat_new = m_max_dt.value();
     } else {
         deltat_new = cfl * dx_min / max_v;

@@ -3,4 +3,4 @@ FILE = inputs_base_3d
 
 # inputs for tests using constant dt
 max_step = 30
-warpx_const_dt = 1e-6
+warpx.const_dt = 1e-6

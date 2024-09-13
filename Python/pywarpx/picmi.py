@@ -1872,7 +1872,10 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
     Parameters
     ----------
     warpx_cfl: float, optional
-        Fraction of the CFL condition for particle velocity vs grid size, used to set the timestep
+        Fraction of the CFL condition for particle velocity vs grid size, used to set the timestep when employing adaptive timestepping
+
+    warpx_max_dt: float, optional
+        The maximum allowable timestep when using adaptive timestepping (only available for non-electromagnetic solvers)
 
     warpx_relativistic: bool, default=False
         Whether to use the relativistic solver or lab frame solver
@@ -1890,6 +1893,7 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
         self.self_fields_verbosity = kw.pop("warpx_self_fields_verbosity", None)
         self.magnetostatic = kw.pop("warpx_magnetostatic", False)
         self.cfl = kw.pop("warpx_cfl", None)
+        self.max_dt = kw.pop("warpx_max_dt", None)
 
     def solver_initialize_inputs(self):
         # Open BC means FieldBoundaryType::Open for electrostatic sims, rather than perfectly-matched layer
@@ -1897,8 +1901,9 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
 
         self.grid.grid_initialize_inputs()
 
-        # set CFL number
+        # set adaptive timestepping parameters
         pywarpx.warpx.cfl = self.cfl
+        pywarpx.warpx.max_dt = self.max_dt
 
         if self.relativistic:
             pywarpx.warpx.do_electrostatic = "relativistic"
@@ -2745,9 +2750,6 @@ class Simulation(picmistandard.PICMI_Simulation):
 
     warpx_used_inputs_file: string, optional
         The name of the text file that the used input parameters is written to,
-
-    warpx_max_dt: float, optional
-        The maximum allowable timestep when using adaptive timestepping (only available for non-electromagnetic solvers)
     """
 
     # Set the C++ WarpX interface (see _libwarpx.LibWarpX) as an extension to
@@ -2814,8 +2816,6 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.checkpoint_signals = kw.pop("warpx_checkpoint_signals", None)
         self.numprocs = kw.pop("warpx_numprocs", None)
 
-        self.max_dt = kw.pop("warpx_max_dt", None)
-
         self.inputs_initialized = False
         self.warpx_initialized = False
 
@@ -2828,9 +2828,6 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.warpx.verbose = self.verbose
         if self.time_step_size is not None:
             pywarpx.warpx.const_dt = self.time_step_size
-
-        if self.max_dt is not None:
-            pywarpx.warpx.max_dt = self.max_dt
 
         if self.gamma_boost is not None:
             pywarpx.warpx.gamma_boost = self.gamma_boost
