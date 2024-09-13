@@ -821,7 +821,7 @@ Particle initialization
 * ``particles.rigid_injected_species`` (`strings`, separated by spaces)
     List of species injected using the rigid injection method. The rigid injection
     method is useful when injecting a relativistic particle beam in boosted-frame
-    simulations; see the :ref:`input-output section <theory-io>` for more details.
+    simulations; see the :ref:`input-output section <boosted_frame-io>` for more details.
     For species injected using this method, particles are translated along the `+z`
     axis with constant velocity as long as their ``z`` coordinate verifies
     ``z<zinject_plane``. When ``z>zinject_plane``,
@@ -1953,7 +1953,7 @@ Collision models
 ----------------
 
 WarpX provides several particle collision models, using varying degrees of approximation.
-Details about the collision models can be found in the :ref:`theory section <theory-collisions>`.
+Details about the collision models can be found in the :ref:`theory section <multiphysics-collisions>`.
 
 * ``collisions.collision_names`` (`strings`, separated by spaces)
     The name of each collision type.
@@ -1976,10 +1976,10 @@ Details about the collision models can be found in the :ref:`theory section <the
       (e.g. ``<species_name>.species_type = 'deuterium'``)
     - ``dsmc`` for pair-wise, non-Coulomb collisions between kinetic species.
       This is a "direct simulation Monte Carlo" treatment of collisions between
-      kinetic species. See :ref:`DSMC section <theory-collisions-dsmc>`.
+      kinetic species. See :ref:`DSMC section <multiphysics-collisions-dsmc>`.
     - ``background_mcc`` for collisions between particles and a neutral background.
       This is a relativistic Monte Carlo treatment for particles colliding
-      with a neutral background gas. See :ref:`MCC section <theory-collisions-mcc>`.
+      with a neutral background gas. See :ref:`MCC section <multiphysics-collisions-mcc>`.
     - ``background_stopping`` for slowing of ions due to collisions with electrons or ions.
       This implements the approximate formulae as derived in Introduction to Plasma Physics,
       from Goldston and Rutherford, section 14.2.

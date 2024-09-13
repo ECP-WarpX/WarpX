@@ -178,16 +178,16 @@ namespace
         pos.x = lo_corner[0] + (iv[0]+r.x)*dx[0];
         pos.y = lo_corner[1] + (iv[1]+r.y)*dx[1];
         pos.z = lo_corner[2] + (iv[2]+r.z)*dx[2];
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(WARPX_DIM_XZ)
         pos.x = lo_corner[0] + (iv[0]+r.x)*dx[0];
         pos.y = 0.0_rt;
-#if   defined WARPX_DIM_XZ
         pos.z = lo_corner[1] + (iv[1]+r.y)*dx[1];
-#elif defined WARPX_DIM_RZ
+#elif defined(WARPX_DIM_RZ)
         // Note that for RZ, r.y will be theta
+        pos.x = lo_corner[0] + (iv[0]+r.x)*dx[0];
+        pos.y = 0.0_rt;
         pos.z = lo_corner[1] + (iv[1]+r.z)*dx[1];
-#endif
-#else
+#elif defined(WARPX_DIM_1D_Z)
         pos.x = 0.0_rt;
         pos.y = 0.0_rt;
         pos.z = lo_corner[0] + (iv[0]+r.x)*dx[0];
@@ -222,20 +222,9 @@ namespace
 #endif
         ) noexcept
     {
-        pa[PIdx::z][ip] = 0._rt;
-#if (AMREX_SPACEDIM >= 2)
-        pa[PIdx::x][ip] = 0._rt;
-#endif
-#if defined(WARPX_DIM_3D)
-        pa[PIdx::y][ip] = 0._rt;
-#endif
-        pa[PIdx::w ][ip] = 0._rt;
-        pa[PIdx::ux][ip] = 0._rt;
-        pa[PIdx::uy][ip] = 0._rt;
-        pa[PIdx::uz][ip] = 0._rt;
-#ifdef WARPX_DIM_RZ
-        pa[PIdx::theta][ip] = 0._rt;
-#endif
+        for (int idx=0 ; idx < PIdx::nattribs ; idx++) {
+            pa[idx][ip] = 0._rt;
+        }
         if (do_field_ionization) {pi[ip] = 0;}
 #ifdef WARPX_QED
         if (has_quantum_sync) {p_optical_depth_QSR[ip] = 0._rt;}
@@ -758,6 +747,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(PlasmaInjector & plasma_injector,
         const std::shared_ptr<ParticleReal> ptr_offset_z = ps["positionOffset"]["z"].loadChunk<ParticleReal>();
         auto const position_unit_z = static_cast<ParticleReal>(ps["position"]["z"].unitSI());
         auto const position_offset_unit_z = static_cast<ParticleReal>(ps["positionOffset"]["z"].unitSI());
+
         const std::shared_ptr<ParticleReal> ptr_ux = ps["momentum"]["x"].loadChunk<ParticleReal>();
         auto const momentum_unit_x = static_cast<ParticleReal>(ps["momentum"]["x"].unitSI());
         const std::shared_ptr<ParticleReal> ptr_uz = ps["momentum"]["z"].loadChunk<ParticleReal>();
@@ -1264,13 +1254,8 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
 
             Real scale_fac = 0.0_rt;
             if( pcounts[index] != 0) {
-#if defined(WARPX_DIM_3D)
-                scale_fac = dx[0]*dx[1]*dx[2]/pcounts[index];
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                scale_fac = dx[0]*dx[1]/pcounts[index];
-#elif defined(WARPX_DIM_1D_Z)
-                scale_fac = dx[0]/pcounts[index];
-#endif
+                amrex::Real const dV = AMREX_D_TERM(dx[0], *dx[1], *dx[2]);
+                scale_fac = dV/pcounts[index];
             }
 
             for (int i_part = 0; i_part < pcounts[index]; ++i_part)
@@ -1285,29 +1270,15 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                 auto pos = getCellCoords(overlap_corner, dx, r, iv);
 
 #if defined(WARPX_DIM_3D)
-                if (!tile_realbox.contains(XDim3{pos.x,pos.y,pos.z})) {
-                    ZeroInitializeAndSetNegativeID(pa_idcpu, pa, ip, loc_do_field_ionization, pi
-#ifdef WARPX_QED
-                                                   ,loc_has_quantum_sync, p_optical_depth_QSR
-                                                   ,loc_has_breit_wheeler, p_optical_depth_BW
-#endif
-                                                   );
-                    continue;
-                }
+                bool const box_contains = tile_realbox.contains(XDim3{pos.x,pos.y,pos.z});
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 amrex::ignore_unused(k);
-                if (!tile_realbox.contains(XDim3{pos.x,pos.z,0.0_rt})) {
-                    ZeroInitializeAndSetNegativeID(pa_idcpu, pa, ip, loc_do_field_ionization, pi
-#ifdef WARPX_QED
-                                                   ,loc_has_quantum_sync, p_optical_depth_QSR
-                                                   ,loc_has_breit_wheeler, p_optical_depth_BW
-#endif
-                                                   );
-                    continue;
-                }
-#else
+                bool const box_contains = tile_realbox.contains(XDim3{pos.x,pos.z,0.0_rt});
+#elif defined(WARPX_DIM_1D_Z)
                 amrex::ignore_unused(j,k);
-                if (!tile_realbox.contains(XDim3{pos.z,0.0_rt,0.0_rt})) {
+                bool const box_contains = tile_realbox.contains(XDim3{pos.z,0.0_rt,0.0_rt});
+#endif
+                if (!box_contains) {
                     ZeroInitializeAndSetNegativeID(pa_idcpu, pa, ip, loc_do_field_ionization, pi
 #ifdef WARPX_QED
                                                    ,loc_has_quantum_sync, p_optical_depth_QSR
@@ -1316,7 +1287,6 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                                                    );
                     continue;
                 }
-#endif
 
                 // Save the x and y values to use in the insideBounds checks.
                 // This is needed with WARPX_DIM_RZ since x and y are modified.
@@ -1461,13 +1431,14 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                 pa[PIdx::x][ip] = pos.x;
                 pa[PIdx::y][ip] = pos.y;
                 pa[PIdx::z][ip] = pos.z;
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-#ifdef WARPX_DIM_RZ
+#elif defined(WARPX_DIM_XZ)
+                pa[PIdx::x][ip] = pos.x;
+                pa[PIdx::z][ip] = pos.z;
+#elif defined(WARPX_DIM_RZ)
                 pa[PIdx::theta][ip] = theta;
-#endif
                 pa[PIdx::x][ip] = xb;
                 pa[PIdx::z][ip] = pos.z;
-#else
+#elif defined(WARPX_DIM_1D_Z)
                 pa[PIdx::z][ip] = pos.z;
 #endif
             }
@@ -1967,7 +1938,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 #elif defined(WARPX_DIM_XZ)
                 pa[PIdx::x][ip] = ppos.x;
                 pa[PIdx::z][ip] = ppos.z;
-#else
+#elif defined(WARPX_DIM_1D_Z)
                 pa[PIdx::z][ip] = ppos.z;
 #endif
             }
@@ -2367,13 +2338,7 @@ PhysicalParticleContainer::SplitParticles (int lev)
     long np_split;
     if(split_type==0)
     {
-        #if defined(WARPX_DIM_3D)
-           np_split = 8;
-        #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-           np_split = 4;
-        #else
-           np_split = 2;
-        #endif
+        np_split = amrex::Math::powi<AMREX_SPACEDIM>(2);
     } else {
         np_split = 2*AMREX_SPACEDIM;
     }
@@ -2832,15 +2797,12 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     if (save_previous_position) {
 #if (AMREX_SPACEDIM >= 2)
         x_old = pti.GetAttribs(particle_comps["prev_x"]).dataPtr() + offset;
-#else
-    amrex::ignore_unused(x_old);
 #endif
 #if defined(WARPX_DIM_3D)
         y_old = pti.GetAttribs(particle_comps["prev_y"]).dataPtr() + offset;
-#else
-    amrex::ignore_unused(y_old);
 #endif
         z_old = pti.GetAttribs(particle_comps["prev_z"]).dataPtr() + offset;
+        amrex::ignore_unused(x_old, y_old);
     }
 
     // Loop over the particles and update their momentum
@@ -3040,7 +3002,7 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
 
     const Dim3 lo = lbound(box);
 
-    const int depos_type = WarpX::current_deposition_algo;
+    const auto depos_type = WarpX::current_deposition_algo;
     const int nox = WarpX::nox;
     const int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 

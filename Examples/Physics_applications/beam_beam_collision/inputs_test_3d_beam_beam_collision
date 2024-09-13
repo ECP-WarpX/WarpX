@@ -27,7 +27,7 @@ my_constants.Lz = 180.0*clight/omegab
 # for a full scale simulation use: nx, ny, nz = 512, 512, 1024
 my_constants.nx = 64
 my_constants.ny = 64
-my_constants.nz = 128
+my_constants.nz = 64
 
 
 # TIME

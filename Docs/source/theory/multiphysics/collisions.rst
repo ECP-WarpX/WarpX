@@ -1,4 +1,4 @@
-.. _theory-collisions:
+.. _multiphysics-collisions:
 
 Collisions
 ==========
@@ -8,7 +8,7 @@ including collisions between kinetic particles (Coulomb collisions, DSMC,
 nuclear fusion) as well as collisions between kinetic particles and a fixed
 (i.e. non-evolving) background species (MCC, background stopping).
 
-.. _theory-collisions-mcc:
+.. _multiphysics-collisions-mcc:
 
 Background Monte Carlo Collisions (MCC)
 ---------------------------------------
@@ -52,7 +52,7 @@ for all scattering processes are evaluated at the energy as calculated above.
 
 Once a particle is selected for a specific collision process, that process determines how the particle is scattered as outlined below.
 
-.. _theory-collisions-dsmc:
+.. _multiphysics-collisions-dsmc:
 
 Direct Simulation Monte Carlo (DSMC)
 ------------------------------------
