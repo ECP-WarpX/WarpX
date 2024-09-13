@@ -59,14 +59,11 @@ class FiniteDifferenceSolver
                        std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
                        amrex::Real dt );
 
-        void EvolveE ( ablastr::fields::VectorField const& Efield,
-                       ablastr::fields::VectorField const& Bfield,
-                       ablastr::fields::VectorField const& Jfield,
-                       ablastr::fields::VectorField const& edge_lengths,
-                       ablastr::fields::VectorField const& face_areas,
-                       ablastr::fields::VectorField const& ECTRhofield,
-                       amrex::MultiFab const* Ffield,
-                       int lev, amrex::Real dt );
+        void EvolveE ( ablastr::fields::MultiFabRegister & fields,
+                       int lev,
+                       PatchType patch_type,
+                       ablastr::fields::VectorField const& Efield,
+                       amrex::Real dt );
 
         void EvolveF ( amrex::MultiFab* Ffield,
                        ablastr::fields::VectorField const& Efield,

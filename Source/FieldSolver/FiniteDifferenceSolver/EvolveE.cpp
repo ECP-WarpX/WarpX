@@ -50,17 +50,44 @@ using namespace ablastr::fields;
  * \brief Update the E field, over one timestep
  */
 void FiniteDifferenceSolver::EvolveE (
+    ablastr::fields::MultiFabRegister & fields,
+    int lev,
+    PatchType patch_type,
     ablastr::fields::VectorField const& Efield,
-    ablastr::fields::VectorField const& Bfield,
-    ablastr::fields::VectorField const& Jfield,
-    VectorField const& edge_lengths,
-    VectorField const& face_areas,
-    VectorField const& ECTRhofield,
-    amrex::MultiFab const* Ffield,
-    int lev, amrex::Real const dt ) {
+    amrex::Real const dt
+)
+{
+    using ablastr::fields::Direction;
+    ablastr::fields::VectorField Bfield = patch_type == PatchType::fine ?
+        fields.get_alldirs("Bfield_fp", lev) : fields.get_alldirs("Bfield_cp", lev);
+    ablastr::fields::VectorField Jfield = patch_type == PatchType::fine ?
+        fields.get_alldirs("current_fp", lev) : fields.get_alldirs("current_cp", lev);
 
-    if (m_fdtd_algo != ElectromagneticSolverAlgo::ECT) {
-        amrex::ignore_unused(face_areas, ECTRhofield);
+    amrex::MultiFab* Ffield = nullptr;
+    if (fields.has("F_fp", Direction{0}, lev)) {
+        Ffield = patch_type == PatchType::fine ?
+                 fields.get("F_fp", lev) : fields.get("F_cp", lev);
+    }
+
+    ablastr::fields::VectorField edge_lengths;
+    if (fields.has("edge_lengths", Direction{0}, lev)) {
+        edge_lengths = patch_type == PatchType::fine ?
+            fields.get_alldirs("edge_lengths", lev) : fields.get_alldirs("edge_lengths", lev);
+    }
+    ablastr::fields::VectorField face_areas;
+    if (fields.has("face_areas", Direction{0}, lev)) {
+        face_areas = patch_type == PatchType::fine ?
+            fields.get_alldirs("face_areas", lev) : fields.get_alldirs("face_areas", lev);
+    }
+    ablastr::fields::VectorField area_mod;
+    if (fields.has("face_areas", Direction{0}, lev)) {
+        area_mod = patch_type == PatchType::fine ?
+            fields.get_alldirs("area_mod", lev) : fields.get_alldirs("area_mod", lev);
+    }
+    ablastr::fields::VectorField ECTRhofield;
+    if (fields.has("ECTRhofield", Direction{0}, lev)) {
+        ECTRhofield = patch_type == PatchType::fine ?
+                      fields.get_alldirs("ECTRhofield", lev) : fields.get_alldirs("ECTRhofield", lev);
     }
 
     // Select algorithm (The choice of algorithm is a runtime option,

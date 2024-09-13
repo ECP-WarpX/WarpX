@@ -153,10 +153,6 @@ WarpX::MoveWindow (const int step, bool move_j)
 
     ablastr::fields::MultiLevelVectorField Efield_aux = m_fields.get_mr_levels_alldirs("Efield_aux", finest_level);
     ablastr::fields::MultiLevelVectorField Bfield_aux = m_fields.get_mr_levels_alldirs("Bfield_aux", finest_level);
-    ablastr::fields::MultiLevelVectorField Efield_avg_fp = m_fields.get_mr_levels_alldirs("Efield_avg_fp", finest_level);
-    ablastr::fields::MultiLevelVectorField Bfield_avg_fp = m_fields.get_mr_levels_alldirs("Bfield_avg_fp", finest_level);
-    ablastr::fields::MultiLevelVectorField Efield_avg_cp = m_fields.get_mr_levels_alldirs("Efield_avg_cp", finest_level);
-    ablastr::fields::MultiLevelVectorField Bfield_avg_cp = m_fields.get_mr_levels_alldirs("Bfield_avg_cp", finest_level);
 
     // Update the continuous position of the moving window,
     // and of the plasma injection
@@ -250,6 +246,8 @@ WarpX::MoveWindow (const int step, bool move_j)
             shiftMF(*m_fields.get("Efield_fp",Direction{0},lev), geom[lev], num_shift, dir, lev, do_update_cost,
                 m_p_ext_field_params->E_external_grid[dim], use_Eparser, Efield_parser);
             if (fft_do_time_averaging) {
+                ablastr::fields::MultiLevelVectorField Efield_avg_fp = m_fields.get_mr_levels_alldirs("Efield_avg_fp", finest_level);
+                ablastr::fields::MultiLevelVectorField Bfield_avg_fp = m_fields.get_mr_levels_alldirs("Bfield_avg_fp", finest_level);
                 shiftMF(*Bfield_avg_fp[lev][dim], geom[lev], num_shift, dir, lev, do_update_cost,
                     m_p_ext_field_params->B_external_grid[dim], use_Bparser, Bfield_parser);
                 shiftMF(*Efield_avg_fp[lev][dim], geom[lev], num_shift, dir, lev, do_update_cost,
@@ -281,6 +279,8 @@ WarpX::MoveWindow (const int step, bool move_j)
                 shiftMF(*Bfield_aux[lev][dim], geom[lev], num_shift, dir, lev, do_update_cost);
                 shiftMF(*Efield_aux[lev][dim], geom[lev], num_shift, dir, lev, do_update_cost);
                 if (fft_do_time_averaging) {
+                    ablastr::fields::MultiLevelVectorField Efield_avg_cp = m_fields.get_mr_levels_alldirs("Efield_avg_cp", finest_level);
+                    ablastr::fields::MultiLevelVectorField Bfield_avg_cp = m_fields.get_mr_levels_alldirs("Bfield_avg_cp", finest_level);
                     shiftMF(*Bfield_avg_cp[lev][dim], geom[lev-1], num_shift_crse, dir, lev, do_update_cost,
                         m_p_ext_field_params->B_external_grid[dim], use_Bparser, Bfield_parser);
                     shiftMF(*Efield_avg_cp[lev][dim], geom[lev-1], num_shift_crse, dir, lev, do_update_cost,

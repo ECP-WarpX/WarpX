@@ -909,21 +909,17 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
 {
     // Evolve E field in regular cells
     if (patch_type == PatchType::fine) {
-        m_fdtd_solver_fp[lev]->EvolveE( m_fields.get_alldirs("Efield_fp",lev),
-                                        m_fields.get_alldirs("Bfield_fp", lev),
-                                        m_fields.get_alldirs("current_fp", lev),
-                                        m_fields.get_alldirs("edge_lengths", lev),
-                                        m_fields.get_alldirs("face_areas", lev),
-                                        m_fields.get_alldirs("ECTRhofield", lev),
-                                        m_fields.get("F_fp", lev), lev, a_dt );
+        m_fdtd_solver_fp[lev]->EvolveE( m_fields,
+                                        lev,
+                                        patch_type,
+                                        m_fields.get_alldirs("Efield_fp",lev),
+                                        a_dt );
     } else {
-        m_fdtd_solver_cp[lev]->EvolveE( m_fields.get_alldirs("Efield_cp",lev),
-                                        m_fields.get_alldirs("Bfield_cp", lev),
-                                        m_fields.get_alldirs("current_cp", lev),
-                                        m_fields.get_alldirs("edge_lengths", lev),
-                                        m_fields.get_alldirs("face_areas", lev),
-                                        m_fields.get_alldirs("ECTRhofield", lev),
-                                        m_fields.get("F_cp", lev), lev, a_dt );
+        m_fdtd_solver_cp[lev]->EvolveE( m_fields,
+                                        lev,
+                                        patch_type,
+                                        m_fields.get_alldirs("Efield_cp",lev),
+                                        a_dt );
     }
 
     // Evolve E field in PML cells

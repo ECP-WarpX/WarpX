@@ -55,10 +55,11 @@ void FiniteDifferenceSolver::EvolveB (
     [[maybe_unused]] std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
     [[maybe_unused]] amrex::Real const dt ) {
 
+    using ablastr::fields::Direction;
     ablastr::fields::VectorField Bfield = patch_type == PatchType::fine ?
         fields.get_alldirs("Bfield_fp", lev) : fields.get_alldirs("Bfield_cp", lev);
     ablastr::fields::VectorField Efield = patch_type == PatchType::fine ?
-        fields.get_alldirs("Bfield_fp", lev) : fields.get_alldirs("Efield_cp", lev);
+        fields.get_alldirs("Efield_fp", lev) : fields.get_alldirs("Efield_cp", lev);
 
     // Select algorithm (The choice of algorithm is a runtime option,
     // but we compile code for each algorithm, using templates)
@@ -68,16 +69,31 @@ void FiniteDifferenceSolver::EvolveB (
         EvolveBCylindrical <CylindricalYeeAlgorithm> ( Bfield, Efield, lev, dt );
 #else
 
-    amrex::MultiFab const * Gfield = patch_type == PatchType::fine ?
-        fields.get("G_fp", lev) : fields.get("G_fp", lev);
-    ablastr::fields::VectorField face_areas = patch_type == PatchType::fine ?
-        fields.get_alldirs("face_areas", lev) : fields.get_alldirs("face_areas", lev);
-    ablastr::fields::VectorField area_mod = patch_type == PatchType::fine ?
-        fields.get_alldirs("area_mod", lev) : fields.get_alldirs("area_mod", lev);
-    ablastr::fields::VectorField ECTRhofield = patch_type == PatchType::fine ?
-        fields.get_alldirs("ECTRhofield", lev) : fields.get_alldirs("ECTRhofield", lev);
-    ablastr::fields::VectorField Venl = patch_type == PatchType::fine ?
-        fields.get_alldirs("Venl", lev) : fields.get_alldirs("Venl", lev);
+    amrex::MultiFab const * Gfield = nullptr;
+    if (fields.has("G_fp", lev)) {
+        Gfield = patch_type == PatchType::fine ?
+            fields.get("G_fp", lev) : fields.get("G_cp", lev);
+    }
+    ablastr::fields::VectorField face_areas;
+    if (fields.has("face_areas", Direction{0}, lev)) {
+        face_areas = patch_type == PatchType::fine ?
+            fields.get_alldirs("face_areas", lev) : fields.get_alldirs("face_areas", lev);
+    }
+    ablastr::fields::VectorField area_mod;
+    if (fields.has("face_areas", Direction{0}, lev)) {
+        area_mod = patch_type == PatchType::fine ?
+            fields.get_alldirs("area_mod", lev) : fields.get_alldirs("area_mod", lev);
+    }
+    ablastr::fields::VectorField ECTRhofield;
+    if (fields.has("ECTRhofield", Direction{0}, lev)) {
+        ECTRhofield = patch_type == PatchType::fine ?
+            fields.get_alldirs("ECTRhofield", lev) : fields.get_alldirs("ECTRhofield", lev);
+    }
+    ablastr::fields::VectorField Venl;
+    if (fields.has("Venl", Direction{0}, lev)) {
+        Venl = patch_type == PatchType::fine ?
+            fields.get_alldirs("Venl", lev) : fields.get_alldirs("Venl", lev);
+    }
 
     if (m_grid_type == GridType::Collocated) {
 
