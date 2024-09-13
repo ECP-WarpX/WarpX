@@ -101,15 +101,19 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
 #endif
     using ablastr::fields::Direction;
 
-    ablastr::fields::MultiLevelVectorField const& Efield_fp = m_fields.get_mr_levels_alldirs("Efield_fp", finest_level);
     ablastr::fields::MultiLevelVectorField const& Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
-    ablastr::fields::MultiLevelVectorField const& Efield_avg_fp = m_fields.get_mr_levels_alldirs("Efield_avg_fp", finest_level);
-    ablastr::fields::MultiLevelVectorField const& Bfield_avg_fp = m_fields.get_mr_levels_alldirs("Bfield_avg_fp", finest_level);
+    ablastr::fields::MultiLevelVectorField const& Efield_fp = m_fields.get_mr_levels_alldirs("Efield_fp", finest_level);
     ablastr::fields::MultiLevelVectorField const& Efield_aux = m_fields.get_mr_levels_alldirs("Efield_aux", finest_level);
     ablastr::fields::MultiLevelVectorField const& Bfield_aux = m_fields.get_mr_levels_alldirs("Bfield_aux", finest_level);
 
-    ablastr::fields::MultiLevelVectorField const & Bmf = WarpX::fft_do_time_averaging ? Bfield_avg_fp : Bfield_fp;
-    ablastr::fields::MultiLevelVectorField const & Emf = WarpX::fft_do_time_averaging ? Efield_avg_fp : Efield_fp;
+    ablastr::fields::MultiLevelVectorField const & Bmf =
+        WarpX::fft_do_time_averaging ?
+        m_fields.get_mr_levels_alldirs("Bfield_avg_fp", finest_level) :
+        Bfield_fp;
+    ablastr::fields::MultiLevelVectorField const & Emf =
+        WarpX::fft_do_time_averaging ?
+        m_fields.get_mr_levels_alldirs("Efield_avg_fp", finest_level) :
+        Efield_fp;
 
     const amrex::IntVect& Bx_stag = Bmf[0][0]->ixType().toIntVect();
     const amrex::IntVect& By_stag = Bmf[0][1]->ixType().toIntVect();

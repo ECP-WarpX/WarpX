@@ -677,7 +677,7 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
         } else if ( m_varnames[comp] == "jz_displacement" ) {
                 m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(2, lev, m_crse_ratio, true);
         } else if ( m_varnames[comp] == "Az" ){
-            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("vector_potential_fp", Direction{2}, lev), lev, m_crse_ratio);
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("vector_potential_fp_nodal", Direction{2}, lev), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "rho" ){
             // Initialize rho functor to dump total rho
             m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, true);
@@ -726,9 +726,9 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             } else if  (m_varnames[comp] == "jt_displacement" ){
                 m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(1, lev, m_crse_ratio, true);
             } else if ( m_varnames[comp] == "Ar" ){
-                m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("vector_potential_fp", Direction{0}, lev), lev, m_crse_ratio);
+                m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("vector_potential_fp_nodal", Direction{0}, lev), lev, m_crse_ratio);
             } else if ( m_varnames[comp] == "At" ){
-                m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("vector_potential_fp", Direction{1}, lev), lev, m_crse_ratio);
+                m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("vector_potential_fp_nodal", Direction{1}, lev), lev, m_crse_ratio);
             } else {
                 WARPX_ABORT_WITH_MESSAGE(m_varnames[comp] + " is not a known field output type for RZ geometry");
             }
@@ -753,9 +753,9 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             } else if ( m_varnames[comp] == "jy_displacement" ){
                 m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(1, lev, m_crse_ratio);
             } else if ( m_varnames[comp] == "Ax" ){
-                m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("vector_potential_fp", Direction{0}, lev), lev, m_crse_ratio);
+                m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("vector_potential_fp_nodal", Direction{0}, lev), lev, m_crse_ratio);
             } else if ( m_varnames[comp] == "Ay" ){
-                m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("vector_potential_fp", Direction{1}, lev), lev, m_crse_ratio);
+                m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("vector_potential_fp_nodal", Direction{1}, lev), lev, m_crse_ratio);
             } else {
                 std::cout << "Error on component " << m_varnames[comp] << std::endl;
                 WARPX_ABORT_WITH_MESSAGE(m_varnames[comp] + " is not a known field output type for this geometry");

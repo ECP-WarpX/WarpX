@@ -298,7 +298,7 @@ plt.legend(["Analytical", "Magnetostatic"])
 
 bt_err = np.abs(Bt_mean[r_idx] - Bt_an(r_sub)).max() / np.abs(Bt_an(r_sub)).max()
 
-plt.ylabel("$B_{\Theta}$ (T)")
+plt.ylabel(r"$B_{\Theta}$ (T)")
 plt.xlabel("r (m)")
 plt.title("Max % Error: {} %".format(bt_err * 100.0))
 plt.tight_layout()
