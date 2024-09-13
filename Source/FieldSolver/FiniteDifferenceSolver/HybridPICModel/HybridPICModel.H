@@ -64,18 +64,18 @@ public:
 
     /**
      * \brief
-     * Function to calculate the total current based on Ampere's law while
-     * neglecting displacement current (J = curl x B). Used in the Ohm's law
-     * solver (kinetic-fluid hybrid model).
+     * Function to calculate the total plasma current based on Ampere's law while
+     * neglecting displacement current (J = curl x B). Any external current is
+     * subtracted as well. Used in the Ohm's law solver (kinetic-fluid hybrid model).
      *
      * \param[in] Bfield       Magnetic field from which the current is calculated.
      * \param[in] edge_lengths Length of cell edges taking embedded boundaries into account
      */
-    void CalculateCurrentAmpere (
+    void CalculatePlasmaCurrent (
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Bfield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths
     );
-    void CalculateCurrentAmpere (
+    void CalculatePlasmaCurrent (
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
         int lev
@@ -190,15 +190,15 @@ public:
     // Declare multifabs specifically needed for the hybrid-PIC model
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_fp_temp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_temp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_ampere;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_plasma;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_external;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > electron_pressure_fp;
 
     // Helper functions to retrieve hybrid-PIC multifabs
     [[nodiscard]] amrex::MultiFab*
-    get_pointer_current_fp_ampere  (int lev, int direction) const
+    get_pointer_current_fp_plasma  (int lev, int direction) const
     {
-        return current_fp_ampere[lev][direction].get();
+        return current_fp_plasma[lev][direction].get();
     }
 
     [[nodiscard]] amrex::MultiFab*

@@ -38,7 +38,7 @@ JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buff
     AMREX_ASSUME(hybrid_pic_model != nullptr);
 
      /** pointer to current calculated from Ampere's Law (Jamp) multifab */
-    amrex::MultiFab* mf_curlB = hybrid_pic_model->get_pointer_current_fp_ampere(m_lev, m_dir);;
+    amrex::MultiFab* mf_curlB = hybrid_pic_model->get_pointer_current_fp_plasma(m_lev, m_dir);
 
     //if (!hybrid_pic_model) {
         // To finish this implementation, we need to implement a method to
