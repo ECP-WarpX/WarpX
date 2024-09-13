@@ -90,7 +90,7 @@ For easier debugging, it can be convenient to run the tests on your local machin
 
        ctest --test-dir build -R "test_3d_langmuir_multi\..*"
 
-  Note that filtering with ``-R "test_3d_langmuir_multi"`` would include the additional tests that have the same string in them and can be sufficient if one aims to isolate a single test.
+  Note that filtering with ``-R "test_3d_langmuir_multi"`` would include the additional tests that have the same substring in their name and can be sufficient if one aims to isolate a single test.
   Note also that the escaping ``\.`` in the regular expression is necessary in order to take into account the fact that each test is automatically appended with the strings ``.run``, ``.analysis`` and possibly ``.cleanup``.
 
 * Run only tests not labeled with the ``slow`` label:
