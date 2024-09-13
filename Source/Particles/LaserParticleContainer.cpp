@@ -563,6 +563,8 @@ LaserParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
                                 std::string current_fp_string,
                                 Real t, Real dt, DtType /*a_dt_type*/, bool skip_deposition, PushType push_type)
 {
+    using ablastr::fields::Direction;
+
     WARPX_PROFILE("LaserParticleContainer::Evolve()");
     WARPX_PROFILE_VAR_NS("LaserParticleContainer::Evolve::ParticlePush", blp_pp);
 
@@ -579,7 +581,7 @@ LaserParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
     // Update laser profile
     m_up_laser_profile->update(t_lab);
 
-    BL_ASSERT(OnSameGrids(lev,jx));
+    BL_ASSERT(OnSameGrids(lev, *fields.get("current_fp", Direction{0}, lev)));
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 

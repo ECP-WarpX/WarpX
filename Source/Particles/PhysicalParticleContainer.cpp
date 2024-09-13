@@ -2031,11 +2031,12 @@ PhysicalParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
                                    Real /*t*/, Real dt, DtType a_dt_type, bool skip_deposition,
                                    PushType push_type)
 {
+    using ablastr::fields::Direction;
 
     WARPX_PROFILE("PhysicalParticleContainer::Evolve()");
     WARPX_PROFILE_VAR_NS("PhysicalParticleContainer::Evolve::GatherAndPush", blp_fg);
 
-    BL_ASSERT(OnSameGrids(lev,jx));
+    BL_ASSERT(OnSameGrids(lev, *fields.get("current_fp", Direction{0}, lev)));
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
