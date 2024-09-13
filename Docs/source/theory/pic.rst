@@ -458,7 +458,8 @@ which is divided into :math:`m` subintervals of equal size :math:`\delta t = \De
 
 .. _fig-psatd_jrhom:
 
-.. figure:: psatd_jrhom.png
+.. figure::
+   https://private-user-images.githubusercontent.com/30510597/367434274-f784b1f4-e776-4703-900e-19b63ba4ef80.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MjYyNTg4NzEsIm5iZiI6MTcyNjI1ODU3MSwicGF0aCI6Ii8zMDUxMDU5Ny8zNjc0MzQyNzQtZjc4NGIxZjQtZTc3Ni00NzAzLTkwMGUtMTliNjNiYTRlZjgwLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNDA5MTMlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjQwOTEzVDIwMTYxMVomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTM0ZDRjMzQ1ZGNhNjk1NWVjNzFjNDM0NWYzNmQ3ZWRhYzIyZmYzNTcwODhiZDhlODI1ZjNmMjU1OTFmZGNjY2EmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JmFjdG9yX2lkPTAma2V5X2lkPTAmcmVwb19pZD0wIn0.zfo7WUkFJhXXJobqttqJoLaAUaomS1Go1-DiVB2ny5c
    :alt: [fig:psatd_jrhom] Diagrams illustrating various time dependencies of the current density :math:`\mathbf{\tilde{J}}` and charge density :math:`\tilde{\rho}` for constant/linear (CL), both constant (CC), linear (LL) and quadratic (QQ) dependencies with :math:`m` subintervals: (first column) :math:`m=1`, (second) :math:`m=2` and (third) :math:`m=4`. CL1 corresponds to the standard PSATD PIC method. The triangle and circle glyphs represent the times at which the macroparticles deposit :math:`\mathbf{\tilde{J}}` and :math:`\tilde{\rho}` on the grid, respectively. The dashed and solid lines represent the assumed time dependency of :math:`\mathbf{\tilde{J}}` and :math:`\tilde{\rho}` within one timestep, when integrating the Maxwell equations analytically.
 
    Diagrams illustrating various time dependencies of the current density :math:`\mathbf{\tilde{J}}` and charge density :math:`\tilde{\rho}` for constant/linear (CL), both constant (CC), linear (LL) and quadratic (QQ) dependencies with :math:`m` subintervals: (first column) :math:`m=1`, (second) :math:`m=2` and (third) :math:`m=4`. CL1 corresponds to the standard PSATD PIC method. The triangle and circle glyphs represent the times at which the macroparticles deposit :math:`\mathbf{\tilde{J}}` and :math:`\tilde{\rho}` on the grid, respectively. The dashed and solid lines represent the assumed time dependency of :math:`\mathbf{\tilde{J}}` and :math:`\tilde{\rho}` within one timestep, when integrating the Maxwell equations analytically.
@@ -507,7 +508,8 @@ Here, :math:`\mathbf{a_J}, \mathbf{b_J}, \mathbf{c_J}, a_{\rho}, b_{\rho}, c_{\r
 
 .. _fig-j_rho_table:
 
-.. figure:: j_rho_table.png
+.. figure::
+   https://private-user-images.githubusercontent.com/30510597/367436072-805219dc-d909-4bbe-866e-8def0d265a7c.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MjYyNTkyODIsIm5iZiI6MTcyNjI1ODk4MiwicGF0aCI6Ii8zMDUxMDU5Ny8zNjc0MzYwNzItODA1MjE5ZGMtZDkwOS00YmJlLTg2NmUtOGRlZjBkMjY1YTdjLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNDA5MTMlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjQwOTEzVDIwMjMwMlomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTM4Yzc4ZDVkOWNlNTI4N2RmZDNiMGY2MTkyZjg1MWQwMjJhMGEzMzhlNTllMjljOTJiYjJmZDJkMzE0NzQ1N2QmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JmFjdG9yX2lkPTAma2V5X2lkPTAmcmVwb19pZD0wIn0.fzxU5k93BzYt0PqUIUj4awaGcXliUTmGb67CKlt8LzE
    :alt: [fig:j_rho_table] Polynomial coefficients based on the time dependency of the current and charge densities :math:`{\mathbf{\tilde{J}}}(t)` and :math:`\rho(t)` over one time subinterval, :math:`\delta t = \Delta t/m`}.
 Polynomial coefficients based on the time dependency of the current and charge densities :math:`{\mathbf{\tilde{J}}}(a)` and :math:`\rho(t)` over one time subinterval, :math:`\delta t = \Delta t/m`.
 
