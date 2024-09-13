@@ -105,8 +105,8 @@ namespace ablastr::fields
         /** the MR level of this (i)MultiFab */
         int m_level = 0;
 
-        /** redistribute */
-        bool m_redistribute = true;
+        /** remake distribution map on load balance, @see amrex::AmrCore::RemakeLevel */
+        bool m_remake = true;
 
         /** redistribute on @see amrex::AmrCore::RemakeLevel */
         bool m_redistribute_on_remake = true;
@@ -156,7 +156,7 @@ namespace ablastr::fields
          * @param ncomp ...
          * @param ngrow ...
          * @param initial_value ...
-         * @param redistribute follow the default domain decomposition of the simulation
+         * @param remake follow the default domain decomposition of the simulation
          * @param redistribute_on_remake redistribute on @see amrex::AmrCore::RemakeLevel
          * @return pointer to newly allocated MultiFab
          */
@@ -169,7 +169,7 @@ namespace ablastr::fields
             int ncomp,
             amrex::IntVect const & ngrow,
             std::optional<const amrex::Real> initial_value = std::nullopt,
-            bool redistribute = true,
+            bool remake = true,
             bool redistribute_on_remake = true
         );
         amrex::MultiFab*
@@ -182,7 +182,7 @@ namespace ablastr::fields
             int ncomp,
             amrex::IntVect const & ngrow,
             std::optional<const amrex::Real> initial_value = std::nullopt,
-            bool redistribute = true,
+            bool remake = true,
             bool redistribute_on_remake = true
         );
 
