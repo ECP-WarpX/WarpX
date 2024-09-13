@@ -28,9 +28,9 @@ class NewtonSolver : public NonlinearSolver<Vec,Ops>
 {
 public:
 
-    NewtonSolver<Vec,Ops>() = default;
+    NewtonSolver() = default;
 
-    ~NewtonSolver<Vec,Ops>() override = default;
+    ~NewtonSolver() override = default;
 
     // Prohibit Move and Copy operations
     NewtonSolver(const NewtonSolver&) = delete;
