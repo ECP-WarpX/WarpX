@@ -830,7 +830,7 @@ WarpX::computeMaxStepBoostAccelerator() {
         static_cast<int>(interaction_time_boost/dt[maxLevel()]);
     max_step = computed_max_step;
     Print()<<"max_step computed in computeMaxStepBoostAccelerator: "
-           <<max_step<<std::endl;
+           <<max_step<<"\n";
 }
 
 void
