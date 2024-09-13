@@ -11,6 +11,7 @@
 #include "SpectralFieldData_fwd.H"
 
 #include "SpectralKSpace.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpX_Complex.H"
 
 #include <ablastr/math/fft/AnyFFT.H>
@@ -59,8 +60,8 @@ class SpectralFieldIndex
          */
         SpectralFieldIndex (bool update_with_rho,
                             bool time_averaging,
-                            int J_in_time,
-                            int rho_in_time,
+                            JInTime J_in_time,
+                            RhoInTime rho_in_time,
                             bool dive_cleaning,
                             bool divb_cleaning,
                             bool pml,
