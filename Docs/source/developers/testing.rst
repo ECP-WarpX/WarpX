@@ -73,13 +73,13 @@ For easier debugging, it can be convenient to run the tests on your local machin
 
   .. code-block:: sh
 
-       ctest --test-dir build -R "laser_acceleration"
+       ctest --test-dir build -R laser_acceleration
 
 * Run tests except those matching the regular expression ``laser_acceleration``:
 
   .. code-block:: sh
 
-       ctest --test-dir build -E "laser_acceleration"
+       ctest --test-dir build -E laser_acceleration
 
 * Sometimes two or more tests share a large number of input parameters and differ by a small set of options.
   Such tests typically also share a base string in their names.
@@ -90,7 +90,7 @@ For easier debugging, it can be convenient to run the tests on your local machin
 
        ctest --test-dir build -R "test_3d_langmuir_multi\..*"
 
-  Note that filtering with ``-R "test_3d_langmuir_multi"`` would include the other existing tests and would not be sufficient.
+  Note that filtering with ``-R "test_3d_langmuir_multi"`` would include the additional tests that have the same string in them and can be sufficient if one aims to isolate a single test.
   Note also that the escaping ``\.`` in the regular expression is necessary in order to take into account the fact that each test is automatically appended with the strings ``.run``, ``.analysis`` and possibly ``.cleanup``.
 
 Once the execution of CTest is completed, you can find all files associated with each test in its corresponding directory under ``build/bin/``.
