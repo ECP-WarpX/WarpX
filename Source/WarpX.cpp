@@ -2297,10 +2297,10 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
     // Allocate extra multifabs needed for fluids
     if (do_fluid_species) {
-        myfl->AllocateLevelMFs(lev, ba, dm);
+        myfl->AllocateLevelMFs(m_fields, ba, dm, lev);
         auto & warpx = GetInstance();
         const amrex::Real cur_time = warpx.gett_new(lev);
-        myfl->InitData(lev, geom[lev].Domain(),cur_time);
+        myfl->InitData(m_fields, geom[lev].Domain(), cur_time, lev);
     }
 
     // Allocate extra multifabs for macroscopic properties of the medium

@@ -27,47 +27,47 @@ MultiFluidContainer::MultiFluidContainer (int nlevs_max)
 }
 
 void
-MultiFluidContainer::AllocateLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm)
+MultiFluidContainer::AllocateLevelMFs (ablastr::fields::MultiFabRegister& m_fields, const BoxArray& ba, const DistributionMapping& dm, int lev)
 {
     for (auto& fl : allcontainers) {
-        fl->AllocateLevelMFs(lev, ba, dm);
+        fl->AllocateLevelMFs(m_fields, ba, dm, lev);
     }
 }
 
 void
-MultiFluidContainer::InitData (int lev, amrex::Box init_box, amrex::Real cur_time)
+MultiFluidContainer::InitData (ablastr::fields::MultiFabRegister& m_fields, amrex::Box init_box, amrex::Real cur_time, int lev)
 {
     for (auto& fl : allcontainers) {
-        fl->InitData(lev, init_box, cur_time);
+        fl->InitData(m_fields, init_box, cur_time, lev);
     }
 }
 
 
 void
-MultiFluidContainer::DepositCharge (int lev, amrex::MultiFab &rho)
+MultiFluidContainer::DepositCharge (ablastr::fields::MultiFabRegister& m_fields, amrex::MultiFab &rho, int lev)
 {
     for (auto& fl : allcontainers) {
-        fl->DepositCharge(lev,rho);
+        fl->DepositCharge(m_fields,rho,lev);
     }
 }
 
 void
-MultiFluidContainer::DepositCurrent (int lev,
-    amrex::MultiFab& jx, amrex::MultiFab& jy, amrex::MultiFab& jz)
+MultiFluidContainer::DepositCurrent (ablastr::fields::MultiFabRegister& m_fields,
+    amrex::MultiFab& jx, amrex::MultiFab& jy, amrex::MultiFab& jz, int lev)
 {
     for (auto& fl : allcontainers) {
-        fl->DepositCurrent(lev,jx,jy,jz);
+        fl->DepositCurrent(m_fields,jx,jy,jz,lev);
     }
 }
 
 void
-MultiFluidContainer::Evolve (int lev,
-                            const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
-                            const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
-                            MultiFab* rho, MultiFab& jx, MultiFab& jy, MultiFab& jz,
-                            amrex::Real cur_time, bool skip_deposition)
+MultiFluidContainer::Evolve (ablastr::fields::MultiFabRegister& m_fields, 
+                            int lev,
+                            std::string current_fp_string,
+                            amrex::Real cur_time, 
+                            bool skip_deposition)
 {
     for (auto& fl : allcontainers) {
-        fl->Evolve(lev, Ex, Ey, Ez, Bx, By, Bz, rho, jx, jy, jz, cur_time, skip_deposition);
+        fl->Evolve(m_fields, lev, current_fp_string, cur_time, skip_deposition);
     }
 }

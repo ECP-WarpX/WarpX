@@ -262,7 +262,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     mypc->DepositCharge(m_fields.get_mr_levels("rho_fp", finest_level), 0.0_rt);
     if (do_fluid_species) {
         int const lev = 0;
-        myfl->DepositCharge( lev, *m_fields.get("rho_fp", lev));
+        myfl->DepositCharge( m_fields, *m_fields.get("rho_fp", lev), lev );
     }
     for (int lev = 0; lev <= max_level; lev++) {
         if (lev > 0) {

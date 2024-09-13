@@ -137,8 +137,6 @@ WarpX::UpdateInjectionPosition (const amrex::Real a_dt)
 int
 WarpX::MoveWindow (const int step, bool move_j)
 {
-    using ablastr::fields::Direction;
-
     WARPX_PROFILE("WarpX::MoveWindow");
 
     using ablastr::fields::Direction;
@@ -381,10 +379,10 @@ WarpX::MoveWindow (const int step, bool move_j)
             const int n_fluid_species = myfl->nSpecies();
             for (int i=0; i<n_fluid_species; i++) {
                 WarpXFluidContainer& fl = myfl->GetFluidContainer(i);
-                shiftMF( *fl.N[lev], geom[lev], num_shift, dir, lev, do_update_cost );
-                shiftMF( *fl.NU[lev][0], geom[lev], num_shift, dir, lev, do_update_cost );
-                shiftMF( *fl.NU[lev][1], geom[lev], num_shift, dir, lev, do_update_cost );
-                shiftMF( *fl.NU[lev][2], geom[lev], num_shift, dir, lev, do_update_cost );
+                shiftMF( *m_fields.get(fl.name_mf_N, lev), geom[lev], num_shift, dir, lev, do_update_cost );
+                shiftMF( *m_fields.get(fl.name_mf_NU, Direction{0}, lev), geom[lev], num_shift, dir, lev, do_update_cost );
+                shiftMF( *m_fields.get(fl.name_mf_NU, Direction{1}, lev), geom[lev], num_shift, dir, lev, do_update_cost );
+                shiftMF( *m_fields.get(fl.name_mf_NU, Direction{2}, lev), geom[lev], num_shift, dir, lev, do_update_cost );
             }
         }
     }
@@ -460,7 +458,7 @@ WarpX::MoveWindow (const int step, bool move_j)
         const amrex::Real cur_time = t_new[0];
         for (int i=0; i<n_fluid_species; i++) {
             WarpXFluidContainer& fl = myfl->GetFluidContainer(i);
-            fl.InitData( lev, injection_box, cur_time );
+            fl.InitData( m_fields, injection_box, cur_time, lev );
         }
     }
 

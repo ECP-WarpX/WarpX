@@ -1145,17 +1145,9 @@ WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type,
         // Might this be related to issue #1943?
 #endif
         if (do_fluid_species) {
-            myfl->Evolve(lev,
-                         *m_fields.get("Efield_aux", Direction{0}, lev),
-                         *m_fields.get("Efield_aux", Direction{1}, lev),
-                         *m_fields.get("Efield_aux", Direction{2}, lev),
-                         *m_fields.get("Bfield_aux", Direction{0}, lev),
-                         *m_fields.get("Bfield_aux", Direction{1}, lev),
-                         *m_fields.get("Bfield_aux", Direction{2}, lev),
-                         m_fields.get("rho_fp", lev),
-                         *m_fields.get(current_fp_string, Direction{0}, lev),
-                         *m_fields.get(current_fp_string, Direction{1}, lev),
-                         *m_fields.get(current_fp_string, Direction{2}, lev),
+            myfl->Evolve(m_fields,
+                         lev,
+                         current_fp_string,
                          cur_time,
                          skip_current
             );

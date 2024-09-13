@@ -50,9 +50,6 @@ WarpXFluidContainer::WarpXFluidContainer(int nlevs_max, int ispecies, const std:
     }
     amrex::Gpu::synchronize();
 
-    // Resize the list of MultiFabs for the right number of levels
-    N.resize(nlevs_max);
-    NU.resize(nlevs_max);
 }
 
 void WarpXFluidContainer::ReadParameters()
@@ -139,31 +136,33 @@ void WarpXFluidContainer::ReadParameters()
     }
 }
 
-void WarpXFluidContainer::AllocateLevelMFs(int lev, const BoxArray &ba, const DistributionMapping &dm)
+void WarpXFluidContainer::AllocateLevelMFs(ablastr::fields::MultiFabRegister& m_fields, const BoxArray &ba, const DistributionMapping &dm, int lev)
 {
+    using ablastr::fields::Direction;
     const int ncomps = 1;
     const amrex::IntVect nguards(AMREX_D_DECL(2, 2, 2));
+  
+    m_fields.alloc_init(
+            name_mf_N, lev, amrex::convert(ba, amrex::IntVect::TheNodeVector()), dm,
+            ncomps, nguards, 0.0_rt);
 
-    // set human-readable tag for each MultiFab
-    auto const tag = [lev](std::string tagname)
-    {
-        tagname.append("[l=").append(std::to_string(lev)).append("]");
-        return tagname;
-    };
+    m_fields.alloc_init(
+            name_mf_NU, Direction{0}, lev, amrex::convert(ba, amrex::IntVect::TheNodeVector()), dm,
+            ncomps, nguards, 0.0_rt);
 
-    WarpX::AllocInitMultiFab(N[lev], amrex::convert(ba, amrex::IntVect::TheNodeVector()),
-                            dm, ncomps, nguards, lev, tag("fluid density"), 0.0_rt);
+    m_fields.alloc_init(
+            name_mf_NU, Direction{1}, lev, amrex::convert(ba, amrex::IntVect::TheNodeVector()), dm,
+            ncomps, nguards, 0.0_rt);
 
-    WarpX::AllocInitMultiFab(NU[lev][0], amrex::convert(ba, amrex::IntVect::TheNodeVector()),
-                            dm, ncomps, nguards, lev, tag("fluid momentum density [x]"), 0.0_rt);
-    WarpX::AllocInitMultiFab(NU[lev][1], amrex::convert(ba, amrex::IntVect::TheNodeVector()),
-                            dm, ncomps, nguards, lev, tag("fluid momentum density [y]"), 0.0_rt);
-    WarpX::AllocInitMultiFab(NU[lev][2], amrex::convert(ba, amrex::IntVect::TheNodeVector()),
-                            dm, ncomps, nguards, lev, tag("fluid momentum density [z]"), 0.0_rt);
+    m_fields.alloc_init(
+            name_mf_NU, Direction{2}, lev, amrex::convert(ba, amrex::IntVect::TheNodeVector()), dm,
+            ncomps, nguards, 0.0_rt);
+    
 }
 
-void WarpXFluidContainer::InitData(int lev, amrex::Box init_box, amrex::Real cur_time)
+void WarpXFluidContainer::InitData(ablastr::fields::MultiFabRegister& m_fields, amrex::Box init_box, amrex::Real cur_time, int lev)
 {
+    using ablastr::fields::Direction;
     WARPX_PROFILE("WarpXFluidContainer::InitData");
 
     // Convert initialization box to nodal box
@@ -186,14 +185,14 @@ void WarpXFluidContainer::InitData(int lev, amrex::Box init_box, amrex::Real cur
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-    for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
+    for (MFIter mfi(*m_fields.get(name_mf_N, lev), TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
 
-        amrex::Box const tile_box  = mfi.tilebox(N[lev]->ixType().toIntVect());
-        amrex::Array4<Real> const &N_arr = N[lev]->array(mfi);
-        amrex::Array4<Real> const &NUx_arr = NU[lev][0]->array(mfi);
-        amrex::Array4<Real> const &NUy_arr = NU[lev][1]->array(mfi);
-        amrex::Array4<Real> const &NUz_arr = NU[lev][2]->array(mfi);
+        amrex::Box const tile_box  = mfi.tilebox(m_fields.get(name_mf_N, lev)->ixType().toIntVect());
+        amrex::Array4<Real> const &N_arr = m_fields.get(name_mf_N, lev)->array(mfi);
+        amrex::Array4<Real> const &NUx_arr = m_fields.get(name_mf_NU, Direction{0}, lev)->array(mfi);
+        amrex::Array4<Real> const &NUy_arr = m_fields.get(name_mf_NU, Direction{1}, lev)->array(mfi);
+        amrex::Array4<Real> const &NUz_arr = m_fields.get(name_mf_NU, Direction{2}, lev)->array(mfi);
 
         // Return the intersection of all cells and the ones we wish to update
         amrex::Box const init_box_intersection = init_box & tile_box;
@@ -253,54 +252,66 @@ void WarpXFluidContainer::InitData(int lev, amrex::Box init_box, amrex::Real cur
 
 
 void WarpXFluidContainer::Evolve(
+    ablastr::fields::MultiFabRegister& m_fields, 
     int lev,
-    const amrex::MultiFab &Ex, const amrex::MultiFab &Ey, const amrex::MultiFab &Ez,
-    const amrex::MultiFab &Bx, const amrex::MultiFab &By, const amrex::MultiFab &Bz,
-    amrex::MultiFab* rho, amrex::MultiFab &jx, amrex::MultiFab &jy, amrex::MultiFab &jz,
-    amrex::Real cur_time, bool skip_deposition)
+    std::string current_fp_string,
+    amrex::Real cur_time, 
+    bool skip_deposition)
 {
-
+    using ablastr::fields::Direction;
     WARPX_PROFILE("WarpXFluidContainer::Evolve");
 
-    if (rho && ! skip_deposition && ! do_not_deposit) {
+    if (m_fields.get("rho_fp",lev) && ! skip_deposition && ! do_not_deposit) {
         // Deposit charge before particle push, in component 0 of MultiFab rho.
-        DepositCharge(lev, *rho, 0);
+        DepositCharge(m_fields, *m_fields.get("rho_fp",lev), lev, 0);
     }
 
     // Step the Lorentz Term
     if(!do_not_gather){
-        GatherAndPush(lev, Ex, Ey, Ez, Bx, By, Bz, cur_time);
+        GatherAndPush(m_fields, 
+                    *m_fields.get("Efield_aux", Direction{0}, lev),
+                    *m_fields.get("Efield_aux", Direction{1}, lev), 
+                    *m_fields.get("Efield_aux", Direction{2}, lev),
+                    *m_fields.get("Bfield_aux", Direction{0}, lev),
+                    *m_fields.get("Bfield_aux", Direction{1}, lev),
+                    *m_fields.get("Bfield_aux", Direction{2}, lev),
+                    cur_time, lev);
     }
 
     // Cylindrical centrifugal term
     if(!do_not_push){
 #if defined(WARPX_DIM_RZ)
-        centrifugal_source_rz(lev);
+        centrifugal_source_rz(m_fields, lev);
 #endif
 
         // Apply (non-periodic) BC on the fluids (needed for spatial derivative),
         // and communicate N, NU at boundaries
-        ApplyBcFluidsAndComms(lev);
+        ApplyBcFluidsAndComms(m_fields, lev);
 
         // Step the Advective term
-        AdvectivePush_Muscl(lev);
+        AdvectivePush_Muscl(m_fields, lev);
     }
 
     // Deposit rho to the simulation mesh
     // Deposit charge (end of the step)
-    if (rho && ! skip_deposition && ! do_not_deposit) {
-        DepositCharge(lev, *rho, 1);
+    if (m_fields.get("rho_fp",lev) && ! skip_deposition && ! do_not_deposit) {
+        DepositCharge(m_fields, *m_fields.get("rho_fp",lev), lev, 1);
     }
 
     // Deposit J to the simulation mesh
     if (!skip_deposition && ! do_not_deposit) {
-        DepositCurrent(lev, jx, jy, jz);
+        DepositCurrent(m_fields, 
+                        *m_fields.get(current_fp_string, Direction{0}, lev), 
+                        *m_fields.get(current_fp_string, Direction{1}, lev), 
+                        *m_fields.get(current_fp_string, Direction{2}, lev), 
+                        lev);
     }
 }
 
 // Momentum source due to curvature
-void WarpXFluidContainer::ApplyBcFluidsAndComms (int lev)
+void WarpXFluidContainer::ApplyBcFluidsAndComms (ablastr::fields::MultiFabRegister& m_fields, int lev)
 {
+    using ablastr::fields::Direction;
     WARPX_PROFILE("WarpXFluidContainer::ApplyBcFluidsAndComms");
 
     WarpX &warpx = WarpX::GetInstance();
@@ -315,15 +326,15 @@ void WarpXFluidContainer::ApplyBcFluidsAndComms (int lev)
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-    for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
+    for (MFIter mfi(*m_fields.get(name_mf_N, lev), TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
 
-        amrex::Box tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
+        amrex::Box tile_box = mfi.tilebox(m_fields.get(name_mf_N, lev)->ixType().toIntVect());
 
-        const amrex::Array4<Real> N_arr = N[lev]->array(mfi);
-        const amrex::Array4<Real> NUx_arr = NU[lev][0]->array(mfi);
-        const amrex::Array4<Real> NUy_arr = NU[lev][1]->array(mfi);
-        const amrex::Array4<Real> NUz_arr = NU[lev][2]->array(mfi);
+        const amrex::Array4<Real> N_arr = m_fields.get(name_mf_N, lev)->array(mfi);
+        const amrex::Array4<Real> NUx_arr = m_fields.get(name_mf_NU, Direction{0}, lev)->array(mfi);
+        const amrex::Array4<Real> NUy_arr = m_fields.get(name_mf_NU, Direction{1}, lev)->array(mfi);
+        const amrex::Array4<Real> NUz_arr = m_fields.get(name_mf_NU, Direction{2}, lev)->array(mfi);
 
         //Grow the tilebox
         tile_box.grow(1);
@@ -395,15 +406,16 @@ void WarpXFluidContainer::ApplyBcFluidsAndComms (int lev)
     }
 
     // Fill guard cells
-    FillBoundary(*N[lev], N[lev]->nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(*NU[lev][0], NU[lev][0]->nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(*NU[lev][1], NU[lev][1]->nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(*NU[lev][2], NU[lev][2]->nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(*m_fields.get(name_mf_N, lev), m_fields.get(name_mf_N, lev)->nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(*m_fields.get(name_mf_NU, Direction{0}, lev), m_fields.get(name_mf_NU, Direction{0}, lev)->nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(*m_fields.get(name_mf_NU, Direction{1}, lev), m_fields.get(name_mf_NU, Direction{1}, lev)->nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(*m_fields.get(name_mf_NU, Direction{2}, lev), m_fields.get(name_mf_NU, Direction{2}, lev)->nGrowVect(), WarpX::do_single_precision_comms, period);
 }
 
 // Muscl Advection Update
-void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
+void WarpXFluidContainer::AdvectivePush_Muscl (ablastr::fields::MultiFabRegister& m_fields, int lev)
 {
+    using ablastr::fields::Direction;
     WARPX_PROFILE("WarpXFluidContainer::AdvectivePush_Muscl");
 
     // Grab the grid spacing
@@ -434,31 +446,31 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
     const amrex::Real dt_over_dz_half = 0.5_rt*(dt/dx[0]);
 #endif
 
-    const amrex::BoxArray ba = N[lev]->boxArray();
+    const amrex::BoxArray ba = m_fields.get(name_mf_N, lev)->boxArray();
 
     // Temporary Half-step values
 #if defined(WARPX_DIM_3D)
-    amrex::MultiFab tmp_U_minus_x( amrex::convert(ba, IntVect(0,1,1)), N[lev]->DistributionMap(), 4, 1);
-    amrex::MultiFab tmp_U_plus_x( amrex::convert(ba, IntVect(0,1,1)), N[lev]->DistributionMap(), 4, 1);
-    amrex::MultiFab tmp_U_minus_y( amrex::convert(ba, IntVect(1,0,1)), N[lev]->DistributionMap(), 4, 1);
-    amrex::MultiFab tmp_U_plus_y( amrex::convert(ba, IntVect(1,0,1)), N[lev]->DistributionMap(), 4, 1);
-    amrex::MultiFab tmp_U_minus_z( amrex::convert(ba, IntVect(1,1,0)), N[lev]->DistributionMap(), 4, 1);
-    amrex::MultiFab tmp_U_plus_z( amrex::convert(ba, IntVect(1,1,0)), N[lev]->DistributionMap(), 4, 1);
+    amrex::MultiFab tmp_U_minus_x( amrex::convert(ba, IntVect(0,1,1)), m_fields.get(name_mf_N, lev)->DistributionMap(), 4, 1);
+    amrex::MultiFab tmp_U_plus_x( amrex::convert(ba, IntVect(0,1,1)), m_fields.get(name_mf_N, lev)->DistributionMap(), 4, 1);
+    amrex::MultiFab tmp_U_minus_y( amrex::convert(ba, IntVect(1,0,1)), m_fields.get(name_mf_N, lev)->DistributionMap(), 4, 1);
+    amrex::MultiFab tmp_U_plus_y( amrex::convert(ba, IntVect(1,0,1)), m_fields.get(name_mf_N, lev)->DistributionMap(), 4, 1);
+    amrex::MultiFab tmp_U_minus_z( amrex::convert(ba, IntVect(1,1,0)), m_fields.get(name_mf_N, lev)->DistributionMap(), 4, 1);
+    amrex::MultiFab tmp_U_plus_z( amrex::convert(ba, IntVect(1,1,0)), m_fields.get(name_mf_N, lev)->DistributionMap(), 4, 1);
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    amrex::MultiFab tmp_U_minus_x( amrex::convert(ba, IntVect(0,1)), N[lev]->DistributionMap(), 4, 1);
-    amrex::MultiFab tmp_U_plus_x( amrex::convert(ba, IntVect(0,1)), N[lev]->DistributionMap(), 4, 1);
-    amrex::MultiFab tmp_U_minus_z( amrex::convert(ba, IntVect(1,0)), N[lev]->DistributionMap(), 4, 1);
-    amrex::MultiFab tmp_U_plus_z( amrex::convert(ba, IntVect(1,0)), N[lev]->DistributionMap(), 4, 1);
+    amrex::MultiFab tmp_U_minus_x( amrex::convert(ba, IntVect(0,1)), m_fields.get(name_mf_N, lev)->DistributionMap(), 4, 1);
+    amrex::MultiFab tmp_U_plus_x( amrex::convert(ba, IntVect(0,1)), m_fields.get(name_mf_N, lev)->DistributionMap(), 4, 1);
+    amrex::MultiFab tmp_U_minus_z( amrex::convert(ba, IntVect(1,0)), m_fields.get(name_mf_N, lev)->DistributionMap(), 4, 1);
+    amrex::MultiFab tmp_U_plus_z( amrex::convert(ba, IntVect(1,0)), m_fields.get(name_mf_N, lev)->DistributionMap(), 4, 1);
 #else
-    amrex::MultiFab tmp_U_minus_z( amrex::convert(ba, IntVect(0)), N[lev]->DistributionMap(), 4, 1);
-    amrex::MultiFab tmp_U_plus_z( amrex::convert(ba, IntVect(0)), N[lev]->DistributionMap(), 4, 1);
+    amrex::MultiFab tmp_U_minus_z( amrex::convert(ba, IntVect(0)), m_fields.get(name_mf_N, lev)->DistributionMap(), 4, 1);
+    amrex::MultiFab tmp_U_plus_z( amrex::convert(ba, IntVect(0)), m_fields.get(name_mf_N, lev)->DistributionMap(), 4, 1);
 #endif
 
     // Fill edge values of N and U at the half timestep for MUSCL
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-    for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
+    for (MFIter mfi(*m_fields.get(name_mf_N, lev), TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
 
         // Loop over a box with one extra gridpoint in the ghost region to avoid
@@ -476,10 +488,10 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
            return tt;
         }();
 
-        amrex::Array4<Real> const &N_arr = N[lev]->array(mfi);
-        amrex::Array4<Real> const &NUx_arr = NU[lev][0]->array(mfi);
-        amrex::Array4<Real> const &NUy_arr = NU[lev][1]->array(mfi);
-        amrex::Array4<Real> const &NUz_arr = NU[lev][2]->array(mfi);
+        amrex::Array4<Real> const &N_arr = m_fields.get(name_mf_N, lev)->array(mfi);
+        amrex::Array4<Real> const &NUx_arr = m_fields.get(name_mf_NU, Direction{0}, lev)->array(mfi);
+        amrex::Array4<Real> const &NUy_arr = m_fields.get(name_mf_NU, Direction{1}, lev)->array(mfi);
+        amrex::Array4<Real> const &NUz_arr = m_fields.get(name_mf_NU, Direction{2}, lev)->array(mfi);
 
         // Boxes are computed to avoid going out of bounds.
         // Grow the entire domain
@@ -741,13 +753,13 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-    for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
+    for (MFIter mfi(*m_fields.get(name_mf_N, lev), TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-        const amrex::Box tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
-        const amrex::Array4<Real> N_arr = N[lev]->array(mfi);
-        const amrex::Array4<Real> NUx_arr = NU[lev][0]->array(mfi);
-        const amrex::Array4<Real> NUy_arr = NU[lev][1]->array(mfi);
-        const amrex::Array4<Real> NUz_arr = NU[lev][2]->array(mfi);
+        const amrex::Box tile_box = mfi.tilebox(m_fields.get(name_mf_N, lev)->ixType().toIntVect());
+        const amrex::Array4<Real> N_arr = m_fields.get(name_mf_N, lev)->array(mfi);
+        const amrex::Array4<Real> NUx_arr = m_fields.get(name_mf_NU, Direction{0}, lev)->array(mfi);
+        const amrex::Array4<Real> NUy_arr = m_fields.get(name_mf_NU, Direction{1}, lev)->array(mfi);
+        const amrex::Array4<Real> NUz_arr = m_fields.get(name_mf_NU, Direction{2}, lev)->array(mfi);
 
 #if defined(WARPX_DIM_3D)
         amrex::Array4<amrex::Real> const &U_minus_x = tmp_U_minus_x.array(mfi);
@@ -878,8 +890,9 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
 // Momentum source due to curvature
 #if defined(WARPX_DIM_RZ)
-void WarpXFluidContainer::centrifugal_source_rz (int lev)
+void WarpXFluidContainer::centrifugal_source_rz (ablastr::fields::MultiFabRegister& m_fields, int lev)
 {
+    using ablastr::fields::Direction;
     WARPX_PROFILE("WarpXFluidContainer::centrifugal_source_rz");
 
     WarpX &warpx = WarpX::GetInstance();
@@ -894,15 +907,15 @@ void WarpXFluidContainer::centrifugal_source_rz (int lev)
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-    for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
+    for (MFIter mfi(*m_fields.get(name_mf_N, lev), TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
 
-        amrex::Box const &tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
+        amrex::Box const &tile_box = mfi.tilebox(m_fields.get(name_mf_N, lev)->ixType().toIntVect());
 
-        amrex::Array4<Real> const &N_arr = N[lev]->array(mfi);
-        const amrex::Array4<Real> NUx_arr = NU[lev][0]->array(mfi);
-        const amrex::Array4<Real> NUy_arr = NU[lev][1]->array(mfi);
-        amrex::Array4<Real> const &NUz_arr = NU[lev][2]->array(mfi);
+        amrex::Array4<Real> const &N_arr = m_fields.get(name_mf_N, lev)->array(mfi);
+        const amrex::Array4<Real> NUx_arr = m_fields.get(name_mf_NU, Direction{0}, lev)->array(mfi);
+        const amrex::Array4<Real> NUy_arr = m_fields.get(name_mf_NU, Direction{1}, lev)->array(mfi);
+        amrex::Array4<Real> const &NUz_arr = m_fields.get(name_mf_NU, Direction{2}, lev)->array(mfi);
 
         amrex::ParallelFor(tile_box,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -947,11 +960,13 @@ void WarpXFluidContainer::centrifugal_source_rz (int lev)
 
 // Momentum source from fields
 void WarpXFluidContainer::GatherAndPush (
-    int lev,
+    ablastr::fields::MultiFabRegister& m_fields,
     const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
     const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz,
-    Real t)
+    Real t,
+    int lev)
 {
+    using ablastr::fields::Direction;
     WARPX_PROFILE("WarpXFluidContainer::GatherAndPush");
 
     WarpX &warpx = WarpX::GetInstance();
@@ -978,7 +993,7 @@ void WarpXFluidContainer::GatherAndPush (
     auto Bz_type = amrex::GpuArray<int, 3>{0, 0, 0};
     for (int i = 0; i < AMREX_SPACEDIM; ++i)
     {
-        Nodal_type[i] = N[lev]->ixType()[i];
+        Nodal_type[i] = m_fields.get(name_mf_N, lev)->ixType()[i];
         Ex_type[i] = Ex.ixType()[i];
         Ey_type[i] = Ey.ixType()[i];
         Ez_type[i] = Ez.ixType()[i];
@@ -1015,15 +1030,15 @@ void WarpXFluidContainer::GatherAndPush (
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-    for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
+    for (MFIter mfi(*m_fields.get(name_mf_N, lev), TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
 
-        amrex::Box const &tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
+        amrex::Box const &tile_box = mfi.tilebox(m_fields.get(name_mf_N, lev)->ixType().toIntVect());
 
-        amrex::Array4<Real> const &N_arr = N[lev]->array(mfi);
-        const amrex::Array4<Real> NUx_arr = NU[lev][0]->array(mfi);
-        const amrex::Array4<Real> NUy_arr = NU[lev][1]->array(mfi);
-        const amrex::Array4<Real> NUz_arr = NU[lev][2]->array(mfi);
+        amrex::Array4<Real> const &N_arr = m_fields.get(name_mf_N, lev)->array(mfi);
+        const amrex::Array4<Real> NUx_arr = m_fields.get(name_mf_NU, Direction{0}, lev)->array(mfi);
+        const amrex::Array4<Real> NUy_arr = m_fields.get(name_mf_NU, Direction{1}, lev)->array(mfi);
+        const amrex::Array4<Real> NUz_arr = m_fields.get(name_mf_NU, Direction{2}, lev)->array(mfi);
 
         amrex::Array4<const amrex::Real> const& Ex_arr = Ex.array(mfi);
         amrex::Array4<const amrex::Real> const& Ey_arr = Ey.array(mfi);
@@ -1218,7 +1233,7 @@ void WarpXFluidContainer::GatherAndPush (
     }
 }
 
-void WarpXFluidContainer::DepositCharge (int lev, amrex::MultiFab &rho, int icomp)
+void WarpXFluidContainer::DepositCharge (ablastr::fields::MultiFabRegister& m_fields, amrex::MultiFab &rho, int lev, int icomp)
 {
     WARPX_PROFILE("WarpXFluidContainer::DepositCharge");
 
@@ -1235,11 +1250,11 @@ void WarpXFluidContainer::DepositCharge (int lev, amrex::MultiFab &rho, int icom
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-    for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
+    for (MFIter mfi(*m_fields.get(name_mf_N, lev), TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
 
-        amrex::Box const &tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
-        amrex::Array4<Real> const &N_arr = N[lev]->array(mfi);
+        amrex::Box const &tile_box = mfi.tilebox(m_fields.get(name_mf_N, lev)->ixType().toIntVect());
+        amrex::Array4<Real> const &N_arr = m_fields.get(name_mf_N, lev)->array(mfi);
         const amrex::Array4<amrex::Real> rho_arr = rho.array(mfi);
         const amrex::Array4<int> owner_mask_rho_arr = owner_mask_rho->array(mfi);
 
@@ -1255,15 +1270,17 @@ void WarpXFluidContainer::DepositCharge (int lev, amrex::MultiFab &rho, int icom
 
 
 void WarpXFluidContainer::DepositCurrent(
-    int lev,
-    amrex::MultiFab &jx, amrex::MultiFab &jy, amrex::MultiFab &jz)
+    ablastr::fields::MultiFabRegister& m_fields,
+    amrex::MultiFab &jx, amrex::MultiFab &jy, amrex::MultiFab &jz,
+    int lev)
 {
+    using ablastr::fields::Direction;
     WARPX_PROFILE("WarpXFluidContainer::DepositCurrent");
 
     // Temporary nodal currents
-    amrex::MultiFab tmp_jx_fluid(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_jy_fluid(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_jz_fluid(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
+    amrex::MultiFab tmp_jx_fluid(m_fields.get(name_mf_N, lev)->boxArray(), m_fields.get(name_mf_N, lev)->DistributionMap(), 1, 0);
+    amrex::MultiFab tmp_jy_fluid(m_fields.get(name_mf_N, lev)->boxArray(), m_fields.get(name_mf_N, lev)->DistributionMap(), 1, 0);
+    amrex::MultiFab tmp_jz_fluid(m_fields.get(name_mf_N, lev)->boxArray(), m_fields.get(name_mf_N, lev)->DistributionMap(), 1, 0);
 
     const amrex::Real inv_clight_sq = 1.0_prt / PhysConst::c / PhysConst::c;
     const amrex::Real q = getCharge();
@@ -1293,14 +1310,14 @@ void WarpXFluidContainer::DepositCurrent(
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-    for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
+    for (MFIter mfi(*m_fields.get(name_mf_N, lev), TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-        amrex::Box const &tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
+        amrex::Box const &tile_box = mfi.tilebox(m_fields.get(name_mf_N, lev)->ixType().toIntVect());
 
-        amrex::Array4<Real> const &N_arr = N[lev]->array(mfi);
-        amrex::Array4<Real> const &NUx_arr = NU[lev][0]->array(mfi);
-        amrex::Array4<Real> const &NUy_arr = NU[lev][1]->array(mfi);
-        amrex::Array4<Real> const &NUz_arr = NU[lev][2]->array(mfi);
+        amrex::Array4<Real> const &N_arr = m_fields.get(name_mf_N, lev)->array(mfi);
+        amrex::Array4<Real> const &NUx_arr = m_fields.get(name_mf_NU, Direction{0}, lev)->array(mfi);
+        amrex::Array4<Real> const &NUy_arr = m_fields.get(name_mf_NU, Direction{1}, lev)->array(mfi);
+        amrex::Array4<Real> const &NUz_arr = m_fields.get(name_mf_NU, Direction{2}, lev)->array(mfi);
 
         const amrex::Array4<amrex::Real> tmp_jx_fluid_arr = tmp_jx_fluid.array(mfi);
         const amrex::Array4<amrex::Real> tmp_jy_fluid_arr = tmp_jy_fluid.array(mfi);
@@ -1328,7 +1345,7 @@ void WarpXFluidContainer::DepositCurrent(
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-    for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
+    for (MFIter mfi(*m_fields.get(name_mf_N, lev), TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
         amrex::Box const &tile_box_x = mfi.tilebox(jx.ixType().toIntVect());
         amrex::Box const &tile_box_y = mfi.tilebox(jy.ixType().toIntVect());
