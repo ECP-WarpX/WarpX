@@ -11,6 +11,7 @@
 
 #include "SpectralAlgorithms/SpectralBaseAlgorithm.H"
 #include "SpectralFieldData.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 
 #include <ablastr/fields/MultiFabRegister.H>
 #include <ablastr/utils/Enums.H>
@@ -87,9 +88,9 @@ class SpectralSolver
                         bool periodic_single_box,
                         bool update_with_rho,
                         bool fft_do_time_averaging,
-                        int psatd_solution_type,
-                        int J_in_time,
-                        int rho_in_time,
+                        PSATDSolutionType psatd_solution_type,
+                        JInTime J_in_time,
+                        RhoInTime rho_in_time,
                         bool dive_cleaning,
                         bool divb_cleaning);
 

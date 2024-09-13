@@ -413,12 +413,10 @@ LaserParticleContainer::InitData (int lev)
 #if defined(WARPX_DIM_3D)
         return {m_u_X[0]*(pos[0]-m_position[0])+m_u_X[1]*(pos[1]-m_position[1])+m_u_X[2]*(pos[2]-m_position[2]),
                 m_u_Y[0]*(pos[0]-m_position[0])+m_u_Y[1]*(pos[1]-m_position[1])+m_u_Y[2]*(pos[2]-m_position[2])};
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-#   if defined(WARPX_DIM_RZ)
+#elif defined(WARPX_DIM_RZ)
         return {pos[0]-m_position[0], 0.0_rt};
-#   else
+#elif defined(WARPX_DIM_XZ)
         return {m_u_X[0]*(pos[0]-m_position[0])+m_u_X[2]*(pos[2]-m_position[2]), 0.0_rt};
-#   endif
 #else
         return {m_u_X[2]*(pos[2]-m_position[2]), 0.0_rt};
 #endif
@@ -743,13 +741,12 @@ LaserParticleContainer::ComputeSpacing (int lev, Real& Sx, Real& Sy) const
     Sy = std::min(std::min(dx[0]/(std::abs(m_u_Y[0])+eps),
                            dx[1]/(std::abs(m_u_Y[1])+eps)),
                            dx[2]/(std::abs(m_u_Y[2])+eps));
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-#   if defined(WARPX_DIM_RZ)
+#elif defined(WARPX_DIM_RZ)
     Sx = dx[0];
-#   else
+    Sy = 1.0;
+#elif defined(WARPX_DIM_XZ)
     Sx = std::min(dx[0]/(std::abs(m_u_X[0])+eps),
                   dx[2]/(std::abs(m_u_X[2])+eps));
-#   endif
     Sy = 1.0;
 #else
     Sx = 1.0;
@@ -759,7 +756,7 @@ LaserParticleContainer::ComputeSpacing (int lev, Real& Sx, Real& Sy) const
 }
 
 void
-LaserParticleContainer::ComputeWeightMobility (Real Sx, Real Sy)
+LaserParticleContainer::ComputeWeightMobility ([[maybe_unused]] Real Sx, [[maybe_unused]] Real Sy)
 {
     // The mobility is the constant of proportionality between the field to
     // be emitted, and the corresponding velocity that the particles need to have.
@@ -769,14 +766,7 @@ LaserParticleContainer::ComputeWeightMobility (Real Sx, Real Sy)
     m_mobility = eps/m_e_max;
     m_weight = PhysConst::ep0 / m_mobility;
     // Multiply by particle spacing
-#if defined(WARPX_DIM_3D)
-    m_weight *= Sx * Sy;
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    m_weight *= Sx;
-    amrex::ignore_unused(Sy);
-#else
-    amrex::ignore_unused(Sx,Sy);
-#endif
+    m_weight *= AMREX_D_TERM(1._rt, * Sx, * Sy);
     // When running in the boosted-frame, the input parameters (and in particular
     // the amplitude of the field) are given in the lab-frame.
     // Therefore, the mobility needs to be modified by a factor WarpX::gamma_boost.

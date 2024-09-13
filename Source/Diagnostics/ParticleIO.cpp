@@ -241,7 +241,7 @@ MultiParticleContainer::WriteHeader (std::ostream& os) const
 
 void
 storePhiOnParticles ( PinnedMemoryParticleContainer& tmp,
-    int electrostatic_solver_id, bool is_full_diagnostic ) {
+    ElectrostaticSolverAlgo electrostatic_solver_id, bool is_full_diagnostic ) {
 
     using PinnedParIter = typename PinnedMemoryParticleContainer::ParIterType;
 

@@ -137,6 +137,11 @@ An example of initializing the fields by accessing their data through Python, ad
 Many Further Examples, Demos and Tests
 --------------------------------------
 
+.. toctree::
+   :maxdepth: 1
+
+   examples/field_ionization/README.rst
+
 WarpX runs over 200 integration tests on a variety of modeling cases, which validate and demonstrate its functionality.
 Please see the `Examples/Tests/ <https://github.com/ECP-WarpX/WarpX/tree/development/Examples/Tests>`__ directory for many more examples.
 

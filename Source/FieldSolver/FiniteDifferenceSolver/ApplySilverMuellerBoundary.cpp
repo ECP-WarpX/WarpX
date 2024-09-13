@@ -39,8 +39,8 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
     ablastr::fields::VectorField& Bfield,
     amrex::Box domain_box,
     amrex::Real const dt,
-    amrex::Vector<FieldBoundaryType> field_boundary_lo,
-    amrex::Vector<FieldBoundaryType> field_boundary_hi) {
+    amrex::Array<FieldBoundaryType,AMREX_SPACEDIM> field_boundary_lo,
+    amrex::Array<FieldBoundaryType,AMREX_SPACEDIM> field_boundary_hi) {
 
     using ablastr::fields::Direction;
 
