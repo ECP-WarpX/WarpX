@@ -2347,22 +2347,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                     dm, ncomps, guard_cells.ng_FieldSolver, 0.0_rt);
             }
             if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
-                //! EB: Lengths of the mesh edges
-                m_fields.alloc_init( "edge_lengths", Direction{0}, lev, amrex::convert(ba, Ex_nodal_flag),
-                    dm, ncomps, guard_cells.ng_FieldSolver, 0.0_rt);
-                m_fields.alloc_init( "edge_lengths", Direction{1}, lev, amrex::convert(ba, Ey_nodal_flag),
-                    dm, ncomps, guard_cells.ng_FieldSolver, 0.0_rt);
-                m_fields.alloc_init( "edge_lengths", Direction{2}, lev, amrex::convert(ba, Ez_nodal_flag),
-                    dm, ncomps, guard_cells.ng_FieldSolver, 0.0_rt);
-
-                //! EB: Areas of the mesh faces
-                m_fields.alloc_init( "face_areas", Direction{0}, lev, amrex::convert(ba, Bx_nodal_flag),
-                    dm, ncomps, guard_cells.ng_FieldSolver, 0.0_rt);
-                m_fields.alloc_init( "face_areas", Direction{1}, lev, amrex::convert(ba, By_nodal_flag),
-                    dm, ncomps, guard_cells.ng_FieldSolver, 0.0_rt);
-                m_fields.alloc_init( "face_areas", Direction{2}, lev, amrex::convert(ba, Bz_nodal_flag),
-                    dm, ncomps, guard_cells.ng_FieldSolver, 0.0_rt);
-
                 AllocInitMultiFab(m_flag_info_face[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps,
                                   guard_cells.ng_FieldSolver, lev, "m_flag_info_face[x]");
                 AllocInitMultiFab(m_flag_info_face[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps,
