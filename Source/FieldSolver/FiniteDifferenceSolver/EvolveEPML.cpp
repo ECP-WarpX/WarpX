@@ -58,15 +58,22 @@ void FiniteDifferenceSolver::EvolveEPML (
     WARPX_ABORT_WITH_MESSAGE(
         "PML are not implemented in cylindrical geometry.");
 #else
+    using ablastr::fields::Direction;
     ablastr::fields::VectorField Efield = (patch_type == PatchType::fine) ?
         fields.get_alldirs("pml_E_fp", level) : fields.get_alldirs("pml_E_cp", level);
     ablastr::fields::VectorField Bfield = (patch_type == PatchType::fine) ?
         fields.get_alldirs("pml_B_fp", level) : fields.get_alldirs("pml_B_cp", level);
     ablastr::fields::VectorField Jfield = (patch_type == PatchType::fine) ?
         fields.get_alldirs("pml_j_fp", level) : fields.get_alldirs("pml_j_cp", level);
-    ablastr::fields::VectorField edge_lengths = fields.get_alldirs("pml_edge_lengths", level);
-    amrex::MultiFab* const Ffield = (patch_type == PatchType::fine) ?
-        fields.get("pml_F_fp", level) : fields.get("pml_F_cp", level);
+    ablastr::fields::VectorField edge_lengths;
+    if (fields.has("pml_edge_lengths", Direction{0}, level)) {
+        edge_lengths = fields.get_alldirs("pml_edge_lengths", level);
+    }
+    amrex::MultiFab * Ffield = nullptr;
+    if (fields.has("pml_F_fp", level)) {
+        Ffield = (patch_type == PatchType::fine) ?
+            fields.get("pml_F_fp", level) : fields.get("pml_F_cp", level);
+    }
 
     if (m_grid_type == GridType::Collocated) {
 

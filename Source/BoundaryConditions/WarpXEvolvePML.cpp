@@ -88,10 +88,7 @@ WarpX::DampPML_Cartesian (const int lev, PatchType patch_type)
     {
         const auto& pml_E = (patch_type == PatchType::fine) ? m_fields.get_alldirs("pml_E_fp", lev) : m_fields.get_alldirs("pml_E_cp", lev);
         const auto& pml_B = (patch_type == PatchType::fine) ? m_fields.get_alldirs("pml_B_fp", lev) : m_fields.get_alldirs("pml_B_cp", lev);
-        const auto& pml_F = (patch_type == PatchType::fine) ? m_fields.get("pml_F_fp", lev) : m_fields.get("pml_F_cp", lev);
-        const auto& pml_G = (patch_type == PatchType::fine) ? m_fields.get("pml_G_fp", lev) : m_fields.get("pml_G_cp", lev);
-        const auto& sigba = (patch_type == PatchType::fine) ? pml[lev]->GetMultiSigmaBox_fp()
-                                                            : pml[lev]->GetMultiSigmaBox_cp();
+        const auto& sigba = (patch_type == PatchType::fine) ? pml[lev]->GetMultiSigmaBox_fp() : pml[lev]->GetMultiSigmaBox_cp();
 
         const amrex::IntVect Ex_stag = pml_E[0]->ixType().toIntVect();
         const amrex::IntVect Ey_stag = pml_E[1]->ixType().toIntVect();
@@ -102,12 +99,16 @@ WarpX::DampPML_Cartesian (const int lev, PatchType patch_type)
         const amrex::IntVect Bz_stag = pml_B[2]->ixType().toIntVect();
 
         amrex::IntVect F_stag;
-        if (pml_F) {
+        if (m_fields.has("pml_F_fp", lev)) {
+            amrex::MultiFab* pml_F = (patch_type == PatchType::fine) ?
+                m_fields.get("pml_F_fp", lev) : m_fields.get("pml_F_cp", lev);
             F_stag = pml_F->ixType().toIntVect();
         }
 
         amrex::IntVect G_stag;
-        if (pml_G) {
+        if (m_fields.has("pml_G_fp", lev)) {
+            amrex::MultiFab* pml_G = (patch_type == PatchType::fine) ?
+                m_fields.get("pml_G_fp", lev) : m_fields.get("pml_G_cp", lev);
             G_stag = pml_G->ixType().toIntVect();
         }
 
@@ -198,7 +199,9 @@ WarpX::DampPML_Cartesian (const int lev, PatchType patch_type)
             // For warpx_damp_pml_F(), mfi.nodaltilebox is used in the ParallelFor loop and here we
             // use mfi.tilebox. However, it does not matter because in damp_pml, where nodaltilebox
             // is used, only a simple multiplication is performed.
-            if (pml_F) {
+            if (m_fields.has("pml_F_fp", lev)) {
+                amrex::MultiFab* pml_F = (patch_type == PatchType::fine) ?
+                    m_fields.get("pml_F_fp", lev) : m_fields.get("pml_F_cp", lev);
                 const Box& tnd = mfi.nodaltilebox();
                 auto const& pml_F_fab = pml_F->array(mfi);
                 amrex::ParallelFor(tnd, [=] AMREX_GPU_DEVICE (int i, int j, int k)
@@ -209,7 +212,10 @@ WarpX::DampPML_Cartesian (const int lev, PatchType patch_type)
             }
 
             // Damp G when WarpX::do_divb_cleaning = true
-            if (pml_G) {
+            if (m_fields.has("pml_G_fp", lev)) {
+                amrex::MultiFab* pml_G = (patch_type == PatchType::fine) ?
+                    m_fields.get("pml_G_fp", lev) : m_fields.get("pml_G_cp", lev);
+
                 const Box& tb = mfi.tilebox(G_stag);
                 auto const& pml_G_fab = pml_G->array(mfi);
                 amrex::ParallelFor(tb, [=] AMREX_GPU_DEVICE (int i, int j, int k)
