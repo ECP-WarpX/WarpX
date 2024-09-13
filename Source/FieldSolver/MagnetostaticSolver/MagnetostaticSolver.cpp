@@ -322,7 +322,7 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
                 else {
                     WARPX_ABORT_WITH_MESSAGE(
                         "Field boundary conditions have to be either periodic, PEC or neumann "
-                        "when using the magnetostatic solver,  but they are " + GetFieldBCTypeString(WarpX::field_boundary_lo[idim])
+                        "when using the magnetostatic solver,  but they are " + amrex::getEnumNameString(WarpX::field_boundary_lo[idim])
                     );
                 }
 
@@ -342,7 +342,7 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
                 else {
                     WARPX_ABORT_WITH_MESSAGE(
                         "Field boundary conditions have to be either periodic, PEC or neumann "
-                        "when using the magnetostatic solver,  but they are " + GetFieldBCTypeString(WarpX::field_boundary_lo[idim])
+                        "when using the magnetostatic solver,  but they are " + amrex::getEnumNameString(WarpX::field_boundary_lo[idim])
                     );
                 }
             }
