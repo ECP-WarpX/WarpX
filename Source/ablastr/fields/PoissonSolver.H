@@ -392,13 +392,15 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         // - coarser level provides boundary values for finer level patch
         // Interpolation from phi[lev] to phi[lev+1]
         // (This provides both the boundary conditions and initial guess for phi[lev+1])
-        if (lev < finest_level) { interpolatePhiBetweenLevels(phi[lev],
-                                                              phi[lev+1],
-                                                              geom[lev],
-                                                              do_single_precision_comms,
-                                                              refratio,
-                                                              ncomp,
-                                                              ng);}
+        if (lev < finest_level) {
+            interpolatePhiBetweenLevels(phi[lev],
+                                        phi[lev+1],
+                                        geom[lev],
+                                        do_single_precision_comms,
+                                        refratio,
+                                        ncomp,
+                                        ng);
+        }
 
         // Run additional operations, such as calculation of the E field for embedded boundaries
         if constexpr (!std::is_same_v<T_PostPhiCalculationFunctor, std::nullopt_t>) {
