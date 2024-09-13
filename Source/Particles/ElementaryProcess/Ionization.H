@@ -143,8 +143,8 @@ struct IonizationFilterFunc
             // if requested, do Zhang's correction of ADK
             if (m_do_adk_correction) {
                 const amrex::Real r = E / m_adk_correction_factors[3];
-                w_dtau *= std::exp(m_adk_correction_factors[0]*r*r+m_adk_correction_factors[1]*r+
-                                   m_adk_correction_factors[2]);
+                w_dtau *= std::exp(-(m_adk_correction_factors[0]*r*r+m_adk_correction_factors[1]*r+
+                                   m_adk_correction_factors[2]));
             }
 
             const amrex::Real p = 1._rt - std::exp( - w_dtau );
