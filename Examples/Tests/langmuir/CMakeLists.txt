@@ -341,6 +341,7 @@ if(WarpX_FFT)
         diags/diag1000040  # output
         OFF  # dependency
     )
+    label_warpx_test(test_3d_langmuir_multi_psatd_vay_deposition_nodal slow)
 endif()
 
 add_warpx_test(
