@@ -10,3 +10,4 @@ add_warpx_test(
     diags/diag1000010  # output
     OFF  # dependency
 )
+label_warpx_test(test_3d_nodal_electrostatic_solver slow)
