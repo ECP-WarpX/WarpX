@@ -781,11 +781,7 @@ WarpX::PushPSATD ()
     auto Bfield_cp = m_fields.get_mr_levels_alldirs("Bfield_cp", finest_level);
 
     // FFT of E and B
-    PSATDForwardTransformEB(
-        m_fields.get_mr_levels_alldirs("Efield_fp", finest_level),
-        m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level),
-        m_fields.get_mr_levels_alldirs("Efield_cp", finest_level),
-        m_fields.get_mr_levels_alldirs("Bfield_cp", finest_level) );
+    PSATDForwardTransformEB(Efield_fp, Bfield_fp, Efield_cp, Bfield_cp );
 
 #ifdef WARPX_DIM_RZ
     if (pml_rz[0]) { pml_rz[0]->PushPSATD(0); }
@@ -1100,7 +1096,6 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
         "Macroscopic EvolveE is not implemented for lev>0, yet."
     );
 
-    ablastr::fields::MultiLevelVectorField const& Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
     m_fdtd_solver_fp[lev]->MacroscopicEvolveE(
         m_fields.get_alldirs("Efield_fp", lev),
         m_fields.get_alldirs("Bfield_fp", lev),
