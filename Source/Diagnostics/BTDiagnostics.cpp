@@ -701,11 +701,11 @@ BTDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
         } else if ( m_cellcenter_varnames_fields[comp] == "Bz" ){
             m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("Bfield_aux", Direction{2}, lev), lev, m_crse_ratio, false, ncomp);
         } else if ( m_cellcenter_varnames_fields[comp] == "jr" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("current_fp", lev), lev, m_crse_ratio, false, ncomp);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("current_fp", Direction{0}, lev), lev, m_crse_ratio, false, ncomp);
         } else if ( m_cellcenter_varnames_fields[comp] == "jt" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("current_fp", lev), lev, m_crse_ratio, false, ncomp);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("current_fp", Direction{1}, lev), lev, m_crse_ratio, false, ncomp);
         } else if ( m_cellcenter_varnames_fields[comp] == "jz" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("current_fp", lev), lev, m_crse_ratio, false, ncomp);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get("current_fp", Direction{2}, lev), lev, m_crse_ratio, false, ncomp);
         } else if ( m_cellcenter_varnames_fields[comp] == "rho" ){
             m_cell_center_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, false, -1, false, ncomp);
         }
