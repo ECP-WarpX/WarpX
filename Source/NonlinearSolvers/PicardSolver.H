@@ -26,9 +26,9 @@ class PicardSolver : public NonlinearSolver<Vec,Ops>
 {
 public:
 
-    PicardSolver<Vec,Ops>() = default;
+    PicardSolver() = default;
 
-    ~PicardSolver<Vec,Ops>() override = default;
+    ~PicardSolver() override = default;
 
     // Prohibit Move and Copy operations
     PicardSolver(const PicardSolver&) = delete;
