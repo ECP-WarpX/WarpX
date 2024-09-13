@@ -57,11 +57,47 @@ void CheckGriddingForRZSpectral ();
 
 /** Function that sets the value of MultiFab MF to zero.
  *
- * For z between zmin and zmax.
+ * \param[in] mf Pointer to the MultiFab
+ * \param[in] lev The mesh refinement level
+ * \param[in] zmin The minimum z of the range to be mullified
+ * \param[in] zmin The maximum z of the range to be mullified
+ */
+void NullifyMFinstance (
+    amrex::MultiFab *mf,
+    int lev,
+    amrex::Real zmin,
+    amrex::Real zmax
+);
+
+/** Function that sets the value of MultiFab MF to zero.
+ *
+ * \param[in] multifab_map Multifab registry
+ * \param[in] nf_name Name of Multifab to modify
+ * \param[in] lev The mesh refinement level
+ * \param[in] zmin The minimum z of the range to be mullified
+ * \param[in] zmin The maximum z of the range to be mullified
  */
 void NullifyMF (
     ablastr::fields::MultiFabRegister& multifab_map,
-    std::string mf_name,
+    std::string const& mf_name,
+    int lev,
+    amrex::Real zmin,
+    amrex::Real zmax
+);
+
+/** Function that sets the value of MultiFab MF to zero.
+ *
+ * \param[in] multifab_map Multifab registry
+ * \param[in] nf_name Name of Multifab to modify
+ * \param[in] dir Direction, for Multifabs that are components of vectors
+ * \param[in] lev The mesh refinement level
+ * \param[in] zmin The minimum z of the range to be mullified
+ * \param[in] zmin The maximum z of the range to be mullified
+ */
+void NullifyMF (
+    ablastr::fields::MultiFabRegister& multifab_map,
+    std::string const& mf_name,
+    ablastr::fields::Direction dir,
     int lev,
     amrex::Real zmin,
     amrex::Real zmax

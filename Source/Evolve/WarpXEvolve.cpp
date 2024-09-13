@@ -1195,6 +1195,8 @@ WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type,
 void
 WarpX::applyMirrors (Real time)
 {
+    using ablastr::fields::Direction;
+
     // something to do?
     if (num_mirrors == 0) {
         return;
@@ -1222,12 +1224,12 @@ WarpX::applyMirrors (Real time)
             const amrex::Real z_max = std::max(z_max_tmp, z_min+mirror_z_npoints[i_mirror]*dz);
 
             // Set each field on the fine patch to zero between z_min and z_max
-            NullifyMF(m_fields, "Efield_fp[0]", lev, z_min, z_max);
-            NullifyMF(m_fields, "Efield_fp[1]", lev, z_min, z_max);
-            NullifyMF(m_fields, "Efield_fp[2]", lev, z_min, z_max);
-            NullifyMF(m_fields, "Bfield_fp[0]", lev, z_min, z_max);
-            NullifyMF(m_fields, "Bfield_fp[1]", lev, z_min, z_max);
-            NullifyMF(m_fields, "Bfield_fp[2]", lev, z_min, z_max);
+            NullifyMF(m_fields, "Efield_fp", Direction{0}, lev, z_min, z_max);
+            NullifyMF(m_fields, "Efield_fp", Direction{1}, lev, z_min, z_max);
+            NullifyMF(m_fields, "Efield_fp", Direction{2}, lev, z_min, z_max);
+            NullifyMF(m_fields, "Bfield_fp", Direction{0}, lev, z_min, z_max);
+            NullifyMF(m_fields, "Bfield_fp", Direction{1}, lev, z_min, z_max);
+            NullifyMF(m_fields, "Bfield_fp", Direction{2}, lev, z_min, z_max);
 
             // If div(E)/div(B) cleaning are used, set F/G field to zero
             NullifyMF(m_fields, "F_fp", lev, z_min, z_max);
@@ -1236,12 +1238,12 @@ WarpX::applyMirrors (Real time)
             if (lev>0)
             {
                 // Set each field on the coarse patch to zero between z_min and z_max
-                NullifyMF(m_fields, "Efield_cp[0]", lev, z_min, z_max);
-                NullifyMF(m_fields, "Efield_cp[1]", lev, z_min, z_max);
-                NullifyMF(m_fields, "Efield_cp[2]", lev, z_min, z_max);
-                NullifyMF(m_fields, "Bfield_cp[0]", lev, z_min, z_max);
-                NullifyMF(m_fields, "Bfield_cp[1]", lev, z_min, z_max);
-                NullifyMF(m_fields, "Bfield_cp[2]", lev, z_min, z_max);
+                NullifyMF(m_fields, "Efield_cp", Direction{0}, lev, z_min, z_max);
+                NullifyMF(m_fields, "Efield_cp", Direction{1}, lev, z_min, z_max);
+                NullifyMF(m_fields, "Efield_cp", Direction{2}, lev, z_min, z_max);
+                NullifyMF(m_fields, "Bfield_cp", Direction{0}, lev, z_min, z_max);
+                NullifyMF(m_fields, "Bfield_cp", Direction{1}, lev, z_min, z_max);
+                NullifyMF(m_fields, "Bfield_cp", Direction{2}, lev, z_min, z_max);
 
                 // If div(E)/div(B) cleaning are used, set F/G field to zero
                 NullifyMF(m_fields, "F_cp", lev, z_min, z_max);

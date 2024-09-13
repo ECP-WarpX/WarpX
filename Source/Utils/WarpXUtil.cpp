@@ -221,18 +221,13 @@ void ConvertLabParamsToBoost()
 
 }
 
-void NullifyMF (
-    ablastr::fields::MultiFabRegister& multifab_map,
-    std::string mf_name,
+void NullifyMFinstance (
+    amrex::MultiFab *mf,
     int lev,
     amrex::Real zmin,
     amrex::Real zmax
 )
 {
-    WARPX_PROFILE("WarpXUtil::NullifyMF()");
-    if (!multifab_map.has(mf_name, lev)) { return; }
-
-    auto * mf = multifab_map.get(mf_name, lev);
     int const ncomp = mf->nComp();
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -271,6 +266,39 @@ void NullifyMF (
             );
         }
     }
+}
+
+void NullifyMF (
+    ablastr::fields::MultiFabRegister& multifab_map,
+    std::string const& mf_name,
+    int lev,
+    amrex::Real zmin,
+    amrex::Real zmax
+)
+{
+    WARPX_PROFILE("WarpXUtil::NullifyMF()");
+    if (!multifab_map.has(mf_name, lev)) { return; }
+
+    auto * mf = multifab_map.get(mf_name, lev);
+
+    NullifyMFinstance ( mf, lev, zmin, zmax);
+}
+
+void NullifyMF (
+    ablastr::fields::MultiFabRegister& multifab_map,
+    std::string const& mf_name,
+    ablastr::fields::Direction dir,
+    int lev,
+    amrex::Real zmin,
+    amrex::Real zmax
+)
+{
+    WARPX_PROFILE("WarpXUtil::NullifyMF()");
+    if (!multifab_map.has(mf_name, dir, lev)) { return; }
+
+    auto * mf = multifab_map.get(mf_name, dir, lev);
+
+    NullifyMFinstance ( mf, lev, zmin, zmax);
 }
 
 namespace WarpXUtilIO{
