@@ -120,16 +120,11 @@ class _MultiFABWrapper(object):
         else:
             # Always fetch this anew in case the C++ MultiFab is recreated
             warpx = libwarpx.libwarpx_so.get_instance()
-            if self.mf_name.startswith("pml"):
-                # Temporary until pml are updated to new method
-                name = f"{self.mf_name}[level={self.level}]"
-            else:
-                name = self.mf_name
             if self.idir is not None:
                 direction = libwarpx.libwarpx_so.Direction(self.idir)
-                return warpx.multifab(name, direction, self.level)
+                return warpx.multifab(self.mf_name, direction, self.level)
             else:
-                return warpx.multifab(name, self.level)
+                return warpx.multifab(self.mf_name, self.level)
 
     @property
     def shape(self):
@@ -898,55 +893,55 @@ def JzFPAmpereWrapper(level=0, include_ghosts=False):
 
 def ExFPPMLWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="pml_E_fp[x]", level=level, include_ghosts=include_ghosts
+        mf_name="pml_E_fp", idir=0, level=level, include_ghosts=include_ghosts
     )
 
 
 def EyFPPMLWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="pml_E_fp[y]", level=level, include_ghosts=include_ghosts
+        mf_name="pml_E_fp", idir=1, level=level, include_ghosts=include_ghosts
     )
 
 
 def EzFPPMLWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="pml_E_fp[z]", level=level, include_ghosts=include_ghosts
+        mf_name="pml_E_fp", idir=2, level=level, include_ghosts=include_ghosts
     )
 
 
 def BxFPPMLWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="pml_B_fp[x]", level=level, include_ghosts=include_ghosts
+        mf_name="pml_B_fp", idir=0, level=level, include_ghosts=include_ghosts
     )
 
 
 def ByFPPMLWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="pml_B_fp[y]", level=level, include_ghosts=include_ghosts
+        mf_name="pml_B_fp", idir=1, level=level, include_ghosts=include_ghosts
     )
 
 
 def BzFPPMLWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="pml_B_fp[z]", level=level, include_ghosts=include_ghosts
+        mf_name="pml_B_fp", idir=2, level=level, include_ghosts=include_ghosts
     )
 
 
 def JxFPPMLWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="pml_j_fp[x]", level=level, include_ghosts=include_ghosts
+        mf_name="pml_j_fp", idir=0, level=level, include_ghosts=include_ghosts
     )
 
 
 def JyFPPMLWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="pml_j_fp[y]", level=level, include_ghosts=include_ghosts
+        mf_name="pml_j_fp", idir=1, level=level, include_ghosts=include_ghosts
     )
 
 
 def JzFPPMLWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="pml_j_fp[z]", level=level, include_ghosts=include_ghosts
+        mf_name="pml_j_fp", idir=2, level=level, include_ghosts=include_ghosts
     )
 
 
@@ -964,55 +959,55 @@ def GFPPMLWrapper(level=0, include_ghosts=False):
 
 def ExCPPMLWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="pml_E_cp[x]", level=level, include_ghosts=include_ghosts
+        mf_name="pml_E_cp", idir=0, level=level, include_ghosts=include_ghosts
     )
 
 
 def EyCPPMLWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="pml_E_cp[y]", level=level, include_ghosts=include_ghosts
+        mf_name="pml_E_cp", idir=1, level=level, include_ghosts=include_ghosts
     )
 
 
 def EzCPPMLWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="pml_E_cp[z]", level=level, include_ghosts=include_ghosts
+        mf_name="pml_E_cp", idir=2, level=level, include_ghosts=include_ghosts
     )
 
 
 def BxCPPMLWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="pml_B_cp[x]", level=level, include_ghosts=include_ghosts
+        mf_name="pml_B_cp", idir=0, level=level, include_ghosts=include_ghosts
     )
 
 
 def ByCPPMLWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="pml_B_cp[y]", level=level, include_ghosts=include_ghosts
+        mf_name="pml_B_cp", idir=1, level=level, include_ghosts=include_ghosts
     )
 
 
 def BzCPPMLWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="pml_B_cp[z]", level=level, include_ghosts=include_ghosts
+        mf_name="pml_B_cp", idir=2, level=level, include_ghosts=include_ghosts
     )
 
 
 def JxCPPMLWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="pml_j_cp[x]", level=level, include_ghosts=include_ghosts
+        mf_name="pml_j_cp", idir=0, level=level, include_ghosts=include_ghosts
     )
 
 
 def JyCPPMLWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="pml_j_cp[y]", level=level, include_ghosts=include_ghosts
+        mf_name="pml_j_cp", idir=1, level=level, include_ghosts=include_ghosts
     )
 
 
 def JzCPPMLWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="pml_j_cp[z]", level=level, include_ghosts=include_ghosts
+        mf_name="pml_j_cp", idir=2, level=level, include_ghosts=include_ghosts
     )
 
 

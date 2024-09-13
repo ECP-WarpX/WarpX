@@ -123,8 +123,6 @@ void init_WarpX (py::module& m)
             [](WarpX & wx, std::string multifab_name, int level) {
                 if (wx.m_fields.has(multifab_name, level)) {
                     return wx.m_fields.get(multifab_name, level);
-                } else if (wx.multifab_map.count(multifab_name) > 0) {
-                    return wx.multifab_map.at(multifab_name);
                 } else {
                     throw std::runtime_error("The MultiFab '" + multifab_name + "' is unknown or is not allocated!");
                 }
