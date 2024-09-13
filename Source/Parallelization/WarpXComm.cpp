@@ -766,16 +766,20 @@ WarpX::FillBoundaryB (const int lev, const PatchType patch_type, const amrex::In
     std::array<amrex::MultiFab*,3> mf;
     amrex::Periodicity period;
 
+    using ablastr::fields::Direction;
+
     if (patch_type == PatchType::fine)
     {
-        ablastr::fields::MultiLevelVectorField const& Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
-        mf     = {Bfield_fp[lev][0], Bfield_fp[lev][1], Bfield_fp[lev][2]};
+        mf     = {m_fields.get("Bfield_fp",Direction{0},lev),
+                  m_fields.get("Bfield_fp",Direction{1},lev),
+                  m_fields.get("Bfield_fp",Direction{2},lev)};
         period = Geom(lev).periodicity();
     }
     else // coarse patch
     {
-        ablastr::fields::MultiLevelVectorField const& Bfield_cp_new = m_fields.get_mr_levels_alldirs("Bfield_cp", finest_level);
-        mf     = {Bfield_cp_new[lev][0], Bfield_cp_new[lev][1], Bfield_cp_new[lev][2]};
+        mf     = {m_fields.get("Bfield_cp",Direction{0},lev),
+                  m_fields.get("Bfield_cp",Direction{1},lev),
+                  m_fields.get("Bfield_cp",Direction{2},lev)};
         period = Geom(lev-1).periodicity();
     }
 
@@ -1019,7 +1023,9 @@ void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng, std::optio
             if (m_fields.has("pml_G_cp",lev) && m_fields.has("G_cp",lev)) {
                 pml[lev]->Exchange(m_fields.get("pml_G_cp", lev), m_fields.get("G_cp", lev), patch_type, do_pml_in_domain);
             }
-            pml[lev]->FillBoundary(*m_fields.get("pml_G_cp", lev), patch_type, nodal_sync);
+            if (m_fields.has("pml_G_cp", lev)) {
+                pml[lev]->FillBoundary(*m_fields.get("pml_G_cp", lev), patch_type, nodal_sync);
+            }
         }
 
         if (m_fields.has("G_cp",lev))
