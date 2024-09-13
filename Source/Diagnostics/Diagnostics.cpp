@@ -38,8 +38,8 @@
 
 using namespace amrex::literals;
 
-Diagnostics::Diagnostics (int i, std::string name)
-    : m_diag_name(std::move(name)), m_diag_index(i)
+Diagnostics::Diagnostics (int i, std::string name, DiagTypes diag_type)
+    : m_diag_type(diag_type), m_diag_name(std::move(name)), m_diag_index(i)
 {
 }
 
@@ -565,7 +565,7 @@ Diagnostics::ComputeAndPack ()
     auto & warpx = WarpX::GetInstance();
 
     // We sum up fields for later averaging and output when we are inside the averaging period
-    bool do_sum_now = cur_step >= time_ave
+    //bool do_sum_now = cur_step >= time_ave
 
     // compute the necessary fields and store result in m_mf_output.
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
@@ -577,11 +577,11 @@ Diagnostics::ComputeAndPack ()
                 // a diagnostics and writes in one or more components of the output
                 // multifab m_mf_output[lev].
                 m_all_field_functors[lev][icomp]->operator()(m_mf_output[i_buffer][lev], icomp_dst, i_buffer);
-                if (do_sum_now)
-                // update the index of the next component to fill
-                int scalar_a = 1;
+                //if (do_sum_now)
+                //// update the index of the next component to fill
+                //int scalar_a = 1;
                 // call amrex sax operation to do the following
-                m_sum_mf_output[i_buffer][lev] += scalar_a * m_mf_output[i_buffer][lev]
+                //m_sum_mf_output[i_buffer][lev] += scalar_a * m_mf_output[i_buffer][lev]
                 icomp_dst += m_all_field_functors[lev][icomp]->nComp();
             }
             // Check that the proper number of components of mf_avg were updated.

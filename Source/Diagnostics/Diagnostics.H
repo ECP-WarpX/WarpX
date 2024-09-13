@@ -21,6 +21,8 @@
 #include <string>
 #include <vector>
 
+/** All types of diagnostics. */
+enum struct DiagTypes {Full, BackTransformed, BoundaryScraping, TimeAveraged};
 /**
  * \brief base class for diagnostics.
  * Contains main routines to filter, compute and flush diagnostics.
@@ -35,7 +37,7 @@ public:
      * @param i index of diagnostics in MultiDiagnostics::alldiags
      * @param name diagnostics name in the inputs file
      */
-    Diagnostics (int i, std::string name);
+    Diagnostics (int i, std::string name, DiagTypes diag_type);
 
     /** Virtual Destructor to handle clean destruction of derived classes */
     virtual ~Diagnostics ();
@@ -45,6 +47,8 @@ public:
     Diagnostics(Diagnostics&& )                    = default;
     Diagnostics& operator=(Diagnostics&& )         = default;
 
+    /** Stores the diag type */
+    DiagTypes m_diag_type;
     /** Pack (stack) all fields in the cell-centered output MultiFab m_mf_output.
      *
      * Fields are computed (e.g., cell-centered or back-transformed)
