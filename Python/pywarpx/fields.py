@@ -875,19 +875,19 @@ def FaceAreaszWrapper(level=0, include_ghosts=False):
 
 def JxFPAmpereWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="current_fp_ampere", idir=0, level=level, include_ghosts=include_ghosts
+        mf_name="hybrid_current_fp_ampere", idir=0, level=level, include_ghosts=include_ghosts
     )
 
 
 def JyFPAmpereWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="current_fp_ampere", idir=1, level=level, include_ghosts=include_ghosts
+        mf_name="hybrid_current_fp_ampere", idir=1, level=level, include_ghosts=include_ghosts
     )
 
 
 def JzFPAmpereWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="current_fp_ampere", idir=2, level=level, include_ghosts=include_ghosts
+        mf_name="hybrid_current_fp_ampere", idir=2, level=level, include_ghosts=include_ghosts
     )
 
 

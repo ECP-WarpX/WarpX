@@ -70,8 +70,8 @@ void WarpX::HybridPICEvolveFields ()
         m_fields.get_mr_levels_alldirs("edge_lengths", finest_level));
 
     // Reference hybrid-PIC multifabs
-    ablastr::fields::MultiLevelScalarField rho_fp_temp = m_fields.get_mr_levels("rho_fp_temp", finest_level);
-    ablastr::fields::MultiLevelVectorField current_fp_temp = m_fields.get_mr_levels_alldirs("current_fp_temp", finest_level);
+    ablastr::fields::MultiLevelScalarField rho_fp_temp = m_fields.get_mr_levels("hybrid_rho_fp_temp", finest_level);
+    ablastr::fields::MultiLevelVectorField current_fp_temp = m_fields.get_mr_levels_alldirs("hybrid_current_fp_temp", finest_level);
 
     // During the above deposition the charge and current density were updated
     // so that, at this time, we have rho^{n} in rho_fp_temp, rho{n+1} in the
@@ -196,8 +196,8 @@ void WarpX::HybridPICDepositInitialRhoAndJ ()
 {
     using ablastr::fields::va2vm;
 
-    ablastr::fields::MultiLevelScalarField rho_fp_temp = m_fields.get_mr_levels("rho_fp_temp", finest_level);
-    ablastr::fields::MultiLevelVectorField current_fp_temp = m_fields.get_mr_levels_alldirs("current_fp_temp", finest_level);
+    ablastr::fields::MultiLevelScalarField rho_fp_temp = m_fields.get_mr_levels("hybrid_rho_fp_temp", finest_level);
+    ablastr::fields::MultiLevelVectorField current_fp_temp = m_fields.get_mr_levels_alldirs("hybrid_current_fp_temp", finest_level);
     mypc->DepositCharge(rho_fp_temp, 0._rt);
     mypc->DepositCurrent(current_fp_temp, dt[0], 0._rt);
     SyncRho(rho_fp_temp, m_fields.get_mr_levels("rho_cp", finest_level), m_fields.get_mr_levels("rho_buf", finest_level));

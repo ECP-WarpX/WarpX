@@ -274,7 +274,7 @@ void WarpX::ApplyElectronPressureBoundary (const int lev, PatchType patch_type)
 {
     if (::isAnyBoundary<FieldBoundaryType::PEC>(field_boundary_lo, field_boundary_hi)) {
         if (patch_type == PatchType::fine) {
-            ablastr::fields::ScalarField electron_pressure_fp = m_fields.get("electron_pressure_fp", lev);
+            ablastr::fields::ScalarField electron_pressure_fp = m_fields.get("hybrid_electron_pressure_fp", lev);
             PEC::ApplyPECtoElectronPressure(
                 electron_pressure_fp,
                 field_boundary_lo, field_boundary_hi,

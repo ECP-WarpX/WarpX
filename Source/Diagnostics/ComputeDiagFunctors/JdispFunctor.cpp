@@ -40,7 +40,7 @@ JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buff
     AMREX_ASSUME(hybrid_pic_model != nullptr);
 
      /** pointer to current calculated from Ampere's Law (Jamp) multifab */
-    amrex::MultiFab* mf_curlB = warpx.m_fields.get("current_fp_ampere", Direction{m_dir}, m_lev);
+    amrex::MultiFab* mf_curlB = warpx.m_fields.get("hybrid_current_fp_ampere", Direction{m_dir}, m_lev);
 
     //if (!hybrid_pic_model) {
         // To finish this implementation, we need to implement a method to
@@ -66,7 +66,7 @@ JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buff
     if (hybrid_pic_model) {
         // Subtract the interpolated j_external value from j_displacement.
         /** pointer to external currents (Jext) multifab */
-        amrex::MultiFab* mf_j_external = warpx.m_fields.get("current_fp_external", Direction{m_dir}, m_lev);
+        amrex::MultiFab* mf_j_external = warpx.m_fields.get("hybrid_current_fp_external", Direction{m_dir}, m_lev);
 
         // Index type required for interpolating Jext from their respective
         // staggering (nodal) to the Jx_displacement, Jy_displacement, Jz_displacement
