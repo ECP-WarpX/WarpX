@@ -93,6 +93,12 @@ For easier debugging, it can be convenient to run the tests on your local machin
   Note that filtering with ``-R "test_3d_langmuir_multi"`` would include the additional tests that have the same string in them and can be sufficient if one aims to isolate a single test.
   Note also that the escaping ``\.`` in the regular expression is necessary in order to take into account the fact that each test is automatically appended with the strings ``.run``, ``.analysis`` and possibly ``.cleanup``.
 
+* Run only tests not labeled with the ``slow`` label:
+
+  .. code-block:: sh
+
+       ctest --test-dir build -LE slow
+
 Once the execution of CTest is completed, you can find all files associated with each test in its corresponding directory under ``build/bin/``.
 For example, if you run the single test ``test_3d_laser_acceleration``, you can find all files associated with this test in the directory ``build/bin/test_3d_laser_acceleration/``.
 

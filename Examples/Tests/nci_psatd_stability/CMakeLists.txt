@@ -203,4 +203,5 @@ if(WarpX_FFT)
         diags/diag1000050  # output
         OFF  # dependency
     )
+    label_warpx_test(test_rz_multiJ_psatd slow)
 endif()
