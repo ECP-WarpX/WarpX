@@ -1,10 +1,10 @@
 .. _theory:
 
-Introduction
-============
+Models & Algorithms
+===================
 
 .. figure:: Plasma_acceleration_sim.png
-   :alt: Plasma laser-driven (top) and charged-particles-driven (bottom) acceleration (rendering from 3-D Particle-In-Cell simulations). A laser beam (red and blue disks in top picture) or a charged particle beam (red dots in bottom picture) propagating (from left to right) through an under-dense plasma (not represented) displaces electrons, creating a plasma wakefield that supports very high electric fields (pale blue and yellow). These electric fields, which can be orders of magnitude larger than with conventional techniques, can be used to accelerate a short charged particle beam (white) to high-energy over a very short distance.
+   :alt: Plasma acceleration diagram
 
    Plasma laser-driven (top) and charged-particles-driven (bottom) acceleration (rendering from 3-D Particle-In-Cell simulations). A laser beam (red and blue disks in top picture) or a charged particle beam (red dots in bottom picture) propagating (from left to right) through an under-dense plasma (not represented) displaces electrons, creating a plasma wakefield that supports very high electric fields (pale blue and yellow). These electric fields, which can be orders of magnitude larger than with conventional techniques, can be used to accelerate a short charged particle beam (white) to high-energy over a very short distance.
 
@@ -18,6 +18,51 @@ However, these simulations are extremely computationally intensive, due to the n
 Various techniques or reduced models have been developed to allow multidimensional simulations at manageable computational costs: quasistatic approximation :cite:p:`i-Sprangleprl90,i-Antonsenprl1992,i-Krallpre1993,i-Morapop1997,i-Quickpic`,
 ponderomotive guiding center (PGC) models :cite:p:`i-Antonsenprl1992,i-Krallpre1993,i-Quickpic,i-Benedettiaac2010,i-Cowanjcp11`, simulation in an optimal Lorentz boosted frame :cite:p:`i-Vayprl07,i-Bruhwileraac08,i-Vayscidac09,i-Vaypac09,i-Martinspac09,i-VayAAC2010,i-Martinsnaturephysics10,i-Martinspop10,i-Martinscpc10,i-Vayjcp2011,i-VayPOPL2011,i-Vaypop2011,i-Yu2016`,
 expanding the fields into a truncated series of azimuthal modes :cite:p:`i-godfrey1985iprop,i-LifschitzJCP2009,i-DavidsonJCP2015,i-Lehe2016,i-AndriyashPoP2016`, fluid approximation :cite:p:`i-Krallpre1993,i-Shadwickpop09,i-Benedettiaac2010` and scaled parameters :cite:p:`i-Cormieraac08,i-Geddespac09`.
+
+Field Solvers
+-------------
+
+.. toctree::
+   :maxdepth: 1
+
+   pic
+   kinetic_fluid_hybrid_model
+
+Grid & Geometries
+-----------------
+
+Boundary Conditions
+-------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   boundary_conditions
+
+Species Representations
+-----------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   cold_fluid_model
+
+Multiphysics Processes
+----------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   multiphysics_extensions
+
+Advanced Modes of Running
+-------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   amr
+   boosted_frame
 
 .. bibliography::
     :keyprefix: i-

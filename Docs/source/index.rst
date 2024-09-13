@@ -36,9 +36,9 @@ We also have a `discussion page <https://github.com/ECP-WarpX/WarpX/discussions>
    /* front page: hide chapter titles
     * needed for consistent HTML-PDF-EPUB chapters
     */
+   section#theory,
    section#installation,
    section#usage,
-   section#theory,
    section#data-analysis,
    section#development,
    section#maintenance,
@@ -53,6 +53,16 @@ We also have a `discussion page <https://github.com/ECP-WarpX/WarpX/discussions>
    coc
    acknowledge_us
    highlights
+
+Theory
+------
+.. toctree::
+   :titlesonly:
+   :caption: THEORY
+   :maxdepth: 1
+   :hidden:
+
+   theory/intro
 
 Installation
 ------------
@@ -98,22 +108,6 @@ Data Analysis
    dataanalysis/picviewer
    dataanalysis/reduced_diags
    dataanalysis/workflows
-
-Theory
-------
-.. toctree::
-   :caption: THEORY
-   :maxdepth: 1
-   :hidden:
-
-   theory/intro
-   theory/pic
-   theory/amr
-   theory/boundary_conditions
-   theory/boosted_frame
-   theory/multiphysics_extensions
-   theory/kinetic_fluid_hybrid_model
-   theory/cold_fluid_model
 
 Development
 -----------
