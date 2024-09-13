@@ -200,7 +200,7 @@ if(WarpX_FFT)
         2  # nprocs
         inputs_test_rz_multiJ_psatd  # inputs
         analysis_default_regression.py  # analysis
-        diags/diag1000050  # output
+        diags/diag1000025  # output
         OFF  # dependency
     )
     label_warpx_test(test_rz_multiJ_psatd slow)
