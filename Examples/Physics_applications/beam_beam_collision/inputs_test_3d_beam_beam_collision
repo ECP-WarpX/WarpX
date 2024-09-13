@@ -29,7 +29,6 @@ my_constants.nx = 64
 my_constants.ny = 64
 my_constants.nz = 64
 
-
 # TIME
 my_constants.T = 0.7*Lz/clight
 my_constants.dt = sigmaz/clight/10.
