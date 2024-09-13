@@ -30,7 +30,7 @@ class WarpXFluidContainer
 public:
     friend MultiFluidContainer;
 
-    WarpXFluidContainer (int nlevs_max, int ispecies, const std::string& name);
+    WarpXFluidContainer (int ispecies, const std::string &name);
     ~WarpXFluidContainer() = default;
 
     WarpXFluidContainer (WarpXFluidContainer const &)             = delete;

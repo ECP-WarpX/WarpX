@@ -314,7 +314,7 @@ WarpX::WarpX ()
 
     // Fluid Container
     if (do_fluid_species) {
-        myfl = std::make_unique<MultiFluidContainer>(nlevs_max);
+        myfl = std::make_unique<MultiFluidContainer>();
     }
 
     Efield_dotMask.resize(nlevs_max);
@@ -329,7 +329,7 @@ WarpX::WarpX ()
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
     {
         // Create hybrid-PIC model object if needed
-        m_hybrid_pic_model = std::make_unique<HybridPICModel>(nlevs_max);
+        m_hybrid_pic_model = std::make_unique<HybridPICModel>();
     }
 
     current_buffer_masks.resize(nlevs_max);
@@ -2035,7 +2035,7 @@ WarpX::ClearLevel (int lev)
 
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
     {
-        m_hybrid_pic_model->ClearLevel(lev);
+        m_hybrid_pic_model->ClearLevel(m_fields, lev);
     }
 
     for (int i = 0; i < 3; ++i) {
@@ -2290,6 +2290,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
     {
         m_hybrid_pic_model->AllocateLevelMFs(
+            m_fields,
             lev, ba, dm, ncomps, ngJ, ngRho, jx_nodal_flag, jy_nodal_flag,
             jz_nodal_flag, rho_nodal_flag
         );

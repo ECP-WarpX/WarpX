@@ -33,20 +33,20 @@
 class HybridPICModel
 {
 public:
-    HybridPICModel (int nlevs_max); // constructor
+    HybridPICModel ();
 
     /** Read user-defined model parameters. Called in constructor. */
     void ReadParameters ();
 
     /** Allocate hybrid-PIC specific multifabs. Called in constructor. */
-    void AllocateMFs (int nlevs_max);
-    void AllocateLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
+    void AllocateLevelMFs (ablastr::fields::MultiFabRegister & fields,
+                           int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
                            int ncomps, const amrex::IntVect& ngJ, const amrex::IntVect& ngRho,
                            const amrex::IntVect& jx_nodal_flag, const amrex::IntVect& jy_nodal_flag,
                            const amrex::IntVect& jz_nodal_flag, const amrex::IntVect& rho_nodal_flag);
 
     /** Helper function to clear values from hybrid-PIC specific multifabs. */
-    void ClearLevel (int lev);
+    void ClearLevel (ablastr::fields::MultiFabRegister & fields, int lev);
 
     void InitData ();
 
@@ -99,7 +99,7 @@ public:
         ablastr::fields::VectorField const& Efield,
         ablastr::fields::VectorField const& Jfield,
         ablastr::fields::VectorField const& Bfield,
-        amrex::MultiFab* const rhofield,
+        amrex::MultiFab const& rhofield,
         ablastr::fields::VectorField const& edge_lengths,
         int lev, bool solve_for_Faraday);
 
@@ -107,7 +107,7 @@ public:
         ablastr::fields::VectorField const& Efield,
         ablastr::fields::VectorField const& Jfield,
         ablastr::fields::VectorField const& Bfield,
-        amrex::MultiFab* const rhofield,
+        amrex::MultiFab const& rhofield,
         ablastr::fields::VectorField const& edge_lengths,
         int lev, PatchType patch_type, bool solve_for_Faraday);
 
@@ -155,8 +155,8 @@ public:
      * \param[in] rho_field scalar ion charge density Multifab at a given level
      */
     void FillElectronPressureMF (
-        std::unique_ptr<amrex::MultiFab> const& Pe_field,
-        amrex::MultiFab* const& rho_field ) const;
+        amrex::MultiFab& Pe_field,
+        amrex::MultiFab const& rho_field ) const;
 
     // Declare variables to hold hybrid-PIC model parameters
     /** Number of substeps to take when evolving B */
@@ -188,32 +188,6 @@ public:
     std::array< std::unique_ptr<amrex::Parser>, 3> m_J_external_parser;
     std::array< amrex::ParserExecutor<4>, 3> m_J_external;
     bool m_external_field_has_time_dependence = false;
-
-    // Declare multifabs specifically needed for the hybrid-PIC model (FIXME: remove me)
-    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_fp_temp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_temp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_ampere;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_external;
-    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > electron_pressure_fp;
-
-    // Helper functions to retrieve hybrid-PIC multifabs
-    [[nodiscard]] amrex::MultiFab*
-    get_pointer_current_fp_ampere  (int lev, int direction) const
-    {
-        return current_fp_ampere[lev][direction].get();
-    }
-
-    [[nodiscard]] amrex::MultiFab*
-    get_pointer_current_fp_external (int lev, int direction) const
-    {
-        return current_fp_external[lev][direction].get();
-    }
-
-    [[nodiscard]] amrex::MultiFab*
-    get_pointer_electron_pressure_fp  (int lev) const
-    {
-        return electron_pressure_fp[lev].get();
-    }
 
     /** Gpu Vector with index type of the Jx multifab */
     amrex::GpuArray<int, 3> Jx_IndexType;

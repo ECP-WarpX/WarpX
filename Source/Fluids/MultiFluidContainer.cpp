@@ -13,7 +13,7 @@
 
 using namespace amrex;
 
-MultiFluidContainer::MultiFluidContainer (int nlevs_max)
+MultiFluidContainer::MultiFluidContainer ()
 {
     const ParmParse pp_fluids("fluids");
     pp_fluids.queryarr("species_names", species_names);
@@ -22,7 +22,7 @@ MultiFluidContainer::MultiFluidContainer (int nlevs_max)
 
     allcontainers.resize(nspecies);
     for (int i = 0; i < nspecies; ++i) {
-        allcontainers[i] = std::make_unique<WarpXFluidContainer>(nlevs_max, i, species_names[i]);
+        allcontainers[i] = std::make_unique<WarpXFluidContainer>(i, species_names[i]);
     }
 }
 

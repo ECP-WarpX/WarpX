@@ -36,7 +36,7 @@ class MultiFluidContainer
 
 public:
 
-    MultiFluidContainer (int nlevs_max);
+    MultiFluidContainer ();
 
     ~MultiFluidContainer() = default;
 

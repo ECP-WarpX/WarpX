@@ -70,8 +70,8 @@ void WarpX::HybridPICEvolveFields ()
         m_fields.get_mr_levels_alldirs("edge_lengths", finest_level));
 
     // Reference hybrid-PIC multifabs
-    auto& rho_fp_temp = m_hybrid_pic_model->rho_fp_temp;
-    auto& current_fp_temp = m_hybrid_pic_model->current_fp_temp;
+    ablastr::fields::MultiLevelScalarField rho_fp_temp = m_fields.get_mr_levels("rho_fp_temp", finest_level);
+    ablastr::fields::MultiLevelVectorField current_fp_temp = m_fields.get_mr_levels_alldirs("current_fp_temp", finest_level);
 
     // During the above deposition the charge and current density were updated
     // so that, at this time, we have rho^{n} in rho_fp_temp, rho{n+1} in the
@@ -108,7 +108,7 @@ void WarpX::HybridPICEvolveFields ()
         m_hybrid_pic_model->BfieldEvolveRK(
             m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level),
             m_fields.get_mr_levels_alldirs("Efield_fp", finest_level),
-            va2vm(current_fp_temp), amrex::GetVecOfPtrs(rho_fp_temp),
+            current_fp_temp, rho_fp_temp,
             m_fields.get_mr_levels_alldirs("edge_lenghts", finest_level),
             0.5_rt/sub_steps*dt[0],
             DtType::FirstHalf, guard_cells.ng_FieldSolver,
@@ -135,7 +135,7 @@ void WarpX::HybridPICEvolveFields ()
             m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level),
             m_fields.get_mr_levels_alldirs("Efield_fp", finest_level),
             m_fields.get_mr_levels_alldirs("current_fp", finest_level),
-            amrex::GetVecOfPtrs(rho_fp_temp),
+            rho_fp_temp,
             m_fields.get_mr_levels_alldirs("edge_lenghts", finest_level),
             0.5_rt/sub_steps*dt[0],
             DtType::SecondHalf, guard_cells.ng_FieldSolver,
@@ -170,7 +170,7 @@ void WarpX::HybridPICEvolveFields ()
         m_fields.get_mr_levels_alldirs("edge_lengths", finest_level));
     m_hybrid_pic_model->HybridPICSolveE(
         m_fields.get_mr_levels_alldirs("Efield_fp", finest_level),
-        va2vm(current_fp_temp),
+        current_fp_temp,
         m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level),
         m_fields.get_mr_levels("rho_fp", finest_level),
         m_fields.get_mr_levels_alldirs("edge_lengths", finest_level), false
@@ -196,11 +196,11 @@ void WarpX::HybridPICDepositInitialRhoAndJ ()
 {
     using ablastr::fields::va2vm;
 
-    auto& rho_fp_temp = m_hybrid_pic_model->rho_fp_temp;
-    auto& current_fp_temp = m_hybrid_pic_model->current_fp_temp;
-    mypc->DepositCharge(amrex::GetVecOfPtrs(rho_fp_temp), 0._rt);
-    mypc->DepositCurrent(va2vm(current_fp_temp), dt[0], 0._rt);
-    SyncRho(amrex::GetVecOfPtrs(rho_fp_temp), m_fields.get_mr_levels("rho_cp", finest_level), m_fields.get_mr_levels("rho_buf", finest_level));
+    ablastr::fields::MultiLevelScalarField rho_fp_temp = m_fields.get_mr_levels("rho_fp_temp", finest_level);
+    ablastr::fields::MultiLevelVectorField current_fp_temp = m_fields.get_mr_levels_alldirs("current_fp_temp", finest_level);
+    mypc->DepositCharge(rho_fp_temp, 0._rt);
+    mypc->DepositCurrent(current_fp_temp, dt[0], 0._rt);
+    SyncRho(rho_fp_temp, m_fields.get_mr_levels("rho_cp", finest_level), m_fields.get_mr_levels("rho_buf", finest_level));
     SyncCurrent("current_fp");
     for (int lev=0; lev <= finest_level; ++lev) {
         // SyncCurrent does not include a call to FillBoundary, but it is needed
@@ -210,12 +210,12 @@ void WarpX::HybridPICDepositInitialRhoAndJ ()
         current_fp_temp[lev][1]->FillBoundary(Geom(lev).periodicity());
         current_fp_temp[lev][2]->FillBoundary(Geom(lev).periodicity());
 
-        ApplyRhofieldBoundary(lev, rho_fp_temp[lev].get(), PatchType::fine);
+        ApplyRhofieldBoundary(lev, rho_fp_temp[lev], PatchType::fine);
         // Set current density at PEC boundaries, if needed.
         ApplyJfieldBoundary(
-            lev, current_fp_temp[lev][0].get(),
-            current_fp_temp[lev][1].get(),
-            current_fp_temp[lev][2].get(),
+            lev, current_fp_temp[lev][0],
+            current_fp_temp[lev][1],
+            current_fp_temp[lev][2],
             PatchType::fine
         );
     }

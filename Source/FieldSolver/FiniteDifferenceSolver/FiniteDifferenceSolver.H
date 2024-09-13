@@ -153,12 +153,12 @@ class FiniteDifferenceSolver
           * \param[in] solve_for_Faraday boolean flag for whether the E-field is solved to be used in Faraday's equation
           */
         void HybridPICSolveE ( ablastr::fields::VectorField const& Efield,
-                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > & Jfield,
+                      ablastr::fields::VectorField & Jfield,
                       ablastr::fields::VectorField const& Jifield,
-                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jextfield,
+                      ablastr::fields::VectorField const& Jextfield,
                       ablastr::fields::VectorField const& Bfield,
-                      amrex::MultiFab* const rhofield,
-                      std::unique_ptr<amrex::MultiFab> const& Pefield,
+                      amrex::MultiFab const& rhofield,
+                      amrex::MultiFab const& Pefield,
                       ablastr::fields::VectorField const& edge_lengths,
                       int lev, HybridPICModel const* hybrid_model,
                       bool solve_for_Faraday );
@@ -173,7 +173,7 @@ class FiniteDifferenceSolver
           * \param[in] lev  level number for the calculation
           */
         void CalculateCurrentAmpere (
-                      std::array< std::unique_ptr<amrex::MultiFab>, 3>& Jfield,
+                      ablastr::fields::VectorField& Jfield,
                       ablastr::fields::VectorField const& Bfield,
                       ablastr::fields::VectorField const& edge_lengths,
                       int lev );
@@ -208,7 +208,7 @@ class FiniteDifferenceSolver
         template< typename T_Algo >
         void EvolveBCylindrical (
             ablastr::fields::VectorField const& Bfield,
-            ablastr::fields::VectorField const & Efield,
+            ablastr::fields::VectorField const& Efield,
             int lev,
             amrex::Real dt );
 
@@ -239,19 +239,19 @@ class FiniteDifferenceSolver
         template<typename T_Algo>
         void HybridPICSolveECylindrical (
             ablastr::fields::VectorField const& Efield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
+            ablastr::fields::VectorField const& Jfield,
             ablastr::fields::VectorField const& Jifield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jextfield,
+            ablastr::fields::VectorField const& Jextfield,
             ablastr::fields::VectorField const& Bfield,
-            amrex::MultiFab* const rhofield,
-            std::unique_ptr<amrex::MultiFab> const& Pefield,
+            amrex::MultiFab const& rhofield,
+            amrex::MultiFab const& Pefield,
             ablastr::fields::VectorField const& edge_lengths,
             int lev, HybridPICModel const* hybrid_model,
             bool solve_for_Faraday );
 
         template<typename T_Algo>
         void CalculateCurrentAmpereCylindrical (
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
+            ablastr::fields::VectorField& Jfield,
             ablastr::fields::VectorField const& Bfield,
             ablastr::fields::VectorField const& edge_lengths,
             int lev
@@ -339,24 +339,24 @@ class FiniteDifferenceSolver
         template< typename T_Algo >
         void EvolveFPMLCartesian ( amrex::MultiFab* Ffield,
                                    ablastr::fields::VectorField Efield,
-                      amrex::Real dt );
+                                   amrex::Real dt );
 
         template<typename T_Algo>
         void HybridPICSolveECartesian (
             ablastr::fields::VectorField const& Efield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
+            ablastr::fields::VectorField const& Jfield,
             ablastr::fields::VectorField const& Jifield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jextfield,
+            ablastr::fields::VectorField const& Jextfield,
             ablastr::fields::VectorField const& Bfield,
-            amrex::MultiFab* const rhofield,
-            std::unique_ptr<amrex::MultiFab> const& Pefield,
+            amrex::MultiFab const& rhofield,
+            amrex::MultiFab const& Pefield,
             ablastr::fields::VectorField const& edge_lengths,
             int lev, HybridPICModel const* hybrid_model,
             bool solve_for_Faraday );
 
         template<typename T_Algo>
         void CalculateCurrentAmpereCartesian (
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
+            ablastr::fields::VectorField& Jfield,
             ablastr::fields::VectorField const& Bfield,
             ablastr::fields::VectorField const& edge_lengths,
             int lev
