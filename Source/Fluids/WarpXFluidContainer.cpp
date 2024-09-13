@@ -19,7 +19,7 @@
 using namespace ablastr::utils::communication;
 using namespace amrex;
 
-WarpXFluidContainer::WarpXFluidContainer(int ispecies, const std::string &name) :
+WarpXFluidContainer::WarpXFluidContainer(int ispecies, const std::string &name):
     species_id{ispecies},
     species_name{name}
 {
@@ -141,7 +141,7 @@ void WarpXFluidContainer::AllocateLevelMFs(ablastr::fields::MultiFabRegister& m_
     using ablastr::fields::Direction;
     const int ncomps = 1;
     const amrex::IntVect nguards(AMREX_D_DECL(2, 2, 2));
-  
+
     m_fields.alloc_init(
             name_mf_N, lev, amrex::convert(ba, amrex::IntVect::TheNodeVector()), dm,
             ncomps, nguards, 0.0_rt);
@@ -157,7 +157,7 @@ void WarpXFluidContainer::AllocateLevelMFs(ablastr::fields::MultiFabRegister& m_
     m_fields.alloc_init(
             name_mf_NU, Direction{2}, lev, amrex::convert(ba, amrex::IntVect::TheNodeVector()), dm,
             ncomps, nguards, 0.0_rt);
-    
+
 }
 
 void WarpXFluidContainer::InitData(ablastr::fields::MultiFabRegister& m_fields, amrex::Box init_box, amrex::Real cur_time, int lev)
@@ -252,10 +252,10 @@ void WarpXFluidContainer::InitData(ablastr::fields::MultiFabRegister& m_fields, 
 
 
 void WarpXFluidContainer::Evolve(
-    ablastr::fields::MultiFabRegister& m_fields, 
+    ablastr::fields::MultiFabRegister& m_fields,
     int lev,
     std::string current_fp_string,
-    amrex::Real cur_time, 
+    amrex::Real cur_time,
     bool skip_deposition)
 {
     using ablastr::fields::Direction;
@@ -268,9 +268,9 @@ void WarpXFluidContainer::Evolve(
 
     // Step the Lorentz Term
     if(!do_not_gather){
-        GatherAndPush(m_fields, 
+        GatherAndPush(m_fields,
                     *m_fields.get("Efield_aux", Direction{0}, lev),
-                    *m_fields.get("Efield_aux", Direction{1}, lev), 
+                    *m_fields.get("Efield_aux", Direction{1}, lev),
                     *m_fields.get("Efield_aux", Direction{2}, lev),
                     *m_fields.get("Bfield_aux", Direction{0}, lev),
                     *m_fields.get("Bfield_aux", Direction{1}, lev),
@@ -300,10 +300,10 @@ void WarpXFluidContainer::Evolve(
 
     // Deposit J to the simulation mesh
     if (!skip_deposition && ! do_not_deposit) {
-        DepositCurrent(m_fields, 
-                        *m_fields.get(current_fp_string, Direction{0}, lev), 
-                        *m_fields.get(current_fp_string, Direction{1}, lev), 
-                        *m_fields.get(current_fp_string, Direction{2}, lev), 
+        DepositCurrent(m_fields,
+                        *m_fields.get(current_fp_string, Direction{0}, lev),
+                        *m_fields.get(current_fp_string, Direction{1}, lev),
+                        *m_fields.get(current_fp_string, Direction{2}, lev),
                         lev);
     }
 }

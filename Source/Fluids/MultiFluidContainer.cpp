@@ -61,10 +61,10 @@ MultiFluidContainer::DepositCurrent (ablastr::fields::MultiFabRegister& m_fields
 }
 
 void
-MultiFluidContainer::Evolve (ablastr::fields::MultiFabRegister& m_fields, 
+MultiFluidContainer::Evolve (ablastr::fields::MultiFabRegister& m_fields,
                             int lev,
                             std::string current_fp_string,
-                            amrex::Real cur_time, 
+                            amrex::Real cur_time,
                             bool skip_deposition)
 {
     for (auto& fl : allcontainers) {
