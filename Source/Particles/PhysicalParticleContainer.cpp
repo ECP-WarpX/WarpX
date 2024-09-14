@@ -2976,10 +2976,10 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
 #if !defined(AMREX_USE_GPU)
                 std::stringstream convergenceMsg;
                 convergenceMsg << "Picard solver for particle failed to converge after " <<
-                    iter << " iterations. " << std::endl;
+                    iter << " iterations.\n";
                 convergenceMsg << "Position step norm is " << step_norm <<
-                    " and the tolerance is " << particle_tolerance << std::endl;
-                convergenceMsg << " ux = " << ux[ip] << ", uy = " << uy[ip] << ", uz = " << uz[ip] << std::endl;
+                    " and the tolerance is " << particle_tolerance << "\n";
+                convergenceMsg << " ux = " << ux[ip] << ", uy = " << uy[ip] << ", uz = " << uz[ip] << "\n";
                 convergenceMsg << " xp = " << xp     << ", yp = " << yp     << ", zp = " << zp;
                 ablastr::warn_manager::WMRecordWarning("ImplicitPushXP", convergenceMsg.str());
 #endif

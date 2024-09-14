@@ -16,6 +16,7 @@
 #include "Diagnostics/MultiDiagnostics_fwd.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags_fwd.H"
 #include "EmbeddedBoundary/WarpXFaceInfoBox_fwd.H"
+#include "FieldSolver/ElectrostaticSolvers/ElectrostaticSolver_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel_fwd.H"
@@ -39,7 +40,6 @@
 #include "Evolve/WarpXDtType.H"
 #include "Evolve/WarpXPushType.H"
 #include "FieldSolver/Fields.H"
-#include "FieldSolver/ElectrostaticSolver.H"
 #include "FieldSolver/MagnetostaticSolver/MagnetostaticSolver.H"
 #include "FieldSolver/ImplicitSolvers/ImplicitSolver.H"
 #include "FieldSolver/ImplicitSolvers/WarpXSolverVec.H"
@@ -143,6 +143,7 @@ public:
     MultiParticleContainer& GetPartContainer () { return *mypc; }
     MultiFluidContainer& GetFluidContainer () { return *myfl; }
     MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
+    ElectrostaticSolver& GetElectrostaticSolver () {return *m_electrostatic_solver;}
     HybridPICModel& GetHybridPICModel () { return *m_hybrid_pic_model; }
     [[nodiscard]] HybridPICModel * get_pointer_HybridPICModel () const { return m_hybrid_pic_model.get(); }
     MultiDiagnostics& GetMultiDiags () {return *multi_diags;}
@@ -964,12 +965,6 @@ public:
     static inline auto electrostatic_solver_id = ElectrostaticSolverAlgo::Default;
     static inline auto poisson_solver_id = PoissonSolverAlgo::Default;
 
-    // Parameters for lab frame electrostatic
-    static amrex::Real self_fields_required_precision;
-    static amrex::Real self_fields_absolute_tolerance;
-    static int self_fields_max_iters;
-    static int self_fields_verbosity;
-
     static int do_moving_window; // boolean
     static int start_moving_window_step; // the first step to move window
     static int end_moving_window_step; // the last step to move window
@@ -1016,31 +1011,8 @@ public:
      */
     [[nodiscard]] amrex::IntVect get_numprocs() const {return numprocs;}
 
-    /** Enable embedded boundaries */
-    bool m_boundary_potential_specified = false;
-    ElectrostaticSolver::PoissonBoundaryHandler m_poisson_boundary_handler;
+    /** Electrostatic solve call */
     void ComputeSpaceChargeField (bool reset_fields);
-    void AddBoundaryField ();
-    void AddSpaceChargeField (WarpXParticleContainer& pc);
-    void AddSpaceChargeFieldLabFrame ();
-    void computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                     amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-                     std::array<amrex::Real, 3> beta = {{0,0,0}},
-                     amrex::Real required_precision=amrex::Real(1.e-11),
-                     amrex::Real absolute_tolerance=amrex::Real(0.0),
-                     int max_iters=200,
-                     int verbosity=2) const;
-
-    void setPhiBC (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi ) const;
-
-    void computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
-                   const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-                   std::array<amrex::Real, 3> beta = {{0,0,0}} ) const;
-    void computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& B,
-                   const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-                   std::array<amrex::Real, 3> beta = {{0,0,0}} ) const;
-    void computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                                      amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi) const;
 
     // Magnetostatic Solver Interface
     MagnetostaticSolver::VectorPoissonBoundaryHandler m_vector_poisson_boundary_handler;
@@ -1685,6 +1657,9 @@ private:
 
     // Macroscopic properties
     std::unique_ptr<MacroscopicProperties> m_macroscopic_properties;
+
+    // Electrostatic solver
+    std::unique_ptr<ElectrostaticSolver> m_electrostatic_solver;
 
     // Hybrid PIC algorithm parameters
     std::unique_ptr<HybridPICModel> m_hybrid_pic_model;

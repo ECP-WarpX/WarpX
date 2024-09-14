@@ -12,6 +12,16 @@ add_warpx_test(
 )
 
 add_warpx_test(
+    test_2d_langmuir_multi  # name
+    2  # dims
+    2  # nprocs
+    inputs_test_2d_langmuir_multi  # inputs
+    analysis_2d.py  # analysis
+    diags/diag1000080  # output
+    OFF  # dependency
+)
+
+add_warpx_test(
     test_2d_langmuir_multi_mr  # name
     2  # dims
     2  # nprocs
