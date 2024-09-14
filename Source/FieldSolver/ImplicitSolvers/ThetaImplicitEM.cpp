@@ -57,22 +57,21 @@ void ThetaImplicitEM::Define ( WarpX* const  a_WarpX )
 void ThetaImplicitEM::PrintParameters () const
 {
     if (!m_WarpX->Verbose()) { return; }
-    amrex::Print() << std::endl;
-    amrex::Print() << "-----------------------------------------------------------" << std::endl;
-    amrex::Print() << "----------- THETA IMPLICIT EM SOLVER PARAMETERS -----------" << std::endl;
-    amrex::Print() << "-----------------------------------------------------------" << std::endl;
-    amrex::Print() << "Time-bias parameter theta:  " << m_theta << std::endl;
-    amrex::Print() << "max particle iterations:    " << m_max_particle_iterations << std::endl;
-    amrex::Print() << "particle tolerance:         " << m_particle_tolerance << std::endl;
+    amrex::Print() << "\n";
+    amrex::Print() << "-----------------------------------------------------------\n";
+    amrex::Print() << "----------- THETA IMPLICIT EM SOLVER PARAMETERS -----------\n";
+    amrex::Print() << "-----------------------------------------------------------\n";
+    amrex::Print() << "Time-bias parameter theta:  " << m_theta << "\n";
+    amrex::Print() << "max particle iterations:    " << m_max_particle_iterations << "\n";
+    amrex::Print() << "particle tolerance:         " << m_particle_tolerance << "\n";
     if (m_nlsolver_type==NonlinearSolverType::Picard) {
-        amrex::Print() << "Nonlinear solver type:      Picard" << std::endl;
+        amrex::Print() << "Nonlinear solver type:      Picard\n";
     }
     else if (m_nlsolver_type==NonlinearSolverType::Newton) {
-        amrex::Print() << "Nonlinear solver type:      Newton" << std::endl;
+        amrex::Print() << "Nonlinear solver type:      Newton\n";
     }
     m_nlsolver->PrintParams();
-    amrex::Print() << "-----------------------------------------------------------" << std::endl;
-    amrex::Print() << std::endl;
+    amrex::Print() << "-----------------------------------------------------------\n\n";
 }
 
 void ThetaImplicitEM::OneStep ( const amrex::Real  a_time,

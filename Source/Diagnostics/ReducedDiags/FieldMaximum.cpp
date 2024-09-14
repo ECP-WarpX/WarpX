@@ -93,7 +93,7 @@ FieldMaximum::FieldMaximum (const std::string& rd_name)
                 ofs << m_sep;
                 ofs << "[" << c++ << "]max_|B|_lev" + std::to_string(lev) + "(T)";
             }
-            ofs << std::endl;
+            ofs << "\n";
             // close file
             ofs.close();
         }

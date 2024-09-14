@@ -18,6 +18,7 @@
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "EmbeddedBoundary/Enabled.H"
 #include "FieldSolver/Fields.H"
+#include "FieldSolver/ElectrostaticSolvers/ElectrostaticSolver.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #include "Filter/BilinearFilter.H"
@@ -560,6 +561,8 @@ WarpX::InitData ()
         );
     }
 
+    m_electrostatic_solver->InitData();
+
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
         m_hybrid_pic_model->InitData();
     }
@@ -843,7 +846,7 @@ WarpX::computeMaxStepBoostAccelerator() {
         static_cast<int>(interaction_time_boost/dt[maxLevel()]);
     max_step = computed_max_step;
     Print()<<"max_step computed in computeMaxStepBoostAccelerator: "
-           <<max_step<<std::endl;
+           <<max_step<<"\n";
 }
 
 void
