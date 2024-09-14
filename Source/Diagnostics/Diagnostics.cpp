@@ -574,20 +574,20 @@ Diagnostics::ComputeAndPack ()
                 // a diagnostics and writes in one or more components of the output
                 // multifab m_mf_output[lev].
                 m_all_field_functors[lev][icomp]->operator()(m_mf_output[i_buffer][lev], icomp_dst, i_buffer);
+                // update the index of the next component to fill
                 icomp_dst += m_all_field_functors[lev][icomp]->nComp();
             }
             // Check that the proper number of components of mf_avg were updated.
             AMREX_ALWAYS_ASSERT( icomp_dst == m_varnames.size() );
 
-            if (m_do_timeaverage) {
-                // update the index of the next component to fill
+            if (m_diag_type == DiagTypes::TimeAveraged) {
+
                 amrex::Real real_a = 1.0;
                 // call amrex sax operation to do the following
                 amrex::MultiFab::Saxpy(
-                        m_sum_mf_output[i_buffer][lev], real_a, m_mf_output[i_buffer][lev], 0, 0, m_mf_output[i_buffer][lev].nComp(), m_mf_output[i_buffer][lev].nGrowVect());
+                        m_sum_mf_output[i_buffer][lev], real_a, m_mf_output[i_buffer][lev],
+                        0, 0, m_mf_output[i_buffer][lev].nComp(), m_mf_output[i_buffer][lev].nGrowVect());
             }
-
-            m_sum_mf_output[i_buffer][lev] += scalar_a * m_mf_output[i_buffer][lev]
 
             // needed for contour plots of rho, i.e. ascent/sensei
             if (m_format == "sensei" || m_format == "ascent") {

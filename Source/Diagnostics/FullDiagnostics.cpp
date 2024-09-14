@@ -101,6 +101,47 @@ FullDiagnostics::ReadParameters ()
     const bool plot_raw_fields_guards_specified = pp_diag_name.query("plot_raw_fields_guards", m_plot_raw_fields_guards);
     const bool raw_specified = plot_raw_fields_specified || plot_raw_fields_guards_specified;
 
+    if (m_diag_type == DiagTypes::TimeAveraged) {
+        std::string m_time_average_mode_str = "none";
+        /** Whether the diagnostics are averaging data over time or not
+         * Valid options are "fixed_start" and "dynamic_start".
+         */
+        pp_diag_name.get("time_average_mode", m_time_average_mode_str);
+
+        if (m_time_average_mode_str == "fixed_start") {
+                m_time_average_type = TimeAverageType::Static;
+            } else if (m_time_average_mode_str == "dynamic_start") {
+                m_time_average_type = TimeAverageType::Dynamic;
+            } else if (m_time_average_mode_str == "none") {
+                m_time_average_type = TimeAverageType::None;
+            } else {
+            WARPX_ABORT_WITH_MESSAGE(
+                    "Unknown time averaging mode. Valid entries are: none, fixed_start, dynamic_start"
+                    );
+        }
+
+        if (m_time_average_type == TimeAverageType::Static) {
+            pp_diag_name.get("average_start_step", m_average_start_step);
+        }
+
+        if (m_time_average_type == TimeAverageType::Dynamic) {
+            const bool averaging_period_steps_specified = pp_diag_name.query(
+                    "average_period_steps", m_average_period_steps
+                    );
+            const bool averaging_period_time_specified = pp_diag_name.queryWithParser(
+                    "average_period_time", m_average_period_time
+                    );
+            // one of the two averaging period options must be set but neither none nor both
+            if (
+                    (averaging_period_steps_specified && averaging_period_time_specified)
+                    || !(averaging_period_steps_specified || averaging_period_time_specified)
+                    ) {
+                WARPX_ABORT_WITH_MESSAGE("Please specify either 'average_period_steps' or 'average_period_time', not both.");
+            }
+        }
+    }
+
+
 #ifdef WARPX_DIM_RZ
     pp_diag_name.query("dump_rz_modes", m_dump_rz_modes);
 #else
@@ -144,20 +185,19 @@ FullDiagnostics::Flush ( int i_buffer, bool /* force_flush */ )
         m_output_species.at(i_buffer), nlev_output, m_file_prefix,
         m_file_min_digits, m_plot_raw_fields, m_plot_raw_fields_guards);
 
-//    if (m_time_averaging == "fixed_start" || m_time_averaging == "dynamic_start") {
-//        // Loop over the output levels and divide by the number of steps in the averaging period
-//        for (int lev = 0; lev < nlev_output; ++lev) {
-//            m_sum_mf_output.at(i_buffer).at(lev).mult(1./m_average_period_steps);
-//        }
-//
-//        m_flush_format->WriteToFile(
-//        m_varnames, m_sum_mf_output.at(i_buffer), m_geom_output.at(i_buffer), warpx.getistep(),
-//        warpx.gett_new(0),
-//        m_output_species.at(i_buffer), nlev_output, m_file_prefix,
-//        m_file_min_digits, m_plot_raw_fields, m_plot_raw_fields_guards);
-//
-//
-//    }
+    if (m_time_average_type == TimeAverageType::Static || m_time_average_type == TimeAverageType::Dynamic) {
+        // Loop over the output levels and divide by the number of steps in the averaging period
+        for (int lev = 0; lev < nlev_output; ++lev) {
+            m_sum_mf_output.at(i_buffer).at(lev).mult(1./m_average_period_steps);
+        }
+
+        m_flush_format->WriteToFile(
+        m_varnames, m_sum_mf_output.at(i_buffer), m_geom_output.at(i_buffer), warpx.getistep(),
+        warpx.gett_new(0),
+        m_output_species.at(i_buffer), nlev_output, m_file_prefix,
+        m_file_min_digits, m_plot_raw_fields, m_plot_raw_fields_guards);
+
+    }
 
     FlushRaw();
 }
@@ -180,18 +220,20 @@ FullDiagnostics::DoDump (int step, int /*i_buffer*/, bool force_flush)
 bool
 FullDiagnostics::DoComputeAndPack (int step, bool force_flush)
 {
-//    if (m_time_averaging == "dynamic_start")
-//        m_average_start_step = m_intervals.nextContains(step) - m_average_period_steps;
-//
-//    // add logic here to do compute and pack if m_intervals.contains (step+1-time_average_period) or if (cur_step>time_average_startstep)
-//    bool in_averaging_period = false;
-//    if (step > m_intervals.nextContains(step) - m_average_start_step && step <= m_intervals.nextContains(step))
-//        in_averaging_period = true;
-//
+    if (m_time_averaging == "dynamic_start") {
+        m_average_start_step = m_intervals.nextContains(step) - m_average_period_steps;
+    }
+
+    // add logic here to do compute and pack if m_intervals.contains (step+1-time_average_period) or if (cur_step>time_average_startstep)
+    bool in_averaging_period = false;
+    if (step > m_intervals.nextContains(step) - m_average_start_step && step <= m_intervals.nextContains(step)) {
+        in_averaging_period = true;
+    }
+
     // Data must be computed and packed for full diagnostics
     // whenever the data needs to be flushed.
-    //return (force_flush || m_intervals.contains(step+1) || in_averaging_period);
-    return (force_flush || m_intervals.contains(step+1) );
+    return (force_flush || m_intervals.contains(step+1) || in_averaging_period);
+    //return (force_flush || m_intervals.contains(step+1) );
 
 }
 
@@ -624,6 +666,18 @@ FullDiagnostics::InitializeBufferData (int i_buffer, int lev, bool restart ) {
                 ba.getCellCenteredBox(0).smallEnd(idim) * warpx.Geom(lev).CellSize(idim));
             diag_dom.setHi( idim, warpx.Geom(lev).ProbLo(idim) +
                 (ba.getCellCenteredBox( static_cast<int>(ba.size())-1 ).bigEnd(idim) + 1) * warpx.Geom(lev).CellSize(idim));
+        }
+
+        if (m_time_average_type == TimeAverageType::Dynamic) {
+
+            // already checked in ReadParameters that only one of them is set
+            if (m_average_period_steps > 0) {
+                m_average_period_time = m_average_period_steps * warpx.getdt(0);
+            } else if (m_average_period_time > 0) {
+                m_average_period_steps = static_cast<int> (std::round(m_average_period_time / warpx.getdt(0)));
+            }
+
+            // CONTINUE HERE
         }
     }
 
