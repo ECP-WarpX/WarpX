@@ -66,7 +66,7 @@ namespace ablastr::fields {
  * \param[out] max_norm_rho The maximum L-infinity norm of `rho` across all levels
  */
 inline amrex::Real getMaxNormRho (
-    amrex::Vector<amrex::MultiFab*> const & rho,
+    ablastr::fields::ConstMultiLevelScalarField const& rho,
     int finest_level,
     amrex::Real & absolute_tolerance)
 {
@@ -191,25 +191,26 @@ template<
     typename T_FArrayBoxFactory = void
 >
 void
-computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
-            ablastr::fields::MultiLevelScalarField & phi,
-            std::array<amrex::Real, 3> const beta,
-            amrex::Real relative_tolerance,
-            amrex::Real absolute_tolerance,
-            int max_iters,
-            int verbosity,
-            amrex::Vector<amrex::Geometry> const& geom,
-            amrex::Vector<amrex::DistributionMapping> const& dmap,
-            amrex::Vector<amrex::BoxArray> const& grids,
-            utils::enums::GridType grid_type,
-            T_BoundaryHandler const boundary_handler,
-            bool is_solver_igf_on_lev0,
-            bool eb_enabled = false,
-            bool do_single_precision_comms = false,
-            std::optional<amrex::Vector<amrex::IntVect> > rel_ref_ratio = std::nullopt,
-            [[maybe_unused]] T_PostPhiCalculationFunctor post_phi_calculation = std::nullopt,
-            [[maybe_unused]] std::optional<amrex::Real const> current_time = std::nullopt, // only used for EB
-            [[maybe_unused]] std::optional<amrex::Vector<T_FArrayBoxFactory const *> > eb_farray_box_factory = std::nullopt // only used for EB
+computePhi (
+    ablastr::fields::MultiLevelScalarField const& rho,
+    ablastr::fields::MultiLevelScalarField const& phi,
+    std::array<amrex::Real, 3> const beta,
+    amrex::Real relative_tolerance,
+    amrex::Real absolute_tolerance,
+    int max_iters,
+    int verbosity,
+    amrex::Vector<amrex::Geometry> const& geom,
+    amrex::Vector<amrex::DistributionMapping> const& dmap,
+    amrex::Vector<amrex::BoxArray> const& grids,
+    utils::enums::GridType grid_type,
+    T_BoundaryHandler const boundary_handler,
+    bool is_solver_igf_on_lev0,
+    bool eb_enabled = false,
+    bool do_single_precision_comms = false,
+    std::optional<amrex::Vector<amrex::IntVect> > rel_ref_ratio = std::nullopt,
+    [[maybe_unused]] T_PostPhiCalculationFunctor post_phi_calculation = std::nullopt,
+    [[maybe_unused]] std::optional<amrex::Real const> current_time = std::nullopt, // only used for EB
+    [[maybe_unused]] std::optional<amrex::Vector<T_FArrayBoxFactory const *> > eb_farray_box_factory = std::nullopt // only used for EB
 )
 {
     using namespace amrex::literals;
@@ -250,7 +251,8 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 #endif
 
     // determine if rho is zero everywhere
-    const amrex::Real max_norm_b = getMaxNormRho(rho, finest_level, absolute_tolerance);
+    const amrex::Real max_norm_b = getMaxNormRho(
+        amrex::GetVecOfConstPtrs(rho), finest_level, absolute_tolerance);
 
     amrex::LPInfo info;
 

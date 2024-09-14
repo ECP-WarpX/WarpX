@@ -922,30 +922,6 @@ public:
 
     /** Electrostatic solve call */
     void ComputeSpaceChargeField (bool reset_fields);
-<<<<<<< HEAD
-    void AddBoundaryField ();
-    void AddSpaceChargeField (WarpXParticleContainer& pc);
-    void AddSpaceChargeFieldLabFrame ();
-    void computePhi (const ablastr::fields::MultiLevelScalarField& rho,
-                     ablastr::fields::MultiLevelScalarField& phi,
-                     std::array<amrex::Real, 3> beta = {{0,0,0}},
-                     amrex::Real required_precision=amrex::Real(1.e-11),
-                     amrex::Real absolute_tolerance=amrex::Real(0.0),
-                     int max_iters=200,
-                     int verbosity=2);
-
-    void setPhiBC (ablastr::fields::MultiLevelScalarField& phi ) const;
-
-    void computeE (ablastr::fields::MultiLevelVectorField& E,
-                   const ablastr::fields::MultiLevelScalarField& phi,
-                   std::array<amrex::Real, 3> beta = {{0,0,0}} ) const;
-    void computeB (ablastr::fields::MultiLevelVectorField& B,
-                   const ablastr::fields::MultiLevelScalarField& phi,
-                   std::array<amrex::Real, 3> beta = {{0,0,0}} ) const;
-    void computePhiTriDiagonal (const ablastr::fields::MultiLevelScalarField& rho,
-                                      ablastr::fields::MultiLevelScalarField& phi) const;
-=======
->>>>>>> development
 
     // Magnetostatic Solver Interface
     MagnetostaticSolver::VectorPoissonBoundaryHandler m_vector_poisson_boundary_handler;

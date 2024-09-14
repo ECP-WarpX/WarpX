@@ -634,7 +634,7 @@ WarpX::AddExternalFields (int const lev) {
 
     // FIXME: RZ multimode has more than one component for all these
     if (m_p_ext_field_params->E_ext_grid_type != ExternalFieldType::default_zero) {
-        ablastr::fields::MultiLevelVectorField Efield_fp = m_fields.get_mr_levels_alldirs("Efield_fp",finest_level);
+        ablastr::fields::MultiLevelVectorField Efield_fp = m_fields.get_mr_levels_alldirs("Efield_fp",max_level);
         if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::constant) {
             Efield_fp[lev][0]->plus(m_p_ext_field_params->E_external_grid[0], guard_cells.ng_alloc_EB.min());
             Efield_fp[lev][1]->plus(m_p_ext_field_params->E_external_grid[1], guard_cells.ng_alloc_EB.min());
@@ -647,7 +647,7 @@ WarpX::AddExternalFields (int const lev) {
         }
     }
     if (m_p_ext_field_params->B_ext_grid_type != ExternalFieldType::default_zero) {
-        ablastr::fields::MultiLevelVectorField const& Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
+        ablastr::fields::MultiLevelVectorField const& Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp", max_level);
         if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::constant) {
             Bfield_fp[lev][0]->plus(m_p_ext_field_params->B_external_grid[0], guard_cells.ng_alloc_EB.min());
             Bfield_fp[lev][1]->plus(m_p_ext_field_params->B_external_grid[1], guard_cells.ng_alloc_EB.min());
@@ -716,7 +716,7 @@ WarpX::InitPML ()
             do_pml_Hi[0][idim] = 1; // on level 0
         }
     }
-    if (finest_level > 0) { do_pml = 1; }
+    if (max_level > 0) { do_pml = 1; }
     if (do_pml)
     {
         bool const eb_enabled = EB::enabled();
@@ -741,7 +741,7 @@ WarpX::InitPML ()
             do_pml_Lo[0], do_pml_Hi[0]);
 #endif
 
-        for (int lev = 1; lev <= finest_level; ++lev)
+        for (int lev = 1; lev <= max_level; ++lev)
         {
             do_pml_Lo[lev] = amrex::IntVect::TheUnitVector();
             do_pml_Hi[lev] = amrex::IntVect::TheUnitVector();
@@ -788,7 +788,7 @@ WarpX::ComputePMLFactors ()
 {
     if (do_pml)
     {
-        for (int lev = 0; lev <= finest_level; ++lev)
+        for (int lev = 0; lev <= max_level; ++lev)
         {
             if (pml[lev]) {
                 pml[lev]->ComputePMLFactors(dt[lev]);
@@ -907,8 +907,8 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 {
     using ablastr::fields::Direction;
 
-    ablastr::fields::MultiLevelVectorField Efield_aux = m_fields.get_mr_levels_alldirs("Efield_aux", finest_level);
-    ablastr::fields::MultiLevelVectorField Bfield_aux = m_fields.get_mr_levels_alldirs("Bfield_aux", finest_level);
+    ablastr::fields::MultiLevelVectorField Efield_aux = m_fields.get_mr_levels_alldirs("Efield_aux", max_level);
+    ablastr::fields::MultiLevelVectorField Bfield_aux = m_fields.get_mr_levels_alldirs("Bfield_aux", max_level);
 
     // initialize the averaged fields only if the averaged algorithm
     // is activated ('psatd.do_time_averaging=1')
@@ -990,7 +990,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
             m_p_ext_field_params->Byfield_parser->compile<3>(),
             m_p_ext_field_params->Bzfield_parser->compile<3>(),
             m_fields.get_alldirs("edge_lengths", lev),
-            m_fields.get_mr_levels_alldirs("face_areas", finest_level)[lev],
+            m_fields.get_mr_levels_alldirs("face_areas", max_level)[lev],
             'B',
             lev, PatchType::coarse);
     }
@@ -1010,7 +1010,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                 m_fdtd_solver_fp[lev]->EvolveECTRho(
                     m_fields.get_alldirs("Efield_fp",lev),
                     m_fields.get_alldirs("edge_lengths", lev),
-                    m_fields.get_mr_levels_alldirs("face_areas", finest_level)[lev],
+                    m_fields.get_mr_levels_alldirs("face_areas", max_level)[lev],
                     m_fields.get_alldirs("ECTRhofield", lev),
                     lev);
             }
@@ -1048,7 +1048,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                     m_fdtd_solver_cp[lev]->EvolveECTRho(
                         m_fields.get_alldirs("Efield_cp",lev),
                         m_fields.get_alldirs("edge_lengths", lev),
-                        m_fields.get_mr_levels_alldirs("face_areas", finest_level)[lev],
+                        m_fields.get_mr_levels_alldirs("face_areas", max_level)[lev],
                         m_fields.get_alldirs("ECTRhofield", lev),
                         lev);
                 }
@@ -1232,7 +1232,7 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
 
 void WarpX::CheckGuardCells()
 {
-    for (int lev = 0; lev <= finest_level; ++lev)
+    for (int lev = 0; lev <= max_level; ++lev)
     {
         for (int dim = 0; dim < 3; ++dim)
         {
