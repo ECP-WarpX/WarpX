@@ -32,7 +32,7 @@ void RelativisticExplicitES::InitData () {
 void RelativisticExplicitES::ComputeSpaceChargeField (
     ablastr::fields::MultiFabRegister& fields,
     MultiParticleContainer& mpc,
-    MultiFluidContainer* mfl,
+    [[maybe_unused]] MultiFluidContainer* mfl,
     int max_level)
 {
     using ablastr::fields::MultiLevelVectorField;
@@ -52,7 +52,6 @@ void RelativisticExplicitES::ComputeSpaceChargeField (
             AddSpaceChargeField(*species, Efield_fp, Bfield_fp);
         }
     }
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( !(mfl), "Fluid species are not supported with the relativistic electrostatic solver");
 
     // Add the field due to the boundary potentials
     if (always_run_solve || (m_poisson_boundary_handler->m_boundary_potential_specified))

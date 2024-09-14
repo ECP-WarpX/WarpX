@@ -47,7 +47,7 @@ public:
     /**
      * Evolve updates a single timestep (dt) of the cold relativistic fluid equations
      */
-    void Evolve (ablastr::fields::MultiFabRegister& m_fields,
+    void Evolve (ablastr::fields::MultiFabRegister& fields,
                  int lev,
                  std::string current_fp_string,
                  amrex::Real cur_time,

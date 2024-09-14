@@ -62,7 +62,7 @@ public:
     /// This evolves all the fluids by one PIC time step, including current deposition, the
     /// field solve, and pushing the fluids, for all the species in the MultiFluidContainer.
     ///
-    void Evolve (ablastr::fields::MultiFabRegister& m_fields,
+    void Evolve (ablastr::fields::MultiFabRegister& fields,
                  int lev,
                  std::string current_fp_string,
                  amrex::Real cur_time,
