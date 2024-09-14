@@ -12,8 +12,14 @@ class FullDiagnostics final : public Diagnostics
 {
 public:
     FullDiagnostics (int i, const std::string& name, DiagTypes diag_type);
-//    bool m_do_timeaverage = false;
-//    enum TimeAverageType {None, Static, Dynamic};
+    /** Type of time averaging for diagnostics (fields only)
+     * None corresponds to instantaneous diags
+     * Static corresponds to a fixed starting step for averaging,
+     *     will average until the end, and dump out intermediate average results
+     * Dynamic corresponds to a moving period for averaging where the start step
+     *     is as many steps before the output interval as the averaging period is long.
+     */
+    enum TimeAverageType {None, Static, Dynamic};
 private:
     /** Read user-requested parameters for full diagnostics */
     void ReadParameters ();
@@ -29,16 +35,14 @@ private:
      * before writing the diagnostic.
      */
     bool m_solver_deposits_current = true;
-    /** Whether the diagnostics are averaging data over time or not
-     * Valid options are "fixed_start" and "dynamic_start".
-     */
-    std::string m_time_averaging = "none";
+    /** Whether the diagnostics are averaging data over time or not */
+    TimeAverageType m_time_average_type = TimeAverageType::None;
     /** Period to average fields over: in steps */
-    unsigned int m_average_period_steps = 0;
+    int m_average_period_steps = 0;
     /** Period to average fields over: in seconds */
-    amrex::Real m_average_period_seconds = 0;
+    amrex::Real m_average_period_time = 0;
     /** Time step to start averaging */
-    unsigned int m_average_start_step = 0;
+    int m_average_start_step = 0;
     /** Flush m_mf_output and particles to file for the i^th buffer */
     void Flush (int i_buffer, bool /* force_flush */) override;
     /** Flush raw data */
