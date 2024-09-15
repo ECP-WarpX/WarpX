@@ -1478,27 +1478,31 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
             // Determine the number of macroparticles to inject in this cell (num_ppc_int)
             amrex::Real num_ppc_real_in_this_cell = num_ppc_real; // user input: number of macroparticles per cell
             if (inject_from_eb) {
+#ifdef AMREX_USE_EB
                 // Injection from EB
-                if (eb_flag_arr(i,j,k).isRegular() || eb_flag_arr(i,j,k).isCovered()) return; // Skip cells that are not partially covered by the EB
-                num_ppc_real_in_this_cell *= eb_bnd_area_arr(i,j,k); // Scale by the area of the EB
+                // Skip cells that are not partially covered by the EB
+                if (eb_flag_arr(i,j,k).isRegular() || eb_flag_arr(i,j,k).isCovered()) return;
+                // Scale by the (normalized) area of the EB surface in this cell
+                num_ppc_real_in_this_cell *= eb_bnd_area_arr(i,j,k);
+#endif
             } else {
                 // Injection from a plane
                 auto lo = getCellCoords(overlap_corner, dx, {0._rt, 0._rt, 0._rt}, iv);
                 auto hi = getCellCoords(overlap_corner, dx, {1._rt, 1._rt, 1._rt}, iv);
-                if (!flux_pos->overlapsWith(lo, hi)) return; // Skip cells that do not overlap with the plane
+                // Skip cells that do not overlap with the plane
+                if (!flux_pos->overlapsWith(lo, hi)) return;
             }
             const int num_ppc_int = static_cast<int>(num_ppc_real_in_this_cell + amrex::Random(engine));
 
-            {
-                auto index = overlap_box.index(iv);
-                int r;
-                if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
-                    r = compute_area_weights(lrrfac, flux_normal_axis);
-                } else {
-                    r = 1;
-                }
-                pcounts[index] = num_ppc_int*r;
+            auto index = overlap_box.index(iv);
+            int r;
+            if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
+                r = compute_area_weights(lrrfac, flux_normal_axis);
+            } else {
+                r = 1;
             }
+            pcounts[index] = num_ppc_int*r;
+
             amrex::ignore_unused(j,k);
         });
 
