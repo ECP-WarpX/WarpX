@@ -1432,16 +1432,17 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         RealBox overlap_realbox;
         Box overlap_box;
         IntVect shifted;
-        if (inject_from_eb) {
 #ifdef AMREX_USE_EB
+        if (inject_from_eb) {
             // Injection from EB
             const amrex::FabType fab_type = eb_flag[mfi].getType(tile_box);
             if (fab_type == amrex::FabType::regular) continue; // Go to the next tile
             if (fab_type == amrex::FabType::covered) continue; // Go to the next tile
             overlap_box = tile_box;
             overlap_realbox = tile_realbox;
+        } else
 #endif
-        } else {
+        {
             // Injection from a plane
             const bool no_overlap = find_overlap_flux(tile_realbox, part_realbox, dx, problo, plasma_injector, overlap_realbox, overlap_box, shifted);
             if (no_overlap) continue; // Go to the next tile
@@ -1474,19 +1475,19 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         amrex::ParallelForRNG(overlap_box, [=] AMREX_GPU_DEVICE (int i, int j, int k, amrex::RandomEngine const& engine) noexcept
         {
             const IntVect iv(AMREX_D_DECL(i, j, k));
-<<<<<<< HEAD
 
             // Determine the number of macroparticles to inject in this cell (num_ppc_int)
             amrex::Real num_ppc_real_in_this_cell = num_ppc_real; // user input: number of macroparticles per cell
-            if (inject_from_eb) {
 #ifdef AMREX_USE_EB
+            if (inject_from_eb) {
                 // Injection from EB
                 // Skip cells that are not partially covered by the EB
                 if (eb_flag_arr(i,j,k).isRegular() || eb_flag_arr(i,j,k).isCovered()) return;
                 // Scale by the (normalized) area of the EB surface in this cell
                 num_ppc_real_in_this_cell *= eb_bnd_area_arr(i,j,k);
+            } else
 #endif
-            } else {
+            {
                 // Injection from a plane
                 auto lo = getCellCoords(overlap_corner, dx, {0._rt, 0._rt, 0._rt}, iv);
                 auto hi = getCellCoords(overlap_corner, dx, {1._rt, 1._rt, 1._rt}, iv);
@@ -1504,25 +1505,6 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
             pcounts[index] = num_ppc_int*r;
 
             amrex::ignore_unused(j,k);
-=======
-            amrex::ignore_unused(j,k);
-
-            auto lo = getCellCoords(overlap_corner, dx, {0._rt, 0._rt, 0._rt}, iv);
-            auto hi = getCellCoords(overlap_corner, dx, {1._rt, 1._rt, 1._rt}, iv);
-
-            // Skip cells that do not overlap with the injection plane
-            if (!flux_pos->overlapsWith(lo, hi)) return;
-
-            // Determine how many particles to inject in this cell
-            auto index = overlap_box.index(iv);
-            const int num_ppc_int = static_cast<int>(num_ppc_real + amrex::Random(engine));
-            // Take into account refined injection region
-            int r = 1;
-            if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
-                r = compute_area_weights(lrrfac, flux_normal_axis);
-            }
-            pcounts[index] = num_ppc_int*r;
->>>>>>> simplify_fine_injectionwq
         });
 
         // Max number of new particles. All of them are created,
@@ -1592,7 +1574,15 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
             amrex::ignore_unused(j,k);
             const auto index = overlap_box.index(iv);
 
-            Real scale_fac = compute_scale_fac_area(dx, num_ppc_real, flux_normal_axis);
+            Real scale_fac;
+#ifdef AMREX_USE_EB
+            if (inject_from_eb) {
+                scale_fac = compute_scale_fac_area_eb(dx, pcounts[index], eb_bnd_area_arr, iv);
+            } else
+#endif
+            {
+                scale_fac = compute_scale_fac_area_plane(dx, num_ppc_real, flux_normal_axis);
+            }
 
             auto lo = getCellCoords(overlap_corner, dx, {0._rt, 0._rt, 0._rt}, iv);
             auto hi = getCellCoords(overlap_corner, dx, {1._rt, 1._rt, 1._rt}, iv);
