@@ -1370,6 +1370,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 #ifdef AMREX_USE_EB
     amrex::EBFArrayBoxFactory const& eb_box_factory = WarpX::GetInstance().fieldEBFactory(0);
     amrex::FabArray<amrex::EBCellFlagFab> const& eb_flag = eb_box_factory.getMultiEBCellFlagFab();
+    amrex::MultiCutFab const& eb_bnd_area = eb_box_factory.getBndryArea();
 #endif
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(0);
@@ -1424,18 +1425,24 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         const Box& tile_box = mfi.tilebox();
         const RealBox tile_realbox = WarpX::getRealBox(tile_box, 0);
 
+        bool inject_from_eb = plasma_injector.m_inject_from_eb; // whether to inject from EB or from a plane
+
         // Find the cells of part_realbox that overlap with tile_realbox
         // If there is no overlap, just go to the next tile in the loop
         RealBox overlap_realbox;
         Box overlap_box;
         IntVect shifted;
-        if (plasma_injector.m_inject_from_eb) {
+        if (inject_from_eb) {
+#ifdef AMREX_USE_EB
+            // Injection from EB
             const amrex::FabType fab_type = eb_flag[mfi].getType(tile_box);
             if (fab_type == amrex::FabType::regular) continue; // Go to the next tile
             if (fab_type == amrex::FabType::covered) continue; // Go to the next tile
             overlap_box = tile_box;
             overlap_realbox = tile_realbox;
+#endif
         } else {
+            // Injection from a plane
             const bool no_overlap = find_overlap_flux(tile_realbox, part_realbox, dx, problo, plasma_injector, overlap_realbox, overlap_box, shifted);
             if (no_overlap) continue; // Go to the next tile
         }
@@ -1458,19 +1465,31 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         if (refine_injection) {
             fine_overlap_box = overlap_box & amrex::shift(fine_injection_box, -shifted);
         }
+
+#ifdef AMREX_USE_EB
+        auto const& eb_flag_arr = eb_flag.array(mfi);
+        amrex::Array4<const amrex::Real> const& eb_bnd_area_arr = eb_bnd_area.array(mfi);
+#endif
+
         amrex::ParallelForRNG(overlap_box, [=] AMREX_GPU_DEVICE (int i, int j, int k, amrex::RandomEngine const& engine) noexcept
         {
             const IntVect iv(AMREX_D_DECL(i, j, k));
-            auto lo = getCellCoords(overlap_corner, dx, {0._rt, 0._rt, 0._rt}, iv);
-            auto hi = getCellCoords(overlap_corner, dx, {1._rt, 1._rt, 1._rt}, iv);
 
-            const int num_ppc_int = static_cast<int>(num_ppc_real + amrex::Random(engine));
+            // Determine the number of macroparticles to inject in this cell (num_ppc_int)
+            amrex::Real num_ppc_real_in_this_cell = num_ppc_real; // user input: number of macroparticles per cell
+            if (inject_from_eb) {
+                // Injection from EB
+                if (eb_flag_arr(i,j,k).isRegular() || eb_flag_arr(i,j,k).isCovered()) return; // Skip cells that are not partially covered by the EB
+                num_ppc_real_in_this_cell *= eb_bnd_area_arr(i,j,k); // Scale by the area of the EB
+            } else {
+                // Injection from a plane
+                auto lo = getCellCoords(overlap_corner, dx, {0._rt, 0._rt, 0._rt}, iv);
+                auto hi = getCellCoords(overlap_corner, dx, {1._rt, 1._rt, 1._rt}, iv);
+                if (!flux_pos->overlapsWith(lo, hi)) return; // Skip cells that do not overlap with the plane
+            }
+            const int num_ppc_int = static_cast<int>(num_ppc_real_in_this_cell + amrex::Random(engine));
 
-            if (flux_pos->overlapsWith(lo, hi))
             {
-
-                // TODO: EBInjection: call getBndArea ; infer how many particles to inject from the area
-
                 auto index = overlap_box.index(iv);
                 int r;
                 if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
