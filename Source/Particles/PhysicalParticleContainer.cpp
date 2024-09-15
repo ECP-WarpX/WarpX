@@ -1367,6 +1367,11 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
     const auto dx = geom.CellSizeArray();
     const auto problo = geom.ProbLoArray();
 
+#ifdef AMREX_USE_EB
+    amrex::EBFArrayBoxFactory const& eb_box_factory = WarpX::GetInstance().fieldEBFactory(0);
+    amrex::FabArray<amrex::EBCellFlagFab> const& eb_flag = eb_box_factory.getMultiEBCellFlagFab();
+#endif
+
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(0);
 
     // Create temporary particle container to which particles will be added;
@@ -1424,9 +1429,15 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         RealBox overlap_realbox;
         Box overlap_box;
         IntVect shifted;
-        const bool no_overlap = find_overlap_flux(tile_realbox, part_realbox, dx, problo, plasma_injector, overlap_realbox, overlap_box, shifted);
-        if (no_overlap) {
-            continue; // Go to the next tile
+        if (plasma_injector.m_inject_from_eb) {
+            const amrex::FabType fab_type = eb_flag[mfi].getType(tile_box);
+            if (fab_type == amrex::FabType::regular) continue; // Go to the next tile
+            if (fab_type == amrex::FabType::covered) continue; // Go to the next tile
+            overlap_box = tile_box;
+            overlap_realbox = tile_realbox;
+        } else {
+            const bool no_overlap = find_overlap_flux(tile_realbox, part_realbox, dx, problo, plasma_injector, overlap_realbox, overlap_box, shifted);
+            if (no_overlap) continue; // Go to the next tile
         }
 
         const int grid_id = mfi.index();
