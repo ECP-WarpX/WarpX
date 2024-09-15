@@ -37,13 +37,6 @@ namespace SpeciesUtils {
         std::unique_ptr<VelocityProperties>& h_mom_vel,
         int flux_normal_axis=0, int flux_direction=0);
 
-#ifdef AMREX_USE_EB
-    void parseMomentum (std::string const& species_name, std::string const& source_name, const std::string& style,
-        std::unique_ptr<InjectorMomentum,InjectorMomentumDeleter>& h_inj_mom,
-        amrex::AsyncArray<amrex::Box>& ba,
-        amrex::AsyncArray<amrex::Array4<const amrex::Real>>& a_arrays,
-        int size);
-#endif
 }
 
 #endif // WARPX_SPECIES_UTILS_H_

@@ -22,10 +22,6 @@
 
 #include <ablastr/warn_manager/WarnManager.H>
 
-#ifdef AMREX_USE_EB
-#include <AMReX_EB2.H>
-#endif
-
 #include <AMReX.H>
 #include <AMReX_BLassert.H>
 #include <AMReX_Config.H>
@@ -138,8 +134,6 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name,
         setupNRandomPerCell(pp_species);
     } else if (injection_style == "nfluxpercell") {
         setupNFluxPerCell(pp_species);
-    } else if (injection_style == "stlfluxpercell") {
-        setupSTLFluxInjection(pp_species, geom);
     } else if (injection_style == "nuniformpercell") {
         setupNuniformPerCell(pp_species);
     } else if (injection_style == "external_file") {
@@ -372,107 +366,6 @@ void PlasmaInjector::setupNFluxPerCell (amrex::ParmParse const& pp_species)
                                 ux_th_parser, uy_th_parser, uz_th_parser,
                                 h_mom_temp, h_mom_vel,
                                 flux_normal_axis, flux_direction);
-}
-
-void PlasmaInjector::setupSTLFluxInjection (amrex::ParmParse const& pp_species, const amrex::Geometry& geom)
-{
-    // just added so theres not the unused parameter error
-    if (geom.isPeriodic(0)) {
-        std::cout << "" << std::endl;
-    }
-#ifdef AMREX_USE_EB
-
-    utils::parser::getWithParser(pp_species, source_name, "num_particles_per_cell", num_particles_per_cell_real);
-#ifdef WARPX_DIM_RZ
-    if (WarpX::n_rz_azimuthal_modes > 1) {
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        num_particles_per_cell_real>=2*WarpX::n_rz_azimuthal_modes,
-        "Error: For accurate use of WarpX cylindrical geometry the number "
-        "of particles should be at least two times n_rz_azimuthal_modes "
-        "(Please visit PR#765 for more information.)");
-    }
-#endif
-    flux_normal_axis = -1;
-
-    std::cout << "settig up with stl flux injection" << std::endl;
-    amrex::EB2::Build(geom, 0, 20);
-    const amrex::EB2::IndexSpace& indexSpace = amrex::EB2::IndexSpace::top();
-    const amrex::EB2::Level& eb_level = indexSpace.getLevel(geom);
-
-    const amrex::BoxArray ba = eb_level.boxArray();
-    const amrex::DistributionMapping dm = eb_level.DistributionMap();
-    std::shared_ptr<amrex::EBFArrayBoxFactory> field_factory_ptr = amrex::makeEBFabFactory(&eb_level, ba, dm, {0, 0, 0}, amrex::EBSupport::full);
-
-    // since multicutfab, by default only contians cut cells
-    std::cout << "getting field factory info" << std::endl;
-    amrex::FabArray<amrex::EBCellFlagFab> const& eb_flag = field_factory_ptr->getMultiEBCellFlagFab();
-    amrex::MultiCutFab const& eb_bnd_normal = field_factory_ptr->getBndryNormal();
-    amrex::MultiCutFab const& eb_bnd_cent = field_factory_ptr->getBndryCent();
-
-    // make fabarray to copy into with a pinned arena
-    // adding comment to rebuild idk maybe it'll work
-    amrex::Vector<amrex::Box> b_array;
-    amrex::Vector<amrex::Array4<const amrex::Real>> normal_arrays;
-    amrex::Vector<amrex::Array4<const amrex::Real>> cent_arrays;
-    int size = 0;
-
-    for (amrex::MFIter mfi(ba, dm); mfi.isValid(); ++mfi) {
-        const amrex::Box & box = mfi.tilebox( amrex::IntVect::TheCellVector());
-
-        // skip boxes that do not intersect with the EB (fully covered or fully regular)
-        amrex::FabType fab_type = eb_flag[mfi].getType(box);
-        if (fab_type == amrex::FabType::regular) continue;
-        if (fab_type == amrex::FabType::covered) continue;
-
-        b_array.push_back(box);
-
-        const amrex::Array4<const amrex::Real> & const_eb_bnd_normal_arr = eb_bnd_normal.array(mfi);
-        amrex::Array4<const amrex::Real>& eb_bnd_normal_arr = const_cast<amrex::Array4<const amrex::Real>&>(const_eb_bnd_normal_arr);
-        normal_arrays.push_back(eb_bnd_normal_arr);
-
-        std::cout << "i am here" << std::endl;
-        const amrex::Array4<const amrex::Real> & const_eb_bnd_cent_arr = eb_bnd_cent.array(mfi);
-        std::cout << "array4 size is : " << const_eb_bnd_cent_arr.size() << std::endl;
-        amrex::Array4<const amrex::Real>& eb_bnd_cent_arr = const_cast<amrex::Array4<const amrex::Real>&>(const_eb_bnd_cent_arr);
-        std::cout << "array4 size is : " << eb_bnd_cent_arr.size() << std::endl;
-        cent_arrays.push_back(eb_bnd_cent_arr);
-        size += 1;
-    }
-
-    std::cout << "making vectors async arrays" << std::endl;
-    std::cout << "size of async arrays: " << size << std::endl;
-    amrex::AsyncArray<amrex::Box> barray(b_array.dataPtr(), b_array.size());
-    amrex::AsyncArray<amrex::Array4<const amrex::Real>> narray(normal_arrays.dataPtr(), normal_arrays.size());
-
-    amrex::GpuArray<amrex::Array4<const amrex::Real>, 12> carray;
-    for (int n = 0; n < 12; n++) {
-        std::cout << "getting cent array place: " << n << std::endl;
-        const amrex::Array4<const amrex::Real>& og_array_c = cent_arrays[n];
-        carray[n] = og_array_c;
-        std::cout << "setting gpu array to og_array_c" << size << std::endl;
-    }
-    amrex::Gpu::synchronize();
-
-    std::cout << "creating injector position" << std::endl;
-    h_flux_pos = std::make_unique<InjectorPosition> (
-        (InjectorPositionRandomSTLPlane*)nullptr,
-        xmin, xmax, ymin, ymax, zmin, zmax, barray, carray);
-#ifdef AMREX_USE_GPU
-    d_flux_pos = static_cast<InjectorPosition*>
-        (amrex::The_Arena()->alloc(sizeof(InjectorPosition)));
-        amrex::Gpu::htod_memcpy_async(d_flux_pos, h_flux_pos.get(), sizeof(InjectorPosition));
-#else
-    d_flux_pos = h_flux_pos.get();
-#endif
-#endif
-    parseFlux(pp_species);
-
-#ifdef AMREX_USE_EB
-    std::cout << "parsing momentum" << std::endl;
-    SpeciesUtils::parseMomentum(species_name, source_name, "stlfluxpercell",
-                                h_inj_mom, barray, narray, size);
-#endif
-
 }
 
 void PlasmaInjector::setupNuniformPerCell (amrex::ParmParse const& pp_species)

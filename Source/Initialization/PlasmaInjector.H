@@ -199,7 +199,6 @@ protected:
     void setupNuniformPerCell (amrex::ParmParse const& pp_species);
     void setupExternalFile (amrex::ParmParse const& pp_species);
 
-    void setupSTLFluxInjection (amrex::ParmParse const& pp_species, const amrex::Geometry& geom);
     void parseFlux (amrex::ParmParse const& pp_species);
 };
 

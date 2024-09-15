@@ -283,41 +283,4 @@ namespace SpeciesUtils {
         }
     }
 
-#ifdef AMREX_USE_EB
-    void parseMomentum (std::string const& species_name, std::string const& source_name, const std::string& /*style*/,
-        std::unique_ptr<InjectorMomentum,InjectorMomentumDeleter>& h_inj_mom,
-        amrex::AsyncArray<amrex::Box>& ba,
-        amrex::AsyncArray<amrex::Array4<const amrex::Real>>& arrays,
-        int size) {
-
-        using namespace amrex::literals;
-        const amrex::ParmParse pp_species(species_name);
-
-        // parse momentum information
-        std::string mom_dist_s;
-        utils::parser::get(pp_species, source_name, "momentum_distribution_type", mom_dist_s);
-        std::transform(mom_dist_s.begin(),
-                       mom_dist_s.end(),
-                       mom_dist_s.begin(),
-                       ::tolower);
-        if (mom_dist_s == "gaussian_flux") {
-            std::cout << "setting momentum using gaussian flux" << std::endl;
-            amrex::Real un_m;
-            amrex::Real un_th;
-            utils::parser::queryWithParser(pp_species, source_name, "un_m",  un_m);
-            utils::parser::queryWithParser(pp_species, source_name, "un_th", un_th);
-            h_inj_mom.reset(new InjectorMomentum((InjectorMomentumSTLGaussianFlux*)nullptr,
-                                                un_m, un_th, ba, arrays, size));
-        }
-        else {
-            std::stringstream stringstream;
-            std::string string;
-            stringstream << "the momentum distribution type: " << mom_dist_s << "is not supported with an stl injection";
-            string = stringstream.str();
-            WARPX_ABORT_WITH_MESSAGE(string);
-        }
-
-    }
-#endif
-
 }

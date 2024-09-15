@@ -20,7 +20,6 @@
 #include <AMReX_Config.H>
 #include <AMReX_Dim3.H>
 #include <AMReX_GpuQualifiers.H>
-#include <AMReX_GpuAsyncArray.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Parser.H>
 #include <AMReX_Random.H>
@@ -156,101 +155,6 @@ private:
     int m_flux_direction;
 };
 
-#ifdef AMREX_USE_EB
-// struct whose getMomentum returns momentum for 1 particle, from random
-// gaussian flux distribution in the specified direction.
-// Direction is determined by stl file plane.
-struct InjectorMomentumSTLGaussianFlux
-{
-    InjectorMomentumSTLGaussianFlux (amrex::Real a_un_m, amrex::Real a_un_th,
-                                     amrex::AsyncArray<amrex::Box>& a_ba,
-                                     amrex::AsyncArray<amrex::Array4<const amrex::Real>>& a_arrays,
-                                     int a_size) noexcept
-        : u_m(a_un_m), u_th(a_un_th), ba(a_ba), arrays(a_arrays), size(a_size)
-    {
-    }
-
-    [[nodiscard]]
-    AMREX_GPU_HOST_DEVICE
-    amrex::XDim3
-    getMomentum (amrex::Real x, amrex::Real y, amrex::Real z,
-                 amrex::RandomEngine const& engine) const noexcept
-    {
-        amrex::Real u = generateGaussianFluxDist(u_m, u_th, engine);
-        return calcMomentum(x, y, z, u);
-    }
-
-    [[nodiscard]]
-    AMREX_GPU_HOST_DEVICE
-    amrex::XDim3
-    getBulkMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
-    {
-        return calcMomentum(x, y, z, u_m);
-    }
-
-
-private:
-
-    [[nodiscard]]
-        AMREX_GPU_HOST_DEVICE
-        amrex::XDim3
-        calcMomentum (amrex::Real x, amrex::Real y, amrex::Real z, amrex::Real momentum) const noexcept
-    {
-#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
-        amrex::Box const* b_data = ba.gpuData();
-        amrex::Array4<const amrex::Real> const* n_data = arrays.gpuData();
-        return calcMomentumHelper(x, y, z, momentum, b_data, n_data);
-#else
-        amrex::Box const* b_data = ba.data();
-        amrex::Array4<const amrex::Real> const* n_data = arrays.data();
-        return calcMomentumHelper(x, y, z, momentum, b_data, n_data);
-#endif
-    }
-
-
-    [[nodiscard]]
-        AMREX_GPU_HOST_DEVICE
-        amrex::XDim3
-        calcMomentumHelper (amrex::Real x, amrex::Real y, amrex::Real z, amrex::Real momentum,
-                            amrex::Box const* b_data, amrex::Array4<const amrex::Real> const* n_data) const noexcept
-    {
-
-        using namespace amrex::literals;
-
-        if ((b_data == nullptr) || (n_data == nullptr)) {
-            return amrex::XDim3{0.0_rt, 0.0_rt, 0.0_rt};
-        }
-
-        // how can i use x y z given that ba and array:4 have to take in integers
-        int int_x = amrex::Math::round(x);
-        int int_y = amrex::Math::round(y);
-        int int_z = amrex::Math::round(z);
-
-        for (int i = 0; i < size; ++i) {
-            if (b_data[i].contains(int_x, int_y, int_z)) {
-                amrex::Array4<const amrex::Real> const& eb_bnd_normal_arr = n_data[i];
-
-                amrex::Real m_i = eb_bnd_normal_arr(int_x, int_y, int_z, 1);
-                amrex::Real m_j = eb_bnd_normal_arr(int_x, int_y, int_z, 2);
-                amrex::Real m_k = eb_bnd_normal_arr(int_x, int_y, int_z, 3);
-
-                // add a variable that determines if it should go inwards or outwards (default is inwards)
-                amrex::Real const ux = m_i * momentum * -1;
-                amrex::Real const uy = m_j * momentum * -1;
-                amrex::Real const uz = m_k * momentum * -1;
-                return amrex::XDim3{ux, uy, uz};
-            }
-        }
-        return amrex::XDim3{0.0_rt, 0.0_rt, 0.0_rt};
-    }
-
-    amrex::Real u_m, u_th;
-    amrex::AsyncArray<amrex::Box>& ba;
-    amrex::AsyncArray<amrex::Array4<const amrex::Real>>& arrays;
-    int size;
-};
-
-#endif
 
 // struct whose getMomentum returns momentum for 1 particle, from random
 // uniform distribution u_min < u < u_max
@@ -636,18 +540,6 @@ struct InjectorMomentum
           object(t,a_ux_m,a_uy_m,a_uz_m,a_ux_th,a_uy_th,a_uz_th)
     { }
 
-#ifdef AMREX_USE_EB
-    // This constructor stores a InjectorMomentumSTLGaussianFlux in union object.
-    InjectorMomentum (InjectorMomentumSTLGaussianFlux* t,
-                      amrex::Real a_un_m, amrex::Real a_un_th,
-                      amrex::AsyncArray<amrex::Box>& a_ba,
-                      amrex::AsyncArray<amrex::Array4<const amrex::Real>>& a_arrays,
-                      int a_size)
-        : type(Type::stlgaussianflux),
-          object(t, a_un_m, a_un_th, a_ba, a_arrays, a_size)
-    { }
-#endif
-
     // This constructor stores a InjectorMomentumGaussianFlux in union object.
     InjectorMomentum (InjectorMomentumGaussianFlux* t,
                       amrex::Real a_ux_m, amrex::Real a_uy_m, amrex::Real a_uz_m,
@@ -723,12 +615,6 @@ struct InjectorMomentum
         {
             return object.gaussianflux.getMomentum(x,y,z,engine);
         }
-#ifdef AMREX_USE_EB
-        case Type::stlgaussianflux:
-        {
-            return object.stlgaussianflux.getMomentum(x,y,z,engine);
-        }
-#endif
         case Type::uniform:
         {
             return object.uniform.getMomentum(x,y,z,engine);
@@ -782,12 +668,6 @@ struct InjectorMomentum
         {
             return object.gaussianflux.getBulkMomentum(x,y,z);
         }
-#ifdef AMREX_USE_EB
-        case Type::stlgaussianflux:
-        {
-            return object.stlgaussianflux.getBulkMomentum(x,y,z);
-        }
-#endif
         case Type::uniform:
         {
             return object.uniform.getBulkMomentum(x,y,z);
@@ -816,20 +696,7 @@ struct InjectorMomentum
         }
     }
 
-    enum struct Type {
-        constant,
-        gaussian,
-        gaussianflux,
-#ifdef AMREX_USE_EB
-        stlgaussianflux,
-#endif
-        uniform,
-        boltzmann,
-        juttner,
-        radial_expansion,
-        parser,
-        gaussianparser
-    };
+    enum struct Type { constant, gaussian, gaussianflux, uniform, boltzmann, juttner, radial_expansion, parser, gaussianparser };
     Type type;
 
 private:
@@ -852,14 +719,6 @@ private:
                 amrex::Real a_uy_th, amrex::Real a_uz_th,
                 int a_flux_normal_axis, int a_flux_direction) noexcept
             : gaussianflux(a_ux_m,a_uy_m,a_uz_m,a_ux_th,a_uy_th,a_uz_th,a_flux_normal_axis,a_flux_direction) {}
-#ifdef AMREX_USE_EB
-        Object (InjectorMomentumSTLGaussianFlux*,
-                amrex::Real a_un_m, amrex::Real a_un_th,
-                amrex::AsyncArray<amrex::Box>& a_ba,
-                amrex::AsyncArray<amrex::Array4<const amrex::Real>>& a_arrays,
-                int a_size) noexcept
-            : stlgaussianflux(a_un_m, a_un_th, a_ba, a_arrays, a_size) {}
-#endif
         Object (InjectorMomentumUniform*,
                 amrex::Real a_ux_min, amrex::Real a_uy_min,
                 amrex::Real a_uz_min, amrex::Real a_ux_max,
@@ -891,9 +750,6 @@ private:
         InjectorMomentumConstant constant;
         InjectorMomentumGaussian gaussian;
         InjectorMomentumGaussianFlux gaussianflux;
-#ifdef AMREX_USE_EB
-        InjectorMomentumSTLGaussianFlux stlgaussianflux;
-#endif
         InjectorMomentumUniform uniform;
         InjectorMomentumBoltzmann boltzmann;
         InjectorMomentumJuttner juttner;
