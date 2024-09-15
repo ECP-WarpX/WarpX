@@ -590,14 +590,15 @@ In WarpX, the embedded boundary can be defined in either of two ways:
             A function of `x`, `y`, `z` that defines the surface of the embedded
             boundary. That surface lies where the function value is 0 ;
             the physics simulation area is where the function value is negative ;
-            the interior of the embeddded boundary is where the function value is positive.
+            the interior of the embedded boundary is where the function value is positive.
 
     - **From an STL file:**
         In that case, you will need to set the following parameters in the input file.
 
         * ``eb2.stl_file`` (`string`)
-            The path to an STL file. In addition, you also need to set ``eb2.geom_type = stl``,
-            in order for the file to be read by WarpX.
+            The path to an `STL file <https://en.wikipedia.org/wiki/STL_(file_format)>`__.
+            In addition, you also need to set ``eb2.geom_type = stl``, in order for the file to be read by WarpX.
+            `See the AMReX documentation for more details <https://amrex-codes.github.io/amrex/docs_html/EB.html>`__.
 
 Whether the embedded boundary is defined with an analytical function or an STL file, you can
 additionally define the electric potential at the embedded boundary with an analytical function:
@@ -820,7 +821,7 @@ Particle initialization
 * ``particles.rigid_injected_species`` (`strings`, separated by spaces)
     List of species injected using the rigid injection method. The rigid injection
     method is useful when injecting a relativistic particle beam in boosted-frame
-    simulations; see the :ref:`input-output section <theory-io>` for more details.
+    simulations; see the :ref:`input-output section <boosted_frame-io>` for more details.
     For species injected using this method, particles are translated along the `+z`
     axis with constant velocity as long as their ``z`` coordinate verifies
     ``z<zinject_plane``. When ``z>zinject_plane``,
@@ -1952,7 +1953,7 @@ Collision models
 ----------------
 
 WarpX provides several particle collision models, using varying degrees of approximation.
-Details about the collision models can be found in the :ref:`theory section <theory-collisions>`.
+Details about the collision models can be found in the :ref:`theory section <multiphysics-collisions>`.
 
 * ``collisions.collision_names`` (`strings`, separated by spaces)
     The name of each collision type.
@@ -1975,10 +1976,10 @@ Details about the collision models can be found in the :ref:`theory section <the
       (e.g. ``<species_name>.species_type = 'deuterium'``)
     - ``dsmc`` for pair-wise, non-Coulomb collisions between kinetic species.
       This is a "direct simulation Monte Carlo" treatment of collisions between
-      kinetic species. See :ref:`DSMC section <theory-collisions-dsmc>`.
+      kinetic species. See :ref:`DSMC section <multiphysics-collisions-dsmc>`.
     - ``background_mcc`` for collisions between particles and a neutral background.
       This is a relativistic Monte Carlo treatment for particles colliding
-      with a neutral background gas. See :ref:`MCC section <theory-collisions-mcc>`.
+      with a neutral background gas. See :ref:`MCC section <multiphysics-collisions-mcc>`.
     - ``background_stopping`` for slowing of ions due to collisions with electrons or ions.
       This implements the approximate formulae as derived in Introduction to Plasma Physics,
       from Goldston and Rutherford, section 14.2.

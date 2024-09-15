@@ -48,32 +48,25 @@ using namespace amrex;
  * \brief Update the B field, over one timestep
  */
 void FiniteDifferenceSolver::EvolveB (
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
-    std::unique_ptr<amrex::MultiFab> const& Gfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_mod,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Venl,
-    std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_cell,
-    std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
-    int lev, amrex::Real const dt ) {
-
-#if defined(WARPX_DIM_RZ) || !defined(AMREX_USE_EB)
-  amrex::ignore_unused(area_mod, ECTRhofield, Venl, flag_info_cell, borrowing);
-#endif
+    [[maybe_unused]] std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
+    [[maybe_unused]] std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
+    [[maybe_unused]] std::unique_ptr<amrex::MultiFab> const& Gfield,
+    [[maybe_unused]] std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+    [[maybe_unused]] std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_mod,
+    [[maybe_unused]] std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
+    [[maybe_unused]] std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Venl,
+    [[maybe_unused]] std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_cell,
+    [[maybe_unused]] std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
+    [[maybe_unused]] int lev,
+    [[maybe_unused]] amrex::Real const dt ) {
 
     // Select algorithm (The choice of algorithm is a runtime option,
     // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
     if ((m_fdtd_algo == ElectromagneticSolverAlgo::Yee)||
         (m_fdtd_algo == ElectromagneticSolverAlgo::HybridPIC)){
-        ignore_unused(Gfield, face_areas);
         EvolveBCylindrical <CylindricalYeeAlgorithm> ( Bfield, Efield, lev, dt );
 #else
-    if(m_grid_type == GridType::Collocated || m_fdtd_algo != ElectromagneticSolverAlgo::ECT){
-        amrex::ignore_unused(face_areas);
-    }
 
     if (m_grid_type == GridType::Collocated) {
 
@@ -87,12 +80,9 @@ void FiniteDifferenceSolver::EvolveB (
     } else if (m_fdtd_algo == ElectromagneticSolverAlgo::CKC) {
 
         EvolveBCartesian <CartesianCKCAlgorithm> ( Bfield, Efield, Gfield, lev, dt );
-#ifdef AMREX_USE_EB
     } else if (m_fdtd_algo == ElectromagneticSolverAlgo::ECT) {
-
         EvolveBCartesianECT(Bfield, face_areas, area_mod, ECTRhofield, Venl, flag_info_cell,
                             borrowing, lev, dt);
-#endif
 #endif
     } else {
         WARPX_ABORT_WITH_MESSAGE("EvolveB: Unknown algorithm");
@@ -245,9 +235,9 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
             amrex::Array4<Real> const &S = face_areas[idim]->array(mfi);
             amrex::Array4<Real> const &S_mod = area_mod[idim]->array(mfi);
 
-            auto &borrowing_dim = (*borrowing[idim])[mfi];
-            auto borrowing_dim_neigh_faces = borrowing_dim.neigh_faces.data();
-            auto borrowing_dim_area = borrowing_dim.area.data();
+            auto & borrowing_dim = (*borrowing[idim])[mfi];
+            auto * borrowing_dim_neigh_faces = borrowing_dim.neigh_faces.data();
+            auto * borrowing_dim_area = borrowing_dim.area.data();
 
             auto const &borrowing_inds = (*borrowing[idim])[mfi].inds.data();
             auto const &borrowing_size = (*borrowing[idim])[mfi].size.array();
@@ -259,24 +249,23 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
             //Take care of the unstable cells
             amrex::ParallelFor(tb, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
-                if (S(i, j, k) <= 0) return;
+                if (S(i, j, k) <= 0) { return; }
 
-                if (!(flag_info_cell_dim(i, j, k) == 0))
-                    return;
+                if (!(flag_info_cell_dim(i, j, k) == 0)) { return; }
 
                 Venl_dim(i, j, k) = Rho(i, j, k) * S(i, j, k);
                 amrex::Real rho_enl;
 
                 // First we compute the rho of the enlarged face
                 for (int offset = 0; offset<borrowing_size(i, j, k); offset++) {
-                    int ind = borrowing_inds[*borrowing_inds_pointer(i, j, k) + offset];
+                    int const ind = borrowing_inds[*borrowing_inds_pointer(i, j, k) + offset];
                     auto vec = FaceInfoBox::uint8_to_inds(borrowing_dim_neigh_faces[ind]);
                     int ip, jp, kp;
-                    if(idim == 0){
+                    if (idim == 0) {
                         ip = i;
                         jp = j + vec(0);
                         kp = k + vec(1);
-                    }else if(idim == 1){
+                    } else if (idim == 1) {  // NOLINT(bugprone-branch-clone)
 #ifdef WARPX_DIM_XZ
                         ip = i + vec(0);
                         jp = j + vec(1);
@@ -288,7 +277,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
 #else
                         WARPX_ABORT_WITH_MESSAGE("EvolveBCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V");
 #endif
-                    }else{
+                    } else {
                         ip = i + vec(0);
                         jp = j + vec(1);
                         kp = k;
@@ -301,14 +290,14 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
                 rho_enl = Venl_dim(i, j, k) / S_mod(i, j, k);
 
                 for (int offset = 0; offset < borrowing_size(i, j, k); offset++) {
-                    int ind = borrowing_inds[*borrowing_inds_pointer(i, j, k) + offset];
+                    int const ind = borrowing_inds[*borrowing_inds_pointer(i, j, k) + offset];
                     auto vec = FaceInfoBox::uint8_to_inds(borrowing_dim_neigh_faces[ind]);
                     int ip, jp, kp;
-                    if(idim == 0){
+                    if (idim == 0) {
                         ip = i;
                         jp = j + vec(0);
                         kp = k + vec(1);
-                    }else if(idim == 1){
+                    } else if (idim == 1) {  // NOLINT(bugprone-branch-clone)
 #ifdef WARPX_DIM_XZ
                         ip = i + vec(0);
                         jp = j + vec(1);
@@ -320,7 +309,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
 #else
                         WARPX_ABORT_WITH_MESSAGE("EvolveBCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V");
 #endif
-                    }else{
+                    } else {
                         ip = i + vec(0);
                         jp = j + vec(1);
                         kp = k;
@@ -336,7 +325,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
 
             //Take care of the stable cells
             amrex::ParallelFor(tb, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-                if (S(i, j, k) <= 0) return;
+                if (S(i, j, k) <= 0) { return; }
 
                 if (flag_info_cell_dim(i, j, k) == 0) {
                     return;

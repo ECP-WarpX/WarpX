@@ -34,12 +34,13 @@ import checksumAPI
 yt.funcs.mylog.setLevel(0)
 
 # Open plotfile specified in command line
+test_name = os.path.split(os.getcwd())[1]
 filename = sys.argv[1]
 ds = yt.load(filename)
 t_max = ds.current_time.item()  # time of simulation
 
 # Parse test name and check if particle_shape = 4 is used
-emass_10 = True if re.search("emass_10", filename) else False
+emass_10 = True if re.search("emass_10", test_name) else False
 
 if emass_10:
     l2_tolerance = 0.096
@@ -193,5 +194,4 @@ if "phi" in ts.avail_record_components["electron"]:
     )  # Check conservation of energy
 
 # Checksum regression analysis
-test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)

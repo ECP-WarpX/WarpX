@@ -115,7 +115,7 @@ DifferentialLuminosity::DifferentialLuminosity (const std::string& rd_name)
                 const Real b = m_bin_min + m_bin_size*(Real(i)+0.5_rt);
                 ofs << "bin" << 1+i << "=" << b << "(eV)";
             }
-            ofs << std::endl;
+            ofs << "\n";
             // close file
             ofs.close();
         }
