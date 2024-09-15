@@ -189,9 +189,17 @@ public:
 
     /** External E/B fields */
     bool m_add_ext_particle_B_field = false;
+    std::string m_Bx_ext_part_function = "0.0";
+    std::string m_By_ext_part_function = "0.0";
+    std::string m_Bz_ext_part_function = "0.0";
+    std::array< std::unique_ptr<amrex::Parser>, 3> m_B_external_parser;
     std::array< amrex::ParserExecutor<4>, 3> m_B_external;
 
     bool m_add_ext_particle_E_field = false;
+    std::string m_Ex_ext_part_function = "0.0";
+    std::string m_Ey_ext_part_function = "0.0";
+    std::string m_Ez_ext_part_function = "0.0";
+    std::array< std::unique_ptr<amrex::Parser>, 3> m_E_external_parser;
     std::array< amrex::ParserExecutor<4>, 3> m_E_external;
 
     // Declare multifabs specifically needed for the hybrid-PIC model

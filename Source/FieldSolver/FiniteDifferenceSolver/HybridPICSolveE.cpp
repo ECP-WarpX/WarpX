@@ -433,14 +433,6 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
     auto & warpx = WarpX::GetInstance();
     auto t = warpx.gett_new(lev);
 
-    // amrex::Print() 
-    //     << "Bz = " << Bz_part(0,0,0,t)
-    //     << ", Br = " << Br_part(0,0,0,t) 
-    //     << ", Et = " << Et_part(0,0,0,t) 
-    //     << ", t=" << t 
-    //     << ", include E?: " << include_E_ext_part
-    //     << std::endl;
-
     auto dx_lev = warpx.Geom(lev).CellSizeArray();
     const RealBox& real_box = warpx.Geom(lev).ProbDomain();
     const auto nodal_flag = IntVect::TheNodeVector();
@@ -525,14 +517,14 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
             if (include_B_ext_part) {
                 // Determine r and z on nodal mesh at i and j
                 const amrex::Real fac_x = (1._rt - nodal_flag[0]) * dx_lev[0] * 0.5_rt;
-                const amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
-                const amrex::Real y = 0._rt;
+                const amrex::Real xx = i*dx_lev[0] + real_box.lo(0) + fac_x;
+                const amrex::Real yy = 0._rt;
                 const amrex::Real fac_z = (1._rt - nodal_flag[1]) * dx_lev[1] * 0.5_rt;
-                const amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
+                const amrex::Real zz = j*dx_lev[1] + real_box.lo(1) + fac_z;
 
-                Br_interp += Br_part(x,y,z,t);
-                Bt_interp += Bt_part(x,y,z,t);
-                Bz_interp += Bz_part(x,y,z,t);
+                Br_interp += Br_part(xx,yy,zz,t);
+                Bt_interp += Bt_part(xx,yy,zz,t);
+                Bz_interp += Bz_part(xx,yy,zz,t);
             }
 
             // calculate enE = (J - Ji) x B
@@ -649,12 +641,12 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                 if (include_E_ext_part) {
                     // Determine r and z on nodal mesh at i and j
                     const amrex::Real fac_x = (1._rt - Er_stag[0]) * dx_lev[0] * 0.5_rt;
-                    const amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
-                    const amrex::Real y = 0._rt;
+                    const amrex::Real xx = i*dx_lev[0] + real_box.lo(0) + fac_x;
+                    const amrex::Real yy = 0._rt;
                     const amrex::Real fac_z = (1._rt - Er_stag[1]) * dx_lev[1] * 0.5_rt;
-                    const amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
+                    const amrex::Real zz = j*dx_lev[1] + real_box.lo(1) + fac_z;
 
-                    Er(i, j, 0) -= Er_part(x,y,z,t);
+                    Er(i, j, 0) -= Er_part(xx,yy,zz,t);
                 }
             },
 
@@ -703,12 +695,12 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                 if (include_E_ext_part) {
                     // Determine r and z on nodal mesh at i and j
                     const amrex::Real fac_x = (1._rt - Et_stag[0]) * dx_lev[0] * 0.5_rt;
-                    const amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
-                    const amrex::Real y = 0._rt;
+                    const amrex::Real xx = i*dx_lev[0] + real_box.lo(0) + fac_x;
+                    const amrex::Real yy = 0._rt;
                     const amrex::Real fac_z = (1._rt - Et_stag[1]) * dx_lev[1] * 0.5_rt;
-                    const amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
+                    const amrex::Real zz = j*dx_lev[1] + real_box.lo(1) + fac_z;
 
-                    Et(i, j, 0) -= Et_part(x,y,z,t);
+                    Et(i, j, 0) -= Et_part(xx,yy,zz,t);
                 }
             },
 
@@ -753,12 +745,12 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                 if (include_E_ext_part) {
                     // Determine r and z on nodal mesh at i and j
                     const amrex::Real fac_x = (1._rt - Ez_stag[0]) * dx_lev[0] * 0.5_rt;
-                    const amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
-                    const amrex::Real y = 0._rt;
+                    const amrex::Real xx = i*dx_lev[0] + real_box.lo(0) + fac_x;
+                    const amrex::Real yy = 0._rt;
                     const amrex::Real fac_z = (1._rt - Ez_stag[1]) * dx_lev[1] * 0.5_rt;
-                    const amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
+                    const amrex::Real zz = j*dx_lev[1] + real_box.lo(1) + fac_z;
 
-                    Ez(i, j, 0) -= Ez_part(x,y,z,t);
+                    Ez(i, j, 0) -= Ez_part(xx,yy,zz,t);
                 }
             }
         );
@@ -1017,13 +1009,13 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 if (include_E_ext_part) {
                     // Determine x, y, and z on nodal mesh at i, j, & k
                     const amrex::Real fac_x = (1._rt - Ex_stag[0]) * dx_lev[0] * 0.5_rt;
-                    const amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
+                    const amrex::Real xx = i*dx_lev[0] + real_box.lo(0) + fac_x;
                     const amrex::Real fac_y = (1._rt - Ex_stag[1]) * dx_lev[1] * 0.5_rt;
-                    const amrex::Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
+                    const amrex::Real yy = j*dx_lev[1] + real_box.lo(1) + fac_y;
                     const amrex::Real fac_z = (1._rt - Ex_stag[2]) * dx_lev[2] * 0.5_rt;
-                    const amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
+                    const amrex::Real zz = k*dx_lev[2] + real_box.lo(2) + fac_z;
 
-                    Ex(i, j, k) -= Ex_part(x,y,z,t);
+                    Ex(i, j, k) -= Ex_part(xx,yy,zz,t);
                 }
             },
 
@@ -1073,13 +1065,13 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 if (include_E_ext_part) {
                     // Determine x, y, and z on nodal mesh at i, j, & k
                     const amrex::Real fac_x = (1._rt - Ey_stag[0]) * dx_lev[0] * 0.5_rt;
-                    const amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
+                    const amrex::Real xx = i*dx_lev[0] + real_box.lo(0) + fac_x;
                     const amrex::Real fac_y = (1._rt - Ey_stag[1]) * dx_lev[1] * 0.5_rt;
-                    const amrex::Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
+                    const amrex::Real yy = j*dx_lev[1] + real_box.lo(1) + fac_y;
                     const amrex::Real fac_z = (1._rt - Ey_stag[2]) * dx_lev[2] * 0.5_rt;
-                    const amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
+                    const amrex::Real zz = k*dx_lev[2] + real_box.lo(2) + fac_z;
 
-                    Ey(i, j, k) -= Ey_part(x,y,z,t);
+                    Ey(i, j, k) -= Ey_part(xx,yy,zz,t);
                 }
             },
 
@@ -1125,13 +1117,13 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 if (include_E_ext_part) {
                     // Determine x, y, and z on nodal mesh at i, j, & k
                     const amrex::Real fac_x = (1._rt - Ez_stag[0]) * dx_lev[0] * 0.5_rt;
-                    const amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
+                    const amrex::Real xx = i*dx_lev[0] + real_box.lo(0) + fac_x;
                     const amrex::Real fac_y = (1._rt - Ez_stag[1]) * dx_lev[1] * 0.5_rt;
-                    const amrex::Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
+                    const amrex::Real yy = j*dx_lev[1] + real_box.lo(1) + fac_y;
                     const amrex::Real fac_z = (1._rt - Ez_stag[2]) * dx_lev[2] * 0.5_rt;
-                    const amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
+                    const amrex::Real zz = k*dx_lev[2] + real_box.lo(2) + fac_z;
 
-                    Ez(i, j, k) -= Ez_part(x,y,z,t);
+                    Ez(i, j, k) -= Ez_part(xx,yy,zz,t);
                 }
             }
         );

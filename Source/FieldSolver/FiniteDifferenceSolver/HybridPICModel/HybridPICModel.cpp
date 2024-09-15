@@ -55,6 +55,15 @@ void HybridPICModel::ReadParameters ()
     pp_hybrid.query("Jx_external_grid_function(x,y,z,t)", m_Jx_ext_grid_function);
     pp_hybrid.query("Jy_external_grid_function(x,y,z,t)", m_Jy_ext_grid_function);
     pp_hybrid.query("Jz_external_grid_function(x,y,z,t)", m_Jz_ext_grid_function);
+
+    // external fields
+    const ParmParse pp_part("particles");
+    pp_hybrid.query("Bx_external_particle_function(x,y,z,t)", m_Bx_ext_part_function);
+    pp_hybrid.query("By_external_particle_function(x,y,z,t)", m_By_ext_part_function);
+    pp_hybrid.query("Bz_external_particle_function(x,y,z,t)", m_Bz_ext_part_function);
+    pp_hybrid.query("Ex_external_particle_function(x,y,z,t)", m_Ex_ext_part_function);
+    pp_hybrid.query("Ey_external_particle_function(x,y,z,t)", m_Ey_ext_part_function);
+    pp_hybrid.query("Ez_external_particle_function(x,y,z,t)", m_Ez_ext_part_function);
 }
 
 void HybridPICModel::AllocateMFs (int nlevs_max)
@@ -157,19 +166,29 @@ void HybridPICModel::InitData ()
     const auto& mypc = warpx.GetPartContainer();
 
     if ( mypc.m_B_ext_particle_s == "parse_b_ext_particle_function") {
-        constexpr auto num_arguments = 4; //x,y,z,t
-        m_B_external[0] = mypc.m_Bx_particle_parser->compile<num_arguments>();
-        m_B_external[1] = mypc.m_By_particle_parser->compile<num_arguments>();
-        m_B_external[2] = mypc.m_Bz_particle_parser->compile<num_arguments>();
+        m_B_external_parser[0] = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(m_Bx_ext_part_function,{"x","y","z","t"}));
+        m_B_external_parser[1] = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(m_By_ext_part_function,{"x","y","z","t"}));
+        m_B_external_parser[2] = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(m_Bz_ext_part_function,{"x","y","z","t"}));
+        m_B_external[0] = m_B_external_parser[0]->compile<4>();
+        m_B_external[1] = m_B_external_parser[1]->compile<4>();
+        m_B_external[2] = m_B_external_parser[2]->compile<4>();
 
         m_add_ext_particle_B_field = true;
     }
 
     if ( mypc.m_E_ext_particle_s == "parse_e_ext_particle_function") {
-        constexpr auto num_arguments = 4; //x,y,z,t
-        m_E_external[0] = mypc.m_Ex_particle_parser->compile<num_arguments>();
-        m_E_external[1] = mypc.m_Ey_particle_parser->compile<num_arguments>();
-        m_E_external[2] = mypc.m_Ez_particle_parser->compile<num_arguments>();
+        m_E_external_parser[0] = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(m_Ex_ext_part_function,{"x","y","z","t"}));
+        m_E_external_parser[1] = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(m_Ey_ext_part_function,{"x","y","z","t"}));
+        m_E_external_parser[2] = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(m_Ez_ext_part_function,{"x","y","z","t"}));
+        m_E_external[0] = m_E_external_parser[0]->compile<4>();
+        m_E_external[1] = m_E_external_parser[0]->compile<4>();
+        m_E_external[2] = m_E_external_parser[0]->compile<4>();
 
         m_add_ext_particle_E_field = true;
     }
