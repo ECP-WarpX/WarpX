@@ -1474,6 +1474,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         amrex::ParallelForRNG(overlap_box, [=] AMREX_GPU_DEVICE (int i, int j, int k, amrex::RandomEngine const& engine) noexcept
         {
             const IntVect iv(AMREX_D_DECL(i, j, k));
+<<<<<<< HEAD
 
             // Determine the number of macroparticles to inject in this cell (num_ppc_int)
             amrex::Real num_ppc_real_in_this_cell = num_ppc_real; // user input: number of macroparticles per cell
@@ -1495,15 +1496,33 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
             const int num_ppc_int = static_cast<int>(num_ppc_real_in_this_cell + amrex::Random(engine));
 
             auto index = overlap_box.index(iv);
-            int r;
+            // Take into account refined injection region
+            int r = 1;
             if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
                 r = compute_area_weights(lrrfac, flux_normal_axis);
-            } else {
-                r = 1;
             }
             pcounts[index] = num_ppc_int*r;
 
             amrex::ignore_unused(j,k);
+=======
+            amrex::ignore_unused(j,k);
+
+            auto lo = getCellCoords(overlap_corner, dx, {0._rt, 0._rt, 0._rt}, iv);
+            auto hi = getCellCoords(overlap_corner, dx, {1._rt, 1._rt, 1._rt}, iv);
+
+            // Skip cells that do not overlap with the injection plane
+            if (!flux_pos->overlapsWith(lo, hi)) return;
+
+            // Determine how many particles to inject in this cell
+            auto index = overlap_box.index(iv);
+            const int num_ppc_int = static_cast<int>(num_ppc_real + amrex::Random(engine));
+            // Take into account refined injection region
+            int r = 1;
+            if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
+                r = compute_area_weights(lrrfac, flux_normal_axis);
+            }
+            pcounts[index] = num_ppc_int*r;
+>>>>>>> simplify_fine_injectionwq
         });
 
         // Max number of new particles. All of them are created,
@@ -1570,6 +1589,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         [=] AMREX_GPU_DEVICE (int i, int j, int k, amrex::RandomEngine const& engine) noexcept
         {
             const IntVect iv = IntVect(AMREX_D_DECL(i, j, k));
+            amrex::ignore_unused(j,k);
             const auto index = overlap_box.index(iv);
 
             Real scale_fac = compute_scale_fac_area(dx, num_ppc_real, flux_normal_axis);
@@ -1577,17 +1597,10 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
             auto lo = getCellCoords(overlap_corner, dx, {0._rt, 0._rt, 0._rt}, iv);
             auto hi = getCellCoords(overlap_corner, dx, {1._rt, 1._rt, 1._rt}, iv);
 
-            if (flux_pos->overlapsWith(lo, hi))
-            {
-                int r;
-                if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
-                    r = compute_area_weights(lrrfac, flux_normal_axis);
-                } else {
-                    r = 1;
-                }
+            if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
+                int r = compute_area_weights(lrrfac, flux_normal_axis);
                 scale_fac /= r;
             }
-            amrex::ignore_unused(j,k);
 
             for (int i_part = 0; i_part < pcounts[index]; ++i_part)
             {
