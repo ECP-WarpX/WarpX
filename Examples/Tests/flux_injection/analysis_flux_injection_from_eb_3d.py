@@ -85,6 +85,9 @@ def compare_gaussian_flux(u, w, u_th, u_m, label=""):
 
 plt.figure()
 
+x = ad["electron", "particle_position_x"].to_ndarray() / (m_e * c)
+y = ad["electron", "particle_position_y"].to_ndarray() / (m_e * c)
+z = ad["electron", "particle_position_z"].to_ndarray() / (m_e * c)
 ux = ad["electron", "particle_momentum_x"].to_ndarray() / (m_e * c)
 uy = ad["electron", "particle_momentum_y"].to_ndarray() / (m_e * c)
 uz = ad["electron", "particle_momentum_z"].to_ndarray() / (m_e * c)
@@ -96,8 +99,15 @@ print("Ntot_sim = ", Ntot_sim)
 print("Ntot = ", Ntot)
 assert np.isclose(Ntot_sim, Ntot, rtol=0.01)
 
+# Check that none of the particles are inside the EB
+assert np.all(x**2 + y**2 + z**2 > R**2)
+
+# Check that the normal component of the velocity is consistent with the expected distribution
+r = np.sqrt(x**2 + y**2 + z**2)
+un = ux * (x / r) + uy * (y / r) + uz * (z / r)  # normal component
+compare_gaussian_flux(un, w, u_th=0.1, u_m=0.07, label="u_n")
+
 # compare_gaussian(ux, w, u_th=0.1, label="u_x")
-# compare_gaussian_flux(uy, w, u_th=0.1, u_m=0.07, label="u_y")
 # compare_gaussian(uz, w, u_th=0.1, label="u_z")
 
 plt.tight_layout()
