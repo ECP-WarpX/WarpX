@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
-cmake_minimum_required(VERSION 3.20.0)
-project(WarpX VERSION 24.08)
+cmake_minimum_required(VERSION 3.24.0)
+project(WarpX VERSION 24.09)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -27,13 +27,6 @@ endif()
 # https://cmake.org/cmake/help/latest/policy/CMP0104.html
 if(POLICY CMP0104)
     cmake_policy(SET CMP0104 OLD)
-endif()
-
-# We use simple syntax in cmake_dependent_option, so we are compatible with the
-# extended syntax in CMake 3.22+
-# https://cmake.org/cmake/help/v3.22/policy/CMP0127.html
-if(POLICY CMP0127)
-    cmake_policy(SET CMP0127 NEW)
 endif()
 
 
@@ -75,7 +68,7 @@ include(CMakeDependentOption)
 option(WarpX_APP           "Build the WarpX executable application"     ON)
 option(WarpX_ASCENT        "Ascent in situ diagnostics"                 OFF)
 option(WarpX_CATALYST      "Catalyst in situ diagnostics"               OFF)
-option(WarpX_EB            "Embedded boundary support"                  OFF)
+option(WarpX_EB            "Embedded boundary support"                  ON)
 option(WarpX_LIB           "Build WarpX as a library"                   OFF)
 option(WarpX_MPI           "Multi-node support (message-passing)"       ON)
 option(WarpX_OPENPMD       "openPMD I/O (HDF5, ADIOS)"                  ON)
@@ -88,6 +81,14 @@ option(WarpX_QED_TABLE_GEN "QED table generation (requires PICSAR and Boost)"
                                                                         OFF)
 option(WarpX_QED_TOOLS     "Build external tool to generate QED lookup tables (requires PICSAR and Boost)"
                                                                         OFF)
+
+# Advanced option to automatically clean up CI test directories
+option(WarpX_TEST_CLEANUP "Clean up CI test directories" OFF)
+mark_as_advanced(WarpX_TEST_CLEANUP)
+
+# Advanced option to run CI tests with FPE-trapping runtime parameters
+option(WarpX_TEST_FPETRAP "Run CI tests with FPE-trapping runtime parameters" OFF)
+mark_as_advanced(WarpX_TEST_FPETRAP)
 
 set(WarpX_DIMS_VALUES 1 2 3 RZ)
 set(WarpX_DIMS 3 CACHE STRING "Simulation dimensionality <1;2;3;RZ>")
@@ -195,7 +196,7 @@ if(WarpX_HEFFTE)
 endif()
 
 # this defined the variable BUILD_TESTING which is ON by default
-#include(CTest)
+include(CTest)
 
 
 # Dependencies ################################################################
@@ -794,12 +795,12 @@ endif()
 
 # Tests #######################################################################
 #
-
-#if(BUILD_TESTING)
-#    enable_testing()
-#
-#    add_test(...)
-#endif()
+if(BUILD_TESTING)
+    enable_testing()
+    if(WarpX_APP OR WarpX_PYTHON)
+        add_subdirectory(Examples)
+    endif()
+endif()
 
 
 # Status Summary for Build Options ############################################

@@ -16,6 +16,7 @@ The motion is slow enough that relativistic effects are ignored.
 """
 
 import os
+import re
 import sys
 
 import numpy as np
@@ -194,10 +195,8 @@ assert abs(np.abs((uy - uy_sim) / uy)) < velocity_tolerance, Exception(
     "error in y particle velocity"
 )
 
+# The PICMI and native input versions run the same test, so
+# their results are compared to the same benchmark file
 test_name = os.path.split(os.getcwd())[1]
-# The PICMI and native input versions of `inputs_3d` run the same test, so
-# their results are compared to the same benchmark file.
-if test_name == "Python_plasma_lens":
-    test_name = "Plasma_lens"
-
+test_name = re.sub("_picmi", "", test_name)
 checksumAPI.evaluate_checksum(test_name, filename)

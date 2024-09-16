@@ -1,8 +1,8 @@
-# Copyright 2016-2023 The WarpX Community
+# Copyright 2016-2024 The WarpX Community
 #
 # This file is part of WarpX.
 #
-# Authors: Andrew Myers, David Grote, Lorenzo Giacomel, Axel Huebl
+# Authors: Andrew Myers, David Grote, Lorenzo Giacomel, Axel Huebl, S. Eric Clark
 # License: BSD-3-Clause-LBNL
 
 import os
@@ -38,6 +38,7 @@ from .Interpolation import interpolation  # noqa
 from .Lasers import lasers  # noqa
 from .LoadThirdParty import load_cupy  # noqa
 from .Particles import newspecies, particles  # noqa
+from .ProjectionDivBCleaner import projectiondivbcleaner  # noqa
 from .PSATD import psatd  # noqa
 from .WarpX import warpx  # noqa
 

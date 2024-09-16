@@ -17,6 +17,7 @@ import periodictable
 
 import picmistandard
 import pywarpx
+import pywarpx.callbacks
 
 codename = "warpx"
 picmistandard.register_codename(codename)
@@ -2006,12 +2007,62 @@ class LaserAntenna(picmistandard.PICMI_LaserAntenna):
 
 
 class LoadInitialField(picmistandard.PICMI_LoadGriddedField):
+    def init(self, kw):
+        self.do_divb_cleaning_external = kw.pop("warpx_do_divb_cleaning_external", None)
+        self.divb_cleaner_atol = kw.pop("warpx_projection_divb_cleaner_atol", None)
+        self.divb_cleaner_rtol = kw.pop("warpx_projection_divb_cleaner_rtol", None)
+
     def applied_field_initialize_inputs(self):
         pywarpx.warpx.read_fields_from_path = self.read_fields_from_path
         if self.load_E:
             pywarpx.warpx.E_ext_grid_init_style = "read_from_file"
         if self.load_B:
             pywarpx.warpx.B_ext_grid_init_style = "read_from_file"
+            pywarpx.warpx.do_divb_cleaning_external = self.do_divb_cleaning_external
+            pywarpx.projectiondivbcleaner.atol = self.divb_cleaner_atol
+            pywarpx.projectiondivbcleaner.rtol = self.divb_cleaner_rtol
+
+
+class LoadInitialFieldFromPython:
+    """
+    Field Initializer that takes a function handle to be registered as a callback.
+    The function is expected to write the E and/or B fields into the
+    fields.Bx/y/zFPExternalWrapper() multifab. The callback is installed
+    in the beforeInitEsolve hook. This should operate identically to loading from
+    a file.
+
+    Parameters
+    ----------
+    warpx_do_divb_cleaning_external: bool, default=True
+        Flag that controls whether or not to execute the Projection based B-field divergence cleaner.
+
+    load_E: bool, default=True
+        E field is expected to be loaded in the registered callback.
+
+    load_B: bool, default=True
+        B field is expected to be loaded in the registered callback.
+    """
+
+    def __init__(self, **kw):
+        self.do_divb_cleaning_external = kw.pop("warpx_do_divb_cleaning_external", None)
+        self.divb_cleaner_atol = kw.pop("warpx_projection_divb_cleaner_atol", None)
+        self.divb_cleaner_rtol = kw.pop("warpx_projection_divb_cleaner_rtol", None)
+
+        # If using load_from_python, a function handle is expected for callback
+        self.load_from_python = kw.pop("load_from_python")
+        self.load_E = kw.pop("load_E", True)
+        self.load_B = kw.pop("load_B", True)
+
+    def applied_field_initialize_inputs(self):
+        if self.load_E:
+            pywarpx.warpx.E_ext_grid_init_style = "load_from_python"
+        if self.load_B:
+            pywarpx.warpx.B_ext_grid_init_style = "load_from_python"
+            pywarpx.warpx.do_divb_cleaning_external = self.do_divb_cleaning_external
+            pywarpx.projectiondivbcleaner.atol = self.divb_cleaner_atol
+            pywarpx.projectiondivbcleaner.rtol = self.divb_cleaner_rtol
+
+        pywarpx.callbacks.installloadExternalFields(self.load_from_python)
 
 
 class AnalyticInitialField(picmistandard.PICMI_AnalyticAppliedField):
@@ -2594,6 +2645,9 @@ class Simulation(picmistandard.PICMI_Simulation):
     warpx_do_dynamic_scheduling: bool, default=True
         Whether to do dynamic scheduling with OpenMP
 
+    warpx_roundrobin_sfc: bool, default=False
+        Whether to use the RRSFC strategy for making DistributionMapping
+
     warpx_load_balance_intervals: string, default='0'
         The intervals for doing load balancing
 
@@ -2710,6 +2764,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         )
         self.random_seed = kw.pop("warpx_random_seed", None)
         self.do_dynamic_scheduling = kw.pop("warpx_do_dynamic_scheduling", None)
+        self.roundrobin_sfc = kw.pop("warpx_roundrobin_sfc", None)
         self.load_balance_intervals = kw.pop("warpx_load_balance_intervals", None)
         self.load_balance_efficiency_ratio_threshold = kw.pop(
             "warpx_load_balance_efficiency_ratio_threshold", None
@@ -2804,6 +2859,8 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.warpx.used_inputs_file = self.used_inputs_file
 
         pywarpx.warpx.do_dynamic_scheduling = self.do_dynamic_scheduling
+
+        pywarpx.warpx.roundrobin_sfc = self.roundrobin_sfc
 
         pywarpx.particles.use_fdtd_nci_corr = self.use_fdtd_nci_corr
 

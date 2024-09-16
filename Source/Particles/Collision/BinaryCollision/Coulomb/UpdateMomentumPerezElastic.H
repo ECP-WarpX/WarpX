@@ -43,20 +43,22 @@ void UpdateMomentumPerezElastic (
     T_R const dt, amrex::RandomEngine const& engine )
 {
 
-    T_PR const diffx = amrex::Math::abs(u1x-u2x);
-    T_PR const diffy = amrex::Math::abs(u1y-u2y);
-    T_PR const diffz = amrex::Math::abs(u1z-u2z);
-    T_PR const diffm = std::sqrt(diffx*diffx+diffy*diffy+diffz*diffz);
-    T_PR const summm = std::sqrt(u1x*u1x+u1y*u1y+u1z*u1z) + std::sqrt(u2x*u2x+u2y*u2y+u2z*u2z);
-    // If g = u1 - u2 = 0, do not collide.
-    // Or if the relative difference is less than 1.0e-10.
-    if ( diffm < std::numeric_limits<T_PR>::min() || diffm/summm < 1.0e-10 ) { return; }
-
     T_PR constexpr inv_c2 = T_PR(1.0) / ( PhysConst::c * PhysConst::c );
 
     // Compute Lorentz factor gamma
-    T_PR const g1 = std::sqrt( T_PR(1.0) + (u1x*u1x+u1y*u1y+u1z*u1z)*inv_c2 );
-    T_PR const g2 = std::sqrt( T_PR(1.0) + (u2x*u2x+u2y*u2y+u2z*u2z)*inv_c2 );
+    T_PR const gb1sq = (u1x*u1x + u1y*u1y + u1z*u1z)*inv_c2;
+    T_PR const gb2sq = (u2x*u2x + u2y*u2y + u2z*u2z)*inv_c2;
+    T_PR const g1 = std::sqrt( T_PR(1.0) + gb1sq );
+    T_PR const g2 = std::sqrt( T_PR(1.0) + gb2sq );
+
+    T_PR const diffx = u1x-u2x;
+    T_PR const diffy = u1y-u2y;
+    T_PR const diffz = u1z-u2z;
+    T_PR const diffm = std::sqrt((diffx*diffx+diffy*diffy+diffz*diffz)*inv_c2);
+    T_PR const summm = std::sqrt(gb1sq) + std::sqrt(gb2sq);
+    // If g = u1 - u2 = 0, do not collide.
+    // Or if the relative difference is less than 1.0e-10.
+    if ( diffm < std::numeric_limits<T_PR>::min() || diffm/summm < 1.0e-10 ) { return; }
 
     // Compute momenta
     T_PR const p1x = u1x * m1;
@@ -237,33 +239,18 @@ void UpdateMomentumPerezElastic (
         T_PR const p2fsz = -p1fsz;
 
         // Transform from COM to lab frame
-        T_PR p1fx;    T_PR p2fx;
-        T_PR p1fy;    T_PR p2fy;
-        T_PR p1fz;    T_PR p2fz;
-        if ( vcms > std::numeric_limits<T_PR>::min() )
-        {
-            T_PR const vcDp1fs = vcx*p1fsx + vcy*p1fsy + vcz*p1fsz;
-            T_PR const vcDp2fs = vcx*p2fsx + vcy*p2fsy + vcz*p2fsz;
-            /* factor = (gc-1.0)/vcms; Rewrite to avoid subtraction losing precision when gc is close to 1 */
-            T_PR const factor = gc*gc*inv_c2/(gc+T_PR(1.0));
-            T_PR const factor1 = factor*vcDp1fs + m1*g1s*gc;
-            T_PR const factor2 = factor*vcDp2fs + m2*g2s*gc;
-            p1fx = p1fsx + vcx * factor1;
-            p1fy = p1fsy + vcy * factor1;
-            p1fz = p1fsz + vcz * factor1;
-            p2fx = p2fsx + vcx * factor2;
-            p2fy = p2fsy + vcy * factor2;
-            p2fz = p2fsz + vcz * factor2;
-        }
-        else // If vcms = 0, don't do Lorentz-transform.
-        {
-            p1fx = p1fsx;
-            p1fy = p1fsy;
-            p1fz = p1fsz;
-            p2fx = p2fsx;
-            p2fy = p2fsy;
-            p2fz = p2fsz;
-        }
+        T_PR const vcDp1fs = vcx*p1fsx + vcy*p1fsy + vcz*p1fsz;
+        T_PR const vcDp2fs = vcx*p2fsx + vcy*p2fsy + vcz*p2fsz;
+        /* factor = (gc-1.0)/vcms; Rewrite to avoid subtraction losing precision when gc is close to 1 */
+        T_PR const factor = gc*gc*inv_c2/(gc+T_PR(1.0));
+        T_PR const factor1 = factor*vcDp1fs + m1*g1s*gc;
+        T_PR const factor2 = factor*vcDp2fs + m2*g2s*gc;
+        T_PR const p1fx = p1fsx + vcx * factor1;
+        T_PR const p1fy = p1fsy + vcy * factor1;
+        T_PR const p1fz = p1fsz + vcz * factor1;
+        T_PR const p2fx = p2fsx + vcx * factor2;
+        T_PR const p2fy = p2fsy + vcy * factor2;
+        T_PR const p2fz = p2fsz + vcz * factor2;
 
         // Rejection method
         r = amrex::Random(engine);

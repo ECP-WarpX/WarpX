@@ -21,14 +21,14 @@ import checksumAPI
 
 filename = sys.argv[1]
 
-galilean = True if re.search("galilean", filename) else False
+cwd = os.getcwd()
+filename_init = os.path.join(cwd, "diags/diag1000050")
 
+galilean = True if re.search("galilean", cwd) else False
 # Initial laser energy (at iteration 50)
 if galilean:
-    filename_init = "pml_x_galilean_plt000050"
     energy_start = 4.439376199524034e-08
 else:
-    filename_init = "pml_x_psatd_plt000050"
     energy_start = 7.282940107273505e-08
 
 # Check consistency of field energy diagnostics with initial energy above
@@ -74,13 +74,6 @@ print("reflectivity     = " + str(reflectivity))
 print("reflectivity_max = " + str(reflectivity_max))
 
 assert reflectivity < reflectivity_max
-
-# Check restart data v. original data
-sys.path.insert(0, "../../../../warpx/Examples/")
-from analysis_default_restart import check_restart
-
-if not galilean:
-    check_restart(filename)
 
 test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)
