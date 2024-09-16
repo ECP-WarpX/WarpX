@@ -26,7 +26,7 @@ warpx.const_dt = 7e-9
 # Boundary condition
 boundary.field_lo = periodic periodic periodic
 boundary.field_hi = periodic periodic periodic
-warpx.eb_implicit_function = "-(x**2+y**2+z**2-0.1**2)"
+warpx.eb_implicit_function = "-(x**2+y**2+z**2-2**2)"
 
 # particles
 particles.species_names = electron
