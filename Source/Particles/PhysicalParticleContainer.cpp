@@ -1438,13 +1438,11 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 #ifdef AMREX_USE_EB
         if (inject_from_eb) {
             // Injection from EB
-            amrex::Print() << "Considering box " << tile_box << std::endl;
             const amrex::FabType fab_type = eb_flag[mfi].getType(tile_box);
             if (fab_type == amrex::FabType::regular) { continue; } // Go to the next tile
             if (fab_type == amrex::FabType::covered) { continue; } // Go to the next tile
             overlap_box = tile_box;
-            overlap_realbox = tile_realbox;
-            amrex::Print() << "Inject: yes " << tile_box << std::endl;
+            overlap_realbox = part_realbox;
         } else
 #endif
         {
