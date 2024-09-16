@@ -43,7 +43,7 @@ namespace ablastr::fields
         }
 
         /* TODO: just temporary int compatibility */
-        operator int() { return dir; }
+        operator int() const { return dir; }
     };
 
     /** A scalar field (a MultiFab)

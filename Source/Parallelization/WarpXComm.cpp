@@ -57,7 +57,7 @@ WarpX::UpdateAuxilaryData ()
 
     using ablastr::fields::Direction;
 
-    auto Bfield_aux_lvl0_0 = m_fields.get("Bfield_aux", Direction{0}, 0);
+    amrex::MultiFab *Bfield_aux_lvl0_0 = m_fields.get("Bfield_aux", Direction{0}, 0);
 
     ablastr::fields::MultiLevelVectorField const& Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
 
@@ -69,9 +69,9 @@ WarpX::UpdateAuxilaryData ()
 
     // When loading particle fields from file: add the external fields:
     for (int lev = 0; lev <= finest_level; ++lev) {
-        auto Bfield_aux_lvl_0 = m_fields.get("Bfield_aux", Direction{0}, lev);
-        auto Bfield_aux_lvl_1 = m_fields.get("Bfield_aux", Direction{1}, lev);
-        auto Bfield_aux_lvl_2 = m_fields.get("Bfield_aux", Direction{2}, lev);
+        amrex::MultiFab *Bfield_aux_lvl_0 = m_fields.get("Bfield_aux", Direction{0}, lev);
+        amrex::MultiFab *Bfield_aux_lvl_1 = m_fields.get("Bfield_aux", Direction{1}, lev);
+        amrex::MultiFab *Bfield_aux_lvl_2 = m_fields.get("Bfield_aux", Direction{2}, lev);
 
         if (mypc->m_E_ext_particle_s == "read_from_file") {
             const auto& E_ext_lev = m_fields.get_alldirs("E_external_particle_field", lev);
@@ -1073,12 +1073,12 @@ WarpX::SyncCurrent (std::string current_fp_string)
 
     WARPX_PROFILE("WarpX::SyncCurrent()");
 
-    ablastr::fields::MultiLevelVectorField J_fp = m_fields.get_mr_levels_alldirs(current_fp_string, finest_level);
+    ablastr::fields::MultiLevelVectorField const& J_fp = m_fields.get_mr_levels_alldirs(current_fp_string, finest_level);
 
     // If warpx.do_current_centering = 1, center currents from nodal grid to staggered grid
     if (do_current_centering)
     {
-        ablastr::fields::MultiLevelVectorField J_fp_nodal = m_fields.get_mr_levels_alldirs("current_fp_nodal", finest_level+1);
+        ablastr::fields::MultiLevelVectorField const& J_fp_nodal = m_fields.get_mr_levels_alldirs("current_fp_nodal", finest_level+1);
 
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(finest_level <= 1,
                                          "warpx.do_current_centering=1 not supported with more than one fine levels");
@@ -1188,7 +1188,7 @@ WarpX::SyncCurrent (std::string current_fp_string)
                     }
                 });
                 // Now it's safe to apply filter and sumboundary on J_cp
-                ablastr::fields::MultiLevelVectorField J_cp = m_fields.get_mr_levels_alldirs("current_cp", finest_level);
+                ablastr::fields::MultiLevelVectorField const& J_cp = m_fields.get_mr_levels_alldirs("current_cp", finest_level);
                 if (use_filter)
                 {
                     ApplyFilterJ(J_cp, lev+1, idim);
@@ -1203,14 +1203,14 @@ WarpX::SyncCurrent (std::string current_fp_string)
                 // filtering depends on the level. This is also done before any
                 // same-level communication because it's easier this way to
                 // avoid double counting.
-                ablastr::fields::MultiLevelVectorField J_cp = m_fields.get_mr_levels_alldirs("current_cp", finest_level);
+                ablastr::fields::MultiLevelVectorField const& J_cp = m_fields.get_mr_levels_alldirs("current_cp", finest_level);
                 J_cp[lev][Direction{idim}]->setVal(0.0);
                 ablastr::coarsen::average::Coarsen(*J_cp[lev][Direction{idim}],
                                                    *J_fp[lev][Direction{idim}],
                                                    refRatio(lev-1));
                 if (m_fields.has("current_buf", Direction{idim}, lev))
                 {
-                    ablastr::fields::MultiLevelVectorField J_buffer = m_fields.get_mr_levels_alldirs("current_buf", finest_level);
+                    ablastr::fields::MultiLevelVectorField const& J_buffer = m_fields.get_mr_levels_alldirs("current_buf", finest_level);
 
                     IntVect const& ng = J_cp[lev][Direction{idim}]->nGrowVect();
                     AMREX_ASSERT(ng.allLE(J_buffer[lev][Direction{idim}]->nGrowVect()));

@@ -460,7 +460,7 @@ MultiParticleContainer::InitMultiPhysicsModules ()
 void
 MultiParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
                                 int lev,
-                                std::string current_fp_string,
+                                std::string const& current_fp_string,
                                 Real t, Real dt, DtType a_dt_type, bool skip_deposition,
                                 PushType push_type)
 {
@@ -530,7 +530,7 @@ MultiParticleContainer::DepositCurrent (
     const amrex::Real dt, const amrex::Real relative_time)
 {
     // Reset the J arrays
-    for (auto& J_lev : J)
+    for (const auto& J_lev : J)
     {
         J_lev[0]->setVal(0.0_rt);
         J_lev[1]->setVal(0.0_rt);
@@ -558,7 +558,7 @@ MultiParticleContainer::DepositCharge (
     const amrex::Real relative_time)
 {
     // Reset the rho array
-    for (auto& rho_lev : rho)
+    for (const auto& rho_lev : rho)
     {
         rho_lev->setVal(0.0_rt);
     }

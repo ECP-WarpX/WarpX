@@ -67,7 +67,7 @@ class FiniteDifferenceSolver
 
         void EvolveF ( amrex::MultiFab* Ffield,
                        ablastr::fields::VectorField const& Efield,
-                       amrex::MultiFab* const rhofield,
+                       amrex::MultiFab* rhofield,
                        int rhocomp,
                        amrex::Real dt );
 
@@ -75,7 +75,7 @@ class FiniteDifferenceSolver
                       ablastr::fields::VectorField const& Bfield,
                       amrex::Real dt);
 
-        void EvolveECTRho ( ablastr::fields::VectorField const Efield,
+        void EvolveECTRho ( ablastr::fields::VectorField const& Efield,
                             ablastr::fields::VectorField const& edge_lengths,
                             ablastr::fields::VectorField const& face_areas,
                             ablastr::fields::VectorField const& ECTRhofield,
@@ -278,7 +278,7 @@ class FiniteDifferenceSolver
         void EvolveFCartesian (
             amrex::MultiFab* Ffield,
             ablastr::fields::VectorField Efield,
-            amrex::MultiFab* const rhofield,
+            amrex::MultiFab* rhofield,
             int rhocomp,
             amrex::Real dt );
 
@@ -289,7 +289,7 @@ class FiniteDifferenceSolver
             amrex::Real dt);
 
         void EvolveRhoCartesianECT (
-            ablastr::fields::VectorField const Efield,
+            ablastr::fields::VectorField const& Efield,
             ablastr::fields::VectorField const& edge_lengths,
             ablastr::fields::VectorField const& face_areas,
             ablastr::fields::VectorField const& ECTRhofield, int lev);

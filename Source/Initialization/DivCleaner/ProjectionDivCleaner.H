@@ -83,7 +83,7 @@ public:
     amrex::Gpu::DeviceVector<amrex::Real> m_stencil_coefs_z;
 
     // Default Constructor
-    ProjectionDivCleaner (std::string a_field_name);
+    ProjectionDivCleaner (std::string const& a_field_name);
 
     void ReadParameters ();
 

@@ -30,7 +30,7 @@ using namespace amrex;
 
 namespace warpx::initialization {
 
-ProjectionDivCleaner::ProjectionDivCleaner(std::string a_field_name) :
+ProjectionDivCleaner::ProjectionDivCleaner(std::string const& a_field_name) :
     m_field_name(a_field_name)
 {
     using ablastr::fields::Direction;

@@ -48,7 +48,7 @@ using namespace ablastr::fields;
  * \brief Update the B field, over one timestep
  */
 void FiniteDifferenceSolver::EvolveECTRho (
-    ablastr::fields::VectorField const Efield,
+    ablastr::fields::VectorField const& Efield,
     ablastr::fields::VectorField const& edge_lengths,
     ablastr::fields::VectorField const& face_areas,
     ablastr::fields::VectorField const& ECTRhofield,
@@ -68,7 +68,7 @@ void FiniteDifferenceSolver::EvolveECTRho (
 // If we implement ECT in 1D we will need to take care of this #ifndef differently
 #ifndef WARPX_DIM_RZ
 void FiniteDifferenceSolver::EvolveRhoCartesianECT (
-    ablastr::fields::VectorField const Efield,
+    ablastr::fields::VectorField const& Efield,
     ablastr::fields::VectorField const& edge_lengths,
     ablastr::fields::VectorField const& face_areas,
     ablastr::fields::VectorField const& ECTRhofield, const int lev ) {
