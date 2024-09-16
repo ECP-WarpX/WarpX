@@ -1453,8 +1453,6 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
             auto lo = getCellCoords(overlap_corner, dx, {0._rt, 0._rt, 0._rt}, iv);
             auto hi = getCellCoords(overlap_corner, dx, {1._rt, 1._rt, 1._rt}, iv);
 
-            const int num_ppc_int = static_cast<int>(num_ppc_real + amrex::Random(engine));
-
             if (flux_pos->overlapsWith(lo, hi))
             {
                 auto index = overlap_box.index(iv);
@@ -1464,7 +1462,8 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 } else {
                     r = 1;
                 }
-                pcounts[index] = num_ppc_int*r;
+                const int num_ppc_int = static_cast<int>(num_ppc_real*r + amrex::Random(engine));
+                pcounts[index] = num_ppc_int;
             }
             amrex::ignore_unused(j,k);
         });
