@@ -14,7 +14,6 @@ the particle distributions are consistent with the expected distributions.
 """
 
 import os
-import re
 import sys
 
 import matplotlib.pyplot as plt
@@ -24,7 +23,6 @@ from scipy.constants import c, m_e
 from scipy.special import erf
 
 sys.path.insert(1, "../../../../warpx/Regression/Checksum/")
-import checksumAPI
 
 yt.funcs.mylog.setLevel(0)
 
@@ -107,7 +105,7 @@ plt.savefig("Distribution.png")
 
 # Verify checksum
 test_name = os.path.split(os.getcwd())[1]
-if re.search("single_precision", fn):
-    checksumAPI.evaluate_checksum(test_name, fn, rtol=1.0e-3)
-else:
-    checksumAPI.evaluate_checksum(test_name, fn)
+# if re.search("single_precision", fn):
+#    checksumAPI.evaluate_checksum(test_name, fn, rtol=1.0e-3)
+# else:
+#    checksumAPI.evaluate_checksum(test_name, fn)

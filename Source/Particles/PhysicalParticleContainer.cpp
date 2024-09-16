@@ -1412,9 +1412,9 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
     bool inject_from_eb = plasma_injector.m_inject_from_eb; // whether to inject from EB or from a plane
 
     MFItInfo info;
-//    if (do_tiling && Gpu::notInLaunchRegion()) {
-//        info.EnableTiling(tile_size);
-//    }
+    if (do_tiling && Gpu::notInLaunchRegion()) {
+        info.EnableTiling(tile_size);
+    }
 #ifdef AMREX_USE_OMP
     info.SetDynamic(true);
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
