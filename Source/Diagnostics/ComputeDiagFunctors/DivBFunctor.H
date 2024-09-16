@@ -10,8 +10,7 @@
 /**
  * \brief Functor to compute divB into mf_out.
  */
-class
-DivBFunctor final : public ComputeDiagFunctor
+class DivBFunctor final : public ComputeDiagFunctor
 {
 public:
     /** Constructor.
@@ -19,10 +18,12 @@ public:
      * \param[in] lev level of multifab.
      * \param[in] crse_ratio for interpolating field values from simulation MultiFabs
                   to the output diagnostic MultiFab, mf_dst.
+     * \param[in] convertRZmodes2cartesian whether to generate the result in Cartesian coordinates
+     *            (summing over modes)
      * \param[in] ncomp Number of component of mf_src to cell-center in dst multifab.
      */
-    DivBFunctor(const std::array<const amrex::MultiFab* const, 3> arr_mf_src, const int lev, amrex::IntVect crse_ratio,
-                bool convertRZmodes2cartesian=true, const int ncomp=1);
+    DivBFunctor(std::array<const amrex::MultiFab* const, 3> arr_mf_src, int lev, amrex::IntVect crse_ratio,
+                bool convertRZmodes2cartesian=true, int ncomp=1);
 
     /** \brief Compute DivB directly into mf_dst.
      *
@@ -30,7 +31,7 @@ public:
      * \param[in] dcomp first component of mf_dst in which cell-centered
      *            data is stored
      */
-    virtual void operator()(amrex::MultiFab& mf_dst, const int dcomp, const int /*i_buffer*/) const override;
+    void operator()(amrex::MultiFab& mf_dst, int dcomp, int /*i_buffer*/) const override;
 private:
     /** Vector of pointer to source multifab Bx, By, Bz */
     std::array<const amrex::MultiFab * const, 3> m_arr_mf_src;

@@ -23,15 +23,15 @@ Please add the following sentence to your publications, it helps contributors ke
 
 **Plain text:**
 
-  This research used the open-source particle-in-cell code WarpX https://github.com/ECP-WarpX/WarpX, primarily funded by the US DOE Exascale Computing Project. Primary WarpX contributors are with LBNL, LLNL, CEA-LIDYL, SLAC, DESY, CERN, and Modern Electron. We acknowledge all WarpX contributors.
+  This research used the open-source particle-in-cell code WarpX https://github.com/ECP-WarpX/WarpX. Primary WarpX contributors are with LBNL, LLNL, CEA-LIDYL, SLAC, DESY, CERN, and TAE Technologies. We acknowledge all WarpX contributors.
 
-**Latex:**
+**LaTeX:**
 
 .. code-block:: latex
 
   \usepackage{hyperref}
-  This research used the open-source particle-in-cell code WarpX \url{https://github.com/ECP-WarpX/WarpX}, primarily funded by the US DOE Exascale Computing Project.
-  Primary WarpX contributors are with LBNL, LLNL, CEA-LIDYL, SLAC, DESY, CERN, and Modern Electron.
+  This research used the open-source particle-in-cell code WarpX \url{https://github.com/ECP-WarpX/WarpX}.
+  Primary WarpX contributors are with LBNL, LLNL, CEA-LIDYL, SLAC, DESY, CERN, and TAE Technologies.
   We acknowledge all WarpX contributors.
 
 .. _acknowledge_warpx_ref:
@@ -41,30 +41,62 @@ Latest WarpX reference
 
 If your project leads to a scientific publication, please consider citing the paper below.
 
-- Myers A, Almgren A, Amorim LD, Bell J, Fedeli L, Ge L, Gott K, Grote DP, Hogan M, Huebl A, Jambunathan R, Lehe R, Ng C, Rowan M, Shapoval O, Thevenet M, Vay JL, Vincenti H, Yang E, Zaim N, Zhang W, Zhao Y, Zoni E.
-  **Porting WarpX to GPU-accelerated platforms**. *Parallel Computing*. 2021 Sep, 108:102833.
-  https://doi.org/10.1016/j.parco.2021.102833
+- Fedeli L, Huebl A, Boillod-Cerneux F, Clark T, Gott K, Hillairet C, Jaure S, Leblanc A, Lehe R, Myers A, Piechurski C, Sato M, Zaim N, Zhang W, Vay J-L, Vincenti H.
+  **Pushing the Frontier in the Design of Laser-Based Electron Accelerators with Groundbreaking Mesh-Refined Particle-In-Cell Simulations on Exascale-Class Supercomputers**.
+  *SC22: International Conference for High Performance Computing, Networking, Storage and Analysis (SC)*. ISSN:2167-4337, pp. 25-36, Dallas, TX, US, 2022.
+  `DOI:10.1109/SC41404.2022.00008 <https://doi.org/10.1109/SC41404.2022.00008>`__ (`preprint here <https://www.computer.org/csdl/proceedings-article/sc/2022/544400a025/1I0bSKaoECc>`__)
 
 .. _acknowledge_warpx_all_refs:
 
 Prior WarpX references
 ----------------------
 
-If your project uses the specific algorithms, please consider citing the respective publications in addition.
+If your project uses a specific algorithm or component, please consider citing the respective publications in addition.
+
+- Shapoval O, Zoni E, Lehe R, Thévenet M, and Vay J-L.
+  **Pseudospectral particle-in-cell formulation with arbitrary charge and current-density time dependencies for the modeling of relativistic plasmas**.
+  Physical Review E **110**, 025206, 2024.
+  `DOI:10.1103/PhysRevE.110.025206 <https://doi.org/10.1103/PhysRevE.110.025206>`__
+
+- Sandberg R T, Lehe R, Mitchell C E, Garten M, Myers A, Qiang J, Vay J-L and Huebl A.
+  **Synthesizing Particle-in-Cell Simulations Through Learning and GPU Computing for Hybrid Particle Accelerator Beamlines**.
+  Proc. of Platform for Advanced Scientific Computing (PASC'24), *PASC24 Best Paper Award*, 2024.
+  `DOI:10.1145/3659914.3659937 <https://doi.org/10.1145/3659914.3659937>`__
+
+- Sandberg R T, Lehe R, Mitchell C E, Garten M, Qiang J, Vay J-L and Huebl A.
+  **Hybrid Beamline Element ML-Training for Surrogates in the ImpactX Beam-Dynamics Code**.
+  14th International Particle Accelerator Conference (IPAC'23), WEPA101, 2023.
+  `DOI:10.18429/JACoW-IPAC2023-WEPA101 <https://doi.org/10.18429/JACoW-IPAC2023-WEPA101>`__
+
+- Huebl A, Lehe R, Zoni E, Shapoval O, Sandberg R T, Garten M, Formenti A, Jambunathan R, Kumar P, Gott K, Myers A, Zhang W, Almgren A, Mitchell C E, Qiang J, Sinn A, Diederichs S, Thevenet M, Grote D, Fedeli L, Clark T, Zaim N, Vincenti H, Vay JL.
+  **From Compact Plasma Particle Sources to Advanced Accelerators with Modeling at Exascale**.
+  Proceedings of the 20th Advanced Accelerator Concepts Workshop (AAC'22), *in print*, 2023.
+  `arXiv:2303.12873 <https://arxiv.org/abs/2303.12873>`__
 
 - Huebl A, Lehe R, Mitchell C E, Qiang J, Ryne R D, Sandberg R T, Vay JL.
   **Next Generation Computational Tools for the Modeling and Design of Particle Accelerators at Exascale**.
-  *NAPAC'22*, 2022.
-  `arXiv:2208.02382 <https://arxiv.org/abs/2208.02382>`__
+  Proceedings of the 2022 North American Particle Accelerator Conference (NAPAC'22), TUYE2, pp. 302-306, 2022.
+  `arXiv:2208.02382 <https://arxiv.org/abs/2208.02382>`__,
+  `DOI:10.18429/JACoW-NAPAC2022-TUYE2 <https://doi.org/10.18429/JACoW-NAPAC2022-TUYE2>`__
 
 - Fedeli L, Zaim N, Sainte-Marie A, Thevenet M, Huebl A, Myers A, Vay JL, Vincenti H.
   **PICSAR-QED: a Monte Carlo module to simulate Strong-Field Quantum Electrodynamics in Particle-In-Cell codes for exascale architectures**.
   *New Journal of Physics* **24** 025009, 2022.
   `DOI:10.1088/1367-2630/ac4ef1 <https://doi.org/10.1088/1367-2630/ac4ef1>`__
 
+- Lehe R, Blelly A, Giacomel L, Jambunathan R, Vay JL.
+  **Absorption of charged particles in perfectly matched layers by optimal damping of the deposited current**.
+  *Physical Review E* **106** 045306, 2022.
+  `DOI:10.1103/PhysRevE.106.045306 <https://doi.org/10.1103/PhysRevE.106.045306>`__
+
 - Zoni E, Lehe R, Shapoval O, Belkin D, Zaim N, Fedeli L, Vincenti H, Vay JL.
   **A hybrid nodal-staggered pseudo-spectral electromagnetic particle-in-cell method with finite-order centering**. *Computer Physics Communications* **279**, 2022.
   `DOI:10.1016/j.cpc.2022.108457 <https://doi.org/10.1016/j.cpc.2022.108457>`__
+
+- Myers A, Almgren A, Amorim LD, Bell J, Fedeli L, Ge L, Gott K, Grote DP, Hogan M, Huebl A, Jambunathan R, Lehe R, Ng C, Rowan M, Shapoval O, Thevenet M, Vay JL, Vincenti H, Yang E, Zaim N, Zhang W, Zhao Y, Zoni E.
+  **Porting WarpX to GPU-accelerated platforms**.
+  *Parallel Computing*. 2021 Sep, 108:102833.
+  `DOI:10.1016/j.parco.2021.102833 <https://doi.org/10.1016/j.parco.2021.102833>`__
 
 - Shapoval O, Lehe R, Thevenet M, Zoni E, Zhao Y, Vay JL.
   **Overcoming timestep limitations in boosted-frame Particle-In-Cell simulations of plasma-based acceleration**.

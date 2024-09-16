@@ -46,9 +46,9 @@ void
 WarpX::Hybrid_QED_Push (amrex::Vector<amrex::Real> a_dt)
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        WarpX::do_nodal != 0,
+        WarpX::grid_type == GridType::Collocated,
         "Error: The Hybrid QED method is "
-        "currently only compatible with the nodal scheme."
+        "currently only implemented on a collocated grid."
     );
     for (int lev = 0; lev <= finest_level; ++lev) {
         Hybrid_QED_Push(lev, a_dt[lev]);
@@ -141,15 +141,15 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, amrex::Real a_dt)
 
         // Temporary arrays for electric field, protected by Elixir on GPU
         FArrayBox tmpEx_fab(gex,1);
-        Elixir tmpEx_eli = tmpEx_fab.elixir();
+        const Elixir tmpEx_eli = tmpEx_fab.elixir();
         auto const& tmpEx = tmpEx_fab.array();
 
         FArrayBox tmpEy_fab(gey,1);
-        Elixir tmpEy_eli = tmpEy_fab.elixir();
+        const Elixir tmpEy_eli = tmpEy_fab.elixir();
         auto const& tmpEy = tmpEy_fab.array();
 
         FArrayBox tmpEz_fab(gez,1);
-        Elixir tmpEz_eli = tmpEz_fab.elixir();
+        const Elixir tmpEz_eli = tmpEz_fab.elixir();
         auto const& tmpEz = tmpEz_fab.array();
 
         // Copy electric field to temporary arrays
@@ -169,7 +169,7 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, amrex::Real a_dt)
         );
 
         // Make local copy of xi, to use on device.
-        const Real xi_c2 = WarpX::quantum_xi_c2;
+        const Real xi_c2 = m_quantum_xi_c2;
 
         // Apply QED correction to electric field, using temporary arrays.
         amrex::ParallelFor(

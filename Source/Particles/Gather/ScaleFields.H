@@ -41,14 +41,14 @@ struct ScaleFields
     {
         using namespace amrex::literals;
 
-        if (!m_do_scale) return;
+        if (!m_do_scale) { return; }
 
         // Scale the fields of particles about to cross the injection plane.
         // This only approximates what should be happening. The particles
         // should by advanced a fraction of a time step instead.
         // Scaling the fields is much easier and may be good enough.
-        const amrex::Real dtscale = m_dt - (m_z_plane_previous - zp)/(m_vz_ave_boosted + m_v_boost);
-        if (0._rt < dtscale && dtscale < m_dt)
+        const amrex::Real dtscale = 1._rt - (m_z_plane_previous - zp)/(m_vz_ave_boosted + m_v_boost)/m_dt;
+        if (0._rt < dtscale && dtscale < 1._rt)
         {
             Exp *= dtscale;
             Eyp *= dtscale;
@@ -60,4 +60,4 @@ struct ScaleFields
     }
 };
 
-#endif
+#endif //WARPX_PARTICLES_GATHER_SCALEFIELDS_H_

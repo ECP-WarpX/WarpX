@@ -6,36 +6,39 @@
  */
 #include "PsatdAlgorithmRZ.H"
 #include "Utils/TextMsg.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
 #include <cmath>
 
-using amrex::operator""_rt;
-
+using namespace amrex::literals;
 
 /* \brief Initialize coefficients for the update equation */
 PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
                                     amrex::DistributionMapping const & dm,
                                     const SpectralFieldIndex& spectral_index,
-                                    int const n_rz_azimuthal_modes, int const norder_z,
-                                    bool const nodal, amrex::Real const dt,
+                                    int const n_rz_azimuthal_modes,
+                                    int const norder_z,
+                                    ablastr::utils::enums::GridType grid_type,
+                                    amrex::Real const dt,
                                     bool const update_with_rho,
                                     const bool time_averaging,
-                                    const bool do_multi_J,
+                                    const JInTime J_in_time,
+                                    const RhoInTime rho_in_time,
                                     const bool dive_cleaning,
-                                    const bool divb_cleaning)
-     // Initialize members of base class
-     : SpectralBaseAlgorithmRZ(spectral_kspace, dm, spectral_index, norder_z, nodal),
-       m_spectral_index(spectral_index),
-       m_dt(dt),
-       m_update_with_rho(update_with_rho),
-       m_time_averaging(time_averaging),
-       m_do_multi_J(do_multi_J),
-       m_dive_cleaning(dive_cleaning),
-       m_divb_cleaning(divb_cleaning)
+                                    const bool divb_cleaning):
+    // Initialize members of base class and member variables
+    SpectralBaseAlgorithmRZ{spectral_kspace, dm, spectral_index, norder_z, grid_type},
+    m_dt{dt},
+    m_update_with_rho{update_with_rho},
+    m_time_averaging{time_averaging},
+    m_J_in_time{J_in_time},
+    m_dive_cleaning{dive_cleaning},
+    m_divb_cleaning{divb_cleaning}
 {
+    amrex::ignore_unused(rho_in_time);
 
     // Allocate the arrays of coefficients
     amrex::BoxArray const & ba = spectral_kspace.spectralspace_ba;
@@ -45,30 +48,28 @@ PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
     X2_coef = SpectralRealCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
     X3_coef = SpectralRealCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
 
-    coefficients_initialized = false;
-
-    if (time_averaging && do_multi_J)
+    if (time_averaging && J_in_time == JInTime::Linear)
     {
         X5_coef = SpectralRealCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
         X6_coef = SpectralRealCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
     }
 
-    if (time_averaging && !do_multi_J)
+    if (time_averaging && J_in_time != JInTime::Linear)
     {
-        amrex::Abort(Utils::TextMsg::Err(
-            "RZ PSATD: psatd.do_time_averaging = 1 implemented only with warpx.do_multi_J = 1"));
+        WARPX_ABORT_WITH_MESSAGE(
+            "RZ PSATD: psatd.do_time_averaging=1 implemented only with psatd.J_in_time=linear");
     }
 
-    if (dive_cleaning && !do_multi_J)
+    if (dive_cleaning && J_in_time != JInTime::Linear)
     {
-        amrex::Abort(Utils::TextMsg::Err(
-            "RZ PSATD: warpx.do_dive_cleaning = 1 implemented only with warpx.do_multi_J = 1"));
+        WARPX_ABORT_WITH_MESSAGE(
+            "RZ PSATD: warpx.do_dive_cleaning=1 implemented only with psatd.J_in_time=linear");
     }
 
-    if (divb_cleaning && !do_multi_J)
+    if (divb_cleaning && J_in_time != JInTime::Linear)
     {
-        amrex::Abort(Utils::TextMsg::Err(
-            "RZ PSATD: warpx.do_divb_cleaning = 1 implemented only with warpx.do_multi_J = 1"));
+        WARPX_ABORT_WITH_MESSAGE(
+            "RZ PSATD: warpx.do_divb_cleaning=1 implemented only with psatd.J_in_time=linear");
     }
 }
 
@@ -80,7 +81,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
 
     const bool update_with_rho = m_update_with_rho;
     const bool time_averaging = m_time_averaging;
-    const bool do_multi_J = m_do_multi_J;
+    const bool J_linear = (m_J_in_time == JInTime::Linear);
     const bool dive_cleaning = m_dive_cleaning;
     const bool divb_cleaning = m_divb_cleaning;
 
@@ -109,7 +110,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
 
         amrex::Array4<const amrex::Real> X5_arr;
         amrex::Array4<const amrex::Real> X6_arr;
-        if (time_averaging && do_multi_J)
+        if (time_averaging && J_linear)
         {
             X5_arr = X5_coef[mfi].array();
             X6_arr = X6_coef[mfi].array();
@@ -128,6 +129,9 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
         amrex::ParallelFor(bx, modes,
         [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept
         {
+            const int idx_jx = (J_linear) ? static_cast<int>(Idx.Jx_old) : static_cast<int>(Idx.Jx_mid);
+            const int idx_jy = (J_linear) ? static_cast<int>(Idx.Jy_old) : static_cast<int>(Idx.Jy_mid);
+            const int idx_jz = (J_linear) ? static_cast<int>(Idx.Jz_old) : static_cast<int>(Idx.Jz_mid);
 
             // All of the fields of each mode are grouped together
             int const Ep_m = Idx.Ex + Idx.n_fields*mode;
@@ -136,9 +140,9 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
             int const Bp_m = Idx.Bx + Idx.n_fields*mode;
             int const Bm_m = Idx.By + Idx.n_fields*mode;
             int const Bz_m = Idx.Bz + Idx.n_fields*mode;
-            int const Jp_m = Idx.Jx + Idx.n_fields*mode;
-            int const Jm_m = Idx.Jy + Idx.n_fields*mode;
-            int const Jz_m = Idx.Jz + Idx.n_fields*mode;
+            int const Jp_m = idx_jx + Idx.n_fields*mode;
+            int const Jm_m = idx_jy + Idx.n_fields*mode;
+            int const Jz_m = idx_jz + Idx.n_fields*mode;
             int const rho_old_m = Idx.rho_old + Idx.n_fields*mode;
             int const rho_new_m = Idx.rho_new + Idx.n_fields*mode;
 
@@ -235,7 +239,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
                 G_old = fields(i,j,k,G_m);
             }
 
-            if (do_multi_J)
+            if (J_linear)
             {
                 const int Jp_m_new = Idx.Jx_new + Idx.n_fields*mode;
                 const int Jm_m_new = Idx.Jy_new + Idx.n_fields*mode;
@@ -332,7 +336,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
 void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const & f)
 {
     const bool time_averaging = m_time_averaging;
-    const bool do_multi_J = m_do_multi_J;
+    const bool J_linear = (m_J_in_time == JInTime::Linear);
 
     // Fill them with the right values:
     // Loop over boxes and allocate the corresponding coefficients
@@ -353,7 +357,7 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const
 
         amrex::Array4<amrex::Real> X5;
         amrex::Array4<amrex::Real> X6;
-        if (time_averaging && do_multi_J)
+        if (time_averaging && J_linear)
         {
             X5 = X5_coef[mfi].array();
             X6 = X6_coef[mfi].array();
@@ -392,9 +396,9 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const
                 X3(i,j,k,mode) = - c*c * dt*dt / (3._rt*ep0);
             }
 
-            if (time_averaging && do_multi_J)
+            if (time_averaging && J_linear)
             {
-                constexpr amrex::Real c2 = PhysConst::c;
+                constexpr amrex::Real c2 = PhysConst::c * PhysConst::c;
                 const amrex::Real dt3 = dt * dt * dt;
                 const amrex::Real om  = c * k_norm;
                 const amrex::Real om2 = om * om;
@@ -402,14 +406,14 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const
 
                 if (om != 0.0_rt)
                 {
-                    X5(i,j,k) = c2 / ep0 * (S_ck(i,j,k) / om2 - (1._rt - C(i,j,k)) / (om4 * dt)
+                    X5(i,j,k,mode) = c2 / ep0 * (S_ck(i,j,k,mode) / om2 - (1._rt - C(i,j,k,mode)) / (om4 * dt)
                                             - 0.5_rt * dt / om2);
-                    X6(i,j,k) = c2 / ep0 * ((1._rt - C(i,j,k)) / (om4 * dt) - 0.5_rt * dt / om2);
+                    X6(i,j,k,mode) = c2 / ep0 * ((1._rt - C(i,j,k,mode)) / (om4 * dt) - 0.5_rt * dt / om2);
                 }
                 else
                 {
-                    X5(i,j,k) = - c2 * dt3 / (8._rt * ep0);
-                    X6(i,j,k) = - c2 * dt3 / (24._rt * ep0);
+                    X5(i,j,k,mode) = - c2 * dt3 / (8._rt * ep0);
+                    X6(i,j,k,mode) = - c2 * dt3 / (24._rt * ep0);
                 }
             }
         });
@@ -430,7 +434,7 @@ PsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data)
         amrex::Box const & bx = field_data.fields[mfi].box();
 
         // Extract arrays for the fields to be updated
-        amrex::Array4<Complex> fields = field_data.fields[mfi].array();
+        const amrex::Array4<Complex> fields = field_data.fields[mfi].array();
 
         // Extract pointers for the k vectors
         auto const & kr_modes = field_data.getKrArray(mfi);
@@ -447,9 +451,9 @@ PsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data)
         [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept
         {
             // All of the fields of each mode are grouped together
-            auto const Jp_m = Idx.Jx + Idx.n_fields*mode;
-            auto const Jm_m = Idx.Jy + Idx.n_fields*mode;
-            auto const Jz_m = Idx.Jz + Idx.n_fields*mode;
+            auto const Jp_m = Idx.Jx_mid + Idx.n_fields*mode;
+            auto const Jm_m = Idx.Jy_mid + Idx.n_fields*mode;
+            auto const Jz_m = Idx.Jz_mid + Idx.n_fields*mode;
             auto const rho_old_m = Idx.rho_old + Idx.n_fields*mode;
             auto const rho_new_m = Idx.rho_new + Idx.n_fields*mode;
 
@@ -485,6 +489,6 @@ PsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data)
 void
 PsatdAlgorithmRZ::VayDeposition (SpectralFieldDataRZ& /*field_data*/)
 {
-    amrex::Abort(Utils::TextMsg::Err(
-        "Vay deposition not implemented in RZ geometry"));
+    WARPX_ABORT_WITH_MESSAGE(
+        "Vay deposition not implemented in RZ geometry");
 }

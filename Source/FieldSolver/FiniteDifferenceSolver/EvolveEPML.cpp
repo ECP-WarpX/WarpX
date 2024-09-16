@@ -16,6 +16,7 @@
 #else
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
+#include "EmbeddedBoundary/Enabled.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
@@ -52,30 +53,30 @@ void FiniteDifferenceSolver::EvolveEPML (
     MultiSigmaBox const& sigba,
     amrex::Real const dt, bool pml_has_particles ) {
 
-   // Select algorithm (The choice of algorithm is a runtime option,
-   // but we compile code for each algorithm, using templates)
+    // Select algorithm (The choice of algorithm is a runtime option,
+    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
     amrex::ignore_unused(Efield, Bfield, Jfield, Ffield, sigba, dt, pml_has_particles, edge_lengths);
-    amrex::Abort(Utils::TextMsg::Err(
-        "PML are not implemented in cylindrical geometry."));
+    WARPX_ABORT_WITH_MESSAGE(
+        "PML are not implemented in cylindrical geometry.");
 #else
-    if (m_do_nodal) {
+    if (m_grid_type == GridType::Collocated) {
 
         EvolveEPMLCartesian <CartesianNodalAlgorithm> (
             Efield, Bfield, Jfield, edge_lengths, Ffield, sigba, dt, pml_has_particles );
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee || m_fdtd_algo == MaxwellSolverAlgo::ECT) {
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee || m_fdtd_algo == ElectromagneticSolverAlgo::ECT) {
 
         EvolveEPMLCartesian <CartesianYeeAlgorithm> (
             Efield, Bfield, Jfield,  edge_lengths, Ffield, sigba, dt, pml_has_particles );
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::CKC) {
 
         EvolveEPMLCartesian <CartesianCKCAlgorithm> (
             Efield, Bfield, Jfield,  edge_lengths, Ffield, sigba, dt, pml_has_particles );
 
     } else {
-        amrex::Abort(Utils::TextMsg::Err("EvolveEPML: Unknown algorithm"));
+        WARPX_ABORT_WITH_MESSAGE("EvolveEPML: Unknown algorithm");
     }
 #endif
 }
@@ -109,19 +110,20 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
         Array4<Real> const& By = Bfield[1]->array(mfi);
         Array4<Real> const& Bz = Bfield[2]->array(mfi);
 
-#ifdef AMREX_USE_EB
-        Array4<Real> const& lx = edge_lengths[0]->array(mfi);
-        Array4<Real> const& ly = edge_lengths[1]->array(mfi);
-        Array4<Real> const& lz = edge_lengths[2]->array(mfi);
-#endif
+        amrex::Array4<amrex::Real> lx, ly, lz;
+        if (EB::enabled()) {
+            lx = edge_lengths[0]->array(mfi);
+            ly = edge_lengths[1]->array(mfi);
+            lz = edge_lengths[2]->array(mfi);
+        }
 
         // Extract stencil coefficients
         Real const * const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
-        int const n_coefs_x = m_stencil_coefs_x.size();
+        auto const n_coefs_x = static_cast<int>(m_stencil_coefs_x.size());
         Real const * const AMREX_RESTRICT coefs_y = m_stencil_coefs_y.dataPtr();
-        int const n_coefs_y = m_stencil_coefs_y.size();
+        auto const n_coefs_y = static_cast<int>(m_stencil_coefs_y.size());
         Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
-        int const n_coefs_z = m_stencil_coefs_z.size();
+        auto const n_coefs_z = static_cast<int>(m_stencil_coefs_z.size());
 
         // Extract tileboxes for which to loop
         Box const& tex  = mfi.tilebox(Efield[0]->ixType().ixType());
@@ -132,9 +134,7 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
         amrex::ParallelFor(tex, tey, tez,
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-#ifdef AMREX_USE_EB
-                if(lx(i, j, k) <= 0) return;
-#endif
+                if (lx && lx(i, j, k) <= 0) { return; }
 
                 Ex(i, j, k, PMLComp::xz) -= c2 * dt * (
                     T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k, PMLComp::yx)
@@ -145,8 +145,13 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-#ifdef AMREX_USE_EB
-                if(ly(i, j, k)<=0) return;
+                // Skip field push if this cell is fully covered by embedded boundaries
+#ifdef WARPX_DIM_3D
+                if (ly && ly(i,j,k) <= 0) { return; }
+#elif defined(WARPX_DIM_XZ)
+                //In XZ Ey is associated with a mesh node, so we need to check if the mesh node is covered
+                amrex::ignore_unused(ly);
+                if (lx && (lx(i, j, k)<=0 || lx(i-1, j, k)<=0 || lz(i, j-1, k)<=0 || lz(i, j, k)<=0)) { return; }
 #endif
 
                 Ey(i, j, k, PMLComp::yx) -= c2 * dt * (
@@ -158,9 +163,7 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-#ifdef AMREX_USE_EB
-                if(lz(i, j, k) <= 0) return;
-#endif
+                if (lz && lz(i, j, k) <= 0) { return; }
 
                 Ez(i, j, k, PMLComp::zy) -= c2 * dt * (
                     T_Algo::DownwardDy(Bx, coefs_y, n_coefs_y, i, j, k, PMLComp::xy)
@@ -238,13 +241,7 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
                 }
             );
         }
-
-    }
-
-#ifndef AMREX_USE_EB
-    amrex::ignore_unused(edge_lengths);
-#endif
-
+    } // MFIter
 }
 
-#endif // corresponds to ifndef WARPX_DIM_RZ
+#endif // ifndef WARPX_DIM_RZ

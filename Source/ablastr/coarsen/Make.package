@@ -1,0 +1,4 @@
+CEXE_sources += average.cpp
+CEXE_sources += sample.cpp
+
+VPATH_LOCATIONS   += $(WARPX_HOME)/Source/ablastr/coarsen

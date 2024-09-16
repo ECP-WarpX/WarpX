@@ -15,10 +15,10 @@
 #    include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
 #include "Filter/NCIGodfreyFilter.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
-#include "Utils/WarpXUtil.H"
 
 #include <AMReX_Config.H>
 #include <AMReX_INT.H>
@@ -33,34 +33,35 @@ using namespace amrex;
 void
 guardCellManager::Init (
     const amrex::Real dt,
-    const amrex::RealVect dx,
+    const amrex::Real *dx,
     const bool do_subcycling,
     const bool do_fdtd_nci_corr,
-    const bool do_nodal,
+    ablastr::utils::enums::GridType grid_type,
     const bool do_moving_window,
     const int moving_window_dir,
     const int nox,
     const int nox_fft, const int noy_fft, const int noz_fft,
     const int nci_corr_stencil,
-    const int maxwell_solver_id,
+    const ElectromagneticSolverAlgo electromagnetic_solver_id,
     const int max_level,
-    const amrex::Vector<amrex::Real> v_galilean,
-    const amrex::Vector<amrex::Real> v_comoving,
+    const amrex::Vector<amrex::Real>& v_galilean,
+    const amrex::Vector<amrex::Real>& v_comoving,
     const bool safe_guard_cells,
-    const int do_electrostatic,
     const int do_multi_J,
     const bool fft_do_time_averaging,
     const bool do_pml,
     const int do_pml_in_domain,
     const int pml_ncell,
-    const amrex::Vector<amrex::IntVect>& ref_ratios)
+    const amrex::Vector<amrex::IntVect>& ref_ratios,
+    const bool use_filter,
+    const amrex::IntVect& bilinear_filter_stencil_length)
 {
     // When using subcycling, the particles on the fine level perform two pushes
     // before being redistributed ; therefore, we need one extra guard cell
     // (the particles may move by 2*c*dt)
-    int ngx_tmp = (max_level > 0 && do_subcycling == 1) ? nox+1 : nox;
-    int ngy_tmp = (max_level > 0 && do_subcycling == 1) ? nox+1 : nox;
-    int ngz_tmp = (max_level > 0 && do_subcycling == 1) ? nox+1 : nox;
+    int ngx_tmp = (max_level > 0 && do_subcycling) ? nox+1 : nox;
+    int ngy_tmp = (max_level > 0 && do_subcycling) ? nox+1 : nox;
+    int ngz_tmp = (max_level > 0 && do_subcycling) ? nox+1 : nox;
 
     const bool galilean = (v_galilean[0] != 0. || v_galilean[1] != 0. || v_galilean[2] != 0.);
     const bool comoving = (v_comoving[0] != 0. || v_comoving[1] != 0. || v_comoving[2] != 0.);
@@ -81,10 +82,10 @@ guardCellManager::Init (
     // interpolation from coarse grid to fine grid.
     int ngx = (ngx_tmp % 2) ? ngx_tmp+1 : ngx_tmp;  // Always even number
     int ngy = (ngy_tmp % 2) ? ngy_tmp+1 : ngy_tmp;  // Always even number
-    int ngz_nonci = (ngz_tmp % 2) ? ngz_tmp+1 : ngz_tmp;  // Always even number
+    const int ngz_nonci = (ngz_tmp % 2) ? ngz_tmp+1 : ngz_tmp;  // Always even number
     int ngz;
     if (do_fdtd_nci_corr) {
-        int ng = ngz_tmp + nci_corr_stencil;
+        const int ng = ngz_tmp + nci_corr_stencil;
         ngz = (ng % 2) ? ng+1 : ng;
     } else {
         ngz = ngz_nonci;
@@ -100,10 +101,10 @@ guardCellManager::Init (
     // the fine grid by a number of cells equal to the ref_ratio in the moving
     // window direction.
     if (do_moving_window) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(ref_ratios.size() <= 1,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(max_level <= 1,
             "The number of grow cells for the moving window currently assumes 2 levels max.");
-        const int nlevs = ref_ratios.size()+1;
-        int max_r = (nlevs > 1) ? ref_ratios[0][moving_window_dir] : 2;
+        const auto nlevs = static_cast<int>(max_level+1);
+        const int max_r = (nlevs > 1) ? ref_ratios[0][moving_window_dir] : 2;
 
         ngx = std::max(ngx,max_r);
         ngy = std::max(ngy,max_r);
@@ -119,9 +120,11 @@ guardCellManager::Init (
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     ng_alloc_EB = IntVect(ngx,ngz);
     ng_alloc_J = IntVect(ngJx,ngJz);
+    amrex::ignore_unused(ngy, ngJy);
 #elif defined(WARPX_DIM_1D_Z)
     ng_alloc_EB = IntVect(ngz);
     ng_alloc_J = IntVect(ngJz);
+    amrex::ignore_unused(ngx, ngJx, ngy, ngJy);
 #endif
 
     // TODO Adding one cell for rho should not be necessary, given that the number of guard cells
@@ -132,8 +135,11 @@ guardCellManager::Init (
 
     // Electromagnetic simulations: account for change in particle positions within half a time step
     // for current deposition and within one time step for charge deposition (since rho is needed
-    // both at the beginning and at the end of the PIC iteration)
-    if (do_electrostatic == ElectrostaticSolverAlgo::None)
+    // both at the beginning and at the end of the PIC iteration).
+    // For the hybrid-PIC solver, the same number of guard cells are used as for
+    // the electrostatic solver.
+    if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None &&
+        electromagnetic_solver_id != ElectromagneticSolverAlgo::HybridPIC)
     {
         for (int i = 0; i < AMREX_SPACEDIM; i++)
         {
@@ -160,10 +166,15 @@ guardCellManager::Init (
     ng_depos_J   = ng_alloc_J;
     ng_depos_rho = ng_alloc_Rho;
 
+    if (use_filter)
+    {
+        ng_alloc_J += bilinear_filter_stencil_length - amrex::IntVect(1);
+    }
+
     // After pushing particle
     int ng_alloc_F_int = (do_moving_window) ? 2 : 0;
     // CKC solver requires one additional guard cell
-    if (maxwell_solver_id == MaxwellSolverAlgo::CKC) ng_alloc_F_int = std::max( ng_alloc_F_int, 1 );
+    if (electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC) { ng_alloc_F_int = std::max( ng_alloc_F_int, 1 ); }
     ng_alloc_F = IntVect(AMREX_D_DECL(ng_alloc_F_int, ng_alloc_F_int, ng_alloc_F_int));
 
     // Used if warpx.do_divb_cleaning = 1
@@ -171,7 +182,7 @@ guardCellManager::Init (
     // TODO Does the CKC solver require one additional guard cell (as for F)?
     ng_alloc_G = IntVect(AMREX_D_DECL(ng_alloc_G_int, ng_alloc_G_int, ng_alloc_G_int));
 
-    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+    if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
     {
         // The number of guard cells should be enough to contain the stencil of the FFT solver.
         //
@@ -189,21 +200,22 @@ guardCellManager::Init (
         // currents in the latter case). This does not seem to be necessary in x and y,
         // where it still seems fine to set half the number of guard cells of the nodal case.
 
-        int ngFFt_x = do_nodal ? nox_fft : nox_fft / 2;
-        int ngFFt_y = do_nodal ? noy_fft : noy_fft / 2;
-        int ngFFt_z = (do_nodal || galilean) ? noz_fft : noz_fft / 2;
+        using namespace ablastr::utils::enums;
+        int ngFFt_x = (grid_type == GridType::Collocated) ? nox_fft : nox_fft / 2;
+        int ngFFt_y = (grid_type == GridType::Collocated) ? noy_fft : noy_fft / 2;
+        int ngFFt_z = (grid_type == GridType::Collocated || galilean) ? noz_fft : noz_fft / 2;
 
-        ParmParse pp_psatd("psatd");
-        queryWithParser(pp_psatd, "nx_guard", ngFFt_x);
-        queryWithParser(pp_psatd, "ny_guard", ngFFt_y);
-        queryWithParser(pp_psatd, "nz_guard", ngFFt_z);
+        const ParmParse pp_psatd("psatd");
+        utils::parser::queryWithParser(pp_psatd, "nx_guard", ngFFt_x);
+        utils::parser::queryWithParser(pp_psatd, "ny_guard", ngFFt_y);
+        utils::parser::queryWithParser(pp_psatd, "nz_guard", ngFFt_z);
 
 #if defined(WARPX_DIM_3D)
-        IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
+        auto ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        IntVect ngFFT = IntVect(ngFFt_x, ngFFt_z);
+        auto ngFFT = IntVect(ngFFt_x, ngFFt_z);
 #elif defined(WARPX_DIM_1D_Z)
-        IntVect ngFFT = IntVect(ngFFt_z);
+        auto ngFFT = IntVect(ngFFt_z);
 #endif
 
 #ifdef WARPX_DIM_RZ
@@ -213,7 +225,7 @@ guardCellManager::Init (
             }
         }
 #else
-       amrex::ignore_unused(do_pml, do_pml_in_domain, pml_ncell);
+        amrex::ignore_unused(do_pml, do_pml_in_domain, pml_ncell);
 #endif
 
         // All boxes should have the same number of guard cells, to avoid temporary parallel copies:
@@ -238,29 +250,33 @@ guardCellManager::Init (
     }
 
     // Compute number of cells required for Field Solver
-    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+    if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         ng_FieldSolver = ng_alloc_EB;
         ng_FieldSolverF = ng_alloc_EB;
         ng_FieldSolverG = ng_alloc_EB;
     }
 #ifdef WARPX_DIM_RZ
-    else if (maxwell_solver_id == MaxwellSolverAlgo::Yee) {
+    else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
+             electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
+             electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC ) {
         ng_FieldSolver  = CylindricalYeeAlgorithm::GetMaxGuardCell();
         ng_FieldSolverF = CylindricalYeeAlgorithm::GetMaxGuardCell();
         ng_FieldSolverG = CylindricalYeeAlgorithm::GetMaxGuardCell();
     }
 #else
     else {
-        if (do_nodal) {
+        if (grid_type == GridType::Collocated) {
             ng_FieldSolver  = CartesianNodalAlgorithm::GetMaxGuardCell();
             ng_FieldSolverF = CartesianNodalAlgorithm::GetMaxGuardCell();
             ng_FieldSolverG = CartesianNodalAlgorithm::GetMaxGuardCell();
-        } else if (maxwell_solver_id == MaxwellSolverAlgo::Yee
-                   || maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+        } else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
+                   electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
+                   electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT ||
+                   electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC ) {
             ng_FieldSolver  = CartesianYeeAlgorithm::GetMaxGuardCell();
             ng_FieldSolverF = CartesianYeeAlgorithm::GetMaxGuardCell();
             ng_FieldSolverG = CartesianYeeAlgorithm::GetMaxGuardCell();
-        } else if (maxwell_solver_id == MaxwellSolverAlgo::CKC) {
+        } else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC) {
             ng_FieldSolver  = CartesianCKCAlgorithm::GetMaxGuardCell();
             ng_FieldSolverF = CartesianCKCAlgorithm::GetMaxGuardCell();
             ng_FieldSolverG = CartesianCKCAlgorithm::GetMaxGuardCell();
@@ -274,7 +290,7 @@ guardCellManager::Init (
     ng_alloc_F.max( ng_FieldSolverF );
     ng_alloc_G.max( ng_FieldSolverG );
 
-    if (do_moving_window && maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+    if (do_moving_window && electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         ng_afterPushPSATD = ng_alloc_EB;
     }
 
@@ -291,14 +307,20 @@ guardCellManager::Init (
             ng_MovingWindow = ng_alloc_EB;
         }
     } else {
-        // Compute number of cells required for Field Gather
-        int FGcell[4] = {0,1,1,2}; // Index is nox
-        IntVect ng_FieldGather_noNCI = IntVect(AMREX_D_DECL(FGcell[nox],FGcell[nox],FGcell[nox]));
+        // Compute number of cells required for Field Gather:
+        // When increasing the shape by order by one, support of the shape
+        // factor grows symmetrically by half a cell on each side. So every
+        // +2 orders, one touches one more cell point.
+        int const FGcell = (nox + 1) / 2;  // integer division
+        auto ng_FieldGather_noNCI = IntVect(AMREX_D_DECL(FGcell,FGcell,FGcell));
         ng_FieldGather_noNCI = ng_FieldGather_noNCI.min(ng_alloc_EB);
+
         // If NCI filter, add guard cells in the z direction
         IntVect ng_NCIFilter = IntVect::TheZeroVector();
-        if (do_fdtd_nci_corr)
+        if (do_fdtd_nci_corr) {
             ng_NCIFilter[WARPX_ZINDEX] = NCIGodfreyFilter::m_stencil_width;
+        }
+
         // Note: communications of guard cells for bilinear filter are handled
         // separately.
         ng_FieldGather = ng_FieldGather_noNCI + ng_NCIFilter;

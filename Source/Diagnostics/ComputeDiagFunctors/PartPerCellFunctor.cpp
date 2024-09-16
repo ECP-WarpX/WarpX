@@ -2,8 +2,9 @@
 
 #include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include "Particles/MultiParticleContainer.H"
-#include "Utils/CoarsenIO.H"
 #include "WarpX.H"
+
+#include <ablastr/coarsen/sample.H>
 
 #include <AMReX_BLassert.H>
 #include <AMReX_IntVect.H>
@@ -36,5 +37,5 @@ PartPerCellFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp, const i
     // Compute ppc which includes a summation over all species.
     warpx.GetPartContainer().Increment(ppc_mf, m_lev);
     // Coarsen and interpolate from ppc_mf to the output diagnostic MultiFab, mf_dst.
-    CoarsenIO::Coarsen(mf_dst, ppc_mf, dcomp, 0, nComp(), 0, m_crse_ratio);
+    ablastr::coarsen::sample::Coarsen(mf_dst, ppc_mf, dcomp, 0, nComp(), 0, m_crse_ratio);
 }

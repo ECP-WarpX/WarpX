@@ -1,0 +1,70 @@
+# stop_time = 1.5e-13
+
+warpx.zmax_plasma_to_compute_max_step = 56.e-6
+warpx.gamma_boost = 5.
+warpx.boost_direction = z
+
+amr.n_cell =  256 512 # 32 64
+amr.max_grid_size = 512
+amr.blocking_factor = 16
+amr.max_level = 0
+geometry.dims = 2
+geometry.prob_lo     = -50.e-6   -10.e-6
+geometry.prob_hi     =  50.e-6     0.e-6
+
+# Boundary condition
+boundary.field_lo = periodic pml
+boundary.field_hi = periodic pml
+
+warpx.cfl = .999
+warpx.do_moving_window = 1
+warpx.moving_window_dir = z
+warpx.moving_window_v = 1.0 # in units of the speed of light
+warpx.serialize_initial_conditions = 1
+
+# Order of particle shape factors
+algo.particle_shape = 1
+
+particles.species_names = beam
+particles.rigid_injected_species = beam
+beam.charge = -q_e
+beam.mass = m_e
+beam.injection_style = "gaussian_beam"
+beam.x_rms = 1.e-6
+beam.y_rms = 1.e-6
+beam.z_rms = .5e-6
+beam.x_m = 0.
+beam.y_m = 0.
+beam.z_m = -5.e-6
+beam.npart = 10000
+beam.q_tot = -1.e-20
+beam.momentum_distribution_type = "gaussian"
+beam.ux_m = 0.0
+beam.uy_m = 0.0
+beam.uz_m = 1000.
+beam.ux_th = 100.
+beam.uy_th = 100.
+beam.uz_th =   0.
+beam.zinject_plane = 20.e-6
+beam.rigid_advance = true
+
+# Diagnostics
+diagnostics.diags_names = diag1 diag2
+
+diag1.diag_type = BackTransformed
+diag1.do_back_transformed_fields = 1
+diag1.intervals = :1
+diag1.dt_snapshots_lab = 1.8679589331096515e-13
+diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
+diag1.format = plotfile
+diag1.buffer_size = 32
+diag1.write_species = 1
+
+diag2.diag_type = BackTransformed
+diag2.do_back_transformed_fields = 1
+diag2.num_snapshots_lab = 2
+diag2.dt_snapshots_lab = 1.8679589331096515e-13
+diag2.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
+diag2.format = openpmd
+diag2.openpmd_backend = h5
+diag2.buffer_size = 32

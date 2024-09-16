@@ -10,9 +10,14 @@
 
 #include "EmbeddedBoundary/WarpXFaceInfoBox_fwd.H"
 #include "FiniteDifferenceSolver_fwd.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 
 #include "BoundaryConditions/PML_fwd.H"
+#include "Evolve/WarpXDtType.H"
+#include "HybridPICModel/HybridPICModel_fwd.H"
 #include "MacroscopicProperties/MacroscopicProperties_fwd.H"
+
+#include <ablastr/utils/Enums.H>
 
 #include <AMReX_GpuContainers.H>
 #include <AMReX_REAL.H>
@@ -39,12 +44,12 @@ class FiniteDifferenceSolver
          *
          * \param fdtd_algo Identifies the chosen algorithm, as defined in WarpXAlgorithmSelection.H
          * \param cell_size Cell size along each dimension, for the chosen refinement level
-         * \param do_nodal  Whether the solver is applied to a nodal or staggered grid
+         * \param grid_type Whether the solver is applied to a collocated or staggered grid
          */
         FiniteDifferenceSolver (
-            int const fdtd_algo,
+            ElectromagneticSolverAlgo fdtd_algo,
             std::array<amrex::Real,3> cell_size,
-            bool const do_nodal );
+            ablastr::utils::enums::GridType grid_type );
 
         void EvolveB ( std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
@@ -55,7 +60,7 @@ class FiniteDifferenceSolver
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Venl,
                        std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_cell,
                        std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
-                       int lev, amrex::Real const dt );
+                       int lev, amrex::Real dt );
 
         void EvolveE ( std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
@@ -64,31 +69,31 @@ class FiniteDifferenceSolver
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
                        std::unique_ptr<amrex::MultiFab> const& Ffield,
-                       int lev, amrex::Real const dt );
+                       int lev, amrex::Real dt );
 
         void EvolveF ( std::unique_ptr<amrex::MultiFab>& Ffield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
                        std::unique_ptr<amrex::MultiFab> const& rhofield,
-                       int const rhocomp,
-                       amrex::Real const dt );
+                       int rhocomp,
+                       amrex::Real dt );
 
         void EvolveG (std::unique_ptr<amrex::MultiFab>& Gfield,
                       std::array<std::unique_ptr<amrex::MultiFab>,3> const& Bfield,
-                      amrex::Real const dt);
+                      amrex::Real dt);
 
         void EvolveECTRho ( std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
                             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
                             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
                             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
-                            const int lev );
+                            int lev );
 
         void ApplySilverMuellerBoundary(
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
             amrex::Box domain_box,
-            amrex::Real const dt,
-            amrex::Vector<int> field_boundary_lo,
-            amrex::Vector<int> field_boundary_hi);
+            amrex::Real dt,
+            amrex::Array<FieldBoundaryType,AMREX_SPACEDIM> field_boundary_lo,
+            amrex::Array<FieldBoundaryType,AMREX_SPACEDIM> field_boundary_hi);
 
         void ComputeDivE ( const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                            amrex::MultiFab& divE );
@@ -101,38 +106,81 @@ class FiniteDifferenceSolver
           * \param[out] Efield  vector of electric field MultiFabs updated at a given level
           * \param[in] Bfield   vector of magnetic field MultiFabs at a given level
           * \param[in] Jfield   vector of current density MultiFabs at a given level
+          * \param[in] edge_lengths length of edges along embedded boundaries
           * \param[in] dt       timestep of the simulation
           * \param[in] macroscopic_properties contains user-defined properties of the medium.
           */
-
         void MacroscopicEvolveE ( std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-                      amrex::Real const dt,
+                      amrex::Real dt,
                       std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
 
         void EvolveBPML ( std::array< amrex::MultiFab*, 3 > Bfield,
-                      std::array< amrex::MultiFab*, 3 > const Efield,
-                      amrex::Real const dt,
-                      const bool dive_cleaning);
+                      std::array< amrex::MultiFab*, 3 > Efield,
+                      amrex::Real dt,
+                      bool dive_cleaning);
 
        void EvolveEPML ( std::array< amrex::MultiFab*, 3 > Efield,
-                      std::array< amrex::MultiFab*, 3 > const Bfield,
-                      std::array< amrex::MultiFab*, 3 > const Jfield,
-                      std::array< amrex::MultiFab*, 3 > const edge_lengths,
-                      amrex::MultiFab* const Ffield,
+                      std::array< amrex::MultiFab*, 3 > Bfield,
+                      std::array< amrex::MultiFab*, 3 > Jfield,
+                      std::array< amrex::MultiFab*, 3 >  edge_lengths,
+                      amrex::MultiFab* Ffield,
                       MultiSigmaBox const& sigba,
-                      amrex::Real const dt, bool pml_has_particles );
+                      amrex::Real dt, bool pml_has_particles );
 
        void EvolveFPML ( amrex::MultiFab* Ffield,
-                     std::array< amrex::MultiFab*, 3 > const Efield,
-                     amrex::Real const dt );
+                     std::array< amrex::MultiFab*, 3 > Efield,
+                     amrex::Real dt );
+
+        /**
+          * \brief E-update in the hybrid PIC algorithm as described in
+          * Winske et al. (2003) Eq. 10.
+          * https://link.springer.com/chapter/10.1007/3-540-36530-3_8
+          *
+          * \param[out] Efield  vector of electric field MultiFabs updated at a given level
+          * \param[in] Jfield   vector of total current MultiFabs at a given level
+          * \param[in] Jifield  vector of ion current density MultiFabs at a given level
+          * \param[in] Jextfield  vector of external current density MultiFabs at a given level
+          * \param[in] Bfield   vector of magnetic field MultiFabs at a given level
+          * \param[in] rhofield scalar ion charge density Multifab at a given level
+          * \param[in] Pefield  scalar electron pressure MultiFab at a given level
+          * \param[in] edge_lengths length of edges along embedded boundaries
+          * \param[in] lev  level number for the calculation
+          * \param[in] hybrid_model instance of the hybrid-PIC model
+          * \param[in] solve_for_Faraday boolean flag for whether the E-field is solved to be used in Faraday's equation
+          */
+        void HybridPICSolveE ( std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3>& Jfield,
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield,
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jextfield,
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+                      std::unique_ptr<amrex::MultiFab> const& rhofield,
+                      std::unique_ptr<amrex::MultiFab> const& Pefield,
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+                      int lev, HybridPICModel const* hybrid_model,
+                      bool solve_for_Faraday );
+
+        /**
+          * \brief Calculation of total current using Ampere's law (without
+          * displacement current): J = (curl x B) / mu0.
+          *
+          * \param[out] Jfield  vector of current MultiFabs at a given level
+          * \param[in] Bfield   vector of magnetic field MultiFabs at a given level
+          * \param[in] edge_lengths length of edges along embedded boundaries
+          * \param[in] lev  level number for the calculation
+          */
+        void CalculateCurrentAmpere (
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3>& Jfield,
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+                      int lev );
 
     private:
 
-        int m_fdtd_algo;
-        bool m_do_nodal;
+        ElectromagneticSolverAlgo m_fdtd_algo;
+        ablastr::utils::enums::GridType m_grid_type;
 
 #ifdef WARPX_DIM_RZ
         amrex::Real m_dr, m_rmin;
@@ -160,37 +208,60 @@ class FiniteDifferenceSolver
         void EvolveBCylindrical (
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
-            const int lev,
-            amrex::Real const dt );
+            int lev,
+            amrex::Real dt );
 
         template< typename T_Algo >
         void EvolveECylindrical (
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
             std::unique_ptr<amrex::MultiFab> const& Ffield,
-            const int lev,
-            amrex::Real const dt );
+            int lev,
+            amrex::Real dt );
 
         template< typename T_Algo >
         void EvolveFCylindrical (
             std::unique_ptr<amrex::MultiFab>& Ffield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
             std::unique_ptr<amrex::MultiFab> const& rhofield,
-            int const rhocomp,
-            amrex::Real const dt );
+            int rhocomp,
+            amrex::Real dt );
 
         template< typename T_Algo >
         void ComputeDivECylindrical (
             const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
             amrex::MultiFab& divE );
+
+        template<typename T_Algo>
+        void HybridPICSolveECylindrical (
+            std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jifield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jextfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+            std::unique_ptr<amrex::MultiFab> const& rhofield,
+            std::unique_ptr<amrex::MultiFab> const& Pefield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+            int lev, HybridPICModel const* hybrid_model,
+            bool solve_for_Faraday );
+
+        template<typename T_Algo>
+        void CalculateCurrentAmpereCylindrical (
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+            int lev
+        );
+
 #else
         template< typename T_Algo >
         void EvolveBCartesian (
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
             std::unique_ptr<amrex::MultiFab> const& Gfield,
-            int lev, amrex::Real const dt );
+            int lev, amrex::Real dt );
 
         template< typename T_Algo >
         void EvolveECartesian (
@@ -199,21 +270,21 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
             std::unique_ptr<amrex::MultiFab> const& Ffield,
-            int lev, amrex::Real const dt );
+            int lev, amrex::Real dt );
 
         template< typename T_Algo >
         void EvolveFCartesian (
             std::unique_ptr<amrex::MultiFab>& Ffield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
             std::unique_ptr<amrex::MultiFab> const& rhofield,
-            int const rhocomp,
-            amrex::Real const dt );
+            int rhocomp,
+            amrex::Real dt );
 
         template< typename T_Algo >
         void EvolveGCartesian (
             std::unique_ptr<amrex::MultiFab>& Gfield,
             std::array<std::unique_ptr<amrex::MultiFab>,3> const& Bfield,
-            amrex::Real const dt);
+            amrex::Real dt);
 
         void EvolveRhoCartesianECT (
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
@@ -229,7 +300,7 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Venl,
             std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_cell,
             std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
-            int lev, amrex::Real const dt
+            int lev, amrex::Real dt
         );
 
         template< typename T_Algo >
@@ -240,33 +311,54 @@ class FiniteDifferenceSolver
         template< typename T_Algo, typename T_MacroAlgo >
         void MacroscopicEvolveECartesian (
             std::array< std::unique_ptr< amrex::MultiFab>, 3>& Efield,
-            std::array< std::unique_ptr< amrex::MultiFab>, 3> const &Bfield,
+            std::array< std::unique_ptr< amrex::MultiFab>, 3> const& Bfield,
             std::array< std::unique_ptr< amrex::MultiFab>, 3> const& Jfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-            amrex::Real const dt,
+            amrex::Real dt,
             std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
 
         template< typename T_Algo >
         void EvolveBPMLCartesian (
             std::array< amrex::MultiFab*, 3 > Bfield,
-            std::array< amrex::MultiFab*, 3 > const Efield,
-            amrex::Real const dt,
-            const bool dive_cleaning);
+            std::array< amrex::MultiFab*, 3 > Efield,
+            amrex::Real dt,
+            bool dive_cleaning);
 
         template< typename T_Algo >
         void EvolveEPMLCartesian (
             std::array< amrex::MultiFab*, 3 > Efield,
-            std::array< amrex::MultiFab*, 3 > const Bfield,
-            std::array< amrex::MultiFab*, 3 > const Jfield,
-            std::array< amrex::MultiFab*, 3 > const edge_lengths,
-            amrex::MultiFab* const Ffield,
+            std::array< amrex::MultiFab*, 3 > Bfield,
+            std::array< amrex::MultiFab*, 3 > Jfield,
+            std::array< amrex::MultiFab*, 3 > edge_lengths,
+            amrex::MultiFab* Ffield,
             MultiSigmaBox const& sigba,
-            amrex::Real const dt, bool pml_has_particles );
+            amrex::Real dt, bool pml_has_particles );
 
         template< typename T_Algo >
         void EvolveFPMLCartesian ( amrex::MultiFab* Ffield,
-                      std::array< amrex::MultiFab*, 3 > const Efield,
-                      amrex::Real const dt );
+                      std::array< amrex::MultiFab*, 3 > Efield,
+                      amrex::Real dt );
+
+        template<typename T_Algo>
+        void HybridPICSolveECartesian (
+            std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jifield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jextfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+            std::unique_ptr<amrex::MultiFab> const& rhofield,
+            std::unique_ptr<amrex::MultiFab> const& Pefield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+            int lev, HybridPICModel const* hybrid_model,
+            bool solve_for_Faraday );
+
+        template<typename T_Algo>
+        void CalculateCurrentAmpereCartesian (
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+            int lev
+        );
 #endif
 
 };

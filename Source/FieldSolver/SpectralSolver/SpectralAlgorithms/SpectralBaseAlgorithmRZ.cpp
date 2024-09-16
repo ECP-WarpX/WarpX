@@ -9,6 +9,7 @@
 #include <cmath>
 
 using namespace amrex;
+using namespace amrex::literals;
 
 /**
  * \brief Compute spectral divergence of E
@@ -37,7 +38,7 @@ SpectralBaseAlgorithmRZ::ComputeSpectralDivE (
         Box const & bx = field_data.fields[mfi].box();
 
         // Extract arrays for the fields to be updated
-        Array4<Complex> fields = field_data.fields[mfi].array();
+        const Array4<Complex> fields = field_data.fields[mfi].array();
 
         // Extract pointers for the k vectors
         Real const * kr_arr = field_data.getKrArray(mfi).dataPtr();

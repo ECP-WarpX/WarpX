@@ -21,6 +21,11 @@
         "orcid": "0000-0003-0313-4496"
       },
       {
+        "affiliation": "Lawrence Livermore National Laboratory",
+        "name": "Angus, Justin Ray",
+        "orcid": "0000-0003-1474-0002"
+      },
+      {
         "affiliation": "Lawrence Berkeley National Laboratory",
         "name": "Belkin, Daniel",
         "orcid": "0000-0002-3936-6419"
@@ -34,9 +39,24 @@
         "name": "Blelly, Aurore"
       },
       {
+        "affiliation": "Helion Energy, Inc.",
+        "name": "Clark, Stephen Eric",
+        "orcid": "0000-0002-0117-776X"
+      },
+      {
         "affiliation": "LIDYL, CEA-Universit\u00e9 Paris-Saclay, CEA Saclay",
         "name": "Fedeli, Luca",
         "orcid": "0000-0002-7215-4178"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Formenti, Arianna",
+        "orcid": "0000-0002-7887-9313"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Garten, Marco",
+        "orcid": "0000-0001-6994-2475"
       },
       {
         "affiliation": "SLAC National Accelerator Laboratory",
@@ -64,7 +84,7 @@
         "orcid": "0000-0002-1750-9757"
       },
       {
-        "affiliation": "Modern Electron",
+        "affiliation": "TAE Technologies Inc.",
         "name": "Groenewald, Roelof E.",
         "orcid": "0000-0002-5282-7152"
       },
@@ -77,6 +97,11 @@
         "affiliation": "Lawrence Berkeley National Laboratory",
         "name": "Gu, Junmin",
         "orcid": "0000-0002-1521-8534"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Haseeb, Muhammad",
+        "orcid": "0000-0002-0697-6894"
       },
       {
         "affiliation": "Lawrence Berkeley National Laboratory",
@@ -130,7 +155,7 @@
       },
       {
         "affiliation": "Lawrence Berkeley National Laboratory",
-        "name": "Rheaume, Tiberius",
+        "name": "Rheaume, Elisa",
         "orcid": "0000-0002-6710-0650"
       },
       {
@@ -139,19 +164,29 @@
         "orcid": "0000-0003-2406-1273"
       },
       {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Sandberg, Ryan Thor",
+        "orcid": "0000-0001-7680-8733"
+      },
+      {
         "affiliation": "Modern Electron",
         "name": "Scherpelz, Peter",
         "orcid": "0000-0001-8185-3387"
       },
       {
-        "affiliation": "Lawrence Berkeley National Laboratory",
-        "name": "Weber, Gunther H.",
-        "orcid": "0000-0002-1794-1398"
+        "affiliation": "Laboratory for Laser Energetics, University of Rochester",
+        "name": "Weichman, Kale",
+        "orcid": "0000-0002-3487-7922"
       },
       {
         "affiliation": "Lawrence Berkeley National Laboratory",
         "name": "Yang, Eloise",
         "orcid": "0000-0002-9319-4216"
+      },
+      {
+        "affiliation": "LIDYL, CEA-Universit\u00e9 Paris-Saclay, CEA Saclay",
+        "name": "Zaim, Ne\u00efl",
+        "orcid": "0000-0003-0313-4496"
       },
       {
         "affiliation": "Lawrence Berkeley National Laboratory",
@@ -172,14 +207,15 @@
         "affiliation": "Lawrence Berkeley National Laboratory",
         "name": "Zoni, Edoardo",
         "orcid": "0000-0001-5662-4646"
-      },
-      {
-        "affiliation": "LIDYL, CEA-Universit\u00e9 Paris-Saclay, CEA Saclay",
-        "name": "Zaim, Ne\u00efl",
-        "orcid": "0000-0003-0313-4496"
       }
     ],
     "contributors": [
+      {
+        "type": "Other",
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Weber, Gunther H.",
+        "orcid": "0000-0002-1794-1398"
+      },
       {
         "type": "Other",
         "affiliation": "Intel",

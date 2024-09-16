@@ -11,10 +11,12 @@
 #include "Utils/WarpXConst.H"
 #include "WarpX.H"
 
+#include "Utils/WarpXProfilerWrapper.H"
+
 #include <blas.hh>
 #include <lapack.hh>
 
-using amrex::operator""_rt;
+using namespace amrex::literals;
 
 HankelTransform::HankelTransform (int const hankel_order,
                                   int const azimuthal_mode,
@@ -23,9 +25,20 @@ HankelTransform::HankelTransform (int const hankel_order,
 : m_nr(nr), m_nk(nr)
 {
 
+    WARPX_PROFILE("HankelTransform::HankelTransform");
+
     // Check that azimuthal_mode has a valid value
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(hankel_order-1 <= azimuthal_mode && azimuthal_mode <= hankel_order+1,
                                      "azimuthal_mode must be either hankel_order-1, hankel_order or hankel_order+1");
+
+#ifdef AMREX_USE_GPU
+    // BLAS setup
+    //   SYCL note: we need to double check AMReX device ID conventions and
+    //   BLAS++ device ID conventions are the same
+    int const device_id = amrex::Gpu::Device::deviceId();
+    blas::Queue::stream_t stream_id = amrex::Gpu::gpuStream();
+    m_queue = std::make_unique<blas::Queue>( device_id, stream_id );
+#endif
 
     amrex::Vector<amrex::Real> alphas;
     amrex::Vector<int> alpha_errors;
@@ -42,7 +55,7 @@ HankelTransform::HankelTransform (int const hankel_order,
 
     // Calculate the spatial grid (Uniform grid with a half-cell offset)
     amrex::Vector<amrex::Real> rmesh(m_nr);
-    amrex::Real dr = rmax/m_nr;
+    const amrex::Real dr = rmax/m_nr;
     for (int ir=0 ; ir < m_nr ; ir++) {
         rmesh[ir] = dr*(ir + 0.5_rt);
     }
@@ -52,16 +65,11 @@ HankelTransform::HankelTransform (int const hankel_order,
     // NB: When compared with the FBPIC article, all the matrices here
     // are calculated in transposed form. This is done so as to use the
     // `dot` and `gemm` functions, in the `transform` method.
-    int p_denom;
-    if (hankel_order == azimuthal_mode) {
-        p_denom = hankel_order + 1;
-    } else {
-        p_denom = hankel_order;
-    }
+    const int p_denom = (hankel_order == azimuthal_mode)?(hankel_order + 1):(hankel_order);
 
     amrex::Vector<amrex::Real> denom(m_nk);
     for (int ik=0 ; ik < m_nk ; ik++) {
-        const amrex::Real jna = jn(p_denom, alphas[ik]);
+        const auto jna = static_cast<amrex::Real>(jn(p_denom, alphas[ik]));
         denom[ik] = MathConst::pi*rmax*rmax*jna*jna;
     }
 
@@ -69,7 +77,7 @@ HankelTransform::HankelTransform (int const hankel_order,
     for (int ir=0 ; ir < m_nr ; ir++) {
         for (int ik=0 ; ik < m_nk ; ik++) {
             int const ii = ik + ir*m_nk;
-            num[ii] = jn(hankel_order, rmesh[ir]*kr[ik]);
+            num[ii] = static_cast<amrex::Real>(jn(hankel_order, rmesh[ir]*kr[ik]));
         }
     }
 
@@ -92,7 +100,8 @@ HankelTransform::HankelTransform (int const hankel_order,
         if (hankel_order == azimuthal_mode-1) {
             for (int ir=0 ; ir < m_nr ; ir++) {
                 int const ii = ir*m_nk;
-                invM[ii] = std::pow(rmesh[ir], (azimuthal_mode-1))/(MathConst::pi*std::pow(rmax, (azimuthal_mode+1)));
+                invM[ii] = static_cast<amrex::Real>(
+                    std::pow(rmesh[ir], (azimuthal_mode-1))/(MathConst::pi*std::pow(rmax, (azimuthal_mode+1))));
             }
         } else {
             for (int ir=0 ; ir < m_nr ; ir++) {
@@ -114,7 +123,7 @@ HankelTransform::HankelTransform (int const hankel_order,
     // Calculate the matrix M by inverting invM
     if (azimuthal_mode !=0 && hankel_order != azimuthal_mode-1) {
         // In this case, invM is singular, thus we calculate the pseudo-inverse.
-        // The Moore-Penrose psuedo-inverse is calculated using the SVD method.
+        // The Moore-Penrose pseudo-inverse is calculated using the SVD method.
 
         M.resize(m_nk*m_nr, 0.);
         amrex::Vector<amrex::Real> invMcopy(invM);
@@ -124,7 +133,7 @@ HankelTransform::HankelTransform (int const hankel_order,
         amrex::Vector<amrex::Real> sp((m_nr)*(m_nk-1), 0.);
         amrex::Vector<amrex::Real> temp((m_nr)*(m_nk-1), 0.);
 
-        // Calculate the singlular-value-decomposition of invM (leaving out the first row).
+        // Calculate the singular-value-decomposition of invM (leaving out the first row).
         // invM = u*sdiag*vt
         // Note that invMcopy.dataPtr()+1 is passed in so that the first ik row is skipped
         // A copy is passed in since the matrix is destroyed
@@ -186,6 +195,8 @@ void
 HankelTransform::HankelForwardTransform (amrex::FArrayBox const& F, int const F_icomp,
                                          amrex::FArrayBox      & G, int const G_icomp)
 {
+    WARPX_PROFILE("HankelTransform::HankelForwardTransform");
+
     amrex::Box const& F_box = F.box();
     amrex::Box const& G_box = G.box();
 
@@ -198,37 +209,24 @@ HankelTransform::HankelForwardTransform (amrex::FArrayBox const& F, int const F_
     AMREX_ALWAYS_ASSERT(ngr >= 0);
     AMREX_ALWAYS_ASSERT(F_box.bigEnd(0)+1 >= m_nr);
 
-#ifndef AMREX_USE_GPU
-    // On CPU, the blas::gemm is significantly faster
+    // We perform stream synchronization since `gemm` may be running
+    // on a different stream.
+    amrex::Gpu::streamSynchronize();
 
     // Note that M is flagged to be transposed since it has dimensions (m_nr, m_nk)
     blas::gemm(blas::Layout::ColMajor, blas::Op::Trans, blas::Op::NoTrans,
                m_nk, nz, m_nr, 1._rt,
                m_M.dataPtr(), m_nk,
                F.dataPtr(F_icomp)+ngr, nrF, 0._rt,
-               G.dataPtr(G_icomp), m_nk);
-
-#else
-    // On GPU, the explicit loop is significantly faster
-    // It is not clear if the GPU gemm wasn't build properly, it is cycling data out and back
-    // in to the device, or if it is because gemm is launching its own threads.
-
-    amrex::Real const * M_arr = m_M.dataPtr();
-    amrex::Array4<const amrex::Real> const & F_arr = F.array();
-    amrex::Array4<      amrex::Real> const & G_arr = G.array();
-
-    int const nr = m_nr;
-
-    amrex::ParallelFor(G_box,
-    [=] AMREX_GPU_DEVICE(int ik, int iz, int k3d) noexcept {
-        G_arr(ik,iz,k3d,G_icomp) = 0.;
-        for (int ir=0 ; ir < nr ; ir++) {
-            int const ii = ir + ik*nr;
-            G_arr(ik,iz,k3d,G_icomp) += M_arr[ii]*F_arr(ir,iz,k3d,F_icomp);
-        }
-    });
-
+               G.dataPtr(G_icomp), m_nk
+#ifdef AMREX_USE_GPU
+               , *m_queue // Calls the GPU version of blas::gemm
 #endif
+           );
+
+    // We perform stream synchronization since `gemm` may be running
+    // on a different stream.
+    amrex::Gpu::streamSynchronize();
 
 }
 
@@ -236,6 +234,8 @@ void
 HankelTransform::HankelInverseTransform (amrex::FArrayBox const& G, int const G_icomp,
                                          amrex::FArrayBox      & F, int const F_icomp)
 {
+    WARPX_PROFILE("HankelTransform::HankelInverseTransform");
+
     amrex::Box const& G_box = G.box();
     amrex::Box const& F_box = F.box();
 
@@ -248,36 +248,22 @@ HankelTransform::HankelInverseTransform (amrex::FArrayBox const& G, int const G_
     AMREX_ALWAYS_ASSERT(ngr >= 0);
     AMREX_ALWAYS_ASSERT(F_box.bigEnd(0)+1 >= m_nr);
 
-#ifndef AMREX_USE_GPU
-    // On CPU, the blas::gemm is significantly faster
+    // We perform stream synchronization since `gemm` may be running
+    // on a different stream.
+    amrex::Gpu::streamSynchronize();
 
     // Note that m_invM is flagged to be transposed since it has dimensions (m_nk, m_nr)
     blas::gemm(blas::Layout::ColMajor, blas::Op::Trans, blas::Op::NoTrans,
                m_nr, nz, m_nk, 1._rt,
                m_invM.dataPtr(), m_nr,
                G.dataPtr(G_icomp), m_nk, 0._rt,
-               F.dataPtr(F_icomp)+ngr, nrF);
-
-#else
-    // On GPU, the explicit loop is significantly faster
-    // It is not clear if the GPU gemm wasn't build properly, it is cycling data out and back
-    // in to the device, or if it is because gemm is launching its own threads.
-
-    amrex::Real const * invM_arr = m_invM.dataPtr();
-    amrex::Array4<const amrex::Real> const & G_arr = G.array();
-    amrex::Array4<      amrex::Real> const & F_arr = F.array();
-
-    int const nk = m_nk;
-
-    amrex::ParallelFor(G_box,
-    [=] AMREX_GPU_DEVICE(int ir, int iz, int k3d) noexcept {
-        F_arr(ir,iz,k3d,F_icomp) = 0.;
-        for (int ik=0 ; ik < nk ; ik++) {
-            int const ii = ik + ir*nk;
-            F_arr(ir,iz,k3d,F_icomp) += invM_arr[ii]*G_arr(ik,iz,k3d,G_icomp);
-        }
-    });
-
+               F.dataPtr(F_icomp)+ngr, nrF
+#ifdef AMREX_USE_GPU
+               , *m_queue // Calls the GPU version of blas::gemm
 #endif
+           );
 
+    // We perform stream synchronization since `gemm` may be running
+    // on a different stream.
+    amrex::Gpu::streamSynchronize();
 }
