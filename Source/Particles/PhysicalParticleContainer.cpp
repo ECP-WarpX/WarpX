@@ -1538,9 +1538,6 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 
             Real scale_fac = compute_scale_fac_area(dx, num_ppc_real, flux_normal_axis);
 
-            auto lo = getCellCoords(overlap_corner, dx, {0._rt, 0._rt, 0._rt}, iv);
-            auto hi = getCellCoords(overlap_corner, dx, {1._rt, 1._rt, 1._rt}, iv);
-
             if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
                 int r = compute_area_weights(lrrfac, flux_normal_axis);
                 scale_fac /= r;
