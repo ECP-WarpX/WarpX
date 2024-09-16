@@ -360,8 +360,8 @@ namespace ablastr::fields
             std::string name,
             int level
         );
-        ConstVectorField
-        [[nodiscard]] get_alldirs  (
+        [[nodiscard]] ConstVectorField
+        get_alldirs  (
             std::string name,
             int level
         ) const;
