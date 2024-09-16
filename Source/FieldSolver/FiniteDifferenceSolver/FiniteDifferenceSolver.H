@@ -159,6 +159,7 @@ class FiniteDifferenceSolver
                       std::unique_ptr<amrex::MultiFab> const& rhofield,
                       std::unique_ptr<amrex::MultiFab> const& Pefield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+                      amrex::Real t,
                       int lev, HybridPICModel const* hybrid_model,
                       bool solve_for_Faraday );
 
@@ -244,6 +245,7 @@ class FiniteDifferenceSolver
             std::unique_ptr<amrex::MultiFab> const& rhofield,
             std::unique_ptr<amrex::MultiFab> const& Pefield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+            amrex::Real t,
             int lev, HybridPICModel const* hybrid_model,
             bool solve_for_Faraday );
 
@@ -349,6 +351,7 @@ class FiniteDifferenceSolver
             std::unique_ptr<amrex::MultiFab> const& rhofield,
             std::unique_ptr<amrex::MultiFab> const& Pefield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+            amrex::Real t,
             int lev, HybridPICModel const* hybrid_model,
             bool solve_for_Faraday );
 

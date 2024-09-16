@@ -88,6 +88,12 @@ void WarpX::HybridPICEvolveFields ()
         }
     }
 
+    // Calculate the electron pressure at t=n using rho^n
+    m_hybrid_pic_model->CalculateElectronPressure(DtType::FirstHalf);
+
+    amrex::Real t_start = gett_old(0);
+    amrex::Real sub_dt = 0.5_rt/sub_steps*dt[0];
+
     // Push the B field from t=n to t=n+1/2 using the current and density
     // at t=n, while updating the E field along with B using the electron
     // momentum equation
@@ -95,7 +101,9 @@ void WarpX::HybridPICEvolveFields ()
     {
         m_hybrid_pic_model->BfieldEvolveRK(
             Bfield_fp, Efield_fp, current_fp_temp, rho_fp_temp,
-            m_edge_lengths, 0.5_rt/sub_steps*dt[0],
+            m_edge_lengths,
+            t_start + static_cast<amrex::Real>(sub_step)*sub_dt,
+            sub_dt,
             DtType::FirstHalf, guard_cells.ng_FieldSolver,
             WarpX::sync_nodal_points
         );
@@ -113,12 +121,19 @@ void WarpX::HybridPICEvolveFields ()
         );
     }
 
+    // Calculate the electron pressure at t=n+1/2
+    m_hybrid_pic_model->CalculateElectronPressure(DtType::SecondHalf);
+
+    t_start += 0.5_rt*dt[0];
+
     // Now push the B field from t=n+1/2 to t=n+1 using the n+1/2 quantities
     for (int sub_step = 0; sub_step < sub_steps; sub_step++)
     {
         m_hybrid_pic_model->BfieldEvolveRK(
             Bfield_fp, Efield_fp, current_fp, rho_fp_temp,
-            m_edge_lengths, 0.5_rt/sub_steps*dt[0],
+            m_edge_lengths,
+            t_start + static_cast<amrex::Real>(sub_step)*sub_dt,
+            sub_dt,
             DtType::SecondHalf, guard_cells.ng_FieldSolver,
             WarpX::sync_nodal_points
         );
@@ -148,7 +163,7 @@ void WarpX::HybridPICEvolveFields ()
     // Update the E field to t=n+1 using the extrapolated J_i^n+1 value
     m_hybrid_pic_model->CalculateCurrentAmpere(Bfield_fp, m_edge_lengths);
     m_hybrid_pic_model->HybridPICSolveE(
-        Efield_fp, current_fp_temp, Bfield_fp, rho_fp, m_edge_lengths, false
+        Efield_fp, current_fp_temp, Bfield_fp, rho_fp, m_edge_lengths, gett_new(0), false
     );
     FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 

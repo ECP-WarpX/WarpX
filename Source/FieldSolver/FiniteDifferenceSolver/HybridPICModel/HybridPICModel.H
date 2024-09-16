@@ -91,6 +91,7 @@ public:
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Bfield,
         amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
+        amrex::Real t, 
         bool solve_for_Faraday);
 
     void HybridPICSolveE (
@@ -99,6 +100,7 @@ public:
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
         std::unique_ptr<amrex::MultiFab> const& rhofield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+        amrex::Real t, 
         int lev, bool solve_for_Faraday);
 
     void HybridPICSolveE (
@@ -107,6 +109,7 @@ public:
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
         std::unique_ptr<amrex::MultiFab> const& rhofield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+        amrex::Real t, 
         int lev, PatchType patch_type, bool solve_for_Faraday);
 
     void BfieldEvolveRK (
@@ -115,7 +118,7 @@ public:
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
         amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
-        amrex::Real dt, DtType a_dt_type,
+        amrex::Real t, amrex::Real dt, DtType a_dt_type,
         amrex::IntVect ng, std::optional<bool> nodal_sync);
 
     void BfieldEvolveRK (
@@ -124,7 +127,7 @@ public:
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
         amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
-        amrex::Real dt, int lev, DtType dt_type,
+        amrex::Real t, amrex::Real dt, int lev, DtType dt_type,
         amrex::IntVect ng, std::optional<bool> nodal_sync);
 
     void FieldPush (
@@ -133,7 +136,7 @@ public:
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
         amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
-        amrex::Real dt, DtType dt_type,
+        amrex::Real t, amrex::Real dt, DtType dt_type,
         amrex::IntVect ng, std::optional<bool> nodal_sync);
 
     /**

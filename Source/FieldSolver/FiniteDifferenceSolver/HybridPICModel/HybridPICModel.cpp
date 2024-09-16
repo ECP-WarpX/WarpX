@@ -465,6 +465,7 @@ void HybridPICModel::HybridPICSolveE (
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Bfield,
     amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
+    amrex::Real t,
     const bool solve_for_Faraday)
 {
     auto& warpx = WarpX::GetInstance();
@@ -472,7 +473,7 @@ void HybridPICModel::HybridPICSolveE (
     {
         HybridPICSolveE(
             Efield[lev], Jfield[lev], Bfield[lev], rhofield[lev],
-            edge_lengths[lev], lev, solve_for_Faraday
+            edge_lengths[lev], t, lev, solve_for_Faraday
         );
     }
 }
@@ -483,12 +484,13 @@ void HybridPICModel::HybridPICSolveE (
     std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
     std::unique_ptr<amrex::MultiFab> const& rhofield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+    amrex::Real t,
     const int lev, const bool solve_for_Faraday)
 {
     WARPX_PROFILE("WarpX::HybridPICSolveE()");
 
     HybridPICSolveE(
-        Efield, Jfield, Bfield, rhofield, edge_lengths, lev,
+        Efield, Jfield, Bfield, rhofield, edge_lengths, t, lev,
         PatchType::fine, solve_for_Faraday
     );
     if (lev > 0)
@@ -504,6 +506,7 @@ void HybridPICModel::HybridPICSolveE (
     std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
     std::unique_ptr<amrex::MultiFab> const& rhofield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+    amrex::Real t,
     const int lev, PatchType patch_type,
     const bool solve_for_Faraday)
 {
@@ -514,7 +517,7 @@ void HybridPICModel::HybridPICSolveE (
         Efield, current_fp_ampere[lev], Jfield, current_fp_external[lev],
         Bfield, rhofield,
         electron_pressure_fp[lev],
-        edge_lengths, lev, this, solve_for_Faraday
+        edge_lengths, t, lev, this, solve_for_Faraday
     );
     warpx.ApplyEfieldBoundary(lev, patch_type);
 }
@@ -576,14 +579,14 @@ void HybridPICModel::BfieldEvolveRK (
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
     amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
-    amrex::Real dt, DtType dt_type,
+    amrex::Real t, amrex::Real dt, DtType dt_type,
     IntVect ng, std::optional<bool> nodal_sync )
 {
     auto& warpx = WarpX::GetInstance();
     for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
     {
         BfieldEvolveRK(
-            Bfield, Efield, Jfield, rhofield, edge_lengths, dt, lev, dt_type,
+            Bfield, Efield, Jfield, rhofield, edge_lengths, t, dt, lev, dt_type,
             ng, nodal_sync
         );
     }
@@ -595,7 +598,7 @@ void HybridPICModel::BfieldEvolveRK (
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
     amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
-    amrex::Real dt, int lev, DtType dt_type,
+    amrex::Real t, amrex::Real dt, int lev, DtType dt_type,
     IntVect ng, std::optional<bool> nodal_sync )
 {
     // Make copies of the B-field multifabs at t = n and create multifabs for
@@ -618,11 +621,13 @@ void HybridPICModel::BfieldEvolveRK (
         K[ii].setVal(0.0);
     }
 
+    amrex::Real t_eval = t;
+
     // The Runge-Kutta scheme begins here.
     // Step 1:
     FieldPush(
         Bfield, Efield, Jfield, rhofield, edge_lengths,
-        0.5_rt*dt, dt_type, ng, nodal_sync
+        t_eval, 0.5_rt*dt, dt_type, ng, nodal_sync
     );
 
     // The Bfield is now given by:
@@ -636,9 +641,10 @@ void HybridPICModel::BfieldEvolveRK (
     }
 
     // Step 2:
+    t_eval = t+0.5_rt*dt;
     FieldPush(
         Bfield, Efield, Jfield, rhofield, edge_lengths,
-        0.5_rt*dt, dt_type, ng, nodal_sync
+        t_eval, 0.5_rt*dt, dt_type, ng, nodal_sync
     );
 
     // The Bfield is now given by:
@@ -658,7 +664,7 @@ void HybridPICModel::BfieldEvolveRK (
     // Step 3:
     FieldPush(
         Bfield, Efield, Jfield, rhofield, edge_lengths,
-        dt, dt_type, ng, nodal_sync
+        t_eval, dt, dt_type, ng, nodal_sync
     );
 
     // The Bfield is now given by:
@@ -672,9 +678,10 @@ void HybridPICModel::BfieldEvolveRK (
     }
 
     // Step 4:
+    t_eval = t + dt;
     FieldPush(
         Bfield, Efield, Jfield, rhofield, edge_lengths,
-        0.5_rt*dt, dt_type, ng, nodal_sync
+        t_eval, 0.5_rt*dt, dt_type, ng, nodal_sync
     );
 
     // The Bfield is now given by:
@@ -708,7 +715,7 @@ void HybridPICModel::FieldPush (
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
     amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
-    amrex::Real dt, DtType dt_type,
+    amrex::Real t, amrex::Real dt, DtType dt_type,
     IntVect ng, std::optional<bool> nodal_sync )
 {
     auto& warpx = WarpX::GetInstance();
@@ -716,7 +723,7 @@ void HybridPICModel::FieldPush (
     // Calculate J = curl x B / mu0
     CalculateCurrentAmpere(Bfield, edge_lengths);
     // Calculate the E-field from Ohm's law
-    HybridPICSolveE(Efield, Jfield, Bfield, rhofield, edge_lengths, true);
+    HybridPICSolveE(Efield, Jfield, Bfield, rhofield, edge_lengths, t, true);
     warpx.FillBoundaryE(ng, nodal_sync);
     // Push forward the B-field using Faraday's law
     warpx.EvolveB(dt, dt_type);

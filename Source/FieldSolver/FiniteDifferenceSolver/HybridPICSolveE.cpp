@@ -360,6 +360,7 @@ void FiniteDifferenceSolver::HybridPICSolveE (
     std::unique_ptr<amrex::MultiFab> const& rhofield,
     std::unique_ptr<amrex::MultiFab> const& Pefield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+    amrex::Real t,
     int lev, HybridPICModel const* hybrid_model,
     const bool solve_for_Faraday)
 {
@@ -370,14 +371,14 @@ void FiniteDifferenceSolver::HybridPICSolveE (
 
         HybridPICSolveECylindrical <CylindricalYeeAlgorithm> (
             Efield, Jfield, Jifield, Jextfield, Bfield, rhofield, Pefield,
-            edge_lengths, lev, hybrid_model, solve_for_Faraday
+            edge_lengths, t, lev, hybrid_model, solve_for_Faraday
         );
 
 #else
 
         HybridPICSolveECartesian <CartesianYeeAlgorithm> (
             Efield, Jfield, Jifield, Jextfield, Bfield, rhofield, Pefield,
-            edge_lengths, lev, hybrid_model, solve_for_Faraday
+            edge_lengths, t, lev, hybrid_model, solve_for_Faraday
         );
 
 #endif
@@ -398,6 +399,7 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
     std::unique_ptr<amrex::MultiFab> const& rhofield,
     std::unique_ptr<amrex::MultiFab> const& Pefield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+    amrex::Real t,
     int lev, HybridPICModel const* hybrid_model,
     const bool solve_for_Faraday )
 {
@@ -431,7 +433,6 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
     const auto Ez_part = hybrid_model->m_E_external[2];
 
     auto & warpx = WarpX::GetInstance();
-    auto t = warpx.gett_new(lev);
 
     auto dx_lev = warpx.Geom(lev).CellSizeArray();
     const RealBox& real_box = warpx.Geom(lev).ProbDomain();
@@ -776,6 +777,7 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
     std::unique_ptr<amrex::MultiFab> const& rhofield,
     std::unique_ptr<amrex::MultiFab> const& Pefield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+    amrex::Real t,
     int lev, HybridPICModel const* hybrid_model,
     const bool solve_for_Faraday )
 {
@@ -803,7 +805,6 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
     const auto Ez_part = hybrid_model->m_E_external[2];
 
     auto & warpx = WarpX::GetInstance();
-    auto t = warpx.gett_new(lev);
 
     auto dx_lev = warpx.Geom(lev).CellSizeArray();
     const RealBox& real_box = warpx.Geom(lev).ProbDomain();
