@@ -1662,7 +1662,37 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                     continue;
                 }
 
-                // TODO: EBInjection: rotate the momentum: make it perpendicular to the surface
+#ifdef AMREX_USE_EB
+                if (inject_from_eb) {
+                    // Injection from EB: rotate momentum according to the normal of the EB surface
+                    // (The above code initialized the momentum by assuming that z is the direction
+                    // normal to the EB surface. Thus we need to rotate from z to the normal.)
+                    amrex::Real const nx = eb_bnd_normal_arr(i,j,k,0);
+                    amrex::Real const ny = eb_bnd_normal_arr(i,j,k,1);
+                    amrex::Real const nz = eb_bnd_normal_arr(i,j,k,2);
+
+                    // Rotate the momentum along the theta direction (in the z-x plane)
+                    amrex::Real const cos_theta = nz;
+                    amrex::Real const sin_theta = std::sqrt(1-nz*nz);
+                    amrex::Real uz = pu.z*cos_theta - pu.x*sin_theta;
+                    amrex::Real ux = pu.x*cos_theta + pu.z*sin_theta;
+                    amrex::Real uy = pu.y; // unchanged
+
+                    // Rotate the momentum along the phi direction (in the x-y plane)
+                    amrex::Real const nperp = std::sqrt(nx*nx + ny*ny);
+                    if ( nperp > 0.0 ) {
+                        amrex::Real const cos_phi = nx/nperp;
+                        amrex::Real const sin_phi = ny/nperp;
+                        pu.z = uz; // unchanged
+                        pu.x = ux*cos_phi - uy*sin_phi;
+                        pu.y = uy*cos_phi + ux*sin_phi;
+                    } else {
+                        pu.x = ux;
+                        pu.y = uy;
+                        pu.z = uz;
+                    }
+                }
+#endif
 
 #ifdef WARPX_DIM_RZ
                 // Conversion from cylindrical to Cartesian coordinates
