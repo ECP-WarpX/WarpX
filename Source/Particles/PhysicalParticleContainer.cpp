@@ -1373,6 +1373,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
     amrex::FabArray<amrex::EBCellFlagFab> const& eb_flag = eb_box_factory.getMultiEBCellFlagFab();
     amrex::MultiCutFab const& eb_bnd_area = eb_box_factory.getBndryArea();
     amrex::MultiCutFab const& eb_bnd_normal = eb_box_factory.getBndryNormal();
+    amrex::MultiCutFab const& eb_bnd_cent = eb_box_factory.getBndryCent();
 #endif
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(0);
@@ -1438,8 +1439,8 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         if (inject_from_eb) {
             // Injection from EB
             const amrex::FabType fab_type = eb_flag[mfi].getType(tile_box);
-            if (fab_type == amrex::FabType::regular) continue; // Go to the next tile
-            if (fab_type == amrex::FabType::covered) continue; // Go to the next tile
+            if (fab_type == amrex::FabType::regular) { continue; } // Go to the next tile
+            if (fab_type == amrex::FabType::covered) { continue; } // Go to the next tile
             overlap_box = tile_box;
             overlap_realbox = tile_realbox;
         } else
@@ -1447,7 +1448,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         {
             // Injection from a plane
             const bool no_overlap = find_overlap_flux(tile_realbox, part_realbox, dx, problo, plasma_injector, overlap_realbox, overlap_box, shifted);
-            if (no_overlap) continue; // Go to the next tile
+            if (no_overlap) { continue; } // Go to the next tile
         }
 
         const int grid_id = mfi.index();
@@ -1474,6 +1475,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         auto const& eb_flag_arr = eb_flag.array(mfi);
         amrex::Array4<const amrex::Real> const& eb_bnd_area_arr = eb_bnd_area.array(mfi);
         amrex::Array4<const amrex::Real> const& eb_bnd_normal_arr = eb_bnd_normal.array(mfi);
+        amrex::Array4<const amrex::Real> const& eb_bnd_cent_arr = eb_bnd_cent.array(mfi);
 #endif
 
         amrex::ParallelForRNG(overlap_box, [=] AMREX_GPU_DEVICE (int i, int j, int k, amrex::RandomEngine const& engine) noexcept
@@ -1590,8 +1592,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
             }
 
             if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
-                int r = compute_area_weights(lrrfac, flux_normal_axis);
-                scale_fac /= r;
+                scale_fac /= compute_area_weights(lrrfac, flux_normal_axis);
             }
 
             for (int i_part = 0; i_part < pcounts[index]; ++i_part)
@@ -1599,12 +1600,27 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 const long ip = poffset[index] + i_part;
                 pa_idcpu[ip] = amrex::SetParticleIDandCPU(pid+ip, cpuid);
 
-                // This assumes the flux_pos is of type InjectorPositionRandomPlane
-                const XDim3 r = (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) ?
-                  // In the refined injection region: use refinement ratio `lrrfac`
-                  flux_pos->getPositionUnitBox(i_part, lrrfac, engine) :
-                  // Otherwise: use 1 as the refinement ratio
-                  flux_pos->getPositionUnitBox(i_part, amrex::IntVect::TheUnitVector(), engine);
+                // Determine the position of the particle within the cell
+                XDim3 r;
+#ifdef AMREX_USE_EB
+                // Injection from the EB
+                // Inject at the position of the centroid of the boundary within this cell
+                // TODO: add a random offset to the position
+                if (inject_from_eb) {
+                    r = { 0.5_rt + eb_bnd_cent_arr(i,j,k,0),
+                          0.5_rt + eb_bnd_cent_arr(i,j,k,1),
+                          0.5_rt + eb_bnd_cent_arr(i,j,k,2) };
+                } else
+#endif
+                {
+                    // Injection from a plane
+                    // This assumes the flux_pos is of type InjectorPositionRandomPlane
+                    r = (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) ?
+                        // In the refined injection region: use refinement ratio `lrrfac`
+                        flux_pos->getPositionUnitBox(i_part, lrrfac, engine) :
+                        // Otherwise: use 1 as the refinement ratio
+                        flux_pos->getPositionUnitBox(i_part, amrex::IntVect::TheUnitVector(), engine);
+                }
                 auto pos = getCellCoords(overlap_corner, dx, r, iv);
                 auto ppos = PDim3(pos);
 
