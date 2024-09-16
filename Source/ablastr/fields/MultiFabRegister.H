@@ -241,7 +241,7 @@ namespace ablastr::fields
          * @param level ...
          * @return true if contained, otherwise false
          */
-        bool
+        [[nodiscard]] bool
         has (
             std::string name,
             int level
@@ -257,7 +257,7 @@ namespace ablastr::fields
          * @param level ...
          * @return true if contained, otherwise false
          */
-        bool
+        [[nodiscard]] bool
         has (
             std::string name,
             Direction dir,
@@ -305,7 +305,7 @@ namespace ablastr::fields
          * @param level ...
          * @return ...
          */
-        amrex::MultiFab const *
+        [[nodiscard]] amrex::MultiFab const *
         get (
             std::string name,
             int level
@@ -321,7 +321,7 @@ namespace ablastr::fields
          * @param level ...
          * @return ...
          */
-        amrex::MultiFab const *
+        [[nodiscard]] amrex::MultiFab const *
         get (
             std::string name,
             Direction dir,
@@ -341,7 +341,7 @@ namespace ablastr::fields
             std::string name,
             int finest_level
         );
-        ConstMultiLevelScalarField
+        [[nodiscard]] ConstMultiLevelScalarField
         get_mr_levels (
             std::string name,
             int finest_level
@@ -361,7 +361,7 @@ namespace ablastr::fields
             int level
         );
         ConstVectorField
-        get_alldirs  (
+        [[nodiscard]] get_alldirs  (
             std::string name,
             int level
         ) const;
@@ -380,7 +380,7 @@ namespace ablastr::fields
             std::string name,
             int finest_level
         );
-        ConstMultiLevelVectorField
+        [[nodiscard]] ConstMultiLevelVectorField
         get_mr_levels_alldirs (
             std::string name,
             int finest_level
@@ -393,7 +393,7 @@ namespace ablastr::fields
          *
          * @return ...
          */
-        std::vector<std::string>
+        [[nodiscard]] std::vector<std::string>
         list () const;
 
         /** title
@@ -459,7 +459,7 @@ namespace ablastr::fields
          * @param level ...
          * @return ...
          */
-        std::string
+        [[nodiscard]] std::string
         mf_name (
             std::string name,
             int level
@@ -475,7 +475,7 @@ namespace ablastr::fields
          * @param level ...
          * @return ...
          */
-        std::string
+        [[nodiscard]] std::string
         mf_name (
             std::string name,
             Direction dir,
@@ -487,7 +487,7 @@ namespace ablastr::fields
         internal_get (
                 std::string key
         );
-        amrex::MultiFab const *
+        [[nodiscard]] amrex::MultiFab const *
         internal_get (
                 std::string key
         ) const;
