@@ -104,8 +104,18 @@ assert np.all(x**2 + y**2 + z**2 > R**2)
 
 # Check that the normal component of the velocity is consistent with the expected distribution
 r = np.sqrt(x**2 + y**2 + z**2)
-un = ux * (x / r) + uy * (y / r) + uz * (z / r)  # normal component
-compare_gaussian_flux(un, w, u_th=0.1, u_m=0.07, label="u_n")
+# Normal direction
+nx = x / r
+ny = y / r
+nz = z / r
+u_n = ux * nx + uy * ny + uz * nz  # normal component
+compare_gaussian_flux(u_n, w, u_th=0.1, u_m=0.07, label="u_n")
+
+# Pick a direction that is orthogonal to the normal direction, and check the distribution
+vx = ny / np.sqrt(nx**2 + ny**2)
+vy = -nx / np.sqrt(nx**2 + ny**2)
+u_perp = ux * vx + uy * vy
+compare_gaussian(u_perp, w, u_th=0.01, label="u_perp")
 
 # compare_gaussian(ux, w, u_th=0.1, label="u_x")
 # compare_gaussian(uz, w, u_th=0.1, label="u_z")
