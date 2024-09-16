@@ -8,6 +8,8 @@
 
 #include "BeamRelevant.H"
 #include "ChargeOnEB.H"
+#include "ColliderRelevant.H"
+#include "DifferentialLuminosity.H"
 #include "FieldEnergy.H"
 #include "FieldMaximum.H"
 #include "FieldProbe.H"
@@ -41,7 +43,7 @@ using namespace amrex;
 MultiReducedDiags::MultiReducedDiags ()
 {
     // read reduced diags names
-    ParmParse pp_warpx("warpx");
+    const ParmParse pp_warpx("warpx");
     m_plot_rd = pp_warpx.queryarr("reduced_diags_names", m_rd_names);
 
     // if names are not given, reduced diags will not be done
@@ -59,6 +61,8 @@ MultiReducedDiags::MultiReducedDiags ()
             {"FieldReduction",        [](CS s){return std::make_unique<FieldReduction>(s);}},
             {"RhoMaximum",            [](CS s){return std::make_unique<RhoMaximum>(s);}},
             {"BeamRelevant",          [](CS s){return std::make_unique<BeamRelevant>(s);}},
+            {"ColliderRelevant",      [](CS s){return std::make_unique<ColliderRelevant>(s);}},
+            {"DifferentialLuminosity",[](CS s){return std::make_unique<DifferentialLuminosity>(s);}},
             {"LoadBalanceCosts",      [](CS s){return std::make_unique<LoadBalanceCosts>(s);}},
             {"LoadBalanceEfficiency", [](CS s){return std::make_unique<LoadBalanceEfficiency>(s);}},
             {"ParticleHistogram",     [](CS s){return std::make_unique<ParticleHistogram>(s);}},
@@ -70,7 +74,7 @@ MultiReducedDiags::MultiReducedDiags ()
     // loop over all reduced diags and fill m_multi_rd with requested reduced diags
     std::transform(m_rd_names.begin(), m_rd_names.end(), std::back_inserter(m_multi_rd),
         [&](const auto& rd_name){
-            ParmParse pp_rd_name(rd_name);
+            const ParmParse pp_rd_name(rd_name);
 
             // read reduced diags type
             std::string rd_type;

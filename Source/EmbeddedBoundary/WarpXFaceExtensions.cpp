@@ -6,6 +6,7 @@
  */
 
 #include "WarpXFaceInfoBox.H"
+#include "EmbeddedBoundary/Enabled.H"
 #include "Utils/TextMsg.H"
 #include "WarpX.H"
 
@@ -38,17 +39,26 @@ GetNeigh(const amrex::Array4<T>& arr,
 
     if(dim == 0){
         return arr(i, j + i_n, k + j_n);
-    }else if(dim == 1){
+    }
 #ifdef WARPX_DIM_XZ
-        return arr(i + i_n, j + j_n, k);
-#elif defined(WARPX_DIM_3D)
-        return arr(i + i_n, j, k + j_n);
-#else
-        amrex::Abort("GetNeigh: Only implemented in 2D3V and 3D3V");
-#endif
-    }else if(dim == 2){
+    else if(dim == 1 || (dim == 2)){
         return arr(i + i_n, j + j_n, k);
     }
+#elif defined(WARPX_DIM_3D)
+    else if(dim == 1){
+        return arr(i + i_n, j, k + j_n);
+    }
+    else if(dim == 2){
+        return arr(i + i_n, j + j_n, k);
+    }
+#else
+    else if(dim == 1){
+        amrex::Abort("GetNeigh: Only implemented in 2D3V and 3D3V");
+    }
+    else if(dim == 2){
+        return arr(i + i_n, j + j_n, k);
+    }
+#endif
 
     amrex::Abort("GetNeigh: dim must be 0, 1 or 2");
 
@@ -81,22 +91,32 @@ SetNeigh(const amrex::Array4<T>& arr, const T val,
     if(dim == 0){
         arr(i, j + i_n, k + j_n) = val;
         return;
-    }else if(dim == 1){
+    }
 #ifdef WARPX_DIM_XZ
-        arr(i + i_n, j + j_n, k) = val;
-#elif defined(WARPX_DIM_3D)
-        arr(i + i_n, j, k + j_n) = val;
-#else
-        amrex::Abort("SetNeigh: Only implemented in 2D3V and 3D3V");
-#endif
-        return;
-    }else if(dim == 2){
+    else if(dim == 1 || (dim == 2)){
         arr(i + i_n, j + j_n, k) = val;
         return;
     }
+#elif defined(WARPX_DIM_3D)
+    else if(dim == 1){
+        arr(i + i_n, j, k + j_n) = val;
+        return;
+    }
+    else if(dim == 2){
+        arr(i + i_n, j + j_n, k) = val;
+        return;
+    }
+#else
+    else if(dim == 1){
+        amrex::Abort("SetNeigh: Only implemented in 2D3V and 3D3V");
+    }
+    else if(dim == 2){
+        arr(i + i_n, j + j_n, k) = val;
+        return;
+    }
+#endif
 
     amrex::Abort("SetNeigh: dim must be 0, 1 or 2");
-
 }
 
 
@@ -144,43 +164,49 @@ ComputeSStab(const int i, const int j, const int k,
 
 
 amrex::Array1D<int, 0, 2>
-WarpX::CountExtFaces() {
+WarpX::CountExtFaces () {
     amrex::Array1D<int, 0, 2> sums{0, 0, 0};
 #ifdef AMREX_USE_EB
+    if (EB::enabled()) {
 #ifndef WARPX_DIM_RZ
 
 #ifdef WARPX_DIM_XZ
-    // In 2D we change the extrema of the for loop so that we only have the case idim=1
-    for(int idim = 1; idim < AMREX_SPACEDIM; ++idim) {
+        // In 2D we change the extrema of the for loop so that we only have the case idim=1
+        for(int idim = 1; idim < AMREX_SPACEDIM; ++idim) {
 #elif defined(WARPX_DIM_3D)
         for(int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
 #else
-        WARPX_ABORT_WITH_MESSAGE(
-            "CountExtFaces: Only implemented in 2D3V and 3D3V");
+            WARPX_ABORT_WITH_MESSAGE(
+                "CountExtFaces: Only implemented in 2D3V and 3D3V");
 #endif
-        amrex::ReduceOps<amrex::ReduceOpSum> reduce_ops;
-        amrex::ReduceData<int> reduce_data(reduce_ops);
-        for (amrex::MFIter mfi(*m_flag_ext_face[maxLevel()][idim]); mfi.isValid(); ++mfi) {
-            amrex::Box const &box = mfi.validbox();
-            auto const &flag_ext_face = m_flag_ext_face[maxLevel()][idim]->array(mfi);
-            reduce_ops.eval(box, reduce_data,
-                [=] AMREX_GPU_DEVICE(int i, int j, int k) -> amrex::GpuTuple<int> {
-                    return flag_ext_face(i, j, k);
-                });
+            amrex::ReduceOps<amrex::ReduceOpSum> reduce_ops;
+            amrex::ReduceData<int> reduce_data(reduce_ops);
+            for (amrex::MFIter mfi(*m_flag_ext_face[maxLevel()][idim]); mfi.isValid(); ++mfi) {
+                amrex::Box const &box = mfi.validbox();
+                auto const &flag_ext_face = m_flag_ext_face[maxLevel()][idim]->array(mfi);
+                reduce_ops.eval(box, reduce_data,
+                    [=] AMREX_GPU_DEVICE(int i, int j, int k) -> amrex::GpuTuple<int> {
+                        return flag_ext_face(i, j, k);
+                    });
+            }
+
+            auto r = reduce_data.value();
+            sums(idim) = amrex::get<0>(r);
         }
 
-        auto r = reduce_data.value();
-        sums(idim) = amrex::get<0>(r);
-    }
-
-    amrex::ParallelDescriptor::ReduceIntSum(&(sums(0)), AMREX_SPACEDIM);
+        amrex::ParallelDescriptor::ReduceIntSum(&(sums(0)), AMREX_SPACEDIM);
 #endif
+    }
 #endif
     return sums;
 }
 
 void
-WarpX::ComputeFaceExtensions(){
+WarpX::ComputeFaceExtensions ()
+{
+    if (!EB::enabled()) {
+        throw std::runtime_error("ComputeFaceExtensions only works when EBs are enabled at runtime");
+    }
 #ifdef AMREX_USE_EB
     amrex::Array1D<int, 0, 2> N_ext_faces = CountExtFaces();
     ablastr::warn_manager::WMRecordWarning("Embedded Boundary",
@@ -263,7 +289,7 @@ WarpX::InitBorrowing() {
         borrowing_x.inds_pointer.resize(box);
         borrowing_x.size.resize(box);
         borrowing_x.size.setVal<amrex::RunOn::Device>(0);
-        amrex::Long ncells = box.numPts();
+        const amrex::Long ncells = box.numPts();
         // inds, neigh_faces and area are extended to their largest possible size here, but they are
         // resized to a much smaller size later on, based on the actual number of neighboring
         // intruded faces for each unstable face.
@@ -279,7 +305,7 @@ WarpX::InitBorrowing() {
         borrowing_y.inds_pointer.resize(box);
         borrowing_y.size.resize(box);
         borrowing_y.size.setVal<amrex::RunOn::Device>(0);
-        amrex::Long ncells = box.numPts();
+        const amrex::Long ncells = box.numPts();
         borrowing_y.inds.resize(8*ncells);
         borrowing_y.neigh_faces.resize(8*ncells);
         borrowing_y.area.resize(8*ncells);
@@ -292,7 +318,7 @@ WarpX::InitBorrowing() {
         borrowing_z.inds_pointer.resize(box);
         borrowing_z.size.resize(box);
         borrowing_z.size.setVal<amrex::RunOn::Device>(0);
-        amrex::Long ncells = box.numPts();
+        const amrex::Long ncells = box.numPts();
         borrowing_z.inds.resize(8*ncells);
         borrowing_z.neigh_faces.resize(8*ncells);
         borrowing_z.area.resize(8*ncells);
@@ -314,7 +340,7 @@ ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
     for (int i_n = -1; i_n < 2; i_n++) {
         for (int j_n = -1; j_n < 2; j_n++) {
             //This if makes sure that we don't visit the "diagonal neighbours"
-            if (!(i_n == j_n || i_n == -j_n)) {
+            if ((i_n != j_n) && (i_n != -j_n)) {
                 // Here a face is available if it doesn't need to be extended itself and if its
                 // area exceeds Sz_ext. Here we need to take into account if the intruded face
                 // has given away already some area, so we use Sz_red rather than Sz.
@@ -402,7 +428,11 @@ ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ex
 
 
 void
-WarpX::ComputeOneWayExtensions() {
+WarpX::ComputeOneWayExtensions ()
+{
+    if (!EB::enabled()) {
+        throw std::runtime_error("ComputeOneWayExtensions only works when EBs are enabled at runtime");
+    }
 #ifdef AMREX_USE_EB
 #ifndef WARPX_DIM_RZ
     auto const eb_fact = fieldEBFactory(maxLevel());
@@ -433,7 +463,7 @@ WarpX::ComputeOneWayExtensions() {
             auto &borrowing = (*m_borrowing[maxLevel()][idim])[mfi];
             auto const &borrowing_inds_pointer = borrowing.inds_pointer.array();
             auto const &borrowing_size = borrowing.size.array();
-            amrex::Long ncells = box.numPts();
+            amrex::Long const ncells = box.numPts();
             int* borrowing_inds = borrowing.inds.data();
             FaceInfoBox::Neighbours* borrowing_neigh_faces = borrowing.neigh_faces.data();
             amrex::Real* borrowing_area = borrowing.area.data();
@@ -484,7 +514,7 @@ WarpX::ComputeOneWayExtensions() {
                     for (int i_n = -1; i_n < 2; i_n++) {
                         for (int j_n = -1; j_n < 2; j_n++) {
                             //This if makes sure that we don't visit the "diagonal neighbours"
-                            if( !(i_n == j_n || i_n == -j_n)){
+                            if (i_n != j_n && i_n != -j_n){
                                 // Here a face is available if it doesn't need to be extended itself and if its
                                 // area exceeds Sz_ext. Here we need to take into account if the intruded face
                                 // has given away already some area, so we use Sz_red rather than Sz.
@@ -526,8 +556,14 @@ WarpX::ComputeOneWayExtensions() {
 
 
 void
-WarpX::ComputeEightWaysExtensions() {
+WarpX::ComputeEightWaysExtensions ()
+{
+    if (!EB::enabled()) {
+        throw std::runtime_error("ComputeEightWaysExtensions only works when EBs are enabled at runtime");
+    }
 #ifdef AMREX_USE_EB
+    using namespace amrex::literals;
+
 #ifndef WARPX_DIM_RZ
     auto const &cell_size = CellSize(maxLevel());
 
@@ -555,7 +591,7 @@ WarpX::ComputeEightWaysExtensions() {
             auto &borrowing = (*m_borrowing[maxLevel()][idim])[mfi];
             auto const &borrowing_inds_pointer = borrowing.inds_pointer.array();
             auto const &borrowing_size = borrowing.size.array();
-            amrex::Long ncells = box.numPts();
+            amrex::Long const ncells = box.numPts();
             int* borrowing_inds = borrowing.inds.data();
             FaceInfoBox::Neighbours* borrowing_neigh_faces = borrowing.neigh_faces.data();
             amrex::Real* borrowing_area = borrowing.area.data();
@@ -631,7 +667,7 @@ WarpX::ComputeEightWaysExtensions() {
                         neg_face = false;
                         for (int i_n = -1; i_n < 2; i_n++) {
                             for (int j_n = -1; j_n < 2; j_n++) {
-                                if(local_avail(i_n + 1, j_n + 1)){
+                                if (local_avail(i_n + 1, j_n + 1) != 0_rt){
                                     const amrex::Real patch = S_ext * GetNeigh(S, i, j, k, i_n, j_n, idim) / denom;
                                     if(GetNeigh(S_mod, i, j, k, i_n, j_n, idim) - patch <= 0) {
                                         neg_face = true;
@@ -656,7 +692,7 @@ WarpX::ComputeEightWaysExtensions() {
                         int count = 0;
                         for (int i_n = -1; i_n < 2; i_n++) {
                             for (int j_n = -1; j_n < 2; j_n++) {
-                                if(local_avail(i_n + 1, j_n + 1)){
+                                if(local_avail(i_n + 1, j_n + 1) != 0_rt){
                                     const amrex::Real patch = S_ext * GetNeigh(S, i, j, k, i_n, j_n, idim) / denom;
                                     borrowing_inds[ps + count] = ps + count;
                                     FaceInfoBox::addConnectedNeighbor(i_n, j_n, ps + count,
@@ -684,7 +720,11 @@ WarpX::ComputeEightWaysExtensions() {
 }
 
 void
-WarpX::ApplyBCKCorrection(const int idim) {
+WarpX::ApplyBCKCorrection (const int idim)
+{
+    if (!EB::enabled()) {
+        throw std::runtime_error("ApplyBCKCorrection only works when EBs are enabled at runtime");
+    }
 #if defined(AMREX_USE_EB) and !defined(WARPX_DIM_RZ)
     const std::array<amrex::Real,3> &cell_size = CellSize(maxLevel());
 
@@ -717,7 +757,8 @@ WarpX::ApplyBCKCorrection(const int idim) {
 }
 
 void
-WarpX::ShrinkBorrowing() {
+WarpX::ShrinkBorrowing ()
+{
     for(int idim = 0; idim < AMREX_SPACEDIM; idim++) {
         for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
             auto &borrowing = (*m_borrowing[maxLevel()][idim])[mfi];

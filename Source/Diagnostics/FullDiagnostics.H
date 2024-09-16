@@ -6,11 +6,10 @@
 
 #include <string>
 
-class
-FullDiagnostics final : public Diagnostics
+class FullDiagnostics final : public Diagnostics
 {
 public:
-    FullDiagnostics (int i, std::string name);
+    FullDiagnostics (int i, const std::string& name);
 private:
     /** Read user-requested parameters for full diagnostics */
     void ReadParameters ();
@@ -22,8 +21,12 @@ private:
     bool m_plot_raw_fields_guards = false;
     /** Whether to dump the RZ modes */
     bool m_dump_rz_modes = false;
+    /** Whether the field solver deposits current density, if not it will be done
+     * before writing the diagnostic.
+     */
+    bool m_solver_deposits_current = true;
     /** Flush m_mf_output and particles to file for the i^th buffer */
-    void Flush (int i_buffer) override;
+    void Flush (int i_buffer, bool /* force_flush */) override;
     /** Flush raw data */
     void FlushRaw ();
     /** whether to compute and pack cell-centered data in m_mf_output

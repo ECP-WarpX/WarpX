@@ -13,6 +13,7 @@ The following scripts automate this workflow, in case one needs a newer commit o
 .. code-block:: sh
 
    ./Tools/Release/updateAMReX.py
+   ./Tools/Release/updatepyAMReX.py
    ./Tools/Release/updatePICSAR.py
 
 
@@ -32,6 +33,7 @@ In order to create a GitHub release, you need to:
     .. code-block:: sh
 
        ./Tools/Release/updateAMReX.py
+       ./Tools/Release/updatepyAMReX.py
        ./Tools/Release/updatePICSAR.py
 
        ./Tools/Release/newVersion.sh

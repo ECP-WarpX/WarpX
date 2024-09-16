@@ -46,14 +46,14 @@ void FiniteDifferenceSolver::EvolveBPML (
     amrex::Real const dt,
     const bool dive_cleaning) {
 
-   // Select algorithm (The choice of algorithm is a runtime option,
-   // but we compile code for each algorithm, using templates)
+    // Select algorithm (The choice of algorithm is a runtime option,
+    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
     amrex::ignore_unused(Bfield, Efield, dt, dive_cleaning);
-   WARPX_ABORT_WITH_MESSAGE(
+    WARPX_ABORT_WITH_MESSAGE(
         "PML are not implemented in cylindrical geometry.");
 #else
-    if (m_grid_type == GridType::Collocated) {
+    if (m_grid_type == ablastr::utils::enums::GridType::Collocated) {
 
         EvolveBPMLCartesian <CartesianNodalAlgorithm> (Bfield, Efield, dt, dive_cleaning);
 
@@ -98,11 +98,11 @@ void FiniteDifferenceSolver::EvolveBPMLCartesian (
 
         // Extract stencil coefficients
         Real const * const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
-        int const n_coefs_x = m_stencil_coefs_x.size();
+        auto const n_coefs_x = static_cast<int>(m_stencil_coefs_x.size());
         Real const * const AMREX_RESTRICT coefs_y = m_stencil_coefs_y.dataPtr();
-        int const n_coefs_y = m_stencil_coefs_y.size();
+        auto const n_coefs_y = static_cast<int>(m_stencil_coefs_y.size());
         Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
-        int const n_coefs_z = m_stencil_coefs_z.size();
+        auto const n_coefs_z = static_cast<int>(m_stencil_coefs_z.size());
 
         // Extract tileboxes for which to loop
         Box const& tbx  = mfi.tilebox(Bfield[0]->ixType().ixType());

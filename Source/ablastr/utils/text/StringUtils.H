@@ -11,6 +11,7 @@
 
 #include <AMReX_Utility.H>
 
+#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -61,7 +62,7 @@ namespace ablastr::utils::text
      * @return an std::vector containing the lines of the wrapped text
      */
     std::vector<std::string> automatic_text_wrap(
-        const std::string& text, const int max_line_length);
+        const std::string& text, int max_line_length);
 
 }
 

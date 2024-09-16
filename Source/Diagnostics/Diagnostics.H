@@ -40,6 +40,11 @@ public:
     /** Virtual Destructor to handle clean destruction of derived classes */
     virtual ~Diagnostics ();
 
+    Diagnostics (Diagnostics const &)              = delete;
+    Diagnostics& operator= (Diagnostics const & )  = delete;
+    Diagnostics(Diagnostics&& )                    = default;
+    Diagnostics& operator=(Diagnostics&& )         = default;
+
     /** Pack (stack) all fields in the cell-centered output MultiFab m_mf_output.
      *
      * Fields are computed (e.g., cell-centered or back-transformed)
@@ -58,8 +63,10 @@ public:
      *   multiple times yet.
      *  When these are fixed, the implementation of Flush should be in Diagnostics.cpp
      * \param[in] i_buffer index of the buffer data to be flushed.
+     * \param[in] force_flush only used for BTD, whether to do a complete flush of the data
+     * (including metadata listing the total number of particles) even if the snapshot is incomplete
      */
-    virtual void Flush (int i_buffer) = 0;
+    virtual void Flush (int i_buffer, bool force_flush) = 0;
     /** Initialize pointers to main fields and allocate output multifab m_mf_output. */
     void InitData ();
     void InitDataBeforeRestart ();
@@ -68,7 +75,7 @@ public:
      *
      * Derived classes MUST implement this function, and it must allocate m_all_field_functors
      * and fill it with ComputeDiagFunctor objects.
-     * The functions is called at intiailization and when the domain is decomposed
+     * The functions is called at initialization and when the domain is decomposed
      * during the simulation to load-balance.
      * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
      */
@@ -105,9 +112,9 @@ public:
      */
     void FilterComputePackFlush (int step, bool force_flush=false);
     /** Whether the last timestep is always dumped */
-    bool DoDumpLastTimestep () const {return  m_dump_last_timestep;}
+    [[nodiscard]] bool DoDumpLastTimestep () const {return  m_dump_last_timestep;}
     /** Returns the number of snapshots used in BTD. For Full-Diagnostics, the value is 1*/
-    int getnumbuffers() {return m_num_buffers;}
+    [[nodiscard]] int getnumbuffers() const {return m_num_buffers;}
     /** Time in lab-frame associated with the ith snapshot
      * \param[in] i_buffer index of the buffer
      */
@@ -232,13 +239,13 @@ protected:
     amrex::Vector< std::string > m_pfield_varnames;
     /** Names of species for which to output particle field diagnostics */
     std::vector< std::string > m_pfield_species;
-    /** Whether to do averaging for each of the particle fied diagnostics */
+    /** Whether to do averaging for each of the particle field diagnostics */
     std::vector< bool > m_pfield_do_average;
     /** Species indices corresponding to elements of m_pfield_varnames */
     std::vector< int > m_pfield_species_index;
     /** List of the parser strings for the particle field diagnostics */
     std::vector< std::string > m_pfield_strings;
-    /** Whether to use a filter function on particles before calculating particle fied diagnostics */
+    /** Whether to use a filter function on particles before calculating particle field diagnostics */
     std::vector< bool> m_pfield_dofilter;
     /** List of parser strings for pre-average filtering for the particle field diagnostics */
     std::vector< std::string > m_pfield_filter_strings;
@@ -297,16 +304,13 @@ protected:
     int m_num_buffers;
     /** Array of species indices that dump rho per species */
     amrex::Vector<int> m_rho_per_species_index;
+    /** Array of species indices that dump temperature per species */
+    amrex::Vector<int> m_T_per_species_index;
     /** Vector of particle buffer vectors for each snapshot */
     amrex::Vector< amrex::Vector<std::unique_ptr<PinnedMemoryParticleContainer> > > m_particles_buffer;
     /** Vector of pointers to functors to compute particle output per species*/
     amrex::Vector< std::unique_ptr<ComputeParticleDiagFunctor> > m_all_particle_functors;
 
-    /** Vector of total number of particles previously flushed, per species, per snapshot.
-     *  The first vector is for total number of snapshots and second vector loops
-     *  over the total number of species selected for diagnostics.
-     */
-    amrex::Vector< amrex::Vector <int> > m_totalParticles_flushed_already;
     /** Vector of total number of particles in the buffer, per species, per snapshot.
      *  The first vector is for total number of snapshots and second vector loops
      *  over the total number of species selected for diagnostics.

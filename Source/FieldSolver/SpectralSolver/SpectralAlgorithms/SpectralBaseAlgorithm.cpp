@@ -27,11 +27,15 @@ using namespace amrex;
 /**
  * \brief Constructor
  */
-SpectralBaseAlgorithm::SpectralBaseAlgorithm(const SpectralKSpace& spectral_kspace,
+SpectralBaseAlgorithm::SpectralBaseAlgorithm (
+    const SpectralKSpace& spectral_kspace,
     const amrex::DistributionMapping& dm,
     const SpectralFieldIndex& spectral_index,
-    const int norder_x, const int norder_y,
-    const int norder_z, const short grid_type):
+    const int norder_x,
+    const int norder_y,
+    const int norder_z,
+    ablastr::utils::enums::GridType grid_type
+):
         m_spectral_index(spectral_index),
     // Compute and assign the modified k vectors
         modified_kx_vec(spectral_kspace.getModifiedKComponent(dm,0,norder_x,grid_type)),
@@ -70,7 +74,7 @@ SpectralBaseAlgorithm::ComputeSpectralDivE (
         const Box& bx = field_data.fields[mfi].box();
 
         // Extract arrays for the fields to be updated
-        Array4<Complex> fields = field_data.fields[mfi].array();
+        const Array4<Complex> fields = field_data.fields[mfi].array();
         // Extract pointers for the k vectors
         const Real* modified_kx_arr = modified_kx_vec[mfi].dataPtr();
 #if defined(WARPX_DIM_3D)

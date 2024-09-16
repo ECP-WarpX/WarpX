@@ -30,10 +30,13 @@ public:
      * constructor
      * @param[in] rd_name reduced diags names
      */
-    ParticleHistogram2D(std::string rd_name);
+    ParticleHistogram2D(const std::string& rd_name);
 
     /// File type
     std::string m_openpmd_backend {"default"};
+
+    /// minimum number of digits for file suffix (file-based only supported now for now) */
+    int m_file_min_digits = 6;
 
     /// number of bins on the abscissa and ordinate
     int m_bin_num_abs;
@@ -56,10 +59,10 @@ public:
     amrex::Real m_bin_size_ord;
 
     /// functions
-    std::string function_string_abs = "";
-    std::string function_string_ord = "";
-    std::string filter_string = "";
-    std::string value_string = "";
+    std::string function_string_abs;
+    std::string function_string_ord;
+    std::string filter_string;
+    std::string value_string;
 
 /// Parser to read expression for particle quantity from the input file.
     /// 7 elements are t, x, y, z, ux, uy, uz, w
@@ -84,14 +87,14 @@ public:
      *
      * @param[in] step current time step
      */
-    void ComputeDiags(int step) override final;
+    void ComputeDiags(int step) final;
 
     /**
      * write to file function
      *
      * @param[in] step current time step
      */
-    void WriteToFile (int step) const override final;
+    void WriteToFile (int step) const final;
 
 };
 

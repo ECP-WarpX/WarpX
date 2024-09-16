@@ -7,14 +7,8 @@
 # include <AMReX_AmrMeshParticleInSituBridge.H>
 #endif
 
-FlushFormatSensei::FlushFormatSensei () :
-    m_insitu_config(), m_insitu_pin_mesh(0), m_insitu_bridge(nullptr),
-    m_amr_mesh(nullptr)
-{}
-
 FlushFormatSensei::FlushFormatSensei (amrex::AmrMesh *amr_mesh,
-    std::string diag_name) :
-    m_insitu_config(), m_insitu_pin_mesh(0), m_insitu_bridge(nullptr),
+    const std::string& diag_name) :
     m_amr_mesh(amr_mesh)
 {
 #ifndef AMREX_USE_SENSEI_INSITU
@@ -50,7 +44,7 @@ FlushFormatSensei::~FlushFormatSensei () = default;
 
 void
 FlushFormatSensei::WriteToFile (
-    const amrex::Vector<std::string> varnames,
+    const amrex::Vector<std::string>& varnames,
     const amrex::Vector<amrex::MultiFab>& mf,
     amrex::Vector<amrex::Geometry>& geom,
     const amrex::Vector<int> iteration, const double time,
@@ -59,14 +53,13 @@ FlushFormatSensei::WriteToFile (
     bool plot_raw_fields, bool plot_raw_fields_guards,
     const bool use_pinned_pc,
     bool isBTD, int /*snapshotID*/, int /*bufferID*/, int /*numBuffers*/,
-    const amrex::Geometry& /*full_BTD_snapshot*/, bool /*isLastBTDFlush*/,
-    const amrex::Vector<int>& totalParticlesFlushedAlready) const
+    const amrex::Geometry& /*full_BTD_snapshot*/, bool /*isLastBTDFlush*/) const
 {
     amrex::ignore_unused(
         geom, nlev, prefix, file_min_digits,
         plot_raw_fields, plot_raw_fields_guards,
-        use_pinned_pc,
-        totalParticlesFlushedAlready);
+        use_pinned_pc
+    );
 
 #ifndef AMREX_USE_SENSEI_INSITU
     amrex::ignore_unused(varnames, mf, iteration, time, particle_diags,

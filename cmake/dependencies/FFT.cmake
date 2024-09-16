@@ -1,4 +1,4 @@
-if(WarpX_PSATD)
+if(ABLASTR_FFT)
     # Helper Functions ############################################################
     #
     option(WarpX_FFTW_IGNORE_OMP "Ignore FFTW3 OpenMP support, even if found" OFF)
@@ -122,4 +122,4 @@ if(WarpX_PSATD)
             message(STATUS "FFTW: Did NOT search for OpenMP support (WarpX_COMPUTE!=OMP)")
         endif()
     endif()
-endif(WarpX_PSATD)
+endif(ABLASTR_FFT)

@@ -1,18 +1,33 @@
 macro(find_amrex)
+    # if pyAMReX is external, AMReX must be as well
+    if(DEFINED WarpX_pyamrex_internal AND NOT WarpX_pyamrex_internal)
+        set(WarpX_amrex_internal OFF CACHE BOOL
+            "Download & build AMReX" FORCE)
+    endif()
+
     if(WarpX_amrex_src)
         message(STATUS "Compiling local AMReX ...")
         message(STATUS "AMReX source path: ${WarpX_amrex_src}")
+        if(NOT IS_DIRECTORY ${WarpX_amrex_src})
+            message(FATAL_ERROR "Specified directory WarpX_amrex_src='${WarpX_amrex_src}' does not exist!")
+        endif()
     elseif(WarpX_amrex_internal)
         message(STATUS "Downloading AMReX ...")
         message(STATUS "AMReX repository: ${WarpX_amrex_repo} (${WarpX_amrex_branch})")
         include(FetchContent)
     endif()
+
     if(WarpX_amrex_internal OR WarpX_amrex_src)
         set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
         # see https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX.html#customization-options
         if(WarpX_ASCENT)
             set(AMReX_ASCENT ON CACHE INTERNAL "")
+            set(AMReX_CONDUIT ON CACHE INTERNAL "")
+        endif()
+
+        if(WarpX_CATALYST)
+            set(AMReX_CATALYST ON CACHE INTERNAL "")
             set(AMReX_CONDUIT ON CACHE INTERNAL "")
         endif()
 
@@ -69,11 +84,6 @@ macro(find_amrex)
             set(AMReX_SENSEI ON CACHE INTERNAL "")
         endif()
 
-        if(DEFINED AMReX_BUILD_SHARED_LIBS)
-            set(AMReX_INSTALL ${AMReX_BUILD_SHARED_LIBS} CACHE INTERNAL "")
-        else()
-            set(AMReX_INSTALL ${BUILD_SHARED_LIBS} CACHE INTERNAL "")
-        endif()
         set(AMReX_AMRLEVEL OFF CACHE INTERNAL "")
         set(AMReX_ENABLE_TESTS OFF CACHE INTERNAL "")
         set(AMReX_FORTRAN OFF CACHE INTERNAL "")
@@ -92,9 +102,19 @@ macro(find_amrex)
         endif()
 
         # shared libs, i.e. for Python bindings, need relocatable code
-        #   openPMD: currently triggers shared libs (TODO)
-        if(WarpX_LIB OR ABLASTR_POSITION_INDEPENDENT_CODE OR BUILD_SHARED_LIBS OR WarpX_OPENPMD)
-            set(AMReX_PIC ON CACHE INTERNAL "")
+        if(WarpX_PYTHON OR
+           ABLASTR_POSITION_INDEPENDENT_CODE OR
+           (WarpX_LIB AND BUILD_SHARED_LIBS))
+            set(AMReX_PIC ON CACHE INTERNAL "" FORCE)
+        endif()
+        if(WarpX_PYTHON OR (WarpX_LIB AND BUILD_SHARED_LIBS))
+            set(AMReX_PIC ON CACHE INTERNAL "" FORCE)
+
+            # WE NEED AMReX AS SHARED LIB, OTHERWISE WE CANNOT SHARE ITS GLOBALS
+            # BETWEEN MULTIPLE PYTHON MODULES
+            # TODO this is likely an export/symbol hiding issue that we could
+            #      alleviate later on
+            set(AMReX_BUILD_SHARED_LIBS ON CACHE BOOL "Build AMReX shared library" FORCE)
         endif()
 
         # IPO/LTO
@@ -103,6 +123,12 @@ macro(find_amrex)
             if(WarpX_COMPUTE STREQUAL CUDA)
                 set(AMReX_CUDA_LTO ON CACHE BOOL "")
             endif()
+        endif()
+
+        if(DEFINED AMReX_BUILD_SHARED_LIBS)
+            set(AMReX_INSTALL ${AMReX_BUILD_SHARED_LIBS} CACHE INTERNAL "Generate Install Targets" FORCE)
+        else()
+            set(AMReX_INSTALL ${BUILD_SHARED_LIBS} CACHE INTERNAL "Generate Install Targets" FORCE)
         endif()
 
         # RZ is AMReX 2D
@@ -119,22 +145,17 @@ macro(find_amrex)
             endif()
             add_subdirectory(${WarpX_amrex_src} _deps/localamrex-build/)
         else()
+            if(WarpX_COMPUTE STREQUAL CUDA)
+                enable_language(CUDA)
+                # AMReX 21.06+ supports CUDA_ARCHITECTURES
+            endif()
             FetchContent_Declare(fetchedamrex
                 GIT_REPOSITORY ${WarpX_amrex_repo}
                 GIT_TAG        ${WarpX_amrex_branch}
                 BUILD_IN_SOURCE 0
             )
-            FetchContent_GetProperties(fetchedamrex)
-
-            if(NOT fetchedamrex_POPULATED)
-                FetchContent_Populate(fetchedamrex)
-                list(APPEND CMAKE_MODULE_PATH "${fetchedamrex_SOURCE_DIR}/Tools/CMake")
-                if(WarpX_COMPUTE STREQUAL CUDA)
-                    enable_language(CUDA)
-                    # AMReX 21.06+ supports CUDA_ARCHITECTURES
-                endif()
-                add_subdirectory(${fetchedamrex_SOURCE_DIR} ${fetchedamrex_BINARY_DIR})
-            endif()
+            FetchContent_MakeAvailable(fetchedamrex)
+            list(APPEND CMAKE_MODULE_PATH "${fetchedamrex_SOURCE_DIR}/Tools/CMake")
 
             # advanced fetch options
             mark_as_advanced(FETCHCONTENT_BASE_DIR)
@@ -205,6 +226,12 @@ macro(find_amrex)
             set(COMPONENT_ASCENT)
         endif()
 
+        if(WarpX_CATALYST)
+            set(COMPONENT_CATALYST CATALYST CONDUIT)
+        else()
+            set(COMPONENT_CATALYST)
+        endif()
+
         set(WarpX_amrex_dim ${WarpX_DIMS})  # RZ is AMReX 2D
         list(TRANSFORM WarpX_amrex_dim REPLACE RZ 2)
         list(REMOVE_DUPLICATES WarpX_amrex_dim)
@@ -229,8 +256,17 @@ macro(find_amrex)
         endif()
         set(COMPONENT_PRECISION ${WarpX_PRECISION} P${WarpX_PARTICLE_PRECISION})
 
-        find_package(AMReX 23.06 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIMS} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} ${COMPONENT_SENSEI} TINYP LSOLVERS)
+        find_package(AMReX 24.09 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_CATALYST} ${COMPONENT_DIMS} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} ${COMPONENT_SENSEI} LSOLVERS)
+        # note: TINYP skipped because user-configured and optional
+
+        # AMReX CMake helper scripts
+        list(APPEND CMAKE_MODULE_PATH "${AMReX_DIR}/AMReXCMakeModules")
+
         message(STATUS "AMReX: Found version '${AMReX_VERSION}'")
+
+        if(WarpX_COMPUTE STREQUAL CUDA)
+            enable_language(CUDA)
+        endif()
     endif()
 endmacro()
 
@@ -243,7 +279,7 @@ set(WarpX_amrex_src ""
 set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
     CACHE STRING
     "Repository URI to pull and build AMReX from if(WarpX_amrex_internal)")
-set(WarpX_amrex_branch "d9bae8ce9e69a962154a9340a0fb8ae9895c1fde"
+set(WarpX_amrex_branch "028638564f7be0694b9898f8d4088cdbf9a6f9f5"
     CACHE STRING
     "Repository branch for WarpX_amrex_repo if(WarpX_amrex_internal)")
 

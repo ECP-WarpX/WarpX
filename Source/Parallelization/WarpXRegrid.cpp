@@ -10,10 +10,14 @@
 
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
+#include "EmbeddedBoundary/Enabled.H"
 #include "EmbeddedBoundary/WarpXFaceInfoBox.H"
+#include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
+#include "Initialization/ExternalField.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
@@ -48,11 +52,28 @@
 using namespace amrex;
 
 void
+WarpX::CheckLoadBalance (int step)
+{
+    if (step > 0 && load_balance_intervals.contains(step+1))
+    {
+        LoadBalance();
+
+        // Reset the costs to 0
+        ResetCosts();
+    }
+    if (!costs.empty())
+    {
+        RescaleCosts(step);
+    }
+}
+
+void
 WarpX::LoadBalance ()
 {
     WARPX_PROFILE_REGION("LoadBalance");
     WARPX_PROFILE("WarpX::LoadBalance()");
 
+    AMREX_ALWAYS_ASSERT(!costs.empty());
     AMREX_ALWAYS_ASSERT(costs[0] != nullptr);
 
 #ifdef AMREX_USE_MPI
@@ -144,85 +165,100 @@ WarpX::LoadBalance ()
 #endif
 }
 
-
-template <typename MultiFabType> void
-RemakeMultiFab (std::unique_ptr<MultiFabType>& mf, const DistributionMapping& dm,
-                const bool redistribute)
-{
-    if (mf == nullptr) return;
-    const IntVect& ng = mf->nGrowVect();
-    std::unique_ptr<MultiFabType> pmf;
-    WarpX::AllocInitMultiFab(pmf, mf->boxArray(), dm, mf->nComp(), ng, mf->tags()[0]);
-    if (redistribute) pmf->Redistribute(*mf, 0, 0, mf->nComp(), ng);
-    mf = std::move(pmf);
-}
-
 void
 WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const DistributionMapping& dm)
 {
+
+    const auto RemakeMultiFab = [&](auto& mf, const bool redistribute){
+        if (mf == nullptr) { return; }
+        const IntVect& ng = mf->nGrowVect();
+        auto pmf = std::remove_reference_t<decltype(mf)>{};
+        AllocInitMultiFab(pmf, mf->boxArray(), dm, mf->nComp(), ng, lev, mf->tags()[0]);
+        if (redistribute) { pmf->Redistribute(*mf, 0, 0, mf->nComp(), ng); }
+        mf = std::move(pmf);
+    };
+
+    bool const eb_enabled = EB::enabled();
     if (ba == boxArray(lev))
     {
-        if (ParallelDescriptor::NProcs() == 1) return;
+        if (ParallelDescriptor::NProcs() == 1) { return; }
 
         // Fine patch
         for (int idim=0; idim < 3; ++idim)
         {
-            RemakeMultiFab(Bfield_fp[lev][idim], dm, true);
-            RemakeMultiFab(Efield_fp[lev][idim], dm, true);
-            if (add_external_B_field) {
-                RemakeMultiFab(Bfield_fp_external[lev][idim], dm, true);
+            RemakeMultiFab(Bfield_fp[lev][idim], true);
+            RemakeMultiFab(Efield_fp[lev][idim], true);
+            if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::read_from_file) {
+                RemakeMultiFab(Bfield_fp_external[lev][idim], true);
             }
-            if (add_external_E_field) {
-                RemakeMultiFab(Efield_fp_external[lev][idim], dm, true);
+            if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::read_from_file) {
+                RemakeMultiFab(Efield_fp_external[lev][idim], true);
             }
-            RemakeMultiFab(current_fp[lev][idim], dm, false);
-            RemakeMultiFab(current_store[lev][idim], dm, false);
+            if (mypc->m_B_ext_particle_s == "read_from_file") {
+                RemakeMultiFab(B_external_particle_field[lev][idim], true);
+            }
+            if (mypc->m_E_ext_particle_s == "read_from_file") {
+                RemakeMultiFab(E_external_particle_field[lev][idim], true);
+            }
+            RemakeMultiFab(current_fp[lev][idim], false);
+            RemakeMultiFab(current_store[lev][idim], false);
             if (current_deposition_algo == CurrentDepositionAlgo::Vay) {
-                RemakeMultiFab(current_fp_vay[lev][idim], dm, false);
+                RemakeMultiFab(current_fp_vay[lev][idim], false);
             }
             if (do_current_centering) {
-                RemakeMultiFab(current_fp_nodal[lev][idim], dm, false);
+                RemakeMultiFab(current_fp_nodal[lev][idim], false);
             }
             if (fft_do_time_averaging) {
-                RemakeMultiFab(Efield_avg_fp[lev][idim], dm, true);
-                RemakeMultiFab(Bfield_avg_fp[lev][idim], dm, true);
+                RemakeMultiFab(Efield_avg_fp[lev][idim], true);
+                RemakeMultiFab(Bfield_avg_fp[lev][idim], true);
             }
-#ifdef AMREX_USE_EB
-            if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) {
-                RemakeMultiFab(m_edge_lengths[lev][idim], dm, false);
-                RemakeMultiFab(m_face_areas[lev][idim], dm, false);
-                if(WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT){
-                    RemakeMultiFab(Venl[lev][idim], dm, false);
-                    RemakeMultiFab(m_flag_info_face[lev][idim], dm, false);
-                    RemakeMultiFab(m_flag_ext_face[lev][idim], dm, false);
-                    RemakeMultiFab(m_area_mod[lev][idim], dm, false);
-                    RemakeMultiFab(ECTRhofield[lev][idim], dm, false);
-                    m_borrowing[lev][idim] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(ba, Bfield_fp[lev][idim]->ixType().toIntVect()), dm);
+            if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
+                RemakeMultiFab(m_hybrid_pic_model->current_fp_temp[lev][idim], true);
+                RemakeMultiFab(m_hybrid_pic_model->current_fp_ampere[lev][idim], false);
+                RemakeMultiFab(m_hybrid_pic_model->current_fp_external[lev][idim],true);
+            }
+            if (eb_enabled) {
+                if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) {
+                    RemakeMultiFab(m_edge_lengths[lev][idim], false);
+                    RemakeMultiFab(m_face_areas[lev][idim], false);
+                    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
+                        RemakeMultiFab(Venl[lev][idim], false);
+                        RemakeMultiFab(m_flag_info_face[lev][idim], false);
+                        RemakeMultiFab(m_flag_ext_face[lev][idim], false);
+                        RemakeMultiFab(m_area_mod[lev][idim], false);
+                        RemakeMultiFab(ECTRhofield[lev][idim], false);
+                        m_borrowing[lev][idim] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(ba, Bfield_fp[lev][idim]->ixType().toIntVect()), dm);
+                    }
                 }
             }
-#endif
         }
 
-        RemakeMultiFab(F_fp[lev], dm, true);
-        RemakeMultiFab(rho_fp[lev], dm, false);
+        RemakeMultiFab(F_fp[lev], true);
+        RemakeMultiFab(rho_fp[lev], false);
         // phi_fp should be redistributed since we use the solution from
         // the last step as the initial guess for the next solve
-        RemakeMultiFab(phi_fp[lev], dm, true);
+        RemakeMultiFab(phi_fp[lev], true);
+
+        if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
+            RemakeMultiFab(m_hybrid_pic_model->rho_fp_temp[lev], true);
+            RemakeMultiFab(m_hybrid_pic_model->electron_pressure_fp[lev], false);
+        }
+
+        if (eb_enabled) {
+            RemakeMultiFab(m_distance_to_eb[lev], false);
 
 #ifdef AMREX_USE_EB
-        RemakeMultiFab(m_distance_to_eb[lev], dm, false);
-
-        int max_guard = guard_cells.ng_FieldSolver.max();
-        m_field_factory[lev] = amrex::makeEBFabFactory(Geom(lev), ba, dm,
-                                                       {max_guard, max_guard, max_guard},
-                                                       amrex::EBSupport::full);
-
-        InitializeEBGridData(lev);
-#else
-        m_field_factory[lev] = std::make_unique<FArrayBoxFactory>();
+            int const max_guard = guard_cells.ng_FieldSolver.max();
+            m_field_factory[lev] = amrex::makeEBFabFactory(Geom(lev), ba, dm,
+                                                           {max_guard, max_guard, max_guard},
+                                                           amrex::EBSupport::full);
 #endif
+            InitializeEBGridData(lev);
+        } else {
+            m_field_factory[lev] = std::make_unique<FArrayBoxFactory>();
+        }
 
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
         if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
             if (spectral_solver_fp[lev] != nullptr) {
                 // Get the cell-centered box
@@ -232,7 +268,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                 auto dx = CellSize(lev);
 
 #   ifdef WARPX_DIM_RZ
-                if ( fft_periodic_single_box == false ) {
+                if ( !fft_periodic_single_box ) {
                     realspace_ba.grow(1, ngEB[1]); // add guard cells only in z
                 }
                 AllocLevelSpectralSolverRZ(spectral_solver_fp,
@@ -241,7 +277,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                                            dm,
                                            dx);
 #   else
-                if ( fft_periodic_single_box == false ) {
+                if ( !fft_periodic_single_box ) {
                     realspace_ba.grow(ngEB);   // add guard cells
                 }
                 bool const pml_flag_false = false;
@@ -266,8 +302,8 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         } else {
             for (int idim=0; idim < 3; ++idim)
             {
-                RemakeMultiFab(Bfield_aux[lev][idim], dm, false);
-                RemakeMultiFab(Efield_aux[lev][idim], dm, false);
+                RemakeMultiFab(Bfield_aux[lev][idim], false);
+                RemakeMultiFab(Efield_aux[lev][idim], false);
             }
         }
 
@@ -275,23 +311,23 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         if (lev > 0) {
             for (int idim=0; idim < 3; ++idim)
             {
-                RemakeMultiFab(Bfield_cp[lev][idim], dm, true);
-                RemakeMultiFab(Efield_cp[lev][idim], dm, true);
-                RemakeMultiFab(current_cp[lev][idim], dm, false);
+                RemakeMultiFab(Bfield_cp[lev][idim], true);
+                RemakeMultiFab(Efield_cp[lev][idim], true);
+                RemakeMultiFab(current_cp[lev][idim], false);
                 if (fft_do_time_averaging) {
-                    RemakeMultiFab(Efield_avg_cp[lev][idim], dm, true);
-                    RemakeMultiFab(Bfield_avg_cp[lev][idim], dm, true);
+                    RemakeMultiFab(Efield_avg_cp[lev][idim], true);
+                    RemakeMultiFab(Bfield_avg_cp[lev][idim], true);
                 }
             }
-            RemakeMultiFab(F_cp[lev], dm, true);
-            RemakeMultiFab(rho_cp[lev], dm, false);
+            RemakeMultiFab(F_cp[lev], true);
+            RemakeMultiFab(rho_cp[lev], false);
 
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
             if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
                 if (spectral_solver_cp[lev] != nullptr) {
                     BoxArray cba = ba;
                     cba.coarsen(refRatio(lev-1));
-                    std::array<Real,3> cdx = CellSize(lev-1);
+                    const std::array<Real,3> cdx = CellSize(lev-1);
 
                     // Get the cell-centered box
                     BoxArray c_realspace_ba = cba;  // Copy box
@@ -324,17 +360,18 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         if (lev > 0 && (n_field_gather_buffer > 0 || n_current_deposition_buffer > 0)) {
             for (int idim=0; idim < 3; ++idim)
             {
-                RemakeMultiFab(Bfield_cax[lev][idim], dm, false);
-                RemakeMultiFab(Efield_cax[lev][idim], dm, false);
-                RemakeMultiFab(current_buf[lev][idim], dm, false);
+                RemakeMultiFab(Bfield_cax[lev][idim], false);
+                RemakeMultiFab(Efield_cax[lev][idim], false);
+                RemakeMultiFab(current_buf[lev][idim], false);
             }
-            RemakeMultiFab(charge_buf[lev], dm, false);
+            RemakeMultiFab(charge_buf[lev], false);
             // we can avoid redistributing these since we immediately re-build the values via BuildBufferMasks()
-            RemakeMultiFab(current_buffer_masks[lev], dm, false);
-            RemakeMultiFab(gather_buffer_masks[lev], dm, false);
+            RemakeMultiFab(current_buffer_masks[lev], false);
+            RemakeMultiFab(gather_buffer_masks[lev], false);
 
-            if (current_buffer_masks[lev] || gather_buffer_masks[lev])
+            if (current_buffer_masks[lev] || gather_buffer_masks[lev]) {
                 BuildBufferMasks();
+            }
         }
 
         // Re-initialize the lattice element finder with the new ba and dm.
@@ -344,7 +381,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         {
             costs[lev] = std::make_unique<LayoutData<Real>>(ba, dm);
             const auto iarr = costs[lev]->IndexArray();
-            for (int i : iarr)
+            for (const auto& i : iarr)
             {
                 (*costs[lev])[i] = 0.0;
                 setLoadBalanceEfficiency(lev, -1);
@@ -355,7 +392,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
 
     } else
     {
-        amrex::Abort("RemakeLevel: to be implemented");
+        WARPX_ABORT_WITH_MESSAGE("RemakeLevel: to be implemented");
     }
 
     // Re-initialize diagnostic functors that stores pointers to the user-requested fields at level, lev.
@@ -398,13 +435,43 @@ WarpX::ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::LayoutData<am
 void
 WarpX::ResetCosts ()
 {
+    AMREX_ALWAYS_ASSERT(!costs.empty());
+    AMREX_ALWAYS_ASSERT(costs[0] != nullptr);
+
     for (int lev = 0; lev <= finest_level; ++lev)
     {
         const auto iarr = costs[lev]->IndexArray();
-        for (int i : iarr)
+        for (const auto& i : iarr)
         {
             // Reset costs
             (*costs[lev])[i] = 0.0;
+        }
+    }
+}
+
+void
+WarpX::RescaleCosts (int step)
+{
+    // rescale is only used for timers
+    if (WarpX::load_balance_costs_update_algo != LoadBalanceCostsUpdateAlgo::Timers)
+    {
+        return;
+    }
+
+    AMREX_ALWAYS_ASSERT(costs.size() == finest_level + 1);
+
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        if (costs[lev])
+        {
+            // Perform running average of the costs
+            // (Giving more importance to most recent costs; only needed
+            // for timers update, heuristic load balance considers the
+            // instantaneous costs)
+            for (const auto& i : costs[lev]->IndexArray())
+            {
+                (*costs[lev])[i] *= (1._rt - 2._rt/load_balance_intervals.localPeriod(step+1));
+            }
         }
     }
 }

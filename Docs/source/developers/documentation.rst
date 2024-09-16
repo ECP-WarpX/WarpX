@@ -11,21 +11,21 @@ Whenever you create a new class, please document it where it is declared (typica
 
 .. code-block:: cpp
 
-   /** A brief title
+   /** \brief A brief title
     *
-    * few-line description explaining the purpose of my_class.
+    * few-line description explaining the purpose of MyClass.
     *
-    * If you are kind enough, also quickly explain how things in my_class work.
+    * If you are kind enough, also quickly explain how things in MyClass work.
     * (typically a few more lines)
     */
-   class my_class
+   class MyClass
    { ... }
 
 Doxygen reads this docstring, so please be accurate with the syntax! See `Doxygen manual <http://www.doxygen.nl/manual/docblocks.html>`__ for more information. Similarly, please document functions when you declare them (typically in a header file) like:
 
 .. code-block:: cpp
 
-  /** A brief title
+  /** \brief A brief title
    *
    * few-line description explaining the purpose of my_function.
    *
@@ -33,7 +33,7 @@ Doxygen reads this docstring, so please be accurate with the syntax! See `Doxyge
    *                       my_function will operate.
    * \return what is the meaning and value range of the returned value
    */
-  int my_class::my_function(int* my_int);
+  int MyClass::my_function (int* my_int);
 
 An online version of this documentation is :ref:`linked here <development-doxygen>`.
 

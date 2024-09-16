@@ -7,6 +7,7 @@
 
 #include "FieldMomentum.H"
 
+#include "FieldSolver/Fields.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "WarpX.H"
@@ -37,8 +38,9 @@
 #include <vector>
 
 using namespace amrex;
+using namespace warpx::fields;
 
-FieldMomentum::FieldMomentum (std::string rd_name)
+FieldMomentum::FieldMomentum (const std::string& rd_name)
     : ReducedDiags{rd_name}
 {
     // RZ coordinate is not working
@@ -49,7 +51,7 @@ FieldMomentum::FieldMomentum (std::string rd_name)
 
     // Read number of levels
     int nLevel = 0;
-    amrex::ParmParse pp_amr("amr");
+    const amrex::ParmParse pp_amr("amr");
     pp_amr.query("max_level", nLevel);
     nLevel += 1;
 
@@ -58,7 +60,7 @@ FieldMomentum::FieldMomentum (std::string rd_name)
 
     if (amrex::ParallelDescriptor::IOProcessor())
     {
-        if (m_IsNotRestart)
+        if (m_write_header)
         {
             // Open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
@@ -85,7 +87,7 @@ FieldMomentum::FieldMomentum (std::string rd_name)
                 ofs << "momentum_z_lev" << lev << "(kg*m/s)";
             }
 
-            ofs << std::endl;
+            ofs << "\n";
             ofs.close();
         }
     }
@@ -94,10 +96,7 @@ FieldMomentum::FieldMomentum (std::string rd_name)
 void FieldMomentum::ComputeDiags (int step)
 {
     // Check if the diags should be done
-    if (m_intervals.contains(step+1) == false)
-    {
-        return;
-    }
+    if (!m_intervals.contains(step+1)) { return; }
 
     // Get a reference to WarpX instance
     auto & warpx = WarpX::GetInstance();
@@ -109,12 +108,12 @@ void FieldMomentum::ComputeDiags (int step)
     for (int lev = 0; lev < nLevel; ++lev)
     {
         // Get MultiFab data at given refinement level
-        const amrex::MultiFab & Ex = warpx.getEfield(lev, 0);
-        const amrex::MultiFab & Ey = warpx.getEfield(lev, 1);
-        const amrex::MultiFab & Ez = warpx.getEfield(lev, 2);
-        const amrex::MultiFab & Bx = warpx.getBfield(lev, 0);
-        const amrex::MultiFab & By = warpx.getBfield(lev, 1);
-        const amrex::MultiFab & Bz = warpx.getBfield(lev, 2);
+        const amrex::MultiFab & Ex = warpx.getField(FieldType::Efield_aux, lev, 0);
+        const amrex::MultiFab & Ey = warpx.getField(FieldType::Efield_aux, lev, 1);
+        const amrex::MultiFab & Ez = warpx.getField(FieldType::Efield_aux, lev, 2);
+        const amrex::MultiFab & Bx = warpx.getField(FieldType::Bfield_aux, lev, 0);
+        const amrex::MultiFab & By = warpx.getField(FieldType::Bfield_aux, lev, 1);
+        const amrex::MultiFab & Bz = warpx.getField(FieldType::Bfield_aux, lev, 2);
 
         // Cell-centered index type
         const amrex::GpuArray<int,3> cc{0,0,0};
@@ -182,19 +181,11 @@ void FieldMomentum::ComputeDiags (int step)
         amrex::Real ExB_x = amrex::get<0>(r);
         amrex::Real ExB_y = amrex::get<1>(r);
         amrex::Real ExB_z = amrex::get<2>(r);
-        amrex::ParallelDescriptor::ReduceRealSum(ExB_x);
-        amrex::ParallelDescriptor::ReduceRealSum(ExB_y);
-        amrex::ParallelDescriptor::ReduceRealSum(ExB_z);
+        amrex::ParallelDescriptor::ReduceRealSum({ExB_x,ExB_y,ExB_z});
 
-        // Get cell size
-        amrex::Geometry const & geom = warpx.Geom(lev);
-#if   defined(WARPX_DIM_1D_Z)
-        auto dV = geom.CellSize(0);
-#elif   defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        auto dV = geom.CellSize(0) * geom.CellSize(1);
-#elif defined(WARPX_DIM_3D)
-        auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
-#endif
+        // Get cell volume
+        const std::array<Real, 3> &dx = WarpX::CellSize(lev);
+        const amrex::Real dV = dx[0]*dx[1]*dx[2];
 
         // Save data (offset: 3 values for each refinement level)
         const int offset = lev*3;

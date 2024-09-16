@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef MAGNETOSTATICSOLVER_H_
-#define MAGNETOSTATICSOLVER_H_
+#ifndef WARPX_MAGNETOSTATICSOLVER_H_
+#define WARPX_MAGNETOSTATICSOLVER_H_
 
 #include <AMReX_Array.H>
 #include <AMReX_MultiFab.H>
@@ -47,11 +47,11 @@ namespace MagnetostaticSolver {
                   m_grad_buf_b_stag(grad_buf_b_stag)
         {}
 
-        void operator()(amrex::Array<std::unique_ptr<amrex::MLMG>,3> & mlmg, int const lev);
+        void operator()(amrex::Array<std::unique_ptr<amrex::MLMG>,3> & mlmg, int lev);
 
         // Function to perform interpolation from cell edges to cell faces
         void doInterp(const std::unique_ptr<amrex::MultiFab> &src, const std::unique_ptr<amrex::MultiFab> &dst);
     };
 } // namespace MagnetostaticSolver
 
-#endif //MAGNETOSTATICSOLVER_H_
+#endif //WARPX_MAGNETOSTATICSOLVER_H_

@@ -121,7 +121,7 @@ Perlmutter Example
 """"""""""""""""""
 
 Example on how to create traces on a multi-GPU system that uses the Slurm scheduler (e.g., NERSC's Perlmutter system).
-You can either run this on an interactive node or use the Slurm batch script header :ref:`documented here <running-cpp-perlmutter-A100-GPUs>`.
+You can either run this on an interactive node or use the Slurm batch script header :ref:`documented here <running-cpp-perlmutter>`.
 
 .. code-block:: bash
 
@@ -134,27 +134,15 @@ You can either run this on an interactive node or use the Slurm batch script hea
    rm -rf ${TMPDIR} profiling*
    mkdir -p ${TMPDIR}
 
-   # 2021.5.1 (broken: lacks most trace info)
-   #NSYS="/global/common/software/nersc/pm-2021q4/easybuild/software/Nsight-Systems/2021.5.1/bin/nsys"
-   # 2021.4.1 (working)
-   NSYS="/opt/nvidia/hpc_sdk/Linux_x86_64/21.11/compilers/bin/nsys"
-
    # record
    srun --ntasks=4 --gpus=4 --cpu-bind=cores \
-       ${NSYS} profile -f true               \
+       nsys profile -f true               \
          -o profiling_%q{SLURM_TASK_PID}     \
          -t mpi,cuda,nvtx,osrt,openmp        \
          --mpi-impl=mpich                    \
        ./warpx.3d.MPI.CUDA.DP.QED            \
          inputs_3d                           \
            warpx.numprocs=1 1 4 amr.n_cell=512 512 2048 max_step=10
-
-.. warning::
-
-   March 23rd, 2022 (INC0182505):
-   Currently, the environment pre-loads a ``Nsight-Systems/2021.5.1`` module that ships ``nsys`` version 2021.5.1.
-   This version does not record all trace information.
-   You need to use the one directly shipped with the NVHPC base system, version 2021.4.1, located in ``/opt/nvidia/hpc_sdk/Linux_x86_64/21.11/compilers/bin/nsys``.
 
 .. note::
 
@@ -259,7 +247,7 @@ node, or without a workload management system.
 .. note::
 
     To collect full statistics, Nsight-Compute reruns kernels,
-    temporarilly saving device memory in host memory. This makes it
+    temporarily saving device memory in host memory. This makes it
     slower than Nsight-Systems, so the provided script profiles only a single
     step of a single process. This is generally enough to extract relevant
     information.

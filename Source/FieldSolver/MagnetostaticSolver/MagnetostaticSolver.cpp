@@ -7,10 +7,11 @@
 #include "WarpX.H"
 
 #include "FieldSolver/MagnetostaticSolver/MagnetostaticSolver.H"
+#include "EmbeddedBoundary/Enabled.H"
 #include "Parallelization/GuardCellManager.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "Python/WarpX_py.H"
+#include "Python/callbacks.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/TextMsg.H"
@@ -106,16 +107,21 @@ WarpX::AddMagnetostaticFieldLabFrame()
     }
 #endif
 
-    SyncCurrent(current_fp, current_cp); // Apply filter, perform MPI exchange, interpolate across levels
+    SyncCurrent(current_fp, current_cp, current_buf); // Apply filter, perform MPI exchange, interpolate across levels
 
     // set the boundary and current density potentials
     setVectorPotentialBC(vector_potential_fp_nodal);
 
     // Compute the vector potential A, by solving the Poisson equation
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( !IsPythonCallBackInstalled("poissonsolver"),
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( !IsPythonCallbackInstalled("poissonsolver"),
         "Python Level Poisson Solve not supported for Magnetostatic implementation.");
 
-    amrex::Real magnetostatic_absolute_tolerance = self_fields_absolute_tolerance*PhysConst::c;
+    // const amrex::Real magnetostatic_absolute_tolerance = self_fields_absolute_tolerance*PhysConst::c;
+    // temporary fix!!!
+    const amrex::Real magnetostatic_absolute_tolerance = 0.0;
+    const amrex::Real self_fields_required_precision = 1e-12;
+    const int self_fields_max_iters = 200;
+    const int self_fields_verbosity = 2;
 
     computeVectorPotential( current_fp, vector_potential_fp_nodal, self_fields_required_precision,
                      magnetostatic_absolute_tolerance, self_fields_max_iters,
@@ -159,7 +165,7 @@ WarpX::computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<
     }
 
 #if defined(AMREX_USE_EB)
-    std::optional<MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel> post_A_calculation({Bfield_fp,
+    const std::optional<MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel> post_A_calculation({Bfield_fp,
                                                                                                vector_potential_grad_buf_e_stag,
                                                                                                vector_potential_grad_buf_b_stag});
 
@@ -167,10 +173,10 @@ WarpX::computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<
     for (int lev = 0; lev <= finest_level; ++lev) {
         factories.push_back(&WarpX::fieldEBFactory(lev));
     }
-    std::optional<amrex::Vector<amrex::EBFArrayBoxFactory const *> > eb_farray_box_factory({factories});
+    const std::optional<amrex::Vector<amrex::EBFArrayBoxFactory const *> > eb_farray_box_factory({factories});
 #else
-    std::optional<MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel> post_A_calculation;
-    std::optional<amrex::Vector<amrex::FArrayBoxFactory const *> > eb_farray_box_factory;
+    const std::optional<MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel> post_A_calculation;
+    const std::optional<amrex::Vector<amrex::FArrayBoxFactory const *> > eb_farray_box_factory;
 #endif
 
     ablastr::fields::computeVectorPotential(
@@ -184,6 +190,7 @@ WarpX::computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<
         this->dmap,
         this->grids,
         this->m_vector_poisson_boundary_handler,
+        EB::enabled(),
         WarpX::do_single_precision_comms,
         this->ref_ratio,
         post_A_calculation,
@@ -206,7 +213,7 @@ void
 WarpX::setVectorPotentialBC ( amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>,3>>& A ) const
 {
     // check if any dimension has non-periodic boundary conditions
-    if (!m_vector_poisson_boundary_handler.has_non_periodic) return;
+    if (!m_vector_poisson_boundary_handler.has_non_periodic) { return; }
 
     auto dirichlet_flag = m_vector_poisson_boundary_handler.dirichlet_flag;
 
@@ -228,7 +235,7 @@ WarpX::setVectorPotentialBC ( amrex::Vector<amrex::Array<std::unique_ptr<amrex::
                 // loop over dimensions
                 for (int idim=0; idim<AMREX_SPACEDIM; idim++){
                     // check if neither boundaries in this dimension should be set
-                    if (!(dirichlet_flag[adim][2*idim] || dirichlet_flag[adim][2*idim+1])) continue;
+                    if (!(dirichlet_flag[adim][2*idim] || dirichlet_flag[adim][2*idim+1])) { continue; }
 
                     // a check can be added below to test if the boundary values
                     // are already correct, in which case the ParallelFor over the
@@ -240,11 +247,13 @@ WarpX::setVectorPotentialBC ( amrex::Vector<amrex::Array<std::unique_ptr<amrex::
 
                                 IntVect iv(AMREX_D_DECL(i,j,k));
 
-                                if (dirichlet_flag[adim][2*idim] && iv[idim] == domain.smallEnd(idim))
+                                if (dirichlet_flag[adim][2*idim] && iv[idim] == domain.smallEnd(idim)) {
                                     A_arr(i,j,k) = 0.;
+                                }
 
-                                if (dirichlet_flag[adim][2*idim+1] && iv[idim] == domain.bigEnd(idim))
+                                if (dirichlet_flag[adim][2*idim+1] && iv[idim] == domain.bigEnd(idim)) {
                                     A_arr(i,j,k) = 0.;
+                                }
                             } // loop ijk
                         );
                     }
@@ -257,8 +266,8 @@ WarpX::setVectorPotentialBC ( amrex::Vector<amrex::Array<std::unique_ptr<amrex::
 void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs ( )
 {
     for (int adim = 0; adim < 3; adim++) {
-        int dim_start = 0;
 #ifdef WARPX_DIM_RZ
+        int dim_start = 0;
         WarpX& warpx = WarpX::GetInstance();
         auto geom = warpx.Geom(0);
         if (geom.ProbLo(0) == 0){
@@ -266,7 +275,7 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
             dirichlet_flag[adim][0] = false;
             dim_start = 1;
 
-            // handle the r_max boundary explicity
+            // handle the r_max boundary explicitly
             if (WarpX::field_boundary_hi[0] == FieldBoundaryType::PEC) {
                 if (adim == 0) {
                     hibc[adim][0] = LinOpBCType::Neumann;
@@ -281,12 +290,15 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
                 dirichlet_flag[adim][1] = false;
             }
         }
+#else
+        const int dim_start = 0;
 #endif
+        bool ndotA = false;
         for (int idim=dim_start; idim<AMREX_SPACEDIM; idim++){
-            bool ndotA = (adim == idim);
+            ndotA = (adim == idim);
 
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-            if (idim == 1) ndotA = (adim == 2);
+            if (idim == 1) { ndotA = (adim == 2); }
 #endif
 
             if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Periodic
@@ -313,9 +325,9 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
                     dirichlet_flag[adim][idim*2] = false;
                 }
                 else {
-                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-                        "Field boundary conditions have to be either periodic, PEC, or neumann "
-                        "when using the magnetostatic solver"
+                    WARPX_ABORT_WITH_MESSAGE(
+                        "Field boundary conditions have to be either periodic, PEC or neumann "
+                        "when using the magnetostatic solver,  but they are " + amrex::getEnumNameString(WarpX::field_boundary_lo[idim])
                     );
                 }
 
@@ -333,9 +345,9 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
                     dirichlet_flag[adim][idim*2+1] = false;
                 }
                 else {
-                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-                        "Field boundary conditions have to be either periodic, PEC, or neumann "
-                        "when using the electrostatic solver"
+                    WARPX_ABORT_WITH_MESSAGE(
+                        "Field boundary conditions have to be either periodic, PEC or neumann "
+                        "when using the magnetostatic solver,  but they are " + amrex::getEnumNameString(WarpX::field_boundary_lo[idim])
                     );
                 }
             }
@@ -376,7 +388,7 @@ void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::doInterp(const std
         Array4<amrex::Real const> const& src_arr = src->const_array(mfi);
         Array4<amrex::Real> const& dst_arr = dst->array(mfi);
 
-        Box bx = mfi.tilebox();
+        const Box bx = mfi.tilebox();
 
         ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
         {
@@ -393,7 +405,7 @@ void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::operator()(amrex::
     // This operator gets the gradient solution on the cell edges, aligned with E field staggered grid
     // This routine interpolates to the B-field staggered grid,
 
-    amrex::Array<amrex::MultiFab*, AMREX_SPACEDIM> buf_ptr =
+    const amrex::Array<amrex::MultiFab*, AMREX_SPACEDIM> buf_ptr =
     {
 #if defined(WARPX_DIM_3D)
         m_grad_buf_e_stag[lev][0].get(),

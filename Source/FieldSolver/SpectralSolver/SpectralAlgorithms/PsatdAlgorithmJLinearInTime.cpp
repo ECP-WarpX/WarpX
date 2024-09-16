@@ -24,7 +24,7 @@
 
 #include <cmath>
 
-#if WARPX_USE_PSATD
+#if WARPX_USE_FFT
 
 using namespace amrex::literals;
 
@@ -35,7 +35,7 @@ PsatdAlgorithmJLinearInTime::PsatdAlgorithmJLinearInTime(
     const int norder_x,
     const int norder_y,
     const int norder_z,
-    const short grid_type,
+    ablastr::utils::enums::GridType grid_type,
     const amrex::Real dt,
     const bool time_averaging,
     const bool dive_cleaning,
@@ -84,14 +84,14 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
         const amrex::Box& bx = f.fields[mfi].box();
 
         // Extract arrays for the fields to be updated
-        amrex::Array4<Complex> fields = f.fields[mfi].array();
+        const amrex::Array4<Complex> fields = f.fields[mfi].array();
 
         // These coefficients are always allocated
-        amrex::Array4<const amrex::Real> C_arr = C_coef[mfi].array();
-        amrex::Array4<const amrex::Real> S_ck_arr = S_ck_coef[mfi].array();
-        amrex::Array4<const amrex::Real> X1_arr = X1_coef[mfi].array();
-        amrex::Array4<const amrex::Real> X2_arr = X2_coef[mfi].array();
-        amrex::Array4<const amrex::Real> X3_arr = X3_coef[mfi].array();
+        const amrex::Array4<const amrex::Real> C_arr = C_coef[mfi].array();
+        const amrex::Array4<const amrex::Real> S_ck_arr = S_ck_coef[mfi].array();
+        const amrex::Array4<const amrex::Real> X1_arr = X1_coef[mfi].array();
+        const amrex::Array4<const amrex::Real> X2_arr = X2_coef[mfi].array();
+        const amrex::Array4<const amrex::Real> X3_arr = X3_coef[mfi].array();
 
         amrex::Array4<const amrex::Real> X5_arr;
         amrex::Array4<const amrex::Real> X6_arr;
@@ -130,8 +130,8 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
             const Complex rho_new = fields(i,j,k,Idx.rho_new);
 
             Complex F_old, G_old;
-            if (dive_cleaning) F_old = fields(i,j,k,Idx.F);
-            if (divb_cleaning) G_old = fields(i,j,k,Idx.G);
+            if (dive_cleaning) { F_old = fields(i,j,k,Idx.F); }
+            if (divb_cleaning) { G_old = fields(i,j,k,Idx.G); }
 
             // k vector values
             const amrex::Real kx = modified_kx_arr[i];
@@ -280,11 +280,11 @@ void PsatdAlgorithmJLinearInTime::InitializeSpectralCoefficients (
         const amrex::Real* kz_s = modified_kz_vec[mfi].dataPtr();
 
         // Coefficients always allocated
-        amrex::Array4<amrex::Real> C = C_coef[mfi].array();
-        amrex::Array4<amrex::Real> S_ck = S_ck_coef[mfi].array();
-        amrex::Array4<amrex::Real> X1 = X1_coef[mfi].array();
-        amrex::Array4<amrex::Real> X2 = X2_coef[mfi].array();
-        amrex::Array4<amrex::Real> X3 = X3_coef[mfi].array();
+        const amrex::Array4<amrex::Real> C = C_coef[mfi].array();
+        const amrex::Array4<amrex::Real> S_ck = S_ck_coef[mfi].array();
+        const amrex::Array4<amrex::Real> X1 = X1_coef[mfi].array();
+        const amrex::Array4<amrex::Real> X2 = X2_coef[mfi].array();
+        const amrex::Array4<amrex::Real> X3 = X3_coef[mfi].array();
 
         // Loop over indices within one box
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -372,11 +372,11 @@ void PsatdAlgorithmJLinearInTime::InitializeSpectralCoefficientsAveraging (
 #endif
         const amrex::Real* kz_s = modified_kz_vec[mfi].dataPtr();
 
-        amrex::Array4<amrex::Real const> C = C_coef[mfi].array();
-        amrex::Array4<amrex::Real const> S_ck = S_ck_coef[mfi].array();
+        const amrex::Array4<amrex::Real const> C = C_coef[mfi].array();
+        const amrex::Array4<amrex::Real const> S_ck = S_ck_coef[mfi].array();
 
-        amrex::Array4<amrex::Real> X5 = X5_coef[mfi].array();
-        amrex::Array4<amrex::Real> X6 = X6_coef[mfi].array();
+        const amrex::Array4<amrex::Real> X5 = X5_coef[mfi].array();
+        const amrex::Array4<amrex::Real> X6 = X6_coef[mfi].array();
 
         // Loop over indices within one box
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -444,4 +444,4 @@ PsatdAlgorithmJLinearInTime::VayDeposition (SpectralFieldData& field_data)
         "Vay deposition not implemented for multi-J PSATD algorithm");
 }
 
-#endif // WARPX_USE_PSATD
+#endif // WARPX_USE_FFT

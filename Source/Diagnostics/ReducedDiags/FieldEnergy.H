@@ -26,7 +26,7 @@ public:
      * constructor
      * @param[in] rd_name reduced diags names
      */
-    FieldEnergy(std::string rd_name);
+    FieldEnergy(const std::string& rd_name);
 
     /**
      * This function computes the field energy (EF):
@@ -37,7 +37,7 @@ public:
      *
      * @param[in] step current time step
      */
-    virtual void ComputeDiags(int step) override final;
+    void ComputeDiags(int step) final;
 
     /**
      * \brief Calculate the integral of the field squared in RZ
@@ -46,7 +46,7 @@ public:
      * \param lev   The refinement level
      * \return The integral
      */
-    amrex::Real ComputeNorm2RZ(const amrex::MultiFab& field, const int lev);
+    amrex::Real ComputeNorm2RZ(const amrex::MultiFab& field, int lev);
 
 };
 

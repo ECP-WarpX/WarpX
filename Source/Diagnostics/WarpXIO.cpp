@@ -8,9 +8,10 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "BoundaryConditions/PML.H"
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
 #    include "BoundaryConditions/PML_RZ.H"
 #endif
+#include "EmbeddedBoundary/Enabled.H"
 #include "FieldIO.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/TextMsg.H"
@@ -19,6 +20,7 @@
 #include "Diagnostics/MultiDiagnostics.H"
 
 #include <ablastr/utils/Communication.H>
+#include <ablastr/utils/text/StreamUtils.H>
 
 #ifdef AMREX_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
@@ -50,13 +52,6 @@ namespace
     const std::string level_prefix {"Level_"};
 }
 
-void
-WarpX::GotoNextLine (std::istream& is)
-{
-    constexpr std::streamsize bl_ignore_max { 100000 };
-    is.ignore(bl_ignore_max, '\n');
-}
-
 amrex::DistributionMapping
 WarpX::GetRestartDMap (const std::string& chkfile, const amrex::BoxArray& ba, int lev) const {
     std::string DMFileName = chkfile;
@@ -70,9 +65,9 @@ WarpX::GetRestartDMap (const std::string& chkfile, const amrex::BoxArray& ba, in
 
     Vector<char> fileCharPtr;
     ParallelDescriptor::ReadAndBcastFile(DMFileName, fileCharPtr);
-    std::string fileCharPtrString(fileCharPtr.dataPtr());
+    const std::string fileCharPtrString(fileCharPtr.dataPtr());
     std::istringstream DMFile(fileCharPtrString, std::istringstream::in);
-    if ( ! DMFile.good()) amrex::FileOpenFailed(DMFileName);
+    if ( ! DMFile.good()) { amrex::FileOpenFailed(DMFileName); }
     DMFile.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
     int nprocs_in_checkpoint;
@@ -100,13 +95,13 @@ WarpX::InitFromCheckpoint ()
 
     // Header
     {
-        std::string File(restart_chkfile + "/WarpXHeader");
+        const std::string File(restart_chkfile + "/WarpXHeader");
 
-        VisMF::IO_Buffer io_buffer(VisMF::GetIOBufferSize());
+        const VisMF::IO_Buffer io_buffer(VisMF::GetIOBufferSize());
 
         Vector<char> fileCharPtr;
         ParallelDescriptor::ReadAndBcastFile(File, fileCharPtr);
-        std::string fileCharPtrString(fileCharPtr.dataPtr());
+        const std::string fileCharPtrString(fileCharPtr.dataPtr());
         std::istringstream is(fileCharPtrString, std::istringstream::in);
         is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
@@ -116,7 +111,7 @@ WarpX::InitFromCheckpoint ()
 
         int nlevs;
         is >> nlevs;
-        GotoNextLine(is);
+        ablastr::utils::text::goto_next_line(is);
         finest_level = nlevs-1;
 
         std::getline(is, line);
@@ -171,10 +166,10 @@ WarpX::InitFromCheckpoint ()
 
         amrex::Real moving_window_x_checkpoint;
         is >> moving_window_x_checkpoint;
-        GotoNextLine(is);
+        ablastr::utils::text::goto_next_line(is);
 
         is >> is_synchronized;
-        GotoNextLine(is);
+        ablastr::utils::text::goto_next_line(is);
 
         amrex::Vector<amrex::Real> prob_lo( AMREX_SPACEDIM );
         std::getline(is, line);
@@ -203,35 +198,37 @@ WarpX::InitFromCheckpoint ()
         for (int lev = 0; lev < nlevs; ++lev) {
             BoxArray ba;
             ba.readFrom(is);
-            GotoNextLine(is);
-            DistributionMapping dm = GetRestartDMap(restart_chkfile, ba, lev);
+            ablastr::utils::text::goto_next_line(is);
+            const DistributionMapping dm = GetRestartDMap(restart_chkfile, ba, lev);
             SetBoxArray(lev, ba);
             SetDistributionMap(lev, dm);
             AllocLevelData(lev, ba, dm);
         }
 
         mypc->ReadHeader(is);
-        is >> current_injection_position;
-        GotoNextLine(is);
+        const int n_species = mypc->nSpecies();
+        for (int i=0; i<n_species; i++)
+        {
+             is >> mypc->GetParticleContainer(i).m_current_injection_position;
+             ablastr::utils::text::goto_next_line(is);
+        }
 
         int do_moving_window_before_restart;
         is >> do_moving_window_before_restart;
-        GotoNextLine(is);
+        ablastr::utils::text::goto_next_line(is);
 
         if (do_moving_window_before_restart) {
             moving_window_x = moving_window_x_checkpoint;
         }
 
         is >> time_of_last_gal_shift;
-        GotoNextLine(is);
+        ablastr::utils::text::goto_next_line(is);
 
-
-        auto & warpx = WarpX::GetInstance();
-        for (int idiag = 0; idiag < warpx.GetMultiDiags().GetTotalDiags(); ++idiag)
+        for (int idiag = 0; idiag < multi_diags->GetTotalDiags(); ++idiag)
         {
-            if( warpx.GetMultiDiags().diagstypes(idiag) == DiagTypes::BackTransformed )
+            if( multi_diags->diagstypes(idiag) == DiagTypes::BackTransformed )
             {
-                auto& diag = warpx.GetMultiDiags().GetDiag(idiag);
+                auto& diag = multi_diags->GetDiag(idiag);
                 if (diag.getnumbuffers() > 0) {
                     diag.InitDataBeforeRestart();
                     for (int i_buffer=0; i_buffer<diag.getnumbuffers(); ++i_buffer){
@@ -271,7 +268,7 @@ WarpX::InitFromCheckpoint ()
                     diag.InitData();
                 }
             } else {
-                warpx.GetMultiDiags().GetDiag(idiag).InitData();
+                multi_diags->GetDiag(idiag).InitData();
             }
         }
     }
@@ -386,16 +383,18 @@ WarpX::InitFromCheckpoint ()
     if (do_pml)
     {
         for (int lev = 0; lev < nlevs; ++lev) {
-            if (pml[lev])
+            if (pml[lev]) {
                 pml[lev]->Restart(amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "pml"));
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
-            if (pml_rz[lev])
+            }
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
+            if (pml_rz[lev]) {
                 pml_rz[lev]->Restart(amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "pml_rz"));
+            }
 #endif
         }
     }
 
-    InitializeEBGridData(maxLevel());
+    if (EB::enabled()) { InitializeEBGridData(maxLevel()); }
 
     // Initialize particles
     mypc->AllocData();
