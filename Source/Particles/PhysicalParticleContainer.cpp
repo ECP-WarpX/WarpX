@@ -1368,9 +1368,11 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
     const auto problo = geom.ProbLoArray();
 
 #ifdef AMREX_USE_EB
+    // Extract data structures for embedded boundaries
     amrex::EBFArrayBoxFactory const& eb_box_factory = WarpX::GetInstance().fieldEBFactory(0);
     amrex::FabArray<amrex::EBCellFlagFab> const& eb_flag = eb_box_factory.getMultiEBCellFlagFab();
     amrex::MultiCutFab const& eb_bnd_area = eb_box_factory.getBndryArea();
+    amrex::MultiCutFab const& eb_bnd_normal = eb_box_factory.getBndryNormal();
 #endif
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(0);
@@ -1468,8 +1470,10 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         }
 
 #ifdef AMREX_USE_EB
+        // Extract data structures for embedded boundaries
         auto const& eb_flag_arr = eb_flag.array(mfi);
         amrex::Array4<const amrex::Real> const& eb_bnd_area_arr = eb_bnd_area.array(mfi);
+        amrex::Array4<const amrex::Real> const& eb_bnd_normal_arr = eb_bnd_normal.array(mfi);
 #endif
 
         amrex::ParallelForRNG(overlap_box, [=] AMREX_GPU_DEVICE (int i, int j, int k, amrex::RandomEngine const& engine) noexcept
@@ -1577,15 +1581,13 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
             Real scale_fac;
 #ifdef AMREX_USE_EB
             if (inject_from_eb) {
-                scale_fac = compute_scale_fac_area_eb(dx, pcounts[index], eb_bnd_area_arr, iv);
+                scale_fac = compute_scale_fac_area_eb(dx, num_ppc_real,
+                    eb_bnd_area_arr, eb_bnd_normal_arr, i, j, k );
             } else
 #endif
             {
                 scale_fac = compute_scale_fac_area_plane(dx, num_ppc_real, flux_normal_axis);
             }
-
-            auto lo = getCellCoords(overlap_corner, dx, {0._rt, 0._rt, 0._rt}, iv);
-            auto hi = getCellCoords(overlap_corner, dx, {1._rt, 1._rt, 1._rt}, iv);
 
             if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
                 int r = compute_area_weights(lrrfac, flux_normal_axis);

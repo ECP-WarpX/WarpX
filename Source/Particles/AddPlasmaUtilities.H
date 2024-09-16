@@ -71,12 +71,46 @@ int compute_area_weights (const amrex::IntVect& iv, const int normal_axis) {
     return r;
 }
 
+
+#ifdef AMREX_USE_EB
 /*
   This computes the scale_fac (used for setting the particle weights) on a on area basis
-  (used for flux injection).
+  (used for flux injection from the embedded boundary).
  */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-amrex::Real compute_scale_fac_area (const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>& dx,
+amrex::Real compute_scale_fac_area_eb (
+    const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>& dx,
+    const amrex::Real num_ppc_real,
+    amrex::Array4<const amrex::Real> const& eb_bnd_area_arr,
+    amrex::Array4<const amrex::Real> const& eb_bnd_normal_arr,
+    int i, int j, int k ) {
+    using namespace amrex::literals;
+    // Scale particle weight by the area of the emitting surface, within one cell
+    amrex::Real scale_fac = 0.0_rt;
+#if defined(WARPX_DIM_3D)
+    // By definition, eb_bnd_area_arr is normalized (unitless).
+    // Here we undo the normalization (i.e. multiply by the surface used for normalization).
+    const amrex::Real nx = eb_bnd_normal_arr(i,j,k,0);
+    const amrex::Real ny = eb_bnd_normal_arr(i,j,k,1);
+    const amrex::Real nz = eb_bnd_normal_arr(i,j,k,2);
+    scale_fac = eb_bnd_area_arr(i,j,k) *
+        std::sqrt(amrex::Math::powi<2>(nx*dx[1]*dx[2]) +
+                  amrex::Math::powi<2>(ny*dx[0]*dx[2]) +
+                  amrex::Math::powi<2>(nz*dx[0]*dx[1]));
+#else
+    // TODO Implement in RZ, 2D, and 1D
+#endif
+    scale_fac /= num_ppc_real;
+    return scale_fac;
+}
+#endif
+
+/*
+  This computes the scale_fac (used for setting the particle weights) on a on area basis
+  (used for flux injection from a plane).
+ */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real compute_scale_fac_area_plane (const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>& dx,
                                     const amrex::Real num_ppc_real, const int flux_normal_axis) {
     using namespace amrex::literals;
     amrex::Real scale_fac = AMREX_D_TERM(dx[0],*dx[1],*dx[2])/num_ppc_real;
