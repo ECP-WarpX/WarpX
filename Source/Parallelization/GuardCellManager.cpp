@@ -313,7 +313,7 @@ guardCellManager::Init (
         // when increasing the shape order by one, the support of the shape
         // factor grows symmetrically by half a cell on each side. So every
         // +2 orders, one touches one more cell point.
-        IntVect ng_FieldGather_noNCI = IntVect(AMREX_D_DECL(FGcell[nox],FGcell[nox],FGcell[nox]));
+        auto ng_FieldGather_noNCI = amrex::IntVect(AMREX_D_DECL(FGcell[nox], FGcell[nox], FGcell[nox]));
         ng_FieldGather_noNCI = ng_FieldGather_noNCI.min(ng_alloc_EB);
 
         // If NCI filter, add guard cells in the z direction
