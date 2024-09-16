@@ -114,11 +114,17 @@ compare_gaussian_flux(u_n, w, u_th=0.1, u_m=0.07, label="u_n")
 # Pick a direction that is orthogonal to the normal direction, and check the distribution
 vx = ny / np.sqrt(nx**2 + ny**2)
 vy = -nx / np.sqrt(nx**2 + ny**2)
-u_perp = ux * vx + uy * vy
+vz = 0
+u_perp = ux * vx + uy * vy + uz * vz
 compare_gaussian(u_perp, w, u_th=0.01, label="u_perp")
 
-# compare_gaussian(ux, w, u_th=0.1, label="u_x")
-# compare_gaussian(uz, w, u_th=0.1, label="u_z")
+# Pick the other perpendicular direction, and check the distribution
+# The third direction is obtained by the cross product (n x v)
+wx = ny * vz - nz * vy
+wy = nz * vx - nx * vz
+wz = nx * vy - ny * vx
+u_perp2 = ux * wx + uy * wy + uz * wz
+compare_gaussian(u_perp2, w, u_th=0.01, label="u_perp")
 
 plt.tight_layout()
 plt.savefig("Distribution.png")
