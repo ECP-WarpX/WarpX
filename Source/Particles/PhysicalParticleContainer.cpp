@@ -1456,7 +1456,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
             auto hi = getCellCoords(overlap_corner, dx, {1._rt, 1._rt, 1._rt}, iv);
 
             // Skip cells that do not overlap with the injection plane
-            if (!flux_pos->overlapsWith(lo, hi)) return;
+            if (!flux_pos->overlapsWith(lo, hi)) { return; }
 
             // Determine how many particles to inject in this cell
             auto index = overlap_box.index(iv);
@@ -1539,8 +1539,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
             Real scale_fac = compute_scale_fac_area(dx, num_ppc_real, flux_normal_axis);
 
             if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
-                int r = compute_area_weights(lrrfac, flux_normal_axis);
-                scale_fac /= r;
+                scale_fac /= compute_area_weights(lrrfac, flux_normal_axis);
             }
 
             for (int i_part = 0; i_part < pcounts[index]; ++i_part)
