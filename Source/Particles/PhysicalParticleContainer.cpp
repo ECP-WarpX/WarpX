@@ -1455,18 +1455,16 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
             auto lo = getCellCoords(overlap_corner, dx, {0._rt, 0._rt, 0._rt}, iv);
             auto hi = getCellCoords(overlap_corner, dx, {1._rt, 1._rt, 1._rt}, iv);
 
-            // Skip cells that do not overlap with the injection plane
-            if (!flux_pos->overlapsWith(lo, hi)) { return; }
-
-            // Determine how many particles to inject in this cell
-            auto index = overlap_box.index(iv);
-            const int num_ppc_int = static_cast<int>(num_ppc_real + amrex::Random(engine));
-            // Take into account refined injection region
-            int r = 1;
-            if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
-                r = compute_area_weights(lrrfac, flux_normal_axis);
+            if (flux_pos->overlapsWith(lo, hi))
+            {
+                auto index = overlap_box.index(iv);
+                int r = 1;
+                if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
+                    r = compute_area_weights(lrrfac, flux_normal_axis);
+                }
+                const int num_ppc_int = static_cast<int>(num_ppc_real*r + amrex::Random(engine));
+                pcounts[index] = num_ppc_int;
             }
-            pcounts[index] = num_ppc_int*r;
         });
 
         // Max number of new particles. All of them are created,
