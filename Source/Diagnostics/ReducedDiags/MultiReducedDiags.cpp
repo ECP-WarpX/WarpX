@@ -9,6 +9,7 @@
 #include "BeamRelevant.H"
 #include "ChargeOnEB.H"
 #include "ColliderRelevant.H"
+#include "DifferentialLuminosity.H"
 #include "FieldEnergy.H"
 #include "FieldMaximum.H"
 #include "FieldProbe.H"
@@ -61,6 +62,7 @@ MultiReducedDiags::MultiReducedDiags ()
             {"RhoMaximum",            [](CS s){return std::make_unique<RhoMaximum>(s);}},
             {"BeamRelevant",          [](CS s){return std::make_unique<BeamRelevant>(s);}},
             {"ColliderRelevant",      [](CS s){return std::make_unique<ColliderRelevant>(s);}},
+            {"DifferentialLuminosity",[](CS s){return std::make_unique<DifferentialLuminosity>(s);}},
             {"LoadBalanceCosts",      [](CS s){return std::make_unique<LoadBalanceCosts>(s);}},
             {"LoadBalanceEfficiency", [](CS s){return std::make_unique<LoadBalanceEfficiency>(s);}},
             {"ParticleHistogram",     [](CS s){return std::make_unique<ParticleHistogram>(s);}},
