@@ -54,4 +54,4 @@ algo.particle_shape = 3
 diagnostics.diags_names = diag1
 diag1.intervals = 20
 diag1.diag_type = Full
-diag1.fields_to_plot = Ex Ey Ez Bx Bz jx jy jz
+diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz
