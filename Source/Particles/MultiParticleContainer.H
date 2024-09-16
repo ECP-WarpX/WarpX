@@ -14,6 +14,7 @@
 #include "MultiParticleContainer_fwd.H"
 
 #include "Evolve/WarpXDtType.H"
+#include "Evolve/WarpXPushType.H"
 #include "Particles/Collision/CollisionHandler.H"
 #ifdef WARPX_QED
 #   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper_fwd.H"
@@ -22,7 +23,6 @@
 #include "PhysicalParticleContainer.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpXParticleContainer.H"
 #include "ParticleBoundaries.H"
 
@@ -69,25 +69,27 @@ public:
 
     MultiParticleContainer (amrex::AmrCore* amr_core);
 
-    ~MultiParticleContainer() {}
+    ~MultiParticleContainer() = default;
 
-    WarpXParticleContainer&
-    GetParticleContainer (int ispecies) const {return *allcontainers[ispecies];}
+    MultiParticleContainer (MultiParticleContainer const &)             = delete;
+    MultiParticleContainer& operator= (MultiParticleContainer const & ) = delete;
+    MultiParticleContainer(MultiParticleContainer&& )                   = default;
+    MultiParticleContainer& operator=(MultiParticleContainer&& )        = default;
 
-    WarpXParticleContainer*
-    GetParticleContainerPtr (int ispecies) const {return allcontainers[ispecies].get();}
+    [[nodiscard]] WarpXParticleContainer&
+    GetParticleContainer (int index) const {return *allcontainers[index];}
 
-    WarpXParticleContainer&
+    [[nodiscard]] WarpXParticleContainer*
+    GetParticleContainerPtr (int index) const {return allcontainers[index].get();}
+
+    [[nodiscard]] WarpXParticleContainer&
     GetParticleContainerFromName (const std::string& name) const;
 
-#ifdef WARPX_USE_OPENPMD
-    std::unique_ptr<WarpXParticleContainer>& GetUniqueContainer(int ispecies) {
-      return  allcontainers[ispecies];
+    std::array<amrex::ParticleReal, 3> meanParticleVelocity(int index) {
+        return allcontainers[index]->meanParticleVelocity();
     }
-#endif
-    std::array<amrex::ParticleReal, 3> meanParticleVelocity(int ispecies) {
-        return allcontainers[ispecies]->meanParticleVelocity();
-    }
+
+    amrex::ParticleReal maxParticleVelocity();
 
     void AllocData ();
 
@@ -95,11 +97,11 @@ public:
 
     void InitMultiPhysicsModules ();
 
-    ///
-    /// This evolves all the particles by one PIC time step, including current deposition, the
-    /// field solve, and pushing the particles, for all the species in the MultiParticleContainer.
-    /// This is the electromagnetic version.
-    ///
+    /**
+    * \brief This evolves all the particles by one PIC time step, including current deposition, the
+    * field solve, and pushing the particles, for all the species in the MultiParticleContainer.
+    * This is the electromagnetic version.
+    */
     void Evolve (int lev,
                  const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
                  const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz,
@@ -108,21 +110,21 @@ public:
                  amrex::MultiFab* rho, amrex::MultiFab* crho,
                  const amrex::MultiFab* cEx, const amrex::MultiFab* cEy, const amrex::MultiFab* cEz,
                  const amrex::MultiFab* cBx, const amrex::MultiFab* cBy, const amrex::MultiFab* cBz,
-                 amrex::Real t, amrex::Real dt, DtType a_dt_type=DtType::Full, bool skip_deposition=false);
+                 amrex::Real t, amrex::Real dt, DtType a_dt_type=DtType::Full, bool skip_deposition=false,
+                 PushType push_type=PushType::Explicit);
 
-    ///
-    /// This pushes the particle positions by one half time step for all the species in the
-    /// MultiParticleContainer. It is used to desynchronize the particles after initializaton
-    /// or when restarting from a checkpoint.
-    ///
+    /**
+    * \brief This pushes the particle positions by one time step for all the species in the
+    * MultiParticleContainer.
+    */
     void PushX (amrex::Real dt);
 
-    ///
-    /// This pushes the particle momenta by dt for all the species in the
-    /// MultiParticleContainer. It is used to desynchronize the particles after initializaton
-    /// or when restarting from a checkpoint.  It is also used to synchronize particles at the
-    /// the end of the run.  This is the electromagnetic version.
-    ///
+    /**
+    * This pushes the particle momenta by dt for all the species in the
+    * MultiParticleContainer. It is used to desynchronize the particles after initialization
+    * or when restarting from a checkpoint.  It is also used to synchronize particles at the
+    * the end of the run.  This is the electromagnetic version.
+    */
     void PushP (int lev, amrex::Real dt,
                 const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
                 const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz);
@@ -133,7 +135,7 @@ public:
     *
     * @param[in] lev the index of the refinement level.
     */
-    std::unique_ptr<amrex::MultiFab> GetZeroChargeDensity(const int lev);
+    std::unique_ptr<amrex::MultiFab> GetZeroChargeDensity(int lev);
 
     /**
      * \brief Deposit charge density.
@@ -146,7 +148,7 @@ public:
      */
     void
     DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                   const amrex::Real relative_time);
+                   amrex::Real relative_time);
 
     /**
      * \brief Deposit current density.
@@ -161,7 +163,7 @@ public:
      */
     void
     DepositCurrent (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
-                    const amrex::Real dt, const amrex::Real relative_time);
+                    amrex::Real dt, amrex::Real relative_time);
 
     ///
     /// This deposits the particle charge onto a node-centered MultiFab and returns a unique ptr
@@ -180,7 +182,7 @@ public:
     *
     * @param[in] timestep the current timestep.
     */
-    void doResampling (const int timestep);
+    void doResampling (int timestep, bool verbose);
 
 #ifdef WARPX_QED
     /** If Schwinger process is activated, this function is called at every
@@ -194,9 +196,9 @@ public:
 
     /** This function computes the box outside which Schwinger process is disabled. The box is
      * defined by m_qed_schwinger_xmin/xmax/ymin/ymax/zmin/zmax and the warpx level 0 geometry
-     * object (to make the link between Real and int quatities).
+     * object (to make the link between Real and int quantities).
      */
-    amrex::Box ComputeSchwingerGlobalBox () const;
+    [[nodiscard]] amrex::Box ComputeSchwingerGlobalBox () const;
 #endif
 
     void Restart (const std::string& dir);
@@ -213,7 +215,9 @@ public:
 
     void defineAllParticleTiles ();
 
-    void RedistributeLocal (const int num_ghost);
+    void deleteInvalidParticles ();
+
+    void RedistributeLocal (int num_ghost);
 
     /** Apply BC. For now, just discard particles outside the domain, regardless
      *  of the whole simulation BC. */
@@ -226,66 +230,67 @@ public:
     *
     * @param[in] lev the index of the refinement level.
     */
-    amrex::Vector<amrex::Long> GetZeroParticlesInGrid(const int lev) const;
+    [[nodiscard]] amrex::Vector<amrex::Long> GetZeroParticlesInGrid(int lev) const;
 
-    amrex::Vector<amrex::Long> NumberOfParticlesInGrid(int lev) const;
+    [[nodiscard]] amrex::Vector<amrex::Long> NumberOfParticlesInGrid(int lev) const;
 
     void Increment (amrex::MultiFab& mf, int lev);
 
     void SetParticleBoxArray (int lev, amrex::BoxArray& new_ba);
     void SetParticleDistributionMap (int lev, amrex::DistributionMapping& new_dm);
 
-    int nSpecies() const {return species_names.size();}
+    [[nodiscard]] int nSpecies () const {return static_cast<int>(species_names.size());}
+    [[nodiscard]] int nLasers () const {return static_cast<int>(lasers_names.size());}
+    [[nodiscard]] int nContainers () const {return static_cast<int>(allcontainers.size());}
 
-    int nSpeciesBackTransformedDiagnostics() const {return nspecies_back_transformed_diagnostics;}
-    int mapSpeciesBackTransformedDiagnostics(int i) const {return map_species_back_transformed_diagnostics[i];}
-    int doBackTransformedDiagnostics() const {return do_back_transformed_diagnostics;}
     /** Whether back-transformed diagnostics need to be performed for any plasma species.
      *
      * \param[in] do_back_transformed_particles The parameter to set if back-transformed particles are set to true/false
      */
-    void SetDoBackTransformedParticles (const bool do_back_transformed_particles);
+    void SetDoBackTransformedParticles (bool do_back_transformed_particles);
     /** Whether back-transformed diagnostics is set for species with species_name.
      *
      * \param[in] species_name The species for which back-transformed particles is set.
      * \param[in] do_back_transformed_particles The parameter to set if back-transformed particles are set to true/false
      */
-    void SetDoBackTransformedParticles (std::string species_name, const bool do_back_transformed_particles);
+    void SetDoBackTransformedParticles (const std::string& species_name, bool do_back_transformed_particles);
 
-    int nSpeciesDepositOnMainGrid () const {
+    [[nodiscard]] int nSpeciesDepositOnMainGrid () const
+    {
         bool const onMainGrid = true;
         auto const & v = m_deposit_on_main_grid;
-        return std::count( v.begin(), v.end(), onMainGrid );
+        return static_cast<int>(std::count( v.begin(), v.end(), onMainGrid ));
     }
 
-    int nSpeciesGatherFromMainGrid() const {
+    [[nodiscard]] int nSpeciesGatherFromMainGrid() const
+    {
         bool const fromMainGrid = true;
         auto const & v = m_gather_from_main_grid;
-        return std::count( v.begin(), v.end(), fromMainGrid );
+        return static_cast<int>(std::count( v.begin(), v.end(), fromMainGrid ));
     }
-
-    void GetLabFrameData(const std::string& snapshot_name,
-                         const int i_lab, const int direction,
-                         const amrex::Real z_old, const amrex::Real z_new,
-                         const amrex::Real t_boost, const amrex::Real t_lab, const amrex::Real dt,
-                         amrex::Vector<WarpXParticleContainer::DiagnosticParticleData>& parts) const;
 
     // Inject particles during the simulation (for particles entering the
     // simulation domain after some iterations, due to flowing plasma and/or
     // moving window).
     void ContinuousInjection(const amrex::RealBox& injection_box) const;
-    // Update injection position for continuously-injected species.
-    void UpdateContinuousInjectionPosition(amrex::Real dt) const;
-    int doContinuousInjection() const;
+
+    /**
+     * \brief  Update antenna position for continuous injection of lasers
+     *         in a boosted frame. Empty function for containers other than lasers.
+     */
+    void UpdateAntennaPosition(amrex::Real dt) const;
+
+    [[nodiscard]] int doContinuousInjection() const;
 
     // Inject particles from a surface during the simulation
     void ContinuousFluxInjection(amrex::Real t, amrex::Real dt) const;
 
-    std::vector<std::string> GetSpeciesNames() const { return species_names; }
+    [[nodiscard]] std::vector<std::string> GetSpeciesNames() const { return species_names; }
 
-    std::vector<std::string> GetLasersNames() const { return lasers_names; }
+    [[nodiscard]] std::vector<std::string> GetLasersNames() const { return lasers_names; }
 
-    std::vector<std::string> GetSpeciesAndLasersNames() const {
+    [[nodiscard]] std::vector<std::string> GetSpeciesAndLasersNames() const
+    {
         std::vector<std::string> tmp = species_names;
         tmp.insert(tmp.end(), lasers_names.begin(), lasers_names.end());
         return tmp;
@@ -293,13 +298,10 @@ public:
 
     PhysicalParticleContainer& GetPCtmp () { return *pc_tmp; }
 
-    void ScrapeParticles (const amrex::Vector<const amrex::MultiFab*>& distance_to_eb);
+    void ScrapeParticlesAtEB (const amrex::Vector<const amrex::MultiFab*>& distance_to_eb);
 
     std::string m_B_ext_particle_s = "none";
     std::string m_E_ext_particle_s = "none";
-    // External fields added to particle fields.
-    amrex::Vector<amrex::ParticleReal> m_B_external_particle;
-    amrex::Vector<amrex::ParticleReal> m_E_external_particle;
     // Parser for B_external on the particle
     std::unique_ptr<amrex::Parser> m_Bx_particle_parser;
     std::unique_ptr<amrex::Parser> m_By_particle_parser;
@@ -332,7 +334,10 @@ public:
                       const amrex::MultiFab& Bz);
 #endif
 
-    int getSpeciesID (std::string product_str) const;
+    [[nodiscard]] int getSpeciesID (const std::string& product_str) const;
+
+    amrex::Vector<std::unique_ptr<WarpXParticleContainer>>::iterator begin() {return allcontainers.begin();}
+    amrex::Vector<std::unique_ptr<WarpXParticleContainer>>::iterator end() {return allcontainers.end();}
 
 protected:
 
@@ -371,6 +376,7 @@ protected:
 
     //! instead of depositing (current, charge) on the finest patch level, deposit to the coarsest grid
     std::vector<bool> m_deposit_on_main_grid;
+    std::vector<bool> m_laser_deposit_on_main_grid;
 
     //! instead of gathering fields from the finest patch level, gather from the coarsest
     std::vector<bool> m_gather_from_main_grid;
@@ -378,6 +384,7 @@ protected:
     std::vector<PCTypes> species_types;
 
     template<typename ...Args>
+    [[nodiscard]]
     amrex::MFItInfo getMFItInfo (const WarpXParticleContainer& pc_src,
                                  Args const&... pc_dsts) const noexcept
     {
@@ -385,8 +392,8 @@ protected:
 
         MFItInfoCheckTiling(pc_src, pc_dsts...);
 
-        if (pc_src.do_tiling && amrex::Gpu::notInLaunchRegion()) {
-            info.EnableTiling(pc_src.tile_size);
+        if (WarpXParticleContainer::do_tiling && amrex::Gpu::notInLaunchRegion()) {
+            info.EnableTiling(WarpXParticleContainer::tile_size);
         }
 
 #ifdef AMREX_USE_OMP
@@ -425,12 +432,12 @@ protected:
     /**
      * Returns the number of species having Quantum Synchrotron process enabled
      */
-    int NSpeciesQuantumSync() const { return  m_nspecies_quantum_sync;}
+    [[nodiscard]] int NSpeciesQuantumSync() const { return  m_nspecies_quantum_sync;}
 
     /**
      * Returns the number of species having Breit Wheeler process enabled
      */
-    int NSpeciesBreitWheeler() const { return m_nspecies_breit_wheeler;}
+    [[nodiscard]] int NSpeciesBreitWheeler() const { return m_nspecies_breit_wheeler;}
 
     /**
      * Initializes the Quantum Synchrotron engine
@@ -455,7 +462,7 @@ protected:
     void BreitWheelerGenerateTable();
 
     /** Whether or not to activate Schwinger process */
-    bool m_do_qed_schwinger = 0;
+    bool m_do_qed_schwinger = false;
     /** Name of Schwinger electron product species */
     std::string m_qed_schwinger_ele_product_name;
     /** Name of Schwinger positron product species */
@@ -494,24 +501,16 @@ private:
 
     void mapSpeciesProduct ();
 
-    // Number of species dumped in BackTransformedDiagnostics
-    int nspecies_back_transformed_diagnostics = 0;
-    // map_species_back_transformed_diagnostics[i] is the species ID in
-    // MultiParticleContainer for 0<i<nspecies_back_transformed_diagnostics
-    std::vector<int> map_species_back_transformed_diagnostics;
-    int do_back_transformed_diagnostics = 0;
     bool m_do_back_transformed_particles = false;
 
     void MFItInfoCheckTiling(const WarpXParticleContainer& /*pc_src*/) const noexcept
-    {
-        return;
-    }
+    {}
 
     template<typename First, typename ...Args>
     void MFItInfoCheckTiling(const WarpXParticleContainer& pc_src,
                              First const& pc_dst, Args const&... others) const noexcept
     {
-        if (pc_src.do_tiling && amrex::Gpu::notInLaunchRegion()) {
+        if (WarpXParticleContainer::do_tiling && amrex::Gpu::notInLaunchRegion()) {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(pc_dst.do_tiling,
                 "For particle creation processes, either all or none of the "
                 "particle species must use tiling.");

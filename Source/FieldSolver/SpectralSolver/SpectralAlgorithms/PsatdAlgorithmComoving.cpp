@@ -1,8 +1,11 @@
 #include "PsatdAlgorithmComoving.H"
 
 #include "Utils/TextMsg.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpX_Complex.H"
+
+#include <ablastr/utils/Enums.H>
 
 #include <AMReX.H>
 #include <AMReX_Array4.H>
@@ -12,38 +15,39 @@
 #include <AMReX_GpuComplex.H>
 #include <AMReX_GpuLaunch.H>
 #include <AMReX_GpuQualifiers.H>
+#include <AMReX_Math.H>
 #include <AMReX_MFIter.H>
 #include <AMReX_PODVector.H>
 
 #include <cmath>
 
-#if WARPX_USE_PSATD
+#if WARPX_USE_FFT
 
 using namespace amrex;
 
 PsatdAlgorithmComoving::PsatdAlgorithmComoving (const SpectralKSpace& spectral_kspace,
                                                 const DistributionMapping& dm,
                                                 const SpectralFieldIndex& spectral_index,
-                                                const int norder_x, const int norder_y,
-                                                const int norder_z, const bool nodal,
-                                                const amrex::IntVect& fill_guards,
+                                                const int norder_x,
+                                                const int norder_y,
+                                                const int norder_z,
+                                                ablastr::utils::enums::GridType grid_type,
                                                 const amrex::Vector<amrex::Real>& v_comoving,
                                                 const amrex::Real dt,
                                                 const bool update_with_rho)
-     // Members initialization
-     : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, nodal, fill_guards),
-       m_spectral_index(spectral_index),
+    // Members initialization
+     : SpectralBaseAlgorithm{spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, grid_type},
        // Initialize the infinite-order k vectors (the argument n_order = -1 selects
-       // the infinite order option, the argument nodal = false is then irrelevant)
-       kx_vec(spectral_kspace.getModifiedKComponent(dm, 0, -1, false)),
+       // the infinite order option, the argument grid_type=GridType::Staggered is then irrelevant)
+       kx_vec{spectral_kspace.getModifiedKComponent(dm, 0, -1, ablastr::utils::enums::GridType::Staggered)},
 #if defined(WARPX_DIM_3D)
-       ky_vec(spectral_kspace.getModifiedKComponent(dm, 1, -1, false)),
-       kz_vec(spectral_kspace.getModifiedKComponent(dm, 2, -1, false)),
+       ky_vec{spectral_kspace.getModifiedKComponent(dm, 1, -1, GridType::Staggered)},
+       kz_vec{spectral_kspace.getModifiedKComponent(dm, 2, -1, GridType::Staggered)},
 #else
-       kz_vec(spectral_kspace.getModifiedKComponent(dm, 1, -1, false)),
+       kz_vec{spectral_kspace.getModifiedKComponent(dm, 1, -1, ablastr::utils::enums::GridType::Staggered)},
 #endif
-       m_v_comoving(v_comoving),
-       m_dt(dt)
+       m_v_comoving{v_comoving},
+       m_dt{dt}
 {
     amrex::ignore_unused(update_with_rho);
 
@@ -75,15 +79,15 @@ PsatdAlgorithmComoving::pushSpectralFields (SpectralFieldData& f) const
         const amrex::Box& bx = f.fields[mfi].box();
 
         // Extract arrays for the fields to be updated
-        amrex::Array4<Complex> fields = f.fields[mfi].array();
+        const amrex::Array4<Complex> fields = f.fields[mfi].array();
 
         // Extract arrays for the coefficients
-        amrex::Array4<const amrex::Real> C_arr    = C_coef   [mfi].array();
-        amrex::Array4<const amrex::Real> S_ck_arr = S_ck_coef[mfi].array();
-        amrex::Array4<const Complex>     X1_arr   = X1_coef  [mfi].array();
-        amrex::Array4<const Complex>     X2_arr   = X2_coef  [mfi].array();
-        amrex::Array4<const Complex>     X3_arr   = X3_coef  [mfi].array();
-        amrex::Array4<const Complex>     X4_arr   = X4_coef  [mfi].array();
+        const amrex::Array4<const amrex::Real> C_arr    = C_coef   [mfi].array();
+        const amrex::Array4<const amrex::Real> S_ck_arr = S_ck_coef[mfi].array();
+        const amrex::Array4<const Complex>     X1_arr   = X1_coef  [mfi].array();
+        const amrex::Array4<const Complex>     X2_arr   = X2_coef  [mfi].array();
+        const amrex::Array4<const Complex>     X3_arr   = X3_coef  [mfi].array();
+        const amrex::Array4<const Complex>     X4_arr   = X4_coef  [mfi].array();
 
         // Extract pointers for the k vectors
         const amrex::Real* modified_kx_arr = modified_kx_vec[mfi].dataPtr();
@@ -104,9 +108,9 @@ PsatdAlgorithmComoving::pushSpectralFields (SpectralFieldData& f) const
             const Complex Bz_old = fields(i,j,k,Idx.Bz);
 
             // Shortcuts for the values of J and rho
-            const Complex Jx = fields(i,j,k,Idx.Jx);
-            const Complex Jy = fields(i,j,k,Idx.Jy);
-            const Complex Jz = fields(i,j,k,Idx.Jz);
+            const Complex Jx = fields(i,j,k,Idx.Jx_mid);
+            const Complex Jy = fields(i,j,k,Idx.Jy_mid);
+            const Complex Jz = fields(i,j,k,Idx.Jz_mid);
             const Complex rho_old = fields(i,j,k,Idx.rho_old);
             const Complex rho_new = fields(i,j,k,Idx.rho_new);
 
@@ -178,13 +182,13 @@ void PsatdAlgorithmComoving::InitializeSpectralCoefficients (const SpectralKSpac
         const amrex::Real* kz     = kz_vec[mfi].dataPtr();
 
         // Extract arrays for the coefficients
-        amrex::Array4<amrex::Real> C    = C_coef     [mfi].array();
-        amrex::Array4<amrex::Real> S_ck = S_ck_coef  [mfi].array();
-        amrex::Array4<Complex>     X1   = X1_coef    [mfi].array();
-        amrex::Array4<Complex>     X2   = X2_coef    [mfi].array();
-        amrex::Array4<Complex>     X3   = X3_coef    [mfi].array();
-        amrex::Array4<Complex>     X4   = X4_coef    [mfi].array();
-        amrex::Array4<Complex>     T2   = Theta2_coef[mfi].array();
+        const amrex::Array4<amrex::Real> C    = C_coef     [mfi].array();
+        const amrex::Array4<amrex::Real> S_ck = S_ck_coef  [mfi].array();
+        const amrex::Array4<Complex>     X1   = X1_coef    [mfi].array();
+        const amrex::Array4<Complex>     X2   = X2_coef    [mfi].array();
+        const amrex::Array4<Complex>     X3   = X3_coef    [mfi].array();
+        const amrex::Array4<Complex>     X4   = X4_coef    [mfi].array();
+        const amrex::Array4<Complex>     T2   = Theta2_coef[mfi].array();
 
         // Store comoving velocity
         const amrex::Real vx = m_v_comoving[0];
@@ -198,21 +202,21 @@ void PsatdAlgorithmComoving::InitializeSpectralCoefficients (const SpectralKSpac
         {
             // Calculate norm of finite-order k vector
             const amrex::Real knorm_mod = std::sqrt(
-                std::pow(kx_mod[i], 2) +
+                amrex::Math::powi<2>(kx_mod[i]) +
 #if defined(WARPX_DIM_3D)
-                std::pow(ky_mod[j], 2) +
-                std::pow(kz_mod[k], 2));
+                amrex::Math::powi<2>(ky_mod[j]) +
+                amrex::Math::powi<2>(kz_mod[k]));
 #else
-                std::pow(kz_mod[j], 2));
+                amrex::Math::powi<2>(kz_mod[j]));
 #endif
             // Calculate norm of infinite-order k vector
             const amrex::Real knorm = std::sqrt(
-                std::pow(kx[i], 2) +
+                amrex::Math::powi<2>(kx[i]) +
 #if defined(WARPX_DIM_3D)
-                std::pow(ky[j], 2) +
-                std::pow(kz[k], 2));
+                amrex::Math::powi<2>(ky[j]) +
+                amrex::Math::powi<2>(kz[k]));
 #else
-                std::pow(kz[j], 2));
+                amrex::Math::powi<2>(kz[j]));
 #endif
             // Physical constants c, c**2, and epsilon_0, and imaginary unit
             constexpr amrex::Real c   = PhysConst::c;
@@ -254,7 +258,7 @@ void PsatdAlgorithmComoving::InitializeSpectralCoefficients (const SpectralKSpac
 
                 if ( (nu != om_mod/om) && (nu != -om_mod/om) && (nu != 0.) ) {
 
-                    Complex x1 = om2 / (om2_mod - nu * nu * om2)
+                    const Complex x1 = om2 / (om2_mod - nu * nu * om2)
                         * (theta_star - theta * C(i,j,k) + I * nu * om * theta * S_ck(i,j,k));
 
                     // X1 multiplies i*(k \times J) in the update equation for B
@@ -424,7 +428,7 @@ void PsatdAlgorithmComoving::CurrentCorrection (SpectralFieldData& field_data)
         const amrex::Box& bx = field_data.fields[mfi].box();
 
         // Extract arrays for the fields to be updated
-        amrex::Array4<Complex> fields = field_data.fields[mfi].array();
+        const amrex::Array4<Complex> fields = field_data.fields[mfi].array();
 
         // Extract pointers for the k vectors
         const amrex::Real* const modified_kx_arr = modified_kx_vec[mfi].dataPtr();
@@ -448,9 +452,9 @@ void PsatdAlgorithmComoving::CurrentCorrection (SpectralFieldData& field_data)
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
             // Shortcuts for the values of J and rho
-            const Complex Jx = fields(i,j,k,Idx.Jx);
-            const Complex Jy = fields(i,j,k,Idx.Jy);
-            const Complex Jz = fields(i,j,k,Idx.Jz);
+            const Complex Jx = fields(i,j,k,Idx.Jx_mid);
+            const Complex Jy = fields(i,j,k,Idx.Jy_mid);
+            const Complex Jz = fields(i,j,k,Idx.Jz_mid);
             const Complex rho_old = fields(i,j,k,Idx.rho_old);
             const Complex rho_new = fields(i,j,k,Idx.rho_new);
 
@@ -483,15 +487,15 @@ void PsatdAlgorithmComoving::CurrentCorrection (SpectralFieldData& field_data)
                     const Complex theta = amrex::exp(- I * k_dot_v * dt * 0.5_rt);
                     const Complex den = 1._rt - theta * theta;
 
-                    fields(i,j,k,Idx.Jx) = Jx - (kmod_dot_J + k_dot_v * theta * (rho_new - rho_old) / den) * kx_mod / (knorm_mod * knorm_mod);
-                    fields(i,j,k,Idx.Jy) = Jy - (kmod_dot_J + k_dot_v * theta * (rho_new - rho_old) / den) * ky_mod / (knorm_mod * knorm_mod);
-                    fields(i,j,k,Idx.Jz) = Jz - (kmod_dot_J + k_dot_v * theta * (rho_new - rho_old) / den) * kz_mod / (knorm_mod * knorm_mod);
+                    fields(i,j,k,Idx.Jx_mid) = Jx - (kmod_dot_J + k_dot_v * theta * (rho_new - rho_old) / den) * kx_mod / (knorm_mod * knorm_mod);
+                    fields(i,j,k,Idx.Jy_mid) = Jy - (kmod_dot_J + k_dot_v * theta * (rho_new - rho_old) / den) * ky_mod / (knorm_mod * knorm_mod);
+                    fields(i,j,k,Idx.Jz_mid) = Jz - (kmod_dot_J + k_dot_v * theta * (rho_new - rho_old) / den) * kz_mod / (knorm_mod * knorm_mod);
 
                 } else {
 
-                    fields(i,j,k,Idx.Jx) = Jx - (kmod_dot_J - I * (rho_new - rho_old) / dt) * kx_mod / (knorm_mod * knorm_mod);
-                    fields(i,j,k,Idx.Jy) = Jy - (kmod_dot_J - I * (rho_new - rho_old) / dt) * ky_mod / (knorm_mod * knorm_mod);
-                    fields(i,j,k,Idx.Jz) = Jz - (kmod_dot_J - I * (rho_new - rho_old) / dt) * kz_mod / (knorm_mod * knorm_mod);
+                    fields(i,j,k,Idx.Jx_mid) = Jx - (kmod_dot_J - I * (rho_new - rho_old) / dt) * kx_mod / (knorm_mod * knorm_mod);
+                    fields(i,j,k,Idx.Jy_mid) = Jy - (kmod_dot_J - I * (rho_new - rho_old) / dt) * ky_mod / (knorm_mod * knorm_mod);
+                    fields(i,j,k,Idx.Jz_mid) = Jz - (kmod_dot_J - I * (rho_new - rho_old) / dt) * kz_mod / (knorm_mod * knorm_mod);
                 }
             }
         });
@@ -501,8 +505,8 @@ void PsatdAlgorithmComoving::CurrentCorrection (SpectralFieldData& field_data)
 void
 PsatdAlgorithmComoving::VayDeposition (SpectralFieldData& /*field_data*/)
 {
-    amrex::Abort(Utils::TextMsg::Err(
-        "Vay deposition not implemented for comoving PSATD"));
+    WARPX_ABORT_WITH_MESSAGE(
+        "Vay deposition not implemented for comoving PSATD");
 }
 
-#endif // WARPX_USE_PSATD
+#endif // WARPX_USE_FFT

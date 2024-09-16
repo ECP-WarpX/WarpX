@@ -40,7 +40,6 @@ namespace {
         {"tritium"    , PhysicalSpecies::hydrogen3},
         {"proton"     , PhysicalSpecies::proton},
         {"helium"     , PhysicalSpecies::helium},
-        {"alpha"      , PhysicalSpecies::alpha},
         {"helium3"    , PhysicalSpecies::helium3},
         {"helium4"    , PhysicalSpecies::helium4},
         {"alpha"      , PhysicalSpecies::alpha},
@@ -127,8 +126,9 @@ namespace {
 
     constexpr auto quiet_NaN = std::numeric_limits<amrex::Real>::quiet_NaN();
 
-    // The atomic mass data below is from this NIST page
+    // The atomic mass data below is from these NIST pages
     // https://physics.nist.gov/cgi-bin/Compositions/stand_alone.pl?ele=&ascii=ascii2&isotype=some
+    // https://physics.nist.gov/cgi-bin/cuu/Value?malu
     const
     std::map<PhysicalSpecies,Properties> species_to_properties
     {
@@ -178,7 +178,7 @@ namespace {
              amrex::Real(4.00260325413) * PhysConst::m_u,
              amrex::Real(2) * PhysConst::q_e}},
         {PhysicalSpecies::alpha, Properties{
-             amrex::Real(4.00260325413) * PhysConst::m_u - amrex::Real(2) * PhysConst::m_e,
+             amrex::Real(4.001506179127) * PhysConst::m_u,
              amrex::Real(2) * PhysConst::q_e}},
         {PhysicalSpecies::lithium, Properties{
              amrex::Real(6.967) * PhysConst::m_u,
@@ -255,6 +255,9 @@ namespace {
         {PhysicalSpecies::neon22, Properties{
              amrex::Real(21.991385114) * PhysConst::m_u,
              amrex::Real(10) * PhysConst::q_e}},
+        {PhysicalSpecies::aluminium, Properties{
+             amrex::Real(26.98153853) * PhysConst::m_u,
+             amrex::Real(13) * PhysConst::q_e}},
         {PhysicalSpecies::argon, Properties{
              amrex::Real(39.948) * PhysConst::m_u,
              amrex::Real(18) * PhysConst::q_e}},

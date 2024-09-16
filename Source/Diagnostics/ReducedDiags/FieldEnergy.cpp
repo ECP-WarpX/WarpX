@@ -7,13 +7,17 @@
 
 #include "FieldEnergy.H"
 
+#include "FieldSolver/Fields.H"
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
-#include "Utils/IntervalsParser.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "WarpX.H"
 
+#include <AMReX_Array4.H>
 #include <AMReX_Config.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_MFIter.H>
 #include <AMReX_Geometry.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_ParallelDescriptor.H>
@@ -25,20 +29,16 @@
 #include <vector>
 
 using namespace amrex;
+using namespace warpx::fields;
 
 // constructor
-FieldEnergy::FieldEnergy (std::string rd_name)
+FieldEnergy::FieldEnergy (const std::string& rd_name)
 : ReducedDiags{rd_name}
 {
-    // RZ coordinate is not working
-#if (defined WARPX_DIM_RZ)
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-        "FieldEnergy reduced diagnostics does not work for RZ coordinate.");
-#endif
 
     // read number of levels
     int nLevel = 0;
-    ParmParse pp_amr("amr");
+    const ParmParse pp_amr("amr");
     pp_amr.query("max_level", nLevel);
     nLevel += 1;
 
@@ -48,7 +48,7 @@ FieldEnergy::FieldEnergy (std::string rd_name)
 
     if (ParallelDescriptor::IOProcessor())
     {
-        if ( m_IsNotRestart )
+        if ( m_write_header )
         {
             // open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
@@ -67,7 +67,7 @@ FieldEnergy::FieldEnergy (std::string rd_name)
                 ofs << m_sep;
                 ofs << "[" << c++ << "]B_lev" + std::to_string(lev) + "(J)";
             }
-            ofs << std::endl;
+            ofs << "\n";
             // close file
             ofs.close();
         }
@@ -91,22 +91,29 @@ void FieldEnergy::ComputeDiags (int step)
     for (int lev = 0; lev < nLevel; ++lev)
     {
         // get MultiFab data at lev
-        const MultiFab & Ex = warpx.getEfield(lev,0);
-        const MultiFab & Ey = warpx.getEfield(lev,1);
-        const MultiFab & Ez = warpx.getEfield(lev,2);
-        const MultiFab & Bx = warpx.getBfield(lev,0);
-        const MultiFab & By = warpx.getBfield(lev,1);
-        const MultiFab & Bz = warpx.getBfield(lev,2);
+        const MultiFab & Ex = warpx.getField(FieldType::Efield_aux, lev,0);
+        const MultiFab & Ey = warpx.getField(FieldType::Efield_aux, lev,1);
+        const MultiFab & Ez = warpx.getField(FieldType::Efield_aux, lev,2);
+        const MultiFab & Bx = warpx.getField(FieldType::Bfield_aux, lev,0);
+        const MultiFab & By = warpx.getField(FieldType::Bfield_aux, lev,1);
+        const MultiFab & Bz = warpx.getField(FieldType::Bfield_aux, lev,2);
 
-        // get cell size
+        // get cell volume
+        const std::array<Real, 3> &dx = WarpX::CellSize(lev);
+        const amrex::Real dV = dx[0]*dx[1]*dx[2];
+
+#if defined(WARPX_DIM_RZ)
+        amrex::Real const tmpEx = ComputeNorm2RZ(Ex, lev);
+        amrex::Real const tmpEy = ComputeNorm2RZ(Ey, lev);
+        amrex::Real const tmpEz = ComputeNorm2RZ(Ez, lev);
+        amrex::Real const Es = tmpEx + tmpEy + tmpEz;
+
+        amrex::Real const tmpBx = ComputeNorm2RZ(Bx, lev);
+        amrex::Real const tmpBy = ComputeNorm2RZ(By, lev);
+        amrex::Real const tmpBz = ComputeNorm2RZ(Bz, lev);
+        amrex::Real const Bs = tmpBx + tmpBy + tmpBz;
+#else
         Geometry const & geom = warpx.Geom(lev);
-#if defined(WARPX_DIM_1D_Z)
-        auto dV = geom.CellSize(0);
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        auto dV = geom.CellSize(0) * geom.CellSize(1);
-#elif defined(WARPX_DIM_3D)
-        auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
-#endif
 
         // compute E squared
         Real const tmpEx = Ex.norm2(0,geom.periodicity());
@@ -119,6 +126,7 @@ void FieldEnergy::ComputeDiags (int step)
         Real const tmpBy = By.norm2(0,geom.periodicity());
         Real const tmpBz = Bz.norm2(0,geom.periodicity());
         Real const Bs = tmpBx*tmpBx + tmpBy*tmpBy + tmpBz*tmpBz;
+#endif
 
         constexpr int noutputs = 3; // total energy, E-field energy and B-field energy
         constexpr int index_total = 0;
@@ -143,3 +151,68 @@ void FieldEnergy::ComputeDiags (int step)
      *   ......] */
 }
 // end void FieldEnergy::ComputeDiags
+
+// Function that computes the sum of the field squared in RZ
+amrex::Real
+FieldEnergy::ComputeNorm2RZ(const amrex::MultiFab& field, const int lev)
+{
+    // get a reference to WarpX instance
+    auto & warpx = WarpX::GetInstance();
+
+    Geometry const & geom = warpx.Geom(lev);
+    const amrex::Real dr = geom.CellSize(0);
+
+    amrex::ReduceOps<amrex::ReduceOpSum> reduce_ops;
+    amrex::ReduceData<amrex::Real> reduce_data(reduce_ops);
+    using ReduceTuple = typename decltype(reduce_data)::Type;
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for ( amrex::MFIter mfi(field, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi )
+    {
+
+        amrex::Array4<const amrex::Real> const& field_arr = field.array(mfi);
+
+        const amrex::Box tilebox = mfi.tilebox();
+        amrex::Box tb = convert(tilebox, field.ixType().toIntVect());
+
+        // Lower corner of tile box physical domain
+        const amrex::XDim3 xyzmin = WarpX::LowerCorner(tilebox, lev, 0._rt);
+        const Dim3 lo = lbound(tilebox);
+        const Dim3 hi = ubound(tilebox);
+        const Real rmin = xyzmin.x + (tb.ixType().nodeCentered(0) ? 0._rt : 0.5_rt*dr);
+        const int irmin = lo.x;
+        const int irmax = hi.x;
+
+        int const ncomp = field.nComp();
+
+        for (int idir=0 ; idir < AMREX_SPACEDIM ; idir++) {
+            if (WarpX::field_boundary_hi[idir] == FieldBoundaryType::Periodic) {
+                // For periodic boundaries, do not include the data in the nodes
+                // on the upper edge of the domain
+                tb.enclosedCells(idir);
+            }
+        }
+
+        reduce_ops.eval(tb, ncomp, reduce_data,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) -> ReduceTuple
+            {
+                const amrex::Real r = rmin + (i - irmin)*dr;
+                amrex::Real volume_factor = r;
+                if (r == 0._rt) {
+                    volume_factor = dr/8._rt;
+                } else if (rmin == 0._rt && i == irmax) {
+                    volume_factor = r/2._rt - dr/8._rt;
+                }
+                const amrex::Real theta_integral = (n == 0 ? 2._rt : 1._rt);
+                return theta_integral*field_arr(i,j,k,n)*field_arr(i,j,k,n)*volume_factor;
+            });
+
+    }
+
+    const amrex::Real field_sum = amrex::get<0>(reduce_data.value());
+    const amrex::Real result = MathConst::pi*field_sum;
+    return result;
+}
+// end Real FieldEnergy::ComputeNorm2RZ

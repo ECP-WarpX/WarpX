@@ -1,43 +1,84 @@
 .. _usage-picmi:
+.. _usage-picmi-run:
 
-Python (PICMI)
-==============
+Parameters: Python (PICMI)
+==========================
+
+This documents on how to use WarpX as a Python script (e.g., ``python3 PICMI_script.py``).
 
 WarpX uses the `PICMI standard <https://github.com/picmi-standard/picmi>`__ for its Python input files.
-Python version 3.6 or newer is required.
+Complete example input files can be found in :ref:`the examples section <usage-examples>`.
 
-Example input files can be found in :ref:`the examples section <usage-examples>`.
-The examples support running in both modes by commenting and uncommenting the appropriate lines.
+In the input file, instances of classes are created defining the various aspects of the simulation.
+A variable of type :py:class:`pywarpx.picmi.Simulation` is the central object to which all other options are passed, defining the simulation time, field solver, registered species, etc.
+
+Once the simulation is fully configured, it can be used in one of two modes.
+**Interactive** use is the most common and can be :ref:`extended with custom runtime functionality <usage-python-extend>`:
+
+.. tab-set::
+
+   .. tab-item:: Interactive
+
+      :py:meth:`~pywarpx.picmi.Simulation.step`: run directly from Python
+
+   .. tab-item:: Preprocessor
+
+      :py:meth:`~pywarpx.picmi.Simulation.write_input_file`: create an :ref:`inputs file for a WarpX executable <running-cpp-parameters>`
+
+When run directly from Python, one can also extend WarpX with further custom user logic.
+See the :ref:`detailed workflow page <usage-python-extend>` on how to extend WarpX from Python.
+
 
 .. _usage-picmi-parameters:
 
-Parameters
-----------
+Simulation and Grid Setup
+-------------------------
 
-Simulation and grid setup
-^^^^^^^^^^^^^^^^^^^^^^^^^
+.. autoclass:: pywarpx.picmi.Simulation
+    :members: step, add_species, add_laser, add_applied_field, write_input_file
 
-The `Simulation` object is the central object in a PICMI script.
-It defines the simulation time, field solver, registered species, etc.
+.. autoclass:: pywarpx.picmi.Cartesian3DGrid
 
-.. autoclass:: picmistandard.PICMI_Simulation
-    :members: step, add_species, add_laser, write_input_file
+.. autoclass:: pywarpx.picmi.Cartesian2DGrid
+
+.. autoclass:: pywarpx.picmi.Cartesian1DGrid
+
+.. autoclass:: pywarpx.picmi.CylindricalGrid
+
+.. autoclass:: pywarpx.picmi.EmbeddedBoundary
 
 Field solvers define the updates of electric and magnetic fields.
 
-.. autoclass:: picmistandard.PICMI_ElectromagneticSolver
+.. autoclass:: pywarpx.picmi.ElectromagneticSolver
 
-.. autoclass:: picmistandard.PICMI_ElectrostaticSolver
+.. autoclass:: pywarpx.picmi.ElectrostaticSolver
 
-Grid define the geometry and discretization.
+Object that allows smoothing of fields.
 
-.. autoclass:: picmistandard.PICMI_Cartesian3DGrid
+.. autoclass:: pywarpx.picmi.BinomialSmoother
 
-.. autoclass:: picmistandard.PICMI_Cartesian2DGrid
+Evolve Schemes
+--------------
 
-.. autoclass:: picmistandard.PICMI_Cartesian1DGrid
+These define the scheme use to evolve the fields and particles.
+An instance of one of these would be passed as the `evolve_scheme` into the `Simulation`.
 
-.. autoclass:: picmistandard.PICMI_CylindricalGrid
+.. autoclass:: pywarpx.picmi.ExplicitEvolveScheme
+
+.. autoclass:: pywarpx.picmi.ThetaImplicitEMEvolveScheme
+
+.. autoclass:: pywarpx.picmi.SemiImplicitEMEvolveScheme
+
+There are several support classes use to specify components of the evolve schemes
+
+.. autoclass:: pywarpx.picmi.PicardNonlinearSolver
+
+.. autoclass:: pywarpx.picmi.NewtonNonlinearSolver
+
+.. autoclass:: pywarpx.picmi.GMRESLinearSolver
+
+Constants
+---------
 
 For convenience, the PICMI interface defines the following constants,
 which can be used directly inside any PICMI script. The values are in SI units.
@@ -49,121 +90,87 @@ which can be used directly inside any PICMI script. The values are in SI units.
 - ``picmi.constants.m_e``: The electron mass
 - ``picmi.constants.m_p``: The proton mass
 
-Additionally to self-consistent fields from the field solver, external fields can be applied.
+Applied fields
+--------------
 
-.. autoclass:: picmistandard.PICMI_ConstantAppliedField
+Instances of the classes below need to be passed to the method `add_applied_field` of the `Simulation` class.
 
-.. autoclass:: picmistandard.PICMI_AnalyticAppliedField
+.. autoclass:: pywarpx.picmi.AnalyticInitialField
 
-.. autoclass:: picmistandard.PICMI_Mirror
+.. autoclass:: pywarpx.picmi.ConstantAppliedField
 
-Diagnostics can be used to output data.
+.. autoclass:: pywarpx.picmi.AnalyticAppliedField
 
-.. autoclass:: picmistandard.PICMI_ParticleDiagnostic
+.. autoclass:: pywarpx.picmi.LoadInitialField
 
-.. autoclass:: picmistandard.PICMI_FieldDiagnostic
+.. autoclass:: pywarpx.picmi.PlasmaLens
 
-.. autoclass:: picmistandard.PICMI_ElectrostaticFieldDiagnostic
+.. autoclass:: pywarpx.picmi.Mirror
+
+Diagnostics
+-----------
+
+.. autoclass:: pywarpx.picmi.ParticleDiagnostic
+
+.. autoclass:: pywarpx.picmi.FieldDiagnostic
+
+.. autoclass:: pywarpx.picmi.ElectrostaticFieldDiagnostic
+
+.. autoclass:: pywarpx.picmi.Checkpoint
+
+.. autoclass:: pywarpx.picmi.ReducedDiagnostic
 
 Lab-frame diagnostics diagnostics are used when running boosted-frame simulations.
 
-.. autoclass:: picmistandard.PICMI_LabFrameParticleDiagnostic
+.. autoclass:: pywarpx.picmi.LabFrameParticleDiagnostic
 
-.. autoclass:: picmistandard.PICMI_LabFrameFieldDiagnostic
+.. autoclass:: pywarpx.picmi.LabFrameFieldDiagnostic
 
 Particles
-^^^^^^^^^
+---------
 
 Species objects are a collection of particles with similar properties.
 For instance, background plasma electrons, background plasma ions and an externally injected beam could each be their own particle species.
 
-.. autoclass:: picmistandard.PICMI_Species
+.. autoclass:: pywarpx.picmi.Species
 
-.. autoclass:: picmistandard.PICMI_MultiSpecies
+.. autoclass:: pywarpx.picmi.MultiSpecies
 
 Particle distributions can be used for to initialize particles in a particle species.
 
-.. autoclass:: picmistandard.PICMI_GaussianBunchDistribution
+.. autoclass:: pywarpx.picmi.GaussianBunchDistribution
 
-.. autoclass:: picmistandard.PICMI_UniformDistribution
+.. autoclass:: pywarpx.picmi.UniformDistribution
 
-.. autoclass:: picmistandard.PICMI_AnalyticDistribution
+.. autoclass:: pywarpx.picmi.AnalyticDistribution
 
-.. autoclass:: picmistandard.PICMI_ParticleListDistribution
+.. autoclass:: pywarpx.picmi.ParticleListDistribution
 
 Particle layouts determine how to microscopically place macro particles in a grid cell.
 
-.. autoclass:: picmistandard.PICMI_GriddedLayout
+.. autoclass:: pywarpx.picmi.GriddedLayout
 
-.. autoclass:: picmistandard.PICMI_PseudoRandomLayout
+.. autoclass:: pywarpx.picmi.PseudoRandomLayout
 
-Lasers
-^^^^^^
+Other operations related to particles:
+
+.. autoclass:: pywarpx.picmi.CoulombCollisions
+
+.. autoclass:: pywarpx.picmi.DSMCCollisions
+
+.. autoclass:: pywarpx.picmi.MCCCollisions
+
+.. autoclass:: pywarpx.picmi.FieldIonization
+
+Laser Pulses
+------------
 
 Laser profiles can be used to initialize laser pulses in the simulation.
 
-.. autoclass:: picmistandard.PICMI_GaussianLaser
+.. autoclass:: pywarpx.picmi.GaussianLaser
 
-.. autoclass:: picmistandard.PICMI_AnalyticLaser
+.. autoclass:: pywarpx.picmi.AnalyticLaser
 
 Laser injectors control where to initialize laser pulses on the simulation grid.
 
-.. autoclass:: picmistandard.PICMI_LaserAntenna
-
-
-.. _usage-picmi-run:
-
-Running
--------
-
-WarpX can be run in one of two modes. It can run as a preprocessor, using the
-Python input file to generate an input file to be used by the C++ version, or
-it can be run directly from Python.
-
-In either mode, if using a `virtual environment <https://docs.python.org/3/tutorial/venv.html>`__, be sure to activate it before compiling and running WarpX.
-
-
-Running WarpX directly from Python
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-For this, a full Python installation of WarpX is required, as described in :ref:`the install documentation <install-users>` (:ref:`developers <install-developers>`).
-
-In order to run a new simulation:
-
-* Create a **new directory**, where the simulation will be run.
-
-* Add a **Python script** in the directory.
-
-The input file should have the line ``sim.step()`` which runs the simulation.
-
-* **Run** the script with Python:
-
-.. code-block:: bash
-
-   mpirun -np <n_ranks> python <python_script>
-
-where ``<n_ranks>`` is the number of MPI ranks used, and ``<python_script>``
-is the name of the script.
-
-Using Python input as a preprocessor
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-In this case, only the pure Python version needs to be installed, as described :ref:`here <developers-gnumake-python>`.
-
-In order to run a new simulation:
-
-* Create a **new directory**, where the simulation will be run.
-
-* Add a **Python script** in the directory.
-
-The input file should have the line like ``sim.write_input_file(file_name = 'inputs_from_PICMI')``
-which runs the preprocessor, generating the AMReX inputs file.
-
-* **Run** the script with Python:
-
-.. code-block:: bash
-
-   python <python_script>
-
-where ``<python_script>`` is the name of the script.
-This creates the WarpX input file that you can run as normal with the WarpX executable.
+.. autoclass:: pywarpx.picmi.LaserAntenna

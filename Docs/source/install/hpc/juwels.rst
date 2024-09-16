@@ -57,12 +57,14 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cd $HOME/src/warpx
    rm -rf build
 
-   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_MPI_THREAD_MULTIPLE=OFF
+   cmake -S . -B build -DWarpX_DIMS="1;2;3" -DWarpX_COMPUTE=CUDA -DWarpX_FFT=ON -DWarpX_MPI_THREAD_MULTIPLE=OFF
    cmake --build build -j 16
 
 The other :ref:`general compile-time options <install-developers>` apply as usual.
 
-The executable will be generated in ``build/bin/``.
+**That's it!**
+A 3D WarpX executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-juwels>` with a :ref:`3D example inputs file <usage-examples>`.
+Most people execute the binary directly or copy it out to a location in ``$SCRATCH``.
 
 .. note::
 
@@ -73,6 +75,8 @@ The executable will be generated in ``build/bin/``.
       export OMPI_MCA_io=romio321
 
    in your job scripts, before running the ``srun`` command.
+
+.. _running-cpp-juwels:
 
 Running
 -------

@@ -4,7 +4,7 @@ Building WarpX with Spack
 =========================
 
 As mentioned in the :ref:`install section <install-users>`, WarpX can be installed using Spack.
-From the `Spack web page <https://spack.io>`_: "Spack is a package management tool designed to support multiple versions and configurations of software on a wide variety of platforms and environments."
+From the `Spack web page <https://spack.io>`__: "Spack is a package management tool designed to support multiple versions and configurations of software on a wide variety of platforms and environments."
 
 .. note::
 
@@ -17,6 +17,13 @@ From the `Spack web page <https://spack.io>`_: "Spack is a package management to
 
 Spack is available from `github <https://github.com/spack/spack>`_.
 Spack only needs to be cloned and can be used right away - there are no installation steps.
+You can add `binary caches <https://spack.io/spack-binary-packages/>`__ for faster builds:
+
+.. code-block:: bash
+
+   spack mirror add rolling https://binaries.spack.io/develop
+   spack buildcache keys --install --trust
+
 Do not miss out on `the official Spack tutorial <https://spack-tutorial.readthedocs.io/>`_ if you are new to Spack.
 
 The spack command, ``spack/bin/spack``, can be used directly or ``spack/bin`` can be added to your ``PATH`` environment variable.

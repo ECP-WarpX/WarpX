@@ -66,7 +66,7 @@ behavior of *each* individual MPI rank. The workflow for doing so is the followi
             cmake -S . -B build -DAMReX_BASE_PROFILE=OFF -DAMReX_TINY_PROFILE=ON
 
 - Run the simulation to be profiled. Note that the WarpX executable will create
-and new folder `bl_prof`, which contains the profiling data.
+  a new folder `bl_prof`, which contains the profiling data.
 
     .. note::
 
@@ -112,11 +112,16 @@ Nvidia Nsight-Systems
 
 `Vendor homepage <https://developer.nvidia.com/nsight-systems>`__ and `product manual <https://docs.nvidia.com/nsight-systems/>`__.
 
+Nsight-Systems provides system level profiling data, including CPU and GPU
+interactions. It runs quickly, and provides a convenient visualization of
+profiling results including NVTX timers.
+
 
 Perlmutter Example
 """"""""""""""""""
 
-Example on how to create traces on a multi-GPU system that uses the Slurm scheduler (e.g., NERSC's Perlmutter system):
+Example on how to create traces on a multi-GPU system that uses the Slurm scheduler (e.g., NERSC's Perlmutter system).
+You can either run this on an interactive node or use the Slurm batch script header :ref:`documented here <running-cpp-perlmutter>`.
 
 .. code-block:: bash
 
@@ -129,14 +134,9 @@ Example on how to create traces on a multi-GPU system that uses the Slurm schedu
    rm -rf ${TMPDIR} profiling*
    mkdir -p ${TMPDIR}
 
-   # 2021.5.1 (broken: lacks most trace info)
-   #NSYS="/global/common/software/nersc/pm-2021q4/easybuild/software/Nsight-Systems/2021.5.1/bin/nsys"
-   # 2021.4.1 (working)
-   NSYS="/opt/nvidia/hpc_sdk/Linux_x86_64/21.11/compilers/bin/nsys"
-
    # record
    srun --ntasks=4 --gpus=4 --cpu-bind=cores \
-       ${NSYS} profile -f true               \
+       nsys profile -f true               \
          -o profiling_%q{SLURM_TASK_PID}     \
          -t mpi,cuda,nvtx,osrt,openmp        \
          --mpi-impl=mpich                    \
@@ -144,13 +144,15 @@ Example on how to create traces on a multi-GPU system that uses the Slurm schedu
          inputs_3d                           \
            warpx.numprocs=1 1 4 amr.n_cell=512 512 2048 max_step=10
 
+.. note::
+
+    If everything went well, you will obtain as many output files named ``profiling_<number>.nsys-rep`` as active MPI ranks.
+    Each MPI rank's performance trace can be analyzed with the Nsight System graphical user interface (GUI).
+    In WarpX, every MPI rank is associated with one GPU, which each creates one trace file.
+
 .. warning::
 
-   March 23rd, 2022 (INC0182505):
-   Currently, the environment pre-loads a ``Nsight-Systems/2021.5.1`` module that ships ``nsys`` version 2021.5.1.
-   This version does not record all trace information.
-   You need to use the one directly shipped with the NVHPC base system, version 2021.4.1, located in ``/opt/nvidia/hpc_sdk/Linux_x86_64/21.11/compilers/bin/nsys``.
-
+    The last line of the sbatch file has to match the data of your input files.
 
 Summit Example
 """"""""""""""
@@ -198,3 +200,81 @@ In these examples, the individual lines for recording a trace profile are:
 Now open the created trace files (per rank) in the Nsight-Systems GUI.
 This can be done on another system than the one that recorded the traces.
 For example, if you record on a cluster and open the analysis GUI on your laptop, it is recommended to make sure that versions of Nsight-Systems match on the remote and local system.
+
+Nvidia Nsight-Compute
+---------------------
+
+`Vendor homepage <https://developer.nvidia.com/nsight-compute>`__ and `product manual <https://docs.nvidia.com/nsight-compute/>`__.
+
+Nsight-Compute captures fine grained information at the kernel level
+concerning resource utilization. By default, it collects a lot of data and runs
+slowly (can be a few minutes per step), but provides detailed information about
+occupancy, and memory bandwidth for a kernel.
+
+
+Example
+"""""""
+
+Example of how to create traces on a single-GPU system. A jobscript for
+Perlmutter is shown, but the `SBATCH` headers are not strictly necessary as the
+command only profiles a single process. This can also be run on an interactive
+node, or without a workload management system.
+
+.. code-block:: bash
+
+   #!/bin/bash -l
+   #SBATCH -t 00:30:00
+   #SBATCH -N 1
+   #SBATCH -J ncuProfiling
+   #SBATCH -A <your account>
+   #SBATCH -q regular
+   #SBATCH -C gpu
+   #SBATCH --ntasks-per-node=1
+   #SBATCH --gpus-per-task=1
+   #SBATCH --gpu-bind=map_gpu:0
+   #SBATCH --mail-user=<email>
+   #SBATCH --mail-type=ALL
+
+   # record
+   dcgmi profile --pause
+   ncu -f -o out \
+   --target-processes all \
+   --set detailed \
+   --nvtx --nvtx-include="WarpXParticleContainer::DepositCurrent::CurrentDeposition/" \
+   ./warpx input max_step=1 \
+   &> warpxOut.txt
+
+.. note::
+
+    To collect full statistics, Nsight-Compute reruns kernels,
+    temporarily saving device memory in host memory. This makes it
+    slower than Nsight-Systems, so the provided script profiles only a single
+    step of a single process. This is generally enough to extract relevant
+    information.
+
+Details
+"""""""
+In the example above, the individual lines for recording a trace profile are:
+
+* ``dcgmi profile --pause`` other profiling tools can't be collecting data,
+  `see this Q&A <https://forums.developer.nvidia.com/t/profiling-failed-because-a-driver-resource-was-unavailable/205435>`__.
+* ``-f`` overwrite previously written trace profiles.
+* ``-o``: output file for profiling.
+* ``--target-processes all``: required for multiprocess code.
+* ``--set detailed``: controls what profiling data is collected. If only
+  interested in a few things, this can improve profiling speed.
+  ``detailed`` gets pretty much everything.
+* ``--nvtx``: collects NVTX data. See note.
+* ``--nvtx-include``: tells the profiler to only profile the given sections.
+  You can also use ``-k`` to profile only a given kernel.
+* ``./warpx...``: select the WarpX executable and a good inputs file.
+
+Now open the created trace file in the Nsight-Compute GUI. As with
+Nsight-Systems,
+this can be done on another system than the one that recorded the traces.
+For example, if you record on a cluster and open the analysis GUI on your laptop, it is recommended to make sure that versions of Nsight-Compute match on the remote and local system.
+
+.. note::
+
+    nvtx-include syntax is very particular. The trailing / in the example is
+    significant. For full information, see the Nvidia's documentation on `NVTX filtering <https://docs.nvidia.com/nsight-compute/NsightComputeCli/index.html#nvtx-filtering>`__ .

@@ -1,23 +1,25 @@
+.. _examples-pwfa-boost:
+
 In-Depth: PWFA
 ==============
 
 As described in the :doc:`../theory/intro`, one of the key applications of the WarpX exascale computing platform is in modelling future, compact and economic plasma-based accelerators.
 In this section we describe the simulation setup of a realistic *electron beam driven plasma wakefield accelerator* (PWFA) configuration.
-For illustration purposes the setup can be explored with **WarpX** using the example input file :download:`PWFA <../../../Examples/Physics_applications/plasma_acceleration/inputs_2d_boost>`.
+For illustration purposes the setup can be explored with **WarpX** using the example input file :download:`PWFA <../../../Examples/Physics_applications/plasma_acceleration/inputs_test_2d_plasma_acceleration_boosted>`.
 
 The simulation setup consists of 4 particle species: drive beam (driver), witness beam (beam), plasma electrons (plasma_e), and plasma ions (plasma_p).
 The species physical parameters are summarized in the following table.
 
-======== ============================================================
+======== ================================================================================================================
 Species  Parameters
-======== ============================================================
-driver   :math:`\gamma` = 48923; N = 2x10^8; σz = 4.0 μm; σx = 2.0 μm
-beam     :math:`\gamma` = 48923; N = 6x10^5; σz = 1.0 mm; σx = 0.5 μm
-plasma_e n = 1x10^23 m^-3; w = 70 μm; lr = 8 mm; L = 200 mm
-plasma_p n = 1x10^23 m^-3; w = 70 μm; lr = 8 mm; L = 200 mm
-======== ============================================================
+======== ================================================================================================================
+driver   :math:`\gamma` = 48923; N = 2x10^8; :math:`\sigma_z` = 4.0 um; :math:`\sigma_x` = 2.0 um
+beam     :math:`\gamma` = 48923; N = 6x10^5; :math:`\sigma_z` = 1.0 mm; :math:`\sigma_x` = 0.5 um
+plasma_e n = 1x10^23 m^-3; w = 70 um; lr = 8 mm; L = 200 mm
+plasma_p n = 1x10^23 m^-3; w = 70 um; lr = 8 mm; L = 200 mm
+======== ================================================================================================================
 
-Where :math:`\gamma` is the beam relativistic Lorentz factor, N is the number of particles, and σx, σy, σz are the beam widths (root-mean-squares of particle positions) in the transverse (x,y) and longitudinal directions.
+Where :math:`\gamma` is the beam relativistic Lorentz factor, N is the number of particles, and :math:`\sigma_x`, :math:`\sigma_y`, :math:`\sigma_z` are the beam widths (root-mean-squares of particle positions) in the transverse (x,y) and longitudinal directions.
 
 The plasma, of total length L, has a density profile that consists of a lr long linear up-ramp, ranging from 0 to peak value n, is uniform within a transverse width of w and after the up-ramp.
 
@@ -42,7 +44,7 @@ Listed below are the key arguments and best-practices relevant for choosing the 
 Finite Difference Time Domain
 -----------------------------
 
-    For standard plasma wakefield configurations, it is possible to model the physics correctly using the Particle-In-Cell (PIC) Finite Difference Time Domain (FDTD) algorithms (:doc:`../theory/picsar_theory`).
+    For standard plasma wakefield configurations, it is possible to model the physics correctly using the :ref:`Particle-In-Cell (PIC) <theory-pic>` Finite Difference Time Domain (FDTD) algorithms.
     If the simulation contains localised extremely high intensity fields, however, numerical instabilities might arise, such as the numerical Cherenkov instability (:doc:`../theory/boosted_frame`).
     In that case, it is recommended to use the Pseudo Spectral Analytical Time Domain (PSATD) or the Pseudo-Spectral Time-Domain (PSTD) algorithms.
     In the example we are describing, it is sufficient to use FDTD.
@@ -96,7 +98,7 @@ Time step
 
     The time step (:math:`dt`) is used to iterated over the main PIC loop and is computed by WarpX differently depending on the Maxwell field FDTD solvers used:
 
-    * **For Yee** is equal to the CFL parameter chosen in the input file (:doc:`parameters`) times the Courant–Friedrichs–Lewy condition (CFL) that follows the analytical expression in :doc:`../theory/picsar_theory`
+    * **For Yee** is equal to the CFL parameter chosen in the input file (:doc:`parameters`) times the Courant–Friedrichs–Lewy condition (CFL) that follows the analytical expression in :ref:`theory-pic`
     * **For CKC** is equal to CFL times the minimum between the boosted frame cell dimensions
 
     where CFL is chosen to be below unity and set an optimal trade-off between making the simulation faster and avoiding NCI and other spurious effects.
@@ -127,4 +129,4 @@ Maximum grid size and blocking factor
 -------------------------------------
 
     These parameters are carfully chosen to improve the code parallelization, load-balancing and performance (:doc:`parameters`) for each numerical configuration.
-    They define the smallest and largest number of cells that can be contained in each simulation box and are carefully defined in the `AMReX <https://amrex-codes.github.io/amrex/docs_html/GridCreation.html?highlight=blocking_factor>`_ documentation.
+    They define the smallest and largest number of cells that can be contained in each simulation box and are carefully defined in the `AMReX <https://amrex-codes.github.io/amrex/docs_html/GridCreation.html?highlight=blocking_factor>`__ documentation.

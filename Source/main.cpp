@@ -8,82 +8,35 @@
  */
 #include "WarpX.H"
 
-#include "Initialization/WarpXAMReXInit.H"
-#include "Utils/MPIInitHelpers.H"
-#include "Utils/WarpXUtil.H"
+#include "Initialization/WarpXInit.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
-#include <ablastr/warn_manager/WarnManager.H>
+#include <ablastr/utils/timer/Timer.H>
 
-#include <AMReX.H>
-#include <AMReX_Config.H>
-#include <AMReX_ParallelDescriptor.H>
 #include <AMReX_Print.H>
-#include <AMReX_REAL.H>
-#include <AMReX_TinyProfiler.H>
-#include <AMReX_Utility.H>
-
-#if defined(AMREX_USE_MPI)
-#  include <mpi.h>
-#endif
-
-#if defined(AMREX_USE_HIP) && defined(WARPX_USE_PSATD)
-// cstddef: work-around for ROCm/rocFFT <=4.3.0
-// https://github.com/ROCmSoftwarePlatform/rocFFT/blob/rocm-4.3.0/library/include/rocfft.h#L36-L42
-#  include <cstddef>
-#  include <rocfft.h>
-#endif
 
 int main(int argc, char* argv[])
 {
-    using namespace amrex;
-
-    utils::warpx_mpi_init(argc, argv);
-
-    warpx_amrex_init(argc, argv);
-
-#if defined(AMREX_USE_HIP) && defined(WARPX_USE_PSATD)
-    rocfft_setup();
-#endif
-
-    ParseGeometryInput();
-
-    ConvertLabParamsToBoost();
-    ReadBCParams();
-
-#ifdef WARPX_DIM_RZ
-    CheckGriddingForRZSpectral();
-#endif
-
+    warpx::initialization::initialize_external_libraries(argc, argv);
     {
         WARPX_PROFILE_VAR("main()", pmain);
 
-        const auto strt_total = static_cast<Real>(amrex::second());
+        auto timer = ablastr::utils::timer::Timer{};
+        timer.record_start_time();
 
-        WarpX warpx;
-
+        auto& warpx = WarpX::GetInstance();
         warpx.InitData();
-
         warpx.Evolve();
+        const auto is_warpx_verbose = warpx.Verbose();
+        WarpX::Finalize();
 
-        //Print warning messages at the end of the simulation
-        ablastr::warn_manager::GetWMInstance().PrintGlobalWarnings("THE END");
-
-        if (warpx.Verbose()) {
-            auto end_total = static_cast<Real>(amrex::second()) - strt_total;
-            ParallelDescriptor::ReduceRealMax(end_total, ParallelDescriptor::IOProcessorNumber());
-            Print() << "Total Time                     : " << end_total << '\n';
+        timer.record_stop_time();
+        if (is_warpx_verbose){
+            amrex::Print() << "Total Time                     : "
+                           << timer.get_global_duration() << '\n';
         }
 
         WARPX_PROFILE_VAR_STOP(pmain);
     }
-
-#if defined(AMREX_USE_HIP) && defined(WARPX_USE_PSATD)
-    rocfft_cleanup();
-#endif
-
-    Finalize();
-#if defined(AMREX_USE_MPI)
-    MPI_Finalize();
-#endif
+    warpx::initialization::finalize_external_libraries();
 }

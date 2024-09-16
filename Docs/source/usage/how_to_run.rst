@@ -25,7 +25,7 @@ Where ``<run_directory>`` by the actual path to the run directory.
 -------------
 
 If you installed warpX with a :ref:`package manager <install-users>`, a ``warpx``-prefixed executable will be available as a regular system command to you.
-Depending on the choosen build options, the name is suffixed with more details.
+Depending on the chosen build options, the name is suffixed with more details.
 Try it like this:
 
 .. code-block:: bash
@@ -99,7 +99,7 @@ On an :ref:`HPC system <install-hpc>`, you would instead submit the :ref:`job sc
 By default, WarpX will write a status update to the terminal (``stdout``).
 On :ref:`HPC systems <install-hpc>`, we usually store a copy of this in a file called ``outputs.txt``.
 
-We also store by default an exact copy of all explicitly and implicitly used inputs parameters in a file called ``warpx_used_inputs``.
+We also store by default an exact copy of all explicitly and implicitly used inputs parameters in a file called ``warpx_used_inputs`` (this file name can be changed).
 This is important for reproducibility, since as we wrote in the previous paragraph, the options in the input file can be extended and overwritten from the command line.
 
 :ref:`Further configured diagnostics <running-cpp-parameters-diagnostics>` are explained in the next sections.

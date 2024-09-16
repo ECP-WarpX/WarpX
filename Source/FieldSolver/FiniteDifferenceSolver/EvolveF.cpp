@@ -50,29 +50,29 @@ void FiniteDifferenceSolver::EvolveF (
     int const rhocomp,
     amrex::Real const dt ) {
 
-   // Select algorithm (The choice of algorithm is a runtime option,
-   // but we compile code for each algorithm, using templates)
+    // Select algorithm (The choice of algorithm is a runtime option,
+    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
-    if (m_fdtd_algo == MaxwellSolverAlgo::Yee){
+    if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee){
 
         EvolveFCylindrical <CylindricalYeeAlgorithm> ( Ffield, Efield, rhofield, rhocomp, dt );
 
 #else
-    if (m_do_nodal) {
+    if (m_grid_type == GridType::Collocated) {
 
         EvolveFCartesian <CartesianNodalAlgorithm> ( Ffield, Efield, rhofield, rhocomp, dt );
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee) {
 
         EvolveFCartesian <CartesianYeeAlgorithm> ( Ffield, Efield, rhofield, rhocomp, dt );
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::CKC) {
 
         EvolveFCartesian <CartesianCKCAlgorithm> ( Ffield, Efield, rhofield, rhocomp, dt );
 
 #endif
     } else {
-        amrex::Abort(Utils::TextMsg::Err("EvolveF: Unknown algorithm"));
+        WARPX_ABORT_WITH_MESSAGE("EvolveF: Unknown algorithm");
     }
 
 }
@@ -103,11 +103,11 @@ void FiniteDifferenceSolver::EvolveFCartesian (
 
         // Extract stencil coefficients
         Real const * const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
-        int const n_coefs_x = m_stencil_coefs_x.size();
+        auto const n_coefs_x = static_cast<int>(m_stencil_coefs_x.size());
         Real const * const AMREX_RESTRICT coefs_y = m_stencil_coefs_y.dataPtr();
-        int const n_coefs_y = m_stencil_coefs_y.size();
+        auto const n_coefs_y = static_cast<int>(m_stencil_coefs_y.size());
         Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
-        int const n_coefs_z = m_stencil_coefs_z.size();
+        auto const n_coefs_z =static_cast<int>(m_stencil_coefs_z.size());
 
         // Extract tileboxes for which to loop
         Box const& tf  = mfi.tilebox(Ffield->ixType().toIntVect());
@@ -148,7 +148,7 @@ void FiniteDifferenceSolver::EvolveFCylindrical (
     for ( MFIter mfi(*Ffield, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
 
         // Extract field data for this grid/tile
-        Array4<Real> F = Ffield->array(mfi);
+        const Array4<Real> F = Ffield->array(mfi);
         Array4<Real> const& Er = Efield[0]->array(mfi);
         Array4<Real> const& Et = Efield[1]->array(mfi);
         Array4<Real> const& Ez = Efield[2]->array(mfi);
@@ -156,9 +156,9 @@ void FiniteDifferenceSolver::EvolveFCylindrical (
 
         // Extract stencil coefficients
         Real const * const AMREX_RESTRICT coefs_r = m_stencil_coefs_r.dataPtr();
-        int const n_coefs_r = m_stencil_coefs_r.size();
+        auto const n_coefs_r = static_cast<int>(m_stencil_coefs_r.size());
         Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
-        int const n_coefs_z = m_stencil_coefs_z.size();
+        auto const n_coefs_z = static_cast<int>(m_stencil_coefs_z.size());
 
         // Extract cylindrical specific parameters
         Real const dr = m_dr;
@@ -169,7 +169,6 @@ void FiniteDifferenceSolver::EvolveFCylindrical (
         Box const& tf  = mfi.tilebox(Ffield->ixType().toIntVect());
 
         Real constexpr inv_epsilon0 = 1./PhysConst::ep0;
-        Real constexpr c2 = PhysConst::c * PhysConst::c;
 
         // Use the right shift in components:
         // - the first WarpX::ncomps (2*n_rz_azimuthal_modes-1) components correspond to rho old (i.e. rhocomp=0)
@@ -195,7 +194,7 @@ void FiniteDifferenceSolver::EvolveFCylindrical (
                             + T_Algo::DownwardDrr_over_r(Er, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m-1)
                             + m * Et( i, j, 0, 2*m )/r
                             + T_Algo::DownwardDz(Ez, coefs_z, n_coefs_z, i, j, 0, 2*m-1) ); // Real part
-                        F(i, j, 0, 2*m  ) += c2 * dt *(
+                        F(i, j, 0, 2*m  ) += dt *(
                             - rho(i, j, 0, rho_shift + 2*m-1) * inv_epsilon0
                             + T_Algo::DownwardDrr_over_r(Er, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m-1)
                             - m * Et( i, j, 0, 2*m-1 )/r

@@ -1,0 +1,49 @@
+# Maximum number of time steps
+max_step = 10000
+
+# number of grid points
+amr.n_cell = 8 8 8
+
+# Maximum level in hierarchy (disable mesh refinement)
+amr.max_level = 0
+
+# Geometry
+geometry.dims = 3
+geometry.prob_lo = -2.077023075927835e+07 -2.077023075927835e+07 -2.077023075927835e+07
+geometry.prob_hi =  2.077023075927835e+07  2.077023075927835e+07  2.077023075927835e+07
+
+# Boundary Condition
+boundary.field_lo = periodic periodic periodic
+boundary.field_hi = periodic periodic periodic
+
+# Algorithms
+algo.charge_deposition = standard
+algo.field_gathering = energy-conserving
+algo.particle_pusher = "higuera"
+
+# CFL
+warpx.cfl = 1.0
+
+# Order of particle shape factors
+algo.particle_shape = 1
+
+# particles
+particles.species_names = positron
+positron.charge = 1.0
+positron.mass = 1.0
+positron.injection_style = "SingleParticle"
+positron.single_particle_pos = 0.0  0.0  0.0
+positron.single_particle_u = 0.0  19.974984355438178  0.0
+positron.single_particle_weight = 0.0
+
+# External fields
+# Ex is set to be Ex = -vy*Bz
+particles.B_ext_particle_init_style = "constant"
+particles.B_external_particle =  0.0  0.0  1.0
+particles.E_ext_particle_init_style = "constant"
+particles.E_external_particle =  -2.994174829214179e+08  0.0  0.0
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.intervals = 10000
+diag1.diag_type = Full
