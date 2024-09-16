@@ -1409,10 +1409,12 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                                                      m_user_int_attrib_parser,
                                                      m_user_real_attrib_parser);
 
+    bool inject_from_eb = plasma_injector.m_inject_from_eb; // whether to inject from EB or from a plane
+
     MFItInfo info;
-    if (do_tiling && Gpu::notInLaunchRegion()) {
-        info.EnableTiling(tile_size);
-    }
+//    if (do_tiling && Gpu::notInLaunchRegion()) {
+//        info.EnableTiling(tile_size);
+//    }
 #ifdef AMREX_USE_OMP
     info.SetDynamic(true);
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -1428,8 +1430,6 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         const Box& tile_box = mfi.tilebox();
         const RealBox tile_realbox = WarpX::getRealBox(tile_box, 0);
 
-        bool inject_from_eb = plasma_injector.m_inject_from_eb; // whether to inject from EB or from a plane
-
         // Find the cells of part_realbox that overlap with tile_realbox
         // If there is no overlap, just go to the next tile in the loop
         RealBox overlap_realbox;
@@ -1438,11 +1438,13 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 #ifdef AMREX_USE_EB
         if (inject_from_eb) {
             // Injection from EB
+            amrex::Print() << "Considering box " << tile_box << std::endl;
             const amrex::FabType fab_type = eb_flag[mfi].getType(tile_box);
             if (fab_type == amrex::FabType::regular) { continue; } // Go to the next tile
             if (fab_type == amrex::FabType::covered) { continue; } // Go to the next tile
             overlap_box = tile_box;
             overlap_realbox = tile_realbox;
+            amrex::Print() << "Inject: yes " << tile_box << std::endl;
         } else
 #endif
         {
@@ -1583,8 +1585,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
             Real scale_fac;
 #ifdef AMREX_USE_EB
             if (inject_from_eb) {
-                scale_fac = compute_scale_fac_area_eb(dx, num_ppc_real,
-                    eb_bnd_area_arr, eb_bnd_normal_arr, i, j, k );
+                scale_fac = compute_scale_fac_area_eb(dx, num_ppc_real, eb_bnd_normal_arr, i, j, k );
             } else
 #endif
             {
@@ -1667,9 +1668,12 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                     // Injection from EB: rotate momentum according to the normal of the EB surface
                     // (The above code initialized the momentum by assuming that z is the direction
                     // normal to the EB surface. Thus we need to rotate from z to the normal.)
-                    amrex::Real const nx = eb_bnd_normal_arr(i,j,k,0);
-                    amrex::Real const ny = eb_bnd_normal_arr(i,j,k,1);
-                    amrex::Real const nz = eb_bnd_normal_arr(i,j,k,2);
+                    // The minus sign below takes into account the fact that eb_bnd_normal_arr
+                    // points towards the covered region, while particles are to be emitted
+                    // *away* from the covered region.
+                    amrex::Real const nx = -eb_bnd_normal_arr(i,j,k,0);
+                    amrex::Real const ny = -eb_bnd_normal_arr(i,j,k,1);
+                    amrex::Real const nz = -eb_bnd_normal_arr(i,j,k,2);
 
                     // Rotate the momentum along the theta direction (in the z-x plane)
                     amrex::Real const cos_theta = nz;

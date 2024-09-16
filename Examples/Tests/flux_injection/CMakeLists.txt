@@ -16,8 +16,8 @@ add_warpx_test(
     3  # dims
     2  # nprocs
     inputs_test_3d_flux_injection_from_eb  # inputs
-    analysis_flux_injection_3d.py  # analysis
-    diags/diag1000002  # output
+    analysis_flux_injection_from_eb_3d.py  # analysis
+    diags/diag1000010  # output
     OFF  # dependency
 )
 

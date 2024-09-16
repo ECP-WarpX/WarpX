@@ -81,7 +81,6 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real compute_scale_fac_area_eb (
     const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>& dx,
     const amrex::Real num_ppc_real,
-    amrex::Array4<const amrex::Real> const& eb_bnd_area_arr,
     amrex::Array4<const amrex::Real> const& eb_bnd_normal_arr,
     int i, int j, int k ) {
     using namespace amrex::literals;
@@ -93,10 +92,12 @@ amrex::Real compute_scale_fac_area_eb (
     const amrex::Real nx = eb_bnd_normal_arr(i,j,k,0);
     const amrex::Real ny = eb_bnd_normal_arr(i,j,k,1);
     const amrex::Real nz = eb_bnd_normal_arr(i,j,k,2);
-    scale_fac = eb_bnd_area_arr(i,j,k) *
-        std::sqrt(amrex::Math::powi<2>(nx*dx[1]*dx[2]) +
+    scale_fac = std::sqrt(amrex::Math::powi<2>(nx*dx[1]*dx[2]) +
                   amrex::Math::powi<2>(ny*dx[0]*dx[2]) +
                   amrex::Math::powi<2>(nz*dx[0]*dx[1]));
+    // Do not multiply by eb_bnd_area_arr(i,j,k) here because this
+    // already taken into account by emitting a number of macroparticles
+    // that is proportional to the area of eb_bnd_area_arr(i,j,k).
 #else
     // TODO Implement in RZ, 2D, and 1D
 #endif
