@@ -255,10 +255,10 @@ WarpX::MoveWindow (const int step, bool move_j)
                 shiftMF(*m_fields.get("current_fp", Direction{dim}, lev), geom[lev], num_shift, dir, lev, do_update_cost);
             }
             if (pml[lev] && pml[lev]->ok()) {
-                const std::array<amrex::MultiFab*, 3>& pml_B = m_fields.get_alldirs("pml_B_fp", lev);
-                const std::array<amrex::MultiFab*, 3>& pml_E = m_fields.get_alldirs("pml_E_fp", lev);
-                shiftMF(*pml_B[dim], geom[lev], num_shift, dir, lev, dont_update_cost);
-                shiftMF(*pml_E[dim], geom[lev], num_shift, dir, lev, dont_update_cost);
+                amrex::MultiFab* pml_B = m_fields.get("pml_B_fp", Direction{dim}, lev);
+                amrex::MultiFab* pml_E = m_fields.get("pml_E_fp", Direction{dim}, lev);
+                shiftMF(*pml_B, geom[lev], num_shift, dir, lev, dont_update_cost);
+                shiftMF(*pml_E, geom[lev], num_shift, dir, lev, dont_update_cost);
             }
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
             if (pml_rz[lev] && dim < 2) {
@@ -288,10 +288,10 @@ WarpX::MoveWindow (const int step, bool move_j)
                     shiftMF(*m_fields.get("current_cp", Direction{dim}, lev), geom[lev-1], num_shift_crse, dir, lev, do_update_cost);
                 }
                 if (do_pml && pml[lev]->ok()) {
-                    const std::array<amrex::MultiFab*, 3>& pml_B = m_fields.get_alldirs("pml_B_cp", lev);
-                    const std::array<amrex::MultiFab*, 3>& pml_E = m_fields.get_alldirs("pml_E_cp", lev);
-                    shiftMF(*pml_B[dim], geom[lev-1], num_shift_crse, dir, lev, dont_update_cost);
-                    shiftMF(*pml_E[dim], geom[lev-1], num_shift_crse, dir, lev, dont_update_cost);
+                    amrex::MultiFab* pml_B_cp = m_fields.get("pml_B_cp", Direction{dim}, lev);
+                    amrex::MultiFab* pml_E_cp = m_fields.get("pml_E_cp", Direction{dim}, lev);
+                    shiftMF(*pml_B_cp, geom[lev-1], num_shift_crse, dir, lev, dont_update_cost);
+                    shiftMF(*pml_E_cp, geom[lev-1], num_shift_crse, dir, lev, dont_update_cost);
                 }
             }
         }
