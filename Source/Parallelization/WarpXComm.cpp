@@ -1102,7 +1102,7 @@ WarpX::SyncCurrent (
                 // Now it's safe to apply filter and sumboundary on J_cp
                 if (use_filter)
                 {
-                    ApplyFilterJ(J_cp, lev+1, idim);
+                    ApplyFilterMF(J_cp, lev+1, idim);
                 }
                 SumBoundaryJ(J_cp, lev+1, idim, period);
             }
@@ -1136,7 +1136,7 @@ WarpX::SyncCurrent (
 
             if (use_filter)
             {
-                ApplyFilterJ(J_fp, lev, idim);
+                ApplyFilterMF(J_fp, lev, idim);
             }
             SumBoundaryJ(J_fp, lev, idim, period);
         }
@@ -1248,30 +1248,30 @@ void WarpX::RestrictCurrentFromFineToCoarsePatch (
     ablastr::coarsen::average::Coarsen(*crse[2], *fine[2], refinement_ratio );
 }
 
-void WarpX::ApplyFilterJ (
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+void WarpX::ApplyFilterMF (
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& mfvec,
     const int lev,
     const int idim)
 {
-    amrex::MultiFab& J = *current[lev][idim];
+    amrex::MultiFab& mf = *mfvec[lev][idim];
 
-    const int ncomp = J.nComp();
-    const amrex::IntVect ngrow = J.nGrowVect();
-    amrex::MultiFab Jf(J.boxArray(), J.DistributionMap(), ncomp, ngrow);
-    bilinear_filter.ApplyStencil(Jf, J, lev);
+    const int ncomp = mf.nComp();
+    const amrex::IntVect ngrow = mf.nGrowVect();
+    amrex::MultiFab mf_filtered(mf.boxArray(), mf.DistributionMap(), ncomp, ngrow);
+    bilinear_filter.ApplyStencil(mf_filtered, mf, lev);
 
     const int srccomp = 0;
     const int dstcomp = 0;
-    amrex::MultiFab::Copy(J, Jf, srccomp, dstcomp, ncomp, ngrow);
+    amrex::MultiFab::Copy(mf, mf_filtered, srccomp, dstcomp, ncomp, ngrow);
 }
 
-void WarpX::ApplyFilterJ (
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+void WarpX::ApplyFilterMF (
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& mfvec,
     const int lev)
 {
     for (int idim=0; idim<3; ++idim)
     {
-        ApplyFilterJ(current, lev, idim);
+        ApplyFilterMF(mfvec, lev, idim);
     }
 }
 
@@ -1347,7 +1347,7 @@ void WarpX::AddCurrentFromFineLevelandSumBoundary (
 
     if (use_filter)
     {
-        ApplyFilterJ(J_fp, lev);
+        ApplyFilterMF(J_fp, lev);
     }
     SumBoundaryJ(J_fp, lev, period);
 
@@ -1366,8 +1366,8 @@ void WarpX::AddCurrentFromFineLevelandSumBoundary (
 
             if (use_filter && J_buffer[lev+1][idim])
             {
-                ApplyFilterJ(J_cp, lev+1, idim);
-                ApplyFilterJ(J_buffer, lev+1, idim);
+                ApplyFilterMF(J_cp, lev+1, idim);
+                ApplyFilterMF(J_buffer, lev+1, idim);
 
                 MultiFab::Add(
                     *J_buffer[lev+1][idim], *J_cp[lev+1][idim],
@@ -1381,7 +1381,7 @@ void WarpX::AddCurrentFromFineLevelandSumBoundary (
             }
             else if (use_filter) // but no buffer
             {
-                ApplyFilterJ(J_cp, lev+1, idim);
+                ApplyFilterMF(J_cp, lev+1, idim);
 
                 ablastr::utils::communication::ParallelAdd(
                     mf, *J_cp[lev+1][idim], 0, 0,

@@ -1323,12 +1323,12 @@ private:
         int lev);
     void StoreCurrent (int lev);
     void RestoreCurrent (int lev);
-    void ApplyFilterJ (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+    void ApplyFilterMF (
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& mfvec,
         int lev,
         int idim);
-    void ApplyFilterJ (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+    void ApplyFilterMF (
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& mfvec,
         int lev);
     void SumBoundaryJ (
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,

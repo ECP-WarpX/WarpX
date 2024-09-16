@@ -54,6 +54,8 @@ WarpX::ImplicitPreRHSOp ( amrex::Real  a_cur_time,
     using namespace amrex::literals;
     amrex::ignore_unused( a_full_dt, a_nl_iter, a_from_jacobian );
 
+    if (use_filter) { ApplyFilterMF(Efield_fp, 0); }
+
     // Advance the particle positions by 1/2 dt,
     // particle velocities by dt, then take average of old and new v,
     // deposit currents, giving J at n+1/2
