@@ -355,25 +355,26 @@ void PlasmaInjector::setupNFluxPerCell (amrex::ParmParse const& pp_species)
 #    else
         const std::string flux_normal_axis_help = "'z'.";
 #    endif
-#endif
+    #endif
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(flux_normal_axis >= 0,
             "Error: Invalid value for flux_normal_axis. It must be " + flux_normal_axis_help);
         utils::parser::getWithParser(pp_species, source_name, "flux_direction", flux_direction);
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(flux_direction == +1 || flux_direction == -1,
             "Error: flux_direction must be -1 or +1.");
-        // Construct InjectorPosition with InjectorPositionRandom.
-        h_flux_pos = std::make_unique<InjectorPosition>(
-            (InjectorPositionRandomPlane*)nullptr,
-            xmin, xmax, ymin, ymax, zmin, zmax,
-            flux_normal_axis);
-#ifdef AMREX_USE_GPU
-        d_flux_pos = static_cast<InjectorPosition*>
-            (amrex::The_Arena()->alloc(sizeof(InjectorPosition)));
-        amrex::Gpu::htod_memcpy_async(d_flux_pos, h_flux_pos.get(), sizeof(InjectorPosition));
-#else
-        d_flux_pos = h_flux_pos.get();
-#endif
     }
+
+    // Construct InjectorPosition with InjectorPositionRandom.
+    h_flux_pos = std::make_unique<InjectorPosition>(
+        (InjectorPositionRandomPlane*)nullptr,
+        xmin, xmax, ymin, ymax, zmin, zmax,
+        flux_normal_axis);
+#ifdef AMREX_USE_GPU
+    d_flux_pos = static_cast<InjectorPosition*>
+        (amrex::The_Arena()->alloc(sizeof(InjectorPosition)));
+    amrex::Gpu::htod_memcpy_async(d_flux_pos, h_flux_pos.get(), sizeof(InjectorPosition));
+#else
+    d_flux_pos = h_flux_pos.get();
+#endif
 
     parseFlux(pp_species);
     SpeciesUtils::parseMomentum(species_name, source_name, "nfluxpercell", h_inj_mom,
