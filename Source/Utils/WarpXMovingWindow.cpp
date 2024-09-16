@@ -262,10 +262,10 @@ WarpX::MoveWindow (const int step, bool move_j)
             }
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
             if (pml_rz[lev] && dim < 2) {
-                const std::array<amrex::MultiFab*, 2>& pml_rz_B = pml_rz[lev]->GetB_fp();
-                const std::array<amrex::MultiFab*, 2>& pml_rz_E = pml_rz[lev]->GetE_fp();
-                shiftMF(*pml_rz_B[dim], geom[lev], num_shift, dir, lev, dont_update_cost);
-                shiftMF(*pml_rz_E[dim], geom[lev], num_shift, dir, lev, dont_update_cost);
+                amrex::MultiFab* pml_rz_B = m_fields.get("pml_B_fp", Direction{dim}, lev);
+                amrex::MultiFab* pml_rz_E = m_fields.get("pml_E_fp", Direction{dim}, lev);
+                shiftMF(*pml_rz_B, geom[lev], num_shift, dir, lev, dont_update_cost);
+                shiftMF(*pml_rz_E, geom[lev], num_shift, dir, lev, dont_update_cost);
             }
 #endif
             if (lev > 0) {

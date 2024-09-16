@@ -390,7 +390,7 @@ WarpX::InitFromCheckpoint ()
             }
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
             if (pml_rz[lev]) {
-                pml_rz[lev]->Restart(amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "pml_rz"));
+                pml_rz[lev]->Restart(m_fields, amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "pml_rz"));
             }
 #endif
         }

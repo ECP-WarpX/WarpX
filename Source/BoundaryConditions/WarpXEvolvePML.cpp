@@ -70,7 +70,7 @@ WarpX::DampPML (const int lev, PatchType patch_type)
                                    m_fields.get("Efield_fp",Direction{2},lev),
                                    m_fields.get("Bfield_fp",Direction{1},lev),
                                    m_fields.get("Bfield_fp",Direction{2},lev),
-                                   dt[lev]);
+                                   dt[lev], m_fields);
     }
 #endif
     if (pml[lev]) {

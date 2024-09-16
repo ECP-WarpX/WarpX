@@ -160,6 +160,7 @@ FlushFormatCheckpoint::WriteToFile (
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
             if (warpx.GetPML_RZ(lev)) {
                 warpx.GetPML_RZ(lev)->CheckPoint(
+                    warpx.m_fields,
                     amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "pml_rz"));
             }
 #endif
