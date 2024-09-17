@@ -42,9 +42,9 @@ computePhiIGF ( amrex::MultiFab const & rho,
 {
     using namespace amrex::literals;
 
-    BL_PROFILE_VAR_NS("IGF FFTs", timer_ffts);
-    BL_PROFILE_VAR_NS("IGF FFT plans", timer_plans);
-    BL_PROFILE_VAR_NS("IGF parallel copies", timer_pcopies);
+    BL_PROFILE_VAR_NS("ablastr::fields::computePhiIGF: FFTs", timer_ffts);
+    BL_PROFILE_VAR_NS("ablastr::fields::computePhiIGF: FFT plans", timer_plans);
+    BL_PROFILE_VAR_NS("ablastr::fields::computePhiIGF: parallel copies", timer_pcopies);
 
 #if defined(ABLASTR_USE_FFT) && defined(ABLASTR_USE_HEFFTE)
     {
