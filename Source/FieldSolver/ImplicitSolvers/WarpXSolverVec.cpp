@@ -23,6 +23,8 @@ void WarpXSolverVec::Define ( WarpX*     a_WarpX,
         m_warpx_ptr_defined = true;
     }
 
+    m_num_amr_levels = 1;
+
     m_array_type = a_array_type;
     m_scalar_type = a_scalar_type;
 

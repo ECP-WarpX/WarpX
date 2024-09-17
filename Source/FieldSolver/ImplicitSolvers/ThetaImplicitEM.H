@@ -79,7 +79,7 @@ public:
                       int              a_nl_iter,
                       bool             a_from_jacobian ) override;
 
-    [[nodiscard]] amrex::Real theta () const { return m_theta; }
+    [[nodiscard]] amrex::Real theta () const override { return m_theta; }
 
 private:
 

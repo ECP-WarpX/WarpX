@@ -19,15 +19,15 @@ void ThetaImplicitEM::Define ( WarpX* const  a_WarpX )
 
     // Retain a pointer back to main WarpX class
     m_WarpX = a_WarpX;
+    m_num_amr_levels = 1;
 
     // Define E and Eold vectors
     m_E.Define( m_WarpX, FieldType::Efield_fp );
     m_Eold.Define( m_E );
 
     // Define Bold MultiFab
-    const int num_levels = 1;
-    m_Bold.resize(num_levels); // size is number of levels
-    for (int lev = 0; lev < num_levels; ++lev) {
+    m_Bold.resize(m_num_amr_levels); // size is number of levels
+    for (int lev = 0; lev < m_num_amr_levels; ++lev) {
         for (int n=0; n<3; n++) {
             const amrex::MultiFab& Bfp = m_WarpX->getField( FieldType::Bfield_fp,lev,n);
             m_Bold[lev][n] = std::make_unique<amrex::MultiFab>( Bfp.boxArray(),
