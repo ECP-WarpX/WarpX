@@ -68,17 +68,13 @@ computePhiIGF ( amrex::MultiFab const & rho,
     // Without distributed FFTs (i.e. without heFFTe):
     // allocate the 2x wider array on a single box
     amrex::BoxArray const realspace_ba = amrex::BoxArray( realspace_box );
-    amrex::Box const spectralspace_box = amrex::Box(
-        {0,0,0},
-        {nx, 2*ny-1, 2*nz-1},
-        amrex::IntVect::TheNodeVector() );
-    amrex::BoxArray const spectralspace_ba = amrex::BoxArray( spectralspace_box );
     // Define a distribution mapping for the global FFT, with only one box
     amrex::DistributionMapping dm_global_fft;
     dm_global_fft.define( realspace_ba );
 #elif defined(ABLASTR_USE_HEFFTE)
     // With distributed FFTs (i.e. with heFFTe):
     // Define a new distribution mapping which is decomposed purely along z
+    // and has one box per MPI rank
     int const nprocs = amrex::ParallelDescriptor::NProcs();
     amrex::BoxArray realspace_ba;
     amrex::DistributionMapping dm_global_fft;
@@ -94,7 +90,6 @@ computePhiIGF ( amrex::MultiFab const & rho,
         // nleft boxes has minsize_z+1 nodes and the others minsize
         // nodes. We do it this way instead of BoxArray::maxSize to make
         // sure there are exactly nprocs boxes and there are no overlaps.
-
         amrex::BoxList bl(amrex::IndexType::TheNodeType());
         for (int iproc = 0; iproc < nprocs; ++iproc) {
             int zlo, zhi;
@@ -198,27 +193,38 @@ computePhiIGF ( amrex::MultiFab const & rho,
       );
     }
 
-    // since there is 1 MPI rank per box, here each MPI rank obtains its local box and the associated boxid
+    // Prepare to perform FFTs on each box.
+    // Since there is 1 MPI rank per box, here each MPI rank obtains its local box and the associated boxid
     int local_boxid = amrex::ParallelDescriptor::MyProc(); // because of how we made the DistributionMapping
     amrex::Box local_nodal_box = realspace_ba[local_boxid];
     amrex::Box local_box(local_nodal_box.smallEnd(), local_nodal_box.bigEnd());
     local_box.shift(-realspace_box.smallEnd()); // This simplifies the setup because the global lo is zero now
-
-    // Since we the domain decompostion is in the z-direction, setting up
-    // c_local_box is simple.
+    // Since we the domain decompostion is in the z-direction, setting up c_local_box is simple.
     amrex::Box c_local_box = local_box;
     c_local_box.setBig(0, local_box.length(0)/2+1);
 
+    // Allocate array in spectral space
     using SpectralField = amrex::BaseFab< amrex::GpuComplex< amrex::Real > > ;
     SpectralField tmp_rho_fft(c_local_box, 1, amrex::The_Device_Arena());
     SpectralField tmp_G_fft(c_local_box, 1, amrex::The_Device_Arena());
     tmp_rho_fft.shift(realspace_box.smallEnd());
     tmp_G_fft.shift(realspace_box.smallEnd());
 
+    // Create FFT plans
     BL_PROFILE_VAR_START(timer_plans);
-#if defined(AMREX_USE_CUDA)
+#if !defined(ABLASTR_USE_HEFFTE)
+    forward_plan_rho[mfi] = ablastr::math::anyfft::CreatePlan(
+        fft_size, tmp_rho[mfi].dataPtr(),
+        reinterpret_cast<ablastr::math::anyfft::Complex*>(tmp_rho_fft[mfi].dataPtr()),
+        ablastr::math::anyfft::direction::R2C, AMREX_SPACEDIM);
+    forward_plan_G[mfi] = ablastr::math::anyfft::CreatePlan(
+        fft_size, tmp_G[mfi].dataPtr(),
+        reinterpret_cast<ablastr::math::anyfft::Complex*>(tmp_G_fft[mfi].dataPtr()),
+        ablastr::math::anyfft::direction::R2C, AMREX_SPACEDIM);
+#elif defined(ABLASTR_USE_HEFFTE)
+#if     defined(AMREX_USE_CUDA)
     heffte::fft3d_r2c<heffte::backend::cufft> fft
-#elif defined(AMREX_USE_HIP)
+#elif   defined(AMREX_USE_HIP)
     heffte::fft3d_r2c<heffte::backend::rocfft> fft
 #else
     heffte::fft3d_r2c<heffte::backend::fftw> fft
@@ -228,15 +234,21 @@ computePhiIGF ( amrex::MultiFab const & rho,
          {{c_local_box.smallEnd(0),c_local_box.smallEnd(1), c_local_box.smallEnd(2)},
           {c_local_box.bigEnd(0)  ,c_local_box.bigEnd(1)  ,c_local_box.bigEnd(2)}},
          0, amrex::ParallelDescriptor::Communicator());
-    BL_PROFILE_VAR_STOP(timer_plans);
-
     using heffte_complex = typename heffte::fft_output<amrex::Real>::type;
     heffte_complex* rho_fft_data = (heffte_complex*) tmp_rho_fft.dataPtr();
     heffte_complex* G_fft_data = (heffte_complex*) tmp_G_fft.dataPtr();
+#endif
+    BL_PROFILE_VAR_STOP(timer_plans);
 
+    // Perform forward FFTs
     BL_PROFILE_VAR_START(timer_ffts);
+#if !defined(ABLASTR_USE_HEFFTE)
+    ablastr::math::anyfft::Execute(forward_plan_rho[mfi]);
+    ablastr::math::anyfft::Execute(forward_plan_G[mfi]);
+#elif defined(ABLASTR_USE_HEFFTE)
     fft.forward(tmp_rho[local_boxid].dataPtr(), rho_fft_data);
     fft.forward(tmp_G[local_boxid].dataPtr(), G_fft_data);
+#endif
     BL_PROFILE_VAR_STOP(timer_ffts);
 
     // Multiply tmp_G_fft and tmp_rho_fft in spectral space
@@ -296,10 +308,6 @@ computePhiIGF ( amrex::MultiFab const & rho,
     tmp_rho.setVal(0);
     amrex::MultiFab tmp_G = amrex::MultiFab(realspace_ba, dm_global_fft, 1, 0);
     tmp_G.setVal(0);
-    // Allocate corresponding arrays in Fourier space
-    using SpectralField = amrex::FabArray< amrex::BaseFab< amrex::GpuComplex< amrex::Real > > >;
-    SpectralField tmp_rho_fft = SpectralField( spectralspace_ba, dm_global_fft, 1, 0 );
-    SpectralField tmp_G_fft = SpectralField( spectralspace_ba, dm_global_fft, 1, 0 );
 
     BL_PROFILE_VAR_START(timer_pcopies);
     // Copy from rho to tmp_rho
