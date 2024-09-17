@@ -251,7 +251,7 @@ namespace ablastr::fields
          */
         void
         alloc_like (
-            std::string other_name,
+            const std::string& other_name,
             int other_level
         );
 
@@ -361,12 +361,12 @@ namespace ablastr::fields
          */
         MultiLevelScalarField
         get_mr_levels (
-            std::string name,
+            const std::string& name,
             int finest_level
         );
         [[nodiscard]] ConstMultiLevelScalarField
         get_mr_levels (
-            std::string name,
+            const std::string& name,
             int finest_level
         ) const;
 
@@ -380,12 +380,12 @@ namespace ablastr::fields
          */
         VectorField
         get_alldirs  (
-            std::string name,
+            const std::string&,
             int level
         );
         [[nodiscard]] ConstVectorField
         get_alldirs  (
-            std::string name,
+            const std::string& name,
             int level
         ) const;
 
@@ -400,12 +400,12 @@ namespace ablastr::fields
          */
         MultiLevelVectorField
         get_mr_levels_alldirs (
-            std::string name,
+            const std::string& name,
             int finest_level
         );
         [[nodiscard]] ConstMultiLevelVectorField
         get_mr_levels_alldirs (
-            std::string name,
+            const std::string& name,
             int finest_level
         ) const;
 
@@ -508,11 +508,11 @@ namespace ablastr::fields
     private:
         amrex::MultiFab *
         internal_get (
-                std::string key
+                const std::string& key
         );
         [[nodiscard]] amrex::MultiFab const *
         internal_get (
-                std::string key
+                const std::string& key
         ) const;
 
         /** data storage: ownership and lifetime control */
