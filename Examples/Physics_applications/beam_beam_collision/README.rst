@@ -67,8 +67,45 @@ For the large-scale simulation we have used the following options:
    qed_bw.tab_pair_frac_how_many=512
    qed_bw.save_table_in=my_bw_table.txt
 
-.. figure:: https://gist.github.com/user-attachments/assets/2dd43782-d039-4faa-9d27-e3cf8fb17352
+
+.. figure:: https://user-images.githubusercontent.com/17280419/291749626-aa61fff2-e6d2-45a3-80ee-84b2851ea0bf.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTEiLCJleHAiOjE3MDMwMzQzNTEsIm5iZiI6MTcwMzAzNDA1MSwicGF0aCI6Ii8xNzI4MDQxOS8yOTE3NDk2MjYtYWE2MWZmZjItZTZkMi00NWEzLTgwZWUtODRiMjg1MWVhMGJmLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFJV05KWUFYNENTVkVINTNBJTJGMjAyMzEyMjAlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjMxMjIwVDAxMDA1MVomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPWFiYzY2MGQyYzIyZGIzYzUxOWI3MzNjZTk5ZDM1YzgyNmY4ZDYxOGRlZjAyZTIwNTAyMTc3NTgwN2Q0YjEwNGMmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JmFjdG9yX2lkPTAma2V5X2lkPTAmcmVwb19pZD0wIn0.I96LQpjqmFXirPDVnBlFQIkCuenR6IuOSY0OIIQvtCo
    :alt: Beam-beam collision benchmark against :cite:t:`ex-Yakimenko2019`.
    :width: 100%
 
    Beam-beam collision benchmark against :cite:t:`ex-Yakimenko2019`.
+
+
+Below are two visualizations scripts that provide examples to graph the field and reduced diagnostics.
+They are available in the ``Examples/Physics_applications/beam-beam_collision/`` folder and can be run as simply as ``python3 plot_fields.py`` and ``python3 plot_reduced.py``.
+
+.. tab-set::
+
+   .. tab-item:: Field Diagnostics
+
+      This script visualizes the evolution of the fields (:math:`|E|, |B|, \rho`) during the collision between the two ultra-relativistic lepton beams.
+      The magnitude of E and B and the charge densities of the primary beams and of the secondary pairs are sliced along either one of the two transverse coordinates (:math:`x` and :math:`y`).
+
+      .. literalinclude:: plot_fields.py
+         :language: python3
+         :caption: You can copy this file from ``Examples/Physics_applications/beam-beam_collision/plot_fields.py``.
+
+      .. figure:: https://gist.github.com/user-attachments/assets/04c9c0ec-b580-446f-a11a-437c1b244a41
+         :alt: Slice across :math:`x` of different fields (:math:`|E|, |B|, \rho`) at timestep 45, in the middle of the collision.
+         :width: 100%
+
+         Slice across :math:`x` of different fields (:math:`|E|, |B|, \rho`) at timestep 45, in the middle of the collision.
+
+
+   .. tab-item:: Reduced Diagnostics
+
+      A similar script to the one below was used to produce the image showing the benchmark against :cite:t:`ex-Yakimenko2019`.
+
+      .. literalinclude:: plot_reduced.py
+         :language: python3
+         :caption: You can copy this file from ``Examples/Physics_applications/beam-beam_collision/plot_reduced.py``.
+
+      .. figure:: https://gist.github.com/user-attachments/assets/c280490a-f1f2-4329-ad3c-46817d245dc1
+         :alt: Photon and pair production rates in time throughout the collision.
+         :width: 100%
+
+         Photon and pair production rates in time throughout the collision.
