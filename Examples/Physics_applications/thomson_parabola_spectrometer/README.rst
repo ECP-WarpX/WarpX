@@ -30,7 +30,7 @@ For `MPI-parallel <https://www.mpi-forum.org>`__ runs, prefix these lines with `
 
 .. literalinclude:: inputs
    :language: ini
-   :caption: You can copy this file from ``Examples/Physics_applications/thomson_parabola_spectrometer/inputs``.
+   :caption: You can copy this file from ``Examples/Physics_applications/thomson_parabola_spectrometer/inputs_test_3d_thomson_parabola_spectrometer``.
 
 Visualize
 ---------
