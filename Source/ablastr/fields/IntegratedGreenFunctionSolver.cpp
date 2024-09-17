@@ -75,7 +75,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
     SpectralField tmp_G_fft = SpectralField( spectralspace_ba, dm_global_fft, 1, 0 );
 
     // Copy from rho to tmp_rho
-    tmp_rho.ParallelCopy( rho, 0, 0, 1, amrex::IntVect::TheZeroVector(), amrex::IntVect::TheZeroVector() );
+    tmp_rho.ParallelCopy( rho, 0, 0, 1, rho.nGrowVect(), amrex::IntVect::TheZeroVector() );
 
     // Compute the integrated Green function
     {
