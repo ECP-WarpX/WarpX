@@ -539,7 +539,7 @@ void HybridPICModel::FillElectronPressureMF (
 
 void HybridPICModel::BfieldEvolveRK (
     ablastr::fields::MultiLevelVectorField const& Bfield,
-    ablastr::fields::MultiLevelVectorField const&Efield,
+    ablastr::fields::MultiLevelVectorField const& Efield,
     ablastr::fields::MultiLevelVectorField const& Jfield,
     ablastr::fields::MultiLevelScalarField const& rhofield,
     ablastr::fields::MultiLevelVectorField  const& edge_lengths,
