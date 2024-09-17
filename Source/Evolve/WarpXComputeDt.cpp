@@ -45,13 +45,12 @@ WarpX::ComputeDt ()
     // Handle cases where the timestep is not limited by the speed of light
     // and no constant timestep is provided
     if (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
-        std::stringstream errorMsg;
-        errorMsg << "warpx.const_dt must be specified with the hybrid-PIC solver.";
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_const_dt.has_value(), errorMsg.str());
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_const_dt.has_value(), "warpx.const_dt must be specified with the hybrid-PIC solver.");
     } else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None) {
-        std::stringstream errorMsg;
-        errorMsg << "warpx.const_dt must be specified with the electrostatic solver, or the warpx.dt_update_interval must be > 0.";
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_const_dt.has_value() || dt_update_interval.isActivated(), errorMsg.str());
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            m_const_dt.has_value() || dt_update_interval.isActivated(),
+            "warpx.const_dt must be specified with the electrostatic solver, or warpx.dt_update_interval must be > 0."
+        );
     }
 
     // Determine the appropriate timestep as limited by the speed of light
@@ -60,15 +59,17 @@ WarpX::ComputeDt ()
 
     if (m_const_dt.has_value()) {
         deltat = m_const_dt.value();
-    } else if (electrostatic_solver_id  != ElectrostaticSolverAlgo::None ||
-               electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
-        // Computation of dt for spectral algorithm
-        // (determined by the minimum cell size in all directions)
-        if (m_max_dt.has_value() && electromagnetic_solver_id == ElectromagneticSolverAlgo::None) {
+    } else if (electrostatic_solver_id  != ElectrostaticSolverAlgo::None) {
+        // Set dt for electrostatic algorithm
+        if (m_max_dt.has_value()) {
             deltat = m_max_dt.value();
         } else {
-            deltat = cfl / PhysConst::c * minDim(dx);
+            deltat = cfl * minDim(dx) / PhysConst::c;
         }
+    } else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
+        // Computation of dt for spectral algorithm
+        // (determined by the minimum cell size in all directions)
+        deltat = cfl * minDim(dx) / PhysConst::c;
     } else {
         // Computation of dt for FDTD algorithm
 #ifdef WARPX_DIM_RZ

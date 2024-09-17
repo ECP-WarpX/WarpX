@@ -116,6 +116,10 @@ public:
     void InitData ();
 
     void Evolve (int numsteps = -1);
+
+    /** Push momentum one half step forward to synchronize with position.
+     *  Also sets is_synchronized to `true`.
+     */
     void Synchronize ();
 
     //
