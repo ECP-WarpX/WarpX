@@ -73,9 +73,9 @@ jobs:
         mpirun -n 2 ./build/bin/warpx.3d Examples/Physics_applications/laser_acceleration/inputs_base_3d
 
         export OMP_NUM_THREADS=1
-        mpirun -n 1 ./build/bin/warpx.rz Examples/Tests/collision/inputs_test_3d_collision
-        mpirun -n 1 ./build/bin/warpx.1d Examples/Tests/collision/inputs_test_3d_collision_z
-        mpirun -n 1 ./build/bin/warpx.2d Examples/Tests/collision/inputs_test_3d_collision_xz
+        mpirun -n 1 ./build/bin/warpx.rz Examples/Tests/collision/inputs_test_rz_collision
+        mpirun -n 1 ./build/bin/warpx.1d Examples/Tests/collision/inputs_test_1d_collision_z
+        mpirun -n 1 ./build/bin/warpx.2d Examples/Tests/collision/inputs_test_2d_collision_xz
         mpirun -n 1 ./build/bin/warpx.3d Examples/Tests/collision/inputs_test_3d_collision_xyz
 
         export OMP_NUM_THREADS=2
