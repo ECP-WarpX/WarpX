@@ -63,15 +63,24 @@ jobs:
         export OMPI_ALLOW_RUN_AS_ROOT=1
         export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
 
-        export OMP_NUM_THREADS=2
-
         #MPI implementations often leak memory
         export "ASAN_OPTIONS=detect_leaks=0"
 
+        export OMP_NUM_THREADS=2
         mpirun -n 2 ./build/bin/warpx.rz Examples/Physics_applications/laser_acceleration/inputs_base_rz
         mpirun -n 2 ./build/bin/warpx.1d Examples/Physics_applications/laser_acceleration/inputs_test_1d_laser_acceleration
         mpirun -n 2 ./build/bin/warpx.2d Examples/Physics_applications/laser_acceleration/inputs_base_2d
         mpirun -n 2 ./build/bin/warpx.3d Examples/Physics_applications/laser_acceleration/inputs_base_3d
+
+        export OMP_NUM_THREADS=1
+        mpirun -n 1 ./build/bin/warpx.rz Examples/Tests/collision/inputs_test_3d_collision
+        mpirun -n 1 ./build/bin/warpx.1d Examples/Tests/collision/inputs_test_3d_collision_z
+        mpirun -n 1 ./build/bin/warpx.2d Examples/Tests/collision/inputs_test_3d_collision_xz
+        mpirun -n 1 ./build/bin/warpx.3d Examples/Tests/collision/inputs_test_3d_collision_xyz
+
+        export OMP_NUM_THREADS=2
+        mpirun -n 2 ./build/bin/warpx.2d Examples/Tests/qed/inputs_base_2d_breit_wheeler
+        mpirun -n 2 ./build/bin/warpx.3d Examples/Tests/qed/inputs_base_3d_breit_wheeler
 
   build_thread_sanitizer:
     name: Clang thread sanitizer
@@ -153,6 +162,9 @@ jobs:
         mpirun -n 2 ./build/bin/warpx.1d Examples/Physics_applications/laser_acceleration/inputs_test_1d_laser_acceleration warpx.serialize_initial_conditions = 0
         mpirun -n 2 ./build/bin/warpx.2d Examples/Physics_applications/laser_acceleration/inputs_base_2d warpx.serialize_initial_conditions = 0
         mpirun -n 2 ./build/bin/warpx.3d Examples/Physics_applications/laser_acceleration/inputs_base_3d warpx.serialize_initial_conditions = 0
+
+        mpirun -n 2 ./build/bin/warpx.2d Examples/Tests/qed/inputs_base_2d_breit_wheeler
+        mpirun -n 2 ./build/bin/warpx.3d Examples/Tests/qed/inputs_base_3d_breit_wheeler
 
         git clone https://github.com/ECP-WarpX/warpx-data ../warpx-data
         cd Examples/Tests/embedded_circle
