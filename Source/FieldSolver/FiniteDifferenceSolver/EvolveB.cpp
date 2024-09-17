@@ -76,23 +76,19 @@ void FiniteDifferenceSolver::EvolveB (
     }
     ablastr::fields::VectorField face_areas;
     if (fields.has("face_areas", Direction{0}, lev)) {
-        face_areas = patch_type == PatchType::fine ?
-            fields.get_alldirs("face_areas", lev) : fields.get_alldirs("face_areas", lev);
+        face_areas = fields.get_alldirs("face_areas", lev);
     }
     ablastr::fields::VectorField area_mod;
-    if (fields.has("face_areas", Direction{0}, lev)) {
-        area_mod = patch_type == PatchType::fine ?
-            fields.get_alldirs("area_mod", lev) : fields.get_alldirs("area_mod", lev);
+    if (fields.has("area_mod", Direction{0}, lev)) {
+        area_mod = fields.get_alldirs("area_mod", lev);
     }
     ablastr::fields::VectorField ECTRhofield;
     if (fields.has("ECTRhofield", Direction{0}, lev)) {
-        ECTRhofield = patch_type == PatchType::fine ?
-            fields.get_alldirs("ECTRhofield", lev) : fields.get_alldirs("ECTRhofield", lev);
+        ECTRhofield = fields.get_alldirs("ECTRhofield", lev);
     }
     ablastr::fields::VectorField Venl;
     if (fields.has("Venl", Direction{0}, lev)) {
-        Venl = patch_type == PatchType::fine ?
-            fields.get_alldirs("Venl", lev) : fields.get_alldirs("Venl", lev);
+        Venl = fields.get_alldirs("Venl", lev);
     }
 
     if (m_grid_type == GridType::Collocated) {
