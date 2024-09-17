@@ -193,8 +193,9 @@ computePhiIGF ( amrex::MultiFab const & rho,
       );
     }
 
-    // Prepare to perform FFTs on each box.
+    // Prepare to perform global FFT
     // Since there is 1 MPI rank per box, here each MPI rank obtains its local box and the associated boxid
+    // (when not using heFFTe, there is only one box and thus the local box is the same as the global box)
     int local_boxid = amrex::ParallelDescriptor::MyProc(); // because of how we made the DistributionMapping
     amrex::Box local_nodal_box = realspace_ba[local_boxid];
     amrex::Box local_box(local_nodal_box.smallEnd(), local_nodal_box.bigEnd());
@@ -221,6 +222,10 @@ computePhiIGF ( amrex::MultiFab const & rho,
         fft_size, tmp_G[mfi].dataPtr(),
         reinterpret_cast<ablastr::math::anyfft::Complex*>(tmp_G_fft[mfi].dataPtr()),
         ablastr::math::anyfft::direction::R2C, AMREX_SPACEDIM);
+    backward_plan[mfi] = ablastr::math::anyfft::CreatePlan(
+        fft_size, tmp_G[mfi].dataPtr(),
+        reinterpret_cast<ablastr::math::anyfft::Complex*>( tmp_G_fft[mfi].dataPtr()),
+        ablastr::math::anyfft::direction::C2R, AMREX_SPACEDIM);
 #elif defined(ABLASTR_USE_HEFFTE)
 #if     defined(AMREX_USE_CUDA)
     heffte::fft3d_r2c<heffte::backend::cufft> fft
@@ -229,10 +234,10 @@ computePhiIGF ( amrex::MultiFab const & rho,
 #else
     heffte::fft3d_r2c<heffte::backend::fftw> fft
 #endif
-        ({{local_box.smallEnd(0),local_box.smallEnd(1), local_box.smallEnd(2)},
-          {local_box.bigEnd(0)  ,local_box.bigEnd(1)  , local_box.bigEnd(2)}},
-         {{c_local_box.smallEnd(0),c_local_box.smallEnd(1), c_local_box.smallEnd(2)},
-          {c_local_box.bigEnd(0)  ,c_local_box.bigEnd(1)  ,c_local_box.bigEnd(2)}},
+        ({{local_box.smallEnd(0), local_box.smallEnd(1), local_box.smallEnd(2)},
+          {local_box.bigEnd(0), local_box.bigEnd(1), local_box.bigEnd(2)}},
+         {{c_local_box.smallEnd(0), c_local_box.smallEnd(1), c_local_box.smallEnd(2)},
+          {c_local_box.bigEnd(0), c_local_box.bigEnd(1), c_local_box.bigEnd(2)}},
          0, amrex::ParallelDescriptor::Communicator());
     using heffte_complex = typename heffte::fft_output<amrex::Real>::type;
     heffte_complex* rho_fft_data = (heffte_complex*) tmp_rho_fft.dataPtr();
@@ -253,15 +258,16 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
     // Multiply tmp_G_fft and tmp_rho_fft in spectral space
     // Store the result in-place in Gtmp_G_fft, to save memory
-    //amrex::Multiply( tmp_G_fft, tmp_rho_fft, 0, 0, 1, 0);
-    //tmp_G_fft.mult(tmp_rho_fft, 0, 0, 1);
     tmp_G_fft.template mult<amrex::RunOn::Device>(tmp_rho_fft, 0, 0, 1);
     amrex::Gpu::streamSynchronize();
 
-    // PRINT / SAVE G TIMES RHO
-
+    // Perform backward FFT
     BL_PROFILE_VAR_START(timer_ffts);
+#if !defined(ABLASTR_USE_HEFFTE)
+    ablastr::math::anyfft::Execute(backward_plan[mfi]);
+#elif defined(ABLASTR_USE_HEFFTE)
     fft.backward(G_fft_data, tmp_G[local_boxid].dataPtr());
+#endif
     BL_PROFILE_VAR_STOP(timer_ffts);
 
      // Normalize, since (FFT + inverse FFT) results in a factor N
@@ -273,180 +279,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
     phi.ParallelCopy( tmp_G, 0, 0, 1, amrex::IntVect::TheZeroVector(), phi.nGrowVect());
     BL_PROFILE_VAR_STOP(timer_pcopies);
 
-#elif defined(ABLASTR_USE_FFT) && !defined(ABLASTR_USE_HEFFTE)
-    {
-    BL_PROFILE("Integrated Green Function Solver");
-
-    // Define box that encompasses the full domain
-    amrex::Box domain = ba.minimalBox();
-    domain.surroundingNodes(); // get nodal points, since `phi` and `rho` are nodal
-    domain.grow( phi.nGrowVect() ); // include guard cells
-
-    int const nx = domain.length(0);
-    int const ny = domain.length(1);
-    int const nz = domain.length(2);
-
-    // Allocate 2x wider arrays for the convolution of rho with the Green function
-    // This also defines the box arrays for the global FFT: contains only one box;
-    amrex::Box const realspace_box = amrex::Box(
-        {domain.smallEnd(0), domain.smallEnd(1), domain.smallEnd(2)},
-        {2*nx-1+domain.smallEnd(0), 2*ny-1+domain.smallEnd(1), 2*nz-1+domain.smallEnd(2)},
-        amrex::IntVect::TheNodeVector() );
-
-
-    amrex::BoxArray const realspace_ba = amrex::BoxArray( realspace_box );
-    amrex::Box const spectralspace_box = amrex::Box(
-        {0,0,0},
-        {nx, 2*ny-1, 2*nz-1},
-        amrex::IntVect::TheNodeVector() );
-    amrex::BoxArray const spectralspace_ba = amrex::BoxArray( spectralspace_box );
-    // Define a distribution mapping for the global FFT, with only one box
-    amrex::DistributionMapping dm_global_fft;
-    dm_global_fft.define( realspace_ba );
-    // Allocate required arrays
-    amrex::MultiFab tmp_rho = amrex::MultiFab(realspace_ba, dm_global_fft, 1, 0);
-    tmp_rho.setVal(0);
-    amrex::MultiFab tmp_G = amrex::MultiFab(realspace_ba, dm_global_fft, 1, 0);
-    tmp_G.setVal(0);
-
-    BL_PROFILE_VAR_START(timer_pcopies);
-    // Copy from rho to tmp_rho
-    tmp_rho.ParallelCopy( rho, 0, 0, 1, amrex::IntVect::TheZeroVector(), amrex::IntVect::TheZeroVector() );
-    BL_PROFILE_VAR_STOP(timer_pcopies);
-
-    // Compute the integrated Green function
-    {
-    BL_PROFILE("Initialize Green function");
-    amrex::BoxArray const domain_ba = amrex::BoxArray( domain );
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
-#endif
-    for (amrex::MFIter mfi(domain_ba, dm_global_fft,amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
-
-        amrex::Box const bx = mfi.tilebox();
-
-        amrex::IntVect const lo = realspace_box.smallEnd();
-        amrex::IntVect const hi = realspace_box.bigEnd();
-
-        // Fill values of the Green function
-        amrex::Real const dx = cell_size[0];
-        amrex::Real const dy = cell_size[1];
-        amrex::Real const dz = cell_size[2];
-        amrex::Array4<amrex::Real> const tmp_G_arr = tmp_G.array(mfi);
-        amrex::ParallelFor( bx,
-            [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
-            {
-                int const i0 = i - lo[0];
-                int const j0 = j - lo[1];
-                int const k0 = k - lo[2];
-                amrex::Real const x = i0*dx;
-                amrex::Real const y = j0*dy;
-                amrex::Real const z = k0*dz;
-
-                amrex::Real const G_value = 1._rt/(4._rt*ablastr::constant::math::pi*ablastr::constant::SI::ep0) * (
-                    IntegratedPotential( x+0.5_rt*dx, y+0.5_rt*dy, z+0.5_rt*dz )
-                  - IntegratedPotential( x-0.5_rt*dx, y+0.5_rt*dy, z+0.5_rt*dz )
-                  - IntegratedPotential( x+0.5_rt*dx, y-0.5_rt*dy, z+0.5_rt*dz )
-                  - IntegratedPotential( x+0.5_rt*dx, y+0.5_rt*dy, z-0.5_rt*dz )
-                  + IntegratedPotential( x+0.5_rt*dx, y-0.5_rt*dy, z-0.5_rt*dz )
-                  + IntegratedPotential( x-0.5_rt*dx, y+0.5_rt*dy, z-0.5_rt*dz )
-                  + IntegratedPotential( x-0.5_rt*dx, y-0.5_rt*dy, z+0.5_rt*dz )
-                  - IntegratedPotential( x-0.5_rt*dx, y-0.5_rt*dy, z-0.5_rt*dz )
-                );
-
-                tmp_G_arr(i,j,k) = G_value;
-                // Fill the rest of the array by periodicity
-                if (i0>0) {tmp_G_arr(hi[0]+1-i0, j         , k         ) = G_value;}
-                if (j0>0) {tmp_G_arr(i         , hi[1]+1-j0, k         ) = G_value;}
-                if (k0>0) {tmp_G_arr(i         , j         , hi[2]+1-k0) = G_value;}
-                if ((i0>0)&&(j0>0)) {tmp_G_arr(hi[0]+1-i0, hi[1]+1-j0, k         ) = G_value;}
-                if ((j0>0)&&(k0>0)) {tmp_G_arr(i         , hi[1]+1-j0, hi[2]+1-k0) = G_value;}
-                if ((i0>0)&&(k0>0)) {tmp_G_arr(hi[0]+1-i0, j         , hi[2]+1-k0) = G_value;}
-                if ((i0>0)&&(j0>0)&&(k0>0)) {tmp_G_arr(hi[0]+1-i0, hi[1]+1-j0, hi[2]+1-k0) = G_value;}
-            }
-        );
-    }
-
-
-    }
-    BL_PROFILE_VAR_START(timer_plans);
-    // Perform forward FFTs
-    auto forward_plan_rho = ablastr::math::anyfft::FFTplans(spectralspace_ba, dm_global_fft);
-    auto forward_plan_G = ablastr::math::anyfft::FFTplans(spectralspace_ba, dm_global_fft);
-    BL_PROFILE_VAR_STOP(timer_plans);
-
-    // Loop over boxes perform FFTs
-    for ( amrex::MFIter mfi(realspace_ba, dm_global_fft); mfi.isValid(); ++mfi ){
-
-        // Note: the size of the real-space box and spectral-space box
-        // differ when using real-to-complex FFT. When initializing
-        // the FFT plan, the valid dimensions are those of the real-space box.
-        const amrex::IntVect fft_size = realspace_ba[mfi].length();
-
-        // FFT of rho
-        BL_PROFILE_VAR_START(timer_plans);
-        forward_plan_rho[mfi] = ablastr::math::anyfft::CreatePlan(
-            fft_size, tmp_rho[mfi].dataPtr(),
-            reinterpret_cast<ablastr::math::anyfft::Complex*>(tmp_rho_fft[mfi].dataPtr()),
-            ablastr::math::anyfft::direction::R2C, AMREX_SPACEDIM);
-        BL_PROFILE_VAR_STOP(timer_plans);
-
-        BL_PROFILE_VAR_START(timer_ffts);
-        ablastr::math::anyfft::Execute(forward_plan_rho[mfi]);
-        BL_PROFILE_VAR_STOP(timer_ffts);
-
-        // FFT of G
-        BL_PROFILE_VAR_START(timer_plans);
-        forward_plan_G[mfi] = ablastr::math::anyfft::CreatePlan(
-            fft_size, tmp_G[mfi].dataPtr(),
-            reinterpret_cast<ablastr::math::anyfft::Complex*>(tmp_G_fft[mfi].dataPtr()),
-            ablastr::math::anyfft::direction::R2C, AMREX_SPACEDIM);
-        BL_PROFILE_VAR_STOP(timer_plans);
-
-        BL_PROFILE_VAR_START(timer_ffts);
-        ablastr::math::anyfft::Execute(forward_plan_G[mfi]);
-        BL_PROFILE_VAR_STOP(timer_ffts);
-
-    }
-
-    // Multiply tmp_G_fft and tmp_rho_fft in spectral space
-    // Store the result in-place in Gtmp_G_fft, to save memory
-    amrex::Multiply( tmp_G_fft, tmp_rho_fft, 0, 0, 1, 0);
-
-    BL_PROFILE_VAR_START(timer_plans);
-    // Perform inverse FFT
-    auto backward_plan = ablastr::math::anyfft::FFTplans(spectralspace_ba, dm_global_fft);
-    BL_PROFILE_VAR_STOP(timer_plans);
-
-    // Loop over boxes perform FFTs
-    for ( amrex::MFIter mfi(spectralspace_ba, dm_global_fft); mfi.isValid(); ++mfi ){
-
-        // Note: the size of the real-space box and spectral-space box
-        // differ when using real-to-complex FFT. When initializing
-        // the FFT plan, the valid dimensions are those of the real-space box.
-        const amrex::IntVect fft_size = realspace_ba[mfi].length();
-
-        // Inverse FFT: is done in-place, in the array of G
-        BL_PROFILE_VAR_START(timer_plans);
-        backward_plan[mfi] = ablastr::math::anyfft::CreatePlan(
-            fft_size, tmp_G[mfi].dataPtr(),
-            reinterpret_cast<ablastr::math::anyfft::Complex*>( tmp_G_fft[mfi].dataPtr()),
-            ablastr::math::anyfft::direction::C2R, AMREX_SPACEDIM);
-        BL_PROFILE_VAR_STOP(timer_plans);
-
-        BL_PROFILE_VAR_START(timer_ffts);
-        ablastr::math::anyfft::Execute(backward_plan[mfi]);
-        BL_PROFILE_VAR_STOP(timer_ffts);
-    }
-    // Normalize, since (FFT + inverse FFT) results in a factor N
-    const amrex::Real normalization = 1._rt / realspace_box.numPts();
-    tmp_G.mult( normalization );
-
-    BL_PROFILE_VAR_START(timer_pcopies);
-    // Copy from tmp_G to phi
-    phi.ParallelCopy( tmp_G, 0, 0, 1, amrex::IntVect::TheZeroVector(), phi.nGrowVect() );
-    BL_PROFILE_VAR_STOP(timer_pcopies);
-
+#if !defined(ABLASTR_USE_HEFFTE)
     // Loop to destroy FFT plans
     for ( amrex::MFIter mfi(spectralspace_ba, dm_global_fft); mfi.isValid(); ++mfi ){
         ablastr::math::anyfft::DestroyPlan(forward_plan_G[mfi]);
@@ -454,5 +287,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
         ablastr::math::anyfft::DestroyPlan(backward_plan[mfi]);
     }
 #endif
+
+#endif // ABLASTR_USE_FFT
 }
 } // namespace ablastr::fields
