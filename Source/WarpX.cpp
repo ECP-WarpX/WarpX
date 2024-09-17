@@ -2259,12 +2259,12 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     if (fft_do_time_averaging)
     {
         m_fields.alloc_init( "Bfield_avg_fp", Direction{0}, lev, amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
-        m_fields.alloc_init( "Bfield_avg_fp", Direction{1}, lev, amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
-        m_fields.alloc_init( "Bfield_avg_fp", Direction{2}, lev, amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+        m_fields.alloc_init( "Bfield_avg_fp", Direction{1}, lev, amrex::convert(ba, By_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+        m_fields.alloc_init( "Bfield_avg_fp", Direction{2}, lev, amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
 
         m_fields.alloc_init( "Efield_avg_fp", Direction{0}, lev, amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
-        m_fields.alloc_init( "Efield_avg_fp", Direction{1}, lev, amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
-        m_fields.alloc_init( "Efield_avg_fp", Direction{2}, lev, amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+        m_fields.alloc_init( "Efield_avg_fp", Direction{1}, lev, amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+        m_fields.alloc_init( "Efield_avg_fp", Direction{2}, lev, amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
     }
 
     if (EB::enabled()) {
