@@ -16,7 +16,9 @@
 #endif
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
+#include "EmbeddedBoundary/Enabled.H"
 #include "FieldSolver/Fields.H"
+#include "FieldSolver/ElectrostaticSolvers/ElectrostaticSolver.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #include "Filter/BilinearFilter.H"
@@ -550,6 +552,8 @@ WarpX::InitData ()
         );
     }
 
+    m_electrostatic_solver->InitData();
+
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
         m_hybrid_pic_model->InitData();
     }
@@ -702,6 +706,7 @@ WarpX::InitPML ()
     if (finest_level > 0) { do_pml = 1; }
     if (do_pml)
     {
+        bool const eb_enabled = EB::enabled();
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
         do_pml_Lo[0][0] = 0; // no PML at r=0, in cylindrical geometry
         pml_rz[0] = std::make_unique<PML_RZ>(0, boxArray(0), DistributionMap(0), &Geom(0), pml_ncell, do_pml_in_domain);
@@ -717,6 +722,7 @@ WarpX::InitPML ()
             psatd_solution_type, J_in_time, rho_in_time,
             do_pml_dive_cleaning, do_pml_divb_cleaning,
             amrex::IntVect(0), amrex::IntVect(0),
+            eb_enabled,
             guard_cells.ng_FieldSolver.max(),
             v_particle_pml,
             do_pml_Lo[0], do_pml_Hi[0]);
@@ -756,6 +762,7 @@ WarpX::InitPML ()
                 do_moving_window, pml_has_particles, do_pml_in_domain,
                 psatd_solution_type, J_in_time, rho_in_time, do_pml_dive_cleaning, do_pml_divb_cleaning,
                 amrex::IntVect(0), amrex::IntVect(0),
+                eb_enabled,
                 guard_cells.ng_FieldSolver.max(),
                 v_particle_pml,
                 do_pml_Lo[lev], do_pml_Hi[lev]);
@@ -826,7 +833,7 @@ WarpX::computeMaxStepBoostAccelerator() {
         static_cast<int>(interaction_time_boost/dt[maxLevel()]);
     max_step = computed_max_step;
     Print()<<"max_step computed in computeMaxStepBoostAccelerator: "
-           <<max_step<<std::endl;
+           <<max_step<<"\n";
 }
 
 void
@@ -934,7 +941,8 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     }
 
 #ifdef AMREX_USE_EB
-    InitializeEBGridData(lev);
+    bool const eb_enabled = EB::enabled();
+    if (eb_enabled) { InitializeEBGridData(lev); }
 #endif
 
     // if the input string for the B-field is "parse_b_ext_grid_function",
@@ -979,11 +987,13 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         && (lev <= maxlevel_extEMfield_init)) {
 
 #ifdef AMREX_USE_EB
-        // We initialize ECTRhofield consistently with the Efield
-        if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
-            m_fdtd_solver_fp[lev]->EvolveECTRho(
-                Efield_fp[lev], m_edge_lengths[lev],
-                m_face_areas[lev], ECTRhofield[lev], lev);
+        if (eb_enabled) {
+            // We initialize ECTRhofield consistently with the Efield
+            if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
+                m_fdtd_solver_fp[lev]->EvolveECTRho(
+                    Efield_fp[lev], m_edge_lengths[lev],
+                    m_face_areas[lev], ECTRhofield[lev], lev);
+            }
         }
 #endif
 
@@ -1012,11 +1022,13 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                 'E',
                 lev, PatchType::coarse);
 #ifdef AMREX_USE_EB
-            if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
-                // We initialize ECTRhofield consistently with the Efield
-                m_fdtd_solver_cp[lev]->EvolveECTRho(Efield_cp[lev], m_edge_lengths[lev],
-                                                    m_face_areas[lev], ECTRhofield[lev], lev);
+            if (eb_enabled) {
+                if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
+                    // We initialize ECTRhofield consistently with the Efield
+                    m_fdtd_solver_cp[lev]->EvolveECTRho(Efield_cp[lev], m_edge_lengths[lev],
+                                                        m_face_areas[lev], ECTRhofield[lev], lev);
 
+                }
             }
 #endif
        }
@@ -1041,7 +1053,7 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
        ParserExecutor<3> const& zfield_parser,
        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
-       const char field,
+       [[maybe_unused]] const char field,
        const int lev, PatchType patch_type)
 {
 
@@ -1057,49 +1069,47 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
     const amrex::IntVect y_nodal_flag = mfy->ixType().toIntVect();
     const amrex::IntVect z_nodal_flag = mfz->ixType().toIntVect();
 
-    for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi)
-    {
-        const amrex::Box& tbx = mfi.tilebox( x_nodal_flag, mfx->nGrowVect() );
-        const amrex::Box& tby = mfi.tilebox( y_nodal_flag, mfy->nGrowVect() );
-        const amrex::Box& tbz = mfi.tilebox( z_nodal_flag, mfz->nGrowVect() );
+    bool const eb_enabled = EB::enabled();
 
-        auto const& mfxfab = mfx->array(mfi);
-        auto const& mfyfab = mfy->array(mfi);
-        auto const& mfzfab = mfz->array(mfi);
+    for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+        const amrex::Box &tbx = mfi.tilebox(x_nodal_flag, mfx->nGrowVect());
+        const amrex::Box &tby = mfi.tilebox(y_nodal_flag, mfy->nGrowVect());
+        const amrex::Box &tbz = mfi.tilebox(z_nodal_flag, mfz->nGrowVect());
 
-#ifdef AMREX_USE_EB
-        amrex::Array4<amrex::Real> const& lx = edge_lengths[0]->array(mfi);
-        amrex::Array4<amrex::Real> const& ly = edge_lengths[1]->array(mfi);
-        amrex::Array4<amrex::Real> const& lz = edge_lengths[2]->array(mfi);
-        amrex::Array4<amrex::Real> const& Sx = face_areas[0]->array(mfi);
-        amrex::Array4<amrex::Real> const& Sy = face_areas[1]->array(mfi);
-        amrex::Array4<amrex::Real> const& Sz = face_areas[2]->array(mfi);
+        auto const &mfxfab = mfx->array(mfi);
+        auto const &mfyfab = mfy->array(mfi);
+        auto const &mfzfab = mfz->array(mfi);
 
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        const amrex::Dim3 lx_lo = amrex::lbound(lx);
-        const amrex::Dim3 lx_hi = amrex::ubound(lx);
-        const amrex::Dim3 lz_lo = amrex::lbound(lz);
-        const amrex::Dim3 lz_hi = amrex::ubound(lz);
-#endif
+        amrex::Array4<amrex::Real> lx, ly, lz, Sx, Sy, Sz;
+        if (eb_enabled) {
+            lx = edge_lengths[0]->array(mfi);
+            ly = edge_lengths[1]->array(mfi);
+            lz = edge_lengths[2]->array(mfi);
+            Sx = face_areas[0]->array(mfi);
+            Sy = face_areas[1]->array(mfi);
+            Sz = face_areas[2]->array(mfi);
+        }
 
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        amrex::ignore_unused(ly, Sx, Sz);
-#elif defined(WARPX_DIM_1D_Z)
-        amrex::ignore_unused(lx, ly, lz, Sx, Sy, Sz);
+        amrex::Dim3 lx_lo, lx_hi, lz_lo, lz_hi;
 #endif
-
-#else
-        amrex::ignore_unused(edge_lengths, face_areas, field);
+        if (eb_enabled) {
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+            lx_lo = amrex::lbound(lx);
+            lx_hi = amrex::ubound(lx);
+            lz_lo = amrex::lbound(lz);
+            lz_hi = amrex::ubound(lz);
 #endif
+        }
 
         amrex::ParallelFor (tbx, tby, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
 #ifdef AMREX_USE_EB
 #ifdef WARPX_DIM_3D
-                if((field=='E' and lx(i, j, k)<=0) or (field=='B' and Sx(i, j, k)<=0))  return;
+                if(lx && ((field=='E' and lx(i, j, k)<=0) or (field=='B' and Sx(i, j, k)<=0))) { return; }
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 //In XZ and RZ Ex is associated with a x-edge, while Bx is associated with a z-edge
-                if((field=='E' and lx(i, j, k)<=0) or (field=='B' and lz(i, j, k)<=0)) return;
+                if(lx && ((field=='E' and lx(i, j, k)<=0) or (field=='B' and lz(i, j, k)<=0))) { return; }
 #endif
 #endif
                 // Shift required in the x-, y-, or z- position
@@ -1129,14 +1139,15 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
 #ifdef AMREX_USE_EB
 #ifdef WARPX_DIM_3D
-                if((field=='E' and ly(i, j, k)<=0) or (field=='B' and Sy(i, j, k)<=0))  return;
+                if(ly && ((field=='E' and ly(i, j, k)<=0) or (field=='B' and Sy(i, j, k)<=0))) { return; }
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 //In XZ and RZ Ey is associated with a mesh node, so we need to check if  the mesh node is covered
-                if((field=='E' and (lx(std::min(i  , lx_hi.x), std::min(j  , lx_hi.y), k)<=0
+                if(lx &&
+                  ((field=='E' and (lx(std::min(i  , lx_hi.x), std::min(j  , lx_hi.y), k)<=0
                                  || lx(std::max(i-1, lx_lo.x), std::min(j  , lx_hi.y), k)<=0
                                  || lz(std::min(i  , lz_hi.x), std::min(j  , lz_hi.y), k)<=0
                                  || lz(std::min(i  , lz_hi.x), std::max(j-1, lz_lo.y), k)<=0)) or
-                   (field=='B' and Sy(i,j,k)<=0)) return;
+                   (field=='B' and Sy(i,j,k)<=0))) { return; }
 #endif
 #endif
 #if defined(WARPX_DIM_1D_Z)
@@ -1164,10 +1175,10 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
 #ifdef AMREX_USE_EB
 #ifdef WARPX_DIM_3D
-                if((field=='E' and lz(i, j, k)<=0) or (field=='B' and Sz(i, j, k)<=0))  return;
+                if(lz && ((field=='E' and lz(i, j, k)<=0) or (field=='B' and Sz(i, j, k)<=0))) { return; }
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 //In XZ and RZ Ez is associated with a z-edge, while Bz is associated with a x-edge
-                if((field=='E' and lz(i, j, k)<=0) or (field=='B' and lx(i, j, k)<=0)) return;
+                if(lz && ((field=='E' and lz(i, j, k)<=0) or (field=='B' and lx(i, j, k)<=0))) { return; }
 #endif
 #endif
 #if defined(WARPX_DIM_1D_Z)
@@ -1268,9 +1279,7 @@ void WarpX::InitializeEBGridData (int lev)
     if (lev == maxLevel()) {
 
         // Throw a warning if EB is on and particle_shape > 1
-        bool flag_eb_on = not fieldEBFactory(lev).isAllRegular();
-
-        if ((nox > 1 or noy > 1 or noz > 1) and flag_eb_on)
+        if ((nox > 1 or noy > 1 or noz > 1) and EB::enabled())
         {
             ablastr::warn_manager::WMRecordWarning("Particles",
               "when algo.particle_shape > 1, numerical artifacts will be present when\n"

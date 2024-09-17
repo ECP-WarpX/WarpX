@@ -54,7 +54,7 @@ jobs:
       run: |
         $env:PATH += ';C:/Program Files (x86)/WarpX/bin/'
 
-        python3 Examples\Tests\gaussian_beam\PICMI_inputs_gaussian_beam.py
+        python3 Examples/Tests/gaussian_beam/inputs_test_3d_gaussian_beam_picmi.py
 # JSON writes are currently very slow (50min) with MSVC
 #  --diagformat=openpmd
 
@@ -118,5 +118,5 @@ jobs:
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\vc\Auxiliary\build\vcvarsall.bat" x64
         set "PATH=C:/Program Files (x86)/WarpX/bin/;%PATH%"
 
-        python3 Examples\Tests\gaussian_beam\PICMI_inputs_gaussian_beam.py --diagformat=openpmd
+        python3 Examples/Tests/gaussian_beam/inputs_test_3d_gaussian_beam_picmi.py --diagformat=openpmd
         if errorlevel 1 exit 1

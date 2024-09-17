@@ -176,7 +176,7 @@ scrapeParticlesAtEB (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distan
             [=] AMREX_GPU_DEVICE (const int ip, amrex::RandomEngine const& engine) noexcept
             {
                 // skip particles that are already flagged for removal
-                if (!amrex::ParticleIDWrapper{ptd.m_idcpu[ip]}.is_valid()) return;
+                if (!amrex::ParticleIDWrapper{ptd.m_idcpu[ip]}.is_valid()) { return; }
 
                 amrex::ParticleReal xp, yp, zp;
                 getPosition(ip, xp, yp, zp);
@@ -185,7 +185,7 @@ scrapeParticlesAtEB (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distan
                 amrex::Real W[AMREX_SPACEDIM][2];
                 ablastr::particles::compute_weights<amrex::IndexType::NODE>(
                     xp, yp, zp, plo, dxi, i, j, k, W);
-                amrex::Real phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, phi);
+                amrex::Real const phi_value = ablastr::particles::interp_field_nodal(i, j, k, W, phi);
 
                 if (phi_value < 0.0)
                 {

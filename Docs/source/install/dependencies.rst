@@ -7,7 +7,7 @@ WarpX depends on the following popular third party software.
 Please see installation instructions below.
 
 - a mature `C++17 <https://en.wikipedia.org/wiki/C%2B%2B17>`__ compiler, e.g., GCC 8.4+, Clang 7, NVCC 11.0, MSVC 19.15 or newer
-- `CMake 3.20.0+ <https://cmake.org>`__
+- `CMake 3.24.0+ <https://cmake.org>`__
 - `Git 2.18+ <https://git-scm.com>`__
 - `AMReX <https://amrex-codes.github.io>`__: we automatically download and compile a copy of AMReX
 - `PICSAR <https://github.com/ECP-WarpX/picsar>`__: we automatically download and compile a copy of PICSAR
@@ -28,7 +28,7 @@ Optional dependencies include:
 - `FFTW3 <http://www.fftw.org>`__: for spectral solver (PSATD or IGF) support when running on CPU or SYCL
 
   - also needs the ``pkg-config`` tool on Unix
-- `heFFTe 2.4.0+ <https://github.com/icl-utk-edu/heffte`__: for multi-node spectral solver (IGF) support
+- `heFFTe 2.4.0+ <https://github.com/icl-utk-edu/heffte>`__: for multi-node spectral solver (IGF) support
 - `BLAS++ <https://github.com/icl-utk-edu/blaspp>`__ and `LAPACK++ <https://github.com/icl-utk-edu/lapackpp>`__: for spectral solver (PSATD) support in RZ geometry
 - `Boost 1.66.0+ <https://www.boost.org/>`__: for QED lookup tables generation support
 - `openPMD-api 0.15.1+ <https://github.com/openPMD/openPMD-api>`__: we automatically download and compile a copy of openPMD-api for openPMD I/O support
@@ -81,7 +81,7 @@ Conda (Linux/macOS/Windows)
 
       .. code-block:: bash
 
-         conda create -n warpx-cpu-mpich-dev -c conda-forge blaspp boost ccache cmake compilers git lapackpp "openpmd-api=*=mpi_mpich*" openpmd-viewer python make numpy pandas scipy yt "fftw=*=mpi_mpich*" pkg-config matplotlib mamba mpich mpi4py ninja pip virtualenv
+         conda create -n warpx-cpu-mpich-dev -c conda-forge blaspp boost ccache cmake compilers git "heffte=*=mpi_mpich*" lapackpp "openpmd-api=*=mpi_mpich*" openpmd-viewer python make numpy pandas scipy yt "fftw=*=mpi_mpich*" pkg-config matplotlib mamba mpich mpi4py ninja pip virtualenv
          conda activate warpx-cpu-mpich-dev
 
          # compile WarpX with -DWarpX_MPI=ON

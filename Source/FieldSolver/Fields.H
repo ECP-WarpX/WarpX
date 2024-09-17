@@ -7,10 +7,14 @@
 #ifndef WARPX_FIELDS_H_
 #define WARPX_FIELDS_H_
 
+#include <algorithm>
+#include <iterator>
+
 namespace warpx::fields
 {
     enum struct FieldType : int
     {
+        None,
         Efield_aux,
         Bfield_aux,
         Efield_fp,
@@ -37,6 +41,20 @@ namespace warpx::fields
         Efield_avg_cp,
         Bfield_avg_cp
     };
+
+    constexpr FieldType ArrayFieldTypes[] = {
+            FieldType::Efield_aux, FieldType::Bfield_aux, FieldType::Efield_fp, FieldType::Bfield_fp,
+            FieldType::current_fp, FieldType::current_fp_nodal, FieldType::vector_potential_fp,
+            FieldType::Efield_cp, FieldType::Bfield_cp, FieldType::current_cp,
+            FieldType::Efield_avg_fp, FieldType::Bfield_avg_fp, FieldType::Efield_avg_cp, FieldType::Bfield_avg_cp};
+
+    inline bool
+    isFieldArray (const FieldType field_type)
+    {
+        return std::any_of( std::begin(ArrayFieldTypes), std::end(ArrayFieldTypes),
+            [field_type](const FieldType& f) { return f == field_type; });
+    }
+
 }
 
 #endif //WARPX_FIELDS_H_
