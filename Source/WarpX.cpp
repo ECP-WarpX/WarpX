@@ -2530,9 +2530,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
     if (mypc->m_B_ext_particle_s == "read_from_file") {
         //  These fields will be added to the fields that the particles see, and need to match the index type
-        auto Bfield_aux_levl_0 = m_fields.get("Bfield_aux", Direction{0}, lev);
-        auto Bfield_aux_levl_1 = m_fields.get("Bfield_aux", Direction{1}, lev);
-        auto Bfield_aux_levl_2 = m_fields.get("Bfield_aux", Direction{2}, lev);
+        auto* Bfield_aux_levl_0 = m_fields.get("Bfield_aux", Direction{0}, lev);
+        auto* Bfield_aux_levl_1 = m_fields.get("Bfield_aux", Direction{1}, lev);
+        auto* Bfield_aux_levl_2 = m_fields.get("Bfield_aux", Direction{2}, lev);
 
         // Same as Bfield_fp for reading external field data
         m_fields.alloc_init( "B_external_particle_field", Direction{0}, lev, amrex::convert(ba, Bfield_aux_levl_0->ixType()),
@@ -2553,9 +2553,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
     if (mypc->m_E_ext_particle_s == "read_from_file") {
         //  These fields will be added to the fields that the particles see, and need to match the index type
-        auto Efield_aux_levl_0 = m_fields.get("Efield_aux", Direction{0}, lev);
-        auto Efield_aux_levl_1 = m_fields.get("Efield_aux", Direction{1}, lev);
-        auto Efield_aux_levl_2 = m_fields.get("Efield_aux", Direction{2}, lev);
+        auto* Efield_aux_levl_0 = m_fields.get("Efield_aux", Direction{0}, lev);
+        auto* Efield_aux_levl_1 = m_fields.get("Efield_aux", Direction{1}, lev);
+        auto* Efield_aux_levl_2 = m_fields.get("Efield_aux", Direction{2}, lev);
 
         // Same as Efield_fp for reading external field data
         m_fields.alloc_init( "E_external_particle_field", Direction{0}, lev, amrex::convert(ba, Efield_aux_levl_0->ixType()),
@@ -2966,14 +2966,14 @@ WarpX::ComputeDivE(amrex::MultiFab& divE, const int lev)
 {
     if ( WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD ) {
 #ifdef WARPX_USE_FFT
-        ablastr::fields::VectorField Efield_aux_lev = m_fields.get_alldirs("Efield_aux", lev);
+        const ablastr::fields::VectorField Efield_aux_lev = m_fields.get_alldirs("Efield_aux", lev);
         spectral_solver_fp[lev]->ComputeSpectralDivE(lev, Efield_aux_lev, divE);
 #else
         WARPX_ABORT_WITH_MESSAGE(
             "ComputeDivE: PSATD requested but not compiled");
 #endif
     } else {
-        ablastr::fields::VectorField Efield_aux_lev = m_fields.get_alldirs("Efield_aux", lev);
+        const ablastr::fields::VectorField Efield_aux_lev = m_fields.get_alldirs("Efield_aux", lev);
         m_fdtd_solver_fp[lev]->ComputeDivE(Efield_aux_lev, divE);
     }
 }
@@ -3410,7 +3410,7 @@ WarpX::getFieldDotMaskPointer ( FieldType field_type, int lev, int dir ) const
 }
 
 void WarpX::SetDotMask( std::unique_ptr<amrex::iMultiFab>& field_dotMask,
-                        std::string field_name, int lev, int dir ) const
+                        const std::string& field_name, int lev, int dir ) const
 {
     // Define the dot mask for this field_type needed to properly compute dotProduct()
     // for field values that have shared locations on different MPI ranks

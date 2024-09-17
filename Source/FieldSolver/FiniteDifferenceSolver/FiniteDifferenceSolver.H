@@ -226,7 +226,7 @@ class FiniteDifferenceSolver
         void EvolveFCylindrical (
             amrex::MultiFab* Ffield,
             ablastr::fields::VectorField const & Efield,
-            amrex::MultiFab* const rhofield,
+            amrex::MultiFab* rhofield,
             int rhocomp,
             amrex::Real dt );
 
@@ -322,7 +322,7 @@ class FiniteDifferenceSolver
         template< typename T_Algo >
         void EvolveBPMLCartesian (
             std::array< amrex::MultiFab*, 3 > Bfield,
-            ablastr::fields::VectorField const Efield,
+            ablastr::fields::VectorField Efield,
             amrex::Real dt,
             bool dive_cleaning);
 

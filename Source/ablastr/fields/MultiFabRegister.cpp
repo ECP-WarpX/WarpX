@@ -569,10 +569,12 @@ namespace ablastr::fields
         // C++20: Replace with std::erase_if
         for (auto first = m_mf_register.begin(), last = m_mf_register.end(); first != last;)
         {
-            if (first->second.m_level == level)
+            if (first->second.m_level == level){
                 first = m_mf_register.erase(first);
-            else
+            }
+            else{
                 ++first;
+            }
         }
     }
 
@@ -627,7 +629,7 @@ namespace ablastr::fields
         const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& old_vector_on_levels
     )
     {
-        int const finest_level = old_vector_on_levels.size() - 1u;
+        auto const finest_level = static_cast<int>(old_vector_on_levels.size() - 1u);
 
         MultiLevelVectorField field_on_level;
         field_on_level.reserve(finest_level+1);
@@ -653,7 +655,7 @@ namespace ablastr::fields
         const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& old_scalar_on_levels
     )
     {
-        int const finest_level = old_scalar_on_levels.size() - 1u;
+        auto const finest_level = static_cast<int>(old_scalar_on_levels.size() - 1u);
 
         MultiLevelScalarField field_on_level;
         field_on_level.reserve(finest_level+1);

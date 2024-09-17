@@ -468,8 +468,8 @@ void HybridPICModel::HybridPICSolveE (
     auto& warpx = WarpX::GetInstance();
 
     ablastr::fields::VectorField current_fp_ampere = warpx.m_fields.get_alldirs("hybrid_current_fp_ampere", lev);
-    ablastr::fields::VectorField current_fp_external = warpx.m_fields.get_alldirs("hybrid_current_fp_external", lev);
-    ablastr::fields::ScalarField electron_pressure_fp = warpx.m_fields.get("hybrid_electron_pressure_fp", lev);
+    const ablastr::fields::VectorField current_fp_external = warpx.m_fields.get_alldirs("hybrid_current_fp_external", lev);
+    const ablastr::fields::ScalarField electron_pressure_fp = warpx.m_fields.get("hybrid_electron_pressure_fp", lev);
 
     // Solve E field in regular cells
     warpx.get_pointer_fdtd_solver_fp(lev)->HybridPICSolveE(
