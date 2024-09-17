@@ -120,17 +120,32 @@ FullDiagnostics::ReadParameters ()
                     );
         }
 
+        const bool averaging_period_steps_specified = pp_diag_name.query(
+                "average_period_steps", m_average_period_steps
+        );
+        const bool averaging_period_time_specified = pp_diag_name.queryWithParser(
+                "average_period_time", m_average_period_time
+        );
+
         if (m_time_average_type == TimeAverageType::Static) {
+            // This fails if users do not specify a start.
             pp_diag_name.get("average_start_step", m_average_start_step);
+
+            if (averaging_period_time_specified || averaging_period_steps_specified) {
+                const std::string period_spec_warn_msg = "An averaging period was specified for the 'static_start' averaging mode" \
+                                                         "but will be IGNORED. Averaging will be performed between step" \
+                                                         + std::to_string(m_average_start_step) \
+                                                         + "and the specified intervals.";
+                ablastr::warn_manager::WMRecordWarning(
+                        "Diagnostics",
+                        period_spec_warn_msg,
+                        ablastr::warn_manager::WarnPriority::medium
+                );
+            }
+
         }
 
         if (m_time_average_type == TimeAverageType::Dynamic) {
-            const bool averaging_period_steps_specified = pp_diag_name.query(
-                    "average_period_steps", m_average_period_steps
-                    );
-            const bool averaging_period_time_specified = pp_diag_name.queryWithParser(
-                    "average_period_time", m_average_period_time
-                    );
             // one of the two averaging period options must be set but neither none nor both
             if (
                     (averaging_period_steps_specified && averaging_period_time_specified)
@@ -220,20 +235,36 @@ FullDiagnostics::DoDump (int step, int /*i_buffer*/, bool force_flush)
 bool
 FullDiagnostics::DoComputeAndPack (int step, bool force_flush)
 {
-    if (m_time_averaging == "dynamic_start") {
+    if (m_time_average_type == TimeAverageType::Dynamic) {
         m_average_start_step = m_intervals.nextContains(step) - m_average_period_steps;
+        // check that the periods do not overlap and that the start step is not negative
+        if (m_average_start_step > 0) {
+            if (m_average_start_step < m_intervals.previousContains(step)) {
+                WARPX_ABORT_WITH_MESSAGE(
+                        "Averaging periods may not overlap within a single diagnostic. "
+                        "Please create a second diagnostic for overlapping time averaging periods "
+                        "and account for the increased memory consumption."
+                        );
+            } else {
+            WARPX_ABORT_WITH_MESSAGE("The step to begin time averaging may not be a negative number.");
+            }
+        }
     }
 
-    // add logic here to do compute and pack if m_intervals.contains (step+1-time_average_period) or if (cur_step>time_average_startstep)
+    // Start averaging at output step (from diag.intervals) - period + 1
     bool in_averaging_period = false;
     if (step > m_intervals.nextContains(step) - m_average_start_step && step <= m_intervals.nextContains(step)) {
         in_averaging_period = true;
+
+        if (m_time_average_type == TimeAverageType::Static) {
+            // Update time averaging period to current step
+            m_average_period_steps = step - m_average_start_step;
+        }
     }
 
     // Data must be computed and packed for full diagnostics
     // whenever the data needs to be flushed.
     return (force_flush || m_intervals.contains(step+1) || in_averaging_period);
-    //return (force_flush || m_intervals.contains(step+1) );
 
 }
 
@@ -670,14 +701,14 @@ FullDiagnostics::InitializeBufferData (int i_buffer, int lev, bool restart ) {
 
         if (m_time_average_type == TimeAverageType::Dynamic) {
 
-            // already checked in ReadParameters that only one of them is set
+            // already checked in ReadParameters that only one of the parameters is set
+            // calculate the other averaging period parameter from the other one, respectively
             if (m_average_period_steps > 0) {
                 m_average_period_time = m_average_period_steps * warpx.getdt(0);
             } else if (m_average_period_time > 0) {
                 m_average_period_steps = static_cast<int> (std::round(m_average_period_time / warpx.getdt(0)));
             }
 
-            // CONTINUE HERE
         }
     }
 

@@ -19,7 +19,7 @@ public:
      * Dynamic corresponds to a moving period for averaging where the start step
      *     is as many steps before the output interval as the averaging period is long.
      */
-    enum TimeAverageType {None, Static, Dynamic};
+    enum struct TimeAverageType {None, Static, Dynamic};
 private:
     /** Read user-requested parameters for full diagnostics */
     void ReadParameters ();
