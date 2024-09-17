@@ -15,16 +15,18 @@
 #include <algorithm>
 #include <array>
 #include <memory>
-using namespace amrex::literals;
+
 using namespace amrex;
+using namespace amrex::literals;
+using namespace warpx::fields;
 
 namespace
 {
     /** Returns true if any field boundary is set to FieldBoundaryType FT, else returns false.*/
     template <FieldBoundaryType FT>
     [[nodiscard]]
-    bool isAnyBoundary (const amrex::Vector<FieldBoundaryType>& field_boundary_lo,
-        const amrex::Vector<FieldBoundaryType>& field_boundary_hi)
+    bool isAnyBoundary (const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& field_boundary_lo,
+        const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& field_boundary_hi)
     {
         const auto isFT = [](const auto& b){
             return b == FT;};
@@ -35,8 +37,8 @@ namespace
     /** Returns true if any particle boundary is set to ParticleBoundaryType PT, else returns false.*/
     template <ParticleBoundaryType PT>
     [[nodiscard]]
-    bool isAnyBoundary (const amrex::Vector<ParticleBoundaryType>& particle_boundary_lo,
-        const amrex::Vector<ParticleBoundaryType>& particle_boundary_hi)
+    bool isAnyBoundary (const amrex::Array<ParticleBoundaryType,AMREX_SPACEDIM>& particle_boundary_lo,
+        const amrex::Array<ParticleBoundaryType,AMREX_SPACEDIM>& particle_boundary_hi)
     {
         const auto isPT = [](const auto& b){
             return b == PT;};
@@ -199,8 +201,8 @@ WarpX::ApplyFieldBoundaryOnAxis (amrex::MultiFab* Er, amrex::MultiFab* Et, amrex
         // Lower corner of tile box physical domain
         // Note that this is done before the tilebox.grow so that
         // these do not include the guard cells.
-        const std::array<amrex::Real, 3>& xyzmin = LowerCorner(tilebox, lev, 0._rt);
-        const amrex::Real rmin = xyzmin[0];
+        const amrex::XDim3 xyzmin = LowerCorner(tilebox, lev, 0._rt);
+        const amrex::Real rmin = xyzmin.x;
 
         // Skip blocks that don't touch the axis
         if (rmin > 0._rt) { continue; }

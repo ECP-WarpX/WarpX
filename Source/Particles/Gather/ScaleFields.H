@@ -60,4 +60,4 @@ struct ScaleFields
     }
 };
 
-#endif
+#endif //WARPX_PARTICLES_GATHER_SCALEFIELDS_H_

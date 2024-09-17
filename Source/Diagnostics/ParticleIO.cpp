@@ -7,6 +7,7 @@
  * License: BSD-3-Clause-LBNL
  */
 
+#include "FieldSolver/Fields.H"
 #include "Particles/ParticleIO.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/PhysicalParticleContainer.H"
@@ -17,6 +18,7 @@
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "WarpX.H"
 
 #include <ablastr/utils/text/StreamUtils.H>
 
@@ -41,6 +43,7 @@
 #include <vector>
 
 using namespace amrex;
+using namespace warpx::fields;
 
 void
 LaserParticleContainer::ReadHeader (std::istream& is)
@@ -238,7 +241,7 @@ MultiParticleContainer::WriteHeader (std::ostream& os) const
 
 void
 storePhiOnParticles ( PinnedMemoryParticleContainer& tmp,
-    int electrostatic_solver_id, bool is_full_diagnostic ) {
+    ElectrostaticSolverAlgo electrostatic_solver_id, bool is_full_diagnostic ) {
 
     using PinnedParIter = typename PinnedMemoryParticleContainer::ParIterType;
 
@@ -281,7 +284,8 @@ storePhiOnParticles ( PinnedMemoryParticleContainer& tmp,
                     getPosition(ip, xp, yp, zp);
                     int i, j, k;
                     amrex::Real W[AMREX_SPACEDIM][2];
-                    ablastr::particles::compute_weights(xp, yp, zp, plo, dxi, i, j, k, W);
+                    ablastr::particles::compute_weights<amrex::IndexType::NODE>(
+                        xp, yp, zp, plo, dxi, i, j, k, W);
                     amrex::Real const phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, phi_grid);
                     phi_particle_arr[ip] = phi_value;
                 }

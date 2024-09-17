@@ -169,7 +169,7 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, amrex::Real a_dt)
         );
 
         // Make local copy of xi, to use on device.
-        const Real xi_c2 = WarpX::quantum_xi_c2;
+        const Real xi_c2 = m_quantum_xi_c2;
 
         // Apply QED correction to electric field, using temporary arrays.
         amrex::ParallelFor(

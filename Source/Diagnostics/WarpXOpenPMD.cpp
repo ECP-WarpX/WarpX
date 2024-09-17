@@ -213,32 +213,29 @@ namespace detail
         return make_pair(record_name, component_name);
     }
 
-    /** Return the component labels for particle positions
+    /** Return the user-selected components for particle positions
+     *
+     * @param[in] write_real_comp The real attribute ids, from WarpX
+     * @param[in] real_comp_names The real attribute names, from WarpX
      */
     inline std::vector< std::string >
-    getParticlePositionComponentLabels (bool ignore_dims=false)
+    getParticlePositionComponentLabels (
+        amrex::Vector<int> const & write_real_comp,
+        amrex::Vector<std::string> const & real_comp_names)
     {
-        using vs = std::vector< std::string >;
-        auto positionComponents = vs{"x", "y", "z"};
-        if (!ignore_dims) {
-#if defined(WARPX_DIM_1D_Z)
-            positionComponents = vs{"z"};
-#elif defined(WARPX_DIM_XZ)
-            positionComponents = vs{"x", "z"};
-#elif defined(WARPX_DIM_RZ)
-            // note: although we internally store particle positions
-            //       for AMReX in r,z and a theta attribute, we
-            //       actually need them for algorithms (e.g. push)
-            //       and I/O in Cartesian.
-            //       Other attributes like momentum are consequently
-            //       stored in x,y,z internally.
-            positionComponents = vs{"x", "y", "z"};
-#elif defined(WARPX_DIM_3D)
-            positionComponents = vs{"x", "y", "z"};
-#else
-#   error Unknown WarpX dimensionality.
-#endif
+        std::vector< std::string > positionComponents;
+
+        int idx = 0;
+        for (auto const & comp : real_comp_names ) {
+            if (write_real_comp[idx]) {
+                if (comp == "position_x" || comp == "position_y" || comp == "position_z") {
+                    std::string const last_letter{comp.back()};
+                    positionComponents.push_back(last_letter);
+                }
+            }
+            idx++;
         }
+
         return positionComponents;
     }
 
@@ -469,7 +466,7 @@ void WarpXOpenPMDPlot::CloseStep (bool isBTD, bool isLastBTDFlush)
             std::string const filename = GetFileName(filepath);
 
             std::ofstream pv_helper_file(m_dirPrefix + "/paraview.pmd");
-            pv_helper_file << filename << std::endl;
+            pv_helper_file << filename << "\n";
             pv_helper_file.close();
         }
     }
@@ -705,16 +702,18 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
         doParticleSetup = is_first_flush_with_particles || is_last_flush_and_never_particles;
     }
 
+    auto const positionComponents = detail::getParticlePositionComponentLabels(write_real_comp, real_comp_names);
+
     // this setup stage also implicitly calls "makeEmpty" if needed (i.e., is_last_flush_and_never_particles)
     //   for BTD, we call this multiple times as we may resize in subsequent dumps if number of particles in the buffer > 0
     if (doParticleSetup || is_resizing_flush) {
-        SetupPos(currSpecies, NewParticleVectorSize, isBTD);
+        SetupPos(currSpecies, positionComponents, NewParticleVectorSize, isBTD);
         SetupRealProperties(pc, currSpecies, write_real_comp, real_comp_names, write_int_comp, int_comp_names,
                             NewParticleVectorSize, isBTD);
     }
 
     if (is_last_flush_to_step) {
-        SetConstParticleRecordsEDPIC(currSpecies, NewParticleVectorSize, charge, mass);
+        SetConstParticleRecordsEDPIC(currSpecies, positionComponents, NewParticleVectorSize, charge, mass);
     }
 
     // open files from all processors, in case some will not contribute below
@@ -912,33 +911,34 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
     {
         auto const real_counter = std::min(write_real_comp.size(), real_comp_names.size());
 
+#if defined(WARPX_DIM_RZ)
         // reconstruct Cartesian positions for RZ simulations
         // r,z,theta -> x,y,z
-#if defined(WARPX_DIM_RZ)
-        auto const * const r = soa.GetRealData(PIdx::x).data();
-        auto const * const theta = soa.GetRealData(PIdx::theta).data();
+        // If each comp is being written, create a temporary array, otherwise create an empty array.
+        std::shared_ptr<amrex::ParticleReal> const x(
+            new amrex::ParticleReal[(write_real_comp[0] ? numParticleOnTile : 0)],
+            [](amrex::ParticleReal const *p) { delete[] p; }
+        );
+        std::shared_ptr<amrex::ParticleReal> const y(
+            new amrex::ParticleReal[(write_real_comp[1] ? numParticleOnTile : 0)],
+            [](amrex::ParticleReal const *p) { delete[] p; }
+        );
 
+        const auto& tile = pti.GetParticleTile();
+        const auto& ptd = tile.getConstParticleTileData();
+
+        for (int i = 0; i < numParticleOnTile; ++i) {
+            const auto& p = ptd.getSuperParticle(i);
+            amrex::ParticleReal xp, yp, zp;
+            get_particle_position(p, xp, yp, zp);
+            if (write_real_comp[0]) { x.get()[i] = xp; }
+            if (write_real_comp[1]) { y.get()[i] = yp; }
+        }
         if (write_real_comp[0]) {
-            std::shared_ptr<amrex::ParticleReal> const x(
-                new amrex::ParticleReal[numParticleOnTile],
-                [](amrex::ParticleReal const *p) { delete[] p; }
-            );
-            for (int i = 0; i < numParticleOnTile; ++i) {
-                x.get()[i] = r[i] * std::cos(theta[i]);
-            }
-            getComponentRecord(real_comp_names[0]).storeChunk(
-                x, {offset}, {numParticleOnTile64});
+            getComponentRecord(real_comp_names[0]).storeChunk(x, {offset}, {numParticleOnTile64});
         }
         if (write_real_comp[1]) {
-            std::shared_ptr<amrex::ParticleReal> const y(
-                new amrex::ParticleReal[numParticleOnTile],
-                [](amrex::ParticleReal const *p) { delete[] p; }
-            );
-            for (int i = 0; i < numParticleOnTile; ++i) {
-                y.get()[i] = r[i] * std::sin(theta[i]);
-            }
-            getComponentRecord(real_comp_names[1]).storeChunk(
-                y, {offset}, {numParticleOnTile64});
+            getComponentRecord(real_comp_names[1]).storeChunk(y, {offset}, {numParticleOnTile64});
         }
 #endif
 
@@ -978,6 +978,7 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
 void
 WarpXOpenPMDPlot::SetupPos (
     openPMD::ParticleSpecies& currSpecies,
+    std::vector<std::string> const & positionComponents,
     const unsigned long long& np,
     bool const isBTD)
 {
@@ -986,7 +987,6 @@ WarpXOpenPMDPlot::SetupPos (
     auto realType = openPMD::Dataset(openPMD::determineDatatype<amrex::ParticleReal>(), {np}, options);
     auto idType = openPMD::Dataset(openPMD::determineDatatype< uint64_t >(), {np}, options);
 
-    auto const positionComponents = detail::getParticlePositionComponentLabels();
     for( auto const& comp : positionComponents ) {
         currSpecies["position"][comp].resetDataset( realType );
     }
@@ -998,6 +998,7 @@ WarpXOpenPMDPlot::SetupPos (
 void
 WarpXOpenPMDPlot::SetConstParticleRecordsEDPIC (
         openPMD::ParticleSpecies& currSpecies,
+        std::vector<std::string> const & positionComponents,
         const unsigned long long& np,
         amrex::ParticleReal const charge,
         amrex::ParticleReal const mass)
@@ -1006,7 +1007,6 @@ WarpXOpenPMDPlot::SetConstParticleRecordsEDPIC (
     const auto *const scalar = openPMD::RecordComponent::SCALAR;
 
     // define record shape to be number of particles
-    auto const positionComponents = detail::getParticlePositionComponentLabels(true);
     for( auto const& comp : positionComponents ) {
         currSpecies["positionOffset"][comp].resetDataset( realType );
     }
@@ -1015,9 +1015,12 @@ WarpXOpenPMDPlot::SetConstParticleRecordsEDPIC (
 #if defined(WARPX_DIM_1D_Z)
     currSpecies["position"]["x"].resetDataset( realType );
     currSpecies["position"]["y"].resetDataset( realType );
+    currSpecies["positionOffset"]["x"].resetDataset( realType );
+    currSpecies["positionOffset"]["y"].resetDataset( realType );
 #endif
 #if defined(WARPX_DIM_XZ)
     currSpecies["position"]["y"].resetDataset( realType );
+    currSpecies["positionOffset"]["y"].resetDataset( realType );
 #endif
 
     // make constant
@@ -1031,22 +1034,29 @@ WarpXOpenPMDPlot::SetConstParticleRecordsEDPIC (
 #if defined(WARPX_DIM_1D_Z)
     currSpecies["position"]["x"].makeConstant( 0._prt );
     currSpecies["position"]["y"].makeConstant( 0._prt );
+    currSpecies["positionOffset"]["x"].makeConstant( 0._prt );
+    currSpecies["positionOffset"]["y"].makeConstant( 0._prt );
 #endif
 #if defined(WARPX_DIM_XZ)
     currSpecies["position"]["y"].makeConstant( 0._prt );
+    currSpecies["positionOffset"]["y"].makeConstant( 0._prt );
 #endif
 
     // meta data
-    currSpecies["position"].setUnitDimension( detail::getUnitDimension("position") );
-    currSpecies["positionOffset"].setUnitDimension( detail::getUnitDimension("positionOffset") );
+    if (!positionComponents.empty()) {
+        currSpecies["position"].setUnitDimension( detail::getUnitDimension("position") );
+        currSpecies["positionOffset"].setUnitDimension( detail::getUnitDimension("positionOffset") );
+    }
     currSpecies["charge"].setUnitDimension( detail::getUnitDimension("charge") );
     currSpecies["mass"].setUnitDimension( detail::getUnitDimension("mass") );
 
     // meta data for ED-PIC extension
-    currSpecies["position"].setAttribute( "macroWeighted", 0u );
-    currSpecies["position"].setAttribute( "weightingPower", 0.0 );
-    currSpecies["positionOffset"].setAttribute( "macroWeighted", 0u );
-    currSpecies["positionOffset"].setAttribute( "weightingPower", 0.0 );
+    if (!positionComponents.empty()) {
+        currSpecies["position"].setAttribute( "macroWeighted", 0u );
+        currSpecies["position"].setAttribute( "weightingPower", 0.0 );
+        currSpecies["positionOffset"].setAttribute( "macroWeighted", 0u );
+        currSpecies["positionOffset"].setAttribute( "weightingPower", 0.0 );
+    }
     currSpecies["id"].setAttribute( "macroWeighted", 0u );
     currSpecies["id"].setAttribute( "weightingPower", 0.0 );
     currSpecies["charge"].setAttribute( "macroWeighted", 0u );

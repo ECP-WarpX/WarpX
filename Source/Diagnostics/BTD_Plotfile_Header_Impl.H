@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef BTD_PLOTFILE_HEADER_IMPL_H
-#define BTD_PLOTFILE_HEADER_IMPL_H
+#ifndef WARPX_BTD_PLOTFILE_HEADER_IMPL_H
+#define WARPX_BTD_PLOTFILE_HEADER_IMPL_H
 
 #include <AMReX_Array.H>
 #include <AMReX_Box.H>
@@ -342,4 +342,4 @@ public:
     std::string m_Header_path;
 };
 
-#endif
+#endif //WARPX_BTD_PLOTFILE_HEADER_IMPL_H

@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef NamedComponentParticleContainer_H_
-#define NamedComponentParticleContainer_H_
+#ifndef WARPX_NamedComponentParticleContainer_H_
+#define WARPX_NamedComponentParticleContainer_H_
 
 #include "Utils/TextMsg.H"
 
@@ -219,4 +219,4 @@ protected:
     std::map<std::string, int> particle_runtime_icomps;
 };
 
-#endif
+#endif //WARPX_NamedComponentParticleContainer_H_

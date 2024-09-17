@@ -7,8 +7,9 @@
  */
 #include "SliceDiagnostic.H"
 
-#include "WarpX.H"
+#include "FieldSolver/Fields.H"
 #include "Utils/TextMsg.H"
+#include "WarpX.H"
 
 #include <ablastr/utils/Communication.H>
 #include <ablastr/warn_manager/WarnManager.H>
@@ -40,7 +41,7 @@
 #include <sstream>
 
 using namespace amrex;
-
+using namespace warpx::fields;
 
 /* \brief
  *  The functions creates the slice for diagnostics based on the user-input.
@@ -152,7 +153,7 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
     ablastr::utils::communication::ParallelCopy(*smf, mf, 0, 0, ncomp, nghost_vect, nghost_vect, WarpX::do_single_precision_comms);
 
     // interpolate if required on refined slice //
-    if (interpolate == 1 ) {
+    if (interpolate) {
        InterpolateSliceValues( *smf, interp_lo, slice_cc_nd_box, dom_geom,
                                ncomp, nghost, slice_lo, slice_hi, SliceType, real_box);
     }

@@ -5,8 +5,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef SMART_COPY_H_
-#define SMART_COPY_H_
+#ifndef WARPX_SMART_COPY_H_
+#define WARPX_SMART_COPY_H_
 
 #include "DefaultInitialization.H"
 #include "SmartUtils.H"
@@ -163,4 +163,4 @@ public:
     [[nodiscard]] bool isDefined () const noexcept { return m_defined; }
 };
 
-#endif
+#endif //WARPX_SMART_COPY_H_

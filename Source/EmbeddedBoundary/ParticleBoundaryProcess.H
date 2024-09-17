@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef PARTICLEBOUNDARYPROCESS_H_
-#define PARTICLEBOUNDARYPROCESS_H_
+#ifndef WARPX_PARTICLEBOUNDARYPROCESS_H_
+#define WARPX_PARTICLEBOUNDARYPROCESS_H_
 
 #include <AMReX_Particle.H>
 #include <AMReX_REAL.H>
@@ -36,4 +36,4 @@ struct Absorb {
 };
 }
 
-#endif
+#endif //WARPX_PARTICLEBOUNDARYPROCESS_H_

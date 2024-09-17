@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef PARTICLEIO_H_
-#define PARTICLEIO_H_
+#ifndef WARPX_PARTICLEIO_H_
+#define WARPX_PARTICLEIO_H_
 
 #include "Particles/WarpXParticleContainer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
@@ -90,6 +90,6 @@ particlesConvertUnits (ConvertDirection convert_direction, T_ParticleContainer* 
  */
 void
 storePhiOnParticles ( PinnedMemoryParticleContainer& tmp,
-    int electrostatic_solver_id, bool is_full_diagnostic );
+    ElectrostaticSolverAlgo electrostatic_solver_id, bool is_full_diagnostic );
 
-#endif /* PARTICLEIO_H_ */
+#endif /* WARPX_PARTICLEIO_H_ */

@@ -14,7 +14,7 @@
 #include <FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H>
 #include <FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H>
 #include <FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H>
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
 #   include <FieldSolver/SpectralSolver/SpectralKSpace.H>
 #   ifdef WARPX_DIM_RZ
 #       include <FieldSolver/SpectralSolver/SpectralSolverRZ.H>
@@ -36,7 +36,7 @@
 #include <Utils/WarpXConst.H>
 #include <Utils/WarpXProfilerWrapper.H>
 #include <Utils/WarpXUtil.H>
-
+#include "FieldSolver/ElectrostaticSolvers/ElectrostaticSolver.H"
 #include <AMReX.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_ParallelDescriptor.H>
@@ -176,13 +176,13 @@ The physical fields in WarpX have the following naming:
                std::string potential_lo_y, std::string potential_hi_y,
                std::string potential_lo_z, std::string potential_hi_z)
             {
-                if (potential_lo_x != "") wx.m_poisson_boundary_handler.potential_xlo_str = potential_lo_x;
-                if (potential_hi_x != "") wx.m_poisson_boundary_handler.potential_xhi_str = potential_hi_x;
-                if (potential_lo_y != "") wx.m_poisson_boundary_handler.potential_ylo_str = potential_lo_y;
-                if (potential_hi_y != "") wx.m_poisson_boundary_handler.potential_yhi_str = potential_hi_y;
-                if (potential_lo_z != "") wx.m_poisson_boundary_handler.potential_zlo_str = potential_lo_z;
-                if (potential_hi_z != "") wx.m_poisson_boundary_handler.potential_zhi_str = potential_hi_z;
-                wx.m_poisson_boundary_handler.buildParsers();
+                if (potential_lo_x != "") wx.GetElectrostaticSolver().m_poisson_boundary_handler->potential_xlo_str = potential_lo_x;
+                if (potential_hi_x != "") wx.GetElectrostaticSolver().m_poisson_boundary_handler->potential_xhi_str = potential_hi_x;
+                if (potential_lo_y != "") wx.GetElectrostaticSolver().m_poisson_boundary_handler->potential_ylo_str = potential_lo_y;
+                if (potential_hi_y != "") wx.GetElectrostaticSolver().m_poisson_boundary_handler->potential_yhi_str = potential_hi_y;
+                if (potential_lo_z != "") wx.GetElectrostaticSolver().m_poisson_boundary_handler->potential_zlo_str = potential_lo_z;
+                if (potential_hi_z != "") wx.GetElectrostaticSolver().m_poisson_boundary_handler->potential_zhi_str = potential_hi_z;
+                wx.GetElectrostaticSolver().m_poisson_boundary_handler->BuildParsers();
             },
             py::arg("potential_lo_x") = "",
             py::arg("potential_hi_x") = "",
@@ -194,10 +194,14 @@ The physical fields in WarpX have the following naming:
         )
         .def("set_potential_on_eb",
             [](WarpX& wx, std::string potential) {
-                wx.m_poisson_boundary_handler.setPotentialEB(potential);
+                wx.GetElectrostaticSolver().m_poisson_boundary_handler->setPotentialEB(potential);
             },
             py::arg("potential"),
             "Sets the EB potential string and updates the function parser."
+        )
+        .def_static("run_div_cleaner",
+            [] () { WarpX::ProjectionCleanDivB(); },
+            "Executes projection based divergence cleaner on loaded Bfield_fp_external."
         )
     ;
 

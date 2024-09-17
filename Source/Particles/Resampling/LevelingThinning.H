@@ -39,6 +39,12 @@ public:
     LevelingThinning (const std::string& species_name);
 
     /**
+     * This function queries deprecated input parameters and aborts
+     * the run if one of them is specified.
+     */
+    void BackwardCompatibility (const std::string& species_name );
+
+    /**
      * \brief A method that performs leveling thinning for the considered species.
      *
      * @param[in] pti WarpX particle iterator of the particles to resample.

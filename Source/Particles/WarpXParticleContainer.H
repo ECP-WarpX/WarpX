@@ -354,7 +354,7 @@ public:
     amrex::Vector<amrex::ParticleReal> m_E_external_particle;
 
     //! Current injection position
-    amrex::Real m_current_injection_position;
+    amrex::Real m_current_injection_position = 0.;
 
     // split along diagonals (0) or axes (1)
     int split_type = 0;
@@ -426,12 +426,14 @@ public:
     virtual QuantumSynchrotronEngine* get_quantum_sync_engine_ptr () const {return nullptr;}
 #endif
 
+    void setDoNotPush (bool flag) { do_not_push = flag; }
+
 protected:
     int species_id;
 
     amrex::ParticleReal charge;
     amrex::ParticleReal mass;
-    PhysicalSpecies physical_species;
+    PhysicalSpecies physical_species = PhysicalSpecies::unspecified;
 
     // Controls boundaries for particles exiting the domain
     ParticleBoundaries m_boundary_conditions;
@@ -442,7 +444,7 @@ protected:
     //! instead of gathering fields from the finest patch level, gather from the coarsest
     bool m_gather_from_main_grid = false;
 
-    int do_not_push = 0;
+    bool do_not_push = false;
     int do_not_gather = 0;
 
     // Whether to allow particles outside of the simulation domain to be

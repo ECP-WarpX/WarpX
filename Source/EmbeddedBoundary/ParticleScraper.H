@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef PARTICLESCRAPER_H_
-#define PARTICLESCRAPER_H_
+#ifndef WARPX_PARTICLESCRAPER_H_
+#define WARPX_PARTICLESCRAPER_H_
 
 #include "EmbeddedBoundary/DistanceToEB.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
@@ -65,9 +65,9 @@
  */
 template <class PC, class F, std::enable_if_t<amrex::IsParticleContainer<PC>::value, int> foo = 0>
 void
-scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, int lev, F&& f)
+scrapeParticlesAtEB (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, int lev, F&& f)
 {
-    scrapeParticles(pc, distance_to_eb, lev, lev, std::forward<F>(f));
+    scrapeParticlesAtEB(pc, distance_to_eb, lev, lev, std::forward<F>(f));
 }
 
 /**
@@ -108,9 +108,9 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
  */
 template <class PC, class F, std::enable_if_t<amrex::IsParticleContainer<PC>::value, int> foo = 0>
 void
-scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, F&& f)
+scrapeParticlesAtEB (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, F&& f)
 {
-    scrapeParticles(pc, distance_to_eb, 0, pc.finestLevel(), std::forward<F>(f));
+    scrapeParticlesAtEB(pc, distance_to_eb, 0, pc.finestLevel(), std::forward<F>(f));
 }
 
 /**
@@ -153,10 +153,10 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
  */
 template <class PC, class F, std::enable_if_t<amrex::IsParticleContainer<PC>::value, int> foo = 0>
 void
-scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb,
+scrapeParticlesAtEB (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb,
                  int lev_min, int lev_max, F&& f)
 {
-    BL_PROFILE("scrapeParticles");
+    BL_PROFILE("scrapeParticlesAtEB");
 
     for (int lev = lev_min; lev <= lev_max; ++lev)
     {
@@ -176,22 +176,23 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
             [=] AMREX_GPU_DEVICE (const int ip, amrex::RandomEngine const& engine) noexcept
             {
                 // skip particles that are already flagged for removal
-                if (!amrex::ParticleIDWrapper{ptd.m_idcpu[ip]}.is_valid()) return;
+                if (!amrex::ParticleIDWrapper{ptd.m_idcpu[ip]}.is_valid()) { return; }
 
                 amrex::ParticleReal xp, yp, zp;
                 getPosition(ip, xp, yp, zp);
 
                 int i, j, k;
                 amrex::Real W[AMREX_SPACEDIM][2];
-                ablastr::particles::compute_weights(xp, yp, zp, plo, dxi, i, j, k, W);
-                amrex::Real phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, phi);
+                ablastr::particles::compute_weights<amrex::IndexType::NODE>(
+                    xp, yp, zp, plo, dxi, i, j, k, W);
+                amrex::Real const phi_value = ablastr::particles::interp_field_nodal(i, j, k, W, phi);
 
                 if (phi_value < 0.0)
                 {
                     int ic, jc, kc; // Cell-centered indices
-                    [[maybe_unused]] int nodal;
                     amrex::Real Wc[AMREX_SPACEDIM][2]; // Cell-centered weights
-                    ablastr::particles::compute_weights(xp, yp, zp, plo, dxi, ic, jc, kc, Wc, nodal=0);
+                    ablastr::particles::compute_weights<amrex::IndexType::CELL>(
+                        xp, yp, zp, plo, dxi, ic, jc, kc, Wc);
                     amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, ic, jc, kc, Wc, phi, dxi);
                     DistanceToEB::normalize(normal);
                     amrex::RealVect pos;
@@ -216,4 +217,4 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
     }
 }
 
-#endif
+#endif //WARPX_PARTICLESCRAPER_H_

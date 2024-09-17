@@ -94,7 +94,7 @@ public:
                                 amrex::ParticleReal * AMREX_RESTRICT puzp,
                                 amrex::ParticleReal const * AMREX_RESTRICT pwp,
                                 amrex::Real const * AMREX_RESTRICT amplitude,
-                                amrex::Real dt);
+                                amrex::Real dt, PushType push_type=PushType::Explicit);
 
 protected:
 

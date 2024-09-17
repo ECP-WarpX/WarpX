@@ -13,9 +13,10 @@
 #include "BoundaryConditions/PML.H"
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
+#include "EmbeddedBoundary/Enabled.H"
 #include "Evolve/WarpXDtType.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
 #   else
@@ -125,10 +126,8 @@ WarpX::Evolve (int numsteps)
 
         ExecutePythonCallback("particleinjection");
 
-        // TODO: move out
-        if (evolve_scheme == EvolveScheme::ImplicitPicard ||
-            evolve_scheme == EvolveScheme::SemiImplicitPicard) {
-            OneStep_ImplicitPicard(cur_time);
+        if (m_implicit_solver) {
+            m_implicit_solver->OneStep(cur_time, dt[0], step);
         }
         else if ( electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
              electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC )
@@ -144,7 +143,7 @@ WarpX::Evolve (int numsteps)
             OneStep_multiJ(cur_time);
         }
         // Electromagnetic case: no subcycling or no mesh refinement
-        else if (do_subcycling == 0 || finest_level == 0)
+        else if ( !do_subcycling || (finest_level == 0))
         {
             OneStep_nosub(cur_time);
             // E: guard cells are up-to-date
@@ -152,7 +151,7 @@ WarpX::Evolve (int numsteps)
             // F: guard cells are NOT up-to-date
         }
         // Electromagnetic case: subcycling with one level of mesh refinement
-        else if (do_subcycling == 1 && finest_level == 1)
+        else if (do_subcycling && (finest_level == 1))
         {
             OneStep_sub1(cur_time);
         }
@@ -208,6 +207,7 @@ WarpX::Evolve (int numsteps)
 
         // sync up time
         for (int i = 0; i <= max_level; ++i) {
+            t_old[i] = t_new[i];
             t_new[i] = cur_time;
         }
         multi_diags->FilterComputePackFlush( step, false, true );
@@ -248,7 +248,12 @@ WarpX::Evolve (int numsteps)
                     // This is currently a lab frame calculation.
                     ComputeMagnetostaticField();
                 }
-                AddExternalFields();
+                // Since the fields were reset above, the external fields are added
+                // back on to the fine patch fields. This make it so that the net fields
+                // are the sum of the field solution and any external field.
+                for (int lev = 0; lev <= max_level; ++lev) {
+                    AddExternalFields(lev);
+                }
             } else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
                 // Hybrid-PIC case:
                 // The particles are now at p^{n+1/2} and x^{n+1}. The fields
@@ -308,6 +313,9 @@ WarpX::Evolve (int numsteps)
         multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
         if (m_exit_loop_due_to_interrupt_signal) { ExecutePythonCallback("onbreaksignal"); }
     }
+
+    amrex::Print() <<
+        ablastr::warn_manager::GetWMInstance().PrintGlobalWarnings("THE END");
 }
 
 /* /brief Perform one PIC iteration, without subcycling
@@ -489,13 +497,7 @@ void WarpX::HandleParticlesAtBoundaries (int step, amrex::Real cur_time, int num
     mypc->ContinuousFluxInjection(cur_time, dt[0]);
 
     mypc->ApplyBoundaryConditions();
-
-    // interact the particles with EB walls (if present)
-#ifdef AMREX_USE_EB
-    mypc->ScrapeParticles(amrex::GetVecOfConstPtrs(m_distance_to_eb));
-#endif
-
-    m_particle_boundary_buffer->gatherParticles(*mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
+    m_particle_boundary_buffer->gatherParticlesFromDomainBoundaries(*mypc);
 
     // Non-Maxwell solver: particles can move by an arbitrary number of cells
     if( electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
@@ -521,6 +523,14 @@ void WarpX::HandleParticlesAtBoundaries (int step, amrex::Real cur_time, int num
         else {
             mypc->Redistribute();
         }
+    }
+
+    // interact the particles with EB walls (if present)
+    if (EB::enabled()) {
+        mypc->ScrapeParticlesAtEB(amrex::GetVecOfConstPtrs(m_distance_to_eb));
+        m_particle_boundary_buffer->gatherParticlesFromEmbeddedBoundaries(
+            *mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
+        mypc->deleteInvalidParticles();
     }
 
     if (sort_intervals.contains(step+1)) {
@@ -602,7 +612,7 @@ void WarpX::SyncCurrentAndRho ()
 void
 WarpX::OneStep_multiJ (const amrex::Real cur_time)
 {
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD,
@@ -644,7 +654,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     //    (dt[0] denotes the time step on mesh refinement level 0)
     if (J_in_time == JInTime::Linear)
     {
-        auto& current = (WarpX::do_current_centering) ? current_fp_nodal : current_fp;
+        auto& current = (do_current_centering) ? current_fp_nodal : current_fp;
         mypc->DepositCurrent(current, dt[0], -dt[0]);
         // Synchronize J: filter, exchange boundary, and interpolate across levels.
         // With current centering, the nodal current is deposited in 'current',
@@ -678,7 +688,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
 
         // Deposit new J at relative time t_deposit_current with time step dt
         // (dt[0] denotes the time step on mesh refinement level 0)
-        auto& current = (WarpX::do_current_centering) ? current_fp_nodal : current_fp;
+        auto& current = (do_current_centering) ? current_fp_nodal : current_fp;
         mypc->DepositCurrent(current, dt[0], t_deposit_current);
         // Synchronize J: filter, exchange boundary, and interpolate across levels.
         // With current centering, the nodal current is deposited in 'current',
@@ -765,7 +775,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     amrex::ignore_unused(cur_time);
     WARPX_ABORT_WITH_MESSAGE(
         "multi-J algorithm not implemented for FDTD");
-#endif // WARPX_USE_PSATD
+#endif // WARPX_USE_FFT
 }
 
 /* /brief Perform one PIC iteration, with subcycling

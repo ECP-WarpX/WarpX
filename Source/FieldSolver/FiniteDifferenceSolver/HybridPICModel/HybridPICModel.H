@@ -22,6 +22,8 @@
 #include <AMReX_Array.H>
 #include <AMReX_REAL.H>
 
+#include <optional>
+
 /**
  * \brief This class contains the parameters needed to evaluate hybrid field
  * solutions (kinetic ions with fluid electrons).
@@ -89,7 +91,7 @@ public:
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Bfield,
         amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
-        bool include_resistivity_term);
+        bool solve_for_Faraday);
 
     void HybridPICSolveE (
         std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
@@ -97,7 +99,7 @@ public:
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
         std::unique_ptr<amrex::MultiFab> const& rhofield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
-        int lev, bool include_resistivity_term);
+        int lev, bool solve_for_Faraday);
 
     void HybridPICSolveE (
         std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
@@ -105,7 +107,7 @@ public:
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
         std::unique_ptr<amrex::MultiFab> const& rhofield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
-        int lev, PatchType patch_type, bool include_resistivity_term);
+        int lev, PatchType patch_type, bool solve_for_Faraday);
 
     void BfieldEvolveRK (
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
@@ -136,12 +138,11 @@ public:
 
     /**
      * \brief
-     * Function to calculate the electron pressure at a given timestep type
-     * using the simulation charge density. Used in the Ohm's law solver
-     * (kinetic-fluid hybrid model).
+     * Function to calculate the electron pressure using the simulation charge
+     * density. Used in the Ohm's law solver (kinetic-fluid hybrid model).
      */
-    void CalculateElectronPressure (          DtType a_dt_type);
-    void CalculateElectronPressure (int lev,  DtType a_dt_type);
+    void CalculateElectronPressure ();
+    void CalculateElectronPressure (int lev);
 
     /**
      * \brief Fill the electron pressure multifab given the kinetic particle

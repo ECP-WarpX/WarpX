@@ -47,9 +47,21 @@ LevelingThinning::LevelingThinning (const std::string& species_name)
     }
 
     utils::parser::queryWithParser(
-        pp_species_name, "resampling_algorithm_min_ppc", m_min_ppc);
+        pp_species_name, "resampling_min_ppc", m_min_ppc);
+    BackwardCompatibility(species_name);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_min_ppc >= 1,
                                      "Resampling min_ppc should be greater than or equal to 1");
+}
+
+void LevelingThinning::BackwardCompatibility (const std::string& species_name )
+{
+    const amrex::ParmParse pp_species_name(species_name);
+    int backward_min_ppc;
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_species_name.query("resampling_algorithm_min_ppc", backward_min_ppc),
+        "<species>.resampling_algorithm_min_ppc is no longer a valid option. "
+        "Please use the renamed option <species>.resampling_min_ppc instead."
+    );
 }
 
 void LevelingThinning::operator() (WarpXParIter& pti, const int lev,

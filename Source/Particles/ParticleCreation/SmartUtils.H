@@ -6,8 +6,8 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef SMART_UTILS_H_
-#define SMART_UTILS_H_
+#ifndef WARPX_SMART_UTILS_H_
+#define WARPX_SMART_UTILS_H_
 
 #include "DefaultInitialization.H"
 
@@ -70,4 +70,4 @@ void setNewParticleIDs (PTile& ptile, amrex::Long old_size, amrex::Long num_adde
     });
 }
 
-#endif //SMART_UTILS_H_
+#endif //WARPX_SMART_UTILS_H_
