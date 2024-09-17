@@ -11,7 +11,7 @@ We turn on the Quantum Synchrotron QED module for photon emission (also known as
 the Breit-Wheeler QED module for the generation of electron-positron pairs (also known as coherent pair generation in the collider community).
 
 To solve for the electromagnetic field we use the nodal version of the electrostatic relativistic solver.
-This solver computes the average velocity of each species, and solves the corresponding relativistic Poisson equation (see the WarpX documentation for `warpx.do_electrostatic = relativistic` for more detail). 
+This solver computes the average velocity of each species, and solves the corresponding relativistic Poisson equation (see the WarpX documentation for `warpx.do_electrostatic = relativistic` for more detail).
 This solver accurately reproduces the subtle cancellation that occur for some component of ``E + v x B``, which are crucial in simulations of relativistic particles.
 
 
@@ -40,9 +40,9 @@ We compare different results for the reduced diagnostics with the literature:
 * (blue) large-scale WarpX simulation (high resolution and ad hoc generated tables ;
 * (black) literature results from :cite:t:`ex-Yakimenko2019`.
 
-The small-scale simulation has been performed with a resolution of ``nx = 64, ny = 64, nz = 64`` grid cells, while the large-scale one has a much higher resolution of ``nx = 512, ny = 512, nz = 1024``. 
-Moreover, the large-scale simulation uses dedicated QED lookup tables instead of the builtin tables. 
-To generate the tables within WarpX, the code must be compiled with the flag ``-DWarpX_QED_TABLE_GEN=ON``. 
+The small-scale simulation has been performed with a resolution of ``nx = 64, ny = 64, nz = 64`` grid cells, while the large-scale one has a much higher resolution of ``nx = 512, ny = 512, nz = 1024``.
+Moreover, the large-scale simulation uses dedicated QED lookup tables instead of the builtin tables.
+To generate the tables within WarpX, the code must be compiled with the flag ``-DWarpX_QED_TABLE_GEN=ON``.
 For the large-scale simulation we have used the following options:
 
 .. code-block:: ini
