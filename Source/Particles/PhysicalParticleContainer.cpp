@@ -1368,12 +1368,19 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
     const auto problo = geom.ProbLoArray();
 
 #ifdef AMREX_USE_EB
+    bool inject_from_eb = plasma_injector.m_inject_from_eb; // whether to inject from EB or from a plane
     // Extract data structures for embedded boundaries
-    amrex::EBFArrayBoxFactory const& eb_box_factory = WarpX::GetInstance().fieldEBFactory(0);
-    amrex::FabArray<amrex::EBCellFlagFab> const& eb_flag = eb_box_factory.getMultiEBCellFlagFab();
-    amrex::MultiCutFab const& eb_bnd_area = eb_box_factory.getBndryArea();
-    amrex::MultiCutFab const& eb_bnd_normal = eb_box_factory.getBndryNormal();
-    amrex::MultiCutFab const& eb_bnd_cent = eb_box_factory.getBndryCent();
+    amrex::FabArray<amrex::EBCellFlagFab> const* eb_flag = nullptr;
+    amrex::MultiCutFab const* eb_bnd_area = nullptr;
+    amrex::MultiCutFab const* eb_bnd_normal = nullptr;
+    amrex::MultiCutFab const* eb_bnd_cent = nullptr;
+    if (inject_from_eb) {
+        amrex::EBFArrayBoxFactory const& eb_box_factory = WarpX::GetInstance().fieldEBFactory(0);
+        eb_flag = &eb_box_factory.getMultiEBCellFlagFab();
+        eb_bnd_area = &eb_box_factory.getBndryArea();
+        eb_bnd_normal = &eb_box_factory.getBndryNormal();
+        eb_bnd_cent = &eb_box_factory.getBndryCent();
+    }
 #endif
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(0);
@@ -1409,8 +1416,6 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                                                      m_user_int_attrib_parser,
                                                      m_user_real_attrib_parser);
 
-    bool inject_from_eb = plasma_injector.m_inject_from_eb; // whether to inject from EB or from a plane
-
     MFItInfo info;
     if (do_tiling && Gpu::notInLaunchRegion()) {
         info.EnableTiling(tile_size);
@@ -1438,7 +1443,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 #ifdef AMREX_USE_EB
         if (inject_from_eb) {
             // Injection from EB
-            const amrex::FabType fab_type = eb_flag[mfi].getType(tile_box);
+            const amrex::FabType fab_type = (*eb_flag)[mfi].getType(tile_box);
             if (fab_type == amrex::FabType::regular) { continue; } // Go to the next tile
             if (fab_type == amrex::FabType::covered) { continue; } // Go to the next tile
             overlap_box = tile_box;
@@ -1472,10 +1477,12 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 
 #ifdef AMREX_USE_EB
         // Extract data structures for embedded boundaries
-        auto const& eb_flag_arr = eb_flag.array(mfi);
-        amrex::Array4<const amrex::Real> const& eb_bnd_area_arr = eb_bnd_area.array(mfi);
-        amrex::Array4<const amrex::Real> const& eb_bnd_normal_arr = eb_bnd_normal.array(mfi);
-        amrex::Array4<const amrex::Real> const& eb_bnd_cent_arr = eb_bnd_cent.array(mfi);
+        if (inject_from_eb) {
+            auto const& eb_flag_arr = eb_flag->array(mfi);
+            amrex::Array4<const amrex::Real> const& eb_bnd_area_arr = eb_bnd_area->array(mfi);
+            amrex::Array4<const amrex::Real> const& eb_bnd_normal_arr = eb_bnd_normal->array(mfi);
+            amrex::Array4<const amrex::Real> const& eb_bnd_cent_arr = eb_bnd_cent->array(mfi);
+        }
 #endif
 
         amrex::ParallelForRNG(overlap_box, [=] AMREX_GPU_DEVICE (int i, int j, int k, amrex::RandomEngine const& engine) noexcept
