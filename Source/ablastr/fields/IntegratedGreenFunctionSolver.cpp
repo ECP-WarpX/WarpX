@@ -180,6 +180,9 @@ computePhiIGF ( amrex::MultiFab const & rho,
                 if ((i0>0)&&(j0>0)&&(k0>0)) {tmp_G_arr(hi[0]+1-i0, hi[1]+1-j0, hi[2]+1-k0) = G_value;}
 #else
                 // With distributed FFTs (i.e. with heFFTe):
+                amrex::Real x_hi = dx*(hi[0]+2);
+                amrex::Real y_hi = dy*(hi[1]+2);
+                amrex::Real z_hi = dz*(hi[2]+2);
                 if ((i0< nx)&&(j0< ny)&&(k0< nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential(x     , y     , z     , dx, dy, dz); }
                 if ((i0< nx)&&(j0> ny)&&(k0< nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential(x     , y_hi-y, z     , dx, dy, dz); }
                 if ((i0< nx)&&(j0< ny)&&(k0> nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential(x     , y     , z_hi-z, dx, dy, dz); }
