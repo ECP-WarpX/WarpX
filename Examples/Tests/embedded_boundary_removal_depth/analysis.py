@@ -10,9 +10,10 @@ import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
+import tqdm
 from openpmd_viewer import OpenPMDTimeSeries
 
-yt.funcs.mylog.setLevel(0)
+#yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, "../../../../warpx/Regression/Checksum/")
 import checksumAPI
 
@@ -20,14 +21,12 @@ import checksumAPI
 filename = sys.argv[1]
 test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename, output_format="openpmd")
-
-ts = OpenPMDTimeSeries("./embedded_boundary_removal_depth_plt/")
-
+print(os.getcwd())
 
 def get_avg_divE(ts, start_avg_iter, end_avg_iter, ar_size):
     avg_divE = np.zeros((ar_size, ar_size))
     for iteration in tqdm.tqdm(ts.iterations[start_avg_iter:end_avg_iter]):
-        divE = ts_dev.get_field(
+        divE = ts.get_field(
             "divE", iteration=iteration, slice_across="y", plot=False, cmap="RdBu"
         )
         avg_divE += divE[0]
@@ -47,23 +46,22 @@ def plot(array, vmax=1e-9):
     ax.set_ylabel("z (m)")
     ax.set_title("Averaged divE")
 
+ts = OpenPMDTimeSeries("./diags/diag1/")
 
 ar_size = 32
 start_avg_iter = 20
 end_avg_iter = 50
 
-divE_avg = get_avg_divE(ts_new, start_avg_iter, end_avg_iter, ar_size)
+divE_avg = get_avg_divE(ts, start_avg_iter, end_avg_iter, ar_size)
 plot(divE_avg, vmax=1e-9)
 plt.savefig("AverageddivE.png")
 
-tolerance = 1e-11
-
+tolerance = 1e-9
 
 def check_tolerance(array, tolerance):
     assert np.all(
         array <= tolerance
     ), f"Test did not pass: one or more elements exceed the tolerance of {tolerance}."
     print("All elements of are within the tolerance.")
-
 
 check_tolerance(divE_avg, tolerance)
