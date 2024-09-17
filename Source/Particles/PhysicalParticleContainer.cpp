@@ -1477,11 +1477,15 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 
 #ifdef AMREX_USE_EB
         // Extract data structures for embedded boundaries
+        amrex::Array4<const typename FabArray<EBCellFlagFab>::value_type> eb_flag_arr;
+        amrex::Array4<const amrex::Real> eb_bnd_area_arr;
+        amrex::Array4<const amrex::Real> eb_bnd_normal_arr;
+        amrex::Array4<const amrex::Real> eb_bnd_cent_arr;
         if (inject_from_eb) {
-            auto const& eb_flag_arr = eb_flag->array(mfi);
-            amrex::Array4<const amrex::Real> const& eb_bnd_area_arr = eb_bnd_area->array(mfi);
-            amrex::Array4<const amrex::Real> const& eb_bnd_normal_arr = eb_bnd_normal->array(mfi);
-            amrex::Array4<const amrex::Real> const& eb_bnd_cent_arr = eb_bnd_cent->array(mfi);
+            eb_flag_arr = eb_flag->array(mfi);
+            eb_bnd_area_arr = eb_bnd_area->array(mfi);
+            eb_bnd_normal_arr = eb_bnd_normal->array(mfi);
+            eb_bnd_cent_arr = eb_bnd_cent->array(mfi);
         }
 #endif
 
