@@ -13,7 +13,6 @@ import numpy as np
 import tqdm
 from openpmd_viewer import OpenPMDTimeSeries
 
-#yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, "../../../../warpx/Regression/Checksum/")
 import checksumAPI
 
@@ -21,7 +20,6 @@ import checksumAPI
 filename = sys.argv[1]
 test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename, output_format="openpmd")
-print(os.getcwd())
 
 def get_avg_divE(ts, start_avg_iter, end_avg_iter, ar_size):
     avg_divE = np.zeros((ar_size, ar_size))
