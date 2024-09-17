@@ -38,17 +38,15 @@ namespace ablastr::fields
         // allocate
         const auto tag = amrex::MFInfo().SetTag(name);
         auto [it, success] = m_mf_register.emplace(
-            std::make_pair(
-                name,
-                MultiFabOwner{
-                    {ba, dm, ncomp, ngrow, tag},
-                    std::nullopt,  // scalar: no direction
-                    level,
-                    remake,
-                    redistribute_on_remake,
-                    ""   // we own the memory
-                }
-            )
+            name,
+            MultiFabOwner{
+                {ba, dm, ncomp, ngrow, tag},
+                std::nullopt,  // scalar: no direction
+                level,
+                remake,
+                redistribute_on_remake,
+                ""   // we own the memory
+            }
         );
         if (!success) {
             throw std::runtime_error("MultiFabRegister::alloc_init failed for " + name);
@@ -94,17 +92,15 @@ namespace ablastr::fields
         // allocate
         const auto tag = amrex::MFInfo().SetTag(name);
         auto [it, success] = m_mf_register.emplace(
-            std::make_pair(
-                name,
-                MultiFabOwner{
-                    {ba, dm, ncomp, ngrow, tag},
-                    dir,
-                    level,
-                    remake,
-                    redistribute_on_remake,
-                    ""   // we own the memory
-                }
-            )
+            name,
+            MultiFabOwner{
+                {ba, dm, ncomp, ngrow, tag},
+                dir,
+                level,
+                remake,
+                redistribute_on_remake,
+                ""   // we own the memory
+            }
         );
         if (!success) {
             throw std::runtime_error("MultiFabRegister::alloc_init failed for " + name);
@@ -168,17 +164,16 @@ namespace ablastr::fields
 
         // allocate
         auto [it, success] = m_mf_register.emplace(
-            std::make_pair(
-                new_name,
-                MultiFabOwner{
-                    {mf_alias, amrex::make_alias, 0, mf_alias.nComp()},
-                    std::nullopt,  // scalar: no direction
-                    level,
-                    alias.m_remake,
-                    alias.m_redistribute_on_remake,
-                    alias_name
-                }
-            )
+            new_name,
+            MultiFabOwner{
+                {mf_alias, amrex::make_alias, 0, mf_alias.nComp()},
+                std::nullopt,  // scalar: no direction
+                level,
+                alias.m_remake,
+                alias.m_redistribute_on_remake,
+                alias_name
+            }
+
         );
         if (!success) {
             throw std::runtime_error("MultiFabRegister::alias_init failed for " + new_name);
@@ -229,17 +224,15 @@ namespace ablastr::fields
 
         // allocate
         auto [it, success] = m_mf_register.emplace(
-            std::make_pair(
-                new_name,
-                MultiFabOwner{
-                    {mf_alias, amrex::make_alias, 0, mf_alias.nComp()},
-                    dir,
-                    level,
-                    alias.m_remake,
-                    alias.m_redistribute_on_remake,
-                    alias_name
-                }
-            )
+            new_name,
+            MultiFabOwner{
+                {mf_alias, amrex::make_alias, 0, mf_alias.nComp()},
+                dir,
+                level,
+                alias.m_remake,
+                alias.m_redistribute_on_remake,
+                alias_name
+            }
         );
         if (!success) {
             throw std::runtime_error("MultiFabRegister::alias_init failed for " + new_name);
