@@ -40,15 +40,14 @@ computePhiIGF ( amrex::MultiFab const & rho,
                 std::array<amrex::Real, 3> const & cell_size,
                 amrex::BoxArray const & ba)
 {
+#if defined(ABLASTR_USE_FFT)
     using namespace amrex::literals;
 
     BL_PROFILE_VAR_NS("ablastr::fields::computePhiIGF: FFTs", timer_ffts);
     BL_PROFILE_VAR_NS("ablastr::fields::computePhiIGF: FFT plans", timer_plans);
     BL_PROFILE_VAR_NS("ablastr::fields::computePhiIGF: parallel copies", timer_pcopies);
 
-#if defined(ABLASTR_USE_FFT) && defined(ABLASTR_USE_HEFFTE)
-    {
-    BL_PROFILE("Integrated Green Function Solver");
+    BL_PROFILE("ablastr::fields::computePhiIGF");
 
     // Define box that encompasses the full domain
     amrex::Box domain = ba.minimalBox();
@@ -59,25 +58,36 @@ computePhiIGF ( amrex::MultiFab const & rho,
     int const ny = domain.length(1);
     int const nz = domain.length(2);
 
-
-    int const nprocs = amrex::ParallelDescriptor::NProcs();
-
     // Allocate 2x wider arrays for the convolution of rho with the Green function
     amrex::Box const realspace_box = amrex::Box(
         {domain.smallEnd(0), domain.smallEnd(1), domain.smallEnd(2)},
         {2*nx-1+domain.smallEnd(0), 2*ny-1+domain.smallEnd(1), 2*nz-1+domain.smallEnd(2)},
         amrex::IntVect::TheNodeVector() );
 
-
+#if !defined(ABLASTR_USE_HEFFTE)
+    // Without distributed FFTs (i.e. without heFFTe):
+    // allocate the 2x wider array on a single box
+    amrex::BoxArray const realspace_ba = amrex::BoxArray( realspace_box );
+    amrex::Box const spectralspace_box = amrex::Box(
+        {0,0,0},
+        {nx, 2*ny-1, 2*nz-1},
+        amrex::IntVect::TheNodeVector() );
+    amrex::BoxArray const spectralspace_ba = amrex::BoxArray( spectralspace_box );
+    // Define a distribution mapping for the global FFT, with only one box
+    amrex::DistributionMapping dm_global_fft;
+    dm_global_fft.define( realspace_ba );
+#elif defined(ABLASTR_USE_HEFFTE)
+    // With distributed FFTs (i.e. with heFFTe):
+    // Define a new distribution mapping which is decomposed purely along z
+    int const nprocs = amrex::ParallelDescriptor::NProcs();
     amrex::BoxArray realspace_ba;
-    amrex::DistributionMapping realspace_dm;
+    amrex::DistributionMapping dm_global_fft;
     {
         int realspace_nx = realspace_box.length(0);
         int realspace_ny = realspace_box.length(1);
         int realspace_nz = realspace_box.length(2);
         int minsize_z = realspace_nz / nprocs;
         int nleft_z = realspace_nz - minsize_z*nprocs;
-
 
         AMREX_ALWAYS_ASSERT(realspace_nz >= nprocs);
         // We are going to split realspace_box in such a way that the first
@@ -101,21 +111,18 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
             tbx.shift(realspace_box.smallEnd());
             bl.push_back(tbx);
-
-
         }
-
         realspace_ba.define(std::move(bl));
         amrex::Vector<int> pmap(nprocs);
         std::iota(pmap.begin(), pmap.end(), 0);
-        realspace_dm.define(std::move(pmap));
-}
-
+        dm_global_fft.define(std::move(pmap));
+    }
+#endif
 
     // Allocate required arrays
-    amrex::MultiFab tmp_rho = amrex::MultiFab(realspace_ba, realspace_dm, 1, 0);
+    amrex::MultiFab tmp_rho = amrex::MultiFab(realspace_ba, dm_global_fft, 1, 0);
     tmp_rho.setVal(0);
-    amrex::MultiFab tmp_G = amrex::MultiFab(realspace_ba, realspace_dm, 1, 0);
+    amrex::MultiFab tmp_G = amrex::MultiFab(realspace_ba, dm_global_fft, 1, 0);
     tmp_G.setVal(0);
 
     BL_PROFILE_VAR_START(timer_pcopies);
@@ -255,6 +262,8 @@ computePhiIGF ( amrex::MultiFab const & rho,
         {domain.smallEnd(0), domain.smallEnd(1), domain.smallEnd(2)},
         {2*nx-1+domain.smallEnd(0), 2*ny-1+domain.smallEnd(1), 2*nz-1+domain.smallEnd(2)},
         amrex::IntVect::TheNodeVector() );
+
+
     amrex::BoxArray const realspace_ba = amrex::BoxArray( realspace_box );
     amrex::Box const spectralspace_box = amrex::Box(
         {0,0,0},
@@ -417,7 +426,6 @@ computePhiIGF ( amrex::MultiFab const & rho,
         ablastr::math::anyfft::DestroyPlan(forward_plan_G[mfi]);
         ablastr::math::anyfft::DestroyPlan(forward_plan_rho[mfi]);
         ablastr::math::anyfft::DestroyPlan(backward_plan[mfi]);
-    }
     }
 #endif
 }
