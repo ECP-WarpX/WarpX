@@ -21,13 +21,8 @@ void ThetaImplicitEM::Define ( WarpX* const  a_WarpX )
     m_WarpX = a_WarpX;
 
     // Define E and Eold vectors
-    m_E.Define( m_WarpX->getMultiLevelField(FieldType::Efield_fp) );
-    m_Eold.Define( m_WarpX->getMultiLevelField(FieldType::Efield_fp) );
-
-    // Need to define the WarpXSolverVec owned dot_mask to do dot
-    // product correctly for linear and nonlinear solvers
-    const amrex::Vector<amrex::Geometry>& Geom = m_WarpX->Geom();
-    m_E.SetDotMask(Geom);
+    m_E.Define( m_WarpX, FieldType::Efield_fp );
+    m_Eold.Define( m_E );
 
     // Define Bold MultiFab
     const int num_levels = 1;
@@ -61,22 +56,21 @@ void ThetaImplicitEM::Define ( WarpX* const  a_WarpX )
 void ThetaImplicitEM::PrintParameters () const
 {
     if (!m_WarpX->Verbose()) { return; }
-    amrex::Print() << std::endl;
-    amrex::Print() << "-----------------------------------------------------------" << std::endl;
-    amrex::Print() << "----------- THETA IMPLICIT EM SOLVER PARAMETERS -----------" << std::endl;
-    amrex::Print() << "-----------------------------------------------------------" << std::endl;
-    amrex::Print() << "Time-bias parameter theta:  " << m_theta << std::endl;
-    amrex::Print() << "max particle iterations:    " << m_max_particle_iterations << std::endl;
-    amrex::Print() << "particle tolerance:         " << m_particle_tolerance << std::endl;
+    amrex::Print() << "\n";
+    amrex::Print() << "-----------------------------------------------------------\n";
+    amrex::Print() << "----------- THETA IMPLICIT EM SOLVER PARAMETERS -----------\n";
+    amrex::Print() << "-----------------------------------------------------------\n";
+    amrex::Print() << "Time-bias parameter theta:  " << m_theta << "\n";
+    amrex::Print() << "max particle iterations:    " << m_max_particle_iterations << "\n";
+    amrex::Print() << "particle tolerance:         " << m_particle_tolerance << "\n";
     if (m_nlsolver_type==NonlinearSolverType::Picard) {
-        amrex::Print() << "Nonlinear solver type:      Picard" << std::endl;
+        amrex::Print() << "Nonlinear solver type:      Picard\n";
     }
     else if (m_nlsolver_type==NonlinearSolverType::Newton) {
-        amrex::Print() << "Nonlinear solver type:      Newton" << std::endl;
+        amrex::Print() << "Nonlinear solver type:      Newton\n";
     }
     m_nlsolver->PrintParams();
-    amrex::Print() << "-----------------------------------------------------------" << std::endl;
-    amrex::Print() << std::endl;
+    amrex::Print() << "-----------------------------------------------------------\n\n";
 }
 
 void ThetaImplicitEM::OneStep ( const amrex::Real  a_time,
@@ -85,15 +79,14 @@ void ThetaImplicitEM::OneStep ( const amrex::Real  a_time,
 {
     amrex::ignore_unused(a_step);
 
-    // Fields have E^{n} and B^{n}
-    // Particles have p^{n} and x^{n}.
+    // Fields have Eg^{n} and Bg^{n}
+    // Particles have up^{n} and xp^{n}.
 
-    // Save the values at the start of the time step,
+    // Save up and xp at the start of the time step
     m_WarpX->SaveParticlesAtImplicitStepStart ( );
 
-    // Save the fields at the start of the step
-    m_Eold.Copy( m_WarpX->getMultiLevelField(FieldType::Efield_fp) );
-    m_E.Copy(m_Eold); // initial guess for E
+    // Save Eg at the start of the time step
+    m_Eold.Copy( FieldType::Efield_fp );
 
     const int num_levels = static_cast<int>(m_Bold.size());
     for (int lev = 0; lev < num_levels; ++lev) {
@@ -106,8 +99,9 @@ void ThetaImplicitEM::OneStep ( const amrex::Real  a_time,
 
     const amrex::Real theta_time = a_time + m_theta*a_dt;
 
-    // Solve nonlinear system for E at t_{n+theta}
+    // Solve nonlinear system for Eg at t_{n+theta}
     // Particles will be advanced to t_{n+1/2}
+    m_E.Copy(m_Eold); // initial guess for Eg^{n+theta}
     m_nlsolver->Solve( m_E, m_Eold, theta_time, a_dt );
 
     // Update WarpX owned Efield_fp and Bfield_fp to t_{n+theta}
@@ -116,7 +110,7 @@ void ThetaImplicitEM::OneStep ( const amrex::Real  a_time,
     // Advance particles from time n+1/2 to time n+1
     m_WarpX->FinishImplicitParticleUpdate();
 
-    // Advance E and B fields from time n+theta to time n+1
+    // Advance Eg and Bg from time n+theta to time n+1
     const amrex::Real new_time = a_time + a_dt;
     FinishFieldUpdate( new_time );
 
@@ -129,15 +123,15 @@ void ThetaImplicitEM::ComputeRHS ( WarpXSolverVec&  a_RHS,
                                    int              a_nl_iter,
                                    bool             a_from_jacobian )
 {
-    // update WarpX-owned Efield_fp and Bfield_fp using current state of E from
-    // the nonlinear solver at time n+theta
+    // Update WarpX-owned Efield_fp and Bfield_fp using current state of
+    // Eg from the nonlinear solver at time n+theta
     UpdateWarpXFields( a_E, a_time, a_dt );
 
-    // Self consistently update particle positions and velocities using the
-    // current state of the fields E and B. Deposit current density at time n+1/2.
+    // Update particle positions and velocities using the current state
+    // of Eg and Bg. Deposit current density at time n+1/2
     m_WarpX->ImplicitPreRHSOp( a_time, a_dt, a_nl_iter, a_from_jacobian );
 
-    // RHS = cvac^2*m_theta*dt*( curl(B^{n+theta}) - mu0*J^{n+1/2} )
+    // RHS = cvac^2*m_theta*dt*( curl(Bg^{n+theta}) - mu0*Jg^{n+1/2} )
     m_WarpX->ImplicitComputeRHSE(m_theta*a_dt, a_RHS);
 }
 
@@ -159,8 +153,8 @@ void ThetaImplicitEM::FinishFieldUpdate ( amrex::Real  a_new_time )
 {
     amrex::ignore_unused(a_new_time);
 
-    // Eg^{n+1} = (1/theta)*E_g^{n+theta} + (1-1/theta)*E_g^n
-    // Bg^{n+1} = (1/theta)*B_g^{n+theta} + (1-1/theta)*B_g^n
+    // Eg^{n+1} = (1/theta)*Eg^{n+theta} + (1-1/theta)*Eg^n
+    // Bg^{n+1} = (1/theta)*Bg^{n+theta} + (1-1/theta)*Bg^n
 
     const amrex::Real c0 = 1._rt/m_theta;
     const amrex::Real c1 = 1._rt - c0;

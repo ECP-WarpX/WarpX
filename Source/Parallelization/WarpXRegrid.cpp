@@ -10,6 +10,7 @@
 
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
+#include "EmbeddedBoundary/Enabled.H"
 #include "EmbeddedBoundary/WarpXFaceInfoBox.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #include "Initialization/ExternalField.H"
@@ -177,6 +178,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         mf = std::move(pmf);
     };
 
+    bool const eb_enabled = EB::enabled();
     if (ba == boxArray(lev))
     {
         if (ParallelDescriptor::NProcs() == 1) { return; }
@@ -215,20 +217,20 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                 RemakeMultiFab(m_hybrid_pic_model->current_fp_ampere[lev][idim], false);
                 RemakeMultiFab(m_hybrid_pic_model->current_fp_external[lev][idim],true);
             }
-#ifdef AMREX_USE_EB
-            if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) {
-                RemakeMultiFab(m_edge_lengths[lev][idim], false);
-                RemakeMultiFab(m_face_areas[lev][idim], false);
-                if(WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT){
-                    RemakeMultiFab(Venl[lev][idim], false);
-                    RemakeMultiFab(m_flag_info_face[lev][idim], false);
-                    RemakeMultiFab(m_flag_ext_face[lev][idim], false);
-                    RemakeMultiFab(m_area_mod[lev][idim], false);
-                    RemakeMultiFab(ECTRhofield[lev][idim], false);
-                    m_borrowing[lev][idim] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(ba, Bfield_fp[lev][idim]->ixType().toIntVect()), dm);
+            if (eb_enabled) {
+                if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) {
+                    RemakeMultiFab(m_edge_lengths[lev][idim], false);
+                    RemakeMultiFab(m_face_areas[lev][idim], false);
+                    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
+                        RemakeMultiFab(Venl[lev][idim], false);
+                        RemakeMultiFab(m_flag_info_face[lev][idim], false);
+                        RemakeMultiFab(m_flag_ext_face[lev][idim], false);
+                        RemakeMultiFab(m_area_mod[lev][idim], false);
+                        RemakeMultiFab(ECTRhofield[lev][idim], false);
+                        m_borrowing[lev][idim] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(ba, Bfield_fp[lev][idim]->ixType().toIntVect()), dm);
+                    }
                 }
             }
-#endif
         }
 
         RemakeMultiFab(F_fp[lev], true);
@@ -242,18 +244,19 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
             RemakeMultiFab(m_hybrid_pic_model->electron_pressure_fp[lev], false);
         }
 
+        if (eb_enabled) {
+            RemakeMultiFab(m_distance_to_eb[lev], false);
+
 #ifdef AMREX_USE_EB
-        RemakeMultiFab(m_distance_to_eb[lev], false);
-
-        int max_guard = guard_cells.ng_FieldSolver.max();
-        m_field_factory[lev] = amrex::makeEBFabFactory(Geom(lev), ba, dm,
-                                                       {max_guard, max_guard, max_guard},
-                                                       amrex::EBSupport::full);
-
-        InitializeEBGridData(lev);
-#else
-        m_field_factory[lev] = std::make_unique<FArrayBoxFactory>();
+            int const max_guard = guard_cells.ng_FieldSolver.max();
+            m_field_factory[lev] = amrex::makeEBFabFactory(Geom(lev), ba, dm,
+                                                           {max_guard, max_guard, max_guard},
+                                                           amrex::EBSupport::full);
 #endif
+            InitializeEBGridData(lev);
+        } else {
+            m_field_factory[lev] = std::make_unique<FArrayBoxFactory>();
+        }
 
 #ifdef WARPX_USE_FFT
         if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {

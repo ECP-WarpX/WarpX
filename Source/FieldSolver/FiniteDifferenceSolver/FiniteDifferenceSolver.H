@@ -47,7 +47,7 @@ class FiniteDifferenceSolver
          * \param grid_type Whether the solver is applied to a collocated or staggered grid
          */
         FiniteDifferenceSolver (
-            int fdtd_algo,
+            ElectromagneticSolverAlgo fdtd_algo,
             std::array<amrex::Real,3> cell_size,
             ablastr::utils::enums::GridType grid_type );
 
@@ -92,8 +92,8 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
             amrex::Box domain_box,
             amrex::Real dt,
-            amrex::Vector<FieldBoundaryType> field_boundary_lo,
-            amrex::Vector<FieldBoundaryType> field_boundary_hi);
+            amrex::Array<FieldBoundaryType,AMREX_SPACEDIM> field_boundary_lo,
+            amrex::Array<FieldBoundaryType,AMREX_SPACEDIM> field_boundary_hi);
 
         void ComputeDivE ( const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                            amrex::MultiFab& divE );
@@ -149,7 +149,7 @@ class FiniteDifferenceSolver
           * \param[in] edge_lengths length of edges along embedded boundaries
           * \param[in] lev  level number for the calculation
           * \param[in] hybrid_model instance of the hybrid-PIC model
-          * \param[in] include_resistivity_term boolean flag for whether to include resistivity
+          * \param[in] solve_for_Faraday boolean flag for whether the E-field is solved to be used in Faraday's equation
           */
         void HybridPICSolveE ( std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3>& Jfield,
@@ -160,7 +160,7 @@ class FiniteDifferenceSolver
                       std::unique_ptr<amrex::MultiFab> const& Pefield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
                       int lev, HybridPICModel const* hybrid_model,
-                      bool include_resistivity_term );
+                      bool solve_for_Faraday );
 
         /**
           * \brief Calculation of total current using Ampere's law (without
@@ -179,7 +179,7 @@ class FiniteDifferenceSolver
 
     private:
 
-        int m_fdtd_algo;
+        ElectromagneticSolverAlgo m_fdtd_algo;
         ablastr::utils::enums::GridType m_grid_type;
 
 #ifdef WARPX_DIM_RZ
@@ -245,7 +245,7 @@ class FiniteDifferenceSolver
             std::unique_ptr<amrex::MultiFab> const& Pefield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
             int lev, HybridPICModel const* hybrid_model,
-            bool include_resistivity_term );
+            bool solve_for_Faraday );
 
         template<typename T_Algo>
         void CalculateCurrentAmpereCylindrical (
@@ -350,7 +350,7 @@ class FiniteDifferenceSolver
             std::unique_ptr<amrex::MultiFab> const& Pefield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
             int lev, HybridPICModel const* hybrid_model,
-            bool include_resistivity_term );
+            bool solve_for_Faraday );
 
         template<typename T_Algo>
         void CalculateCurrentAmpereCartesian (

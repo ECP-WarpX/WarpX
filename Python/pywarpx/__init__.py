@@ -1,8 +1,8 @@
-# Copyright 2016-2023 The WarpX Community
+# Copyright 2016-2024 The WarpX Community
 #
 # This file is part of WarpX.
 #
-# Authors: Andrew Myers, David Grote, Lorenzo Giacomel, Axel Huebl
+# Authors: Andrew Myers, David Grote, Lorenzo Giacomel, Axel Huebl, S. Eric Clark
 # License: BSD-3-Clause-LBNL
 
 import os
@@ -38,20 +38,23 @@ from .Interpolation import interpolation  # noqa
 from .Lasers import lasers  # noqa
 from .LoadThirdParty import load_cupy  # noqa
 from .Particles import newspecies, particles  # noqa
+from .ProjectionDivBCleaner import projectiondivbcleaner  # noqa
 from .PSATD import psatd  # noqa
 from .WarpX import warpx  # noqa
 
 # This is a circular import and must happen after the import of libwarpx
 from . import picmi  # noqa  # isort:skip
 
+
 # intentionally query the value - only set once sim dimension is known
 def __getattr__(name):
     # https://stackoverflow.com/a/57263518/2719194
-    if name == '__version__':
+    if name == "__version__":
         return libwarpx.__version__
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
+
 # TODO
-#__doc__ = cxx.__doc__
-#__license__ = cxx.__license__
-#__author__ = cxx.__author__
+# __doc__ = cxx.__doc__
+# __license__ = cxx.__license__
+# __author__ = cxx.__author__

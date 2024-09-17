@@ -32,8 +32,10 @@ import numpy
 import post_processing_utils
 import yt
 
-sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+sys.path.insert(1, "../../../../warpx/Regression/Checksum/")
 import checksumAPI
+
+test_name = os.path.split(os.getcwd())[1]
 
 tolerance = 0.001
 
@@ -42,7 +44,7 @@ ne = ng * 200
 ni = ng * 200
 np = ne + ni
 
-c  = 299792458.0
+c = 299792458.0
 me = 9.10938356e-31
 mi = me * 5.0
 
@@ -50,43 +52,49 @@ mi = me * 5.0
 ## fit.
 
 # exponential fit coefficients
-a =  0.04330638981264072
+a = 0.04330638981264072
 b = -0.11588277796546632
 
 last_fn = sys.argv[1]
-if (last_fn[-1] == "/"): last_fn = last_fn[:-1]
-last_it = last_fn[-6:] # i.e., 000150
+if last_fn[-1] == "/":
+    last_fn = last_fn[:-1]
+last_it = last_fn[-6:]  # i.e., 000150
 prefix = last_fn[:-6]  # i.e., diags/diag1
 
 # Collect all output files in fn_list (names match pattern prefix + arbitrary number)
-fn_list = glob.glob(prefix + '*[0-9]')
+fn_list = glob.glob(prefix + "*[0-9]")
+
+print(last_fn)
+print(last_it)
+print(prefix)
+print(fn_list)
 
 error = 0.0
 nt = 0
 for fn in fn_list:
     # load file
-    ds  = yt.load( fn )
-    ad  = ds.all_data()
-    px  = ad[('all', 'particle_momentum_x')].to_ndarray()
+    ds = yt.load(fn)
+    ad = ds.all_data()
+    px = ad[("all", "particle_momentum_x")].to_ndarray()
     # get time index j
     j = int(fn[-5:])
     # compute error
-    vxe = numpy.mean(px[ 0:ne])/me/c
-    vxi = numpy.mean(px[ne:np])/mi/c
+    vxe = numpy.mean(px[0:ne]) / me / c
+    vxi = numpy.mean(px[ne:np]) / mi / c
     vxd = vxe - vxi
-    fit = a*math.exp(b*j)
-    error = error + abs(fit-vxd)
+    fit = a * math.exp(b * j)
+    error = error + abs(fit - vxd)
     nt = nt + 1
 
 error = error / nt
 
-print('error = ', error)
-print('tolerance = ', tolerance)
-assert(error < tolerance)
+print("error = ", error)
+print("tolerance = ", tolerance)
+assert error < tolerance
 
 # The second part of the analysis is not done for the Python test
 # since the particle filter function is not accessible from PICMI yet
-if "Python" in last_fn:
+if "picmi" in test_name:
     exit()
 
 ## In the second part of the test, we verify that the diagnostic particle filter function works as
@@ -97,18 +105,20 @@ species_name = "electron"
 
 parser_filter_fn = "diags/diag_parser_filter" + last_it
 parser_filter_expression = "(x>200) * (z<200) * (px-3*pz>0)"
-post_processing_utils.check_particle_filter(last_fn, parser_filter_fn, parser_filter_expression,
-                                            dim, species_name)
+post_processing_utils.check_particle_filter(
+    last_fn, parser_filter_fn, parser_filter_expression, dim, species_name
+)
 
 uniform_filter_fn = "diags/diag_uniform_filter" + last_it
 uniform_filter_expression = "ids%6 == 0"
-post_processing_utils.check_particle_filter(last_fn, uniform_filter_fn, uniform_filter_expression,
-                                            dim, species_name)
+post_processing_utils.check_particle_filter(
+    last_fn, uniform_filter_fn, uniform_filter_expression, dim, species_name
+)
 
 random_filter_fn = "diags/diag_random_filter" + last_it
 random_fraction = 0.77
-post_processing_utils.check_random_filter(last_fn, random_filter_fn, random_fraction,
-                                          dim, species_name)
+post_processing_utils.check_random_filter(
+    last_fn, random_filter_fn, random_fraction, dim, species_name
+)
 
-test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, last_fn)

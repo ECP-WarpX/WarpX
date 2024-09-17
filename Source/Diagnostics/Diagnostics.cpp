@@ -4,6 +4,7 @@
 #include "ComputeDiagFunctors/BackTransformParticleFunctor.H"
 #include "Diagnostics/FlushFormats/FlushFormat.H"
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
+#include "FlushFormats/FlushFormatCatalyst.H"
 #include "FlushFormats/FlushFormatAscent.H"
 #include "FlushFormats/FlushFormatCheckpoint.H"
 #ifdef WARPX_USE_OPENPMD
@@ -505,7 +506,9 @@ Diagnostics::InitBaseData ()
         m_flush_format = std::make_unique<FlushFormatCheckpoint>() ;
     } else if (m_format == "ascent"){
         m_flush_format = std::make_unique<FlushFormatAscent>();
-    } else if (m_format == "sensei"){
+    } else if (m_format == "catalyst") {
+        m_flush_format = std::make_unique<FlushFormatCatalyst>();
+    } else if (m_format == "sensei") {
 #ifdef AMREX_USE_SENSEI_INSITU
         m_flush_format = std::make_unique<FlushFormatSensei>(
             dynamic_cast<amrex::AmrMesh*>(const_cast<WarpX*>(&warpx)),

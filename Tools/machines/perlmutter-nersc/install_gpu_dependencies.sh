@@ -145,6 +145,10 @@ cmake \
 cmake --build ${build_dir}/heffte-pm-gpu-build --target install --parallel 16
 rm -rf ${build_dir}/heffte-pm-gpu-build
 
+# work-around for heFFTe 2.4.0 bug with NVCC
+# https://github.com/icl-utk-edu/heffte/pull/54
+sed -i 's/__AVX__/NOTDEFINED_DONOTUSE/g' ${SW_DIR}/heffte-2.4.0/include/stock_fft/heffte_stock_vec_types.h
+
 
 # Python ######################################################################
 #
