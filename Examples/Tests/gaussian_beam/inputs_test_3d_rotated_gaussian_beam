@@ -54,7 +54,7 @@ geometry.prob_hi = Lx  Ly  Lz
 ######## BOUNDARY CONDITION #####
 #################################
 boundary.field_lo = pec pec pec
-boundary.field_hi = pec pec pec 
+boundary.field_hi = pec pec pec
 boundary.particle_lo = Absorbing Absorbing Absorbing
 boundary.particle_hi = Absorbing Absorbing Absorbing
 
