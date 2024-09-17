@@ -8,6 +8,7 @@ CEXE_sources += FieldProbeParticleContainer.cpp
 CEXE_sources += FieldMomentum.cpp
 CEXE_sources += BeamRelevant.cpp
 CEXE_sources += ColliderRelevant.cpp
+CEXE_sources += DifferentialLuminosity.cpp
 CEXE_sources += LoadBalanceCosts.cpp
 CEXE_sources += LoadBalanceEfficiency.cpp
 CEXE_sources += ParticleHistogram.cpp

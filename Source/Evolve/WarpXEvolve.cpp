@@ -13,6 +13,7 @@
 #include "BoundaryConditions/PML.H"
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
+#include "EmbeddedBoundary/Enabled.H"
 #include "Evolve/WarpXDtType.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #ifdef WARPX_USE_FFT
@@ -206,6 +207,7 @@ WarpX::Evolve (int numsteps)
 
         // sync up time
         for (int i = 0; i <= max_level; ++i) {
+            t_old[i] = t_new[i];
             t_new[i] = cur_time;
         }
         multi_diags->FilterComputePackFlush( step, false, true );
@@ -246,7 +248,12 @@ WarpX::Evolve (int numsteps)
                     // This is currently a lab frame calculation.
                     ComputeMagnetostaticField();
                 }
-                AddExternalFields();
+                // Since the fields were reset above, the external fields are added
+                // back on to the fine patch fields. This make it so that the net fields
+                // are the sum of the field solution and any external field.
+                for (int lev = 0; lev <= max_level; ++lev) {
+                    AddExternalFields(lev);
+                }
             } else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
                 // Hybrid-PIC case:
                 // The particles are now at p^{n+1/2} and x^{n+1}. The fields
@@ -519,11 +526,12 @@ void WarpX::HandleParticlesAtBoundaries (int step, amrex::Real cur_time, int num
     }
 
     // interact the particles with EB walls (if present)
-#ifdef AMREX_USE_EB
-    mypc->ScrapeParticlesAtEB(amrex::GetVecOfConstPtrs(m_distance_to_eb));
-    m_particle_boundary_buffer->gatherParticlesFromEmbeddedBoundaries(*mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
-    mypc->deleteInvalidParticles();
-#endif
+    if (EB::enabled()) {
+        mypc->ScrapeParticlesAtEB(amrex::GetVecOfConstPtrs(m_distance_to_eb));
+        m_particle_boundary_buffer->gatherParticlesFromEmbeddedBoundaries(
+            *mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
+        mypc->deleteInvalidParticles();
+    }
 
     if (sort_intervals.contains(step+1)) {
         if (verbose) {

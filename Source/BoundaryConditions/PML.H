@@ -140,12 +140,15 @@ public:
          const amrex::DistributionMapping& dm, bool do_similar_dm_pml,
          const amrex::Geometry* geom, const amrex::Geometry* cgeom,
          int ncell, int delta, amrex::IntVect ref_ratio,
-         amrex::Real dt, int nox_fft, int noy_fft, int noz_fft, short grid_type,
+         amrex::Real dt, int nox_fft, int noy_fft, int noz_fft,
+         ablastr::utils::enums::GridType grid_type,
          int do_moving_window, int pml_has_particles, int do_pml_in_domain,
-         int psatd_solution_type, int J_in_time, int rho_in_time,
+         PSATDSolutionType psatd_solution_type,
+         JInTime J_in_time, RhoInTime rho_in_time,
          bool do_pml_dive_cleaning, bool do_pml_divb_cleaning,
          const amrex::IntVect& fill_guards_fields,
          const amrex::IntVect& fill_guards_current,
+         bool eb_enabled,
          int max_guard_EB, amrex::Real v_sigma_sb,
          amrex::IntVect do_pml_Lo = amrex::IntVect::TheUnitVector(),
          amrex::IntVect do_pml_Hi = amrex::IntVect::TheUnitVector());
@@ -259,7 +262,7 @@ private:
     }
 
 #ifdef AMREX_USE_EB
-    amrex::EBFArrayBoxFactory const& fieldEBFactory () const noexcept {
+    [[nodiscard]] amrex::EBFArrayBoxFactory const& fieldEBFactory () const noexcept {
         return static_cast<amrex::EBFArrayBoxFactory const&>(*pml_field_factory);
     }
 #endif
