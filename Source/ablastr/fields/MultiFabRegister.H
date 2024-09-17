@@ -141,19 +141,18 @@ namespace ablastr::fields
         MultiFabRegister& operator=(MultiFabRegister&&) = delete;
         ~MultiFabRegister() = default;
 
-        /** title
+        /** Allocate and optionally initialize a MultiFab (field)
          *
-         * body body
-         * body
-         * body
+         * This registers a new MultiFab under a unique name, allocates it and
+         * optionally assigns it an initial value.
          *
-         * @param name ...
-         * @param level ...
-         * @param ba ...
-         * @param dm ...
-         * @param ncomp ...
-         * @param ngrow ...
-         * @param initial_value ...
+         * @param name a unique name for this field
+         * @param level the MR level to represent
+         * @param ba the list of boxes to cover the field
+         * @param dm the distribution mapping for load balancing with MPI
+         * @param ncomp the number of components of the field (all with the same staggering)
+         * @param ngrow the number of guard (ghost, halo) cells
+         * @param initial_value the optional initial value
          * @param remake follow the default domain decomposition of the simulation
          * @param redistribute_on_remake redistribute on @see amrex::AmrCore::RemakeLevel
          * @return pointer to newly allocated MultiFab
@@ -170,6 +169,24 @@ namespace ablastr::fields
             bool remake = true,
             bool redistribute_on_remake = true
         );
+
+        /** Allocate and optionally initialize a MultiFab (field)
+         *
+         * This registers a new MultiFab under a unique name, allocates it and
+         * optionally assigns it an initial value.
+         *
+         * @param name a unique name for this field
+         * @param dir the field component for vector fields ("direction" of the unit vector)
+         * @param level the MR level to represent
+         * @param ba the list of boxes to cover the field
+         * @param dm the distribution mapping for load balancing with MPI
+         * @param ncomp the number of components of the field (all with the same staggering)
+         * @param ngrow the number of guard (ghost, halo) cells
+         * @param initial_value the optional initial value
+         * @param remake follow the default domain decomposition of the simulation
+         * @param redistribute_on_remake redistribute on @see amrex::AmrCore::RemakeLevel
+         * @return pointer to newly allocated MultiFab
+         */
         amrex::MultiFab*
         alloc_init (
             std::string name,
@@ -184,13 +201,16 @@ namespace ablastr::fields
             bool redistribute_on_remake = true
         );
 
-        /** Create an alias
+        /** Create an alias of a MultiFab (field)
+         *
+         * Registers a new name for an existing MultiFab (field) and optionally assigning
+         * a value.
          *
          * @param new_name new name
-         * @param alias_name owner to alias to
-         * @param level ...
-         * @param initial_value ...
-         * @return
+         * @param alias_name owner name to alias
+         * @param level the MR level to represent
+         * @param initial_value the optional value to assign
+         * @return the newly aliased MultiFab
          */
         amrex::MultiFab*
         alias_init (
@@ -200,22 +220,25 @@ namespace ablastr::fields
             std::optional<const amrex::Real> initial_value = std::nullopt
         );
 
-        /** Create an alias
+        /** Create an alias of a MultiFab (field)
+         *
+         * Registers a new name for an existing MultiFab (field) and optionally assigning
+         * a value.
          *
          * @param new_name new name
-         * @param alias_name owner to alias to
-         * @param dir ...
-         * @param level ...
-         * @param initial_value ...
-         * @return
+         * @param alias_name owner name to alias
+         * @param dir the field component for vector fields ("direction" of the unit vector) both in the alias and aliased
+         * @param level the MR level to represent
+         * @param initial_value the optional value to assign
+         * @return the newly aliased MultiFab
          */
         amrex::MultiFab*
         alias_init (
-                std::string new_name,
-                std::string alias_name,
-                Direction dir,
-                int level,
-                std::optional<const amrex::Real> initial_value = std::nullopt
+            std::string new_name,
+            std::string alias_name,
+            Direction dir,
+            int level,
+            std::optional<const amrex::Real> initial_value = std::nullopt
         );
 
         /** title
