@@ -56,7 +56,7 @@ where :math:`\mathrm{d}\tau` is the simulation timestep, which is divided by the
 Empirical Extension to Over-the-Barrier Regime for Hydrogen
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For hydrogen, WarpX offers the modified empirical ADK extension to the Over-the-Barrier (OTB) published in :cite:t:`mpion-zhang_empirical_2014` Eq. (8) (note that there should not be a minus sign).
+For hydrogen, WarpX offers the modified empirical ADK extension to the Over-the-Barrier (OTB) published in :cite:t:`mpion-zhang_empirical_2014` Eq. (8) (note there is a typo in the paper and there should not be a minus sign in Eq. 8).
 
 .. math::
 
