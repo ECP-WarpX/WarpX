@@ -127,18 +127,24 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
     BL_PROFILE_VAR_START(timer_pcopies);
     // Copy from rho including its ghost cells to tmp_rho
-    // w.z.: please check. I think we need to use rho.nGrowVect() otherwise
-    // the data outside the ba.minimalBox() will not be copied over.
     tmp_rho.ParallelCopy( rho, 0, 0, 1, rho.nGrowVect(), amrex::IntVect::TheZeroVector() );
     BL_PROFILE_VAR_STOP(timer_pcopies);
 
+#if !defined(ABLASTR_USE_HEFFTE)
+    // Without distributed FFTs (i.e. without heFFTe):
+    // We loop over the original box (not the 2x wider one), and the other quadrants by periodicity
+    amrex::BoxArray const& igf_compute_box = domain_ba;
+#else
+    // With distributed FFTs (i.e. with heFFTe):
+    // We loop over the full 2x wider box, since 1 MPI rank does not necessarily own the data for the other quadrants
+    amrex::BoxArray const& igf_compute_box = tmp_G.boxArray();
+#endif
 
     // Compute the integrated Green function
-
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-    for (amrex::MFIter mfi(tmp_G,amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+    for (amrex::MFIter mfi(igf_compute_box, dm_global_fft, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
 
         amrex::Box const bx = mfi.tilebox();
 
@@ -165,6 +171,20 @@ computePhiIGF ( amrex::MultiFab const & rho,
                 amrex::Real const y = j0*dy;
                 amrex::Real const z = k0*dz;
 
+#if !defined(ABLASTR_USE_HEFFTE)
+                // Without distributed FFTs (i.e. without heFFTe):
+                amrex::Real const G_value = SumOfIntegratedPotential(x     , y     , z     , dx, dy, dz);
+                tmp_G_arr(i,j,k) = G_value;
+                // Fill the rest of the array by periodicity
+                if (i0>0) {tmp_G_arr(hi[0]+1-i0, j         , k         ) = G_value;}
+                if (j0>0) {tmp_G_arr(i         , hi[1]+1-j0, k         ) = G_value;}
+                if (k0>0) {tmp_G_arr(i         , j         , hi[2]+1-k0) = G_value;}
+                if ((i0>0)&&(j0>0)) {tmp_G_arr(hi[0]+1-i0, hi[1]+1-j0, k         ) = G_value;}
+                if ((j0>0)&&(k0>0)) {tmp_G_arr(i         , hi[1]+1-j0, hi[2]+1-k0) = G_value;}
+                if ((i0>0)&&(k0>0)) {tmp_G_arr(hi[0]+1-i0, j         , hi[2]+1-k0) = G_value;}
+                if ((i0>0)&&(j0>0)&&(k0>0)) {tmp_G_arr(hi[0]+1-i0, hi[1]+1-j0, hi[2]+1-k0) = G_value;}
+#else
+                // With distributed FFTs (i.e. with heFFTe):
                 if ((i0< nx)&&(j0< ny)&&(k0< nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential(x     , y     , z     , dx, dy, dz); }
                 if ((i0< nx)&&(j0> ny)&&(k0< nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential(x     , y_hi-y, z     , dx, dy, dz); }
                 if ((i0< nx)&&(j0< ny)&&(k0> nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential(x     , y     , z_hi-z, dx, dy, dz); }
@@ -173,11 +193,10 @@ computePhiIGF ( amrex::MultiFab const & rho,
                 if ((i0> nx)&&(j0< ny)&&(k0> nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential(x_hi-x, y     , z_hi-z, dx, dy, dz); }
                 if ((i0> nx)&&(j0> ny)&&(k0> nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential(x_hi-x, y_hi-y, z_hi-z, dx, dy, dz); }
                 if ((i0> nx)&&(j0< ny)&&(k0< nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential(x_hi-x, y     , z     , dx, dy, dz); }
+#endif
          }
       );
     }
-
-
 
     // since there is 1 MPI rank per box, here each MPI rank obtains its local box and the associated boxid
     int local_boxid = amrex::ParallelDescriptor::MyProc(); // because of how we made the DistributionMapping
@@ -242,7 +261,6 @@ computePhiIGF ( amrex::MultiFab const & rho,
     phi.ParallelCopy( tmp_G, 0, 0, 1, amrex::IntVect::TheZeroVector(), phi.nGrowVect());
     BL_PROFILE_VAR_STOP(timer_pcopies);
 
-    }
 #elif defined(ABLASTR_USE_FFT) && !defined(ABLASTR_USE_HEFFTE)
     {
     BL_PROFILE("Integrated Green Function Solver");

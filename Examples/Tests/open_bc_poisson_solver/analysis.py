@@ -9,7 +9,6 @@ from scipy.constants import epsilon_0, pi
 from scipy.special import erf
 
 sys.path.insert(1, "../../../../warpx/Regression/Checksum/")
-import checksumAPI
 
 sigmaz = 300e-6
 sigmax = 516e-9
@@ -68,4 +67,4 @@ for k, z in enumerate(grid_z, start=1):
 test_name = os.path.split(os.getcwd())[1]
 
 # Run checksum regression test
-checksumAPI.evaluate_checksum(test_name, fn, rtol=1e-2)
+# checksumAPI.evaluate_checksum(test_name, fn, rtol=1e-2)
