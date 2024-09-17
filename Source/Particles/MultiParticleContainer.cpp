@@ -472,7 +472,7 @@ MultiParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
         fields.get(current_fp_string, Direction{2}, lev)->setVal(0.0);
         if (fields.has("current_buf", Direction{0}, lev)) { fields.get("current_buf", Direction{0}, lev)->setVal(0.0); }
         if (fields.has("current_buf", Direction{1}, lev)) { fields.get("current_buf", Direction{1}, lev)->setVal(0.0); }
-        if (fields.has("current_buf", Direction{1}, lev)) { fields.get("current_buf", Direction{2}, lev)->setVal(0.0); }
+        if (fields.has("current_buf", Direction{2}, lev)) { fields.get("current_buf", Direction{2}, lev)->setVal(0.0); }
         if (fields.has("rho_fp", lev)) { fields.get("rho_fp", lev)->setVal(0.0); }
         if (fields.has("rho_buf", lev)) { fields.get("rho_buf", lev)->setVal(0.0); }
     }
