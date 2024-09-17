@@ -13,7 +13,7 @@ import numpy as np
 import tqdm
 from openpmd_viewer import OpenPMDTimeSeries
 
-#yt.funcs.mylog.setLevel(0)
+# yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, "../../../../warpx/Regression/Checksum/")
 import checksumAPI
 
@@ -22,6 +22,7 @@ filename = sys.argv[1]
 test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename, output_format="openpmd")
 print(os.getcwd())
+
 
 def get_avg_divE(ts, start_avg_iter, end_avg_iter, ar_size):
     avg_divE = np.zeros((ar_size, ar_size))
@@ -46,6 +47,7 @@ def plot(array, vmax=1e-9):
     ax.set_ylabel("z (m)")
     ax.set_title("Averaged divE")
 
+
 ts = OpenPMDTimeSeries("./diags/diag1/")
 
 ar_size = 32
@@ -58,10 +60,12 @@ plt.savefig("AverageddivE.png")
 
 tolerance = 1e-9
 
+
 def check_tolerance(array, tolerance):
     assert np.all(
         array <= tolerance
     ), f"Test did not pass: one or more elements exceed the tolerance of {tolerance}."
     print("All elements of are within the tolerance.")
+
 
 check_tolerance(divE_avg, tolerance)
