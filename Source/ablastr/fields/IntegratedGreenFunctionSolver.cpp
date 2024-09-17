@@ -26,15 +26,11 @@
 #include <AMReX_MLLinOp.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_REAL.H>
-#include <AMReX_PlotFileUtil.H>
 
 #if defined(ABLASTR_USE_FFT) && defined(ABLASTR_USE_HEFFTE)
 #include <heffte.h>
 #endif
 
-#include <array>
-#include <fstream>
-#include <iomanip>
 
 namespace ablastr::fields {
 
