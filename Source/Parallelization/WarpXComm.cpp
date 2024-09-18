@@ -730,8 +730,8 @@ WarpX::FillBoundaryE (const int lev, const PatchType patch_type, const amrex::In
         {
             const std::array<amrex::MultiFab*,3> mf_pml =
                 (patch_type == PatchType::fine) ?
-                m_fields.get_alldirs("pml_E_fp", finest_level) :
-                m_fields.get_alldirs("pml_E_cp", finest_level);
+                m_fields.get_alldirs("pml_E_fp", lev) :
+                m_fields.get_alldirs("pml_E_cp", lev);
 
             pml[lev]->Exchange(mf_pml, mf, patch_type, do_pml_in_domain);
             pml[lev]->FillBoundary(mf_pml, patch_type, nodal_sync);
@@ -795,8 +795,8 @@ WarpX::FillBoundaryB (const int lev, const PatchType patch_type, const amrex::In
         {
             const std::array<amrex::MultiFab*,3> mf_pml =
                 (patch_type == PatchType::fine) ?
-                m_fields.get_alldirs("pml_B_fp", finest_level) :
-                m_fields.get_alldirs("pml_B_cp", finest_level);
+                m_fields.get_alldirs("pml_B_fp", lev) :
+                m_fields.get_alldirs("pml_B_cp", lev);
 
             pml[lev]->Exchange(mf_pml, mf, patch_type, do_pml_in_domain);
             pml[lev]->FillBoundary(mf_pml, patch_type, nodal_sync);
