@@ -1060,15 +1060,15 @@ PML::CopyJtoPMLs (
 {
     using ablastr::fields::Direction;
 
-    bool const has_j_fp = fields.has("j_fp", Direction{0}, lev);
+    bool const has_j_fp = fields.has("current_fp", Direction{0}, lev);
     bool const has_pml_j_fp = fields.has("pml_j_fp", Direction{0}, lev);
-    bool const has_j_cp = fields.has("j_cp", Direction{0}, lev);
+    bool const has_j_cp = fields.has("current_cp", Direction{0}, lev);
     bool const has_pml_j_cp = fields.has("pml_j_cp", Direction{0}, lev);
 
     if (patch_type == PatchType::fine && has_pml_j_fp && has_j_fp)
     {
         ablastr::fields::VectorField pml_j_fp = fields.get_alldirs("pml_j_fp", lev);
-        ablastr::fields::VectorField jp = fields.get_alldirs("j_fp", lev);
+        ablastr::fields::VectorField jp = fields.get_alldirs("current_fp", lev);
         CopyToPML(*pml_j_fp[0], *jp[0], *m_geom);
         CopyToPML(*pml_j_fp[1], *jp[1], *m_geom);
         CopyToPML(*pml_j_fp[2], *jp[2], *m_geom);
@@ -1076,7 +1076,7 @@ PML::CopyJtoPMLs (
     else if (patch_type == PatchType::coarse && has_j_cp && has_pml_j_cp)
     {
         ablastr::fields::VectorField pml_j_cp = fields.get_alldirs("pml_j_cp", lev);
-        ablastr::fields::VectorField jp = fields.get_alldirs("j_cp", lev);
+        ablastr::fields::VectorField jp = fields.get_alldirs("current_cp", lev);
         CopyToPML(*pml_j_cp[0], *jp[0], *m_cgeom);
         CopyToPML(*pml_j_cp[1], *jp[1], *m_cgeom);
         CopyToPML(*pml_j_cp[2], *jp[2], *m_cgeom);
