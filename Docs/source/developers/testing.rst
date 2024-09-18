@@ -175,6 +175,8 @@ If you need a new Python package dependency for testing, please add it in `Regre
 
 Sometimes two or more tests share a large number of input parameters. The shared input parameters can be collected in a "base" input file that can be passed as a runtime parameter in the actual test input files through the parameter ``FILE``.
 
+If the new test is added in a new directory that did not exist before, please add the name of that directory with the command ``add_subdirectory`` in `Physics_applications/CMakeLists.txt <https://github.com/ECP-WarpX/WarpX/tree/development/Examples/Physics_applications/CMakeLists.txt>`__ or `Tests/CMakeLists.txt <https://github.com/ECP-WarpX/WarpX/tree/development/Examples/Tests/CMakeLists.txt>`__, depending on where the new test directory is located.
+
 Naming conventions for automated tests
 --------------------------------------
 
