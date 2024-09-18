@@ -805,7 +805,7 @@ public:
      *
      * \param[in] current_fp_string the coarse of fine patch to use for current
      */
-    void SyncCurrent (std::string current_fp_string);
+    void SyncCurrent (const std::string& current_fp_string);
 
     void SyncRho ();
 

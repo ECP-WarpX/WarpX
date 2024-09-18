@@ -110,7 +110,7 @@ void RelativisticExplicitES::AddSpaceChargeField (
     }
 
     // Apply filter, perform MPI exchange, interpolate across levels
-    Vector<std::unique_ptr<MultiFab>> rho_buf(num_levels);
+    const Vector<std::unique_ptr<MultiFab>> rho_buf(num_levels);
     warpx.SyncRho(
         amrex::GetVecOfPtrs(rho),
         amrex::GetVecOfPtrs(rho_coarse),

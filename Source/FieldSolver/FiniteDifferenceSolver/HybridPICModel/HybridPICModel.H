@@ -90,7 +90,7 @@ public:
         ablastr::fields::MultiLevelVectorField const& Bfield,
         ablastr::fields::MultiLevelScalarField const& rhofield,
         ablastr::fields::MultiLevelVectorField const& edge_lengths,
-        bool solve_for_Faraday);
+        bool solve_for_Faraday) const;
 
     void HybridPICSolveE (
         ablastr::fields::VectorField const& Efield,
@@ -98,7 +98,7 @@ public:
         ablastr::fields::VectorField const& Bfield,
         amrex::MultiFab const& rhofield,
         ablastr::fields::VectorField const& edge_lengths,
-        int lev, bool solve_for_Faraday);
+        int lev, bool solve_for_Faraday) const;
 
     void HybridPICSolveE (
         ablastr::fields::VectorField const& Efield,
@@ -106,7 +106,7 @@ public:
         ablastr::fields::VectorField const& Bfield,
         amrex::MultiFab const& rhofield,
         ablastr::fields::VectorField const& edge_lengths,
-        int lev, PatchType patch_type, bool solve_for_Faraday);
+        int lev, PatchType patch_type, bool solve_for_Faraday) const;
 
     void BfieldEvolveRK (
         ablastr::fields::MultiLevelVectorField const& Bfield,
@@ -140,8 +140,8 @@ public:
      * Function to calculate the electron pressure using the simulation charge
      * density. Used in the Ohm's law solver (kinetic-fluid hybrid model).
      */
-    void CalculateElectronPressure ();
-    void CalculateElectronPressure (int lev);
+    void CalculateElectronPressure () const;
+    void CalculateElectronPressure (int lev) const;
 
     /**
      * \brief Fill the electron pressure multifab given the kinetic particle

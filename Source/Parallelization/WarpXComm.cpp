@@ -1067,7 +1067,7 @@ WarpX::FillBoundaryAux (int lev, IntVect ng)
 }
 
 void
-WarpX::SyncCurrent (std::string current_fp_string)
+WarpX::SyncCurrent (const std::string& current_fp_string)
 {
     using ablastr::fields::Direction;
 
@@ -1237,13 +1237,13 @@ WarpX::SyncCurrent (std::string current_fp_string)
 
 void
 WarpX::SyncRho () {
-    ablastr::fields::MultiLevelScalarField rho_fp = m_fields.has("rho_fp", 0) ?
+    const ablastr::fields::MultiLevelScalarField rho_fp = m_fields.has("rho_fp", 0) ?
         m_fields.get_mr_levels("rho_fp", finest_level) :
         ablastr::fields::MultiLevelScalarField{static_cast<size_t>(finest_level+1)};
-    ablastr::fields::MultiLevelScalarField rho_cp = m_fields.has("rho_cp", 1) ?
+    const ablastr::fields::MultiLevelScalarField rho_cp = m_fields.has("rho_cp", 1) ?
         m_fields.get_mr_levels("rho_cp", finest_level) :
         ablastr::fields::MultiLevelScalarField{static_cast<size_t>(finest_level+1)};
-    ablastr::fields::MultiLevelScalarField rho_buf = m_fields.has("rho_buf", 1) ?
+    const ablastr::fields::MultiLevelScalarField rho_buf = m_fields.has("rho_buf", 1) ?
         m_fields.get_mr_levels("rho_buf", finest_level) :
         ablastr::fields::MultiLevelScalarField{static_cast<size_t>(finest_level+1)};
 

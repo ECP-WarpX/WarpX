@@ -149,7 +149,7 @@ public:
      */
     virtual void Evolve (ablastr::fields::MultiFabRegister& fields,
                          int lev,
-                         std::string current_fp_string,
+                         const std::string& current_fp_string,
                          amrex::Real t, amrex::Real dt, DtType a_dt_type=DtType::Full, bool skip_deposition=false,
                          PushType push_type=PushType::Explicit) = 0;
 

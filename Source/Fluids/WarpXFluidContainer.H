@@ -38,7 +38,7 @@ public:
     WarpXFluidContainer(WarpXFluidContainer&& )                   = default;
     WarpXFluidContainer& operator=(WarpXFluidContainer&& )        = default;
 
-    void AllocateLevelMFs (ablastr::fields::MultiFabRegister& m_fields, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm, int lev);
+    void AllocateLevelMFs (ablastr::fields::MultiFabRegister& m_fields, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm, int lev) const;
 
     void InitData (ablastr::fields::MultiFabRegister& m_fields, amrex::Box init_box, amrex::Real cur_time, int lev);
 
@@ -49,7 +49,7 @@ public:
      */
     void Evolve (ablastr::fields::MultiFabRegister& fields,
                  int lev,
-                 std::string current_fp_string,
+                 const std::string& current_fp_string,
                  amrex::Real cur_time,
                  bool skip_deposition=false);
 

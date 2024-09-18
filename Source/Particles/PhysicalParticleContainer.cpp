@@ -1746,7 +1746,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 void
 PhysicalParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
                                    int lev,
-                                   std::string current_fp_string,
+                                   const std::string& current_fp_string,
                                    Real /*t*/, Real dt, DtType a_dt_type, bool skip_deposition,
                                    PushType push_type)
 {

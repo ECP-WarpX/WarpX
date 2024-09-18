@@ -136,7 +136,7 @@ void WarpXFluidContainer::ReadParameters()
     }
 }
 
-void WarpXFluidContainer::AllocateLevelMFs(ablastr::fields::MultiFabRegister& fields, const BoxArray &ba, const DistributionMapping &dm, int lev)
+void WarpXFluidContainer::AllocateLevelMFs(ablastr::fields::MultiFabRegister& fields, const BoxArray &ba, const DistributionMapping &dm, int lev) const
 {
     using ablastr::fields::Direction;
     const int ncomps = 1;
@@ -254,7 +254,7 @@ void WarpXFluidContainer::InitData(ablastr::fields::MultiFabRegister& fields, am
 void WarpXFluidContainer::Evolve(
     ablastr::fields::MultiFabRegister& fields,
     int lev,
-    std::string current_fp_string,
+    const std::string& current_fp_string,
     amrex::Real cur_time,
     bool skip_deposition)
 {

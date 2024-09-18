@@ -96,7 +96,7 @@ namespace
      */
     void CheckGuardCells (
         ablastr::fields::MultiFabRegister& fields,
-        std::string mf_name,
+        const std::string& mf_name,
         int lev
     )
     {

@@ -421,7 +421,7 @@ void HybridPICModel::HybridPICSolveE (
     ablastr::fields::MultiLevelVectorField const& Bfield,
     ablastr::fields::MultiLevelScalarField const& rhofield,
     ablastr::fields::MultiLevelVectorField const& edge_lengths,
-    const bool solve_for_Faraday)
+    const bool solve_for_Faraday) const
 {
     auto& warpx = WarpX::GetInstance();
     for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
@@ -439,7 +439,7 @@ void HybridPICModel::HybridPICSolveE (
     ablastr::fields::VectorField const& Bfield,
     amrex::MultiFab const& rhofield,
     ablastr::fields::VectorField const& edge_lengths,
-    const int lev, const bool solve_for_Faraday)
+    const int lev, const bool solve_for_Faraday) const
 {
     WARPX_PROFILE("WarpX::HybridPICSolveE()");
 
@@ -461,7 +461,7 @@ void HybridPICModel::HybridPICSolveE (
     amrex::MultiFab const& rhofield,
     ablastr::fields::VectorField const& edge_lengths,
     const int lev, PatchType patch_type,
-    const bool solve_for_Faraday)
+    const bool solve_for_Faraday) const
 {
     using ablastr::fields::va2vm;
 
@@ -481,7 +481,7 @@ void HybridPICModel::HybridPICSolveE (
     warpx.ApplyEfieldBoundary(lev, patch_type);
 }
 
-void HybridPICModel::CalculateElectronPressure()
+void HybridPICModel::CalculateElectronPressure() const
 {
     auto& warpx = WarpX::GetInstance();
     for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
@@ -490,7 +490,7 @@ void HybridPICModel::CalculateElectronPressure()
     }
 }
 
-void HybridPICModel::CalculateElectronPressure(const int lev)
+void HybridPICModel::CalculateElectronPressure(const int lev) const
 {
     WARPX_PROFILE("WarpX::CalculateElectronPressure()");
 
