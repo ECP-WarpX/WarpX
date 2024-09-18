@@ -91,7 +91,7 @@ public:
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Bfield,
         amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
-        amrex::Real t, 
+        amrex::Real t,
         bool solve_for_Faraday);
 
     void HybridPICSolveE (
@@ -100,7 +100,7 @@ public:
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
         std::unique_ptr<amrex::MultiFab> const& rhofield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
-        amrex::Real t, 
+        amrex::Real t,
         int lev, bool solve_for_Faraday);
 
     void HybridPICSolveE (
@@ -109,7 +109,7 @@ public:
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
         std::unique_ptr<amrex::MultiFab> const& rhofield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
-        amrex::Real t, 
+        amrex::Real t,
         int lev, PatchType patch_type, bool solve_for_Faraday);
 
     void BfieldEvolveRK (
