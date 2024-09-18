@@ -1388,8 +1388,9 @@ WarpX::ReadParameters ()
         // Instead, if warpx.grid_type=collocated, the momentum-conserving and
         // energy conserving field gathering algorithms are equivalent (forces
         // gathered from the collocated grid) and no fields centering occurs.
-        if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving &&
-            WarpX::grid_type != GridType::Collocated)
+        if ((WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving 
+            && WarpX::grid_type != GridType::Collocated)
+            || WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
         {
             utils::parser::queryWithParser(
                 pp_warpx, "field_centering_nox", field_centering_nox);
