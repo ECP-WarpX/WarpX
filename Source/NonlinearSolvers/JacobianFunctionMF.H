@@ -49,7 +49,7 @@ class JacobianFunctionMF
     inline
     void updatePreCondMat ( const T&  a_X )
     {
-        if (m_usePreCond) m_preCond->Update(a_X);
+        if (m_usePreCond) { m_preCond->Update(a_X); }
     }
 
     inline
@@ -140,14 +140,14 @@ class JacobianFunctionMF
     void curTime ( RT a_time )
     {
         m_cur_time = a_time;
-        if (m_usePreCond) m_preCond->CurTime(a_time);
+        if (m_usePreCond) { m_preCond->CurTime(a_time); }
     }
 
     inline
     void curTimeStep ( RT a_dt )
     {
         m_dt = a_dt;
-        if (m_usePreCond) m_preCond->CurTimeStep(a_dt);
+        if (m_usePreCond) { m_preCond->CurTimeStep(a_dt); }
     }
 
     inline
