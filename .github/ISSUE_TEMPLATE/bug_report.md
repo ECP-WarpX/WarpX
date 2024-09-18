@@ -1,34 +1,36 @@
 ---
 name: Bug report
-about: Create a report to help us reproduce your problem.
+about: Found a bug? Let us know.
 title: ''
 labels: [bug]
 assignees: ''
 
 ---
 
-**Describe the bug**
+**What bug did you find?**
 A clear and concise description of what the bug is.
 
-**To Reproduce**
-Please share your WarpX inputs files or PICMI Python files here.
-You can drag-and-drop files into this form or zip up larger collections of files, e.g., including analysis scripts to reproduce your problem.
+**How to reproduce the bug**
+Please provide (if available):
+- WarpX inputs files
+- PICMI Python files
+- Python post-processing scripts
 
-Please minimize your inputs/scripts to be concise and focused on your issue.
-For instance, make the simulation scripts very small and fast to run, whenever possible.
+Please minimize your inputs/scripts to be concise and focused on the issue.
+For instance, make the simulation scripts as small and fast to run as possible.
 
-**Expected behavior**
+**What behavior did you expect?**
 A clear and concise description of what you expected to happen.
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
-
-**Software Environment**
-- version of WarpX: [YY.MM]
-- installed WarpX via: [conda-forge, spack, pip, brew, from source, module system, ...]
+**Tell us about your software environment**
 - operating system: [name and version]
-- machine: [Are you running on a public cluster? It's likely we compute on it as well!]
-- name and version of Python implementation: [e.g. CPython 3.12]
+- version of WarpX: [e.g., latest, 24.09, etc.]
+- installed WarpX via: [e.g., conda-forge, spack, pip, brew, from source, module system, etc.]
+- HPC machine: [Are you running on an HPC cluster? We might support it already: https://warpx.readthedocs.io/en/latest/install/hpc.html]
+- other relevant dependency names and versions
 
-**Additional context**
-Add any other context about the problem here.
+**Additional information**
+If applicable, please add other info to help explain the issue.
+
+**Screenshots**
+If applicable, please add screenshots to help explain the issue.
