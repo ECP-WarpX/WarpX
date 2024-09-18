@@ -669,11 +669,11 @@ WarpX::PushPSATD ()
 
     const int rho_old = spectral_solver_fp[0]->m_spectral_index.rho_old;
     const int rho_new = spectral_solver_fp[0]->m_spectral_index.rho_new;
-    ablastr::fields::MultiLevelScalarField rho_fp = m_fields.get_mr_levels("rho_fp", finest_level);
-    ablastr::fields::MultiLevelScalarField rho_cp = m_fields.get_mr_levels("rho_fp", finest_level);
-    ablastr::fields::MultiLevelVectorField current_fp = m_fields.get_mr_levels_alldirs("current_fp", finest_level);
-    ablastr::fields::MultiLevelVectorField current_cp = m_fields.get_mr_levels_alldirs("current_cp", finest_level);
-    ablastr::fields::MultiLevelVectorField current_buf = m_fields.get_mr_levels_alldirs("current_buf", finest_level);
+    const ablastr::fields::MultiLevelScalarField rho_fp = m_fields.get_mr_levels("rho_fp", finest_level);
+    const ablastr::fields::MultiLevelScalarField rho_cp = m_fields.get_mr_levels("rho_fp", finest_level);
+    const ablastr::fields::MultiLevelVectorField current_fp = m_fields.get_mr_levels_alldirs("current_fp", finest_level);
+    const ablastr::fields::MultiLevelVectorField current_cp = m_fields.get_mr_levels_alldirs("current_cp", finest_level);
+    const ablastr::fields::MultiLevelVectorField current_buf = m_fields.get_mr_levels_alldirs("current_buf", finest_level);
 
     if (fft_periodic_single_box)
     {

@@ -29,10 +29,10 @@ void LabFrameExplicitES::ComputeSpaceChargeField (
     using ablastr::fields::MultiLevelScalarField;
     using ablastr::fields::MultiLevelVectorField;
 
-    MultiLevelScalarField rho_fp = fields.get_mr_levels("rho_fp", max_level);
-    MultiLevelScalarField rho_cp = fields.get_mr_levels("rho_cp", max_level);
+    const MultiLevelScalarField rho_fp = fields.get_mr_levels("rho_fp", max_level);
+    const MultiLevelScalarField rho_cp = fields.get_mr_levels("rho_cp", max_level);
     MultiLevelScalarField phi_fp = fields.get_mr_levels("phi_fp", max_level);
-    MultiLevelVectorField Efield_fp = fields.get_mr_levels_alldirs("Efield_fp", max_level);
+    const MultiLevelVectorField Efield_fp = fields.get_mr_levels_alldirs("Efield_fp", max_level);
 
     mpc.DepositCharge(rho_fp, 0.0_rt);
     if (mfl) {
@@ -41,7 +41,7 @@ void LabFrameExplicitES::ComputeSpaceChargeField (
     }
 
     // Apply filter, perform MPI exchange, interpolate across levels
-    Vector<std::unique_ptr<MultiFab> > rho_buf(num_levels);
+    const Vector<std::unique_ptr<MultiFab> > rho_buf(num_levels);
     auto & warpx = WarpX::GetInstance();
     warpx.SyncRho( rho_fp, rho_cp, amrex::GetVecOfPtrs(rho_buf) );
 

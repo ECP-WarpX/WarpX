@@ -58,9 +58,9 @@ void FiniteDifferenceSolver::EvolveE (
 )
 {
     using ablastr::fields::Direction;
-    ablastr::fields::VectorField Bfield = patch_type == PatchType::fine ?
+    const ablastr::fields::VectorField Bfield = patch_type == PatchType::fine ?
         fields.get_alldirs("Bfield_fp", lev) : fields.get_alldirs("Bfield_cp", lev);
-    ablastr::fields::VectorField Jfield = patch_type == PatchType::fine ?
+    const ablastr::fields::VectorField Jfield = patch_type == PatchType::fine ?
         fields.get_alldirs("current_fp", lev) : fields.get_alldirs("current_cp", lev);
 
     amrex::MultiFab* Ffield = nullptr;
@@ -71,23 +71,19 @@ void FiniteDifferenceSolver::EvolveE (
 
     ablastr::fields::VectorField edge_lengths;
     if (fields.has("edge_lengths", Direction{0}, lev)) {
-        edge_lengths = patch_type == PatchType::fine ?
-            fields.get_alldirs("edge_lengths", lev) : fields.get_alldirs("edge_lengths", lev);
+        edge_lengths = fields.get_alldirs("edge_lengths", lev);
     }
     ablastr::fields::VectorField face_areas;
     if (fields.has("face_areas", Direction{0}, lev)) {
-        face_areas = patch_type == PatchType::fine ?
-            fields.get_alldirs("face_areas", lev) : fields.get_alldirs("face_areas", lev);
+        face_areas = fields.get_alldirs("face_areas", lev);
     }
     ablastr::fields::VectorField area_mod;
-    if (fields.has("face_areas", Direction{0}, lev)) {
-        area_mod = patch_type == PatchType::fine ?
-            fields.get_alldirs("area_mod", lev) : fields.get_alldirs("area_mod", lev);
+    if (fields.has("area_mod", Direction{0}, lev)) {
+        area_mod = fields.get_alldirs("area_mod", lev);
     }
     ablastr::fields::VectorField ECTRhofield;
     if (fields.has("ECTRhofield", Direction{0}, lev)) {
-        ECTRhofield = patch_type == PatchType::fine ?
-                      fields.get_alldirs("ECTRhofield", lev) : fields.get_alldirs("ECTRhofield", lev);
+        ECTRhofield = fields.get_alldirs("ECTRhofield", lev);
     }
 
     // Select algorithm (The choice of algorithm is a runtime option,
@@ -221,7 +217,7 @@ void FiniteDifferenceSolver::EvolveECartesian (
         if (Ffield) {
 
             // Extract field data for this grid/tile
-            Array4<Real const> F = Ffield->array(mfi);
+            const Array4<Real const> F = Ffield->array(mfi);
 
             // Loop over the cells and update the fields
             amrex::ParallelFor(tex, tey, tez,

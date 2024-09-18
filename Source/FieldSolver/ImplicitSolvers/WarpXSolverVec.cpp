@@ -21,8 +21,8 @@ WarpXSolverVec::~WarpXSolverVec ()
 }
 
 void WarpXSolverVec::Define ( WarpX*  a_WarpX,
-                         std::string  a_vector_type_name,
-                         std::string  a_scalar_type_name )
+                         const std::string&  a_vector_type_name,
+                         const std::string&  a_scalar_type_name )
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !IsDefined(),
@@ -41,7 +41,7 @@ void WarpXSolverVec::Define ( WarpX*  a_WarpX,
         m_array_type = FieldType::Efield_fp;
     }
     else if (m_vector_type_name=="Bfield_fp") {
-        m_array_type = FieldType::Efield_fp;
+        m_array_type = FieldType::Bfield_fp;
     }
     else if (m_vector_type_name=="vector_potential_fp_nodal") {
         m_array_type = FieldType::vector_potential_fp;
