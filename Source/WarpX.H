@@ -132,6 +132,11 @@ public:
 
     void Evolve (int numsteps = -1);
 
+    /** Push momentum one half step forward to synchronize with position.
+     *  Also sets is_synchronized to `true`.
+     */
+    void Synchronize ();
+
     //
     // Functions used by implicit solvers
     //
@@ -620,6 +625,12 @@ public:
 
     /** Determine the timestep of the simulation. */
     void ComputeDt ();
+
+    /**
+     * Determine the simulation timestep from the maximum speed of all particles
+     * Sets timestep so that a particle can only cross cfl*dx cells per timestep.
+     */
+    void UpdateDtFromParticleSpeeds ();
 
     /** Print main PIC parameters to stdout */
     void PrintMainPICparameters ();
@@ -1497,6 +1508,7 @@ private:
     amrex::Vector<amrex::Real> t_new;
     amrex::Vector<amrex::Real> t_old;
     amrex::Vector<amrex::Real> dt;
+    static utils::parser::IntervalsParser dt_update_interval; // How often to update the timestep when using adaptive timestepping
 
     // Particle container
     std::unique_ptr<MultiParticleContainer> mypc;
@@ -1658,7 +1670,9 @@ private:
     int num_injected_species = -1;
     amrex::Vector<int> injected_plasma_species;
 
+    // Timestepping parameters
     std::optional<amrex::Real> m_const_dt;
+    std::optional<amrex::Real> m_max_dt;
 
     // Macroscopic properties
     std::unique_ptr<MacroscopicProperties> m_macroscopic_properties;
