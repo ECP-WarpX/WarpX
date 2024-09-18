@@ -582,7 +582,7 @@ Diagnostics::ComputeAndPack ()
 
             if (m_diag_type == DiagTypes::TimeAveraged) {
 
-                amrex::Real real_a = 1.0;
+                const amrex::Real real_a = 1.0;
                 // call amrex sax operation to do the following
                 amrex::MultiFab::Saxpy(
                         m_sum_mf_output[i_buffer][lev], real_a, m_mf_output[i_buffer][lev],

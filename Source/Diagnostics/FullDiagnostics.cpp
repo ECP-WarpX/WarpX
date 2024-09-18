@@ -198,7 +198,7 @@ FullDiagnostics::Flush ( int i_buffer, bool /* force_flush */ )
         if (m_time_average_type == TimeAverageType::Static || m_time_average_type == TimeAverageType::Dynamic) {
             // Loop over the output levels and divide by the number of steps in the averaging period
             for (int lev = 0; lev < nlev_output; ++lev) {
-                m_sum_mf_output.at(i_buffer).at(lev).mult(1./m_average_period_steps);
+                m_sum_mf_output.at(i_buffer).at(lev).mult(1._rt/static_cast<amrex::Real>(m_average_period_steps));
             }
 
             m_flush_format->WriteToFile(
