@@ -2966,14 +2966,14 @@ WarpX::ComputeDivE(amrex::MultiFab& divE, const int lev)
 {
     if ( WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD ) {
 #ifdef WARPX_USE_FFT
-        ablastr::fields::VectorField Efield_aux_lev = m_fields.get_alldirs("Efield_aux", lev);
+        const ablastr::fields::VectorField Efield_aux_lev = m_fields.get_alldirs("Efield_aux", lev);
         spectral_solver_fp[lev]->ComputeSpectralDivE(lev, Efield_aux_lev, divE);
 #else
         WARPX_ABORT_WITH_MESSAGE(
             "ComputeDivE: PSATD requested but not compiled");
 #endif
     } else {
-        ablastr::fields::VectorField Efield_aux_lev = m_fields.get_alldirs("Efield_aux", lev);
+        const ablastr::fields::VectorField Efield_aux_lev = m_fields.get_alldirs("Efield_aux", lev);
         m_fdtd_solver_fp[lev]->ComputeDivE(Efield_aux_lev, divE);
     }
 }
