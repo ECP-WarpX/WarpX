@@ -3410,7 +3410,7 @@ WarpX::getFieldDotMaskPointer ( FieldType field_type, int lev, int dir ) const
 }
 
 void WarpX::SetDotMask( std::unique_ptr<amrex::iMultiFab>& field_dotMask,
-                        std::string field_name, int lev, int dir ) const
+                        std::string const & field_name, int lev, int dir ) const
 {
     // Define the dot mask for this field_type needed to properly compute dotProduct()
     // for field values that have shared locations on different MPI ranks
