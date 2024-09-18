@@ -21,9 +21,7 @@ MultiDiagnostics::MultiDiagnostics ()
      */
     alldiags.resize( ndiags );
     for (int i=0; i<ndiags; i++){
-        if ( diags_types[i] == DiagTypes::Full ){
-            alldiags[i] = std::make_unique<FullDiagnostics>(i, diags_names[i], diags_types[i]);
-        } else if ( diags_types[i] == DiagTypes::TimeAveraged ){
+        if ( diags_types[i] == DiagTypes::Full || diags_types[i] == DiagTypes::TimeAveraged ){
             alldiags[i] = std::make_unique<FullDiagnostics>(i, diags_names[i], diags_types[i]);
         } else if ( diags_types[i] == DiagTypes::BackTransformed ){
             alldiags[i] = std::make_unique<BTDiagnostics>(i, diags_names[i], diags_types[i]);
