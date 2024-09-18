@@ -1030,7 +1030,6 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
         Gpu::DeviceVector<amrex::Long> counts(overlap_box.numPts(), 0);
         Gpu::DeviceVector<amrex::Long> offset(overlap_box.numPts());
         auto *pcounts = counts.data();
-        const amrex::IntVect lrrfac = rrfac;
         Box fine_overlap_box; // default Box is NOT ok().
         if (refine_injection) {
             fine_overlap_box = overlap_box & amrex::shift(fine_injection_box, -shifted);
@@ -1048,7 +1047,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
             {
                 auto index = overlap_box.index(iv);
                 const amrex::Long r = (fine_overlap_box.ok() && fine_overlap_box.contains(iv))?
-                    (AMREX_D_TERM(lrrfac[0],*lrrfac[1],*lrrfac[2])) : (1);
+                    (AMREX_D_TERM(rrfac[0],*rrfac[1],*rrfac[2])) : (1);
                 pcounts[index] = num_ppc*r;
                 // update pcount by checking if cell-corners or cell-center
                 // has non-zero density
@@ -1154,8 +1153,8 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                 long ip = poffset[index] + i_part;
                 pa_idcpu[ip] = amrex::SetParticleIDandCPU(pid+ip, cpuid);
                 const XDim3 r = (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) ?
-                  // In the refined injection region: use refinement ratio `lrrfac`
-                  inj_pos->getPositionUnitBox(i_part, lrrfac, engine) :
+                  // In the refined injection region: use refinement ratio `rrfac`
+                  inj_pos->getPositionUnitBox(i_part, rrfac, engine) :
                   // Otherwise: use 1 as the refinement ratio
                   inj_pos->getPositionUnitBox(i_part, amrex::IntVect::TheUnitVector(), engine);
                 auto pos = getCellCoords(overlap_corner, dx, r, iv);
@@ -1441,7 +1440,6 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         Gpu::DeviceVector<int> counts(overlap_box.numPts(), 0);
         Gpu::DeviceVector<int> offset(overlap_box.numPts());
         auto *pcounts = counts.data();
-        const amrex::IntVect lrrfac = rrfac;
         const int flux_normal_axis = plasma_injector.flux_normal_axis;
         Box fine_overlap_box; // default Box is NOT ok().
         if (refine_injection) {
@@ -1450,23 +1448,21 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         amrex::ParallelForRNG(overlap_box, [=] AMREX_GPU_DEVICE (int i, int j, int k, amrex::RandomEngine const& engine) noexcept
         {
             const IntVect iv(AMREX_D_DECL(i, j, k));
+            amrex::ignore_unused(j,k);
+
             auto lo = getCellCoords(overlap_corner, dx, {0._rt, 0._rt, 0._rt}, iv);
             auto hi = getCellCoords(overlap_corner, dx, {1._rt, 1._rt, 1._rt}, iv);
-
-            const int num_ppc_int = static_cast<int>(num_ppc_real + amrex::Random(engine));
 
             if (flux_pos->overlapsWith(lo, hi))
             {
                 auto index = overlap_box.index(iv);
-                int r;
+                int r = 1;
                 if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
-                    r = compute_area_weights(lrrfac, flux_normal_axis);
-                } else {
-                    r = 1;
+                    r = compute_area_weights(rrfac, flux_normal_axis);
                 }
-                pcounts[index] = num_ppc_int*r;
+                const int num_ppc_int = static_cast<int>(num_ppc_real*r + amrex::Random(engine));
+                pcounts[index] = num_ppc_int;
             }
-            amrex::ignore_unused(j,k);
         });
 
         // Max number of new particles. All of them are created,
@@ -1533,24 +1529,14 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         [=] AMREX_GPU_DEVICE (int i, int j, int k, amrex::RandomEngine const& engine) noexcept
         {
             const IntVect iv = IntVect(AMREX_D_DECL(i, j, k));
+            amrex::ignore_unused(j,k);
             const auto index = overlap_box.index(iv);
 
             Real scale_fac = compute_scale_fac_area(dx, num_ppc_real, flux_normal_axis);
 
-            auto lo = getCellCoords(overlap_corner, dx, {0._rt, 0._rt, 0._rt}, iv);
-            auto hi = getCellCoords(overlap_corner, dx, {1._rt, 1._rt, 1._rt}, iv);
-
-            if (flux_pos->overlapsWith(lo, hi))
-            {
-                int r;
-                if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
-                    r = compute_area_weights(lrrfac, flux_normal_axis);
-                } else {
-                    r = 1;
-                }
-                scale_fac /= r;
+            if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
+                scale_fac /= compute_area_weights(rrfac, flux_normal_axis);
             }
-            amrex::ignore_unused(j,k);
 
             for (int i_part = 0; i_part < pcounts[index]; ++i_part)
             {
@@ -1559,8 +1545,8 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 
                 // This assumes the flux_pos is of type InjectorPositionRandomPlane
                 const XDim3 r = (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) ?
-                  // In the refined injection region: use refinement ratio `lrrfac`
-                  flux_pos->getPositionUnitBox(i_part, lrrfac, engine) :
+                  // In the refined injection region: use refinement ratio `rrfac`
+                  flux_pos->getPositionUnitBox(i_part, rrfac, engine) :
                   // Otherwise: use 1 as the refinement ratio
                   flux_pos->getPositionUnitBox(i_part, amrex::IntVect::TheUnitVector(), engine);
                 auto pos = getCellCoords(overlap_corner, dx, r, iv);

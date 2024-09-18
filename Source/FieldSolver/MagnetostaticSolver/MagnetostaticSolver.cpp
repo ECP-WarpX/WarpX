@@ -116,7 +116,12 @@ WarpX::AddMagnetostaticFieldLabFrame()
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( !IsPythonCallbackInstalled("poissonsolver"),
         "Python Level Poisson Solve not supported for Magnetostatic implementation.");
 
-    const amrex::Real magnetostatic_absolute_tolerance = self_fields_absolute_tolerance*PhysConst::c;
+    // const amrex::Real magnetostatic_absolute_tolerance = self_fields_absolute_tolerance*PhysConst::c;
+    // temporary fix!!!
+    const amrex::Real magnetostatic_absolute_tolerance = 0.0;
+    const amrex::Real self_fields_required_precision = 1e-12;
+    const int self_fields_max_iters = 200;
+    const int self_fields_verbosity = 2;
 
     computeVectorPotential( current_fp, vector_potential_fp_nodal, self_fields_required_precision,
                      magnetostatic_absolute_tolerance, self_fields_max_iters,

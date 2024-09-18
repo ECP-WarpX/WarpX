@@ -16,6 +16,9 @@
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "EmbeddedBoundary/Enabled.H"
 #include "EmbeddedBoundary/WarpXFaceInfoBox.H"
+#include "FieldSolver/ElectrostaticSolvers/ElectrostaticSolver.H"
+#include "FieldSolver/ElectrostaticSolvers/LabFrameExplicitES.H"
+#include "FieldSolver/ElectrostaticSolvers/RelativisticExplicitES.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
@@ -173,11 +176,6 @@ bool WarpX::sort_particles_for_deposition = false;
 amrex::IntVect WarpX::sort_idx_type(AMREX_D_DECL(0,0,0));
 
 bool WarpX::do_dynamic_scheduling = true;
-
-Real WarpX::self_fields_required_precision = 1.e-11_rt;
-Real WarpX::self_fields_absolute_tolerance = 0.0_rt;
-int WarpX::self_fields_max_iters = 200;
-int WarpX::self_fields_verbosity = 2;
 
 bool WarpX::do_subcycling = false;
 bool WarpX::do_multi_J = false;
@@ -354,6 +352,17 @@ WarpX::WarpX ()
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
     {
         current_fp_vay.resize(nlevs_max);
+    }
+
+    // Create Electrostatic Solver object if needed
+    if ((WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame)
+        || (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic))
+    {
+        m_electrostatic_solver = std::make_unique<LabFrameExplicitES>(nlevs_max);
+    }
+    else
+    {
+        m_electrostatic_solver = std::make_unique<RelativisticExplicitES>(nlevs_max);
     }
 
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
@@ -733,20 +742,6 @@ WarpX::ReadParameters ()
             electromagnetic_solver_id = ElectromagneticSolverAlgo::None;
         }
 
-        if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
-            electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
-        {
-            // Note that with the relativistic version, these parameters would be
-            // input for each species.
-            utils::parser::queryWithParser(
-                pp_warpx, "self_fields_required_precision", self_fields_required_precision);
-            utils::parser::queryWithParser(
-                pp_warpx, "self_fields_absolute_tolerance", self_fields_absolute_tolerance);
-            utils::parser::queryWithParser(
-                pp_warpx, "self_fields_max_iters", self_fields_max_iters);
-            pp_warpx.query("self_fields_verbosity", self_fields_verbosity);
-        }
-
         pp_warpx.query_enum_sloppy("poisson_solver", poisson_solver_id, "-_");
 #ifndef WARPX_DIM_3D
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -767,7 +762,7 @@ WarpX::ReadParameters ()
         "The FFT Poisson solver is not implemented in labframe-electromagnetostatic mode yet."
         );
 
-        bool const eb_enabled = EB::enabled();
+        [[maybe_unused]] bool const eb_enabled = EB::enabled();
 #if !defined(AMREX_USE_EB)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             !eb_enabled,
@@ -775,38 +770,8 @@ WarpX::ReadParameters ()
         );
 #endif
 
-        // Parse the input file for domain boundary potentials
-        const ParmParse pp_boundary("boundary");
-        bool potential_specified = false;
-        // When reading the potential at the boundary from the input file, set this flag to true if any of the potential is specified
-        potential_specified |= pp_boundary.query("potential_lo_x", m_poisson_boundary_handler.potential_xlo_str);
-        potential_specified |= pp_boundary.query("potential_hi_x", m_poisson_boundary_handler.potential_xhi_str);
-        potential_specified |= pp_boundary.query("potential_lo_y", m_poisson_boundary_handler.potential_ylo_str);
-        potential_specified |= pp_boundary.query("potential_hi_y", m_poisson_boundary_handler.potential_yhi_str);
-        potential_specified |= pp_boundary.query("potential_lo_z", m_poisson_boundary_handler.potential_zlo_str);
-        potential_specified |= pp_boundary.query("potential_hi_z", m_poisson_boundary_handler.potential_zhi_str);
-        if (eb_enabled) {
-            potential_specified |= pp_warpx.query("eb_potential(x,y,z,t)", m_poisson_boundary_handler.potential_eb_str);
-        }
-        m_boundary_potential_specified = potential_specified;
-        if (potential_specified & (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)) {
-            ablastr::warn_manager::WMRecordWarning(
-                "Algorithms",
-                "The input script specifies the electric potential (phi) at the boundary, but \
-                also uses the hybrid PIC solver based on Ohm’s law. When using this solver, the \
-                electric potential does not have any impact on the simulation.",
-                ablastr::warn_manager::WarnPriority::low);
-        }
-        else if (potential_specified & (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::None)) {
-            ablastr::warn_manager::WMRecordWarning(
-                "Algorithms",
-                "The input script specifies the electric potential (phi) at the boundary so \
-                an initial Poisson solve will be performed.",
-                ablastr::warn_manager::WarnPriority::low);
-        }
-
-        m_poisson_boundary_handler.buildParsers();
 #ifdef WARPX_DIM_RZ
+        const ParmParse pp_boundary("boundary");
         pp_boundary.query("verboncoeur_axis_correction", verboncoeur_axis_correction);
 #endif
 
