@@ -88,9 +88,6 @@ void WarpX::HybridPICEvolveFields ()
         }
     }
 
-    // Calculate the electron pressure at t=n using rho^n
-    m_hybrid_pic_model->CalculateElectronPressure(DtType::FirstHalf);
-
     amrex::Real t_start = gett_old(0);
     amrex::Real sub_dt = 0.5_rt/sub_steps*dt[0];
 
@@ -120,9 +117,6 @@ void WarpX::HybridPICEvolveFields ()
             0.5_rt, *rho_fp[lev], 0, 0, 1, rho_fp_temp[lev]->nGrowVect()
         );
     }
-
-    // Calculate the electron pressure at t=n+1/2
-    m_hybrid_pic_model->CalculateElectronPressure(DtType::SecondHalf);
 
     t_start += 0.5_rt*dt[0];
 
