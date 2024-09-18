@@ -29,7 +29,7 @@ public:
 
     void computePhiTriDiagonal (
         const ablastr::fields::MultiLevelScalarField& rho,
-        ablastr::fields::MultiLevelScalarField& phi
+        const ablastr::fields::MultiLevelScalarField& phi
     );
 
 };

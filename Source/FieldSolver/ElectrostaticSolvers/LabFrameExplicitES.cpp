@@ -94,7 +94,7 @@ void LabFrameExplicitES::ComputeSpaceChargeField (
 */
 void LabFrameExplicitES::computePhiTriDiagonal (
     const ablastr::fields::MultiLevelScalarField& rho,
-    ablastr::fields::MultiLevelScalarField& phi)
+    const ablastr::fields::MultiLevelScalarField& phi)
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(num_levels == 1,
     "The tridiagonal solver cannot be used with mesh refinement");
