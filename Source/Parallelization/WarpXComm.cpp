@@ -69,21 +69,19 @@ WarpX::UpdateAuxilaryData ()
 
     // When loading particle fields from file: add the external fields:
     for (int lev = 0; lev <= finest_level; ++lev) {
-        amrex::MultiFab *Bfield_aux_lvl_0 = m_fields.get("Bfield_aux", Direction{0}, lev);
-        amrex::MultiFab *Bfield_aux_lvl_1 = m_fields.get("Bfield_aux", Direction{1}, lev);
-        amrex::MultiFab *Bfield_aux_lvl_2 = m_fields.get("Bfield_aux", Direction{2}, lev);
-
         if (mypc->m_E_ext_particle_s == "read_from_file") {
+            ablastr::fields::VectorField Efield_aux = m_fields.get_alldirs("Efield_aux", lev);
             const auto& E_ext_lev = m_fields.get_alldirs("E_external_particle_field", lev);
-            amrex::MultiFab::Add(*Bfield_aux_lvl_0, *E_ext_lev[0], 0, 0, E_ext_lev[0]->nComp(), guard_cells.ng_FieldGather);
-            amrex::MultiFab::Add(*Bfield_aux_lvl_1, *E_ext_lev[1], 0, 0, E_ext_lev[1]->nComp(), guard_cells.ng_FieldGather);
-            amrex::MultiFab::Add(*Bfield_aux_lvl_2, *E_ext_lev[2], 0, 0, E_ext_lev[2]->nComp(), guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*Efield_aux[0], *E_ext_lev[0], 0, 0, E_ext_lev[0]->nComp(), guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*Efield_aux[1], *E_ext_lev[1], 0, 0, E_ext_lev[1]->nComp(), guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*Efield_aux[2], *E_ext_lev[2], 0, 0, E_ext_lev[2]->nComp(), guard_cells.ng_FieldGather);
         }
         if (mypc->m_B_ext_particle_s == "read_from_file") {
+            ablastr::fields::VectorField Bfield_aux = m_fields.get_alldirs("Bfield_aux", lev);
             const auto& B_ext_lev = m_fields.get_alldirs("B_external_particle_field", lev);
-            amrex::MultiFab::Add(*Bfield_aux_lvl_0, *B_ext_lev[0], 0, 0, B_ext_lev[0]->nComp(), guard_cells.ng_FieldGather);
-            amrex::MultiFab::Add(*Bfield_aux_lvl_1, *B_ext_lev[1], 0, 0, B_ext_lev[1]->nComp(), guard_cells.ng_FieldGather);
-            amrex::MultiFab::Add(*Bfield_aux_lvl_2, *B_ext_lev[2], 0, 0, B_ext_lev[2]->nComp(), guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*Bfield_aux[0], *B_ext_lev[0], 0, 0, B_ext_lev[0]->nComp(), guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*Bfield_aux[1], *B_ext_lev[1], 0, 0, B_ext_lev[1]->nComp(), guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*Bfield_aux[2], *B_ext_lev[2], 0, 0, B_ext_lev[2]->nComp(), guard_cells.ng_FieldGather);
         }
     }
 
