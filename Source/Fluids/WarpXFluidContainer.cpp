@@ -261,7 +261,7 @@ void WarpXFluidContainer::Evolve(
     using ablastr::fields::Direction;
     WARPX_PROFILE("WarpXFluidContainer::Evolve");
 
-    if (fields.get("rho_fp",lev) && ! skip_deposition && ! do_not_deposit) {
+    if (fields.has("rho_fp",lev) && ! skip_deposition && ! do_not_deposit) {
         // Deposit charge before particle push, in component 0 of MultiFab rho.
         DepositCharge(fields, *fields.get("rho_fp",lev), lev, 0);
     }
@@ -294,7 +294,7 @@ void WarpXFluidContainer::Evolve(
 
     // Deposit rho to the simulation mesh
     // Deposit charge (end of the step)
-    if (fields.get("rho_fp",lev) && ! skip_deposition && ! do_not_deposit) {
+    if (fields.has("rho_fp",lev) && ! skip_deposition && ! do_not_deposit) {
         DepositCharge(fields, *fields.get("rho_fp",lev), lev, 1);
     }
 
