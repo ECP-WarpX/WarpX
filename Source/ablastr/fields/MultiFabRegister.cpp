@@ -569,10 +569,9 @@ namespace ablastr::fields
         // C++20: Replace with std::erase_if
         for (auto first = m_mf_register.begin(), last = m_mf_register.end(); first != last;)
         {
-            if (first->second.m_level == level){
+            if (first->second.m_level == level) {
                 first = m_mf_register.erase(first);
-            }
-            else{
+            } else {
                 ++first;
             }
         }

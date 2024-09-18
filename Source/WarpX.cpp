@@ -2259,12 +2259,12 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     if (fft_do_time_averaging)
     {
         m_fields.alloc_init( "Bfield_avg_fp", Direction{0}, lev, amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
-        m_fields.alloc_init( "Bfield_avg_fp", Direction{1}, lev, amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
-        m_fields.alloc_init( "Bfield_avg_fp", Direction{2}, lev, amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+        m_fields.alloc_init( "Bfield_avg_fp", Direction{1}, lev, amrex::convert(ba, By_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+        m_fields.alloc_init( "Bfield_avg_fp", Direction{2}, lev, amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
 
         m_fields.alloc_init( "Efield_avg_fp", Direction{0}, lev, amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
-        m_fields.alloc_init( "Efield_avg_fp", Direction{1}, lev, amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
-        m_fields.alloc_init( "Efield_avg_fp", Direction{2}, lev, amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+        m_fields.alloc_init( "Efield_avg_fp", Direction{1}, lev, amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+        m_fields.alloc_init( "Efield_avg_fp", Direction{2}, lev, amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
     }
 
     if (EB::enabled()) {
@@ -2530,9 +2530,15 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
     if (mypc->m_B_ext_particle_s == "read_from_file") {
         //  These fields will be added to the fields that the particles see, and need to match the index type
+<<<<<<< HEAD
         auto* Bfield_aux_levl_0 = m_fields.get("Bfield_aux", Direction{0}, lev);
         auto* Bfield_aux_levl_1 = m_fields.get("Bfield_aux", Direction{1}, lev);
         auto* Bfield_aux_levl_2 = m_fields.get("Bfield_aux", Direction{2}, lev);
+=======
+        auto *Bfield_aux_levl_0 = m_fields.get("Bfield_aux", Direction{0}, lev);
+        auto *Bfield_aux_levl_1 = m_fields.get("Bfield_aux", Direction{1}, lev);
+        auto *Bfield_aux_levl_2 = m_fields.get("Bfield_aux", Direction{2}, lev);
+>>>>>>> 1dfeb9f0ff8b104502d31bfd8aa90827de58ea7a
 
         // Same as Bfield_fp for reading external field data
         m_fields.alloc_init( "B_external_particle_field", Direction{0}, lev, amrex::convert(ba, Bfield_aux_levl_0->ixType()),
@@ -2553,9 +2559,15 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
     if (mypc->m_E_ext_particle_s == "read_from_file") {
         //  These fields will be added to the fields that the particles see, and need to match the index type
+<<<<<<< HEAD
         auto* Efield_aux_levl_0 = m_fields.get("Efield_aux", Direction{0}, lev);
         auto* Efield_aux_levl_1 = m_fields.get("Efield_aux", Direction{1}, lev);
         auto* Efield_aux_levl_2 = m_fields.get("Efield_aux", Direction{2}, lev);
+=======
+        auto *Efield_aux_levl_0 = m_fields.get("Efield_aux", Direction{0}, lev);
+        auto *Efield_aux_levl_1 = m_fields.get("Efield_aux", Direction{1}, lev);
+        auto *Efield_aux_levl_2 = m_fields.get("Efield_aux", Direction{2}, lev);
+>>>>>>> 1dfeb9f0ff8b104502d31bfd8aa90827de58ea7a
 
         // Same as Efield_fp for reading external field data
         m_fields.alloc_init( "E_external_particle_field", Direction{0}, lev, amrex::convert(ba, Efield_aux_levl_0->ixType()),
@@ -2588,12 +2600,12 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         if (fft_do_time_averaging)
         {
             m_fields.alloc_init("Bfield_avg_cp", Direction{0}, lev, amrex::convert(cba, Bx_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
-            m_fields.alloc_init("Bfield_avg_cp", Direction{1}, lev, amrex::convert(cba, Bx_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
-            m_fields.alloc_init("Bfield_avg_cp", Direction{2}, lev, amrex::convert(cba, Bx_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+            m_fields.alloc_init("Bfield_avg_cp", Direction{1}, lev, amrex::convert(cba, By_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+            m_fields.alloc_init("Bfield_avg_cp", Direction{2}, lev, amrex::convert(cba, Bz_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
 
             m_fields.alloc_init("Efield_avg_cp", Direction{0}, lev, amrex::convert(cba, Ex_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
-            m_fields.alloc_init("Efield_avg_cp", Direction{1}, lev, amrex::convert(cba, Ex_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
-            m_fields.alloc_init("Efield_avg_cp", Direction{2}, lev, amrex::convert(cba, Ex_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+            m_fields.alloc_init("Efield_avg_cp", Direction{1}, lev, amrex::convert(cba, Ey_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+            m_fields.alloc_init("Efield_avg_cp", Direction{2}, lev, amrex::convert(cba, Ez_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
         }
 
         // Create the MultiFabs for the current
@@ -3410,7 +3422,7 @@ WarpX::getFieldDotMaskPointer ( FieldType field_type, int lev, int dir ) const
 }
 
 void WarpX::SetDotMask( std::unique_ptr<amrex::iMultiFab>& field_dotMask,
-                        const std::string& field_name, int lev, int dir ) const
+                        std::string const & field_name, int lev, int dir ) const
 {
     // Define the dot mask for this field_type needed to properly compute dotProduct()
     // for field values that have shared locations on different MPI ranks

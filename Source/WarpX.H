@@ -485,7 +485,7 @@ public:
      * Set the dotMask container
      */
     void SetDotMask( std::unique_ptr<amrex::iMultiFab>& field_dotMask,
-                     const std::string& field_name, int lev, int dir ) const;
+                     std::string const & field_name, int lev, int dir ) const;
 
     [[nodiscard]] bool DoPML () const {return do_pml;}
     [[nodiscard]] bool DoFluidSpecies () const {return do_fluid_species;}

@@ -64,7 +64,7 @@ void FiniteDifferenceSolver::EvolveE (
         fields.get_alldirs("current_fp", lev) : fields.get_alldirs("current_cp", lev);
 
     amrex::MultiFab* Ffield = nullptr;
-    if (fields.has("F_fp", Direction{0}, lev)) {
+    if (fields.has("F_fp", lev)) {
         Ffield = patch_type == PatchType::fine ?
                  fields.get("F_fp", lev) : fields.get("F_cp", lev);
     }
