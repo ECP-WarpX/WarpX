@@ -194,24 +194,26 @@ FullDiagnostics::Flush ( int i_buffer, bool /* force_flush */ )
     // is supported for BackTransformed Diagnostics, in BTDiagnostics class.
     auto & warpx = WarpX::GetInstance();
 
+    if (m_diag_type == DiagTypes::TimeAveraged) {
+        if (m_time_average_type == TimeAverageType::Static || m_time_average_type == TimeAverageType::Dynamic) {
+            // Loop over the output levels and divide by the number of steps in the averaging period
+            for (int lev = 0; lev < nlev_output; ++lev) {
+                m_sum_mf_output.at(i_buffer).at(lev).mult(1./m_average_period_steps);
+            }
+
+            m_flush_format->WriteToFile(
+                    m_varnames, m_sum_mf_output.at(i_buffer), m_geom_output.at(i_buffer), warpx.getistep(),
+                    warpx.gett_new(0),
+                    m_output_species.at(i_buffer), nlev_output, m_file_prefix,
+                    m_file_min_digits, m_plot_raw_fields, m_plot_raw_fields_guards);
+
+        }
+    } else {
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output.at(i_buffer), m_geom_output.at(i_buffer), warpx.getistep(),
         warpx.gett_new(0),
         m_output_species.at(i_buffer), nlev_output, m_file_prefix,
         m_file_min_digits, m_plot_raw_fields, m_plot_raw_fields_guards);
-
-    if (m_time_average_type == TimeAverageType::Static || m_time_average_type == TimeAverageType::Dynamic) {
-        // Loop over the output levels and divide by the number of steps in the averaging period
-        for (int lev = 0; lev < nlev_output; ++lev) {
-            m_sum_mf_output.at(i_buffer).at(lev).mult(1./m_average_period_steps);
-        }
-
-        m_flush_format->WriteToFile(
-        m_varnames, m_sum_mf_output.at(i_buffer), m_geom_output.at(i_buffer), warpx.getistep(),
-        warpx.gett_new(0),
-        m_output_species.at(i_buffer), nlev_output, m_file_prefix,
-        m_file_min_digits, m_plot_raw_fields, m_plot_raw_fields_guards);
-
     }
 
     FlushRaw();
@@ -235,30 +237,33 @@ FullDiagnostics::DoDump (int step, int /*i_buffer*/, bool force_flush)
 bool
 FullDiagnostics::DoComputeAndPack (int step, bool force_flush)
 {
-    if (m_time_average_type == TimeAverageType::Dynamic) {
-        m_average_start_step = m_intervals.nextContains(step) - m_average_period_steps;
-        // check that the periods do not overlap and that the start step is not negative
-        if (m_average_start_step > 0) {
-            if (m_average_start_step < m_intervals.previousContains(step)) {
-                WARPX_ABORT_WITH_MESSAGE(
-                        "Averaging periods may not overlap within a single diagnostic. "
-                        "Please create a second diagnostic for overlapping time averaging periods "
-                        "and account for the increased memory consumption."
-                        );
-            } else {
-            WARPX_ABORT_WITH_MESSAGE("The step to begin time averaging may not be a negative number.");
-            }
-        }
-    }
 
     // Start averaging at output step (from diag.intervals) - period + 1
     bool in_averaging_period = false;
-    if (step > m_intervals.nextContains(step) - m_average_start_step && step <= m_intervals.nextContains(step)) {
-        in_averaging_period = true;
+    if (m_diag_type == DiagTypes::TimeAveraged) {
+        if (m_time_average_type == TimeAverageType::Dynamic) {
+            m_average_start_step = m_intervals.nextContains(step) - m_average_period_steps;
+            // check that the periods do not overlap and that the start step is not negative
+            if (m_average_start_step > 0) {
+                if (m_average_start_step < m_intervals.previousContains(step)) {
+                    WARPX_ABORT_WITH_MESSAGE(
+                            "Averaging periods may not overlap within a single diagnostic. "
+                            "Please create a second diagnostic for overlapping time averaging periods "
+                            "and account for the increased memory consumption."
+                    );
+                } else {
+                    WARPX_ABORT_WITH_MESSAGE("The step to begin time averaging may not be a negative number.");
+                }
+            }
+        }
 
-        if (m_time_average_type == TimeAverageType::Static) {
-            // Update time averaging period to current step
-            m_average_period_steps = step - m_average_start_step;
+        if (step > m_intervals.nextContains(step) - m_average_start_step && step <= m_intervals.nextContains(step)) {
+            in_averaging_period = true;
+
+            if (m_time_average_type == TimeAverageType::Static) {
+                // Update time averaging period to current step
+                m_average_period_steps = step - m_average_start_step;
+            }
         }
     }
 
@@ -723,10 +728,14 @@ FullDiagnostics::InitializeBufferData (int i_buffer, int lev, bool restart ) {
     const int ngrow = (m_format == "sensei" || m_format == "ascent") ? 1 : 0;
     int const ncomp = static_cast<int>(m_varnames.size());
     m_mf_output[i_buffer][lev] = amrex::MultiFab(ba, dmap, ncomp, ngrow);
-    // Allocate MultiFab for cell-centered field output accumulation. The data will be averaged before flushing.
-    m_sum_mf_output[i_buffer][lev] = amrex::MultiFab(ba, dmap, ncomp, ngrow);
-    // Initialize to zero because we add data.
-    m_sum_mf_output[i_buffer][lev].setVal(0.);
+
+    if (m_diag_type == DiagTypes::TimeAveraged) {
+        // Allocate MultiFab for cell-centered field output accumulation. The data will be averaged before flushing.
+        m_sum_mf_output[i_buffer][lev] = amrex::MultiFab(ba, dmap, ncomp, ngrow);
+        // Initialize to zero because we add data.
+        m_sum_mf_output[i_buffer][lev].setVal(0.);
+    }
+
     if (lev == 0) {
         // The extent of the domain covered by the diag multifab, m_mf_output
         //default non-periodic geometry for diags
