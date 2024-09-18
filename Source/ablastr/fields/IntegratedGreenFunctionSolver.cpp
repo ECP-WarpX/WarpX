@@ -128,7 +128,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
 #if !defined(ABLASTR_USE_HEFFTE)
     // Without distributed FFTs (i.e. without heFFTe):
     // We loop over the original box (not the 2x wider one), and the other quadrants by periodicity
-    amrex::BoxArray const& igf_compute_box = domain_ba;
+    amrex::BoxArray const& igf_compute_box = amrex::BoxArray( domain );
 #else
     // With distributed FFTs (i.e. with heFFTe):
     // We loop over the full 2x wider box, since 1 MPI rank does not necessarily own the data for the other quadrants
@@ -150,10 +150,6 @@ computePhiIGF ( amrex::MultiFab const & rho,
         amrex::Real const dx = cell_size[0];
         amrex::Real const dy = cell_size[1];
         amrex::Real const dz = cell_size[2];
-
-        amrex::Real x_hi = dx*(hi[0]+2);
-        amrex::Real y_hi = dy*(hi[1]+2);
-        amrex::Real z_hi = dz*(hi[2]+2);
 
         amrex::Array4<amrex::Real> const tmp_G_arr = tmp_G.array(mfi);
         amrex::ParallelFor( bx,
@@ -217,17 +213,18 @@ computePhiIGF ( amrex::MultiFab const & rho,
     // Create FFT plans
     BL_PROFILE_VAR_START(timer_plans);
 #if !defined(ABLASTR_USE_HEFFTE)
-    forward_plan_rho[mfi] = ablastr::math::anyfft::CreatePlan(
-        fft_size, tmp_rho[mfi].dataPtr(),
-        reinterpret_cast<ablastr::math::anyfft::Complex*>(tmp_rho_fft[mfi].dataPtr()),
+    const amrex::IntVect fft_size = realspace_ba[local_boxid].length();
+    ablastr::math::anyfft::FFTplan forward_plan_rho = ablastr::math::anyfft::CreatePlan(
+        fft_size, tmp_rho[local_boxid].dataPtr(),
+        reinterpret_cast<ablastr::math::anyfft::Complex*>(tmp_rho_fft.dataPtr()),
         ablastr::math::anyfft::direction::R2C, AMREX_SPACEDIM);
-    forward_plan_G[mfi] = ablastr::math::anyfft::CreatePlan(
-        fft_size, tmp_G[mfi].dataPtr(),
-        reinterpret_cast<ablastr::math::anyfft::Complex*>(tmp_G_fft[mfi].dataPtr()),
+    ablastr::math::anyfft::FFTplan forward_plan_G = ablastr::math::anyfft::CreatePlan(
+        fft_size, tmp_G[local_boxid].dataPtr(),
+        reinterpret_cast<ablastr::math::anyfft::Complex*>(tmp_G_fft.dataPtr()),
         ablastr::math::anyfft::direction::R2C, AMREX_SPACEDIM);
-    backward_plan[mfi] = ablastr::math::anyfft::CreatePlan(
-        fft_size, tmp_G[mfi].dataPtr(),
-        reinterpret_cast<ablastr::math::anyfft::Complex*>( tmp_G_fft[mfi].dataPtr()),
+    ablastr::math::anyfft::FFTplan backward_plan = ablastr::math::anyfft::CreatePlan(
+        fft_size, tmp_G[local_boxid].dataPtr(),
+        reinterpret_cast<ablastr::math::anyfft::Complex*>( tmp_G_fft.dataPtr()),
         ablastr::math::anyfft::direction::C2R, AMREX_SPACEDIM);
 #elif defined(ABLASTR_USE_HEFFTE)
 #if     defined(AMREX_USE_CUDA)
@@ -251,8 +248,8 @@ computePhiIGF ( amrex::MultiFab const & rho,
     // Perform forward FFTs
     BL_PROFILE_VAR_START(timer_ffts);
 #if !defined(ABLASTR_USE_HEFFTE)
-    ablastr::math::anyfft::Execute(forward_plan_rho[mfi]);
-    ablastr::math::anyfft::Execute(forward_plan_G[mfi]);
+    ablastr::math::anyfft::Execute(forward_plan_rho);
+    ablastr::math::anyfft::Execute(forward_plan_G);
 #elif defined(ABLASTR_USE_HEFFTE)
     fft.forward(tmp_rho[local_boxid].dataPtr(), rho_fft_data);
     fft.forward(tmp_G[local_boxid].dataPtr(), G_fft_data);
@@ -267,7 +264,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
     // Perform backward FFT
     BL_PROFILE_VAR_START(timer_ffts);
 #if !defined(ABLASTR_USE_HEFFTE)
-    ablastr::math::anyfft::Execute(backward_plan[mfi]);
+    ablastr::math::anyfft::Execute(backward_plan);
 #elif defined(ABLASTR_USE_HEFFTE)
     fft.backward(G_fft_data, tmp_G[local_boxid].dataPtr());
 #endif
@@ -284,11 +281,9 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
 #if !defined(ABLASTR_USE_HEFFTE)
     // Loop to destroy FFT plans
-    for ( amrex::MFIter mfi(spectralspace_ba, dm_global_fft); mfi.isValid(); ++mfi ){
-        ablastr::math::anyfft::DestroyPlan(forward_plan_G[mfi]);
-        ablastr::math::anyfft::DestroyPlan(forward_plan_rho[mfi]);
-        ablastr::math::anyfft::DestroyPlan(backward_plan[mfi]);
-    }
+    ablastr::math::anyfft::DestroyPlan(forward_plan_G);
+    ablastr::math::anyfft::DestroyPlan(forward_plan_rho);
+    ablastr::math::anyfft::DestroyPlan(backward_plan);
 #endif
 
 #endif // ABLASTR_USE_FFT
