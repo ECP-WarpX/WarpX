@@ -147,7 +147,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
             }
         );
     }
-    
+
     // since there is 1 MPI rank per box, here each MPI rank obtains its local box and the associated boxid
     int local_boxid = amrex::ParallelDescriptor::MyProc(); // because of how we made the DistributionMapping
     amrex::Box local_nodal_box = realspace_ba[local_boxid];
