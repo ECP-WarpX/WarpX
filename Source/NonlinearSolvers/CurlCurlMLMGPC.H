@@ -18,7 +18,7 @@
 #include <AMReX_GMRES_MLMG.H>
 
 #include "FieldSolver/Fields.H"
-#include "../Utils/WarpXConst.H"
+#include "Utils/WarpXConst.H"
 #include "Preconditioner.H"
 
 /**

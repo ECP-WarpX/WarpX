@@ -13,7 +13,7 @@
 
 #include "FieldSolver/ImplicitSolvers/WarpXSolverVec.H"
 #include "NonlinearSolvers/NonlinearSolverLibrary.H"
-#include "../../Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 
 /**
  * \brief Base class for implicit time solvers. The base functions are those
