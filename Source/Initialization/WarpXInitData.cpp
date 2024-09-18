@@ -907,9 +907,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 {
     using ablastr::fields::Direction;
 
-    ablastr::fields::MultiLevelVectorField Efield_aux = m_fields.get_mr_levels_alldirs("Efield_aux", max_level);
-    ablastr::fields::MultiLevelVectorField Bfield_aux = m_fields.get_mr_levels_alldirs("Bfield_aux", max_level);
-
     // initialize the averaged fields only if the averaged algorithm
     // is activated ('psatd.do_time_averaging=1')
     const ParmParse pp_psatd("psatd");
@@ -929,7 +926,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
             }
 
            if (lev > 0) {
-                Bfield_aux[lev][i]->setVal(m_p_ext_field_params->B_external_grid[i]);
+                m_fields.get("Bfield_aux", Direction{i}, lev)->setVal(m_p_ext_field_params->B_external_grid[i]);
                 m_fields.get("Bfield_cp", Direction{i}, lev)->setVal(m_p_ext_field_params->B_external_grid[i]);
                 if (fft_do_time_averaging) {
                     m_fields.get("Bfield_avg_cp", Direction{i}, lev)->setVal(m_p_ext_field_params->B_external_grid[i]);
@@ -948,7 +945,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                 m_fields.get("Efield_avg_fp", Direction{i}, lev)->setVal(m_p_ext_field_params->E_external_grid[i]);
             }
             if (lev > 0) {
-                Efield_aux[lev][i]->setVal(m_p_ext_field_params->E_external_grid[i]);
+                m_fields.get("Efield_aux", Direction{i}, lev)->setVal(m_p_ext_field_params->E_external_grid[i]);
                 m_fields.get("Efield_cp", Direction{i}, lev)->setVal(m_p_ext_field_params->E_external_grid[i]);
                 if (fft_do_time_averaging) {
                     m_fields.get("Efield_avg_cp", Direction{i}, lev)->setVal(m_p_ext_field_params->E_external_grid[i]);
@@ -971,9 +968,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
          && (lev > 0) && (lev <= maxlevel_extEMfield_init)) {
 
         InitializeExternalFieldsOnGridUsingParser(
-            Bfield_aux[lev][0],
-            Bfield_aux[lev][1],
-            Bfield_aux[lev][2],
+            m_fields.get("Bfield_aux", Direction{0}, lev),
+            m_fields.get("Bfield_aux", Direction{1}, lev),
+            m_fields.get("Bfield_aux", Direction{2}, lev),
             m_p_ext_field_params->Bxfield_parser->compile<3>(),
             m_p_ext_field_params->Byfield_parser->compile<3>(),
             m_p_ext_field_params->Bzfield_parser->compile<3>(),
@@ -1019,9 +1016,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 
         if (lev > 0) {
             InitializeExternalFieldsOnGridUsingParser(
-                Efield_aux[lev][0],
-                Efield_aux[lev][1],
-                Efield_aux[lev][2],
+                m_fields.get("Efield_aux", Direction{0}, lev),
+                m_fields.get("Efield_aux", Direction{1}, lev),
+                m_fields.get("Efield_aux", Direction{2}, lev),
                 m_p_ext_field_params->Exfield_parser->compile<3>(),
                 m_p_ext_field_params->Eyfield_parser->compile<3>(),
                 m_p_ext_field_params->Ezfield_parser->compile<3>(),
