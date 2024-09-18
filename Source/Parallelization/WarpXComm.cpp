@@ -432,6 +432,9 @@ WarpX::UpdateAuxilaryDataSameType ()
                              m_fields.get("Bfield_cp",Direction{1},lev)->nComp(), ng);
                 MultiFab dBz(m_fields.get("Bfield_cp",Direction{2},lev)->boxArray(), dm,
                              m_fields.get("Bfield_cp",Direction{2},lev)->nComp(), ng);
+                dBx.setVal(0.0);
+                dBy.setVal(0.0);
+                dBz.setVal(0.0);
 
                 // Copy Bfield_aux to the dB MultiFabs, using up to ng_src (=ng_FieldGather) guard
                 // cells from Bfield_aux and filling up to ng (=nGrow) guard cells in the dB MultiFabs
