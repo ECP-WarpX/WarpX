@@ -40,7 +40,6 @@ computePhiIGF ( amrex::MultiFab const & rho,
                 std::array<amrex::Real, 3> const & cell_size,
                 amrex::BoxArray const & ba)
 {
-#if defined(ABLASTR_USE_FFT)
     using namespace amrex::literals;
 
     BL_PROFILE_VAR_NS("ablastr::fields::computePhiIGF: FFTs", timer_ffts);
@@ -289,7 +288,5 @@ computePhiIGF ( amrex::MultiFab const & rho,
     // Copy from tmp_G to phi
     phi.ParallelCopy( tmp_G, 0, 0, 1, amrex::IntVect::TheZeroVector(), phi.nGrowVect());
     BL_PROFILE_VAR_STOP(timer_pcopies);
-
-#endif // ABLASTR_USE_FFT
 }
 } // namespace ablastr::fields
