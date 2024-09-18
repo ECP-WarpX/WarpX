@@ -3258,7 +3258,7 @@ WarpX::StoreCurrent (int lev)
 {
     using ablastr::fields::Direction;
     for (int idim = 0; idim < 3; ++idim) {
-        if (m_fields.get("current_store", Direction{idim},lev)) {
+        if (m_fields.has("current_store", Direction{idim},lev)) {
             MultiFab::Copy(*m_fields.get("current_store", Direction{idim}, lev),
                            *m_fields.get("current_fp", Direction{idim}, lev),
                            0, 0, 1, m_fields.get("current_store", Direction{idim}, lev)->nGrowVect());
@@ -3272,7 +3272,7 @@ WarpX::RestoreCurrent (int lev)
     using ablastr::fields::Direction;
 
     for (int idim = 0; idim < 3; ++idim) {
-        if (m_fields.get("current_store", Direction{idim}, lev)) {
+        if (m_fields.has("current_store", Direction{idim}, lev)) {
             std::swap(
                 *m_fields.get("current_fp", Direction{idim}, lev),
                 *m_fields.get("current_store", Direction{idim}, lev)
