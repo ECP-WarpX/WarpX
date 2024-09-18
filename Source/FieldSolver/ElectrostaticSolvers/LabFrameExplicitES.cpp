@@ -31,7 +31,7 @@ void LabFrameExplicitES::ComputeSpaceChargeField (
 
     const MultiLevelScalarField rho_fp = fields.get_mr_levels("rho_fp", max_level);
     const MultiLevelScalarField rho_cp = fields.get_mr_levels("rho_cp", max_level);
-    MultiLevelScalarField phi_fp = fields.get_mr_levels("phi_fp", max_level);
+    const MultiLevelScalarField phi_fp = fields.get_mr_levels("phi_fp", max_level);
     const MultiLevelVectorField Efield_fp = fields.get_mr_levels_alldirs("Efield_fp", max_level);
 
     mpc.DepositCharge(rho_fp, 0.0_rt);
