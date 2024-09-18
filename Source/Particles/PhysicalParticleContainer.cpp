@@ -1762,7 +1762,6 @@ PhysicalParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
     const iMultiFab* current_masks = WarpX::CurrentBufferMasks(lev);
     const iMultiFab* gather_masks = WarpX::GatherBufferMasks(lev);
 
-    using ablastr::fields::Direction;
     const bool has_rho = fields.has("rho_fp", lev);
     const bool has_cjx = fields.has("current_buf", Direction{0}, lev);
     const bool has_cEx = fields.has("Efield_cax", Direction{0}, lev);
