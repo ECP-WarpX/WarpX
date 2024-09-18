@@ -62,6 +62,7 @@ using ablastr::utils::SignalHandling;
 
 void
 WarpX::Synchronize () {
+    using ablastr::fields::Direction;
     FillBoundaryE(guard_cells.ng_FieldGather);
     FillBoundaryB(guard_cells.ng_FieldGather);
     if (fft_do_time_averaging)
