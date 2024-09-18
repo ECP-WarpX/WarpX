@@ -138,7 +138,7 @@ PML_RZ::FillBoundaryE (ablastr::fields::MultiFabRegister& fields, PatchType patc
     if (patch_type == PatchType::fine && pml_Er->nGrowVect().max() > 0)
     {
         amrex::Periodicity const& period = m_geom->periodicity();
-        const amrex::Vector<amrex::MultiFab*> mf = {pml_Er, pml_Et};
+        amrex::Vector<amrex::MultiFab*> mf = {pml_Er, pml_Et};
         ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period, nodal_sync);
     }
 }
@@ -152,7 +152,7 @@ PML_RZ::FillBoundaryB (ablastr::fields::MultiFabRegister& fields, PatchType patc
         amrex::MultiFab * pml_Bt = fields.get("pml_B_fp", Direction{1}, 0);
 
         amrex::Periodicity const& period = m_geom->periodicity();
-        const amrex::Vector<amrex::MultiFab*> mf = {pml_Br, pml_Bt};
+        amrex::Vector<amrex::MultiFab*> mf = {pml_Br, pml_Bt};
         ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period, nodal_sync);
     }
 }

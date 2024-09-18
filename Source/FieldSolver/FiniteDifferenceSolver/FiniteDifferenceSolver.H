@@ -226,7 +226,7 @@ class FiniteDifferenceSolver
         void EvolveFCylindrical (
             amrex::MultiFab* Ffield,
             ablastr::fields::VectorField const & Efield,
-            amrex::MultiFab* rhofield,
+            amrex::MultiFab* const rhofield,
             int rhocomp,
             amrex::Real dt );
 

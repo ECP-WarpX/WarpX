@@ -59,11 +59,11 @@ void FiniteDifferenceSolver::EvolveEPML (
         "PML are not implemented in cylindrical geometry.");
 #else
     using ablastr::fields::Direction;
-    const ablastr::fields::VectorField Efield = (patch_type == PatchType::fine) ?
+    ablastr::fields::VectorField Efield = (patch_type == PatchType::fine) ?
         fields.get_alldirs("pml_E_fp", level) : fields.get_alldirs("pml_E_cp", level);
-    const ablastr::fields::VectorField Bfield = (patch_type == PatchType::fine) ?
+    ablastr::fields::VectorField Bfield = (patch_type == PatchType::fine) ?
         fields.get_alldirs("pml_B_fp", level) : fields.get_alldirs("pml_B_cp", level);
-    const ablastr::fields::VectorField Jfield = (patch_type == PatchType::fine) ?
+    ablastr::fields::VectorField Jfield = (patch_type == PatchType::fine) ?
         fields.get_alldirs("pml_j_fp", level) : fields.get_alldirs("pml_j_cp", level);
     ablastr::fields::VectorField edge_lengths;
     if (fields.has("pml_edge_lengths", Direction{0}, level)) {

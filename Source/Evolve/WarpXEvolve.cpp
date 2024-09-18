@@ -663,8 +663,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     //    (after checking that pointer to rho_fp on MR level 0 is not null)
     if (m_fields.has("rho_fp", 0) && rho_in_time == RhoInTime::Linear)
     {
-        const ablastr::fields::MultiLevelScalarField rho_fp = m_fields.get_mr_levels("rho_fp", finest_level);
-        const ablastr::fields::MultiLevelScalarField rho_cp = m_fields.get_mr_levels("rho_fp", finest_level);
+        ablastr::fields::MultiLevelScalarField rho_fp = m_fields.get_mr_levels("rho_fp", finest_level);
+        ablastr::fields::MultiLevelScalarField rho_cp = m_fields.get_mr_levels("rho_fp", finest_level);
 
         // Deposit rho at relative time -dt
         // (dt[0] denotes the time step on mesh refinement level 0)
@@ -732,8 +732,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         // (after checking that pointer to rho_fp on MR level 0 is not null)
         if (m_fields.has("rho_fp", 0))
         {
-            const ablastr::fields::MultiLevelScalarField rho_fp = m_fields.get_mr_levels("rho_fp", finest_level);
-            const ablastr::fields::MultiLevelScalarField rho_cp = m_fields.get_mr_levels("rho_cp", finest_level);
+            ablastr::fields::MultiLevelScalarField rho_fp = m_fields.get_mr_levels("rho_fp", finest_level);
+            ablastr::fields::MultiLevelScalarField rho_cp = m_fields.get_mr_levels("rho_cp", finest_level);
 
             // Move rho from new to old if rho is linear in time
             if (rho_in_time == RhoInTime::Linear) { PSATDMoveRhoNewToRhoOld(); }

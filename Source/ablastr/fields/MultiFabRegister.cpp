@@ -628,7 +628,7 @@ namespace ablastr::fields
         const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& old_vector_on_levels
     )
     {
-        auto const finest_level = static_cast<int>(old_vector_on_levels.size() - 1u);
+        int const finest_level = old_vector_on_levels.size() - 1u;
 
         MultiLevelVectorField field_on_level;
         field_on_level.reserve(finest_level+1);
@@ -654,7 +654,7 @@ namespace ablastr::fields
         const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& old_scalar_on_levels
     )
     {
-        auto const finest_level = static_cast<int>(old_scalar_on_levels.size() - 1u);
+        int const finest_level = old_scalar_on_levels.size() - 1u;
 
         MultiLevelScalarField field_on_level;
         field_on_level.reserve(finest_level+1);

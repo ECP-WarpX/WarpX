@@ -56,9 +56,9 @@ void FiniteDifferenceSolver::EvolveB (
     [[maybe_unused]] amrex::Real const dt ) {
 
     using ablastr::fields::Direction;
-    const ablastr::fields::VectorField Bfield = patch_type == PatchType::fine ?
+    ablastr::fields::VectorField Bfield = patch_type == PatchType::fine ?
         fields.get_alldirs("Bfield_fp", lev) : fields.get_alldirs("Bfield_cp", lev);
-    const ablastr::fields::VectorField Efield = patch_type == PatchType::fine ?
+    ablastr::fields::VectorField Efield = patch_type == PatchType::fine ?
         fields.get_alldirs("Efield_fp", lev) : fields.get_alldirs("Efield_cp", lev);
 
     // Select algorithm (The choice of algorithm is a runtime option,

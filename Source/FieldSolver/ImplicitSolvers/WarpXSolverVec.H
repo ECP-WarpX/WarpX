@@ -68,8 +68,8 @@ public:
     [[nodiscard]] inline bool IsDefined () const { return m_is_defined; }
 
     void Define ( WarpX*  a_WarpX,
-             const std::string&  a_vector_type_name,
-             const std::string&  a_scalar_type_name = "none" );
+             std::string  a_vector_type_name,
+             std::string  a_scalar_type_name = "none" );
 
     inline
     void Define ( const WarpXSolverVec&  a_solver_vec )

@@ -56,9 +56,9 @@ void FiniteDifferenceSolver::EvolveBPML (
     WARPX_ABORT_WITH_MESSAGE(
         "PML are not implemented in cylindrical geometry.");
 #else
-    const ablastr::fields::VectorField Bfield = (patch_type == PatchType::fine) ?
+    ablastr::fields::VectorField Bfield = (patch_type == PatchType::fine) ?
         fields.get_alldirs("pml_B_fp", level) : fields.get_alldirs("pml_B_cp", level);
-    const ablastr::fields::VectorField Efield = (patch_type == PatchType::fine) ?
+    ablastr::fields::VectorField Efield = (patch_type == PatchType::fine) ?
         fields.get_alldirs("pml_E_fp", level) : fields.get_alldirs("pml_E_cp", level);
 
     if (m_grid_type == ablastr::utils::enums::GridType::Collocated) {
