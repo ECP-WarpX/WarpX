@@ -169,7 +169,7 @@ class JacobianFunctionMF
     RT m_normY0;
     RT m_cur_time, m_dt;
 
-    std::string m_pc_type;
+    std::string m_pc_type = "none";
 
     T m_Z, m_Y0, m_R0, m_R;
     Ops* m_ops;
