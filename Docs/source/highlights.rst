@@ -120,6 +120,7 @@ Scientific works in laser-ion acceleration and laser-matter interaction.
    Physical Review Letters **127**, 114801, 2021.
    `DOI:10.1103/PhysRevLett.127.114801 <https://doi.org/10.1103/PhysRevLett.127.114801>`__
 
+
 Particle Accelerator & Beam Physics
 ***********************************
 
