@@ -403,7 +403,7 @@ void HybridPICModel::CalculateCurrentAmpere (
     WARPX_PROFILE("WarpX::CalculateCurrentAmpere()");
 
     auto& warpx = WarpX::GetInstance();
-    ablastr::fields::VectorField current_fp_ampere = warpx.m_fields.get_alldirs("hybrid_current_fp_ampere", warpx.finestLevel());
+    ablastr::fields::VectorField current_fp_ampere = warpx.m_fields.get_alldirs("hybrid_current_fp_ampere", lev);
     warpx.get_pointer_fdtd_solver_fp(lev)->CalculateCurrentAmpere(
         current_fp_ampere, Bfield, edge_lengths, lev
     );
@@ -463,7 +463,6 @@ void HybridPICModel::HybridPICSolveE (
     const int lev, PatchType patch_type,
     const bool solve_for_Faraday) const
 {
-    using ablastr::fields::va2vm;
 
     auto& warpx = WarpX::GetInstance();
 
