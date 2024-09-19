@@ -124,7 +124,7 @@ void RelativisticExplicitES::AddSpaceChargeField (
     // Compute the potential phi, by solving the Poisson equation
     computePhi( rho, phi, beta, pc.self_fields_required_precision,
                 pc.self_fields_absolute_tolerance, pc.self_fields_max_iters,
-                pc.self_fields_verbosity );
+                pc.self_fields_verbosity, is_igf_2d_slices, is_igf_distributed );
 
     // Compute the corresponding electric and magnetic field, from the potential phi
     computeE( Efield_fp, phi, beta );
@@ -161,7 +161,7 @@ void RelativisticExplicitES::AddBoundaryField (amrex::Vector<std::array< std::un
     // Compute the potential phi, by solving the Poisson equation
     computePhi( rho, phi, beta, self_fields_required_precision,
                 self_fields_absolute_tolerance, self_fields_max_iters,
-                self_fields_verbosity );
+                self_fields_verbosity, is_igf_2d_slices, is_igf_distributed );
 
     // Compute the corresponding electric field, from the potential phi.
     computeE( Efield_fp, phi, beta );
