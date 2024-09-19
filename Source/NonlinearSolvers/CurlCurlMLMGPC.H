@@ -12,10 +12,14 @@
 #include <AMReX_Array.H>
 #include <AMReX_Vector.H>
 #include <AMReX_MultiFab.H>
+
+// currently not implemented in 1D
+#ifndef WARPX_DIM_1D_Z
 #include <AMReX_MLLinOp.H>
 #include <AMReX_MLCurlCurl.H>
 #include <AMReX_MLMG.H>
 #include <AMReX_GMRES_MLMG.H>
+#endif
 
 #include "FieldSolver/Fields.H"
 #include "Utils/WarpXConst.H"
@@ -121,6 +125,8 @@ class CurlCurlMLMGPC : public Preconditioner<T,Ops>
         amrex::Vector<amrex::DistributionMapping> m_dmap;
         amrex::IntVect m_gv;
 
+// currently not implemented in 1D
+#ifndef WARPX_DIM_1D_Z
         amrex::Array<amrex::LinOpBCType, AMREX_SPACEDIM> m_bc_lo;
         amrex::Array<amrex::LinOpBCType, AMREX_SPACEDIM> m_bc_hi;
 
@@ -128,6 +134,7 @@ class CurlCurlMLMGPC : public Preconditioner<T,Ops>
         std::unique_ptr<amrex::MLCurlCurl> m_curl_curl;
         std::unique_ptr<amrex::MLMGT<MFArr>> m_solver;
         std::unique_ptr<amrex::GMRESMLMGT<MFArr>> m_gmres_solver;
+#endif
 
         /**
          * \brief Read parameters
@@ -217,6 +224,10 @@ void CurlCurlMLMGPC<T,Ops>::Define ( const T& a_U,
     // read preconditioner parameters
     readParameters();
 
+// currently not implemented in 1D
+#ifdef WARPX_DIM_1D_Z
+    WARPX_ABORT_WITH_MESSAGE("CurlCurlMLMGPC not yet implemented for 1D");
+#else
     // create info object for curl-curl op
     m_info = std::make_unique<LPInfo>();
     m_info->setAgglomeration(m_agglomeration);
@@ -260,6 +271,7 @@ void CurlCurlMLMGPC<T,Ops>::Define ( const T& a_U,
         m_gmres_solver->setPrecondNumIters(m_max_iter);
         m_gmres_solver->setVerbose(static_cast<int>(m_verbose));
     }
+#endif
 
     m_is_defined = true;
     return;
@@ -278,7 +290,12 @@ void CurlCurlMLMGPC<T,Ops>::Update (const T& a_U)
     // set the coefficients alpha and beta for curl-curl op
     RT alpha = (m_ops->theta()*this->m_dt*PhysConst::c) * (m_ops->theta()*this->m_dt*PhysConst::c);
     RT beta = RT(1.0);
+
+// currently not implemented in 1D
+#ifndef WARPX_DIM_1D_Z
     m_curl_curl->setScalars(alpha, beta);
+#endif
+
     if (m_verbose) {
         amrex::Print() << "Updating " << PreconditionerTypes::curl_curl_mlmg
                        << ": dt = " << this->m_dt << ", "
@@ -293,9 +310,12 @@ void CurlCurlMLMGPC<T,Ops>::Update (const T& a_U)
 template <class T, class Ops>
 void CurlCurlMLMGPC<T,Ops>::defineMLCCAMFFromWarpXAMF ( amrex::Array<amrex::MultiFab,3>& a_mfarr_mlcc,
                                                         const amrex::Array<std::unique_ptr<amrex::MultiFab>,3>& a_mfarr_warpx,
-                                                        const amrex::IntVect& ng )
+                                                        const amrex::IntVect& a_ng )
 {
 #if defined(WARPX_DIM_1D_Z)
+    amrex::ignore_unused(a_mfarr_mlcc);
+    amrex::ignore_unused(a_mfarr_warpx);
+    amrex::ignore_unused(a_ng);
     WARPX_ABORT_WITH_MESSAGE("CurlCurlMLMGPC::defineMLCCAMFFromWarpXAMF not yet implemented for 1D");
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     // In WarpX, missing dimension is y
@@ -304,26 +324,26 @@ void CurlCurlMLMGPC<T,Ops>::defineMLCCAMFFromWarpXAMF ( amrex::Array<amrex::Mult
         a_mfarr_mlcc[0].define( a_mfarr_warpx[0]->boxArray(),
                                 a_mfarr_warpx[0]->DistributionMap(),
                                 a_mfarr_warpx[0]->nComp(),
-                                ng );
+                                a_ng );
     }
     {
         a_mfarr_mlcc[1].define( a_mfarr_warpx[2]->boxArray(),
                                 a_mfarr_warpx[2]->DistributionMap(),
                                 a_mfarr_warpx[2]->nComp(),
-                                ng );
+                                a_ng );
     }
     {
         a_mfarr_mlcc[2].define( a_mfarr_warpx[1]->boxArray(),
                                 a_mfarr_warpx[1]->DistributionMap(),
                                 a_mfarr_warpx[1]->nComp(),
-                                ng );
+                                a_ng );
     }
 #elif defined(WARPX_DIM_3D)
     for (int d = 0; d < 3; d++) {
         a_mfarr_mlcc[d].define( a_mfarr_warpx[d]->boxArray(),
                                 a_mfarr_warpx[d]->DistributionMap(),
                                 a_mfarr_warpx[d]->nComp(),
-                                ng );
+                                a_ng );
     }
 #endif
 }
@@ -331,19 +351,22 @@ void CurlCurlMLMGPC<T,Ops>::defineMLCCAMFFromWarpXAMF ( amrex::Array<amrex::Mult
 template <class T, class Ops>
 void CurlCurlMLMGPC<T,Ops>::copyMLCCAMFFromWarpXAMF ( amrex::Array<amrex::MultiFab,3>& a_dst,
                                                       const amrex::Array<std::unique_ptr<amrex::MultiFab>,3>& a_src,
-                                                      const amrex::IntVect& ng )
+                                                      const amrex::IntVect& a_ng )
 {
 #if defined(WARPX_DIM_1D_Z)
+    amrex::ignore_unused(a_dst);
+    amrex::ignore_unused(a_src);
+    amrex::ignore_unused(a_ng);
     WARPX_ABORT_WITH_MESSAGE("CurlCurlMLMGPC::copyMLCCAMFFromWarpXAMF not yet implemented for 1D");
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     // In WarpX, missing dimension is y
     // In AMReX, missing dimension is z
-    amrex::MultiFab::Copy( a_dst[0], *(a_src[0]), 0, 0, a_dst[0].nComp(), ng);
-    amrex::MultiFab::Copy( a_dst[1], *(a_src[2]), 0, 0, a_dst[0].nComp(), ng);
-    amrex::MultiFab::Copy( a_dst[2], *(a_src[1]), 0, 0, a_dst[0].nComp(), ng);
+    amrex::MultiFab::Copy( a_dst[0], *(a_src[0]), 0, 0, a_dst[0].nComp(), a_ng);
+    amrex::MultiFab::Copy( a_dst[1], *(a_src[2]), 0, 0, a_dst[1].nComp(), a_ng);
+    amrex::MultiFab::Copy( a_dst[2], *(a_src[1]), 0, 0, a_dst[2].nComp(), a_ng);
 #elif defined(WARPX_DIM_3D)
     for (int d = 0; d < 3; d++) {
-        amrex::MultiFab::Copy( a_dst[d], *(a_src[d]), 0, 0, ncomp, ng);
+        amrex::MultiFab::Copy( a_dst[d], *(a_src[d]), 0, 0, a_dst[d].nComp(), a_ng);
     }
 #endif
 }
@@ -351,19 +374,22 @@ void CurlCurlMLMGPC<T,Ops>::copyMLCCAMFFromWarpXAMF ( amrex::Array<amrex::MultiF
 template <class T, class Ops>
 void CurlCurlMLMGPC<T,Ops>::copyWarpXAMFFromMLCCAMF ( amrex::Array<std::unique_ptr<amrex::MultiFab>,3>& a_dst,
                                                       const amrex::Array<amrex::MultiFab,3>& a_src,
-                                                      const amrex::IntVect& ng )
+                                                      const amrex::IntVect& a_ng )
 {
 #if defined(WARPX_DIM_1D_Z)
+    amrex::ignore_unused(a_dst);
+    amrex::ignore_unused(a_src);
+    amrex::ignore_unused(a_ng);
     WARPX_ABORT_WITH_MESSAGE("CurlCurlMLMGPC::copyMLCCAMFFromWarpXAMF not yet implemented for 1D");
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     // In WarpX, missing dimension is y
     // In AMReX, missing dimension is z
-    amrex::MultiFab::Copy( *(a_dst[0]), a_src[0], 0, 0, a_dst[0]->nComp(), ng);
-    amrex::MultiFab::Copy( *(a_dst[1]), a_src[2], 0, 0, a_dst[0]->nComp(), ng);
-    amrex::MultiFab::Copy( *(a_dst[2]), a_src[1], 0, 0, a_dst[0]->nComp(), ng);
+    amrex::MultiFab::Copy( *(a_dst[0]), a_src[0], 0, 0, a_dst[0]->nComp(), a_ng);
+    amrex::MultiFab::Copy( *(a_dst[1]), a_src[2], 0, 0, a_dst[1]->nComp(), a_ng);
+    amrex::MultiFab::Copy( *(a_dst[2]), a_src[1], 0, 0, a_dst[2]->nComp(), a_ng);
 #elif defined(WARPX_DIM_3D)
     for (int d = 0; d < 3; d++) {
-        amrex::MultiFab::Copy( *(a_dst[d]), a_src[d], 0, 0, ncomp, ng);
+        amrex::MultiFab::Copy( *(a_dst[d]), a_src[d], 0, 0, a_dst[d]->nComp(), a_ng);
     }
 #endif
 }
@@ -405,12 +431,15 @@ void CurlCurlMLMGPC<T,Ops>::Apply (T& a_x, const T& a_b)
         copyMLCCAMFFromWarpXAMF(solution, x_mfarrvec[n], IntVect::TheZeroVector());
         copyMLCCAMFFromWarpXAMF(rhs, b_mfarrvec[n], IntVect::TheZeroVector());
 
+// currently not implemented in 1D
+#ifndef WARPX_DIM_1D_Z
         m_curl_curl->prepareRHS({&rhs});
         if (m_use_gmres) {
             m_gmres_solver->solve(solution, rhs, m_rtol, m_atol);
         } else {
             m_solver->solve({&solution}, {&rhs}, m_rtol, m_atol);
         }
+#endif
 
         // Copy solution in local object to a_x
         copyWarpXAMFFromMLCCAMF(x_mfarrvec[n], solution, IntVect::TheZeroVector());
