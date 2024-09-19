@@ -35,7 +35,6 @@ void ElectrostaticSolver::ReadParameters () {
 
     // FFT solver flags
     pp_warpx.query("use_2d_slices_fft_solver", is_igf_2d_slices);
-    pp_warpx.query("use_distributed_ffts", is_igf_distributed);
 }
 
 void
@@ -118,8 +117,7 @@ ElectrostaticSolver::computePhi (const amrex::Vector<std::unique_ptr<amrex::Mult
                    Real absolute_tolerance,
                    int const max_iters,
                    int const verbosity,
-                   bool is_2d_slices = false,
-                   bool is_distributed = false) const {
+                   bool is_igf_2d_slices) const {
     // create a vector to our fields, sorted by level
     amrex::Vector<amrex::MultiFab *> sorted_rho;
     amrex::Vector<amrex::MultiFab *> sorted_phi;
@@ -199,7 +197,6 @@ ElectrostaticSolver::computePhi (const amrex::Vector<std::unique_ptr<amrex::Mult
         *m_poisson_boundary_handler,
         is_solver_igf_on_lev0,
         is_igf_2d_slices,
-        is_igf_distributed,
         EB::enabled(),
         WarpX::do_single_precision_comms,
         warpx.refRatio(),

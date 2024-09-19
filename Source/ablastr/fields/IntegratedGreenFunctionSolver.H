@@ -121,6 +121,7 @@ namespace ablastr::fields
         return G_value;
     }
 
+
     /** @brief Compute the electrostatic potential using the Integrated Green Function method
      *         as in http://dx.doi.org/10.1103/PhysRevSTAB.9.044204
      *
@@ -134,8 +135,7 @@ namespace ablastr::fields
                    amrex::MultiFab & phi,
                    std::array<amrex::Real, 3> const & cell_size,
                    amrex::BoxArray const & ba,
-                   bool is_2d_slices,
-                   bool is_distributed);
+                   bool is_2d_slices);
 
 } // namespace ablastr::fields
 
