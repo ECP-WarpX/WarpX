@@ -54,7 +54,7 @@ jobs:
       run: |
         $env:PATH += ';C:/Program Files (x86)/WarpX/bin/'
 
-        $job = Start-ThreadJob -Name "test" -ScriptBlock { & python3 Examples/Tests/gaussian_beam/inputs_test_3d_gaussian_beam_picmi.py }
+        $job = Start-ThreadJob -Name "test" -ScriptBlock { & "python3" "Examples/Tests/gaussian_beam/inputs_test_3d_gaussian_beam_picmi.py" }
         Start-Sleep -Seconds 30
         Stop-Job $job.Id
 
