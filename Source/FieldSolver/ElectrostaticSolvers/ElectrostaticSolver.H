@@ -97,8 +97,8 @@ public:
         amrex::Real required_precision,
         amrex::Real absolute_tolerance,
         int max_iters,
-        int verbosity, 
-        bool is_2d_slices, 
+        int verbosity,
+        bool is_2d_slices,
         bool is_distributed
     ) const;
 
@@ -162,8 +162,8 @@ public:
     int self_fields_verbosity = 2;
 
     /** Parameters for FFT Poisson solver aka IGF */
-    // 0: full 3D, 1: many 2D z-slices (quasi-3D) 
-    bool is_igf_2d_slices = false; 
+    // 0: full 3D, 1: many 2D z-slices (quasi-3D)
+    bool is_igf_2d_slices = false;
     // 0: solver on 1 process, 1: distributed solver
     bool is_igf_distributed = false;
 };

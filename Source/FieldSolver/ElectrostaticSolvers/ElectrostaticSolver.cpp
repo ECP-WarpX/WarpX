@@ -27,7 +27,7 @@ void ElectrostaticSolver::ReadParameters () {
     ParmParse const pp_warpx("warpx");
 
     // Note that with the relativistic version, these parameters would be
-    // input for each species. 
+    // input for each species.
     pp_warpx.query("self_fields_required_precision", self_fields_required_precision);
     pp_warpx.query("self_fields_absolute_tolerance", self_fields_absolute_tolerance);
     pp_warpx.query("self_fields_max_iters", self_fields_max_iters);
@@ -117,7 +117,7 @@ ElectrostaticSolver::computePhi (const amrex::Vector<std::unique_ptr<amrex::Mult
                    Real const required_precision,
                    Real absolute_tolerance,
                    int const max_iters,
-                   int const verbosity, 
+                   int const verbosity,
                    bool is_2d_slices = false,
                    bool is_distributed = false) const {
     // create a vector to our fields, sorted by level
@@ -199,7 +199,7 @@ ElectrostaticSolver::computePhi (const amrex::Vector<std::unique_ptr<amrex::Mult
         *m_poisson_boundary_handler,
         is_solver_igf_on_lev0,
         is_igf_2d_slices,
-        is_igf_distributed, 
+        is_igf_distributed,
         EB::enabled(),
         WarpX::do_single_precision_comms,
         warpx.refRatio(),

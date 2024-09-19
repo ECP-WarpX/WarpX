@@ -38,8 +38,8 @@ void
 computePhiIGF ( amrex::MultiFab const & rho,
                 amrex::MultiFab & phi,
                 std::array<amrex::Real, 3> const & cell_size,
-                amrex::BoxArray const & ba, 
-                bool is_2d_slices, 
+                amrex::BoxArray const & ba,
+                bool is_2d_slices,
                 bool is_distributed)
 {
     using namespace amrex::literals;
@@ -62,8 +62,8 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
     // Allocate 2x wider (_big) arrays for the convolution of rho with the Green function
     // The arrays are doubled in z only if the solver is 3D
-    int const nx_big = 2*nx-1; 
-    int const ny_big = 2*ny-1; 
+    int const nx_big = 2*nx-1;
+    int const ny_big = 2*ny-1;
     int const nz_big = (!is_2d_slices) ? 2*nz-1 : nz; ;
 
     amrex::Box const realspace_box = amrex::Box(
@@ -71,9 +71,9 @@ computePhiIGF ( amrex::MultiFab const & rho,
         {nx_big+domain.smallEnd(0), ny_big+domain.smallEnd(1), nz_big+domain.smallEnd(2)},
         amrex::IntVect::TheNodeVector() );
 
-    amrex::BoxArray realspace_ba; 
+    amrex::BoxArray realspace_ba;
     amrex::DistributionMapping dm_global_fft;
-    
+
     if(!is_distributed){
         // Without distributed FFTs (i.e. without heFFTe):
         // Allocate the 2x wider array on a single box
@@ -85,7 +85,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
         // Define a new distribution mapping which is decomposed purely along z
         // and has one box per MPI rank
         int const nprocs = amrex::ParallelDescriptor::NProcs();
-   
+
         int realspace_nx = realspace_box.length(0);
         int realspace_ny = realspace_box.length(1);
         int realspace_nz = realspace_box.length(2);
@@ -154,7 +154,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
         amrex::Real const dx = cell_size[0];
         amrex::Real const dy = cell_size[1];
         amrex::Real const dz = cell_size[2];
- 
+
         amrex::Array4<amrex::Real> const tmp_G_arr = tmp_G.array(mfi);
         amrex::ParallelFor( bx,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -198,7 +198,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
                     if (i0>0) {tmp_G_arr(hi[0]+1-i0, j         , k         ) = G_value;}
                     if (j0>0) {tmp_G_arr(i         , hi[1]+1-j0, k         ) = G_value;}
                     if ((i0>0)&&(j0>0)) {tmp_G_arr(hi[0]+1-i0, hi[1]+1-j0, k         ) = G_value;}
-                }else if(is_distributed && is_2d_slices){ 
+                }else if(is_distributed && is_2d_slices){
                     if ((i0< nx)&&(j0< ny)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential2D(x,      y,      dx, dy); }
                     if ((i0< nx)&&(j0> ny)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential2D(x,      y_hi-y, dx, dy); }
                     if ((i0> nx)&&(j0> ny)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential2D(x_hi-x, y_hi-y, dx, dy); }
@@ -238,7 +238,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
         const int nsy = c_local_box.length(1);
         const int nsz = c_local_box.length(2);
 
-        
+
         if(!is_distributed && !is_2d_slices){
 
             BL_PROFILE_VAR_START(timer_plans);
@@ -280,7 +280,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
             tmp_G.mult( normalization );
 
         }
-#if defined(ABLASTR_USE_HEFFTE)              
+#if defined(ABLASTR_USE_HEFFTE)
         else if(is_distributed && !is_2d_slices){
 #if     defined(AMREX_USE_CUDA)
         heffte::fft3d_r2c<heffte::backend::cufft> fft

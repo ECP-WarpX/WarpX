@@ -56,7 +56,7 @@ namespace ablastr::fields
      * @param[in] y y-coordinate of given location
      * @param[in] z z-coordinate of given location
      * @param[in] dx cell size along x
-     * @param[in] dy cell size along y 
+     * @param[in] dy cell size along y
      * @param[in] dz cell size along z
      *
      * @return the sum of integrated Green function G in 3D
@@ -133,8 +133,8 @@ namespace ablastr::fields
     computePhiIGF (amrex::MultiFab const & rho,
                    amrex::MultiFab & phi,
                    std::array<amrex::Real, 3> const & cell_size,
-                   amrex::BoxArray const & ba, 
-                   bool is_2d_slices, 
+                   amrex::BoxArray const & ba,
+                   bool is_2d_slices,
                    bool is_distributed);
 
 } // namespace ablastr::fields
