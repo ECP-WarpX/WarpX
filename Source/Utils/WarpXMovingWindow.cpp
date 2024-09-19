@@ -269,10 +269,10 @@ WarpX::MoveWindow (const int step, bool move_j)
                 // coarse grid
                 shiftMF(*m_fields.get("Bfield_cp",Direction{dim},lev), geom[lev-1], num_shift_crse, dir, lev, do_update_cost,
                     m_p_ext_field_params->B_external_grid[dim], use_Bparser, Bfield_parser);
-                shiftMF(*m_fields.get("Efield_cp",Direction{dim},lev), geom[lev-1], num_shift, dir, lev, do_update_cost,
+                shiftMF(*m_fields.get("Efield_cp",Direction{dim},lev), geom[lev-1], num_shift_crse, dir, lev, do_update_cost,
                     m_p_ext_field_params->E_external_grid[dim], use_Eparser, Efield_parser);
-                shiftMF(*m_fields.get("Bfield_aux",Direction{dim},lev), geom[lev], num_shift, dir, lev, do_update_cost);
-                shiftMF(*m_fields.get("Efield_aux",Direction{dim},lev), geom[lev], num_shift, dir, lev, do_update_cost);
+                shiftMF(*m_fields.get("Bfield_aux",Direction{dim},lev), geom[lev], num_shift_crse, dir, lev, do_update_cost);
+                shiftMF(*m_fields.get("Efield_aux",Direction{dim},lev), geom[lev], num_shift_crse, dir, lev, do_update_cost);
                 if (fft_do_time_averaging) {
                     ablastr::fields::MultiLevelVectorField Efield_avg_cp = m_fields.get_mr_levels_alldirs("Efield_avg_cp", finest_level);
                     ablastr::fields::MultiLevelVectorField Bfield_avg_cp = m_fields.get_mr_levels_alldirs("Bfield_avg_cp", finest_level);
