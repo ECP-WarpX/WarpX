@@ -158,7 +158,7 @@ class JacobianFunctionMF
         }
     }
 
-    void define( const T&, Ops* const, const std::string& );
+    void define( const T&, Ops*, const std::string& );
 
     private:
 
@@ -172,8 +172,8 @@ class JacobianFunctionMF
     std::string m_pc_type = "none";
 
     T m_Z, m_Y0, m_R0, m_R;
-    Ops* m_ops;
-    Preconditioner<T,Ops>* m_preCond;
+    Ops* m_ops = nullptr;
+    std::unique_ptr<Preconditioner<T,Ops>> m_preCond = nullptr;
 };
 
 template <class T, class Ops>
@@ -188,12 +188,11 @@ void JacobianFunctionMF<T,Ops>::define ( const T&  a_U,
 
     m_ops = a_ops;
 
-    m_preCond = nullptr;
     m_usePreCond = (a_pc_type != "none");
     if (m_usePreCond) {
         m_pc_type = a_pc_type;
         if (m_pc_type == PreconditionerTypes::curl_curl_mlmg) {
-            m_preCond = new CurlCurlMLMGPC<T,Ops>();
+            m_preCond = std::make_unique<CurlCurlMLMGPC<T,Ops>>();
         } else {
             std::stringstream convergenceMsg;
             convergenceMsg << "JacobianFunctionMF::define(): " << m_pc_type <<

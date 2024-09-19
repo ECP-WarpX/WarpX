@@ -68,15 +68,21 @@ class CurlCurlMLMGPC : public Preconditioner<T,Ops>
          */
         ~CurlCurlMLMGPC () override = default;
 
+        // Default move and copy operations
+        CurlCurlMLMGPC(const CurlCurlMLMGPC&) = default;
+        CurlCurlMLMGPC& operator=(const CurlCurlMLMGPC&) = default;
+        CurlCurlMLMGPC(CurlCurlMLMGPC&&) noexcept = default;
+        CurlCurlMLMGPC& operator=(CurlCurlMLMGPC&&) noexcept = default;
+
         /**
          * \brief Define the preconditioner
          */
-        virtual void Define (const T&, Ops* const) override;
+        void Define (const T&, Ops*) override;
 
         /**
          * \brief Update the preconditioner
          */
-        virtual void Update (const T&) override;
+        void Update (const T&) override;
 
         /**
          * \brief Apply (solve) the preconditioner given a RHS
@@ -86,12 +92,12 @@ class CurlCurlMLMGPC : public Preconditioner<T,Ops>
          *  where A is the linear operator, in this case, the curl-curl operator:
          *      A x = curl (alpha * curl (x) ) + beta * x
          */
-        virtual void Apply (T&, const T&) override;
+        void Apply (T&, const T&) override;
 
         /**
          * \brief Print parameters
          */
-        virtual void printParameters() const override;
+        void printParameters() const override;
 
         /**
          * \brief Check if the nonlinear solver has been defined.
@@ -189,7 +195,7 @@ void CurlCurlMLMGPC<T,Ops>::printParameters() const
 template <class T, class Ops>
 void CurlCurlMLMGPC<T,Ops>::readParameters()
 {
-    amrex::ParmParse pp(PreconditionerTypes::curl_curl_mlmg);
+    const amrex::ParmParse pp(PreconditionerTypes::curl_curl_mlmg);
     pp.query("verbose", m_verbose);
     pp.query("bottom_verbose", m_bottom_verbose);
     pp.query("max_iter", m_max_iter);
@@ -200,8 +206,6 @@ void CurlCurlMLMGPC<T,Ops>::readParameters()
     pp.query("relative_tolerance",  m_rtol);
     pp.query("use_gmres",  m_use_gmres);
     pp.query("use_gmres_pc",  m_use_gmres_pc);
-
-    return;
 }
 
 template <class T, class Ops>
@@ -274,7 +278,6 @@ void CurlCurlMLMGPC<T,Ops>::Define ( const T& a_U,
 #endif
 
     m_is_defined = true;
-    return;
 }
 
 template <class T, class Ops>
@@ -288,8 +291,8 @@ void CurlCurlMLMGPC<T,Ops>::Update (const T& a_U)
     amrex::ignore_unused(a_U);
 
     // set the coefficients alpha and beta for curl-curl op
-    RT alpha = (m_ops->theta()*this->m_dt*PhysConst::c) * (m_ops->theta()*this->m_dt*PhysConst::c);
-    RT beta = RT(1.0);
+    const RT alpha = (m_ops->theta()*this->m_dt*PhysConst::c) * (m_ops->theta()*this->m_dt*PhysConst::c);
+    const RT beta = RT(1.0);
 
 // currently not implemented in 1D
 #ifndef WARPX_DIM_1D_Z
@@ -303,8 +306,6 @@ void CurlCurlMLMGPC<T,Ops>::Update (const T& a_U)
                        << "alpha = " << alpha << ", "
                        << "beta = " << beta << "\n";
     }
-
-    return;
 }
 
 template <class T, class Ops>
@@ -445,8 +446,6 @@ void CurlCurlMLMGPC<T,Ops>::Apply (T& a_x, const T& a_b)
         copyWarpXAMFFromMLCCAMF(x_mfarrvec[n], solution, IntVect::TheZeroVector());
 
     }
-
-    return;
 }
 
 #endif

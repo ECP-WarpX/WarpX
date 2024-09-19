@@ -47,10 +47,16 @@ class Preconditioner
          */
         virtual ~Preconditioner () = default;
 
+        // Default move and copy operations
+        Preconditioner(const Preconditioner&) = default;
+        Preconditioner& operator=(const Preconditioner&) = default;
+        Preconditioner(Preconditioner&&) noexcept = default;
+        Preconditioner& operator=(Preconditioner&&) noexcept = default;
+
         /**
          * \brief Define the preconditioner
          */
-        virtual void Define (const T&, Ops* const) = 0;
+        virtual void Define (const T&, Ops*) = 0;
 
         /**
          * \brief Update the preconditioner
@@ -69,7 +75,7 @@ class Preconditioner
         /**
          * \brief Check if the nonlinear solver has been defined.
          */
-        virtual bool IsDefined () const = 0;
+        [[nodiscard]] virtual bool IsDefined () const = 0;
 
         /**
          * \brief Print parameters
