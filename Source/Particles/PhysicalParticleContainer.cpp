@@ -1805,6 +1805,7 @@ PhysicalParticleContainer::Evolve (int lev,
             Elixir exeli, eyeli, ezeli, bxeli, byeli, bzeli;
 
             if (WarpX::use_fdtd_nci_corr)
+            // DocDiagram::[Level 2][PushParticlesandDeposit][applyNCIFilter]
             {
                 // Filter arrays Ex[pti], store the result in
                 // filtered_Ex and update pointer exfab so that it
@@ -1837,6 +1838,7 @@ PhysicalParticleContainer::Evolve (int lev,
             const long np_current = (cjx) ? nfine_current : np;
 
             if (rho && ! skip_deposition && ! do_not_deposit) {
+                // DocDiagram::[Level 1][PushParticlesandDeposit][DepositCharge Rho_n]
                 // Deposit charge before particle push, in component 0 of MultiFab rho.
 
                 const int* const AMREX_RESTRICT ion_lev = (do_field_ionization)?
@@ -1863,11 +1865,15 @@ PhysicalParticleContainer::Evolve (int lev,
                 const auto np_to_push = np_gather;
                 const auto gather_lev = lev;
                 if (push_type == PushType::Explicit) {
+                    // DocDiagram::[Level 1][PushParticlesandDeposit](if Explicit)
+                    // DocDiagram::[Level 1][PushParticlesandDeposit](if Explicit)[PushPX]
                     PushPX(pti, exfab, eyfab, ezfab,
                            bxfab, byfab, bzfab,
                            Ex.nGrowVect(), e_is_nodal,
                            0, np_to_push, lev, gather_lev, dt, ScaleFields(false), a_dt_type);
                 } else if (push_type == PushType::Implicit) {
+                    // DocDiagram::[Level 1][PushParticlesandDeposit](elif Implicit)
+                    // DocDiagram::[Level 1][PushParticlesandDeposit](elif Implicit)[ImplicitPushPX]
                     ImplicitPushXP(pti, exfab, eyfab, ezfab,
                                    bxfab, byfab, bzfab,
                                    Ex.nGrowVect(), e_is_nodal,
@@ -1930,6 +1936,7 @@ PhysicalParticleContainer::Evolve (int lev,
                         pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr():nullptr;
 
                     // Deposit inside domains
+                    // DocDiagram::[Level 1][PushParticlesandDeposit][DepositCurrent]
                     DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
                                    0, np_current, thread_num,
                                    lev, lev, dt, relative_time, push_type);
@@ -1954,6 +1961,7 @@ PhysicalParticleContainer::Evolve (int lev,
                     const int* const AMREX_RESTRICT ion_lev = (do_field_ionization)?
                         pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr():nullptr;
 
+                    // DocDiagram::[Level 1][PushParticlesandDeposit][DepositCharge Rho_n+1]
                     DepositCharge(pti, wp, ion_lev, rho, 1, 0,
                                   np_current, thread_num, lev, lev);
                     if (has_buffer){
@@ -1979,9 +1987,11 @@ PhysicalParticleContainer::Evolve (int lev,
     // are not consistent, and the call to Redistribute (inside
     // SplitParticles) may result in split particles to deposit twice on the
     // coarse level.
+    // DocDiagram::[Level 2][PushParticlesandDeposit][SplitParticles]
     if (do_splitting && (a_dt_type == DtType::SecondHalf || a_dt_type == DtType::Full) ){
         SplitParticles(lev);
     }
+// DocDiagram::[Level 1][PushParticlesandDeposit][Return]
 }
 
 void
@@ -2450,6 +2460,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                                    int lev, int gather_lev,
                                    amrex::Real dt, ScaleFields scaleFields,
                                    DtType a_dt_type)
+// DocDiagram::[Level 1][PushPX]
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE((gather_lev==(lev-1)) ||
                                      (gather_lev==(lev  )),
@@ -2600,8 +2611,10 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         amrex::ParticleReal Byp = By_external_particle;
         amrex::ParticleReal Bzp = Bz_external_particle;
 
+        // DocDiagram::[Level 1][PushPX][doGather]
         if(!t_do_not_gather){
             // first gather E and B to the particle positions
+            // DocDiagram::[Level 1][PushPX][doGather]
             doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                            ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                            ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
@@ -2611,9 +2624,11 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
         [[maybe_unused]] const auto& getExternalEB_tmp = getExternalEB;
         if constexpr (exteb_control == has_exteb) {
+            // DocDiagram::[Level 2][PushPX][getExternalEB]
             getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
         }
 
+        // DocDiagram::[Level 2][PushPX][scaleFields]
         scaleFields(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
 
 #ifdef WARPX_QED
@@ -2625,6 +2640,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                 copyAttribs(ip);
             }
 
+            // DocDiagram::[Level 1][PushPX][doParticleMomentumPush]
             doParticleMomentumPush<0>(ux[ip], uy[ip], uz[ip],
                                       Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                       ion_lev ? ion_lev[ip] : 1,
@@ -2634,6 +2650,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 #endif
                                       dt);
 
+            // DocDiagram::[Level 1][PushPX][UpdatePosition]
             UpdatePosition(xp, yp, zp, ux[ip], uy[ip], uz[ip], dt);
             setPosition(ip, xp, yp, zp);
         }
@@ -2673,6 +2690,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
             amrex::ignore_unused(qed_control);
 #endif
     });
+// DocDiagram::[Level 1][PushPX][Return]
 }
 
 /* \brief Perform the implicit particle push operation in one fused kernel
