@@ -3,6 +3,8 @@
 Models & Algorithms
 ===================
 
+.. _theory-pic:
+
 In the *particle-in-cell method* :cite:p:`i-Birdsalllangdon`,
 the electromagnetic fields are solved on a discretized grid while particles are
 evolved in continuous space. A high-level schematic of the method is shown in the

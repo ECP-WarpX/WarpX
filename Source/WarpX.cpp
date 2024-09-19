@@ -16,6 +16,9 @@
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "EmbeddedBoundary/Enabled.H"
 #include "EmbeddedBoundary/WarpXFaceInfoBox.H"
+#include "FieldSolver/ElectrostaticSolvers/ElectrostaticSolver.H"
+#include "FieldSolver/ElectrostaticSolvers/LabFrameExplicitES.H"
+#include "FieldSolver/ElectrostaticSolvers/RelativisticExplicitES.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
@@ -110,23 +113,11 @@ bool WarpX::compute_max_step_from_btd = false;
 Real WarpX::zmax_plasma_to_compute_max_step = 0._rt;
 Real WarpX::zmin_domain_boost_step_0 = 0._rt;
 
-short WarpX::current_deposition_algo;
-short WarpX::charge_deposition_algo;
-short WarpX::field_gathering_algo;
-short WarpX::particle_pusher_algo;
-short WarpX::electromagnetic_solver_id;
-short WarpX::evolve_scheme;
 int WarpX::max_particle_its_in_implicit_scheme = 21;
 ParticleReal WarpX::particle_tol_in_implicit_scheme = 1.e-10;
-short WarpX::psatd_solution_type;
-short WarpX::J_in_time;
-short WarpX::rho_in_time;
-short WarpX::load_balance_costs_update_algo;
 bool WarpX::do_dive_cleaning = false;
 bool WarpX::do_divb_cleaning = false;
 bool WarpX::do_divb_cleaning_external = false;
-int WarpX::em_solver_medium;
-int WarpX::macroscopic_solver_algo;
 bool WarpX::do_single_precision_comms = false;
 
 bool WarpX::do_shared_mem_charge_deposition = false;
@@ -140,11 +131,6 @@ amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(14,14,0));
 amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(1,1,1));
 #endif
 int WarpX::shared_mem_current_tpb = 128;
-
-amrex::Vector<FieldBoundaryType> WarpX::field_boundary_lo(AMREX_SPACEDIM,FieldBoundaryType::PML);
-amrex::Vector<FieldBoundaryType> WarpX::field_boundary_hi(AMREX_SPACEDIM,FieldBoundaryType::PML);
-amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_lo(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
-amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_hi(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
 
 int WarpX::n_rz_azimuthal_modes = 1;
 int WarpX::ncomps = 1;
@@ -191,17 +177,12 @@ amrex::IntVect WarpX::sort_idx_type(AMREX_D_DECL(0,0,0));
 
 bool WarpX::do_dynamic_scheduling = true;
 
-int WarpX::electrostatic_solver_id;
-int WarpX::poisson_solver_id;
-Real WarpX::self_fields_required_precision = 1.e-11_rt;
-Real WarpX::self_fields_absolute_tolerance = 0.0_rt;
-int WarpX::self_fields_max_iters = 200;
-int WarpX::self_fields_verbosity = 2;
-
 bool WarpX::do_subcycling = false;
 bool WarpX::do_multi_J = false;
 int WarpX::do_multi_J_n_depositions;
 bool WarpX::safe_guard_cells = false;
+
+utils::parser::IntervalsParser WarpX::dt_update_interval;
 
 std::map<std::string, amrex::MultiFab *> WarpX::multifab_map;
 std::map<std::string, amrex::iMultiFab *> WarpX::imultifab_map;
@@ -211,7 +192,6 @@ IntVect WarpX::filter_npass_each_dir(1);
 int WarpX::n_field_gather_buffer = -1;
 int WarpX::n_current_deposition_buffer = -1;
 
-ablastr::utils::enums::GridType WarpX::grid_type;
 amrex::IntVect m_rho_nodal_flag;
 
 WarpX* WarpX::m_instance = nullptr;
@@ -374,6 +354,17 @@ WarpX::WarpX ()
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
     {
         current_fp_vay.resize(nlevs_max);
+    }
+
+    // Create Electrostatic Solver object if needed
+    if ((WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame)
+        || (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic))
+    {
+        m_electrostatic_solver = std::make_unique<LabFrameExplicitES>(nlevs_max);
+    }
+    else
+    {
+        m_electrostatic_solver = std::make_unique<RelativisticExplicitES>(nlevs_max);
     }
 
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
@@ -540,8 +531,7 @@ WarpX::ReadParameters ()
 
     {
         const ParmParse pp_algo("algo");
-        electromagnetic_solver_id = static_cast<short>(GetAlgorithmInteger(pp_algo, "maxwell_solver"));
-
+        pp_algo.query_enum_sloppy("maxwell_solver", electromagnetic_solver_id, "-_");
         if (electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT && !EB::enabled()) {
             throw std::runtime_error("ECP Solver requires to enable embedded boundaries at runtime.");
         }
@@ -748,27 +738,13 @@ WarpX::ReadParameters ()
         maxlevel_extEMfield_init = maxLevel();
         pp_warpx.query("maxlevel_extEMfield_init", maxlevel_extEMfield_init);
 
-        electrostatic_solver_id = GetAlgorithmInteger(pp_warpx, "do_electrostatic");
+        pp_warpx.query_enum_sloppy("do_electrostatic", electrostatic_solver_id, "-_");
         // if an electrostatic solver is used, set the Maxwell solver to None
         if (electrostatic_solver_id != ElectrostaticSolverAlgo::None) {
             electromagnetic_solver_id = ElectromagneticSolverAlgo::None;
         }
 
-        if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
-            electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
-        {
-            // Note that with the relativistic version, these parameters would be
-            // input for each species.
-            utils::parser::queryWithParser(
-                pp_warpx, "self_fields_required_precision", self_fields_required_precision);
-            utils::parser::queryWithParser(
-                pp_warpx, "self_fields_absolute_tolerance", self_fields_absolute_tolerance);
-            utils::parser::queryWithParser(
-                pp_warpx, "self_fields_max_iters", self_fields_max_iters);
-            pp_warpx.query("self_fields_verbosity", self_fields_verbosity);
-        }
-
-        poisson_solver_id = GetAlgorithmInteger(pp_warpx, "poisson_solver");
+        pp_warpx.query_enum_sloppy("poisson_solver", poisson_solver_id, "-_");
 #ifndef WARPX_DIM_3D
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         poisson_solver_id!=PoissonSolverAlgo::IntegratedGreenFunction,
@@ -788,7 +764,7 @@ WarpX::ReadParameters ()
         "The FFT Poisson solver is not implemented in labframe-electromagnetostatic mode yet."
         );
 
-        bool const eb_enabled = EB::enabled();
+        [[maybe_unused]] bool const eb_enabled = EB::enabled();
 #if !defined(AMREX_USE_EB)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             !eb_enabled,
@@ -796,42 +772,17 @@ WarpX::ReadParameters ()
         );
 #endif
 
-        // Parse the input file for domain boundary potentials
-        const ParmParse pp_boundary("boundary");
-        bool potential_specified = false;
-        // When reading the potential at the boundary from the input file, set this flag to true if any of the potential is specified
-        potential_specified |= pp_boundary.query("potential_lo_x", m_poisson_boundary_handler.potential_xlo_str);
-        potential_specified |= pp_boundary.query("potential_hi_x", m_poisson_boundary_handler.potential_xhi_str);
-        potential_specified |= pp_boundary.query("potential_lo_y", m_poisson_boundary_handler.potential_ylo_str);
-        potential_specified |= pp_boundary.query("potential_hi_y", m_poisson_boundary_handler.potential_yhi_str);
-        potential_specified |= pp_boundary.query("potential_lo_z", m_poisson_boundary_handler.potential_zlo_str);
-        potential_specified |= pp_boundary.query("potential_hi_z", m_poisson_boundary_handler.potential_zhi_str);
-        if (eb_enabled) {
-            potential_specified |= pp_warpx.query("eb_potential(x,y,z,t)", m_poisson_boundary_handler.potential_eb_str);
-        }
-        m_boundary_potential_specified = potential_specified;
-        if (potential_specified & (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)) {
-            ablastr::warn_manager::WMRecordWarning(
-                "Algorithms",
-                "The input script specifies the electric potential (phi) at the boundary, but \
-                also uses the hybrid PIC solver based on Ohm’s law. When using this solver, the \
-                electric potential does not have any impact on the simulation.",
-                ablastr::warn_manager::WarnPriority::low);
-        }
-        else if (potential_specified & (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::None)) {
-            ablastr::warn_manager::WMRecordWarning(
-                "Algorithms",
-                "The input script specifies the electric potential (phi) at the boundary so \
-                an initial Poisson solve will be performed.",
-                ablastr::warn_manager::WarnPriority::low);
-        }
-
-        m_poisson_boundary_handler.buildParsers();
 #ifdef WARPX_DIM_RZ
+        const ParmParse pp_boundary("boundary");
         pp_boundary.query("verboncoeur_axis_correction", verboncoeur_axis_correction);
 #endif
 
+        // Read timestepping options
         utils::parser::queryWithParser(pp_warpx, "const_dt", m_const_dt);
+        utils::parser::queryWithParser(pp_warpx, "max_dt", m_max_dt);
+        std::vector<std::string> dt_interval_vec = {"-1"};
+        pp_warpx.queryarr("dt_update_interval", dt_interval_vec);
+        dt_update_interval = utils::parser::IntervalsParser(dt_interval_vec);
 
         // Filter currently not working with FDTD solver in RZ geometry: turn OFF by default
         // (see https://github.com/ECP-WarpX/WarpX/issues/1943)
@@ -1089,7 +1040,7 @@ WarpX::ReadParameters ()
 
         // Integer that corresponds to the type of grid used in the simulation
         // (collocated, staggered, hybrid)
-        grid_type = static_cast<ablastr::utils::enums::GridType>(GetAlgorithmInteger(pp_warpx, "grid_type"));
+        pp_warpx.query_enum_sloppy("grid_type", grid_type, "-_");
 
         // Use same shape factors in all directions, for gathering
         if (grid_type == GridType::Collocated) { galerkin_interpolation = false; }
@@ -1232,10 +1183,15 @@ WarpX::ReadParameters ()
         // note: current_deposition must be set after maxwell_solver (electromagnetic_solver_id) or
         //       do_electrostatic (electrostatic_solver_id) are already determined,
         //       because its default depends on the solver selection
-        current_deposition_algo = static_cast<short>(GetAlgorithmInteger(pp_algo, "current_deposition"));
-        charge_deposition_algo = static_cast<short>(GetAlgorithmInteger(pp_algo, "charge_deposition"));
-        particle_pusher_algo = static_cast<short>(GetAlgorithmInteger(pp_algo, "particle_pusher"));
-        evolve_scheme = static_cast<short>(GetAlgorithmInteger(pp_algo, "evolve_scheme"));
+        if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD ||
+            electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC ||
+            electrostatic_solver_id != ElectrostaticSolverAlgo::None) {
+            current_deposition_algo = CurrentDepositionAlgo::Direct;
+        }
+        pp_algo.query_enum_sloppy("current_deposition", current_deposition_algo, "-_");
+        pp_algo.query_enum_sloppy("charge_deposition", charge_deposition_algo, "-_");
+        pp_algo.query_enum_sloppy("particle_pusher", particle_pusher_algo, "-_");
+        pp_algo.query_enum_sloppy("evolve_scheme", evolve_scheme, "-_");
 
         // check for implicit evolve scheme
         if (evolve_scheme == EvolveScheme::SemiImplicitEM) {
@@ -1296,7 +1252,7 @@ WarpX::ReadParameters ()
 
         // Query algo.field_gathering from input, set field_gathering_algo to
         // "default" if not found (default defined in Utils/WarpXAlgorithmSelection.cpp)
-        field_gathering_algo = static_cast<short>(GetAlgorithmInteger(pp_algo, "field_gathering"));
+        pp_algo.query_enum_sloppy("field_gathering", field_gathering_algo, "-_");
 
         // Set default field gathering algorithm for hybrid grids (momentum-conserving)
         std::string tmp_algo;
@@ -1353,9 +1309,10 @@ WarpX::ReadParameters ()
                 " combined with mesh refinement is currently not implemented");
         }
 
-        em_solver_medium = GetAlgorithmInteger(pp_algo, "em_solver_medium");
+        pp_algo.query_enum_sloppy("em_solver_medium", em_solver_medium, "-_");
         if (em_solver_medium == MediumForEM::Macroscopic ) {
-            macroscopic_solver_algo = GetAlgorithmInteger(pp_algo,"macroscopic_sigma_method");
+            pp_algo.query_enum_sloppy("macroscopic_sigma_method",
+                                      macroscopic_solver_algo, "-_");
         }
 
         if (evolve_scheme == EvolveScheme::SemiImplicitEM ||
@@ -1394,7 +1351,7 @@ WarpX::ReadParameters ()
         }
         utils::parser::queryWithParser(pp_algo, "load_balance_efficiency_ratio_threshold",
                         load_balance_efficiency_ratio_threshold);
-        load_balance_costs_update_algo = static_cast<short>(GetAlgorithmInteger(pp_algo, "load_balance_costs_update"));
+        pp_algo.query_enum_sloppy("load_balance_costs_update", load_balance_costs_update_algo, "-_");
         if (WarpX::load_balance_costs_update_algo==LoadBalanceCostsUpdateAlgo::Heuristic) {
             utils::parser::queryWithParser(
                 pp_algo, "costs_heuristic_cells_wt", costs_heuristic_cells_wt);
@@ -1565,12 +1522,12 @@ WarpX::ReadParameters ()
         // Integer that corresponds to the order of the PSATD solution
         // (whether the PSATD equations are derived from first-order or
         // second-order solution)
-        psatd_solution_type = static_cast<short>(GetAlgorithmInteger(pp_psatd, "solution_type"));
+        pp_psatd.query_enum_sloppy("solution_type", psatd_solution_type, "-_");
 
         // Integers that correspond to the time dependency of J (constant, linear)
         // and rho (linear, quadratic) for the PSATD algorithm
-        J_in_time = static_cast<short>(GetAlgorithmInteger(pp_psatd, "J_in_time"));
-        rho_in_time = static_cast<short>(GetAlgorithmInteger(pp_psatd, "rho_in_time"));
+        pp_psatd.query_enum_sloppy("J_in_time", J_in_time, "-_");
+        pp_psatd.query_enum_sloppy("rho_in_time", rho_in_time, "-_");
 
         if (psatd_solution_type != PSATDSolutionType::FirstOrder || !do_multi_J)
         {

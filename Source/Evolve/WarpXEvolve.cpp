@@ -61,6 +61,27 @@ using namespace amrex;
 using ablastr::utils::SignalHandling;
 
 void
+WarpX::Synchronize () {
+    FillBoundaryE(guard_cells.ng_FieldGather);
+    FillBoundaryB(guard_cells.ng_FieldGather);
+    if (fft_do_time_averaging)
+    {
+        FillBoundaryE_avg(guard_cells.ng_FieldGather);
+        FillBoundaryB_avg(guard_cells.ng_FieldGather);
+    }
+    UpdateAuxilaryData();
+    FillBoundaryAux(guard_cells.ng_UpdateAux);
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        mypc->PushP(lev, 0.5_rt*dt[lev],
+                    *Efield_aux[lev][0],*Efield_aux[lev][1],
+                    *Efield_aux[lev][2],
+                    *Bfield_aux[lev][0],*Bfield_aux[lev][1],
+                    *Bfield_aux[lev][2]);
+    }
+    is_synchronized = true;
+}
+
+void
 WarpX::Evolve (int numsteps)
 {
     WARPX_PROFILE_REGION("WarpX::Evolve()");
@@ -95,6 +116,18 @@ WarpX::Evolve (int numsteps)
 
         CheckLoadBalance(step);
 
+        // Update timestep for electrostatic solver if a constant dt is not provided
+        // This first synchronizes the position and velocity before setting the new timestep
+        if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None &&
+            !m_const_dt.has_value() && dt_update_interval.contains(step+1)) {
+            if (verbose) {
+                amrex::Print() << Utils::TextMsg::Info("updating timestep");
+            }
+            Synchronize();
+            UpdateDtFromParticleSpeeds();
+        }
+
+        // If position and velocity are synchronized, push velocity backward one half step
         if (evolve_scheme == EvolveScheme::Explicit)
         {
             ExplicitFillBoundaryEBUpdateAux();
@@ -175,25 +208,9 @@ WarpX::Evolve (int numsteps)
 
         // TODO: move out
         if (evolve_scheme == EvolveScheme::Explicit) {
+            // At the end of last step, push p by 0.5*dt to synchronize
             if (cur_time + dt[0] >= stop_time - 1.e-3*dt[0] || step == numsteps_max-1) {
-                // At the end of last step, push p by 0.5*dt to synchronize
-                FillBoundaryE(guard_cells.ng_FieldGather);
-                FillBoundaryB(guard_cells.ng_FieldGather);
-                if (fft_do_time_averaging)
-                {
-                    FillBoundaryE_avg(guard_cells.ng_FieldGather);
-                    FillBoundaryB_avg(guard_cells.ng_FieldGather);
-                }
-                UpdateAuxilaryData();
-                FillBoundaryAux(guard_cells.ng_UpdateAux);
-                for (int lev = 0; lev <= finest_level; ++lev) {
-                    mypc->PushP(lev, 0.5_rt*dt[lev],
-                                *Efield_aux[lev][0],*Efield_aux[lev][1],
-                                *Efield_aux[lev][2],
-                                *Bfield_aux[lev][0],*Bfield_aux[lev][1],
-                                *Bfield_aux[lev][2]);
-                }
-                is_synchronized = true;
+                Synchronize();
             }
         }
 
@@ -445,7 +462,7 @@ void WarpX::checkEarlyUnusedParams ()
 void WarpX::ExplicitFillBoundaryEBUpdateAux ()
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(evolve_scheme == EvolveScheme::Explicit,
-        "Cannot call WarpX::ExplicitFillBoundaryEBUpdateAux wihtout Explicit evolve scheme set!");
+        "Cannot call WarpX::ExplicitFillBoundaryEBUpdateAux without Explicit evolve scheme set!");
 
     // At the beginning, we have B^{n} and E^{n}.
     // Particles have p^{n} and x^{n}.

@@ -27,8 +27,7 @@ my_constants.Lz = 180.0*clight/omegab
 # for a full scale simulation use: nx, ny, nz = 512, 512, 1024
 my_constants.nx = 64
 my_constants.ny = 64
-my_constants.nz = 128
-
+my_constants.nz = 64
 
 # TIME
 my_constants.T = 0.7*Lz/clight
@@ -212,7 +211,7 @@ warpx.do_qed_schwinger = 0.
 # FULL
 diagnostics.diags_names = diag1
 
-diag1.intervals = 0
+diag1.intervals = 15
 diag1.diag_type = Full
 diag1.write_species = 1
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz rho_beam1 rho_beam2 rho_ele1 rho_pos1 rho_ele2 rho_pos2
