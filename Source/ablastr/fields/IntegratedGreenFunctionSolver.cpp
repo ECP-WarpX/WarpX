@@ -38,7 +38,7 @@ void
 computePhiIGF ( amrex::MultiFab const & rho,
                 amrex::MultiFab & phi,
                 std::array<amrex::Real, 3> const & cell_size,
-                amrex::BoxArray const & ba, 
+                amrex::BoxArray const & ba,
                 bool is_2d_slices)
 {
     using namespace amrex::literals;
@@ -60,8 +60,8 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
     // Allocate 2x wider (_big) arrays for the convolution of rho with the Green function
     // The arrays are doubled in z only if the solver is full 3D
-    int const nx_big = 2*nx-1; 
-    int const ny_big = 2*ny-1; 
+    int const nx_big = 2*nx-1;
+    int const ny_big = 2*ny-1;
     int const nz_big = (!is_2d_slices) ? 2*nz-1 : nz;
 
     amrex::Box const realspace_box = amrex::Box(
@@ -69,7 +69,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
         {nx_big+domain.smallEnd(0), ny_big+domain.smallEnd(1), nz_big+domain.smallEnd(2)},
         amrex::IntVect::TheNodeVector() );
 
-    amrex::BoxArray realspace_ba; 
+    amrex::BoxArray realspace_ba;
     amrex::DistributionMapping dm_global_fft;
 
     // Define a new distribution mapping which is decomposed purely along z
@@ -134,7 +134,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
         amrex::Real const dx = cell_size[0];
         amrex::Real const dy = cell_size[1];
         amrex::Real const dz = cell_size[2];
- 
+
         amrex::Array4<amrex::Real> const tmp_G_arr = tmp_G.array(mfi);
         amrex::ParallelFor( bx,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -199,10 +199,10 @@ computePhiIGF ( amrex::MultiFab const & rho,
         const int nsy = c_local_box.length(1);
         const int nsz = c_local_box.length(2);
 
-        if(!is_2d_slices){ 
+        if(!is_2d_slices){
 
 #if !defined(ABLASTR_USE_HEFFTE) // full 3d solver on 1 process
-            // Create the FFT plans 
+            // Create the FFT plans
             BL_PROFILE_VAR_START(timer_plans);
             const amrex::IntVect fft_size = realspace_ba[local_boxid].length();
             ablastr::math::anyfft::FFTplan forward_plan_rho = ablastr::math::anyfft::CreatePlan(
@@ -266,7 +266,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
             heffte_complex* rho_fft_data = (heffte_complex*) tmp_rho_fft.dataPtr();
             heffte_complex* G_fft_data = (heffte_complex*) tmp_G_fft.dataPtr();
 
-            // Forward transforms of rho and G 
+            // Forward transforms of rho and G
             BL_PROFILE_VAR_START(timer_ffts);
             fft.forward(tmp_rho[local_boxid].dataPtr(), rho_fft_data);
             fft.forward(tmp_G[local_boxid].dataPtr(), G_fft_data);
@@ -309,7 +309,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
                 nsz, NULL, 1, nsx*nsy, NULL, 1, nrx*nry);
             BL_PROFILE_VAR_STOP(timer_plans);
 
-            // Forward transforms of rho and G 
+            // Forward transforms of rho and G
             BL_PROFILE_VAR_START(timer_ffts);
             ablastr::math::anyfft::Execute(forward_plan_rho);
             ablastr::math::anyfft::Execute(forward_plan_G);
@@ -335,7 +335,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
             tmp_G.mult( normalization );
         }
     }
- 
+
     // Copy from tmp_G to phi
     BL_PROFILE_VAR_START(timer_pcopies);
     phi.ParallelCopy( tmp_G, 0, 0, 1, amrex::IntVect::TheZeroVector(), phi.nGrowVect() );
