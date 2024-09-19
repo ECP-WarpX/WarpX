@@ -417,7 +417,7 @@ void FiniteDifferenceSolver::EvolveECylindrical (
         if (Ffield) {
 
             // Extract field data for this grid/tile
-            Array4<Real const> F = Ffield->array(mfi);
+            const Array4<Real const> F = Ffield->array(mfi);
 
             // Loop over the cells and update the fields
             amrex::ParallelFor(ter, tet, tez,
