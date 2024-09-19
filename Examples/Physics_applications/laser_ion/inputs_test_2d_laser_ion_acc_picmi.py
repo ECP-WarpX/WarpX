@@ -140,7 +140,7 @@ solver = picmi.ElectromagneticSolver(
 
 # Diagnostics
 particle_diag = picmi.ParticleDiagnostic(
-    name="diag1",
+    name="diagInst",
     period=100,
     warpx_format="openpmd",
     warpx_openpmd_backend="h5",
@@ -153,7 +153,7 @@ ncell_field = []
 for ncell_comp, cr in zip([nx, nz], coarsening_ratio):
     ncell_field.append(int(ncell_comp / cr))
 field_diag = picmi.FieldDiagnostic(
-    name="diag1",
+    name="diagInst",
     grid=grid,
     period=100,
     number_of_cells=ncell_field,
