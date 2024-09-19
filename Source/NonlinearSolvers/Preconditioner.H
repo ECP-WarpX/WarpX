@@ -59,6 +59,10 @@ class Preconditioner
 
         /**
          * \brief Apply (solve) the preconditioner given a RHS
+         *
+         *  Given a right-hand-side b, solve:
+         *      A x = b
+         *  where A is a linear operator.
          */
         virtual void Apply (T&, const T&) = 0;
 

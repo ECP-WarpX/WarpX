@@ -27,6 +27,14 @@
  *  Preconditioner that solves the curl-curl equation for the E-field, given
  *  a RHS. Uses AMReX's curl-curl linear operator and multigrid solver.
  *
+ *  The equation solves for Eg in:
+ *  curl ( alpha * curl ( Eg ) ) + beta * Eg = b
+ *  where
+ *    + alpha is a scalar
+ *    + beta can either be a scalar that is constant in space or a MultiFab
+ *    + Eg is the electric field.
+ *    + b is a specified RHS with the same layout as Eg
+ *
  *  This class is templated on a solution-type class T and an operator class Ops.
  *
  *  The Ops class must have the following function:
@@ -68,6 +76,11 @@ class CurlCurlMLMGPC : public Preconditioner<T,Ops>
 
         /**
          * \brief Apply (solve) the preconditioner given a RHS
+         *
+         *  Given a right-hand-side b, solve:
+         *      A x = b
+         *  where A is the linear operator, in this case, the curl-curl operator:
+         *      A x = curl (alpha * curl (x) ) + beta * x
          */
         virtual void Apply (T&, const T&) override;
 
@@ -94,11 +107,11 @@ class CurlCurlMLMGPC : public Preconditioner<T,Ops>
         bool m_use_gmres = false;
         bool m_use_gmres_pc = true;
 
-        int m_max_iter = 300;
+        int m_max_iter = 10;
         int m_max_coarsening_level = 30;
 
         RT m_atol = 1.0e-16;
-        RT m_rtol = 1.0e-10;
+        RT m_rtol = 1.0e-4;
 
         Ops* m_ops;
 
@@ -230,6 +243,8 @@ void CurlCurlMLMGPC<T,Ops>::Define ( const T& a_U,
     // Construct the curl-curl linear operator and set its BCs
     m_curl_curl = std::make_unique<MLCurlCurl>(m_geom, m_grids, m_dmap, *m_info);
     m_curl_curl->setDomainBC(m_ops->GetLinOpBCLo(), m_ops->GetLinOpBCHi());
+
+    // Dummy value for alpha and beta to avoid abort due to degenerate matrix by MLMG solver
     m_curl_curl->setScalars(1.0, 1.0);
 
     // Construct the MLMG solver
@@ -356,6 +371,12 @@ void CurlCurlMLMGPC<T,Ops>::copyWarpXAMFFromMLCCAMF ( amrex::Array<std::unique_p
 template <class T, class Ops>
 void CurlCurlMLMGPC<T,Ops>::Apply (T& a_x, const T& a_b)
 {
+    //  Given a right-hand-side b, solve:
+    //      A x = b
+    //  where A is the linear operator, in this case, the curl-curl
+    //  operator:
+    //      A x = curl (alpha * curl (x) ) + beta * x
+
     using namespace amrex;
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
