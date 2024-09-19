@@ -54,7 +54,11 @@ jobs:
       run: |
         $env:PATH += ';C:/Program Files (x86)/WarpX/bin/'
 
-        python3 Examples/Tests/gaussian_beam/inputs_test_3d_gaussian_beam_picmi.py
+        Start-ThreadJob -Name "test" -ScriptBlock { python3 Examples/Tests/gaussian_beam/inputs_test_3d_gaussian_beam_picmi.py }
+        Start-Sleep -Seconds 20
+        Stop-Job -Name "test"
+
+        cat Backtrace.0
 # JSON writes are currently very slow (50min) with MSVC
 #  --diagformat=openpmd
 
