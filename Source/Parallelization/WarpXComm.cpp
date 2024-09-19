@@ -20,6 +20,7 @@
 #include "WarpXSumGuardCells.H"
 #include "Particles/MultiParticleContainer.H"
 
+#include <ablastr/fields/MultiFabRegister.H>
 #include <ablastr/coarsen/average.H>
 #include <ablastr/utils/Communication.H>
 

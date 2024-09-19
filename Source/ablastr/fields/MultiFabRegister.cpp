@@ -119,8 +119,9 @@ namespace ablastr::fields
 
     void
     MultiFabRegister::alloc_like (
-        const std::string& /* other_name */,
-        int /* other_level */
+        std::string /* new_name */,
+        std::string /* other_name*/,
+        int /* level */
     )
     {
         // other_name = mf_name(other_name, other_level);

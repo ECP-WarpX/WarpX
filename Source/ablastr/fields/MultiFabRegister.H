@@ -241,27 +241,26 @@ namespace ablastr::fields
             std::optional<const amrex::Real> initial_value = std::nullopt
         );
 
-        /** title
+        /** Allocate a new MultiFab (field) with the same size and distribution as another.
          *
-         * body body
-         * body
+         * @todo this is reserved for future use and not yet implemented.
+         * @todo we will also add an overload with dir.
          *
-         * @param other_name ...
-         * @param other_level ...
+         * @param new_name new name
+         * @param other_name the other multifab
+         * @param level the MR level to represent
          */
         void
         alloc_like (
-            const std::string& other_name,
-            int other_level
+            std::string new_name,
+            std::string other_name,
+            int level
         );
 
-        /** title
+        /** Check if a scalar MultiFab (field) is registered.
          *
-         * body body
-         * body
-         *
-         * @param name ...
-         * @param level ...
+         * @param name the name to check if registered
+         * @param level the MR level to check
          * @return true if contained, otherwise false
          */
         [[nodiscard]] bool
@@ -270,14 +269,11 @@ namespace ablastr::fields
             int level
         ) const;
 
-        /** title
+        /** Check if a MultiFab that is part of a vector/tensor field is registered.
          *
-         * body body
-         * body
-         *
-         * @param name ...
-         * @param dir ...
-         * @param level ...
+         * @param name the name to check if registered
+         * @param dir the field component for vector fields ("direction" of the unit vector)
+         * @param level the MR level to check
          * @return true if contained, otherwise false
          */
         [[nodiscard]] bool
@@ -287,46 +283,43 @@ namespace ablastr::fields
             int level
         ) const;
 
-        /** title
+        /** Return a scalar MultiFab (field).
          *
-         * body body
-         * body
+         * This throws a runtime error if the requested field is not present.
          *
-         * @param name ...
-         * @param level ...
-         * @return ...
+         * @param name the name to check if registered
+         * @param level the MR level to check
+         * @return a non-owning pointer to the MultiFab (field)
          */
-        amrex::MultiFab*
+        [[nodiscard]] amrex::MultiFab*
         get (
             std::string name,
             int level
         );
 
-        /** title
+        /** Return a MultiFab that is part of a vector/tensor field.
          *
-         * body body
-         * body
+         * This throws a runtime error if the requested field is not present.
          *
-         * @param name ...
-         * @param dir ...
-         * @param level ...
-         * @return ...
+         * @param name the name to check if registered
+         * @param dir the field component for vector fields ("direction" of the unit vector)
+         * @param level the MR level to check
+         * @return a non-owning pointer to the MultiFab (field)
          */
-        amrex::MultiFab*
+        [[nodiscard]] amrex::MultiFab*
         get (
             std::string name,
             Direction dir,
             int level
         );
 
-        /** title
+        /** Return a scalar MultiFab (field).
          *
-         * body body
-         * body
+         * This throws a runtime error if the requested field is not present.
          *
-         * @param name ...
-         * @param level ...
-         * @return ...
+         * @param name the name to check if registered
+         * @param level the MR level to check
+         * @return a non-owning pointer to the MultiFab (field)
          */
         [[nodiscard]] amrex::MultiFab const *
         get (
@@ -334,15 +327,14 @@ namespace ablastr::fields
             int level
         ) const;
 
-        /** title
+        /** Return a MultiFab that is part of a vector/tensor field.
          *
-         * body body
-         * body
+         * This throws a runtime error if the requested field is not present.
          *
-         * @param name ...
-         * @param dir ...
-         * @param level ...
-         * @return ...
+         * @param name the name to check if registered
+         * @param dir the field component for vector fields ("direction" of the unit vector)
+         * @param level the MR level to check
+         * @return a non-owning pointer to the MultiFab (field)
          */
         [[nodiscard]] amrex::MultiFab const *
         get (
@@ -359,7 +351,7 @@ namespace ablastr::fields
          * @param finest_level ...
          * @return ...
          */
-        MultiLevelScalarField
+        [[nodiscard]] MultiLevelScalarField
         get_mr_levels (
             const std::string& name,
             int finest_level
@@ -378,7 +370,7 @@ namespace ablastr::fields
          * @param level ...
          * @return ...
          */
-        VectorField
+        [[nodiscard]] VectorField
         get_alldirs  (
             const std::string&,
             int level
@@ -398,7 +390,7 @@ namespace ablastr::fields
          * @param finest_level ...
          * @return ...
          */
-        MultiLevelVectorField
+        [[nodiscard]] MultiLevelVectorField
         get_mr_levels_alldirs (
             const std::string& name,
             int finest_level
@@ -508,11 +500,11 @@ namespace ablastr::fields
     private:
         amrex::MultiFab *
         internal_get (
-                const std::string& key
+            const std::string& key
         );
         [[nodiscard]] amrex::MultiFab const *
         internal_get (
-                const std::string& key
+            const std::string& key
         ) const;
 
         /** data storage: ownership and lifetime control */

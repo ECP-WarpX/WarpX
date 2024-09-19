@@ -99,7 +99,8 @@ void init_MultiFabRegister (py::module & m)
         .def("alloc_like",
              &MultiFabRegister::alloc_like,
              py::arg("other_name"),
-             py::arg("other_level")
+             py::arg("other_level"),
+             py::arg("level")
         )
 
         .def("has",
