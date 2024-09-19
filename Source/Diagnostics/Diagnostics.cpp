@@ -535,11 +535,14 @@ Diagnostics::InitBaseData ()
     for (int i = 0; i < m_num_buffers; ++i) {
         m_mf_output[i].resize( nmax_lev );
     }
-    m_sum_mf_output.resize(m_num_buffers);
-    for (int i = 0; i < m_num_buffers; ++i) {
-        m_sum_mf_output[i].resize( nmax_lev );
-    }
 
+    // allocate vector of buffers and vector of levels for each buffer for summation multifab for TimeAveragedDiagnostics
+    if (m_diag_type == DiagTypes::TimeAveraged) {
+        m_sum_mf_output.resize(m_num_buffers);
+        for (int i = 0; i < m_num_buffers; ++i) {
+            m_sum_mf_output[i].resize( nmax_lev );
+        }
+    }
 
     // allocate vector of geometry objects corresponding to each output multifab.
     m_geom_output.resize( m_num_buffers );

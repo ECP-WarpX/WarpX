@@ -38,15 +38,17 @@ private:
     /** Whether the diagnostics are averaging data over time or not */
     TimeAverageType m_time_average_type = TimeAverageType::None;
     /** Period to average fields over: in steps */
-    int m_average_period_steps = 0;
+    int m_average_period_steps = -1;
     /** Period to average fields over: in seconds */
-    amrex::Real m_average_period_time = 0;
+    amrex::Real m_average_period_time = -1.0;
     /** Time step to start averaging */
-    int m_average_start_step = 0;
+    int m_average_start_step = -1;
     /** Flush m_mf_output or m_sum_mf_output and particles to file for the i^th buffer */
     void Flush (int i_buffer, bool /* force_flush */) override;
     /** Flush raw data */
     void FlushRaw ();
+    /** Initialize Data required to compute TimeAveraged diagnostics */
+    void DerivedInitData () override;
     /** whether to compute and pack cell-centered data in m_mf_output
      * \param[in] step current time step
      * \param[in] force_flush if true, return true for any step since output must be

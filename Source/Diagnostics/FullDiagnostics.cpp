@@ -58,6 +58,27 @@ FullDiagnostics::FullDiagnostics (int i, const std::string& name, DiagTypes diag
 }
 
 void
+FullDiagnostics::DerivedInitData() {
+    if (m_diag_type == DiagTypes::TimeAveraged) {
+        auto & warpx = WarpX::GetInstance();
+        if (m_time_average_type == TimeAverageType::Dynamic) {
+
+            // already checked in ReadParameters that only one of the parameters is set
+            // calculate the other averaging period parameter from the other one, respectively
+            if (m_average_period_steps > 0) {
+                m_average_period_time = m_average_period_steps * warpx.getdt(0);
+            } else if (m_average_period_time > 0) {
+                m_average_period_steps = static_cast<int> (std::round(m_average_period_time / warpx.getdt(0)));
+            }
+            amrex::Print() << Utils::TextMsg::Info(
+                "Initializing TimeAveragedDiagnostics " + m_diag_name
+                + " with an averaging period of " + std::to_string(m_average_period_steps) + " steps"
+                );
+        }
+    }
+}
+
+void
 FullDiagnostics::InitializeParticleBuffer ()
 {
     // When particle buffers are included, the vector of particle containers
@@ -241,28 +262,51 @@ FullDiagnostics::DoComputeAndPack (int step, bool force_flush)
     // Start averaging at output step (from diag.intervals) - period + 1
     bool in_averaging_period = false;
     if (m_diag_type == DiagTypes::TimeAveraged) {
+
+        // TODO we need a good solution to avoid that there is output at step 0
+        if (step == 0) {
+            return false;
+        }
+
         if (m_time_average_type == TimeAverageType::Dynamic) {
             m_average_start_step = m_intervals.nextContains(step) - m_average_period_steps;
             // check that the periods do not overlap and that the start step is not negative
-            if (m_average_start_step > 0) {
-                if (m_average_start_step < m_intervals.previousContains(step)) {
+            if (m_average_start_step >= 0) {
+                // The start step cannot be on an interval step because then we would begin a new period and also output the old one
+                if (m_average_start_step <= m_intervals.previousContains(step)) {
                     WARPX_ABORT_WITH_MESSAGE(
                             "Averaging periods may not overlap within a single diagnostic. "
                             "Please create a second diagnostic for overlapping time averaging periods "
                             "and account for the increased memory consumption."
                     );
-                } else {
-                    WARPX_ABORT_WITH_MESSAGE("The step to begin time averaging may not be a negative number.");
                 }
+
+            } else {
+                WARPX_ABORT_WITH_MESSAGE(
+                        "The step to begin time averaging ("
+                        + std::to_string(m_average_start_step)
+                        + ") may not be a negative number."
+                        );
             }
         }
 
-        if (step > m_intervals.nextContains(step) - m_average_start_step && step <= m_intervals.nextContains(step)) {
+        if (step >= m_average_start_step && step <= m_intervals.nextContains(step)) {
             in_averaging_period = true;
 
             if (m_time_average_type == TimeAverageType::Static) {
                 // Update time averaging period to current step
                 m_average_period_steps = step - m_average_start_step;
+            }
+        }
+        // Print information on when time-averaging is active
+        if (in_averaging_period) {
+            if (step == m_average_start_step) {
+                amrex::Print() << Utils::TextMsg::Info(
+                        "Begin time averaging for " + m_diag_name + " and output at step "
+                        + std::to_string(m_intervals.nextContains(step))
+                );
+            } else {
+                amrex::Print() << Utils::TextMsg::Info("Time-averaging during this step for diagnostic: " + m_diag_name);
             }
         }
     }
@@ -704,17 +748,6 @@ FullDiagnostics::InitializeBufferData (int i_buffer, int lev, bool restart ) {
                 (ba.getCellCenteredBox( static_cast<int>(ba.size())-1 ).bigEnd(idim) + 1) * warpx.Geom(lev).CellSize(idim));
         }
 
-        if (m_time_average_type == TimeAverageType::Dynamic) {
-
-            // already checked in ReadParameters that only one of the parameters is set
-            // calculate the other averaging period parameter from the other one, respectively
-            if (m_average_period_steps > 0) {
-                m_average_period_time = m_average_period_steps * warpx.getdt(0);
-            } else if (m_average_period_time > 0) {
-                m_average_period_steps = static_cast<int> (std::round(m_average_period_time / warpx.getdt(0)));
-            }
-
-        }
     }
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
