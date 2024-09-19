@@ -204,6 +204,8 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
             utils::enums::GridType grid_type,
             T_BoundaryHandler const boundary_handler,
             bool is_solver_igf_on_lev0,
+            bool is_igf_2d_slices,
+            bool is_igf_distributed,
             bool eb_enabled = false,
             bool do_single_precision_comms = false,
             std::optional<amrex::Vector<amrex::IntVect> > rel_ref_ratio = std::nullopt,
@@ -266,7 +268,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
             if ( max_norm_b == 0 ) {
                 phi[lev]->setVal(0);
             } else {
-                computePhiIGF( *rho[lev], *phi[lev], dx_scaled, grids[lev] );
+                computePhiIGF( *rho[lev], *phi[lev], dx_scaled, grids[lev], is_igf_2d_slices, is_igf_distributed );
             }
             continue;
         }

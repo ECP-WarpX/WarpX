@@ -32,16 +32,15 @@
 #endif
 
 
-int is_distributed =0;
-int is_3D = 1; 
-
 namespace ablastr::fields {
 
 void
 computePhiIGF ( amrex::MultiFab const & rho,
                 amrex::MultiFab & phi,
                 std::array<amrex::Real, 3> const & cell_size,
-                amrex::BoxArray const & ba)
+                amrex::BoxArray const & ba, 
+                bool is_2d_slices, 
+                bool is_distributed)
 {
     using namespace amrex::literals;
 
@@ -65,8 +64,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
     // The arrays are doubled in z only if the solver is 3D
     int const nx_big = 2*nx-1; 
     int const ny_big = 2*ny-1; 
-    int nz_big; 
-    if(is_3D) { nz_big = 2*nz-1; } else { nz_big = nz; }
+    int const nz_big = (!is_2d_slices) ? 2*nz-1 : nz; ;
 
     amrex::Box const realspace_box = amrex::Box(
         {domain.smallEnd(0), domain.smallEnd(1), domain.smallEnd(2)},
@@ -171,7 +169,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
                 amrex::Real y_hi = dy*(hi[1]+2);
                 amrex::Real z_hi = dz*(hi[2]+2);
 
-                if(!is_distributed && is_3D){
+                if(!is_distributed && !is_2d_slices){
                     // Without distributed FFTs (i.e. without heFFTe):
                     amrex::Real const G_value = SumOfIntegratedPotential3D(x     , y     , z     , dx, dy, dz);
                     tmp_G_arr(i,j,k) = G_value;
@@ -183,7 +181,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
                     if ((j0>0)&&(k0>0)) {tmp_G_arr(i         , hi[1]+1-j0, hi[2]+1-k0) = G_value;}
                     if ((i0>0)&&(k0>0)) {tmp_G_arr(hi[0]+1-i0, j         , hi[2]+1-k0) = G_value;}
                     if ((i0>0)&&(j0>0)&&(k0>0)) {tmp_G_arr(hi[0]+1-i0, hi[1]+1-j0, hi[2]+1-k0) = G_value;}
-                }else if(is_distributed && is_3D){
+                }else if(is_distributed && !is_2d_slices){
                     // With distributed FFTs (i.e. with heFFTe):
                     if ((i0< nx)&&(j0< ny)&&(k0< nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential3D(x     , y     , z     , dx, dy, dz); }
                     if ((i0< nx)&&(j0> ny)&&(k0< nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential3D(x     , y_hi-y, z     , dx, dy, dz); }
@@ -193,14 +191,14 @@ computePhiIGF ( amrex::MultiFab const & rho,
                     if ((i0> nx)&&(j0< ny)&&(k0> nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential3D(x_hi-x, y     , z_hi-z, dx, dy, dz); }
                     if ((i0> nx)&&(j0> ny)&&(k0> nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential3D(x_hi-x, y_hi-y, z_hi-z, dx, dy, dz); }
                     if ((i0> nx)&&(j0< ny)&&(k0< nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential3D(x_hi-x, y     , z     , dx, dy, dz); }
-                }else if(!is_distributed && !is_3D){
+                }else if(!is_distributed && is_2d_slices){
                     amrex::Real const G_value = SumOfIntegratedPotential2D(x     , y, dx, dy);
                     tmp_G_arr(i,j,k) = G_value;
                     // Fill the rest of the array by periodicity
                     if (i0>0) {tmp_G_arr(hi[0]+1-i0, j         , k         ) = G_value;}
                     if (j0>0) {tmp_G_arr(i         , hi[1]+1-j0, k         ) = G_value;}
                     if ((i0>0)&&(j0>0)) {tmp_G_arr(hi[0]+1-i0, hi[1]+1-j0, k         ) = G_value;}
-                }else if(is_distributed && !is_3D){ 
+                }else if(is_distributed && is_2d_slices){ 
                     if ((i0< nx)&&(j0< ny)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential2D(x,      y,      dx, dy); }
                     if ((i0< nx)&&(j0> ny)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential2D(x,      y_hi-y, dx, dy); }
                     if ((i0> nx)&&(j0> ny)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential2D(x_hi-x, y_hi-y, dx, dy); }
@@ -212,12 +210,12 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
     // Prepare to perform global FFT
     // Since there is 1 MPI rank per box, here each MPI rank obtains its local box and the associated boxid
-    int local_boxid = amrex::ParallelDescriptor::MyProc(); // because of how we made the DistributionMapping
+    const int local_boxid = amrex::ParallelDescriptor::MyProc(); // because of how we made the DistributionMapping
     if (local_boxid < realspace_ba.size()) {
         // When not using heFFTe, there is only one box (the global box)
         // It is taken care of my MPI rank 0 ; other ranks have no work (hence the if condition)
 
-        amrex::Box local_nodal_box = realspace_ba[local_boxid];
+        const amrex::Box local_nodal_box = realspace_ba[local_boxid];
         amrex::Box local_box(local_nodal_box.smallEnd(), local_nodal_box.bigEnd());
         local_box.shift(-realspace_box.smallEnd()); // This simplifies the setup because the global lo is zero now
         // Since we the domain decompostion is in the z-direction, setting up c_local_box is simple.
@@ -241,7 +239,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
         const int nsz = c_local_box.length(2);
 
         
-        if(!is_distributed && is_3D){
+        if(!is_distributed && !is_2d_slices){
 
             BL_PROFILE_VAR_START(timer_plans);
             const amrex::IntVect fft_size = realspace_ba[local_boxid].length();
@@ -283,7 +281,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
         }
 #if defined(ABLASTR_USE_HEFFTE)              
-        else if(is_distributed && is_3D){
+        else if(is_distributed && !is_2d_slices){
 #if     defined(AMREX_USE_CUDA)
         heffte::fft3d_r2c<heffte::backend::cufft> fft
 #elif   defined(AMREX_USE_HIP)
@@ -309,14 +307,14 @@ computePhiIGF ( amrex::MultiFab const & rho,
         fft.backward(G_fft_data, tmp_G[local_boxid].dataPtr());
 
         // Normalize, since (FFT + inverse FFT) results in a factor N
-        Const amrex::Real normalization = 1._rt / realspace_box.numPts();
+        const amrex::Real normalization = 1._rt / realspace_box.numPts();
         tmp_G.mult( normalization );
         }
 #endif
-        else if (!is_distributed && !is_3D){
+        else if (!is_distributed && is_2d_slices){
             //serial 2d
 
-        }else if (is_distributed && !is_3D){
+        }else if (is_distributed && is_2d_slices){
             int fft_size[] = {nry, nrx};
             BL_PROFILE_VAR_START(timer_plans);
             ablastr::math::anyfft::FFTplan forward_plan_rho = ablastr::math::anyfft::CreatePlanMany(
