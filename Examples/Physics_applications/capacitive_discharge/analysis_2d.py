@@ -11,12 +11,11 @@ import os
 import sys
 
 sys.path.append("../../../../warpx/Regression/Checksum/")
+from checksumAPI import evaluate_checksum
 
-import checksumAPI
-
-my_check = checksumAPI.evaluate_checksum(
+# compare checksums
+evaluate_checksum(
     test_name=os.path.split(os.getcwd())[1],
     output_file=sys.argv[1],
     rtol=5e-3,
-    do_particles=True,
 )
