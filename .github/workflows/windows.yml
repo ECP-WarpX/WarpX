@@ -58,6 +58,9 @@ jobs:
         Start-Sleep -Seconds 30
         Stop-Job $job.Id
 
+        $jobOutput = $job | Receive-Job
+        $jobOutput
+
         cat Backtrace.0
 # JSON writes are currently very slow (50min) with MSVC
 #  --diagformat=openpmd
