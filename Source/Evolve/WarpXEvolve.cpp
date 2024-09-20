@@ -682,7 +682,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     if (m_fields.has("rho_fp", 0) && rho_in_time == RhoInTime::Linear)
     {
         const ablastr::fields::MultiLevelScalarField rho_fp = m_fields.get_mr_levels("rho_fp", finest_level);
-        const ablastr::fields::MultiLevelScalarField rho_cp = m_fields.get_mr_levels("rho_fp", finest_level);
+        const ablastr::fields::MultiLevelScalarField rho_cp = m_fields.get_mr_levels("rho_cp", finest_level);
 
         // Deposit rho at relative time -dt
         // (dt[0] denotes the time step on mesh refinement level 0)
