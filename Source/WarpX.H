@@ -1685,8 +1685,8 @@ private:
      *                                (only used in RZ geometry to avoid double filtering)
      */
     void PSATDForwardTransformJ (
-        ablastr::fields::MultiLevelVectorField const& J_fp,
-        ablastr::fields::MultiLevelVectorField const& J_cp,
+        std::string const & J_fp_string,
+        std::string const & J_cp_string,
         bool apply_kspace_filter=true);
 
     /**
@@ -1698,8 +1698,8 @@ private:
      *             storing the coarse patch current to be transformed
      */
     void PSATDBackwardTransformJ (
-        ablastr::fields::MultiLevelVectorField const & J_fp,
-        ablastr::fields::MultiLevelVectorField const & J_cp);
+        std::string const & J_fp_string,
+        std::string const & J_cp_string);
 
     /**
      * \brief Forward FFT of rho on all mesh refinement levels,
@@ -1713,8 +1713,8 @@ private:
      *                                (only used in RZ geometry to avoid double filtering)
      */
     void PSATDForwardTransformRho (
-        ablastr::fields::MultiLevelScalarField const & charge_fp,
-        ablastr::fields::MultiLevelScalarField const & charge_cp,
+        std::string const & charge_fp_string,
+        std::string const & charge_cp_string,
         int icomp, int dcomp, bool apply_kspace_filter=true);
 
     /**

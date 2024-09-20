@@ -677,8 +677,10 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     //    (after checking that pointer to rho_fp on MR level 0 is not null)
     if (m_fields.has("rho_fp", 0) && rho_in_time == RhoInTime::Linear)
     {
-        const ablastr::fields::MultiLevelScalarField rho_fp = m_fields.get_mr_levels("rho_fp", finest_level);
-        const ablastr::fields::MultiLevelScalarField rho_cp = m_fields.get_mr_levels("rho_cp", finest_level);
+        ablastr::fields::MultiLevelScalarField const rho_fp = m_fields.get_mr_levels("rho_fp", finest_level);
+
+        std::string const rho_fp_string = "rho_fp";
+        std::string const rho_cp_string = "rho_cp";
 
         // Deposit rho at relative time -dt
         // (dt[0] denotes the time step on mesh refinement level 0)
@@ -686,7 +688,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         // Filter, exchange boundary, and interpolate across levels
         SyncRho();
         // Forward FFT of rho
-        PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_new);
+        PSATDForwardTransformRho(rho_fp_string, rho_cp_string, 0, rho_new);
     }
 
     // 4) Deposit J at relative time -dt with time step dt
@@ -702,9 +704,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         // of guard cells.
         SyncCurrent("current_fp");
         // Forward FFT of J
-        PSATDForwardTransformJ(
-            m_fields.get_mr_levels_alldirs( "current_fp", finest_level),
-            m_fields.get_mr_levels_alldirs( "current_cp", finest_level) );
+        PSATDForwardTransformJ("current_fp", "current_cp");
     }
 
     // Number of depositions for multi-J scheme
@@ -738,16 +738,16 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         // of guard cells.
         SyncCurrent("current_fp");
         // Forward FFT of J
-        PSATDForwardTransformJ(
-            m_fields.get_mr_levels_alldirs( "current_fp", finest_level),
-            m_fields.get_mr_levels_alldirs( "current_cp", finest_level) );
+        PSATDForwardTransformJ("current_fp", "current_cp");
 
         // Deposit new rho
         // (after checking that pointer to rho_fp on MR level 0 is not null)
         if (m_fields.has("rho_fp", 0))
         {
-            const ablastr::fields::MultiLevelScalarField rho_fp = m_fields.get_mr_levels("rho_fp", finest_level);
-            const ablastr::fields::MultiLevelScalarField rho_cp = m_fields.get_mr_levels("rho_cp", finest_level);
+            ablastr::fields::MultiLevelScalarField const rho_fp = m_fields.get_mr_levels("rho_fp", finest_level);
+
+            std::string const rho_fp_string = "rho_fp";
+            std::string const rho_cp_string = "rho_cp";
 
             // Move rho from new to old if rho is linear in time
             if (rho_in_time == RhoInTime::Linear) { PSATDMoveRhoNewToRhoOld(); }
@@ -758,7 +758,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             SyncRho();
             // Forward FFT of rho
             const int rho_idx = (rho_in_time == RhoInTime::Linear) ? rho_new : rho_mid;
-            PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_idx);
+            PSATDForwardTransformRho(rho_fp_string, rho_cp_string, 0, rho_idx);
         }
 
         if (WarpX::current_correction)
