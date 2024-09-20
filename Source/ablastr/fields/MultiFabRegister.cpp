@@ -623,49 +623,4 @@ namespace ablastr::fields
         }
         return field_on_level;
     }
-
-    MultiLevelVectorField
-    va2vm (
-        const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& old_vector_on_levels
-    )
-    {
-        auto const finest_level = static_cast<int>(old_vector_on_levels.size() - 1u);
-
-        MultiLevelVectorField field_on_level;
-        field_on_level.reserve(finest_level+1);
-
-        const std::vector<Direction> all_dirs = {Direction{0}, Direction{1}, Direction{2}};
-
-        for (int lvl = 0; lvl <= finest_level; lvl++)
-        {
-            // insert a new level
-            field_on_level.push_back(VectorField{});
-
-            // insert components
-            for (const auto dir : {0, 1, 2})
-            {
-                field_on_level[lvl][Direction{dir}] = old_vector_on_levels[lvl][dir].get();
-            }
-        }
-        return field_on_level;
-    }
-
-    MultiLevelScalarField
-    va2vm (
-        const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& old_scalar_on_levels
-    )
-    {
-        auto const finest_level = static_cast<int>(old_scalar_on_levels.size() - 1u);
-
-        MultiLevelScalarField field_on_level;
-        field_on_level.reserve(finest_level+1);
-
-        for (int lvl = 0; lvl <= finest_level; lvl++)
-        {
-            // insert a scalar field on a level
-            field_on_level.push_back(ScalarField{old_scalar_on_levels[lvl].get()});
-
-        }
-        return field_on_level;
-    }
 } // namespace ablastr::fields
