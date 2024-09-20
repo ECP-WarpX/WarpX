@@ -11,6 +11,7 @@
 #include <AMReX_Array.H>
 #include <AMReX_BoxArray.H>
 #include <AMReX_DistributionMapping.H>
+#include <AMReX_Enum.H>
 #include <AMReX_Extension.H>
 #include <AMReX_IntVect.H>
 #include <AMReX_MultiFab.H>
@@ -21,8 +22,34 @@
 #include <optional>
 #include <string>
 #include <stdexcept>
+#include <type_traits>
 #include <vector>
 
+
+namespace
+{
+    // type trait helpers in lieu of an amrex::is_amrex_enum
+    template <typename, typename = std::void_t<>>
+    struct is_castable_to_string : std::false_type {};
+
+    template <typename T>
+    struct is_castable_to_string<T, std::void_t<decltype(static_cast<std::string>(std::declval<T>()))>> : std::true_type {};
+
+    /** helper to either cast a string/char array to string to query an AMREX_ENUM */
+    template<typename T>
+    std::string getExtractedName (T name)
+    {
+        if constexpr(is_castable_to_string<T>())
+        {
+            // already a unique string key
+            return std::string(name);
+        } else
+        {
+            // user-defined AMREX_ENUM or compile error
+            return amrex::getEnumNameString(name);
+        }
+    }
+}
 
 namespace ablastr::fields
 {
@@ -157,9 +184,10 @@ namespace ablastr::fields
          * @param redistribute_on_remake redistribute on @see amrex::AmrCore::RemakeLevel
          * @return pointer to newly allocated MultiFab
          */
+        template<typename T>
         amrex::MultiFab*
         alloc_init (
-            std::string name,
+            T name,
             int level,
             amrex::BoxArray const & ba,
             amrex::DistributionMapping const & dm,
@@ -168,7 +196,20 @@ namespace ablastr::fields
             std::optional<const amrex::Real> initial_value = std::nullopt,
             bool remake = true,
             bool redistribute_on_remake = true
-        );
+        )
+        {
+            return alloc_init<std::string>(
+                getExtractedName(name),
+                level,
+                ba,
+                dm,
+                ncomp,
+                ngrow,
+                initial_value,
+                remake,
+                redistribute_on_remake
+            );
+        }
 
         /** Allocate and optionally initialize a MultiFab (field)
          *
@@ -187,9 +228,10 @@ namespace ablastr::fields
          * @param redistribute_on_remake redistribute on @see amrex::AmrCore::RemakeLevel
          * @return pointer to newly allocated MultiFab
          */
+        template<typename T>
         amrex::MultiFab*
         alloc_init (
-            std::string name,
+            T name,
             Direction dir,
             int level,
             amrex::BoxArray const & ba,
@@ -199,7 +241,21 @@ namespace ablastr::fields
             std::optional<const amrex::Real> initial_value = std::nullopt,
             bool remake = true,
             bool redistribute_on_remake = true
-        );
+        )
+        {
+            return alloc_init<std::string>(
+                getExtractedName(name),
+                dir,
+                level,
+                ba,
+                dm,
+                ncomp,
+                ngrow,
+                initial_value,
+                remake,
+                redistribute_on_remake
+            );
+        }
 
         /** Create an alias of a MultiFab (field)
          *
@@ -212,13 +268,22 @@ namespace ablastr::fields
          * @param initial_value the optional value to assign
          * @return the newly aliased MultiFab
          */
+        template<typename N, typename A>
         amrex::MultiFab*
         alias_init (
-            std::string new_name,
-            std::string alias_name,
+            N new_name,
+            A alias_name,
             int level,
             std::optional<const amrex::Real> initial_value = std::nullopt
-        );
+        )
+        {
+            return alias_init<std::string, std::string>(
+                getExtractedName(new_name),
+                getExtractedName(alias_name),
+                level,
+                initial_value
+            );
+        }
 
         /** Create an alias of a MultiFab (field)
          *
@@ -232,14 +297,24 @@ namespace ablastr::fields
          * @param initial_value the optional value to assign
          * @return the newly aliased MultiFab
          */
+        template<typename N, typename A>
         amrex::MultiFab*
         alias_init (
-            std::string new_name,
-            std::string alias_name,
+            N new_name,
+            A alias_name,
             Direction dir,
             int level,
             std::optional<const amrex::Real> initial_value = std::nullopt
-        );
+        )
+        {
+            return alias_init<std::string, std::string>(
+                getExtractedName(new_name),
+                getExtractedName(alias_name),
+                dir,
+                level,
+                initial_value
+            );
+        }
 
         /** Allocate a new MultiFab (field) with the same size and distribution as another.
          *
@@ -263,11 +338,18 @@ namespace ablastr::fields
          * @param level the MR level to check
          * @return true if contained, otherwise false
          */
+        template<typename T>
         [[nodiscard]] bool
         has (
-            std::string name,
+            T name,
             int level
-        ) const;
+        ) const
+        {
+            return has<std::string>(
+                getExtractedName(name),
+                level
+            );
+        }
 
         /** Check if a MultiFab that is part of a vector/tensor field is registered.
          *
@@ -276,12 +358,20 @@ namespace ablastr::fields
          * @param level the MR level to check
          * @return true if contained, otherwise false
          */
+        template<typename T>
         [[nodiscard]] bool
         has (
-            std::string name,
+            T name,
             Direction dir,
             int level
-        ) const;
+        ) const
+        {
+            return has<std::string>(
+                getExtractedName(name),
+                dir,
+                level
+            );
+        }
 
         /** Check if a MultiFab vector field is registered.
          *
@@ -289,11 +379,18 @@ namespace ablastr::fields
          * @param level the MR level to check
          * @return true if contained, otherwise false
          */
+        template<typename T>
         [[nodiscard]] bool
         has_vector (
-            std::string const & name,
+            T name,
             int level
-        ) const;
+        ) const
+        {
+            return has_vector<std::string>(
+                getExtractedName(name),
+                level
+            );
+        }
 
         /** Return a scalar MultiFab (field).
          *
@@ -303,11 +400,18 @@ namespace ablastr::fields
          * @param level the MR level to check
          * @return a non-owning pointer to the MultiFab (field)
          */
+        template<typename T>
         [[nodiscard]] amrex::MultiFab*
         get (
-            std::string name,
+            T name,
             int level
-        );
+        )
+        {
+            return get<std::string>(
+                getExtractedName(name),
+                level
+            );
+        }
 
         /** Return a MultiFab that is part of a vector/tensor field.
          *
@@ -318,12 +422,20 @@ namespace ablastr::fields
          * @param level the MR level to check
          * @return a non-owning pointer to the MultiFab (field)
          */
+        template<typename T>
         [[nodiscard]] amrex::MultiFab*
         get (
-            std::string name,
+            T name,
             Direction dir,
             int level
-        );
+        )
+        {
+            return get<std::string>(
+                getExtractedName(name),
+                dir,
+                level
+            );
+        }
 
         /** Return a scalar MultiFab (field).
          *
@@ -333,11 +445,18 @@ namespace ablastr::fields
          * @param level the MR level to check
          * @return a non-owning pointer to the MultiFab (field)
          */
+        template<typename T>
         [[nodiscard]] amrex::MultiFab const *
         get (
-            std::string name,
+            T name,
             int level
-        ) const;
+        ) const
+        {
+            return get<std::string>(
+                getExtractedName(name),
+                level
+            );
+        }
 
         /** Return a MultiFab that is part of a vector/tensor field.
          *
@@ -348,12 +467,20 @@ namespace ablastr::fields
          * @param level the MR level to check
          * @return a non-owning pointer to the MultiFab (field)
          */
+        template<typename T>
         [[nodiscard]] amrex::MultiFab const *
         get (
-            std::string name,
+            T name,
             Direction dir,
             int level
-        ) const;
+        ) const
+        {
+            return get<std::string>(
+                getExtractedName(name),
+                dir,
+                level
+            );
+        }
 
         /** title
          *
@@ -363,16 +490,32 @@ namespace ablastr::fields
          * @param finest_level ...
          * @return ...
          */
+        //@{
+        template<typename T>
         [[nodiscard]] MultiLevelScalarField
         get_mr_levels (
-            const std::string& name,
+            T name,
             int finest_level
-        );
+        )
+        {
+            return get_mr_levels<std::string>(
+                getExtractedName(name),
+                finest_level
+            );
+        }
+        template<typename T>
         [[nodiscard]] ConstMultiLevelScalarField
         get_mr_levels (
-            const std::string& name,
+            T name,
             int finest_level
-        ) const;
+        ) const
+        {
+            return get_mr_levels<std::string>(
+                getExtractedName(name),
+                finest_level
+            );
+        }
+        //@}
 
         /** title
          *
@@ -382,16 +525,32 @@ namespace ablastr::fields
          * @param level ...
          * @return ...
          */
+        //@{
+        template<typename T>
         [[nodiscard]] VectorField
         get_alldirs  (
-            const std::string&,
+            T name,
             int level
-        );
+        )
+        {
+            return get_alldirs<std::string>(
+                getExtractedName(name),
+                level
+            );
+        }
+        template<typename T>
         [[nodiscard]] ConstVectorField
         get_alldirs  (
-            const std::string& name,
+            T name,
             int level
-        ) const;
+        ) const
+        {
+            return get_alldirs<std::string>(
+                getExtractedName(name),
+                level
+            );
+        }
+        //@}
 
         /** Return a vector field on all MR levels.
          *
@@ -402,16 +561,32 @@ namespace ablastr::fields
          * @param finest_level ...
          * @return ...
          */
+        //@{
+        template<typename T>
         [[nodiscard]] MultiLevelVectorField
         get_mr_levels_alldirs (
-            const std::string& name,
+            T name,
             int finest_level
-        );
+        )
+        {
+            return get_mr_levels_alldirs<std::string>(
+                getExtractedName(name),
+                finest_level
+            );
+        }
+        template<typename T>
         [[nodiscard]] ConstMultiLevelVectorField
         get_mr_levels_alldirs (
-            const std::string& name,
+            T name,
             int finest_level
-        ) const;
+        ) const
+        {
+            return get_mr_levels_alldirs<std::string>(
+                getExtractedName(name),
+                finest_level
+            );
+        }
+        //@}
 
         /** title
          *
@@ -431,11 +606,15 @@ namespace ablastr::fields
          * @param name ...
          * @param level ...
          */
+        template<typename T>
         void
         erase (
-            std::string name,
+            T name,
             int level
-        );
+        )
+        {
+            erase<std::string>(getExtractedName(name), level);
+        }
 
         /** title
          *
@@ -446,12 +625,16 @@ namespace ablastr::fields
          * @param dir ...
          * @param level ...
          */
+        template<typename T>
         void
         erase (
-            std::string name,
+            T name,
             Direction dir,
             int level
-        );
+        )
+        {
+            erase<std::string>(getExtractedName(name), dir, level);
+        }
 
         /** Erase all MultiFabs on a specific MR level.
          *
@@ -536,5 +719,7 @@ namespace ablastr::fields
     );
 
 } // namespace ablastr::fields
+
+#include "MultiFabRegister_string.H"
 
 #endif  // ABLASTR_FIELDS_MF_REGISTER_H

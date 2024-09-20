@@ -14,8 +14,9 @@
 
 namespace ablastr::fields
 {
+    template<>
     amrex::MultiFab*
-    MultiFabRegister::alloc_init (
+    MultiFabRegister::alloc_init<std::string> (
         std::string name,
         int level,
         amrex::BoxArray const & ba,
@@ -63,8 +64,9 @@ namespace ablastr::fields
         return &mf;
     }
 
+    template<>
     amrex::MultiFab*
-    MultiFabRegister::alloc_init (
+    MultiFabRegister::alloc_init<std::string> (
         std::string name,
         Direction dir,
         int level,
@@ -132,8 +134,9 @@ namespace ablastr::fields
         // TODO: does the other_name already exist? error
     }
 
+    template<>
     amrex::MultiFab*
-    MultiFabRegister::alias_init (
+    MultiFabRegister::alias_init<std::string, std::string> (
         std::string new_name,
         std::string alias_name,
         int level,
@@ -191,8 +194,9 @@ namespace ablastr::fields
         return &mf;
     }
 
+    template<>
     amrex::MultiFab*
-    MultiFabRegister::alias_init (
+    MultiFabRegister::alias_init<std::string, std::string> (
             std::string new_name,
             std::string alias_name,
             Direction dir,
@@ -306,8 +310,9 @@ namespace ablastr::fields
         }
     }
 
+    template<>
     bool
-    MultiFabRegister::has (
+    MultiFabRegister::has<std::string> (
         std::string name,
         int level
     ) const
@@ -317,8 +322,9 @@ namespace ablastr::fields
         return m_mf_register.count(name) > 0;
     }
 
+    template<>
     bool
-    MultiFabRegister::has (
+    MultiFabRegister::has<std::string> (
         std::string name,
         Direction dir,
         int level
@@ -329,9 +335,10 @@ namespace ablastr::fields
         return m_mf_register.count(name) > 0;
     }
 
+    template<>
     bool
-    MultiFabRegister::has_vector (
-        std::string const & name,
+    MultiFabRegister::has_vector<std::string> (
+        std::string name,
         int level
     ) const
     {
@@ -376,8 +383,9 @@ namespace ablastr::fields
         return &mf;
     }
 
+    template<>
     amrex::MultiFab*
-    MultiFabRegister::get (
+    MultiFabRegister::get<std::string> (
         std::string name,
         int level
     )
@@ -386,8 +394,9 @@ namespace ablastr::fields
         return internal_get(name);
     }
 
+    template<>
     amrex::MultiFab*
-    MultiFabRegister::get (
+    MultiFabRegister::get<std::string> (
         std::string name,
         Direction dir,
         int level
@@ -397,8 +406,9 @@ namespace ablastr::fields
         return internal_get(name);
     }
 
+    template<>
     amrex::MultiFab const *
-    MultiFabRegister::get (
+    MultiFabRegister::get<std::string> (
         std::string name,
         int level
     ) const
@@ -407,8 +417,9 @@ namespace ablastr::fields
         return internal_get(name);
     }
 
+    template<>
     amrex::MultiFab const *
-    MultiFabRegister::get (
+    MultiFabRegister::get<std::string> (
         std::string name,
         Direction dir,
         int level
@@ -418,9 +429,10 @@ namespace ablastr::fields
         return internal_get(name);
     }
 
+    template<>
     MultiLevelScalarField
-    MultiFabRegister::get_mr_levels (
-        const std::string& name,
+    MultiFabRegister::get_mr_levels<std::string> (
+        std::string name,
         int finest_level
     )
     {
@@ -433,9 +445,10 @@ namespace ablastr::fields
         return field_on_level;
     }
 
+    template<>
     ConstMultiLevelScalarField
-    MultiFabRegister::get_mr_levels (
-        const std::string& name,
+    MultiFabRegister::get_mr_levels<std::string> (
+        std::string name,
         int finest_level
     ) const
     {
@@ -448,9 +461,10 @@ namespace ablastr::fields
         return field_on_level;
     }
 
+    template<>
     VectorField
-    MultiFabRegister::get_alldirs  (
-        const std::string& name,
+    MultiFabRegister::get_alldirs<std::string> (
+        std::string name,
         int level
     )
     {
@@ -468,9 +482,10 @@ namespace ablastr::fields
         return vectorField;
     }
 
+    template<>
     ConstVectorField
-    MultiFabRegister::get_alldirs  (
-        const std::string& name,
+    MultiFabRegister::get_alldirs<std::string> (
+        std::string name,
         int level
     ) const
     {
@@ -488,9 +503,10 @@ namespace ablastr::fields
         return vectorField;
     }
 
+    template<>
     MultiLevelVectorField
-    MultiFabRegister::get_mr_levels_alldirs  (
-        const std::string& name,
+    MultiFabRegister::get_mr_levels_alldirs<std::string> (
+        std::string name,
         int finest_level
     )
     {
@@ -514,9 +530,10 @@ namespace ablastr::fields
         return field_on_level;
     }
 
+    template<>
     ConstMultiLevelVectorField
-    MultiFabRegister::get_mr_levels_alldirs  (
-        const std::string& name,
+    MultiFabRegister::get_mr_levels_alldirs<std::string> (
+        std::string name,
         int finest_level
     ) const
     {
@@ -550,8 +567,9 @@ namespace ablastr::fields
         return names;
     }
 
+    template<>
     void
-    MultiFabRegister::erase (
+    MultiFabRegister::erase<std::string> (
         std::string name,
         int level
     )
@@ -564,8 +582,9 @@ namespace ablastr::fields
         m_mf_register.erase(name);
     }
 
+    template<>
     void
-    MultiFabRegister::erase (
+    MultiFabRegister::erase<std::string> (
         std::string name,
         Direction dir,
         int level
