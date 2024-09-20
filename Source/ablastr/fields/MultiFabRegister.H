@@ -252,8 +252,8 @@ namespace ablastr::fields
          */
         void
         alloc_like (
-            std::string new_name,
-            std::string other_name,
+            std::string const & new_name,
+            std::string const & other_name,
             int level
         );
 
