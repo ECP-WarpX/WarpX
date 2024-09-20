@@ -3270,6 +3270,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
 
 ElectrostaticFieldDiagnostic = FieldDiagnostic
 
+
 class TimeAveragedFieldDiagnostic(FieldDiagnostic):
     """
     See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`__ for more information.
@@ -3319,7 +3320,6 @@ class TimeAveragedFieldDiagnostic(FieldDiagnostic):
         self.diagnostic.average_period_steps = self.average_period_steps
         self.diagnostic.average_period_time = self.average_period_time
         self.diagnostic.average_start_step = self.average_start_step
-
 
 
 class Checkpoint(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
