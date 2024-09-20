@@ -100,55 +100,85 @@ namespace {
     }
 }
 
-void WarpX::PSATDForwardTransformEB (
-    const ablastr::fields::MultiLevelVectorField& E_fp,
-    const ablastr::fields::MultiLevelVectorField& B_fp,
-    const ablastr::fields::MultiLevelVectorField& E_cp,
-    const ablastr::fields::MultiLevelVectorField& B_cp)
+void WarpX::PSATDForwardTransformEB ()
 {
     const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
+    const std::string Efield_fp_string = "Efield_fp";
+    const std::string Efield_cp_string = "Efield_cp";
+    const std::string Bfield_fp_string = "Bfield_fp";
+    const std::string Bfield_cp_string = "Bfield_cp";
+
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        ForwardTransformVect(lev, *spectral_solver_fp[lev], E_fp[lev], Idx.Ex, Idx.Ey, Idx.Ez);
-        ForwardTransformVect(lev, *spectral_solver_fp[lev], B_fp[lev], Idx.Bx, Idx.By, Idx.Bz);
+        if (m_fields.has(Efield_fp_string, lev)) {
+            ablastr::fields::VectorField E_fp =  m_fields.get_alldirs(Efield_fp_string, lev);
+            ForwardTransformVect(lev, *spectral_solver_fp[lev], E_fp, Idx.Ex, Idx.Ey, Idx.Ez);
+        }
+        if (m_fields.has(Bfield_fp_string, lev)) {
+            ablastr::fields::VectorField B_fp =  m_fields.get_alldirs(Bfield_fp_string, lev);
+            ForwardTransformVect(lev, *spectral_solver_fp[lev], B_fp, Idx.Bx, Idx.By, Idx.Bz);
+        }
 
         if (spectral_solver_cp[lev])
         {
-            ForwardTransformVect(lev, *spectral_solver_cp[lev], E_cp[lev], Idx.Ex, Idx.Ey, Idx.Ez);
-            ForwardTransformVect(lev, *spectral_solver_cp[lev], B_cp[lev], Idx.Bx, Idx.By, Idx.Bz);
+            if (m_fields.has(Efield_cp_string, lev)) {
+                ablastr::fields::VectorField E_cp =  m_fields.get_alldirs(Efield_cp_string, lev);
+                ForwardTransformVect(lev, *spectral_solver_cp[lev], E_cp, Idx.Ex, Idx.Ey, Idx.Ez);
+            }
+            if (m_fields.has(Bfield_cp_string, lev)) {
+                ablastr::fields::VectorField B_cp =  m_fields.get_alldirs(Bfield_cp_string, lev);
+                ForwardTransformVect(lev, *spectral_solver_cp[lev], B_cp, Idx.Bx, Idx.By, Idx.Bz);
+            }
         }
     }
 }
 
-void WarpX::PSATDBackwardTransformEB (
-    const ablastr::fields::MultiLevelVectorField& E_fp,
-    const ablastr::fields::MultiLevelVectorField& B_fp,
-    const ablastr::fields::MultiLevelVectorField& E_cp,
-    const ablastr::fields::MultiLevelVectorField& B_cp)
+void WarpX::PSATDBackwardTransformEB ()
 {
     const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
+    const std::string Efield_fp_string = "Efield_fp";
+    const std::string Efield_cp_string = "Efield_cp";
+    const std::string Bfield_fp_string = "Bfield_fp";
+    const std::string Bfield_cp_string = "Bfield_cp";
+
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        BackwardTransformVect(lev, *spectral_solver_fp[lev], E_fp[lev],
-                              Idx.Ex, Idx.Ey, Idx.Ez, m_fill_guards_fields);
-        BackwardTransformVect(lev, *spectral_solver_fp[lev], B_fp[lev],
-                              Idx.Bx, Idx.By, Idx.Bz, m_fill_guards_fields);
+        if (m_fields.has(Efield_fp_string, lev)) {
+            ablastr::fields::VectorField E_fp =  m_fields.get_alldirs(Efield_fp_string, lev);
+            BackwardTransformVect(lev, *spectral_solver_fp[lev], E_fp,
+                                  Idx.Ex, Idx.Ey, Idx.Ez, m_fill_guards_fields);
+        }
+        if (m_fields.has(Bfield_fp_string, lev)) {
+            ablastr::fields::VectorField B_fp =  m_fields.get_alldirs(Bfield_fp_string, lev);
+            BackwardTransformVect(lev, *spectral_solver_fp[lev], B_fp,
+                                  Idx.Bx, Idx.By, Idx.Bz, m_fill_guards_fields);
+        }
 
         if (spectral_solver_cp[lev])
         {
-            BackwardTransformVect(lev, *spectral_solver_cp[lev], E_cp[lev],
-                                  Idx.Ex, Idx.Ey, Idx.Ez, m_fill_guards_fields);
-            BackwardTransformVect(lev, *spectral_solver_cp[lev], B_cp[lev],
-                                  Idx.Bx, Idx.By, Idx.Bz, m_fill_guards_fields);
+            if (m_fields.has(Efield_cp_string, lev)) {
+                ablastr::fields::VectorField E_cp =  m_fields.get_alldirs(Efield_cp_string, lev);
+                BackwardTransformVect(lev, *spectral_solver_cp[lev], E_cp,
+                                      Idx.Ex, Idx.Ey, Idx.Ez, m_fill_guards_fields);
+            }
+            if (m_fields.has(Bfield_cp_string, lev)) {
+                ablastr::fields::VectorField B_cp =  m_fields.get_alldirs(Bfield_cp_string, lev);
+                BackwardTransformVect(lev, *spectral_solver_cp[lev], B_cp,
+                                      Idx.Bx, Idx.By, Idx.Bz, m_fill_guards_fields);
+            }
         }
     }
 
     // Damp the fields in the guard cells
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        DampFieldsInGuards(lev, E_fp[lev], B_fp[lev]);
+        if (m_fields.has(Efield_fp_string, lev) && m_fields.has(Bfield_fp_string, lev)) {
+            ablastr::fields::VectorField E_fp =  m_fields.get_alldirs(Efield_fp_string, lev);
+            ablastr::fields::VectorField B_fp =  m_fields.get_alldirs(Bfield_fp_string, lev);
+            DampFieldsInGuards(lev, E_fp, B_fp);
+        }
     }
 }
 
@@ -775,13 +805,13 @@ WarpX::PushPSATD ()
         PSATDForwardTransformRho(rho_fp, rho_cp, 1, rho_new);
     }
 
-    auto Efield_fp = m_fields.get_mr_levels_alldirs("Efield_fp", finest_level);
-    auto Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
-    auto Efield_cp = m_fields.get_mr_levels_alldirs("Efield_cp", finest_level);
-    auto Bfield_cp = m_fields.get_mr_levels_alldirs("Bfield_cp", finest_level);
+    //auto Efield_fp = m_fields.get_mr_levels_alldirs("Efield_fp", finest_level);
+    //auto Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
+    //auto Efield_cp = m_fields.get_mr_levels_alldirs("Efield_cp", finest_level);
+    //auto Bfield_cp = m_fields.get_mr_levels_alldirs("Bfield_cp", finest_level);
 
     // FFT of E and B
-    PSATDForwardTransformEB(Efield_fp, Bfield_fp, Efield_cp, Bfield_cp );
+    PSATDForwardTransformEB();
 
 #ifdef WARPX_DIM_RZ
     if (pml_rz[0]) { pml_rz[0]->PushPSATD(0); }
@@ -795,10 +825,7 @@ WarpX::PushPSATD ()
     PSATDPushSpectralFields();
 
     // Inverse FFT of E, B, F, and G
-    PSATDBackwardTransformEB( m_fields.get_mr_levels_alldirs("Efield_fp",finest_level),
-                              Bfield_fp,
-                              m_fields.get_mr_levels_alldirs("Efield_cp",finest_level),
-                              Bfield_cp);
+    PSATDBackwardTransformEB();
     if (WarpX::fft_do_time_averaging) {
         auto Efield_avg_fp = m_fields.get_mr_levels_alldirs("Efield_avg_fp", finest_level);
         auto Bfield_avg_fp = m_fields.get_mr_levels_alldirs("Bfield_avg_fp", finest_level);

@@ -1646,40 +1646,14 @@ private:
 
     /**
      * \brief Forward FFT of E,B on all mesh refinement levels
-     *
-     * \param E_fp Vector of three-dimensional arrays (for each level)
-     *             storing the fine patch electric field to be transformed
-     * \param B_fp Vector of three-dimensional arrays (for each level)
-     *             storing the fine patch magnetic field to be transformed
-     * \param E_cp Vector of three-dimensional arrays (for each level)
-     *             storing the coarse patch electric field to be transformed
-     * \param B_cp Vector of three-dimensional arrays (for each level)
-     *             storing the coarse patch magnetic field to be transformed
      */
-    void PSATDForwardTransformEB (
-        const ablastr::fields::MultiLevelVectorField& E_fp,
-        const ablastr::fields::MultiLevelVectorField& B_fp,
-        const ablastr::fields::MultiLevelVectorField& E_cp,
-        const ablastr::fields::MultiLevelVectorField& B_cp);
+    void PSATDForwardTransformEB ();
 
     /**
      * \brief Backward FFT of E,B on all mesh refinement levels,
      *        with field damping in the guard cells (if needed)
-     *
-     * \param E_fp Vector of three-dimensional arrays (for each level)
-     *             storing the fine patch electric field to be transformed
-     * \param B_fp Vector of three-dimensional arrays (for each level)
-     *             storing the fine patch magnetic field to be transformed
-     * \param E_cp Vector of three-dimensional arrays (for each level)
-     *             storing the coarse patch electric field to be transformed
-     * \param B_cp Vector of three-dimensional arrays (for each level)
-     *             storing the coarse patch magnetic field to be transformed
      */
-    void PSATDBackwardTransformEB (
-        const ablastr::fields::MultiLevelVectorField& E_fp,
-        const ablastr::fields::MultiLevelVectorField& B_fp,
-        const ablastr::fields::MultiLevelVectorField& E_cp,
-        const ablastr::fields::MultiLevelVectorField& B_cp);
+    void PSATDBackwardTransformEB ();
 
     /**
      * \brief Backward FFT of averaged E,B on all mesh refinement levels
