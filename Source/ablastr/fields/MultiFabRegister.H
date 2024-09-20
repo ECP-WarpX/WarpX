@@ -283,6 +283,18 @@ namespace ablastr::fields
             int level
         ) const;
 
+        /** Check if a MultiFab vector field is registered.
+         *
+         * @param name the name to check if registered
+         * @param level the MR level to check
+         * @return true if contained, otherwise false
+         */
+        [[nodiscard]] bool
+        has_vector (
+            std::string name,
+            int level
+        ) const;
+
         /** Return a scalar MultiFab (field).
          *
          * This throws a runtime error if the requested field is not present.

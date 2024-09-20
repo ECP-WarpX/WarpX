@@ -111,22 +111,22 @@ void WarpX::PSATDForwardTransformEB ()
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (m_fields.has(Efield_fp_string, lev)) {
+        if (m_fields.has_vector(Efield_fp_string, lev)) {
             ablastr::fields::VectorField E_fp =  m_fields.get_alldirs(Efield_fp_string, lev);
             ForwardTransformVect(lev, *spectral_solver_fp[lev], E_fp, Idx.Ex, Idx.Ey, Idx.Ez);
         }
-        if (m_fields.has(Bfield_fp_string, lev)) {
+        if (m_fields.has_vector(Bfield_fp_string, lev)) {
             ablastr::fields::VectorField B_fp =  m_fields.get_alldirs(Bfield_fp_string, lev);
             ForwardTransformVect(lev, *spectral_solver_fp[lev], B_fp, Idx.Bx, Idx.By, Idx.Bz);
         }
 
         if (spectral_solver_cp[lev])
         {
-            if (m_fields.has(Efield_cp_string, lev)) {
+            if (m_fields.has_vector(Efield_cp_string, lev)) {
                 ablastr::fields::VectorField E_cp =  m_fields.get_alldirs(Efield_cp_string, lev);
                 ForwardTransformVect(lev, *spectral_solver_cp[lev], E_cp, Idx.Ex, Idx.Ey, Idx.Ez);
             }
-            if (m_fields.has(Bfield_cp_string, lev)) {
+            if (m_fields.has_vector(Bfield_cp_string, lev)) {
                 ablastr::fields::VectorField B_cp =  m_fields.get_alldirs(Bfield_cp_string, lev);
                 ForwardTransformVect(lev, *spectral_solver_cp[lev], B_cp, Idx.Bx, Idx.By, Idx.Bz);
             }
@@ -145,12 +145,12 @@ void WarpX::PSATDBackwardTransformEB ()
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (m_fields.has(Efield_fp_string, lev)) {
+        if (m_fields.has_vector(Efield_fp_string, lev)) {
             ablastr::fields::VectorField E_fp =  m_fields.get_alldirs(Efield_fp_string, lev);
             BackwardTransformVect(lev, *spectral_solver_fp[lev], E_fp,
                                   Idx.Ex, Idx.Ey, Idx.Ez, m_fill_guards_fields);
         }
-        if (m_fields.has(Bfield_fp_string, lev)) {
+        if (m_fields.has_vector(Bfield_fp_string, lev)) {
             ablastr::fields::VectorField B_fp =  m_fields.get_alldirs(Bfield_fp_string, lev);
             BackwardTransformVect(lev, *spectral_solver_fp[lev], B_fp,
                                   Idx.Bx, Idx.By, Idx.Bz, m_fill_guards_fields);
@@ -158,12 +158,12 @@ void WarpX::PSATDBackwardTransformEB ()
 
         if (spectral_solver_cp[lev])
         {
-            if (m_fields.has(Efield_cp_string, lev)) {
+            if (m_fields.has_vector(Efield_cp_string, lev)) {
                 ablastr::fields::VectorField E_cp =  m_fields.get_alldirs(Efield_cp_string, lev);
                 BackwardTransformVect(lev, *spectral_solver_cp[lev], E_cp,
                                       Idx.Ex, Idx.Ey, Idx.Ez, m_fill_guards_fields);
             }
-            if (m_fields.has(Bfield_cp_string, lev)) {
+            if (m_fields.has_vector(Bfield_cp_string, lev)) {
                 ablastr::fields::VectorField B_cp =  m_fields.get_alldirs(Bfield_cp_string, lev);
                 BackwardTransformVect(lev, *spectral_solver_cp[lev], B_cp,
                                       Idx.Bx, Idx.By, Idx.Bz, m_fill_guards_fields);
@@ -174,7 +174,7 @@ void WarpX::PSATDBackwardTransformEB ()
     // Damp the fields in the guard cells
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (m_fields.has(Efield_fp_string, lev) && m_fields.has(Bfield_fp_string, lev)) {
+        if (m_fields.has_vector(Efield_fp_string, lev) && m_fields.has_vector(Bfield_fp_string, lev)) {
             ablastr::fields::VectorField E_fp =  m_fields.get_alldirs(Efield_fp_string, lev);
             ablastr::fields::VectorField B_fp =  m_fields.get_alldirs(Bfield_fp_string, lev);
             DampFieldsInGuards(lev, E_fp, B_fp);

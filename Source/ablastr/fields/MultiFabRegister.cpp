@@ -329,6 +329,23 @@ namespace ablastr::fields
         return m_mf_register.count(name) > 0;
     }
 
+    bool
+    MultiFabRegister::has_vector (
+        std::string name,
+        int level
+    ) const
+    {
+        const std::vector<Direction> all_dirs = {Direction{0}, Direction{1}, Direction{2}};
+
+        int count = 0;
+        for (const Direction& dir : all_dirs) {
+            std::string internal_name = mf_name(name, dir, level);
+            count += m_mf_register.count(internal_name);
+        }
+
+        return count == 3;
+    }
+
     amrex::MultiFab*
     MultiFabRegister::internal_get (
         const std::string& key
