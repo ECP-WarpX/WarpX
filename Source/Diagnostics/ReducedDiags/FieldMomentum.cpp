@@ -7,7 +7,7 @@
 
 #include "FieldMomentum.H"
 
-#include "FieldSolver/Fields.H"
+#include "Fields.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "WarpX.H"

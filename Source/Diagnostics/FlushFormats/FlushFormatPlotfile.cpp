@@ -1,6 +1,6 @@
 #include "FlushFormatPlotfile.H"
 
-#include "FieldSolver/Fields.H"
+#include "Fields.H"
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "Particles/Filter/FilterFunctors.H"

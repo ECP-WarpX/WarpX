@@ -35,7 +35,7 @@
 #include <AMReX_SPACE.H>
 #include <AMReX_Vector.H>
 
-#include <FieldSolver/Fields.H>
+#include "Fields.H"
 #include "Utils/Parser/ParserUtils.H"
 
 namespace warpx::initialization {

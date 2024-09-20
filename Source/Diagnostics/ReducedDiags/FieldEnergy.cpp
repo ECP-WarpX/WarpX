@@ -7,7 +7,7 @@
 
 #include "FieldEnergy.H"
 
-#include "FieldSolver/Fields.H"
+#include "Fields.H"
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"

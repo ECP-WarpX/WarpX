@@ -7,7 +7,7 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#include "FieldSolver/Fields.H"
+#include "Fields.H"
 #include "Particles/ParticleIO.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/PhysicalParticleContainer.H"

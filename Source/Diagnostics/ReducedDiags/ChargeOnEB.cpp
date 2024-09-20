@@ -9,7 +9,7 @@
 
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
 #include "EmbeddedBoundary/Enabled.H"
-#include "FieldSolver/Fields.H"
+#include "Fields.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/Parser/ParserUtils.H"

@@ -12,7 +12,7 @@
 #include "ComputeDiagFunctors/RhoFunctor.H"
 #include "Diagnostics/Diagnostics.H"
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
-#include "FieldSolver/Fields.H"
+#include "Fields.H"
 #include "FlushFormats/FlushFormat.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/Algorithms/IsIn.H"

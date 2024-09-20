@@ -9,7 +9,7 @@
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_FIELDREDUCTION_H_
 
 #include "ReducedDiags.H"
-#include "FieldSolver/Fields.H"
+#include "Fields.H"
 #include "WarpX.H"
 
 #include <ablastr/coarsen/sample.H>

@@ -19,7 +19,7 @@
 #else
 #include <FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H>
 #endif
-#include <FieldSolver/Fields.H>
+#include "Fields.H"
 #include <Initialization/ExternalField.H>
 #include <ablastr/utils/Communication.H>
 #include <Utils/WarpXProfilerWrapper.H>

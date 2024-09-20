@@ -1,6 +1,6 @@
 #include "MacroscopicProperties.H"
 
-#include "FieldSolver/Fields.H"
+#include "Fields.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 

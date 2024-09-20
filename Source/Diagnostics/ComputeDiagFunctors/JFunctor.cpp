@@ -6,7 +6,7 @@
 
 #include "JFunctor.H"
 
-#include "FieldSolver/Fields.H"
+#include "Fields.H"
 #include "Particles/MultiParticleContainer.H"
 #include "WarpX.H"
 

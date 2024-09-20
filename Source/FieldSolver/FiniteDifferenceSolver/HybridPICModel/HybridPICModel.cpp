@@ -10,7 +10,7 @@
 #include "HybridPICModel.H"
 
 #include "EmbeddedBoundary/Enabled.H"
-#include "FieldSolver/Fields.H"
+#include "Fields.H"
 #include "WarpX.H"
 
 using namespace amrex;

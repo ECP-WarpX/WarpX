@@ -8,7 +8,7 @@
 #include "PML_RZ.H"
 
 #include "BoundaryConditions/PML_RZ.H"
-#include "FieldSolver/Fields.H"
+#include "Fields.H"
 #ifdef WARPX_USE_FFT
 #   include "FieldSolver/SpectralSolver/SpectralFieldDataRZ.H"
 #endif

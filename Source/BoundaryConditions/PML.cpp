@@ -10,7 +10,7 @@
 
 #include "BoundaryConditions/PML.H"
 #include "BoundaryConditions/PMLComponent.H"
-#include "FieldSolver/Fields.H"
+#include "Fields.H"
 #ifdef WARPX_USE_FFT
 #   include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #endif

@@ -6,7 +6,7 @@
 #include "JdispFunctor.H"
 
 #include "WarpX.H"
-#include "FieldSolver/Fields.H"
+#include "Fields.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #include "Particles/MultiParticleContainer.H"
 

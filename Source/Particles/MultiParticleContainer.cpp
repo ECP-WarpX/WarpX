@@ -11,7 +11,7 @@
  */
 #include "MultiParticleContainer.H"
 
-#include "FieldSolver/Fields.H"
+#include "Fields.H"
 #include "Particles/ElementaryProcess/Ionization.H"
 #ifdef WARPX_QED
 #   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
