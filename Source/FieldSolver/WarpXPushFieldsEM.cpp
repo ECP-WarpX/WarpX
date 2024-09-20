@@ -805,11 +805,6 @@ WarpX::PushPSATD ()
         PSATDForwardTransformRho(rho_fp, rho_cp, 1, rho_new);
     }
 
-    //auto Efield_fp = m_fields.get_mr_levels_alldirs("Efield_fp", finest_level);
-    //auto Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
-    //auto Efield_cp = m_fields.get_mr_levels_alldirs("Efield_cp", finest_level);
-    //auto Bfield_cp = m_fields.get_mr_levels_alldirs("Bfield_cp", finest_level);
-
     // FFT of E and B
     PSATDForwardTransformEB();
 
