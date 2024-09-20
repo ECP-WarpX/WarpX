@@ -2893,7 +2893,11 @@ Time-Averaged Diagnostics
 This type of diagnostics can be created using ``<diag_name>.diag_type = TimeAveraged``.
 We support only field data and related options from the list at `Full Diagnostics`_.
 
-    In addition, `TimeAveraged` diagnostic options include:
+.. note::
+
+    As with ``FullDiagnostics``, ``TimeAveraged`` diagnostics output the initial **instantaneous** conditions of the selected fields on step 0 (unless more specific output intervals exclude output for step 0).
+
+In addition, ``TimeAveraged`` diagnostic options include:
 
 * ``<diag_name>.time_average_mode`` (`string`, default `none`)
     Describes the operating mode for time averaged field output.

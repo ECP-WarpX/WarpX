@@ -36,7 +36,7 @@ private:
      */
     bool m_solver_deposits_current = true;
     /** Whether the diagnostics are averaging data over time or not */
-    TimeAverageType m_time_average_type = TimeAverageType::None;
+    TimeAverageType m_time_average_mode = TimeAverageType::None;
     /** Period to average fields over: in steps */
     int m_average_period_steps = -1;
     /** Period to average fields over: in seconds */
