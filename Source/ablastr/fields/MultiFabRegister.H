@@ -291,7 +291,7 @@ namespace ablastr::fields
          */
         [[nodiscard]] bool
         has_vector (
-            std::string name,
+            std::string const & name,
             int level
         ) const;
 
