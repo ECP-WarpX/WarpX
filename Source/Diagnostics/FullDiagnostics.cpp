@@ -151,6 +151,12 @@ FullDiagnostics::ReadParameters ()
         if (m_time_average_type == TimeAverageType::Static) {
             // This fails if users do not specify a start.
             pp_diag_name.get("average_start_step", m_average_start_step);
+            if (m_average_start_step == 0) {
+                WARPX_ABORT_WITH_MESSAGE(
+                    "Static-start time-averaged diagnostic " + m_diag_name + " requires a positive (non-zero) value "
+                    "for the 'average_start_step' parameter."
+                );
+            }
 
             if (averaging_period_time_specified || averaging_period_steps_specified) {
                 const std::string period_spec_warn_msg = "An averaging period was specified for the 'static_start' averaging mode" \
@@ -173,6 +179,19 @@ FullDiagnostics::ReadParameters ()
                     || !(averaging_period_steps_specified || averaging_period_time_specified)
                     ) {
                 WARPX_ABORT_WITH_MESSAGE("Please specify either 'average_period_steps' or 'average_period_time', not both.");
+            }
+
+            int unused_start_step = -1;
+            const bool averaging_start_on_dynamic_period_specified = pp_diag_name.query("average_start_step", unused_start_step);
+            if (averaging_start_on_dynamic_period_specified) {
+                const std::string start_spec_warn_msg = "An averaging start step was specified for the 'dynamic_start'" \
+                                                         "time-averaged diagnostic " + m_diag_name + " but will be IGNORED. " \
+                                                         "Averaging will begin with the first averaging period.";
+                ablastr::warn_manager::WMRecordWarning(
+                        "Diagnostics",
+                        start_spec_warn_msg,
+                        ablastr::warn_manager::WarnPriority::medium
+                );
             }
         }
     }
@@ -215,7 +234,12 @@ FullDiagnostics::Flush ( int i_buffer, bool /* force_flush */ )
     // is supported for BackTransformed Diagnostics, in BTDiagnostics class.
     auto & warpx = WarpX::GetInstance();
 
-    if (m_diag_type == DiagTypes::TimeAveraged) {
+    // Get the time step on coarsest level.
+    const int step = warpx.getistep(0);
+    // For time-averaged diagnostics, we still write out an instantaneous diagnostic on step 0
+    // to accommodate a user workflow that only uses that type of diagnostic.
+    // This allows for quicker turnaround in setup by avoiding having to set an additional instantaneous diagnostic.
+    if (m_diag_type == DiagTypes::TimeAveraged && step > 0) {
         if (m_time_average_type == TimeAverageType::Static || m_time_average_type == TimeAverageType::Dynamic) {
             // Loop over the output levels and divide by the number of steps in the averaging period
             for (int lev = 0; lev < nlev_output; ++lev) {
@@ -228,13 +252,25 @@ FullDiagnostics::Flush ( int i_buffer, bool /* force_flush */ )
                     m_output_species.at(i_buffer), nlev_output, m_file_prefix,
                     m_file_min_digits, m_plot_raw_fields, m_plot_raw_fields_guards);
 
+            // Reset the values in the dynamic start time-averaged diagnostics after flush
+            if (m_time_average_type == TimeAverageType::Dynamic) {
+                for (int lev = 0; lev < nlev_output; ++lev) {
+                    m_sum_mf_output.at(i_buffer).at(lev).setVal(0.);
+                }
+            }
         }
     } else {
-    m_flush_format->WriteToFile(
-        m_varnames, m_mf_output.at(i_buffer), m_geom_output.at(i_buffer), warpx.getistep(),
-        warpx.gett_new(0),
-        m_output_species.at(i_buffer), nlev_output, m_file_prefix,
-        m_file_min_digits, m_plot_raw_fields, m_plot_raw_fields_guards);
+        if (m_diag_type == DiagTypes::TimeAveraged && step == 0) {
+            // For both dynamic_start and fixed_start at step 0 we prepare an instantaneous output
+            amrex::Print() << Utils::TextMsg::Info("Time-averaged diagnostic " + m_diag_name
+                                                   + " is preparing an instantaneous output during step " + std::to_string(step));
+        }
+
+        m_flush_format->WriteToFile(
+            m_varnames, m_mf_output.at(i_buffer), m_geom_output.at(i_buffer), warpx.getistep(),
+            warpx.gett_new(0),
+            m_output_species.at(i_buffer), nlev_output, m_file_prefix,
+            m_file_min_digits, m_plot_raw_fields, m_plot_raw_fields_guards);
     }
 
     FlushRaw();
@@ -258,59 +294,56 @@ FullDiagnostics::DoDump (int step, int /*i_buffer*/, bool force_flush)
 bool
 FullDiagnostics::DoComputeAndPack (int step, bool force_flush)
 {
-
     // Start averaging at output step (from diag.intervals) - period + 1
     bool in_averaging_period = false;
     if (m_diag_type == DiagTypes::TimeAveraged) {
 
-        // TODO we need a good solution to avoid that there is output at step 0
-        if (step == 0) {
-            return false;
-        }
+        if (step > 0) {
 
-        if (m_time_average_type == TimeAverageType::Dynamic) {
-            m_average_start_step = m_intervals.nextContains(step) - m_average_period_steps;
-            // check that the periods do not overlap and that the start step is not negative
-            if (m_average_start_step >= 0) {
-                // The start step cannot be on an interval step because then we would begin a new period and also output the old one
-                if (m_average_start_step <= m_intervals.previousContains(step)) {
+            if (m_time_average_type == TimeAverageType::Dynamic) {
+                m_average_start_step = m_intervals.nextContains(step) - m_average_period_steps;
+                // check that the periods do not overlap and that the start step is not negative
+                if (m_average_start_step > 0) {
+                    // The start step cannot be on an interval step because then we would begin a new period and also output the old one
+                    if (m_average_start_step <= m_intervals.previousContains(step)) {
+                        WARPX_ABORT_WITH_MESSAGE(
+                                "Averaging periods may not overlap within a single diagnostic. "
+                                "Please create a second diagnostic for overlapping time averaging periods "
+                                "and account for the increased memory consumption."
+                        );
+                    }
+                } else {
                     WARPX_ABORT_WITH_MESSAGE(
-                            "Averaging periods may not overlap within a single diagnostic. "
-                            "Please create a second diagnostic for overlapping time averaging periods "
-                            "and account for the increased memory consumption."
+                            "The step to begin time averaging ("
+                            + std::to_string(m_average_start_step)
+                            + ") for diagnostic " + m_diag_name + " must be a positive number."
                     );
                 }
 
-            } else {
-                WARPX_ABORT_WITH_MESSAGE(
-                        "The step to begin time averaging ("
-                        + std::to_string(m_average_start_step)
-                        + ") may not be a negative number."
+                if (step >= m_average_start_step && step <= m_intervals.nextContains(step)) {
+                    in_averaging_period = true;
+
+                    if (m_time_average_type == TimeAverageType::Static) {
+                        // Update time averaging period to current step
+                        m_average_period_steps = step - m_average_start_step;
+                    }
+                }
+                // Print information on when time-averaging is active
+                if (in_averaging_period) {
+                    if (step == m_average_start_step) {
+                        amrex::Print() << Utils::TextMsg::Info(
+                                "Begin time averaging for " + m_diag_name + " and output at step "
+                                + std::to_string(m_intervals.nextContains(step))
                         );
-            }
-        }
-
-        if (step >= m_average_start_step && step <= m_intervals.nextContains(step)) {
-            in_averaging_period = true;
-
-            if (m_time_average_type == TimeAverageType::Static) {
-                // Update time averaging period to current step
-                m_average_period_steps = step - m_average_start_step;
-            }
-        }
-        // Print information on when time-averaging is active
-        if (in_averaging_period) {
-            if (step == m_average_start_step) {
-                amrex::Print() << Utils::TextMsg::Info(
-                        "Begin time averaging for " + m_diag_name + " and output at step "
-                        + std::to_string(m_intervals.nextContains(step))
-                );
-            } else {
-                amrex::Print() << Utils::TextMsg::Info("Time-averaging during this step for diagnostic: " + m_diag_name);
+                    } else {
+                        amrex::Print()
+                                << Utils::TextMsg::Info(
+                                        "Time-averaging during this step for diagnostic: " + m_diag_name);
+                    }
+                }
             }
         }
     }
-
     // Data must be computed and packed for full diagnostics
     // whenever the data needs to be flushed.
     return (force_flush || m_intervals.contains(step+1) || in_averaging_period);
