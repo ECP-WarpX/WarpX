@@ -19,12 +19,12 @@ const Array<FieldBoundaryType,AMREX_SPACEDIM>& ImplicitSolver::GetFieldBoundaryH
     return m_WarpX->GetFieldBoundaryHi();
 }
 
-const Array<LinOpBCType,AMREX_SPACEDIM> ImplicitSolver::GetLinOpBCLo () const
+Array<LinOpBCType,AMREX_SPACEDIM> ImplicitSolver::GetLinOpBCLo () const
 {
     return convertFieldBCToLinOpBC(m_WarpX->GetFieldBoundaryLo());
 }
 
-const Array<LinOpBCType,AMREX_SPACEDIM> ImplicitSolver::GetLinOpBCHi () const
+Array<LinOpBCType,AMREX_SPACEDIM> ImplicitSolver::GetLinOpBCHi () const
 {
     return convertFieldBCToLinOpBC(m_WarpX->GetFieldBoundaryHi());
 }
