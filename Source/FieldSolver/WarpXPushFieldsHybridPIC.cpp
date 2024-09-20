@@ -22,7 +22,6 @@ using namespace amrex;
 void WarpX::HybridPICEvolveFields ()
 {
     using ablastr::fields::Direction;
-    using ablastr::fields::va2vm;
 
     WARPX_PROFILE("WarpX::HybridPICEvolveFields()");
 
@@ -192,8 +191,6 @@ void WarpX::HybridPICEvolveFields ()
 
 void WarpX::HybridPICDepositInitialRhoAndJ ()
 {
-    using ablastr::fields::va2vm;
-
     ablastr::fields::MultiLevelScalarField rho_fp_temp = m_fields.get_mr_levels("hybrid_rho_fp_temp", finest_level);
     ablastr::fields::MultiLevelVectorField current_fp_temp = m_fields.get_mr_levels_alldirs("hybrid_current_fp_temp", finest_level);
     mypc->DepositCharge(rho_fp_temp, 0._rt);
