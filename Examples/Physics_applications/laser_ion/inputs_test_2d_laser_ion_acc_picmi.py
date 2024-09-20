@@ -162,6 +162,18 @@ field_diag = picmi.FieldDiagnostic(
     warpx_openpmd_backend="h5",
 )
 
+field_time_avg_diag = picmi.TimeAveragedFieldDiagnostic(
+    name="diagTimeAvg",
+    grid=grid,
+    period=100,
+    number_of_cells=ncell_field,
+    data_list=["B", "E", "J", "rho", "rho_electrons", "rho_hydrogen"],
+    warpx_format="openpmd",
+    warpx_openpmd_backend="h5",
+    warpx_time_average_mode="dynamic_start",
+    warpx_average_period_steps=10,
+)
+
 particle_fw_diag = picmi.ParticleDiagnostic(
     name="openPMDfw",
     period=100,
@@ -292,6 +304,7 @@ sim.add_laser(laser, injection_method=laser_antenna)
 # Add full diagnostics
 sim.add_diagnostic(particle_diag)
 sim.add_diagnostic(field_diag)
+sim.add_diagnostic(field_time_avg_diag)
 sim.add_diagnostic(particle_fw_diag)
 sim.add_diagnostic(particle_bw_diag)
 # Add reduced diagnostics

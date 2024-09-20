@@ -61,7 +61,7 @@ void
 FullDiagnostics::DerivedInitData() {
     if (m_diag_type == DiagTypes::TimeAveraged) {
         auto & warpx = WarpX::GetInstance();
-        if (m_time_average_type == TimeAverageType::Dynamic) {
+        if (m_time_average_mode == TimeAverageType::Dynamic) {
 
             // already checked in ReadParameters that only one of the parameters is set
             // calculate the other averaging period parameter from the other one, respectively
@@ -130,11 +130,11 @@ FullDiagnostics::ReadParameters ()
         pp_diag_name.get("time_average_mode", m_time_average_mode_str);
 
         if (m_time_average_mode_str == "fixed_start") {
-                m_time_average_type = TimeAverageType::Static;
+            m_time_average_mode = TimeAverageType::Static;
             } else if (m_time_average_mode_str == "dynamic_start") {
-                m_time_average_type = TimeAverageType::Dynamic;
+            m_time_average_mode = TimeAverageType::Dynamic;
             } else if (m_time_average_mode_str == "none") {
-                m_time_average_type = TimeAverageType::None;
+            m_time_average_mode = TimeAverageType::None;
             } else {
             WARPX_ABORT_WITH_MESSAGE(
                     "Unknown time averaging mode. Valid entries are: none, fixed_start, dynamic_start"
@@ -148,7 +148,7 @@ FullDiagnostics::ReadParameters ()
                 "average_period_time", m_average_period_time
         );
 
-        if (m_time_average_type == TimeAverageType::Static) {
+        if (m_time_average_mode == TimeAverageType::Static) {
             // This fails if users do not specify a start.
             pp_diag_name.get("average_start_step", m_average_start_step);
             if (m_average_start_step == 0) {
@@ -172,7 +172,7 @@ FullDiagnostics::ReadParameters ()
 
         }
 
-        if (m_time_average_type == TimeAverageType::Dynamic) {
+        if (m_time_average_mode == TimeAverageType::Dynamic) {
             // one of the two averaging period options must be set but neither none nor both
             if (
                     (averaging_period_steps_specified && averaging_period_time_specified)
@@ -240,7 +240,7 @@ FullDiagnostics::Flush ( int i_buffer, bool /* force_flush */ )
     // to accommodate a user workflow that only uses that type of diagnostic.
     // This allows for quicker turnaround in setup by avoiding having to set an additional instantaneous diagnostic.
     if (m_diag_type == DiagTypes::TimeAveraged && step > 0) {
-        if (m_time_average_type == TimeAverageType::Static || m_time_average_type == TimeAverageType::Dynamic) {
+        if (m_time_average_mode == TimeAverageType::Static || m_time_average_mode == TimeAverageType::Dynamic) {
             // Loop over the output levels and divide by the number of steps in the averaging period
             for (int lev = 0; lev < nlev_output; ++lev) {
                 m_sum_mf_output.at(i_buffer).at(lev).mult(1._rt/static_cast<amrex::Real>(m_average_period_steps));
@@ -253,7 +253,7 @@ FullDiagnostics::Flush ( int i_buffer, bool /* force_flush */ )
                     m_file_min_digits, m_plot_raw_fields, m_plot_raw_fields_guards);
 
             // Reset the values in the dynamic start time-averaged diagnostics after flush
-            if (m_time_average_type == TimeAverageType::Dynamic) {
+            if (m_time_average_mode == TimeAverageType::Dynamic) {
                 for (int lev = 0; lev < nlev_output; ++lev) {
                     m_sum_mf_output.at(i_buffer).at(lev).setVal(0.);
                 }
@@ -300,12 +300,12 @@ FullDiagnostics::DoComputeAndPack (int step, bool force_flush)
 
         if (step > 0) {
 
-            if (m_time_average_type == TimeAverageType::Dynamic) {
+            if (m_time_average_mode == TimeAverageType::Dynamic) {
                 m_average_start_step = m_intervals.nextContains(step) - m_average_period_steps;
                 // check that the periods do not overlap and that the start step is not negative
                 if (m_average_start_step > 0) {
                     // The start step cannot be on an interval step because then we would begin a new period and also output the old one
-                    if (m_average_start_step <= m_intervals.previousContains(step)) {
+                    if (m_average_start_step < m_intervals.previousContains(step)) {
                         WARPX_ABORT_WITH_MESSAGE(
                                 "Averaging periods may not overlap within a single diagnostic. "
                                 "Please create a second diagnostic for overlapping time averaging periods "
@@ -323,7 +323,7 @@ FullDiagnostics::DoComputeAndPack (int step, bool force_flush)
                 if (step >= m_average_start_step && step <= m_intervals.nextContains(step)) {
                     in_averaging_period = true;
 
-                    if (m_time_average_type == TimeAverageType::Static) {
+                    if (m_time_average_mode == TimeAverageType::Static) {
                         // Update time averaging period to current step
                         m_average_period_steps = step - m_average_start_step;
                     }
