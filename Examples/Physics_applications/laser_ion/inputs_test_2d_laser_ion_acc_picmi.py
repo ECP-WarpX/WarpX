@@ -171,7 +171,7 @@ field_time_avg_diag = picmi.TimeAveragedFieldDiagnostic(
     warpx_format="openpmd",
     warpx_openpmd_backend="h5",
     warpx_time_average_mode="dynamic_start",
-    warpx_average_period_steps=10,
+    warpx_average_period_time=2.67e-15,
 )
 
 particle_fw_diag = picmi.ParticleDiagnostic(

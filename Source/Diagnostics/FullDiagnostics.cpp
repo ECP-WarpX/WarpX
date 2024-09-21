@@ -159,10 +159,10 @@ FullDiagnostics::ReadParameters ()
             }
 
             if (averaging_period_time_specified || averaging_period_steps_specified) {
-                const std::string period_spec_warn_msg = "An averaging period was specified for the 'static_start' averaging mode" \
-                                                         "but will be IGNORED. Averaging will be performed between step" \
+                const std::string period_spec_warn_msg = "An averaging period was specified for the 'static_start' averaging mode " \
+                                                         "but will be IGNORED. Averaging will be performed between step " \
                                                          + std::to_string(m_average_start_step) \
-                                                         + "and the specified intervals.";
+                                                         + " and the specified intervals.";
                 ablastr::warn_manager::WMRecordWarning(
                         "Diagnostics",
                         period_spec_warn_msg,
