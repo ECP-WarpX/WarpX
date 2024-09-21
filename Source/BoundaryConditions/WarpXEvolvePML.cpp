@@ -284,7 +284,7 @@ WarpX::DampJPML (int lev, PatchType patch_type)
             // Skip the field update if this gridpoint is inside the embedded boundary
             amrex::Array4<amrex::Real> eb_lxfab, eb_lyfab, eb_lzfab;
             if (EB::enabled()) {
-                const auto &pml_edge_lenghts = m_fields.get_alldirs("pmg_edge_lengths", lev);
+                const auto &pml_edge_lenghts = m_fields.get_alldirs("pml_edge_lengths", lev);
 
                 eb_lxfab = pml_edge_lenghts[0]->array(mfi);
                 eb_lyfab = pml_edge_lenghts[1]->array(mfi);
