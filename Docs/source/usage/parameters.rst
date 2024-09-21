@@ -2929,6 +2929,7 @@ BackTransformed Diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``BackTransformed`` diag type are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame. This option can be set using ``<diag_name>.diag_type = BackTransformed``. We support the following list of options from `Full Diagnostics`_
+
     ``<diag_name>.format``, ``<diag_name>.openpmd_backend``, ``<diag_name>.dump_rz_modes``, ``<diag_name>.file_prefix``, ``<diag_name>.diag_lo``, ``<diag_name>.diag_hi``, ``<diag_name>.write_species``, ``<diag_name>.species``.
 
     Additional options for this diagnostic include:
@@ -3519,7 +3520,7 @@ Reduced Diagnostics
         :math:`\int d\mathcal{E}^* \frac{d\mathcal{L}}{d\mathcal{E}^*} (\mathcal{E}^*, t)\sigma^*(\mathcal{E}^*)`
         gives the total number of collisions of that process (from the beginning of the simulation up until time :math:`t`).
 
-         The differential luminosity is given in units of :math:`\text{m}^{-2}.\text{eV}^{-1}`. For collider-relevant WarpX simulations
+        The differential luminosity is given in units of :math:`\text{m}^{-2}.\text{eV}^{-1}`. For collider-relevant WarpX simulations
         involving two crossing, high-energy beams of particles, the differential luminosity in :math:`\text{s}^{-1}.\text{m}^{-2}.\text{eV}^{-1}`
         can be obtained by multiplying the above differential luminosity by the expected repetition rate of the beams.
 
