@@ -10,6 +10,7 @@
 
 #include "BoundaryConditions/PML.H"
 #include "Evolve/WarpXDtType.H"
+#include "Fields.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #if defined(WARPX_USE_FFT)
 #   include "FieldSolver/SpectralSolver/SpectralFieldData.H"
@@ -53,6 +54,7 @@
 #include <memory>
 
 using namespace amrex;
+using warpx::fields::FieldType;
 
 #ifdef WARPX_USE_FFT
 namespace {
@@ -214,14 +216,14 @@ WarpX::PSATDForwardTransformF ()
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (m_fields.has("F_fp", lev)) {
-            spectral_solver_fp[lev]->ForwardTransform(lev, *m_fields.get("F_fp", lev), Idx.F);
+        if (m_fields.has(FieldType::F_fp, lev)) {
+            spectral_solver_fp[lev]->ForwardTransform(lev, *m_fields.get(FieldType::F_fp, lev), Idx.F);
         }
 
         if (spectral_solver_cp[lev])
         {
-            if (m_fields.has("F_cp", lev)) {
-                spectral_solver_cp[lev]->ForwardTransform(lev, *m_fields.get("F_cp", lev), Idx.F);
+            if (m_fields.has(FieldType::F_cp, lev)) {
+                spectral_solver_cp[lev]->ForwardTransform(lev, *m_fields.get(FieldType::F_cp, lev), Idx.F);
             }
         }
     }
@@ -235,17 +237,17 @@ WarpX::PSATDBackwardTransformF ()
     for (int lev = 0; lev <= finest_level; ++lev)
     {
 #ifdef WARPX_DIM_RZ
-        if (m_fields.has("F_fp", lev)) { spectral_solver_fp[lev]->BackwardTransform(lev, *m_fields.get("F_fp", lev), Idx.F); }
+        if (m_fields.has(FieldType::F_fp, lev)) { spectral_solver_fp[lev]->BackwardTransform(lev, *m_fields.get(FieldType::F_fp, lev), Idx.F); }
 #else
-        if (m_fields.has("F_fp", lev)) { spectral_solver_fp[lev]->BackwardTransform(lev, *m_fields.get("F_fp", lev), Idx.F, m_fill_guards_fields); }
+        if (m_fields.has(FieldType::F_fp, lev)) { spectral_solver_fp[lev]->BackwardTransform(lev, *m_fields.get(FieldType::F_fp, lev), Idx.F, m_fill_guards_fields); }
 #endif
 
         if (spectral_solver_cp[lev])
         {
 #ifdef WARPX_DIM_RZ
-            if (m_fields.has("F_cp", lev)) { spectral_solver_cp[lev]->BackwardTransform(lev, *m_fields.get("F_cp", lev), Idx.F); }
+            if (m_fields.has(FieldType::F_cp, lev)) { spectral_solver_cp[lev]->BackwardTransform(lev, *m_fields.get(FieldType::F_cp, lev), Idx.F); }
 #else
-            if (m_fields.has("F_cp", lev)) { spectral_solver_cp[lev]->BackwardTransform(lev, *m_fields.get("F_cp", lev), Idx.F, m_fill_guards_fields); }
+            if (m_fields.has(FieldType::F_cp, lev)) { spectral_solver_cp[lev]->BackwardTransform(lev, *m_fields.get(FieldType::F_cp, lev), Idx.F, m_fill_guards_fields); }
 #endif
         }
     }
@@ -253,7 +255,7 @@ WarpX::PSATDBackwardTransformF ()
     // Damp the field in the guard cells
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        DampFieldsInGuards(lev, m_fields.get("F_fp", lev));
+        DampFieldsInGuards(lev, m_fields.get(FieldType::F_fp, lev));
     }
 }
 
@@ -264,14 +266,14 @@ WarpX::PSATDForwardTransformG ()
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (m_fields.has("G_fp", lev)) {
-            spectral_solver_fp[lev]->ForwardTransform(lev, *m_fields.get("G_fp", lev), Idx.G);
+        if (m_fields.has(FieldType::G_fp, lev)) {
+            spectral_solver_fp[lev]->ForwardTransform(lev, *m_fields.get(FieldType::G_fp, lev), Idx.G);
         }
 
         if (spectral_solver_cp[lev])
         {
-            if (m_fields.has("G_cp", lev)) {
-                spectral_solver_fp[lev]->ForwardTransform(lev, *m_fields.get("G_cp", lev), Idx.G);
+            if (m_fields.has(FieldType::G_cp, lev)) {
+                spectral_solver_fp[lev]->ForwardTransform(lev, *m_fields.get(FieldType::G_cp, lev), Idx.G);
             }
         }
     }
@@ -284,8 +286,8 @@ WarpX::PSATDBackwardTransformG ()
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (m_fields.has("G_fp", lev)) {
-            MultiFab* G_fp = m_fields.get("G_fp", lev);
+        if (m_fields.has(FieldType::G_fp, lev)) {
+            MultiFab* G_fp = m_fields.get(FieldType::G_fp, lev);
 #ifdef WARPX_DIM_RZ
             spectral_solver_fp[lev]->BackwardTransform(lev, *G_fp, Idx.G);
 #else
@@ -297,8 +299,8 @@ WarpX::PSATDBackwardTransformG ()
 
         if (spectral_solver_cp[lev])
         {
-            if (m_fields.has("G_cp", lev)) {
-                MultiFab* G_cp = m_fields.get("G_cp", lev);
+            if (m_fields.has(FieldType::G_cp, lev)) {
+                MultiFab* G_cp = m_fields.get(FieldType::G_cp, lev);
 #ifdef WARPX_DIM_RZ
                 spectral_solver_fp[lev]->BackwardTransform(lev, *G_cp, Idx.G);
 #else
@@ -505,15 +507,15 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
     {
         const std::array<amrex::Real,3>& dx = WarpX::CellSize(lev);
 
-        amrex::MultiFab const& Dx = *m_fields.get("current_fp_vay", Direction{0}, lev);
-        amrex::MultiFab const& Dy = *m_fields.get("current_fp_vay", Direction{1}, lev);
-        amrex::MultiFab const& Dz = *m_fields.get("current_fp_vay", Direction{2}, lev);
+        amrex::MultiFab const& Dx = *m_fields.get(FieldType::current_fp_vay, Direction{0}, lev);
+        amrex::MultiFab const& Dy = *m_fields.get(FieldType::current_fp_vay, Direction{1}, lev);
+        amrex::MultiFab const& Dz = *m_fields.get(FieldType::current_fp_vay, Direction{2}, lev);
 
 #if defined (WARPX_DIM_XZ)
         amrex::ignore_unused(Dy);
 #endif
 
-    amrex::MultiFab& Jx = *m_fields.get("current_fp", Direction{0}, lev);
+    amrex::MultiFab& Jx = *m_fields.get(FieldType::current_fp, Direction{0}, lev);
 
 
 #ifdef AMREX_USE_OMP
@@ -544,7 +546,7 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
 
 #if defined (WARPX_DIM_3D)
         // Subtract average of cumulative sum from Jy
-        amrex::MultiFab& Jy = *m_fields.get("current_fp", Direction{1}, lev);;
+        amrex::MultiFab& Jy = *m_fields.get(FieldType::current_fp, Direction{1}, lev);;
         for (amrex::MFIter mfi(Jy); mfi.isValid(); ++mfi)
         {
             const amrex::Box& bx = mfi.fabbox();
@@ -569,7 +571,7 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
 #endif
 
         // Subtract average of cumulative sum from Jz
-        amrex::MultiFab& Jz = *m_fields.get("current_fp", Direction{2}, lev);
+        amrex::MultiFab& Jz = *m_fields.get(FieldType::current_fp, Direction{2}, lev);
         for (amrex::MFIter mfi(Jz); mfi.isValid(); ++mfi)
         {
             const amrex::Box& bx = mfi.fabbox();
@@ -725,7 +727,7 @@ WarpX::PushPSATD ()
     std::string const rho_fp_string = "rho_fp";
     std::string const rho_cp_string = "rho_cp";
 
-    const ablastr::fields::MultiLevelVectorField current_fp = m_fields.get_mr_levels_alldirs("current_fp", finest_level);
+    const ablastr::fields::MultiLevelVectorField current_fp = m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level);
     std::string current_fp_string = "current_fp";
     std::string const current_cp_string = "current_cp";
 
@@ -848,10 +850,10 @@ WarpX::PushPSATD ()
     // Inverse FFT of E, B, F, and G
     PSATDBackwardTransformEB();
     if (WarpX::fft_do_time_averaging) {
-        auto Efield_avg_fp = m_fields.get_mr_levels_alldirs("Efield_avg_fp", finest_level);
-        auto Bfield_avg_fp = m_fields.get_mr_levels_alldirs("Bfield_avg_fp", finest_level);
-        auto Efield_avg_cp = m_fields.get_mr_levels_alldirs("Efield_avg_cp", finest_level);
-        auto Bfield_avg_cp = m_fields.get_mr_levels_alldirs("Bfield_avg_cp", finest_level);
+        auto Efield_avg_fp = m_fields.get_mr_levels_alldirs(FieldType::Efield_avg_fp, finest_level);
+        auto Bfield_avg_fp = m_fields.get_mr_levels_alldirs(FieldType::Bfield_avg_fp, finest_level);
+        auto Efield_avg_cp = m_fields.get_mr_levels_alldirs(FieldType::Efield_avg_cp, finest_level);
+        auto Bfield_avg_cp = m_fields.get_mr_levels_alldirs(FieldType::Bfield_avg_cp, finest_level);
         PSATDBackwardTransformEBavg(Efield_avg_fp, Bfield_avg_fp, Efield_avg_cp, Bfield_avg_cp);
     }
     if (WarpX::do_dive_cleaning) { PSATDBackwardTransformF(); }
@@ -956,13 +958,13 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
         m_fdtd_solver_fp[lev]->EvolveE( m_fields,
                                         lev,
                                         patch_type,
-                                        m_fields.get_alldirs("Efield_fp",lev),
+                                        m_fields.get_alldirs(FieldType::Efield_fp, lev),
                                         a_dt );
     } else {
         m_fdtd_solver_cp[lev]->EvolveE( m_fields,
                                         lev,
                                         patch_type,
-                                        m_fields.get_alldirs("Efield_cp",lev),
+                                        m_fields.get_alldirs(FieldType::Efield_cp, lev),
                                         a_dt );
     }
 
@@ -992,16 +994,16 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
 #ifdef AMREX_USE_EB
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
         if (patch_type == PatchType::fine) {
-            m_fdtd_solver_fp[lev]->EvolveECTRho( m_fields.get_alldirs("Efield_fp",lev),
-                                                 m_fields.get_alldirs("edge_lengths", lev),
-                                                 m_fields.get_alldirs("face_areas", lev),
-                                                 m_fields.get_alldirs("ECTRhofield", lev),
+            m_fdtd_solver_fp[lev]->EvolveECTRho( m_fields.get_alldirs(FieldType::Efield_fp, lev),
+                                                 m_fields.get_alldirs(FieldType::edge_lengths, lev),
+                                                 m_fields.get_alldirs(FieldType::face_areas, lev),
+                                                 m_fields.get_alldirs(FieldType::ECTRhofield, lev),
                                                  lev );
         } else {
-            m_fdtd_solver_cp[lev]->EvolveECTRho( m_fields.get_alldirs("Efield_cp",lev),
-                                                 m_fields.get_alldirs("edge_lengths", lev),
-                                                 m_fields.get_alldirs("face_areas", lev),
-                                                 m_fields.get_alldirs("ECTRhofield", lev),
+            m_fdtd_solver_cp[lev]->EvolveECTRho( m_fields.get_alldirs(FieldType::Efield_cp, lev),
+                                                 m_fields.get_alldirs(FieldType::edge_lengths, lev),
+                                                 m_fields.get_alldirs(FieldType::face_areas, lev),
+                                                 m_fields.get_alldirs(FieldType::ECTRhofield, lev),
                                                  lev);
         }
     }
@@ -1040,26 +1042,26 @@ WarpX::EvolveF (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
 
     // Evolve F field in regular cells
     if (patch_type == PatchType::fine) {
-        m_fdtd_solver_fp[lev]->EvolveF( m_fields.get("F_fp", lev),
-                                        m_fields.get_alldirs("Efield_fp", lev),
-                                        m_fields.get("rho_fp",lev), rhocomp, a_dt );
+        m_fdtd_solver_fp[lev]->EvolveF( m_fields.get(FieldType::F_fp, lev),
+                                        m_fields.get_alldirs(FieldType::Efield_fp, lev),
+                                        m_fields.get(FieldType::rho_fp,lev), rhocomp, a_dt );
     } else {
-        m_fdtd_solver_cp[lev]->EvolveF( m_fields.get("F_cp", lev),
-                                        m_fields.get_alldirs("Efield_cp", lev),
-                                        m_fields.get("rho_cp",lev), rhocomp, a_dt );
+        m_fdtd_solver_cp[lev]->EvolveF( m_fields.get(FieldType::F_cp, lev),
+                                        m_fields.get_alldirs(FieldType::Efield_cp, lev),
+                                        m_fields.get(FieldType::rho_cp,lev), rhocomp, a_dt );
     }
 
     // Evolve F field in PML cells
     if (do_pml && pml[lev]->ok()) {
         if (patch_type == PatchType::fine) {
             m_fdtd_solver_fp[lev]->EvolveFPML(
-                m_fields.get("pml_F_fp", lev),
-                m_fields.get_alldirs("pml_E_fp", lev),
+                m_fields.get(FieldType::pml_F_fp, lev),
+                m_fields.get_alldirs(FieldType::pml_E_fp, lev),
                 a_dt );
         } else {
             m_fdtd_solver_cp[lev]->EvolveFPML(
-                m_fields.get("pml_F_cp", lev),
-                m_fields.get_alldirs("pml_E_cp", lev),
+                m_fields.get(FieldType::pml_F_cp, lev),
+                m_fields.get_alldirs(FieldType::pml_E_cp, lev),
                 a_dt );
         }
     }
@@ -1099,16 +1101,16 @@ WarpX::EvolveG (int lev, PatchType patch_type, amrex::Real a_dt, DtType /*a_dt_t
     // Evolve G field in regular cells
     if (patch_type == PatchType::fine)
     {
-        ablastr::fields::MultiLevelVectorField const& Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
+        ablastr::fields::MultiLevelVectorField const& Bfield_fp = m_fields.get_mr_levels_alldirs(FieldType::Bfield_fp, finest_level);
         m_fdtd_solver_fp[lev]->EvolveG(
-            m_fields.get("G_fp", lev),
+            m_fields.get(FieldType::G_fp, lev),
             Bfield_fp[lev], a_dt);
     }
     else // coarse patch
     {
-        ablastr::fields::MultiLevelVectorField const& Bfield_cp_new = m_fields.get_mr_levels_alldirs("Bfield_cp", finest_level);
+        ablastr::fields::MultiLevelVectorField const& Bfield_cp_new = m_fields.get_mr_levels_alldirs(FieldType::Bfield_cp, finest_level);
         m_fdtd_solver_cp[lev]->EvolveG(
-            m_fields.get("G_cp", lev),
+            m_fields.get(FieldType::G_cp, lev),
             Bfield_cp_new[lev], a_dt);
     }
 
@@ -1145,10 +1147,10 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
     );
 
     m_fdtd_solver_fp[lev]->MacroscopicEvolveE(
-        m_fields.get_alldirs("Efield_fp", lev),
-        m_fields.get_alldirs("Bfield_fp", lev),
-        m_fields.get_alldirs("current_fp", lev),
-        m_fields.get_alldirs("edge_lengths", lev),
+        m_fields.get_alldirs(FieldType::Efield_fp, lev),
+        m_fields.get_alldirs(FieldType::Bfield_fp, lev),
+        m_fields.get_alldirs(FieldType::current_fp, lev),
+        m_fields.get_alldirs(FieldType::edge_lengths, lev),
         a_dt, m_macroscopic_properties);
 
     if (do_pml && pml[lev]->ok()) {

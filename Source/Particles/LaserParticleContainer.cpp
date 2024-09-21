@@ -10,6 +10,7 @@
 
 #include "Evolve/WarpXDtType.H"
 #include "Evolve/WarpXPushType.H"
+#include "Fields.H"
 #include "Laser/LaserProfiles.H"
 #include "Particles/LaserParticleContainer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
@@ -562,6 +563,7 @@ LaserParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
                                 Real t, Real dt, DtType /*a_dt_type*/, bool skip_deposition, PushType push_type)
 {
     using ablastr::fields::Direction;
+    using warpx::fields::FieldType;
 
     WARPX_PROFILE("LaserParticleContainer::Evolve()");
     WARPX_PROFILE_VAR_NS("LaserParticleContainer::Evolve::ParticlePush", blp_pp);
@@ -579,12 +581,12 @@ LaserParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
     // Update laser profile
     m_up_laser_profile->update(t_lab);
 
-    BL_ASSERT(OnSameGrids(lev, *fields.get("current_fp", Direction{0}, lev)));
+    BL_ASSERT(OnSameGrids(lev, *fields.get(FieldType::current_fp, Direction{0}, lev)));
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
-    const bool has_rho = fields.has("rho_fp", lev);
-    const bool has_buffer = fields.has("current_buf", lev);
+    const bool has_rho = fields.has(FieldType::rho_fp, lev);
+    const bool has_buffer = fields.has(FieldType::current_buf, lev);
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -626,11 +628,11 @@ LaserParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
 
             if (has_rho && ! skip_deposition && ! do_not_deposit) {
                 int* AMREX_RESTRICT ion_lev = nullptr;
-                amrex::MultiFab* rho = fields.get("rho_fp", lev);
+                amrex::MultiFab* rho = fields.get(FieldType::rho_fp, lev);
                 DepositCharge(pti, wp, ion_lev, rho, 0, 0,
                               np_current, thread_num, lev, lev);
                 if (has_buffer) {
-                    amrex::MultiFab* crho = fields.get("rho_buf", lev);
+                    amrex::MultiFab* crho = fields.get(FieldType::rho_buf, lev);
                     DepositCharge(pti, wp, ion_lev, crho, 0, np_current,
                                   np-np_current, thread_num, lev, lev-1);
                 }
@@ -676,9 +678,9 @@ LaserParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
                 if (has_buffer)
                 {
                     // Deposit in buffers
-                    amrex::MultiFab * cjx = fields.get("current_buf", Direction{0}, lev);
-                    amrex::MultiFab * cjy = fields.get("current_buf", Direction{1}, lev);
-                    amrex::MultiFab * cjz = fields.get("current_buf", Direction{2}, lev);
+                    amrex::MultiFab * cjx = fields.get(FieldType::current_buf, Direction{0}, lev);
+                    amrex::MultiFab * cjy = fields.get(FieldType::current_buf, Direction{1}, lev);
+                    amrex::MultiFab * cjz = fields.get(FieldType::current_buf, Direction{2}, lev);
                     DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
                                    np_current, np-np_current, thread_num,
                                    lev, lev-1, dt, relative_time, push_type);
@@ -688,11 +690,11 @@ LaserParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
 
             if (has_rho && ! skip_deposition && ! do_not_deposit) {
                 int* AMREX_RESTRICT ion_lev = nullptr;
-                amrex::MultiFab* rho = fields.get("rho_fp", lev);
+                amrex::MultiFab* rho = fields.get(FieldType::rho_fp, lev);
                 DepositCharge(pti, wp, ion_lev, rho, 1, 0,
                               np_current, thread_num, lev, lev);
                 if (has_buffer) {
-                    amrex::MultiFab* crho = fields.get("rho_buf", lev);
+                    amrex::MultiFab* crho = fields.get(FieldType::rho_buf, lev);
                     DepositCharge(pti, wp, ion_lev, crho, 1, np_current,
                                   np-np_current, thread_num, lev, lev-1);
                 }

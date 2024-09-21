@@ -18,7 +18,7 @@
 
 using namespace amrex;
 using namespace amrex::literals;
-using namespace warpx::fields;
+using warpx::fields::FieldType;
 
 namespace
 {
@@ -55,9 +55,9 @@ void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
     if (::isAnyBoundary<FieldBoundaryType::PEC>(field_boundary_lo, field_boundary_hi)) {
         if (patch_type == PatchType::fine) {
             PEC::ApplyPECtoEfield(
-                    {m_fields.get("Efield_fp",Direction{0},lev),
-                     m_fields.get("Efield_fp",Direction{1},lev),
-                     m_fields.get("Efield_fp",Direction{2},lev)},
+                    {m_fields.get(FieldType::Efield_fp, Direction{0}, lev),
+                     m_fields.get(FieldType::Efield_fp, Direction{1}, lev),
+                     m_fields.get(FieldType::Efield_fp, Direction{2}, lev)},
                     field_boundary_lo, field_boundary_hi,
                     get_ng_fieldgather(), Geom(lev),
                     lev, patch_type, ref_ratio);
@@ -65,7 +65,7 @@ void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
                 // apply pec on split E-fields in PML region
                 const bool split_pml_field = true;
                 PEC::ApplyPECtoEfield(
-                    m_fields.get_alldirs("pml_E_fp",lev),
+                    m_fields.get_alldirs(FieldType::pml_E_fp, lev),
                     field_boundary_lo, field_boundary_hi,
                     get_ng_fieldgather(), Geom(lev),
                     lev, patch_type, ref_ratio,
@@ -73,9 +73,9 @@ void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
             }
         } else {
             PEC::ApplyPECtoEfield(
-                {m_fields.get("Efield_cp",Direction{0},lev),
-                 m_fields.get("Efield_cp",Direction{1},lev),
-                 m_fields.get("Efield_cp",Direction{2},lev)},
+                {m_fields.get(FieldType::Efield_cp,Direction{0},lev),
+                 m_fields.get(FieldType::Efield_cp,Direction{1},lev),
+                 m_fields.get(FieldType::Efield_cp,Direction{2},lev)},
                 field_boundary_lo, field_boundary_hi,
                 get_ng_fieldgather(), Geom(lev),
                 lev, patch_type, ref_ratio);
@@ -83,7 +83,7 @@ void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
                 // apply pec on split E-fields in PML region
                 const bool split_pml_field = true;
                 PEC::ApplyPECtoEfield(
-                    m_fields.get_alldirs("pml_E_cp",lev),
+                    m_fields.get_alldirs(FieldType::pml_E_cp, lev),
                     field_boundary_lo, field_boundary_hi,
                     get_ng_fieldgather(), Geom(lev),
                     lev, patch_type, ref_ratio,
@@ -94,13 +94,13 @@ void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
 
 #ifdef WARPX_DIM_RZ
     if (patch_type == PatchType::fine) {
-        ApplyFieldBoundaryOnAxis(m_fields.get("Efield_fp",Direction{0},lev),
-                                 m_fields.get("Efield_fp",Direction{1},lev),
-                                 m_fields.get("Efield_fp",Direction{2},lev), lev);
+        ApplyFieldBoundaryOnAxis(m_fields.get(FieldType::Efield_fp, Direction{0}, lev),
+                                 m_fields.get(FieldType::Efield_fp, Direction{1}, lev),
+                                 m_fields.get(FieldType::Efield_fp, Direction{2}, lev), lev);
     } else {
-        ApplyFieldBoundaryOnAxis(m_fields.get("Efield_cp",Direction{0},lev),
-                                 m_fields.get("Efield_cp",Direction{1},lev),
-                                 m_fields.get("Efield_cp",Direction{2},lev), lev);
+        ApplyFieldBoundaryOnAxis(m_fields.get(FieldType::Efield_cp, Direction{0}, lev),
+                                 m_fields.get(FieldType::Efield_cp, Direction{1}, lev),
+                                 m_fields.get(FieldType::Efield_cp, Direction{2}, lev), lev);
     }
 #endif
 }
@@ -112,17 +112,17 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
     if (::isAnyBoundary<FieldBoundaryType::PEC>(field_boundary_lo, field_boundary_hi)) {
         if (patch_type == PatchType::fine) {
             PEC::ApplyPECtoBfield( {
-                m_fields.get("Bfield_fp",Direction{0},lev),
-                m_fields.get("Bfield_fp",Direction{1},lev),
-                m_fields.get("Bfield_fp",Direction{2},lev) },
+                m_fields.get(FieldType::Bfield_fp,Direction{0},lev),
+                m_fields.get(FieldType::Bfield_fp,Direction{1},lev),
+                m_fields.get(FieldType::Bfield_fp,Direction{2},lev) },
                 field_boundary_lo, field_boundary_hi,
                 get_ng_fieldgather(), Geom(lev),
                 lev, patch_type, ref_ratio);
         } else {
             PEC::ApplyPECtoBfield( {
-                m_fields.get("Bfield_cp",Direction{0},lev),
-                m_fields.get("Bfield_cp",Direction{1},lev),
-                m_fields.get("Bfield_cp",Direction{2},lev) },
+                m_fields.get(FieldType::Bfield_cp,Direction{0},lev),
+                m_fields.get(FieldType::Bfield_cp,Direction{1},lev),
+                m_fields.get(FieldType::Bfield_cp,Direction{2},lev) },
                 field_boundary_lo, field_boundary_hi,
                 get_ng_fieldgather(), Geom(lev),
                 lev, patch_type, ref_ratio);
@@ -135,8 +135,8 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
     if (lev == 0) {
         if (a_dt_type == DtType::FirstHalf) {
             if(::isAnyBoundary<FieldBoundaryType::Absorbing_SilverMueller>(field_boundary_lo, field_boundary_hi)){
-                auto Efield_fp = m_fields.get_mr_levels_alldirs("Efield_fp",max_level);
-                auto Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp",max_level);
+                auto Efield_fp = m_fields.get_mr_levels_alldirs(FieldType::Efield_fp, max_level);
+                auto Bfield_fp = m_fields.get_mr_levels_alldirs(FieldType::Bfield_fp, max_level);
                 m_fdtd_solver_fp[0]->ApplySilverMuellerBoundary(
                 Efield_fp[lev], Bfield_fp[lev],
                 Geom(lev).Domain(), dt[lev],
@@ -147,13 +147,13 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
 
 #ifdef WARPX_DIM_RZ
     if (patch_type == PatchType::fine) {
-        ApplyFieldBoundaryOnAxis(m_fields.get("Bfield_fp",Direction{0},lev),
-                                 m_fields.get("Bfield_fp",Direction{1},lev),
-                                 m_fields.get("Bfield_fp",Direction{2},lev), lev);
+        ApplyFieldBoundaryOnAxis(m_fields.get(FieldType::Bfield_fp,Direction{0},lev),
+                                 m_fields.get(FieldType::Bfield_fp,Direction{1},lev),
+                                 m_fields.get(FieldType::Bfield_fp,Direction{2},lev), lev);
     } else {
-        ApplyFieldBoundaryOnAxis(m_fields.get("Bfield_cp",Direction{0},lev),
-                                 m_fields.get("Bfield_cp",Direction{1},lev),
-                                 m_fields.get("Bfield_cp",Direction{2},lev), lev);
+        ApplyFieldBoundaryOnAxis(m_fields.get(FieldType::Bfield_cp,Direction{0},lev),
+                                 m_fields.get(FieldType::Bfield_cp,Direction{1},lev),
+                                 m_fields.get(FieldType::Bfield_cp,Direction{2},lev), lev);
     }
 #endif
 }
@@ -274,7 +274,7 @@ void WarpX::ApplyElectronPressureBoundary (const int lev, PatchType patch_type)
 {
     if (::isAnyBoundary<FieldBoundaryType::PEC>(field_boundary_lo, field_boundary_hi)) {
         if (patch_type == PatchType::fine) {
-            ablastr::fields::ScalarField electron_pressure_fp = m_fields.get("hybrid_electron_pressure_fp", lev);
+            ablastr::fields::ScalarField electron_pressure_fp = m_fields.get(FieldType::hybrid_electron_pressure_fp, lev);
             PEC::ApplyPECtoElectronPressure(
                 electron_pressure_fp,
                 field_boundary_lo, field_boundary_hi,

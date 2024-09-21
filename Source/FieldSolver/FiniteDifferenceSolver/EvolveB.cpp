@@ -7,6 +7,7 @@
 #include "FiniteDifferenceSolver.H"
 
 #include "EmbeddedBoundary/WarpXFaceInfoBox.H"
+#include "Fields.H"
 #ifndef WARPX_DIM_RZ
 #   include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #   include "FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
@@ -53,13 +54,16 @@ void FiniteDifferenceSolver::EvolveB (
     PatchType patch_type,
     [[maybe_unused]] std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_cell,
     [[maybe_unused]] std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
-    [[maybe_unused]] amrex::Real const dt ) {
+    [[maybe_unused]] amrex::Real const dt )
+{
 
     using ablastr::fields::Direction;
+    using warpx::fields::FieldType;
+
     const ablastr::fields::VectorField Bfield = patch_type == PatchType::fine ?
-        fields.get_alldirs("Bfield_fp", lev) : fields.get_alldirs("Bfield_cp", lev);
+        fields.get_alldirs(FieldType::Bfield_fp, lev) : fields.get_alldirs(FieldType::Bfield_cp, lev);
     const ablastr::fields::VectorField Efield = patch_type == PatchType::fine ?
-        fields.get_alldirs("Efield_fp", lev) : fields.get_alldirs("Efield_cp", lev);
+        fields.get_alldirs(FieldType::Efield_fp, lev) : fields.get_alldirs(FieldType::Efield_cp, lev);
 
     // Select algorithm (The choice of algorithm is a runtime option,
     // but we compile code for each algorithm, using templates)
@@ -70,25 +74,25 @@ void FiniteDifferenceSolver::EvolveB (
 #else
 
     amrex::MultiFab const * Gfield = nullptr;
-    if (fields.has("G_fp", lev)) {
+    if (fields.has(FieldType::G_fp, lev)) {
         Gfield = patch_type == PatchType::fine ?
-            fields.get("G_fp", lev) : fields.get("G_cp", lev);
+            fields.get(FieldType::G_fp, lev) : fields.get(FieldType::G_cp, lev);
     }
     ablastr::fields::VectorField face_areas;
-    if (fields.has("face_areas", Direction{0}, lev)) {
-        face_areas = fields.get_alldirs("face_areas", lev);
+    if (fields.has(FieldType::face_areas, Direction{0}, lev)) {
+        face_areas = fields.get_alldirs(FieldType::face_areas, lev);
     }
     ablastr::fields::VectorField area_mod;
-    if (fields.has("area_mod", Direction{0}, lev)) {
-        area_mod = fields.get_alldirs("area_mod", lev);
+    if (fields.has(FieldType::area_mod, Direction{0}, lev)) {
+        area_mod = fields.get_alldirs(FieldType::area_mod, lev);
     }
     ablastr::fields::VectorField ECTRhofield;
-    if (fields.has("ECTRhofield", Direction{0}, lev)) {
-        ECTRhofield = fields.get_alldirs("ECTRhofield", lev);
+    if (fields.has(FieldType::ECTRhofield, Direction{0}, lev)) {
+        ECTRhofield = fields.get_alldirs(FieldType::ECTRhofield, lev);
     }
     ablastr::fields::VectorField Venl;
-    if (fields.has("Venl", Direction{0}, lev)) {
-        Venl = fields.get_alldirs("Venl", lev);
+    if (fields.has(FieldType::Venl, Direction{0}, lev)) {
+        Venl = fields.get_alldirs(FieldType::Venl, lev);
     }
 
     if (m_grid_type == GridType::Collocated) {

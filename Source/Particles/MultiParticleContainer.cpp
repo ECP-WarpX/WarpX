@@ -81,7 +81,7 @@
 #include <vector>
 
 using namespace amrex;
-using namespace warpx::fields;
+using warpx::fields::FieldType;
 
 namespace
 {
@@ -470,11 +470,11 @@ MultiParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
         fields.get(current_fp_string, Direction{0}, lev)->setVal(0.0);
         fields.get(current_fp_string, Direction{1}, lev)->setVal(0.0);
         fields.get(current_fp_string, Direction{2}, lev)->setVal(0.0);
-        if (fields.has("current_buf", Direction{0}, lev)) { fields.get("current_buf", Direction{0}, lev)->setVal(0.0); }
-        if (fields.has("current_buf", Direction{1}, lev)) { fields.get("current_buf", Direction{1}, lev)->setVal(0.0); }
-        if (fields.has("current_buf", Direction{2}, lev)) { fields.get("current_buf", Direction{2}, lev)->setVal(0.0); }
-        if (fields.has("rho_fp", lev)) { fields.get("rho_fp", lev)->setVal(0.0); }
-        if (fields.has("rho_buf", lev)) { fields.get("rho_buf", lev)->setVal(0.0); }
+        if (fields.has(FieldType::current_buf, Direction{0}, lev)) { fields.get(FieldType::current_buf, Direction{0}, lev)->setVal(0.0); }
+        if (fields.has(FieldType::current_buf, Direction{1}, lev)) { fields.get(FieldType::current_buf, Direction{1}, lev)->setVal(0.0); }
+        if (fields.has(FieldType::current_buf, Direction{2}, lev)) { fields.get(FieldType::current_buf, Direction{2}, lev)->setVal(0.0); }
+        if (fields.has(FieldType::rho_fp, lev)) { fields.get(FieldType::rho_fp, lev)->setVal(0.0); }
+        if (fields.has(FieldType::rho_buf, lev)) { fields.get(FieldType::rho_buf, lev)->setVal(0.0); }
     }
     for (auto& pc : allcontainers) {
         pc->Evolve(fields, lev, current_fp_string, t, dt, a_dt_type, skip_deposition, push_type);
@@ -1357,12 +1357,12 @@ MultiParticleContainer::doQEDSchwinger ()
     pc_product_pos->defineAllParticleTiles();
 
     using ablastr::fields::Direction;
-    const MultiFab & Ex = *warpx.m_fields.get("Efield_aux", Direction{0}, level_0);
-    const MultiFab & Ey = *warpx.m_fields.get("Efield_aux", Direction{1}, level_0);
-    const MultiFab & Ez = *warpx.m_fields.get("Efield_aux", Direction{2}, level_0);
-    const MultiFab & Bx = *warpx.m_fields.get("Bfield_aux", Direction{0}, level_0);
-    const MultiFab & By = *warpx.m_fields.get("Bfield_aux", Direction{1}, level_0);
-    const MultiFab & Bz = *warpx.m_fields.get("Bfield_aux", Direction{2}, level_0);
+    const MultiFab & Ex = *warpx.m_fields.get(FieldType::Efield_aux, Direction{0}, level_0);
+    const MultiFab & Ey = *warpx.m_fields.get(FieldType::Efield_aux, Direction{1}, level_0);
+    const MultiFab & Ez = *warpx.m_fields.get(FieldType::Efield_aux, Direction{2}, level_0);
+    const MultiFab & Bx = *warpx.m_fields.get(FieldType::Bfield_aux, Direction{0}, level_0);
+    const MultiFab & By = *warpx.m_fields.get(FieldType::Bfield_aux, Direction{1}, level_0);
+    const MultiFab & Bz = *warpx.m_fields.get(FieldType::Bfield_aux, Direction{2}, level_0);
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())

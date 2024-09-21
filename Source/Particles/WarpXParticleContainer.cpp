@@ -14,6 +14,7 @@
 #include "Deposition/CurrentDeposition.H"
 #include "Deposition/SharedDepositionUtils.H"
 #include "EmbeddedBoundary/Enabled.H"
+#include "Fields.H"
 #include "Pusher/GetAndSetPosition.H"
 #include "Pusher/UpdatePosition.H"
 #include "ParticleBoundaries_K.H"
@@ -173,6 +174,7 @@ WarpXParticleContainer::AddNParticles (int /*lev*/, long n,
                                        int uniqueparticles, amrex::Long id)
 {
     using namespace amrex::literals;
+    using warpx::fields::FieldType;
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE((PIdx::nattribs + nattr_real - 1) <= NumRealComps(),
                                      "Too many real attributes specified");
@@ -305,7 +307,7 @@ WarpXParticleContainer::AddNParticles (int /*lev*/, long n,
         auto & warpx = WarpX::GetInstance();
         scrapeParticlesAtEB(
             *this,
-            warpx.m_fields.get_mr_levels("distance_to_eb", warpx.finestLevel()),
+            warpx.m_fields.get_mr_levels(FieldType::distance_to_eb, warpx.finestLevel()),
             ParticleBoundaryProcess::Absorb());
         deleteInvalidParticles();
     }

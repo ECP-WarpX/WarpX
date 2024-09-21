@@ -15,6 +15,7 @@
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "EmbeddedBoundary/Enabled.H"
 #include "Evolve/WarpXDtType.H"
+#include "Fields.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #ifdef WARPX_USE_FFT
 #   ifdef WARPX_DIM_RZ
@@ -63,6 +64,8 @@ using ablastr::utils::SignalHandling;
 void
 WarpX::Synchronize () {
     using ablastr::fields::Direction;
+    using warpx::fields::FieldType;
+
     FillBoundaryE(guard_cells.ng_FieldGather);
     FillBoundaryB(guard_cells.ng_FieldGather);
     if (fft_do_time_averaging)
@@ -76,12 +79,12 @@ WarpX::Synchronize () {
         mypc->PushP(
             lev,
             0.5_rt*dt[lev],
-            *m_fields.get("Efield_aux", Direction{0}, lev),
-            *m_fields.get("Efield_aux", Direction{1}, lev),
-            *m_fields.get("Efield_aux", Direction{2}, lev),
-            *m_fields.get("Bfield_aux", Direction{0}, lev),
-            *m_fields.get("Bfield_aux", Direction{1}, lev),
-            *m_fields.get("Bfield_aux", Direction{2}, lev)
+            *m_fields.get(FieldType::Efield_aux, Direction{0}, lev),
+            *m_fields.get(FieldType::Efield_aux, Direction{1}, lev),
+            *m_fields.get(FieldType::Efield_aux, Direction{2}, lev),
+            *m_fields.get(FieldType::Bfield_aux, Direction{0}, lev),
+            *m_fields.get(FieldType::Bfield_aux, Direction{1}, lev),
+            *m_fields.get(FieldType::Bfield_aux, Direction{2}, lev)
         );
     }
     is_synchronized = true;
@@ -473,6 +476,7 @@ void WarpX::ExplicitFillBoundaryEBUpdateAux ()
         "Cannot call WarpX::ExplicitFillBoundaryEBUpdateAux without Explicit evolve scheme set!");
 
     using ablastr::fields::Direction;
+    using warpx::fields::FieldType;
 
     // At the beginning, we have B^{n} and E^{n}.
     // Particles have p^{n} and x^{n}.
@@ -491,12 +495,12 @@ void WarpX::ExplicitFillBoundaryEBUpdateAux ()
             mypc->PushP(
                 lev,
                 -0.5_rt*dt[lev],
-                *m_fields.get("Efield_aux", Direction{0}, lev),
-                *m_fields.get("Efield_aux", Direction{1}, lev),
-                *m_fields.get("Efield_aux", Direction{2}, lev),
-                *m_fields.get("Bfield_aux", Direction{0}, lev),
-                *m_fields.get("Bfield_aux", Direction{1}, lev),
-                *m_fields.get("Bfield_aux", Direction{2}, lev)
+                *m_fields.get(FieldType::Efield_aux, Direction{0}, lev),
+                *m_fields.get(FieldType::Efield_aux, Direction{1}, lev),
+                *m_fields.get(FieldType::Efield_aux, Direction{2}, lev),
+                *m_fields.get(FieldType::Bfield_aux, Direction{0}, lev),
+                *m_fields.get(FieldType::Bfield_aux, Direction{1}, lev),
+                *m_fields.get(FieldType::Bfield_aux, Direction{2}, lev)
             );
         }
         is_synchronized = false;
@@ -561,9 +565,10 @@ void WarpX::HandleParticlesAtBoundaries (int step, amrex::Real cur_time, int num
 
     // interact the particles with EB walls (if present)
     if (EB::enabled()) {
-        mypc->ScrapeParticlesAtEB(m_fields.get_mr_levels("distance_to_eb", finest_level));
+        using warpx::fields::FieldType;
+        mypc->ScrapeParticlesAtEB(m_fields.get_mr_levels(FieldType::distance_to_eb, finest_level));
         m_particle_boundary_buffer->gatherParticlesFromEmbeddedBoundaries(
-            *mypc, m_fields.get_mr_levels("distance_to_eb", finest_level));
+            *mypc, m_fields.get_mr_levels(FieldType::distance_to_eb, finest_level));
         mypc->deleteInvalidParticles();
     }
 
@@ -578,6 +583,7 @@ void WarpX::HandleParticlesAtBoundaries (int step, amrex::Real cur_time, int num
 void WarpX::SyncCurrentAndRho ()
 {
     using ablastr::fields::Direction;
+    using warpx::fields::FieldType;
 
     if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
     {
@@ -610,7 +616,7 @@ void WarpX::SyncCurrentAndRho ()
                 // TODO This works only without mesh refinement
                 const int lev = 0;
                 if (use_filter) {
-                    ApplyFilterJ(m_fields.get_mr_levels_alldirs("current_fp_vay", finest_level), lev);
+                    ApplyFilterJ(m_fields.get_mr_levels_alldirs(FieldType::current_fp_vay, finest_level), lev);
                 }
             }
         }
@@ -624,22 +630,22 @@ void WarpX::SyncCurrentAndRho ()
     // Reflect charge and current density over PEC boundaries, if needed.
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (m_fields.has("rho_fp", lev)) {
-            ApplyRhofieldBoundary(lev, m_fields.get("rho_fp",lev), PatchType::fine);
+        if (m_fields.has(FieldType::rho_fp, lev)) {
+            ApplyRhofieldBoundary(lev, m_fields.get(FieldType::rho_fp,lev), PatchType::fine);
         }
         ApplyJfieldBoundary(lev,
-            m_fields.get("current_fp",Direction{0},lev),
-            m_fields.get("current_fp",Direction{1},lev),
-            m_fields.get("current_fp",Direction{2},lev),
+            m_fields.get(FieldType::current_fp, Direction{0}, lev),
+            m_fields.get(FieldType::current_fp, Direction{1}, lev),
+            m_fields.get(FieldType::current_fp, Direction{2}, lev),
             PatchType::fine);
         if (lev > 0) {
-            if (m_fields.has("rho_cp", lev)) {
-                ApplyRhofieldBoundary(lev, m_fields.get("rho_cp",lev), PatchType::coarse);
+            if (m_fields.has(FieldType::rho_cp, lev)) {
+                ApplyRhofieldBoundary(lev, m_fields.get(FieldType::rho_cp,lev), PatchType::coarse);
             }
             ApplyJfieldBoundary(lev,
-                m_fields.get("current_cp",Direction{0},lev),
-                m_fields.get("current_cp",Direction{1},lev),
-                m_fields.get("current_cp",Direction{2},lev),
+                m_fields.get(FieldType::current_cp, Direction{0}, lev),
+                m_fields.get(FieldType::current_cp, Direction{1}, lev),
+                m_fields.get(FieldType::current_cp, Direction{2}, lev),
                 PatchType::coarse);
         }
     }
@@ -654,6 +660,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD,
         "multi-J algorithm not implemented for FDTD"
     );
+
+    using warpx::fields::FieldType;
 
     const int rho_mid = spectral_solver_fp[0]->m_spectral_index.rho_mid;
     const int rho_new = spectral_solver_fp[0]->m_spectral_index.rho_new;
@@ -675,9 +683,9 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
 
     // 3) Deposit rho (in rho_new, since it will be moved during the loop)
     //    (after checking that pointer to rho_fp on MR level 0 is not null)
-    if (m_fields.has("rho_fp", 0) && rho_in_time == RhoInTime::Linear)
+    if (m_fields.has(FieldType::rho_fp, 0) && rho_in_time == RhoInTime::Linear)
     {
-        ablastr::fields::MultiLevelScalarField const rho_fp = m_fields.get_mr_levels("rho_fp", finest_level);
+        ablastr::fields::MultiLevelScalarField const rho_fp = m_fields.get_mr_levels(FieldType::rho_fp, finest_level);
 
         std::string const rho_fp_string = "rho_fp";
         std::string const rho_cp_string = "rho_cp";
@@ -742,9 +750,9 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
 
         // Deposit new rho
         // (after checking that pointer to rho_fp on MR level 0 is not null)
-        if (m_fields.has("rho_fp", 0))
+        if (m_fields.has(FieldType::rho_fp, 0))
         {
-            ablastr::fields::MultiLevelScalarField const rho_fp = m_fields.get_mr_levels("rho_fp", finest_level);
+            ablastr::fields::MultiLevelScalarField const rho_fp = m_fields.get_mr_levels(FieldType::rho_fp, finest_level);
 
             std::string const rho_fp_string = "rho_fp";
             std::string const rho_cp_string = "rho_cp";
@@ -786,10 +794,10 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         // We summed the integral of the field over 2*dt
         PSATDScaleAverageFields(1._rt / (2._rt*dt[0]));
         PSATDBackwardTransformEBavg(
-            m_fields.get_mr_levels_alldirs("Efield_avg_fp", finest_level),
-            m_fields.get_mr_levels_alldirs("Bfield_avg_fp", finest_level),
-            m_fields.get_mr_levels_alldirs("Efield_avg_cp", finest_level),
-            m_fields.get_mr_levels_alldirs("Bfield_avg_cp", finest_level)
+            m_fields.get_mr_levels_alldirs(FieldType::Efield_avg_fp, finest_level),
+            m_fields.get_mr_levels_alldirs(FieldType::Bfield_avg_fp, finest_level),
+            m_fields.get_mr_levels_alldirs(FieldType::Efield_avg_cp, finest_level),
+            m_fields.get_mr_levels_alldirs(FieldType::Bfield_avg_cp, finest_level)
         );
     }
 
@@ -858,22 +866,24 @@ WarpX::OneStep_sub1 (Real cur_time)
     const int fine_lev = 1;
     const int coarse_lev = 0;
 
+    using warpx::fields::FieldType;
+
     // i) Push particles and fields on the fine patch (first fine step)
     PushParticlesandDeposit(fine_lev, cur_time, DtType::FirstHalf);
     RestrictCurrentFromFineToCoarsePatch(
-        m_fields.get_mr_levels_alldirs("current_fp", finest_level),
-        m_fields.get_mr_levels_alldirs("current_cp", finest_level), fine_lev);
+        m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level),
+        m_fields.get_mr_levels_alldirs(FieldType::current_cp, finest_level), fine_lev);
     RestrictRhoFromFineToCoarsePatch(fine_lev);
     if (use_filter) {
-        ApplyFilterJ( m_fields.get_mr_levels_alldirs("current_fp", finest_level), fine_lev);
+        ApplyFilterJ( m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level), fine_lev);
     }
     SumBoundaryJ(
-        m_fields.get_mr_levels_alldirs("current_fp", finest_level),
+        m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level),
         fine_lev, Geom(fine_lev).periodicity());
 
     ApplyFilterandSumBoundaryRho(
-        m_fields.get_mr_levels("rho_fp", finest_level),
-        m_fields.get_mr_levels("rho_cp", finest_level),
+        m_fields.get_mr_levels(FieldType::rho_fp, finest_level),
+        m_fields.get_mr_levels(FieldType::rho_cp, finest_level),
         fine_lev, PatchType::fine, 0, 2*ncomps);
 
     EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::FirstHalf);
@@ -903,13 +913,13 @@ WarpX::OneStep_sub1 (Real cur_time)
     PushParticlesandDeposit(coarse_lev, cur_time, DtType::Full);
     StoreCurrent(coarse_lev);
     AddCurrentFromFineLevelandSumBoundary(
-        m_fields.get_mr_levels_alldirs("current_fp", finest_level),
-        m_fields.get_mr_levels_alldirs("current_cp", finest_level),
-        m_fields.get_mr_levels_alldirs("current_buf", finest_level), coarse_lev);
+        m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level),
+        m_fields.get_mr_levels_alldirs(FieldType::current_cp, finest_level),
+        m_fields.get_mr_levels_alldirs(FieldType::current_buf, finest_level), coarse_lev);
     AddRhoFromFineLevelandSumBoundary(
-        m_fields.get_mr_levels("rho_fp", finest_level),
-        m_fields.get_mr_levels("rho_cp", finest_level),
-        m_fields.get_mr_levels("rho_buf", finest_level),
+        m_fields.get_mr_levels(FieldType::rho_fp, finest_level),
+        m_fields.get_mr_levels(FieldType::rho_cp, finest_level),
+        m_fields.get_mr_levels(FieldType::rho_buf, finest_level),
         coarse_lev, 0, ncomps);
 
     EvolveB(fine_lev, PatchType::coarse, dt[fine_lev], DtType::FirstHalf);
@@ -939,16 +949,16 @@ WarpX::OneStep_sub1 (Real cur_time)
     // iv) Push particles and fields on the fine patch (second fine step)
     PushParticlesandDeposit(fine_lev, cur_time + dt[fine_lev], DtType::SecondHalf);
     RestrictCurrentFromFineToCoarsePatch(
-        m_fields.get_mr_levels_alldirs("current_fp", finest_level),
-        m_fields.get_mr_levels_alldirs("current_cp", finest_level), fine_lev);
+        m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level),
+        m_fields.get_mr_levels_alldirs(FieldType::current_cp, finest_level), fine_lev);
     RestrictRhoFromFineToCoarsePatch(fine_lev);
     if (use_filter) {
-        ApplyFilterJ( m_fields.get_mr_levels_alldirs("current_fp", finest_level), fine_lev);
+        ApplyFilterJ( m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level), fine_lev);
     }
-    SumBoundaryJ( m_fields.get_mr_levels_alldirs("current_fp", finest_level), fine_lev, Geom(fine_lev).periodicity());
+    SumBoundaryJ( m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level), fine_lev, Geom(fine_lev).periodicity());
     ApplyFilterandSumBoundaryRho(
-        m_fields.get_mr_levels("rho_fp", finest_level),
-        m_fields.get_mr_levels("rho_cp", finest_level),
+        m_fields.get_mr_levels(FieldType::rho_fp, finest_level),
+        m_fields.get_mr_levels(FieldType::rho_cp, finest_level),
         fine_lev, PatchType::fine, 0, ncomps);
 
     EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::FirstHalf);
@@ -977,14 +987,14 @@ WarpX::OneStep_sub1 (Real cur_time)
     // by only half a coarse step (second half)
     RestoreCurrent(coarse_lev);
     AddCurrentFromFineLevelandSumBoundary(
-        m_fields.get_mr_levels_alldirs("current_fp", finest_level),
-        m_fields.get_mr_levels_alldirs("current_cp", finest_level),
-        m_fields.get_mr_levels_alldirs("current_buf", finest_level),
+        m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level),
+        m_fields.get_mr_levels_alldirs(FieldType::current_cp, finest_level),
+        m_fields.get_mr_levels_alldirs(FieldType::current_buf, finest_level),
         coarse_lev);
     AddRhoFromFineLevelandSumBoundary(
-        m_fields.get_mr_levels("rho_fp", finest_level),
-        m_fields.get_mr_levels("rho_cp", finest_level),
-        m_fields.get_mr_levels("rho_buf", finest_level),
+        m_fields.get_mr_levels(FieldType::rho_fp, finest_level),
+        m_fields.get_mr_levels(FieldType::rho_cp, finest_level),
+        m_fields.get_mr_levels(FieldType::rho_buf, finest_level),
         coarse_lev, ncomps, ncomps);
 
     EvolveE(fine_lev, PatchType::coarse, dt[fine_lev]);
@@ -1047,15 +1057,16 @@ void
 WarpX::doFieldIonization (int lev)
 {
     using ablastr::fields::Direction;
+    using warpx::fields::FieldType;
 
     mypc->doFieldIonization(
         lev,
-        *m_fields.get("Efield_aux", Direction{0}, lev),
-        *m_fields.get("Efield_aux", Direction{1}, lev),
-        *m_fields.get("Efield_aux", Direction{2}, lev),
-        *m_fields.get("Bfield_aux", Direction{0}, lev),
-        *m_fields.get("Bfield_aux", Direction{1}, lev),
-        *m_fields.get("Bfield_aux", Direction{2}, lev)
+        *m_fields.get(FieldType::Efield_aux, Direction{0}, lev),
+        *m_fields.get(FieldType::Efield_aux, Direction{1}, lev),
+        *m_fields.get(FieldType::Efield_aux, Direction{2}, lev),
+        *m_fields.get(FieldType::Bfield_aux, Direction{0}, lev),
+        *m_fields.get(FieldType::Bfield_aux, Direction{1}, lev),
+        *m_fields.get(FieldType::Bfield_aux, Direction{2}, lev)
     );
 }
 
@@ -1072,15 +1083,16 @@ void
 WarpX::doQEDEvents (int lev)
 {
     using ablastr::fields::Direction;
+    using warpx::fields::FieldType;
 
     mypc->doQedEvents(
         lev,
-        *m_fields.get("Efield_aux", Direction{0}, lev),
-        *m_fields.get("Efield_aux", Direction{1}, lev),
-        *m_fields.get("Efield_aux", Direction{2}, lev),
-        *m_fields.get("Bfield_aux", Direction{0}, lev),
-        *m_fields.get("Bfield_aux", Direction{1}, lev),
-        *m_fields.get("Bfield_aux", Direction{2}, lev)
+        *m_fields.get(FieldType::Efield_aux, Direction{0}, lev),
+        *m_fields.get(FieldType::Efield_aux, Direction{1}, lev),
+        *m_fields.get(FieldType::Efield_aux, Direction{2}, lev),
+        *m_fields.get(FieldType::Bfield_aux, Direction{0}, lev),
+        *m_fields.get(FieldType::Bfield_aux, Direction{1}, lev),
+        *m_fields.get(FieldType::Bfield_aux, Direction{2}, lev)
     );
 }
 #endif
@@ -1100,6 +1112,7 @@ WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type,
                                PushType push_type)
 {
     using ablastr::fields::Direction;
+    using warpx::fields::FieldType;
 
     std::string current_fp_string;
 
@@ -1130,21 +1143,21 @@ WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type,
 #ifdef WARPX_DIM_RZ
         // This is called after all particles have deposited their current and charge.
         ApplyInverseVolumeScalingToCurrentDensity(
-            m_fields.get("current_fp", Direction{0}, lev),
-            m_fields.get("current_fp", Direction{1}, lev),
-            m_fields.get("current_fp", Direction{2}, lev),
+            m_fields.get(FieldType::current_fp, Direction{0}, lev),
+            m_fields.get(FieldType::current_fp, Direction{1}, lev),
+            m_fields.get(FieldType::current_fp, Direction{2}, lev),
             lev);
-        if (m_fields.has("current_buf", Direction{0}, lev)) {
+        if (m_fields.has(FieldType::current_buf, Direction{0}, lev)) {
             ApplyInverseVolumeScalingToCurrentDensity(
-                m_fields.get("current_buf", Direction{0}, lev),
-                m_fields.get("current_buf", Direction{1}, lev),
-                m_fields.get("current_buf", Direction{2}, lev),
+                m_fields.get(FieldType::current_buf, Direction{0}, lev),
+                m_fields.get(FieldType::current_buf, Direction{1}, lev),
+                m_fields.get(FieldType::current_buf, Direction{2}, lev),
                 lev-1);
         }
-        if (m_fields.has("rho_fp", lev)) {
-            ApplyInverseVolumeScalingToChargeDensity(m_fields.get("rho_fp", lev), lev);
-            if (m_fields.has("rho_buf", lev)) {
-                ApplyInverseVolumeScalingToChargeDensity(m_fields.get("rho_buf", lev), lev-1);
+        if (m_fields.has(FieldType::rho_fp, lev)) {
+            ApplyInverseVolumeScalingToChargeDensity(m_fields.get(FieldType::rho_fp, lev), lev);
+            if (m_fields.has(FieldType::rho_buf, lev)) {
+                ApplyInverseVolumeScalingToChargeDensity(m_fields.get(FieldType::rho_buf, lev), lev-1);
             }
         }
 // #else

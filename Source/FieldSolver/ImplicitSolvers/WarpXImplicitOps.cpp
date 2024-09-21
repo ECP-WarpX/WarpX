@@ -73,7 +73,9 @@ WarpX::SetElectricFieldAndApplyBCs ( const WarpXSolverVec&  a_E )
         a_E.getArrayVecType()==warpx::fields::FieldType::Efield_fp,
         "WarpX::SetElectricFieldAndApplyBCs() must be called with Efield_fp type");
 
-    ablastr::fields::MultiLevelVectorField Efield_fp = m_fields.get_mr_levels_alldirs("Efield_fp",finest_level);
+    using warpx::fields::FieldType;
+
+    ablastr::fields::MultiLevelVectorField Efield_fp = m_fields.get_mr_levels_alldirs(FieldType::Efield_fp, finest_level);
     const ablastr::fields::MultiLevelVectorField& Evec = a_E.getArrayVec();
     amrex::MultiFab::Copy(*Efield_fp[0][0], *Evec[0][0], 0, 0, ncomps, Evec[0][0]->nGrowVect());
     amrex::MultiFab::Copy(*Efield_fp[0][1], *Evec[0][1], 0, 0, ncomps, Evec[0][1]->nGrowVect());
@@ -87,8 +89,10 @@ WarpX::UpdateMagneticFieldAndApplyBCs( ablastr::fields::MultiLevelVectorField co
                                        amrex::Real                                    a_thetadt )
 {
     using ablastr::fields::Direction;
+    using warpx::fields::FieldType;
+
     for (int lev = 0; lev <= finest_level; ++lev) {
-        ablastr::fields::VectorField Bfp = m_fields.get_alldirs("Bfield_fp",lev);
+        ablastr::fields::VectorField Bfp = m_fields.get_alldirs(FieldType::Bfield_fp, lev);
         amrex::MultiFab::Copy(*Bfp[0], *a_Bn[lev][0], 0, 0, ncomps, a_Bn[lev][0]->nGrowVect());
         amrex::MultiFab::Copy(*Bfp[1], *a_Bn[lev][1], 0, 0, ncomps, a_Bn[lev][1]->nGrowVect());
         amrex::MultiFab::Copy(*Bfp[2], *a_Bn[lev][2], 0, 0, ncomps, a_Bn[lev][2]->nGrowVect());
@@ -101,7 +105,9 @@ void
 WarpX::FinishMagneticFieldAndApplyBCs( ablastr::fields::MultiLevelVectorField const&  a_Bn,
                                        amrex::Real                                    a_theta )
 {
-    FinishImplicitField(m_fields.get_mr_levels_alldirs("Bfield_fp", 0), a_Bn, a_theta);
+    using warpx::fields::FieldType;
+
+    FinishImplicitField(m_fields.get_mr_levels_alldirs(FieldType::Bfield_fp, 0), a_Bn, a_theta);
     ApplyMagneticFieldBCs();
 }
 

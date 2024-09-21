@@ -49,7 +49,7 @@ ProjectionDivCleaner::ProjectionDivCleaner(std::string const& a_field_name) :
     m_source.resize(m_levels);
 
     const int ncomps = WarpX::ncomps;
-    auto const& ng = warpx.m_fields.get(m_field_name,Direction{0},0)->nGrowVect();
+    auto const& ng = warpx.m_fields.get(m_field_name, Direction{0}, 0)->nGrowVect();
 
     for (int lev = 0; lev < m_levels; ++lev)
     {
@@ -214,9 +214,9 @@ ProjectionDivCleaner::setSourceFromBfield ()
         WarpX::ComputeDivB(
             *m_source[ilev],
             0,
-            {warpx.m_fields.get(m_field_name,Direction{0},ilev),
-             warpx.m_fields.get(m_field_name,Direction{1},ilev),
-             warpx.m_fields.get(m_field_name,Direction{2},ilev)},
+            {warpx.m_fields.get(m_field_name, Direction{0}, ilev),
+             warpx.m_fields.get(m_field_name, Direction{1}, ilev),
+             warpx.m_fields.get(m_field_name, Direction{2}, ilev)},
             WarpX::CellSize(0)
             );
 
@@ -243,9 +243,9 @@ ProjectionDivCleaner::correctBfield ()
     for (int ilev = 0; ilev < m_levels; ++ilev)
     {
         // Grab B-field multifabs at this level
-        amrex::MultiFab* Bx = warpx.m_fields.get(m_field_name,Direction{0},ilev);
-        amrex::MultiFab* By = warpx.m_fields.get(m_field_name,Direction{1},ilev);
-        amrex::MultiFab* Bz = warpx.m_fields.get(m_field_name,Direction{2},ilev);
+        amrex::MultiFab* Bx = warpx.m_fields.get(m_field_name, Direction{0}, ilev);
+        amrex::MultiFab* By = warpx.m_fields.get(m_field_name, Direction{1}, ilev);
+        amrex::MultiFab* Bz = warpx.m_fields.get(m_field_name, Direction{2}, ilev);
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())

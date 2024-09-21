@@ -7,7 +7,7 @@
 #include "FieldSolver/ImplicitSolvers/WarpXSolverVec.H"
 #include "WarpX.H"
 
-using namespace warpx::fields;
+using warpx::fields::FieldType;
 
 WarpXSolverVec::~WarpXSolverVec ()
 {
@@ -73,7 +73,7 @@ void WarpXSolverVec::Define ( WarpX*  a_WarpX,
             "WarpXSolverVec::Define() called with array_type not an array field");
 
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
-            const ablastr::fields::VectorField this_array = m_WarpX->m_fields.get_alldirs(m_vector_type_name,lev);
+            const ablastr::fields::VectorField this_array = m_WarpX->m_fields.get_alldirs(m_vector_type_name, lev);
             for (int n = 0; n < 3; n++) {
                 m_array_vec[lev][n] = new amrex::MultiFab( this_array[n]->boxArray(),
                                                            this_array[n]->DistributionMap(),
@@ -122,7 +122,7 @@ void WarpXSolverVec::Copy ( FieldType  a_array_type,
 
     for (int lev = 0; lev < m_num_amr_levels; ++lev) {
         if (m_array_type != FieldType::None) {
-            const ablastr::fields::VectorField this_array = m_WarpX->m_fields.get_alldirs(m_vector_type_name,lev);
+            const ablastr::fields::VectorField this_array = m_WarpX->m_fields.get_alldirs(m_vector_type_name, lev);
             for (int n = 0; n < 3; ++n) {
                 amrex::MultiFab::Copy( *m_array_vec[lev][n], *this_array[n], 0, 0, m_ncomp,
                                        amrex::IntVect::TheZeroVector() );

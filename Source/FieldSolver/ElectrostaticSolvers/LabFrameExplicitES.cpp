@@ -9,6 +9,7 @@
 #include "LabFrameExplicitES.H"
 #include "Fluids/MultiFluidContainer_fwd.H"
 #include "EmbeddedBoundary/Enabled.H"
+#include "Fields.H"
 #include "Particles/MultiParticleContainer_fwd.H"
 #include "Python/callbacks.H"
 #include "WarpX.H"
@@ -28,11 +29,12 @@ void LabFrameExplicitES::ComputeSpaceChargeField (
 {
     using ablastr::fields::MultiLevelScalarField;
     using ablastr::fields::MultiLevelVectorField;
+    using warpx::fields::FieldType;
 
-    const MultiLevelScalarField rho_fp = fields.get_mr_levels("rho_fp", max_level);
-    const MultiLevelScalarField rho_cp = fields.get_mr_levels("rho_cp", max_level);
-    const MultiLevelScalarField phi_fp = fields.get_mr_levels("phi_fp", max_level);
-    const MultiLevelVectorField Efield_fp = fields.get_mr_levels_alldirs("Efield_fp", max_level);
+    const MultiLevelScalarField rho_fp = fields.get_mr_levels(FieldType::rho_fp, max_level);
+    const MultiLevelScalarField rho_cp = fields.get_mr_levels(FieldType::rho_cp, max_level);
+    const MultiLevelScalarField phi_fp = fields.get_mr_levels(FieldType::phi_fp, max_level);
+    const MultiLevelVectorField Efield_fp = fields.get_mr_levels_alldirs(FieldType::Efield_fp, max_level);
 
     mpc.DepositCharge(rho_fp, 0.0_rt);
     if (mfl) {

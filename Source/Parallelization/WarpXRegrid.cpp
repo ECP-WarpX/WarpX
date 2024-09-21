@@ -12,6 +12,7 @@
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "EmbeddedBoundary/Enabled.H"
 #include "EmbeddedBoundary/WarpXFaceInfoBox.H"
+#include "Fields.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #include "Initialization/ExternalField.H"
 #include "Particles/MultiParticleContainer.H"
@@ -170,8 +171,8 @@ WarpX::LoadBalance ()
 void
 WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const DistributionMapping& dm)
 {
-
     using ablastr::fields::Direction;
+    using warpx::fields::FieldType;
 
     bool const eb_enabled = EB::enabled();
     if (ba == boxArray(lev))
@@ -181,7 +182,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         m_fields.remake_level(lev, dm);
 
         // Fine patch
-        ablastr::fields::MultiLevelVectorField const& Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
+        ablastr::fields::MultiLevelVectorField const& Bfield_fp = m_fields.get_mr_levels_alldirs(FieldType::Bfield_fp, finest_level);
         for (int idim=0; idim < 3; ++idim)
         {
             if (eb_enabled) {
@@ -315,6 +316,7 @@ void
 WarpX::ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::LayoutData<amrex::Real> > >& a_costs)
 {
     using ablastr::fields::Direction;
+    using warpx::fields::FieldType;
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -334,7 +336,7 @@ WarpX::ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::LayoutData<am
         }
 
         // Cell loop
-        MultiFab* Ex = m_fields.get("Efield_fp",Direction{0},lev);
+        MultiFab* Ex = m_fields.get(FieldType::Efield_fp, Direction{0}, lev);
         for (MFIter mfi(*Ex, false); mfi.isValid(); ++mfi)
         {
             const Box& gbx = mfi.growntilebox();

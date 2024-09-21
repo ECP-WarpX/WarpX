@@ -7,6 +7,7 @@
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 
 #include "BoundaryConditions/PMLComponent.H"
+#include "Fields.H"
 
 #ifndef WARPX_DIM_RZ
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
@@ -48,6 +49,7 @@ void FiniteDifferenceSolver::EvolveBPML (
     const bool dive_cleaning
 )
 {
+    using warpx::fields::FieldType;
 
     // Select algorithm (The choice of algorithm is a runtime option,
     // but we compile code for each algorithm, using templates)
@@ -57,9 +59,9 @@ void FiniteDifferenceSolver::EvolveBPML (
         "PML are not implemented in cylindrical geometry.");
 #else
     const ablastr::fields::VectorField Bfield = (patch_type == PatchType::fine) ?
-        fields.get_alldirs("pml_B_fp", level) : fields.get_alldirs("pml_B_cp", level);
+        fields.get_alldirs(FieldType::pml_B_fp, level) : fields.get_alldirs(FieldType::pml_B_cp, level);
     const ablastr::fields::VectorField Efield = (patch_type == PatchType::fine) ?
-        fields.get_alldirs("pml_E_fp", level) : fields.get_alldirs("pml_E_cp", level);
+        fields.get_alldirs(FieldType::pml_E_fp, level) : fields.get_alldirs(FieldType::pml_E_cp, level);
 
     if (m_grid_type == ablastr::utils::enums::GridType::Collocated) {
 

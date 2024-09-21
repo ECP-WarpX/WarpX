@@ -4,20 +4,23 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "ablastr/coarsen/sample.H"
+#include "Fields.H"
 #include "Particles/Pusher/UpdateMomentumHigueraCary.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
 #include "MusclHancockUtils.H"
 #include "Fluids/WarpXFluidContainer.H"
-#include "WarpX.H"
-#include <ablastr/utils/Communication.H>
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/WarpXUtil.H"
 #include "Utils/SpeciesUtils.H"
+#include "WarpX.H"
+
+#include <ablastr/coarsen/sample.H>
+#include <ablastr/utils/Communication.H>
 
 using namespace ablastr::utils::communication;
 using namespace amrex;
+
 
 WarpXFluidContainer::WarpXFluidContainer(int ispecies, const std::string &name):
     species_id{ispecies},
@@ -259,22 +262,24 @@ void WarpXFluidContainer::Evolve(
     bool skip_deposition)
 {
     using ablastr::fields::Direction;
+    using warpx::fields::FieldType;
+
     WARPX_PROFILE("WarpXFluidContainer::Evolve");
 
-    if (fields.has("rho_fp",lev) && ! skip_deposition && ! do_not_deposit) {
+    if (fields.has(FieldType::rho_fp,lev) && ! skip_deposition && ! do_not_deposit) {
         // Deposit charge before particle push, in component 0 of MultiFab rho.
-        DepositCharge(fields, *fields.get("rho_fp",lev), lev, 0);
+        DepositCharge(fields, *fields.get(FieldType::rho_fp,lev), lev, 0);
     }
 
     // Step the Lorentz Term
     if(!do_not_gather){
         GatherAndPush(fields,
-                    *fields.get("Efield_aux", Direction{0}, lev),
-                    *fields.get("Efield_aux", Direction{1}, lev),
-                    *fields.get("Efield_aux", Direction{2}, lev),
-                    *fields.get("Bfield_aux", Direction{0}, lev),
-                    *fields.get("Bfield_aux", Direction{1}, lev),
-                    *fields.get("Bfield_aux", Direction{2}, lev),
+                    *fields.get(FieldType::Efield_aux, Direction{0}, lev),
+                    *fields.get(FieldType::Efield_aux, Direction{1}, lev),
+                    *fields.get(FieldType::Efield_aux, Direction{2}, lev),
+                    *fields.get(FieldType::Bfield_aux, Direction{0}, lev),
+                    *fields.get(FieldType::Bfield_aux, Direction{1}, lev),
+                    *fields.get(FieldType::Bfield_aux, Direction{2}, lev),
                     cur_time, lev);
     }
 
@@ -294,8 +299,8 @@ void WarpXFluidContainer::Evolve(
 
     // Deposit rho to the simulation mesh
     // Deposit charge (end of the step)
-    if (fields.has("rho_fp",lev) && ! skip_deposition && ! do_not_deposit) {
-        DepositCharge(fields, *fields.get("rho_fp",lev), lev, 1);
+    if (fields.has(FieldType::rho_fp,lev) && ! skip_deposition && ! do_not_deposit) {
+        DepositCharge(fields, *fields.get(FieldType::rho_fp,lev), lev, 1);
     }
 
     // Deposit J to the simulation mesh

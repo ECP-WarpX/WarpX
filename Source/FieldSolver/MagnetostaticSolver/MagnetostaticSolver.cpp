@@ -6,6 +6,7 @@
  */
 #include "WarpX.H"
 
+#include "Fields.H"
 #include "FieldSolver/MagnetostaticSolver/MagnetostaticSolver.H"
 #include "EmbeddedBoundary/Enabled.H"
 #include "Parallelization/GuardCellManager.H"
@@ -73,6 +74,7 @@ void
 WarpX::AddMagnetostaticFieldLabFrame()
 {
     using ablastr::fields::Direction;
+    using warpx::fields::FieldType;
 
     WARPX_PROFILE("WarpX::AddMagnetostaticFieldLabFrame");
 
@@ -90,7 +92,7 @@ WarpX::AddMagnetostaticFieldLabFrame()
     // reset current_fp before depositing current density for this step
     for (int lev = 0; lev <= max_level; lev++) {
         for (int dim=0; dim < 3; dim++) {
-            m_fields.get("current_fp", Direction{dim}, lev)->setVal(0.);
+            m_fields.get(FieldType::current_fp, Direction{dim}, lev)->setVal(0.);
         }
     }
 
@@ -99,7 +101,7 @@ WarpX::AddMagnetostaticFieldLabFrame()
         WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
         if (!species.do_not_deposit) {
             species.DepositCurrent(
-                m_fields.get_mr_levels_alldirs("current_fp", finest_level),
+                m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level),
                 dt[0], 0.);
         }
     }
@@ -107,9 +109,9 @@ WarpX::AddMagnetostaticFieldLabFrame()
 #ifdef WARPX_DIM_RZ
     for (int lev = 0; lev <= max_level; lev++) {
         ApplyInverseVolumeScalingToCurrentDensity(
-            m_fields.get("current_fp", Direction{0}, lev),
-            m_fields.get("current_fp", Direction{1}, lev),
-            m_fields.get("current_fp", Direction{2}, lev),
+            m_fields.get(FieldType::current_fp, Direction{0}, lev),
+            m_fields.get(FieldType::current_fp, Direction{1}, lev),
+            m_fields.get(FieldType::current_fp, Direction{2}, lev),
             lev );
     }
 #endif
@@ -117,7 +119,7 @@ WarpX::AddMagnetostaticFieldLabFrame()
     SyncCurrent("current_fp");
 
     // set the boundary and current density potentials
-    setVectorPotentialBC(m_fields.get_mr_levels_alldirs("vector_potential_fp_nodal", finest_level));
+    setVectorPotentialBC(m_fields.get_mr_levels_alldirs(FieldType::vector_potential_fp_nodal, finest_level));
 
     // Compute the vector potential A, by solving the Poisson equation
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( !IsPythonCallbackInstalled("poissonsolver"),
@@ -131,8 +133,8 @@ WarpX::AddMagnetostaticFieldLabFrame()
     const int self_fields_verbosity = 2;
 
     computeVectorPotential(
-        m_fields.get_mr_levels_alldirs("current_fp", finest_level),
-        m_fields.get_mr_levels_alldirs("vector_potential_fp_nodal", finest_level),
+        m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level),
+        m_fields.get_mr_levels_alldirs(FieldType::vector_potential_fp_nodal, finest_level),
         self_fields_required_precision, magnetostatic_absolute_tolerance, self_fields_max_iters,
         self_fields_verbosity);
 }
@@ -162,6 +164,7 @@ WarpX::computeVectorPotential (ablastr::fields::MultiLevelVectorField const& cur
                                int const verbosity) // const // This breaks non-const m_fields.get_mr_levels_alldirs
 {
     using ablastr::fields::Direction;
+    using warpx::fields::FieldType;
 
     // create a vector to our fields, sorted by level
     amrex::Vector<amrex::Array<amrex::MultiFab*,3>> sorted_curr;
@@ -176,12 +179,12 @@ WarpX::computeVectorPotential (ablastr::fields::MultiLevelVectorField const& cur
     }
 
 #if defined(AMREX_USE_EB)
-    const ablastr::fields::MultiLevelVectorField Bfield_fp = m_fields.get_mr_levels_alldirs("Bfield_fp", finest_level);
+    const ablastr::fields::MultiLevelVectorField Bfield_fp = m_fields.get_mr_levels_alldirs(FieldType::Bfield_fp, finest_level);
     const std::optional<MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel> post_A_calculation(
     {
         Bfield_fp,
-        m_fields.get_mr_levels_alldirs("vector_potential_grad_buf_e_stag", finest_level),
-        m_fields.get_mr_levels_alldirs("vector_potential_grad_buf_b_stag", finest_level)
+        m_fields.get_mr_levels_alldirs(FieldType::vector_potential_grad_buf_e_stag, finest_level),
+        m_fields.get_mr_levels_alldirs(FieldType::vector_potential_grad_buf_b_stag, finest_level)
     });
 
     amrex::Vector<amrex::EBFArrayBoxFactory const *> factories;

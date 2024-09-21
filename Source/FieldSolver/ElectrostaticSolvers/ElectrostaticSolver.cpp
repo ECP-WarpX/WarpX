@@ -8,10 +8,14 @@
  */
 
 #include "ElectrostaticSolver.H"
-#include <ablastr/fields/PoissonSolver.H>
 #include "EmbeddedBoundary/Enabled.H"
+#include "Fields.H"
+
+#include <ablastr/fields/PoissonSolver.H>
+
 
 using namespace amrex;
+using warpx::fields::FieldType;
 
 ElectrostaticSolver::ElectrostaticSolver (int nlevs_max) : num_levels{nlevs_max}
 {
@@ -153,18 +157,18 @@ ElectrostaticSolver::computePhi (
                 e_field.push_back(
 #if defined(WARPX_DIM_1D_Z)
                     amrex::Array<amrex::MultiFab*, 1>{
-                        warpx.m_fields.get("Efield_fp", Direction{2}, lev)
+                        warpx.m_fields.get(FieldType::Efield_fp, Direction{2}, lev)
                     }
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                     amrex::Array<amrex::MultiFab*, 2>{
-                        warpx.m_fields.get("Efield_fp", Direction{0}, lev),
-                        warpx.m_fields.get("Efield_fp", Direction{2}, lev)
+                        warpx.m_fields.get(FieldType::Efield_fp, Direction{0}, lev),
+                        warpx.m_fields.get(FieldType::Efield_fp, Direction{2}, lev)
                     }
 #elif defined(WARPX_DIM_3D)
                     amrex::Array<amrex::MultiFab *, 3>{
-                        warpx.m_fields.get("Efield_fp", Direction{0}, lev),
-                        warpx.m_fields.get("Efield_fp", Direction{1}, lev),
-                        warpx.m_fields.get("Efield_fp", Direction{2}, lev)
+                        warpx.m_fields.get(FieldType::Efield_fp, Direction{0}, lev),
+                        warpx.m_fields.get(FieldType::Efield_fp, Direction{1}, lev),
+                        warpx.m_fields.get(FieldType::Efield_fp, Direction{2}, lev)
                     }
 #endif
                 );
