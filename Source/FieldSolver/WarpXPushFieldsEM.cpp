@@ -330,7 +330,7 @@ void WarpX::PSATDForwardTransformJ (
         idx_jz = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jz_new) : static_cast<int>(Idx.Jz_mid);
 
         if (m_fields.has_vector(J_fp_string, lev)) {
-            ablastr::fields::VectorField J_fp =  m_fields.get_alldirs(J_fp_string, lev);
+            ablastr::fields::VectorField const J_fp = m_fields.get_alldirs(J_fp_string, lev);
             ForwardTransformVect(lev, *spectral_solver_fp[lev], J_fp, idx_jx, idx_jy, idx_jz);
         }
 
@@ -343,7 +343,7 @@ void WarpX::PSATDForwardTransformJ (
             idx_jz = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jz_new) : static_cast<int>(Idx.Jz_mid);
 
             if (m_fields.has_vector(J_cp_string, lev)) {
-                ablastr::fields::VectorField J_cp =  m_fields.get_alldirs(J_cp_string, lev);
+                ablastr::fields::VectorField const J_cp =  m_fields.get_alldirs(J_cp_string, lev);
                 ForwardTransformVect(lev, *spectral_solver_cp[lev], J_cp, idx_jx, idx_jy, idx_jz);
             }
         }
@@ -400,7 +400,7 @@ void WarpX::PSATDBackwardTransformJ (
         idx_jz = static_cast<int>(Idx.Jz_mid);
 
         if (m_fields.has_vector(J_fp_string, lev)) {
-            ablastr::fields::VectorField J_fp =  m_fields.get_alldirs(J_fp_string, lev);
+            ablastr::fields::VectorField const J_fp =  m_fields.get_alldirs(J_fp_string, lev);
             BackwardTransformVect(lev, *spectral_solver_fp[lev], J_fp,
                                   idx_jx, idx_jy, idx_jz, m_fill_guards_current);
         }
@@ -416,7 +416,7 @@ void WarpX::PSATDBackwardTransformJ (
             idx_jz = static_cast<int>(Idx.Jz_mid);
 
             if (m_fields.has_vector(J_cp_string, lev)) {
-                ablastr::fields::VectorField J_cp =  m_fields.get_alldirs(J_cp_string, lev);
+                ablastr::fields::VectorField const J_cp =  m_fields.get_alldirs(J_cp_string, lev);
                 BackwardTransformVect(lev, *spectral_solver_cp[lev], J_cp,
                                       idx_jx, idx_jy, idx_jz, m_fill_guards_current);
             }

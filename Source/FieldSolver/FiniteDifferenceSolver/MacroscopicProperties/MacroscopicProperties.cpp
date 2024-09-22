@@ -23,7 +23,6 @@
 #include <sstream>
 
 using namespace amrex;
-using warpx::fields::FieldType;
 
 MacroscopicProperties::MacroscopicProperties ()
 {
