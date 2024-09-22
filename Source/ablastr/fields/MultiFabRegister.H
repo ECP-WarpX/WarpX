@@ -1,27 +1,27 @@
-/* Copyright 2024 The ABLAST Community
+/* Copyright 2024 The ABLASTR Community
  *
- * This file is part of WarpX.
+ * This file is part of ABLASTR.
  *
  * License: BSD-3-Clause-LBNL
- * Authors: Axel Huebl, ...
+ * Authors: Axel Huebl
  */
 #ifndef ABLASTR_FIELDS_MF_REGISTER_H
 #define ABLASTR_FIELDS_MF_REGISTER_H
 
-#include <AMReX_Array.H>
 #include <AMReX_BoxArray.H>
 #include <AMReX_DistributionMapping.H>
 #include <AMReX_Enum.H>
 #include <AMReX_Extension.H>
 #include <AMReX_IntVect.H>
 #include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
 
 #include <array>
 #include <map>
 #include <memory>
 #include <optional>
 #include <string>
-#include <stdexcept>
 #include <type_traits>
 #include <vector>
 
@@ -193,12 +193,12 @@ namespace ablastr::fields
             amrex::DistributionMapping const & dm,
             int ncomp,
             amrex::IntVect const & ngrow,
-            std::optional<const amrex::Real> initial_value = std::nullopt,
+            std::optional<amrex::Real const> initial_value = std::nullopt,
             bool remake = true,
             bool redistribute_on_remake = true
         )
         {
-            return alloc_init<std::string>(
+            return alloc_init<std::string const &>(
                 getExtractedName(name),
                 level,
                 ba,
@@ -238,12 +238,12 @@ namespace ablastr::fields
             amrex::DistributionMapping const & dm,
             int ncomp,
             amrex::IntVect const & ngrow,
-            std::optional<const amrex::Real> initial_value = std::nullopt,
+            std::optional<amrex::Real const> initial_value = std::nullopt,
             bool remake = true,
             bool redistribute_on_remake = true
         )
         {
-            return alloc_init<std::string>(
+            return alloc_init<std::string const &>(
                 getExtractedName(name),
                 dir,
                 level,
@@ -274,10 +274,10 @@ namespace ablastr::fields
             N new_name,
             A alias_name,
             int level,
-            std::optional<const amrex::Real> initial_value = std::nullopt
+            std::optional<amrex::Real const> initial_value = std::nullopt
         )
         {
-            return alias_init<std::string, std::string>(
+            return alias_init<std::string const &, std::string const &>(
                 getExtractedName(new_name),
                 getExtractedName(alias_name),
                 level,
@@ -304,10 +304,10 @@ namespace ablastr::fields
             A alias_name,
             Direction dir,
             int level,
-            std::optional<const amrex::Real> initial_value = std::nullopt
+            std::optional<amrex::Real const> initial_value = std::nullopt
         )
         {
-            return alias_init<std::string, std::string>(
+            return alias_init<std::string const &, std::string const &>(
                 getExtractedName(new_name),
                 getExtractedName(alias_name),
                 dir,
@@ -345,7 +345,7 @@ namespace ablastr::fields
             int level
         ) const
         {
-            return has<std::string>(
+            return has<std::string const &>(
                 getExtractedName(name),
                 level
             );
@@ -366,7 +366,7 @@ namespace ablastr::fields
             int level
         ) const
         {
-            return has<std::string>(
+            return has<std::string const &>(
                 getExtractedName(name),
                 dir,
                 level
@@ -386,7 +386,7 @@ namespace ablastr::fields
             int level
         ) const
         {
-            return has_vector<std::string>(
+            return has_vector<std::string const &>(
                 getExtractedName(name),
                 level
             );
@@ -396,8 +396,8 @@ namespace ablastr::fields
          *
          * This throws a runtime error if the requested field is not present.
          *
-         * @param name the name to check if registered
-         * @param level the MR level to check
+         * @param name the name of the field
+         * @param level the MR level
          * @return a non-owning pointer to the MultiFab (field)
          */
         template<typename T>
@@ -407,7 +407,7 @@ namespace ablastr::fields
             int level
         )
         {
-            return get<std::string>(
+            return get<std::string const &>(
                 getExtractedName(name),
                 level
             );
@@ -417,9 +417,9 @@ namespace ablastr::fields
          *
          * This throws a runtime error if the requested field is not present.
          *
-         * @param name the name to check if registered
+         * @param name the name of the field
          * @param dir the field component for vector fields ("direction" of the unit vector)
-         * @param level the MR level to check
+         * @param level the MR level
          * @return a non-owning pointer to the MultiFab (field)
          */
         template<typename T>
@@ -430,7 +430,7 @@ namespace ablastr::fields
             int level
         )
         {
-            return get<std::string>(
+            return get<std::string const &>(
                 getExtractedName(name),
                 dir,
                 level
@@ -441,8 +441,8 @@ namespace ablastr::fields
          *
          * This throws a runtime error if the requested field is not present.
          *
-         * @param name the name to check if registered
-         * @param level the MR level to check
+         * @param name the name of the field
+         * @param level the MR level
          * @return a non-owning pointer to the MultiFab (field)
          */
         template<typename T>
@@ -452,7 +452,7 @@ namespace ablastr::fields
             int level
         ) const
         {
-            return get<std::string>(
+            return get<std::string const &>(
                 getExtractedName(name),
                 level
             );
@@ -462,9 +462,9 @@ namespace ablastr::fields
          *
          * This throws a runtime error if the requested field is not present.
          *
-         * @param name the name to check if registered
+         * @param name the name of the field
          * @param dir the field component for vector fields ("direction" of the unit vector)
-         * @param level the MR level to check
+         * @param level the MR level
          * @return a non-owning pointer to the MultiFab (field)
          */
         template<typename T>
@@ -475,20 +475,20 @@ namespace ablastr::fields
             int level
         ) const
         {
-            return get<std::string>(
+            return get<std::string const &>(
                 getExtractedName(name),
                 dir,
                 level
             );
         }
 
-        /** title
+        /** Return the MultiFab of a scalar field on all MR levels.
          *
-         * Same as get above, but returns all levels for a name.
+         * This throws a runtime error if the requested field is not present.
          *
-         * @param name ...
-         * @param finest_level ...
-         * @return ...
+         * @param name the name of the field
+         * @param finest_level the highest MR level to return
+         * @return non-owning pointers to the MultiFab (field) on all levels
          */
         //@{
         template<typename T>
@@ -498,7 +498,7 @@ namespace ablastr::fields
             int finest_level
         )
         {
-            return get_mr_levels<std::string>(
+            return get_mr_levels<std::string const &>(
                 getExtractedName(name),
                 finest_level
             );
@@ -510,7 +510,7 @@ namespace ablastr::fields
             int finest_level
         ) const
         {
-            return get_mr_levels<std::string>(
+            return get_mr_levels<std::string const &>(
                 getExtractedName(name),
                 finest_level
             );
@@ -521,9 +521,9 @@ namespace ablastr::fields
          *
          * Same as get above, but returns all levels for a name.
          *
-         * @param name ...
-         * @param level ...
-         * @return ...
+         * @param name the name of the field
+         * @param level the MR level
+         * @return non-owning pointers to all components of a vector field
          */
         //@{
         template<typename T>
@@ -533,7 +533,7 @@ namespace ablastr::fields
             int level
         )
         {
-            return get_alldirs<std::string>(
+            return get_alldirs<std::string const &>(
                 getExtractedName(name),
                 level
             );
@@ -545,7 +545,7 @@ namespace ablastr::fields
             int level
         ) const
         {
-            return get_alldirs<std::string>(
+            return get_alldirs<std::string const &>(
                 getExtractedName(name),
                 level
             );
@@ -557,9 +557,9 @@ namespace ablastr::fields
          * Out loop: MR levels.
          * Inner loop: directions (components).
          *
-         * @param name ...
-         * @param finest_level ...
-         * @return ...
+         * @param name the name of the field
+         * @param finest_level the highest MR level to return
+         * @return non-owning pointers to all components of a vector field on all MR levels
          */
         //@{
         template<typename T>
@@ -569,7 +569,7 @@ namespace ablastr::fields
             int finest_level
         )
         {
-            return get_mr_levels_alldirs<std::string>(
+            return get_mr_levels_alldirs<std::string const &>(
                 getExtractedName(name),
                 finest_level
             );
@@ -581,30 +581,24 @@ namespace ablastr::fields
             int finest_level
         ) const
         {
-            return get_mr_levels_alldirs<std::string>(
+            return get_mr_levels_alldirs<std::string const &>(
                 getExtractedName(name),
                 finest_level
             );
         }
         //@}
 
-        /** title
+        /** List the internal names of all registered fields.
          *
-         * body body
-         * body
-         *
-         * @return ...
+         * @return all currently allocated and registered fields
          */
         [[nodiscard]] std::vector<std::string>
         list () const;
 
-        /** title
+        /** Deallocate and remove a scalar field.
          *
-         * body body
-         * body
-         *
-         * @param name ...
-         * @param level ...
+         * @param name the name of the field
+         * @param level the MR level
          */
         template<typename T>
         void
@@ -613,17 +607,14 @@ namespace ablastr::fields
             int level
         )
         {
-            erase<std::string>(getExtractedName(name), level);
+            erase<std::string const &>(getExtractedName(name), level);
         }
 
-        /** title
+        /** Deallocate and remove a vector field component.
          *
-         * body body
-         * body
-         *
-         * @param name ...
-         * @param dir ...
-         * @param level ...
+         * @param name the name of the field
+         * @param dir the field component for vector fields ("direction" of the unit vector)
+         * @param level the MR level
          */
         template<typename T>
         void
@@ -633,7 +624,7 @@ namespace ablastr::fields
             int level
         )
         {
-            erase<std::string>(getExtractedName(name), dir, level);
+            erase<std::string const &>(getExtractedName(name), dir, level);
         }
 
         /** Erase all MultiFabs on a specific MR level.
@@ -660,14 +651,11 @@ namespace ablastr::fields
             amrex::DistributionMapping const & new_dm
         );
 
-        /** title
+        /** Create the register name of scalar field and MR level
          *
-         * body body
-         * body
-         *
-         * @param name ...
-         * @param level ...
-         * @return ...
+         * @param name the name of the field
+         * @param level the MR level
+         * @return internal name of the field in the register
          */
         [[nodiscard]] std::string
         mf_name (
@@ -675,15 +663,12 @@ namespace ablastr::fields
             int level
         ) const;
 
-        /** title
+        /** Create the register name of vector field, component direction and MR level
          *
-         * body body
-         * body
-         *
-         * @param name ...
-         * @param dir ...
-         * @param level ...
-         * @return ...
+         * @param name the name of the field
+         * @param dir the field component for vector fields ("direction" of the unit vector)
+         * @param level the MR level
+         * @return internal name of the field in the register
          */
         [[nodiscard]] std::string
         mf_name (
@@ -695,11 +680,11 @@ namespace ablastr::fields
     private:
         amrex::MultiFab *
         internal_get (
-            const std::string& key
+            std::string const & key
         );
         [[nodiscard]] amrex::MultiFab const *
         internal_get (
-            const std::string& key
+            std::string const & key
         ) const;
 
         /** data storage: ownership and lifetime control */
@@ -707,15 +692,18 @@ namespace ablastr::fields
             std::string,
             MultiFabOwner
         > m_mf_register;
+
+        /** the three directions of a vector field */
+        std::vector<Direction> m_all_dirs = {Direction{0}, Direction{1}, Direction{2}};
     };
 
-    /** TODO: temporary, remove me
+    /** Little temporary helper function to pass temporary MultiFabs as VectorField.
      *
-     * @return
+     * @return pointers to externally managed vector field components (3 MultiFab)
      */
     VectorField
     a2m (
-        const std::array< std::unique_ptr<amrex::MultiFab>, 3 > & old_vectorfield
+        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const & old_vectorfield
     );
 
 } // namespace ablastr::fields

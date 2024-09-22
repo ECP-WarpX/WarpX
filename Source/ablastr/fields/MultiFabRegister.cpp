@@ -1,29 +1,35 @@
-/* Copyright 2024 The ABLAST Community
+/* Copyright 2024 The ABLASTR Community
  *
- * This file is part of WarpX.
+ * This file is part of ABLASTR.
  *
  * License: BSD-3-Clause-LBNL
- * Authors: Axel Huebl, ...
+ * Authors: Axel Huebl
  */
 #include "MultiFabRegister.H"
 
-#include "ablastr/utils/TextMsg.H"
+#include <AMReX_MakeType.H>
 
-#include <algorithm>
+#include <array>
+#include <memory>
+#include <optional>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 
 
 namespace ablastr::fields
 {
     template<>
     amrex::MultiFab*
-    MultiFabRegister::alloc_init<std::string> (
-        std::string name,
+    MultiFabRegister::alloc_init<std::string const &> (
+        std::string const & name,
         int level,
         amrex::BoxArray const & ba,
         amrex::DistributionMapping const & dm,
         int ncomp,
         amrex::IntVect const & ngrow,
-        std::optional<const amrex::Real> initial_value,
+        std::optional<amrex::Real const> initial_value,
         bool remake,
         bool redistribute_on_remake
     )
@@ -34,12 +40,12 @@ namespace ablastr::fields
         }
 
         // fully qualified name
-        name = mf_name(name, level);
+        std::string const internal_name = mf_name(name, level);
 
         // allocate
-        const auto tag = amrex::MFInfo().SetTag(name);
+        const auto tag = amrex::MFInfo().SetTag(internal_name);
         auto [it, success] = m_mf_register.emplace(
-            name,
+            internal_name,
             MultiFabOwner{
                 {ba, dm, ncomp, ngrow, tag},
                 std::nullopt,  // scalar: no direction
@@ -50,10 +56,10 @@ namespace ablastr::fields
             }
         );
         if (!success) {
-            throw std::runtime_error("MultiFabRegister::alloc_init failed for " + name);
+            throw std::runtime_error("MultiFabRegister::alloc_init failed for " + internal_name);
         }
 
-        // a short-hand alias for the code below
+        // a shorthand alias for the code below
         amrex::MultiFab & mf = it->second.m_mf;
 
         // initialize with value
@@ -66,15 +72,15 @@ namespace ablastr::fields
 
     template<>
     amrex::MultiFab*
-    MultiFabRegister::alloc_init<std::string> (
-        std::string name,
+    MultiFabRegister::alloc_init<std::string const &> (
+        std::string const & name,
         Direction dir,
         int level,
         amrex::BoxArray const & ba,
         amrex::DistributionMapping const & dm,
         int ncomp,
         amrex::IntVect const & ngrow,
-        std::optional<const amrex::Real> initial_value,
+        std::optional<amrex::Real const> initial_value,
         bool remake,
         bool redistribute_on_remake
     )
@@ -89,12 +95,12 @@ namespace ablastr::fields
         }
 
         // fully qualified name
-        name = mf_name(name, dir, level);
+        std::string const internal_name = mf_name(name, dir, level);
 
         // allocate
-        const auto tag = amrex::MFInfo().SetTag(name);
+        const auto tag = amrex::MFInfo().SetTag(internal_name);
         auto [it, success] = m_mf_register.emplace(
-            name,
+            internal_name,
             MultiFabOwner{
                 {ba, dm, ncomp, ngrow, tag},
                 dir,
@@ -105,10 +111,10 @@ namespace ablastr::fields
             }
         );
         if (!success) {
-            throw std::runtime_error("MultiFabRegister::alloc_init failed for " + name);
+            throw std::runtime_error("MultiFabRegister::alloc_init failed for " + internal_name);
         }
 
-        // a short-hand alias for the code below
+        // a shorthand alias for the code below
         amrex::MultiFab & mf = it->second.m_mf;
 
         // initialize with value
@@ -136,11 +142,11 @@ namespace ablastr::fields
 
     template<>
     amrex::MultiFab*
-    MultiFabRegister::alias_init<std::string, std::string> (
-        std::string new_name,
-        std::string alias_name,
+    MultiFabRegister::alias_init<std::string const &, std::string const &> (
+        std::string const & new_name,
+        std::string const & alias_name,
         int level,
-        std::optional<const amrex::Real> initial_value
+        std::optional<amrex::Real const> initial_value
     )
     {
         // checks
@@ -160,30 +166,30 @@ namespace ablastr::fields
         }
 
         // fully qualified name
-        new_name = mf_name(new_name, level);
-        alias_name = mf_name(alias_name, level);
+        std::string const internal_new_name = mf_name(new_name, level);
+        std::string const internal_alias_name = mf_name(alias_name, level);
 
-        MultiFabOwner & alias = m_mf_register[alias_name];
+        MultiFabOwner & alias = m_mf_register[internal_alias_name];
         amrex::MultiFab & mf_alias = alias.m_mf;
 
         // allocate
         auto [it, success] = m_mf_register.emplace(
-            new_name,
+                internal_new_name,
             MultiFabOwner{
                 {mf_alias, amrex::make_alias, 0, mf_alias.nComp()},
                 std::nullopt,  // scalar: no direction
                 level,
                 alias.m_remake,
                 alias.m_redistribute_on_remake,
-                alias_name
+                internal_alias_name
             }
 
         );
         if (!success) {
-            throw std::runtime_error("MultiFabRegister::alias_init failed for " + new_name);
+            throw std::runtime_error("MultiFabRegister::alias_init failed for " + internal_new_name);
         }
 
-        // a short-hand alias for the code below
+        // a shorthand alias for the code below
         amrex::MultiFab & mf = it->second.m_mf;
 
         // initialize with value
@@ -196,12 +202,12 @@ namespace ablastr::fields
 
     template<>
     amrex::MultiFab*
-    MultiFabRegister::alias_init<std::string, std::string> (
-            std::string new_name,
-            std::string alias_name,
+    MultiFabRegister::alias_init<std::string const &, std::string const &> (
+            std::string const & new_name,
+            std::string const & alias_name,
             Direction dir,
             int level,
-            std::optional<const amrex::Real> initial_value
+            std::optional<amrex::Real const> initial_value
     )
     {
         // checks
@@ -221,26 +227,26 @@ namespace ablastr::fields
         }
 
         // fully qualified name
-        new_name = mf_name(new_name, dir, level);
-        alias_name = mf_name(alias_name, dir, level);
+        std::string const internal_new_name = mf_name(new_name, dir, level);
+        std::string const internal_alias_name = mf_name(alias_name, dir, level);
 
-        MultiFabOwner & alias = m_mf_register[alias_name];
+        MultiFabOwner & alias = m_mf_register[internal_alias_name];
         amrex::MultiFab & mf_alias = alias.m_mf;
 
         // allocate
         auto [it, success] = m_mf_register.emplace(
-            new_name,
+            internal_new_name,
             MultiFabOwner{
                 {mf_alias, amrex::make_alias, 0, mf_alias.nComp()},
                 dir,
                 level,
                 alias.m_remake,
                 alias.m_redistribute_on_remake,
-                alias_name
+                internal_alias_name
             }
         );
         if (!success) {
-            throw std::runtime_error("MultiFabRegister::alias_init failed for " + new_name);
+            throw std::runtime_error("MultiFabRegister::alias_init failed for " + internal_new_name);
         }
 
         // a short-hand alias for the code below
@@ -312,40 +318,39 @@ namespace ablastr::fields
 
     template<>
     bool
-    MultiFabRegister::has<std::string> (
-        std::string name,
+    MultiFabRegister::has<std::string const &> (
+        std::string const & name,
         int level
     ) const
     {
-        name = mf_name(name, level);
+        std::string const internal_name = mf_name(name, level);
 
-        return m_mf_register.count(name) > 0;
+        return m_mf_register.count(internal_name) > 0;
     }
 
     template<>
     bool
-    MultiFabRegister::has<std::string> (
-        std::string name,
+    MultiFabRegister::has<std::string const &> (
+        std::string const & name,
         Direction dir,
         int level
     ) const
     {
-        name = mf_name(name, dir, level);
+        std::string const internal_name = mf_name(name, dir, level);
 
-        return m_mf_register.count(name) > 0;
+        return m_mf_register.count(internal_name) > 0;
     }
 
     template<>
     bool
-    MultiFabRegister::has_vector<std::string> (
-        std::string name,
+    MultiFabRegister::has_vector<std::string const &> (
+        std::string const & name,
         int level
     ) const
     {
-        const std::vector<Direction> all_dirs = {Direction{0}, Direction{1}, Direction{2}};
-
         unsigned long count = 0;
-        for (const Direction& dir : all_dirs) {
+        for (Direction const & dir : m_all_dirs)
+        {
             std::string const internal_name = mf_name(name, dir, level);
             count += m_mf_register.count(internal_name);
         }
@@ -355,7 +360,7 @@ namespace ablastr::fields
 
     amrex::MultiFab*
     MultiFabRegister::internal_get (
-        const std::string& key
+        std::string const & key
     )
     {
         if (m_mf_register.count(key) == 0) {
@@ -370,7 +375,7 @@ namespace ablastr::fields
 
     amrex::MultiFab const *
     MultiFabRegister::internal_get (
-        const std::string& key
+        std::string const & key
     ) const
     {
         if (m_mf_register.count(key) == 0) {
@@ -385,54 +390,54 @@ namespace ablastr::fields
 
     template<>
     amrex::MultiFab*
-    MultiFabRegister::get<std::string> (
-        std::string name,
+    MultiFabRegister::get<std::string const &> (
+        std::string const & name,
         int level
     )
     {
-        name = mf_name(name, level);
-        return internal_get(name);
+        std::string const internal_name = mf_name(name, level);
+        return internal_get(internal_name);
     }
 
     template<>
     amrex::MultiFab*
-    MultiFabRegister::get<std::string> (
-        std::string name,
+    MultiFabRegister::get<std::string const &> (
+        std::string const & name,
         Direction dir,
         int level
     )
     {
-        name = mf_name(name, dir, level);
-        return internal_get(name);
+        std::string const internal_name = mf_name(name, dir, level);
+        return internal_get(internal_name);
     }
 
     template<>
     amrex::MultiFab const *
-    MultiFabRegister::get<std::string> (
-        std::string name,
+    MultiFabRegister::get<std::string const &> (
+        std::string const & name,
         int level
     ) const
     {
-        name = mf_name(name, level);
-        return internal_get(name);
+        std::string const internal_name = mf_name(name, level);
+        return internal_get(internal_name);
     }
 
     template<>
     amrex::MultiFab const *
-    MultiFabRegister::get<std::string> (
-        std::string name,
+    MultiFabRegister::get<std::string const &> (
+        std::string const & name,
         Direction dir,
         int level
     ) const
     {
-        name = mf_name(name, dir, level);
-        return internal_get(name);
+        std::string const internal_name = mf_name(name, dir, level);
+        return internal_get(internal_name);
     }
 
     template<>
     MultiLevelScalarField
-    MultiFabRegister::get_mr_levels<std::string> (
-        std::string name,
+    MultiFabRegister::get_mr_levels<std::string const &> (
+        std::string const & name,
         int finest_level
     )
     {
@@ -447,8 +452,8 @@ namespace ablastr::fields
 
     template<>
     ConstMultiLevelScalarField
-    MultiFabRegister::get_mr_levels<std::string> (
-        std::string name,
+    MultiFabRegister::get_mr_levels<std::string const &> (
+        std::string const & name,
         int finest_level
     ) const
     {
@@ -463,19 +468,16 @@ namespace ablastr::fields
 
     template<>
     VectorField
-    MultiFabRegister::get_alldirs<std::string> (
-        std::string name,
+    MultiFabRegister::get_alldirs<std::string const &> (
+        std::string const & name,
         int level
     )
     {
-        // TODO: Technically, we should search field_on_level via std::unique_copy
-        const std::vector<Direction> all_dirs = {Direction{0}, Direction{1}, Direction{2}};
-
         // insert a new level
         VectorField vectorField;
 
         // insert components
-        for (const Direction& dir : all_dirs)
+        for (Direction const & dir : m_all_dirs)
         {
             vectorField[dir] = get(name, dir, level);
         }
@@ -484,19 +486,16 @@ namespace ablastr::fields
 
     template<>
     ConstVectorField
-    MultiFabRegister::get_alldirs<std::string> (
-        std::string name,
+    MultiFabRegister::get_alldirs<std::string const &> (
+        std::string const & name,
         int level
     ) const
     {
-        // TODO: Technically, we should search field_on_level via std::unique_copy
-        const std::vector<Direction> all_dirs = {Direction{0}, Direction{1}, Direction{2}};
-
         // insert a new level
         ConstVectorField vectorField;
 
         // insert components
-        for (const Direction& dir: all_dirs)
+        for (Direction const & dir : m_all_dirs)
         {
             vectorField[dir] = get(name, dir, level);
         }
@@ -505,16 +504,13 @@ namespace ablastr::fields
 
     template<>
     MultiLevelVectorField
-    MultiFabRegister::get_mr_levels_alldirs<std::string> (
-        std::string name,
+    MultiFabRegister::get_mr_levels_alldirs<std::string const &> (
+        std::string const & name,
         int finest_level
     )
     {
         MultiLevelVectorField field_on_level;
         field_on_level.reserve(finest_level+1);
-
-        // TODO: Technically, we should search field_on_level via std::unique_copy
-        const std::vector<Direction> all_dirs = {Direction{0}, Direction{1}, Direction{2}};
 
         for (int lvl = 0; lvl <= finest_level; lvl++)
         {
@@ -522,7 +518,7 @@ namespace ablastr::fields
             field_on_level.push_back(VectorField{});
 
             // insert components
-            for (const Direction& dir : all_dirs)
+            for (Direction const & dir : m_all_dirs)
             {
                 field_on_level[lvl][dir] = get(name, dir, lvl);
             }
@@ -532,16 +528,13 @@ namespace ablastr::fields
 
     template<>
     ConstMultiLevelVectorField
-    MultiFabRegister::get_mr_levels_alldirs<std::string> (
-        std::string name,
+    MultiFabRegister::get_mr_levels_alldirs<std::string const &> (
+        std::string const & name,
         int finest_level
     ) const
     {
         ConstMultiLevelVectorField field_on_level;
         field_on_level.reserve(finest_level+1);
-
-        // TODO: Technically, we should search field_on_level via std::unique_copy
-        const std::vector<Direction> all_dirs = {Direction{0}, Direction{1}, Direction{2}};
 
         for (int lvl = 0; lvl <= finest_level; lvl++)
         {
@@ -549,7 +542,7 @@ namespace ablastr::fields
             field_on_level.push_back(ConstVectorField{});
 
             // insert components
-            for (const Direction& dir : all_dirs)
+            for (Direction const & dir : m_all_dirs)
             {
                 field_on_level[lvl][dir] = get(name, dir, lvl);
             }
@@ -569,33 +562,33 @@ namespace ablastr::fields
 
     template<>
     void
-    MultiFabRegister::erase<std::string> (
-        std::string name,
+    MultiFabRegister::erase<std::string const &> (
+        std::string const & name,
         int level
     )
     {
-        name = mf_name(name, level);
+        std::string const internal_name = mf_name(name, level);
 
-        if (m_mf_register.count(name) != 1) {
-            throw std::runtime_error("MultiFabRegister::erase name does not exist in register: " + name);
+        if (m_mf_register.count(internal_name) != 1) {
+            throw std::runtime_error("MultiFabRegister::erase name does not exist in register: " + internal_name);
         }
-        m_mf_register.erase(name);
+        m_mf_register.erase(internal_name);
     }
 
     template<>
     void
-    MultiFabRegister::erase<std::string> (
-        std::string name,
+    MultiFabRegister::erase<std::string const &> (
+        std::string const & name,
         Direction dir,
         int level
     )
     {
-        name = mf_name(name, dir, level);
+        std::string const internal_name = mf_name(name, dir, level);
 
-        if (m_mf_register.count(name) != 1) {
-            throw std::runtime_error("MultiFabRegister::erase name does not exist in register: " + name);
+        if (m_mf_register.count(internal_name) != 1) {
+            throw std::runtime_error("MultiFabRegister::erase name does not exist in register: " + internal_name);
         }
-        m_mf_register.erase(name);
+        m_mf_register.erase(internal_name);
     }
 
     void
@@ -645,15 +638,15 @@ namespace ablastr::fields
 
     VectorField
     a2m (
-        const std::array< std::unique_ptr<amrex::MultiFab>, 3 > & old_vectorfield
+        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const & old_vectorfield
     )
     {
-        const std::vector<Direction> all_dirs = {Direction{0}, Direction{1}, Direction{2}};
+        std::vector<Direction> const all_dirs = {Direction{0}, Direction{1}, Direction{2}};
 
         VectorField field_on_level;
 
         // insert components
-        for (const auto dir : {0, 1, 2})
+        for (auto const dir : {0, 1, 2})
         {
             field_on_level[Direction{dir}] = old_vectorfield[dir].get();
         }
