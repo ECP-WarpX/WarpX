@@ -1,6 +1,11 @@
 name: 🧴 clang sanitizers
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - "development"
+      - "nightly"
+  pull_request:
 
 concurrency:
   group: ${{ github.ref }}-${{ github.head_ref }}-clangsanitizers

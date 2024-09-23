@@ -6,6 +6,10 @@ pool:
 pr:
   autoCancel: true
   drafts: false
+  branches:
+    include:
+    - development
+    - nightly
 
 jobs:
 - job:
