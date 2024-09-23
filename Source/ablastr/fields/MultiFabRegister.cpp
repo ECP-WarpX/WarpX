@@ -125,21 +125,6 @@ namespace ablastr::fields
         return &mf;
     }
 
-    void
-    MultiFabRegister::alloc_like (
-        std::string const & /* new_name */,
-        std::string const & /* other_name */,
-        int /* level */
-    )
-    {
-        // other_name = mf_name(other_name, other_level);
-
-        throw std::runtime_error("MultiFabRegister::alloc_like not yet implemented");
-
-        // Checks
-        // TODO: does the other_name already exist? error
-    }
-
     template<>
     amrex::MultiFab*
     MultiFabRegister::alias_init<std::string const &, std::string const &> (

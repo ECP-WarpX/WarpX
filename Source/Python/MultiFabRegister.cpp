@@ -96,13 +96,6 @@ void init_MultiFabRegister (py::module & m)
              py::arg("initial_value")
         )
 
-        .def("alloc_like",
-             &MultiFabRegister::alloc_like,
-             py::arg("other_name"),
-             py::arg("other_level"),
-             py::arg("level")
-        )
-
         .def("has",
              py::overload_cast<
                  std::string,

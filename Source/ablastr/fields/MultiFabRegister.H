@@ -316,22 +316,6 @@ namespace ablastr::fields
             );
         }
 
-        /** Allocate a new MultiFab (field) with the same size and distribution as another.
-         *
-         * @todo this is reserved for future use and not yet implemented.
-         * @todo we will also add an overload with dir.
-         *
-         * @param new_name new name
-         * @param other_name the other multifab
-         * @param level the MR level to represent
-         */
-        void
-        alloc_like (
-            std::string const & new_name,
-            std::string const & other_name,
-            int level
-        );
-
         /** Check if a scalar MultiFab (field) is registered.
          *
          * @param name the name to check if registered
