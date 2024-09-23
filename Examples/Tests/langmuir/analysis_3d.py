@@ -29,17 +29,20 @@ from scipy.constants import c, e, epsilon_0, m_e
 sys.path.insert(1, "../../../../warpx/Regression/Checksum/")
 import checksumAPI
 
+# test name
+test_name = os.path.split(os.getcwd())[1]
+
 # this will be the name of the plot file
 fn = sys.argv[1]
 
 # Parse test name and check if current correction (psatd.current_correction=1) is applied
-current_correction = True if re.search("current_correction", fn) else False
+current_correction = True if re.search("current_correction", test_name) else False
 
 # Parse test name and check if Vay current deposition (algo.current_deposition=vay) is used
-vay_deposition = True if re.search("Vay_deposition", fn) else False
+vay_deposition = True if re.search("vay_deposition", test_name) else False
 
 # Parse test name and check if div(E)/div(B) cleaning (warpx.do_div<e,b>_cleaning=1) is used
-div_cleaning = True if re.search("div_cleaning", fn) else False
+div_cleaning = True if re.search("div_cleaning", test_name) else False
 
 # Parameters (these parameters must match the parameters in `inputs.multi.rt`)
 epsilon = 0.01
@@ -178,8 +181,8 @@ if current_correction or vay_deposition:
     assert error_rel < tolerance
 
 if div_cleaning:
-    ds_old = yt.load("Langmuir_multi_psatd_div_cleaning_plt000038")
-    ds_mid = yt.load("Langmuir_multi_psatd_div_cleaning_plt000039")
+    ds_old = yt.load("diags/diag1000038")
+    ds_mid = yt.load("diags/diag1000039")
     ds_new = yt.load(fn)  # this is the last plotfile
 
     ad_old = ds_old.covering_grid(
@@ -209,9 +212,7 @@ if div_cleaning:
     print("tolerance = {}".format(tolerance))
     assert error_rel < tolerance
 
-test_name = os.path.split(os.getcwd())[1]
-
-if re.search("single_precision", fn):
+if re.search("single_precision", test_name):
     checksumAPI.evaluate_checksum(test_name, fn, rtol=1.0e-3)
 else:
     checksumAPI.evaluate_checksum(test_name, fn)

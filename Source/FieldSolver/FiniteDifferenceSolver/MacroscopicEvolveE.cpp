@@ -7,6 +7,7 @@
 #   include "FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
 #   include "FiniteDifferenceAlgorithms/FieldAccessorFunctors.H"
 #endif
+#include "EmbeddedBoundary/Enabled.H"
 #include "MacroscopicProperties/MacroscopicProperties.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -139,10 +140,14 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
         Array4<Real> const& jy = Jfield[1]->array(mfi);
         Array4<Real> const& jz = Jfield[2]->array(mfi);
 
-#ifdef AMREX_USE_EB
-        amrex::Array4<amrex::Real> const& lx = edge_lengths[0]->array(mfi);
-        amrex::Array4<amrex::Real> const& ly = edge_lengths[1]->array(mfi);
-        amrex::Array4<amrex::Real> const& lz = edge_lengths[2]->array(mfi);
+        amrex::Array4<amrex::Real> eb_lx, eb_ly, eb_lz;
+        if (EB::enabled()) {
+            eb_lx = edge_lengths[0]->array(mfi);
+            eb_ly = edge_lengths[1]->array(mfi);
+            eb_lz = edge_lengths[2]->array(mfi);
+        }
+#ifdef WARPX_DIM_XZ
+        amrex::ignore_unused(eb_ly);
 #endif
 
         // material prop //
@@ -174,10 +179,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
         // Loop over the cells and update the fields
         amrex::ParallelFor(tex, tey, tez,
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-#ifdef AMREX_USE_EB
                 // Skip field push if this cell is fully covered by embedded boundaries
-                if (lx(i, j, k) <= 0) return;
-#endif
+                if (eb_lx && eb_lx(i, j, k) <= 0) { return; }
+
                 // Interpolate conductivity, sigma, to Ex position on the grid
                 amrex::Real const sigma_interp = ablastr::coarsen::sample::Interp(sigma_arr, sigma_stag,
                                                                                   Ex_stag, macro_cr, i, j, k, scomp);
@@ -193,15 +197,13 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-#ifdef AMREX_USE_EB
 #ifdef WARPX_DIM_3D
-                if (ly(i,j,k) <= 0) return;
+                if (eb_ly && eb_ly(i,j,k) <= 0) { return; }
 #elif defined(WARPX_DIM_XZ)
                 //In XZ Ey is associated with a mesh node, so we need to check if the mesh node is covered
-                amrex::ignore_unused(ly);
-                if (lx(i, j, k)<=0 || lx(i-1, j, k)<=0 || lz(i, j, k)<=0 || lz(i, j-1, k)<=0) return;
+                if (eb_lx && (eb_lx(i, j, k)<=0 || eb_lx(i-1, j, k)<=0 || eb_lz(i, j, k)<=0 || eb_lz(i, j-1, k)<=0)) { return; }
 #endif
-#endif
+
                 // Interpolate conductivity, sigma, to Ey position on the grid
                 amrex::Real const sigma_interp = ablastr::coarsen::sample::Interp(sigma_arr, sigma_stag,
                                                                                   Ey_stag, macro_cr, i, j, k, scomp);
@@ -218,10 +220,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-#ifdef AMREX_USE_EB
                 // Skip field push if this cell is fully covered by embedded boundaries
-                if (lz(i,j,k) <= 0) return;
-#endif
+                if (eb_lz && eb_lz(i, j, k) <= 0) { return; }
+
                 // Interpolate conductivity, sigma, to Ez position on the grid
                 amrex::Real const sigma_interp = ablastr::coarsen::sample::Interp(sigma_arr, sigma_stag,
                                                                                   Ez_stag, macro_cr, i, j, k, scomp);

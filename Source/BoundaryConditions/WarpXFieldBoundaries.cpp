@@ -26,8 +26,8 @@ namespace
     /** Returns true if any field boundary is set to FieldBoundaryType FT, else returns false.*/
     template <FieldBoundaryType FT>
     [[nodiscard]]
-    bool isAnyBoundary (const amrex::Vector<FieldBoundaryType>& field_boundary_lo,
-        const amrex::Vector<FieldBoundaryType>& field_boundary_hi)
+    bool isAnyBoundary (const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& field_boundary_lo,
+        const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& field_boundary_hi)
     {
         const auto isFT = [](const auto& b){
             return b == FT;};
@@ -38,8 +38,8 @@ namespace
     /** Returns true if any particle boundary is set to ParticleBoundaryType PT, else returns false.*/
     template <ParticleBoundaryType PT>
     [[nodiscard]]
-    bool isAnyBoundary (const amrex::Vector<ParticleBoundaryType>& particle_boundary_lo,
-        const amrex::Vector<ParticleBoundaryType>& particle_boundary_hi)
+    bool isAnyBoundary (const amrex::Array<ParticleBoundaryType,AMREX_SPACEDIM>& particle_boundary_lo,
+        const amrex::Array<ParticleBoundaryType,AMREX_SPACEDIM>& particle_boundary_hi)
     {
         const auto isPT = [](const auto& b){
             return b == PT;};

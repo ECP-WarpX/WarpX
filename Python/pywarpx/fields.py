@@ -661,6 +661,42 @@ def BzFPWrapper(level=0, include_ghosts=False):
     )
 
 
+def ExFPExternalWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(
+        mf_name="Efield_fp_external[x]", level=level, include_ghosts=include_ghosts
+    )
+
+
+def EyFPExternalWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(
+        mf_name="Efield_fp_external[y]", level=level, include_ghosts=include_ghosts
+    )
+
+
+def EzFPExternalWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(
+        mf_name="Efield_fp_external[z]", level=level, include_ghosts=include_ghosts
+    )
+
+
+def BxFPExternalWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(
+        mf_name="Bfield_fp_external[x]", level=level, include_ghosts=include_ghosts
+    )
+
+
+def ByFPExternalWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(
+        mf_name="Bfield_fp_external[y]", level=level, include_ghosts=include_ghosts
+    )
+
+
+def BzFPExternalWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(
+        mf_name="Bfield_fp_external[z]", level=level, include_ghosts=include_ghosts
+    )
+
+
 def JxFPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
         mf_name="current_fp[x]", level=level, include_ghosts=include_ghosts

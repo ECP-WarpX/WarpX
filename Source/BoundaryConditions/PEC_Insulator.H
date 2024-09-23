@@ -37,8 +37,8 @@ public:
      *                                    split pml field
      */
     void ApplyPEC_InsulatortoEfield (std::array<amrex::MultiFab*, 3> Efield,
-                                     amrex::Vector<FieldBoundaryType> const & field_boundary_lo,
-                                     amrex::Vector<FieldBoundaryType> const & field_boundary_hi,
+                                     amrex::Array<FieldBoundaryType,AMREX_SPACEDIM> const & field_boundary_lo,
+                                     amrex::Array<FieldBoundaryType,AMREX_SPACEDIM> const & field_boundary_hi,
                                      amrex::IntVect const & ng_fieldgather, amrex::Geometry const & geom,
                                      int lev, PatchType patch_type, amrex::Vector<amrex::IntVect> const & ref_ratios,
                                      amrex::Real time,
@@ -60,8 +60,8 @@ public:
      * \param[in]     time                current time of the simulation
      */
     void ApplyPEC_InsulatortoBfield (std::array<amrex::MultiFab*, 3> Bfield,
-                                     amrex::Vector<FieldBoundaryType> const & field_boundary_lo,
-                                     amrex::Vector<FieldBoundaryType> const & field_boundary_hi,
+                                     amrex::Array<FieldBoundaryType,AMREX_SPACEDIM> const & field_boundary_lo,
+                                     amrex::Array<FieldBoundaryType,AMREX_SPACEDIM> const & field_boundary_hi,
                                      amrex::IntVect const & ng_fieldgather, amrex::Geometry const & geom,
                                      int lev, PatchType patch_type, amrex::Vector<amrex::IntVect> const & ref_ratios,
                                      amrex::Real time);
@@ -100,8 +100,8 @@ public:
      */
     void
     ApplyPEC_InsulatortoField (std::array<amrex::MultiFab*, 3> field,
-                               amrex::Vector<FieldBoundaryType> const & field_boundary_lo,
-                               amrex::Vector<FieldBoundaryType> const & field_boundary_hi,
+                               amrex::Array<FieldBoundaryType,AMREX_SPACEDIM> const & field_boundary_lo,
+                               amrex::Array<FieldBoundaryType,AMREX_SPACEDIM> const & field_boundary_hi,
                                amrex::IntVect const & ng_fieldgather, amrex::Geometry const & geom,
                                int lev, PatchType patch_type, amrex::Vector<amrex::IntVect> const & ref_ratios,
                                amrex::Real time,

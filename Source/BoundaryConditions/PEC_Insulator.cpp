@@ -278,8 +278,8 @@ PEC_Insulator::PEC_Insulator ()
 void
 PEC_Insulator::ApplyPEC_InsulatortoEfield (
     std::array<amrex::MultiFab*, 3> Efield,
-    amrex::Vector<FieldBoundaryType> const & field_boundary_lo,
-    amrex::Vector<FieldBoundaryType> const & field_boundary_hi,
+    amrex::Array<FieldBoundaryType,AMREX_SPACEDIM> const & field_boundary_lo,
+    amrex::Array<FieldBoundaryType,AMREX_SPACEDIM> const & field_boundary_hi,
     amrex::IntVect const & ng_fieldgather, amrex::Geometry const & geom,
     int lev, PatchType patch_type, amrex::Vector<amrex::IntVect> const & ref_ratios,
     amrex::Real time,
@@ -305,8 +305,8 @@ PEC_Insulator::ApplyPEC_InsulatortoEfield (
 void
 PEC_Insulator::ApplyPEC_InsulatortoBfield (
     std::array<amrex::MultiFab*, 3> Bfield,
-    amrex::Vector<FieldBoundaryType> const & field_boundary_lo,
-    amrex::Vector<FieldBoundaryType> const & field_boundary_hi,
+    amrex::Array<FieldBoundaryType,AMREX_SPACEDIM> const & field_boundary_lo,
+    amrex::Array<FieldBoundaryType,AMREX_SPACEDIM> const & field_boundary_hi,
     amrex::IntVect const & ng_fieldgather, amrex::Geometry const & geom,
     int lev, PatchType patch_type, amrex::Vector<amrex::IntVect> const & ref_ratios,
     amrex::Real time)
@@ -332,8 +332,8 @@ PEC_Insulator::ApplyPEC_InsulatortoBfield (
 void
 PEC_Insulator::ApplyPEC_InsulatortoField (
     std::array<amrex::MultiFab*, 3> field,
-    amrex::Vector<FieldBoundaryType> const & field_boundary_lo,
-    amrex::Vector<FieldBoundaryType> const & field_boundary_hi,
+    amrex::Array<FieldBoundaryType,AMREX_SPACEDIM> const & field_boundary_lo,
+    amrex::Array<FieldBoundaryType,AMREX_SPACEDIM> const & field_boundary_hi,
     amrex::IntVect const & ng_fieldgather, amrex::Geometry const & geom,
     int lev, PatchType patch_type, amrex::Vector<amrex::IntVect> const & ref_ratios,
     amrex::Real time,

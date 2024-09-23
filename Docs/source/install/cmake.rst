@@ -88,7 +88,7 @@ CMake Option                  Default & Values                             Descr
 ``WarpX_CATALYST``            ON/**OFF**                                   Catalyst in situ visualization
 ``WarpX_COMPUTE``             NOACC/**OMP**/CUDA/SYCL/HIP                  On-node, accelerated computing backend
 ``WarpX_DIMS``                **3**/2/1/RZ                                 Simulation dimensionality. Use ``"1;2;RZ;3"`` for all.
-``WarpX_EB``                  ON/**OFF**                                   Embedded boundary support (not supported in RZ yet)
+``WarpX_EB``                  **ON**/OFF                                   Embedded boundary support (not supported in RZ yet)
 ``WarpX_IPO``                 ON/**OFF**                                   Compile WarpX with interprocedural optimization (aka LTO)
 ``WarpX_LIB``                 ON/**OFF**                                   Build WarpX as a library, e.g., for PICMI Python
 ``WarpX_MPI``                 **ON**/OFF                                   Multi-node support (message-passing)
@@ -269,7 +269,7 @@ Environment Variable          Default & Values                             Descr
 ============================= ============================================ ================================================================
 ``WARPX_COMPUTE``             NOACC/**OMP**/CUDA/SYCL/HIP                  On-node, accelerated computing backend
 ``WARPX_DIMS``                ``"1;2;3;RZ"``                               Simulation dimensionalities (semicolon-separated list)
-``WARPX_EB``                  ON/**OFF**                                   Embedded boundary support (not supported in RZ yet)
+``WARPX_EB``                  **ON**/OFF                                   Embedded boundary support (not supported in RZ yet)
 ``WARPX_MPI``                 ON/**OFF**                                   Multi-node support (message-passing)
 ``WARPX_OPENPMD``             **ON**/OFF                                   openPMD I/O (HDF5, ADIOS)
 ``WARPX_PRECISION``           SINGLE/**DOUBLE**                            Floating point precision (single/double)

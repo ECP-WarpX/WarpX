@@ -63,14 +63,14 @@ class CMakeBuild(build_ext):
             out = subprocess.check_output(["cmake", "--version"])
         except OSError:
             raise RuntimeError(
-                "CMake 3.20.0+ must be installed to build the following "
+                "CMake 3.24.0+ must be installed to build the following "
                 + "extensions: "
                 + ", ".join(e.name for e in self.extensions)
             )
 
         cmake_version = parse(re.search(r"version\s*([\d.]+)", out.decode()).group(1))
-        if cmake_version < parse("3.20.0"):
-            raise RuntimeError("CMake >= 3.20.0 is required")
+        if cmake_version < parse("3.24.0"):
+            raise RuntimeError("CMake >= 3.24.0 is required")
 
         for ext in self.extensions:
             self.build_extension(ext)
@@ -195,7 +195,7 @@ env = os.environ.copy()
 #         consistent across platforms (especially Windows)
 WARPX_COMPUTE = env.pop("WARPX_COMPUTE", "OMP")
 WARPX_MPI = env.pop("WARPX_MPI", "OFF")
-WARPX_EB = env.pop("WARPX_EB", "OFF")
+WARPX_EB = env.pop("WARPX_EB", "ON")
 WARPX_OPENPMD = env.pop("WARPX_OPENPMD", "ON")
 WARPX_PRECISION = env.pop("WARPX_PRECISION", "DOUBLE")
 WARPX_PARTICLE_PRECISION = env.pop("WARPX_PARTICLE_PRECISION", WARPX_PRECISION)

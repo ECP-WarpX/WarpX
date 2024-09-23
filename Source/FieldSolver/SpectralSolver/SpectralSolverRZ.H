@@ -41,8 +41,8 @@ class SpectralSolverRZ
                           bool with_pml,
                           bool update_with_rho,
                           bool fft_do_time_averaging,
-                          int J_in_time,
-                          int rho_in_time,
+                          JInTime J_in_time,
+                          RhoInTime rho_in_time,
                           bool dive_cleaning,
                           bool divb_cleaning);
 

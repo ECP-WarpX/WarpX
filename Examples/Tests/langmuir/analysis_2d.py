@@ -29,19 +29,23 @@ from scipy.constants import c, e, epsilon_0, m_e
 sys.path.insert(1, "../../../../warpx/Regression/Checksum/")
 import checksumAPI
 
+# test name
+test_name = os.path.split(os.getcwd())[1]
+
 # this will be the name of the plot file
 fn = sys.argv[1]
 
 # Parse test name and check if current correction (psatd.current_correction=1) is applied
-current_correction = True if re.search("current_correction", fn) else False
+current_correction = True if re.search("current_correction", test_name) else False
 
 # Parse test name and check if Vay current deposition (algo.current_deposition=vay) is used
-vay_deposition = True if re.search("Vay_deposition", fn) else False
+vay_deposition = True if re.search("vay_deposition", test_name) else False
 
 # Parse test name and check if particle_shape = 4 is used
-particle_shape_4 = True if re.search("particle_shape_4", fn) else False
+particle_shape_4 = True if re.search("particle_shape_4", test_name) else False
 
-# Parameters (these parameters must match the parameters in `inputs.multi.rt`)
+# Parameters (must match the parameters in the inputs)
+# FIXME read these parameters from warpx_used_inputs
 epsilon = 0.01
 n = 4.0e24
 n_osc_x = 2
@@ -159,5 +163,4 @@ if current_correction or vay_deposition:
     print("tolerance = {}".format(tolerance))
     assert error_rel < tolerance
 
-test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, fn)
