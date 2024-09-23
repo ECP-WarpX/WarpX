@@ -7,6 +7,7 @@
 
 #include "FieldMaximum.H"
 
+#include "FieldSolver/Fields.H"
 #include "Utils/TextMsg.H"
 #include "WarpX.H"
 
@@ -38,6 +39,7 @@
 #include <vector>
 
 using namespace amrex;
+using namespace warpx::fields;
 
 // constructor
 FieldMaximum::FieldMaximum (const std::string& rd_name)
@@ -90,7 +92,7 @@ FieldMaximum::FieldMaximum (const std::string& rd_name)
                 ofs << m_sep;
                 ofs << "[" << c++ << "]max_|B|_lev" + std::to_string(lev) + "(T)";
             }
-            ofs << std::endl;
+            ofs << "\n";
             // close file
             ofs.close();
         }

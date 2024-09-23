@@ -13,8 +13,8 @@ This section collects typical user workflows and best practices for WarpX.
    workflows/plot_distribution_mapping
    workflows/debugging
    workflows/generate_lookup_tables_with_tools
-   workflows/libensemble
    workflows/plot_timestep_duration
    workflows/psatd_stencil
    workflows/archiving
    workflows/ml_dataset_training
+   workflows/optimas

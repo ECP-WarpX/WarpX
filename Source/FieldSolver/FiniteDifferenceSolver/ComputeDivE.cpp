@@ -52,7 +52,7 @@ void FiniteDifferenceSolver::ComputeDivE (
         ComputeDivECylindrical <CylindricalYeeAlgorithm> ( Efield, divEfield );
 
 #else
-    if (m_grid_type == GridType::Collocated) {
+    if (m_grid_type == ablastr::utils::enums::GridType::Collocated) {
 
         ComputeDivECartesian <CartesianNodalAlgorithm> ( Efield, divEfield );
 

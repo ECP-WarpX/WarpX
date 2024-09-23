@@ -39,8 +39,8 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
     amrex::Box domain_box,
     amrex::Real const dt,
-    amrex::Vector<int> field_boundary_lo,
-    amrex::Vector<int> field_boundary_hi) {
+    amrex::Array<FieldBoundaryType,AMREX_SPACEDIM> field_boundary_lo,
+    amrex::Array<FieldBoundaryType,AMREX_SPACEDIM> field_boundary_hi) {
 
     // Ensure that we are using the Yee solver
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(

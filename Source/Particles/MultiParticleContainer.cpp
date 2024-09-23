@@ -10,6 +10,8 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "MultiParticleContainer.H"
+
+#include "FieldSolver/Fields.H"
 #include "Particles/ElementaryProcess/Ionization.H"
 #ifdef WARPX_QED
 #   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
@@ -37,10 +39,8 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
-#ifdef AMREX_USE_EB
-#   include "EmbeddedBoundary/ParticleScraper.H"
-#   include "EmbeddedBoundary/ParticleBoundaryProcess.H"
-#endif
+#include "EmbeddedBoundary/ParticleScraper.H"
+#include "EmbeddedBoundary/ParticleBoundaryProcess.H"
 
 #include "WarpX.H"
 
@@ -80,6 +80,7 @@
 #include <vector>
 
 using namespace amrex;
+using namespace warpx::fields;
 
 namespace
 {
@@ -396,6 +397,15 @@ MultiParticleContainer::GetParticleContainerFromName (const std::string& name) c
     return *allcontainers[i];
 }
 
+amrex::ParticleReal
+MultiParticleContainer::maxParticleVelocity() {
+    amrex::ParticleReal max_v = 0.0_prt;
+    for (const auto &pc : allcontainers) {
+        max_v = std::max(max_v, pc->maxParticleVelocity());
+    }
+    return max_v;
+}
+
 void
 MultiParticleContainer::AllocData ()
 {
@@ -629,6 +639,14 @@ MultiParticleContainer::defineAllParticleTiles ()
 {
     for (auto& pc : allcontainers) {
         pc->defineAllParticleTiles();
+    }
+}
+
+void
+MultiParticleContainer::deleteInvalidParticles ()
+{
+    for (auto& pc : allcontainers) {
+        pc->deleteInvalidParticles();
     }
 }
 
@@ -945,15 +963,11 @@ void MultiParticleContainer::CheckIonizationProductSpecies()
     }
 }
 
-void MultiParticleContainer::ScrapeParticles (const amrex::Vector<const amrex::MultiFab*>& distance_to_eb)
+void MultiParticleContainer::ScrapeParticlesAtEB (const amrex::Vector<const amrex::MultiFab*>& distance_to_eb)
 {
-#ifdef AMREX_USE_EB
     for (auto& pc : allcontainers) {
-        scrapeParticles(*pc, distance_to_eb, ParticleBoundaryProcess::Absorb());
+        scrapeParticlesAtEB(*pc, distance_to_eb, ParticleBoundaryProcess::Absorb());
     }
-#else
-    amrex::ignore_unused(distance_to_eb);
-#endif
 }
 
 #ifdef WARPX_QED
@@ -1388,10 +1402,12 @@ MultiParticleContainer::doQEDSchwinger ()
 
         const auto Transform = SchwingerTransformFunc{m_qed_schwinger_y_size, PIdx::w};
 
+        const amrex::Geometry& geom_level_zero = warpx.Geom(level_0);
+
         const auto num_added = filterCreateTransformFromFAB<1>( *pc_product_ele, *pc_product_pos, dst_ele_tile,
                                dst_pos_tile, box, fieldsEB, np_ele_dst,
                                np_pos_dst,Filter, CreateEle, CreatePos,
-                               Transform);
+                               Transform, geom_level_zero);
 
         setNewParticleIDs(dst_ele_tile, np_ele_dst, num_added);
         setNewParticleIDs(dst_pos_tile, np_pos_dst, num_added);

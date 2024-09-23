@@ -104,7 +104,7 @@ cmake -S ${REPO_DIR} -B ${REPO_DIR}/build_clang_tidy \
   -DWarpX_DIMS="1;2;3;RZ"      \
   -DWarpX_MPI=ON               \
   -DWarpX_COMPUTE=OMP          \
-  -DWarpX_PSATD=ON             \
+  -DWarpX_FFT=ON               \
   -DWarpX_QED=ON               \
   -DWarpX_QED_TABLE_GEN=ON     \
   -DWarpX_OPENPMD=ON           \

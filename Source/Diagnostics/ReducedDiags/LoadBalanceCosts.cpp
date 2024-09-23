@@ -7,6 +7,7 @@
 #include "LoadBalanceCosts.H"
 
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
+#include "FieldSolver/Fields.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -35,6 +36,7 @@
 #include <utility>
 
 using namespace amrex;
+using namespace warpx::fields;
 
 namespace
 {
@@ -273,7 +275,7 @@ void LoadBalanceCosts::WriteToFile (int step) const
     // end loop over data size
 
     // end line
-    ofs << std::endl;
+    ofs << "\n";
 
     // close file
     ofs.close();
@@ -327,7 +329,7 @@ void LoadBalanceCosts::WriteToFile (int step) const
             ofstmp << m_sep;
             ofstmp << "[" << c++ << "]hostname_box_" + std::to_string(boxNumber) + "()";
         }
-        ofstmp << std::endl;
+        ofstmp << "\n";
 
         // open the data-containing file
         const std::string fileDataName = m_path + m_rd_name + "." + m_extension;
@@ -358,7 +360,7 @@ void LoadBalanceCosts::WriteToFile (int step) const
             {
                 ofstmp << m_sep << "NaN";
             }
-            ofstmp << std::endl;
+            ofstmp << "\n";
         }
 
         // close files

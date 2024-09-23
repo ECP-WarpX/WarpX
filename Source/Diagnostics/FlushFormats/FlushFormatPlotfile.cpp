@@ -1,16 +1,17 @@
 #include "FlushFormatPlotfile.H"
 
-#include "Particles/ParticleIO.H"
+#include "FieldSolver/Fields.H"
+#include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "Particles/Filter/FilterFunctors.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Particles/ParticleIO.H"
 #include "Particles/PinnedMemoryParticleContainer.H"
 #include "Utils/Interpolate.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
-#include "Diagnostics/MultiDiagnostics.H"
 
 #include <AMReX.H>
 #include <AMReX_Box.H>
@@ -47,6 +48,7 @@
 #include <vector>
 
 using namespace amrex;
+using namespace warpx::fields;
 
 namespace
 {
@@ -224,7 +226,7 @@ FlushFormatPlotfile::WriteJobInfo(const std::string& dir) const
         jobInfoFile << " Inputs File Parameters\n";
         jobInfoFile << PrettyLine;
 
-        ParmParse::dumpTable(jobInfoFile, true);
+        ParmParse::prettyPrintTable(jobInfoFile);
 
         jobInfoFile.close();
     }

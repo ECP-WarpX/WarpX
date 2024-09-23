@@ -7,6 +7,7 @@
 
 #include "FieldMomentum.H"
 
+#include "FieldSolver/Fields.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "WarpX.H"
@@ -37,6 +38,7 @@
 #include <vector>
 
 using namespace amrex;
+using namespace warpx::fields;
 
 FieldMomentum::FieldMomentum (const std::string& rd_name)
     : ReducedDiags{rd_name}
@@ -85,7 +87,7 @@ FieldMomentum::FieldMomentum (const std::string& rd_name)
                 ofs << "momentum_z_lev" << lev << "(kg*m/s)";
             }
 
-            ofs << std::endl;
+            ofs << "\n";
             ofs.close();
         }
     }
@@ -181,15 +183,9 @@ void FieldMomentum::ComputeDiags (int step)
         amrex::Real ExB_z = amrex::get<2>(r);
         amrex::ParallelDescriptor::ReduceRealSum({ExB_x,ExB_y,ExB_z});
 
-        // Get cell size
-        amrex::Geometry const & geom = warpx.Geom(lev);
-#if   defined(WARPX_DIM_1D_Z)
-        auto dV = geom.CellSize(0);
-#elif   defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        auto dV = geom.CellSize(0) * geom.CellSize(1);
-#elif defined(WARPX_DIM_3D)
-        auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
-#endif
+        // Get cell volume
+        const std::array<Real, 3> &dx = WarpX::CellSize(lev);
+        const amrex::Real dV = dx[0]*dx[1]*dx[2];
 
         // Save data (offset: 3 values for each refinement level)
         const int offset = lev*3;
