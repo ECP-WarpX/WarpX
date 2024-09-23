@@ -95,6 +95,7 @@ sim = picmi.Simulation(
     solver=solver,
     time_step_size=dt,
     max_steps=max_steps,
+    warpx_use_filter=1,
     warpx_embedded_boundary=embedded_boundary,
     warpx_amrex_the_arena_is_managed=1,
 )

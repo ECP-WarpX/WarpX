@@ -2150,15 +2150,11 @@ Time step
 Filtering
 ^^^^^^^^^
 
-* ``warpx.use_filter`` (`0` or `1`; default: `1`, except for RZ FDTD)
+* ``warpx.use_filter`` (`0` or `1`; default: `1`)
     Whether to smooth the charge and currents on the mesh, after depositing them from the macro-particles.
     This uses a bilinear filter (see the :ref:`filtering section <theory-pic-filter>`).
-    The default is `1` in all cases, except for simulations in RZ geometry using the FDTD solver.
+    The default is `1` in all cases, including the simulations in RZ geometry using the FDTD solver.
     With the RZ PSATD solver, the filtering is done in :math:`k`-space.
-
-    .. warning::
-
-       Known bug: filter currently not working with FDTD solver in RZ geometry (see https://github.com/ECP-WarpX/WarpX/issues/1943).
 
 * ``warpx.filter_npass_each_dir`` (`3 int`) optional (default `1 1 1`)
     Number of passes along each direction for the bilinear filter.

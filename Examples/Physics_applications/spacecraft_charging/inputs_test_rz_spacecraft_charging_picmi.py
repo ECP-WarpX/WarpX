@@ -283,6 +283,10 @@ part_scraping_boundary_diag = picmi.ParticleBoundaryScrapingDiagnostic(
 ##########################
 
 sim = picmi.Simulation(
+    solver = solver,
+    time_step_size = dt,
+    max_steps = max_steps,
+    warpx_use_filter = 1,
     solver=solver,
     time_step_size=dt,
     max_steps=max_steps,
