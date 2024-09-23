@@ -51,9 +51,9 @@ class SpaceChargeFieldCorrector(object):
         # Correct fields so as to recover the actual charge
         # TODO: add guard cells
         Er = sim.extension.warpx.multifab("Efield_fp[x][level=0]")
-        Er.saxpy(Er, (q - q_v) * self.normalized_Er, 0, 0, 1, 0)
+        Er.saxpy(Er, (q - q_v), self.normalized_Er, 0, 0, 1, 0)
         Ez = sim.extension.warpx.multifab("Efield_fp[z][level=0]")
-        Ez.saxpy(Ez, (q - q_v) * self.normalized_Ez, 0, 0, 1, 0)
+        Ez.saxpy(Ez, (q - q_v), self.normalized_Ez, 0, 0, 1, 0)
         phi = PhiFPWrapper(include_ghosts=True)
         phi[...] += (q - q_v) * self.normalized_phi
         self.spacecraft_potential += (q - q_v) * self.spacecraft_capacitance
