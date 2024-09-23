@@ -195,7 +195,7 @@ plt.legend(["Analytical", "Electrostatic"])
 
 er_err = np.abs(Er_mean[r_idx] - Er_an(r_sub)).max() / np.abs(Er_an(r_sub)).max()
 
-plt.ylabel("$E_r$ (V/m)")
+plt.ylabel(r"$E_r$ (V/m)")
 plt.xlabel("r (m)")
 plt.title("Max % Error: {} %".format(er_err * 100.0))
 plt.tight_layout()
