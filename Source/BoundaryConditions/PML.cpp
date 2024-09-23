@@ -1060,10 +1060,10 @@ PML::CopyJtoPMLs (
 {
     using ablastr::fields::Direction;
 
-    bool const has_j_fp = fields.has(FieldType::current_fp, Direction{0}, lev);
-    bool const has_pml_j_fp = fields.has(FieldType::pml_j_fp, Direction{0}, lev);
-    bool const has_j_cp = fields.has(FieldType::current_cp, Direction{0}, lev);
-    bool const has_pml_j_cp = fields.has(FieldType::pml_j_cp, Direction{0}, lev);
+    bool const has_j_fp = fields.has_vector(FieldType::current_fp, lev);
+    bool const has_pml_j_fp = fields.has_vector(FieldType::pml_j_fp, lev);
+    bool const has_j_cp = fields.has_vector(FieldType::current_cp, lev);
+    bool const has_pml_j_cp = fields.has_vector(FieldType::pml_j_cp, lev);
 
     if (patch_type == PatchType::fine && has_pml_j_fp && has_j_fp)
     {
