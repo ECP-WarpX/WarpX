@@ -592,11 +592,16 @@ namespace ablastr::fields
         int level
     ) const
     {
-        // Add the suffix "[dir=dir]"
+        // Add the suffix for the direction [x] or [y] or [z]
+        // note: since Cartesian is not correct for all our supported geometries,
+        //       in the future we might want to break this to "[dir=0/1/2]".
+        //       This will be a breaking change for (Python) users that rely on that string.
+        constexpr int x_in_ascii = 120;
+        std::string const component_name{char(x_in_ascii + dir.dir)};
         return mf_name(
             name
-            .append("[dir=")
-            .append(std::to_string(dir.dir))
+            .append("[")
+            .append(component_name)
             .append("]"),
             level
         );
