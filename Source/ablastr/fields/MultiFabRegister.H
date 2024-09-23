@@ -391,7 +391,7 @@ namespace ablastr::fields
             int level
         )
         {
-            return get<std::string const &>(
+            return internal_get(
                 getExtractedName(name),
                 level
             );
@@ -414,7 +414,7 @@ namespace ablastr::fields
             int level
         )
         {
-            return get<std::string const &>(
+            return internal_get(
                 getExtractedName(name),
                 dir,
                 level
@@ -436,7 +436,7 @@ namespace ablastr::fields
             int level
         ) const
         {
-            return get<std::string const &>(
+            return internal_get(
                 getExtractedName(name),
                 level
             );
@@ -459,7 +459,7 @@ namespace ablastr::fields
             int level
         ) const
         {
-            return get<std::string const &>(
+            return internal_get(
                 getExtractedName(name),
                 dir,
                 level
@@ -482,7 +482,7 @@ namespace ablastr::fields
             int finest_level
         )
         {
-            return get_mr_levels<std::string const &>(
+            return internal_get_mr_levels(
                 getExtractedName(name),
                 finest_level
             );
@@ -494,7 +494,7 @@ namespace ablastr::fields
             int finest_level
         ) const
         {
-            return get_mr_levels<std::string const &>(
+            return internal_get_mr_levels(
                 getExtractedName(name),
                 finest_level
             );
@@ -517,7 +517,7 @@ namespace ablastr::fields
             int level
         )
         {
-            return get_alldirs<std::string const &>(
+            return internal_get_alldirs(
                 getExtractedName(name),
                 level
             );
@@ -529,7 +529,7 @@ namespace ablastr::fields
             int level
         ) const
         {
-            return get_alldirs<std::string const &>(
+            return internal_get_alldirs(
                 getExtractedName(name),
                 level
             );
@@ -553,7 +553,7 @@ namespace ablastr::fields
             int finest_level
         )
         {
-            return get_mr_levels_alldirs<std::string const &>(
+            return internal_get_mr_levels_alldirs(
                 getExtractedName(name),
                 finest_level
             );
@@ -565,7 +565,7 @@ namespace ablastr::fields
             int finest_level
         ) const
         {
-            return get_mr_levels_alldirs<std::string const &>(
+            return internal_get_mr_levels_alldirs(
                 getExtractedName(name),
                 finest_level
             );
