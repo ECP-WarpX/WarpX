@@ -366,9 +366,8 @@ namespace ablastr::fields
         return &mf;
     }
 
-    template<>
     amrex::MultiFab*
-    MultiFabRegister::get<std::string const &> (
+    MultiFabRegister::internal_get (
         std::string const & name,
         int level
     )
@@ -377,9 +376,8 @@ namespace ablastr::fields
         return internal_get(internal_name);
     }
 
-    template<>
     amrex::MultiFab*
-    MultiFabRegister::get<std::string const &> (
+    MultiFabRegister::internal_get (
         std::string const & name,
         Direction dir,
         int level
@@ -389,9 +387,8 @@ namespace ablastr::fields
         return internal_get(internal_name);
     }
 
-    template<>
     amrex::MultiFab const *
-    MultiFabRegister::get<std::string const &> (
+    MultiFabRegister::internal_get (
         std::string const & name,
         int level
     ) const
@@ -400,9 +397,8 @@ namespace ablastr::fields
         return internal_get(internal_name);
     }
 
-    template<>
     amrex::MultiFab const *
-    MultiFabRegister::get<std::string const &> (
+    MultiFabRegister::internal_get (
         std::string const & name,
         Direction dir,
         int level
@@ -412,9 +408,8 @@ namespace ablastr::fields
         return internal_get(internal_name);
     }
 
-    template<>
     MultiLevelScalarField
-    MultiFabRegister::get_mr_levels<std::string const &> (
+    MultiFabRegister::internal_get_mr_levels (
         std::string const & name,
         int finest_level
     )
@@ -423,14 +418,13 @@ namespace ablastr::fields
         field_on_level.reserve(finest_level+1);
         for (int lvl = 0; lvl <= finest_level; lvl++)
         {
-            field_on_level.push_back(get(name, lvl));
+            field_on_level.push_back(internal_get(name, lvl));
         }
         return field_on_level;
     }
 
-    template<>
     ConstMultiLevelScalarField
-    MultiFabRegister::get_mr_levels<std::string const &> (
+    MultiFabRegister::internal_get_mr_levels (
         std::string const & name,
         int finest_level
     ) const
@@ -439,14 +433,13 @@ namespace ablastr::fields
         field_on_level.reserve(finest_level+1);
         for (int lvl = 0; lvl <= finest_level; lvl++)
         {
-            field_on_level.push_back(get(name, lvl));
+            field_on_level.push_back(internal_get(name, lvl));
         }
         return field_on_level;
     }
 
-    template<>
     VectorField
-    MultiFabRegister::get_alldirs<std::string const &> (
+    MultiFabRegister::internal_get_alldirs (
         std::string const & name,
         int level
     )
@@ -457,14 +450,13 @@ namespace ablastr::fields
         // insert components
         for (Direction const & dir : m_all_dirs)
         {
-            vectorField[dir] = get(name, dir, level);
+            vectorField[dir] = internal_get(name, dir, level);
         }
         return vectorField;
     }
 
-    template<>
     ConstVectorField
-    MultiFabRegister::get_alldirs<std::string const &> (
+    MultiFabRegister::internal_get_alldirs (
         std::string const & name,
         int level
     ) const
@@ -475,14 +467,13 @@ namespace ablastr::fields
         // insert components
         for (Direction const & dir : m_all_dirs)
         {
-            vectorField[dir] = get(name, dir, level);
+            vectorField[dir] = internal_get(name, dir, level);
         }
         return vectorField;
     }
 
-    template<>
     MultiLevelVectorField
-    MultiFabRegister::get_mr_levels_alldirs<std::string const &> (
+    MultiFabRegister::internal_get_mr_levels_alldirs (
         std::string const & name,
         int finest_level
     )
@@ -498,15 +489,14 @@ namespace ablastr::fields
             // insert components
             for (Direction const & dir : m_all_dirs)
             {
-                field_on_level[lvl][dir] = get(name, dir, lvl);
+                field_on_level[lvl][dir] = internal_get(name, dir, lvl);
             }
         }
         return field_on_level;
     }
 
-    template<>
     ConstMultiLevelVectorField
-    MultiFabRegister::get_mr_levels_alldirs<std::string const &> (
+    MultiFabRegister::internal_get_mr_levels_alldirs (
         std::string const & name,
         int finest_level
     ) const
@@ -522,7 +512,7 @@ namespace ablastr::fields
             // insert components
             for (Direction const & dir : m_all_dirs)
             {
-                field_on_level[lvl][dir] = get(name, dir, lvl);
+                field_on_level[lvl][dir] = internal_get(name, dir, lvl);
             }
         }
         return field_on_level;

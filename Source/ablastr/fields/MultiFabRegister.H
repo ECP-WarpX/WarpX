@@ -730,6 +730,59 @@ namespace ablastr::fields
             int level
         ) const;
 
+        amrex::MultiFab *
+        internal_get (
+            std::string const & name,
+            int level
+        );
+        amrex::MultiFab const *
+        internal_get (
+            std::string const & name,
+            int level
+        ) const;
+        amrex::MultiFab *
+        internal_get (
+            std::string const & name,
+            Direction dir,
+            int level
+        );
+        amrex::MultiFab const *
+        internal_get (
+            std::string const & name,
+            Direction dir,
+            int level
+        ) const;
+        MultiLevelScalarField
+        internal_get_mr_levels (
+            std::string const & name,
+            int finest_level
+        );
+        ConstMultiLevelScalarField
+        internal_get_mr_levels (
+            std::string const & name,
+            int finest_level
+        ) const;
+        VectorField
+        internal_get_alldirs (
+            std::string const & name,
+            int level
+        );
+        ConstVectorField
+        internal_get_alldirs (
+            std::string const & name,
+            int level
+        ) const;
+        MultiLevelVectorField
+        internal_get_mr_levels_alldirs (
+            std::string const & name,
+            int finest_level
+        );
+        ConstMultiLevelVectorField
+        internal_get_mr_levels_alldirs (
+            std::string const & name,
+            int finest_level
+        ) const;
+
         /** data storage: ownership and lifetime control */
         std::map<
             std::string,
