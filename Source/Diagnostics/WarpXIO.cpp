@@ -8,9 +8,10 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "BoundaryConditions/PML.H"
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
 #    include "BoundaryConditions/PML_RZ.H"
 #endif
+#include "EmbeddedBoundary/Enabled.H"
 #include "FieldIO.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/TextMsg.H"
@@ -385,7 +386,7 @@ WarpX::InitFromCheckpoint ()
             if (pml[lev]) {
                 pml[lev]->Restart(amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "pml"));
             }
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
             if (pml_rz[lev]) {
                 pml_rz[lev]->Restart(amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "pml_rz"));
             }
@@ -393,7 +394,7 @@ WarpX::InitFromCheckpoint ()
         }
     }
 
-    InitializeEBGridData(maxLevel());
+    if (EB::enabled()) { InitializeEBGridData(maxLevel()); }
 
     // Initialize particles
     mypc->AllocData();

@@ -23,8 +23,8 @@
 using namespace amrex;
 
 // constructor
-ReducedDiags::ReducedDiags (std::string rd_name)
-    : m_rd_name(std::move(rd_name))
+ReducedDiags::ReducedDiags (const std::string& rd_name):
+m_rd_name{rd_name}
 {
     BackwardCompatibility();
 
@@ -121,7 +121,7 @@ void ReducedDiags::WriteToFile (int step) const
     // end loop over data size
 
     // end line
-    ofs << std::endl;
+    ofs << "\n";
 
     // close file
     ofs.close();

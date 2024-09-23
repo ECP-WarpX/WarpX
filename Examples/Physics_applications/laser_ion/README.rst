@@ -15,37 +15,36 @@ Although laser-ion acceleration requires full 3D modeling for adequate descripti
    This includes spatial and temporal resolution, but also the number of macro-particles per cell representing the target density for proper phase space sampling.
    You will need a computing cluster for adequate resolution of the target density, see comments in the input file.
 
-.. warning::
-
-   It is strongly advised to set the parameters ``<species>.zmin / zmax / xmin / ...`` when working with highly dense targets that are limited in one or multiple dimensions.
-   The particle creation routine will first create particles everywhere between these limits (`defaulting to box size if unset`), setting particles to invalid only afterwards based on the density profile.
-   Not setting these parameters can quickly lead to memory overflows.
-
 
 Run
 ---
 
 This example can be run **either** as:
 
-* **Python** script: ``mpiexec -n 2 python3 PICMI_inputs_2d.py`` or
-* WarpX **executable** using an input file: ``mpiexec -n 2 warpx.2d inputs_2d``
+* **Python** script: ``mpiexec -n 2 python3 inputs_test_2d_laser_ion_acc_picmi.py`` or
+* WarpX **executable** using an input file: ``mpiexec -n 2 warpx.2d inputs_test_2d_laser_ion_acc``
 
-For `MPI-parallel <https://www.mpi-forum.org>`__ runs on computing clusters, change the prefix to ``mpiexec -n <no. of MPI ranks> ...`` or ``srun -n <no. of MPI ranks> ...``, depending on the system and number of MPI ranks you want to allocate.
+.. tip::
+
+   For `MPI-parallel <https://www.mpi-forum.org>`__ runs on computing clusters, change the prefix to ``mpiexec -n <no. of MPI ranks> ...`` or ``srun -n <no. of MPI ranks> ...``, depending on the system and number of MPI ranks you want to allocate.
+
+   The input option ``warpx_numprocs`` / ``warpx.numprocs`` needs to be adjusted for parallel :ref:`domain decomposition <usage_domain_decomposition>`, to match the number of MPI ranks used.
+   In order to use dynamic load balancing, use the :ref:`more general method <usage_domain_decomposition-general>` of setting blocks.
 
 .. tab-set::
 
    .. tab-item:: Python: Script
 
-      .. literalinclude:: PICMI_inputs_2d.py
+      .. literalinclude:: inputs_test_2d_laser_ion_acc_picmi.py
          :language: python3
-         :caption: You can copy this file from ``Examples/Physics_applications/laser_ion/PICMI_inputs_2d.py``.
+         :caption: You can copy this file from ``Examples/Physics_applications/laser_ion/inputs_test_2d_laser_ion_acc_picmi.py``.
 
 
    .. tab-item:: Executable: Input File
 
-      .. literalinclude:: inputs_2d
+      .. literalinclude:: inputs_test_2d_laser_ion_acc
          :language: ini
-         :caption: You can copy this file from ``Examples/Physics_applications/laser_ion/inputs_2d``.
+         :caption: You can copy this file from ``Examples/Physics_applications/laser_ion/inputs_test_2d_laser_ion_acc``.
 
 Analyze
 -------
@@ -53,18 +52,18 @@ Analyze
 .. _fig-tnsa-ps-electrons-pinhole:
 
 .. figure:: https://user-images.githubusercontent.com/5416860/295003882-c755fd47-4bb3-4439-9319-c48214cbaafd.png
-   :alt: Longitudinal phase space of forward-flying electrons in a 2 degree opening angle.
+   :alt: Longitudinal phase space of forward-moving electrons in a 2 degree opening angle.
    :width: 100%
 
-   Longitudinal phase space of forward-flying electrons in a 2 degree opening angle.
+   Longitudinal phase space of forward-moving electrons in a 2 degree opening angle.
 
 .. _fig-tnsa-ps-protons-pinhole:
 
 .. figure:: https://user-images.githubusercontent.com/5416860/295003988-dea3dfb7-0d55-4616-b32d-061fb429f9ac.png
-   :alt: Longitudinal phase space of forward-flying protons in a 2 degree opening angle.
+   :alt: Longitudinal phase space of forward-moving protons in a 2 degree opening angle.
    :width: 100%
 
-   Longitudinal phase space of forward-flying protons in a 2 degree opening angle.
+   Longitudinal phase space of forward-moving protons in a 2 degree opening angle.
 
 Time-resolved phase electron space analysis as in :numref:`fig-tnsa-ps-electrons-pinhole` gives information about, e.g., how laser energy is locally converted into electron kinetic energy.
 Later in time, ion phase spaces like :numref:`fig-tnsa-ps-protons-pinhole` can reveal where accelerated ion populations originate.

@@ -6,7 +6,10 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "OpenPMDHelpFunction.H"
+
 #include "Utils/TextMsg.H"
+
+#include <map>
 
 std::string
 WarpXOpenPMDFileType ()

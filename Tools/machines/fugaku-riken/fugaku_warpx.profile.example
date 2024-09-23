@@ -10,7 +10,7 @@ export LD_LIBRARY_PATH=/lib64:$LD_LIBRARY_PATH
 spack load ninja@1.11.1%fj@4.10.0
 
 # optional: for PSATD
-spack load fujitsu-fftw
+spack load fujitsu-fftw@1.1.0%fj@4.10.0
 
 # optional: for QED lookup table generation support
 spack load boost@1.80.0%fj@4.8.1/zc5pwgc

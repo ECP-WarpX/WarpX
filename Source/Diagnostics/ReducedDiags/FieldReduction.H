@@ -9,6 +9,7 @@
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_FIELDREDUCTION_H_
 
 #include "ReducedDiags.H"
+#include "FieldSolver/Fields.H"
 #include "WarpX.H"
 
 #include <ablastr/coarsen/sample.H>
@@ -36,7 +37,6 @@
 #include <type_traits>
 #include <vector>
 
-
 /**
  * This class contains a function that computes an arbitrary reduction of the fields. The function
  * used in the reduction is defined by an input file parser expression and the reduction operation
@@ -50,7 +50,7 @@ public:
      * constructor
      * @param[in] rd_name reduced diags names
      */
-    FieldReduction(std::string rd_name);
+    FieldReduction(const std::string& rd_name);
 
     /**
      * This function is called at every time step, and if necessary calls the templated function
@@ -73,7 +73,7 @@ private:
     std::unique_ptr<amrex::Parser> m_parser;
 
     // Type of reduction (e.g. Maximum, Minimum or Sum)
-    int m_reduction_type;
+    ReductionType m_reduction_type;
 
 public:
 
@@ -99,15 +99,15 @@ public:
         const auto dx = geom.CellSizeArray();
 
         // get MultiFab data
-        const amrex::MultiFab & Ex = warpx.getEfield(lev,0);
-        const amrex::MultiFab & Ey = warpx.getEfield(lev,1);
-        const amrex::MultiFab & Ez = warpx.getEfield(lev,2);
-        const amrex::MultiFab & Bx = warpx.getBfield(lev,0);
-        const amrex::MultiFab & By = warpx.getBfield(lev,1);
-        const amrex::MultiFab & Bz = warpx.getBfield(lev,2);
-        const amrex::MultiFab & jx = warpx.getcurrent_fp(lev,0);
-        const amrex::MultiFab & jy = warpx.getcurrent_fp(lev,1);
-        const amrex::MultiFab & jz = warpx.getcurrent_fp(lev,2);
+        const amrex::MultiFab & Ex = warpx.getField(warpx::fields::FieldType::Efield_aux, lev,0);
+        const amrex::MultiFab & Ey = warpx.getField(warpx::fields::FieldType::Efield_aux, lev,1);
+        const amrex::MultiFab & Ez = warpx.getField(warpx::fields::FieldType::Efield_aux, lev,2);
+        const amrex::MultiFab & Bx = warpx.getField(warpx::fields::FieldType::Bfield_aux, lev,0);
+        const amrex::MultiFab & By = warpx.getField(warpx::fields::FieldType::Bfield_aux, lev,1);
+        const amrex::MultiFab & Bz = warpx.getField(warpx::fields::FieldType::Bfield_aux, lev,2);
+        const amrex::MultiFab & jx = warpx.getField(warpx::fields::FieldType::current_fp, lev,0);
+        const amrex::MultiFab & jy = warpx.getField(warpx::fields::FieldType::current_fp, lev,1);
+        const amrex::MultiFab & jz = warpx.getField(warpx::fields::FieldType::current_fp, lev,2);
 
 
         // General preparation of interpolation and reduction operations
@@ -212,15 +212,15 @@ public:
         amrex::Real reduce_value = amrex::get<0>(reduce_data.value());
 
         // MPI reduce
-        if (std::is_same<ReduceOp, amrex::ReduceOpMax>::value)
+        if (std::is_same_v<ReduceOp, amrex::ReduceOpMax>)
         {
             amrex::ParallelDescriptor::ReduceRealMax(reduce_value);
         }
-        if (std::is_same<ReduceOp, amrex::ReduceOpMin>::value)
+        if (std::is_same_v<ReduceOp, amrex::ReduceOpMin>)
         {
             amrex::ParallelDescriptor::ReduceRealMin(reduce_value);
         }
-        if (std::is_same<ReduceOp, amrex::ReduceOpSum>::value)
+        if (std::is_same_v<ReduceOp, amrex::ReduceOpSum>)
         {
             amrex::ParallelDescriptor::ReduceRealSum(reduce_value);
         // If reduction operation is a sum, multiply the value by the cell volume so that the

@@ -322,6 +322,13 @@ public:
                         int nattr_int, amrex::Vector<amrex::Vector<int>> const & attr_int,
                         int uniqueparticles, amrex::Long id=-1);
 
+    /** Remove particles with invalid ID
+    *
+    * This is a local operation (no MPI communication) and is thus preferable over `ReDistribute`
+    * (which also removes invalid particles, but involves MPI communications at the same time)
+    */
+    void deleteInvalidParticles ();
+
     virtual void ReadHeader (std::istream& is) = 0;
 
     virtual void WriteHeader (std::ostream& os) const = 0;
@@ -347,7 +354,7 @@ public:
     amrex::Vector<amrex::ParticleReal> m_E_external_particle;
 
     //! Current injection position
-    amrex::Real m_current_injection_position;
+    amrex::Real m_current_injection_position = 0.;
 
     // split along diagonals (0) or axes (1)
     int split_type = 0;
@@ -419,12 +426,14 @@ public:
     virtual QuantumSynchrotronEngine* get_quantum_sync_engine_ptr () const {return nullptr;}
 #endif
 
+    void setDoNotPush (bool flag) { do_not_push = flag; }
+
 protected:
     int species_id;
 
     amrex::ParticleReal charge;
     amrex::ParticleReal mass;
-    PhysicalSpecies physical_species;
+    PhysicalSpecies physical_species = PhysicalSpecies::unspecified;
 
     // Controls boundaries for particles exiting the domain
     ParticleBoundaries m_boundary_conditions;
@@ -435,7 +444,7 @@ protected:
     //! instead of gathering fields from the finest patch level, gather from the coarsest
     bool m_gather_from_main_grid = false;
 
-    int do_not_push = 0;
+    bool do_not_push = false;
     int do_not_gather = 0;
 
     // Whether to allow particles outside of the simulation domain to be
@@ -467,9 +476,9 @@ protected:
     //Species can receive a shared pointer to a QED engine (species for
     //which this is relevant should override these functions)
     virtual void
-    set_breit_wheeler_engine_ptr(std::shared_ptr<BreitWheelerEngine>){}
+    set_breit_wheeler_engine_ptr(const std::shared_ptr<BreitWheelerEngine>&){}
     virtual void
-    set_quantum_sync_engine_ptr(std::shared_ptr<QuantumSynchrotronEngine>){}
+    set_quantum_sync_engine_ptr(const std::shared_ptr<QuantumSynchrotronEngine>&){}
 
     int m_qed_breit_wheeler_ele_product;
     std::string m_qed_breit_wheeler_ele_product_name;

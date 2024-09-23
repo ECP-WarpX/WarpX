@@ -5,8 +5,8 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef SMART_CREATE_H_
-#define SMART_CREATE_H_
+#ifndef WARPX_SMART_CREATE_H_
+#define WARPX_SMART_CREATE_H_
 
 #include "DefaultInitialization.H"
 
@@ -112,4 +112,4 @@ public:
     [[nodiscard]] bool isDefined () const noexcept { return m_defined; }
 };
 
-#endif //SMART_CREATE_H_
+#endif //WARPX_SMART_CREATE_H_

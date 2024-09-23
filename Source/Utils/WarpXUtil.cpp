@@ -76,7 +76,8 @@ void ParseGeometryInput()
 
 #ifdef WARPX_DIM_RZ
     const ParmParse pp_algo("algo");
-    const int electromagnetic_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
+    auto electromagnetic_solver_id = ElectromagneticSolverAlgo::Default;
+    pp_algo.query_enum_sloppy("maxwell_solver", electromagnetic_solver_id, "-_");
     if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
     {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(prob_lo[0] == 0.,
@@ -232,8 +233,8 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax)
     for(amrex::MFIter mfi(mf, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi){
         const amrex::Box& bx = mfi.tilebox();
         // Get box lower and upper physical z bound, and dz
-        const amrex::Real zmin_box = WarpX::LowerCorner(bx, lev, 0._rt)[2];
-        const amrex::Real zmax_box = WarpX::UpperCorner(bx, lev, 0._rt)[2];
+        const amrex::Real zmin_box = WarpX::LowerCorner(bx, lev, 0._rt).z;
+        const amrex::Real zmax_box = WarpX::UpperCorner(bx, lev, 0._rt).z;
         const amrex::Real dz  = WarpX::CellSize(lev)[2];
         // Get box lower index in the z direction
 #if defined(WARPX_DIM_3D)
@@ -266,7 +267,7 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax)
 }
 
 namespace WarpXUtilIO{
-    bool WriteBinaryDataOnFile(std::string filename, const amrex::Vector<char>& data)
+    bool WriteBinaryDataOnFile(const std::string& filename, const amrex::Vector<char>& data)
     {
         std::ofstream of{filename, std::ios::binary};
         of.write(data.data(), data.size());
@@ -310,7 +311,8 @@ void CheckGriddingForRZSpectral ()
     CheckDims();
 
     const ParmParse pp_algo("algo");
-    const int electromagnetic_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
+    auto electromagnetic_solver_id = ElectromagneticSolverAlgo::Default;
+    pp_algo.query_enum_sloppy("maxwell_solver", electromagnetic_solver_id, "-_");
 
     // only check for PSATD in RZ
     if (electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) {
@@ -395,15 +397,14 @@ void CheckGriddingForRZSpectral ()
 void ReadBCParams ()
 {
 
-    amrex::Vector<std::string> field_BC_lo(AMREX_SPACEDIM,"default");
-    amrex::Vector<std::string> field_BC_hi(AMREX_SPACEDIM,"default");
-    amrex::Vector<std::string> particle_BC_lo(AMREX_SPACEDIM,"default");
-    amrex::Vector<std::string> particle_BC_hi(AMREX_SPACEDIM,"default");
     amrex::Vector<int> geom_periodicity(AMREX_SPACEDIM,0);
     ParmParse pp_geometry("geometry");
     const ParmParse pp_warpx("warpx");
     const ParmParse pp_algo("algo");
-    const int electromagnetic_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
+    auto electromagnetic_solver_id = ElectromagneticSolverAlgo::Default;
+    pp_algo.query_enum_sloppy("maxwell_solver", electromagnetic_solver_id, "-_");
+    auto poisson_solver_id = PoissonSolverAlgo::Default;
+    pp_warpx.query_enum_sloppy("poisson_solver", poisson_solver_id, "-_");
 
     if (pp_geometry.queryarr("is_periodic", geom_periodicity))
     {
@@ -418,26 +419,21 @@ void ReadBCParams ()
     // particle boundary may not be explicitly specified for some applications
     bool particle_boundary_specified = false;
     const ParmParse pp_boundary("boundary");
-    pp_boundary.queryarr("field_lo", field_BC_lo, 0, AMREX_SPACEDIM);
-    pp_boundary.queryarr("field_hi", field_BC_hi, 0, AMREX_SPACEDIM);
-    if (pp_boundary.queryarr("particle_lo", particle_BC_lo, 0, AMREX_SPACEDIM)) {
-        particle_boundary_specified = true;
-    }
-    if (pp_boundary.queryarr("particle_hi", particle_BC_hi, 0, AMREX_SPACEDIM)) {
-        particle_boundary_specified = true;
-    }
-    AMREX_ALWAYS_ASSERT(field_BC_lo.size() == AMREX_SPACEDIM);
-    AMREX_ALWAYS_ASSERT(field_BC_hi.size() == AMREX_SPACEDIM);
-    AMREX_ALWAYS_ASSERT(particle_BC_lo.size() == AMREX_SPACEDIM);
-    AMREX_ALWAYS_ASSERT(particle_BC_hi.size() == AMREX_SPACEDIM);
-
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         // Get field boundary type
-        WarpX::field_boundary_lo[idim] = GetFieldBCTypeInteger(field_BC_lo[idim]);
-        WarpX::field_boundary_hi[idim] = GetFieldBCTypeInteger(field_BC_hi[idim]);
+        pp_boundary.query_enum_sloppy("field_lo",
+                                      WarpX::field_boundary_lo[idim], "-_", idim);
+        pp_boundary.query_enum_sloppy("field_hi",
+                                      WarpX::field_boundary_hi[idim], "-_", idim);
         // Get particle boundary type
-        WarpX::particle_boundary_lo[idim] = GetParticleBCTypeInteger(particle_BC_lo[idim]);
-        WarpX::particle_boundary_hi[idim] = GetParticleBCTypeInteger(particle_BC_hi[idim]);
+        if (pp_boundary.query_enum_sloppy("particle_lo",
+                                          WarpX::particle_boundary_lo[idim], "-_", idim)) {
+            particle_boundary_specified = true;
+        }
+        if (pp_boundary.query_enum_sloppy("particle_hi",
+                                          WarpX::particle_boundary_hi[idim], "-_", idim)) {
+            particle_boundary_specified = true;
+        }
 
         if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Periodic ||
             WarpX::field_boundary_hi[idim] == FieldBoundaryType::Periodic ||
@@ -469,6 +465,14 @@ void ReadBCParams ()
             ),
             "PEC boundary not implemented for PSATD, yet!"
         );
+
+        if(WarpX::field_boundary_lo[idim] == FieldBoundaryType::Open &&
+           WarpX::field_boundary_hi[idim] == FieldBoundaryType::Open){
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction,
+                "Field open boundary conditions are only implemented for the FFT-based Poisson solver"
+            );
+        }
     }
 
     // Appending periodicity information to input so that it can be used by amrex
@@ -481,11 +485,11 @@ void ReadBCParams ()
 
 namespace WarpXUtilLoadBalance
 {
-    bool doCosts (const amrex::LayoutData<amrex::Real>* costs, const amrex::BoxArray ba,
+    bool doCosts (const amrex::LayoutData<amrex::Real>* cost, const amrex::BoxArray& ba,
                   const amrex::DistributionMapping& dm)
     {
-        const bool consistent = costs && (dm == costs->DistributionMap()) &&
-            (ba.CellEqual(costs->boxArray())) &&
+        const bool consistent = cost && (dm == cost->DistributionMap()) &&
+            (ba.CellEqual(cost->boxArray())) &&
             (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers);
         return consistent;
     }

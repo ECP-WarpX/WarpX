@@ -8,6 +8,7 @@
 #include "ColliderRelevant.H"
 
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
+#include "FieldSolver/Fields.H"
 #if (defined WARPX_QED)
 #   include "Particles/ElementaryProcess/QEDInternals/QedChiFunctions.H"
 #endif
@@ -58,9 +59,10 @@
 #include <vector>
 
 using namespace amrex;
+using namespace warpx::fields;
 
-ColliderRelevant::ColliderRelevant (std::string rd_name)
-: ReducedDiags{std::move(rd_name)}
+ColliderRelevant::ColliderRelevant (const std::string& rd_name)
+: ReducedDiags{rd_name}
 {
     // read colliding species names - must be 2
     const amrex::ParmParse pp_rd_name(m_rd_name);
@@ -179,7 +181,7 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
                 const auto& el = m_headers_indices[name];
                 ofs << m_sep << "[" << el.idx + off << "]" << el.header;
             }
-            ofs << std::endl;
+            ofs << "\n";
             // close file
             ofs.close();
         }
@@ -439,14 +441,13 @@ void ColliderRelevant::ComputeDiags (int step)
             const int lev = 0;
 
             // define variables in preparation for field gathering
-            const std::array<amrex::Real,3>& dx = WarpX::CellSize(std::max(lev, 0));
-            const amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
-            const amrex::MultiFab & Ex = warpx.getEfield(lev,0);
-            const amrex::MultiFab & Ey = warpx.getEfield(lev,1);
-            const amrex::MultiFab & Ez = warpx.getEfield(lev,2);
-            const amrex::MultiFab & Bx = warpx.getBfield(lev,0);
-            const amrex::MultiFab & By = warpx.getBfield(lev,1);
-            const amrex::MultiFab & Bz = warpx.getBfield(lev,2);
+            const amrex::XDim3 dinv = WarpX::InvCellSize(std::max(lev, 0));
+            const amrex::MultiFab & Ex = warpx.getField(FieldType::Efield_aux, lev,0);
+            const amrex::MultiFab & Ey = warpx.getField(FieldType::Efield_aux, lev,1);
+            const amrex::MultiFab & Ez = warpx.getField(FieldType::Efield_aux, lev,2);
+            const amrex::MultiFab & Bx = warpx.getField(FieldType::Bfield_aux, lev,0);
+            const amrex::MultiFab & By = warpx.getField(FieldType::Bfield_aux, lev,1);
+            const amrex::MultiFab & Bz = warpx.getField(FieldType::Bfield_aux, lev,2);
 
             // declare reduce_op
             ReduceOps<ReduceOpMin, ReduceOpMax, ReduceOpSum> reduce_op;
@@ -476,8 +477,7 @@ void ColliderRelevant::ComputeDiags (int step)
                 amrex::Box box = pti.tilebox();
                 box.grow(ngEB);
                 const amrex::Dim3 lo = amrex::lbound(box);
-                const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
-                const amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
+                const amrex::XDim3 xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
                 const amrex::Array4<const amrex::Real> & ex_arr = Ex[pti].array();
                 const amrex::Array4<const amrex::Real> & ey_arr = Ey[pti].array();
                 const amrex::Array4<const amrex::Real> & ez_arr = Ez[pti].array();
@@ -513,7 +513,7 @@ void ColliderRelevant::ComputeDiags (int step)
                         ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                         ex_type, ey_type, ez_type,
                         bx_type, by_type, bz_type,
-                        dx_arr, xyzmin_arr, lo,
+                        dinv, xyzmin, lo,
                         n_rz_azimuthal_modes, nox, galerkin_interpolation);
                     // compute chi
                     amrex::Real chi = 0.0_rt;

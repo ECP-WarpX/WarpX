@@ -352,14 +352,14 @@ public:
      * @param[in] ptr the pointer
      */
     void set_breit_wheeler_engine_ptr
-        (std::shared_ptr<BreitWheelerEngine> ptr) override;
+        (const std::shared_ptr<BreitWheelerEngine>& ptr) override;
 
     /**
      * Acquires a shared smart pointer to a QuantumSynchrotronEngine
      * @param[in] ptr the pointer
      */
     void set_quantum_sync_engine_ptr
-        (std::shared_ptr<QuantumSynchrotronEngine> ptr) override;
+        (const std::shared_ptr<QuantumSynchrotronEngine>& ptr) override;
     //__________
 
     BreitWheelerEngine* get_breit_wheeler_engine_ptr () const override {
@@ -392,6 +392,14 @@ public:
     }
 
 protected:
+
+    /*
+       Finds the box defining the region where refine injection should be used, if that
+       option is enabled. Currently this only works for numLevels() == 2 and static mesh
+       refinement.
+    */
+    bool findRefinedInjectionBox (amrex::Box& fine_injection_box, amrex::IntVect& rrfac);
+
     std::string species_name;
     std::vector<std::unique_ptr<PlasmaInjector>> plasma_injectors;
 

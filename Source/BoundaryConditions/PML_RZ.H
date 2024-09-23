@@ -10,7 +10,9 @@
 
 #include "PML_RZ_fwd.H"
 
-#ifdef WARPX_USE_PSATD
+#include "Utils/WarpXAlgorithmSelection.H"
+
+#ifdef WARPX_USE_FFT
 #   include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
 #endif
 
@@ -25,8 +27,6 @@
 #include <optional>
 #include <string>
 
-enum struct PatchType : int;
-
 class PML_RZ
 {
 public:
@@ -40,7 +40,7 @@ public:
     std::array<amrex::MultiFab*,2> GetE_fp ();
     std::array<amrex::MultiFab*,2> GetB_fp ();
 
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
     void PushPSATD (int lev);
 #endif
 
@@ -62,7 +62,7 @@ private:
     std::array<std::unique_ptr<amrex::MultiFab>,2> pml_E_fp;
     std::array<std::unique_ptr<amrex::MultiFab>,2> pml_B_fp;
 
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_FFT
     void PushPMLPSATDSinglePatchRZ ( int lev,
                 SpectralSolverRZ& solver,
                 std::array<std::unique_ptr<amrex::MultiFab>,2>& pml_E,

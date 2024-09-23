@@ -7,6 +7,7 @@
 
 #include "FieldMaximum.H"
 
+#include "FieldSolver/Fields.H"
 #include "Utils/TextMsg.H"
 #include "WarpX.H"
 
@@ -38,9 +39,10 @@
 #include <vector>
 
 using namespace amrex;
+using namespace warpx::fields;
 
 // constructor
-FieldMaximum::FieldMaximum (std::string rd_name)
+FieldMaximum::FieldMaximum (const std::string& rd_name)
 : ReducedDiags{rd_name}
 {
     // RZ coordinate is not working
@@ -90,7 +92,7 @@ FieldMaximum::FieldMaximum (std::string rd_name)
                 ofs << m_sep;
                 ofs << "[" << c++ << "]max_|B|_lev" + std::to_string(lev) + "(T)";
             }
-            ofs << std::endl;
+            ofs << "\n";
             // close file
             ofs.close();
         }
@@ -114,12 +116,12 @@ void FieldMaximum::ComputeDiags (int step)
     for (int lev = 0; lev < nLevel; ++lev)
     {
         // get MultiFab data at lev
-        const MultiFab & Ex = warpx.getEfield(lev,0);
-        const MultiFab & Ey = warpx.getEfield(lev,1);
-        const MultiFab & Ez = warpx.getEfield(lev,2);
-        const MultiFab & Bx = warpx.getBfield(lev,0);
-        const MultiFab & By = warpx.getBfield(lev,1);
-        const MultiFab & Bz = warpx.getBfield(lev,2);
+        const MultiFab & Ex = warpx.getField(FieldType::Efield_aux, lev,0);
+        const MultiFab & Ey = warpx.getField(FieldType::Efield_aux, lev,1);
+        const MultiFab & Ez = warpx.getField(FieldType::Efield_aux, lev,2);
+        const MultiFab & Bx = warpx.getField(FieldType::Bfield_aux, lev,0);
+        const MultiFab & By = warpx.getField(FieldType::Bfield_aux, lev,1);
+        const MultiFab & Bz = warpx.getField(FieldType::Bfield_aux, lev,2);
 
         constexpr int noutputs = 8; // max of Ex,Ey,Ez,|E|,Bx,By,Bz and |B|
         constexpr int index_Ex = 0;

@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef MAGNETOSTATICSOLVER_H_
-#define MAGNETOSTATICSOLVER_H_
+#ifndef WARPX_MAGNETOSTATICSOLVER_H_
+#define WARPX_MAGNETOSTATICSOLVER_H_
 
 #include <AMReX_Array.H>
 #include <AMReX_MultiFab.H>
@@ -54,4 +54,4 @@ namespace MagnetostaticSolver {
     };
 } // namespace MagnetostaticSolver
 
-#endif //MAGNETOSTATICSOLVER_H_
+#endif //WARPX_MAGNETOSTATICSOLVER_H_

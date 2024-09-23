@@ -29,7 +29,7 @@
 using namespace amrex::literals;
 
 // constructor
-RhoMaximum::RhoMaximum (std::string rd_name)
+RhoMaximum::RhoMaximum (const std::string& rd_name)
 : ReducedDiags{rd_name}
 {
     // RZ coordinate is not working
@@ -113,7 +113,7 @@ RhoMaximum::RhoMaximum (std::string rd_name)
                                          + "_|rho|_lev" + std::to_string(lev) + "(C/m^3)";
                 }
             }
-            ofs << std::endl;
+            ofs << "\n";
             // close file
             ofs.close();
         }
