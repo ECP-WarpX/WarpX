@@ -145,6 +145,7 @@ class FiniteDifferenceSolver
           * \param[in] Jifield  vector of ion current density MultiFabs at a given level
           * \param[in] Jextfield  vector of external current density MultiFabs at a given level
           * \param[in] Bfield   vector of magnetic field MultiFabs at a given level
+          * \param[in] Bextfield  vector of external magnetic field MultiFabs at a given level
           * \param[in] rhofield scalar ion charge density Multifab at a given level
           * \param[in] Pefield  scalar electron pressure MultiFab at a given level
           * \param[in] edge_lengths length of edges along embedded boundaries
@@ -157,6 +158,7 @@ class FiniteDifferenceSolver
                       ablastr::fields::VectorField const& Jifield,
                       ablastr::fields::VectorField const& Jextfield,
                       ablastr::fields::VectorField const& Bfield,
+                      ablastr::fields::VectorField const& Bextfield,
                       amrex::MultiFab const& rhofield,
                       amrex::MultiFab const& Pefield,
                       ablastr::fields::VectorField const& edge_lengths,
@@ -243,6 +245,7 @@ class FiniteDifferenceSolver
             ablastr::fields::VectorField const& Jifield,
             ablastr::fields::VectorField const& Jextfield,
             ablastr::fields::VectorField const& Bfield,
+            ablastr::fields::VectorField const& Bextfield,
             amrex::MultiFab const& rhofield,
             amrex::MultiFab const& Pefield,
             ablastr::fields::VectorField const& edge_lengths,
@@ -347,6 +350,7 @@ class FiniteDifferenceSolver
             ablastr::fields::VectorField const& Jfield,
             ablastr::fields::VectorField const& Jifield,
             ablastr::fields::VectorField const& Jextfield,
+            ablastr::fields::VectorField const& Bextfield,
             ablastr::fields::VectorField const& Bfield,
             amrex::MultiFab const& rhofield,
             amrex::MultiFab const& Pefield,

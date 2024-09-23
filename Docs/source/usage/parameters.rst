@@ -2447,8 +2447,23 @@ Maxwell solver: kinetic-fluid hybrid
 * ``hybrid_pic_model.plasma_hyper_resistivity`` (`float` or `str`) optional (default ``0``)
     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the plasma hyper-resistivity in :math:`\Omega m^3`.
 
-* ``hybrid_pic_model.J[x/y/z]_external_grid_function(x, y, z, t)`` (`float` or `str`) optional (default ``0``)
-    If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the external current (on the grid) in :math:`A/m^2`.
+* ``hybrid_pic_model.[J/B]_ext_grid_init_style`` (`str`) optional (default ``0``)
+    If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the external field style:math:`\Omega m^3`.
+
+    * ``hybrid_pic_model.J[x/y/z]_external_grid_function(x, y, z, t)`` (`float` or `str`) optional (default ``0``)
+        If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the external current (on the grid) in :math:`A/m^2`.
+
+    * ``hybrid_pic_model.B[x/y/z]_external_grid_function(x, y, z, t)`` (`float` or `str`) optional (default ``0``)
+        If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the external magnetic field (on the grid) in :math:`T`.
+
+    * ``hybrid_pic_model.read_[j/b]fields_from_path`` (`str`) optional (default ``0``)
+        If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the path to file.
+
+    * ``hybrid_pic_model.read_from_file`` (`str`) optional (default ``0``)
+        If ``algo.maxwell_solver`` is set to ``hybrid``, this sets wether to read from file.
+    
+    * ``hybrid_pic_model.parse_[j/b]_ext_grid_function`` (`str`) optional (default ``0``)
+        If ``algo.maxwell_solver`` is set to ``hybrid``, this sets wether to use analytical function.
 
 * ``hybrid_pic_model.n_floor`` (`float`) optional (default ``1``)
     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the plasma density floor, in :math:`m^{-3}`, which is useful since the generalized Ohm's law used to calculate the E-field includes a :math:`1/n` term.

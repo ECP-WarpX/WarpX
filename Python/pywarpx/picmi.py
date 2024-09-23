@@ -1797,6 +1797,9 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         Jx_external_function=None,
         Jy_external_function=None,
         Jz_external_function=None,
+        Bx_external_function=None,
+        By_external_function=None,
+        Bz_external_function=None,
         **kw,
     ):
         self.grid = grid
@@ -1814,6 +1817,10 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         self.Jx_external_function = Jx_external_function
         self.Jy_external_function = Jy_external_function
         self.Jz_external_function = Jz_external_function
+
+        self.Bx_external_function = Bx_external_function
+        self.By_external_function = By_external_function
+        self.Bz_external_function = Bz_external_function
 
         # Handle keyword arguments used in expressions
         self.user_defined_kw = {}
@@ -1861,6 +1868,25 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
             "Jz_external_grid_function(x,y,z,t)",
             pywarpx.my_constants.mangle_expression(
                 self.Jz_external_function, self.mangle_dict
+            ),
+        )
+
+        pywarpx.hybridpicmodel.__setattr__(
+            "Bx_external_grid_function(x,y,z,t)",
+            pywarpx.my_constants.mangle_expression(
+                self.Bx_external_function, self.mangle_dict
+            ),
+        )
+        pywarpx.hybridpicmodel.__setattr__(
+            "By_external_grid_function(x,y,z,t)",
+            pywarpx.my_constants.mangle_expression(
+                self.By_external_function, self.mangle_dict
+            ),
+        )
+        pywarpx.hybridpicmodel.__setattr__(
+            "Bz_external_grid_function(x,y,z,t)",
+            pywarpx.my_constants.mangle_expression(
+                self.Bz_external_function, self.mangle_dict
             ),
         )
 

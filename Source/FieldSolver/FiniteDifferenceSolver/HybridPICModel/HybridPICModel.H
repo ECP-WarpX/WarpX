@@ -49,14 +49,15 @@ public:
 
     /**
      * \brief
-     * Function to evaluate the external current expressions and populate the
-     * external current multifab. Note the external current can be a function
+     * Function to evaluate the external field expressions and populate the
+     * external field multifab. Note the external fields can be a function
      * of time and therefore this should be re-evaluated at every step.
      */
     void GetCurrentExternal (
         ablastr::fields::MultiLevelVectorField const& edge_lengths
     );
-    void GetCurrentExternal (
+    void GetExternalField (
+        std::array< amrex::ParserExecutor<4>, 3> const& F_external,
         ablastr::fields::VectorField const& edge_lengths,
         int lev
     );
@@ -184,7 +185,23 @@ public:
     std::string m_Jz_ext_grid_function = "0.0";
     std::array< std::unique_ptr<amrex::Parser>, 3> m_J_external_parser;
     std::array< amrex::ParserExecutor<4>, 3> m_J_external;
-    bool m_external_field_has_time_dependence = false;
+    bool m_external_jfield_has_time_dependence = false;
+
+    /** External magnetic field */
+    std::string m_Bx_ext_grid_function = "0.0";
+    std::string m_By_ext_grid_function = "0.0";
+    std::string m_Bz_ext_grid_function = "0.0";
+    std::array< std::unique_ptr<amrex::Parser>, 3> m_B_external_parser;
+    std::array< amrex::ParserExecutor<4>, 3> m_B_external;
+    bool m_external_bfield_has_time_dependence = false;
+
+    // Path of the file where external
+    // fields are stored
+    std::string m_external_jfields_path = "0.0";
+    std::string m_external_bfields_path = "0.0";
+
+    std::string m_J_ext_grid_s = "0.0";
+    std::string m_B_ext_grid_s = "0.0";
 
     /** Gpu Vector with index type of the Jx multifab */
     amrex::GpuArray<int, 3> Jx_IndexType;
