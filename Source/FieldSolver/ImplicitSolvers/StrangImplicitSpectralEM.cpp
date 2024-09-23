@@ -21,13 +21,9 @@ void StrangImplicitSpectralEM::Define ( WarpX* const a_WarpX )
     m_WarpX = a_WarpX;
 
     // Define E and Eold vectors
-    m_E.Define( m_WarpX->getMultiLevelField(FieldType::Efield_fp) );
-    m_Eold.Define( m_WarpX->getMultiLevelField(FieldType::Efield_fp) );
+    m_E.Define( m_WarpX, FieldType::Efield_fp );
+    m_Eold.Define( m_E );
 
-    // Need to define the WarpXSolverVec owned dot_mask to do dot
-    // product correctly for linear and nonlinear solvers
-    const amrex::Vector<amrex::Geometry>& Geom = m_WarpX->Geom();
-    m_E.SetDotMask(Geom);
 
     // Parse nonlinear solver parameters
     const amrex::ParmParse pp("implicit_evolve");
@@ -42,21 +38,20 @@ void StrangImplicitSpectralEM::Define ( WarpX* const a_WarpX )
 void StrangImplicitSpectralEM::PrintParameters () const
 {
     if (!m_WarpX->Verbose()) { return; }
-    amrex::Print() << std::endl;
-    amrex::Print() << "------------------------------------------------------------------------" << std::endl;
-    amrex::Print() << "----------- STRANG SPLIT IMPLICIT SPECTRAL EM SOLVER PARAMETERS --------" << std::endl;
-    amrex::Print() << "------------------------------------------------------------------------" << std::endl;
-    amrex::Print() << "max particle iterations:    " << m_max_particle_iterations << std::endl;
-    amrex::Print() << "particle tolerance:         " << m_particle_tolerance << std::endl;
+    amrex::Print() << "\n";
+    amrex::Print() << "------------------------------------------------------------------------" << "\n";
+    amrex::Print() << "----------- STRANG SPLIT IMPLICIT SPECTRAL EM SOLVER PARAMETERS --------" << "\n";
+    amrex::Print() << "------------------------------------------------------------------------" << "\n";
+    amrex::Print() << "max particle iterations:    " << m_max_particle_iterations << "\n";
+    amrex::Print() << "particle tolerance:         " << m_particle_tolerance << "\n";
     if (m_nlsolver_type==NonlinearSolverType::Picard) {
-        amrex::Print() << "Nonlinear solver type:      Picard" << std::endl;
+        amrex::Print() << "Nonlinear solver type:      Picard\n";
     }
     else if (m_nlsolver_type==NonlinearSolverType::Newton) {
-        amrex::Print() << "Nonlinear solver type:      Newton" << std::endl;
+        amrex::Print() << "Nonlinear solver type:      Newton\n";
     }
     m_nlsolver->PrintParams();
-    amrex::Print() << "-----------------------------------------------------------" << std::endl;
-    amrex::Print() << std::endl;
+    amrex::Print() << "-----------------------------------------------------------\n\n";
 }
 
 void StrangImplicitSpectralEM::OneStep ( amrex::Real a_time,
@@ -75,7 +70,7 @@ void StrangImplicitSpectralEM::OneStep ( amrex::Real a_time,
     m_WarpX->SpectralSourceFreeFieldAdvance();
 
     // Save the fields at the start of the step
-    m_Eold.Copy( m_WarpX->getMultiLevelField(FieldType::Efield_fp) );
+    m_Eold.Copy( FieldType::Efield_fp );
     m_E.Copy(m_Eold); // initial guess for E
 
     amrex::Real const half_time = a_time + 0.5_rt*a_dt;
@@ -99,7 +94,7 @@ void StrangImplicitSpectralEM::OneStep ( amrex::Real a_time,
 
 }
 
-void StrangImplicitSpectralEM::ComputeRHS ( WarpXSolverVec& a_Erhs,
+void StrangImplicitSpectralEM::ComputeRHS ( WarpXSolverVec& a_RHS,
                                             WarpXSolverVec const & a_E,
                                             amrex::Real a_time,
                                             amrex::Real a_dt,
@@ -115,9 +110,10 @@ void StrangImplicitSpectralEM::ComputeRHS ( WarpXSolverVec& a_Erhs,
     m_WarpX->ImplicitPreRHSOp( a_time, a_dt, a_nl_iter, a_from_jacobian );
 
     // For Strang split implicit PSATD, the RHS = -dt*mu*c**2*J
-    a_Erhs.Copy(m_WarpX->getMultiLevelField(FieldType::current_fp));
+    bool const allow_type_mismatch = true;
+    a_RHS.Copy(FieldType::current_fp, warpx::fields::FieldType::None, allow_type_mismatch);
     amrex::Real constexpr coeff = PhysConst::c * PhysConst::c * PhysConst::mu0;
-    a_Erhs.scale(-coeff * 0.5_rt*a_dt);
+    a_RHS.scale(-coeff * 0.5_rt*a_dt);
 
 }
 

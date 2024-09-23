@@ -60,7 +60,7 @@ public:
                    amrex::Real  a_dt,
                    int          a_step ) override;
 
-    void ComputeRHS ( WarpXSolverVec&  a_Erhs,
+    void ComputeRHS ( WarpXSolverVec&  a_RHS,
                 const WarpXSolverVec&  a_E,
                       amrex::Real      a_time,
                       amrex::Real      a_dt,
@@ -90,7 +90,7 @@ private:
     /**
      * \brief Update the E and B fields owned by WarpX
      */
-    void UpdateWarpXFields ( const WarpXSolverVec&  a_E,
+    void UpdateWarpXFields ( WarpXSolverVec const&  a_E,
                              amrex::Real            a_time,
                              amrex::Real            a_dt );
 

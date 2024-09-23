@@ -10,6 +10,9 @@
 #include "FieldSolver/SpectralSolver/SpectralKSpaceRZ.H"
 #include "FieldSolver/SpectralSolver/SpectralFieldDataRZ.H"
 
+#include <ablastr/utils/Enums.H>
+
+
 /* \brief Class that updates the field in spectral space
  * and stores the coefficients of the corresponding update equation.
  *
@@ -84,7 +87,8 @@ class SpectralBaseAlgorithmRZ
         SpectralBaseAlgorithmRZ(SpectralKSpaceRZ const & spectral_kspace,
                                 amrex::DistributionMapping const & dm,
                                 const SpectralFieldIndex& spectral_index,
-                                int const norder_z, short const grid_type)
+                                int const norder_z,
+                                ablastr::utils::enums::GridType grid_type)
           // Compute and assign the modified k vectors
           : m_spectral_index(spectral_index),
             modified_kz_vec(spectral_kspace.getModifiedKComponent(dm, 1, norder_z, grid_type))

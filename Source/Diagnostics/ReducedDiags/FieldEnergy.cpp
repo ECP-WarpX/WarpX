@@ -67,7 +67,7 @@ FieldEnergy::FieldEnergy (const std::string& rd_name)
                 ofs << m_sep;
                 ofs << "[" << c++ << "]B_lev" + std::to_string(lev) + "(J)";
             }
-            ofs << std::endl;
+            ofs << "\n";
             // close file
             ofs.close();
         }

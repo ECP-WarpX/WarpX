@@ -13,6 +13,7 @@
 #include "BoundaryConditions/PML.H"
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
+#include "EmbeddedBoundary/Enabled.H"
 #include "Evolve/WarpXDtType.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #ifdef WARPX_USE_FFT
@@ -60,6 +61,27 @@ using namespace amrex;
 using ablastr::utils::SignalHandling;
 
 void
+WarpX::Synchronize () {
+    FillBoundaryE(guard_cells.ng_FieldGather);
+    FillBoundaryB(guard_cells.ng_FieldGather);
+    if (fft_do_time_averaging)
+    {
+        FillBoundaryE_avg(guard_cells.ng_FieldGather);
+        FillBoundaryB_avg(guard_cells.ng_FieldGather);
+    }
+    UpdateAuxilaryData();
+    FillBoundaryAux(guard_cells.ng_UpdateAux);
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        mypc->PushP(lev, 0.5_rt*dt[lev],
+                    *Efield_aux[lev][0],*Efield_aux[lev][1],
+                    *Efield_aux[lev][2],
+                    *Bfield_aux[lev][0],*Bfield_aux[lev][1],
+                    *Bfield_aux[lev][2]);
+    }
+    is_synchronized = true;
+}
+
+void
 WarpX::Evolve (int numsteps)
 {
     WARPX_PROFILE_REGION("WarpX::Evolve()");
@@ -94,6 +116,18 @@ WarpX::Evolve (int numsteps)
 
         CheckLoadBalance(step);
 
+        // Update timestep for electrostatic solver if a constant dt is not provided
+        // This first synchronizes the position and velocity before setting the new timestep
+        if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None &&
+            !m_const_dt.has_value() && dt_update_interval.contains(step+1)) {
+            if (verbose) {
+                amrex::Print() << Utils::TextMsg::Info("updating timestep");
+            }
+            Synchronize();
+            UpdateDtFromParticleSpeeds();
+        }
+
+        // If position and velocity are synchronized, push velocity backward one half step
         if (evolve_scheme == EvolveScheme::Explicit)
         {
             ExplicitFillBoundaryEBUpdateAux();
@@ -174,25 +208,9 @@ WarpX::Evolve (int numsteps)
 
         // TODO: move out
         if (evolve_scheme == EvolveScheme::Explicit) {
+            // At the end of last step, push p by 0.5*dt to synchronize
             if (cur_time + dt[0] >= stop_time - 1.e-3*dt[0] || step == numsteps_max-1) {
-                // At the end of last step, push p by 0.5*dt to synchronize
-                FillBoundaryE(guard_cells.ng_FieldGather);
-                FillBoundaryB(guard_cells.ng_FieldGather);
-                if (fft_do_time_averaging)
-                {
-                    FillBoundaryE_avg(guard_cells.ng_FieldGather);
-                    FillBoundaryB_avg(guard_cells.ng_FieldGather);
-                }
-                UpdateAuxilaryData();
-                FillBoundaryAux(guard_cells.ng_UpdateAux);
-                for (int lev = 0; lev <= finest_level; ++lev) {
-                    mypc->PushP(lev, 0.5_rt*dt[lev],
-                                *Efield_aux[lev][0],*Efield_aux[lev][1],
-                                *Efield_aux[lev][2],
-                                *Bfield_aux[lev][0],*Bfield_aux[lev][1],
-                                *Bfield_aux[lev][2]);
-                }
-                is_synchronized = true;
+                Synchronize();
             }
         }
 
@@ -206,6 +224,7 @@ WarpX::Evolve (int numsteps)
 
         // sync up time
         for (int i = 0; i <= max_level; ++i) {
+            t_old[i] = t_new[i];
             t_new[i] = cur_time;
         }
         multi_diags->FilterComputePackFlush( step, false, true );
@@ -246,7 +265,12 @@ WarpX::Evolve (int numsteps)
                     // This is currently a lab frame calculation.
                     ComputeMagnetostaticField();
                 }
-                AddExternalFields();
+                // Since the fields were reset above, the external fields are added
+                // back on to the fine patch fields. This make it so that the net fields
+                // are the sum of the field solution and any external field.
+                for (int lev = 0; lev <= max_level; ++lev) {
+                    AddExternalFields(lev);
+                }
             } else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
                 // Hybrid-PIC case:
                 // The particles are now at p^{n+1/2} and x^{n+1}. The fields
@@ -438,7 +462,7 @@ void WarpX::checkEarlyUnusedParams ()
 void WarpX::ExplicitFillBoundaryEBUpdateAux ()
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(evolve_scheme == EvolveScheme::Explicit,
-        "Cannot call WarpX::ExplicitFillBoundaryEBUpdateAux wihtout Explicit evolve scheme set!");
+        "Cannot call WarpX::ExplicitFillBoundaryEBUpdateAux without Explicit evolve scheme set!");
 
     // At the beginning, we have B^{n} and E^{n}.
     // Particles have p^{n} and x^{n}.
@@ -519,11 +543,12 @@ void WarpX::HandleParticlesAtBoundaries (int step, amrex::Real cur_time, int num
     }
 
     // interact the particles with EB walls (if present)
-#ifdef AMREX_USE_EB
-    mypc->ScrapeParticlesAtEB(amrex::GetVecOfConstPtrs(m_distance_to_eb));
-    m_particle_boundary_buffer->gatherParticlesFromEmbeddedBoundaries(*mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
-    mypc->deleteInvalidParticles();
-#endif
+    if (EB::enabled()) {
+        mypc->ScrapeParticlesAtEB(amrex::GetVecOfConstPtrs(m_distance_to_eb));
+        m_particle_boundary_buffer->gatherParticlesFromEmbeddedBoundaries(
+            *mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
+        mypc->deleteInvalidParticles();
+    }
 
     if (sort_intervals.contains(step+1)) {
         if (verbose) {
