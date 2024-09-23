@@ -124,7 +124,7 @@ namespace ablastr::fields
         /** owned (i)MultiFab */
         amrex::MultiFab m_mf;
 
-        /** Components (base vector directions) of this (i)MultiFab */
+        /** Components (base vector directions) of this MultiFab */
         std::optional<Direction> m_dir = std::nullopt;
 
         /** the MR level of this (i)MultiFab */
@@ -153,7 +153,7 @@ namespace ablastr::fields
         is_alias () const { return !m_owner.empty(); }
     };
 
-    /** This is a register of fields aka amrex::(i)MultiFabs.
+    /** This is a register of fields aka amrex::MultiFabs.
      *
      * This is owned by a simulation instance. All used fields should be registered here.
      * Internally, this contains @see MultiFabOwner values.

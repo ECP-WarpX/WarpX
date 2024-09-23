@@ -2626,13 +2626,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             if (grid_type == GridType::Collocated)
             {
                 m_fields.alloc_init(FieldType::G_cp,
-                    lev, amrex::convert(ba, IntVect::TheUnitVector()), dm,
+                    lev, amrex::convert(cba, IntVect::TheUnitVector()), dm,
                     ncomps, ngG, 0.0_rt);
             }
             else // grid_type=staggered or grid_type=hybrid
             {
                 m_fields.alloc_init(FieldType::G_cp,
-                    lev, amrex::convert(ba, IntVect::TheZeroVector()), dm,
+                    lev, amrex::convert(cba, IntVect::TheZeroVector()), dm,
                     ncomps, ngG, 0.0_rt);
             }
         }
