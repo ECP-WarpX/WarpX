@@ -591,7 +591,7 @@ namespace ablastr::fields
             int level
         )
         {
-            erase<std::string const &>(getExtractedName(name), level);
+            internal_erase(getExtractedName(name), level);
         }
 
         /** Deallocate and remove a vector field component.
@@ -608,7 +608,7 @@ namespace ablastr::fields
             int level
         )
         {
-            erase<std::string const &>(getExtractedName(name), dir, level);
+            internal_erase(getExtractedName(name), dir, level);
         }
 
         /** Erase all MultiFabs on a specific MR level.
@@ -782,6 +782,18 @@ namespace ablastr::fields
             std::string const & name,
             int finest_level
         ) const;
+
+        void
+        internal_erase (
+            std::string const & name,
+            int level
+        );
+        void
+        internal_erase (
+            std::string const & name,
+            Direction dir,
+            int level
+        );
 
         /** data storage: ownership and lifetime control */
         std::map<

@@ -528,9 +528,8 @@ namespace ablastr::fields
         return names;
     }
 
-    template<>
     void
-    MultiFabRegister::erase<std::string const &> (
+    MultiFabRegister::internal_erase (
         std::string const & name,
         int level
     )
@@ -543,9 +542,8 @@ namespace ablastr::fields
         m_mf_register.erase(internal_name);
     }
 
-    template<>
     void
-    MultiFabRegister::erase<std::string const &> (
+    MultiFabRegister::internal_erase (
         std::string const & name,
         Direction dir,
         int level
