@@ -14,8 +14,8 @@ geometry.prob_lo = 0.     2.e-2 # physical domain
 geometry.prob_hi = 1.e-2  3.e-2
 
 # Boundary condition
-boundary.field_lo = neumann       periodic
-boundary.field_hi = pec_insulator periodic
+boundary.field_lo = neumann      periodic
+boundary.field_hi = PECInsulator periodic
 
 warpx.serialize_initial_conditions = 1
 

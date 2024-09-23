@@ -97,8 +97,8 @@ namespace
             // Loop over sides, iside = -1 (lo), iside = +1 (hi)
             for (int iside = -1; iside <= +1; iside += 2) {
                 bool const isPEC_InsulatorBoundary = ( (iside == -1)
-                    ? fbndry_lo[idim] == FieldBoundaryType::PEC_Insulator
-                    : fbndry_hi[idim] == FieldBoundaryType::PEC_Insulator );
+                    ? fbndry_lo[idim] == FieldBoundaryType::PECInsulator
+                    : fbndry_hi[idim] == FieldBoundaryType::PECInsulator );
                 if (isPEC_InsulatorBoundary) {
                     isInsulatorBoundary = ( (iside == -1)
                         ? is_insulator_lo[idim] == 1
