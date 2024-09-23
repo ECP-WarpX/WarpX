@@ -198,7 +198,7 @@ namespace ablastr::fields
             bool redistribute_on_remake = true
         )
         {
-            return alloc_init<std::string const &>(
+            return internal_alloc_init(
                 getExtractedName(name),
                 level,
                 ba,
@@ -243,7 +243,7 @@ namespace ablastr::fields
             bool redistribute_on_remake = true
         )
         {
-            return alloc_init<std::string const &>(
+            return internal_alloc_init(
                 getExtractedName(name),
                 dir,
                 level,
@@ -277,7 +277,7 @@ namespace ablastr::fields
             std::optional<amrex::Real const> initial_value = std::nullopt
         )
         {
-            return alias_init<std::string const &, std::string const &>(
+            return internal_alias_init(
                 getExtractedName(new_name),
                 getExtractedName(alias_name),
                 level,
@@ -307,7 +307,7 @@ namespace ablastr::fields
             std::optional<amrex::Real const> initial_value = std::nullopt
         )
         {
-            return alias_init<std::string const &, std::string const &>(
+            return internal_alias_init(
                 getExtractedName(new_name),
                 getExtractedName(alias_name),
                 dir,
@@ -329,7 +329,7 @@ namespace ablastr::fields
             int level
         ) const
         {
-            return has<std::string const &>(
+            return internal_has(
                 getExtractedName(name),
                 level
             );
@@ -350,7 +350,7 @@ namespace ablastr::fields
             int level
         ) const
         {
-            return has<std::string const &>(
+            return internal_has(
                 getExtractedName(name),
                 dir,
                 level
@@ -370,7 +370,7 @@ namespace ablastr::fields
             int level
         ) const
         {
-            return has_vector<std::string const &>(
+            return internal_has_vector(
                 getExtractedName(name),
                 level
             );
@@ -671,6 +671,65 @@ namespace ablastr::fields
             std::string const & key
         ) const;
 
+        amrex::MultiFab*
+        internal_alloc_init (
+            std::string const & name,
+            int level,
+            amrex::BoxArray const & ba,
+            amrex::DistributionMapping const & dm,
+            int ncomp,
+            amrex::IntVect const & ngrow,
+            std::optional<amrex::Real const> initial_value = std::nullopt,
+            bool remake = true,
+            bool redistribute_on_remake = true
+        );
+        amrex::MultiFab*
+        internal_alloc_init (
+            std::string const & name,
+            Direction dir,
+            int level,
+            amrex::BoxArray const & ba,
+            amrex::DistributionMapping const & dm,
+            int ncomp,
+            amrex::IntVect const & ngrow,
+            std::optional<amrex::Real const> initial_value = std::nullopt,
+            bool remake = true,
+            bool redistribute_on_remake = true
+        );
+
+        amrex::MultiFab*
+        internal_alias_init (
+            std::string const & new_name,
+            std::string const & alias_name,
+            int level,
+            std::optional<amrex::Real const> initial_value = std::nullopt
+        );
+        amrex::MultiFab*
+        internal_alias_init (
+            std::string const & new_name,
+            std::string const & alias_name,
+            Direction dir,
+            int level,
+            std::optional<amrex::Real const> initial_value = std::nullopt
+        );
+
+        [[nodiscard]] bool
+        internal_has (
+            std::string const & name,
+            int level
+        ) const;
+        [[nodiscard]] bool
+        internal_has (
+            std::string const & name,
+            Direction dir,
+            int level
+        ) const;
+        [[nodiscard]] bool
+        internal_has_vector (
+            std::string const & name,
+            int level
+        ) const;
+
         /** data storage: ownership and lifetime control */
         std::map<
             std::string,
@@ -691,7 +750,5 @@ namespace ablastr::fields
     );
 
 } // namespace ablastr::fields
-
-#include "MultiFabRegister_string.H"
 
 #endif  // ABLASTR_FIELDS_MF_REGISTER_H

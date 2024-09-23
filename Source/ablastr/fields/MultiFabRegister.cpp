@@ -20,9 +20,8 @@
 
 namespace ablastr::fields
 {
-    template<>
     amrex::MultiFab*
-    MultiFabRegister::alloc_init<std::string const &> (
+    MultiFabRegister::internal_alloc_init (
         std::string const & name,
         int level,
         amrex::BoxArray const & ba,
@@ -70,9 +69,8 @@ namespace ablastr::fields
         return &mf;
     }
 
-    template<>
     amrex::MultiFab*
-    MultiFabRegister::alloc_init<std::string const &> (
+    MultiFabRegister::internal_alloc_init (
         std::string const & name,
         Direction dir,
         int level,
@@ -125,9 +123,8 @@ namespace ablastr::fields
         return &mf;
     }
 
-    template<>
     amrex::MultiFab*
-    MultiFabRegister::alias_init<std::string const &, std::string const &> (
+    MultiFabRegister::internal_alias_init (
         std::string const & new_name,
         std::string const & alias_name,
         int level,
@@ -185,9 +182,8 @@ namespace ablastr::fields
         return &mf;
     }
 
-    template<>
     amrex::MultiFab*
-    MultiFabRegister::alias_init<std::string const &, std::string const &> (
+    MultiFabRegister::internal_alias_init (
             std::string const & new_name,
             std::string const & alias_name,
             Direction dir,
@@ -301,9 +297,8 @@ namespace ablastr::fields
         }
     }
 
-    template<>
     bool
-    MultiFabRegister::has<std::string const &> (
+    MultiFabRegister::internal_has (
         std::string const & name,
         int level
     ) const
@@ -313,9 +308,8 @@ namespace ablastr::fields
         return m_mf_register.count(internal_name) > 0;
     }
 
-    template<>
     bool
-    MultiFabRegister::has<std::string const &> (
+    MultiFabRegister::internal_has (
         std::string const & name,
         Direction dir,
         int level
@@ -326,9 +320,8 @@ namespace ablastr::fields
         return m_mf_register.count(internal_name) > 0;
     }
 
-    template<>
     bool
-    MultiFabRegister::has_vector<std::string const &> (
+    MultiFabRegister::internal_has_vector (
         std::string const & name,
         int level
     ) const
