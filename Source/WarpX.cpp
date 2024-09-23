@@ -1200,6 +1200,9 @@ WarpX::ReadParameters ()
         else if (evolve_scheme == EvolveScheme::ThetaImplicitEM) {
             m_implicit_solver = std::make_unique<ThetaImplicitEM>();
         }
+        else if (evolve_scheme == EvolveScheme::StrangImplicitSpectralEM) {
+            m_implicit_solver = std::make_unique<StrangImplicitSpectralEM>();
+        }
 
         // implicit evolve schemes not setup to use mirrors
         if (evolve_scheme == EvolveScheme::SemiImplicitEM ||
@@ -1245,7 +1248,8 @@ WarpX::ReadParameters ()
         if (current_deposition_algo == CurrentDepositionAlgo::Villasenor) {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 evolve_scheme == EvolveScheme::SemiImplicitEM ||
-                evolve_scheme == EvolveScheme::ThetaImplicitEM,
+                evolve_scheme == EvolveScheme::ThetaImplicitEM ||
+                evolve_scheme == EvolveScheme::StrangImplicitSpectralEM,
                 "Villasenor current deposition can only"
                 "be used with Implicit evolve schemes.");
         }
@@ -1316,7 +1320,8 @@ WarpX::ReadParameters ()
         }
 
         if (evolve_scheme == EvolveScheme::SemiImplicitEM ||
-            evolve_scheme == EvolveScheme::ThetaImplicitEM) {
+            evolve_scheme == EvolveScheme::ThetaImplicitEM ||
+            evolve_scheme == EvolveScheme::StrangImplicitSpectralEM) {
 
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 current_deposition_algo == CurrentDepositionAlgo::Esirkepov ||
@@ -1326,8 +1331,9 @@ WarpX::ReadParameters ()
 
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
-                electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC,
-                "Only the Yee EM solver is supported with the implicit and semi-implicit schemes");
+                electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC ||
+                electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD,
+                "Only the Yee, CKC, and PSATD EM solvers are supported with the implicit and semi-implicit schemes");
 
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 particle_pusher_algo == ParticlePusherAlgo::Boris ||
@@ -1337,6 +1343,11 @@ WarpX::ReadParameters ()
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 field_gathering_algo != GatheringAlgo::MomentumConserving,
                     "With implicit and semi-implicit schemes, the momentum conserving field gather is not supported as it would not conserve energy");
+        }
+        if (evolve_scheme == EvolveScheme::StrangImplicitSpectralEM) {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD,
+                "With the strang_implicit_spectral_em evolve scheme, the algo.maxwell_solver must be psatd");
         }
 
         // Load balancing parameters
@@ -2842,6 +2853,10 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
 
     amrex::Real solver_dt = dt[lev];
     if (WarpX::do_multi_J) { solver_dt /= static_cast<amrex::Real>(WarpX::do_multi_J_n_depositions); }
+    if (evolve_scheme == EvolveScheme::StrangImplicitSpectralEM) {
+        // The step is Strang split into two half steps
+        solver_dt /= 2.;
+    }
 
     auto pss = std::make_unique<SpectralSolverRZ>(lev,
                                                   realspace_ba,
@@ -2895,6 +2910,10 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
 
     amrex::Real solver_dt = dt[lev];
     if (WarpX::do_multi_J) { solver_dt /= static_cast<amrex::Real>(WarpX::do_multi_J_n_depositions); }
+    if (evolve_scheme == EvolveScheme::StrangImplicitSpectralEM) {
+        // The step is Strang split into two half steps
+        solver_dt /= 2.;
+    }
 
     auto pss = std::make_unique<SpectralSolver>(lev,
                                                 realspace_ba,

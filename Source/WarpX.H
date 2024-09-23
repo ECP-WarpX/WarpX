@@ -135,6 +135,7 @@ public:
     void UpdateMagneticFieldAndApplyBCs ( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& a_Bn,
                                amrex::Real a_thetadt );
     void ApplyMagneticFieldBCs ();
+    void SpectralSourceFreeFieldAdvance();
     void FinishMagneticFieldAndApplyBCs ( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& a_Bn,
                                amrex::Real a_theta );
     void FinishImplicitField ( amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_fp,

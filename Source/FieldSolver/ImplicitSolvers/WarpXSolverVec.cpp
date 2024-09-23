@@ -75,14 +75,15 @@ void WarpXSolverVec::Define ( WarpX*     a_WarpX,
 }
 
 void WarpXSolverVec::Copy ( FieldType  a_array_type,
-                            FieldType  a_scalar_type )
+                            FieldType  a_scalar_type,
+                            bool allow_type_mismatch)
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         IsDefined(),
         "WarpXSolverVec::Copy() called on undefined WarpXSolverVec");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        a_array_type==m_array_type &&
-        a_scalar_type==m_scalar_type,
+        (a_array_type==m_array_type &&
+        a_scalar_type==m_scalar_type) || allow_type_mismatch,
         "WarpXSolverVec::Copy() called with vecs of different types");
 
     for (int lev = 0; lev < m_num_amr_levels; ++lev) {
