@@ -10,9 +10,7 @@ jobs:
   build_win_msvc:
     name: MSVC C++17 w/o MPI
     runs-on: windows-latest
-    # disabled due to issues in #5230
-    if: 0
-    #if: github.event.pull_request.draft == false
+    if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
