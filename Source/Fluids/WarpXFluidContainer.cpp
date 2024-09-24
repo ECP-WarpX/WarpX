@@ -164,11 +164,11 @@ void WarpXFluidContainer::AllocateLevelMFs(ablastr::fields::MultiFabRegister& fi
 
     fields.alloc_init(
             name_mf_T, lev, amrex::convert(ba, amrex::IntVect::TheNodeVector()), dm,
-            ncomps, nguards, 0.0_rt);  
+            ncomps, nguards, 0.0_rt);
 
     fields.alloc_init(
             name_mf_K, lev, amrex::convert(ba, amrex::IntVect::TheNodeVector()), dm,
-            ncomps, nguards, 0.0_rt);  
+            ncomps, nguards, 0.0_rt);
 
 }
 
@@ -1444,7 +1444,7 @@ void WarpXFluidContainer::HybridUpdateUe (ablastr::fields::MultiFabRegister& fie
                     Uey(i, j, k) = (Jy(i, j, k) - Jiy(i, j, k))/rho(i, j, k);
                     Uez(i, j, k) = (Jz(i, j, k) - Jiz(i, j, k))/rho(i, j, k);
                 }
-                
+
             });
         }
 

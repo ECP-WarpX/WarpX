@@ -1867,7 +1867,9 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
             ),
         )
 
-        pywarpx.hybridpicmodel.solve_electron_energy_equation = self.solve_electron_energy_equation
+        pywarpx.hybridpicmodel.solve_electron_energy_equation = (
+            self.solve_electron_energy_equation
+        )
 
 
 class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):

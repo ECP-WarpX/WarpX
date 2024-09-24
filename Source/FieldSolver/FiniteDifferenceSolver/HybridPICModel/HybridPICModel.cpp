@@ -561,7 +561,7 @@ void HybridPICModel::FillElectronPressureMF (
                 );
             });
         }
-    } 
+    }
     else{
 // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
@@ -573,7 +573,7 @@ void HybridPICModel::FillElectronPressureMF (
             Array4<Real const> const& rho = rho_field.const_array(mfi);
             Array4<Real> const& Pe = Pe_field.array(mfi);
             Array4<Real> const& Te = Te_field.array(mfi);
-            
+
             // Extract tileboxes for which to loop
             const Box& tilebox  = mfi.tilebox();
 
@@ -585,7 +585,7 @@ void HybridPICModel::FillElectronPressureMF (
         }
 
     }
-    
+
 }
 
 void HybridPICModel::BfieldEvolveRK (
