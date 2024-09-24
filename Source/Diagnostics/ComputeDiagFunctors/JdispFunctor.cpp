@@ -6,7 +6,7 @@
 #include "JdispFunctor.H"
 
 #include "WarpX.H"
-#include "FieldSolver/Fields.H"
+#include "Fields.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #include "Particles/MultiParticleContainer.H"
 
@@ -16,7 +16,7 @@
 #include <AMReX_MultiFab.H>
 
 using namespace amrex;
-using namespace warpx::fields;
+using warpx::fields::FieldType;
 
 JdispFunctor::JdispFunctor (int dir, int lev,
         amrex::IntVect crse_ratio, bool convertRZmodes2cartesian, int ncomp)
@@ -27,18 +27,20 @@ JdispFunctor::JdispFunctor (int dir, int lev,
 void
 JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/) const
 {
+    using ablastr::fields::Direction;
+
     auto& warpx = WarpX::GetInstance();
     auto* hybrid_pic_model = warpx.get_pointer_HybridPICModel();
 
     /** pointer to total simulation current (J) multifab */
-    amrex::MultiFab* mf_j = warpx.getFieldPointer(FieldType::current_fp, m_lev, m_dir);
+    amrex::MultiFab* mf_j = warpx.m_fields.get(FieldType::current_fp, Direction{m_dir}, m_lev);
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(hybrid_pic_model,
         "Displacement current diagnostic is only implemented for the HybridPICModel.");
     AMREX_ASSUME(hybrid_pic_model != nullptr);
 
      /** pointer to current calculated from Ampere's Law (Jamp) multifab */
-    amrex::MultiFab* mf_curlB = hybrid_pic_model->get_pointer_current_fp_ampere(m_lev, m_dir);;
+    amrex::MultiFab* mf_curlB = warpx.m_fields.get(FieldType::hybrid_current_fp_ampere, Direction{m_dir}, m_lev);
 
     //if (!hybrid_pic_model) {
         // To finish this implementation, we need to implement a method to
@@ -64,7 +66,7 @@ JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buff
     if (hybrid_pic_model) {
         // Subtract the interpolated j_external value from j_displacement.
         /** pointer to external currents (Jext) multifab */
-        amrex::MultiFab* mf_j_external = hybrid_pic_model->get_pointer_current_fp_external(m_lev, m_dir);
+        amrex::MultiFab* mf_j_external = warpx.m_fields.get(FieldType::hybrid_current_fp_external, Direction{m_dir}, m_lev);
 
         // Index type required for interpolating Jext from their respective
         // staggering (nodal) to the Jx_displacement, Jy_displacement, Jz_displacement
