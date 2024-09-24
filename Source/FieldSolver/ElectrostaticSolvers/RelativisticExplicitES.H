@@ -68,10 +68,10 @@ public:
     /** Compute the potential `phi` by solving the Poisson equation with the
        simulation specific boundary conditions and boundary values, then add the
        E field due to that `phi` to `E_fp`.
-    * \param[in] Efield Efield updated to include potential gradient from boundary condition
+    * \param[in] E_fp Efield updated to include potential gradient from boundary condition
     */
     void AddBoundaryField (
-        ablastr::fields::MultiLevelVectorField& Efield
+        ablastr::fields::MultiLevelVectorField& E_fp
     );
 };
 
