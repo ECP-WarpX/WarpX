@@ -135,9 +135,9 @@ This example accesses the :math:`E_x(x,y,z)` field at level 0 after every time s
 
        # data access
        #   vector field E, component x, on the fine patch of MR level 0
-       E_x_mf = warpx.multifab(f"Efield_fp", dir=0, level=0)
+       E_x_mf = warpx.multifab("Efield_fp", dir=0, level=0)
        #   scalar field rho, on the fine patch of MR level 0
-       rho_mf = warpx.multifab(f"rho_fp", level=0)
+       rho_mf = warpx.multifab("rho_fp", level=0)
 
        # compute on E_x_mf
        # iterate over mesh-refinement levels
