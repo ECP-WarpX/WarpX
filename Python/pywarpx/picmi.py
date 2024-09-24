@@ -1797,6 +1797,7 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         Jx_external_function=None,
         Jy_external_function=None,
         Jz_external_function=None,
+        solve_electron_energy_equation=False,
         **kw,
     ):
         self.grid = grid
@@ -1814,6 +1815,8 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         self.Jx_external_function = Jx_external_function
         self.Jy_external_function = Jy_external_function
         self.Jz_external_function = Jz_external_function
+
+        self.solve_electron_energy_equation = solve_electron_energy_equation
 
         # Handle keyword arguments used in expressions
         self.user_defined_kw = {}
@@ -1863,6 +1866,8 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
                 self.Jz_external_function, self.mangle_dict
             ),
         )
+
+        pywarpx.hybridpicmodel.solve_electron_energy_equation = self.solve_electron_energy_equation
 
 
 class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
