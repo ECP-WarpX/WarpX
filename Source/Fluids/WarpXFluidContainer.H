@@ -131,6 +131,9 @@ public:
      */
     void DepositCharge (ablastr::fields::MultiFabRegister& m_fields, amrex::MultiFab &rho, int lev, int icomp = 0);
 
+    // Function that calculates Ue from Je = J_ampere - Ji and saves in NU for hybrid solver
+    void HybridUpdateUe (ablastr::fields::MultiFabRegister& m_fields, int lev);
+    
     [[nodiscard]] amrex::Real getCharge () const {return charge;}
     [[nodiscard]] amrex::Real getMass () const {return mass;}
 
