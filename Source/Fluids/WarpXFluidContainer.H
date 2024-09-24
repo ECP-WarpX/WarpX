@@ -131,8 +131,15 @@ public:
      */
     void DepositCharge (ablastr::fields::MultiFabRegister& m_fields, amrex::MultiFab &rho, int lev, int icomp = 0);
 
-    // Function that calculates Ue from Je = J_ampere - Ji and saves in NU for hybrid solver
+    // HybridUpdateUe calculates Ue from Je = J_ampere - Ji and saves in NU for hybrid solver
     void HybridUpdateUe (ablastr::fields::MultiFabRegister& m_fields, int lev);
+
+    // Sets Ke in fluid container MF to be used by qdsmc particles
+    void HybridInitializeKe (ablastr::fields::MultiFabRegister& m_fields, amrex::Real gamma, int lev);
+
+    // UpdateTe takes the already interpolated Ke values from the grid after pushing the fictitious particles
+    // and calculates Te at n+1
+    void HybridUpdateTe (ablastr::fields::MultiFabRegister& m_fields, amrex::Real gamma, int lev);
 
     [[nodiscard]] amrex::Real getCharge () const {return charge;}
     [[nodiscard]] amrex::Real getMass () const {return mass;}

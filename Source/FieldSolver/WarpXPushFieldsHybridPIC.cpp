@@ -166,15 +166,24 @@ void WarpX::HybridPICEvolveFields ()
         m_fields.get_mr_levels_alldirs(FieldType::Bfield_fp, finest_level),
         m_fields.get_mr_levels_alldirs(FieldType::edge_lengths, finest_level));
 
+    // all the qdsmc solver functions should be in a ElectronEnergyEquationSolver class as well as other solvers like Layer method
     if(m_hybrid_pic_model->m_solve_electron_energy_equation){
+
+        // Initialize Ke = ne^(1-gamma)*Te
+        // Move up, shouldn't Ke be defined with both ne and Te at n instead of ne at n+1 ?
+        hybrid_electron_fl->HybridInitializeKe(m_fields, m_hybrid_pic_model->m_gamma , finest_level);
 
         // Update Ue in electron fluid container
         // check at what step this should be calculated, here Ue is at n+1
+        // maybe move up to be consistent with Ke initialization
         hybrid_electron_fl->HybridUpdateUe(m_fields, finest_level);
 
         // Solve electron energy equation without sources or sinks
         // and update electron temperature before calculating Pe
-        // hybrid_electron_fl->SolveEEQqdsmc(); // should take rho, Je
+        // hybrid_electron_fl->SolveEEEqQDSMC(); // should take rho, Je
+
+        // Update Te after QDSMC solver is used
+        hybrid_electron_fl->HybridUpdateTe(m_fields, m_hybrid_pic_model->m_gamma, finest_level);
 
     }
 

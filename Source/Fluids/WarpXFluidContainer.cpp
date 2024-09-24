@@ -1447,6 +1447,54 @@ void WarpXFluidContainer::HybridUpdateUe (ablastr::fields::MultiFabRegister& fie
 
             });
         }
+}
 
 
+void WarpXFluidContainer::HybridInitializeKe (ablastr::fields::MultiFabRegister& fields, amrex::Real gamma, int lev)
+{
+    using warpx::fields::FieldType;
+    ablastr::fields::ScalarField rho_fp = fields.get(FieldType::rho_fp, lev);
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for ( MFIter mfi(*rho_fp, TilingIfNotGPU()); mfi.isValid(); ++mfi )
+        {
+            amrex::Array4<amrex::Real> const & rho = rho_fp->array(mfi);
+            amrex::Array4<amrex::Real> const & Te = fields.get(name_mf_T, lev)->array(mfi);
+            const amrex::Array4<amrex::Real> Ke = fields.get(name_mf_K, lev)->array(mfi);
+
+            const Box& tilebox  = mfi.tilebox();
+
+            ParallelFor(tilebox, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                if( rho(i, j, k) > 0.0_rt ){
+                    Ke(i, j, k) = Te(i, j, k)*std::pow((rho(i, j, k)/PhysConst::q_e), 1-gamma)/PhysConst::q_e;
+                }
+            });
+        }
+}
+
+
+void WarpXFluidContainer::HybridUpdateTe (ablastr::fields::MultiFabRegister& fields, amrex::Real gamma, int lev)
+{
+    using warpx::fields::FieldType;
+    ablastr::fields::ScalarField rho_fp = fields.get(FieldType::rho_fp, lev);
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for ( MFIter mfi(*rho_fp, TilingIfNotGPU()); mfi.isValid(); ++mfi )
+        {
+            amrex::Array4<amrex::Real> const & rho = rho_fp->array(mfi);
+            amrex::Array4<amrex::Real> const & Ke = fields.get(name_mf_K, lev)->array(mfi);
+            const amrex::Array4<amrex::Real> Te = fields.get(name_mf_T, lev)->array(mfi);
+
+            const Box& tilebox  = mfi.tilebox();
+
+            ParallelFor(tilebox, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                if( rho(i, j, k) > 0.0_rt ){
+                    Te(i, j, k) = Ke(i, j, k)*std::pow((rho(i, j, k)/PhysConst::q_e), gamma-1)*PhysConst::q_e;
+                }
+            });
+        }
 }
