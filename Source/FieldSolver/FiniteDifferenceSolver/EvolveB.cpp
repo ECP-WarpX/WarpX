@@ -61,9 +61,9 @@ void FiniteDifferenceSolver::EvolveB (
     using warpx::fields::FieldType;
 
     const ablastr::fields::VectorField Bfield = patch_type == PatchType::fine ?
-        fields.get_alldirs(FieldType::Bfield_fp, lev) : fields.get_alldirs(FieldType::Bfield_cp, lev);
+        fields.get_alldirs(FieldType::B_fp, lev) : fields.get_alldirs(FieldType::B_cp, lev);
     const ablastr::fields::VectorField Efield = patch_type == PatchType::fine ?
-        fields.get_alldirs(FieldType::Efield_fp, lev) : fields.get_alldirs(FieldType::Efield_cp, lev);
+        fields.get_alldirs(FieldType::E_fp, lev) : fields.get_alldirs(FieldType::E_cp, lev);
 
     // Select algorithm (The choice of algorithm is a runtime option,
     // but we compile code for each algorithm, using templates)

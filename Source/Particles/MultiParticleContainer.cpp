@@ -1357,12 +1357,12 @@ MultiParticleContainer::doQEDSchwinger ()
     pc_product_pos->defineAllParticleTiles();
 
     using ablastr::fields::Direction;
-    const MultiFab & Ex = *warpx.m_fields.get(FieldType::Efield_aux, Direction{0}, level_0);
-    const MultiFab & Ey = *warpx.m_fields.get(FieldType::Efield_aux, Direction{1}, level_0);
-    const MultiFab & Ez = *warpx.m_fields.get(FieldType::Efield_aux, Direction{2}, level_0);
-    const MultiFab & Bx = *warpx.m_fields.get(FieldType::Bfield_aux, Direction{0}, level_0);
-    const MultiFab & By = *warpx.m_fields.get(FieldType::Bfield_aux, Direction{1}, level_0);
-    const MultiFab & Bz = *warpx.m_fields.get(FieldType::Bfield_aux, Direction{2}, level_0);
+    const MultiFab & Ex = *warpx.m_fields.get(FieldType::E_aux, Direction{0}, level_0);
+    const MultiFab & Ey = *warpx.m_fields.get(FieldType::E_aux, Direction{1}, level_0);
+    const MultiFab & Ez = *warpx.m_fields.get(FieldType::E_aux, Direction{2}, level_0);
+    const MultiFab & Bx = *warpx.m_fields.get(FieldType::B_aux, Direction{0}, level_0);
+    const MultiFab & By = *warpx.m_fields.get(FieldType::B_aux, Direction{1}, level_0);
+    const MultiFab & Bz = *warpx.m_fields.get(FieldType::B_aux, Direction{2}, level_0);
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())

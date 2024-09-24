@@ -106,8 +106,8 @@ void WarpX::HybridPICEvolveFields ()
     for (int sub_step = 0; sub_step < sub_steps; sub_step++)
     {
         m_hybrid_pic_model->BfieldEvolveRK(
-            m_fields.get_mr_levels_alldirs(FieldType::Bfield_fp, finest_level),
-            m_fields.get_mr_levels_alldirs(FieldType::Efield_fp, finest_level),
+            m_fields.get_mr_levels_alldirs(FieldType::B_fp, finest_level),
+            m_fields.get_mr_levels_alldirs(FieldType::E_fp, finest_level),
             current_fp_temp, rho_fp_temp,
             m_fields.get_mr_levels_alldirs(FieldType::edge_lengths, finest_level),
             0.5_rt/sub_steps*dt[0],
@@ -132,8 +132,8 @@ void WarpX::HybridPICEvolveFields ()
     for (int sub_step = 0; sub_step < sub_steps; sub_step++)
     {
         m_hybrid_pic_model->BfieldEvolveRK(
-            m_fields.get_mr_levels_alldirs(FieldType::Bfield_fp, finest_level),
-            m_fields.get_mr_levels_alldirs(FieldType::Efield_fp, finest_level),
+            m_fields.get_mr_levels_alldirs(FieldType::B_fp, finest_level),
+            m_fields.get_mr_levels_alldirs(FieldType::E_fp, finest_level),
             m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level),
             rho_fp_temp,
             m_fields.get_mr_levels_alldirs(FieldType::edge_lengths, finest_level),
@@ -166,12 +166,12 @@ void WarpX::HybridPICEvolveFields ()
 
     // Update the E field to t=n+1 using the extrapolated J_i^n+1 value
     m_hybrid_pic_model->CalculateCurrentAmpere(
-        m_fields.get_mr_levels_alldirs(FieldType::Bfield_fp, finest_level),
+        m_fields.get_mr_levels_alldirs(FieldType::B_fp, finest_level),
         m_fields.get_mr_levels_alldirs(FieldType::edge_lengths, finest_level));
     m_hybrid_pic_model->HybridPICSolveE(
-        m_fields.get_mr_levels_alldirs(FieldType::Efield_fp, finest_level),
+        m_fields.get_mr_levels_alldirs(FieldType::E_fp, finest_level),
         current_fp_temp,
-        m_fields.get_mr_levels_alldirs(FieldType::Bfield_fp, finest_level),
+        m_fields.get_mr_levels_alldirs(FieldType::B_fp, finest_level),
         m_fields.get_mr_levels(FieldType::rho_fp, finest_level),
         m_fields.get_mr_levels_alldirs(FieldType::edge_lengths, finest_level), false
     );

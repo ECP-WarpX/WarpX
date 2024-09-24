@@ -101,7 +101,7 @@ Fields
 The ``fields`` module provides wrapper around most of the MultiFabs that are defined in the WarpX class.
 For a list of all of the available wrappers, see the file ``Python/pywarpx/fields.py``.
 For each MultiFab, there is a function that will return a wrapper around the data.
-For instance, the function ``ExWrapper`` returns a wrapper around the ``x`` component of the MultiFab vector ``Efield_aux``.
+For instance, the function ``ExWrapper`` returns a wrapper around the ``x`` component of the MultiFab vector ``E_aux``.
 
 .. code-block:: python
 

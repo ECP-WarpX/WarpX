@@ -20,7 +20,7 @@ void SemiImplicitEM::Define ( WarpX*  a_WarpX )
     m_WarpX = a_WarpX;
 
     // Define E and Eold vectors
-    m_E.Define( m_WarpX, "Efield_fp" );
+    m_E.Define( m_WarpX, "E_fp" );
     m_Eold.Define( m_E );
 
     // Parse implicit solver parameters
@@ -65,9 +65,9 @@ void SemiImplicitEM::OneStep ( amrex::Real  a_time,
     m_WarpX->SaveParticlesAtImplicitStepStart ( );
 
     // Save Eg at the start of the time step
-    m_Eold.Copy( FieldType::Efield_fp );
+    m_Eold.Copy( FieldType::E_fp );
 
-    // Advance WarpX owned Bfield_fp to t_{n+1/2}
+    // Advance WarpX owned B_fp to t_{n+1/2}
     m_WarpX->EvolveB(a_dt, DtType::Full);
     m_WarpX->ApplyMagneticFieldBCs();
 
@@ -78,7 +78,7 @@ void SemiImplicitEM::OneStep ( amrex::Real  a_time,
     m_E.Copy(m_Eold); // initial guess for Eg^{n+1/2}
     m_nlsolver->Solve( m_E, m_Eold, half_time, a_dt );
 
-    // Update WarpX owned Efield_fp to t_{n+1/2}
+    // Update WarpX owned E_fp to t_{n+1/2}
     m_WarpX->SetElectricFieldAndApplyBCs( m_E );
 
     // Advance particles from time n+1/2 to time n+1
@@ -98,7 +98,7 @@ void SemiImplicitEM::ComputeRHS ( WarpXSolverVec&  a_RHS,
                                   int              a_nl_iter,
                                   bool             a_from_jacobian )
 {
-    // Update WarpX-owned Efield_fp using current state of Eg from
+    // Update WarpX-owned E_fp using current state of Eg from
     // the nonlinear solver at time n+theta
     m_WarpX->SetElectricFieldAndApplyBCs( a_E );
 

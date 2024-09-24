@@ -79,12 +79,12 @@ WarpX::Synchronize () {
         mypc->PushP(
             lev,
             0.5_rt*dt[lev],
-            *m_fields.get(FieldType::Efield_aux, Direction{0}, lev),
-            *m_fields.get(FieldType::Efield_aux, Direction{1}, lev),
-            *m_fields.get(FieldType::Efield_aux, Direction{2}, lev),
-            *m_fields.get(FieldType::Bfield_aux, Direction{0}, lev),
-            *m_fields.get(FieldType::Bfield_aux, Direction{1}, lev),
-            *m_fields.get(FieldType::Bfield_aux, Direction{2}, lev)
+            *m_fields.get(FieldType::E_aux, Direction{0}, lev),
+            *m_fields.get(FieldType::E_aux, Direction{1}, lev),
+            *m_fields.get(FieldType::E_aux, Direction{2}, lev),
+            *m_fields.get(FieldType::B_aux, Direction{0}, lev),
+            *m_fields.get(FieldType::B_aux, Direction{1}, lev),
+            *m_fields.get(FieldType::B_aux, Direction{2}, lev)
         );
     }
     is_synchronized = true;
@@ -495,12 +495,12 @@ void WarpX::ExplicitFillBoundaryEBUpdateAux ()
             mypc->PushP(
                 lev,
                 -0.5_rt*dt[lev],
-                *m_fields.get(FieldType::Efield_aux, Direction{0}, lev),
-                *m_fields.get(FieldType::Efield_aux, Direction{1}, lev),
-                *m_fields.get(FieldType::Efield_aux, Direction{2}, lev),
-                *m_fields.get(FieldType::Bfield_aux, Direction{0}, lev),
-                *m_fields.get(FieldType::Bfield_aux, Direction{1}, lev),
-                *m_fields.get(FieldType::Bfield_aux, Direction{2}, lev)
+                *m_fields.get(FieldType::E_aux, Direction{0}, lev),
+                *m_fields.get(FieldType::E_aux, Direction{1}, lev),
+                *m_fields.get(FieldType::E_aux, Direction{2}, lev),
+                *m_fields.get(FieldType::B_aux, Direction{0}, lev),
+                *m_fields.get(FieldType::B_aux, Direction{1}, lev),
+                *m_fields.get(FieldType::B_aux, Direction{2}, lev)
             );
         }
         is_synchronized = false;
@@ -794,10 +794,10 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         // We summed the integral of the field over 2*dt
         PSATDScaleAverageFields(1._rt / (2._rt*dt[0]));
         PSATDBackwardTransformEBavg(
-            m_fields.get_mr_levels_alldirs(FieldType::Efield_avg_fp, finest_level),
-            m_fields.get_mr_levels_alldirs(FieldType::Bfield_avg_fp, finest_level),
-            m_fields.get_mr_levels_alldirs(FieldType::Efield_avg_cp, finest_level),
-            m_fields.get_mr_levels_alldirs(FieldType::Bfield_avg_cp, finest_level)
+            m_fields.get_mr_levels_alldirs(FieldType::E_avg_fp, finest_level),
+            m_fields.get_mr_levels_alldirs(FieldType::B_avg_fp, finest_level),
+            m_fields.get_mr_levels_alldirs(FieldType::E_avg_cp, finest_level),
+            m_fields.get_mr_levels_alldirs(FieldType::B_avg_cp, finest_level)
         );
     }
 
@@ -1061,12 +1061,12 @@ WarpX::doFieldIonization (int lev)
 
     mypc->doFieldIonization(
         lev,
-        *m_fields.get(FieldType::Efield_aux, Direction{0}, lev),
-        *m_fields.get(FieldType::Efield_aux, Direction{1}, lev),
-        *m_fields.get(FieldType::Efield_aux, Direction{2}, lev),
-        *m_fields.get(FieldType::Bfield_aux, Direction{0}, lev),
-        *m_fields.get(FieldType::Bfield_aux, Direction{1}, lev),
-        *m_fields.get(FieldType::Bfield_aux, Direction{2}, lev)
+        *m_fields.get(FieldType::E_aux, Direction{0}, lev),
+        *m_fields.get(FieldType::E_aux, Direction{1}, lev),
+        *m_fields.get(FieldType::E_aux, Direction{2}, lev),
+        *m_fields.get(FieldType::B_aux, Direction{0}, lev),
+        *m_fields.get(FieldType::B_aux, Direction{1}, lev),
+        *m_fields.get(FieldType::B_aux, Direction{2}, lev)
     );
 }
 
@@ -1087,12 +1087,12 @@ WarpX::doQEDEvents (int lev)
 
     mypc->doQedEvents(
         lev,
-        *m_fields.get(FieldType::Efield_aux, Direction{0}, lev),
-        *m_fields.get(FieldType::Efield_aux, Direction{1}, lev),
-        *m_fields.get(FieldType::Efield_aux, Direction{2}, lev),
-        *m_fields.get(FieldType::Bfield_aux, Direction{0}, lev),
-        *m_fields.get(FieldType::Bfield_aux, Direction{1}, lev),
-        *m_fields.get(FieldType::Bfield_aux, Direction{2}, lev)
+        *m_fields.get(FieldType::E_aux, Direction{0}, lev),
+        *m_fields.get(FieldType::E_aux, Direction{1}, lev),
+        *m_fields.get(FieldType::E_aux, Direction{2}, lev),
+        *m_fields.get(FieldType::B_aux, Direction{0}, lev),
+        *m_fields.get(FieldType::B_aux, Direction{1}, lev),
+        *m_fields.get(FieldType::B_aux, Direction{2}, lev)
     );
 }
 #endif
@@ -1216,12 +1216,12 @@ WarpX::applyMirrors (Real time)
             const amrex::Real z_max = std::max(z_max_tmp, z_min+mirror_z_npoints[i_mirror]*dz);
 
             // Set each field on the fine patch to zero between z_min and z_max
-            NullifyMF(m_fields, "Efield_fp", Direction{0}, lev, z_min, z_max);
-            NullifyMF(m_fields, "Efield_fp", Direction{1}, lev, z_min, z_max);
-            NullifyMF(m_fields, "Efield_fp", Direction{2}, lev, z_min, z_max);
-            NullifyMF(m_fields, "Bfield_fp", Direction{0}, lev, z_min, z_max);
-            NullifyMF(m_fields, "Bfield_fp", Direction{1}, lev, z_min, z_max);
-            NullifyMF(m_fields, "Bfield_fp", Direction{2}, lev, z_min, z_max);
+            NullifyMF(m_fields, "E_fp", Direction{0}, lev, z_min, z_max);
+            NullifyMF(m_fields, "E_fp", Direction{1}, lev, z_min, z_max);
+            NullifyMF(m_fields, "E_fp", Direction{2}, lev, z_min, z_max);
+            NullifyMF(m_fields, "B_fp", Direction{0}, lev, z_min, z_max);
+            NullifyMF(m_fields, "B_fp", Direction{1}, lev, z_min, z_max);
+            NullifyMF(m_fields, "B_fp", Direction{2}, lev, z_min, z_max);
 
             // If div(E)/div(B) cleaning are used, set F/G field to zero
             NullifyMF(m_fields, "F_fp", lev, z_min, z_max);
@@ -1230,12 +1230,12 @@ WarpX::applyMirrors (Real time)
             if (lev>0)
             {
                 // Set each field on the coarse patch to zero between z_min and z_max
-                NullifyMF(m_fields, "Efield_cp", Direction{0}, lev, z_min, z_max);
-                NullifyMF(m_fields, "Efield_cp", Direction{1}, lev, z_min, z_max);
-                NullifyMF(m_fields, "Efield_cp", Direction{2}, lev, z_min, z_max);
-                NullifyMF(m_fields, "Bfield_cp", Direction{0}, lev, z_min, z_max);
-                NullifyMF(m_fields, "Bfield_cp", Direction{1}, lev, z_min, z_max);
-                NullifyMF(m_fields, "Bfield_cp", Direction{2}, lev, z_min, z_max);
+                NullifyMF(m_fields, "E_cp", Direction{0}, lev, z_min, z_max);
+                NullifyMF(m_fields, "E_cp", Direction{1}, lev, z_min, z_max);
+                NullifyMF(m_fields, "E_cp", Direction{2}, lev, z_min, z_max);
+                NullifyMF(m_fields, "B_cp", Direction{0}, lev, z_min, z_max);
+                NullifyMF(m_fields, "B_cp", Direction{1}, lev, z_min, z_max);
+                NullifyMF(m_fields, "B_cp", Direction{2}, lev, z_min, z_max);
 
                 // If div(E)/div(B) cleaning are used, set F/G field to zero
                 NullifyMF(m_fields, "F_cp", lev, z_min, z_max);

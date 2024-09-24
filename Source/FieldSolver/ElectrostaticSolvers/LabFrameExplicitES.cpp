@@ -34,7 +34,7 @@ void LabFrameExplicitES::ComputeSpaceChargeField (
     const MultiLevelScalarField rho_fp = fields.get_mr_levels(FieldType::rho_fp, max_level);
     const MultiLevelScalarField rho_cp = fields.get_mr_levels(FieldType::rho_cp, max_level);
     const MultiLevelScalarField phi_fp = fields.get_mr_levels(FieldType::phi_fp, max_level);
-    const MultiLevelVectorField Efield_fp = fields.get_mr_levels_alldirs(FieldType::Efield_fp, max_level);
+    const MultiLevelVectorField E_fp = fields.get_mr_levels_alldirs(FieldType::E_fp, max_level);
 
     mpc.DepositCharge(rho_fp, 0.0_rt);
     if (mfl) {
@@ -82,9 +82,9 @@ void LabFrameExplicitES::ComputeSpaceChargeField (
 
     // Compute the electric field. Note that if an EB is used the electric
     // field will be calculated in the computePhi call.
-    if (!EB::enabled()) { computeE( Efield_fp, phi_fp, beta ); }
+    if (!EB::enabled()) { computeE( E_fp, phi_fp, beta ); }
     else {
-        if (IsPythonCallbackInstalled("poissonsolver")) { computeE(Efield_fp, phi_fp, beta); }
+        if (IsPythonCallbackInstalled("poissonsolver")) { computeE(E_fp, phi_fp, beta); }
     }
 }
 

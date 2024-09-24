@@ -72,7 +72,7 @@ On a loop over particles it can be useful to access the fields on the box we are
 
 .. code-block:: cpp
 
-  // E is a reference to, say, WarpX::Efield_aux
+  // E is a reference to, say, WarpX::E_aux
   // Get the Ex field on the grid
   const FArrayBox& exfab = (*E[lev][0])[pti];
   // Let's be generous and also get the underlying box (i.e., index info)
@@ -91,7 +91,7 @@ Main functions
 Buffers
 -------
 
-To reduce numerical artifacts at the boundary of a mesh-refinement patch, WarpX has an option to use buffers: When particles evolve on the fine level, they gather from the coarse level (e.g., ``Efield_cax``, a copy of the ``aux`` data from the level below) if they are located on the fine level but fewer than ``WarpX::n_field_gather_buffer`` cells away from the coarse-patch boundary. Similarly, when particles evolve on the fine level, they deposit on the coarse level (e.g., ``Efield_cp``) if they are located on the fine level but fewer than ``WarpX::n_current_deposition_buffer`` cells away from the coarse-patch boundary.
+To reduce numerical artifacts at the boundary of a mesh-refinement patch, WarpX has an option to use buffers: When particles evolve on the fine level, they gather from the coarse level (e.g., ``E_cax``, a copy of the ``aux`` data from the level below) if they are located on the fine level but fewer than ``WarpX::n_field_gather_buffer`` cells away from the coarse-patch boundary. Similarly, when particles evolve on the fine level, they deposit on the coarse level (e.g., ``E_cp``) if they are located on the fine level but fewer than ``WarpX::n_current_deposition_buffer`` cells away from the coarse-patch boundary.
 
 ``WarpX::gather_buffer_masks`` and ``WarpX::current_buffer_masks`` contain masks indicating if a cell is in the interior of the fine-resolution patch or in the buffers. Then, particles depending on this mask in
 

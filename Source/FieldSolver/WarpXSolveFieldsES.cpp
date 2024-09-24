@@ -24,8 +24,8 @@ void WarpX::ComputeSpaceChargeField (bool const reset_fields)
         WARPX_PROFILE("WarpX::ComputeSpaceChargeField::reset_fields");
         for (int lev = 0; lev <= max_level; lev++) {
             for (int comp=0; comp<3; comp++) {
-                m_fields.get(FieldType::Efield_fp, Direction{comp}, lev)->setVal(0);
-                m_fields.get(FieldType::Bfield_fp, Direction{comp}, lev)->setVal(0);
+                m_fields.get(FieldType::E_fp, Direction{comp}, lev)->setVal(0);
+                m_fields.get(FieldType::B_fp, Direction{comp}, lev)->setVal(0);
             }
         }
     }

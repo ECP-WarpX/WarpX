@@ -43,29 +43,29 @@ void RelativisticExplicitES::ComputeSpaceChargeField (
 
     const bool always_run_solve = (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::Relativistic);
 
-    MultiLevelVectorField Efield_fp = fields.get_mr_levels_alldirs(FieldType::Efield_fp, max_level);
-    MultiLevelVectorField Bfield_fp = fields.get_mr_levels_alldirs(FieldType::Bfield_fp, max_level);
+    MultiLevelVectorField E_fp = fields.get_mr_levels_alldirs(FieldType::E_fp, max_level);
+    MultiLevelVectorField B_fp = fields.get_mr_levels_alldirs(FieldType::B_fp, max_level);
 
     // Loop over the species and add their space-charge contribution to E and B.
     // Note that the fields calculated here does not include the E field
     // due to simulation boundary potentials
     for (auto const& species : mpc) {
         if (always_run_solve || (species->initialize_self_fields)) {
-            AddSpaceChargeField(*species, Efield_fp, Bfield_fp);
+            AddSpaceChargeField(*species, E_fp, B_fp);
         }
     }
 
     // Add the field due to the boundary potentials
     if (always_run_solve || (m_poisson_boundary_handler->m_boundary_potential_specified))
     {
-        AddBoundaryField(Efield_fp);
+        AddBoundaryField(E_fp);
     }
 }
 
 void RelativisticExplicitES::AddSpaceChargeField (
     WarpXParticleContainer& pc,
-    ablastr::fields::MultiLevelVectorField& Efield_fp,
-    ablastr::fields::MultiLevelVectorField& Bfield_fp)
+    ablastr::fields::MultiLevelVectorField& E_fp,
+    ablastr::fields::MultiLevelVectorField& B_fp)
 {
     WARPX_PROFILE("RelativisticExplicitES::AddSpaceChargeField");
 
@@ -133,12 +133,12 @@ void RelativisticExplicitES::AddSpaceChargeField (
                 pc.self_fields_verbosity );
 
     // Compute the corresponding electric and magnetic field, from the potential phi
-    computeE( Efield_fp, amrex::GetVecOfPtrs(phi), beta );
-    computeB( Bfield_fp, amrex::GetVecOfPtrs(phi), beta );
+    computeE( E_fp, amrex::GetVecOfPtrs(phi), beta );
+    computeB( B_fp, amrex::GetVecOfPtrs(phi), beta );
 
 }
 
-void RelativisticExplicitES::AddBoundaryField (ablastr::fields::MultiLevelVectorField& Efield_fp)
+void RelativisticExplicitES::AddBoundaryField (ablastr::fields::MultiLevelVectorField& E_fp)
 {
     WARPX_PROFILE("RelativisticExplicitES::AddBoundaryField");
 
@@ -171,5 +171,5 @@ void RelativisticExplicitES::AddBoundaryField (ablastr::fields::MultiLevelVector
                 self_fields_verbosity );
 
     // Compute the corresponding electric field, from the potential phi.
-    computeE( Efield_fp, amrex::GetVecOfPtrs(phi), beta );
+    computeE( E_fp, amrex::GetVecOfPtrs(phi), beta );
 }

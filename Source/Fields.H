@@ -20,12 +20,12 @@ namespace warpx::fields
 {
     AMREX_ENUM(FieldType,
         None,
-        Efield_aux, //!< Field that the particles gather from. Obtained from Efield_fp (and Efield_cp when using MR); see UpdateAuxilaryData
-        Bfield_aux, //!< Field that the particles gather from. Obtained from Bfield_fp (and Bfield_cp when using MR); see UpdateAuxilaryData
-        Efield_fp,  //!< The field that is updated by the field solver at each timestep
-        Bfield_fp,  //!< The field that is updated by the field solver at each timestep
-        Efield_fp_external, //!< Stores grid particle fields provided by the user as  through an openPMD file
-        Bfield_fp_external, //!< Stores grid particle fields provided by the user as  through an openPMD file
+        E_aux, //!< Field that the particles gather from. Obtained from E_fp (and E_cp when using MR); see UpdateAuxilaryData
+        B_aux, //!< Field that the particles gather from. Obtained from B_fp (and B_cp when using MR); see UpdateAuxilaryData
+        E_fp,  //!< The field that is updated by the field solver at each timestep
+        B_fp,  //!< The field that is updated by the field solver at each timestep
+        E_fp_external, //!< Stores grid particle fields provided by the user as  through an openPMD file
+        B_fp_external, //!< Stores grid particle fields provided by the user as  through an openPMD file
         current_fp, //!< The current that is used as a source for the field solver
         current_fp_nodal, //!< Only used when using nodal current deposition
         current_fp_vay,   //!< Only used when using Vay current deposition
@@ -45,14 +45,14 @@ namespace warpx::fields
         hybrid_current_fp_temp,
         hybrid_current_fp_ampere,
         hybrid_current_fp_external,
-        Efield_cp,  //!< Only used with MR. The field that is updated by the field solver at each timestep, on the coarse patch of each level
-        Bfield_cp,  //!< Only used with MR. The field that is updated by the field solver at each timestep, on the coarse patch of each level
+        E_cp,  //!< Only used with MR. The field that is updated by the field solver at each timestep, on the coarse patch of each level
+        B_cp,  //!< Only used with MR. The field that is updated by the field solver at each timestep, on the coarse patch of each level
         current_cp, //!< Only used with MR. The current that is used as a source for the field solver, on the coarse patch of each level
         rho_cp, //!< Only used with MR. The charge density that is used as a source for the field solver, on the coarse patch of each level
         F_cp,   //!< Only used with MR. Used for divE cleaning, on the coarse patch of each level
         G_cp,   //!< Only used with MR. Used for divB cleaning, on the coarse patch of each level
-        Efield_cax, //!< Only used with MR. Particles that are close to the edge of the MR patch (i.e. in the gather buffer) gather from this field
-        Bfield_cax, //!< Only used with MR. Particles that are close to the edge of the MR patch (i.e. in the gather buffer) gather from this field
+        E_cax, //!< Only used with MR. Particles that are close to the edge of the MR patch (i.e. in the gather buffer) gather from this field
+        B_cax, //!< Only used with MR. Particles that are close to the edge of the MR patch (i.e. in the gather buffer) gather from this field
         E_external_particle_field, //!< Stores external particle fields provided by the user as  through an openPMD file
         B_external_particle_field, //!< Stores external particle fields provided by the user as  through an openPMD file
         distance_to_eb, //!< Only used with embedded boundaries (EB). Stores the distance to the nearest EB
@@ -70,10 +70,10 @@ namespace warpx::fields
         pml_F_cp,
         pml_G_cp,
         pml_edge_lengths,
-        Efield_avg_fp,
-        Bfield_avg_fp,
-        Efield_avg_cp,
-        Bfield_avg_cp,
+        E_avg_fp,
+        B_avg_fp,
+        E_avg_cp,
+        B_avg_cp,
         B_old, //!< Stores the value of B at the beginning of the timestep, for the implicit solver
         ECTRhofield,
         Venl
@@ -81,10 +81,10 @@ namespace warpx::fields
 
     /** these are vector fields */
     constexpr FieldType ArrayFieldTypes[] = {
-        FieldType::Efield_aux,
-        FieldType::Bfield_aux,
-        FieldType::Efield_fp,
-        FieldType::Bfield_fp,
+        FieldType::E_aux,
+        FieldType::B_aux,
+        FieldType::E_fp,
+        FieldType::B_fp,
         FieldType::current_fp,
         FieldType::current_fp_nodal,
         FieldType::current_fp_vay,
@@ -97,11 +97,11 @@ namespace warpx::fields
         FieldType::hybrid_current_fp_temp,
         FieldType::hybrid_current_fp_ampere,
         FieldType::hybrid_current_fp_external,
-        FieldType::Efield_cp,
-        FieldType::Bfield_cp,
+        FieldType::E_cp,
+        FieldType::B_cp,
         FieldType::current_cp,
-        FieldType::Efield_cax,
-        FieldType::Bfield_cax,
+        FieldType::E_cax,
+        FieldType::B_cax,
         FieldType::E_external_particle_field,
         FieldType::B_external_particle_field,
         FieldType::pml_E_fp,
@@ -110,10 +110,10 @@ namespace warpx::fields
         FieldType::pml_E_cp,
         FieldType::pml_B_cp,
         FieldType::pml_j_cp,
-        FieldType::Efield_avg_fp,
-        FieldType::Bfield_avg_fp,
-        FieldType::Efield_avg_cp,
-        FieldType::Bfield_avg_cp,
+        FieldType::E_avg_fp,
+        FieldType::B_avg_fp,
+        FieldType::E_avg_cp,
+        FieldType::B_avg_cp,
         FieldType::B_old,
         FieldType::ECTRhofield,
         FieldType::Venl

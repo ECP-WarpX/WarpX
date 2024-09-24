@@ -84,24 +84,24 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, amrex::Real a_dt)
     MultiFab *Ex, *Ey, *Ez, *Bx, *By, *Bz, *Jx, *Jy, *Jz;
     if (patch_type == PatchType::fine)
     {
-        Ex = m_fields.get(FieldType::Efield_fp, Direction{0}, lev);
-        Ey = m_fields.get(FieldType::Efield_fp, Direction{1}, lev);
-        Ez = m_fields.get(FieldType::Efield_fp, Direction{2}, lev);
-        Bx = m_fields.get(FieldType::Bfield_fp, Direction{0}, lev);
-        By = m_fields.get(FieldType::Bfield_fp, Direction{1}, lev);
-        Bz = m_fields.get(FieldType::Bfield_fp, Direction{2}, lev);
+        Ex = m_fields.get(FieldType::E_fp, Direction{0}, lev);
+        Ey = m_fields.get(FieldType::E_fp, Direction{1}, lev);
+        Ez = m_fields.get(FieldType::E_fp, Direction{2}, lev);
+        Bx = m_fields.get(FieldType::B_fp, Direction{0}, lev);
+        By = m_fields.get(FieldType::B_fp, Direction{1}, lev);
+        Bz = m_fields.get(FieldType::B_fp, Direction{2}, lev);
         Jx = m_fields.get(FieldType::current_fp, Direction{0}, lev);
         Jy = m_fields.get(FieldType::current_fp, Direction{1}, lev);
         Jz = m_fields.get(FieldType::current_fp, Direction{2}, lev);
     }
     else
     {
-        Ex = m_fields.get(FieldType::Efield_cp, Direction{0}, lev);
-        Ey = m_fields.get(FieldType::Efield_cp, Direction{1}, lev);
-        Ez = m_fields.get(FieldType::Efield_cp, Direction{2}, lev);
-        Bx = m_fields.get(FieldType::Bfield_cp, Direction{0}, lev);
-        By = m_fields.get(FieldType::Bfield_cp, Direction{1}, lev);
-        Bz = m_fields.get(FieldType::Bfield_cp, Direction{2}, lev);
+        Ex = m_fields.get(FieldType::E_cp, Direction{0}, lev);
+        Ey = m_fields.get(FieldType::E_cp, Direction{1}, lev);
+        Ez = m_fields.get(FieldType::E_cp, Direction{2}, lev);
+        Bx = m_fields.get(FieldType::B_cp, Direction{0}, lev);
+        By = m_fields.get(FieldType::B_cp, Direction{1}, lev);
+        Bz = m_fields.get(FieldType::B_cp, Direction{2}, lev);
         Jx = m_fields.get(FieldType::current_cp, Direction{0}, lev);
         Jy = m_fields.get(FieldType::current_cp, Direction{1}, lev);
         Jz = m_fields.get(FieldType::current_cp, Direction{2}, lev);

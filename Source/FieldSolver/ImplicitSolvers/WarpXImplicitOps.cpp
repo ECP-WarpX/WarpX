@@ -57,7 +57,7 @@ WarpX::ImplicitPreRHSOp ( amrex::Real  a_cur_time,
     // Advance the particle positions by 1/2 dt,
     // particle velocities by dt, then take average of old and new v,
     // deposit currents, giving J at n+1/2
-    // This uses Efield_fp and Bfield_fp, the field at n+1/2 from the previous iteration.
+    // This uses E_fp and B_fp, the field at n+1/2 from the previous iteration.
     const bool skip_current = false;
     const PushType push_type = PushType::Implicit;
     PushParticlesandDeposit(a_cur_time, skip_current, push_type);
@@ -70,16 +70,16 @@ void
 WarpX::SetElectricFieldAndApplyBCs ( const WarpXSolverVec&  a_E )
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        a_E.getArrayVecType()==warpx::fields::FieldType::Efield_fp,
-        "WarpX::SetElectricFieldAndApplyBCs() must be called with Efield_fp type");
+        a_E.getArrayVecType()==warpx::fields::FieldType::E_fp,
+        "WarpX::SetElectricFieldAndApplyBCs() must be called with E_fp type");
 
     using warpx::fields::FieldType;
 
-    ablastr::fields::MultiLevelVectorField Efield_fp = m_fields.get_mr_levels_alldirs(FieldType::Efield_fp, finest_level);
+    ablastr::fields::MultiLevelVectorField E_fp = m_fields.get_mr_levels_alldirs(FieldType::E_fp, finest_level);
     const ablastr::fields::MultiLevelVectorField& Evec = a_E.getArrayVec();
-    amrex::MultiFab::Copy(*Efield_fp[0][0], *Evec[0][0], 0, 0, ncomps, Evec[0][0]->nGrowVect());
-    amrex::MultiFab::Copy(*Efield_fp[0][1], *Evec[0][1], 0, 0, ncomps, Evec[0][1]->nGrowVect());
-    amrex::MultiFab::Copy(*Efield_fp[0][2], *Evec[0][2], 0, 0, ncomps, Evec[0][2]->nGrowVect());
+    amrex::MultiFab::Copy(*E_fp[0][0], *Evec[0][0], 0, 0, ncomps, Evec[0][0]->nGrowVect());
+    amrex::MultiFab::Copy(*E_fp[0][1], *Evec[0][1], 0, 0, ncomps, Evec[0][1]->nGrowVect());
+    amrex::MultiFab::Copy(*E_fp[0][2], *Evec[0][2], 0, 0, ncomps, Evec[0][2]->nGrowVect());
     FillBoundaryE(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
     ApplyEfieldBoundary(0, PatchType::fine);
 }
@@ -92,7 +92,7 @@ WarpX::UpdateMagneticFieldAndApplyBCs( ablastr::fields::MultiLevelVectorField co
     using warpx::fields::FieldType;
 
     for (int lev = 0; lev <= finest_level; ++lev) {
-        ablastr::fields::VectorField Bfp = m_fields.get_alldirs(FieldType::Bfield_fp, lev);
+        ablastr::fields::VectorField Bfp = m_fields.get_alldirs(FieldType::B_fp, lev);
         amrex::MultiFab::Copy(*Bfp[0], *a_Bn[lev][0], 0, 0, ncomps, a_Bn[lev][0]->nGrowVect());
         amrex::MultiFab::Copy(*Bfp[1], *a_Bn[lev][1], 0, 0, ncomps, a_Bn[lev][1]->nGrowVect());
         amrex::MultiFab::Copy(*Bfp[2], *a_Bn[lev][2], 0, 0, ncomps, a_Bn[lev][2]->nGrowVect());
@@ -107,7 +107,7 @@ WarpX::FinishMagneticFieldAndApplyBCs( ablastr::fields::MultiLevelVectorField co
 {
     using warpx::fields::FieldType;
 
-    FinishImplicitField(m_fields.get_mr_levels_alldirs(FieldType::Bfield_fp, 0), a_Bn, a_theta);
+    FinishImplicitField(m_fields.get_mr_levels_alldirs(FieldType::B_fp, 0), a_Bn, a_theta);
     ApplyMagneticFieldBCs();
 }
 
@@ -333,15 +333,15 @@ void
 WarpX::ImplicitComputeRHSE (int lev, PatchType patch_type, amrex::Real a_dt, WarpXSolverVec&  a_Erhs_vec)
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        a_Erhs_vec.getArrayVecType()==warpx::fields::FieldType::Efield_fp,
-        "WarpX::ImplicitComputeRHSE() must be called with Efield_fp type");
+        a_Erhs_vec.getArrayVecType()==warpx::fields::FieldType::E_fp,
+        "WarpX::ImplicitComputeRHSE() must be called with E_fp type");
 
     // set RHS to zero value
     a_Erhs_vec.getArrayVec()[lev][0]->setVal(0.0);
     a_Erhs_vec.getArrayVec()[lev][1]->setVal(0.0);
     a_Erhs_vec.getArrayVec()[lev][2]->setVal(0.0);
 
-    // Compute Efield_rhs in regular cells by calling EvolveE. Because
+    // Compute E_rhs in regular cells by calling EvolveE. Because
     // a_Erhs_vec is set to zero above, calling EvolveE below results in
     // a_Erhs_vec storing only the RHS of the update equation. I.e.,
     // c^2*dt*(curl(B^{n+theta} - mu0*J^{n+1/2})
@@ -359,7 +359,7 @@ WarpX::ImplicitComputeRHSE (int lev, PatchType patch_type, amrex::Real a_dt, War
                                         a_dt );
     }
 
-    // Compute Efield_rhs in PML cells by calling EvolveEPML
+    // Compute E_rhs in PML cells by calling EvolveEPML
     if (do_pml && pml[lev]->ok()) {
         amrex::Abort("PML not yet implemented with implicit solvers.");
     }

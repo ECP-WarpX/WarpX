@@ -1754,15 +1754,15 @@ PhysicalParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
 
     const bool has_rho = fields.has(FieldType::rho_fp, lev);
     const bool has_cjx = fields.has(FieldType::current_buf, Direction{0}, lev);
-    const bool has_cEx = fields.has(FieldType::Efield_cax, Direction{0}, lev);
+    const bool has_cEx = fields.has(FieldType::E_cax, Direction{0}, lev);
     const bool has_buffer = has_cEx || has_cjx;
 
-    amrex::MultiFab & Ex = *fields.get(FieldType::Efield_aux, Direction{0}, lev);
-    amrex::MultiFab & Ey = *fields.get(FieldType::Efield_aux, Direction{1}, lev);
-    amrex::MultiFab & Ez = *fields.get(FieldType::Efield_aux, Direction{2}, lev);
-    amrex::MultiFab & Bx = *fields.get(FieldType::Bfield_aux, Direction{0}, lev);
-    amrex::MultiFab & By = *fields.get(FieldType::Bfield_aux, Direction{1}, lev);
-    amrex::MultiFab & Bz = *fields.get(FieldType::Bfield_aux, Direction{2}, lev);
+    amrex::MultiFab & Ex = *fields.get(FieldType::E_aux, Direction{0}, lev);
+    amrex::MultiFab & Ey = *fields.get(FieldType::E_aux, Direction{1}, lev);
+    amrex::MultiFab & Ez = *fields.get(FieldType::E_aux, Direction{2}, lev);
+    amrex::MultiFab & Bx = *fields.get(FieldType::B_aux, Direction{0}, lev);
+    amrex::MultiFab & By = *fields.get(FieldType::B_aux, Direction{1}, lev);
+    amrex::MultiFab & Bz = *fields.get(FieldType::B_aux, Direction{2}, lev);
 
     if (m_do_back_transformed_particles)
     {
@@ -1897,12 +1897,12 @@ PhysicalParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
                     const IntVect& ref_ratio = WarpX::RefRatio(lev-1);
                     const Box& cbox = amrex::coarsen(box,ref_ratio);
 
-                    amrex::MultiFab & cEx = *fields.get(FieldType::Efield_cax, Direction{0}, lev);
-                    amrex::MultiFab & cEy = *fields.get(FieldType::Efield_cax, Direction{1}, lev);
-                    amrex::MultiFab & cEz = *fields.get(FieldType::Efield_cax, Direction{2}, lev);
-                    amrex::MultiFab & cBx = *fields.get(FieldType::Bfield_cax, Direction{0}, lev);
-                    amrex::MultiFab & cBy = *fields.get(FieldType::Bfield_cax, Direction{1}, lev);
-                    amrex::MultiFab & cBz = *fields.get(FieldType::Bfield_cax, Direction{2}, lev);
+                    amrex::MultiFab & cEx = *fields.get(FieldType::E_cax, Direction{0}, lev);
+                    amrex::MultiFab & cEy = *fields.get(FieldType::E_cax, Direction{1}, lev);
+                    amrex::MultiFab & cEz = *fields.get(FieldType::E_cax, Direction{2}, lev);
+                    amrex::MultiFab & cBx = *fields.get(FieldType::B_cax, Direction{0}, lev);
+                    amrex::MultiFab & cBy = *fields.get(FieldType::B_cax, Direction{1}, lev);
+                    amrex::MultiFab & cBz = *fields.get(FieldType::B_cax, Direction{2}, lev);
 
                     // Data on the grid
                     FArrayBox const* cexfab = &cEx[pti];

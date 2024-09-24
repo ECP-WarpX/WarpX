@@ -445,12 +445,12 @@ void ColliderRelevant::ComputeDiags (int step)
             // define variables in preparation for field gathering
             using warpx::fields::FieldType;
             const amrex::XDim3 dinv = WarpX::InvCellSize(std::max(lev, 0));
-            const amrex::MultiFab & Ex = *warpx.m_fields.get(FieldType::Efield_aux, Direction{0}, lev);
-            const amrex::MultiFab & Ey = *warpx.m_fields.get(FieldType::Efield_aux, Direction{1}, lev);
-            const amrex::MultiFab & Ez = *warpx.m_fields.get(FieldType::Efield_aux, Direction{2}, lev);
-            const amrex::MultiFab & Bx = *warpx.m_fields.get(FieldType::Bfield_aux, Direction{0}, lev);
-            const amrex::MultiFab & By = *warpx.m_fields.get(FieldType::Bfield_aux, Direction{1}, lev);
-            const amrex::MultiFab & Bz = *warpx.m_fields.get(FieldType::Bfield_aux, Direction{2}, lev);
+            const amrex::MultiFab & Ex = *warpx.m_fields.get(FieldType::E_aux, Direction{0}, lev);
+            const amrex::MultiFab & Ey = *warpx.m_fields.get(FieldType::E_aux, Direction{1}, lev);
+            const amrex::MultiFab & Ez = *warpx.m_fields.get(FieldType::E_aux, Direction{2}, lev);
+            const amrex::MultiFab & Bx = *warpx.m_fields.get(FieldType::B_aux, Direction{0}, lev);
+            const amrex::MultiFab & By = *warpx.m_fields.get(FieldType::B_aux, Direction{1}, lev);
+            const amrex::MultiFab & Bz = *warpx.m_fields.get(FieldType::B_aux, Direction{2}, lev);
 
             // declare reduce_op
             ReduceOps<ReduceOpMin, ReduceOpMax, ReduceOpSum> reduce_op;

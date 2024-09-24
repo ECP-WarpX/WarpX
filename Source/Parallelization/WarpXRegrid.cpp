@@ -182,13 +182,13 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         m_fields.remake_level(lev, dm);
 
         // Fine patch
-        ablastr::fields::MultiLevelVectorField const& Bfield_fp = m_fields.get_mr_levels_alldirs(FieldType::Bfield_fp, finest_level);
+        ablastr::fields::MultiLevelVectorField const& B_fp = m_fields.get_mr_levels_alldirs(FieldType::B_fp, finest_level);
         for (int idim=0; idim < 3; ++idim)
         {
             if (eb_enabled) {
                 if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) {
                     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
-                        m_borrowing[lev][idim] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(ba, Bfield_fp[lev][idim]->ixType().toIntVect()), dm);
+                        m_borrowing[lev][idim] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(ba, B_fp[lev][idim]->ixType().toIntVect()), dm);
                     }
                 }
             }
@@ -336,7 +336,7 @@ WarpX::ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::LayoutData<am
         }
 
         // Cell loop
-        MultiFab* Ex = m_fields.get(FieldType::Efield_fp, Direction{0}, lev);
+        MultiFab* Ex = m_fields.get(FieldType::E_fp, Direction{0}, lev);
         for (MFIter mfi(*Ex, false); mfi.isValid(); ++mfi)
         {
             const Box& gbx = mfi.growntilebox();

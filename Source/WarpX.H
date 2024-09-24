@@ -1426,8 +1426,8 @@ private:
 
     // Masks for computing dot product and global moments of fields when using grids that
     // have shared locations across different ranks (e.g., a Yee grid)
-    mutable amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>,3 > > Efield_dotMask;
-    mutable amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>,3 > > Bfield_dotMask;
+    mutable amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>,3 > > E_dotMask;
+    mutable amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>,3 > > B_dotMask;
     mutable amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>,3 > > Afield_dotMask;
     mutable amrex::Vector<            std::unique_ptr<amrex::iMultiFab>     > phi_dotMask;
 
