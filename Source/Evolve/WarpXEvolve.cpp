@@ -591,11 +591,11 @@ void WarpX::SyncCurrentAndRho ()
         {
             // With periodic single box, synchronize J and rho here,
             // even with current correction or Vay deposition
-            std::string const current_fp_string = (current_deposition_algo == CurrentDepositionAlgo::Vay)
-                ? "current_fp_vay" : "current_fp";
-            // TODO Replace current_cp with current_cp_vay once Vay deposition is implemented with MR
+            std::string const j_fp_string = (current_deposition_algo == CurrentDepositionAlgo::Vay)
+                ? "j_fp_vay" : "j_fp";
+            // TODO Replace j_cp with j_cp_vay once Vay deposition is implemented with MR
 
-            SyncCurrent(current_fp_string);
+            SyncCurrent(j_fp_string);
             SyncRho();
 
         }
@@ -607,7 +607,7 @@ void WarpX::SyncCurrentAndRho ()
             if (!current_correction &&
                 current_deposition_algo != CurrentDepositionAlgo::Vay)
             {
-                SyncCurrent("current_fp");
+                SyncCurrent("j_fp");
                 SyncRho();
             }
 
@@ -616,14 +616,14 @@ void WarpX::SyncCurrentAndRho ()
                 // TODO This works only without mesh refinement
                 const int lev = 0;
                 if (use_filter) {
-                    ApplyFilterJ(m_fields.get_mr_levels_alldirs(FieldType::current_fp_vay, finest_level), lev);
+                    ApplyFilterJ(m_fields.get_mr_levels_alldirs(FieldType::j_fp_vay, finest_level), lev);
                 }
             }
         }
     }
     else // FDTD
     {
-        SyncCurrent("current_fp");
+        SyncCurrent("j_fp");
         SyncRho();
     }
 
@@ -634,18 +634,18 @@ void WarpX::SyncCurrentAndRho ()
             ApplyRhofieldBoundary(lev, m_fields.get(FieldType::rho_fp,lev), PatchType::fine);
         }
         ApplyJfieldBoundary(lev,
-            m_fields.get(FieldType::current_fp, Direction{0}, lev),
-            m_fields.get(FieldType::current_fp, Direction{1}, lev),
-            m_fields.get(FieldType::current_fp, Direction{2}, lev),
+            m_fields.get(FieldType::j_fp, Direction{0}, lev),
+            m_fields.get(FieldType::j_fp, Direction{1}, lev),
+            m_fields.get(FieldType::j_fp, Direction{2}, lev),
             PatchType::fine);
         if (lev > 0) {
             if (m_fields.has(FieldType::rho_cp, lev)) {
                 ApplyRhofieldBoundary(lev, m_fields.get(FieldType::rho_cp,lev), PatchType::coarse);
             }
             ApplyJfieldBoundary(lev,
-                m_fields.get(FieldType::current_cp, Direction{0}, lev),
-                m_fields.get(FieldType::current_cp, Direction{1}, lev),
-                m_fields.get(FieldType::current_cp, Direction{2}, lev),
+                m_fields.get(FieldType::j_cp, Direction{0}, lev),
+                m_fields.get(FieldType::j_cp, Direction{1}, lev),
+                m_fields.get(FieldType::j_cp, Direction{2}, lev),
                 PatchType::coarse);
         }
     }
@@ -703,16 +703,16 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     //    (dt[0] denotes the time step on mesh refinement level 0)
     if (J_in_time == JInTime::Linear)
     {
-        std::string const current_string = (do_current_centering) ? "current_fp_nodal" : "current_fp";
+        std::string const current_string = (do_current_centering) ? "j_fp_nodal" : "j_fp";
         mypc->DepositCurrent( m_fields.get_mr_levels_alldirs(current_string, finest_level), dt[0], -dt[0]);
         // Synchronize J: filter, exchange boundary, and interpolate across levels.
         // With current centering, the nodal current is deposited in 'current',
-        // namely 'current_fp_nodal': SyncCurrent stores the result of its centering
-        // into 'current_fp' and then performs both filtering, if used, and exchange
+        // namely 'j_fp_nodal': SyncCurrent stores the result of its centering
+        // into 'j_fp' and then performs both filtering, if used, and exchange
         // of guard cells.
-        SyncCurrent("current_fp");
+        SyncCurrent("j_fp");
         // Forward FFT of J
-        PSATDForwardTransformJ("current_fp", "current_cp");
+        PSATDForwardTransformJ("j_fp", "j_cp");
     }
 
     // Number of depositions for multi-J scheme
@@ -737,16 +737,16 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
 
         // Deposit new J at relative time t_deposit_current with time step dt
         // (dt[0] denotes the time step on mesh refinement level 0)
-        std::string const current_string = (do_current_centering) ? "current_fp_nodal" : "current_fp";
+        std::string const current_string = (do_current_centering) ? "j_fp_nodal" : "j_fp";
         mypc->DepositCurrent( m_fields.get_mr_levels_alldirs(current_string, finest_level), dt[0], t_deposit_current);
         // Synchronize J: filter, exchange boundary, and interpolate across levels.
         // With current centering, the nodal current is deposited in 'current',
-        // namely 'current_fp_nodal': SyncCurrent stores the result of its centering
-        // into 'current_fp' and then performs both filtering, if used, and exchange
+        // namely 'j_fp_nodal': SyncCurrent stores the result of its centering
+        // into 'j_fp' and then performs both filtering, if used, and exchange
         // of guard cells.
-        SyncCurrent("current_fp");
+        SyncCurrent("j_fp");
         // Forward FFT of J
-        PSATDForwardTransformJ("current_fp", "current_cp");
+        PSATDForwardTransformJ("j_fp", "j_cp");
 
         // Deposit new rho
         // (after checking that pointer to rho_fp on MR level 0 is not null)
@@ -871,14 +871,14 @@ WarpX::OneStep_sub1 (Real cur_time)
     // i) Push particles and fields on the fine patch (first fine step)
     PushParticlesandDeposit(fine_lev, cur_time, DtType::FirstHalf);
     RestrictCurrentFromFineToCoarsePatch(
-        m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level),
-        m_fields.get_mr_levels_alldirs(FieldType::current_cp, finest_level), fine_lev);
+        m_fields.get_mr_levels_alldirs(FieldType::j_fp, finest_level),
+        m_fields.get_mr_levels_alldirs(FieldType::j_cp, finest_level), fine_lev);
     RestrictRhoFromFineToCoarsePatch(fine_lev);
     if (use_filter) {
-        ApplyFilterJ( m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level), fine_lev);
+        ApplyFilterJ( m_fields.get_mr_levels_alldirs(FieldType::j_fp, finest_level), fine_lev);
     }
     SumBoundaryJ(
-        m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level),
+        m_fields.get_mr_levels_alldirs(FieldType::j_fp, finest_level),
         fine_lev, Geom(fine_lev).periodicity());
 
     ApplyFilterandSumBoundaryRho(
@@ -913,8 +913,8 @@ WarpX::OneStep_sub1 (Real cur_time)
     PushParticlesandDeposit(coarse_lev, cur_time, DtType::Full);
     StoreCurrent(coarse_lev);
     AddCurrentFromFineLevelandSumBoundary(
-        m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level),
-        m_fields.get_mr_levels_alldirs(FieldType::current_cp, finest_level),
+        m_fields.get_mr_levels_alldirs(FieldType::j_fp, finest_level),
+        m_fields.get_mr_levels_alldirs(FieldType::j_cp, finest_level),
         m_fields.get_mr_levels_alldirs(FieldType::current_buf, finest_level), coarse_lev);
     AddRhoFromFineLevelandSumBoundary(
         m_fields.get_mr_levels(FieldType::rho_fp, finest_level),
@@ -949,13 +949,13 @@ WarpX::OneStep_sub1 (Real cur_time)
     // iv) Push particles and fields on the fine patch (second fine step)
     PushParticlesandDeposit(fine_lev, cur_time + dt[fine_lev], DtType::SecondHalf);
     RestrictCurrentFromFineToCoarsePatch(
-        m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level),
-        m_fields.get_mr_levels_alldirs(FieldType::current_cp, finest_level), fine_lev);
+        m_fields.get_mr_levels_alldirs(FieldType::j_fp, finest_level),
+        m_fields.get_mr_levels_alldirs(FieldType::j_cp, finest_level), fine_lev);
     RestrictRhoFromFineToCoarsePatch(fine_lev);
     if (use_filter) {
-        ApplyFilterJ( m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level), fine_lev);
+        ApplyFilterJ( m_fields.get_mr_levels_alldirs(FieldType::j_fp, finest_level), fine_lev);
     }
-    SumBoundaryJ( m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level), fine_lev, Geom(fine_lev).periodicity());
+    SumBoundaryJ( m_fields.get_mr_levels_alldirs(FieldType::j_fp, finest_level), fine_lev, Geom(fine_lev).periodicity());
     ApplyFilterandSumBoundaryRho(
         m_fields.get_mr_levels(FieldType::rho_fp, finest_level),
         m_fields.get_mr_levels(FieldType::rho_cp, finest_level),
@@ -987,8 +987,8 @@ WarpX::OneStep_sub1 (Real cur_time)
     // by only half a coarse step (second half)
     RestoreCurrent(coarse_lev);
     AddCurrentFromFineLevelandSumBoundary(
-        m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level),
-        m_fields.get_mr_levels_alldirs(FieldType::current_cp, finest_level),
+        m_fields.get_mr_levels_alldirs(FieldType::j_fp, finest_level),
+        m_fields.get_mr_levels_alldirs(FieldType::j_cp, finest_level),
         m_fields.get_mr_levels_alldirs(FieldType::current_buf, finest_level),
         coarse_lev);
     AddRhoFromFineLevelandSumBoundary(
@@ -1114,25 +1114,25 @@ WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type,
     using ablastr::fields::Direction;
     using warpx::fields::FieldType;
 
-    std::string current_fp_string;
+    std::string j_fp_string;
 
     if (WarpX::do_current_centering)
     {
-        current_fp_string = "current_fp_nodal";
+        j_fp_string = "j_fp_nodal";
     }
     else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
     {
-        current_fp_string = "current_fp_vay";
+        j_fp_string = "j_fp_vay";
     }
     else
     {
-        current_fp_string = "current_fp";
+        j_fp_string = "j_fp";
     }
 
     mypc->Evolve(
         m_fields,
         lev,
-        current_fp_string,
+        j_fp_string,
         cur_time,
         dt[lev],
         a_dt_type,
@@ -1143,9 +1143,9 @@ WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type,
 #ifdef WARPX_DIM_RZ
         // This is called after all particles have deposited their current and charge.
         ApplyInverseVolumeScalingToCurrentDensity(
-            m_fields.get(FieldType::current_fp, Direction{0}, lev),
-            m_fields.get(FieldType::current_fp, Direction{1}, lev),
-            m_fields.get(FieldType::current_fp, Direction{2}, lev),
+            m_fields.get(FieldType::j_fp, Direction{0}, lev),
+            m_fields.get(FieldType::j_fp, Direction{1}, lev),
+            m_fields.get(FieldType::j_fp, Direction{2}, lev),
             lev);
         if (m_fields.has(FieldType::current_buf, Direction{0}, lev)) {
             ApplyInverseVolumeScalingToCurrentDensity(
@@ -1171,7 +1171,7 @@ WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type,
         if (do_fluid_species) {
             myfl->Evolve(m_fields,
                          lev,
-                         current_fp_string,
+                         j_fp_string,
                          cur_time,
                          skip_current
             );

@@ -1241,7 +1241,7 @@ void WarpX::CheckGuardCells()
         {
             ::CheckGuardCells(m_fields, "Efield_fp[" + std::to_string(dim) + "]", lev);
             ::CheckGuardCells(m_fields, "Bfield_fp[" + std::to_string(dim) + "]", lev);
-            ::CheckGuardCells(m_fields, "current_fp[" + std::to_string(dim) + "]", lev);
+            ::CheckGuardCells(m_fields, "j_fp[" + std::to_string(dim) + "]", lev);
 
             if (WarpX::fft_do_time_averaging)
             {
@@ -1261,7 +1261,7 @@ void WarpX::CheckGuardCells()
             {
                 ::CheckGuardCells(m_fields, "Efield_cp[" + std::to_string(dim) + "]", lev);
                 ::CheckGuardCells(m_fields, "Bfield_cp[" + std::to_string(dim) + "]", lev);
-                ::CheckGuardCells(m_fields, "current_cp[" + std::to_string(dim) + "]", lev);
+                ::CheckGuardCells(m_fields, "j_cp[" + std::to_string(dim) + "]", lev);
 
                 if (WarpX::fft_do_time_averaging)
                 {

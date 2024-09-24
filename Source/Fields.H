@@ -26,9 +26,9 @@ namespace warpx::fields
         Bfield_fp,  //!< The field that is updated by the field solver at each timestep
         Efield_fp_external, //!< Stores grid particle fields provided by the user as  through an openPMD file
         Bfield_fp_external, //!< Stores grid particle fields provided by the user as  through an openPMD file
-        current_fp, //!< The current that is used as a source for the field solver
-        current_fp_nodal, //!< Only used when using nodal current deposition
-        current_fp_vay,   //!< Only used when using Vay current deposition
+        j_fp, //!< The current that is used as a source for the field solver
+        j_fp_nodal, //!< Only used when using nodal current deposition
+        j_fp_vay,   //!< Only used when using Vay current deposition
         current_buf, //!< Particles that are close to the edge of the MR patch (i.e. in the deposition buffer) deposit to this field.
         current_store, //!< Only used when doing subcycling with mesh refinement, for book-keeping of currents
         rho_buf, //!< Particles that are close to the edge of the MR patch (i.e. in the deposition buffer) deposit to this field.
@@ -42,12 +42,12 @@ namespace warpx::fields
         vector_potential_grad_buf_b_stag,
         hybrid_electron_pressure_fp,
         hybrid_rho_fp_temp,
-        hybrid_current_fp_temp,
-        hybrid_current_fp_ampere,
-        hybrid_current_fp_external,
+        hybrid_j_fp_temp,
+        hybrid_j_fp_ampere,
+        hybrid_j_fp_external,
         Efield_cp,  //!< Only used with MR. The field that is updated by the field solver at each timestep, on the coarse patch of each level
         Bfield_cp,  //!< Only used with MR. The field that is updated by the field solver at each timestep, on the coarse patch of each level
-        current_cp, //!< Only used with MR. The current that is used as a source for the field solver, on the coarse patch of each level
+        j_cp, //!< Only used with MR. The current that is used as a source for the field solver, on the coarse patch of each level
         rho_cp, //!< Only used with MR. The charge density that is used as a source for the field solver, on the coarse patch of each level
         F_cp,   //!< Only used with MR. Used for divE cleaning, on the coarse patch of each level
         G_cp,   //!< Only used with MR. Used for divB cleaning, on the coarse patch of each level
@@ -85,21 +85,21 @@ namespace warpx::fields
         FieldType::Bfield_aux,
         FieldType::Efield_fp,
         FieldType::Bfield_fp,
-        FieldType::current_fp,
-        FieldType::current_fp_nodal,
-        FieldType::current_fp_vay,
+        FieldType::j_fp,
+        FieldType::j_fp_nodal,
+        FieldType::j_fp_vay,
         FieldType::current_buf,
         FieldType::current_store,
         FieldType::vector_potential_fp,
         FieldType::vector_potential_fp_nodal,
         FieldType::vector_potential_grad_buf_e_stag,
         FieldType::vector_potential_grad_buf_b_stag,
-        FieldType::hybrid_current_fp_temp,
-        FieldType::hybrid_current_fp_ampere,
-        FieldType::hybrid_current_fp_external,
+        FieldType::hybrid_j_fp_temp,
+        FieldType::hybrid_j_fp_ampere,
+        FieldType::hybrid_j_fp_external,
         FieldType::Efield_cp,
         FieldType::Bfield_cp,
-        FieldType::current_cp,
+        FieldType::j_cp,
         FieldType::Efield_cax,
         FieldType::Bfield_cax,
         FieldType::E_external_particle_field,

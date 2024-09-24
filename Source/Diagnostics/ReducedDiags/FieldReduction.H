@@ -107,9 +107,9 @@ public:
         const amrex::MultiFab & Bx = *warpx.m_fields.get(FieldType::Bfield_aux, Direction{0}, lev);
         const amrex::MultiFab & By = *warpx.m_fields.get(FieldType::Bfield_aux, Direction{1}, lev);
         const amrex::MultiFab & Bz = *warpx.m_fields.get(FieldType::Bfield_aux, Direction{2}, lev);
-        const amrex::MultiFab & jx = *warpx.m_fields.get(FieldType::current_fp, Direction{0},lev);
-        const amrex::MultiFab & jy = *warpx.m_fields.get(FieldType::current_fp, Direction{1},lev);
-        const amrex::MultiFab & jz = *warpx.m_fields.get(FieldType::current_fp, Direction{2},lev);
+        const amrex::MultiFab & jx = *warpx.m_fields.get(FieldType::j_fp, Direction{0},lev);
+        const amrex::MultiFab & jy = *warpx.m_fields.get(FieldType::j_fp, Direction{1},lev);
+        const amrex::MultiFab & jz = *warpx.m_fields.get(FieldType::j_fp, Direction{2},lev);
 
 
         // General preparation of interpolation and reduction operations

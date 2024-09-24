@@ -582,11 +582,11 @@ FlushFormatPlotfile::WriteAllRawFields(
                     default_level_prefix, "Ey_fp", lev, plot_raw_fields_guards );
         WriteRawMF( *warpx.m_fields.get(FieldType::Efield_fp, Direction{2}, lev), dm, raw_pltname,
                     default_level_prefix, "Ez_fp", lev, plot_raw_fields_guards );
-        WriteRawMF( *warpx.m_fields.get(FieldType::current_fp,Direction{0}, lev), dm, raw_pltname,
+        WriteRawMF( *warpx.m_fields.get(FieldType::j_fp,Direction{0}, lev), dm, raw_pltname,
                     default_level_prefix, "jx_fp", lev,plot_raw_fields_guards );
-        WriteRawMF( *warpx.m_fields.get(FieldType::current_fp,Direction{1}, lev), dm, raw_pltname,
+        WriteRawMF( *warpx.m_fields.get(FieldType::j_fp,Direction{1}, lev), dm, raw_pltname,
                     default_level_prefix, "jy_fp", lev,plot_raw_fields_guards );
-        WriteRawMF( *warpx.m_fields.get(FieldType::current_fp,Direction{2}, lev), dm, raw_pltname,
+        WriteRawMF( *warpx.m_fields.get(FieldType::j_fp,Direction{2}, lev), dm, raw_pltname,
                     default_level_prefix, "jz_fp", lev,plot_raw_fields_guards );
         WriteRawMF( *warpx.m_fields.get(FieldType::Bfield_fp, Direction{0}, lev), dm, raw_pltname,
                     default_level_prefix, "Bx_fp", lev, plot_raw_fields_guards );
@@ -653,8 +653,8 @@ FlushFormatPlotfile::WriteAllRawFields(
                                warpx.m_fields.get(FieldType::Bfield_fp, Direction{2}, lev),
                                dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards);
             WriteCoarseVector( "j",
-                               warpx.m_fields.get(FieldType::current_cp, Direction{0}, lev), warpx.m_fields.get(FieldType::current_cp, Direction{1}, lev), warpx.m_fields.get(FieldType::current_cp, Direction{2}, lev),
-                               warpx.m_fields.get(FieldType::current_fp, Direction{0}, lev), warpx.m_fields.get(FieldType::current_fp, Direction{1}, lev), warpx.m_fields.get(FieldType::current_fp, Direction{2}, lev),
+                               warpx.m_fields.get(FieldType::j_cp, Direction{0}, lev), warpx.m_fields.get(FieldType::j_cp, Direction{1}, lev), warpx.m_fields.get(FieldType::j_cp, Direction{2}, lev),
+                               warpx.m_fields.get(FieldType::j_fp, Direction{0}, lev), warpx.m_fields.get(FieldType::j_fp, Direction{1}, lev), warpx.m_fields.get(FieldType::j_fp, Direction{2}, lev),
                                dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards);
             if (warpx.m_fields.has(FieldType::F_fp, lev) && warpx.m_fields.has(FieldType::F_cp, lev))
             {

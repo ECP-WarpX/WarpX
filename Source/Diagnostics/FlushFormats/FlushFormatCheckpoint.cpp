@@ -100,11 +100,11 @@ FlushFormatCheckpoint::WriteToFile (
 
         if (warpx.getis_synchronized()) {
             // Need to save j if synchronized because after restart we need j to evolve E by dt/2.
-            VisMF::Write(*warpx.m_fields.get(FieldType::current_fp, Direction{0}, lev),
+            VisMF::Write(*warpx.m_fields.get(FieldType::j_fp, Direction{0}, lev),
                          amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "jx_fp"));
-            VisMF::Write(*warpx.m_fields.get(FieldType::current_fp, Direction{1}, lev),
+            VisMF::Write(*warpx.m_fields.get(FieldType::j_fp, Direction{1}, lev),
                          amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "jy_fp"));
-            VisMF::Write(*warpx.m_fields.get(FieldType::current_fp, Direction{2}, lev),
+            VisMF::Write(*warpx.m_fields.get(FieldType::j_fp, Direction{2}, lev),
                          amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "jz_fp"));
         }
 
@@ -142,11 +142,11 @@ FlushFormatCheckpoint::WriteToFile (
 
             if (warpx.getis_synchronized()) {
                 // Need to save j if synchronized because after restart we need j to evolve E by dt/2.
-                VisMF::Write(*warpx.m_fields.get(FieldType::current_cp, Direction{0}, lev),
+                VisMF::Write(*warpx.m_fields.get(FieldType::j_cp, Direction{0}, lev),
                              amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "jx_cp"));
-                VisMF::Write(*warpx.m_fields.get(FieldType::current_cp, Direction{1}, lev),
+                VisMF::Write(*warpx.m_fields.get(FieldType::j_cp, Direction{1}, lev),
                              amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "jy_cp"));
-                VisMF::Write(*warpx.m_fields.get(FieldType::current_cp, Direction{2}, lev),
+                VisMF::Write(*warpx.m_fields.get(FieldType::j_cp, Direction{2}, lev),
                              amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "jz_cp"));
             }
         }

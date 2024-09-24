@@ -257,7 +257,7 @@ void WarpXFluidContainer::InitData(ablastr::fields::MultiFabRegister& fields, am
 void WarpXFluidContainer::Evolve(
     ablastr::fields::MultiFabRegister& fields,
     int lev,
-    const std::string& current_fp_string,
+    const std::string& j_fp_string,
     amrex::Real cur_time,
     bool skip_deposition)
 {
@@ -306,9 +306,9 @@ void WarpXFluidContainer::Evolve(
     // Deposit J to the simulation mesh
     if (!skip_deposition && ! do_not_deposit) {
         DepositCurrent(fields,
-                        *fields.get(current_fp_string, Direction{0}, lev),
-                        *fields.get(current_fp_string, Direction{1}, lev),
-                        *fields.get(current_fp_string, Direction{2}, lev),
+                        *fields.get(j_fp_string, Direction{0}, lev),
+                        *fields.get(j_fp_string, Direction{1}, lev),
+                        *fields.get(j_fp_string, Direction{2}, lev),
                         lev);
     }
 }
