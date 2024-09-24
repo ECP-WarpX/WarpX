@@ -54,7 +54,7 @@
 #include <memory>
 
 using namespace amrex;
-using warpx::fields::FieldType;
+using namespace warpx::fields;
 
 #ifdef WARPX_USE_FFT
 namespace {
@@ -494,7 +494,7 @@ void WarpX::PSATDVayDeposition ()
 
 void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
 {
-    using ablastr::fields::Direction;
+    using ablastr::fields::Dir;
 
     // Subtraction of cumulative sum for Vay deposition
     // implemented only in 2D and 3D Cartesian geometry
@@ -507,15 +507,15 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
     {
         const std::array<amrex::Real,3>& dx = WarpX::CellSize(lev);
 
-        amrex::MultiFab const& Dx = *m_fields.get(FieldType::current_fp_vay, Direction{0}, lev);
-        amrex::MultiFab const& Dy = *m_fields.get(FieldType::current_fp_vay, Direction{1}, lev);
-        amrex::MultiFab const& Dz = *m_fields.get(FieldType::current_fp_vay, Direction{2}, lev);
+        amrex::MultiFab const& Dx = *m_fields.get(FieldType::current_fp_vay, 0_dir, lev);
+        amrex::MultiFab const& Dy = *m_fields.get(FieldType::current_fp_vay, 1_dir, lev);
+        amrex::MultiFab const& Dz = *m_fields.get(FieldType::current_fp_vay, 2_dir, lev);
 
 #if defined (WARPX_DIM_XZ)
         amrex::ignore_unused(Dy);
 #endif
 
-    amrex::MultiFab& Jx = *m_fields.get(FieldType::current_fp, Direction{0}, lev);
+    amrex::MultiFab& Jx = *m_fields.get(FieldType::current_fp, 0_dir, lev);
 
 
 #ifdef AMREX_USE_OMP
@@ -546,7 +546,7 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
 
 #if defined (WARPX_DIM_3D)
         // Subtract average of cumulative sum from Jy
-        amrex::MultiFab& Jy = *m_fields.get(FieldType::current_fp, Direction{1}, lev);;
+        amrex::MultiFab& Jy = *m_fields.get(FieldType::current_fp, 1_dir, lev);;
         for (amrex::MFIter mfi(Jy); mfi.isValid(); ++mfi)
         {
             const amrex::Box& bx = mfi.fabbox();
@@ -571,7 +571,7 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
 #endif
 
         // Subtract average of cumulative sum from Jz
-        amrex::MultiFab& Jz = *m_fields.get(FieldType::current_fp, Direction{2}, lev);
+        amrex::MultiFab& Jz = *m_fields.get(FieldType::current_fp, 2_dir, lev);
         for (amrex::MFIter mfi(Jz); mfi.isValid(); ++mfi)
         {
             const amrex::Box& bx = mfi.fabbox();

@@ -57,7 +57,7 @@
 #endif
 
 using namespace amrex;
-using warpx::fields::FieldType;
+using namespace warpx::fields;
 
 namespace
 {
@@ -571,7 +571,7 @@ PML::PML (const int lev, const BoxArray& grid_ba,
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!eb_enabled, "PML: eb_enabled is true but was not compiled in.");
 #endif
 
-    using ablastr::fields::Direction;
+    using ablastr::fields::Dir;
 
     // When `do_pml_in_domain` is true, the PML overlap with the last `ncell` of the physical domain or fine patch(es)
     // (instead of extending `ncell` outside of the physical domain or fine patch(es))
@@ -701,35 +701,35 @@ PML::PML (const int lev, const BoxArray& grid_ba,
     const int ncompb = (m_divb_cleaning) ? 3 : 2;
 
     auto& warpx = WarpX::GetInstance();
-    using ablastr::fields::Direction;
+    using ablastr::fields::Dir;
 
-    const amrex::BoxArray ba_Ex = amrex::convert(ba, warpx.m_fields.get(FieldType::Efield_fp, Direction{0}, 0)->ixType().toIntVect());
-    const amrex::BoxArray ba_Ey = amrex::convert(ba, warpx.m_fields.get(FieldType::Efield_fp, Direction{1}, 0)->ixType().toIntVect());
-    const amrex::BoxArray ba_Ez = amrex::convert(ba, warpx.m_fields.get(FieldType::Efield_fp, Direction{2}, 0)->ixType().toIntVect());
-    warpx.m_fields.alloc_init(FieldType::pml_E_fp, Direction{0}, lev, ba_Ex, dm, ncompe, nge, 0.0_rt, false, false);
-    warpx.m_fields.alloc_init(FieldType::pml_E_fp, Direction{1}, lev, ba_Ey, dm, ncompe, nge, 0.0_rt, false, false);
-    warpx.m_fields.alloc_init(FieldType::pml_E_fp, Direction{2}, lev, ba_Ez, dm, ncompe, nge, 0.0_rt, false, false);
+    const amrex::BoxArray ba_Ex = amrex::convert(ba, warpx.m_fields.get(FieldType::Efield_fp, 0_dir, 0)->ixType().toIntVect());
+    const amrex::BoxArray ba_Ey = amrex::convert(ba, warpx.m_fields.get(FieldType::Efield_fp, 1_dir, 0)->ixType().toIntVect());
+    const amrex::BoxArray ba_Ez = amrex::convert(ba, warpx.m_fields.get(FieldType::Efield_fp, 2_dir, 0)->ixType().toIntVect());
+    warpx.m_fields.alloc_init(FieldType::pml_E_fp, 0_dir, lev, ba_Ex, dm, ncompe, nge, 0.0_rt, false, false);
+    warpx.m_fields.alloc_init(FieldType::pml_E_fp, 1_dir, lev, ba_Ey, dm, ncompe, nge, 0.0_rt, false, false);
+    warpx.m_fields.alloc_init(FieldType::pml_E_fp, 2_dir, lev, ba_Ez, dm, ncompe, nge, 0.0_rt, false, false);
 
-    const amrex::BoxArray ba_Bx = amrex::convert(ba, warpx.m_fields.get(FieldType::Bfield_fp, Direction{0}, 0)->ixType().toIntVect());
-    const amrex::BoxArray ba_By = amrex::convert(ba, warpx.m_fields.get(FieldType::Bfield_fp, Direction{1}, 0)->ixType().toIntVect());
-    const amrex::BoxArray ba_Bz = amrex::convert(ba, warpx.m_fields.get(FieldType::Bfield_fp, Direction{2}, 0)->ixType().toIntVect());
-    warpx.m_fields.alloc_init(FieldType::pml_B_fp, Direction{0}, lev, ba_Bx, dm, ncompb, ngb, 0.0_rt, false, false);
-    warpx.m_fields.alloc_init(FieldType::pml_B_fp, Direction{1}, lev, ba_By, dm, ncompb, ngb, 0.0_rt, false, false);
-    warpx.m_fields.alloc_init(FieldType::pml_B_fp, Direction{2}, lev, ba_Bz, dm, ncompb, ngb, 0.0_rt, false, false);
+    const amrex::BoxArray ba_Bx = amrex::convert(ba, warpx.m_fields.get(FieldType::Bfield_fp, 0_dir, 0)->ixType().toIntVect());
+    const amrex::BoxArray ba_By = amrex::convert(ba, warpx.m_fields.get(FieldType::Bfield_fp, 1_dir, 0)->ixType().toIntVect());
+    const amrex::BoxArray ba_Bz = amrex::convert(ba, warpx.m_fields.get(FieldType::Bfield_fp, 2_dir, 0)->ixType().toIntVect());
+    warpx.m_fields.alloc_init(FieldType::pml_B_fp, 0_dir, lev, ba_Bx, dm, ncompb, ngb, 0.0_rt, false, false);
+    warpx.m_fields.alloc_init(FieldType::pml_B_fp, 1_dir, lev, ba_By, dm, ncompb, ngb, 0.0_rt, false, false);
+    warpx.m_fields.alloc_init(FieldType::pml_B_fp, 2_dir, lev, ba_Bz, dm, ncompb, ngb, 0.0_rt, false, false);
 
-    const amrex::BoxArray ba_jx = amrex::convert(ba, WarpX::GetInstance().m_fields.get(FieldType::current_fp, Direction{0}, 0)->ixType().toIntVect());
-    const amrex::BoxArray ba_jy = amrex::convert(ba, WarpX::GetInstance().m_fields.get(FieldType::current_fp, Direction{1}, 0)->ixType().toIntVect());
-    const amrex::BoxArray ba_jz = amrex::convert(ba, WarpX::GetInstance().m_fields.get(FieldType::current_fp, Direction{2}, 0)->ixType().toIntVect());
-    warpx.m_fields.alloc_init(FieldType::pml_j_fp, Direction{0}, lev, ba_jx, dm, 1, ngb, 0.0_rt, false, false);
-    warpx.m_fields.alloc_init(FieldType::pml_j_fp, Direction{1}, lev, ba_jy, dm, 1, ngb, 0.0_rt, false, false);
-    warpx.m_fields.alloc_init(FieldType::pml_j_fp, Direction{2}, lev, ba_jz, dm, 1, ngb, 0.0_rt, false, false);
+    const amrex::BoxArray ba_jx = amrex::convert(ba, WarpX::GetInstance().m_fields.get(FieldType::current_fp, 0_dir, 0)->ixType().toIntVect());
+    const amrex::BoxArray ba_jy = amrex::convert(ba, WarpX::GetInstance().m_fields.get(FieldType::current_fp, 1_dir, 0)->ixType().toIntVect());
+    const amrex::BoxArray ba_jz = amrex::convert(ba, WarpX::GetInstance().m_fields.get(FieldType::current_fp, 2_dir, 0)->ixType().toIntVect());
+    warpx.m_fields.alloc_init(FieldType::pml_j_fp, 0_dir, lev, ba_jx, dm, 1, ngb, 0.0_rt, false, false);
+    warpx.m_fields.alloc_init(FieldType::pml_j_fp, 1_dir, lev, ba_jy, dm, 1, ngb, 0.0_rt, false, false);
+    warpx.m_fields.alloc_init(FieldType::pml_j_fp, 2_dir, lev, ba_jz, dm, 1, ngb, 0.0_rt, false, false);
 
 #ifdef AMREX_USE_EB
     if (eb_enabled) {
         const amrex::IntVect max_guard_EB_vect = amrex::IntVect(max_guard_EB);
-        warpx.m_fields.alloc_init(FieldType::pml_edge_lengths, Direction{0}, lev, ba_Ex, dm, WarpX::ncomps, max_guard_EB_vect, 0.0_rt, false, false);
-        warpx.m_fields.alloc_init(FieldType::pml_edge_lengths, Direction{1}, lev, ba_Ey, dm, WarpX::ncomps, max_guard_EB_vect, 0.0_rt, false, false);
-        warpx.m_fields.alloc_init(FieldType::pml_edge_lengths, Direction{2}, lev, ba_Ez, dm, WarpX::ncomps, max_guard_EB_vect, 0.0_rt, false, false);
+        warpx.m_fields.alloc_init(FieldType::pml_edge_lengths, 0_dir, lev, ba_Ex, dm, WarpX::ncomps, max_guard_EB_vect, 0.0_rt, false, false);
+        warpx.m_fields.alloc_init(FieldType::pml_edge_lengths, 1_dir, lev, ba_Ey, dm, WarpX::ncomps, max_guard_EB_vect, 0.0_rt, false, false);
+        warpx.m_fields.alloc_init(FieldType::pml_edge_lengths, 2_dir, lev, ba_Ez, dm, WarpX::ncomps, max_guard_EB_vect, 0.0_rt, false, false);
 
         if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
             WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC ||
@@ -841,19 +841,19 @@ PML::PML (const int lev, const BoxArray& grid_ba,
             cdm.define(cba);
         }
 
-        const amrex::BoxArray cba_Ex = amrex::convert(cba, WarpX::GetInstance().m_fields.get(FieldType::Efield_cp, Direction{0}, 1)->ixType().toIntVect());
-        const amrex::BoxArray cba_Ey = amrex::convert(cba, WarpX::GetInstance().m_fields.get(FieldType::Efield_cp, Direction{1}, 1)->ixType().toIntVect());
-        const amrex::BoxArray cba_Ez = amrex::convert(cba, WarpX::GetInstance().m_fields.get(FieldType::Efield_cp, Direction{2}, 1)->ixType().toIntVect());
-        warpx.m_fields.alloc_init(FieldType::pml_E_cp, Direction{0}, lev, cba_Ex, cdm, ncompe, nge, 0.0_rt, false, false);
-        warpx.m_fields.alloc_init(FieldType::pml_E_cp, Direction{1}, lev, cba_Ey, cdm, ncompe, nge, 0.0_rt, false, false);
-        warpx.m_fields.alloc_init(FieldType::pml_E_cp, Direction{2}, lev, cba_Ez, cdm, ncompe, nge, 0.0_rt, false, false);
+        const amrex::BoxArray cba_Ex = amrex::convert(cba, WarpX::GetInstance().m_fields.get(FieldType::Efield_cp, 0_dir, 1)->ixType().toIntVect());
+        const amrex::BoxArray cba_Ey = amrex::convert(cba, WarpX::GetInstance().m_fields.get(FieldType::Efield_cp, 1_dir, 1)->ixType().toIntVect());
+        const amrex::BoxArray cba_Ez = amrex::convert(cba, WarpX::GetInstance().m_fields.get(FieldType::Efield_cp, 2_dir, 1)->ixType().toIntVect());
+        warpx.m_fields.alloc_init(FieldType::pml_E_cp, 0_dir, lev, cba_Ex, cdm, ncompe, nge, 0.0_rt, false, false);
+        warpx.m_fields.alloc_init(FieldType::pml_E_cp, 1_dir, lev, cba_Ey, cdm, ncompe, nge, 0.0_rt, false, false);
+        warpx.m_fields.alloc_init(FieldType::pml_E_cp, 2_dir, lev, cba_Ez, cdm, ncompe, nge, 0.0_rt, false, false);
 
-        const amrex::BoxArray cba_Bx = amrex::convert(cba, WarpX::GetInstance().m_fields.get(FieldType::Bfield_cp, Direction{0}, 1)->ixType().toIntVect());
-        const amrex::BoxArray cba_By = amrex::convert(cba, WarpX::GetInstance().m_fields.get(FieldType::Bfield_cp, Direction{1}, 1)->ixType().toIntVect());
-        const amrex::BoxArray cba_Bz = amrex::convert(cba, WarpX::GetInstance().m_fields.get(FieldType::Bfield_cp, Direction{2}, 1)->ixType().toIntVect());
-        warpx.m_fields.alloc_init(FieldType::pml_B_cp, Direction{0}, lev, cba_Bx, cdm, ncompb, ngb, 0.0_rt, false, false);
-        warpx.m_fields.alloc_init(FieldType::pml_B_cp, Direction{1}, lev, cba_By, cdm, ncompb, ngb, 0.0_rt, false, false);
-        warpx.m_fields.alloc_init(FieldType::pml_B_cp, Direction{2}, lev, cba_Bz, cdm, ncompb, ngb, 0.0_rt, false, false);
+        const amrex::BoxArray cba_Bx = amrex::convert(cba, WarpX::GetInstance().m_fields.get(FieldType::Bfield_cp, 0_dir, 1)->ixType().toIntVect());
+        const amrex::BoxArray cba_By = amrex::convert(cba, WarpX::GetInstance().m_fields.get(FieldType::Bfield_cp, 1_dir, 1)->ixType().toIntVect());
+        const amrex::BoxArray cba_Bz = amrex::convert(cba, WarpX::GetInstance().m_fields.get(FieldType::Bfield_cp, 2_dir, 1)->ixType().toIntVect());
+        warpx.m_fields.alloc_init(FieldType::pml_B_cp, 0_dir, lev, cba_Bx, cdm, ncompb, ngb, 0.0_rt, false, false);
+        warpx.m_fields.alloc_init(FieldType::pml_B_cp, 1_dir, lev, cba_By, cdm, ncompb, ngb, 0.0_rt, false, false);
+        warpx.m_fields.alloc_init(FieldType::pml_B_cp, 2_dir, lev, cba_Bz, cdm, ncompb, ngb, 0.0_rt, false, false);
 
         if (m_dive_cleaning)
         {
@@ -871,12 +871,12 @@ PML::PML (const int lev, const BoxArray& grid_ba,
             warpx.m_fields.alloc_init(FieldType::pml_G_cp, lev, cba_G_nodal, cdm, 3, ngf, 0.0_rt, false, false);
         }
 
-        const amrex::BoxArray cba_jx = amrex::convert(cba, WarpX::GetInstance().m_fields.get(FieldType::current_cp, Direction{0}, 1)->ixType().toIntVect());
-        const amrex::BoxArray cba_jy = amrex::convert(cba, WarpX::GetInstance().m_fields.get(FieldType::current_cp, Direction{1}, 1)->ixType().toIntVect());
-        const amrex::BoxArray cba_jz = amrex::convert(cba, WarpX::GetInstance().m_fields.get(FieldType::current_cp, Direction{2}, 1)->ixType().toIntVect());
-        warpx.m_fields.alloc_init(FieldType::pml_j_cp, Direction{0}, lev, cba_jx, cdm, 1, ngb, 0.0_rt, false, false);
-        warpx.m_fields.alloc_init(FieldType::pml_j_cp, Direction{1}, lev, cba_jy, cdm, 1, ngb, 0.0_rt, false, false);
-        warpx.m_fields.alloc_init(FieldType::pml_j_cp, Direction{2}, lev, cba_jz, cdm, 1, ngb, 0.0_rt, false, false);
+        const amrex::BoxArray cba_jx = amrex::convert(cba, WarpX::GetInstance().m_fields.get(FieldType::current_cp, 0_dir, 1)->ixType().toIntVect());
+        const amrex::BoxArray cba_jy = amrex::convert(cba, WarpX::GetInstance().m_fields.get(FieldType::current_cp, 1_dir, 1)->ixType().toIntVect());
+        const amrex::BoxArray cba_jz = amrex::convert(cba, WarpX::GetInstance().m_fields.get(FieldType::current_cp, 2_dir, 1)->ixType().toIntVect());
+        warpx.m_fields.alloc_init(FieldType::pml_j_cp, 0_dir, lev, cba_jx, cdm, 1, ngb, 0.0_rt, false, false);
+        warpx.m_fields.alloc_init(FieldType::pml_j_cp, 1_dir, lev, cba_jy, cdm, 1, ngb, 0.0_rt, false, false);
+        warpx.m_fields.alloc_init(FieldType::pml_j_cp, 2_dir, lev, cba_jz, cdm, 1, ngb, 0.0_rt, false, false);
 
         single_domain_box = is_single_box_domain ? cdomain : Box();
         sigba_cp = std::make_unique<MultiSigmaBox>(cba, cdm, grid_cba_reduced, cgeom->CellSize(),
@@ -1058,7 +1058,7 @@ PML::CopyJtoPMLs (
     int lev
 )
 {
-    using ablastr::fields::Direction;
+    using ablastr::fields::Dir;
 
     bool const has_j_fp = fields.has_vector(FieldType::current_fp, lev);
     bool const has_pml_j_fp = fields.has_vector(FieldType::pml_j_fp, lev);
@@ -1069,17 +1069,17 @@ PML::CopyJtoPMLs (
     {
         ablastr::fields::VectorField pml_j_fp = fields.get_alldirs(FieldType::pml_j_fp, lev);
         ablastr::fields::VectorField jp = fields.get_alldirs(FieldType::current_fp, lev);
-        CopyToPML(*pml_j_fp[0], *jp[0], *m_geom);
-        CopyToPML(*pml_j_fp[1], *jp[1], *m_geom);
-        CopyToPML(*pml_j_fp[2], *jp[2], *m_geom);
+        CopyToPML(*pml_j_fp[0_dir], *jp[0_dir], *m_geom);
+        CopyToPML(*pml_j_fp[1_dir], *jp[1_dir], *m_geom);
+        CopyToPML(*pml_j_fp[2_dir], *jp[2_dir], *m_geom);
     }
     else if (patch_type == PatchType::coarse && has_j_cp && has_pml_j_cp)
     {
         ablastr::fields::VectorField pml_j_cp = fields.get_alldirs(FieldType::pml_j_cp, lev);
         ablastr::fields::VectorField jp = fields.get_alldirs(FieldType::current_cp, lev);
-        CopyToPML(*pml_j_cp[0], *jp[0], *m_cgeom);
-        CopyToPML(*pml_j_cp[1], *jp[1], *m_cgeom);
-        CopyToPML(*pml_j_cp[2], *jp[2], *m_cgeom);
+        CopyToPML(*pml_j_cp[0_dir], *jp[0_dir], *m_cgeom);
+        CopyToPML(*pml_j_cp[1_dir], *jp[1_dir], *m_cgeom);
+        CopyToPML(*pml_j_cp[2_dir], *jp[2_dir], *m_cgeom);
     }
 }
 
@@ -1099,9 +1099,9 @@ void PML::Exchange (ablastr::fields::VectorField mf_pml,
                     const int do_pml_in_domain)
 {
     const amrex::Geometry& geom = (patch_type == PatchType::fine) ? *m_geom : *m_cgeom;
-    if (mf_pml[0] && mf[0]) { Exchange(*mf_pml[0], *mf[0], geom, do_pml_in_domain); }
-    if (mf_pml[1] && mf[1]) { Exchange(*mf_pml[1], *mf[1], geom, do_pml_in_domain); }
-    if (mf_pml[2] && mf[2]) { Exchange(*mf_pml[2], *mf[2], geom, do_pml_in_domain); }
+    if (mf_pml[0_dir] && mf[0_dir]) { Exchange(*mf_pml[0_dir], *mf[0_dir], geom, do_pml_in_domain); }
+    if (mf_pml[1_dir] && mf[1_dir]) { Exchange(*mf_pml[1_dir], *mf[1_dir], geom, do_pml_in_domain); }
+    if (mf_pml[2_dir] && mf[2_dir]) { Exchange(*mf_pml[2_dir], *mf[2_dir], geom, do_pml_in_domain); }
 }
 
 void PML::Exchange (amrex::MultiFab* mf_pml,
@@ -1211,7 +1211,7 @@ PML::FillBoundary (ablastr::fields::VectorField mf_pml, PatchType patch_type, st
         m_geom->periodicity() :
         m_cgeom->periodicity();
 
-    const Vector<MultiFab*> mf{mf_pml[0], mf_pml[1], mf_pml[2]};
+    const Vector<MultiFab*> mf{mf_pml[0_dir], mf_pml[1_dir], mf_pml[2_dir]};
     ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period, nodal_sync);
 }
 
@@ -1232,30 +1232,30 @@ PML::CheckPoint (
     const std::string& dir
 ) const
 {
-    using ablastr::fields::Direction;
+    using ablastr::fields::Dir;
 
-    if (fields.has(FieldType::pml_E_fp, Direction{0}, 0))
+    if (fields.has(FieldType::pml_E_fp, 0_dir, 0))
     {
         ablastr::fields::VectorField pml_E_fp = fields.get_alldirs(FieldType::pml_E_fp, 0);
         ablastr::fields::VectorField pml_B_fp = fields.get_alldirs(FieldType::pml_B_fp, 0);
-        VisMF::AsyncWrite(*pml_E_fp[0], dir+"_Ex_fp");
-        VisMF::AsyncWrite(*pml_E_fp[1], dir+"_Ey_fp");
-        VisMF::AsyncWrite(*pml_E_fp[2], dir+"_Ez_fp");
-        VisMF::AsyncWrite(*pml_B_fp[0], dir+"_Bx_fp");
-        VisMF::AsyncWrite(*pml_B_fp[1], dir+"_By_fp");
-        VisMF::AsyncWrite(*pml_B_fp[2], dir+"_Bz_fp");
+        VisMF::AsyncWrite(*pml_E_fp[0_dir], dir+"_Ex_fp");
+        VisMF::AsyncWrite(*pml_E_fp[1_dir], dir+"_Ey_fp");
+        VisMF::AsyncWrite(*pml_E_fp[2_dir], dir+"_Ez_fp");
+        VisMF::AsyncWrite(*pml_B_fp[0_dir], dir+"_Bx_fp");
+        VisMF::AsyncWrite(*pml_B_fp[1_dir], dir+"_By_fp");
+        VisMF::AsyncWrite(*pml_B_fp[2_dir], dir+"_Bz_fp");
     }
 
-    if (fields.has(FieldType::pml_E_cp, Direction{0}, 0))
+    if (fields.has(FieldType::pml_E_cp, 0_dir, 0))
     {
         ablastr::fields::VectorField pml_E_cp = fields.get_alldirs(FieldType::pml_E_cp, 0);
         ablastr::fields::VectorField pml_B_cp = fields.get_alldirs(FieldType::pml_B_cp, 0);
-        VisMF::AsyncWrite(*pml_E_cp[0], dir+"_Ex_cp");
-        VisMF::AsyncWrite(*pml_E_cp[1], dir+"_Ey_cp");
-        VisMF::AsyncWrite(*pml_E_cp[2], dir+"_Ez_cp");
-        VisMF::AsyncWrite(*pml_B_cp[0], dir+"_Bx_cp");
-        VisMF::AsyncWrite(*pml_B_cp[1], dir+"_By_cp");
-        VisMF::AsyncWrite(*pml_B_cp[2], dir+"_Bz_cp");
+        VisMF::AsyncWrite(*pml_E_cp[0_dir], dir+"_Ex_cp");
+        VisMF::AsyncWrite(*pml_E_cp[1_dir], dir+"_Ey_cp");
+        VisMF::AsyncWrite(*pml_E_cp[2_dir], dir+"_Ez_cp");
+        VisMF::AsyncWrite(*pml_B_cp[0_dir], dir+"_Bx_cp");
+        VisMF::AsyncWrite(*pml_B_cp[1_dir], dir+"_By_cp");
+        VisMF::AsyncWrite(*pml_B_cp[2_dir], dir+"_Bz_cp");
     }
 }
 
@@ -1265,30 +1265,30 @@ PML::Restart (
     const std::string& dir
 )
 {
-    using ablastr::fields::Direction;
+    using ablastr::fields::Dir;
 
-    if (fields.has(FieldType::pml_E_fp, Direction{0}, 0))
+    if (fields.has(FieldType::pml_E_fp, 0_dir, 0))
     {
         ablastr::fields::VectorField pml_E_fp = fields.get_alldirs(FieldType::pml_E_fp, 0);
         ablastr::fields::VectorField pml_B_fp = fields.get_alldirs(FieldType::pml_B_fp, 0);
-        VisMF::Read(*pml_E_fp[0], dir+"_Ex_fp");
-        VisMF::Read(*pml_E_fp[1], dir+"_Ey_fp");
-        VisMF::Read(*pml_E_fp[2], dir+"_Ez_fp");
-        VisMF::Read(*pml_B_fp[0], dir+"_Bx_fp");
-        VisMF::Read(*pml_B_fp[1], dir+"_By_fp");
-        VisMF::Read(*pml_B_fp[2], dir+"_Bz_fp");
+        VisMF::Read(*pml_E_fp[0_dir], dir+"_Ex_fp");
+        VisMF::Read(*pml_E_fp[1_dir], dir+"_Ey_fp");
+        VisMF::Read(*pml_E_fp[2_dir], dir+"_Ez_fp");
+        VisMF::Read(*pml_B_fp[0_dir], dir+"_Bx_fp");
+        VisMF::Read(*pml_B_fp[1_dir], dir+"_By_fp");
+        VisMF::Read(*pml_B_fp[2_dir], dir+"_Bz_fp");
     }
 
-    if (fields.has(FieldType::pml_E_cp, Direction{0}, 0))
+    if (fields.has(FieldType::pml_E_cp, 0_dir, 0))
     {
         ablastr::fields::VectorField pml_E_cp = fields.get_alldirs(FieldType::pml_E_cp, 0);
         ablastr::fields::VectorField pml_B_cp = fields.get_alldirs(FieldType::pml_B_cp, 0);
-        VisMF::Read(*pml_E_cp[0], dir+"_Ex_cp");
-        VisMF::Read(*pml_E_cp[1], dir+"_Ey_cp");
-        VisMF::Read(*pml_E_cp[2], dir+"_Ez_cp");
-        VisMF::Read(*pml_B_cp[0], dir+"_Bx_cp");
-        VisMF::Read(*pml_B_cp[1], dir+"_By_cp");
-        VisMF::Read(*pml_B_cp[2], dir+"_Bz_cp");
+        VisMF::Read(*pml_E_cp[0_dir], dir+"_Ex_cp");
+        VisMF::Read(*pml_E_cp[1_dir], dir+"_Ey_cp");
+        VisMF::Read(*pml_E_cp[2_dir], dir+"_Ez_cp");
+        VisMF::Read(*pml_B_cp[0_dir], dir+"_Bx_cp");
+        VisMF::Read(*pml_B_cp[1_dir], dir+"_By_cp");
+        VisMF::Read(*pml_B_cp[2_dir], dir+"_Bz_cp");
     }
 }
 
@@ -1325,25 +1325,25 @@ PushPMLPSATDSinglePatch (
     const SpectralFieldIndex& Idx = solver.m_spectral_index;
 
     // Perform forward Fourier transforms
-    solver.ForwardTransform(lev, *pml_E[0], Idx.Exy, PMLComp::xy);
-    solver.ForwardTransform(lev, *pml_E[0], Idx.Exz, PMLComp::xz);
-    solver.ForwardTransform(lev, *pml_E[1], Idx.Eyx, PMLComp::yx);
-    solver.ForwardTransform(lev, *pml_E[1], Idx.Eyz, PMLComp::yz);
-    solver.ForwardTransform(lev, *pml_E[2], Idx.Ezx, PMLComp::zx);
-    solver.ForwardTransform(lev, *pml_E[2], Idx.Ezy, PMLComp::zy);
-    solver.ForwardTransform(lev, *pml_B[0], Idx.Bxy, PMLComp::xy);
-    solver.ForwardTransform(lev, *pml_B[0], Idx.Bxz, PMLComp::xz);
-    solver.ForwardTransform(lev, *pml_B[1], Idx.Byx, PMLComp::yx);
-    solver.ForwardTransform(lev, *pml_B[1], Idx.Byz, PMLComp::yz);
-    solver.ForwardTransform(lev, *pml_B[2], Idx.Bzx, PMLComp::zx);
-    solver.ForwardTransform(lev, *pml_B[2], Idx.Bzy, PMLComp::zy);
+    solver.ForwardTransform(lev, *pml_E[0_dir], Idx.Exy, PMLComp::xy);
+    solver.ForwardTransform(lev, *pml_E[0_dir], Idx.Exz, PMLComp::xz);
+    solver.ForwardTransform(lev, *pml_E[1_dir], Idx.Eyx, PMLComp::yx);
+    solver.ForwardTransform(lev, *pml_E[1_dir], Idx.Eyz, PMLComp::yz);
+    solver.ForwardTransform(lev, *pml_E[2_dir], Idx.Ezx, PMLComp::zx);
+    solver.ForwardTransform(lev, *pml_E[2_dir], Idx.Ezy, PMLComp::zy);
+    solver.ForwardTransform(lev, *pml_B[0_dir], Idx.Bxy, PMLComp::xy);
+    solver.ForwardTransform(lev, *pml_B[0_dir], Idx.Bxz, PMLComp::xz);
+    solver.ForwardTransform(lev, *pml_B[1_dir], Idx.Byx, PMLComp::yx);
+    solver.ForwardTransform(lev, *pml_B[1_dir], Idx.Byz, PMLComp::yz);
+    solver.ForwardTransform(lev, *pml_B[2_dir], Idx.Bzx, PMLComp::zx);
+    solver.ForwardTransform(lev, *pml_B[2_dir], Idx.Bzy, PMLComp::zy);
 
     // WarpX::do_pml_dive_cleaning = true
     if (pml_F)
     {
-        solver.ForwardTransform(lev, *pml_E[0], Idx.Exx, PMLComp::xx);
-        solver.ForwardTransform(lev, *pml_E[1], Idx.Eyy, PMLComp::yy);
-        solver.ForwardTransform(lev, *pml_E[2], Idx.Ezz, PMLComp::zz);
+        solver.ForwardTransform(lev, *pml_E[0_dir], Idx.Exx, PMLComp::xx);
+        solver.ForwardTransform(lev, *pml_E[1_dir], Idx.Eyy, PMLComp::yy);
+        solver.ForwardTransform(lev, *pml_E[2_dir], Idx.Ezz, PMLComp::zz);
         solver.ForwardTransform(lev, *pml_F, Idx.Fx, PMLComp::x);
         solver.ForwardTransform(lev, *pml_F, Idx.Fy, PMLComp::y);
         solver.ForwardTransform(lev, *pml_F, Idx.Fz, PMLComp::z);
@@ -1352,9 +1352,9 @@ PushPMLPSATDSinglePatch (
     // WarpX::do_pml_divb_cleaning = true
     if (pml_G)
     {
-        solver.ForwardTransform(lev, *pml_B[0], Idx.Bxx, PMLComp::xx);
-        solver.ForwardTransform(lev, *pml_B[1], Idx.Byy, PMLComp::yy);
-        solver.ForwardTransform(lev, *pml_B[2], Idx.Bzz, PMLComp::zz);
+        solver.ForwardTransform(lev, *pml_B[0_dir], Idx.Bxx, PMLComp::xx);
+        solver.ForwardTransform(lev, *pml_B[1_dir], Idx.Byy, PMLComp::yy);
+        solver.ForwardTransform(lev, *pml_B[2_dir], Idx.Bzz, PMLComp::zz);
         solver.ForwardTransform(lev, *pml_G, Idx.Gx, PMLComp::x);
         solver.ForwardTransform(lev, *pml_G, Idx.Gy, PMLComp::y);
         solver.ForwardTransform(lev, *pml_G, Idx.Gz, PMLComp::z);
@@ -1364,25 +1364,25 @@ PushPMLPSATDSinglePatch (
     solver.pushSpectralFields();
 
     // Perform backward Fourier transforms
-    solver.BackwardTransform(lev, *pml_E[0], Idx.Exy, fill_guards, PMLComp::xy);
-    solver.BackwardTransform(lev, *pml_E[0], Idx.Exz, fill_guards, PMLComp::xz);
-    solver.BackwardTransform(lev, *pml_E[1], Idx.Eyx, fill_guards, PMLComp::yx);
-    solver.BackwardTransform(lev, *pml_E[1], Idx.Eyz, fill_guards, PMLComp::yz);
-    solver.BackwardTransform(lev, *pml_E[2], Idx.Ezx, fill_guards, PMLComp::zx);
-    solver.BackwardTransform(lev, *pml_E[2], Idx.Ezy, fill_guards, PMLComp::zy);
-    solver.BackwardTransform(lev, *pml_B[0], Idx.Bxy, fill_guards, PMLComp::xy);
-    solver.BackwardTransform(lev, *pml_B[0], Idx.Bxz, fill_guards, PMLComp::xz);
-    solver.BackwardTransform(lev, *pml_B[1], Idx.Byx, fill_guards, PMLComp::yx);
-    solver.BackwardTransform(lev, *pml_B[1], Idx.Byz, fill_guards, PMLComp::yz);
-    solver.BackwardTransform(lev, *pml_B[2], Idx.Bzx, fill_guards, PMLComp::zx);
-    solver.BackwardTransform(lev, *pml_B[2], Idx.Bzy, fill_guards, PMLComp::zy);
+    solver.BackwardTransform(lev, *pml_E[0_dir], Idx.Exy, fill_guards, PMLComp::xy);
+    solver.BackwardTransform(lev, *pml_E[0_dir], Idx.Exz, fill_guards, PMLComp::xz);
+    solver.BackwardTransform(lev, *pml_E[1_dir], Idx.Eyx, fill_guards, PMLComp::yx);
+    solver.BackwardTransform(lev, *pml_E[1_dir], Idx.Eyz, fill_guards, PMLComp::yz);
+    solver.BackwardTransform(lev, *pml_E[2_dir], Idx.Ezx, fill_guards, PMLComp::zx);
+    solver.BackwardTransform(lev, *pml_E[2_dir], Idx.Ezy, fill_guards, PMLComp::zy);
+    solver.BackwardTransform(lev, *pml_B[0_dir], Idx.Bxy, fill_guards, PMLComp::xy);
+    solver.BackwardTransform(lev, *pml_B[0_dir], Idx.Bxz, fill_guards, PMLComp::xz);
+    solver.BackwardTransform(lev, *pml_B[1_dir], Idx.Byx, fill_guards, PMLComp::yx);
+    solver.BackwardTransform(lev, *pml_B[1_dir], Idx.Byz, fill_guards, PMLComp::yz);
+    solver.BackwardTransform(lev, *pml_B[2_dir], Idx.Bzx, fill_guards, PMLComp::zx);
+    solver.BackwardTransform(lev, *pml_B[2_dir], Idx.Bzy, fill_guards, PMLComp::zy);
 
     // WarpX::do_pml_dive_cleaning = true
     if (pml_F)
     {
-        solver.BackwardTransform(lev, *pml_E[0], Idx.Exx, fill_guards, PMLComp::xx);
-        solver.BackwardTransform(lev, *pml_E[1], Idx.Eyy, fill_guards, PMLComp::yy);
-        solver.BackwardTransform(lev, *pml_E[2], Idx.Ezz, fill_guards, PMLComp::zz);
+        solver.BackwardTransform(lev, *pml_E[0_dir], Idx.Exx, fill_guards, PMLComp::xx);
+        solver.BackwardTransform(lev, *pml_E[1_dir], Idx.Eyy, fill_guards, PMLComp::yy);
+        solver.BackwardTransform(lev, *pml_E[2_dir], Idx.Ezz, fill_guards, PMLComp::zz);
         solver.BackwardTransform(lev, *pml_F, Idx.Fx, fill_guards, PMLComp::x);
         solver.BackwardTransform(lev, *pml_F, Idx.Fy, fill_guards, PMLComp::y);
         solver.BackwardTransform(lev, *pml_F, Idx.Fz, fill_guards, PMLComp::z);
@@ -1391,9 +1391,9 @@ PushPMLPSATDSinglePatch (
     // WarpX::do_pml_divb_cleaning = true
     if (pml_G)
     {
-        solver.BackwardTransform(lev, *pml_B[0], Idx.Bxx, fill_guards, PMLComp::xx);
-        solver.BackwardTransform(lev, *pml_B[1], Idx.Byy, fill_guards, PMLComp::yy);
-        solver.BackwardTransform(lev, *pml_B[2], Idx.Bzz, fill_guards, PMLComp::zz);
+        solver.BackwardTransform(lev, *pml_B[0_dir], Idx.Bxx, fill_guards, PMLComp::xx);
+        solver.BackwardTransform(lev, *pml_B[1_dir], Idx.Byy, fill_guards, PMLComp::yy);
+        solver.BackwardTransform(lev, *pml_B[2_dir], Idx.Bzz, fill_guards, PMLComp::zz);
         solver.BackwardTransform(lev, *pml_G, Idx.Gx, fill_guards, PMLComp::x);
         solver.BackwardTransform(lev, *pml_G, Idx.Gy, fill_guards, PMLComp::y);
         solver.BackwardTransform(lev, *pml_G, Idx.Gz, fill_guards, PMLComp::z);

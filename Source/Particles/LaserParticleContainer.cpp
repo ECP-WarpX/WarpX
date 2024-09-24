@@ -562,8 +562,8 @@ LaserParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
                                 const std::string& current_fp_string,
                                 Real t, Real dt, DtType /*a_dt_type*/, bool skip_deposition, PushType push_type)
 {
-    using ablastr::fields::Direction;
-    using warpx::fields::FieldType;
+    using ablastr::fields::Dir;
+    using namespace warpx::fields;
 
     WARPX_PROFILE("LaserParticleContainer::Evolve()");
     WARPX_PROFILE_VAR_NS("LaserParticleContainer::Evolve::ParticlePush", blp_pp);
@@ -581,7 +581,7 @@ LaserParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
     // Update laser profile
     m_up_laser_profile->update(t_lab);
 
-    BL_ASSERT(OnSameGrids(lev, *fields.get(FieldType::current_fp, Direction{0}, lev)));
+    BL_ASSERT(OnSameGrids(lev, *fields.get(FieldType::current_fp, 0_dir, lev)));
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
@@ -660,7 +660,7 @@ LaserParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
             WARPX_PROFILE_VAR_STOP(blp_pp);
 
             // Current Deposition
-            using ablastr::fields::Direction;
+            using ablastr::fields::Dir;
             if (!skip_deposition)
             {
                 // Deposit at t_{n+1/2}
@@ -668,9 +668,9 @@ LaserParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
 
                 int* ion_lev = nullptr;
                 // Deposit inside domains
-                amrex::MultiFab * jx = fields.get(current_fp_string, Direction{0}, lev);
-                amrex::MultiFab * jy = fields.get(current_fp_string, Direction{1}, lev);
-                amrex::MultiFab * jz = fields.get(current_fp_string, Direction{2}, lev);
+                amrex::MultiFab * jx = fields.get(current_fp_string, 0_dir, lev);
+                amrex::MultiFab * jy = fields.get(current_fp_string, 1_dir, lev);
+                amrex::MultiFab * jz = fields.get(current_fp_string, 2_dir, lev);
                 DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, jx, jy, jz,
                                0, np_current, thread_num,
                                lev, lev, dt, relative_time, push_type);
@@ -678,9 +678,9 @@ LaserParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
                 if (has_buffer)
                 {
                     // Deposit in buffers
-                    amrex::MultiFab * cjx = fields.get(FieldType::current_buf, Direction{0}, lev);
-                    amrex::MultiFab * cjy = fields.get(FieldType::current_buf, Direction{1}, lev);
-                    amrex::MultiFab * cjz = fields.get(FieldType::current_buf, Direction{2}, lev);
+                    amrex::MultiFab * cjx = fields.get(FieldType::current_buf, 0_dir, lev);
+                    amrex::MultiFab * cjy = fields.get(FieldType::current_buf, 1_dir, lev);
+                    amrex::MultiFab * cjz = fields.get(FieldType::current_buf, 2_dir, lev);
                     DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
                                    np_current, np-np_current, thread_num,
                                    lev, lev-1, dt, relative_time, push_type);

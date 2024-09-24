@@ -23,8 +23,8 @@ using namespace amrex;
 
 void WarpX::HybridPICEvolveFields ()
 {
-    using ablastr::fields::Direction;
-    using warpx::fields::FieldType;
+    using ablastr::fields::Dir;
+    using namespace warpx::fields;
 
     WARPX_PROFILE("WarpX::HybridPICEvolveFields()");
 
@@ -44,9 +44,9 @@ void WarpX::HybridPICEvolveFields ()
         int const lev = 0;
         myfl->DepositCharge(m_fields, *m_fields.get(FieldType::rho_fp, lev), lev);
         myfl->DepositCurrent(m_fields,
-            *m_fields.get(FieldType::current_fp, Direction{0}, lev),
-            *m_fields.get(FieldType::current_fp, Direction{1}, lev),
-            *m_fields.get(FieldType::current_fp, Direction{2}, lev),
+            *m_fields.get(FieldType::current_fp, 0_dir, lev),
+            *m_fields.get(FieldType::current_fp, 1_dir, lev),
+            *m_fields.get(FieldType::current_fp, 2_dir, lev),
             lev);
     }
 
@@ -60,7 +60,7 @@ void WarpX::HybridPICEvolveFields ()
     // a nodal grid
     for (int lev = 0; lev <= finest_level; ++lev) {
         for (int idim = 0; idim < 3; ++idim) {
-            m_fields.get(FieldType::current_fp, Direction{idim}, lev)->FillBoundary(Geom(lev).periodicity());
+            m_fields.get(FieldType::current_fp, Dir{idim}, lev)->FillBoundary(Geom(lev).periodicity());
         }
     }
 
@@ -94,7 +94,7 @@ void WarpX::HybridPICEvolveFields ()
             MultiFab::LinComb(
                 *current_fp_temp[lev][idim],
                 0.5_rt, *current_fp_temp[lev][idim], 0,
-                0.5_rt, *m_fields.get(FieldType::current_fp, Direction{idim}, lev), 0,
+                0.5_rt, *m_fields.get(FieldType::current_fp, Dir{idim}, lev), 0,
                 0, 1, current_fp_temp[lev][idim]->nGrowVect()
             );
         }
@@ -155,7 +155,7 @@ void WarpX::HybridPICEvolveFields ()
             MultiFab::LinComb(
                 *current_fp_temp[lev][idim],
                 -1._rt, *current_fp_temp[lev][idim], 0,
-                2._rt, *m_fields.get(FieldType::current_fp, Direction{idim}, lev), 0,
+                2._rt, *m_fields.get(FieldType::current_fp, Dir{idim}, lev), 0,
                 0, 1, current_fp_temp[lev][idim]->nGrowVect()
             );
         }
@@ -186,7 +186,7 @@ void WarpX::HybridPICEvolveFields ()
         MultiFab::Copy(*rho_fp_temp[lev], *m_fields.get(FieldType::rho_fp, lev),
                         0, 0, 1, rho_fp_temp[lev]->nGrowVect());
         for (int idim = 0; idim < 3; ++idim) {
-            MultiFab::Copy(*current_fp_temp[lev][idim], *m_fields.get(FieldType::current_fp, Direction{idim}, lev),
+            MultiFab::Copy(*current_fp_temp[lev][idim], *m_fields.get(FieldType::current_fp, Dir{idim}, lev),
                            0, 0, 1, current_fp_temp[lev][idim]->nGrowVect());
         }
     }
@@ -194,7 +194,7 @@ void WarpX::HybridPICEvolveFields ()
 
 void WarpX::HybridPICDepositInitialRhoAndJ ()
 {
-    using warpx::fields::FieldType;
+    using namespace warpx::fields;
 
     ablastr::fields::MultiLevelScalarField rho_fp_temp = m_fields.get_mr_levels(FieldType::hybrid_rho_fp_temp, finest_level);
     ablastr::fields::MultiLevelVectorField current_fp_temp = m_fields.get_mr_levels_alldirs(FieldType::hybrid_current_fp_temp, finest_level);

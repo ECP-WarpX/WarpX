@@ -7,7 +7,7 @@
 #include "SemiImplicitEM.H"
 #include "WarpX.H"
 
-using warpx::fields::FieldType;
+using namespace warpx::fields;
 using namespace amrex::literals;
 
 void SemiImplicitEM::Define ( WarpX*  a_WarpX )

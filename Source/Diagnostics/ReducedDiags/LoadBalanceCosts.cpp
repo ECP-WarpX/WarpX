@@ -38,7 +38,7 @@
 #include <utility>
 
 using namespace amrex;
-using warpx::fields::FieldType;
+using namespace warpx::fields;
 
 namespace
 {
@@ -125,13 +125,13 @@ void LoadBalanceCosts::ComputeDiags (int step)
     // shift index for m_data
     int shift_m_data = 0;
 
-    using ablastr::fields::Direction;
+    using ablastr::fields::Dir;
 
     // save data
     for (int lev = 0; lev < nLevels; ++lev)
     {
         const amrex::DistributionMapping& dm = warpx.DistributionMap(lev);
-        const MultiFab & Ex = *warpx.m_fields.get(FieldType::Efield_aux, Direction{0}, lev);
+        const MultiFab & Ex = *warpx.m_fields.get(FieldType::Efield_aux, 0_dir, lev);
         for (MFIter mfi(Ex, false); mfi.isValid(); ++mfi)
         {
             const Box& tbx = mfi.tilebox();

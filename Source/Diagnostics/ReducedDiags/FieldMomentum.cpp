@@ -39,7 +39,7 @@
 #include <vector>
 
 using namespace amrex;
-using warpx::fields::FieldType;
+using namespace warpx::fields;
 
 FieldMomentum::FieldMomentum (const std::string& rd_name)
     : ReducedDiags{rd_name}
@@ -105,18 +105,18 @@ void FieldMomentum::ComputeDiags (int step)
     // Get number of refinement levels
     const auto nLevel = warpx.finestLevel() + 1;
 
-    using ablastr::fields::Direction;
+    using ablastr::fields::Dir;
 
     // Loop over refinement levels
     for (int lev = 0; lev < nLevel; ++lev)
     {
         // Get MultiFab data at given refinement level
-        const amrex::MultiFab & Ex = *warpx.m_fields.get(FieldType::Efield_aux, Direction{0}, lev);
-        const amrex::MultiFab & Ey = *warpx.m_fields.get(FieldType::Efield_aux, Direction{1}, lev);
-        const amrex::MultiFab & Ez = *warpx.m_fields.get(FieldType::Efield_aux, Direction{2}, lev);
-        const amrex::MultiFab & Bx = *warpx.m_fields.get(FieldType::Bfield_aux, Direction{0}, lev);
-        const amrex::MultiFab & By = *warpx.m_fields.get(FieldType::Bfield_aux, Direction{1}, lev);
-        const amrex::MultiFab & Bz = *warpx.m_fields.get(FieldType::Bfield_aux, Direction{2}, lev);
+        const amrex::MultiFab & Ex = *warpx.m_fields.get(FieldType::Efield_aux, 0_dir, lev);
+        const amrex::MultiFab & Ey = *warpx.m_fields.get(FieldType::Efield_aux, 1_dir, lev);
+        const amrex::MultiFab & Ez = *warpx.m_fields.get(FieldType::Efield_aux, 2_dir, lev);
+        const amrex::MultiFab & Bx = *warpx.m_fields.get(FieldType::Bfield_aux, 0_dir, lev);
+        const amrex::MultiFab & By = *warpx.m_fields.get(FieldType::Bfield_aux, 1_dir, lev);
+        const amrex::MultiFab & Bz = *warpx.m_fields.get(FieldType::Bfield_aux, 2_dir, lev);
 
         // Cell-centered index type
         const amrex::GpuArray<int,3> cc{0,0,0};

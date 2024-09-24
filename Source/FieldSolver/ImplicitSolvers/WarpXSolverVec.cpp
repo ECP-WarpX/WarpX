@@ -7,7 +7,7 @@
 #include "FieldSolver/ImplicitSolvers/WarpXSolverVec.H"
 #include "WarpX.H"
 
-using warpx::fields::FieldType;
+using namespace warpx::fields;
 
 WarpXSolverVec::~WarpXSolverVec ()
 {

@@ -14,7 +14,7 @@
 #include "WarpX.H"
 
 using namespace amrex;
-using warpx::fields::FieldType;
+using namespace warpx::fields;
 
 HybridPICModel::HybridPICModel ()
 {
@@ -63,7 +63,7 @@ void HybridPICModel::AllocateLevelMFs (ablastr::fields::MultiFabRegister & field
                                        const IntVect& jz_nodal_flag,
                                        const IntVect& rho_nodal_flag)
 {
-    using ablastr::fields::Direction;
+    using ablastr::fields::Dir;
 
     // The "hybrid_electron_pressure_fp" multifab stores the electron pressure calculated
     // from the specified equation of state.
@@ -79,36 +79,36 @@ void HybridPICModel::AllocateLevelMFs (ablastr::fields::MultiFabRegister & field
     fields.alloc_init(FieldType::hybrid_rho_fp_temp,
         lev, amrex::convert(ba, rho_nodal_flag),
         dm, ncomps, ngRho, 0.0_rt);
-    fields.alloc_init(FieldType::hybrid_current_fp_temp, Direction{0},
+    fields.alloc_init(FieldType::hybrid_current_fp_temp, 0_dir,
         lev, amrex::convert(ba, jx_nodal_flag),
         dm, ncomps, ngJ, 0.0_rt);
-    fields.alloc_init(FieldType::hybrid_current_fp_temp, Direction{1},
+    fields.alloc_init(FieldType::hybrid_current_fp_temp, 1_dir,
         lev, amrex::convert(ba, jy_nodal_flag),
         dm, ncomps, ngJ, 0.0_rt);
-    fields.alloc_init(FieldType::hybrid_current_fp_temp, Direction{2},
+    fields.alloc_init(FieldType::hybrid_current_fp_temp, 2_dir,
         lev, amrex::convert(ba, jz_nodal_flag),
         dm, ncomps, ngJ, 0.0_rt);
 
-    fields.alloc_init(FieldType::hybrid_current_fp_ampere, Direction{0},
+    fields.alloc_init(FieldType::hybrid_current_fp_ampere, 0_dir,
         lev, amrex::convert(ba, jx_nodal_flag),
         dm, ncomps, ngJ, 0.0_rt);
-    fields.alloc_init(FieldType::hybrid_current_fp_ampere, Direction{1},
+    fields.alloc_init(FieldType::hybrid_current_fp_ampere, 1_dir,
         lev, amrex::convert(ba, jy_nodal_flag),
         dm, ncomps, ngJ, 0.0_rt);
-    fields.alloc_init(FieldType::hybrid_current_fp_ampere, Direction{2},
+    fields.alloc_init(FieldType::hybrid_current_fp_ampere, 2_dir,
         lev, amrex::convert(ba, jz_nodal_flag),
         dm, ncomps, ngJ, 0.0_rt);
 
     // the external current density multifab is made nodal to avoid needing to interpolate
     // to a nodal grid as has to be done for the ion and total current density multifabs
     // this also allows the external current multifab to not have any ghost cells
-    fields.alloc_init(FieldType::hybrid_current_fp_external, Direction{0},
+    fields.alloc_init(FieldType::hybrid_current_fp_external, 0_dir,
         lev, amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
         dm, ncomps, IntVect(AMREX_D_DECL(0,0,0)), 0.0_rt);
-    fields.alloc_init(FieldType::hybrid_current_fp_external, Direction{1},
+    fields.alloc_init(FieldType::hybrid_current_fp_external, 1_dir,
         lev, amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
         dm, ncomps, IntVect(AMREX_D_DECL(0,0,0)), 0.0_rt);
-    fields.alloc_init(FieldType::hybrid_current_fp_external, Direction{2},
+    fields.alloc_init(FieldType::hybrid_current_fp_external, 2_dir,
         lev, amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
         dm, ncomps, IntVect(AMREX_D_DECL(0,0,0)), 0.0_rt);
 
@@ -144,18 +144,18 @@ void HybridPICModel::InitData ()
     }
 
     auto & warpx = WarpX::GetInstance();
-    using ablastr::fields::Direction;
+    using ablastr::fields::Dir;
 
     // Get the grid staggering of the fields involved in calculating E
-    amrex::IntVect Jx_stag = warpx.m_fields.get(FieldType::current_fp, Direction{0}, 0)->ixType().toIntVect();
-    amrex::IntVect Jy_stag = warpx.m_fields.get(FieldType::current_fp, Direction{1}, 0)->ixType().toIntVect();
-    amrex::IntVect Jz_stag = warpx.m_fields.get(FieldType::current_fp, Direction{2}, 0)->ixType().toIntVect();
-    amrex::IntVect Bx_stag = warpx.m_fields.get(FieldType::Bfield_fp, Direction{0}, 0)->ixType().toIntVect();
-    amrex::IntVect By_stag = warpx.m_fields.get(FieldType::Bfield_fp, Direction{1}, 0)->ixType().toIntVect();
-    amrex::IntVect Bz_stag = warpx.m_fields.get(FieldType::Bfield_fp, Direction{2}, 0)->ixType().toIntVect();
-    amrex::IntVect Ex_stag = warpx.m_fields.get(FieldType::Efield_fp, Direction{0}, 0)->ixType().toIntVect();
-    amrex::IntVect Ey_stag = warpx.m_fields.get(FieldType::Efield_fp, Direction{1}, 0)->ixType().toIntVect();
-    amrex::IntVect Ez_stag = warpx.m_fields.get(FieldType::Efield_fp, Direction{2}, 0)->ixType().toIntVect();
+    amrex::IntVect Jx_stag = warpx.m_fields.get(FieldType::current_fp, 0_dir, 0)->ixType().toIntVect();
+    amrex::IntVect Jy_stag = warpx.m_fields.get(FieldType::current_fp, 1_dir, 0)->ixType().toIntVect();
+    amrex::IntVect Jz_stag = warpx.m_fields.get(FieldType::current_fp, 2_dir, 0)->ixType().toIntVect();
+    amrex::IntVect Bx_stag = warpx.m_fields.get(FieldType::Bfield_fp, 0_dir, 0)->ixType().toIntVect();
+    amrex::IntVect By_stag = warpx.m_fields.get(FieldType::Bfield_fp, 1_dir, 0)->ixType().toIntVect();
+    amrex::IntVect Bz_stag = warpx.m_fields.get(FieldType::Bfield_fp, 2_dir, 0)->ixType().toIntVect();
+    amrex::IntVect Ex_stag = warpx.m_fields.get(FieldType::Efield_fp, 0_dir, 0)->ixType().toIntVect();
+    amrex::IntVect Ey_stag = warpx.m_fields.get(FieldType::Efield_fp, 1_dir, 0)->ixType().toIntVect();
+    amrex::IntVect Ez_stag = warpx.m_fields.get(FieldType::Efield_fp, 2_dir, 0)->ixType().toIntVect();
 
     // Check that the grid types are appropriate
     const bool appropriate_grids = (
@@ -224,9 +224,9 @@ void HybridPICModel::InitData ()
 #ifdef AMREX_USE_EB
         if (EB::enabled()) {
             using ablastr::fields::Direction;
-            auto const & edge_lengths_x = *warpx.m_fields.get(FieldType::edge_lengths, Direction{0}, lev);
-            auto const & edge_lengths_y = *warpx.m_fields.get(FieldType::edge_lengths, Direction{1}, lev);
-            auto const & edge_lengths_z = *warpx.m_fields.get(FieldType::edge_lengths, Direction{2}, lev);
+            auto const & edge_lengths_x = *warpx.m_fields.get(FieldType::edge_lengths, 0_dir, lev);
+            auto const & edge_lengths_y = *warpx.m_fields.get(FieldType::edge_lengths, 1_dir, lev);
+            auto const & edge_lengths_z = *warpx.m_fields.get(FieldType::edge_lengths, 2_dir, lev);
 
             edge_lengths = std::array< std::unique_ptr<amrex::MultiFab>, 3 >{
                 std::make_unique<amrex::MultiFab>(
@@ -268,10 +268,10 @@ void HybridPICModel::GetCurrentExternal (
     auto dx_lev = warpx.Geom(lev).CellSizeArray();
     const RealBox& real_box = warpx.Geom(lev).ProbDomain();
 
-    using ablastr::fields::Direction;
-    amrex::MultiFab * mfx = warpx.m_fields.get(FieldType::hybrid_current_fp_external, Direction{0}, lev);
-    amrex::MultiFab * mfy = warpx.m_fields.get(FieldType::hybrid_current_fp_external, Direction{1}, lev);
-    amrex::MultiFab * mfz = warpx.m_fields.get(FieldType::hybrid_current_fp_external, Direction{2}, lev);
+    using ablastr::fields::Dir;
+    amrex::MultiFab * mfx = warpx.m_fields.get(FieldType::hybrid_current_fp_external, 0_dir, lev);
+    amrex::MultiFab * mfy = warpx.m_fields.get(FieldType::hybrid_current_fp_external, 1_dir, lev);
+    amrex::MultiFab * mfz = warpx.m_fields.get(FieldType::hybrid_current_fp_external, 2_dir, lev);
 
     const amrex::IntVect x_nodal_flag = mfx->ixType().toIntVect();
     const amrex::IntVect y_nodal_flag = mfy->ixType().toIntVect();

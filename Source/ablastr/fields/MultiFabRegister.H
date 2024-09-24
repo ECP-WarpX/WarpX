@@ -8,6 +8,8 @@
 #ifndef ABLASTR_FIELDS_MF_REGISTER_H
 #define ABLASTR_FIELDS_MF_REGISTER_H
 
+#include "ablastr/utils/ConstMap.H"
+
 #include <AMReX_BoxArray.H>
 #include <AMReX_DistributionMapping.H>
 #include <AMReX_Enum.H>
@@ -60,11 +62,11 @@ namespace ablastr::fields
      *
      * @todo: synchronize with AMReX "enum class Direction"
      */
-    struct Direction
+    struct Dir
     {
         int dir = 0;
 
-        bool operator<(const Direction& other) const
+        bool operator<(const Dir& other) const
         {
             return other.dir < this->dir;
         }
@@ -72,6 +74,8 @@ namespace ablastr::fields
         /* TODO: just temporary int compatibility */
         operator int() const { return dir; }
     };
+
+    Dir operator""_dir(unsigned long long);
 
     /** A scalar field (a MultiFab)
      *
@@ -87,29 +91,27 @@ namespace ablastr::fields
 
     /** A vector field of three MultiFab
      */
-    //using VectorField = ablastr::utils::ConstMap<Direction, amrex::MultiFab *>;
-    using VectorField = std::array<amrex::MultiFab *, 3>;
+    using VectorField = ablastr::utils::ConstMap<Dir, amrex::MultiFab *>;
 
     /** A read-only vector field of three MultiFab
      */
-    //using VectorField = ablastr::utils::ConstMap<Direction, amrex::MultiFab const *>;
-    using ConstVectorField = std::array<amrex::MultiFab const *, 3>;
+    using ConstVectorField = ablastr::utils::ConstMap<Dir, amrex::MultiFab const *>;
 
     /** A multi-level scalar field
      */
-    using MultiLevelScalarField = amrex::Vector<ScalarField>;
+    using MultiLevelScalarField = ablastr::utils::MultiLevelVect<ScalarField>;
 
     /** A read-only multi-level scalar field
      */
-    using ConstMultiLevelScalarField = amrex::Vector<ConstScalarField>;
+    using ConstMultiLevelScalarField = ablastr::utils::MultiLevelVect<ConstScalarField>;
 
     /** A multi-level vector field
     */
-    using MultiLevelVectorField = amrex::Vector<VectorField>;
+    using MultiLevelVectorField = ablastr::utils::MultiLevelVect<VectorField>;
 
     /** A read-only multi-level vector field
     */
-    using ConstMultiLevelVectorField = amrex::Vector<ConstVectorField>;
+    using ConstMultiLevelVectorField = ablastr::utils::MultiLevelVect<ConstVectorField>;
 
     /** A class to control the lifetime and properties of a MultiFab (field).
      *
@@ -125,7 +127,7 @@ namespace ablastr::fields
         amrex::MultiFab m_mf;
 
         /** Components (base vector directions) of this MultiFab */
-        std::optional<Direction> m_dir = std::nullopt;
+        std::optional<Dir> m_dir = std::nullopt;
 
         /** the MR level of this (i)MultiFab */
         int m_level = 0;
@@ -231,16 +233,16 @@ namespace ablastr::fields
         template<typename T>
         amrex::MultiFab*
         alloc_init (
-            T name,
-            Direction dir,
-            int level,
-            amrex::BoxArray const & ba,
-            amrex::DistributionMapping const & dm,
-            int ncomp,
-            amrex::IntVect const & ngrow,
-            std::optional<amrex::Real const> initial_value = std::nullopt,
-            bool remake = true,
-            bool redistribute_on_remake = true
+                T name,
+                Dir dir,
+                int level,
+                amrex::BoxArray const & ba,
+                amrex::DistributionMapping const & dm,
+                int ncomp,
+                amrex::IntVect const & ngrow,
+                std::optional<amrex::Real const> initial_value = std::nullopt,
+                bool remake = true,
+                bool redistribute_on_remake = true
         )
         {
             return internal_alloc_init(
@@ -300,11 +302,11 @@ namespace ablastr::fields
         template<typename N, typename A>
         amrex::MultiFab*
         alias_init (
-            N new_name,
-            A alias_name,
-            Direction dir,
-            int level,
-            std::optional<amrex::Real const> initial_value = std::nullopt
+                N new_name,
+                A alias_name,
+                Dir dir,
+                int level,
+                std::optional<amrex::Real const> initial_value = std::nullopt
         )
         {
             return internal_alias_init(
@@ -345,9 +347,9 @@ namespace ablastr::fields
         template<typename T>
         [[nodiscard]] bool
         has (
-            T name,
-            Direction dir,
-            int level
+                T name,
+                Dir dir,
+                int level
         ) const
         {
             return internal_has(
@@ -409,9 +411,9 @@ namespace ablastr::fields
         template<typename T>
         [[nodiscard]] amrex::MultiFab*
         get (
-            T name,
-            Direction dir,
-            int level
+                T name,
+                Dir dir,
+                int level
         )
         {
             return internal_get(
@@ -454,9 +456,9 @@ namespace ablastr::fields
         template<typename T>
         [[nodiscard]] amrex::MultiFab const *
         get (
-            T name,
-            Direction dir,
-            int level
+                T name,
+                Dir dir,
+                int level
         ) const
         {
             return internal_get(
@@ -603,9 +605,9 @@ namespace ablastr::fields
         template<typename T>
         void
         erase (
-            T name,
-            Direction dir,
-            int level
+                T name,
+                Dir dir,
+                int level
         )
         {
             internal_erase(getExtractedName(name), dir, level);
@@ -656,9 +658,9 @@ namespace ablastr::fields
          */
         [[nodiscard]] std::string
         mf_name (
-            std::string name,
-            Direction dir,
-            int level
+                std::string name,
+                Dir dir,
+                int level
         ) const;
 
     private:
@@ -685,16 +687,16 @@ namespace ablastr::fields
         );
         amrex::MultiFab*
         internal_alloc_init (
-            std::string const & name,
-            Direction dir,
-            int level,
-            amrex::BoxArray const & ba,
-            amrex::DistributionMapping const & dm,
-            int ncomp,
-            amrex::IntVect const & ngrow,
-            std::optional<amrex::Real const> initial_value = std::nullopt,
-            bool remake = true,
-            bool redistribute_on_remake = true
+                std::string const & name,
+                Dir dir,
+                int level,
+                amrex::BoxArray const & ba,
+                amrex::DistributionMapping const & dm,
+                int ncomp,
+                amrex::IntVect const & ngrow,
+                std::optional<amrex::Real const> initial_value = std::nullopt,
+                bool remake = true,
+                bool redistribute_on_remake = true
         );
 
         amrex::MultiFab*
@@ -706,11 +708,11 @@ namespace ablastr::fields
         );
         amrex::MultiFab*
         internal_alias_init (
-            std::string const & new_name,
-            std::string const & alias_name,
-            Direction dir,
-            int level,
-            std::optional<amrex::Real const> initial_value = std::nullopt
+                std::string const & new_name,
+                std::string const & alias_name,
+                Dir dir,
+                int level,
+                std::optional<amrex::Real const> initial_value = std::nullopt
         );
 
         [[nodiscard]] bool
@@ -720,9 +722,9 @@ namespace ablastr::fields
         ) const;
         [[nodiscard]] bool
         internal_has (
-            std::string const & name,
-            Direction dir,
-            int level
+                std::string const & name,
+                Dir dir,
+                int level
         ) const;
         [[nodiscard]] bool
         internal_has_vector (
@@ -742,15 +744,15 @@ namespace ablastr::fields
         ) const;
         [[nodiscard]] amrex::MultiFab *
         internal_get (
-            std::string const & name,
-            Direction dir,
-            int level
+                std::string const & name,
+                Dir dir,
+                int level
         );
         [[nodiscard]] amrex::MultiFab const *
         internal_get (
-            std::string const & name,
-            Direction dir,
-            int level
+                std::string const & name,
+                Dir dir,
+                int level
         ) const;
         [[nodiscard]] MultiLevelScalarField
         internal_get_mr_levels (
@@ -790,9 +792,9 @@ namespace ablastr::fields
         );
         void
         internal_erase (
-            std::string const & name,
-            Direction dir,
-            int level
+                std::string const & name,
+                Dir dir,
+                int level
         );
 
         /** data storage: ownership and lifetime control */
@@ -802,7 +804,7 @@ namespace ablastr::fields
         > m_mf_register;
 
         /** the three directions of a vector field */
-        std::vector<Direction> m_all_dirs = {Direction{0}, Direction{1}, Direction{2}};
+        std::vector<Dir> m_all_dirs = {0_dir, 1_dir, 2_dir};
     };
 
     /** Little temporary helper function to pass temporary MultiFabs as VectorField.

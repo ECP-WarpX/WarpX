@@ -67,11 +67,11 @@ WarpX::DampPML (const int lev, PatchType patch_type)
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
     if (pml_rz[lev]) {
         using ablastr::fields::Direction;
-        using warpx::fields::FieldType;
-        pml_rz[lev]->ApplyDamping( m_fields.get(FieldType::Efield_fp, Direction{1}, lev),
-                                   m_fields.get(FieldType::Efield_fp, Direction{2}, lev),
-                                   m_fields.get(FieldType::Bfield_fp, Direction{1}, lev),
-                                   m_fields.get(FieldType::Bfield_fp, Direction{2}, lev),
+        using namespace warpx::fields;
+        pml_rz[lev]->ApplyDamping( m_fields.get(FieldType::Efield_fp, 1_dir, lev),
+                                   m_fields.get(FieldType::Efield_fp, 2_dir, lev),
+                                   m_fields.get(FieldType::Bfield_fp, 1_dir, lev),
+                                   m_fields.get(FieldType::Bfield_fp, 2_dir, lev),
                                    dt[lev], m_fields);
     }
 #endif
@@ -88,19 +88,19 @@ WarpX::DampPML_Cartesian (const int lev, PatchType patch_type)
 
     if (pml[lev]->ok())
     {
-        using warpx::fields::FieldType;
+        using namespace warpx::fields;
 
         const auto& pml_E = (patch_type == PatchType::fine) ? m_fields.get_alldirs(FieldType::pml_E_fp, lev) : m_fields.get_alldirs(FieldType::pml_E_cp, lev);
         const auto& pml_B = (patch_type == PatchType::fine) ? m_fields.get_alldirs(FieldType::pml_B_fp, lev) : m_fields.get_alldirs(FieldType::pml_B_cp, lev);
         const auto& sigba = (patch_type == PatchType::fine) ? pml[lev]->GetMultiSigmaBox_fp() : pml[lev]->GetMultiSigmaBox_cp();
 
-        const amrex::IntVect Ex_stag = pml_E[0]->ixType().toIntVect();
-        const amrex::IntVect Ey_stag = pml_E[1]->ixType().toIntVect();
-        const amrex::IntVect Ez_stag = pml_E[2]->ixType().toIntVect();
+        const amrex::IntVect Ex_stag = pml_E[0_dir]->ixType().toIntVect();
+        const amrex::IntVect Ey_stag = pml_E[1_dir]->ixType().toIntVect();
+        const amrex::IntVect Ez_stag = pml_E[2_dir]->ixType().toIntVect();
 
-        const amrex::IntVect Bx_stag = pml_B[0]->ixType().toIntVect();
-        const amrex::IntVect By_stag = pml_B[1]->ixType().toIntVect();
-        const amrex::IntVect Bz_stag = pml_B[2]->ixType().toIntVect();
+        const amrex::IntVect Bx_stag = pml_B[0_dir]->ixType().toIntVect();
+        const amrex::IntVect By_stag = pml_B[1_dir]->ixType().toIntVect();
+        const amrex::IntVect Bz_stag = pml_B[2_dir]->ixType().toIntVect();
 
         amrex::IntVect F_stag;
         if (m_fields.has(FieldType::pml_F_fp, lev)) {
@@ -119,21 +119,21 @@ WarpX::DampPML_Cartesian (const int lev, PatchType patch_type)
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-        for ( MFIter mfi(*pml_E[0], TilingIfNotGPU()); mfi.isValid(); ++mfi )
+        for ( MFIter mfi(*pml_E[0_dir], TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {
-            const Box& tex  = mfi.tilebox( pml_E[0]->ixType().toIntVect() );
-            const Box& tey  = mfi.tilebox( pml_E[1]->ixType().toIntVect() );
-            const Box& tez  = mfi.tilebox( pml_E[2]->ixType().toIntVect() );
-            const Box& tbx  = mfi.tilebox( pml_B[0]->ixType().toIntVect() );
-            const Box& tby  = mfi.tilebox( pml_B[1]->ixType().toIntVect() );
-            const Box& tbz  = mfi.tilebox( pml_B[2]->ixType().toIntVect() );
+            const Box& tex  = mfi.tilebox( pml_E[0_dir]->ixType().toIntVect() );
+            const Box& tey  = mfi.tilebox( pml_E[1_dir]->ixType().toIntVect() );
+            const Box& tez  = mfi.tilebox( pml_E[2_dir]->ixType().toIntVect() );
+            const Box& tbx  = mfi.tilebox( pml_B[0_dir]->ixType().toIntVect() );
+            const Box& tby  = mfi.tilebox( pml_B[1_dir]->ixType().toIntVect() );
+            const Box& tbz  = mfi.tilebox( pml_B[2_dir]->ixType().toIntVect() );
 
-            auto const& pml_Exfab = pml_E[0]->array(mfi);
-            auto const& pml_Eyfab = pml_E[1]->array(mfi);
-            auto const& pml_Ezfab = pml_E[2]->array(mfi);
-            auto const& pml_Bxfab = pml_B[0]->array(mfi);
-            auto const& pml_Byfab = pml_B[1]->array(mfi);
-            auto const& pml_Bzfab = pml_B[2]->array(mfi);
+            auto const& pml_Exfab = pml_E[0_dir]->array(mfi);
+            auto const& pml_Eyfab = pml_E[1_dir]->array(mfi);
+            auto const& pml_Ezfab = pml_E[2_dir]->array(mfi);
+            auto const& pml_Bxfab = pml_B[0_dir]->array(mfi);
+            auto const& pml_Byfab = pml_B[1_dir]->array(mfi);
+            auto const& pml_Bzfab = pml_B[2_dir]->array(mfi);
 
             amrex::Real const * AMREX_RESTRICT sigma_fac_x = sigba[mfi].sigma_fac[0].data();
 #if defined(WARPX_DIM_3D)
@@ -258,7 +258,7 @@ WarpX::DampJPML (int lev, PatchType patch_type)
 
     if (pml[lev]->ok())
     {
-        using warpx::fields::FieldType;
+        using namespace warpx::fields;
 
         const auto& pml_j = (patch_type == PatchType::fine) ? m_fields.get_alldirs(FieldType::pml_j_fp, lev) : m_fields.get_alldirs(FieldType::pml_j_cp, lev);
         const auto& sigba = (patch_type == PatchType::fine) ? pml[lev]->GetMultiSigmaBox_fp()
@@ -267,11 +267,11 @@ WarpX::DampJPML (int lev, PatchType patch_type)
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-        for ( MFIter mfi(*pml_j[0], TilingIfNotGPU()); mfi.isValid(); ++mfi )
+        for ( MFIter mfi(*pml_j[0_dir], TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {
-            auto const& pml_jxfab = pml_j[0]->array(mfi);
-            auto const& pml_jyfab = pml_j[1]->array(mfi);
-            auto const& pml_jzfab = pml_j[2]->array(mfi);
+            auto const& pml_jxfab = pml_j[0_dir]->array(mfi);
+            auto const& pml_jyfab = pml_j[1_dir]->array(mfi);
+            auto const& pml_jzfab = pml_j[2_dir]->array(mfi);
             const Real* sigma_cumsum_fac_j_x = sigba[mfi].sigma_cumsum_fac[0].data();
             const Real* sigma_star_cumsum_fac_j_x = sigba[mfi].sigma_star_cumsum_fac[0].data();
 #if defined(WARPX_DIM_3D)
@@ -291,16 +291,16 @@ WarpX::DampJPML (int lev, PatchType patch_type)
             if (EB::enabled()) {
                 const auto &pml_edge_lenghts = m_fields.get_alldirs(FieldType::pml_edge_lengths, lev);
 
-                eb_lxfab = pml_edge_lenghts[0]->array(mfi);
-                eb_lyfab = pml_edge_lenghts[1]->array(mfi);
-                eb_lzfab = pml_edge_lenghts[2]->array(mfi);
+                eb_lxfab = pml_edge_lenghts[0_dir]->array(mfi);
+                eb_lyfab = pml_edge_lenghts[1_dir]->array(mfi);
+                eb_lzfab = pml_edge_lenghts[2_dir]->array(mfi);
             } else {
                 amrex::ignore_unused(eb_lxfab, eb_lyfab, eb_lzfab);
             }
 
-            const Box& tjx  = mfi.tilebox( pml_j[0]->ixType().toIntVect() );
-            const Box& tjy  = mfi.tilebox( pml_j[1]->ixType().toIntVect() );
-            const Box& tjz  = mfi.tilebox( pml_j[2]->ixType().toIntVect() );
+            const Box& tjx  = mfi.tilebox( pml_j[0_dir]->ixType().toIntVect() );
+            const Box& tjy  = mfi.tilebox( pml_j[1_dir]->ixType().toIntVect() );
+            const Box& tjz  = mfi.tilebox( pml_j[2_dir]->ixType().toIntVect() );
 
             int const x_lo = sigba[mfi].sigma_cumsum_fac[0].lo();
 #if defined(WARPX_DIM_3D)
@@ -354,7 +354,7 @@ WarpX::DampJPML (int lev, PatchType patch_type)
 void
 WarpX::CopyJPML ()
 {
-    using ablastr::fields::Direction;
+    using ablastr::fields::Dir;
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {

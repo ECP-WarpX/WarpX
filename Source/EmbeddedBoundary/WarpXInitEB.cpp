@@ -296,7 +296,7 @@ void
 WarpX::MarkCells ()
 {
     using ablastr::fields::Direction;
-    using warpx::fields::FieldType;
+    using namespace warpx::fields;
 
 #ifndef WARPX_DIM_RZ
     auto const &cell_size = CellSize(maxLevel());
@@ -313,9 +313,9 @@ WarpX::MarkCells ()
             continue;
         }
 #endif
-        for (amrex::MFIter mfi(*m_fields.get(FieldType::Bfield_fp, Direction{idim}, maxLevel())); mfi.isValid(); ++mfi) {
+        for (amrex::MFIter mfi(*m_fields.get(FieldType::Bfield_fp, Dir{idim}, maxLevel())); mfi.isValid(); ++mfi) {
             auto* face_areas_idim_max_lev =
-                m_fields.get(FieldType::face_areas, Direction{idim}, maxLevel());
+                m_fields.get(FieldType::face_areas, Dir{idim}, maxLevel());
 
             const amrex::Box& box = mfi.tilebox(face_areas_idim_max_lev->ixType().toIntVect(),
                                                 face_areas_idim_max_lev->nGrowVect() );
@@ -323,10 +323,10 @@ WarpX::MarkCells ()
             auto const &S = face_areas_idim_max_lev->array(mfi);
             auto const &flag_info_face = m_flag_info_face[maxLevel()][idim]->array(mfi);
             auto const &flag_ext_face = m_flag_ext_face[maxLevel()][idim]->array(mfi);
-            const auto &lx = m_fields.get(FieldType::edge_lengths, Direction{0}, maxLevel())->array(mfi);
-            const auto &ly = m_fields.get(FieldType::edge_lengths, Direction{1}, maxLevel())->array(mfi);
-            const auto &lz = m_fields.get(FieldType::edge_lengths, Direction{2}, maxLevel())->array(mfi);
-            auto const &mod_areas_dim = m_fields.get(FieldType::area_mod, Direction{idim}, maxLevel())->array(mfi);
+            const auto &lx = m_fields.get(FieldType::edge_lengths, 0_dir, maxLevel())->array(mfi);
+            const auto &ly = m_fields.get(FieldType::edge_lengths, 1_dir, maxLevel())->array(mfi);
+            const auto &lz = m_fields.get(FieldType::edge_lengths, 2_dir, maxLevel())->array(mfi);
+            auto const &mod_areas_dim = m_fields.get(FieldType::area_mod, Dir{idim}, maxLevel())->array(mfi);
 
             const amrex::Real dx = cell_size[0];
             const amrex::Real dy = cell_size[1];
@@ -390,7 +390,7 @@ WarpX::ComputeDistanceToEB ()
     }
 #ifdef AMREX_USE_EB
     BL_PROFILE("ComputeDistanceToEB");
-    using warpx::fields::FieldType;
+    using namespace warpx::fields;
     const amrex::EB2::IndexSpace& eb_is = amrex::EB2::IndexSpace::top();
     for (int lev=0; lev<=maxLevel(); lev++) {
         const amrex::EB2::Level& eb_level = eb_is.getLevel(Geom(lev));

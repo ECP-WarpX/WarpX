@@ -39,7 +39,7 @@ void RelativisticExplicitES::ComputeSpaceChargeField (
     WARPX_PROFILE("RelativisticExplicitES::ComputeSpaceChargeField");
 
     using ablastr::fields::MultiLevelVectorField;
-    using warpx::fields::FieldType;
+    using namespace warpx::fields;
 
     const bool always_run_solve = (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::Relativistic);
 

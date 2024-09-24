@@ -59,8 +59,8 @@ void FiniteDifferenceSolver::EvolveEPML (
     WARPX_ABORT_WITH_MESSAGE(
         "PML are not implemented in cylindrical geometry.");
 #else
-    using ablastr::fields::Direction;
-    using warpx::fields::FieldType;
+    using ablastr::fields::Dir;
+    using namespace warpx::fields;
 
     const ablastr::fields::VectorField Efield = (patch_type == PatchType::fine) ?
         fields.get_alldirs(FieldType::pml_E_fp, level) : fields.get_alldirs(FieldType::pml_E_cp, level);
@@ -69,7 +69,7 @@ void FiniteDifferenceSolver::EvolveEPML (
     const ablastr::fields::VectorField Jfield = (patch_type == PatchType::fine) ?
         fields.get_alldirs(FieldType::pml_j_fp, level) : fields.get_alldirs(FieldType::pml_j_cp, level);
     ablastr::fields::VectorField edge_lengths;
-    if (fields.has(FieldType::pml_edge_lengths, Direction{0}, level)) {
+    if (fields.has(FieldType::pml_edge_lengths, 0_dir, level)) {
         edge_lengths = fields.get_alldirs(FieldType::pml_edge_lengths, level);
     }
     amrex::MultiFab * Ffield = nullptr;

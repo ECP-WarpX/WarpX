@@ -141,7 +141,7 @@ void WarpXFluidContainer::ReadParameters()
 
 void WarpXFluidContainer::AllocateLevelMFs(ablastr::fields::MultiFabRegister& fields, const BoxArray &ba, const DistributionMapping &dm, int lev) const
 {
-    using ablastr::fields::Direction;
+    using ablastr::fields::Dir;
     const int ncomps = 1;
     const amrex::IntVect nguards(AMREX_D_DECL(2, 2, 2));
 
@@ -150,22 +150,22 @@ void WarpXFluidContainer::AllocateLevelMFs(ablastr::fields::MultiFabRegister& fi
             ncomps, nguards, 0.0_rt);
 
     fields.alloc_init(
-            name_mf_NU, Direction{0}, lev, amrex::convert(ba, amrex::IntVect::TheNodeVector()), dm,
+            name_mf_NU, 0_dir, lev, amrex::convert(ba, amrex::IntVect::TheNodeVector()), dm,
             ncomps, nguards, 0.0_rt);
 
     fields.alloc_init(
-            name_mf_NU, Direction{1}, lev, amrex::convert(ba, amrex::IntVect::TheNodeVector()), dm,
+            name_mf_NU, 1_dir, lev, amrex::convert(ba, amrex::IntVect::TheNodeVector()), dm,
             ncomps, nguards, 0.0_rt);
 
     fields.alloc_init(
-            name_mf_NU, Direction{2}, lev, amrex::convert(ba, amrex::IntVect::TheNodeVector()), dm,
+            name_mf_NU, 2_dir, lev, amrex::convert(ba, amrex::IntVect::TheNodeVector()), dm,
             ncomps, nguards, 0.0_rt);
 
 }
 
 void WarpXFluidContainer::InitData(ablastr::fields::MultiFabRegister& fields, amrex::Box init_box, amrex::Real cur_time, int lev)
 {
-    using ablastr::fields::Direction;
+    using ablastr::fields::Dir;
     WARPX_PROFILE("WarpXFluidContainer::InitData");
 
     // Convert initialization box to nodal box
@@ -193,9 +193,9 @@ void WarpXFluidContainer::InitData(ablastr::fields::MultiFabRegister& fields, am
 
         amrex::Box const tile_box  = mfi.tilebox(fields.get(name_mf_N, lev)->ixType().toIntVect());
         amrex::Array4<Real> const &N_arr = fields.get(name_mf_N, lev)->array(mfi);
-        amrex::Array4<Real> const &NUx_arr = fields.get(name_mf_NU, Direction{0}, lev)->array(mfi);
-        amrex::Array4<Real> const &NUy_arr = fields.get(name_mf_NU, Direction{1}, lev)->array(mfi);
-        amrex::Array4<Real> const &NUz_arr = fields.get(name_mf_NU, Direction{2}, lev)->array(mfi);
+        amrex::Array4<Real> const &NUx_arr = fields.get(name_mf_NU, 0_dir, lev)->array(mfi);
+        amrex::Array4<Real> const &NUy_arr = fields.get(name_mf_NU, 1_dir, lev)->array(mfi);
+        amrex::Array4<Real> const &NUz_arr = fields.get(name_mf_NU, 2_dir, lev)->array(mfi);
 
         // Return the intersection of all cells and the ones we wish to update
         amrex::Box const init_box_intersection = init_box & tile_box;
@@ -261,8 +261,8 @@ void WarpXFluidContainer::Evolve(
     amrex::Real cur_time,
     bool skip_deposition)
 {
-    using ablastr::fields::Direction;
-    using warpx::fields::FieldType;
+    using ablastr::fields::Dir;
+    using namespace warpx::fields;
 
     WARPX_PROFILE("WarpXFluidContainer::Evolve");
 
@@ -274,12 +274,12 @@ void WarpXFluidContainer::Evolve(
     // Step the Lorentz Term
     if(!do_not_gather){
         GatherAndPush(fields,
-                    *fields.get(FieldType::Efield_aux, Direction{0}, lev),
-                    *fields.get(FieldType::Efield_aux, Direction{1}, lev),
-                    *fields.get(FieldType::Efield_aux, Direction{2}, lev),
-                    *fields.get(FieldType::Bfield_aux, Direction{0}, lev),
-                    *fields.get(FieldType::Bfield_aux, Direction{1}, lev),
-                    *fields.get(FieldType::Bfield_aux, Direction{2}, lev),
+                    *fields.get(FieldType::Efield_aux, 0_dir, lev),
+                    *fields.get(FieldType::Efield_aux, 1_dir, lev),
+                    *fields.get(FieldType::Efield_aux, 2_dir, lev),
+                    *fields.get(FieldType::Bfield_aux, 0_dir, lev),
+                    *fields.get(FieldType::Bfield_aux, 1_dir, lev),
+                    *fields.get(FieldType::Bfield_aux, 2_dir, lev),
                     cur_time, lev);
     }
 
@@ -306,9 +306,9 @@ void WarpXFluidContainer::Evolve(
     // Deposit J to the simulation mesh
     if (!skip_deposition && ! do_not_deposit) {
         DepositCurrent(fields,
-                        *fields.get(current_fp_string, Direction{0}, lev),
-                        *fields.get(current_fp_string, Direction{1}, lev),
-                        *fields.get(current_fp_string, Direction{2}, lev),
+                        *fields.get(current_fp_string, 0_dir, lev),
+                        *fields.get(current_fp_string, 1_dir, lev),
+                        *fields.get(current_fp_string, 2_dir, lev),
                         lev);
     }
 }
@@ -316,7 +316,7 @@ void WarpXFluidContainer::Evolve(
 // Momentum source due to curvature
 void WarpXFluidContainer::ApplyBcFluidsAndComms (ablastr::fields::MultiFabRegister& fields, int lev)
 {
-    using ablastr::fields::Direction;
+    using ablastr::fields::Dir;
     WARPX_PROFILE("WarpXFluidContainer::ApplyBcFluidsAndComms");
 
     WarpX &warpx = WarpX::GetInstance();
@@ -337,9 +337,9 @@ void WarpXFluidContainer::ApplyBcFluidsAndComms (ablastr::fields::MultiFabRegist
         amrex::Box tile_box = mfi.tilebox(fields.get(name_mf_N, lev)->ixType().toIntVect());
 
         const amrex::Array4<Real> N_arr = fields.get(name_mf_N, lev)->array(mfi);
-        const amrex::Array4<Real> NUx_arr = fields.get(name_mf_NU, Direction{0}, lev)->array(mfi);
-        const amrex::Array4<Real> NUy_arr = fields.get(name_mf_NU, Direction{1}, lev)->array(mfi);
-        const amrex::Array4<Real> NUz_arr = fields.get(name_mf_NU, Direction{2}, lev)->array(mfi);
+        const amrex::Array4<Real> NUx_arr = fields.get(name_mf_NU, 0_dir, lev)->array(mfi);
+        const amrex::Array4<Real> NUy_arr = fields.get(name_mf_NU, 1_dir, lev)->array(mfi);
+        const amrex::Array4<Real> NUz_arr = fields.get(name_mf_NU, 2_dir, lev)->array(mfi);
 
         //Grow the tilebox
         tile_box.grow(1);
@@ -412,15 +412,15 @@ void WarpXFluidContainer::ApplyBcFluidsAndComms (ablastr::fields::MultiFabRegist
 
     // Fill guard cells
     FillBoundary(*fields.get(name_mf_N, lev), fields.get(name_mf_N, lev)->nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(*fields.get(name_mf_NU, Direction{0}, lev), fields.get(name_mf_NU, Direction{0}, lev)->nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(*fields.get(name_mf_NU, Direction{1}, lev), fields.get(name_mf_NU, Direction{1}, lev)->nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(*fields.get(name_mf_NU, Direction{2}, lev), fields.get(name_mf_NU, Direction{2}, lev)->nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(*fields.get(name_mf_NU, 0_dir, lev), fields.get(name_mf_NU, Direction{0}, lev)->nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(*fields.get(name_mf_NU, 1_dir, lev), fields.get(name_mf_NU, Direction{1}, lev)->nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(*fields.get(name_mf_NU, 2_dir, lev), fields.get(name_mf_NU, Direction{2}, lev)->nGrowVect(), WarpX::do_single_precision_comms, period);
 }
 
 // Muscl Advection Update
 void WarpXFluidContainer::AdvectivePush_Muscl (ablastr::fields::MultiFabRegister& fields, int lev)
 {
-    using ablastr::fields::Direction;
+    using ablastr::fields::Dir;
     WARPX_PROFILE("WarpXFluidContainer::AdvectivePush_Muscl");
 
     // Grab the grid spacing
@@ -494,9 +494,9 @@ void WarpXFluidContainer::AdvectivePush_Muscl (ablastr::fields::MultiFabRegister
         }();
 
         amrex::Array4<Real> const &N_arr = fields.get(name_mf_N, lev)->array(mfi);
-        amrex::Array4<Real> const &NUx_arr = fields.get(name_mf_NU, Direction{0}, lev)->array(mfi);
-        amrex::Array4<Real> const &NUy_arr = fields.get(name_mf_NU, Direction{1}, lev)->array(mfi);
-        amrex::Array4<Real> const &NUz_arr = fields.get(name_mf_NU, Direction{2}, lev)->array(mfi);
+        amrex::Array4<Real> const &NUx_arr = fields.get(name_mf_NU, 0_dir, lev)->array(mfi);
+        amrex::Array4<Real> const &NUy_arr = fields.get(name_mf_NU, 1_dir, lev)->array(mfi);
+        amrex::Array4<Real> const &NUz_arr = fields.get(name_mf_NU, 2_dir, lev)->array(mfi);
 
         // Boxes are computed to avoid going out of bounds.
         // Grow the entire domain
@@ -762,9 +762,9 @@ void WarpXFluidContainer::AdvectivePush_Muscl (ablastr::fields::MultiFabRegister
     {
         const amrex::Box tile_box = mfi.tilebox(fields.get(name_mf_N, lev)->ixType().toIntVect());
         const amrex::Array4<Real> N_arr = fields.get(name_mf_N, lev)->array(mfi);
-        const amrex::Array4<Real> NUx_arr = fields.get(name_mf_NU, Direction{0}, lev)->array(mfi);
-        const amrex::Array4<Real> NUy_arr = fields.get(name_mf_NU, Direction{1}, lev)->array(mfi);
-        const amrex::Array4<Real> NUz_arr = fields.get(name_mf_NU, Direction{2}, lev)->array(mfi);
+        const amrex::Array4<Real> NUx_arr = fields.get(name_mf_NU, 0_dir, lev)->array(mfi);
+        const amrex::Array4<Real> NUy_arr = fields.get(name_mf_NU, 1_dir, lev)->array(mfi);
+        const amrex::Array4<Real> NUz_arr = fields.get(name_mf_NU, 2_dir, lev)->array(mfi);
 
 #if defined(WARPX_DIM_3D)
         amrex::Array4<amrex::Real> const &U_minus_x = tmp_U_minus_x.array(mfi);
@@ -918,9 +918,9 @@ void WarpXFluidContainer::centrifugal_source_rz (ablastr::fields::MultiFabRegist
         amrex::Box const &tile_box = mfi.tilebox(fields.get(name_mf_N, lev)->ixType().toIntVect());
 
         amrex::Array4<Real> const &N_arr = fields.get(name_mf_N, lev)->array(mfi);
-        const amrex::Array4<Real> NUx_arr = fields.get(name_mf_NU, Direction{0}, lev)->array(mfi);
-        const amrex::Array4<Real> NUy_arr = fields.get(name_mf_NU, Direction{1}, lev)->array(mfi);
-        amrex::Array4<Real> const &NUz_arr = fields.get(name_mf_NU, Direction{2}, lev)->array(mfi);
+        const amrex::Array4<Real> NUx_arr = fields.get(name_mf_NU, 0_dir, lev)->array(mfi);
+        const amrex::Array4<Real> NUy_arr = fields.get(name_mf_NU, 1_dir, lev)->array(mfi);
+        amrex::Array4<Real> const &NUz_arr = fields.get(name_mf_NU, 2_dir, lev)->array(mfi);
 
         amrex::ParallelFor(tile_box,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -971,7 +971,7 @@ void WarpXFluidContainer::GatherAndPush (
     Real t,
     int lev)
 {
-    using ablastr::fields::Direction;
+    using ablastr::fields::Dir;
     WARPX_PROFILE("WarpXFluidContainer::GatherAndPush");
 
     WarpX &warpx = WarpX::GetInstance();
@@ -1041,9 +1041,9 @@ void WarpXFluidContainer::GatherAndPush (
         amrex::Box const &tile_box = mfi.tilebox(fields.get(name_mf_N, lev)->ixType().toIntVect());
 
         amrex::Array4<Real> const &N_arr = fields.get(name_mf_N, lev)->array(mfi);
-        const amrex::Array4<Real> NUx_arr = fields.get(name_mf_NU, Direction{0}, lev)->array(mfi);
-        const amrex::Array4<Real> NUy_arr = fields.get(name_mf_NU, Direction{1}, lev)->array(mfi);
-        const amrex::Array4<Real> NUz_arr = fields.get(name_mf_NU, Direction{2}, lev)->array(mfi);
+        const amrex::Array4<Real> NUx_arr = fields.get(name_mf_NU, 0_dir, lev)->array(mfi);
+        const amrex::Array4<Real> NUy_arr = fields.get(name_mf_NU, 1_dir, lev)->array(mfi);
+        const amrex::Array4<Real> NUz_arr = fields.get(name_mf_NU, 2_dir, lev)->array(mfi);
 
         amrex::Array4<const amrex::Real> const& Ex_arr = Ex.array(mfi);
         amrex::Array4<const amrex::Real> const& Ey_arr = Ey.array(mfi);
@@ -1279,7 +1279,7 @@ void WarpXFluidContainer::DepositCurrent(
     amrex::MultiFab &jx, amrex::MultiFab &jy, amrex::MultiFab &jz,
     int lev)
 {
-    using ablastr::fields::Direction;
+    using ablastr::fields::Dir;
     WARPX_PROFILE("WarpXFluidContainer::DepositCurrent");
 
     // Temporary nodal currents
@@ -1320,9 +1320,9 @@ void WarpXFluidContainer::DepositCurrent(
         amrex::Box const &tile_box = mfi.tilebox(fields.get(name_mf_N, lev)->ixType().toIntVect());
 
         amrex::Array4<Real> const &N_arr = fields.get(name_mf_N, lev)->array(mfi);
-        amrex::Array4<Real> const &NUx_arr = fields.get(name_mf_NU, Direction{0}, lev)->array(mfi);
-        amrex::Array4<Real> const &NUy_arr = fields.get(name_mf_NU, Direction{1}, lev)->array(mfi);
-        amrex::Array4<Real> const &NUz_arr = fields.get(name_mf_NU, Direction{2}, lev)->array(mfi);
+        amrex::Array4<Real> const &NUx_arr = fields.get(name_mf_NU, 0_dir, lev)->array(mfi);
+        amrex::Array4<Real> const &NUy_arr = fields.get(name_mf_NU, 1_dir, lev)->array(mfi);
+        amrex::Array4<Real> const &NUz_arr = fields.get(name_mf_NU, 2_dir, lev)->array(mfi);
 
         const amrex::Array4<amrex::Real> tmp_jx_fluid_arr = tmp_jx_fluid.array(mfi);
         const amrex::Array4<amrex::Real> tmp_jy_fluid_arr = tmp_jy_fluid.array(mfi);

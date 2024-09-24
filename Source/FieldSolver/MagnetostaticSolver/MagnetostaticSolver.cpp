@@ -73,8 +73,8 @@ WarpX::ComputeMagnetostaticField()
 void
 WarpX::AddMagnetostaticFieldLabFrame()
 {
-    using ablastr::fields::Direction;
-    using warpx::fields::FieldType;
+    using ablastr::fields::Dir;
+    using namespace warpx::fields;
 
     WARPX_PROFILE("WarpX::AddMagnetostaticFieldLabFrame");
 
@@ -92,7 +92,7 @@ WarpX::AddMagnetostaticFieldLabFrame()
     // reset current_fp before depositing current density for this step
     for (int lev = 0; lev <= max_level; lev++) {
         for (int dim=0; dim < 3; dim++) {
-            m_fields.get(FieldType::current_fp, Direction{dim}, lev)->setVal(0.);
+            m_fields.get(FieldType::current_fp, Dir{dim}, lev)->setVal(0.);
         }
     }
 
@@ -109,9 +109,9 @@ WarpX::AddMagnetostaticFieldLabFrame()
 #ifdef WARPX_DIM_RZ
     for (int lev = 0; lev <= max_level; lev++) {
         ApplyInverseVolumeScalingToCurrentDensity(
-            m_fields.get(FieldType::current_fp, Direction{0}, lev),
-            m_fields.get(FieldType::current_fp, Direction{1}, lev),
-            m_fields.get(FieldType::current_fp, Direction{2}, lev),
+            m_fields.get(FieldType::current_fp, 0_dir, lev),
+            m_fields.get(FieldType::current_fp, 1_dir, lev),
+            m_fields.get(FieldType::current_fp, 2_dir, lev),
             lev );
     }
 #endif
@@ -163,19 +163,19 @@ WarpX::computeVectorPotential (ablastr::fields::MultiLevelVectorField const& cur
                                int const max_iters,
                                int const verbosity) // const // This breaks non-const m_fields.get_mr_levels_alldirs
 {
-    using ablastr::fields::Direction;
-    using warpx::fields::FieldType;
+    using ablastr::fields::Dir;
+    using namespace warpx::fields;
 
     // create a vector to our fields, sorted by level
     amrex::Vector<amrex::Array<amrex::MultiFab*,3>> sorted_curr;
     amrex::Vector<amrex::Array<amrex::MultiFab*,3>> sorted_A;
     for (int lev = 0; lev <= finest_level; ++lev) {
-        sorted_curr.emplace_back(amrex::Array<amrex::MultiFab*,3> ({curr[lev][Direction{0}],
-                                                                    curr[lev][Direction{1}],
-                                                                    curr[lev][Direction{2}]}));
-        sorted_A.emplace_back(amrex::Array<amrex::MultiFab*,3> ({A[lev][Direction{0}],
-                                                                 A[lev][Direction{1}],
-                                                                 A[lev][Direction{2}]}));
+        sorted_curr.emplace_back(amrex::Array<amrex::MultiFab*,3> ({curr[lev][0_dir],
+                                                                    curr[lev][1_dir],
+                                                                    curr[lev][2_dir]}));
+        sorted_A.emplace_back(amrex::Array<amrex::MultiFab*,3> ({A[lev][0_dir],
+                                                                 A[lev][1_dir],
+                                                                 A[lev][2_dir]}));
     }
 
 #if defined(AMREX_USE_EB)
@@ -230,7 +230,7 @@ WarpX::computeVectorPotential (ablastr::fields::MultiLevelVectorField const& cur
 void
 WarpX::setVectorPotentialBC (ablastr::fields::MultiLevelVectorField const& A) const
 {
-    using ablastr::fields::Direction;
+    using ablastr::fields::Dir;
 
     // check if any dimension has non-periodic boundary conditions
     if (!m_vector_poisson_boundary_handler.has_non_periodic) { return; }
@@ -246,11 +246,11 @@ WarpX::setVectorPotentialBC (ablastr::fields::MultiLevelVectorField const& A) co
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-            for ( MFIter mfi(*A[lev][Direction{adim}], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+            for ( MFIter mfi(*A[lev][Dir{adim}], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
                 // Extract the vector potential
-                auto A_arr = A[lev][Direction{adim}]->array(mfi);
+                auto A_arr = A[lev][Dir{adim}]->array(mfi);
                 // Extract tileboxes for which to loop
-                const Box& tb  = mfi.tilebox( A[lev][Direction{adim}]->ixType().toIntVect());
+                const Box& tb  = mfi.tilebox( A[lev][Dir{adim}]->ixType().toIntVect());
 
                 // loop over dimensions
                 for (int idim=0; idim<AMREX_SPACEDIM; idim++){

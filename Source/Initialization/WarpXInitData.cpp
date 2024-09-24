@@ -504,8 +504,8 @@ WarpX::InitData ()
 {
     WARPX_PROFILE("WarpX::InitData()");
 
-    using ablastr::fields::Direction;
-    using warpx::fields::FieldType;
+    using ablastr::fields::Dir;
+    using namespace warpx::fields;
 
     ablastr::parallelization::check_mpi_thread_level();
 
@@ -558,9 +558,9 @@ WarpX::InitData ()
         const int lev_zero = 0;
         m_macroscopic_properties->InitData(
             Geom(lev_zero),
-            m_fields.get(FieldType::Efield_fp, Direction{0}, lev_zero)->ixType().toIntVect(),
-            m_fields.get(FieldType::Efield_fp, Direction{1}, lev_zero)->ixType().toIntVect(),
-            m_fields.get(FieldType::Efield_fp, Direction{2}, lev_zero)->ixType().toIntVect()
+            m_fields.get(FieldType::Efield_fp, 0_dir, lev_zero)->ixType().toIntVect(),
+            m_fields.get(FieldType::Efield_fp, 1_dir, lev_zero)->ixType().toIntVect(),
+            m_fields.get(FieldType::Efield_fp, 2_dir, lev_zero)->ixType().toIntVect()
         );
     }
 
@@ -634,8 +634,8 @@ WarpX::InitData ()
 void
 WarpX::AddExternalFields (int const lev)
 {
-    using ablastr::fields::Direction;
-    using warpx::fields::FieldType;
+    using ablastr::fields::Dir;
+    using namespace warpx::fields;
 
     // FIXME: RZ multimode has more than one component for all these
     if (m_p_ext_field_params->E_ext_grid_type != ExternalFieldType::default_zero) {
@@ -646,9 +646,9 @@ WarpX::AddExternalFields (int const lev)
             Efield_fp[lev][2]->plus(m_p_ext_field_params->E_external_grid[2], guard_cells.ng_alloc_EB.min());
         }
         else {
-            amrex::MultiFab::Add(*Efield_fp[lev][0], *m_fields.get(FieldType::Efield_fp_external, Direction{0}, lev), 0, 0, 1, guard_cells.ng_alloc_EB);
-            amrex::MultiFab::Add(*Efield_fp[lev][1], *m_fields.get(FieldType::Efield_fp_external, Direction{1}, lev), 0, 0, 1, guard_cells.ng_alloc_EB);
-            amrex::MultiFab::Add(*Efield_fp[lev][2], *m_fields.get(FieldType::Efield_fp_external, Direction{2}, lev), 0, 0, 1, guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Efield_fp[lev][0], *m_fields.get(FieldType::Efield_fp_external, 0_dir, lev), 0, 0, 1, guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Efield_fp[lev][1], *m_fields.get(FieldType::Efield_fp_external, 1_dir, lev), 0, 0, 1, guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Efield_fp[lev][2], *m_fields.get(FieldType::Efield_fp_external, 2_dir, lev), 0, 0, 1, guard_cells.ng_alloc_EB);
         }
     }
     if (m_p_ext_field_params->B_ext_grid_type != ExternalFieldType::default_zero) {
@@ -659,9 +659,9 @@ WarpX::AddExternalFields (int const lev)
             Bfield_fp[lev][2]->plus(m_p_ext_field_params->B_external_grid[2], guard_cells.ng_alloc_EB.min());
         }
         else {
-            amrex::MultiFab::Add(*Bfield_fp[lev][0], *m_fields.get(FieldType::Bfield_fp_external, Direction{0}, lev), 0, 0, 1, guard_cells.ng_alloc_EB);
-            amrex::MultiFab::Add(*Bfield_fp[lev][1], *m_fields.get(FieldType::Bfield_fp_external, Direction{1}, lev), 0, 0, 1, guard_cells.ng_alloc_EB);
-            amrex::MultiFab::Add(*Bfield_fp[lev][2], *m_fields.get(FieldType::Bfield_fp_external, Direction{2}, lev), 0, 0, 1, guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Bfield_fp[lev][0], *m_fields.get(FieldType::Bfield_fp_external, 0_dir, lev), 0, 0, 1, guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Bfield_fp[lev][1], *m_fields.get(FieldType::Bfield_fp_external, 1_dir, lev), 0, 0, 1, guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Bfield_fp[lev][2], *m_fields.get(FieldType::Bfield_fp_external, 2_dir, lev), 0, 0, 1, guard_cells.ng_alloc_EB);
         }
     }
 }
@@ -910,8 +910,8 @@ WarpX::PostRestart ()
 void
 WarpX::InitLevelData (int lev, Real /*time*/)
 {
-    using ablastr::fields::Direction;
-    using warpx::fields::FieldType;
+    using ablastr::fields::Dir;
+    using namespace warpx::fields;
 
     // initialize the averaged fields only if the averaged algorithm
     // is activated ('psatd.do_time_averaging=1')
@@ -928,14 +928,14 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         if ( is_B_ext_const && (lev <= maxlevel_extEMfield_init) )
         {
             if (fft_do_time_averaging) {
-                m_fields.get(FieldType::Bfield_avg_fp, Direction{i}, lev)->setVal(m_p_ext_field_params->B_external_grid[i]);
+                m_fields.get(FieldType::Bfield_avg_fp, Dir{i}, lev)->setVal(m_p_ext_field_params->B_external_grid[i]);
             }
 
            if (lev > 0) {
-                m_fields.get(FieldType::Bfield_aux, Direction{i}, lev)->setVal(m_p_ext_field_params->B_external_grid[i]);
-                m_fields.get(FieldType::Bfield_cp, Direction{i}, lev)->setVal(m_p_ext_field_params->B_external_grid[i]);
+                m_fields.get(FieldType::Bfield_aux, Dir{i}, lev)->setVal(m_p_ext_field_params->B_external_grid[i]);
+                m_fields.get(FieldType::Bfield_cp, Dir{i}, lev)->setVal(m_p_ext_field_params->B_external_grid[i]);
                 if (fft_do_time_averaging) {
-                    m_fields.get(FieldType::Bfield_avg_cp, Direction{i}, lev)->setVal(m_p_ext_field_params->B_external_grid[i]);
+                    m_fields.get(FieldType::Bfield_avg_cp, Dir{i}, lev)->setVal(m_p_ext_field_params->B_external_grid[i]);
                 }
            }
         }
@@ -948,13 +948,13 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         if ( is_E_ext_const && (lev <= maxlevel_extEMfield_init) )
         {
             if (fft_do_time_averaging) {
-                m_fields.get(FieldType::Efield_avg_fp, Direction{i}, lev)->setVal(m_p_ext_field_params->E_external_grid[i]);
+                m_fields.get(FieldType::Efield_avg_fp, Dir{i}, lev)->setVal(m_p_ext_field_params->E_external_grid[i]);
             }
             if (lev > 0) {
-                m_fields.get(FieldType::Efield_aux, Direction{i}, lev)->setVal(m_p_ext_field_params->E_external_grid[i]);
-                m_fields.get(FieldType::Efield_cp, Direction{i}, lev)->setVal(m_p_ext_field_params->E_external_grid[i]);
+                m_fields.get(FieldType::Efield_aux, Dir{i}, lev)->setVal(m_p_ext_field_params->E_external_grid[i]);
+                m_fields.get(FieldType::Efield_cp, Dir{i}, lev)->setVal(m_p_ext_field_params->E_external_grid[i]);
                 if (fft_do_time_averaging) {
-                    m_fields.get(FieldType::Efield_avg_cp, Direction{i}, lev)->setVal(m_p_ext_field_params->E_external_grid[i]);
+                    m_fields.get(FieldType::Efield_avg_cp, Dir{i}, lev)->setVal(m_p_ext_field_params->E_external_grid[i]);
                 }
             }
         }
@@ -974,9 +974,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
          && (lev > 0) && (lev <= maxlevel_extEMfield_init)) {
 
         InitializeExternalFieldsOnGridUsingParser(
-            m_fields.get(FieldType::Bfield_aux, Direction{0}, lev),
-            m_fields.get(FieldType::Bfield_aux, Direction{1}, lev),
-            m_fields.get(FieldType::Bfield_aux, Direction{2}, lev),
+            m_fields.get(FieldType::Bfield_aux, 0_dir, lev),
+            m_fields.get(FieldType::Bfield_aux, 1_dir, lev),
+            m_fields.get(FieldType::Bfield_aux, 2_dir, lev),
             m_p_ext_field_params->Bxfield_parser->compile<3>(),
             m_p_ext_field_params->Byfield_parser->compile<3>(),
             m_p_ext_field_params->Bzfield_parser->compile<3>(),
@@ -986,9 +986,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
             lev, PatchType::fine);
 
         InitializeExternalFieldsOnGridUsingParser(
-            m_fields.get(FieldType::Bfield_cp, Direction{0}, lev),
-            m_fields.get(FieldType::Bfield_cp, Direction{1}, lev),
-            m_fields.get(FieldType::Bfield_cp, Direction{2}, lev),
+            m_fields.get(FieldType::Bfield_cp, 0_dir, lev),
+            m_fields.get(FieldType::Bfield_cp, 1_dir, lev),
+            m_fields.get(FieldType::Bfield_cp, 2_dir, lev),
             m_p_ext_field_params->Bxfield_parser->compile<3>(),
             m_p_ext_field_params->Byfield_parser->compile<3>(),
             m_p_ext_field_params->Bzfield_parser->compile<3>(),
@@ -1022,9 +1022,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 
         if (lev > 0) {
             InitializeExternalFieldsOnGridUsingParser(
-                m_fields.get(FieldType::Efield_aux, Direction{0}, lev),
-                m_fields.get(FieldType::Efield_aux, Direction{1}, lev),
-                m_fields.get(FieldType::Efield_aux, Direction{2}, lev),
+                m_fields.get(FieldType::Efield_aux, 0_dir, lev),
+                m_fields.get(FieldType::Efield_aux, 1_dir, lev),
+                m_fields.get(FieldType::Efield_aux, 2_dir, lev),
                 m_p_ext_field_params->Exfield_parser->compile<3>(),
                 m_p_ext_field_params->Eyfield_parser->compile<3>(),
                 m_p_ext_field_params->Ezfield_parser->compile<3>(),
@@ -1034,9 +1034,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                 lev, PatchType::fine);
 
             InitializeExternalFieldsOnGridUsingParser(
-                m_fields.get(FieldType::Efield_cp, Direction{0}, lev),
-                m_fields.get(FieldType::Efield_cp, Direction{1}, lev),
-                m_fields.get(FieldType::Efield_cp, Direction{2}, lev),
+                m_fields.get(FieldType::Efield_cp, 0_dir, lev),
+                m_fields.get(FieldType::Efield_cp, 1_dir, lev),
+                m_fields.get(FieldType::Efield_cp, 2_dir, lev),
                 m_p_ext_field_params->Exfield_parser->compile<3>(),
                 m_p_ext_field_params->Eyfield_parser->compile<3>(),
                 m_p_ext_field_params->Ezfield_parser->compile<3>(),
@@ -1292,7 +1292,7 @@ void WarpX::InitializeEBGridData (int lev)
 
         if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD )
         {
-            using warpx::fields::FieldType;
+            using namespace warpx::fields;
 
             auto const eb_fact = fieldEBFactory(lev);
 
@@ -1367,8 +1367,8 @@ void WarpX::CheckKnownIssues()
 void
 WarpX::LoadExternalFields (int const lev)
 {
-    using ablastr::fields::Direction;
-    using warpx::fields::FieldType;
+    using ablastr::fields::Dir;
+    using namespace warpx::fields;
 
     // External fields from file are currently not compatible with the moving window
     // In order to support the moving window, the MultiFab containing the external
@@ -1387,9 +1387,9 @@ WarpX::LoadExternalFields (int const lev)
     if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::parse_ext_grid_function) {
         // Initialize Bfield_fp_external with external function
         InitializeExternalFieldsOnGridUsingParser(
-            m_fields.get(FieldType::Bfield_fp_external, Direction{0}, lev),
-            m_fields.get(FieldType::Bfield_fp_external, Direction{1}, lev),
-            m_fields.get(FieldType::Bfield_fp_external, Direction{2}, lev),
+            m_fields.get(FieldType::Bfield_fp_external, 0_dir, lev),
+            m_fields.get(FieldType::Bfield_fp_external, 1_dir, lev),
+            m_fields.get(FieldType::Bfield_fp_external, 2_dir, lev),
             m_p_ext_field_params->Bxfield_parser->compile<3>(),
             m_p_ext_field_params->Byfield_parser->compile<3>(),
             m_p_ext_field_params->Bzfield_parser->compile<3>(),
@@ -1402,22 +1402,22 @@ WarpX::LoadExternalFields (int const lev)
 #if defined(WARPX_DIM_RZ)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
                                          "External field reading is not implemented for more than one RZ mode (see #3829)");
-        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get(FieldType::Bfield_fp_external,Direction{0},lev), "B", "r");
-        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get(FieldType::Bfield_fp_external,Direction{1},lev), "B", "t");
-        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get(FieldType::Bfield_fp_external,Direction{2},lev), "B", "z");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get(FieldType::Bfield_fp_external,0_dir,lev), "B", "r");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get(FieldType::Bfield_fp_external,1_dir,lev), "B", "t");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get(FieldType::Bfield_fp_external,2_dir,lev), "B", "z");
 #else
-        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get(FieldType::Bfield_fp_external, Direction{0}, lev), "B", "x");
-        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get(FieldType::Bfield_fp_external, Direction{1}, lev), "B", "y");
-        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get(FieldType::Bfield_fp_external, Direction{2}, lev), "B", "z");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get(FieldType::Bfield_fp_external, 0_dir, lev), "B", "x");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get(FieldType::Bfield_fp_external, 1_dir, lev), "B", "y");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get(FieldType::Bfield_fp_external, 2_dir, lev), "B", "z");
 #endif
     }
 
     if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::parse_ext_grid_function) {
         // Initialize Efield_fp_external with external function
         InitializeExternalFieldsOnGridUsingParser(
-            m_fields.get(FieldType::Efield_fp_external, Direction{0}, lev),
-            m_fields.get(FieldType::Efield_fp_external, Direction{1}, lev),
-            m_fields.get(FieldType::Efield_fp_external, Direction{2}, lev),
+            m_fields.get(FieldType::Efield_fp_external, 0_dir, lev),
+            m_fields.get(FieldType::Efield_fp_external, 1_dir, lev),
+            m_fields.get(FieldType::Efield_fp_external, 2_dir, lev),
             m_p_ext_field_params->Exfield_parser->compile<3>(),
             m_p_ext_field_params->Eyfield_parser->compile<3>(),
             m_p_ext_field_params->Ezfield_parser->compile<3>(),
@@ -1430,13 +1430,13 @@ WarpX::LoadExternalFields (int const lev)
 #if defined(WARPX_DIM_RZ)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
                                          "External field reading is not implemented for more than one RZ mode (see #3829)");
-        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get(FieldType::Efield_fp_external,Direction{0},lev), "E", "r");
-        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get(FieldType::Efield_fp_external,Direction{1},lev), "E", "t");
-        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get(FieldType::Efield_fp_external,Direction{2},lev), "E", "z");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get(FieldType::Efield_fp_external,0_dir,lev), "E", "r");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get(FieldType::Efield_fp_external,1_dir,lev), "E", "t");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get(FieldType::Efield_fp_external,2_dir,lev), "E", "z");
 #else
-        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get(FieldType::Efield_fp_external, Direction{0}, lev), "E", "x");
-        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get(FieldType::Efield_fp_external, Direction{1}, lev), "E", "y");
-        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get(FieldType::Efield_fp_external, Direction{2}, lev), "E", "z");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get(FieldType::Efield_fp_external, 0_dir, lev), "E", "x");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get(FieldType::Efield_fp_external, 1_dir, lev), "E", "y");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, m_fields.get(FieldType::Efield_fp_external, 2_dir, lev), "E", "z");
 #endif
     }
 
@@ -1454,23 +1454,23 @@ WarpX::LoadExternalFields (int const lev)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
                                          "External field reading is not implemented for more than one RZ mode (see #3829)");
         ReadExternalFieldFromFile(external_fields_path,
-            m_fields.get(FieldType::B_external_particle_field, Direction{0}, lev),
+            m_fields.get(FieldType::B_external_particle_field, 0_dir, lev),
             "B", "r");
         ReadExternalFieldFromFile(external_fields_path,
-            m_fields.get(FieldType::B_external_particle_field, Direction{1}, lev),
+            m_fields.get(FieldType::B_external_particle_field, 1_dir, lev),
             "B", "t");
         ReadExternalFieldFromFile(external_fields_path,
-            m_fields.get(FieldType::B_external_particle_field, Direction{2}, lev),
+            m_fields.get(FieldType::B_external_particle_field, 2_dir, lev),
             "B", "z");
 #else
         ReadExternalFieldFromFile(external_fields_path,
-            m_fields.get(FieldType::B_external_particle_field, Direction{0}, lev),
+            m_fields.get(FieldType::B_external_particle_field, 0_dir, lev),
             "B", "x");
         ReadExternalFieldFromFile(external_fields_path,
-            m_fields.get(FieldType::B_external_particle_field, Direction{1}, lev),
+            m_fields.get(FieldType::B_external_particle_field, 1_dir, lev),
             "B", "y");
         ReadExternalFieldFromFile(external_fields_path,
-            m_fields.get(FieldType::B_external_particle_field, Direction{2}, lev),
+            m_fields.get(FieldType::B_external_particle_field, 2_dir, lev),
             "B", "z");
 #endif
     }
@@ -1482,23 +1482,23 @@ WarpX::LoadExternalFields (int const lev)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
                                          "External field reading is not implemented for more than one RZ mode (see #3829)");
         ReadExternalFieldFromFile(external_fields_path,
-            m_fields.get(FieldType::E_external_particle_field, Direction{0}, lev),
+            m_fields.get(FieldType::E_external_particle_field, 0_dir, lev),
             "E", "r");
         ReadExternalFieldFromFile(external_fields_path,
-            m_fields.get(FieldType::E_external_particle_field, Direction{1}, lev),
+            m_fields.get(FieldType::E_external_particle_field, 1_dir, lev),
             "E", "t");
         ReadExternalFieldFromFile(external_fields_path,
-            m_fields.get(FieldType::E_external_particle_field, Direction{2}, lev),
+            m_fields.get(FieldType::E_external_particle_field, 2_dir, lev),
             "E", "z");
 #else
         ReadExternalFieldFromFile(external_fields_path,
-            m_fields.get(FieldType::E_external_particle_field, Direction{0}, lev),
+            m_fields.get(FieldType::E_external_particle_field, 0_dir, lev),
             "E", "x");
         ReadExternalFieldFromFile(external_fields_path,
-            m_fields.get(FieldType::E_external_particle_field, Direction{1}, lev),
+            m_fields.get(FieldType::E_external_particle_field, 1_dir, lev),
             "E", "y");
         ReadExternalFieldFromFile(external_fields_path,
-            m_fields.get(FieldType::E_external_particle_field, Direction{2}, lev),
+            m_fields.get(FieldType::E_external_particle_field, 2_dir, lev),
             "E", "z");
 #endif
     }

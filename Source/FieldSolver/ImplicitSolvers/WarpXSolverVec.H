@@ -88,6 +88,8 @@ public:
     inline
     void Copy ( const WarpXSolverVec&  a_solver_vec )
     {
+        using namespace warpx::fields;
+
         assertIsDefined( a_solver_vec );
         if (IsDefined()) { assertSameType( a_solver_vec ); }
         else { Define(a_solver_vec); }
@@ -95,8 +97,8 @@ public:
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
             if (m_array_type != warpx::fields::FieldType::None) {
                 for (int n = 0; n < 3; ++n) {
-                    const amrex::MultiFab* this_field = a_solver_vec.getArrayVec()[lev][n];
-                    amrex::MultiFab::Copy( *m_array_vec[lev][n], *this_field, 0, 0, m_ncomp,
+                    const amrex::MultiFab* this_field = a_solver_vec.getArrayVec()[lev][Dir{n}];
+                    amrex::MultiFab::Copy( *m_array_vec[lev][Dir{n}], *this_field, 0, 0, m_ncomp,
                                            amrex::IntVect::TheZeroVector() );
                 }
             }
@@ -128,13 +130,15 @@ public:
     inline
     void operator+= ( const WarpXSolverVec&  a_solver_vec )
     {
+        using namespace warpx::fields;
+
         assertIsDefined( a_solver_vec );
         assertSameType( a_solver_vec );
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
             if (m_array_type != warpx::fields::FieldType::None) {
-                m_array_vec[lev][0]->plus(*(a_solver_vec.getArrayVec()[lev][0]), 0, 1, 0);
-                m_array_vec[lev][1]->plus(*(a_solver_vec.getArrayVec()[lev][1]), 0, 1, 0);
-                m_array_vec[lev][2]->plus(*(a_solver_vec.getArrayVec()[lev][2]), 0, 1, 0);
+                m_array_vec[lev][0_dir]->plus(*(a_solver_vec.getArrayVec()[lev][0_dir]), 0, 1, 0);
+                m_array_vec[lev][1_dir]->plus(*(a_solver_vec.getArrayVec()[lev][1_dir]), 0, 1, 0);
+                m_array_vec[lev][2_dir]->plus(*(a_solver_vec.getArrayVec()[lev][2_dir]), 0, 1, 0);
             }
             if (m_scalar_type != warpx::fields::FieldType::None) {
                 m_scalar_vec[lev]->plus(*(a_solver_vec.getScalarVec()[lev]), 0, 1, 0);
@@ -145,13 +149,15 @@ public:
     inline
     void operator-= (const WarpXSolverVec& a_solver_vec)
     {
+        using namespace warpx::fields;
+
         assertIsDefined( a_solver_vec );
         assertSameType( a_solver_vec );
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
             if (m_array_type != warpx::fields::FieldType::None) {
-                m_array_vec[lev][0]->minus(*(a_solver_vec.getArrayVec()[lev][0]), 0, 1, 0);
-                m_array_vec[lev][1]->minus(*(a_solver_vec.getArrayVec()[lev][1]), 0, 1, 0);
-                m_array_vec[lev][2]->minus(*(a_solver_vec.getArrayVec()[lev][2]), 0, 1, 0);
+                m_array_vec[lev][0_dir]->minus(*(a_solver_vec.getArrayVec()[lev][0_dir]), 0, 1, 0);
+                m_array_vec[lev][1_dir]->minus(*(a_solver_vec.getArrayVec()[lev][1_dir]), 0, 1, 0);
+                m_array_vec[lev][2_dir]->minus(*(a_solver_vec.getArrayVec()[lev][2_dir]), 0, 1, 0);
             }
             if (m_scalar_type != warpx::fields::FieldType::None) {
                 m_scalar_vec[lev]->minus(*(a_solver_vec.getScalarVec()[lev]), 0, 1, 0);
@@ -165,6 +171,8 @@ public:
     inline
     void linComb (const RT a, const WarpXSolverVec& X, const RT b, const WarpXSolverVec& Y)
     {
+        using namespace warpx::fields;
+
         assertIsDefined( X );
         assertIsDefined( Y );
         assertSameType( X );
@@ -172,8 +180,8 @@ public:
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
             if (m_array_type != warpx::fields::FieldType::None) {
                 for (int n = 0; n < 3; n++) {
-                    amrex::MultiFab::LinComb(*m_array_vec[lev][n], a, *X.getArrayVec()[lev][n], 0,
-                                                                   b, *Y.getArrayVec()[lev][n], 0,
+                    amrex::MultiFab::LinComb(*m_array_vec[lev][Dir{n}], a, *X.getArrayVec()[lev][Dir{n}], 0,
+                                                                   b, *Y.getArrayVec()[lev][Dir{n}], 0,
                                                                    0, 1, 0);
                 }
             }
@@ -190,12 +198,14 @@ public:
      */
     void increment (const WarpXSolverVec& X, const RT a)
     {
+        using namespace warpx::fields;
+
         assertIsDefined( X );
         assertSameType( X );
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
             if (m_array_type != warpx::fields::FieldType::None) {
                 for (int n = 0; n < 3; n++) {
-                    amrex::MultiFab::Saxpy( *m_array_vec[lev][n], a, *X.getArrayVec()[lev][n],
+                    amrex::MultiFab::Saxpy( *m_array_vec[lev][Dir{n}], a, *X.getArrayVec()[lev][Dir{n}],
                                             0, 0, 1, amrex::IntVect::TheZeroVector() );
                 }
             }
@@ -215,11 +225,14 @@ public:
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             IsDefined(),
             "WarpXSolverVec::scale() called on undefined WarpXSolverVec");
+
+        using namespace warpx::fields;
+
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
             if (m_array_type != warpx::fields::FieldType::None) {
-                m_array_vec[lev][0]->mult(a_a, 0, 1);
-                m_array_vec[lev][1]->mult(a_a, 0, 1);
-                m_array_vec[lev][2]->mult(a_a, 0, 1);
+                m_array_vec[lev][0_dir]->mult(a_a, 0, 1);
+                m_array_vec[lev][1_dir]->mult(a_a, 0, 1);
+                m_array_vec[lev][2_dir]->mult(a_a, 0, 1);
             }
             if (m_scalar_type != warpx::fields::FieldType::None) {
                 m_scalar_vec[lev]->mult(a_a, 0, 1);
@@ -236,11 +249,14 @@ public:
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             IsDefined(),
             "WarpXSolverVec::setVal() called on undefined WarpXSolverVec");
+
+        using namespace warpx::fields;
+
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
             if (m_array_type != warpx::fields::FieldType::None) {
-                m_array_vec[lev][0]->setVal(a_val);
-                m_array_vec[lev][1]->setVal(a_val);
-                m_array_vec[lev][2]->setVal(a_val);
+                m_array_vec[lev][0_dir]->setVal(a_val);
+                m_array_vec[lev][1_dir]->setVal(a_val);
+                m_array_vec[lev][2_dir]->setVal(a_val);
             }
             if (m_scalar_type != warpx::fields::FieldType::None) {
                 m_scalar_vec[lev]->setVal(a_val);
@@ -271,11 +287,11 @@ public:
         return std::sqrt(norm);
     }
 
-    [[nodiscard]] const ablastr::fields::MultiLevelVectorField& getArrayVec() const {return m_array_vec;}
-    ablastr::fields::MultiLevelVectorField& getArrayVec() {return m_array_vec;}
+    [[nodiscard]] ablastr::fields::ConstMultiLevelVectorField const & getArrayVec () const {return m_array_vec; }
+    [[nodiscard]] ablastr::fields::MultiLevelVectorField& getArrayVec () {return m_array_vec;}
 
-    [[nodiscard]] const ablastr::fields::MultiLevelScalarField& getScalarVec() const {return m_scalar_vec;}
-    ablastr::fields::MultiLevelScalarField& getScalarVec() {return m_scalar_vec;}
+    [[nodiscard]] ablastr::fields::ConstMultiLevelScalarField const & getScalarVec () const {return m_scalar_vec;}
+    [[nodiscard]] ablastr::fields::MultiLevelScalarField& getScalarVec () {return m_scalar_vec;}
 
     // solver vector types are type warpx::fields::FieldType
     [[nodiscard]] warpx::fields::FieldType getArrayVecType () const { return m_array_type; }

@@ -87,9 +87,9 @@ public:
     template<typename ReduceOp>
     void ComputeFieldReduction()
     {
-        using ablastr::fields::Direction;
+        using ablastr::fields::Dir;
         using namespace amrex::literals;
-        using warpx::fields::FieldType;
+        using namespace warpx::fields;
 
         // get a reference to WarpX instance
         auto & warpx = WarpX::GetInstance();
@@ -101,15 +101,15 @@ public:
         const auto dx = geom.CellSizeArray();
 
         // get MultiFab data
-        const amrex::MultiFab & Ex = *warpx.m_fields.get(FieldType::Efield_aux, Direction{0}, lev);
-        const amrex::MultiFab & Ey = *warpx.m_fields.get(FieldType::Efield_aux, Direction{1}, lev);
-        const amrex::MultiFab & Ez = *warpx.m_fields.get(FieldType::Efield_aux, Direction{2}, lev);
-        const amrex::MultiFab & Bx = *warpx.m_fields.get(FieldType::Bfield_aux, Direction{0}, lev);
-        const amrex::MultiFab & By = *warpx.m_fields.get(FieldType::Bfield_aux, Direction{1}, lev);
-        const amrex::MultiFab & Bz = *warpx.m_fields.get(FieldType::Bfield_aux, Direction{2}, lev);
-        const amrex::MultiFab & jx = *warpx.m_fields.get(FieldType::current_fp, Direction{0},lev);
-        const amrex::MultiFab & jy = *warpx.m_fields.get(FieldType::current_fp, Direction{1},lev);
-        const amrex::MultiFab & jz = *warpx.m_fields.get(FieldType::current_fp, Direction{2},lev);
+        const amrex::MultiFab & Ex = *warpx.m_fields.get(FieldType::Efield_aux, 0_dir, lev);
+        const amrex::MultiFab & Ey = *warpx.m_fields.get(FieldType::Efield_aux, 1_dir, lev);
+        const amrex::MultiFab & Ez = *warpx.m_fields.get(FieldType::Efield_aux, 2_dir, lev);
+        const amrex::MultiFab & Bx = *warpx.m_fields.get(FieldType::Bfield_aux, 0_dir, lev);
+        const amrex::MultiFab & By = *warpx.m_fields.get(FieldType::Bfield_aux, 1_dir, lev);
+        const amrex::MultiFab & Bz = *warpx.m_fields.get(FieldType::Bfield_aux, 2_dir, lev);
+        const amrex::MultiFab & jx = *warpx.m_fields.get(FieldType::current_fp, 0_dir,lev);
+        const amrex::MultiFab & jy = *warpx.m_fields.get(FieldType::current_fp, 1_dir,lev);
+        const amrex::MultiFab & jz = *warpx.m_fields.get(FieldType::current_fp, 2_dir,lev);
 
 
         // General preparation of interpolation and reduction operations

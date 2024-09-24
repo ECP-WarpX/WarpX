@@ -1343,7 +1343,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
 #ifdef AMREX_USE_EB
     if (EB::enabled())
     {
-        using warpx::fields::FieldType;
+        using namespace warpx::fields;
         auto & warpx = WarpX::GetInstance();
         scrapeParticlesAtEB(
             *this,
@@ -1714,7 +1714,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 #ifdef AMREX_USE_EB
     if (EB::enabled())
     {
-        using warpx::fields::FieldType;
+        using namespace warpx::fields;
         auto & warpx = WarpX::GetInstance();
         scrapeParticlesAtEB(
             tmp_pc,
@@ -1739,13 +1739,13 @@ PhysicalParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
                                    Real /*t*/, Real dt, DtType a_dt_type, bool skip_deposition,
                                    PushType push_type)
 {
-    using ablastr::fields::Direction;
-    using warpx::fields::FieldType;
+    using ablastr::fields::Dir;
+    using namespace warpx::fields;
 
     WARPX_PROFILE("PhysicalParticleContainer::Evolve()");
     WARPX_PROFILE_VAR_NS("PhysicalParticleContainer::Evolve::GatherAndPush", blp_fg);
 
-    BL_ASSERT(OnSameGrids(lev, *fields.get(FieldType::current_fp, Direction{0}, lev)));
+    BL_ASSERT(OnSameGrids(lev, *fields.get(FieldType::current_fp, 0_dir, lev)));
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
@@ -1753,16 +1753,16 @@ PhysicalParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
     const iMultiFab* gather_masks = WarpX::GatherBufferMasks(lev);
 
     const bool has_rho = fields.has(FieldType::rho_fp, lev);
-    const bool has_cjx = fields.has(FieldType::current_buf, Direction{0}, lev);
-    const bool has_cEx = fields.has(FieldType::Efield_cax, Direction{0}, lev);
+    const bool has_cjx = fields.has(FieldType::current_buf, 0_dir, lev);
+    const bool has_cEx = fields.has(FieldType::Efield_cax, 0_dir, lev);
     const bool has_buffer = has_cEx || has_cjx;
 
-    amrex::MultiFab & Ex = *fields.get(FieldType::Efield_aux, Direction{0}, lev);
-    amrex::MultiFab & Ey = *fields.get(FieldType::Efield_aux, Direction{1}, lev);
-    amrex::MultiFab & Ez = *fields.get(FieldType::Efield_aux, Direction{2}, lev);
-    amrex::MultiFab & Bx = *fields.get(FieldType::Bfield_aux, Direction{0}, lev);
-    amrex::MultiFab & By = *fields.get(FieldType::Bfield_aux, Direction{1}, lev);
-    amrex::MultiFab & Bz = *fields.get(FieldType::Bfield_aux, Direction{2}, lev);
+    amrex::MultiFab & Ex = *fields.get(FieldType::Efield_aux, 0_dir, lev);
+    amrex::MultiFab & Ey = *fields.get(FieldType::Efield_aux, 1_dir, lev);
+    amrex::MultiFab & Ez = *fields.get(FieldType::Efield_aux, 2_dir, lev);
+    amrex::MultiFab & Bx = *fields.get(FieldType::Bfield_aux, 0_dir, lev);
+    amrex::MultiFab & By = *fields.get(FieldType::Bfield_aux, 1_dir, lev);
+    amrex::MultiFab & Bz = *fields.get(FieldType::Bfield_aux, 2_dir, lev);
 
     if (m_do_back_transformed_particles)
     {
@@ -1897,12 +1897,12 @@ PhysicalParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
                     const IntVect& ref_ratio = WarpX::RefRatio(lev-1);
                     const Box& cbox = amrex::coarsen(box,ref_ratio);
 
-                    amrex::MultiFab & cEx = *fields.get(FieldType::Efield_cax, Direction{0}, lev);
-                    amrex::MultiFab & cEy = *fields.get(FieldType::Efield_cax, Direction{1}, lev);
-                    amrex::MultiFab & cEz = *fields.get(FieldType::Efield_cax, Direction{2}, lev);
-                    amrex::MultiFab & cBx = *fields.get(FieldType::Bfield_cax, Direction{0}, lev);
-                    amrex::MultiFab & cBy = *fields.get(FieldType::Bfield_cax, Direction{1}, lev);
-                    amrex::MultiFab & cBz = *fields.get(FieldType::Bfield_cax, Direction{2}, lev);
+                    amrex::MultiFab & cEx = *fields.get(FieldType::Efield_cax, 0_dir, lev);
+                    amrex::MultiFab & cEy = *fields.get(FieldType::Efield_cax, 1_dir, lev);
+                    amrex::MultiFab & cEz = *fields.get(FieldType::Efield_cax, 2_dir, lev);
+                    amrex::MultiFab & cBx = *fields.get(FieldType::Bfield_cax, 0_dir, lev);
+                    amrex::MultiFab & cBy = *fields.get(FieldType::Bfield_cax, 1_dir, lev);
+                    amrex::MultiFab & cBz = *fields.get(FieldType::Bfield_cax, 2_dir, lev);
 
                     // Data on the grid
                     FArrayBox const* cexfab = &cEx[pti];
@@ -1955,9 +1955,9 @@ PhysicalParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
                         pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr():nullptr;
 
                     // Deposit inside domains
-                    amrex::MultiFab * jx = fields.get(current_fp_string, Direction{0}, lev);
-                    amrex::MultiFab * jy = fields.get(current_fp_string, Direction{1}, lev);
-                    amrex::MultiFab * jz = fields.get(current_fp_string, Direction{2}, lev);
+                    amrex::MultiFab * jx = fields.get(current_fp_string, 0_dir, lev);
+                    amrex::MultiFab * jy = fields.get(current_fp_string, 1_dir, lev);
+                    amrex::MultiFab * jz = fields.get(current_fp_string, 2_dir, lev);
                     DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, jx, jy, jz,
                                    0, np_current, thread_num,
                                    lev, lev, dt, relative_time, push_type);
@@ -1965,9 +1965,9 @@ PhysicalParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
                     if (has_buffer)
                     {
                         // Deposit in buffers
-                        amrex::MultiFab * cjx = fields.get(FieldType::current_buf, Direction{0}, lev);
-                        amrex::MultiFab * cjy = fields.get(FieldType::current_buf, Direction{1}, lev);
-                        amrex::MultiFab * cjz = fields.get(FieldType::current_buf, Direction{2}, lev);
+                        amrex::MultiFab * cjx = fields.get(FieldType::current_buf, 0_dir, lev);
+                        amrex::MultiFab * cjy = fields.get(FieldType::current_buf, 1_dir, lev);
+                        amrex::MultiFab * cjz = fields.get(FieldType::current_buf, 2_dir, lev);
                         DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
                                        np_current, np-np_current, thread_num,
                                        lev, lev-1, dt, relative_time, push_type);

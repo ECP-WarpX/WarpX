@@ -34,8 +34,8 @@
 #include <memory>
 
 using namespace amrex::literals;
-using warpx::fields::FieldType;
-using ablastr::fields::Direction;
+using namespace warpx::fields;
+using ablastr::fields::Dir;
 
 PML_RZ::PML_RZ (int lev, amrex::BoxArray const& grid_ba, amrex::DistributionMapping const& grid_dm,
                 amrex::Geometry const* geom, int ncell, int do_pml_in_domain)
@@ -48,22 +48,22 @@ PML_RZ::PML_RZ (int lev, amrex::BoxArray const& grid_ba, amrex::DistributionMapp
     bool const remake = false;
     bool const redistribute_on_remake = false;
 
-    amrex::MultiFab const& Er_fp = *warpx.m_fields.get(FieldType::Efield_fp, Direction{0}, lev);
-    amrex::MultiFab const& Et_fp = *warpx.m_fields.get(FieldType::Efield_fp, Direction{1}, lev);
+    amrex::MultiFab const& Er_fp = *warpx.m_fields.get(FieldType::Efield_fp, 0_dir, lev);
+    amrex::MultiFab const& Et_fp = *warpx.m_fields.get(FieldType::Efield_fp, 1_dir, lev);
     amrex::BoxArray const ba_Er = amrex::convert(grid_ba, Er_fp.ixType().toIntVect());
     amrex::BoxArray const ba_Et = amrex::convert(grid_ba, Et_fp.ixType().toIntVect());
-    warpx.m_fields.alloc_init(FieldType::pml_E_fp, Direction{0}, lev, ba_Er, grid_dm, Er_fp.nComp(), Er_fp.nGrowVect(), 0.0_rt,
+    warpx.m_fields.alloc_init(FieldType::pml_E_fp, 0_dir, lev, ba_Er, grid_dm, Er_fp.nComp(), Er_fp.nGrowVect(), 0.0_rt,
                               remake, redistribute_on_remake);
-    warpx.m_fields.alloc_init(FieldType::pml_E_fp, Direction{1}, lev, ba_Et, grid_dm, Et_fp.nComp(), Et_fp.nGrowVect(), 0.0_rt,
+    warpx.m_fields.alloc_init(FieldType::pml_E_fp, 1_dir, lev, ba_Et, grid_dm, Et_fp.nComp(), Et_fp.nGrowVect(), 0.0_rt,
                               remake, redistribute_on_remake);
 
-    amrex::MultiFab const& Br_fp = *warpx.m_fields.get(FieldType::Bfield_fp,Direction{0},lev);
-    amrex::MultiFab const& Bt_fp = *warpx.m_fields.get(FieldType::Bfield_fp,Direction{1},lev);
+    amrex::MultiFab const& Br_fp = *warpx.m_fields.get(FieldType::Bfield_fp,0_dir,lev);
+    amrex::MultiFab const& Bt_fp = *warpx.m_fields.get(FieldType::Bfield_fp,1_dir,lev);
     amrex::BoxArray const ba_Br = amrex::convert(grid_ba, Br_fp.ixType().toIntVect());
     amrex::BoxArray const ba_Bt = amrex::convert(grid_ba, Bt_fp.ixType().toIntVect());
-    warpx.m_fields.alloc_init(FieldType::pml_B_fp, Direction{0}, lev, ba_Br, grid_dm, Br_fp.nComp(), Br_fp.nGrowVect(), 0.0_rt,
+    warpx.m_fields.alloc_init(FieldType::pml_B_fp, 0_dir, lev, ba_Br, grid_dm, Br_fp.nComp(), Br_fp.nGrowVect(), 0.0_rt,
                               remake, redistribute_on_remake);
-    warpx.m_fields.alloc_init(FieldType::pml_B_fp, Direction{1}, lev, ba_Bt, grid_dm, Bt_fp.nComp(), Bt_fp.nGrowVect(), 0.0_rt,
+    warpx.m_fields.alloc_init(FieldType::pml_B_fp, 1_dir, lev, ba_Bt, grid_dm, Bt_fp.nComp(), Bt_fp.nGrowVect(), 0.0_rt,
                               remake, redistribute_on_remake);
 
 }
@@ -77,8 +77,8 @@ PML_RZ::ApplyDamping (amrex::MultiFab* Et_fp, amrex::MultiFab* Ez_fp,
     amrex::Real const dr = m_geom->CellSize(0);
     amrex::Real const cdt_over_dr = PhysConst::c*dt/dr;
 
-    amrex::MultiFab* pml_Et = fields.get(FieldType::pml_E_fp, Direction{1}, 0);
-    amrex::MultiFab* pml_Bt = fields.get(FieldType::pml_B_fp, Direction{1}, 0);
+    amrex::MultiFab* pml_Et = fields.get(FieldType::pml_E_fp, 1_dir, 0);
+    amrex::MultiFab* pml_Bt = fields.get(FieldType::pml_B_fp, 1_dir, 0);
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -132,8 +132,8 @@ PML_RZ::ApplyDamping (amrex::MultiFab* Et_fp, amrex::MultiFab* Ez_fp,
 void
 PML_RZ::FillBoundaryE (ablastr::fields::MultiFabRegister& fields, PatchType patch_type, std::optional<bool> nodal_sync)
 {
-    amrex::MultiFab * pml_Er = fields.get(FieldType::pml_E_fp, Direction{0}, 0);
-    amrex::MultiFab * pml_Et = fields.get(FieldType::pml_E_fp, Direction{1}, 0);
+    amrex::MultiFab * pml_Er = fields.get(FieldType::pml_E_fp, 0_dir, 0);
+    amrex::MultiFab * pml_Et = fields.get(FieldType::pml_E_fp, 1_dir, 0);
 
     if (patch_type == PatchType::fine && pml_Er->nGrowVect().max() > 0)
     {
@@ -148,8 +148,8 @@ PML_RZ::FillBoundaryB (ablastr::fields::MultiFabRegister& fields, PatchType patc
 {
     if (patch_type == PatchType::fine)
     {
-        amrex::MultiFab * pml_Br = fields.get(FieldType::pml_B_fp, Direction{0}, 0);
-        amrex::MultiFab * pml_Bt = fields.get(FieldType::pml_B_fp, Direction{1}, 0);
+        amrex::MultiFab * pml_Br = fields.get(FieldType::pml_B_fp, 0_dir, 0);
+        amrex::MultiFab * pml_Bt = fields.get(FieldType::pml_B_fp, 1_dir, 0);
 
         amrex::Periodicity const& period = m_geom->periodicity();
         const amrex::Vector<amrex::MultiFab*> mf = {pml_Br, pml_Bt};
@@ -160,22 +160,22 @@ PML_RZ::FillBoundaryB (ablastr::fields::MultiFabRegister& fields, PatchType patc
 void
 PML_RZ::CheckPoint (ablastr::fields::MultiFabRegister& fields, std::string const& dir) const
 {
-    if (fields.has(FieldType::pml_E_fp, Direction{0}, 0)) {
-        amrex::VisMF::AsyncWrite(*fields.get(FieldType::pml_E_fp, Direction{0}, 0), dir+"_Er_fp");
-        amrex::VisMF::AsyncWrite(*fields.get(FieldType::pml_E_fp, Direction{1}, 0), dir+"_Et_fp");
-        amrex::VisMF::AsyncWrite(*fields.get(FieldType::pml_B_fp, Direction{0}, 0), dir+"_Br_fp");
-        amrex::VisMF::AsyncWrite(*fields.get(FieldType::pml_B_fp, Direction{1}, 0), dir+"_Bt_fp");
+    if (fields.has(FieldType::pml_E_fp, 0_dir, 0)) {
+        amrex::VisMF::AsyncWrite(*fields.get(FieldType::pml_E_fp, 0_dir, 0), dir+"_Er_fp");
+        amrex::VisMF::AsyncWrite(*fields.get(FieldType::pml_E_fp, 1_dir, 0), dir+"_Et_fp");
+        amrex::VisMF::AsyncWrite(*fields.get(FieldType::pml_B_fp, 0_dir, 0), dir+"_Br_fp");
+        amrex::VisMF::AsyncWrite(*fields.get(FieldType::pml_B_fp, 1_dir, 0), dir+"_Bt_fp");
     }
 }
 
 void
 PML_RZ::Restart (ablastr::fields::MultiFabRegister& fields, std::string const& dir)
 {
-    if (fields.has(FieldType::pml_E_fp, Direction{0}, 0)) {
-        amrex::VisMF::Read(*fields.get(FieldType::pml_E_fp, Direction{0}, 0), dir+"_Er_fp");
-        amrex::VisMF::Read(*fields.get(FieldType::pml_E_fp, Direction{1}, 0), dir+"_Et_fp");
-        amrex::VisMF::Read(*fields.get(FieldType::pml_B_fp, Direction{0}, 0), dir+"_Br_fp");
-        amrex::VisMF::Read(*fields.get(FieldType::pml_B_fp, Direction{1}, 0), dir+"_Bt_fp");
+    if (fields.has(FieldType::pml_E_fp, 0_dir, 0)) {
+        amrex::VisMF::Read(*fields.get(FieldType::pml_E_fp, 0_dir, 0), dir+"_Er_fp");
+        amrex::VisMF::Read(*fields.get(FieldType::pml_E_fp, 1_dir, 0), dir+"_Et_fp");
+        amrex::VisMF::Read(*fields.get(FieldType::pml_B_fp, 0_dir, 0), dir+"_Br_fp");
+        amrex::VisMF::Read(*fields.get(FieldType::pml_B_fp, 1_dir, 0), dir+"_Bt_fp");
     }
 }
 
@@ -196,10 +196,10 @@ PML_RZ::PushPMLPSATDSinglePatchRZ (
     ablastr::fields::MultiFabRegister& fields)
 {
     SpectralFieldIndex const& Idx = solver.m_spectral_index;
-    amrex::MultiFab * pml_Er = fields.get(FieldType::pml_E_fp, Direction{0}, 0);
-    amrex::MultiFab * pml_Et = fields.get(FieldType::pml_E_fp, Direction{1}, 0);
-    amrex::MultiFab * pml_Br = fields.get(FieldType::pml_B_fp, Direction{0}, 0);
-    amrex::MultiFab * pml_Bt = fields.get(FieldType::pml_B_fp, Direction{1}, 0);
+    amrex::MultiFab * pml_Er = fields.get(FieldType::pml_E_fp, 0_dir, 0);
+    amrex::MultiFab * pml_Et = fields.get(FieldType::pml_E_fp, 1_dir, 0);
+    amrex::MultiFab * pml_Br = fields.get(FieldType::pml_B_fp, 0_dir, 0);
+    amrex::MultiFab * pml_Bt = fields.get(FieldType::pml_B_fp, 1_dir, 0);
 
     // Perform forward Fourier transforms
     solver.ForwardTransform(lev, *pml_Er, Idx.Er_pml, *pml_Et, Idx.Et_pml);

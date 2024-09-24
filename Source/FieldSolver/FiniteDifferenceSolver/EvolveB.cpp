@@ -57,8 +57,8 @@ void FiniteDifferenceSolver::EvolveB (
     [[maybe_unused]] amrex::Real const dt )
 {
 
-    using ablastr::fields::Direction;
-    using warpx::fields::FieldType;
+    using ablastr::fields::Dir;
+    using namespace warpx::fields;
 
     const ablastr::fields::VectorField Bfield = patch_type == PatchType::fine ?
         fields.get_alldirs(FieldType::Bfield_fp, lev) : fields.get_alldirs(FieldType::Bfield_cp, lev);
@@ -79,19 +79,19 @@ void FiniteDifferenceSolver::EvolveB (
             fields.get(FieldType::G_fp, lev) : fields.get(FieldType::G_cp, lev);
     }
     ablastr::fields::VectorField face_areas;
-    if (fields.has(FieldType::face_areas, Direction{0}, lev)) {
+    if (fields.has(FieldType::face_areas, 0_dir, lev)) {
         face_areas = fields.get_alldirs(FieldType::face_areas, lev);
     }
     ablastr::fields::VectorField area_mod;
-    if (fields.has(FieldType::area_mod, Direction{0}, lev)) {
+    if (fields.has(FieldType::area_mod, 0_dir, lev)) {
         area_mod = fields.get_alldirs(FieldType::area_mod, lev);
     }
     ablastr::fields::VectorField ECTRhofield;
-    if (fields.has(FieldType::ECTRhofield, Direction{0}, lev)) {
+    if (fields.has(FieldType::ECTRhofield, 0_dir, lev)) {
         ECTRhofield = fields.get_alldirs(FieldType::ECTRhofield, lev);
     }
     ablastr::fields::VectorField Venl;
-    if (fields.has(FieldType::Venl, Direction{0}, lev)) {
+    if (fields.has(FieldType::Venl, 0_dir, lev)) {
         Venl = fields.get_alldirs(FieldType::Venl, lev);
     }
 
