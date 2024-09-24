@@ -1421,6 +1421,8 @@ private:
     bool do_fluid_species = false;
     std::unique_ptr<MultiFluidContainer> myfl;
 
+    // Fluid container used in hybrid solver for electron energy equation
+    std::unique_ptr<WarpXFluidContainer> hybrid_electron_fl;
     //
     // Fields: First array for level, second for direction
     //
