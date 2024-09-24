@@ -57,13 +57,16 @@ void HybridPICModel::ReadParameters ()
     pp_hybrid.query("Jz_external_grid_function(x,y,z,t)", m_Jz_ext_grid_function);
 
     // external fields
-    const ParmParse pp_part("particles");
-    pp_hybrid.query("Bx_external_particle_function(x,y,z,t)", m_Bx_ext_part_function);
-    pp_hybrid.query("By_external_particle_function(x,y,z,t)", m_By_ext_part_function);
-    pp_hybrid.query("Bz_external_particle_function(x,y,z,t)", m_Bz_ext_part_function);
-    pp_hybrid.query("Ex_external_particle_function(x,y,z,t)", m_Ex_ext_part_function);
-    pp_hybrid.query("Ey_external_particle_function(x,y,z,t)", m_Ey_ext_part_function);
-    pp_hybrid.query("Ez_external_particle_function(x,y,z,t)", m_Ez_ext_part_function);
+    pp_hybrid.query("add_external_fields", m_add_external_fields);
+
+    if (m_add_external_fields) {
+        pp_hybrid.query("Bx_external_grid_function(x,y,z,t)", m_Bx_ext_grid_function);
+        pp_hybrid.query("By_external_grid_function(x,y,z,t)", m_By_ext_grid_function);
+        pp_hybrid.query("Bz_external_grid_function(x,y,z,t)", m_Bz_ext_grid_function);
+        pp_hybrid.query("Ex_external_grid_function(x,y,z,t)", m_Ex_ext_grid_function);
+        pp_hybrid.query("Ey_external_grid_function(x,y,z,t)", m_Ey_ext_grid_function);
+        pp_hybrid.query("Ez_external_grid_function(x,y,z,t)", m_Ez_ext_grid_function);
+    }
 }
 
 void HybridPICModel::AllocateMFs (int nlevs_max)
@@ -73,14 +76,30 @@ void HybridPICModel::AllocateMFs (int nlevs_max)
     current_fp_temp.resize(nlevs_max);
     current_fp_ampere.resize(nlevs_max);
     current_fp_external.resize(nlevs_max);
+
+    if (m_add_external_fields) {
+        Bfield_hyb_external.resize(nlevs_max);
+        Efield_hyb_external.resize(nlevs_max);
+        // Bfield_hyb_self.resize(nlevs_max);
+        // Efield_hyb_self.resize(nlevs_max);
+    }
 }
 
-void HybridPICModel::AllocateLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm,
-                                       const int ncomps, const IntVect& ngJ, const IntVect& ngRho,
-                                       const IntVect& jx_nodal_flag,
-                                       const IntVect& jy_nodal_flag,
-                                       const IntVect& jz_nodal_flag,
-                                       const IntVect& rho_nodal_flag)
+void HybridPICModel::AllocateLevelMFs (
+    int lev, const BoxArray& ba, const DistributionMapping& dm,
+    const int ncomps,
+    const IntVect& ngJ, const IntVect& ngRho,
+    const IntVect& ngE, const IntVect& ngB,
+    const IntVect& jx_nodal_flag,
+    const IntVect& jy_nodal_flag,
+    const IntVect& jz_nodal_flag,
+    const IntVect& rho_nodal_flag,
+    const IntVect& Ex_nodal_flag,
+    const IntVect& Ey_nodal_flag,
+    const IntVect& Ez_nodal_flag,
+    const IntVect& Bx_nodal_flag,
+    const IntVect& By_nodal_flag,
+    const IntVect& Bz_nodal_flag)
 {
     // The "electron_pressure_fp" multifab stores the electron pressure calculated
     // from the specified equation of state.
@@ -120,6 +139,22 @@ void HybridPICModel::AllocateLevelMFs (int lev, const BoxArray& ba, const Distri
     WarpX::AllocInitMultiFab(current_fp_external[lev][2], amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
         dm, ncomps, IntVect(AMREX_D_DECL(0,0,0)), lev, "current_fp_external[z]", 0.0_rt);
 
+    if (m_add_external_fields) {
+        // These are nodal to match when B-field is added in evaluation of Ohm's law
+        WarpX::AllocInitMultiFab(Bfield_hyb_external[lev][0], amrex::convert(ba, Bx_nodal_flag),
+            dm, ncomps, ngB, lev, "Bfield_hyb_external[x]", 0.0_rt);
+        WarpX::AllocInitMultiFab(Bfield_hyb_external[lev][1], amrex::convert(ba, By_nodal_flag),
+            dm, ncomps, ngB, lev, "Bfield_hyb_external[y]", 0.0_rt);
+        WarpX::AllocInitMultiFab(Bfield_hyb_external[lev][2], amrex::convert(ba, Bz_nodal_flag),
+            dm, ncomps, ngB, lev, "Bfield_hyb_external[z]", 0.0_rt);
+        WarpX::AllocInitMultiFab(Efield_hyb_external[lev][0], amrex::convert(ba, Ex_nodal_flag),
+            dm, ncomps, ngE, lev, "Efield_hyb_external[x]", 0.0_rt);
+        WarpX::AllocInitMultiFab(Efield_hyb_external[lev][1], amrex::convert(ba, Ey_nodal_flag),
+            dm, ncomps, ngE, lev, "Efield_hyb_external[y]", 0.0_rt);
+        WarpX::AllocInitMultiFab(Efield_hyb_external[lev][2], amrex::convert(ba, Ez_nodal_flag),
+            dm, ncomps, ngE, lev, "Efield_hyb_external[z]", 0.0_rt);
+    }
+
 #ifdef WARPX_DIM_RZ
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         (ncomps == 1),
@@ -135,6 +170,10 @@ void HybridPICModel::ClearLevel (int lev)
         current_fp_temp[lev][i].reset();
         current_fp_ampere[lev][i].reset();
         current_fp_external[lev][i].reset();
+        if (m_add_external_fields) {
+            Bfield_hyb_external[lev][i].reset();
+            Efield_hyb_external[lev][i].reset();
+        }
     }
 }
 
@@ -165,33 +204,25 @@ void HybridPICModel::InitData ()
     auto & warpx = WarpX::GetInstance();
     const auto& mypc = warpx.GetPartContainer();
 
-    if ( mypc.m_B_ext_particle_s == "parse_b_ext_particle_function") {
-        m_B_external_parser[0] = std::make_unique<amrex::Parser>(
-            utils::parser::makeParser(m_Bx_ext_part_function,{"x","y","z","t"}));
-        m_B_external_parser[1] = std::make_unique<amrex::Parser>(
-            utils::parser::makeParser(m_By_ext_part_function,{"x","y","z","t"}));
-        m_B_external_parser[2] = std::make_unique<amrex::Parser>(
-            utils::parser::makeParser(m_Bz_ext_part_function,{"x","y","z","t"}));
-        m_B_external[0] = m_B_external_parser[0]->compile<4>();
-        m_B_external[1] = m_B_external_parser[1]->compile<4>();
-        m_B_external[2] = m_B_external_parser[2]->compile<4>();
+    m_B_external_parser[0] = std::make_unique<amrex::Parser>(
+        utils::parser::makeParser(m_Bx_ext_grid_function,{"x","y","z","t"}));
+    m_B_external_parser[1] = std::make_unique<amrex::Parser>(
+        utils::parser::makeParser(m_By_ext_grid_function,{"x","y","z","t"}));
+    m_B_external_parser[2] = std::make_unique<amrex::Parser>(
+        utils::parser::makeParser(m_Bz_ext_grid_function,{"x","y","z","t"}));
+    m_B_external[0] = m_B_external_parser[0]->compile<4>();
+    m_B_external[1] = m_B_external_parser[1]->compile<4>();
+    m_B_external[2] = m_B_external_parser[2]->compile<4>();
 
-        m_add_ext_particle_B_field = true;
-    }
-
-    if ( mypc.m_E_ext_particle_s == "parse_e_ext_particle_function") {
-        m_E_external_parser[0] = std::make_unique<amrex::Parser>(
-            utils::parser::makeParser(m_Ex_ext_part_function,{"x","y","z","t"}));
-        m_E_external_parser[1] = std::make_unique<amrex::Parser>(
-            utils::parser::makeParser(m_Ey_ext_part_function,{"x","y","z","t"}));
-        m_E_external_parser[2] = std::make_unique<amrex::Parser>(
-            utils::parser::makeParser(m_Ez_ext_part_function,{"x","y","z","t"}));
-        m_E_external[0] = m_E_external_parser[0]->compile<4>();
-        m_E_external[1] = m_E_external_parser[0]->compile<4>();
-        m_E_external[2] = m_E_external_parser[0]->compile<4>();
-
-        m_add_ext_particle_E_field = true;
-    }
+    m_E_external_parser[0] = std::make_unique<amrex::Parser>(
+        utils::parser::makeParser(m_Ex_ext_grid_function,{"x","y","z","t"}));
+    m_E_external_parser[1] = std::make_unique<amrex::Parser>(
+        utils::parser::makeParser(m_Ey_ext_grid_function,{"x","y","z","t"}));
+    m_E_external_parser[2] = std::make_unique<amrex::Parser>(
+        utils::parser::makeParser(m_Ez_ext_grid_function,{"x","y","z","t"}));
+    m_E_external[0] = m_E_external_parser[0]->compile<4>();
+    m_E_external[1] = m_E_external_parser[1]->compile<4>();
+    m_E_external[2] = m_E_external_parser[2]->compile<4>();
 
     // Get the grid staggering of the fields involved in calculating E
     amrex::IntVect Jx_stag = warpx.getField(FieldType::current_fp, 0,0).ixType().toIntVect();
@@ -285,6 +316,7 @@ void HybridPICModel::InitData ()
         }
 #endif
         GetCurrentExternal(edge_lengths, lev);
+        GetFieldsExternal(edge_lengths, lev);
     }
 }
 
@@ -296,36 +328,73 @@ void HybridPICModel::GetCurrentExternal (
     auto& warpx = WarpX::GetInstance();
     for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
     {
-        GetCurrentExternal(edge_lengths[lev], lev);
+        GetExternalFieldFromExpression(current_fp_external[lev], m_J_external, edge_lengths[lev], lev);
     }
 }
-
 
 void HybridPICModel::GetCurrentExternal (
     std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
     int lev)
 {
+    if (!m_external_field_has_time_dependence) { return; }
+    GetExternalFieldFromExpression(current_fp_external[lev], m_J_external, edge_lengths, lev);
+}
+
+void HybridPICModel::GetFieldsExternal (
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths, 
+    amrex::Real t)
+{
+    auto& warpx = WarpX::GetInstance();
+    for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
+    {
+        GetExternalFieldFromExpression(Bfield_hyb_external[lev], m_B_external, edge_lengths[lev], lev, t);
+        GetExternalFieldFromExpression(Efield_hyb_external[lev], m_E_external, edge_lengths[lev], lev, t);
+    }
+}
+
+void HybridPICModel::GetFieldsExternal (
+    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+    int lev)
+{
+    GetExternalFieldFromExpression(Bfield_hyb_external[lev], m_B_external, edge_lengths, lev);
+    GetExternalFieldFromExpression(Efield_hyb_external[lev], m_E_external, edge_lengths, lev);
+}
+
+void HybridPICModel::GetExternalFieldFromExpression (
+    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& field,
+    std::array< amrex::ParserExecutor<4>, 3> const& expression,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+    int lev)
+{
+    auto & warpx = WarpX::GetInstance();
+    auto t = warpx.gett_new(lev);
+    GetExternalFieldFromExpression(field, expression, edge_lengths, lev, t);
+}
+
+void HybridPICModel::GetExternalFieldFromExpression (
+    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& field,
+    std::array< amrex::ParserExecutor<4>, 3> const& expression,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+    int lev, amrex::Real t)
+{
     // This logic matches closely to WarpX::InitializeExternalFieldsOnGridUsingParser
     // except that the parsers include time dependence.
     auto & warpx = WarpX::GetInstance();
-
-    auto t = warpx.gett_new(lev);
-
     auto dx_lev = warpx.Geom(lev).CellSizeArray();
     const RealBox& real_box = warpx.Geom(lev).ProbDomain();
 
-    auto& mfx = current_fp_external[lev][0];
-    auto& mfy = current_fp_external[lev][1];
-    auto& mfz = current_fp_external[lev][2];
+    auto& mfx = field[0];
+    auto& mfy = field[1];
+    auto& mfz = field[2];
 
     const amrex::IntVect x_nodal_flag = mfx->ixType().toIntVect();
     const amrex::IntVect y_nodal_flag = mfy->ixType().toIntVect();
     const amrex::IntVect z_nodal_flag = mfz->ixType().toIntVect();
 
     // avoid implicit lambda capture
-    auto Jx_external = m_J_external[0];
-    auto Jy_external = m_J_external[1];
-    auto Jz_external = m_J_external[2];
+    auto x_external = expression[0];
+    auto y_external = expression[1];
+    auto z_external = expression[2];
 
     for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
@@ -371,7 +440,7 @@ void HybridPICModel::GetCurrentExternal (
                 const amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
 #endif
                 // Initialize the x-component of the field.
-                mfxfab(i,j,k) = Jx_external(x,y,z,t);
+                mfxfab(i,j,k) = x_external(x,y,z,t);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 // skip if node is covered by an embedded boundary
@@ -397,7 +466,7 @@ void HybridPICModel::GetCurrentExternal (
                 const amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
 #endif
                 // Initialize the y-component of the field.
-                mfyfab(i,j,k)  = Jy_external(x,y,z,t);
+                mfyfab(i,j,k)  = y_external(x,y,z,t);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 // skip if node is covered by an embedded boundary
@@ -423,7 +492,7 @@ void HybridPICModel::GetCurrentExternal (
                 const amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
 #endif
                 // Initialize the z-component of the field.
-                mfzfab(i,j,k) = Jz_external(x,y,z,t);
+                mfzfab(i,j,k) = z_external(x,y,z,t);
             }
         );
     }

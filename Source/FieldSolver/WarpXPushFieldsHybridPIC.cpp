@@ -55,6 +55,31 @@ void WarpX::HybridPICEvolveFields ()
 
     // Get requested number of substeps to use
     const int sub_steps = m_hybrid_pic_model->m_substeps;
+    
+    amrex::Real t_eval = gett_old(0);
+    amrex::Real sub_dt = 0.5_rt*dt[0]/sub_steps;
+
+    const bool add_external_fields = m_hybrid_pic_model->m_add_external_fields;
+    auto const& Bfield_hyb_external = m_hybrid_pic_model->Bfield_hyb_external;
+    auto const& Efield_hyb_external = m_hybrid_pic_model->Efield_hyb_external;
+
+    // Handle field splitting for Hybrid field push
+    if (add_external_fields) {
+        // Get the external fields
+        m_hybrid_pic_model->GetFieldsExternal(m_edge_lengths, t_eval);
+
+        // If using split fields, subtract the external field at the old time
+        for (int lev = 0; lev <= finest_level; ++lev) {
+            for (int idim = 0; idim < 3; ++idim) {
+                MultiFab::Subtract(
+                    *Bfield_fp[lev][idim],
+                    *Bfield_hyb_external[lev][idim], 
+                    0, 0, 1, 
+                    Bfield_hyb_external[lev][idim]->nGrowVect());
+            }
+        }
+        FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+    }
 
     // Get the external current
     m_hybrid_pic_model->GetCurrentExternal(m_edge_lengths);
@@ -88,9 +113,6 @@ void WarpX::HybridPICEvolveFields ()
         }
     }
 
-    amrex::Real t_start = gett_old(0);
-    amrex::Real sub_dt = 0.5_rt/sub_steps*dt[0];
-
     // Push the B field from t=n to t=n+1/2 using the current and density
     // at t=n, while updating the E field along with B using the electron
     // momentum equation
@@ -99,8 +121,7 @@ void WarpX::HybridPICEvolveFields ()
         m_hybrid_pic_model->BfieldEvolveRK(
             Bfield_fp, Efield_fp, current_fp_temp, rho_fp_temp,
             m_edge_lengths,
-            t_start + static_cast<amrex::Real>(sub_step)*sub_dt,
-            sub_dt,
+            t_eval, sub_dt,
             DtType::FirstHalf, guard_cells.ng_FieldSolver,
             WarpX::sync_nodal_points
         );
@@ -118,7 +139,12 @@ void WarpX::HybridPICEvolveFields ()
         );
     }
 
-    t_start += 0.5_rt*dt[0];
+    t_eval += 0.5_rt*dt[0];
+
+    if (add_external_fields) {
+        // Get the external fields
+        m_hybrid_pic_model->GetFieldsExternal(m_edge_lengths, t_eval);
+    }
 
     // Now push the B field from t=n+1/2 to t=n+1 using the n+1/2 quantities
     for (int sub_step = 0; sub_step < sub_steps; sub_step++)
@@ -126,8 +152,7 @@ void WarpX::HybridPICEvolveFields ()
         m_hybrid_pic_model->BfieldEvolveRK(
             Bfield_fp, Efield_fp, current_fp, rho_fp_temp,
             m_edge_lengths,
-            t_start + static_cast<amrex::Real>(sub_step)*sub_dt,
-            sub_dt,
+            t_eval, sub_dt,
             DtType::SecondHalf, guard_cells.ng_FieldSolver,
             WarpX::sync_nodal_points
         );
@@ -154,11 +179,35 @@ void WarpX::HybridPICEvolveFields ()
     // Calculate the electron pressure at t=n+1
     m_hybrid_pic_model->CalculateElectronPressure();
 
+    t_eval = gett_new(0);
+
     // Update the E field to t=n+1 using the extrapolated J_i^n+1 value
     m_hybrid_pic_model->CalculateCurrentAmpere(Bfield_fp, m_edge_lengths);
     m_hybrid_pic_model->HybridPICSolveE(
-        Efield_fp, current_fp_temp, Bfield_fp, rho_fp, m_edge_lengths, gett_new(0), false
+        Efield_fp, current_fp_temp, Bfield_fp, rho_fp, m_edge_lengths, t_eval, false
     );
+
+    // Handle field splitting for Hybrid field push
+    if (add_external_fields) {
+        m_hybrid_pic_model->GetFieldsExternal(m_edge_lengths, t_eval);
+
+        // If using split fields, add the external field at the new time
+        for (int lev = 0; lev <= finest_level; ++lev) {
+            for (int idim = 0; idim < 3; ++idim) {
+                MultiFab::Add(
+                    *Bfield_fp[lev][idim],
+                    *Bfield_hyb_external[lev][idim],
+                    0, 0, 1, 
+                    Bfield_hyb_external[lev][idim]->nGrowVect());
+                MultiFab::Add(
+                    *Efield_fp[lev][idim],
+                    *Efield_hyb_external[lev][idim],
+                    0, 0, 1,
+                    Efield_hyb_external[lev][idim]->nGrowVect());
+            }
+        }
+        FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+    }
     FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
     // Copy the rho^{n+1} values to rho_fp_temp and the J_i^{n+1/2} values to

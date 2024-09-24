@@ -21,6 +21,9 @@
 
 #include <AMReX_Array.H>
 #include <AMReX_REAL.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_DistributionMapping.H>
 
 #include <optional>
 
@@ -38,10 +41,26 @@ public:
 
     /** Allocate hybrid-PIC specific multifabs. Called in constructor. */
     void AllocateMFs (int nlevs_max);
-    void AllocateLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
-                           int ncomps, const amrex::IntVect& ngJ, const amrex::IntVect& ngRho,
-                           const amrex::IntVect& jx_nodal_flag, const amrex::IntVect& jy_nodal_flag,
-                           const amrex::IntVect& jz_nodal_flag, const amrex::IntVect& rho_nodal_flag);
+    void AllocateLevelMFs (
+        int lev,
+        const amrex::BoxArray& ba,
+        const amrex::DistributionMapping& dm,
+        const int ncomps,
+        const amrex::IntVect& ngJ,
+        const amrex::IntVect& ngRho,
+        const amrex::IntVect& ngE, 
+        const amrex::IntVect& ngB,
+        const amrex::IntVect& jx_nodal_flag,
+        const amrex::IntVect& jy_nodal_flag,
+        const amrex::IntVect& jz_nodal_flag,
+        const amrex::IntVect& rho_nodal_flag,
+        const amrex::IntVect& Ex_nodal_flag,
+        const amrex::IntVect& Ey_nodal_flag,
+        const amrex::IntVect& Ez_nodal_flag,
+        const amrex::IntVect& Bx_nodal_flag,
+        const amrex::IntVect& By_nodal_flag,
+        const amrex::IntVect& Bz_nodal_flag
+    );
 
     /** Helper function to clear values from hybrid-PIC specific multifabs. */
     void ClearLevel (int lev);
@@ -57,9 +76,37 @@ public:
     void GetCurrentExternal (
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths
     );
+
     void GetCurrentExternal (
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
         int lev
+    );
+
+    void GetFieldsExternal (
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths
+    );
+
+    void GetFieldsExternal (
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths, 
+        amrex::Real t);
+
+    void GetFieldsExternal (
+        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+        int lev
+    );
+
+    void GetExternalFieldFromExpression (
+        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& field,
+        std::array< amrex::ParserExecutor<4>, 3> const& expression,
+        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+        int lev
+    );
+
+    void GetExternalFieldFromExpression (
+        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& field,
+        std::array< amrex::ParserExecutor<4>, 3> const& expression,
+        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+        int lev, amrex::Real t
     );
 
     /**
@@ -152,7 +199,7 @@ public:
      * charge density (and assumption of quasi-neutrality) using the user
      * specified electron equation of state.
      *
-     * \param[out] Pe_filed scalar electron pressure MultiFab at a given level
+     * \param[out] Pe_field scalar electron pressure MultiFab at a given level
      * \param[in] rho_field scalar ion charge density Multifab at a given level
      */
     void FillElectronPressureMF (
@@ -191,17 +238,17 @@ public:
     bool m_external_field_has_time_dependence = false;
 
     /** External E/B fields */
-    bool m_add_ext_particle_B_field = false;
-    std::string m_Bx_ext_part_function = "0.0";
-    std::string m_By_ext_part_function = "0.0";
-    std::string m_Bz_ext_part_function = "0.0";
+    bool m_add_external_fields = false;
+
+    std::string m_Bx_ext_grid_function = "0.0";
+    std::string m_By_ext_grid_function = "0.0";
+    std::string m_Bz_ext_grid_function = "0.0";
     std::array< std::unique_ptr<amrex::Parser>, 3> m_B_external_parser;
     std::array< amrex::ParserExecutor<4>, 3> m_B_external;
 
-    bool m_add_ext_particle_E_field = false;
-    std::string m_Ex_ext_part_function = "0.0";
-    std::string m_Ey_ext_part_function = "0.0";
-    std::string m_Ez_ext_part_function = "0.0";
+    std::string m_Ex_ext_grid_function = "0.0";
+    std::string m_Ey_ext_grid_function = "0.0";
+    std::string m_Ez_ext_grid_function = "0.0";
     std::array< std::unique_ptr<amrex::Parser>, 3> m_E_external_parser;
     std::array< amrex::ParserExecutor<4>, 3> m_E_external;
 
@@ -211,6 +258,11 @@ public:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_ampere;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_external;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > electron_pressure_fp;
+
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_hyb_external;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_hyb_external;
+    // amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_hyb_self;
+    // amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_hyb_self;
 
     // Helper functions to retrieve hybrid-PIC multifabs
     [[nodiscard]] amrex::MultiFab*
