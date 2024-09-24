@@ -1735,7 +1735,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 void
 PhysicalParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
                                    int lev,
-                                   const std::string& current_fp_string,
+                                   const std::string& j_fp_string,
                                    Real /*t*/, Real dt, DtType a_dt_type, bool skip_deposition,
                                    PushType push_type)
 {
@@ -1745,7 +1745,7 @@ PhysicalParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
     WARPX_PROFILE("PhysicalParticleContainer::Evolve()");
     WARPX_PROFILE_VAR_NS("PhysicalParticleContainer::Evolve::GatherAndPush", blp_fg);
 
-    BL_ASSERT(OnSameGrids(lev, *fields.get(FieldType::current_fp, Direction{0}, lev)));
+    BL_ASSERT(OnSameGrids(lev, *fields.get(FieldType::j_fp, Direction{0}, lev)));
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
@@ -1955,9 +1955,9 @@ PhysicalParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
                         pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr():nullptr;
 
                     // Deposit inside domains
-                    amrex::MultiFab * jx = fields.get(current_fp_string, Direction{0}, lev);
-                    amrex::MultiFab * jy = fields.get(current_fp_string, Direction{1}, lev);
-                    amrex::MultiFab * jz = fields.get(current_fp_string, Direction{2}, lev);
+                    amrex::MultiFab * jx = fields.get(j_fp_string, Direction{0}, lev);
+                    amrex::MultiFab * jy = fields.get(j_fp_string, Direction{1}, lev);
+                    amrex::MultiFab * jz = fields.get(j_fp_string, Direction{2}, lev);
                     DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, jx, jy, jz,
                                    0, np_current, thread_num,
                                    lev, lev, dt, relative_time, push_type);

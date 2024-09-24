@@ -107,7 +107,7 @@ public:
     void Evolve (
         ablastr::fields::MultiFabRegister& fields,
         int lev,
-        std::string const& current_fp_string,
+        std::string const& j_fp_string,
         amrex::Real t,
         amrex::Real dt,
         DtType a_dt_type=DtType::Full,

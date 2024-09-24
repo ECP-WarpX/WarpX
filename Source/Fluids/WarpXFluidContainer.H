@@ -49,7 +49,7 @@ public:
      */
     void Evolve (ablastr::fields::MultiFabRegister& fields,
                  int lev,
-                 const std::string& current_fp_string,
+                 const std::string& j_fp_string,
                  amrex::Real cur_time,
                  bool skip_deposition=false);
 

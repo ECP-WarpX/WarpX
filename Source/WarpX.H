@@ -815,9 +815,9 @@ public:
      * Then, for each MR level, including level 0, apply filter and sum guard
      * cells across levels.
      *
-     * \param[in] current_fp_string the coarse of fine patch to use for current
+     * \param[in] j_fp_string the coarse of fine patch to use for current
      */
-    void SyncCurrent (const std::string& current_fp_string);
+    void SyncCurrent (const std::string& j_fp_string);
 
     void SyncRho ();
 

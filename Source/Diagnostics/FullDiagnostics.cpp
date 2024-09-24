@@ -185,7 +185,7 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
         AMREX_ALWAYS_ASSERT(
             warpx.m_fields.get(FieldType::Bfield_aux, Direction{dim}, lev)->nComp() == ncomp_multimodefab );
         AMREX_ALWAYS_ASSERT(
-            warpx.m_fields.get(FieldType::current_fp, Direction{dim}, lev)->nComp() == ncomp_multimodefab );
+            warpx.m_fields.get(FieldType::j_fp, Direction{dim}, lev)->nComp() == ncomp_multimodefab );
     }
 
     // Species index to loop over species that dump rho per species
@@ -409,7 +409,7 @@ FullDiagnostics::AddRZModesToDiags (int lev)
         AMREX_ALWAYS_ASSERT(
             warpx.m_fields.get(FieldType::Bfield_aux, Direction{dim}, lev)->nComp() == ncomp_multimodefab );
         AMREX_ALWAYS_ASSERT(
-            warpx.m_fields.get(FieldType::current_fp, Direction{dim}, lev)->nComp() == ncomp_multimodefab );
+            warpx.m_fields.get(FieldType::j_fp, Direction{dim}, lev)->nComp() == ncomp_multimodefab );
     }
 
     // Check if divE is requested
@@ -465,7 +465,7 @@ FullDiagnostics::AddRZModesToDiags (int lev)
             dim, lev, m_crse_ratio, false, deposit_current, ncomp_multimodefab));
         deposit_current = false;
         AddRZModesToOutputNames(std::string("J") + coord[dim],
-                warpx.m_fields.get(FieldType::current_fp,Direction{0},0)->nComp());
+                warpx.m_fields.get(FieldType::j_fp,Direction{0},0)->nComp());
     }
     // divE
     if (divE_requested) {

@@ -35,23 +35,23 @@ JFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/
 
     auto& warpx = WarpX::GetInstance();
     /** pointer to source multifab (can be multi-component) */
-    amrex::MultiFab* m_mf_src = warpx.m_fields.get(FieldType::current_fp,Direction{m_dir},m_lev);
+    amrex::MultiFab* m_mf_src = warpx.m_fields.get(FieldType::j_fp,Direction{m_dir},m_lev);
 
     // Deposit current if no solver or the electrostatic solver is being used
     if (m_deposit_current)
     {
         // allocate temporary multifab to deposit current density into
-        ablastr::fields::MultiLevelVectorField current_fp_temp {
-            warpx.m_fields.get_alldirs(FieldType::current_fp, m_lev)
+        ablastr::fields::MultiLevelVectorField j_fp_temp {
+            warpx.m_fields.get_alldirs(FieldType::j_fp, m_lev)
         };
 
         auto& mypc = warpx.GetPartContainer();
-        mypc.DepositCurrent(current_fp_temp, warpx.getdt(m_lev), 0.0);
+        mypc.DepositCurrent(j_fp_temp, warpx.getdt(m_lev), 0.0);
 
         // sum values in guard cells - note that this does not filter the
         // current density.
         for (int idim = 0; idim < 3; ++idim) {
-            current_fp_temp[0][idim]->FillBoundary(warpx.Geom(m_lev).periodicity());
+            j_fp_temp[0][idim]->FillBoundary(warpx.Geom(m_lev).periodicity());
         }
     }
 

@@ -507,15 +507,15 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
     {
         const std::array<amrex::Real,3>& dx = WarpX::CellSize(lev);
 
-        amrex::MultiFab const& Dx = *m_fields.get(FieldType::current_fp_vay, Direction{0}, lev);
-        amrex::MultiFab const& Dy = *m_fields.get(FieldType::current_fp_vay, Direction{1}, lev);
-        amrex::MultiFab const& Dz = *m_fields.get(FieldType::current_fp_vay, Direction{2}, lev);
+        amrex::MultiFab const& Dx = *m_fields.get(FieldType::j_fp_vay, Direction{0}, lev);
+        amrex::MultiFab const& Dy = *m_fields.get(FieldType::j_fp_vay, Direction{1}, lev);
+        amrex::MultiFab const& Dz = *m_fields.get(FieldType::j_fp_vay, Direction{2}, lev);
 
 #if defined (WARPX_DIM_XZ)
         amrex::ignore_unused(Dy);
 #endif
 
-    amrex::MultiFab& Jx = *m_fields.get(FieldType::current_fp, Direction{0}, lev);
+    amrex::MultiFab& Jx = *m_fields.get(FieldType::j_fp, Direction{0}, lev);
 
 
 #ifdef AMREX_USE_OMP
@@ -546,7 +546,7 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
 
 #if defined (WARPX_DIM_3D)
         // Subtract average of cumulative sum from Jy
-        amrex::MultiFab& Jy = *m_fields.get(FieldType::current_fp, Direction{1}, lev);;
+        amrex::MultiFab& Jy = *m_fields.get(FieldType::j_fp, Direction{1}, lev);;
         for (amrex::MFIter mfi(Jy); mfi.isValid(); ++mfi)
         {
             const amrex::Box& bx = mfi.fabbox();
@@ -571,7 +571,7 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
 #endif
 
         // Subtract average of cumulative sum from Jz
-        amrex::MultiFab& Jz = *m_fields.get(FieldType::current_fp, Direction{2}, lev);
+        amrex::MultiFab& Jz = *m_fields.get(FieldType::j_fp, Direction{2}, lev);
         for (amrex::MFIter mfi(Jz); mfi.isValid(); ++mfi)
         {
             const amrex::Box& bx = mfi.fabbox();
@@ -727,16 +727,16 @@ WarpX::PushPSATD ()
     std::string const rho_fp_string = "rho_fp";
     std::string const rho_cp_string = "rho_cp";
 
-    const ablastr::fields::MultiLevelVectorField current_fp = m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level);
-    std::string current_fp_string = "current_fp";
-    std::string const current_cp_string = "current_cp";
+    const ablastr::fields::MultiLevelVectorField j_fp = m_fields.get_mr_levels_alldirs(FieldType::j_fp, finest_level);
+    std::string j_fp_string = "j_fp";
+    std::string const j_cp_string = "j_cp";
 
     if (fft_periodic_single_box)
     {
         if (current_correction)
         {
             // FFT of J and rho
-            PSATDForwardTransformJ(current_fp_string, current_cp_string);
+            PSATDForwardTransformJ(j_fp_string, j_cp_string);
             PSATDForwardTransformRho(rho_fp_string, rho_cp_string, 0, rho_old);
             PSATDForwardTransformRho(rho_fp_string, rho_cp_string, 1, rho_new);
 
@@ -744,14 +744,14 @@ WarpX::PushPSATD ()
             PSATDCurrentCorrection();
 
             // Inverse FFT of J
-            PSATDBackwardTransformJ(current_fp_string, current_cp_string);
+            PSATDBackwardTransformJ(j_fp_string, j_cp_string);
         }
         else if (current_deposition_algo == CurrentDepositionAlgo::Vay)
         {
             // FFT of D and rho (if used)
-            // TODO Replace current_cp with current_cp_vay once Vay deposition is implemented with MR
-            current_fp_string = "current_fp_vay";
-            PSATDForwardTransformJ(current_fp_string, current_cp_string);
+            // TODO Replace j_cp with j_cp_vay once Vay deposition is implemented with MR
+            j_fp_string = "j_fp_vay";
+            PSATDForwardTransformJ(j_fp_string, j_cp_string);
             PSATDForwardTransformRho(rho_fp_string, rho_cp_string, 0, rho_old);
             PSATDForwardTransformRho(rho_fp_string, rho_cp_string, 1, rho_new);
 
@@ -759,18 +759,18 @@ WarpX::PushPSATD ()
             PSATDVayDeposition();
 
             // Inverse FFT of J, subtract cumulative sums of D
-            current_fp_string = "current_fp";
-            PSATDBackwardTransformJ(current_fp_string, current_cp_string);
+            j_fp_string = "j_fp";
+            PSATDBackwardTransformJ(j_fp_string, j_cp_string);
             // TODO Cumulative sums need to be fixed with periodic single box
             PSATDSubtractCurrentPartialSumsAvg();
 
             // FFT of J after subtraction of cumulative sums
-            PSATDForwardTransformJ(current_fp_string, current_cp_string);
+            PSATDForwardTransformJ(j_fp_string, j_cp_string);
         }
         else // no current correction, no Vay deposition
         {
             // FFT of J and rho (if used)
-            PSATDForwardTransformJ(current_fp_string, current_cp_string);
+            PSATDForwardTransformJ(j_fp_string, j_cp_string);
             PSATDForwardTransformRho(rho_fp_string, rho_cp_string, 0, rho_old);
             PSATDForwardTransformRho(rho_fp_string, rho_cp_string, 1, rho_new);
         }
@@ -784,11 +784,11 @@ WarpX::PushPSATD ()
             // In RZ geometry, do not apply filtering here, since it is
             // applied in the subsequent calls to these functions (below)
             const bool apply_kspace_filter = false;
-            PSATDForwardTransformJ(current_fp_string, current_cp_string, apply_kspace_filter);
+            PSATDForwardTransformJ(j_fp_string, j_cp_string, apply_kspace_filter);
             PSATDForwardTransformRho(rho_fp_string, rho_cp_string, 0, rho_old, apply_kspace_filter);
             PSATDForwardTransformRho(rho_fp_string, rho_cp_string, 1, rho_new, apply_kspace_filter);
 #else
-            PSATDForwardTransformJ(current_fp_string, current_cp_string);
+            PSATDForwardTransformJ(j_fp_string, j_cp_string);
             PSATDForwardTransformRho(rho_fp_string, rho_cp_string, 0, rho_old);
             PSATDForwardTransformRho(rho_fp_string, rho_cp_string, 1, rho_new);
 #endif
@@ -797,24 +797,24 @@ WarpX::PushPSATD ()
             PSATDCurrentCorrection();
 
             // Inverse FFT of J
-            PSATDBackwardTransformJ(current_fp_string, current_cp_string);
+            PSATDBackwardTransformJ(j_fp_string, j_cp_string);
 
             // Synchronize J and rho
-            SyncCurrent("current_fp");
+            SyncCurrent("j_fp");
             SyncRho();
         }
         else if (current_deposition_algo == CurrentDepositionAlgo::Vay)
         {
             // FFT of D
-            current_fp_string = "current_fp_vay";
-            PSATDForwardTransformJ(current_fp_string, current_cp_string);
+            j_fp_string = "j_fp_vay";
+            PSATDForwardTransformJ(j_fp_string, j_cp_string);
 
             // Compute J from D in k-space
             PSATDVayDeposition();
 
             // Inverse FFT of J, subtract cumulative sums of D
-            current_fp_string = "current_fp";
-            PSATDBackwardTransformJ(current_fp_string, current_cp_string);
+            j_fp_string = "j_fp";
+            PSATDBackwardTransformJ(j_fp_string, j_cp_string);
             PSATDSubtractCurrentPartialSumsAvg();
 
             // Synchronize J and rho (if used).
@@ -823,12 +823,12 @@ WarpX::PushPSATD ()
             // by calling SyncCurrentAndRho (see Evolve/WarpXEvolve.cpp).
             // TODO This works only without mesh refinement
             const int lev = 0;
-            SumBoundaryJ(current_fp, lev, Geom(lev).periodicity());
+            SumBoundaryJ(j_fp, lev, Geom(lev).periodicity());
             SyncRho();
         }
 
         // FFT of J and rho (if used)
-        PSATDForwardTransformJ(current_fp_string, current_cp_string);
+        PSATDForwardTransformJ(j_fp_string, j_cp_string);
         PSATDForwardTransformRho(rho_fp_string, rho_cp_string, 0, rho_old);
         PSATDForwardTransformRho(rho_fp_string, rho_cp_string, 1, rho_new);
     }
@@ -1149,7 +1149,7 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
     m_fdtd_solver_fp[lev]->MacroscopicEvolveE(
         m_fields.get_alldirs(FieldType::Efield_fp, lev),
         m_fields.get_alldirs(FieldType::Bfield_fp, lev),
-        m_fields.get_alldirs(FieldType::current_fp, lev),
+        m_fields.get_alldirs(FieldType::j_fp, lev),
         m_fields.get_alldirs(FieldType::edge_lengths, lev),
         a_dt, m_macroscopic_properties);
 

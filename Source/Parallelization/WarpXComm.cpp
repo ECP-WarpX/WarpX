@@ -1071,18 +1071,18 @@ WarpX::FillBoundaryAux (int lev, IntVect ng)
 }
 
 void
-WarpX::SyncCurrent (const std::string& current_fp_string)
+WarpX::SyncCurrent (const std::string& j_fp_string)
 {
     using ablastr::fields::Direction;
 
     WARPX_PROFILE("WarpX::SyncCurrent()");
 
-    ablastr::fields::MultiLevelVectorField const& J_fp = m_fields.get_mr_levels_alldirs(current_fp_string, finest_level);
+    ablastr::fields::MultiLevelVectorField const& J_fp = m_fields.get_mr_levels_alldirs(j_fp_string, finest_level);
 
     // If warpx.do_current_centering = 1, center currents from nodal grid to staggered grid
     if (do_current_centering)
     {
-        ablastr::fields::MultiLevelVectorField const& J_fp_nodal = m_fields.get_mr_levels_alldirs(FieldType::current_fp_nodal, finest_level+1);
+        ablastr::fields::MultiLevelVectorField const& J_fp_nodal = m_fields.get_mr_levels_alldirs(FieldType::j_fp_nodal, finest_level+1);
 
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(finest_level <= 1,
                                          "warpx.do_current_centering=1 not supported with more than one fine levels");
@@ -1192,7 +1192,7 @@ WarpX::SyncCurrent (const std::string& current_fp_string)
                     }
                 });
                 // Now it's safe to apply filter and sumboundary on J_cp
-                ablastr::fields::MultiLevelVectorField const& J_cp = m_fields.get_mr_levels_alldirs(FieldType::current_cp, finest_level);
+                ablastr::fields::MultiLevelVectorField const& J_cp = m_fields.get_mr_levels_alldirs(FieldType::j_cp, finest_level);
                 if (use_filter)
                 {
                     ApplyFilterJ(J_cp, lev+1, idim);
@@ -1207,7 +1207,7 @@ WarpX::SyncCurrent (const std::string& current_fp_string)
                 // filtering depends on the level. This is also done before any
                 // same-level communication because it's easier this way to
                 // avoid double counting.
-                ablastr::fields::MultiLevelVectorField const& J_cp = m_fields.get_mr_levels_alldirs(FieldType::current_cp, finest_level);
+                ablastr::fields::MultiLevelVectorField const& J_cp = m_fields.get_mr_levels_alldirs(FieldType::j_cp, finest_level);
                 J_cp[lev][Direction{idim}]->setVal(0.0);
                 ablastr::coarsen::average::Coarsen(*J_cp[lev][Direction{idim}],
                                                    *J_fp[lev][Direction{idim}],

@@ -460,16 +460,16 @@ MultiParticleContainer::InitMultiPhysicsModules ()
 void
 MultiParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
                                 int lev,
-                                std::string const& current_fp_string,
+                                std::string const& j_fp_string,
                                 Real t, Real dt, DtType a_dt_type, bool skip_deposition,
                                 PushType push_type)
 {
     if (! skip_deposition) {
         using ablastr::fields::Direction;
 
-        fields.get(current_fp_string, Direction{0}, lev)->setVal(0.0);
-        fields.get(current_fp_string, Direction{1}, lev)->setVal(0.0);
-        fields.get(current_fp_string, Direction{2}, lev)->setVal(0.0);
+        fields.get(j_fp_string, Direction{0}, lev)->setVal(0.0);
+        fields.get(j_fp_string, Direction{1}, lev)->setVal(0.0);
+        fields.get(j_fp_string, Direction{2}, lev)->setVal(0.0);
         if (fields.has(FieldType::current_buf, Direction{0}, lev)) { fields.get(FieldType::current_buf, Direction{0}, lev)->setVal(0.0); }
         if (fields.has(FieldType::current_buf, Direction{1}, lev)) { fields.get(FieldType::current_buf, Direction{1}, lev)->setVal(0.0); }
         if (fields.has(FieldType::current_buf, Direction{2}, lev)) { fields.get(FieldType::current_buf, Direction{2}, lev)->setVal(0.0); }
@@ -477,7 +477,7 @@ MultiParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
         if (fields.has(FieldType::rho_buf, lev)) { fields.get(FieldType::rho_buf, lev)->setVal(0.0); }
     }
     for (auto& pc : allcontainers) {
-        pc->Evolve(fields, lev, current_fp_string, t, dt, a_dt_type, skip_deposition, push_type);
+        pc->Evolve(fields, lev, j_fp_string, t, dt, a_dt_type, skip_deposition, push_type);
     }
 }
 

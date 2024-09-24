@@ -283,7 +283,7 @@ WarpX::InitFromCheckpoint ()
     for (int lev = 0; lev < nlevs; ++lev)
     {
         for (int i = 0; i < 3; ++i) {
-            m_fields.get(FieldType::current_fp, Direction{i}, lev)->setVal(0.0);
+            m_fields.get(FieldType::j_fp, Direction{i}, lev)->setVal(0.0);
             m_fields.get(FieldType::Efield_fp, Direction{i}, lev)->setVal(0.0);
             m_fields.get(FieldType::Bfield_fp, Direction{i}, lev)->setVal(0.0);
         }
@@ -293,7 +293,7 @@ WarpX::InitFromCheckpoint ()
                 m_fields.get(FieldType::Efield_aux, Direction{i}, lev)->setVal(0.0);
                 m_fields.get(FieldType::Bfield_aux, Direction{i}, lev)->setVal(0.0);
 
-                m_fields.get(FieldType::current_cp, Direction{i}, lev)->setVal(0.0);
+                m_fields.get(FieldType::j_cp, Direction{i}, lev)->setVal(0.0);
                 m_fields.get(FieldType::Efield_cp, Direction{i}, lev)->setVal(0.0);
                 m_fields.get(FieldType::Bfield_cp, Direction{i}, lev)->setVal(0.0);
             }
@@ -331,11 +331,11 @@ WarpX::InitFromCheckpoint ()
         }
 
         if (is_synchronized) {
-            VisMF::Read(*m_fields.get(FieldType::current_fp, Direction{0}, lev),
+            VisMF::Read(*m_fields.get(FieldType::j_fp, Direction{0}, lev),
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "jx_fp"));
-            VisMF::Read(*m_fields.get(FieldType::current_fp, Direction{1}, lev),
+            VisMF::Read(*m_fields.get(FieldType::j_fp, Direction{1}, lev),
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "jy_fp"));
-            VisMF::Read(*m_fields.get(FieldType::current_fp, Direction{2}, lev),
+            VisMF::Read(*m_fields.get(FieldType::j_fp, Direction{2}, lev),
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "jz_fp"));
         }
 
@@ -373,11 +373,11 @@ WarpX::InitFromCheckpoint ()
             }
 
             if (is_synchronized) {
-                VisMF::Read(*m_fields.get(FieldType::current_cp, Direction{0}, lev),
+                VisMF::Read(*m_fields.get(FieldType::j_cp, Direction{0}, lev),
                             amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "jx_cp"));
-                VisMF::Read(*m_fields.get(FieldType::current_cp, Direction{1}, lev),
+                VisMF::Read(*m_fields.get(FieldType::j_cp, Direction{1}, lev),
                             amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "jy_cp"));
-                VisMF::Read(*m_fields.get(FieldType::current_cp, Direction{2}, lev),
+                VisMF::Read(*m_fields.get(FieldType::j_cp, Direction{2}, lev),
                             amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "jz_cp"));
             }
         }

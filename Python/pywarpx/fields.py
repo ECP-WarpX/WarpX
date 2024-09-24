@@ -616,19 +616,19 @@ def BzWrapper(level=0, include_ghosts=False):
 
 def JxWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="current_fp", idir=0, level=level, include_ghosts=include_ghosts
+        mf_name="j_fp", idir=0, level=level, include_ghosts=include_ghosts
     )
 
 
 def JyWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="current_fp", idir=1, level=level, include_ghosts=include_ghosts
+        mf_name="j_fp", idir=1, level=level, include_ghosts=include_ghosts
     )
 
 
 def JzWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="current_fp", idir=2, level=level, include_ghosts=include_ghosts
+        mf_name="j_fp", idir=2, level=level, include_ghosts=include_ghosts
     )
 
 
@@ -706,19 +706,19 @@ def BzFPExternalWrapper(level=0, include_ghosts=False):
 
 def JxFPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="current_fp", idir=0, level=level, include_ghosts=include_ghosts
+        mf_name="j_fp", idir=0, level=level, include_ghosts=include_ghosts
     )
 
 
 def JyFPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="current_fp", idir=1, level=level, include_ghosts=include_ghosts
+        mf_name="j_fp", idir=1, level=level, include_ghosts=include_ghosts
     )
 
 
 def JzFPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="current_fp", idir=2, level=level, include_ghosts=include_ghosts
+        mf_name="j_fp", idir=2, level=level, include_ghosts=include_ghosts
     )
 
 
@@ -807,19 +807,19 @@ def BzCPWrapper(level=0, include_ghosts=False):
 
 def JxCPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="current_cp", idir=0, level=level, include_ghosts=include_ghosts
+        mf_name="j_cp", idir=0, level=level, include_ghosts=include_ghosts
     )
 
 
 def JyCPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="current_cp", idir=1, level=level, include_ghosts=include_ghosts
+        mf_name="j_cp", idir=1, level=level, include_ghosts=include_ghosts
     )
 
 
 def JzCPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="current_cp", idir=2, level=level, include_ghosts=include_ghosts
+        mf_name="j_cp", idir=2, level=level, include_ghosts=include_ghosts
     )
 
 
@@ -875,7 +875,7 @@ def FaceAreaszWrapper(level=0, include_ghosts=False):
 
 def JxFPAmpereWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="hybrid_current_fp_ampere",
+        mf_name="hybrid_j_fp_ampere",
         idir=0,
         level=level,
         include_ghosts=include_ghosts,
@@ -884,7 +884,7 @@ def JxFPAmpereWrapper(level=0, include_ghosts=False):
 
 def JyFPAmpereWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="hybrid_current_fp_ampere",
+        mf_name="hybrid_j_fp_ampere",
         idir=1,
         level=level,
         include_ghosts=include_ghosts,
@@ -893,7 +893,7 @@ def JyFPAmpereWrapper(level=0, include_ghosts=False):
 
 def JzFPAmpereWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="hybrid_current_fp_ampere",
+        mf_name="hybrid_j_fp_ampere",
         idir=2,
         level=level,
         include_ghosts=include_ghosts,

@@ -83,7 +83,7 @@ public:
      *
      * \param fields the WarpX field register
      * \param lev level on which particles are living
-     * \param current_fp_string current coarse or fine patch identifier in fields
+     * \param j_fp_string current coarse or fine patch identifier in fields
      * \param t current physical time
      * \param dt time step by which particles are advanced
      * \param a_dt_type type of time step (used for sub-cycling)
@@ -96,7 +96,7 @@ public:
      */
     void Evolve (ablastr::fields::MultiFabRegister& fields,
                  int lev,
-                 const std::string& current_fp_string,
+                 const std::string& j_fp_string,
                  amrex::Real t,
                  amrex::Real dt,
                  DtType a_dt_type=DtType::Full,

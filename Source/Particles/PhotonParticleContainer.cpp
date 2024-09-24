@@ -231,7 +231,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
 void
 PhotonParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
                                  int lev,
-                                 const std::string& current_fp_string,
+                                 const std::string& j_fp_string,
                                  Real t, Real dt, DtType a_dt_type, bool skip_deposition,
                                  PushType push_type)
 {
@@ -239,7 +239,7 @@ PhotonParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
     // Push and deposit have been re-written for photons
     PhysicalParticleContainer::Evolve (fields,
                                        lev,
-                                       current_fp_string,
+                                       j_fp_string,
                                        t, dt, a_dt_type, skip_deposition, push_type);
 
 }

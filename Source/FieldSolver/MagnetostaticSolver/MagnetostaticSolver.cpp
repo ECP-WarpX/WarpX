@@ -89,10 +89,10 @@ WarpX::AddMagnetostaticFieldLabFrame()
                                      "Error: RZ magnetostatic only implemented for a single mode");
 #endif
 
-    // reset current_fp before depositing current density for this step
+    // reset j_fp before depositing current density for this step
     for (int lev = 0; lev <= max_level; lev++) {
         for (int dim=0; dim < 3; dim++) {
-            m_fields.get(FieldType::current_fp, Direction{dim}, lev)->setVal(0.);
+            m_fields.get(FieldType::j_fp, Direction{dim}, lev)->setVal(0.);
         }
     }
 
@@ -101,7 +101,7 @@ WarpX::AddMagnetostaticFieldLabFrame()
         WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
         if (!species.do_not_deposit) {
             species.DepositCurrent(
-                m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level),
+                m_fields.get_mr_levels_alldirs(FieldType::j_fp, finest_level),
                 dt[0], 0.);
         }
     }
@@ -109,14 +109,14 @@ WarpX::AddMagnetostaticFieldLabFrame()
 #ifdef WARPX_DIM_RZ
     for (int lev = 0; lev <= max_level; lev++) {
         ApplyInverseVolumeScalingToCurrentDensity(
-            m_fields.get(FieldType::current_fp, Direction{0}, lev),
-            m_fields.get(FieldType::current_fp, Direction{1}, lev),
-            m_fields.get(FieldType::current_fp, Direction{2}, lev),
+            m_fields.get(FieldType::j_fp, Direction{0}, lev),
+            m_fields.get(FieldType::j_fp, Direction{1}, lev),
+            m_fields.get(FieldType::j_fp, Direction{2}, lev),
             lev );
     }
 #endif
 
-    SyncCurrent("current_fp");
+    SyncCurrent("j_fp");
 
     // set the boundary and current density potentials
     setVectorPotentialBC(m_fields.get_mr_levels_alldirs(FieldType::vector_potential_fp_nodal, finest_level));
@@ -133,7 +133,7 @@ WarpX::AddMagnetostaticFieldLabFrame()
     const int self_fields_verbosity = 2;
 
     computeVectorPotential(
-        m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level),
+        m_fields.get_mr_levels_alldirs(FieldType::j_fp, finest_level),
         m_fields.get_mr_levels_alldirs(FieldType::vector_potential_fp_nodal, finest_level),
         self_fields_required_precision, magnetostatic_absolute_tolerance, self_fields_max_iters,
         self_fields_verbosity);

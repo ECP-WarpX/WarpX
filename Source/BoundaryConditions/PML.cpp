@@ -717,9 +717,9 @@ PML::PML (const int lev, const BoxArray& grid_ba,
     warpx.m_fields.alloc_init(FieldType::pml_B_fp, Direction{1}, lev, ba_By, dm, ncompb, ngb, 0.0_rt, false, false);
     warpx.m_fields.alloc_init(FieldType::pml_B_fp, Direction{2}, lev, ba_Bz, dm, ncompb, ngb, 0.0_rt, false, false);
 
-    const amrex::BoxArray ba_jx = amrex::convert(ba, WarpX::GetInstance().m_fields.get(FieldType::current_fp, Direction{0}, 0)->ixType().toIntVect());
-    const amrex::BoxArray ba_jy = amrex::convert(ba, WarpX::GetInstance().m_fields.get(FieldType::current_fp, Direction{1}, 0)->ixType().toIntVect());
-    const amrex::BoxArray ba_jz = amrex::convert(ba, WarpX::GetInstance().m_fields.get(FieldType::current_fp, Direction{2}, 0)->ixType().toIntVect());
+    const amrex::BoxArray ba_jx = amrex::convert(ba, WarpX::GetInstance().m_fields.get(FieldType::j_fp, Direction{0}, 0)->ixType().toIntVect());
+    const amrex::BoxArray ba_jy = amrex::convert(ba, WarpX::GetInstance().m_fields.get(FieldType::j_fp, Direction{1}, 0)->ixType().toIntVect());
+    const amrex::BoxArray ba_jz = amrex::convert(ba, WarpX::GetInstance().m_fields.get(FieldType::j_fp, Direction{2}, 0)->ixType().toIntVect());
     warpx.m_fields.alloc_init(FieldType::pml_j_fp, Direction{0}, lev, ba_jx, dm, 1, ngb, 0.0_rt, false, false);
     warpx.m_fields.alloc_init(FieldType::pml_j_fp, Direction{1}, lev, ba_jy, dm, 1, ngb, 0.0_rt, false, false);
     warpx.m_fields.alloc_init(FieldType::pml_j_fp, Direction{2}, lev, ba_jz, dm, 1, ngb, 0.0_rt, false, false);
@@ -871,9 +871,9 @@ PML::PML (const int lev, const BoxArray& grid_ba,
             warpx.m_fields.alloc_init(FieldType::pml_G_cp, lev, cba_G_nodal, cdm, 3, ngf, 0.0_rt, false, false);
         }
 
-        const amrex::BoxArray cba_jx = amrex::convert(cba, WarpX::GetInstance().m_fields.get(FieldType::current_cp, Direction{0}, 1)->ixType().toIntVect());
-        const amrex::BoxArray cba_jy = amrex::convert(cba, WarpX::GetInstance().m_fields.get(FieldType::current_cp, Direction{1}, 1)->ixType().toIntVect());
-        const amrex::BoxArray cba_jz = amrex::convert(cba, WarpX::GetInstance().m_fields.get(FieldType::current_cp, Direction{2}, 1)->ixType().toIntVect());
+        const amrex::BoxArray cba_jx = amrex::convert(cba, WarpX::GetInstance().m_fields.get(FieldType::j_cp, Direction{0}, 1)->ixType().toIntVect());
+        const amrex::BoxArray cba_jy = amrex::convert(cba, WarpX::GetInstance().m_fields.get(FieldType::j_cp, Direction{1}, 1)->ixType().toIntVect());
+        const amrex::BoxArray cba_jz = amrex::convert(cba, WarpX::GetInstance().m_fields.get(FieldType::j_cp, Direction{2}, 1)->ixType().toIntVect());
         warpx.m_fields.alloc_init(FieldType::pml_j_cp, Direction{0}, lev, cba_jx, cdm, 1, ngb, 0.0_rt, false, false);
         warpx.m_fields.alloc_init(FieldType::pml_j_cp, Direction{1}, lev, cba_jy, cdm, 1, ngb, 0.0_rt, false, false);
         warpx.m_fields.alloc_init(FieldType::pml_j_cp, Direction{2}, lev, cba_jz, cdm, 1, ngb, 0.0_rt, false, false);
@@ -1060,15 +1060,15 @@ PML::CopyJtoPMLs (
 {
     using ablastr::fields::Direction;
 
-    bool const has_j_fp = fields.has_vector(FieldType::current_fp, lev);
+    bool const has_j_fp = fields.has_vector(FieldType::j_fp, lev);
     bool const has_pml_j_fp = fields.has_vector(FieldType::pml_j_fp, lev);
-    bool const has_j_cp = fields.has_vector(FieldType::current_cp, lev);
+    bool const has_j_cp = fields.has_vector(FieldType::j_cp, lev);
     bool const has_pml_j_cp = fields.has_vector(FieldType::pml_j_cp, lev);
 
     if (patch_type == PatchType::fine && has_pml_j_fp && has_j_fp)
     {
         ablastr::fields::VectorField pml_j_fp = fields.get_alldirs(FieldType::pml_j_fp, lev);
-        ablastr::fields::VectorField jp = fields.get_alldirs(FieldType::current_fp, lev);
+        ablastr::fields::VectorField jp = fields.get_alldirs(FieldType::j_fp, lev);
         CopyToPML(*pml_j_fp[0], *jp[0], *m_geom);
         CopyToPML(*pml_j_fp[1], *jp[1], *m_geom);
         CopyToPML(*pml_j_fp[2], *jp[2], *m_geom);
@@ -1076,7 +1076,7 @@ PML::CopyJtoPMLs (
     else if (patch_type == PatchType::coarse && has_j_cp && has_pml_j_cp)
     {
         ablastr::fields::VectorField pml_j_cp = fields.get_alldirs(FieldType::pml_j_cp, lev);
-        ablastr::fields::VectorField jp = fields.get_alldirs(FieldType::current_cp, lev);
+        ablastr::fields::VectorField jp = fields.get_alldirs(FieldType::j_cp, lev);
         CopyToPML(*pml_j_cp[0], *jp[0], *m_cgeom);
         CopyToPML(*pml_j_cp[1], *jp[1], *m_cgeom);
         CopyToPML(*pml_j_cp[2], *jp[2], *m_cgeom);

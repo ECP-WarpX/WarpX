@@ -293,7 +293,7 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
 void
 RigidInjectedParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
                                         int lev,
-                                        const std::string& current_fp_string,
+                                        const std::string& j_fp_string,
                                         Real t, Real dt, DtType a_dt_type, bool skip_deposition,
                                         PushType push_type)
 {
@@ -314,7 +314,7 @@ RigidInjectedParticleContainer::Evolve (ablastr::fields::MultiFabRegister& field
 
     PhysicalParticleContainer::Evolve (fields,
                                        lev,
-                                       current_fp_string,
+                                       j_fp_string,
                                        t, dt, a_dt_type, skip_deposition, push_type);
 }
 

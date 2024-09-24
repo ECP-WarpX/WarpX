@@ -2202,23 +2202,23 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     m_fields.alloc_init(FieldType::Efield_fp, Direction{1}, lev, amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
     m_fields.alloc_init(FieldType::Efield_fp, Direction{2}, lev, amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
 
-    m_fields.alloc_init(FieldType::current_fp, Direction{0}, lev, amrex::convert(ba, jx_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
-    m_fields.alloc_init(FieldType::current_fp, Direction{1}, lev, amrex::convert(ba, jy_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
-    m_fields.alloc_init(FieldType::current_fp, Direction{2}, lev, amrex::convert(ba, jz_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
+    m_fields.alloc_init(FieldType::j_fp, Direction{0}, lev, amrex::convert(ba, jx_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
+    m_fields.alloc_init(FieldType::j_fp, Direction{1}, lev, amrex::convert(ba, jy_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
+    m_fields.alloc_init(FieldType::j_fp, Direction{2}, lev, amrex::convert(ba, jz_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
 
     if (do_current_centering)
     {
         amrex::BoxArray const& nodal_ba = amrex::convert(ba, amrex::IntVect::TheNodeVector());
-        m_fields.alloc_init(FieldType::current_fp_nodal, Direction{0}, lev, nodal_ba, dm, ncomps, ngJ, 0.0_rt);
-        m_fields.alloc_init(FieldType::current_fp_nodal, Direction{1}, lev, nodal_ba, dm, ncomps, ngJ, 0.0_rt);
-        m_fields.alloc_init(FieldType::current_fp_nodal, Direction{2}, lev, nodal_ba, dm, ncomps, ngJ, 0.0_rt);
+        m_fields.alloc_init(FieldType::j_fp_nodal, Direction{0}, lev, nodal_ba, dm, ncomps, ngJ, 0.0_rt);
+        m_fields.alloc_init(FieldType::j_fp_nodal, Direction{1}, lev, nodal_ba, dm, ncomps, ngJ, 0.0_rt);
+        m_fields.alloc_init(FieldType::j_fp_nodal, Direction{2}, lev, nodal_ba, dm, ncomps, ngJ, 0.0_rt);
     }
 
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
     {
-        m_fields.alloc_init(FieldType::current_fp_vay, Direction{0}, lev, amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
-        m_fields.alloc_init(FieldType::current_fp_vay, Direction{1}, lev, amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
-        m_fields.alloc_init(FieldType::current_fp_vay, Direction{2}, lev, amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
+        m_fields.alloc_init(FieldType::j_fp_vay, Direction{0}, lev, amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
+        m_fields.alloc_init(FieldType::j_fp_vay, Direction{1}, lev, amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
+        m_fields.alloc_init(FieldType::j_fp_vay, Direction{2}, lev, amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
     }
 
     if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
@@ -2604,9 +2604,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         }
 
         // Create the MultiFabs for the current
-        m_fields.alloc_init(FieldType::current_cp, Direction{0}, lev, amrex::convert(cba, jx_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
-        m_fields.alloc_init(FieldType::current_cp, Direction{1}, lev, amrex::convert(cba, jy_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
-        m_fields.alloc_init(FieldType::current_cp, Direction{2}, lev, amrex::convert(cba, jz_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
+        m_fields.alloc_init(FieldType::j_cp, Direction{0}, lev, amrex::convert(cba, jx_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
+        m_fields.alloc_init(FieldType::j_cp, Direction{1}, lev, amrex::convert(cba, jy_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
+        m_fields.alloc_init(FieldType::j_cp, Direction{2}, lev, amrex::convert(cba, jz_nodal_flag), dm, ncomps, ngJ, 0.0_rt);
 
         if (rho_ncomps > 0) {
             m_fields.alloc_init(FieldType::rho_cp,
@@ -3260,7 +3260,7 @@ WarpX::StoreCurrent (int lev)
     for (int idim = 0; idim < 3; ++idim) {
         if (m_fields.has(FieldType::current_store, Direction{idim},lev)) {
             MultiFab::Copy(*m_fields.get(FieldType::current_store, Direction{idim}, lev),
-                           *m_fields.get(FieldType::current_fp, Direction{idim}, lev),
+                           *m_fields.get(FieldType::j_fp, Direction{idim}, lev),
                            0, 0, 1, m_fields.get(FieldType::current_store, Direction{idim}, lev)->nGrowVect());
         }
     }
@@ -3275,7 +3275,7 @@ WarpX::RestoreCurrent (int lev)
     for (int idim = 0; idim < 3; ++idim) {
         if (m_fields.has(FieldType::current_store, Direction{idim}, lev)) {
             std::swap(
-                *m_fields.get(FieldType::current_fp, Direction{idim}, lev),
+                *m_fields.get(FieldType::j_fp, Direction{idim}, lev),
                 *m_fields.get(FieldType::current_store, Direction{idim}, lev)
             );
         }

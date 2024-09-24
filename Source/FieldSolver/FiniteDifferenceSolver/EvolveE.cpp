@@ -64,7 +64,7 @@ void FiniteDifferenceSolver::EvolveE (
     const ablastr::fields::VectorField Bfield = patch_type == PatchType::fine ?
         fields.get_alldirs(FieldType::Bfield_fp, lev) : fields.get_alldirs(FieldType::Bfield_cp, lev);
     const ablastr::fields::VectorField Jfield = patch_type == PatchType::fine ?
-        fields.get_alldirs(FieldType::current_fp, lev) : fields.get_alldirs(FieldType::current_cp, lev);
+        fields.get_alldirs(FieldType::j_fp, lev) : fields.get_alldirs(FieldType::j_cp, lev);
 
     amrex::MultiFab* Ffield = nullptr;
     if (fields.has(FieldType::F_fp, lev)) {

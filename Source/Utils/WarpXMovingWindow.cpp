@@ -251,7 +251,7 @@ WarpX::MoveWindow (const int step, bool move_j)
                    m_p_ext_field_params-> E_external_grid[dim], use_Eparser, Efield_parser);
             }
             if (move_j) {
-                shiftMF(*m_fields.get(FieldType::current_fp, Direction{dim}, lev), geom[lev], num_shift, dir, lev, do_update_cost);
+                shiftMF(*m_fields.get(FieldType::j_fp, Direction{dim}, lev), geom[lev], num_shift, dir, lev, do_update_cost);
             }
             if (pml[lev] && pml[lev]->ok()) {
                 amrex::MultiFab* pml_B = m_fields.get(FieldType::pml_B_fp, Direction{dim}, lev);
@@ -284,7 +284,7 @@ WarpX::MoveWindow (const int step, bool move_j)
                         m_p_ext_field_params->E_external_grid[dim], use_Eparser, Efield_parser);
                 }
                 if (move_j) {
-                    shiftMF(*m_fields.get(FieldType::current_cp, Direction{dim}, lev), geom[lev-1], num_shift_crse, dir, lev, do_update_cost);
+                    shiftMF(*m_fields.get(FieldType::j_cp, Direction{dim}, lev), geom[lev-1], num_shift_crse, dir, lev, do_update_cost);
                 }
                 if (do_pml && pml[lev]->ok()) {
                     amrex::MultiFab* pml_B_cp = m_fields.get(FieldType::pml_B_cp, Direction{dim}, lev);
