@@ -74,7 +74,7 @@ namespace warpx::fields
         Bfield_avg_fp,
         Efield_avg_cp,
         Bfield_avg_cp,
-        Bold, //!< Stores the value of B at the beginning of the timestep, for the implicit solver
+        B_old, //!< Stores the value of B at the beginning of the timestep, for the implicit solver
         ECTRhofield,
         Venl
     );
@@ -114,7 +114,7 @@ namespace warpx::fields
         FieldType::Bfield_avg_fp,
         FieldType::Efield_avg_cp,
         FieldType::Bfield_avg_cp,
-        FieldType::Bold,
+        FieldType::B_old,
         FieldType::ECTRhofield,
         FieldType::Venl
     };
