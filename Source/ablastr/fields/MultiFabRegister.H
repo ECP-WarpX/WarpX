@@ -662,7 +662,7 @@ namespace ablastr::fields
         ) const;
 
     private:
-        amrex::MultiFab *
+        [[nodiscard]] amrex::MultiFab *
         internal_get (
             std::string const & key
         );
@@ -730,54 +730,54 @@ namespace ablastr::fields
             int level
         ) const;
 
-        amrex::MultiFab *
+        [[nodiscard]] amrex::MultiFab *
         internal_get (
             std::string const & name,
             int level
         );
-        amrex::MultiFab const *
+        [[nodiscard]] amrex::MultiFab const *
         internal_get (
             std::string const & name,
             int level
         ) const;
-        amrex::MultiFab *
-        internal_get (
-            std::string const & name,
-            Direction dir,
-            int level
-        );
-        amrex::MultiFab const *
+        [[nodiscard]] amrex::MultiFab *
         internal_get (
             std::string const & name,
             Direction dir,
             int level
+        );
+        [[nodiscard]] amrex::MultiFab const *
+        internal_get (
+            std::string const & name,
+            Direction dir,
+            int level
         ) const;
-        MultiLevelScalarField
+        [[nodiscard]] MultiLevelScalarField
         internal_get_mr_levels (
             std::string const & name,
             int finest_level
         );
-        ConstMultiLevelScalarField
+        [[nodiscard]] ConstMultiLevelScalarField
         internal_get_mr_levels (
             std::string const & name,
             int finest_level
         ) const;
-        VectorField
+        [[nodiscard]] VectorField
         internal_get_alldirs (
             std::string const & name,
             int level
         );
-        ConstVectorField
+        [[nodiscard]] ConstVectorField
         internal_get_alldirs (
             std::string const & name,
             int level
         ) const;
-        MultiLevelVectorField
+        [[nodiscard]] MultiLevelVectorField
         internal_get_mr_levels_alldirs (
             std::string const & name,
             int finest_level
         );
-        ConstMultiLevelVectorField
+        [[nodiscard]] ConstMultiLevelVectorField
         internal_get_mr_levels_alldirs (
             std::string const & name,
             int finest_level
