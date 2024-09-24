@@ -517,11 +517,13 @@ void HybridPICModel::CalculateElectronPressure(const int lev) const
     WARPX_PROFILE("WarpX::CalculateElectronPressure()");
 
     auto& warpx = WarpX::GetInstance();
+    ablastr::fields::ScalarField electron_temperature_fp = warpx.m_fields.get("fluid_temperature_electrons_hybrid", lev);
     ablastr::fields::ScalarField electron_pressure_fp = warpx.m_fields.get(FieldType::hybrid_electron_pressure_fp, lev);
     ablastr::fields::ScalarField rho_fp = warpx.m_fields.get(FieldType::rho_fp, lev);
 
     // Calculate the electron pressure using rho^{n+1}.
     FillElectronPressureMF(
+        *electron_temperature_fp
         *electron_pressure_fp,
         *rho_fp
     );
