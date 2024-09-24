@@ -130,7 +130,7 @@ void init_WarpX (py::module& m)
             py::arg("multifab_name"),
             py::arg("level"),
             py::return_value_policy::reference_internal,
-            R"doc(Return MultiFabs by name and level, e.g., ``\"Efield_aux\"``, ``\"Efield_fp"``, ...
+            R"doc(Return MultiFabs by name and level, e.g., ``\"E_aux\"``, ``\"E_fp"``, ...
 
 The physical fields in WarpX have the following naming:
 
@@ -152,7 +152,7 @@ The physical fields in WarpX have the following naming:
             py::arg("dir"),
             py::arg("level"),
             py::return_value_policy::reference_internal,
-            R"doc(Return MultiFabs by name, direction, and level, e.g., ``\"Efield_aux\"``, ``\"Efield_fp"``, ...
+            R"doc(Return MultiFabs by name, direction, and level, e.g., ``\"E_aux\"``, ``\"E_fp"``, ...
 
 The physical fields in WarpX have the following naming:
 
@@ -233,7 +233,7 @@ The physical fields in WarpX have the following naming:
         )
         .def_static("run_div_cleaner",
             [] () { WarpX::ProjectionCleanDivB(); },
-            "Executes projection based divergence cleaner on loaded Bfield_fp_external."
+            "Executes projection based divergence cleaner on loaded B_fp_external."
         )
     ;
 

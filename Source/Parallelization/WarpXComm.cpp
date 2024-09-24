@@ -60,11 +60,11 @@ WarpX::UpdateAuxilaryData ()
 
     using ablastr::fields::Direction;
 
-    amrex::MultiFab *Bfield_aux_lvl0_0 = m_fields.get(FieldType::Bfield_aux, Direction{0}, 0);
+    amrex::MultiFab *B_aux_lvl0_0 = m_fields.get(FieldType::B_aux, Direction{0}, 0);
 
-    ablastr::fields::MultiLevelVectorField const& Bfield_fp = m_fields.get_mr_levels_alldirs(FieldType::Bfield_fp, finest_level);
+    ablastr::fields::MultiLevelVectorField const& B_fp = m_fields.get_mr_levels_alldirs(FieldType::B_fp, finest_level);
 
-    if (Bfield_aux_lvl0_0->ixType() == Bfield_fp[0][0]->ixType()) {
+    if (B_aux_lvl0_0->ixType() == B_fp[0][0]->ixType()) {
         UpdateAuxilaryDataSameType();
     } else {
         UpdateAuxilaryDataStagToNodal();
@@ -73,18 +73,18 @@ WarpX::UpdateAuxilaryData ()
     // When loading particle fields from file: add the external fields:
     for (int lev = 0; lev <= finest_level; ++lev) {
         if (mypc->m_E_ext_particle_s == "read_from_file") {
-            ablastr::fields::VectorField Efield_aux = m_fields.get_alldirs(FieldType::Efield_aux, lev);
+            ablastr::fields::VectorField E_aux = m_fields.get_alldirs(FieldType::E_aux, lev);
             const auto& E_ext_lev = m_fields.get_alldirs(FieldType::E_external_particle_field, lev);
-            amrex::MultiFab::Add(*Efield_aux[0], *E_ext_lev[0], 0, 0, E_ext_lev[0]->nComp(), guard_cells.ng_FieldGather);
-            amrex::MultiFab::Add(*Efield_aux[1], *E_ext_lev[1], 0, 0, E_ext_lev[1]->nComp(), guard_cells.ng_FieldGather);
-            amrex::MultiFab::Add(*Efield_aux[2], *E_ext_lev[2], 0, 0, E_ext_lev[2]->nComp(), guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*E_aux[0], *E_ext_lev[0], 0, 0, E_ext_lev[0]->nComp(), guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*E_aux[1], *E_ext_lev[1], 0, 0, E_ext_lev[1]->nComp(), guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*E_aux[2], *E_ext_lev[2], 0, 0, E_ext_lev[2]->nComp(), guard_cells.ng_FieldGather);
         }
         if (mypc->m_B_ext_particle_s == "read_from_file") {
-            ablastr::fields::VectorField Bfield_aux = m_fields.get_alldirs(FieldType::Bfield_aux, lev);
+            ablastr::fields::VectorField B_aux = m_fields.get_alldirs(FieldType::B_aux, lev);
             const auto& B_ext_lev = m_fields.get_alldirs(FieldType::B_external_particle_field, lev);
-            amrex::MultiFab::Add(*Bfield_aux[0], *B_ext_lev[0], 0, 0, B_ext_lev[0]->nComp(), guard_cells.ng_FieldGather);
-            amrex::MultiFab::Add(*Bfield_aux[1], *B_ext_lev[1], 0, 0, B_ext_lev[1]->nComp(), guard_cells.ng_FieldGather);
-            amrex::MultiFab::Add(*Bfield_aux[2], *B_ext_lev[2], 0, 0, B_ext_lev[2]->nComp(), guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*B_aux[0], *B_ext_lev[0], 0, 0, B_ext_lev[0]->nComp(), guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*B_aux[1], *B_ext_lev[1], 0, 0, B_ext_lev[1]->nComp(), guard_cells.ng_FieldGather);
+            amrex::MultiFab::Add(*B_aux[2], *B_ext_lev[2], 0, 0, B_ext_lev[2]->nComp(), guard_cells.ng_FieldGather);
         }
     }
 
@@ -102,19 +102,19 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
 #endif
     using ablastr::fields::Direction;
 
-    ablastr::fields::MultiLevelVectorField const& Bfield_fp = m_fields.get_mr_levels_alldirs(FieldType::Bfield_fp, finest_level);
-    ablastr::fields::MultiLevelVectorField const& Efield_fp = m_fields.get_mr_levels_alldirs(FieldType::Efield_fp, finest_level);
-    ablastr::fields::MultiLevelVectorField const& Efield_aux = m_fields.get_mr_levels_alldirs(FieldType::Efield_aux, finest_level);
-    ablastr::fields::MultiLevelVectorField const& Bfield_aux = m_fields.get_mr_levels_alldirs(FieldType::Bfield_aux, finest_level);
+    ablastr::fields::MultiLevelVectorField const& B_fp = m_fields.get_mr_levels_alldirs(FieldType::B_fp, finest_level);
+    ablastr::fields::MultiLevelVectorField const& E_fp = m_fields.get_mr_levels_alldirs(FieldType::E_fp, finest_level);
+    ablastr::fields::MultiLevelVectorField const& E_aux = m_fields.get_mr_levels_alldirs(FieldType::E_aux, finest_level);
+    ablastr::fields::MultiLevelVectorField const& B_aux = m_fields.get_mr_levels_alldirs(FieldType::B_aux, finest_level);
 
     ablastr::fields::MultiLevelVectorField const & Bmf =
         WarpX::fft_do_time_averaging ?
-        m_fields.get_mr_levels_alldirs(FieldType::Bfield_avg_fp, finest_level) :
-        Bfield_fp;
+        m_fields.get_mr_levels_alldirs(FieldType::B_avg_fp, finest_level) :
+        B_fp;
     ablastr::fields::MultiLevelVectorField const & Emf =
         WarpX::fft_do_time_averaging ?
-        m_fields.get_mr_levels_alldirs(FieldType::Efield_avg_fp, finest_level) :
-        Efield_fp;
+        m_fields.get_mr_levels_alldirs(FieldType::E_avg_fp, finest_level) :
+        E_fp;
 
     const amrex::IntVect& Bx_stag = Bmf[0][0]->ixType().toIntVect();
     const amrex::IntVect& By_stag = Bmf[0][1]->ixType().toIntVect();
@@ -131,18 +131,18 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-    for (MFIter mfi(*Bfield_aux[0][0], TilingIfNotGPU()); mfi.isValid(); ++mfi)
+    for (MFIter mfi(*B_aux[0][0], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-        Array4<Real> const& bx_aux = Bfield_aux[0][0]->array(mfi);
-        Array4<Real> const& by_aux = Bfield_aux[0][1]->array(mfi);
-        Array4<Real> const& bz_aux = Bfield_aux[0][2]->array(mfi);
+        Array4<Real> const& bx_aux = B_aux[0][0]->array(mfi);
+        Array4<Real> const& by_aux = B_aux[0][1]->array(mfi);
+        Array4<Real> const& bz_aux = B_aux[0][2]->array(mfi);
         Array4<Real const> const& bx_fp = Bmf[0][0]->const_array(mfi);
         Array4<Real const> const& by_fp = Bmf[0][1]->const_array(mfi);
         Array4<Real const> const& bz_fp = Bmf[0][2]->const_array(mfi);
 
-        Array4<Real> const& ex_aux = Efield_aux[0][0]->array(mfi);
-        Array4<Real> const& ey_aux = Efield_aux[0][1]->array(mfi);
-        Array4<Real> const& ez_aux = Efield_aux[0][2]->array(mfi);
+        Array4<Real> const& ex_aux = E_aux[0][0]->array(mfi);
+        Array4<Real> const& ey_aux = E_aux[0][1]->array(mfi);
+        Array4<Real> const& ez_aux = E_aux[0][2]->array(mfi);
         Array4<Real const> const& ex_fp = Emf[0][0]->const_array(mfi);
         Array4<Real const> const& ey_fp = Emf[0][1]->const_array(mfi);
         Array4<Real const> const& ez_fp = Emf[0][2]->const_array(mfi);
@@ -187,22 +187,22 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
     // NOTE: high-order interpolation is not implemented for mesh refinement
     for (int lev = 1; lev <= finest_level; ++lev)
     {
-        BoxArray const& nba = Bfield_aux[lev][0]->boxArray();
+        BoxArray const& nba = B_aux[lev][0]->boxArray();
         BoxArray const& cnba = amrex::coarsen(nba,2);
-        DistributionMapping const& dm = Bfield_aux[lev][0]->DistributionMap();
+        DistributionMapping const& dm = B_aux[lev][0]->DistributionMap();
         amrex::Periodicity const& cperiod = Geom(lev-1).periodicity();
 
         // Bfield
         {
             if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None) {
                 Array<std::unique_ptr<MultiFab>,3> Btmp;
-                if (m_fields.has(FieldType::Bfield_cax, Direction{0}, lev)) {
+                if (m_fields.has(FieldType::B_cax, Direction{0}, lev)) {
                     for (int i = 0; i < 3; ++i) {
                         Btmp[i] = std::make_unique<MultiFab>(
-                            *m_fields.get(FieldType::Bfield_cax, Direction{i}, lev), amrex::make_alias, 0, 1);
+                            *m_fields.get(FieldType::B_cax, Direction{i}, lev), amrex::make_alias, 0, 1);
                     }
                 } else {
-                    const IntVect ngtmp = Bfield_aux[lev-1][0]->nGrowVect();
+                    const IntVect ngtmp = B_aux[lev-1][0]->nGrowVect();
                     for (int i = 0; i < 3; ++i) {
                         Btmp[i] = std::make_unique<MultiFab>(cnba, dm, 1, ngtmp);
                     }
@@ -215,36 +215,36 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                     const IntVect ng = Btmp[i]->nGrowVect();
                     // Guard cells may not be up to date beyond ng_FieldGather
                     const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
-                    // Copy Bfield_aux to Btmp, using up to ng_src (=ng_FieldGather) guard cells from
-                    // Bfield_aux and filling up to ng (=nGrow) guard cells in Btmp
-                    ablastr::utils::communication::ParallelCopy(*Btmp[i], *Bfield_aux[lev - 1][i], 0, 0, 1,
+                    // Copy B_aux to Btmp, using up to ng_src (=ng_FieldGather) guard cells from
+                    // B_aux and filling up to ng (=nGrow) guard cells in Btmp
+                    ablastr::utils::communication::ParallelCopy(*Btmp[i], *B_aux[lev - 1][i], 0, 0, 1,
                                                                 ng_src, ng, WarpX::do_single_precision_comms, cperiod);
                 }
 
                 const amrex::IntVect& refinement_ratio = refRatio(lev-1);
 
-                const amrex::IntVect& Bx_fp_stag = m_fields.get(FieldType::Bfield_fp, Direction{0}, lev)->ixType().toIntVect();
-                const amrex::IntVect& By_fp_stag = m_fields.get(FieldType::Bfield_fp, Direction{1}, lev)->ixType().toIntVect();
-                const amrex::IntVect& Bz_fp_stag = m_fields.get(FieldType::Bfield_fp, Direction{2}, lev)->ixType().toIntVect();
+                const amrex::IntVect& Bx_fp_stag = m_fields.get(FieldType::B_fp, Direction{0}, lev)->ixType().toIntVect();
+                const amrex::IntVect& By_fp_stag = m_fields.get(FieldType::B_fp, Direction{1}, lev)->ixType().toIntVect();
+                const amrex::IntVect& Bz_fp_stag = m_fields.get(FieldType::B_fp, Direction{2}, lev)->ixType().toIntVect();
 
-                const amrex::IntVect& Bx_cp_stag = m_fields.get(FieldType::Bfield_cp, Direction{0}, lev)->ixType().toIntVect();
-                const amrex::IntVect& By_cp_stag = m_fields.get(FieldType::Bfield_cp, Direction{1}, lev)->ixType().toIntVect();
-                const amrex::IntVect& Bz_cp_stag = m_fields.get(FieldType::Bfield_cp, Direction{2}, lev)->ixType().toIntVect();
+                const amrex::IntVect& Bx_cp_stag = m_fields.get(FieldType::B_cp, Direction{0}, lev)->ixType().toIntVect();
+                const amrex::IntVect& By_cp_stag = m_fields.get(FieldType::B_cp, Direction{1}, lev)->ixType().toIntVect();
+                const amrex::IntVect& Bz_cp_stag = m_fields.get(FieldType::B_cp, Direction{2}, lev)->ixType().toIntVect();
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-                for (MFIter mfi(*Bfield_aux[lev][0], TilingIfNotGPU()); mfi.isValid(); ++mfi)
+                for (MFIter mfi(*B_aux[lev][0], TilingIfNotGPU()); mfi.isValid(); ++mfi)
                 {
-                    Array4<Real> const& bx_aux = Bfield_aux[lev][0]->array(mfi);
-                    Array4<Real> const& by_aux = Bfield_aux[lev][1]->array(mfi);
-                    Array4<Real> const& bz_aux = Bfield_aux[lev][2]->array(mfi);
-                    Array4<Real const> const& bx_fp = m_fields.get(FieldType::Bfield_fp, Direction{0}, lev)->const_array(mfi);
-                    Array4<Real const> const& by_fp = m_fields.get(FieldType::Bfield_fp, Direction{1}, lev)->const_array(mfi);
-                    Array4<Real const> const& bz_fp = m_fields.get(FieldType::Bfield_fp, Direction{2}, lev)->const_array(mfi);
-                    Array4<Real const> const& bx_cp = m_fields.get(FieldType::Bfield_cp, Direction{0}, lev)->const_array(mfi);
-                    Array4<Real const> const& by_cp = m_fields.get(FieldType::Bfield_cp, Direction{1}, lev)->const_array(mfi);
-                    Array4<Real const> const& bz_cp = m_fields.get(FieldType::Bfield_cp, Direction{2}, lev)->const_array(mfi);
+                    Array4<Real> const& bx_aux = B_aux[lev][0]->array(mfi);
+                    Array4<Real> const& by_aux = B_aux[lev][1]->array(mfi);
+                    Array4<Real> const& bz_aux = B_aux[lev][2]->array(mfi);
+                    Array4<Real const> const& bx_fp = m_fields.get(FieldType::B_fp, Direction{0}, lev)->const_array(mfi);
+                    Array4<Real const> const& by_fp = m_fields.get(FieldType::B_fp, Direction{1}, lev)->const_array(mfi);
+                    Array4<Real const> const& bz_fp = m_fields.get(FieldType::B_fp, Direction{2}, lev)->const_array(mfi);
+                    Array4<Real const> const& bx_cp = m_fields.get(FieldType::B_cp, Direction{0}, lev)->const_array(mfi);
+                    Array4<Real const> const& by_cp = m_fields.get(FieldType::B_cp, Direction{1}, lev)->const_array(mfi);
+                    Array4<Real const> const& bz_cp = m_fields.get(FieldType::B_cp, Direction{2}, lev)->const_array(mfi);
                     Array4<Real const> const& bx_c = Btmp[0]->const_array(mfi);
                     Array4<Real const> const& by_c = Btmp[1]->const_array(mfi);
                     Array4<Real const> const& bz_c = Btmp[2]->const_array(mfi);
@@ -260,20 +260,20 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                 }
             }
             else { // electrostatic
-                const amrex::IntVect& Bx_fp_stag = Bfield_fp[lev][0]->ixType().toIntVect();
-                const amrex::IntVect& By_fp_stag = Bfield_fp[lev][1]->ixType().toIntVect();
-                const amrex::IntVect& Bz_fp_stag = Bfield_fp[lev][2]->ixType().toIntVect();
+                const amrex::IntVect& Bx_fp_stag = B_fp[lev][0]->ixType().toIntVect();
+                const amrex::IntVect& By_fp_stag = B_fp[lev][1]->ixType().toIntVect();
+                const amrex::IntVect& Bz_fp_stag = B_fp[lev][2]->ixType().toIntVect();
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-                for (MFIter mfi(*Bfield_aux[lev][0], TilingIfNotGPU()); mfi.isValid(); ++mfi)
+                for (MFIter mfi(*B_aux[lev][0], TilingIfNotGPU()); mfi.isValid(); ++mfi)
                 {
-                    Array4<Real> const& bx_aux = Bfield_aux[lev][0]->array(mfi);
-                    Array4<Real> const& by_aux = Bfield_aux[lev][1]->array(mfi);
-                    Array4<Real> const& bz_aux = Bfield_aux[lev][2]->array(mfi);
-                    Array4<Real const> const& bx_fp = Bfield_fp[lev][0]->const_array(mfi);
-                    Array4<Real const> const& by_fp = Bfield_fp[lev][1]->const_array(mfi);
-                    Array4<Real const> const& bz_fp = Bfield_fp[lev][2]->const_array(mfi);
+                    Array4<Real> const& bx_aux = B_aux[lev][0]->array(mfi);
+                    Array4<Real> const& by_aux = B_aux[lev][1]->array(mfi);
+                    Array4<Real> const& bz_aux = B_aux[lev][2]->array(mfi);
+                    Array4<Real const> const& bx_fp = B_fp[lev][0]->const_array(mfi);
+                    Array4<Real const> const& by_fp = B_fp[lev][1]->const_array(mfi);
+                    Array4<Real const> const& bz_fp = B_fp[lev][2]->const_array(mfi);
 
                     const Box& bx = mfi.growntilebox();
                     amrex::ParallelFor(bx,
@@ -290,13 +290,13 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
         {
             if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None) {
                 Array<std::unique_ptr<MultiFab>,3> Etmp;
-                if (m_fields.has(FieldType::Efield_cax, Direction{0}, lev)) {
+                if (m_fields.has(FieldType::E_cax, Direction{0}, lev)) {
                     for (int i = 0; i < 3; ++i) {
                         Etmp[i] = std::make_unique<MultiFab>(
-                            *m_fields.get(FieldType::Efield_cax, Direction{i}, lev), amrex::make_alias, 0, 1);
+                            *m_fields.get(FieldType::E_cax, Direction{i}, lev), amrex::make_alias, 0, 1);
                     }
                 } else {
-                    const IntVect ngtmp = Efield_aux[lev-1][0]->nGrowVect();
+                    const IntVect ngtmp = E_aux[lev-1][0]->nGrowVect();
                     for (int i = 0; i < 3; ++i) {
                         Etmp[i] = std::make_unique<MultiFab>(
                             cnba, dm, 1, ngtmp);
@@ -310,36 +310,36 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                     const IntVect ng = Etmp[i]->nGrowVect();
                     // Guard cells may not be up to date beyond ng_FieldGather
                     const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
-                    // Copy Efield_aux to Etmp, using up to ng_src (=ng_FieldGather) guard cells from
-                    // Efield_aux and filling up to ng (=nGrow) guard cells in Etmp
-                    ablastr::utils::communication::ParallelCopy(*Etmp[i], *Efield_aux[lev - 1][i], 0, 0, 1,
+                    // Copy E_aux to Etmp, using up to ng_src (=ng_FieldGather) guard cells from
+                    // E_aux and filling up to ng (=nGrow) guard cells in Etmp
+                    ablastr::utils::communication::ParallelCopy(*Etmp[i], *E_aux[lev - 1][i], 0, 0, 1,
                                                                 ng_src, ng, WarpX::do_single_precision_comms, cperiod);
                 }
 
                 const amrex::IntVect& refinement_ratio = refRatio(lev-1);
 
-                const amrex::IntVect& Ex_fp_stag = m_fields.get(FieldType::Efield_fp, Direction{0}, lev)->ixType().toIntVect();
-                const amrex::IntVect& Ey_fp_stag = m_fields.get(FieldType::Efield_fp, Direction{1}, lev)->ixType().toIntVect();
-                const amrex::IntVect& Ez_fp_stag = m_fields.get(FieldType::Efield_fp, Direction{2}, lev)->ixType().toIntVect();
+                const amrex::IntVect& Ex_fp_stag = m_fields.get(FieldType::E_fp, Direction{0}, lev)->ixType().toIntVect();
+                const amrex::IntVect& Ey_fp_stag = m_fields.get(FieldType::E_fp, Direction{1}, lev)->ixType().toIntVect();
+                const amrex::IntVect& Ez_fp_stag = m_fields.get(FieldType::E_fp, Direction{2}, lev)->ixType().toIntVect();
 
-                const amrex::IntVect& Ex_cp_stag = m_fields.get(FieldType::Efield_cp, Direction{0}, lev)->ixType().toIntVect();
-                const amrex::IntVect& Ey_cp_stag = m_fields.get(FieldType::Efield_cp, Direction{1}, lev)->ixType().toIntVect();
-                const amrex::IntVect& Ez_cp_stag = m_fields.get(FieldType::Efield_cp, Direction{2}, lev)->ixType().toIntVect();
+                const amrex::IntVect& Ex_cp_stag = m_fields.get(FieldType::E_cp, Direction{0}, lev)->ixType().toIntVect();
+                const amrex::IntVect& Ey_cp_stag = m_fields.get(FieldType::E_cp, Direction{1}, lev)->ixType().toIntVect();
+                const amrex::IntVect& Ez_cp_stag = m_fields.get(FieldType::E_cp, Direction{2}, lev)->ixType().toIntVect();
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-                for (MFIter mfi(*Efield_aux[lev][0], TilingIfNotGPU()); mfi.isValid(); ++mfi)
+                for (MFIter mfi(*E_aux[lev][0], TilingIfNotGPU()); mfi.isValid(); ++mfi)
                 {
-                    Array4<Real> const& ex_aux = Efield_aux[lev][0]->array(mfi);
-                    Array4<Real> const& ey_aux = Efield_aux[lev][1]->array(mfi);
-                    Array4<Real> const& ez_aux = Efield_aux[lev][2]->array(mfi);
-                    Array4<Real const> const& ex_fp = m_fields.get(FieldType::Efield_fp, Direction{0}, lev)->const_array(mfi);
-                    Array4<Real const> const& ey_fp = m_fields.get(FieldType::Efield_fp, Direction{1}, lev)->const_array(mfi);
-                    Array4<Real const> const& ez_fp = m_fields.get(FieldType::Efield_fp, Direction{2}, lev)->const_array(mfi);
-                    Array4<Real const> const& ex_cp = m_fields.get(FieldType::Efield_cp, Direction{0}, lev)->const_array(mfi);
-                    Array4<Real const> const& ey_cp = m_fields.get(FieldType::Efield_cp, Direction{1}, lev)->const_array(mfi);
-                    Array4<Real const> const& ez_cp = m_fields.get(FieldType::Efield_cp, Direction{2}, lev)->const_array(mfi);
+                    Array4<Real> const& ex_aux = E_aux[lev][0]->array(mfi);
+                    Array4<Real> const& ey_aux = E_aux[lev][1]->array(mfi);
+                    Array4<Real> const& ez_aux = E_aux[lev][2]->array(mfi);
+                    Array4<Real const> const& ex_fp = m_fields.get(FieldType::E_fp, Direction{0}, lev)->const_array(mfi);
+                    Array4<Real const> const& ey_fp = m_fields.get(FieldType::E_fp, Direction{1}, lev)->const_array(mfi);
+                    Array4<Real const> const& ez_fp = m_fields.get(FieldType::E_fp, Direction{2}, lev)->const_array(mfi);
+                    Array4<Real const> const& ex_cp = m_fields.get(FieldType::E_cp, Direction{0}, lev)->const_array(mfi);
+                    Array4<Real const> const& ey_cp = m_fields.get(FieldType::E_cp, Direction{1}, lev)->const_array(mfi);
+                    Array4<Real const> const& ez_cp = m_fields.get(FieldType::E_cp, Direction{2}, lev)->const_array(mfi);
                     Array4<Real const> const& ex_c = Etmp[0]->const_array(mfi);
                     Array4<Real const> const& ey_c = Etmp[1]->const_array(mfi);
                     Array4<Real const> const& ez_c = Etmp[2]->const_array(mfi);
@@ -355,20 +355,20 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                 }
             }
             else { // electrostatic
-                const amrex::IntVect& Ex_fp_stag = m_fields.get(FieldType::Efield_fp, Direction{0}, lev)->ixType().toIntVect();
-                const amrex::IntVect& Ey_fp_stag = m_fields.get(FieldType::Efield_fp, Direction{1}, lev)->ixType().toIntVect();
-                const amrex::IntVect& Ez_fp_stag = m_fields.get(FieldType::Efield_fp, Direction{2}, lev)->ixType().toIntVect();
+                const amrex::IntVect& Ex_fp_stag = m_fields.get(FieldType::E_fp, Direction{0}, lev)->ixType().toIntVect();
+                const amrex::IntVect& Ey_fp_stag = m_fields.get(FieldType::E_fp, Direction{1}, lev)->ixType().toIntVect();
+                const amrex::IntVect& Ez_fp_stag = m_fields.get(FieldType::E_fp, Direction{2}, lev)->ixType().toIntVect();
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-                for (MFIter mfi(*Efield_aux[lev][0], TilingIfNotGPU()); mfi.isValid(); ++mfi)
+                for (MFIter mfi(*E_aux[lev][0], TilingIfNotGPU()); mfi.isValid(); ++mfi)
                 {
-                    Array4<Real> const& ex_aux = Efield_aux[lev][0]->array(mfi);
-                    Array4<Real> const& ey_aux = Efield_aux[lev][1]->array(mfi);
-                    Array4<Real> const& ez_aux = Efield_aux[lev][2]->array(mfi);
-                    Array4<Real const> const& ex_fp = m_fields.get(FieldType::Efield_fp, Direction{0}, lev)->const_array(mfi);
-                    Array4<Real const> const& ey_fp = m_fields.get(FieldType::Efield_fp, Direction{1}, lev)->const_array(mfi);
-                    Array4<Real const> const& ez_fp = m_fields.get(FieldType::Efield_fp, Direction{2}, lev)->const_array(mfi);
+                    Array4<Real> const& ex_aux = E_aux[lev][0]->array(mfi);
+                    Array4<Real> const& ey_aux = E_aux[lev][1]->array(mfi);
+                    Array4<Real> const& ez_aux = E_aux[lev][2]->array(mfi);
+                    Array4<Real const> const& ex_fp = m_fields.get(FieldType::E_fp, Direction{0}, lev)->const_array(mfi);
+                    Array4<Real const> const& ey_fp = m_fields.get(FieldType::E_fp, Direction{1}, lev)->const_array(mfi);
+                    Array4<Real const> const& ez_fp = m_fields.get(FieldType::E_fp, Direction{2}, lev)->const_array(mfi);
 
                     const Box& bx = mfi.growntilebox();
                     amrex::ParallelFor(bx,
@@ -391,95 +391,95 @@ WarpX::UpdateAuxilaryDataSameType ()
     const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
 
     using ablastr::fields::Direction;
-    ablastr::fields::MultiLevelVectorField Efield_fp = m_fields.get_mr_levels_alldirs(FieldType::Efield_fp, finest_level);
-    ablastr::fields::MultiLevelVectorField Bfield_fp = m_fields.get_mr_levels_alldirs(FieldType::Bfield_fp, finest_level);
-    ablastr::fields::MultiLevelVectorField Efield_aux = m_fields.get_mr_levels_alldirs(FieldType::Efield_aux, finest_level);
-    ablastr::fields::MultiLevelVectorField Bfield_aux = m_fields.get_mr_levels_alldirs(FieldType::Bfield_aux, finest_level);
+    ablastr::fields::MultiLevelVectorField E_fp = m_fields.get_mr_levels_alldirs(FieldType::E_fp, finest_level);
+    ablastr::fields::MultiLevelVectorField B_fp = m_fields.get_mr_levels_alldirs(FieldType::B_fp, finest_level);
+    ablastr::fields::MultiLevelVectorField E_aux = m_fields.get_mr_levels_alldirs(FieldType::E_aux, finest_level);
+    ablastr::fields::MultiLevelVectorField B_aux = m_fields.get_mr_levels_alldirs(FieldType::B_aux, finest_level);
 
     // Level 0: Copy from fine to aux
-    // Note: in some configurations, Efield_aux/Bfield_aux and Efield_fp/Bfield_fp are simply aliases to the
+    // Note: in some configurations, E_aux/B_aux and E_fp/B_fp are simply aliases to the
     // same MultiFab object. MultiFab::Copy operation automatically detects this and does nothing in this case.
     if (WarpX::fft_do_time_averaging)
     {
-        MultiFab::Copy(*Efield_aux[0][0], *m_fields.get(FieldType::Efield_avg_fp, Direction{0}, 0), 0, 0, Efield_aux[0][0]->nComp(), ng_src);
-        MultiFab::Copy(*Efield_aux[0][1], *m_fields.get(FieldType::Efield_avg_fp, Direction{1}, 0), 0, 0, Efield_aux[0][1]->nComp(), ng_src);
-        MultiFab::Copy(*Efield_aux[0][2], *m_fields.get(FieldType::Efield_avg_fp, Direction{2}, 0), 0, 0, Efield_aux[0][2]->nComp(), ng_src);
-        MultiFab::Copy(*Bfield_aux[0][0], *m_fields.get(FieldType::Bfield_avg_fp, Direction{0}, 0), 0, 0, Bfield_aux[0][0]->nComp(), ng_src);
-        MultiFab::Copy(*Bfield_aux[0][1], *m_fields.get(FieldType::Bfield_avg_fp, Direction{1}, 0), 0, 0, Bfield_aux[0][1]->nComp(), ng_src);
-        MultiFab::Copy(*Bfield_aux[0][2], *m_fields.get(FieldType::Bfield_avg_fp, Direction{2}, 0), 0, 0, Bfield_aux[0][2]->nComp(), ng_src);
+        MultiFab::Copy(*E_aux[0][0], *m_fields.get(FieldType::E_avg_fp, Direction{0}, 0), 0, 0, E_aux[0][0]->nComp(), ng_src);
+        MultiFab::Copy(*E_aux[0][1], *m_fields.get(FieldType::E_avg_fp, Direction{1}, 0), 0, 0, E_aux[0][1]->nComp(), ng_src);
+        MultiFab::Copy(*E_aux[0][2], *m_fields.get(FieldType::E_avg_fp, Direction{2}, 0), 0, 0, E_aux[0][2]->nComp(), ng_src);
+        MultiFab::Copy(*B_aux[0][0], *m_fields.get(FieldType::B_avg_fp, Direction{0}, 0), 0, 0, B_aux[0][0]->nComp(), ng_src);
+        MultiFab::Copy(*B_aux[0][1], *m_fields.get(FieldType::B_avg_fp, Direction{1}, 0), 0, 0, B_aux[0][1]->nComp(), ng_src);
+        MultiFab::Copy(*B_aux[0][2], *m_fields.get(FieldType::B_avg_fp, Direction{2}, 0), 0, 0, B_aux[0][2]->nComp(), ng_src);
     }
     else
     {
-        MultiFab::Copy(*Efield_aux[0][0], *Efield_fp[0][0], 0, 0, Efield_aux[0][0]->nComp(), ng_src);
-        MultiFab::Copy(*Efield_aux[0][1], *Efield_fp[0][1], 0, 0, Efield_aux[0][1]->nComp(), ng_src);
-        MultiFab::Copy(*Efield_aux[0][2], *Efield_fp[0][2], 0, 0, Efield_aux[0][2]->nComp(), ng_src);
-        MultiFab::Copy(*Bfield_aux[0][0], *Bfield_fp[0][0], 0, 0, Bfield_aux[0][0]->nComp(), ng_src);
-        MultiFab::Copy(*Bfield_aux[0][1], *Bfield_fp[0][1], 0, 0, Bfield_aux[0][1]->nComp(), ng_src);
-        MultiFab::Copy(*Bfield_aux[0][2], *Bfield_fp[0][2], 0, 0, Bfield_aux[0][2]->nComp(), ng_src);
+        MultiFab::Copy(*E_aux[0][0], *E_fp[0][0], 0, 0, E_aux[0][0]->nComp(), ng_src);
+        MultiFab::Copy(*E_aux[0][1], *E_fp[0][1], 0, 0, E_aux[0][1]->nComp(), ng_src);
+        MultiFab::Copy(*E_aux[0][2], *E_fp[0][2], 0, 0, E_aux[0][2]->nComp(), ng_src);
+        MultiFab::Copy(*B_aux[0][0], *B_fp[0][0], 0, 0, B_aux[0][0]->nComp(), ng_src);
+        MultiFab::Copy(*B_aux[0][1], *B_fp[0][1], 0, 0, B_aux[0][1]->nComp(), ng_src);
+        MultiFab::Copy(*B_aux[0][2], *B_fp[0][2], 0, 0, B_aux[0][2]->nComp(), ng_src);
     }
     for (int lev = 1; lev <= finest_level; ++lev)
     {
         const amrex::Periodicity& crse_period = Geom(lev-1).periodicity();
-        const IntVect& ng = m_fields.get(FieldType::Bfield_cp, Direction{0}, lev)->nGrowVect();
-        const DistributionMapping& dm = m_fields.get(FieldType::Bfield_cp, Direction{0}, lev)->DistributionMap();
+        const IntVect& ng = m_fields.get(FieldType::B_cp, Direction{0}, lev)->nGrowVect();
+        const DistributionMapping& dm = m_fields.get(FieldType::B_cp, Direction{0}, lev)->DistributionMap();
 
         // B field
         {
             if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None)
             {
-                MultiFab dBx(m_fields.get(FieldType::Bfield_cp, Direction{0}, lev)->boxArray(), dm,
-                             m_fields.get(FieldType::Bfield_cp, Direction{0}, lev)->nComp(), ng);
-                MultiFab dBy(m_fields.get(FieldType::Bfield_cp, Direction{1}, lev)->boxArray(), dm,
-                             m_fields.get(FieldType::Bfield_cp, Direction{1}, lev)->nComp(), ng);
-                MultiFab dBz(m_fields.get(FieldType::Bfield_cp, Direction{2}, lev)->boxArray(), dm,
-                             m_fields.get(FieldType::Bfield_cp, Direction{2}, lev)->nComp(), ng);
+                MultiFab dBx(m_fields.get(FieldType::B_cp, Direction{0}, lev)->boxArray(), dm,
+                             m_fields.get(FieldType::B_cp, Direction{0}, lev)->nComp(), ng);
+                MultiFab dBy(m_fields.get(FieldType::B_cp, Direction{1}, lev)->boxArray(), dm,
+                             m_fields.get(FieldType::B_cp, Direction{1}, lev)->nComp(), ng);
+                MultiFab dBz(m_fields.get(FieldType::B_cp, Direction{2}, lev)->boxArray(), dm,
+                             m_fields.get(FieldType::B_cp, Direction{2}, lev)->nComp(), ng);
                 dBx.setVal(0.0);
                 dBy.setVal(0.0);
                 dBz.setVal(0.0);
 
-                // Copy Bfield_aux to the dB MultiFabs, using up to ng_src (=ng_FieldGather) guard
-                // cells from Bfield_aux and filling up to ng (=nGrow) guard cells in the dB MultiFabs
+                // Copy B_aux to the dB MultiFabs, using up to ng_src (=ng_FieldGather) guard
+                // cells from B_aux and filling up to ng (=nGrow) guard cells in the dB MultiFabs
 
-                ablastr::utils::communication::ParallelCopy(dBx, *Bfield_aux[lev - 1][0], 0, 0,
-                                                            Bfield_aux[lev - 1][0]->nComp(), ng_src, ng, WarpX::do_single_precision_comms,
+                ablastr::utils::communication::ParallelCopy(dBx, *B_aux[lev - 1][0], 0, 0,
+                                                            B_aux[lev - 1][0]->nComp(), ng_src, ng, WarpX::do_single_precision_comms,
                                                             crse_period);
-                ablastr::utils::communication::ParallelCopy(dBy, *Bfield_aux[lev - 1][1], 0, 0,
-                                                            Bfield_aux[lev - 1][1]->nComp(), ng_src, ng, WarpX::do_single_precision_comms,
+                ablastr::utils::communication::ParallelCopy(dBy, *B_aux[lev - 1][1], 0, 0,
+                                                            B_aux[lev - 1][1]->nComp(), ng_src, ng, WarpX::do_single_precision_comms,
                                                             crse_period);
-                ablastr::utils::communication::ParallelCopy(dBz, *Bfield_aux[lev - 1][2], 0, 0,
-                                                            Bfield_aux[lev - 1][2]->nComp(), ng_src, ng, WarpX::do_single_precision_comms,
+                ablastr::utils::communication::ParallelCopy(dBz, *B_aux[lev - 1][2], 0, 0,
+                                                            B_aux[lev - 1][2]->nComp(), ng_src, ng, WarpX::do_single_precision_comms,
                                                             crse_period);
 
-                if (m_fields.has(FieldType::Bfield_cax, Direction{0}, lev))
+                if (m_fields.has(FieldType::B_cax, Direction{0}, lev))
                 {
-                    MultiFab::Copy(*m_fields.get(FieldType::Bfield_cax, Direction{0}, lev), dBx, 0, 0, m_fields.get(FieldType::Bfield_cax, Direction{0}, lev)->nComp(), ng);
-                    MultiFab::Copy(*m_fields.get(FieldType::Bfield_cax, Direction{1}, lev), dBy, 0, 0, m_fields.get(FieldType::Bfield_cax, Direction{1}, lev)->nComp(), ng);
-                    MultiFab::Copy(*m_fields.get(FieldType::Bfield_cax, Direction{2}, lev), dBz, 0, 0, m_fields.get(FieldType::Bfield_cax, Direction{2}, lev)->nComp(), ng);
+                    MultiFab::Copy(*m_fields.get(FieldType::B_cax, Direction{0}, lev), dBx, 0, 0, m_fields.get(FieldType::B_cax, Direction{0}, lev)->nComp(), ng);
+                    MultiFab::Copy(*m_fields.get(FieldType::B_cax, Direction{1}, lev), dBy, 0, 0, m_fields.get(FieldType::B_cax, Direction{1}, lev)->nComp(), ng);
+                    MultiFab::Copy(*m_fields.get(FieldType::B_cax, Direction{2}, lev), dBz, 0, 0, m_fields.get(FieldType::B_cax, Direction{2}, lev)->nComp(), ng);
                 }
-                MultiFab::Subtract(dBx, *m_fields.get(FieldType::Bfield_cp, Direction{0}, lev),
-                                   0, 0, m_fields.get(FieldType::Bfield_cp, Direction{0}, lev)->nComp(), ng);
-                MultiFab::Subtract(dBy, *m_fields.get(FieldType::Bfield_cp, Direction{1}, lev),
-                                   0, 0, m_fields.get(FieldType::Bfield_cp, Direction{1}, lev)->nComp(), ng);
-                MultiFab::Subtract(dBz, *m_fields.get(FieldType::Bfield_cp, Direction{2}, lev),
-                                   0, 0, m_fields.get(FieldType::Bfield_cp, Direction{2}, lev)->nComp(), ng);
+                MultiFab::Subtract(dBx, *m_fields.get(FieldType::B_cp, Direction{0}, lev),
+                                   0, 0, m_fields.get(FieldType::B_cp, Direction{0}, lev)->nComp(), ng);
+                MultiFab::Subtract(dBy, *m_fields.get(FieldType::B_cp, Direction{1}, lev),
+                                   0, 0, m_fields.get(FieldType::B_cp, Direction{1}, lev)->nComp(), ng);
+                MultiFab::Subtract(dBz, *m_fields.get(FieldType::B_cp, Direction{2}, lev),
+                                   0, 0, m_fields.get(FieldType::B_cp, Direction{2}, lev)->nComp(), ng);
 
                 const amrex::IntVect& refinement_ratio = refRatio(lev-1);
 
-                const amrex::IntVect& Bx_stag = Bfield_aux[lev-1][0]->ixType().toIntVect();
-                const amrex::IntVect& By_stag = Bfield_aux[lev-1][1]->ixType().toIntVect();
-                const amrex::IntVect& Bz_stag = Bfield_aux[lev-1][2]->ixType().toIntVect();
+                const amrex::IntVect& Bx_stag = B_aux[lev-1][0]->ixType().toIntVect();
+                const amrex::IntVect& By_stag = B_aux[lev-1][1]->ixType().toIntVect();
+                const amrex::IntVect& Bz_stag = B_aux[lev-1][2]->ixType().toIntVect();
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-                for (MFIter mfi(*Bfield_aux[lev][0]); mfi.isValid(); ++mfi)
+                for (MFIter mfi(*B_aux[lev][0]); mfi.isValid(); ++mfi)
                 {
-                    Array4<Real> const& bx_aux = Bfield_aux[lev][0]->array(mfi);
-                    Array4<Real> const& by_aux = Bfield_aux[lev][1]->array(mfi);
-                    Array4<Real> const& bz_aux = Bfield_aux[lev][2]->array(mfi);
-                    Array4<Real const> const& bx_fp = Bfield_fp[lev][0]->const_array(mfi);
-                    Array4<Real const> const& by_fp = Bfield_fp[lev][1]->const_array(mfi);
-                    Array4<Real const> const& bz_fp = Bfield_fp[lev][2]->const_array(mfi);
+                    Array4<Real> const& bx_aux = B_aux[lev][0]->array(mfi);
+                    Array4<Real> const& by_aux = B_aux[lev][1]->array(mfi);
+                    Array4<Real> const& bz_aux = B_aux[lev][2]->array(mfi);
+                    Array4<Real const> const& bx_fp = B_fp[lev][0]->const_array(mfi);
+                    Array4<Real const> const& by_fp = B_fp[lev][1]->const_array(mfi);
+                    Array4<Real const> const& bz_fp = B_fp[lev][2]->const_array(mfi);
                     Array4<Real const> const& bx_c = dBx.const_array(mfi);
                     Array4<Real const> const& by_c = dBy.const_array(mfi);
                     Array4<Real const> const& bz_c = dBz.const_array(mfi);
@@ -501,70 +501,70 @@ WarpX::UpdateAuxilaryDataSameType ()
             }
             else // electrostatic
             {
-                MultiFab::Copy(*Bfield_aux[lev][0], *Bfield_fp[lev][0], 0, 0, Bfield_aux[lev][0]->nComp(), Bfield_aux[lev][0]->nGrowVect());
-                MultiFab::Copy(*Bfield_aux[lev][1], *Bfield_fp[lev][1], 0, 0, Bfield_aux[lev][1]->nComp(), Bfield_aux[lev][1]->nGrowVect());
-                MultiFab::Copy(*Bfield_aux[lev][2], *Bfield_fp[lev][2], 0, 0, Bfield_aux[lev][2]->nComp(), Bfield_aux[lev][2]->nGrowVect());
+                MultiFab::Copy(*B_aux[lev][0], *B_fp[lev][0], 0, 0, B_aux[lev][0]->nComp(), B_aux[lev][0]->nGrowVect());
+                MultiFab::Copy(*B_aux[lev][1], *B_fp[lev][1], 0, 0, B_aux[lev][1]->nComp(), B_aux[lev][1]->nGrowVect());
+                MultiFab::Copy(*B_aux[lev][2], *B_fp[lev][2], 0, 0, B_aux[lev][2]->nComp(), B_aux[lev][2]->nGrowVect());
             }
         }
         // E field
         {
             if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None)
             {
-                MultiFab dEx(m_fields.get(FieldType::Efield_cp, Direction{0}, lev)->boxArray(), dm,
-                             m_fields.get(FieldType::Efield_cp, Direction{0}, lev)->nComp(), ng);
-                MultiFab dEy(m_fields.get(FieldType::Efield_cp, Direction{1}, lev)->boxArray(), dm,
-                             m_fields.get(FieldType::Efield_cp, Direction{1}, lev)->nComp(), ng);
-                MultiFab dEz(m_fields.get(FieldType::Efield_cp, Direction{2}, lev)->boxArray(), dm,
-                             m_fields.get(FieldType::Efield_cp, Direction{2}, lev)->nComp(), ng);
+                MultiFab dEx(m_fields.get(FieldType::E_cp, Direction{0}, lev)->boxArray(), dm,
+                             m_fields.get(FieldType::E_cp, Direction{0}, lev)->nComp(), ng);
+                MultiFab dEy(m_fields.get(FieldType::E_cp, Direction{1}, lev)->boxArray(), dm,
+                             m_fields.get(FieldType::E_cp, Direction{1}, lev)->nComp(), ng);
+                MultiFab dEz(m_fields.get(FieldType::E_cp, Direction{2}, lev)->boxArray(), dm,
+                             m_fields.get(FieldType::E_cp, Direction{2}, lev)->nComp(), ng);
                 dEx.setVal(0.0);
                 dEy.setVal(0.0);
                 dEz.setVal(0.0);
 
-                // Copy Efield_aux to the dE MultiFabs, using up to ng_src (=ng_FieldGather) guard
-                // cells from Efield_aux and filling up to ng (=nGrow) guard cells in the dE MultiFabs
-                ablastr::utils::communication::ParallelCopy(dEx, *Efield_aux[lev - 1][0], 0, 0,
-                                                            Efield_aux[lev - 1][0]->nComp(), ng_src, ng,
+                // Copy E_aux to the dE MultiFabs, using up to ng_src (=ng_FieldGather) guard
+                // cells from E_aux and filling up to ng (=nGrow) guard cells in the dE MultiFabs
+                ablastr::utils::communication::ParallelCopy(dEx, *E_aux[lev - 1][0], 0, 0,
+                                                            E_aux[lev - 1][0]->nComp(), ng_src, ng,
                                                             WarpX::do_single_precision_comms,
                                                             crse_period);
-                ablastr::utils::communication::ParallelCopy(dEy, *Efield_aux[lev - 1][1], 0, 0,
-                                                            Efield_aux[lev - 1][1]->nComp(), ng_src, ng,
+                ablastr::utils::communication::ParallelCopy(dEy, *E_aux[lev - 1][1], 0, 0,
+                                                            E_aux[lev - 1][1]->nComp(), ng_src, ng,
                                                             WarpX::do_single_precision_comms,
                                                             crse_period);
-                ablastr::utils::communication::ParallelCopy(dEz, *Efield_aux[lev - 1][2], 0, 0,
-                                                            Efield_aux[lev - 1][2]->nComp(), ng_src, ng,
+                ablastr::utils::communication::ParallelCopy(dEz, *E_aux[lev - 1][2], 0, 0,
+                                                            E_aux[lev - 1][2]->nComp(), ng_src, ng,
                                                             WarpX::do_single_precision_comms,
                                                             crse_period);
 
-                if (m_fields.has(FieldType::Efield_cax, Direction{0}, lev))
+                if (m_fields.has(FieldType::E_cax, Direction{0}, lev))
                 {
-                    MultiFab::Copy(*m_fields.get(FieldType::Efield_cax, Direction{0}, lev), dEx, 0, 0, m_fields.get(FieldType::Efield_cax, Direction{0}, lev)->nComp(), ng);
-                    MultiFab::Copy(*m_fields.get(FieldType::Efield_cax, Direction{1}, lev), dEy, 0, 0, m_fields.get(FieldType::Efield_cax, Direction{1}, lev)->nComp(), ng);
-                    MultiFab::Copy(*m_fields.get(FieldType::Efield_cax, Direction{2}, lev), dEz, 0, 0, m_fields.get(FieldType::Efield_cax, Direction{2}, lev)->nComp(), ng);
+                    MultiFab::Copy(*m_fields.get(FieldType::E_cax, Direction{0}, lev), dEx, 0, 0, m_fields.get(FieldType::E_cax, Direction{0}, lev)->nComp(), ng);
+                    MultiFab::Copy(*m_fields.get(FieldType::E_cax, Direction{1}, lev), dEy, 0, 0, m_fields.get(FieldType::E_cax, Direction{1}, lev)->nComp(), ng);
+                    MultiFab::Copy(*m_fields.get(FieldType::E_cax, Direction{2}, lev), dEz, 0, 0, m_fields.get(FieldType::E_cax, Direction{2}, lev)->nComp(), ng);
                 }
-                MultiFab::Subtract(dEx, *m_fields.get(FieldType::Efield_cp, Direction{0}, lev),
-                                   0, 0, m_fields.get(FieldType::Efield_cp, Direction{0}, lev)->nComp(), ng);
-                MultiFab::Subtract(dEy, *m_fields.get(FieldType::Efield_cp, Direction{1}, lev),
-                                   0, 0, m_fields.get(FieldType::Efield_cp, Direction{1}, lev)->nComp(), ng);
-                MultiFab::Subtract(dEz, *m_fields.get(FieldType::Efield_cp, Direction{2}, lev),
-                                   0, 0, m_fields.get(FieldType::Efield_cp, Direction{2}, lev)->nComp(), ng);
+                MultiFab::Subtract(dEx, *m_fields.get(FieldType::E_cp, Direction{0}, lev),
+                                   0, 0, m_fields.get(FieldType::E_cp, Direction{0}, lev)->nComp(), ng);
+                MultiFab::Subtract(dEy, *m_fields.get(FieldType::E_cp, Direction{1}, lev),
+                                   0, 0, m_fields.get(FieldType::E_cp, Direction{1}, lev)->nComp(), ng);
+                MultiFab::Subtract(dEz, *m_fields.get(FieldType::E_cp, Direction{2}, lev),
+                                   0, 0, m_fields.get(FieldType::E_cp, Direction{2}, lev)->nComp(), ng);
 
                 const amrex::IntVect& refinement_ratio = refRatio(lev-1);
 
-                const amrex::IntVect& Ex_stag = Efield_aux[lev-1][0]->ixType().toIntVect();
-                const amrex::IntVect& Ey_stag = Efield_aux[lev-1][1]->ixType().toIntVect();
-                const amrex::IntVect& Ez_stag = Efield_aux[lev-1][2]->ixType().toIntVect();
+                const amrex::IntVect& Ex_stag = E_aux[lev-1][0]->ixType().toIntVect();
+                const amrex::IntVect& Ey_stag = E_aux[lev-1][1]->ixType().toIntVect();
+                const amrex::IntVect& Ez_stag = E_aux[lev-1][2]->ixType().toIntVect();
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-                for (MFIter mfi(*Efield_aux[lev][0]); mfi.isValid(); ++mfi)
+                for (MFIter mfi(*E_aux[lev][0]); mfi.isValid(); ++mfi)
                 {
-                    Array4<Real> const& ex_aux = Efield_aux[lev][0]->array(mfi);
-                    Array4<Real> const& ey_aux = Efield_aux[lev][1]->array(mfi);
-                    Array4<Real> const& ez_aux = Efield_aux[lev][2]->array(mfi);
-                    Array4<Real const> const& ex_fp = m_fields.get(FieldType::Efield_fp, Direction{0}, lev)->const_array(mfi);
-                    Array4<Real const> const& ey_fp = m_fields.get(FieldType::Efield_fp, Direction{1}, lev)->const_array(mfi);
-                    Array4<Real const> const& ez_fp = m_fields.get(FieldType::Efield_fp, Direction{2}, lev)->const_array(mfi);
+                    Array4<Real> const& ex_aux = E_aux[lev][0]->array(mfi);
+                    Array4<Real> const& ey_aux = E_aux[lev][1]->array(mfi);
+                    Array4<Real> const& ez_aux = E_aux[lev][2]->array(mfi);
+                    Array4<Real const> const& ex_fp = m_fields.get(FieldType::E_fp, Direction{0}, lev)->const_array(mfi);
+                    Array4<Real const> const& ey_fp = m_fields.get(FieldType::E_fp, Direction{1}, lev)->const_array(mfi);
+                    Array4<Real const> const& ez_fp = m_fields.get(FieldType::E_fp, Direction{2}, lev)->const_array(mfi);
                     Array4<Real const> const& ex_c = dEx.const_array(mfi);
                     Array4<Real const> const& ey_c = dEy.const_array(mfi);
                     Array4<Real const> const& ez_c = dEz.const_array(mfi);
@@ -586,9 +586,9 @@ WarpX::UpdateAuxilaryDataSameType ()
             }
             else // electrostatic
             {
-                MultiFab::Copy(*Efield_aux[lev][0], *m_fields.get(FieldType::Efield_fp, Direction{0}, lev), 0, 0, Efield_aux[lev][0]->nComp(), Efield_aux[lev][0]->nGrowVect());
-                MultiFab::Copy(*Efield_aux[lev][1], *m_fields.get(FieldType::Efield_fp, Direction{1}, lev), 0, 0, Efield_aux[lev][1]->nComp(), Efield_aux[lev][1]->nGrowVect());
-                MultiFab::Copy(*Efield_aux[lev][2], *m_fields.get(FieldType::Efield_fp, Direction{2}, lev), 0, 0, Efield_aux[lev][2]->nComp(), Efield_aux[lev][2]->nGrowVect());
+                MultiFab::Copy(*E_aux[lev][0], *m_fields.get(FieldType::E_fp, Direction{0}, lev), 0, 0, E_aux[lev][0]->nComp(), E_aux[lev][0]->nGrowVect());
+                MultiFab::Copy(*E_aux[lev][1], *m_fields.get(FieldType::E_fp, Direction{1}, lev), 0, 0, E_aux[lev][1]->nComp(), E_aux[lev][1]->nGrowVect());
+                MultiFab::Copy(*E_aux[lev][2], *m_fields.get(FieldType::E_fp, Direction{2}, lev), 0, 0, E_aux[lev][2]->nComp(), E_aux[lev][2]->nGrowVect());
             }
         }
     }
@@ -713,16 +713,16 @@ WarpX::FillBoundaryE (const int lev, const PatchType patch_type, const amrex::In
 
     if (patch_type == PatchType::fine)
     {
-        mf     = {m_fields.get(FieldType::Efield_fp, Direction{0}, lev),
-                  m_fields.get(FieldType::Efield_fp, Direction{1}, lev),
-                  m_fields.get(FieldType::Efield_fp, Direction{2}, lev)};
+        mf     = {m_fields.get(FieldType::E_fp, Direction{0}, lev),
+                  m_fields.get(FieldType::E_fp, Direction{1}, lev),
+                  m_fields.get(FieldType::E_fp, Direction{2}, lev)};
         period = Geom(lev).periodicity();
     }
     else // coarse patch
     {
-        mf     = {m_fields.get(FieldType::Efield_cp, Direction{0}, lev),
-                  m_fields.get(FieldType::Efield_cp, Direction{1}, lev),
-                  m_fields.get(FieldType::Efield_cp, Direction{2}, lev)};
+        mf     = {m_fields.get(FieldType::E_cp, Direction{0}, lev),
+                  m_fields.get(FieldType::E_cp, Direction{1}, lev),
+                  m_fields.get(FieldType::E_cp, Direction{2}, lev)};
         period = Geom(lev-1).periodicity();
     }
 
@@ -778,16 +778,16 @@ WarpX::FillBoundaryB (const int lev, const PatchType patch_type, const amrex::In
 
     if (patch_type == PatchType::fine)
     {
-        mf     = {m_fields.get(FieldType::Bfield_fp, Direction{0}, lev),
-                  m_fields.get(FieldType::Bfield_fp, Direction{1}, lev),
-                  m_fields.get(FieldType::Bfield_fp, Direction{2}, lev)};
+        mf     = {m_fields.get(FieldType::B_fp, Direction{0}, lev),
+                  m_fields.get(FieldType::B_fp, Direction{1}, lev),
+                  m_fields.get(FieldType::B_fp, Direction{2}, lev)};
         period = Geom(lev).periodicity();
     }
     else // coarse patch
     {
-        mf     = {m_fields.get(FieldType::Bfield_cp, Direction{0}, lev),
-                  m_fields.get(FieldType::Bfield_cp, Direction{1}, lev),
-                  m_fields.get(FieldType::Bfield_cp, Direction{2}, lev)};
+        mf     = {m_fields.get(FieldType::B_cp, Direction{0}, lev),
+                  m_fields.get(FieldType::B_cp, Direction{1}, lev),
+                  m_fields.get(FieldType::B_cp, Direction{2}, lev)};
         period = Geom(lev-1).periodicity();
     }
 
@@ -843,19 +843,19 @@ WarpX::FillBoundaryE_avg (int lev, PatchType patch_type, IntVect ng)
             WARPX_ABORT_WITH_MESSAGE("Averaged Galilean PSATD with PML is not yet implemented");
         }
 
-        ablastr::fields::MultiLevelVectorField Efield_avg_fp = m_fields.get_mr_levels_alldirs(FieldType::Efield_avg_fp, finest_level);
+        ablastr::fields::MultiLevelVectorField E_avg_fp = m_fields.get_mr_levels_alldirs(FieldType::E_avg_fp, finest_level);
 
         const amrex::Periodicity& period = Geom(lev).periodicity();
         if ( safe_guard_cells ){
-            const Vector<MultiFab*> mf{Efield_avg_fp[lev][0],Efield_avg_fp[lev][1],Efield_avg_fp[lev][2]};
+            const Vector<MultiFab*> mf{E_avg_fp[lev][0],E_avg_fp[lev][1],E_avg_fp[lev][2]};
             ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period);
         } else {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng.allLE(Efield_avg_fp[lev][0]->nGrowVect()),
+                ng.allLE(E_avg_fp[lev][0]->nGrowVect()),
                 "Error: in FillBoundaryE_avg, requested more guard cells than allocated");
-            ablastr::utils::communication::FillBoundary(*Efield_avg_fp[lev][0], ng, WarpX::do_single_precision_comms, period);
-            ablastr::utils::communication::FillBoundary(*Efield_avg_fp[lev][1], ng, WarpX::do_single_precision_comms, period);
-            ablastr::utils::communication::FillBoundary(*Efield_avg_fp[lev][2], ng, WarpX::do_single_precision_comms, period);
+            ablastr::utils::communication::FillBoundary(*E_avg_fp[lev][0], ng, WarpX::do_single_precision_comms, period);
+            ablastr::utils::communication::FillBoundary(*E_avg_fp[lev][1], ng, WarpX::do_single_precision_comms, period);
+            ablastr::utils::communication::FillBoundary(*E_avg_fp[lev][2], ng, WarpX::do_single_precision_comms, period);
         }
     }
     else if (patch_type == PatchType::coarse)
@@ -865,20 +865,20 @@ WarpX::FillBoundaryE_avg (int lev, PatchType patch_type, IntVect ng)
             WARPX_ABORT_WITH_MESSAGE("Averaged Galilean PSATD with PML is not yet implemented");
         }
 
-        ablastr::fields::MultiLevelVectorField Efield_avg_cp = m_fields.get_mr_levels_alldirs(FieldType::Efield_avg_cp, finest_level);
+        ablastr::fields::MultiLevelVectorField E_avg_cp = m_fields.get_mr_levels_alldirs(FieldType::E_avg_cp, finest_level);
 
         const amrex::Periodicity& cperiod = Geom(lev-1).periodicity();
         if ( safe_guard_cells ) {
-            const Vector<MultiFab*> mf{Efield_avg_cp[lev][0],Efield_avg_cp[lev][1],Efield_avg_cp[lev][2]};
+            const Vector<MultiFab*> mf{E_avg_cp[lev][0],E_avg_cp[lev][1],E_avg_cp[lev][2]};
             ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, cperiod);
 
         } else {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng.allLE(Efield_avg_cp[lev][0]->nGrowVect()),
+                ng.allLE(E_avg_cp[lev][0]->nGrowVect()),
                 "Error: in FillBoundaryE, requested more guard cells than allocated");
-            ablastr::utils::communication::FillBoundary(*Efield_avg_cp[lev][0], ng, WarpX::do_single_precision_comms, cperiod);
-            ablastr::utils::communication::FillBoundary(*Efield_avg_cp[lev][1], ng, WarpX::do_single_precision_comms, cperiod);
-            ablastr::utils::communication::FillBoundary(*Efield_avg_cp[lev][2], ng, WarpX::do_single_precision_comms, cperiod);
+            ablastr::utils::communication::FillBoundary(*E_avg_cp[lev][0], ng, WarpX::do_single_precision_comms, cperiod);
+            ablastr::utils::communication::FillBoundary(*E_avg_cp[lev][1], ng, WarpX::do_single_precision_comms, cperiod);
+            ablastr::utils::communication::FillBoundary(*E_avg_cp[lev][2], ng, WarpX::do_single_precision_comms, cperiod);
         }
     }
 }
@@ -903,19 +903,19 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
             WARPX_ABORT_WITH_MESSAGE("Averaged Galilean PSATD with PML is not yet implemented");
         }
 
-        ablastr::fields::MultiLevelVectorField Bfield_avg_fp = m_fields.get_mr_levels_alldirs(FieldType::Bfield_avg_fp, finest_level);
+        ablastr::fields::MultiLevelVectorField B_avg_fp = m_fields.get_mr_levels_alldirs(FieldType::B_avg_fp, finest_level);
 
         const amrex::Periodicity& period = Geom(lev).periodicity();
         if ( safe_guard_cells ) {
-            const Vector<MultiFab*> mf{Bfield_avg_fp[lev][0],Bfield_avg_fp[lev][1],Bfield_avg_fp[lev][2]};
+            const Vector<MultiFab*> mf{B_avg_fp[lev][0],B_avg_fp[lev][1],B_avg_fp[lev][2]};
             ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period);
         } else {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng.allLE(m_fields.get(FieldType::Bfield_fp, Direction{0}, lev)->nGrowVect()),
+                ng.allLE(m_fields.get(FieldType::B_fp, Direction{0}, lev)->nGrowVect()),
                 "Error: in FillBoundaryB, requested more guard cells than allocated");
-            ablastr::utils::communication::FillBoundary(*Bfield_avg_fp[lev][0], ng, WarpX::do_single_precision_comms, period);
-            ablastr::utils::communication::FillBoundary(*Bfield_avg_fp[lev][1], ng, WarpX::do_single_precision_comms, period);
-            ablastr::utils::communication::FillBoundary(*Bfield_avg_fp[lev][2], ng, WarpX::do_single_precision_comms, period);
+            ablastr::utils::communication::FillBoundary(*B_avg_fp[lev][0], ng, WarpX::do_single_precision_comms, period);
+            ablastr::utils::communication::FillBoundary(*B_avg_fp[lev][1], ng, WarpX::do_single_precision_comms, period);
+            ablastr::utils::communication::FillBoundary(*B_avg_fp[lev][2], ng, WarpX::do_single_precision_comms, period);
         }
     }
     else if (patch_type == PatchType::coarse)
@@ -925,19 +925,19 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
             WARPX_ABORT_WITH_MESSAGE("Averaged Galilean PSATD with PML is not yet implemented");
         }
 
-        ablastr::fields::MultiLevelVectorField Bfield_avg_cp = m_fields.get_mr_levels_alldirs(FieldType::Bfield_avg_cp, finest_level);
+        ablastr::fields::MultiLevelVectorField B_avg_cp = m_fields.get_mr_levels_alldirs(FieldType::B_avg_cp, finest_level);
 
         const amrex::Periodicity& cperiod = Geom(lev-1).periodicity();
         if ( safe_guard_cells ){
-            const Vector<MultiFab*> mf{Bfield_avg_cp[lev][0],Bfield_avg_cp[lev][1],Bfield_avg_cp[lev][2]};
+            const Vector<MultiFab*> mf{B_avg_cp[lev][0],B_avg_cp[lev][1],B_avg_cp[lev][2]};
             ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, cperiod);
         } else {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng.allLE(Bfield_avg_cp[lev][0]->nGrowVect()),
+                ng.allLE(B_avg_cp[lev][0]->nGrowVect()),
                 "Error: in FillBoundaryB_avg, requested more guard cells than allocated");
-            ablastr::utils::communication::FillBoundary(*Bfield_avg_cp[lev][0], ng, WarpX::do_single_precision_comms, cperiod);
-            ablastr::utils::communication::FillBoundary(*Bfield_avg_cp[lev][1], ng, WarpX::do_single_precision_comms, cperiod);
-            ablastr::utils::communication::FillBoundary(*Bfield_avg_cp[lev][2], ng, WarpX::do_single_precision_comms, cperiod);
+            ablastr::utils::communication::FillBoundary(*B_avg_cp[lev][0], ng, WarpX::do_single_precision_comms, cperiod);
+            ablastr::utils::communication::FillBoundary(*B_avg_cp[lev][1], ng, WarpX::do_single_precision_comms, cperiod);
+            ablastr::utils::communication::FillBoundary(*B_avg_cp[lev][2], ng, WarpX::do_single_precision_comms, cperiod);
         }
     }
 }
@@ -1058,16 +1058,16 @@ WarpX::FillBoundaryAux (IntVect ng)
 void
 WarpX::FillBoundaryAux (int lev, IntVect ng)
 {
-    ablastr::fields::MultiLevelVectorField Efield_aux = m_fields.get_mr_levels_alldirs(FieldType::Efield_aux, finest_level);
-    ablastr::fields::MultiLevelVectorField Bfield_aux = m_fields.get_mr_levels_alldirs(FieldType::Bfield_aux, finest_level);
+    ablastr::fields::MultiLevelVectorField E_aux = m_fields.get_mr_levels_alldirs(FieldType::E_aux, finest_level);
+    ablastr::fields::MultiLevelVectorField B_aux = m_fields.get_mr_levels_alldirs(FieldType::B_aux, finest_level);
 
     const amrex::Periodicity& period = Geom(lev).periodicity();
-    ablastr::utils::communication::FillBoundary(*Efield_aux[lev][0], ng, WarpX::do_single_precision_comms, period);
-    ablastr::utils::communication::FillBoundary(*Efield_aux[lev][1], ng, WarpX::do_single_precision_comms, period);
-    ablastr::utils::communication::FillBoundary(*Efield_aux[lev][2], ng, WarpX::do_single_precision_comms, period);
-    ablastr::utils::communication::FillBoundary(*Bfield_aux[lev][0], ng, WarpX::do_single_precision_comms, period);
-    ablastr::utils::communication::FillBoundary(*Bfield_aux[lev][1], ng, WarpX::do_single_precision_comms, period);
-    ablastr::utils::communication::FillBoundary(*Bfield_aux[lev][2], ng, WarpX::do_single_precision_comms, period);
+    ablastr::utils::communication::FillBoundary(*E_aux[lev][0], ng, WarpX::do_single_precision_comms, period);
+    ablastr::utils::communication::FillBoundary(*E_aux[lev][1], ng, WarpX::do_single_precision_comms, period);
+    ablastr::utils::communication::FillBoundary(*E_aux[lev][2], ng, WarpX::do_single_precision_comms, period);
+    ablastr::utils::communication::FillBoundary(*B_aux[lev][0], ng, WarpX::do_single_precision_comms, period);
+    ablastr::utils::communication::FillBoundary(*B_aux[lev][1], ng, WarpX::do_single_precision_comms, period);
+    ablastr::utils::communication::FillBoundary(*B_aux[lev][2], ng, WarpX::do_single_precision_comms, period);
 }
 
 void

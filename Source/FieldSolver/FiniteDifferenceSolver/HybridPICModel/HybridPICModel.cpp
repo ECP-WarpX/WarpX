@@ -150,12 +150,12 @@ void HybridPICModel::InitData ()
     amrex::IntVect Jx_stag = warpx.m_fields.get(FieldType::current_fp, Direction{0}, 0)->ixType().toIntVect();
     amrex::IntVect Jy_stag = warpx.m_fields.get(FieldType::current_fp, Direction{1}, 0)->ixType().toIntVect();
     amrex::IntVect Jz_stag = warpx.m_fields.get(FieldType::current_fp, Direction{2}, 0)->ixType().toIntVect();
-    amrex::IntVect Bx_stag = warpx.m_fields.get(FieldType::Bfield_fp, Direction{0}, 0)->ixType().toIntVect();
-    amrex::IntVect By_stag = warpx.m_fields.get(FieldType::Bfield_fp, Direction{1}, 0)->ixType().toIntVect();
-    amrex::IntVect Bz_stag = warpx.m_fields.get(FieldType::Bfield_fp, Direction{2}, 0)->ixType().toIntVect();
-    amrex::IntVect Ex_stag = warpx.m_fields.get(FieldType::Efield_fp, Direction{0}, 0)->ixType().toIntVect();
-    amrex::IntVect Ey_stag = warpx.m_fields.get(FieldType::Efield_fp, Direction{1}, 0)->ixType().toIntVect();
-    amrex::IntVect Ez_stag = warpx.m_fields.get(FieldType::Efield_fp, Direction{2}, 0)->ixType().toIntVect();
+    amrex::IntVect Bx_stag = warpx.m_fields.get(FieldType::B_fp, Direction{0}, 0)->ixType().toIntVect();
+    amrex::IntVect By_stag = warpx.m_fields.get(FieldType::B_fp, Direction{1}, 0)->ixType().toIntVect();
+    amrex::IntVect Bz_stag = warpx.m_fields.get(FieldType::B_fp, Direction{2}, 0)->ixType().toIntVect();
+    amrex::IntVect Ex_stag = warpx.m_fields.get(FieldType::E_fp, Direction{0}, 0)->ixType().toIntVect();
+    amrex::IntVect Ey_stag = warpx.m_fields.get(FieldType::E_fp, Direction{1}, 0)->ixType().toIntVect();
+    amrex::IntVect Ez_stag = warpx.m_fields.get(FieldType::E_fp, Direction{2}, 0)->ixType().toIntVect();
 
     // Check that the grid types are appropriate
     const bool appropriate_grids = (

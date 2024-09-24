@@ -87,7 +87,7 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, long a_offset
     // the external fields are not added directly inside the gather kernel.
     // (Hence of `None`, which ensures that the gather kernel is compiled without support
     // for external fields.) Instead, the external fields are added to the MultiFab
-    // Efield_aux and Bfield_aux before the particles gather from these MultiFab.
+    // E_aux and B_aux before the particles gather from these MultiFab.
     if (mypc.m_E_ext_particle_s == "read_from_file") {
         m_Etype = ExternalFieldInitType::None;
     }

@@ -274,12 +274,12 @@ void WarpXFluidContainer::Evolve(
     // Step the Lorentz Term
     if(!do_not_gather){
         GatherAndPush(fields,
-                    *fields.get(FieldType::Efield_aux, Direction{0}, lev),
-                    *fields.get(FieldType::Efield_aux, Direction{1}, lev),
-                    *fields.get(FieldType::Efield_aux, Direction{2}, lev),
-                    *fields.get(FieldType::Bfield_aux, Direction{0}, lev),
-                    *fields.get(FieldType::Bfield_aux, Direction{1}, lev),
-                    *fields.get(FieldType::Bfield_aux, Direction{2}, lev),
+                    *fields.get(FieldType::E_aux, Direction{0}, lev),
+                    *fields.get(FieldType::E_aux, Direction{1}, lev),
+                    *fields.get(FieldType::E_aux, Direction{2}, lev),
+                    *fields.get(FieldType::B_aux, Direction{0}, lev),
+                    *fields.get(FieldType::B_aux, Direction{1}, lev),
+                    *fields.get(FieldType::B_aux, Direction{2}, lev),
                     cur_time, lev);
     }
 

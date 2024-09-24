@@ -40,7 +40,7 @@ public:
      * \param[in] charge_buf Buffer region to synchronize charge density from fine and coarse patch
      * \param[in,unused] phi_fp A temporary multifab is used to compute electrostatic potentail for each species
      * \param[in] mpc Pointer to multi particle container to access species data
-     * \param[in,out] Efield_fp Field contribution from phi computed from each species' charge density is added
+     * \param[in,out] E_fp Field contribution from phi computed from each species' charge density is added
      * \param[in,out] Bfield Field contribution from phi computed from each species' charge density is added
      */
     void ComputeSpaceChargeField (
@@ -61,13 +61,13 @@ public:
      */
     void AddSpaceChargeField (
         WarpXParticleContainer& pc,
-        ablastr::fields::MultiLevelVectorField& Efield_fp,
-        ablastr::fields::MultiLevelVectorField& Bfield_fp
+        ablastr::fields::MultiLevelVectorField& E_fp,
+        ablastr::fields::MultiLevelVectorField& B_fp
     );
 
     /** Compute the potential `phi` by solving the Poisson equation with the
        simulation specific boundary conditions and boundary values, then add the
-       E field due to that `phi` to `Efield_fp`.
+       E field due to that `phi` to `E_fp`.
     * \param[in] Efield Efield updated to include potential gradient from boundary condition
     */
     void AddBoundaryField (

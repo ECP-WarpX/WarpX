@@ -179,10 +179,10 @@ WarpX::computeVectorPotential (ablastr::fields::MultiLevelVectorField const& cur
     }
 
 #if defined(AMREX_USE_EB)
-    const ablastr::fields::MultiLevelVectorField Bfield_fp = m_fields.get_mr_levels_alldirs(FieldType::Bfield_fp, finest_level);
+    const ablastr::fields::MultiLevelVectorField B_fp = m_fields.get_mr_levels_alldirs(FieldType::B_fp, finest_level);
     const std::optional<MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel> post_A_calculation(
     {
-        Bfield_fp,
+        B_fp,
         m_fields.get_mr_levels_alldirs(FieldType::vector_potential_grad_buf_e_stag, finest_level),
         m_fields.get_mr_levels_alldirs(FieldType::vector_potential_grad_buf_b_stag, finest_level)
     });

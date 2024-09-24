@@ -19,14 +19,14 @@ Due the AMR strategy used in WarpX (see section :ref:`Theory: AMR <theory-amr>` 
 
 * In some conditions, i.e., when buffers are used for the field gather (for numerical reasons), a **copy of E and B on the auxiliary grid** ``_aux`` **of the  level below** ``lev-1`` is stored in fields with suffix ``_cax`` (for `coarse aux`).
 
-As an example, the structures for the electric field are ``Efield_fp``, ``Efield_cp``, ``Efield_aux`` (and optionally ``Efield_cax``).
+As an example, the structures for the electric field are ``E_fp``, ``E_cp``, ``E_aux`` (and optionally ``E_cax``).
 
 Declaration
 -----------
 
 All the fields described above are public members of class ``WarpX``, defined in ``WarpX.H``. They are defined as an ``amrex::Vector`` (over MR levels) of ``std::array`` (for the 3 spatial components :math:`E_x`, :math:`E_y`, :math:`E_z`) of ``std::unique_ptr`` of ``amrex::MultiFab``, i.e.:
 
-  amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp;
+  amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > E_fp;
 
 Hence, ``Ex`` on MR level ``lev`` is a pointer to an ``amrex::MultiFab``. The other fields are organized in the same way.
 
@@ -50,7 +50,7 @@ As all cell-wise operation, the field push is done as follows (this is split in 
    // Loop over MR levels
    for (int lev = 0; lev <= finest_level; ++lev) {
       // Get pointer to MultiFab Ex on level lev
-      MultiFab* Ex = Efield_fp[lev][0].get();
+      MultiFab* Ex = E_fp[lev][0].get();
       // Loop over boxes (or tiles if not on GPU)
       for ( MFIter mfi(*Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
           // Apply field solver on the FAB

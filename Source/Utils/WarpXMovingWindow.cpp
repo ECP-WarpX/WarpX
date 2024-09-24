@@ -220,35 +220,35 @@ WarpX::MoveWindow (const int step, bool move_j)
         // Shift each component of vector fields (E, B, j)
         for (int dim = 0; dim < 3; ++dim) {
             // Fine grid
-            amrex::ParserExecutor<3> Bfield_parser;
-            amrex::ParserExecutor<3> Efield_parser;
+            amrex::ParserExecutor<3> B_parser;
+            amrex::ParserExecutor<3> E_parser;
             bool use_Bparser = false;
             bool use_Eparser = false;
             if (m_p_ext_field_params->B_ext_grid_type ==
                     ExternalFieldType::parse_ext_grid_function) {
                 use_Bparser = true;
-                if (dim == 0) { Bfield_parser = m_p_ext_field_params->Bxfield_parser->compile<3>(); }
-                if (dim == 1) { Bfield_parser = m_p_ext_field_params->Byfield_parser->compile<3>(); }
-                if (dim == 2) { Bfield_parser = m_p_ext_field_params->Bzfield_parser->compile<3>(); }
+                if (dim == 0) { B_parser = m_p_ext_field_params->Bxfield_parser->compile<3>(); }
+                if (dim == 1) { B_parser = m_p_ext_field_params->Byfield_parser->compile<3>(); }
+                if (dim == 2) { B_parser = m_p_ext_field_params->Bzfield_parser->compile<3>(); }
             }
             if (m_p_ext_field_params->E_ext_grid_type ==
                     ExternalFieldType::parse_ext_grid_function) {
                 use_Eparser = true;
-                if (dim == 0) { Efield_parser = m_p_ext_field_params->Exfield_parser->compile<3>(); }
-                if (dim == 1) { Efield_parser = m_p_ext_field_params->Eyfield_parser->compile<3>(); }
-                if (dim == 2) { Efield_parser = m_p_ext_field_params->Ezfield_parser->compile<3>(); }
+                if (dim == 0) { E_parser = m_p_ext_field_params->Exfield_parser->compile<3>(); }
+                if (dim == 1) { E_parser = m_p_ext_field_params->Eyfield_parser->compile<3>(); }
+                if (dim == 2) { E_parser = m_p_ext_field_params->Ezfield_parser->compile<3>(); }
             }
-            shiftMF(*m_fields.get(FieldType::Bfield_fp, Direction{dim}, lev), geom[lev], num_shift, dir, lev, do_update_cost,
-                m_p_ext_field_params->B_external_grid[dim], use_Bparser, Bfield_parser);
-            shiftMF(*m_fields.get(FieldType::Efield_fp, Direction{dim}, lev), geom[lev], num_shift, dir, lev, do_update_cost,
-                m_p_ext_field_params->E_external_grid[dim], use_Eparser, Efield_parser);
+            shiftMF(*m_fields.get(FieldType::B_fp, Direction{dim}, lev), geom[lev], num_shift, dir, lev, do_update_cost,
+                m_p_ext_field_params->B_external_grid[dim], use_Bparser, B_parser);
+            shiftMF(*m_fields.get(FieldType::E_fp, Direction{dim}, lev), geom[lev], num_shift, dir, lev, do_update_cost,
+                m_p_ext_field_params->E_external_grid[dim], use_Eparser, E_parser);
             if (fft_do_time_averaging) {
-                ablastr::fields::MultiLevelVectorField Efield_avg_fp = m_fields.get_mr_levels_alldirs(FieldType::Efield_avg_fp, finest_level);
-                ablastr::fields::MultiLevelVectorField Bfield_avg_fp = m_fields.get_mr_levels_alldirs(FieldType::Bfield_avg_fp, finest_level);
-                shiftMF(*Bfield_avg_fp[lev][dim], geom[lev], num_shift, dir, lev, do_update_cost,
-                    m_p_ext_field_params->B_external_grid[dim], use_Bparser, Bfield_parser);
-                shiftMF(*Efield_avg_fp[lev][dim], geom[lev], num_shift, dir, lev, do_update_cost,
-                   m_p_ext_field_params-> E_external_grid[dim], use_Eparser, Efield_parser);
+                ablastr::fields::MultiLevelVectorField E_avg_fp = m_fields.get_mr_levels_alldirs(FieldType::E_avg_fp, finest_level);
+                ablastr::fields::MultiLevelVectorField B_avg_fp = m_fields.get_mr_levels_alldirs(FieldType::B_avg_fp, finest_level);
+                shiftMF(*B_avg_fp[lev][dim], geom[lev], num_shift, dir, lev, do_update_cost,
+                    m_p_ext_field_params->B_external_grid[dim], use_Bparser, B_parser);
+                shiftMF(*E_avg_fp[lev][dim], geom[lev], num_shift, dir, lev, do_update_cost,
+                   m_p_ext_field_params-> E_external_grid[dim], use_Eparser, E_parser);
             }
             if (move_j) {
                 shiftMF(*m_fields.get(FieldType::current_fp, Direction{dim}, lev), geom[lev], num_shift, dir, lev, do_update_cost);
@@ -269,19 +269,19 @@ WarpX::MoveWindow (const int step, bool move_j)
 #endif
             if (lev > 0) {
                 // coarse grid
-                shiftMF(*m_fields.get(FieldType::Bfield_cp, Direction{dim}, lev), geom[lev-1], num_shift_crse, dir, lev, do_update_cost,
-                    m_p_ext_field_params->B_external_grid[dim], use_Bparser, Bfield_parser);
-                shiftMF(*m_fields.get(FieldType::Efield_cp, Direction{dim}, lev), geom[lev-1], num_shift_crse, dir, lev, do_update_cost,
-                    m_p_ext_field_params->E_external_grid[dim], use_Eparser, Efield_parser);
-                shiftMF(*m_fields.get(FieldType::Bfield_aux, Direction{dim}, lev), geom[lev], num_shift, dir, lev, do_update_cost);
-                shiftMF(*m_fields.get(FieldType::Efield_aux, Direction{dim}, lev), geom[lev], num_shift, dir, lev, do_update_cost);
+                shiftMF(*m_fields.get(FieldType::B_cp, Direction{dim}, lev), geom[lev-1], num_shift_crse, dir, lev, do_update_cost,
+                    m_p_ext_field_params->B_external_grid[dim], use_Bparser, B_parser);
+                shiftMF(*m_fields.get(FieldType::E_cp, Direction{dim}, lev), geom[lev-1], num_shift_crse, dir, lev, do_update_cost,
+                    m_p_ext_field_params->E_external_grid[dim], use_Eparser, E_parser);
+                shiftMF(*m_fields.get(FieldType::B_aux, Direction{dim}, lev), geom[lev], num_shift, dir, lev, do_update_cost);
+                shiftMF(*m_fields.get(FieldType::E_aux, Direction{dim}, lev), geom[lev], num_shift, dir, lev, do_update_cost);
                 if (fft_do_time_averaging) {
-                    ablastr::fields::MultiLevelVectorField Efield_avg_cp = m_fields.get_mr_levels_alldirs(FieldType::Efield_avg_cp, finest_level);
-                    ablastr::fields::MultiLevelVectorField Bfield_avg_cp = m_fields.get_mr_levels_alldirs(FieldType::Bfield_avg_cp, finest_level);
-                    shiftMF(*Bfield_avg_cp[lev][dim], geom[lev-1], num_shift_crse, dir, lev, do_update_cost,
-                        m_p_ext_field_params->B_external_grid[dim], use_Bparser, Bfield_parser);
-                    shiftMF(*Efield_avg_cp[lev][dim], geom[lev-1], num_shift_crse, dir, lev, do_update_cost,
-                        m_p_ext_field_params->E_external_grid[dim], use_Eparser, Efield_parser);
+                    ablastr::fields::MultiLevelVectorField E_avg_cp = m_fields.get_mr_levels_alldirs(FieldType::E_avg_cp, finest_level);
+                    ablastr::fields::MultiLevelVectorField B_avg_cp = m_fields.get_mr_levels_alldirs(FieldType::B_avg_cp, finest_level);
+                    shiftMF(*B_avg_cp[lev][dim], geom[lev-1], num_shift_crse, dir, lev, do_update_cost,
+                        m_p_ext_field_params->B_external_grid[dim], use_Bparser, B_parser);
+                    shiftMF(*E_avg_cp[lev][dim], geom[lev-1], num_shift_crse, dir, lev, do_update_cost,
+                        m_p_ext_field_params->E_external_grid[dim], use_Eparser, E_parser);
                 }
                 if (move_j) {
                     shiftMF(*m_fields.get(FieldType::current_cp, Direction{dim}, lev), geom[lev-1], num_shift_crse, dir, lev, do_update_cost);
@@ -466,9 +466,9 @@ WarpX::MoveWindow (const int step, bool move_j)
         const int lev_zero = 0;
         m_macroscopic_properties->InitData(
             Geom(lev_zero),
-            m_fields.get(FieldType::Efield_fp, Direction{0}, lev_zero)->ixType().toIntVect(),
-            m_fields.get(FieldType::Efield_fp, Direction{1}, lev_zero)->ixType().toIntVect(),
-            m_fields.get(FieldType::Efield_fp, Direction{2}, lev_zero)->ixType().toIntVect()
+            m_fields.get(FieldType::E_fp, Direction{0}, lev_zero)->ixType().toIntVect(),
+            m_fields.get(FieldType::E_fp, Direction{1}, lev_zero)->ixType().toIntVect(),
+            m_fields.get(FieldType::E_fp, Direction{2}, lev_zero)->ixType().toIntVect()
         );
     }
 

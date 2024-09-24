@@ -68,10 +68,10 @@ WarpX::DampPML (const int lev, PatchType patch_type)
     if (pml_rz[lev]) {
         using ablastr::fields::Direction;
         using warpx::fields::FieldType;
-        pml_rz[lev]->ApplyDamping( m_fields.get(FieldType::Efield_fp, Direction{1}, lev),
-                                   m_fields.get(FieldType::Efield_fp, Direction{2}, lev),
-                                   m_fields.get(FieldType::Bfield_fp, Direction{1}, lev),
-                                   m_fields.get(FieldType::Bfield_fp, Direction{2}, lev),
+        pml_rz[lev]->ApplyDamping( m_fields.get(FieldType::E_fp, Direction{1}, lev),
+                                   m_fields.get(FieldType::E_fp, Direction{2}, lev),
+                                   m_fields.get(FieldType::B_fp, Direction{1}, lev),
+                                   m_fields.get(FieldType::B_fp, Direction{2}, lev),
                                    dt[lev], m_fields);
     }
 #endif

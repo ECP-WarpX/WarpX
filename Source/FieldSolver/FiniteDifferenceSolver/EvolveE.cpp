@@ -62,7 +62,7 @@ void FiniteDifferenceSolver::EvolveE (
     using warpx::fields::FieldType;
 
     const ablastr::fields::VectorField Bfield = patch_type == PatchType::fine ?
-        fields.get_alldirs(FieldType::Bfield_fp, lev) : fields.get_alldirs(FieldType::Bfield_cp, lev);
+        fields.get_alldirs(FieldType::B_fp, lev) : fields.get_alldirs(FieldType::B_cp, lev);
     const ablastr::fields::VectorField Jfield = patch_type == PatchType::fine ?
         fields.get_alldirs(FieldType::current_fp, lev) : fields.get_alldirs(FieldType::current_cp, lev);
 

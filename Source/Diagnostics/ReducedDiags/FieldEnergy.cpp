@@ -95,12 +95,12 @@ void FieldEnergy::ComputeDiags (int step)
     for (int lev = 0; lev < nLevel; ++lev)
     {
         // get MultiFab data at lev
-        const MultiFab & Ex = *warpx.m_fields.get(FieldType::Efield_aux, Direction{0}, lev);
-        const MultiFab & Ey = *warpx.m_fields.get(FieldType::Efield_aux, Direction{1}, lev);
-        const MultiFab & Ez = *warpx.m_fields.get(FieldType::Efield_aux, Direction{2}, lev);
-        const MultiFab & Bx = *warpx.m_fields.get(FieldType::Bfield_aux, Direction{0}, lev);
-        const MultiFab & By = *warpx.m_fields.get(FieldType::Bfield_aux, Direction{1}, lev);
-        const MultiFab & Bz = *warpx.m_fields.get(FieldType::Bfield_aux, Direction{2}, lev);
+        const MultiFab & Ex = *warpx.m_fields.get(FieldType::E_aux, Direction{0}, lev);
+        const MultiFab & Ey = *warpx.m_fields.get(FieldType::E_aux, Direction{1}, lev);
+        const MultiFab & Ez = *warpx.m_fields.get(FieldType::E_aux, Direction{2}, lev);
+        const MultiFab & Bx = *warpx.m_fields.get(FieldType::B_aux, Direction{0}, lev);
+        const MultiFab & By = *warpx.m_fields.get(FieldType::B_aux, Direction{1}, lev);
+        const MultiFab & Bz = *warpx.m_fields.get(FieldType::B_aux, Direction{2}, lev);
 
         // get cell volume
         const std::array<Real, 3> &dx = WarpX::CellSize(lev);

@@ -580,37 +580,37 @@ class _MultiFABWrapper(object):
 
 def ExWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Efield_aux", idir=0, level=level, include_ghosts=include_ghosts
+        mf_name="E_aux", idir=0, level=level, include_ghosts=include_ghosts
     )
 
 
 def EyWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Efield_aux", idir=1, level=level, include_ghosts=include_ghosts
+        mf_name="E_aux", idir=1, level=level, include_ghosts=include_ghosts
     )
 
 
 def EzWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Efield_aux", idir=2, level=level, include_ghosts=include_ghosts
+        mf_name="E_aux", idir=2, level=level, include_ghosts=include_ghosts
     )
 
 
 def BxWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Bfield_aux", idir=0, level=level, include_ghosts=include_ghosts
+        mf_name="B_aux", idir=0, level=level, include_ghosts=include_ghosts
     )
 
 
 def ByWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Bfield_aux", idir=1, level=level, include_ghosts=include_ghosts
+        mf_name="B_aux", idir=1, level=level, include_ghosts=include_ghosts
     )
 
 
 def BzWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Bfield_aux", idir=2, level=level, include_ghosts=include_ghosts
+        mf_name="B_aux", idir=2, level=level, include_ghosts=include_ghosts
     )
 
 
@@ -634,73 +634,73 @@ def JzWrapper(level=0, include_ghosts=False):
 
 def ExFPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Efield_fp", idir=0, level=level, include_ghosts=include_ghosts
+        mf_name="E_fp", idir=0, level=level, include_ghosts=include_ghosts
     )
 
 
 def EyFPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Efield_fp", idir=1, level=level, include_ghosts=include_ghosts
+        mf_name="E_fp", idir=1, level=level, include_ghosts=include_ghosts
     )
 
 
 def EzFPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Efield_fp", idir=2, level=level, include_ghosts=include_ghosts
+        mf_name="E_fp", idir=2, level=level, include_ghosts=include_ghosts
     )
 
 
 def BxFPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Bfield_fp", idir=0, level=level, include_ghosts=include_ghosts
+        mf_name="B_fp", idir=0, level=level, include_ghosts=include_ghosts
     )
 
 
 def ByFPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Bfield_fp", idir=1, level=level, include_ghosts=include_ghosts
+        mf_name="B_fp", idir=1, level=level, include_ghosts=include_ghosts
     )
 
 
 def BzFPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Bfield_fp", idir=2, level=level, include_ghosts=include_ghosts
+        mf_name="B_fp", idir=2, level=level, include_ghosts=include_ghosts
     )
 
 
 def ExFPExternalWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Efield_fp_external", idir=0, level=level, include_ghosts=include_ghosts
+        mf_name="E_fp_external", idir=0, level=level, include_ghosts=include_ghosts
     )
 
 
 def EyFPExternalWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Efield_fp_external", idir=1, level=level, include_ghosts=include_ghosts
+        mf_name="E_fp_external", idir=1, level=level, include_ghosts=include_ghosts
     )
 
 
 def EzFPExternalWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Efield_fp_external", idir=2, level=level, include_ghosts=include_ghosts
+        mf_name="E_fp_external", idir=2, level=level, include_ghosts=include_ghosts
     )
 
 
 def BxFPExternalWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Bfield_fp_external", idir=0, level=level, include_ghosts=include_ghosts
+        mf_name="B_fp_external", idir=0, level=level, include_ghosts=include_ghosts
     )
 
 
 def ByFPExternalWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Bfield_fp_external", idir=1, level=level, include_ghosts=include_ghosts
+        mf_name="B_fp_external", idir=1, level=level, include_ghosts=include_ghosts
     )
 
 
 def BzFPExternalWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Bfield_fp_external", idir=2, level=level, include_ghosts=include_ghosts
+        mf_name="B_fp_external", idir=2, level=level, include_ghosts=include_ghosts
     )
 
 
@@ -771,37 +771,37 @@ def AzFPWrapper(level=0, include_ghosts=False):
 
 def ExCPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Efield_cp", idir=0, level=level, include_ghosts=include_ghosts
+        mf_name="E_cp", idir=0, level=level, include_ghosts=include_ghosts
     )
 
 
 def EyCPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Efield_cp", idir=1, level=level, include_ghosts=include_ghosts
+        mf_name="E_cp", idir=1, level=level, include_ghosts=include_ghosts
     )
 
 
 def EzCPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Efield_cp", idir=2, level=level, include_ghosts=include_ghosts
+        mf_name="E_cp", idir=2, level=level, include_ghosts=include_ghosts
     )
 
 
 def BxCPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Bfield_cp", idir=0, level=level, include_ghosts=include_ghosts
+        mf_name="B_cp", idir=0, level=level, include_ghosts=include_ghosts
     )
 
 
 def ByCPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Bfield_cp", idir=1, level=level, include_ghosts=include_ghosts
+        mf_name="B_cp", idir=1, level=level, include_ghosts=include_ghosts
     )
 
 
 def BzCPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Bfield_cp", idir=2, level=level, include_ghosts=include_ghosts
+        mf_name="B_cp", idir=2, level=level, include_ghosts=include_ghosts
     )
 
 

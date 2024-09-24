@@ -201,27 +201,27 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
                 amrex::amrex_avgdown_nodes(Dst_bx, Dst_fabox, Src_fabox, dcomp,
                                            scomp, ncomp, slice_cr_ratio);
             }
-            if( SliceType == warpx.m_fields.get(FieldType::Efield_aux, Direction{0}, 0)->ixType().toIntVect() ) {
+            if( SliceType == warpx.m_fields.get(FieldType::E_aux, Direction{0}, 0)->ixType().toIntVect() ) {
                 amrex::amrex_avgdown_edges(Dst_bx, Dst_fabox, Src_fabox, dcomp,
                                            scomp, ncomp, slice_cr_ratio, 0);
             }
-            if( SliceType == warpx.m_fields.get(FieldType::Efield_aux, Direction{1}, 0)->ixType().toIntVect() ) {
+            if( SliceType == warpx.m_fields.get(FieldType::E_aux, Direction{1}, 0)->ixType().toIntVect() ) {
                 amrex::amrex_avgdown_edges(Dst_bx, Dst_fabox, Src_fabox, dcomp,
                                            scomp, ncomp, slice_cr_ratio, 1);
             }
-            if( SliceType == warpx.m_fields.get(FieldType::Efield_aux, Direction{2}, 0)->ixType().toIntVect() ) {
+            if( SliceType == warpx.m_fields.get(FieldType::E_aux, Direction{2}, 0)->ixType().toIntVect() ) {
                 amrex::amrex_avgdown_edges(Dst_bx, Dst_fabox, Src_fabox, dcomp,
                                            scomp, ncomp, slice_cr_ratio, 2);
             }
-            if( SliceType == warpx.m_fields.get(FieldType::Bfield_aux, Direction{0}, 0)->ixType().toIntVect() ) {
+            if( SliceType == warpx.m_fields.get(FieldType::B_aux, Direction{0}, 0)->ixType().toIntVect() ) {
                 amrex::amrex_avgdown_faces(Dst_bx, Dst_fabox, Src_fabox, dcomp,
                                            scomp, ncomp, slice_cr_ratio, 0);
             }
-            if( SliceType == warpx.m_fields.get(FieldType::Bfield_aux, Direction{1}, 0)->ixType().toIntVect() ) {
+            if( SliceType == warpx.m_fields.get(FieldType::B_aux, Direction{1}, 0)->ixType().toIntVect() ) {
                 amrex::amrex_avgdown_faces(Dst_bx, Dst_fabox, Src_fabox, dcomp,
                                            scomp, ncomp, slice_cr_ratio, 1);
             }
-            if( SliceType == warpx.m_fields.get(FieldType::Bfield_aux, Direction{2}, 0)->ixType().toIntVect() ) {
+            if( SliceType == warpx.m_fields.get(FieldType::B_aux, Direction{2}, 0)->ixType().toIntVect() ) {
                 amrex::amrex_avgdown_faces(Dst_bx, Dst_fabox, Src_fabox, dcomp,
                                            scomp, ncomp, slice_cr_ratio, 2);
             }

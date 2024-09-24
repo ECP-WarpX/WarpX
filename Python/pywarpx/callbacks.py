@@ -25,7 +25,7 @@ extra reference to the method's object is saved.
 
 Functions can be called at the following times:
 
-* ``loadExternalFields``: during ``WarpX::LoadExternalFields`` to write ``B/Efield_fp_external`` values
+* ``loadExternalFields``: during ``WarpX::LoadExternalFields`` to write ``B/E_fp_external`` values
 * ``beforeInitEsolve``: before the initial solve for the E fields (i.e. before the PIC loop starts)
 * ``afterinit``: immediately after the init is complete
 * ``beforeEsolve``: before the solve for E fields

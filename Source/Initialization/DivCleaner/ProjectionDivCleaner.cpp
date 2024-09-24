@@ -344,7 +344,7 @@ WarpX::ProjectionCleanDivB() {
                 ablastr::warn_manager::WarnPriority::low);
         }
 
-        warpx::initialization::ProjectionDivCleaner dc("Bfield_fp_external");
+        warpx::initialization::ProjectionDivCleaner dc("B_fp_external");
 
 
         dc.setSourceFromBfield();

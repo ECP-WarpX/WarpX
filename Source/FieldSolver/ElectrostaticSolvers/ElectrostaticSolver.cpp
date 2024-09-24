@@ -149,7 +149,7 @@ ElectrostaticSolver::computePhi (
             // EB: use AMReX to directly calculate the electric field since with EB's the
             // simple finite difference scheme in WarpX::computeE sometimes fails
 
-            // TODO: maybe make this a helper function or pass Efield_fp directly
+            // TODO: maybe make this a helper function or pass E_fp directly
             amrex::Vector<
                 amrex::Array<amrex::MultiFab *, AMREX_SPACEDIM>
             > e_field;
@@ -157,18 +157,18 @@ ElectrostaticSolver::computePhi (
                 e_field.push_back(
 #if defined(WARPX_DIM_1D_Z)
                     amrex::Array<amrex::MultiFab*, 1>{
-                        warpx.m_fields.get(FieldType::Efield_fp, Direction{2}, lev)
+                        warpx.m_fields.get(FieldType::E_fp, Direction{2}, lev)
                     }
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                     amrex::Array<amrex::MultiFab*, 2>{
-                        warpx.m_fields.get(FieldType::Efield_fp, Direction{0}, lev),
-                        warpx.m_fields.get(FieldType::Efield_fp, Direction{2}, lev)
+                        warpx.m_fields.get(FieldType::E_fp, Direction{0}, lev),
+                        warpx.m_fields.get(FieldType::E_fp, Direction{2}, lev)
                     }
 #elif defined(WARPX_DIM_3D)
                     amrex::Array<amrex::MultiFab *, 3>{
-                        warpx.m_fields.get(FieldType::Efield_fp, Direction{0}, lev),
-                        warpx.m_fields.get(FieldType::Efield_fp, Direction{1}, lev),
-                        warpx.m_fields.get(FieldType::Efield_fp, Direction{2}, lev)
+                        warpx.m_fields.get(FieldType::E_fp, Direction{0}, lev),
+                        warpx.m_fields.get(FieldType::E_fp, Direction{1}, lev),
+                        warpx.m_fields.get(FieldType::E_fp, Direction{2}, lev)
                     }
 #endif
                 );

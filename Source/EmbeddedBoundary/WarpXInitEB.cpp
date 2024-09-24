@@ -313,7 +313,7 @@ WarpX::MarkCells ()
             continue;
         }
 #endif
-        for (amrex::MFIter mfi(*m_fields.get(FieldType::Bfield_fp, Direction{idim}, maxLevel())); mfi.isValid(); ++mfi) {
+        for (amrex::MFIter mfi(*m_fields.get(FieldType::B_fp, Direction{idim}, maxLevel())); mfi.isValid(); ++mfi) {
             auto* face_areas_idim_max_lev =
                 m_fields.get(FieldType::face_areas, Direction{idim}, maxLevel());
 

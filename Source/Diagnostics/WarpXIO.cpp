@@ -284,49 +284,49 @@ WarpX::InitFromCheckpoint ()
     {
         for (int i = 0; i < 3; ++i) {
             m_fields.get(FieldType::current_fp, Direction{i}, lev)->setVal(0.0);
-            m_fields.get(FieldType::Efield_fp, Direction{i}, lev)->setVal(0.0);
-            m_fields.get(FieldType::Bfield_fp, Direction{i}, lev)->setVal(0.0);
+            m_fields.get(FieldType::E_fp, Direction{i}, lev)->setVal(0.0);
+            m_fields.get(FieldType::B_fp, Direction{i}, lev)->setVal(0.0);
         }
 
         if (lev > 0) {
             for (int i = 0; i < 3; ++i) {
-                m_fields.get(FieldType::Efield_aux, Direction{i}, lev)->setVal(0.0);
-                m_fields.get(FieldType::Bfield_aux, Direction{i}, lev)->setVal(0.0);
+                m_fields.get(FieldType::E_aux, Direction{i}, lev)->setVal(0.0);
+                m_fields.get(FieldType::B_aux, Direction{i}, lev)->setVal(0.0);
 
                 m_fields.get(FieldType::current_cp, Direction{i}, lev)->setVal(0.0);
-                m_fields.get(FieldType::Efield_cp, Direction{i}, lev)->setVal(0.0);
-                m_fields.get(FieldType::Bfield_cp, Direction{i}, lev)->setVal(0.0);
+                m_fields.get(FieldType::E_cp, Direction{i}, lev)->setVal(0.0);
+                m_fields.get(FieldType::B_cp, Direction{i}, lev)->setVal(0.0);
             }
         }
 
-        VisMF::Read(*m_fields.get(FieldType::Efield_fp, Direction{0}, lev),
+        VisMF::Read(*m_fields.get(FieldType::E_fp, Direction{0}, lev),
                     amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Ex_fp"));
-        VisMF::Read(*m_fields.get(FieldType::Efield_fp, Direction{1}, lev),
+        VisMF::Read(*m_fields.get(FieldType::E_fp, Direction{1}, lev),
                     amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Ey_fp"));
-        VisMF::Read(*m_fields.get(FieldType::Efield_fp, Direction{2}, lev),
+        VisMF::Read(*m_fields.get(FieldType::E_fp, Direction{2}, lev),
                     amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Ez_fp"));
 
-        VisMF::Read(*m_fields.get(FieldType::Bfield_fp, Direction{0}, lev),
+        VisMF::Read(*m_fields.get(FieldType::B_fp, Direction{0}, lev),
                     amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bx_fp"));
-        VisMF::Read(*m_fields.get(FieldType::Bfield_fp, Direction{1}, lev),
+        VisMF::Read(*m_fields.get(FieldType::B_fp, Direction{1}, lev),
                     amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "By_fp"));
-        VisMF::Read(*m_fields.get(FieldType::Bfield_fp, Direction{2}, lev),
+        VisMF::Read(*m_fields.get(FieldType::B_fp, Direction{2}, lev),
                     amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bz_fp"));
 
         if (WarpX::fft_do_time_averaging)
         {
-            VisMF::Read(*m_fields.get(FieldType::Efield_avg_fp, Direction{0}, lev),
+            VisMF::Read(*m_fields.get(FieldType::E_avg_fp, Direction{0}, lev),
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Ex_avg_fp"));
-            VisMF::Read(*m_fields.get(FieldType::Efield_avg_fp, Direction{1}, lev),
+            VisMF::Read(*m_fields.get(FieldType::E_avg_fp, Direction{1}, lev),
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Ey_avg_fp"));
-            VisMF::Read(*m_fields.get(FieldType::Efield_avg_fp, Direction{2}, lev),
+            VisMF::Read(*m_fields.get(FieldType::E_avg_fp, Direction{2}, lev),
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Ez_avg_fp"));
 
-            VisMF::Read(*m_fields.get(FieldType::Bfield_avg_fp, Direction{0}, lev),
+            VisMF::Read(*m_fields.get(FieldType::B_avg_fp, Direction{0}, lev),
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bx_avg_fp"));
-            VisMF::Read(*m_fields.get(FieldType::Bfield_avg_fp, Direction{1}, lev),
+            VisMF::Read(*m_fields.get(FieldType::B_avg_fp, Direction{1}, lev),
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "By_avg_fp"));
-            VisMF::Read(*m_fields.get(FieldType::Bfield_avg_fp, Direction{2}, lev),
+            VisMF::Read(*m_fields.get(FieldType::B_avg_fp, Direction{2}, lev),
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bz_avg_fp"));
         }
 
@@ -341,34 +341,34 @@ WarpX::InitFromCheckpoint ()
 
         if (lev > 0)
         {
-            VisMF::Read(*m_fields.get(FieldType::Efield_cp, Direction{0}, lev),
+            VisMF::Read(*m_fields.get(FieldType::E_cp, Direction{0}, lev),
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Ex_cp"));
-            VisMF::Read(*m_fields.get(FieldType::Efield_cp, Direction{1}, lev),
+            VisMF::Read(*m_fields.get(FieldType::E_cp, Direction{1}, lev),
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Ey_cp"));
-            VisMF::Read(*m_fields.get(FieldType::Efield_cp, Direction{2}, lev),
+            VisMF::Read(*m_fields.get(FieldType::E_cp, Direction{2}, lev),
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Ez_cp"));
 
-            VisMF::Read(*m_fields.get(FieldType::Bfield_cp, Direction{0}, lev),
+            VisMF::Read(*m_fields.get(FieldType::B_cp, Direction{0}, lev),
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bx_cp"));
-            VisMF::Read(*m_fields.get(FieldType::Bfield_cp, Direction{1}, lev),
+            VisMF::Read(*m_fields.get(FieldType::B_cp, Direction{1}, lev),
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "By_cp"));
-            VisMF::Read(*m_fields.get(FieldType::Bfield_cp, Direction{2}, lev),
+            VisMF::Read(*m_fields.get(FieldType::B_cp, Direction{2}, lev),
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bz_cp"));
 
             if (WarpX::fft_do_time_averaging)
             {
-                VisMF::Read(*m_fields.get(FieldType::Efield_avg_cp, Direction{0}, lev),
+                VisMF::Read(*m_fields.get(FieldType::E_avg_cp, Direction{0}, lev),
                             amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Ex_avg_cp"));
-                VisMF::Read(*m_fields.get(FieldType::Efield_avg_cp, Direction{1}, lev),
+                VisMF::Read(*m_fields.get(FieldType::E_avg_cp, Direction{1}, lev),
                             amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Ey_avg_cp"));
-                VisMF::Read(*m_fields.get(FieldType::Efield_avg_cp, Direction{2}, lev),
+                VisMF::Read(*m_fields.get(FieldType::E_avg_cp, Direction{2}, lev),
                             amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Ez_avg_cp"));
 
-                VisMF::Read(*m_fields.get(FieldType::Bfield_avg_cp, Direction{0}, lev),
+                VisMF::Read(*m_fields.get(FieldType::B_avg_cp, Direction{0}, lev),
                             amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bx_avg_cp"));
-                VisMF::Read(*m_fields.get(FieldType::Bfield_avg_cp, Direction{1}, lev),
+                VisMF::Read(*m_fields.get(FieldType::B_avg_cp, Direction{1}, lev),
                             amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "By_avg_cp"));
-                VisMF::Read(*m_fields.get(FieldType::Bfield_avg_cp, Direction{2}, lev),
+                VisMF::Read(*m_fields.get(FieldType::B_avg_cp, Direction{2}, lev),
                             amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bz_avg_cp"));
             }
 

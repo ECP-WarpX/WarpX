@@ -37,11 +37,11 @@ void WarpXSolverVec::Define ( WarpX*  a_WarpX,
     m_vector_type_name = a_vector_type_name;
     m_scalar_type_name = a_scalar_type_name;
 
-    if (m_vector_type_name=="Efield_fp") {
-        m_array_type = FieldType::Efield_fp;
+    if (m_vector_type_name=="E_fp") {
+        m_array_type = FieldType::E_fp;
     }
-    else if (m_vector_type_name=="Bfield_fp") {
-        m_array_type = FieldType::Bfield_fp;
+    else if (m_vector_type_name=="B_fp") {
+        m_array_type = FieldType::B_fp;
     }
     else if (m_vector_type_name=="vector_potential_fp_nodal") {
         m_array_type = FieldType::vector_potential_fp;
@@ -49,7 +49,7 @@ void WarpXSolverVec::Define ( WarpX*  a_WarpX,
     else if (m_vector_type_name!="none") {
         WARPX_ABORT_WITH_MESSAGE(a_vector_type_name
                     +"is not a valid option for array type used in Definining"
-                    +"a WarpXSolverVec. Valid array types are: Efield_fp, Bfield_fp,"
+                    +"a WarpXSolverVec. Valid array types are: E_fp, B_fp,"
                     +"and vector_potential_fp_nodal");
     }
 
