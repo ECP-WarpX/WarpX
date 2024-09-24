@@ -291,7 +291,7 @@ void HybridPICModel::InitData ()
             };
         }
 #endif
-        if (m_J_ext_grid_s == "parse_j_ext_grid_function") {
+        if (m_J_ext_grid_s == "parse_ext_grid_function") {
             GetExternalField<FieldType::hybrid_current_fp_external>(
                 m_J_external, ablastr::fields::a2m(edge_lengths), lev);
         }
@@ -311,7 +311,7 @@ void HybridPICModel::InitData ()
                 "J", "z");
         }
 
-        if (m_B_ext_grid_s == "parse_b_ext_grid_function") {
+        if (m_B_ext_grid_s == "parse_ext_grid_function") {
             GetExternalField<FieldType::hybrid_bfield_fp_external>(
                 m_B_external, ablastr::fields::a2m(edge_lengths), lev);
         }
@@ -336,11 +336,11 @@ void HybridPICModel::InitData ()
 void HybridPICModel::GetCurrentExternal (
     ablastr::fields::MultiLevelVectorField const& edge_lengths)
 {
+    if (!m_external_jfield_has_time_dependence) { return; }
+
     auto &warpx = WarpX::GetInstance();
-    if (m_external_jfield_has_time_dependence) {
-        for (int lev = 0; lev <= warpx.finestLevel(); ++lev) {
-            GetExternalField<FieldType::hybrid_current_fp_external>(m_J_external, edge_lengths[lev], lev);
-        }
+    for (int lev = 0; lev <= warpx.finestLevel(); ++lev) {
+        GetExternalField<FieldType::hybrid_current_fp_external>(m_J_external, edge_lengths[lev], lev);
     }
 }
 
