@@ -129,6 +129,17 @@ FullDiagnostics::ReadParameters ()
          */
         pp_diag_name.get("time_average_mode", m_time_average_mode_str);
 
+        const amrex::ParmParse pp_warpx("warpx");
+        std::vector<std::string> dt_interval_vec = {"-1"};
+        const bool timestep_may_vary = pp_warpx.queryarr("dt_update_interval", dt_interval_vec);
+        amrex::Print() << Utils::TextMsg::Warn("Time step varies?" + std::to_string(timestep_may_vary));
+        if (timestep_may_vary) {
+            WARPX_ABORT_WITH_MESSAGE(
+                    "Time-averaged diagnostics (encountered in: "
+                    + m_diag_name + ") are currently not supported with adaptive time-stepping"
+                    );
+        }
+
         if (m_time_average_mode_str == "fixed_start") {
             m_time_average_mode = TimeAverageType::Static;
             } else if (m_time_average_mode_str == "dynamic_start") {
