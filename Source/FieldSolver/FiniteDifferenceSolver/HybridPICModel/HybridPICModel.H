@@ -19,12 +19,15 @@
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
+#include "WarpX.H"
+
 #include <ablastr/fields/MultiFabRegister.H>
 
 #include <AMReX_Array.H>
 #include <AMReX_REAL.H>
 
 #include <optional>
+
 
 /**
  * \brief This class contains the parameters needed to evaluate hybrid field
@@ -57,6 +60,7 @@ public:
         ablastr::fields::MultiLevelVectorField const& edge_lengths
     );
 
+    template<warpx::fields::FieldType T>
     void GetExternalField (
         std::array< amrex::ParserExecutor<4>, 3> const& F_external,
         ablastr::fields::VectorField const& edge_lengths,

@@ -74,9 +74,9 @@ WarpX::UpdateAuxilaryData ()
     
     if (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
         // Hybrid code loads both from field and parsers to external fields
-        ablastr::fields::VectorField bfield_fp_external = m_fields.get_alldirs(FieldType::hybrid_bfield_fp_external, lev);
-        ablastr::fields::VectorField Bfield_aux = m_fields.get_alldirs(FieldType::Bfield_aux, lev);
         for (int lev = 0; lev <= finest_level; ++lev) {
+            ablastr::fields::VectorField bfield_fp_external = m_fields.get_alldirs(FieldType::hybrid_bfield_fp_external, lev);
+            ablastr::fields::VectorField Bfield_aux = m_fields.get_alldirs(FieldType::Bfield_aux, lev);
             amrex::MultiFab::Add(*Bfield_aux[0], *bfield_fp_external[0], 0, 0, bfield_fp_external[0]->nComp(), guard_cells.ng_FieldGather);
             amrex::MultiFab::Add(*Bfield_aux[1], *bfield_fp_external[1], 0, 0, bfield_fp_external[1]->nComp(), guard_cells.ng_FieldGather);
             amrex::MultiFab::Add(*Bfield_aux[2], *bfield_fp_external[2], 0, 0, bfield_fp_external[2]->nComp(), guard_cells.ng_FieldGather);

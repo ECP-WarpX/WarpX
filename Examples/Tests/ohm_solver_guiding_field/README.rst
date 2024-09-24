@@ -1,11 +1,12 @@
 .. _examples-ohm-solver-magnetic-reconnection:
 
-Ohm Solver: Magnetic Reconnection
+Ohm Solver: Guiding Field (Magnetic Reconnection)
 =================================
 
 Hybrid-PIC codes are often used to simulate magnetic reconnection in space plasmas.
 An example of magnetic reconnection from a force-free sheet is provided, based on
-the simulation described in :cite:t:`ex-Le2016`.
+the simulation described in :cite:t:`ex-Le2016`. This is a copy of the original 
+ohm_solver_magnetic_reconnection example, but with an external (static) guiding magnetic field.
 
 Run
 ---
