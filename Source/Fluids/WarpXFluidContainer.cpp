@@ -22,7 +22,7 @@ using namespace ablastr::utils::communication;
 using namespace amrex;
 
 
-WarpXFluidContainer::WarpXFluidContainer(int ispecies, const std::string &name):
+WarpXFluidContainer::WarpXFluidContainer(int ispecies, const std::string &name, bool electron_hybrid):
     species_id{ispecies},
     species_name{name}
 {

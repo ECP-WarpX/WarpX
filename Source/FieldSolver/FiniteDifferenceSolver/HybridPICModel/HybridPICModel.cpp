@@ -523,7 +523,7 @@ void HybridPICModel::CalculateElectronPressure(const int lev) const
 
     // Calculate the electron pressure using rho^{n+1}.
     FillElectronPressureMF(
-        *electron_temperature_fp
+        *electron_temperature_fp,
         *electron_pressure_fp,
         *rho_fp
     );
@@ -550,6 +550,10 @@ void HybridPICModel::FillElectronPressureMF (
         // Extract field data for this grid/tile
         Array4<Real const> const& rho = rho_field.const_array(mfi);
         Array4<Real> const& Pe = Pe_field.array(mfi);
+        Array4<Real> const& Te = Te_field.array(mfi);
+
+        // Extract tileboxes for which to loop
+        const Box& tilebox  = mfi.tilebox();
 
             ParallelFor(tilebox, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 Pe(i, j, k) = ElectronPressure::get_pressure(
