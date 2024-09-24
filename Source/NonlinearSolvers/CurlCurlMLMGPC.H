@@ -21,7 +21,9 @@
 #include <AMReX_GMRES_MLMG.H>
 #endif
 
-#include "FieldSolver/Fields.H"
+#include <ablastr/fields/MultiFabRegister.H>
+
+#include "Fields.H"
 #include "Utils/WarpXConst.H"
 #include "Preconditioner.H"
 
@@ -151,20 +153,20 @@ class CurlCurlMLMGPC : public Preconditioner<T,Ops>
          * \brief Define staggered-grid MultiFabs for AMReX's curl-curl operator given WarpX's fields
          */
          void defineMLCCAMFFromWarpXAMF ( amrex::Array<amrex::MultiFab,3>&,
-                                          const amrex::Array<std::unique_ptr<amrex::MultiFab>,3>&,
+                                          const ablastr::fields::VectorField&,
                                           const amrex::IntVect& );
 
         /**
          * \brief Copy to AMReX's staggered-grid MultiFabs from WarpX's staggered-grid MultiFabs
          */
          void copyMLCCAMFFromWarpXAMF ( amrex::Array<amrex::MultiFab,3>&,
-                                        const amrex::Array<std::unique_ptr<amrex::MultiFab>,3>&,
+                                        const ablastr::fields::VectorField&,
                                         const amrex::IntVect& );
 
         /**
          * \brief Copy to WarpX's staggered-grid MultiFabs from AMReX's staggered-grid MultiFabs
          */
-         void copyWarpXAMFFromMLCCAMF ( amrex::Array<std::unique_ptr<amrex::MultiFab>,3>&,
+         void copyWarpXAMFFromMLCCAMF ( ablastr::fields::VectorField&,
                                         const amrex::Array<amrex::MultiFab,3>&,
                                         const amrex::IntVect& );
 
@@ -310,7 +312,7 @@ void CurlCurlMLMGPC<T,Ops>::Update (const T& a_U)
 
 template <class T, class Ops>
 void CurlCurlMLMGPC<T,Ops>::defineMLCCAMFFromWarpXAMF ( amrex::Array<amrex::MultiFab,3>& a_mfarr_mlcc,
-                                                        const amrex::Array<std::unique_ptr<amrex::MultiFab>,3>& a_mfarr_warpx,
+                                                        const ablastr::fields::VectorField& a_mfarr_warpx,
                                                         const amrex::IntVect& a_ng )
 {
 #if defined(WARPX_DIM_1D_Z)
@@ -351,7 +353,7 @@ void CurlCurlMLMGPC<T,Ops>::defineMLCCAMFFromWarpXAMF ( amrex::Array<amrex::Mult
 
 template <class T, class Ops>
 void CurlCurlMLMGPC<T,Ops>::copyMLCCAMFFromWarpXAMF ( amrex::Array<amrex::MultiFab,3>& a_dst,
-                                                      const amrex::Array<std::unique_ptr<amrex::MultiFab>,3>& a_src,
+                                                      const ablastr::fields::VectorField& a_src,
                                                       const amrex::IntVect& a_ng )
 {
 #if defined(WARPX_DIM_1D_Z)
@@ -373,7 +375,7 @@ void CurlCurlMLMGPC<T,Ops>::copyMLCCAMFFromWarpXAMF ( amrex::Array<amrex::MultiF
 }
 
 template <class T, class Ops>
-void CurlCurlMLMGPC<T,Ops>::copyWarpXAMFFromMLCCAMF ( amrex::Array<std::unique_ptr<amrex::MultiFab>,3>& a_dst,
+void CurlCurlMLMGPC<T,Ops>::copyWarpXAMFFromMLCCAMF ( ablastr::fields::VectorField& a_dst,
                                                       const amrex::Array<amrex::MultiFab,3>& a_src,
                                                       const amrex::IntVect& a_ng )
 {
