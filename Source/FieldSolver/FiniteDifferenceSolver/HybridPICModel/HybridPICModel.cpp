@@ -530,15 +530,16 @@ void HybridPICModel::CalculateElectronPressure(const int lev) const
 }
 
 void HybridPICModel::FillElectronPressureMF (
+    amrex::MultiFab& Te_field,
     amrex::MultiFab& Pe_field,
     amrex::MultiFab const& rho_field
 ) const
 {
     const auto n0_ref = m_n0_ref;
-    const auto elec_temp = m_elec_temp;
     const auto gamma = m_gamma;
 
-    // Loop through the grids, and over the tiles within each grid
+    if(!m_solve_electron_energy_equation){
+// Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
@@ -548,15 +549,37 @@ void HybridPICModel::FillElectronPressureMF (
         Array4<Real const> const& rho = rho_field.const_array(mfi);
         Array4<Real> const& Pe = Pe_field.array(mfi);
 
-        // Extract tileboxes for which to loop
-        const Box& tilebox  = mfi.tilebox();
+            ParallelFor(tilebox, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                Pe(i, j, k) = ElectronPressure::get_pressure(
+                    n0_ref, Te(i, j, k), gamma, rho(i, j, k)
+                );
+            });
+        }
+    } 
+    else{
+// Loop through the grids, and over the tiles within each grid
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+        for ( MFIter mfi(Pe_field, TilingIfNotGPU()); mfi.isValid(); ++mfi )
+        {
+            // Extract field data for this grid/tile
+            Array4<Real const> const& rho = rho_field.const_array(mfi);
+            Array4<Real> const& Pe = Pe_field.array(mfi);
+            Array4<Real> const& Te = Te_field.array(mfi);
+            
+            // Extract tileboxes for which to loop
+            const Box& tilebox  = mfi.tilebox();
 
-        ParallelFor(tilebox, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-            Pe(i, j, k) = ElectronPressure::get_pressure(
-                n0_ref, elec_temp, gamma, rho(i, j, k)
-            );
-        });
+            ParallelFor(tilebox, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                Pe(i, j, k) = ElectronPressure::get_pressure_ideal_gas(
+                     Te(i, j, k), rho(i, j, k)
+                );
+            });
+        }
+
     }
+    
 }
 
 void HybridPICModel::BfieldEvolveRK (
