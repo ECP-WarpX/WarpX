@@ -24,7 +24,7 @@ yt.funcs.mylog.setLevel(50)
 import numpy as np
 from scipy.constants import c, e, epsilon_0, m_e
 
-sys.path.append("../../../../warpx/Regression/Checksum/")
+sys.path.insert(1, "../../../../warpx/Regression/Checksum/")
 from checksumAPI import evaluate_checksum
 
 # this will be the name of the plot file
