@@ -24,7 +24,7 @@ void ThetaImplicitEM::Define ( WarpX* const  a_WarpX )
     m_E.Define( m_WarpX, "Efield_fp" );
     m_Eold.Define( m_E );
 
-    // Define Bold MultiFabs
+    // Define B_old MultiFabs
     using ablastr::fields::Direction;
     const int num_levels = 1;
     for (int lev = 0; lev < num_levels; ++lev) {
@@ -33,9 +33,9 @@ void ThetaImplicitEM::Define ( WarpX* const  a_WarpX )
         const auto& ba_Bz = m_WarpX->m_fields.get(FieldType::Bfield_fp, Direction{2}, lev)->boxArray();
         const auto& dm = m_WarpX->m_fields.get(FieldType::Bfield_fp, Direction{0}, lev)->DistributionMap();
         const amrex::IntVect ngb = m_WarpX->m_fields.get(FieldType::Bfield_fp, Direction{0}, lev)->nGrowVect();
-        m_WarpX->m_fields.alloc_init(FieldType::Bold, Direction{0}, lev, ba_Bx, dm, 1, ngb, 0.0_rt);
-        m_WarpX->m_fields.alloc_init(FieldType::Bold, Direction{1}, lev, ba_By, dm, 1, ngb, 0.0_rt);
-        m_WarpX->m_fields.alloc_init(FieldType::Bold, Direction{2}, lev, ba_Bz, dm, 1, ngb, 0.0_rt);
+        m_WarpX->m_fields.alloc_init(FieldType::B_old, Direction{0}, lev, ba_Bx, dm, 1, ngb, 0.0_rt);
+        m_WarpX->m_fields.alloc_init(FieldType::B_old, Direction{1}, lev, ba_By, dm, 1, ngb, 0.0_rt);
+        m_WarpX->m_fields.alloc_init(FieldType::B_old, Direction{2}, lev, ba_Bz, dm, 1, ngb, 0.0_rt);
     }
 
     // Parse theta-implicit solver specific parameters
@@ -92,10 +92,10 @@ void ThetaImplicitEM::OneStep ( const amrex::Real  a_time,
     const int num_levels = 1;
     for (int lev = 0; lev < num_levels; ++lev) {
         const ablastr::fields::VectorField Bfp = m_WarpX->m_fields.get_alldirs(FieldType::Bfield_fp, lev);
-        ablastr::fields::VectorField Bold = m_WarpX->m_fields.get_alldirs(FieldType::Bold, lev);
+        ablastr::fields::VectorField B_old = m_WarpX->m_fields.get_alldirs(FieldType::B_old, lev);
         for (int n = 0; n < 3; ++n) {
-            amrex::MultiFab::Copy( *Bold[n], *Bfp[n], 0, 0, Bold[n]->nComp(),
-                                   Bold[n]->nGrowVect() );
+            amrex::MultiFab::Copy(*B_old[n], *Bfp[n], 0, 0, B_old[n]->nComp(),
+                                  B_old[n]->nGrowVect() );
         }
     }
 
@@ -147,8 +147,8 @@ void ThetaImplicitEM::UpdateWarpXFields ( const WarpXSolverVec&  a_E,
     m_WarpX->SetElectricFieldAndApplyBCs( a_E );
 
     // Update Bfield_fp owned by WarpX
-    ablastr::fields::MultiLevelVectorField const& Bold = m_WarpX->m_fields.get_mr_levels_alldirs(FieldType::Bold, 0);
-    m_WarpX->UpdateMagneticFieldAndApplyBCs( Bold, m_theta*a_dt );
+    ablastr::fields::MultiLevelVectorField const& B_old = m_WarpX->m_fields.get_mr_levels_alldirs(FieldType::B_old, 0);
+    m_WarpX->UpdateMagneticFieldAndApplyBCs(B_old, m_theta * a_dt );
 
 }
 
@@ -163,7 +163,7 @@ void ThetaImplicitEM::FinishFieldUpdate ( amrex::Real  a_new_time )
     const amrex::Real c1 = 1._rt - c0;
     m_E.linComb( c0, m_E, c1, m_Eold );
     m_WarpX->SetElectricFieldAndApplyBCs( m_E );
-    ablastr::fields::MultiLevelVectorField const & Bold = m_WarpX->m_fields.get_mr_levels_alldirs(FieldType::Bold, 0);
-    m_WarpX->FinishMagneticFieldAndApplyBCs( Bold, m_theta );
+    ablastr::fields::MultiLevelVectorField const & B_old = m_WarpX->m_fields.get_mr_levels_alldirs(FieldType::B_old, 0);
+    m_WarpX->FinishMagneticFieldAndApplyBCs(B_old, m_theta );
 
 }
