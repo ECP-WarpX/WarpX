@@ -191,6 +191,11 @@ void HybridPICModel::InitData ()
         m_external_bfield_has_time_dependence += B_ext_symbols.count("t");
     }
 
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        m_external_bfield_has_time_dependence,
+        "The hybrid-PIC algorithm does not work with time dependent external magnetic fields."
+    );
+
     auto & warpx = WarpX::GetInstance();
     using ablastr::fields::Direction;
 

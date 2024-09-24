@@ -1782,6 +1782,9 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
 
     Jx/y/z_external_function: str
         Function of space and time specifying external (non-plasma) currents.
+
+    Bx/y/z_external_function: str
+        Function of space external (non-plasma) magnetic field.
     """
 
     def __init__(

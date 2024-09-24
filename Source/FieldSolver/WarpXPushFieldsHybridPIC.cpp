@@ -68,8 +68,12 @@ void WarpX::HybridPICEvolveFields ()
     const int sub_steps = m_hybrid_pic_model->m_substeps;
 
     // Get the external current
+<<<<<<< HEAD
     m_hybrid_pic_model->GetCurrentExternal(
         m_fields.get_mr_levels_alldirs(FieldType::edge_lengths, finest_level));
+=======
+    m_hybrid_pic_model->GetExternalCurrent(m_edge_lengths);
+>>>>>>> 01c4bf202 (add ci test and b field warning)
 
     // Reference hybrid-PIC multifabs
     ablastr::fields::MultiLevelScalarField rho_fp_temp = m_fields.get_mr_levels(FieldType::hybrid_rho_fp_temp, finest_level);

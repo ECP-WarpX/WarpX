@@ -1349,7 +1349,7 @@ void WarpX::CheckKnownIssues()
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             !external_particle_field_used,
             "The hybrid-PIC algorithm does not work with external fields "
-            "applied directly to particles."
+            "applied directly to particles. Instead use hybrid_pic_model.B_external_init_style"
         );
     }
 

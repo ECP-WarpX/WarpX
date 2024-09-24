@@ -56,6 +56,7 @@ public:
     void GetCurrentExternal (
         ablastr::fields::MultiLevelVectorField const& edge_lengths
     );
+
     void GetExternalField (
         std::array< amrex::ParserExecutor<4>, 3> const& F_external,
         ablastr::fields::VectorField const& edge_lengths,
