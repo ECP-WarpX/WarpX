@@ -15,12 +15,11 @@
 #include "WarpX.H"
 
 using namespace amrex;
-using namespace warpx::fields;
+using warpx::fields::FieldType;
 
-HybridPICModel::HybridPICModel ( int nlevs_max )
+HybridPICModel::HybridPICModel ()
 {
     ReadParameters();
-    AllocateMFs(nlevs_max);
 }
 
 void HybridPICModel::ReadParameters ()
@@ -69,6 +68,13 @@ void HybridPICModel::ReadParameters ()
     }
 }
 
+void HybridPICModel::AllocateLevelMFs (ablastr::fields::MultiFabRegister & fields,
+                                       int lev, const BoxArray& ba, const DistributionMapping& dm,
+                                       const int ncomps, const IntVect& ngJ, const IntVect& ngRho,
+                                       const IntVect& jx_nodal_flag,
+                                       const IntVect& jy_nodal_flag,
+                                       const IntVect& jz_nodal_flag,
+                                       const IntVect& rho_nodal_flag)
 void HybridPICModel::AllocateMFs (int nlevs_max)
 {
     electron_pressure_fp.resize(nlevs_max);
@@ -101,43 +107,54 @@ void HybridPICModel::AllocateLevelMFs (
     const IntVect& By_nodal_flag,
     const IntVect& Bz_nodal_flag)
 {
-    // The "electron_pressure_fp" multifab stores the electron pressure calculated
+    using ablastr::fields::Direction;
+
+    // The "hybrid_electron_pressure_fp" multifab stores the electron pressure calculated
     // from the specified equation of state.
-    // The "rho_fp_temp" multifab is used to store the ion charge density
+    // The "hybrid_rho_fp_temp" multifab is used to store the ion charge density
     // interpolated or extrapolated to appropriate timesteps.
-    // The "current_fp_temp" multifab is used to store the ion current density
+    // The "hybrid_current_fp_temp" multifab is used to store the ion current density
     // interpolated or extrapolated to appropriate timesteps.
-    // The "current_fp_ampere" multifab stores the total current calculated as
+    // The "hybrid_current_fp_ampere" multifab stores the total current calculated as
     // the curl of B.
-    WarpX::AllocInitMultiFab(electron_pressure_fp[lev], amrex::convert(ba, rho_nodal_flag),
-        dm, ncomps, ngRho, lev, "electron_pressure_fp", 0.0_rt);
+    fields.alloc_init(FieldType::hybrid_electron_pressure_fp,
+        lev, amrex::convert(ba, rho_nodal_flag),
+        dm, ncomps, ngRho, 0.0_rt);
+    fields.alloc_init(FieldType::hybrid_rho_fp_temp,
+        lev, amrex::convert(ba, rho_nodal_flag),
+        dm, ncomps, ngRho, 0.0_rt);
+    fields.alloc_init(FieldType::hybrid_current_fp_temp, Direction{0},
+        lev, amrex::convert(ba, jx_nodal_flag),
+        dm, ncomps, ngJ, 0.0_rt);
+    fields.alloc_init(FieldType::hybrid_current_fp_temp, Direction{1},
+        lev, amrex::convert(ba, jy_nodal_flag),
+        dm, ncomps, ngJ, 0.0_rt);
+    fields.alloc_init(FieldType::hybrid_current_fp_temp, Direction{2},
+        lev, amrex::convert(ba, jz_nodal_flag),
+        dm, ncomps, ngJ, 0.0_rt);
 
-    WarpX::AllocInitMultiFab(rho_fp_temp[lev], amrex::convert(ba, rho_nodal_flag),
-        dm, ncomps, ngRho, lev, "rho_fp_temp", 0.0_rt);
-
-    WarpX::AllocInitMultiFab(current_fp_temp[lev][0], amrex::convert(ba, jx_nodal_flag),
-        dm, ncomps, ngJ, lev, "current_fp_temp[x]", 0.0_rt);
-    WarpX::AllocInitMultiFab(current_fp_temp[lev][1], amrex::convert(ba, jy_nodal_flag),
-        dm, ncomps, ngJ, lev, "current_fp_temp[y]", 0.0_rt);
-    WarpX::AllocInitMultiFab(current_fp_temp[lev][2], amrex::convert(ba, jz_nodal_flag),
-        dm, ncomps, ngJ, lev, "current_fp_temp[z]", 0.0_rt);
-
-    WarpX::AllocInitMultiFab(current_fp_ampere[lev][0], amrex::convert(ba, jx_nodal_flag),
-        dm, ncomps, ngJ, lev, "current_fp_ampere[x]", 0.0_rt);
-    WarpX::AllocInitMultiFab(current_fp_ampere[lev][1], amrex::convert(ba, jy_nodal_flag),
-        dm, ncomps, ngJ, lev, "current_fp_ampere[y]", 0.0_rt);
-    WarpX::AllocInitMultiFab(current_fp_ampere[lev][2], amrex::convert(ba, jz_nodal_flag),
-        dm, ncomps, ngJ, lev, "current_fp_ampere[z]", 0.0_rt);
+    fields.alloc_init(FieldType::hybrid_current_fp_ampere, Direction{0},
+        lev, amrex::convert(ba, jx_nodal_flag),
+        dm, ncomps, ngJ, 0.0_rt);
+    fields.alloc_init(FieldType::hybrid_current_fp_ampere, Direction{1},
+        lev, amrex::convert(ba, jy_nodal_flag),
+        dm, ncomps, ngJ, 0.0_rt);
+    fields.alloc_init(FieldType::hybrid_current_fp_ampere, Direction{2},
+        lev, amrex::convert(ba, jz_nodal_flag),
+        dm, ncomps, ngJ, 0.0_rt);
 
     // the external current density multifab is made nodal to avoid needing to interpolate
     // to a nodal grid as has to be done for the ion and total current density multifabs
     // this also allows the external current multifab to not have any ghost cells
-    WarpX::AllocInitMultiFab(current_fp_external[lev][0], amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
-        dm, ncomps, IntVect(AMREX_D_DECL(0,0,0)), lev, "current_fp_external[x]", 0.0_rt);
-    WarpX::AllocInitMultiFab(current_fp_external[lev][1], amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
-        dm, ncomps, IntVect(AMREX_D_DECL(0,0,0)), lev, "current_fp_external[y]", 0.0_rt);
-    WarpX::AllocInitMultiFab(current_fp_external[lev][2], amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
-        dm, ncomps, IntVect(AMREX_D_DECL(0,0,0)), lev, "current_fp_external[z]", 0.0_rt);
+    fields.alloc_init(FieldType::hybrid_current_fp_external, Direction{0},
+        lev, amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
+        dm, ncomps, IntVect(AMREX_D_DECL(0,0,0)), 0.0_rt);
+    fields.alloc_init(FieldType::hybrid_current_fp_external, Direction{1},
+        lev, amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
+        dm, ncomps, IntVect(AMREX_D_DECL(0,0,0)), 0.0_rt);
+    fields.alloc_init(FieldType::hybrid_current_fp_external, Direction{2},
+        lev, amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
+        dm, ncomps, IntVect(AMREX_D_DECL(0,0,0)), 0.0_rt);
 
     if (m_add_external_fields) {
         // These are nodal to match when B-field is added in evaluation of Ohm's law
@@ -223,17 +240,18 @@ void HybridPICModel::InitData ()
     m_E_external[0] = m_E_external_parser[0]->compile<4>();
     m_E_external[1] = m_E_external_parser[1]->compile<4>();
     m_E_external[2] = m_E_external_parser[2]->compile<4>();
+    using ablastr::fields::Direction;
 
     // Get the grid staggering of the fields involved in calculating E
-    amrex::IntVect Jx_stag = warpx.getField(FieldType::current_fp, 0,0).ixType().toIntVect();
-    amrex::IntVect Jy_stag = warpx.getField(FieldType::current_fp, 0,1).ixType().toIntVect();
-    amrex::IntVect Jz_stag = warpx.getField(FieldType::current_fp, 0,2).ixType().toIntVect();
-    amrex::IntVect Bx_stag = warpx.getField(FieldType::Bfield_fp, 0,0).ixType().toIntVect();
-    amrex::IntVect By_stag = warpx.getField(FieldType::Bfield_fp, 0,1).ixType().toIntVect();
-    amrex::IntVect Bz_stag = warpx.getField(FieldType::Bfield_fp, 0,2).ixType().toIntVect();
-    amrex::IntVect Ex_stag = warpx.getField(FieldType::Efield_fp, 0,0).ixType().toIntVect();
-    amrex::IntVect Ey_stag = warpx.getField(FieldType::Efield_fp, 0,1).ixType().toIntVect();
-    amrex::IntVect Ez_stag = warpx.getField(FieldType::Efield_fp, 0,2).ixType().toIntVect();
+    amrex::IntVect Jx_stag = warpx.m_fields.get(FieldType::current_fp, Direction{0}, 0)->ixType().toIntVect();
+    amrex::IntVect Jy_stag = warpx.m_fields.get(FieldType::current_fp, Direction{1}, 0)->ixType().toIntVect();
+    amrex::IntVect Jz_stag = warpx.m_fields.get(FieldType::current_fp, Direction{2}, 0)->ixType().toIntVect();
+    amrex::IntVect Bx_stag = warpx.m_fields.get(FieldType::Bfield_fp, Direction{0}, 0)->ixType().toIntVect();
+    amrex::IntVect By_stag = warpx.m_fields.get(FieldType::Bfield_fp, Direction{1}, 0)->ixType().toIntVect();
+    amrex::IntVect Bz_stag = warpx.m_fields.get(FieldType::Bfield_fp, Direction{2}, 0)->ixType().toIntVect();
+    amrex::IntVect Ex_stag = warpx.m_fields.get(FieldType::Efield_fp, Direction{0}, 0)->ixType().toIntVect();
+    amrex::IntVect Ey_stag = warpx.m_fields.get(FieldType::Efield_fp, Direction{1}, 0)->ixType().toIntVect();
+    amrex::IntVect Ez_stag = warpx.m_fields.get(FieldType::Efield_fp, Direction{2}, 0)->ixType().toIntVect();
 
     // Check that the grid types are appropriate
     const bool appropriate_grids = (
@@ -301,9 +319,10 @@ void HybridPICModel::InitData ()
         auto edge_lengths = std::array<std::unique_ptr<amrex::MultiFab>, 3>();
 #ifdef AMREX_USE_EB
         if (EB::enabled()) {
-            auto const & edge_lengths_x = warpx.getField(FieldType::edge_lengths, lev, 0);
-            auto const & edge_lengths_y = warpx.getField(FieldType::edge_lengths, lev, 1);
-            auto const & edge_lengths_z = warpx.getField(FieldType::edge_lengths, lev, 2);
+            using ablastr::fields::Direction;
+            auto const & edge_lengths_x = *warpx.m_fields.get(FieldType::edge_lengths, Direction{0}, lev);
+            auto const & edge_lengths_y = *warpx.m_fields.get(FieldType::edge_lengths, Direction{1}, lev);
+            auto const & edge_lengths_z = *warpx.m_fields.get(FieldType::edge_lengths, Direction{2}, lev);
 
             edge_lengths = std::array< std::unique_ptr<amrex::MultiFab>, 3 >{
                 std::make_unique<amrex::MultiFab>(
@@ -315,13 +334,13 @@ void HybridPICModel::InitData ()
             };
         }
 #endif
-        GetCurrentExternal(edge_lengths, lev);
-        GetFieldsExternal(edge_lengths, lev);
+        GetCurrentExternal(ablastr::fields::a2m(edge_lengths), lev);
+        GetFieldsExternal(ablastr::fields::a2m(edge_lengths), lev);
     }
 }
 
 void HybridPICModel::GetCurrentExternal (
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths)
+    ablastr::fields::MultiLevelVectorField const& edge_lengths)
 {
     if (!m_external_field_has_time_dependence) { return; }
 
@@ -333,7 +352,7 @@ void HybridPICModel::GetCurrentExternal (
 }
 
 void HybridPICModel::GetCurrentExternal (
-    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+    ablastr::fields::VectorField const& edge_lengths,
     int lev)
 {
     if (!m_external_field_has_time_dependence) { return; }
@@ -499,8 +518,8 @@ void HybridPICModel::GetExternalFieldFromExpression (
 }
 
 void HybridPICModel::CalculateCurrentAmpere (
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Bfield,
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths)
+    ablastr::fields::MultiLevelVectorField const& Bfield,
+    ablastr::fields::MultiLevelVectorField const& edge_lengths)
 {
     auto& warpx = WarpX::GetInstance();
     for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
@@ -510,51 +529,52 @@ void HybridPICModel::CalculateCurrentAmpere (
 }
 
 void HybridPICModel::CalculateCurrentAmpere (
-    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+    ablastr::fields::VectorField const& Bfield,
+    ablastr::fields::VectorField const& edge_lengths,
     const int lev)
 {
     WARPX_PROFILE("WarpX::CalculateCurrentAmpere()");
 
     auto& warpx = WarpX::GetInstance();
+    ablastr::fields::VectorField current_fp_ampere = warpx.m_fields.get_alldirs(FieldType::hybrid_current_fp_ampere, lev);
     warpx.get_pointer_fdtd_solver_fp(lev)->CalculateCurrentAmpere(
-        current_fp_ampere[lev], Bfield, edge_lengths, lev
+        current_fp_ampere, Bfield, edge_lengths, lev
     );
 
     // we shouldn't apply the boundary condition to J since J = J_i - J_e but
     // the boundary correction was already applied to J_i and the B-field
     // boundary ensures that J itself complies with the boundary conditions, right?
     // ApplyJfieldBoundary(lev, Jfield[0].get(), Jfield[1].get(), Jfield[2].get());
-    for (int i=0; i<3; i++) { current_fp_ampere[lev][i]->FillBoundary(warpx.Geom(lev).periodicity()); }
+    for (int i=0; i<3; i++) { current_fp_ampere[i]->FillBoundary(warpx.Geom(lev).periodicity()); }
 }
 
 void HybridPICModel::HybridPICSolveE (
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> & Efield,
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Bfield,
-    amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
+    ablastr::fields::MultiLevelVectorField const& Efield,
+    ablastr::fields::MultiLevelVectorField const& Jfield,
+    ablastr::fields::MultiLevelVectorField const& Bfield,
+    ablastr::fields::MultiLevelScalarField const& rhofield,
+    ablastr::fields::MultiLevelVectorField const& edge_lengths,
     amrex::Real t,
-    const bool solve_for_Faraday)
+    const bool solve_for_Faraday) const
 {
     auto& warpx = WarpX::GetInstance();
     for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
     {
         HybridPICSolveE(
-            Efield[lev], Jfield[lev], Bfield[lev], rhofield[lev],
+            Efield[lev], Jfield[lev], Bfield[lev], *rhofield[lev],
             edge_lengths[lev], t, lev, solve_for_Faraday
         );
     }
 }
 
 void HybridPICModel::HybridPICSolveE (
-    std::array< std::unique_ptr<amrex::MultiFab>, 3> & Efield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
-    std::unique_ptr<amrex::MultiFab> const& rhofield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+    ablastr::fields::VectorField const& Efield,
+    ablastr::fields::VectorField const& Jfield,
+    ablastr::fields::VectorField const& Bfield,
+    amrex::MultiFab const& rhofield,
+    ablastr::fields::VectorField const& edge_lengths,
     amrex::Real t,
-    const int lev, const bool solve_for_Faraday)
+    const int lev, const bool solve_for_Faraday) const
 {
     WARPX_PROFILE("WarpX::HybridPICSolveE()");
 
@@ -570,28 +590,33 @@ void HybridPICModel::HybridPICSolveE (
 }
 
 void HybridPICModel::HybridPICSolveE (
-    std::array< std::unique_ptr<amrex::MultiFab>, 3> & Efield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
-    std::unique_ptr<amrex::MultiFab> const& rhofield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+    ablastr::fields::VectorField const& Efield,
+    ablastr::fields::VectorField const& Jfield,
+    ablastr::fields::VectorField const& Bfield,
+    amrex::MultiFab const& rhofield,
+    ablastr::fields::VectorField const& edge_lengths,
     amrex::Real t,
     const int lev, PatchType patch_type,
-    const bool solve_for_Faraday)
+    const bool solve_for_Faraday) const
 {
+
     auto& warpx = WarpX::GetInstance();
+
+    ablastr::fields::VectorField current_fp_ampere = warpx.m_fields.get_alldirs(FieldType::hybrid_current_fp_ampere, lev);
+    const ablastr::fields::VectorField current_fp_external = warpx.m_fields.get_alldirs(FieldType::hybrid_current_fp_external, lev);
+    const ablastr::fields::ScalarField electron_pressure_fp = warpx.m_fields.get(FieldType::hybrid_electron_pressure_fp, lev);
 
     // Solve E field in regular cells
     warpx.get_pointer_fdtd_solver_fp(lev)->HybridPICSolveE(
-        Efield, current_fp_ampere[lev], Jfield, current_fp_external[lev],
+        Efield, current_fp_ampere, Jfield, current_fp_external,
         Bfield, rhofield,
-        electron_pressure_fp[lev],
+        *electron_pressure_fp,
         edge_lengths, t, lev, this, solve_for_Faraday
     );
     warpx.ApplyEfieldBoundary(lev, patch_type);
 }
 
-void HybridPICModel::CalculateElectronPressure()
+void HybridPICModel::CalculateElectronPressure() const
 {
     auto& warpx = WarpX::GetInstance();
     for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
@@ -600,22 +625,27 @@ void HybridPICModel::CalculateElectronPressure()
     }
 }
 
-void HybridPICModel::CalculateElectronPressure(const int lev)
+void HybridPICModel::CalculateElectronPressure(const int lev) const
 {
     WARPX_PROFILE("WarpX::CalculateElectronPressure()");
 
     auto& warpx = WarpX::GetInstance();
+    ablastr::fields::ScalarField electron_pressure_fp = warpx.m_fields.get(FieldType::hybrid_electron_pressure_fp, lev);
+    ablastr::fields::ScalarField rho_fp = warpx.m_fields.get(FieldType::rho_fp, lev);
+
     // Calculate the electron pressure using rho^{n+1}.
     FillElectronPressureMF(
-        electron_pressure_fp[lev], warpx.getFieldPointer(FieldType::rho_fp, lev)
+        *electron_pressure_fp,
+        *rho_fp
     );
     warpx.ApplyElectronPressureBoundary(lev, PatchType::fine);
-    electron_pressure_fp[lev]->FillBoundary(warpx.Geom(lev).periodicity());
+    electron_pressure_fp->FillBoundary(warpx.Geom(lev).periodicity());
 }
 
 void HybridPICModel::FillElectronPressureMF (
-    std::unique_ptr<amrex::MultiFab> const& Pe_field,
-    amrex::MultiFab* const& rho_field ) const
+    amrex::MultiFab& Pe_field,
+    amrex::MultiFab const& rho_field
+) const
 {
     const auto n0_ref = m_n0_ref;
     const auto elec_temp = m_elec_temp;
@@ -625,11 +655,11 @@ void HybridPICModel::FillElectronPressureMF (
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-    for ( MFIter mfi(*Pe_field, TilingIfNotGPU()); mfi.isValid(); ++mfi )
+    for ( MFIter mfi(Pe_field, TilingIfNotGPU()); mfi.isValid(); ++mfi )
     {
         // Extract field data for this grid/tile
-        Array4<Real const> const& rho = rho_field->const_array(mfi);
-        Array4<Real> const& Pe = Pe_field->array(mfi);
+        Array4<Real const> const& rho = rho_field.const_array(mfi);
+        Array4<Real> const& Pe = Pe_field.array(mfi);
 
         // Extract tileboxes for which to loop
         const Box& tilebox  = mfi.tilebox();
@@ -643,11 +673,11 @@ void HybridPICModel::FillElectronPressureMF (
 }
 
 void HybridPICModel::BfieldEvolveRK (
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
-    amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
+    ablastr::fields::MultiLevelVectorField const& Bfield,
+    ablastr::fields::MultiLevelVectorField const& Efield,
+    ablastr::fields::MultiLevelVectorField const& Jfield,
+    ablastr::fields::MultiLevelScalarField const& rhofield,
+    ablastr::fields::MultiLevelVectorField  const& edge_lengths,
     amrex::Real t, amrex::Real dt, DtType dt_type,
     IntVect ng, std::optional<bool> nodal_sync )
 {
@@ -662,11 +692,11 @@ void HybridPICModel::BfieldEvolveRK (
 }
 
 void HybridPICModel::BfieldEvolveRK (
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
-    amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
+    ablastr::fields::MultiLevelVectorField const& Bfield,
+    ablastr::fields::MultiLevelVectorField const& Efield,
+    ablastr::fields::MultiLevelVectorField const& Jfield,
+    ablastr::fields::MultiLevelScalarField const& rhofield,
+    ablastr::fields::MultiLevelVectorField const& edge_lengths,
     amrex::Real t, amrex::Real dt, int lev, DtType dt_type,
     IntVect ng, std::optional<bool> nodal_sync )
 {
@@ -779,11 +809,11 @@ void HybridPICModel::BfieldEvolveRK (
 }
 
 void HybridPICModel::FieldPush (
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
-    amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
+    ablastr::fields::MultiLevelVectorField const& Bfield,
+    ablastr::fields::MultiLevelVectorField const& Efield,
+    ablastr::fields::MultiLevelVectorField const& Jfield,
+    ablastr::fields::MultiLevelScalarField const& rhofield,
+    ablastr::fields::MultiLevelVectorField const& edge_lengths,
     amrex::Real t, amrex::Real dt, DtType dt_type,
     IntVect ng, std::optional<bool> nodal_sync )
 {
