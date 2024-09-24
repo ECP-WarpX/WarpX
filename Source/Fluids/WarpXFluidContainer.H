@@ -30,7 +30,7 @@ class WarpXFluidContainer
 public:
     friend MultiFluidContainer;
 
-    WarpXFluidContainer (int ispecies, const std::string &name);
+    WarpXFluidContainer (int ispecies, const std::string &name, bool electron_hybrid=false);
     ~WarpXFluidContainer() = default;
 
     WarpXFluidContainer (WarpXFluidContainer const &)             = delete;
@@ -188,7 +188,9 @@ public:
     // Names of Multifabs that will be added to the mfs register
     std::string name_mf_N = "fluid_density_"+species_name;
     std::string name_mf_NU = "fluid_momentum_density_"+species_name;
-
+    std::string name_mf_T = "fluid_temperature_"+species_name;
+    std::string name_mf_K = "fluid_entropy_"+species_name;
+    
 };
 
 #endif
