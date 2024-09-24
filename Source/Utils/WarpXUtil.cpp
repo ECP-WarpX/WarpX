@@ -288,7 +288,7 @@ void NullifyMF (
 void NullifyMF (
     ablastr::fields::MultiFabRegister& multifab_map,
     std::string const& mf_name,
-    ablastr::fields::Direction dir,
+    ablastr::fields::Dir dir,
     int lev,
     amrex::Real zmin,
     amrex::Real zmax

@@ -153,7 +153,7 @@ public:
     MultiDiagnostics& GetMultiDiags () {return *multi_diags;}
 #ifdef AMREX_USE_EB
     ablastr::fields::MultiLevelScalarField GetDistanceToEB () {
-        using warpx::fields::FieldType;
+        using namespace warpx::fields;
         return m_fields.get_mr_levels(FieldType::distance_to_eb, finestLevel());
     }
 #endif

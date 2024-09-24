@@ -19,7 +19,7 @@
 #include <AMReX_REAL.H>
 
 
-enum struct ConvertDirection{WarpX_to_SI, SI_to_WarpX};
+enum struct ConvertDir{WarpX_to_SI, SI_to_WarpX};
 
 /** Convert particle momentum to/from SI
  *

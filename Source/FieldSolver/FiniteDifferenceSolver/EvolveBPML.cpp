@@ -49,7 +49,7 @@ void FiniteDifferenceSolver::EvolveBPML (
     const bool dive_cleaning
 )
 {
-    using warpx::fields::FieldType;
+    using namespace warpx::fields;
 
     // Select algorithm (The choice of algorithm is a runtime option,
     // but we compile code for each algorithm, using templates)

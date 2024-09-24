@@ -15,7 +15,7 @@
 
 
 using namespace amrex;
-using warpx::fields::FieldType;
+using namespace warpx::fields;
 
 ElectrostaticSolver::ElectrostaticSolver (int nlevs_max) : num_levels{nlevs_max}
 {
@@ -123,7 +123,7 @@ ElectrostaticSolver::computePhi (
     int const max_iters,
     int const verbosity) const
 {
-    using ablastr::fields::Direction;
+    using ablastr::fields::Dir;
 
     // create a vector to our fields, sorted by level
     amrex::Vector<amrex::MultiFab *> sorted_rho;
@@ -157,18 +157,18 @@ ElectrostaticSolver::computePhi (
                 e_field.push_back(
 #if defined(WARPX_DIM_1D_Z)
                     amrex::Array<amrex::MultiFab*, 1>{
-                        warpx.m_fields.get(FieldType::Efield_fp, Direction{2}, lev)
+                        warpx.m_fields.get(FieldType::Efield_fp, 2_dir, lev)
                     }
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                     amrex::Array<amrex::MultiFab*, 2>{
-                        warpx.m_fields.get(FieldType::Efield_fp, Direction{0}, lev),
-                        warpx.m_fields.get(FieldType::Efield_fp, Direction{2}, lev)
+                        warpx.m_fields.get(FieldType::Efield_fp, 0_dir, lev),
+                        warpx.m_fields.get(FieldType::Efield_fp, 2_dir, lev)
                     }
 #elif defined(WARPX_DIM_3D)
                     amrex::Array<amrex::MultiFab *, 3>{
-                        warpx.m_fields.get(FieldType::Efield_fp, Direction{0}, lev),
-                        warpx.m_fields.get(FieldType::Efield_fp, Direction{1}, lev),
-                        warpx.m_fields.get(FieldType::Efield_fp, Direction{2}, lev)
+                        warpx.m_fields.get(FieldType::Efield_fp, 0_dir, lev),
+                        warpx.m_fields.get(FieldType::Efield_fp, 1_dir, lev),
+                        warpx.m_fields.get(FieldType::Efield_fp, 2_dir, lev)
                     }
 #endif
                 );

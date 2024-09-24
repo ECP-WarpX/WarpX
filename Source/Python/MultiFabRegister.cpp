@@ -15,7 +15,7 @@ void init_MultiFabRegister (py::module & m)
 {
     using namespace ablastr::fields;
 
-    py::class_<ablastr::fields::Direction>(m, "Direction")
+    py::class_<ablastr::fields::Dir>(m, "Direction")
         .def(py::init<int>());
 
     py::class_<ablastr::fields::MultiFabRegister>(m, "MultiFabRegister")
@@ -46,7 +46,7 @@ void init_MultiFabRegister (py::module & m)
         .def("alloc_init",
              py::overload_cast<
                  std::string,
-                 ablastr::fields::Direction,
+                 ablastr::fields::Dir,
                  int,
                  amrex::BoxArray const &,
                  amrex::DistributionMapping const &,
@@ -85,7 +85,7 @@ void init_MultiFabRegister (py::module & m)
              py::overload_cast<
                  std::string,
                  std::string,
-                 ablastr::fields::Direction,
+                 ablastr::fields::Dir,
                  int,
                  std::optional<const amrex::Real>
              >(&MultiFabRegister::alias_init<std::string, std::string>),
@@ -108,7 +108,7 @@ void init_MultiFabRegister (py::module & m)
         .def("has",
              py::overload_cast<
                  std::string,
-                 ablastr::fields::Direction,
+                 ablastr::fields::Dir,
                  int
              >(&MultiFabRegister::has<std::string>, py::const_),
              py::arg("name"),
@@ -128,7 +128,7 @@ void init_MultiFabRegister (py::module & m)
         .def("get",
              py::overload_cast<
                  std::string,
-                 ablastr::fields::Direction,
+                 ablastr::fields::Dir,
                  int
              >(&MultiFabRegister::get<std::string>),
              py::arg("name"),
@@ -153,7 +153,7 @@ void init_MultiFabRegister (py::module & m)
         .def("erase",
              py::overload_cast<
                  std::string,
-                 ablastr::fields::Direction,
+                 ablastr::fields::Dir,
                  int
              >(&MultiFabRegister::erase<std::string>),
              py::arg("name"),

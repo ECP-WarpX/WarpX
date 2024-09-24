@@ -73,7 +73,7 @@ WarpX::SetElectricFieldAndApplyBCs ( const WarpXSolverVec&  a_E )
         a_E.getArrayVecType()==warpx::fields::FieldType::Efield_fp,
         "WarpX::SetElectricFieldAndApplyBCs() must be called with Efield_fp type");
 
-    using warpx::fields::FieldType;
+    using namespace warpx::fields;
 
     ablastr::fields::MultiLevelVectorField Efield_fp = m_fields.get_mr_levels_alldirs(FieldType::Efield_fp, finest_level);
     const ablastr::fields::MultiLevelVectorField& Evec = a_E.getArrayVec();
@@ -88,8 +88,8 @@ void
 WarpX::UpdateMagneticFieldAndApplyBCs( ablastr::fields::MultiLevelVectorField const&  a_Bn,
                                        amrex::Real                                    a_thetadt )
 {
-    using ablastr::fields::Direction;
-    using warpx::fields::FieldType;
+    using ablastr::fields::Dir;
+    using namespace warpx::fields;
 
     for (int lev = 0; lev <= finest_level; ++lev) {
         ablastr::fields::VectorField Bfp = m_fields.get_alldirs(FieldType::Bfield_fp, lev);
@@ -105,7 +105,7 @@ void
 WarpX::FinishMagneticFieldAndApplyBCs( ablastr::fields::MultiLevelVectorField const&  a_Bn,
                                        amrex::Real                                    a_theta )
 {
-    using warpx::fields::FieldType;
+    using namespace warpx::fields;
 
     FinishImplicitField(m_fields.get_mr_levels_alldirs(FieldType::Bfield_fp, 0), a_Bn, a_theta);
     ApplyMagneticFieldBCs();

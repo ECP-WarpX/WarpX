@@ -71,16 +71,16 @@ namespace ablastr::fields
 
     amrex::MultiFab*
     MultiFabRegister::internal_alloc_init (
-        std::string const & name,
-        Direction dir,
-        int level,
-        amrex::BoxArray const & ba,
-        amrex::DistributionMapping const & dm,
-        int ncomp,
-        amrex::IntVect const & ngrow,
-        std::optional<amrex::Real const> initial_value,
-        bool remake,
-        bool redistribute_on_remake
+            std::string const & name,
+            Dir dir,
+            int level,
+            amrex::BoxArray const & ba,
+            amrex::DistributionMapping const & dm,
+            int ncomp,
+            amrex::IntVect const & ngrow,
+            std::optional<amrex::Real const> initial_value,
+            bool remake,
+            bool redistribute_on_remake
     )
     {
         // checks
@@ -186,7 +186,7 @@ namespace ablastr::fields
     MultiFabRegister::internal_alias_init (
             std::string const & new_name,
             std::string const & alias_name,
-            Direction dir,
+            Dir dir,
             int level,
             std::optional<amrex::Real const> initial_value
     )
@@ -310,9 +310,9 @@ namespace ablastr::fields
 
     bool
     MultiFabRegister::internal_has (
-        std::string const & name,
-        Direction dir,
-        int level
+            std::string const & name,
+            Dir dir,
+            int level
     ) const
     {
         std::string const internal_name = mf_name(name, dir, level);
@@ -327,7 +327,7 @@ namespace ablastr::fields
     ) const
     {
         unsigned long count = 0;
-        for (Direction const & dir : m_all_dirs)
+        for (Dir const & dir : m_all_dirs)
         {
             std::string const internal_name = mf_name(name, dir, level);
             count += m_mf_register.count(internal_name);
@@ -378,9 +378,9 @@ namespace ablastr::fields
 
     amrex::MultiFab*
     MultiFabRegister::internal_get (
-        std::string const & name,
-        Direction dir,
-        int level
+            std::string const & name,
+            Dir dir,
+            int level
     )
     {
         std::string const internal_name = mf_name(name, dir, level);
@@ -399,9 +399,9 @@ namespace ablastr::fields
 
     amrex::MultiFab const *
     MultiFabRegister::internal_get (
-        std::string const & name,
-        Direction dir,
-        int level
+            std::string const & name,
+            Dir dir,
+            int level
     ) const
     {
         std::string const internal_name = mf_name(name, dir, level);
@@ -448,9 +448,9 @@ namespace ablastr::fields
         VectorField vectorField;
 
         // insert components
-        for (Direction const & dir : m_all_dirs)
+        for (Dir const & dir : m_all_dirs)
         {
-            vectorField[dir] = internal_get(name, dir, level);
+            vectorField.insert({dir, internal_get(name, dir, level)});
         }
         return vectorField;
     }
@@ -465,9 +465,9 @@ namespace ablastr::fields
         ConstVectorField vectorField;
 
         // insert components
-        for (Direction const & dir : m_all_dirs)
+        for (Dir const & dir : m_all_dirs)
         {
-            vectorField[dir] = internal_get(name, dir, level);
+            vectorField.insert({dir, internal_get(name, dir, level)});
         }
         return vectorField;
     }
@@ -487,9 +487,9 @@ namespace ablastr::fields
             field_on_level.push_back(VectorField{});
 
             // insert components
-            for (Direction const & dir : m_all_dirs)
+            for (Dir const & dir : m_all_dirs)
             {
-                field_on_level[lvl][dir] = internal_get(name, dir, lvl);
+                field_on_level[lvl].insert({dir, internal_get(name, dir, lvl)});
             }
         }
         return field_on_level;
@@ -510,9 +510,9 @@ namespace ablastr::fields
             field_on_level.push_back(ConstVectorField{});
 
             // insert components
-            for (Direction const & dir : m_all_dirs)
+            for (Dir const & dir : m_all_dirs)
             {
-                field_on_level[lvl][dir] = internal_get(name, dir, lvl);
+                field_on_level[lvl].insert({dir, internal_get(name, dir, lvl)});
             }
         }
         return field_on_level;
@@ -544,9 +544,9 @@ namespace ablastr::fields
 
     void
     MultiFabRegister::internal_erase (
-        std::string const & name,
-        Direction dir,
-        int level
+            std::string const & name,
+            Dir dir,
+            int level
     )
     {
         std::string const internal_name = mf_name(name, dir, level);
@@ -587,9 +587,9 @@ namespace ablastr::fields
 
     std::string
     MultiFabRegister::mf_name (
-        std::string name,
-        Direction dir,
-        int level
+            std::string name,
+            Dir dir,
+            int level
     ) const
     {
         // Add the suffix for the direction [x] or [y] or [z]
@@ -612,14 +612,14 @@ namespace ablastr::fields
         std::array< std::unique_ptr<amrex::MultiFab>, 3 > const & old_vectorfield
     )
     {
-        std::vector<Direction> const all_dirs = {Direction{0}, Direction{1}, Direction{2}};
+        std::vector<Dir> const all_dirs = {0_dir, 1_dir, 2_dir};
 
         VectorField field_on_level;
 
         // insert components
-        for (auto const dir : {0, 1, 2})
+        for (auto const dir : {0_dir, 1_dir, 2_dir})
         {
-            field_on_level[Direction{dir}] = old_vectorfield[dir].get();
+            field_on_level.insert({dir, old_vectorfield[dir].get()});
         }
         return field_on_level;
     }

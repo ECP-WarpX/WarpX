@@ -54,7 +54,7 @@
 #include <vector>
 
 using namespace amrex::literals;
-using warpx::fields::FieldType;
+using namespace warpx::fields;
 
 // constructor
 ParticleExtrema::ParticleExtrema (const std::string& rd_name)
@@ -262,7 +262,7 @@ void ParticleExtrema::ComputeDiags (int step)
             const bool galerkin_interpolation = WarpX::galerkin_interpolation;
             const amrex::IntVect ngEB = warpx.getngEB();
 
-            using ablastr::fields::Direction;
+            using ablastr::fields::Dir;
 
             // loop over refinement levels
             for (int lev = 0; lev <= level_number; ++lev)
@@ -270,12 +270,12 @@ void ParticleExtrema::ComputeDiags (int step)
                 // define variables in preparation for field gathering
                 const amrex::XDim3 dinv = WarpX::InvCellSize(std::max(lev, 0));
 
-                const amrex::MultiFab & Ex = *warpx.m_fields.get(FieldType::Efield_aux, Direction{0}, lev);
-                const amrex::MultiFab & Ey = *warpx.m_fields.get(FieldType::Efield_aux, Direction{1}, lev);
-                const amrex::MultiFab & Ez = *warpx.m_fields.get(FieldType::Efield_aux, Direction{2}, lev);
-                const amrex::MultiFab & Bx = *warpx.m_fields.get(FieldType::Bfield_aux, Direction{0}, lev);
-                const amrex::MultiFab & By = *warpx.m_fields.get(FieldType::Bfield_aux, Direction{1}, lev);
-                const amrex::MultiFab & Bz = *warpx.m_fields.get(FieldType::Bfield_aux, Direction{2}, lev);
+                const amrex::MultiFab & Ex = *warpx.m_fields.get(FieldType::Efield_aux, 0_dir, lev);
+                const amrex::MultiFab & Ey = *warpx.m_fields.get(FieldType::Efield_aux, 1_dir, lev);
+                const amrex::MultiFab & Ez = *warpx.m_fields.get(FieldType::Efield_aux, 2_dir, lev);
+                const amrex::MultiFab & Bx = *warpx.m_fields.get(FieldType::Bfield_aux, 0_dir, lev);
+                const amrex::MultiFab & By = *warpx.m_fields.get(FieldType::Bfield_aux, 1_dir, lev);
+                const amrex::MultiFab & Bz = *warpx.m_fields.get(FieldType::Bfield_aux, 2_dir, lev);
 
                 // declare reduce_op
                 amrex::ReduceOps<amrex::ReduceOpMin, amrex::ReduceOpMax> reduce_op;

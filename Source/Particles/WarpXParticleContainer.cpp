@@ -174,7 +174,7 @@ WarpXParticleContainer::AddNParticles (int /*lev*/, long n,
                                        int uniqueparticles, amrex::Long id)
 {
     using namespace amrex::literals;
-    using warpx::fields::FieldType;
+    using namespace warpx::fields;
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE((PIdx::nattribs + nattr_real - 1) <= NumRealComps(),
                                      "Too many real attributes specified");

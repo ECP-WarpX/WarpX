@@ -55,7 +55,7 @@ namespace warpx {
 
 void init_WarpX (py::module& m)
 {
-    using ablastr::fields::Direction;
+    using ablastr::fields::Dir;
 
     // Expose the WarpX instance
     m.def("get_instance",
@@ -141,7 +141,7 @@ The physical fields in WarpX have the following naming:
   (only for level 1 and higher).)doc"
         )
         .def("multifab",
-            [](WarpX & wx, std::string multifab_name, Direction dir, int level) {
+            [](WarpX & wx, std::string multifab_name, Dir dir, int level) {
                 if (wx.m_fields.has(multifab_name, dir, level)) {
                     return wx.m_fields.get(multifab_name, dir, level);
                 } else {

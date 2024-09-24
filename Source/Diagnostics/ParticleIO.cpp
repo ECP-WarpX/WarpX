@@ -43,7 +43,7 @@
 #include <vector>
 
 using namespace amrex;
-using warpx::fields::FieldType;
+using namespace warpx::fields;
 
 void
 LaserParticleContainer::ReadHeader (std::istream& is)

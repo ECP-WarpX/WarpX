@@ -17,7 +17,7 @@
 #include <AMReX_IntVect.H>
 #include <AMReX_MultiFab.H>
 
-using warpx::fields::FieldType;
+using namespace warpx::fields;
 
 JFunctor::JFunctor (const int dir, int lev,
                    amrex::IntVect crse_ratio,
@@ -31,19 +31,18 @@ JFunctor::JFunctor (const int dir, int lev,
 void
 JFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/) const
 {
-    using ablastr::fields::Direction;
+    using ablastr::fields::Dir;
 
     auto& warpx = WarpX::GetInstance();
     /** pointer to source multifab (can be multi-component) */
-    amrex::MultiFab* m_mf_src = warpx.m_fields.get(FieldType::current_fp,Direction{m_dir},m_lev);
+    amrex::MultiFab* m_mf_src = warpx.m_fields.get(FieldType::current_fp,Dir{m_dir},m_lev);
 
     // Deposit current if no solver or the electrostatic solver is being used
     if (m_deposit_current)
     {
         // allocate temporary multifab to deposit current density into
-        ablastr::fields::MultiLevelVectorField current_fp_temp {
-            warpx.m_fields.get_alldirs(FieldType::current_fp, m_lev)
-        };
+        ablastr::fields::MultiLevelVectorField current_fp_temp =
+            warpx.m_fields.get_alldirs(FieldType::current_fp, m_lev);
 
         auto& mypc = warpx.GetPartContainer();
         mypc.DepositCurrent(current_fp_temp, warpx.getdt(m_lev), 0.0);

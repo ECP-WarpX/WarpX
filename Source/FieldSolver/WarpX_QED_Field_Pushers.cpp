@@ -70,8 +70,8 @@ WarpX::Hybrid_QED_Push (int lev, amrex::Real a_dt)
 void
 WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, amrex::Real a_dt)
 {
-    using ablastr::fields::Direction;
-    using warpx::fields::FieldType;
+    using ablastr::fields::Dir;
+    using namespace warpx::fields;
 
     const int patch_level = (patch_type == PatchType::fine) ? lev : lev-1;
     const std::array<Real,3>& dx_vec= WarpX::CellSize(patch_level);
@@ -79,32 +79,32 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, amrex::Real a_dt)
     const Real dy = dx_vec[1];
     const Real dz = dx_vec[2];
 
-    using ablastr::fields::Direction;
+    using ablastr::fields::Dir;
 
     MultiFab *Ex, *Ey, *Ez, *Bx, *By, *Bz, *Jx, *Jy, *Jz;
     if (patch_type == PatchType::fine)
     {
-        Ex = m_fields.get(FieldType::Efield_fp, Direction{0}, lev);
-        Ey = m_fields.get(FieldType::Efield_fp, Direction{1}, lev);
-        Ez = m_fields.get(FieldType::Efield_fp, Direction{2}, lev);
-        Bx = m_fields.get(FieldType::Bfield_fp, Direction{0}, lev);
-        By = m_fields.get(FieldType::Bfield_fp, Direction{1}, lev);
-        Bz = m_fields.get(FieldType::Bfield_fp, Direction{2}, lev);
-        Jx = m_fields.get(FieldType::current_fp, Direction{0}, lev);
-        Jy = m_fields.get(FieldType::current_fp, Direction{1}, lev);
-        Jz = m_fields.get(FieldType::current_fp, Direction{2}, lev);
+        Ex = m_fields.get(FieldType::Efield_fp, 0_dir, lev);
+        Ey = m_fields.get(FieldType::Efield_fp, 1_dir, lev);
+        Ez = m_fields.get(FieldType::Efield_fp, 2_dir, lev);
+        Bx = m_fields.get(FieldType::Bfield_fp, 0_dir, lev);
+        By = m_fields.get(FieldType::Bfield_fp, 1_dir, lev);
+        Bz = m_fields.get(FieldType::Bfield_fp, 2_dir, lev);
+        Jx = m_fields.get(FieldType::current_fp, 0_dir, lev);
+        Jy = m_fields.get(FieldType::current_fp, 1_dir, lev);
+        Jz = m_fields.get(FieldType::current_fp, 2_dir, lev);
     }
     else
     {
-        Ex = m_fields.get(FieldType::Efield_cp, Direction{0}, lev);
-        Ey = m_fields.get(FieldType::Efield_cp, Direction{1}, lev);
-        Ez = m_fields.get(FieldType::Efield_cp, Direction{2}, lev);
-        Bx = m_fields.get(FieldType::Bfield_cp, Direction{0}, lev);
-        By = m_fields.get(FieldType::Bfield_cp, Direction{1}, lev);
-        Bz = m_fields.get(FieldType::Bfield_cp, Direction{2}, lev);
-        Jx = m_fields.get(FieldType::current_cp, Direction{0}, lev);
-        Jy = m_fields.get(FieldType::current_cp, Direction{1}, lev);
-        Jz = m_fields.get(FieldType::current_cp, Direction{2}, lev);
+        Ex = m_fields.get(FieldType::Efield_cp, 0_dir, lev);
+        Ey = m_fields.get(FieldType::Efield_cp, 1_dir, lev);
+        Ez = m_fields.get(FieldType::Efield_cp, 2_dir, lev);
+        Bx = m_fields.get(FieldType::Bfield_cp, 0_dir, lev);
+        By = m_fields.get(FieldType::Bfield_cp, 1_dir, lev);
+        Bz = m_fields.get(FieldType::Bfield_cp, 2_dir, lev);
+        Jx = m_fields.get(FieldType::current_cp, 0_dir, lev);
+        Jy = m_fields.get(FieldType::current_cp, 1_dir, lev);
+        Jz = m_fields.get(FieldType::current_cp, 2_dir, lev);
     }
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);

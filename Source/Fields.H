@@ -18,6 +18,8 @@
 
 namespace warpx::fields
 {
+    using namespace ablastr::fields;
+
     AMREX_ENUM(FieldType,
         None,
         Efield_aux, //!< Field that the particles gather from. Obtained from Efield_fp (and Efield_cp when using MR); see UpdateAuxilaryData

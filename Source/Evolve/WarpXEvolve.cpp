@@ -63,8 +63,8 @@ using ablastr::utils::SignalHandling;
 
 void
 WarpX::Synchronize () {
-    using ablastr::fields::Direction;
-    using warpx::fields::FieldType;
+    using ablastr::fields::Dir;
+    using namespace warpx::fields;
 
     FillBoundaryE(guard_cells.ng_FieldGather);
     FillBoundaryB(guard_cells.ng_FieldGather);
@@ -79,12 +79,12 @@ WarpX::Synchronize () {
         mypc->PushP(
             lev,
             0.5_rt*dt[lev],
-            *m_fields.get(FieldType::Efield_aux, Direction{0}, lev),
-            *m_fields.get(FieldType::Efield_aux, Direction{1}, lev),
-            *m_fields.get(FieldType::Efield_aux, Direction{2}, lev),
-            *m_fields.get(FieldType::Bfield_aux, Direction{0}, lev),
-            *m_fields.get(FieldType::Bfield_aux, Direction{1}, lev),
-            *m_fields.get(FieldType::Bfield_aux, Direction{2}, lev)
+            *m_fields.get(FieldType::Efield_aux, 0_dir, lev),
+            *m_fields.get(FieldType::Efield_aux, 1_dir, lev),
+            *m_fields.get(FieldType::Efield_aux, 2_dir, lev),
+            *m_fields.get(FieldType::Bfield_aux, 0_dir, lev),
+            *m_fields.get(FieldType::Bfield_aux, 1_dir, lev),
+            *m_fields.get(FieldType::Bfield_aux, 2_dir, lev)
         );
     }
     is_synchronized = true;
@@ -96,7 +96,7 @@ WarpX::Evolve (int numsteps)
     WARPX_PROFILE_REGION("WarpX::Evolve()");
     WARPX_PROFILE("WarpX::Evolve()");
 
-    using ablastr::fields::Direction;
+    using ablastr::fields::Dir;
 
     Real cur_time = t_new[0];
 
@@ -475,8 +475,8 @@ void WarpX::ExplicitFillBoundaryEBUpdateAux ()
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(evolve_scheme == EvolveScheme::Explicit,
         "Cannot call WarpX::ExplicitFillBoundaryEBUpdateAux without Explicit evolve scheme set!");
 
-    using ablastr::fields::Direction;
-    using warpx::fields::FieldType;
+    using ablastr::fields::Dir;
+    using namespace warpx::fields;
 
     // At the beginning, we have B^{n} and E^{n}.
     // Particles have p^{n} and x^{n}.
@@ -495,12 +495,12 @@ void WarpX::ExplicitFillBoundaryEBUpdateAux ()
             mypc->PushP(
                 lev,
                 -0.5_rt*dt[lev],
-                *m_fields.get(FieldType::Efield_aux, Direction{0}, lev),
-                *m_fields.get(FieldType::Efield_aux, Direction{1}, lev),
-                *m_fields.get(FieldType::Efield_aux, Direction{2}, lev),
-                *m_fields.get(FieldType::Bfield_aux, Direction{0}, lev),
-                *m_fields.get(FieldType::Bfield_aux, Direction{1}, lev),
-                *m_fields.get(FieldType::Bfield_aux, Direction{2}, lev)
+                *m_fields.get(FieldType::Efield_aux, 0_dir, lev),
+                *m_fields.get(FieldType::Efield_aux, 1_dir, lev),
+                *m_fields.get(FieldType::Efield_aux, 2_dir, lev),
+                *m_fields.get(FieldType::Bfield_aux, 0_dir, lev),
+                *m_fields.get(FieldType::Bfield_aux, 1_dir, lev),
+                *m_fields.get(FieldType::Bfield_aux, 2_dir, lev)
             );
         }
         is_synchronized = false;
@@ -565,7 +565,7 @@ void WarpX::HandleParticlesAtBoundaries (int step, amrex::Real cur_time, int num
 
     // interact the particles with EB walls (if present)
     if (EB::enabled()) {
-        using warpx::fields::FieldType;
+        using namespace warpx::fields;
         mypc->ScrapeParticlesAtEB(m_fields.get_mr_levels(FieldType::distance_to_eb, finest_level));
         m_particle_boundary_buffer->gatherParticlesFromEmbeddedBoundaries(
             *mypc, m_fields.get_mr_levels(FieldType::distance_to_eb, finest_level));
@@ -582,8 +582,8 @@ void WarpX::HandleParticlesAtBoundaries (int step, amrex::Real cur_time, int num
 
 void WarpX::SyncCurrentAndRho ()
 {
-    using ablastr::fields::Direction;
-    using warpx::fields::FieldType;
+    using ablastr::fields::Dir;
+    using namespace warpx::fields;
 
     if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
     {
@@ -634,18 +634,18 @@ void WarpX::SyncCurrentAndRho ()
             ApplyRhofieldBoundary(lev, m_fields.get(FieldType::rho_fp,lev), PatchType::fine);
         }
         ApplyJfieldBoundary(lev,
-            m_fields.get(FieldType::current_fp, Direction{0}, lev),
-            m_fields.get(FieldType::current_fp, Direction{1}, lev),
-            m_fields.get(FieldType::current_fp, Direction{2}, lev),
+            m_fields.get(FieldType::current_fp, 0_dir, lev),
+            m_fields.get(FieldType::current_fp, 1_dir, lev),
+            m_fields.get(FieldType::current_fp, 2_dir, lev),
             PatchType::fine);
         if (lev > 0) {
             if (m_fields.has(FieldType::rho_cp, lev)) {
                 ApplyRhofieldBoundary(lev, m_fields.get(FieldType::rho_cp,lev), PatchType::coarse);
             }
             ApplyJfieldBoundary(lev,
-                m_fields.get(FieldType::current_cp, Direction{0}, lev),
-                m_fields.get(FieldType::current_cp, Direction{1}, lev),
-                m_fields.get(FieldType::current_cp, Direction{2}, lev),
+                m_fields.get(FieldType::current_cp, 0_dir, lev),
+                m_fields.get(FieldType::current_cp, 1_dir, lev),
+                m_fields.get(FieldType::current_cp, 2_dir, lev),
                 PatchType::coarse);
         }
     }
@@ -661,7 +661,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         "multi-J algorithm not implemented for FDTD"
     );
 
-    using warpx::fields::FieldType;
+    using namespace warpx::fields;
 
     const int rho_mid = spectral_solver_fp[0]->m_spectral_index.rho_mid;
     const int rho_new = spectral_solver_fp[0]->m_spectral_index.rho_new;
@@ -866,7 +866,7 @@ WarpX::OneStep_sub1 (Real cur_time)
     const int fine_lev = 1;
     const int coarse_lev = 0;
 
-    using warpx::fields::FieldType;
+    using namespace warpx::fields;
 
     // i) Push particles and fields on the fine patch (first fine step)
     PushParticlesandDeposit(fine_lev, cur_time, DtType::FirstHalf);
@@ -1056,17 +1056,17 @@ WarpX::doFieldIonization ()
 void
 WarpX::doFieldIonization (int lev)
 {
-    using ablastr::fields::Direction;
-    using warpx::fields::FieldType;
+    using ablastr::fields::Dir;
+    using namespace warpx::fields;
 
     mypc->doFieldIonization(
         lev,
-        *m_fields.get(FieldType::Efield_aux, Direction{0}, lev),
-        *m_fields.get(FieldType::Efield_aux, Direction{1}, lev),
-        *m_fields.get(FieldType::Efield_aux, Direction{2}, lev),
-        *m_fields.get(FieldType::Bfield_aux, Direction{0}, lev),
-        *m_fields.get(FieldType::Bfield_aux, Direction{1}, lev),
-        *m_fields.get(FieldType::Bfield_aux, Direction{2}, lev)
+        *m_fields.get(FieldType::Efield_aux, 0_dir, lev),
+        *m_fields.get(FieldType::Efield_aux, 1_dir, lev),
+        *m_fields.get(FieldType::Efield_aux, 2_dir, lev),
+        *m_fields.get(FieldType::Bfield_aux, 0_dir, lev),
+        *m_fields.get(FieldType::Bfield_aux, 1_dir, lev),
+        *m_fields.get(FieldType::Bfield_aux, 2_dir, lev)
     );
 }
 
@@ -1082,17 +1082,17 @@ WarpX::doQEDEvents ()
 void
 WarpX::doQEDEvents (int lev)
 {
-    using ablastr::fields::Direction;
-    using warpx::fields::FieldType;
+    using ablastr::fields::Dir;
+    using namespace warpx::fields;
 
     mypc->doQedEvents(
         lev,
-        *m_fields.get(FieldType::Efield_aux, Direction{0}, lev),
-        *m_fields.get(FieldType::Efield_aux, Direction{1}, lev),
-        *m_fields.get(FieldType::Efield_aux, Direction{2}, lev),
-        *m_fields.get(FieldType::Bfield_aux, Direction{0}, lev),
-        *m_fields.get(FieldType::Bfield_aux, Direction{1}, lev),
-        *m_fields.get(FieldType::Bfield_aux, Direction{2}, lev)
+        *m_fields.get(FieldType::Efield_aux, 0_dir, lev),
+        *m_fields.get(FieldType::Efield_aux, 1_dir, lev),
+        *m_fields.get(FieldType::Efield_aux, 2_dir, lev),
+        *m_fields.get(FieldType::Bfield_aux, 0_dir, lev),
+        *m_fields.get(FieldType::Bfield_aux, 1_dir, lev),
+        *m_fields.get(FieldType::Bfield_aux, 2_dir, lev)
     );
 }
 #endif
@@ -1111,8 +1111,8 @@ void
 WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type, bool skip_current,
                                PushType push_type)
 {
-    using ablastr::fields::Direction;
-    using warpx::fields::FieldType;
+    using ablastr::fields::Dir;
+    using namespace warpx::fields;
 
     std::string current_fp_string;
 
@@ -1143,15 +1143,15 @@ WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type,
 #ifdef WARPX_DIM_RZ
         // This is called after all particles have deposited their current and charge.
         ApplyInverseVolumeScalingToCurrentDensity(
-            m_fields.get(FieldType::current_fp, Direction{0}, lev),
-            m_fields.get(FieldType::current_fp, Direction{1}, lev),
-            m_fields.get(FieldType::current_fp, Direction{2}, lev),
+            m_fields.get(FieldType::current_fp, 0_dir, lev),
+            m_fields.get(FieldType::current_fp, 1_dir, lev),
+            m_fields.get(FieldType::current_fp, 2_dir, lev),
             lev);
-        if (m_fields.has(FieldType::current_buf, Direction{0}, lev)) {
+        if (m_fields.has(FieldType::current_buf, 0_dir, lev)) {
             ApplyInverseVolumeScalingToCurrentDensity(
-                m_fields.get(FieldType::current_buf, Direction{0}, lev),
-                m_fields.get(FieldType::current_buf, Direction{1}, lev),
-                m_fields.get(FieldType::current_buf, Direction{2}, lev),
+                m_fields.get(FieldType::current_buf, 0_dir, lev),
+                m_fields.get(FieldType::current_buf, 1_dir, lev),
+                m_fields.get(FieldType::current_buf, 2_dir, lev),
                 lev-1);
         }
         if (m_fields.has(FieldType::rho_fp, lev)) {
@@ -1187,7 +1187,7 @@ WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type,
 void
 WarpX::applyMirrors (Real time)
 {
-    using ablastr::fields::Direction;
+    using ablastr::fields::Dir;
 
     // something to do?
     if (num_mirrors == 0) {
@@ -1216,12 +1216,12 @@ WarpX::applyMirrors (Real time)
             const amrex::Real z_max = std::max(z_max_tmp, z_min+mirror_z_npoints[i_mirror]*dz);
 
             // Set each field on the fine patch to zero between z_min and z_max
-            NullifyMF(m_fields, "Efield_fp", Direction{0}, lev, z_min, z_max);
-            NullifyMF(m_fields, "Efield_fp", Direction{1}, lev, z_min, z_max);
-            NullifyMF(m_fields, "Efield_fp", Direction{2}, lev, z_min, z_max);
-            NullifyMF(m_fields, "Bfield_fp", Direction{0}, lev, z_min, z_max);
-            NullifyMF(m_fields, "Bfield_fp", Direction{1}, lev, z_min, z_max);
-            NullifyMF(m_fields, "Bfield_fp", Direction{2}, lev, z_min, z_max);
+            NullifyMF(m_fields, "Efield_fp", 0_dir, lev, z_min, z_max);
+            NullifyMF(m_fields, "Efield_fp", 1_dir, lev, z_min, z_max);
+            NullifyMF(m_fields, "Efield_fp", 2_dir, lev, z_min, z_max);
+            NullifyMF(m_fields, "Bfield_fp", 0_dir, lev, z_min, z_max);
+            NullifyMF(m_fields, "Bfield_fp", 1_dir, lev, z_min, z_max);
+            NullifyMF(m_fields, "Bfield_fp", 2_dir, lev, z_min, z_max);
 
             // If div(E)/div(B) cleaning are used, set F/G field to zero
             NullifyMF(m_fields, "F_fp", lev, z_min, z_max);
@@ -1230,12 +1230,12 @@ WarpX::applyMirrors (Real time)
             if (lev>0)
             {
                 // Set each field on the coarse patch to zero between z_min and z_max
-                NullifyMF(m_fields, "Efield_cp", Direction{0}, lev, z_min, z_max);
-                NullifyMF(m_fields, "Efield_cp", Direction{1}, lev, z_min, z_max);
-                NullifyMF(m_fields, "Efield_cp", Direction{2}, lev, z_min, z_max);
-                NullifyMF(m_fields, "Bfield_cp", Direction{0}, lev, z_min, z_max);
-                NullifyMF(m_fields, "Bfield_cp", Direction{1}, lev, z_min, z_max);
-                NullifyMF(m_fields, "Bfield_cp", Direction{2}, lev, z_min, z_max);
+                NullifyMF(m_fields, "Efield_cp", 0_dir, lev, z_min, z_max);
+                NullifyMF(m_fields, "Efield_cp", 1_dir, lev, z_min, z_max);
+                NullifyMF(m_fields, "Efield_cp", 2_dir, lev, z_min, z_max);
+                NullifyMF(m_fields, "Bfield_cp", 0_dir, lev, z_min, z_max);
+                NullifyMF(m_fields, "Bfield_cp", 1_dir, lev, z_min, z_max);
+                NullifyMF(m_fields, "Bfield_cp", 2_dir, lev, z_min, z_max);
 
                 // If div(E)/div(B) cleaning are used, set F/G field to zero
                 NullifyMF(m_fields, "F_cp", lev, z_min, z_max);
