@@ -218,13 +218,16 @@ Particles
                # write to all particles in the chunk
                # note: careful, if you change particle positions, you might need to
                #       redistribute particles before continuing the simulation step
-               soa.real[0][()] = 0.30  # x
-               soa.real[1][()] = 0.35  # y
-               soa.real[2][()] = 0.40  # z
+               soa.real["x"][:] = 0.30
+               soa.real["y"][:] = 0.35
+               soa.real["z"][:] = 0.40
 
-               # all other attributes: weight, momentum x, y, z, ...
-               for soa_real in soa.real[3:]:
-                   soa_real[()] = 42.0
+               soa.real["ux"][:] = 0.9
+               soa.real["uy"][:] = 0.8
+               soa.real["uz"][:] = 5.4
+
+               soa.real["w"][:] = 42.0
+               # ...
 
                # by default empty unless ionization or QED physics is used
                # or other runtime attributes were added manually
