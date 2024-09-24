@@ -91,6 +91,13 @@ namespace {
         pp_particles.queryAdd("do_tiling", do_tiling);
     }
 
+    void verbose_tiny_profiler ()
+    {
+        auto pp_tiny_profiler = amrex::ParmParse{"tiny_profiler"};
+        auto verbose = 1;
+        pp_tiny_profiler.queryAdd("verbose", verbose);
+    }
+
     /** Overwrite defaults in AMReX Inputs
      *
      * This overwrites defaults in amrex::ParmParse for inputs.
@@ -98,6 +105,7 @@ namespace {
     void
     overwrite_amrex_parser_defaults ()
     {
+        verbose_tiny_profiler();
         override_default_abort_on_out_of_gpu_memory();
         override_default_the_arena_is_managed();
         override_default_omp_threads();
