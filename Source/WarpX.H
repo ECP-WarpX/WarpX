@@ -146,6 +146,7 @@ public:
 
     MultiParticleContainer& GetPartContainer () { return *mypc; }
     MultiFluidContainer& GetFluidContainer () { return *myfl; }
+    WarpXFluidContainer& GetElectronFluidContainer () { return *hybrid_electron_fl; }
     MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
     ElectrostaticSolver& GetElectrostaticSolver () {return *m_electrostatic_solver;}
     HybridPICModel& GetHybridPICModel () { return *m_hybrid_pic_model; }
