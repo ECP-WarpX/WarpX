@@ -133,7 +133,7 @@ public:
 
     // Function that calculates Ue from Je = J_ampere - Ji and saves in NU for hybrid solver
     void HybridUpdateUe (ablastr::fields::MultiFabRegister& m_fields, int lev);
-    
+
     [[nodiscard]] amrex::Real getCharge () const {return charge;}
     [[nodiscard]] amrex::Real getMass () const {return mass;}
 
@@ -193,7 +193,7 @@ public:
     std::string name_mf_NU = "fluid_momentum_density_"+species_name;
     std::string name_mf_T = "fluid_temperature_"+species_name;
     std::string name_mf_K = "fluid_entropy_"+species_name;
-    
+
 };
 
 #endif

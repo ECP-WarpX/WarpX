@@ -168,7 +168,7 @@ void WarpX::HybridPICEvolveFields ()
 
     if(m_hybrid_pic_model->m_solve_electron_energy_equation){
 
-        // Update Ue in electron fluid container 
+        // Update Ue in electron fluid container
         // check at what step this should be calculated, here Ue is at n+1
         hybrid_electron_fl->HybridUpdateUe(m_fields, finest_level);
 
@@ -177,7 +177,7 @@ void WarpX::HybridPICEvolveFields ()
         // hybrid_electron_fl->SolveEEQqdsmc(); // should take rho, Je
 
     }
-    
+
     // Calculate the electron pressure at t=n+1
     m_hybrid_pic_model->CalculateElectronPressure();
 
