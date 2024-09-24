@@ -361,15 +361,15 @@ namespace ablastr::fields
 
     amrex::MultiFab const *
     MultiFabRegister::internal_get (
-        std::string const & key
+        std::string const & internal_name
     ) const
     {
-        if (m_mf_register.count(key) == 0) {
+        if (m_mf_register.count(internal_name) == 0) {
             // FIXME: temporary, throw a std::runtime_error
-            // throw std::runtime_error("MultiFabRegister::get name does not exist in register: " + key);
+            // throw std::runtime_error("MultiFabRegister::get name does not exist in register: " + internal_name);
             return nullptr;
         }
-        amrex::MultiFab const & mf = m_mf_register.at(key).m_mf;
+        amrex::MultiFab const & mf = m_mf_register.at(internal_name).m_mf;
 
         return &mf;
     }
