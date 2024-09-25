@@ -55,8 +55,8 @@ namespace
     constexpr int permission_flag_rwxrxrx = 0755;
 }
 
-BTDiagnostics::BTDiagnostics (int i, const std::string& name)
-    : Diagnostics{i, name}
+BTDiagnostics::BTDiagnostics (int i, const std::string& name, DiagTypes diag_type)
+    : Diagnostics{i, name, diag_type}
 {
     ReadParameters();
 }
