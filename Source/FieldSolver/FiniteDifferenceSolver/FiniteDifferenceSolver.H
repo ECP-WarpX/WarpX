@@ -4,7 +4,7 @@
  *
  * Authors: Remi Lehe (LBNL)
  *          S. Eric Clark (Helion Energy)
- * 
+ *
  * License: BSD-3-Clause-LBNL
  */
 

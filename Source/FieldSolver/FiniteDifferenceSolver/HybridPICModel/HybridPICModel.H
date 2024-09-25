@@ -53,7 +53,7 @@ public:
         const int ncomps,
         const amrex::IntVect& ngJ,
         const amrex::IntVect& ngRho,
-        const amrex::IntVect& ngE, 
+        const amrex::IntVect& ngE,
         const amrex::IntVect& ngB,
         const amrex::IntVect& jx_nodal_flag,
         const amrex::IntVect& jy_nodal_flag,
@@ -83,7 +83,7 @@ public:
         warpx::fields::FieldType field_type,
         std::array< amrex::ParserExecutor<4>, 3> const& expression,
         int lev);
-    
+
     void GetExternalFieldFromExpression (
         warpx::fields::FieldType field_type,
         std::array< amrex::ParserExecutor<4>, 3> const& expression,
