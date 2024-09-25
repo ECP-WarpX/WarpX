@@ -1,23 +1,26 @@
-.. _examples-ohm-solver-magnetic-reconnection:
+.. _examples-ohm-solver-guiding_field:
 
 Ohm Solver: Guiding Field (Magnetic Reconnection)
 =================================
 
+This is a copy of the original ohm_solver_magnetic_reconnection example, 
+but with an external (static) guiding magnetic field.
+
 Hybrid-PIC codes are often used to simulate magnetic reconnection in space plasmas.
 An example of magnetic reconnection from a force-free sheet is provided, based on
-the simulation described in :cite:t:`ex-Le2016`. This is a copy of the original 
-ohm_solver_magnetic_reconnection example, but with an external (static) guiding magnetic field.
+the simulation described in :cite:t:`ex-Le2016`. Here, the magnetic field is initialized
+without the guiding field, and the guiding field is added to the simulation as a static field.
 
 Run
 ---
 
 The following **Python** script configures and launches the simulation.
 
-.. dropdown:: Script ``inputs_test_2d_ohm_solver_magnetic_reconnection_picmi.py``
+.. dropdown:: Script ``inputs_test_2d_ohm_solver_guiding_field_picmi.py``
 
-   .. literalinclude:: inputs_test_2d_ohm_solver_magnetic_reconnection_picmi.py
+   .. literalinclude:: inputs_test_2d_ohm_solver_guiding_field_picmi.py
       :language: python3
-      :caption: You can copy this file from ``Examples/Tests/ohm_solver_magnetic_reconnection/inputs_test_2d_ohm_solver_magnetic_reconnection_picmi.py``.
+      :caption: You can copy this file from ``Examples/Tests/ohm_solver_guiding_field/inputs_test_2d_ohm_solver_guiding_field_picmi.py``.
 
 Running the full simulation should take about 4 hours if executed on 1 V100 GPU.
 For `MPI-parallel <https://www.mpi-forum.org>`__ runs, prefix these lines with
@@ -25,7 +28,7 @@ For `MPI-parallel <https://www.mpi-forum.org>`__ runs, prefix these lines with
 
    .. code-block:: bash
 
-      python3 inputs_test_2d_ohm_solver_magnetic_reconnection_picmi.py
+      python3 inputs_test_2d_ohm_solver_guiding_field_picmi.py
 
 Analyze
 -------
@@ -37,7 +40,7 @@ animates the evolution of the magnetic field (as shown below).
 
    .. literalinclude:: analysis.py
       :language: python3
-      :caption: You can copy this file from ``Examples/Tests/ohm_solver_magnetic_reconnection/analysis.py``.
+      :caption: You can copy this file from ``Examples/Tests/ohm_solver_guiding_field/analysis.py``.
 
 .. figure:: https://user-images.githubusercontent.com/40245517/229639784-b5d3b596-3550-4570-8761-8d9a67aa4b3b.gif
    :alt: Magnetic reconnection.

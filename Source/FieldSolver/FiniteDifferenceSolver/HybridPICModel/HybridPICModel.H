@@ -202,8 +202,8 @@ public:
 
     // Path of the file where external
     // fields are stored
-    std::string m_external_jfields_path = "0.0";
-    std::string m_external_bfields_path = "0.0";
+    std::string m_external_j_fields_path = "0.0";
+    std::string m_external_b_fields_path = "0.0";
 
     std::string m_J_ext_grid_s = "0.0";
     std::string m_B_ext_grid_s = "0.0";
