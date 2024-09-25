@@ -170,12 +170,12 @@ WarpX::computeVectorPotential (ablastr::fields::MultiLevelVectorField const& cur
     amrex::Vector<amrex::Array<amrex::MultiFab*,3>> sorted_curr;
     amrex::Vector<amrex::Array<amrex::MultiFab*,3>> sorted_A;
     for (int lev = 0; lev <= finest_level; ++lev) {
-        sorted_curr.emplace_back(amrex::Array<amrex::MultiFab*,3> ({curr[lev][0].get(),
-                                                                    curr[lev][1].get(),
-                                                                    curr[lev][2].get()}));
-        sorted_A.emplace_back(amrex::Array<amrex::MultiFab*,3> ({A[lev][0].get(),
-                                                                 A[lev][1].get(),
-                                                                 A[lev][2].get()}));
+        sorted_curr.emplace_back(amrex::Array<amrex::MultiFab*,3> ({curr[lev][0],
+                                                                    curr[lev][1],
+                                                                    curr[lev][2]}));
+        sorted_A.emplace_back(amrex::Array<amrex::MultiFab*,3> ({A[lev][0],
+                                                                 A[lev][1],
+                                                                 A[lev][2]}));
     }
 
     const ablastr::fields::MultiLevelVectorField Bfield_fp = m_fields.get_mr_levels_alldirs(FieldType::Bfield_fp, finest_level);
