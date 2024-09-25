@@ -18,6 +18,11 @@
 
 namespace warpx::fields
 {
+    /** Unique identifiers for WarpX scalar and vector fields.
+     *
+     * These are implemented as @see amrex::MultiFab (one or one per component "direction", respectively) and stored in the
+     * @see ablastr::fields::MultiFabRegister .
+     */
     AMREX_ENUM(FieldType,
         None,
         Efield_aux, //!< Field that the particles gather from. Obtained from Efield_fp (and Efield_cp when using MR); see UpdateAuxilaryData
