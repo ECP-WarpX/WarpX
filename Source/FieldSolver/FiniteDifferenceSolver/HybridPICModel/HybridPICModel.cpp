@@ -189,7 +189,6 @@ void HybridPICModel::InitData ()
     }
 
     auto & warpx = WarpX::GetInstance();
-    const auto& mypc = warpx.GetPartContainer();
 
     m_B_external_parser[0] = std::make_unique<amrex::Parser>(
         utils::parser::makeParser(m_Bx_ext_grid_function,{"x","y","z","t"}));
@@ -302,7 +301,9 @@ void HybridPICModel::GetCurrentExternal (bool skip_check /*=false*/)
 
 void HybridPICModel::GetFieldsExternal (amrex::Real t)
 {
+    using ablastr::fields::Direction;
     auto& warpx = WarpX::GetInstance();
+
     for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
     {
         GetExternalFieldFromExpression(
@@ -311,6 +312,12 @@ void HybridPICModel::GetFieldsExternal (amrex::Real t)
         GetExternalFieldFromExpression(
             FieldType::hybrid_E_fp_external,
             m_E_external, lev, t);
+        for (int idim=0; idim < 3; idim++) {
+            auto mf_Bext = warpx.m_fields.get(FieldType::hybrid_B_fp_external, Direction{idim}, lev);
+            mf_Bext->FillBoundary(warpx.Geom(lev).periodicity());
+            auto mf_Eext = warpx.m_fields.get(FieldType::hybrid_E_fp_external, Direction{idim}, lev);
+            mf_Eext->FillBoundary(warpx.Geom(lev).periodicity());
+        }
     }
 }
 
@@ -336,9 +343,11 @@ void HybridPICModel::GetExternalFieldFromExpression (
     auto dx_lev = warpx.Geom(lev).CellSizeArray();
     const RealBox& real_box = warpx.Geom(lev).ProbDomain();
 
-    auto const& mfx = warpx.m_fields.get(field_type, Direction{0}, lev);
-    auto const& mfy = warpx.m_fields.get(field_type, Direction{1}, lev);
-    auto const& mfz = warpx.m_fields.get(field_type, Direction{2}, lev);
+    ablastr::fields::VectorField field = warpx.m_fields.get_alldirs(field_type, lev);
+
+    amrex::MultiFab* mfx = field[0];
+    amrex::MultiFab* mfy = field[1];
+    amrex::MultiFab* mfz = field[2];
 
     const amrex::IntVect x_nodal_flag = mfx->ixType().toIntVect();
     const amrex::IntVect y_nodal_flag = mfy->ixType().toIntVect();
@@ -449,6 +458,7 @@ void HybridPICModel::GetExternalFieldFromExpression (
             }
         );
     }
+    amrex::Gpu::streamSynchronize();
 }
 
 void HybridPICModel::CalculateCurrentAmpere (

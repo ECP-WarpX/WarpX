@@ -88,7 +88,6 @@ void WarpX::HybridPICEvolveFields ()
                     m_fields.get(FieldType::hybrid_B_fp_external, Direction{idim}, lev)->nGrowVect());
             }
         }
-        FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
     }
 
     // Get the external current
@@ -208,6 +207,8 @@ void WarpX::HybridPICEvolveFields ()
         m_fields.get_mr_levels_alldirs(FieldType::edge_lengths, finest_level), t_eval, false
     );
 
+    FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+
     // Handle field splitting for Hybrid field push
     if (add_external_fields) {
         m_hybrid_pic_model->GetFieldsExternal(t_eval);
@@ -227,9 +228,7 @@ void WarpX::HybridPICEvolveFields ()
                     m_fields.get(FieldType::hybrid_E_fp_external, Direction{idim}, lev)->nGrowVect());
             }
         }
-        FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
     }
-    FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
     // Copy the rho^{n+1} values to rho_fp_temp and the J_i^{n+1/2} values to
     // current_fp_temp since at the next step those values will be needed as
