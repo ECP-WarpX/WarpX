@@ -1,8 +1,9 @@
-/* Copyright 2023 The WarpX Community
+/* Copyright 2023-2024 The WarpX Community
  *
  * This file is part of WarpX.
  *
  * Authors: Roelof Groenewald (TAE Technologies)
+ *          S. Eric Clark (Helion Energy)
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -71,30 +72,27 @@ void WarpX::HybridPICEvolveFields ()
     amrex::Real sub_dt = 0.5_rt*dt[0]/sub_steps;
 
     const bool add_external_fields = m_hybrid_pic_model->m_add_external_fields;
-    auto const& Bfield_hyb_external = m_hybrid_pic_model->Bfield_hyb_external;
-    auto const& Efield_hyb_external = m_hybrid_pic_model->Efield_hyb_external;
 
     // Handle field splitting for Hybrid field push
     if (add_external_fields) {
         // Get the external fields
-        m_hybrid_pic_model->GetFieldsExternal(m_edge_lengths, t_eval);
+        m_hybrid_pic_model->GetFieldsExternal(t_eval);
 
         // If using split fields, subtract the external field at the old time
         for (int lev = 0; lev <= finest_level; ++lev) {
             for (int idim = 0; idim < 3; ++idim) {
                 MultiFab::Subtract(
-                    *Bfield_fp[lev][idim],
-                    *Bfield_hyb_external[lev][idim], 
+                    *m_fields.get(FieldType::Bfield_fp, Direction{idim}, lev),
+                    *m_fields.get(FieldType::hybrid_B_fp_external, Direction{idim}, lev), 
                     0, 0, 1, 
-                    Bfield_hyb_external[lev][idim]->nGrowVect());
+                    m_fields.get(FieldType::hybrid_B_fp_external, Direction{idim}, lev)->nGrowVect());
             }
         }
         FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
     }
 
     // Get the external current
-    m_hybrid_pic_model->GetCurrentExternal(
-        m_fields.get_mr_levels_alldirs(FieldType::edge_lengths, finest_level));
+    m_hybrid_pic_model->GetCurrentExternal();
 
     // Reference hybrid-PIC multifabs
     ablastr::fields::MultiLevelScalarField rho_fp_temp = m_fields.get_mr_levels(FieldType::hybrid_rho_fp_temp, finest_level);
@@ -157,7 +155,7 @@ void WarpX::HybridPICEvolveFields ()
 
     if (add_external_fields) {
         // Get the external fields
-        m_hybrid_pic_model->GetFieldsExternal(m_fields.get_mr_levels_alldirs(FieldType::edge_lengths, finest_level), t_eval);
+        m_hybrid_pic_model->GetFieldsExternal(t_eval);
     }
 
     // Now push the B field from t=n+1/2 to t=n+1 using the n+1/2 quantities
@@ -212,21 +210,21 @@ void WarpX::HybridPICEvolveFields ()
 
     // Handle field splitting for Hybrid field push
     if (add_external_fields) {
-        m_hybrid_pic_model->GetFieldsExternal(m_edge_lengths, t_eval);
+        m_hybrid_pic_model->GetFieldsExternal(t_eval);
 
         // If using split fields, add the external field at the new time
         for (int lev = 0; lev <= finest_level; ++lev) {
             for (int idim = 0; idim < 3; ++idim) {
                 MultiFab::Add(
-                    *Bfield_fp[lev][idim],
-                    *Bfield_hyb_external[lev][idim],
+                    *m_fields.get(FieldType::Bfield_fp, Direction{idim}, lev),
+                    *m_fields.get(FieldType::hybrid_B_fp_external, Direction{idim}, lev), 
                     0, 0, 1, 
-                    Bfield_hyb_external[lev][idim]->nGrowVect());
+                    m_fields.get(FieldType::hybrid_B_fp_external, Direction{idim}, lev)->nGrowVect());
                 MultiFab::Add(
-                    *Efield_fp[lev][idim],
-                    *Efield_hyb_external[lev][idim],
-                    0, 0, 1,
-                    Efield_hyb_external[lev][idim]->nGrowVect());
+                    *m_fields.get(FieldType::Efield_fp, Direction{idim}, lev),
+                    *m_fields.get(FieldType::hybrid_E_fp_external, Direction{idim}, lev), 
+                    0, 0, 1, 
+                    m_fields.get(FieldType::hybrid_E_fp_external, Direction{idim}, lev)->nGrowVect());
             }
         }
         FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);

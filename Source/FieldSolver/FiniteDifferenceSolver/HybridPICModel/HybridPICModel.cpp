@@ -1,8 +1,9 @@
-/* Copyright 2023 The WarpX Community
+/* Copyright 2023-2024 The WarpX Community
  *
  * This file is part of WarpX.
  *
  * Authors: Roelof Groenewald (TAE Technologies)
+ *          S. Eric Clark (Helion Energy)
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -10,7 +11,7 @@
 #include "HybridPICModel.H"
 
 #include "EmbeddedBoundary/Enabled.H"
-#include "FieldSolver/Fields.H"
+#include "Fields.H"
 #include "Particles/MultiParticleContainer.H"
 #include "WarpX.H"
 
@@ -68,30 +69,8 @@ void HybridPICModel::ReadParameters ()
     }
 }
 
-void HybridPICModel::AllocateLevelMFs (ablastr::fields::MultiFabRegister & fields,
-                                       int lev, const BoxArray& ba, const DistributionMapping& dm,
-                                       const int ncomps, const IntVect& ngJ, const IntVect& ngRho,
-                                       const IntVect& jx_nodal_flag,
-                                       const IntVect& jy_nodal_flag,
-                                       const IntVect& jz_nodal_flag,
-                                       const IntVect& rho_nodal_flag)
-void HybridPICModel::AllocateMFs (int nlevs_max)
-{
-    electron_pressure_fp.resize(nlevs_max);
-    rho_fp_temp.resize(nlevs_max);
-    current_fp_temp.resize(nlevs_max);
-    current_fp_ampere.resize(nlevs_max);
-    current_fp_external.resize(nlevs_max);
-
-    if (m_add_external_fields) {
-        Bfield_hyb_external.resize(nlevs_max);
-        Efield_hyb_external.resize(nlevs_max);
-        // Bfield_hyb_self.resize(nlevs_max);
-        // Efield_hyb_self.resize(nlevs_max);
-    }
-}
-
 void HybridPICModel::AllocateLevelMFs (
+    ablastr::fields::MultiFabRegister & fields,
     int lev, const BoxArray& ba, const DistributionMapping& dm,
     const int ncomps,
     const IntVect& ngJ, const IntVect& ngRho,
@@ -158,18 +137,24 @@ void HybridPICModel::AllocateLevelMFs (
 
     if (m_add_external_fields) {
         // These are nodal to match when B-field is added in evaluation of Ohm's law
-        WarpX::AllocInitMultiFab(Bfield_hyb_external[lev][0], amrex::convert(ba, Bx_nodal_flag),
-            dm, ncomps, ngB, lev, "Bfield_hyb_external[x]", 0.0_rt);
-        WarpX::AllocInitMultiFab(Bfield_hyb_external[lev][1], amrex::convert(ba, By_nodal_flag),
-            dm, ncomps, ngB, lev, "Bfield_hyb_external[y]", 0.0_rt);
-        WarpX::AllocInitMultiFab(Bfield_hyb_external[lev][2], amrex::convert(ba, Bz_nodal_flag),
-            dm, ncomps, ngB, lev, "Bfield_hyb_external[z]", 0.0_rt);
-        WarpX::AllocInitMultiFab(Efield_hyb_external[lev][0], amrex::convert(ba, Ex_nodal_flag),
-            dm, ncomps, ngE, lev, "Efield_hyb_external[x]", 0.0_rt);
-        WarpX::AllocInitMultiFab(Efield_hyb_external[lev][1], amrex::convert(ba, Ey_nodal_flag),
-            dm, ncomps, ngE, lev, "Efield_hyb_external[y]", 0.0_rt);
-        WarpX::AllocInitMultiFab(Efield_hyb_external[lev][2], amrex::convert(ba, Ez_nodal_flag),
-            dm, ncomps, ngE, lev, "Efield_hyb_external[z]", 0.0_rt);
+        fields.alloc_init(FieldType::hybrid_B_fp_external, Direction{0},
+            lev, amrex::convert(ba, Bx_nodal_flag),
+            dm, ncomps, ngB, 0.0_rt);
+        fields.alloc_init(FieldType::hybrid_B_fp_external, Direction{1},
+            lev, amrex::convert(ba, By_nodal_flag),
+            dm, ncomps, ngB, 0.0_rt);
+        fields.alloc_init(FieldType::hybrid_B_fp_external, Direction{2},
+            lev, amrex::convert(ba, Bz_nodal_flag),
+            dm, ncomps, ngB, 0.0_rt);
+        fields.alloc_init(FieldType::hybrid_E_fp_external, Direction{0},
+            lev, amrex::convert(ba, Ex_nodal_flag),
+            dm, ncomps, ngE, 0.0_rt);
+        fields.alloc_init(FieldType::hybrid_E_fp_external, Direction{1},
+            lev, amrex::convert(ba, Ey_nodal_flag),
+            dm, ncomps, ngE, 0.0_rt);
+        fields.alloc_init(FieldType::hybrid_E_fp_external, Direction{2},
+            lev, amrex::convert(ba, Ez_nodal_flag),
+            dm, ncomps, ngE, 0.0_rt);
     }
 
 #ifdef WARPX_DIM_RZ
@@ -177,21 +162,6 @@ void HybridPICModel::AllocateLevelMFs (
         (ncomps == 1),
         "Ohm's law solver only support m = 0 azimuthal mode at present.");
 #endif
-}
-
-void HybridPICModel::ClearLevel (int lev)
-{
-    electron_pressure_fp[lev].reset();
-    rho_fp_temp[lev].reset();
-    for (int i = 0; i < 3; ++i) {
-        current_fp_temp[lev][i].reset();
-        current_fp_ampere[lev][i].reset();
-        current_fp_external[lev][i].reset();
-        if (m_add_external_fields) {
-            Bfield_hyb_external[lev][i].reset();
-            Efield_hyb_external[lev][i].reset();
-        }
-    }
 }
 
 void HybridPICModel::InitData ()
@@ -315,96 +285,60 @@ void HybridPICModel::InitData ()
     // Initialize external current - note that this approach skips the check
     // if the current is time dependent which is what needs to be done to
     // write time independent fields on the first step.
-    for (int lev = 0; lev <= warpx.finestLevel(); ++lev) {
-        auto edge_lengths = std::array<std::unique_ptr<amrex::MultiFab>, 3>();
-#ifdef AMREX_USE_EB
-        if (EB::enabled()) {
-            using ablastr::fields::Direction;
-            auto const & edge_lengths_x = *warpx.m_fields.get(FieldType::edge_lengths, Direction{0}, lev);
-            auto const & edge_lengths_y = *warpx.m_fields.get(FieldType::edge_lengths, Direction{1}, lev);
-            auto const & edge_lengths_z = *warpx.m_fields.get(FieldType::edge_lengths, Direction{2}, lev);
-
-            edge_lengths = std::array< std::unique_ptr<amrex::MultiFab>, 3 >{
-                std::make_unique<amrex::MultiFab>(
-                    edge_lengths_x, amrex::make_alias, 0, edge_lengths_x.nComp()),
-                std::make_unique<amrex::MultiFab>(
-                    edge_lengths_y, amrex::make_alias, 0, edge_lengths_y.nComp()),
-                std::make_unique<amrex::MultiFab>(
-                    edge_lengths_z, amrex::make_alias, 0, edge_lengths_z.nComp())
-            };
-        }
-#endif
-        GetCurrentExternal(ablastr::fields::a2m(edge_lengths), lev);
-        GetFieldsExternal(ablastr::fields::a2m(edge_lengths), lev);
-    }
+    GetCurrentExternal(true);
+    GetFieldsExternal(warpx.gett_new(0));
 }
 
-void HybridPICModel::GetCurrentExternal (
-    ablastr::fields::MultiLevelVectorField const& edge_lengths)
+void HybridPICModel::GetCurrentExternal (bool skip_check /*=false*/)
 {
-    if (!m_external_field_has_time_dependence) { return; }
+    if (!skip_check && !m_external_field_has_time_dependence) { return; }
 
     auto& warpx = WarpX::GetInstance();
     for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
     {
-        GetExternalFieldFromExpression(current_fp_external[lev], m_J_external, edge_lengths[lev], lev);
+        GetExternalFieldFromExpression(FieldType::hybrid_current_fp_external, m_J_external, lev);
     }
 }
 
-void HybridPICModel::GetCurrentExternal (
-    ablastr::fields::VectorField const& edge_lengths,
-    int lev)
-{
-    if (!m_external_field_has_time_dependence) { return; }
-    GetExternalFieldFromExpression(current_fp_external[lev], m_J_external, edge_lengths, lev);
-}
-
-void HybridPICModel::GetFieldsExternal (
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths, 
-    amrex::Real t)
+void HybridPICModel::GetFieldsExternal (amrex::Real t)
 {
     auto& warpx = WarpX::GetInstance();
     for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
     {
-        GetExternalFieldFromExpression(Bfield_hyb_external[lev], m_B_external, edge_lengths[lev], lev, t);
-        GetExternalFieldFromExpression(Efield_hyb_external[lev], m_E_external, edge_lengths[lev], lev, t);
+        GetExternalFieldFromExpression(
+            FieldType::hybrid_B_fp_external,
+            m_B_external, lev, t);
+        GetExternalFieldFromExpression(
+            FieldType::hybrid_E_fp_external,
+            m_E_external, lev, t);
     }
-}
-
-void HybridPICModel::GetFieldsExternal (
-    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
-    int lev)
-{
-    GetExternalFieldFromExpression(Bfield_hyb_external[lev], m_B_external, edge_lengths, lev);
-    GetExternalFieldFromExpression(Efield_hyb_external[lev], m_E_external, edge_lengths, lev);
 }
 
 void HybridPICModel::GetExternalFieldFromExpression (
-    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& field,
+    FieldType field_type,
     std::array< amrex::ParserExecutor<4>, 3> const& expression,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
     int lev)
 {
     auto & warpx = WarpX::GetInstance();
-    auto t = warpx.gett_new(lev);
-    GetExternalFieldFromExpression(field, expression, edge_lengths, lev, t);
+    GetExternalFieldFromExpression(field_type, expression, lev, warpx.gett_new(lev));
 }
 
 void HybridPICModel::GetExternalFieldFromExpression (
-    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& field,
+    FieldType field_type,
     std::array< amrex::ParserExecutor<4>, 3> const& expression,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
     int lev, amrex::Real t)
 {
+    using ablastr::fields::Direction;
+
     // This logic matches closely to WarpX::InitializeExternalFieldsOnGridUsingParser
     // except that the parsers include time dependence.
     auto & warpx = WarpX::GetInstance();
     auto dx_lev = warpx.Geom(lev).CellSizeArray();
     const RealBox& real_box = warpx.Geom(lev).ProbDomain();
 
-    auto& mfx = field[0];
-    auto& mfy = field[1];
-    auto& mfz = field[2];
+    auto const& mfx = warpx.m_fields.get(field_type, Direction{0}, lev);
+    auto const& mfy = warpx.m_fields.get(field_type, Direction{1}, lev);
+    auto const& mfz = warpx.m_fields.get(field_type, Direction{2}, lev);
 
     const amrex::IntVect x_nodal_flag = mfx->ixType().toIntVect();
     const amrex::IntVect y_nodal_flag = mfy->ixType().toIntVect();
@@ -427,9 +361,9 @@ void HybridPICModel::GetExternalFieldFromExpression (
 
         amrex::Array4<amrex::Real> lx, ly, lz;
         if (EB::enabled()) {
-            lx = edge_lengths[0]->array(mfi);
-            ly = edge_lengths[1]->array(mfi);
-            lz = edge_lengths[2]->array(mfi);
+            lx = warpx.m_fields.get(FieldType::edge_lengths, Direction{0}, lev)->array(mfi);
+            ly = warpx.m_fields.get(FieldType::edge_lengths, Direction{1}, lev)->array(mfi);
+            lz = warpx.m_fields.get(FieldType::edge_lengths, Direction{2}, lev)->array(mfi);
         }
 
         amrex::ParallelFor (tbx, tby, tbz,

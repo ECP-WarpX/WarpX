@@ -23,6 +23,7 @@
 #include <ablastr/coarsen/sample.H>
 
 using namespace amrex;
+using warpx::fields::FieldType;
 
 void FiniteDifferenceSolver::CalculateCurrentAmpere (
     ablastr::fields::VectorField & Jfield,
@@ -423,8 +424,10 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
     const bool include_hyper_resistivity_term = (eta_h > 0.0) && solve_for_Faraday;
 
     const bool include_external_fields = hybrid_model->m_add_external_fields;
-    auto const& Bfield_external = hybrid_model->Bfield_hyb_external[0]; // lev=0
-    auto const& Efield_external = hybrid_model->Efield_hyb_external[0]; // lev=0
+
+    auto const& warpx = WarpX::GetInstance();
+    ablastr::fields::ConstVectorField Bfield_external = warpx.m_fields.get_alldirs(FieldType::hybrid_B_fp_external, 0); // lev=0
+    ablastr::fields::ConstVectorField Efield_external = warpx.m_fields.get_alldirs(FieldType::hybrid_E_fp_external, 0); // lev=0
 
     // Index type required for interpolating fields from their respective
     // staggering to the Ex, Ey, Ez locations
@@ -762,8 +765,10 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
     const bool include_hyper_resistivity_term = (eta_h > 0.) && solve_for_Faraday;
 
     const bool include_external_fields = hybrid_model->m_add_external_fields;
-    auto const& Bfield_external = hybrid_model->Bfield_hyb_external[0]; // lev=0
-    auto const& Efield_external = hybrid_model->Efield_hyb_external[0]; // lev=0
+
+    auto const& warpx = WarpX::GetInstance();
+    ablastr::fields::ConstVectorField Bfield_external = warpx.m_fields.get_alldirs(FieldType::hybrid_B_fp_external, 0); // lev=0
+    ablastr::fields::ConstVectorField Efield_external = warpx.m_fields.get_alldirs(FieldType::hybrid_E_fp_external, 0); // lev=0
 
     // Index type required for interpolating fields from their respective
     // staggering to the Ex, Ey, Ez locations

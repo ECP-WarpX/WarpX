@@ -1,8 +1,9 @@
-/* Copyright 2023 The WarpX Community
+/* Copyright 2023-2024 The WarpX Community
  *
  * This file is part of WarpX.
  *
  * Authors: Roelof Groenewald (TAE Technologies)
+ *          S. Eric Clark (Helion Energy)
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -11,6 +12,8 @@
 #define WARPX_HYBRIDPICMODEL_H_
 
 #include "HybridPICModel_fwd.H"
+
+#include "Fields.H"
 
 #include "Utils/WarpXAlgorithmSelection.H"
 
@@ -42,8 +45,8 @@ public:
     void ReadParameters ();
 
     /** Allocate hybrid-PIC specific multifabs. Called in constructor. */
-    void AllocateLevelMFs (ablastr::fields::MultiFabRegister & fields,
-                           
+    void AllocateLevelMFs (
+        ablastr::fields::MultiFabRegister & fields,
         int lev,
         const amrex::BoxArray& ba,
         const amrex::DistributionMapping& dm,
@@ -72,41 +75,19 @@ public:
      * external current multifab. Note the external current can be a function
      * of time and therefore this should be re-evaluated at every step.
      */
-    void GetCurrentExternal (
-        ablastr::fields::MultiLevelVectorField const& edge_lengths
-    );
+    void GetCurrentExternal (bool skip_check = false);
 
-    void GetCurrentExternal (
-        ablastr::fields::VectorField const& edge_lengths,
-        int lev
-    );
-
-    void GetFieldsExternal (
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths
-    );
-
-    void GetFieldsExternal (
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths, 
-        amrex::Real t);
-
-    void GetFieldsExternal (
-        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
-        int lev
-    );
+    void GetFieldsExternal (amrex::Real t);
 
     void GetExternalFieldFromExpression (
-        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& field,
+        warpx::fields::FieldType field_type,
         std::array< amrex::ParserExecutor<4>, 3> const& expression,
-        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
-        int lev
-    );
-
+        int lev);
+    
     void GetExternalFieldFromExpression (
-        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& field,
+        warpx::fields::FieldType field_type,
         std::array< amrex::ParserExecutor<4>, 3> const& expression,
-        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
-        int lev, amrex::Real t
-    );
+        int lev, amrex::Real t);
 
     /**
      * \brief
@@ -252,35 +233,35 @@ public:
     std::array< amrex::ParserExecutor<4>, 3> m_E_external;
 
     // Declare multifabs specifically needed for the hybrid-PIC model
-    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_fp_temp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_temp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_ampere;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_external;
-    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > electron_pressure_fp;
+    // amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_fp_temp;
+    // amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_temp;
+    // amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_ampere;
+    // amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_external;
+    // amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > electron_pressure_fp;
 
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_hyb_external;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_hyb_external;
+    // amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_hyb_external;
+    // amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_hyb_external;
     // amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_hyb_self;
     // amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_hyb_self;
 
-    // Helper functions to retrieve hybrid-PIC multifabs
-    [[nodiscard]] amrex::MultiFab*
-    get_pointer_current_fp_ampere  (int lev, int direction) const
-    {
-        return current_fp_ampere[lev][direction].get();
-    }
+    // // Helper functions to retrieve hybrid-PIC multifabs
+    // [[nodiscard]] amrex::MultiFab*
+    // get_pointer_current_fp_ampere  (int lev, int direction) const
+    // {
+    //     return current_fp_ampere[lev][direction].get();
+    // }
 
-    [[nodiscard]] amrex::MultiFab*
-    get_pointer_current_fp_external (int lev, int direction) const
-    {
-        return current_fp_external[lev][direction].get();
-    }
+    // [[nodiscard]] amrex::MultiFab*
+    // get_pointer_current_fp_external (int lev, int direction) const
+    // {
+    //     return current_fp_external[lev][direction].get();
+    // }
 
-    [[nodiscard]] amrex::MultiFab*
-    get_pointer_electron_pressure_fp  (int lev) const
-    {
-        return electron_pressure_fp[lev].get();
-    }
+    // [[nodiscard]] amrex::MultiFab*
+    // get_pointer_electron_pressure_fp  (int lev) const
+    // {
+    //     return electron_pressure_fp[lev].get();
+    // }
 
     /** Gpu Vector with index type of the Jx multifab */
     amrex::GpuArray<int, 3> Jx_IndexType;

@@ -45,6 +45,8 @@ namespace warpx::fields
         hybrid_current_fp_temp,
         hybrid_current_fp_ampere,
         hybrid_current_fp_external,
+        hybrid_B_fp_external,
+        hybrid_E_fp_external,
         Efield_cp,  //!< Only used with MR. The field that is updated by the field solver at each timestep, on the coarse patch of each level
         Bfield_cp,  //!< Only used with MR. The field that is updated by the field solver at each timestep, on the coarse patch of each level
         current_cp, //!< Only used with MR. The current that is used as a source for the field solver, on the coarse patch of each level
@@ -97,6 +99,8 @@ namespace warpx::fields
         FieldType::hybrid_current_fp_temp,
         FieldType::hybrid_current_fp_ampere,
         FieldType::hybrid_current_fp_external,
+        FieldType::hybrid_B_fp_external,
+        FieldType::hybrid_E_fp_external,
         FieldType::Efield_cp,
         FieldType::Bfield_cp,
         FieldType::current_cp,
