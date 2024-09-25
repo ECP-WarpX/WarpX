@@ -188,7 +188,7 @@ if not sim.test:
 if sim.test:
     import os
     import sys
-    
+
     sys.path.insert(1, "../../../../warpx/Regression/Checksum/")
     import checksumAPI
 

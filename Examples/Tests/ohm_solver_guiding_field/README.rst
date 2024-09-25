@@ -3,7 +3,7 @@
 Ohm Solver: Guiding Field (Magnetic Reconnection)
 =================================
 
-This is a copy of the original ohm_solver_magnetic_reconnection example, 
+This is a copy of the original ohm_solver_magnetic_reconnection example,
 but with an external (static) guiding magnetic field.
 
 Hybrid-PIC codes are often used to simulate magnetic reconnection in space plasmas.

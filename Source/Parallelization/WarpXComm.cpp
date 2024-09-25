@@ -71,7 +71,7 @@ WarpX::UpdateAuxilaryData ()
         UpdateAuxilaryDataStagToNodal();
     }
 
-    
+
     if (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
         // Hybrid code loads both from field and parsers to external fields
         for (int lev = 0; lev <= finest_level; ++lev) {

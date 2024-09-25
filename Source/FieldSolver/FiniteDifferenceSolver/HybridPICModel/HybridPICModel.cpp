@@ -295,19 +295,19 @@ void HybridPICModel::InitData ()
             GetExternalField<FieldType::hybrid_current_fp_external>(
                 m_J_external, ablastr::fields::a2m(edge_lengths), lev);
         }
-        
+
         if (m_J_ext_grid_s == "read_from_file") {
             warpx.ReadExternalFieldFromFile(
-                m_external_j_fields_path, 
-                warpx.m_fields.get(FieldType::hybrid_current_fp_external, Direction{0}, lev), 
+                m_external_j_fields_path,
+                warpx.m_fields.get(FieldType::hybrid_current_fp_external, Direction{0}, lev),
                 "J", "x");
             warpx.ReadExternalFieldFromFile(
-                m_external_j_fields_path, 
-                warpx.m_fields.get(FieldType::hybrid_current_fp_external, Direction{1}, lev), 
+                m_external_j_fields_path,
+                warpx.m_fields.get(FieldType::hybrid_current_fp_external, Direction{1}, lev),
                 "J", "y");
             warpx.ReadExternalFieldFromFile(
-                m_external_j_fields_path, 
-                warpx.m_fields.get(FieldType::hybrid_current_fp_external, Direction{2}, lev), 
+                m_external_j_fields_path,
+                warpx.m_fields.get(FieldType::hybrid_current_fp_external, Direction{2}, lev),
                 "J", "z");
         }
 
@@ -315,19 +315,19 @@ void HybridPICModel::InitData ()
             GetExternalField<FieldType::hybrid_bfield_fp_external>(
                 m_B_external, ablastr::fields::a2m(edge_lengths), lev);
         }
-        
+
         if (m_B_ext_grid_s == "read_from_file") {
             warpx.ReadExternalFieldFromFile(
-                m_external_b_fields_path, 
-                warpx.m_fields.get(FieldType::hybrid_bfield_fp_external, Direction{0}, lev), 
+                m_external_b_fields_path,
+                warpx.m_fields.get(FieldType::hybrid_bfield_fp_external, Direction{0}, lev),
                 "B", "x");
             warpx.ReadExternalFieldFromFile(
-                m_external_b_fields_path, 
-                warpx.m_fields.get(FieldType::hybrid_bfield_fp_external, Direction{1}, lev), 
+                m_external_b_fields_path,
+                warpx.m_fields.get(FieldType::hybrid_bfield_fp_external, Direction{1}, lev),
                 "B", "y");
             warpx.ReadExternalFieldFromFile(
-                m_external_b_fields_path, 
-                warpx.m_fields.get(FieldType::hybrid_bfield_fp_external, Direction{2}, lev), 
+                m_external_b_fields_path,
+                warpx.m_fields.get(FieldType::hybrid_bfield_fp_external, Direction{2}, lev),
                 "B", "z");
         }
     }

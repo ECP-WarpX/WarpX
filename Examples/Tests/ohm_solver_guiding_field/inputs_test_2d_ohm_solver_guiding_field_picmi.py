@@ -89,9 +89,7 @@ class ForceFreeSheetReconnection(object):
             f"+{-self.dB*self.Lx/(2.0*self.Lz)}*cos({2.0*np.pi/self.Lx}*x)"
             f"*sin({np.pi/self.Lz}*z)"
         )
-        self.By = (
-            f"sqrt({self.B0**2}-" f"({self.B0}*tanh(z*{1.0/self.l_i}))**2)"
-        )
+        self.By = f"sqrt({self.B0**2}-" f"({self.B0}*tanh(z*{1.0/self.l_i}))**2)"
         self.Bz = f"{self.dB}*sin({2.0*np.pi/self.Lx}*x)*cos({np.pi/self.Lz}*z)"
 
         self.J0 = self.B0 / constants.mu0 / self.l_i

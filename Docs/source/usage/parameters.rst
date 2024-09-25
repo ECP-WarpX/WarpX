@@ -2452,7 +2452,7 @@ Maxwell solver: kinetic-fluid hybrid
 
     * ``read_from_file`` (`str`) optional (default ``0``)
       If ``algo.maxwell_solver`` is set to ``hybrid``, this sets wether to read from file.
-    
+
     * ``parse_ext_grid_function`` (`str`) optional (default ``0``)
       If ``algo.maxwell_solver`` is set to ``hybrid``, this sets wether to use analytical function.
 
