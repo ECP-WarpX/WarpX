@@ -705,37 +705,37 @@ def BzFPExternalWrapper(level=0, include_ghosts=False):
 
 def ExHybridExternalWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Efield_hyb_external[x]", level=level, include_ghosts=include_ghosts
+        mf_name="hybrid_E_fp_external", idir=0, level=level, include_ghosts=include_ghosts
     )
 
 
 def EyHybridExternalWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Efield_hyb_external[y]", level=level, include_ghosts=include_ghosts
+        mf_name="hybrid_E_fp_external", idir=1, level=level, include_ghosts=include_ghosts
     )
 
 
 def EzHybridExternalWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Efield_hyb_external[z]", level=level, include_ghosts=include_ghosts
+        mf_name="hybrid_E_fp_external", idir=2, level=level, include_ghosts=include_ghosts
     )
 
 
 def BxHybridExternalWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Bfield_hyb_external[x]", level=level, include_ghosts=include_ghosts
+        mf_name="hybrid_B_fp_external", idir=0, level=level, include_ghosts=include_ghosts
     )
 
 
 def ByHybridExternalWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Bfield_hyb_external[y]", level=level, include_ghosts=include_ghosts
+        mf_name="hybrid_B_fp_external", idir=1, level=level, include_ghosts=include_ghosts
     )
 
 
 def BzHybridExternalWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
-        mf_name="Bfield_hyb_external[z]", level=level, include_ghosts=include_ghosts
+        mf_name="hybrid_B_fp_external", idir=2, level=level, include_ghosts=include_ghosts
     )
 
 def JxFPWrapper(level=0, include_ghosts=False):
