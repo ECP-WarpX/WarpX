@@ -409,7 +409,7 @@ computePhi (
                 post_phi_calculation.value()(mlmg, lev);
             }
         }
-        rho[lev]->mult(-ablastr::constant::SI::ep0);  // Divide rho by epsilon again
+        rho[lev]->mult(-ablastr::constant::SI::ep0);  // Multiply rho by epsilon again
 
     } // loop over lev(els)
 } // computePhi
