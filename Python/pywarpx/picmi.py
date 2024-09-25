@@ -1834,12 +1834,14 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         self.By_external_function = By_expression
         self.Bz_external_function = Bz_expression
 
-        if (Ex_expression is not None
+        if (
+            Ex_expression is not None
             or Ey_expression is not None
             or Ez_expression is not None
             or Bx_expression is not None
             or By_expression is not None
-            or Bz_expression is not None):
+            or Bz_expression is not None
+        ):
             self.add_external_fields = True
 
         # Handle keyword arguments used in expressions

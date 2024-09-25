@@ -67,7 +67,7 @@ void WarpX::HybridPICEvolveFields ()
 
     // Get requested number of substeps to use
     const int sub_steps = m_hybrid_pic_model->m_substeps;
-    
+
     amrex::Real t_eval = gett_old(0);
     amrex::Real sub_dt = 0.5_rt*dt[0]/sub_steps;
 
@@ -83,8 +83,8 @@ void WarpX::HybridPICEvolveFields ()
             for (int idim = 0; idim < 3; ++idim) {
                 MultiFab::Subtract(
                     *m_fields.get(FieldType::Bfield_fp, Direction{idim}, lev),
-                    *m_fields.get(FieldType::hybrid_B_fp_external, Direction{idim}, lev), 
-                    0, 0, 1, 
+                    *m_fields.get(FieldType::hybrid_B_fp_external, Direction{idim}, lev),
+                    0, 0, 1,
                     m_fields.get(FieldType::hybrid_B_fp_external, Direction{idim}, lev)->nGrowVect());
             }
         }
@@ -217,13 +217,13 @@ void WarpX::HybridPICEvolveFields ()
             for (int idim = 0; idim < 3; ++idim) {
                 MultiFab::Add(
                     *m_fields.get(FieldType::Bfield_fp, Direction{idim}, lev),
-                    *m_fields.get(FieldType::hybrid_B_fp_external, Direction{idim}, lev), 
-                    0, 0, 1, 
+                    *m_fields.get(FieldType::hybrid_B_fp_external, Direction{idim}, lev),
+                    0, 0, 1,
                     m_fields.get(FieldType::hybrid_B_fp_external, Direction{idim}, lev)->nGrowVect());
                 MultiFab::Add(
                     *m_fields.get(FieldType::Efield_fp, Direction{idim}, lev),
-                    *m_fields.get(FieldType::hybrid_E_fp_external, Direction{idim}, lev), 
-                    0, 0, 1, 
+                    *m_fields.get(FieldType::hybrid_E_fp_external, Direction{idim}, lev),
+                    0, 0, 1,
                     m_fields.get(FieldType::hybrid_E_fp_external, Direction{idim}, lev)->nGrowVect());
             }
         }

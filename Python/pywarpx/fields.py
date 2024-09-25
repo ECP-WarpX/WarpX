@@ -703,6 +703,7 @@ def BzFPExternalWrapper(level=0, include_ghosts=False):
         mf_name="Bfield_fp_external", idir=2, level=level, include_ghosts=include_ghosts
     )
 
+
 def ExHybridExternalWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
         mf_name="Efield_hyb_external[x]", level=level, include_ghosts=include_ghosts
@@ -737,6 +738,7 @@ def BzHybridExternalWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
         mf_name="Bfield_hyb_external[z]", level=level, include_ghosts=include_ghosts
     )
+
 
 def JxFPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(
