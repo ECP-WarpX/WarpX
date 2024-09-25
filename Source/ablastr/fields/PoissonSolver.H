@@ -54,6 +54,7 @@
 
 #include <array>
 #include <optional>
+#include <stdexcept>
 
 
 namespace ablastr::fields {
@@ -311,13 +312,17 @@ computePhi (
             auto linop_nodelap = std::make_unique<amrex::MLEBNodeFDLaplacian>();
             if (eb_enabled) {
 #if defined(AMREX_USE_EB)
-                linop_nodelap->define(
-                    amrex::Vector<amrex::Geometry>{geom[lev]},
-                    amrex::Vector<amrex::BoxArray>{grids[lev]},
-                    amrex::Vector<amrex::DistributionMapping>{dmap[lev]},
-                    info,
-                    amrex::Vector<amrex::EBFArrayBoxFactory const*>{eb_farray_box_factory.value()[lev]}
-                );
+                if constexpr(std::is_same_v<void, T_FArrayBoxFactory>) {
+                    throw std::runtime_error("EB requested by eb_farray_box_factory not provided!");
+                } else {
+                    linop_nodelap->define(
+                        amrex::Vector<amrex::Geometry>{geom[lev]},
+                        amrex::Vector<amrex::BoxArray>{grids[lev]},
+                        amrex::Vector<amrex::DistributionMapping>{dmap[lev]},
+                        info,
+                        amrex::Vector<amrex::EBFArrayBoxFactory const*>{eb_farray_box_factory.value()[lev]}
+                    );
+                }
 #endif
             }
             else {
