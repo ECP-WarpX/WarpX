@@ -120,17 +120,27 @@ void init_WarpX (py::module& m)
              R"doc(Registry to all WarpX MultiFab (fields).)doc"
         )
         .def("multifab",
-            [](WarpX & wx, std::string multifab_name, int level) {
-                if (wx.m_fields.has(multifab_name, level)) {
-                    return wx.m_fields.get(multifab_name, level);
+             [](WarpX & wx, std::string internal_name) {
+                 if (wx.m_fields.internal_has(internal_name)) {
+                     return wx.m_fields.internal_get(internal_name);
+                 } else {
+                     throw std::runtime_error("MultiFab '" + internal_name + "' is unknown or is not allocated!");
+                 }
+             },
+             py::arg("internal_name")
+        )
+        .def("multifab",
+            [](WarpX & wx, std::string scalar_name, int level) {
+                if (wx.m_fields.has(scalar_name, level)) {
+                    return wx.m_fields.get(scalar_name, level);
                 } else {
-                    throw std::runtime_error("The MultiFab '" + multifab_name + "' is unknown or is not allocated!");
+                    throw std::runtime_error("The scalar field '" + scalar_name + "' is unknown or is not allocated!");
                 }
             },
-            py::arg("multifab_name"),
+            py::arg("scalar_name"),
             py::arg("level"),
             py::return_value_policy::reference_internal,
-            R"doc(Return MultiFabs by name and level, e.g., ``\"Efield_aux\"``, ``\"Efield_fp"``, ...
+            R"doc(Return scalar fields (MultiFabs) by name and level, e.g., ``\"rho_fp\"``, ``\"phi_fp"``, ...
 
 The physical fields in WarpX have the following naming:
 
@@ -141,18 +151,18 @@ The physical fields in WarpX have the following naming:
   (only for level 1 and higher).)doc"
         )
         .def("multifab",
-            [](WarpX & wx, std::string multifab_name, Direction dir, int level) {
-                if (wx.m_fields.has(multifab_name, dir, level)) {
-                    return wx.m_fields.get(multifab_name, dir, level);
+            [](WarpX & wx, std::string vector_name, Direction dir, int level) {
+                if (wx.m_fields.has(vector_name, dir, level)) {
+                    return wx.m_fields.get(vector_name, dir, level);
                 } else {
-                    throw std::runtime_error("The MultiFab '" + multifab_name + "' is unknown or is not allocated!");
+                    throw std::runtime_error("The vector field '" + vector_name + "' is unknown or is not allocated!");
                 }
             },
-            py::arg("multifab_name"),
+            py::arg("vector_name"),
             py::arg("dir"),
             py::arg("level"),
             py::return_value_policy::reference_internal,
-            R"doc(Return MultiFabs by name, direction, and level, e.g., ``\"Efield_aux\"``, ``\"Efield_fp"``, ...
+            R"doc(Return the component of a vector field (MultiFab) by name, direction, and level, e.g., ``\"Efield_aux\"``, ``\"Efield_fp"``, ...
 
 The physical fields in WarpX have the following naming:
 

@@ -661,14 +661,21 @@ namespace ablastr::fields
             int level
         ) const;
 
-    private:
+        /** Temporary test function for legacy Python bindings */
+        [[nodiscard]] bool
+        internal_has (
+            std::string const & internal_name
+        );
         [[nodiscard]] amrex::MultiFab *
         internal_get (
-            std::string const & key
+            std::string const & internal_name
         );
+
+    private:
+
         [[nodiscard]] amrex::MultiFab const *
         internal_get (
-            std::string const & key
+            std::string const & internal_name
         ) const;
 
         amrex::MultiFab*
