@@ -50,9 +50,9 @@ class SpaceChargeFieldCorrector(object):
 
         # Correct fields so as to recover the actual charge
         # TODO: add guard cells
-        Er = sim.extension.warpx.multifab("Efield_fp[x]", 0)
+        Er = sim.extension.warpx.multifab("Efield_fp[x][level=0]")
         Er.saxpy(Er, (q - q_v), self.normalized_Er, 0, 0, 1, 0)
-        Ez = sim.extension.warpx.multifab("Efield_fp[z]", 0)
+        Ez = sim.extension.warpx.multifab("Efield_fp[z][level=0]")
         Ez.saxpy(Ez, (q - q_v), self.normalized_Ez, 0, 0, 1, 0)
         phi = PhiFPWrapper(include_ghosts=True)
         phi[...] += (q - q_v) * self.normalized_phi
@@ -81,9 +81,13 @@ class SpaceChargeFieldCorrector(object):
 
         # Record fields
         # TODO: add guard cells
-        self.normalized_Er = sim.extension.warpx.multifab("Efield_fp[x]", 0).copy()
+        self.normalized_Er = sim.extension.warpx.multifab(
+            "Efield_fp[x][level=0]"
+        ).copy()
         self.normalized_Er.mult(1 / q_v, 0)
-        self.normalized_Ez = sim.extension.warpx.multifab("Efield_fp[z]", 0).copy()
+        self.normalized_Ez = sim.extension.warpx.multifab(
+            "Efield_fp[z][level=0]"
+        ).copy()
         self.normalized_Ez.mult(1 / q_v, 0)
         phi = PhiFPWrapper(include_ghosts=True)[:, :]
         self.normalized_phi = phi[...] / q_v
