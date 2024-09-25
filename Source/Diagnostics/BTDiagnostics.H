@@ -241,7 +241,7 @@ private:
      *  will be used by all snapshots to obtain lab-frame data at the respective
      *  z slice location.
      */
-    amrex::Vector<std::unique_ptr<amrex::MultiFab> > m_cell_centered_data;
+    std::string const cell_centered_data_name;
     /** Vector of pointers to compute cell-centered data, per level, per component
      *  using the coarsening-ratio provided by the user.
      */
@@ -346,7 +346,7 @@ private:
      *  \param[in] i_buffer snapshot index
      */
     void SetSnapshotFullStatus (int i_buffer);
-    /** Vector of field-data stored in the cell-centered multifab, m_cell_centered_data.
+    /** Vector of field-data stored in the cell-centered multifab, cell_centered_data.
      *  All the fields are stored regardless of the specific fields to plot selected
      *  by the user.
      */

@@ -56,7 +56,8 @@ namespace
 }
 
 BTDiagnostics::BTDiagnostics (int i, const std::string& name)
-    : Diagnostics{i, name}
+    : Diagnostics{i, name},
+      cell_centered_data_name("BTD_cell_centered_data_"+name)
 {
     ReadParameters();
 }
@@ -83,7 +84,6 @@ void BTDiagnostics::DerivedInitData ()
     m_old_z_boost.resize(m_num_buffers);
     m_buffer_counter.resize(m_num_buffers);
     m_snapshot_ncells_lab.resize(m_num_buffers);
-    m_cell_centered_data.resize(nmax_lev);
     m_cell_center_functors.resize(nmax_lev);
     m_max_buffer_multifabs.resize(m_num_buffers);
     m_buffer_flush_counter.resize(m_num_buffers);
@@ -519,8 +519,10 @@ BTDiagnostics::DefineCellCenteredMultiFab(int lev)
 #else
     const int ncomps = static_cast<int>(m_cellcenter_varnames.size());
 #endif
-    m_cell_centered_data[lev] = std::make_unique<amrex::MultiFab>(ba, dmap, ncomps, amrex::IntVect(ngrow));
-    m_cell_centered_data[lev]->setVal(0._rt);
+    bool const remake = false;
+    bool const redistribute_on_remake = false;
+    warpx.m_fields.alloc_init(cell_centered_data_name, lev, ba, dmap, ncomps, amrex::IntVect(ngrow), 0.0_rt,
+                              remake, redistribute_on_remake);
 
 }
 
@@ -546,7 +548,7 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
     // to the correct field-data pointers
     m_all_field_functors[lev].clear();
     // For back-transformed data, all the components are cell-centered and stored
-    // in a single multifab, m_cell_centered_data.
+    // in a single multifab, cell_centered_data.
     // Therefore, size of functors at all levels is 1.
     const int num_BT_functors = 1;
     m_all_field_functors[lev].resize(num_BT_functors);
@@ -555,11 +557,11 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
     // Create an object of class BackTransformFunctor
     for (int i = 0; i < num_BT_functors; ++i)
     {
-        // coarsening ratio is not provided since the source MultiFab, m_cell_centered_data
+        // coarsening ratio is not provided since the source MultiFab, cell_centered_data
         // is coarsened based on the user-defined m_crse_ratio
         const int nvars = static_cast<int>(m_varnames.size());
         m_all_field_functors[lev][i] = std::make_unique<BackTransformFunctor>(
-                  m_cell_centered_data[lev].get(), lev,
+                  warpx.m_fields.get(cell_centered_data_name, lev), lev,
                   nvars, m_num_buffers, m_varnames, m_varnames_fields);
     }
 
@@ -671,14 +673,14 @@ BTDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
     // to the correct field-data pointers
     m_all_field_functors[lev].clear();
     // For back-transformed data, all the components are cell-centered and stored
-    // in a single multifab, m_cell_centered_data.
+    // in a single multifab, cell_centered_data.
     // Therefore, size of functors at all levels is 1
     const int num_BT_functors = 1;
     m_all_field_functors[lev].resize(num_BT_functors);
     for (int i = 0; i < num_BT_functors; ++i) {
         const int nvars = static_cast<int>(m_varnames.size());
         m_all_field_functors[lev][i] = std::make_unique<BackTransformFunctor>(
-                                       m_cell_centered_data[lev].get(), lev,
+                                       warpx.m_fields.get(cell_centered_data_name, lev), lev,
                                        nvars, m_num_buffers, m_varnames,
                                        m_varnames_fields);
     }
@@ -805,21 +807,23 @@ BTDiagnostics::PrepareFieldDataForOutput ()
         for (int icomp = 0; icomp<m_cell_center_fuctors_at_lev_size; ++icomp) {
             // Call all the cell-center functors in m_cell_center_functors.
             // Each of them computes cell-centered data for a field and
-            // stores it in cell-centered MultiFab, m_cell_centered_data[lev].
-            m_cell_center_functors[lev][icomp]->operator()(*m_cell_centered_data[lev], icomp_dst);
+            // stores it in cell-centered MultiFab, cell_centered_data[lev].
+            m_cell_center_functors[lev][icomp]->operator()(*warpx.m_fields.get(cell_centered_data_name, lev), icomp_dst);
             icomp_dst += m_cell_center_functors[lev][icomp]->nComp();
         }
         // Check that the proper number of user-requested components are cell-centered
         AMREX_ALWAYS_ASSERT( icomp_dst == m_cellcenter_varnames.size() );
         // fill boundary call is required to average_down (flatten) data to
         // the coarsest level.
-        ablastr::utils::communication::FillBoundary(*m_cell_centered_data[lev], WarpX::do_single_precision_comms,
+        ablastr::utils::communication::FillBoundary(*warpx.m_fields.get(cell_centered_data_name, lev),
+                                                    WarpX::do_single_precision_comms,
                                                     warpx.Geom(lev).periodicity());
     }
     // Flattening out MF over levels
 
     for (int lev = warpx.finestLevel(); lev > 0; --lev) {
-        ablastr::coarsen::sample::Coarsen(*m_cell_centered_data[lev - 1], *m_cell_centered_data[lev], 0, 0,
+        ablastr::coarsen::sample::Coarsen(*warpx.m_fields.get(cell_centered_data_name, lev - 1),
+                                          *warpx.m_fields.get(cell_centered_data_name, lev), 0, 0,
                                           static_cast<int>(m_cellcenter_varnames.size()), 0, WarpX::RefRatio(lev-1) );
     }
 
