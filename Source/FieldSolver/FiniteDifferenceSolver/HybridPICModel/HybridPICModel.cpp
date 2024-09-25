@@ -57,8 +57,8 @@ void HybridPICModel::ReadParameters ()
     pp_hybrid.query("J_external_init_style", m_J_ext_grid_s);
 
     if (m_J_ext_grid_s == "read_from_file"){
-            const std::string read_jfields_from_path="./";
-            pp_hybrid.query("read_jfields_from_path", m_external_jfields_path);
+            const std::string read_j_fields_from_path="./";
+            pp_hybrid.query("read_j_fields_from_path", m_external_jfields_path);
     }
 
     // external magnetic field
@@ -69,8 +69,8 @@ void HybridPICModel::ReadParameters ()
     pp_hybrid.query("B_external_init_style", m_B_ext_grid_s);
 
     if (m_B_ext_grid_s == "read_from_file"){
-            const std::string read_bfields_from_path="./";
-            pp_hybrid.query("read_bfields_from_path", m_external_bfields_path);
+            const std::string read_b_fields_from_path="./";
+            pp_hybrid.query("read_b_fields_from_path", m_external_bfields_path);
     }
 }
 
