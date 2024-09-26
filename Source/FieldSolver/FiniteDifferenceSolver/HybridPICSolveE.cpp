@@ -501,18 +501,22 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
             auto const Bt_interp = Interp(Bt, Bt_stag, nodal, coarsen, i, j, 0, 0);
             auto const Bz_interp = Interp(Bz, Bz_stag, nodal, coarsen, i, j, 0, 0);
 
+            auto const Bextr_interp = Interp(Bextr, Br_stag, nodal, coarsen, i, j, 0, 0);
+            auto const Bextt_interp = Interp(Bextt, Bt_stag, nodal, coarsen, i, j, 0, 0);
+            auto const Bextz_interp = Interp(Bextz, Bz_stag, nodal, coarsen, i, j, 0, 0);
+
             // calculate enE = (J - Ji) x B
             enE_nodal(i, j, 0, 0) = (
-                (jt_interp - jit_interp - Jextt(i, j, 0)) * (Bz_interp + Bextz(i, j, 0))
-                - (jz_interp - jiz_interp - Jextz(i, j, 0)) * (Bt_interp + Bextt(i, j, 0))
+                (jt_interp - jit_interp - Jextt(i, j, 0)) * (Bz_interp + Bextz_interp)
+                - (jz_interp - jiz_interp - Jextz(i, j, 0)) * (Bt_interp + Bextt_interp)
             );
             enE_nodal(i, j, 0, 1) = (
-                (jz_interp - jiz_interp - Jextz(i, j, 0)) * (Br_interp + Bextr(i, j, 0))
-                - (jr_interp - jir_interp - Jextr(i, j, 0)) * (Bz_interp + Bextz(i, j, 0))
+                (jz_interp - jiz_interp - Jextz(i, j, 0)) * (Br_interp + Bextr_interp)
+                - (jr_interp - jir_interp - Jextr(i, j, 0)) * (Bz_interp + Bextz_interp)
             );
             enE_nodal(i, j, 0, 2) = (
-                (jr_interp - jir_interp - Jextr(i, j, 0)) * (Bt_interp + Bextt(i, j, 0))
-                - (jt_interp - jit_interp - Jextt(i, j, 0)) * (Br_interp + Bextr(i, j, 0))
+                (jr_interp - jir_interp - Jextr(i, j, 0)) * (Bt_interp + Bextt_interp)
+                - (jt_interp - jit_interp - Jextt(i, j, 0)) * (Br_interp + Bextr_interp)
             );
         });
 
