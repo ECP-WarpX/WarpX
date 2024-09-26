@@ -30,8 +30,13 @@ diag1.diag_type = Full
 diag1.format = openpmd
 diag1.intervals = 100
 
+#diag2.diag_type = BackTransformed
+#diag2.num_snapshots_lab = 50
+#diag2.dz_snapshots_lab = 0.1
+#diag2.format = openpmd
+
 # diagnostics
-diagnostics.diags_names = diag1
+diagnostics.diags_names = diag1 # diag2
 
 # electrons
 particles.species_names = electrons positrons
@@ -69,6 +74,10 @@ positrons.rigid_advance=0
 
 # max_step
 max_step = 4000
+
+#warpx.do_moving_window = 1
+#warpx.moving_window_dir = z
+#warpx.moving_window_v = 0.9999008
 
 # Undulator field
 particles.B_ext_particle_init_style = parse_B_ext_particle_function
