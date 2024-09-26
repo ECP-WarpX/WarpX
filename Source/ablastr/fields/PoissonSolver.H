@@ -14,6 +14,7 @@
 #include <ablastr/warn_manager/WarnManager.H>
 #include <ablastr/math/fft/AnyFFT.H>
 #include <ablastr/fields/Interpolate.H>
+#include <ablastr/fields/MultiFabRegister.H>
 #include <ablastr/profiler/ProfilerWrapper.H>
 
 #if defined(ABLASTR_USE_FFT) && defined(WARPX_DIM_3D)
@@ -53,6 +54,7 @@
 
 #include <array>
 #include <optional>
+#include <stdexcept>
 
 
 namespace ablastr::fields {
@@ -275,7 +277,7 @@ computePhi (
 #endif
         // Use the Multigrid (MLMG) solver if selected or on refined patches
         // but first scale rho appropriately
-        rho[lev]->mult(-1._rt / ablastr::constant::SI::ep0);  // TODO: when do we "un-multiply" this? We need to document this side-effect!
+        rho[lev]->mult(-1._rt / ablastr::constant::SI::ep0);
 
 #ifdef WARPX_DIM_RZ
         constexpr bool is_rz = true;
@@ -310,13 +312,17 @@ computePhi (
             auto linop_nodelap = std::make_unique<amrex::MLEBNodeFDLaplacian>();
             if (eb_enabled) {
 #if defined(AMREX_USE_EB)
-                linop_nodelap->define(
-                    amrex::Vector<amrex::Geometry>{geom[lev]},
-                    amrex::Vector<amrex::BoxArray>{grids[lev]},
-                    amrex::Vector<amrex::DistributionMapping>{dmap[lev]},
-                    info,
-                    amrex::Vector<amrex::EBFArrayBoxFactory const*>{eb_farray_box_factory.value()[lev]}
-                );
+                if constexpr(std::is_same_v<void, T_FArrayBoxFactory>) {
+                    throw std::runtime_error("EB requested by eb_farray_box_factory not provided!");
+                } else {
+                    linop_nodelap->define(
+                        amrex::Vector<amrex::Geometry>{geom[lev]},
+                        amrex::Vector<amrex::BoxArray>{grids[lev]},
+                        amrex::Vector<amrex::DistributionMapping>{dmap[lev]},
+                        info,
+                        amrex::Vector<amrex::EBFArrayBoxFactory const*>{eb_farray_box_factory.value()[lev]}
+                    );
+                }
 #endif
             }
             else {
@@ -409,6 +415,8 @@ computePhi (
                 post_phi_calculation.value()(mlmg, lev);
             }
         }
+        rho[lev]->mult(-ablastr::constant::SI::ep0);  // Multiply rho by epsilon again
+
     } // loop over lev(els)
 } // computePhi
 } // namespace ablastr::fields

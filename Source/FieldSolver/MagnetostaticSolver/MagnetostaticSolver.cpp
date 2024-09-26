@@ -170,15 +170,14 @@ WarpX::computeVectorPotential (ablastr::fields::MultiLevelVectorField const& cur
     amrex::Vector<amrex::Array<amrex::MultiFab*,3>> sorted_curr;
     amrex::Vector<amrex::Array<amrex::MultiFab*,3>> sorted_A;
     for (int lev = 0; lev <= finest_level; ++lev) {
-        sorted_curr.emplace_back(amrex::Array<amrex::MultiFab*,3> ({curr[lev][Direction{0}],
-                                                                    curr[lev][Direction{1}],
-                                                                    curr[lev][Direction{2}]}));
-        sorted_A.emplace_back(amrex::Array<amrex::MultiFab*,3> ({A[lev][Direction{0}],
-                                                                 A[lev][Direction{1}],
-                                                                 A[lev][Direction{2}]}));
+        sorted_curr.emplace_back(amrex::Array<amrex::MultiFab*,3> ({curr[lev][0],
+                                                                    curr[lev][1],
+                                                                    curr[lev][2]}));
+        sorted_A.emplace_back(amrex::Array<amrex::MultiFab*,3> ({A[lev][0],
+                                                                 A[lev][1],
+                                                                 A[lev][2]}));
     }
 
-#if defined(AMREX_USE_EB)
     const ablastr::fields::MultiLevelVectorField Bfield_fp = m_fields.get_mr_levels_alldirs(FieldType::Bfield_fp, finest_level);
     const std::optional<MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel> post_A_calculation(
     {
@@ -187,13 +186,13 @@ WarpX::computeVectorPotential (ablastr::fields::MultiLevelVectorField const& cur
         m_fields.get_mr_levels_alldirs(FieldType::vector_potential_grad_buf_b_stag, finest_level)
     });
 
+#if defined(AMREX_USE_EB)
     amrex::Vector<amrex::EBFArrayBoxFactory const *> factories;
     for (int lev = 0; lev <= finest_level; ++lev) {
         factories.push_back(&WarpX::fieldEBFactory(lev));
     }
     const std::optional<amrex::Vector<amrex::EBFArrayBoxFactory const *> > eb_farray_box_factory({factories});
 #else
-    const std::optional<MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel> post_A_calculation;
     const std::optional<amrex::Vector<amrex::FArrayBoxFactory const *> > eb_farray_box_factory;
 #endif
 

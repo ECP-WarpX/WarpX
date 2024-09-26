@@ -18,25 +18,30 @@
 
 namespace warpx::fields
 {
+    /** Unique identifiers for WarpX scalar and vector fields.
+     *
+     * These are implemented as amrex::MultiFab (one or one per component "direction",
+     * respectively) and stored in the ablastr::fields::MultiFabRegister .
+     */
     AMREX_ENUM(FieldType,
         None,
-        Efield_aux, //!< Field that the particles gather from. Obtained from Efield_fp (and Efield_cp when using MR); see UpdateAuxilaryData
-        Bfield_aux, //!< Field that the particles gather from. Obtained from Bfield_fp (and Bfield_cp when using MR); see UpdateAuxilaryData
-        Efield_fp,  //!< The field that is updated by the field solver at each timestep
-        Bfield_fp,  //!< The field that is updated by the field solver at each timestep
-        Efield_fp_external, //!< Stores grid particle fields provided by the user as  through an openPMD file
-        Bfield_fp_external, //!< Stores grid particle fields provided by the user as  through an openPMD file
-        current_fp, //!< The current that is used as a source for the field solver
-        current_fp_nodal, //!< Only used when using nodal current deposition
-        current_fp_vay,   //!< Only used when using Vay current deposition
-        current_buf, //!< Particles that are close to the edge of the MR patch (i.e. in the deposition buffer) deposit to this field.
-        current_store, //!< Only used when doing subcycling with mesh refinement, for book-keeping of currents
-        rho_buf, //!< Particles that are close to the edge of the MR patch (i.e. in the deposition buffer) deposit to this field.
-        rho_fp,  //!< The charge density that is used as a source for the field solver (mostly for labframe electrostatic and PSATD)
-        F_fp, //!< Used for divE cleaning
-        G_fp, //!< Used for divB cleaning
-        phi_fp, //!< Obtained by the Poisson solver, for labframe electrostatic
-        vector_potential_fp, //!< Obtained by the magnetostatic solver
+        Efield_aux, /**< Field that the particles gather from. Obtained from Efield_fp (and Efield_cp when using MR); see UpdateAuxilaryData */
+        Bfield_aux, /**< Field that the particles gather from. Obtained from Bfield_fp (and Bfield_cp when using MR); see UpdateAuxilaryData */
+        Efield_fp,  /**< The field that is updated by the field solver at each timestep */
+        Bfield_fp,  /**< The field that is updated by the field solver at each timestep */
+        Efield_fp_external, /**< Stores grid particle fields provided by the user as  through an openPMD file */
+        Bfield_fp_external, /**< Stores grid particle fields provided by the user as  through an openPMD file */
+        current_fp, /**< The current that is used as a source for the field solver */
+        current_fp_nodal, /**< Only used when using nodal current deposition */
+        current_fp_vay,   /**< Only used when using Vay current deposition */
+        current_buf, /**< Particles that are close to the edge of the MR patch (i.e. in the deposition buffer) deposit to this field. */
+        current_store, /**< Only used when doing subcycling with mesh refinement, for book-keeping of currents */
+        rho_buf, /**< Particles that are close to the edge of the MR patch (i.e. in the deposition buffer) deposit to this field. */
+        rho_fp,  /**< The charge density that is used as a source for the field solver (mostly for labframe electrostatic and PSATD) */
+        F_fp, /**< Used for divE cleaning */
+        G_fp, /**< Used for divB cleaning */
+        phi_fp, /**< Obtained by the Poisson solver, for labframe electrostatic */
+        vector_potential_fp, /**< Obtained by the magnetostatic solver */
         vector_potential_fp_nodal,
         vector_potential_grad_buf_e_stag,
         vector_potential_grad_buf_b_stag,
@@ -76,7 +81,7 @@ namespace warpx::fields
         Bfield_avg_fp,
         Efield_avg_cp,
         Bfield_avg_cp,
-        B_old, //!< Stores the value of B at the beginning of the timestep, for the implicit solver
+        B_old, /**< Stores the value of B at the beginning of the timestep, for the implicit solver */
         ECTRhofield,
         Venl
     );

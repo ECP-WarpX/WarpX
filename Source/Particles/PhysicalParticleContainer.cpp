@@ -1753,9 +1753,9 @@ PhysicalParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
     const iMultiFab* gather_masks = WarpX::GatherBufferMasks(lev);
 
     const bool has_rho = fields.has(FieldType::rho_fp, lev);
-    const bool has_cjx = fields.has(FieldType::current_buf, Direction{0}, lev);
-    const bool has_cEx = fields.has(FieldType::Efield_cax, Direction{0}, lev);
-    const bool has_buffer = has_cEx || has_cjx;
+    const bool has_J_buf = fields.has_vector(FieldType::current_buf, lev);
+    const bool has_E_cax = fields.has_vector(FieldType::Efield_cax, lev);
+    const bool has_buffer = has_E_cax || has_J_buf;
 
     amrex::MultiFab & Ex = *fields.get(FieldType::Efield_aux, Direction{0}, lev);
     amrex::MultiFab & Ey = *fields.get(FieldType::Efield_aux, Direction{1}, lev);
@@ -1850,7 +1850,7 @@ PhysicalParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
                     pti, lev, current_masks, gather_masks );
             }
 
-            const long np_current = has_cjx ? nfine_current : np;
+            const long np_current = has_J_buf ? nfine_current : np;
 
             if (has_rho && ! skip_deposition && ! do_not_deposit) {
                 // Deposit charge before particle push, in component 0 of MultiFab rho.
@@ -1870,7 +1870,7 @@ PhysicalParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
 
             if (! do_not_push)
             {
-                const long np_gather = has_cEx ? nfine_gather : np;
+                const long np_gather = has_E_cax ? nfine_gather : np;
 
                 int e_is_nodal = Ex.is_nodal() and Ey.is_nodal() and Ez.is_nodal();
 
