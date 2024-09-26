@@ -796,9 +796,7 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
         Array4<Real const> const& Bexty = Bextfield[1]->const_array(mfi);
         Array4<Real const> const& Bextz = Bextfield[2]->const_array(mfi);
 
-        // Loop over the cells and update the nodal E field
         amrex::ParallelFor(mfi.tilebox(), [=] AMREX_GPU_DEVICE (int i, int j, int k){
-
             // interpolate the total current to a nodal grid
             auto const jx_interp = Interp(Jx, Jx_stag, nodal, coarsen, i, j, k, 0);
             auto const jy_interp = Interp(Jy, Jy_stag, nodal, coarsen, i, j, k, 0);
@@ -814,18 +812,58 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
             auto const By_interp = Interp(By, By_stag, nodal, coarsen, i, j, k, 0);
             auto const Bz_interp = Interp(Bz, Bz_stag, nodal, coarsen, i, j, k, 0);
 
+            auto const Bextx_interp = Interp(Bextx, Bx_stag, nodal, coarsen, i, j, k, 0);
+            auto const Bexty_interp = Interp(Bexty, By_stag, nodal, coarsen, i, j, k, 0);
+            auto const Bextz_interp = Interp(Bextz, Bz_stag, nodal, coarsen, i, j, k, 0);
+
             // calculate enE = (J - Ji) x B
             enE_nodal(i, j, k, 0) = (
-                (jy_interp - jiy_interp - Jexty(i, j, k)) * (Bz_interp + Bextz(i, j, k))
-                - (jz_interp - jiz_interp - Jextz(i, j, k)) * (By_interp + Bexty(i, j, k))
+                (jy_interp - jiy_interp - Jexty(i, j, k)) * (Bz_interp + Bextz_interp)
+                - (jz_interp - jiz_interp - Jextz(i, j, k)) * (By_interp + Bexty_interp)
             );
             enE_nodal(i, j, k, 1) = (
-                (jz_interp - jiz_interp - Jextz(i, j, k)) * (Bx_interp + Bextx(i, j, k))
-                - (jx_interp - jix_interp - Jextx(i, j, k)) * (Bz_interp + Bextz(i, j, k))
+                (jz_interp - jiz_interp - Jextz(i, j, k)) * (Bx_interp + Bextx_interp)
+                - (jx_interp - jix_interp - Jextx(i, j, k)) * (Bz_interp + Bextz_interp)
             );
             enE_nodal(i, j, k, 2) = (
-                (jx_interp - jix_interp - Jextx(i, j, k)) * (By_interp + Bexty(i, j, k))
-                - (jy_interp - jiy_interp - Jexty(i, j, k)) * (Bx_interp + Bextx(i, j, k))
+                (jx_interp - jix_interp - Jextx(i, j, k)) * (By_interp + Bexty_interp)
+                - (jy_interp - jiy_interp - Jexty(i, j, k)) * (Bx_interp + Bextx_interp)
+            );
+        });
+
+        // Loop over the cells and update the nodal E field
+        amrex::ParallelFor(mfi.tilebox(), [=] AMREX_GPU_DEVICE (int i, int j, int k){
+            // interpolate the total current to a nodal grid
+            auto const jx_interp = Interp(Jx, Jx_stag, nodal, coarsen, i, j, k, 0);
+            auto const jy_interp = Interp(Jy, Jy_stag, nodal, coarsen, i, j, k, 0);
+            auto const jz_interp = Interp(Jz, Jz_stag, nodal, coarsen, i, j, k, 0);
+
+            // interpolate the ion current to a nodal grid
+            auto const jix_interp = Interp(Jix, Jx_stag, nodal, coarsen, i, j, k, 0);
+            auto const jiy_interp = Interp(Jiy, Jy_stag, nodal, coarsen, i, j, k, 0);
+            auto const jiz_interp = Interp(Jiz, Jz_stag, nodal, coarsen, i, j, k, 0);
+
+            // interpolate the B field to a nodal grid
+            auto const Bx_interp = Interp(Bx, Bx_stag, nodal, coarsen, i, j, k, 0);
+            auto const By_interp = Interp(By, By_stag, nodal, coarsen, i, j, k, 0);
+            auto const Bz_interp = Interp(Bz, Bz_stag, nodal, coarsen, i, j, k, 0);
+
+            auto const Bextx_interp = Interp(Bextx, Bx_stag, nodal, coarsen, i, j, k, 0);
+            auto const Bexty_interp = Interp(Bexty, By_stag, nodal, coarsen, i, j, k, 0);
+            auto const Bextz_interp = Interp(Bextz, Bz_stag, nodal, coarsen, i, j, k, 0);
+
+            // calculate enE = (J - Ji) x B
+            enE_nodal(i, j, k, 0) = (
+                (jy_interp - jiy_interp - Jexty(i, j, k)) * (Bz_interp + Bextz_interp)
+                - (jz_interp - jiz_interp - Jextz(i, j, k)) * (By_interp + Bexty_interp)
+            );
+            enE_nodal(i, j, k, 1) = (
+                (jz_interp - jiz_interp - Jextz(i, j, k)) * (Bx_interp + Bextx_interp)
+                - (jx_interp - jix_interp - Jextx(i, j, k)) * (Bz_interp + Bextz_interp)
+            );
+            enE_nodal(i, j, k, 2) = (
+                (jx_interp - jix_interp - Jextx(i, j, k)) * (By_interp + Bexty_interp)
+                - (jy_interp - jiy_interp - Jexty(i, j, k)) * (Bx_interp + Bextx_interp)
             );
         });
 

@@ -16,6 +16,7 @@
 using namespace amrex;
 using warpx::fields::FieldType;
 
+
 HybridPICModel::HybridPICModel ()
 {
     ReadParameters();
