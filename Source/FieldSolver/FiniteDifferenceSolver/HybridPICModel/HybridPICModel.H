@@ -205,8 +205,8 @@ public:
     std::string m_external_j_fields_path = "0.0";
     std::string m_external_b_fields_path = "0.0";
 
-    std::string m_J_ext_grid_s = "0.0";
-    std::string m_B_ext_grid_s = "0.0";
+    std::string m_J_ext_grid_style = "0.0";
+    std::string m_B_ext_grid_style = "0.0";
 
     /** Gpu Vector with index type of the Jx multifab */
     amrex::GpuArray<int, 3> Jx_IndexType;

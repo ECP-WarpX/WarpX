@@ -2448,13 +2448,13 @@ Maxwell solver: kinetic-fluid hybrid
     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the plasma hyper-resistivity in :math:`\Omega m^3`.
 
 * ``hybrid_pic_model.[J/B]_ext_grid_init_style`` (`str`) optional (default ``0``)
-    If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the external field style:math:`\Omega m^3`.
+    If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the external field style.
 
     * ``read_from_file`` (`str`) optional (default ``0``)
-      If ``algo.maxwell_solver`` is set to ``hybrid``, this sets wether to read from file.
+      If ``algo.maxwell_solver`` is set to ``hybrid``, this sets whether to read from file.
 
     * ``parse_ext_grid_function`` (`str`) optional (default ``0``)
-      If ``algo.maxwell_solver`` is set to ``hybrid``, this sets wether to use analytical function.
+      If ``algo.maxwell_solver`` is set to ``hybrid``, this sets whether to use analytical function.
 
 * ``hybrid_pic_model.J[x/y/z]_external_grid_function(x, y, z, t)`` (`float` or `str`) optional (default ``0``)
     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the external current (on the grid) in :math:`A/m^2`.

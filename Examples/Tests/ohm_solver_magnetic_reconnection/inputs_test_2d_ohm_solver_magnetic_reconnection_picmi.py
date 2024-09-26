@@ -57,8 +57,9 @@ class ForceFreeSheetReconnection(object):
     # Number of substeps used to update B
     substeps = 20
 
-    def __init__(self, test, verbose):
+    def __init__(self, test, verbose, guiding):
         self.test = test
+        self.guiding = guiding
         self.verbose = verbose or self.test
 
         # calculate various plasma parameters based on the simulation input
@@ -87,9 +88,13 @@ class ForceFreeSheetReconnection(object):
             f"+{-self.dB*self.Lx/(2.0*self.Lz)}*cos({2.0*np.pi/self.Lx}*x)"
             f"*sin({np.pi/self.Lz}*z)"
         )
-        self.By = (
-            f"sqrt({self.Bg**2 + self.B0**2}-" f"({self.B0}*tanh(z*{1.0/self.l_i}))**2)"
-        )
+        if self.guiding:
+            self.By = f"sqrt({self.B0**2}-" f"({self.B0}*tanh(z*{1.0/self.l_i}))**2)"
+        else:
+            self.By = (
+                f"sqrt({self.Bg**2 + self.B0**2}-"
+                f"({self.B0}*tanh(z*{1.0/self.l_i}))**2)"
+            )
         self.Bz = f"{self.dB}*sin({2.0*np.pi/self.Lx}*x)*cos({np.pi/self.Lz}*z)"
 
         self.J0 = self.B0 / constants.mu0 / self.l_i
@@ -209,6 +214,7 @@ class ForceFreeSheetReconnection(object):
             n_floor=0.1 * self.n_plasma,
             plasma_resistivity=self.eta * self.eta0,
             substeps=self.substeps,
+            By_external_function=f"{self.Bg}" if self.guiding else None,
         )
         simulation.solver = self.solver
 
@@ -328,6 +334,12 @@ parser.add_argument(
     action="store_true",
 )
 parser.add_argument(
+    "-g",
+    "--guiding_field",
+    help="toggle whether this script is run with a guiding field",
+    action="store_true",
+)
+parser.add_argument(
     "-v",
     "--verbose",
     help="Verbose output",
@@ -336,5 +348,7 @@ parser.add_argument(
 args, left = parser.parse_known_args()
 sys.argv = sys.argv[:1] + left
 
-run = ForceFreeSheetReconnection(test=args.test, verbose=args.verbose)
+run = ForceFreeSheetReconnection(
+    test=args.test, guiding=args.guiding_field, verbose=args.verbose
+)
 simulation.step()

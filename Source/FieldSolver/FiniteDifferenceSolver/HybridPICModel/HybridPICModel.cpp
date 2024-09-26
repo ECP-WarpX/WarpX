@@ -54,11 +54,10 @@ void HybridPICModel::ReadParameters ()
     pp_hybrid.query("Jy_external_grid_function(x,y,z,t)", m_Jy_ext_grid_function);
     pp_hybrid.query("Jz_external_grid_function(x,y,z,t)", m_Jz_ext_grid_function);
 
-    pp_hybrid.query("J_external_init_style", m_J_ext_grid_s);
+    pp_hybrid.query("J_external_init_style", m_J_ext_grid_style);
 
-    if (m_J_ext_grid_s == "read_from_file"){
-            const std::string read_j_fields_from_path="./";
-            pp_hybrid.query("read_j_fields_from_path", m_external_j_fields_path);
+    if (m_J_ext_grid_style == "read_from_file") {
+        pp_hybrid.get("read_j_fields_from_path", m_external_j_fields_path);
     }
 
     // external magnetic field
@@ -66,11 +65,10 @@ void HybridPICModel::ReadParameters ()
     pp_hybrid.query("By_external_grid_function(x,y,z,t)", m_By_ext_grid_function);
     pp_hybrid.query("Bz_external_grid_function(x,y,z,t)", m_Bz_ext_grid_function);
 
-    pp_hybrid.query("B_external_init_style", m_B_ext_grid_s);
+    pp_hybrid.query("B_external_init_style", m_B_ext_grid_style);
 
-    if (m_B_ext_grid_s == "read_from_file"){
-            const std::string read_b_fields_from_path="./";
-            pp_hybrid.query("read_b_fields_from_path", m_external_b_fields_path);
+    if (m_B_ext_grid_style == "read_from_file"){
+        pp_hybrid.get("read_b_fields_from_path", m_external_b_fields_path);
     }
 }
 
@@ -291,12 +289,12 @@ void HybridPICModel::InitData ()
             };
         }
 #endif
-        if (m_J_ext_grid_s == "parse_ext_grid_function") {
+        if (m_J_ext_grid_style == "parse_ext_grid_function") {
             GetExternalField<FieldType::hybrid_current_fp_external>(
                 m_J_external, ablastr::fields::a2m(edge_lengths), lev);
         }
 
-        if (m_J_ext_grid_s == "read_from_file") {
+        if (m_J_ext_grid_style == "read_from_file") {
             warpx.ReadExternalFieldFromFile(
                 m_external_j_fields_path,
                 warpx.m_fields.get(FieldType::hybrid_current_fp_external, Direction{0}, lev),
@@ -311,12 +309,12 @@ void HybridPICModel::InitData ()
                 "J", "z");
         }
 
-        if (m_B_ext_grid_s == "parse_ext_grid_function") {
+        if (m_B_ext_grid_style == "parse_ext_grid_function") {
             GetExternalField<FieldType::hybrid_bfield_fp_external>(
                 m_B_external, ablastr::fields::a2m(edge_lengths), lev);
         }
 
-        if (m_B_ext_grid_s == "read_from_file") {
+        if (m_B_ext_grid_style == "read_from_file") {
             warpx.ReadExternalFieldFromFile(
                 m_external_b_fields_path,
                 warpx.m_fields.get(FieldType::hybrid_bfield_fp_external, Direction{0}, lev),
@@ -373,33 +371,27 @@ void HybridPICModel::GetExternalField (
     auto Fy_external = F_external[1];
     auto Fz_external = F_external[2];
 
-    for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi)
-    {
-       const amrex::Box& tbx = mfi.tilebox( x_nodal_flag, mfx->nGrowVect() );
-       const amrex::Box& tby = mfi.tilebox( y_nodal_flag, mfy->nGrowVect() );
-       const amrex::Box& tbz = mfi.tilebox( z_nodal_flag, mfz->nGrowVect() );
+    for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+        const amrex::Box& tbx = mfi.tilebox( x_nodal_flag, mfx->nGrowVect() );
+        const amrex::Box& tby = mfi.tilebox( y_nodal_flag, mfy->nGrowVect() );
+        const amrex::Box& tbz = mfi.tilebox( z_nodal_flag, mfz->nGrowVect() );
 
-       auto const& mfxfab = mfx->array(mfi);
-       auto const& mfyfab = mfy->array(mfi);
-       auto const& mfzfab = mfz->array(mfi);
+        auto const& mfxfab = mfx->array(mfi);
+        auto const& mfyfab = mfy->array(mfi);
+        auto const& mfzfab = mfz->array(mfi);
 
-#ifdef AMREX_USE_EB
-       amrex::Array4<amrex::Real> const& lx = edge_lengths[0]->array(mfi);
-       amrex::Array4<amrex::Real> const& ly = edge_lengths[1]->array(mfi);
-       amrex::Array4<amrex::Real> const& lz = edge_lengths[2]->array(mfi);
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        amrex::ignore_unused(ly);
-#endif
-#else
-       amrex::ignore_unused(edge_lengths);
-#endif
+        amrex::Array4<amrex::Real> lx, ly, lz;
+        if (EB::enabled()) {
+            lx = edge_lengths[0]->array(mfi);
+            ly = edge_lengths[1]->array(mfi);
+            lz = edge_lengths[2]->array(mfi);
+        }
 
         amrex::ParallelFor (tbx, tby, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 // skip if node is covered by an embedded boundary
-#ifdef AMREX_USE_EB
-                if (lx(i, j, k) <= 0) return;
-#endif
+                if (lx && lx(i, j, k) <= 0) { return; }
+
                 // Shift required in the x-, y-, or z- position
                 // depending on the index type of the multifab
 #if defined(WARPX_DIM_1D_Z)
@@ -426,9 +418,8 @@ void HybridPICModel::GetExternalField (
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 // skip if node is covered by an embedded boundary
-#ifdef AMREX_USE_EB
-                if (ly(i, j, k) <= 0) return;
-#endif
+                if (ly && ly(i, j, k) <= 0) { return; }
+
 #if defined(WARPX_DIM_1D_Z)
                 const amrex::Real x = 0._rt;
                 const amrex::Real y = 0._rt;
@@ -453,9 +444,8 @@ void HybridPICModel::GetExternalField (
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 // skip if node is covered by an embedded boundary
-#ifdef AMREX_USE_EB
-                if (lz(i, j, k) <= 0) return;
-#endif
+                if (lz && lz(i, j, k) <= 0) { return; }
+
 #if defined(WARPX_DIM_1D_Z)
                 const amrex::Real x = 0._rt;
                 const amrex::Real y = 0._rt;
