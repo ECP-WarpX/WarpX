@@ -285,7 +285,8 @@ void HybridPICModel::InitData ()
     // if the current is time dependent which is what needs to be done to
     // write time independent fields on the first step.
     GetCurrentExternal(true);
-    GetFieldsExternal(warpx.gett_new(0));
+    if (m_add_external_fields)
+        GetFieldsExternal(warpx.gett_new(0));
 }
 
 void HybridPICModel::GetCurrentExternal (bool skip_check /*=false*/)
@@ -301,6 +302,8 @@ void HybridPICModel::GetCurrentExternal (bool skip_check /*=false*/)
 
 void HybridPICModel::GetFieldsExternal (amrex::Real t)
 {
+    if (!m_add_external_fields) return;
+
     using ablastr::fields::Direction;
     auto& warpx = WarpX::GetInstance();
 
