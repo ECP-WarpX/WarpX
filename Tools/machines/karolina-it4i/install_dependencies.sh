@@ -26,12 +26,24 @@ if [ ! -d "$WORK/spack" ]
 then
     git clone -c feature.manyFiles=true -b v0.21.0 https://github.com/spack/spack.git $WORK/spack
     source $WORK/spack/share/spack/setup-env.sh
+else
+    # If the directory exists, checkout v0.21.0 branch
+    cd $WORK/spack
+    git checkout v0.21.0
+    git pull origin v0.21.0
+    source $WORK/spack/share/spack/setup-env.sh
 
-    # create and activate the spack environment
-    spack env create warpx-karolina-cuda $WORK/src/warpx/Tools/machines/karolina-it4i/spack-karolina-cuda.yaml
-    spack env activate warpx-karolina-cuda
-    spack install
+    # Delete spack env if present
+    spack env deactivate || true
+    spack env rm -y warpx-karolina-cuda || true
+
+    cd -
 fi
+
+# create and activate the spack environment
+spack env create warpx-karolina-cuda $WORK/src/warpx/Tools/machines/karolina-it4i/spack-karolina-cuda.yaml
+spack env activate warpx-karolina-cuda
+spack install
 
 # Python ##########################################################
 #
@@ -41,7 +53,7 @@ python -m pip install --user --upgrade matplotlib
 #python -m pip install --user --upgrade yt
 
 # install or update WarpX dependencies
-python -m pip install --user --upgrade picmistandard==0.28.0
+python -m pip install --user --upgrade picmistandard==0.30.0
 python -m pip install --user --upgrade lasy
 
 # optional: for optimas (based on libEnsemble & ax->botorch->gpytorch->pytorch)

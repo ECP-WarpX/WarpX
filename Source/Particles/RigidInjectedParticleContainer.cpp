@@ -73,7 +73,7 @@ void RigidInjectedParticleContainer::InitData()
 {
     // Perform Lorentz transform of `z_inject_plane`
     const amrex::Real t_boost = WarpX::GetInstance().gett_new(0);
-    amrex::Real zinject_plane_boost = zinject_plane/WarpX::gamma_boost
+    const amrex::Real zinject_plane_boost = zinject_plane/WarpX::gamma_boost
                                     - WarpX::beta_boost*PhysConst::c*t_boost;
     zinject_plane_levels.resize(finestLevel()+1, zinject_plane_boost);
 
@@ -291,15 +291,11 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
 }
 
 void
-RigidInjectedParticleContainer::Evolve (int lev,
-                                        const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
-                                        const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
-                                        MultiFab& jx, MultiFab& jy, MultiFab& jz,
-                                        MultiFab* cjx, MultiFab* cjy, MultiFab* cjz,
-                                        MultiFab* rho, MultiFab* crho,
-                                        const MultiFab* cEx, const MultiFab* cEy, const MultiFab* cEz,
-                                        const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
-                                        Real t, Real dt, DtType a_dt_type, bool skip_deposition)
+RigidInjectedParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
+                                        int lev,
+                                        const std::string& current_fp_string,
+                                        Real t, Real dt, DtType a_dt_type, bool skip_deposition,
+                                        PushType push_type)
 {
 
     // Update location of injection plane in the boosted frame
@@ -316,15 +312,10 @@ RigidInjectedParticleContainer::Evolve (int lev,
     done_injecting_lev = ((zinject_plane_levels[lev] < plo[WARPX_ZINDEX] && WarpX::moving_window_v + WarpX::beta_boost*PhysConst::c >= 0.) ||
                            (zinject_plane_levels[lev] > phi[WARPX_ZINDEX] && WarpX::moving_window_v + WarpX::beta_boost*PhysConst::c <= 0.));
 
-    PhysicalParticleContainer::Evolve (lev,
-                                       Ex, Ey, Ez,
-                                       Bx, By, Bz,
-                                       jx, jy, jz,
-                                       cjx, cjy, cjz,
-                                       rho, crho,
-                                       cEx, cEy, cEz,
-                                       cBx, cBy, cBz,
-                                       t, dt, a_dt_type, skip_deposition);
+    PhysicalParticleContainer::Evolve (fields,
+                                       lev,
+                                       current_fp_string,
+                                       t, dt, a_dt_type, skip_deposition, push_type);
 }
 
 void
@@ -336,7 +327,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
 
     if (do_not_push) { return; }
 
-    const std::array<Real,3>& dx = WarpX::CellSize(std::max(lev,0));
+    const amrex::XDim3 dinv = WarpX::InvCellSize(std::max(lev,0));
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel
@@ -368,7 +359,6 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
             const amrex::ParticleReal By_external_particle = m_B_external_particle[1];
             const amrex::ParticleReal Bz_external_particle = m_B_external_particle[2];
 
-            const std::array<amrex::Real,3>& xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
 
             const Dim3 lo = lbound(box);
 
@@ -376,8 +366,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
             const int nox = WarpX::nox;
             const int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 
-            const amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
-            const amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
+            const amrex::XDim3 xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
 
             amrex::Array4<const amrex::Real> const& ex_arr = exfab.array();
             amrex::Array4<const amrex::Real> const& ey_arr = eyfab.array();
@@ -444,7 +433,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
                 doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                               dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
+                               dinv, xyzmin, lo, n_rz_azimuthal_modes,
                                nox, galerkin_interpolation);
 
                 [[maybe_unused]] const auto& getExternalEB_tmp = getExternalEB;

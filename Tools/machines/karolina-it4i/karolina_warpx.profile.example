@@ -26,15 +26,11 @@ fi
 module purge
 module load OpenMPI/4.1.4-GCC-11.3.0-CUDA-11.7.0
 
-# download and activate spack
-if [ ! -d "$WORK/spack" ]
-then
-    echo "WARNING: Spack installation not detected, please run install_dependencies.sh"
-else
-    # activate the spack environment
-    source $WORK/spack/share/spack/setup-env.sh
-    spack env activate warpx-karolina-cuda
-fi
+source $WORK/spack/share/spack/setup-env.sh && spack env activate warpx-karolina-cuda && {
+    echo "Spack environment 'warpx-karolina-cuda' activated successfully."
+} || {
+    echo "Failed to activate Spack environment 'warpx-karolina-cuda'. Please run install_dependencies.sh."
+}
 
 # Text Editor for Tools ########################## (edit this line)
 # examples: "nano", "vim", "emacs -nw" or without terminal: "gedit"

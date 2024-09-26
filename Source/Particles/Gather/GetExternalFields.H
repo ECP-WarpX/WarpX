@@ -142,7 +142,7 @@ struct GetExternalEBField
             // the plasma lens periods do not start before z=0
             if (zl > 0) {
                 // find which is the next lens
-                int i_lens = static_cast<int>(std::floor(zl/m_repeated_plasma_lens_period));
+                const auto i_lens = static_cast<int>(std::floor(zl/m_repeated_plasma_lens_period));
                 if (i_lens < m_n_lenses) {
                     amrex::ParticleReal const lens_start = m_repeated_plasma_lens_starts[i_lens] + i_lens*m_repeated_plasma_lens_period;
                     amrex::ParticleReal const lens_end = lens_start + m_repeated_plasma_lens_lengths[i_lens];
