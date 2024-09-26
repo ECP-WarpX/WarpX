@@ -108,9 +108,6 @@ public:
     /** Move operator */
     WarpX& operator= ( WarpX && ) = delete;
 
-    static std::string Version (); //!< Version of WarpX executable
-    static std::string PicsarVersion (); //!< Version of PICSAR dependency
-
     [[nodiscard]] int Verbose () const { return verbose; }
 
     void InitData ();

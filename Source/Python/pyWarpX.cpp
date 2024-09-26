@@ -78,7 +78,7 @@ PYBIND11_MODULE(PYWARPX_MODULE_NAME, m) {
     m.attr("__version__") = MACRO_STRINGIFY(PYWARPX_VERSION_INFO);
 #else
     // note: not necessarily PEP-440 compliant
-    m.attr("__version__") = WarpX::Version();
+    m.attr("__version__") = warpx::Version();
 #endif
 
     // authors

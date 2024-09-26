@@ -16,6 +16,7 @@
 #include "Utils/RelativeCellPosition.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/WarpXVersion.H"
 #include "WarpX.H"
 #include "OpenPMDHelpFunction.H"
 
@@ -518,7 +519,7 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
     uint32_t const openPMD_ED_PIC = 1u;
     m_Series->setOpenPMDextension( openPMD_ED_PIC );
     // meta info
-    m_Series->setSoftware( "WarpX", WarpX::Version() );
+    m_Series->setSoftware( "WarpX", warpx::Version() );
 }
 
 void
