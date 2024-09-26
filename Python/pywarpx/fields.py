@@ -375,7 +375,6 @@ class _MultiFABWrapper(object):
                         box_big_end[i] += nghosts[i]
 
         boxlo = self._get_indices(box.small_end, 0)
-        boxhi = self._get_indices(box.big_end, 0)
         ilo = self._get_indices(box_small_end, 0)
         ihi = self._get_indices(box_big_end, 0)
 
