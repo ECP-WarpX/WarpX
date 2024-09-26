@@ -100,14 +100,14 @@ void HybridPICModel::AllocateLevelMFs (int lev, const BoxArray& ba, const Distri
     WarpX::AllocInitMultiFab(current_fp_plasma[lev][2], amrex::convert(ba, jz_nodal_flag),
         dm, ncomps, ngJ, lev, "current_fp_plasma[z]", 0.0_rt);
 
-    // the external current density multifab matches the current staggering but no
-    // ghost cells are needed since this multifab is only used to update local values
+    // the external current density multifab matches the current staggering and
+    // one ghost cell is used since we interpolate the current to a nodal grid
     WarpX::AllocInitMultiFab(current_fp_external[lev][0], amrex::convert(ba, jx_nodal_flag),
-        dm, ncomps, IntVect(AMREX_D_DECL(0,0,0)), lev, "current_fp_external[x]", 0.0_rt);
+        dm, ncomps, IntVect::TheUnitVector, lev, "current_fp_external[x]", 0.0_rt);
     WarpX::AllocInitMultiFab(current_fp_external[lev][1], amrex::convert(ba, jy_nodal_flag),
-        dm, ncomps, IntVect(AMREX_D_DECL(0,0,0)), lev, "current_fp_external[y]", 0.0_rt);
+        dm, ncomps, IntVect::TheUnitVector, lev, "current_fp_external[y]", 0.0_rt);
     WarpX::AllocInitMultiFab(current_fp_external[lev][2], amrex::convert(ba, jz_nodal_flag),
-        dm, ncomps, IntVect(AMREX_D_DECL(0,0,0)), lev, "current_fp_external[z]", 0.0_rt);
+        dm, ncomps, IntVect::TheUnitVector, lev, "current_fp_external[z]", 0.0_rt);
 
 #ifdef WARPX_DIM_RZ
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -418,13 +418,11 @@ void HybridPICModel::CalculatePlasmaCurrent (
     // ApplyJfieldBoundary(lev, Jfield[0].get(), Jfield[1].get(), Jfield[2].get());
     for (int i=0; i<3; i++) { current_fp_plasma[lev][i]->FillBoundary(warpx.Geom(lev).periodicity()); }
 
-    // Subtract external current from "Ampere" current calculated above
+    // Subtract external current from "Ampere" current calculated above. Note
+    // we need to include 1 ghost cell since later we will interpolate the
+    // plasma current to a nodal grid.
     for (int i=0; i<3; i++) {
-        MultiFab::LinComb(
-            *current_fp_plasma[lev][i],
-            1._rt, *current_fp_plasma[lev][i], 0,
-            -1._rt, *current_fp_external[lev][i], 0, 0, 1, 0
-        );
+        current_fp_plasma[lev][i]->minus(*current_fp_external[lev][i], 0, 1, 1);
     }
 }
 
