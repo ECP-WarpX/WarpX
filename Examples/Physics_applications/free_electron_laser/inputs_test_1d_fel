@@ -73,7 +73,7 @@ positrons.zinject_plane=0.0
 positrons.rigid_advance=0
 
 # max_step
-max_step = 4000
+max_step = 2500
 
 #warpx.do_moving_window = 1
 #warpx.moving_window_dir = z
