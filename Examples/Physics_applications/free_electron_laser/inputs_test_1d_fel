@@ -26,16 +26,20 @@ boundary.particle_hi = absorbing
 boundary.particle_lo = absorbing
 
 # diagnostics
-diagnostics.diags_names = diag1 diag2
+diagnostics.diags_names = diag_labframe diag_boostedframe
 
-diag1.diag_type = Full
-diag1.format = openpmd
-diag1.intervals = 100
+# Diagnostic that show quantities in the frame
+# of the simulation (boosted-frame)
+diag_boostedframe.diag_type = Full
+diag_boostedframe.format = openpmd
+diag_boostedframe.intervals = 100
 
-diag2.diag_type = BackTransformed
-diag2.num_snapshots_lab = 20
-diag2.dz_snapshots_lab = 0.1
-diag2.format = openpmd
+# Diagnostic that show quantities
+# reconstructed in the lab frame
+diag_labframe.diag_type = BackTransformed
+diag_labframe.num_snapshots_lab = 20
+diag_labframe.dz_snapshots_lab = 0.1
+diag_labframe.format = openpmd
 
 # Run the simulation long enough for
 # all backtransformed diagnostic to be complete

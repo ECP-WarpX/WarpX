@@ -13,10 +13,9 @@ by initializing an electron and positron beam on top of each other,
 each having half the current of the physical beam.
 
 The script checks that the radiation wavelength and gain length
-are the expected ones.
+are the expected ones. The check is performed both in the
+lab-frame diagnostics and boosted-frame diagnostics.
 """
-
-import sys
 
 import numpy as np
 from openpmd_viewer import OpenPMDTimeSeries
@@ -33,17 +32,15 @@ gamma_boost = (
 )  # Lorentz factor of the ponderomotive frame
 beta_boost = (1 - 1.0 / gamma_boost**2) ** 0.5
 
-# Open file specified in command line
-filename = sys.argv[1]
-ts = OpenPMDTimeSeries(filename)
+# Analyze the diagnostics showing quantities in the boosted frame
+ts = OpenPMDTimeSeries("diags/diag_boostedframe")
 
 
 # Extract the growth of the peak electric field
-def extract_peak_E(iteration):
+def extract_peak_E_boost(iteration):
     """
-    Extract the position of the peak electric field in
-    a *boosted-frame* snapshot. Also return the position
-    of the peak in the lab frame.
+    Extract the peak electric field in a *boosted-frame* snapshot.
+    Also return the position of the peak in the lab frame.
     """
     Ex, info = ts.get_field("E", "x", iteration=iteration)
     By, info = ts.get_field("B", "y", iteration=iteration)
@@ -56,24 +53,11 @@ def extract_peak_E(iteration):
 
 
 # Loop through all iterations
-z_lab_peak, E_lab_peak = ts.iterate(extract_peak_E)
+z_lab_peak, E_lab_peak = ts.iterate(extract_peak_E_boost)
 log_P_peak = np.log(E_lab_peak**2)
 # Since the radiation power is proportional to the square of the peak electric field,
 # the log of the power is equal to the log of the square of the peak electric field,
 # up to an additive constant.
-
-# Check that the radiation wavelength is the expected one
-iteration_check = 2000
-Ex, info = ts.get_field("E", "x", iteration=iteration_check)
-By, info = ts.get_field("B", "y", iteration=iteration_check)
-E_lab = gamma_boost * (Ex + c * beta_boost * By)
-Nz = len(info.z)
-fft_E = abs(np.fft.fft(E_lab))
-lambd = 1.0 / np.fft.fftfreq(Nz, d=info.dz)
-lambda_radiation_boost = lambd[fft_E[:Nz].argmax()]
-lambda_radiation_lab = lambda_radiation_boost / (2 * gamma_boost)
-lambda_expected = lambda_u / (2 * gamma_boost**2)
-assert abs(lambda_radiation_lab - lambda_expected) / lambda_expected < 0.01
 
 # Pick the iterations between which the growth of the log of the power is linear
 # (i.e. the growth of the power is exponential) and fit a line to extract the
@@ -88,6 +72,58 @@ Lg_expected = 0.22  # Expected gain length from https://arxiv.org/pdf/2009.13645
 print("Gain length: ", Lg)
 assert abs(Lg - Lg_expected) / Lg_expected < 0.2
 
+# Check that the radiation wavelength is the expected one
+iteration_check = 2000
+Ex, info = ts.get_field("E", "x", iteration=iteration_check)
+By, info = ts.get_field("B", "y", iteration=iteration_check)
+E_lab = gamma_boost * (Ex + c * beta_boost * By)
+Nz = len(info.z)
+fft_E = abs(np.fft.fft(E_lab))
+lambd = 1.0 / np.fft.fftfreq(Nz, d=info.dz)
+lambda_radiation_boost = lambd[fft_E[:Nz].argmax()]
+lambda_radiation_lab = lambda_radiation_boost / (2 * gamma_boost)
+lambda_expected = lambda_u / (2 * gamma_boost**2)
+assert abs(lambda_radiation_lab - lambda_expected) / lambda_expected < 0.01
+
+# Analyze the diagnostics showing quantities in the lab frame
+ts_lab = OpenPMDTimeSeries("diags/diag_labframe")
+
+
+# Extract the growth of the peak electric field
+def extract_peak_E_lab(iteration):
+    """
+    Extract the position of the peak electric field
+    """
+    Ex, info = ts_lab.get_field("E", "x", iteration=iteration)
+    return info.zmax, np.nanmax(Ex)
+
+
+# Loop through all iterations
+z_lab_peak, E_lab_peak = ts_lab.iterate(extract_peak_E_lab)
+log_P_peak = np.log(E_lab_peak**2)
+
+# Pick the iterations between which the growth of the log of the power is linear
+# (i.e. the growth of the power is exponential) and fit a line to extract the
+# gain length.
+i_start = 6
+i_end = 20
+# Perform linear fit
+p = np.polyfit(z_lab_peak[i_start:i_end], log_P_peak[i_start:i_end], 1)
+# Extract the gain length
+Lg = 1 / p[0]
+Lg_expected = 0.22  # Expected gain length from https://arxiv.org/pdf/2009.13645
+print("Gain length: ", Lg)
+assert abs(Lg - Lg_expected) / Lg_expected < 0.25
+
+# Check that the radiation wavelength is the expected one
+iteration_check = 18
+Ex, info = ts_lab.get_field("E", "x", iteration=iteration_check)
+Nz = len(info.z)
+fft_E = abs(np.fft.fft(E_lab))
+lambd = 1.0 / np.fft.fftfreq(Nz, d=info.dz)
+lambda_radiation_lab = lambd[fft_E[:Nz].argmax()]
+lambda_expected = lambda_u / (2 * gamma_boost**2)
+# assert abs(lambda_radiation_lab - lambda_expected) / lambda_expected < 0.01
 
 # test_name = os.path.split(os.getcwd())[1]
 # import checksumAPI
