@@ -1,0 +1,65 @@
+my_constants.gamma_bunch=100.6
+my_constants.Bu = 0.5
+my_constants.lambda_u = 3e-2
+my_constants.k_u= 2*pi/lambda_u
+my_constants.K = q_e*Bu/(m_e*clight*k_u) # Undulator parameter
+
+warpx.gamma_boost = gamma_bunch/(1+K*K/2) # Lorentz factor of the ponderomotive frame
+warpx.boost_direction = z
+algo.maxwell_solver = yee
+algo.particle_shape = 2
+algo.particle_pusher = vay
+
+# geometry
+geometry.dims = 1
+geometry.prob_hi = 0
+geometry.prob_lo = -200e-6
+
+amr.max_grid_size = 64
+amr.max_level = 0
+amr.n_cell = 2000
+
+# boundary
+boundary.field_hi = pec
+boundary.field_lo = pec
+boundary.particle_hi = absorbing
+boundary.particle_lo = absorbing
+
+# diag1
+diag1.diag_type = Full
+diag1.format = openpmd
+diag1.intervals = 10
+
+# diagnostics
+diagnostics.diags_names = diag1
+
+# electrons
+particles.species_names = electrons
+electrons.charge = -q_e
+
+electrons.initialize_self_fields = 1
+electrons.injection_style = nuniformpercell
+electrons.mass = m_e
+electrons.momentum_distribution_type = constant
+electrons.num_particles_per_cell_each_dim = 20
+electrons.profile = constant
+electrons.density = 2.7e19
+electrons.ux = 0.0
+electrons.uy = 0.0
+electrons.uz = gamma_bunch
+electrons.zmax = -50e-6
+electrons.zmin = -150e-6
+particles.rigid_injected_species= electrons
+electrons.zinject_plane=0.0
+electrons.rigid_advance=0
+
+# max_step
+max_step = 1000
+
+# Undulator field
+particles.B_ext_particle_init_style = parse_B_ext_particle_function
+particles.Bx_external_particle_function(x,y,z,t) = 0
+particles.By_external_particle_function(x,y,z,t) = if((z>0), Bu*cos(k_u*z), 0.0)
+particles.Bz_external_particle_function(x,y,z,t) =0.0
+
+warpx.cfl = 0.99
