@@ -317,7 +317,9 @@ class _MultiFABWrapper(object):
             ]
         return device_arr
 
-    def _get_intersect_slice(self, mfi, starts, stops, icstart, icstop, with_internal_ghosts):
+    def _get_intersect_slice(
+        self, mfi, starts, stops, icstart, icstop, with_internal_ghosts
+    ):
         """Return the slices where the block intersects with the global slice.
         If the block does not intersect, return None.
         This also shifts the block slices by the number of ghost cells in the
