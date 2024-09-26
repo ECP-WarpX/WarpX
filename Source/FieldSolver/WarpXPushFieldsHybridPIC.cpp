@@ -34,6 +34,31 @@ void WarpX::HybridPICEvolveFields ()
         finest_level == 0,
         "Ohm's law E-solve only works with a single level.");
 
+    // Get requested number of substeps to use
+    const int sub_steps = m_hybrid_pic_model->m_substeps;
+
+    amrex::Real t_eval = gett_old(0);
+    amrex::Real sub_dt = 0.5_rt*dt[0]/sub_steps;
+
+    const bool add_external_fields = m_hybrid_pic_model->m_add_external_fields;
+
+    // Handle field splitting for Hybrid field push
+    if (add_external_fields) {
+        // Get the external fields
+        m_hybrid_pic_model->GetFieldsExternal(t_eval);
+
+        // If using split fields, subtract the external field at the old time
+        for (int lev = 0; lev <= finest_level; ++lev) {
+            for (int idim = 0; idim < 3; ++idim) {
+                MultiFab::Subtract(
+                    *m_fields.get(FieldType::Bfield_fp, Direction{idim}, lev),
+                    *m_fields.get(FieldType::hybrid_B_fp_external, Direction{idim}, lev),
+                    0, 0, 1,
+                    m_fields.get(FieldType::hybrid_B_fp_external, Direction{idim}, lev)->nGrowVect());
+            }
+        }
+    }
+
     // The particles have now been pushed to their t_{n+1} positions.
     // Perform charge deposition in component 0 of rho_fp at t_{n+1}.
     mypc->DepositCharge(m_fields.get_mr_levels(FieldType::rho_fp, finest_level), 0._rt);
@@ -62,31 +87,6 @@ void WarpX::HybridPICEvolveFields ()
     for (int lev = 0; lev <= finest_level; ++lev) {
         for (int idim = 0; idim < 3; ++idim) {
             m_fields.get(FieldType::current_fp, Direction{idim}, lev)->FillBoundary(Geom(lev).periodicity());
-        }
-    }
-
-    // Get requested number of substeps to use
-    const int sub_steps = m_hybrid_pic_model->m_substeps;
-
-    amrex::Real t_eval = gett_old(0);
-    amrex::Real sub_dt = 0.5_rt*dt[0]/sub_steps;
-
-    const bool add_external_fields = m_hybrid_pic_model->m_add_external_fields;
-
-    // Handle field splitting for Hybrid field push
-    if (add_external_fields) {
-        // Get the external fields
-        m_hybrid_pic_model->GetFieldsExternal(t_eval);
-
-        // If using split fields, subtract the external field at the old time
-        for (int lev = 0; lev <= finest_level; ++lev) {
-            for (int idim = 0; idim < 3; ++idim) {
-                MultiFab::Subtract(
-                    *m_fields.get(FieldType::Bfield_fp, Direction{idim}, lev),
-                    *m_fields.get(FieldType::hybrid_B_fp_external, Direction{idim}, lev),
-                    0, 0, 1,
-                    m_fields.get(FieldType::hybrid_B_fp_external, Direction{idim}, lev)->nGrowVect());
-            }
         }
     }
 

@@ -2243,7 +2243,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     {
         m_hybrid_pic_model->AllocateLevelMFs(
             m_fields,
-            lev, ba, dm, ncomps, ngJ, ngRho, ngEB, ngEB, jx_nodal_flag, jy_nodal_flag,
+            lev, ba, dm, ncomps, ngJ, ngRho, ngEB, jx_nodal_flag, jy_nodal_flag,
             jz_nodal_flag, rho_nodal_flag, Ex_nodal_flag, Ey_nodal_flag, Ez_nodal_flag,
             Bx_nodal_flag, By_nodal_flag, Bz_nodal_flag
         );

@@ -74,7 +74,7 @@ void HybridPICModel::AllocateLevelMFs (
     int lev, const BoxArray& ba, const DistributionMapping& dm,
     const int ncomps,
     const IntVect& ngJ, const IntVect& ngRho,
-    const IntVect& ngE, const IntVect& ngB,
+    const IntVect& ngEB,
     const IntVect& jx_nodal_flag,
     const IntVect& jy_nodal_flag,
     const IntVect& jz_nodal_flag,
@@ -139,22 +139,22 @@ void HybridPICModel::AllocateLevelMFs (
         // These are nodal to match when B-field is added in evaluation of Ohm's law
         fields.alloc_init(FieldType::hybrid_B_fp_external, Direction{0},
             lev, amrex::convert(ba, Bx_nodal_flag),
-            dm, ncomps, ngB, 0.0_rt);
+            dm, ncomps, ngEB, 0.0_rt);
         fields.alloc_init(FieldType::hybrid_B_fp_external, Direction{1},
             lev, amrex::convert(ba, By_nodal_flag),
-            dm, ncomps, ngB, 0.0_rt);
+            dm, ncomps, ngEB, 0.0_rt);
         fields.alloc_init(FieldType::hybrid_B_fp_external, Direction{2},
             lev, amrex::convert(ba, Bz_nodal_flag),
-            dm, ncomps, ngB, 0.0_rt);
+            dm, ncomps, ngEB, 0.0_rt);
         fields.alloc_init(FieldType::hybrid_E_fp_external, Direction{0},
             lev, amrex::convert(ba, Ex_nodal_flag),
-            dm, ncomps, ngE, 0.0_rt);
+            dm, ncomps, ngEB, 0.0_rt);
         fields.alloc_init(FieldType::hybrid_E_fp_external, Direction{1},
             lev, amrex::convert(ba, Ey_nodal_flag),
-            dm, ncomps, ngE, 0.0_rt);
+            dm, ncomps, ngEB, 0.0_rt);
         fields.alloc_init(FieldType::hybrid_E_fp_external, Direction{2},
             lev, amrex::convert(ba, Ez_nodal_flag),
-            dm, ncomps, ngE, 0.0_rt);
+            dm, ncomps, ngEB, 0.0_rt);
     }
 
 #ifdef WARPX_DIM_RZ
@@ -368,17 +368,19 @@ void HybridPICModel::GetExternalFieldFromExpression (
         auto const& mfyfab = mfy->array(mfi);
         auto const& mfzfab = mfz->array(mfi);
 
-        amrex::Array4<amrex::Real> lx, ly, lz;
-        if (EB::enabled()) {
-            lx = warpx.m_fields.get(FieldType::edge_lengths, Direction{0}, lev)->array(mfi);
-            ly = warpx.m_fields.get(FieldType::edge_lengths, Direction{1}, lev)->array(mfi);
-            lz = warpx.m_fields.get(FieldType::edge_lengths, Direction{2}, lev)->array(mfi);
-        }
+        // I am not sure this is needed. There are some guard cell matching issues with how the edges are computed.
+        // Since I want to fill in entire box + guard cells I can skip these checks.
+        // amrex::Array4<amrex::Real> lx, ly, lz;
+        // if (EB::enabled()) {
+        //     lx = warpx.m_fields.get(FieldType::edge_lengths, Direction{0}, lev)->array(mfi);
+        //     ly = warpx.m_fields.get(FieldType::edge_lengths, Direction{1}, lev)->array(mfi);
+        //     lz = warpx.m_fields.get(FieldType::edge_lengths, Direction{2}, lev)->array(mfi);
+        // }
 
         amrex::ParallelFor (tbx, tby, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 // skip if node is covered by an embedded boundary
-                if (lx && lx(i, j, k) <= 0) { return; }
+                //if (EB::enabled() && lx(i, j, k) <= 0) { return; }
 
                 // Shift required in the x-, y-, or z- position
                 // depending on the index type of the multifab
@@ -406,7 +408,7 @@ void HybridPICModel::GetExternalFieldFromExpression (
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 // skip if node is covered by an embedded boundary
-                if (ly && ly(i, j, k) <= 0) { return; }
+                // if (ly && ly(i, j, k) <= 0) { return; }
 
 #if defined(WARPX_DIM_1D_Z)
                 const amrex::Real x = 0._rt;
@@ -432,7 +434,7 @@ void HybridPICModel::GetExternalFieldFromExpression (
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 // skip if node is covered by an embedded boundary
-                if (lz && lz(i, j, k) <= 0) { return; }
+                // if (lz && lz(i, j, k) <= 0) { return; }
 
 #if defined(WARPX_DIM_1D_Z)
                 const amrex::Real x = 0._rt;
