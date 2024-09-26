@@ -75,9 +75,9 @@ positrons.rigid_advance=0
 # max_step
 max_step = 2500
 
-#warpx.do_moving_window = 1
-#warpx.moving_window_dir = z
-#warpx.moving_window_v = 0.9999008
+warpx.do_moving_window = 1
+warpx.moving_window_dir = z
+warpx.moving_window_v = sqrt(1-(1+K*K/2)/(gamma_bunch*gamma_bunch))
 
 # Undulator field
 particles.B_ext_particle_init_style = parse_B_ext_particle_function

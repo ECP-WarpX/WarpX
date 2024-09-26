@@ -62,6 +62,19 @@ log_P_peak = np.log(E_lab_peak**2)
 # the log of the power is equal to the log of the square of the peak electric field,
 # up to an additive constant.
 
+# Check that the radiation wavelength is the expected one
+iteration_check = 2000
+Ex, info = ts.get_field("E", "x", iteration=iteration_check)
+By, info = ts.get_field("B", "y", iteration=iteration_check)
+E_lab = gamma_boost * (Ex + c * beta_boost * By)
+Nz = len(info.z)
+fft_E = abs(np.fft.fft(E_lab))
+lambd = 1.0 / np.fft.fftfreq(Nz, d=info.dz)
+lambda_radiation_boost = lambd[fft_E[:Nz].argmax()]
+lambda_radiation_lab = lambda_radiation_boost / (2 * gamma_boost)
+lambda_expected = lambda_u / (2 * gamma_boost**2)
+assert abs(lambda_radiation_lab - lambda_expected) / lambda_expected < 0.01
+
 # Pick the iterations between which the growth of the log of the power is linear
 # (i.e. the growth of the power is exponential) and fit a line to extract the
 # gain length.
@@ -72,7 +85,7 @@ p = np.polyfit(z_lab_peak[i_start:i_end], log_P_peak[i_start:i_end], 1)
 # Extract the gain length
 Lg = 1 / p[0]
 Lg_expected = 0.22  # Expected gain length from https://arxiv.org/pdf/2009.13645
-
+print("Gain length: ", Lg)
 assert abs(Lg - Lg_expected) / Lg_expected < 0.2
 
 
