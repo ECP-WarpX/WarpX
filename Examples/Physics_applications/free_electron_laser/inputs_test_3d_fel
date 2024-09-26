@@ -3,6 +3,9 @@ my_constants.Bu = 0.5
 my_constants.lambda_u = 3e-2
 my_constants.k_u= 2*pi/lambda_u
 my_constants.K = q_e*Bu/(m_e*clight*k_u) # Undulator parameter
+my_constants.L_ramp = 3e-2 # Length of the undulator ramp
+# Initial kick to compensate the non-zero B integral in the ramp
+my_constants.initial_ux0 = q_e*Bu*L_ramp/(m_e*clight) * 1/( 1 + (k_u*L_ramp)*(k_u*L_ramp) )
 
 warpx.gamma_boost = gamma_bunch/sqrt(1+K*K/2) # Lorentz factor of the ponderomotive frame
 warpx.boost_direction = z
@@ -16,7 +19,7 @@ geometry.prob_hi =  400e-6  400e-6     0
 geometry.prob_lo = -400e-6 -400e-6  -110e-6
 
 amr.max_level = 0
-amr.n_cell = 16 16 512
+amr.n_cell = 16 16 1024
 
 # boundary
 boundary.field_hi = pml pml pml
@@ -54,8 +57,8 @@ electrons.mass = m_e
 electrons.momentum_distribution_type = constant
 electrons.num_particles_per_cell_each_dim = 2 2 2
 electrons.profile = constant
-electrons.density = 2.7
-electrons.ux = 0.0
+electrons.density = 2.7e19
+electrons.ux = +initial_ux0
 electrons.uy = 0.0
 electrons.uz = gamma_bunch
 electrons.zmax = -50e-6
@@ -73,8 +76,8 @@ positrons.mass = m_e
 positrons.momentum_distribution_type = constant
 positrons.num_particles_per_cell_each_dim = 2 2 2
 positrons.profile = constant
-positrons.density = 2.7
-positrons.ux = 0.0
+positrons.density = 2.7e19
+positrons.ux = -initial_ux0
 positrons.uy = 0.0
 positrons.uz = gamma_bunch
 positrons.zmax = -50e-6
@@ -93,7 +96,7 @@ warpx.moving_window_v = sqrt(1-(1+K*K/2)/(gamma_bunch*gamma_bunch))
 # Undulator field
 particles.B_ext_particle_init_style = parse_B_ext_particle_function
 particles.Bx_external_particle_function(x,y,z,t) = 0
-particles.By_external_particle_function(x,y,z,t) = Bu*cos(k_u*z)
+particles.By_external_particle_function(x,y,z,t) = if( z>0, Bu*cos(k_u*z)*(1-exp(-z/L_ramp)), 0 )
 particles.Bz_external_particle_function(x,y,z,t) =0.0
 
 warpx.cfl = 0.99
