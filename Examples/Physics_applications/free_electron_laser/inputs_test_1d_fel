@@ -4,7 +4,7 @@ my_constants.lambda_u = 3e-2
 my_constants.k_u= 2*pi/lambda_u
 my_constants.K = q_e*Bu/(m_e*clight*k_u) # Undulator parameter
 
-warpx.gamma_boost = gamma_bunch/(1+K*K/2) # Lorentz factor of the ponderomotive frame
+warpx.gamma_boost = gamma_bunch/sqrt(1+K*K/2) # Lorentz factor of the ponderomotive frame
 warpx.boost_direction = z
 algo.maxwell_solver = yee
 algo.particle_shape = 2
