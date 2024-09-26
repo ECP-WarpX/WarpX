@@ -1522,8 +1522,7 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         # --- Same method names are used, though mapped to lower case.
         pywarpx.algo.maxwell_solver = self.method
 
-        if self.cfl is not None:
-            pywarpx.warpx.cfl = self.cfl
+        pywarpx.warpx.cfl = self.cfl
 
         if self.source_smoother is not None:
             self.source_smoother.smoother_initialize_inputs(self)
@@ -1880,6 +1879,16 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
 
     warpx_self_fields_verbosity: integer, default=2
         Level of verbosity for the lab frame solver
+
+    warpx_dt_update_interval: string, optional (default = -1)
+        How frequently the timestep is updated. Adaptive timestepping is disabled when this is <= 0.
+
+    warpx_cfl: float, optional
+        Fraction of the CFL condition for particle velocity vs grid size, used to set the timestep when `dt_update_interval > 0`.
+
+    warpx_max_dt: float, optional
+        The maximum allowable timestep when `dt_update_interval > 0`.
+
     """
 
     def init(self, kw):
@@ -1887,12 +1896,20 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
         self.absolute_tolerance = kw.pop("warpx_absolute_tolerance", None)
         self.self_fields_verbosity = kw.pop("warpx_self_fields_verbosity", None)
         self.magnetostatic = kw.pop("warpx_magnetostatic", False)
+        self.cfl = kw.pop("warpx_cfl", None)
+        self.dt_update_interval = kw.pop("dt_update_interval", None)
+        self.max_dt = kw.pop("warpx_max_dt", None)
 
     def solver_initialize_inputs(self):
         # Open BC means FieldBoundaryType::Open for electrostatic sims, rather than perfectly-matched layer
         BC_map["open"] = "open"
 
         self.grid.grid_initialize_inputs()
+
+        # set adaptive timestepping parameters
+        pywarpx.warpx.cfl = self.cfl
+        pywarpx.warpx.dt_update_interval = self.dt_update_interval
+        pywarpx.warpx.max_dt = self.max_dt
 
         if self.relativistic:
             pywarpx.warpx.do_electrostatic = "relativistic"
@@ -3890,6 +3907,7 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
             "ParticleNumber",
             "LoadBalanceCosts",
             "LoadBalanceEfficiency",
+            "Timestep",
         ]
         # The species diagnostics require a species to be provided
         self._species_reduced_diagnostics = [
