@@ -70,7 +70,7 @@ p = np.polyfit(z_lab_peak[i_start:i_end], log_P_peak[i_start:i_end], 1)
 Lg = 1 / p[0]
 Lg_expected = 0.22  # Expected gain length from https://arxiv.org/pdf/2009.13645
 print("Gain length: ", Lg)
-assert abs(Lg - Lg_expected) / Lg_expected < 0.2
+assert abs(Lg - Lg_expected) / Lg_expected < 0.1
 
 # Check that the radiation wavelength is the expected one
 iteration_check = 2000
@@ -113,7 +113,7 @@ p = np.polyfit(z_lab_peak[i_start:i_end], log_P_peak[i_start:i_end], 1)
 Lg = 1 / p[0]
 Lg_expected = 0.22  # Expected gain length from https://arxiv.org/pdf/2009.13645
 print("Gain length: ", Lg)
-assert abs(Lg - Lg_expected) / Lg_expected < 0.25
+assert abs(Lg - Lg_expected) / Lg_expected < 0.15
 
 # Check that the radiation wavelength is the expected one
 iteration_check = 18
