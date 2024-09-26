@@ -73,19 +73,19 @@ void FiniteDifferenceSolver::EvolveE (
     }
 
     ablastr::fields::VectorField edge_lengths;
-    if (fields.has(FieldType::edge_lengths, Direction{0}, lev)) {
+    if (fields.has_vector(FieldType::edge_lengths, lev)) {
         edge_lengths = fields.get_alldirs(FieldType::edge_lengths, lev);
     }
     ablastr::fields::VectorField face_areas;
-    if (fields.has(FieldType::face_areas, Direction{0}, lev)) {
+    if (fields.has_vector(FieldType::face_areas, lev)) {
         face_areas = fields.get_alldirs(FieldType::face_areas, lev);
     }
     ablastr::fields::VectorField area_mod;
-    if (fields.has(FieldType::area_mod, Direction{0}, lev)) {
+    if (fields.has_vector(FieldType::area_mod, lev)) {
         area_mod = fields.get_alldirs(FieldType::area_mod, lev);
     }
     ablastr::fields::VectorField ECTRhofield;
-    if (fields.has(FieldType::ECTRhofield, Direction{0}, lev)) {
+    if (fields.has_vector(FieldType::ECTRhofield, lev)) {
         ECTRhofield = fields.get_alldirs(FieldType::ECTRhofield, lev);
     }
 
