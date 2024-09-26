@@ -20,8 +20,8 @@ amr.max_level = 0
 amr.n_cell = 2000
 
 # boundary
-boundary.field_hi = pec
-boundary.field_lo = pec
+boundary.field_hi = absorbing_silver_mueller
+boundary.field_lo = absorbing_silver_mueller
 boundary.particle_hi = absorbing
 boundary.particle_lo = absorbing
 
@@ -47,8 +47,8 @@ electrons.density = 2.7e19
 electrons.ux = 0.0
 electrons.uy = 0.0
 electrons.uz = gamma_bunch
-electrons.zmax = -50e-6
-electrons.zmin = -150e-6
+electrons.zmax = -200e-6
+electrons.zmin = -300e-6
 electrons.zinject_plane=0.0
 electrons.rigid_advance=0
 
@@ -62,13 +62,13 @@ positrons.density = 2.7e19
 positrons.ux = 0.0
 positrons.uy = 0.0
 positrons.uz = gamma_bunch
-positrons.zmax = -50e-6
-positrons.zmin = -150e-6
+positrons.zmax = -200e-6
+positrons.zmin = -300e-6
 positrons.zinject_plane=0.0
 positrons.rigid_advance=0
 
 # max_step
-max_step = 1000
+max_step = 4000
 
 # Undulator field
 particles.B_ext_particle_init_style = parse_B_ext_particle_function
