@@ -28,7 +28,3 @@ For `MPI-parallel <https://www.mpi-forum.org>`__ runs, prefix these lines with `
 .. literalinclude:: inputs_test_1d_fel
    :language: ini
    :caption: You can copy this file from ``Examples/Physics_applications/beam_beam_collision/inputs_test_1d_fel``.
-
-
-Visualize
----------
