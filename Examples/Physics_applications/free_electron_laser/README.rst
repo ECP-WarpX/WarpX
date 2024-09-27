@@ -8,7 +8,7 @@ In this example, a relativistic electron beam is sent through an undulator (repr
 oscillating magnetic field). The radiation emitted by the beam grows exponentially
 as the beam travels through the undulator, due to the Free-Electron-Laser instability.
 
-The parameters of the simulation are taken from :cite:t:`ex-Fallahi2020`.
+The parameters of the simulation are taken from section 5.1 of :cite:t:`ex-Fallahi2020`.
 
 The simulation is performed in 1D, and uses the boosted-frame technique as described in
 :cite:t:`ex-VayFELA2009` and :cite:t:`ex-VayFELB2009`, to reduce the computational cost of the simulation.
