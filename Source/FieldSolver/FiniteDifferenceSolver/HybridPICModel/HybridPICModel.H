@@ -44,7 +44,8 @@ public:
     /** Allocate hybrid-PIC specific multifabs. Called in constructor. */
     void AllocateLevelMFs (ablastr::fields::MultiFabRegister & fields,
                            int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
-                           int ncomps, const amrex::IntVect& ngJ, const amrex::IntVect& ngRho,
+                           int ncomps, const amrex::IntVect& ngEB, const amrex::IntVect& ngJ, const amrex::IntVect& ngRho,
+                           const amrex::IntVect& Bx_nodal_flag, const amrex::IntVect& By_nodal_flag, const amrex::IntVect& Bz_nodal_flag,
                            const amrex::IntVect& jx_nodal_flag, const amrex::IntVect& jy_nodal_flag,
                            const amrex::IntVect& jz_nodal_flag, const amrex::IntVect& rho_nodal_flag);
 

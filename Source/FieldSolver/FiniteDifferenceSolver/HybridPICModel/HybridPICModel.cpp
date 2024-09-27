@@ -75,7 +75,10 @@ void HybridPICModel::ReadParameters ()
 
 void HybridPICModel::AllocateLevelMFs (ablastr::fields::MultiFabRegister & fields,
                                        int lev, const BoxArray& ba, const DistributionMapping& dm,
-                                       const int ncomps, const IntVect& ngJ, const IntVect& ngRho,
+                                       const int ncomps, const IntVect& ngEB, const IntVect& ngJ, const IntVect& ngRho,
+                                       const IntVect& Bx_nodal_flag,
+                                       const IntVect& By_nodal_flag,
+                                       const IntVect& Bz_nodal_flag,
                                        const IntVect& jx_nodal_flag,
                                        const IntVect& jy_nodal_flag,
                                        const IntVect& jz_nodal_flag,
@@ -130,18 +133,12 @@ void HybridPICModel::AllocateLevelMFs (ablastr::fields::MultiFabRegister & field
         lev, amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
         dm, ncomps, IntVect(AMREX_D_DECL(0,0,0)), 0.0_rt);
 
-    // the external bfield multifab is made nodal to avoid needing to interpolate
-    // to a nodal grid as has to be done for the ion and total current density multifabs
-    // this also allows the external b field multifab to not have any ghost cells
     fields.alloc_init(FieldType::hybrid_bfield_fp_external, Direction{0},
-        lev, amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
-        dm, ncomps, IntVect(AMREX_D_DECL(0,0,0)), 0.0_rt);
+        lev, amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
     fields.alloc_init(FieldType::hybrid_bfield_fp_external, Direction{1},
-        lev, amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
-        dm, ncomps, IntVect(AMREX_D_DECL(0,0,0)), 0.0_rt);
+        lev, amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
     fields.alloc_init(FieldType::hybrid_bfield_fp_external, Direction{2},
-        lev, amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
-        dm, ncomps, IntVect(AMREX_D_DECL(0,0,0)), 0.0_rt);
+        lev, amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
 
 #ifdef WARPX_DIM_RZ
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
