@@ -7,6 +7,6 @@ add_warpx_test(
     2  # nprocs
     inputs_test_1d_fel  # inputs
     analysis_fel.py  # analysis
-    diags/diag1  # output
+    diags/diag_boostedframe  # output
     OFF  # dependency
 )
