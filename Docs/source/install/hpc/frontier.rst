@@ -170,6 +170,12 @@ Or in non-interactive runs:
    :language: bash
    :caption: You can copy this file from ``$HOME/src/warpx/Tools/machines/frontier-olcf/submit.sh``.
 
+Note that this script manually broadcasts the WarpX binary and the linked libraries to the local storage of each node,
+in order to reduce the overhead on Frontier's shared filesystems and on the simulation startup.
+This is achieved by using the ``sbcast`` utility and by modifying the ``LD_LIBRARY_PATH`` environment variable
+(see the `Frontier User Guide <https://docs.olcf.ornl.gov/systems/frontier_user_guide.html#sbcasting-a-binary-with-libraries-stored-on-shared-file-systems>`__) page on this topic.
+Broadcasting the WarpX binary and the linked libraries to the local storage of each node is highly recommended,
+especially for large-scale simulations (more than approximately 1000 nodes).
 
 .. _post-processing-frontier:
 
