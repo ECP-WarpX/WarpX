@@ -86,7 +86,7 @@ E_lab = gamma_boost * (Ex + c * beta_boost * By)
 Nz = len(info.z)
 fft_E = abs(np.fft.fft(E_lab))
 lambd = 1.0 / np.fft.fftfreq(Nz, d=info.dz)
-lambda_radiation_boost = lambd[fft_E[:Nz].argmax()]
+lambda_radiation_boost = lambd[fft_E[: Nz // 2].argmax()]
 lambda_radiation_lab = lambda_radiation_boost / (2 * gamma_boost)
 lambda_expected = lambda_u / (2 * gamma_boost**2)
 assert abs(lambda_radiation_lab - lambda_expected) / lambda_expected < 0.01
@@ -122,12 +122,12 @@ print("Gain length: ", Lg)
 assert abs(Lg - Lg_expected) / Lg_expected < 0.15
 
 # Check that the radiation wavelength is the expected one
-iteration_check = 18
+iteration_check = 14
 Ex, info = ts_lab.get_field("E", "x", iteration=iteration_check)
 Nz = len(info.z)
-fft_E = abs(np.fft.fft(E_lab))
+fft_E = abs(np.fft.fft(Ex))
 lambd = 1.0 / np.fft.fftfreq(Nz, d=info.dz)
-lambda_radiation_lab = lambd[fft_E[:Nz].argmax()]
+lambda_radiation_lab = lambd[fft_E[: Nz // 2].argmax()]
 lambda_expected = lambda_u / (2 * gamma_boost**2)
 print("lambda_radiation_lab", lambda_radiation_lab)
 print("lambda_expected", lambda_expected)
