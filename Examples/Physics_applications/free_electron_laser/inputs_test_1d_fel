@@ -13,7 +13,7 @@ algo.particle_pusher = vay
 # geometry
 geometry.dims = 1
 geometry.prob_hi = 0
-geometry.prob_lo = -150e-6
+geometry.prob_lo = -300e-6
 
 amr.max_grid_size = 64
 amr.max_level = 0

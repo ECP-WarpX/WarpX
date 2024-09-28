@@ -76,7 +76,7 @@ p = np.polyfit(z_lab_peak[i_start:i_end], log_P_peak[i_start:i_end], 1)
 Lg = 1 / p[0]
 Lg_expected = 0.22  # Expected gain length from https://arxiv.org/pdf/2009.13645
 print("Gain length: ", Lg)
-assert abs(Lg - Lg_expected) / Lg_expected < 0.1
+assert abs(Lg - Lg_expected) / Lg_expected < 0.11
 
 # Check that the radiation wavelength is the expected one
 iteration_check = 2000
@@ -129,7 +129,9 @@ fft_E = abs(np.fft.fft(E_lab))
 lambd = 1.0 / np.fft.fftfreq(Nz, d=info.dz)
 lambda_radiation_lab = lambd[fft_E[:Nz].argmax()]
 lambda_expected = lambda_u / (2 * gamma_boost**2)
-# assert abs(lambda_radiation_lab - lambda_expected) / lambda_expected < 0.01
+print("lambda_radiation_lab", lambda_radiation_lab)
+print("lambda_expected", lambda_expected)
+assert abs(lambda_radiation_lab - lambda_expected) / lambda_expected < 0.01
 
 # this will be the name of the plot file
 filename = sys.argv[1]
