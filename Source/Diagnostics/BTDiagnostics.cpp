@@ -69,6 +69,7 @@ void BTDiagnostics::DerivedInitData ()
     m_gamma_boost = WarpX::gamma_boost;
     m_beta_boost = std::sqrt( 1._rt - 1._rt/( m_gamma_boost * m_gamma_boost) );
     m_moving_window_dir = WarpX::moving_window_dir;
+    m_moving_window_beta = WarpX::moving_window_v/PhysConst::c;
     // Currently, for BTD, all the data is averaged+coarsened to coarsest level
     // and then sliced+back-transformed+filled_to_buffer.
     // The number of levels to be output is nlev_output.
@@ -138,7 +139,7 @@ void BTDiagnostics::DerivedInitData ()
     const int lev = 0;
     const amrex::Real dt_boosted_frame = warpx.getdt(lev);
     const int moving_dir = WarpX::moving_window_dir;
-    const amrex::Real Lz_lab = warpx.Geom(lev).ProbLength(moving_dir) / WarpX::gamma_boost / (1._rt+WarpX::beta_boost);
+    const amrex::Real Lz_lab = warpx.Geom(lev).ProbLength(moving_dir) * WarpX::gamma_boost * (1._rt - WarpX::beta_boost*m_moving_window_beta);
     const int ref_ratio = 1;
     const amrex::Real dz_snapshot_grid = dz_lab(dt_boosted_frame, ref_ratio);
     // Need enough buffers so the snapshot length is longer than the lab frame length
@@ -256,7 +257,7 @@ BTDiagnostics::ReadParameters ()
     bool snapshot_interval_is_specified = utils::parser::queryWithParser(
         pp_diag_name, "dt_snapshots_lab", m_dt_snapshots_lab);
     if ( utils::parser::queryWithParser(pp_diag_name, "dz_snapshots_lab", m_dz_snapshots_lab) ) {
-        m_dt_snapshots_lab = m_dz_snapshots_lab/PhysConst::c;
+        m_dt_snapshots_lab = m_dz_snapshots_lab/WarpX::moving_window_v;
         snapshot_interval_is_specified = true;
     }
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(snapshot_interval_is_specified,
@@ -338,8 +339,8 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
     // When restarting boosted simulations, the code below needs to take
     // into account the fact that the position of the box at the beginning
     // of the simulation, is not the one that we had at t=0 (because of the moving window)
-    const amrex::Real boosted_moving_window_v = (WarpX::moving_window_v - m_beta_boost*PhysConst::c)
-                                        / (1._rt - m_beta_boost * WarpX::moving_window_v/PhysConst::c);
+    const amrex::Real boosted_moving_window_v = (m_moving_window_beta - m_beta_boost)
+                                        / (1._rt - m_beta_boost * m_moving_window_beta);
     // Lab-frame time for the i^th snapshot
     if (!restart) {
         const amrex::Real zmax_0 = warpx.Geom(lev).ProbHi(m_moving_window_dir);
@@ -403,9 +404,9 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
     // Define buffer_domain in lab-frame for the i^th snapshot.
     // Replace z-dimension with lab-frame co-ordinates.
     const amrex::Real zmin_buffer_lab = ( diag_dom.lo(m_moving_window_dir) - boosted_moving_window_v * warpx.gett_new(0) )
-                                / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
+                                * (1.0_rt - m_beta_boost*m_moving_window_beta) * m_gamma_boost;
     const amrex::Real zmax_buffer_lab = ( diag_dom.hi(m_moving_window_dir) - boosted_moving_window_v * warpx.gett_new(0) )
-                                / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
+                                * (1.0_rt - m_beta_boost*m_moving_window_beta) * m_gamma_boost;
 
     // Initialize buffer counter and z-positions of the  i^th snapshot in
     // boosted-frame and lab-frame
