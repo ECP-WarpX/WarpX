@@ -340,12 +340,14 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
     // into account the fact that the position of the box at the beginning
     // of the simulation, is not the one that we had at t=0 (because of the moving window)
     const amrex::Real boosted_moving_window_v = (m_moving_window_beta - m_beta_boost)
-                                        / (1._rt - m_beta_boost * m_moving_window_beta);
+                                        / (1._rt - m_beta_boost*m_moving_window_beta);
     // Lab-frame time for the i^th snapshot
     if (!restart) {
-        const amrex::Real zmax_0 = warpx.Geom(lev).ProbHi(m_moving_window_dir);
+        const amrex::Real zmax_boost = warpx.Geom(lev).ProbHi(m_moving_window_dir);
         m_t_lab.at(i_buffer) = m_intervals.GetBTDIteration(i_buffer) * m_dt_snapshots_lab
-            + m_gamma_boost*m_beta_boost*zmax_0/PhysConst::c;
+            + m_gamma_boost*m_beta_boost*zmax_boost/PhysConst::c;
+            // Note: gamma_boost*beta_boost*zmax_boost is equal to
+            // beta_boost*zmax_lab/(1-beta_boost*beta_moving_window)
     }
 
     // Define buffer domain in boosted frame at level, lev, with user-defined lo and hi
