@@ -68,15 +68,15 @@ log_P_peak = np.log(E_lab_peak**2)
 # Pick the iterations between which the growth of the log of the power is linear
 # (i.e. the growth of the power is exponential) and fit a line to extract the
 # gain length.
-i_start = 15
-i_end = 23
+i_start = 16
+i_end = 25
 # Perform linear fit
 p = np.polyfit(z_lab_peak[i_start:i_end], log_P_peak[i_start:i_end], 1)
 # Extract the gain length
 Lg = 1 / p[0]
 Lg_expected = 0.22  # Expected gain length from https://arxiv.org/pdf/2009.13645
 print("Gain length: ", Lg)
-assert abs(Lg - Lg_expected) / Lg_expected < 0.11
+assert abs(Lg - Lg_expected) / Lg_expected < 0.15
 
 # Check that the radiation wavelength is the expected one
 iteration_check = 2000

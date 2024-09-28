@@ -40,6 +40,7 @@ diag_labframe.diag_type = BackTransformed
 diag_labframe.num_snapshots_lab = 20
 diag_labframe.dz_snapshots_lab = 0.1
 diag_labframe.format = openpmd
+diag_labframe.buffer_size = 64
 
 # Run the simulation long enough for
 # all backtransformed diagnostic to be complete
@@ -58,8 +59,8 @@ electrons.density = 2.7e19/2
 electrons.ux = 0.0
 electrons.uy = 0.0
 electrons.uz = gamma_bunch
-electrons.zmax = -50e-6
-electrons.zmin = -150e-6
+electrons.zmax = -25e-6
+electrons.zmin = -125e-6
 electrons.zinject_plane=0.0
 electrons.rigid_advance=0
 
@@ -73,8 +74,8 @@ positrons.density = 2.7e19/2
 positrons.ux = 0.0
 positrons.uy = 0.0
 positrons.uz = gamma_bunch
-positrons.zmax = -50e-6
-positrons.zmin = -150e-6
+positrons.zmax = -25e-6
+positrons.zmin = -125e-6
 positrons.zinject_plane=0.0
 positrons.rigid_advance=0
 
