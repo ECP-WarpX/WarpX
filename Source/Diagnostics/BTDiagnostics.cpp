@@ -150,22 +150,21 @@ void BTDiagnostics::DerivedInitData ()
     // the final snapshot starts filling when the
     // right edge of the moving window intersects the final snapshot
     // time of final snapshot : t_sn = t0 + i*dt_snapshot
-    // where t0 is the time of first BTD snapshot, t0 = zmax / c  * beta / (1-beta)
+    // where t0 is the time of first BTD snapshot, t0 = zmax / c  * beta / (1-beta*beta_mw)
     //
     // the right edge of the moving window at the time of the final snapshot
     // has space time coordinates
-    // time t_intersect = t_sn, position  z_intersect=zmax + c*t_sn
+    // time t_intersect = t_sn, position  z_intersect=zmax + v_mw*t_sn
     // the boosted time of this space time pair is
     // t_intersect_boost = gamma * (t_intersect - beta * z_intersect_boost/c)
-    //                   = gamma * (t_sn * (1 - beta) - beta * zmax / c)
-    //                   = gamma * (zmax*beta/c + i*dt_snapshot*(1-beta) - beta*zmax/c)
-    //                   = gamma * i * dt_snapshot * (1-beta)
-    //                   = i * dt_snapshot / gamma / (1+beta)
+    //                   = gamma * (t_sn * (1 - beta*beta_mw) - beta * zmax / c)
+    //                   = gamma * (zmax*beta/c + i*dt_snapshot*(1-beta*beta_mw) - beta*zmax/c)
+    //                   = gamma * (1-beta*beta_mw) * i * dt_snapshot
     //
     // if j = final snapshot starting step, then we want to solve
-    // j dt_boosted_frame >= t_intersect_boost = i * dt_snapshot / gamma / (1+beta)
-    // j >= i / gamma / (1+beta) * dt_snapshot / dt_boosted_frame
-    const int final_snapshot_starting_step = static_cast<int>(std::ceil(final_snapshot_iteration / WarpX::gamma_boost / (1._rt+WarpX::beta_boost) * m_dt_snapshots_lab / dt_boosted_frame));
+    // j dt_boosted_frame >= t_intersect_boost = i * gamma * (1-beta*beta_mw) * dt_snapshot
+    // j >= i * gamma * (1-beta*beta_mw) * dt_snapshot / dt_boosted_frame
+    const int final_snapshot_starting_step = static_cast<int>(std::ceil(final_snapshot_iteration * WarpX::gamma_boost * (1._rt - WarpX::beta_boost*m_moving_window_beta) * m_dt_snapshots_lab / dt_boosted_frame));
     const int final_snapshot_fill_iteration = final_snapshot_starting_step + num_buffers * m_buffer_size - 1;
     const amrex::Real final_snapshot_fill_time = final_snapshot_fill_iteration * dt_boosted_frame;
     if (WarpX::compute_max_step_from_btd) {
