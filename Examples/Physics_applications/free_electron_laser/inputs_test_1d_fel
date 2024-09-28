@@ -13,11 +13,11 @@ algo.particle_pusher = vay
 # geometry
 geometry.dims = 1
 geometry.prob_hi = 0
-geometry.prob_lo = -300e-6
+geometry.prob_lo = -192e-6
 
 amr.max_grid_size = 64
 amr.max_level = 0
-amr.n_cell = 1600
+amr.n_cell = 1024
 
 # boundary
 boundary.field_hi = absorbing_silver_mueller
