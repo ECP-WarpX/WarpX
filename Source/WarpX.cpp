@@ -200,6 +200,10 @@ void WarpX::MakeWarpX ()
 {
     ParseGeometryInput();
 
+    ReadMovingWindowParameters(
+        do_moving_window, start_moving_window_step, end_moving_window_step,
+        moving_window_dir, moving_window_v);
+
     ConvertLabParamsToBoost();
     ReadBCParams();
 
@@ -623,42 +627,11 @@ WarpX::ReadParameters ()
         pp_warpx.query("compute_max_step_from_btd",
             compute_max_step_from_btd);
 
-        pp_warpx.query("do_moving_window", do_moving_window);
-        if (do_moving_window)
-        {
-            utils::parser::queryWithParser(
-                pp_warpx, "start_moving_window_step", start_moving_window_step);
-            utils::parser::queryWithParser(
-                pp_warpx, "end_moving_window_step", end_moving_window_step);
-            std::string s;
-            pp_warpx.get("moving_window_dir", s);
-
-            if (s == "z" || s == "Z") {
-                moving_window_dir = WARPX_ZINDEX;
-            }
-#if defined(WARPX_DIM_3D)
-            else if (s == "y" || s == "Y") {
-                moving_window_dir = 1;
-            }
-#endif
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_3D)
-            else if (s == "x" || s == "X") {
-                moving_window_dir = 0;
-            }
-#endif
-
-            else {
-                WARPX_ABORT_WITH_MESSAGE("Unknown moving_window_dir: "+s);
-            }
-
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(Geom(0).isPeriodic(moving_window_dir) == 0,
-                       "The problem must be non-periodic in the moving window direction");
-
+        if (do_moving_window) {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                Geom(0).isPeriodic(moving_window_dir) == 0,
+                "The problem must be non-periodic in the moving window direction");
             moving_window_x = geom[0].ProbLo(moving_window_dir);
-
-            utils::parser::getWithParser(
-                pp_warpx, "moving_window_v", moving_window_v);
-            moving_window_v *= PhysConst::c;
         }
 
         m_p_ext_field_params = std::make_unique<ExternalFieldParams>(pp_warpx);

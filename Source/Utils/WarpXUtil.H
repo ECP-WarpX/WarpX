@@ -33,6 +33,10 @@ void ParseGeometryInput();
 void ReadBoostedFrameParameters(amrex::Real& gamma_boost, amrex::Real& beta_boost,
                                 amrex::Vector<int>& boost_direction);
 
+void ReadMovingWindowParameters(
+    int& do_moving_window, int& start_moving_window_step, int& end_moving_window_step,
+    int& moving_window_dir, amrex::Real& moving_window_v);
+
 void ConvertLabParamsToBoost();
 
 /**
