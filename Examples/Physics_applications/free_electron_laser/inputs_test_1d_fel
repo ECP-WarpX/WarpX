@@ -15,7 +15,7 @@ geometry.dims = 1
 geometry.prob_hi = 0
 geometry.prob_lo = -192e-6
 
-amr.max_grid_size = 64
+amr.max_grid_size = 1024
 amr.max_level = 0
 amr.n_cell = 1024
 
