@@ -37,7 +37,7 @@ diag_boostedframe.intervals = 100
 # Diagnostic that show quantities
 # reconstructed in the lab frame
 diag_labframe.diag_type = BackTransformed
-diag_labframe.num_snapshots_lab = 17
+diag_labframe.num_snapshots_lab = 25
 diag_labframe.dz_snapshots_lab = 0.1
 diag_labframe.format = openpmd
 diag_labframe.buffer_size = 64
