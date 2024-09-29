@@ -174,8 +174,9 @@ computeSemiImplicitPhi (
         if (boundary_handler.phi_EB_only_t) {
             linop.setEBDirichlet(boundary_handler.potential_eb_t(current_time.value()));
         }
-        else
+        else {
             linop.setEBDirichlet(boundary_handler.getPhiEB(current_time.value()));
+        }
 #endif
         linop.setSigma(lev, sigma);
 

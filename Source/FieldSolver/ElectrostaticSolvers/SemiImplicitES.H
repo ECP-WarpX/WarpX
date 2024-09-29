@@ -15,15 +15,6 @@
 #include <ablastr/coarsen/sample.H>
 #include <ablastr/fields/SemiImplicitPoissonSolver.H>
 
-// #include "Particles/MultiParticleContainer.H"
-// #include "Utils/WarpXConst.H"
-// #include "Utils/WarpXProfilerWrapper.H"
-// #include "WarpX.H"
-
-// #include <ablastr/coarsen/sample.H>
-// #include <ablastr/utils/Communication.H>
-// #include <ablastr/warn_manager/WarnManager.H>
-
 class SemiImplicitES final : public ElectrostaticSolver
 {
 public:
@@ -55,7 +46,7 @@ public:
      *  \f]
      * \param[out] phi The potential to be computed by this function
      * \param[in] rho The total charge density
-     * \param[in] sigma Represents the modified
+     * \param[in] sigma Represents the modified dielectric
      * \param[in] required_precision The relative convergence threshold for the MLMG solver
      * \param[in] absolute_tolerance The absolute convergence threshold for the MLMG solver
      * \param[in] max_iters The maximum number of iterations allowed for the MLMG solver

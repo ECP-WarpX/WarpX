@@ -11,7 +11,6 @@
 #include <Diagnostics/MultiDiagnostics.H>
 #include <Diagnostics/ReducedDiags/MultiReducedDiags.H>
 #include <EmbeddedBoundary/WarpXFaceInfoBox.H>
-#include "FieldSolver/ElectrostaticSolvers/SemiImplicitES.H"
 #include <FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H>
 #include <FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H>
 #include <FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H>
