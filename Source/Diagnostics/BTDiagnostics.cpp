@@ -1001,12 +1001,15 @@ BTDiagnostics::GetZSliceInDomainFlag (const int i_buffer, const int lev)
 {
     auto & warpx = WarpX::GetInstance();
     const amrex::RealBox& boost_domain = warpx.Geom(lev).ProbDomain();
+    const amrex::Real boost_cellsize = warpx.Geom(lev).CellSize(m_moving_window_dir);
     const amrex::Real buffer_zmin_lab = m_snapshot_domain_lab[i_buffer].lo( m_moving_window_dir );
     const amrex::Real buffer_zmax_lab = m_snapshot_domain_lab[i_buffer].hi( m_moving_window_dir );
 
+    // Exclude 0.5*boost_cellsize from the edge, to avoid that the interpolation to
+    // cell centers uses data from the guard cells.
     const bool slice_not_in_domain =
-        ( m_current_z_boost[i_buffer] <= boost_domain.lo(m_moving_window_dir) ) ||
-        ( m_current_z_boost[i_buffer] >= boost_domain.hi(m_moving_window_dir) ) ||
+        ( m_current_z_boost[i_buffer] <= boost_domain.lo(m_moving_window_dir) + 0.5_rt*boost_cellsize) ||
+        ( m_current_z_boost[i_buffer] >= boost_domain.hi(m_moving_window_dir) - 0.5_rt*boost_cellsize) ||
         ( m_current_z_lab[i_buffer] <= buffer_zmin_lab ) ||
         ( m_current_z_lab[i_buffer] >= buffer_zmax_lab );
 
