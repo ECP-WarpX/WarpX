@@ -14,13 +14,14 @@
 #include "Diagnostics/Diagnostics.H"
 #include "Diagnostics/FlushFormats/FlushFormat.H"
 #include "ComputeDiagFunctors/BackTransformParticleFunctor.H"
-#include "FieldSolver/Fields.H"
+#include "Fields.H"
 #include "Utils/Algorithms/IsIn.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "WarpX.H"
 
+#include <ablastr/fields/MultiFabRegister.H>
 #include <ablastr/coarsen/sample.H>
 #include <ablastr/utils/Communication.H>
 #include <ablastr/utils/SignalHandling.H>
@@ -47,7 +48,7 @@
 #include <vector>
 
 using namespace amrex::literals;
-using namespace warpx::fields;
+using warpx::fields::FieldType;
 
 namespace
 {
@@ -55,7 +56,8 @@ namespace
 }
 
 BTDiagnostics::BTDiagnostics (int i, const std::string& name)
-    : Diagnostics{i, name}
+    : Diagnostics{i, name},
+      m_cell_centered_data_name("BTD_cell_centered_data_" + name)
 {
     ReadParameters();
 }
@@ -82,7 +84,6 @@ void BTDiagnostics::DerivedInitData ()
     m_old_z_boost.resize(m_num_buffers);
     m_buffer_counter.resize(m_num_buffers);
     m_snapshot_ncells_lab.resize(m_num_buffers);
-    m_cell_centered_data.resize(nmax_lev);
     m_cell_center_functors.resize(nmax_lev);
     m_max_buffer_multifabs.resize(m_num_buffers);
     m_buffer_flush_counter.resize(m_num_buffers);
@@ -170,18 +171,18 @@ void BTDiagnostics::DerivedInitData ()
         if (final_snapshot_fill_iteration > warpx.maxStep()) {
             warpx.updateMaxStep(final_snapshot_fill_iteration);
             amrex::Print()<<"max_step insufficient to fill all BTD snapshots. Automatically increased to: "
-                << final_snapshot_fill_iteration << std::endl;
+                << final_snapshot_fill_iteration << "\n";
 
         }
         if (final_snapshot_fill_time > warpx.stopTime()) {
             warpx.updateStopTime(final_snapshot_fill_time);
             amrex::Print()<<"stop_time insufficient to fill all BTD snapshots. Automatically increased to: "
-                << final_snapshot_fill_time << std::endl;
+                << final_snapshot_fill_time << "\n";
 
         }
         if (warpx.maxStep() == std::numeric_limits<int>::max() && warpx.stopTime() == std::numeric_limits<amrex::Real>::max()) {
             amrex::Print()<<"max_step unspecified and stop time unspecified.  Setting max step to "
-                <<final_snapshot_fill_iteration<< " to fill all BTD snapshots." << std::endl;
+                <<final_snapshot_fill_iteration<< " to fill all BTD snapshots.\n";
             warpx.updateMaxStep(final_snapshot_fill_iteration);
         }
 
@@ -518,13 +519,18 @@ BTDiagnostics::DefineCellCenteredMultiFab(int lev)
 #else
     const int ncomps = static_cast<int>(m_cellcenter_varnames.size());
 #endif
-    WarpX::AllocInitMultiFab(m_cell_centered_data[lev], ba, dmap, ncomps, amrex::IntVect(ngrow), lev, "cellcentered_BTD", 0._rt);
+    bool const remake = false;
+    bool const redistribute_on_remake = false;
+    warpx.m_fields.alloc_init(m_cell_centered_data_name, lev, ba, dmap, ncomps, amrex::IntVect(ngrow), 0.0_rt,
+                              remake, redistribute_on_remake);
 
 }
 
 void
 BTDiagnostics::InitializeFieldFunctors (int lev)
 {
+    using ablastr::fields::Direction;
+
     // Initialize fields functors only if do_back_transformed_fields is selected
     if (!m_do_back_transformed_fields) { return; }
 
@@ -537,12 +543,14 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
 #else
 
     auto & warpx = WarpX::GetInstance();
+    auto & fields = warpx.m_fields;
+
     // Clear any pre-existing vector to release stored data
     // This ensures that when domain is load-balanced, the functors point
     // to the correct field-data pointers
     m_all_field_functors[lev].clear();
     // For back-transformed data, all the components are cell-centered and stored
-    // in a single multifab, m_cell_centered_data.
+    // in a single multifab.
     // Therefore, size of functors at all levels is 1.
     const int num_BT_functors = 1;
     m_all_field_functors[lev].resize(num_BT_functors);
@@ -551,11 +559,11 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
     // Create an object of class BackTransformFunctor
     for (int i = 0; i < num_BT_functors; ++i)
     {
-        // coarsening ratio is not provided since the source MultiFab, m_cell_centered_data
+        // coarsening ratio is not provided since the source MultiFab
         // is coarsened based on the user-defined m_crse_ratio
         const int nvars = static_cast<int>(m_varnames.size());
         m_all_field_functors[lev][i] = std::make_unique<BackTransformFunctor>(
-                  m_cell_centered_data[lev].get(), lev,
+                  fields.get(m_cell_centered_data_name, lev), lev,
                   nvars, m_num_buffers, m_varnames, m_varnames_fields);
     }
 
@@ -567,23 +575,23 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
         m_cell_center_functors.at(lev).size());
     for (int comp=0; comp<m_cell_center_functors_at_lev_size; comp++){
         if        ( m_cellcenter_varnames[comp] == "Ex" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Efield_aux, lev, 0), lev, m_crse_ratio);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(fields.get(FieldType::Efield_aux, Direction{0}, lev), lev, m_crse_ratio);
         } else if ( m_cellcenter_varnames[comp] == "Ey" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Efield_aux, lev, 1), lev, m_crse_ratio);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(fields.get(FieldType::Efield_aux, Direction{1}, lev), lev, m_crse_ratio);
         } else if ( m_cellcenter_varnames[comp] == "Ez" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Efield_aux, lev, 2), lev, m_crse_ratio);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(fields.get(FieldType::Efield_aux, Direction{2}, lev), lev, m_crse_ratio);
         } else if ( m_cellcenter_varnames[comp] == "Bx" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Bfield_aux, lev, 0), lev, m_crse_ratio);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(fields.get(FieldType::Bfield_aux, Direction{0}, lev), lev, m_crse_ratio);
         } else if ( m_cellcenter_varnames[comp] == "By" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Bfield_aux, lev, 1), lev, m_crse_ratio);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(fields.get(FieldType::Bfield_aux, Direction{1}, lev), lev, m_crse_ratio);
         } else if ( m_cellcenter_varnames[comp] == "Bz" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Bfield_aux, lev, 2), lev, m_crse_ratio);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(fields.get(FieldType::Bfield_aux, Direction{2}, lev), lev, m_crse_ratio);
         } else if ( m_cellcenter_varnames[comp] == "jx" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::current_fp, lev, 0), lev, m_crse_ratio);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(fields.get(FieldType::current_fp,Direction{0}, lev), lev, m_crse_ratio);
         } else if ( m_cellcenter_varnames[comp] == "jy" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::current_fp, lev, 1), lev, m_crse_ratio);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(fields.get(FieldType::current_fp,Direction{1}, lev), lev, m_crse_ratio);
         } else if ( m_cellcenter_varnames[comp] == "jz" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::current_fp, lev, 2), lev, m_crse_ratio);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(fields.get(FieldType::current_fp,Direction{2}, lev), lev, m_crse_ratio);
         } else if ( m_cellcenter_varnames[comp] == "rho" ){
             m_cell_center_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio);
         }
@@ -598,7 +606,9 @@ BTDiagnostics::UpdateVarnamesForRZopenPMD ()
 {
 #ifdef WARPX_DIM_RZ
     auto & warpx = WarpX::GetInstance();
-    const int ncomp_multimodefab = warpx.getFieldPointer(FieldType::Efield_aux, 0,0)->nComp();
+    auto & fields = warpx.m_fields;
+    using ablastr::fields::Direction;
+    const int ncomp_multimodefab = fields.get(FieldType::Efield_aux, Direction{0}, 0)->nComp();
     const int ncomp = ncomp_multimodefab;
 
 
@@ -656,22 +666,25 @@ void
 BTDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
 {
 #ifdef WARPX_DIM_RZ
+    using ablastr::fields::Direction;
+
     auto & warpx = WarpX::GetInstance();
-    const int ncomp_multimodefab = warpx.getFieldPointer(FieldType::Efield_aux, 0,0)->nComp();
+    auto & fields = warpx.m_fields;
+    const int ncomp_multimodefab = fields.get(FieldType::Efield_aux, Direction{0}, 0)->nComp();
     const int ncomp = ncomp_multimodefab;
     // Clear any pre-existing vector to release stored data
     // This ensures that when domain is load-balanced, the functors point
     // to the correct field-data pointers
     m_all_field_functors[lev].clear();
     // For back-transformed data, all the components are cell-centered and stored
-    // in a single multifab, m_cell_centered_data.
+    // in a single MultiFab.
     // Therefore, size of functors at all levels is 1
     const int num_BT_functors = 1;
     m_all_field_functors[lev].resize(num_BT_functors);
     for (int i = 0; i < num_BT_functors; ++i) {
         const int nvars = static_cast<int>(m_varnames.size());
         m_all_field_functors[lev][i] = std::make_unique<BackTransformFunctor>(
-                                       m_cell_centered_data[lev].get(), lev,
+                                       fields.get(m_cell_centered_data_name, lev), lev,
                                        nvars, m_num_buffers, m_varnames,
                                        m_varnames_fields);
     }
@@ -683,23 +696,23 @@ BTDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
     const auto m_cell_center_functors_at_lev_size = static_cast<int>(m_cell_center_functors.at(lev).size());
     for (int comp=0; comp<m_cell_center_functors_at_lev_size; comp++){
         if        ( m_cellcenter_varnames_fields[comp] == "Er" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Efield_aux, lev, 0), lev, m_crse_ratio, false, ncomp);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(fields.get(FieldType::Efield_aux, Direction{0}, lev), lev, m_crse_ratio, false, ncomp);
         } else if ( m_cellcenter_varnames_fields[comp] == "Et" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Efield_aux, lev, 1), lev, m_crse_ratio, false, ncomp);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(fields.get(FieldType::Efield_aux, Direction{1}, lev), lev, m_crse_ratio, false, ncomp);
         } else if ( m_cellcenter_varnames_fields[comp] == "Ez" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Efield_aux, lev, 2), lev, m_crse_ratio, false, ncomp);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(fields.get(FieldType::Efield_aux, Direction{2}, lev), lev, m_crse_ratio, false, ncomp);
         } else if ( m_cellcenter_varnames_fields[comp] == "Br" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Bfield_aux, lev, 0), lev, m_crse_ratio, false, ncomp);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(fields.get(FieldType::Bfield_aux, Direction{0}, lev), lev, m_crse_ratio, false, ncomp);
         } else if ( m_cellcenter_varnames_fields[comp] == "Bt" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Bfield_aux, lev, 1), lev, m_crse_ratio, false, ncomp);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(fields.get(FieldType::Bfield_aux, Direction{1}, lev), lev, m_crse_ratio, false, ncomp);
         } else if ( m_cellcenter_varnames_fields[comp] == "Bz" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::Bfield_aux, lev, 2), lev, m_crse_ratio, false, ncomp);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(fields.get(FieldType::Bfield_aux, Direction{2}, lev), lev, m_crse_ratio, false, ncomp);
         } else if ( m_cellcenter_varnames_fields[comp] == "jr" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::current_fp, lev, 0), lev, m_crse_ratio, false, ncomp);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(fields.get(FieldType::current_fp, Direction{0}, lev), lev, m_crse_ratio, false, ncomp);
         } else if ( m_cellcenter_varnames_fields[comp] == "jt" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::current_fp, lev, 1), lev, m_crse_ratio, false, ncomp);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(fields.get(FieldType::current_fp, Direction{1}, lev), lev, m_crse_ratio, false, ncomp);
         } else if ( m_cellcenter_varnames_fields[comp] == "jz" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFieldPointer(FieldType::current_fp, lev, 2), lev, m_crse_ratio, false, ncomp);
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(fields.get(FieldType::current_fp, Direction{2}, lev), lev, m_crse_ratio, false, ncomp);
         } else if ( m_cellcenter_varnames_fields[comp] == "rho" ){
             m_cell_center_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, false, -1, false, ncomp);
         }
@@ -789,6 +802,8 @@ BTDiagnostics::PrepareFieldDataForOutput ()
     if (!m_do_back_transformed_fields) { return; }
 
     auto & warpx = WarpX::GetInstance();
+    auto & fields = warpx.m_fields;
+
     // In this function, we will get cell-centered data for every level, lev,
     // using the cell-center functors and their respective operators()
     // Call m_cell_center_functors->operator
@@ -798,21 +813,23 @@ BTDiagnostics::PrepareFieldDataForOutput ()
         for (int icomp = 0; icomp<m_cell_center_fuctors_at_lev_size; ++icomp) {
             // Call all the cell-center functors in m_cell_center_functors.
             // Each of them computes cell-centered data for a field and
-            // stores it in cell-centered MultiFab, m_cell_centered_data[lev].
-            m_cell_center_functors[lev][icomp]->operator()(*m_cell_centered_data[lev], icomp_dst);
+            // stores it in cell-centered MultiFab.
+            m_cell_center_functors[lev][icomp]->operator()(*fields.get(m_cell_centered_data_name, lev), icomp_dst);
             icomp_dst += m_cell_center_functors[lev][icomp]->nComp();
         }
         // Check that the proper number of user-requested components are cell-centered
         AMREX_ALWAYS_ASSERT( icomp_dst == m_cellcenter_varnames.size() );
         // fill boundary call is required to average_down (flatten) data to
         // the coarsest level.
-        ablastr::utils::communication::FillBoundary(*m_cell_centered_data[lev], WarpX::do_single_precision_comms,
+        ablastr::utils::communication::FillBoundary(*fields.get(m_cell_centered_data_name, lev),
+                                                    WarpX::do_single_precision_comms,
                                                     warpx.Geom(lev).periodicity());
     }
     // Flattening out MF over levels
 
     for (int lev = warpx.finestLevel(); lev > 0; --lev) {
-        ablastr::coarsen::sample::Coarsen(*m_cell_centered_data[lev - 1], *m_cell_centered_data[lev], 0, 0,
+        ablastr::coarsen::sample::Coarsen(*fields.get(m_cell_centered_data_name, lev - 1),
+                                          *fields.get(m_cell_centered_data_name, lev), 0, 0,
                                           static_cast<int>(m_cellcenter_varnames.size()), 0, WarpX::RefRatio(lev-1) );
     }
 

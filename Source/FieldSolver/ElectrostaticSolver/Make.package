@@ -1,3 +1,0 @@
-CEXE_sources += SemiImplicitSolver.cpp
-
-VPATH_LOCATIONS   += $(WARPX_HOME)/Source/FieldSolver/ElectrostaticSolver

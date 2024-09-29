@@ -4,6 +4,7 @@
 #include "ComputeDiagFunctors/BackTransformParticleFunctor.H"
 #include "Diagnostics/FlushFormats/FlushFormat.H"
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
+#include "FlushFormats/FlushFormatCatalyst.H"
 #include "FlushFormats/FlushFormatAscent.H"
 #include "FlushFormats/FlushFormatCheckpoint.H"
 #ifdef WARPX_USE_OPENPMD
@@ -229,8 +230,9 @@ Diagnostics::BaseReadParameters ()
        if (WarpX::boost_direction[ dim_map[WarpX::moving_window_dir] ] == 1) {
            // Convert user-defined lo and hi for diagnostics to account for boosted-frame
            // simulations with moving window
-           const amrex::Real convert_factor = 1._rt/(WarpX::gamma_boost * (1._rt - WarpX::beta_boost) );
-           // Assuming that the window travels with speed c
+           const amrex::Real beta_window = WarpX::moving_window_v / PhysConst::c;
+           const amrex::Real convert_factor = 1._rt/(
+               WarpX::gamma_boost * (1._rt - WarpX::beta_boost * beta_window) );
            m_lo[WarpX::moving_window_dir] *= convert_factor;
            m_hi[WarpX::moving_window_dir] *= convert_factor;
        }
@@ -506,7 +508,9 @@ Diagnostics::InitBaseData ()
         m_flush_format = std::make_unique<FlushFormatCheckpoint>() ;
     } else if (m_format == "ascent"){
         m_flush_format = std::make_unique<FlushFormatAscent>();
-    } else if (m_format == "sensei"){
+    } else if (m_format == "catalyst") {
+        m_flush_format = std::make_unique<FlushFormatCatalyst>();
+    } else if (m_format == "sensei") {
 #ifdef AMREX_USE_SENSEI_INSITU
         m_flush_format = std::make_unique<FlushFormatSensei>(
             dynamic_cast<amrex::AmrMesh*>(const_cast<WarpX*>(&warpx)),

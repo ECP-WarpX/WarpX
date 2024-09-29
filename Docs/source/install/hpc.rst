@@ -43,6 +43,7 @@ This section documents quick-start guides for a selection of supercomputers that
    hpc/lassen
    hpc/lawrencium
    hpc/leonardo
+   hpc/lonestar6
    hpc/lumi
    hpc/lxplus
    hpc/ookami
@@ -50,9 +51,9 @@ This section documents quick-start guides for a selection of supercomputers that
    hpc/pitzer
    hpc/polaris
    hpc/quartz
-   hpc/spock
    hpc/summit
    hpc/taurus
+   hpc/tioga
 
 .. tip::
 

@@ -16,7 +16,7 @@
 #include "Diagnostics/MultiDiagnostics_fwd.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags_fwd.H"
 #include "EmbeddedBoundary/WarpXFaceInfoBox_fwd.H"
-#include "FieldSolver/ElectrostaticSolver/SemiImplicitSolver_fwd.H"
+#include "FieldSolver/ElectrostaticSolvers/ElectrostaticSolver_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel_fwd.H"
@@ -39,8 +39,7 @@
 #include "AcceleratorLattice/AcceleratorLattice.H"
 #include "Evolve/WarpXDtType.H"
 #include "Evolve/WarpXPushType.H"
-#include "FieldSolver/Fields.H"
-#include "FieldSolver/ElectrostaticSolver.H"
+#include "Fields.H"
 #include "FieldSolver/MagnetostaticSolver/MagnetostaticSolver.H"
 #include "FieldSolver/ImplicitSolvers/ImplicitSolver.H"
 #include "FieldSolver/ImplicitSolvers/WarpXSolverVec.H"
@@ -50,6 +49,7 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/export.H"
 
+#include <ablastr/fields/MultiFabRegister.H>
 #include <ablastr/utils/Enums.H>
 
 #include <AMReX.H>
@@ -85,7 +85,6 @@ class WARPX_EXPORT WarpX
     : public amrex::AmrCore
 {
 public:
-
     static WarpX& GetInstance ();
 
     static void ResetInstance ();
@@ -105,9 +104,9 @@ public:
     WarpX& operator= ( WarpX const & ) = delete;
 
     /** Move constructor */
-    WarpX ( WarpX && ) = default;
+    WarpX ( WarpX && ) = delete;
     /** Move operator */
-    WarpX& operator= ( WarpX && ) = default;
+    WarpX& operator= ( WarpX && ) = delete;
 
     static std::string Version (); //!< Version of WarpX executable
     static std::string PicsarVersion (); //!< Version of PICSAR dependency
@@ -117,6 +116,11 @@ public:
     void InitData ();
 
     void Evolve (int numsteps = -1);
+
+    /** Push momentum one half step forward to synchronize with position.
+     *  Also sets is_synchronized to `true`.
+     */
+    void Synchronize ();
 
     //
     // Functions used by implicit solvers
@@ -128,14 +132,14 @@ public:
     void SaveParticlesAtImplicitStepStart ();
     void FinishImplicitParticleUpdate ();
     void SetElectricFieldAndApplyBCs ( const WarpXSolverVec&  a_E );
-    void UpdateMagneticFieldAndApplyBCs ( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& a_Bn,
-                               amrex::Real a_thetadt );
+    void UpdateMagneticFieldAndApplyBCs ( ablastr::fields::MultiLevelVectorField const&  a_Bn,
+                                          amrex::Real  a_thetadt );
     void ApplyMagneticFieldBCs ();
-    void FinishMagneticFieldAndApplyBCs ( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& a_Bn,
-                               amrex::Real a_theta );
-    void FinishImplicitField ( amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_fp,
-                         const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_n,
-                         amrex::Real theta );
+    void FinishMagneticFieldAndApplyBCs ( ablastr::fields::MultiLevelVectorField const&  a_Bn,
+                                          amrex::Real  a_theta );
+    void FinishImplicitField ( const ablastr::fields::MultiLevelVectorField&  Field_fp,
+                               const ablastr::fields::MultiLevelVectorField&  Field_n,
+                               amrex::Real  theta );
     void ImplicitComputeRHSE (         amrex::Real dt, WarpXSolverVec& a_Erhs_vec);
     void ImplicitComputeRHSE (int lev, amrex::Real dt, WarpXSolverVec& a_Erhs_vec);
     void ImplicitComputeRHSE (int lev, PatchType patch_type, amrex::Real dt, WarpXSolverVec& a_Erhs_vec);
@@ -143,11 +147,15 @@ public:
     MultiParticleContainer& GetPartContainer () { return *mypc; }
     MultiFluidContainer& GetFluidContainer () { return *myfl; }
     MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
+    ElectrostaticSolver& GetElectrostaticSolver () {return *m_electrostatic_solver;}
     HybridPICModel& GetHybridPICModel () { return *m_hybrid_pic_model; }
     [[nodiscard]] HybridPICModel * get_pointer_HybridPICModel () const { return m_hybrid_pic_model.get(); }
     MultiDiagnostics& GetMultiDiags () {return *multi_diags;}
 #ifdef AMREX_USE_EB
-    amrex::Vector<std::unique_ptr<amrex::MultiFab> >& GetDistanceToEB () {return m_distance_to_eb;}
+    ablastr::fields::MultiLevelScalarField GetDistanceToEB () {
+        using warpx::fields::FieldType;
+        return m_fields.get_mr_levels(FieldType::distance_to_eb, finestLevel());
+    }
 #endif
     ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_boundary_buffer; }
 
@@ -171,17 +179,17 @@ public:
 
     // Algorithms
     //! Integer that corresponds to the current deposition algorithm (Esirkepov, direct, Vay, Villasenor)
-    static short current_deposition_algo;
+    static inline auto current_deposition_algo = CurrentDepositionAlgo::Default;
     //! Integer that corresponds to the charge deposition algorithm (only standard deposition)
-    static short charge_deposition_algo;
+    static inline auto charge_deposition_algo = ChargeDepositionAlgo::Default;
     //! Integer that corresponds to the field gathering algorithm (energy-conserving, momentum-conserving)
-    static short field_gathering_algo;
+    static inline auto field_gathering_algo = GatheringAlgo::Default;
     //! Integer that corresponds to the particle push algorithm (Boris, Vay, Higuera-Cary)
-    static short particle_pusher_algo;
+    static inline auto particle_pusher_algo = ParticlePusherAlgo::Default;
     //! Integer that corresponds to the type of Maxwell solver (Yee, CKC, PSATD, ECT)
-    static short electromagnetic_solver_id;
+    static inline auto electromagnetic_solver_id = ElectromagneticSolverAlgo::Default;
     //! Integer that corresponds to the evolve scheme (explicit, semi_implicit_em, theta_implicit_em)
-    static short evolve_scheme;
+    static inline auto evolve_scheme = EvolveScheme::Default;
     //! Maximum iterations used for self-consistent particle update in implicit particle-suppressed evolve schemes
     static int max_particle_its_in_implicit_scheme;
     //! Relative tolerance used for self-consistent particle update in implicit particle-suppressed evolve schemes
@@ -189,43 +197,55 @@ public:
     /** Records a number corresponding to the load balance cost update strategy
      *  being used (0 or 1 corresponding to timers or heuristic).
      */
-    static short load_balance_costs_update_algo;
+    static inline auto load_balance_costs_update_algo = LoadBalanceCostsUpdateAlgo::Default;
     //! Integer that corresponds to electromagnetic Maxwell solver (vacuum - 0, macroscopic - 1)
-    static int em_solver_medium;
+    static inline auto em_solver_medium = MediumForEM::Default;
     /** Integer that correspond to macroscopic Maxwell solver algorithm
      *  (BackwardEuler - 0, Lax-Wendroff - 1)
      */
-    static int macroscopic_solver_algo;
+    static inline auto macroscopic_solver_algo = MacroscopicSolverAlgo::Default;
     /** Integers that correspond to boundary condition applied to fields at the
      *  lower domain boundaries
      *  (0 to 6 correspond to PML, Periodic, PEC, PMC, Damped, Absorbing Silver-Mueller, None)
      */
-    static amrex::Vector<FieldBoundaryType> field_boundary_lo;
+    static inline amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>
+        field_boundary_lo {AMREX_D_DECL(FieldBoundaryType::Default,
+                                        FieldBoundaryType::Default,
+                                        FieldBoundaryType::Default)};
     /** Integers that correspond to boundary condition applied to fields at the
      *  upper domain boundaries
      *  (0 to 6 correspond to PML, Periodic, PEC, PMC, Damped, Absorbing Silver-Mueller, None)
      */
-    static amrex::Vector<FieldBoundaryType> field_boundary_hi;
+    static inline amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>
+        field_boundary_hi {AMREX_D_DECL(FieldBoundaryType::Default,
+                                        FieldBoundaryType::Default,
+                                        FieldBoundaryType::Default)};
     /** Integers that correspond to boundary condition applied to particles at the
      *  lower domain boundaries
      *  (0 to 4 correspond to Absorbing, Open, Reflecting, Periodic, Thermal)
      */
-    static amrex::Vector<ParticleBoundaryType> particle_boundary_lo;
+    static inline amrex::Array<ParticleBoundaryType,AMREX_SPACEDIM>
+        particle_boundary_lo {AMREX_D_DECL(ParticleBoundaryType::Default,
+                                           ParticleBoundaryType::Default,
+                                           ParticleBoundaryType::Default)};
     /** Integers that correspond to boundary condition applied to particles at the
      *  upper domain boundaries
      *  (0 to 4 correspond to Absorbing, Open, Reflecting, Periodic, Thermal)
      */
-    static amrex::Vector<ParticleBoundaryType> particle_boundary_hi;
+    static inline amrex::Array<ParticleBoundaryType,AMREX_SPACEDIM>
+        particle_boundary_hi {AMREX_D_DECL(ParticleBoundaryType::Default,
+                                           ParticleBoundaryType::Default,
+                                           ParticleBoundaryType::Default)};
 
     //! Integer that corresponds to the order of the PSATD solution
     //! (whether the PSATD equations are derived from first-order or
     //! second-order solution)
-    static short psatd_solution_type;
+    static inline auto psatd_solution_type = PSATDSolutionType::Default;
 
     //! Integers that correspond to the time dependency of J (constant, linear)
     //! and rho (linear, quadratic) for the PSATD algorithm
-    static short J_in_time;
-    static short rho_in_time;
+    static inline auto J_in_time = JInTime::Default;
+    static inline auto rho_in_time = RhoInTime::Default;
 
     //! If true, the current is deposited on a nodal grid and then centered onto a staggered grid
     //! using finite centering of order given by #current_centering_nox, #current_centering_noy,
@@ -266,6 +286,10 @@ public:
     static bool do_dive_cleaning;
     //! Solve additional Maxwell equation for G in order to control errors in magnetic Gauss' law
     static bool do_divb_cleaning;
+
+    //! Solve Poisson equation when loading an external magnetic field to clean divergence
+    //! This is useful to remove errors that could lead to non-zero B field divergence
+    static bool do_divb_cleaning_external;
 
     //! Order of the particle shape factors (splines) along x
     static int nox;
@@ -374,7 +398,7 @@ public:
 
     //! Integer that corresponds to the type of grid used in the simulation
     //! (collocated, staggered, hybrid)
-    static ablastr::utils::enums::GridType grid_type;
+    static inline auto grid_type = ablastr::utils::enums::GridType::Default;
 
     // Global rho nodal flag to know about rho index type when rho MultiFab is not allocated
     amrex::IntVect m_rho_nodal_flag;
@@ -449,25 +473,6 @@ public:
         const std::string& name,
         std::optional<const amrex::Real> initial_value);
 
-    /**
-     * \brief
-     * Allocate the MultiFab so that is like the specified MultiFab (same ba and dm)
-     * and optionally initialize it. This also adds the MultiFab
-     * to the map of MultiFabs (used to ease the access to MultiFabs from the Python
-     * interface
-     *
-     * \param mf[out] The MultiFab unique pointer to be allocated
-     * \param mf_model[in] The MultiFab to model
-     * \param name[in] The name of the MultiFab to use in the map
-     * \param initial_value[in] The optional initial value
-     */
-    static void AllocInitMultiFabFromModel (
-        std::unique_ptr<amrex::MultiFab>& mf,
-        amrex::MultiFab& mf_model,
-        int level,
-        const std::string& name,
-        std::optional<const amrex::Real> initial_value = {});
-
     // Maps of all of the MultiFabs and iMultiFabs used (this can include MFs from other classes)
     // This is a convenience for the Python interface, allowing all MultiFabs
     // to be easily referenced from Python.
@@ -476,65 +481,17 @@ public:
 
     /**
      * \brief
-     * Check if a field is initialized.
-     *
-     * \param field_type[in] the field type
-     * \param lev[in] the mesh refinement level
-     * \param direction[in] the field component (0 by default)
-     *
-     * \return true if the field is initialized, false otherwise
+     * Get pointer to the amrex::MultiFab containing the dotMask for the specified field
      */
-    [[nodiscard]] bool
-    isFieldInitialized (warpx::fields::FieldType field_type, int lev, int direction = 0) const;
+    [[nodiscard]] const amrex::iMultiFab*
+    getFieldDotMaskPointer (warpx::fields::FieldType field_type, int lev, int dir) const;
 
     /**
      * \brief
-     * Get a pointer to the field data.
-     *
-     * \param field_type[in] the field type
-     * \param lev[in] the mesh refinement level
-     * \param direction[in] the field component (0 by default)
-     *
-     * \return the pointer to an amrex::MultiFab containing the field data
+     * Set the dotMask container
      */
-    [[nodiscard]] amrex::MultiFab*
-    getFieldPointer (warpx::fields::FieldType field_type, int lev, int direction = 0) const;
-
-    /**
-     * \brief
-     * For vector fields, get an array of three pointers to the field data.
-     *
-     * \param field_type[in] the field type
-     * \param lev[in] the mesh refinement level
-     *
-     * \return an array of three pointers amrex::MultiFab* containing the field data
-     */
-    [[nodiscard]] std::array<const amrex::MultiFab* const, 3>
-    getFieldPointerArray (warpx::fields::FieldType field_type, int lev) const;
-
-    /**
-     * \brief
-     * Get a constant reference to the field data.
-     *
-     * \param field_type[in] the field type
-     * \param lev[in] the mesh refinement level
-     * \param direction[in] the field component (0 by default)
-     *
-     * \return a constant refernce to an amrex::MultiFab containing the field data
-     */
-    [[nodiscard]] const amrex::MultiFab&
-    getField(warpx::fields::FieldType field_type, int lev, int direction = 0) const;
-
-    /**
-     * \brief
-     * Get a constant reference to the specified vector field on the different MR levels
-     *
-     * \param field_type[in] the field type
-     *
-     * \return a vector (which one element per MR level) of arrays of three pointers (for 3 vector components) amrex::MultiFab* containing the field data
-     */
-    [[nodiscard]] const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>,3>>&
-    getMultiLevelField(warpx::fields::FieldType field_type) const;
+    void SetDotMask( std::unique_ptr<amrex::iMultiFab>& field_dotMask,
+                     std::string const & field_name, int lev, int dir ) const;
 
     [[nodiscard]] bool DoPML () const {return do_pml;}
     [[nodiscard]] bool DoFluidSpecies () const {return do_fluid_species;}
@@ -575,6 +532,12 @@ public:
 
     /** Determine the timestep of the simulation. */
     void ComputeDt ();
+
+    /**
+     * Determine the simulation timestep from the maximum speed of all particles
+     * Sets timestep so that a particle can only cross cfl*dx cells per timestep.
+     */
+    void UpdateDtFromParticleSpeeds ();
 
     /** Print main PIC parameters to stdout */
     void PrintMainPICparameters ();
@@ -705,8 +668,8 @@ public:
      * when FieldBoundaryType is set to damped. Vector version.
      */
     void DampFieldsInGuards (int lev,
-                             const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
-                             const std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield);
+                             const ablastr::fields::VectorField& Efield,
+                             const ablastr::fields::VectorField& Bfield);
 
     /**
      * \brief Private function for spectral solver
@@ -715,7 +678,7 @@ public:
      * can appear in parallel simulations. This will be called
      * when FieldBoundaryType is set to damped. Scalar version.
      */
-    void DampFieldsInGuards (int lev, std::unique_ptr<amrex::MultiFab>& mf);
+    void DampFieldsInGuards (int lev, amrex::MultiFab* mf);
 
 #ifdef WARPX_DIM_RZ
     void ApplyInverseVolumeScalingToCurrentDensity(amrex::MultiFab* Jx,
@@ -852,21 +815,16 @@ public:
      * Then, for each MR level, including level 0, apply filter and sum guard
      * cells across levels.
      *
-     * \param[in,out] J_fp reference to fine-patch current \c MultiFab (all MR levels)
-     * \param[in,out] J_cp reference to coarse-patch current \c MultiFab (all MR levels)
-     * \param[in,out] J_buffer reference to buffer current \c MultiFab (all MR levels)
+     * \param[in] current_fp_string the coarse of fine patch to use for current
      */
-    void SyncCurrent (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_buffer);
+    void SyncCurrent (const std::string& current_fp_string);
 
     void SyncRho ();
 
     void SyncRho (
-        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
-        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
-        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_buffer);
+        const ablastr::fields::MultiLevelScalarField& charge_fp,
+        const ablastr::fields::MultiLevelScalarField& charge_cp,
+        ablastr::fields::MultiLevelScalarField const & charge_buffer);
 
     [[nodiscard]] amrex::Vector<int> getnsubsteps () const {return nsubsteps;}
     [[nodiscard]] int getnsubsteps (int lev) const {return nsubsteps[lev];}
@@ -925,14 +883,8 @@ public:
     static const amrex::iMultiFab* CurrentBufferMasks (int lev);
     static const amrex::iMultiFab* GatherBufferMasks (int lev);
 
-    static int electrostatic_solver_id;
-    static int poisson_solver_id;
-
-    // Parameters for lab frame electrostatic
-    static amrex::Real self_fields_required_precision;
-    static amrex::Real self_fields_absolute_tolerance;
-    static int self_fields_max_iters;
-    static int self_fields_verbosity;
+    static inline auto electrostatic_solver_id = ElectrostaticSolverAlgo::Default;
+    static inline auto poisson_solver_id = PoissonSolverAlgo::Default;
 
     static int do_moving_window; // boolean
     static int start_moving_window_step; // the first step to move window
@@ -953,14 +905,16 @@ public:
 
     // these should be private, but can't due to Cuda limitations
     static void ComputeDivB (amrex::MultiFab& divB, int dcomp,
-                             const std::array<const amrex::MultiFab* const, 3>& B,
+                             ablastr::fields::VectorField const & B,
                              const std::array<amrex::Real,3>& dx);
 
     static void ComputeDivB (amrex::MultiFab& divB, int dcomp,
-                             const std::array<const amrex::MultiFab* const, 3>& B,
+                             ablastr::fields::VectorField const & B,
                              const std::array<amrex::Real,3>& dx, amrex::IntVect ngrow);
 
     void ComputeDivE(amrex::MultiFab& divE, int lev);
+
+    static void ProjectionCleanDivB ();
 
     [[nodiscard]] amrex::IntVect getngEB() const { return guard_cells.ng_alloc_EB; }
     [[nodiscard]] amrex::IntVect getngF() const { return guard_cells.ng_alloc_F; }
@@ -978,43 +932,21 @@ public:
      */
     [[nodiscard]] amrex::IntVect get_numprocs() const {return numprocs;}
 
-    bool m_boundary_potential_specified = false;
-    ElectrostaticSolver::PoissonBoundaryHandler m_poisson_boundary_handler;
+    /** Electrostatic solve call */
     void ComputeSpaceChargeField (bool reset_fields);
-    void AddBoundaryField ();
-    void AddSpaceChargeField (WarpXParticleContainer& pc);
-    void AddSpaceChargeFieldLabFrame ();
-    void computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                     amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-                     std::array<amrex::Real, 3> beta = {{0,0,0}},
-                     amrex::Real required_precision=amrex::Real(1.e-11),
-                     amrex::Real absolute_tolerance=amrex::Real(0.0),
-                     int max_iters=200,
-                     int verbosity=2) const;
-
-    void setPhiBC (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi ) const;
-
-    void computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
-                   const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-                   std::array<amrex::Real, 3> beta = {{0,0,0}} ) const;
-    void computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& B,
-                   const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-                   std::array<amrex::Real, 3> beta = {{0,0,0}} ) const;
-    void computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                                      amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi) const;
 
     // Magnetostatic Solver Interface
     MagnetostaticSolver::VectorPoissonBoundaryHandler m_vector_poisson_boundary_handler;
     void ComputeMagnetostaticField ();
     void AddMagnetostaticFieldLabFrame ();
-    void computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> >& curr,
-                                 amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> >& A,
+    void computeVectorPotential (ablastr::fields::MultiLevelVectorField const& curr,
+                                 ablastr::fields::MultiLevelVectorField const& A,
                                  amrex::Real required_precision=amrex::Real(1.e-11),
                                  amrex::Real absolute_tolerance=amrex::Real(0.0),
                                  int max_iters=200,
-                                 int verbosity=2) const;
+                                 int verbosity=2); // const;
 
-    void setVectorPotentialBC (amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> >& A) const;
+    void setVectorPotentialBC (ablastr::fields::MultiLevelVectorField const& A) const;
 
     /**
      * \brief
@@ -1042,9 +974,9 @@ public:
          amrex::ParserExecutor<3> const& xfield_parser,
          amrex::ParserExecutor<3> const& yfield_parser,
          amrex::ParserExecutor<3> const& zfield_parser,
-         std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-         std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
-         char field,
+         ablastr::fields::VectorField const& edge_lengths,
+         ablastr::fields::VectorField const& face_areas,
+         [[maybe_unused]] char field,
          int lev, PatchType patch_type);
 
     /**
@@ -1111,7 +1043,7 @@ public:
     void BuildBufferMasksInBox ( amrex::Box tbx, amrex::IArrayBox &buffer_mask,
                                  const amrex::IArrayBox &guard_mask, int ng );
 #ifdef AMREX_USE_EB
-    amrex::EBFArrayBoxFactory const& fieldEBFactory (int lev) const noexcept {
+    [[nodiscard]] amrex::EBFArrayBoxFactory const& fieldEBFactory (int lev) const noexcept {
         return static_cast<amrex::EBFArrayBoxFactory const&>(*m_field_factory[lev]);
     }
 #endif
@@ -1123,24 +1055,24 @@ public:
     * \brief Compute the length of the mesh edges. Here the length is a value in [0, 1].
     *        An edge of length 0 is fully covered.
     */
-    static void ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+    static void ComputeEdgeLengths (ablastr::fields::VectorField& edge_lengths,
                                     const amrex::EBFArrayBoxFactory& eb_fact);
     /**
     * \brief Compute the area of the mesh faces. Here the area is a value in [0, 1].
     *        An edge of area 0 is fully covered.
     */
-    static void ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+    static void ComputeFaceAreas (ablastr::fields::VectorField& face_areas,
                                   const amrex::EBFArrayBoxFactory& eb_fact);
 
     /**
     * \brief Scale the edges lengths by the mesh width to obtain the real lengths.
     */
-    static void ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+    static void ScaleEdges (ablastr::fields::VectorField& edge_lengths,
                             const std::array<amrex::Real,3>& cell_size);
     /**
     * \brief Scale the edges areas by the mesh width to obtain the real areas.
     */
-    static void ScaleAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+    static void ScaleAreas (ablastr::fields::VectorField& face_areas,
                             const std::array<amrex::Real,3>& cell_size);
     /**
     * \brief Initialize information for cell extensions.
@@ -1210,6 +1142,9 @@ public:
 
     FiniteDifferenceSolver * get_pointer_fdtd_solver_fp (int lev) { return m_fdtd_solver_fp[lev].get(); }
 
+    // Field container
+    ablastr::fields::MultiFabRegister m_fields;
+
 protected:
 
     /**
@@ -1242,6 +1177,10 @@ protected:
     //! Use this function to override the Level 0 grids made by AMReX.
     //! This function is called in amrex::AmrCore::InitFromScratch.
     void PostProcessBaseGrids (amrex::BoxArray& ba0) const final;
+
+    //! Use this function to override how DistributionMapping is made.
+    [[nodiscard]] amrex::DistributionMapping
+    MakeDistributionMap (int lev, amrex::BoxArray const& ba) final;
 
     //! Make a new level from scratch using provided BoxArray and
     //! DistributionMapping.  Only used during initialization.  Called
@@ -1305,53 +1244,50 @@ private:
     void OneStep_multiJ (amrex::Real cur_time);
 
     void RestrictCurrentFromFineToCoarsePatch (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+        const ablastr::fields::MultiLevelVectorField& J_fp,
+        const ablastr::fields::MultiLevelVectorField& J_cp,
         int lev);
     void AddCurrentFromFineLevelandSumBoundary (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_buffer,
+        const ablastr::fields::MultiLevelVectorField& J_fp,
+        const ablastr::fields::MultiLevelVectorField& J_cp,
+        const ablastr::fields::MultiLevelVectorField& J_buffer,
         int lev);
     void StoreCurrent (int lev);
     void RestoreCurrent (int lev);
     void ApplyFilterJ (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+        const ablastr::fields::MultiLevelVectorField& current,
         int lev,
         int idim);
     void ApplyFilterJ (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+        const ablastr::fields::MultiLevelVectorField& current,
         int lev);
     void SumBoundaryJ (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+        const ablastr::fields::MultiLevelVectorField& current,
         int lev,
         int idim,
         const amrex::Periodicity& period);
     void SumBoundaryJ (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+        const ablastr::fields::MultiLevelVectorField& current,
         int lev,
         const amrex::Periodicity& period);
     void NodalSyncJ (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+        const ablastr::fields::MultiLevelVectorField& J_fp,
+        const ablastr::fields::MultiLevelVectorField& J_cp,
         int lev,
         PatchType patch_type);
 
-    void RestrictRhoFromFineToCoarsePatch (
-        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
-        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
-        int lev);
+    void RestrictRhoFromFineToCoarsePatch (int lev );
     void ApplyFilterandSumBoundaryRho (
-        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
-        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+        const ablastr::fields::MultiLevelScalarField& charge_fp,
+        const ablastr::fields::MultiLevelScalarField& charge_cp,
         int lev,
         PatchType patch_type,
         int icomp,
         int ncomp);
     void AddRhoFromFineLevelandSumBoundary (
-        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
-        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
-        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_buffer,
+        const ablastr::fields::MultiLevelScalarField& charge_fp,
+        const ablastr::fields::MultiLevelScalarField& charge_cp,
+        ablastr::fields::MultiLevelScalarField const & charge_buffer,
         int lev,
         int icomp,
         int ncomp);
@@ -1474,6 +1410,7 @@ private:
     amrex::Vector<amrex::Real> t_new;
     amrex::Vector<amrex::Real> t_old;
     amrex::Vector<amrex::Real> dt;
+    static utils::parser::IntervalsParser dt_update_interval; // How often to update the timestep when using adaptive timestepping
 
     // Particle container
     std::unique_ptr<MultiParticleContainer> mypc;
@@ -1487,38 +1424,12 @@ private:
     // Fields: First array for level, second for direction
     //
 
-    // Full solution
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_aux;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_aux;
-
-    // Fine patch
-    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > F_fp;
-    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > G_fp;
-    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_fp;
-    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > phi_fp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_vay;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_fp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_fp;
-
-    // Memory buffers for computing magnetostatic fields
-    // Vector Potential A and previous step.  Time buffer needed for computing dA/dt to first order
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_fp_nodal;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_grad_buf_e_stag;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_grad_buf_b_stag;
-
-    // Same as Bfield_fp/Efield_fp for reading external field data
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp_external;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp_external;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > E_external_particle_field;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > B_external_particle_field;
-
-    //! EB: Lengths of the mesh edges
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths;
-    //! EB: Areas of the mesh faces
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_face_areas;
+    // Masks for computing dot product and global moments of fields when using grids that
+    // have shared locations across different ranks (e.g., a Yee grid)
+    mutable amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>,3 > > Efield_dotMask;
+    mutable amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>,3 > > Bfield_dotMask;
+    mutable amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>,3 > > Afield_dotMask;
+    mutable amrex::Vector<            std::unique_ptr<amrex::iMultiFab>     > phi_dotMask;
 
     /** EB: for every mesh face flag_info_face contains a:
      *          * 0 if the face needs to be extended
@@ -1534,70 +1445,15 @@ private:
      * and in WarpX::ComputeEightWaysExtensions
      * This is only used for the ECT solver.*/
     amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_ext_face;
-    /** EB: m_area_mod contains the modified areas of the mesh faces, i.e. if a face is enlarged it
-     * contains the area of the enlarged face
-     * This is only used for the ECT solver.*/
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_area_mod;
+
     /** EB: m_borrowing contains the info about the enlarged cells, i.e. for every enlarged cell it
      * contains the info of which neighbors are being intruded (and the amount of borrowed area).
      * This is only used for the ECT solver.*/
     amrex::Vector<std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 > > m_borrowing;
 
-    /** ECTRhofield is needed only by the ect
-     * solver and it contains the electromotive force density for every mesh face.
-     * The name ECTRhofield has been used to comply with the notation of the paper
-     * https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4463918 (page 9, equation 4
-     * and below).
-     * Although it's called rho it has nothing to do with the charge density!
-     * This is only used for the ECT solver.*/
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > ECTRhofield;
-    /** Venl contains the electromotive force for every mesh face, i.e. every entry is
-     * the corresponding entry in ECTRhofield multiplied by the total area (possibly with enlargement)
-     * This is only used for the ECT solver.*/
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Venl;
-
-    //EB level set
-    amrex::Vector<std::unique_ptr<amrex::MultiFab> > m_distance_to_eb;
-
-    // store fine patch
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_store;
-
-    // Nodal MultiFab for nodal current deposition if warpx.do_current_centering = 1
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>> current_fp_nodal;
-
-    // Coarse patch
-    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > F_cp;
-    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > G_cp;
-    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_cp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_cp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_cp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_cp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_cp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_cp;
-
     // Copy of the coarse aux
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3 > > Efield_cax;
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_cax;
     amrex::Vector<std::unique_ptr<amrex::iMultiFab> > current_buffer_masks;
     amrex::Vector<std::unique_ptr<amrex::iMultiFab> > gather_buffer_masks;
-
-    // If charge/current deposition buffers are used
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_buf;
-    amrex::Vector<std::unique_ptr<amrex::MultiFab> > charge_buf;
-
-    /**
-     * \brief
-     * Get a pointer to the field data. Does not check if the pointer
-     * is not nullptr.
-     *
-     * \param field_type[in] the field type
-     * \param lev[in] the mesh refinement level
-     * \param direction[in] the field component (0 by default)
-     *
-     * \return the pointer to an amrex::MultiFab containing the field data
-     */
-    [[nodiscard]] amrex::MultiFab*
-    getFieldPointerUnchecked (warpx::fields::FieldType field_type, int lev, int direction = 0) const;
 
     // PML
     int do_pml = 0;
@@ -1628,16 +1484,18 @@ private:
     int num_injected_species = -1;
     amrex::Vector<int> injected_plasma_species;
 
+    // Timestepping parameters
     std::optional<amrex::Real> m_const_dt;
+    std::optional<amrex::Real> m_max_dt;
 
     // Macroscopic properties
     std::unique_ptr<MacroscopicProperties> m_macroscopic_properties;
 
+    // Electrostatic solver
+    std::unique_ptr<ElectrostaticSolver> m_electrostatic_solver;
+
     // Hybrid PIC algorithm parameters
     std::unique_ptr<HybridPICModel> m_hybrid_pic_model;
-
-    // Semi-implicit electrostatic algorithm
-    std::unique_ptr<SemiImplicitSolver> m_semi_implicit_solver;
 
     // Load balancing
     /** Load balancing intervals that reads the "load_balance_intervals" string int the input file
@@ -1715,17 +1573,11 @@ private:
 
     guardCellManager guard_cells;
 
-    //Slice Parameters
+    // Slice Parameters
     int slice_max_grid_size;
     int slice_plot_int = -1;
     amrex::RealBox slice_realbox;
     amrex::IntVect slice_cr_ratio;
-    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > F_slice;
-    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > G_slice;
-    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_slice;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_slice;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_slice;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_slice;
 
     bool fft_periodic_single_box = false;
     int nox_fft = 16;
@@ -1795,40 +1647,14 @@ private:
 
     /**
      * \brief Forward FFT of E,B on all mesh refinement levels
-     *
-     * \param E_fp Vector of three-dimensional arrays (for each level)
-     *             storing the fine patch electric field to be transformed
-     * \param B_fp Vector of three-dimensional arrays (for each level)
-     *             storing the fine patch magnetic field to be transformed
-     * \param E_cp Vector of three-dimensional arrays (for each level)
-     *             storing the coarse patch electric field to be transformed
-     * \param B_cp Vector of three-dimensional arrays (for each level)
-     *             storing the coarse patch magnetic field to be transformed
      */
-    void PSATDForwardTransformEB (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_cp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_cp);
+    void PSATDForwardTransformEB ();
 
     /**
      * \brief Backward FFT of E,B on all mesh refinement levels,
      *        with field damping in the guard cells (if needed)
-     *
-     * \param E_fp Vector of three-dimensional arrays (for each level)
-     *             storing the fine patch electric field to be transformed
-     * \param B_fp Vector of three-dimensional arrays (for each level)
-     *             storing the fine patch magnetic field to be transformed
-     * \param E_cp Vector of three-dimensional arrays (for each level)
-     *             storing the coarse patch electric field to be transformed
-     * \param B_cp Vector of three-dimensional arrays (for each level)
-     *             storing the coarse patch magnetic field to be transformed
      */
-    void PSATDBackwardTransformEB (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_cp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_cp);
+    void PSATDBackwardTransformEB ();
 
     /**
      * \brief Backward FFT of averaged E,B on all mesh refinement levels
@@ -1843,10 +1669,10 @@ private:
      *                 storing the coarse patch averaged magnetic field to be transformed
      */
     void PSATDBackwardTransformEBavg (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_avg_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_avg_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_avg_cp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_avg_cp);
+        ablastr::fields::MultiLevelVectorField const& E_avg_fp,
+        ablastr::fields::MultiLevelVectorField const& B_avg_fp,
+        ablastr::fields::MultiLevelVectorField const& E_avg_cp,
+        ablastr::fields::MultiLevelVectorField const& B_avg_cp);
 
     /**
      * \brief Forward FFT of J on all mesh refinement levels,
@@ -1860,8 +1686,8 @@ private:
      *                                (only used in RZ geometry to avoid double filtering)
      */
     void PSATDForwardTransformJ (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+        std::string const & J_fp_string,
+        std::string const & J_cp_string,
         bool apply_kspace_filter=true);
 
     /**
@@ -1873,8 +1699,8 @@ private:
      *             storing the coarse patch current to be transformed
      */
     void PSATDBackwardTransformJ (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp);
+        std::string const & J_fp_string,
+        std::string const & J_cp_string);
 
     /**
      * \brief Forward FFT of rho on all mesh refinement levels,
@@ -1888,8 +1714,8 @@ private:
      *                                (only used in RZ geometry to avoid double filtering)
      */
     void PSATDForwardTransformRho (
-        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
-        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+        std::string const & charge_fp_string,
+        std::string const & charge_cp_string,
         int icomp, int dcomp, bool apply_kspace_filter=true);
 
     /**

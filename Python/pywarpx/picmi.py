@@ -17,6 +17,7 @@ import periodictable
 
 import picmistandard
 import pywarpx
+import pywarpx.callbacks
 
 codename = "warpx"
 picmistandard.register_codename(codename)
@@ -1521,8 +1522,7 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         # --- Same method names are used, though mapped to lower case.
         pywarpx.algo.maxwell_solver = self.method
 
-        if self.cfl is not None:
-            pywarpx.warpx.cfl = self.cfl
+        pywarpx.warpx.cfl = self.cfl
 
         if self.source_smoother is not None:
             self.source_smoother.smoother_initialize_inputs(self)
@@ -1889,6 +1889,16 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
     warpx_semi_implicit_factor: float, default=4
         If the semi-implicit Poisson solver is used, this sets the value
         of C_SI (the method is marginally stable at C_SI = 1)
+
+    warpx_dt_update_interval: string, optional (default = -1)
+        How frequently the timestep is updated. Adaptive timestepping is disabled when this is <= 0.
+
+    warpx_cfl: float, optional
+        Fraction of the CFL condition for particle velocity vs grid size, used to set the timestep when `dt_update_interval > 0`.
+
+    warpx_max_dt: float, optional
+        The maximum allowable timestep when `dt_update_interval > 0`.
+
     """
 
     def init(self, kw):
@@ -1898,12 +1908,20 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
         self.magnetostatic = kw.pop("warpx_magnetostatic", False)
         self.semi_implicit = kw.pop("warpx_semi_implicit", False)
         self.semi_implicit_factor = kw.pop("warpx_semi_implicit_factor", None)
+        self.cfl = kw.pop("warpx_cfl", None)
+        self.dt_update_interval = kw.pop("dt_update_interval", None)
+        self.max_dt = kw.pop("warpx_max_dt", None)
 
     def solver_initialize_inputs(self):
         # Open BC means FieldBoundaryType::Open for electrostatic sims, rather than perfectly-matched layer
         BC_map["open"] = "open"
 
         self.grid.grid_initialize_inputs()
+
+        # set adaptive timestepping parameters
+        pywarpx.warpx.cfl = self.cfl
+        pywarpx.warpx.dt_update_interval = self.dt_update_interval
+        pywarpx.warpx.max_dt = self.max_dt
 
         if self.relativistic:
             pywarpx.warpx.do_electrostatic = "relativistic"
@@ -2001,31 +2019,82 @@ class LaserAntenna(picmistandard.PICMI_LaserAntenna):
                 "specified antenna normal."
             )
         self.normal_vector = laser.laser.direction  # The plane normal direction
+        # Ensure the normal vector is a unit vector
+        self.normal_vector /= np.linalg.norm(self.normal_vector)
         if isinstance(laser, GaussianLaser):
-            # Focal distance from the antenna (in meters)
-            laser.laser.profile_focal_distance = np.sqrt(
-                (laser.focal_position[0] - self.position[0]) ** 2
-                + (laser.focal_position[1] - self.position[1]) ** 2
-                + (laser.focal_position[2] - self.position[2]) ** 2
+            # Focal displacement from the antenna (in meters)
+            laser.laser.profile_focal_distance = (
+                (laser.focal_position[0] - self.position[0]) * self.normal_vector[0]
+                + (laser.focal_position[1] - self.position[1]) * self.normal_vector[1]
+                + (laser.focal_position[2] - self.position[2]) * self.normal_vector[2]
             )
             # The time at which the laser reaches its peak (in seconds)
             laser.laser.profile_t_peak = (
-                np.sqrt(
-                    (self.position[0] - laser.centroid_position[0]) ** 2
-                    + (self.position[1] - laser.centroid_position[1]) ** 2
-                    + (self.position[2] - laser.centroid_position[2]) ** 2
-                )
-                / constants.c
-            )
+                (self.position[0] - laser.centroid_position[0]) * self.normal_vector[0]
+                + (self.position[1] - laser.centroid_position[1])
+                * self.normal_vector[1]
+                + (self.position[2] - laser.centroid_position[2])
+                * self.normal_vector[2]
+            ) / constants.c
 
 
 class LoadInitialField(picmistandard.PICMI_LoadGriddedField):
+    def init(self, kw):
+        self.do_divb_cleaning_external = kw.pop("warpx_do_divb_cleaning_external", None)
+        self.divb_cleaner_atol = kw.pop("warpx_projection_divb_cleaner_atol", None)
+        self.divb_cleaner_rtol = kw.pop("warpx_projection_divb_cleaner_rtol", None)
+
     def applied_field_initialize_inputs(self):
         pywarpx.warpx.read_fields_from_path = self.read_fields_from_path
         if self.load_E:
             pywarpx.warpx.E_ext_grid_init_style = "read_from_file"
         if self.load_B:
             pywarpx.warpx.B_ext_grid_init_style = "read_from_file"
+            pywarpx.warpx.do_divb_cleaning_external = self.do_divb_cleaning_external
+            pywarpx.projectiondivbcleaner.atol = self.divb_cleaner_atol
+            pywarpx.projectiondivbcleaner.rtol = self.divb_cleaner_rtol
+
+
+class LoadInitialFieldFromPython:
+    """
+    Field Initializer that takes a function handle to be registered as a callback.
+    The function is expected to write the E and/or B fields into the
+    fields.Bx/y/zFPExternalWrapper() multifab. The callback is installed
+    in the beforeInitEsolve hook. This should operate identically to loading from
+    a file.
+
+    Parameters
+    ----------
+    warpx_do_divb_cleaning_external: bool, default=True
+        Flag that controls whether or not to execute the Projection based B-field divergence cleaner.
+
+    load_E: bool, default=True
+        E field is expected to be loaded in the registered callback.
+
+    load_B: bool, default=True
+        B field is expected to be loaded in the registered callback.
+    """
+
+    def __init__(self, **kw):
+        self.do_divb_cleaning_external = kw.pop("warpx_do_divb_cleaning_external", None)
+        self.divb_cleaner_atol = kw.pop("warpx_projection_divb_cleaner_atol", None)
+        self.divb_cleaner_rtol = kw.pop("warpx_projection_divb_cleaner_rtol", None)
+
+        # If using load_from_python, a function handle is expected for callback
+        self.load_from_python = kw.pop("load_from_python")
+        self.load_E = kw.pop("load_E", True)
+        self.load_B = kw.pop("load_B", True)
+
+    def applied_field_initialize_inputs(self):
+        if self.load_E:
+            pywarpx.warpx.E_ext_grid_init_style = "load_from_python"
+        if self.load_B:
+            pywarpx.warpx.B_ext_grid_init_style = "load_from_python"
+            pywarpx.warpx.do_divb_cleaning_external = self.do_divb_cleaning_external
+            pywarpx.projectiondivbcleaner.atol = self.divb_cleaner_atol
+            pywarpx.projectiondivbcleaner.rtol = self.divb_cleaner_rtol
+
+        pywarpx.callbacks.installloadExternalFields(self.load_from_python)
 
 
 class AnalyticInitialField(picmistandard.PICMI_AnalyticAppliedField):
@@ -2608,6 +2677,9 @@ class Simulation(picmistandard.PICMI_Simulation):
     warpx_do_dynamic_scheduling: bool, default=True
         Whether to do dynamic scheduling with OpenMP
 
+    warpx_roundrobin_sfc: bool, default=False
+        Whether to use the RRSFC strategy for making DistributionMapping
+
     warpx_load_balance_intervals: string, default='0'
         The intervals for doing load balancing
 
@@ -2724,6 +2796,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         )
         self.random_seed = kw.pop("warpx_random_seed", None)
         self.do_dynamic_scheduling = kw.pop("warpx_do_dynamic_scheduling", None)
+        self.roundrobin_sfc = kw.pop("warpx_roundrobin_sfc", None)
         self.load_balance_intervals = kw.pop("warpx_load_balance_intervals", None)
         self.load_balance_efficiency_ratio_threshold = kw.pop(
             "warpx_load_balance_efficiency_ratio_threshold", None
@@ -2818,6 +2891,8 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.warpx.used_inputs_file = self.used_inputs_file
 
         pywarpx.warpx.do_dynamic_scheduling = self.do_dynamic_scheduling
+
+        pywarpx.warpx.roundrobin_sfc = self.roundrobin_sfc
 
         pywarpx.particles.use_fdtd_nci_corr = self.use_fdtd_nci_corr
 
@@ -3847,6 +3922,7 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
             "ParticleNumber",
             "LoadBalanceCosts",
             "LoadBalanceEfficiency",
+            "Timestep",
         ]
         # The species diagnostics require a species to be provided
         self._species_reduced_diagnostics = [
@@ -3983,3 +4059,178 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
                     self.diagnostic.__setattr__(key, expression)
                 else:
                     self.diagnostic.__setattr__(key, value)
+
+
+class ParticleBoundaryScrapingDiagnostic(
+    picmistandard.PICMI_ParticleBoundaryScrapingDiagnostic, WarpXDiagnosticBase
+):
+    """
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`__ for more information.
+
+    Parameters
+    ----------
+    warpx_format: openpmd
+        Diagnostic file format
+
+    warpx_openpmd_backend: {bp, h5, json}, optional
+        Openpmd backend file format
+
+    warpx_openpmd_encoding: 'v' (variable based), 'f' (file based) or 'g' (group based), optional
+        Only read if ``<diag_name>.format = openpmd``. openPMD file output encoding.
+        File based: one file per timestep (slower), group/variable based: one file for all steps (faster)).
+        Variable based is an experimental feature with ADIOS2. Default: `'f'`.
+
+    warpx_file_prefix: string, optional
+        Prefix on the diagnostic file name
+
+    warpx_file_min_digits: integer, optional
+        Minimum number of digits for the time step number in the file name
+
+    warpx_random_fraction: float or dict, optional
+        Random fraction of particles to include in the diagnostic. If a float
+        is given the same fraction will be used for all species, if a dictionary
+        is given the keys should be species with the value specifying the random
+        fraction for that species.
+
+    warpx_uniform_stride: integer or dict, optional
+        Stride to down select to the particles to include in the diagnostic.
+        If an integer is given the same stride will be used for all species, if
+        a dictionary is given the keys should be species with the value
+        specifying the stride for that species.
+
+    warpx_dump_last_timestep: bool, optional
+        If true, the last timestep is dumped regardless of the diagnostic period/intervals.
+
+    warpx_plot_filter_function: string, optional
+        Analytic expression to down select the particles to in the diagnostic
+    """
+
+    def init(self, kw):
+        self.format = kw.pop("warpx_format", "openpmd")
+        self.openpmd_backend = kw.pop("warpx_openpmd_backend", None)
+        self.openpmd_encoding = kw.pop("warpx_openpmd_encoding", None)
+        self.file_prefix = kw.pop("warpx_file_prefix", None)
+        self.file_min_digits = kw.pop("warpx_file_min_digits", None)
+        self.random_fraction = kw.pop("warpx_random_fraction", None)
+        self.uniform_stride = kw.pop("warpx_uniform_stride", None)
+        self.plot_filter_function = kw.pop("warpx_plot_filter_function", None)
+        self.dump_last_timestep = kw.pop("warpx_dump_last_timestep", None)
+
+        self.user_defined_kw = {}
+        if self.plot_filter_function is not None:
+            # This allows variables to be used in the plot_filter_function, but
+            # in order not to break other codes, the variables must begin with "warpx_"
+            for k in list(kw.keys()):
+                if k.startswith("warpx_") and re.search(
+                    r"\b%s\b" % k, self.plot_filter_function
+                ):
+                    self.user_defined_kw[k] = kw[k]
+                    del kw[k]
+
+        self.mangle_dict = None
+
+    def diagnostic_initialize_inputs(self):
+        self.add_diagnostic()
+
+        self.diagnostic.diag_type = "BoundaryScraping"
+        self.diagnostic.format = self.format
+        self.diagnostic.openpmd_backend = self.openpmd_backend
+        self.diagnostic.openpmd_encoding = self.openpmd_encoding
+        self.diagnostic.file_min_digits = self.file_min_digits
+        self.diagnostic.dump_last_timestep = self.dump_last_timestep
+        self.diagnostic.intervals = self.period
+        self.diagnostic.set_or_replace_attr("write_species", True)
+        if "fields_to_plot" not in self.diagnostic.argvattrs:
+            self.diagnostic.fields_to_plot = "none"
+
+        self.set_write_dir()
+
+        # --- Use a set to ensure that fields don't get repeated.
+        variables = set()
+
+        if self.data_list is not None:
+            for dataname in self.data_list:
+                if dataname == "position":
+                    if pywarpx.geometry.dims != "1":  # because then it's WARPX_DIM_1D_Z
+                        variables.add("x")
+                    if pywarpx.geometry.dims == "3":
+                        variables.add("y")
+                    variables.add("z")
+                    if pywarpx.geometry.dims == "RZ":
+                        variables.add("theta")
+                elif dataname == "momentum":
+                    variables.add("ux")
+                    variables.add("uy")
+                    variables.add("uz")
+                elif dataname == "weighting":
+                    variables.add("w")
+                elif dataname in ["x", "y", "z", "theta", "ux", "uy", "uz"]:
+                    if pywarpx.geometry.dims == "1" and (
+                        dataname == "x" or dataname == "y"
+                    ):
+                        raise RuntimeError(
+                            f"The attribute {dataname} is not available in mode WARPX_DIM_1D_Z"
+                            f"chosen by dim={pywarpx.geometry.dims} in pywarpx."
+                        )
+                    elif pywarpx.geometry.dims != "3" and dataname == "y":
+                        raise RuntimeError(
+                            f"The attribute {dataname} is not available outside of mode WARPX_DIM_3D"
+                            f"The chosen value was dim={pywarpx.geometry.dims} in pywarpx."
+                        )
+                    elif pywarpx.geometry.dims != "RZ" and dataname == "theta":
+                        raise RuntimeError(
+                            f"The attribute {dataname} is not available outside of mode WARPX_DIM_RZ."
+                            f"The chosen value was dim={pywarpx.geometry.dims} in pywarpx."
+                        )
+                    else:
+                        variables.add(dataname)
+                else:
+                    # possibly add user defined attributes
+                    variables.add(dataname)
+
+            # --- Convert the set to a sorted list so that the order
+            # --- is the same on all processors.
+            variables = list(variables)
+            variables.sort()
+
+        # species list
+        if self.species is None:
+            species_names = pywarpx.particles.species_names
+        elif np.iterable(self.species):
+            species_names = [species.name for species in self.species]
+        else:
+            species_names = [self.species.name]
+
+        # check if random fraction is specified and whether a value is given per species
+        random_fraction = {}
+        random_fraction_default = self.random_fraction
+        if isinstance(self.random_fraction, dict):
+            random_fraction_default = 1.0
+            for key, val in self.random_fraction.items():
+                random_fraction[key.name] = val
+
+        # check if uniform stride is specified and whether a value is given per species
+        uniform_stride = {}
+        uniform_stride_default = self.uniform_stride
+        if isinstance(self.uniform_stride, dict):
+            uniform_stride_default = 1
+            for key, val in self.uniform_stride.items():
+                uniform_stride[key.name] = val
+
+        if self.mangle_dict is None:
+            # Only do this once so that the same variables are used in this distribution
+            # is used multiple times
+            self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
+
+        for name in species_names:
+            diag = pywarpx.Bucket.Bucket(
+                self.name + "." + name,
+                variables=variables,
+                random_fraction=random_fraction.get(name, random_fraction_default),
+                uniform_stride=uniform_stride.get(name, uniform_stride_default),
+            )
+            expression = pywarpx.my_constants.mangle_expression(
+                self.plot_filter_function, self.mangle_dict
+            )
+            diag.__setattr__("plot_filter_function(t,x,y,z,ux,uy,uz)", expression)
+            self.diagnostic._species_dict[name] = diag

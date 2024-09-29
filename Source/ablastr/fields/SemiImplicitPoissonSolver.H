@@ -97,25 +97,27 @@ template<
     typename T_FArrayBoxFactory = void
 >
 void
-computeSemiImplicitPhi (amrex::Vector<amrex::MultiFab*> const & rho,
-                        amrex::Vector<amrex::MultiFab*> & phi,
-                        amrex::Vector<std::unique_ptr<amrex::MultiFab>> const & sigma,
-                        amrex::Real const relative_tolerance,
-                        amrex::Real absolute_tolerance,
-                        int const max_iters,
-                        int const verbosity,
-                        amrex::Vector<amrex::Geometry> const& geom,
-                        amrex::Vector<amrex::DistributionMapping> const& dmap,
-                        amrex::Vector<amrex::BoxArray> const& grids,
-                        T_BoundaryHandler const & boundary_handler,
-                        bool is_solver_igf_on_lev0,
-                        bool const do_single_precision_comms = false,
-                        std::optional<amrex::Vector<amrex::IntVect> > rel_ref_ratio = std::nullopt,
-                        [[maybe_unused]] T_PostPhiCalculationFunctor post_phi_calculation = std::nullopt,
-                        [[maybe_unused]] std::optional<amrex::Real const> current_time = std::nullopt, // only used for EB
-                        [[maybe_unused]] std::optional<amrex::Vector<T_FArrayBoxFactory const *> > eb_farray_box_factory = std::nullopt // only used for EB
-)
-{
+computeSemiImplicitPhi (
+    ablastr::fields::MultiLevelScalarField const& rho,
+    ablastr::fields::MultiLevelScalarField const& phi,
+    amrex::MultiFab const & sigma,
+    amrex::Real relative_tolerance,
+    amrex::Real absolute_tolerance,
+    int max_iters,
+    int verbosity,
+    amrex::Vector<amrex::Geometry> const& geom,
+    amrex::Vector<amrex::DistributionMapping> const& dmap,
+    amrex::Vector<amrex::BoxArray> const& grids,
+    [[maybe_unused]] utils::enums::GridType grid_type,
+    T_BoundaryHandler const boundary_handler,
+    bool is_solver_igf_on_lev0,
+    [[maybe_unused]] bool eb_enabled = false,
+    bool do_single_precision_comms = false,
+    std::optional<amrex::Vector<amrex::IntVect> > rel_ref_ratio = std::nullopt,
+    [[maybe_unused]] T_PostPhiCalculationFunctor post_phi_calculation = std::nullopt,
+    [[maybe_unused]] std::optional<amrex::Real const> current_time = std::nullopt, // only used for EB
+    [[maybe_unused]] std::optional<amrex::Vector<T_FArrayBoxFactory const *> > eb_farray_box_factory = std::nullopt // only used for EB
+) {
     using namespace amrex::literals;
 
     ABLASTR_PROFILE("computeSemiImplicitPhi");
@@ -175,7 +177,7 @@ computeSemiImplicitPhi (amrex::Vector<amrex::MultiFab*> const & rho,
         else
             linop.setEBDirichlet(boundary_handler.getPhiEB(current_time.value()));
 #endif
-        linop.setSigma(lev, *sigma[lev]);
+        linop.setSigma(lev, sigma);
 
         // Solve the Poisson equation
         linop.setDomainBC( boundary_handler.lobc, boundary_handler.hibc );

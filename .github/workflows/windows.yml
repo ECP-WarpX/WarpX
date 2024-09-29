@@ -10,7 +10,9 @@ jobs:
   build_win_msvc:
     name: MSVC C++17 w/o MPI
     runs-on: windows-latest
-    if: github.event.pull_request.draft == false
+    # disabled due to issues in #5230
+    if: 0
+    #if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
@@ -54,7 +56,7 @@ jobs:
       run: |
         $env:PATH += ';C:/Program Files (x86)/WarpX/bin/'
 
-        python3 Examples\Tests\gaussian_beam\PICMI_inputs_gaussian_beam.py
+        python3 Examples/Tests/gaussian_beam/inputs_test_3d_gaussian_beam_picmi.py
 # JSON writes are currently very slow (50min) with MSVC
 #  --diagformat=openpmd
 
@@ -118,5 +120,5 @@ jobs:
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\vc\Auxiliary\build\vcvarsall.bat" x64
         set "PATH=C:/Program Files (x86)/WarpX/bin/;%PATH%"
 
-        python3 Examples\Tests\gaussian_beam\PICMI_inputs_gaussian_beam.py --diagformat=openpmd
+        python3 Examples/Tests/gaussian_beam/inputs_test_3d_gaussian_beam_picmi.py --diagformat=openpmd
         if errorlevel 1 exit 1
