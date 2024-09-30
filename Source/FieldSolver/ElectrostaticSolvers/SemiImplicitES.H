@@ -35,7 +35,7 @@ public:
         MultiFluidContainer* mfl,
         int max_level) override;
 
-    void ComputeSigma ( amrex::MultiFab& sigma );
+    void ComputeSigma ( amrex::MultiFab& sigma ) const;
 
     /**
      * Compute the potential `phi` by solving the semi-implicit Poisson equation
@@ -52,6 +52,10 @@ public:
      * \param[in] max_iters The maximum number of iterations allowed for the MLMG solver
      * \param[in] verbosity The verbosity setting for the MLMG solver
      */
+    void computePhi (
+        ablastr::fields::MultiLevelScalarField const& rho,
+        ablastr::fields::MultiLevelScalarField const& phi
+    ) const;
     void computePhi (
         ablastr::fields::MultiLevelScalarField const& rho,
         ablastr::fields::MultiLevelScalarField const& phi,

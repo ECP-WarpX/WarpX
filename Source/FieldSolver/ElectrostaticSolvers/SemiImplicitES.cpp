@@ -61,20 +61,28 @@ void SemiImplicitES::ComputeSpaceChargeField (
     // set the boundary potentials appropriately
     setPhiBC(phi_fp, warpx.gett_new(0));
 
+    // perform phi calculation
+    computePhi(rho_fp, phi_fp);
+}
+
+void SemiImplicitES::computePhi (
+    ablastr::fields::MultiLevelScalarField const& rho,
+    ablastr::fields::MultiLevelScalarField const& phi) const
+{
     // Calculate the mass enhancement factor:
     // The "sigma" multifab stores the dressing of the Poisson equation. It
     // is a cell-centered multifab.
-    auto const& ba = convert(rho_fp[0]->boxArray(), IntVect(AMREX_D_DECL(0,0,0)));
-    MultiFab sigma(ba, rho_fp[0]->DistributionMap(), 1, rho_fp[0]->nGrowVect());
+    auto const& ba = convert(rho[0]->boxArray(), IntVect(AMREX_D_DECL(0,0,0)));
+    MultiFab sigma(ba, rho[0]->DistributionMap(), 1, rho[0]->nGrowVect());
     ComputeSigma(sigma);
 
     // Use the AMREX MLMG solver
-    computePhi(rho_fp, phi_fp, sigma, self_fields_required_precision,
+    computePhi(rho, phi, sigma, self_fields_required_precision,
                 self_fields_absolute_tolerance, self_fields_max_iters,
                 self_fields_verbosity);
 }
 
-void SemiImplicitES::ComputeSigma (MultiFab& sigma)
+void SemiImplicitES::ComputeSigma (MultiFab& sigma) const
 {
     // Reset sigma to 1
     sigma.setVal(1.0_rt);
