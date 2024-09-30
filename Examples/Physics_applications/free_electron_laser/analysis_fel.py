@@ -17,6 +17,7 @@ are the expected ones. The check is performed both in the
 lab-frame diagnostics and boosted-frame diagnostics.
 """
 
+import os
 import sys
 
 import numpy as np
@@ -24,6 +25,7 @@ from openpmd_viewer import OpenPMDTimeSeries
 from scipy.constants import c, e, m_e
 
 sys.path.insert(1, "../../../../warpx/Regression/Checksum/")
+import checksumAPI
 
 # Physical parameters of the test
 gamma_bunch = 100.6
@@ -134,7 +136,7 @@ lambda_radiation_lab = lambda_radiation_boost / (2 * gamma_boost)
 lambda_expected = lambda_u / (2 * gamma_boost**2)
 assert abs(lambda_radiation_lab - lambda_expected) / lambda_expected < 0.01
 
-# this will be the name of the plot file
-# filename = sys.argv[1]
-# test_name = os.path.split(os.getcwd())[1]
-# checksumAPI.evaluate_checksum(test_name, filename, output_format="openpmd")
+# Evaluate the checksum
+filename = sys.argv[1]
+test_name = os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, filename, output_format="openpmd")
