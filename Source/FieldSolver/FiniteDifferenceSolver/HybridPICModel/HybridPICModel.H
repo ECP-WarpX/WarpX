@@ -1,8 +1,9 @@
-/* Copyright 2023 The WarpX Community
+/* Copyright 2023-2024 The WarpX Community
  *
  * This file is part of WarpX.
  *
  * Authors: Roelof Groenewald (TAE Technologies)
+ *          S. Eric Clark (Helion Energy)
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -11,6 +12,8 @@
 #define WARPX_HYBRIDPICMODEL_H_
 
 #include "HybridPICModel_fwd.H"
+
+#include "Fields.H"
 
 #include "Utils/WarpXAlgorithmSelection.H"
 
@@ -23,6 +26,9 @@
 
 #include <AMReX_Array.H>
 #include <AMReX_REAL.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_DistributionMapping.H>
 
 #include <optional>
 
@@ -39,11 +45,26 @@ public:
     void ReadParameters ();
 
     /** Allocate hybrid-PIC specific multifabs. Called in constructor. */
-    void AllocateLevelMFs (ablastr::fields::MultiFabRegister & fields,
-                           int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
-                           int ncomps, const amrex::IntVect& ngJ, const amrex::IntVect& ngRho,
-                           const amrex::IntVect& jx_nodal_flag, const amrex::IntVect& jy_nodal_flag,
-                           const amrex::IntVect& jz_nodal_flag, const amrex::IntVect& rho_nodal_flag);
+    void AllocateLevelMFs (
+        ablastr::fields::MultiFabRegister & fields,
+        int lev,
+        const amrex::BoxArray& ba,
+        const amrex::DistributionMapping& dm,
+        const int ncomps,
+        const amrex::IntVect& ngJ,
+        const amrex::IntVect& ngRho,
+        const amrex::IntVect& ngEB,
+        const amrex::IntVect& jx_nodal_flag,
+        const amrex::IntVect& jy_nodal_flag,
+        const amrex::IntVect& jz_nodal_flag,
+        const amrex::IntVect& rho_nodal_flag,
+        const amrex::IntVect& Ex_nodal_flag,
+        const amrex::IntVect& Ey_nodal_flag,
+        const amrex::IntVect& Ez_nodal_flag,
+        const amrex::IntVect& Bx_nodal_flag,
+        const amrex::IntVect& By_nodal_flag,
+        const amrex::IntVect& Bz_nodal_flag
+    );
 
     void InitData ();
 
@@ -53,13 +74,19 @@ public:
      * external current multifab. Note the external current can be a function
      * of time and therefore this should be re-evaluated at every step.
      */
-    void GetCurrentExternal (
-        ablastr::fields::MultiLevelVectorField const& edge_lengths
-    );
-    void GetCurrentExternal (
-        ablastr::fields::VectorField const& edge_lengths,
-        int lev
-    );
+    void GetCurrentExternal (bool skip_check = false);
+
+    void GetFieldsExternal (amrex::Real t);
+
+    void GetExternalFieldFromExpression (
+        warpx::fields::FieldType field_type,
+        std::array< amrex::ParserExecutor<4>, 3> const& expression,
+        int lev);
+
+    void GetExternalFieldFromExpression (
+        warpx::fields::FieldType field_type,
+        std::array< amrex::ParserExecutor<4>, 3> const& expression,
+        int lev, amrex::Real t);
 
     /**
      * \brief
@@ -90,6 +117,7 @@ public:
         ablastr::fields::MultiLevelVectorField const& Bfield,
         ablastr::fields::MultiLevelScalarField const& rhofield,
         ablastr::fields::MultiLevelVectorField const& edge_lengths,
+        amrex::Real t,
         bool solve_for_Faraday) const;
 
     void HybridPICSolveE (
@@ -98,6 +126,7 @@ public:
         ablastr::fields::VectorField const& Bfield,
         amrex::MultiFab const& rhofield,
         ablastr::fields::VectorField const& edge_lengths,
+        amrex::Real t,
         int lev, bool solve_for_Faraday) const;
 
     void HybridPICSolveE (
@@ -106,6 +135,7 @@ public:
         ablastr::fields::VectorField const& Bfield,
         amrex::MultiFab const& rhofield,
         ablastr::fields::VectorField const& edge_lengths,
+        amrex::Real t,
         int lev, PatchType patch_type, bool solve_for_Faraday) const;
 
     void BfieldEvolveRK (
@@ -114,7 +144,7 @@ public:
         ablastr::fields::MultiLevelVectorField const& Jfield,
         ablastr::fields::MultiLevelScalarField const& rhofield,
         ablastr::fields::MultiLevelVectorField const& edge_lengths,
-        amrex::Real dt, DtType a_dt_type,
+        amrex::Real t, amrex::Real dt, DtType a_dt_type,
         amrex::IntVect ng, std::optional<bool> nodal_sync);
 
     void BfieldEvolveRK (
@@ -123,7 +153,7 @@ public:
         ablastr::fields::MultiLevelVectorField const& Jfield,
         ablastr::fields::MultiLevelScalarField const& rhofield,
         ablastr::fields::MultiLevelVectorField const& edge_lengths,
-        amrex::Real dt, int lev, DtType dt_type,
+        amrex::Real t, amrex::Real dt, int lev, DtType dt_type,
         amrex::IntVect ng, std::optional<bool> nodal_sync);
 
     void FieldPush (
@@ -132,7 +162,7 @@ public:
         ablastr::fields::MultiLevelVectorField const& Jfield,
         ablastr::fields::MultiLevelScalarField const& rhofield,
         ablastr::fields::MultiLevelVectorField const& edge_lengths,
-        amrex::Real dt, DtType dt_type,
+        amrex::Real t, amrex::Real dt, DtType dt_type,
         amrex::IntVect ng, std::optional<bool> nodal_sync);
 
     /**
@@ -148,7 +178,7 @@ public:
      * charge density (and assumption of quasi-neutrality) using the user
      * specified electron equation of state.
      *
-     * \param[out] Pe_filed scalar electron pressure MultiFab at a given level
+     * \param[out] Pe_field scalar electron pressure MultiFab at a given level
      * \param[in] rho_field scalar ion charge density Multifab at a given level
      */
     void FillElectronPressureMF (
@@ -185,6 +215,52 @@ public:
     std::array< std::unique_ptr<amrex::Parser>, 3> m_J_external_parser;
     std::array< amrex::ParserExecutor<4>, 3> m_J_external;
     bool m_external_field_has_time_dependence = false;
+
+    /** External E/B fields */
+    bool m_add_external_fields = false;
+
+    std::string m_Bx_ext_grid_function = "0.0";
+    std::string m_By_ext_grid_function = "0.0";
+    std::string m_Bz_ext_grid_function = "0.0";
+    std::array< std::unique_ptr<amrex::Parser>, 3> m_B_external_parser;
+    std::array< amrex::ParserExecutor<4>, 3> m_B_external;
+
+    std::string m_Ex_ext_grid_function = "0.0";
+    std::string m_Ey_ext_grid_function = "0.0";
+    std::string m_Ez_ext_grid_function = "0.0";
+    std::array< std::unique_ptr<amrex::Parser>, 3> m_E_external_parser;
+    std::array< amrex::ParserExecutor<4>, 3> m_E_external;
+
+    // Declare multifabs specifically needed for the hybrid-PIC model
+    // amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_fp_temp;
+    // amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_temp;
+    // amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_ampere;
+    // amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_external;
+    // amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > electron_pressure_fp;
+
+    // amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_hyb_external;
+    // amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_hyb_external;
+    // amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_hyb_self;
+    // amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_hyb_self;
+
+    // // Helper functions to retrieve hybrid-PIC multifabs
+    // [[nodiscard]] amrex::MultiFab*
+    // get_pointer_current_fp_ampere  (int lev, int direction) const
+    // {
+    //     return current_fp_ampere[lev][direction].get();
+    // }
+
+    // [[nodiscard]] amrex::MultiFab*
+    // get_pointer_current_fp_external (int lev, int direction) const
+    // {
+    //     return current_fp_external[lev][direction].get();
+    // }
+
+    // [[nodiscard]] amrex::MultiFab*
+    // get_pointer_electron_pressure_fp  (int lev) const
+    // {
+    //     return electron_pressure_fp[lev].get();
+    // }
 
     /** Gpu Vector with index type of the Jx multifab */
     amrex::GpuArray<int, 3> Jx_IndexType;

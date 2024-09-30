@@ -1,6 +1,9 @@
-/* Copyright 2020 Remi Lehe
+/* Copyright 2020-2024 The WarpX Community
  *
  * This file is part of WarpX.
+ *
+ * Authors: Remi Lehe (LBNL)
+ *          S. Eric Clark (Helion Energy)
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -160,6 +163,7 @@ class FiniteDifferenceSolver
                       amrex::MultiFab const& rhofield,
                       amrex::MultiFab const& Pefield,
                       ablastr::fields::VectorField const& edge_lengths,
+                      amrex::Real t,
                       int lev, HybridPICModel const* hybrid_model,
                       bool solve_for_Faraday );
 
@@ -246,6 +250,7 @@ class FiniteDifferenceSolver
             amrex::MultiFab const& rhofield,
             amrex::MultiFab const& Pefield,
             ablastr::fields::VectorField const& edge_lengths,
+            amrex::Real t,
             int lev, HybridPICModel const* hybrid_model,
             bool solve_for_Faraday );
 
@@ -351,6 +356,7 @@ class FiniteDifferenceSolver
             amrex::MultiFab const& rhofield,
             amrex::MultiFab const& Pefield,
             ablastr::fields::VectorField const& edge_lengths,
+            amrex::Real t,
             int lev, HybridPICModel const* hybrid_model,
             bool solve_for_Faraday );
 

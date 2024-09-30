@@ -1,8 +1,9 @@
-/* Copyright 2023 The WarpX Community
+/* Copyright 2023-2024 The WarpX Community
  *
  * This file is part of WarpX.
  *
  * Authors: Roelof Groenewald (TAE Technologies)
+ *          S. Eric Clark (Helion Energy)
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -22,6 +23,7 @@
 #include <ablastr/coarsen/sample.H>
 
 using namespace amrex;
+using warpx::fields::FieldType;
 
 void FiniteDifferenceSolver::CalculateCurrentAmpere (
     ablastr::fields::VectorField & Jfield,
@@ -359,6 +361,7 @@ void FiniteDifferenceSolver::HybridPICSolveE (
     amrex::MultiFab const& rhofield,
     amrex::MultiFab const& Pefield,
     ablastr::fields::VectorField const& edge_lengths,
+    amrex::Real t,
     int lev, HybridPICModel const* hybrid_model,
     const bool solve_for_Faraday)
 {
@@ -369,14 +372,14 @@ void FiniteDifferenceSolver::HybridPICSolveE (
 
         HybridPICSolveECylindrical <CylindricalYeeAlgorithm> (
             Efield, Jfield, Jifield, Jextfield, Bfield, rhofield, Pefield,
-            edge_lengths, lev, hybrid_model, solve_for_Faraday
+            edge_lengths, t, lev, hybrid_model, solve_for_Faraday
         );
 
 #else
 
         HybridPICSolveECartesian <CartesianYeeAlgorithm> (
             Efield, Jfield, Jifield, Jextfield, Bfield, rhofield, Pefield,
-            edge_lengths, lev, hybrid_model, solve_for_Faraday
+            edge_lengths, t, lev, hybrid_model, solve_for_Faraday
         );
 
 #endif
@@ -384,6 +387,8 @@ void FiniteDifferenceSolver::HybridPICSolveE (
         amrex::Abort(Utils::TextMsg::Err(
             "HybridSolveE: The hybrid-PIC electromagnetic solver algorithm must be used"));
     }
+    auto& warpx = WarpX::GetInstance();
+    warpx.ApplyEfieldBoundary(lev, PatchType::fine);
 }
 
 #ifdef WARPX_DIM_RZ
@@ -397,6 +402,7 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
     amrex::MultiFab const& rhofield,
     amrex::MultiFab const& Pefield,
     ablastr::fields::VectorField const& edge_lengths,
+    amrex::Real t,
     int lev, HybridPICModel const* hybrid_model,
     const bool solve_for_Faraday )
 {
@@ -418,6 +424,12 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
     const auto resistivity_has_J_dependence = hybrid_model->m_resistivity_has_J_dependence;
 
     const bool include_hyper_resistivity_term = (eta_h > 0.0) && solve_for_Faraday;
+
+    const bool include_external_fields = hybrid_model->m_add_external_fields;
+
+    auto const& warpx = WarpX::GetInstance();
+    ablastr::fields::ConstVectorField Bfield_external = warpx.m_fields.get_alldirs(FieldType::hybrid_B_fp_external, 0); // lev=0
+    ablastr::fields::ConstVectorField Efield_external = warpx.m_fields.get_alldirs(FieldType::hybrid_E_fp_external, 0); // lev=0
 
     // Index type required for interpolating fields from their respective
     // staggering to the Ex, Ey, Ez locations
@@ -478,6 +490,10 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
         Array4<Real const> const& Bt = Bfield[1]->const_array(mfi);
         Array4<Real const> const& Bz = Bfield[2]->const_array(mfi);
 
+        Array4<Real const> const& Br_ext = Bfield_external[0]->const_array(mfi);
+        Array4<Real const> const& Bt_ext = Bfield_external[1]->const_array(mfi);
+        Array4<Real const> const& Bz_ext = Bfield_external[2]->const_array(mfi);
+
         // Loop over the cells and update the nodal E field
         amrex::ParallelFor(mfi.tilebox(), [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
 
@@ -492,9 +508,15 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
             auto const jiz_interp = Interp(Jiz, Jz_stag, nodal, coarsen, i, j, 0, 0);
 
             // interpolate the B field to a nodal grid
-            auto const Br_interp = Interp(Br, Br_stag, nodal, coarsen, i, j, 0, 0);
-            auto const Bt_interp = Interp(Bt, Bt_stag, nodal, coarsen, i, j, 0, 0);
-            auto const Bz_interp = Interp(Bz, Bz_stag, nodal, coarsen, i, j, 0, 0);
+            auto Br_interp = Interp(Br, Br_stag, nodal, coarsen, i, j, 0, 0);
+            auto Bt_interp = Interp(Bt, Bt_stag, nodal, coarsen, i, j, 0, 0);
+            auto Bz_interp = Interp(Bz, Bz_stag, nodal, coarsen, i, j, 0, 0);
+
+            if (include_external_fields) {
+                Br_interp += Interp(Br_ext, Br_stag, nodal, coarsen, i, j, 0, 0);
+                Bt_interp += Interp(Bt_ext, Bt_stag, nodal, coarsen, i, j, 0, 0);
+                Bz_interp += Interp(Bz_ext, Bz_stag, nodal, coarsen, i, j, 0, 0);
+            }
 
             // calculate enE = (J - Ji) x B
             enE_nodal(i, j, 0, 0) = (
@@ -535,6 +557,9 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
         Array4<Real> const& Er = Efield[0]->array(mfi);
         Array4<Real> const& Et = Efield[1]->array(mfi);
         Array4<Real> const& Ez = Efield[2]->array(mfi);
+        Array4<Real const> const& Er_ext = Efield_external[0]->const_array(mfi);
+        Array4<Real const> const& Et_ext = Efield_external[1]->const_array(mfi);
+        Array4<Real const> const& Ez_ext = Efield_external[2]->const_array(mfi);
         Array4<Real const> const& Jr = Jfield[0]->const_array(mfi);
         Array4<Real const> const& Jt = Jfield[1]->const_array(mfi);
         Array4<Real const> const& Jz = Jfield[2]->const_array(mfi);
@@ -606,6 +631,10 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                     auto nabla2Jr = T_Algo::Dr_rDr_over_r(Jr, r, dr, coefs_r, n_coefs_r, i, j, 0, 0);
                     Er(i, j, 0) -= eta_h * nabla2Jr;
                 }
+
+                if (include_external_fields) {
+                    Er(i, j, 0) -= Er_ext(i, j, 0);
+                }
             },
 
             // Et calculation
@@ -649,6 +678,10 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                 if (solve_for_Faraday) { Et(i, j, 0) += eta(rho_val, jtot_val) * Jt(i, j, 0); }
 
                 // Note: Hyper-resisitivity should be revisited here when modal decomposition is implemented
+
+                if (include_external_fields) {
+                    Et(i, j, 0) -= Et_ext(i, j, 0);
+                }
             },
 
             // Ez calculation
@@ -684,9 +717,13 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                 // Add resistivity only if E field value is used to update B
                 if (solve_for_Faraday) { Ez(i, j, 0) += eta(rho_val, jtot_val) * Jz(i, j, 0); }
 
-                if (include_hyper_resistivity_term) {
+                if (include_hyper_resistivity_term && solve_for_Faraday) {
                     auto nabla2Jz = T_Algo::Dzz(Jz, coefs_z, n_coefs_z, i, j, 0, 0);
                     Ez(i, j, 0) -= eta_h * nabla2Jz;
+                }
+
+                if (include_external_fields) {
+                    Ez(i, j, 0) -= Ez_ext(i, j, 0);
                 }
             }
         );
@@ -712,6 +749,7 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
     amrex::MultiFab const& rhofield,
     amrex::MultiFab const& Pefield,
     ablastr::fields::VectorField const& edge_lengths,
+    amrex::Real t,
     int lev, HybridPICModel const* hybrid_model,
     const bool solve_for_Faraday )
 {
@@ -727,6 +765,12 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
     const auto resistivity_has_J_dependence = hybrid_model->m_resistivity_has_J_dependence;
 
     const bool include_hyper_resistivity_term = (eta_h > 0.) && solve_for_Faraday;
+
+    const bool include_external_fields = hybrid_model->m_add_external_fields;
+
+    auto const& warpx = WarpX::GetInstance();
+    ablastr::fields::ConstVectorField Bfield_external = warpx.m_fields.get_alldirs(FieldType::hybrid_B_fp_external, 0); // lev=0
+    ablastr::fields::ConstVectorField Efield_external = warpx.m_fields.get_alldirs(FieldType::hybrid_E_fp_external, 0); // lev=0
 
     // Index type required for interpolating fields from their respective
     // staggering to the Ex, Ey, Ez locations
@@ -787,6 +831,10 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
         Array4<Real const> const& By = Bfield[1]->const_array(mfi);
         Array4<Real const> const& Bz = Bfield[2]->const_array(mfi);
 
+        Array4<Real const> const& Bx_ext = Bfield_external[0]->const_array(mfi);
+        Array4<Real const> const& By_ext = Bfield_external[1]->const_array(mfi);
+        Array4<Real const> const& Bz_ext = Bfield_external[2]->const_array(mfi);
+
         // Loop over the cells and update the nodal E field
         amrex::ParallelFor(mfi.tilebox(), [=] AMREX_GPU_DEVICE (int i, int j, int k){
 
@@ -801,9 +849,15 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
             auto const jiz_interp = Interp(Jiz, Jz_stag, nodal, coarsen, i, j, k, 0);
 
             // interpolate the B field to a nodal grid
-            auto const Bx_interp = Interp(Bx, Bx_stag, nodal, coarsen, i, j, k, 0);
-            auto const By_interp = Interp(By, By_stag, nodal, coarsen, i, j, k, 0);
-            auto const Bz_interp = Interp(Bz, Bz_stag, nodal, coarsen, i, j, k, 0);
+            auto Bx_interp = Interp(Bx, Bx_stag, nodal, coarsen, i, j, k, 0);
+            auto By_interp = Interp(By, By_stag, nodal, coarsen, i, j, k, 0);
+            auto Bz_interp = Interp(Bz, Bz_stag, nodal, coarsen, i, j, k, 0);
+
+            if (include_external_fields) {
+                Bx_interp += Interp(Bx_ext, Bx_stag, nodal, coarsen, i, j, k, 0);
+                By_interp += Interp(By_ext, By_stag, nodal, coarsen, i, j, k, 0);
+                Bz_interp += Interp(Bz_ext, Bz_stag, nodal, coarsen, i, j, k, 0);
+            }
 
             // calculate enE = (J - Ji) x B
             enE_nodal(i, j, k, 0) = (
@@ -844,6 +898,9 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
         Array4<Real> const& Ex = Efield[0]->array(mfi);
         Array4<Real> const& Ey = Efield[1]->array(mfi);
         Array4<Real> const& Ez = Efield[2]->array(mfi);
+        Array4<Real const> const& Ex_ext = Efield_external[0]->const_array(mfi);
+        Array4<Real const> const& Ey_ext = Efield_external[1]->const_array(mfi);
+        Array4<Real const> const& Ez_ext = Efield_external[2]->const_array(mfi);
         Array4<Real const> const& Jx = Jfield[0]->const_array(mfi);
         Array4<Real const> const& Jy = Jfield[1]->const_array(mfi);
         Array4<Real const> const& Jz = Jfield[2]->const_array(mfi);
@@ -910,6 +967,10 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                     auto nabla2Jx = T_Algo::Dxx(Jx, coefs_x, n_coefs_x, i, j, k);
                     Ex(i, j, k) -= eta_h * nabla2Jx;
                 }
+
+                if (include_external_fields) {
+                    Ex(i, j, k) -= Ex_ext(i, j, k);
+                }
             },
 
             // Ey calculation
@@ -954,6 +1015,10 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                     auto nabla2Jy = T_Algo::Dyy(Jy, coefs_y, n_coefs_y, i, j, k);
                     Ey(i, j, k) -= eta_h * nabla2Jy;
                 }
+
+                if (include_external_fields) {
+                    Ey(i, j, k) -= Ey_ext(i, j, k);
+                }
             },
 
             // Ez calculation
@@ -993,6 +1058,10 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 if (include_hyper_resistivity_term) {
                     auto nabla2Jz = T_Algo::Dzz(Jz, coefs_z, n_coefs_z, i, j, k);
                     Ez(i, j, k) -= eta_h * nabla2Jz;
+                }
+
+                if (include_external_fields) {
+                    Ez(i, j, k) -= Ez_ext(i, j, k);
                 }
             }
         );
