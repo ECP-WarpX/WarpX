@@ -196,7 +196,7 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
         {
             if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None) {
                 Array<std::unique_ptr<MultiFab>,3> Btmp;
-                if (m_fields.has(FieldType::Bfield_cax, Direction{0}, lev)) {
+                if (m_fields.has_vector(FieldType::Bfield_cax, lev)) {
                     for (int i = 0; i < 3; ++i) {
                         Btmp[i] = std::make_unique<MultiFab>(
                             *m_fields.get(FieldType::Bfield_cax, Direction{i}, lev), amrex::make_alias, 0, 1);
@@ -290,7 +290,7 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
         {
             if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None) {
                 Array<std::unique_ptr<MultiFab>,3> Etmp;
-                if (m_fields.has(FieldType::Efield_cax, Direction{0}, lev)) {
+                if (m_fields.has_vector(FieldType::Efield_cax, lev)) {
                     for (int i = 0; i < 3; ++i) {
                         Etmp[i] = std::make_unique<MultiFab>(
                             *m_fields.get(FieldType::Efield_cax, Direction{i}, lev), amrex::make_alias, 0, 1);
@@ -450,7 +450,7 @@ WarpX::UpdateAuxilaryDataSameType ()
                                                             Bfield_aux[lev - 1][2]->nComp(), ng_src, ng, WarpX::do_single_precision_comms,
                                                             crse_period);
 
-                if (m_fields.has(FieldType::Bfield_cax, Direction{0}, lev))
+                if (m_fields.has_vector(FieldType::Bfield_cax, lev))
                 {
                     MultiFab::Copy(*m_fields.get(FieldType::Bfield_cax, Direction{0}, lev), dBx, 0, 0, m_fields.get(FieldType::Bfield_cax, Direction{0}, lev)->nComp(), ng);
                     MultiFab::Copy(*m_fields.get(FieldType::Bfield_cax, Direction{1}, lev), dBy, 0, 0, m_fields.get(FieldType::Bfield_cax, Direction{1}, lev)->nComp(), ng);
@@ -535,7 +535,7 @@ WarpX::UpdateAuxilaryDataSameType ()
                                                             WarpX::do_single_precision_comms,
                                                             crse_period);
 
-                if (m_fields.has(FieldType::Efield_cax, Direction{0}, lev))
+                if (m_fields.has_vector(FieldType::Efield_cax, lev))
                 {
                     MultiFab::Copy(*m_fields.get(FieldType::Efield_cax, Direction{0}, lev), dEx, 0, 0, m_fields.get(FieldType::Efield_cax, Direction{0}, lev)->nComp(), ng);
                     MultiFab::Copy(*m_fields.get(FieldType::Efield_cax, Direction{1}, lev), dEy, 0, 0, m_fields.get(FieldType::Efield_cax, Direction{1}, lev)->nComp(), ng);
