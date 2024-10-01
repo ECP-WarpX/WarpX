@@ -7,7 +7,7 @@
 #include "SemiImplicitEM.H"
 #include "WarpX.H"
 
-using namespace warpx::fields;
+using warpx::fields::FieldType;
 using namespace amrex::literals;
 
 void SemiImplicitEM::Define ( WarpX*  a_WarpX )
@@ -20,13 +20,8 @@ void SemiImplicitEM::Define ( WarpX*  a_WarpX )
     m_WarpX = a_WarpX;
 
     // Define E and Eold vectors
-    m_E.Define( m_WarpX->getMultiLevelField(FieldType::Efield_fp) );
-    m_Eold.Define( m_WarpX->getMultiLevelField(FieldType::Efield_fp) );
-
-    // Need to define the WarpXSolverVec owned dot_mask to do dot
-    // product correctly for linear and nonlinear solvers
-    const amrex::Vector<amrex::Geometry>& Geom = m_WarpX->Geom();
-    m_E.SetDotMask(Geom);
+    m_E.Define( m_WarpX, "Efield_fp" );
+    m_Eold.Define( m_E );
 
     // Parse implicit solver parameters
     const amrex::ParmParse pp("implicit_evolve");
@@ -41,21 +36,20 @@ void SemiImplicitEM::Define ( WarpX*  a_WarpX )
 void SemiImplicitEM::PrintParameters () const
 {
     if (!m_WarpX->Verbose()) { return; }
-    amrex::Print() << std::endl;
-    amrex::Print() << "-----------------------------------------------------------" << std::endl;
-    amrex::Print() << "----------- SEMI IMPLICIT EM SOLVER PARAMETERS ------------" << std::endl;
-    amrex::Print() << "-----------------------------------------------------------" << std::endl;
-    amrex::Print() << "max particle iterations:    " << m_max_particle_iterations << std::endl;
-    amrex::Print() << "particle tolerance:         " << m_particle_tolerance << std::endl;
+    amrex::Print() << "\n";
+    amrex::Print() << "-----------------------------------------------------------\n";
+    amrex::Print() << "----------- SEMI IMPLICIT EM SOLVER PARAMETERS ------------\n";
+    amrex::Print() << "-----------------------------------------------------------\n";
+    amrex::Print() << "max particle iterations:    " << m_max_particle_iterations << "\n";
+    amrex::Print() << "particle tolerance:         " << m_particle_tolerance << "\n";
     if (m_nlsolver_type==NonlinearSolverType::Picard) {
-        amrex::Print() << "Nonlinear solver type:      Picard" << std::endl;
+        amrex::Print() << "Nonlinear solver type:      Picard\n";
     }
     else if (m_nlsolver_type==NonlinearSolverType::Newton) {
-        amrex::Print() << "Nonlinear solver type:      Newton" << std::endl;
+        amrex::Print() << "Nonlinear solver type:      Newton\n";
     }
     m_nlsolver->PrintParams();
-    amrex::Print() << "-----------------------------------------------------------" << std::endl;
-    amrex::Print() << std::endl;
+    amrex::Print() << "-----------------------------------------------------------\n\n";
 }
 
 void SemiImplicitEM::OneStep ( amrex::Real  a_time,
@@ -71,7 +65,7 @@ void SemiImplicitEM::OneStep ( amrex::Real  a_time,
     m_WarpX->SaveParticlesAtImplicitStepStart ( );
 
     // Save Eg at the start of the time step
-    m_Eold.Copy( m_WarpX->getMultiLevelField(FieldType::Efield_fp) );
+    m_Eold.Copy( FieldType::Efield_fp );
 
     // Advance WarpX owned Bfield_fp to t_{n+1/2}
     m_WarpX->EvolveB(a_dt, DtType::Full);

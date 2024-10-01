@@ -68,10 +68,10 @@ jobs:
         #MPI implementations often leak memory
         export "ASAN_OPTIONS=detect_leaks=0"
 
-        mpirun -n 2 ./build/bin/warpx.rz Examples/Physics_applications/laser_acceleration/inputs_rz
-        mpirun -n 2 ./build/bin/warpx.1d Examples/Physics_applications/laser_acceleration/inputs_1d
-        mpirun -n 2 ./build/bin/warpx.2d Examples/Physics_applications/laser_acceleration/inputs_2d
-        mpirun -n 2 ./build/bin/warpx.3d Examples/Physics_applications/laser_acceleration/inputs_3d
+        mpirun -n 2 ./build/bin/warpx.rz Examples/Physics_applications/laser_acceleration/inputs_base_rz
+        mpirun -n 2 ./build/bin/warpx.1d Examples/Physics_applications/laser_acceleration/inputs_test_1d_laser_acceleration
+        mpirun -n 2 ./build/bin/warpx.2d Examples/Physics_applications/laser_acceleration/inputs_base_2d
+        mpirun -n 2 ./build/bin/warpx.3d Examples/Physics_applications/laser_acceleration/inputs_base_3d
 
   build_thread_sanitizer:
     name: Clang thread sanitizer
@@ -149,29 +149,14 @@ jobs:
 
         export OMP_NUM_THREADS=2
 
-        mpirun -n 2 ./build/bin/warpx.rz Examples/Physics_applications/laser_acceleration/inputs_rz warpx.serialize_initial_conditions = 0
-        mpirun -n 2 ./build/bin/warpx.1d Examples/Physics_applications/laser_acceleration/inputs_1d warpx.serialize_initial_conditions = 0
-        mpirun -n 2 ./build/bin/warpx.2d Examples/Physics_applications/laser_acceleration/inputs_2d warpx.serialize_initial_conditions = 0
-        mpirun -n 2 ./build/bin/warpx.3d Examples/Physics_applications/laser_acceleration/inputs_3d warpx.serialize_initial_conditions = 0
+        mpirun -n 2 ./build/bin/warpx.rz Examples/Physics_applications/laser_acceleration/inputs_base_rz warpx.serialize_initial_conditions = 0
+        mpirun -n 2 ./build/bin/warpx.1d Examples/Physics_applications/laser_acceleration/inputs_test_1d_laser_acceleration warpx.serialize_initial_conditions = 0
+        mpirun -n 2 ./build/bin/warpx.2d Examples/Physics_applications/laser_acceleration/inputs_base_2d warpx.serialize_initial_conditions = 0
+        mpirun -n 2 ./build/bin/warpx.3d Examples/Physics_applications/laser_acceleration/inputs_base_3d warpx.serialize_initial_conditions = 0
 
         git clone https://github.com/ECP-WarpX/warpx-data ../warpx-data
         cd Examples/Tests/embedded_circle
 
         ulimit -c unlimited
 
-        mpirun -n 2 ../../../build_EB/bin/warpx.2d inputs_2d warpx.serialize_initial_conditions = 0
-
-  save_pr_number:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Save PR number
-        env:
-          PR_NUMBER: ${{ github.event.number }}
-        run: |
-          echo $PR_NUMBER > pr_number.txt
-      - uses: actions/upload-artifact@v4
-        with:
-          name: pr_number
-          path: pr_number.txt
-          retention-days: 1
+        mpirun -n 2 ../../../build_EB/bin/warpx.2d inputs_test_2d_embedded_circle warpx.serialize_initial_conditions = 0

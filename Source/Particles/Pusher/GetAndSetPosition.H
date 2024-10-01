@@ -76,33 +76,20 @@ struct GetParticlePosition
 {
     using RType = amrex::ParticleReal;
 
-#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
-    const RType* AMREX_RESTRICT m_x = nullptr;
-    const RType* AMREX_RESTRICT m_z = nullptr;
-#elif defined(WARPX_DIM_3D)
     const RType* AMREX_RESTRICT m_x = nullptr;
     const RType* AMREX_RESTRICT m_y = nullptr;
     const RType* AMREX_RESTRICT m_z = nullptr;
-#elif defined(WARPX_DIM_1D_Z)
-    const RType* AMREX_RESTRICT m_z = nullptr;
-#elif defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
-    const RType* AMREX_RESTRICT m_x = nullptr;
+
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+    const RType* AMREX_RESTRICT m_theta = nullptr;
+#endif
+#if defined(WARPX_DIM_RSPHERE)
+    const RType* AMREX_RESTRICT m_phi = nullptr;
 #endif
 
-#if defined(WARPX_DIM_RZ)
-    const RType* m_theta = nullptr;
-#elif defined(WARPX_DIM_XZ)
-    static constexpr RType m_y_default = RType(0.0);
-#elif defined(WARPX_DIM_1D_Z)
     static constexpr RType m_x_default = RType(0.0);
     static constexpr RType m_y_default = RType(0.0);
-#elif defined(WARPX_DIM_RCYLINDER)
-    const RType* m_theta = nullptr;
     static constexpr RType m_z_default = RType(0.0);
-#elif defined(WARPX_DIM_RSPHERE)
-    const RType* m_theta = nullptr;
-    const RType* m_phi = nullptr;
-#endif
 
     GetParticlePosition () = default;
 
@@ -146,30 +133,30 @@ struct GetParticlePosition
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator() (const long i, RType& x, RType& y, RType& z) const noexcept
     {
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ)
         RType const r = m_x[i];
         x = r*std::cos(m_theta[i]);
         y = r*std::sin(m_theta[i]);
         z = m_z[i];
-#elif WARPX_DIM_RCYLINDER
+#elif defined(WARPX_DIM_RCYLINDER)
         RType const r = m_x[i];
         x = r*std::cos(m_theta[i]);
         y = r*std::sin(m_theta[i]);
         z = m_z_default;
-#elif WARPX_DIM_RSPHERE
+#elif defined(WARPX_DIM_RSPHERE)
         RType const r = m_x[i];
         x = r*std::cos(m_theta[i])*std::sin(m_phi[i]);
         y = r*std::sin(m_theta[i])*std::sin(m_phi[i]);
         z = r*std::cos(m_phi[i]);
-#elif WARPX_DIM_3D
+#elif defined(WARPX_DIM_3D)
         x = m_x[i];
         y = m_y[i];
         z = m_z[i];
-#elif WARPX_DIM_XZ
+#elif defined(WARPX_DIM_XZ)
         x = m_x[i];
         y = m_y_default;
         z = m_z[i];
-#else
+#elif defined(WARPX_DIM_1D_Z)
         x = m_x_default;
         y = m_y_default;
         z = m_z[i];
@@ -184,27 +171,27 @@ struct GetParticlePosition
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void AsStored (const long i, RType& x, RType& y, RType& z) const noexcept
     {
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ)
         x = m_x[i];
         y = m_theta[i];
         z = m_z[i];
-#elif WARPX_DIM_RCYLINDER
+#elif defined(WARPX_DIM_RCYLINDER)
         x = m_x[i];
         y = m_theta[i];
         z = m_z_default;
-#elif WARPX_DIM_RSPHERE
+#elif defined(WARPX_DIM_RSPHERE)
         x = m_x[i];
         y = m_theta[i];
         z = m_phi[i];
-#elif WARPX_DIM_3D
+#elif defined(WARPX_DIM_3D)
         x = m_x[i];
         y = m_y[i];
         z = m_z[i];
-#elif WARPX_DIM_XZ
+#elif defined(WARPX_DIM_XZ)
         x = m_x[i];
         y = m_y_default;
         z = m_z[i];
-#else
+#elif defined(WARPX_DIM_1D_Z)
         x = m_x_default;
         y = m_y_default;
         z = m_z[i];
@@ -224,18 +211,19 @@ struct SetParticlePosition
 {
     using RType = amrex::ParticleReal;
 
-#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
-    RType* AMREX_RESTRICT m_x;
-    RType* AMREX_RESTRICT m_z;
-#elif defined(WARPX_DIM_3D)
+#if defined(WARPX_DIM_3D)
     RType* AMREX_RESTRICT m_x;
     RType* AMREX_RESTRICT m_y;
+    RType* AMREX_RESTRICT m_z;
+#elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
+    RType* AMREX_RESTRICT m_x;
     RType* AMREX_RESTRICT m_z;
 #elif defined(WARPX_DIM_1D_Z)
     RType* AMREX_RESTRICT m_z;
 #elif defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
     RType* AMREX_RESTRICT m_x = nullptr;
 #endif
+
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
     RType* AMREX_RESTRICT m_theta;
 #endif
@@ -274,36 +262,28 @@ struct SetParticlePosition
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator() (const long i, RType x, RType y, RType z) const noexcept
     {
-#if defined(WARPX_DIM_XZ)
-        amrex::ignore_unused(y);
-#endif
-#if defined(WARPX_DIM_1D_Z)
-        amrex::ignore_unused(x,y);
-#endif
-#if defined(WARPX_DIM_RCYLINDER)
-        amrex::ignore_unused(z);
-#endif
-#ifdef WARPX_DIM_RZ
+        amrex::ignore_unused(x,y,z);
+#if defined(WARPX_DIM_RZ)
         m_theta[i] = std::atan2(y, x);
         m_x[i] = std::sqrt(x*x + y*y);
         m_z[i] = z;
-#elif WARPX_DIM_RCYLINDER
+#elif defined(WARPX_DIM_RCYLINDER)
         m_theta[i] = std::atan2(y, x);
         m_x[i] = std::sqrt(x*x + y*y);
-#elif WARPX_DIM_RSPHERE
+#elif defined(WARPX_DIM_RSPHERE)
         RType const rxy = std::sqrt(x*x + y*y);
         RType const r = std::sqrt(x*x + y*y + z*z);
         m_x[i] = r;
         m_theta[i] = std::atan2(y, x);
         m_phi[i] = std::atan2(rxy, z);
-#elif WARPX_DIM_3D
+#elif defined(WARPX_DIM_3D)
         m_x[i] = x;
         m_y[i] = y;
         m_z[i] = z;
-#elif WARPX_DIM_XZ
+#elif defined(WARPX_DIM_XZ)
         m_x[i] = x;
         m_z[i] = z;
-#else
+#elif defined(WARPX_DIM_1D_Z)
         m_z[i] = z;
 #endif
     }
@@ -315,34 +295,26 @@ struct SetParticlePosition
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void AsStored (const long i, RType x, RType y, RType z) const noexcept
     {
-#if defined(WARPX_DIM_XZ)
-        amrex::ignore_unused(y);
-#endif
-#if defined(WARPX_DIM_1D_Z)
-        amrex::ignore_unused(x,y);
-#endif
-#if defined(WARPX_DIM_RCYLINDER)
-        amrex::ignore_unused(z);
-#endif
-#ifdef WARPX_DIM_RZ
+        amrex::ignore_unused(x,y,z);
+#if defined(WARPX_DIM_RZ)
         m_x[i] = x;
         m_theta[i] = y;
         m_z[i] = z;
-#elif WARPX_DIM_RCYLINDER
+#elif defined(WARPX_DIM_RCYLINDER)
         m_x[i] = x;
         m_theta[i] = y;
-#elif WARPX_DIM_RSPHERE
+#elif defined(WARPX_DIM_RSPHERE)
         m_x[i] = x;
         m_theta[i] = y;
         m_phi[i] = z;
-#elif WARPX_DIM_3D
+#elif defined(WARPX_DIM_3D)
         m_x[i] = x;
         m_y[i] = y;
         m_z[i] = z;
-#elif WARPX_DIM_XZ
+#elif defined(WARPX_DIM_XZ)
         m_x[i] = x;
         m_z[i] = z;
-#else
+#elif defined(WARPX_DIM_1D_Z)
         m_z[i] = z;
 #endif
     }

@@ -232,8 +232,9 @@ Diagnostics::BaseReadParameters ()
        if (WarpX::boost_direction[ dim_map[WarpX::moving_window_dir] ] == 1) {
            // Convert user-defined lo and hi for diagnostics to account for boosted-frame
            // simulations with moving window
-           const amrex::Real convert_factor = 1._rt/(WarpX::gamma_boost * (1._rt - WarpX::beta_boost) );
-           // Assuming that the window travels with speed c
+           const amrex::Real beta_window = WarpX::moving_window_v / PhysConst::c;
+           const amrex::Real convert_factor = 1._rt/(
+               WarpX::gamma_boost * (1._rt - WarpX::beta_boost * beta_window) );
            m_lo[WarpX::moving_window_dir] *= convert_factor;
            m_hi[WarpX::moving_window_dir] *= convert_factor;
        }

@@ -471,8 +471,8 @@ namespace
 void
 PEC::ApplyPECtoEfield (
     std::array<amrex::MultiFab*, 3> Efield,
-    const amrex::Vector<FieldBoundaryType>& field_boundary_lo,
-    const amrex::Vector<FieldBoundaryType>& field_boundary_hi,
+    const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& field_boundary_lo,
+    const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& field_boundary_hi,
     const amrex::IntVect& ng_fieldgather, const amrex::Geometry& geom,
     const int lev, PatchType patch_type, const amrex::Vector<amrex::IntVect>& ref_ratios,
     const bool split_pml_field)
@@ -524,12 +524,7 @@ PEC::ApplyPECtoEfield (
         amrex::ParallelFor(
             tex, nComp_x,
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-                amrex::ignore_unused(k);
-#endif
-#if AMREX_SPACEDIM == 1
                 amrex::ignore_unused(j,k);
-#endif
                 const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 0;
                 ::SetEfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
@@ -537,12 +532,7 @@ PEC::ApplyPECtoEfield (
             },
             tey, nComp_y,
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-                amrex::ignore_unused(k);
-#endif
-#if AMREX_SPACEDIM == 1
                 amrex::ignore_unused(j,k);
-#endif
                 const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 1;
                 ::SetEfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
@@ -550,12 +540,7 @@ PEC::ApplyPECtoEfield (
             },
             tez, nComp_z,
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-                amrex::ignore_unused(k);
-#endif
-#if AMREX_SPACEDIM == 1
                 amrex::ignore_unused(j,k);
-#endif
                 const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 2;
                 ::SetEfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
@@ -569,8 +554,8 @@ PEC::ApplyPECtoEfield (
 void
 PEC::ApplyPECtoBfield (
     std::array<amrex::MultiFab*, 3> Bfield,
-    const amrex::Vector<FieldBoundaryType>& field_boundary_lo,
-    const amrex::Vector<FieldBoundaryType>& field_boundary_hi,
+    const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& field_boundary_lo,
+    const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& field_boundary_hi,
     const amrex::IntVect& ng_fieldgather, const amrex::Geometry& geom,
     const int lev, PatchType patch_type, const amrex::Vector<amrex::IntVect>& ref_ratios)
 {
@@ -616,12 +601,7 @@ PEC::ApplyPECtoBfield (
         amrex::ParallelFor(
             tbx, nComp_x,
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-                amrex::ignore_unused(k);
-#endif
-#if AMREX_SPACEDIM == 1
                 amrex::ignore_unused(j,k);
-#endif
                 const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 0;
                 ::SetBfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
@@ -629,12 +609,7 @@ PEC::ApplyPECtoBfield (
             },
             tby, nComp_y,
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-                amrex::ignore_unused(k);
-#endif
-#if AMREX_SPACEDIM == 1
                 amrex::ignore_unused(j,k);
-#endif
                 const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 1;
                 ::SetBfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
@@ -642,12 +617,7 @@ PEC::ApplyPECtoBfield (
             },
             tbz, nComp_z,
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-                amrex::ignore_unused(k);
-#endif
-#if AMREX_SPACEDIM == 1
                 amrex::ignore_unused(j,k);
-#endif
                 const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 2;
                 ::SetBfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
@@ -671,10 +641,10 @@ PEC::ApplyPECtoBfield (
 void
 PEC::ApplyReflectiveBoundarytoRhofield (
     amrex::MultiFab* rho,
-    const amrex::Vector<FieldBoundaryType>& field_boundary_lo,
-    const amrex::Vector<FieldBoundaryType>& field_boundary_hi,
-    const amrex::Vector<ParticleBoundaryType>& particle_boundary_lo,
-    const amrex::Vector<ParticleBoundaryType>& particle_boundary_hi,
+    const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& field_boundary_lo,
+    const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& field_boundary_hi,
+    const amrex::Array<ParticleBoundaryType,AMREX_SPACEDIM>& particle_boundary_lo,
+    const amrex::Array<ParticleBoundaryType,AMREX_SPACEDIM>& particle_boundary_hi,
     const amrex::Geometry& geom,
     const int lev, PatchType patch_type, const amrex::Vector<amrex::IntVect>& ref_ratios)
 {
@@ -741,11 +711,7 @@ PEC::ApplyReflectiveBoundarytoRhofield (
         // Loop over valid cells (i.e. cells inside the domain)
         amrex::ParallelFor(mfi.validbox(), nComp,
         [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-            amrex::ignore_unused(k);
-#elif AMREX_SPACEDIM == 1
             amrex::ignore_unused(j,k);
-#endif
             // Store the array index
             const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 
@@ -761,10 +727,10 @@ PEC::ApplyReflectiveBoundarytoRhofield (
 void
 PEC::ApplyReflectiveBoundarytoJfield(
     amrex::MultiFab* Jx, amrex::MultiFab* Jy, amrex::MultiFab* Jz,
-    const amrex::Vector<FieldBoundaryType>& field_boundary_lo,
-    const amrex::Vector<FieldBoundaryType>& field_boundary_hi,
-    const amrex::Vector<ParticleBoundaryType>& particle_boundary_lo,
-    const amrex::Vector<ParticleBoundaryType>& particle_boundary_hi,
+    const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& field_boundary_lo,
+    const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& field_boundary_hi,
+    const amrex::Array<ParticleBoundaryType,AMREX_SPACEDIM>& particle_boundary_lo,
+    const amrex::Array<ParticleBoundaryType,AMREX_SPACEDIM>& particle_boundary_hi,
     const amrex::Geometry& geom,
     const int lev, PatchType patch_type, const amrex::Vector<amrex::IntVect>& ref_ratios)
 {
@@ -873,11 +839,7 @@ PEC::ApplyReflectiveBoundarytoJfield(
         // Loop over valid cells (i.e. cells inside the domain)
         amrex::ParallelFor(mfi.validbox(), Jx->nComp(),
         [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-            amrex::ignore_unused(k);
-#elif AMREX_SPACEDIM == 1
             amrex::ignore_unused(j,k);
-#endif
             // Store the array index
             const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 
@@ -908,11 +870,7 @@ PEC::ApplyReflectiveBoundarytoJfield(
         // Loop over valid cells (i.e. cells inside the domain)
         amrex::ParallelFor(mfi.validbox(), Jy->nComp(),
         [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-            amrex::ignore_unused(k);
-#elif AMREX_SPACEDIM == 1
             amrex::ignore_unused(j,k);
-#endif
             // Store the array index
             const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 
@@ -943,11 +901,7 @@ PEC::ApplyReflectiveBoundarytoJfield(
         // Loop over valid cells (i.e. cells inside the domain)
         amrex::ParallelFor(mfi.validbox(), Jz->nComp(),
         [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-            amrex::ignore_unused(k);
-#elif AMREX_SPACEDIM == 1
             amrex::ignore_unused(j,k);
-#endif
             // Store the array index
             const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 
@@ -962,8 +916,8 @@ PEC::ApplyReflectiveBoundarytoJfield(
 void
 PEC::ApplyPECtoElectronPressure (
     amrex::MultiFab* Pefield,
-    const amrex::Vector<FieldBoundaryType>& field_boundary_lo,
-    const amrex::Vector<FieldBoundaryType>& field_boundary_hi,
+    const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& field_boundary_lo,
+    const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& field_boundary_hi,
     const amrex::Geometry& geom,
     const int lev, PatchType patch_type, const amrex::Vector<amrex::IntVect>& ref_ratios)
 {
@@ -1014,11 +968,7 @@ PEC::ApplyPECtoElectronPressure (
         // Loop over valid cells (i.e. cells inside the domain)
         amrex::ParallelFor(mfi.validbox(), nComp,
         [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-            amrex::ignore_unused(k);
-#elif AMREX_SPACEDIM == 1
             amrex::ignore_unused(j,k);
-#endif
             // Store the array index
             const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 

@@ -113,9 +113,9 @@ DifferentialLuminosity::DifferentialLuminosity (const std::string& rd_name)
                 ofs << m_sep;
                 ofs << "[" << off++ << "]";
                 const Real b = m_bin_min + m_bin_size*(Real(i)+0.5_rt);
-                ofs << "bin" << 1+i << "=" << b << "(J)";
+                ofs << "bin" << 1+i << "=" << b << "(eV)";
             }
-            ofs << std::endl;
+            ofs << "\n";
             // close file
             ofs.close();
         }
@@ -133,7 +133,8 @@ void DifferentialLuminosity::ComputeDiags (int step)
     // array d_data, we add contributions at *each timestep*, but
     // we only write the data to file at intervals specified by the user.
 
-    const Real c2 = PhysConst::c*PhysConst::c;
+    const Real c2_over_qe = PhysConst::c*PhysConst::c/PhysConst::q_e;
+    const Real inv_c2 = 1._rt/(PhysConst::c*PhysConst::c);
 
     // get a reference to WarpX instance
     auto& warpx = WarpX::GetInstance();
@@ -218,13 +219,13 @@ void DifferentialLuminosity::ComputeDiags (int step)
                         index_type const j_2 = indices_2[i_2];
 
                         Real const u1_square =  u1x[j_1]*u1x[j_1] + u1y[j_1]*u1y[j_1] + u1z[j_1]*u1z[j_1];
-                        Real const gamma1 = std::sqrt(1._rt + u1_square/c2);
+                        Real const gamma1 = std::sqrt(1._rt + u1_square*inv_c2);
                         Real const u2_square = u2x[j_2]*u2x[j_2] + u2y[j_2]*u2y[j_2] + u2z[j_2]*u2z[j_2];
-                        Real const gamma2 = std::sqrt(1._rt + u2_square/c2);
+                        Real const gamma2 = std::sqrt(1._rt + u2_square*inv_c2);
                         Real const u1_dot_u2 = u1x[j_1]*u2x[j_2] + u1y[j_1]*u2y[j_2] + u1z[j_1]*u2z[j_2];
 
-                        // center of mass energy
-                        Real const E_com = c2 * std::sqrt(m1*m1 + m2*m2 + 2*m1*m2* (gamma1*gamma2 - u1_dot_u2/c2));
+                        // center of mass energy in eV
+                        Real const E_com = c2_over_qe * std::sqrt(m1*m1 + m2*m2 + 2*m1*m2* (gamma1*gamma2 - u1_dot_u2*inv_c2));
 
                         // determine particle bin
                         int const bin = int(Math::floor((E_com-bin_min)/bin_size));
@@ -242,9 +243,9 @@ void DifferentialLuminosity::ComputeDiags (int step)
 
                         Real const v1_cross_v2_square = (u1_cross_u2_x*u1_cross_u2_x + u1_cross_u2_y*u1_cross_u2_y + u1_cross_u2_z*u1_cross_u2_z) / (gamma1*gamma1*gamma2*gamma2);
 
-                        Real const radicand = v1_minus_v2_square - v1_cross_v2_square / c2;
+                        Real const radicand = v1_minus_v2_square - v1_cross_v2_square * inv_c2;
 
-                        Real const dL_dEcom = std::sqrt( radicand ) * w1[j_1] * w2[j_2] / dV / bin_size * dt; // m^-2 J^-1
+                        Real const dL_dEcom = std::sqrt( radicand ) * w1[j_1] * w2[j_2] / dV / bin_size * dt; // m^-2 eV^-1
 
                         amrex::HostDevice::Atomic::Add(&dptr_data[bin], dL_dEcom);
 

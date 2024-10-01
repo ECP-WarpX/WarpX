@@ -84,19 +84,4 @@ jobs:
         source py-venv/bin/activate
         export OMP_NUM_THREADS=1
 
-        mpirun -n 2 Examples/Physics_applications/laser_acceleration/PICMI_inputs_3d.py
-
-  save_pr_number:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Save PR number
-        env:
-          PR_NUMBER: ${{ github.event.number }}
-        run: |
-          echo $PR_NUMBER > pr_number.txt
-      - uses: actions/upload-artifact@v4
-        with:
-          name: pr_number
-          path: pr_number.txt
-          retention-days: 1
+        mpirun -n 2 Examples/Physics_applications/laser_acceleration/inputs_test_3d_laser_acceleration_picmi.py
