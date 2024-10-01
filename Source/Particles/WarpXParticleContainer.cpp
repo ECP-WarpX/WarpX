@@ -584,8 +584,8 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                 // signed distance function
                 auto const distance_to_eb_arr = (*warpx.GetDistanceToEB()[lev])[pti].array();
                 const Geometry& geom = Geom(lev);
-                const amrex::GpuArray<amrex::Real, 3U> eb_dxi = geom.InvCellSizeArray();
-                const amrex::GpuArray<amrex::Real, 3U> eb_plo = geom.ProbLoArray();
+                const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> eb_dxi = geom.InvCellSizeArray();
+                const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> eb_plo = geom.ProbLoArray();
 #endif
                 if        (WarpX::nox == 1){
                     doEsirkepovDepositionShapeN<1>(
