@@ -1318,7 +1318,7 @@ void WarpX::DampFieldsInGuards(const int lev, amrex::MultiFab* mf)
     }
 }
 
-#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
 // This scales the current by the inverse volume and wraps around the deposition at negative radius.
 // It is faster to apply this on the grid than to do it particle by particle.
 // It is put here since there isn't another nice place for it.
@@ -1398,7 +1398,11 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
             if (r == 0._rt) {
                 Jr_arr(i,j,0,0) = 0._rt;
             } else {
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
                 Jr_arr(i,j,0,0) /= (2._rt*MathConst::pi*r);
+#if defined(WARPX_DIM_RSPHERE)
+                Jr_arr(i,j,0,0) /= (4._rt/3._rt*MathConst::pi*(3._rt*r*r + dr*dr/4._rt));
+#endif
             }
 
             for (int imode=1 ; imode < nmodes ; imode++) {
@@ -1435,7 +1439,11 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
             if (r == 0._rt) {
                 Jt_arr(i,j,0,0) = 0._rt;
             } else {
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
                 Jt_arr(i,j,0,0) /= (2._rt*MathConst::pi*r);
+#if defined(WARPX_DIM_RSPHERE)
+                Jt_arr(i,j,0,0) /= (4._rt/3._rt*MathConst::pi*(3._rt*r*r + dr*dr/4._rt));
+#endif
             }
 
             for (int imode=1 ; imode < nmodes ; imode++) {
@@ -1472,7 +1480,11 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
             if (r == 0._rt) {
                 Jz_arr(i,j,0,0) /= (MathConst::pi*dr*axis_volume_factor);
             } else {
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
                 Jz_arr(i,j,0,0) /= (2._rt*MathConst::pi*r);
+#if defined(WARPX_DIM_RSPHERE)
+                Jz_arr(i,j,0,0) /= (4._rt/3._rt*MathConst::pi*(3._rt*r*r + dr*dr/4._rt));
+#endif
             }
 
             for (int imode=1 ; imode < nmodes ; imode++) {
@@ -1569,7 +1581,11 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
             if (r == 0.) {
                 Rho_arr(i,j,0,icomp) /= (MathConst::pi*dr*axis_volume_factor);
             } else {
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
                 Rho_arr(i,j,0,icomp) /= (2._rt*MathConst::pi*r);
+#if defined(WARPX_DIM_RSPHERE)
+                Rho_arr(i,j,0,icomp) /= (4._rt/3._rt*MathConst::pi*(3._rt*r*r + dr*dr/4._rt));
+#endif
             }
         });
     }
