@@ -9,7 +9,6 @@ pr:
   branches:
     include:
     - development
-    - nightly
 
 jobs:
 - job:

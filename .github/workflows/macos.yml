@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - "development"
-      - "nightly"
   pull_request:
 
 concurrency:
