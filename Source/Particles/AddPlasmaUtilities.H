@@ -100,6 +100,7 @@ amrex::Real compute_scale_fac_area_eb (
     // that is proportional to the area of eb_bnd_area_arr(i,j,k).
 #else
     // TODO Implement in RZ, 2D, and 1D
+    amrex::ignore_unused(dx, eb_bnd_normal_arr, i, j, k);
 #endif
     scale_fac /= num_ppc_real;
     return scale_fac;
