@@ -1528,7 +1528,7 @@ WarpX::LoadExternalFields (int const lev)
             m_p_ext_field_params->Ezfield_parser->compile<4>(),
             m_fields.get_alldirs(FieldType::edge_lengths, lev),
             m_fields.get_alldirs(FieldType::face_areas, lev),
-            'f', lev, PatchType::fine);
+            'e', lev, PatchType::fine);
     }
     else if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::read_from_file) {
 #if defined(WARPX_DIM_RZ)
