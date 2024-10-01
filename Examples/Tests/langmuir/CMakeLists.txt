@@ -419,4 +419,3 @@ add_warpx_test(
     diags/diag1000080  # output
     OFF  # dependency
 )
-
