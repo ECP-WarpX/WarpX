@@ -47,8 +47,11 @@ struct ScaleFields
         // This only approximates what should be happening. The particles
         // should by advanced a fraction of a time step instead.
         // Scaling the fields is much easier and may be good enough.
-        const amrex::Real dtscale = 1._rt - (m_z_plane_previous - zp)/(m_vz_ave_boosted + m_v_boost)/m_dt;
-        if (0._rt < dtscale && dtscale < 1._rt)
+        amrex::Real dtscale = 0.5_rt - (m_z_plane_previous - zp)/(m_vz_ave_boosted + m_v_boost)/m_dt;
+        if (dtscale < 0._rt) {
+            dtscale = 0;
+        }
+        if (dtscale < 1._rt)
         {
             Exp *= dtscale;
             Eyp *= dtscale;
