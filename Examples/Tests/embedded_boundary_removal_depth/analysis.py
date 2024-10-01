@@ -40,7 +40,7 @@ def plot(array, vmax=1e-9):
     ax.plot(x, y, "k--")
     ax.plot(x, -y, "k--")
     cax = ax.imshow(array, cmap="RdBu", extent=[-10, 10, -10, 10], origin="lower")
-    cbar = fig.colorbar(cax, ax=ax)
+    fig.colorbar(cax, ax=ax)
     ax.set_xlabel("x (m)")
     ax.set_ylabel("z (m)")
     ax.set_title("Averaged divE")
