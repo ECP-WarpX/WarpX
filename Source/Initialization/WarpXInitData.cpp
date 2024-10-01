@@ -977,18 +977,18 @@ WarpX::InitLevelData (int lev, Real /*time*/)
             m_p_ext_field_params->Bxfield_parser->compile<4>(),
             m_p_ext_field_params->Byfield_parser->compile<4>(),
             m_p_ext_field_params->Bzfield_parser->compile<4>(),
+            lev, PatchType::fine, 'f',
             m_fields.get_alldirs(FieldType::edge_lengths, lev),
-            m_fields.get_alldirs(FieldType::face_areas, lev),
-            'f', lev, PatchType::fine);
+            m_fields.get_alldirs(FieldType::face_areas, lev));
 
         ComputeExternalFieldOnGridUsingParser(
             FieldType::Bfield_cp,
             m_p_ext_field_params->Bxfield_parser->compile<4>(),
             m_p_ext_field_params->Byfield_parser->compile<4>(),
             m_p_ext_field_params->Bzfield_parser->compile<4>(),
+            lev, PatchType::coarse, 'f',
             m_fields.get_alldirs(FieldType::edge_lengths, lev),
-            m_fields.get_mr_levels_alldirs(FieldType::face_areas, max_level)[lev],
-            'f', lev, PatchType::coarse);
+            m_fields.get_mr_levels_alldirs(FieldType::face_areas, max_level)[lev]);
     }
 
     // if the input string for the E-field is "parse_e_ext_grid_function",
@@ -1019,18 +1019,18 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                 m_p_ext_field_params->Exfield_parser->compile<4>(),
                 m_p_ext_field_params->Eyfield_parser->compile<4>(),
                 m_p_ext_field_params->Ezfield_parser->compile<4>(),
+                lev, PatchType::fine, 'e',
                 m_fields.get_alldirs(FieldType::edge_lengths, lev),
-                m_fields.get_alldirs(FieldType::face_areas, lev),
-                'e', lev, PatchType::fine);
+                m_fields.get_alldirs(FieldType::face_areas, lev));
 
             ComputeExternalFieldOnGridUsingParser(
                 FieldType::Efield_cp,
                 m_p_ext_field_params->Exfield_parser->compile<4>(),
                 m_p_ext_field_params->Eyfield_parser->compile<4>(),
                 m_p_ext_field_params->Ezfield_parser->compile<4>(),
+                lev, PatchType::coarse, 'e',
                 m_fields.get_alldirs(FieldType::edge_lengths, lev),
-                m_fields.get_alldirs(FieldType::face_areas, lev),
-                'e', lev, PatchType::coarse);
+                m_fields.get_alldirs(FieldType::face_areas, lev));
 #ifdef AMREX_USE_EB
             if (eb_enabled) {
                 if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
@@ -1064,124 +1064,9 @@ void WarpX::ComputeExternalFieldOnGridUsingParser (
     amrex::ParserExecutor<4> const& fx_parser,
     amrex::ParserExecutor<4> const& fy_parser,
     amrex::ParserExecutor<4> const& fz_parser,
-    int lev, PatchType patch_type)
-{
-    auto t = gett_new(lev);
-
-    auto dx_lev = geom[lev].CellSizeArray();
-    const RealBox& real_box = geom[lev].ProbDomain();
-
-    amrex::IntVect refratio = (lev > 0 ) ? RefRatio(lev-1) : amrex::IntVect(1);
-    if (patch_type == PatchType::coarse) {
-        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            dx_lev[idim] *= refratio[idim];
-        }
-    }
-
-    using ablastr::fields::Direction;
-    amrex::MultiFab * mfx = m_fields.get(field, Direction{0}, lev);
-    amrex::MultiFab * mfy = m_fields.get(field, Direction{1}, lev);
-    amrex::MultiFab * mfz = m_fields.get(field, Direction{2}, lev);
-
-    const amrex::IntVect x_nodal_flag = mfx->ixType().toIntVect();
-    const amrex::IntVect y_nodal_flag = mfy->ixType().toIntVect();
-    const amrex::IntVect z_nodal_flag = mfz->ixType().toIntVect();
-
-    for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi)
-    {
-        const amrex::Box& tbx = mfi.tilebox( x_nodal_flag, mfx->nGrowVect() );
-        const amrex::Box& tby = mfi.tilebox( y_nodal_flag, mfy->nGrowVect() );
-        const amrex::Box& tbz = mfi.tilebox( z_nodal_flag, mfz->nGrowVect() );
-
-        auto const& mfxfab = mfx->array(mfi);
-        auto const& mfyfab = mfy->array(mfi);
-        auto const& mfzfab = mfz->array(mfi);
-
-        amrex::ParallelFor (tbx, tby, tbz,
-            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                // Shift required in the x-, y-, or z- position
-                // depending on the index type of the multifab
-#if defined(WARPX_DIM_1D_Z)
-                const amrex::Real x = 0._rt;
-                const amrex::Real y = 0._rt;
-                const amrex::Real fac_z = (1._rt - x_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
-                const amrex::Real z = j*dx_lev[0] + real_box.lo(0) + fac_z;
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                const amrex::Real fac_x = (1._rt - x_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
-                const amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
-                const amrex::Real y = 0._rt;
-                const amrex::Real fac_z = (1._rt - x_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
-                const amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
-#else
-                const amrex::Real fac_x = (1._rt - x_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
-                const amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
-                const amrex::Real fac_y = (1._rt - x_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
-                const amrex::Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
-                const amrex::Real fac_z = (1._rt - x_nodal_flag[2]) * dx_lev[2] * 0.5_rt;
-                const amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
-#endif
-                // Initialize the x-component of the field.
-                mfxfab(i,j,k) = fx_parser(x, y, z, t);
-            },
-            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-#if defined(WARPX_DIM_1D_Z)
-                const amrex::Real x = 0._rt;
-                const amrex::Real y = 0._rt;
-                const amrex::Real fac_z = (1._rt - y_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
-                const amrex::Real z = j*dx_lev[0] + real_box.lo(0) + fac_z;
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                const amrex::Real fac_x = (1._rt - y_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
-                const amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
-                const amrex::Real y = 0._rt;
-                const amrex::Real fac_z = (1._rt - y_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
-                const amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
-#elif defined(WARPX_DIM_3D)
-                const amrex::Real fac_x = (1._rt - y_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
-                const amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
-                const amrex::Real fac_y = (1._rt - y_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
-                const amrex::Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
-                const amrex::Real fac_z = (1._rt - y_nodal_flag[2]) * dx_lev[2] * 0.5_rt;
-                const amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
-#endif
-                // Initialize the y-component of the field.
-                mfyfab(i,j,k) = fy_parser(x, y, z, t);
-            },
-            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-#if defined(WARPX_DIM_1D_Z)
-                const amrex::Real x = 0._rt;
-                const amrex::Real y = 0._rt;
-                const amrex::Real fac_z = (1._rt - z_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
-                const amrex::Real z = j*dx_lev[0] + real_box.lo(0) + fac_z;
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                const amrex::Real fac_x = (1._rt - z_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
-                const amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
-                const amrex::Real y = 0._rt;
-                const amrex::Real fac_z = (1._rt - z_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
-                const amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
-#elif defined(WARPX_DIM_3D)
-                const amrex::Real fac_x = (1._rt - z_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
-                const amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
-                const amrex::Real fac_y = (1._rt - z_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
-                const amrex::Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
-                const amrex::Real fac_z = (1._rt - z_nodal_flag[2]) * dx_lev[2] * 0.5_rt;
-                const amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
-#endif
-                // Initialize the z-component of the field.
-                mfzfab(i,j,k) = fz_parser(x, y, z, t);
-            }
-        );
-    }
-}
-
-void WarpX::ComputeExternalFieldOnGridUsingParser (
-    warpx::fields::FieldType field,
-    amrex::ParserExecutor<4> const& fx_parser,
-    amrex::ParserExecutor<4> const& fy_parser,
-    amrex::ParserExecutor<4> const& fz_parser,
-    ablastr::fields::VectorField const& edge_lengths,
-    ablastr::fields::VectorField const& face_areas,
-    [[maybe_unused]] const char topology,
-    int lev, PatchType patch_type)
+    int lev, PatchType patch_type, [[maybe_unused]] const char topology,
+    std::optional<ablastr::fields::VectorField> const& edge_lengths,
+    std::optional<ablastr::fields::VectorField> const& face_areas)
 {
     auto t = gett_new(lev);
 
@@ -1218,12 +1103,18 @@ void WarpX::ComputeExternalFieldOnGridUsingParser (
 
         amrex::Array4<amrex::Real> lx, ly, lz, Sx, Sy, Sz;
         if (eb_enabled) {
-            lx = edge_lengths[0]->array(mfi);
-            ly = edge_lengths[1]->array(mfi);
-            lz = edge_lengths[2]->array(mfi);
-            Sx = face_areas[0]->array(mfi);
-            Sy = face_areas[1]->array(mfi);
-            Sz = face_areas[2]->array(mfi);
+            if (edge_lengths.has_value()) {
+                auto& edge_lengths_array = edge_lengths.value();
+                lx = edge_lengths_array[0]->array(mfi);
+                ly = edge_lengths_array[1]->array(mfi);
+                lz = edge_lengths_array[2]->array(mfi);
+            }
+            if (face_areas.has_value()) {
+                auto& face_areas_array = face_areas.value();
+                Sx = face_areas_array[0]->array(mfi);
+                Sy = face_areas_array[1]->array(mfi);
+                Sz = face_areas_array[2]->array(mfi);
+            }
         }
 
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
@@ -1501,9 +1392,9 @@ WarpX::LoadExternalFields (int const lev)
             m_p_ext_field_params->Bxfield_parser->compile<4>(),
             m_p_ext_field_params->Byfield_parser->compile<4>(),
             m_p_ext_field_params->Bzfield_parser->compile<4>(),
+            lev, PatchType::fine, 'f',
             m_fields.get_alldirs(FieldType::edge_lengths, lev),
-            m_fields.get_alldirs(FieldType::face_areas, lev),
-            'f', lev, PatchType::fine);
+            m_fields.get_alldirs(FieldType::face_areas, lev));
     }
     else if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::read_from_file) {
 #if defined(WARPX_DIM_RZ)
@@ -1526,9 +1417,9 @@ WarpX::LoadExternalFields (int const lev)
             m_p_ext_field_params->Exfield_parser->compile<4>(),
             m_p_ext_field_params->Eyfield_parser->compile<4>(),
             m_p_ext_field_params->Ezfield_parser->compile<4>(),
+            lev, PatchType::fine, 'e',
             m_fields.get_alldirs(FieldType::edge_lengths, lev),
-            m_fields.get_alldirs(FieldType::face_areas, lev),
-            'e', lev, PatchType::fine);
+            m_fields.get_alldirs(FieldType::face_areas, lev));
     }
     else if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::read_from_file) {
 #if defined(WARPX_DIM_RZ)
