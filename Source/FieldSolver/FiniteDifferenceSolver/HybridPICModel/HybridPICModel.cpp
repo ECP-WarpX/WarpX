@@ -228,7 +228,7 @@ void HybridPICModel::InitData ()
             m_J_external[2],
             warpx.m_fields.get_alldirs(FieldType::edge_lengths, lev),
             warpx.m_fields.get_alldirs(FieldType::face_areas, lev),
-            "edge", lev, PatchType::fine);
+            'e', lev, PatchType::fine);
     }
 }
 
@@ -246,7 +246,7 @@ void HybridPICModel::GetCurrentExternal ()
             m_J_external[2],
             warpx.m_fields.get_alldirs(FieldType::edge_lengths, lev),
             warpx.m_fields.get_alldirs(FieldType::face_areas, lev),
-            "edge", lev, PatchType::fine);
+            'e', lev, PatchType::fine);
     }
 }
 

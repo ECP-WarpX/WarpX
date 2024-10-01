@@ -979,7 +979,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
             m_p_ext_field_params->Bzfield_parser->compile<4>(),
             m_fields.get_alldirs(FieldType::edge_lengths, lev),
             m_fields.get_alldirs(FieldType::face_areas, lev),
-            "face", lev, PatchType::fine);
+            'f', lev, PatchType::fine);
 
         ComputeExternalFieldOnGridUsingParser(
             FieldType::Bfield_cp,
@@ -988,7 +988,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
             m_p_ext_field_params->Bzfield_parser->compile<4>(),
             m_fields.get_alldirs(FieldType::edge_lengths, lev),
             m_fields.get_mr_levels_alldirs(FieldType::face_areas, max_level)[lev],
-            "face", lev, PatchType::coarse);
+            'f', lev, PatchType::coarse);
     }
 
     // if the input string for the E-field is "parse_e_ext_grid_function",
@@ -1021,7 +1021,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                 m_p_ext_field_params->Ezfield_parser->compile<4>(),
                 m_fields.get_alldirs(FieldType::edge_lengths, lev),
                 m_fields.get_alldirs(FieldType::face_areas, lev),
-                "edge", lev, PatchType::fine);
+                'e', lev, PatchType::fine);
 
             ComputeExternalFieldOnGridUsingParser(
                 FieldType::Efield_cp,
@@ -1030,7 +1030,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                 m_p_ext_field_params->Ezfield_parser->compile<4>(),
                 m_fields.get_alldirs(FieldType::edge_lengths, lev),
                 m_fields.get_alldirs(FieldType::face_areas, lev),
-                "edge", lev, PatchType::coarse);
+                'e', lev, PatchType::coarse);
 #ifdef AMREX_USE_EB
             if (eb_enabled) {
                 if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
@@ -1180,7 +1180,7 @@ void WarpX::ComputeExternalFieldOnGridUsingParser (
     amrex::ParserExecutor<4> const& fz_parser,
     ablastr::fields::VectorField const& edge_lengths,
     ablastr::fields::VectorField const& face_areas,
-    [[maybe_unused]] std::string topology,
+    [[maybe_unused]] const char topology,
     int lev, PatchType patch_type)
 {
     auto t = gett_new(lev);
@@ -1242,10 +1242,10 @@ void WarpX::ComputeExternalFieldOnGridUsingParser (
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
 #ifdef AMREX_USE_EB
 #ifdef WARPX_DIM_3D
-                if(lx && ((topology=="edge" and lx(i, j, k)<=0) or (topology=="face" and Sx(i, j, k)<=0))) { return; }
+                if(lx && ((topology=='e' and lx(i, j, k)<=0) or (topology=='f' and Sx(i, j, k)<=0))) { return; }
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 //In XZ and RZ Ex is associated with a x-edge, while Bx is associated with a z-edge
-                if(lx && ((topology=="edge" and lx(i, j, k)<=0) or (topology=="face" and lz(i, j, k)<=0))) { return; }
+                if(lx && ((topology=='e' and lx(i, j, k)<=0) or (topology=='f' and lz(i, j, k)<=0))) { return; }
 #endif
 #endif
                 // Shift required in the x-, y-, or z- position
@@ -1275,15 +1275,15 @@ void WarpX::ComputeExternalFieldOnGridUsingParser (
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
 #ifdef AMREX_USE_EB
 #ifdef WARPX_DIM_3D
-                if(ly && ((topology=="edge" and ly(i, j, k)<=0) or (topology=="face" and Sy(i, j, k)<=0))) { return; }
+                if(ly && ((topology=='e' and ly(i, j, k)<=0) or (topology=='f' and Sy(i, j, k)<=0))) { return; }
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 //In XZ and RZ Ey is associated with a mesh node, so we need to check if  the mesh node is covered
                 if(lx &&
-                  ((topology=="edge" and (lx(std::min(i  , lx_hi.x), std::min(j  , lx_hi.y), k)<=0
+                  ((topology=='e' and (lx(std::min(i  , lx_hi.x), std::min(j  , lx_hi.y), k)<=0
                                  || lx(std::max(i-1, lx_lo.x), std::min(j  , lx_hi.y), k)<=0
                                  || lz(std::min(i  , lz_hi.x), std::min(j  , lz_hi.y), k)<=0
                                  || lz(std::min(i  , lz_hi.x), std::max(j-1, lz_lo.y), k)<=0)) or
-                   (topology=="face" and Sy(i,j,k)<=0))) { return; }
+                   (topology=='f' and Sy(i,j,k)<=0))) { return; }
 #endif
 #endif
 #if defined(WARPX_DIM_1D_Z)
@@ -1311,10 +1311,10 @@ void WarpX::ComputeExternalFieldOnGridUsingParser (
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
 #ifdef AMREX_USE_EB
 #ifdef WARPX_DIM_3D
-                if(lz && ((topology=="edge" and lz(i, j, k)<=0) or (topology=="face" and Sz(i, j, k)<=0))) { return; }
+                if(lz && ((topology=='e' and lz(i, j, k)<=0) or (topology=='f' and Sz(i, j, k)<=0))) { return; }
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 //In XZ and RZ Ez is associated with a z-edge, while Bz is associated with a x-edge
-                if(lz && ((topology=="edge" and lz(i, j, k)<=0) or (topology=="face" and lx(i, j, k)<=0))) { return; }
+                if(lz && ((topology=='e' and lz(i, j, k)<=0) or (topology=='f' and lx(i, j, k)<=0))) { return; }
 #endif
 #endif
 #if defined(WARPX_DIM_1D_Z)
@@ -1503,7 +1503,7 @@ WarpX::LoadExternalFields (int const lev)
             m_p_ext_field_params->Bzfield_parser->compile<4>(),
             m_fields.get_alldirs(FieldType::edge_lengths, lev),
             m_fields.get_alldirs(FieldType::face_areas, lev),
-            "face", lev, PatchType::fine);
+            'f', lev, PatchType::fine);
     }
     else if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::read_from_file) {
 #if defined(WARPX_DIM_RZ)
@@ -1528,7 +1528,7 @@ WarpX::LoadExternalFields (int const lev)
             m_p_ext_field_params->Ezfield_parser->compile<4>(),
             m_fields.get_alldirs(FieldType::edge_lengths, lev),
             m_fields.get_alldirs(FieldType::face_areas, lev),
-            "edge", lev, PatchType::fine);
+            'f', lev, PatchType::fine);
     }
     else if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::read_from_file) {
 #if defined(WARPX_DIM_RZ)
