@@ -974,7 +974,7 @@ public:
         amrex::ParserExecutor<4> const& fz_parser,
         ablastr::fields::VectorField const& edge_lengths,
         ablastr::fields::VectorField const& face_areas,
-        [[maybe_unused]] const char topology,
+        [[maybe_unused]] char topology,
         int lev, PatchType patch_type);
 
     void ComputeExternalFieldOnGridUsingParser (
