@@ -211,7 +211,7 @@ warpx.do_qed_schwinger = 0.
 # FULL
 diagnostics.diags_names = diag1
 
-diag1.intervals = 0
+diag1.intervals = 15
 diag1.diag_type = Full
 diag1.write_species = 1
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz rho_beam1 rho_beam2 rho_ele1 rho_pos1 rho_ele2 rho_pos2
