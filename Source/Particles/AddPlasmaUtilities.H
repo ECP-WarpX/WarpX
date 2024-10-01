@@ -85,23 +85,28 @@ amrex::Real compute_scale_fac_area_eb (
     int i, int j, int k ) {
     using namespace amrex::literals;
     // Scale particle weight by the area of the emitting surface, within one cell
-    amrex::Real scale_fac = 0.0_rt;
-#if defined(WARPX_DIM_3D)
     // By definition, eb_bnd_area_arr is normalized (unitless).
     // Here we undo the normalization (i.e. multiply by the surface used for normalization).
+#if defined(WARPX_DIM_3D)
     const amrex::Real nx = eb_bnd_normal_arr(i,j,k,0);
     const amrex::Real ny = eb_bnd_normal_arr(i,j,k,1);
     const amrex::Real nz = eb_bnd_normal_arr(i,j,k,2);
-    scale_fac = std::sqrt(amrex::Math::powi<2>(nx*dx[1]*dx[2]) +
+    amrex::Real scale_fac = std::sqrt(amrex::Math::powi<2>(nx*dx[1]*dx[2]) +
                   amrex::Math::powi<2>(ny*dx[0]*dx[2]) +
                   amrex::Math::powi<2>(nz*dx[0]*dx[1]));
+
+#elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
+    const amrex::Real nx = eb_bnd_normal_arr(i,j,k,0);
+    const amrex::Real nz = eb_bnd_normal_arr(i,j,k,1);
+    amrex::Real scale_fac = std::sqrt(amrex::Math::powi<2>(nx*dx[1]) +
+                  amrex::Math::powi<2>(nz*dx[0]));
+#else
+    amrex::ignore_unused(dx, eb_bnd_normal_arr, i, j, k);
+    amrex::Real scale_fac = 0.0_rt;
+#endif
     // Do not multiply by eb_bnd_area_arr(i,j,k) here because this
     // already taken into account by emitting a number of macroparticles
     // that is proportional to the area of eb_bnd_area_arr(i,j,k).
-#else
-    // TODO Implement in RZ, 2D, and 1D
-    amrex::ignore_unused(dx, eb_bnd_normal_arr, i, j, k);
-#endif
     scale_fac /= num_ppc_real;
     return scale_fac;
 }
