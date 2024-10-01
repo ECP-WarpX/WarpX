@@ -86,7 +86,7 @@ warpx.moving_window_v = sqrt(1-(1+K*K/2)/(gamma_bunch*gamma_bunch))
 # Undulator field
 particles.B_ext_particle_init_style = parse_B_ext_particle_function
 particles.Bx_external_particle_function(x,y,z,t) = 0
-particles.By_external_particle_function(x,y,z,t) = if( z>0, Bu*cos(k_u*z), 0 )
+particles.By_external_particle_function(x,y,z,t) = Bu*cos(k_u*z)
 particles.Bz_external_particle_function(x,y,z,t) =0.0
 
 warpx.cfl = 0.99
