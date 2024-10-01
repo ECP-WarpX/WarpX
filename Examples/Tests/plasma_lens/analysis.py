@@ -25,7 +25,7 @@ from scipy.constants import c, e, m_e
 
 yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, "../../../../warpx/Regression/Checksum/")
-import checksumAPI
+from checksumAPI import evaluate_checksum
 
 filename = sys.argv[1]
 ds = yt.load(filename)
@@ -199,4 +199,7 @@ assert abs(np.abs((uy - uy_sim) / uy)) < velocity_tolerance, Exception(
 # their results are compared to the same benchmark file
 test_name = os.path.split(os.getcwd())[1]
 test_name = re.sub("_picmi", "", test_name)
-checksumAPI.evaluate_checksum(test_name, filename)
+evaluate_checksum(
+    test_name=test_name,
+    output_file=sys.argv[1],
+)

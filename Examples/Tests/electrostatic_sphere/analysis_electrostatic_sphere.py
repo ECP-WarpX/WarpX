@@ -29,7 +29,7 @@ from scipy.constants import c
 from scipy.optimize import fsolve
 
 sys.path.insert(1, "../../../../warpx/Regression/Checksum/")
-import checksumAPI
+from checksumAPI import evaluate_checksum
 
 yt.funcs.mylog.setLevel(0)
 
@@ -194,4 +194,7 @@ if "phi" in ts.avail_record_components["electron"]:
     )  # Check conservation of energy
 
 # Checksum regression analysis
-checksumAPI.evaluate_checksum(test_name, filename)
+evaluate_checksum(
+    test_name=os.path.split(os.getcwd())[1],
+    output_file=sys.argv[1],
+)
