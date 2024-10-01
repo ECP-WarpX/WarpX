@@ -126,7 +126,7 @@ ElectrostaticSolver::computePhi (
     Real const required_precision,
     Real absolute_tolerance,
     int const max_iters,
-    int const verbosity, 
+    int const verbosity,
     bool is_2d_slices
 ) const
 {
