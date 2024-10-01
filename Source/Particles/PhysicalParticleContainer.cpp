@@ -1498,8 +1498,8 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
             amrex::ignore_unused(j,k);
 
             // Determine the number of macroparticles to inject in this cell (num_ppc_int)
-            amrex::Real num_ppc_real_in_this_cell = num_ppc_real; // user input: number of macroparticles per cell
 #ifdef AMREX_USE_EB
+            amrex::Real num_ppc_real_in_this_cell = num_ppc_real; // user input: number of macroparticles per cell
             if (inject_from_eb) {
                 // Injection from EB
                 // Skip cells that are not partially covered by the EB
@@ -1507,6 +1507,8 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 // Scale by the (normalized) area of the EB surface in this cell
                 num_ppc_real_in_this_cell *= eb_bnd_area_arr(i,j,k);
             } else
+#else
+            amrex::Real const num_ppc_real_in_this_cell = num_ppc_real; // user input: number of macroparticles per cell
 #endif
             {
                 // Injection from a plane
