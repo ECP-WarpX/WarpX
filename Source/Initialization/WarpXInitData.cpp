@@ -1103,13 +1103,13 @@ void WarpX::ComputeExternalFieldOnGridUsingParser (
         amrex::Array4<amrex::Real> lx, ly, lz, Sx, Sy, Sz;
         if (eb_enabled) {
             if (edge_lengths.has_value()) {
-                auto& edge_lengths_array = edge_lengths.value();
+                const auto& edge_lengths_array = edge_lengths.value();
                 lx = edge_lengths_array[0]->array(mfi);
                 ly = edge_lengths_array[1]->array(mfi);
                 lz = edge_lengths_array[2]->array(mfi);
             }
             if (face_areas.has_value()) {
-                auto& face_areas_array = face_areas.value();
+                const auto& face_areas_array = face_areas.value();
                 Sx = face_areas_array[0]->array(mfi);
                 Sy = face_areas_array[1]->array(mfi);
                 Sz = face_areas_array[2]->array(mfi);
