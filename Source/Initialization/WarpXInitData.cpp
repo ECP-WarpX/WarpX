@@ -1076,14 +1076,14 @@ void WarpX::ComputeExternalFieldOnGridUsingParser (
     amrex::IntVect refratio = (lev > 0 ) ? RefRatio(lev-1) : amrex::IntVect(1);
     if (patch_type == PatchType::coarse) {
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            dx_lev[idim] *= refratio[idim];
+            dx_lev[idim] = dx_lev[idim] + refratio[idim];
         }
     }
 
     using ablastr::fields::Direction;
-    amrex::MultiFab * mfx = m_fields.get(field, Direction{0}, lev);
-    amrex::MultiFab * mfy = m_fields.get(field, Direction{1}, lev);
-    amrex::MultiFab * mfz = m_fields.get(field, Direction{2}, lev);
+    amrex::MultiFab* mfx = m_fields.get(field, Direction{0}, lev);
+    amrex::MultiFab* mfy = m_fields.get(field, Direction{1}, lev);
+    amrex::MultiFab* mfz = m_fields.get(field, Direction{2}, lev);
 
     const amrex::IntVect x_nodal_flag = mfx->ixType().toIntVect();
     const amrex::IntVect y_nodal_flag = mfy->ixType().toIntVect();
@@ -1091,8 +1091,7 @@ void WarpX::ComputeExternalFieldOnGridUsingParser (
 
     const bool eb_enabled = EB::enabled();
 
-    for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi)
-    {
+    for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi) {
         const amrex::Box& tbx = mfi.tilebox( x_nodal_flag, mfx->nGrowVect() );
         const amrex::Box& tby = mfi.tilebox( y_nodal_flag, mfy->nGrowVect() );
         const amrex::Box& tbz = mfi.tilebox( z_nodal_flag, mfz->nGrowVect() );
@@ -1161,7 +1160,7 @@ void WarpX::ComputeExternalFieldOnGridUsingParser (
                 const amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
 #endif
                 // Initialize the x-component of the field.
-                mfxfab(i,j,k) = fx_parser(x, y, z, t);
+                mfxfab(i,j,k) = fx_parser(x,y,z,t);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
 #ifdef AMREX_USE_EB
@@ -1197,7 +1196,7 @@ void WarpX::ComputeExternalFieldOnGridUsingParser (
                 const amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
 #endif
                 // Initialize the y-component of the field.
-                mfyfab(i,j,k) = fy_parser(x, y, z, t);
+                mfyfab(i,j,k) = fy_parser(x,y,z,t);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
 #ifdef AMREX_USE_EB
@@ -1228,7 +1227,7 @@ void WarpX::ComputeExternalFieldOnGridUsingParser (
                 const amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
 #endif
                 // Initialize the z-component of the field.
-                mfzfab(i,j,k) = fz_parser(x, y, z, t);
+                mfzfab(i,j,k) = fz_parser(x,y,z,t);
             }
         );
     }
