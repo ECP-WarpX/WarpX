@@ -218,7 +218,7 @@ diagTimeAvg.diag_type = TimeAveraged
 diagTimeAvg.time_average_mode = dynamic_start
 diagTimeAvg.average_period_time = 2.67e-15  # period of 800 nm light waves
 diagTimeAvg.write_species = 0
-diagTimeAvg.fields_to_plot = Ey Ez Bx By Bz jx jy jz rho rho_electrons rho_hydrogen
+diagTimeAvg.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho rho_electrons rho_hydrogen
 # reduce resolution of output fields
 diagTimeAvg.coarsening_ratio = 4 4
 diagTimeAvg.format = openpmd
