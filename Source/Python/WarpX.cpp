@@ -253,6 +253,10 @@ The physical fields in WarpX have the following naming:
             [] () { WarpX::ProjectionCleanDivB(); },
             "Executes projection based divergence cleaner on loaded Bfield_fp_external."
         )
+        .def("synchronize",
+            [] (WarpX& wx) { wx.Synchronize(); },
+            "Synchronize particle velocities and positions."
+        )
     ;
 
     py::class_<warpx::Config>(m, "Config")
