@@ -350,8 +350,7 @@ namespace ablastr::fields
     )
     {
         if (m_mf_register.count(internal_name) == 0) {
-            // FIXME: temporary, throw a std::runtime_error
-            // throw std::runtime_error("MultiFabRegister::get name does not exist in register: " + key);
+            throw std::runtime_error("MultiFabRegister::get name does not exist in register: " + internal_name);
             return nullptr;
         }
         amrex::MultiFab & mf = m_mf_register.at(internal_name).m_mf;
@@ -365,8 +364,7 @@ namespace ablastr::fields
     ) const
     {
         if (m_mf_register.count(internal_name) == 0) {
-            // FIXME: temporary, throw a std::runtime_error
-            // throw std::runtime_error("MultiFabRegister::get name does not exist in register: " + internal_name);
+            throw std::runtime_error("MultiFabRegister::get name does not exist in register: " + internal_name);
             return nullptr;
         }
         amrex::MultiFab const & mf = m_mf_register.at(internal_name).m_mf;
