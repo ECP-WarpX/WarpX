@@ -143,7 +143,7 @@ namespace {
         auto preparse_amrex_input_int_array =
             [&pp_amr](const std::string& input_str, const bool replace = false)
             {
-                const auto c_input_str = input_str.c_str();
+                const auto *const c_input_str = input_str.c_str();
                 if (pp_amr.contains(c_input_str)) {
                     amrex::Vector<int> input_array;
                     utils::parser::getArrWithParser(pp_amr,c_input_str, input_array);
