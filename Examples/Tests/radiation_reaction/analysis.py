@@ -163,7 +163,7 @@ def check():
 
         assert error_rel < tolerance_rel
 
-    # compare checksum
+    # compare checksums
     evaluate_checksum(
         test_name=os.path.split(os.getcwd())[1],
         output_file=sys.argv[1],

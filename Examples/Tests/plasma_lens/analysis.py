@@ -195,10 +195,9 @@ assert abs(np.abs((uy - uy_sim) / uy)) < velocity_tolerance, Exception(
     "error in y particle velocity"
 )
 
-# The PICMI and native input versions run the same test, so
-# their results are compared to the same benchmark file
+# compare checksums
 test_name = os.path.split(os.getcwd())[1]
-test_name = re.sub("_picmi", "", test_name)
+test_name = re.sub("_picmi", "", test_name)  # same checksums for PICMI test
 evaluate_checksum(
     test_name=test_name,
     output_file=sys.argv[1],

@@ -30,7 +30,7 @@ print(abs(E - E[0]) / E[0])
 # Check that the energy is conserved to 0.3%
 assert np.all(abs(E - E[0]) / E[0] < 0.003)
 
-# Checksum test
+# compare checksums
 evaluate_checksum(
     test_name=os.path.split(os.getcwd())[1],
     output_file=sys.argv[1],

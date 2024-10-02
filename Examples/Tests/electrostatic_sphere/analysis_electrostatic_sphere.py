@@ -193,7 +193,7 @@ if "phi" in ts.avail_record_components["electron"]:
         Ek_i + Ep_i
     )  # Check conservation of energy
 
-# Checksum regression analysis
+# compare checksums
 evaluate_checksum(
     test_name=os.path.split(os.getcwd())[1],
     output_file=sys.argv[1],
