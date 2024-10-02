@@ -895,12 +895,10 @@ MultiParticleContainer::doFieldIonization (int lev,
         pc_source ->defineAllParticleTiles();
         pc_product->defineAllParticleTiles();
 
-        auto info = getMFItInfo(*pc_source, *pc_product);
-
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-        for (WarpXParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
+        for (WarpXParIter pti(*pc_source, lev); pti.isValid(); ++pti)
         {
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
@@ -1530,12 +1528,10 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
         pc_product_pos->defineAllParticleTiles();
         pc_product_ele->defineAllParticleTiles();
 
-        auto info = getMFItInfo(*pc_source, *pc_product_ele, *pc_product_pos);
-
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-        for (WarpXParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
+        for (WarpXParIter pti(*pc_source, lev); pti.isValid(); ++pti)
         {
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
@@ -1607,12 +1603,10 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
         pc_source ->defineAllParticleTiles();
         pc_product_phot->defineAllParticleTiles();
 
-        auto info = getMFItInfo(*pc_source, *pc_product_phot);
-
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-        for (WarpXParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
+        for (WarpXParIter pti(*pc_source, lev); pti.isValid(); ++pti)
         {
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
