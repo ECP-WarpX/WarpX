@@ -18,17 +18,17 @@ echo 'Acquire::Retries "3";' | sudo tee /etc/apt/apt.conf.d/80-retries
 sudo apt-get -qqq update
 sudo apt-get install -y \
     cmake               \
-    clang-17            \
-    clang-tidy-17       \
+    clang-19            \
+    clang-tidy-19       \
     libblas-dev         \
-    libc++-17-dev       \
+    libc++-19-dev       \
     libboost-math-dev   \
     libfftw3-dev        \
     libfftw3-mpi-dev    \
     libhdf5-openmpi-dev \
     liblapack-dev       \
     libopenmpi-dev      \
-    libomp-17-dev       \
+    libomp-19-dev       \
     ninja-build         \
     wget                \
     xz-utils            \
@@ -37,9 +37,9 @@ sudo apt-get install -y \
     ccache              \
     pkg-config
 
-# Use clang 17
-export CXX=$(which clang++-17)
-export CC=$(which clang-17)
+# Use clang 19
+export CXX=$(which clang++-19)
+export CC=$(which clang-19)
 
 # cmake-easyinstall
 #
