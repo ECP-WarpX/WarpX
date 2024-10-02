@@ -95,10 +95,29 @@ namespace {
         pp_particles.queryAdd("do_tiling", do_tiling);
     }
 
+    /** Overwrite defaults in AMReX Inputs
+     *
+     * This overwrites defaults in amrex::ParmParse for inputs.
+     */
+    void
+    overwrite_amrex_parser_defaults ()
+    {
+        override_default_abort_on_out_of_gpu_memory();
+        override_default_the_arena_is_managed();
+        override_default_omp_threads();
+        apply_workaround_for_warpx_numprocs();
+        set_device_synchronization();
+        override_default_tiling_option_for_particles();
+    }
+
+    /** Parse prob_lo and hi
+     *
+     * Parse prob_lo and hi evaluating any expressions since geometry
+     * does not parse its input. Note that this operation has to be
+     * performed after having initialized AMReX
+     */
     void parse_geometry_input ()
     {
-        // Parse prob_lo and hi, evaluating any expressions since geometry does not
-        // parse its input
         auto pp_geometry = amrex::ParmParse {"geometry"};
 
         auto prob_lo = amrex::Vector<amrex::Real>(AMREX_SPACEDIM);
@@ -143,20 +162,11 @@ namespace {
         std::for_each(params_to_parse.begin(), params_to_parse.end(), preparse_amrex_input_int_array);
     }
 
-
-    /** Overwrite defaults in AMReX Inputs
-     *
-     * This overwrites defaults in amrex::ParmParse for inputs.
+    /** This method groups calls to functions related to the initialization of AMReX
+     * that can run only after having called amrex::Initialize
      */
-    void
-    overwrite_amrex_parser_defaults ()
+    void amrex_post_initialize ()
     {
-        override_default_abort_on_out_of_gpu_memory();
-        override_default_the_arena_is_managed();
-        override_default_omp_threads();
-        apply_workaround_for_warpx_numprocs();
-        set_device_synchronization();
-        override_default_tiling_option_for_particles();
         parse_geometry_input();
     }
 }
@@ -167,13 +177,18 @@ namespace warpx::initialization
     amrex::AMReX*
     amrex_init (int& argc, char**& argv, bool build_parm_parse)
     {
-        return amrex::Initialize(
-            argc,
-            argv,
-            build_parm_parse,
-            MPI_COMM_WORLD,
-            ::overwrite_amrex_parser_defaults
-        );
+        amrex::AMReX* amrex =
+            amrex::Initialize(
+                argc,
+                argv,
+                build_parm_parse,
+                MPI_COMM_WORLD,
+                ::overwrite_amrex_parser_defaults
+            );
+
+        ::amrex_post_initialize();
+
+        return amrex;
     }
 
 }
