@@ -1076,7 +1076,7 @@ void WarpX::ComputeExternalFieldOnGridUsingParser (
     amrex::IntVect refratio = (lev > 0 ) ? RefRatio(lev-1) : amrex::IntVect(1);
     if (patch_type == PatchType::coarse) {
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            dx_lev[idim] = dx_lev[idim] + refratio[idim];
+            dx_lev[idim] = dx_lev[idim] * refratio[idim];
         }
     }
 
