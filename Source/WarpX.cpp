@@ -474,12 +474,12 @@ WarpX::ReadParameters ()
 #ifdef WARPX_DIM_RZ
         if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
         {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(geom.ProbLo(0) == 0.,
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(Geom(0).ProbLo(0) == 0.,
                 "Lower bound of radial coordinate (prob_lo[0]) with RZ PSATD solver must be zero");
         }
         else
         {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(geom.ProbLo(0) >= 0.,
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(Geom(0).ProbLo(0) >= 0.,
             "Lower bound of radial coordinate (prob_lo[0]) with RZ FDTD solver must be non-negative");
         }
 #endif
