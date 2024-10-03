@@ -104,35 +104,35 @@ jobs:
         export CC=$(which clang-18)
         export CXXFLAGS="-fsanitize=thread"
 
-        cmake -S . -B build                              \
-          -GNinja                                        \
-          -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread"   \
+        cmake -S . -B build                               \
+          -GNinja                                         \
+          -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread"    \
           -DCMAKE_SHARED_LINKER_FLAGS="-fsanitize=thread" \
-          -DCMAKE_VERBOSE_MAKEFILE=ON                    \
-          -DCMAKE_BUILD_TYPE=RelWithDebInfo              \
-          -DWarpX_DIMS="RZ;1;2;3"                        \
-          -DWarpX_FFT=ON                                 \
-          -DWarpX_QED=ON                                 \
-          -DWarpX_QED_TABLE_GEN=ON                       \
-          -DWarpX_OPENPMD=ON                             \
-          -DWarpX_EB=OFF                                 \
-          -DWarpX_PRECISION=DOUBLE                       \
+          -DCMAKE_VERBOSE_MAKEFILE=ON                     \
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo               \
+          -DWarpX_DIMS="RZ;1;2;3"                         \
+          -DWarpX_FFT=ON                                  \
+          -DWarpX_QED=ON                                  \
+          -DWarpX_QED_TABLE_GEN=ON                        \
+          -DWarpX_OPENPMD=ON                              \
+          -DWarpX_EB=OFF                                  \
+          -DWarpX_PRECISION=DOUBLE                        \
           -DWarpX_PARTICLE_PRECISION=DOUBLE
         cmake --build build -j 4
 
-        cmake -S . -B build_EB                           \
-          -GNinja                                        \
-          -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread"   \
+        cmake -S . -B build_EB                            \
+          -GNinja                                         \
+          -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread"    \
           -DCMAKE_SHARED_LINKER_FLAGS="-fsanitize=thread" \
-          -DCMAKE_VERBOSE_MAKEFILE=ON                    \
-          -DCMAKE_BUILD_TYPE=RelWithDebInfo              \
-          -DWarpX_DIMS="2"                               \
-          -DWarpX_FFT=ON                                 \
-          -DWarpX_QED=ON                                 \
-          -DWarpX_QED_TABLE_GEN=ON                       \
-          -DWarpX_OPENPMD=ON                             \
-          -DWarpX_EB=ON                                  \
-          -DWarpX_PRECISION=DOUBLE                       \
+          -DCMAKE_VERBOSE_MAKEFILE=ON                     \
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo               \
+          -DWarpX_DIMS="2"                                \
+          -DWarpX_FFT=ON                                  \
+          -DWarpX_QED=ON                                  \
+          -DWarpX_QED_TABLE_GEN=ON                        \
+          -DWarpX_OPENPMD=ON                              \
+          -DWarpX_EB=ON                                   \
+          -DWarpX_PRECISION=DOUBLE                        \
           -DWarpX_PARTICLE_PRECISION=DOUBLE
         cmake --build build_EB -j 4
 
