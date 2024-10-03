@@ -391,6 +391,25 @@ WarpXOpenPMDPlot::WarpXOpenPMDPlot (
 {
     m_OpenPMDoptions = detail::getSeriesOptions(operator_type, operator_parameters,
                                                 engine_type, engine_parameters);
+
+    // Automatically use Joined Array in particles for bp4/bp5 postfixed files
+    std::size_t found_bp4 = m_OpenPMDFileType.find("bp4");
+    std::size_t found_bp5 = m_OpenPMDFileType.find("bp5");
+    if ( (found_bp4 != std::string::npos) || (found_bp5 != std::string::npos) )
+      m_ApplyJoinedArray = true;
+
+    amrex::Print()<<"  ... [Using Joined Array for particles in ADIOS??]  "<<m_ApplyJoinedArray<<std::endl;
+}
+
+openPMD::Extent WarpXOpenPMDPlot::ProperExtent (unsigned long long n, bool init) const
+{
+   if (!m_ApplyJoinedArray)
+     return {n};
+
+   if (init)
+     return {openPMD::Dataset::JOINED_DIMENSION};
+   else
+     return {};
 }
 
 WarpXOpenPMDPlot::~WarpXOpenPMDPlot ()
@@ -529,7 +548,11 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
                   const bool isLastBTDFlush
 )
 {
-WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDParticles()");
+std::string name="WarpXOpenPMDPlot::WriteOpenPMDParticles()";
+if ( m_ApplyJoinedArray )
+     name +="_joined ";
+WARPX_PROFILE(name);
+
 
 for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
 
@@ -665,7 +688,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
     AMREX_ALWAYS_ASSERT(real_comp_names.size() == pc->NumRealComps());
     AMREX_ALWAYS_ASSERT(int_comp_names.size() == pc->NumIntComps());
 
-    WarpXParticleCounter counter(pc);
+    WarpXParticleCounter counter(pc, m_ApplyJoinedArray);
     auto const num_dump_particles = counter.GetTotalNumParticles();
 
     openPMD::Iteration currIteration = GetIteration(iteration, isBTD);
@@ -712,10 +735,11 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                             NewParticleVectorSize, isBTD);
     }
 
+#ifdef NO_JOINED_DIM // need to see how to revive const vars in openpmd (needs the size which should get from gathering and we skip gathering with joined array)
     if (is_last_flush_to_step) {
         SetConstParticleRecordsEDPIC(currSpecies, positionComponents, NewParticleVectorSize, charge, mass);
     }
-
+#endif
     // open files from all processors, in case some will not contribute below
     m_Series->flush();
 
@@ -747,6 +771,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
         } // pti
     } // currentLevel
 
+#ifdef NO_JOINED_DIM // possibly not needed, will verify
     // work-around for BTD particle resize in ADIOS2
     //
     // This issues an empty ADIOS2 Put to make sure the new global shape
@@ -796,7 +821,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
             }
         }
     }
-
+#endif
     m_Series->flush();
 }
 
@@ -811,8 +836,8 @@ WarpXOpenPMDPlot::SetupRealProperties (ParticleContainer const * pc,
 {
     std::string options = "{}";
     if (isBTD) { options = "{ \"resizable\": true }"; }
-    auto dtype_real = openPMD::Dataset(openPMD::determineDatatype<amrex::ParticleReal>(), {np}, options);
-    auto dtype_int  = openPMD::Dataset(openPMD::determineDatatype<int>(), {np}, options);
+    auto dtype_real = openPMD::Dataset(openPMD::determineDatatype<amrex::ParticleReal>(),  ProperExtent(np, true), options);
+    auto dtype_int  = openPMD::Dataset(openPMD::determineDatatype<int>(),  ProperExtent(np, true), options);
     //
     // the beam/input3d showed write_real_comp.size() = 16 while only 10 real comp names
     // so using the min to be safe.
@@ -904,7 +929,7 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
     {
         // todo: add support to not write the particle index
         getComponentRecord("id").storeChunkRaw(
-            soa.GetIdCPUData().data(), {offset}, {numParticleOnTile64});
+            soa.GetIdCPUData().data(), ProperExtent(offset, false), {numParticleOnTile64});
     }
 
     // here we the save the SoA properties (real)
@@ -935,10 +960,10 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
             if (write_real_comp[1]) { y.get()[i] = yp; }
         }
         if (write_real_comp[0]) {
-            getComponentRecord(real_comp_names[0]).storeChunk(x, {offset}, {numParticleOnTile64});
+           getComponentRecord(real_comp_names[0]).storeChunk(x, ProperExtent(offset, false) , {numParticleOnTile64});
         }
         if (write_real_comp[1]) {
-            getComponentRecord(real_comp_names[1]).storeChunk(y, {offset}, {numParticleOnTile64});
+            getComponentRecord(real_comp_names[1]).storeChunk(y, ProperExtent(offset, false), {numParticleOnTile64});
         }
 #endif
 
@@ -958,7 +983,7 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
 #endif
             if (write_real_comp[idx]) {
                 getComponentRecord(real_comp_names[idx]).storeChunkRaw(
-                    soa.GetRealData(soa_r_idx).data(), {offset}, {numParticleOnTile64});
+                    soa.GetRealData(soa_r_idx).data(), ProperExtent(offset, false), {numParticleOnTile64});
             }
         }
     }
@@ -968,7 +993,7 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
         for (auto idx=0; idx<int_counter; idx++) {
             if (write_int_comp[idx]) {
                 getComponentRecord(int_comp_names[idx]).storeChunkRaw(
-                    soa.GetIntData(idx).data(), {offset}, {numParticleOnTile64});
+                    soa.GetIntData(idx).data(), ProperExtent(offset, false), {numParticleOnTile64});
             }
         }
     }
@@ -984,8 +1009,8 @@ WarpXOpenPMDPlot::SetupPos (
 {
     std::string options = "{}";
     if (isBTD) { options = "{ \"resizable\": true }"; }
-    auto realType = openPMD::Dataset(openPMD::determineDatatype<amrex::ParticleReal>(), {np}, options);
-    auto idType = openPMD::Dataset(openPMD::determineDatatype< uint64_t >(), {np}, options);
+    auto realType = openPMD::Dataset(openPMD::determineDatatype<amrex::ParticleReal>(), ProperExtent(np, true), options);
+    auto idType = openPMD::Dataset(openPMD::determineDatatype< uint64_t >(), ProperExtent(np, true), options);
 
     for( auto const& comp : positionComponents ) {
         currSpecies["position"][comp].resetDataset( realType );
@@ -1003,7 +1028,7 @@ WarpXOpenPMDPlot::SetConstParticleRecordsEDPIC (
         amrex::ParticleReal const charge,
         amrex::ParticleReal const mass)
 {
-    auto realType = openPMD::Dataset(openPMD::determineDatatype<amrex::ParticleReal>(), {np});
+    auto realType = openPMD::Dataset(openPMD::determineDatatype<amrex::ParticleReal>(), ProperExtent(np, true));
     const auto *const scalar = openPMD::RecordComponent::SCALAR;
 
     // define record shape to be number of particles
@@ -1477,14 +1502,18 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
 //
 //
 //
-WarpXParticleCounter::WarpXParticleCounter (ParticleContainer* pc):
+WarpXParticleCounter::WarpXParticleCounter (ParticleContainer* pc, bool doLazyCount):
     m_MPIRank{amrex::ParallelDescriptor::MyProc()},
     m_MPISize{amrex::ParallelDescriptor::NProcs()}
 {
-    m_ParticleCounterByLevel.resize(pc->finestLevel()+1);
-    m_ParticleOffsetAtRank.resize(pc->finestLevel()+1);
-    m_ParticleSizeAtRank.resize(pc->finestLevel()+1);
+    WARPX_PROFILE("WarpXParticleCounter");
 
+    unsigned long long zero=0;
+    m_ParticleCounterByLevel.resize(pc->finestLevel()+1, zero);
+    m_ParticleOffsetAtRank.resize(pc->finestLevel()+1, zero);
+    m_ParticleSizeAtRank.resize(pc->finestLevel()+1, zero);
+
+  if (!doLazyCount) {
     for (auto currentLevel = 0; currentLevel <= pc->finestLevel(); currentLevel++)
     {
         long numParticles = 0; // numParticles in this processor
@@ -1510,6 +1539,19 @@ WarpXParticleCounter::WarpXParticleCounter (ParticleContainer* pc):
 
         m_Total += sum;
     }
+  } // !do lazy count
+  else
+  {
+      for (auto currentLevel = 0; currentLevel <= pc->finestLevel(); currentLevel++)
+      {
+         long numParticles = 0; // numParticles in this processor
+         for (ParticleIter pti(*pc, currentLevel); pti.isValid(); ++pti) {
+              auto numParticleOnTile = pti.numParticles();
+              numParticles += numParticleOnTile;
+          }
+          m_Total += numParticles;
+       }
+  } // else
 }
 
 
