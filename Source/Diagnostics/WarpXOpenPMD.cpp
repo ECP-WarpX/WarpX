@@ -392,17 +392,19 @@ WarpXOpenPMDPlot::WarpXOpenPMDPlot (
     m_OpenPMDoptions = detail::getSeriesOptions(operator_type, operator_parameters,
                                                 engine_type, engine_parameters);
 
+#if OPENPMDAPI_VERSION_GE(0, 16, 0)
     // Automatically use Joined Array in particles for bp4/bp5 postfixed files
     std::size_t found_bp4 = m_OpenPMDFileType.find("bp4");
     std::size_t found_bp5 = m_OpenPMDFileType.find("bp5");
     if ( (found_bp4 != std::string::npos) || (found_bp5 != std::string::npos) )
       m_ApplyJoinedArray = true;
-
     amrex::Print()<<"  ... [Using Joined Array for particles in ADIOS??]  "<<m_ApplyJoinedArray<<std::endl;
+#endif
 }
 
 openPMD::Extent WarpXOpenPMDPlot::ProperExtent (unsigned long long n, bool init) const
 {
+#if OPENPMDAPI_VERSION_GE(0, 16, 0)  
    if (!m_ApplyJoinedArray)
      return {n};
 
@@ -410,6 +412,9 @@ openPMD::Extent WarpXOpenPMDPlot::ProperExtent (unsigned long long n, bool init)
      return {openPMD::Dataset::JOINED_DIMENSION};
    else
      return {};
+#else
+   return {n};
+#endif
 }
 
 WarpXOpenPMDPlot::~WarpXOpenPMDPlot ()
