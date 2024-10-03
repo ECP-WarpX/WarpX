@@ -107,7 +107,7 @@ jobs:
         cmake -S . -B build                              \
           -GNinja                                        \
           -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread"   \
-          -CMAKE_SHARED_LINKER_FLAGS="-fsanitize=thread" \
+          -DCMAKE_SHARED_LINKER_FLAGS="-fsanitize=thread" \
           -DCMAKE_VERBOSE_MAKEFILE=ON                    \
           -DCMAKE_BUILD_TYPE=RelWithDebInfo              \
           -DWarpX_DIMS="RZ;1;2;3"                        \
@@ -123,7 +123,7 @@ jobs:
         cmake -S . -B build_EB                           \
           -GNinja                                        \
           -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread"   \
-          -CMAKE_SHARED_LINKER_FLAGS="-fsanitize=thread" \
+          -DCMAKE_SHARED_LINKER_FLAGS="-fsanitize=thread" \
           -DCMAKE_VERBOSE_MAKEFILE=ON                    \
           -DCMAKE_BUILD_TYPE=RelWithDebInfo              \
           -DWarpX_DIMS="2"                               \
