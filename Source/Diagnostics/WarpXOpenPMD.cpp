@@ -553,10 +553,11 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
                   const bool isLastBTDFlush
 )
 {
-std::string name="WarpXOpenPMDPlot::WriteOpenPMDParticles()";
-if ( m_ApplyJoinedArray )
+ std::string name="WarpXOpenPMDPlot::WriteOpenPMDParticles()";
+ if ( m_ApplyJoinedArray ) {
      name +="_joined ";
-WARPX_PROFILE(name);
+ }
+ WARPX_PROFILE(name);
 
 
 for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
@@ -745,8 +746,9 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
         SetConstParticleRecordsEDPIC(currSpecies, positionComponents, NewParticleVectorSize, charge, mass);
     }
 #else
-    if ( iteration < -100 ) // temporarily.  avoid compiler error, should never be true
+    if ( iteration < -100 ) { // temporarily.  avoid compiler error, should never be true
       SetConstParticleRecordsEDPIC(currSpecies, positionComponents, NewParticleVectorSize, charge, mass);
+    }
 #endif
     // open files from all processors, in case some will not contribute below
     m_Series->flush();
