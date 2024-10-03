@@ -771,7 +771,6 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
         } // pti
     } // currentLevel
 
-#ifdef NO_JOINED_DIM // possibly not needed, will verify
     // work-around for BTD particle resize in ADIOS2
     //
     // This issues an empty ADIOS2 Put to make sure the new global shape
@@ -783,6 +782,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
     //   BP4 (ADIOS 2.8): last MPI rank's `Put` meta-data wins
     //   BP5 (ADIOS 2.8): everyone has to write an empty block
     if (is_resizing_flush && !contributed_particles && isBTD && m_Series->backend() == "ADIOS2") {
+#ifdef NO_JOINED_DIM // possibly not needed, will verify      
         for( auto & [record_name, record] : currSpecies ) {
             for( auto & [comp_name, comp] : record ) {
                 if (comp.constant()) { continue; }
@@ -820,8 +820,8 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                 }
             }
         }
+#endif	
     }
-#endif
     m_Series->flush();
 }
 
