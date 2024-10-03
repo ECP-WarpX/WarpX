@@ -405,31 +405,6 @@ public:
 
     /**
      * \brief
-     * Allocate and optionally initialize the MultiFab. This also adds the MultiFab
-     * to the map of MultiFabs (used to ease the access to MultiFabs from the Python
-     * interface
-     *
-     * \param[out] mf The MultiFab unique pointer to be allocated
-     * \param[in] ba The BoxArray describing the MultiFab
-     * \param[in] dm The DistributionMapping describing the MultiFab
-     * \param[in] ncomp The number of components in the MultiFab
-     * \param[in] ngrow The number of guard cells in the MultiFab
-     * \param[in] level The refinement level
-     * \param[in] name The name of the MultiFab to use in the map
-     * \param[in] initial_value The optional initial value
-     */
-    static void AllocInitMultiFab (
-        std::unique_ptr<amrex::MultiFab>& mf,
-        const amrex::BoxArray& ba,
-        const amrex::DistributionMapping& dm,
-        int ncomp,
-        const amrex::IntVect& ngrow,
-        int level,
-        const std::string& name,
-        std::optional<const amrex::Real> initial_value = {});
-
-    /**
-     * \brief
      * Allocate and optionally initialize the iMultiFab. This also adds the iMultiFab
      * to the map of MultiFabs (used to ease the access to MultiFabs from the Python
      * interface
@@ -453,30 +428,9 @@ public:
         const std::string& name,
         std::optional<const int> initial_value = {});
 
-    /**
-     * \brief
-     * Create an alias of a MultiFab, adding the alias to the MultiFab map
-     * \param[out] mf The MultiFab to create
-     * \param[in] mf_to_alias The MultiFab to alias
-     * \param[in] scomp The starting component to be aliased
-     * \param[in] ncomp The number of components to alias
-     * \param[in] level The refinement level
-     * \param[in] name The name of the MultiFab to use in the map
-     * \param[in] initial_value optional initial value for MultiFab
-     */
-    static void AliasInitMultiFab (
-        std::unique_ptr<amrex::MultiFab>& mf,
-        const amrex::MultiFab& mf_to_alias,
-        int scomp,
-        int ncomp,
-        int level,
-        const std::string& name,
-        std::optional<const amrex::Real> initial_value);
-
-    // Maps of all of the MultiFabs and iMultiFabs used (this can include MFs from other classes)
-    // This is a convenience for the Python interface, allowing all MultiFabs
+    // Maps of all of the iMultiFabs used (this can include MFs from other classes)
+    // This is a convenience for the Python interface, allowing all iMultiFabs
     // to be easily referenced from Python.
-    static std::map<std::string, amrex::MultiFab *> multifab_map;
     static std::map<std::string, amrex::iMultiFab *> imultifab_map;
 
     /**
