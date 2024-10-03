@@ -29,6 +29,7 @@ sudo apt-get install -y \
     liblapack-dev       \
     libopenmpi-dev      \
     libomp-18-dev       \
+    libtsan2            \
     ninja-build         \
     wget                \
     xz-utils            \
