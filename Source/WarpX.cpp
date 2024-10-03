@@ -184,7 +184,6 @@ bool WarpX::safe_guard_cells = false;
 
 utils::parser::IntervalsParser WarpX::dt_update_interval;
 
-std::map<std::string, amrex::MultiFab *> WarpX::multifab_map;
 std::map<std::string, amrex::iMultiFab *> WarpX::imultifab_map;
 
 IntVect WarpX::filter_npass_each_dir(1);
@@ -3286,26 +3285,6 @@ TagWithLevelSuffix (std::string name, int const level)
 
 void
 WarpX::AllocInitMultiFab (
-    std::unique_ptr<amrex::MultiFab>& mf,
-    const amrex::BoxArray& ba,
-    const amrex::DistributionMapping& dm,
-    const int ncomp,
-    const amrex::IntVect& ngrow,
-    const int level,
-    const std::string& name,
-    std::optional<const amrex::Real> initial_value)
-{
-    const auto name_with_suffix = TagWithLevelSuffix(name, level);
-    const auto tag = amrex::MFInfo().SetTag(name_with_suffix);
-    mf = std::make_unique<amrex::MultiFab>(ba, dm, ncomp, ngrow, tag);
-    if (initial_value) {
-        mf->setVal(*initial_value);
-    }
-    multifab_map[name_with_suffix] = mf.get();
-}
-
-void
-WarpX::AllocInitMultiFab (
     std::unique_ptr<amrex::iMultiFab>& mf,
     const amrex::BoxArray& ba,
     const amrex::DistributionMapping& dm,
@@ -3322,24 +3301,6 @@ WarpX::AllocInitMultiFab (
         mf->setVal(*initial_value);
     }
     imultifab_map[name_with_suffix] = mf.get();
-}
-
-void
-WarpX::AliasInitMultiFab (
-    std::unique_ptr<amrex::MultiFab>& mf,
-    const amrex::MultiFab& mf_to_alias,
-    const int scomp,
-    const int ncomp,
-    const int level,
-    const std::string& name,
-    std::optional<const amrex::Real> initial_value)
-{
-    const auto name_with_suffix = TagWithLevelSuffix(name, level);
-    mf = std::make_unique<amrex::MultiFab>(mf_to_alias, amrex::make_alias, scomp, ncomp);
-    if (initial_value) {
-        mf->setVal(*initial_value);
-    }
-    multifab_map[name_with_suffix] = mf.get();
 }
 
 amrex::DistributionMapping
