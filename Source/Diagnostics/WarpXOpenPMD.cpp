@@ -402,7 +402,7 @@ WarpXOpenPMDPlot::WarpXOpenPMDPlot (
 #endif
 }
 
-openPMD::Extent WarpXOpenPMDPlot::ProperExtent (unsigned long long n, bool init) const
+openPMD::Extent WarpXOpenPMDPlot::ProperExtent (unsigned long long n, [[maybe_unused]] bool init) const
 {
 #if OPENPMDAPI_VERSION_GE(0, 16, 0)
    if (!m_ApplyJoinedArray)
@@ -744,6 +744,9 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
     if (is_last_flush_to_step) {
         SetConstParticleRecordsEDPIC(currSpecies, positionComponents, NewParticleVectorSize, charge, mass);
     }
+#else
+    if (1 < 0) // avoid compiler error
+      SetConstParticleRecordsEDPIC(currSpecies, positionComponents, NewParticleVectorSize, charge, mass);
 #endif
     // open files from all processors, in case some will not contribute below
     m_Series->flush();

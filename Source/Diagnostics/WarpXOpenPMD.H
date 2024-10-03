@@ -337,7 +337,7 @@ private:
   int m_MPISize = 1;
 
   bool m_ApplyJoinedArray = false; // joined array
-  openPMD::Extent ProperExtent(unsigned long long n, bool init) const;
+  openPMD::Extent ProperExtent(unsigned long long n, [[maybe_unused]] bool init) const;
 
   openPMD::IterationEncoding m_Encoding = openPMD::IterationEncoding::fileBased;
   std::string m_OpenPMDFileType = "bp"; //! MPI-parallel openPMD backend: bp or h5
