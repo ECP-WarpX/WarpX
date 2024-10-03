@@ -745,7 +745,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
         SetConstParticleRecordsEDPIC(currSpecies, positionComponents, NewParticleVectorSize, charge, mass);
     }
 #else
-    if (1 < 0) // avoid compiler error
+    if ( iteration < -100 ) // temporarily.  avoid compiler error, should never be true
       SetConstParticleRecordsEDPIC(currSpecies, positionComponents, NewParticleVectorSize, charge, mass);
 #endif
     // open files from all processors, in case some will not contribute below
