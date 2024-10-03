@@ -1518,7 +1518,7 @@ WarpXParticleCounter::WarpXParticleCounter (ParticleContainer* pc, bool doLazyCo
 {
     WARPX_PROFILE("WarpXParticleCounter");
 
-    unsigned long long zero=0;
+    const unsigned long long zero=0;
     m_ParticleCounterByLevel.resize(pc->finestLevel()+1, zero);
     m_ParticleOffsetAtRank.resize(pc->finestLevel()+1, zero);
     m_ParticleSizeAtRank.resize(pc->finestLevel()+1, zero);
