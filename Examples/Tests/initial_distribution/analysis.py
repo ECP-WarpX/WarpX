@@ -452,5 +452,5 @@ assert f9_error < tolerance
 # compare checksums
 evaluate_checksum(
     test_name=os.path.split(os.getcwd())[1],
-    filename=sys.argv[1],
+    output_file=sys.argv[1],
 )
