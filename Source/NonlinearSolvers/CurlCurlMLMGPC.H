@@ -149,27 +149,6 @@ class CurlCurlMLMGPC : public Preconditioner<T,Ops>
          */
         void readParameters();
 
-        /**
-         * \brief Define staggered-grid MultiFabs for AMReX's curl-curl operator given WarpX's fields
-         */
-         void defineMLCCAMFFromWarpXAMF ( amrex::Array<amrex::MultiFab,3>&,
-                                          const ablastr::fields::VectorField&,
-                                          const amrex::IntVect& );
-
-        /**
-         * \brief Copy to AMReX's staggered-grid MultiFabs from WarpX's staggered-grid MultiFabs
-         */
-         void copyMLCCAMFFromWarpXAMF ( amrex::Array<amrex::MultiFab,3>&,
-                                        const ablastr::fields::VectorField&,
-                                        const amrex::IntVect& );
-
-        /**
-         * \brief Copy to WarpX's staggered-grid MultiFabs from AMReX's staggered-grid MultiFabs
-         */
-         void copyWarpXAMFFromMLCCAMF ( ablastr::fields::VectorField&,
-                                        const amrex::Array<amrex::MultiFab,3>&,
-                                        const amrex::IntVect& );
-
     private:
 
 };
@@ -311,93 +290,6 @@ void CurlCurlMLMGPC<T,Ops>::Update (const T& a_U)
 }
 
 template <class T, class Ops>
-void CurlCurlMLMGPC<T,Ops>::defineMLCCAMFFromWarpXAMF ( amrex::Array<amrex::MultiFab,3>& a_mfarr_mlcc,
-                                                        const ablastr::fields::VectorField& a_mfarr_warpx,
-                                                        const amrex::IntVect& a_ng )
-{
-#if defined(WARPX_DIM_1D_Z)
-    amrex::ignore_unused(a_mfarr_mlcc);
-    amrex::ignore_unused(a_mfarr_warpx);
-    amrex::ignore_unused(a_ng);
-    WARPX_ABORT_WITH_MESSAGE("CurlCurlMLMGPC::defineMLCCAMFFromWarpXAMF not yet implemented for 1D");
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    // In WarpX, missing dimension is y
-    // In AMReX, missing dimension is z
-    {
-        a_mfarr_mlcc[0].define( a_mfarr_warpx[0]->boxArray(),
-                                a_mfarr_warpx[0]->DistributionMap(),
-                                a_mfarr_warpx[0]->nComp(),
-                                a_ng );
-    }
-    {
-        a_mfarr_mlcc[1].define( a_mfarr_warpx[2]->boxArray(),
-                                a_mfarr_warpx[2]->DistributionMap(),
-                                a_mfarr_warpx[2]->nComp(),
-                                a_ng );
-    }
-    {
-        a_mfarr_mlcc[2].define( a_mfarr_warpx[1]->boxArray(),
-                                a_mfarr_warpx[1]->DistributionMap(),
-                                a_mfarr_warpx[1]->nComp(),
-                                a_ng );
-    }
-#elif defined(WARPX_DIM_3D)
-    for (int d = 0; d < 3; d++) {
-        a_mfarr_mlcc[d].define( a_mfarr_warpx[d]->boxArray(),
-                                a_mfarr_warpx[d]->DistributionMap(),
-                                a_mfarr_warpx[d]->nComp(),
-                                a_ng );
-    }
-#endif
-}
-
-template <class T, class Ops>
-void CurlCurlMLMGPC<T,Ops>::copyMLCCAMFFromWarpXAMF ( amrex::Array<amrex::MultiFab,3>& a_dst,
-                                                      const ablastr::fields::VectorField& a_src,
-                                                      const amrex::IntVect& a_ng )
-{
-#if defined(WARPX_DIM_1D_Z)
-    amrex::ignore_unused(a_dst);
-    amrex::ignore_unused(a_src);
-    amrex::ignore_unused(a_ng);
-    WARPX_ABORT_WITH_MESSAGE("CurlCurlMLMGPC::copyMLCCAMFFromWarpXAMF not yet implemented for 1D");
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    // In WarpX, missing dimension is y
-    // In AMReX, missing dimension is z
-    amrex::MultiFab::Copy( a_dst[0], *(a_src[0]), 0, 0, a_dst[0].nComp(), a_ng);
-    amrex::MultiFab::Copy( a_dst[1], *(a_src[2]), 0, 0, a_dst[1].nComp(), a_ng);
-    amrex::MultiFab::Copy( a_dst[2], *(a_src[1]), 0, 0, a_dst[2].nComp(), a_ng);
-#elif defined(WARPX_DIM_3D)
-    for (int d = 0; d < 3; d++) {
-        amrex::MultiFab::Copy( a_dst[d], *(a_src[d]), 0, 0, a_dst[d].nComp(), a_ng);
-    }
-#endif
-}
-
-template <class T, class Ops>
-void CurlCurlMLMGPC<T,Ops>::copyWarpXAMFFromMLCCAMF ( ablastr::fields::VectorField& a_dst,
-                                                      const amrex::Array<amrex::MultiFab,3>& a_src,
-                                                      const amrex::IntVect& a_ng )
-{
-#if defined(WARPX_DIM_1D_Z)
-    amrex::ignore_unused(a_dst);
-    amrex::ignore_unused(a_src);
-    amrex::ignore_unused(a_ng);
-    WARPX_ABORT_WITH_MESSAGE("CurlCurlMLMGPC::copyMLCCAMFFromWarpXAMF not yet implemented for 1D");
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    // In WarpX, missing dimension is y
-    // In AMReX, missing dimension is z
-    amrex::MultiFab::Copy( *(a_dst[0]), a_src[0], 0, 0, a_dst[0]->nComp(), a_ng);
-    amrex::MultiFab::Copy( *(a_dst[1]), a_src[2], 0, 0, a_dst[1]->nComp(), a_ng);
-    amrex::MultiFab::Copy( *(a_dst[2]), a_src[1], 0, 0, a_dst[2]->nComp(), a_ng);
-#elif defined(WARPX_DIM_3D)
-    for (int d = 0; d < 3; d++) {
-        amrex::MultiFab::Copy( *(a_dst[d]), a_src[d], 0, 0, a_dst[d]->nComp(), a_ng);
-    }
-#endif
-}
-
-template <class T, class Ops>
 void CurlCurlMLMGPC<T,Ops>::Apply (T& a_x, const T& a_b)
 {
     //  Given a right-hand-side b, solve:
@@ -428,11 +320,31 @@ void CurlCurlMLMGPC<T,Ops>::Apply (T& a_x, const T& a_b)
     for (int n = 0; n < m_num_amr_levels; n++) {
 
         // Copy initial guess to local object
-        Array<MultiFab,3> solution, rhs;
-        defineMLCCAMFFromWarpXAMF(solution, x_mfarrvec[n], IntVect::TheUnitVector());
-        defineMLCCAMFFromWarpXAMF(rhs, b_mfarrvec[n], IntVect::TheZeroVector());
-        copyMLCCAMFFromWarpXAMF(solution, x_mfarrvec[n], IntVect::TheZeroVector());
-        copyMLCCAMFFromWarpXAMF(rhs, b_mfarrvec[n], IntVect::TheZeroVector());
+#if defined(WARPX_DIM_1D_Z)
+        // Missing dimensions is x,y in WarpX and y,z in AMReX
+        Array<MultiFab,3> solution { MultiFab(*x_mfarrvec[n][2], make_alias, 0, 1),
+                                     MultiFab(*x_mfarrvec[n][0], make_alias, 0, 1),
+                                     MultiFab(*x_mfarrvec[n][1], make_alias, 0, 1) };
+        Array<MultiFab,3> rhs      { MultiFab(*b_mfarrvec[n][2], make_alias, 0, 1),
+                                     MultiFab(*b_mfarrvec[n][0], make_alias, 0, 1),
+                                     MultiFab(*b_mfarrvec[n][1], make_alias, 0, 1) };
+        WARPX_ABORT_WITH_MESSAGE("CurlCurlMLMGPC not yet implemented for 1D");
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+        // Missing dimension is y in WarpX and z in AMReX
+        Array<MultiFab,3> solution { MultiFab(*x_mfarrvec[n][0], make_alias, 0, 1),
+                                     MultiFab(*x_mfarrvec[n][2], make_alias, 0, 1),
+                                     MultiFab(*x_mfarrvec[n][1], make_alias, 0, 1) };
+        Array<MultiFab,3> rhs      { MultiFab(*b_mfarrvec[n][0], make_alias, 0, 1),
+                                     MultiFab(*b_mfarrvec[n][2], make_alias, 0, 1),
+                                     MultiFab(*b_mfarrvec[n][1], make_alias, 0, 1) };
+#elif defined(WARPX_DIM_3D)
+        Array<MultiFab,3> solution { MultiFab(*x_mfarrvec[n][0], make_alias, 0, 1),
+                                     MultiFab(*x_mfarrvec[n][1], make_alias, 0, 1),
+                                     MultiFab(*x_mfarrvec[n][2], make_alias, 0, 1) };
+        Array<MultiFab,3> rhs      { MultiFab(*b_mfarrvec[n][0], make_alias, 0, 1),
+                                     MultiFab(*b_mfarrvec[n][1], make_alias, 0, 1),
+                                     MultiFab(*b_mfarrvec[n][2], make_alias, 0, 1) };
+#endif
 
 // currently not implemented in 1D
 #ifndef WARPX_DIM_1D_Z
@@ -443,10 +355,6 @@ void CurlCurlMLMGPC<T,Ops>::Apply (T& a_x, const T& a_b)
             m_solver->solve({&solution}, {&rhs}, m_rtol, m_atol);
         }
 #endif
-
-        // Copy solution in local object to a_x
-        copyWarpXAMFFromMLCCAMF(x_mfarrvec[n], solution, IntVect::TheZeroVector());
-
     }
 }
 
