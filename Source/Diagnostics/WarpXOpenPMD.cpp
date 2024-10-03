@@ -404,7 +404,7 @@ WarpXOpenPMDPlot::WarpXOpenPMDPlot (
 
 openPMD::Extent WarpXOpenPMDPlot::ProperExtent (unsigned long long n, bool init) const
 {
-#if OPENPMDAPI_VERSION_GE(0, 16, 0)  
+#if OPENPMDAPI_VERSION_GE(0, 16, 0)
    if (!m_ApplyJoinedArray)
      return {n};
 
