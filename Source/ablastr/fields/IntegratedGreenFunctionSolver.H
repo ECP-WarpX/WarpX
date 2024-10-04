@@ -121,45 +121,6 @@ namespace ablastr::fields
         return G_value;
     }
 
-    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    void
-    arianna (amrex::Box const & realspace_box, amrex::BoxArray & realspace_ba, amrex::DistributionMapping & dm_global_fft){
-        // Define a new distribution mapping which is decomposed purely along z
-        // and has one box per MPI rank
-        int const nprocs = amrex::ParallelDescriptor::NProcs();
-
-        int realspace_nx = realspace_box.length(0);
-        int realspace_ny = realspace_box.length(1);
-        int realspace_nz = realspace_box.length(2);
-        int minsize_z = realspace_nz / nprocs;
-        int nleft_z = realspace_nz - minsize_z*nprocs;
-
-        AMREX_ALWAYS_ASSERT(realspace_nz >= nprocs);
-        // We are going to split realspace_box in such a way that the first
-        // nleft boxes has minsize_z+1 nodes and the others minsize
-        // nodes. We do it this way instead of BoxArray::maxSize to make
-        // sure there are exactly nprocs boxes and there are no overlaps.
-        amrex::BoxList bl(amrex::IndexType::TheNodeType());
-        for (int iproc = 0; iproc < nprocs; ++iproc) {
-            int zlo, zhi;
-            if (iproc < nleft_z) {
-                zlo = iproc*(minsize_z+1);
-                zhi = zlo + minsize_z;
-            } else {
-                zlo = iproc*minsize_z + nleft_z;
-                zhi = zlo + minsize_z - 1;
-            }
-            amrex::Box tbx(amrex::IntVect(0,0,zlo),amrex::IntVect(realspace_nx-1,realspace_ny-1,zhi),amrex::IntVect(1));
-            tbx.shift(realspace_box.smallEnd());
-            bl.push_back(tbx);
-        }
-        realspace_ba.define(std::move(bl));
-        amrex::Vector<int> pmap(nprocs);
-        std::iota(pmap.begin(), pmap.end(), 0);
-        dm_global_fft.define(std::move(pmap));
-    }
-
-
     /** @brief Compute the electrostatic potential using the Integrated Green Function method
      *         as in http://dx.doi.org/10.1103/PhysRevSTAB.9.044204
      *
