@@ -10,7 +10,7 @@ my_constants.beam_N = 1.2e10
 my_constants.sigmax = 500e-9
 my_constants.sigmay = 10e-9
 my_constants.sigmaz = 300e-3
-my_constants.muz = -4*sigmaz
+my_constants.muz = 4*sigmaz
 
 # BOX
 my_constants.Lx = 8*sigmax
