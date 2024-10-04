@@ -40,7 +40,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
                 amrex::MultiFab & phi,
                 std::array<amrex::Real, 3> const & cell_size,
                 amrex::BoxArray const & ba,
-                bool const is_2d_slices, 
+                bool const is_2d_slices,
                 bool const is_3d_distributed)
 {
     using namespace amrex::literals;
@@ -77,17 +77,17 @@ computePhiIGF ( amrex::MultiFab const & rho,
         amrex::IntVect::TheNodeVector() );
 
     amrex::BoxArray realspace_ba;
-    amrex::DistributionMapping dm_global_fft; 
+    amrex::DistributionMapping dm_global_fft;
 
     if(is_2d_slices || is_3d_distributed){
-        arianna(realspace_box, realspace_ba, dm_global_fft); 
+        arianna(realspace_box, realspace_ba, dm_global_fft);
     }
     else{
         // Without distributed FFTs (i.e. without heFFTe):
         // allocate the 2x wider array on a single box
         realspace_ba = amrex::BoxArray(realspace_box);
         // Define a distribution mapping for the global FFT, with only one box
-        dm_global_fft.define(realspace_ba);    
+        dm_global_fft.define(realspace_ba);
     }
 
     // Allocate required arrays
@@ -139,10 +139,10 @@ computePhiIGF ( amrex::MultiFab const & rho,
                     if ((i0< nx)&&(j0< ny)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential2D(x,      y,      dx, dy); }
                     if ((i0< nx)&&(j0> ny)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential2D(x,      y_hi-y, dx, dy); }
                     if ((i0> nx)&&(j0> ny)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential2D(x_hi-x, y_hi-y, dx, dy); }
-                    if ((i0> nx)&&(j0< ny)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential2D(x_hi-x, y,      dx, dy); }                    
+                    if ((i0> nx)&&(j0< ny)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential2D(x_hi-x, y,      dx, dy); }
                 } else {
                     int const k0 = k - lo[2];
-                    amrex::Real const z = k0*dz;                    
+                    amrex::Real const z = k0*dz;
 #if defined(ABLASTR_USE_HEFFTE)
                     if (is_3d_distributed) {
                         // 3D with distributed FFTs (i.e. with heFFTe):
@@ -155,7 +155,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
                         if ((i0> nx)&&(j0> ny)&&(k0> nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential3D(x_hi-x, y_hi-y, z_hi-z, dx, dy, dz); }
                         if ((i0> nx)&&(j0< ny)&&(k0< nz)) { tmp_G_arr(i,j,k) = SumOfIntegratedPotential3D(x_hi-x, y     , z     , dx, dy, dz); }
                     } else
-#endif                    
+#endif
                     {
                         // 3D without distributed FFTs (i.e. without heFFTe):
                         amrex::Real const G_value = SumOfIntegratedPotential3D(x     , y     , z     , dx, dy, dz);
@@ -169,7 +169,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
                         if ((i0>0)&&(k0>0)) {tmp_G_arr(hi[0]+1-i0, j         , hi[2]+1-k0) = G_value;}
                         if ((i0>0)&&(j0>0)&&(k0>0)) {tmp_G_arr(hi[0]+1-i0, hi[1]+1-j0, hi[2]+1-k0) = G_value;}
                     }
-                }   
+                }
             }
         );
     }
@@ -252,7 +252,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
             const amrex::Real normalization = 1._rt / (nrx*nry);
             tmp_G.mult( normalization );
         } else {
-#if defined(ABLASTR_USE_HEFFTE)  
+#if defined(ABLASTR_USE_HEFFTE)
             if (is_3d_distributed) { // Fully 3d solver on many processes
                  // Create plans
                 BL_PROFILE_VAR_START(timer_plans);

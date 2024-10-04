@@ -93,7 +93,7 @@ public:
         amrex::Real absolute_tolerance,
         int max_iters,
         int verbosity,
-        bool is_igf_2d_slices, 
+        bool is_igf_2d_slices,
         bool is_igf_3d_distributed
     ) const;
 
