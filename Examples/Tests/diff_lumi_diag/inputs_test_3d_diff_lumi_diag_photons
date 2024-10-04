@@ -1,7 +1,7 @@
 # base input parameters
 FILE = inputs_base_3d
 
-diag1.format = openpmd
+# Test with electrons/positrons: use parse_density_function
 
 beam1.species_type = electron
 beam1.injection_style = "NUniformPerCell"

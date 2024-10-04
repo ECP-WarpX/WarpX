@@ -85,7 +85,7 @@ beam2.do_not_deposit = 1
 # FULL
 diagnostics.diags_names = diag1
 
-diag1.intervals = 1
+diag1.intervals = 80
 diag1.diag_type = Full
 diag1.write_species = 1
 diag1.fields_to_plot = rho_beam1 rho_beam2

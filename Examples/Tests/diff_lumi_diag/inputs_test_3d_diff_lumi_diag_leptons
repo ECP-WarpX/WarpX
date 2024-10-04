@@ -1,6 +1,9 @@
 # base input parameters
 FILE = inputs_base_3d
 
+# Test with electrons/positrons: use gaussian beam distribution
+# by providing the total charge (q_tot)
+
 my_constants.nmacropart = 2e5
 
 beam1.species_type = electron
