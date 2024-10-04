@@ -322,12 +322,6 @@ void CurlCurlMLMGPC<T,Ops>::Apply (T& a_x, const T& a_b)
         // Copy initial guess to local object
 #if defined(WARPX_DIM_1D_Z)
         // Missing dimensions is x,y in WarpX and y,z in AMReX
-        Array<MultiFab,3> solution { MultiFab(*x_mfarrvec[n][2], make_alias, 0, 1),
-                                     MultiFab(*x_mfarrvec[n][0], make_alias, 0, 1),
-                                     MultiFab(*x_mfarrvec[n][1], make_alias, 0, 1) };
-        Array<MultiFab,3> rhs      { MultiFab(*b_mfarrvec[n][2], make_alias, 0, 1),
-                                     MultiFab(*b_mfarrvec[n][0], make_alias, 0, 1),
-                                     MultiFab(*b_mfarrvec[n][1], make_alias, 0, 1) };
         WARPX_ABORT_WITH_MESSAGE("CurlCurlMLMGPC not yet implemented for 1D");
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         // Missing dimension is y in WarpX and z in AMReX
