@@ -6,12 +6,11 @@ my_constants.mc2_eV = m_e*clight*clight/q_e
 # BEAMS
 my_constants.beam_energy_eV = 125.e9
 my_constants.beam_gamma = beam_energy_eV/(mc2_eV)
-my_constants.beam_charge = 1.2e10*q_e
+my_constants.beam_N = 1.2e10
 my_constants.sigmax = 500e-9
 my_constants.sigmay = 10e-9
 my_constants.sigmaz = 300e-3
 my_constants.muz = -4*sigmaz
-my_constants.nmacropart = 2e5
 
 # BOX
 my_constants.Lx = 8*sigmax
