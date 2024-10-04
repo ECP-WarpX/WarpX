@@ -68,11 +68,11 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
     amrex::Real const cdt_over_dz = cdt*m_h_stencil_coefs_z[0];
     amrex::Real const coef1_z = (1._rt - cdt_over_dz)/(1._rt + cdt_over_dz);
     amrex::Real const coef2_z = 2._rt*cdt_over_dz/(1._rt + cdt_over_dz) / PhysConst::c;
+#endif
 
     // Extract stencil coefficients
     Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
     auto const n_coefs_z = static_cast<int>(m_h_stencil_coefs_z.size());
-#endif
 
     // Extract cylindrical specific parameters
     Real const dr = m_dr;
@@ -93,11 +93,11 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
         // Extract field data for this grid/tile
         Array4<Real> const& Er = Efield[Direction{0}]->array(mfi);
         Array4<Real> const& Et = Efield[Direction{1}]->array(mfi);
-#if defined(WARPX_DIM_RZ)
         Array4<Real> const& Ez = Efield[Direction{2}]->array(mfi);
+#if defined(WARPX_DIM_RZ)
         Array4<Real> const& Br = Bfield[Direction{0}]->array(mfi);
-        Array4<Real> const& Bt = Bfield[Direction{1}]->array(mfi);
 #endif
+        Array4<Real> const& Bt = Bfield[Direction{1}]->array(mfi);
         Array4<Real> const& Bz = Bfield[Direction{2}]->array(mfi);
 
         // Extract tileboxes for which to loop
@@ -149,6 +149,7 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
                         Bt(i,j,0,m) = coef1_z*Bt(i,j,0,m) - coef2_z*Er(i,j+1,0,m);
                     }
                 }
+#endif
                 // At the +r boundary (innermost guard cell)
                 if ( apply_hi_r && (i==domain_box.bigEnd(0)+1) ){
                     // Mode 0
@@ -163,9 +164,6 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
                             + coef3_r*CylindricalYeeAlgorithm::UpwardDz(Er, coefs_z, n_coefs_z, i, j, 0, 2*m);
                     }
                 }
-#else
-                amrex::ignore_unused(i,j);
-#endif
 
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
