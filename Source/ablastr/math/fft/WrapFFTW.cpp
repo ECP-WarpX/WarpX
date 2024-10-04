@@ -36,6 +36,15 @@ namespace ablastr::math::anyfft
     const auto VendorCreatePlanC2R1D = fftw_plan_dft_c2r_1d;
 #endif
 
+#ifdef AMREX_USE_FLOAT
+    const auto VendorCreateManyPlanR2C = fftwf_plan_many_dft_r2c;
+    const auto VendorCreateManyPlanC2R = fftwf_plan_many_dft_c2r;
+#else
+    const auto VendorCreateManyPlanR2C = fftw_plan_many_dft_r2c;
+    const auto VendorCreateManyPlanC2R = fftw_plan_many_dft_c2r;
+#endif
+
+
     FFTplan CreatePlan(const amrex::IntVect& real_size, amrex::Real * const real_array,
                        Complex * const complex_array, const direction dir, const int dim)
     {
@@ -110,14 +119,14 @@ namespace ablastr::math::anyfft
 #endif
         if (dir == direction::R2C){
 
-            fft_plan.m_plan = fftw_plan_many_dft_r2c(dim, real_size, howmany,
+            fft_plan.m_plan = VendorCreateManyPlanR2C(dim, real_size, howmany,
                                                 real_array, inembed,
                                                 istride, idist,
                                                 complex_array, onembed,
                                                 ostride, odist, FFTW_ESTIMATE);
         } else if (dir == direction::C2R){
 
-            fft_plan.m_plan = fftw_plan_many_dft_c2r(dim, real_size, howmany,
+            fft_plan.m_plan = VendorCreateManyPlanC2R(dim, real_size, howmany,
                                                 complex_array, inembed,
                                                 istride, idist,
                                                 real_array, onembed,
