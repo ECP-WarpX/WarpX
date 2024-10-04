@@ -180,9 +180,9 @@ namespace ApplyParticleBoundaries {
         const amrex::Real sintheta = std::sin(y);
         const amrex::Real cosphi = std::cos(z);
         const amrex::Real sinphi = std::sin(z);
-        const amrex::Real ur = +ux*costheta*sinphi + uy*sintheta*sinphi + uz*cosphi;
-        const amrex::Real ut = -ux*sintheta + uy*costheta;
-        const amrex::Real up = +ux*costheta*cosphi + uy*sintheta*cosphi - uz*sinphi;
+        amrex::Real ur = +ux*costheta*sinphi + uy*sintheta*sinphi + uz*cosphi;
+        amrex::Real ut = -ux*sintheta + uy*costheta;
+        amrex::Real up = +ux*costheta*cosphi + uy*sintheta*cosphi - uz*sinphi;
         if (change_sign_ux) { ur = -ur; }
         if (change_sign_uy) { ut = -ut; }
         if (change_sign_uz) { up = -up; }

@@ -9,6 +9,8 @@
 
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
 #    include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
+#elif defined(WARPX_DIM_RSPHERE)
+#    include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/SphericalYeeAlgorithm.H"
 #else
 #    include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #    include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
@@ -261,13 +263,21 @@ guardCellManager::Init (
         ng_FieldSolverF = ng_alloc_EB;
         ng_FieldSolverG = ng_alloc_EB;
     }
-#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
     else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
              electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
              electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC ) {
         ng_FieldSolver  = CylindricalYeeAlgorithm::GetMaxGuardCell();
         ng_FieldSolverF = CylindricalYeeAlgorithm::GetMaxGuardCell();
         ng_FieldSolverG = CylindricalYeeAlgorithm::GetMaxGuardCell();
+    }
+#elif defined(WARPX_DIM_RSPHERE)
+    else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
+             electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
+             electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC ) {
+        ng_FieldSolver  = SphericalYeeAlgorithm::GetMaxGuardCell();
+        ng_FieldSolverF = SphericalYeeAlgorithm::GetMaxGuardCell();
+        ng_FieldSolverG = SphericalYeeAlgorithm::GetMaxGuardCell();
     }
 #else
     else {

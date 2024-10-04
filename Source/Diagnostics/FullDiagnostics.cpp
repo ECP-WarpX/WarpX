@@ -174,9 +174,6 @@ void
 FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
 {
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
-#ifdef WARPX_DIM_RSPHERE
-This needs fixing
-#endif
     using ablastr::fields::Direction;
 
     auto & warpx = WarpX::GetInstance();
@@ -219,6 +216,12 @@ This needs fixing
     // diagnostic output
     bool deposit_current = !m_solver_deposits_current;
 
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
+    std::string dir3_name = {"z"};
+#elif defined(WARPX_DIM_RSPHERE)
+    std::string dir3_name = {"p"};
+#endif
+
     // Fill vector of functors for all components except individual cylindrical modes.
     const auto m_varname_fields_size = static_cast<int>(m_varnames_fields.size());
     for (int comp=0; comp<m_varname_fields_size; comp++){
@@ -234,11 +237,11 @@ This needs fixing
             if (update_varnames) {
                 AddRZModesToOutputNames(std::string("Et"), ncomp);
             }
-        } else if ( m_varnames_fields[comp] == "Ez" ){
+        } else if ( m_varnames_fields[comp] == "E"+dir3_name ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get(FieldType::Efield_aux, Direction{2}, lev), lev, m_crse_ratio,
                                                         false, ncomp);
             if (update_varnames) {
-                AddRZModesToOutputNames(std::string("Ez"), ncomp);
+                AddRZModesToOutputNames(std::string("E"+dir3_name), ncomp);
             }
         } else if ( m_varnames_fields[comp] == "Br" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get(FieldType::Bfield_aux, Direction{0}, lev), lev, m_crse_ratio,
@@ -252,11 +255,11 @@ This needs fixing
             if (update_varnames) {
                 AddRZModesToOutputNames(std::string("Bt"), ncomp);
             }
-        } else if ( m_varnames_fields[comp] == "Bz" ){
+        } else if ( m_varnames_fields[comp] == "B"+dir3_name ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_fields.get(FieldType::Bfield_aux, Direction{2}, lev), lev, m_crse_ratio,
                                                         false, ncomp);
             if (update_varnames) {
-                AddRZModesToOutputNames(std::string("Bz"), ncomp);
+                AddRZModesToOutputNames(std::string("B"+dir3_name), ncomp);
             }
         } else if ( m_varnames_fields[comp] == "jr" ){
             m_all_field_functors[lev][comp] = std::make_unique<JFunctor>(0, lev, m_crse_ratio,
@@ -272,12 +275,12 @@ This needs fixing
             if (update_varnames) {
                 AddRZModesToOutputNames(std::string("jt"), ncomp);
             }
-        } else if ( m_varnames_fields[comp] == "jz" ){
+        } else if ( m_varnames_fields[comp] == "j"+dir3_name ){
             m_all_field_functors[lev][comp] = std::make_unique<JFunctor>(2, lev, m_crse_ratio,
                                                         false, deposit_current, ncomp);
             deposit_current = false;
             if (update_varnames) {
-                AddRZModesToOutputNames(std::string("jz"), ncomp);
+                AddRZModesToOutputNames(std::string("j"+dir3_name), ncomp);
             }
         } else if ( m_varnames_fields[comp] == "jr_displacement" ){
             m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(0, lev, m_crse_ratio,
@@ -291,11 +294,11 @@ This needs fixing
             if (update_varnames) {
                 AddRZModesToOutputNames(std::string("jt_displacement"), ncomp);
             }
-        } else if ( m_varnames_fields[comp] == "jz_displacement" ){
+        } else if ( m_varnames_fields[comp] == "j"+dir3_name+"_displacement" ){
             m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(2, lev, m_crse_ratio,
                                                         false, ncomp);
             if (update_varnames) {
-                AddRZModesToOutputNames(std::string("jz_displacement"), ncomp);
+                AddRZModesToOutputNames(std::string("j"+dir3_name+"_displacement"), ncomp);
             }
         } else if ( m_varnames_fields[comp] == "rho" ){
             // Initialize rho functor to dump total rho

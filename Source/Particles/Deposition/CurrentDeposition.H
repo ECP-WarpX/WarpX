@@ -83,6 +83,7 @@ void doDepositionShapeNKernel([[maybe_unused]] const amrex::ParticleReal xp,
     const amrex::Real sintheta = (rpmid > 0._rt ? ypmid/rpmid : 0._rt);
     const amrex::Real wqx = wq*invvol*(+vx*costheta + vy*sintheta);
     const amrex::Real wqy = wq*invvol*(-vx*sintheta + vy*costheta);
+    const amrex::Real wqz = wq*invvol*vz;
     #if defined(WARPX_DIM_RZ)
     const Complex xy0 = Complex{costheta, sintheta};
     #endif
@@ -97,15 +98,15 @@ void doDepositionShapeNKernel([[maybe_unused]] const amrex::ParticleReal xp,
     const amrex::Real costheta = (rpxymid > 0._rt ? xpmid/rpxymid : 1._rt);
     const amrex::Real sintheta = (rpxymid > 0._rt ? ypmid/rpxymid : 0._rt);
     const amrex::Real cosphi = (rpmid > 0._rt ? zpmid/rpmid : 1._rt);
-    const amrex::Real sinphi = (rpmid > 0._rt ? rpxmid/rpmid : 0._rt);
+    const amrex::Real sinphi = (rpmid > 0._rt ? rpxymid/rpmid : 0._rt);
     const amrex::Real wqx = wq*invvol*(+vx*costheta*sinphi + vy*sintheta*sinphi + vz*cosphi);
     const amrex::Real wqy = wq*invvol*(-vx*sintheta + vy*costheta);
     const amrex::Real wqz = wq*invvol*(+vx*costheta*cosphi + vy*sintheta*cosphi - vz*sinphi);
 #else
     const amrex::Real wqx = wq*invvol*vx;
     const amrex::Real wqy = wq*invvol*vy;
-#endif
     const amrex::Real wqz = wq*invvol*vz;
+#endif
 
     // --- Compute shape factors
     Compute_shape_factor< depos_order > const compute_shape_factor;
@@ -755,6 +756,9 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
             Real const xp_mid = xp_new - 0.5_rt*dt*uxp[ip]*gaminv;
             Real const yp_mid = yp_new - 0.5_rt*dt*uyp[ip]*gaminv;
             Real const zp_mid = zp_new - 0.5_rt*dt*uzp[ip]*gaminv;
+            Real const xp_old = xp_new - dt*uxp[ip]*gaminv;
+            Real const yp_old = yp_new - dt*uyp[ip]*gaminv;
+            Real const zp_old = zp_new - dt*uzp[ip]*gaminv;
             Real const rpxy_mid = std::sqrt(xp_mid*xp_mid + yp_mid*yp_mid);
             Real const rp_new = std::sqrt(xp_new*xp_new + yp_new*yp_new + zp_new*zp_new);
             Real const rp_mid = std::sqrt(xp_mid*xp_mid + yp_mid*yp_mid + zp_mid*zp_mid);
@@ -1445,7 +1449,7 @@ void doVillasenorDepositionShapeNImplicit ([[maybe_unused]]const amrex::Particle
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
             ParticleReal const yp_np1 = 2._prt*yp_nph - yp_n[ip];
 #endif
-#if !defined(WARPX_DIM_RCYLINDER) && !defined(WARPX_DIM_RSPHERE)
+#if !defined(WARPX_DIM_RCYLINDER)
             ParticleReal const zp_np1 = 2._prt*zp_nph - zp_n[ip];
 #endif
 
@@ -1483,10 +1487,13 @@ void doVillasenorDepositionShapeNImplicit ([[maybe_unused]]const amrex::Particle
 #elif defined(WARPX_DIM_RSPHERE)
             amrex::Real const xp_new = xp_np1;
             amrex::Real const yp_new = yp_np1;
+            amrex::Real const zp_new = zp_np1;
             amrex::Real const xp_mid = xp_nph;
             amrex::Real const yp_mid = yp_nph;
+            amrex::Real const zp_mid = zp_nph;
             amrex::Real const xp_old = xp_n[ip];
             amrex::Real const yp_old = yp_n[ip];
+            amrex::Real const zp_old = zp_n[ip];
             amrex::Real const rpxy_new = std::sqrt(xp_new*xp_new + yp_new*yp_new);
             amrex::Real const rpxy_old = std::sqrt(xp_old*xp_old + yp_old*yp_old);
             amrex::Real const rpxy_mid = (rpxy_new + rpxy_old)/2._rt;
@@ -1503,8 +1510,8 @@ void doVillasenorDepositionShapeNImplicit ([[maybe_unused]]const amrex::Particle
             double const x_new = (rp_new - xyzmin.x)*dinv.x;
             double const x_old = (rp_old - xyzmin.x)*dinv.x;
             amrex::Real const vx = (rp_new - rp_old)/dt;
-            amrex::Real const vy = (-uxp[ip]*sintheta_mid + uyp[ip]*costheta_mid)*gaminv;
-            amrex::Real const vz = (+uxp[ip]*costheta_mid*cosphi_mid + uyp[ip]*sintheta_mid*cosphi_mid - uzp[ip]*sinphi_mid)*gaminv;
+            amrex::Real const vy = (-uxp_nph[ip]*sintheta_mid + uyp_nph[ip]*costheta_mid)*gaminv;
+            amrex::Real const vz = (+uxp_nph[ip]*costheta_mid*cosphi_mid + uyp_nph[ip]*sintheta_mid*cosphi_mid - uzp_nph[ip]*sinphi_mid)*gaminv;
 #elif defined(WARPX_DIM_XZ)
             // Keep these double to avoid bug in single precision
             double const x_new = (xp_np1 - xyzmin.x)*dinv.x;

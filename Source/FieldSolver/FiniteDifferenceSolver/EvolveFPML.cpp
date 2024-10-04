@@ -9,7 +9,7 @@
 #include "BoundaryConditions/PMLComponent.H"
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
-#else
+#elif !defined(WARPX_DIM_RSPHERE)
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
@@ -46,10 +46,10 @@ void FiniteDifferenceSolver::EvolveFPML (
 
     // Select algorithm (The choice of algorithm is a runtime option,
     // but we compile code for each algorithm, using templates)
-#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
     amrex::ignore_unused(Ffield, Efield, dt);
     WARPX_ABORT_WITH_MESSAGE(
-        "PML are not implemented in cylindrical geometry.");
+        "PML are only implemented in Cartesian geometry.");
 #else
     if (m_grid_type == GridType::Collocated) {
 
@@ -70,7 +70,7 @@ void FiniteDifferenceSolver::EvolveFPML (
 }
 
 
-#if !defined(WARPX_DIM_RZ) && !defined(WARPX_DIM_RCYLINDER)
+#if !defined(WARPX_DIM_RZ) && !defined(WARPX_DIM_RCYLINDER) && !defined(WARPX_DIM_RSPHERE)
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveFPMLCartesian (

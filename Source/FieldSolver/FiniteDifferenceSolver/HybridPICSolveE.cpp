@@ -12,6 +12,8 @@
 #include "EmbeddedBoundary/Enabled.H"
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
 #   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
+#elif defined(WARPX_DIM_RSPHERE)
+#   include "FiniteDifferenceAlgorithms/SphericalYeeAlgorithm.H"
 #else
 #   include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #endif
@@ -26,7 +28,7 @@ using namespace amrex;
 void FiniteDifferenceSolver::CalculateCurrentAmpere (
     ablastr::fields::VectorField & Jfield,
     ablastr::fields::VectorField const& Bfield,
-    ablastr::fields::VectorField const& edge_lengths,
+    [[maybe_unused]]ablastr::fields::VectorField const& edge_lengths,
     int lev )
 {
     // Select algorithm (The choice of algorithm is a runtime option,
@@ -35,6 +37,11 @@ void FiniteDifferenceSolver::CalculateCurrentAmpere (
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
         CalculateCurrentAmpereCylindrical <CylindricalYeeAlgorithm> (
             Jfield, Bfield, edge_lengths, lev
+        );
+
+#elif defined(WARPX_DIM_RSPHERE)
+        CalculateCurrentAmpereSpherical <SphericalYeeAlgorithm> (
+            Jfield, Bfield, lev
         );
 
 #else
@@ -238,6 +245,106 @@ void FiniteDifferenceSolver::CalculateCurrentAmpereCylindrical (
     }
 }
 
+#elif defined(WARPX_DIM_RSPHERE)
+template<typename T_Algo>
+void FiniteDifferenceSolver::CalculateCurrentAmpereSpherical (
+    ablastr::fields::VectorField& Jfield,
+    ablastr::fields::VectorField const& Bfield,
+    int lev
+)
+{
+    // for the profiler
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+
+    // reset Jfield
+    Jfield[0]->setVal(0);
+    Jfield[1]->setVal(0);
+    Jfield[2]->setVal(0);
+
+    // Loop through the grids, and over the tiles within each grid
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for ( MFIter mfi(*Jfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+        }
+        Real wt = static_cast<Real>(amrex::second());
+
+        // Extract field data for this grid/tile
+        Array4<Real> const& Jr = Jfield[0]->array(mfi);
+        Array4<Real> const& Jt = Jfield[1]->array(mfi);
+        Array4<Real> const& Jp = Jfield[2]->array(mfi);
+        Array4<Real> const& Bt = Bfield[1]->array(mfi);
+        Array4<Real> const& Bp = Bfield[2]->array(mfi);
+
+        // Extract stencil coefficients
+        Real const * const AMREX_RESTRICT coefs_r = m_stencil_coefs_r.dataPtr();
+        int const n_coefs_r = static_cast<int>(m_stencil_coefs_r.size());
+
+        // Extract cylindrical specific parameters
+        Real const dr = m_dr;
+        Real const rmin = m_rmin;
+
+        // Extract tileboxes for which to loop
+        Box const& tjr  = mfi.tilebox(Jfield[0]->ixType().toIntVect());
+        Box const& tjt  = mfi.tilebox(Jfield[1]->ixType().toIntVect());
+        Box const& tjp  = mfi.tilebox(Jfield[2]->ixType().toIntVect());
+
+        Real const one_over_mu0 = 1._rt / PhysConst::mu0;
+
+        // Calculate the total current, using Ampere's law, on the same grid
+        // as the E-field
+        amrex::ParallelFor(tjr, tjt, tjp,
+
+            // Jr calculation
+            [=] AMREX_GPU_DEVICE (int i, int /*j*/, int /*k*/){
+                Jr(i, 0, 0, 0) = 0._rt;
+            },
+
+            // Jt calculation
+            [=] AMREX_GPU_DEVICE (int i, int /*j*/, int /*k*/){
+                // r on a nodal point (Jt is nodal in r)
+                Real const r = rmin + i*dr;
+                // Off-axis, regular curl
+                if (r > 0.5_rt*dr) {
+                    // Mode m=0
+                    Jt(i, 0, 0, 0) = one_over_mu0 * (
+                        - T_Algo::DownwardDrr_over_r(Bp, r, dr, coefs_r, n_coefs_r, i, 0, 0, 0));
+                } else { // r==0: on-axis corrections
+                    // Ensure that Jt remains 0 on axis
+                    Jt(i, 0, 0, 0) = 0.;
+                }
+            },
+
+            // Jp calculation
+            [=] AMREX_GPU_DEVICE (int i, int /*j*/, int /*k*/){
+                // r on a nodal point (Jp is nodal in r)
+                Real const r = rmin + i*dr;
+                // Off-axis, regular curl
+                if (r > 0.5_rt*dr) {
+                    Jp(i, 0, 0, 0) = one_over_mu0 * (
+                       T_Algo::DownwardDrr_over_r(Bt, r, dr, coefs_r, n_coefs_r, i, 0, 0, 0)
+                    );
+                // r==0: on-axis corrections
+                } else {
+                    // Bt is linear in r, for small r
+                    // Therefore, the formula below regularizes the singularity
+                    Jp(i, 0, 0, 0) = one_over_mu0 * 4 * Bt(i, 0, 0, 0) / dr;
+                }
+            }
+        );
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = static_cast<Real>(amrex::second()) - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+        }
+    }
+}
+
 #else
 
 template<typename T_Algo>
@@ -357,7 +464,7 @@ void FiniteDifferenceSolver::HybridPICSolveE (
     ablastr::fields::VectorField const& Bfield,
     amrex::MultiFab const& rhofield,
     amrex::MultiFab const& Pefield,
-    ablastr::fields::VectorField const& edge_lengths,
+    [[maybe_unused]]ablastr::fields::VectorField const& edge_lengths,
     int lev, HybridPICModel const* hybrid_model,
     const bool solve_for_Faraday)
 {
@@ -369,6 +476,13 @@ void FiniteDifferenceSolver::HybridPICSolveE (
         HybridPICSolveECylindrical <CylindricalYeeAlgorithm> (
             Efield, Jfield, Jifield, Bfield, rhofield, Pefield,
             edge_lengths, lev, hybrid_model, solve_for_Faraday
+        );
+
+#elif defined(WARPX_DIM_RSPHERE)
+
+        HybridPICSolveESpherical <SphericalYeeAlgorithm> (
+            Efield, Jfield, Jifield, Bfield, rhofield, Pefield,
+            lev, hybrid_model, solve_for_Faraday
         );
 
 #else
@@ -695,6 +809,20 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
     }
 }
 
+#elif defined(WARPX_DIM_RSPHERE)
+template<typename T_Algo>
+void FiniteDifferenceSolver::HybridPICSolveESpherical (
+    ablastr::fields::VectorField const& /*Efield*/,
+    ablastr::fields::VectorField const& /*Jfield*/,
+    ablastr::fields::VectorField const& /*Jifield*/,
+    ablastr::fields::VectorField const& /*Bfield*/,
+    amrex::MultiFab const& /*rhofield*/,
+    amrex::MultiFab const& /*Pefield*/,
+    int /*lev*/, HybridPICModel const* /*hybrid_model*/,
+    const bool /*solve_for_Faraday*/ )
+{
+    WARPX_ABORT_WITH_MESSAGE("HybridPICSolveESphrical not fully implemented");
+}
 #else
 
 template<typename T_Algo>

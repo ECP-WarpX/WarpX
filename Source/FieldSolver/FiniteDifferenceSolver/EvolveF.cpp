@@ -8,6 +8,8 @@
 
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
+#elif defined(WARPX_DIM_RSPHERE)
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/SphericalYeeAlgorithm.H"
 #else
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
@@ -16,7 +18,7 @@
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
-#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
 #   include "WarpX.H"
 #endif
 
@@ -57,6 +59,11 @@ void FiniteDifferenceSolver::EvolveF (
 
         EvolveFCylindrical <CylindricalYeeAlgorithm> ( Ffield, Efield, rhofield, rhocomp, dt );
 
+#elif defined(WARPX_DIM_RSPHERE)
+    if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee){
+
+        EvolveFSpherical <SphericalYeeAlgorithm> ( Ffield, Efield, rhofield, rhocomp, dt );
+
 #else
     if (m_grid_type == GridType::Collocated) {
 
@@ -78,7 +85,7 @@ void FiniteDifferenceSolver::EvolveF (
 }
 
 
-#if !defined(WARPX_DIM_RZ) && !defined(WARPX_DIM_RCYLINDER)
+#if !defined(WARPX_DIM_RZ) && !defined(WARPX_DIM_RCYLINDER) && !defined(WARPX_DIM_RSPHERE)
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveFCartesian (
@@ -221,4 +228,70 @@ void FiniteDifferenceSolver::EvolveFCylindrical (
 
 }
 
-#endif // corresponds to if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
+#elif defined(WARPX_DIM_RSPHERE)
+
+template<typename T_Algo>
+void FiniteDifferenceSolver::EvolveFSpherical (
+    amrex::MultiFab* Ffield,
+    ablastr::fields::VectorField const & Efield,
+    amrex::MultiFab* const rhofield,
+    int const rhocomp,
+    amrex::Real const dt ) {
+
+    // Loop through the grids, and over the tiles within each grid
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for ( MFIter mfi(*Ffield, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+
+        // Extract field data for this grid/tile
+        const Array4<Real> F = Ffield->array(mfi);
+        Array4<Real> const& Er = Efield[0]->array(mfi);
+        Array4<Real> const& rho = rhofield->array(mfi);
+
+        // Extract stencil coefficients
+        Real const * const AMREX_RESTRICT coefs_r = m_stencil_coefs_r.dataPtr();
+        auto const n_coefs_r = static_cast<int>(m_stencil_coefs_r.size());
+
+        // Extract spherical specific parameters
+        Real const dr = m_dr;
+        Real const rmin = m_rmin;
+
+        // Extract tileboxes for which to loop
+        Box const& tf  = mfi.tilebox(Ffield->ixType().toIntVect());
+
+        Real constexpr inv_epsilon0 = 1./PhysConst::ep0;
+
+        // Use the right shift in components:
+        // - the first component corresponds to rho old (i.e. rhocomp=0)
+        // - the next component corresponds to rho new (i.e. rhocomp=1)
+        int rho_shift = 0;
+        if (rhocomp == 1) {
+            rho_shift = WarpX::ncomps;
+        }
+
+        // Loop over the cells and update the fields
+        amrex::ParallelFor(tf,
+
+            [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
+                Real const r = rmin + i*dr; // r on a nodal grid (F is nodal in r)
+                if (r != 0) { // Off-axis, regular equations
+                    F(i, j, 0, 0) += dt * (
+                        - rho(i, j, 0, rho_shift) * inv_epsilon0
+                        + T_Algo::DownwardDrr2_over_r2(Er, r, dr, coefs_r, n_coefs_r, i, j, 0, 0) );
+                } else { // r==0: on-axis corrections
+                    // Er is linear in r, for small r
+                    // Therefore, the formula below regularizes the singularity
+                    F(i, j, 0, 0) += dt * (
+                        - rho(i, j, 0, rho_shift) * inv_epsilon0
+                         + 6._rt*Er(i, j, 0, 0)/dr); // regularization
+                }
+            }
+
+        ); // end of loop over cells
+
+    } // end of loop over grid/tiles
+
+}
+
+#endif

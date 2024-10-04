@@ -578,7 +578,7 @@ void doGatherShapeNEsirkepovStencilImplicit (
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
     const ParticleReal yp_np1 = 2._prt*yp_nph - yp_n;
 #endif
-#if !defined(WARPX_DIM_RCYLINDER) && !defined(WARPX_DIM_RSPHERE)
+#if !defined(WARPX_DIM_RCYLINDER)
     const ParticleReal zp_np1 = 2._prt*zp_nph - zp_n;
 #endif
 
@@ -1088,7 +1088,7 @@ void doGatherPicnicShapeN (
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
     const ParticleReal yp_np1 = 2._prt*yp_nph - yp_n;
 #endif
-#if !defined(WARPX_DIM_RCYLINDER) && !defined(WARPX_DIM_RSPHERE)
+#if !defined(WARPX_DIM_RCYLINDER)
     const ParticleReal zp_np1 = 2._prt*zp_nph - zp_n;
 #endif
 
