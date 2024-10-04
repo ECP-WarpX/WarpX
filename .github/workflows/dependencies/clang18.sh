@@ -7,11 +7,6 @@
 
 set -eu -o pipefail
 
-# This dependency file is currently used within a docker container,
-# which does not come with sudo.
-apt-get -qqq update
-apt-get -y install sudo
-
 # `man apt.conf`:
 #   Number of retries to perform. If this is non-zero APT will retry
 #   failed files the given number of times.
@@ -23,17 +18,18 @@ echo 'Acquire::Retries "3";' | sudo tee /etc/apt/apt.conf.d/80-retries
 sudo apt-get -qqq update
 sudo apt-get install -y \
     cmake               \
-    clang-17            \
-    clang-tidy-17       \
+    clang-18            \
+    clang-tidy-18       \
     libblas-dev         \
-    libc++-17-dev       \
+    libc++-18-dev       \
     libboost-math-dev   \
     libfftw3-dev        \
     libfftw3-mpi-dev    \
     libhdf5-openmpi-dev \
     liblapack-dev       \
     libopenmpi-dev      \
-    libomp-17-dev       \
+    libomp-18-dev       \
+    libtsan2            \
     ninja-build         \
     wget                \
     xz-utils            \
@@ -42,9 +38,9 @@ sudo apt-get install -y \
     ccache              \
     pkg-config
 
-# Use clang 17
-export CXX=$(which clang++-17)
-export CC=$(which clang-17)
+# Use clang 18
+export CXX=$(which clang++-18)
+export CC=$(which clang-18)
 
 # cmake-easyinstall
 #
