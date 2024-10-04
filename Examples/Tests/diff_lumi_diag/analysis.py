@@ -11,7 +11,7 @@ import numpy as np
 from read_raw_data import read_reduced_diags_histogram
 
 sys.path.insert(1, "../../../../warpx/Regression/Checksum/")
-import checksumAPI
+from checksumAPI import evaluate_checksum
 
 # Extract the differential luminosity from the file
 _, _, E_bin, bin_data = read_reduced_diags_histogram(
@@ -44,9 +44,9 @@ print("Relative error: ", error)
 print("Tolerance: ", tol)
 assert error < tol
 
-# Get name of the test
-fn = sys.argv[1]
-test_name = os.path.split(os.getcwd())[1]
-
-# Run checksum regression test
-checksumAPI.evaluate_checksum(test_name, fn, rtol=1e-2)
+# compare checksums
+evaluate_checksum(
+    test_name=os.path.split(os.getcwd())[1],
+    output_file=sys.argv[1],
+    rtol=1e-2,
+)
