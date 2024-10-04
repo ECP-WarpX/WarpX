@@ -195,7 +195,7 @@ env = os.environ.copy()
 #         consistent across platforms (especially Windows)
 WARPX_COMPUTE = env.pop("WARPX_COMPUTE", "OMP")
 WARPX_MPI = env.pop("WARPX_MPI", "OFF")
-WARPX_EB = env.pop("WARPX_EB", "OFF")
+WARPX_EB = env.pop("WARPX_EB", "ON")
 WARPX_OPENPMD = env.pop("WARPX_OPENPMD", "ON")
 WARPX_PRECISION = env.pop("WARPX_PRECISION", "DOUBLE")
 WARPX_PARTICLE_PRECISION = env.pop("WARPX_PARTICLE_PRECISION", WARPX_PRECISION)
@@ -274,7 +274,7 @@ with open("./requirements.txt") as f:
 setup(
     name="pywarpx",
     # note PEP-440 syntax: x.y.zaN but x.y.z.devN
-    version="24.08",
+    version="24.10",
     packages=["pywarpx"],
     package_dir={"pywarpx": "Python/pywarpx"},
     author="Jean-Luc Vay, David P. Grote, Maxence Thévenet, Rémi Lehe, Andrew Myers, Weiqun Zhang, Axel Huebl, et al.",

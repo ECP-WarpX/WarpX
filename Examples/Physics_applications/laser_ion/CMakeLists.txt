@@ -5,7 +5,6 @@ add_warpx_test(
     test_2d_laser_ion_acc  # name
     2  # dims
     2  # nprocs
-    OFF  # eb
     inputs_test_2d_laser_ion_acc  # inputs
     analysis_default_openpmd_regression.py  # analysis
     diags/diag1/  # output
@@ -16,7 +15,6 @@ add_warpx_test(
     test_2d_laser_ion_acc_picmi  # name
     2  # dims
     2  # nprocs
-    OFF  # eb
     inputs_test_2d_laser_ion_acc_picmi.py  # inputs
     analysis_default_openpmd_regression.py  # analysis
     diags/diag1/  # output

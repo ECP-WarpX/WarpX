@@ -7,7 +7,7 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#include "FieldSolver/Fields.H"
+#include "Fields.H"
 #include "Particles/ParticleIO.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/PhysicalParticleContainer.H"
@@ -43,7 +43,7 @@
 #include <vector>
 
 using namespace amrex;
-using namespace warpx::fields;
+using warpx::fields::FieldType;
 
 void
 LaserParticleContainer::ReadHeader (std::istream& is)
@@ -241,7 +241,7 @@ MultiParticleContainer::WriteHeader (std::ostream& os) const
 
 void
 storePhiOnParticles ( PinnedMemoryParticleContainer& tmp,
-    int electrostatic_solver_id, bool is_full_diagnostic ) {
+    ElectrostaticSolverAlgo electrostatic_solver_id, bool is_full_diagnostic ) {
 
     using PinnedParIter = typename PinnedMemoryParticleContainer::ParIterType;
 
@@ -268,7 +268,7 @@ storePhiOnParticles ( PinnedMemoryParticleContainer& tmp,
         const amrex::Geometry& geom = warpx.Geom(lev);
         auto plo = geom.ProbLoArray();
         auto dxi = geom.InvCellSizeArray();
-        amrex::MultiFab const& phi = warpx.getField( FieldType::phi_fp, lev, 0 );
+        amrex::MultiFab const& phi = *warpx.m_fields.get(FieldType::phi_fp, lev);
 
         for (PinnedParIter pti(tmp, lev); pti.isValid(); ++pti) {
 

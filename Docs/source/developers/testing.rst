@@ -81,6 +81,24 @@ For easier debugging, it can be convenient to run the tests on your local machin
 
        ctest --test-dir build -E laser_acceleration
 
+* Sometimes two or more tests share a large number of input parameters and differ by a small set of options.
+  Such tests typically also share a base string in their names.
+  For example, you can find three different tests named ``test_3d_langmuir_multi``, ``test_3d_langmuir_multi_nodal`` and ``test_3d_langmuir_multi_picmi``.
+  In such a case, if you wish to run the test ``test_3d_langmuir_multi`` only, this can be done again with the ``-R`` regular `expression filter <https://regex101.com>`__ via
+
+  .. code-block:: sh
+
+       ctest --test-dir build -R "test_3d_langmuir_multi\..*"
+
+  Note that filtering with ``-R "test_3d_langmuir_multi"`` would include the additional tests that have the same substring in their name and would not be sufficient to isolate a single test.
+  Note also that the escaping ``\.`` in the regular expression is necessary in order to take into account the fact that each test is automatically appended with the strings ``.run``, ``.analysis`` and possibly ``.cleanup``.
+
+* Run only tests not labeled with the ``slow`` label:
+
+  .. code-block:: sh
+
+       ctest --test-dir build -LE slow
+
 Once the execution of CTest is completed, you can find all files associated with each test in its corresponding directory under ``build/bin/``.
 For example, if you run the single test ``test_3d_laser_acceleration``, you can find all files associated with this test in the directory ``build/bin/test_3d_laser_acceleration/``.
 
@@ -103,7 +121,6 @@ A new test can be added by adding a corresponding entry in ``CMakeLists.txt`` as
            test_1d_laser_acceleration  # name
            1  # dims
            2  # nprocs
-           OFF  # eb
            inputs_test_1d_laser_acceleration  # inputs
            analysis.py  # analysis
            diags/diag1000100  # output (plotfile)
@@ -118,7 +135,6 @@ A new test can be added by adding a corresponding entry in ``CMakeLists.txt`` as
            test_2d_laser_acceleration_picmi  # name
            2  # dims
            2  # nprocs
-           OFF  # eb
            inputs_test_2d_laser_acceleration_picmi.py  # inputs
            analysis.py  # analysis
            diags/diag1000100  # output (plotfile)
@@ -133,7 +149,6 @@ A new test can be added by adding a corresponding entry in ``CMakeLists.txt`` as
            test_3d_laser_acceleration_restart  # name
            3  # dims
            2  # nprocs
-           OFF  # eb
            inputs_test_3d_laser_acceleration_restart  # inputs
            analysis_default_restart.py  # analysis
            diags/diag1000100  # output (plotfile)
@@ -150,7 +165,6 @@ A new test can be added by adding a corresponding entry in ``CMakeLists.txt`` as
            test_rz_laser_acceleration_picmi  # name
            RZ  # dims
            2   # nprocs
-           OFF  # eb
            "inputs_test_rz_laser_acceleration_picmi.py --test --dir 1"  # inputs
            analysis.py  # analysis
            diags/diag1/  # output (openPMD time series)
@@ -159,7 +173,9 @@ A new test can be added by adding a corresponding entry in ``CMakeLists.txt`` as
 
 If you need a new Python package dependency for testing, please add it in `Regression/requirements.txt <https://github.com/ECP-WarpX/WarpX/blob/development/Regression/requirements.txt>`__.
 
-Sometimes, two tests share a large number of input parameters. The shared input parameters can be collected in a "base" input file that can be passed as a runtime parameter in the actual test input files through the parameter ``FILE``.
+Sometimes two or more tests share a large number of input parameters. The shared input parameters can be collected in a "base" input file that can be passed as a runtime parameter in the actual test input files through the parameter ``FILE``.
+
+If the new test is added in a new directory that did not exist before, please add the name of that directory with the command ``add_subdirectory`` in `Physics_applications/CMakeLists.txt <https://github.com/ECP-WarpX/WarpX/tree/development/Examples/Physics_applications/CMakeLists.txt>`__ or `Tests/CMakeLists.txt <https://github.com/ECP-WarpX/WarpX/tree/development/Examples/Tests/CMakeLists.txt>`__, depending on where the new test directory is located.
 
 Naming conventions for automated tests
 --------------------------------------

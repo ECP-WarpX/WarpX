@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.24.0)
-project(WarpX VERSION 24.09)
+project(WarpX VERSION 24.10)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -68,7 +68,7 @@ include(CMakeDependentOption)
 option(WarpX_APP           "Build the WarpX executable application"     ON)
 option(WarpX_ASCENT        "Ascent in situ diagnostics"                 OFF)
 option(WarpX_CATALYST      "Catalyst in situ diagnostics"               OFF)
-option(WarpX_EB            "Embedded boundary support"                  OFF)
+option(WarpX_EB            "Embedded boundary support"                  ON)
 option(WarpX_LIB           "Build WarpX as a library"                   OFF)
 option(WarpX_MPI           "Multi-node support (message-passing)"       ON)
 option(WarpX_OPENPMD       "openPMD I/O (HDF5, ADIOS)"                  ON)

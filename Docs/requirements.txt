@@ -5,7 +5,7 @@
 # License: BSD-3-Clause-LBNL
 
 # WarpX PICMI bindings w/o C++ component (used for autoclass docs)
--e Python
+-e ../Python
 breathe
 docutils>=0.17.1
 
