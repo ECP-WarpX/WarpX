@@ -504,7 +504,6 @@ void FiniteDifferenceSolver::EvolveESpherical (
         Array4<Real> const& Er = Efield[0]->array(mfi);
         Array4<Real> const& Et = Efield[1]->array(mfi);
         Array4<Real> const& Ep = Efield[2]->array(mfi);
-        Array4<Real> const& Br = Bfield[0]->array(mfi);
         Array4<Real> const& Bt = Bfield[1]->array(mfi);
         Array4<Real> const& Bp = Bfield[2]->array(mfi);
         Array4<Real> const& jr = Jfield[0]->array(mfi);

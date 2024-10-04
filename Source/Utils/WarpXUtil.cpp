@@ -146,7 +146,7 @@ void ReadBoostedFrameParameters(Real& gamma_boost, Real& beta_boost,
 
 void ReadMovingWindowParameters(
     int& do_moving_window, int& start_moving_window_step, int& end_moving_window_step,
-    int& moving_window_dir, amrex::Real& moving_window_v)
+    [[maybe_unused]] int& moving_window_dir, amrex::Real& moving_window_v)
 {
     const ParmParse pp_warpx("warpx");
     pp_warpx.query("do_moving_window", do_moving_window);
