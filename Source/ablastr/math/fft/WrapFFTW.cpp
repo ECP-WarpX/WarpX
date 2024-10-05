@@ -104,7 +104,8 @@ namespace ablastr::math::anyfft
     FFTplan CreatePlanMany(int * real_size, amrex::Real * real_array,
                            Complex * complex_array, const direction dir, const int dim,
                            int howmany, int * inembed, int istride, int idist,
-                           int * onembed, int ostride, int odist){
+                           int * onembed, int ostride, int odist)
+    {
 
         FFTplan fft_plan;
 
