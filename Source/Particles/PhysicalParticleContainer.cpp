@@ -243,209 +243,6 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 {
     BackwardCompatibility();
 
-    const ParmParse pp_species_name(species_name);
-
-    std::string injection_style = "none";
-    pp_species_name.query("injection_style", injection_style);
-    if (injection_style != "none") {
-        // The base plasma injector, whose input parameters have no source prefix.
-        // Only created if needed
-        plasma_injectors.push_back(std::make_unique<PlasmaInjector>(species_id, species_name, amr_core->Geom(0)));
-    }
-
-    std::vector<std::string> injection_sources;
-    pp_species_name.queryarr("injection_sources", injection_sources);
-    for (auto &source_name : injection_sources) {
-        plasma_injectors.push_back(std::make_unique<PlasmaInjector>(species_id, species_name, amr_core->Geom(0),
-                                                                    source_name));
-    }
-
-    // Setup the charge and mass. There are multiple ways that they can be specified, so checks are needed to
-    // ensure that a value is specified and warnings given if multiple values are specified.
-    // The ordering is that species.charge and species.mass take precedence over all other values.
-    // Next is charge and mass determined from species_type.
-    // Last is charge and mass from the plasma injector setup
-    bool charge_from_source = false;
-    bool mass_from_source = false;
-    for (auto const& plasma_injector : plasma_injectors) {
-        // For now, use the last value for charge and mass that is found.
-        // A check could be added for consistency of multiple values, but it'll probably never be needed
-        charge_from_source |= plasma_injector->queryCharge(charge);
-        mass_from_source |= plasma_injector->queryMass(mass);
-    }
-
-    std::string physical_species_s;
-    const bool species_is_specified = pp_species_name.query("species_type", physical_species_s);
-    if (species_is_specified) {
-        const auto physical_species_from_string = species::from_string( physical_species_s );
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(physical_species_from_string,
-            physical_species_s + " does not exist!");
-        physical_species = physical_species_from_string.value();
-        charge = species::get_charge( physical_species );
-        mass = species::get_mass( physical_species );
-    }
-
-    // parse charge and mass (overriding values above)
-    const bool charge_is_specified = utils::parser::queryWithParser(pp_species_name, "charge", charge);
-    const bool mass_is_specified = utils::parser::queryWithParser(pp_species_name, "mass", mass);
-
-    if (charge_is_specified && species_is_specified) {
-        ablastr::warn_manager::WMRecordWarning("Species",
-            "Both '" + species_name +  ".charge' and " +
-                species_name + ".species_type' are specified.\n" +
-                species_name + ".charge' will take precedence.\n");
-    }
-    if (mass_is_specified && species_is_specified) {
-        ablastr::warn_manager::WMRecordWarning("Species",
-            "Both '" + species_name +  ".mass' and " +
-                species_name + ".species_type' are specified.\n" +
-                species_name + ".mass' will take precedence.\n");
-    }
-
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        charge_from_source ||
-        charge_is_specified ||
-        species_is_specified,
-        "Need to specify at least one of species_type or charge for species '" +
-        species_name + "'."
-    );
-
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        mass_from_source ||
-        mass_is_specified ||
-        species_is_specified,
-        "Need to specify at least one of species_type or mass for species '" +
-        species_name + "'."
-    );
-
-    pp_species_name.query("boost_adjust_transverse_positions", boost_adjust_transverse_positions);
-    pp_species_name.query("do_backward_propagation", do_backward_propagation);
-    pp_species_name.query("random_theta", m_rz_random_theta);
-
-    // Initialize splitting
-    pp_species_name.query("do_splitting", do_splitting);
-    pp_species_name.query("split_type", split_type);
-    pp_species_name.query("do_not_deposit", do_not_deposit);
-    pp_species_name.query("do_not_gather", do_not_gather);
-    pp_species_name.query("do_not_push", do_not_push);
-
-    pp_species_name.query("do_continuous_injection", do_continuous_injection);
-    pp_species_name.query("initialize_self_fields", initialize_self_fields);
-    utils::parser::queryWithParser(
-        pp_species_name, "self_fields_required_precision", self_fields_required_precision);
-    utils::parser::queryWithParser(
-        pp_species_name, "self_fields_absolute_tolerance", self_fields_absolute_tolerance);
-    utils::parser::queryWithParser(
-        pp_species_name, "self_fields_max_iters", self_fields_max_iters);
-    pp_species_name.query("self_fields_verbosity", self_fields_verbosity);
-
-    pp_species_name.query("do_field_ionization", do_field_ionization);
-
-    pp_species_name.query("do_resampling", do_resampling);
-    if (do_resampling) { m_resampler = Resampling(species_name); }
-
-    //check if Radiation Reaction is enabled and do consistency checks
-    pp_species_name.query("do_classical_radiation_reaction", do_classical_radiation_reaction);
-    //if the species is not a lepton, do_classical_radiation_reaction
-    //should be false
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        (!do_classical_radiation_reaction) ||
-        AmIA<PhysicalSpecies::electron>() ||
-        AmIA<PhysicalSpecies::positron>(),
-        "can't enable classical radiation reaction for non lepton species '"
-            + species_name + "'.");
-
-    //Only Boris pusher is compatible with radiation reaction
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        (!do_classical_radiation_reaction) ||
-        WarpX::particle_pusher_algo == ParticlePusherAlgo::Boris,
-        "Radiation reaction can be enabled only if Boris pusher is used");
-    //_____________________________
-
-#ifdef WARPX_QED
-    pp_species_name.query("do_qed_quantum_sync", m_do_qed_quantum_sync);
-    if (m_do_qed_quantum_sync) {
-        AddRealComp("opticalDepthQSR");
-    }
-
-    pp_species_name.query("do_qed_breit_wheeler", m_do_qed_breit_wheeler);
-    if (m_do_qed_breit_wheeler) {
-        AddRealComp("opticalDepthBW");
-    }
-
-    if(m_do_qed_quantum_sync){
-        pp_species_name.get("qed_quantum_sync_phot_product_species",
-            m_qed_quantum_sync_phot_product_name);
-    }
-#endif
-
-    // User-defined integer attributes
-    pp_species_name.queryarr("addIntegerAttributes", m_user_int_attribs);
-    const auto n_user_int_attribs = static_cast<int>(m_user_int_attribs.size());
-    std::vector< std::string > str_int_attrib_function;
-    str_int_attrib_function.resize(n_user_int_attribs);
-    m_user_int_attrib_parser.resize(n_user_int_attribs);
-    for (int i = 0; i < n_user_int_attribs; ++i) {
-        utils::parser::Store_parserString(
-            pp_species_name, "attribute."+m_user_int_attribs.at(i)+"(x,y,z,ux,uy,uz,t)",
-            str_int_attrib_function.at(i));
-        m_user_int_attrib_parser.at(i) = std::make_unique<amrex::Parser>(
-            utils::parser::makeParser(str_int_attrib_function.at(i),{"x","y","z","ux","uy","uz","t"}));
-        AddIntComp(m_user_int_attribs.at(i));
-    }
-
-    // User-defined real attributes
-    pp_species_name.queryarr("addRealAttributes", m_user_real_attribs);
-    const auto n_user_real_attribs = static_cast<int>(m_user_real_attribs.size());
-    std::vector< std::string > str_real_attrib_function;
-    str_real_attrib_function.resize(n_user_real_attribs);
-    m_user_real_attrib_parser.resize(n_user_real_attribs);
-    for (int i = 0; i < n_user_real_attribs; ++i) {
-        utils::parser::Store_parserString(
-            pp_species_name, "attribute."+m_user_real_attribs.at(i)+"(x,y,z,ux,uy,uz,t)",
-            str_real_attrib_function.at(i));
-        m_user_real_attrib_parser.at(i) = std::make_unique<amrex::Parser>(
-            utils::parser::makeParser(str_real_attrib_function.at(i),{"x","y","z","ux","uy","uz","t"}));
-        AddRealComp(m_user_real_attribs.at(i));
-    }
-
-    // If old particle positions should be saved add the needed components
-    pp_species_name.query("save_previous_position", m_save_previous_position);
-    if (m_save_previous_position) {
-#if (AMREX_SPACEDIM >= 2)
-        AddRealComp("prev_x");
-#endif
-#if defined(WARPX_DIM_3D)
-        AddRealComp("prev_y");
-#endif
-        AddRealComp("prev_z");
-#ifdef WARPX_DIM_RZ
-      amrex::Abort("Saving previous particle positions not yet implemented in RZ");
-#endif
-    }
-
-    // Read reflection models for absorbing boundaries; defaults to a zero
-    pp_species_name.query("reflection_model_xlo(E)", m_boundary_conditions.reflection_model_xlo_str);
-    pp_species_name.query("reflection_model_xhi(E)", m_boundary_conditions.reflection_model_xhi_str);
-    pp_species_name.query("reflection_model_ylo(E)", m_boundary_conditions.reflection_model_ylo_str);
-    pp_species_name.query("reflection_model_yhi(E)", m_boundary_conditions.reflection_model_yhi_str);
-    pp_species_name.query("reflection_model_zlo(E)", m_boundary_conditions.reflection_model_zlo_str);
-    pp_species_name.query("reflection_model_zhi(E)", m_boundary_conditions.reflection_model_zhi_str);
-    m_boundary_conditions.BuildReflectionModelParsers();
-
-    const ParmParse pp_boundary("boundary");
-    bool flag = false;
-    pp_boundary.query("reflect_all_velocities", flag);
-    m_boundary_conditions.Set_reflect_all_velocities(flag);
-
-    // currently supports only isotropic thermal distribution
-    // same distribution is applied to all boundaries
-    const amrex::ParmParse pp_species_boundary("boundary." + species_name);
-    if (WarpX::isAnyParticleBoundaryThermal()) {
-        amrex::Real boundary_uth;
-        utils::parser::getWithParser(pp_species_boundary,"u_th",boundary_uth);
-        m_boundary_conditions.SetThermalVelocity(boundary_uth);
-    }
 }
 
 PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core)
@@ -472,6 +269,203 @@ PhysicalParticleContainer::BackwardCompatibility ()
 
 void PhysicalParticleContainer::InitData ()
 {
+
+    const ParmParse pp_species_name(species_name);
+
+    std::string injection_style = "none";
+    pp_species_name.query("injection_style", injection_style);
+    if (injection_style != "none") {
+        // The base plasma injector, whose input parameters have no source prefix.
+        // Only created if needed
+        plasma_injectors.push_back(std::make_unique<PlasmaInjector>(species_id, species_name, Geom(0)));
+    }
+
+    std::vector<std::string> injection_sources;
+    pp_species_name.queryarr("injection_sources", injection_sources);
+    for (auto &source_name : injection_sources) {
+        plasma_injectors.push_back(std::make_unique<PlasmaInjector>(species_id, species_name, Geom(0),
+                                                                    source_name));
+    }
+
+    // Setup the charge and mass. There are multiple ways that they can be specified, so checks are needed to
+    // ensure that a value is specified and warnings given if multiple values are specified.
+    // The ordering is that species.charge and species.mass take precedence over all other values.
+    // Next is charge and mass determined from species_type.
+    // Last is charge and mass from the plasma injector setup
+    bool charge_from_source = false;
+    bool mass_from_source = false;
+    for (auto const& plasma_injector : plasma_injectors) {
+        // For now, use the last value for charge and mass that is found.
+        // A check could be added for consistency of multiple values, but it'll probably never be needed
+        charge_from_source |= plasma_injector->queryCharge(charge);
+        mass_from_source |= plasma_injector->queryMass(mass);
+    }
+
+    std::string physical_species_s;
+    const bool species_is_specified = pp_species_name.query("species_type", physical_species_s);
+    if (species_is_specified) {
+        const auto physical_species_from_string = species::from_string( physical_species_s );
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(physical_species_from_string,
+                                         physical_species_s + " does not exist!");
+        physical_species = physical_species_from_string.value();
+        charge = species::get_charge( physical_species );
+        mass = species::get_mass( physical_species );
+    }
+
+    // parse charge and mass (overriding values above)
+    const bool charge_is_specified = utils::parser::queryWithParser(pp_species_name, "charge", charge);
+    const bool mass_is_specified = utils::parser::queryWithParser(pp_species_name, "mass", mass);
+
+    if (charge_is_specified && species_is_specified) {
+        ablastr::warn_manager::WMRecordWarning("Species",
+                                               "Both '" + species_name +  ".charge' and " +
+                                               species_name + ".species_type' are specified.\n" +
+                                               species_name + ".charge' will take precedence.\n");
+    }
+    if (mass_is_specified && species_is_specified) {
+        ablastr::warn_manager::WMRecordWarning("Species",
+                                               "Both '" + species_name +  ".mass' and " +
+                                               species_name + ".species_type' are specified.\n" +
+                                               species_name + ".mass' will take precedence.\n");
+    }
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            charge_from_source ||
+            charge_is_specified ||
+            species_is_specified,
+            "Need to specify at least one of species_type or charge for species '" +
+            species_name + "'."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            mass_from_source ||
+            mass_is_specified ||
+            species_is_specified,
+            "Need to specify at least one of species_type or mass for species '" +
+            species_name + "'."
+    );
+
+    pp_species_name.query("boost_adjust_transverse_positions", boost_adjust_transverse_positions);
+    pp_species_name.query("do_backward_propagation", do_backward_propagation);
+    pp_species_name.query("random_theta", m_rz_random_theta);
+
+    // Initialize splitting
+    pp_species_name.query("do_splitting", do_splitting);
+    pp_species_name.query("split_type", split_type);
+    pp_species_name.query("do_not_deposit", do_not_deposit);
+    pp_species_name.query("do_not_gather", do_not_gather);
+    pp_species_name.query("do_not_push", do_not_push);
+
+    pp_species_name.query("do_continuous_injection", do_continuous_injection);
+    pp_species_name.query("initialize_self_fields", initialize_self_fields);
+    utils::parser::queryWithParser(
+            pp_species_name, "self_fields_required_precision", self_fields_required_precision);
+    utils::parser::queryWithParser(
+            pp_species_name, "self_fields_absolute_tolerance", self_fields_absolute_tolerance);
+    utils::parser::queryWithParser(
+            pp_species_name, "self_fields_max_iters", self_fields_max_iters);
+    pp_species_name.query("self_fields_verbosity", self_fields_verbosity);
+
+    pp_species_name.query("do_field_ionization", do_field_ionization);
+
+    pp_species_name.query("do_resampling", do_resampling);
+    if (do_resampling) { m_resampler = Resampling(species_name); }
+
+    //check if Radiation Reaction is enabled and do consistency checks
+    pp_species_name.query("do_classical_radiation_reaction", do_classical_radiation_reaction);
+    //if the species is not a lepton, do_classical_radiation_reaction
+    //should be false
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            (!do_classical_radiation_reaction) ||
+            AmIA<PhysicalSpecies::electron>() ||
+            AmIA<PhysicalSpecies::positron>(),
+            "can't enable classical radiation reaction for non lepton species '"
+            + species_name + "'.");
+
+    //Only Boris pusher is compatible with radiation reaction
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            (!do_classical_radiation_reaction) ||
+            WarpX::particle_pusher_algo == ParticlePusherAlgo::Boris,
+            "Radiation reaction can be enabled only if Boris pusher is used");
+    //_____________________________
+
+#ifdef WARPX_QED
+    pp_species_name.query("do_qed_quantum_sync", m_do_qed_quantum_sync);
+    if (m_do_qed_quantum_sync) {
+        AddRealComp("opticalDepthQSR");
+    }
+
+    pp_species_name.query("do_qed_breit_wheeler", m_do_qed_breit_wheeler);
+    if (m_do_qed_breit_wheeler) {
+        AddRealComp("opticalDepthBW");
+    }
+
+    if(m_do_qed_quantum_sync){
+        pp_species_name.get("qed_quantum_sync_phot_product_species",
+                            m_qed_quantum_sync_phot_product_name);
+    }
+#endif
+
+    // User-defined integer attributes
+    pp_species_name.queryarr("addIntegerAttributes", m_user_int_attribs);
+    const auto n_user_int_attribs = static_cast<int>(m_user_int_attribs.size());
+    std::vector< std::string > str_int_attrib_function;
+    str_int_attrib_function.resize(n_user_int_attribs);
+    m_user_int_attrib_parser.resize(n_user_int_attribs);
+    for (int i = 0; i < n_user_int_attribs; ++i) {
+        utils::parser::Store_parserString(
+                pp_species_name, "attribute."+m_user_int_attribs.at(i)+"(x,y,z,ux,uy,uz,t)",
+                str_int_attrib_function.at(i));
+        m_user_int_attrib_parser.at(i) = std::make_unique<amrex::Parser>(
+                utils::parser::makeParser(str_int_attrib_function.at(i),{"x","y","z","ux","uy","uz","t"}));
+        AddIntComp(m_user_int_attribs.at(i));
+    }
+
+    // User-defined real attributes
+    pp_species_name.queryarr("addRealAttributes", m_user_real_attribs);
+    const auto n_user_real_attribs = static_cast<int>(m_user_real_attribs.size());
+    std::vector< std::string > str_real_attrib_function;
+    str_real_attrib_function.resize(n_user_real_attribs);
+    m_user_real_attrib_parser.resize(n_user_real_attribs);
+    for (int i = 0; i < n_user_real_attribs; ++i) {
+        utils::parser::Store_parserString(
+                pp_species_name, "attribute."+m_user_real_attribs.at(i)+"(x,y,z,ux,uy,uz,t)",
+                str_real_attrib_function.at(i));
+        m_user_real_attrib_parser.at(i) = std::make_unique<amrex::Parser>(
+                utils::parser::makeParser(str_real_attrib_function.at(i),{"x","y","z","ux","uy","uz","t"}));
+        AddRealComp(m_user_real_attribs.at(i));
+    }
+
+    // If old particle positions should be saved add the needed components
+    pp_species_name.query("save_previous_position", m_save_previous_position);
+    if (m_save_previous_position) {
+#if (AMREX_SPACEDIM >= 2)
+        AddRealComp("prev_x");
+#endif
+#if defined(WARPX_DIM_3D)
+        AddRealComp("prev_y");
+#endif
+        AddRealComp("prev_z");
+#ifdef WARPX_DIM_RZ
+        amrex::Abort("Saving previous particle positions not yet implemented in RZ");
+#endif
+    }
+
+    // Read reflection models for absorbing boundaries; defaults to a zero
+    pp_species_name.query("reflection_model_xlo(E)", m_boundary_conditions.reflection_model_xlo_str);
+    pp_species_name.query("reflection_model_xhi(E)", m_boundary_conditions.reflection_model_xhi_str);
+    pp_species_name.query("reflection_model_ylo(E)", m_boundary_conditions.reflection_model_ylo_str);
+    pp_species_name.query("reflection_model_yhi(E)", m_boundary_conditions.reflection_model_yhi_str);
+    pp_species_name.query("reflection_model_zlo(E)", m_boundary_conditions.reflection_model_zlo_str);
+    pp_species_name.query("reflection_model_zhi(E)", m_boundary_conditions.reflection_model_zhi_str);
+    m_boundary_conditions.BuildReflectionModelParsers();
+
+    const ParmParse pp_boundary("boundary");
+    bool flag = false;
+    pp_boundary.query("reflect_all_velocities", flag);
+    m_boundary_conditions.Set_reflect_all_velocities(flag);
+
+
     AddParticles(0); // Note - add on level 0
     Redistribute();  // We then redistribute
 }
@@ -1035,6 +1029,9 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
         if (refine_injection) {
             fine_overlap_box = overlap_box & amrex::shift(fine_injection_box, -shifted);
         }
+
+        inj_rho->prepareBox(lev, mfi);
+
         amrex::ParallelFor(overlap_box, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
         {
             const IntVect iv(AMREX_D_DECL(i, j, k));
@@ -1137,6 +1134,8 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
 #ifdef WARPX_DIM_RZ
         const bool rz_random_theta = m_rz_random_theta;
 #endif
+        inj_rho->prepareBox(lev, mfi);
+
         amrex::ParallelForRNG(overlap_box,
         [=] AMREX_GPU_DEVICE (int i, int j, int k, amrex::RandomEngine const& engine) noexcept
         {

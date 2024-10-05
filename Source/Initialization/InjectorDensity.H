@@ -11,10 +11,12 @@
 
 #include "Utils/WarpXConst.H"
 
+
 #include <AMReX.H>
 #include <AMReX_Array.H>
 #include <AMReX_GpuQualifiers.H>
-#include <AMReX_Math.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_ParmParse.H>
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
 
@@ -25,6 +27,9 @@
 struct InjectorDensityConstant
 {
     InjectorDensityConstant (amrex::Real a_rho) noexcept : m_rho(a_rho) {}
+
+    void
+    prepareBox (int, amrex::MFIter &) {}
 
     [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
@@ -44,6 +49,9 @@ struct InjectorDensityParser
     InjectorDensityParser (amrex::ParserExecutor<3> const& a_parser) noexcept
         : m_parser(a_parser) {}
 
+    void
+    prepareBox (int, amrex::MFIter &) {}
+
     [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::Real
@@ -61,6 +69,9 @@ struct InjectorDensityPredefined
     InjectorDensityPredefined (std::string const& a_species_name) noexcept;
 
     void clear ();
+
+    void
+    prepareBox (int, amrex::MFIter &) {}
 
     [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
@@ -118,12 +129,60 @@ private:
     amrex::GpuArray<amrex::Real,6> p;
 };
 
+struct InjectorDensityFromFile
+{
+    InjectorDensityFromFile (std::string const& a_species_name);
+
+    //~InjectorDensityFromFile() = default;
+
+    void clear();
+
+    void
+    prepareBox (int /* lev */, amrex::MFIter & mfi)
+    {
+        m_rho_array4 = m_rho->array(mfi);
+    }
+
+    [[nodiscard]]
+    AMREX_GPU_HOST_DEVICE
+    amrex::Real
+    getDensity (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    {
+        if (x < lo0 or x > hi0 or y < lo1 or y > hi1 or z < lo2 or z > hi2){
+            return 0;
+        }
+
+        int ix = std::floor((x-lo0)/m_cell_size[0]);
+        int iy = std::floor((y-lo1)/m_cell_size[1]);
+        int iz = std::floor((z-lo2)/m_cell_size[2]);
+
+
+        return m_rho_array4(ix,iy,iz);
+    }
+private:
+    amrex::MultiFab* m_rho;
+    amrex::Array4<amrex::Real> m_rho_array4;
+
+    double lo0;
+    double hi0;
+    double lo1;
+    double hi1;
+    double lo2;
+    double hi2;
+    amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> m_cell_size;
+};
+
+
+
+
+
 // Base struct for density injector.
 // InjectorDensity contains a union (called Object) that holds any one
 // instance of:
 // - InjectorDensityConstant  : to generate constant density;
 // - InjectorDensityParser    : to generate density from parser;
 // - InjectorDensityPredefined: to generate density from predefined profile;
+// - InjectorDensityFromFile  : to read density from an external file;
 // The choice is made at runtime, depending in the constructor called.
 // This mimics virtual functions.
 struct InjectorDensity
@@ -145,6 +204,20 @@ struct InjectorDensity
         : type(Type::predefined),
           object(t,a_species_name)
     { }
+    //This constructor stores a InjectorDensityFromFile in union object
+    InjectorDensity (InjectorDensityFromFile* t, std::string const& a_species_name)
+            : type(Type::fromfile),
+              object(t, a_species_name)
+    { }
+
+    void
+    prepareBox (int lev, amrex::MFIter & mfi)
+    {
+        if (type == Type::fromfile)
+        {
+            return object.fromfile.prepareBox(lev, mfi);
+        }
+    }
 
     // Explicitly prevent the compiler from generating copy constructors
     // and copy assignment operators.
@@ -154,6 +227,11 @@ struct InjectorDensity
     void operator= (InjectorDensity &&) = delete;
 
     // Default destructor
+//    ~InjectorDensity ()
+//    {
+//        // TODO: clean up fromfile
+//    }
+
     ~InjectorDensity () = default;
 
     void clear ();
@@ -179,6 +257,10 @@ struct InjectorDensity
         {
             return object.predefined.getDensity(x,y,z);
         }
+        case Type::fromfile:
+        {
+            return object.fromfile.getDensity(x,y,z);
+        }
         default:
         {
             amrex::Abort("InjectorDensity: unknown type");
@@ -188,11 +270,11 @@ struct InjectorDensity
     }
 
 private:
-    enum struct Type { constant, predefined, parser };
+    enum struct Type { constant, predefined, parser, fromfile };
     Type type;
 
     // An instance of union Object constructs and stores any one of
-    // the objects declared (constant or parser or predefined).
+    // the objects declared (constant or parser or predefined or fromfile).
     union Object {
         Object (InjectorDensityConstant*, amrex::Real a_rho) noexcept
             : constant(a_rho) {}
@@ -200,9 +282,13 @@ private:
             : parser(a_parser) {}
         Object (InjectorDensityPredefined*, std::string const& a_species_name) noexcept
             : predefined(a_species_name) {}
+        Object (InjectorDensityFromFile*, std::string const& a_species_name) noexcept
+            : fromfile(a_species_name) {}
+        ~Object() { }
         InjectorDensityConstant   constant;
         InjectorDensityParser     parser;
         InjectorDensityPredefined predefined;
+        InjectorDensityFromFile   fromfile;
     };
     Object object;
 };

@@ -1501,8 +1501,8 @@ WarpX::LoadExternalFields (int const lev)
 #if defined(WARPX_USE_OPENPMD) && !defined(WARPX_DIM_1D_Z) && !defined(WARPX_DIM_XZ)
 void
 WarpX::ReadExternalFieldFromFile (
-       const std::string& read_fields_from_path, amrex::MultiFab* mf,
-       const std::string& F_name, const std::string& F_component)
+       const std::string read_fields_from_path, amrex::MultiFab* mf,
+       const std::string F_name, const std::string F_component)
 {
     // Get WarpX domain info
     auto& warpx = WarpX::GetInstance();
@@ -1558,7 +1558,8 @@ WarpX::ReadExternalFieldFromFile (
     const auto file_dz = static_cast<amrex::Real>(d[2]);
 #endif
 
-    auto FC = F[F_component];
+    // Extract the correct component of the field
+    auto FC = (F_component == "")? F[openPMD::RecordComponent::SCALAR] : F[F_component];
     const auto extent = FC.getExtent();
     const auto extent0 = static_cast<int>(extent[0]);
     const auto extent1 = static_cast<int>(extent[1]);
@@ -1643,30 +1644,39 @@ WarpX::ReadExternalFieldFromFile (
 
 #if defined(WARPX_DIM_RZ)
                 const amrex::Array4<double> fc_array(FC_data, {0,0,0}, {extent0, extent2, extent1}, 1);
-                const double
-                    f00 = fc_array(0, iz  , ir  ),
-                    f01 = fc_array(0, iz  , ir+1),
-                    f10 = fc_array(0, iz+1, ir  ),
-                    f11 = fc_array(0, iz+1, ir+1);
-                mffab(i,j,k) = static_cast<amrex::Real>(utils::algorithms::bilinear_interp<double>
-                    (xx0, xx0+file_dr, xx1, xx1+file_dz,
-                     f00, f01, f10, f11,
-                     x0, x1));
+                if (iz < 0 | iz > extent2-2 | ir < 0 | ir > extent1-2 ){
+                    // Avoid out-of-bound access
+                } else {
+                    const double
+                        f00 = fc_array(0, iz  , ir  ),
+                        f01 = fc_array(0, iz  , ir+1),
+                        f10 = fc_array(0, iz+1, ir  ),
+                        f11 = fc_array(0, iz+1, ir+1);
+                    mffab(i,j,k) = static_cast<amrex::Real>(utils::algorithms::bilinear_interp<double>
+                        (xx0, xx0+file_dr, xx1, xx1+file_dz,
+                        f00, f01, f10, f11,
+                        x0, x1));
+                }
 #elif defined(WARPX_DIM_3D)
                 const amrex::Array4<double> fc_array(FC_data, {0,0,0}, {extent2, extent1, extent0}, 1);
-                const double
-                    f000 = fc_array(iz  , iy  , ix  ),
-                    f001 = fc_array(iz+1, iy  , ix  ),
-                    f010 = fc_array(iz  , iy+1, ix  ),
-                    f011 = fc_array(iz+1, iy+1, ix  ),
-                    f100 = fc_array(iz  , iy  , ix+1),
-                    f101 = fc_array(iz+1, iy  , ix+1),
-                    f110 = fc_array(iz  , iy+1, ix+1),
-                    f111 = fc_array(iz+1, iy+1, ix+1);
-                mffab(i,j,k) = static_cast<amrex::Real>(utils::algorithms::trilinear_interp<double>
-                    (xx0, xx0+file_dx, xx1, xx1+file_dy, xx2, xx2+file_dz,
-                     f000, f001, f010, f011, f100, f101, f110, f111,
-                     x0, x1, x2));
+                if (iz < 0 | iz > extent2-2 | iy < 0 | iy > extent1-2 | ix < 0 | ix > extent0-2 ){
+                    // Avoid out-of-bound access
+                    mffab(i,j,k) = 0.0_rt;
+                } else {
+                    const double
+                        f000 = fc_array(iz  , iy  , ix  ),
+                        f001 = fc_array(iz+1, iy  , ix  ),
+                        f010 = fc_array(iz  , iy+1, ix  ),
+                        f011 = fc_array(iz+1, iy+1, ix  ),
+                        f100 = fc_array(iz  , iy  , ix+1),
+                        f101 = fc_array(iz+1, iy  , ix+1),
+                        f110 = fc_array(iz  , iy+1, ix+1),
+                        f111 = fc_array(iz+1, iy+1, ix+1);
+                    mffab(i,j,k) = static_cast<amrex::Real>(utils::algorithms::trilinear_interp<double>
+                        (xx0, xx0+file_dx, xx1, xx1+file_dy, xx2, xx2+file_dz,
+                        f000, f001, f010, f011, f100, f101, f110, f111,
+                        x0, x1, x2));
+                }
 #endif
 
             }
@@ -1678,7 +1688,7 @@ WarpX::ReadExternalFieldFromFile (
 } // End function WarpX::ReadExternalFieldFromFile
 #else // WARPX_USE_OPENPMD && !WARPX_DIM_1D_Z && !defined(WARPX_DIM_XZ)
 void
-WarpX::ReadExternalFieldFromFile (const std::string& , amrex::MultiFab* , const std::string& , const std::string& )
+WarpX::ReadExternalFieldFromFile (const std::string , amrex::MultiFab* , const std::string, const std::string )
 {
 #if defined(WARPX_DIM_1D_Z)
     WARPX_ABORT_WITH_MESSAGE("Reading fields from openPMD files is not supported in 1D");

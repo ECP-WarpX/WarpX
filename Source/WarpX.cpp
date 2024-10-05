@@ -2345,6 +2345,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             rho_ncomps = (WarpX::do_multi_J) ? ncomps : 2*ncomps;
         }
     }
+    //TODO:: Only do this if plasma density is read from file
+    if (rho_ncomps == 0){ rho_ncomps = 2;}
+
     if (rho_ncomps > 0)
     {
         m_fields.alloc_init(FieldType::rho_fp,
