@@ -76,6 +76,8 @@ namespace ablastr::math::anyfft
         const std::size_t lengths[] = {AMREX_D_DECL(std::size_t(real_size[0]),
                                                     std::size_t(real_size[1]),
                                                     std::size_t(real_size[2]))};
+        std::vector<size_t> ristride = {istride};
+        std::vector<size_t> rostride = {ostride};
 
         rocfft_plan_description desc = nullptr;
         rocfft_status result = rocfft_plan_description_set_data_layout(
@@ -85,10 +87,10 @@ namespace ablastr::math::anyfft
                                 (const std::size_t*)(inembed),
                                 (const std::size_t*)(onembed), 
                                 dim,
-                                nullptr,
+                                ristride,
                                 (const std::size_t)(idist),
                                 dim,
-                                nullpts,
+                                rostride,
                                 (const std::size_t)(odist));
 
         // Initialize fft_plan.m_plan with the vendor fft plan.
