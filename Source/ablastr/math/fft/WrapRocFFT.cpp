@@ -81,11 +81,11 @@ namespace ablastr::math::anyfft
 
         rocfft_plan_description desc = nullptr;
         rocfft_status result = rocfft_plan_description_set_data_layout(
-                                desc,  
+                                desc,
                                 (dir == direction::R2C) ? rocfft_array_type_real : rocfft_array_type_hermitian_interleaved,
                                 (dir == direction::R2C) ? rocfft_array_type_hermitian_interleaved : rocfft_array_type_real,
                                 (const std::size_t*)(inembed),
-                                (const std::size_t*)(onembed), 
+                                (const std::size_t*)(onembed),
                                 dim,
                                 ristride,
                                 (const std::size_t)(idist),
