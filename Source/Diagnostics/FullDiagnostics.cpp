@@ -217,9 +217,9 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
     bool deposit_current = !m_solver_deposits_current;
 
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
-    std::string dir3_name = {"z"};
+    std::string const dir3_name = {"z"};
 #elif defined(WARPX_DIM_RSPHERE)
-    std::string dir3_name = {"p"};
+    std::string const dir3_name = {"p"};
 #endif
 
     // Fill vector of functors for all components except individual cylindrical modes.
