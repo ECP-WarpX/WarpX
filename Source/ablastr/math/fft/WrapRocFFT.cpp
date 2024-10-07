@@ -90,8 +90,8 @@ namespace ablastr::math::anyfft
                                 desc,
                                 (dir == direction::R2C) ? rocfft_array_type_real : rocfft_array_type_hermitian_interleaved,
                                 (dir == direction::R2C) ? rocfft_array_type_hermitian_interleaved : rocfft_array_type_real,
-                                (const size_t * inembed), 
-                                (const size_t * onembed), 
+                                (const size_t *) inembed, 
+                                (const size_t *) onembed, 
                                 dim,
                                 roc_istride,
                                 (const std::size_t)(idist),
@@ -117,7 +117,7 @@ namespace ablastr::math::anyfft
                                     desc);
 
         assert_rocfft_status("rocfft_plan_create", result);
-        result == rocfft_plan_description_destroy(desc);
+        result = rocfft_plan_description_destroy(desc);
         assert_rocfft_status("rocfft_plan_description_destroy", result);
 
         // Store meta-data in fft_plan
