@@ -86,19 +86,19 @@ ProjectionDivCleaner::ProjectionDivCleaner(std::string const& a_field_name) :
 #endif
 
 
-    if (m_h_stencil_coefs_x.size() > 0) {
+    if (!m_h_stencil_coefs_x.empty()) {
         m_stencil_coefs_x.resize(m_h_stencil_coefs_x.size());
         amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
                               m_h_stencil_coefs_x.begin(), m_h_stencil_coefs_x.end(),
                               m_stencil_coefs_x.begin());
     }
-    if (m_h_stencil_coefs_y.size() > 0) {
+    if (!m_h_stencil_coefs_y.empty()) {
         m_stencil_coefs_y.resize(m_h_stencil_coefs_y.size());
         amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
                               m_h_stencil_coefs_y.begin(), m_h_stencil_coefs_y.end(),
                               m_stencil_coefs_y.begin());
     }
-    if (m_h_stencil_coefs_z.size() > 0) {
+    if (!m_h_stencil_coefs_z.empty()) {
         m_stencil_coefs_z.resize(m_h_stencil_coefs_z.size());
         amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
                               m_h_stencil_coefs_z.begin(), m_h_stencil_coefs_z.end(),
