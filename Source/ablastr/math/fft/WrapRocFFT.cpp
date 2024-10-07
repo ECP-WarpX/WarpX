@@ -76,22 +76,30 @@ namespace ablastr::math::anyfft
         const std::size_t lengths[] = {AMREX_D_DECL(std::size_t(real_size[0]),
                                                     std::size_t(real_size[1]),
                                                     std::size_t(real_size[2]))};
-        std::vector<size_t> ristride = {istride};
-        std::vector<size_t> rostride = {ostride};
+
+        const std::size_t roc_istride[] = {AMREX_D_DECL( (dir == direction::R2C) ? std::size_t(istride * real_size[0]) : std::size_t(istride * (real_size[0]/2+1)),
+                                                          std::size_t(istride * real_size[1]),
+                                                          std::size_t(istride * real_size[2]))};
+
+        const std::size_t roc_ostride[] = {AMREX_D_DECL( (dir == direction::R2C) ? std::size_t(ostride * (real_size[0]/2+1)) : std::size_t(ostride * real_size[0]),
+                                                          std::size_t(ostride*real_size[1]),
+                                                          std::size_t(ostride*real_size[2]))};                                                    
 
         rocfft_plan_description desc = nullptr;
         rocfft_status result = rocfft_plan_description_set_data_layout(
                                 desc,
                                 (dir == direction::R2C) ? rocfft_array_type_real : rocfft_array_type_hermitian_interleaved,
                                 (dir == direction::R2C) ? rocfft_array_type_hermitian_interleaved : rocfft_array_type_real,
-                                (const std::size_t*)(inembed),
-                                (const std::size_t*)(onembed),
+                                (const size_t * inembed), 
+                                (const size_t * onembed), 
                                 dim,
-                                ristride,
+                                roc_istride,
                                 (const std::size_t)(idist),
                                 dim,
-                                rostride,
+                                roc_ostride,
                                 (const std::size_t)(odist));
+        assert_rocfft_status("rocfft_plan_description_set_data_layout", result);
+
 
         // Initialize fft_plan.m_plan with the vendor fft plan.
         result = rocfft_plan_create(&(fft_plan.m_plan),
@@ -109,6 +117,8 @@ namespace ablastr::math::anyfft
                                     desc);
 
         assert_rocfft_status("rocfft_plan_create", result);
+        result == rocfft_plan_description_destroy(desc);
+        assert_rocfft_status("rocfft_plan_description_destroy", result);
 
         // Store meta-data in fft_plan
         fft_plan.m_real_array = real_array;
