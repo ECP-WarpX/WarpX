@@ -83,15 +83,15 @@ namespace ablastr::math::anyfft
 
         const std::size_t roc_ostride[] = {AMREX_D_DECL( (dir == direction::R2C) ? std::size_t(ostride * (real_size[0]/2+1)) : std::size_t(ostride * real_size[0]),
                                                           std::size_t(ostride*real_size[1]),
-                                                          std::size_t(ostride*real_size[2]))};                                                    
+                                                          std::size_t(ostride*real_size[2]))};
 
         rocfft_plan_description desc = nullptr;
         rocfft_status result = rocfft_plan_description_set_data_layout(
                                 desc,
                                 (dir == direction::R2C) ? rocfft_array_type_real : rocfft_array_type_hermitian_interleaved,
                                 (dir == direction::R2C) ? rocfft_array_type_hermitian_interleaved : rocfft_array_type_real,
-                                (const size_t *) inembed, 
-                                (const size_t *) onembed, 
+                                (const size_t *) inembed,
+                                (const size_t *) onembed,
                                 dim,
                                 roc_istride,
                                 (const std::size_t)(idist),
