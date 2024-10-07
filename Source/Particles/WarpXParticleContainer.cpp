@@ -1277,7 +1277,7 @@ WarpXParticleContainer::DepositCharge (amrex::MultiFab* rho,
     }
 #endif
 
-#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
     if (apply_boundary_and_scale_volume)
     {
         WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho, lev);

@@ -106,7 +106,7 @@ WarpX::AddMagnetostaticFieldLabFrame()
         }
     }
 
-#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
     for (int lev = 0; lev <= max_level; lev++) {
         ApplyInverseVolumeScalingToCurrentDensity(
             m_fields.get(FieldType::current_fp, Direction{0}, lev),

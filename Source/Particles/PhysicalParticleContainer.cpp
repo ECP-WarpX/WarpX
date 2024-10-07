@@ -1343,7 +1343,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                 }
 #elif defined(WARPX_DIM_RSPHERE)
                 if (radially_weighted) {
-                    weight *= 4._rt/3._rt*MathConst::pi*xb*xb;
+                    weight *= 4._rt*MathConst::pi*xb*xb;
                 } else {
                     // This is not correct since it might shift the particle
                     // out of the local grid

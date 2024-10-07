@@ -1401,6 +1401,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
                 Jr_arr(i,j,0,0) /= (2._rt*MathConst::pi*r);
 #elif defined(WARPX_DIM_RSPHERE)
+                // Scale factor is 4/3*pi*((r + dr/2)**3 - (r - dr/2)**3)/dr
                 Jr_arr(i,j,0,0) /= (4._rt/3._rt*MathConst::pi*(3._rt*r*r + dr*dr/4._rt));
 #endif
             }
@@ -1442,6 +1443,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
                 Jt_arr(i,j,0,0) /= (2._rt*MathConst::pi*r);
 #elif defined(WARPX_DIM_RSPHERE)
+                // Scale factor is 4/3*pi*((r + dr/2)**3 - (r - dr/2)**3)/dr
                 Jt_arr(i,j,0,0) /= (4._rt/3._rt*MathConst::pi*(3._rt*r*r + dr*dr/4._rt));
 #endif
             }
@@ -1483,6 +1485,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
                 Jz_arr(i,j,0,0) /= (2._rt*MathConst::pi*r);
 #elif defined(WARPX_DIM_RSPHERE)
+                // Scale factor is 4/3*pi*((r + dr/2)**3 - (r - dr/2)**3)/dr
                 Jz_arr(i,j,0,0) /= (4._rt/3._rt*MathConst::pi*(3._rt*r*r + dr*dr/4._rt));
 #endif
             }
@@ -1584,6 +1587,7 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
                 Rho_arr(i,j,0,icomp) /= (2._rt*MathConst::pi*r);
 #elif defined(WARPX_DIM_RSPHERE)
+                // Scale factor is 4/3*pi*((r + dr/2)**3 - (r - dr/2)**3)/dr
                 Rho_arr(i,j,0,icomp) /= (4._rt/3._rt*MathConst::pi*(3._rt*r*r + dr*dr/4._rt));
 #endif
             }
