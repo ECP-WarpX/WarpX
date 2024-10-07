@@ -15,6 +15,9 @@
 #include <AMReX_AmrCoreFwd.H>
 #include <AMReX_Vector.H>
 
+#include "Particles/ParticleBoundaries.H"
+#include <ablastr/fields/MultiFabRegister.H>
+
 /**
  * This enumerated struct is used to index the field probe particle
  * values that are being stored as SoA data. Nattribs
@@ -25,17 +28,19 @@ struct QdsmcPart
     enum
     {
 #if !defined (WARPX_DIM_1D_Z)
-        x, vx,
+        x,
 #endif
 #if defined (WARPX_DIM_3D)
-        y, vy,
+        y,
 #endif
-        z, vz,
-        KeNe,
+        z,
+        vx, vy, vz,
+        entropy, np_real,
+
 #ifdef WARPX_DIM_RZ
-        theta, vtheta      ///< RZ needs all three position components
+        theta,      ///< RZ needs all three position components
 #endif
-        nattribs //shoud be = 2*dim + number of real attributes (KeNe for now)
+        nattribs //shoud be = ??
     };
 };
 
@@ -66,34 +71,38 @@ public:
     using const_iterator = amrex::ParConstIterSoA<QdsmcPart::nattribs, 0>;
 
     //! similar to WarpXParticleContainer::AddNParticles
-    void AddNParticles (int lev, 
+    void AddNParticles (int lev, amrex::Long n,
                         amrex::Vector<amrex::ParticleReal> const & x, 
                         amrex::Vector<amrex::ParticleReal> const & y, 
                         amrex::Vector<amrex::ParticleReal> const & z,
                         amrex::Vector<amrex::ParticleReal> const & vx, 
                         amrex::Vector<amrex::ParticleReal> const & vy, 
                         amrex::Vector<amrex::ParticleReal> const & vz,
-                        amrex::Vector<amrex::ParticleReal> const & kN);
+                        amrex::Vector<amrex::ParticleReal> const & entropy,
+                        amrex::Vector<amrex::ParticleReal> const & np_real)
+                        //amrex::Long id);
 
     // Function that Initializes the qdsmc particles positions
     void InitX();
 
-    // Function that Initializes the qdsmc particles velocities
-    void InitV();
+    /* Function that Initializes the qdsmc particles velocities
+    *  without including a thermal spread, this is only used by 
+    *  the qdsmc solver for the electron temperature used in the 
+    *  hybrid PIC model
+    */
+    void InitV_drift(ablastr::fields::VectorField& U);
 
     // Function that pushes particle positions by one time step
     void PushX(amrex::Real dt);
 
-    // Function that gathers a scalar multifab value to particles positions
-    // No interpolation needed since particles are initialized on each step at node positions
+    /* Function that gathers a scalar multifab value to particles positions
+    *  No interpolation needed since particles are initialized on each step at node positions
+    */
     void Gather();
 
     // Function that deposits a scalar quantity from particles to a multifab.
     // Takes vector with a specific particle value (can be anything) and scalar multifab to deposit in
-    void Deposit(amrex::Vector<amrex::ParticleReal> const & p_val, ablastr::fields::ScalarField& scalar_field);
-
-
-
+    //void DepositK(amrex::Vector<amrex::ParticleReal> const & p_val, ablastr::fields::ScalarField& scalar_field);
 
 };
 

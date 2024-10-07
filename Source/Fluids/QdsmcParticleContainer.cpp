@@ -65,44 +65,33 @@ QdsmcParticleContainer::QdsmcParticleContainer (AmrCore* amr_core)
 }
 
 void
-QdsmcParticleContainer::AddNParticles (int /*lev*/, long n,
+QdsmcParticleContainer::AddNParticles (int lev, long n,
                                        amrex::Vector<amrex::ParticleReal> const & x,
                                        amrex::Vector<amrex::ParticleReal> const & y,
                                        amrex::Vector<amrex::ParticleReal> const & z,
-                                       amrex::Vector<amrex::ParticleReal> const & ux,
-                                       amrex::Vector<amrex::ParticleReal> const & uy,
-                                       amrex::Vector<amrex::ParticleReal> const & uz,
-                                       amrex::Vector<amrex::ParticleReal> const & KeNe,
-                                       amrex::Long id)
-//                                       const int nattr_real,
-//                                       amrex::Vector<amrex::Vector<amrex::ParticleReal>> const & attr_real,
-//                                       const int nattr_int,
-//                                       amrex::Vector<amrex::Vector<int>> const & attr_int,
-//                                       int uniqueparticles, amrex::Long id)
+                                       amrex::Vector<amrex::ParticleReal> const & vx,
+                                       amrex::Vector<amrex::ParticleReal> const & vy,
+                                       amrex::Vector<amrex::ParticleReal> const & vz,
+                                       amrex::Vector<amrex::ParticleReal> const & entropy,
+                                       amrex::Vector<amrex::ParticleReal> const & np_real)
+                                       //amrex::Long id)
+
 {
     using namespace amrex::literals;
     using warpx::fields::FieldType;
 
-    //WARPX_ALWAYS_ASSERT_WITH_MESSAGE((PIdx::nattribs + nattr_real - 1) <= NumRealComps(),
-    //                                 "Too many real attributes specified");
-    
-    /*
-    long ibegin = 0;
-    long iend = n;
-    
-    if (!uniqueparticles) {
-        const int myproc = amrex::ParallelDescriptor::MyProc();
-        const int nprocs = amrex::ParallelDescriptor::NProcs();
-        const auto navg = n/nprocs;
-        const auto nleft = n - navg * nprocs;
-        if (myproc < nleft) {
-            ibegin = myproc*(navg+1);
-            iend = ibegin + navg+1;
-        } else {
-            ibegin = myproc*navg + nleft;
-            iend = ibegin + navg;
-        }
-    }*/
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(lev == 0, "QdsmcParticleContainer::AddNParticles: only lev=0 is supported yet.");
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(x.size() == n,"x.size() != # of qdsmc particles to add");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(y.size() == n,"y.size() != # of qdsmc particles to add");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(z.size() == n,"z.size() != # of qdsmc particles to add");
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(vx.size() == n,"vx.size() != # of qdsmc particles to add");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(vy.size() == n,"vy.size() != # of qdsmc particles to add");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(vz.size() == n,"vz.size() != # of qdsmc particles to add");
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(entropy.size() == n,"entropy.size() != # of qdsmc particles to add");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(np_real.size() == n,"np_real.size() != # of qdsmc particles to add");
 
     //  Add to grid 0 and tile 0
     // Redistribute() will move them to proper places.
@@ -112,21 +101,23 @@ QdsmcParticleContainer::AddNParticles (int /*lev*/, long n,
     PinnedTile pinned_tile;
     pinned_tile.define(NumRuntimeRealComps(), NumRuntimeIntComps());
 
+    long ibegin = 0;
+    long iend = n;
     const std::size_t np = n;
 
 #ifdef WARPX_DIM_RZ
-    amrex::Vector<amrex::ParticleReal> r(np);
+   amrex::Vector<amrex::ParticleReal> r(np);
     amrex::Vector<amrex::ParticleReal> theta(np);
 #endif
 
-    for (auto i = ibegin; i < iend; ++i)
+    for (auto i = 0; i < np; ++i)
     {
         auto & idcpu_data = pinned_tile.GetStructOfArrays().GetIdCPUData();
-
-        amrex::Long current_id = id;  // copy input
-        if (id == -1) {
-            current_id = ParticleType::NextID();
-        }
+        //amrex::Long current_id = id;  // copy input
+        //if (id == -1) {
+        //    current_id = ParticleType::NextID();
+        //}
+        current_id = ParticleType::NextID();
         idcpu_data.push_back(amrex::SetParticleIDandCPU(current_id, ParallelDescriptor::MyProc()));
 
 #ifdef WARPX_DIM_RZ
@@ -138,64 +129,33 @@ QdsmcParticleContainer::AddNParticles (int /*lev*/, long n,
     if (np > 0)
     {
 #if defined(WARPX_DIM_3D)
-        pinned_tile.push_back_real(PIdx::x, x.data() + ibegin, x.data() + iend);
-        pinned_tile.push_back_real(PIdx::y, y.data() + ibegin, y.data() + iend);
-        pinned_tile.push_back_real(PIdx::z, z.data() + ibegin, z.data() + iend);
+        pinned_tile.push_back_real(QdsmcPart::x, x.data() + ibegin, x.data() + iend);
+        pinned_tile.push_back_real(QdsmcPart::y, y.data() + ibegin, y.data() + iend);
+        pinned_tile.push_back_real(QdsmcPart::z, z.data() + ibegin, z.data() + iend);
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         amrex::ignore_unused(y);
 #ifdef WARPX_DIM_RZ
-        pinned_tile.push_back_real(PIdx::x, r.data(), r.data() + np);
+        pinned_tile.push_back_real(QdsmcPart::x, r.data(), r.data() + np);
 #else
-        pinned_tile.push_back_real(PIdx::x, x.data() + ibegin, x.data() + iend);
+        pinned_tile.push_back_real(QdsmcPart::x, x.data() + ibegin, x.data() + iend);
 #endif
-        pinned_tile.push_back_real(PIdx::z, z.data() + ibegin, z.data() + iend);
+        pinned_tile.push_back_real(QdsmcPart::z, z.data() + ibegin, z.data() + iend);
 #else //AMREX_SPACEDIM == 1
         amrex::ignore_unused(x,y);
-        pinned_tile.push_back_real(PIdx::z, z.data() + ibegin, z.data() + iend);
+        pinned_tile.push_back_real(QdsmcPart::z, z.data() + ibegin, z.data() + iend);
 #endif
 
-        pinned_tile.push_back_real(PIdx::w, attr_real[0].data() + ibegin, attr_real[0].data() + iend);
-        pinned_tile.push_back_real(PIdx::ux, ux.data() + ibegin, ux.data() + iend);
-        pinned_tile.push_back_real(PIdx::uy, uy.data() + ibegin, uy.data() + iend);
-        pinned_tile.push_back_real(PIdx::uz, uz.data() + ibegin, uz.data() + iend);
+        pinned_tile.push_back_real(QdsmcPart::entropy, entropy.data() + ibegin, entropy.data() + iend);
+        pinned_tile.push_back_real(QdsmcPart::np_real, np_real.data() + ibegin, np_real.data() + iend);
+        pinned_tile.push_back_real(QdsmcPart::vx, vx.data() + ibegin, vx.data() + iend);
+        pinned_tile.push_back_real(QdsmcPart::vy, vy.data() + ibegin, vy.data() + iend);
+        pinned_tile.push_back_real(QdsmcPart::vz, vz.data() + ibegin, vz.data() + iend);
 
         if ( (NumRuntimeRealComps()>0) || (NumRuntimeIntComps()>0) ){
             DefineAndReturnParticleTile(0, 0, 0);
         }
 
-        for (int comp = PIdx::uz+1; comp < PIdx::nattribs; ++comp)
-        {
-#ifdef WARPX_DIM_RZ
-            if (comp == PIdx::theta) {
-                pinned_tile.push_back_real(comp, theta.data(), theta.data() + np);
-            }
-            else {
-                pinned_tile.push_back_real(comp, np, 0.0_prt);
-            }
-#else
-            pinned_tile.push_back_real(comp, np, 0.0_prt);
-#endif
-        }
-
-        // Initialize nattr_real - 1 runtime real attributes from data in the attr_real array
-        for (int j = PIdx::nattribs; j < PIdx::nattribs + nattr_real - 1; ++j)
-        {
-            // get the next attribute from attr_real array
-            pinned_tile.push_back_real(
-                j, attr_real[j - PIdx::nattribs + 1].data() + ibegin, attr_real[j - PIdx::nattribs + 1].data() + iend
-            );
-        }
-
-        // Initialize nattr_int runtime integer attributes from data in the attr_int array
-        for (int j = 0; j < nattr_int; ++j)
-        {
-            // get the next attribute from attr_int array
-            pinned_tile.push_back_int(j, attr_int[j].data() + ibegin, attr_int[j].data() + iend);
-        }
-
         pinned_tile.resize(np);
-        // Default initialize the other real and integer runtime attributes
-        DefaultInitializeRuntimeAttributes(pinned_tile, nattr_real - 1, nattr_int);
 
         auto old_np = particle_tile.numParticles();
         auto new_np = old_np + pinned_tile.numParticles();
@@ -209,6 +169,7 @@ QdsmcParticleContainer::AddNParticles (int /*lev*/, long n,
     Redistribute();
 
     // Remove particles that are inside the embedded boundaries
+/*
 #ifdef AMREX_USE_EB
     if (EB::enabled()) {
         auto & warpx = WarpX::GetInstance();
@@ -219,4 +180,5 @@ QdsmcParticleContainer::AddNParticles (int /*lev*/, long n,
         deleteInvalidParticles();
     }
 #endif
+*/
 }

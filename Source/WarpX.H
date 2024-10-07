@@ -27,6 +27,7 @@
 #include "Particles/WarpXParticleContainer_fwd.H"
 #include "Fluids/MultiFluidContainer_fwd.H"
 #include "Fluids/WarpXFluidContainer_fwd.H"
+#include "Fluids/QdsmcParticleContainer_fwd.H"
 
 #ifdef WARPX_USE_FFT
 #   ifdef WARPX_DIM_RZ
