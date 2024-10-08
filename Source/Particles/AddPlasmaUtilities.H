@@ -142,6 +142,7 @@ void rotate_momentum_eb (
     amrex::Array4<const amrex::Real> const& eb_bnd_normal_arr,
     int i, int j, int k )
 {
+#if defined(WARPX_DIM_3D)
     // The minus sign below takes into account the fact that eb_bnd_normal_arr
     // points towards the covered region, while particles are to be emitted
     // *away* from the covered region.
@@ -169,6 +170,22 @@ void rotate_momentum_eb (
         pu.y = uy;
         pu.z = uz;
     }
+#elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
+    // The minus sign below takes into account the fact that eb_bnd_normal_arr
+    // points towards the covered region, while particles are to be emitted
+    // *away* from the covered region.
+    amrex::Real const ny = -eb_bnd_normal_arr(i,j,k,1);
+    // Rotate the momentum in the plane of the simulation
+    // This uses x,y notation instead of the usual x,z notations in WarpX
+    amrex::Real const cos_theta = ny;
+    amrex::Real const sin_theta = std::sqrt(1-ny*ny);
+    amrex::Real uy = pu.y*cos_theta - pu.x*sin_theta;
+    amrex::Real ux = pu.x*cos_theta + pu.y*sin_theta;
+    pu.y = uy;
+    pu.x = ux;
+#else
+    amrex::ignore_unused(pu, eb_bnd_normal_arr, i, j, k);
+#endif
 }
 #endif //AMREX_USE_EB
 
