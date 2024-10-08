@@ -105,6 +105,7 @@ if dims == "3D":
     z = ad["electron", "particle_position_z"].to_ndarray()
 elif dims == "2D":
     x = ad["electron", "particle_position_x"].to_ndarray()
+    y = np.zeros_like(x)
     z = ad["electron", "particle_position_y"].to_ndarray()
 elif dims == "RZ":
     theta = ad["electron", "particle_theta"].to_ndarray()
@@ -126,22 +127,13 @@ assert np.isclose(Ntot_sim, Ntot, rtol=0.01)
 # Check that none of the particles are inside the EB
 # A factor 0.98 is applied to take into account
 # the cut-cell approximation of the sphere
-if dims == "3D" or dims == "RZ":
-    assert np.all(x**2 + y**2 + z**2 > (0.98 * R) ** 2)
-elif dims == "2D":
-    assert np.all(x**2 + z**2 > (0.98 * R) ** 2)
+assert np.all(x**2 + y**2 + z**2 > (0.98 * R) ** 2)
 
 # Check that the normal component of the velocity is consistent with the expected distribution
-if dims == "3D" or dims == "RZ":
-    r = np.sqrt(x**2 + y**2 + z**2)
-    nx = x / r
-    ny = y / r
-    nz = z / r
-else:
-    r = np.sqrt(x**2 + z**2)
-    nx = x / r
-    ny = 0
-    nz = z / r
+r = np.sqrt(x**2 + y**2 + z**2)
+nx = x / r
+ny = y / r
+nz = z / r
 u_n = ux * nx + uy * ny + uz * nz  # normal component
 compare_gaussian_flux(u_n, w, u_th=0.1, u_m=0.07, label="u_n")
 
