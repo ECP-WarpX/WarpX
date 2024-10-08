@@ -84,11 +84,11 @@ computePhiIGF ( amrex::MultiFab const & rho,
         // and has one box per MPI rank
         int const nprocs = amrex::ParallelDescriptor::NProcs();
 
-        int realspace_nx = realspace_box.length(0);
-        int realspace_ny = realspace_box.length(1);
-        int realspace_nz = realspace_box.length(2);
-        int minsize_z = realspace_nz / nprocs;
-        int nleft_z = realspace_nz - minsize_z*nprocs;
+        int const realspace_nx = realspace_box.length(0);
+        int const realspace_ny = realspace_box.length(1);
+        int const realspace_nz = realspace_box.length(2);
+        int const minsize_z = realspace_nz / nprocs;
+        int const nleft_z = realspace_nz - minsize_z*nprocs;
 
         AMREX_ALWAYS_ASSERT(realspace_nz >= nprocs);
         // We are going to split realspace_box in such a way that the first
@@ -151,9 +151,9 @@ computePhiIGF ( amrex::MultiFab const & rho,
         amrex::Real const dy = cell_size[1];
         amrex::Real const dz = cell_size[2];
 
-        amrex::Real x_hi = dx*(hi[0]+2);
-        amrex::Real y_hi = dy*(hi[1]+2);
-        amrex::Real z_hi = dz*(hi[2]+2);
+        amrex::Real const x_hi = dx*(hi[0]+2);
+        amrex::Real const y_hi = dy*(hi[1]+2);
+        amrex::Real const z_hi = dz*(hi[2]+2);
         amrex::ignore_unused(z_hi);
 
         amrex::Array4<amrex::Real> const tmp_G_arr = tmp_G.array(mfi);
@@ -246,17 +246,17 @@ computePhiIGF ( amrex::MultiFab const & rho,
                 fft_size, tmp_rho[local_boxid].dataPtr(),
                 reinterpret_cast<ablastr::math::anyfft::Complex*>(tmp_rho_fft.dataPtr()),
                 ablastr::math::anyfft::direction::R2C, AMREX_SPACEDIM-1,
-                nrz, NULL, 1, nrx*nry, NULL, 1, nsx*nsy);
+                nrz, nullptr, 1, nrx*nry, nullptr, 1, nsx*nsy);
             ablastr::math::anyfft::FFTplan forward_plan_G = ablastr::math::anyfft::CreatePlanMany(
                 fft_size, tmp_G[local_boxid].dataPtr(),
                 reinterpret_cast<ablastr::math::anyfft::Complex*>(tmp_G_fft.dataPtr()),
                 ablastr::math::anyfft::direction::R2C, AMREX_SPACEDIM-1,
-                nrz, NULL, 1, nrx*nry, NULL, 1, nsx*nsy);
+                nrz, nullptr, 1, nrx*nry, nullptr, 1, nsx*nsy);
             ablastr::math::anyfft::FFTplan backward_plan = ablastr::math::anyfft::CreatePlanMany(
                 fft_size, tmp_G[local_boxid].dataPtr(),
                 reinterpret_cast<ablastr::math::anyfft::Complex*>(tmp_G_fft.dataPtr()),
                 ablastr::math::anyfft::direction::C2R, AMREX_SPACEDIM-1,
-                nsz, NULL, 1, nsx*nsy, NULL, 1, nrx*nry);
+                nsz, nullptr, 1, nsx*nsy, nullptr, 1, nrx*nry);
             BL_PROFILE_VAR_STOP(timer_plans);
 
             // Forward transforms of rho and G
