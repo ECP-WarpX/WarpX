@@ -22,6 +22,29 @@
 #include <AMReX_REAL.H>
 #include <AMReX_RealBox.H>
 
+struct PDim3 {
+    amrex::ParticleReal x, y, z;
+
+    AMREX_GPU_HOST_DEVICE
+    PDim3(const amrex::XDim3& a):
+        x{static_cast<amrex::ParticleReal>(a.x)},
+        y{static_cast<amrex::ParticleReal>(a.y)},
+        z{static_cast<amrex::ParticleReal>(a.z)}
+    {}
+
+    AMREX_GPU_HOST_DEVICE
+    ~PDim3() = default;
+
+    AMREX_GPU_HOST_DEVICE
+    PDim3(PDim3 const &)            = default;
+    AMREX_GPU_HOST_DEVICE
+    PDim3& operator=(PDim3 const &) = default;
+    AMREX_GPU_HOST_DEVICE
+    PDim3(PDim3&&)                  = default;
+    AMREX_GPU_HOST_DEVICE
+    PDim3& operator=(PDim3&&)       = default;
+};
+
 /*
   Finds the overlap region between the given tile_realbox and part_realbox, returning true
   if an overlap exists and false if otherwise. This also sets the parameters overlap_realbox,
@@ -110,7 +133,44 @@ amrex::Real compute_scale_fac_area_eb (
     scale_fac /= num_ppc_real;
     return scale_fac;
 }
-#endif
+
+// Before this function: normal momentum is along z
+// After this function: normal momentum is along the local normal to the EB
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+void rotate_momentum_eb (
+    PDim3 & pu,
+    amrex::Array4<const amrex::Real> const& eb_bnd_normal_arr,
+    int i, int j, int k )
+{
+    // The minus sign below takes into account the fact that eb_bnd_normal_arr
+    // points towards the covered region, while particles are to be emitted
+    // *away* from the covered region.
+    amrex::Real const nx = -eb_bnd_normal_arr(i,j,k,0);
+    amrex::Real const ny = -eb_bnd_normal_arr(i,j,k,1);
+    amrex::Real const nz = -eb_bnd_normal_arr(i,j,k,2);
+
+    // Rotate the momentum along the theta direction (in the z-x plane)
+    amrex::Real const cos_theta = nz;
+    amrex::Real const sin_theta = std::sqrt(1-nz*nz);
+    amrex::Real uz = pu.z*cos_theta - pu.x*sin_theta;
+    amrex::Real ux = pu.x*cos_theta + pu.z*sin_theta;
+    amrex::Real uy = pu.y; // unchanged
+
+    // Rotate the momentum along the phi direction (in the x-y plane)
+    amrex::Real const nperp = std::sqrt(nx*nx + ny*ny);
+    if ( nperp > 0.0 ) {
+        amrex::Real const cos_phi = nx/nperp;
+        amrex::Real const sin_phi = ny/nperp;
+        pu.z = uz; // unchanged
+        pu.x = ux*cos_phi - uy*sin_phi;
+        pu.y = uy*cos_phi + ux*sin_phi;
+    } else {
+        pu.x = ux;
+        pu.y = uy;
+        pu.z = uz;
+    }
+}
+#endif //AMREX_USE_EB
 
 /*
   This computes the scale_fac (used for setting the particle weights) on a on area basis

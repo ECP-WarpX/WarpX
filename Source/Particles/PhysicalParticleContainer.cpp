@@ -147,29 +147,6 @@ namespace
         return z0;
     }
 
-    struct PDim3 {
-        ParticleReal x, y, z;
-
-        AMREX_GPU_HOST_DEVICE
-        PDim3(const amrex::XDim3& a):
-            x{static_cast<ParticleReal>(a.x)},
-            y{static_cast<ParticleReal>(a.y)},
-            z{static_cast<ParticleReal>(a.z)}
-        {}
-
-        AMREX_GPU_HOST_DEVICE
-        ~PDim3() = default;
-
-        AMREX_GPU_HOST_DEVICE
-        PDim3(PDim3 const &)            = default;
-        AMREX_GPU_HOST_DEVICE
-        PDim3& operator=(PDim3 const &) = default;
-        AMREX_GPU_HOST_DEVICE
-        PDim3(PDim3&&)                  = default;
-        AMREX_GPU_HOST_DEVICE
-        PDim3& operator=(PDim3&&)       = default;
-    };
-
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     XDim3 getCellCoords (const GpuArray<Real, AMREX_SPACEDIM>& lo_corner,
                          const GpuArray<Real, AMREX_SPACEDIM>& dx,
@@ -1683,33 +1660,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                     // Injection from EB: rotate momentum according to the normal of the EB surface
                     // (The above code initialized the momentum by assuming that z is the direction
                     // normal to the EB surface. Thus we need to rotate from z to the normal.)
-                    // The minus sign below takes into account the fact that eb_bnd_normal_arr
-                    // points towards the covered region, while particles are to be emitted
-                    // *away* from the covered region.
-                    amrex::Real const nx = -eb_bnd_normal_arr(i,j,k,0);
-                    amrex::Real const ny = -eb_bnd_normal_arr(i,j,k,1);
-                    amrex::Real const nz = -eb_bnd_normal_arr(i,j,k,2);
-
-                    // Rotate the momentum along the theta direction (in the z-x plane)
-                    amrex::Real const cos_theta = nz;
-                    amrex::Real const sin_theta = std::sqrt(1-nz*nz);
-                    amrex::Real uz = pu.z*cos_theta - pu.x*sin_theta;
-                    amrex::Real ux = pu.x*cos_theta + pu.z*sin_theta;
-                    amrex::Real uy = pu.y; // unchanged
-
-                    // Rotate the momentum along the phi direction (in the x-y plane)
-                    amrex::Real const nperp = std::sqrt(nx*nx + ny*ny);
-                    if ( nperp > 0.0 ) {
-                        amrex::Real const cos_phi = nx/nperp;
-                        amrex::Real const sin_phi = ny/nperp;
-                        pu.z = uz; // unchanged
-                        pu.x = ux*cos_phi - uy*sin_phi;
-                        pu.y = uy*cos_phi + ux*sin_phi;
-                    } else {
-                        pu.x = ux;
-                        pu.y = uy;
-                        pu.z = uz;
-                    }
+                    rotate_momentum_eb(pu, eb_bnd_normal_arr, i, j , k);
                 }
 #endif
 
