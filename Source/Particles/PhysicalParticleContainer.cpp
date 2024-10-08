@@ -1362,6 +1362,8 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         eb_bnd_normal = &eb_box_factory.getBndryNormal();
         eb_bnd_cent = &eb_box_factory.getBndryCent();
     }
+#else
+    const bool inject_from_eb = false;
 #endif
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(0);
@@ -1679,7 +1681,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 const amrex::Real radial_position = ppos.x;
                 ppos.x = radial_position*cos_theta;
                 ppos.y = radial_position*sin_theta;
-                if (loc_flux_normal_axis != 2) {
+                if ((loc_flux_normal_axis != 2) or (inject_from_eb)) {
                     // Rotate the momentum
                     // This because, when the flux direction is e.g. "r"
                     // the `inj_mom` objects generates a v*Gaussian distribution
