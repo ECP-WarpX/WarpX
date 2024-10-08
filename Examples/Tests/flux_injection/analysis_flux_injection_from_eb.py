@@ -14,6 +14,7 @@ the particle distributions are consistent with the expected distributions.
 """
 
 import os
+import re
 import sys
 
 import matplotlib.pyplot as plt
@@ -32,11 +33,24 @@ ds = yt.load(fn)
 ad = ds.all_data()
 t_max = ds.current_time.item()  # time of simulation
 
+# Extract the dimensionality of the simulation
+with open("./warpx_used_inputs", "r") as f:
+    warpx_used_inputs = f.read()
+if re.search("geometry.dims\s*=\s*2", warpx_used_inputs):
+    dims = "2D"
+elif re.search("geometry.dims\s*=\s*RZ", warpx_used_inputs):
+    dims = "RZ"
+elif re.search("geometry.dims\s*=\s*3", warpx_used_inputs):
+    dims = "3D"
+
 # Total number of electrons expected:
 # Simulation parameters determine the total number of particles emitted (Ntot)
 flux = 1.0  # in m^-2.s^-1, from the input script
 R = 2.0  # in m, radius of the sphere
-emission_surface = 4 * np.pi * R**2  # in m^2
+if dims == "3D" or dims == "RZ":
+    emission_surface = 4 * np.pi * R**2  # in m^2
+elif dims == "2D":
+    emission_surface = 2 * np.pi * R  # in m
 Ntot = flux * emission_surface * t_max
 
 # Parameters of the histogram
@@ -44,7 +58,7 @@ hist_bins = 50
 hist_range = [-0.5, 0.5]
 
 
-# Define function that histogram and check the data
+# Define function that histograms and checks the data
 def gaussian_dist(u, u_th):
     return 1.0 / ((2 * np.pi) ** 0.5 * u_th) * np.exp(-(u**2) / (2 * u_th**2))
 
@@ -85,9 +99,19 @@ def compare_gaussian_flux(u, w, u_th, u_m, label=""):
 
 plt.figure()
 
-x = ad["electron", "particle_position_x"].to_ndarray() / (m_e * c)
-y = ad["electron", "particle_position_y"].to_ndarray() / (m_e * c)
-z = ad["electron", "particle_position_z"].to_ndarray() / (m_e * c)
+if dims == "3D":
+    x = ad["electron", "particle_position_x"].to_ndarray()
+    y = ad["electron", "particle_position_y"].to_ndarray()
+    z = ad["electron", "particle_position_z"].to_ndarray()
+elif dims == "2D":
+    x = ad["electron", "particle_position_x"].to_ndarray()
+    z = ad["electron", "particle_position_y"].to_ndarray()
+elif dims == "RZ":
+    theta = ad["electron", "particle_theta"].to_ndarray()
+    r = ad["electron", "particle_position_x"].to_ndarray()
+    x = r * np.cos(theta)
+    y = r * np.sin(theta)
+    z = ad["electron", "particle_position_y"].to_ndarray() / (m_e * c)
 ux = ad["electron", "particle_momentum_x"].to_ndarray() / (m_e * c)
 uy = ad["electron", "particle_momentum_y"].to_ndarray() / (m_e * c)
 uz = ad["electron", "particle_momentum_z"].to_ndarray() / (m_e * c)
@@ -100,14 +124,22 @@ print("Ntot = ", Ntot)
 assert np.isclose(Ntot_sim, Ntot, rtol=0.01)
 
 # Check that none of the particles are inside the EB
-assert np.all(x**2 + y**2 + z**2 > R**2)
+if dims == "3D" or dims == "RZ":
+    assert np.all(x**2 + y**2 + z**2 > R**2)
+elif dims == "2D":
+    assert np.all(x**2 + z**2 > R**2)
 
 # Check that the normal component of the velocity is consistent with the expected distribution
-r = np.sqrt(x**2 + y**2 + z**2)
-# Normal direction
-nx = x / r
-ny = y / r
-nz = z / r
+if dims == "3D" or dims == "RZ":
+    r = np.sqrt(x**2 + y**2 + z**2)
+    nx = x / r
+    ny = y / r
+    nz = z / r
+else:
+    r = np.sqrt(x**2 + z**2)
+    nx = x / r
+    ny = 0
+    nz = z / r
 u_n = ux * nx + uy * ny + uz * nz  # normal component
 compare_gaussian_flux(u_n, w, u_th=0.1, u_m=0.07, label="u_n")
 
