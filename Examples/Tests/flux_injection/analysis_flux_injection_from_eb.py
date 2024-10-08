@@ -112,7 +112,7 @@ elif dims == "RZ":
     r = ad["electron", "particle_position_x"].to_ndarray()
     x = r * np.cos(theta)
     y = r * np.sin(theta)
-    z = ad["electron", "particle_position_y"].to_ndarray() / (m_e * c)
+    z = ad["electron", "particle_position_y"].to_ndarray()
 ux = ad["electron", "particle_momentum_x"].to_ndarray() / (m_e * c)
 uy = ad["electron", "particle_momentum_y"].to_ndarray() / (m_e * c)
 uz = ad["electron", "particle_momentum_z"].to_ndarray() / (m_e * c)

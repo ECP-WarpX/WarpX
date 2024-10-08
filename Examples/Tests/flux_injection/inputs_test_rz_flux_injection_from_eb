@@ -2,7 +2,7 @@
 max_step = 10
 
 # number of grid points
-amr.n_cell = 16 16
+amr.n_cell = 8 16
 
 # The lo and hi ends of grids are multipliers of blocking factor
 amr.blocking_factor = 8
@@ -15,8 +15,8 @@ amr.max_grid_size = 8
 amr.max_level = 0
 
 # Geometry
-geometry.dims = 2
-geometry.prob_lo     = -4 -4
+geometry.dims = RZ
+geometry.prob_lo     =  0 -4
 geometry.prob_hi     =  4  4
 
 # Deactivate Maxwell solver
@@ -24,8 +24,8 @@ algo.maxwell_solver = none
 warpx.const_dt = 1e-9
 
 # Boundary condition
-boundary.field_lo = periodic periodic
-boundary.field_hi = periodic periodic
+boundary.field_lo = none periodic
+boundary.field_hi = pec periodic
 warpx.eb_implicit_function = "-(x**2+y**2+z**2-2**2)"
 
 # particles
