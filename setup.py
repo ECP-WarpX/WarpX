@@ -312,7 +312,7 @@ setup(
     # },
     extras_require={
         "all": [
-            "openPMD-api~=0.15.1",
+            "openPMD-api>=0.16.0",
             "openPMD-viewer~=1.1",
             "yt>=4.1.0",
             "matplotlib",
