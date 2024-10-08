@@ -28,8 +28,6 @@
 #include <string>
 #include <vector>
 
-void ParseGeometryInput();
-
 void ReadBoostedFrameParameters(amrex::Real& gamma_boost, amrex::Real& beta_boost,
                                 amrex::Vector<int>& boost_direction);
 
@@ -43,10 +41,6 @@ void ConvertLabParamsToBoost();
  * Reads the user-defined field and particle boundary condition parameters
  */
 void ReadBCParams ();
-
-/** Check the warpx.dims matches the binary name
- */
-void CheckDims ();
 
 /** Check the warpx.dims matches the binary name & set up RZ gridding
  *
