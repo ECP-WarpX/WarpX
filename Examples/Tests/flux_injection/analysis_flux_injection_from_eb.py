@@ -36,11 +36,11 @@ t_max = ds.current_time.item()  # time of simulation
 # Extract the dimensionality of the simulation
 with open("./warpx_used_inputs", "r") as f:
     warpx_used_inputs = f.read()
-if re.search("geometry.dims\s*=\s*2", warpx_used_inputs):
+if re.search("geometry.dims = 2", warpx_used_inputs):
     dims = "2D"
-elif re.search("geometry.dims\s*=\s*RZ", warpx_used_inputs):
+elif re.search("geometry.dims = RZ", warpx_used_inputs):
     dims = "RZ"
-elif re.search("geometry.dims\s*=\s*3", warpx_used_inputs):
+elif re.search("geometry.dims = 3", warpx_used_inputs):
     dims = "3D"
 
 # Total number of electrons expected:
@@ -124,10 +124,12 @@ print("Ntot = ", Ntot)
 assert np.isclose(Ntot_sim, Ntot, rtol=0.01)
 
 # Check that none of the particles are inside the EB
+# A factor 0.98 is applied to take into account
+# the cut-cell approximation of the sphere
 if dims == "3D" or dims == "RZ":
-    assert np.all(x**2 + y**2 + z**2 > R**2)
+    assert np.all(x**2 + y**2 + z**2 > (0.98 * R) ** 2)
 elif dims == "2D":
-    assert np.all(x**2 + z**2 > R**2)
+    assert np.all(x**2 + z**2 > (0.98 * R) ** 2)
 
 # Check that the normal component of the velocity is consistent with the expected distribution
 if dims == "3D" or dims == "RZ":
