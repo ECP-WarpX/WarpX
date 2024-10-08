@@ -1,9 +1,12 @@
 .. _developers-checksum:
 
-Using checksums
-===============
+Checksums on Tests
+==================
 
-When running an automated test, the checksum module computes one aggregated number per field (e.g., the sum of the absolute values of the array elements) and compares it to a reference value (benchmark).
+When running an automated test, we often compare the data of final time step of the test with expected values to catch accidental changes.
+Instead of relying on reference files that we would have to store in their full size, we calculate an aggregate checksum.
+
+For this purpose, the checksum Python module computes one aggregated number per field (e.g., the sum of the absolute values of the array elements) and compares it to a reference value (benchmark).
 This should be sensitive enough to make the test fail if your PR causes a significant difference, print meaningful error messages, and give you a chance to fix a bug or reset the benchmark if needed.
 
 The checksum module is located in ``Regression/Checksum/``, and the benchmarks are stored as human-readable `JSON <https://www.json.org/json-en.html>`__ files in ``Regression/Checksum/benchmarks_json/``, with one file per benchmark (for example, the test ``test_2d_langmuir_multi`` has a corresponding benchmark ``Regression/Checksum/benchmarks_json/test_2d_langmuir_multi.json``).
