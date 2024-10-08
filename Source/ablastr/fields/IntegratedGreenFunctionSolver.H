@@ -15,8 +15,6 @@
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
 
-#include <ablastr/constant.H>
-
 #include <array>
 #include <cmath>
 
