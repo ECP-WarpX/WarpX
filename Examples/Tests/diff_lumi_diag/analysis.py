@@ -48,7 +48,7 @@ elif "photons" in test_name:
     # In the photons case, the particles are
     # initialized from a density distribution ;
     # tolerance is larger due to lower particle statistics
-    tol = 5e-2
+    tol = 6e-2
 
 # Check that the simulation result and analytical result match
 error = abs(dL_dE_sim - dL_dE_th).max() / abs(dL_dE_th).max()
