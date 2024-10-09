@@ -123,7 +123,7 @@ An automated test typically consists of the following components:
 * analysis script;
 * checksum file.
 
-To learn more about how to use checksums in automated tests, please see the corresponding section :ref:`Checksums on Tests<developers-checksum>`.
+To learn more about how to use checksums in automated tests, please see the corresponding section :ref:`Checksums on Tests <developers-checksum>`.
 
 As mentioned above, the input files and scripts used by the automated tests can be found in the `Examples <https://github.com/ECP-WarpX/WarpX/tree/development/Examples>`__ directory, under either `Physics_applications <https://github.com/ECP-WarpX/WarpX/tree/development/Examples/Physics_applications>`__ or `Tests <https://github.com/ECP-WarpX/WarpX/tree/development/Examples/Tests>`__.
 
