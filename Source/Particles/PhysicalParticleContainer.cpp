@@ -1480,7 +1480,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
             if (inject_from_eb) {
                 // Injection from EB
                 // Skip cells that are not partially covered by the EB
-                if (eb_flag_arr(i,j,k).isRegular() || eb_flag_arr(i,j,k).isCovered()) return;
+                if (eb_flag_arr(i,j,k).isRegular() || eb_flag_arr(i,j,k).isCovered()) { return; }
                 // Scale by the (normalized) area of the EB surface in this cell
                 num_ppc_real_in_this_cell *= eb_bnd_area_arr(i,j,k);
             } else
@@ -1492,7 +1492,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 auto lo = getCellCoords(overlap_corner, dx, {0._rt, 0._rt, 0._rt}, iv);
                 auto hi = getCellCoords(overlap_corner, dx, {1._rt, 1._rt, 1._rt}, iv);
                 // Skip cells that do not overlap with the plane
-                if (!flux_pos->overlapsWith(lo, hi)) return;
+                if (!flux_pos->overlapsWith(lo, hi)) { return; }
             }
             const int num_ppc_int = static_cast<int>(num_ppc_real_in_this_cell + amrex::Random(engine));
 
