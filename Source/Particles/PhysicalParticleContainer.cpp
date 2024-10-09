@@ -1596,15 +1596,19 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 pa_idcpu[ip] = amrex::SetParticleIDandCPU(pid+ip, cpuid);
 
                 // Determine the position of the particle within the cell
+                XDim3 pos;
                 XDim3 r;
 #ifdef AMREX_USE_EB
-                // Injection from the EB
-                // Inject at the position of the centroid of the boundary within this cell
-                // TODO: add a random offset to the position
                 if (inject_from_eb) {
-                    r = { 0.5_rt + eb_bnd_cent_arr(i,j,k,0),
-                          0.5_rt + eb_bnd_cent_arr(i,j,k,1),
-                          0.5_rt + eb_bnd_cent_arr(i,j,k,2) };
+#if defined(WARPX_DIM_3D)
+                    pos.x = overlap_corner[0] + (iv[0] + 0.5_rt + eb_bnd_cent_arr(i,j,k,0))*dx[0];
+                    pos.y = overlap_corner[1] + (iv[1] + 0.5_rt + eb_bnd_cent_arr(i,j,k,1))*dx[1];
+                    pos.z = overlap_corner[2] + (iv[2] + 0.5_rt + eb_bnd_cent_arr(i,j,k,2))*dx[2];
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                    pos.x = overlap_corner[0] + (iv[0] + 0.5_rt + eb_bnd_cent_arr(i,j,k,0))*dx[0];
+                    pos.y = 0.0_rt;
+                    pos.z = overlap_corner[1] + (iv[1] + 0.5_rt + eb_bnd_cent_arr(i,j,k,1))*dx[1];
+#endif
                 } else
 #endif
                 {
@@ -1615,8 +1619,8 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                         flux_pos->getPositionUnitBox(i_part, rrfac, engine) :
                         // Otherwise: use 1 as the refinement ratio
                         flux_pos->getPositionUnitBox(i_part, amrex::IntVect::TheUnitVector(), engine);
+                    pos = getCellCoords(overlap_corner, dx, r, iv);
                 }
-                auto pos = getCellCoords(overlap_corner, dx, r, iv);
                 auto ppos = PDim3(pos);
 
                 // inj_mom would typically be InjectorMomentumGaussianFlux
