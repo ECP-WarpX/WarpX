@@ -186,6 +186,7 @@ void DifferentialLuminosity::ComputeDiags (int step)
             amrex::ParticleReal * const AMREX_RESTRICT u1x = soa_1.m_rdata[PIdx::ux];
             amrex::ParticleReal * const AMREX_RESTRICT u1y = soa_1.m_rdata[PIdx::uy]; // v*gamma=p/m
             amrex::ParticleReal * const AMREX_RESTRICT u1z = soa_1.m_rdata[PIdx::uz];
+            bool species1_is_photon = species_1.AmIA<PhysicalSpecies::photon>();
 
             const auto soa_2 = ptile_2.getParticleTileData();
             index_type* AMREX_RESTRICT indices_2 = bins_2.permutationPtr();
@@ -195,6 +196,7 @@ void DifferentialLuminosity::ComputeDiags (int step)
             amrex::ParticleReal * const AMREX_RESTRICT u2x = soa_2.m_rdata[PIdx::ux];
             amrex::ParticleReal * const AMREX_RESTRICT u2y = soa_2.m_rdata[PIdx::uy];
             amrex::ParticleReal * const AMREX_RESTRICT u2z = soa_2.m_rdata[PIdx::uz];
+            bool species2_is_photon = species_2.AmIA<PhysicalSpecies::photon>();
 
             // Extract low-level data
             auto const n_cells = static_cast<int>(bins_1.numBins());
@@ -219,30 +221,32 @@ void DifferentialLuminosity::ComputeDiags (int step)
 
                         Real p1t=0, p1x=0, p1y=0, p1z=0; // components of 4-momentum of particle 1
                         Real const u1_sq =  u1x[j_1]*u1x[j_1] + u1y[j_1]*u1y[j_1] + u1z[j_1]*u1z[j_1];
-                        if (m1 != 0) {
-                            p1t = m1*std::sqrt( c_sq + u1_sq );
-                            p1x = m1*u1x[j_1];
-                            p1y = m1*u1y[j_1];
-                            p1z = m1*u1z[j_1];
-                        } else { // photon case (momentum is normalized by m_e)
+                        if (species1_is_photon) {
+                            // photon case (momentum is normalized by m_e in WarpX)
                             p1t = PhysConst::m_e*std::sqrt( u1_sq );
                             p1x = PhysConst::m_e*u1x[j_1];
                             p1y = PhysConst::m_e*u1y[j_1];
                             p1z = PhysConst::m_e*u1z[j_1];
+                        } else {
+                            p1t = m1*std::sqrt( c_sq + u1_sq );
+                            p1x = m1*u1x[j_1];
+                            p1y = m1*u1y[j_1];
+                            p1z = m1*u1z[j_1];
                         }
 
                         Real p2t=0, p2x=0, p2y=0, p2z=0; // components of 4-momentum of particle 2
                         Real const u2_sq =  u2x[j_2]*u2x[j_2] + u2y[j_2]*u2y[j_2] + u2z[j_2]*u2z[j_2];
-                        if (m2 != 0) {
-                            p2t = m2*std::sqrt( c_sq + u2_sq );
-                            p2x = m2*u2x[j_2];
-                            p2y = m2*u2y[j_2];
-                            p2z = m2*u2z[j_2];
-                        } else { // photon case (momentum is normalized by m_e)
+                        if (species2_is_photon) {
+                            // photon case (momentum is normalized by m_e in WarpX)
                             p2t = PhysConst::m_e*std::sqrt(u2_sq);
                             p2x = PhysConst::m_e*u2x[j_2];
                             p2y = PhysConst::m_e*u2y[j_2];
                             p2z = PhysConst::m_e*u2z[j_2];
+                        } else {
+                            p2t = m2*std::sqrt( c_sq + u2_sq );
+                            p2x = m2*u2x[j_2];
+                            p2y = m2*u2y[j_2];
+                            p2z = m2*u2z[j_2];
                         }
 
                         // center of mass energy in eV

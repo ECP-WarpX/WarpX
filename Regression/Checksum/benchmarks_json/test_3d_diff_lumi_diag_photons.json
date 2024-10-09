@@ -1,24 +1,24 @@
 {
+  "lev=0": {
+    "rho_beam1": 656097367.2335038,
+    "rho_beam2": 656097367.2335038
+  },
   "beam1": {
     "particle_momentum_x": 0.0,
     "particle_momentum_y": 0.0,
-    "particle_momentum_z": 7.388641025805706e-12,
-    "particle_position_x": 0.08294399999999999,
-    "particle_position_y": 0.00165888,
-    "particle_position_z": 132710.39999777995,
-    "particle_weight": 11903687690.435307
+    "particle_momentum_z": 1.7512476113279403e-11,
+    "particle_position_x": 0.2621440000000001,
+    "particle_position_y": 0.005242880000000001,
+    "particle_position_z": 314572.79999473685,
+    "particle_weight": 11997744756.90957
   },
   "beam2": {
     "particle_momentum_x": 0.0,
     "particle_momentum_y": 0.0,
-    "particle_momentum_z": 7.387710136059835e-12,
-    "particle_position_x": 0.08294399999999999,
-    "particle_position_y": 0.0016588799999999997,
-    "particle_position_z": 132710.39999777602,
-    "particle_weight": 11903687690.435303
-  },
-  "lev=0": {
-    "rho_beam1": 650984457.422468,
-    "rho_beam2": 650984457.422468
+    "particle_momentum_z": 1.7513431895752007e-11,
+    "particle_position_x": 0.2621440000000001,
+    "particle_position_y": 0.005242880000000001,
+    "particle_position_z": 314572.79999472946,
+    "particle_weight": 11997744756.909573
   }
 }
