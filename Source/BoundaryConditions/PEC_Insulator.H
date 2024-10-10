@@ -27,6 +27,8 @@ public:
      *        and the normal fields extrapolated from the valid cells.
      *
      * \param[in,out] Efield
+     * \param[in]     field_boundary_lo   lower field boundary conditions
+     * \param[in]     field_boundary_hi   upper field boundary conditions
      * \param[in]     ng_fieldgather      number of guard cells used by field gather
      * \param[in]     geom                geometry object of level "lev"
      * \param[in]     lev                 level of the Multifab
@@ -52,6 +54,8 @@ public:
      *        and the normal fields extrapolated from the valid cells.
      *
      * \param[in,out] Bfield
+     * \param[in]     field_boundary_lo   lower field boundary conditions
+     * \param[in]     field_boundary_hi   upper field boundary conditions
      * \param[in]     ng_fieldgather      number of guard cells used by field gather
      * \param[in]     geom                geometry object of level "lev"
      * \param[in]     lev                 level of the Multifab
@@ -70,6 +74,8 @@ public:
      * \brief The work routine applying the boundary condition
      *
      * \param[in,out] field
+     * \param[in]     field_boundary_lo   lower field boundary conditions
+     * \param[in]     field_boundary_hi   upper field boundary conditions
      * \param[in]     ng_fieldgather      number of guard cells used by field gather
      * \param[in]     geom                geometry object of level "lev"
      * \param[in]     lev                 level of the Multifab

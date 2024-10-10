@@ -37,8 +37,10 @@ namespace
      * \returns number of grid points beyond the boundary
      */
     AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-    int get_cell_count_to_boundary (amrex::IntVect const & dom_lo,
-        amrex::IntVect const & dom_hi, amrex::IntVect const & ijk_vec,
+    int get_cell_count_to_boundary (
+        amrex::IntVect const & dom_lo,
+        amrex::IntVect const & dom_hi,
+        amrex::IntVect const & ijk_vec,
         amrex::IntVect const & is_nodal, int idim, int iside)
     {
         return ((iside == -1) ? (dom_lo[idim] - ijk_vec[idim])
@@ -63,11 +65,16 @@ namespace
      * \param[in] is_nodal     staggering of the field data being updated.
      * \param[in] is_insulator_lo Specifies whether lower boundaries are insulators
      * \param[in] is_insulator_hi Specifies whether upper boundaries are insulators
-     * \param[in] fbndry_lo     Specified values of the field at the lower boundaries in the insulator
-     * \param[in] fbndry_hi     Specified values of the field at the upper boundaries in the insulator
+     * \param[in] field_lo     the values of the field for the lower insulator boundary cell
+     * \param[in] field_hi     the values of the field for the upper insulator boundary cell
+     * \param[in] set_field_lo whether to set the field for the direction on the lower boundary
+     * \param[in] set_field_hi whether to set the field for the direction on the upper boundary
+     * \param[in] fbndry_lo    specified values of the field at the lower boundaries in the insulator
+     * \param[in] fbndry_hi    specified values of the field at the upper boundaries in the insulator
      */
     AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-    void SetFieldOnPEC_Insulator (int icomp, amrex::IntVect const & dom_lo,
+    void SetFieldOnPEC_Insulator (int icomp,
+                                  amrex::IntVect const & dom_lo,
                                   amrex::IntVect const & dom_hi,
                                   amrex::IntVect const & ijk_vec, int n,
                                   amrex::Array4<amrex::Real> const & field,
@@ -440,12 +447,7 @@ PEC_Insulator::ApplyPEC_InsulatortoField (
         amrex::ParallelFor(
             tex, nComp_x,
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-                amrex::ignore_unused(k);
-#endif
-#if (defined WARPX_DIM_1D_Z)
                 amrex::ignore_unused(j, k);
-#endif
 
                 amrex::IntVect const iv(AMREX_D_DECL(i, j, k));
                 amrex::Real const x = (AMREX_SPACEDIM > 1 ? xyzmin_x.x + (iv[0] - lo_x[0])*dx[0] : 0._rt);
@@ -490,12 +492,7 @@ PEC_Insulator::ApplyPEC_InsulatortoField (
             },
             tey, nComp_y,
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-                amrex::ignore_unused(k);
-#endif
-#if (defined WARPX_DIM_1D_Z)
                 amrex::ignore_unused(j, k);
-#endif
 
                 amrex::IntVect const iv(AMREX_D_DECL(i, j, k));
                 amrex::Real const x = (AMREX_SPACEDIM > 1 ? xyzmin_y.x + (iv[0] - lo_y[0])*dx[0] : 0._rt);
@@ -540,12 +537,7 @@ PEC_Insulator::ApplyPEC_InsulatortoField (
             },
             tez, nComp_z,
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-                amrex::ignore_unused(k);
-#endif
-#if (defined WARPX_DIM_1D_Z)
                 amrex::ignore_unused(j, k);
-#endif
 
                 amrex::IntVect const iv(AMREX_D_DECL(i, j, k));
                 amrex::Real const x = (AMREX_SPACEDIM > 1 ? xyzmin_z.x + (iv[0] - lo_z[0])*dx[0] : 0._rt);
