@@ -12,6 +12,7 @@
 #ifndef WARPX_H_
 #define WARPX_H_
 
+#include "BoundaryConditions/PEC_Insulator_fwd.H"
 #include "BoundaryConditions/PML_fwd.H"
 #include "Diagnostics/MultiDiagnostics_fwd.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags_fwd.H"
@@ -1424,6 +1425,9 @@ private:
     amrex::Vector<std::unique_ptr<PML_RZ> > pml_rz;
 #endif
     amrex::Real v_particle_pml;
+
+    // Insulator boundary conditions
+    std::unique_ptr<PEC_Insulator> pec_insulator_boundary;
 
     // External fields parameters
     std::unique_ptr<ExternalFieldParams> m_p_ext_field_params;
