@@ -1349,7 +1349,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
     const auto problo = geom.ProbLoArray();
 
 #ifdef AMREX_USE_EB
-    bool inject_from_eb = plasma_injector.m_inject_from_eb; // whether to inject from EB or from a plane
+    bool const inject_from_eb = plasma_injector.m_inject_from_eb; // whether to inject from EB or from a plane
     // Extract data structures for embedded boundaries
     amrex::FabArray<amrex::EBCellFlagFab> const* eb_flag = nullptr;
     amrex::MultiCutFab const* eb_bnd_area = nullptr;
