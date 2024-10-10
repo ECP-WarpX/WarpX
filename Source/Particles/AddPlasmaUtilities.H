@@ -109,7 +109,8 @@ amrex::Real compute_scale_fac_area_eb (
     using namespace amrex::literals;
     // Scale particle weight by the area of the emitting surface, within one cell
     // By definition, eb_bnd_area_arr is normalized (unitless).
-    // Here we undo the normalization (i.e. multiply by the surface used for normalization).
+    // Here we undo the normalization (i.e. multiply by the surface used for normalization in amrex:
+    // see https://amrex-codes.github.io/amrex/docs_html/EB.html#embedded-boundary-data-structures)
 #if defined(WARPX_DIM_3D)
     const amrex::Real nx = eb_bnd_normal_arr(i,j,k,0);
     const amrex::Real ny = eb_bnd_normal_arr(i,j,k,1);
@@ -134,8 +135,13 @@ amrex::Real compute_scale_fac_area_eb (
     return scale_fac;
 }
 
-// Before this function: normal momentum is along z
-// After this function: normal momentum is along the local normal to the EB
+/* Rotate the momentum of the particle, using a rotation that transforms the
+   z axis to the normal of the embedded boundary. More specifically, before
+   calling this function, `pu.z` has the momentum distribution that is
+   meant for the direction normal to the embedded boundary, and `pu.x`/`pu.y`
+   have the momentum distribution that is meant for the tangentional direction.
+   After calling this function, `pu.x`, `pu.y`, `pu.z` will have the correct
+   momentum distribution, consistent with the local normal to the embedded boundary. */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void rotate_momentum_eb (
     PDim3 & pu,
