@@ -157,7 +157,7 @@ namespace
                             // Upper radial boundary
                             amrex::Real const rguard = ijk_vec[idim] + 0.5_rt*(1._rt - is_nodal[idim]);
                             if (icomp == 0) {
-                                // Add radial scale so that drFr/dr = 0.
+                                // Add radial scale so that the divergence, drFr/dr, is 0.
                                 // This only works for the first guard cell and with
                                 // Fr cell centered in r.
                                 amrex::Real const rmirror = ijk_mirror[idim] + 0.5_rt*(1._rt - is_nodal[idim]);
