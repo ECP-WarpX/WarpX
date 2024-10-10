@@ -153,9 +153,9 @@ void rotate_momentum_eb (
     // Rotate the momentum along the theta direction (in the z-x plane)
     amrex::Real const cos_theta = nz;
     amrex::Real const sin_theta = std::sqrt(1-nz*nz);
-    amrex::Real uz = pu.z*cos_theta - pu.x*sin_theta;
-    amrex::Real ux = pu.x*cos_theta + pu.z*sin_theta;
-    amrex::Real uy = pu.y; // unchanged
+    amrex::Real const uz = pu.z*cos_theta - pu.x*sin_theta;
+    amrex::Real const ux = pu.x*cos_theta + pu.z*sin_theta;
+    amrex::Real const uy = pu.y; // unchanged
 
     // Rotate the momentum along the phi direction (in the x-y plane)
     amrex::Real const nperp = std::sqrt(nx*nx + ny*ny);
@@ -176,8 +176,8 @@ void rotate_momentum_eb (
     // *away* from the covered region.
     amrex::Real const sin_theta = -eb_bnd_normal_arr(i,j,k,0);
     amrex::Real const cos_theta = -eb_bnd_normal_arr(i,j,k,1);
-    amrex::Real uz = pu.z*cos_theta - pu.x*sin_theta;
-    amrex::Real ux = pu.x*cos_theta + pu.z*sin_theta;
+    amrex::Real const uz = pu.z*cos_theta - pu.x*sin_theta;
+    amrex::Real const ux = pu.x*cos_theta + pu.z*sin_theta;
     pu.x = ux;
     pu.z = uz;
 #else
