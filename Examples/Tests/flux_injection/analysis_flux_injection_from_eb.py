@@ -8,8 +8,8 @@
 
 """
 This script tests the emission of particles from the embedded boundary.
-(In this case, the embedded boundary is a sphere.) We check that the
-embedded boundary emits the correct number of particles, and that the
+(In this case, the embedded boundary is a sphere in 3D and RZ, a cylinder in 2D.)
+We check that the embedded boundary emits the correct number of particles, and that
 the particle distributions are consistent with the expected distributions.
 """
 
@@ -126,7 +126,7 @@ print("Ntot = ", Ntot)
 assert np.isclose(Ntot_sim, Ntot, rtol=0.01)
 
 # Check that none of the particles are inside the EB
-# A factor 0.98 is applied to take into account
+# A factor 0.98 is applied to accomodate
 # the cut-cell approximation of the sphere
 assert np.all(x**2 + y**2 + z**2 > (0.98 * R) ** 2)
 
