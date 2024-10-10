@@ -63,8 +63,8 @@ namespace
      * \param[in] is_nodal     staggering of the field data being updated.
      * \param[in] is_insulator_lo Specifies whether lower boundaries are insulators
      * \param[in] is_insulator_hi Specifies whether upper boundaries are insulators
-     * \param[in] field_lo     Specified values of the field at the lower boundaries in the insulator
-     * \param[in] field_hi     Specified values of the field at the upper boundaries in the insulator
+     * \param[in] fbndry_lo     Specified values of the field at the lower boundaries in the insulator
+     * \param[in] fbndry_hi     Specified values of the field at the upper boundaries in the insulator
      */
     AMREX_GPU_DEVICE AMREX_FORCE_INLINE
     void SetFieldOnPEC_Insulator (int icomp, amrex::IntVect const & dom_lo,

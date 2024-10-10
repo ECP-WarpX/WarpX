@@ -21,7 +21,7 @@ public:
     /**
      * \brief Apply either the PEC or insulator boundary condition on the boundary and in the
      *        guard cells.
-     *        In the PEC, the nodal fields (in a Yee mesh) as made even relative to the boundary,
+     *        In the PEC, the nodal fields (in a Yee mesh) are made even relative to the boundary,
      *        the non-nodal fields are made odd.
      *        In the insulator, the tangential fields are set to the value if specified, otherwise unchanged,
      *        and the normal fields extrapolated from the valid cells.
@@ -46,7 +46,7 @@ public:
     /**
      * \brief Apply either the PEC or insulator boundary condition on the boundary and in the
      *        guard cells.
-     *        In the PEC, the nodal fields (in a Yee mesh) as made even relative to the boundary,
+     *        In the PEC, the nodal fields (in a Yee mesh) are made even relative to the boundary,
      *        the non-nodal fields are made odd.
      *        In the insulator, the tangential fields are set to the value if specified, otherwise unchanged,
      *        and the normal fields extrapolated from the valid cells.
