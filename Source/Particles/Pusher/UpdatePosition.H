@@ -44,8 +44,6 @@ void UpdatePosition([[maybe_unused]] amrex::ParticleReal& x,
 #endif
 #if !defined(WARPX_DIM_RCYLINDER)
     z += uz * inv_gamma * dt;
-#else
-    amrex::ignore_unused(z);
 #endif
 }
 
@@ -86,8 +84,6 @@ void UpdatePositionImplicit ([[maybe_unused]] amrex::ParticleReal& x,
 #endif
 #if !defined(WARPX_DIM_RCYLINDER)
     z += uz * inv_gamma * dt;
-#else
-    amrex::ignore_unused(z);
 #endif
 }
 
@@ -111,7 +107,7 @@ void PositionNorm ([[maybe_unused]] amrex::ParticleReal dxp,
 
     if (iter==0) { step_norm = 1.0_prt; }
     else {
-#if !defined(WARPX_DIM_RCYLINDER) && !defined(WARPX_DIM_RSPHERE)
+#if !defined(WARPX_DIM_RCYLINDER)
         step_norm = (dzp - dzp_save)*(dzp - dzp_save)*idzg2;
 #else
         step_norm = 0._prt;
@@ -121,7 +117,7 @@ void PositionNorm ([[maybe_unused]] amrex::ParticleReal dxp,
 #endif
 #if defined(WARPX_DIM_3D)
         step_norm += (dyp - dyp_save)*(dyp - dyp_save)*idyg2;
-#elif defined(WARPX_DIM_RZ)
+#elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
         step_norm += (dyp - dyp_save)*(dyp - dyp_save)*idxg2;
 #endif
         step_norm = std::sqrt(step_norm);
