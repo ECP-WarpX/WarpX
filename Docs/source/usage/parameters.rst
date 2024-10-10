@@ -2152,7 +2152,7 @@ Filtering
 
 * ``warpx.use_filter`` (`0` or `1`; default: `1`, except for RZ FDTD)
     Whether to smooth the charge and currents on the mesh, after depositing them from the macro-particles.
-    This uses a bilinear filter (see the :ref:`filtering section <theory-pic-filter>`).
+    This uses a bilinear filter (see the :ref:`filtering section <theory-filter>`).
     The default is `1` in all cases, except for simulations in RZ geometry using the FDTD solver.
     With the RZ PSATD solver, the filtering is done in :math:`k`-space.
 
@@ -2245,7 +2245,7 @@ Two families of Maxwell solvers are implemented in WarpX, based on the Finite-Di
      - ``yee``: Yee FDTD solver.
      - ``ckc``: (not available in ``RZ`` geometry) Cole-Karkkainen solver with Cowan
        coefficients (see :cite:t:`param-CowanPRSTAB13`).
-     - ``psatd``: Pseudo-spectral solver (see :ref:`theory <theory-pic-mwsolve-psatd>`).
+     - ``psatd``: Pseudo-spectral solver (see :ref:`theory <theory-mwsolve-psatd>`).
      - ``ect``: Enlarged cell technique (conformal finite difference solver. See :cite:t:`param-XiaoIEEE2005`).
      - ``hybrid``: The E-field will be solved using Ohm's law and a kinetic-fluid hybrid model (see :ref:`theory <theory-kinetic-fluid-hybrid-model>`).
      - ``none``: No field solve will be performed.
