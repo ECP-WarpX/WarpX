@@ -97,8 +97,15 @@ int compute_area_weights (const amrex::IntVect& iv, const int normal_axis) {
 
 #ifdef AMREX_USE_EB
 /*
-  This computes the scale_fac (used for setting the particle weights) on a on area basis
-  (used for flux injection from the embedded boundary).
+ * \brief This computes the scale_fac (used for setting the particle weights) on a on area basis
+ * (used for flux injection from the embedded boundary).
+ *
+ * \param[in] dx: cell size in each direction
+ * \param[in] num_ppc_real: number of particles per cell
+ * \param[in] eb_bnd_normal_arr: array containing the normal to the embedded boundary
+ * \param[in] i, j, k: indices of the cell
+ *
+ * \return scale_fac: the scaling factor to be applied to the weight of the particles
  */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real compute_scale_fac_area_eb (
@@ -135,19 +142,28 @@ amrex::Real compute_scale_fac_area_eb (
     return scale_fac;
 }
 
-/* Rotate the momentum of the particle, using a rotation that transforms the
-   z axis to the normal of the embedded boundary. More specifically, before
-   calling this function, `pu.z` has the momentum distribution that is
-   meant for the direction normal to the embedded boundary, and `pu.x`/`pu.y`
-   have the momentum distribution that is meant for the tangentional direction.
-   After calling this function, `pu.x`, `pu.y`, `pu.z` will have the correct
-   momentum distribution, consistent with the local normal to the embedded boundary. */
+/* \brief Rotate the momentum of the particle so that the z direction
+ * transforms to the normal of the embedded boundary.
+ *
+ * More specifically, before calling this function, `pu.z` has the
+ * momentum distribution that is meant for the direction normal to the
+ * embedded boundary, and `pu.x`/`pu.y` have the momentum distribution that
+ * is meant for the tangentional direction. After calling this function,
+ * `pu.x`, `pu.y`, `pu.z` will have the correct momentum distribution,
+ * consistent with the local normal to the embedded boundary.
+ *
+ * \param[inout] pu momentum of the particle
+ * \param[in] eb_bnd_normal_arr: array containing the normal to the embedded boundary
+ * \param[in] i, j, k: indices of the cell
+ * */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void rotate_momentum_eb (
     PDim3 & pu,
     amrex::Array4<const amrex::Real> const& eb_bnd_normal_arr,
     int i, int j, int k )
 {
+    using namespace amrex::literals;
+
 #if defined(WARPX_DIM_3D)
     // The minus sign below takes into account the fact that eb_bnd_normal_arr
     // points towards the covered region, while particles are to be emitted
@@ -156,26 +172,24 @@ void rotate_momentum_eb (
     amrex::Real const ny = -eb_bnd_normal_arr(i,j,k,1);
     amrex::Real const nz = -eb_bnd_normal_arr(i,j,k,2);
 
-    // Rotate the momentum along the theta direction (in the z-x plane)
+    // Rotate the momentum in theta and phi
     amrex::Real const cos_theta = nz;
-    amrex::Real const sin_theta = std::sqrt(1-nz*nz);
-    amrex::Real const uz = pu.z*cos_theta - pu.x*sin_theta;
-    amrex::Real const ux = pu.x*cos_theta + pu.z*sin_theta;
-    amrex::Real const uy = pu.y; // unchanged
-
-    // Rotate the momentum along the phi direction (in the x-y plane)
+    amrex::Real const sin_theta = std::sqrt(1._rt-nz*nz);
     amrex::Real const nperp = std::sqrt(nx*nx + ny*ny);
+    amrex::Real cos_phi = 1;
+    amrex::Real sin_phi = 0;
     if ( nperp > 0.0 ) {
-        amrex::Real const cos_phi = nx/nperp;
-        amrex::Real const sin_phi = ny/nperp;
-        pu.z = uz; // unchanged
-        pu.x = ux*cos_phi - uy*sin_phi;
-        pu.y = uy*cos_phi + ux*sin_phi;
-    } else {
-        pu.x = ux;
-        pu.y = uy;
-        pu.z = uz;
+        cos_phi = nx/nperp;
+        sin_phi = ny/nperp;
     }
+    // Apply rotation matrix
+    amrex::Real const ux = pu.x*cos_theta*cos_phi - pu.y*sin_phi + pu.z*sin_theta*cos_phi;
+    amrex::Real const uy = pu.x*cos_theta*sin_phi + pu.y*cos_phi + pu.z*sin_theta*sin_phi;
+    amrex::Real const uz = -pu.x*sin_theta + pu.z*cos_theta;
+    pu.x = ux;
+    pu.y = uy;
+    pu.z = uz;
+
 #elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
     // The minus sign below takes into account the fact that eb_bnd_normal_arr
     // points towards the covered region, while particles are to be emitted

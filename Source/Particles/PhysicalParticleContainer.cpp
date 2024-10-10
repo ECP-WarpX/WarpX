@@ -1494,7 +1494,6 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 // Skip cells that do not overlap with the plane
                 if (!flux_pos->overlapsWith(lo, hi)) { return; }
             }
-            const int num_ppc_int = static_cast<int>(num_ppc_real_in_this_cell + amrex::Random(engine));
 
             auto index = overlap_box.index(iv);
             // Take into account refined injection region
@@ -1502,7 +1501,8 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
             if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
                 r = compute_area_weights(rrfac, flux_normal_axis);
             }
-            pcounts[index] = num_ppc_int*r;
+            const int num_ppc_int = static_cast<int>(num_ppc_real_in_this_cell*r + amrex::Random(engine));
+            pcounts[index] = num_ppc_int;
 
             amrex::ignore_unused(j,k);
         });
@@ -1736,7 +1736,6 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 // For cylindrical emission (flux_normal_axis==0
                 // or flux_normal_axis==2), the emission surface depends on
                 // the radius ; thus, the calculation is finalized here
-
                 Real t_weight = flux * scale_fac * dt;
                 if (loc_flux_normal_axis != 1) {
                     if (radially_weighted) {
