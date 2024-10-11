@@ -65,6 +65,7 @@ void CollisionPairFilter (const amrex::ParticleReal u1x, const amrex::ParticleRe
 
     // Evaluate the cross-section for each scattering process to determine
     // the total collision probability.
+    // TODO: Why only 4?
     AMREX_ASSERT_WITH_MESSAGE(
         (process_count < 4), "Too many scattering processes in DSMC routine."
     );

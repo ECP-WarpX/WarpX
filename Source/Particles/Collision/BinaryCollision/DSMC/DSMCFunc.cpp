@@ -53,10 +53,7 @@ DSMCFunc::DSMCFunc (
                                         "Cannot add an unknown scattering process type");
 
         // if the scattering process is ionization get the secondary species
-        // only one ionization process is supported, the vector
-        // m_ionization_processes is only used to make it simple to calculate
-        // the maximum collision frequency with the same function used for
-        // particle conserving processes
+        // only one ionization process is supported
         if (process.type() == ScatteringProcessType::IONIZATION) {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!ionization_flag,
                                              "Background MCC only supports a single ionization process");
@@ -65,36 +62,23 @@ DSMCFunc::DSMCFunc (
             std::string secondary_species;
             pp_collision_name.get("ionization_species", secondary_species);
             m_species_names.push_back(secondary_species);
-
-            m_ionization_processes.push_back(std::move(process));
-        } else {
-            m_scattering_processes.push_back(std::move(process));
         }
+        m_scattering_processes.push_back(std::move(process));
     }
 
     // Store ScatteringProcess::Executor(s).
 #ifdef AMREX_USE_GPU
     amrex::Gpu::HostVector<ScatteringProcess::Executor> h_scattering_processes_exe;
-    amrex::Gpu::HostVector<ScatteringProcess::Executor> h_ionization_processes_exe;
     for (auto const& p : m_scattering_processes) {
         h_scattering_processes_exe.push_back(p.executor());
     }
-    for (auto const& p : m_ionization_processes) {
-        h_ionization_processes_exe.push_back(p.executor());
-    }
     m_scattering_processes_exe.resize(h_scattering_processes_exe.size());
-    m_ionization_processes_exe.resize(h_ionization_processes_exe.size());
     amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_scattering_processes_exe.begin(),
                           h_scattering_processes_exe.end(), m_scattering_processes_exe.begin());
-    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_ionization_processes_exe.begin(),
-                          h_ionization_processes_exe.end(), m_ionization_processes_exe.begin());
     amrex::Gpu::streamSynchronize();
 #else
     for (auto const& p : m_scattering_processes) {
         m_scattering_processes_exe.push_back(p.executor());
-    }
-    for (auto const& p : m_ionization_processes) {
-        m_ionization_processes_exe.push_back(p.executor());
     }
 #endif
 

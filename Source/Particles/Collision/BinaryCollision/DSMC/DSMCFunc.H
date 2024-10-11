@@ -205,9 +205,7 @@ public:
 
 private:
     amrex::Vector<ScatteringProcess> m_scattering_processes;
-    amrex::Vector<ScatteringProcess> m_ionization_processes;
     amrex::Gpu::DeviceVector<ScatteringProcess::Executor> m_scattering_processes_exe;
-    amrex::Gpu::DeviceVector<ScatteringProcess::Executor> m_ionization_processes_exe;
 
     bool ionization_flag = false;
 
