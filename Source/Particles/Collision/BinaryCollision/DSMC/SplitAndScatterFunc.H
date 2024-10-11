@@ -237,7 +237,20 @@ public:
                         amrex::Abort("Uneven mass charge-exchange not implemented yet.");
                     }
                 } else if (mask[i] == int(ScatteringProcessType::IONIZATION)) {
-                    // Same as in doBackgroundIonization
+                    // calculate kinetic energy of the incident electron
+                    double E_coll;
+                    double energy_cost = 0; // TODO: update this: get from scattering process
+                    const ParticleReal u_coll2 = ux1*ux1 + uy1*uy1 + uz1*uz1;
+                    ParticleUtils::getEnergy(u_coll2, m1, E_coll);
+                    // each of the two electron (the scattered e) gets half the energy (could change this later)
+                    const auto E_out = static_cast<amrex::ParticleReal>((E_coll - energy_cost) / 2.0_prt * PhysConst::q_e);
+                    constexpr auto c2 = PhysConst::c * PhysConst::c;
+                    const auto mc2 = m1*c2;
+                    const amrex::ParticleReal up = sqrt(E_out * (E_out + 2.0_prt*mc2) / c2) / m1;
+
+                    // isotropically scatter electrons
+                    ParticleUtils::RandomizeVelocity(ux, uy, uz, up, engine);
+                    ParticleUtils::RandomizeVelocity(e_ux, e_uy, e_uz, up, engine);
                 }
                 else {
                     amrex::Abort("Unknown scattering process.");
