@@ -137,8 +137,6 @@ public:
         {
             if (mask[i])
             {
-                // TODO: by default: set all IDs to be invalid
-
                 const auto product1_index = products_np_data[0] +
                                            (p_offsets[i]*p_num_products_device[0] + 0);
                 // Make a copy of the particle from species 1
@@ -147,6 +145,7 @@ public:
                 // Set the weight of the new particles to p_pair_reaction_weight[i]
                 soa_products_data[0].m_rdata[PIdx::w][product1_index] = p_pair_reaction_weight[i];
 
+                // TODO: when the reaction is ionization, this still creates a second particle of the target...
                 const auto product2_index = products_np_data[1] +
                                            (p_offsets[i]*p_num_products_device[1] + 0);
                 // Make a copy of the particle from species 2
@@ -156,21 +155,29 @@ public:
                 soa_products_data[1].m_rdata[PIdx::w][product2_index] = p_pair_reaction_weight[i];
 
                 if (ionization_flag) {
-                    // The electron created from ionization is stored as the second particle in product 1
-                    // Copy its properties from species 2 (momentum, position, etc.)
-                    // TODO
-                    // Set the weight of the new particles to p_pair_reaction_weight[i]
-
-
-                    // The ion created from ionization is stored as the first particle in product 3
-                    // Copy its properties from species 2 (momentum, position, etc.)
                     const auto product3_index = products_np_data[2] +
                                             (p_offsets[i]*p_num_products_device[2] + 0);
-                    // TODO
+                    if (mask[i] == int(ScatteringProcessType::IONIZATION)) {
+                        // The electron created from ionization is stored as the second particle in product 1
+                        // Copy its properties from the target atoms, i.e. species 2 (momentum, position, etc.)
+                        copy_species2[0](soa_products_data[0], soa_2, static_cast<int>(p_pair_indices_2[i]),
+                                        static_cast<int>(product1_index+1), engine);
+                        // Set the weight of the new particles to p_pair_reaction_weight[i]
+                        soa_products_data[0].m_rdata[PIdx::w][product1_index+1] = p_pair_reaction_weight[i];
 
-                    // Set the weight of the new particles to p_pair_reaction_weight[i]
-                    soa_products_data[0].m_rdata[PIdx::w][product1_index+1] = p_pair_reaction_weight[i];
-                    soa_products_data[2].m_rdata[PIdx::w][product3_index] = p_pair_reaction_weight[i];
+                        // The ion created from ionization is stored as the first particle in product 3
+                        // Copy its properties from the target atoms, i.e. species 2 (momentum, position, etc.)
+                        copy_species2[2](soa_products_data[2], soa_2, static_cast<int>(p_pair_indices_2[i]),
+                                        static_cast<int>(product3_index), engine);
+                        // Set the weight of the new particles to p_pair_reaction_weight[i]
+                        soa_products_data[2].m_rdata[PIdx::w][product3_index] = p_pair_reaction_weight[i];
+                    } else {
+                        // Set IDs as invalid for slots that have been allocated for potential
+                        // ionization events, so that the corresponding particles get removed in the next
+                        // call to `ReDistribute` or `RemoveInvalidParticles`
+                        soa_products_data[0].idcpu(product1_index+1) = amrex::ParticleIdCpus::Invalid;
+                        soa_products_data[2].idcpu(product3_index) = amrex::ParticleIdCpus::Invalid;
+                    }
                 }
 
                 // Set the child particle properties appropriately

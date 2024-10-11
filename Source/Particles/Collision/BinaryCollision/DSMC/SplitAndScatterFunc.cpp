@@ -26,7 +26,7 @@ SplitAndScatterFunc::SplitAndScatterFunc (const std::string& collision_name,
 
     if (m_collision_type == CollisionType::DSMC)
     {
-        if (ionization_flag) {
+        if (m_ionization_flag) {
             // Product species include the ion
             // TODO: as an alternative, we could use the runtime attribute `ionization_level` for this species
             m_num_product_species = 3;

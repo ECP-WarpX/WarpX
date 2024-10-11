@@ -106,6 +106,21 @@ public:
         // Therefore, we insert the colliding species at the beginning of `m_product_species`
         if (collision_type == CollisionType::DSMC) {
             m_product_species.insert( m_product_species.begin(), m_species_names.begin(), m_species_names.end() );
+            // Check if ionization is one of the scattering processes
+            // TODO: This is reused in several places ; we should put it in a separate function
+            amrex::Vector<std::string> scattering_process_names;
+            bool ionization_flag = false;
+            pp_collision_name.queryarr("scattering_processes", scattering_process_names);
+            for (const auto& scattering_process : scattering_process_names) {
+                if (scattering_process.find("excitation") != std::string::npos) {
+                    ionization_flag = true;
+                }
+            }
+            if (ionization_flag) {
+                std::string ionization_species;
+                pp_collision_name.get("ionization_species", ionization_species);
+                m_product_species.push_back(ionization_species);
+            }
         }
         m_have_product_species = !m_product_species.empty();
 

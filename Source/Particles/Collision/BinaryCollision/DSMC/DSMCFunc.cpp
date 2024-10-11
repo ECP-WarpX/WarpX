@@ -32,6 +32,7 @@ DSMCFunc::DSMCFunc (
 
     // create a vector of ScatteringProcess objects from each scattering
     // process name
+    bool ionization_flag = false;
     for (const auto& scattering_process : scattering_process_names) {
         const std::string kw_cross_section = scattering_process + "_cross_section";
         std::string cross_section_file;
@@ -61,10 +62,8 @@ DSMCFunc::DSMCFunc (
 
             // TODO: Add a check that the first species is the electron species
             // (This should be done for impact ionization with MCC too)
-
-            std::string secondary_species;
-            pp_collision_name.get("ionization_species", secondary_species);
-            m_species_names.push_back(secondary_species);
+            // And add a check that the ionization species has the same mass
+            // (and a positive charge), compared to the target species
         }
         m_scattering_processes.push_back(std::move(process));
     }
