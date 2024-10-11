@@ -52,7 +52,24 @@ DSMCFunc::DSMCFunc (
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(process.type() != ScatteringProcessType::INVALID,
                                         "Cannot add an unknown scattering process type");
 
-        m_scattering_processes.push_back(std::move(process));
+        // if the scattering process is ionization get the secondary species
+        // only one ionization process is supported, the vector
+        // m_ionization_processes is only used to make it simple to calculate
+        // the maximum collision frequency with the same function used for
+        // particle conserving processes
+        if (process.type() == ScatteringProcessType::IONIZATION) {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!ionization_flag,
+                                             "Background MCC only supports a single ionization process");
+            ionization_flag = true;
+
+            std::string secondary_species;
+            pp_collision_name.get("ionization_species", secondary_species);
+            m_species_names.push_back(secondary_species);
+
+            m_ionization_processes.push_back(std::move(process));
+        } else {
+            m_scattering_processes.push_back(std::move(process));
+        }
     }
 
     const int process_count = static_cast<int>(m_scattering_processes.size());
