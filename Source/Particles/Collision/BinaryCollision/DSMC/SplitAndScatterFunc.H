@@ -158,17 +158,18 @@ public:
                 if (ionization_flag) {
                     // The electron created from ionization is stored as the second particle in product 1
                     // Copy its properties from species 2 (momentum, position, etc.)
+                    // TODO
+                    // Set the weight of the new particles to p_pair_reaction_weight[i]
 
 
                     // The ion created from ionization is stored as the first particle in product 3
                     // Copy its properties from species 2 (momentum, position, etc.)
                     const auto product3_index = products_np_data[2] +
                                             (p_offsets[i]*p_num_products_device[2] + 0);
+                    // TODO
 
-                    // Make a copy of the particle from species 3
-                    copy_species2[2](soa_products_data[2], soa_3, static_cast<int>(p_pair_indices_3[i]),
-                                    static_cast<int>(product3_index), engine);
                     // Set the weight of the new particles to p_pair_reaction_weight[i]
+                    soa_products_data[0].m_rdata[PIdx::w][product1_index+1] = p_pair_reaction_weight[i];
                     soa_products_data[2].m_rdata[PIdx::w][product3_index] = p_pair_reaction_weight[i];
                 }
 
