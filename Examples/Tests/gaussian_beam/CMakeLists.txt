@@ -20,3 +20,13 @@ add_warpx_test(
     diags/diag1000010  # output
     OFF  # dependency
 )
+
+add_warpx_test(
+    test_3d_rotated_gaussian_beam  # name
+    3  # dims
+    2  # nprocs
+    inputs_test_3d_rotated_gaussian_beam  # inputs
+    analysis_rotated_beam.py  # analysis
+    diags/diag1000000  # output
+    OFF  # dependency
+)
