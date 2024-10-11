@@ -1213,14 +1213,14 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                 // With only 1 mode, the angle doesn't matter so
                 // choose it randomly.
                 const Real theta = (nmodes == 1 && rz_random_theta)?
-                    (2._rt*MathConst::pi*amrex::Random(engine)):
+                    (MathConst::pi*(2._rt*amrex::Random(engine) - 1._rt)):
                     (2._rt*MathConst::pi*r.y + theta_offset);
                 pos.x = xb*std::cos(theta);
                 pos.y = xb*std::sin(theta);
 #elif defined(WARPX_DIM_RSPHERE)
                 // Replace the x, y, and z, setting angles theta and phi.
                 // These x, y, and z are used to get the momentum and density
-                const Real theta = 2._rt*MathConst::pi*amrex::Random(engine);
+                const Real theta = MathConst::pi*(2._rt*amrex::Random(engine) - 1._rt);
                 const Real cos_phi = 2._rt*amrex::Random(engine) - 1._rt;
                 const Real sin_phi = std::sqrt(1._rt - cos_phi*cos_phi);
                 const Real phi = std::atan2(sin_phi, cos_phi);
@@ -1661,7 +1661,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 // With only 1 mode, the angle doesn't matter so
                 // choose it randomly.
                 const Real theta = (nmodes == 1 && rz_random_theta)?
-                    (2._prt*MathConst::pi*amrex::Random(engine)):
+                    (MathConst::pi*(2._rt*amrex::Random(engine) - 1._rt)):
                     (2._prt*MathConst::pi*r.y);
                 Real const cos_theta = std::cos(theta);
                 Real const sin_theta = std::sin(theta);
@@ -1684,7 +1684,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 // Replace the x, y, and z, setting angles theta and phi.
                 // These x, y, and z are used to get the momentum and flux
                 amrex::Real const radial_position = ppos.x;
-                amrex::Real const theta = 2._rt*MathConst::pi*amrex::Random(engine);
+                amrex::Real const theta = MathConst::pi*(2._rt*amrex::Random(engine) - 1._rt);
                 amrex::Real const cos_phi = 2._rt*amrex::Random(engine) - 1._rt;
                 amrex::Real const sin_phi = std::sqrt(1._rt - cos_phi*cos_phi);
                 amrex::Real const phi = std::atan2(sin_phi, cos_phi);
