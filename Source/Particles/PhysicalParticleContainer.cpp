@@ -1213,7 +1213,14 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                 // With only 1 mode, the angle doesn't matter so
                 // choose it randomly.
                 const Real theta = (nmodes == 1 && rz_random_theta)?
+#if defined(WARPX_DIM_RZ)
+                    // This should be updated to be the same as below, since theta
+                    // should range from -pi to +pi. This should be a separate PR
+                    // since it will break RZ CI tests.
+                    (2._rt*MathConst::pi*amrex::Random(engine)):
+#elif defined(WARPX_DIM_RCYLINDER)
                     (MathConst::pi*(2._rt*amrex::Random(engine) - 1._rt)):
+#endif
                     (2._rt*MathConst::pi*r.y + theta_offset);
                 pos.x = xb*std::cos(theta);
                 pos.y = xb*std::sin(theta);
@@ -1660,7 +1667,14 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 // With only 1 mode, the angle doesn't matter so
                 // choose it randomly.
                 const Real theta = (nmodes == 1 && rz_random_theta)?
+#if defined(WARPX_DIM_RZ)
+                    // This should be updated to be the same as below, since theta
+                    // should range from -pi to +pi. This should be a separate PR
+                    // since it will break RZ CI tests.
+                    (2._rt*MathConst::pi*amrex::Random(engine)):
+#elif defined(WARPX_DIM_RCYLINDER)
                     (MathConst::pi*(2._rt*amrex::Random(engine) - 1._rt)):
+#endif
                     (2._prt*MathConst::pi*r.y);
                 Real const cos_theta = std::cos(theta);
                 Real const sin_theta = std::sin(theta);
