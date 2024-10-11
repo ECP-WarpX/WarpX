@@ -15,17 +15,37 @@ SplitAndScatterFunc::SplitAndScatterFunc (const std::string& collision_name,
 {
     const amrex::ParmParse pp_collision_name(collision_name);
 
+    // Check if ionization is one of the scattering processes
+    bool ionization_flag = false;
+    amrex::Vector<std::string> scattering_process_names;
+    pp_collision_name.queryarr("scattering_processes", scattering_process_names);
+    for (const auto& scattering_process : scattering_process_names) {
+        if (scattering_process.find("excitation") != std::string::npos) {
+           ionization_flag = true;
+        }
+    }
+
     if (m_collision_type == CollisionType::DSMC)
     {
-        // here we can add logic to deal with cases where products are created,
-        // for example with impact ionization
-        m_num_product_species = 2;
-        m_num_products_host.push_back(1);
-        m_num_products_host.push_back(1);
+        if (ionization_flag) {
+            // Product species include the ion
+            // TODO: as an alternative, we could use the runtime attribute `ionization_level` for this species
+            m_num_product_species = 3;
+            m_num_products_host.push_back(2); // electron species:
+            // potentially 2 products per reaction: the scattered incoming electron, and the new electron from ionization
+            m_num_products_host.push_back(1);
+            m_num_products_host.push_back(1); // corresponds to the ionized species
+        } else {
+            m_num_product_species = 2;
+            m_num_products_host.push_back(1);
+            m_num_products_host.push_back(1);
+        }
+
 #ifndef AMREX_USE_GPU
         // On CPU, the device vector can be filled immediately
-        m_num_products_device.push_back(1);
-        m_num_products_device.push_back(1);
+        for (int i = 0; i < m_num_product_species; i++) {
+            m_num_products_device.push_back(m_num_products_host[i]);
+        }
 #endif
     }
     else
