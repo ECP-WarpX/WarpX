@@ -109,7 +109,7 @@ BeamRelevant::BeamRelevant (const std::string& rd_name)
             ofs << "[" << c++ << "]alpha_y()";        ofs << m_sep;
             ofs << "[" << c++ << "]beta_x(m)";        ofs << m_sep;
             ofs << "[" << c++ << "]beta_y(m)";        ofs << m_sep;
-            ofs << "[" << c++ << "]charge(C)";        ofs << m_sep;
+            ofs << "[" << c++ << "]charge(C)";        ofs << "\n";
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RCYLINDER)
 #if defined(WARPX_DIM_XZ)
             std::string const dim2 = "z";
