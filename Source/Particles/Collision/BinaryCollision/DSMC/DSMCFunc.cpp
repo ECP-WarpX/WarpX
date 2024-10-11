@@ -72,26 +72,34 @@ DSMCFunc::DSMCFunc (
         }
     }
 
-    const int process_count = static_cast<int>(m_scattering_processes.size());
-
     // Store ScatteringProcess::Executor(s).
 #ifdef AMREX_USE_GPU
     amrex::Gpu::HostVector<ScatteringProcess::Executor> h_scattering_processes_exe;
+    amrex::Gpu::HostVector<ScatteringProcess::Executor> h_ionization_processes_exe;
     for (auto const& p : m_scattering_processes) {
         h_scattering_processes_exe.push_back(p.executor());
     }
-    m_scattering_processes_exe.resize(process_count);
+    for (auto const& p : m_ionization_processes) {
+        h_ionization_processes_exe.push_back(p.executor());
+    }
+    m_scattering_processes_exe.resize(h_scattering_processes_exe.size());
+    m_ionization_processes_exe.resize(h_ionization_processes_exe.size());
     amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_scattering_processes_exe.begin(),
-                        h_scattering_processes_exe.end(), m_scattering_processes_exe.begin());
+                          h_scattering_processes_exe.end(), m_scattering_processes_exe.begin());
+    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_ionization_processes_exe.begin(),
+                          h_ionization_processes_exe.end(), m_ionization_processes_exe.begin());
     amrex::Gpu::streamSynchronize();
 #else
     for (auto const& p : m_scattering_processes) {
         m_scattering_processes_exe.push_back(p.executor());
     }
+    for (auto const& p : m_ionization_processes) {
+        m_ionization_processes_exe.push_back(p.executor());
+    }
 #endif
 
     // Link executor to appropriate ScatteringProcess executors
     m_exe.m_scattering_processes_data = m_scattering_processes_exe.data();
-    m_exe.m_process_count = process_count;
+    m_exe.m_process_count = static_cast<int>(m_scattering_processes_exe.size());
     m_exe.m_isSameSpecies = m_isSameSpecies;
 }
