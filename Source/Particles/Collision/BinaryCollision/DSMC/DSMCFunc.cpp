@@ -59,6 +59,9 @@ DSMCFunc::DSMCFunc (
                                              "Background MCC only supports a single ionization process");
             ionization_flag = true;
 
+            // TODO: Add a check that the first species is the electron species
+            // (This should be done for impact ionization with MCC too)
+
             std::string secondary_species;
             pp_collision_name.get("ionization_species", secondary_species);
             m_species_names.push_back(secondary_species);

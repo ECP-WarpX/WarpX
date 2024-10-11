@@ -288,7 +288,7 @@ class CapacitiveDischargeExample(object):
         if self.dsmc:
             electron_colls = picmi.DSMCCollisions(
                 name="coll_elec",
-                species=[self.ions, self.neutrals],
+                species=[self.electrons, self.neutrals],
                 ndt=5,
                 scattering_processes=electron_scattering_processes,
             )
