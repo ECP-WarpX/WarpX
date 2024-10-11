@@ -33,9 +33,9 @@ RhoMaximum::RhoMaximum (const std::string& rd_name)
 : ReducedDiags{rd_name}
 {
     // RZ coordinate is not working
-#if (defined WARPX_DIM_RZ)
+#if (defined WARPX_DIM_RZ) || (defined WARPX_DIM_RCYLINDER) || (defined WARPX_DIM_RSPHERE)
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-        "RhoMaximum reduced diagnostics does not work for RZ coordinate.");
+        "RhoMaximum reduced diagnostics does not work for cylindrical and spherical coordinate.");
 #endif
 
     // read number of levels

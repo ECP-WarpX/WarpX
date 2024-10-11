@@ -270,6 +270,8 @@ public:
         auto const hi = ubound(cbx);
         int const nz = hi.y - lo.y + 1;
         auto const dr = geom.CellSize(0);
+#elif defined WARPX_DIM_RCYLINDER || defined WARPX_DIM_RSPHERE
+        auto const dr = geom.CellSize(0);
 #endif
 
         auto volume_factor = [=] AMREX_GPU_DEVICE(int i_cell) noexcept {
@@ -277,6 +279,14 @@ public:
             // Return the radial factor for the volume element, dV
             int const ri = (i_cell - i_cell%nz)/nz;
             return MathConst::pi*(2.0_prt*ri + 1.0_prt)*dr;
+#elif defined WARPX_DIM_RCYLINDER
+            int const ri = i_cell;
+            return MathConst::pi*(2.0_prt*ri + 1.0_prt)*dr;
+#elif defined WARPX_DIM_RSPHERE
+            // This needs double checking
+            int const ri = i_cell;
+            int const rr = 2.0_prt*ri + 1.0_prt;
+            return 4._prt/3._prt*MathConst::pi*rr*rr*dr*dr;
 #else
             // No factor is needed for Cartesian
             amrex::ignore_unused(i_cell);

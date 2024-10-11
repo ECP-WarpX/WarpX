@@ -642,7 +642,14 @@ WarpX::ReadParameters ()
         pp_warpx.query("compute_max_step_from_btd",
             compute_max_step_from_btd);
 
-        if (do_moving_window) {
+        if (do_moving_window)
+        {
+#if defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+            WARPX_ABORT_WITH_MESSAGE("Moving window not supported with RCYLINDER and RSPHERE");
+            // Even though this is never used, it needs to have a valid value to avoid
+            // complaints from the compiler
+            moving_window_dir = 0;
+#endif
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 Geom(0).isPeriodic(moving_window_dir) == 0,
                 "The problem must be non-periodic in the moving window direction");
@@ -664,6 +671,11 @@ WarpX::ReadParameters ()
         if (electrostatic_solver_id != ElectrostaticSolverAlgo::None) {
             electromagnetic_solver_id = ElectromagneticSolverAlgo::None;
         }
+
+#if defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(electrostatic_solver_id == ElectrostaticSolverAlgo::None,
+                  "Electrostatic solver not supported with 1D cylindrical and spherical");
+#endif
 
         pp_warpx.query_enum_sloppy("poisson_solver", poisson_solver_id, "-_");
 #ifndef WARPX_DIM_3D
@@ -693,7 +705,7 @@ WarpX::ReadParameters ()
         );
 #endif
 
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
         const ParmParse pp_boundary("boundary");
         pp_boundary.query("verboncoeur_axis_correction", verboncoeur_axis_correction);
 #endif
@@ -707,7 +719,7 @@ WarpX::ReadParameters ()
 
         // Filter currently not working with FDTD solver in RZ geometry: turn OFF by default
         // (see https://github.com/ECP-WarpX/WarpX/issues/1943)
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
         if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) { WarpX::use_filter = false; }
 #endif
 
@@ -728,7 +740,7 @@ WarpX::ReadParameters ()
 
         // TODO When k-space filtering will be implemented also for Cartesian geometries,
         // this code block will have to be applied in all cases (remove #ifdef condition)
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
         if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
             // With RZ spectral, only use k-space filtering
             use_kspace_filter = use_filter;
@@ -739,7 +751,7 @@ WarpX::ReadParameters ()
             // Filter currently not working with FDTD solver in RZ geometry along R
             // (see https://github.com/ECP-WarpX/WarpX/issues/1943)
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!use_filter || filter_npass_each_dir[0] == 0,
-                "In RZ geometry with FDTD, filtering can only be apply along z. This can be controlled by setting warpx.filter_npass_each_dir");
+                "In cylindrical and spherical geometry with FDTD, filtering can not be done in the radial direction. This can be controlled by setting warpx.filter_npass_each_dir");
         }
 #endif
 
@@ -849,7 +861,7 @@ WarpX::ReadParameters ()
         // true for Cartesian PSATD solver, false otherwise
         do_pml_dive_cleaning = false;
         do_pml_divb_cleaning = false;
-#ifndef WARPX_DIM_RZ
+#if !defined(WARPX_DIM_RZ) && !defined(WARPX_DIM_RCYLINDER) && !defined(WARPX_DIM_RSPHERE)
         if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
         {
             do_pml_dive_cleaning = true;
@@ -893,13 +905,15 @@ WarpX::ReadParameters ()
             );
         }
 
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( ::isAnyBoundaryPML(field_boundary_lo, field_boundary_hi) == false || electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD,
-            "PML are not implemented in RZ geometry with FDTD; please set a different boundary condition using boundary.field_lo and boundary.field_hi.");
+            "PML are are only implemented with Cartesian geometry with FDTD; please set a different boundary condition using boundary.field_lo and boundary.field_hi.");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( (do_pml_dive_cleaning == false && do_pml_divb_cleaning == false),
+            "do_pml_dive_cleaning and do_pml_divb_cleaning are only implemented in Cartesian geometry." );
+#endif
+#if defined(WARPX_DIM_RZ)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( field_boundary_lo[1] != FieldBoundaryType::PML && field_boundary_hi[1] != FieldBoundaryType::PML,
             "PML are not implemented in RZ geometry along z; please set a different boundary condition using boundary.field_lo and boundary.field_hi.");
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( (do_pml_dive_cleaning == false && do_pml_divb_cleaning == false),
-            "do_pml_dive_cleaning and do_pml_divb_cleaning are not implemented in RZ geometry." );
 #endif
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -1007,10 +1021,10 @@ WarpX::ReadParameters ()
             current_centering_noz = 8;
         }
 
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             grid_type != GridType::Hybrid,
-            "warpx.grid_type=hybrid is not implemented in RZ geometry");
+            "warpx.grid_type=hybrid is not implemented in cylindrical and spherical geometry");
 #endif
 
         // Update default to external projection divb cleaner if external fields are loaded,
@@ -1065,20 +1079,20 @@ WarpX::ReadParameters ()
 
     {
         const ParmParse pp_algo("algo");
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( electromagnetic_solver_id != ElectromagneticSolverAlgo::CKC,
-            "algo.maxwell_solver = ckc is not (yet) available for RZ geometry");
+            "algo.maxwell_solver = ckc is not (yet) available for cylindrical and spherical geometry");
 #endif
 #ifndef WARPX_USE_FFT
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD,
             "algo.maxwell_solver = psatd is not supported because WarpX was built without spectral solvers");
 #endif
 
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(Geom(0).isPeriodic(0) == 0,
             "The problem must not be periodic in the radial direction");
 
-        // Ensure code aborts if PEC is specified at r=0 for RZ
+        // Ensure code aborts if "none" is not specified at r=0 for cylindrical and spherical
         if (Geom(0).ProbLo(0) == 0){
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 WarpX::field_boundary_lo[0] == FieldBoundaryType::None,
@@ -1092,7 +1106,9 @@ WarpX::ReadParameters ()
             }
 
         }
+#endif
 
+#if defined(WARPX_DIM_RZ)
         if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
             // Force grid_type=collocated (neither staggered nor hybrid)
             // and use same shape factors in all directions for gathering
@@ -1405,6 +1421,11 @@ WarpX::ReadParameters ()
                 "High-order centering of fields (order > 2) is not implemented with mesh refinement");
         }
     }
+
+#if defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD,
+        "PSATD solver not supported with 1D cylindrical and spherical geometry");
+#endif
 
     if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
     {
@@ -2102,7 +2123,18 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     jx_nodal_flag = IntVect(1);
     jy_nodal_flag = IntVect(1);
     jz_nodal_flag = IntVect(0);
-#elif   defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+    // AMReX convention: x = only dimension, y = missing dimension, z = missing dimension
+    Ex_nodal_flag = IntVect(0);
+    Ey_nodal_flag = IntVect(1);
+    Ez_nodal_flag = IntVect(1);
+    Bx_nodal_flag = IntVect(1);
+    By_nodal_flag = IntVect(0);
+    Bz_nodal_flag = IntVect(0);
+    jx_nodal_flag = IntVect(0);
+    jy_nodal_flag = IntVect(1);
+    jz_nodal_flag = IntVect(1);
+#elif  defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     // AMReX convention: x = first dimension, y = missing dimension, z = second dimension
     Ex_nodal_flag = IntVect(0,1);
     Ey_nodal_flag = IntVect(1,1);
@@ -2793,7 +2825,7 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
 {
 #if defined(WARPX_DIM_3D)
     const RealVect dx_vect(dx[0], dx[1], dx[2]);
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(WARPX_DIM_XZ)
     const RealVect dx_vect(dx[0], dx[2]);
 #elif defined(WARPX_DIM_1D_Z)
     const RealVect dx_vect(dx[2]);
@@ -2836,8 +2868,10 @@ WarpX::CellSize (int lev)
     return { dx[0], dx[1], dx[2] };
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     return { dx[0], 1.0, dx[1] };
-#else
+#elif defined(WARPX_DIM_1D_Z)
     return { 1.0, 1.0, dx[0] };
+#elif defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+    return { dx[0], 1.0, 1.0 };
 #endif
 }
 
@@ -2876,6 +2910,9 @@ WarpX::LowerCorner(const Box& bx, const int lev, const amrex::Real time_shift_de
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     return { grid_min[0] + galilean_shift[0], std::numeric_limits<Real>::lowest(), grid_min[1] + galilean_shift[2] };
 
+#elif defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+    return { grid_min[0] + galilean_shift[0], std::numeric_limits<Real>::lowest(), std::numeric_limits<Real>::lowest() };
+
 #elif defined(WARPX_DIM_1D_Z)
     return { std::numeric_limits<Real>::lowest(), std::numeric_limits<Real>::lowest(), grid_min[0] + galilean_shift[2] };
 #endif
@@ -2900,6 +2937,9 @@ WarpX::UpperCorner(const Box& bx, const int lev, const amrex::Real time_shift_de
 
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     return { grid_max[0] + galilean_shift[0], std::numeric_limits<Real>::max(), grid_max[1] + galilean_shift[1] };
+
+#elif defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+    return { grid_max[0] + galilean_shift[0], std::numeric_limits<Real>::max(), std::numeric_limits<Real>::max() };
 
 #elif defined(WARPX_DIM_1D_Z)
     return { std::numeric_limits<Real>::max(), std::numeric_limits<Real>::max(), grid_max[0] + galilean_shift[0] };
@@ -2930,7 +2970,7 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
 
     const Real dxinv = 1._rt/dx[0], dyinv = 1._rt/dx[1], dzinv = 1._rt/dx[2];
 
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
     const Real rmin = GetInstance().Geom(0).ProbLo(0);
 #endif
 
@@ -2949,7 +2989,7 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
         [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
             warpx_computedivb(i, j, k, dcomp, divBfab, Bxfab, Byfab, Bzfab, dxinv, dyinv, dzinv
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
                               ,rmin
 #endif
                               );

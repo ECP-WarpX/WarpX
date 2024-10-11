@@ -29,11 +29,16 @@ struct PIdx
 #if defined (WARPX_DIM_3D)
         y,
 #endif
+#if !defined(WARPX_DIM_RCYLINDER) && !defined(WARPX_DIM_RSPHERE)
         z,
+#endif
         w,      ///< weight
         ux, uy, uz,
-#ifdef WARPX_DIM_RZ
-        theta,      ///< RZ needs all three position components
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+        theta,      ///< Cylindrical and spherical needs the angle
+#endif
+#if defined(WARPX_DIM_RSPHERE)
+        phi,      ///< 1D Sphere needs all three position components
 #endif
         nattribs    ///< number of compile-time attributes
     };
@@ -69,7 +74,7 @@ public:
     /** Construct a NamedComponentParticleContainer from an AmrParGDB object
      *
      * In this case, the only components are the default ones:
-     * weight, momentum and (in RZ geometry) theta.
+     * weight, momentum, (in RZ and RCYLINDER geometry) theta, and (in RSPHERE) phi.
      *
      * @param amr_pgdb A pointer to a ParGDBBase, which contains pointers to
      * the Geometry, DistributionMapping, and BoxArray objects that define the
@@ -84,13 +89,18 @@ public:
 #if defined (WARPX_DIM_3D)
         particle_comps["y"]  = PIdx::y;
 #endif
+#if !defined(WARPX_DIM_RCYLINDER) && !defined(WARPX_DIM_RSPHERE)
         particle_comps["z"]  = PIdx::z;
+#endif
         particle_comps["w"]  = PIdx::w;
         particle_comps["ux"] = PIdx::ux;
         particle_comps["uy"] = PIdx::uy;
         particle_comps["uz"] = PIdx::uz;
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
         particle_comps["theta"] = PIdx::theta;
+#endif
+#if defined(WARPX_DIM_RSPHERE)
+        particle_comps["phi"] = PIdx::phi;
 #endif
     }
 
