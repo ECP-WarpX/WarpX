@@ -207,7 +207,7 @@ private:
     amrex::Vector<ScatteringProcess> m_scattering_processes;
     amrex::Gpu::DeviceVector<ScatteringProcess::Executor> m_scattering_processes_exe;
 
-    bool ionization_flag = false;
+    bool ionization_flag = false; // Not sure we actually need to store this
 
     amrex::Vector<std::string> m_species_names; // TODO: is this the right place to store this?
     bool m_isSameSpecies;

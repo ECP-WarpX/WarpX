@@ -85,7 +85,17 @@ public:
         amrex::Vector<int> num_added_vec(m_num_product_species);
         for (int i = 0; i < m_num_product_species; i++)
         {
-            // How many particles of product species i are created.
+            // How many particles of product species i are potentially created.
+            // ("potentially" because the actual number of particles created depends on the
+            // type of reaction in the DSMC collision, which is stored in the mask. For
+            // instance, an IONIZATION reaction will create 2 electrons (the scattered
+            // electron, which will be split off from the incident electron, and the
+            // ionized electron), while an ELASTIC reaction will only 1 electron (the
+            // scattered electron). Therefore, here we allocate enough memory to store
+            // all potential particles that can be created (see also the constructor of
+            // SplitAndScatterFunc, where `m_num_products_host` is set), but set an
+            // invalid ID for the particles that should not actually be created, so that
+            // they are removed in the subsequent call to ReDistribute.
             const index_type num_added = total * m_num_products_host[i];
             num_added_vec[i] = static_cast<int>(num_added);
             tile_products[i]->resize(products_np[i] + num_added);
@@ -120,15 +130,14 @@ public:
 #endif
 
         const int* AMREX_RESTRICT p_num_products_device = m_num_products_device.data();
+        const bool ionization_flag = m_ionization_flag;
 
         amrex::ParallelForRNG(n_total_pairs,
         [=] AMREX_GPU_DEVICE (int i, amrex::RandomEngine const& engine) noexcept
         {
             if (mask[i])
             {
-                // for now we ignore the possibility of having actual reaction
-                // products - only duplicating (splitting) of the colliding
-                // particles is supported.
+                // TODO: by default: set all IDs to be invalid
 
                 const auto product1_index = products_np_data[0] +
                                            (p_offsets[i]*p_num_products_device[0] + 0);
@@ -145,6 +154,23 @@ public:
                                 static_cast<int>(product2_index), engine);
                 // Set the weight of the new particles to p_pair_reaction_weight[i]
                 soa_products_data[1].m_rdata[PIdx::w][product2_index] = p_pair_reaction_weight[i];
+
+                if (ionization_flag) {
+                    // The electron created from ionization is stored as the second particle in product 1
+                    // Copy its properties from species 2 (momentum, position, etc.)
+
+
+                    // The ion created from ionization is stored as the first particle in product 3
+                    // Copy its properties from species 2 (momentum, position, etc.)
+                    const auto product3_index = products_np_data[2] +
+                                            (p_offsets[i]*p_num_products_device[2] + 0);
+
+                    // Make a copy of the particle from species 3
+                    copy_species2[2](soa_products_data[2], soa_3, static_cast<int>(p_pair_indices_3[i]),
+                                    static_cast<int>(product3_index), engine);
+                    // Set the weight of the new particles to p_pair_reaction_weight[i]
+                    soa_products_data[2].m_rdata[PIdx::w][product3_index] = p_pair_reaction_weight[i];
+                }
 
                 // Set the child particle properties appropriately
                 auto& ux1 = soa_products_data[0].m_rdata[PIdx::ux][product1_index];
@@ -202,6 +228,8 @@ public:
                     else {
                         amrex::Abort("Uneven mass charge-exchange not implemented yet.");
                     }
+                } else if (mask[i] == int(ScatteringProcessType::IONIZATION)) {
+                    // Same as in doBackgroundIonization
                 }
                 else {
                     amrex::Abort("Unknown scattering process.");
@@ -244,6 +272,7 @@ public:
 private:
     // How many different type of species the collision produces
     int m_num_product_species;
+    bool m_ionization_flag = false;
     // Vectors of size m_num_product_species storing how many particles of a given species are
     // produced by a collision event. These vectors are duplicated (one version for host and one
     // for device) which is necessary with GPUs but redundant on CPU.
