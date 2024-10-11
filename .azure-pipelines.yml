@@ -9,6 +9,9 @@ pr:
   branches:
     include:
     - development
+  paths:
+    exclude:
+    - Docs
 
 jobs:
 - job:
