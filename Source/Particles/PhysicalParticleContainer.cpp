@@ -1347,8 +1347,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                 } else {
                     // This is not correct since it might shift the particle
                     // out of the local grid
-                    // Not sure what this should be yet!!
-                    pos.x = std::sqrt(xb*rmax);
+                    pos.x = std::cbrt(xb*rmax);
                     weight *= dx[0];
                 }
 #endif
@@ -1768,8 +1767,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                     } else {
                          // This is not correct since it might shift the particle
                          // out of the local grid
-                         // Not sure what this should be yet!
-                         ppos.x = std::sqrt(radial_position*rmax);
+                         ppos.x = std::cbrt(radial_position*rmax);
                          t_weight *= dx[0];
                     }
                 }
