@@ -1332,7 +1332,11 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
     constexpr int NODE = amrex::IndexType::NODE;
 
     // See Verboncoeur JCP 174, 421-427 (2001) for the modified volume factor
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
     const amrex::Real axis_volume_factor = (verboncoeur_axis_correction ? 1._rt/3._rt : 1._rt/4._rt);
+#elif defined(WARPX_DIM_RSPHERE)
+    const amrex::Real axis_volume_factor = (verboncoeur_axis_correction ? 1._rt/4._rt : 1._rt/8._rt);
+#endif
 
     for ( MFIter mfi(*Jx, TilingIfNotGPU()); mfi.isValid(); ++mfi )
     {
@@ -1480,7 +1484,11 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
             // Apply the inverse volume scaling
             const amrex::Real r = amrex::Math::abs(rminz + (i - irmin)*dr);
             if (r == 0._rt) {
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
                 Jz_arr(i,j,0,0) /= (MathConst::pi*dr*axis_volume_factor);
+#elif defined(WARPX_DIM_RSPHERE)
+                Jz_arr(i,j,0,0) = 0._rt;
+#endif
             } else {
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
                 Jz_arr(i,j,0,0) /= (2._rt*MathConst::pi*r);
@@ -1522,7 +1530,11 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
     constexpr int NODE = amrex::IndexType::NODE;
 
     // See Verboncoeur JCP 174, 421-427 (2001) for the modified volume factor
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
     const amrex::Real axis_volume_factor = (verboncoeur_axis_correction ? 1._rt/3._rt : 1._rt/4._rt);
+#elif defined(WARPX_DIM_RSPHERE)
+    const amrex::Real axis_volume_factor = (verboncoeur_axis_correction ? 1._rt/4._rt : 1._rt/8._rt);
+#endif
 
     Box tilebox;
 
@@ -1582,9 +1594,14 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
             // Apply the inverse volume scaling
             const amrex::Real r = amrex::Math::abs(rminr + (i - irmin)*dr);
             if (r == 0.) {
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
                 Rho_arr(i,j,0,icomp) /= (MathConst::pi*dr*axis_volume_factor);
+#elif defined(WARPX_DIM_RSPHERE)
+                Rho_arr(i,j,0,icomp) /= (4._rt/3._rt*MathConst::pi*dr*dr*axis_volume_factor);
+#endif
             } else {
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
+                // Scale factor is pi*((r + dr/2)**2 - (r - dr/2)**2)/dr
                 Rho_arr(i,j,0,icomp) /= (2._rt*MathConst::pi*r);
 #elif defined(WARPX_DIM_RSPHERE)
                 // Scale factor is 4/3*pi*((r + dr/2)**3 - (r - dr/2)**3)/dr
