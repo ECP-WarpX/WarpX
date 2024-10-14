@@ -155,6 +155,7 @@ public:
 private:
   void Init (openPMD::Access access, bool isBTD);
 
+  void WriteJobInfo();
 
   /** Get the openPMD::Iteration object of the current Series
    *
