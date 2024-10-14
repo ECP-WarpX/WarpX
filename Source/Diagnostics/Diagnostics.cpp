@@ -495,9 +495,11 @@ Diagnostics::InitBaseData ()
     // current moving_window location
     if (WarpX::do_moving_window) {
         const int moving_dir = WarpX::moving_window_dir;
-        const int shift_num_base = static_cast<int>((warpx.getmoving_window_x() - m_lo[moving_dir]) / warpx.Geom(0).CellSize(moving_dir) );
-        m_lo[moving_dir] += shift_num_base * warpx.Geom(0).CellSize(moving_dir);
-        m_hi[moving_dir] += shift_num_base * warpx.Geom(0).CellSize(moving_dir);
+        const int shift_num_base_lo = static_cast<int>((warpx.getmoving_window_x() - m_lo[moving_dir]) / warpx.Geom(0).CellSize(moving_dir) );
+        const int shift_num_base_hi = static_cast<int>((warpx.getmoving_window_x() - m_hi[moving_dir]) / warpx.Geom(0).CellSize(moving_dir) );
+        m_lo[moving_dir] = warpx.getmoving_window_x() - shift_num_base_lo * warpx.Geom(0).CellSize(moving_dir);
+        m_hi[moving_dir] = warpx.getmoving_window_x() - shift_num_base_hi * warpx.Geom(0).CellSize(moving_dir);
+
     }
     // Construct Flush class.
     if        (m_format == "plotfile"){
