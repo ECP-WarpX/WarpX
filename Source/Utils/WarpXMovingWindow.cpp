@@ -210,6 +210,10 @@ WarpX::MoveWindow (const int step, bool move_j)
     constexpr auto dont_update_cost = false; //We can't update cost for PML
 
     // Shift the mesh fields
+    // (only for electromagnetic solvers, for which the history of the
+    // fields matter ; for other solvers, the fields are recomputed from
+    // at each iteration)
+    if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None) {
     for (int lev = 0; lev <= finest_level; ++lev) {
 
         if (lev > 0) {
@@ -384,6 +388,7 @@ WarpX::MoveWindow (const int step, bool move_j)
                 shiftMF( *m_fields.get(fl.name_mf_NU, Direction{2}, lev), geom[lev], num_shift, dir, lev, do_update_cost );
             }
         }
+    }
     }
 
     // Loop over species (particles and lasers)
