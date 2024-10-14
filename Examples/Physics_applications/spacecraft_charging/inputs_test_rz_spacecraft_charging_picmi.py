@@ -18,7 +18,7 @@ from mpi4py import MPI as mpi
 
 from pywarpx import picmi
 from pywarpx.callbacks import installafterEsolve, installafterInitEsolve
-from pywarpx.fields import ExWrapper, EzWrapper, PhiFPWrapper, RhoFPWrapper
+from pywarpx.fields import PhiFPWrapper, RhoFPWrapper
 from pywarpx.particle_containers import ParticleBoundaryBufferWrapper
 
 
@@ -49,10 +49,11 @@ class SpaceChargeFieldCorrector(object):
             q = compute_actual_charge_on_spacecraft()
 
         # Correct fields so as to recover the actual charge
-        Er = ExWrapper(include_ghosts=True)
-        Er[...] += (q - q_v) * self.normalized_Er
-        Ez = EzWrapper(include_ghosts=True)
-        Ez[...] += (q - q_v) * self.normalized_Ez
+        # TODO: add guard cells
+        Er = sim.extension.warpx.multifab("Efield_fp[x][level=0]")
+        Er.saxpy(Er, (q - q_v), self.normalized_Er, 0, 0, 1, 0)
+        Ez = sim.extension.warpx.multifab("Efield_fp[z][level=0]")
+        Ez.saxpy(Ez, (q - q_v), self.normalized_Ez, 0, 0, 1, 0)
         phi = PhiFPWrapper(include_ghosts=True)
         phi[...] += (q - q_v) * self.normalized_phi
         self.spacecraft_potential += (q - q_v) * self.spacecraft_capacitance
@@ -79,10 +80,15 @@ class SpaceChargeFieldCorrector(object):
         assert np.all(abs(rho[...]) < 1.0e-11)
 
         # Record fields
-        Er = ExWrapper(include_ghosts=True)[:, :]
-        self.normalized_Er = Er[...] / q_v
-        Ez = EzWrapper(include_ghosts=True)[:, :]
-        self.normalized_Ez = Ez[...] / q_v
+        # TODO: add guard cells
+        self.normalized_Er = sim.extension.warpx.multifab(
+            "Efield_fp[x][level=0]"
+        ).copy()
+        self.normalized_Er.mult(1 / q_v, 0)
+        self.normalized_Ez = sim.extension.warpx.multifab(
+            "Efield_fp[z][level=0]"
+        ).copy()
+        self.normalized_Ez.mult(1 / q_v, 0)
         phi = PhiFPWrapper(include_ghosts=True)[:, :]
         self.normalized_phi = phi[...] / q_v
 
