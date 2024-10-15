@@ -56,9 +56,9 @@
 
 using namespace amrex;
 
-RigidInjectedParticleContainer::RigidInjectedParticleContainer (AmrCore* amr_core, int ispecies,
+RigidInjectedParticleContainer::RigidInjectedParticleContainer (AmrCore* amr_core,
                                                                 const std::string& name)
-    : PhysicalParticleContainer(amr_core, ispecies, name)
+    : PhysicalParticleContainer(amr_core, name)
 {
 
     const ParmParse pp_species_name(species_name);
@@ -71,6 +71,8 @@ RigidInjectedParticleContainer::RigidInjectedParticleContainer (AmrCore* amr_cor
 
 void RigidInjectedParticleContainer::InitData()
 {
+    PhysicalParticleContainer::InitData();
+
     // Perform Lorentz transform of `z_inject_plane`
     const amrex::Real t_boost = WarpX::GetInstance().gett_new(0);
     const amrex::Real zinject_plane_boost = zinject_plane/WarpX::gamma_boost

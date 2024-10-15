@@ -213,12 +213,56 @@ namespace
     }
 }
 
-PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int ispecies,
+PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core,
                                                       const std::string& name)
-    : WarpXParticleContainer(amr_core, ispecies),
+    : WarpXParticleContainer(amr_core),
       species_name(name)
 {
     BackwardCompatibility();
+
+#ifdef WARPX_QED
+    if (!species_name.empty()) {  // TODO: remove this if once pc_tmp is removed from WarpX
+        const ParmParse pp_species_name(species_name);
+        pp_species_name.query("do_qed_quantum_sync", m_do_qed_quantum_sync);
+        if (m_do_qed_quantum_sync) {
+            AddRealComp("opticalDepthQSR");
+        }
+
+        if (m_do_qed_quantum_sync) {
+            pp_species_name.get("qed_quantum_sync_phot_product_species",
+                                m_qed_quantum_sync_phot_product_name);
+        }
+    }
+#endif
+}
+
+PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core)
+    : WarpXParticleContainer(amr_core)
+{
+}
+
+void
+PhysicalParticleContainer::BackwardCompatibility ()
+{
+    if (!species_name.empty()) {  // TODO: remove this if once pc_tmp is removed from WarpX
+        const ParmParse pp_species_name(species_name);
+        std::vector<std::string> backward_strings;
+        if (pp_species_name.queryarr("plot_vars", backward_strings)) {
+            WARPX_ABORT_WITH_MESSAGE("<species>.plot_vars is not supported anymore. "
+                                     "Please use the new syntax for diagnostics, see documentation.");
+        }
+
+        int backward_int;
+        if (pp_species_name.query("plot_species", backward_int)) {
+            WARPX_ABORT_WITH_MESSAGE("<species>.plot_species is not supported anymore. "
+                                     "Please use the new syntax for diagnostics, see documentation.");
+        }
+    }
+}
+
+void PhysicalParticleContainer::InitData ()
+{
+    if (!species_name.empty()) {  // TODO: remove this if once pc_tmp is removed from WarpX
 
     const ParmParse pp_species_name(species_name);
 
@@ -227,13 +271,13 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     if (injection_style != "none") {
         // The base plasma injector, whose input parameters have no source prefix.
         // Only created if needed
-        plasma_injectors.push_back(std::make_unique<PlasmaInjector>(species_id, species_name, amr_core->Geom(0)));
+        plasma_injectors.push_back(std::make_unique<PlasmaInjector>(species_name, Geom(0)));
     }
 
     std::vector<std::string> injection_sources;
     pp_species_name.queryarr("injection_sources", injection_sources);
     for (auto &source_name : injection_sources) {
-        plasma_injectors.push_back(std::make_unique<PlasmaInjector>(species_id, species_name, amr_core->Geom(0),
+        plasma_injectors.push_back(std::make_unique<PlasmaInjector>(species_name, Geom(0),
                                                                     source_name));
     }
 
@@ -339,23 +383,6 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
         "Radiation reaction can be enabled only if Boris pusher is used");
     //_____________________________
 
-#ifdef WARPX_QED
-    pp_species_name.query("do_qed_quantum_sync", m_do_qed_quantum_sync);
-    if (m_do_qed_quantum_sync) {
-        AddRealComp("opticalDepthQSR");
-    }
-
-    pp_species_name.query("do_qed_breit_wheeler", m_do_qed_breit_wheeler);
-    if (m_do_qed_breit_wheeler) {
-        AddRealComp("opticalDepthBW");
-    }
-
-    if(m_do_qed_quantum_sync){
-        pp_species_name.get("qed_quantum_sync_phot_product_species",
-            m_qed_quantum_sync_phot_product_name);
-    }
-#endif
-
     // User-defined integer attributes
     pp_species_name.queryarr("addIntegerAttributes", m_user_int_attribs);
     const auto n_user_int_attribs = static_cast<int>(m_user_int_attribs.size());
@@ -423,32 +450,9 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
         utils::parser::getWithParser(pp_species_boundary,"u_th",boundary_uth);
         m_boundary_conditions.SetThermalVelocity(boundary_uth);
     }
-}
 
-PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core)
-    : WarpXParticleContainer(amr_core, 0)
-{
-}
+    } // !species_name.empty()  TODO: remove this if once pc_tmp is removed from WarpX
 
-void
-PhysicalParticleContainer::BackwardCompatibility ()
-{
-    const ParmParse pp_species_name(species_name);
-    std::vector<std::string> backward_strings;
-    if (pp_species_name.queryarr("plot_vars", backward_strings)){
-        WARPX_ABORT_WITH_MESSAGE("<species>.plot_vars is not supported anymore. "
-                     "Please use the new syntax for diagnostics, see documentation.");
-    }
-
-    int backward_int;
-    if (pp_species_name.query("plot_species", backward_int)){
-        WARPX_ABORT_WITH_MESSAGE("<species>.plot_species is not supported anymore. "
-                     "Please use the new syntax for diagnostics, see documentation.");
-    }
-}
-
-void PhysicalParticleContainer::InitData ()
-{
     AddParticles(0); // Note - add on level 0
     Redistribute();  // We then redistribute
 }

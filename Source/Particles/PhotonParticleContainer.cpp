@@ -7,6 +7,7 @@
  */
 #include "PhotonParticleContainer.H"
 
+#include "Particles/SpeciesPhysicalProperties.H"
 #ifdef WARPX_QED
 #   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
 #endif
@@ -43,10 +44,16 @@
 
 using namespace amrex;
 
-PhotonParticleContainer::PhotonParticleContainer (AmrCore* amr_core, int ispecies,
+PhotonParticleContainer::PhotonParticleContainer (AmrCore* amr_core,
                                                   const std::string& name)
-    : PhysicalParticleContainer(amr_core, ispecies, name)
+    : PhysicalParticleContainer(amr_core, name)
 {
+    // this is a physical photon
+    physical_species = PhysicalSpecies::photon;
+    charge = species::get_charge( physical_species );
+    mass = species::get_mass( physical_species );
+
+    // other properties and methods, e.g., QED
     const ParmParse pp_species_name(species_name);
 
 #ifdef WARPX_QED
@@ -56,6 +63,7 @@ PhotonParticleContainer::PhotonParticleContainer (AmrCore* amr_core, int ispecie
         //If Breit Wheeler process is enabled, look for the target electron and positron
         //species
         if(m_do_qed_breit_wheeler){
+            AddRealComp("opticalDepthBW");
             pp_species_name.get("qed_breit_wheeler_ele_product_species", m_qed_breit_wheeler_ele_product_name);
             pp_species_name.get("qed_breit_wheeler_pos_product_species", m_qed_breit_wheeler_pos_product_name);
         }
@@ -73,6 +81,8 @@ PhotonParticleContainer::PhotonParticleContainer (AmrCore* amr_core, int ispecie
 
 void PhotonParticleContainer::InitData()
 {
+    PhysicalParticleContainer::InitData();
+
     AddParticles(0); // Note - add on level 0
 
     Redistribute();  // We then redistribute
