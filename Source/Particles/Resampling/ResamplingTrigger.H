@@ -7,7 +7,7 @@
 #ifndef WARPX_RESAMPLING_TRIGGER_H_
 #define WARPX_RESAMPLING_TRIGGER_H_
 
-#include "Utils/Parser/IntervalsParser.H"
+#include "ablastr/utils/IntervalsParser.H"
 
 #include <AMReX_REAL.H>
 
