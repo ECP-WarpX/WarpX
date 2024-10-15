@@ -68,11 +68,6 @@ which clang++
 export CXX=$(which clang++)
 export CC=$(which clang)
 
-# "mpic++ --showme" forgets open-pal in Ubuntu 20.04 + OpenMPI 4.0.3
-#   https://bugs.launchpad.net/ubuntu/+source/openmpi/+bug/1941786
-#   https://github.com/open-mpi/ompi/issues/9317
-export LDFLAGS="-lopen-pal"
-
 # cmake-easyinstall
 #
 sudo curl -L -o /usr/local/bin/cmake-easyinstall https://raw.githubusercontent.com/ax3l/cmake-easyinstall/main/cmake-easyinstall
