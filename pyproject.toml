@@ -20,3 +20,65 @@ known-first-party = ["amrex", "picmistandard", "pywarpx", "warpx"]
 [tool.isort]
 known_first_party = ["amrex", "picmistandard", "pywarpx", "warpx"]
 profile = "black"
+
+[tool.pixi.project]
+name = "warpx-omp-dev"
+channels = ["conda-forge"]
+platforms = ["linux-64"]  # Azure CI
+# platforms = ["linux-64", "linux-aarch64", "linux-ppc64le", "osx-64", "osx-arm64", "win-64"]  # generally what we support with conda-forge
+
+[tool.pixi.dependencies]
+boost = ">=1.85.0"
+ccache = "*"
+cmake = ">=3.24.0"
+compilers = "*"
+dill = "*"
+fftw = ">=3.3"
+git = ">=2.18"
+heffte = { version = ">=2.4.0", build = "mpi_mpich_*" }
+lapackpp = ">=2022.5.0"
+lasy = ">=0.5.0"
+matplotlib = "*"
+mpi = { build = "mpich" }
+mpi4py = "*"
+ninja = "*"
+numpy = "~=1.15"  # unyt 2.9.5 in yt 4.3.1 does not support numpy 2 yet
+openpmd-api = { version = ">=0.15.2", build = "mpi_mpich_*" }
+openpmd-viewer = "*"
+packaging = "*"
+pandas = "*"
+periodictable = "*"
+picmistandard = "==0.30.0"  # see requirements.txt
+pip = ">=24.2"
+pkg-config = "*"
+pybind11 = ">=2.12.0"
+python = "*"
+setuptools = ">=42"
+scipy ="*"
+virtualenv = "*"
+wheel = ">=0.44.0"
+yt = ">=4.3.1"
+
+# For packages not yet available on Conda-Forge
+# [tool.pixi.pypi-dependencies]
+# lasy = ">=0.5.0"
+# picmistandard = "==0.30.0"  # see requirements.txt
+# pywarpx = { path = ".", editable = true }
+
+[tool.linux-64.dependencies]
+libgomp = "*"
+
+[tool.linux-aarch64.dependencies]
+libgomp = "*"
+
+[tool.linux-ppc64le.dependencies]
+libgomp = "*"
+
+[tool.osx-64.dependencies]
+llvm-openmp = "*"
+
+[tool.osx-arm64.dependencies]
+llvm-openmp = "*"
+
+[tool.win-64.dependencies]
+llvm-openmp = "*"
