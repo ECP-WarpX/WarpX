@@ -6,7 +6,7 @@ Particle-in-Cell Method
 .. _fig-pic:
 
 .. figure:: PIC.png
-   :alt: [fig:PIC] The Particle-In-Cell (PIC) method follows the evolution of a collection of charged macro-particles (positively charged in blue on the left plot, negatively charged in red) that evolve self-consistently with their electromagnetic (or electrostatic) fields. The core PIC algorithm involves four operations at each time step: 1) evolve the velocity and position of the particles using the Newton-Lorentz equations, 2) deposit the charge and/or current densities through interpolation from the particles distributions onto the grid, 3) evolve Maxwell’s wave equations (for electromagnetic) or solve Poisson’s equation (for electrostatic) on the grid, 4) interpolate the fields from the grid onto the particles for the next particle push. Additional “add-ons” operations are inserted between these core operations to account for additional physics (e.g. absorption/emission of particles, addition of external forces to account for accelerator focusing or accelerating component) or numerical effects (e.g. smoothing/filtering of the charge/current densities and/or fields on the grid).
+   :alt: figure not found
 
    The Particle-In-Cell (PIC) method follows the evolution of a collection of charged macro-particles (positively charged in blue on the left plot, negatively charged in red) that evolve self-consistently with their electromagnetic (or electrostatic) fields. The core PIC algorithm involves four operations at each time step: 1) evolve the velocity and position of the particles using the Newton-Lorentz equations, 2) deposit the charge and/or current densities through interpolation from the particles distributions onto the grid, 3) evolve Maxwell’s wave equations (for electromagnetic) or solve Poisson’s equation (for electrostatic) on the grid, 4) interpolate the fields from the grid onto the particles for the next particle push. Additional “add-ons” operations are inserted between these core operations to account for additional physics (e.g. absorption/emission of particles, addition of external forces to account for accelerator focusing or accelerating component) or numerical effects (e.g. smoothing/filtering of the charge/current densities and/or fields on the grid).
 
@@ -173,7 +173,7 @@ is described in, e.g., :cite:t:`pt-VayCSD12,pt-Vaycpc04`.
 .. _fig_yee_grid:
 
 .. figure:: Yee_grid.png
-   :alt: [fig:yee_grid](left) Layout of field components on the staggered “Yee” grid. Current densities and electric fields are defined on the edges of the cells and magnetic fields on the faces. (right) Time integration using a second-order finite-difference "leapfrog" integrator.
+   :alt: figure not found
 
    (left) Layout of field components on the staggered “Yee” grid. Current densities and electric fields are defined on the edges of the cells and magnetic fields on the faces. (right) Time integration using a second-order finite-difference "leapfrog" integrator.
 
@@ -456,7 +456,7 @@ During these subintervals, :math:`\boldsymbol{\widetilde{J}}` and :math:`\wideti
 .. _fig-psatd_jrhom:
 
 .. figure:: https://gist.githubusercontent.com/oshapoval/88a73cada764364ad4ffce13563cedf1/raw/697ce1897cde0416bebdde8f1c1e8fcf859cb419/psatd_jrhom.png
-   :alt: figure not found, caption only
+   :alt: figure not found
 
    Diagrams illustrating various time dependencies of the current density :math:`\boldsymbol{\widetilde{J}}` and charge density :math:`\widetilde{\rho}` for constant/linear (CL), both constant (CC), linear (LL) and quadratic (QQ) dependencies with :math:`m` subintervals: (first column) :math:`m=1`, (second) :math:`m=2` and (third) :math:`m=4`. CL1 corresponds to the standard PSATD PIC method. The triangle and circle glyphs represent the times at which the macroparticles deposit :math:`\boldsymbol{\widetilde{J}}` and :math:`\widetilde{\rho}` on the grid, respectively. The dashed and solid lines represent the assumed time dependency of :math:`\boldsymbol{\widetilde{J}}` and :math:`\widetilde{\rho}` within one time step, when integrating the Maxwell equations analytically.
 
@@ -503,9 +503,8 @@ Here, :math:`\boldsymbol{a_J}, \boldsymbol{b_J}, \boldsymbol{c_J}, a_{\rho}, b_{
 
 .. _fig-j_rho_table:
 
-.. figure::
-   https://gist.githubusercontent.com/oshapoval/88a73cada764364ad4ffce13563cedf1/raw/ebc249f8e875a952c65a5319fd523821baccfd5a/j_rho_table.png
-   :alt: figure not found, caption only
+.. figure:: https://gist.githubusercontent.com/oshapoval/88a73cada764364ad4ffce13563cedf1/raw/ebc249f8e875a952c65a5319fd523821baccfd5a/j_rho_table.png
+   :alt: figure not found
 
    Polynomial coefficients based on the time dependency of the current and charge densities :math:`{\boldsymbol{\widetilde{J}}}(t)` and :math:`\widetilde{\rho}(t)` over one time subinterval, :math:`\delta t = \Delta t/m`.
 

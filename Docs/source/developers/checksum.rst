@@ -89,17 +89,23 @@ Alternatively, the benchmarks can be reset using the output of the Azure continu
 * On the Github page of the Pull Request, find (one of) the pipeline(s) failing due to benchmarks that need to be updated and click on "Details".
 
   .. figure:: https://user-images.githubusercontent.com/49716072/135133589-1fd8a626-ff93-4b9e-983f-acee028e0e4e.png
-     :alt: Screen capture showing how to access Azure pipeline output on Github.
+     :alt: figure not found
+
+     Screen capture showing how to access Azure pipeline output on Github.
 
 * Click on "View more details on Azure pipelines".
 
   .. figure:: https://user-images.githubusercontent.com/49716072/135133596-8f73afa2-969e-49a4-b4a6-184a4f478a44.png
-     :alt: Screen capture showing how to access Azure pipeline output on Github.
+     :alt: figure not found
+
+     Screen capture showing how to access Azure pipeline output on Github.
 
 * Click on "Build & test".
 
   .. figure:: https://user-images.githubusercontent.com/49716072/135133607-87324124-6145-4589-9a92-dcc8ea9432e4.png
-     :alt: Screen capture showing how to access Azure pipeline output on Github.
+     :alt: figure not found
+
+     Screen capture showing how to access Azure pipeline output on Github.
 
 From this output, there are two options to reset the benchmarks:
 
@@ -108,7 +114,9 @@ From this output, there are two options to reset the benchmarks:
    For instance, if the failing test is ``LaserAcceleration_BTD``, this content can be pasted into the file ``Regression/Checksum/benchmarks_json/LaserAcceleration_BTD.json``.
 
    .. figure:: https://user-images.githubusercontent.com/49716072/244415944-3199a933-990b-4bde-94b1-162b7e8e22be.png
-      :alt: Screen capture showing how to read new benchmark file from Azure pipeline output.
+      :alt: figure not found
+
+      Screen capture showing how to read new benchmark file from Azure pipeline output.
 
 #. If there are many tests failing in a single Azure pipeline, it might become more convenient to update the benchmarks automatically.
    WarpX provides a script for this, located in ``Tools/DevUtils/update_benchmarks_from_azure_output.py``.
@@ -117,12 +125,16 @@ From this output, there are two options to reset the benchmarks:
    * From the Azure output, click on "View raw log".
 
      .. figure:: https://user-images.githubusercontent.com/49716072/135133617-764b6daf-a8e4-4a50-afae-d4b3a7568b2f.png
-        :alt: Screen capture showing how to download raw Azure pipeline output.
+        :alt: figure not found
+
+        Screen capture showing how to download raw Azure pipeline output.
 
    * This should lead to a page that looks like the image below. Save it as a text file on your local computer.
 
      .. figure:: https://user-images.githubusercontent.com/49716072/135133624-310df207-5f87-4260-9917-26d5af665d60.png
-        :alt: Screen capture showing how to download raw Azure pipeline output.
+        :alt: figure not found
+
+        Screen capture showing how to download raw Azure pipeline output.
 
    * On your local computer, go to the WarpX folder and cd to the ``Tools/DevUtils`` folder.
 
