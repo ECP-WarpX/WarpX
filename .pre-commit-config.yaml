@@ -89,7 +89,7 @@ repos:
 
 # Checks the manifest for missing files (native support)
 - repo: https://github.com/mgedmin/check-manifest
-  rev: "0.49"
+  rev: "0.50"
   hooks:
   - id: check-manifest
     # This is a slow hook, so only run this if --hook-stage manual is passed
