@@ -658,7 +658,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                                   amrex::Dim3 lo,
                                   amrex::Real q,
 #ifdef AMREX_USE_EB
-                                  const amrex::Array4<amrex::Real>& distance_to_eb_arr,
+                                  const amrex::Array4<const amrex::Real>& distance_to_eb_arr,
                                   const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>& eb_dxi,
                                   const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>& eb_plo,
 #endif

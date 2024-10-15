@@ -257,7 +257,7 @@ Overall simulation parameters
         ``warpx.self_fields_absolute_tolerance``).
 
     * ``fft``: Poisson's equation is solved using an Integrated Green Function method (which requires FFT calculations).
-        See these references for more details :cite:t:`QiangPhysRevSTAB2006`, :cite:t:`QiangPhysRevSTAB2006err`.
+        See these references for more details :cite:t:`param-QiangPhysRevSTAB2006`, :cite:t:`param-QiangPhysRevSTAB2006err`.
         It only works in 3D and it requires the compilation flag ``-DWarpX_FFT=ON``.
         If mesh refinement is enabled, this solver only works on the coarsest level.
         On the refined patches, the Poisson equation is solved with the multigrid solver.
@@ -971,16 +971,21 @@ Particle initialization
       The ``external_file`` option is currently implemented for 2D, 3D and RZ geometries, with record components in the cartesian coordinates ``(x,y,z)`` for 3D and RZ, and ``(x,z)`` for 2D.
       For more information on the `openPMD format <https://github.com/openPMD>`__ and how to build WarpX with it, please visit :ref:`the install section <install-developers>`.
 
-    * ``NFluxPerCell``: Continuously inject a flux of macroparticles from a planar surface.
+    * ``NFluxPerCell``: Continuously inject a flux of macroparticles from a surface. The emitting surface can be chosen to be either a plane
+      defined by the user (using some of the parameters listed below), or the embedded boundary (see :ref:`Embedded Boundary Conditions <running-cpp-parameters-eb>`).
       This requires the additional parameters:
 
       * ``<species_name>.flux_profile`` (see the description of this parameter further below)
 
-      * ``<species_name>.surface_flux_pos`` (`double`, location of the injection plane [meter])
+      * ``<species_name>.inject_from_embedded_boundary`` (`0` or `1`, default `0` ; whether to inject from the embedded boundary or from a user-specified plane.
+        When injecting from the embedded boundary, the momentum distribution specified by the user along ``z`` (see e.g. ``uz_m``, ``uz_th`` below) is interpreted
+        as the momentum distribution along the local normal to the embedded boundary.)
 
-      * ``<species_name>.flux_normal_axis`` (`x`, `y`, or `z` for 3D, `x` or `z` for 2D, or `r`, `t`, or `z` for RZ. When `flux_normal_axis` is `r` or `t`, the `x` and `y` components of the user-specified momentum distribution are interpreted as the `r` and `t` components respectively)
+      * ``<species_name>.surface_flux_pos`` (only used when injecting from a plane, `double`, location of the injection plane [meter])
 
-      * ``<species_name>.flux_direction`` (`-1` or `+1`, direction of flux relative to the plane)
+      * ``<species_name>.flux_normal_axis`` (only used when injecting from a plane, `x`, `y`, or `z` for 3D, `x` or `z` for 2D, or `r`, `t`, or `z` for RZ. When `flux_normal_axis` is `r` or `t`, the `x` and `y` components of the user-specified momentum distribution are interpreted as the `r` and `t` components respectively)
+
+      * ``<species_name>.flux_direction`` (only used when injecting from a plane, `-1` or `+1`, direction of flux relative to the plane)
 
       * ``<species_name>.num_particles_per_cell`` (`double`)
 
@@ -2129,13 +2134,23 @@ Time step
     The ratio between the actual timestep that is used in the simulation
     and the Courant-Friedrichs-Lewy (CFL) limit. (e.g. for `warpx.cfl=1`,
     the timestep will be exactly equal to the CFL limit.)
-    This parameter will only be used with the electromagnetic solver.
+    For some speed v and grid spacing dx, this limits the timestep to `warpx.cfl * dx / v`.
+    When used with the electromagnetic solver, `v` is the speed of light.
+    For the electrostatic solver, `v` is the maximum speed among all particles in the domain.
 
 * ``warpx.const_dt`` (`float`)
     Allows direct specification of the time step size, in units of seconds.
-    When the electrostatic solver is being used, this must be supplied.
+    When the electrostatic solver is being used, this must be supplied if not using adaptive timestepping.
     This can be used with the electromagnetic solver, overriding ``warpx.cfl``, but
     it is up to the user to ensure that the CFL condition is met.
+
+* ``warpx.dt_update_interval`` (`string`) optional (default `-1`)
+    How many iterations pass between timestep adaptations when using the electrostatic solver.
+    Must be greater than `0` to use adaptive timestepping, or else ``warpx.const_dt`` must be specified.
+
+* ``warpx.max_dt`` (`float`) optional
+    The maximum timestep permitted for the electrostatic solver, when using adaptive timestepping.
+    If supplied, also sets the initial timestep for these simulations, before the first timestep update.
 
 Filtering
 ^^^^^^^^^
@@ -3448,39 +3463,43 @@ Reduced Diagnostics
         For 1D-Z, :math:`x`-related and :math:`y`-related quantities are not outputted.
         RZ geometry is not supported yet.
 
-* ``DifferentialLuminosity``
-    This type computes the differential luminosity between two species, defined as:
+    * ``DifferentialLuminosity``
+        This type computes the differential luminosity between two species, defined as:
 
-    .. math::
+        .. math::
 
-        \frac{d\mathcal{L}}{d\mathcal{E}^*}(\mathcal{E}^*, t) = \int_0^t dt'\int d\boldsymbol{x}\,d\boldsymbol{p}_1 d\boldsymbol{p}_2\;
-         \sqrt{ |\boldsymbol{v}_1 - \boldsymbol{v}_2|^2 - |\boldsymbol{v}_1\times\boldsymbol{v}_2|^2/c^2} \\ f_1(\boldsymbol{x}, \boldsymbol{p}_1, t')f_2(\boldsymbol{x}, \boldsymbol{p}_2, t') \delta(\mathcal{E}^* - \mathcal{E}^*(\boldsymbol{p}_1, \boldsymbol{p}_2))
+            \frac{d\mathcal{L}}{d\mathcal{E}^*}(\mathcal{E}^*, t) = \int_0^t dt'\int d\boldsymbol{x}\,d\boldsymbol{p}_1 d\boldsymbol{p}_2\;
+             \sqrt{ |\boldsymbol{v}_1 - \boldsymbol{v}_2|^2 - |\boldsymbol{v}_1\times\boldsymbol{v}_2|^2/c^2} \\ f_1(\boldsymbol{x}, \boldsymbol{p}_1, t')f_2(\boldsymbol{x}, \boldsymbol{p}_2, t') \delta(\mathcal{E}^* - \mathcal{E}^*(\boldsymbol{p}_1, \boldsymbol{p}_2))
 
-    where :math:`\mathcal{E}^*(\boldsymbol{p}_1, \boldsymbol{p}_2) = \sqrt{m_1^2c^4 + m_2^2c^4 + 2(m_1 m_2 c^4
-    \gamma_1 \gamma_2 - \boldsymbol{p}_1\cdot\boldsymbol{p}_2 c^2)}` is the energy in the center-of-mass frame,
-    and :math:`f_i` is the distribution function of species :math:`i`. Note that, if :math:`\sigma^*(\mathcal{E}^*)`
-    is the center-of-mass cross-section of a given collision process, then
-    :math:`\int d\mathcal{E}^* \frac{d\mathcal{L}}{d\mathcal{E}^*} (\mathcal{E}^*, t)\sigma^*(\mathcal{E}^*)`
-    gives the total number of collisions of that process (from the beginning of the simulation up until time :math:`t`).
+        where :math:`f_i` is the distribution function of species :math:`i` and
+        :math:`\mathcal{E}^*(\boldsymbol{p}_1, \boldsymbol{p}_2) = \sqrt{m_1^2c^4 + m_2^2c^4 + 2 c^2{p_1}^\mu {p_2}_\mu}`
+        is the energy in the center-of-mass frame, where :math:`p^\mu = (\sqrt{m^2 c^2 + \boldsymbol{p}^2}, \boldsymbol{p})`
+        represents the 4-momentum. Note that, if :math:`\sigma^*(\mathcal{E}^*)`
+        is the center-of-mass cross-section of a given collision process, then
+        :math:`\int d\mathcal{E}^* \frac{d\mathcal{L}}{d\mathcal{E}^*} (\mathcal{E}^*, t)\sigma^*(\mathcal{E}^*)`
+        gives the total number of collisions of that process (from the beginning of the simulation up until time :math:`t`).
 
-    The differential luminosity is given in units of :math:`\text{m}^{-2}.\text{eV}^{-1}`. For collider-relevant WarpX simulations
-    involving two crossing, high-energy beams of particles, the differential luminosity in :math:`\text{s}^{-1}.\text{m}^{-2}.\text{eV}^{-1}`
-    can be obtained by multiplying the above differential luminosity by the expected repetition rate of the beams.
+        The differential luminosity is given in units of :math:`\text{m}^{-2}.\text{eV}^{-1}`. For collider-relevant WarpX simulations
+        involving two crossing, high-energy beams of particles, the differential luminosity in :math:`\text{s}^{-1}.\text{m}^{-2}.\text{eV}^{-1}`
+        can be obtained by multiplying the above differential luminosity by the expected repetition rate of the beams.
 
-    In practice, the above expression of the differential luminosity is evaluated over discrete bins in energy :math:`\mathcal{E}^*`,
-    and by summing over macroparticles.
+        In practice, the above expression of the differential luminosity is evaluated over discrete bins in energy :math:`\mathcal{E}^*`,
+        and by summing over macroparticles.
 
-    * ``<reduced_diags_name>.species`` (`list of two strings`)
-        The names of the two species for which the differential luminosity is computed.
+        * ``<reduced_diags_name>.species`` (`list of two strings`)
+            The names of the two species for which the differential luminosity is computed.
 
-    * ``<reduced_diags_name>.bin_number`` (`int` > 0)
-        The number of bins in energy :math:`\mathcal{E}^*`
+        * ``<reduced_diags_name>.bin_number`` (`int` > 0)
+            The number of bins in energy :math:`\mathcal{E}^*`
 
-    * ``<reduced_diags_name>.bin_max`` (`float`, in eV)
-        The minimum value of :math:`\mathcal{E}^*` for which the differential luminosity is computed.
+        * ``<reduced_diags_name>.bin_max`` (`float`, in eV)
+            The minimum value of :math:`\mathcal{E}^*` for which the differential luminosity is computed.
 
-    * ``<reduced_diags_name>.bin_min`` (`float`, in eV)
-        The maximum value of :math:`\mathcal{E}^*` for which the differential luminosity is computed.
+        * ``<reduced_diags_name>.bin_min`` (`float`, in eV)
+            The maximum value of :math:`\mathcal{E}^*` for which the differential luminosity is computed.
+
+    * ``Timestep``
+        This type outputs the simulation's physical timestep (in seconds) at each mesh refinement level.
 
 * ``<reduced_diags_name>.intervals`` (`string`)
     Using the `Intervals Parser`_ syntax, this string defines the timesteps at which reduced
