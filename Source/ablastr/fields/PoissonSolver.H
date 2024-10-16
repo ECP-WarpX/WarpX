@@ -14,6 +14,7 @@
 #include <ablastr/warn_manager/WarnManager.H>
 #include <ablastr/math/fft/AnyFFT.H>
 #include <ablastr/fields/Interpolate.H>
+#include <ablastr/fields/MultiFabRegister.H>
 #include <ablastr/profiler/ProfilerWrapper.H>
 
 #if defined(ABLASTR_USE_FFT) && defined(WARPX_DIM_3D)
@@ -53,6 +54,7 @@
 
 #include <array>
 #include <optional>
+#include <stdexcept>
 
 
 namespace ablastr::fields {
@@ -162,8 +164,8 @@ inline void interpolatePhiBetweenLevels (
  *   \vec{\nabla}^2 r \phi - (\vec{\beta}\cdot\vec{\nabla})^2 r \phi = -\frac{r \rho}{\epsilon_0}
  * \f]
  *
- * \tparam T_BoundaryHandler handler for boundary conditions, for example @see ElectrostaticSolver::PoissonBoundaryHandler
  * \tparam T_PostPhiCalculationFunctor a calculation per level directly after phi was calculated
+ * \tparam T_BoundaryHandler handler for boundary conditions, for example @see ElectrostaticSolver::PoissonBoundaryHandler (EB ONLY)
  * \tparam T_FArrayBoxFactory usually nothing or an amrex::EBFArrayBoxFactory (EB ONLY)
  * \param[in] rho The charge density a given species
  * \param[out] phi The potential to be computed by this function
@@ -186,8 +188,8 @@ inline void interpolatePhiBetweenLevels (
  * \param[in] eb_farray_box_factory a factory for field data, @see amrex::EBFArrayBoxFactory; required for embedded boundaries (default: none)
  */
 template<
-    typename T_BoundaryHandler,
     typename T_PostPhiCalculationFunctor = std::nullopt_t,
+    typename T_BoundaryHandler = std::nullopt_t,
     typename T_FArrayBoxFactory = void
 >
 void
@@ -203,12 +205,12 @@ computePhi (
     amrex::Vector<amrex::DistributionMapping> const& dmap,
     amrex::Vector<amrex::BoxArray> const& grids,
     utils::enums::GridType grid_type,
-    T_BoundaryHandler const boundary_handler,
     bool is_solver_igf_on_lev0,
     bool eb_enabled = false,
     bool do_single_precision_comms = false,
     std::optional<amrex::Vector<amrex::IntVect> > rel_ref_ratio = std::nullopt,
     [[maybe_unused]] T_PostPhiCalculationFunctor post_phi_calculation = std::nullopt,
+    [[maybe_unused]] T_BoundaryHandler const boundary_handler = std::nullopt, // only used for EB
     [[maybe_unused]] std::optional<amrex::Real const> current_time = std::nullopt, // only used for EB
     [[maybe_unused]] std::optional<amrex::Vector<T_FArrayBoxFactory const *> > eb_farray_box_factory = std::nullopt // only used for EB
 )
@@ -275,7 +277,7 @@ computePhi (
 #endif
         // Use the Multigrid (MLMG) solver if selected or on refined patches
         // but first scale rho appropriately
-        rho[lev]->mult(-1._rt / ablastr::constant::SI::ep0);  // TODO: when do we "un-multiply" this? We need to document this side-effect!
+        rho[lev]->mult(-1._rt / ablastr::constant::SI::ep0);
 
 #ifdef WARPX_DIM_RZ
         constexpr bool is_rz = true;
@@ -310,13 +312,17 @@ computePhi (
             auto linop_nodelap = std::make_unique<amrex::MLEBNodeFDLaplacian>();
             if (eb_enabled) {
 #if defined(AMREX_USE_EB)
-                linop_nodelap->define(
-                    amrex::Vector<amrex::Geometry>{geom[lev]},
-                    amrex::Vector<amrex::BoxArray>{grids[lev]},
-                    amrex::Vector<amrex::DistributionMapping>{dmap[lev]},
-                    info,
-                    amrex::Vector<amrex::EBFArrayBoxFactory const*>{eb_farray_box_factory.value()[lev]}
-                );
+                if constexpr(std::is_same_v<void, T_FArrayBoxFactory>) {
+                    throw std::runtime_error("EB requested by eb_farray_box_factory not provided!");
+                } else {
+                    linop_nodelap->define(
+                        amrex::Vector<amrex::Geometry>{geom[lev]},
+                        amrex::Vector<amrex::BoxArray>{grids[lev]},
+                        amrex::Vector<amrex::DistributionMapping>{dmap[lev]},
+                        info,
+                        amrex::Vector<amrex::EBFArrayBoxFactory const*>{eb_farray_box_factory.value()[lev]}
+                    );
+                }
 #endif
             }
             else {
@@ -343,12 +349,18 @@ computePhi (
 #endif
 #if defined(AMREX_USE_EB)
             if (eb_enabled) {
-                // if the EB potential only depends on time, the potential can be passed
-                // as a float instead of a callable
-                if (boundary_handler.phi_EB_only_t) {
-                    linop_nodelap->setEBDirichlet(boundary_handler.potential_eb_t(current_time.value()));
-                } else {
-                    linop_nodelap->setEBDirichlet(boundary_handler.getPhiEB(current_time.value()));
+                if constexpr (!std::is_same_v<T_BoundaryHandler, std::nullopt_t>) {
+                    // if the EB potential only depends on time, the potential can be passed
+                    // as a float instead of a callable
+                    if (boundary_handler.phi_EB_only_t) {
+                        linop_nodelap->setEBDirichlet(boundary_handler.potential_eb_t(current_time.value()));
+                    } else {
+                        linop_nodelap->setEBDirichlet(boundary_handler.getPhiEB(current_time.value()));
+                    }
+                } else
+                {
+                    ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE( !is_solver_igf_on_lev0,
+                        "EB Poisson solver enabled but no 'boundary_handler' passed!");
                 }
             }
 #endif
@@ -366,9 +378,20 @@ computePhi (
             linop = std::move(linop_tenslap);
         }
 
-        // Solve the Poisson equation
-        linop->setDomainBC(boundary_handler.lobc, boundary_handler.hibc);
+        // Level 0 domain boundary
+        if constexpr (std::is_same_v<T_BoundaryHandler, std::nullopt_t>) {
+            amrex::Array<amrex::LinOpBCType, AMREX_SPACEDIM> const lobc = {AMREX_D_DECL(
+                amrex::LinOpBCType::Dirichlet,
+                amrex::LinOpBCType::Dirichlet,
+                amrex::LinOpBCType::Dirichlet
+            )};
+            amrex::Array<amrex::LinOpBCType, AMREX_SPACEDIM> const hibc = lobc;
+            linop->setDomainBC(lobc, hibc);
+        } else {
+            linop->setDomainBC(boundary_handler.lobc, boundary_handler.hibc);
+        }
 
+        // Solve the Poisson equation
         amrex::MLMG mlmg(*linop); // actual solver defined here
         mlmg.setVerbose(verbosity);
         mlmg.setMaxIter(max_iters);
@@ -409,6 +432,8 @@ computePhi (
                 post_phi_calculation.value()(mlmg, lev);
             }
         }
+        rho[lev]->mult(-ablastr::constant::SI::ep0);  // Multiply rho by epsilon again
+
     } // loop over lev(els)
 } // computePhi
 } // namespace ablastr::fields

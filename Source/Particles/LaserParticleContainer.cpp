@@ -586,7 +586,7 @@ LaserParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
     const bool has_rho = fields.has(FieldType::rho_fp, lev);
-    const bool has_buffer = fields.has(FieldType::current_buf, lev);
+    const bool has_buffer = fields.has_vector(FieldType::current_buf, lev);
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())

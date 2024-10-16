@@ -1,6 +1,12 @@
 name: 🐧 CUDA
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - "development"
+  pull_request:
+    paths-ignore:
+      - "Docs/**"
 
 concurrency:
   group: ${{ github.ref }}-${{ github.head_ref }}-cuda
@@ -131,7 +137,7 @@ jobs:
         which nvcc || echo "nvcc not in PATH!"
 
         git clone https://github.com/AMReX-Codes/amrex.git ../amrex
-        cd ../amrex && git checkout --detach 3734079379bb6b2a3850d197241f6b2c3b3bfa7d && cd -
+        cd ../amrex && git checkout --detach e1222803739ed2342b9ff6fc2d57316ff0d6cb0c && cd -
         make COMP=gcc QED=FALSE USE_MPI=TRUE USE_GPU=TRUE USE_OMP=FALSE USE_FFT=TRUE USE_CCACHE=TRUE -j 4
 
         ccache -s
