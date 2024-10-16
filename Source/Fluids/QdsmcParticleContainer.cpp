@@ -59,7 +59,7 @@
 using namespace amrex;
 
 QdsmcParticleContainer::QdsmcParticleContainer (AmrCore* amr_core)
-    : ParticleContainerPureSoA<QdsmcPart::nattribs, 0>(amr_core->GetParGDB())
+    : ParticleContainerPureSoA<QdsmcPIdx::nattribs, 0>(amr_core->GetParGDB())
 {
     SetParticleSize();
 }
@@ -74,8 +74,6 @@ QdsmcParticleContainer::AddNParticles (int lev, long n,
                                        amrex::Vector<amrex::ParticleReal> const & vz,
                                        amrex::Vector<amrex::ParticleReal> const & entropy,
                                        amrex::Vector<amrex::ParticleReal> const & np_real)
-                                       //amrex::Long id)
-
 {
     using namespace amrex::literals;
     using warpx::fields::FieldType;
@@ -117,7 +115,7 @@ QdsmcParticleContainer::AddNParticles (int lev, long n,
         //if (id == -1) {
         //    current_id = ParticleType::NextID();
         //}
-        current_id = ParticleType::NextID();
+        amrex::Long current_id = ParticleType::NextID();
         idcpu_data.push_back(amrex::SetParticleIDandCPU(current_id, ParallelDescriptor::MyProc()));
 
 #ifdef WARPX_DIM_RZ
@@ -129,27 +127,27 @@ QdsmcParticleContainer::AddNParticles (int lev, long n,
     if (np > 0)
     {
 #if defined(WARPX_DIM_3D)
-        pinned_tile.push_back_real(QdsmcPart::x, x.data() + ibegin, x.data() + iend);
-        pinned_tile.push_back_real(QdsmcPart::y, y.data() + ibegin, y.data() + iend);
-        pinned_tile.push_back_real(QdsmcPart::z, z.data() + ibegin, z.data() + iend);
+        pinned_tile.push_back_real(QdsmcPIdx::x, x.data() + ibegin, x.data() + iend);
+        pinned_tile.push_back_real(QdsmcPIdx::y, y.data() + ibegin, y.data() + iend);
+        pinned_tile.push_back_real(QdsmcPIdx::z, z.data() + ibegin, z.data() + iend);
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         amrex::ignore_unused(y);
 #ifdef WARPX_DIM_RZ
-        pinned_tile.push_back_real(QdsmcPart::x, r.data(), r.data() + np);
+        pinned_tile.push_back_real(QdsmcPIdx::x, r.data(), r.data() + np);
 #else
-        pinned_tile.push_back_real(QdsmcPart::x, x.data() + ibegin, x.data() + iend);
+        pinned_tile.push_back_real(QdsmcPIdx::x, x.data() + ibegin, x.data() + iend);
 #endif
-        pinned_tile.push_back_real(QdsmcPart::z, z.data() + ibegin, z.data() + iend);
+        pinned_tile.push_back_real(QdsmcPIdx::z, z.data() + ibegin, z.data() + iend);
 #else //AMREX_SPACEDIM == 1
         amrex::ignore_unused(x,y);
         pinned_tile.push_back_real(QdsmcPart::z, z.data() + ibegin, z.data() + iend);
 #endif
 
-        pinned_tile.push_back_real(QdsmcPart::entropy, entropy.data() + ibegin, entropy.data() + iend);
-        pinned_tile.push_back_real(QdsmcPart::np_real, np_real.data() + ibegin, np_real.data() + iend);
-        pinned_tile.push_back_real(QdsmcPart::vx, vx.data() + ibegin, vx.data() + iend);
-        pinned_tile.push_back_real(QdsmcPart::vy, vy.data() + ibegin, vy.data() + iend);
-        pinned_tile.push_back_real(QdsmcPart::vz, vz.data() + ibegin, vz.data() + iend);
+        pinned_tile.push_back_real(QdsmcPIdx::entropy, entropy.data() + ibegin, entropy.data() + iend);
+        pinned_tile.push_back_real(QdsmcPIdx::np_real, np_real.data() + ibegin, np_real.data() + iend);
+        pinned_tile.push_back_real(QdsmcPIdx::vx, vx.data() + ibegin, vx.data() + iend);
+        pinned_tile.push_back_real(QdsmcPIdx::vy, vy.data() + ibegin, vy.data() + iend);
+        pinned_tile.push_back_real(QdsmcPIdx::vz, vz.data() + ibegin, vz.data() + iend);
 
         if ( (NumRuntimeRealComps()>0) || (NumRuntimeIntComps()>0) ){
             DefineAndReturnParticleTile(0, 0, 0);

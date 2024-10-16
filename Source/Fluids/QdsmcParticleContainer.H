@@ -23,7 +23,7 @@
  * values that are being stored as SoA data. Nattribs
  * is enumerated to give the number of attributes stored.
  */
-struct QdsmcPart
+struct QdsmcPIdx
 {
     enum
     {
@@ -49,12 +49,12 @@ struct QdsmcPart
  * which is branched from the amrex::ParticleContainer.
  */
 class QdsmcParticleContainer
-    : public amrex::ParticleContainerPureSoA<QdsmcPart::nattribs, 0>
+    : public amrex::ParticleContainerPureSoA<QdsmcPIdx::nattribs, 0>
 {
 public:
     static constexpr int NStructReal = 0;
     static constexpr int NStructInt = 0;
-    static constexpr int NReal = QdsmcPart::nattribs;
+    static constexpr int NReal = QdsmcPIdx::nattribs;
     static constexpr int NInt = 0;
 
     QdsmcParticleContainer (amrex::AmrCore* amr_core);
@@ -66,9 +66,9 @@ public:
     QdsmcParticleContainer& operator= ( QdsmcParticleContainer&& )       = default;
 
     //! amrex iterator for our number of attributes
-    using iterator = amrex::ParIterSoA<QdsmcPart::nattribs, 0>;
+    using iterator = amrex::ParIterSoA<QdsmcPIdx::nattribs, 0>;
     //! amrex iterator for our number of attributes (read-only)
-    using const_iterator = amrex::ParConstIterSoA<QdsmcPart::nattribs, 0>;
+    using const_iterator = amrex::ParConstIterSoA<QdsmcPIdx::nattribs, 0>;
 
     //! similar to WarpXParticleContainer::AddNParticles
     void AddNParticles (int lev, amrex::Long n,
@@ -79,30 +79,18 @@ public:
                         amrex::Vector<amrex::ParticleReal> const & vy, 
                         amrex::Vector<amrex::ParticleReal> const & vz,
                         amrex::Vector<amrex::ParticleReal> const & entropy,
-                        amrex::Vector<amrex::ParticleReal> const & np_real)
-                        //amrex::Long id);
+                        amrex::Vector<amrex::ParticleReal> const & np_real);
 
-    // Function that Initializes the qdsmc particles positions
-    void InitX();
-
-    /* Function that Initializes the qdsmc particles velocities
-    *  without including a thermal spread, this is only used by 
-    *  the qdsmc solver for the electron temperature used in the 
-    *  hybrid PIC model
-    */
-    void InitV_drift(ablastr::fields::VectorField& U);
+    // Function that initializes the particles
+    // requires order used in QDSMC algorithm (nppc = order^dim)
+    // calls AddNParticles
+    void InitParticles (int lev, int order);
 
     // Function that pushes particle positions by one time step
     void PushX(amrex::Real dt);
 
-    /* Function that gathers a scalar multifab value to particles positions
-    *  No interpolation needed since particles are initialized on each step at node positions
-    */
-    void Gather();
-
-    // Function that deposits a scalar quantity from particles to a multifab.
-    // Takes vector with a specific particle value (can be anything) and scalar multifab to deposit in
-    //void DepositK(amrex::Vector<amrex::ParticleReal> const & p_val, ablastr::fields::ScalarField& scalar_field);
+    // Function that reset particle positions to nodes (cell centered)
+    void ResetX();
 
 };
 

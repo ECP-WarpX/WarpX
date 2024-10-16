@@ -52,8 +52,8 @@ WarpXFluidContainer::WarpXFluidContainer(int ispecies, const std::string &name, 
             d_inj_mom = h_inj_mom.get();
     #endif
         }
-    }
     amrex::Gpu::synchronize();
+    }
 }
 
 void WarpXFluidContainer::ReadParameters()
@@ -1413,7 +1413,7 @@ void WarpXFluidContainer::HybridUpdateUe (ablastr::fields::MultiFabRegister& fie
     using warpx::fields::FieldType;
 
     ablastr::fields::ScalarField rho_fp = fields.get(FieldType::rho_fp, lev);
-    ablastr::fields::VectorField current_fp_ampere = fields.get_alldirs(FieldType::hybrid_current_fp_ampere, lev);
+    ablastr::fields::VectorField current_fp_ampere = fields.get_alldirs(FieldType::hybrid_current_fp_plasma, lev);
     ablastr::fields::VectorField current_fp = fields.get_alldirs(FieldType::current_fp, lev);
 
 #ifdef AMREX_USE_OMP
