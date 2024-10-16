@@ -252,9 +252,6 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
         amrex::ParticleReal* AMREX_RESTRICT x_save = xp_save.dataPtr();
         amrex::ParticleReal* AMREX_RESTRICT y_save = yp_save.dataPtr();
         amrex::ParticleReal* AMREX_RESTRICT z_save = zp_save.dataPtr();
-        amrex::ParticleReal* AMREX_RESTRICT ux_save = uxp_save.dataPtr();
-        amrex::ParticleReal* AMREX_RESTRICT uy_save = uyp_save.dataPtr();
-        amrex::ParticleReal* AMREX_RESTRICT uz_save = uzp_save.dataPtr();
 
         // Undo the push for particles not injected yet.
         // The zp are advanced a fixed amount.
@@ -267,9 +264,6 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
                                 amrex::ParticleReal xp, yp, zp;
                                 GetPosition(i, xp, yp, zp);
                                 if (zp <= z_plane_lev) {
-                                    ux[i] = ux_save[i];
-                                    uy[i] = uy_save[i];
-                                    uz[i] = uz_save[i];
                                     xp = x_save[i];
                                     yp = y_save[i];
                                     if (rigid) {
