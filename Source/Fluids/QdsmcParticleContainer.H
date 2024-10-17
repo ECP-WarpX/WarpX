@@ -89,9 +89,6 @@ public:
     // Function that set the particles velocities (only drift for now)
     void SetV();
 
-    // Function that set the particles velocities (only drift for now)
-    void SetV();
-
 };
 
 #endif // WARPX_QdsmcParticleContainer_H_

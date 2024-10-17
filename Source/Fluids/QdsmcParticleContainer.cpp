@@ -139,21 +139,19 @@ QdsmcParticleContainer::AddNParticles (int lev, long n,
 }
 
 
-
-void SetX()
-{
-}
-
-
 void 
 QdsmcParticleContainer::InitParticles (int lev)
 {
     auto& warpx = WarpX::GetInstance();
+    const auto problo = warpx.Geom(lev).ProbLoArray();
+    const auto probhi = warpx.Geom(lev).ProbHiArray();
 
     const amrex::Real* dx = warpx.Geom(lev).CellSize();
-    const auto problo = warpx.Geom(lev).ProbLoArray();
-
     //amrex::Real cell_volume = dx[0]*dx[1]*dx[2]; // how is this handling dimensions?
+
+    int nx = (probhi[0] - problo[0])/dx[0] + 1;
+    int ny = (probhi[1] - problo[1])/dx[1] + 1;
+    int nz = (probhi[2] - problo[2])/dx[2] + 1;
 
     int n_to_add = 0;
 
@@ -175,15 +173,39 @@ QdsmcParticleContainer::InitParticles (int lev)
                     amrex::Real y = problo[1] + (i+0.5)*dx[1];
                     amrex::Real z = problo[2] + (i+0.5)*dx[2];
 
-                    xpos.push_back(x);
-                    ypos.push_back(y);
-                    zpos.push_back(z);
+                    if( x < probhi[0] && y < probhi[1] && z < probhi[2])
+                    {
+                        xpos.push_back(x);
+                        ypos.push_back(y);
+                        zpos.push_back(z);
 
-                    n_to_add++;
+                        n_to_add++;
+                    }
                 }
             }
         }
     }
-    
+
     AddNParticles (0, n_to_add, xpos, ypos, zpos);
 }
+
+
+// complete this! Add GPU kernel for particle push
+/*
+void
+QdsmcParticleContainer::PushX(int lev, amrex::Real dt)
+{
+    // ?
+
+    for (iterator pti(*this, lev); pti.isValid(); ++pti)
+    {
+        auto const np = pti.numParticles();
+
+        amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
+        {
+            //amrex::ParticleReal xp, yp, zp;
+            //GetPosition(ip, xp, yp, zp);
+        });
+    }
+}
+*/
