@@ -72,12 +72,12 @@ public:
     using const_iterator = amrex::ParConstIterSoA<QdsmcPIdx::nattribs, 0>;
 
     //! similar to WarpXParticleContainer::AddNParticles
-    
+
     void AddNParticles (int lev, amrex::Long n,
                         amrex::Vector<amrex::ParticleReal> const & x,
                         amrex::Vector<amrex::ParticleReal> const & y,
                         amrex::Vector<amrex::ParticleReal> const & z);
-    
+
     // Function that initializes the particles (only positions)
     // requires order used in QDSMC algorithm (nppc = order^dim), or nppc = 1 for electron energy equation solver
     // calls AddNParticles
