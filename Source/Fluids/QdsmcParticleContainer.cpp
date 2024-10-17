@@ -75,93 +75,61 @@ QdsmcParticleContainer::AddNParticles (int lev, long n,
                                        amrex::Vector<amrex::ParticleReal> const & entropy,
                                        amrex::Vector<amrex::ParticleReal> const & np_real)
 {
-    using namespace amrex::literals;
-    using warpx::fields::FieldType;
-
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(lev == 0, "QdsmcParticleContainer::AddNParticles: only lev=0 is supported yet.");
-
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(x.size() == n,"x.size() != # of qdsmc particles to add");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(y.size() == n,"y.size() != # of qdsmc particles to add");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(z.size() == n,"z.size() != # of qdsmc particles to add");
-
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(vx.size() == n,"vx.size() != # of qdsmc particles to add");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(vy.size() == n,"vy.size() != # of qdsmc particles to add");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(vz.size() == n,"vz.size() != # of qdsmc particles to add");
-
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(entropy.size() == n,"entropy.size() != # of qdsmc particles to add");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(np_real.size() == n,"np_real.size() != # of qdsmc particles to add");
 
-    //  Add to grid 0 and tile 0
-    // Redistribute() will move them to proper places.
-    auto& particle_tile = DefineAndReturnParticleTile(0, 0, 0);
+    if (n <= 0){
+        Redistribute();
+        return;
+    }
 
+    // have to resize here, not in the constructor because grids have not
+    // been built when constructor was called.
+    reserveData();
+    resizeData();
+
+    /*
+     * Creates a temporary tile to obtain data from simulation. This data
+     * is then coppied to the permament tile which is stored on the particle
+     * (particle_tile).
+     */
     using PinnedTile = typename ContainerLike<amrex::PinnedArenaAllocator>::ParticleTileType;
+
     PinnedTile pinned_tile;
     pinned_tile.define(NumRuntimeRealComps(), NumRuntimeIntComps());
 
-    long ibegin = 0;
-    long iend = n;
-    const std::size_t np = n;
-
-#ifdef WARPX_DIM_RZ
-   amrex::Vector<amrex::ParticleReal> r(np);
-    amrex::Vector<amrex::ParticleReal> theta(np);
-#endif
-
-    for (auto i = 0; i < np; ++i)
+    for (int i = 0; i < n; i++)
     {
         auto & idcpu_data = pinned_tile.GetStructOfArrays().GetIdCPUData();
-        //amrex::Long current_id = id;  // copy input
-        //if (id == -1) {
-        //    current_id = ParticleType::NextID();
-        //}
-        amrex::Long current_id = ParticleType::NextID();
-        idcpu_data.push_back(amrex::SetParticleIDandCPU(current_id, ParallelDescriptor::MyProc()));
-
-#ifdef WARPX_DIM_RZ
-        r[i-ibegin] = std::sqrt(x[i]*x[i] + y[i]*y[i]);
-        theta[i-ibegin] = std::atan2(y[i], x[i]);
-#endif
+        idcpu_data.push_back(amrex::SetParticleIDandCPU(ParticleType::NextID(), ParallelDescriptor::MyProc()));
     }
 
-    if (np > 0)
-    {
-#if defined(WARPX_DIM_3D)
-        pinned_tile.push_back_real(QdsmcPIdx::x, x.data() + ibegin, x.data() + iend);
-        pinned_tile.push_back_real(QdsmcPIdx::y, y.data() + ibegin, y.data() + iend);
-        pinned_tile.push_back_real(QdsmcPIdx::z, z.data() + ibegin, z.data() + iend);
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        amrex::ignore_unused(y);
+    // write Real attributes (SoA) to particle initialized zero
+    DefineAndReturnParticleTile(0, 0, 0);
+
+    // for RZ write theta value
 #ifdef WARPX_DIM_RZ
-        pinned_tile.push_back_real(QdsmcPIdx::x, r.data(), r.data() + np);
-#else
-        pinned_tile.push_back_real(QdsmcPIdx::x, x.data() + ibegin, x.data() + iend);
+    pinned_tile.push_back_real(QdsmcPIdx::theta, np, 0.0);
 #endif
-        pinned_tile.push_back_real(QdsmcPIdx::z, z.data() + ibegin, z.data() + iend);
-#else //AMREX_SPACEDIM == 1
-        amrex::ignore_unused(x,y);
-        pinned_tile.push_back_real(QdsmcPart::z, z.data() + ibegin, z.data() + iend);
+#if !defined (WARPX_DIM_1D_Z)
+    pinned_tile.push_back_real(QdsmcPIdx::x, x);
 #endif
-
-        pinned_tile.push_back_real(QdsmcPIdx::entropy, entropy.data() + ibegin, entropy.data() + iend);
-        pinned_tile.push_back_real(QdsmcPIdx::np_real, np_real.data() + ibegin, np_real.data() + iend);
-        pinned_tile.push_back_real(QdsmcPIdx::vx, vx.data() + ibegin, vx.data() + iend);
-        pinned_tile.push_back_real(QdsmcPIdx::vy, vy.data() + ibegin, vy.data() + iend);
-        pinned_tile.push_back_real(QdsmcPIdx::vz, vz.data() + ibegin, vz.data() + iend);
-
-        if ( (NumRuntimeRealComps()>0) || (NumRuntimeIntComps()>0) ){
-            DefineAndReturnParticleTile(0, 0, 0);
-        }
-
-        pinned_tile.resize(np);
-
-        auto old_np = particle_tile.numParticles();
-        auto new_np = old_np + pinned_tile.numParticles();
-        particle_tile.resize(new_np);
-        amrex::copyParticles(
-            particle_tile, pinned_tile, 0, old_np, pinned_tile.numParticles()
-        );
-    }
+#if defined (WARPX_DIM_3D)
+    pinned_tile.push_back_real(QdsmcPIdx::y, y);
+#endif
+    pinned_tile.push_back_real(QdsmcPIdx::z, z);
+    pinned_tile.push_back_real(QdsmcPIdx::vx, n, 0.0);
+    pinned_tile.push_back_real(QdsmcPIdx::vy, n, 0.0);
+    pinned_tile.push_back_real(QdsmcPIdx::vz, n, 0.0);
+    pinned_tile.push_back_real(QdsmcPIdx::entropy, n, 0.0);
+    pinned_tile.push_back_real(QdsmcPIdx::np_real, n, 0.0);
 
     // Move particles to their appropriate tiles
     Redistribute();

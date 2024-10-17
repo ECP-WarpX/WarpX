@@ -40,7 +40,7 @@ struct QdsmcPIdx
 #ifdef WARPX_DIM_RZ
         theta,      ///< RZ needs all three position components
 #endif
-        nattribs //shoud be = ??
+        nattribs
     };
 };
 
