@@ -207,9 +207,9 @@ QdsmcParticleContainer::InitParticles (int lev)
 }
 
 void
-QdsmcParticleContainer::SetV (int lev, 
-                    const amrex::MultiFab &Ux, 
-                    const amrex::MultiFab &Uy, 
+QdsmcParticleContainer::SetV (int lev,
+                    const amrex::MultiFab &Ux,
+                    const amrex::MultiFab &Uy,
                     const amrex::MultiFab &Uz)
 {
     // get a reference to WarpX instance
