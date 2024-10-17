@@ -157,7 +157,7 @@ QdsmcParticleContainer::InitParticles (int lev)
 
     const amrex::Real* dx = warpx.Geom(lev).CellSize();
 
-    // Read this from domain ?? 
+    // Read this from domain ??
     int nx = (probhi[0] - problo[0])/dx[0] + 1;
     int ny = (probhi[1] - problo[1])/dx[1] + 1;
     int nz = (probhi[2] - problo[2])/dx[2] + 1;
