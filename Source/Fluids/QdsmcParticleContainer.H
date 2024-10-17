@@ -28,14 +28,13 @@ struct QdsmcPIdx
     enum
     {
 #if !defined (WARPX_DIM_1D_Z) // change this, this algorithm will only be used for the dimensions the Hybrid solver is compatible with
-        x,
+        x, x_node, i,
 #endif
 #if defined (WARPX_DIM_3D)
-        y,
+        y, y_node, j,
 #endif
-        z,
+        z, z_node, k,
         vx, vy, vz,
-        x_node, y_node, z_node,
         entropy, np_real,
 
 #ifdef WARPX_DIM_RZ
@@ -76,18 +75,30 @@ public:
     void AddNParticles (int lev, amrex::Long n,
                         amrex::Vector<amrex::ParticleReal> const & x,
                         amrex::Vector<amrex::ParticleReal> const & y,
-                        amrex::Vector<amrex::ParticleReal> const & z);
-
-    // Function that initializes the particles (only positions)
-    // requires order used in QDSMC algorithm (nppc = order^dim), or nppc = 1 for electron energy equation solver
-    // calls AddNParticles
+                        amrex::Vector<amrex::ParticleReal> const & z,
+                        amrex::Vector<amrex::ParticleReal> const & i,
+                        amrex::Vector<amrex::ParticleReal> const & j,
+                        amrex::Vector<amrex::ParticleReal> const & k);
+    /*
+    * Function that initializes the particles (only positions)
+    * current version only adds one particle per cell (qdsmc electron energy equation)
+    * future PR will add a generic implementation of QDSMC and will
+    * requir order used in QDSMC algorithm 
+    * (nppc = order^dim), or nppc = 1 for electron energy equation solver
+    * calls AddNParticles
+    */
     void InitParticles (int lev);
 
     // Function that pushes particle positions by one time step
-    void PushX(amrex::Real dt);
+    void PushX (amrex::Real dt);
 
-    // Function that set the particles velocities (only drift for now)
-    void SetV();
+    // Function that set the fictitious particles velocities (only drift for now)
+    // check if U or NU is going to be used, current version written for U
+    // pass vector field instead
+    void SetV (int lev,
+        const amrex::MultiFab &Ux, 
+        const amrex::MultiFab &Uy, 
+        const amrex::MultiFab &Uz);
 
 };
 

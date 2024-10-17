@@ -66,15 +66,21 @@ QdsmcParticleContainer::QdsmcParticleContainer (AmrCore* amr_core)
 
 
 void
-QdsmcParticleContainer::AddNParticles (int lev, long n,
-                                       amrex::Vector<amrex::ParticleReal> const & x,
-                                       amrex::Vector<amrex::ParticleReal> const & y,
-                                       amrex::Vector<amrex::ParticleReal> const & z)
+QdsmcParticleContainer::AddNParticles (int lev, amrex::Long n,
+                        amrex::Vector<amrex::ParticleReal> const & x,
+                        amrex::Vector<amrex::ParticleReal> const & y,
+                        amrex::Vector<amrex::ParticleReal> const & z,
+                        amrex::Vector<amrex::ParticleReal> const & i,
+                        amrex::Vector<amrex::ParticleReal> const & j,
+                        amrex::Vector<amrex::ParticleReal> const & k)
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(lev == 0, "QdsmcParticleContainer::AddNParticles: only lev=0 is supported yet.");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(x.size() == n,"x.size() != # of qdsmc particles to add");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(y.size() == n,"y.size() != # of qdsmc particles to add");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(z.size() == n,"z.size() != # of qdsmc particles to add");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(i.size() == n,"i.size() != # of qdsmc particles to add");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(j.size() == n,"j.size() != # of qdsmc particles to add");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(k.size() == n,"k.size() != # of qdsmc particles to add");
 
     if (n <= 0){
         Redistribute();
@@ -114,13 +120,16 @@ QdsmcParticleContainer::AddNParticles (int lev, long n,
 #if !defined (WARPX_DIM_1D_Z)
     pinned_tile.push_back_real(QdsmcPIdx::x, x);
     pinned_tile.push_back_real(QdsmcPIdx::x_node, x);
+    pinned_tile.push_back_real(QdsmcPIdx::i, i);
 #endif
 #if defined (WARPX_DIM_3D)
     pinned_tile.push_back_real(QdsmcPIdx::y, y);
     pinned_tile.push_back_real(QdsmcPIdx::y_node, y);
+    pinned_tile.push_back_real(QdsmcPIdx::j, j);
 #endif
     pinned_tile.push_back_real(QdsmcPIdx::z, z);
     pinned_tile.push_back_real(QdsmcPIdx::z_node, z);
+    pinned_tile.push_back_real(QdsmcPIdx::k, k);
     pinned_tile.push_back_real(QdsmcPIdx::vx, n, 0.0);
     pinned_tile.push_back_real(QdsmcPIdx::vy, n, 0.0);
     pinned_tile.push_back_real(QdsmcPIdx::vz, n, 0.0);
@@ -160,6 +169,10 @@ QdsmcParticleContainer::InitParticles (int lev)
     amrex::Vector<amrex::ParticleReal> ypos;
     amrex::Vector<amrex::ParticleReal> zpos;
 
+    amrex::Vector<amrex::ParticleReal> ipos;
+    amrex::Vector<amrex::ParticleReal> jpos;
+    amrex::Vector<amrex::ParticleReal> kpos;
+
     // for now, only one MPI rank adds fictitious particles
     if (ParallelDescriptor::IOProcessor())
     {
@@ -179,6 +192,10 @@ QdsmcParticleContainer::InitParticles (int lev)
                         ypos.push_back(y);
                         zpos.push_back(z);
 
+                        ipos.push_back(i);
+                        jpos.push_back(j);
+                        kpos.push_back(k);
+
                         n_to_add++;
                     }
                 }
@@ -186,9 +203,63 @@ QdsmcParticleContainer::InitParticles (int lev)
         }
     }
 
-    AddNParticles (0, n_to_add, xpos, ypos, zpos);
+    AddNParticles (0, n_to_add, xpos, ypos, zpos, ipos, jpos, kpos);
 }
 
+void
+QdsmcParticleContainer::SetV (int lev, 
+                    const amrex::MultiFab &Ux, 
+                    const amrex::MultiFab &Uy, 
+                    const amrex::MultiFab &Uz)
+{
+    // get a reference to WarpX instance
+    auto & warpx = WarpX::GetInstance();
+
+    long numparticles = 0; // particles on this MPI rank
+
+    for (iterator pti(*this, lev); pti.isValid(); ++pti)
+    {
+        // count particle on MPI rank
+        numparticles += pti.numParticles();
+    }
+
+    for (iterator pti(*this, lev); pti.isValid(); ++pti)
+    {
+        auto const np = pti.numParticles();
+
+        auto& attribs = pti.GetStructOfArrays().GetRealData();
+
+        amrex::ParticleReal* const AMREX_RESTRICT part_vx = attribs[QdsmcPIdx::vx].dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT part_vy = attribs[QdsmcPIdx::vy].dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT part_vz = attribs[QdsmcPIdx::vz].dataPtr();
+
+        amrex::ParticleReal* const AMREX_RESTRICT part_i = attribs[QdsmcPIdx::i].dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT part_j = attribs[QdsmcPIdx::j].dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT part_k = attribs[QdsmcPIdx::k].dataPtr();
+
+        const auto &arrUxfield = Ux[pti].array();
+        const auto &arrUyfield = Uy[pti].array();
+        const auto &arrUzfield = Uz[pti].array();
+
+        // Gather drift velocity directly from nodes
+        // since particles are located at the node positions before PushX
+        amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
+        {
+            int i = part_i[ip];
+            int j = part_j[ip];
+            int k = part_k[ip];
+
+            part_vx[ip] = arrUxfield(i, j, k);
+            part_vy[ip] = arrUyfield(i, j, k);
+            part_vz[ip] = arrUzfield(i, j, k);
+        });
+
+    }
+
+
+
+
+}
 
 // complete this! Add GPU kernel for particle push
 /*
