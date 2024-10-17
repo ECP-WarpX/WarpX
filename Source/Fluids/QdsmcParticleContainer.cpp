@@ -139,7 +139,7 @@ QdsmcParticleContainer::AddNParticles (int lev, long n,
 }
 
 
-void 
+void
 QdsmcParticleContainer::InitParticles (int lev)
 {
     auto& warpx = WarpX::GetInstance();
