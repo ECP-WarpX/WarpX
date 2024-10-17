@@ -83,22 +83,26 @@ public:
     * Function that initializes the particles (only positions)
     * current version only adds one particle per cell (qdsmc electron energy equation)
     * future PR will add a generic implementation of QDSMC and will
-    * requir order used in QDSMC algorithm 
+    * requir order used in QDSMC algorithm
     * (nppc = order^dim), or nppc = 1 for electron energy equation solver
     * calls AddNParticles
     */
     void InitParticles (int lev);
 
-    // Function that pushes particle positions by one time step
-    void PushX (amrex::Real dt);
-
     // Function that set the fictitious particles velocities (only drift for now)
     // check if U or NU is going to be used, current version written for U
     // pass vector field instead
     void SetV (int lev,
-        const amrex::MultiFab &Ux, 
-        const amrex::MultiFab &Uy, 
+        const amrex::MultiFab &Ux,
+        const amrex::MultiFab &Uy,
         const amrex::MultiFab &Uz);
+
+    void SetK (int lev,
+        const amrex::MultiFab &Kfield,
+        const amrex::MultiFab &rhofield);
+
+    // Function that pushes particle positions by one time step
+    void PushX (amrex::Real dt);
 
 };
 

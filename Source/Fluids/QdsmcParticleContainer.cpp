@@ -156,8 +156,8 @@ QdsmcParticleContainer::InitParticles (int lev)
     const auto probhi = warpx.Geom(lev).ProbHiArray();
 
     const amrex::Real* dx = warpx.Geom(lev).CellSize();
-    //amrex::Real cell_volume = dx[0]*dx[1]*dx[2]; // how is this handling dimensions?
 
+    // Read this from domain ?? 
     int nx = (probhi[0] - problo[0])/dx[0] + 1;
     int ny = (probhi[1] - problo[1])/dx[1] + 1;
     int nz = (probhi[2] - problo[2])/dx[2] + 1;
@@ -212,9 +212,6 @@ QdsmcParticleContainer::SetV (int lev,
                     const amrex::MultiFab &Uy, 
                     const amrex::MultiFab &Uz)
 {
-    // get a reference to WarpX instance
-    auto & warpx = WarpX::GetInstance();
-
     long numparticles = 0; // particles on this MPI rank
 
     for (iterator pti(*this, lev); pti.isValid(); ++pti)
@@ -253,12 +250,58 @@ QdsmcParticleContainer::SetV (int lev,
             part_vy[ip] = arrUyfield(i, j, k);
             part_vz[ip] = arrUzfield(i, j, k);
         });
+    }
+}
 
+
+void
+QdsmcParticleContainer::SetK (int lev,
+                const amrex::MultiFab &Kfield,
+                const amrex::MultiFab &rhofield)
+{
+    // get a reference to WarpX instance
+    auto & warpx = WarpX::GetInstance();
+
+    const amrex::Real* dx = warpx.Geom(lev).CellSize();
+    amrex::Real cell_volume = dx[0]*dx[1]*dx[2]; // how is this handling different dimensions?
+
+    long numparticles = 0; // particles on this MPI rank
+
+    for (iterator pti(*this, lev); pti.isValid(); ++pti)
+    {
+        // count particle on MPI rank
+        numparticles += pti.numParticles();
     }
 
+    for (iterator pti(*this, lev); pti.isValid(); ++pti)
+    {
+        auto const np = pti.numParticles();
 
+        auto& attribs = pti.GetStructOfArrays().GetRealData();
 
+        amrex::ParticleReal* const AMREX_RESTRICT part_entropy = attribs[QdsmcPIdx::entropy].dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT part_np_real = attribs[QdsmcPIdx::np_real].dataPtr();
 
+        amrex::ParticleReal* const AMREX_RESTRICT part_i = attribs[QdsmcPIdx::i].dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT part_j = attribs[QdsmcPIdx::j].dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT part_k = attribs[QdsmcPIdx::k].dataPtr();
+
+        const auto &arrKfield = Kfield[pti].array();
+        const auto &arrrhofield = rhofield[pti].array();
+
+        // Gather drift velocity directly from nodes
+        // since particles are located at the node positions before PushX
+        amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
+        {
+            int i = part_i[ip];
+            int j = part_j[ip];
+            int k = part_k[ip];
+
+            amrex::Real density = arrrhofield(i,j,k)/PhysConst::q_e;
+            part_np_real[ip] = density*cell_volume;
+            part_entropy[ip] = arrKfield(i, j, k)*density*cell_volume;
+        });
+    }
 }
 
 // complete this! Add GPU kernel for particle push
