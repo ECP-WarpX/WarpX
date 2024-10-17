@@ -27,7 +27,7 @@ struct QdsmcPIdx
 {
     enum
     {
-#if !defined (WARPX_DIM_1D_Z)
+#if !defined (WARPX_DIM_1D_Z) // change this, this algorithm will only be used for the dimensions the Hybrid solver is compatible with
         x,
 #endif
 #if defined (WARPX_DIM_3D)
@@ -35,6 +35,7 @@ struct QdsmcPIdx
 #endif
         z,
         vx, vy, vz,
+        x_node, y_node, z_node,
         entropy, np_real,
 
 #ifdef WARPX_DIM_RZ
@@ -71,26 +72,25 @@ public:
     using const_iterator = amrex::ParConstIterSoA<QdsmcPIdx::nattribs, 0>;
 
     //! similar to WarpXParticleContainer::AddNParticles
+    
     void AddNParticles (int lev, amrex::Long n,
                         amrex::Vector<amrex::ParticleReal> const & x,
                         amrex::Vector<amrex::ParticleReal> const & y,
-                        amrex::Vector<amrex::ParticleReal> const & z,
-                        amrex::Vector<amrex::ParticleReal> const & vx,
-                        amrex::Vector<amrex::ParticleReal> const & vy,
-                        amrex::Vector<amrex::ParticleReal> const & vz,
-                        amrex::Vector<amrex::ParticleReal> const & entropy,
-                        amrex::Vector<amrex::ParticleReal> const & np_real);
-
-    // Function that initializes the particles
-    // requires order used in QDSMC algorithm (nppc = order^dim)
+                        amrex::Vector<amrex::ParticleReal> const & z);
+    
+    // Function that initializes the particles (only positions)
+    // requires order used in QDSMC algorithm (nppc = order^dim), or nppc = 1 for electron energy equation solver
     // calls AddNParticles
-    void InitParticles (int lev, int order);
+    void InitParticles (int lev);
 
     // Function that pushes particle positions by one time step
     void PushX(amrex::Real dt);
 
-    // Function that reset particle positions to nodes (cell centered)
-    void ResetX();
+    // Function that set the particles velocities (only drift for now)
+    void SetV();
+
+    // Function that set the particles velocities (only drift for now)
+    void SetV();
 
 };
 

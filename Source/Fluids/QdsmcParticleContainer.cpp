@@ -64,26 +64,17 @@ QdsmcParticleContainer::QdsmcParticleContainer (AmrCore* amr_core)
     SetParticleSize();
 }
 
-void
+
+void 
 QdsmcParticleContainer::AddNParticles (int lev, long n,
                                        amrex::Vector<amrex::ParticleReal> const & x,
                                        amrex::Vector<amrex::ParticleReal> const & y,
-                                       amrex::Vector<amrex::ParticleReal> const & z,
-                                       amrex::Vector<amrex::ParticleReal> const & vx,
-                                       amrex::Vector<amrex::ParticleReal> const & vy,
-                                       amrex::Vector<amrex::ParticleReal> const & vz,
-                                       amrex::Vector<amrex::ParticleReal> const & entropy,
-                                       amrex::Vector<amrex::ParticleReal> const & np_real)
+                                       amrex::Vector<amrex::ParticleReal> const & z)
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(lev == 0, "QdsmcParticleContainer::AddNParticles: only lev=0 is supported yet.");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(x.size() == n,"x.size() != # of qdsmc particles to add");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(y.size() == n,"y.size() != # of qdsmc particles to add");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(z.size() == n,"z.size() != # of qdsmc particles to add");
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(vx.size() == n,"vx.size() != # of qdsmc particles to add");
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(vy.size() == n,"vy.size() != # of qdsmc particles to add");
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(vz.size() == n,"vz.size() != # of qdsmc particles to add");
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(entropy.size() == n,"entropy.size() != # of qdsmc particles to add");
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(np_real.size() == n,"np_real.size() != # of qdsmc particles to add");
 
     if (n <= 0){
         Redistribute();
@@ -97,11 +88,11 @@ QdsmcParticleContainer::AddNParticles (int lev, long n,
 
     auto& particle_tile = DefineAndReturnParticleTile(0, 0, 0);
 
-    /*
-     * Creates a temporary tile to obtain data from simulation. This data
-     * is then coppied to the permament tile which is stored on the particle
-     * (particle_tile).
-     */
+    
+    // Creates a temporary tile to obtain data from simulation. This data
+    // is then coppied to the permament tile which is stored on the particle
+    // (particle_tile).
+     
     using PinnedTile = typename ContainerLike<amrex::PinnedArenaAllocator>::ParticleTileType;
 
     PinnedTile pinned_tile;
@@ -122,11 +113,14 @@ QdsmcParticleContainer::AddNParticles (int lev, long n,
 #endif
 #if !defined (WARPX_DIM_1D_Z)
     pinned_tile.push_back_real(QdsmcPIdx::x, x);
+    pinned_tile.push_back_real(QdsmcPIdx::x_node, x);
 #endif
 #if defined (WARPX_DIM_3D)
     pinned_tile.push_back_real(QdsmcPIdx::y, y);
+    pinned_tile.push_back_real(QdsmcPIdx::y_node, y);
 #endif
     pinned_tile.push_back_real(QdsmcPIdx::z, z);
+    pinned_tile.push_back_real(QdsmcPIdx::z_node, z);
     pinned_tile.push_back_real(QdsmcPIdx::vx, n, 0.0);
     pinned_tile.push_back_real(QdsmcPIdx::vy, n, 0.0);
     pinned_tile.push_back_real(QdsmcPIdx::vz, n, 0.0);
@@ -139,24 +133,57 @@ QdsmcParticleContainer::AddNParticles (int lev, long n,
     amrex::copyParticles(
         particle_tile, pinned_tile, 0, old_np, pinned_tile.numParticles());
 
-    /*
-     * Redistributes particles to their appropriate tiles if the box
-     * structure of the simulation changes to accommodate data more
-     * efficiently.
-     */
     Redistribute();
 
-    // Remove particles that are inside the embedded boundaries
-/*
-#ifdef AMREX_USE_EB
-    if (EB::enabled()) {
-        auto & warpx = WarpX::GetInstance();
-        scrapeParticlesAtEB(
-            *this,
-            warpx.m_fields.get_mr_levels(FieldType::distance_to_eb, warpx.finestLevel()),
-            ParticleBoundaryProcess::Absorb());
-        deleteInvalidParticles();
+    // Remove particles that are inside the embedded boundaries ?
+}
+
+
+
+void SetX()
+{
+}
+
+
+void 
+QdsmcParticleContainer::InitParticles (int lev)
+{
+    auto& warpx = WarpX::GetInstance();
+
+    const amrex::Real* dx = warpx.Geom(lev).CellSize();
+    const auto problo = warpx.Geom(lev).ProbLoArray();
+
+    //amrex::Real cell_volume = dx[0]*dx[1]*dx[2]; // how is this handling dimensions?
+
+    int n_to_add = 0;
+
+    // create 1D vector for X, Y, and Z coordinates of fictitious particles
+    amrex::Vector<amrex::ParticleReal> xpos;
+    amrex::Vector<amrex::ParticleReal> ypos;
+    amrex::Vector<amrex::ParticleReal> zpos;
+
+    // for now, only one MPI rank adds fictitious particles
+    if (ParallelDescriptor::IOProcessor())
+    {
+        for ( int i = 0; i < nx; i++)
+        {
+            for ( int j = 0; j < ny; j++)
+            {
+                for ( int k = 0; k < nz; k++)
+                {
+                    amrex::Real x = problo[0] + (i+0.5)*dx[0];
+                    amrex::Real y = problo[1] + (i+0.5)*dx[1];
+                    amrex::Real z = problo[2] + (i+0.5)*dx[2];
+
+                    xpos.push_back(x);
+                    ypos.push_back(y);
+                    zpos.push_back(z);
+
+                    n_to_add++;
+                }
+            }
+        }
     }
-#endif
-*/
+    
+    AddNParticles (0, n_to_add, xpos, ypos, zpos);
 }
