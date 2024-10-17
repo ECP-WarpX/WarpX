@@ -65,7 +65,7 @@ QdsmcParticleContainer::QdsmcParticleContainer (AmrCore* amr_core)
 }
 
 
-void 
+void
 QdsmcParticleContainer::AddNParticles (int lev, long n,
                                        amrex::Vector<amrex::ParticleReal> const & x,
                                        amrex::Vector<amrex::ParticleReal> const & y,
@@ -88,11 +88,11 @@ QdsmcParticleContainer::AddNParticles (int lev, long n,
 
     auto& particle_tile = DefineAndReturnParticleTile(0, 0, 0);
 
-    
+
     // Creates a temporary tile to obtain data from simulation. This data
     // is then coppied to the permament tile which is stored on the particle
     // (particle_tile).
-     
+
     using PinnedTile = typename ContainerLike<amrex::PinnedArenaAllocator>::ParticleTileType;
 
     PinnedTile pinned_tile;
