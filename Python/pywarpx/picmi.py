@@ -1880,6 +1880,16 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
     warpx_self_fields_verbosity: integer, default=2
         Level of verbosity for the lab frame solver
 
+    warpx_magnetostatic: bool, default=False
+        Whether to use the magnetostatic solver
+
+    warpx_semi_implicit: bool, default=False
+        Whether to use the semi-implicit Poisson solver
+
+    warpx_semi_implicit_factor: float, default=4
+        If the semi-implicit Poisson solver is used, this sets the value
+        of C_SI (the method is marginally stable at C_SI = 1)
+
     warpx_dt_update_interval: string, optional (default = -1)
         How frequently the timestep is updated. Adaptive timestepping is disabled when this is <= 0.
 
@@ -1896,6 +1906,8 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
         self.absolute_tolerance = kw.pop("warpx_absolute_tolerance", None)
         self.self_fields_verbosity = kw.pop("warpx_self_fields_verbosity", None)
         self.magnetostatic = kw.pop("warpx_magnetostatic", False)
+        self.semi_implicit = kw.pop("warpx_semi_implicit", False)
+        self.semi_implicit_factor = kw.pop("warpx_semi_implicit_factor", None)
         self.cfl = kw.pop("warpx_cfl", None)
         self.dt_update_interval = kw.pop("dt_update_interval", None)
         self.max_dt = kw.pop("warpx_max_dt", None)
@@ -1916,6 +1928,9 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
         else:
             if self.magnetostatic:
                 pywarpx.warpx.do_electrostatic = "labframe-electromagnetostatic"
+            elif self.semi_implicit:
+                pywarpx.warpx.do_electrostatic = "labframe-semi-implicit"
+                pywarpx.warpx.semi_implicit_factor = self.semi_implicit_factor
             else:
                 pywarpx.warpx.do_electrostatic = "labframe"
             pywarpx.warpx.self_fields_required_precision = self.required_precision
