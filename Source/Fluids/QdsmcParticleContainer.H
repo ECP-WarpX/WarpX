@@ -72,11 +72,11 @@ public:
 
     //! similar to WarpXParticleContainer::AddNParticles
     void AddNParticles (int lev, amrex::Long n,
-                        amrex::Vector<amrex::ParticleReal> const & x, 
-                        amrex::Vector<amrex::ParticleReal> const & y, 
+                        amrex::Vector<amrex::ParticleReal> const & x,
+                        amrex::Vector<amrex::ParticleReal> const & y,
                         amrex::Vector<amrex::ParticleReal> const & z,
-                        amrex::Vector<amrex::ParticleReal> const & vx, 
-                        amrex::Vector<amrex::ParticleReal> const & vy, 
+                        amrex::Vector<amrex::ParticleReal> const & vx,
+                        amrex::Vector<amrex::ParticleReal> const & vy,
                         amrex::Vector<amrex::ParticleReal> const & vz,
                         amrex::Vector<amrex::ParticleReal> const & entropy,
                         amrex::Vector<amrex::ParticleReal> const & np_real);
