@@ -139,7 +139,11 @@ QdsmcParticleContainer::AddNParticles (int lev, long n,
     amrex::copyParticles(
         particle_tile, pinned_tile, 0, old_np, pinned_tile.numParticles());
 
-    // Move particles to their appropriate tiles
+    /*
+     * Redistributes particles to their appropriate tiles if the box
+     * structure of the simulation changes to accommodate data more
+     * efficiently.
+     */
     Redistribute();
 
     // Remove particles that are inside the embedded boundaries
