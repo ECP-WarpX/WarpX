@@ -95,6 +95,8 @@ QdsmcParticleContainer::AddNParticles (int lev, long n,
     reserveData();
     resizeData();
 
+    auto& particle_tile = DefineAndReturnParticleTile(0, 0, 0);
+
     /*
      * Creates a temporary tile to obtain data from simulation. This data
      * is then coppied to the permament tile which is stored on the particle
@@ -116,7 +118,7 @@ QdsmcParticleContainer::AddNParticles (int lev, long n,
 
     // for RZ write theta value
 #ifdef WARPX_DIM_RZ
-    pinned_tile.push_back_real(QdsmcPIdx::theta, np, 0.0);
+    pinned_tile.push_back_real(QdsmcPIdx::theta, n, 0.0);
 #endif
 #if !defined (WARPX_DIM_1D_Z)
     pinned_tile.push_back_real(QdsmcPIdx::x, x);
@@ -130,6 +132,12 @@ QdsmcParticleContainer::AddNParticles (int lev, long n,
     pinned_tile.push_back_real(QdsmcPIdx::vz, n, 0.0);
     pinned_tile.push_back_real(QdsmcPIdx::entropy, n, 0.0);
     pinned_tile.push_back_real(QdsmcPIdx::np_real, n, 0.0);
+
+    const auto old_np = particle_tile.numParticles();
+    const auto new_np = old_np + pinned_tile.numParticles();
+    particle_tile.resize(new_np);
+    amrex::copyParticles(
+        particle_tile, pinned_tile, 0, old_np, pinned_tile.numParticles());
 
     // Move particles to their appropriate tiles
     Redistribute();
