@@ -81,9 +81,9 @@ public:
                         amrex::Vector<amrex::ParticleReal> const & k);
     /*
     * Function that initializes the particles (only positions)
-    * current version only adds one particle per cell (qdsmc electron energy equation)
-    * future PR will add a generic implementation of QDSMC and will
-    * requir order used in QDSMC algorithm
+    * current version only adds one particle per cell (qdsmc for electron energy equation)
+    * future PR will extend this implementation in order to use qdsmc for a neutral gas too
+    * and will require gaussian quadrature order used in QDSMC algorithm
     * (nppc = order^dim), or nppc = 1 for electron energy equation solver
     * calls AddNParticles
     */
@@ -101,8 +101,13 @@ public:
         const amrex::MultiFab &Kfield,
         const amrex::MultiFab &rhofield);
 
-    // Function that pushes particle positions by one time step
+    // Function that push particle positions by one time step
     void PushX (int lev, amrex::Real dt);
+
+    // Change to general function that deposits some fictitious particle 
+    // property/value valuep in a generic scalar multifab
+    // using linear interpolation
+    void DepositK(int lev, amrex::MultiFab &Kfield);
 
 };
 

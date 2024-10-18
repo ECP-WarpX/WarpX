@@ -293,6 +293,10 @@ QdsmcParticleContainer::SetK (int lev,
 void
 QdsmcParticleContainer::PushX (int lev, amrex::Real dt)
 {
+    // get a reference to WarpX instance
+    auto & warpx = WarpX::GetInstance();
+    const amrex::Real* dx = warpx.Geom(lev).CellSize();
+
     for (iterator pti(*this, lev); pti.isValid(); ++pti)
     {
         auto const np = pti.numParticles();
@@ -313,9 +317,70 @@ QdsmcParticleContainer::PushX (int lev, amrex::Real dt)
 
         amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
         {
-            part_x[ip] = part_x0[ip] + part_vx[ip]*dt;
-            part_y[ip] = part_y0[ip] + part_vy[ip]*dt;
-            part_z[ip] = part_z0[ip] + part_vz[ip]*dt;
+            amrex::Real part_dx =  part_vx[ip]*dt;
+            amrex::Real part_dy =  part_vy[ip]*dt;
+            amrex::Real part_dz =  part_vz[ip]*dt;
+
+            part_x[ip] = part_x0[ip] + part_dx;
+            part_y[ip] = part_y0[ip] + part_dy;
+            part_z[ip] = part_z0[ip] + part_dz;
+        });
+    }
+    // search for maximum part_dx/part_dy/part_dz and assert if larger than dx/dy/dz
+    // qdsmc particles should not move out of the cells were they are initialized on each step !!!
+    // which means that the i,j,k values are constant during the entire simulation
+    // ...
+    // ...
+
+    //WARPX_ALWAYS_ASSERT_WITH_MESSAGE(part_dx_max >= dx[0], "QdsmcParticleContainer::PushX: qdsmc_part_dx >= dx");
+    //WARPX_ALWAYS_ASSERT_WITH_MESSAGE(part_dy_max >= dx[1], "QdsmcParticleContainer::PushX: qdsmc_part_dy >= dy");
+    //WARPX_ALWAYS_ASSERT_WITH_MESSAGE(part_dz_max >= dx[2], "QdsmcParticleContainer::PushX: qdsmc_part_dz >= dz");
+}
+
+
+// Generalize this function to --> DepositScalar
+void
+QdsmcParticleContainer::DepositK(int lev, amrex::MultiFab &Kfield)
+{
+    // get a reference to WarpX instance
+    auto & warpx = WarpX::GetInstance();
+
+    const auto dx = warpx.Geom(lev).CellSize();
+    const auto problo = warpx.Geom(lev).ProbLoArray();
+
+    for (iterator pti(*this, lev); pti.isValid(); ++pti)
+    {
+        auto const np = pti.numParticles();
+
+        // making box cell centered
+        amrex::Box box = pti.tilebox();
+        box.grow(Kfield.nGrowVect());
+
+        auto& attribs = pti.GetStructOfArrays().GetRealData();
+
+        amrex::ParticleReal* const AMREX_RESTRICT part_x = attribs[QdsmcPIdx::x].dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT part_y = attribs[QdsmcPIdx::y].dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT part_z = attribs[QdsmcPIdx::z].dataPtr();
+
+        amrex::ParticleReal* const AMREX_RESTRICT part_i = attribs[QdsmcPIdx::i].dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT part_j = attribs[QdsmcPIdx::j].dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT part_k = attribs[QdsmcPIdx::k].dataPtr();
+
+        const amrex::XDim3 xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
+        const amrex::XDim3 dinv = WarpX::InvCellSize(lev);
+
+        // should change this so that Deposit receives as argument which value to read from the QdsmcPIdx struct
+        amrex::ParticleReal* const AMREX_RESTRICT part_entropy = attribs[QdsmcPIdx::entropy].dataPtr();
+
+        // change this to just scalarField
+        auto arrKField = Kfield[pti].array();
+
+        // Gather entropy and density directly from nodes
+        // since particles are located at the node positions before PushX
+        amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
+        {
+            do_deposit_scalar(arrKField, part_x[ip], part_y[ip], part_z[ip],
+                            part_i[ip], part_j[ip], part_k[ip], xyzmin, dinv, part_entropy[ip]);
         });
     }
 }
