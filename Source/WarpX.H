@@ -27,6 +27,7 @@
 #include "Particles/WarpXParticleContainer_fwd.H"
 #include "Fluids/MultiFluidContainer_fwd.H"
 #include "Fluids/WarpXFluidContainer_fwd.H"
+#include "Fluids/QdsmcParticleContainer_fwd.H"
 
 #ifdef WARPX_USE_FFT
 #   ifdef WARPX_DIM_RZ
@@ -146,6 +147,7 @@ public:
 
     MultiParticleContainer& GetPartContainer () { return *mypc; }
     MultiFluidContainer& GetFluidContainer () { return *myfl; }
+    WarpXFluidContainer& GetElectronFluidContainer () { return *hybrid_electron_fl; }
     MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
     ElectrostaticSolver& GetElectrostaticSolver () {return *m_electrostatic_solver;}
     HybridPICModel& GetHybridPICModel () { return *m_hybrid_pic_model; }
@@ -1371,6 +1373,8 @@ private:
     bool do_fluid_species = false;
     std::unique_ptr<MultiFluidContainer> myfl;
 
+    // Fluid container used in hybrid solver for electron energy equation
+    std::unique_ptr<WarpXFluidContainer> hybrid_electron_fl;
     //
     // Fields: First array for level, second for direction
     //

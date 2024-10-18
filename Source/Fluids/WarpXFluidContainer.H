@@ -30,7 +30,7 @@ class WarpXFluidContainer
 public:
     friend MultiFluidContainer;
 
-    WarpXFluidContainer (int ispecies, const std::string &name);
+    WarpXFluidContainer (int ispecies, const std::string &name, bool electron_hybrid=false);
     ~WarpXFluidContainer() = default;
 
     WarpXFluidContainer (WarpXFluidContainer const &)             = delete;
@@ -131,6 +131,16 @@ public:
      */
     void DepositCharge (ablastr::fields::MultiFabRegister& m_fields, amrex::MultiFab &rho, int lev, int icomp = 0);
 
+    // HybridUpdateUe calculates Ue from Je = J_ampere - Ji and saves in NU for hybrid solver
+    void HybridUpdateUe (ablastr::fields::MultiFabRegister& m_fields, int lev);
+
+    // Sets Ke in fluid container MF to be used by qdsmc particles
+    void HybridInitializeKe (ablastr::fields::MultiFabRegister& m_fields, amrex::Real gamma, int lev);
+
+    // UpdateTe takes the already interpolated Ke values from the grid after pushing the fictitious particles
+    // and calculates Te at n+1
+    void HybridUpdateTe (ablastr::fields::MultiFabRegister& m_fields, amrex::Real gamma, int lev);
+
     [[nodiscard]] amrex::Real getCharge () const {return charge;}
     [[nodiscard]] amrex::Real getMass () const {return mass;}
 
@@ -188,6 +198,8 @@ public:
     // Names of Multifabs that will be added to the mfs register
     std::string name_mf_N = "fluid_density_"+species_name;
     std::string name_mf_NU = "fluid_momentum_density_"+species_name;
+    std::string name_mf_T = "fluid_temperature_"+species_name;
+    std::string name_mf_K = "fluid_entropy_"+species_name;
 
 };
 
