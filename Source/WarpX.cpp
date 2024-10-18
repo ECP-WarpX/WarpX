@@ -340,6 +340,9 @@ WarpX::WarpX ()
     {
         // Create hybrid-PIC model object if needed
         m_hybrid_pic_model = std::make_unique<HybridPICModel>();
+
+        // Create electron fluid container for hybrid-PIC model
+        hybrid_electron_fl = std::make_unique<WarpXFluidContainer>(0, "electrons_hybrid", true);
     }
 
     current_buffer_masks.resize(nlevs_max);
@@ -2235,6 +2238,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             lev, ba, dm, ncomps, ngJ, ngRho, jx_nodal_flag, jy_nodal_flag,
             jz_nodal_flag, rho_nodal_flag
         );
+
+        // allocate multifabs for electron fluid container used in hibryd-PIC model
+        hybrid_electron_fl->AllocateLevelMFs(m_fields, ba, dm, lev);
     }
 
     // Allocate extra multifabs needed for fluids
