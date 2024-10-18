@@ -1,9 +1,31 @@
 #!/usr/bin/env python3
 
+import os
+import re
 import sys
 
 import numpy as np
 import openpmd_api as io
+
+sys.path.insert(1, "../../../../warpx/Regression/Checksum/")
+from checksumAPI import evaluate_checksum
+
+
+def analyze_openpmd_regression(output_file):
+    # Run checksum regression test
+    if re.search("single_precision", output_file):
+        evaluate_checksum(
+            test_name=test_name,
+            output_file=output_file,
+            output_format="openpmd",
+            rtol=2e-6,
+        )
+    else:
+        evaluate_checksum(
+            test_name=test_name,
+            output_file=output_file,
+            output_format="openpmd",
+        )
 
 
 def load_field_from_iteration(
@@ -27,15 +49,15 @@ def load_field_from_iteration(
     return field_data
 
 
-def main():
+def compare_time_avg_with_instantaneous_diags(dir_inst: str, dir_avg: str):
+    """Compare instantaneous data (multiple iterations averaged in post-processing) with in-situ averaged data."""
+
     field = "E"
     coord = "z"
     avg_period_steps = 5
     avg_output_step = 100
 
-    path_tpl_inst = "diags/diagInst/openpmd_%T.h5"
-
-    dir_avg = sys.argv[1]
+    path_tpl_inst = f"{dir_inst}/openpmd_%T.h5"
     path_tpl_avg = f"{dir_avg}/openpmd_%T.h5"
 
     si = io.Series(path_tpl_inst, io.Access.read_only)
@@ -63,4 +85,18 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+
+    test_name = os.path.split(os.getcwd())[1]
+    inst_output_file = sys.argv[1]
+
+    # Regression checksum test
+    #   NOTE: works only in the example directory due to relative path import
+    analyze_openpmd_regression(inst_output_file)
+
+    # TODO: implement intervals parser for PICMI that allows more complex output periods
+    if "picmi" not in test_name:
+        # Functionality test for TimeAveragedDiagnostics
+        compare_time_avg_with_instantaneous_diags(
+            dir_inst=sys.argv[1],
+            dir_avg="diags/diagTimeAvg/",
+        )
