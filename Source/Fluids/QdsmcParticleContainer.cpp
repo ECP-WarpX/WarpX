@@ -87,7 +87,6 @@ QdsmcParticleContainer::AddNParticles (int lev, amrex::Long n,
         Redistribute();
         return;
     }
-
     // have to resize here, not in the constructor because grids have not
     // been built when constructor was called.
     reserveData();
@@ -95,11 +94,9 @@ QdsmcParticleContainer::AddNParticles (int lev, amrex::Long n,
 
     auto& particle_tile = DefineAndReturnParticleTile(0, 0, 0);
 
-
     // Creates a temporary tile to obtain data from simulation. This data
     // is then coppied to the permament tile which is stored on the particle
     // (particle_tile).
-
     using PinnedTile = typename ContainerLike<amrex::PinnedArenaAllocator>::ParticleTileType;
 
     PinnedTile pinned_tile;
@@ -145,7 +142,10 @@ QdsmcParticleContainer::AddNParticles (int lev, amrex::Long n,
 
     Redistribute();
 
-    // Remove particles that are inside the embedded boundaries ?
+    // Remove particles that are inside the embedded boundaries here
+    /*
+    *
+    */
 }
 
 
@@ -213,14 +213,6 @@ QdsmcParticleContainer::SetV (int lev,
                     const amrex::MultiFab &Uy,
                     const amrex::MultiFab &Uz)
 {
-    long numparticles = 0; // particles on this MPI rank
-
-    for (iterator pti(*this, lev); pti.isValid(); ++pti)
-    {
-        // count particle on MPI rank
-        numparticles += pti.numParticles();
-    }
-
     for (iterator pti(*this, lev); pti.isValid(); ++pti)
     {
         auto const np = pti.numParticles();
@@ -266,14 +258,6 @@ QdsmcParticleContainer::SetK (int lev,
     const amrex::Real* dx = warpx.Geom(lev).CellSize();
     amrex::Real cell_volume = dx[0]*dx[1]*dx[2]; // how is this handling different dimensions?
 
-    long numparticles = 0; // particles on this MPI rank
-
-    for (iterator pti(*this, lev); pti.isValid(); ++pti)
-    {
-        // count particle on MPI rank
-        numparticles += pti.numParticles();
-    }
-
     for (iterator pti(*this, lev); pti.isValid(); ++pti)
     {
         auto const np = pti.numParticles();
@@ -309,17 +293,6 @@ QdsmcParticleContainer::SetK (int lev,
 void
 QdsmcParticleContainer::PushX (int lev, amrex::Real dt)
 {
-    // get a reference to WarpX instance
-    //auto & warpx = WarpX::GetInstance();
-
-    long numparticles = 0; // particles on this MPI rank
-
-    for (iterator pti(*this, lev); pti.isValid(); ++pti)
-    {
-        // count particle on MPI rank
-        numparticles += pti.numParticles();
-    }
-
     for (iterator pti(*this, lev); pti.isValid(); ++pti)
     {
         auto const np = pti.numParticles();
