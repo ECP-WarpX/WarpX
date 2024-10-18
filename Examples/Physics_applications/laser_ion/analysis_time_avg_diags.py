@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 
 import sys
+
 import numpy as np
 import openpmd_api as io
 
 
-def load_field_from_iteration(series, iteration : int, field : str, coord : str = None) -> np.ndarray:
+def load_field_from_iteration(
+    series, iteration: int, field: str, coord: str = None
+) -> np.ndarray:
     """Load iteration of field data from file."""
 
     it = series.iterations[iteration]
@@ -16,14 +19,15 @@ def load_field_from_iteration(series, iteration : int, field : str, coord : str 
     elif coord in [item[0] for item in list(field_obj.items())]:
         field_data = field_obj[coord].load_chunk()
     else:
-        raise Exception(f"Specified coordinate: f{coord} is not available for field: f{field}.")
+        raise Exception(
+            f"Specified coordinate: f{coord} is not available for field: f{field}."
+        )
     series.flush()
 
     return field_data
 
 
 def main():
-
     field = "E"
     coord = "z"
     avg_period_steps = 5
@@ -43,7 +47,7 @@ def main():
 
     data_inst = np.zeros(shape)
 
-    for i in np.arange(avg_output_step-avg_period_steps+1,avg_output_step+1):
+    for i in np.arange(avg_output_step - avg_period_steps + 1, avg_output_step + 1):
         data_inst += load_field_from_iteration(si, i, field, coord)
 
     data_inst = data_inst / avg_period_steps
