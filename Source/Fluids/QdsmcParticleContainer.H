@@ -104,7 +104,7 @@ public:
     // Function that push particle positions by one time step
     void PushX (int lev, amrex::Real dt);
 
-    // Change to general function that deposits some fictitious particle 
+    // Change to general function that deposits some fictitious particle
     // property/value valuep in a generic scalar multifab
     // using linear interpolation
     void DepositK(int lev, amrex::MultiFab &Kfield);
