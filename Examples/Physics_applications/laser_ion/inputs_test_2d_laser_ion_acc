@@ -202,7 +202,8 @@ laser1.profile_focal_distance = 4.0e-6  # focal distance from the antenna [m]
 #
 diagnostics.diags_names = diagInst diagTimeAvg openPMDfw openPMDbw
 
-diagInst.intervals = 100
+# instantaneous field and particle diagnostic
+diagInst.intervals = 100,96:100  # second interval only for CI testing the time-averaged diags
 diagInst.diag_type = Full
 diagInst.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho rho_electrons rho_hydrogen
 # reduce resolution of output fields
@@ -213,10 +214,12 @@ diagInst.hydrogen.plot_filter_function(t,x,y,z,ux,uy,uz) = (uz>=0) * (x<1.0e-6) 
 diagInst.format = openpmd
 diagInst.openpmd_backend = h5
 
+# time-averaged particle and field diagnostic
 diagTimeAvg.intervals = 100
 diagTimeAvg.diag_type = TimeAveraged
 diagTimeAvg.time_average_mode = dynamic_start
-diagTimeAvg.average_period_time = 2.67e-15  # period of 800 nm light waves
+#diagTimeAvg.average_period_time = 2.67e-15  # period of 800 nm light waves
+diagTimeAvg.average_period_steps = 5  # use only either `time` or `steps`
 diagTimeAvg.write_species = 0
 diagTimeAvg.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho rho_electrons rho_hydrogen
 # reduce resolution of output fields
