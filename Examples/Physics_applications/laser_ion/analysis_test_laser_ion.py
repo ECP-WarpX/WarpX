@@ -85,7 +85,6 @@ def compare_time_avg_with_instantaneous_diags(dir_inst: str, dir_avg: str):
 
 
 if __name__ == "__main__":
-
     test_name = os.path.split(os.getcwd())[1]
     inst_output_file = sys.argv[1]
 
