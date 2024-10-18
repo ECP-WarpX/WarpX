@@ -6,6 +6,7 @@
  */
 
 #include "QdsmcParticleContainer.H"
+#include "Qdsmc_K.H"
 
 #include "Particles/Deposition/ChargeDeposition.H"
 #include "Particles/Deposition/CurrentDeposition.H"
@@ -157,7 +158,7 @@ QdsmcParticleContainer::InitParticles (int lev)
 
     const amrex::Real* dx = warpx.Geom(lev).CellSize();
 
-    // Read this from domain ?? 
+    // Read this from domain ??
     int nx = (probhi[0] - problo[0])/dx[0] + 1;
     int ny = (probhi[1] - problo[1])/dx[1] + 1;
     int nz = (probhi[2] - problo[2])/dx[2] + 1;
@@ -289,7 +290,7 @@ QdsmcParticleContainer::SetK (int lev,
         const auto &arrKfield = Kfield[pti].array();
         const auto &arrrhofield = rhofield[pti].array();
 
-        // Gather drift velocity directly from nodes
+        // Gather entropy and density directly from nodes
         // since particles are located at the node positions before PushX
         amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
         {
@@ -304,22 +305,44 @@ QdsmcParticleContainer::SetK (int lev,
     }
 }
 
-// complete this! Add GPU kernel for particle push
-/*
+
 void
-QdsmcParticleContainer::PushX(int lev, amrex::Real dt)
+QdsmcParticleContainer::PushX (int lev, amrex::Real dt)
 {
-    // ?
+    // get a reference to WarpX instance
+    //auto & warpx = WarpX::GetInstance();
+
+    long numparticles = 0; // particles on this MPI rank
+
+    for (iterator pti(*this, lev); pti.isValid(); ++pti)
+    {
+        // count particle on MPI rank
+        numparticles += pti.numParticles();
+    }
 
     for (iterator pti(*this, lev); pti.isValid(); ++pti)
     {
         auto const np = pti.numParticles();
 
+        auto& attribs = pti.GetStructOfArrays().GetRealData();
+
+        amrex::ParticleReal* const AMREX_RESTRICT part_x0 = attribs[QdsmcPIdx::x_node].dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT part_y0 = attribs[QdsmcPIdx::y_node].dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT part_z0 = attribs[QdsmcPIdx::z_node].dataPtr();
+
+        amrex::ParticleReal* const AMREX_RESTRICT part_x = attribs[QdsmcPIdx::x].dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT part_y = attribs[QdsmcPIdx::y].dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT part_z = attribs[QdsmcPIdx::z].dataPtr();
+
+        amrex::ParticleReal* const AMREX_RESTRICT part_vx = attribs[QdsmcPIdx::vx].dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT part_vy = attribs[QdsmcPIdx::vy].dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT part_vz = attribs[QdsmcPIdx::vz].dataPtr();
+
         amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
         {
-            //amrex::ParticleReal xp, yp, zp;
-            //GetPosition(ip, xp, yp, zp);
+            part_x[ip] = part_x0[ip] + part_vx[ip]*dt;
+            part_y[ip] = part_y0[ip] + part_vy[ip]*dt;
+            part_z[ip] = part_z0[ip] + part_vz[ip]*dt;
         });
     }
 }
-*/

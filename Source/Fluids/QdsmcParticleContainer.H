@@ -102,7 +102,7 @@ public:
         const amrex::MultiFab &rhofield);
 
     // Function that pushes particle positions by one time step
-    void PushX (amrex::Real dt);
+    void PushX (int lev, amrex::Real dt);
 
 };
 
