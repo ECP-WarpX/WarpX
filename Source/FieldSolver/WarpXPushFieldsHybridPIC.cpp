@@ -195,11 +195,13 @@ void WarpX::HybridPICDepositInitialRhoAndJ ()
 {
     using warpx::fields::FieldType;
 
+    bool const skip_level_0 = true;
+
     ablastr::fields::MultiLevelScalarField rho_fp_temp = m_fields.get_mr_levels(FieldType::hybrid_rho_fp_temp, finest_level);
     ablastr::fields::MultiLevelVectorField current_fp_temp = m_fields.get_mr_levels_alldirs(FieldType::hybrid_current_fp_temp, finest_level);
     mypc->DepositCharge(rho_fp_temp, 0._rt);
     mypc->DepositCurrent(current_fp_temp, dt[0], 0._rt);
-    SyncRho(rho_fp_temp, m_fields.get_mr_levels(FieldType::rho_cp, finest_level), m_fields.get_mr_levels(FieldType::rho_buf, finest_level));
+    SyncRho(rho_fp_temp, m_fields.get_mr_levels(FieldType::rho_cp, finest_level, skip_level_0), m_fields.get_mr_levels(FieldType::rho_buf, finest_level, skip_level_0));
     SyncCurrent("hybrid_current_fp_temp");
     for (int lev=0; lev <= finest_level; ++lev) {
         // SyncCurrent does not include a call to FillBoundary, but it is needed
