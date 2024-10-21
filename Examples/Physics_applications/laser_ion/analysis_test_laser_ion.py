@@ -11,23 +11,6 @@ sys.path.insert(1, "../../../../warpx/Regression/Checksum/")
 from checksumAPI import evaluate_checksum
 
 
-def analyze_openpmd_regression(output_file):
-    # Run checksum regression test
-    if re.search("single_precision", output_file):
-        evaluate_checksum(
-            test_name=test_name,
-            output_file=output_file,
-            output_format="openpmd",
-            rtol=2e-6,
-        )
-    else:
-        evaluate_checksum(
-            test_name=test_name,
-            output_file=output_file,
-            output_format="openpmd",
-        )
-
-
 def load_field_from_iteration(
     series, iteration: int, field: str, coord: str = None
 ) -> np.ndarray:
@@ -85,14 +68,15 @@ def compare_time_avg_with_instantaneous_diags(dir_inst: str, dir_avg: str):
 
 
 if __name__ == "__main__":
-    test_name = os.path.split(os.getcwd())[1]
-    inst_output_file = sys.argv[1]
-
-    # Regression checksum test
-    #   NOTE: works only in the example directory due to relative path import
-    analyze_openpmd_regression(inst_output_file)
+    # NOTE: works only in the example directory due to relative path import
+    # compare checksums
+    evaluate_checksum(
+        test_name=os.path.split(os.getcwd())[1],
+        output_file=sys.argv[1],
+    )
 
     # TODO: implement intervals parser for PICMI that allows more complex output periods
+    test_name = os.path.split(os.getcwd())[1]
     if "picmi" not in test_name:
         # Functionality test for TimeAveragedDiagnostics
         compare_time_avg_with_instantaneous_diags(
