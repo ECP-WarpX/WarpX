@@ -1088,7 +1088,7 @@ WarpX::SyncCurrent (const std::string& current_fp_string)
     // If warpx.do_current_centering = 1, center currents from nodal grid to staggered grid
     if (do_current_centering)
     {
-        ablastr::fields::MultiLevelVectorField const& J_fp_nodal = m_fields.get_mr_levels_alldirs(FieldType::current_fp_nodal, finest_level+1);
+        ablastr::fields::MultiLevelVectorField const& J_fp_nodal = m_fields.get_mr_levels_alldirs(FieldType::current_fp_nodal, finest_level);
 
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(finest_level <= 1,
                                          "warpx.do_current_centering=1 not supported with more than one fine levels");
