@@ -2634,10 +2634,10 @@ In-situ visualization
 ^^^^^^^^^^^^^^^^^^^^^
 
 WarpX has five types of diagnostics:
-``FullDiagnostics`` consist in dumps of fields and particles at given iterations,
-``TimeAveragedDiagnostics`` only allow field data which they output after averaging over a period of time,
-``BackTransformedDiagnostics`` are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame,
-``BoundaryScrapingDiagnostics`` are used to collect the particles that are absorbed at the boundary, throughout the simulation, and
+``Full`` diagnostics consist in dumps of fields and particles at given iterations,
+``TimeAveraged`` diagnostics only allow field data, which they output after averaging over a period of time,
+``BackTransformed`` diagnostics are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame,
+``BoundaryScraping`` diagnostics are used to collect the particles that are absorbed at the boundary, throughout the simulation, and
 ``ReducedDiags`` allow the user to compute some reduced quantity (particle temperature, max of a field) and write a small amount of data to text files.
 Similar to what is done for physical species, WarpX has a class Diagnostics that allows users to initialize different diagnostics, each of them with different fields, resolution and period.
 This currently applies to standard diagnostics, but should be extended to back-transformed diagnostics and reduced diagnostics (and others) in a near future.
@@ -2889,13 +2889,13 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 Time-Averaged Diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``TimeAveraged`` diagnostics are a special type of ``FullDiagnostics`` that allows for the output of time-averaged field data.
+``TimeAveraged`` diagnostics are a special type of ``Full`` diagnostics that allows for the output of time-averaged field data.
 This type of diagnostics can be created using ``<diag_name>.diag_type = TimeAveraged``.
 We support only field data and related options from the list at `Full Diagnostics`_.
 
 .. note::
 
-    As with ``FullDiagnostics``, ``TimeAveraged`` diagnostics output the initial **instantaneous** conditions of the selected fields on step 0 (unless more specific output intervals exclude output for step 0).
+    As with ``Full`` diagnostics, ``TimeAveraged`` diagnostics output the initial **instantaneous** conditions of the selected fields on step 0 (unless more specific output intervals exclude output for step 0).
 
 In addition, ``TimeAveraged`` diagnostic options include:
 
