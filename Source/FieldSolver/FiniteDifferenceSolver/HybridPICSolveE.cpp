@@ -489,10 +489,9 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
         Array4<Real const> const& Br = Bfield[0]->const_array(mfi);
         Array4<Real const> const& Bt = Bfield[1]->const_array(mfi);
         Array4<Real const> const& Bz = Bfield[2]->const_array(mfi);
-
-        Array4<Real const> const& Br_ext = Bfield_external[0]->const_array(mfi);
-        Array4<Real const> const& Bt_ext = Bfield_external[1]->const_array(mfi);
-        Array4<Real const> const& Bz_ext = Bfield_external[2]->const_array(mfi);
+        Array4<const Real> const& Br_ext = Bfield_external[0]->const_array(mfi);
+        Array4<const Real> const& Bt_ext = Bfield_external[1]->const_array(mfi);
+        Array4<const Real> const& Bz_ext = Bfield_external[2]->const_array(mfi);
 
         // Loop over the cells and update the nodal E field
         amrex::ParallelFor(mfi.tilebox(), [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
@@ -557,15 +556,15 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
         Array4<Real> const& Er = Efield[0]->array(mfi);
         Array4<Real> const& Et = Efield[1]->array(mfi);
         Array4<Real> const& Ez = Efield[2]->array(mfi);
-        Array4<Real const> const& Er_ext = Efield_external[0]->const_array(mfi);
-        Array4<Real const> const& Et_ext = Efield_external[1]->const_array(mfi);
-        Array4<Real const> const& Ez_ext = Efield_external[2]->const_array(mfi);
         Array4<Real const> const& Jr = Jfield[0]->const_array(mfi);
         Array4<Real const> const& Jt = Jfield[1]->const_array(mfi);
         Array4<Real const> const& Jz = Jfield[2]->const_array(mfi);
         Array4<Real const> const& enE = enE_nodal_mf.const_array(mfi);
         Array4<Real const> const& rho = rhofield.const_array(mfi);
         Array4<Real const> const& Pe = Pefield.const_array(mfi);
+        Array4<const Real> const& Er_ext = Efield_external[0]->const_array(mfi);
+        Array4<const Real> const& Et_ext = Efield_external[1]->const_array(mfi);
+        Array4<const Real> const& Ez_ext = Efield_external[2]->const_array(mfi);
 
         amrex::Array4<amrex::Real> lr, lz;
         if (EB::enabled()) {

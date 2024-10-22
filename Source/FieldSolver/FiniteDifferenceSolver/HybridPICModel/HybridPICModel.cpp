@@ -13,6 +13,7 @@
 #include "EmbeddedBoundary/Enabled.H"
 #include "Fields.H"
 #include "Particles/MultiParticleContainer.H"
+#include "ExternalVectorPotential.H"
 #include "WarpX.H"
 
 using namespace amrex;
@@ -60,12 +61,7 @@ void HybridPICModel::ReadParameters ()
     pp_hybrid.query("add_external_fields", m_add_external_fields);
 
     if (m_add_external_fields) {
-        pp_hybrid.query("Bx_external_grid_function(x,y,z,t)", m_Bx_ext_grid_function);
-        pp_hybrid.query("By_external_grid_function(x,y,z,t)", m_By_ext_grid_function);
-        pp_hybrid.query("Bz_external_grid_function(x,y,z,t)", m_Bz_ext_grid_function);
-        pp_hybrid.query("Ex_external_grid_function(x,y,z,t)", m_Ex_ext_grid_function);
-        pp_hybrid.query("Ey_external_grid_function(x,y,z,t)", m_Ey_ext_grid_function);
-        pp_hybrid.query("Ez_external_grid_function(x,y,z,t)", m_Ez_ext_grid_function);
+        m_external_EB = std::make_unique<ExternalVectorPotential>();
     }
 }
 
@@ -136,25 +132,13 @@ void HybridPICModel::AllocateLevelMFs (
         dm, ncomps, IntVect(AMREX_D_DECL(0,0,0)), 0.0_rt);
 
     if (m_add_external_fields) {
-        // These are nodal to match when B-field is added in evaluation of Ohm's law
-        fields.alloc_init(FieldType::hybrid_B_fp_external, Direction{0},
-            lev, amrex::convert(ba, Bx_nodal_flag),
-            dm, ncomps, ngEB, 0.0_rt);
-        fields.alloc_init(FieldType::hybrid_B_fp_external, Direction{1},
-            lev, amrex::convert(ba, By_nodal_flag),
-            dm, ncomps, ngEB, 0.0_rt);
-        fields.alloc_init(FieldType::hybrid_B_fp_external, Direction{2},
-            lev, amrex::convert(ba, Bz_nodal_flag),
-            dm, ncomps, ngEB, 0.0_rt);
-        fields.alloc_init(FieldType::hybrid_E_fp_external, Direction{0},
-            lev, amrex::convert(ba, Ex_nodal_flag),
-            dm, ncomps, ngEB, 0.0_rt);
-        fields.alloc_init(FieldType::hybrid_E_fp_external, Direction{1},
-            lev, amrex::convert(ba, Ey_nodal_flag),
-            dm, ncomps, ngEB, 0.0_rt);
-        fields.alloc_init(FieldType::hybrid_E_fp_external, Direction{2},
-            lev, amrex::convert(ba, Ez_nodal_flag),
-            dm, ncomps, ngEB, 0.0_rt);
+        m_external_EB->AllocateLevelMFs(
+            fields,
+            lev, ba, dm,
+            ncomps, ngEB,
+            Ex_nodal_flag, Ey_nodal_flag, Ez_nodal_flag,
+            Bx_nodal_flag, By_nodal_flag, Bz_nodal_flag
+        );
     }
 
 #ifdef WARPX_DIM_RZ
@@ -185,30 +169,10 @@ void HybridPICModel::InitData ()
     // check if the external current parsers depend on time
     for (int i=0; i<3; i++) {
         const std::set<std::string> J_ext_symbols = m_J_external_parser[i]->symbols();
-        m_external_field_has_time_dependence += J_ext_symbols.count("t");
+        m_external_current_has_time_dependence += J_ext_symbols.count("t");
     }
 
     auto & warpx = WarpX::GetInstance();
-
-    m_B_external_parser[0] = std::make_unique<amrex::Parser>(
-        utils::parser::makeParser(m_Bx_ext_grid_function,{"x","y","z","t"}));
-    m_B_external_parser[1] = std::make_unique<amrex::Parser>(
-        utils::parser::makeParser(m_By_ext_grid_function,{"x","y","z","t"}));
-    m_B_external_parser[2] = std::make_unique<amrex::Parser>(
-        utils::parser::makeParser(m_Bz_ext_grid_function,{"x","y","z","t"}));
-    m_B_external[0] = m_B_external_parser[0]->compile<4>();
-    m_B_external[1] = m_B_external_parser[1]->compile<4>();
-    m_B_external[2] = m_B_external_parser[2]->compile<4>();
-
-    m_E_external_parser[0] = std::make_unique<amrex::Parser>(
-        utils::parser::makeParser(m_Ex_ext_grid_function,{"x","y","z","t"}));
-    m_E_external_parser[1] = std::make_unique<amrex::Parser>(
-        utils::parser::makeParser(m_Ey_ext_grid_function,{"x","y","z","t"}));
-    m_E_external_parser[2] = std::make_unique<amrex::Parser>(
-        utils::parser::makeParser(m_Ez_ext_grid_function,{"x","y","z","t"}));
-    m_E_external[0] = m_E_external_parser[0]->compile<4>();
-    m_E_external[1] = m_E_external_parser[1]->compile<4>();
-    m_E_external[2] = m_E_external_parser[2]->compile<4>();
     using ablastr::fields::Direction;
 
     // Get the grid staggering of the fields involved in calculating E
@@ -286,12 +250,12 @@ void HybridPICModel::InitData ()
     // write time independent fields on the first step.
     GetCurrentExternal(true);
     if (m_add_external_fields)
-        GetFieldsExternal(warpx.gett_new(0));
+        m_external_EB->InitData();
 }
 
 void HybridPICModel::GetCurrentExternal (bool skip_check /*=false*/)
 {
-    if (!skip_check && !m_external_field_has_time_dependence) { return; }
+    if (!skip_check && !m_external_current_has_time_dependence) { return; }
 
     auto& warpx = WarpX::GetInstance();
     for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
@@ -300,37 +264,13 @@ void HybridPICModel::GetCurrentExternal (bool skip_check /*=false*/)
     }
 }
 
-void HybridPICModel::GetFieldsExternal (amrex::Real t)
-{
-    if (!m_add_external_fields) return;
-
-    using ablastr::fields::Direction;
-    auto& warpx = WarpX::GetInstance();
-
-    for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
-    {
-        GetExternalFieldFromExpression(
-            FieldType::hybrid_B_fp_external,
-            m_B_external, lev, t);
-        GetExternalFieldFromExpression(
-            FieldType::hybrid_E_fp_external,
-            m_E_external, lev, t);
-        for (int idim=0; idim < 3; idim++) {
-            auto mf_Bext = warpx.m_fields.get(FieldType::hybrid_B_fp_external, Direction{idim}, lev);
-            mf_Bext->FillBoundary(warpx.Geom(lev).periodicity());
-            auto mf_Eext = warpx.m_fields.get(FieldType::hybrid_E_fp_external, Direction{idim}, lev);
-            mf_Eext->FillBoundary(warpx.Geom(lev).periodicity());
-        }
-    }
-}
-
 void HybridPICModel::GetExternalFieldFromExpression (
     FieldType field_type,
     std::array< amrex::ParserExecutor<4>, 3> const& expression,
-    int lev)
+    int lev) 
 {
-    auto & warpx = WarpX::GetInstance();
-    GetExternalFieldFromExpression(field_type, expression, lev, warpx.gett_new(lev));
+    auto& warpx = WarpX::GetInstance();
+    GetExternalFieldFromExpression(FieldType::hybrid_current_fp_external, m_J_external, lev, warpx.gett_new(0));
 }
 
 void HybridPICModel::GetExternalFieldFromExpression (

@@ -182,6 +182,21 @@ class FiniteDifferenceSolver
                       ablastr::fields::VectorField const& edge_lengths,
                       int lev );
 
+        /**
+          * \brief Calculation of B field from the vector potential A
+          * B = (curl x A) / mu0.
+          *
+          * \param[out] Bfield  vector of current MultiFabs at a given level
+          * \param[in] Afield   vector of magnetic field MultiFabs at a given level
+          * \param[in] edge_lengths length of edges along embedded boundaries
+          * \param[in] lev  level number for the calculation
+          */
+        void ComputeCurlA (
+                      ablastr::fields::VectorField& Bfield,
+                      ablastr::fields::VectorField const& Afield,
+                      ablastr::fields::VectorField const& edge_lengths,
+                      int lev );
+
     private:
 
         ElectromagneticSolverAlgo m_fdtd_algo;
@@ -258,6 +273,14 @@ class FiniteDifferenceSolver
         void CalculateCurrentAmpereCylindrical (
             ablastr::fields::VectorField& Jfield,
             ablastr::fields::VectorField const& Bfield,
+            ablastr::fields::VectorField const& edge_lengths,
+            int lev
+        );
+
+        template<typename T_Algo>
+        void ComputeCurlACylindrical (
+            ablastr::fields::VectorField& Bfield,
+            ablastr::fields::VectorField const& Afield,
             ablastr::fields::VectorField const& edge_lengths,
             int lev
         );
@@ -364,6 +387,14 @@ class FiniteDifferenceSolver
         void CalculateCurrentAmpereCartesian (
             ablastr::fields::VectorField& Jfield,
             ablastr::fields::VectorField const& Bfield,
+            ablastr::fields::VectorField const& edge_lengths,
+            int lev
+        );
+
+        template<typename T_Algo>
+        void ComputeCurlACartesian (
+            ablastr::fields::VectorField & Bfield,
+            ablastr::fields::VectorField const& Afield,
             ablastr::fields::VectorField const& edge_lengths,
             int lev
         );
