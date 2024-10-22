@@ -86,18 +86,18 @@ void HybridPICModel::AllocateLevelMFs (
 
     // The "hybrid_electron_pressure_fp" multifab stores the electron pressure calculated
     // from the specified equation of state.
-    // The "hybrid_rho_fp_temp" multifab is used to store the ion charge density
-    // interpolated or extrapolated to appropriate timesteps.
-    // The "hybrid_current_fp_temp" multifab is used to store the ion current density
-    // interpolated or extrapolated to appropriate timesteps.
-    // The "hybrid_current_fp_ampere" multifab stores the total current calculated as
-    // the curl of B.
     fields.alloc_init(FieldType::hybrid_electron_pressure_fp,
         lev, amrex::convert(ba, rho_nodal_flag),
         dm, ncomps, ngRho, 0.0_rt);
+
+    // The "hybrid_rho_fp_temp" multifab is used to store the ion charge density
+    // interpolated or extrapolated to appropriate timesteps.
     fields.alloc_init(FieldType::hybrid_rho_fp_temp,
         lev, amrex::convert(ba, rho_nodal_flag),
         dm, ncomps, ngRho, 0.0_rt);
+
+    // The "hybrid_current_fp_temp" multifab is used to store the ion current density
+    // interpolated or extrapolated to appropriate timesteps.
     fields.alloc_init(FieldType::hybrid_current_fp_temp, Direction{0},
         lev, amrex::convert(ba, jx_nodal_flag),
         dm, ncomps, ngJ, 0.0_rt);
@@ -108,28 +108,29 @@ void HybridPICModel::AllocateLevelMFs (
         lev, amrex::convert(ba, jz_nodal_flag),
         dm, ncomps, ngJ, 0.0_rt);
 
-    fields.alloc_init(FieldType::hybrid_current_fp_ampere, Direction{0},
+    // The "hybrid_current_fp_plasma" multifab stores the total plasma current calculated
+    // as the curl of B minus any external current.
+    fields.alloc_init(FieldType::hybrid_current_fp_plasma, Direction{0},
         lev, amrex::convert(ba, jx_nodal_flag),
         dm, ncomps, ngJ, 0.0_rt);
-    fields.alloc_init(FieldType::hybrid_current_fp_ampere, Direction{1},
+    fields.alloc_init(FieldType::hybrid_current_fp_plasma, Direction{1},
         lev, amrex::convert(ba, jy_nodal_flag),
         dm, ncomps, ngJ, 0.0_rt);
-    fields.alloc_init(FieldType::hybrid_current_fp_ampere, Direction{2},
+    fields.alloc_init(FieldType::hybrid_current_fp_plasma, Direction{2},
         lev, amrex::convert(ba, jz_nodal_flag),
         dm, ncomps, ngJ, 0.0_rt);
 
-    // the external current density multifab is made nodal to avoid needing to interpolate
-    // to a nodal grid as has to be done for the ion and total current density multifabs
-    // this also allows the external current multifab to not have any ghost cells
+    // the external current density multifab matches the current staggering and
+    // one ghost cell is used since we interpolate the current to a nodal grid
     fields.alloc_init(FieldType::hybrid_current_fp_external, Direction{0},
-        lev, amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
-        dm, ncomps, IntVect(AMREX_D_DECL(0,0,0)), 0.0_rt);
+        lev, amrex::convert(ba, jx_nodal_flag),
+        dm, ncomps, IntVect(1), 0.0_rt);
     fields.alloc_init(FieldType::hybrid_current_fp_external, Direction{1},
-        lev, amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
-        dm, ncomps, IntVect(AMREX_D_DECL(0,0,0)), 0.0_rt);
+        lev, amrex::convert(ba, jy_nodal_flag),
+        dm, ncomps, IntVect(1), 0.0_rt);
     fields.alloc_init(FieldType::hybrid_current_fp_external, Direction{2},
-        lev, amrex::convert(ba, IntVect(AMREX_D_DECL(1,1,1))),
-        dm, ncomps, IntVect(AMREX_D_DECL(0,0,0)), 0.0_rt);
+        lev, amrex::convert(ba, jz_nodal_flag),
+        dm, ncomps, IntVect(1), 0.0_rt);
 
     if (m_add_external_fields) {
         m_external_EB->AllocateLevelMFs(
@@ -248,201 +249,74 @@ void HybridPICModel::InitData ()
     // Initialize external current - note that this approach skips the check
     // if the current is time dependent which is what needs to be done to
     // write time independent fields on the first step.
-    GetCurrentExternal(true);
-    if (m_add_external_fields)
-        m_external_EB->InitData();
+    for (int lev = 0; lev <= warpx.finestLevel(); ++lev) {
+        warpx.ComputeExternalFieldOnGridUsingParser(
+            FieldType::hybrid_current_fp_external,
+            m_J_external[0],
+            m_J_external[1],
+            m_J_external[2],
+            lev, PatchType::fine, 'e',
+            warpx.m_fields.get_alldirs(FieldType::edge_lengths, lev),
+            warpx.m_fields.get_alldirs(FieldType::face_areas, lev));
+    }
 }
 
-void HybridPICModel::GetCurrentExternal (bool skip_check /*=false*/)
+void HybridPICModel::GetCurrentExternal ()
 {
     if (!skip_check && !m_external_current_has_time_dependence) { return; }
 
     auto& warpx = WarpX::GetInstance();
     for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
     {
-        GetExternalFieldFromExpression(FieldType::hybrid_current_fp_external, m_J_external, lev);
+        warpx.ComputeExternalFieldOnGridUsingParser(
+            FieldType::hybrid_current_fp_external,
+            m_J_external[0],
+            m_J_external[1],
+            m_J_external[2],
+            lev, PatchType::fine, 'e',
+            warpx.m_fields.get_alldirs(FieldType::edge_lengths, lev),
+            warpx.m_fields.get_alldirs(FieldType::face_areas, lev));
     }
 }
 
-void HybridPICModel::GetExternalFieldFromExpression (
-    FieldType field_type,
-    std::array< amrex::ParserExecutor<4>, 3> const& expression,
-    int lev) 
-{
-    auto& warpx = WarpX::GetInstance();
-    GetExternalFieldFromExpression(FieldType::hybrid_current_fp_external, m_J_external, lev, warpx.gett_new(0));
-}
-
-void HybridPICModel::GetExternalFieldFromExpression (
-    FieldType field_type,
-    std::array< amrex::ParserExecutor<4>, 3> const& expression,
-    int lev, amrex::Real t)
-{
-    using ablastr::fields::Direction;
-
-    // This logic matches closely to WarpX::InitializeExternalFieldsOnGridUsingParser
-    // except that the parsers include time dependence.
-    auto & warpx = WarpX::GetInstance();
-    auto dx_lev = warpx.Geom(lev).CellSizeArray();
-    const RealBox& real_box = warpx.Geom(lev).ProbDomain();
-
-    ablastr::fields::VectorField field = warpx.m_fields.get_alldirs(field_type, lev);
-
-    amrex::MultiFab* mfx = field[0];
-    amrex::MultiFab* mfy = field[1];
-    amrex::MultiFab* mfz = field[2];
-
-    const amrex::IntVect x_nodal_flag = mfx->ixType().toIntVect();
-    const amrex::IntVect y_nodal_flag = mfy->ixType().toIntVect();
-    const amrex::IntVect z_nodal_flag = mfz->ixType().toIntVect();
-
-    // avoid implicit lambda capture
-    auto x_external = expression[0];
-    auto y_external = expression[1];
-    auto z_external = expression[2];
-
-    for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi)
-    {
-        const amrex::Box& tbx = mfi.tilebox( x_nodal_flag, mfx->nGrowVect() );
-        const amrex::Box& tby = mfi.tilebox( y_nodal_flag, mfy->nGrowVect() );
-        const amrex::Box& tbz = mfi.tilebox( z_nodal_flag, mfz->nGrowVect() );
-
-        auto const& mfxfab = mfx->array(mfi);
-        auto const& mfyfab = mfy->array(mfi);
-        auto const& mfzfab = mfz->array(mfi);
-
-        amrex::Box lxb, lyb, lzb;
-        amrex::Array4<const amrex::Real> lx, ly, lz;
-        if (EB::enabled()) {
-
-            auto const& mf_lx = *warpx.m_fields.get(FieldType::edge_lengths, Direction{0}, lev);
-            auto const& mf_ly = *warpx.m_fields.get(FieldType::edge_lengths, Direction{1}, lev);
-            auto const& mf_lz = *warpx.m_fields.get(FieldType::edge_lengths, Direction{2}, lev);
-
-            lxb = mfi.growntilebox(mf_lx.nGrowVect());
-            lyb = mfi.growntilebox(mf_ly.nGrowVect());
-            lzb = mfi.growntilebox(mf_lz.nGrowVect());
-
-            lx = mf_lx.array(mfi);
-            ly = mf_ly.array(mfi);
-            lz = mf_lz.array(mfi);
-        }
-
-        amrex::ParallelFor (tbx, tby, tbz,
-            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                // skip if node is covered by an embedded boundary or outside of lx box array
-                if (lx && (!lxb.contains({i, j, k}) || lx(i, j, k) <= 0)) { return; }
-
-                // Shift required in the x-, y-, or z- position
-                // depending on the index type of the multifab
-#if defined(WARPX_DIM_1D_Z)
-                const amrex::Real x = 0._rt;
-                const amrex::Real y = 0._rt;
-                const amrex::Real fac_z = (1._rt - x_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
-                const amrex::Real z = j*dx_lev[0] + real_box.lo(0) + fac_z;
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                const amrex::Real fac_x = (1._rt - x_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
-                const amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
-                const amrex::Real y = 0._rt;
-                const amrex::Real fac_z = (1._rt - x_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
-                const amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
-#else
-                const amrex::Real fac_x = (1._rt - x_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
-                const amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
-                const amrex::Real fac_y = (1._rt - x_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
-                const amrex::Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
-                const amrex::Real fac_z = (1._rt - x_nodal_flag[2]) * dx_lev[2] * 0.5_rt;
-                const amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
-#endif
-                // Initialize the x-component of the field.
-                mfxfab(i,j,k) = x_external(x,y,z,t);
-            },
-            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                // skip if node is covered by an embedded boundary or outside of ly box array
-                if (ly && (!lyb.contains({i, j, k}) || ly(i, j, k) <= 0)) { return; }
-
-#if defined(WARPX_DIM_1D_Z)
-                const amrex::Real x = 0._rt;
-                const amrex::Real y = 0._rt;
-                const amrex::Real fac_z = (1._rt - y_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
-                const amrex::Real z = j*dx_lev[0] + real_box.lo(0) + fac_z;
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                const amrex::Real fac_x = (1._rt - y_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
-                const amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
-                const amrex::Real y = 0._rt;
-                const amrex::Real fac_z = (1._rt - y_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
-                const amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
-#elif defined(WARPX_DIM_3D)
-                const amrex::Real fac_x = (1._rt - y_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
-                const amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
-                const amrex::Real fac_y = (1._rt - y_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
-                const amrex::Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
-                const amrex::Real fac_z = (1._rt - y_nodal_flag[2]) * dx_lev[2] * 0.5_rt;
-                const amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
-#endif
-                // Initialize the y-component of the field.
-                mfyfab(i,j,k)  = y_external(x,y,z,t);
-            },
-            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                // skip if node is covered by an embedded boundary or outside of lz box array
-                if (lz && (!lzb.contains({i, j, k}) || lz(i, j, k) <= 0)) { return; }
-
-#if defined(WARPX_DIM_1D_Z)
-                const amrex::Real x = 0._rt;
-                const amrex::Real y = 0._rt;
-                const amrex::Real fac_z = (1._rt - z_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
-                const amrex::Real z = j*dx_lev[0] + real_box.lo(0) + fac_z;
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                const amrex::Real fac_x = (1._rt - z_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
-                const amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
-                const amrex::Real y = 0._rt;
-                const amrex::Real fac_z = (1._rt - z_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
-                const amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
-#elif defined(WARPX_DIM_3D)
-                const amrex::Real fac_x = (1._rt - z_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
-                const amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
-                const amrex::Real fac_y = (1._rt - z_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
-                const amrex::Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
-                const amrex::Real fac_z = (1._rt - z_nodal_flag[2]) * dx_lev[2] * 0.5_rt;
-                const amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
-#endif
-                // Initialize the z-component of the field.
-                mfzfab(i,j,k) = z_external(x,y,z,t);
-            }
-        );
-    }
-    amrex::Gpu::streamSynchronize();
-}
-
-void HybridPICModel::CalculateCurrentAmpere (
+void HybridPICModel::CalculatePlasmaCurrent (
     ablastr::fields::MultiLevelVectorField const& Bfield,
     ablastr::fields::MultiLevelVectorField const& edge_lengths)
 {
     auto& warpx = WarpX::GetInstance();
     for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
     {
-        CalculateCurrentAmpere(Bfield[lev], edge_lengths[lev], lev);
+        CalculatePlasmaCurrent(Bfield[lev], edge_lengths[lev], lev);
     }
 }
 
-void HybridPICModel::CalculateCurrentAmpere (
+void HybridPICModel::CalculatePlasmaCurrent (
     ablastr::fields::VectorField const& Bfield,
     ablastr::fields::VectorField const& edge_lengths,
     const int lev)
 {
-    WARPX_PROFILE("WarpX::CalculateCurrentAmpere()");
+    WARPX_PROFILE("HybridPICModel::CalculatePlasmaCurrent()");
 
     auto& warpx = WarpX::GetInstance();
-    ablastr::fields::VectorField current_fp_ampere = warpx.m_fields.get_alldirs(FieldType::hybrid_current_fp_ampere, lev);
+    ablastr::fields::VectorField current_fp_plasma = warpx.m_fields.get_alldirs(FieldType::hybrid_current_fp_plasma, lev);
     warpx.get_pointer_fdtd_solver_fp(lev)->CalculateCurrentAmpere(
-        current_fp_ampere, Bfield, edge_lengths, lev
+        current_fp_plasma, Bfield, edge_lengths, lev
     );
 
     // we shouldn't apply the boundary condition to J since J = J_i - J_e but
     // the boundary correction was already applied to J_i and the B-field
     // boundary ensures that J itself complies with the boundary conditions, right?
     // ApplyJfieldBoundary(lev, Jfield[0].get(), Jfield[1].get(), Jfield[2].get());
-    for (int i=0; i<3; i++) { current_fp_ampere[i]->FillBoundary(warpx.Geom(lev).periodicity()); }
+    for (int i=0; i<3; i++) { current_fp_plasma[i]->FillBoundary(warpx.Geom(lev).periodicity()); }
+
+    // Subtract external current from "Ampere" current calculated above. Note
+    // we need to include 1 ghost cell since later we will interpolate the
+    // plasma current to a nodal grid.
+    ablastr::fields::VectorField current_fp_external = warpx.m_fields.get_alldirs(FieldType::hybrid_current_fp_external, lev);
+    for (int i=0; i<3; i++) {
+        current_fp_plasma[i]->minus(*current_fp_external[i], 0, 1, 1);
+    }
+
 }
 
 void HybridPICModel::HybridPICSolveE (
@@ -496,19 +370,15 @@ void HybridPICModel::HybridPICSolveE (
     const int lev, PatchType patch_type,
     const bool solve_for_Faraday) const
 {
-
     auto& warpx = WarpX::GetInstance();
 
-    ablastr::fields::VectorField current_fp_ampere = warpx.m_fields.get_alldirs(FieldType::hybrid_current_fp_ampere, lev);
-    const ablastr::fields::VectorField current_fp_external = warpx.m_fields.get_alldirs(FieldType::hybrid_current_fp_external, lev);
+    ablastr::fields::VectorField current_fp_plasma = warpx.m_fields.get_alldirs(FieldType::hybrid_current_fp_plasma, lev);
     const ablastr::fields::ScalarField electron_pressure_fp = warpx.m_fields.get(FieldType::hybrid_electron_pressure_fp, lev);
 
     // Solve E field in regular cells
     warpx.get_pointer_fdtd_solver_fp(lev)->HybridPICSolveE(
-        Efield, current_fp_ampere, Jfield, current_fp_external,
-        Bfield, rhofield,
-        *electron_pressure_fp,
-        edge_lengths, t, lev, this, solve_for_Faraday
+        Efield, current_fp_plasma, Jfield, Bfield, rhofield,
+        *electron_pressure_fp, edge_lengths, t, lev, this, solve_for_Faraday
     );
     warpx.ApplyEfieldBoundary(lev, patch_type);
 }
@@ -716,8 +586,8 @@ void HybridPICModel::FieldPush (
 {
     auto& warpx = WarpX::GetInstance();
 
-    // Calculate J = curl x B / mu0
-    CalculateCurrentAmpere(Bfield, edge_lengths);
+    // Calculate J = curl x B / mu0 - J_ext
+    CalculatePlasmaCurrent(Bfield, edge_lengths);
     // Calculate the E-field from Ohm's law
     HybridPICSolveE(Efield, Jfield, Bfield, rhofield, edge_lengths, t, true);
     warpx.FillBoundaryE(ng, nodal_sync);
