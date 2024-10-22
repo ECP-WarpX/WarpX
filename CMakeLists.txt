@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
-cmake_minimum_required(VERSION 3.20.0)
-project(WarpX VERSION 24.07)
+cmake_minimum_required(VERSION 3.24.0)
+project(WarpX VERSION 24.10)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -27,13 +27,6 @@ endif()
 # https://cmake.org/cmake/help/latest/policy/CMP0104.html
 if(POLICY CMP0104)
     cmake_policy(SET CMP0104 OLD)
-endif()
-
-# We use simple syntax in cmake_dependent_option, so we are compatible with the
-# extended syntax in CMake 3.22+
-# https://cmake.org/cmake/help/v3.22/policy/CMP0127.html
-if(POLICY CMP0127)
-    cmake_policy(SET CMP0127 NEW)
 endif()
 
 
@@ -74,7 +67,8 @@ set_default_install_dirs()
 include(CMakeDependentOption)
 option(WarpX_APP           "Build the WarpX executable application"     ON)
 option(WarpX_ASCENT        "Ascent in situ diagnostics"                 OFF)
-option(WarpX_EB            "Embedded boundary support"                  OFF)
+option(WarpX_CATALYST      "Catalyst in situ diagnostics"               OFF)
+option(WarpX_EB            "Embedded boundary support"                  ON)
 option(WarpX_LIB           "Build WarpX as a library"                   OFF)
 option(WarpX_MPI           "Multi-node support (message-passing)"       ON)
 option(WarpX_OPENPMD       "openPMD I/O (HDF5, ADIOS)"                  ON)
@@ -87,6 +81,14 @@ option(WarpX_QED_TABLE_GEN "QED table generation (requires PICSAR and Boost)"
                                                                         OFF)
 option(WarpX_QED_TOOLS     "Build external tool to generate QED lookup tables (requires PICSAR and Boost)"
                                                                         OFF)
+
+# Advanced option to automatically clean up CI test directories
+option(WarpX_TEST_CLEANUP "Clean up CI test directories" OFF)
+mark_as_advanced(WarpX_TEST_CLEANUP)
+
+# Advanced option to run CI tests with FPE-trapping runtime parameters
+option(WarpX_TEST_FPETRAP "Run CI tests with FPE-trapping runtime parameters" OFF)
+mark_as_advanced(WarpX_TEST_FPETRAP)
 
 set(WarpX_DIMS_VALUES 1 2 3 RZ)
 set(WarpX_DIMS 3 CACHE STRING "Simulation dimensionality <1;2;3;RZ>")
@@ -194,7 +196,7 @@ if(WarpX_HEFFTE)
 endif()
 
 # this defined the variable BUILD_TESTING which is ON by default
-#include(CTest)
+include(CTest)
 
 
 # Dependencies ################################################################
@@ -252,7 +254,7 @@ endif()
 
 # Python
 if(WarpX_PYTHON)
-    find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
+    find_package(Python 3.8 COMPONENTS Interpreter Development.Module REQUIRED)
 
     # default installation directories: Python
     warpx_set_default_install_dirs_python()
@@ -711,8 +713,10 @@ endforeach()
 # pip helpers for the pywarpx package #########################################
 #
 if(WarpX_PYTHON)
-    set(PYINSTALLOPTIONS "" CACHE STRING
-        "Additional parameters to pass to `pip install`")
+    set(PY_PIP_OPTIONS "-v" CACHE STRING
+        "Additional parameters to pass to `pip` as ; separated list")
+    set(PY_PIP_INSTALL_OPTIONS "" CACHE STRING
+        "Additional parameters to pass to `pip install` as ; separated list")
 
     # ensure all targets are built before we package them in a wheel
     set(pyWarpX_INSTALL_TARGET_NAMES)
@@ -735,7 +739,8 @@ if(WarpX_PYTHON)
         ${CMAKE_COMMAND} -E rm -f -r warpx-whl
         COMMAND
             ${CMAKE_COMMAND} -E env PYWARPX_LIB_DIR=$<TARGET_FILE_DIR:pyWarpX_${WarpX_DIMS_LAST}>
-                ${Python_EXECUTABLE} -m pip wheel -v --no-build-isolation --no-deps --wheel-dir=warpx-whl ${WarpX_SOURCE_DIR}
+                ${Python_EXECUTABLE} -m pip ${PY_PIP_OPTIONS} wheel --no-build-isolation --no-deps --wheel-dir=warpx-whl "${WarpX_SOURCE_DIR}"
+        COMMAND_EXPAND_LISTS VERBATIM
         WORKING_DIRECTORY
             ${WarpX_BINARY_DIR}
         DEPENDS
@@ -749,7 +754,8 @@ if(WarpX_PYTHON)
         set(pyWarpX_REQUIREMENT_FILE "requirements.txt")
     endif()
     add_custom_target(${WarpX_CUSTOM_TARGET_PREFIX}pip_install_requirements
-        ${Python_EXECUTABLE} -m pip install ${PYINSTALLOPTIONS} -r "${WarpX_SOURCE_DIR}/${pyWarpX_REQUIREMENT_FILE}"
+        ${Python_EXECUTABLE} -m pip ${PY_PIP_OPTIONS} install ${PY_PIP_INSTALL_OPTIONS} -r "${WarpX_SOURCE_DIR}/${pyWarpX_REQUIREMENT_FILE}"
+        COMMAND_EXPAND_LISTS VERBATIM
         WORKING_DIRECTORY
             ${WarpX_BINARY_DIR}
     )
@@ -766,7 +772,8 @@ if(WarpX_PYTHON)
     # because otherwise pip would also force reinstall all dependencies.
     add_custom_target(${WarpX_CUSTOM_TARGET_PREFIX}pip_install
         ${CMAKE_COMMAND} -E env WARPX_MPI=${WarpX_MPI}
-            ${Python_EXECUTABLE} -m pip install --force-reinstall --no-index --no-deps ${PYINSTALLOPTIONS} --find-links=warpx-whl pywarpx
+            ${Python_EXECUTABLE} -m pip ${PY_PIP_OPTIONS} install --force-reinstall --no-index --no-deps ${PY_PIP_INSTALL_OPTIONS} --find-links=warpx-whl pywarpx
+        COMMAND_EXPAND_LISTS VERBATIM
         WORKING_DIRECTORY
             ${WarpX_BINARY_DIR}
         DEPENDS
@@ -779,7 +786,8 @@ if(WarpX_PYTHON)
     # this is for package managers only
     add_custom_target(${WarpX_CUSTOM_TARGET_PREFIX}pip_install_nodeps
         ${CMAKE_COMMAND} -E env WARPX_MPI=${WarpX_MPI}
-            ${Python_EXECUTABLE} -m pip install --force-reinstall --no-index --no-deps ${PYINSTALLOPTIONS} --find-links=warpx-whl pywarpx
+            ${Python_EXECUTABLE} -m pip ${PY_PIP_OPTIONS} install --force-reinstall --no-index --no-deps ${PY_PIP_INSTALL_OPTIONS} --find-links=warpx-whl pywarpx
+        COMMAND_EXPAND_LISTS VERBATIM
         WORKING_DIRECTORY
             ${WarpX_BINARY_DIR}
         DEPENDS
@@ -791,12 +799,12 @@ endif()
 
 # Tests #######################################################################
 #
-
-#if(BUILD_TESTING)
-#    enable_testing()
-#
-#    add_test(...)
-#endif()
+if(BUILD_TESTING)
+    enable_testing()
+    if(WarpX_APP OR WarpX_PYTHON)
+        add_subdirectory(Examples)
+    endif()
+endif()
 
 
 # Status Summary for Build Options ############################################

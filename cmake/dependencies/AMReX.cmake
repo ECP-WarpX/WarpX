@@ -26,6 +26,11 @@ macro(find_amrex)
             set(AMReX_CONDUIT ON CACHE INTERNAL "")
         endif()
 
+        if(WarpX_CATALYST)
+            set(AMReX_CATALYST ON CACHE INTERNAL "")
+            set(AMReX_CONDUIT ON CACHE INTERNAL "")
+        endif()
+
         if("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
             set(AMReX_ASSERTIONS ON CACHE BOOL "")
             # note: floating-point exceptions can slow down debug runs a lot
@@ -87,6 +92,8 @@ macro(find_amrex)
         set(AMReX_PARTICLES ON CACHE INTERNAL "")
         set(AMReX_PROBINIT OFF CACHE INTERNAL "")
         set(AMReX_TINY_PROFILE ON CACHE BOOL "")
+        set(AMReX_LINEAR_SOLVERS_EM ON CACHE INTERNAL "")
+        set(AMReX_LINEAR_SOLVERS_INCFLO OFF CACHE INTERNAL "")
 
         if(WarpX_ASCENT OR WarpX_SENSEI)
             set(AMReX_GPU_RDC ON CACHE BOOL "")
@@ -140,22 +147,17 @@ macro(find_amrex)
             endif()
             add_subdirectory(${WarpX_amrex_src} _deps/localamrex-build/)
         else()
+            if(WarpX_COMPUTE STREQUAL CUDA)
+                enable_language(CUDA)
+                # AMReX 21.06+ supports CUDA_ARCHITECTURES
+            endif()
             FetchContent_Declare(fetchedamrex
                 GIT_REPOSITORY ${WarpX_amrex_repo}
                 GIT_TAG        ${WarpX_amrex_branch}
                 BUILD_IN_SOURCE 0
             )
-            FetchContent_GetProperties(fetchedamrex)
-
-            if(NOT fetchedamrex_POPULATED)
-                FetchContent_Populate(fetchedamrex)
-                list(APPEND CMAKE_MODULE_PATH "${fetchedamrex_SOURCE_DIR}/Tools/CMake")
-                if(WarpX_COMPUTE STREQUAL CUDA)
-                    enable_language(CUDA)
-                    # AMReX 21.06+ supports CUDA_ARCHITECTURES
-                endif()
-                add_subdirectory(${fetchedamrex_SOURCE_DIR} ${fetchedamrex_BINARY_DIR})
-            endif()
+            FetchContent_MakeAvailable(fetchedamrex)
+            list(APPEND CMAKE_MODULE_PATH "${fetchedamrex_SOURCE_DIR}/Tools/CMake")
 
             # advanced fetch options
             mark_as_advanced(FETCHCONTENT_BASE_DIR)
@@ -200,6 +202,8 @@ macro(find_amrex)
         mark_as_advanced(AMReX_HYPRE)
         mark_as_advanced(AMReX_IPO)
         mark_as_advanced(AMReX_LINEAR_SOLVERS)
+        mark_as_advanced(AMReX_LINEAR_SOLVERS_INCFLO)
+        mark_as_advanced(AMReX_LINEAR_SOLVERS_EM)
         mark_as_advanced(AMReX_MEM_PROFILE)
         mark_as_advanced(AMReX_MPI)
         mark_as_advanced(AMReX_MPI_THREAD_MULTIPLE)
@@ -226,6 +230,12 @@ macro(find_amrex)
             set(COMPONENT_ASCENT)
         endif()
 
+        if(WarpX_CATALYST)
+            set(COMPONENT_CATALYST CATALYST CONDUIT)
+        else()
+            set(COMPONENT_CATALYST)
+        endif()
+
         set(WarpX_amrex_dim ${WarpX_DIMS})  # RZ is AMReX 2D
         list(TRANSFORM WarpX_amrex_dim REPLACE RZ 2)
         list(REMOVE_DUPLICATES WarpX_amrex_dim)
@@ -250,7 +260,7 @@ macro(find_amrex)
         endif()
         set(COMPONENT_PRECISION ${WarpX_PRECISION} P${WarpX_PARTICLE_PRECISION})
 
-        find_package(AMReX 24.07 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIMS} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} ${COMPONENT_SENSEI} LSOLVERS)
+        find_package(AMReX 24.10 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_CATALYST} ${COMPONENT_DIMS} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} ${COMPONENT_SENSEI} LSOLVERS)
         # note: TINYP skipped because user-configured and optional
 
         # AMReX CMake helper scripts
@@ -273,7 +283,7 @@ set(WarpX_amrex_src ""
 set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
     CACHE STRING
     "Repository URI to pull and build AMReX from if(WarpX_amrex_internal)")
-set(WarpX_amrex_branch "0c3273f5e591815909180f8ffaf5b793cabbf9bc"
+set(WarpX_amrex_branch "62c2a81eac7862d526e5861ef2befc00b7f5b759"
     CACHE STRING
     "Repository branch for WarpX_amrex_repo if(WarpX_amrex_internal)")
 

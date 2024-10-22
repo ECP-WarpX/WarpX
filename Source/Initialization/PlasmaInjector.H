@@ -134,6 +134,8 @@ public:
     // With radial geometry, the particle weight will be proportional to r**radial_weight_power
     amrex::Real radial_weight_power = 1.;
 
+    bool m_inject_from_eb = false; // whether to inject from the embedded boundary
+
     std::string str_flux_function;
 
     amrex::Real xmin, xmax;
