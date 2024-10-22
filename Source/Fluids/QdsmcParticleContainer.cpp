@@ -136,9 +136,9 @@ QdsmcParticleContainer::AddNParticles (int lev, amrex::Long n,
 
     // Remove particles that are inside the embedded boundaries here
     /**
-     * 
-     * 
-     * 
+     *
+     *
+     *
      */
 }
 
@@ -235,7 +235,7 @@ QdsmcParticleContainer::SetV (int lev,
             amrex::Real vzp;
 
             gather_vector_field_qdsmc(part_x0[ip], part_y0[ip], part_z0[ip], vxp, vyp, vzp, arrUxfield, arrUyfield, arrUzfield, xyzmin, dinv);
-  
+
             part_vx[ip] = vxp;
             part_vy[ip] = vyp;
             part_vz[ip] = vzp;
@@ -255,7 +255,7 @@ QdsmcParticleContainer::SetK (int lev,
     const amrex::XDim3 dinv = WarpX::InvCellSize(lev);
     const amrex::Real* dx = warpx.Geom(lev).CellSize();
     amrex::Real cell_volume = dx[0]*dx[1]*dx[2]; // how is this handling different dimensions?
-    
+
     for (iterator pti(*this, lev); pti.isValid(); ++pti)
     {
         auto const np = pti.numParticles();
@@ -300,7 +300,7 @@ QdsmcParticleContainer::PushX (int lev, amrex::Real dt)
     {
         auto const np = pti.numParticles();
         auto& attribs = pti.GetStructOfArrays().GetRealData();
-        
+
         amrex::ParticleReal* const AMREX_RESTRICT part_x0 = attribs[QdsmcPIdx::x_node].dataPtr();
         amrex::ParticleReal* const AMREX_RESTRICT part_y0 = attribs[QdsmcPIdx::y_node].dataPtr();
         amrex::ParticleReal* const AMREX_RESTRICT part_z0 = attribs[QdsmcPIdx::z_node].dataPtr();
@@ -360,7 +360,7 @@ QdsmcParticleContainer::DepositK(int lev, amrex::MultiFab &Kfield)
         amrex::ParticleReal* const AMREX_RESTRICT part_z = attribs[QdsmcPIdx::z].dataPtr();
 
         const amrex::XDim3 xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
-        
+
         // should change this so that Deposit receives as argument which value to read from the QdsmcPIdx struct
         amrex::ParticleReal* const AMREX_RESTRICT part_entropy = attribs[QdsmcPIdx::entropy].dataPtr();
 

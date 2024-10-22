@@ -17,8 +17,8 @@
 
 
 /**
- * 
- * 
+ *
+ *
  */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void gather_density_entropy(const amrex::ParticleReal x0p,
@@ -46,8 +46,8 @@ void gather_density_entropy(const amrex::ParticleReal x0p,
 
 
 /**
- * 
- * 
+ *
+ *
  */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void gather_vector_field_qdsmc(const amrex::ParticleReal x0p,
