@@ -189,10 +189,12 @@ if "phi" in ts.avail_record_components["electron"]:
     print("Checking conservation of energy")
     Ek_i, Ep_i = return_energies(0)
     Ek_f, Ep_f = return_energies(30)
-    print(f'Ep_f = {Ep_f} should be less than')
-    print(f'0.7*Ep_i = {0.7*Ep_i}')
-    print(f'abs( (Ek_i + Ep_i) - (Ek_f + Ep_f) ) = {abs( (Ek_i + Ep_i) - (Ek_f + Ep_f) )} should be less than')
-    print(f'0.003 * (Ek_i + Ep_i) = {0.003 * (Ek_i + Ep_i)}')
+    print(f"Ep_f = {Ep_f} should be less than")
+    print(f"0.7*Ep_i = {0.7*Ep_i}")
+    print(
+        f"abs( (Ek_i + Ep_i) - (Ek_f + Ep_f) ) = {abs( (Ek_i + Ep_i) - (Ek_f + Ep_f) )} should be less than"
+    )
+    print(f"0.003 * (Ek_i + Ep_i) = {0.003 * (Ek_i + Ep_i)}")
     assert Ep_f < 0.7 * Ep_i  # Check that potential energy changes significantly
     assert abs((Ek_i + Ep_i) - (Ek_f + Ep_f)) < 0.003 * (
         Ek_i + Ep_i
