@@ -20,7 +20,7 @@ from .Constants import my_constants
 from .Diagnostics import diagnostics, reduced_diagnostics
 from .EB2 import eb2
 from .Geometry import geometry
-from .HybridPICModel import hybridpicmodel, external_vector_potential
+from .HybridPICModel import external_vector_potential, hybridpicmodel
 from .Interpolation import interpolation
 from .Lasers import lasers, lasers_list
 from .Particles import particles, particles_list
