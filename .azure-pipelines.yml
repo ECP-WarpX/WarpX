@@ -12,6 +12,7 @@ pr:
   paths:
     exclude:
     - Docs
+    - ./.github/workflows
 
 jobs:
 - job:
