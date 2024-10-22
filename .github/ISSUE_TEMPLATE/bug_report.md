@@ -4,11 +4,10 @@ about: Found a bug? Let us know.
 title: ''
 labels: [bug]
 assignees: ''
-
 ---
 
 **What bug did you find?**
-A clear and concise description of what the bug is.
+A clear and concise description of the bug.
 
 **How to reproduce the bug**
 Please provide (if available):

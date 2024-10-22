@@ -1,20 +1,22 @@
 ---
 name: Feature request
-about: Suggest an idea for this project
+about: Request a new feature
 title: ''
 labels: [enhancement]
 assignees: ''
-
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+**What is the context that is prompting you to request a new feature?**
+A clear and concise description of the context.
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+**What feature would you like to add to WarpX?**
+A clear and concise description of the feature.
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+**What alternatives have you considered?**
+A clear and concise description of any alternative solutions or features you have considered.
 
-**Additional context**
-Add any other context or screenshots about the feature request here.
+**Additional information**
+If applicable, please add other info about the feature request.
+
+**Screenshots**
+If applicable, please add screenshots about the feature request.

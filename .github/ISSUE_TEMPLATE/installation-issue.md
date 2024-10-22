@@ -4,7 +4,6 @@ about: Cannot install WarpX? Let us know.
 title: ''
 labels: [install, question]
 assignees: ''
-
 ---
 
 **Where are you trying to install WarpX?**
