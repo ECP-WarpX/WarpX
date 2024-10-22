@@ -72,6 +72,7 @@ if __name__ == "__main__":
     evaluate_checksum(
         test_name=os.path.split(os.getcwd())[1],
         output_file=sys.argv[1],
+        output_format="openpmd",
     )
 
     # TODO: implement intervals parser for PICMI that allows more complex output periods
