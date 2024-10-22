@@ -199,8 +199,7 @@ void FiniteDifferenceSolver::EvolveECartesian (
 #endif
 
                 Ey(i, j, k) += c2 * dt * (
-                    - T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k, n)
-                    + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k, n)
+                    + T_Algo::Curl_Nodal_1(Bz, Bx, coefs_z, coefs_x, i, j, k, n)
                     - PhysConst::mu0 * jy(i, j, k) );
             },
 
@@ -209,8 +208,7 @@ void FiniteDifferenceSolver::EvolveECartesian (
                 // Skip field push if this cell is fully covered by embedded boundaries
                 if (lz && lz(i,j,k) <= 0) { return; }
                 Ez(i, j, k) += c2 * dt * (
-                    - T_Algo::DownwardDy(Bx, coefs_y, n_coefs_y, i, j, k, n)
-                    + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k, n)
+                    + T_Algo::Curl_Nodal_2(Bx, By, coefs_x, coefs_y, i, j, k, n)
                     - PhysConst::mu0 * jz(i, j, k) );
             }
 
@@ -327,82 +325,23 @@ void FiniteDifferenceSolver::EvolveECylindrical (
 
             },
 
-            tet, 1, [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/, int /*n*/){
+            tet, m_ncomps, [=] AMREX_GPU_DEVICE (int i, int j, int k, int n){
                 // Skip field push if this cell is fully covered by embedded boundaries
                 // The Et field is at a node, so we need to check if the node is covered
                 if (lr && (lr(i, j, 0)<=0 || lr(i-1, j, 0)<=0 || lz(i, j-1, 0)<=0 || lz(i, j, 0)<=0)) { return; }
 
-                Real const r = rmin + i*dr; // r on a nodal grid (Et is nodal in r)
-                if (r != 0) { // Off-axis, regular Maxwell equations
-                    Et(i, j, 0, 0) += c2 * dt*(
-                        - T_Algo::DownwardDr(Bz, coefs_r, n_coefs_r, i, j, 0, 0)
-                        + T_Algo::DownwardDz(Br, coefs_z, n_coefs_z, i, j, 0, 0)
-                        - PhysConst::mu0 * jt(i, j, 0, 0 ) ); // Mode m=0
-                    for (int m=1 ; m<nmodes ; m++) { // Higher-order modes
-                        Et(i, j, 0, 2*m-1) += c2 * dt*(
-                            - T_Algo::DownwardDr(Bz, coefs_r, n_coefs_r, i, j, 0, 2*m-1)
-                            + T_Algo::DownwardDz(Br, coefs_z, n_coefs_z, i, j, 0, 2*m-1)
-                            - PhysConst::mu0 * jt(i, j, 0, 2*m-1) ); // Real part
-                        Et(i, j, 0, 2*m  ) += c2 * dt*(
-                            - T_Algo::DownwardDr(Bz, coefs_r, n_coefs_r, i, j, 0, 2*m  )
-                            + T_Algo::DownwardDz(Br, coefs_z, n_coefs_z, i, j, 0, 2*m  )
-                            - PhysConst::mu0 * jt(i, j, 0, 2*m  ) ); // Imaginary part
-                    }
-                } else { // r==0: on-axis corrections
-                    // Ensure that Et remains 0 on axis (except for m=1)
-                    Et(i, j, 0, 0) = 0.; // Mode m=0
-                    for (int m=1; m<nmodes; m++) { // Higher-order modes
-                        if (m == 1){
-                            // The bulk equation could in principle be used here since it does not diverge
-                            // on axis. However, it typically gives poor results e.g. for the propagation
-                            // of a laser pulse (the field is spuriously reduced on axis). For this reason
-                            // a modified on-axis condition is used here: we use the fact that
-                            // Etheta(r=0,m=1) should equal -iEr(r=0,m=1), for the fields Er and Et to be
-                            // independent of theta at r=0. Now with linear interpolation:
-                            // Er(r=0,m=1) = 0.5*[Er(r=dr/2,m=1) + Er(r=-dr/2,m=1)]
-                            // And using the rule applying for the guards cells
-                            // Er(r=-dr/2,m=1) = Er(r=dr/2,m=1). Thus: Et(i,j,m) = -i*Er(i,j,m)
-                            Et(i,j,0,2*m-1) =  Er(i,j,0,2*m  );
-                            Et(i,j,0,2*m  ) = -Er(i,j,0,2*m-1);
-                        } else {
-                            Et(i, j, 0, 2*m-1) = 0.;
-                            Et(i, j, 0, 2*m  ) = 0.;
-                        }
-                    }
-                }
+                Et(i, j, 0, 0) += c2 * dt*(
+                    + T_Algo::Curl_Nodal_1(Bz, Br, coefs_z, coefs_r, i, j, k, n)
+                    - PhysConst::mu0 * jt(i, j, 0, n) );
             },
 
-            tez, 1, [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/, int /*n*/){
+            tez, m_ncomps, [=] AMREX_GPU_DEVICE (int i, int j, int k, int n){
                 // Skip field push if this cell is fully covered by embedded boundaries
                 if (lz && lz(i, j, 0) <= 0) { return; }
 
-                Real const r = rmin + i*dr; // r on a nodal grid (Ez is nodal in r)
-                if (r != 0) { // Off-axis, regular Maxwell equations
-                    Ez(i, j, 0, 0) += c2 * dt*(
-                       T_Algo::DownwardDrr_over_r(Bt, r, dr, coefs_r, n_coefs_r, i, j, 0, 0)
-                        - PhysConst::mu0 * jz(i, j, 0, 0  ) ); // Mode m=0
-                    for (int m=1 ; m<nmodes ; m++) { // Higher-order modes
-                        Ez(i, j, 0, 2*m-1) += c2 * dt *(
-                            - m * Br(i, j, 0, 2*m  )/r
-                            + T_Algo::DownwardDrr_over_r(Bt, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m-1)
-                            - PhysConst::mu0 * jz(i, j, 0, 2*m-1) ); // Real part
-                        Ez(i, j, 0, 2*m  ) += c2 * dt *(
-                            m * Br(i, j, 0, 2*m-1)/r
-                            + T_Algo::DownwardDrr_over_r(Bt, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m  )
-                            - PhysConst::mu0 * jz(i, j, 0, 2*m  ) ); // Imaginary part
-                    }
-                } else { // r==0: on-axis corrections
-                    // For m==0, Bt is linear in r, for small r
-                    // Therefore, the formula below regularizes the singularity
-                    Ez(i, j, 0, 0) += c2 * dt*(
-                         4*Bt(i, j, 0, 0)/dr // regularization
-                         - PhysConst::mu0 * jz(i, j, 0, 0  ) );
-                    // Ensure that Ez remains 0 for higher-order modes
-                    for (int m=1; m<nmodes; m++) {
-                        Ez(i, j, 0, 2*m-1) = 0.;
-                        Ez(i, j, 0, 2*m  ) = 0.;
-                    }
-                }
+                Ez(i, j, 0, 0) += c2 * dt*(
+                    + T_Algo::Curl_Nodal_2(Br, Bt, coefs_r, coefs_t, i, j, k, n)
+                    - PhysConst::mu0 * jz(i, j, 0, n) );
             }
 
         ); // end of loop over cells
