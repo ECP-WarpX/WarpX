@@ -17,8 +17,10 @@
 
 
 /**
- *
- *
+ * Qdsmc particles x0,y0,z0 positions should be cell centered
+ * at the beginning of every step, so the field gathering 
+ * does not require any interpolation, it only needs to read
+ * the values from the cell centered nodes.
  */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void gather_density_entropy(const amrex::ParticleReal x0p,
@@ -46,8 +48,9 @@ void gather_density_entropy(const amrex::ParticleReal x0p,
 
 
 /**
- *
- *
+ * Qdsmc particles x0,y0,z0 positions should match node positions
+ * at the beginning of every step, so the field gathering 
+ * does not require any interpolation.
  */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void gather_vector_field_qdsmc(const amrex::ParticleReal x0p,
@@ -94,9 +97,13 @@ void push_qdsmc_particle(const amrex::ParticleReal x0p,
 }
 
 
-// check: assume nodal, cell centered ?
-// check: handling different dimensions ?
-// only linear interpolation for now
+/**
+ * General kernel for scalar quantity deposition from
+ * fictitious qdsmc particles. Receives a scalar property
+ * from a fictitious particle and deposits onto a scalar field.
+ * Only linear interpolation for now.
+ * Using nodal grid. 
+ */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void do_deposit_scalar(amrex::Array4<amrex::Real> const& scalar_field,
                     const amrex::ParticleReal xp, const amrex::ParticleReal yp, const amrex::ParticleReal zp,

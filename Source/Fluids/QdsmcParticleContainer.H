@@ -80,8 +80,8 @@ public:
     * Function that initializes the particles (only positions)
     * current version only adds one particle per cell (qdsmc for electron energy equation)
     * future PR will extend this implementation in order to use qdsmc for a neutral gas too
-    * and will require gaussian quadrature order used in QDSMC algorithm
-    * (nppc = order^dim), or nppc = 1 for electron energy equation solver
+    * and will require gaussian quadrature order used in general QDSMC algorithm
+    * (nppc = order^dim), or nppc = 1 for electron energy equation used in HybridSolver
     * calls AddNParticles
     */
     void InitParticles (int lev);
