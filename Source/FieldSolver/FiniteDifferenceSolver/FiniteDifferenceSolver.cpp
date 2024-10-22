@@ -15,9 +15,7 @@
 #endif
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
-#ifdef WARPX_DIM_RZ
-#   include "WarpX.H"
-#endif
+#include "WarpX.H"
 
 #include <AMReX.H>
 #include <AMReX_GpuDevice.H>
@@ -40,6 +38,8 @@ FiniteDifferenceSolver::FiniteDifferenceSolver (
         return;
     }
 
+    m_ncomps = WarpX::ncomps;
+
     // Calculate coefficients of finite-difference stencil
 #ifdef WARPX_DIM_RZ
     m_dr = cell_size[0];
@@ -47,13 +47,17 @@ FiniteDifferenceSolver::FiniteDifferenceSolver (
     m_rmin = WarpX::GetInstance().Geom(0).ProbLo(0);
     if (fdtd_algo == ElectromagneticSolverAlgo::Yee ||
         fdtd_algo == ElectromagneticSolverAlgo::HybridPIC ) {
-        CylindricalYeeAlgorithm::InitializeStencilCoefficients( cell_size,
-            m_h_stencil_coefs_r, m_h_stencil_coefs_z );
+        CylindricalYeeAlgorithm::InitializeStencilCoefficients( cell_size, m_rmin,
+            m_h_stencil_coefs_r, m_h_stencil_coefs_t, m_h_stencil_coefs_z );
         m_stencil_coefs_r.resize(m_h_stencil_coefs_r.size());
+        m_stencil_coefs_t.resize(m_h_stencil_coefs_t.size());
         m_stencil_coefs_z.resize(m_h_stencil_coefs_z.size());
         amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
                               m_h_stencil_coefs_r.begin(), m_h_stencil_coefs_r.end(),
                               m_stencil_coefs_r.begin());
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                              m_h_stencil_coefs_t.begin(), m_h_stencil_coefs_t.end(),
+                              m_stencil_coefs_t.begin());
         amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
                               m_h_stencil_coefs_z.begin(), m_h_stencil_coefs_z.end(),
                               m_stencil_coefs_z.begin());

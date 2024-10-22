@@ -183,6 +183,27 @@ struct CartesianCKCAlgorithm {
     }
 
     /**
+     * Perform curl along x on a nodal grid, from a cell-centered field `F`*/
+    template< typename T_Field>
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    static amrex::Real Curl_Nodal_0 (
+        T_Field const& Fy,
+        T_Field const& Fz,
+        amrex::Real const * const coefs_y,
+        amrex::Real const * const coefs_z,
+        int const i, int const j, int const k, int const ncomp=0 ) {
+
+        using namespace amrex;
+#if (defined WARPX_DIM_1D_Z)
+        amrex::ignore_unused(F, coefs_x, i, j, k, ncomp);
+        return 0._rt; // 1D Cartesian: curl along x is 0
+#else
+        return (- DownwardDz(Fy, coefs_z, 6, i, j, k, ncomp)
+                + DownwardDy(Fz, coefs_y, 6, i, j, k, ncomp));
+#endif
+    }
+
+    /**
      * Perform derivative along y on a cell-centered grid, from a nodal field `F` */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real UpwardDy (

@@ -27,13 +27,18 @@ struct CylindricalYeeAlgorithm {
 
     static void InitializeStencilCoefficients (
         std::array<amrex::Real,3>& cell_size,
+        amrex::Real rmin,
         amrex::Vector<amrex::Real>& stencil_coefs_r,
+        amrex::Vector<amrex::Real>& stencil_coefs_t,
         amrex::Vector<amrex::Real>& stencil_coefs_z ) {
 
         using namespace amrex;
         // Store the inverse cell size along each direction in the coefficients
         stencil_coefs_r.resize(1);
         stencil_coefs_r[0] = 1._rt/cell_size[0];  // 1./dr
+        stencil_coefs_t.resize(2);
+        stencil_coefs_t[0] = cell_size[0];  // dr
+        stencil_coefs_t[1] = rmin;
         stencil_coefs_z.resize(1);
         stencil_coefs_z[0] = 1._rt/cell_size[2];  // 1./dz
     }
@@ -102,6 +107,36 @@ struct CylindricalYeeAlgorithm {
 
         Real const inv_dr = coefs_r[0];
         return 1._rt/r * inv_dr*( (r+0.5_rt*dr)*F(i,j,k,comp) - (r-0.5_rt*dr)*F(i-1,j,k,comp) );
+    }
+
+    /**
+     * Perform curl along r on a nodal grid, from a cell-centered field `F`*/
+    template< typename T_Field>
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    static amrex::Real Curl_Nodal_0 (
+        T_Field const& Ft,
+        T_Field const& Fz,
+        amrex::Real const * const coefs_t,
+        amrex::Real const * const coefs_z,
+        int const i, int const j, int const k, int const comp ) {
+
+        using namespace amrex::literals;
+
+        if (comp == 0) {
+            return - DownwardDz(Ft, coefs_z, 1, i, j, k, comp);
+        } else {
+            amrex::Real const dr = coefs_t[0];
+            amrex::Real const rmin = coefs_t[1];
+            amrex::Real const r = rmin + (i + 0.5_rt)*dr; // r on cell-centered point (Er is cell-centered in r)
+            if ((comp % 2) == 1) {
+                return - DownwardDz(Ft, coefs_z, 1, i, j, k, comp)
+                       + (comp + 1)/2*Fz(i,j,k,comp+1)/r; // Real part
+            } else {
+                return - DownwardDz(Ft, coefs_z, 1, i, j, k, comp)
+                       - (comp)/2*Fz(i,j,k,comp-1)/r; // Imaginary part
+            }
+        }
+
     }
 
     /**
