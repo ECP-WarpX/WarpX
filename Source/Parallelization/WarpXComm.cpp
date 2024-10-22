@@ -1366,7 +1366,7 @@ void WarpX::ApplyFilterJ (
     const int ncomp = J.nComp();
     const amrex::IntVect ngrow = J.nGrowVect();
     amrex::MultiFab Jf(J.boxArray(), J.DistributionMap(), ncomp, ngrow);
-    bilinear_filter.ApplyStencil(Jf, J, lev);
+    bilinear_filter.ApplyStencil(Jf, J, lev, m_fields, idim);
 
     const int srccomp = 0;
     const int dstcomp = 0;
@@ -1559,6 +1559,7 @@ void WarpX::ApplyFilterandSumBoundaryRho (int /*lev*/, int glev, amrex::MultiFab
         ng_depos_rho += bilinear_filter.stencil_length_each_dir-1;
         ng_depos_rho.min(ng);
         MultiFab rf(rho.boxArray(), rho.DistributionMap(), ncomp, ng);
+
         bilinear_filter.ApplyStencil(rf, rho, glev, icomp, 0, ncomp);
         WarpXSumGuardCells(rho, rf, period, ng_depos_rho, icomp, ncomp );
     } else {
@@ -1609,11 +1610,13 @@ void WarpX::AddRhoFromFineLevelandSumBoundary (
             ng_depos_rho.min(ng);
             MultiFab rhofc(charge_cp[lev+1]->boxArray(),
                            charge_cp[lev+1]->DistributionMap(), ncomp, ng);
+
             bilinear_filter.ApplyStencil(rhofc, *charge_cp[lev+1], lev+1, icomp, 0, ncomp);
 
             // buffer patch of fine level
             MultiFab rhofb(charge_buffer[lev+1]->boxArray(),
                            charge_buffer[lev+1]->DistributionMap(), ncomp, ng);
+
             bilinear_filter.ApplyStencil(rhofb, *charge_buffer[lev+1], lev+1, icomp, 0, ncomp);
 
             MultiFab::Add(rhofb, rhofc, 0, 0, ncomp, ng);

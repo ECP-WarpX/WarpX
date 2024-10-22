@@ -6,10 +6,11 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "Filter.H"
-
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
+#include "EmbeddedBoundary/Enabled.H"
+#include "Fields.H"
 
 #include <AMReX_Array4.H>
 #include <AMReX_Box.H>
@@ -20,10 +21,13 @@
 #include <AMReX_MFIter.H>
 #include <AMReX_MultiFab.H>
 
+#include <ablastr/fields/MultiFabRegister.H>
+
 #include <algorithm>
 
 using namespace amrex;
-
+using namespace ablastr::fields;
+using warpx::fields::FieldType;
 #ifdef AMREX_USE_GPU
 
 /* \brief Apply stencil on MultiFab (GPU version, 2D/3D).
@@ -92,7 +96,8 @@ Filter::ApplyStencil (FArrayBox& dstfab, const FArrayBox& srcfab,
 void Filter::DoFilter (const Box& tbx,
                        Array4<Real const> const& src,
                        Array4<Real      > const& dst,
-                       int scomp, int dcomp, int ncomp)
+                       int scomp, int dcomp, int ncomp
+                       amrex::Array4<amrex::Real>* lx_ptr)
 {
     AMREX_D_TERM(
     amrex::Real const* AMREX_RESTRICT s0 = m_stencil_0.data();,
@@ -252,6 +257,7 @@ Filter::ApplyStencil (amrex::FArrayBox& dstfab, const amrex::FArrayBox& srcfab,
                       const amrex::Box& tbx, int scomp, int dcomp, int ncomp)
 {
     WARPX_PROFILE("Filter::ApplyStencil(FArrayBox)");
+
     ncomp = std::min(ncomp, srcfab.nComp());
     FArrayBox tmpfab;
     const Box& gbx = amrex::grow(tbx,stencil_length_each_dir-1);
@@ -268,10 +274,30 @@ Filter::ApplyStencil (amrex::FArrayBox& dstfab, const amrex::FArrayBox& srcfab,
 void Filter::DoFilter (const Box& tbx,
                        Array4<Real const> const& tmp,
                        Array4<Real      > const& dst,
-                       int scomp, int dcomp, int ncomp)
+                       int scomp, int dcomp, int ncomp,
+                       amrex::Array4<amrex::Real>* lx_ptr)
 {
     const auto lo = amrex::lbound(tbx);
     const auto hi = amrex::ubound(tbx);
+
+    // Declare tmp_zeroeb here, outside the if-else block
+    std::function<Real(int, int, int, int)> tmp_zeroeb;
+
+    if (lx_ptr) {
+        amrex::Array4<amrex::Real> lxtmp = *lx_ptr;
+        const auto lxtmp_pad = [lxtmp](const int jj, const int kk, const int ll) noexcept {
+            return (lxtmp.contains(jj, kk, ll) && lxtmp(jj, kk, ll) <= 0) ? lxtmp(jj, kk, ll) : 1.0_rt;
+        };
+
+        tmp_zeroeb = [lxtmp_pad, tmp](const int jj, const int kk, const int ll, const int nn) noexcept {
+            return (lxtmp_pad(jj, kk, ll) <= 0) ? 0.0_rt : tmp(jj, kk, ll, nn);
+        };
+    } else {
+        tmp_zeroeb = [tmp](const int jj, const int kk, const int ll, const int nn) noexcept {
+            return tmp(jj, kk, ll, nn);
+        };
+    }
+
     // tmp and dst are of type Array4 (Fortran ordering)
     AMREX_D_TERM(
     amrex::Real const* AMREX_RESTRICT s0 = m_stencil_0.data();,
@@ -298,22 +324,22 @@ void Filter::DoFilter (const Box& tbx,
                             AMREX_PRAGMA_SIMD
                             for (int i = lo.x; i <= hi.x; ++i) {
 #if AMREX_SPACEDIM == 3
-                                dst(i,j,k,dcomp+n) += sss*(tmp(i-i0,j-i1,k-i2,scomp+n)
-                                                          +tmp(i+i0,j-i1,k-i2,scomp+n)
-                                                          +tmp(i-i0,j+i1,k-i2,scomp+n)
-                                                          +tmp(i+i0,j+i1,k-i2,scomp+n)
-                                                          +tmp(i-i0,j-i1,k+i2,scomp+n)
-                                                          +tmp(i+i0,j-i1,k+i2,scomp+n)
-                                                          +tmp(i-i0,j+i1,k+i2,scomp+n)
-                                                          +tmp(i+i0,j+i1,k+i2,scomp+n));
+                                dst(i,j,k,dcomp+n) += sss*(tmp_zeroeb(i-i0,j-i1,k-i2,scomp+n)
+                                                          +tmp_zeroeb(i+i0,j-i1,k-i2,scomp+n)
+                                                          +tmp_zeroeb(i-i0,j+i1,k-i2,scomp+n)
+                                                          +tmp_zeroeb(i+i0,j+i1,k-i2,scomp+n)
+                                                          +tmp_zeroeb(i-i0,j-i1,k+i2,scomp+n)
+                                                          +tmp_zeroeb(i+i0,j-i1,k+i2,scomp+n)
+                                                          +tmp_zeroeb(i-i0,j+i1,k+i2,scomp+n)
+                                                          +tmp_zeroeb(i+i0,j+i1,k+i2,scomp+n));
 #elif AMREX_SPACEDIM == 2
-                                dst(i,j,k,dcomp+n) += sss*(tmp(i-i0,j-i1,k,scomp+n)
-                                                          +tmp(i+i0,j-i1,k,scomp+n)
-                                                          +tmp(i-i0,j+i1,k,scomp+n)
-                                                          +tmp(i+i0,j+i1,k,scomp+n));
+                                dst(i,j,k,dcomp+n) += sss*(tmp_zeroeb(i-i0,j-i1,k,scomp+n)
+                                                          +tmp_zeroeb(i+i0,j-i1,k,scomp+n)
+                                                          +tmp_zeroeb(i-i0,j+i1,k,scomp+n)
+                                                          +tmp_zeroeb(i+i0,j+i1,k,scomp+n));
 #elif AMREX_SPACEDIM == 1
-                                dst(i,j,k,dcomp+n) += sss*(tmp(i-i0,j,k,scomp+n)
-                                                          +tmp(i+i0,j,k,scomp+n));
+                                dst(i,j,k,dcomp+n) += sss*(tmp_zeroeb(i-i0,j,k,scomp+n)
+                                                          +tmp_zeroeb(i+i0,j,k,scomp+n));
 #endif
                             }
                         }
@@ -325,3 +351,71 @@ void Filter::DoFilter (const Box& tbx,
 }
 
 #endif // #ifdef AMREX_USE_CUDA
+
+/* \brief Apply stencil on MultiFab (CPU version, 2D/3D).
+ * \param dstmf Destination MultiFab
+ * \param srcmf source MultiFab
+ * \param[in] lev mesh refinement level
+ * \param idim component's index
+ * \param scomp first component of srcmf on which the filter is applied
+ * \param dcomp first component of dstmf on which the filter is applied
+ * \param ncomp Number of components on which the filter is applied.
+ */
+void
+Filter::ApplyStencil (amrex::MultiFab& dstmf, const amrex::MultiFab& srcmf, const int lev, ablastr::fields::MultiFabRegister & fields, const int idim, int scomp, int dcomp, int ncomp)
+{
+    WARPX_PROFILE("Filter::ApplyStencil(MultiFab)");
+    ncomp = std::min(ncomp, srcmf.nComp());
+
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+
+#ifdef AMREX_USE_OMP
+// never runs on GPU since in the else branch of AMREX_USE_GPU
+#pragma omp parallel
+#endif
+    {
+        FArrayBox tmpfab;
+        for (MFIter mfi(dstmf,true); mfi.isValid(); ++mfi){
+
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+            }
+            auto wt = static_cast<amrex::Real>(amrex::second());
+
+            const auto& srcfab = srcmf[mfi];
+            auto& dstfab = dstmf[mfi];
+            const Box& tbx = mfi.growntilebox();
+            const Box& gbx = amrex::grow(tbx,stencil_length_each_dir-1);
+
+            // tmpfab has enough ghost cells for the stencil
+            tmpfab.resize(gbx,ncomp);
+            tmpfab.setVal(0.0, gbx, 0, ncomp);
+            // Copy values in srcfab into tmpfab
+            const Box& ibx = gbx & srcfab.box();
+            tmpfab.copy(srcfab, ibx, scomp, ibx, 0, ncomp);
+
+            ablastr::fields::VectorField edge_lengths;
+            if (fields.has_vector(FieldType::edge_lengths, lev)) {
+                edge_lengths = fields.get_alldirs(FieldType::edge_lengths, lev);
+                }
+
+#ifdef AMREX_USE_EB
+            amrex::Array4<amrex::Real> lx;
+            lx = edge_lengths[idim]->array(mfi);
+            amrex::Array4<amrex::Real>* lx_ptr = &lx;
+            DoFilter(tbx, tmpfab.array(), dstfab.array(), 0, dcomp, ncomp, lx_ptr);
+#else
+            DoFilter(tbx, tmpfab.array(), dstfab.array(), 0, dcomp, ncomp);
+
+#endif
+
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+                wt = static_cast<amrex::Real>(amrex::second()) - wt;
+                amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+            }
+        }
+    }
+}
