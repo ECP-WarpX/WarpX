@@ -338,7 +338,7 @@ QdsmcParticleContainer::PushX (int lev, amrex::Real dt)
                 part_y[ip] = yp;
                 part_z[ip] = zp;
             }
-            
+
         });
     }
     // search for maximum part_dx/part_dy/part_dz and assert if larger than dx/dy/dz
@@ -391,7 +391,7 @@ QdsmcParticleContainer::DepositK(int lev, amrex::MultiFab &Kfield)
             {
                 do_deposit_scalar(arrKField, part_x[ip], part_y[ip], part_z[ip], xyzmin, dinv, part_entropy[ip]);
             }
-            
+
         });
     }
 }
