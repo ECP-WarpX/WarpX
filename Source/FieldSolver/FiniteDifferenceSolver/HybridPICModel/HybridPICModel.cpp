@@ -61,7 +61,7 @@ void HybridPICModel::ReadParameters ()
     pp_hybrid.query("add_external_fields", m_add_external_fields);
 
     if (m_add_external_fields) {
-        m_external_EB = std::make_unique<ExternalVectorPotential>();
+        m_external_vector_potential = std::make_unique<ExternalVectorPotential>();
     }
 }
 
@@ -133,7 +133,7 @@ void HybridPICModel::AllocateLevelMFs (
         dm, ncomps, IntVect(1), 0.0_rt);
 
     if (m_add_external_fields) {
-        m_external_EB->AllocateLevelMFs(
+        m_external_vector_potential->AllocateLevelMFs(
             fields,
             lev, ba, dm,
             ncomps, ngEB,
@@ -259,11 +259,15 @@ void HybridPICModel::InitData ()
             warpx.m_fields.get_alldirs(FieldType::edge_lengths, lev),
             warpx.m_fields.get_alldirs(FieldType::face_areas, lev));
     }
+
+    if (m_add_external_fields) {
+        m_external_vector_potential->InitData();
+    }
 }
 
 void HybridPICModel::GetCurrentExternal ()
 {
-    if (!skip_check && !m_external_current_has_time_dependence) { return; }
+    if (!m_external_current_has_time_dependence) { return; }
 
     auto& warpx = WarpX::GetInstance();
     for (int lev = 0; lev <= warpx.finestLevel(); ++lev)

@@ -45,7 +45,7 @@ void WarpX::HybridPICEvolveFields ()
     // Handle field splitting for Hybrid field push
     if (add_external_fields) {
         // Get the external fields
-        m_hybrid_pic_model->m_external_EB->UpdateHybridExternalFields(t_eval, sub_dt);
+        m_hybrid_pic_model->m_external_vector_potential->UpdateHybridExternalFields(t_eval, sub_dt);
 
         // If using split fields, subtract the external field at the old time
         for (int lev = 0; lev <= finest_level; ++lev) {
@@ -154,7 +154,7 @@ void WarpX::HybridPICEvolveFields ()
 
     if (add_external_fields) {
         // Get the external fields
-        m_hybrid_pic_model->m_external_EB->UpdateHybridExternalFields(t_eval, sub_dt);
+        m_hybrid_pic_model->m_external_vector_potential->UpdateHybridExternalFields(t_eval, sub_dt);
     }
 
     // Now push the B field from t=n+1/2 to t=n+1 using the n+1/2 quantities
@@ -211,7 +211,7 @@ void WarpX::HybridPICEvolveFields ()
 
     // Handle field splitting for Hybrid field push
     if (add_external_fields) {
-        m_hybrid_pic_model->m_external_EB->UpdateHybridExternalFields(t_eval, sub_dt);
+        m_hybrid_pic_model->m_external_vector_potential->UpdateHybridExternalFields(t_eval, sub_dt);
 
         // If using split fields, add the external field at the new time
         for (int lev = 0; lev <= finest_level; ++lev) {
