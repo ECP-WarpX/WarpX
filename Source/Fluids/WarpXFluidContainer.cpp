@@ -22,37 +22,38 @@ using namespace ablastr::utils::communication;
 using namespace amrex;
 
 
-WarpXFluidContainer::WarpXFluidContainer(int ispecies, const std::string &name):
+WarpXFluidContainer::WarpXFluidContainer(int ispecies, const std::string &name, bool electron_hybrid):
     species_id{ispecies},
     species_name{name}
 {
-    ReadParameters();
+    if(!electron_hybrid){
+        ReadParameters();
 
-    // Initialize injection objects
-    const ParmParse pp_species_name(species_name);
-    SpeciesUtils::parseDensity(species_name, "", h_inj_rho, density_parser);
-    SpeciesUtils::parseMomentum(species_name, "", "none", h_inj_mom,
-        ux_parser, uy_parser, uz_parser, ux_th_parser, uy_th_parser, uz_th_parser, h_mom_temp, h_mom_vel);
-    if (h_inj_rho) {
-#ifdef AMREX_USE_GPU
-        d_inj_rho = static_cast<InjectorDensity*>
-            (amrex::The_Arena()->alloc(sizeof(InjectorDensity)));
-        amrex::Gpu::htod_memcpy_async(d_inj_rho, h_inj_rho.get(), sizeof(InjectorDensity));
-#else
-        d_inj_rho = h_inj_rho.get();
-#endif
-    }
-    if (h_inj_mom) {
-#ifdef AMREX_USE_GPU
-        d_inj_mom = static_cast<InjectorMomentum*>
-            (amrex::The_Arena()->alloc(sizeof(InjectorMomentum)));
-        amrex::Gpu::htod_memcpy_async(d_inj_mom, h_inj_mom.get(), sizeof(InjectorMomentum));
-#else
-        d_inj_mom = h_inj_mom.get();
-#endif
-    }
+        // Initialize injection objects
+        const ParmParse pp_species_name(species_name);
+        SpeciesUtils::parseDensity(species_name, "", h_inj_rho, density_parser);
+        SpeciesUtils::parseMomentum(species_name, "", "none", h_inj_mom,
+            ux_parser, uy_parser, uz_parser, ux_th_parser, uy_th_parser, uz_th_parser, h_mom_temp, h_mom_vel);
+        if (h_inj_rho) {
+    #ifdef AMREX_USE_GPU
+            d_inj_rho = static_cast<InjectorDensity*>
+                (amrex::The_Arena()->alloc(sizeof(InjectorDensity)));
+            amrex::Gpu::htod_memcpy_async(d_inj_rho, h_inj_rho.get(), sizeof(InjectorDensity));
+    #else
+            d_inj_rho = h_inj_rho.get();
+    #endif
+        }
+        if (h_inj_mom) {
+    #ifdef AMREX_USE_GPU
+            d_inj_mom = static_cast<InjectorMomentum*>
+                (amrex::The_Arena()->alloc(sizeof(InjectorMomentum)));
+            amrex::Gpu::htod_memcpy_async(d_inj_mom, h_inj_mom.get(), sizeof(InjectorMomentum));
+    #else
+            d_inj_mom = h_inj_mom.get();
+    #endif
+        }
     amrex::Gpu::synchronize();
-
+    }
 }
 
 void WarpXFluidContainer::ReadParameters()
@@ -159,6 +160,14 @@ void WarpXFluidContainer::AllocateLevelMFs(ablastr::fields::MultiFabRegister& fi
 
     fields.alloc_init(
             name_mf_NU, Direction{2}, lev, amrex::convert(ba, amrex::IntVect::TheNodeVector()), dm,
+            ncomps, nguards, 0.0_rt);
+
+    fields.alloc_init(
+            name_mf_T, lev, amrex::convert(ba, amrex::IntVect::TheNodeVector()), dm,
+            ncomps, nguards, 0.0_rt);
+
+    fields.alloc_init(
+            name_mf_K, lev, amrex::convert(ba, amrex::IntVect::TheNodeVector()), dm,
             ncomps, nguards, 0.0_rt);
 
 }
@@ -1395,4 +1404,96 @@ void WarpXFluidContainer::DepositCurrent(
             }
         );
     }
+}
+
+
+void WarpXFluidContainer::HybridUpdateUe (ablastr::fields::MultiFabRegister& fields, int lev)
+{
+    using ablastr::fields::Direction;
+    using warpx::fields::FieldType;
+
+    ablastr::fields::ScalarField rho_fp = fields.get(FieldType::rho_fp, lev);
+    ablastr::fields::VectorField current_fp_ampere = fields.get_alldirs(FieldType::hybrid_current_fp_plasma, lev);
+    ablastr::fields::VectorField current_fp = fields.get_alldirs(FieldType::current_fp, lev);
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for ( MFIter mfi(*rho_fp, TilingIfNotGPU()); mfi.isValid(); ++mfi )
+        {
+            Array4<Real> const& rho = rho_fp->array(mfi);
+
+            amrex::Array4<amrex::Real> const & Jx = current_fp_ampere[0]->array(mfi);
+            amrex::Array4<amrex::Real> const & Jy = current_fp_ampere[1]->array(mfi);
+            amrex::Array4<amrex::Real> const & Jz = current_fp_ampere[2]->array(mfi);
+
+            amrex::Array4<amrex::Real> const & Jix = current_fp[0]->array(mfi);
+            amrex::Array4<amrex::Real> const & Jiy = current_fp[1]->array(mfi);
+            amrex::Array4<amrex::Real> const & Jiz = current_fp[2]->array(mfi);
+
+            const amrex::Array4<amrex::Real> Uex = fields.get(name_mf_NU, Direction{0}, lev)->array(mfi);
+            const amrex::Array4<amrex::Real> Uey = fields.get(name_mf_NU, Direction{1}, lev)->array(mfi);
+            const amrex::Array4<amrex::Real> Uez = fields.get(name_mf_NU, Direction{2}, lev)->array(mfi);
+
+            const Box& tilebox  = mfi.tilebox();
+
+            ParallelFor(tilebox, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                if( rho(i, j, k) > 0.0_rt ){
+                    Uex(i, j, k) = (Jx(i, j, k) - Jix(i, j, k))/rho(i, j, k);
+                    Uey(i, j, k) = (Jy(i, j, k) - Jiy(i, j, k))/rho(i, j, k);
+                    Uez(i, j, k) = (Jz(i, j, k) - Jiz(i, j, k))/rho(i, j, k);
+                }
+
+            });
+        }
+}
+
+
+void WarpXFluidContainer::HybridInitializeKe (ablastr::fields::MultiFabRegister& fields, amrex::Real gamma, int lev)
+{
+    using warpx::fields::FieldType;
+    ablastr::fields::ScalarField rho_fp = fields.get(FieldType::rho_fp, lev);
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for ( MFIter mfi(*rho_fp, TilingIfNotGPU()); mfi.isValid(); ++mfi )
+        {
+            amrex::Array4<amrex::Real> const & rho = rho_fp->array(mfi);
+            amrex::Array4<amrex::Real> const & Te = fields.get(name_mf_T, lev)->array(mfi);
+            const amrex::Array4<amrex::Real> Ke = fields.get(name_mf_K, lev)->array(mfi);
+
+            const Box& tilebox  = mfi.tilebox();
+
+            ParallelFor(tilebox, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                if( rho(i, j, k) > 0.0_rt ){
+                    Ke(i, j, k) = Te(i, j, k)*std::pow((rho(i, j, k)/PhysConst::q_e), 1-gamma)/PhysConst::q_e;
+                }
+            });
+        }
+}
+
+
+void WarpXFluidContainer::HybridUpdateTe (ablastr::fields::MultiFabRegister& fields, amrex::Real gamma, int lev)
+{
+    using warpx::fields::FieldType;
+    ablastr::fields::ScalarField rho_fp = fields.get(FieldType::rho_fp, lev);
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for ( MFIter mfi(*rho_fp, TilingIfNotGPU()); mfi.isValid(); ++mfi )
+        {
+            amrex::Array4<amrex::Real> const & rho = rho_fp->array(mfi);
+            amrex::Array4<amrex::Real> const & Ke = fields.get(name_mf_K, lev)->array(mfi);
+            const amrex::Array4<amrex::Real> Te = fields.get(name_mf_T, lev)->array(mfi);
+
+            const Box& tilebox  = mfi.tilebox();
+
+            ParallelFor(tilebox, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                if( rho(i, j, k) > 0.0_rt ){
+                    Te(i, j, k) = Ke(i, j, k)*std::pow((rho(i, j, k)/PhysConst::q_e), gamma-1)*PhysConst::q_e;
+                }
+            });
+        }
 }
