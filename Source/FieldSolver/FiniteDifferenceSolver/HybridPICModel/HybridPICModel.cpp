@@ -311,19 +311,27 @@ void HybridPICModel::GetExternalFieldFromExpression (
         auto const& mfyfab = mfy->array(mfi);
         auto const& mfzfab = mfz->array(mfi);
 
-        // I am not sure this is needed. There are some guard cell matching issues with how the edges are computed.
-        // Since I want to fill in entire box + guard cells I can skip these checks.
-        // amrex::Array4<amrex::Real> lx, ly, lz;
-        // if (EB::enabled()) {
-        //     lx = warpx.m_fields.get(FieldType::edge_lengths, Direction{0}, lev)->array(mfi);
-        //     ly = warpx.m_fields.get(FieldType::edge_lengths, Direction{1}, lev)->array(mfi);
-        //     lz = warpx.m_fields.get(FieldType::edge_lengths, Direction{2}, lev)->array(mfi);
-        // }
+        amrex::Box lxb, lyb, lzb;
+        amrex::Array4<const amrex::Real> lx, ly, lz;
+        if (EB::enabled()) {
+
+            auto const& mf_lx = *warpx.m_fields.get(FieldType::edge_lengths, Direction{0}, lev);
+            auto const& mf_ly = *warpx.m_fields.get(FieldType::edge_lengths, Direction{1}, lev);
+            auto const& mf_lz = *warpx.m_fields.get(FieldType::edge_lengths, Direction{2}, lev);
+
+            lxb = mfi.growntilebox(mf_lx.nGrowVect());
+            lyb = mfi.growntilebox(mf_ly.nGrowVect());
+            lzb = mfi.growntilebox(mf_lz.nGrowVect());
+
+            lx = mf_lx.array(mfi);
+            ly = mf_ly.array(mfi);
+            lz = mf_lz.array(mfi);
+        }
 
         amrex::ParallelFor (tbx, tby, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                // skip if node is covered by an embedded boundary
-                //if (EB::enabled() && lx(i, j, k) <= 0) { return; }
+                // skip if node is covered by an embedded boundary or outside of lx box array
+                if (lx && (!lxb.contains({i, j, k}) || lx(i, j, k) <= 0)) { return; }
 
                 // Shift required in the x-, y-, or z- position
                 // depending on the index type of the multifab
@@ -350,8 +358,8 @@ void HybridPICModel::GetExternalFieldFromExpression (
                 mfxfab(i,j,k) = x_external(x,y,z,t);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                // skip if node is covered by an embedded boundary
-                // if (ly && ly(i, j, k) <= 0) { return; }
+                // skip if node is covered by an embedded boundary or outside of ly box array
+                if (ly && (!lyb.contains({i, j, k}) || ly(i, j, k) <= 0)) { return; }
 
 #if defined(WARPX_DIM_1D_Z)
                 const amrex::Real x = 0._rt;
@@ -376,8 +384,8 @@ void HybridPICModel::GetExternalFieldFromExpression (
                 mfyfab(i,j,k)  = y_external(x,y,z,t);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                // skip if node is covered by an embedded boundary
-                // if (lz && lz(i, j, k) <= 0) { return; }
+                // skip if node is covered by an embedded boundary or outside of lz box array
+                if (lz && (!lzb.contains({i, j, k}) || lz(i, j, k) <= 0)) { return; }
 
 #if defined(WARPX_DIM_1D_Z)
                 const amrex::Real x = 0._rt;
