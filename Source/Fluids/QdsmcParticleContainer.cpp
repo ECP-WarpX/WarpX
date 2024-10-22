@@ -63,6 +63,7 @@ QdsmcParticleContainer::QdsmcParticleContainer (AmrCore* amr_core)
     : ParticleContainerPureSoA<QdsmcPIdx::nattribs, 0>(amr_core->GetParGDB())
 {
     SetParticleSize();
+    //InitParticles (0); // only one refinement level is used with the Hybrid solver
 }
 
 
@@ -70,18 +71,12 @@ void
 QdsmcParticleContainer::AddNParticles (int lev, amrex::Long n,
                         amrex::Vector<amrex::ParticleReal> const & x,
                         amrex::Vector<amrex::ParticleReal> const & y,
-                        amrex::Vector<amrex::ParticleReal> const & z,
-                        amrex::Vector<amrex::ParticleReal> const & i,
-                        amrex::Vector<amrex::ParticleReal> const & j,
-                        amrex::Vector<amrex::ParticleReal> const & k)
+                        amrex::Vector<amrex::ParticleReal> const & z)
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(lev == 0, "QdsmcParticleContainer::AddNParticles: only lev=0 is supported yet.");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(x.size() == n,"x.size() != # of qdsmc particles to add");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(y.size() == n,"y.size() != # of qdsmc particles to add");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(z.size() == n,"z.size() != # of qdsmc particles to add");
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(i.size() == n,"i.size() != # of qdsmc particles to add");
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(j.size() == n,"j.size() != # of qdsmc particles to add");
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(k.size() == n,"k.size() != # of qdsmc particles to add");
 
     if (n <= 0){
         Redistribute();
@@ -118,16 +113,13 @@ QdsmcParticleContainer::AddNParticles (int lev, amrex::Long n,
 #if !defined (WARPX_DIM_1D_Z)
     pinned_tile.push_back_real(QdsmcPIdx::x, x);
     pinned_tile.push_back_real(QdsmcPIdx::x_node, x);
-    pinned_tile.push_back_real(QdsmcPIdx::i, i);
 #endif
 #if defined (WARPX_DIM_3D)
     pinned_tile.push_back_real(QdsmcPIdx::y, y);
     pinned_tile.push_back_real(QdsmcPIdx::y_node, y);
-    pinned_tile.push_back_real(QdsmcPIdx::j, j);
 #endif
     pinned_tile.push_back_real(QdsmcPIdx::z, z);
     pinned_tile.push_back_real(QdsmcPIdx::z_node, z);
-    pinned_tile.push_back_real(QdsmcPIdx::k, k);
     pinned_tile.push_back_real(QdsmcPIdx::vx, n, 0.0);
     pinned_tile.push_back_real(QdsmcPIdx::vy, n, 0.0);
     pinned_tile.push_back_real(QdsmcPIdx::vz, n, 0.0);
@@ -143,9 +135,11 @@ QdsmcParticleContainer::AddNParticles (int lev, amrex::Long n,
     Redistribute();
 
     // Remove particles that are inside the embedded boundaries here
-    /*
-    *
-    */
+    /**
+     * 
+     * 
+     * 
+     */
 }
 
 
@@ -158,10 +152,10 @@ QdsmcParticleContainer::InitParticles (int lev)
 
     const amrex::Real* dx = warpx.Geom(lev).CellSize();
 
-    // Read this from domain ??
-    int nx = (probhi[0] - problo[0])/dx[0] + 1;
-    int ny = (probhi[1] - problo[1])/dx[1] + 1;
-    int nz = (probhi[2] - problo[2])/dx[2] + 1;
+    // Read this from domain ?
+    int nx = (probhi[0] - problo[0])/dx[0];
+    int ny = (probhi[1] - problo[1])/dx[1];
+    int nz = (probhi[2] - problo[2])/dx[2];
 
     int n_to_add = 0;
 
@@ -170,19 +164,16 @@ QdsmcParticleContainer::InitParticles (int lev)
     amrex::Vector<amrex::ParticleReal> ypos;
     amrex::Vector<amrex::ParticleReal> zpos;
 
-    amrex::Vector<amrex::ParticleReal> ipos;
-    amrex::Vector<amrex::ParticleReal> jpos;
-    amrex::Vector<amrex::ParticleReal> kpos;
-
     // for now, only one MPI rank adds fictitious particles
     if (ParallelDescriptor::IOProcessor())
     {
-        for ( int i = 0; i < nx; i++)
+        for ( int i = 0; i <= nx; i++)
         {
-            for ( int j = 0; j < ny; j++)
+            for ( int j = 0; j <= ny; j++)
             {
-                for ( int k = 0; k < nz; k++)
+                for ( int k = 0; k <= nz; k++)
                 {
+                    // cell centered
                     amrex::Real x = problo[0] + (i+0.5)*dx[0];
                     amrex::Real y = problo[1] + (i+0.5)*dx[1];
                     amrex::Real z = problo[2] + (i+0.5)*dx[2];
@@ -193,10 +184,6 @@ QdsmcParticleContainer::InitParticles (int lev)
                         ypos.push_back(y);
                         zpos.push_back(z);
 
-                        ipos.push_back(i);
-                        jpos.push_back(j);
-                        kpos.push_back(k);
-
                         n_to_add++;
                     }
                 }
@@ -204,8 +191,9 @@ QdsmcParticleContainer::InitParticles (int lev)
         }
     }
 
-    AddNParticles (0, n_to_add, xpos, ypos, zpos, ipos, jpos, kpos);
+    AddNParticles (0, n_to_add, xpos, ypos, zpos);
 }
+
 
 void
 QdsmcParticleContainer::SetV (int lev,
@@ -213,19 +201,26 @@ QdsmcParticleContainer::SetV (int lev,
                     const amrex::MultiFab &Uy,
                     const amrex::MultiFab &Uz)
 {
+    const amrex::XDim3 dinv = WarpX::InvCellSize(lev);
+
     for (iterator pti(*this, lev); pti.isValid(); ++pti)
     {
         auto const np = pti.numParticles();
-
         auto& attribs = pti.GetStructOfArrays().GetRealData();
+
+        // making box cell centered
+        amrex::Box box = pti.tilebox();
+        box.grow(Ux.nGrowVect());
+
+        const amrex::XDim3 xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
+
+        amrex::ParticleReal* const AMREX_RESTRICT part_x0 = attribs[QdsmcPIdx::x_node].dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT part_y0 = attribs[QdsmcPIdx::y_node].dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT part_z0 = attribs[QdsmcPIdx::z_node].dataPtr();
 
         amrex::ParticleReal* const AMREX_RESTRICT part_vx = attribs[QdsmcPIdx::vx].dataPtr();
         amrex::ParticleReal* const AMREX_RESTRICT part_vy = attribs[QdsmcPIdx::vy].dataPtr();
         amrex::ParticleReal* const AMREX_RESTRICT part_vz = attribs[QdsmcPIdx::vz].dataPtr();
-
-        amrex::ParticleReal* const AMREX_RESTRICT part_i = attribs[QdsmcPIdx::i].dataPtr();
-        amrex::ParticleReal* const AMREX_RESTRICT part_j = attribs[QdsmcPIdx::j].dataPtr();
-        amrex::ParticleReal* const AMREX_RESTRICT part_k = attribs[QdsmcPIdx::k].dataPtr();
 
         const auto &arrUxfield = Ux[pti].array();
         const auto &arrUyfield = Uy[pti].array();
@@ -235,13 +230,15 @@ QdsmcParticleContainer::SetV (int lev,
         // since particles are located at the node positions before PushX
         amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
         {
-            int i = part_i[ip];
-            int j = part_j[ip];
-            int k = part_k[ip];
+            amrex::Real vxp;
+            amrex::Real vyp;
+            amrex::Real vzp;
 
-            part_vx[ip] = arrUxfield(i, j, k);
-            part_vy[ip] = arrUyfield(i, j, k);
-            part_vz[ip] = arrUzfield(i, j, k);
+            gather_vector_field_qdsmc(part_x0[ip], part_y0[ip], part_z0[ip], vxp, vyp, vzp, arrUxfield, arrUyfield, arrUzfield, xyzmin, dinv);
+  
+            part_vx[ip] = vxp;
+            part_vy[ip] = vyp;
+            part_vz[ip] = vzp;
         });
     }
 }
@@ -255,21 +252,27 @@ QdsmcParticleContainer::SetK (int lev,
     // get a reference to WarpX instance
     auto & warpx = WarpX::GetInstance();
 
+    const amrex::XDim3 dinv = WarpX::InvCellSize(lev);
     const amrex::Real* dx = warpx.Geom(lev).CellSize();
     amrex::Real cell_volume = dx[0]*dx[1]*dx[2]; // how is this handling different dimensions?
-
+    
     for (iterator pti(*this, lev); pti.isValid(); ++pti)
     {
         auto const np = pti.numParticles();
-
         auto& attribs = pti.GetStructOfArrays().GetRealData();
+
+        // making box cell centered
+        amrex::Box box = pti.tilebox();
+        box.grow(rhofield.nGrowVect());
+
+        const amrex::XDim3 xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
+
+        amrex::ParticleReal* const AMREX_RESTRICT part_x0 = attribs[QdsmcPIdx::x_node].dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT part_y0 = attribs[QdsmcPIdx::y_node].dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT part_z0 = attribs[QdsmcPIdx::z_node].dataPtr();
 
         amrex::ParticleReal* const AMREX_RESTRICT part_entropy = attribs[QdsmcPIdx::entropy].dataPtr();
         amrex::ParticleReal* const AMREX_RESTRICT part_np_real = attribs[QdsmcPIdx::np_real].dataPtr();
-
-        amrex::ParticleReal* const AMREX_RESTRICT part_i = attribs[QdsmcPIdx::i].dataPtr();
-        amrex::ParticleReal* const AMREX_RESTRICT part_j = attribs[QdsmcPIdx::j].dataPtr();
-        amrex::ParticleReal* const AMREX_RESTRICT part_k = attribs[QdsmcPIdx::k].dataPtr();
 
         const auto &arrKfield = Kfield[pti].array();
         const auto &arrrhofield = rhofield[pti].array();
@@ -278,13 +281,13 @@ QdsmcParticleContainer::SetK (int lev,
         // since particles are located at the node positions before PushX
         amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
         {
-            int i = part_i[ip];
-            int j = part_j[ip];
-            int k = part_k[ip];
+            amrex::Real n_p;
+            amrex::Real kn_p;
 
-            amrex::Real density = arrrhofield(i,j,k)/PhysConst::q_e;
-            part_np_real[ip] = density*cell_volume;
-            part_entropy[ip] = arrKfield(i, j, k)*density*cell_volume;
+            gather_density_entropy(part_x0[ip], part_y0[ip], part_z0[ip], n_p, kn_p, arrrhofield, arrKfield, xyzmin, dinv, cell_volume);
+
+            part_np_real[ip] = n_p;
+            part_entropy[ip] = kn_p;
         });
     }
 }
@@ -293,16 +296,11 @@ QdsmcParticleContainer::SetK (int lev,
 void
 QdsmcParticleContainer::PushX (int lev, amrex::Real dt)
 {
-    // get a reference to WarpX instance
-    auto & warpx = WarpX::GetInstance();
-    const amrex::Real* dx = warpx.Geom(lev).CellSize();
-
     for (iterator pti(*this, lev); pti.isValid(); ++pti)
     {
         auto const np = pti.numParticles();
-
         auto& attribs = pti.GetStructOfArrays().GetRealData();
-
+        
         amrex::ParticleReal* const AMREX_RESTRICT part_x0 = attribs[QdsmcPIdx::x_node].dataPtr();
         amrex::ParticleReal* const AMREX_RESTRICT part_y0 = attribs[QdsmcPIdx::y_node].dataPtr();
         amrex::ParticleReal* const AMREX_RESTRICT part_z0 = attribs[QdsmcPIdx::z_node].dataPtr();
@@ -317,13 +315,15 @@ QdsmcParticleContainer::PushX (int lev, amrex::Real dt)
 
         amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
         {
-            amrex::Real part_dx =  part_vx[ip]*dt;
-            amrex::Real part_dy =  part_vy[ip]*dt;
-            amrex::Real part_dz =  part_vz[ip]*dt;
+            amrex::Real xp;
+            amrex::Real yp;
+            amrex::Real zp;
 
-            part_x[ip] = part_x0[ip] + part_dx;
-            part_y[ip] = part_y0[ip] + part_dy;
-            part_z[ip] = part_z0[ip] + part_dz;
+            push_qdsmc_particle(part_x0[ip], part_y0[ip], part_z0[ip], part_vx[ip], part_vy[ip], part_vz[ip], xp, yp, zp, dt);
+
+            part_x[ip] = xp;
+            part_y[ip] = yp;
+            part_z[ip] = zp;
         });
     }
     // search for maximum part_dx/part_dy/part_dz and assert if larger than dx/dy/dz
@@ -338,15 +338,12 @@ QdsmcParticleContainer::PushX (int lev, amrex::Real dt)
 }
 
 
+
 // Generalize this function to --> DepositScalar
 void
 QdsmcParticleContainer::DepositK(int lev, amrex::MultiFab &Kfield)
 {
-    // get a reference to WarpX instance
-    auto & warpx = WarpX::GetInstance();
-
-    const auto dx = warpx.Geom(lev).CellSize();
-    const auto problo = warpx.Geom(lev).ProbLoArray();
+    const amrex::XDim3 dinv = WarpX::InvCellSize(lev);
 
     for (iterator pti(*this, lev); pti.isValid(); ++pti)
     {
@@ -362,13 +359,8 @@ QdsmcParticleContainer::DepositK(int lev, amrex::MultiFab &Kfield)
         amrex::ParticleReal* const AMREX_RESTRICT part_y = attribs[QdsmcPIdx::y].dataPtr();
         amrex::ParticleReal* const AMREX_RESTRICT part_z = attribs[QdsmcPIdx::z].dataPtr();
 
-        amrex::ParticleReal* const AMREX_RESTRICT part_i = attribs[QdsmcPIdx::i].dataPtr();
-        amrex::ParticleReal* const AMREX_RESTRICT part_j = attribs[QdsmcPIdx::j].dataPtr();
-        amrex::ParticleReal* const AMREX_RESTRICT part_k = attribs[QdsmcPIdx::k].dataPtr();
-
         const amrex::XDim3 xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
-        const amrex::XDim3 dinv = WarpX::InvCellSize(lev);
-
+        
         // should change this so that Deposit receives as argument which value to read from the QdsmcPIdx struct
         amrex::ParticleReal* const AMREX_RESTRICT part_entropy = attribs[QdsmcPIdx::entropy].dataPtr();
 
@@ -379,8 +371,7 @@ QdsmcParticleContainer::DepositK(int lev, amrex::MultiFab &Kfield)
         // since particles are located at the node positions before PushX
         amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
         {
-            do_deposit_scalar(arrKField, part_x[ip], part_y[ip], part_z[ip],
-                            part_i[ip], part_j[ip], part_k[ip], xyzmin, dinv, part_entropy[ip]);
+            do_deposit_scalar(arrKField, part_x[ip], part_y[ip], part_z[ip], xyzmin, dinv, part_entropy[ip]);
         });
     }
 }

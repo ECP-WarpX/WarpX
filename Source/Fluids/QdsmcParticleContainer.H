@@ -28,12 +28,12 @@ struct QdsmcPIdx
     enum
     {
 #if !defined (WARPX_DIM_1D_Z) // change this, this algorithm will only be used for the dimensions the Hybrid solver is compatible with
-        x, x_node, i,
+        x, x_node,
 #endif
 #if defined (WARPX_DIM_3D)
-        y, y_node, j,
+        y, y_node,
 #endif
-        z, z_node, k,
+        z, z_node,
         vx, vy, vz,
         entropy, np_real,
 
@@ -75,10 +75,7 @@ public:
     void AddNParticles (int lev, amrex::Long n,
                         amrex::Vector<amrex::ParticleReal> const & x,
                         amrex::Vector<amrex::ParticleReal> const & y,
-                        amrex::Vector<amrex::ParticleReal> const & z,
-                        amrex::Vector<amrex::ParticleReal> const & i,
-                        amrex::Vector<amrex::ParticleReal> const & j,
-                        amrex::Vector<amrex::ParticleReal> const & k);
+                        amrex::Vector<amrex::ParticleReal> const & z);
     /*
     * Function that initializes the particles (only positions)
     * current version only adds one particle per cell (qdsmc for electron energy equation)
@@ -108,7 +105,6 @@ public:
     // property/value valuep in a generic scalar multifab
     // using linear interpolation
     void DepositK(int lev, amrex::MultiFab &Kfield);
-
 };
 
 #endif // WARPX_QdsmcParticleContainer_H_

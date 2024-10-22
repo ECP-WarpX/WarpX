@@ -15,25 +15,107 @@
 
 #include <cmath>
 
+
+/**
+ * 
+ * 
+ */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+void gather_density_entropy(const amrex::ParticleReal x0p,
+                            const amrex::ParticleReal y0p,
+                            const amrex::ParticleReal z0p,
+                            amrex::Real& n_p,
+                            amrex::Real& kn_p,
+                            amrex::Array4<amrex::Real const> const& rho_arr,
+                            amrex::Array4<amrex::Real const> const& K_arr,
+                            const amrex::XDim3 & xyzmin,
+                            const amrex::XDim3 & dinv,
+                            const amrex::Real cell_volume)
+{
+    amrex::Real x = (x0p - xyzmin.x)*dinv.x;
+    amrex::Real y = (y0p - xyzmin.y)*dinv.y;
+    amrex::Real z = (z0p - xyzmin.z)*dinv.z;
+
+    int i0p = std::floor(x);
+    int j0p = std::floor(y);
+    int k0p = std::floor(z);
+
+    n_p = rho_arr(i0p,j0p,k0p)*cell_volume/PhysConst::q_e;
+    kn_p = K_arr(i0p,j0p,k0p)*n_p;
+}
+
+
+/**
+ * 
+ * 
+ */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+void gather_vector_field_qdsmc(const amrex::ParticleReal x0p,
+                            const amrex::ParticleReal y0p,
+                            const amrex::ParticleReal z0p,
+                            amrex::Real& field_x_p,
+                            amrex::Real& field_y_p,
+                            amrex::Real& field_z_p,
+                            amrex::Array4<amrex::Real const> const& field_x_arr,
+                            amrex::Array4<amrex::Real const> const& field_y_arr,
+                            amrex::Array4<amrex::Real const> const& field_z_arr,
+                            const amrex::XDim3 & xyzmin,
+                            const amrex::XDim3 & dinv)
+{
+    amrex::Real x = (x0p - xyzmin.x)*dinv.x;
+    amrex::Real y = (y0p - xyzmin.y)*dinv.y;
+    amrex::Real z = (z0p - xyzmin.z)*dinv.z;
+
+    int i0p = std::floor(x);
+    int j0p = std::floor(y);
+    int k0p = std::floor(z);
+
+    field_x_p = field_x_arr(i0p,j0p,k0p);
+    field_y_p = field_y_arr(i0p,j0p,k0p);
+    field_z_p = field_z_arr(i0p,j0p,k0p);
+}
+
+
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+void push_qdsmc_particle(const amrex::ParticleReal x0p,
+                        const amrex::ParticleReal y0p,
+                        const amrex::ParticleReal z0p,
+                        const amrex::ParticleReal vxp,
+                        const amrex::ParticleReal vyp,
+                        const amrex::ParticleReal vzp,
+                        amrex::Real& xp,
+                        amrex::Real& yp,
+                        amrex::Real& zp,
+                        amrex::Real dt)
+{
+    xp = x0p + vxp*dt;
+    yp = y0p + vyp*dt;
+    zp = z0p + vzp*dt;
+}
+
+
 // check: assume nodal, cell centered ?
 // check: handling different dimensions ?
 // only linear interpolation for now
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void do_deposit_scalar(amrex::Array4<amrex::Real> const& scalar_field,
-                    const amrex::Real xp, const amrex::Real yp, const amrex::Real zp,
-                    const amrex::Real ip, const amrex::Real jp, const amrex::Real kp,
+                    const amrex::ParticleReal xp, const amrex::ParticleReal yp, const amrex::ParticleReal zp,
                     const amrex::XDim3 & xyzmin,
                     const amrex::XDim3 & dinv,
-                    const amrex::Real valuep)
+                    const amrex::ParticleReal valuep)
 {
     // calculate di, dj, dk for particle in cell
-    int i = ip;
-    int j = jp;
-    int k = kp;
+    amrex::Real x = (xp - xyzmin.x)*dinv.x;
+    amrex::Real y = (yp - xyzmin.y)*dinv.y;
+    amrex::Real z = (zp - xyzmin.z)*dinv.z;
 
-    amrex::Real dip = (xp - xyzmin.x)*dinv.x - i;
-    amrex::Real djp = (yp - xyzmin.y)*dinv.y - j;
-    amrex::Real dkp = (zp - xyzmin.z)*dinv.z - k;
+    int i0p = std::floor(x);
+    int j0p = std::floor(y);
+    int k0p = std::floor(z);
+
+    amrex::Real dip = x - i0p;
+    amrex::Real djp = y - j0p;
+    amrex::Real dkp = z - k0p;
 
     amrex:: Real sx[] = {1.-dip, dip};
     amrex:: Real sy[] = {1.-djp, djp};
@@ -43,7 +125,7 @@ void do_deposit_scalar(amrex::Array4<amrex::Real> const& scalar_field,
     for         (int ioff = 0; ioff < 2; ++ioff){
         for     (int joff = 0; joff < 2; ++joff){
             for (int koff = 0; koff < 2; ++koff){
-                amrex::Gpu::Atomic::AddNoRet(&scalar_field(i+ioff,j+joff,k+koff), valuep*sx[ioff]*sy[joff]*sz[koff]);
+                amrex::Gpu::Atomic::AddNoRet(&scalar_field(i0p+ioff,j0p+joff,k0p+koff), valuep*sx[ioff]*sy[joff]*sz[koff]);
             }
         }
     }
