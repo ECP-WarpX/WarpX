@@ -15,8 +15,7 @@ concurrency:
 jobs:
   build_UB_sanitizer:
     name: Clang UB sanitizer
-    runs-on: ubuntu-22.04
-    container: ubuntu:23.10
+    runs-on: ubuntu-24.04
     if: github.event.pull_request.draft == false
     env:
       CC: clang
@@ -27,7 +26,7 @@ jobs:
     - uses: actions/checkout@v4
     - name: install dependencies
       run: |
-        .github/workflows/dependencies/clang17.sh
+        .github/workflows/dependencies/clang18.sh
     - name: CCache Cache
       uses: actions/cache@v4
       with:
@@ -42,8 +41,8 @@ jobs:
         export CCACHE_MAXSIZE=100M
         ccache -z
 
-        export CXX=$(which clang++-17)
-        export CC=$(which clang-17)
+        export CXX=$(which clang++-18)
+        export CC=$(which clang-18)
         export CXXFLAGS="-fsanitize=undefined,address,pointer-compare -fno-sanitize-recover=all"
 
         cmake -S . -B build                 \
@@ -65,10 +64,6 @@ jobs:
     - name: run with UB sanitizer
       run: |
 
-        # We need these two lines because these tests run inside a docker container
-        export OMPI_ALLOW_RUN_AS_ROOT=1
-        export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
-
         export OMP_NUM_THREADS=2
 
         #MPI implementations often leak memory
@@ -81,8 +76,7 @@ jobs:
 
   build_thread_sanitizer:
     name: Clang thread sanitizer
-    runs-on: ubuntu-22.04
-    container: ubuntu:23.10
+    runs-on: ubuntu-24.04
     if: github.event.pull_request.draft == false
     env:
       CC: clang
@@ -93,7 +87,7 @@ jobs:
     - uses: actions/checkout@v4
     - name: install dependencies
       run: |
-        .github/workflows/dependencies/clang17.sh
+        .github/workflows/dependencies/clang18.sh
     - name: CCache Cache
       uses: actions/cache@v4
       with:
@@ -108,35 +102,39 @@ jobs:
         export CCACHE_MAXSIZE=100M
         ccache -z
 
-        export CXX=$(which clang++-17)
-        export CC=$(which clang-17)
+        export CXX=$(which clang++-18)
+        export CC=$(which clang-18)
         export CXXFLAGS="-fsanitize=thread"
 
-        cmake -S . -B build                 \
-          -GNinja                           \
-          -DCMAKE_VERBOSE_MAKEFILE=ON       \
-          -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-          -DWarpX_DIMS="RZ;1;2;3"           \
-          -DWarpX_FFT=ON                    \
-          -DWarpX_QED=ON                    \
-          -DWarpX_QED_TABLE_GEN=ON          \
-          -DWarpX_OPENPMD=ON                \
-          -DWarpX_EB=OFF                    \
-          -DWarpX_PRECISION=DOUBLE          \
+        cmake -S . -B build                               \
+          -GNinja                                         \
+          -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread"    \
+          -DCMAKE_SHARED_LINKER_FLAGS="-fsanitize=thread" \
+          -DCMAKE_VERBOSE_MAKEFILE=ON                     \
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo               \
+          -DWarpX_DIMS="RZ;1;2;3"                         \
+          -DWarpX_FFT=ON                                  \
+          -DWarpX_QED=ON                                  \
+          -DWarpX_QED_TABLE_GEN=ON                        \
+          -DWarpX_OPENPMD=ON                              \
+          -DWarpX_EB=OFF                                  \
+          -DWarpX_PRECISION=DOUBLE                        \
           -DWarpX_PARTICLE_PRECISION=DOUBLE
         cmake --build build -j 4
 
-        cmake -S . -B build_EB              \
-          -GNinja                           \
-          -DCMAKE_VERBOSE_MAKEFILE=ON       \
-          -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-          -DWarpX_DIMS="2"                  \
-          -DWarpX_FFT=ON                    \
-          -DWarpX_QED=ON                    \
-          -DWarpX_QED_TABLE_GEN=ON          \
-          -DWarpX_OPENPMD=ON                \
-          -DWarpX_EB=ON                     \
-          -DWarpX_PRECISION=DOUBLE          \
+        cmake -S . -B build_EB                            \
+          -GNinja                                         \
+          -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread"    \
+          -DCMAKE_SHARED_LINKER_FLAGS="-fsanitize=thread" \
+          -DCMAKE_VERBOSE_MAKEFILE=ON                     \
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo               \
+          -DWarpX_DIMS="2"                                \
+          -DWarpX_FFT=ON                                  \
+          -DWarpX_QED=ON                                  \
+          -DWarpX_QED_TABLE_GEN=ON                        \
+          -DWarpX_OPENPMD=ON                              \
+          -DWarpX_EB=ON                                   \
+          -DWarpX_PRECISION=DOUBLE                        \
           -DWarpX_PARTICLE_PRECISION=DOUBLE
         cmake --build build_EB -j 4
 
@@ -148,10 +146,6 @@ jobs:
         export PMIX_MCA_gds=hash
         export TSAN_OPTIONS='ignore_noninstrumented_modules=1'
         export ARCHER_OPTIONS="verbose=1"
-
-        # We need these two lines because these tests run inside a docker container
-        export OMPI_ALLOW_RUN_AS_ROOT=1
-        export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
 
         export OMP_NUM_THREADS=2
 
