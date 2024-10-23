@@ -154,7 +154,7 @@ class FiniteDifferenceSolver
           * \param[in] hybrid_model instance of the hybrid-PIC model
           * \param[in] solve_for_Faraday boolean flag for whether the E-field is solved to be used in Faraday's equation
           */
-        void HybridPICSolveE ( 
+        void HybridPICSolveE (
             ablastr::fields::VectorField const& Efield,
             ablastr::fields::VectorField & Jfield,
             ablastr::fields::VectorField const& Jifield,
