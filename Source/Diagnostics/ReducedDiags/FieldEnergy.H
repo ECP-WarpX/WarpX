@@ -39,6 +39,7 @@ public:
      */
     void ComputeDiags(int step) final;
 
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
     /**
      * \brief Calculate the integral of the field squared in radial coordinates
      *
@@ -47,6 +48,7 @@ public:
      * \return The integral
      */
     amrex::Real ComputeNorm2Radial(const amrex::MultiFab& field, int lev);
+#endif
 
 };
 

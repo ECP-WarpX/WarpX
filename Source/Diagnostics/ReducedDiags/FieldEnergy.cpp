@@ -156,6 +156,7 @@ void FieldEnergy::ComputeDiags (int step)
 }
 // end void FieldEnergy::ComputeDiags
 
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
 // Function that computes the sum of the field squared in RZ
 amrex::Real
 FieldEnergy::ComputeNorm2Radial(const amrex::MultiFab& field, const int lev)
@@ -231,4 +232,5 @@ FieldEnergy::ComputeNorm2Radial(const amrex::MultiFab& field, const int lev)
     const amrex::Real result = MathConst::pi*field_sum;
     return result;
 }
+#endif
 // end Real FieldEnergy::ComputeNorm2Radial

@@ -6,9 +6,7 @@
  */
 #include "FiniteDifferenceSolver.H"
 
-#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
-#   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
-#elif !defined(WARPX_DIM_RSPHERE)
+#if !defined(WARPX_DIM_RZ) && !defined(WARPX_DIM_RCYLINDER) && !defined(WARPX_DIM_RSPHERE)
 #   include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #   include "FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
 #   include "FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
