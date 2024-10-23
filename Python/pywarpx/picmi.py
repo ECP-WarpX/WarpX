@@ -1912,7 +1912,6 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         )
 
 
-
 class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
     """
     See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`__ for more information.
