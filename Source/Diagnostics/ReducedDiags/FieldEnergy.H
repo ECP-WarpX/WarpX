@@ -40,13 +40,13 @@ public:
     void ComputeDiags(int step) final;
 
     /**
-     * \brief Calculate the integral of the field squared in RZ
+     * \brief Calculate the integral of the field squared in radial coordinates
      *
      * \param field The MultiFab to be integrated
-     * \param lev   The refinement level
+     * \param lev The refinement level
      * \return The integral
      */
-    amrex::Real ComputeNorm2RZ(const amrex::MultiFab& field, int lev);
+    amrex::Real ComputeNorm2Radial(const amrex::MultiFab& field, int lev);
 
 };
 
