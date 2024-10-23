@@ -7,12 +7,14 @@
 #include "FiniteDifferenceSolver.H"
 
 #include "Fields.H"
-#ifndef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
+#elif defined(WARPX_DIM_RSPHERE)
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/SphericalYeeAlgorithm.H"
+#else
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
-#else
-#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
 #include "EmbeddedBoundary/Enabled.H"
 #include "Utils/TextMsg.H"
@@ -91,9 +93,12 @@ void FiniteDifferenceSolver::EvolveE (
 
     // Select algorithm (The choice of algorithm is a runtime option,
     // but we compile code for each algorithm, using templates)
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
     if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee){
         EvolveECylindrical <CylindricalYeeAlgorithm> ( Efield, Bfield, Jfield, edge_lengths, Ffield, lev, dt );
+#elif defined(WARPX_DIM_RSPHERE)
+    if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee){
+        EvolveESpherical <SphericalYeeAlgorithm> ( Efield, Bfield, Jfield, Ffield, lev, dt );
 #else
     if (m_grid_type == GridType::Collocated) {
 
@@ -115,7 +120,7 @@ void FiniteDifferenceSolver::EvolveE (
 }
 
 
-#ifndef WARPX_DIM_RZ
+#if !defined(WARPX_DIM_RZ) && !defined(WARPX_DIM_RCYLINDER) && !defined(WARPX_DIM_RSPHERE)
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveECartesian (
@@ -249,7 +254,7 @@ void FiniteDifferenceSolver::EvolveECartesian (
 
 }
 
-#else // corresponds to ifndef WARPX_DIM_RZ
+#elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveECylindrical (
@@ -456,6 +461,116 @@ void FiniteDifferenceSolver::EvolveECylindrical (
                         Ez(i, j, 0, 2*m-1) += c2 * dt * T_Algo::UpwardDz(F, coefs_z, n_coefs_z, i, j, 0, 2*m-1); // Real part
                         Ez(i, j, 0, 2*m  ) += c2 * dt * T_Algo::UpwardDz(F, coefs_z, n_coefs_z, i, j, 0, 2*m  ); // Imaginary part
                     }
+                }
+
+            ); // end of loop over cells
+
+        } // end of if condition for F
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = static_cast<amrex::Real>(amrex::second()) - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+        }
+    } // end of loop over grid/tiles
+
+}
+
+#elif defined(WARPX_DIM_RSPHERE)
+
+template<typename T_Algo>
+void FiniteDifferenceSolver::EvolveESpherical (
+    ablastr::fields::VectorField const& Efield,
+    ablastr::fields::VectorField const& Bfield,
+    ablastr::fields::VectorField const& Jfield,
+    amrex::MultiFab const* Ffield,
+    int lev, amrex::Real const dt ) {
+
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+
+    // Loop through the grids, and over the tiles within each grid
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for ( MFIter mfi(*Efield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+        }
+        auto wt = static_cast<amrex::Real>(amrex::second());
+
+        // Extract field data for this grid/tile
+        Array4<Real> const& Er = Efield[0]->array(mfi);
+        Array4<Real> const& Et = Efield[1]->array(mfi);
+        Array4<Real> const& Ep = Efield[2]->array(mfi);
+        Array4<Real> const& Bt = Bfield[1]->array(mfi);
+        Array4<Real> const& Bp = Bfield[2]->array(mfi);
+        Array4<Real> const& jr = Jfield[0]->array(mfi);
+        Array4<Real> const& jt = Jfield[1]->array(mfi);
+        Array4<Real> const& jp = Jfield[2]->array(mfi);
+
+        // Extract stencil coefficients
+        Real const * const AMREX_RESTRICT coefs_r = m_stencil_coefs_r.dataPtr();
+        auto const n_coefs_r = static_cast<int>(m_stencil_coefs_r.size());
+
+        // Extract spherical specific parameters
+        Real const dr = m_dr;
+        Real const rmin = m_rmin;
+
+        // Extract tileboxes for which to loop
+        Box const& ter  = mfi.tilebox(Efield[0]->ixType().toIntVect());
+        Box const& tet  = mfi.tilebox(Efield[1]->ixType().toIntVect());
+        Box const& tep  = mfi.tilebox(Efield[2]->ixType().toIntVect());
+
+        Real const c2 = PhysConst::c * PhysConst::c;
+
+        // Loop over the cells and update the fields
+        amrex::ParallelFor(ter, tet, tep,
+
+            [=] AMREX_GPU_DEVICE (int i, int /*j*/, int /*k*/){
+                Er(i, 0, 0, 0) +=  c2 * dt*(
+                    - PhysConst::mu0 * jr(i, 0, 0, 0) );
+            },
+
+            [=] AMREX_GPU_DEVICE (int i, int /*j*/, int /*k*/){
+                Real const r = rmin + i*dr; // r on a nodal grid (Et is nodal in r)
+                if (r != 0) { // Off-axis, regular Maxwell equations
+                    Et(i, 0, 0, 0) += c2 * dt*(
+                        - T_Algo::DownwardDrr_over_r(Bp, r, dr, coefs_r, n_coefs_r, i, 0, 0, 0)
+                        - PhysConst::mu0 * jt(i, 0, 0, 0 ) );
+                } else { // r==0: on-axis corrections
+                    // Ensure that Et remains 0 on axis
+                    Et(i, 0, 0, 0) = 0.;
+                }
+            },
+
+            [=] AMREX_GPU_DEVICE (int i, int /*j*/, int /*k*/){
+                Real const r = rmin + i*dr; // r on a nodal grid (Ep is nodal in r)
+                if (r != 0) { // Off-axis, regular Maxwell equations
+                    Ep(i, 0, 0, 0) += c2 * dt*(
+                        + T_Algo::DownwardDrr_over_r(Bt, r, dr, coefs_r, n_coefs_r, i, 0, 0, 0)
+                        - PhysConst::mu0 * jp(i, 0, 0, 0  ) );
+                } else { // r==0: on-axis corrections
+                    // Ensure that Ep remains 0 on axis
+                    Ep(i, 0, 0, 0) = 0.;
+                }
+            }
+
+        ); // end of loop over cells
+
+        // If F is not a null pointer, further update E using the grad(F) term
+        // (hyperbolic correction for errors in charge conservation)
+        if (Ffield) {
+
+            // Extract field data for this grid/tile
+            const Array4<Real const> F = Ffield->array(mfi);
+
+            // Loop over the cells and update the fields
+            amrex::ParallelFor(ter,
+
+                [=] AMREX_GPU_DEVICE (int i, int /*j*/, int /*k*/){
+                    Er(i, 0, 0, 0) += c2 * dt * T_Algo::UpwardDr(F, coefs_r, n_coefs_r, i, 0, 0, 0);
                 }
 
             ); // end of loop over cells

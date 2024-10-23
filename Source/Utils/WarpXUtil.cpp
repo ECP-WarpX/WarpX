@@ -75,7 +75,7 @@ void ParseGeometryInput()
         pp_geometry, "prob_hi", prob_hi, 0, AMREX_SPACEDIM);
     AMREX_ALWAYS_ASSERT(prob_hi.size() == AMREX_SPACEDIM);
 
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
     const ParmParse pp_algo("algo");
     auto electromagnetic_solver_id = ElectromagneticSolverAlgo::Default;
     pp_algo.query_enum_sloppy("maxwell_solver", electromagnetic_solver_id, "-_");
@@ -87,7 +87,7 @@ void ParseGeometryInput()
     else
     {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(prob_lo[0] >= 0.,
-            "Lower bound of radial coordinate (prob_lo[0]) with RZ FDTD solver must be non-negative");
+            "Lower bound of radial coordinate (prob_lo[0]) with FDTD solver must be non-negative");
     }
 #endif
 
@@ -114,6 +114,7 @@ void ParseGeometryInput()
 void ReadBoostedFrameParameters(Real& gamma_boost, Real& beta_boost,
                                 Vector<int>& boost_direction)
 {
+#if !defined(WARPX_DIM_RCYLINDER) && !defined(WARPX_DIM_RSPHERE)
     const ParmParse pp_warpx("warpx");
     utils::parser::queryWithParser(pp_warpx, "gamma_boost", gamma_boost);
     if( gamma_boost > 1. ) {
@@ -138,11 +139,14 @@ void ReadBoostedFrameParameters(Real& gamma_boost, Real& beta_boost,
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( s == "z" || s == "Z" ,
             "The boost must be in the z direction.");
     }
+#else
+    amrex::ignore_unused(gamma_boost, beta_boost, boost_direction);
+#endif
 }
 
 void ReadMovingWindowParameters(
     int& do_moving_window, int& start_moving_window_step, int& end_moving_window_step,
-    int& moving_window_dir, amrex::Real& moving_window_v)
+    [[maybe_unused]] int& moving_window_dir, amrex::Real& moving_window_v)
 {
     const ParmParse pp_warpx("warpx");
     pp_warpx.query("do_moving_window", do_moving_window);
@@ -155,7 +159,9 @@ void ReadMovingWindowParameters(
         pp_warpx.get("moving_window_dir", s);
 
         if (s == "z" || s == "Z") {
+#ifdef WARPX_ZINDEX
             moving_window_dir = WARPX_ZINDEX;
+#endif
         }
 #if defined(WARPX_DIM_3D)
         else if (s == "y" || s == "Y") {
@@ -363,6 +369,10 @@ void CheckDims ()
     std::string const dims_compiled = "1";
 #elif defined(WARPX_DIM_RZ)
     std::string const dims_compiled = "RZ";
+#elif defined(WARPX_DIM_RCYLINDER)
+    std::string const dims_compiled = "RCYLINDER";
+#elif defined(WARPX_DIM_RSPHERE)
+    std::string const dims_compiled = "RSPHERE";
 #endif
     const ParmParse pp_geometry("geometry");
     std::string dims;

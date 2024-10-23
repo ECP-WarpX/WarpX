@@ -409,3 +409,23 @@ if(WarpX_FFT)
         OFF  # dependency
     )
 endif()
+
+add_warpx_test(
+    test_rcylinder_langmuir_multi  # name
+    RCYLINDER  # dims
+    2  # nprocs
+    inputs_test_rcylinder_langmuir_multi  # inputs
+    analysis_r1d.py  # analysis
+    diags/diag1000080  # output
+    OFF  # dependency
+)
+
+add_warpx_test(
+    test_rsphere_langmuir_multi  # name
+    RSPHERE  # dims
+    2  # nprocs
+    inputs_test_rsphere_langmuir_multi  # inputs
+    analysis_r1d.py  # analysis
+    diags/diag1000080  # output
+    OFF  # dependency
+)

@@ -63,7 +63,10 @@ void doGatherShapeN ([[maybe_unused]] const amrex::ParticleReal xp,
 {
     using namespace amrex;
 
+#ifdef WARPX_ZINDEX
     constexpr int zdir = WARPX_ZINDEX;
+#endif
+
     constexpr int NODE = amrex::IndexType::NODE;
     constexpr int CELL = amrex::IndexType::CELL;
 
@@ -72,14 +75,17 @@ void doGatherShapeN ([[maybe_unused]] const amrex::ParticleReal xp,
     Compute_shape_factor< depos_order > const compute_shape_factor;
     Compute_shape_factor<depos_order - galerkin_interpolation > const compute_shape_factor_galerkin;
 
-#if (AMREX_SPACEDIM >= 2)
+#if !defined(WARPX_DIM_1D_Z)
     // x direction
     // Get particle position
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
     const amrex::Real rp = std::sqrt(xp*xp + yp*yp);
     const amrex::Real x = (rp - xyzmin.x)*dinv.x;
+#elif defined(WARPX_DIM_RSPHERE)
+    const amrex::Real rp = std::sqrt(xp*xp + yp*yp + zp*zp);
+    const amrex::Real x = (rp - xyzmin.x)*dinv.x;
 #else
-    const amrex::Real x = (xp-xyzmin.x)*dinv.x;
+    const amrex::Real x = (xp - xyzmin.x)*dinv.x;
 #endif
 
     // j_[eb][xyz] leftmost grid point in x that the particle touches for the centering of each current
@@ -158,6 +164,8 @@ void doGatherShapeN ([[maybe_unused]] const amrex::ParticleReal xp,
     int const k_bz = ((bz_type[1] == NODE) ? k_node_v : k_cell_v);
 
 #endif
+
+#if !defined(WARPX_DIM_RCYLINDER) && !defined(WARPX_DIM_RSPHERE)
     // z direction
     const amrex::Real z = (zp-xyzmin.z)*dinv.z;
     amrex::Real sz_node[depos_order + 1];
@@ -192,7 +200,7 @@ void doGatherShapeN ([[maybe_unused]] const amrex::ParticleReal xp,
     int const l_bx = ((bx_type[zdir] == NODE) ? l_node_v : l_cell_v);
     int const l_by = ((by_type[zdir] == NODE) ? l_node_v : l_cell_v);
     int const l_bz = ((bz_type[zdir] == NODE) ? l_node   : l_cell  );
-
+#endif
 
     // Each field is gathered in a separate block of
     // AMREX_SPACEDIM nested loops because the deposition
@@ -365,6 +373,87 @@ void doGatherShapeN ([[maybe_unused]] const amrex::ParticleReal xp,
     Bxp += costheta*Brp - sintheta*Bthetap;
     Byp += costheta*Bthetap + sintheta*Brp;
 
+#elif defined(WARPX_DIM_RCYLINDER)
+
+    amrex::ParticleReal Erp = 0.;
+    amrex::ParticleReal Ethetap = 0.;
+    amrex::ParticleReal Brp = 0.;
+    amrex::ParticleReal Bthetap = 0.;
+
+    // Gather field on particle Ethetap from field on grid ey_arr
+    for (int ix=0; ix<=depos_order; ix++){
+        Ethetap += sx_ey[ix]*ey_arr(lo.x+j_ey+ix, 0, 0, 0);
+    }
+    // Gather field on particle Erp from field on grid ex_arr
+    // Gather field on particle Bzp from field on grid bz_arr
+    for (int ix=0; ix<=depos_order-galerkin_interpolation; ix++){
+        Erp += sx_ex[ix]*ex_arr(lo.x+j_ex+ix, 0, 0, 0);
+        Bzp += sx_bz[ix]*bz_arr(lo.x+j_bz+ix, 0, 0, 0);
+    }
+    // Gather field on particle Ezp from field on grid ez_arr
+    // Gather field on particle Brp from field on grid bx_arr
+    for (int ix=0; ix<=depos_order; ix++){
+        Ezp += sx_ez[ix]*ez_arr(lo.x+j_ez+ix, 0, 0, 0);
+        Brp += sx_bx[ix]*bx_arr(lo.x+j_bx+ix, 0, 0, 0);
+    }
+    // Gather field on particle Bthetap from field on grid by_arr
+    for (int ix=0; ix<=depos_order-galerkin_interpolation; ix++){
+        Bthetap += sx_by[ix]*by_arr(lo.x+j_by+ix, 0, 0, 0);
+    }
+
+    amrex::Real const costheta = (rp > 0. ? xp/rp : 1.);;
+    amrex::Real const sintheta = (rp > 0. ? yp/rp : 0.);;
+
+    // Convert Erp and Ethetap to Ex and Ey
+    Exp += costheta*Erp - sintheta*Ethetap;
+    Eyp += costheta*Ethetap + sintheta*Erp;
+    Bxp += costheta*Brp - sintheta*Bthetap;
+    Byp += costheta*Bthetap + sintheta*Brp;
+
+#elif defined(WARPX_DIM_RSPHERE)
+
+    amrex::ParticleReal Erp = 0.;
+    amrex::ParticleReal Ethetap = 0.;
+    amrex::ParticleReal Ephip = 0.;
+    amrex::ParticleReal Brp = 0.;
+    amrex::ParticleReal Bthetap = 0.;
+    amrex::ParticleReal Bphip = 0.;
+
+    // Gather field on particle Ethetap from field on grid ey_arr
+    for (int ix=0; ix<=depos_order; ix++){
+        Ethetap += sx_ey[ix]*ey_arr(lo.x+j_ey+ix, 0, 0, 0);
+    }
+    // Gather field on particle Erp from field on grid ex_arr
+    // Gather field on particle Bphip from field on grid bz_arr
+    for (int ix=0; ix<=depos_order-galerkin_interpolation; ix++){
+        Erp += sx_ex[ix]*ex_arr(lo.x+j_ex+ix, 0, 0, 0);
+        Bphip += sx_bz[ix]*bz_arr(lo.x+j_bz+ix, 0, 0, 0);
+    }
+    // Gather field on particle Ephip from field on grid ez_arr
+    // Gather field on particle Brp from field on grid bx_arr
+    for (int ix=0; ix<=depos_order; ix++){
+        Ephip += sx_ez[ix]*ez_arr(lo.x+j_ez+ix, 0, 0, 0);
+        Brp += sx_bx[ix]*bx_arr(lo.x+j_bx+ix, 0, 0, 0);
+    }
+    // Gather field on particle Bthetap from field on grid by_arr
+    for (int ix=0; ix<=depos_order-galerkin_interpolation; ix++){
+        Bthetap += sx_by[ix]*by_arr(lo.x+j_by+ix, 0, 0, 0);
+    }
+
+    const amrex::Real rpxy = std::sqrt(xp*xp + yp*yp);
+    amrex::Real const costheta = (rpxy > 0. ? xp/rpxy : 1.);;
+    amrex::Real const sintheta = (rpxy > 0. ? yp/rpxy : 0.);;
+    amrex::Real const cosphi = (rp > 0. ? zp/rp : 1.);;
+    amrex::Real const sinphi = (rp > 0. ? rpxy/rp : 0.);;
+
+    // Convert Erp, Ethetap, and Ephi to Ex, Ey, and Ez
+    Exp += costheta*sinphi*Erp + costheta*cosphi*Ephip - sintheta*Ethetap;
+    Eyp += sintheta*sinphi*Erp + sintheta*cosphi*Ephip + costheta*Ethetap;
+    Ezp += cosphi*Erp - sinphi*Ephip;
+    Bxp += costheta*sinphi*Brp + costheta*cosphi*Bphip - sintheta*Bthetap;
+    Byp += sintheta*sinphi*Brp + sintheta*cosphi*Bphip + costheta*Bthetap;
+    Bzp += cosphi*Brp - sinphi*Bphip;
+
 #else // defined(WARPX_DIM_3D)
     // Gather field on particle Exp from field on grid ex_arr
     for (int iz=0; iz<=depos_order; iz++){
@@ -446,10 +535,10 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void doGatherShapeNEsirkepovStencilImplicit (
                      [[maybe_unused]] const amrex::ParticleReal xp_n,
                      [[maybe_unused]] const amrex::ParticleReal yp_n,
-                     const amrex::ParticleReal zp_n,
+                     [[maybe_unused]] const amrex::ParticleReal zp_n,
                      [[maybe_unused]] const amrex::ParticleReal xp_nph,
                      [[maybe_unused]] const amrex::ParticleReal yp_nph,
-                     const amrex::ParticleReal zp_nph,
+                     [[maybe_unused]] const amrex::ParticleReal zp_nph,
                      amrex::ParticleReal& Exp,
                      amrex::ParticleReal& Eyp,
                      amrex::ParticleReal& Ezp,
@@ -478,7 +567,7 @@ void doGatherShapeNEsirkepovStencilImplicit (
     ignore_unused(n_rz_azimuthal_modes);
 #endif
 
-#if !defined(WARPX_DIM_1D_Z)
+#if (AMREX_SPACEDIM > 1)
     Real constexpr one_third = 1.0_rt / 3.0_rt;
     Real constexpr one_sixth = 1.0_rt / 6.0_rt;
 #endif
@@ -486,13 +575,15 @@ void doGatherShapeNEsirkepovStencilImplicit (
 #if !defined(WARPX_DIM_1D_Z)
     const ParticleReal xp_np1 = 2._prt*xp_nph - xp_n;
 #endif
-#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
     const ParticleReal yp_np1 = 2._prt*yp_nph - yp_n;
 #endif
+#if !defined(WARPX_DIM_RCYLINDER)
     const ParticleReal zp_np1 = 2._prt*zp_nph - zp_n;
+#endif
 
     // computes current and old position in grid units
-#if defined(WARPX_DIM_RZ)
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
     amrex::Real const xp_new = xp_np1;
     amrex::Real const yp_new = yp_np1;
     amrex::Real const xp_mid = xp_nph;
@@ -510,7 +601,34 @@ void doGatherShapeNEsirkepovStencilImplicit (
         costheta_mid = 1._rt;
         sintheta_mid = 0._rt;
     }
+    // Keep these double to avoid bug in single precision
+    double const x_new = (rp_new - xyzmin.x)*dinv.x;
+    double const x_old = (rp_old - xyzmin.x)*dinv.x;
+#if defined(WARPX_DIM_RZ)
     const Complex xy_mid0 = Complex{costheta_mid, sintheta_mid};
+#endif
+#elif defined(WARPX_DIM_RSPHERE)
+    amrex::Real const xp_new = xp_np1;
+    amrex::Real const yp_new = yp_np1;
+    amrex::Real const zp_new = zp_np1;
+    amrex::Real const xp_mid = xp_nph;
+    amrex::Real const yp_mid = yp_nph;
+    amrex::Real const zp_mid = zp_nph;
+    amrex::Real const xp_old = xp_n;
+    amrex::Real const yp_old = yp_n;
+    amrex::Real const zp_old = zp_n;
+    amrex::Real const rpxy_new = std::sqrt(xp_new*xp_new + yp_new*yp_new);
+    amrex::Real const rpxy_old = std::sqrt(xp_old*xp_old + yp_old*yp_old);
+    amrex::Real const rpxy_mid = (rpxy_new + rpxy_old)/2._rt;
+    amrex::Real const rp_new = std::sqrt(xp_new*xp_new + yp_new*yp_new + zp_new*zp_new);
+    amrex::Real const rp_old = std::sqrt(xp_old*xp_old + yp_old*yp_old + zp_old*zp_old);
+    amrex::Real const rp_mid = (rp_new + rp_old)/2._rt;
+
+    amrex::Real const costheta_mid = (rpxy_mid > 0. ? xp_mid/rpxy_mid : 1._rt);
+    amrex::Real const sintheta_mid = (rpxy_mid > 0. ? yp_mid/rpxy_mid : 0._rt);
+    amrex::Real const cosphi_mid = (rp_mid > 0. ? zp_mid/rp_mid : 1._rt);
+    amrex::Real const sinphi_mid = (rp_mid > 0. ? rpxy_mid/rp_mid : 0._rt);
+
     // Keep these double to avoid bug in single precision
     double const x_new = (rp_new - xyzmin.x)*dinv.x;
     double const x_old = (rp_old - xyzmin.x)*dinv.x;
@@ -526,9 +644,11 @@ void doGatherShapeNEsirkepovStencilImplicit (
     double const y_new = (yp_np1 - xyzmin.y)*dinv.y;
     double const y_old = (yp_n - xyzmin.y)*dinv.y;
 #endif
+#if !defined(WARPX_DIM_RCYLINDER) && !defined(WARPX_DIM_RSPHERE)
     // Keep these double to avoid bug in single precision
     double const z_new = (zp_np1 - xyzmin.z)*dinv.z;
     double const z_old = (zp_n - xyzmin.z)*dinv.z;
+#endif
 
     // Shape factor arrays
     // Note that there are extra values above and below
@@ -544,9 +664,11 @@ void doGatherShapeNEsirkepovStencilImplicit (
     double sy_E_new[depos_order + 3] = {0.};
     double sy_E_old[depos_order + 3] = {0.};
 #endif
+#if !defined(WARPX_DIM_RCYLINDER) && !defined(WARPX_DIM_RSPHERE)
     // Keep these double to avoid bug in single precision
     double sz_E_new[depos_order + 3] = {0.};
     double sz_E_old[depos_order + 3] = {0.};
+#endif
 
 #if defined(WARPX_DIM_3D)
     double sx_B_new[depos_order + 3] = {0.};
@@ -580,8 +702,10 @@ void doGatherShapeNEsirkepovStencilImplicit (
     const int j_E_new = compute_shape_factor(sy_E_new+1, y_new);
     const int j_E_old = compute_shifted_shape_factor(sy_E_old, y_old, j_E_new);
 #endif
+#if !defined(WARPX_DIM_RCYLINDER) && !defined(WARPX_DIM_RSPHERE)
     const int k_E_new = compute_shape_factor(sz_E_new+1, z_new);
     const int k_E_old = compute_shifted_shape_factor(sz_E_old, z_old, k_E_new);
+#endif
 
 #if defined(WARPX_DIM_3D)
     const int i_B_new = compute_shape_factor(sx_B_new+1, x_new - 0.5_rt);
@@ -603,9 +727,11 @@ void doGatherShapeNEsirkepovStencilImplicit (
     if (j_E_old < j_E_new) { djl_E = 0; }
     if (j_E_old > j_E_new) { dju_E = 0; }
 #endif
+#if !defined(WARPX_DIM_RCYLINDER) && !defined(WARPX_DIM_RSPHERE)
     int dkl_E = 1, dku_E = 1;
     if (k_E_old < k_E_new) { dkl_E = 0; }
     if (k_E_old > k_E_new) { dku_E = 0; }
+#endif
 
 #if defined(WARPX_DIM_3D)
     int dil_B = 1, diu_B = 1;
@@ -836,6 +962,67 @@ void doGatherShapeNEsirkepovStencilImplicit (
         Byp += By_arr(lo.x+k_E_new-1+k, 0, 0, 0)*sdzkov;
         Ezp += Ez_arr(lo.x+k_E_new-1+k, 0, 0, 0)*sdzkov;
     }
+
+#elif defined(WARPX_DIM_RCYLINDER)
+
+    amrex::ParticleReal Erp = 0.;
+    amrex::ParticleReal Ethetap = 0.;
+    amrex::ParticleReal Brp = 0.;
+    amrex::ParticleReal Bthetap = 0.;
+
+    for (int i=dil_E; i<=depos_order+2-diu_E; i++) {
+        amrex::Real const sdxi = 0.5_rt*(sx_E_old[i] + sx_E_new[i]);
+        Brp += Bx_arr(lo.x+i_E_new-1+i, 0, 0, 0)*sdxi;
+        Ethetap += Ey_arr(lo.x+i_E_new-1+i, 0, 0, 0)*sdxi;
+        Ezp += Ez_arr(lo.x+i_E_new-1+i, 0, 0, 0)*sdxi;
+    }
+    amrex::Real sdxi = 0._rt;
+    for (int i=dil_E; i<=depos_order+1-diu_E; i++) {
+        sdxi += (sx_E_old[i] - sx_E_new[i]);
+        auto sdxiov = static_cast<amrex::Real>((x_new - x_old) == 0. ? 1. : sdxi/(x_new - x_old));
+        Erp += Ex_arr(lo.x+i_E_new-1+i, 0, 0, 0)*sdxiov;
+        Bthetap += By_arr(lo.x+i_E_new-1+i, 0, 0, 0)*sdxiov;
+        Bzp += Bz_arr(lo.x+i_E_new-1+i, 0, 0, 0)*sdxiov;
+    }
+
+    // Convert Erp and Ethetap to Ex and Ey
+    Exp += costheta_mid*Erp - sintheta_mid*Ethetap;
+    Eyp += costheta_mid*Ethetap + sintheta_mid*Erp;
+    Bxp += costheta_mid*Brp - sintheta_mid*Bthetap;
+    Byp += costheta_mid*Bthetap + sintheta_mid*Brp;
+
+#elif defined(WARPX_DIM_RSPHERE)
+
+    amrex::ParticleReal Erp = 0.;
+    amrex::ParticleReal Ethetap = 0.;
+    amrex::ParticleReal Ephip = 0.;
+    amrex::ParticleReal Brp = 0.;
+    amrex::ParticleReal Bthetap = 0.;
+    amrex::ParticleReal Bphip = 0.;
+
+    for (int i=dil_E; i<=depos_order+2-diu_E; i++) {
+        amrex::Real const sdxi = 0.5_rt*(sx_E_old[i] + sx_E_new[i]);
+        Brp += Bx_arr(lo.x+i_E_new-1+i, 0, 0, 0)*sdxi;
+        Ethetap += Ey_arr(lo.x+i_E_new-1+i, 0, 0, 0)*sdxi;
+        Ephip += Ez_arr(lo.x+i_E_new-1+i, 0, 0, 0)*sdxi;
+    }
+    amrex::Real sdxi = 0._rt;
+    for (int i=dil_E; i<=depos_order+1-diu_E; i++) {
+        sdxi += (sx_E_old[i] - sx_E_new[i]);
+        auto sdxiov = static_cast<amrex::Real>((x_new - x_old) == 0. ? 1. : sdxi/(x_new - x_old));
+        Erp += Ex_arr(lo.x+i_E_new-1+i, 0, 0, 0)*sdxiov;
+        Bthetap += By_arr(lo.x+i_E_new-1+i, 0, 0, 0)*sdxiov;
+        Bphip += Bz_arr(lo.x+i_E_new-1+i, 0, 0, 0)*sdxiov;
+    }
+
+    // Convert Erp, Ethetap, and Ephi to Ex, Ey, and Ez
+    Exp += costheta_mid*sinphi_mid*Erp + costheta_mid*cosphi_mid*Ephip - sintheta_mid*Ethetap;
+    Eyp += sintheta_mid*sinphi_mid*Erp + sintheta_mid*cosphi_mid*Ephip + costheta_mid*Ethetap;
+    Ezp += cosphi_mid*Erp - sinphi_mid*Ephip;
+    Bxp += costheta_mid*sinphi_mid*Brp + costheta_mid*cosphi_mid*Bphip - sintheta_mid*Bthetap;
+    Byp += sintheta_mid*sinphi_mid*Brp + sintheta_mid*cosphi_mid*Bphip + costheta_mid*Bthetap;
+    Bzp += cosphi_mid*Brp - sinphi_mid*Bphip;
+
 #endif
 }
 
@@ -863,10 +1050,10 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void doGatherPicnicShapeN (
                      [[maybe_unused]] const amrex::ParticleReal xp_n,
                      [[maybe_unused]] const amrex::ParticleReal yp_n,
-                     const amrex::ParticleReal zp_n,
+                     [[maybe_unused]] const amrex::ParticleReal zp_n,
                      [[maybe_unused]] const amrex::ParticleReal xp_nph,
                      [[maybe_unused]] const amrex::ParticleReal yp_nph,
-                     const amrex::ParticleReal zp_nph,
+                     [[maybe_unused]] const amrex::ParticleReal zp_nph,
                      amrex::ParticleReal& Exp,
                      amrex::ParticleReal& Eyp,
                      amrex::ParticleReal& Ezp,
@@ -898,18 +1085,20 @@ void doGatherPicnicShapeN (
 #if !defined(WARPX_DIM_1D_Z)
     const ParticleReal xp_np1 = 2._prt*xp_nph - xp_n;
 #endif
-#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
     const ParticleReal yp_np1 = 2._prt*yp_nph - yp_n;
 #endif
+#if !defined(WARPX_DIM_RCYLINDER)
     const ParticleReal zp_np1 = 2._prt*zp_nph - zp_n;
+#endif
 
-#if !defined(WARPX_DIM_1D_Z)
+#if (AMREX_SPACEDIM > 1)
     Real constexpr one_third = 1.0_rt / 3.0_rt;
     Real constexpr one_sixth = 1.0_rt / 6.0_rt;
 #endif
 
     // computes current and old position in grid units
-#if defined(WARPX_DIM_RZ)
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
     amrex::Real const xp_new = xp_np1;
     amrex::Real const yp_new = yp_np1;
     amrex::Real const xp_mid = xp_nph;
@@ -927,7 +1116,35 @@ void doGatherPicnicShapeN (
         costheta_mid = 1._rt;
         sintheta_mid = 0._rt;
     }
+    // Keep these double to avoid bug in single precision
+    double const x_new = (rp_new - xyzmin.x)*dinv.x;
+    double const x_old = (rp_old - xyzmin.x)*dinv.x;
+    double const x_bar = (rp_mid - xyzmin.x)*dinv.x;
+#if defined(WARPX_DIM_RZ)
     const Complex xy_mid0 = Complex{costheta_mid, sintheta_mid};
+#endif
+#elif defined(WARPX_DIM_RSPHERE)
+    amrex::Real const xp_new = xp_np1;
+    amrex::Real const yp_new = yp_np1;
+    amrex::Real const zp_new = zp_np1;
+    amrex::Real const xp_mid = xp_nph;
+    amrex::Real const yp_mid = yp_nph;
+    amrex::Real const zp_mid = zp_nph;
+    amrex::Real const xp_old = xp_n;
+    amrex::Real const yp_old = yp_n;
+    amrex::Real const zp_old = zp_n;
+    amrex::Real const rpxy_new = std::sqrt(xp_new*xp_new + yp_new*yp_new);
+    amrex::Real const rpxy_old = std::sqrt(xp_old*xp_old + yp_old*yp_old);
+    amrex::Real const rpxy_mid = (rpxy_new + rpxy_old)/2._rt;
+    amrex::Real const rp_new = std::sqrt(xp_new*xp_new + yp_new*yp_new + zp_new*zp_new);
+    amrex::Real const rp_old = std::sqrt(xp_old*xp_old + yp_old*yp_old + zp_old*zp_old);
+    amrex::Real const rp_mid = (rp_new + rp_old)/2._rt;
+
+    amrex::Real const costheta_mid = (rpxy_mid > 0. ? xp_mid/rpxy_mid : 1._rt);
+    amrex::Real const sintheta_mid = (rpxy_mid > 0. ? yp_mid/rpxy_mid : 0._rt);
+    amrex::Real const cosphi_mid = (rp_mid > 0. ? zp_mid/rp_mid : 1._rt);
+    amrex::Real const sinphi_mid = (rp_mid > 0. ? rpxy_mid/rp_mid : 0._rt);
+
     // Keep these double to avoid bug in single precision
     double const x_new = (rp_new - xyzmin.x)*dinv.x;
     double const x_old = (rp_old - xyzmin.x)*dinv.x;
@@ -944,10 +1161,12 @@ void doGatherPicnicShapeN (
     double const y_old = (yp_n   - xyzmin.y)*dinv.y;
     double const y_bar = (yp_nph - xyzmin.y)*dinv.y;
 #endif
+#if !defined(WARPX_DIM_RCYLINDER) && !defined(WARPX_DIM_RSPHERE)
     // Keep these double to avoid bug in single precision
     double const z_new = (zp_np1 - xyzmin.z)*dinv.z;
     double const z_old = (zp_n   - xyzmin.z)*dinv.z;
     double const z_bar = (zp_nph - xyzmin.z)*dinv.z;
+#endif
 
     // 1) Determine the number of segments.
     // 2) Loop over segments and gather electric field.
@@ -1497,6 +1716,133 @@ void doGatherPicnicShapeN (
         Bxp += Bx_arr(lo.x+k_bar_cell+k, 0, 0)*weight;
         Byp += By_arr(lo.x+k_bar_cell+k, 0, 0)*weight;
     }
+
+#elif defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+
+    amrex::ParticleReal Erp = 0.;
+    amrex::ParticleReal Ethetap = 0.;
+    amrex::ParticleReal Brp = 0.;
+    amrex::ParticleReal Bthetap = 0.;
+    // Z for CYLINDER, phi for SPHERE
+    amrex::ParticleReal E3p = 0.;
+    amrex::ParticleReal B3p = 0.;
+
+    // compute cell crossings in X-direction
+    const auto i_old = static_cast<int>(x_old-shift);
+    const auto i_new = static_cast<int>(x_new-shift);
+    const int cell_crossings_x = std::abs(i_new-i_old);
+    num_segments += cell_crossings_x;
+
+    // need to assert that the number of cell crossings in each direction
+    // is within the range permitted by the number of guard cells
+    // e.g., if (num_segments > 3) ...
+
+    // compute dxp and the initial cell location used to find the cell crossings.
+    double const dxp = x_new - x_old;
+    const auto dirX_sign = static_cast<double>(dxp < 0. ? -1. : 1.);
+    double Xcell = static_cast<double>(i_old) + shift + 0.5*(1.-dirX_sign);
+
+    // loop over the number of segments and deposit
+    const Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
+    const Compute_shape_factor_pair< depos_order > compute_shape_factors_node;
+    double dxp_seg;
+    double x0_new;
+    double x0_old = x_old;
+
+    for (int ns=0; ns<num_segments; ns++) {
+
+        if (ns == num_segments-1) { // final segment
+            x0_new = x_new;
+            dxp_seg = x0_new - x0_old;
+        }
+        else {
+            Xcell = Xcell + dirX_sign;
+            x0_new = Xcell;
+            dxp_seg = x0_new - x0_old;
+        }
+
+        // compute the segment factor (equal to dt_seg/dt for nonzero dxp)
+        const auto seg_factor = static_cast<double>(dxp == 0. ? 1. : dxp_seg/dxp);
+
+        // compute cell-based weights using the average segment position
+        double sx_cell[depos_order] = {0.};
+        double const x0_bar = (x0_new + x0_old)/2.0;
+        const int i0_cell = compute_shape_factor_cell( sx_cell, x0_bar-0.5 );
+
+        if constexpr (depos_order >= 3) { // higher-order correction to the cell-based weights
+            const Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
+            double sx_old_cell[depos_order] = {0.};
+            double sx_new_cell[depos_order] = {0.};
+            const int i0_cell_2 = compute_shape_factors_cell( sx_old_cell, sx_new_cell, x0_old-0.5, x0_new-0.5 );
+            ignore_unused(i0_cell_2);
+            for (int m=0; m<depos_order; m++) {
+                sx_cell[m] = (4.0*sx_cell[m] + sx_old_cell[m] + sx_new_cell[m])/6.0;
+            }
+        }
+
+        // compute node-based weights using the old and new segment positions
+        double sx_old_node[depos_order+1] = {0.};
+        double sx_new_node[depos_order+1] = {0.};
+        const int i0_node = compute_shape_factors_node( sx_old_node, sx_new_node, x0_old, x0_new );
+
+        // gather out-of-plane Ey and Ez for this segment
+        for (int i=0; i<=depos_order; i++) {
+            auto weight = 0.5_rt*(sx_old_node[i] + sx_new_node[i])*seg_factor;
+            Ethetap += Ey_arr(lo.x+i0_node+i, 0, 0)*weight;
+            E3p += Ez_arr(lo.x+i0_node+i, 0, 0)*weight;
+        }
+
+        // gather Ex for this segment
+        for (int i=0; i<=depos_order-1; i++) {
+            auto weight = sx_cell[i]*seg_factor;
+            Erp += Ex_arr(lo.x+i0_cell+i, 0, 0)*weight;
+        }
+
+        // update old segment values
+        if (ns < num_segments-1) {
+            x0_old = x0_new;
+        }
+
+    }
+
+    // gather magnetic field
+    const int depos_order_B = 1; // second template parameter?
+    const Compute_shape_factor< depos_order_B > compute_shape_factor_B;
+    double sx_bar_node[depos_order_B+1] = {0.};
+    double sx_bar_cell[depos_order_B+1] = {0.};
+    const int i_bar_node = compute_shape_factor_B(sx_bar_node, x_bar);
+    const int i_bar_cell = compute_shape_factor_B(sx_bar_cell, x_bar-0.5_rt);
+
+    amrex::Real weight;
+    for (int i=0; i<=depos_order_B; i++) {
+        weight = static_cast<amrex::Real>(sx_bar_node[i]);
+        Brp += Bx_arr(lo.x+i_bar_node+i, 0, 0)*weight;
+        //
+        weight = static_cast<amrex::Real>(sx_bar_cell[i]);
+        Bthetap += By_arr(lo.x+i_bar_cell+i, 0, 0)*weight;
+        B3p += Bz_arr(lo.x+i_bar_cell+i, 0, 0)*weight;
+    }
+
+#if defined(WARPX_DIM_RCYLINDER)
+    // Convert Erp and Ethetap to Ex and Ey
+    Exp += costheta_mid*Erp - sintheta_mid*Ethetap;
+    Eyp += costheta_mid*Ethetap + sintheta_mid*Erp;
+    Bxp += costheta_mid*Brp - sintheta_mid*Bthetap;
+    Byp += costheta_mid*Bthetap + sintheta_mid*Brp;
+    Ezp += E3p;
+    Bzp += B3p;
+
+#elif defined(WARPX_DIM_RSPHERE)
+
+    // Convert Erp, Ethetap, and Ephi to Ex, Ey, and Ez
+    Exp += costheta_mid*sinphi_mid*Erp + costheta_mid*cosphi_mid*E3p - sintheta_mid*Ethetap;
+    Eyp += sintheta_mid*sinphi_mid*Erp + sintheta_mid*cosphi_mid*E3p + costheta_mid*Ethetap;
+    Ezp += cosphi_mid*Erp - sinphi_mid*E3p;
+    Bxp += costheta_mid*sinphi_mid*Brp + costheta_mid*cosphi_mid*B3p - sintheta_mid*Bthetap;
+    Byp += sintheta_mid*sinphi_mid*Brp + sintheta_mid*cosphi_mid*B3p + costheta_mid*Bthetap;
+    Bzp += cosphi_mid*Brp - sinphi_mid*B3p;
+
+#endif
 
 #endif
 }

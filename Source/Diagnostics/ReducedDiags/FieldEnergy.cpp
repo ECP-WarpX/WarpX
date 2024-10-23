@@ -106,15 +106,15 @@ void FieldEnergy::ComputeDiags (int step)
         const std::array<Real, 3> &dx = WarpX::CellSize(lev);
         const amrex::Real dV = dx[0]*dx[1]*dx[2];
 
-#if defined(WARPX_DIM_RZ)
-        amrex::Real const tmpEx = ComputeNorm2RZ(Ex, lev);
-        amrex::Real const tmpEy = ComputeNorm2RZ(Ey, lev);
-        amrex::Real const tmpEz = ComputeNorm2RZ(Ez, lev);
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+        amrex::Real const tmpEx = ComputeNorm2Radial(Ex, lev);
+        amrex::Real const tmpEy = ComputeNorm2Radial(Ey, lev);
+        amrex::Real const tmpEz = ComputeNorm2Radial(Ez, lev);
         amrex::Real const Es = tmpEx + tmpEy + tmpEz;
 
-        amrex::Real const tmpBx = ComputeNorm2RZ(Bx, lev);
-        amrex::Real const tmpBy = ComputeNorm2RZ(By, lev);
-        amrex::Real const tmpBz = ComputeNorm2RZ(Bz, lev);
+        amrex::Real const tmpBx = ComputeNorm2Radial(Bx, lev);
+        amrex::Real const tmpBy = ComputeNorm2Radial(By, lev);
+        amrex::Real const tmpBz = ComputeNorm2Radial(Bz, lev);
         amrex::Real const Bs = tmpBx + tmpBy + tmpBz;
 #else
         Geometry const & geom = warpx.Geom(lev);
@@ -156,9 +156,10 @@ void FieldEnergy::ComputeDiags (int step)
 }
 // end void FieldEnergy::ComputeDiags
 
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
 // Function that computes the sum of the field squared in RZ
 amrex::Real
-FieldEnergy::ComputeNorm2RZ(const amrex::MultiFab& field, const int lev)
+FieldEnergy::ComputeNorm2Radial(const amrex::MultiFab& field, const int lev)
 {
     // get a reference to WarpX instance
     auto & warpx = WarpX::GetInstance();
@@ -203,14 +204,26 @@ FieldEnergy::ComputeNorm2RZ(const amrex::MultiFab& field, const int lev)
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) -> ReduceTuple
             {
                 const amrex::Real r = rmin + (i - irmin)*dr;
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
                 amrex::Real volume_factor = r;
                 if (r == 0._rt) {
                     volume_factor = dr/8._rt;
-                } else if (rmin == 0._rt && i == irmax) {
+                } else if (i == irmax) {
                     volume_factor = r/2._rt - dr/8._rt;
                 }
                 const amrex::Real theta_integral = (n == 0 ? 2._rt : 1._rt);
                 return theta_integral*field_arr(i,j,k,n)*field_arr(i,j,k,n)*volume_factor;
+#elif defined(WARPX_DIM_RSPHERE)
+                // Volume is 4/3*pi*((r + dr/2)**3 - (r - dr/2)**3)
+                // The pi*dr are applied later.
+                amrex::Real volume_factor = 3._rt*r*r + dr*dr/4._rt;
+                if (r == 0._rt) {
+                    volume_factor = dr*dr/8._rt;
+                } else if (i == irmax) {
+                    volume_factor = 3._rt*r*r/2._rt - 3._rt*r*dr/4._rt + dr*dr/8._rt;
+                }
+                return 4._rt/3._rt*field_arr(i,j,k,n)*field_arr(i,j,k,n)*volume_factor;
+#endif
             });
 
     }
@@ -219,4 +232,5 @@ FieldEnergy::ComputeNorm2RZ(const amrex::MultiFab& field, const int lev)
     const amrex::Real result = MathConst::pi*field_sum;
     return result;
 }
-// end Real FieldEnergy::ComputeNorm2RZ
+#endif
+// end Real FieldEnergy::ComputeNorm2Radial
