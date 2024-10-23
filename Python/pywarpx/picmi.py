@@ -1782,6 +1782,9 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
 
     Jx/y/z_external_function: str
         Function of space and time specifying external (non-plasma) currents.
+
+    Ex/y/z_external_function: str
+        Function of space and time specifying external (non-plasma) E-fields.
     """
 
     def __init__(
@@ -1797,6 +1800,10 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         Jx_external_function=None,
         Jy_external_function=None,
         Jz_external_function=None,
+        Ax_external_function=None,
+        Ay_external_function=None,
+        Az_external_function=None,
+        A_time_external_function=None,
         **kw,
     ):
         self.grid = grid
@@ -1814,6 +1821,21 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         self.Jx_external_function = Jx_external_function
         self.Jy_external_function = Jy_external_function
         self.Jz_external_function = Jz_external_function
+
+        self.add_external_fields = None
+
+        self.Ax_external_function = Ax_external_function
+        self.Ay_external_function = Ay_external_function
+        self.Az_external_function = Az_external_function
+
+        if (
+            Ax_external_function is not None
+            or Ay_external_function is not None
+            or Az_external_function is not None
+        ):
+            self.add_external_fields = True
+
+        self.A_time_external_function = A_time_external_function
 
         # Handle keyword arguments used in expressions
         self.user_defined_kw = {}
@@ -1861,6 +1883,31 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
             "Jz_external_grid_function(x,y,z,t)",
             pywarpx.my_constants.mangle_expression(
                 self.Jz_external_function, self.mangle_dict
+            ),
+        )
+        pywarpx.hybridpicmodel.add_external_fields = self.add_external_fields
+        pywarpx.external_vector_potential.__setattr__(
+            "Ax_external_grid_function(x,y,z)",
+            pywarpx.my_constants.mangle_expression(
+                self.Ax_external_function, self.mangle_dict
+            ),
+        )
+        pywarpx.external_vector_potential.__setattr__(
+            "Ay_external_grid_function(x,y,z)",
+            pywarpx.my_constants.mangle_expression(
+                self.Ay_external_function, self.mangle_dict
+            ),
+        )
+        pywarpx.external_vector_potential.__setattr__(
+            "Az_external_grid_function(x,y,z)",
+            pywarpx.my_constants.mangle_expression(
+                self.Az_external_function, self.mangle_dict
+            ),
+        )
+        pywarpx.external_vector_potential.__setattr__(
+            "A_time_external_function(t)",
+            pywarpx.my_constants.mangle_expression(
+                self.A_time_external_function, self.mangle_dict
             ),
         )
 

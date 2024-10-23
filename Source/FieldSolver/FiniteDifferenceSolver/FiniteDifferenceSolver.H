@@ -1,6 +1,9 @@
-/* Copyright 2020 Remi Lehe
+/* Copyright 2020-2024 The WarpX Community
  *
  * This file is part of WarpX.
+ *
+ * Authors: Remi Lehe (LBNL)
+ *          S. Eric Clark (Helion Energy)
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -151,15 +154,16 @@ class FiniteDifferenceSolver
           * \param[in] hybrid_model instance of the hybrid-PIC model
           * \param[in] solve_for_Faraday boolean flag for whether the E-field is solved to be used in Faraday's equation
           */
-        void HybridPICSolveE ( ablastr::fields::VectorField const& Efield,
-                               ablastr::fields::VectorField & Jfield,
-                               ablastr::fields::VectorField const& Jifield,
-                               ablastr::fields::VectorField const& Bfield,
-                               amrex::MultiFab const& rhofield,
-                               amrex::MultiFab const& Pefield,
-                               ablastr::fields::VectorField const& edge_lengths,
-                               int lev, HybridPICModel const* hybrid_model,
-                               bool solve_for_Faraday );
+        void HybridPICSolveE (
+            ablastr::fields::VectorField const& Efield,
+            ablastr::fields::VectorField & Jfield,
+            ablastr::fields::VectorField const& Jifield,
+            ablastr::fields::VectorField const& Bfield,
+            amrex::MultiFab const& rhofield,
+            amrex::MultiFab const& Pefield,
+            ablastr::fields::VectorField const& edge_lengths,
+            int lev, HybridPICModel const* hybrid_model,
+            bool solve_for_Faraday );
 
         /**
           * \brief Calculation of total current using Ampere's law (without
@@ -171,10 +175,25 @@ class FiniteDifferenceSolver
           * \param[in] lev  level number for the calculation
           */
         void CalculateCurrentAmpere (
-                      ablastr::fields::VectorField& Jfield,
-                      ablastr::fields::VectorField const& Bfield,
-                      ablastr::fields::VectorField const& edge_lengths,
-                      int lev );
+            ablastr::fields::VectorField& Jfield,
+            ablastr::fields::VectorField const& Bfield,
+            ablastr::fields::VectorField const& edge_lengths,
+            int lev );
+
+        /**
+          * \brief Calculation of B field from the vector potential A
+          * B = (curl x A) / mu0.
+          *
+          * \param[out] Bfield  vector of current MultiFabs at a given level
+          * \param[in] Afield   vector of magnetic field MultiFabs at a given level
+          * \param[in] edge_lengths length of edges along embedded boundaries
+          * \param[in] lev  level number for the calculation
+          */
+        void ComputeCurlA (
+            ablastr::fields::VectorField& Bfield,
+            ablastr::fields::VectorField const& Afield,
+            ablastr::fields::VectorField const& edge_lengths,
+            int lev );
 
     private:
 
@@ -250,6 +269,14 @@ class FiniteDifferenceSolver
         void CalculateCurrentAmpereCylindrical (
             ablastr::fields::VectorField& Jfield,
             ablastr::fields::VectorField const& Bfield,
+            ablastr::fields::VectorField const& edge_lengths,
+            int lev
+        );
+
+        template<typename T_Algo>
+        void ComputeCurlACylindrical (
+            ablastr::fields::VectorField& Bfield,
+            ablastr::fields::VectorField const& Afield,
             ablastr::fields::VectorField const& edge_lengths,
             int lev
         );
@@ -354,6 +381,14 @@ class FiniteDifferenceSolver
         void CalculateCurrentAmpereCartesian (
             ablastr::fields::VectorField& Jfield,
             ablastr::fields::VectorField const& Bfield,
+            ablastr::fields::VectorField const& edge_lengths,
+            int lev
+        );
+
+        template<typename T_Algo>
+        void ComputeCurlACartesian (
+            ablastr::fields::VectorField & Bfield,
+            ablastr::fields::VectorField const& Afield,
             ablastr::fields::VectorField const& edge_lengths,
             int lev
         );

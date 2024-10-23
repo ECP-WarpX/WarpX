@@ -1,8 +1,9 @@
-/* Copyright 2023 The WarpX Community
+/* Copyright 2023-2024 The WarpX Community
  *
  * This file is part of WarpX.
  *
  * Authors: Roelof Groenewald (TAE Technologies)
+ *          S. Eric Clark (Helion Energy)
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -11,6 +12,8 @@
 
 #include "EmbeddedBoundary/Enabled.H"
 #include "Fields.H"
+#include "Particles/MultiParticleContainer.H"
+#include "ExternalVectorPotential.H"
 #include "WarpX.H"
 
 using namespace amrex;
@@ -53,15 +56,31 @@ void HybridPICModel::ReadParameters ()
     pp_hybrid.query("Jx_external_grid_function(x,y,z,t)", m_Jx_ext_grid_function);
     pp_hybrid.query("Jy_external_grid_function(x,y,z,t)", m_Jy_ext_grid_function);
     pp_hybrid.query("Jz_external_grid_function(x,y,z,t)", m_Jz_ext_grid_function);
+
+    // external fields
+    pp_hybrid.query("add_external_fields", m_add_external_fields);
+
+    if (m_add_external_fields) {
+        m_external_vector_potential = std::make_unique<ExternalVectorPotential>();
+    }
 }
 
-void HybridPICModel::AllocateLevelMFs (ablastr::fields::MultiFabRegister & fields,
-                                       int lev, const BoxArray& ba, const DistributionMapping& dm,
-                                       const int ncomps, const IntVect& ngJ, const IntVect& ngRho,
-                                       const IntVect& jx_nodal_flag,
-                                       const IntVect& jy_nodal_flag,
-                                       const IntVect& jz_nodal_flag,
-                                       const IntVect& rho_nodal_flag)
+void HybridPICModel::AllocateLevelMFs (
+    ablastr::fields::MultiFabRegister & fields,
+    int lev, const BoxArray& ba, const DistributionMapping& dm,
+    const int ncomps,
+    const IntVect& ngJ, const IntVect& ngRho,
+    const IntVect& ngEB,
+    const IntVect& jx_nodal_flag,
+    const IntVect& jy_nodal_flag,
+    const IntVect& jz_nodal_flag,
+    const IntVect& rho_nodal_flag,
+    const IntVect& Ex_nodal_flag,
+    const IntVect& Ey_nodal_flag,
+    const IntVect& Ez_nodal_flag,
+    const IntVect& Bx_nodal_flag,
+    const IntVect& By_nodal_flag,
+    const IntVect& Bz_nodal_flag)
 {
     using ablastr::fields::Direction;
 
@@ -113,6 +132,16 @@ void HybridPICModel::AllocateLevelMFs (ablastr::fields::MultiFabRegister & field
         lev, amrex::convert(ba, jz_nodal_flag),
         dm, ncomps, IntVect(1), 0.0_rt);
 
+    if (m_add_external_fields) {
+        m_external_vector_potential->AllocateLevelMFs(
+            fields,
+            lev, ba, dm,
+            ncomps, ngEB,
+            Ex_nodal_flag, Ey_nodal_flag, Ez_nodal_flag,
+            Bx_nodal_flag, By_nodal_flag, Bz_nodal_flag
+        );
+    }
+
 #ifdef WARPX_DIM_RZ
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         (ncomps == 1),
@@ -141,7 +170,7 @@ void HybridPICModel::InitData ()
     // check if the external current parsers depend on time
     for (int i=0; i<3; i++) {
         const std::set<std::string> J_ext_symbols = m_J_external_parser[i]->symbols();
-        m_external_field_has_time_dependence += J_ext_symbols.count("t");
+        m_external_current_has_time_dependence += J_ext_symbols.count("t");
     }
 
     auto & warpx = WarpX::GetInstance();
@@ -230,11 +259,15 @@ void HybridPICModel::InitData ()
             warpx.m_fields.get_alldirs(FieldType::edge_lengths, lev),
             warpx.m_fields.get_alldirs(FieldType::face_areas, lev));
     }
+
+    if (m_add_external_fields) {
+        m_external_vector_potential->InitData();
+    }
 }
 
 void HybridPICModel::GetCurrentExternal ()
 {
-    if (!m_external_field_has_time_dependence) { return; }
+    if (!m_external_current_has_time_dependence) { return; }
 
     auto& warpx = WarpX::GetInstance();
     for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
