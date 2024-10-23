@@ -164,6 +164,7 @@ computeSemiImplicitPhi (
         // In the presence of EB or RZ the EB enabled linear solver is used
         if (eb_enabled)
         {
+#if defined(AMREX_USE_EB)
             auto linop_nodelap = std::make_unique<amrex::MLEBNodeFDLaplacian>();
             linop_nodelap->define(
                 amrex::Vector<amrex::Geometry>{geom[lev]},
@@ -172,7 +173,6 @@ computeSemiImplicitPhi (
                 info,
                 amrex::Vector<amrex::EBFArrayBoxFactory const*>{eb_farray_box_factory.value()[lev]}
             );
-#if defined(AMREX_USE_EB)
             if constexpr (!std::is_same_v<T_BoundaryHandler, std::nullopt_t>) {
                 // if the EB potential only depends on time, the potential can be passed
                 // as a float instead of a callable
@@ -182,9 +182,9 @@ computeSemiImplicitPhi (
                     linop_nodelap->setEBDirichlet(boundary_handler.getPhiEB(current_time.value()));
                 }
             }
-#endif
             linop_nodelap->setSigma(lev, sigma);
             linop = std::move(linop_nodelap);
+#endif
         }
         else if (is_rz)
         {
