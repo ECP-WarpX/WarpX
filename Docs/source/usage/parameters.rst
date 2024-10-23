@@ -229,10 +229,15 @@ Overall simulation parameters
         \boldsymbol{\nabla}^2 \boldsymbol{A} = - \mu_0 \boldsymbol{j} \qquad \boldsymbol{B} = \boldsymbol{\nabla}\times\boldsymbol{A}
 
     * ``labframe-semi-implicit``: Poisson's equation is solved with a modified dielectric function
-      to create a semi-implicit scheme in which grid heating effects due to unresolved
-      plasma modes are suppressed. If this option is used the additional parameter
-      ``warpx.semi_implicit_factor`` can also be specified to set the value of :math:`C_{SI}`.
-      The method is marginally stable for :math:`C_{SI} = 1`. Specifically, the code solves:
+      to create a semi-implicit scheme which is robust to the numerical instability seen
+      in explicit electrostatic PIC when :math:`\Delta t \omega_{pe} > 2`.
+      If this option is used the additional parameter ``warpx.semi_implicit_factor`` can also be
+      specified to set the value of :math:`C_{SI}` (default 4). The method is stable for :math:`C_{SI} \geq 1`
+      regardless of :math:`\Delta t`, however, the larger :math:`C_{SI}` is set, the lower the numerical plasma
+      frequency will be and therefore care must be taken to not set :math:`C_{SI}` so high that the plasma mode
+      hybridizes with other modes of interest.
+      Details of the method can be found in Appendix A of :cite:t:`param-Barnes2021`.
+      In short, the code solves:
 
       .. math::
 
