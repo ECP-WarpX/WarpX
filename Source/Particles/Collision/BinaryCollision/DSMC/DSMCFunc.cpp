@@ -32,6 +32,7 @@ DSMCFunc::DSMCFunc (
 
     // create a vector of ScatteringProcess objects from each scattering
     // process name
+    bool ionization_flag = false;
     for (const auto& scattering_process : scattering_process_names) {
         const std::string kw_cross_section = scattering_process + "_cross_section";
         std::string cross_section_file;
@@ -52,10 +53,20 @@ DSMCFunc::DSMCFunc (
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(process.type() != ScatteringProcessType::INVALID,
                                         "Cannot add an unknown scattering process type");
 
+        // if the scattering process is ionization get the secondary species
+        // only one ionization process is supported
+        if (process.type() == ScatteringProcessType::IONIZATION) {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!ionization_flag,
+                                             "Background MCC only supports a single ionization process");
+            ionization_flag = true;
+
+            // TODO: Add a check that the first species is the electron species
+            // (This should be done for impact ionization with MCC too)
+            // And add a check that the ionization species has the same mass
+            // (and a positive charge), compared to the target species
+        }
         m_scattering_processes.push_back(std::move(process));
     }
-
-    const int process_count = static_cast<int>(m_scattering_processes.size());
 
     // Store ScatteringProcess::Executor(s).
 #ifdef AMREX_USE_GPU
@@ -63,9 +74,9 @@ DSMCFunc::DSMCFunc (
     for (auto const& p : m_scattering_processes) {
         h_scattering_processes_exe.push_back(p.executor());
     }
-    m_scattering_processes_exe.resize(process_count);
+    m_scattering_processes_exe.resize(h_scattering_processes_exe.size());
     amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_scattering_processes_exe.begin(),
-                        h_scattering_processes_exe.end(), m_scattering_processes_exe.begin());
+                          h_scattering_processes_exe.end(), m_scattering_processes_exe.begin());
     amrex::Gpu::streamSynchronize();
 #else
     for (auto const& p : m_scattering_processes) {
@@ -75,6 +86,6 @@ DSMCFunc::DSMCFunc (
 
     // Link executor to appropriate ScatteringProcess executors
     m_exe.m_scattering_processes_data = m_scattering_processes_exe.data();
-    m_exe.m_process_count = process_count;
+    m_exe.m_process_count = static_cast<int>(m_scattering_processes_exe.size());
     m_exe.m_isSameSpecies = m_isSameSpecies;
 }
