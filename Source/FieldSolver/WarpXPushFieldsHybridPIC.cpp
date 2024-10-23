@@ -37,15 +37,15 @@ void WarpX::HybridPICEvolveFields ()
     // Get requested number of substeps to use
     const int sub_steps = m_hybrid_pic_model->m_substeps;
 
-    amrex::Real t_eval = gett_old(0);
-    amrex::Real sub_dt = 0.5_rt*dt[0]/sub_steps;
-
+    // Get flag to include external fields.
     const bool add_external_fields = m_hybrid_pic_model->m_add_external_fields;
 
     // Handle field splitting for Hybrid field push
     if (add_external_fields) {
         // Get the external fields
-        m_hybrid_pic_model->m_external_vector_potential->UpdateHybridExternalFields(t_eval, sub_dt);
+        m_hybrid_pic_model->m_external_vector_potential->UpdateHybridExternalFields(
+            gett_old(0),
+            0.5_rt*dt[0]);
 
         // If using split fields, subtract the external field at the old time
         for (int lev = 0; lev <= finest_level; ++lev) {
@@ -54,7 +54,7 @@ void WarpX::HybridPICEvolveFields ()
                     *m_fields.get(FieldType::Bfield_fp, Direction{idim}, lev),
                     *m_fields.get(FieldType::hybrid_B_fp_external, Direction{idim}, lev),
                     0, 0, 1,
-                    m_fields.get(FieldType::hybrid_B_fp_external, Direction{idim}, lev)->nGrowVect());
+                    m_fields.get(FieldType::Bfield_fp, Direction{idim}, lev)->nGrowVect());
             }
         }
     }
@@ -132,7 +132,7 @@ void WarpX::HybridPICEvolveFields ()
             m_fields.get_mr_levels_alldirs(FieldType::Efield_fp, finest_level),
             current_fp_temp, rho_fp_temp,
             m_fields.get_mr_levels_alldirs(FieldType::edge_lengths, finest_level),
-            t_eval, sub_dt,
+            0.5_rt*dt[0]/sub_steps,
             DtType::FirstHalf, guard_cells.ng_FieldSolver,
             WarpX::sync_nodal_points
         );
@@ -150,11 +150,11 @@ void WarpX::HybridPICEvolveFields ()
         );
     }
 
-    t_eval += 0.5_rt*dt[0];
-
     if (add_external_fields) {
         // Get the external fields
-        m_hybrid_pic_model->m_external_vector_potential->UpdateHybridExternalFields(t_eval, sub_dt);
+        m_hybrid_pic_model->m_external_vector_potential->UpdateHybridExternalFields(
+            gett_old(0) + 0.5_rt*dt[0],
+            0.5_rt*dt[0]);
     }
 
     // Now push the B field from t=n+1/2 to t=n+1 using the n+1/2 quantities
@@ -166,7 +166,7 @@ void WarpX::HybridPICEvolveFields ()
             m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level),
             rho_fp_temp,
             m_fields.get_mr_levels_alldirs(FieldType::edge_lengths, finest_level),
-            t_eval, sub_dt,
+            0.5_rt*dt[0]/sub_steps,
             DtType::SecondHalf, guard_cells.ng_FieldSolver,
             WarpX::sync_nodal_points
         );
@@ -190,29 +190,31 @@ void WarpX::HybridPICEvolveFields ()
         }
     }
 
+    if (add_external_fields) {
+        m_hybrid_pic_model->m_external_vector_potential->UpdateHybridExternalFields(
+            gett_new(0),
+            0.5_rt*dt[0]);
+    }
+
     // Calculate the electron pressure at t=n+1
     m_hybrid_pic_model->CalculateElectronPressure();
-
-    t_eval = gett_new(0);
 
     // Update the E field to t=n+1 using the extrapolated J_i^n+1 value
     m_hybrid_pic_model->CalculatePlasmaCurrent(
         m_fields.get_mr_levels_alldirs(FieldType::Bfield_fp, finest_level),
         m_fields.get_mr_levels_alldirs(FieldType::edge_lengths, finest_level));
+
     m_hybrid_pic_model->HybridPICSolveE(
         m_fields.get_mr_levels_alldirs(FieldType::Efield_fp, finest_level),
         current_fp_temp,
         m_fields.get_mr_levels_alldirs(FieldType::Bfield_fp, finest_level),
         m_fields.get_mr_levels(FieldType::rho_fp, finest_level),
-        m_fields.get_mr_levels_alldirs(FieldType::edge_lengths, finest_level), t_eval, false
-    );
+        m_fields.get_mr_levels_alldirs(FieldType::edge_lengths, finest_level), false);
 
     FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
     // Handle field splitting for Hybrid field push
     if (add_external_fields) {
-        m_hybrid_pic_model->m_external_vector_potential->UpdateHybridExternalFields(t_eval, sub_dt);
-
         // If using split fields, add the external field at the new time
         for (int lev = 0; lev <= finest_level; ++lev) {
             for (int idim = 0; idim < 3; ++idim) {
@@ -220,12 +222,12 @@ void WarpX::HybridPICEvolveFields ()
                     *m_fields.get(FieldType::Bfield_fp, Direction{idim}, lev),
                     *m_fields.get(FieldType::hybrid_B_fp_external, Direction{idim}, lev),
                     0, 0, 1,
-                    m_fields.get(FieldType::hybrid_B_fp_external, Direction{idim}, lev)->nGrowVect());
+                    m_fields.get(FieldType::Bfield_fp, Direction{idim}, lev)->nGrowVect());
                 MultiFab::Add(
                     *m_fields.get(FieldType::Efield_fp, Direction{idim}, lev),
                     *m_fields.get(FieldType::hybrid_E_fp_external, Direction{idim}, lev),
                     0, 0, 1,
-                    m_fields.get(FieldType::hybrid_E_fp_external, Direction{idim}, lev)->nGrowVect());
+                    m_fields.get(FieldType::Efield_fp, Direction{idim}, lev)->nGrowVect());
             }
         }
     }

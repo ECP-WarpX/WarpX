@@ -106,7 +106,6 @@ public:
         ablastr::fields::MultiLevelVectorField const& Bfield,
         ablastr::fields::MultiLevelScalarField const& rhofield,
         ablastr::fields::MultiLevelVectorField const& edge_lengths,
-        amrex::Real t,
         bool solve_for_Faraday) const;
 
     void HybridPICSolveE (
@@ -115,7 +114,6 @@ public:
         ablastr::fields::VectorField const& Bfield,
         amrex::MultiFab const& rhofield,
         ablastr::fields::VectorField const& edge_lengths,
-        amrex::Real t,
         int lev, bool solve_for_Faraday) const;
 
     void HybridPICSolveE (
@@ -124,7 +122,6 @@ public:
         ablastr::fields::VectorField const& Bfield,
         amrex::MultiFab const& rhofield,
         ablastr::fields::VectorField const& edge_lengths,
-        amrex::Real t,
         int lev, PatchType patch_type, bool solve_for_Faraday) const;
 
     void BfieldEvolveRK (
@@ -133,7 +130,7 @@ public:
         ablastr::fields::MultiLevelVectorField const& Jfield,
         ablastr::fields::MultiLevelScalarField const& rhofield,
         ablastr::fields::MultiLevelVectorField const& edge_lengths,
-        amrex::Real t, amrex::Real dt, DtType a_dt_type,
+        amrex::Real dt, DtType a_dt_type,
         amrex::IntVect ng, std::optional<bool> nodal_sync);
 
     void BfieldEvolveRK (
@@ -142,7 +139,7 @@ public:
         ablastr::fields::MultiLevelVectorField const& Jfield,
         ablastr::fields::MultiLevelScalarField const& rhofield,
         ablastr::fields::MultiLevelVectorField const& edge_lengths,
-        amrex::Real t, amrex::Real dt, int lev, DtType dt_type,
+        amrex::Real dt, int lev, DtType dt_type,
         amrex::IntVect ng, std::optional<bool> nodal_sync);
 
     void FieldPush (
@@ -151,7 +148,7 @@ public:
         ablastr::fields::MultiLevelVectorField const& Jfield,
         ablastr::fields::MultiLevelScalarField const& rhofield,
         ablastr::fields::MultiLevelVectorField const& edge_lengths,
-        amrex::Real t, amrex::Real dt, DtType dt_type,
+        amrex::Real dt, DtType dt_type,
         amrex::IntVect ng, std::optional<bool> nodal_sync);
 
     /**

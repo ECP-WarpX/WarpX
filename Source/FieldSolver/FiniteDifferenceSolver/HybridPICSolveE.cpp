@@ -360,7 +360,6 @@ void FiniteDifferenceSolver::HybridPICSolveE (
     amrex::MultiFab const& rhofield,
     amrex::MultiFab const& Pefield,
     ablastr::fields::VectorField const& edge_lengths,
-    amrex::Real t,
     int lev, HybridPICModel const* hybrid_model,
     const bool solve_for_Faraday)
 {
@@ -371,14 +370,14 @@ void FiniteDifferenceSolver::HybridPICSolveE (
 
         HybridPICSolveECylindrical <CylindricalYeeAlgorithm> (
             Efield, Jfield, Jifield, Bfield, rhofield, Pefield,
-            edge_lengths, t, lev, hybrid_model, solve_for_Faraday
+            edge_lengths, lev, hybrid_model, solve_for_Faraday
         );
 
 #else
 
         HybridPICSolveECartesian <CartesianYeeAlgorithm> (
             Efield, Jfield, Jifield, Bfield, rhofield, Pefield,
-            edge_lengths, t, lev, hybrid_model, solve_for_Faraday
+            edge_lengths, lev, hybrid_model, solve_for_Faraday
         );
 
 #endif
@@ -400,7 +399,6 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
     amrex::MultiFab const& rhofield,
     amrex::MultiFab const& Pefield,
     ablastr::fields::VectorField const& edge_lengths,
-    amrex::Real t,
     int lev, HybridPICModel const* hybrid_model,
     const bool solve_for_Faraday )
 {
@@ -742,7 +740,6 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
     amrex::MultiFab const& rhofield,
     amrex::MultiFab const& Pefield,
     ablastr::fields::VectorField const& edge_lengths,
-    amrex::Real t,
     int lev, HybridPICModel const* hybrid_model,
     const bool solve_for_Faraday )
 {
@@ -761,9 +758,9 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
 
     const bool include_external_fields = hybrid_model->m_add_external_fields;
 
-    auto const& warpx = WarpX::GetInstance();
-    ablastr::fields::ConstVectorField Bfield_external = warpx.m_fields.get_alldirs(FieldType::hybrid_B_fp_external, 0); // lev=0
-    ablastr::fields::ConstVectorField Efield_external = warpx.m_fields.get_alldirs(FieldType::hybrid_E_fp_external, 0); // lev=0
+    auto & warpx = WarpX::GetInstance();
+    ablastr::fields::VectorField Bfield_external = warpx.m_fields.get_alldirs(FieldType::hybrid_B_fp_external, 0); // lev=0
+    ablastr::fields::VectorField Efield_external = warpx.m_fields.get_alldirs(FieldType::hybrid_E_fp_external, 0); // lev=0
 
     // Index type required for interpolating fields from their respective
     // staggering to the Ex, Ey, Ez locations
@@ -821,9 +818,12 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
         Array4<Real const> const& By = Bfield[1]->const_array(mfi);
         Array4<Real const> const& Bz = Bfield[2]->const_array(mfi);
 
-        Array4<Real const> const& Bx_ext = Bfield_external[0]->const_array(mfi);
-        Array4<Real const> const& By_ext = Bfield_external[1]->const_array(mfi);
-        Array4<Real const> const& Bz_ext = Bfield_external[2]->const_array(mfi);
+        Array4<Real> Bx_ext, By_ext, Bz_ext;
+        if (include_external_fields) {
+            Bx_ext = Bfield_external[0]->array(mfi);
+            By_ext = Bfield_external[1]->array(mfi);
+            Bz_ext = Bfield_external[2]->array(mfi);
+        }
 
         // Loop over the cells and update the nodal E field
         amrex::ParallelFor(mfi.tilebox(), [=] AMREX_GPU_DEVICE (int i, int j, int k){
@@ -888,15 +888,19 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
         Array4<Real> const& Ex = Efield[0]->array(mfi);
         Array4<Real> const& Ey = Efield[1]->array(mfi);
         Array4<Real> const& Ez = Efield[2]->array(mfi);
-        Array4<Real const> const& Ex_ext = Efield_external[0]->const_array(mfi);
-        Array4<Real const> const& Ey_ext = Efield_external[1]->const_array(mfi);
-        Array4<Real const> const& Ez_ext = Efield_external[2]->const_array(mfi);
         Array4<Real const> const& Jx = Jfield[0]->const_array(mfi);
         Array4<Real const> const& Jy = Jfield[1]->const_array(mfi);
         Array4<Real const> const& Jz = Jfield[2]->const_array(mfi);
         Array4<Real const> const& enE = enE_nodal_mf.const_array(mfi);
         Array4<Real const> const& rho = rhofield.const_array(mfi);
         Array4<Real const> const& Pe = Pefield.array(mfi);
+
+        Array4<Real> Ex_ext, Ey_ext, Ez_ext;
+        if (include_external_fields) {
+        Ex_ext = Efield_external[0]->array(mfi);
+        Ey_ext = Efield_external[1]->array(mfi);
+        Ez_ext = Efield_external[2]->array(mfi);
+        }
 
         amrex::Array4<amrex::Real> lx, ly, lz;
         if (EB::enabled()) {
