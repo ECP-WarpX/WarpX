@@ -346,12 +346,12 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 #ifdef WARPX_QED
     pp_species_name.query("do_qed_quantum_sync", m_do_qed_quantum_sync);
     if (m_do_qed_quantum_sync) {
-        AddRealComp("opticalDepthQSR");
+        NewRealComp("opticalDepthQSR");
     }
 
     pp_species_name.query("do_qed_breit_wheeler", m_do_qed_breit_wheeler);
     if (m_do_qed_breit_wheeler) {
-        AddRealComp("opticalDepthBW");
+        NewRealComp("opticalDepthBW");
     }
 
     if(m_do_qed_quantum_sync){
@@ -372,7 +372,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
             str_int_attrib_function.at(i));
         m_user_int_attrib_parser.at(i) = std::make_unique<amrex::Parser>(
             utils::parser::makeParser(str_int_attrib_function.at(i),{"x","y","z","ux","uy","uz","t"}));
-        AddIntComp(m_user_int_attribs.at(i));
+        NewIntComp(m_user_int_attribs.at(i));
     }
 
     // User-defined real attributes
@@ -387,20 +387,20 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
             str_real_attrib_function.at(i));
         m_user_real_attrib_parser.at(i) = std::make_unique<amrex::Parser>(
             utils::parser::makeParser(str_real_attrib_function.at(i),{"x","y","z","ux","uy","uz","t"}));
-        AddRealComp(m_user_real_attribs.at(i));
+        NewRealComp(m_user_real_attribs.at(i));
     }
 
     // If old particle positions should be saved add the needed components
     pp_species_name.query("save_previous_position", m_save_previous_position);
     if (m_save_previous_position) {
 #if !defined(WARPX_DIM_1D_Z)
-        AddRealComp("prev_x");
+        NewRealComp("prev_x");
 #endif
 #if defined(WARPX_DIM_3D)
-        AddRealComp("prev_y");
+        NewRealComp("prev_y");
 #endif
 #if defined(WARPX_ZINDEX)
-        AddRealComp("prev_z");
+        NewRealComp("prev_z");
 #endif
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
       amrex::Abort("Saving previous particle positions not yet implemented in RZ");
@@ -3271,7 +3271,7 @@ PhysicalParticleContainer::InitIonizationModule ()
         physical_element == "H" || !do_adk_correction,
         "Correction to ADK by Zhang et al., PRA 90, 043410 (2014) only works with Hydrogen");
     // Add runtime integer component for ionization level
-    AddIntComp("ionizationLevel");
+    NewIntComp("ionizationLevel");
     // Get atomic number and ionization energies from file
     const int ion_element_id = utils::physics::ion_map_ids.at(physical_element);
     ion_atomic_number = utils::physics::ion_atomic_numbers[ion_element_id];
