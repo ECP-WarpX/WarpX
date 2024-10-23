@@ -346,6 +346,13 @@ void FiniteDifferenceSolver::EvolveECylindrical (
 
         ); // end of loop over cells
 
+        // Place holder
+        amrex::ParallelFor(tet, m_ncomps,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
+                T_Algo::UpdateEthetaOnAxis(Et, Er, coefs_t, i, j, k, n);
+            }
+        );
+
         // If F is not a null pointer, further update E using the grad(F) term
         // (hyperbolic correction for errors in charge conservation)
         if (Ffield) {
