@@ -92,7 +92,7 @@ void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
         }
     }
 
-#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
     if (patch_type == PatchType::fine) {
         ApplyFieldBoundaryOnAxis(m_fields.get(FieldType::Efield_fp, Direction{0}, lev),
                                  m_fields.get(FieldType::Efield_fp, Direction{1}, lev),
@@ -145,7 +145,7 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
         }
     }
 
-#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
     if (patch_type == PatchType::fine) {
         ApplyFieldBoundaryOnAxis(m_fields.get(FieldType::Bfield_fp,Direction{0},lev),
                                  m_fields.get(FieldType::Bfield_fp,Direction{1},lev),
@@ -187,7 +187,7 @@ void WarpX::ApplyJfieldBoundary (const int lev, amrex::MultiFab* Jx,
     }
 }
 
-#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
 // Applies the boundary conditions that are specific to the axis when in cylinderical or spherical
 void
 WarpX::ApplyFieldBoundaryOnAxis (amrex::MultiFab* Er, amrex::MultiFab* Et, amrex::MultiFab* Ez, int lev) const
@@ -260,12 +260,18 @@ WarpX::ApplyFieldBoundaryOnAxis (amrex::MultiFab* Er, amrex::MultiFab* Et, amrex
         },
         [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/)
         {
+#if defined(WARPX_DIM_RSPHERE)
+            // Ephi is anti-symmetric
+            Ez_arr(i,j,0,0) = -Ez_arr(-i-ishift_z,j,0,0);
+
+#elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
             Ez_arr(i,j,0,0) = Ez_arr(-i-ishift_z,j,0,0);
 
             for (int imode=1 ; imode < nmodes ; imode++) {
                 Ez_arr(i,j,0,2*imode-1) = -std::pow(-1._rt, imode+1._rt)*Ez_arr(-i-ishift_z,j,0,2*imode-1);
                 Ez_arr(i,j,0,2*imode) = -std::pow(-1._rt, imode+1._rt)*Ez_arr(-i-ishift_z,j,0,2*imode);
             }
+#endif
 
         });
     }
