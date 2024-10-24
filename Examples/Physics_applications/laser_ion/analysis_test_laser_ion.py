@@ -59,7 +59,7 @@ def compare_time_avg_with_instantaneous_diags(dir_inst: str, dir_avg: str):
     data_avg = load_field_from_iteration(sa, avg_output_step, field, coord)
 
     # Compare the data
-    if np.allclose(data_inst, data_avg):
+    if np.allclose(data_inst, data_avg, rtol=1e-12):
         print("Test passed: actual data is close to expected data.")
     else:
         print("Test failed: actual data is not close to expected data.")
