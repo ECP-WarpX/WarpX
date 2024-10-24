@@ -223,10 +223,10 @@ struct CylindricalYeeAlgorithm {
             amrex::Real const r = rmin + (i + 0.5_rt)*dr; // r on cell-centered point (Er is cell-centered in r)
             if ((comp % 2) == 1) {
                 return - DownwardDz(Ft, coefs_z, 1, i, j, k, comp)
-                       + (comp + 1)/2*Fz(i,j,k,comp+1)/r; // Real part
+                       + (comp + 1._rt)/2._rt*Fz(i,j,k,comp+1)/r; // Real part
             } else {
                 return - DownwardDz(Ft, coefs_z, 1, i, j, k, comp)
-                       - (comp)/2*Fz(i,j,k,comp-1)/r; // Imaginary part
+                       - (comp)/2._rt*Fz(i,j,k,comp-1)/r; // Imaginary part
             }
         }
 
@@ -275,10 +275,10 @@ struct CylindricalYeeAlgorithm {
             if (comp == 0) {
                 return DownwardDrr_over_r(Ft, r, dr, coefs_r, 3, i, j, k, 0);
             } else if ((comp % 2) == 1) {
-                return - (comp + 1)/2 * Fr(i, j, 0, comp+1)/r
+                return - (comp + 1._rt)/2._rt * Fr(i, j, 0, comp+1)/r
                        + DownwardDrr_over_r(Ft, r, dr, coefs_r, 3, i, j, k, comp);
             } else { // (comp % 2) == 0
-                return + (comp)/2 * Fr(i, j, 0, comp-1)/r
+                return + (comp)/2._rt * Fr(i, j, 0, comp-1)/r
                        + DownwardDrr_over_r(Ft, r, dr, coefs_r, 3, i, j, k, comp);
             }
         } else { // r==0: on-axis corrections
