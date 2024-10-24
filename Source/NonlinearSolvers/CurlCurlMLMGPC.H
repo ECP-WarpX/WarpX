@@ -125,7 +125,7 @@ class CurlCurlMLMGPC : public Preconditioner<T,Ops>
         RT m_atol = 1.0e-16;
         RT m_rtol = 1.0e-4;
 
-        Ops* m_ops;
+        Ops* m_ops = nullptr;
 
         int m_num_amr_levels = 0;
         amrex::Vector<amrex::Geometry> m_geom;
