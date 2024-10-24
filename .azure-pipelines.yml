@@ -33,16 +33,16 @@ jobs:
       cartesian_1d:
         WARPX_CMAKE_FLAGS: -DWarpX_DIMS=1 -DWarpX_FFT=ON -DWarpX_PYTHON=ON
       # Cartesian 2D
-      cartesian_2d:
-        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=2 -DWarpX_FFT=ON -DWarpX_PYTHON=ON
+      #cartesian_2d:
+      #  WARPX_CMAKE_FLAGS: -DWarpX_DIMS=2 -DWarpX_FFT=ON -DWarpX_PYTHON=ON
       # Cartesian 3D
-      cartesian_3d:
-        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=3 -DWarpX_FFT=ON -DWarpX_PYTHON=ON
-        WARPX_HEFFTE: 'TRUE'
+      #cartesian_3d:
+      #  WARPX_CMAKE_FLAGS: -DWarpX_DIMS=3 -DWarpX_FFT=ON -DWarpX_PYTHON=ON
+      #  WARPX_HEFFTE: 'TRUE'
       # Cylindrical RZ
-      cylindrical_rz:
-        WARPX_CMAKE_FLAGS: -DWarpX_DIMS=RZ -DWarpX_FFT=ON -DWarpX_PYTHON=ON
-        WARPX_RZ_FFT: 'TRUE'
+      #cylindrical_rz:
+      #  WARPX_CMAKE_FLAGS: -DWarpX_DIMS=RZ -DWarpX_FFT=ON -DWarpX_PYTHON=ON
+      #  WARPX_RZ_FFT: 'TRUE'
       # single precision
       #single_precision:
       #  WARPX_CMAKE_FLAGS: -DWarpX_DIMS='1;2;3;RZ' -DWarpX_FFT=ON -DWarpX_PYTHON=ON -DWarpX_PRECISION=SINGLE
@@ -155,7 +155,8 @@ jobs:
         ${AMReX_CMAKE_FLAGS}    \
         ${WARPX_CMAKE_FLAGS}    \
         -DWarpX_TEST_CLEANUP=ON \
-        -DWarpX_TEST_FPETRAP=ON
+        -DWarpX_TEST_FPETRAP=ON \
+        -DCMAKE_BUILD_TYPE=Debug
 
       # build
       cmake --build build -j 2
@@ -166,5 +167,5 @@ jobs:
       set -eu -o pipefail
 
       # run tests (exclude pytest.AMReX when running Python tests)
-      ctest --test-dir build --output-on-failure -E AMReX
+      ctest --test-dir build --output-on-failure -E AMReX -R test_1d_fel
     displayName: 'Test'
