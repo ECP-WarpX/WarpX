@@ -180,14 +180,16 @@ class FiniteDifferenceSolver
 
         ElectromagneticSolverAlgo m_fdtd_algo;
         ablastr::utils::enums::GridType m_grid_type;
+        int m_ncomps;
 
 #ifdef WARPX_DIM_RZ
         amrex::Real m_dr, m_rmin;
         int m_nmodes;
         // host-only
-        amrex::Vector<amrex::Real> m_h_stencil_coefs_r, m_h_stencil_coefs_z;
+        amrex::Vector<amrex::Real> m_h_stencil_coefs_r, m_h_stencil_coefs_t, m_h_stencil_coefs_z;
         // device copy after init
         amrex::Gpu::DeviceVector<amrex::Real> m_stencil_coefs_r;
+        amrex::Gpu::DeviceVector<amrex::Real> m_stencil_coefs_t;
         amrex::Gpu::DeviceVector<amrex::Real> m_stencil_coefs_z;
 #else
         // host-only
