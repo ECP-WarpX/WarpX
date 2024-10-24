@@ -585,29 +585,52 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     else {
         if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
             if (push_type == PushType::Explicit) {
+#ifdef AMREX_USE_EB
+                // signed distance function
+                auto const distance_to_eb_arr = (*warpx.GetDistanceToEB()[lev])[pti].array();
+                const Geometry& geom = Geom(lev);
+                const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> eb_dxi = geom.InvCellSizeArray();
+                const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> eb_plo = geom.ProbLoArray();
+#endif
                 if        (WarpX::nox == 1){
                     doEsirkepovDepositionShapeN<1>(
                         GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                         uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                        jx_arr, jy_arr, jz_arr, np_to_deposit, dt, relative_time, dinv, xyzmin, lo, q,
+                        jx_arr, jy_arr, jz_arr,
+                        np_to_deposit, dt, relative_time, dinv, xyzmin, lo, q,
+#ifdef AMREX_USE_EB
+                        distance_to_eb_arr, eb_dxi, eb_plo,
+#endif
                         WarpX::n_rz_azimuthal_modes);
                 } else if (WarpX::nox == 2){
                     doEsirkepovDepositionShapeN<2>(
                         GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                         uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                        jx_arr, jy_arr, jz_arr, np_to_deposit, dt, relative_time, dinv, xyzmin, lo, q,
+                        jx_arr, jy_arr, jz_arr,
+                        np_to_deposit, dt, relative_time, dinv, xyzmin, lo, q,
+#ifdef AMREX_USE_EB
+                        distance_to_eb_arr, eb_dxi, eb_plo,
+#endif
                         WarpX::n_rz_azimuthal_modes);
                 } else if (WarpX::nox == 3){
                     doEsirkepovDepositionShapeN<3>(
                         GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                         uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                        jx_arr, jy_arr, jz_arr, np_to_deposit, dt, relative_time, dinv, xyzmin, lo, q,
+                        jx_arr, jy_arr, jz_arr,
+                        np_to_deposit, dt, relative_time, dinv, xyzmin, lo, q,
+#ifdef AMREX_USE_EB
+                        distance_to_eb_arr, eb_dxi, eb_plo,
+#endif
                         WarpX::n_rz_azimuthal_modes);
                 } else if (WarpX::nox == 4){
                     doEsirkepovDepositionShapeN<4>(
                         GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                         uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                        jx_arr, jy_arr, jz_arr, np_to_deposit, dt, relative_time, dinv, xyzmin, lo, q,
+                        jx_arr, jy_arr, jz_arr,
+                        np_to_deposit, dt, relative_time, dinv, xyzmin, lo, q,
+#ifdef AMREX_USE_EB
+                        distance_to_eb_arr, eb_dxi, eb_plo,
+#endif
                         WarpX::n_rz_azimuthal_modes);
                 }
             } else if (push_type == PushType::Implicit) {

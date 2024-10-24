@@ -10,6 +10,7 @@
 
 #include "Particles/Deposition/SharedDepositionUtils.H"
 #include "ablastr/parallelization/KernelTimer.H"
+#include "ablastr/particles/NodalFieldGather.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
 #include "Utils/TextMsg.H"
@@ -656,7 +657,13 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                                   const amrex::XDim3 & xyzmin,
                                   amrex::Dim3 lo,
                                   amrex::Real q,
-                                  [[maybe_unused]]int n_rz_azimuthal_modes)
+#ifdef AMREX_USE_EB
+                                  const amrex::Array4<const amrex::Real>& distance_to_eb_arr,
+                                  const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>& eb_dxi,
+                                  const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>& eb_plo,
+#endif
+                                  [[maybe_unused]]int n_rz_azimuthal_modes
+                                  )
 {
     using namespace amrex;
     using namespace amrex::literals;
@@ -735,6 +742,30 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
             double const z_new = (zp - xyzmin.z + (relative_time + 0.5_rt*dt)*uzp[ip]*gaminv)*dinv.z;
             double const z_old = z_new - dt*dinv.z*uzp[ip]*gaminv;
 
+            bool close_to_eb_old = false;
+            bool close_to_eb_new = false;
+#ifdef AMREX_USE_EB
+            // Check whether the particle is close to the EB at the old and new position
+            // TODO: abstract in a separate function (doGatherScalarFieldNodal)
+            // TODO: check calculation for RZ
+            {
+                amrex::Real distance = ablastr::particles::doGatherScalarFieldNodal(
+                    xp + (relative_time - 0.5_rt*dt)*uxp[ip]*gaminv,
+                    yp + (relative_time - 0.5_rt*dt)*uyp[ip]*gaminv,
+                    zp + (relative_time - 0.5_rt*dt)*uzp[ip]*gaminv,
+                    distance_to_eb_arr, eb_dxi, eb_plo );
+                close_to_eb_old = (distance < 1.0_rt); // TODO: tune depth
+            }
+            {
+                amrex::Real distance = ablastr::particles::doGatherScalarFieldNodal(
+                    xp + (relative_time + 0.5_rt*dt)*uxp[ip]*gaminv,
+                    yp + (relative_time + 0.5_rt*dt)*uyp[ip]*gaminv,
+                    zp + (relative_time + 0.5_rt*dt)*uzp[ip]*gaminv,
+                    distance_to_eb_arr, eb_dxi, eb_plo );
+                close_to_eb_new = (distance < 1.0_rt); // TODO: tune depth
+            }
+#endif
+
 #if defined(WARPX_DIM_RZ)
             Real const vy = (-uxp[ip]*sintheta_mid + uyp[ip]*costheta_mid)*gaminv;
 #elif defined(WARPX_DIM_XZ)
@@ -758,19 +789,19 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
 #if !defined(WARPX_DIM_1D_Z)
             double sx_new[depos_order + 3] = {0.};
             double sx_old[depos_order + 3] = {0.};
-            const int i_new = compute_shape_factor(sx_new+1, x_new);
-            const int i_old = compute_shifted_shape_factor(sx_old, x_old, i_new);
+            const int i_new = compute_shape_factor(sx_new+1, x_new, close_to_eb_new);
+            const int i_old = compute_shifted_shape_factor(sx_old, x_old, i_new, close_to_eb_old);
 #endif
 #if defined(WARPX_DIM_3D)
             double sy_new[depos_order + 3] = {0.};
             double sy_old[depos_order + 3] = {0.};
-            const int j_new = compute_shape_factor(sy_new+1, y_new);
-            const int j_old = compute_shifted_shape_factor(sy_old, y_old, j_new);
+            const int j_new = compute_shape_factor(sy_new+1, y_new, close_to_eb_new);
+            const int j_old = compute_shifted_shape_factor(sy_old, y_old, j_new, close_to_eb_old);
 #endif
             double sz_new[depos_order + 3] = {0.};
             double sz_old[depos_order + 3] = {0.};
-            const int k_new = compute_shape_factor(sz_new+1, z_new);
-            const int k_old = compute_shifted_shape_factor(sz_old, z_old, k_new);
+            const int k_new = compute_shape_factor(sz_new+1, z_new, close_to_eb_new);
+            const int k_old = compute_shifted_shape_factor(sz_old, z_old, k_new, close_to_eb_old);
 
             // computes min/max positions of current contributions
 #if !defined(WARPX_DIM_1D_Z)

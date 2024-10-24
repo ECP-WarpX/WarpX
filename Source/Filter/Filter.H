@@ -11,6 +11,8 @@
 
 #include <AMReX_BaseFwd.H>
 
+#include <ablastr/fields/MultiFabRegister.H>
+
 #ifndef WARPX_FILTER_H_
 #define WARPX_FILTER_H_
 
@@ -25,6 +27,10 @@ public:
                        const amrex::MultiFab& srcmf, int lev, int scomp=0,
                        int dcomp=0, int ncomp=10000);
 
+    void ApplyStencil (amrex::MultiFab& dstmf,
+                       const amrex::MultiFab& srcmf, int lev, ablastr::fields::MultiFabRegister & fields, const int idim, int scomp=0,
+                       int dcomp=0, int ncomp=10000);
+
     // Apply stencil on a FabArray.
     void ApplyStencil (amrex::FArrayBox& dstfab,
                        const amrex::FArrayBox& srcfab, const amrex::Box& tbx,
@@ -34,7 +40,8 @@ public:
     void DoFilter (const amrex::Box& tbx,
                    amrex::Array4<amrex::Real const> const& tmp,
                    amrex::Array4<amrex::Real      > const& dst,
-                   int scomp, int dcomp, int ncomp);
+                   int scomp, int dcomp, int ncomp,
+                   amrex::Array4<amrex::Real>* lcomp_ptr = nullptr);
 
     // Length of stencil in each included direction
     amrex::IntVect stencil_length_each_dir;

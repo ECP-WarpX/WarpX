@@ -152,7 +152,7 @@ public:
     [[nodiscard]] HybridPICModel * get_pointer_HybridPICModel () const { return m_hybrid_pic_model.get(); }
     MultiDiagnostics& GetMultiDiags () {return *multi_diags;}
 #ifdef AMREX_USE_EB
-    ablastr::fields::MultiLevelScalarField GetDistanceToEB () {
+    ablastr::fields::ConstMultiLevelScalarField GetDistanceToEB () const {
         using warpx::fields::FieldType;
         return m_fields.get_mr_levels(FieldType::distance_to_eb, finestLevel());
     }
