@@ -26,7 +26,14 @@ class ParticleContainerWrapper(object):
         self.name = species_name
 
         # grab the desired particle container
-        mypc = libwarpx.warpx.multi_particle_container()
+        # if initialize_warpx() has not been called, libwarpx will not have a `warpx` attribute.
+        # We catch this error and provide the user with some useful information.
+        try:
+            mypc = libwarpx.warpx.multi_particle_container()
+        except AttributeError as e:
+            msg = "This may be caused by attempting to create a ParticleContainerWrapper before initialize_warpx has been called"
+            raise AttributeError(msg) from e
+
         self.particle_container = mypc.get_particle_container_from_name(self.name)
 
     def add_particles(
