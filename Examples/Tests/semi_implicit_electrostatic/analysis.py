@@ -18,7 +18,7 @@ with open("sim_parameters.dpkl", "rb") as f:
     sim = dill.load(f)
 
 # characteristic expansion time
-tau = np.sqrt(constants.m_e * sim.sigma_0**2 / (constants.kb * (sim.T_e + sim.T_i)))
+tau = sim.sigma_0 * np.sqrt(sim.M / (constants.kb * (sim.T_e + sim.T_i)))
 
 
 def get_analytic_density(r, t):
@@ -60,10 +60,10 @@ for ii, it in enumerate(ts.iterations):
     )
 
     plt.plot(r_grid, n_e_analytic, "k--", alpha=0.6)
-    plt.plot(r_grid, n_e, label=f"t = {ts.t[ii]*1e6:.1f} $\mu$s")
+    plt.plot(r_grid, n_e, label=f"t = {ts.t[ii]*1e6:.2f} $\mu$s")
 
 print("RMS error (%) in density: ", rms_errors)
-assert np.all(rms_errors < 0.06)
+assert np.all(rms_errors < 0.05)
 
 plt.ylabel("$n_e$ (m$^{-3}$)")
 plt.xlabel("r (m)")

@@ -63,6 +63,11 @@ void SemiImplicitES::ComputeSpaceChargeField (
 
     // perform phi calculation
     computePhi(rho_fp, phi_fp);
+
+    // Compute the electric field. Note that if an EB is used the electric
+    // field will be calculated in the computePhi call.
+    const std::array<Real, 3> beta = {0._rt};
+    if (!EB::enabled()) { computeE( Efield_fp, phi_fp, beta ); }
 }
 
 void SemiImplicitES::computePhi (

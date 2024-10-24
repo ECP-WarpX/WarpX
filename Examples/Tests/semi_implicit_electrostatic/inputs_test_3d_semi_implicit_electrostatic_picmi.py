@@ -8,8 +8,8 @@
 # --- density of the electron species is compared to an approximate analytic solution.
 # --- The example is modified slightly in the following ways:
 # --- 1) The original example used an electromagnetic solver with absorbing
-# ---    boundaries while the present case uses an electrostatic solver with
-# ---    Neumann boundaries.
+# ---    boundaries while the present case encloses the plasma in a conducting
+# ---    sphere.
 # --- 2) The domain and plasma parameters for this case has been modified to
 # ---    set the cell-size and time step such that the explicit electrostatic
 # ---    solver is unstable.
@@ -34,27 +34,27 @@ simulation = picmi.Simulation(warpx_serialize_initial_conditions=True, verbose=0
 class PlasmaExpansionSimulation(object):
     """Simulation setup for an expanding plasma ball in 3d."""
 
-    m_ion = 87.62  # Ion mass (proton masses)
+    m_ion = 25  # Ion mass (electron masses)
 
     # Plasma parameters
     n_plasma = 5e12  # Plasma density (m^-3)
-    sigma_0 = 48  # Initial Gaussian distribution standard deviation (Debye lengths)
+    sigma_0 = 22  # Initial Gaussian distribution standard deviation (Debye lengths)
     T_e = 100.0  # Electron temperature (K)
-    T_i = 1.0  # Ion temperature (K)
+    T_i = 10.0  # Ion temperature (K)
 
     # Spatial domain
-    R = 200  # Radius of metallic sphere (Debye lengths)
+    R = 86  # Radius of metallic sphere (Debye lengths)
     NZ = 72  # Number of cells in each direction
 
     # Temporal domain (if not run as a CI test)
-    LT = 0.8e-6  # Simulation temporal length (s)
+    LT = 0.6e-6  # Simulation temporal length (s)
 
     # Numerical parameters
     NPARTS = 500000  # Seed number of particles
     DT = 0.8  # Time step (electron streaming)
 
     # Solver parameter
-    C_SI = 2.0  # Semi-implicit factor
+    C_SI = 1.0  # Semi-implicit factor
 
     def __init__(self, verbose):
         """Get input parameters for the specific case desired."""
@@ -73,6 +73,7 @@ class PlasmaExpansionSimulation(object):
 
         self.total_steps = int(self.LT / self.dt)
         self.diag_steps = self.total_steps // 3
+        self.total_steps = self.diag_steps * 3
 
         # dump all the current attributes to a dill pickle file
         if comm.rank == 0:
@@ -105,7 +106,7 @@ class PlasmaExpansionSimulation(object):
     def get_plasma_quantities(self):
         """Calculate various plasma parameters based on the simulation input."""
         # Ion mass (kg)
-        self.M = self.m_ion * constants.m_p
+        self.M = self.m_ion * constants.m_e
 
         # Electron plasma frequency (Hz)
         self.f_pe = np.sqrt(
@@ -143,6 +144,16 @@ class PlasmaExpansionSimulation(object):
         simulation.current_deposition_algo = "direct"
         simulation.particle_shape = 1
         simulation.verbose = self.verbose
+
+        #######################################################################
+        # Insert spherical boundary as EB                                     #
+        #######################################################################
+
+        embedded_boundary = picmi.EmbeddedBoundary(
+            implicit_function=f"(x**2+y**2+z**2-{self.R**2})",
+            potential=0.0,
+        )
+        simulation.embedded_boundary = embedded_boundary
 
         #######################################################################
         # Field solver and external field                                     #
