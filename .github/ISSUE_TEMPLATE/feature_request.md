@@ -16,7 +16,7 @@ A clear and concise description of the feature.
 A clear and concise description of any alternative solutions or features you have considered.
 
 **Additional information**
-If applicable, please add other info about the feature request.
+If applicable, please add other info about the feature request (e.g., links to existing codes, publications, etc.).
 
 **Screenshots**
 If applicable, please add screenshots about the feature request.
