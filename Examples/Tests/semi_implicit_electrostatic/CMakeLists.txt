@@ -2,11 +2,11 @@
 #
 
 add_warpx_test(
-    test_2d_semi_implicit_electrostatic_picmi  # name
-    2  # dims
+    test_3d_semi_implicit_electrostatic_picmi  # name
+    3  # dims
     2  # nprocs
-    inputs_test_2d_semi_implicit_electrostatic_picmi.py  # inputs
+    inputs_test_3d_semi_implicit_electrostatic_picmi.py  # inputs
     analysis.py  # analysis
-    diags/field_diag000190  # output
+    diags/field_diag/  # output
     OFF  # dependency
 )
