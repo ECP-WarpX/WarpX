@@ -6,5 +6,6 @@ foreach(D IN LISTS WarpX_DIMS)
         LabFrameExplicitES.cpp
         PoissonBoundaryHandler.cpp
         RelativisticExplicitES.cpp
+        SemiImplicitES.cpp
     )
 endforeach()
