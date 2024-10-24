@@ -31,7 +31,7 @@ class ParticleContainerWrapper(object):
         try:
             mypc = libwarpx.warpx.multi_particle_container()
         except AttributeError as e:
-            msg = "This may be caused by forgetting to call initialize_warpx() before creating a ParticleContainerWrapper."
+            msg = "This may be caused by attempting to create a ParticleContainerWrapper before initialize_warpx has been called"
             raise AttributeError(msg) from e
 
         self.particle_container = mypc.get_particle_container_from_name(self.name)
