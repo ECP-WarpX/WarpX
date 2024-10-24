@@ -308,7 +308,7 @@ struct CylindricalYeeAlgorithm {
      */
     template< typename T_Field>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    static amrex::Real UpdateEthetaOnAxis (
+    static void UpdateEthetaOnAxis (
         T_Field const& Et,
         T_Field const& Er,
         amrex::Real const * const coefs_t,
@@ -319,7 +319,7 @@ struct CylindricalYeeAlgorithm {
         amrex::Real const r = rmin + i*dr; // r on a nodal grid (Et is nodal in r)
         if (r == 0) {
             if (comp == 1) {
-                Et(i,j,0,1) =  Er(i,j,k,2);
+                Et(i,j,0,1) = +Er(i,j,k,2);
             } else if (comp == 2) {
                 Et(i,j,0,2) = -Er(i,j,k,1);
             }
