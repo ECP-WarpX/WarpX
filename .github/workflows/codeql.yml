@@ -5,6 +5,10 @@ on:
     branches: [ "development" ]
   pull_request:
     branches: [ "development" ]
+    paths-ignore:
+      - "Docs/**"
+      - ".github/**"
+      - ".azure-pipelines.yml"
   schedule:
     - cron: "27 3 * * 0"
 

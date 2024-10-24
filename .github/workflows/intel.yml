@@ -7,6 +7,8 @@ on:
   pull_request:
     paths-ignore:
       - "Docs/**"
+      - ".github/**"
+      - ".azure-pipelines.yml"
 
 concurrency:
   group: ${{ github.ref }}-${{ github.head_ref }}-intel
