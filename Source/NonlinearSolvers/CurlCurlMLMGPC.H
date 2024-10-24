@@ -7,25 +7,23 @@
 #ifndef CURL_CURL_MLMG_PC_H_
 #define CURL_CURL_MLMG_PC_H_
 
+#include "Fields.H"
+#include "Utils/WarpXConst.H"
+#include "Preconditioner.H"
+
+#include <ablastr/fields/MultiFabRegister.H>
+
 #include <AMReX.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_Array.H>
 #include <AMReX_Vector.H>
 #include <AMReX_MultiFab.H>
-
-// currently not implemented in 1D
-#ifndef WARPX_DIM_1D_Z
+#ifndef WARPX_DIM_1D_Z // currently not implemented in 1D
 #include <AMReX_MLLinOp.H>
 #include <AMReX_MLCurlCurl.H>
 #include <AMReX_MLMG.H>
 #include <AMReX_GMRES_MLMG.H>
 #endif
-
-#include <ablastr/fields/MultiFabRegister.H>
-
-#include "Fields.H"
-#include "Utils/WarpXConst.H"
-#include "Preconditioner.H"
 
 /**
  * \brief Curl-curl Preconditioner
@@ -70,11 +68,11 @@ class CurlCurlMLMGPC : public Preconditioner<T,Ops>
          */
         ~CurlCurlMLMGPC () override = default;
 
-        // Default move and copy operations
-        CurlCurlMLMGPC(const CurlCurlMLMGPC&) = default;
-        CurlCurlMLMGPC& operator=(const CurlCurlMLMGPC&) = default;
-        CurlCurlMLMGPC(CurlCurlMLMGPC&&) noexcept = default;
-        CurlCurlMLMGPC& operator=(CurlCurlMLMGPC&&) noexcept = default;
+        // Prohibit move and copy operations
+        CurlCurlMLMGPC(const CurlCurlMLMGPC&) = delete;
+        CurlCurlMLMGPC& operator=(const CurlCurlMLMGPC&) = delete;
+        CurlCurlMLMGPC(CurlCurlMLMGPC&&) noexcept = delete;
+        CurlCurlMLMGPC& operator=(CurlCurlMLMGPC&&) noexcept = delete;
 
         /**
          * \brief Define the preconditioner
@@ -157,17 +155,18 @@ template <class T, class Ops>
 void CurlCurlMLMGPC<T,Ops>::printParameters() const
 {
     using namespace amrex;
-    Print() << PreconditionerTypes::curl_curl_mlmg << " verbose:              " << (m_verbose?"true":"false") << "\n";
-    Print() << PreconditionerTypes::curl_curl_mlmg << " bottom verbose:       " << (m_bottom_verbose?"true":"false") << "\n";
-    Print() << PreconditionerTypes::curl_curl_mlmg << " max iter:             " << m_max_iter << "\n";
-    Print() << PreconditionerTypes::curl_curl_mlmg << " agglomeration:        " << m_agglomeration << "\n";
-    Print() << PreconditionerTypes::curl_curl_mlmg << " consolidation:        " << m_consolidation << "\n";
-    Print() << PreconditionerTypes::curl_curl_mlmg << " max_coarsening_level: " << m_max_coarsening_level << "\n";
-    Print() << PreconditionerTypes::curl_curl_mlmg << " absolute tolerance:   " << m_atol << "\n";
-    Print() << PreconditionerTypes::curl_curl_mlmg << " relative tolerance:   " << m_rtol << "\n";
-    Print() << PreconditionerTypes::curl_curl_mlmg << " use GMRES:            " << (m_use_gmres?"true":"false") << "\n";
+    auto pc_name = getEnumNameString(PreconditionerType::pc_curl_curl_mlmg);
+    Print() << pc_name << " verbose:              " << (m_verbose?"true":"false") << "\n";
+    Print() << pc_name << " bottom verbose:       " << (m_bottom_verbose?"true":"false") << "\n";
+    Print() << pc_name << " max iter:             " << m_max_iter << "\n";
+    Print() << pc_name << " agglomeration:        " << m_agglomeration << "\n";
+    Print() << pc_name << " consolidation:        " << m_consolidation << "\n";
+    Print() << pc_name << " max_coarsening_level: " << m_max_coarsening_level << "\n";
+    Print() << pc_name << " absolute tolerance:   " << m_atol << "\n";
+    Print() << pc_name << " relative tolerance:   " << m_rtol << "\n";
+    Print() << pc_name << " use GMRES:            " << (m_use_gmres?"true":"false") << "\n";
     if (m_use_gmres) {
-        Print() << PreconditionerTypes::curl_curl_mlmg
+        Print() << pc_name
                 << " use PC for GMRES:     "
                 << (m_use_gmres_pc?"true":"false") << "\n";
     }
@@ -176,7 +175,7 @@ void CurlCurlMLMGPC<T,Ops>::printParameters() const
 template <class T, class Ops>
 void CurlCurlMLMGPC<T,Ops>::readParameters()
 {
-    const amrex::ParmParse pp(PreconditionerTypes::curl_curl_mlmg);
+    const amrex::ParmParse pp(amrex::getEnumNameString(PreconditionerType::pc_curl_curl_mlmg));
     pp.query("verbose", m_verbose);
     pp.query("bottom_verbose", m_bottom_verbose);
     pp.query("max_iter", m_max_iter);
@@ -282,7 +281,7 @@ void CurlCurlMLMGPC<T,Ops>::Update (const T& a_U)
 #endif
 
     if (m_verbose) {
-        amrex::Print() << "Updating " << PreconditionerTypes::curl_curl_mlmg
+        amrex::Print() << "Updating " << amrex::getEnumNameString(PreconditionerType::pc_curl_curl_mlmg)
                        << ": dt = " << this->m_dt << ", "
                        << " coefficients: "
                        << "alpha = " << alpha << ", "

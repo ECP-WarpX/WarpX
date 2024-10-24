@@ -9,10 +9,11 @@
 
 #include "NonlinearSolver.H"
 #include "JacobianFunctionMF.H"
+#include "Preconditioner.H"
+#include "Utils/TextMsg.H"
 
 #include <AMReX_GMRES.H>
 #include <AMReX_ParmParse.H>
-#include "Utils/TextMsg.H"
 
 #include <vector>
 
@@ -79,7 +80,7 @@ public:
         amrex::Print()     << "GMRES max iterations:     " << m_gmres_maxits << "\n";
         amrex::Print()     << "GMRES relative tolerance: " << m_gmres_rtol << "\n";
         amrex::Print()     << "GMRES absolute tolerance: " << m_gmres_atol << "\n";
-        amrex::Print()     << "Preconditioner type:      " << m_pc_type << "\n";
+        amrex::Print()     << "Preconditioner type:      " << amrex::getEnumNameString(m_pc_type) << "\n";
 
         m_linear_function->printParams();
     }
@@ -144,7 +145,7 @@ private:
     /**
      * \brief Preconditioner type
      */
-    std::string m_pc_type = "none";
+    PreconditionerType m_pc_type = PreconditionerType::none;
 
     mutable amrex::Real m_cur_time, m_dt;
 

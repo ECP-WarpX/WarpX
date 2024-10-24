@@ -6,7 +6,7 @@ using namespace amrex;
 const Geometry& ImplicitSolver::GetGeometry (const int a_lvl) const
 {
     AMREX_ASSERT((a_lvl >= 0) && (a_lvl < m_num_amr_levels));
-    return m_WarpX->GetGeometry(a_lvl);
+    return m_WarpX->Geom(a_lvl);
 }
 
 const Array<FieldBoundaryType,AMREX_SPACEDIM>& ImplicitSolver::GetFieldBoundaryLo () const

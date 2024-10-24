@@ -7,16 +7,12 @@
 #ifndef WARPX_PRECONDITIONER_H_
 #define WARPX_PRECONDITIONER_H_
 
+#include <AMReX_Enum.H>
+
 /**
  * \brief Types for preconditioners for field solvers
  */
-namespace PreconditionerTypes
-{
-    /**
-     * MLMG-based solver for the curl-curl operator
-     */
-    const std::string curl_curl_mlmg = "pc_curl_curl_mlmg";
-}
+AMREX_ENUM(PreconditionerType, pc_curl_curl_mlmg, none);
 
 /**
  * \brief Base class for preconditioners

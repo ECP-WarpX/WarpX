@@ -7,13 +7,13 @@
 #ifndef Implicit_Solver_H_
 #define Implicit_Solver_H_
 
-#include <AMReX_Array.H>
-#include <AMReX_REAL.H>
-#include <AMReX_LO_BCTYPES.H>
-
 #include "FieldSolver/ImplicitSolvers/WarpXSolverVec.H"
 #include "NonlinearSolvers/NonlinearSolverLibrary.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+
+#include <AMReX_Array.H>
+#include <AMReX_REAL.H>
+#include <AMReX_LO_BCTYPES.H>
 
 /**
  * \brief Base class for implicit time solvers. The base functions are those

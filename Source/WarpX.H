@@ -113,11 +113,6 @@ public:
 
     [[nodiscard]] int Verbose () const { return verbose; }
 
-    [[nodiscard]] const amrex::Geometry& GetGeometry ( const int a_lev ) const
-    {
-        return GetInstance().Geom(a_lev);
-    }
-
     [[nodiscard]] const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& GetFieldBoundaryLo () const
     {
         return field_boundary_lo;

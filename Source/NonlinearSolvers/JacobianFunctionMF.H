@@ -7,8 +7,8 @@
 #ifndef JacobianFunctionMF_H_
 #define JacobianFunctionMF_H_
 
-#include <string>
 #include "CurlCurlMLMGPC.H"
+#include <string>
 
 /**
  * \brief This is a linear function class for computing the action of a
@@ -153,12 +153,12 @@ class JacobianFunctionMF
     inline
     void printParams () const
     {
-        if (m_pc_type != "none") {
+        if (m_pc_type != PreconditionerType::none) {
             m_preCond->printParameters();
         }
     }
 
-    void define( const T&, Ops*, const std::string& );
+    void define( const T&, Ops*, const PreconditionerType& );
 
     private:
 
@@ -169,7 +169,7 @@ class JacobianFunctionMF
     RT m_normY0;
     RT m_cur_time, m_dt;
 
-    std::string m_pc_type = "none";
+    PreconditionerType m_pc_type = PreconditionerType::none;
 
     T m_Z, m_Y0, m_R0, m_R;
     Ops* m_ops = nullptr;
@@ -177,9 +177,9 @@ class JacobianFunctionMF
 };
 
 template <class T, class Ops>
-void JacobianFunctionMF<T,Ops>::define ( const T&  a_U,
-                                         Ops*      a_ops,
-                                         const std::string& a_pc_type )
+void JacobianFunctionMF<T,Ops>::define ( const T& a_U,
+                                         Ops* a_ops,
+                                         const PreconditionerType& a_pc_type )
 {
     m_Z.Define(a_U);
     m_Y0.Define(a_U);
@@ -188,15 +188,15 @@ void JacobianFunctionMF<T,Ops>::define ( const T&  a_U,
 
     m_ops = a_ops;
 
-    m_usePreCond = (a_pc_type != "none");
+    m_usePreCond = (a_pc_type != PreconditionerType::none);
     if (m_usePreCond) {
         m_pc_type = a_pc_type;
-        if (m_pc_type == PreconditionerTypes::curl_curl_mlmg) {
+        if (m_pc_type == PreconditionerType::pc_curl_curl_mlmg) {
             m_preCond = std::make_unique<CurlCurlMLMGPC<T,Ops>>();
         } else {
             std::stringstream convergenceMsg;
-            convergenceMsg << "JacobianFunctionMF::define(): " << m_pc_type <<
-                              " is not a valid preconditioner type.";
+            convergenceMsg << "JacobianFunctionMF::define(): " << amrex::getEnumNameString(m_pc_type)
+                            << " is not a valid preconditioner type.";
             WARPX_ABORT_WITH_MESSAGE(convergenceMsg.str());
         }
         m_preCond->Define(a_U, a_ops);
