@@ -479,24 +479,28 @@ namespace ablastr::fields
         [[nodiscard]] MultiLevelScalarField
         get_mr_levels (
             T name,
-            int finest_level
+            int finest_level,
+            bool skip_level_0=false
         )
         {
             return internal_get_mr_levels(
                 getExtractedName(name),
-                finest_level
+                finest_level,
+                skip_level_0
             );
         }
         template<typename T>
         [[nodiscard]] ConstMultiLevelScalarField
         get_mr_levels (
             T name,
-            int finest_level
+            int finest_level,
+            bool skip_level_0=false
         ) const
         {
             return internal_get_mr_levels(
                 getExtractedName(name),
-                finest_level
+                finest_level,
+                skip_level_0
             );
         }
         //@}
@@ -550,24 +554,28 @@ namespace ablastr::fields
         [[nodiscard]] MultiLevelVectorField
         get_mr_levels_alldirs (
             T name,
-            int finest_level
+            int finest_level,
+            bool skip_level_0=false
         )
         {
             return internal_get_mr_levels_alldirs(
                 getExtractedName(name),
-                finest_level
+                finest_level,
+                skip_level_0
             );
         }
         template<typename T>
         [[nodiscard]] ConstMultiLevelVectorField
         get_mr_levels_alldirs (
             T name,
-            int finest_level
+            int finest_level,
+            bool skip_level_0=false
         ) const
         {
             return internal_get_mr_levels_alldirs(
                 getExtractedName(name),
-                finest_level
+                finest_level,
+                skip_level_0
             );
         }
         //@}
@@ -762,12 +770,14 @@ namespace ablastr::fields
         [[nodiscard]] MultiLevelScalarField
         internal_get_mr_levels (
             std::string const & name,
-            int finest_level
+            int finest_level,
+            bool skip_level_0
         );
         [[nodiscard]] ConstMultiLevelScalarField
         internal_get_mr_levels (
             std::string const & name,
-            int finest_level
+            int finest_level,
+            bool skip_level_0
         ) const;
         [[nodiscard]] VectorField
         internal_get_alldirs (
@@ -782,12 +792,14 @@ namespace ablastr::fields
         [[nodiscard]] MultiLevelVectorField
         internal_get_mr_levels_alldirs (
             std::string const & name,
-            int finest_level
+            int finest_level,
+            bool skip_level_0
         );
         [[nodiscard]] ConstMultiLevelVectorField
         internal_get_mr_levels_alldirs (
             std::string const & name,
-            int finest_level
+            int finest_level,
+            bool skip_level_0
         ) const;
 
         void
