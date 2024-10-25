@@ -8,7 +8,7 @@
 #define WARPX_BOUNDARYSCRAPINGDIAGNOSTICS_H_
 
 #include "Diagnostics.H"
-#include "Utils/Parser/IntervalsParser.H"
+#include "ablastr/utils/IntervalsParser.H"
 
 #include <string>
 

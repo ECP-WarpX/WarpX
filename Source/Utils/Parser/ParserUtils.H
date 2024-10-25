@@ -9,6 +9,8 @@
 #ifndef WARPX_UTILS_PARSER_PARSERUTILS_H_
 #define WARPX_UTILS_PARSER_PARSERUTILS_H_
 
+#include <ablastr/utils/SafeCast.H>
+
 #include <AMReX_ParmParse.H>
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
@@ -20,30 +22,6 @@
 
 namespace utils::parser
 {
-    /**
-    * \brief Do a safe cast of a real to an int
-    * This ensures that the float value is within the range of ints and if not,
-    * raises an exception.
-    *
-    * \param x Real value to cast
-    * \param real_name String, the name of the variable being casted to use in the error message
-    */
-    int
-    safeCastToInt(amrex::Real x, const std::string& real_name);
-
-
-    /**
-    * \brief Do a safe cast of a real to a long
-    * This ensures that the float value is within the range of longs and if not,
-    * raises an exception.
-    *
-    * \param x Real value to cast
-    * \param real_name String, the name of the variable being casted to use in the error message
-    */
-    long
-    safeCastToLong(amrex::Real x, const std::string& real_name);
-
-
     /**
     * \brief Initialize an amrex::Parser object from a string containing a math expression
     *
