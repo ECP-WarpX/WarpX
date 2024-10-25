@@ -43,6 +43,9 @@ Docs/source/_static/doxyhtml
 ####################
 # Package Managers #
 ####################
+# Pixi
+# https://pixi.sh
+pixi.lock
 # anonymous Spack environments
 # https://spack.readthedocs.io/en/latest/environments.html#anonymous-environments
 .spack-env/
@@ -70,3 +73,6 @@ cmake-build-*/
 .DS_Store
 .AppleDouble
 .LSOverride
+# pixi environments
+.pixi
+*.egg-info

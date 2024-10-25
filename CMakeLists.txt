@@ -88,7 +88,15 @@ mark_as_advanced(WarpX_TEST_CLEANUP)
 
 # Advanced option to run CI tests with FPE-trapping runtime parameters
 option(WarpX_TEST_FPETRAP "Run CI tests with FPE-trapping runtime parameters" OFF)
+set(WarpX_TEST_FPETRAP_ARGS
+    "amrex.fpe_trap_invalid = 1"
+    "amrex.fpe_trap_overflow = 1"
+    "amrex.fpe_trap_zero = 1"
+    CACHE STRING
+    "AMReX FPE-trapping runtime options if(WarpX_TEST_FPETRAP)"
+)
 mark_as_advanced(WarpX_TEST_FPETRAP)
+mark_as_advanced(WarpX_TEST_FPETRAP_ARGS)
 
 set(WarpX_DIMS_VALUES 1 2 3 RZ)
 set(WarpX_DIMS 3 CACHE STRING "Simulation dimensionality <1;2;3;RZ>")

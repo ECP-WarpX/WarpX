@@ -137,11 +137,7 @@ function(add_warpx_test
         )
         set(runtime_params_fpetrap "")
         if(WarpX_TEST_FPETRAP)
-            set(runtime_params_fpetrap
-                "amrex.fpe_trap_invalid = 1"
-                "amrex.fpe_trap_overflow = 1"
-                "amrex.fpe_trap_zero = 1"
-            )
+            set(runtime_params_fpetrap ${WarpX_TEST_FPETRAP_ARGS})
         endif()
         add_test(
             NAME ${name}.run
