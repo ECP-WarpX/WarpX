@@ -1,0 +1,21 @@
+# required dependencies
+module load profile/base
+module load cmake
+module load git
+module load intel
+module load intelmpi
+module load zlib
+module load fftw
+
+# optional: for Python bindings or libEnsemble
+module load python/3.9.4
+
+if [ -d "$HOME/sw/venvs/warpx" ]
+then
+  source $HOME/sw/venvs/warpx/bin/activate
+fi
+
+# compiler environment hints
+export CXX=$(which icpc)
+export CC=$(which icc)
+export FC=$(which ifort)
