@@ -193,6 +193,16 @@ private:
     /**
      * \brief Compute the nonlinear residual: F(U) = U - b - R(U).
      */
+    /** Optional backtracking line search (newton.line_search = 1):
+     *  after the linear solve, accept the largest step fraction alpha in
+     *  {1, 1/2, ..., 2^-max_halvings} that reduces the residual norm
+     *  (keeping the best trial seen). Stabilizes Newton when the update
+     *  overshoots -- stiff or state-dependent coefficients (vacuum
+     *  resistivity ramps, flux limiters) and noisy residual landscapes. */
+    bool m_use_line_search = false;
+    int m_line_search_max_halvings = 6;
+    mutable Vec m_U_ls;
+
     void EvalResidual ( Vec&         a_F,
                   const Vec&         a_U,
                   const Vec&         a_b,
@@ -213,6 +223,7 @@ void NewtonSolver<Vec,Ops>::Define ( const Vec&  a_U,
     ParseParameters();
 
     m_dU.Define(a_U);
+    m_U_ls.Define(a_U); // line-search base state
     m_F.Define(a_U); // residual function F(U) = U - b - R(U) = 0
     m_R.Define(a_U); // right hand side function R(U)
 
@@ -286,6 +297,8 @@ void NewtonSolver<Vec,Ops>::ParseParameters ()
     pp_newton.query("relative_tolerance",  m_rtol);
     pp_newton.query("max_iterations",      m_maxits);
     pp_newton.query("require_convergence", m_require_convergence);
+    pp_newton.query("line_search",          m_use_line_search);
+    pp_newton.query("line_search_max_halvings", m_line_search_max_halvings);
     pp_newton.query("diagnostic_file",     this->m_diagnostic_file);
     pp_newton.query("diagnostic_interval", this->m_diagnostic_interval);
 
@@ -396,7 +409,35 @@ void NewtonSolver<Vec,Ops>::Solve (Vec&         a_U,
         linear_solver_iters += m_linear_solver->getNumIters();
 
         // Update solution
-        a_U -= m_dU;
+        if (m_use_line_search) {
+            // Backtracking: try alpha = 1, 1/2, ... and accept the first
+            // trial that reduces the residual norm (falling back to the
+            // best trial seen). Trial residuals reuse EvalResidual; the
+            // accepted state is re-evaluated at the top of the next
+            // Newton iteration as usual.
+            m_U_ls.Copy(a_U);
+            amrex::Real alpha = 1._rt;
+            amrex::Real best_alpha = 1._rt;
+            amrex::Real best_norm = -1._rt;
+            for (int ls = 0; ls <= m_line_search_max_halvings; ++ls) {
+                a_U.linComb(1._rt, m_U_ls, -alpha, m_dU);
+                EvalResidual(m_F, a_U, a_b, a_time, iter);
+                amrex::Real const trial_norm = m_F.norm2();
+                if (best_norm < 0._rt || trial_norm < best_norm) {
+                    best_norm = trial_norm;
+                    best_alpha = alpha;
+                }
+                if (trial_norm < norm_abs) { break; }
+                alpha *= 0.5_rt;
+            }
+            a_U.linComb(1._rt, m_U_ls, -best_alpha, m_dU);
+            if (this->m_verbose && best_alpha < 1._rt) {
+                amrex::Print() << "Newton: line search accepted alpha = "
+                               << best_alpha << "\n";
+            }
+        } else {
+            a_U -= m_dU;
+        }
 
         iter++;
         if (iter >= m_maxits) {
