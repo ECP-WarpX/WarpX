@@ -760,6 +760,41 @@ void HybridPICModel::ZeroConductorEdges (
     }
 }
 
+void HybridPICModel::ZeroCoveredFaces (
+    ablastr::fields::VectorField const& field,
+    const int lev) const
+{
+    // Zero fully covered faces (open area = 0); cut faces keep their value,
+    // since their open part carries real flux.
+    auto& warpx = WarpX::GetInstance();
+    const ablastr::fields::VectorField face_areas =
+        warpx.m_fields.get_alldirs(FieldType::face_areas, lev);
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for (amrex::MFIter mfi(*field[0], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+        amrex::Array4<amrex::Real> const& Fx = field[0]->array(mfi);
+        amrex::Array4<amrex::Real> const& Fy = field[1]->array(mfi);
+        amrex::Array4<amrex::Real> const& Fz = field[2]->array(mfi);
+        amrex::Array4<amrex::Real const> const& Sx = face_areas[0]->const_array(mfi);
+        amrex::Array4<amrex::Real const> const& Sy = face_areas[1]->const_array(mfi);
+        amrex::Array4<amrex::Real const> const& Sz = face_areas[2]->const_array(mfi);
+        const amrex::Box tx = mfi.tilebox(field[0]->ixType().toIntVect());
+        const amrex::Box ty = mfi.tilebox(field[1]->ixType().toIntVect());
+        const amrex::Box tz = mfi.tilebox(field[2]->ixType().toIntVect());
+        amrex::ParallelFor(tx, ty, tz,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k){
+                if (Sx(i,j,k) <= 0.0_rt) { Fx(i,j,k) = 0.0_rt; }
+            },
+            [=] AMREX_GPU_DEVICE (int i, int j, int k){
+                if (Sy(i,j,k) <= 0.0_rt) { Fy(i,j,k) = 0.0_rt; }
+            },
+            [=] AMREX_GPU_DEVICE (int i, int j, int k){
+                if (Sz(i,j,k) <= 0.0_rt) { Fz(i,j,k) = 0.0_rt; }
+            });
+    }
+}
+
 void HybridPICModel::CalculatePlasmaCurrent (
     ablastr::fields::MultiLevelVectorField const& Bfield,
     amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>,3 > >& eb_update_E) const

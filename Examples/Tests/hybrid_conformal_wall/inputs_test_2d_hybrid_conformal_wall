@@ -1,7 +1,9 @@
 # Hybrid conformal (ECT) embedded-boundary wall: a rotated-square PEC block
-# centered in a periodic 2D (XZ) domain, uniform By, drifting cold ions kept
-# a standoff off the wall. The analysis asserts the constitutive PEC closure
-# (E and J exactly zero deep in the conductor) and field boundedness.
+# centered in a periodic 2D (XZ) domain, uniform By plus a ramping uniform
+# external By from a vector-potential coil, drifting cold ions kept a
+# standoff off the wall. The analysis asserts the constitutive PEC closure
+# (E and J exactly zero deep in the conductor, external flux excluded from
+# covered faces) and field boundedness.
 max_step = 3
 warpx.const_dt = 5.e-10
 
@@ -37,6 +39,17 @@ hybrid_pic_model.use_conformal_eb = 1
 
 warpx.B_ext_grid_init_style = constant
 warpx.B_external_grid = 0. 0.02 0.
+
+# quasi-static periodic external By = 0.005*cos(2*pi*z/L) with a gentle ramp
+# (fast ramps are screened by this plasma): the conformal wall must exclude
+# it from covered faces and zero its E = -dA/dt on conductor edges
+hybrid_pic_model.add_external_fields = 1
+external_vector_potential.fields = coil
+external_vector_potential.coil.Ax_external_grid_function(x,y,z) = "0.005*(1.6/(2*pi))*sin(2*pi*z/1.6)"
+external_vector_potential.coil.Ay_external_grid_function(x,y,z) = "0"
+external_vector_potential.coil.Az_external_grid_function(x,y,z) = "0"
+external_vector_potential.coil.A_time_external_function(t) = "1.0 + t/1.0e-7"
+external_vector_potential.do_diva_cleaning = 0
 
 particles.species_names = ions
 ions.charge = q_e

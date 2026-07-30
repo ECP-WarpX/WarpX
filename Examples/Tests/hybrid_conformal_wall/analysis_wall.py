@@ -23,6 +23,7 @@ import numpy as np
 THETA = np.pi / 8
 AHALF = 0.25  # conductor: rotated square, max(|xr|,|zr|) < AHALF
 B0 = 0.02
+B1 = 0.005  # external coil By at the final step (ramp reaches 1 at t = 1.5 ns)
 PROB_LO = np.array([-0.8, -0.8])
 NCELL = np.array([32, 32])
 H = 1.6 / NCELL
@@ -97,8 +98,18 @@ def main():
     by, X, Z = load_raw(plotfile, "By")
     xr = X * np.cos(THETA) + Z * np.sin(THETA)
     zr = -X * np.sin(THETA) + Z * np.cos(THETA)
-    fluid = np.maximum(np.abs(xr), np.abs(zr)) > AHALF + 1.5 * hmax
-    assert np.all(np.abs(by[fluid] - B0) < 0.1 * B0), "fluid By drifted"
+    box = np.maximum(np.abs(xr), np.abs(zr))
+    fluid = box > AHALF + 1.5 * hmax
+    deep = box < AHALF - 1.5 * hmax
+    # the quasi-static coil field reaches the fluid, while covered faces
+    # exclude the external flux entirely: deep-conductor By stays exactly B0
+    prof = np.cos(2 * np.pi * Z / 1.6)
+    assert np.all(np.abs(by[fluid] - (B0 + B1 * prof[fluid])) < 0.2 * B1), (
+        "fluid coil field wrong"
+    )
+    assert np.all(np.abs(by[deep] - B0) < 1.0e-14 * B0), (
+        "external flux leaked into covered faces"
+    )
     ex, _, _ = load_raw(plotfile, "Ex")
     assert np.max(np.abs(ex)) > 0.0, "Ohm E identically zero (wall inactive?)"
     assert ok, "constitutive PEC violated: nonzero E or j deep in the conductor"

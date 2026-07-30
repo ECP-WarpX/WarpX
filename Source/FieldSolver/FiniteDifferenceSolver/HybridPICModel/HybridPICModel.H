@@ -159,6 +159,13 @@ public:
         std::array< std::unique_ptr<amrex::iMultiFab>,3 >& eb_update,
         int lev) const;
 
+    /** Zero fully covered faces (open area = 0) of a face-staggered field on
+     *  the conformal (ECT) wall; cut faces keep their open-part flux. Applied
+     *  to the external B so the conductor excludes the time-varying flux. */
+    void ZeroCoveredFaces (
+        ablastr::fields::VectorField const& field,
+        int lev) const;
+
     void BfieldEvolve (
         ablastr::fields::MultiLevelVectorField const& Bfield,
         ablastr::fields::MultiLevelVectorField const& Efield,
