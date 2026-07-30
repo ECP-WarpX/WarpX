@@ -1604,7 +1604,9 @@ void WarpX::InitializeEBGridData (int lev)
         {
             using warpx::fields::FieldType;
 
-            if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
+            // ECT geometry and face extensions: for the ECT Maxwell solver and
+            // for the hybrid-PIC conformal wall (hybrid_pic_model.use_conformal_eb).
+            if (WarpX::UseConformalEBSolve()) {
 
                 auto edge_lengths_lev = m_fields.get_alldirs(FieldType::edge_lengths, lev);
                 warpx::embedded_boundary::ComputeEdgeLengths(edge_lengths_lev, eb_fact);
