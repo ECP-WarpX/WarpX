@@ -1299,9 +1299,9 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid, WarpXGridBase):
         default=None,
         description="Blocking factor (which controls the block size) in the z direction (the second axis of the grid, y in PICMI)",
     )
-    particle_eb: str | None = Field(
+    particle_boundary_eb: str | None = Field(
         default=None,
-        alias="warpx_particle_eb",
+        alias="warpx_boundary_particle_eb",
         description="The boundary condition applied to the particles when they reach the surface of the embedded boundary. Absorbing, Reflecting, or Transparent",
     )
     # option names (warpx_potential_lo/hi_x/z) differ from the field names:
@@ -1340,7 +1340,7 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid, WarpXGridBase):
     # 2D geometry is the x-z plane; there is no second (y) axis.
     potential_ymin = _potential_not_in_geometry("potential_ymin", "2D")
     potential_ymax = _potential_not_in_geometry("potential_ymax", "2D")
-
+    
     def model_post_init(self, context) -> None:
         super().model_post_init(context)
         # Geometry
@@ -1366,7 +1366,7 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid, WarpXGridBase):
         pywarpx.amr.blocking_factor_y = self.blocking_factor_y
 
         # Boundary conditions
-        pywarpx.boundary.particle_eb = self.particle_eb
+        pywarpx.boundary.particle_eb = self.particle_boundary_eb
         pywarpx.boundary.field_lo = [
             BC_map[bc] for bc in self.lower_boundary_conditions
         ]
@@ -1437,9 +1437,9 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid, WarpXGridBase):
         default=None,
         description="Blocking factor (which controls the block size) in the z direction",
     )
-    particle_eb: str | None = Field(
+    particle_boundary_eb: str | None = Field(
         default=None,
-        alias="warpx_particle_eb",
+        alias="warpx_boundary_particle_eb",
         description="The boundary condition applied to the particles when they reach the surface of the embedded boundary. Absorbing, Reflecting, or Transparent",
     )
     potential_xmin: float | str | None = Field(
@@ -1485,6 +1485,7 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid, WarpXGridBase):
         description="If a thermal boundary is used for particles, this dictionary should specify the thermal speed for each species in the form {`<species>`: u_th}. Note: u_th = sqrt(T*q_e/mass)/clight with T in eV.",
     )
 
+
     def model_post_init(self, context) -> None:
         super().model_post_init(context)
         # Geometry
@@ -1512,7 +1513,7 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid, WarpXGridBase):
         pywarpx.amr.blocking_factor_z = self.blocking_factor_z
 
         # Boundary conditions
-        pywarpx.boundary.particle_eb = self.particle_eb
+        pywarpx.boundary.particle_eb = self.particle_boundary_eb
         pywarpx.boundary.field_lo = [
             BC_map[bc] for bc in self.lower_boundary_conditions
         ]
