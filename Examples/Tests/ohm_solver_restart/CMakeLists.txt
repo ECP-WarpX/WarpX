@@ -32,7 +32,7 @@ add_warpx_test(
 )
 
 add_warpx_test(
-    test_2d_ohm_solver_external_field_picmi_segmented  # name
+    test_2d_ohm_solver_external_field_segmented_picmi  # name
     2  # dims
     2  # nprocs
     "inputs_test_2d_ohm_solver_external_field_segmented_picmi.py --segments 3,3,4"  # inputs
