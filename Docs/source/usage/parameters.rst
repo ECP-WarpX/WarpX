@@ -273,6 +273,19 @@ Overall simulation parameters
           - ``newton.absolute_tolerance`` (``float``, default: 0.0)
           - ``newton.diagnostic_file`` (``string``, default: None)
           - ``newton.diagnostic_interval`` (``int``, default: 1)
+          - ``newton.adaptive_forcing`` (``bool``, default: false)
+            When ``true``, the GMRES relative tolerance is chosen adaptively each Newton iteration from the observed nonlinear residual decrease (Eisenstat-Walker Choice 2 with safeguards, as in `Chacón, J. Comput. Phys. 526 (2025) 113789 <https://doi.org/10.1016/j.jcp.2025.113789>`__, Eq. 21):
+            :math:`\zeta_A = \gamma\,(\|G_k\|/\|G_{k-1}\|)^\xi`,
+            :math:`\zeta_B = \min[\zeta_\mathrm{max}, \max(\zeta_A, \gamma \zeta_{k-1}^\xi)]`,
+            :math:`\zeta_k = \min[\zeta_\mathrm{max}, \max(\zeta_B, \gamma\,\epsilon_\mathrm{Newton}/\|G_k\|)]`,
+            floored at :math:`\zeta_\mathrm{min}`, where :math:`\epsilon_\mathrm{Newton}` is the Newton convergence target.
+            The first iteration uses :math:`\zeta_\mathrm{max}`, unless the user explicitly set ``gmres.relative_tolerance``, in which case that value is used.
+            This avoids over-solving the linear system far from the nonlinear root; with it off, the fixed ``gmres.relative_tolerance`` is used every iteration (exact prior behavior).
+
+            - ``newton.forcing_gamma`` (``float``, default: 0.9)
+            - ``newton.forcing_xi`` (``float``, default: 1.5)
+            - ``newton.forcing_zeta_max`` (``float``, default: 0.8)
+            - ``newton.forcing_zeta_min`` (``float``, default: 1.0e-4)
 
           - The PS-JFNK solver uses GMRES to solve the linear system at each nonlinear iteration:
 

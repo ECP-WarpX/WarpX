@@ -1936,6 +1936,11 @@ class NewtonNonlinearSolver(NonlinearSolverBase):
         use_mass_matrices_pc=None,
         mass_matrices_pc_width=None,
         pc_type=None,
+        adaptive_forcing=None,
+        forcing_gamma=None,
+        forcing_xi=None,
+        forcing_zeta_max=None,
+        forcing_zeta_min=None,
     ):
         self.verbose = verbose
         self.linear_solver = linear_solver
@@ -1954,6 +1959,11 @@ class NewtonNonlinearSolver(NonlinearSolverBase):
         self.use_mass_matrices_pc = use_mass_matrices_pc
         self.mass_matrices_pc_width = mass_matrices_pc_width
         self.pc_type = pc_type
+        self.adaptive_forcing = adaptive_forcing
+        self.forcing_gamma = forcing_gamma
+        self.forcing_xi = forcing_xi
+        self.forcing_zeta_max = forcing_zeta_max
+        self.forcing_zeta_min = forcing_zeta_min
 
         if linear_solver is not None:
             assert isinstance(linear_solver, LinearSolverBase)
@@ -1982,6 +1992,11 @@ class NewtonNonlinearSolver(NonlinearSolverBase):
         newton.require_convergence = self.require_convergence
         newton.diagnostic_file = self.diagnostic_file
         newton.diagnostic_interval = self.diagnostic_interval
+        newton.adaptive_forcing = self.adaptive_forcing
+        newton.forcing_gamma = self.forcing_gamma
+        newton.forcing_xi = self.forcing_xi
+        newton.forcing_zeta_max = self.forcing_zeta_max
+        newton.forcing_zeta_min = self.forcing_zeta_min
 
         if self.linear_solver is not None:
             self.linear_solver.linear_solver_initialize_inputs(newton)

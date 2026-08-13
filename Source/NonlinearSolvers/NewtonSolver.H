@@ -86,6 +86,13 @@ public:
         amrex::Print()     << "Newton relative tolerance:  " << m_rtol << "\n";
         amrex::Print()     << "Newton absolute tolerance:  " << m_atol << "\n";
         amrex::Print()     << "Newton require convergence: " << (m_require_convergence?"true":"false") << "\n";
+        if (m_adaptive_forcing) {
+            amrex::Print() << "Newton adaptive forcing:    true"
+                           << " (gamma = "    << m_forcing_gamma
+                           << ", xi = "       << m_forcing_xi
+                           << ", zeta_max = " << m_forcing_zeta_max
+                           << ", zeta_min = " << m_forcing_zeta_min << ")\n";
+        }
         auto linsol_name = amrex::getEnumNameString(m_linear_solver_type);
         amrex::Print()     << "Newton linear solver:       " << linsol_name << "\n";
         amrex::Print()     << "Linear solver (" << linsol_name << ") verbose:            " << m_linsol_verbose_int << "\n";
@@ -203,6 +210,22 @@ private:
     int m_line_search_max_halvings = 6;
     mutable Vec m_U_ls;
 
+    /** Eisenstat-Walker adaptive forcing (newton.adaptive_forcing = 1):
+     *  choose the GMRES relative tolerance each Newton iteration from the
+     *  observed nonlinear residual decrease instead of a fixed value
+     *  (Choice 2 with safeguards, Chacon JCP 2025 Eq. 21). Avoids
+     *  oversolving the linear system when far from the root. Off by
+     *  default; the fixed-tolerance path is unchanged. */
+    bool m_adaptive_forcing = false;
+    amrex::Real m_forcing_gamma = 0.9;
+    amrex::Real m_forcing_xi = 1.5;
+    amrex::Real m_forcing_zeta_max = 0.8;
+    amrex::Real m_forcing_zeta_min = 1.0e-4;
+    /** True when the user explicitly set the linear-solver relative
+     *  tolerance; adaptive forcing then starts from that value on the
+     *  first Newton iteration instead of zeta_max. */
+    bool m_linsol_rtol_set = false;
+
     void EvalResidual ( Vec&         a_F,
                   const Vec&         a_U,
                   const Vec&         a_b,
@@ -299,6 +322,11 @@ void NewtonSolver<Vec,Ops>::ParseParameters ()
     pp_newton.query("require_convergence", m_require_convergence);
     pp_newton.query("line_search",          m_use_line_search);
     pp_newton.query("line_search_max_halvings", m_line_search_max_halvings);
+    pp_newton.query("adaptive_forcing",    m_adaptive_forcing);
+    pp_newton.query("forcing_gamma",       m_forcing_gamma);
+    pp_newton.query("forcing_xi",          m_forcing_xi);
+    pp_newton.query("forcing_zeta_max",    m_forcing_zeta_max);
+    pp_newton.query("forcing_zeta_min",    m_forcing_zeta_min);
     pp_newton.query("diagnostic_file",     this->m_diagnostic_file);
     pp_newton.query("diagnostic_interval", this->m_diagnostic_interval);
 
@@ -306,7 +334,7 @@ void NewtonSolver<Vec,Ops>::ParseParameters ()
     pp_l.query("verbose_int",         m_linsol_verbose_int);
     pp_l.query("restart_length",      m_linsol_restart_length);
     pp_l.query("absolute_tolerance",  m_linsol_atol);
-    pp_l.query("relative_tolerance",  m_linsol_rtol);
+    if (pp_l.query("relative_tolerance", m_linsol_rtol)) { m_linsol_rtol_set = true; }
     pp_l.query("max_iterations",      m_linsol_maxits);
 
     /* backward compatibility */
@@ -314,7 +342,7 @@ void NewtonSolver<Vec,Ops>::ParseParameters ()
     pp_gmres.query("verbose_int",         m_linsol_verbose_int);
     pp_gmres.query("restart_length",      m_linsol_restart_length);
     pp_gmres.query("absolute_tolerance",  m_linsol_atol);
-    pp_gmres.query("relative_tolerance",  m_linsol_rtol);
+    if (pp_gmres.query("relative_tolerance", m_linsol_rtol)) { m_linsol_rtol_set = true; }
     pp_gmres.query("max_iterations",      m_linsol_maxits);
 
     const amrex::ParmParse pp_jac("jacobian");
@@ -345,6 +373,14 @@ void NewtonSolver<Vec,Ops>::Solve (Vec&         a_U,
     amrex::Real norm_abs = 0.;
     amrex::Real norm0 = 1._rt;
     amrex::Real norm_rel = 0.;
+
+    // Eisenstat-Walker adaptive forcing state: per-iteration GMRES relative
+    // tolerance zeta_k, plus the previous iteration's zeta and residual norm
+    // (Choice 2 with safeguards, Chacon JCP 2025 Eq. 21). With adaptive
+    // forcing off, linsol_rtol stays at the fixed m_linsol_rtol.
+    amrex::Real linsol_rtol = m_linsol_rtol;
+    amrex::Real zeta_prev = m_forcing_zeta_max;
+    amrex::Real norm_prev = 1._rt;
 
     int iter;
     int linear_solver_iters = 0;
@@ -403,9 +439,38 @@ void NewtonSolver<Vec,Ops>::Solve (Vec&         a_U,
         m_linear_function->setBaseRHS(m_R);
         m_linear_function->updatePreCondMat(a_U);
 
+        // Eisenstat-Walker Choice-2 forcing: set this iteration's GMRES
+        // relative tolerance from the observed nonlinear residual decrease.
+        if (m_adaptive_forcing) {
+            amrex::Real zeta;
+            if (iter == 0) {
+                // No residual history yet: start from zeta_max, unless the
+                // user pinned a fixed linear-solver relative tolerance (which
+                // is honored exactly, below the zeta_min floor if so pinned).
+                zeta = m_linsol_rtol_set ? m_linsol_rtol : m_forcing_zeta_max;
+            } else {
+                const amrex::Real eps_newton = m_rtol*norm0 + m_atol;
+                const amrex::Real zeta_A = m_forcing_gamma
+                    * std::pow(norm_abs/norm_prev, m_forcing_xi);
+                const amrex::Real zeta_B = std::min( m_forcing_zeta_max,
+                    std::max(zeta_A, m_forcing_gamma*std::pow(zeta_prev, m_forcing_xi)) );
+                zeta = std::min( m_forcing_zeta_max,
+                    std::max(zeta_B, m_forcing_gamma*eps_newton/norm_abs) );
+                zeta = std::max(zeta, m_forcing_zeta_min);
+            }
+            zeta_prev = zeta;
+            norm_prev = norm_abs;
+            linsol_rtol = zeta;
+            if (this->m_verbose) {
+                amrex::Print() << "Newton: adaptive forcing zeta = "
+                               << std::scientific << std::setprecision(5)
+                               << zeta << "\n";
+            }
+        }
+
         // Solve linear system for Newton step [Jac]*dU = F
         m_dU.zero();
-        m_linear_solver->solve( m_dU, m_F, m_linsol_rtol, m_linsol_atol );
+        m_linear_solver->solve( m_dU, m_F, linsol_rtol, m_linsol_atol );
         linear_solver_iters += m_linear_solver->getNumIters();
 
         // Update solution
