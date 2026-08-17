@@ -34,6 +34,17 @@
 #include <thread>
 #include <vector>
 
+#ifdef WARPX_USE_CUDSS
+#include <cudss.h>
+#define WARPX_CUDSS_CHECK(call)                                              \
+    do {                                                                     \
+        const cudssStatus_t _cudss_status = (call);                         \
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(                                    \
+            _cudss_status == CUDSS_STATUS_SUCCESS,                           \
+            "pc_block_banded cuDSS call failed: " #call);                    \
+    } while (0)
+#endif
+
 /**
  * \brief Block-banded direct preconditioner for the theta-implicit hybrid
  *  (generalized Ohm's law) solver in RZ geometry.
@@ -159,6 +170,29 @@ class BlockBandedPC : public Preconditioner<T,Ops>
          *  overlap -- stalls GMRES at large whistler CFL: the wave operator
          *  does not localize. Measured on 8/16-cell r-boxes at dt x8. */
         int m_overlap = 8;
+        /** Device direct solve via NVIDIA cuDSS (WarpX_CUDSS=ON builds):
+         *  the extracted band system is handed to cuDSS as CSR --
+         *  nested-dissection reordering cuts the factorization cost ~100x
+         *  vs the band ordering, and factor+solve run on the IOProcessor's
+         *  GPU with the solution Bcast (the redundant per-rank host
+         *  factorization disappears). precond.bb_device_solve, default on
+         *  when compiled in; requires a single system per rank (single box
+         *  or replicated-global mode). */
+#ifdef WARPX_USE_CUDSS
+        bool m_device_solve = true;
+        bool m_cudss_ready = false;
+        cudssHandle_t m_cudss_handle{};
+        cudssConfig_t m_cudss_config{};
+        cudssData_t m_cudss_data{};
+        cudssMatrix_t m_cudss_matrix{};
+        cudssMatrix_t m_cudss_rhs{};
+        cudssMatrix_t m_cudss_solution{};
+        std::vector<int> m_csr_rowptr, m_csr_colind;
+        std::vector<RT> m_csr_vals;
+        amrex::Gpu::DeviceVector<int> m_d_rowptr, m_d_colind;
+        amrex::Gpu::DeviceVector<RT> m_d_vals, m_d_rhs, m_d_sol;
+#endif
+
         /** Multi-box mode: -1 auto (replicated-global whenever the E
          *  BoxArray has more than one box), 0 per-box Schwarz (research
          *  knob), 1 force replicated-global. In global mode every rank
@@ -333,6 +367,27 @@ class BlockBandedPC : public Preconditioner<T,Ops>
         void ProbeAndFill (BoxSys& S);
         void FactorBox (BoxSys& S) const;
         void SolveBox (BoxSys& S) const;
+#ifdef WARPX_USE_CUDSS
+        bool BuildCSR (const BoxSys& S);
+        void CuDSSFactor (BoxSys& S);
+        void CuDSSSolve (BoxSys& S);
+#endif
+        [[nodiscard]] bool UseDeviceSolve () const
+        {
+#ifdef WARPX_USE_CUDSS
+            return m_device_solve && (m_sys.size() == 1)
+                && (m_global_on || amrex::ParallelDescriptor::NProcs() == 1);
+#else
+            return false;
+#endif
+        }
+        void SolveDispatch (BoxSys& S)
+        {
+#ifdef WARPX_USE_CUDSS
+            if (UseDeviceSolve()) { CuDSSSolve(S); return; }
+#endif
+            SolveBox(S);
+        }
         void SelfCheck (BoxSys& S, int isys) const;
 
     public:
@@ -440,6 +495,9 @@ void BlockBandedPC<T,Ops>::readParameters ()
     pp_precond.query("bb_wall_identity", m_wall_identity);
     pp_precond.query("bb_overlap", m_overlap);
     pp_precond.query("bb_global", m_global);
+#ifdef WARPX_USE_CUDSS
+    pp_precond.query("bb_device_solve", m_device_solve);
+#endif
 
     // The hybrid solver's GetThetaForPC() returns 0 (no implicit light
     // waves); read the actual time-centering directly.
@@ -1795,6 +1853,138 @@ void BlockBandedPC<T,Ops>::VerifyFD (const T& a_U)
 
 #endif  // WARPX_DIM_RZ
 
+#if defined(WARPX_DIM_RZ) && defined(WARPX_USE_CUDSS)
+
+template <class T, class Ops>
+bool BlockBandedPC<T,Ops>::BuildCSR (const BoxSys& S)
+{
+    // rows in the packed order (block-major); columns ascend because the
+    // block diagonals ascend and columns ascend within each block
+    std::vector<int> rp(S.ntot + 1);
+    std::vector<int> ci;
+    std::vector<RT> v;
+    ci.reserve(m_csr_colind.empty() ? std::size_t(S.ntot)*40 : m_csr_colind.size());
+    v.reserve(ci.capacity());
+    long row = 0;
+    for (int b = 0; b < S.nb; b++) {
+        for (int i = 0; i < S.bsz[b]; i++, row++) {
+            rp[row] = int(ci.size());
+            for (int d = 0; d <= 2*S.bw; d++) {
+                const int bc = b + d - S.bw;
+                if (bc < 0 || bc >= S.nb) { continue; }
+                const auto& A = S.blk[b][d];
+                if (A.empty()) { continue; }
+                const int ncol = S.bsz[bc];
+                const RT* ai = &A[std::size_t(i)*ncol];
+                const long cbase = S.boff[bc];
+                for (int j = 0; j < ncol; j++) {
+                    if (ai[j] != RT(0.0)) {
+                        ci.push_back(int(cbase + j));
+                        v.push_back(ai[j]);
+                    }
+                }
+            }
+        }
+    }
+    rp[S.ntot] = int(ci.size());
+    const bool pattern_changed =
+        (rp != m_csr_rowptr) || (ci != m_csr_colind);
+    m_csr_rowptr = std::move(rp);
+    m_csr_colind = std::move(ci);
+    m_csr_vals = std::move(v);
+    return pattern_changed;
+}
+
+template <class T, class Ops>
+void BlockBandedPC<T,Ops>::CuDSSFactor (BoxSys& S)
+{
+    BL_PROFILE("BlockBandedPC::CuDSSFactor()");
+    static_assert(std::is_same_v<amrex::Real, double>,
+        "the cuDSS pc_block_banded backend requires double-precision amrex::Real");
+    if (!amrex::ParallelDescriptor::IOProcessor()) { return; }
+
+    const bool pattern_changed = BuildCSR(S);
+    const auto nrows = static_cast<std::int64_t>(S.ntot);
+    const auto nnz = static_cast<std::int64_t>(m_csr_vals.size());
+
+    if (!m_cudss_ready || pattern_changed) {
+        if (m_cudss_ready) {
+            WARPX_CUDSS_CHECK(cudssMatrixDestroy(m_cudss_matrix));
+            WARPX_CUDSS_CHECK(cudssMatrixDestroy(m_cudss_rhs));
+            WARPX_CUDSS_CHECK(cudssMatrixDestroy(m_cudss_solution));
+            WARPX_CUDSS_CHECK(cudssDataDestroy(m_cudss_handle, m_cudss_data));
+            WARPX_CUDSS_CHECK(cudssDataCreate(m_cudss_handle, &m_cudss_data));
+        } else {
+            WARPX_CUDSS_CHECK(cudssCreate(&m_cudss_handle));
+            WARPX_CUDSS_CHECK(cudssSetStream(m_cudss_handle, amrex::Gpu::gpuStream()));
+            WARPX_CUDSS_CHECK(cudssConfigCreate(&m_cudss_config));
+            WARPX_CUDSS_CHECK(cudssDataCreate(m_cudss_handle, &m_cudss_data));
+        }
+        m_d_rowptr.resize(m_csr_rowptr.size());
+        m_d_colind.resize(m_csr_colind.size());
+        m_d_vals.resize(m_csr_vals.size());
+        m_d_rhs.resize(S.ntot);
+        m_d_sol.resize(S.ntot);
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, m_csr_rowptr.begin(),
+                              m_csr_rowptr.end(), m_d_rowptr.begin());
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, m_csr_colind.begin(),
+                              m_csr_colind.end(), m_d_colind.begin());
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, m_csr_vals.begin(),
+                              m_csr_vals.end(), m_d_vals.begin());
+        amrex::Gpu::streamSynchronize();
+        WARPX_CUDSS_CHECK(cudssMatrixCreateCsr(
+            &m_cudss_matrix, nrows, nrows, nnz,
+            m_d_rowptr.data(), nullptr, m_d_colind.data(), m_d_vals.data(),
+            CUDSS_R_32I, CUDSS_R_32I, CUDSS_R_64F,
+            CUDSS_MTYPE_GENERAL, CUDSS_MVIEW_FULL, CUDSS_BASE_ZERO));
+        WARPX_CUDSS_CHECK(cudssMatrixCreateDn(&m_cudss_rhs, nrows, 1, nrows,
+            m_d_rhs.data(), CUDSS_R_64F, CUDSS_LAYOUT_COL_MAJOR));
+        WARPX_CUDSS_CHECK(cudssMatrixCreateDn(&m_cudss_solution, nrows, 1, nrows,
+            m_d_sol.data(), CUDSS_R_64F, CUDSS_LAYOUT_COL_MAJOR));
+        WARPX_CUDSS_CHECK(cudssExecute(m_cudss_handle, CUDSS_PHASE_ANALYSIS,
+            m_cudss_config, m_cudss_data, m_cudss_matrix,
+            m_cudss_solution, m_cudss_rhs));
+        m_cudss_ready = true;
+        if (m_verbose) {
+            amrex::Print() << "pc_block_banded cuDSS: analysis done (n=" << nrows
+                << ", nnz=" << nnz << ")\n";
+        }
+    } else {
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, m_csr_vals.begin(),
+                              m_csr_vals.end(), m_d_vals.begin());
+        amrex::Gpu::streamSynchronize();
+        WARPX_CUDSS_CHECK(cudssMatrixSetValues(m_cudss_matrix, m_d_vals.data()));
+    }
+    WARPX_CUDSS_CHECK(cudssExecute(m_cudss_handle, CUDSS_PHASE_FACTORIZATION,
+        m_cudss_config, m_cudss_data, m_cudss_matrix,
+        m_cudss_solution, m_cudss_rhs));
+    amrex::Gpu::streamSynchronize();
+}
+
+template <class T, class Ops>
+void BlockBandedPC<T,Ops>::CuDSSSolve (BoxSys& S)
+{
+    BL_PROFILE("BlockBandedPC::CuDSSSolve()");
+    if (amrex::ParallelDescriptor::IOProcessor()) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_cudss_ready,
+            "pc_block_banded: CuDSSSolve() called before CuDSSFactor()");
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, S.x.begin(), S.x.end(),
+                              m_d_rhs.begin());
+        WARPX_CUDSS_CHECK(cudssExecute(m_cudss_handle, CUDSS_PHASE_SOLVE,
+            m_cudss_config, m_cudss_data, m_cudss_matrix,
+            m_cudss_solution, m_cudss_rhs));
+        amrex::Gpu::copyAsync(amrex::Gpu::deviceToHost, m_d_sol.begin(),
+                              m_d_sol.end(), S.x.begin());
+        amrex::Gpu::streamSynchronize();
+    }
+    if (amrex::ParallelDescriptor::NProcs() > 1) {
+        amrex::ParallelDescriptor::Bcast(S.x.data(), std::size_t(S.ntot),
+            amrex::ParallelDescriptor::IOProcessorNumber());
+    }
+}
+
+#endif  // WARPX_DIM_RZ && WARPX_USE_CUDSS
+
 template <class T, class Ops>
 void BlockBandedPC<T,Ops>::Update (const T& a_U)
 {
@@ -1831,7 +2021,12 @@ void BlockBandedPC<T,Ops>::Update (const T& a_U)
         blk_save.reserve(m_sys.size());
         for (auto& S : m_sys) { blk_save.push_back(S.blk); }
     }
-    for (auto& S : m_sys) { FactorBox(S); }
+    for (auto& S : m_sys) {
+#ifdef WARPX_USE_CUDSS
+        if (UseDeviceSolve()) { CuDSSFactor(S); continue; }
+#endif
+        FactorBox(S);
+    }
     const auto t2 = amrex::second();
     if (m_verify) {
         for (std::size_t s = 0; s < m_sys.size(); s++) {
@@ -1843,7 +2038,7 @@ void BlockBandedPC<T,Ops>::Update (const T& a_U)
                 r[i] = RT(h % 20011u)/RT(20011.0) - RT(0.5);
             }
             std::copy(r.begin(), r.end(), S.x.begin());
-            SolveBox(S);
+            SolveDispatch(S);
             std::vector<RT> w;
             ApplyBlocks(S, blk_save[s], S.x, w);
             RT num = RT(0.0), den = RT(0.0);
@@ -1975,7 +2170,7 @@ void BlockBandedPC<T,Ops>::Apply (T& a_x, const T& a_b)
                 S.x[S.boff[b] + locEz(S,b,j)] = hEz.get(i,j);
             }
         }
-        SolveBox(S);
+        SolveDispatch(S);
         // Every rank holds the identical global solution; write owned boxes.
         // The (b_local - b_gathered) pass-through keeps P nonsingular on the
         // duplicated-seam-DOF difference subspace: the true Jacobian acts as
@@ -2058,7 +2253,7 @@ void BlockBandedPC<T,Ops>::Apply (T& a_x, const T& a_b)
             }
         }
 
-        SolveBox(S);
+        SolveDispatch(S);
 
         // unpack solution over the FULL valid boxes (duplicated periodic
         // z-nodes get the wrapped value)
