@@ -10,6 +10,7 @@ AMREX_ENUM(PreconditionerType,
     pc_curl_curl_mlmg,
     pc_hybrid_pic,
     pc_jacobi,
+    pc_block_banded,
     pc_petsc,
     none
 );

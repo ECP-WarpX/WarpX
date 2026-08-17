@@ -137,6 +137,72 @@ public:
     /** Return the time-centering parameter theta (used by preconditioners) */
     [[nodiscard]] amrex::Real GetTheta () const { return m_theta; }
 
+    /**
+     * \brief Return the hybrid-PIC model for preconditioners that need the
+     * generalized Ohm's-law coefficients (n_floor, resistivity and
+     * hyper-resistivity parsers, Hall flags). Returns nullptr for solvers
+     * that do not carry a hybrid model.
+     */
+    virtual const HybridPICModel* GetHybridPICModel () const { return nullptr; }
+
+    /**
+     * \brief Return per-direction pointers to the theta-midpoint magnetic
+     * field B^{n+theta} on level lev for use in a preconditioner. Valid only
+     * after the first residual evaluation of the current Newton iterate has
+     * refreshed the field registry. Solvers that do not maintain a
+     * theta-midpoint B return nullptrs.
+     */
+    virtual amrex::Array<const amrex::MultiFab*, 3> GetBfieldThetaForPC (int lev) const
+    {
+        amrex::ignore_unused(lev);
+        return {nullptr, nullptr, nullptr};
+    }
+
+    /**
+     * \brief Return the charge density holding the midpoint deposit
+     * rho^{n+1/2} on level lev for use in a preconditioner (see the override
+     * for the component convention). Valid only after the first residual
+     * evaluation of the current Newton iterate has deposited it. Solvers
+     * that do not maintain a midpoint density return nullptr.
+     */
+    virtual const amrex::MultiFab* GetRhoMidForPC (int lev) const
+    {
+        amrex::ignore_unused(lev);
+        return nullptr;
+    }
+
+    /**
+     * \brief Return per-direction pointers to the ion (particle) current
+     * deposit consumed by the Ohm solve on level lev, for preconditioners
+     * that model the frozen motional/drift response (J - J_i) x delta_B.
+     * During Jacobian probes the deposits are frozen, so this is exactly
+     * the coefficient the linear solve sees. Solvers without an ion
+     * current return nullptrs.
+     */
+    virtual amrex::Array<const amrex::MultiFab*, 3> GetIonCurrentForPC (int lev) const
+    {
+        amrex::ignore_unused(lev);
+        return {nullptr, nullptr, nullptr};
+    }
+
+    /**
+     * \brief Apply deposited mass matrices to a vector field.
+     * Computes a_out += a_scale * S * (a_in - a_in_ref) [+ a_baseline],
+     * where S is the mass matrix, accumulating into a_out.
+     * If a_in_ref is null, a_in is used directly.
+     * If a_baseline is null, no baseline term is added.
+     * If a_zero_out_first is true, a_out is set to zero before accumulating,
+     * so that it holds the result of this operation only; otherwise the result
+     * is added on top of the existing contents of a_out.
+     */
+    void ApplyMassMatrices (
+        ablastr::fields::MultiLevelVectorField& a_out,
+        const ablastr::fields::MultiLevelVectorField& a_in,
+        const ablastr::fields::MultiLevelVectorField* a_in_ref = nullptr,
+        const ablastr::fields::MultiLevelVectorField* a_baseline = nullptr,
+        amrex::Real a_scale = 1.0,
+        bool a_zero_out_first = false );
+
     void ComputeJfromMassMatrices (bool a_J_from_MM_only);
 
     /**

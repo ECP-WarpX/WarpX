@@ -122,7 +122,29 @@ public:
      * extended device lambda to have public access. */
     void ApplyRhoResponseFromDivJ ();
 
-private:
+    /** The ion current deposit consumed by the Ohm solve (current_fp
+     *  registry) -- frozen during Jacobian probes, so it is the exact
+     *  drift-leg coefficient of the linear solve. */
+    amrex::Array<const amrex::MultiFab*, 3> GetIonCurrentForPC (int lev) const override;
+
+    /** The hybrid-PIC model (owned by WarpX, cached in Define): n_floor,
+     *  the resistivity and hyper-resistivity parsers, and the Hall flags
+     *  a Hall-aware preconditioner needs. */
+    const HybridPICModel* GetHybridPICModel () const override { return m_hybrid_pic_model; }
+
+    /** The theta-midpoint magnetic field B^{n+theta} (Bfield_fp registry).
+     *  Valid only after the first residual evaluation of the iterate. */
+    amrex::Array<const amrex::MultiFab*, 3> GetBfieldThetaForPC (int lev) const override;
+
+    /** The charge density holding the midpoint deposit rho^{n+1/2} in
+     *  component nComp()/2 (rho_fp registry). */
+    const amrex::MultiFab* GetRhoMidForPC (int lev) const override;
+
+    /** The ion current deposit consumed by the Ohm solve (current_fp
+     *  registry) -- frozen during Jacobian probes. */
+    amrex::Array<const amrex::MultiFab*, 3> GetIonCurrentForPC (int lev) const override;
+
+    private:
 
     /**
      * \brief Pointer to the hybrid-PIC model that computes E from Ohm's law.

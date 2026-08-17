@@ -1093,6 +1093,46 @@ void ThetaImplicitHybrid::UpdateWarpXFields ( const WarpXSolverVec&  a_E,
     m_WarpX->UpdateMagneticFieldAndApplyBCs( B_old, m_theta * m_dt, start_time );
 }
 
+
+amrex::Array<const amrex::MultiFab*, 3>
+ThetaImplicitHybrid::GetBfieldThetaForPC ( const int lev ) const
+{
+    // During the nonlinear solve, UpdateWarpXFields (called from every
+    // residual evaluation) leaves the Bfield_fp registry holding the TOTAL
+    // theta-midpoint field B^{n+theta} of the current iterate. Valid only
+    // after the first residual evaluation of the current Newton iterate;
+    // before that (and between steps) the registry holds the end-of-step
+    // totals B^{n+1} (= B^n at the next entry).
+    using ablastr::fields::Direction;
+    return { m_WarpX->m_fields.get(FieldType::Bfield_fp, Direction{0}, lev),
+             m_WarpX->m_fields.get(FieldType::Bfield_fp, Direction{1}, lev),
+             m_WarpX->m_fields.get(FieldType::Bfield_fp, Direction{2}, lev) };
+}
+
+const amrex::MultiFab*
+ThetaImplicitHybrid::GetRhoMidForPC ( const int lev ) const
+{
+    // The rho_fp registry carries two time slots of WarpX::ncomps
+    // components each; consumers read component nComp()/2 (the
+    // midpoint-position deposit rho^{n+1/2} of the current iterate,
+    // written by every residual evaluation). Valid only after the first
+    // residual evaluation of the current Newton iterate.
+    return m_WarpX->m_fields.get(FieldType::rho_fp, lev);
+}
+
+amrex::Array<const amrex::MultiFab*, 3>
+ThetaImplicitHybrid::GetIonCurrentForPC ( const int lev ) const
+{
+    // The Ohm solve consumes current_fp as the ion (particle) current;
+    // it is deposited each residual evaluation and frozen during Jacobian
+    // probes, so between preconditioner updates and the GMRES solve it
+    // holds exactly the frozen drift-leg coefficient (J - J_i) x delta_B.
+    using ablastr::fields::Direction;
+    return { m_WarpX->m_fields.get(FieldType::current_fp, Direction{0}, lev),
+             m_WarpX->m_fields.get(FieldType::current_fp, Direction{1}, lev),
+             m_WarpX->m_fields.get(FieldType::current_fp, Direction{2}, lev) };
+}
+
 void ThetaImplicitHybrid::FinishFieldUpdate( amrex::Real end_time )
 {
     BL_PROFILE("ThetaImplicitHybrid::FinishFieldUpdate()");

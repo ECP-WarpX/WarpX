@@ -12,6 +12,7 @@
 #include "HybridPICPC.H"
 #include "MatrixPC.H"
 #include "JacobiPC.H"
+#include "BlockBandedPC.H"
 #include "Utils/TextMsg.H"
 #include <AMReX_Config.H>
 #include <string>
@@ -169,6 +170,8 @@ void JacobianFunctionMF<T,Ops>::define ( const T& a_U,
             m_preCond = std::make_unique<HybridPICPC<T,Ops>>();
         } else if (m_pc_type == PreconditionerType::pc_jacobi) {
             m_preCond = std::make_unique<JacobiPC<T,Ops>>();
+        } else if (m_pc_type == PreconditionerType::pc_block_banded) {
+            m_preCond = std::make_unique<BlockBandedPC<T,Ops>>();
         } else {
             m_preCond = std::make_unique<MatrixPC<T,Ops>>();
             m_preCond->setName(amrex::getEnumNameString(m_pc_type));
