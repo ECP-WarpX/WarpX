@@ -154,6 +154,20 @@ class BlockBandedPC : public Preconditioner<T,Ops>
         /** PEC-wall treatment: -1 auto (from the upper-r field BC),
          *  0 off (plain truncation), 1 force on. */
         int m_wall_identity = -1;
+        /** Restricted-additive-Schwarz overlap depth (cells) in r at box
+         *  seams (Schwarz mode only). Dirichlet-truncated Schwarz -- any
+         *  overlap -- stalls GMRES at large whistler CFL: the wave operator
+         *  does not localize. Measured on 8/16-cell r-boxes at dt x8. */
+        int m_overlap = 8;
+        /** Multi-box mode: -1 auto (replicated-global whenever the E
+         *  BoxArray has more than one box), 0 per-box Schwarz (research
+         *  knob), 1 force replicated-global. In global mode every rank
+         *  gathers the domain-wide coefficients (MB-scale), assembles and
+         *  factors the SAME global band system redundantly, solves the
+         *  gathered RHS redundantly per apply, and writes its owned boxes
+         *  -- no seams, identical counts to a single-box run. */
+        int m_global = -1;
+        bool m_global_on = false;
 
         Ops* m_ops = nullptr;
         int m_num_amr_levels = 0;
@@ -238,13 +252,17 @@ class BlockBandedPC : public Preconditioner<T,Ops>
         /** Per-box block-banded system + frozen coefficients + scratch. */
         struct BoxSys
         {
-            int rlo=0, rhi=0, zlo=0, zhi=0;
+            int rlo=0, rhi=0, zlo=0, zhi=0;   // owned cell extents
+            int rlo_s=0, rhi_s=0;              // system cell extents (owned
+                                               // + restricted-additive-Schwarz
+                                               // overlap into r neighbors)
             int nrc=0, nzc=0, nzn=0;
             bool zwrap=false, has_axis=false;
-            bool wall_pec=false;   // this box owns a PEC upper-r wall
+            bool wall_pec=false;   // this system reaches a PEC upper-r wall
             int wall_node=0;       // global r-node index of that wall
             int nb=0;
-            int bw=2;
+            int bw=2;    // allocated half-bandwidth (probing budget)
+            int bwf=2;   // effective half-bandwidth (trimmed after harvest)
             std::vector<int> bsz;
             std::vector<long> boff;
             long ntot=0;
@@ -271,11 +289,46 @@ class BlockBandedPC : public Preconditioner<T,Ops>
 
         std::vector<BoxSys> m_sys;
 
+        // ghost-padded copies for the RAS overlap: coefficients (filled per
+        // rebuild) and the per-apply RHS staging (filled per Apply)
+        amrex::Array<amrex::MultiFab,3> m_Bpad;
+        amrex::MultiFab m_rhopad;
+        amrex::Array<amrex::MultiFab,3> m_Jipad;
+        amrex::Array<amrex::MultiFab,3> m_bpad;
+        bool m_pads_defined = false;
+
         // geometry facts (level 0)
         RT m_dr = 1.0, m_dz = 1.0, m_rmin = 0.0;
 
+        /** Bounds-checked host read of a (possibly device) fab copied to
+         *  pinned memory; small helper built in GatherCoefficients. */
+        struct HostFab
+        {
+            std::vector<RT> v;
+            amrex::Box bx;
+            int ncomp=1;
+            [[nodiscard]] RT get (int i, int j, int n=0) const
+            {
+                const amrex::IntVect iv(i,j);
+                if (!bx.contains(iv)) { return RT(0.0); }
+                const auto lo = bx.smallEnd();
+                const auto len = bx.size();
+                const long p = long(i-lo[0]) + long(len[0])*(long(j-lo[1])
+                              + long(len[1])*long(n));
+                return v[p];
+            }
+        };
+        static void CopyFabToHost (const amrex::MultiFab& mf,
+                                   const amrex::MFIter& mfi, HostFab& h);
+
         void BuildSystems (const T& a_U);
         void GatherCoefficients (const T& a_U);
+        void FillCoeffs (BoxSys& S,
+            const HostFab& hBr, const HostFab& hBt, const HostFab& hBz,
+            const HostFab& hRho, const HostFab& hJir, const HostFab& hJit,
+            const HostFab& hJiz, bool have_ji);
+        void GatherGlobal (const amrex::MultiFab& src, int scomp,
+                           HostFab& out, int ng) const;
         void ApplyFrozenBox (BoxSys& S) const;
         void ProbeAndFill (BoxSys& S);
         void FactorBox (BoxSys& S) const;
@@ -355,26 +408,7 @@ class BlockBandedPC : public Preconditioner<T,Ops>
 #endif
         }
 
-        /** Bounds-checked host read of a (possibly device) fab copied to
-         *  pinned memory; small helper built in GatherCoefficients. */
-        struct HostFab
-        {
-            std::vector<RT> v;
-            amrex::Box bx;
-            int ncomp=1;
-            [[nodiscard]] RT get (int i, int j, int n=0) const
-            {
-                const amrex::IntVect iv(i,j);
-                if (!bx.contains(iv)) { return RT(0.0); }
-                const auto lo = bx.smallEnd();
-                const auto len = bx.size();
-                const long p = long(i-lo[0]) + long(len[0])*(long(j-lo[1])
-                              + long(len[1])*long(n));
-                return v[p];
-            }
-        };
-        static void CopyFabToHost (const amrex::MultiFab& mf,
-                                   const amrex::MFIter& mfi, HostFab& h);
+
 #endif
 };
 
@@ -404,6 +438,8 @@ void BlockBandedPC<T,Ops>::readParameters ()
     pp_precond.query("bb_verify", m_verify);
     pp_precond.query("bb_max_mem_gb", m_max_mem_gb);
     pp_precond.query("bb_wall_identity", m_wall_identity);
+    pp_precond.query("bb_overlap", m_overlap);
+    pp_precond.query("bb_global", m_global);
 
     // The hybrid solver's GetThetaForPC() returns 0 (no implicit light
     // waves); read the actual time-centering directly.
@@ -490,15 +526,31 @@ void BlockBandedPC<T,Ops>::BuildSystems (const T& a_U)
     m_sys.clear();
     double mem_gb = 0.0;
 
-    for (MFIter mfi(Ermf); mfi.isValid(); ++mfi) {
-        // cell box of this grid (Er is (cell r, node z): enclosedCells
-        // recovers the cell box)
-        const Box cbx = amrex::enclosedCells(mfi.validbox());
+    // multi-box mode resolution: replicated-global by default whenever the
+    // decomposition splits the domain (Dirichlet-truncated Schwarz stalls
+    // GMRES on the whistler operator; see the class doc)
+    const int nboxes_global = int(Ermf.boxArray().size());
+    m_global_on = (m_global > 0) || (m_global < 0 && nboxes_global > 1);
+
+    amrex::Vector<Box> sysboxes;
+    if (m_global_on) {
+        sysboxes.push_back(dom);
+    } else {
+        for (MFIter mfi(Ermf); mfi.isValid(); ++mfi) {
+            sysboxes.push_back(amrex::enclosedCells(mfi.validbox()));
+        }
+    }
+
+    for (const Box& cbx : sysboxes) {
 
         BoxSys S;
         S.rlo = cbx.smallEnd(0); S.rhi = cbx.bigEnd(0);
         S.zlo = cbx.smallEnd(1); S.zhi = cbx.bigEnd(1);
-        S.nrc = S.rhi - S.rlo + 1;
+        // restricted-additive-Schwarz overlap: the assembled system extends
+        // into r neighbors; only owned rows are written back in Apply
+        S.rlo_s = std::max(S.rlo - m_overlap, dom.smallEnd(0));
+        S.rhi_s = std::min(S.rhi + m_overlap, dom.bigEnd(0));
+        S.nrc = S.rhi_s - S.rlo_s + 1;
         S.nzc = S.zhi - S.zlo + 1;
         S.zwrap = zper && (S.nzc == znD);
         S.nzn = S.zwrap ? S.nzc : S.nzc + 1;
@@ -516,7 +568,7 @@ void BlockBandedPC<T,Ops>::BuildSystems (const T& a_U)
             const bool wall_on = (m_wall_identity < 0) ? bc_is_pec
                                                        : (m_wall_identity > 0);
             S.wall_node = dom.bigEnd(0) + 1;
-            S.wall_pec = wall_on && (S.rhi == dom.bigEnd(0));
+            S.wall_pec = wall_on && (S.rhi_s == dom.bigEnd(0));
         }
         S.nb = S.nrc + 1;
 
@@ -529,33 +581,33 @@ void BlockBandedPC<T,Ops>::BuildSystems (const T& a_U)
 
         const bool ax = S.has_axis;
         const int rpad = 3;
-        const int rNodeLo = std::max(S.rlo - rpad, 0);
-        const int rCellLo = std::max(S.rlo - rpad, 0);
+        const int rNodeLo = std::max(S.rlo_s - rpad, 0);
+        const int rCellLo = std::max(S.rlo_s - rpad, 0);
         // r index clipping above is only physical at the domain top; box-level
         // truncation is fine for coefficient windows too (zero reads).
-        const int rCellHi = std::min(S.rhi + rpad, dom.bigEnd(0));
-        const int rNodeHi = std::min(S.rhi + 1 + rpad, dom.bigEnd(0) + 1);
+        const int rCellHi = std::min(S.rhi_s + rpad, dom.bigEnd(0));
+        const int rNodeHi = std::min(S.rhi_s + 1 + rpad, dom.bigEnd(0) + 1);
 
         // nodal coefficient windows (nodes in r AND z)
-        S.B0rn.define (S.rlo, S.rhi+1, znlo, znhi, zw, zn, 0, RT(1.0), false);
-        S.B0tn.define (S.rlo, S.rhi+1, znlo, znhi, zw, zn, 0, RT(1.0), false);
-        S.B0zn.define (S.rlo, S.rhi+1, znlo, znhi, zw, zn, 0, RT(1.0), false);
-        S.Je0rn.define(S.rlo, S.rhi+1, znlo, znhi, zw, zn, 0, RT(1.0), false);
-        S.Je0tn.define(S.rlo, S.rhi+1, znlo, znhi, zw, zn, 0, RT(1.0), false);
-        S.Je0zn.define(S.rlo, S.rhi+1, znlo, znhi, zw, zn, 0, RT(1.0), false);
+        S.B0rn.define (S.rlo_s, S.rhi_s+1, znlo, znhi, zw, zn, 0, RT(1.0), false);
+        S.B0tn.define (S.rlo_s, S.rhi_s+1, znlo, znhi, zw, zn, 0, RT(1.0), false);
+        S.B0zn.define (S.rlo_s, S.rhi_s+1, znlo, znhi, zw, zn, 0, RT(1.0), false);
+        S.Je0rn.define(S.rlo_s, S.rhi_s+1, znlo, znhi, zw, zn, 0, RT(1.0), false);
+        S.Je0tn.define(S.rlo_s, S.rhi_s+1, znlo, znhi, zw, zn, 0, RT(1.0), false);
+        S.Je0zn.define(S.rlo_s, S.rhi_s+1, znlo, znhi, zw, zn, 0, RT(1.0), false);
 
         // row coefficient windows (per E-component stagger)
-        S.etaEr.define (S.rlo, S.rhi,   znlo, znhi, zw, zn, 0, RT(1.0), false);
-        S.etaEt.define (S.rlo, S.rhi+1, znlo, znhi, zw, zn, 0, RT(1.0), false);
-        S.etaEz.define (S.rlo, S.rhi+1, zclo, zchi, zw, zn, 0, RT(1.0), false);
+        S.etaEr.define (S.rlo_s, S.rhi_s,   znlo, znhi, zw, zn, 0, RT(1.0), false);
+        S.etaEt.define (S.rlo_s, S.rhi_s+1, znlo, znhi, zw, zn, 0, RT(1.0), false);
+        S.etaEz.define (S.rlo_s, S.rhi_s+1, zclo, zchi, zw, zn, 0, RT(1.0), false);
         S.etahEr = S.etaEr; S.etahEt = S.etaEt; S.etahEz = S.etaEz;
         S.irhoEr = S.etaEr; S.irhoEt = S.etaEt; S.irhoEz = S.etaEz;
         S.adEr = S.etaEr;   S.adEt = S.etaEt;   S.adEz = S.etaEz;
 
         // scratch: inputs (valid DOF windows), stages (padded windows)
-        S.inEr.define(S.rlo, S.rhi,   znlo, znhi, zw, zn, 0, RT(1.0), false);
-        S.inEt.define(S.rlo, S.rhi+1, znlo, znhi, zw, zn, 0, RT(1.0), false);
-        S.inEz.define(S.rlo, S.rhi+1, zclo, zchi, zw, zn, 0, RT(1.0), false);
+        S.inEr.define(S.rlo_s, S.rhi_s,   znlo, znhi, zw, zn, 0, RT(1.0), false);
+        S.inEt.define(S.rlo_s, S.rhi_s+1, znlo, znhi, zw, zn, 0, RT(1.0), false);
+        S.inEz.define(S.rlo_s, S.rhi_s+1, zclo, zchi, zw, zn, 0, RT(1.0), false);
         // delta-B: Br (node r, cell z) odd; Bt (cell, cell) odd; Bz (cell, node z) even
         S.dBr.define(rNodeLo, rNodeHi, zclo, zchi, zw, zn, 1, RT(-1.0), ax);
         S.dBt.define(rCellLo, rCellHi, zclo, zchi, zw, zn, 2, RT(-1.0), ax);
@@ -577,12 +629,12 @@ void BlockBandedPC<T,Ops>::BuildSystems (const T& a_U)
             S.dJr.define(rCellLo, S.wall_node, znlo, znhi, zw, zn, 2, RT(-1.0), ax);
         }
         // nodal enE over row-reachable nodes
-        S.enR.define(S.rlo, S.rhi+1, znlo, znhi, zw, zn, 0, RT(1.0), false);
+        S.enR.define(S.rlo_s, S.rhi_s+1, znlo, znhi, zw, zn, 0, RT(1.0), false);
         S.enT = S.enR; S.enZ = S.enR;
         // outputs = row windows
-        S.oEr.define(S.rlo, S.rhi,   zw ? S.zlo : S.zlo, zw ? S.zhi : S.zhi+1, zw, zn, 0, RT(1.0), false);
-        S.oEt.define(S.rlo, S.rhi+1, zw ? S.zlo : S.zlo, zw ? S.zhi : S.zhi+1, zw, zn, 0, RT(1.0), false);
-        S.oEz.define(S.rlo, S.rhi+1, S.zlo, S.zhi, zw, zn, 0, RT(1.0), false);
+        S.oEr.define(S.rlo_s, S.rhi_s,   zw ? S.zlo : S.zlo, zw ? S.zhi : S.zhi+1, zw, zn, 0, RT(1.0), false);
+        S.oEt.define(S.rlo_s, S.rhi_s+1, zw ? S.zlo : S.zlo, zw ? S.zhi : S.zhi+1, zw, zn, 0, RT(1.0), false);
+        S.oEz.define(S.rlo_s, S.rhi_s+1, S.zlo, S.zhi, zw, zn, 0, RT(1.0), false);
 
         S.bsz.resize(S.nb);
         S.boff.resize(S.nb);
@@ -613,6 +665,32 @@ void BlockBandedPC<T,Ops>::BuildSystems (const T& a_U)
         "pc_block_banded: block storage estimate exceeds precond.bb_max_mem_gb"
         " -- this grid's z-lines are too long for dense z-blocks on this rank"
         " (decompose in r, or raise the limit)");
+
+    // ghost-padded staging for the RAS overlap: coefficient copies deep
+    // enough to cover the extended system windows, and a per-apply RHS copy
+    // (Schwarz mode only; global mode gathers instead)
+    if (!m_pads_defined && !m_global_on) {
+        const amrex::IntVect ngc(m_overlap + 4);
+        const amrex::IntVect ngb(m_overlap + 2);
+        const auto B_mfs = m_ops->GetBfieldThetaForPC(0);
+        const MultiFab* rho_mf = m_ops->GetRhoMidForPC(0);
+        const auto Ji_mfs = m_ops->GetIonCurrentForPC(0);
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            (B_mfs[0] != nullptr) && (rho_mf != nullptr),
+            "pc_block_banded: theta-stage B / midpoint rho not available");
+        for (int d = 0; d < 3; d++) {
+            m_Bpad[d].define(B_mfs[d]->boxArray(),
+                             B_mfs[d]->DistributionMap(), 1, ngc);
+            if (Ji_mfs[d] != nullptr) {
+                m_Jipad[d].define(Ji_mfs[d]->boxArray(),
+                                  Ji_mfs[d]->DistributionMap(), 1, ngc);
+            }
+            m_bpad[d].define(u_mfarrvec[0][d]->boxArray(),
+                             u_mfarrvec[0][d]->DistributionMap(), 1, ngb);
+        }
+        m_rhopad.define(rho_mf->boxArray(), rho_mf->DistributionMap(), 1, ngc);
+        m_pads_defined = true;
+    }
 
     if (m_verbose) {
         amrex::AllPrint() << "pc_block_banded: rank " << amrex::ParallelDescriptor::MyProc()
@@ -806,10 +884,123 @@ void BlockBandedPC<T,Ops>::ApplyFrozenBox (BoxSys& S) const
 }
 
 template <class T, class Ops>
+void BlockBandedPC<T,Ops>::GatherGlobal (const amrex::MultiFab& src, int scomp,
+                                         HostFab& out, int ng) const
+{
+    using namespace amrex;
+    const auto& geom = m_ops->GetGeometry(0);
+    const Box dombx = amrex::convert(geom.Domain(), src.ixType());
+    BoxArray ba(dombx);
+    DistributionMapping dm(Vector<int>{0});
+    MultiFab g(ba, dm, 1, ng);
+    if (ParallelDescriptor::MyProc() == 0) { g.setVal(RT(0.0)); }
+    g.ParallelCopy(src, scomp, 0, 1, src.nGrowVect(), IntVect(ng),
+                   geom.periodicity());
+    g.FillBoundary(geom.periodicity());
+    out.bx = amrex::grow(dombx, ng);
+    out.ncomp = 1;
+    const std::size_t n = std::size_t(out.bx.numPts());
+    out.v.assign(n, RT(0.0));
+    for (MFIter mfi(g); mfi.isValid(); ++mfi) {
+        const auto& fab = g[mfi];
+#ifdef AMREX_USE_GPU
+        amrex::Gpu::dtoh_memcpy(out.v.data(), fab.dataPtr(),
+                                n*sizeof(amrex::Real));
+#else
+        std::copy_n(fab.dataPtr(), n, out.v.data());
+#endif
+    }
+    ParallelDescriptor::Bcast(out.v.data(), n,
+        ParallelDescriptor::IOProcessorNumber());
+}
+
+template <class T, class Ops>
 void BlockBandedPC<T,Ops>::GatherCoefficients (const T& a_U)
 {
     using namespace amrex;
     using warpx::fields::FieldType;
+
+    const MultiFab* rho_check = m_ops->GetRhoMidForPC(0);
+    amrex::ignore_unused(rho_check);
+    const auto B_mfs = m_ops->GetBfieldThetaForPC(0);
+    const MultiFab* rho_mf = m_ops->GetRhoMidForPC(0);
+    const auto Ji_mfs = m_ops->GetIonCurrentForPC(0);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        (B_mfs[0] != nullptr) && (rho_mf != nullptr),
+        "pc_block_banded: theta-stage B / midpoint rho not available");
+    const int rho_mid_comp = rho_mf->nComp()/2;
+
+    // stage the frozen coefficients into the overlap-deep padded copies
+    // (imports the sources' physically-filled ghosts, then refreshes the
+    // interior/periodic ghost rings)
+    const auto& geom0 = m_ops->GetGeometry(0);
+    const auto& period0 = geom0.periodicity();
+    const bool have_ji_glob = (Ji_mfs[0] != nullptr);
+    if (!m_global_on) {
+    for (int d = 0; d < 3; d++) {
+        m_Bpad[d].setVal(RT(0.0));
+        m_Bpad[d].ParallelCopy(*B_mfs[d], 0, 0, 1,
+            B_mfs[d]->nGrowVect(), m_Bpad[d].nGrowVect(), period0);
+        m_Bpad[d].FillBoundary(period0);
+        if (have_ji_glob) {
+            m_Jipad[d].setVal(RT(0.0));
+            m_Jipad[d].ParallelCopy(*Ji_mfs[d], 0, 0, 1,
+                Ji_mfs[d]->nGrowVect(), m_Jipad[d].nGrowVect(), period0);
+            m_Jipad[d].FillBoundary(period0);
+        }
+    }
+    m_rhopad.setVal(RT(0.0));
+    m_rhopad.ParallelCopy(*rho_mf, rho_mid_comp, 0, 1,
+        rho_mf->nGrowVect(), m_rhopad.nGrowVect(), period0);
+    m_rhopad.FillBoundary(period0);
+    }
+
+    auto& u_mfarrvec = a_U.getArrayVec();
+    const MultiFab& Ermf = *(u_mfarrvec[0][0]);
+
+    if (m_global) {
+        // replicated global system: gather each coefficient field onto a
+        // domain-spanning host buffer on every rank
+        HostFab hBr, hBt, hBz, hRho, hJir, hJit, hJiz;
+        GatherGlobal(*B_mfs[0], 0, hBr, 3);
+        GatherGlobal(*B_mfs[1], 0, hBt, 3);
+        GatherGlobal(*B_mfs[2], 0, hBz, 3);
+        GatherGlobal(*rho_mf, rho_mid_comp, hRho, 3);
+        if (have_ji_glob) {
+            GatherGlobal(*Ji_mfs[0], 0, hJir, 3);
+            GatherGlobal(*Ji_mfs[1], 0, hJit, 3);
+            GatherGlobal(*Ji_mfs[2], 0, hJiz, 3);
+        }
+        FillCoeffs(m_sys[0], hBr, hBt, hBz, hRho, hJir, hJit, hJiz,
+                   have_ji_glob);
+        return;
+    }
+
+    int isys = 0;
+    for (MFIter mfi(Ermf); mfi.isValid(); ++mfi, ++isys) {
+        BoxSys& S = m_sys[isys];
+        HostFab hBr, hBt, hBz, hRho, hJir, hJit, hJiz;
+        CopyFabToHost(m_Bpad[0], mfi, hBr);
+        CopyFabToHost(m_Bpad[1], mfi, hBt);
+        CopyFabToHost(m_Bpad[2], mfi, hBz);
+        CopyFabToHost(m_rhopad, mfi, hRho);
+        const bool have_ji = have_ji_glob;
+        if (have_ji) {
+            CopyFabToHost(m_Jipad[0], mfi, hJir);
+            CopyFabToHost(m_Jipad[1], mfi, hJit);
+            CopyFabToHost(m_Jipad[2], mfi, hJiz);
+        }
+        FillCoeffs(S, hBr, hBt, hBz, hRho, hJir, hJit, hJiz, have_ji);
+    }
+}
+
+template <class T, class Ops>
+void BlockBandedPC<T,Ops>::FillCoeffs (BoxSys& S,
+    const HostFab& hBr, const HostFab& hBt, const HostFab& hBz,
+    const HostFab& hRho, const HostFab& hJir, const HostFab& hJit,
+    const HostFab& hJiz, bool have_ji)
+{
+    using namespace amrex;
 
     const HybridPICModel* hybrid = m_ops->GetHybridPICModel();
     const RT rho_floor = static_cast<RT>(hybrid->m_n_floor * PhysConst::q_e);
@@ -833,39 +1024,14 @@ void BlockBandedPC<T,Ops>::GatherCoefficients (const T& a_U)
     const RT mu0 = static_cast<RT>(PhysConst::mu0);
     const RT dr = m_dr, dz = m_dz, rmin = m_rmin;
 
-    const auto B_mfs = m_ops->GetBfieldThetaForPC(0);
-    const MultiFab* rho_mf = m_ops->GetRhoMidForPC(0);
-    const auto Ji_mfs = m_ops->GetIonCurrentForPC(0);
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        (B_mfs[0] != nullptr) && (rho_mf != nullptr),
-        "pc_block_banded: theta-stage B / midpoint rho not available");
-    const int rho_mid_comp = rho_mf->nComp()/2;
-
-    auto& u_mfarrvec = a_U.getArrayVec();
-    const MultiFab& Ermf = *(u_mfarrvec[0][0]);
-
-    int isys = 0;
-    for (MFIter mfi(Ermf); mfi.isValid(); ++mfi, ++isys) {
-        BoxSys& S = m_sys[isys];
+    {
         const bool zw = S.zwrap; const int zn = S.nzc;
         const bool ax = S.has_axis;
 
-        HostFab hBr, hBt, hBz, hRho, hJir, hJit, hJiz;
-        CopyFabToHost(*B_mfs[0], mfi, hBr);
-        CopyFabToHost(*B_mfs[1], mfi, hBt);
-        CopyFabToHost(*B_mfs[2], mfi, hBz);
-        CopyFabToHost(*rho_mf, mfi, hRho);
-        const bool have_ji = (Ji_mfs[0] != nullptr);
-        if (have_ji) {
-            CopyFabToHost(*Ji_mfs[0], mfi, hJir);
-            CopyFabToHost(*Ji_mfs[1], mfi, hJit);
-            CopyFabToHost(*Ji_mfs[2], mfi, hJiz);
-        }
-
         // staggered B0 windows with parity mirrors (for J0 and nodal B0)
         PArr B0r, B0t, B0z;
-        const int rNodeLo = std::max(S.rlo-3, 0), rCellLo = std::max(S.rlo-3, 0);
-        const int rCellHi = S.rhi+3, rNodeHi = S.rhi+4;
+        const int rNodeLo = std::max(S.rlo_s-3, 0), rCellLo = std::max(S.rlo_s-3, 0);
+        const int rCellHi = S.rhi_s+3, rNodeHi = S.rhi_s+4;
         const int zclo = S.dBt.jlo, zchi = S.dBt.jhi;
         const int znlo = S.dBz.jlo, znhi = S.dBz.jhi;
         B0r.define(rNodeLo, rNodeHi, zclo, zchi, zw, zn, 1, RT(-1.0), ax);
@@ -953,7 +1119,7 @@ void BlockBandedPC<T,Ops>::GatherCoefficients (const T& a_U)
         // row coefficients per E-component stagger. rho is nodal (single
         // valid slot pair; midpoint deposit is component rho_mid_comp).
         auto rho_nodal = [&](int i, int j) -> RT {
-            return hRho.get(i, j, rho_mid_comp);
+            return hRho.get(i, j, 0);
         };
         auto row_coeffs = [&](int comp, int i, int j, PArr& eta_a, PArr& etah_a,
                               PArr& irho_a, PArr& ad_a)
@@ -1058,48 +1224,12 @@ void BlockBandedPC<T,Ops>::ProbeAndFill (BoxSys& S)
     const PArr* colw[3] = { &S.oEr, &S.oEt, &S.oEz };
     PArr* inw[3] = { &S.inEr, &S.inEt, &S.inEz };
 
-    // ---- pass 1: measure the r (block) and z reach ----
-    // one probe per component, lit points spaced 8 in r and z; SP = 8
-    // resolves reaches up to 4 unambiguously, so reach > 3 is detectable
+    // Allocate at the probing bandwidth budget (3); the effective band is
+    // trimmed after harvest from what actually landed. (A pre-measurement
+    // pass is unreliable on narrow boxes, where the only couplings at a
+    // given reach can run through killed wall columns.)
     const int SP = 8;
-    int bw = 1;
-    int zreach_bad = 0;
-    for (int pc = 0; pc < 3; pc++) {
-        S.inEr.setzero(); S.inEt.setzero(); S.inEz.setzero();
-        const PArr& cw = *colw[pc];
-        for (int i = cw.ilo; i <= cw.ihi; i += SP) {
-            for (int j = cw.jlo; j <= cw.jhi; j += SP) {
-                inw[pc]->ref(i,j) = RT(1.0);
-            }
-        }
-        ApplyFrozenBox(S);
-        auto scan = [&](const PArr& out) {
-            for (int i = out.ilo; i <= out.ihi; i++) {
-                int di = (i - cw.ilo) % SP; if (di < 0) { di += SP; }
-                const int rreach = std::min(di, SP - di);
-                for (int j = out.jlo; j <= out.jhi; j++) {
-                    if (out.get(i,j) == RT(0.0)) { continue; }
-                    if (rreach > 3) { bw = 99; }
-                    else if (rreach >= 2) { bw = std::max(bw, rreach); }
-                    // z-reach: distance to the nearest lit z within this
-                    // row's window (lit pattern is z-independent per column).
-                    // Only meaningful when the modular pattern is uniform --
-                    // wrapped boxes with nzc % SP != 0 break it at the seam
-                    // (the extraction self-check backstops those).
-                    if (!S.zwrap || (S.nzc % SP == 0)) {
-                        int dj = (j - cw.jlo) % SP; if (dj < 0) { dj += SP; }
-                        const int zr = std::min(dj, SP - dj);
-                        if (zr > 3) { zreach_bad = std::max(zreach_bad, zr); }
-                    }
-                }
-            }
-        };
-        scan(S.oEr); scan(S.oEt); scan(S.oEz);
-    }
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(bw <= 3 && zreach_bad == 0,
-        "pc_block_banded: operator reach exceeds the probing budget "
-        "(r-block or z distance > 3) -- extraction would alias");
-    S.bw = bw;
+    S.bw = 3;
 
     // ---- allocate blocks ----
     S.blk.assign(S.nb, {});
@@ -1147,7 +1277,7 @@ void BlockBandedPC<T,Ops>::ProbeAndFill (BoxSys& S)
 
                 // for every lit column, harvest the rows in its window
                 for (int ci = cw.ilo + pr; ci <= cw.ihi; ci += SP) {
-                    const int bcol = ci - S.rlo;
+                    const int bcol = ci - S.rlo_s;
                     const int ncol = S.bsz[bcol];
                     for (int cj = cw.jlo + pz; cj <= cw.jhi; cj += SZ) {
                         int lcol;
@@ -1158,7 +1288,7 @@ void BlockBandedPC<T,Ops>::ProbeAndFill (BoxSys& S)
                         auto harvest = [&](const PArr& out, int rcomp) {
                             for (int io = std::max(out.ilo, ci - S.bw);
                                  io <= std::min(out.ihi, ci + S.bw); io++) {
-                                const int brow = io - S.rlo;
+                                const int brow = io - S.rlo_s;
                                 const int d = bcol - brow + S.bw;
                                 if (d < 0 || d > 2*S.bw) { continue; }
                                 auto& blkv = S.blk[brow][d];
@@ -1186,6 +1316,21 @@ void BlockBandedPC<T,Ops>::ProbeAndFill (BoxSys& S)
             }
         }
     }
+
+    // trim the effective bandwidth: drop outer block diagonals that are
+    // entirely zero (FactorBox/SolveBox/ApplyBlocks loop to S.bwf)
+    int bwf = 1;
+    for (int b = 0; b < S.nb; b++) {
+        for (int d = 0; d <= 2*S.bw; d++) {
+            const int reach = std::abs(d - S.bw);
+            if (reach <= bwf) { continue; }
+            const auto& A = S.blk[b][d];
+            for (const RT v : A) {
+                if (v != RT(0.0)) { bwf = reach; break; }
+            }
+        }
+    }
+    S.bwf = bwf;
 }
 
 // ---------------- dense kernels (row-major) ----------------
@@ -1365,11 +1510,11 @@ void BlockBandedPC<T,Ops>::FactorBox (BoxSys& S) const
     for (int b = 0; b < S.nb; b++) {
         auto& D = S.blk[b][S.bw];
         lu_factor(S.bsz[b], D.data(), S.piv[b].data());
-        for (int l = 1; l <= S.bw && b + l < S.nb; l++) {
+        for (int l = 1; l <= S.bwf && b + l < S.nb; l++) {
             auto& L = S.blk[b+l][S.bw - l];   // row b+l, col b
             if (L.empty()) { continue; }
             solve_right(S.bsz[b+l], S.bsz[b], L.data(), D.data(), S.piv[b].data());
-            for (int m = 1; m <= S.bw && b + m < S.nb; m++) {
+            for (int m = 1; m <= S.bwf && b + m < S.nb; m++) {
                 auto& U = S.blk[b][S.bw + m];     // row b, col b+m
                 if (U.empty()) { continue; }
                 auto& C = S.blk[b+l][S.bw - l + m]; // row b+l, col b+m
@@ -1387,7 +1532,7 @@ void BlockBandedPC<T,Ops>::SolveBox (BoxSys& S) const
     RT* x = S.x.data();
     // forward (unit block lower)
     for (int b = 0; b < S.nb; b++) {
-        for (int l = 1; l <= S.bw && b - l >= 0; l++) {
+        for (int l = 1; l <= S.bwf && b - l >= 0; l++) {
             const auto& L = S.blk[b][S.bw - l];
             if (L.empty()) { continue; }
             gemv_minus(S.bsz[b], S.bsz[b-l], L.data(), &x[S.boff[b-l]], &x[S.boff[b]]);
@@ -1395,7 +1540,7 @@ void BlockBandedPC<T,Ops>::SolveBox (BoxSys& S) const
     }
     // backward
     for (int b = S.nb - 1; b >= 0; b--) {
-        for (int m = 1; m <= S.bw && b + m < S.nb; m++) {
+        for (int m = 1; m <= S.bwf && b + m < S.nb; m++) {
             const auto& U = S.blk[b][S.bw + m];
             if (U.empty()) { continue; }
             gemv_minus(S.bsz[b], S.bsz[b+m], U.data(), &x[S.boff[b+m]], &x[S.boff[b]]);
@@ -1418,7 +1563,7 @@ void BlockBandedPC<T,Ops>::SelfCheck (BoxSys& S, int isys) const
     S.inEr.setzero(); S.inEt.setzero(); S.inEz.setzero();
     std::vector<RT> v(S.ntot, RT(0.0));
     for (int b = 0; b < S.nb; b++) {
-        const int i = S.rlo + b;
+        const int i = S.rlo_s + b;
         if (blockHasEr(S,b)) {
             for (int j = S.oEr.jlo; j <= S.oEr.jhi; j++) {
                 const RT val = hashv(i,j,0);
@@ -1445,7 +1590,7 @@ void BlockBandedPC<T,Ops>::SelfCheck (BoxSys& S, int isys) const
 
     RT num = RT(0.0), den = RT(0.0);
     for (int b = 0; b < S.nb; b++) {
-        const int i = S.rlo + b;
+        const int i = S.rlo_s + b;
         auto acc = [&](const PArr& out, int lidx, int j, int comp) {
             amrex::ignore_unused(comp);
             const RT d = out.get(i,j) - w[S.boff[b] + lidx];
@@ -1526,6 +1671,46 @@ void BlockBandedPC<T,Ops>::VerifyFD (const T& a_U)
     auto& jm_vec = Jm.getArrayVec();
     auto& du_vec2 = dU.getArrayVec();
     const amrex::MultiFab& Ermf = *(du_vec2[0][0]);
+
+    if (m_global_on) {
+        // gather the direction once (collective), apply the single global
+        // system, then write the owned boxes
+        BoxSys& S = m_sys[0];
+        HostFab hEr, hEt, hEz;
+        GatherGlobal(*(du_vec2[0][0]), 0, hEr, 1);
+        GatherGlobal(*(du_vec2[0][1]), 0, hEt, 1);
+        GatherGlobal(*(du_vec2[0][2]), 0, hEz, 1);
+        S.inEr.setzero(); S.inEt.setzero(); S.inEz.setzero();
+        for (int i = S.inEr.ilo; i <= S.inEr.ihi; i++) {
+            for (int j = S.oEr.jlo; j <= S.oEr.jhi; j++) { S.inEr.ref(i,j) = hEr.get(i,j); }
+        }
+        for (int i = S.inEt.ilo; i <= S.inEt.ihi; i++) {
+            for (int j = S.oEt.jlo; j <= S.oEt.jhi; j++) { S.inEt.ref(i,j) = hEt.get(i,j); }
+        }
+        for (int i = S.inEz.ilo; i <= S.inEz.ihi; i++) {
+            for (int j = S.oEz.jlo; j <= S.oEz.jhi; j++) { S.inEz.ref(i,j) = hEz.get(i,j); }
+        }
+        ApplyFrozenBox(S);
+        for (int dim = 0; dim < 3; dim++) {
+            amrex::MultiFab& mf = *(jm_vec[0][dim]);
+            const PArr& out = (dim==0) ? S.oEr : ((dim==1) ? S.oEt : S.oEz);
+            for (amrex::MFIter mfi(mf); mfi.isValid(); ++mfi) {
+                const amrex::Box tb = amrex::convert(mfi.validbox(), mf.ixType());
+#ifdef AMREX_USE_GPU
+                amrex::FArrayBox hout(tb, 1, amrex::The_Pinned_Arena());
+                auto ha = hout.array();
+                amrex::LoopOnCpu(tb, [&](int i, int j, int k) { ha(i,j,k) = out.get(i,j); });
+                amrex::FArrayBox& dfab = mf[mfi];
+                amrex::Gpu::htod_memcpy(dfab.dataPtr(), hout.dataPtr(),
+                                        hout.size()*sizeof(amrex::Real));
+#else
+                auto darr = mf.array(mfi);
+                amrex::LoopOnCpu(tb, [&](int i, int j, int k) { darr(i,j,k) = out.get(i,j); });
+#endif
+            }
+        }
+    } else {
+
     int isys = 0;
     for (amrex::MFIter mfi(Ermf); mfi.isValid(); ++mfi, ++isys) {
         BoxSys& S = m_sys[isys];
@@ -1566,6 +1751,7 @@ void BlockBandedPC<T,Ops>::VerifyFD (const T& a_U)
             });
 #endif
         }
+    }
     }
 
     // compare
@@ -1680,6 +1866,76 @@ void BlockBandedPC<T,Ops>::Update (const T& a_U)
     }
 
     if (m_verify) { VerifyFD(a_U); }
+
+    // end-to-end Apply round-trip (global mode): r -> x = P^-1 r via the
+    // REAL Apply (gather/pack/solve/unpack through the T vectors), then
+    // A*pack(x) must reproduce pack(r). Exercises exactly the paths the
+    // FD gate cannot (multi-fab gather and owned-box write-back).
+    if (m_verify && m_global_on) {
+        T r, x;
+        r.Define(a_U); x.Define(a_U);
+        r.zero(); x.zero();
+        auto& r_vec = r.getArrayVec();
+        const auto& geomv = m_ops->GetGeometry(0);
+        const int zdlo = geomv.Domain().smallEnd(1);
+        const int zdn = geomv.Domain().length(1);
+        const int zwrapv = geomv.isPeriodic(1) ? 1 : 0;
+        for (int dim = 0; dim < 3; dim++) {
+            amrex::MultiFab& mf = *(r_vec[0][dim]);
+            for (amrex::MFIter mfi(mf); mfi.isValid(); ++mfi) {
+                auto arr = mf.array(mfi);
+                amrex::ParallelFor(mfi.validbox(),
+                    [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                    int jw = j;
+                    if (zwrapv) { jw = zdlo + (((j - zdlo) % zdn) + zdn) % zdn; }
+                    unsigned int h = static_cast<unsigned int>(i*73856093)
+                                   ^ static_cast<unsigned int>(jw*19349663)
+                                   ^ static_cast<unsigned int>(dim*83492791);
+                    h ^= h >> 13; h *= 0x5bd1e995u; h ^= h >> 15;
+                    arr(i,j,k) = amrex::Real(h % 20011u)/amrex::Real(20011.0)
+                               - amrex::Real(0.5);
+                });
+            }
+        }
+        Apply(x, r);
+        BoxSys& S = m_sys[0];
+        HostFab hEr, hEt, hEz, hRr, hRt, hRz;
+        auto& x_vec2 = x.getArrayVec();
+        GatherGlobal(*(x_vec2[0][0]), 0, hEr, 1);
+        GatherGlobal(*(x_vec2[0][1]), 0, hEt, 1);
+        GatherGlobal(*(x_vec2[0][2]), 0, hEz, 1);
+        GatherGlobal(*(r_vec[0][0]), 0, hRr, 1);
+        GatherGlobal(*(r_vec[0][1]), 0, hRt, 1);
+        GatherGlobal(*(r_vec[0][2]), 0, hRz, 1);
+        S.inEr.setzero(); S.inEt.setzero(); S.inEz.setzero();
+        for (int i = S.inEr.ilo; i <= S.inEr.ihi; i++) {
+            for (int j = S.oEr.jlo; j <= S.oEr.jhi; j++) { S.inEr.ref(i,j) = hEr.get(i,j); }
+        }
+        for (int i = S.inEt.ilo; i <= S.inEt.ihi; i++) {
+            for (int j = S.oEt.jlo; j <= S.oEt.jhi; j++) { S.inEt.ref(i,j) = hEt.get(i,j); }
+        }
+        for (int i = S.inEz.ilo; i <= S.inEz.ihi; i++) {
+            for (int j = S.oEz.jlo; j <= S.oEz.jhi; j++) { S.inEz.ref(i,j) = hEz.get(i,j); }
+        }
+        ApplyFrozenBox(S);
+        RT num = RT(0.0), den = RT(0.0), dmax = RT(0.0);
+        int imax = -1, jmax = -1, cmax = -1;
+        auto acc = [&](const PArr& out, const HostFab& hr, int comp) {
+            for (int i = out.ilo; i <= out.ihi; i++) {
+                for (int j = out.jlo; j <= out.jhi; j++) {
+                    const RT rr = hr.get(i,j);
+                    const RT d = out.get(i,j) - rr;
+                    num += d*d; den += rr*rr;
+                    if (std::abs(d) > dmax) { dmax = std::abs(d); imax = i; jmax = j; cmax = comp; }
+                }
+            }
+        };
+        acc(S.oEr, hRr, 0); acc(S.oEt, hRt, 1); acc(S.oEz, hRz, 2);
+        amrex::Print() << "pc_block_banded APPLY round-trip rel err = "
+            << (den > RT(0.0) ? std::sqrt(num/den) : std::sqrt(num))
+            << ", max |diff| = " << dmax << " at comp " << cmax
+            << " (r,z) = (" << imax << "," << jmax << ")\n";
+    }
 #endif
 }
 
@@ -1699,18 +1955,96 @@ void BlockBandedPC<T,Ops>::Apply (T& a_x, const T& a_b)
     auto& b_vec = a_b.getArrayVec();
     auto& x_vec = a_x.getArrayVec();
 
+    if (m_global_on) {
+        BoxSys& S = m_sys[0];
+        HostFab hEr, hEt, hEz;
+        GatherGlobal(*(b_vec[0][0]), 0, hEr, 1);
+        GatherGlobal(*(b_vec[0][1]), 0, hEt, 1);
+        GatherGlobal(*(b_vec[0][2]), 0, hEz, 1);
+        for (int b = 0; b < S.nb; b++) {
+            const int i = S.rlo_s + b;
+            if (blockHasEr(S,b)) {
+                for (int j = S.oEr.jlo; j <= S.oEr.jhi; j++) {
+                    S.x[S.boff[b] + locEr(S,b,j)] = hEr.get(i,j);
+                }
+            }
+            for (int j = S.oEt.jlo; j <= S.oEt.jhi; j++) {
+                S.x[S.boff[b] + locEt(S,b,j)] = hEt.get(i,j);
+            }
+            for (int j = S.oEz.jlo; j <= S.oEz.jhi; j++) {
+                S.x[S.boff[b] + locEz(S,b,j)] = hEz.get(i,j);
+            }
+        }
+        SolveBox(S);
+        // Every rank holds the identical global solution; write owned boxes.
+        // The (b_local - b_gathered) pass-through keeps P nonsingular on the
+        // duplicated-seam-DOF difference subspace: the true Jacobian acts as
+        // ~identity there (the state set syncs duplicates before the fields
+        // advance), and a P that collapses all copies onto the owner value
+        // makes J*P^-1 singular on that subspace -- measured as a hard GMRES
+        // stall (0.1-0.2 inner residual) on any multi-box layout. The term
+        // is exactly zero at owner points (bitwise-copied), so single-box
+        // behavior is unchanged.
+        for (int dim = 0; dim < 3; dim++) {
+            amrex::MultiFab& mf = *(x_vec[0][dim]);
+            const amrex::MultiFab& bmf = *(b_vec[0][dim]);
+            const HostFab& hg = (dim==0) ? hEr : ((dim==1) ? hEt : hEz);
+            for (amrex::MFIter mfi(mf); mfi.isValid(); ++mfi) {
+                const amrex::Box tb = amrex::convert(mfi.validbox(), mf.ixType());
+                const int zPeriod = S.nzc;
+                HostFab hb;
+                CopyFabToHost(bmf, mfi, hb);
+                auto fill = [&](auto& arr, int i, int j, int k) {
+                    int jj = j;
+                    if (S.zwrap) {
+                        jj = S.zlo + ((j - S.zlo) % zPeriod + zPeriod) % zPeriod;
+                    }
+                    const int b = i - S.rlo_s;
+                    int l;
+                    if (dim == 0) { l = locEr(S,b,jj); }
+                    else if (dim == 1) { l = locEt(S,b,jj); }
+                    else { l = locEz(S,b,jj); }
+                    arr(i,j,k) = S.x[S.boff[b] + l]
+                               + (hb.get(i,j) - hg.get(i,j));
+                };
+#ifdef AMREX_USE_GPU
+                amrex::FArrayBox hout(tb, 1, amrex::The_Pinned_Arena());
+                auto ha = hout.array();
+                amrex::LoopOnCpu(tb, [&](int i, int j, int k) { fill(ha, i, j, k); });
+                amrex::FArrayBox& dfab = mf[mfi];
+                amrex::Gpu::htod_memcpy(dfab.dataPtr(), hout.dataPtr(),
+                                        hout.size()*sizeof(amrex::Real));
+#else
+                auto darr = mf.array(mfi);
+                amrex::LoopOnCpu(tb, [&](int i, int j, int k) { fill(darr, i, j, k); });
+#endif
+            }
+        }
+        return;
+    }
+
+    // Schwarz communication: stage the RHS into the overlap-padded copies
+    const auto& geom0 = m_ops->GetGeometry(0);
+    const auto& period0 = geom0.periodicity();
+    for (int d = 0; d < 3; d++) {
+        m_bpad[d].setVal(RT(0.0));
+        m_bpad[d].ParallelCopy(*(b_vec[0][d]), 0, 0, 1,
+            amrex::IntVect(0), m_bpad[d].nGrowVect(), period0);
+        m_bpad[d].FillBoundary(period0);
+    }
+
     const amrex::MultiFab& Ermf = *(b_vec[0][0]);
     int isys = 0;
     for (amrex::MFIter mfi(Ermf); mfi.isValid(); ++mfi, ++isys) {
         BoxSys& S = m_sys[isys];
 
-        // pack RHS (unique z points)
+        // pack RHS (unique z points, overlap included)
         HostFab hEr, hEt, hEz;
-        CopyFabToHost(*(b_vec[0][0]), mfi, hEr);
-        CopyFabToHost(*(b_vec[0][1]), mfi, hEt);
-        CopyFabToHost(*(b_vec[0][2]), mfi, hEz);
+        CopyFabToHost(m_bpad[0], mfi, hEr);
+        CopyFabToHost(m_bpad[1], mfi, hEt);
+        CopyFabToHost(m_bpad[2], mfi, hEz);
         for (int b = 0; b < S.nb; b++) {
-            const int i = S.rlo + b;
+            const int i = S.rlo_s + b;
             if (blockHasEr(S,b)) {
                 for (int j = S.oEr.jlo; j <= S.oEr.jhi; j++) {
                     S.x[S.boff[b] + locEr(S,b,j)] = hEr.get(i,j);
@@ -1737,7 +2071,7 @@ void BlockBandedPC<T,Ops>::Apply (T& a_x, const T& a_b)
                 if (S.zwrap) {
                     jj = S.zlo + ((j - S.zlo) % zPeriod + zPeriod) % zPeriod;
                 }
-                const int b = i - S.rlo;
+                const int b = i - S.rlo_s;
                 int l;
                 if (dim == 0) { l = locEr(S,b,jj); }
                 else if (dim == 1) { l = locEt(S,b,jj); }
