@@ -133,6 +133,12 @@ private:
     amrex::Real m_atol = 0.;
 
     /**
+     * \brief Relative perturbation scale for the finite-difference JVP
+     * (matrix-free Jacobian action) in the linear solve.
+     */
+    amrex::Real m_jfnk_epsilon = 1.0e-6;
+
+    /**
      * \brief Maximum iterations for the Newton solver.
      */
     int m_maxits = 100;
@@ -254,6 +260,7 @@ void NewtonSolver<Vec,Ops>::Define ( const Vec&  a_U,
 
     m_linear_function = std::make_unique<JacobianFunctionMF<Vec,Ops>>();
     m_linear_function->define(m_F, m_ops, m_pc_type);
+    m_linear_function->setJFNKEps(m_jfnk_epsilon);
     this->m_usePC = m_linear_function->usePreconditioner();
 
     if (m_linear_solver_type == LinearSolverType::amrex_gmres) {
@@ -320,6 +327,7 @@ void NewtonSolver<Vec,Ops>::ParseParameters ()
     pp_newton.query("relative_tolerance",  m_rtol);
     pp_newton.query("max_iterations",      m_maxits);
     pp_newton.query("require_convergence", m_require_convergence);
+    pp_newton.query("jfnk_epsilon",        m_jfnk_epsilon);
     pp_newton.query("line_search",          m_use_line_search);
     pp_newton.query("line_search_max_halvings", m_line_search_max_halvings);
     pp_newton.query("adaptive_forcing",    m_adaptive_forcing);

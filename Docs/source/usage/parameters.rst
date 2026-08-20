@@ -271,6 +271,7 @@ Overall simulation parameters
           - ``newton.max_iterations`` (``int``, default: 100)
           - ``newton.relative_tolerance`` (``float``, default: 1.0e-6)
           - ``newton.absolute_tolerance`` (``float``, default: 0.0)
+          - ``newton.jfnk_epsilon`` (``float``, default: 1.0e-6) Relative perturbation scale for the finite-difference JVP in the matrix-free linear solve.
           - ``newton.diagnostic_file`` (``string``, default: None)
           - ``newton.diagnostic_interval`` (``int``, default: 1)
           - ``newton.adaptive_forcing`` (``bool``, default: false)
