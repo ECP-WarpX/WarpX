@@ -322,13 +322,13 @@ Overall simulation parameters
 
         - ``implicit_evolve.use_mass_matrices_pc`` (``bool``, default: false).
           When ``true``, the plasma response is captured in the preconditioner.
-          Requires use of a preconditioner (``jacobian.pc_type = pc_curl_curl_mlmg``, ``pc_petsc``, or ``pc_jacobi``).
+          Requires use of a preconditioner (``jacobian.pc_type = pc_curl_curl_mlmg``, ``pc_petsc``, ``pc_jacobi``, ``pc_hybrid_pic``, or ``pc_block_banded``).
 
         - ``implicit_evolve.mass_matrices_pc_width`` (``integer``, default: 0).
           If using ``jacobian.pc_type = pc_petsc``, this parameter specifies the width of the mass matrices included in the preconditioner.
           In most cases, a width of 1 is sufficient for good GMRES performance.
 
-        - ``jacobian.pc_type`` (``string``, default: None). A preconditioner can be used to minimize the number of linear GMRES iterations. There are three options:
+        - ``jacobian.pc_type`` (``string``, default: None). A preconditioner can be used to minimize the number of linear GMRES iterations. There are five options:
 
           - ``jacobian.pc_type = pc_curl_curl_mlmg``: Use the AMReX MLMG solver for the curl curl formulation of Maxwell's equations. This preconditioner solves the following equation:
 
@@ -356,6 +356,24 @@ Overall simulation parameters
             - ``pc_jacobi.max_iter`` (``int``, default: 10)
             - ``pc_jacobi.relative_tolerance`` (``float``, default: 1.0e-4)
             - ``pc_jacobi.absolute_tolerance`` (``float``, default: 1.0e-16)
+
+          - ``jacobian.pc_type = pc_block_banded``: Direct block-banded solve of the frozen-coefficient linearized Ohm operator for the theta-implicit hybrid (generalized Ohm's law) solver. RZ geometry only.
+            The linearized operator (theta-Faraday advance of :math:`\delta B`, Ampere response :math:`\delta J`, the whistler :math:`\delta J\times B_0` and drift :math:`(J_0-J_{i,0})\times\delta B` legs, resistive and hyper-resistive legs, RZ metrics with :math:`m=0` axis parity, and the PEC-wall column treatment) is extracted exactly by colored probing of a frozen-coefficient operator application, assembled into dense blocks coupling the three electric-field components along each z-line, and the block-banded system (banded in the radial block index) is factorized and solved directly.
+            An extraction self-check against the frozen apply runs at every rebuild and aborts on disagreement.
+            Unlike the point-block ``pc_hall_jacobi``, this removes the long-wavelength whistler cluster as well, holding GMRES iteration counts flat as the time step is raised into the whistler-stiff regime.
+            With multiple boxes the domain-wide system is gathered and solved redundantly on every rank (replicated-global mode); a Dirichlet-truncated additive-Schwarz per-box mode exists as a research knob but stalls at large whistler CFL because the wave operator does not localize.
+            When compiled with ``WarpX_CUDSS=ON``, the factorization and solve run on GPU through NVIDIA cuDSS.
+
+            - ``pc_block_banded.verbose`` (``bool``, default: false)
+            - ``precond.bb_update_interval`` (``int``, default: 1): number of steps between operator rebuilds; 0 rebuilds every Newton iteration.
+            - ``precond.bb_include_drift`` (``bool``, default: true): include the drift/motional :math:`(J_0-J_{i,0})\times\delta B` leg.
+            - ``precond.bb_include_hyper`` (``bool``, default: true): include the hyper-resistive leg.
+            - ``precond.bb_verify`` (``bool``, default: false): run verification gates at every rebuild (LU and Apply round-trip checks, and a finite-difference Jacobian-vector-product comparison against the true residual).
+            - ``precond.bb_max_mem_gb`` (``float``, default: 8): memory budget for the extracted blocks; setup aborts if the estimate exceeds it.
+            - ``precond.bb_wall_identity`` (``int``, default: -1): tangential-E identity rows at the outer radial wall; -1 auto-detects from a PEC or PEC-insulator field boundary, 0 off, 1 force on.
+            - ``precond.bb_overlap`` (``int``, default: 8): restricted-additive-Schwarz overlap depth in cells (per-box mode only).
+            - ``precond.bb_global`` (``int``, default: -1): replicated-global mode; -1 auto-enables whenever the BoxArray has more than one box, 0 per-box Schwarz, 1 force global.
+            - ``precond.bb_device_solve`` (``bool``, default: true when compiled with ``WarpX_CUDSS``): factorize and solve on GPU via cuDSS.
 
           - ``jacobian.pc_type = pc_petsc``: Use the PETSc solver.
 

@@ -1802,6 +1802,101 @@ class JacobiPreconditioner(PreconditionerBase):
         pc_jacobi.absolute_tolerance = self.absolute_tolerance
 
 
+class BlockBandedPreconditioner(PreconditionerBase):
+    """
+    Sets up the block-banded direct preconditioner (RZ only) used during the
+    nonlinear solver. The linearized frozen-coefficient Ohm operator is
+    extracted by colored probing into dense 3-component x z-line blocks per
+    radial index and solved with a block-banded LU (or cuDSS on device when
+    compiled with WarpX_CUDSS).
+
+    All parameters are optional; unset parameters keep the solver defaults.
+
+    Parameters
+    ----------
+    verbose: bool, optional
+        Whether there is verbose output from the preconditioner
+
+    update_interval: int, optional
+        Number of steps between operator rebuilds (0 rebuilds every Newton
+        iteration, default 1 rebuilds once per step)
+
+    include_drift: bool, optional
+        Whether the drift/motional (J0 - Ji0) x dB leg is included in the
+        extracted operator
+
+    include_hyper: bool, optional
+        Whether the hyper-resistivity leg is included in the extracted
+        operator
+
+    verify: bool, optional
+        Enable the built-in verification gates on every rebuild: LU and
+        Apply round-trip checks and a finite-difference Jacobian-vector
+        product comparison against the true residual
+
+    max_mem_gb: float, optional
+        Memory budget for the extracted blocks; the setup aborts if the
+        estimate exceeds it
+
+    wall_identity: int, optional
+        Whether tangential-E rows at the outer radial wall are treated as
+        identity (killed columns); -1 (default) auto-detects from a PEC or
+        PEC-insulator field boundary
+
+    overlap: int, optional
+        Restricted-additive-Schwarz overlap (in cells) used when solving
+        per-box local systems
+
+    global_solve: int, optional
+        Whether ranks gather the full system and solve it redundantly;
+        -1 (default) enables global mode whenever the BoxArray is split
+
+    device_solve: bool, optional
+        Whether the factorization/solve runs on GPU via cuDSS (only
+        available when compiled with WarpX_CUDSS; default on in that case)
+    """
+
+    def __init__(
+        self,
+        verbose=None,
+        update_interval=None,
+        include_drift=None,
+        include_hyper=None,
+        verify=None,
+        max_mem_gb=None,
+        wall_identity=None,
+        overlap=None,
+        global_solve=None,
+        device_solve=None,
+    ):
+        self.verbose = verbose
+        self.update_interval = update_interval
+        self.include_drift = include_drift
+        self.include_hyper = include_hyper
+        self.verify = verify
+        self.max_mem_gb = max_mem_gb
+        self.wall_identity = wall_identity
+        self.overlap = overlap
+        self.global_solve = global_solve
+        self.device_solve = device_solve
+
+    def preconditioner_type_initialize_inputs(self, jacobian=None):
+        if jacobian is not None:
+            jacobian.pc_type = "pc_block_banded"
+        pc_block_banded = pywarpx.warpx.get_bucket("pc_block_banded")
+        pc_block_banded.verbose = self.verbose
+        precond = pywarpx.warpx.get_bucket("precond")
+        precond.bb_update_interval = self.update_interval
+        precond.bb_include_drift = self.include_drift
+        precond.bb_include_hyper = self.include_hyper
+        precond.bb_verify = self.verify
+        precond.bb_max_mem_gb = self.max_mem_gb
+        precond.bb_wall_identity = self.wall_identity
+        precond.bb_overlap = self.overlap
+        precond.bb_global = self.global_solve
+        precond.bb_device_solve = self.device_solve
+
+
 class PETScPreconditioner(PreconditionerBase):
     """
     Sets up the PETSc preconditioner used during the nonlinear solver
@@ -1914,7 +2009,7 @@ class NewtonNonlinearSolver(NonlinearSolverBase):
         When use_mass_matrices_pc is True, the width of the preconditioner mass matrices
 
     pc_type: preconditioner instance, optional
-        The preconditioner type, An instance of either CurlCurlMLMGPreconditioner, JacobiPreconditioner, or PETScPreconditioner
+        The preconditioner type, An instance of either CurlCurlMLMGPreconditioner, JacobiPreconditioner, BlockBandedPreconditioner, or PETScPreconditioner
     """
 
     def __init__(
