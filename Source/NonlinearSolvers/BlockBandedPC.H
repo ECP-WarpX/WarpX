@@ -1062,16 +1062,17 @@ void BlockBandedPC<T,Ops>::FillCoeffs (BoxSys& S,
 
     const HybridPICModel* hybrid = m_ops->GetHybridPICModel();
     const RT rho_floor = static_cast<RT>(hybrid->m_n_floor * PhysConst::q_e);
-    const bool hall_on = hybrid->m_include_hall_term;
+    // The hybrid model carries the Hall term unconditionally; no smooth
+    // Holmstrom transition width or electron-inertia extension here.
+    const bool hall_on = true;
     const bool has_eta = (hybrid->m_eta_expression != "0.0");
     const bool has_J_dep = hybrid->m_resistivity_has_J_dependence;
     const bool hyper_on = m_include_hyper && hybrid->m_include_hyper_resistivity_term;
     const bool holm = hybrid->m_holmstrom_vacuum_region;
-    const RT holm_iw = (hybrid->m_holmstrom_transition_width > RT(0.0))
-        ? RT(1.0)/(static_cast<RT>(hybrid->m_holmstrom_transition_width)*rho_floor) : RT(0.0);
+    const RT holm_iw = RT(0.0);   // hard Holmstrom transition on this branch
     const bool holm_smooth = holm && (holm_iw > RT(0.0));
-    const bool inertia_on = hybrid->m_include_electron_inertia;
-    const RT me_eff = inertia_on ? static_cast<RT>(hybrid->m_electron_inertia_mass) : RT(0.0);
+    const bool inertia_on = false;   // no electron inertia on this branch
+    const RT me_eff = RT(0.0);
     const RT s_inertia = (RT(2.0)*m_theta + RT(1.0))/RT(2.0);
     const RT kg2 = RT(4.0)/(m_dr*m_dr) + RT(4.0)/(m_dz*m_dz);
     ParserExecutor<3> eta_exec{};
