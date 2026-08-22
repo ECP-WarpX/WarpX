@@ -993,6 +993,13 @@ void ImplicitSolver::SetMassMatricesForPC ( const amrex::Real a_theta_dt )
     // The pc_type petsc already has the one from the curl curl operator
     // Note: This should be done after Sync/communication has been called
 
+    // pc_hybrid_pic consumes the raw dJ/dE mass-matrix diagonal (the hybrid
+    // Ohm's-law ion response is (Sigma dE) x B / rho_c, with no c^2*mu0*
+    // theta*dt Ampere factor): leave the reduced container unscaled.
+    if (m_nlsolver->GetPreconditionerType() == PreconditionerType::pc_hybrid_pic) {
+        return;
+    }
+
     const amrex::Real pc_factor = PhysConst::c2 * PhysConst::mu0 * a_theta_dt;
     for (int lev = 0; lev < m_num_amr_levels; ++lev) {
         amrex::MultiFab* MMxx_PC = m_WarpX->m_fields.get(FieldType::MassMatrices_PC, Direction{0}, lev);

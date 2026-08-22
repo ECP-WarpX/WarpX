@@ -16,13 +16,42 @@
 
 #ifdef AMREX_USE_PETSC
 
+// petscvec.h typedefs a global-scope C enum `ReductionType` that collides
+// with WarpX's ReductionType (WarpXAlgorithmSelection.H, included above via
+// ImplicitSolver.H). Rename PETSc's symbol within this translation unit; no
+// PETSc API involving it is used here.
+#define ReductionType Petsc_ReductionType
 #include <petscsnes.h> // must include before WarpX_PETSc.H
 #include <petscksp.h> // must include before WarpX_PETSc.H
 #include <petscmat.h> // must include before WarpX_PETSc.H
 #include <petscvec.h> // must include before WarpX_PETSc.H
+#undef ReductionType
 #include "WarpX_PETSc.H"
 
 namespace warpx_petsc {
+
+/** pc_hybrid_pic in nested mode runs an inner Krylov solve to an
+ *  RHS-dependent iteration count, so the preconditioner is not a fixed
+ *  linear operator: only a flexible outer Krylov method is valid. */
+static void RequireFlexibleKSPForNonlinearPC (KSP a_ksp, PreconditionerType a_pc_type)
+{
+    if (a_pc_type != PreconditionerType::pc_hybrid_pic) { return; }
+    std::string mode = "smoother";
+    const amrex::ParmParse pp("pc_hybrid_pic");
+    pp.query("mode", mode);
+    if (mode != "nested") { return; }
+    KSPType ksptype;
+    KSPGetType(a_ksp, &ksptype);
+    const bool flexible = (std::strcmp(ksptype, KSPFGMRES) == 0)
+                       || (std::strcmp(ksptype, KSPPIPEFGMRES) == 0)
+                       || (std::strcmp(ksptype, KSPGCR) == 0)
+                       || (std::strcmp(ksptype, KSPFCG) == 0);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(flexible,
+        "pc_hybrid_pic.mode = nested is a nonlinear preconditioner and requires a "
+        "flexible Krylov method (got KSP type '" + std::string(ksptype)
+        + "'): set PETSC_OPTIONS=\"-ksp_type fgmres\"");
+}
+
 
 //! Wrapper for PETSc SNES object
 struct SNESObj
@@ -489,6 +518,7 @@ void KSP_impl::createObjects(const VecType& a_vec)
         KSPMonitorSet( m_ksp->obj, printKSPResidual, NULL, NULL );
     }
     KSPSetFromOptions(m_ksp->obj);
+    RequireFlexibleKSPForNonlinearPC(m_ksp->obj, this->m_pc_type);
 
     // it is now defined
     this->m_is_defined = true;
@@ -692,6 +722,11 @@ SNES_impl::SNES_impl(const VecType& a_vec, TIType* a_op)
     PetscOptionsSetValue(nullptr, "-ksp_converged_reason", nullptr);
 
     SNESSetFromOptions(m_snes->obj);
+    {
+        KSP snes_ksp;
+        SNESGetKSP(m_snes->obj, &snes_ksp);
+        RequireFlexibleKSPForNonlinearPC(snes_ksp, this->m_pc_type);
+    }
     this->m_is_defined = true;
 
     PetscBool is_specified = PETSC_FALSE;
@@ -787,6 +822,9 @@ void SNES_impl::solve (VecType& a_U,
 
     m_time = a_time;
     m_iter = a_step;
+    // forward the time to the Jacobian/preconditioner as NewtonSolver does:
+    // FD matvecs and Preconditioner::Update must linearize at t_n, not t=0
+    dynamic_cast<JacobianFunctionMF<VecType,TIType>*>(m_linop.get())->curTime(a_time);
     dynamic_cast<JacobianFunctionMF<VecType,TIType>*>(m_linop.get())->curTimeStep(a_dt);
 
     copyVec(this->m_x->obj, a_U);

@@ -87,6 +87,10 @@ void HybridPICModel::ReadParameters ()
     pp_hybrid.query("plasma_hyper_resistivity(rho,B)", m_eta_h_expression);
 
     utils::parser::queryWithParser(pp_hybrid, "n_floor", m_n_floor);
+    utils::parser::queryWithParser(pp_hybrid, "n_floor_smooth_width",
+                                   m_n_floor_smooth_width);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_n_floor_smooth_width >= 0.,
+        "hybrid_pic_model.n_floor_smooth_width must be >= 0");
 
     // Master gate for the electron-energy equation. When enabled, K_e is
     // advected each step by fictitious Lagrangian particles moving with V_e

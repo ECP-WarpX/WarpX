@@ -381,7 +381,14 @@ void WarpX::HybridPICInitializeRhoJandB ()
     using warpx::fields::FieldType;
     using ablastr::fields::Direction;
 
-    if (restart_chkfile.empty()) {
+    // Stage the external fields and add their contribution to the total
+    // field once, at the true start of the run. This entry point executes
+    // at the first step of EVERY Evolve() call; beyond the first entry
+    // Bfield_fp already carries the external contribution (segmented
+    // stepping through repeated sim.step() calls re-enters here mid-run)
+    // -- adding it again double-counts the external field. On restart the
+    // checkpointed fields likewise already contain it. (Upstream PR #7161)
+    if (restart_chkfile.empty() && istep[0] == 0) {
         // This is not a restart, so the rho_fp and current_fp multifabs are
         // still empty.
         HybridPICDepositRhoAndJ();

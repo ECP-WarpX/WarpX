@@ -92,6 +92,8 @@ public:
                            << ", xi = "       << m_forcing_xi
                            << ", zeta_max = " << m_forcing_zeta_max
                            << ", zeta_min = " << m_forcing_zeta_min << ")\n";
+        } else {
+            amrex::Print() << "Newton adaptive forcing:    false\n";
         }
         auto linsol_name = amrex::getEnumNameString(m_linear_solver_type);
         amrex::Print()     << "Newton linear solver:       " << linsol_name << "\n";
@@ -469,11 +471,6 @@ void NewtonSolver<Vec,Ops>::Solve (Vec&         a_U,
             zeta_prev = zeta;
             norm_prev = norm_abs;
             linsol_rtol = zeta;
-            if (this->m_verbose) {
-                amrex::Print() << "Newton: adaptive forcing zeta = "
-                               << std::scientific << std::setprecision(5)
-                               << zeta << "\n";
-            }
         }
 
         // Solve linear system for Newton step [Jac]*dU = F

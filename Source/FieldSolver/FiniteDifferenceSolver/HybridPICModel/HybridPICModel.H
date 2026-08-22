@@ -36,6 +36,7 @@
 #include <AMReX_DistributionMapping.H>
 
 #include <map>
+#include <cmath>
 #include <memory>
 #include <optional>
 
@@ -43,6 +44,39 @@
  * \brief This class contains the parameters needed to evaluate hybrid field
  * solutions (kinetic ions with fluid electrons).
  */
+/** C1 smooth-max blend of the density-floor guard: exact max(rho,
+ *  rho_floor) at w_abs = 0 (legacy hard floor, bit-compatible), the
+ *  smooth-max 0.5*(rho + rho_floor + sqrt((rho-rho_floor)^2 + w_abs^2))
+ *  otherwise. Bounded below by rho_floor everywhere like the hard max
+ *  (the halo response stays floored -- this is not a response mask),
+ *  but infinitely differentiable, so deposit noise chattering across
+ *  the threshold no longer kinks the Ohm residual. w_abs is the
+ *  absolute (charge-density) blend width. */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real HybridSmoothFloor (amrex::Real rho, amrex::Real rho_floor,
+                               amrex::Real w_abs)
+{
+    if (w_abs <= amrex::Real(0.)) { return amrex::max(rho, rho_floor); }
+    const amrex::Real d = rho - rho_floor;
+    return amrex::Real(0.5)*(rho + rho_floor + std::sqrt(d*d + w_abs*w_abs));
+}
+
+/** Weight of the conditional external-E subtraction across the density
+ *  floor: the legacy step (rho >= rho_floor) at w_abs = 0, a tanh blend
+ *  of the same width as the smooth floor otherwise (the two share the
+ *  hybrid_pic_model.n_floor_smooth_width knob -- they are the same
+ *  crossing and must smooth together). */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real HybridExtSubWeight (amrex::Real rho, amrex::Real rho_floor,
+                                amrex::Real w_abs)
+{
+    if (w_abs <= amrex::Real(0.)) {
+        return (rho >= rho_floor) ? amrex::Real(1.) : amrex::Real(0.);
+    }
+    return amrex::Real(0.5)*(amrex::Real(1.)
+        + std::tanh((rho - rho_floor)/w_abs));
+}
+
 class HybridPICModel
 {
 public:
@@ -525,6 +559,13 @@ public:
 
     /** Plasma density floor - if n < n_floor it will be set to n_floor */
     amrex::Real m_n_floor = 1.0;
+    /** Width of the C1 smooth-max blend of the density floor, in units of
+     *  n_floor (0 = exact hard max, bit-compatible legacy behavior). The
+     *  hard max(rho, rho_floor) is a C0 kink in the Ohm residual at the
+     *  floor crossing (and the conditional external-E subtraction a jump);
+     *  cells whose deposit chatters across the threshold stall Newton.
+     *  The blend keeps the halo response FLOORED but smooth. */
+    amrex::Real m_n_floor_smooth_width = 0.0;
 
     /** Plasma resistivity */
     std::string m_eta_expression = "0.0";

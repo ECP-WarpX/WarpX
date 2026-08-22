@@ -1104,9 +1104,30 @@ ThetaImplicitHybrid::GetBfieldThetaForPC ( const int lev ) const
     // before that (and between steps) the registry holds the end-of-step
     // totals B^{n+1} (= B^n at the next entry).
     using ablastr::fields::Direction;
-    return { m_WarpX->m_fields.get(FieldType::Bfield_fp, Direction{0}, lev),
-             m_WarpX->m_fields.get(FieldType::Bfield_fp, Direction{1}, lev),
-             m_WarpX->m_fields.get(FieldType::Bfield_fp, Direction{2}, lev) };
+    amrex::Array<const amrex::MultiFab*, 3> B = {
+        m_WarpX->m_fields.get(FieldType::Bfield_fp, Direction{0}, lev),
+        m_WarpX->m_fields.get(FieldType::Bfield_fp, Direction{1}, lev),
+        m_WarpX->m_fields.get(FieldType::Bfield_fp, Direction{2}, lev) };
+    if (!m_add_external_fields) { return B; }
+    // assemble the TOTAL field (see the header doc): Bfield_fp is internal
+    // between residual evaluations on this branch
+    for (int d = 0; d < 3; ++d) {
+        const amrex::MultiFab* Bext = m_WarpX->m_fields.get(
+            FieldType::hybrid_B_fp_external, Direction{d}, lev);
+        auto& tot = m_B_tot_pc[d];
+        if (!tot || tot->boxArray() != B[d]->boxArray()
+            || tot->DistributionMap() != B[d]->DistributionMap()) {
+            tot = std::make_unique<amrex::MultiFab>(
+                B[d]->boxArray(), B[d]->DistributionMap(),
+                B[d]->nComp(), B[d]->nGrowVect());
+        }
+        amrex::MultiFab::Copy(*tot, *B[d], 0, 0,
+                              B[d]->nComp(), B[d]->nGrowVect());
+        amrex::MultiFab::Add(*tot, *Bext, 0, 0,
+                             Bext->nComp(), tot->nGrowVect());
+        B[d] = tot.get();
+    }
+    return B;
 }
 
 const amrex::MultiFab*
@@ -1137,15 +1158,6 @@ void ThetaImplicitHybrid::FinishFieldUpdate( amrex::Real end_time )
 {
     BL_PROFILE("ThetaImplicitHybrid::FinishFieldUpdate()");
 
-    // Extrapolate from t^{n+θ} to t^{n+1}:
-    // F^{n+1} = (1/θ)·F^{n+θ} + (1 - 1/θ)·F^n
-    const amrex::Real c0 = 1.0_rt / m_theta;
-    const amrex::Real c1 = 1.0_rt - c0;
-
-    // E^{n+1}
-    m_E.linComb( c0, m_E, c1, m_Eold );
-    m_WarpX->SetElectricFieldAndApplyBCs( m_E, end_time );
-
     // B^{n+1}
     ablastr::fields::MultiLevelVectorField const& B_old = 
         m_WarpX->m_fields.get_mr_levels_alldirs(FieldType::B_old, 0);
@@ -1159,7 +1171,7 @@ void ThetaImplicitHybrid::FinishFieldUpdate( amrex::Real end_time )
         AddExternalEfield();
     }
     // pe^{n+1} = (pe^{n+theta} - (1-theta) pe^n) / theta, then roll the state
-    if (!m_pe_theta) { return; }
+    if (m_pe_theta) {
     using namespace amrex::literals;
     using warpx::fields::FieldType;
 
@@ -1196,7 +1208,38 @@ void ThetaImplicitHybrid::FinishFieldUpdate( amrex::Real end_time )
         }
     }
     amrex::MultiFab::Copy(*m_pe_old, *pe, 0, 0, pe->nComp(), pe->nGrowVect());
+    }
 
+    // E^{n+1}: E is algebraic in the generalized Ohm's law, so evaluate it
+    // at the delivered end-of-step state -- total B^{n+1} (externals
+    // included above), pe^{n+1}, and the same ion-deposit family the theta
+    // stage used. Per-level calls: the multi-level HybridPICSolveE wrapper
+    // fires the afterEpush python callback and this must not add a firing.
+    {
+        using warpx::fields::FieldType;
+        if (m_hybrid_pic_model->m_implicit_use_algebraic_closure) {
+            m_hybrid_pic_model->CalculateElectronPressure();
+        }
+        ablastr::fields::MultiLevelVectorField E_fp =
+            m_WarpX->m_fields.get_mr_levels_alldirs(FieldType::Efield_fp, m_num_amr_levels - 1);
+        ablastr::fields::MultiLevelVectorField J_fp =
+            m_WarpX->m_fields.get_mr_levels_alldirs(FieldType::current_fp, m_num_amr_levels - 1);
+        ablastr::fields::MultiLevelVectorField B_fp =
+            m_WarpX->m_fields.get_mr_levels_alldirs(FieldType::Bfield_fp, m_num_amr_levels - 1);
+        ablastr::fields::MultiLevelScalarField r_fp =
+            m_WarpX->m_fields.get_mr_levels(FieldType::rho_fp, m_num_amr_levels - 1);
+        for (int lev = 0; lev < m_num_amr_levels; ++lev) {
+            m_hybrid_pic_model->HybridPICSolveE(
+                E_fp[lev], J_fp[lev], B_fp[lev], *r_fp[lev],
+                m_WarpX->GetEBUpdateEFlag()[lev], lev,
+                true  /* solve_for_Faraday: include resistivity, eta_H */,
+                true  /* solve_for_implicit: include grad_pe */);
+        }
+        // apply the standard E boundary conditions and keep the solver
+        // vector consistent with the delivered field
+        m_E.Copy(FieldType::Efield_fp);
+        m_WarpX->SetElectricFieldAndApplyBCs( m_E, end_time );
+    }
 }
 
 void ThetaImplicitHybrid::AddExternalBfield ()

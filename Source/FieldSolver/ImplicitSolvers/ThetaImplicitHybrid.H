@@ -132,17 +132,19 @@ public:
      *  a Hall-aware preconditioner needs. */
     const HybridPICModel* GetHybridPICModel () const override { return m_hybrid_pic_model; }
 
-    /** The theta-midpoint magnetic field B^{n+theta} (Bfield_fp registry).
-     *  Valid only after the first residual evaluation of the iterate. */
+    /** The TOTAL theta-midpoint magnetic field B^{n+theta}. On this branch
+     *  the external-field splitting keeps Bfield_fp INTERNAL between
+     *  residual evaluations (externals are added and subtracted inside each
+     *  evaluation), so with add_external_fields the external contribution
+     *  is re-assembled into owned scratch here -- the preconditioner must
+     *  linearize the whistler leg at the total field the particles and the
+     *  Ohm solve actually see. Valid only after the first residual
+     *  evaluation of the iterate. */
     amrex::Array<const amrex::MultiFab*, 3> GetBfieldThetaForPC (int lev) const override;
 
     /** The charge density holding the midpoint deposit rho^{n+1/2} in
      *  component nComp()/2 (rho_fp registry). */
     const amrex::MultiFab* GetRhoMidForPC (int lev) const override;
-
-    /** The ion current deposit consumed by the Ohm solve (current_fp
-     *  registry) -- frozen during Jacobian probes. */
-    amrex::Array<const amrex::MultiFab*, 3> GetIonCurrentForPC (int lev) const override;
 
     private:
 
@@ -199,6 +201,11 @@ public:
     /** pe^n and pe^{n+theta} state for the in-loop pressure advance */
     mutable std::unique_ptr<amrex::MultiFab> m_pe_old;
     mutable std::unique_ptr<amrex::MultiFab> m_pe_theta;
+
+    /** Owned scratch for GetBfieldThetaForPC's total-field assembly
+     *  (internal + external B), allocated lazily per direction. */
+    mutable amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> m_B_tot_pc;
+
     mutable std::unique_ptr<amrex::MultiFab> m_pe_scratch;
 
 
