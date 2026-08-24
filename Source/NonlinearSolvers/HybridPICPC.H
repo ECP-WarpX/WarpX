@@ -121,7 +121,11 @@
  *  J_pc = (I + S) + U K, S v = (Sigma v) x B0 / rho_c, with the exact
  *  reduction preserved via the pointwise closed-form (I+S)^-1.
  *
- *  Collocated (nodal) Cartesian 1D/2D/3D only (per-node block exact there).
+ *  Geometries: collocated (nodal) Cartesian 1D/2D/3D, and RZ restricted to
+ *  the m = 0 azimuthal mode (the residual's CylindricalYee up/down stencil
+ *  compositions, on-axis branches and axis mirror parities are reproduced
+ *  exactly; the r = 0 axis and PEC outer wall are part of the boundary
+ *  closure).
  *  Default damping sigma = 0.55 (the 3D Nyquist stability bound of the
  *  damped Jacobi sweep is sigma < 2/3).
  *
@@ -165,6 +169,100 @@ void HybridPICPCInvIpS (amrex::Real bhx, amrex::Real bhy, amrex::Real bhz,
     vy = (a10*ux + a11*uy + a12*uz)*invdet;
     vz = (a20*ux + a21*uy + a22*uz)*invdet;
 }
+
+#if defined(WARPX_DIM_RZ)
+/** RZ (m = 0) stencil helpers mirroring the residual's discrete operators
+ *  on the collocated grid: the Faraday curl uses the CylindricalYee
+ *  "upward" differences and the Ampere curl the "downward" ones, each with
+ *  the residual's on-axis branches, and r evaluated at the
+ *  staggering-assumed positions the kernels use (nodal for r/theta rows,
+ *  cell-centered for the z-row of the Faraday curl and the r-row of the
+ *  hyper-resistive Laplacian). Components are (r, theta, z) = (0, 1, 2);
+ *  index dims are (r, z) = (i, j). */
+namespace hybridpcrz {
+
+    /** True curl of an E-like field, Faraday (upward) stencils. */
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    void CurlF (amrex::Array4<amrex::Real const> const& a,
+                amrex::Real& cr, amrex::Real& ct, amrex::Real& cz,
+                int i, int j, amrex::Real rmin, amrex::Real dr,
+                amrex::Real inv_dr, amrex::Real inv_dz)
+    {
+        using namespace amrex::literals;
+        const amrex::Real rn = rmin + i*dr;             // nodal position
+        const amrex::Real rc = rmin + (i + 0.5_rt)*dr;  // cell-centered
+        // (curl a)_r = -d_z a_theta; the Faraday kernel zeroes B_r on axis
+        cr = (rn == 0.0_rt) ? 0.0_rt
+           : -inv_dz*(a(i,j+1,0,1) - a(i,j,0,1));
+        // (curl a)_theta = d_z a_r - d_r a_z
+        ct = inv_dz*(a(i,j+1,0,0) - a(i,j,0,0))
+           - inv_dr*(a(i+1,j,0,2) - a(i,j,0,2));
+        // (curl a)_z = (1/r) d_r (r a_theta), r at the cell center
+        cz = (1.0_rt/rc)*inv_dr*((rc + 0.5_rt*dr)*a(i+1,j,0,1)
+                               - (rc - 0.5_rt*dr)*a(i,j,0,1));
+    }
+
+    /** True curl of a B-like field, Ampere (downward) stencils with the
+     *  residual's on-axis regularizations. */
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    void CurlA (amrex::Array4<amrex::Real const> const& a,
+                amrex::Real& cr, amrex::Real& ct, amrex::Real& cz,
+                int i, int j, amrex::Real rmin, amrex::Real dr,
+                amrex::Real inv_dr, amrex::Real inv_dz)
+    {
+        using namespace amrex::literals;
+        const amrex::Real rn = rmin + i*dr;
+        // (curl a)_r = -d_z a_theta
+        cr = -inv_dz*(a(i,j,0,1) - a(i,j-1,0,1));
+        if (rn > 0.5_rt*dr) {
+            // (curl a)_theta = d_z a_r - d_r a_z
+            ct = inv_dz*(a(i,j,0,0) - a(i,j-1,0,0))
+               - inv_dr*(a(i,j,0,2) - a(i-1,j,0,2));
+            // (curl a)_z = (1/r) d_r (r a_theta), r at the node
+            cz = (1.0_rt/rn)*inv_dr*((rn + 0.5_rt*dr)*a(i,j,0,1)
+                                   - (rn - 0.5_rt*dr)*a(i-1,j,0,1));
+        } else {
+            ct = 0.0_rt;                        // J_theta = 0 on axis
+            cz = 4.0_rt*a(i,j,0,1)*inv_dr;      // J_z axis regularization
+        }
+    }
+
+    /** Component-wise hyper-resistive Laplacian of a J-like field, the
+     *  residual's RZ forms (r-row at the cell-centered radius including the
+     *  -1/r^2 curvature term; theta-row zero on axis; z-row switching to
+     *  the plain second difference on axis). */
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    void LapJ (amrex::Array4<amrex::Real const> const& a,
+               amrex::Real& lr, amrex::Real& lt, amrex::Real& lz,
+               int i, int j, amrex::Real rmin, amrex::Real dr,
+               amrex::Real inv_dr, amrex::Real inv_dz)
+    {
+        using namespace amrex::literals;
+        const amrex::Real rn = rmin + i*dr;
+        const amrex::Real rc = rmin + (i + 0.5_rt)*dr;
+        const amrex::Real inv_dr2 = inv_dr*inv_dr;
+        const amrex::Real inv_dz2 = inv_dz*inv_dz;
+        auto dzz = [&] (int c) {
+            return inv_dz2*(a(i,j-1,0,c) - 2.0_rt*a(i,j,0,c) + a(i,j+1,0,c));
+        };
+        auto dr_rdr_over_r = [&] (amrex::Real r, int c) {
+            return (1.0_rt/r)*inv_dr2*((r + 0.5_rt*dr)*(a(i+1,j,0,c) - a(i,j,0,c))
+                                     - (r - 0.5_rt*dr)*(a(i,j,0,c) - a(i-1,j,0,c)));
+        };
+        lr = dr_rdr_over_r(rc, 0) + dzz(0) - a(i,j,0,0)/(rc*rc);
+        lt = (rn > 0.0_rt)
+           ? dr_rdr_over_r(rn, 1) + dzz(1) - a(i,j,0,1)/(rn*rn)
+           : 0.0_rt;
+        lz = dzz(2);
+        if (rn > 0.5_rt*dr) {
+            lz += dr_rdr_over_r(rn, 2);
+        } else {
+            lz += inv_dr2*(a(i-1,j,0,2) - 2.0_rt*a(i,j,0,2) + a(i+1,j,0,2));
+        }
+    }
+
+} // namespace hybridpcrz
+#endif // WARPX_DIM_RZ
 
 template <class T, class Ops>
 class HybridPICPC : public Preconditioner<T,Ops>
@@ -223,7 +321,14 @@ class HybridPICPC : public Preconditioner<T,Ops>
         void RestrictCoef (int a_lev);
 
         /** out = curl a (valid region grown by a_grow; a must have ghosts). */
-        void ComputeCurl (const MF& a, MF& out, int a_lev, int a_grow) const;
+        /** Which discrete curl composition stage this is: the Faraday curl
+         *  (E-like -> B-like, upward stencils in RZ) or the Ampere curl
+         *  (B-like -> J-like, downward stencils with the on-axis branches
+         *  in RZ). Cartesian uses the same central stencil for both. */
+        enum class CurlKind { EtoB, BtoJ };
+
+        void ComputeCurl (const MF& a, MF& out, int a_lev, int a_grow,
+                          CurlKind a_kind) const;
 
         /** Final reconstruction helper: out = U a on the valid region. */
         void ApplyUValid (const MF& a, MF& out, int a_lev) const;
@@ -348,6 +453,8 @@ class HybridPICPC : public Preconditioner<T,Ops>
          *  index-dim -> vector-component map; and the EB mask (the nodal
          *  eb_update_E flag on the collocated grid; nullptr without EB). */
         bool m_has_pec_wall = false;
+        /** RZ: the r-lo face is the symmetry axis (rmin == 0). */
+        bool m_has_axis = false;
         bool m_wall_pec[AMREX_SPACEDIM][2] = {};
         int m_dim2comp[AMREX_SPACEDIM] = {AMREX_D_DECL(0, 1, 2)};
         const amrex::iMultiFab* m_eb_flag = nullptr;
@@ -370,8 +477,15 @@ void HybridPICPC<T,Ops>::Define ( const T& a_U, Ops* a_ops )
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         warpx.get_pointer_HybridPICModel() != nullptr,
         "pc_hybrid_pic requires the hybrid-PIC (Ohm's law) field solver");
-#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
-    WARPX_ABORT_WITH_MESSAGE("pc_hybrid_pic is not implemented for curvilinear geometries");
+#if defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+    WARPX_ABORT_WITH_MESSAGE("pc_hybrid_pic is not implemented for 1D radial geometries");
+#elif defined(WARPX_DIM_RZ)
+    // RZ support is m = 0 only, with the axis at r = 0 (the residual's
+    // CylindricalYee stencils and on-axis branches are mirrored exactly)
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::n_rz_azimuthal_modes == 1,
+        "pc_hybrid_pic in RZ supports the m = 0 azimuthal mode only");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(warpx.Geom(0).ProbLo(0) == 0.0,
+        "pc_hybrid_pic in RZ requires the axis (r = 0) in the domain");
 #endif
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         WarpX::grid_type == ablastr::utils::enums::GridType::Collocated,
@@ -382,10 +496,13 @@ void HybridPICPC<T,Ops>::Define ( const T& a_U, Ops* a_ops )
     // rows with dead columns; parity-mirrored ghosts for the delta-B /
     // delta-J stages). Other non-periodic BCs keep the previous
     // zero-extension closure (warned once).
-#if defined(WARPX_DIM_XZ)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     m_dim2comp[0] = 0; m_dim2comp[1] = 2;
 #elif defined(WARPX_DIM_1D_Z)
     m_dim2comp[0] = 2;
+#endif
+#if defined(WARPX_DIM_RZ)
+    m_has_axis = true;
 #endif
     {
         const auto& fbc_lo = a_ops->GetFieldBoundaryLo();
@@ -489,7 +606,7 @@ void HybridPICPC<T,Ops>::Define ( const T& a_U, Ops* a_ops )
 #if defined(WARPX_DIM_3D)
     const int dirs[3] = {0, 1, 2};
     constexpr int ndirs = 3;
-#elif defined(WARPX_DIM_XZ)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     const int dirs[2] = {0, 2};
     constexpr int ndirs = 2;
 #else // WARPX_DIM_1D_Z
@@ -505,7 +622,16 @@ void HybridPICPC<T,Ops>::Define ( const T& a_U, Ops* a_ops )
             const amrex::Real h = dx[d];
             m_inv2dx[lev][dirs[d]] = 0.5_rt / h;
             m_invdx2[lev][dirs[d]] = 1.0_rt / (h*h);
+#if defined(WARPX_DIM_RZ)
+            // the RZ curl-curl is the compact down/up composition, whose
+            // Nyquist symbol reaches 4/h^2 per direction (the Cartesian
+            // wide central composition peaks at half that): size the
+            // defect diagonal accordingly so the sigma < 2 damping bound
+            // keeps its Cartesian semantics
+            m_l2[lev] += 4.0_rt / (h*h);
+#else
             m_l2[lev] += 2.0_rt / (h*h);
+#endif
         }
     }
 
@@ -652,7 +778,7 @@ void HybridPICPC<T,Ops>::Update ( const T& a_U )
     }
     m_bE->FillBoundary(period0);
     ApplyDomainClosure(*m_bE, 0, ClosureClass::BCoef);
-    ComputeCurl(*m_bE, *m_tmp[0], 0, 0);   // m_tmp[0] = mu0 J0 (valid region)
+    ComputeCurl(*m_bE, *m_tmp[0], 0, 0, CurlKind::BtoJ);   // m_tmp[0] = mu0 J0
 
     // Reduced mass-matrix diagonal (raw dJ/dE, deposited/synced each Newton
     // iteration in PreLinearSolve) for the optional ion-response leg,
@@ -793,10 +919,44 @@ void HybridPICPC<T,Ops>::RestrictCoef ( int a_lev )
 }
 
 template <class T, class Ops>
-void HybridPICPC<T,Ops>::ComputeCurl ( const MF& a, MF& out, int a_lev, int a_grow ) const
+void HybridPICPC<T,Ops>::ComputeCurl ( const MF& a, MF& out, int a_lev, int a_grow,
+                                       CurlKind a_kind ) const
 {
     using namespace amrex;
 
+#if defined(WARPX_DIM_RZ)
+    const auto* dx = m_geom[a_lev].CellSize();
+    const Real dr = dx[0];
+    const Real inv_dr = 1.0_rt/dx[0];
+    const Real inv_dz = 1.0_rt/dx[1];
+    const Real rmin = static_cast<Real>(m_geom[a_lev].ProbLo(0));
+    const bool faraday = (a_kind == CurlKind::EtoB);
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for (MFIter mfi(out, TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+        const Box& bx = mfi.growntilebox(a_grow);
+        Array4<const Real> const& av = a.const_array(mfi);
+        Array4<Real> const& cv = out.array(mfi);
+        amrex::ParallelFor(bx,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k)
+            {
+                amrex::ignore_unused(k);
+                Real cr, ct, cz;
+                if (faraday) {
+                    hybridpcrz::CurlF(av, cr, ct, cz, i, j, rmin, dr,
+                                      inv_dr, inv_dz);
+                } else {
+                    hybridpcrz::CurlA(av, cr, ct, cz, i, j, rmin, dr,
+                                      inv_dr, inv_dz);
+                }
+                cv(i,j,0,0) = cr;
+                cv(i,j,0,1) = ct;
+                cv(i,j,0,2) = cz;
+            });
+    }
+#else
+    amrex::ignore_unused(a_kind);
     const auto inv2dx = m_inv2dx[a_lev];
 
 #ifdef AMREX_USE_OMP
@@ -838,6 +998,7 @@ void HybridPICPC<T,Ops>::ComputeCurl ( const MF& a, MF& out, int a_lev, int a_gr
 #endif
             });
     }
+#endif // WARPX_DIM_RZ
 }
 
 template <class T, class Ops>
@@ -846,6 +1007,13 @@ void HybridPICPC<T,Ops>::ApplyUValid ( const MF& a, MF& out, int a_lev ) const
     using namespace amrex;
 
     const auto invdx2 = m_invdx2[a_lev];
+#if defined(WARPX_DIM_RZ)
+    const auto* dxg = m_geom[a_lev].CellSize();
+    const Real rz_dr = dxg[0];
+    const Real rz_inv_dr = 1.0_rt/dxg[0];
+    const Real rz_inv_dz = 1.0_rt/dxg[1];
+    const Real rz_rmin = static_cast<Real>(m_geom[a_lev].ProbLo(0));
+#endif
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -887,6 +1055,9 @@ void HybridPICPC<T,Ops>::ApplyUValid ( const MF& a, MF& out, int a_lev ) const
                    + (av(i,j+1,k,1) - 2.0_rt*ay + av(i,j-1,k,1))*invdx2[2];
                 lz = (av(i+1,j,k,2) - 2.0_rt*az + av(i-1,j,k,2))*invdx2[0]
                    + (av(i,j+1,k,2) - 2.0_rt*az + av(i,j-1,k,2))*invdx2[2];
+#elif defined(WARPX_DIM_RZ)
+                hybridpcrz::LapJ(av, lx, ly, lz, i, j, rz_rmin, rz_dr,
+                                 rz_inv_dr, rz_inv_dz);
 #else
                 lx = (av(i+1,j,k,0) - 2.0_rt*ax + av(i-1,j,k,0))*invdx2[2];
                 ly = (av(i+1,j,k,1) - 2.0_rt*ay + av(i-1,j,k,1))*invdx2[2];
@@ -906,6 +1077,13 @@ void HybridPICPC<T,Ops>::StageKU ( const MF& a, int a_lev )
 
     const auto invdx2 = m_invdx2[a_lev];
     const bool ion = m_have_mm;
+#if defined(WARPX_DIM_RZ)
+    const auto* dxg = m_geom[a_lev].CellSize();
+    const Real rz_dr = dxg[0];
+    const Real rz_inv_dr = 1.0_rt/dxg[0];
+    const Real rz_inv_dz = 1.0_rt/dxg[1];
+    const Real rz_rmin = static_cast<Real>(m_geom[a_lev].ProbLo(0));
+#endif
 
     // tmp = U a on growntilebox(2): U reads a's first ghost ring beyond
     // that, so a must carry NGROW = 3 filled ghosts
@@ -949,6 +1127,9 @@ void HybridPICPC<T,Ops>::StageKU ( const MF& a, int a_lev )
                    + (av(i,j+1,k,1) - 2.0_rt*ay + av(i,j-1,k,1))*invdx2[2];
                 lz = (av(i+1,j,k,2) - 2.0_rt*az + av(i-1,j,k,2))*invdx2[0]
                    + (av(i,j+1,k,2) - 2.0_rt*az + av(i,j-1,k,2))*invdx2[2];
+#elif defined(WARPX_DIM_RZ)
+                hybridpcrz::LapJ(av, lx, ly, lz, i, j, rz_rmin, rz_dr,
+                                 rz_inv_dr, rz_inv_dz);
 #else
                 lx = (av(i+1,j,k,0) - 2.0_rt*ax + av(i-1,j,k,0))*invdx2[2];
                 ly = (av(i+1,j,k,1) - 2.0_rt*ay + av(i-1,j,k,1))*invdx2[2];
@@ -976,7 +1157,7 @@ void HybridPICPC<T,Ops>::StageKU ( const MF& a, int a_lev )
     ApplyDomainClosure(*m_tmp[a_lev], a_lev, ClosureClass::EField);
 
     // tmp2 = curl tmp on growntilebox(1)
-    ComputeCurl(*m_tmp[a_lev], *m_tmp2[a_lev], a_lev, 1);
+    ComputeCurl(*m_tmp[a_lev], *m_tmp2[a_lev], a_lev, 1, CurlKind::EtoB);
     ApplyDomainClosure(*m_tmp2[a_lev], a_lev, ClosureClass::BField);
 }
 
@@ -986,6 +1167,13 @@ void HybridPICPC<T,Ops>::SmoothLevel ( int a_lev, int a_nsweeps, bool a_x_is_zer
     using namespace amrex;
 
     BL_PROFILE("HybridPICPC::SmoothLevel()");
+#if defined(WARPX_DIM_RZ)
+    const auto* dxg = m_geom[a_lev].CellSize();
+    const Real rz_dr = dxg[0];
+    const Real rz_inv_dr = 1.0_rt/dxg[0];
+    const Real rz_inv_dz = 1.0_rt/dxg[1];
+    const Real rz_rmin = static_cast<Real>(m_geom[a_lev].ProbLo(0));
+#endif
 
     const RT l2 = m_l2[a_lev];
     const RT sigma = m_sigma;
@@ -1026,7 +1214,11 @@ void HybridPICPC<T,Ops>::SmoothLevel ( int a_lev, int a_nsweeps, bool a_x_is_zer
                             sz = bW(i,j,k,2);
                         } else {
                             // curl(tmp2) inline
-#if defined(WARPX_DIM_3D)
+#if defined(WARPX_DIM_RZ)
+                            Real ccx, ccy, ccz;
+                            hybridpcrz::CurlA(t2, ccx, ccy, ccz, i, j, rz_rmin,
+                                              rz_dr, rz_inv_dr, rz_inv_dz);
+#elif defined(WARPX_DIM_3D)
                             const Real ccx = (t2(i,j+1,k,2) - t2(i,j-1,k,2))*inv2dx[1]
                                            - (t2(i,j,k+1,1) - t2(i,j,k-1,1))*inv2dx[2];
                             const Real ccy = (t2(i,j,k+1,0) - t2(i,j,k-1,0))*inv2dx[2]
@@ -1082,6 +1274,13 @@ void HybridPICPC<T,Ops>::ResidualLevel ( int a_lev )
     using namespace amrex;
 
     BL_PROFILE("HybridPICPC::ResidualLevel()");
+#if defined(WARPX_DIM_RZ)
+    const auto* dxg = m_geom[a_lev].CellSize();
+    const Real rz_dr = dxg[0];
+    const Real rz_inv_dr = 1.0_rt/dxg[0];
+    const Real rz_inv_dz = 1.0_rt/dxg[1];
+    const Real rz_rmin = static_cast<Real>(m_geom[a_lev].ProbLo(0));
+#endif
 
     const amrex::Periodicity& period = m_geom[a_lev].periodicity();
     const auto inv2dx = m_inv2dx[a_lev];
@@ -1104,7 +1303,11 @@ void HybridPICPC<T,Ops>::ResidualLevel ( int a_lev )
             amrex::ParallelFor(bx,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k)
                 {
-#if defined(WARPX_DIM_3D)
+#if defined(WARPX_DIM_RZ)
+                    Real ccx, ccy, ccz;
+                    hybridpcrz::CurlA(t2, ccx, ccy, ccz, i, j, rz_rmin,
+                                      rz_dr, rz_inv_dr, rz_inv_dz);
+#elif defined(WARPX_DIM_3D)
                     const Real ccx = (t2(i,j+1,k,2) - t2(i,j-1,k,2))*inv2dx[1]
                                    - (t2(i,j,k+1,1) - t2(i,j,k-1,1))*inv2dx[2];
                     const Real ccy = (t2(i,j,k+1,0) - t2(i,j,k-1,0))*inv2dx[2]
@@ -1133,6 +1336,13 @@ template <class T, class Ops>
 void HybridPICPC<T,Ops>::ApplyReducedOp ( const MF& a, MF& out )
 {
     using namespace amrex;
+#if defined(WARPX_DIM_RZ)
+    const auto* dxg = m_geom[0].CellSize();
+    const Real rz_dr = dxg[0];
+    const Real rz_inv_dr = 1.0_rt/dxg[0];
+    const Real rz_inv_dz = 1.0_rt/dxg[1];
+    const Real rz_rmin = static_cast<Real>(m_geom[0].ProbLo(0));
+#endif
 
     // a must be ghost-filled (NGROW layers) by the caller
     StageKU(a, 0);
@@ -1148,7 +1358,11 @@ void HybridPICPC<T,Ops>::ApplyReducedOp ( const MF& a, MF& out )
         amrex::ParallelFor(bx,
             [=] AMREX_GPU_DEVICE (int i, int j, int k)
             {
-#if defined(WARPX_DIM_3D)
+#if defined(WARPX_DIM_RZ)
+                Real ccx, ccy, ccz;
+                hybridpcrz::CurlA(t2, ccx, ccy, ccz, i, j, rz_rmin,
+                                  rz_dr, rz_inv_dr, rz_inv_dz);
+#elif defined(WARPX_DIM_3D)
                 const Real ccx = (t2(i,j+1,k,2) - t2(i,j-1,k,2))*inv2dx[1]
                                - (t2(i,j,k+1,1) - t2(i,j,k-1,1))*inv2dx[2];
                 const Real ccy = (t2(i,j,k+1,0) - t2(i,j,k-1,0))*inv2dx[2]
@@ -1406,6 +1620,43 @@ void HybridPICPC<T,Ops>::ApplyDomainClosure ( MF& a, int a_lev,
         }
     }
 
+#if defined(WARPX_DIM_RZ)
+    // Symmetry axis (r = 0): signed-mirror guards about the axis node --
+    // r/theta components odd, z even, the same parities for E-, B- and
+    // J-like objects at m = 0 (matching ApplyFieldBoundaryOnAxis). The Ohm
+    // solve zeroes E_theta ON the axis, so EField-class objects get that
+    // row zeroed here as well (restored as an identity row on the output).
+    if (m_has_axis) {
+        const Box adom = amrex::convert(m_geom[a_lev].Domain(),
+                                        a.boxArray().ixType());
+        const int w = adom.smallEnd(0);
+        const int cls = static_cast<int>(a_cls);
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+        for (MFIter mfi(a, TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+            const Box& bx = mfi.growntilebox();
+            Array4<Real> const& v = a.array(mfi);
+            amrex::ParallelFor(bx, a.nComp(),
+                [=] AMREX_GPU_DEVICE (int i, int j, int k, int n)
+                {
+                    if (i > w) { return; }
+                    const bool scalar = (cls == 4/*Coef*/) && (n >= 3);
+                    if (i == w) {
+                        if (cls == 0/*EField*/ && n == 1) {
+                            v(i,j,k,n) = 0.0_rt;
+                        }
+                        return;
+                    }
+                    const int im = 2*w - i;
+                    const Real sign =
+                        (scalar || n == 2) ? 1.0_rt : -1.0_rt;
+                    v(i,j,k,n) = sign * v(im,j,k,n);
+                });
+        }
+    }
+#endif
+
     // EB (staircase): zero covered/frozen nodes so no stencil emits or
     // receives contributions there (the residual's masked Ohm solves skip
     // those locations). Fine level only; masked up to the flag's guards.
@@ -1464,6 +1715,30 @@ void HybridPICPC<T,Ops>::OverrideIdentityRows ( T& a_out, const T& a_in ) const
             }
         }
     }
+
+#if defined(WARPX_DIM_RZ)
+    // E_theta on the axis is fixed to zero by the Ohm solve: identity row
+    if (m_has_axis) {
+        const Box adom = amrex::convert(m_geom[0].Domain(),
+            a_out.getArrayVec()[0][1]->boxArray().ixType());
+        Box plane = adom;
+        plane.setBig(0, adom.smallEnd(0));
+        MF& o = *a_out.getArrayVec()[0][1];
+        const MF& si = *a_in.getArrayVec()[0][1];
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+        for (MFIter mfi(o, TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+            const Box bx = mfi.tilebox() & plane;
+            if (bx.isEmpty()) { continue; }
+            Array4<Real> const& ov = o.array(mfi);
+            Array4<const Real> const& sv = si.const_array(mfi);
+            amrex::ParallelFor(bx,
+                [=] AMREX_GPU_DEVICE (int i, int j, int k)
+                { ov(i,j,k) = sv(i,j,k); });
+        }
+    }
+#endif
 
     if (m_eb_flag != nullptr) {
         for (int n = 0; n < 3; n++) {
@@ -1617,10 +1892,10 @@ void HybridPICPC<T,Ops>::Apply ( T& a_x, const T& a_b )
     // are restored on the output below) + parity ghosts; EB nodes zeroed
     ApplyDomainClosure(*m_bE, 0, ClosureClass::EField);
     m_xW[0]->setVal(0.0);
-    ComputeCurl(*m_bE, *m_tmp[0], 0, 1);          // curl b on grow(1)
+    ComputeCurl(*m_bE, *m_tmp[0], 0, 1, CurlKind::EtoB);   // curl b on grow(1)
     ApplyDomainClosure(*m_tmp[0], 0, ClosureClass::BField);
     MF& bdst = m_nested ? *m_bK : *m_bW[0];
-    ComputeCurl(*m_tmp[0], bdst, 0, 0);           // curl curl b (valid)
+    ComputeCurl(*m_tmp[0], bdst, 0, 0, CurlKind::BtoJ);    // curl curl b (valid)
 
     if (m_nested) {
         InnerGMRES();
