@@ -66,7 +66,15 @@ class CylindricalNormalModes(object):
         self.verbose = verbose or self.test
         self.pc_bb = pc_bb
         self.pc_hybrid = pc_hybrid
-        self.collocated = collocated or pc_hybrid
+        # pc_hybrid_pic supports both grids: --pc-hybrid defaults to the
+        # collocated grid unless RZEM_GRID=staggered overrides it
+        grid_env = os.environ.get("RZEM_GRID", "")
+        if grid_env == "staggered":
+            self.collocated = False
+        elif grid_env == "collocated":
+            self.collocated = True
+        else:
+            self.collocated = collocated or pc_hybrid
         self.dt_mult = dt_mult
 
         # calculate various plasma parameters based on the simulation input
@@ -171,9 +179,8 @@ class CylindricalNormalModes(object):
         simulation.max_steps = self.total_steps
         simulation.current_deposition_algo = "direct"
         if self.collocated:
-            # pc_hybrid_pic requires the collocated (nodal) grid (set on the
-            # picmi Simulation object; it writes warpx.grid_type at
-            # initialization)
+            # collocated (nodal) grid (set on the picmi Simulation object;
+            # it writes warpx.grid_type at initialization)
             simulation.grid_type = "collocated"
         simulation.particle_shape = 1
         simulation.verbose = self.verbose
@@ -235,7 +242,7 @@ class CylindricalNormalModes(object):
             # branch: set the preconditioner type explicitly
             pywarpx.warpx.get_bucket("jacobian").pc_type = "pc_block_banded"
         elif self.pc_hybrid:
-            # matrix-free EMHD preconditioner (collocated grid, RZ m = 0)
+            # matrix-free EMHD preconditioner (RZ m = 0)
             pywarpx.warpx.get_bucket("jacobian").pc_type = "pc_hybrid_pic"
             pc_bucket = pywarpx.warpx.get_bucket("pc_hybrid_pic")
             pc_bucket.mode = os.environ.get("RZEM_PC_MODE", "smoother")
@@ -351,7 +358,7 @@ parser.add_argument(
 parser.add_argument(
     "--pc-hybrid",
     help="use the matrix-free EMHD preconditioner (pc_hybrid_pic, RZ m=0; "
-    "switches the run to the collocated grid)",
+    "defaults the run to the collocated grid, RZEM_GRID=staggered overrides)",
     action="store_true",
 )
 parser.add_argument(
