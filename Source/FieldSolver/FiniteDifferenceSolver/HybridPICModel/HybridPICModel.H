@@ -702,7 +702,12 @@ struct ElectronPressure {
                                      amrex::Real const T0,
                                      amrex::Real const gamma,
                                      amrex::Real const rho) {
-        return n0 * T0 * std::pow((rho/PhysConst::q_e)/n0, gamma);
+        // clamp at zero: the fractional power is NaN for rho < 0, and the
+        // theta-implicit mass-matrix continuity response can swing a
+        // near-empty cell (e.g. just emptied by an absorbing boundary)
+        // transiently negative inside the matvec
+        return n0 * T0 * std::pow(
+            (amrex::max(rho, amrex::Real(0.0))/PhysConst::q_e)/n0, gamma);
     }
 };
 
