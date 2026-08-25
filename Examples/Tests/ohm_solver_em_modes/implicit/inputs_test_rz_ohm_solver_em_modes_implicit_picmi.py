@@ -265,6 +265,7 @@ class CylindricalNormalModes(object):
             max_particle_iterations=21,
             particle_tolerance=1.0e-10,
             use_mass_matrices_jacobian=bool(int(os.environ.get("RZEM_MM", "0"))),
+            use_mass_matrices_pc=bool(int(os.environ.get("RZEM_MM_PC", "0"))),
             pc_type=pc,
             diagnostic_file="diags/newton_diag.txt" if self.test else None,
         )

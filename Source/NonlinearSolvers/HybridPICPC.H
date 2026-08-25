@@ -580,6 +580,11 @@ class HybridPICPC : public Preconditioner<T,Ops>
          *  that maps to component c (m_dim2comp) and nodal elsewhere. */
         bool m_staggered = false;
         bool m_wall_pec[AMREX_SPACEDIM][2] = {};
+        /** Non-periodic faces under the zero-extension fallback: on the
+         *  staggered grid the hi-side wall plane of components nodal along
+         *  the face normal lives in the container's ghost region and is not
+         *  modeled -- those rows are made exact identity rows instead. */
+        bool m_wall_open[AMREX_SPACEDIM][2] = {};
         int m_dim2comp[AMREX_SPACEDIM] = {AMREX_D_DECL(0, 1, 2)};
         const amrex::iMultiFab* m_eb_flag = nullptr;
 
@@ -646,11 +651,17 @@ void HybridPICPC<T,Ops>::Define ( const T& a_U, Ops* a_ops )
                     m_wall_pec[d][side] = true;
                     m_has_pec_wall = true;
                 } else {
+                    m_wall_open[d][side] = true;
                     ablastr::warn_manager::WMRecordWarning("HybridPICPC",
-                        "pc_hybrid_pic: non-periodic, non-PEC field boundary "
-                        "detected; the preconditioner keeps a homogeneous "
-                        "zero-extension closure on that face (approximate "
-                        "boundary rows).");
+                        std::string("pc_hybrid_pic: non-periodic, non-PEC "
+                        "field boundary detected; the preconditioner uses ")
+                        + (m_staggered
+                           ? "a zero-gradient (even-clamp) ghost closure "
+                             "with identity rows on the unmodeled wall "
+                             "planes on that face (approximate boundary "
+                             "rows)."
+                           : "a homogeneous zero-extension closure on that "
+                             "face (approximate boundary rows)."));
                 }
             }
         }
@@ -1061,6 +1072,21 @@ void HybridPICPC<T,Ops>::Update ( const T& a_U )
     // it targets E-space accuracy (r_E = -U r_W; see the class docs)
     if (m_nested) {
         m_beta_max = static_cast<RT>(m_l2[0] * m_coef[0]->max(3, 0));
+        if (m_staggered) {
+            // On the staggered grid the E-space amplification of U is
+            // carried by the interpolation-damped Hall chain: each
+            // staggered member of the active transverse pair contributes
+            // cos(theta/2) ~ 1/2 at the grid scale, so ||U|| (and with it
+            // the tolerance scaling) is reduced by the least-damped pair's
+            // factor -- both members staggered in 3D, one nodal member in
+            // 2D/RZ (the undamped 1D pair keeps the full beta). Without
+            // this the W-space inner solve is over-tightened by 2-4x.
+#if defined(WARPX_DIM_3D)
+            m_beta_max *= RT(0.25);
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+            m_beta_max *= RT(0.5);
+#endif
+        }
     }
 
     // Coarse operators by rediscretization: inject the coefficients down the
@@ -2136,10 +2162,17 @@ void HybridPICPC<T,Ops>::OverrideIdentityRows ( T& a_out, const T& a_in ) const
 {
     using namespace amrex;
 
-    if (m_has_pec_wall) {
+    {
         for (int d = 0; d < AMREX_SPACEDIM; d++) {
             for (int side = 0; side < 2; side++) {
-                if (!m_wall_pec[d][side]) { continue; }
+                // PEC faces: exact identity tangential rows (both grids).
+                // Staggered hi-side zero-extension faces: the nodal wall
+                // plane is an unmodeled ghost plane of the cell-indexed
+                // container -- the preconditioner would return zero there
+                // (a singular preconditioner); make those rows identity.
+                const bool open_stag = m_staggered && (side == 1)
+                    && m_wall_open[d][side];
+                if (!m_wall_pec[d][side] && !open_stag) { continue; }
                 const int nc = m_dim2comp[d];
                 for (int n = 0; n < 3; n++) {
                     if (n == nc) { continue; }  // tangential rows only
