@@ -762,8 +762,11 @@ WarpX::ReadParameters ()
 
         if(is_any_boundary_open){
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction,
-                "Field open boundary conditions are only implemented for the FFT-based Poisson solver");
+                poisson_solver_id == PoissonSolverAlgo::IntegratedGreenFunction ||
+                electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC,
+                "Field open boundary conditions are only implemented for the "
+                "FFT-based Poisson solver and the hybrid-PIC solver (where "
+                "they apply a zero-gradient continuation to the field ghosts)");
         }
 
 

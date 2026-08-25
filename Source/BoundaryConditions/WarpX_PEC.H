@@ -125,5 +125,55 @@ namespace PEC {
                                 const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& field_boundary_hi,
                                 const amrex::Geometry& geom,
                                 int lev, PatchType patch_type, const amrex::Vector<amrex::IntVect>& ref_ratios);
+
+    /**
+     * \brief Fill the non-periodic domain ghosts of a scalar field with the
+     * staggering-aware even-mirror zero-gradient (homogeneous Neumann)
+     * image: data nodal in a dimension mirrors across the boundary NODE
+     * (ghost(end -/+ k) = f(end +/- k)) and cell-centered data mirrors
+     * across the boundary FACE. A clamp is not a Neumann image for nodal
+     * data: a centered stencil at the end node would read half the
+     * interior gradient instead of zero. Unlike the PEC pressure image
+     * this is a pure ghost operation: valid data, including the boundary
+     * node itself, is never rewritten. Sides with periodic or 'none'
+     * boundaries are skipped ('none' marks the RZ axis, which carries its
+     * own parity handling); PEC sides are filled only when include_pec is
+     * set (the PEC pressure image also rewrites the boundary node, so
+     * callers that apply it keep it and exclude PEC here). Face ghosts
+     * only (corner-diagonal ghosts are not reached, matching the PEC
+     * scalar image).
+     *
+     * \param[in,out] field               Multifab containing the scalar
+     * \param[in]     field_boundary_lo   Boundary types of the "low" field boundaries
+     * \param[in]     field_boundary_hi   Boundary types of the "high" field boundaries
+     * \param[in]     geom                geometry object of level "lev"
+     * \param[in]     lev                 level of the Multifab
+     * \param[in]     patch_type          coarse or fine
+     * \param[in]     ref_ratios          vector containing the refinement ratios of the refinement levels
+     * \param[in]     include_pec         also fill PEC sides (pure mirror, boundary node untouched)
+     */
+    void ApplyZeroGradientToScalar (
+                                amrex::MultiFab* field,
+                                const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& field_boundary_lo,
+                                const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& field_boundary_hi,
+                                const amrex::Geometry& geom,
+                                int lev, PatchType patch_type, const amrex::Vector<amrex::IntVect>& ref_ratios,
+                                bool include_pec);
+
+    /** Zero-gradient (continuation) ghost fill at OPEN sides for one
+     *  component of a vector field: the same staggering-aware
+     *  even-mirror machinery as ApplyZeroGradientToScalar (nodal data
+     *  mirrors across the boundary node, cell-centered across the
+     *  boundary face), but the side predicate selects exactly the
+     *  sides typed FieldBoundaryType::Open -- the outflow
+     *  "continuation" statement for E and B on an open domain face.
+     *  Pure-ghost: never rewrites valid data.
+     */
+    void ApplyZeroGradientAtOpen (
+                                amrex::MultiFab* field,
+                                const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& field_boundary_lo,
+                                const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& field_boundary_hi,
+                                const amrex::Geometry& geom,
+                                int lev, PatchType patch_type, const amrex::Vector<amrex::IntVect>& ref_ratios);
 }
 #endif // WarpX_PEC_KERNELS_H_

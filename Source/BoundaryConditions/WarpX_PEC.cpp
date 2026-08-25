@@ -548,6 +548,44 @@ namespace
             }
         }
     }
+
+    /**
+     * \brief Scatter the even-mirror zero-gradient image of a valid
+     * cell/node into its domain-ghost mirror on the selected sides.
+     * Unlike SetNeumannOnPEC this never rewrites valid data: the
+     * boundary node (its own mirror under nodal staggering) is left
+     * untouched, so the fill is a pure ghost operation.
+     *
+     * \param[in] n            index of the MultiFab component being updated
+     * \param[in] ijk_vec      indices along the x(i), y(j), z(k) of the field array
+     * \param[in,out] field    field data to be updated
+     * \param[in] mirrorfac    mirror location to get corresponding ghost node value
+     * \param[in] fill         whether the given boundary side gets the fill
+     * \param[in] fabbox       multifab box including ghost cells
+     */
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    void SetZeroGradientGhosts (const int n,
+                                const amrex::IntVect & ijk_vec,
+                                amrex::Array4<amrex::Real> const& field,
+                                amrex::GpuArray<GpuArray<int, 2>, AMREX_SPACEDIM> const& mirrorfac,
+                                amrex::GpuArray<GpuArray<bool, 2>, AMREX_SPACEDIM> const& fill,
+                                amrex::Box const& fabbox )
+    {
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
+        {
+            for (int iside = 0; iside < 2; ++iside)
+            {
+                if (!fill[idim][iside]) { continue; }
+
+                amrex::IntVect iv_mirror = ijk_vec;
+                iv_mirror[idim] = mirrorfac[idim][iside] - ijk_vec[idim];
+
+                if (iv_mirror != ijk_vec && fabbox.contains(iv_mirror)) {
+                    field(iv_mirror, n) = field(ijk_vec, n);
+                }
+            }
+        }
+    }
 }
 
 void
@@ -1188,6 +1226,142 @@ PEC::ApplyPECtoElectronPressure (
             const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 
             ::SetNeumannOnPEC(n, iv, Pe_array, mirrorfac, is_pec, fabbox);
+        });
+    }
+}
+
+void
+PEC::ApplyZeroGradientToScalar (
+    amrex::MultiFab* field,
+    const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& field_boundary_lo,
+    const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& field_boundary_hi,
+    const amrex::Geometry& geom,
+    const int lev, PatchType patch_type, const amrex::Vector<amrex::IntVect>& ref_ratios,
+    const bool include_pec)
+{
+    amrex::Box domain_box = geom.Domain();
+    if (patch_type == PatchType::coarse && (lev > 0)) {
+        domain_box.coarsen(ref_ratios[lev-1]);
+    }
+    domain_box.convert(field->ixType());
+
+    amrex::IntVect domain_lo = domain_box.smallEnd();
+    amrex::IntVect domain_hi = domain_box.bigEnd();
+
+    amrex::IntVect f_nodal = field->ixType().toIntVect();
+    amrex::IntVect ng_fill = field->nGrowVect();
+
+    // Extend a copy of the domain over the sides that do NOT get the
+    // fill, so boxes that only touch those sides are skipped whole.
+    amrex::Box grown_domain_box = domain_box;
+
+    auto fills = [include_pec] (FieldBoundaryType const bc) {
+        return bc != FieldBoundaryType::Periodic &&
+               bc != FieldBoundaryType::None &&
+               (include_pec || bc != FieldBoundaryType::PEC);
+    };
+    amrex::GpuArray<GpuArray<bool,2>, AMREX_SPACEDIM> fill;
+    amrex::GpuArray<GpuArray<int,2>, AMREX_SPACEDIM> mirrorfac;
+    for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
+        fill[idim][0] = fills(field_boundary_lo[idim]);
+        fill[idim][1] = fills(field_boundary_hi[idim]);
+        if (!fill[idim][0]) { grown_domain_box.growLo(idim, ng_fill[idim]); }
+        if (!fill[idim][1]) { grown_domain_box.growHi(idim, ng_fill[idim]); }
+
+        mirrorfac[idim][0] = 2*domain_lo[idim] - (1 - f_nodal[idim]);
+        mirrorfac[idim][1] = 2*domain_hi[idim] + (1 - f_nodal[idim]);
+    }
+    const int nComp = field->nComp();
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for (amrex::MFIter mfi(*field); mfi.isValid(); ++mfi) {
+
+        // Get the multifab box including ghost cells
+        Box const& fabbox = mfi.fabbox();
+
+        // If grown_domain_box contains fabbox there are no ghosts to fill
+        // on this box: continue to the next one
+        if (grown_domain_box.contains(fabbox)) { continue; }
+
+        // Extract field data
+        auto const& f_array = field->array(mfi);
+
+        // Loop over valid cells (i.e. cells inside the domain)
+        amrex::ParallelFor(mfi.validbox(), nComp,
+        [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
+            amrex::ignore_unused(j,k);
+            const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
+
+            ::SetZeroGradientGhosts(n, iv, f_array, mirrorfac, fill, fabbox);
+        });
+    }
+}
+
+void
+PEC::ApplyZeroGradientAtOpen (
+    amrex::MultiFab* field,
+    const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& field_boundary_lo,
+    const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& field_boundary_hi,
+    const amrex::Geometry& geom,
+    const int lev, PatchType patch_type, const amrex::Vector<amrex::IntVect>& ref_ratios)
+{
+    amrex::Box domain_box = geom.Domain();
+    if (patch_type == PatchType::coarse && (lev > 0)) {
+        domain_box.coarsen(ref_ratios[lev-1]);
+    }
+    domain_box.convert(field->ixType());
+
+    amrex::IntVect domain_lo = domain_box.smallEnd();
+    amrex::IntVect domain_hi = domain_box.bigEnd();
+
+    amrex::IntVect f_nodal = field->ixType().toIntVect();
+    amrex::IntVect ng_fill = field->nGrowVect();
+
+    // Extend a copy of the domain over the sides that do NOT get the
+    // fill, so boxes that only touch those sides are skipped whole.
+    amrex::Box grown_domain_box = domain_box;
+
+    // continuation applies ONLY at sides explicitly typed Open
+    auto fills = [] (FieldBoundaryType const bc) {
+        return bc == FieldBoundaryType::Open;
+    };
+    amrex::GpuArray<GpuArray<bool,2>, AMREX_SPACEDIM> fill;
+    amrex::GpuArray<GpuArray<int,2>, AMREX_SPACEDIM> mirrorfac;
+    for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
+        fill[idim][0] = fills(field_boundary_lo[idim]);
+        fill[idim][1] = fills(field_boundary_hi[idim]);
+        if (!fill[idim][0]) { grown_domain_box.growLo(idim, ng_fill[idim]); }
+        if (!fill[idim][1]) { grown_domain_box.growHi(idim, ng_fill[idim]); }
+
+        mirrorfac[idim][0] = 2*domain_lo[idim] - (1 - f_nodal[idim]);
+        mirrorfac[idim][1] = 2*domain_hi[idim] + (1 - f_nodal[idim]);
+    }
+    const int nComp = field->nComp();
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for (amrex::MFIter mfi(*field); mfi.isValid(); ++mfi) {
+
+        // Get the multifab box including ghost cells
+        Box const& fabbox = mfi.fabbox();
+
+        // If grown_domain_box contains fabbox there are no ghosts to fill
+        // on this box: continue to the next one
+        if (grown_domain_box.contains(fabbox)) { continue; }
+
+        // Extract field data
+        auto const& f_array = field->array(mfi);
+
+        // Loop over valid cells (i.e. cells inside the domain)
+        amrex::ParallelFor(mfi.validbox(), nComp,
+        [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
+            amrex::ignore_unused(j,k);
+            const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
+
+            ::SetZeroGradientGhosts(n, iv, f_array, mirrorfac, fill, fabbox);
         });
     }
 }

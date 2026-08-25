@@ -167,7 +167,11 @@ ProjectionDivCleaner::solve ()
         {FieldBoundaryType::PEC, LinOpBCType::Dirichlet},
         {FieldBoundaryType::Neumann, LinOpBCType::Neumann}, // Note that PMC is the same as Neumann
         {FieldBoundaryType::Periodic, LinOpBCType::Periodic},
-        {FieldBoundaryType::None, LinOpBCType::Neumann}
+        {FieldBoundaryType::None, LinOpBCType::Neumann},
+        // Open (outflow continuation): Neumann on the cleaning
+        // potential leaves the normal B at the open face untouched,
+        // consistent with the zero-gradient ghost continuation.
+        {FieldBoundaryType::Open, LinOpBCType::Neumann}
     };
 
     for (int idim=0; idim<AMREX_SPACEDIM; idim++){
