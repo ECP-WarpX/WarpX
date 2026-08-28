@@ -77,3 +77,13 @@ WARP.md
 .DS_Store
 .AppleDouble
 .LSOverride
+
+# local run outputs of the implicit-hybrid test decks
+Examples/Tests/*/runs/
+pc_hybrid_pic_formulation.pdf
+smoke_eb_probe_stages.log
+Examples/Tests/**/runs/
+Examples/Tests/polaris_static_form/A_coil_modes*
+BC_Treatment/
+mm_boundary_package/
+DELIVERY_NOTE.md
