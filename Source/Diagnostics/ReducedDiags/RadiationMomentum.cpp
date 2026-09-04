@@ -34,7 +34,7 @@ RadiationMomentum::RadiationMomentum (std::string const& rd_name)
         radiation_enabled,
         "RadiationMomentum requires radiation_transport.enabled=1.");
 
-    m_data.resize(18, 0.0_rt);
+    m_data.resize(24, 0.0_rt);
 
 #if defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RZ)
     std::array<std::string, 3> const labels{"r", "theta", "z"};
@@ -75,6 +75,16 @@ RadiationMomentum::RadiationMomentum (std::string const& rd_name)
                    << "]cumulative_streaming_boundary_" << label
                    << "(kg*m/s)";
         }
+        for (std::string const& label : labels) {
+            output << m_sep << "[" << column++
+                   << "]pending_streaming_material_" << label
+                   << "(kg*m/s)";
+        }
+        for (std::string const& label : labels) {
+            output << m_sep << "[" << column++
+                   << "]pending_diffusion_material_" << label
+                   << "(kg*m/s)";
+        }
         output << "\n";
     }
 }
@@ -86,12 +96,36 @@ void RadiationMomentum::ComputeDiags (int const step)
     amrex::GpuArray<amrex::Real, 3> boundary_impulse{0.0_rt, 0.0_rt, 0.0_rt};
     amrex::GpuArray<amrex::Real, 3> streaming_boundary_impulse{
         0.0_rt, 0.0_rt, 0.0_rt};
+    amrex::GpuArray<amrex::Real, 3> pending_streaming_impulse{
+        0.0_rt, 0.0_rt, 0.0_rt};
+    amrex::GpuArray<amrex::Real, 3> pending_diffusion_impulse{
+        0.0_rt, 0.0_rt, 0.0_rt};
     for (int lev = 0; lev <= warpx.finestLevel(); ++lev) {
         if (warpx.m_fields.has(FieldType::radiation_material_momentum, lev)) {
             auto const* momentum = warpx.m_fields.get(
                 FieldType::radiation_material_momentum, lev);
             for (int component = 0; component < 3; ++component) {
                 material_impulse[component] += momentum->sum(
+                    component, /*local=*/false);
+            }
+        }
+        if (warpx.m_fields.has(
+                FieldType::radiation_streaming_momentum_carry, lev))
+        {
+            auto const* carry = warpx.m_fields.get(
+                FieldType::radiation_streaming_momentum_carry, lev);
+            for (int component = 0; component < 3; ++component) {
+                pending_streaming_impulse[component] += carry->sum(
+                    component, /*local=*/false);
+            }
+        }
+        if (warpx.m_fields.has(
+                FieldType::radiation_diffusion_momentum_carry, lev))
+        {
+            auto const* carry = warpx.m_fields.get(
+                FieldType::radiation_diffusion_momentum_carry, lev);
+            for (int component = 0; component < 3; ++component) {
+                pending_diffusion_impulse[component] += carry->sum(
                     component, /*local=*/false);
             }
         }
@@ -126,6 +160,8 @@ void RadiationMomentum::ComputeDiags (int const step)
         m_data[12 + component] = streaming_boundary_impulse[component];
         m_data[15 + component] =
             m_cumulative_streaming_boundary_impulse[component];
+        m_data[18 + component] = pending_streaming_impulse[component];
+        m_data[21 + component] = pending_diffusion_impulse[component];
     }
 }
 

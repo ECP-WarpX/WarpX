@@ -4627,8 +4627,10 @@ studies.
 
 .. warning::
 
-   Streaming and diffusion are explicit and support one AMR level. The optional
-   implicit-temperature solve applies only to cell-local LTE material exchange. The
+   Streaming and diffusion are explicit and support one AMR level. LTE exchange and
+   diffusion are not supported with a moving window because their persistent thick-
+   radiation field is not yet shifted with the window. The optional implicit-
+   temperature solve applies only to cell-local LTE material exchange. The
    implementation does not yet sample scattering events or their momentum exchange,
    evolve material composition, or provide an implicit Monte-Carlo/DDMC solve. The
    optional absorption/diffusion momentum adapter is limited to the hybrid-ion
@@ -4697,6 +4699,45 @@ studies.
    diffusion opacity. When :pp:param:`radiation_transport.material_opacity_table_file`
    is selected, omitted values are read from that table; explicitly configured values
    must agree with the table representatives.
+
+.. pp:param:: radiation_transport.initial_diffusion_energy_density(x,y,z)
+   :type: ``string``
+   :unit: :math:`\mathrm{J\,m^{-3}}`
+   :optional:
+
+   Cell-centered radiation energy-density profile for a fresh grey calculation.
+   It requires :pp:param:`radiation_transport.enable_diffusion = 1` or
+   :pp:param:`radiation_transport.enable_lte_exchange = 1`, and every evaluation
+   must be finite and non-negative. If it is omitted, the persistent diffusion
+   field starts at zero.
+
+   Coordinates are in meters. In 3D the arguments are Cartesian ``(x,y,z)``;
+   in 2D Cartesian and RZ they are ``(x,0,z)``, where ``x`` is radius in RZ;
+   in 1D Cartesian they are ``(0,0,z)``; and in RCYLINDER or RSPHERE they are
+   ``(r,0,0)``. Although the input is an energy density, the persistent
+   ``radiation_diffusion_energy`` components store cell-integrated energy in
+   J/cell. WarpX multiplies the expression by the Cartesian cell volume, or by
+   the exact annular or spherical-shell volume in radial geometry; suppressed
+   Cartesian directions have unit extent.
+
+   The expression is applied only on a cold start and currently requires
+   :pp:param:`amr.max_level = 0`. It is ignored on restart, when the checkpointed
+   J/cell field takes precedence.
+
+.. pp:param:: radiation_transport.initial_diffusion_energy_density_g<group>(x,y,z)
+   :type: ``string``
+   :unit: :math:`\mathrm{J\,m^{-3}}`
+   :optional:
+
+   Multigroup form of
+   :pp:param:`radiation_transport.initial_diffusion_energy_density(x,y,z)`, with
+   zero-based group indices such as
+   ``initial_diffusion_energy_density_g0(x,y,z)``. Each omitted group starts at
+   zero. A multigroup calculation must use these suffixed parameters; the grey
+   unsuffixed form is rejected. The unsuffixed and group-specific forms are
+   mutually exclusive. Units, coordinate mapping, validation, J/cell storage,
+   cold-start restriction and restart behavior are otherwise identical to the
+   grey form.
 
 .. pp:param:: radiation_transport.absorption_coefficient
    :type: ``float`` or parser function
@@ -4906,6 +4947,19 @@ studies.
    is removed from absorbed packet energy or ``radiation_diffusion_energy``. Thus ion
    work is not also deposited as electron heat.
 
+   If an increment is smaller than the particle momentum representation can apply,
+   WarpX retains the unapplied impulse in separate, checkpointed streaming and
+   diffusion cell fields. A later increment applies the accumulated value once it is
+   representable; the energy update always uses the kinetic work actually realized by
+   the particles. Delayed streaming work is paired with a signed electron-internal-
+   energy source, so energy credited by the earlier absorption funds the later bulk
+   work. The material adapter aborts if that debit would take the material below its
+   supported minimum-energy state. A versioned checkpoint that declares momentum-carry
+   fields requires both fields on restart and requires momentum coupling to remain
+   enabled, so pending impulse cannot be discarded silently. Checkpoints from before
+   carry fields were introduced may omit them; WarpX reports that compatibility path
+   and initializes the absent inventories to zero.
+
    In multigroup diffusion, each group's force contribution is accumulated
    independently and then reduced in a fixed group order before the ion impulse is
    applied. The measured total ion work is removed in proportion to the surviving
@@ -4918,10 +4972,12 @@ studies.
    remains until Cartesian-to-spherical particle initialization is corrected upstream
    and a component-wise RSPHERE recoil test passes; a vector-magnitude comparison is
    not sufficient validation of radial momentum. Momentum coupling also requires
-   double particle precision and ``enable_particle_conversion = 0``. It is a
-   static-frame force/work operator; it does not yet advect trapped-radiation enthalpy
-   or include all mixed-frame :math:`O(v/c)` terms, and must not be described as a
-   complete radiation-MHD model.
+   double field and particle precision, ``enable_particle_conversion = 0``, and a
+   non-moving simulation window. The pending carries are Eulerian cell inventories:
+   an old carry in a temporarily empty cell remains pending until eligible material is
+   again present; it is not attached to or advected with an individual ion parcel. The
+   operator does not yet advect trapped-radiation enthalpy or include all mixed-frame
+   :math:`O(v/c)` terms, and must not be described as a complete radiation-MHD model.
 
 .. pp:param:: radiation_transport.momentum_species
    :type: ``list of strings``
@@ -4930,8 +4986,9 @@ studies.
    :pp:param:`radiation_transport.enable_momentum_coupling = 1`. Every selected ion
    in a cell receives the same proper-velocity increment, preserving relative drifts
    and thermal spread to the accuracy of the particle representation. WarpX aborts
-   when radiation deposits momentum in a cell containing none of these species or
-   when the requested impulse cannot be represented to the required accuracy.
+   when radiation deposits a new momentum source in a cell containing none of these
+   species, or if an accumulated pending impulse is non-finite or exceeds its strict
+   particle-precision-scaled bound.
 
 .. pp:param:: radiation_transport.minimum_electron_density
    :type: ``float``
@@ -5019,7 +5076,19 @@ studies.
    :optional:
 
    Enable conservative flux-limited diffusion of ``radiation_diffusion_energy``.
-   Requires LTE exchange.
+   This can be used without LTE exchange and with ``material_coupling = none``
+   when the Rosseland coefficient is supplied by the scalar or analytic parser
+   form. In that transport-only mode the parser receives ``ne=0`` and ``Te=0``;
+   expressions must therefore not use those two arguments. State-dependent
+   Rosseland tables, native material tables and per-species opacity still require
+   a real material density/temperature provider and are rejected with
+   ``material_coupling = none``. They are not evaluated at an artificial
+   temperature. When a material coupling is configured while LTE exchange is
+   disabled, its current density and temperature are used as a read-only
+   Rosseland-opacity state; the Planck exchange operator and its material-energy
+   write-back are not run. Diffusion is rejected with a moving window until the
+   persistent ``radiation_diffusion_energy`` field is shifted conservatively with
+   that window.
 
 .. pp:param:: radiation_transport.rosseland_transport_coefficient
    :type: ``float`` or parser function
@@ -5121,7 +5190,9 @@ studies.
    Particle conversion is currently incompatible with
    :pp:param:`radiation_transport.enable_momentum_coupling`: the scalar diffusion
    field does not retain the directional momentum of a converted packet, so WarpX
-   aborts during initialization if both options are enabled.
+   aborts during initialization if both options are enabled. Conversion is also
+   rejected with embedded boundaries because insertion can remove a packet sampled
+   inside covered geometry without a conservative energy recipient.
 
 .. pp:param:: radiation_transport.emission_photon_energy
    :type: ``float``
@@ -5141,6 +5212,29 @@ studies.
 
    Do not create a photon for an optically thin cell until its thick-field energy
    exceeds this value. Energy below the threshold remains in the diffusion field.
+
+.. pp:param:: radiation_transport.particle_conversion_packets_per_cell
+   :type: ``integer``
+   :default: ``1``
+   :optional:
+
+   Number of streaming macroparticles created when one optically thin cell/group
+   converts its diffusion energy. The cell energy is divided among this many
+   nearly equal-weight packets; any remainder below particle-weight precision
+   stays in ``radiation_diffusion_energy`` so conversion remains conservative.
+   Directions are stratified in equal-area polar bands and positions are sampled
+   uniformly within the cell volume, including annular/spherical volume weighting
+   in radial geometries. Samples are clamped to particle-precision coordinates that
+   are provably inside the original field-precision cell faces before insertion;
+   radial samples retain an additional inward margin for trigonometric reconstruction.
+
+   The counter-based samples are keyed by :pp:param:`warpx.random_seed`, the
+   integer simulation step, global cell indices, energy group and packet index.
+   A fixed seed therefore reproduces the conversion independently of loop order,
+   while different fixed seeds produce different packet ensembles. When
+   ``warpx.random_seed = random``, the resolved seed is stored in the checkpoint so
+   a restart reproduces the uninterrupted packet sequence. The value must be
+   positive.
 
 
 Grid types (collocated, staggered, hybrid)

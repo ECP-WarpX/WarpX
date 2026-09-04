@@ -30,7 +30,7 @@ print(f"cumulative boundary loss: {radiation_energy[-1, 8]:.16e} J")
 
 assert initial_radiation > 0.0
 assert radiation_energy.shape[1] == 17
-assert radiation_momentum.shape == (radiation_energy.shape[0], 20)
+assert radiation_momentum.shape == (radiation_energy.shape[0], 26)
 np.testing.assert_allclose(radiation_energy[-1, 2:7], 0.0, atol=1.0e-30)
 np.testing.assert_allclose(radiation_energy[-1, 7], initial_radiation, rtol=rtol)
 np.testing.assert_allclose(radiation_energy[-1, 8], initial_radiation, rtol=rtol)
@@ -50,6 +50,7 @@ np.testing.assert_allclose(
     rtol=rtol,
     atol=1.0e-30,
 )
+np.testing.assert_allclose(radiation_momentum[:, 20:26], 0.0, atol=1.0e-30)
 
 if args.mode == "serial":
     # The packet exits the high-z face, so its signed escaped momentum is +E/c.

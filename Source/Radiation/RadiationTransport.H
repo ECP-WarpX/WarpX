@@ -23,6 +23,7 @@
 #include <AMReX_REAL.H>
 
 #include <array>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -95,6 +96,18 @@ public:
     [[nodiscard]] bool couplesToKineticElectrons () const noexcept
     {
         return m_material_coupling == MaterialCoupling::KineticElectrons;
+    }
+
+    [[nodiscard]] bool usesMomentumCoupling () const noexcept
+    {
+        return m_enable_momentum_coupling;
+    }
+
+    /** Record whether a versioned restart checkpoint declares momentum-carry
+     * fields. This is set from WarpXHeader before per-level fields allocate. */
+    void SetRestartMomentumCarryFieldsPresent (bool const present) noexcept
+    {
+        m_restart_momentum_carry_fields_present = present;
     }
 
     [[nodiscard]] int numEnergyGroups () const noexcept { return m_num_groups; }
@@ -185,12 +198,18 @@ private:
     bool m_require_cell_interface_exact_streaming = false;
     bool m_use_nonlinear_hybrid_lte_remap = false;
     bool m_track_energy_balance = false;
+    bool m_is_restart = false;
+    bool m_restart_momentum_carry_fields_present = false;
+    bool m_has_initial_diffusion_energy_density = false;
+    mutable bool m_initial_diffusion_energy_initialized = false;
     int m_num_groups = 1;
     amrex::Real m_path_cell_fraction = 0.5;
     amrex::Real m_diffusion_cfl = 0.1;
     amrex::Real m_minimum_diffusion_optical_depth = 1.0;
     amrex::Real m_emission_photon_energy = 0.0;
     amrex::Real m_particle_conversion_energy_threshold = 0.0;
+    int m_particle_conversion_packets_per_cell = 1;
+    std::uint64_t m_particle_conversion_seed = 1;
     int m_max_transport_substeps = 10000;
     int m_max_diffusion_substeps = 10000;
     int m_lte_exchange_max_iterations = 64;
@@ -220,6 +239,11 @@ private:
     amrex::ParserExecutor<7> m_planck_absorption_coefficient;
     amrex::Parser m_rosseland_transport_coefficient_parser;
     amrex::ParserExecutor<7> m_rosseland_transport_coefficient;
+    std::vector<amrex::Parser>
+        m_initial_diffusion_energy_density_parsers;
+    std::vector<amrex::ParserExecutor<3>>
+        m_initial_diffusion_energy_density_executors;
+    std::vector<int> m_initial_diffusion_energy_density_is_set;
     std::vector<amrex::Parser> m_species_absorption_coefficient_parsers;
     std::vector<amrex::Parser> m_species_planck_absorption_coefficient_parsers;
     std::vector<amrex::Parser> m_species_rosseland_transport_coefficient_parsers;

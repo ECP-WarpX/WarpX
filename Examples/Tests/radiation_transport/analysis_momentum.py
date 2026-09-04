@@ -99,7 +99,7 @@ _, momentum = load_table(Path("diags/radiation_momentum.txt"))
 assert radiation.shape[0] == 2
 assert momentum.shape[0] == 2
 assert radiation.shape[1] == 17
-assert momentum.shape[1] == 20
+assert momentum.shape[1] == 26
 
 initial_radiation = radiation[0, 2]
 final_radiation = radiation[-1, 2]
@@ -109,6 +109,7 @@ internal_exchange = radiation[-1, 9]
 kinetic_exchange = radiation[-1, 10]
 directed_impulse = momentum[-1, 2]
 cumulative_directed_impulse = momentum[-1, 5]
+pending_streaming_impulse = momentum[-1, 20]
 
 print(f"initial radiation:       {initial_radiation:.16e} J")
 print(f"absorbed radiation:      {absorbed_energy:.16e} J")
@@ -129,7 +130,10 @@ np.testing.assert_allclose(
     atol=1.0e-18,
 )
 np.testing.assert_allclose(
-    directed_impulse, absorbed_energy / C_LIGHT, rtol=2.0e-12, atol=1.0e-24
+    directed_impulse + pending_streaming_impulse,
+    absorbed_energy / C_LIGHT,
+    rtol=2.0e-12,
+    atol=1.0e-24,
 )
 np.testing.assert_allclose(
     cumulative_directed_impulse,
@@ -139,4 +143,6 @@ np.testing.assert_allclose(
 )
 np.testing.assert_allclose(momentum[:, [3, 4, 6, 7]], 0.0, atol=1.0e-24)
 np.testing.assert_allclose(momentum[:, 8:20], 0.0, atol=1.0e-24)
+np.testing.assert_allclose(momentum[:, [21, 22]], 0.0, atol=1.0e-24)
+np.testing.assert_allclose(momentum[:, 23:26], 0.0, atol=1.0e-24)
 assert_energy_balance(radiation_labels, radiation)

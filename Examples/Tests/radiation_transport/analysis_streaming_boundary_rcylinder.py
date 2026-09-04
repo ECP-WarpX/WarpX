@@ -15,7 +15,7 @@ radiation = np.atleast_2d(np.loadtxt("diags/radiation_energy.txt"))
 momentum = np.atleast_2d(np.loadtxt("diags/radiation_momentum.txt"))
 
 assert radiation.shape == (2, 17)
-assert momentum.shape == (2, 20)
+assert momentum.shape == (2, 26)
 
 initial_energy = radiation[0, 2]
 expected_component = initial_energy / (np.sqrt(2.0) * c)
@@ -31,6 +31,7 @@ np.testing.assert_allclose(radiation[-1, 9:11], 0.0, atol=1.0e-30)
 np.testing.assert_allclose(radiation[-1, 11:13], initial_energy, rtol=5.0e-6)
 np.testing.assert_allclose(radiation[:, 13:17], 0.0, atol=1.0e-30)
 np.testing.assert_allclose(momentum[:, 2:14], 0.0, atol=1.0e-30)
+np.testing.assert_allclose(momentum[:, 20:26], 0.0, atol=1.0e-30)
 np.testing.assert_allclose(momentum[-1, [14, 16]], expected_component, rtol=5.0e-6)
 np.testing.assert_allclose(momentum[-1, [17, 19]], expected_component, rtol=5.0e-6)
 np.testing.assert_allclose(momentum[:, [15, 18]], 0.0, atol=1.0e-20)

@@ -7,6 +7,7 @@
 #include "RadiationTransport.H"
 #include "PlanckExchange.H"
 
+#include "EmbeddedBoundary/Enabled.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #include "Fields.H"
 #include "Particles/Algorithms/KineticEnergy.H"
@@ -55,12 +56,13 @@
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
-#include <functional>
 #include <limits>
 #include <memory>
+#include <random>
 #include <set>
 #include <sstream>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -76,6 +78,129 @@ using warpx::radiation::KineticPrecisionEpsilon;
 
 namespace
 {
+[[nodiscard]]
+std::uint64_t
+SplitMix64 (std::uint64_t value) noexcept
+{
+    value += 0x9e3779b97f4a7c15ULL;
+    value = (value ^ (value >> 30U)) * 0xbf58476d1ce4e5b9ULL;
+    value = (value ^ (value >> 27U)) * 0x94d049bb133111ebULL;
+    return value ^ (value >> 31U);
+}
+
+[[nodiscard]]
+std::uint64_t
+ParticleConversionKey (
+    std::uint64_t const seed,
+    int const step,
+    int const i,
+    int const j,
+    int const k,
+    int const group,
+    int const packet) noexcept
+{
+    std::uint64_t key = SplitMix64(seed);
+    auto const combine = [&key] (std::uint64_t const value) noexcept
+    {
+        key = SplitMix64(key ^ SplitMix64(value));
+    };
+    combine(static_cast<std::uint64_t>(static_cast<std::int64_t>(step)));
+    combine(static_cast<std::uint64_t>(static_cast<std::int64_t>(i)));
+    combine(static_cast<std::uint64_t>(static_cast<std::int64_t>(j)));
+    combine(static_cast<std::uint64_t>(static_cast<std::int64_t>(k)));
+    combine(static_cast<std::uint64_t>(group));
+    combine(static_cast<std::uint64_t>(packet));
+    return key;
+}
+
+[[nodiscard]]
+amrex::ParticleReal
+ParticleConversionUniform (
+    std::uint64_t const key, std::uint64_t const draw) noexcept
+{
+    std::uint64_t const value = SplitMix64(key ^ SplitMix64(draw));
+    amrex::ParticleReal const result =
+        static_cast<amrex::ParticleReal>(value >> 11U) * 0x1.0p-53_prt;
+    return amrex::min(result, std::nextafter(1.0_prt, 0.0_prt));
+}
+
+[[nodiscard]]
+amrex::ParticleReal
+ClampParticleConversionPosition (
+    amrex::Real const sampled,
+    amrex::Real const cell_lo,
+    amrex::Real const cell_hi,
+    int const inward_steps = 0) noexcept
+{
+    using ComparisonReal =
+        std::common_type_t<amrex::Real, amrex::ParticleReal>;
+    auto lo = static_cast<amrex::ParticleReal>(cell_lo);
+    auto hi = static_cast<amrex::ParticleReal>(cell_hi);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        amrex::Math::isfinite(sampled)
+            && amrex::Math::isfinite(cell_lo)
+            && amrex::Math::isfinite(cell_hi)
+            && cell_hi > cell_lo
+            && amrex::Math::isfinite(lo) && amrex::Math::isfinite(hi)
+            && hi > lo && inward_steps >= 0,
+        "A diffusion-to-streaming conversion cell is not representable in "
+        "particle-position precision.");
+
+    // Casting a Real face to ParticleReal can round out of the original cell.
+    // Move each endpoint to the first representable position inside that cell.
+    if (static_cast<ComparisonReal>(lo)
+        < static_cast<ComparisonReal>(cell_lo))
+    {
+        lo = std::nextafter(lo, hi);
+    }
+    if (static_cast<ComparisonReal>(hi)
+        >= static_cast<ComparisonReal>(cell_hi))
+    {
+        hi = std::nextafter(hi, lo);
+    }
+
+    // Radial insertion reconstructs r from Cartesian components. Additional
+    // symmetric margins keep norm/trigonometric roundoff away from both faces.
+    for (int step = 0; step < inward_steps; ++step) {
+        auto const next_lo = std::nextafter(lo, hi);
+        auto const next_hi = std::nextafter(hi, lo);
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            next_lo <= next_hi,
+            "A diffusion-to-streaming conversion cell has insufficient "
+            "particle-position precision for the requested inward margin.");
+        lo = next_lo;
+        hi = next_hi;
+    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        static_cast<ComparisonReal>(lo)
+                >= static_cast<ComparisonReal>(cell_lo)
+            && static_cast<ComparisonReal>(hi)
+                < static_cast<ComparisonReal>(cell_hi)
+            && lo <= hi,
+        "A diffusion-to-streaming conversion cell has no representable "
+        "particle position in its physical interior.");
+    return amrex::max(
+        lo, amrex::min(hi,
+            static_cast<amrex::ParticleReal>(sampled)));
+}
+
+[[nodiscard]]
+amrex::ParticleReal
+ParticleConversionCoordinate (
+    amrex::Real const cell_lo,
+    amrex::Real const cell_hi,
+    amrex::ParticleReal const unit_interval) noexcept
+{
+    amrex::Real const sampled =
+        cell_lo + static_cast<amrex::Real>(unit_interval)
+            * (cell_hi - cell_lo);
+    return ClampParticleConversionPosition(sampled, cell_lo, cell_hi);
+}
+
+// Radial particle insertion reconstructs r from sampled Cartesian components.
+// Leave several ULPs inside both faces so trig/norm roundoff cannot move it out.
+[[maybe_unused]] constexpr int particle_conversion_radial_margin_ulps = 8;
+
 int
 ParseDiffusionBoundary (std::string const& name, std::string const& key)
 {
@@ -434,6 +559,39 @@ struct HybridCellMaterialState
     amrex::Real available_energy = 0.0_rt;
     bool valid = true;
 };
+
+struct SignedMaterialAvailability
+{
+    amrex::Real remaining_energy = 0.0_rt;
+    amrex::Real tolerance = 0.0_rt;
+    bool valid = true;
+};
+
+/** Remaining material energy above its floor after a signed source. */
+[[nodiscard]] AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+SignedMaterialAvailability
+EvaluateSignedMaterialAvailability (
+    amrex::Real const available_energy,
+    amrex::Real const pending_energy) noexcept
+{
+    SignedMaterialAvailability result;
+    amrex::Real const scale = amrex::max(
+        amrex::max(std::abs(available_energy), std::abs(pending_energy)),
+        std::numeric_limits<amrex::Real>::min());
+    result.tolerance = 256.0_rt
+        * std::numeric_limits<amrex::Real>::epsilon() * scale;
+    amrex::Real const remaining_energy = available_energy + pending_energy;
+    result.valid = available_energy >= 0.0_rt
+        && amrex::Math::isfinite(available_energy)
+        && amrex::Math::isfinite(pending_energy)
+        && amrex::Math::isfinite(remaining_energy)
+        && amrex::Math::isfinite(result.tolerance)
+        && remaining_energy >= -result.tolerance;
+    result.remaining_energy = result.valid
+        ? amrex::max(0.0_rt, remaining_energy)
+        : 0.0_rt;
+    return result;
+}
 
 /** Physical part of one cell represented by one of its nodal corners. */
 [[nodiscard]] AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
@@ -913,7 +1071,6 @@ EvaluateHybridNonlinearLteTrial (
     HybridNonlinearLteTrial trial;
     trial.valid = state.material.valid
         && state.num_active_corners > 0
-        && pending_material_energy >= 0.0_rt
         && amrex::Math::isfinite(pending_material_energy)
         && cell_volume > 0.0_rt
         && amrex::Math::isfinite(cell_volume);
@@ -999,7 +1156,8 @@ ApplyHybridNonlinearImplicitLteCellExchange (
         || !(state.material.heat_capacity > 0.0_rt)
         || !amrex::Math::isfinite(state.material.heat_capacity)
         || !amrex::Math::isfinite(state.material.internal_energy)
-        || pending_material_energy < 0.0_rt
+        || !(state.material.available_energy >= 0.0_rt)
+        || !amrex::Math::isfinite(state.material.available_energy)
         || !amrex::Math::isfinite(pending_material_energy))
     {
         cell_status(i, j, k, 0) = 1;
@@ -1075,8 +1233,27 @@ ApplyHybridNonlinearImplicitLteCellExchange (
     amrex::Real const temperature_scale = amrex::max(
         state.material.electron_temperature, 1.0_rt);
 
-    amrex::Real energy_scale = state.material.available_energy
-        + pending_material_energy;
+    bool minimum_state_valid = true;
+    amrex::Real const minimum_material_energy_change =
+        EvaluateHybridNonlinearMaterialEnergyChange(
+            state, thermodynamics, minimum_increment,
+            minimum_state_valid);
+    amrex::Real const evaluable_available_energy = amrex::max(
+        0.0_rt, -minimum_material_energy_change);
+    SignedMaterialAvailability const signed_availability =
+        EvaluateSignedMaterialAvailability(
+            evaluable_available_energy, pending_material_energy);
+    if (!minimum_state_valid) {
+        cell_status(i, j, k, 0) = 1;
+        return;
+    }
+    if (!signed_availability.valid) {
+        cell_status(i, j, k, 0) = 2;
+        return;
+    }
+
+    amrex::Real energy_scale = evaluable_available_energy
+        + std::abs(pending_material_energy);
     for (int group = 0; group < context.num_groups; ++group) {
         amrex::Real const old_radiation_energy = radiation(i, j, k, group);
         if (old_radiation_energy < 0.0_rt
@@ -1449,7 +1626,13 @@ ApplyHybridNonlinearImplicitLteCellExchange (
     amrex::Real const remap_residual = material_ledger
         - final_trial.material_energy_change;
     if (!amrex::Math::isfinite(material_ledger)
-        || !amrex::Math::isfinite(remap_residual)
+        || material_ledger
+            < -evaluable_available_energy - signed_availability.tolerance)
+    {
+        cell_status(i, j, k, 0) = 2;
+        return;
+    }
+    if (!amrex::Math::isfinite(remap_residual)
         || std::abs(remap_residual)
             > 10.0_rt * context.tolerance * energy_scale)
     {
@@ -1485,16 +1668,26 @@ ApplyImplicitLteCellExchange (
     amrex::Array4<int> const& cell_status) noexcept {
     constexpr amrex::Real radiation_constant = 7.565733250280007e-16_rt;
     amrex::Real const heat_capacity = material_state.heat_capacity;
+    SignedMaterialAvailability const signed_availability =
+        EvaluateSignedMaterialAvailability(
+            material_state.available_energy, pending_material_energy);
+    amrex::Real const minimum_material_energy =
+        material_state.internal_energy - material_state.available_energy;
     amrex::Real const final_material_energy_before_lte =
         material_state.internal_energy + pending_material_energy;
     amrex::Real total_energy = final_material_energy_before_lte;
+    if (!signed_availability.valid) {
+        cell_status(i, j, k, 0) = 2;
+        return;
+    }
     bool valid = heat_capacity > 0.0_rt &&
                  amrex::Math::isfinite(heat_capacity) &&
                  material_state.internal_energy >= 0.0_rt &&
                  amrex::Math::isfinite(material_state.internal_energy) &&
-                 pending_material_energy >= 0.0_rt &&
                  amrex::Math::isfinite(pending_material_energy) &&
-                 final_material_energy_before_lte >= 0.0_rt &&
+                 amrex::Math::isfinite(minimum_material_energy) &&
+                 final_material_energy_before_lte >=
+                     minimum_material_energy - signed_availability.tolerance &&
                  amrex::Math::isfinite(final_material_energy_before_lte);
     for (int group = 0; group < context.num_groups; ++group) {
         amrex::Real const old_radiation_energy = radiation(i, j, k, group);
@@ -1510,13 +1703,11 @@ ApplyImplicitLteCellExchange (
     }
 
     amrex::Real const available_material_energy =
-        material_state.available_energy +
-        amrex::max(0.0_rt, pending_material_energy);
+        signed_availability.remaining_energy;
     amrex::Real temperature_lo =
-        amrex::max(0.0_rt, (material_state.internal_energy -
-                            material_state.available_energy) /
-                               heat_capacity);
-    amrex::Real temperature_hi = total_energy / heat_capacity;
+        amrex::max(0.0_rt, minimum_material_energy / heat_capacity);
+    amrex::Real temperature_hi = amrex::max(
+        temperature_lo, total_energy / heat_capacity);
     if (!amrex::Math::isfinite(temperature_hi)) {
         cell_status(i, j, k, 0) = 1;
         return;
@@ -1664,7 +1855,15 @@ ApplyImplicitLteCellExchange (
         if (exchange_energy > 0.0_rt) {
             exchange_energy *= positive_scale;
         }
-        radiation(i, j, k, group) = old_radiation_energy + exchange_energy;
+        amrex::Real const new_radiation_energy =
+            old_radiation_energy + exchange_energy;
+        if (new_radiation_energy < 0.0_rt
+            || !amrex::Math::isfinite(new_radiation_energy))
+        {
+            cell_status(i, j, k, 0) = 1;
+            return;
+        }
+        radiation(i, j, k, group) = new_radiation_energy;
         total_exchange += exchange_energy;
     }
 
@@ -1679,7 +1878,16 @@ ApplyImplicitLteCellExchange (
         cell_status(i, j, k, 1) = 1;
         return;
     }
-    material(i, j, k) -= total_exchange;
+    amrex::Real const material_ledger =
+        pending_material_energy - total_exchange;
+    if (!amrex::Math::isfinite(material_ledger)
+        || material_ledger < -material_state.available_energy
+            - signed_availability.tolerance)
+    {
+        cell_status(i, j, k, 0) = 2;
+        return;
+    }
+    material(i, j, k) = material_ledger;
 }
 
 [[nodiscard]]
@@ -2723,6 +2931,74 @@ RadiationTransport::RadiationTransport (
         }
     }
 
+    std::string restart_checkpoint;
+    amrex::ParmParse const pp_amr("amr");
+    pp_amr.query("restart", restart_checkpoint);
+    m_is_restart = !restart_checkpoint.empty();
+
+    std::string const initial_energy_key =
+        "initial_diffusion_energy_density(x,y,z)";
+    bool const initial_energy_is_set = pp.contains(initial_energy_key);
+    m_initial_diffusion_energy_density_parsers.reserve(m_num_groups);
+    m_initial_diffusion_energy_density_executors.resize(m_num_groups);
+    m_initial_diffusion_energy_density_is_set.resize(m_num_groups, 0);
+    auto compile_initial_energy_parser = [&] (
+        std::string const& key, int const group)
+    {
+        std::string expression;
+        utils::parser::Store_parserString(pp, key, expression);
+        m_initial_diffusion_energy_density_parsers.emplace_back(
+            utils::parser::makeParser(expression, {"x", "y", "z"}));
+        m_initial_diffusion_energy_density_executors[group] =
+            m_initial_diffusion_energy_density_parsers.back().compile<3>();
+        m_initial_diffusion_energy_density_is_set[group] = 1;
+        m_has_initial_diffusion_energy_density = true;
+    };
+
+    bool any_group_initial_energy_is_set = false;
+    for (int group = 0; group < m_num_groups; ++group) {
+        std::string const key = "initial_diffusion_energy_density_g"
+            + std::to_string(group) + "(x,y,z)";
+        if (pp.contains(key)) {
+            any_group_initial_energy_is_set = true;
+        }
+    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !(initial_energy_is_set && any_group_initial_energy_is_set),
+        "radiation_transport.initial_diffusion_energy_density(x,y,z) is "
+        "mutually exclusive with group-specific initial diffusion energy "
+        "density expressions.");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        m_num_groups > 1 || !any_group_initial_energy_is_set,
+        "A grey radiation calculation must use "
+        "radiation_transport.initial_diffusion_energy_density(x,y,z), not "
+        "the group-specific _g0 form.");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        m_num_groups == 1 || !initial_energy_is_set,
+        "Multigroup radiation must initialize diffusion energy with "
+        "radiation_transport.initial_diffusion_energy_density_g0(x,y,z), "
+        "_g1(x,y,z), ...; the unsuffixed grey expression is not allowed.");
+    if (initial_energy_is_set) {
+        compile_initial_energy_parser(initial_energy_key, 0);
+    } else {
+        for (int group = 0; group < m_num_groups; ++group) {
+            std::string const key = "initial_diffusion_energy_density_g"
+                + std::to_string(group) + "(x,y,z)";
+            if (pp.contains(key)) {
+                compile_initial_energy_parser(key, group);
+            }
+        }
+    }
+    int configured_max_level = 0;
+    pp_amr.query("max_level", configured_max_level);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !m_has_initial_diffusion_energy_density || m_is_restart
+            || configured_max_level == 0,
+        "Cold-start initial radiation diffusion energy density currently "
+        "requires amr.max_level=0. Radiation transport does not yet evolve "
+        "refined levels, and a later level allocation must not silently start "
+        "with zero radiation energy.");
+
     std::string material_opacity_table_file;
     bool const material_opacity_table_file_is_set = pp.query(
         "material_opacity_table_file", material_opacity_table_file);
@@ -3443,6 +3719,37 @@ RadiationTransport::RadiationTransport (
         utils::parser::queryWithParser(
             pp, "particle_conversion_energy_threshold",
             m_particle_conversion_energy_threshold);
+        pp.query(
+            "particle_conversion_packets_per_cell",
+            m_particle_conversion_packets_per_cell);
+    }
+
+    // Resolve this for every radiation-enabled run so a checkpoint taken
+    // before conversion is enabled still carries the future conversion seed.
+    std::string random_seed = "default";
+    pp_warpx.query("random_seed", random_seed);
+    if (random_seed == "random") {
+        std::uint64_t resolved_seed = 0;
+        if (amrex::ParallelDescriptor::IOProcessor()) {
+            std::random_device random_device;
+            resolved_seed =
+                (static_cast<std::uint64_t>(random_device()) << 32U)
+                ^ static_cast<std::uint64_t>(random_device());
+            if (resolved_seed == 0) { resolved_seed = 1; }
+        }
+        amrex::ParallelDescriptor::Bcast(
+            &resolved_seed, 1,
+            amrex::ParallelDescriptor::IOProcessorNumber());
+        m_particle_conversion_seed = resolved_seed;
+    } else if (random_seed != "default") {
+        std::size_t parsed_characters = 0;
+        m_particle_conversion_seed = std::stoull(
+            random_seed, &parsed_characters);
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            parsed_characters == random_seed.size()
+                && m_particle_conversion_seed > 0,
+            "warpx.random_seed must be default, random, or a positive "
+            "integer.");
     }
     utils::parser::queryWithParser(pp, "path_cell_fraction", m_path_cell_fraction);
     pp.query(
@@ -3542,6 +3849,10 @@ RadiationTransport::RadiationTransport (
         m_particle_conversion_energy_threshold >= 0.0_rt,
         "radiation_transport.particle_conversion_energy_threshold must be "
         "non-negative.");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        m_particle_conversion_packets_per_cell > 0,
+        "radiation_transport.particle_conversion_packets_per_cell must be "
+        "positive.");
 
     bool const representative_energies_are_required =
         m_num_groups > 1 || group_photon_energies_are_set
@@ -3651,12 +3962,28 @@ RadiationTransport::RadiationTransport (
         "material_coupling=hybrid_electrons or kinetic_electrons to supply "
         "the local electron temperature.");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        !m_enable_diffusion || m_enable_lte_exchange,
-        "radiation_transport.enable_diffusion requires enable_lte_exchange=1.");
+        !m_enable_diffusion || m_material_coupling != MaterialCoupling::None
+            || (!m_use_rosseland_table && !m_use_spectral_rosseland_table
+                && !m_use_species_opacity && !m_use_material_opacity_table),
+        "Transport-only diffusion with material_coupling=none supports an "
+        "analytic radiation_transport.rosseland_transport_coefficient. "
+        "State-dependent Rosseland tables and per-species opacity require a "
+        "real electron density/temperature provider; configure material "
+        "coupling until a read-only material-state provider is available.");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !m_has_initial_diffusion_energy_density
+            || m_enable_lte_exchange || m_enable_diffusion,
+        "Initial diffusion energy density requires enable_diffusion=1 or "
+        "enable_lte_exchange=1 so the persistent radiation_diffusion_energy "
+        "field is allocated.");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !m_enable_particle_conversion || m_enable_diffusion,
         "radiation_transport.enable_particle_conversion requires "
         "enable_diffusion=1.");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !m_enable_particle_conversion || !EB::enabled(),
+        "radiation_transport.enable_particle_conversion=1 is not supported "
+        "with embedded boundaries.");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !m_enable_particle_conversion || !m_enable_momentum_coupling,
         "radiation_transport.enable_particle_conversion is not compatible with "
@@ -3675,11 +4002,25 @@ RadiationTransport::RadiationTransport (
         && !m_hybrid_model
             ->electronThermodynamicsSupportsConstantHeatCapacityLte();
 
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !(m_enable_lte_exchange || m_enable_diffusion)
+            || WarpX::do_moving_window == 0,
+        "Radiation LTE/diffusion transport is not supported with a moving "
+        "window until the persistent radiation diffusion-energy field is "
+        "shifted with the simulation window.");
+
     if (m_enable_momentum_coupling) {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            std::numeric_limits<amrex::ParticleReal>::digits >= 53,
-            "Radiation momentum coupling currently requires DOUBLE particle "
-            "precision so small impulses on a moving liner are not rounded away.");
+            std::numeric_limits<amrex::Real>::digits >= 53
+                && std::numeric_limits<amrex::ParticleReal>::digits >= 53,
+            "Radiation momentum coupling currently requires both WarpX field "
+            "precision and particle precision to be DOUBLE so impulse carries "
+            "and represented particle momentum use the same accuracy.");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WarpX::do_moving_window == 0,
+            "Radiation momentum coupling is not supported with a moving window "
+            "until momentum-carry fields are shifted with the simulation "
+            "window.");
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             m_material_coupling == MaterialCoupling::HybridElectrons
                 || m_material_coupling == MaterialCoupling::KineticElectrons,
@@ -3731,8 +4072,9 @@ void
 RadiationTransport::WriteCheckpointData (std::string const& dir) const
 {
     if (!m_enabled) { return; }
-    // This counter feeds the live circuit load and is independent of output
-    // cadence.
+    // These counters feed live diagnostics independently of output cadence.
+    // The resolved conversion seed must also survive a restart when the input
+    // requested warpx.random_seed=random.
     std::ofstream checkpoint{
         dir + "/RadiationTransport_data.txt", std::ofstream::out};
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -3740,7 +4082,8 @@ RadiationTransport::WriteCheckpointData (std::string const& dir) const
         "RadiationTransport could not write its checkpoint state.");
     checkpoint.precision(17);
     checkpoint << m_cumulative_boundary_energy_loss << "\n"
-               << m_cumulative_numerical_energy_residual << "\n";
+               << m_cumulative_numerical_energy_residual << "\n"
+               << m_particle_conversion_seed << "\n";
 }
 
 void
@@ -3801,12 +4144,47 @@ RadiationTransport::ReadCheckpointData (std::string const& dir)
             amrex::Math::isfinite(cumulative_numerical_energy_residual),
             "RadiationTransport checkpoint numerical-energy residual is "
             "non-finite.");
+        m_cumulative_numerical_energy_residual =
+            cumulative_numerical_energy_residual;
+
+        std::string particle_conversion_seed_token;
+        if (!(checkpoint >> particle_conversion_seed_token)) {
+            if (checkpoint.eof()) {
+                checkpoint.clear();
+                if (m_enable_particle_conversion) {
+                    ablastr::warn_manager::WMRecordWarning(
+                        "Radiation transport",
+                        "The restart checkpoint predates resolved particle-"
+                        "conversion seed accounting. The seed resolved from the "
+                        "current input will be used.",
+                        ablastr::warn_manager::WarnPriority::low);
+                }
+            } else {
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    false,
+                    "RadiationTransport checkpoint particle-conversion seed is "
+                    "malformed.");
+            }
+        } else {
+            std::uint64_t particle_conversion_seed = 0;
+            std::istringstream particle_conversion_seed_stream{
+                particle_conversion_seed_token};
+            std::string seed_trailing_token;
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                particle_conversion_seed_token.front() != '-'
+                    && static_cast<bool>(particle_conversion_seed_stream
+                        >> particle_conversion_seed)
+                    && particle_conversion_seed > 0
+                    && !(particle_conversion_seed_stream
+                        >> seed_trailing_token),
+                "RadiationTransport checkpoint particle-conversion seed is "
+                "malformed.");
+            m_particle_conversion_seed = particle_conversion_seed;
+        }
         std::string trailing_token;
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             !(checkpoint >> trailing_token),
             "RadiationTransport checkpoint state has unexpected trailing data.");
-        m_cumulative_numerical_energy_residual =
-            cumulative_numerical_energy_residual;
     }
     m_last_numerical_energy_residual = 0.0_rt;
 }
@@ -3831,6 +4209,31 @@ RadiationTransport::AllocateLevelMFs (
     fields.alloc_init(
         FieldType::radiation_material_momentum, lev, ba, dm, 3,
         amrex::IntVect(1), 0.0_rt);
+    if (m_enable_momentum_coupling) {
+        // A particle proper-velocity increment can be smaller than one ULP of
+        // an already moving macroparticle. Keep the unapplied cell impulse in
+        // its originating radiation path until later impulses make it
+        // representable. Separate carries retain the originating transport
+        // path and its corresponding kinetic-work accounting policy.
+        // Schema-v1 checkpoints predate these fields. Versioned checkpoints
+        // that declare them must fail if either conserved inventory is absent.
+        bool const restart_optional =
+            m_is_restart && !m_restart_momentum_carry_fields_present;
+        fields.alloc_init(
+            FieldType::radiation_streaming_momentum_carry, lev, ba, dm, 3,
+            amrex::IntVect::TheZeroVector(), 0.0_rt,
+            /*remake=*/true,
+            /*redistribute_on_remake=*/true,
+            /*checkpoint_restart=*/true,
+            restart_optional);
+        fields.alloc_init(
+            FieldType::radiation_diffusion_momentum_carry, lev, ba, dm, 3,
+            amrex::IntVect::TheZeroVector(), 0.0_rt,
+            /*remake=*/true,
+            /*redistribute_on_remake=*/true,
+            /*checkpoint_restart=*/true,
+            restart_optional);
+    }
     if (m_use_nonlinear_hybrid_lte_remap) {
         fields.alloc_init(
             FieldType::radiation_hybrid_lte_remap, lev, ba, dm,
@@ -3839,13 +4242,126 @@ RadiationTransport::AllocateLevelMFs (
             /*redistribute_on_remake=*/true,
             /*checkpoint_restart=*/false);
     }
-    if (m_enable_lte_exchange) {
+    if (m_enable_lte_exchange || m_enable_diffusion) {
         fields.alloc_init(
             FieldType::radiation_diffusion_energy, lev, ba, dm, m_num_groups,
             amrex::IntVect(1), 0.0_rt,
             /*remake=*/true,
             /*redistribute_on_remake=*/true,
             /*checkpoint_restart=*/true);
+
+        if (m_has_initial_diffusion_energy_density && !m_is_restart
+            && !m_initial_diffusion_energy_initialized && lev == 0)
+        {
+            amrex::MultiFab& diffusion_energy = *fields.get(
+                FieldType::radiation_diffusion_energy, lev);
+            auto const& geometry = WarpX::GetInstance().Geom(lev);
+            auto const problo = geometry.ProbLoArray();
+            auto const cell_size = geometry.CellSizeArray();
+            auto const domain_lo = amrex::lbound(geometry.Domain());
+
+            amrex::ReduceOps<amrex::ReduceOpMax> invalid_reduce_ops;
+            amrex::ReduceData<int> invalid_reduce_data(invalid_reduce_ops);
+            using InvalidReduceTuple =
+                typename decltype(invalid_reduce_data)::Type;
+
+            // Only valid cells own physical radiation energy. Ghost cells are
+            // synchronization state and are filled before the first stencil use.
+            for (int group = 0; group < m_num_groups; ++group) {
+                if (m_initial_diffusion_energy_density_is_set[group] == 0) {
+                    continue;
+                }
+                auto const parser =
+                    m_initial_diffusion_energy_density_executors[group];
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+                for (amrex::MFIter mfi(
+                         diffusion_energy, amrex::TilingIfNotGPU());
+                     mfi.isValid(); ++mfi)
+                {
+                    amrex::Box const& box = mfi.tilebox();
+                    amrex::Array4<amrex::Real> const energy =
+                        diffusion_energy.array(mfi);
+                    invalid_reduce_ops.eval(
+                        box, invalid_reduce_data,
+                        [=] AMREX_GPU_DEVICE (int i, int j, int k)
+                            -> InvalidReduceTuple
+                        {
+#if defined(WARPX_DIM_3D)
+                            amrex::Real const x = problo[0]
+                                + (i - domain_lo.x + 0.5_rt) * cell_size[0];
+                            amrex::Real const y = problo[1]
+                                + (j - domain_lo.y + 0.5_rt) * cell_size[1];
+                            amrex::Real const z = problo[2]
+                                + (k - domain_lo.z + 0.5_rt) * cell_size[2];
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                            amrex::Real const x = problo[0]
+                                + (i - domain_lo.x + 0.5_rt) * cell_size[0];
+                            amrex::Real const y = 0.0_rt;
+                            amrex::Real const z = problo[1]
+                                + (j - domain_lo.y + 0.5_rt) * cell_size[1];
+#elif defined(WARPX_DIM_RCYLINDER) \
+    || defined(WARPX_DIM_RSPHERE)
+                            amrex::Real const x = problo[0]
+                                + (i - domain_lo.x + 0.5_rt) * cell_size[0];
+                            amrex::Real const y = 0.0_rt;
+                            amrex::Real const z = 0.0_rt;
+#else
+                            amrex::Real const x = 0.0_rt;
+                            amrex::Real const y = 0.0_rt;
+                            amrex::Real const z = problo[0]
+                                + (i - domain_lo.x + 0.5_rt) * cell_size[0];
+#endif
+
+#if defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RZ)
+                            amrex::Real const r_lo = problo[0]
+                                + (i - domain_lo.x) * cell_size[0];
+                            amrex::Real const r_hi = r_lo + cell_size[0];
+#if defined(WARPX_DIM_RCYLINDER)
+                            amrex::Real const cell_volume = MathConst::pi
+                                * (r_hi * r_hi - r_lo * r_lo);
+#else
+                            amrex::Real const cell_volume = MathConst::pi
+                                * (r_hi * r_hi - r_lo * r_lo) * cell_size[1];
+#endif
+#elif defined(WARPX_DIM_RSPHERE)
+                            amrex::Real const r_lo = problo[0]
+                                + (i - domain_lo.x) * cell_size[0];
+                            amrex::Real const r_hi = r_lo + cell_size[0];
+                            amrex::Real const cell_volume = 4.0_rt / 3.0_rt
+                                * MathConst::pi
+                                * (r_hi * r_hi * r_hi
+                                   - r_lo * r_lo * r_lo);
+#else
+                            amrex::Real const cell_volume = AMREX_D_TERM(
+                                cell_size[0], * cell_size[1], * cell_size[2]);
+#endif
+                            amrex::Real const energy_density = parser(x, y, z);
+                            amrex::Real const cell_energy =
+                                energy_density * cell_volume;
+                            bool const valid = energy_density >= 0.0_rt
+                                && amrex::Math::isfinite(energy_density)
+                                && cell_energy >= 0.0_rt
+                                && amrex::Math::isfinite(cell_energy);
+                            energy(i, j, k, group) =
+                                valid ? cell_energy : 0.0_rt;
+                            return {valid ? 0 : 1};
+                        });
+                }
+            }
+
+            int invalid_initial_energy =
+                amrex::get<0>(invalid_reduce_data.value());
+            amrex::ParallelDescriptor::ReduceIntMax(
+                &invalid_initial_energy, 1);
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                invalid_initial_energy == 0,
+                "An initial radiation diffusion energy-density expression "
+                "evaluated to a negative or non-finite value, or produced "
+                "a non-finite cell-integrated energy.");
+            m_initial_diffusion_energy_initialized = true;
+        }
     }
 }
 
@@ -3854,9 +4370,12 @@ namespace
 /** Apply a cell-integrated impulse to the configured massive material species.
  *
  * The same proper-velocity increment is applied to every selected particle in
- * a cell. The returned field stores the actual relativistic kinetic-energy
- * change, so the caller can make the radiation/material energy update exactly
- * paired with the momentum update.
+ * a cell. A checkpointed cell carry retains the difference between the
+ * requested and representable particle impulse. The returned fields store the
+ * actually applied impulse and relativistic kinetic-energy change, so the
+ * caller pairs radiation/material work only with a represented momentum
+ * update. The strict accounting identity is
+ * requested + old carry = applied + new carry.
  *
  * Keep this as a free implementation function: NVCC does not permit extended
  * device lambdas in a private or protected member function.
@@ -3866,6 +4385,7 @@ ApplyMaterialImpulse (
     MultiParticleContainer& particles,
     std::vector<std::string> const& momentum_species,
     amrex::MultiFab const& cell_integrated_impulse,
+    amrex::MultiFab& cell_integrated_impulse_carry,
     amrex::MultiFab& cell_integrated_applied_impulse,
     amrex::MultiFab& cell_integrated_kinetic_energy_change)
 {
@@ -3879,6 +4399,15 @@ ApplyMaterialImpulse (
             && cell_integrated_applied_impulse.ixType().cellCentered(),
         "Applied radiation impulse must be a three-component cell-centered field.");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        cell_integrated_impulse_carry.nComp() == 3
+            && cell_integrated_impulse_carry.ixType().cellCentered()
+            && cell_integrated_impulse_carry.boxArray()
+                == cell_integrated_impulse.boxArray()
+            && cell_integrated_impulse_carry.DistributionMap()
+                == cell_integrated_impulse.DistributionMap(),
+        "Radiation impulse carry must share the three-component cell-centered "
+        "impulse layout.");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         cell_integrated_kinetic_energy_change.nComp() == 1
             && cell_integrated_kinetic_energy_change.ixType().cellCentered(),
         "Radiation kinetic-work ledger must be a scalar cell-centered field.");
@@ -3889,6 +4418,10 @@ ApplyMaterialImpulse (
         cell_integrated_impulse.boxArray(),
         cell_integrated_impulse.DistributionMap(), 1, 0);
     cell_material_mass.setVal(0.0_rt);
+    amrex::MultiFab cell_material_momentum_scale(
+        cell_integrated_impulse.boxArray(),
+        cell_integrated_impulse.DistributionMap(), 1, 0);
+    cell_material_momentum_scale.setVal(0.0_rt);
 
     auto& warpx = WarpX::GetInstance();
     constexpr int lev = 0;
@@ -3916,8 +4449,14 @@ ApplyMaterialImpulse (
             long const np = mfi.numParticles();
             auto const ptd = tile.getParticleTileData();
             auto const* const AMREX_RESTRICT wp = ptd.m_rdata[PIdx::w];
+            auto const* const AMREX_RESTRICT uxp = ptd.m_rdata[PIdx::ux];
+            auto const* const AMREX_RESTRICT uyp = ptd.m_rdata[PIdx::uy];
+            auto const* const AMREX_RESTRICT uzp = ptd.m_rdata[PIdx::uz];
             amrex::Array4<amrex::Real> const mass_arr =
                 cell_material_mass.array(mfi);
+            amrex::Array4<amrex::Real> const momentum_scale_arr =
+                cell_material_momentum_scale.array(mfi);
+            amrex::Real const clight = PhysConst::c;
 
             // Different particles can deposit into the same cell.
             amrex::For(np, [=] AMREX_GPU_DEVICE (long ip) noexcept
@@ -3925,15 +4464,28 @@ ApplyMaterialImpulse (
                 auto const p = WarpXParticleContainer::ParticleType(ptd, ip);
                 auto const [i, j, k] =
                     amrex::getParticleCell(p, plo, dxi).dim3();
+                auto const weighted_mass =
+                    static_cast<amrex::Real>(wp[ip] * species_mass);
                 amrex::Gpu::Atomic::AddNoRet(
-                    &mass_arr(i, j, k),
-                    static_cast<amrex::Real>(wp[ip] * species_mass));
+                    &mass_arr(i, j, k), weighted_mass);
+                amrex::Real const proper_speed = std::sqrt(
+                    static_cast<amrex::Real>(uxp[ip])
+                        * static_cast<amrex::Real>(uxp[ip])
+                    + static_cast<amrex::Real>(uyp[ip])
+                        * static_cast<amrex::Real>(uyp[ip])
+                    + static_cast<amrex::Real>(uzp[ip])
+                        * static_cast<amrex::Real>(uzp[ip]));
+                amrex::Gpu::Atomic::AddNoRet(
+                    &momentum_scale_arr(i, j, k),
+                    weighted_mass * amrex::max(proper_speed, clight));
             });
         }
     }
 
     amrex::Gpu::DeviceScalar<int> missing_material_mass(0);
+    amrex::Gpu::DeviceScalar<int> invalid_impulse_input(0);
     int* const missing_material_mass_ptr = missing_material_mass.dataPtr();
+    int* const invalid_impulse_input_ptr = invalid_impulse_input.dataPtr();
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
@@ -3945,16 +4497,48 @@ ApplyMaterialImpulse (
             cell_material_mass.const_array(mfi);
         amrex::Array4<amrex::Real const> const impulse_arr =
             cell_integrated_impulse.const_array(mfi);
+        amrex::Array4<amrex::Real const> const carry_arr =
+            cell_integrated_impulse_carry.const_array(mfi);
+        amrex::Array4<amrex::Real const> const momentum_scale_arr =
+            cell_material_momentum_scale.const_array(mfi);
         amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (
             int i, int j, int k) noexcept
         {
-            amrex::Real const impulse_norm = std::sqrt(
-                impulse_arr(i, j, k, 0) * impulse_arr(i, j, k, 0)
-                + impulse_arr(i, j, k, 1) * impulse_arr(i, j, k, 1)
-                + impulse_arr(i, j, k, 2) * impulse_arr(i, j, k, 2));
-            if (impulse_norm > 0.0_rt && mass_arr(i, j, k) <= 0.0_rt) {
+            amrex::Real const material_mass = mass_arr(i, j, k);
+            bool const has_new_impulse =
+                impulse_arr(i, j, k, 0) != 0.0_rt
+                || impulse_arr(i, j, k, 1) != 0.0_rt
+                || impulse_arr(i, j, k, 2) != 0.0_rt;
+            if (has_new_impulse && material_mass <= 0.0_rt) {
                 amrex::HostDevice::Atomic::Add(
                     missing_material_mass_ptr, 1);
+            }
+            bool valid = material_mass >= 0.0_rt
+                && amrex::Math::isfinite(material_mass)
+                && momentum_scale_arr(i, j, k) >= 0.0_rt
+                && amrex::Math::isfinite(momentum_scale_arr(i, j, k));
+            for (int component = 0; component < 3; ++component) {
+                amrex::Real const requested =
+                    impulse_arr(i, j, k, component);
+                amrex::Real const old_carry =
+                    carry_arr(i, j, k, component);
+                amrex::Real const target = requested + old_carry;
+                valid = valid
+                    && amrex::Math::isfinite(requested)
+                    && amrex::Math::isfinite(old_carry)
+                    && amrex::Math::isfinite(target);
+                if (material_mass > 0.0_rt) {
+                    amrex::Real const delta_u = target / material_mass;
+                    auto const particle_delta_u =
+                        static_cast<amrex::ParticleReal>(delta_u);
+                    valid = valid
+                        && amrex::Math::isfinite(delta_u)
+                        && amrex::Math::isfinite(particle_delta_u);
+                }
+            }
+            if (!valid) {
+                amrex::HostDevice::Atomic::Add(
+                    invalid_impulse_input_ptr, 1);
             }
         });
     }
@@ -3962,6 +4546,10 @@ ApplyMaterialImpulse (
         missing_material_mass.dataValue() == 0,
         "Radiation deposited momentum in a cell containing no configured "
         "radiation_transport.momentum_species mass.");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        invalid_impulse_input.dataValue() == 0,
+        "Radiation material impulse, pending carry, material mass, or proper-"
+        "velocity increment is non-finite or outside its representable range.");
 
     for (std::string const& species_name : momentum_species) {
         auto& species = particles.GetParticleContainerFromName(species_name);
@@ -3984,6 +4572,8 @@ ApplyMaterialImpulse (
 #endif
             amrex::Array4<amrex::Real const> const impulse_arr =
                 cell_integrated_impulse.const_array(mfi);
+            amrex::Array4<amrex::Real const> const carry_arr =
+                cell_integrated_impulse_carry.const_array(mfi);
             amrex::Array4<amrex::Real const> const mass_arr =
                 cell_material_mass.const_array(mfi);
             amrex::Array4<amrex::Real> const kinetic_arr =
@@ -4005,13 +4595,16 @@ ApplyMaterialImpulse (
                 auto const old_uz = static_cast<amrex::Real>(uzp[ip]);
                 auto const delta_u_r =
                     static_cast<amrex::ParticleReal>(
-                        impulse_arr(i, j, k, 0) / material_mass);
+                        (impulse_arr(i, j, k, 0) + carry_arr(i, j, k, 0))
+                        / material_mass);
                 auto const delta_u_theta =
                     static_cast<amrex::ParticleReal>(
-                        impulse_arr(i, j, k, 1) / material_mass);
+                        (impulse_arr(i, j, k, 1) + carry_arr(i, j, k, 1))
+                        / material_mass);
                 auto const delta_u_z =
                     static_cast<amrex::ParticleReal>(
-                        impulse_arr(i, j, k, 2) / material_mass);
+                        (impulse_arr(i, j, k, 2) + carry_arr(i, j, k, 2))
+                        / material_mass);
 
 #if defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RZ)
                 amrex::ParticleReal radius;
@@ -4141,8 +4734,15 @@ ApplyMaterialImpulse (
         }
     }
 
-    amrex::Gpu::DeviceScalar<int> unresolved_impulse(0);
-    int* const unresolved_impulse_ptr = unresolved_impulse.dataPtr();
+    amrex::Gpu::DeviceScalar<int> invalid_impulse_accounting(0);
+    amrex::Gpu::DeviceScalar<int> unbounded_impulse_carry(0);
+    int* const invalid_impulse_accounting_ptr =
+        invalid_impulse_accounting.dataPtr();
+    int* const unbounded_impulse_carry_ptr =
+        unbounded_impulse_carry.dataPtr();
+    auto constexpr particle_epsilon =
+        static_cast<amrex::Real>(
+            std::numeric_limits<amrex::ParticleReal>::epsilon());
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
@@ -4155,56 +4755,108 @@ ApplyMaterialImpulse (
             cell_integrated_impulse.const_array(mfi);
         amrex::Array4<amrex::Real const> const applied_arr =
             cell_integrated_applied_impulse.const_array(mfi);
+        amrex::Array4<amrex::Real> const carry_arr =
+            cell_integrated_impulse_carry.array(mfi);
+        amrex::Array4<amrex::Real const> const mass_arr =
+            cell_material_mass.const_array(mfi);
+        amrex::Array4<amrex::Real const> const momentum_scale_arr =
+            cell_material_momentum_scale.const_array(mfi);
         amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (
             int i, int j, int k) noexcept
         {
-            amrex::Real requested_norm_squared = 0.0_rt;
+            amrex::Real target_norm_squared = 0.0_rt;
+            amrex::Real accounting_scale_squared = 0.0_rt;
             amrex::Real difference_norm_squared = 0.0_rt;
+            amrex::Real carry_norm_squared = 0.0_rt;
             for (int component = 0; component < 3; ++component) {
+                amrex::Real const old_carry =
+                    carry_arr(i, j, k, component);
                 amrex::Real const requested =
                     requested_arr(i, j, k, component);
+                amrex::Real const target = requested + old_carry;
+                amrex::Real const applied =
+                    applied_arr(i, j, k, component);
+                amrex::Real const new_carry = target - applied;
+                carry_arr(i, j, k, component) = new_carry;
+                amrex::Real const accounted = applied + new_carry;
                 amrex::Real const difference =
-                    applied_arr(i, j, k, component) - requested;
-                requested_norm_squared += requested * requested;
+                    accounted - target;
+                target_norm_squared += target * target;
+                accounting_scale_squared +=
+                    applied * applied + new_carry * new_carry;
                 difference_norm_squared += difference * difference;
+                carry_norm_squared += new_carry * new_carry;
             }
-            if (requested_norm_squared > 0.0_rt
-                && difference_norm_squared
-                    > 1.0e-20_rt * requested_norm_squared)
+            accounting_scale_squared = amrex::max(
+                accounting_scale_squared, target_norm_squared);
+            bool const finite =
+                amrex::Math::isfinite(target_norm_squared)
+                && amrex::Math::isfinite(accounting_scale_squared)
+                && amrex::Math::isfinite(difference_norm_squared)
+                && amrex::Math::isfinite(carry_norm_squared)
+                && amrex::Math::isfinite(momentum_scale_arr(i, j, k));
+            if (!finite
+                || (accounting_scale_squared > 0.0_rt
+                    && difference_norm_squared
+                        > 1.0e-20_rt * accounting_scale_squared))
             {
                 amrex::HostDevice::Atomic::Add(
-                    unresolved_impulse_ptr, 1);
+                    invalid_impulse_accounting_ptr, 1);
+            }
+            // An emptied cell cannot realize its old carry, but it also cannot
+            // grow it: any nonzero new request already failed above. Preserve
+            // that finite inventory until material re-enters the cell.
+            amrex::Real const carry_bound = mass_arr(i, j, k) > 0.0_rt
+                ? 256.0_rt * particle_epsilon
+                    * momentum_scale_arr(i, j, k)
+                : std::sqrt(target_norm_squared);
+            if (!finite
+                || std::sqrt(carry_norm_squared) > carry_bound)
+            {
+                amrex::HostDevice::Atomic::Add(
+                    unbounded_impulse_carry_ptr, 1);
             }
         });
     }
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        unresolved_impulse.dataValue() == 0,
-        "A radiation impulse could not be represented in the configured ion "
-        "particle momenta to 1e-10 relative accuracy. Increase the radiation "
-        "timestep or macroparticle impulse, or inspect the material state.");
+        invalid_impulse_accounting.dataValue() == 0,
+        "Radiation impulse accounting failed to satisfy requested + old carry "
+        "= applied + new carry to 1e-10 relative accuracy.");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        unbounded_impulse_carry.dataValue() == 0,
+        "Radiation impulse carry is non-finite or exceeds the particle-"
+        "momentum representability bound. Inspect the configured material "
+        "state and momentum species.");
 }
 
 /** Apply radiation momentum to material and debit the paired kinetic work.
  *
- * The energy reservoir is the absorbed-packet material energy for streaming
- * recoil and the diffusion-radiation energy for FLD recoil. Keeping both paths
- * here guarantees that the actual particle kinetic-energy change, including
- * finite particle-precision rounding, is paired with the energy update. For a
+ * The ledger is the completed net material-energy source for streaming recoil
+ * and the diffusion-radiation energy for FLD recoil. Keeping both paths here
+ * guarantees that the actual particle kinetic-energy change, including finite
+ * particle-precision rounding, is paired with the energy update. For a
  * multigroup reservoir, the measured total work is distributed in proportion
  * to the surviving group energies. This closes total energy exactly, but is a
  * group-integrated work approximation rather than a frequency-resolved work
- * source.
+ * source. A streaming material-energy ledger may become negative when an old
+ * carry is finally represented: the downstream material adapter then draws
+ * that delayed work from internal energy credited by prior absorption.
  */
 amrex::Real
 ApplyRadiationMomentumWork (
     MultiParticleContainer& particles,
     std::vector<std::string> const& momentum_species,
     amrex::MultiFab const& requested_material_momentum,
+    amrex::MultiFab& deferred_material_momentum,
     amrex::MultiFab& accumulated_material_momentum,
     amrex::MultiFab& accumulated_material_kinetic_energy,
     amrex::MultiFab& energy_reservoir,
-    char const* const insufficient_energy_message)
+    bool const allow_signed_material_energy,
+    char const* const invalid_energy_message)
 {
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !allow_signed_material_energy || energy_reservoir.nComp() == 1,
+        "Signed streaming material-energy work requires a scalar energy ledger.");
     amrex::MultiFab applied_material_momentum(
         accumulated_material_momentum.boxArray(),
         accumulated_material_momentum.DistributionMap(), 3, 0);
@@ -4213,7 +4865,8 @@ ApplyRadiationMomentumWork (
         accumulated_material_kinetic_energy.DistributionMap(), 1, 0);
     ApplyMaterialImpulse(
         particles, momentum_species, requested_material_momentum,
-        applied_material_momentum, material_kinetic_energy_change);
+        deferred_material_momentum, applied_material_momentum,
+        material_kinetic_energy_change);
     amrex::MultiFab::Add(
         accumulated_material_momentum, applied_material_momentum,
         0, 0, 3, 0);
@@ -4246,6 +4899,20 @@ ApplyRadiationMomentumWork (
                 old_energy += energy_arr(i, j, k, group);
             }
             amrex::Real const work = work_arr(i, j, k);
+            if (allow_signed_material_energy) {
+                amrex::Real const new_material_energy = old_energy - work;
+                amrex::Real const residual =
+                    old_energy - (new_material_energy + work);
+                if (!amrex::Math::isfinite(old_energy)
+                    || !amrex::Math::isfinite(work)
+                    || !amrex::Math::isfinite(new_material_energy)
+                    || !amrex::Math::isfinite(residual))
+                {
+                    return {0.0_rt, 1};
+                }
+                energy_arr(i, j, k, 0) = new_material_energy;
+                return {residual, 0};
+            }
             RadiationEnergyUpdateResult const update =
                 ApplyRadiationEnergyUpdate(old_energy, -work);
             if (!update.valid) {
@@ -4271,7 +4938,7 @@ ApplyRadiationMomentumWork (
     int const invalid_work = amrex::get<1>(reduction);
     amrex::ParallelDescriptor::ReduceRealSum(residual);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        invalid_work == 0, insufficient_energy_message);
+        invalid_work == 0, invalid_energy_message);
     return residual;
 }
 
@@ -4526,6 +5193,14 @@ RadiationTransport::Advance (
     amrex::MultiFab& material_momentum =
         *fields.get(FieldType::radiation_material_momentum, lev);
     material_momentum.setVal(0.0_rt);
+    amrex::MultiFab* streaming_momentum_carry = nullptr;
+    amrex::MultiFab* diffusion_momentum_carry = nullptr;
+    if (m_enable_momentum_coupling) {
+        streaming_momentum_carry = fields.get(
+            FieldType::radiation_streaming_momentum_carry, lev);
+        diffusion_momentum_carry = fields.get(
+            FieldType::radiation_diffusion_momentum_carry, lev);
+    }
     amrex::MultiFab* nonlinear_lte_remap = nullptr;
     if (m_use_nonlinear_hybrid_lte_remap) {
         nonlinear_lte_remap =
@@ -5541,15 +6216,22 @@ RadiationTransport::Advance (
         "violates the one-cell transport-substep invariant.");
 
     if (m_enable_momentum_coupling) {
+        // Streaming absorption occurs before LTE and diffusion. Apply its
+        // particle impulse in that same order so subsequent diffusion work is
+        // measured from the post-streaming material momentum. A realized old
+        // carry can make this signed material source negative; the LTE paths
+        // below admit it only while the material remains above its floor.
         m_last_numerical_energy_residual += ApplyRadiationMomentumWork(
             particles, m_momentum_species, packet_material_momentum,
-            material_momentum, material_kinetic_energy, material_energy,
-            "Streaming radiation recoil requires more bulk kinetic work than "
-            "the absorbed packet energy supplies. Reduce the timestep or inspect "
-            "the configured material momentum species.");
+            *streaming_momentum_carry, material_momentum,
+            material_kinetic_energy, material_energy,
+            /*allow_signed_material_energy=*/true,
+            "Streaming radiation recoil produced a non-finite signed material "
+            "internal-energy source.");
     }
 
-    if (m_enable_lte_exchange) {
+    if (m_enable_lte_exchange || m_enable_diffusion) {
+        bool const enable_lte_exchange = m_enable_lte_exchange;
         bool const enable_diffusion = m_enable_diffusion;
         amrex::MultiFab& diffusion_energy =
             *fields.get(FieldType::radiation_diffusion_energy, lev);
@@ -5672,6 +6354,58 @@ RadiationTransport::Advance (
                     AMREX_D_TERM(dx[0], * dx[1], * dx[2]);
 #endif
 
+                if (!enable_lte_exchange
+                    && !gate_on_hybrid_density
+                    && !gate_on_kinetic_density)
+                {
+                    // Transport-only diffusion deliberately has no implicit
+                    // material state. Its supported analytic Rosseland
+                    // coefficient receives ne=Te=0; state-dependent table and
+                    // per-species backends are rejected during construction.
+#if defined(WARPX_DIM_3D)
+                    amrex::Real const x =
+                        plo[0] + (i - domain_lo.x + 0.5_rt) * dx[0];
+                    amrex::Real const y =
+                        plo[1] + (j - domain_lo.y + 0.5_rt) * dx[1];
+                    amrex::Real const z =
+                        plo[2] + (k - domain_lo.z + 0.5_rt) * dx[2];
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                    amrex::Real const x =
+                        plo[0] + (i - domain_lo.x + 0.5_rt) * dx[0];
+                    amrex::Real const y = 0.0_rt;
+                    amrex::Real const z =
+                        plo[1] + (j - domain_lo.y + 0.5_rt) * dx[1];
+#elif defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+                    amrex::Real const x =
+                        plo[0] + (i - domain_lo.x + 0.5_rt) * dx[0];
+                    amrex::Real const y = 0.0_rt;
+                    amrex::Real const z = 0.0_rt;
+#else
+                    amrex::Real const x = 0.0_rt;
+                    amrex::Real const y = 0.0_rt;
+                    amrex::Real const z =
+                        plo[0] + (i - domain_lo.x + 0.5_rt) * dx[0];
+#endif
+                    amrex::GpuArray<amrex::Real, max_opacity_species>
+                        no_number_densities{};
+                    for (int group = 0; group < num_groups; ++group) {
+                        amrex::Real const group_energy =
+                            energy_groups.representativeEnergy(group);
+                        amrex::Real const opacity = rosseland_evaluator(
+                            no_number_densities, x, y, z, current_time,
+                            group_energy, 0.0_rt, 0.0_rt);
+                        if (opacity < 0.0_rt
+                            || !amrex::Math::isfinite(opacity))
+                        {
+                            lte_status_arr(i, j, k, 0) = 1;
+                            rosseland_arr(i, j, k, group) = 0.0_rt;
+                        } else {
+                            rosseland_arr(i, j, k, group) = opacity;
+                        }
+                    }
+                    return;
+                }
+
                 HybridCellMaterialState material_state;
                 HybridNonlinearCellState nonlinear_material_state;
                 if (gate_on_hybrid_density) {
@@ -5745,16 +6479,9 @@ RadiationTransport::Advance (
                     material_state.electron_temperature;
                 amrex::Real available_material_energy =
                     material_state.available_energy;
+                SignedMaterialAvailability signed_availability;
                 amrex::Real const pending_material_energy =
                     material_arr(i, j, k);
-
-                // Streaming absorption was accumulated in this same ledger
-                // before LTE exchange. It is immediately available to fund
-                // emission in the operator-split material state; adding only
-                // its positive part cannot weaken the non-negative-energy
-                // bound on the final, net material source.
-                available_material_energy +=
-                    amrex::max(0.0_rt, pending_material_energy);
 
                 if (electron_density <= density_floor) { return; }
 
@@ -5793,6 +6520,42 @@ RadiationTransport::Advance (
                     || !amrex::Math::isfinite(electron_temperature)) {
                     lte_status_arr(i, j, k, 0) = 1;
                     return;
+                }
+
+                if (!enable_lte_exchange) {
+                    // A configured material coupling can also be used as a
+                    // read-only state provider for Rosseland opacity. Do not
+                    // evaluate Planck opacity or write material energy in this
+                    // transport-only mode.
+                    for (int group = 0; group < num_groups; ++group) {
+                        amrex::Real const group_energy =
+                            energy_groups.representativeEnergy(group);
+                        amrex::Real const opacity =
+                            implicit_lte_context.rosselandOpacity(
+                                opacity_number_density, x, y, z, group_energy,
+                                electron_density, electron_temperature);
+                        if (opacity < 0.0_rt
+                            || !amrex::Math::isfinite(opacity))
+                        {
+                            lte_status_arr(i, j, k, 0) = 1;
+                            rosseland_arr(i, j, k, group) = 0.0_rt;
+                        } else {
+                            rosseland_arr(i, j, k, group) = opacity;
+                        }
+                    }
+                    return;
+                }
+
+                if (!implicit_lte_temperature || !nonlinear_hybrid_lte) {
+                    signed_availability = EvaluateSignedMaterialAvailability(
+                        material_state.available_energy,
+                        pending_material_energy);
+                    if (!signed_availability.valid) {
+                        lte_status_arr(i, j, k, 0) = 2;
+                        return;
+                    }
+                    available_material_energy =
+                        signed_availability.remaining_energy;
                 }
 
                 if (implicit_lte_temperature) {
@@ -5919,11 +6682,29 @@ RadiationTransport::Advance (
                         if (exchange_energy > 0.0_rt) {
                             exchange_energy *= positive_scale;
                         }
-                        radiation_arr(i, j, k, group) =
+                        amrex::Real const new_radiation_energy =
                             old_radiation_energy + exchange_energy;
+                        if (new_radiation_energy < 0.0_rt
+                            || !amrex::Math::isfinite(new_radiation_energy))
+                        {
+                            lte_status_arr(i, j, k, 0) = 1;
+                            return;
+                        }
+                        radiation_arr(i, j, k, group) =
+                            new_radiation_energy;
                         total_exchange += exchange_energy;
                     }
-                    material_arr(i, j, k) -= total_exchange;
+                    amrex::Real const material_ledger =
+                        pending_material_energy - total_exchange;
+                    if (!amrex::Math::isfinite(material_ledger)
+                        || material_ledger
+                            < -material_state.available_energy
+                                - signed_availability.tolerance)
+                    {
+                        lte_status_arr(i, j, k, 0) = 2;
+                        return;
+                    }
+                    material_arr(i, j, k) = material_ledger;
                 }
             });
         }
@@ -5932,8 +6713,10 @@ RadiationTransport::Advance (
         int const lte_unconverged = lte_cell_status.max(1);
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             lte_invalid == 0,
-            "LTE radiation exchange encountered a negative/non-finite Planck or "
-            "Rosseland coefficient, radiation energy, or material temperature.");
+            "Radiation LTE exchange or transport-only diffusion failed "
+            "validation (reason code " + std::to_string(lte_invalid)
+            + ": 1=invalid opacity/radiation/material state, 2=signed material "
+              "source exceeds energy available above the material floor).");
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             lte_unconverged == 0,
             "The implicit LTE temperature solve did not converge (reason code "
@@ -6368,8 +7151,11 @@ RadiationTransport::Advance (
                 amrex::Vector<amrex::ParticleReal> photon_uy;
                 amrex::Vector<amrex::ParticleReal> photon_uz;
                 amrex::Vector<amrex::ParticleReal> photon_weight;
-                std::uint64_t const time_key = std::hash<double>{}(
-                    static_cast<double>(current_time));
+                int const conversion_step = warpx.getistep(lev);
+                int const packets_per_cell =
+                    m_particle_conversion_packets_per_cell;
+                std::uint64_t const conversion_seed =
+                    m_particle_conversion_seed;
 
                 for (amrex::MFIter mfi(host_energy); mfi.isValid(); ++mfi) {
                     amrex::Box const& box = mfi.validbox();
@@ -6398,107 +7184,208 @@ RadiationTransport::Advance (
                                 static_cast<amrex::ParticleReal>(
                                     emission_photon_energy
                                     / (PhysConst::m_e * PhysConst::c));
-
-                            std::uint64_t random_state = time_key
-                                ^ (static_cast<std::uint64_t>(
-                                       static_cast<std::int64_t>(i))
-                                   * 0x9e3779b97f4a7c15ULL)
-                                ^ (static_cast<std::uint64_t>(
-                                       static_cast<std::int64_t>(j))
-                                   * 0xbf58476d1ce4e5b9ULL)
-                                ^ (static_cast<std::uint64_t>(
-                                       static_cast<std::int64_t>(k))
-                                   * 0x94d049bb133111ebULL)
-                                ^ (static_cast<std::uint64_t>(group)
-                                   * 0xd6e8feb86659fd93ULL);
-                            auto next_uniform = [&random_state] () noexcept {
-                                random_state += 0x9e3779b97f4a7c15ULL;
-                                std::uint64_t value = random_state;
-                                value = (value ^ (value >> 30U))
-                                    * 0xbf58476d1ce4e5b9ULL;
-                                value = (value ^ (value >> 27U))
-                                    * 0x94d049bb133111ebULL;
-                                value ^= value >> 31U;
-                                return static_cast<amrex::ParticleReal>(value >> 11U)
-                                    * 0x1.0p-53_prt;
-                            };
+                            amrex::Real remaining_cell_energy = cell_energy;
+                            for (int packet = 0; packet < packets_per_cell;
+                                 ++packet)
+                            {
+                                std::uint64_t const random_key =
+                                    ParticleConversionKey(
+                                        conversion_seed, conversion_step,
+                                        i, j, k, group, packet);
+                                auto const uniform = [random_key] (
+                                    std::uint64_t const draw) noexcept
+                                {
+                                    return ParticleConversionUniform(
+                                        random_key, draw);
+                                };
 
 #if defined(WARPX_DIM_3D)
-                            amrex::ParticleReal const x =
-                                plo[0] + (i - domain_lo.x + 0.5_prt) * dx[0];
-                            amrex::ParticleReal const y =
-                                plo[1] + (j - domain_lo.y + 0.5_prt) * dx[1];
-                            amrex::ParticleReal const z =
-                                plo[2] + (k - domain_lo.z + 0.5_prt) * dx[2];
+                                amrex::Real const x_lo = plo[0]
+                                    + (i - domain_lo.x) * dx[0];
+                                amrex::Real const y_lo = plo[1]
+                                    + (j - domain_lo.y) * dx[1];
+                                amrex::Real const z_lo = plo[2]
+                                    + (k - domain_lo.z) * dx[2];
+                                amrex::ParticleReal const x =
+                                    ParticleConversionCoordinate(
+                                        x_lo, x_lo + dx[0], uniform(2));
+                                amrex::ParticleReal const y =
+                                    ParticleConversionCoordinate(
+                                        y_lo, y_lo + dx[1], uniform(3));
+                                amrex::ParticleReal const z =
+                                    ParticleConversionCoordinate(
+                                        z_lo, z_lo + dx[2], uniform(4));
 #elif defined(WARPX_DIM_XZ)
-                            amrex::ParticleReal const x =
-                                plo[0] + (i - domain_lo.x + 0.5_prt) * dx[0];
-                            amrex::ParticleReal const y = 0.0_prt;
-                            amrex::ParticleReal const z =
-                                plo[1] + (j - domain_lo.y + 0.5_prt) * dx[1];
+                                amrex::Real const x_lo = plo[0]
+                                    + (i - domain_lo.x) * dx[0];
+                                amrex::Real const z_lo = plo[1]
+                                    + (j - domain_lo.y) * dx[1];
+                                amrex::ParticleReal const x =
+                                    ParticleConversionCoordinate(
+                                        x_lo, x_lo + dx[0], uniform(2));
+                                amrex::ParticleReal const y = 0.0_prt;
+                                amrex::ParticleReal const z =
+                                    ParticleConversionCoordinate(
+                                        z_lo, z_lo + dx[1], uniform(3));
 #elif defined(WARPX_DIM_RZ)
-                            amrex::ParticleReal const radius =
-                                plo[0] + (i - domain_lo.x + 0.5_prt) * dx[0];
-                            amrex::ParticleReal const position_angle =
-                                MathConst::tau * next_uniform();
-                            amrex::ParticleReal const x =
-                                radius * std::cos(position_angle);
-                            amrex::ParticleReal const y =
-                                radius * std::sin(position_angle);
-                            amrex::ParticleReal const z =
-                                plo[1] + (j - domain_lo.y + 0.5_prt) * dx[1];
+                                amrex::Real const radius_lo = plo[0]
+                                    + (i - domain_lo.x) * dx[0];
+                                amrex::Real const radius_hi =
+                                    radius_lo + dx[0];
+                                amrex::Real const sampled_radius = std::sqrt(
+                                    radius_lo * radius_lo + uniform(2)
+                                    * (radius_hi * radius_hi
+                                       - radius_lo * radius_lo));
+                                amrex::ParticleReal const radius =
+                                    ClampParticleConversionPosition(
+                                        sampled_radius, radius_lo, radius_hi,
+                                        particle_conversion_radial_margin_ulps);
+                                amrex::ParticleReal const position_angle =
+                                    MathConst::tau * uniform(3);
+                                amrex::ParticleReal const x =
+                                    radius * std::cos(position_angle);
+                                amrex::ParticleReal const y =
+                                    radius * std::sin(position_angle);
+                                amrex::Real const z_lo = plo[1]
+                                    + (j - domain_lo.y) * dx[1];
+                                amrex::ParticleReal const z =
+                                    ParticleConversionCoordinate(
+                                        z_lo, z_lo + dx[1], uniform(4));
 #elif defined(WARPX_DIM_RCYLINDER)
-                            amrex::ParticleReal const radius =
-                                plo[0] + (i - domain_lo.x + 0.5_prt) * dx[0];
-                            amrex::ParticleReal const position_angle =
-                                MathConst::tau * next_uniform();
-                            amrex::ParticleReal const x =
-                                radius * std::cos(position_angle);
-                            amrex::ParticleReal const y =
-                                radius * std::sin(position_angle);
-                            amrex::ParticleReal const z = 0.0_prt;
+                                amrex::Real const radius_lo = plo[0]
+                                    + (i - domain_lo.x) * dx[0];
+                                amrex::Real const radius_hi =
+                                    radius_lo + dx[0];
+                                amrex::Real const sampled_radius = std::sqrt(
+                                    radius_lo * radius_lo + uniform(2)
+                                    * (radius_hi * radius_hi
+                                       - radius_lo * radius_lo));
+                                amrex::ParticleReal const radius =
+                                    ClampParticleConversionPosition(
+                                        sampled_radius, radius_lo, radius_hi,
+                                        particle_conversion_radial_margin_ulps);
+                                amrex::ParticleReal const position_angle =
+                                    MathConst::tau * uniform(3);
+                                amrex::ParticleReal const x =
+                                    radius * std::cos(position_angle);
+                                amrex::ParticleReal const y =
+                                    radius * std::sin(position_angle);
+                                amrex::ParticleReal const z = 0.0_prt;
 #elif defined(WARPX_DIM_RSPHERE)
-                            amrex::ParticleReal const radius =
-                                plo[0] + (i - domain_lo.x + 0.5_prt) * dx[0];
-                            amrex::ParticleReal const position_mu =
-                                2.0_prt * next_uniform() - 1.0_prt;
-                            amrex::ParticleReal const position_angle =
-                                MathConst::tau * next_uniform();
-                            amrex::ParticleReal const position_sin =
-                                std::sqrt(1.0_prt - position_mu * position_mu);
-                            amrex::ParticleReal const x =
-                                radius * position_sin * std::cos(position_angle);
-                            amrex::ParticleReal const y =
-                                radius * position_sin * std::sin(position_angle);
-                            amrex::ParticleReal const z = radius * position_mu;
+                                amrex::Real const radius_lo = plo[0]
+                                    + (i - domain_lo.x) * dx[0];
+                                amrex::Real const radius_hi =
+                                    radius_lo + dx[0];
+                                amrex::Real const sampled_radius = std::cbrt(
+                                    radius_lo * radius_lo * radius_lo
+                                    + uniform(2)
+                                    * (radius_hi * radius_hi * radius_hi
+                                       - radius_lo * radius_lo * radius_lo));
+                                amrex::ParticleReal const radius =
+                                    ClampParticleConversionPosition(
+                                        sampled_radius, radius_lo, radius_hi,
+                                        particle_conversion_radial_margin_ulps);
+                                amrex::ParticleReal const position_mu =
+                                    2.0_prt * uniform(3) - 1.0_prt;
+                                amrex::ParticleReal const position_angle =
+                                    MathConst::tau * uniform(4);
+                                amrex::ParticleReal const position_sin =
+                                    std::sqrt(
+                                        1.0_prt
+                                        - position_mu * position_mu);
+                                amrex::ParticleReal const x = radius
+                                    * position_sin * std::cos(position_angle);
+                                amrex::ParticleReal const y = radius
+                                    * position_sin * std::sin(position_angle);
+                                amrex::ParticleReal const z =
+                                    radius * position_mu;
 #else
-                            amrex::ParticleReal const x = 0.0_prt;
-                            amrex::ParticleReal const y = 0.0_prt;
-                            amrex::ParticleReal const z =
-                                plo[0] + (i - domain_lo.x + 0.5_prt) * dx[0];
+                                amrex::ParticleReal const x = 0.0_prt;
+                                amrex::ParticleReal const y = 0.0_prt;
+                                amrex::Real const z_lo = plo[0]
+                                    + (i - domain_lo.x) * dx[0];
+                                amrex::ParticleReal const z =
+                                    ParticleConversionCoordinate(
+                                        z_lo, z_lo + dx[0], uniform(2));
 #endif
-                            amrex::ParticleReal const direction_mu =
-                                2.0_prt * next_uniform() - 1.0_prt;
-                            amrex::ParticleReal const direction_angle =
-                                MathConst::tau * next_uniform();
-                            amrex::ParticleReal const direction_sin =
-                                std::sqrt(1.0_prt - direction_mu * direction_mu);
+                                // Stratify cos(theta) so each converted cell
+                                // samples every equal-area latitude band.
+                                amrex::ParticleReal const direction_limit =
+                                    std::nextafter(1.0_prt, 0.0_prt);
+                                amrex::ParticleReal const direction_mu =
+                                    amrex::max(-direction_limit, amrex::min(
+                                        direction_limit,
+                                        2.0_prt * (packet + uniform(0))
+                                            / packets_per_cell
+                                            - 1.0_prt));
+                                amrex::ParticleReal const direction_angle =
+                                    MathConst::tau * uniform(1);
+                                amrex::ParticleReal const direction_sin =
+                                    std::sqrt(
+                                        1.0_prt
+                                        - direction_mu * direction_mu);
+                                amrex::ParticleReal const packet_ux =
+                                    photon_momentum_magnitude * direction_sin
+                                    * std::cos(direction_angle);
+                                amrex::ParticleReal const packet_uy =
+                                    photon_momentum_magnitude * direction_sin
+                                    * std::sin(direction_angle);
+                                amrex::ParticleReal const packet_uz =
+                                    photon_momentum_magnitude * direction_mu;
+                                amrex::Real const packet_energy_per_weight =
+                                    static_cast<amrex::Real>(
+                                        Algorithms::KineticEnergyPhotons(
+                                            packet_ux, packet_uy,
+                                            packet_uz));
+                                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                                    packet_energy_per_weight > 0.0_rt
+                                        && amrex::Math::isfinite(
+                                            packet_energy_per_weight),
+                                    "A diffusion-to-streaming packet momentum "
+                                    "does not represent finite positive "
+                                    "photon energy.");
 
-                            photon_x.push_back(x);
-                            photon_y.push_back(y);
-                            photon_z.push_back(z);
-                            photon_ux.push_back(
-                                photon_momentum_magnitude * direction_sin
-                                * std::cos(direction_angle));
-                            photon_uy.push_back(
-                                photon_momentum_magnitude * direction_sin
-                                * std::sin(direction_angle));
-                            photon_uz.push_back(
-                                photon_momentum_magnitude * direction_mu);
-                            photon_weight.push_back(
-                                static_cast<amrex::ParticleReal>(
-                                    cell_energy / emission_photon_energy));
-                            host_energy_arr(i, j, k, group) = 0.0_rt;
+                                int const remaining_packets =
+                                    packets_per_cell - packet;
+                                amrex::Real const target_packet_energy =
+                                    remaining_cell_energy / remaining_packets;
+                                amrex::ParticleReal packet_weight =
+                                    static_cast<amrex::ParticleReal>(
+                                        target_packet_energy
+                                        / packet_energy_per_weight);
+                                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                                    amrex::Math::isfinite(packet_weight),
+                                    "A diffusion-to-streaming packet weight "
+                                    "overflowed particle precision.");
+                                if (!(packet_weight > 0.0_prt)) { break; }
+                                amrex::Real represented_energy =
+                                    static_cast<amrex::Real>(packet_weight)
+                                    * packet_energy_per_weight;
+                                while (represented_energy
+                                    > remaining_cell_energy)
+                                {
+                                    packet_weight = std::nextafter(
+                                        packet_weight, 0.0_prt);
+                                    represented_energy =
+                                        static_cast<amrex::Real>(packet_weight)
+                                        * packet_energy_per_weight;
+                                }
+                                if (!(represented_energy > 0.0_rt)) { break; }
+
+                                photon_x.push_back(x);
+                                photon_y.push_back(y);
+                                photon_z.push_back(z);
+                                photon_ux.push_back(packet_ux);
+                                photon_uy.push_back(packet_uy);
+                                photon_uz.push_back(packet_uz);
+                                photon_weight.push_back(packet_weight);
+                                remaining_cell_energy -= represented_energy;
+                            }
+                            // Retaining any sub-particle-precision remainder
+                            // makes representation conversion conservative
+                            // instead of silently dropping roundoff energy.
+                            host_energy_arr(i, j, k, group) =
+                                remaining_cell_energy;
                         }
                     }
                 }
@@ -6520,8 +7407,10 @@ RadiationTransport::Advance (
             if (m_enable_momentum_coupling) {
                 m_last_numerical_energy_residual += ApplyRadiationMomentumWork(
                     particles, m_momentum_species, diffusion_material_momentum,
-                    material_momentum, material_kinetic_energy,
+                    *diffusion_momentum_carry, material_momentum,
+                    material_kinetic_energy,
                     diffusion_energy,
+                    /*allow_signed_material_energy=*/false,
                     "Radiation diffusion recoil requires more bulk kinetic work "
                     "than the local diffusion energy supplies. Reduce the "
                     "timestep or inspect the configured momentum species.");

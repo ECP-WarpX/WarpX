@@ -67,6 +67,12 @@ namespace warpx::fields
                                        * during the current step [kg*m/s/cell]. Components are
                                        * Cartesian in Cartesian geometry and (r,theta,z) in radial
                                        * geometry. */
+        radiation_streaming_momentum_carry, /**< Checkpointed cell-integrated streaming-radiation
+                                              * impulse that particle momentum precision has not
+                                              * yet represented [kg*m/s/cell]. */
+        radiation_diffusion_momentum_carry, /**< Checkpointed cell-integrated diffusion-radiation
+                                              * impulse that particle momentum precision has not
+                                              * yet represented [kg*m/s/cell]. */
         radiation_hybrid_lte_remap, /**< Ephemeral two-component nonlinear hybrid-LTE remap:
                                      * cell temperature increment [K] and represented material
                                      * energy increment [J/cell]. */

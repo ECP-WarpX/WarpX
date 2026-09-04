@@ -96,7 +96,7 @@ radiation_labels, radiation = load_table(Path("diags/radiation_energy.txt"))
 _, momentum = load_table(Path("diags/radiation_momentum.txt"))
 
 assert radiation.shape == (2, 17)
-assert momentum.shape == (2, 20)
+assert momentum.shape == (2, 26)
 
 initial_radiation = radiation[0, 2]
 final_radiation = radiation[-1, 2]
@@ -105,6 +105,7 @@ material_exchange = radiation[-1, 5]
 internal_exchange = radiation[-1, 9]
 kinetic_exchange = radiation[-1, 10]
 radial_impulse = momentum[-1, 2]
+pending_streaming_impulse = momentum[-1, 20]
 
 # The packet stays in radial cell 8 of the 16-cell unit-radius mesh. The
 # NUniformPerCell ion weights exactly represent this cell's physical mass per
@@ -136,7 +137,12 @@ assert absorbed_energy > 0.0
 assert expected_kinetic_exchange < 0.0
 assert kinetic_exchange < 0.0, "radiation did not decelerate the inward liner"
 assert internal_exchange > absorbed_energy
-np.testing.assert_allclose(radial_impulse, expected_impulse, rtol=2.0e-12, atol=1.0e-18)
+np.testing.assert_allclose(
+    radial_impulse + pending_streaming_impulse,
+    expected_impulse,
+    rtol=2.0e-12,
+    atol=1.0e-18,
+)
 np.testing.assert_allclose(momentum[-1, 5], radial_impulse, rtol=2.0e-12, atol=1.0e-18)
 np.testing.assert_allclose(
     kinetic_exchange,
@@ -159,4 +165,6 @@ np.testing.assert_allclose(
     atol=1.0e-14 * abs(radial_impulse),
 )
 np.testing.assert_allclose(momentum[:, 8:20], 0.0, atol=1.0e-24)
+np.testing.assert_allclose(momentum[:, [21, 22]], 0.0, atol=1.0e-24)
+np.testing.assert_allclose(momentum[:, 23:26], 0.0, atol=1.0e-24)
 assert_energy_balance(radiation_labels, radiation)

@@ -119,6 +119,51 @@ WarpX::InitFromCheckpoint ()
         std::string line, word;
 
         std::getline(is, line);
+        {
+            std::istringstream version_stream(line);
+            std::string checkpoint_label;
+            std::string version_label;
+            int checkpoint_version = 0;
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                static_cast<bool>(version_stream >> checkpoint_label
+                    >> version_label >> checkpoint_version)
+                    && checkpoint_label == "Checkpoint"
+                    && version_label == "version:"
+                    && (checkpoint_version == 1 || checkpoint_version == 2),
+                "WarpX checkpoint header has an invalid version record.");
+
+            bool momentum_carry_fields_present = false;
+            if (checkpoint_version >= 2) {
+                std::string carry_label;
+                int carry_fields = -1;
+                std::string trailing_token;
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    static_cast<bool>(version_stream >> carry_label
+                        >> carry_fields)
+                        && carry_label
+                            == "radiation_momentum_carry_fields:"
+                        && (carry_fields == 0 || carry_fields == 1)
+                        && !(version_stream >> trailing_token),
+                    "WarpX checkpoint header has an invalid radiation momentum-"
+                    "carry schema record.");
+                momentum_carry_fields_present = carry_fields == 1;
+            } else {
+                std::string trailing_token;
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    !(version_stream >> trailing_token),
+                    "WarpX schema-v1 checkpoint header has unexpected trailing "
+                    "data.");
+            }
+            GetRadiationTransport().SetRestartMomentumCarryFieldsPresent(
+                momentum_carry_fields_present);
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                !momentum_carry_fields_present
+                    || GetRadiationTransport().usesMomentumCoupling(),
+                "This checkpoint contains radiation momentum-carry fields. "
+                "Restart with radiation_transport.enabled=1 and "
+                "radiation_transport.enable_momentum_coupling=1 so conserved "
+                "pending impulse is not discarded.");
+        }
 
         int nlevs;
         is >> nlevs;

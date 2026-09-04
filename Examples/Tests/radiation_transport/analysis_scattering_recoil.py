@@ -210,10 +210,15 @@ np.testing.assert_allclose(
     radiation[-1, 2] + radiation[-1, 5], stage_initial, rtol=ledger_rtol
 )
 np.testing.assert_allclose(radiation[-1, 2] + radiation[-1, 6], 0.0, atol=1.0e-11)
-np.testing.assert_allclose(momentum_ledger[-1, 4], expected_momentum, rtol=impulse_rtol)
+np.testing.assert_allclose(
+    momentum_ledger[-1, 4] + momentum_ledger[-1, 25],
+    expected_momentum,
+    rtol=impulse_rtol,
+)
 np.testing.assert_allclose(momentum_ledger[-1, 7], expected_momentum, rtol=impulse_rtol)
 np.testing.assert_allclose(momentum_ledger[-1, [2, 3, 5, 6]], 0.0, atol=1.0e-24)
 np.testing.assert_allclose(momentum_ledger[-1, 8:20], 0.0, atol=1.0e-24)
+np.testing.assert_allclose(momentum_ledger[-1, 20:25], 0.0, atol=1.0e-24)
 
 assert np.count_nonzero(final["radiation_diffusion_energy"] > 0.0) > 1
 assert abs(expected_momentum) > 0.0

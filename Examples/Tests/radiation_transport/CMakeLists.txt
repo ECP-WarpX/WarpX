@@ -87,10 +87,18 @@ if(WarpX_LIB)
         COMMAND test_radial_face_marching)
 endif()
 
-# CTest's PASS_REGULAR_EXPRESSION does not require a failed child process.  Use
-# the shared command-contract wrapper so each unsupported exact-streaming
-# capability is required to abort before accepting a timestep.
-function(add_radiation_exact_streaming_failure_test name dims inputs expected)
+# CTest's PASS_REGULAR_EXPRESSION does not require a failed child process. Use
+# the shared command-contract wrapper so unsupported configurations must both
+# fail and emit their intended diagnostic before accepting a timestep. An
+# optional fifth argument requests an MPI rank count; the default is one.
+function(add_radiation_failure_test name dims inputs expected)
+    set(nprocs 1)
+    if(ARGC GREATER 4)
+        set(nprocs ${ARGV4})
+    endif()
+    if(nprocs GREATER_EQUAL 2 AND NOT WarpX_MPI)
+        return()
+    endif()
     if(NOT ${dims} IN_LIST WarpX_DIMS OR NOT WarpX_APP)
         return()
     endif()
@@ -101,6 +109,15 @@ function(add_radiation_exact_streaming_failure_test name dims inputs expected)
     warpx_set_suffix_dims(SD ${dims})
     set(test_working_dir "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${name}")
     file(MAKE_DIRECTORY "${test_working_dir}")
+    set(test_mpi_command "")
+    if(nprocs GREATER_EQUAL 2)
+        set(test_mpi_command
+            ${MPIEXEC_EXECUTABLE}
+            ${MPI_ALLOW_ROOT}
+            ${MPIEXEC_NUMPROC_FLAG} ${nprocs}
+            ${MPIEXEC_POSTFLAGS}
+            ${MPIEXEC_PREFLAGS})
+    endif()
     add_test(
         NAME ${name}.run
         COMMAND
@@ -110,6 +127,7 @@ function(add_radiation_exact_streaming_failure_test name dims inputs expected)
             --expect "${expected}"
             --forbid "STEP 1 ends"
             --
+            ${test_mpi_command}
             $<TARGET_FILE:app_${SD}>
             ${input_args}
             "amrex.abort_on_unused_inputs = 1"
@@ -558,37 +576,37 @@ add_warpx_test(
     OFF  # dependency
 )
 
-add_radiation_exact_streaming_failure_test(
+add_radiation_failure_test(
     test_rcylinder_radiation_transport_exact_annular_rejected
     RCYLINDER
     "inputs_test_rcylinder_radiation_transport_exact_layered geometry.prob_lo=0.1"
     "requires an axis-containing RCYLINDER domain")
 
-add_radiation_exact_streaming_failure_test(
+add_radiation_failure_test(
     test_rcylinder_radiation_transport_exact_momentum_rejected
     RCYLINDER
     "inputs_test_rcylinder_radiation_transport_exact_layered radiation_transport.enable_momentum_coupling=1 radiation_transport.momentum_species=ions"
     "incompatible with radiation_transport.enable_momentum_coupling=1.")
 
-add_radiation_exact_streaming_failure_test(
+add_radiation_failure_test(
     test_rcylinder_radiation_transport_exact_conversion_rejected
     RCYLINDER
     "inputs_test_rcylinder_radiation_transport_exact_layered radiation_transport.enable_particle_conversion=1 radiation_transport.emission_photon_energy=1.0e-19"
     "enable_particle_conversion=1.")
 
-add_radiation_exact_streaming_failure_test(
+add_radiation_failure_test(
     test_rcylinder_radiation_transport_exact_boundary_rejected
     RCYLINDER
     "inputs_test_rcylinder_radiation_transport_exact_layered boundary.particle_hi=absorbing"
     "requires an Open outer radial particle boundary.")
 
-add_radiation_exact_streaming_failure_test(
+add_radiation_failure_test(
     test_rz_radiation_transport_exact_rejected
     RZ
     inputs_base_rz_radiation_transport_exact_rejected
     "not supported in RZ geometry.")
 
-add_radiation_exact_streaming_failure_test(
+add_radiation_failure_test(
     test_rsphere_radiation_transport_exact_rejected
     RSPHERE
     inputs_base_rsphere_radiation_transport_exact_rejected
@@ -745,7 +763,235 @@ if(WarpX_PRECISION STREQUAL "DOUBLE" AND WarpX_PARTICLE_PRECISION STREQUAL "DOUB
         OFF  # checksum (analytic FLD, recoil and energy ledgers are checked)
         test_1d_radiation_transport_scattering_recoil  # dependency
     )
+
+    add_warpx_test(
+        test_1d_radiation_transport_momentum_carry  # name
+        1  # dims
+        1  # nprocs
+        inputs_test_1d_radiation_transport_momentum_carry  # inputs
+        "analysis_momentum_carry.py"  # analysis
+        OFF  # checksum (sub-ULP impulse, applied work, and carry are checked)
+        OFF  # dependency
+    )
+
+    add_warpx_test(
+        test_1d_radiation_transport_streaming_momentum_carry  # name
+        1  # dims
+        1  # nprocs
+        inputs_test_1d_radiation_transport_streaming_momentum_carry  # inputs
+        "analysis_streaming_momentum_carry.py"  # analysis
+        OFF  # checksum (sub-ULP streaming recoil and signed work are checked)
+        OFF  # dependency
+    )
+
+    add_warpx_test(
+        test_1d_radiation_transport_streaming_momentum_carry_lte_frozen  # name
+        1  # dims
+        1  # nprocs
+        "inputs_test_1d_radiation_transport_streaming_momentum_carry radiation_transport.enable_lte_exchange=1 radiation_transport.planck_absorption_coefficient=0.0"  # inputs
+        "analysis_streaming_momentum_carry.py"  # analysis
+        OFF  # checksum (signed carry work passes through frozen LTE safely)
+        OFF  # dependency
+    )
+
+    add_warpx_test(
+        test_1d_radiation_transport_streaming_momentum_carry_lte_implicit  # name
+        1  # dims
+        1  # nprocs
+        "inputs_test_1d_radiation_transport_streaming_momentum_carry radiation_transport.enable_lte_exchange=1 radiation_transport.planck_absorption_coefficient=0.0 radiation_transport.lte_exchange_solver=implicit_temperature"  # inputs
+        "analysis_streaming_momentum_carry.py"  # analysis
+        OFF  # checksum (signed carry work is reserved before implicit LTE)
+        OFF  # dependency
+    )
+
+    add_warpx_test(
+        test_1d_radiation_transport_streaming_momentum_carry_lte_nonlinear  # name
+        1  # dims
+        1  # nprocs
+        "inputs_test_1d_radiation_transport_streaming_momentum_carry radiation_transport.enable_lte_exchange=1 radiation_transport.planck_absorption_coefficient=0.0 radiation_transport.lte_exchange_solver=implicit_temperature hybrid_pic_model.electron_thermodynamics=fixed_charge_latent_energy hybrid_pic_model.electron_latent_transition_temperature_eV=1.0e20 hybrid_pic_model.electron_latent_energy_eV=1.0e19 hybrid_pic_model.electron_latent_sharpness=4.0"  # inputs
+        "analysis_streaming_momentum_carry.py"  # analysis
+        OFF  # checksum (signed carry work passes through nonlinear LTE remap)
+        OFF  # dependency
+    )
+
+    add_radiation_failure_test(
+        test_1d_radiation_transport_streaming_momentum_moving_window_rejected
+        1
+        "inputs_test_1d_radiation_transport_streaming_momentum_carry boundary.field_lo=pec boundary.field_hi=pec boundary.particle_lo=absorbing boundary.particle_hi=absorbing warpx.do_moving_window=1 warpx.moving_window_dir=z warpx.moving_window_v=1.0"
+        "Radiation momentum coupling is not supported with a moving window")
+
+    add_warpx_test(
+        test_1d_radiation_transport_momentum_carry_restart  # name
+        1  # dims
+        1  # nprocs
+        "inputs_test_1d_radiation_transport_momentum_carry_restart amr.restart='../test_1d_radiation_transport_momentum_carry/diags/chk000149'"  # inputs
+        "analysis_momentum_carry.py --compare-reference"  # analysis
+        OFF  # checksum (nonzero checkpointed carry and restart are checked)
+        test_1d_radiation_transport_momentum_carry  # dependency
+    )
+
+    if(TEST test_1d_radiation_transport_momentum_carry.analysis)
+        set(momentum_carry_fixture_dir
+            "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test_1d_radiation_transport_momentum_carry/diags")
+        add_test(
+            NAME test_1d_radiation_transport_momentum_carry_restart_fixtures
+            COMMAND
+                ${Python_EXECUTABLE}
+                ${CMAKE_CURRENT_SOURCE_DIR}/prepare_momentum_carry_restart_fixtures.py
+                ${momentum_carry_fixture_dir}/chk000149
+                ${momentum_carry_fixture_dir}/chk000149_legacy_missing_carry
+                ${momentum_carry_fixture_dir}/chk000149_corrupt_missing_carry)
+        set_property(
+            TEST test_1d_radiation_transport_momentum_carry_restart_fixtures
+            APPEND PROPERTY DEPENDS
+                test_1d_radiation_transport_momentum_carry.analysis)
+
+        add_warpx_test(
+            test_1d_radiation_transport_momentum_carry_legacy_restart  # name
+            1  # dims
+            1  # nprocs
+            "inputs_test_1d_radiation_transport_momentum_carry_legacy_restart amr.restart='../test_1d_radiation_transport_momentum_carry/diags/chk000149_legacy_missing_carry'"  # inputs
+            "analysis_momentum_carry_legacy_restart.py"  # analysis
+            OFF  # checksum (the immediate restart diagnostic checks zero carry)
+            test_1d_radiation_transport_momentum_carry  # dependency
+        )
+        if(TEST test_1d_radiation_transport_momentum_carry_legacy_restart.run)
+            set_property(
+                TEST test_1d_radiation_transport_momentum_carry_legacy_restart.run
+                APPEND PROPERTY DEPENDS
+                    test_1d_radiation_transport_momentum_carry_restart_fixtures)
+        endif()
+
+        add_warpx_test(
+            test_1d_radiation_transport_momentum_carry_legacy_restart_mpi  # name
+            1  # dims
+            2  # nprocs
+            "inputs_test_1d_radiation_transport_momentum_carry_legacy_restart amr.restart='../test_1d_radiation_transport_momentum_carry/diags/chk000149_legacy_missing_carry'"  # inputs
+            "analysis_momentum_carry_legacy_restart.py"  # analysis
+            OFF  # checksum (MPI ranks must take the same optional-field branch)
+            test_1d_radiation_transport_momentum_carry  # dependency
+        )
+        if(TEST test_1d_radiation_transport_momentum_carry_legacy_restart_mpi.run)
+            set_property(
+                TEST test_1d_radiation_transport_momentum_carry_legacy_restart_mpi.run
+                APPEND PROPERTY DEPENDS
+                    test_1d_radiation_transport_momentum_carry_restart_fixtures)
+        endif()
+
+        add_radiation_failure_test(
+            test_1d_radiation_transport_momentum_carry_corrupt_restart
+            1
+            "inputs_test_1d_radiation_transport_momentum_carry_corrupt_restart amr.restart='../test_1d_radiation_transport_momentum_carry/diags/chk000149_corrupt_missing_carry'"
+            "missing the required MultiFab header")
+        if(TEST test_1d_radiation_transport_momentum_carry_corrupt_restart.run)
+            set_property(
+                TEST test_1d_radiation_transport_momentum_carry_corrupt_restart.run
+                APPEND PROPERTY DEPENDS
+                    test_1d_radiation_transport_momentum_carry_restart_fixtures)
+        endif()
+
+        add_radiation_failure_test(
+            test_1d_radiation_transport_momentum_carry_corrupt_restart_mpi
+            1
+            "inputs_test_1d_radiation_transport_momentum_carry_corrupt_restart amr.restart='../test_1d_radiation_transport_momentum_carry/diags/chk000149_corrupt_missing_carry'"
+            "missing the required MultiFab header"
+            2)
+        if(TEST test_1d_radiation_transport_momentum_carry_corrupt_restart_mpi.run)
+            set_property(
+                TEST test_1d_radiation_transport_momentum_carry_corrupt_restart_mpi.run
+                APPEND PROPERTY DEPENDS
+                    test_1d_radiation_transport_momentum_carry_restart_fixtures)
+        endif()
+
+        add_radiation_failure_test(
+            test_1d_radiation_transport_momentum_carry_disabled_restart
+            1
+            "inputs_test_1d_radiation_transport_momentum_carry_corrupt_restart amr.restart='../test_1d_radiation_transport_momentum_carry/diags/chk000149' radiation_transport.enable_momentum_coupling=0"
+            "checkpoint contains radiation momentum-carry fields")
+        if(TEST test_1d_radiation_transport_momentum_carry_disabled_restart.run)
+            set_property(
+                TEST test_1d_radiation_transport_momentum_carry_disabled_restart.run
+                APPEND PROPERTY DEPENDS
+                    test_1d_radiation_transport_momentum_carry.analysis)
+        endif()
+
+        if(WarpX_TEST_CLEANUP
+           AND TEST test_1d_radiation_transport_momentum_carry.cleanup)
+            foreach(corrupt_test
+                    test_1d_radiation_transport_momentum_carry_corrupt_restart
+                    test_1d_radiation_transport_momentum_carry_corrupt_restart_mpi
+                    test_1d_radiation_transport_momentum_carry_disabled_restart)
+                if(TEST ${corrupt_test}.run)
+                    set_property(
+                        TEST test_1d_radiation_transport_momentum_carry.cleanup
+                        APPEND PROPERTY DEPENDS ${corrupt_test}.run)
+                endif()
+            endforeach()
+        endif()
+    endif()
 endif()
+
+add_warpx_test(
+    test_1d_radiation_transport_cold_start_profiles  # name
+    1  # dims
+    1  # nprocs
+    inputs_test_1d_radiation_transport_cold_start_profiles  # inputs
+    "analysis_cold_start_profiles.py --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"  # analysis
+    OFF  # checksum (analytic radiation cold-start profile is checked)
+    OFF  # dependency
+)
+
+add_warpx_test(
+    test_1d_radiation_transport_diffusion_only  # name
+    1  # dims
+    1  # nprocs
+    inputs_test_1d_radiation_transport_diffusion_only  # inputs
+    "analysis_diffusion_only.py"  # analysis
+    OFF  # checksum (analytic conservation and stencil symmetry are checked)
+    OFF  # dependency
+)
+
+add_warpx_test(
+    test_1d_radiation_transport_diffusion_read_only_hybrid  # name
+    1  # dims
+    1  # nprocs
+    inputs_test_1d_radiation_transport_diffusion_read_only_hybrid  # inputs
+    "analysis_diffusion_only.py"  # analysis
+    OFF  # checksum (Hybrid-PIC supplies opacity state without LTE write-back)
+    OFF  # dependency
+)
+
+add_radiation_failure_test(
+    test_1d_radiation_transport_diffusion_only_table_rejected
+    1
+    "inputs_test_1d_radiation_transport_diffusion_only_table_rejected radiation_transport.rosseland_transport_coefficient_table_file=${CMAKE_CURRENT_SOURCE_DIR}/opacity_rosseland_2d_log.dat"
+    "State-dependent Rosseland tables and per-species opacity require")
+
+add_radiation_failure_test(
+    test_1d_radiation_transport_diffusion_moving_window_rejected
+    1
+    "inputs_test_1d_radiation_transport_diffusion_only boundary.field_lo=pec boundary.field_hi=pec boundary.particle_lo=absorbing boundary.particle_hi=absorbing warpx.do_moving_window=1 warpx.moving_window_dir=z warpx.moving_window_v=1.0"
+    "Radiation LTE/diffusion transport is not supported")
+
+add_warpx_test(
+    test_1d_radiation_transport_cold_start_profiles_multigroup  # name
+    1  # dims
+    1  # nprocs
+    inputs_test_1d_radiation_transport_cold_start_profiles_multigroup  # inputs
+    "analysis_cold_start_profiles.py --multigroup --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"  # analysis
+    OFF  # checksum (radiation group initialization and zero defaults are checked)
+    OFF  # dependency
+)
+
+add_warpx_test(
+    test_1d_radiation_transport_cold_start_profiles_restart  # name
+    1  # dims
+    1  # nprocs
+    "inputs_test_1d_radiation_transport_cold_start_profiles_restart amr.restart='../test_1d_radiation_transport_cold_start_profiles/diags/chk000001'"  # inputs
+    "analysis_cold_start_profiles.py --restart --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"  # analysis
+    OFF  # checksum (checkpointed radiation energy is checked)
+    test_1d_radiation_transport_cold_start_profiles  # dependency
+)
 
 add_warpx_test(
     test_1d_radiation_transport_hybrid  # name
@@ -1338,6 +1584,114 @@ add_warpx_test(
     "analysis_rz.py"  # analysis
     OFF  # checksum
     OFF  # dependency
+)
+
+add_warpx_test(
+    test_3d_radiation_transport_conversion_random_seed_checkpoint  # name
+    3  # dims
+    1  # nprocs
+    inputs_test_3d_radiation_transport_conversion_random_seed_restart  # inputs
+    "analysis_conversion_random_seed_restart.py --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"  # analysis
+    OFF  # checksum (conversion timing and checkpoint production are checked)
+    OFF  # dependency
+)
+
+add_warpx_test(
+    test_3d_radiation_transport_conversion_random_seed_restart  # name
+    3  # dims
+    1  # nprocs
+    "inputs_test_3d_radiation_transport_conversion_random_seed_restart_restart amr.restart='../test_3d_radiation_transport_conversion_random_seed_checkpoint/diags/chk000001'"  # inputs
+    "analysis_conversion_random_seed_restart.py --reference ../test_3d_radiation_transport_conversion_random_seed_checkpoint --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"  # analysis
+    OFF  # checksum (resolved random seed and packet realization are compared exactly)
+    test_3d_radiation_transport_conversion_random_seed_checkpoint  # dependency
+)
+
+add_warpx_test(
+    test_3d_radiation_transport_conversion_disabled_seed_checkpoint  # name
+    3  # dims
+    1  # nprocs
+    inputs_test_3d_radiation_transport_conversion_disabled_seed_checkpoint  # inputs
+    OFF  # analysis (the dependent restart validates the saved seed)
+    OFF  # checksum
+    OFF  # dependency
+)
+
+add_warpx_test(
+    test_3d_radiation_transport_conversion_enabled_seed_restart  # name
+    3  # dims
+    1  # nprocs
+    "inputs_test_3d_radiation_transport_conversion_random_seed_restart_restart amr.restart='../test_3d_radiation_transport_conversion_disabled_seed_checkpoint/diags/chk000001'"  # inputs
+    "analysis_conversion_random_seed_restart.py --seed-checkpoint ../test_3d_radiation_transport_conversion_disabled_seed_checkpoint/diags/chk000001 --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"  # analysis
+    OFF  # checksum (conversion-disabled checkpoint seed is restored exactly)
+    test_3d_radiation_transport_conversion_disabled_seed_checkpoint  # dependency
+)
+
+if(WarpX_EB)
+    add_radiation_failure_test(
+        test_3d_radiation_transport_conversion_eb_rejected
+        3
+        "inputs_test_3d_radiation_transport_packet_sampling eb2.geom_type=all_regular"
+        "enable_particle_conversion=1 is not supported")
+endif()
+
+add_warpx_test(
+    test_3d_radiation_transport_packet_sampling_seed42  # name
+    3  # dims
+    1  # nprocs
+    inputs_test_3d_radiation_transport_packet_sampling  # inputs
+    "analysis_packet_sampling.py --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"  # analysis
+    OFF  # checksum (packet count, strata, and exact energy are checked)
+    OFF  # dependency
+)
+
+add_warpx_test(
+    test_3d_radiation_transport_packet_sampling_offset  # name
+    3  # dims
+    1  # nprocs
+    inputs_test_3d_radiation_transport_packet_sampling_offset  # inputs
+    "analysis_packet_sampling.py --domain-offset 100000.1 --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"  # analysis
+    OFF  # checksum (mixed-precision offset cell ownership is checked)
+    OFF  # dependency
+)
+
+add_warpx_test(
+    test_3d_radiation_transport_packet_sampling_seed42_uniform  # name
+    3  # dims
+    1  # nprocs
+    inputs_test_3d_radiation_transport_packet_sampling_uniform  # inputs
+    "analysis_packet_sampling.py --uniform-domain --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"  # analysis
+    OFF  # checksum (all 64 cells in the one-box serial reference are checked)
+    OFF  # dependency
+)
+
+add_warpx_test(
+    test_3d_radiation_transport_packet_sampling_seed42_mpi_multibox  # name
+    3  # dims
+    2  # nprocs
+    inputs_test_3d_radiation_transport_packet_sampling_mpi  # inputs
+    "analysis_packet_sampling.py --uniform-domain --reference ../test_3d_radiation_transport_packet_sampling_seed42_uniform --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"  # analysis
+    OFF  # checksum (MPI/multibox packet records are compared exactly to serial)
+    test_3d_radiation_transport_packet_sampling_seed42_uniform  # dependency
+)
+
+add_warpx_test(
+    test_3d_radiation_transport_packet_sampling_seed42_repeat  # name
+    3  # dims
+    1  # nprocs
+    inputs_test_3d_radiation_transport_packet_sampling  # inputs
+    "analysis_packet_sampling.py --reference ../test_3d_radiation_transport_packet_sampling_seed42 --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"  # analysis
+    OFF  # checksum (same-seed particle records are compared exactly)
+    test_3d_radiation_transport_packet_sampling_seed42  # dependency
+)
+
+add_warpx_test(
+    test_3d_radiation_transport_packet_sampling_seed43  # name
+    3  # dims
+    1  # nprocs
+    "inputs_test_3d_radiation_transport_packet_sampling warpx.random_seed=43"  # inputs
+    "analysis_packet_sampling.py --reference ../test_3d_radiation_transport_packet_sampling_seed42 --expect-different --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"  # analysis
+    OFF  # checksum (different seeds must change the packet ensemble)
+    test_3d_radiation_transport_packet_sampling_seed42  # dependency
 )
 
 add_warpx_test(

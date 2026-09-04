@@ -6,6 +6,7 @@
 #include "Particles/Filter/FilterFunctors.H"
 #include "Particles/ParticleIO.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Radiation/RadiationTransport.H"
 #include "Utils/Interpolate.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
@@ -264,7 +265,10 @@ FlushFormatPlotfile::WriteWarpXHeader(
 
         HeaderFile.precision(17);
 
-        HeaderFile << "Checkpoint version: 1\n";
+        // Keep radiation restart schema information on the version line so the
+        // legacy header layout remains unchanged for all following records.
+        HeaderFile << "Checkpoint version: 2 radiation_momentum_carry_fields: "
+                   << warpx.GetRadiationTransport().usesMomentumCoupling() << "\n";
 
         const int nlevels = warpx.finestLevel()+1;
         HeaderFile << nlevels << "\n";

@@ -11,11 +11,14 @@
 
 #include <AMReX_Array.H>
 
-/** Cell-integrated material and escaped-boundary radiation impulse accounting.
+/** Cell-integrated material, pending, and escaped-boundary radiation impulse
+ * accounting.
  *
  * Components are Cartesian in Cartesian geometry and (r,theta,z) in RCYL/RZ.
  * The radial entry is an azimuthally integrated scalar impulse ledger, not the
- * globally conserved Cartesian momentum of a complete cylinder.
+ * globally conserved Cartesian momentum of a complete cylinder. Pending
+ * streaming/diffusion entries are checkpointed cell impulses not yet
+ * representable in the configured particle momentum precision.
  */
 class RadiationMomentum : public ReducedDiags
 {

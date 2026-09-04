@@ -31,7 +31,7 @@ momentum = np.atleast_2d(np.loadtxt("diags/radiation_momentum.txt"))
 assert radiation.shape[0] >= 3, "need the initial row plus at least two evolved steps"
 assert radiation.shape[1] == 17
 assert momentum.shape[0] == radiation.shape[0]
-assert momentum.shape[1] == 20
+assert momentum.shape[1] == 26
 
 initial = radiation[0, 2]
 final = radiation[-1, 2]
@@ -60,7 +60,7 @@ np.testing.assert_allclose(radiation[:, 11:13], 0.0, atol=1.0e-30)
 np.testing.assert_allclose(radiation[:, 13], radiation[:, 7], rtol=rtol)
 np.testing.assert_allclose(radiation[:, 14], radiation[:, 8], rtol=rtol)
 np.testing.assert_allclose(radiation[:, 15:17], 0.0, atol=1.0e-30)
-np.testing.assert_allclose(momentum[:, 14:20], 0.0, atol=1.0e-24)
+np.testing.assert_allclose(momentum[:, 14:26], 0.0, atol=1.0e-24)
 np.testing.assert_allclose(
     momentum[:, current_momentum_column],
     momentum_factor * radiation[:, 7] / 299792458.0,

@@ -96,7 +96,7 @@ radiation_labels, radiation = load_table(Path("diags/radiation_energy.txt"))
 _, momentum = load_table(Path("diags/radiation_momentum.txt"))
 
 assert radiation.shape == (2, 19)
-assert momentum.shape == (2, 20)
+assert momentum.shape == (2, 26)
 
 dt = 1.0e-12
 radius = 0.02
@@ -139,6 +139,7 @@ expected_kinetic = kinetic_0 + kinetic_2
 group_energies = radiation[-1, 9:11]
 diffusion_energy = radiation[-1, 4]
 material_impulse = momentum[-1, 2]
+pending_diffusion_impulse = momentum[-1, 23]
 material_kinetic = radiation[-1, 12]
 group_fractions = group_energies / np.sum(group_energies)
 
@@ -156,7 +157,10 @@ np.testing.assert_allclose(
     np.sum(group_energies), diffusion_energy, rtol=2.0e-12, atol=1.0e-9
 )
 np.testing.assert_allclose(
-    material_impulse, expected_impulse, rtol=2.0e-12, atol=1.0e-20
+    material_impulse + pending_diffusion_impulse,
+    expected_impulse,
+    rtol=2.0e-12,
+    atol=1.0e-20,
 )
 np.testing.assert_allclose(
     momentum[-1, 5], material_impulse, rtol=2.0e-12, atol=1.0e-20
@@ -180,4 +184,6 @@ np.testing.assert_allclose(
 transverse_tolerance = max(1.0e-20, 1.0e-14 * abs(material_impulse))
 np.testing.assert_allclose(momentum[:, [3, 4, 6, 7]], 0.0, atol=transverse_tolerance)
 np.testing.assert_allclose(momentum[:, 8:20], 0.0, atol=1.0e-24)
+np.testing.assert_allclose(momentum[:, 20:23], 0.0, atol=1.0e-24)
+np.testing.assert_allclose(momentum[:, [24, 25]], 0.0, atol=1.0e-24)
 assert_energy_balance(radiation_labels, radiation)

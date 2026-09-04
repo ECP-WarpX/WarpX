@@ -249,6 +249,9 @@ namespace ablastr::fields
         /** whether to include in checkpoint/restart */
         bool m_checkpoint_restart = false;
 
+        /** whether a missing field in an older checkpoint initializes to zero */
+        bool m_restart_optional = false;
+
         /** if m_mf is a non-owning alias, this string tracks the name of the owner */
         std::string m_owner;
 
@@ -296,6 +299,8 @@ namespace ablastr::fields
          * @param remake follow the default domain decomposition of the simulation
          * @param redistribute_on_remake redistribute on @see amrex::AmrCore::RemakeLevel
          * @param checkpoint_restart whether to include in checkpoint/restart
+         * @param restart_optional initialize to zero if this field's VisMF header
+         * is absent in an older checkpoint; requires checkpoint_restart
          * @return pointer to newly allocated MultiFab
          */
         template<typename T>
@@ -310,7 +315,8 @@ namespace ablastr::fields
             std::optional<amrex::Real const> initial_value = std::nullopt,
             bool remake = true,
             bool redistribute_on_remake = true,
-            bool checkpoint_restart = false
+            bool checkpoint_restart = false,
+            bool restart_optional = false
         )
         {
             return internal_alloc_init(
@@ -323,7 +329,8 @@ namespace ablastr::fields
                 initial_value,
                 remake,
                 redistribute_on_remake,
-                checkpoint_restart
+                checkpoint_restart,
+                restart_optional
             );
         }
 
@@ -343,6 +350,8 @@ namespace ablastr::fields
          * @param remake follow the default domain decomposition of the simulation
          * @param redistribute_on_remake redistribute on @see amrex::AmrCore::RemakeLevel
          * @param checkpoint_restart whether to include in checkpoint/restart
+         * @param restart_optional initialize to zero if this field's VisMF header
+         * is absent in an older checkpoint; requires checkpoint_restart
          * @return pointer to newly allocated MultiFab
          */
         template<typename T>
@@ -358,7 +367,8 @@ namespace ablastr::fields
             std::optional<amrex::Real const> initial_value = std::nullopt,
             bool remake = true,
             bool redistribute_on_remake = true,
-            bool checkpoint_restart = false
+            bool checkpoint_restart = false,
+            bool restart_optional = false
         )
         {
             return internal_alloc_init(
@@ -372,7 +382,8 @@ namespace ablastr::fields
                 initial_value,
                 remake,
                 redistribute_on_remake,
-                checkpoint_restart
+                checkpoint_restart,
+                restart_optional
             );
         }
 
@@ -840,7 +851,8 @@ namespace ablastr::fields
             std::optional<amrex::Real const> initial_value = std::nullopt,
             bool remake = true,
             bool redistribute_on_remake = true,
-            bool checkpoint_restart = false
+            bool checkpoint_restart = false,
+            bool restart_optional = false
         );
         amrex::MultiFab*
         internal_alloc_init (
@@ -854,7 +866,8 @@ namespace ablastr::fields
             std::optional<amrex::Real const> initial_value = std::nullopt,
             bool remake = true,
             bool redistribute_on_remake = true,
-            bool checkpoint_restart = false
+            bool checkpoint_restart = false,
+            bool restart_optional = false
         );
 
         amrex::MultiFab*

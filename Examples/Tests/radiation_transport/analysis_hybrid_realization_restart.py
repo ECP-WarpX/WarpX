@@ -76,10 +76,12 @@ def checkpoint_values(path: Path) -> tuple[np.ndarray, np.ndarray]:
         [float(token) for token in transport_path.read_text().split()]
     )
     reduced = np.asarray([float(token) for token in reduced_path.read_text().split()])
-    assert transport.shape == (2,)
+    assert transport.shape in ((2,), (3,))
     assert reduced.shape == (6,)
     assert np.all(np.isfinite(transport))
     assert np.all(np.isfinite(reduced))
+    if transport.shape == (3,):
+        assert transport[2] >= 1.0
     return transport, reduced
 
 
