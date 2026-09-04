@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cfenv>
 #include <limits>
 #include <map>
 #include <utility>
@@ -477,6 +478,7 @@ private:
 #pragma omp parallel
 #endif
             {
+                std::feclearexcept(FE_ALL_EXCEPT);
                 amrex::setFPExcept(m_prev[amrex::OpenMP::get_thread_num()]);
             }
         }
