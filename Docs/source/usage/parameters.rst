@@ -3917,7 +3917,7 @@ Maxwell solver: kinetic-fluid hybrid
     the electron pressure (see :ref:`here <theory-hybrid-model-elec-temp>`).
 
 .. pp:param:: hybrid_pic_model.initial_elec_temp(x,y,z)
-    :type: :ref:`parser_function <Basics_Parser>`
+    :type: :ref:`parser_function <running-cpp-parameters-parser>`
     :optional:
 
     Cold-start electron-temperature profile in eV for
