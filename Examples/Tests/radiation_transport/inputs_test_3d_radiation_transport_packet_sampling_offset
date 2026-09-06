@@ -1,7 +1,7 @@
 # Offset cell faces are deliberately not exactly representable in single
 # particle precision. Converted positions must still remain in the Real cell.
 
-FILE = inputs_test_3d_radiation_transport_packet_sampling
+FILE = inputs_base_3d_radiation_transport_packet_sampling
 
 geometry.prob_lo = 100000.1 100000.1 100000.1
 geometry.prob_hi = 100001.1 100001.1 100001.1

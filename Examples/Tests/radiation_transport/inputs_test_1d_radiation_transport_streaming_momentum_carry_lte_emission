@@ -2,7 +2,7 @@
 # extreme temperature makes finite LTE emission coexist with sub-ULP ion recoil.
 # Unlike the zero-opacity branch checks, this exercises a nonzero thermal source
 # and implicit temperature response while delayed streaming work is realized.
-FILE = inputs_test_1d_radiation_transport_streaming_momentum_carry
+FILE = inputs_base_1d_radiation_transport_streaming_momentum_carry
 
 radiation_transport.enable_lte_exchange = 1
 radiation_transport.planck_absorption_coefficient = 2.0e-80
