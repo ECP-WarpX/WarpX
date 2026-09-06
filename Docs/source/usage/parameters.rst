@@ -5293,8 +5293,9 @@ studies.
    effort to energetic cells/groups instead of equally to nearly empty tails.
    The full converted energy is retained even when the count cap is reached, so
    the target is not a strict maximum packet energy or a hard global population
-   limit. It follows the current radiation inventory so late-time decaying
-   pulses retain sampling resolution. It does not change the
+   limit. New conversion follows the current radiation inventory, but existing
+   streaming packets are not resampled: late-time decaying pulses can still
+   become poorly resolved and require explicit count/seed refinement. It does not change the
    physical group photon energy, opacity, field estimator, or acceptance gates.
    Packet-count and timestep convergence must still be demonstrated. Keep this
    setting and its cap unchanged for reproducible restart comparisons.
@@ -5322,6 +5323,9 @@ studies.
    and independent-seed convergence for each scientifically relevant band.
    These budgets are not hard population or memory limits. Keep the budgets
    and cap unchanged across reproducibility comparisons and restarts.
+   Only newly converted packets use the updated targets; the option does not
+   regenerate or remove sampling noise from packets that are already streaming.
+   Equal budgets are not necessarily efficient or accurate for every band.
 
 
 Grid types (collocated, staggered, hybrid)
