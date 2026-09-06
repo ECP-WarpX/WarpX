@@ -1131,6 +1131,9 @@ void HybridPICModel::ReadParameters (
     if (!utils::parser::queryWithParser(pp_hybrid, "elec_temp", m_elec_temp)) {
         Abort("hybrid_pic_model.elec_temp must be specified when using the hybrid solver");
     }
+    m_has_initial_elec_temp = utils::parser::Query_parserString(
+        pp_hybrid,
+        "initial_elec_temp(x,y,z)", m_initial_elec_temp_expression);
     const bool n0_ref_given = utils::parser::queryWithParser(pp_hybrid, "n0_ref", m_n0_ref);
     if (m_gamma != 1.0 && !n0_ref_given) {
         Abort("hybrid_pic_model.n0_ref should be specified if hybrid_pic_model.gamma != 1");
@@ -1150,6 +1153,10 @@ void HybridPICModel::ReadParameters (
     // law. Default off preserves the legacy algebraic adiabatic closure.
     pp_hybrid.query("solve_electron_energy_equation",
                     m_solve_electron_energy_equation);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !m_has_initial_elec_temp || m_solve_electron_energy_equation,
+        "hybrid_pic_model.initial_elec_temp(x,y,z) requires "
+        "hybrid_pic_model.solve_electron_energy_equation=1.");
     pp_hybrid.query("conservative_pressure_work",
                     m_conservative_pressure_work);
 #if defined(WARPX_DIM_RSPHERE)
@@ -1631,6 +1638,13 @@ void HybridPICModel::AllocateAuxiliaryLevelMFs (
 
 void HybridPICModel::InitData (const ablastr::fields::MultiFabRegister& fields)
 {
+    if (m_has_initial_elec_temp) {
+        m_initial_elec_temp_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(
+                m_initial_elec_temp_expression, {"x", "y", "z"}));
+        m_initial_elec_temp = m_initial_elec_temp_parser->compile<3>();
+    }
+
     m_resistivity_parser = std::make_unique<amrex::Parser>(
         utils::parser::makeParser(m_eta_expression, {"rho","J","t"}));
     m_eta = m_resistivity_parser->compile<3>();
@@ -2103,7 +2117,76 @@ void HybridPICModel::InitData (const ablastr::fields::MultiFabRegister& fields)
         for (int lev = 0; lev <= warpx.finestLevel(); ++lev) {
             amrex::MultiFab & Te_mf = *warpx.m_fields.get(
                 FieldType::hybrid_electron_temperature_fp, lev);
-            Te_mf.setVal(m_elec_temp / PhysConst::kb);
+            if (!m_has_initial_elec_temp) {
+                Te_mf.setVal(m_elec_temp / PhysConst::kb);
+                continue;
+            }
+
+            auto const initial_elec_temp = m_initial_elec_temp;
+            auto const problo = warpx.Geom(lev).ProbLoArray();
+            auto const dx = warpx.Geom(lev).CellSizeArray();
+            amrex::Dim3 const domain_lo =
+                amrex::lbound(warpx.Geom(lev).Domain());
+            amrex::IntVect const index_type =
+                Te_mf.ixType().toIntVect();
+            amrex::Real const eV_to_K = PhysConst::q_e / PhysConst::kb;
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+            for (amrex::MFIter mfi(Te_mf); mfi.isValid(); ++mfi) {
+                amrex::Array4<amrex::Real> const temperature =
+                    Te_mf.array(mfi);
+                amrex::Box const box = mfi.fabbox();
+                amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (
+                    int i, int j, int k) noexcept
+                {
+                    amrex::Real temperature_eV;
+#if defined(WARPX_DIM_3D)
+                    amrex::Real const x = problo[0]
+                        + (i - domain_lo.x + 0.5_rt * (1 - index_type[0]))
+                            * dx[0];
+                    amrex::Real const y = problo[1]
+                        + (j - domain_lo.y + 0.5_rt * (1 - index_type[1]))
+                            * dx[1];
+                    amrex::Real const z = problo[2]
+                        + (k - domain_lo.z + 0.5_rt * (1 - index_type[2]))
+                            * dx[2];
+                    temperature_eV = initial_elec_temp(x, y, z);
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                    amrex::Real const x = problo[0]
+                        + (i - domain_lo.x + 0.5_rt * (1 - index_type[0]))
+                            * dx[0];
+                    amrex::Real const z = problo[1]
+                        + (j - domain_lo.y + 0.5_rt * (1 - index_type[1]))
+                            * dx[1];
+                    temperature_eV = initial_elec_temp(x, 0.0_rt, z);
+#elif defined(WARPX_DIM_1D_Z)
+                    amrex::Real const z = problo[0]
+                        + (i - domain_lo.x + 0.5_rt * (1 - index_type[0]))
+                            * dx[0];
+                    temperature_eV = initial_elec_temp(0.0_rt, 0.0_rt, z);
+#elif defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+                    amrex::Real const x = problo[0]
+                        + (i - domain_lo.x + 0.5_rt * (1 - index_type[0]))
+                            * dx[0];
+                    temperature_eV = initial_elec_temp(x, 0.0_rt, 0.0_rt);
+#endif
+                    amrex::Real const temperature_K = temperature_eV * eV_to_K;
+                    temperature(i, j, k) =
+                        amrex::Math::isfinite(temperature_eV)
+                            && temperature_eV > 0.0_rt
+                            && amrex::Math::isfinite(temperature_K)
+                            && temperature_K > 0.0_rt
+                        ? temperature_K
+                        : std::numeric_limits<amrex::Real>::quiet_NaN();
+                });
+            }
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                Te_mf.is_finite(0, Te_mf.nComp(), Te_mf.nGrowVect()),
+                "hybrid_pic_model.initial_elec_temp(x,y,z) must return a "
+                "finite, positive electron temperature in eV at every "
+                "electron-temperature grid point.");
         }
     }
 
@@ -5324,14 +5407,32 @@ void HybridPICModel::AdvanceElectronEnergyQDSMC (amrex::Real const dt) const
             amrex::MultiFab& weights_out = *warpx.m_fields.get(
                 FieldType::hybrid_qdsmc_weights_fp, lev);
 
-            // The reviewed ideal-gas algorithm transports K_e with one
-            // Lagrangian marker per cell.
-            m_qdsmc_pc->SetV(lev, Vex, Vey, Vez);
-            m_qdsmc_pc->SetK(lev, Ke, rho);
-            m_qdsmc_pc->PushX(lev, dt);
-            m_qdsmc_pc->DepositK(lev, Karr_out);
-            m_qdsmc_pc->DepositField(lev, weights_out);
-            QDSMCUpdateThermodynamics(lev, dt);
+            // A marker that remains at its home cell is still gathered from
+            // the nodal grid and scattered back with linear shape factors.
+            // That gather/scatter composition is a smoothing stencil, not an
+            // identity, so applying it repeatedly at V_e=0 causes a purely
+            // projection-count-dependent electron-energy drift.  Take the
+            // exact identity path when every electron-velocity component is
+            // identically zero.  Use one collective for the three components
+            // so the decision is decomposition independent.
+            amrex::Real max_electron_velocity = std::max({
+                Vex.norm0(/*comp=*/0, /*nghost=*/0, /*local=*/true),
+                Vey.norm0(/*comp=*/0, /*nghost=*/0, /*local=*/true),
+                Vez.norm0(/*comp=*/0, /*nghost=*/0, /*local=*/true)});
+            amrex::ParallelDescriptor::ReduceRealMax(max_electron_velocity);
+
+            if (max_electron_velocity != 0.0_rt) {
+                // The reviewed QDSMC algorithm transports K_e with one
+                // Lagrangian marker per cell.  Keep this path for every
+                // genuinely moving state; the stationary fast path above
+                // changes neither its marker push nor its remap.
+                m_qdsmc_pc->SetV(lev, Vex, Vey, Vez);
+                m_qdsmc_pc->SetK(lev, Ke, rho);
+                m_qdsmc_pc->PushX(lev, dt);
+                m_qdsmc_pc->DepositK(lev, Karr_out);
+                m_qdsmc_pc->DepositField(lev, weights_out);
+                QDSMCUpdateThermodynamics(lev, dt);
+            }
         }
 
         // Step 6: Joule-heating source on U_e (Phys. Plasmas 31, 012902 (2024), Eq. 12), per-cell from

@@ -3916,6 +3916,19 @@ Maxwell solver: kinetic-fluid hybrid
     If :pp:param:`algo.maxwell_solver` is set to ``hybrid``, this sets the reference density, in :math:`m^{-3}`, used to calculate
     the electron pressure (see :ref:`here <theory-hybrid-model-elec-temp>`).
 
+.. pp:param:: hybrid_pic_model.initial_elec_temp(x,y,z)
+    :type: :ref:`parser_function <Basics_Parser>`
+    :optional:
+
+    Cold-start electron-temperature profile in eV for
+    ``hybrid_pic_model.solve_electron_energy_equation = 1``.
+    Values must be finite and strictly positive at all temperature grid points,
+    including guard cells. Coordinates follow the usual geometry convention
+    (``z`` in 1D; ``x`` is radius in cylindrical geometries).
+    The required scalar ``hybrid_pic_model.elec_temp`` remains the reference
+    temperature. The profile is not reapplied on restart and does not select
+    a different electron-energy transport or material closure.
+
 .. pp:param:: hybrid_pic_model.gamma
     :type: ``float``
     :default: ``5/3``

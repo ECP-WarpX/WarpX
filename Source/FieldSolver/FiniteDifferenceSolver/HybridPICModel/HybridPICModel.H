@@ -501,6 +501,11 @@ public:
     /** Electron temperature: read from the input in eV, converted to
      * k_B T_e in J at the end of ReadParameters. */
     amrex::Real m_elec_temp;
+    /** Optional cold-start electron-temperature profile in eV. */
+    std::string m_initial_elec_temp_expression;
+    std::unique_ptr<amrex::Parser> m_initial_elec_temp_parser;
+    amrex::ParserExecutor<3> m_initial_elec_temp;
+    bool m_has_initial_elec_temp = false;
     /** Reference electron density */
     amrex::Real m_n0_ref = 1.0;
     /** Electron pressure scaling exponent */

@@ -1,6 +1,26 @@
 # Add tests (alphabetical order) ##############################################
 #
 
+add_warpx_test(
+    test_1d_radiation_transport_material_profile
+    1
+    1
+    inputs_test_1d_radiation_transport_material_profile
+    "analysis_material_profile.py --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"
+    OFF
+    OFF
+)
+
+add_warpx_test(
+    test_1d_radiation_transport_material_profile_restart
+    1
+    1
+    "inputs_test_1d_radiation_transport_material_profile_restart amr.restart='../test_1d_radiation_transport_material_profile/diags/chk000001'"
+    "analysis_material_profile.py --restart --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"
+    OFF
+    test_1d_radiation_transport_material_profile
+)
+
 # Fixture commands below are registered outside add_warpx_test's function
 # scope. Resolve their interpreter here as well, including APP-only builds.
 if(WarpX_APP AND NOT Python_EXECUTABLE)
@@ -185,6 +205,18 @@ add_radiation_failure_test(
     1
     inputs_base_1d_radiation_transport_kinetic_thermal_cold_rejected
     "nondegenerate particles in every affected NGP cell")
+
+add_radiation_failure_test(
+    test_1d_radiation_transport_material_profile_negative_rejected
+    1
+    "inputs_base_1d_radiation_transport_material_profile_rejected hybrid_pic_model.initial_elec_temp(x,y,z)=-1.0"
+    "positive electron temperature in eV")
+
+add_radiation_failure_test(
+    test_1d_radiation_transport_material_profile_static_closure_rejected
+    1
+    "inputs_base_1d_radiation_transport_material_profile_rejected hybrid_pic_model.solve_electron_energy_equation=0"
+    "hybrid_pic_model.solve_electron_energy_equation=1.")
 
 add_warpx_test(
     test_1d_radiation_transport_kinetic_thermal_drift  # name

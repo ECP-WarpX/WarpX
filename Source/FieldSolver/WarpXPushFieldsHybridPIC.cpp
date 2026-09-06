@@ -586,7 +586,8 @@ void WarpX::HybridPICInitializeRhoJandB ()
     // written at the end of InitData, before this runs). Any nonlinear caloric
     // EOS must instead preserve the input T_e seeded by InitData and evaluate
     // its own P(rho,T); running the legacy closure here would silently replace
-    // both quantities with ideal-polytropic values. On restart every evolved
+    // both quantities with ideal-polytropic values. An explicitly initialized
+    // temperature profile must likewise survive this bootstrap. On restart every evolved
     // temperature is restored from its checkpoint and likewise must not be
     // replaced by the algebraic closure. Pe is derived, so rebuild it from the
     // preserved T_e and reconstructed rho. This also preserves radiation,
@@ -595,6 +596,7 @@ void WarpX::HybridPICInitializeRhoJandB ()
     bool const preserve_evolved_temperature =
         m_hybrid_pic_model->m_solve_electron_energy_equation
         && (!restart_chkfile.empty()
+            || m_hybrid_pic_model->m_has_initial_elec_temp
             || !m_hybrid_pic_model->electronThermodynamicsExecutor()
                 .isIdealGas());
     if (preserve_evolved_temperature)
