@@ -17,9 +17,9 @@
 #   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
 #   include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
 #   include "Particles/ElementaryProcess/QEDSchwingerProcess.H"
-#   include "Particles/ElementaryProcess/QEDEvolveOpticalDepth.H"
 #   include "Particles/ElementaryProcess/QEDPairGeneration.H"
 #   include "Particles/ElementaryProcess/QEDPhotonEmission.H"
+#   include "Particles/Gather/GatherFieldsOnParticle.H"
 #endif
 #include "Particles/LaserParticleContainer.H"
 #include "Particles/ParticleCreation/FilterCopyTransform.H"
@@ -1975,22 +1975,28 @@ void MultiParticleContainer::doQedQuantumSyncEvolveOpticalDepth (int lev,
 #endif
         for (WarpXParIter pti(*pc_source, lev); pti.isValid(); ++pti)
         {
-            auto& attribs = pti.GetAttribs();
-
-            auto EvolveOpticalDepth = QuantumSyncEvolveOpticalDepthFunc(
-                  m_shr_p_qs_engine->build_evolve_functor(),
-                  attribs[PIdx::ux].dataPtr(),
-                  attribs[PIdx::uy].dataPtr(),
-                  attribs[PIdx::uz].dataPtr(),
-                  pti.GetAttribs("opticalDepthQSR").dataPtr(),
-                  dt,
+            const auto gather_fields = GatherFieldsOnParticle(
                   pti, lev, Ex.nGrowVect(),
                   Ex[pti], Ey[pti], Ez[pti],
                   Bx[pti], By[pti], Bz[pti],
                   phys_pc_ptr->m_E_external_particle,
                   phys_pc_ptr->m_B_external_particle);
+            const auto evolve_opt_depth = m_shr_p_qs_engine->build_evolve_functor();
 
-            amrex::ParallelFor(pti.numParticles(), EvolveOpticalDepth);
+            auto& attribs = pti.GetAttribs();
+            amrex::ParticleReal* const AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
+            amrex::ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
+            amrex::ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
+            amrex::ParticleReal* const AMREX_RESTRICT opt_depth =
+                pti.GetAttribs("opticalDepthQSR").dataPtr();
+
+            amrex::ParallelFor(pti.numParticles(), [=] AMREX_GPU_DEVICE (long ip)
+            {
+                amrex::ParticleReal ex, ey, ez, bx, by, bz;
+                gather_fields(ip, ex, ey, ez, bx, by, bz);
+                evolve_opt_depth(ux[ip], uy[ip], uz[ip], ex, ey, ez, bx, by, bz,
+                                 dt, opt_depth[ip]);
+            });
         }
     }
 }
