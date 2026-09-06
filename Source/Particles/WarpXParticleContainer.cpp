@@ -76,6 +76,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <type_traits>
 
 using namespace amrex;
 
@@ -2655,12 +2656,15 @@ WarpXParticleContainer::GetPlasmaFrequency (int lev)
     return plasma_frequency;
 }
 
-std::pair<amrex::ParticleReal, amrex::ParticleReal> WarpXParticleContainer::sumParticleWeightAndEnergy (bool local) const {
+std::pair<amrex::Real, amrex::Real>
+WarpXParticleContainer::sumParticleWeightAndEnergy (bool local) const
+{
 
     // Get mass (used only for particles other than photons, see below)
     const amrex::Real mass = this->m_mass;
 
     using PType = typename WarpXParticleContainer::SuperParticleType;
+    using ProductReal = std::common_type_t<amrex::Real, amrex::ParticleReal>;
 
     amrex::Real Etot = 0.0_rt;
     amrex::Real Ws   = 0.0_rt;
@@ -2679,7 +2683,10 @@ std::pair<amrex::ParticleReal, amrex::ParticleReal> WarpXParticleContainer::sumP
                 const amrex::ParticleReal ux = p.rdata(PIdx::ux);
                 const amrex::ParticleReal uy = p.rdata(PIdx::uy);
                 const amrex::ParticleReal uz = p.rdata(PIdx::uz);
-                return {w*Algorithms::KineticEnergyPhotons(ux,uy,uz),w};
+                // Match radiation's represented-energy ledger: promote before
+                // multiplying, not after a particle-precision product rounds.
+                return {static_cast<ProductReal>(w)
+                    * static_cast<ProductReal>(Algorithms::KineticEnergyPhotons(ux,uy,uz)), w};
             },
             reduce_ops);
 
@@ -2697,7 +2704,8 @@ std::pair<amrex::ParticleReal, amrex::ParticleReal> WarpXParticleContainer::sumP
                 const amrex::ParticleReal uy = p.rdata(PIdx::uy);
                 const amrex::ParticleReal uz = p.rdata(PIdx::uz);
 
-                return {w*Algorithms::KineticEnergy(ux,uy,uz,mass), w};
+                return {static_cast<ProductReal>(w)
+                    * static_cast<ProductReal>(Algorithms::KineticEnergy(ux,uy,uz,mass)), w};
             },
             reduce_ops);
 
@@ -2709,7 +2717,8 @@ std::pair<amrex::ParticleReal, amrex::ParticleReal> WarpXParticleContainer::sumP
     return {Etot,Ws};
 }
 
-amrex::ParticleReal WarpXParticleContainer::sumParticleEnergy (bool local) const {
+amrex::Real WarpXParticleContainer::sumParticleEnergy (bool local) const
+{
 
     auto [total_energy, total_weight] = this->sumParticleWeightAndEnergy(local);
     return total_energy;
