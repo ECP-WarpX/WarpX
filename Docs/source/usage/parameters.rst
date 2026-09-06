@@ -5308,6 +5308,20 @@ studies.
    Positive per-cell/group packet-count cap in energy-targeted conversion mode.
    This is not a global memory limit. The fixed-count mode does not use this cap.
 
+.. pp:param:: radiation_transport.particle_conversion_batch_size
+   :type: ``integer``
+   :default: ``0``
+   :optional:
+
+   Maximum number of newly converted packets staged together on each rank.
+   Zero retains the original whole-step staging. A positive value such as 65536
+   bounds temporary host packet arrays and pinned injection storage. Batches
+   are appended to their local destination grid; one collective redistribution
+   follows all local batches, including ranks that create no packets.
+   This changes storage/transfer scheduling, not packet counts, seeded birth
+   positions/directions, or the per-cell represented-energy calculation.
+   It does not bound the final photon population or total device memory.
+
 .. pp:param:: radiation_transport.particle_conversion_group_target_packet_counts
    :type: ``list of integers``
    :optional:

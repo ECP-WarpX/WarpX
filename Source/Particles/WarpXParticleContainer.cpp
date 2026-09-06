@@ -8,6 +8,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpXParticleContainer.H"
+#include "ParticleBatchInjection.H"
 
 #include "ablastr/particles/DepositCharge.H"
 #include "Deposition/ChargeDeposition.H"
@@ -194,12 +195,43 @@ WarpXParticleContainer::AddNParticles (int /*lev*/, long n,
                                        amrex::Vector<amrex::Vector<int>> const & attr_int,
                                        int uniqueparticles, amrex::Long id)
 {
-    using namespace amrex::literals;
-    using warpx::fields::FieldType;
+    warpx::particles::AppendParticleBatch(
+        *this, 0, n, x, y, z, ux, uy, uz,
+        nattr_real, attr_real, nattr_int, attr_int, uniqueparticles, id);
+    Redistribute();
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE((PIdx::nattribs + nattr_real - 1) <= NumRealComps(),
+#ifdef AMREX_USE_EB
+    if (EB::enabled()) {
+        auto& warpx = WarpX::GetInstance();
+        scrapeParticlesAtEB(
+            *this,
+            warpx.m_fields.get_mr_levels(
+                warpx::fields::FieldType::distance_to_eb, warpx.finestLevel()),
+            ParticleBoundaryProcess::Absorb());
+        deleteInvalidParticles();
+    }
+#endif
+}
+
+void
+warpx::particles::AppendParticleBatch (
+    WarpXParticleContainer& particles, int const staging_grid, long const n,
+    amrex::Vector<amrex::ParticleReal> const& x,
+    amrex::Vector<amrex::ParticleReal> const& y,
+    amrex::Vector<amrex::ParticleReal> const& z,
+    amrex::Vector<amrex::ParticleReal> const& ux,
+    amrex::Vector<amrex::ParticleReal> const& uy,
+    amrex::Vector<amrex::ParticleReal> const& uz,
+    int const nattr_real,
+    amrex::Vector<amrex::Vector<amrex::ParticleReal>> const& attr_real,
+    int const nattr_int, amrex::Vector<amrex::Vector<int>> const& attr_int,
+    int const uniqueparticles, amrex::Long const id)
+{
+    using namespace amrex::literals;
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE((PIdx::nattribs + nattr_real - 1) <= particles.NumRealComps(),
                                      "Too many real attributes specified");
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(nattr_int <= NumIntComps(),
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(nattr_int <= particles.NumIntComps(),
                                      "Too many integer attributes specified");
 
     long ibegin = 0;
@@ -218,15 +250,16 @@ WarpXParticleContainer::AddNParticles (int /*lev*/, long n,
         }
     }
 
-    //  Add to grid 0 and tile 0
-    // Redistribute() will move them to proper places.
-    auto& particle_tile = DefineAndReturnParticleTile(0, 0, 0);
+    // The caller performs the collective redistribution after local appends.
+    auto& particle_tile = particles.DefineAndReturnParticleTile(0, staging_grid, 0);
 
-    using PinnedTile = typename ContainerLike<amrex::PolymorphicArenaAllocator>::ParticleTileType;
+    using PinnedTile = typename WarpXParticleContainer::ContainerLike<
+        amrex::PolymorphicArenaAllocator>::ParticleTileType;
     PinnedTile pinned_tile;
-    auto soa_rdata_names = GetRealSoANames();
-    auto soa_idata_names = GetIntSoANames();
-    pinned_tile.define(NumRuntimeRealComps(), NumRuntimeIntComps(), &soa_rdata_names, &soa_idata_names, amrex::The_Pinned_Arena());
+    auto soa_rdata_names = particles.GetRealSoANames();
+    auto soa_idata_names = particles.GetIntSoANames();
+    pinned_tile.define(particles.NumRuntimeRealComps(), particles.NumRuntimeIntComps(),
+                       &soa_rdata_names, &soa_idata_names, amrex::The_Pinned_Arena());
 
     const std::size_t np = iend-ibegin;
 
@@ -245,7 +278,7 @@ WarpXParticleContainer::AddNParticles (int /*lev*/, long n,
 
         amrex::Long current_id = id;  // copy input
         if (id == -1) {
-            current_id = ParticleType::NextID();
+            current_id = WarpXParticleContainer::ParticleType::NextID();
         }
         idcpu_data.push_back(amrex::SetParticleIDandCPU(current_id, ParallelDescriptor::MyProc()));
 
@@ -287,8 +320,8 @@ WarpXParticleContainer::AddNParticles (int /*lev*/, long n,
         pinned_tile.push_back_real(PIdx::uy, uy.data() + ibegin, uy.data() + iend);
         pinned_tile.push_back_real(PIdx::uz, uz.data() + ibegin, uz.data() + iend);
 
-        if ( (NumRuntimeRealComps()>0) || (NumRuntimeIntComps()>0) ){
-            DefineAndReturnParticleTile(0, 0, 0);
+        if ( (particles.NumRuntimeRealComps()>0) || (particles.NumRuntimeIntComps()>0) ){
+            particles.DefineAndReturnParticleTile(0, staging_grid, 0);
         }
 
         for (int comp = PIdx::uz+1; comp < PIdx::nattribs; ++comp)
@@ -328,7 +361,7 @@ WarpXParticleContainer::AddNParticles (int /*lev*/, long n,
 
         pinned_tile.resize(np);
         // Default initialize the other real and integer runtime attributes
-        DefaultInitializeRuntimeAttributes(pinned_tile, nattr_real - 1, nattr_int);
+        particles.DefaultInitializeRuntimeAttributes(pinned_tile, nattr_real - 1, nattr_int);
 
         auto old_np = particle_tile.numParticles();
         auto new_np = old_np + pinned_tile.numParticles();
@@ -336,22 +369,9 @@ WarpXParticleContainer::AddNParticles (int /*lev*/, long n,
         amrex::copyParticles(
             particle_tile, pinned_tile, 0, old_np, pinned_tile.numParticles()
         );
+        // The caller may immediately reuse the bounded host batch storage.
+        amrex::Gpu::streamSynchronize();
     }
-
-    // Move particles to their appropriate tiles
-    Redistribute();
-
-    // Remove particles that are inside the embedded boundaries
-#ifdef AMREX_USE_EB
-    if (EB::enabled()) {
-        auto & warpx = WarpX::GetInstance();
-        scrapeParticlesAtEB(
-            *this,
-            warpx.m_fields.get_mr_levels(FieldType::distance_to_eb, warpx.finestLevel()),
-            ParticleBoundaryProcess::Absorb());
-        deleteInvalidParticles();
-    }
-#endif
 }
 
 void

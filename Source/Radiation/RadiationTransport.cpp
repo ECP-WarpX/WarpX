@@ -12,6 +12,7 @@
 #include "Fields.H"
 #include "Particles/Algorithms/KineticEnergy.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Particles/ParticleBatchInjection.H"
 #include "Particles/PhotonParticleContainer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/Pusher/UpdatePosition.H"
@@ -3739,6 +3740,7 @@ RadiationTransport::RadiationTransport (
                     m_particle_conversion_group_target_packet_counts);
         pp.query("particle_conversion_max_packets_per_cell",
                  m_particle_conversion_max_packets_per_cell);
+        pp.query("particle_conversion_batch_size", m_particle_conversion_batch_size);
     }
 
     // Resolve this for every radiation-enabled run so a checkpoint taken
@@ -3876,6 +3878,9 @@ RadiationTransport::RadiationTransport (
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_particle_conversion_max_packets_per_cell > 0,
         "Radiation conversion requires a positive packet count cap.");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        m_particle_conversion_batch_size >= 0,
+        "Radiation conversion batch size must be nonnegative.");
     if (!m_particle_conversion_group_target_packet_counts.empty()) {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             m_particle_conversion_target_packet_count == 0,
@@ -7251,6 +7256,24 @@ RadiationTransport::Advance (
                 int const conversion_step = warpx.getistep(lev);
                 std::uint64_t const conversion_seed =
                     m_particle_conversion_seed;
+                auto const flush_packets = [&] (int const grid)
+                {
+                    if (photon_x.empty()) { return; }
+                    amrex::Vector<amrex::Vector<amrex::ParticleReal>> const attributes{
+                        photon_weight};
+                    amrex::Vector<amrex::Vector<int>> const integer_attributes{};
+                    warpx::particles::AppendParticleBatch(
+                        photons, grid, static_cast<long>(photon_x.size()),
+                        photon_x, photon_y, photon_z, photon_ux, photon_uy, photon_uz,
+                        1, attributes, 0, integer_attributes, /*uniqueparticles=*/1, -1);
+                    photon_x.clear();
+                    photon_y.clear();
+                    photon_z.clear();
+                    photon_ux.clear();
+                    photon_uy.clear();
+                    photon_uz.clear();
+                    photon_weight.clear();
+                };
 
                 for (amrex::MFIter mfi(host_energy); mfi.isValid(); ++mfi) {
                     amrex::Box const& box = mfi.validbox();
@@ -7491,6 +7514,11 @@ RadiationTransport::Advance (
                                 photon_uz.push_back(packet_uz);
                                 photon_weight.push_back(packet_weight);
                                 remaining_cell_energy -= represented_energy;
+                                if (m_particle_conversion_batch_size > 0
+                                    && photon_x.size() >= m_particle_conversion_batch_size)
+                                {
+                                    flush_packets(mfi.index());
+                                }
                             }
                             // Retaining any sub-particle-precision remainder
                             // makes representation conversion conservative
@@ -7499,19 +7527,28 @@ RadiationTransport::Advance (
                                 remaining_cell_energy;
                         }
                     }
+                    if (m_particle_conversion_batch_size > 0) {
+                        flush_packets(mfi.index());
+                    }
                 }
 
                 amrex::htod_memcpy(diffusion_energy, host_energy);
                 amrex::Gpu::streamSynchronize();
-                amrex::Vector<amrex::Vector<amrex::ParticleReal>> const attributes{
-                    photon_weight};
-                amrex::Vector<amrex::Vector<int>> const integer_attributes{};
-                photons.AddNParticles(
-                    lev, static_cast<long>(photon_x.size()),
-                    photon_x, photon_y, photon_z,
-                    photon_ux, photon_uy, photon_uz,
-                    1, attributes, 0, integer_attributes,
-                    /*uniqueparticles=*/1);
+                if (m_particle_conversion_batch_size > 0) {
+                    // Local ranks may append different numbers of batches.
+                    // Keep their single collective at the same control point.
+                    photons.Redistribute();
+                } else {
+                    amrex::Vector<amrex::Vector<amrex::ParticleReal>> const attributes{
+                        photon_weight};
+                    amrex::Vector<amrex::Vector<int>> const integer_attributes{};
+                    photons.AddNParticles(
+                        lev, static_cast<long>(photon_x.size()),
+                        photon_x, photon_y, photon_z,
+                        photon_ux, photon_uy, photon_uz,
+                        1, attributes, 0, integer_attributes,
+                        /*uniqueparticles=*/1);
+                }
                 diffusion_energy.FillBoundary(warpx.Geom(lev).periodicity());
             }
 

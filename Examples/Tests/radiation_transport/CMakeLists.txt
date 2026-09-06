@@ -2,20 +2,65 @@
 #
 
 add_warpx_test(
-    test_3d_radiation_transport_group_sampling_streaming
-    3
-    1
-    inputs_test_3d_radiation_transport_group_sampling_streaming
-    "analysis_group_sampling.py --streaming --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"
-    OFF
-    OFF
-)
-add_warpx_test(
     test_3d_radiation_transport_group_sampling
     3
     1
     inputs_base_3d_radiation_transport_group_sampling
     "analysis_group_sampling.py --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"
+    OFF
+    OFF
+)
+add_warpx_test(
+    test_3d_radiation_transport_packet_batches
+    3
+    1
+    "inputs_base_3d_radiation_transport_group_sampling radiation_transport.particle_conversion_batch_size=3"
+    "analysis_group_sampling.py --reference ../test_3d_radiation_transport_group_sampling --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"
+    OFF
+    test_3d_radiation_transport_group_sampling
+)
+add_warpx_test(
+    test_3d_radiation_transport_packet_batches_mpi
+    3
+    2
+    "inputs_base_3d_radiation_transport_group_sampling radiation_transport.particle_conversion_batch_size=3 amr.max_grid_size=2"
+    "analysis_group_sampling.py --reference ../test_3d_radiation_transport_group_sampling --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"
+    OFF
+    test_3d_radiation_transport_group_sampling
+)
+add_warpx_test(
+    test_3d_radiation_transport_packet_batches_empty_rank
+    3
+    2
+    "inputs_base_3d_radiation_transport_group_sampling radiation_transport.particle_conversion_batch_size=3"
+    "analysis_group_sampling.py --reference ../test_3d_radiation_transport_group_sampling --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"
+    OFF
+    test_3d_radiation_transport_group_sampling
+)
+add_warpx_test(
+    test_3d_radiation_transport_packet_batches_checkpoint
+    3
+    1
+    "inputs_base_3d_radiation_transport_conversion_random_seed_restart radiation_transport.particle_conversion_batch_size=3 radiation_transport.particle_conversion_packets_per_cell=8"
+    "analysis_conversion_random_seed_restart.py --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"
+    OFF
+    OFF
+)
+add_warpx_test(
+    test_3d_radiation_transport_packet_batches_restart
+    3
+    2
+    "inputs_base_3d_radiation_transport_conversion_random_seed_restart_restart radiation_transport.particle_conversion_batch_size=3 radiation_transport.particle_conversion_packets_per_cell=8 amr.restart='../test_3d_radiation_transport_packet_batches_checkpoint/diags/chk000001'"
+    "analysis_conversion_random_seed_restart.py --reference ../test_3d_radiation_transport_packet_batches_checkpoint --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"
+    OFF
+    test_3d_radiation_transport_packet_batches_checkpoint
+)
+add_warpx_test(
+    test_3d_radiation_transport_group_sampling_streaming
+    3
+    1
+    inputs_test_3d_radiation_transport_group_sampling_streaming
+    "analysis_group_sampling.py --streaming --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"
     OFF
     OFF
 )
@@ -307,6 +352,11 @@ add_radiation_failure_test(
     3
     "inputs_base_3d_radiation_transport_packet_sampling radiation_transport.particle_conversion_target_packet_count=-1"
     "requires a nonnegative target packet count")
+add_radiation_failure_test(
+    test_3d_radiation_transport_packet_batch_negative_rejected
+    3
+    "inputs_base_3d_radiation_transport_group_sampling radiation_transport.particle_conversion_batch_size=-1"
+    "batch size must be nonnegative")
 add_radiation_failure_test(
     test_3d_radiation_transport_group_budget_size_rejected
     3
