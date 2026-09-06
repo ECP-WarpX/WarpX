@@ -32,10 +32,8 @@
  * \param do_crr                    Whether to do the classical radiation reaction
  * \param dt                        Time step size
  * \param momentum_push_type        Type of momentum push: FirstHalf, SecondHalf, Full, None
- * \param chi_max_coeff             Squared quantum parameter cutoff `(chi_max*E_s)^2` above
- *                                  which the classical radiation reaction term is dropped
- *                                  because the quantum synchrotron module handles the
- *                                  energy loss. Defaults to "no cutoff".
+ * \param chi_max_coeff             Cutoff above which the classical radiation reaction is
+ *                                  skipped, see UpdateMomentumBorisWithRadiationReaction
  */
 
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
@@ -55,16 +53,12 @@ void doParticleMomentumPush(amrex::ParticleReal& ux,
                             const int do_crr,
                             const amrex::Real dt,
                             MomentumPushType momentum_push_type,
-                            const amrex::ParticleReal chi_max_coeff
-                                = std::numeric_limits<amrex::ParticleReal>::max())
+                            const amrex::ParticleReal chi_max_coeff)
 {
     amrex::ParticleReal qp = a_q;
     qp *= ion_lev;
 
     if (do_crr) {
-        // The quantum-parameter cutoff is applied inside the radiation reaction pusher,
-        // where the required auxiliary quantity is already available. This keeps a single
-        // call site here: no compile-time QED option, and no second inlined pusher.
         UpdateMomentumBorisWithRadiationReaction(ux, uy, uz,
                                                  Ex, Ey, Ez, Bx,
                                                  By, Bz, qp, m, dt, momentum_push_type,

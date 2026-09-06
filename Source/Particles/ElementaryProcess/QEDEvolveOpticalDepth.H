@@ -25,15 +25,12 @@
 /**
  * \brief Functor advancing the quantum synchrotron optical depth of one particle.
  *
- * The optical depth is a Monte-Carlo quantity: it is decremented at the photon emission
- * rate dN/dt(energy, chi) and triggers the emission of a photon when it becomes negative.
- * It is therefore advanced here, in the same pass that performs the emission, rather than
- * inside the particle pusher. Keeping it out of the pusher means the momentum push carries
- * no compile-time QED option, and -- importantly for the implicit solver -- the optical
- * depth is not part of the nonlinear iteration state and never needs to be rolled back.
+ * The optical depth is a Monte-Carlo quantity, decremented at the photon emission rate
+ * dN/dt(energy, chi), and triggers an emission when it becomes negative. It is advanced
+ * in its own pass rather than inside the particle pusher, so that the momentum push carries
+ * no compile-time QED option and the implicit solver never has to roll it back.
  *
- * The fields are gathered here, exactly as PhotonEmissionTransformFunc and the field
- * ionization module already do.
+ * The fields are gathered at the particle position, as PhotonEmissionTransformFunc does.
  */
 class QuantumSyncEvolveOpticalDepthFunc
 {

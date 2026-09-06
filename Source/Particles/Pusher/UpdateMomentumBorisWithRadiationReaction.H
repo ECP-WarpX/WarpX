@@ -26,15 +26,11 @@
  * \param m                     Mass of the particle
  * \param dt                    Time step size
  * \param momentum_push_type    Type of momentum push: FirstHalf, SecondHalf, Full, None
- * \param chi_max_coeff         Squared quantum parameter cutoff, expressed as
- *                              `(chi_max*E_s)^2` with `E_s` the Schwinger field, i.e. in
- *                              the same units as the auxiliary quantity `coeff` computed
- *                              below. Above this value the classical friction term is
- *                              *not* applied: the discrete quantum synchrotron module
- *                              accounts for the radiated energy instead, and applying
- *                              both would double-count it. Defaults to "no cutoff"
- *                              (always apply the classical term), which is the correct
- *                              behaviour when quantum synchrotron is off.
+ * \param chi_max_coeff         Cutoff on the quantum parameter chi, given as `(chi_max*E_s)^2`
+ *                              with `E_s` the Schwinger field. Above it the classical
+ *                              radiation reaction is skipped, since the quantum synchrotron
+ *                              module then accounts for the radiated energy. Defaults to
+ *                              no cutoff.
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void UpdateMomentumBorisWithRadiationReaction(
@@ -91,12 +87,9 @@ void UpdateMomentumBorisWithRadiationReaction(
     const amrex::ParticleReal bdotE2 = bdotE*bdotE;
     const amrex::ParticleReal coeff = gamma_n*gamma_n*(fl_q2-bdotE2);
 
-    // `coeff` is exactly the squared quantum parameter scaled by the Schwinger field:
-    // chi = gamma*sqrt(|E+v x B|^2 - (v.E/c)^2)/E_s = sqrt(coeff)/E_s.
-    // Comparing squares avoids a sqrt and keeps the cutoff test essentially free,
-    // since `coeff` is needed by the radiation reaction force anyway.
-    // Above the cutoff, leave the plain Boris result in place: the discrete quantum
-    // synchrotron module is responsible for the energy loss in that regime.
+    // `coeff` is the squared quantum parameter scaled by the Schwinger field,
+    // chi = sqrt(coeff)/E_s, so the cutoff can be applied without a square root.
+    // Above the cutoff, keep the plain Boris result.
     if (coeff >= chi_max_coeff) { return; }
 
     //Radiation reaction constant

@@ -387,9 +387,11 @@ public:
     /**
     * \brief Advances the quantum synchrotron optical depth by one time step.
     *
-    * Must be called from the time loop *after* the particle push: the optical depth has to
-    * be advanced with the momentum the particle has at the end of the step, which is what
-    * the pusher used when this was still fused into it.
+    * Must be called from the time loop after both the particle push and the photon
+    * emission (doQedQuantumSync): after the push so that the optical depth is advanced
+    * with the end-of-step momentum, and after the emission so that a particle emits on the
+    * optical depth accumulated over previous steps only. In particular, this prevents a
+    * particle created by pair production from radiating within the same step.
     */
     void doQedQuantumSyncEvolveOpticalDepth (int lev,
                                              const amrex::MultiFab& Ex,

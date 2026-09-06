@@ -237,9 +237,8 @@ WarpX::Evolve (int numsteps)
         OneStep(cur_time, dt[0], step);
 
 #ifdef WARPX_QED
-        // multi-physics: advance the quantum synchrotron optical depth. This has to come
-        // after the push, so that the optical depth is advanced with the momentum the
-        // particle has at the end of the step, as it was when this was done in the pusher.
+        // multi-physics: advance the quantum synchrotron optical depth. This must come
+        // after the push and after doQEDEvents(), see MultiParticleContainer.H.
         doQEDEvolveOpticalDepth();
 #endif
 
@@ -1405,10 +1404,8 @@ WarpX::doQEDEvolveOpticalDepth ()
             *m_fields.get(FieldType::Bfield_aux, Direction{0}, lev),
             *m_fields.get(FieldType::Bfield_aux, Direction{1}, lev),
             *m_fields.get(FieldType::Bfield_aux, Direction{2}, lev),
-            // This routine is called once per coarse step, and every level advances
-            // dt[0] of physical time over a coarse step -- either in one push, or in
-            // refinement-ratio sub-steps of dt[lev] when sub-cycling is on. So dt[0]
-            // is the interval over which the optical depth must be advanced at every level.
+            // Called once per coarse step, over which every level advances dt[0] of
+            // physical time (in one push, or in sub-steps of dt[lev] when sub-cycling).
             dt[0]
         );
     }

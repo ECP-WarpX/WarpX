@@ -1474,9 +1474,9 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     const auto pusher_algo = WarpX::particle_pusher_algo;
     const auto do_crr = do_classical_radiation_reaction;
 
-    // Quantum-parameter cutoff for the classical radiation reaction term. The optical
-    // depth of the quantum synchrotron process is *not* evolved here: that is done once
-    // per step in MultiParticleContainer::doQedQuantumSync(), next to the photon emission.
+    // Quantum-parameter cutoff for the classical radiation reaction term. The quantum
+    // synchrotron optical depth is not evolved here: see
+    // MultiParticleContainer::doQedQuantumSyncEvolveOpticalDepth().
     const auto chi_max_coeff = getQedChiMaxCoeff();
 
     enum exteb_flags : int { no_exteb, has_exteb };
@@ -1737,8 +1737,6 @@ amrex::ParticleReal PhysicalParticleContainer::getQedChiMaxCoeff () const
     auto chi_max_coeff = std::numeric_limits<amrex::ParticleReal>::max();
 #ifdef WARPX_QED
     if (m_do_qed_quantum_sync) {
-        // chi = gamma*sqrt(|E + v x B|^2 - (v.E/c)^2)/E_s, and the pusher compares the
-        // square of the numerator against this value, so scale by the Schwinger field here.
         const auto chi_max = static_cast<amrex::ParticleReal>(
             m_shr_p_qs_engine->get_minimum_chi_part());
         const auto e_s = static_cast<amrex::ParticleReal>(

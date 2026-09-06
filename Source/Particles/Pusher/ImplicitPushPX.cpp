@@ -188,11 +188,10 @@ namespace {
             uy[ip] = uyp_n;
             uz[ip] = uzp_n;
 
-            // Note: the quantum synchrotron optical depth is deliberately *not* evolved
-            // here. It is a Monte-Carlo process that has no place inside the nonlinear
-            // iteration: evolving it here would make it part of the implicit solver state
-            // and require rolling it back on every non-converged iteration. It is advanced
-            // once per step in MultiParticleContainer::doQedQuantumSync() instead.
+            // The quantum synchrotron optical depth is deliberately not evolved here, as a
+            // Monte-Carlo quantity has no place in the nonlinear iteration (it would have to
+            // be rolled back on every non-converged iteration). It is advanced once per step
+            // in MultiParticleContainer::doQedQuantumSyncEvolveOpticalDepth() instead.
             doParticleMomentumPush(ux[ip], uy[ip], uz[ip],
                                       Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                       ion_lev ? ion_lev[ip] : 1,
