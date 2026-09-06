@@ -7473,7 +7473,7 @@ RadiationTransport::Advance (
                 for (int sweep = 0; sweep < 2; ++sweep) {
                     for (int index = 0; index < m_num_groups; ++index) {
                         int const group = sweep == 0 ? index : m_num_groups - 1 - index;
-                        amrex::MultiFab request(
+                        amrex::MultiFab const request(
                             diffusion_group_material_momentum, amrex::make_alias, 3 * group, 3);
                         amrex::MultiFab pending(
                             group_carry, amrex::make_alias, 3 * group, 3);

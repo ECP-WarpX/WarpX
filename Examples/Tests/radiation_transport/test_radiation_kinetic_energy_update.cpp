@@ -169,7 +169,9 @@ int main (int argc, char* argv[])
         }
         pass = device_precision_pass && pass;
 
-        amrex::Real const energy = std::ldexp(amrex::Real(1.0), -40);
+        // Exact in both supported precisions. Avoid lowering a constant ldexp
+        // through NVHPC 25.1's failing host SCALEFS instruction selection.
+        constexpr amrex::Real energy = 0x1p-40_rt;
         auto const particle_epsilon = static_cast<amrex::Real>(
             std::numeric_limits<amrex::ParticleReal>::epsilon());
         amrex::Real const coefficient = amrex::max(
