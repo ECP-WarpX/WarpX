@@ -16,7 +16,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--geometry", choices=["1d", "2d", "rcyl"], required=True)
 parser.add_argument("--precision", choices=["SINGLE", "DOUBLE"], required=True)
 parser.add_argument("--particle-precision", choices=["SINGLE", "DOUBLE"], required=True)
+parser.add_argument("--length-scale", type=float, default=1.0)
 args = parser.parse_args()
+assert np.isfinite(args.length_scale) and args.length_scale > 0.0
 
 plotfile = Path("diags/diag000001")
 with open(plotfile / "Header") as header:
@@ -35,19 +37,19 @@ radiation_energy = np.atleast_2d(np.loadtxt("diags/radiation_energy.txt"))
 initial_energy = particle_energy[0, 2]
 final_energy = particle_energy[-1, 2]
 
-alpha = 3.0
-path_length = 0.7
+alpha = 3.0 / args.length_scale
+path_length = 0.7 * args.length_scale
 path_cell_fraction = 0.5
-cell_size = 1.0 / 64.0
+cell_size = args.length_scale / 64.0
 n_substeps = int(np.ceil(path_length / (path_cell_fraction * cell_size)))
 
 if args.geometry == "2d":
     expected_deposition = np.zeros((64, 64))
-    start = np.array([0.1, 0.1])
+    start = np.array([0.1, 0.1]) * args.length_scale
     direction = np.array([1.0, 1.0]) / np.sqrt(2.0)
 else:
     expected_deposition = np.zeros(64)
-    start = np.array([0.1])
+    start = np.array([0.1]) * args.length_scale
     direction = np.array([1.0])
 
 remaining_energy = initial_energy
@@ -69,7 +71,9 @@ while remaining_distance > 4.0 * np.finfo(float).eps * path_length:
     remaining_energy *= survival
     remaining_distance -= segment_distance
     position += segment_distance * direction
-    crossing = np.isclose(face_distance, segment_distance, rtol=0.0, atol=1.0e-14)
+    crossing = np.isclose(
+        face_distance, segment_distance, rtol=0.0, atol=1.0e-14 * args.length_scale
+    )
     indices[crossing] += 1
 
 closed_form_final = initial_energy * np.exp(-alpha * path_length)

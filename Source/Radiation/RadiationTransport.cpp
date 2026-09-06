@@ -78,6 +78,17 @@ using warpx::radiation::KineticPrecisionEpsilon;
 
 namespace
 {
+std::string
+ParserRealLiteral (amrex::Real const value)
+{
+    // std::to_string uses fixed decimal precision and silently zeros small
+    // opacities. Preserve every significant digit when constructing a parser.
+    std::ostringstream literal;
+    literal.precision(std::numeric_limits<amrex::Real>::max_digits10);
+    literal << value;
+    return literal.str();
+}
+
 [[nodiscard]]
 std::uint64_t
 SplitMix64 (std::uint64_t value) noexcept
@@ -3463,7 +3474,7 @@ RadiationTransport::RadiationTransport (
                 constant_absorption_coefficient >= 0.0_rt,
                 "radiation_transport.absorption_coefficient must be non-negative.");
             m_absorption_coefficient_parser = utils::parser::makeParser(
-                std::to_string(constant_absorption_coefficient),
+                ParserRealLiteral(constant_absorption_coefficient),
                 {"x", "y", "z", "t", "photon_energy", "ne", "Te"});
         } else {
             std::string absorption_coefficient_function;
@@ -3564,7 +3575,7 @@ RadiationTransport::RadiationTransport (
                     "non-negative.");
                 m_planck_absorption_coefficient_parser =
                     utils::parser::makeParser(
-                        std::to_string(constant_planck_coefficient),
+                        ParserRealLiteral(constant_planck_coefficient),
                         {"x", "y", "z", "t", "photon_energy", "ne", "Te"});
             } else {
                 std::string planck_coefficient_function;
@@ -3652,7 +3663,7 @@ RadiationTransport::RadiationTransport (
                     "non-negative.");
                 m_rosseland_transport_coefficient_parser =
                     utils::parser::makeParser(
-                        std::to_string(constant_rosseland_coefficient),
+                        ParserRealLiteral(constant_rosseland_coefficient),
                         {"x", "y", "z", "t", "photon_energy", "ne", "Te"});
             } else {
                 std::string rosseland_coefficient_function;
@@ -4955,9 +4966,15 @@ void
 AccumulateStreamingBoundaryLoss (
     PhotonParticleContainer& photons,
     int const lev,
-    amrex::Real* const streaming_boundary_energy,
-    amrex::GpuArray<amrex::Real*, 3> const& streaming_boundary_momentum)
+    amrex::GpuArray<amrex::Real, 4>& streaming_boundary_loss)
 {
+    // Tree reductions avoid both atomic contention and long serial sums whose
+    // roundoff can exceed the energy-ledger guard for large packet populations.
+    amrex::ReduceOps<amrex::ReduceOpSum, amrex::ReduceOpSum,
+                     amrex::ReduceOpSum, amrex::ReduceOpSum> reduce_ops;
+    amrex::ReduceData<amrex::Real, amrex::Real, amrex::Real, amrex::Real>
+        reduce_data(reduce_ops);
+    using ReduceTuple = typename decltype(reduce_data)::Type;
     amrex::MFItInfo info;
     if (amrex::Gpu::notInLaunchRegion()) {
         info.EnableTiling(WarpXParticleContainer::tile_size);
@@ -4981,22 +4998,21 @@ AccumulateStreamingBoundaryLoss (
         auto const get_position = GetParticlePosition<PIdx>(mfi);
 #endif
 
-        amrex::For(np, [=] AMREX_GPU_DEVICE (long ip) noexcept
+        reduce_ops.eval(np, reduce_data,
+            [=] AMREX_GPU_DEVICE (long ip) noexcept -> ReduceTuple
         {
             if (amrex::ParticleIDWrapper{idcpu[ip]}.is_valid()
                 || wp[ip] <= 0.0_prt)
             {
-                return;
+                return {0.0_rt, 0.0_rt, 0.0_rt, 0.0_rt};
             }
             amrex::ParticleReal const weight = wp[ip];
             amrex::ParticleReal const energy = weight
                 * Algorithms::KineticEnergyPhotons(
                     uxp[ip], uyp[ip], uzp[ip]);
-            amrex::HostDevice::Atomic::Add(
-                streaming_boundary_energy, static_cast<amrex::Real>(energy));
-
             amrex::ParticleReal const momentum_scale =
                 weight * PhysConst::m_e;
+            amrex::GpuArray<amrex::Real, 3> momentum{};
 #if defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RZ)
             amrex::ParticleReal radius;
             amrex::ParticleReal theta;
@@ -5006,19 +5022,13 @@ AccumulateStreamingBoundaryLoss (
             (void)position_z;
             amrex::ParticleReal const cos_theta = std::cos(theta);
             amrex::ParticleReal const sin_theta = std::sin(theta);
-            amrex::HostDevice::Atomic::Add(
-                streaming_boundary_momentum[0],
-                static_cast<amrex::Real>(
-                    momentum_scale * (uxp[ip] * cos_theta
-                        + uyp[ip] * sin_theta)));
-            amrex::HostDevice::Atomic::Add(
-                streaming_boundary_momentum[1],
-                static_cast<amrex::Real>(
-                    momentum_scale * (-uxp[ip] * sin_theta
-                        + uyp[ip] * cos_theta)));
-            amrex::HostDevice::Atomic::Add(
-                streaming_boundary_momentum[2], static_cast<amrex::Real>(
-                    momentum_scale * uzp[ip]));
+            momentum[0] = static_cast<amrex::Real>(
+                momentum_scale * (uxp[ip] * cos_theta
+                    + uyp[ip] * sin_theta));
+            momentum[1] = static_cast<amrex::Real>(
+                momentum_scale * (-uxp[ip] * sin_theta
+                    + uyp[ip] * cos_theta));
+            momentum[2] = static_cast<amrex::Real>(momentum_scale * uzp[ip]);
 #elif defined(WARPX_DIM_RSPHERE)
             amrex::ParticleReal radius;
             amrex::ParticleReal theta;
@@ -5029,36 +5039,31 @@ AccumulateStreamingBoundaryLoss (
             amrex::ParticleReal const sin_theta = std::sin(theta);
             amrex::ParticleReal const cos_phi = std::cos(phi);
             amrex::ParticleReal const sin_phi = std::sin(phi);
-            amrex::HostDevice::Atomic::Add(
-                streaming_boundary_momentum[0],
-                static_cast<amrex::Real>(
-                    momentum_scale * (uxp[ip] * cos_theta * cos_phi
-                        + uyp[ip] * sin_theta * cos_phi
-                        + uzp[ip] * sin_phi)));
-            amrex::HostDevice::Atomic::Add(
-                streaming_boundary_momentum[1],
-                static_cast<amrex::Real>(
-                    momentum_scale * (-uxp[ip] * sin_theta
-                        + uyp[ip] * cos_theta)));
-            amrex::HostDevice::Atomic::Add(
-                streaming_boundary_momentum[2],
-                static_cast<amrex::Real>(
-                    momentum_scale * (-uxp[ip] * cos_theta * sin_phi
-                        - uyp[ip] * sin_theta * sin_phi
-                        + uzp[ip] * cos_phi)));
+            momentum[0] = static_cast<amrex::Real>(
+                momentum_scale * (uxp[ip] * cos_theta * cos_phi
+                    + uyp[ip] * sin_theta * cos_phi
+                    + uzp[ip] * sin_phi));
+            momentum[1] = static_cast<amrex::Real>(
+                momentum_scale * (-uxp[ip] * sin_theta
+                    + uyp[ip] * cos_theta));
+            momentum[2] = static_cast<amrex::Real>(
+                momentum_scale * (-uxp[ip] * cos_theta * sin_phi
+                    - uyp[ip] * sin_theta * sin_phi
+                    + uzp[ip] * cos_phi));
 #else
-            amrex::HostDevice::Atomic::Add(
-                streaming_boundary_momentum[0], static_cast<amrex::Real>(
-                    momentum_scale * uxp[ip]));
-            amrex::HostDevice::Atomic::Add(
-                streaming_boundary_momentum[1], static_cast<amrex::Real>(
-                    momentum_scale * uyp[ip]));
-            amrex::HostDevice::Atomic::Add(
-                streaming_boundary_momentum[2], static_cast<amrex::Real>(
-                    momentum_scale * uzp[ip]));
+            momentum[0] = static_cast<amrex::Real>(momentum_scale * uxp[ip]);
+            momentum[1] = static_cast<amrex::Real>(momentum_scale * uyp[ip]);
+            momentum[2] = static_cast<amrex::Real>(momentum_scale * uzp[ip]);
 #endif
+            return {static_cast<amrex::Real>(energy),
+                    momentum[0], momentum[1], momentum[2]};
         });
     }
+    auto const sums = reduce_data.value();
+    streaming_boundary_loss[0] += amrex::get<0>(sums);
+    streaming_boundary_loss[1] += amrex::get<1>(sums);
+    streaming_boundary_loss[2] += amrex::get<2>(sums);
+    streaming_boundary_loss[3] += amrex::get<3>(sums);
 }
 
 [[nodiscard]]
@@ -5537,16 +5542,7 @@ RadiationTransport::Advance (
     int* const invalid_radial_face_input_ptr =
         invalid_radial_face_input.dataPtr();
 #endif
-    amrex::Gpu::DeviceScalar<amrex::Real> streaming_boundary_energy(0.0_rt);
-    amrex::Gpu::DeviceScalar<amrex::Real> streaming_boundary_momentum_0(0.0_rt);
-    amrex::Gpu::DeviceScalar<amrex::Real> streaming_boundary_momentum_1(0.0_rt);
-    amrex::Gpu::DeviceScalar<amrex::Real> streaming_boundary_momentum_2(0.0_rt);
-    amrex::Real* const streaming_boundary_energy_ptr =
-        streaming_boundary_energy.dataPtr();
-    amrex::GpuArray<amrex::Real*, 3> const streaming_boundary_momentum_ptr{
-        streaming_boundary_momentum_0.dataPtr(),
-        streaming_boundary_momentum_1.dataPtr(),
-        streaming_boundary_momentum_2.dataPtr()};
+    amrex::GpuArray<amrex::Real, 4> streaming_boundary_loss{};
 
     // Advance photons in paths no longer than one cell. Cartesian paths are
     // split exactly at every crossed mesh face. In exact RCYLINDER mode, the
@@ -6162,8 +6158,7 @@ RadiationTransport::Advance (
         photons.ApplyBoundaryConditions();
         if (m_track_energy_balance) {
             AccumulateStreamingBoundaryLoss(
-                photons, lev, streaming_boundary_energy_ptr,
-                streaming_boundary_momentum_ptr);
+                photons, lev, streaming_boundary_loss);
         }
         photons.Redistribute();
     }
@@ -6190,13 +6185,13 @@ RadiationTransport::Advance (
 
     if (m_track_energy_balance) {
         m_last_streaming_boundary_energy_loss =
-            streaming_boundary_energy.dataValue();
+            streaming_boundary_loss[0];
         amrex::ParallelDescriptor::ReduceRealSum(
             m_last_streaming_boundary_energy_loss);
         m_last_streaming_boundary_momentum_loss = {
-            streaming_boundary_momentum_0.dataValue(),
-            streaming_boundary_momentum_1.dataValue(),
-            streaming_boundary_momentum_2.dataValue()};
+            streaming_boundary_loss[1],
+            streaming_boundary_loss[2],
+            streaming_boundary_loss[3]};
         amrex::ParallelDescriptor::ReduceRealSum(
             m_last_streaming_boundary_momentum_loss.data(), 3);
     }
@@ -7458,13 +7453,24 @@ RadiationTransport::Advance (
                 amrex::max(
                     std::abs(initial_radiation_energy),
                     std::abs(final_radiation_energy)));
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            std::abs(residual_boundary_energy_loss
-                - m_last_boundary_energy_loss
-                - m_last_numerical_energy_residual) <= roundoff_tolerance,
-            "Explicit streaming-packet and diffusion-face boundary losses do "
-            "not close the radiation/material energy balance. This indicates "
-            "an untracked radiation representation change or boundary path.");
+        amrex::Real const closure_error = residual_boundary_energy_loss
+            - m_last_boundary_energy_loss - m_last_numerical_energy_residual;
+        if (!(std::abs(closure_error) <= roundoff_tolerance)) {
+            std::ostringstream message;
+            message.precision(std::numeric_limits<amrex::Real>::max_digits10);
+            message << "Explicit streaming-packet and diffusion-face boundary losses do "
+                "not close the radiation/material energy balance. This indicates "
+                "an untracked radiation representation change or boundary path. "
+                "Energy ledger (J): initial=" << initial_radiation_energy
+                << ", final=" << final_radiation_energy
+                << ", material=" << material_exchange
+                << ", streaming_escape=" << m_last_streaming_boundary_energy_loss
+                << ", diffusion_escape=" << m_last_diffusion_boundary_energy_loss
+                << ", numerical_residual=" << m_last_numerical_energy_residual
+                << ", closure_error=" << closure_error
+                << ", tolerance=" << roundoff_tolerance;
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false, message.str());
+        }
         m_cumulative_boundary_energy_loss += m_last_boundary_energy_loss;
     }
     m_cumulative_numerical_energy_residual +=

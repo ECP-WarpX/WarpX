@@ -8,6 +8,7 @@
 
 """Validate repeated sub-ULP streaming recoil and delayed signed work."""
 
+import argparse
 from pathlib import Path
 
 import numpy as np
@@ -15,6 +16,10 @@ import yt
 
 C_LIGHT = 299792458.0
 ION_MASS_KG = 1.0
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--lte-emission", action="store_true")
+args = parser.parse_args()
 
 
 def load_table(path: Path) -> dict[str, np.ndarray]:
@@ -69,8 +74,13 @@ cumulative_residual = energy["cumulative_numerical_energy_residual(J)"]
 
 energy_scale = float(radiation[0])
 energy_atol = 1024.0 * np.finfo(np.float64).eps * energy_scale
-np.testing.assert_allclose(streaming, radiation, rtol=0.0, atol=energy_atol)
-np.testing.assert_allclose(diffusion, 0.0, rtol=0.0, atol=energy_atol)
+np.testing.assert_allclose(streaming + diffusion, radiation, rtol=0.0, atol=energy_atol)
+if args.lte_emission:
+    assert diffusion[0] == 0.0
+    assert np.all(np.diff(diffusion) > 0.0)
+    assert diffusion[-1] > 1.0e6 * energy_atol
+else:
+    np.testing.assert_allclose(diffusion, 0.0, rtol=0.0, atol=energy_atol)
 np.testing.assert_allclose(boundary, 0.0, rtol=0.0, atol=energy_atol)
 np.testing.assert_allclose(cumulative_boundary, 0.0, rtol=0.0, atol=energy_atol)
 np.testing.assert_allclose(
@@ -98,7 +108,7 @@ np.testing.assert_allclose(
     atol=energy_atol,
 )
 
-current_absorption = radiation[:-1] - radiation[1:]
+current_absorption = streaming[:-1] - streaming[1:]
 assert np.all(current_absorption > 0.0)
 np.testing.assert_allclose(
     material,
@@ -133,7 +143,10 @@ np.testing.assert_allclose(
     atol=energy_atol,
 )
 
-negative_internal_rows = np.flatnonzero(internal < 0.0)
+# With diffusion disabled, changes in the thick field are solely LTE exchange.
+# Remove that signed contribution to isolate the delayed streaming-work debit.
+streaming_internal = internal + np.r_[0.0, np.diff(diffusion)]
+negative_internal_rows = np.flatnonzero(streaming_internal < 0.0)
 assert negative_internal_rows.size >= 1
 assert np.all(negative_internal_rows > 0)
 assert np.all(kinetic[negative_internal_rows] > 0.0)

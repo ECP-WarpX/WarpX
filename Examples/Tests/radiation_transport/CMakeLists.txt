@@ -1,6 +1,12 @@
 # Add tests (alphabetical order) ##############################################
 #
 
+# Fixture commands below are registered outside add_warpx_test's function
+# scope. Resolve their interpreter here as well, including APP-only builds.
+if(WarpX_APP AND NOT Python_EXECUTABLE)
+    find_package(Python COMPONENTS Interpreter REQUIRED)
+endif()
+
 if(WarpX_LIB)
     add_executable(
         test_radiation_energy_update
@@ -152,6 +158,16 @@ add_warpx_test(
     "analysis_beer_lambert.py --geometry 1d --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"  # analysis
     OFF  # checksum
     OFF  # dependency
+)
+
+add_warpx_test(
+    test_1d_radiation_transport_small_constant_opacity
+    1
+    1
+    inputs_test_1d_radiation_transport_small_constant_opacity
+    "analysis_beer_lambert.py --geometry 1d --length-scale 1.0e8 --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"
+    OFF
+    OFF
 )
 
 add_warpx_test(
@@ -786,6 +802,16 @@ if(WarpX_PRECISION STREQUAL "DOUBLE" AND WarpX_PARTICLE_PRECISION STREQUAL "DOUB
         "analysis_streaming_momentum_carry.py"  # analysis
         OFF  # checksum (signed carry work passes through nonlinear LTE remap)
         OFF  # dependency
+    )
+
+    add_warpx_test(
+        test_1d_radiation_transport_streaming_momentum_carry_lte_emission
+        1
+        1
+        inputs_test_1d_radiation_transport_streaming_momentum_carry_lte_emission
+        "analysis_streaming_momentum_carry.py --lte-emission"
+        OFF
+        OFF
     )
 
     add_radiation_failure_test(
