@@ -7151,14 +7151,14 @@ RadiationTransport::Advance (
                     m_particle_conversion_target_packet_count > 0
                     ? TotalRadiationEnergy(photons, fields, lev, m_num_groups)
                     : 0.0_rt;
-                double const target_packet_energy =
+                double const sampling_energy_target =
                     m_particle_conversion_target_packet_count > 0
                     ? static_cast<double>(current_radiation_energy)
                         / m_particle_conversion_target_packet_count
                     : 0.0;
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                    std::isfinite(target_packet_energy)
-                        && (target_packet_energy > 0.0 || current_radiation_energy == 0.0_rt),
+                    std::isfinite(sampling_energy_target)
+                        && (sampling_energy_target > 0.0 || current_radiation_energy == 0.0_rt),
                     "The radiation packet energy target is non-finite or underflows.");
                 amrex::MFInfo const host_info =
                     amrex::MFInfo().SetArena(amrex::The_Pinned_Arena());
@@ -7212,14 +7212,14 @@ RadiationTransport::Advance (
                                     / (PhysConst::m_e * PhysConst::c));
                             amrex::Real remaining_cell_energy = cell_energy;
                             int packets_per_cell = m_particle_conversion_packets_per_cell;
-                            if (target_packet_energy > 0.0) {
+                            if (sampling_energy_target > 0.0) {
                                 // Allocate resolution by represented energy rather
                                 // than spending the same count on negligible tails
                                 // and bright cells. The cap bounds each allocation;
                                 // all cell energy is still represented conservatively.
                                 auto const requested = std::round(
                                     static_cast<double>(cell_energy)
-                                    / target_packet_energy);
+                                    / sampling_energy_target);
                                 packets_per_cell = static_cast<int>(std::max(
                                     1.0, std::min(requested,
                                         static_cast<double>(

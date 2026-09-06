@@ -167,7 +167,7 @@ np.testing.assert_allclose(
 np.testing.assert_allclose(momentum[:, 8:20], 0.0, atol=1.0e-24)
 # A radial kick at a non-cardinal particle angle can acquire a transverse
 # rounding increment. Its pending carry compensates that represented increment;
-# it is their sum, not either inventory alone, that must have zero torque.
+# their sum, not either inventory alone, must have zero transverse impulse.
 np.testing.assert_allclose(
     momentum[:, [6, 7]] + momentum[:, [21, 22]], 0.0, atol=1.0e-24
 )
