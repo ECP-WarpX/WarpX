@@ -70,11 +70,17 @@ void SemiImplicitDarwin::Define ( WarpX*  a_WarpX, bool from_restart)
     pp_l.query("absolute_tolerance",  m_linsol_atol);
     pp_l.query("relative_tolerance",  m_linsol_rtol);
     pp_l.query("max_iterations",      m_linsol_maxits);
+    pp_l.query("pc_type",             m_pc_type);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        m_pc_type == PreconditionerType::none ||
+        m_pc_type == PreconditionerType::pc_darwin_mlmg,
+        "The semi-implicit Darwin solver only supports pc_darwin_mlmg as "
+        "the GMRES preconditioner (amrex_gmres.pc_type).");
 
     // Define the linear operator (this also allocates the scratch space it
     // uses to evaluate the operator on each GMRES iteration)
     m_linear_function = std::make_unique<DarwinLinearFieldOperator>();
-    m_linear_function->define(m_Z, this, PreconditionerType::none);
+    m_linear_function->define(m_Z, this, m_pc_type);
 
     // Define the linear solver
     if (m_linear_solver_type == LinearSolverType::amrex_gmres) {
@@ -121,6 +127,8 @@ void SemiImplicitDarwin::PrintParameters () const
     amrex::Print()     << "Linear solver (" << linsol_name << ") max iterations:     " << m_linsol_maxits << "\n";
     amrex::Print()     << "Linear solver (" << linsol_name << ") relative tolerance: " << m_linsol_rtol << "\n";
     amrex::Print()     << "Linear solver (" << linsol_name << ") absolute tolerance: " << m_linsol_atol << "\n";
+    amrex::Print()     << "Linear solver (" << linsol_name << ") preconditioner:     " << amrex::getEnumNameString(m_pc_type) << "\n";
+    if (m_linear_function) { m_linear_function->printParameters(); }
     amrex::Print() << "-----------------------------------------------------------\n\n";
 }
 
@@ -182,6 +190,10 @@ int SemiImplicitDarwin::OneStep ( [[maybe_unused]] amrex::Real  start_time,
     // Populate the source vector
     // i.e. fill m_source with `2 * laplacian(B) + 2 * mu_0 curl(J)`
     CalculateSourceVector();
+
+    // Refresh the preconditioner from the freshly deposited mass matrices
+    // (no-op unless a preconditioner is enabled).
+    m_linear_function->updatePreCondMat();
 
     // Solve the magnetoinductive equation:
     // bilaplacian(Z) + curl(chi curl(Z)) = 2 * laplacian(B) + 2 * mu_0 curl(J)
@@ -577,5 +589,63 @@ void SemiImplicitDarwin::ApplyScaledMassMatrices (
         rhs[lev][0]->FillBoundaryAndSync(m_WarpX->Geom(lev).periodicity());
         rhs[lev][1]->FillBoundaryAndSync(m_WarpX->Geom(lev).periodicity());
         rhs[lev][2]->FillBoundaryAndSync(m_WarpX->Geom(lev).periodicity());
+    }
+}
+
+void SemiImplicitDarwin::ComputeScaledMassMatrixCC ( amrex::MultiFab& a_chi_cc ) const
+{
+    BL_PROFILE("SemiImplicitDarwin::ComputeScaledMassMatrixCC()");
+
+    using ablastr::fields::Direction;
+
+    const int lev = 0;
+    const amrex::MultiFab* Sdiag[3] = {
+        m_WarpX->m_fields.get(FieldType::MassMatrices_X, Direction{0}, lev),
+        m_WarpX->m_fields.get(FieldType::MassMatrices_Y, Direction{1}, lev),
+        m_WarpX->m_fields.get(FieldType::MassMatrices_Z, Direction{2}, lev)};
+
+    a_chi_cc.setVal(0.0);
+
+    // Average over the three diagonal blocks and scale by the same 2 mu0/dt
+    // prefactor the operator applies to the mass-matrix product.
+    const amrex::Real fac = 2.0_rt * PhysConst::mu0 / (3.0_rt * m_dt);
+
+    for (int d = 0; d < 3; ++d) {
+        const int nc = Sdiag[d]->nComp();
+        const amrex::IntVect et = Sdiag[d]->ixType().toIntVect();
+        const int e0 = et[0];
+        const int e1 = (AMREX_SPACEDIM >= 2) ? et[1] : 0;
+        const int e2 = (AMREX_SPACEDIM >= 3) ? et[2] : 0;
+        // Each staggered point contributes with equal weight to the average
+        // onto the cell center (2 points per nodal dimension of the block).
+        const amrex::Real wt =
+            fac / static_cast<amrex::Real>((e0 + 1)*(e1 + 1)*(e2 + 1));
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+        for (amrex::MFIter mfi(a_chi_cc, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
+        {
+            const amrex::Box& tbx = mfi.tilebox();
+            amrex::Array4<amrex::Real> const& chi = a_chi_cc.array(mfi);
+            amrex::Array4<const amrex::Real> const& S = Sdiag[d]->const_array(mfi);
+            amrex::ParallelFor(tbx, [=] AMREX_GPU_DEVICE (int i, int j, int k)
+            {
+                amrex::Real s = 0.0;
+                // Perform row-sum of mass matrix elements
+                for (int c = 0; c < nc; ++c) {
+                    // Perform interpolation from `S`'s
+                    // original staggering to the desired staggering
+                    for (int kk = 0; kk <= e2; ++kk) {
+                        for (int jj = 0; jj <= e1; ++jj) {
+                            for (int ii = 0; ii <= e0; ++ii) {
+                                s += S(i+ii,j+jj,k+kk,c);
+                            }
+                        }
+                    }
+                }
+                chi(i,j,k) += wt*s;
+            });
+        }
     }
 }

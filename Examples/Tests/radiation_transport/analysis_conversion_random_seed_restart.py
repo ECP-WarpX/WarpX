@@ -60,9 +60,7 @@ expected_energy = 8.0e-13
 particle_rtol = 3.0e-6 if particle_dtype == np.float32 else 2.0e-12
 ledger_rtol = 4.0e-6 if cross_dtype == np.float32 else 3.0e-13
 represented_energy = np.sum(
-    after_conversion[:, 6]
-    * c
-    * np.linalg.norm(after_conversion[:, 3:6], axis=1)
+    after_conversion[:, 6] * c * np.linalg.norm(after_conversion[:, 3:6], axis=1)
 )
 np.testing.assert_allclose(
     np.linalg.norm(after_conversion[:, 3:6], axis=1),

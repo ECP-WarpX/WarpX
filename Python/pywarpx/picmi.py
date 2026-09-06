@@ -1654,6 +1654,13 @@ class GMRESLinearSolver(LinearSolverBase):
 
     absolute_tolerance: float, default=0.
         Absoluate tolerence of the convergence
+
+    pc_type: preconditioner instance, optional
+        The preconditioner applied inside the GMRES iterations. This is only
+        used by solvers that drive GMRES directly rather than through a
+        nonlinear solver (currently the semi-implicit Darwin solver, which
+        supports an instance of DarwinMLMGPreconditioner); with a nonlinear
+        solver, pass the preconditioner to that solver instead.
     """
 
     def __init__(
@@ -1663,12 +1670,21 @@ class GMRESLinearSolver(LinearSolverBase):
         absolute_tolerance=None,
         relative_tolerance=None,
         max_iterations=None,
+        pc_type=None,
     ):
         self.verbose_int = verbose_int
         self.restart_length = restart_length
         self.absolute_tolerance = absolute_tolerance
         self.relative_tolerance = relative_tolerance
         self.max_iterations = max_iterations
+        self.pc_type = pc_type
+
+        if pc_type is not None:
+            assert isinstance(pc_type, PreconditionerBase)
+            assert pc_type.supports_direct_gmres, (
+                f"{type(pc_type).__name__} cannot be selected directly on the "
+                "GMRES solver; pass it to the nonlinear solver instead"
+            )
 
     def linear_solver_initialize_inputs(self, nonlinear_solver=None):
         if nonlinear_solver is not None:
@@ -1679,6 +1695,10 @@ class GMRESLinearSolver(LinearSolverBase):
         amrex_gmres.absolute_tolerance = self.absolute_tolerance
         amrex_gmres.relative_tolerance = self.relative_tolerance
         amrex_gmres.max_iterations = self.max_iterations
+
+        if self.pc_type is not None:
+            amrex_gmres.pc_type = self.pc_type.name
+            self.pc_type.preconditioner_type_initialize_inputs()
 
 
 class PETScKSPLinearSolver(LinearSolverBase):
@@ -1695,7 +1715,19 @@ class PETScKSPLinearSolver(LinearSolverBase):
 
 
 class PreconditionerBase(picmistandard.base._ClassWithInit):
-    pass
+    # Name of the WarpX preconditioner type, set by subclasses.
+    name = None
+
+    # Whether this preconditioner can be selected directly on a linear
+    # solver (rather than only via a nonlinear solver's Jacobian).
+    supports_direct_gmres = False
+
+    def preconditioner_type_initialize_inputs(self, jacobian=None):
+        if jacobian is not None:
+            jacobian.pc_type = self.name
+        bucket = pywarpx.warpx.get_bucket(self.name)
+        for attr, value in vars(self).items():
+            setattr(bucket, attr, value)
 
 
 class CurlCurlMLMGPreconditioner(PreconditionerBase):
@@ -1727,6 +1759,8 @@ class CurlCurlMLMGPreconditioner(PreconditionerBase):
         Absoluate tolerence of the convergence
     """
 
+    name = "pc_curl_curl_mlmg"
+
     def __init__(
         self,
         verbose,
@@ -1747,18 +1781,65 @@ class CurlCurlMLMGPreconditioner(PreconditionerBase):
         self.relative_tolerance = relative_tolerance
         self.absolute_tolerance = absolute_tolerance
 
-    def preconditioner_type_initialize_inputs(self, jacobian=None):
-        if jacobian is not None:
-            jacobian.pc_type = "pc_curl_curl_mlmg"
-        pc_curl_curl_mlmg = pywarpx.warpx.get_bucket("pc_curl_curl_mlmg")
-        pc_curl_curl_mlmg.verbose = self.verbose
-        pc_curl_curl_mlmg.bottom_verbose = self.bottom_verbose
-        pc_curl_curl_mlmg.agglomeration = self.agglomeration
-        pc_curl_curl_mlmg.consolidation = self.consolidation
-        pc_curl_curl_mlmg.max_iter = self.max_iter
-        pc_curl_curl_mlmg.max_coarsening_level = self.max_coarsening_level
-        pc_curl_curl_mlmg.relative_tolerance = self.relative_tolerance
-        pc_curl_curl_mlmg.absolute_tolerance = self.absolute_tolerance
+
+class DarwinMLMGPreconditioner(PreconditionerBase):
+    """
+    Sets up the factored-Laplacian multigrid preconditioner for the
+    semi-implicit Darwin solver's GMRES iteration. Approximates the Darwin
+    field operator by its constant-susceptibility factorization
+    (-nabla^2)(-nabla^2 + chi) and applies it as two successive scalar
+    multigrid solves (Poisson then Helmholtz with the spatially varying
+    susceptibility) per vector component.
+
+    Parameters
+    ----------
+    verbose: bool, default=False
+        Whether there is verbose output from the solver
+
+    bottom_verbose: bool, optional
+        Whether there is verbose output from the bottom solver
+
+    agglomeration: bool, optional
+
+    consolidation: bool, optional
+
+    max_iter: int, default=2
+        The fixed number of V-cycles used for each of the two multigrid
+        solves per component (fixed so the preconditioner is a fixed linear
+        operator across a GMRES solve)
+
+    max_coarsening_level: int, optional
+        Maximum coarsening level
+
+    relative_tolerance: float, optional
+        Relative tolerance of the convergence
+
+    absolute_tolerance: float, optional
+        Absolute tolerance of the convergence
+    """
+
+    name = "pc_darwin_mlmg"
+    supports_direct_gmres = True
+
+    def __init__(
+        self,
+        verbose=None,
+        bottom_verbose=None,
+        agglomeration=None,
+        consolidation=None,
+        max_iter=None,
+        max_coarsening_level=None,
+        relative_tolerance=None,
+        absolute_tolerance=None,
+    ):
+        self.verbose = verbose
+        self.bottom_verbose = bottom_verbose
+        self.agglomeration = agglomeration
+        self.consolidation = consolidation
+        self.max_iter = max_iter
+        self.max_coarsening_level = max_coarsening_level
+        self.relative_tolerance = relative_tolerance
+        self.absolute_tolerance = absolute_tolerance
 
 
 class JacobiPreconditioner(PreconditionerBase):
@@ -1780,6 +1861,8 @@ class JacobiPreconditioner(PreconditionerBase):
         Absoluate tolerence of the convergence
     """
 
+    name = "pc_jacobi"
+
     def __init__(
         self,
         verbose,
@@ -1791,15 +1874,6 @@ class JacobiPreconditioner(PreconditionerBase):
         self.max_iter = max_iter
         self.relative_tolerance = relative_tolerance
         self.absolute_tolerance = absolute_tolerance
-
-    def preconditioner_type_initialize_inputs(self, jacobian=None):
-        if jacobian is not None:
-            jacobian.pc_type = "pc_jacobi"
-        pc_jacobi = pywarpx.warpx.get_bucket("pc_jacobi")
-        pc_jacobi.verbose = self.verbose
-        pc_jacobi.max_iter = self.max_iter
-        pc_jacobi.relative_tolerance = self.relative_tolerance
-        pc_jacobi.absolute_tolerance = self.absolute_tolerance
 
 
 class PETScPreconditioner(PreconditionerBase):
@@ -1827,6 +1901,8 @@ class PETScPreconditioner(PreconditionerBase):
         When type is "hypre" and hypre_type is "euclid"
     """
 
+    name = "pc_petsc"
+
     def __init__(
         self,
         type,
@@ -1842,17 +1918,6 @@ class PETScPreconditioner(PreconditionerBase):
         self.ilu_factor_levels = ilu_factor_levels
         self.hypre_type = hypre_type
         self.euclid_factor_levels = euclid_factor_levels
-
-    def preconditioner_type_initialize_inputs(self, jacobian=None):
-        if jacobian is not None:
-            jacobian.pc_type = "pc_petsc"
-        pc_petsc = pywarpx.warpx.get_bucket("pc_petsc")
-        pc_petsc.type = self.type
-        pc_petsc.asm_overlap = self.asm_overlap
-        pc_petsc.sub_type = self.sub_type
-        pc_petsc.ilu_factor_levels = self.ilu_factor_levels
-        pc_petsc.hypre_type = self.hypre_type
-        pc_petsc.euclid_factor_levels = self.euclid_factor_levels
 
 
 class NonlinearSolverBase(picmistandard.base._ClassWithInit):

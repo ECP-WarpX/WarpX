@@ -76,9 +76,7 @@ if args.uniform_domain:
 radiation = np.atleast_2d(np.loadtxt("diags/radiation_energy.txt"))
 assert radiation.shape == (2, 17)
 initial_energy = 8.0e-13 if args.uniform_domain else 1.0e-13
-np.testing.assert_allclose(
-    represented_energy, initial_energy, rtol=ledger_rtol
-)
+np.testing.assert_allclose(represented_energy, initial_energy, rtol=ledger_rtol)
 np.testing.assert_allclose(radiation[:, 2], initial_energy, rtol=ledger_rtol)
 np.testing.assert_allclose(radiation[-1, 3], initial_energy, rtol=ledger_rtol)
 np.testing.assert_allclose(
@@ -101,6 +99,5 @@ if args.reference is not None:
         np.testing.assert_array_equal(current, reference)
 
 print(
-    "multi-packet conversion: "
-    f"count={len(current)}, energy={represented_energy:.16e} J"
+    f"multi-packet conversion: count={len(current)}, energy={represented_energy:.16e} J"
 )

@@ -63,10 +63,9 @@ for field in (streaming, diffusion):
     assert not carry_files(args.legacy, field)
 
 fresh_copy(args.source, args.corrupt_current)
-assert (
-    (args.corrupt_current / "WarpXHeader").read_text().splitlines()[0]
-    == source_lines[0].strip()
-)
+assert (args.corrupt_current / "WarpXHeader").read_text().splitlines()[
+    0
+] == source_lines[0].strip()
 corrupt_headers = [
     path
     for path in carry_files(args.corrupt_current, diffusion)
@@ -76,19 +75,13 @@ assert corrupt_headers
 for path in corrupt_headers:
     path.unlink()
 assert not any(
-    path.name.endswith("_H")
-    for path in carry_files(args.corrupt_current, diffusion)
+    path.name.endswith("_H") for path in carry_files(args.corrupt_current, diffusion)
 )
-assert any(
-    "_D_" in path.name
-    for path in carry_files(args.corrupt_current, diffusion)
-)
+assert any("_D_" in path.name for path in carry_files(args.corrupt_current, diffusion))
 # The source fixture is shared by the ordinary restart test and must remain intact.
 assert source_header.read_text().splitlines()[0] == source_lines[0].strip()
 for field in (streaming, diffusion):
-    assert any(
-        path.name.endswith("_H") for path in carry_files(args.source, field)
-    )
+    assert any(path.name.endswith("_H") for path in carry_files(args.source, field))
 
 print(f"legacy carry fixture:         {args.legacy}")
 print(f"damaged current carry fixture: {args.corrupt_current}")

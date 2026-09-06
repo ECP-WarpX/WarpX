@@ -110,10 +110,7 @@ initial_conserved_energy = float(
 )
 energy_scale = max(abs(initial_conserved_energy), np.finfo(float).tiny)
 np.testing.assert_allclose(
-    initial_conserved_energy
-    - radiation
-    - cumulative_material
-    - cumulative_boundary,
+    initial_conserved_energy - radiation - cumulative_material - cumulative_boundary,
     cumulative_residual,
     rtol=0.0,
     atol=1.0e-10 * energy_scale,
@@ -126,9 +123,7 @@ reference_energy = (
     if args.compare_reference
     else energy
 )
-cumulative_work = float(
-    np.sum(reference_energy["material_kinetic_exchange(J)"])
-)
+cumulative_work = float(np.sum(reference_energy["material_kinetic_exchange(J)"]))
 np.testing.assert_allclose(
     particle_momentum[2], cumulative_applied[-1], rtol=1.0e-10, atol=1.0e-20
 )
