@@ -1385,12 +1385,7 @@ WarpX::doQEDEvents ()
             *m_fields.get(FieldType::Efield_aux, Direction{2}, lev),
             *m_fields.get(FieldType::Bfield_aux, Direction{0}, lev),
             *m_fields.get(FieldType::Bfield_aux, Direction{1}, lev),
-            *m_fields.get(FieldType::Bfield_aux, Direction{2}, lev),
-            // This routine is called once per coarse step, and every level advances
-            // dt[0] of physical time over a coarse step -- either in one push, or in
-            // refinement-ratio sub-steps of dt[lev] when sub-cycling is on. So dt[0]
-            // is the interval over which the optical depth must be advanced at every level.
-            dt[0]
+            *m_fields.get(FieldType::Bfield_aux, Direction{2}, lev)
         );
     }
 }
@@ -1410,6 +1405,10 @@ WarpX::doQEDEvolveOpticalDepth ()
             *m_fields.get(FieldType::Bfield_aux, Direction{0}, lev),
             *m_fields.get(FieldType::Bfield_aux, Direction{1}, lev),
             *m_fields.get(FieldType::Bfield_aux, Direction{2}, lev),
+            // This routine is called once per coarse step, and every level advances
+            // dt[0] of physical time over a coarse step -- either in one push, or in
+            // refinement-ratio sub-steps of dt[lev] when sub-cycling is on. So dt[0]
+            // is the interval over which the optical depth must be advanced at every level.
             dt[0]
         );
     }

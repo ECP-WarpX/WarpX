@@ -1782,13 +1782,12 @@ void MultiParticleContainer::doQedEvents (int lev,
                                           const MultiFab& Ez,
                                           const MultiFab& Bx,
                                           const MultiFab& By,
-                                          const MultiFab& Bz,
-                                          amrex::Real dt)
+                                          const MultiFab& Bz)
 {
     ABLASTR_PROFILE("MultiParticleContainer::doQedEvents()");
 
     doQedBreitWheeler(lev, Ex, Ey, Ez, Bx, By, Bz);
-    doQedQuantumSync(lev, Ex, Ey, Ez, Bx, By, Bz, dt);
+    doQedQuantumSync(lev, Ex, Ey, Ez, Bx, By, Bz);
 }
 
 void MultiParticleContainer::doQedBreitWheeler (int lev,
@@ -1880,8 +1879,7 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
                                                const MultiFab& Ez,
                                                const MultiFab& Bx,
                                                const MultiFab& By,
-                                               const MultiFab& Bz,
-                                               amrex::Real dt)
+                                               const MultiFab& Bz)
 {
     ABLASTR_PROFILE("MultiParticleContainer::doQedQuantumSync()");
 

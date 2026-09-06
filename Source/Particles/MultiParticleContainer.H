@@ -382,8 +382,7 @@ public:
                       const amrex::MultiFab& Ez,
                       const amrex::MultiFab& Bx,
                       const amrex::MultiFab& By,
-                      const amrex::MultiFab& Bz,
-                      amrex::Real dt);
+                      const amrex::MultiFab& Bz);
 
     /**
     * \brief Advances the quantum synchrotron optical depth by one time step.
@@ -430,8 +429,7 @@ protected:
                            const amrex::MultiFab& Ez,
                            const amrex::MultiFab& Bx,
                            const amrex::MultiFab& By,
-                           const amrex::MultiFab& Bz,
-                           amrex::Real dt);
+                           const amrex::MultiFab& Bz);
 #endif
 
     // Particle container types
