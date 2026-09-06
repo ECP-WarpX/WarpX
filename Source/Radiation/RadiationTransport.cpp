@@ -3735,6 +3735,8 @@ RadiationTransport::RadiationTransport (
             m_particle_conversion_packets_per_cell);
         pp.query("particle_conversion_target_packet_count",
                  m_particle_conversion_target_packet_count);
+        pp.queryarr("particle_conversion_group_target_packet_counts",
+                    m_particle_conversion_group_target_packet_counts);
         pp.query("particle_conversion_max_packets_per_cell",
                  m_particle_conversion_max_packets_per_cell);
     }
@@ -3874,6 +3876,19 @@ RadiationTransport::RadiationTransport (
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_particle_conversion_max_packets_per_cell > 0,
         "Radiation conversion requires a positive packet count cap.");
+    if (!m_particle_conversion_group_target_packet_counts.empty()) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            m_particle_conversion_target_packet_count == 0,
+            "Radiation global and group packet budgets cannot be combined.");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            m_particle_conversion_group_target_packet_counts.size() == m_num_groups,
+            "Radiation group packet budget count must match energy groups.");
+        for (int const count : m_particle_conversion_group_target_packet_counts) {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                count > 0,
+                "Radiation group packet budgets must be positive.");
+        }
+    }
 
     bool const representative_energies_are_required =
         m_num_groups > 1 || group_photon_energies_are_set
@@ -5088,6 +5103,45 @@ TotalRadiationEnergy (
             total += diffusion->sum(group, /*local=*/false);
         }
     }
+    return total;
+}
+
+// Per-group normalization includes both live streaming packets and diffusion
+// energy. Normalizing by diffusion alone would oversample a nearly escaped band.
+[[nodiscard]]
+amrex::Real
+RadiationGroupEnergy (
+    PhotonParticleContainer& photons,
+    amrex::MultiFab const& diffusion,
+    int const level,
+    int const group,
+    warpx::radiation::EnergyGroupsExecutor const energy_groups)
+{
+    amrex::ReduceOps<amrex::ReduceOpSum> reduce_ops;
+    amrex::ReduceData<amrex::Real> reduce_data(reduce_ops);
+    using ReduceTuple = typename decltype(reduce_data)::Type;
+    for (WarpXParIter mfi(photons, level); mfi.isValid(); ++mfi) {
+        auto const ptd = mfi.GetParticleTile().getParticleTileData();
+        reduce_ops.eval(mfi.numParticles(), reduce_data,
+            [=] AMREX_GPU_DEVICE (long ip) noexcept -> ReduceTuple
+        {
+            if (!amrex::ParticleIDWrapper{ptd.m_idcpu[ip]}.is_valid()
+                || ptd.m_rdata[PIdx::w][ip] <= 0.0_prt)
+            {
+                return {0.0_rt};
+            }
+            auto const photon_energy = Algorithms::KineticEnergyPhotons(
+                ptd.m_rdata[PIdx::ux][ip], ptd.m_rdata[PIdx::uy][ip],
+                ptd.m_rdata[PIdx::uz][ip]);
+            return {energy_groups.index(photon_energy) == group
+                ? static_cast<amrex::Real>(ptd.m_rdata[PIdx::w][ip])
+                    * static_cast<amrex::Real>(photon_energy)
+                : 0.0_rt};
+        });
+    }
+    amrex::Real total = amrex::get<0>(reduce_data.value())
+        + diffusion.sum(group, /*local=*/true);
+    amrex::ParallelDescriptor::ReduceRealSum(total);
     return total;
 }
 }
@@ -7160,6 +7214,21 @@ RadiationTransport::Advance (
                     std::isfinite(sampling_energy_target)
                         && (sampling_energy_target > 0.0 || current_radiation_energy == 0.0_rt),
                     "The radiation packet energy target is non-finite or underflows.");
+                amrex::Vector<double> group_sampling_energy_targets(
+                    num_groups, sampling_energy_target);
+                if (!m_particle_conversion_group_target_packet_counts.empty()) {
+                    for (int group = 0; group < num_groups; ++group) {
+                        amrex::Real const inventory = RadiationGroupEnergy(
+                            photons, diffusion_energy, lev, group, energy_groups);
+                        double const target = static_cast<double>(inventory)
+                            / m_particle_conversion_group_target_packet_counts[group];
+                        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                            std::isfinite(target)
+                                && (target > 0.0 || inventory == 0.0_rt),
+                            "The radiation group packet energy target is non-finite or underflows.");
+                        group_sampling_energy_targets[group] = target;
+                    }
+                }
                 amrex::MFInfo const host_info =
                     amrex::MFInfo().SetArena(amrex::The_Pinned_Arena());
                 amrex::MultiFab host_energy(
@@ -7212,14 +7281,16 @@ RadiationTransport::Advance (
                                     / (PhysConst::m_e * PhysConst::c));
                             amrex::Real remaining_cell_energy = cell_energy;
                             int packets_per_cell = m_particle_conversion_packets_per_cell;
-                            if (sampling_energy_target > 0.0) {
+                            double const group_sampling_target =
+                                group_sampling_energy_targets[group];
+                            if (group_sampling_target > 0.0) {
                                 // Allocate resolution by represented energy rather
                                 // than spending the same count on negligible tails
                                 // and bright cells. The cap bounds each allocation;
                                 // all cell energy is still represented conservatively.
                                 auto const requested = std::round(
                                     static_cast<double>(cell_energy)
-                                    / sampling_energy_target);
+                                    / group_sampling_target);
                                 packets_per_cell = static_cast<int>(std::max(
                                     1.0, std::min(requested,
                                         static_cast<double>(

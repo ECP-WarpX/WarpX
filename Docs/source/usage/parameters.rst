@@ -5307,6 +5307,22 @@ studies.
    Positive per-cell/group packet-count cap in energy-targeted conversion mode.
    This is not a global memory limit. The fixed-count mode does not use this cap.
 
+.. pp:param:: radiation_transport.particle_conversion_group_target_packet_counts
+   :type: ``list of integers``
+   :optional:
+
+   Alternative soft budgets for resolving weak spectral bands: one positive
+   count per energy group, mutually exclusive with a positive global
+   ``particle_conversion_target_packet_count``. Each group's target packet
+   energy is its current global streaming-plus-diffusion inventory divided by
+   its own budget. The same rounding, minimum of one, and per-cell/group cap
+   apply. Empty groups create no packets. No energy cutoff is introduced.
+   This changes sampling effort, not opacity or the transport equations, and
+   does not guarantee spectral convergence. Demonstrate timestep, packet-count,
+   and independent-seed convergence for each scientifically relevant band.
+   These budgets are not hard population or memory limits. Keep the budgets
+   and cap unchanged across reproducibility comparisons and restarts.
+
 
 Grid types (collocated, staggered, hybrid)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

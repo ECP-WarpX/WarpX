@@ -218,6 +218,7 @@ private:
     amrex::Real m_particle_conversion_energy_threshold = 0.0;
     int m_particle_conversion_packets_per_cell = 1;
     int m_particle_conversion_target_packet_count = 0;
+    amrex::Vector<int> m_particle_conversion_group_target_packet_counts;
     int m_particle_conversion_max_packets_per_cell = 4096;
     std::uint64_t m_particle_conversion_seed = 1;
     int m_max_transport_substeps = 10000;
