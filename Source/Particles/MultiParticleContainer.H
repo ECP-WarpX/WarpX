@@ -384,6 +384,22 @@ public:
                       const amrex::MultiFab& By,
                       const amrex::MultiFab& Bz,
                       amrex::Real dt);
+
+    /**
+    * \brief Advances the quantum synchrotron optical depth by one time step.
+    *
+    * Must be called from the time loop *after* the particle push: the optical depth has to
+    * be advanced with the momentum the particle has at the end of the step, which is what
+    * the pusher used when this was still fused into it.
+    */
+    void doQedQuantumSyncEvolveOpticalDepth (int lev,
+                                             const amrex::MultiFab& Ex,
+                                             const amrex::MultiFab& Ey,
+                                             const amrex::MultiFab& Ez,
+                                             const amrex::MultiFab& Bx,
+                                             const amrex::MultiFab& By,
+                                             const amrex::MultiFab& Bz,
+                                             amrex::Real dt);
 #endif
 
     [[nodiscard]] int getSpeciesID (const std::string& product_str) const;

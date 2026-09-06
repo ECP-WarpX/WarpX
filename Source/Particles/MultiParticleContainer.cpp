@@ -1946,46 +1946,73 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
                                   dst_tile, np_dst, num_added,
                                   m_quantum_sync_photon_creation_energy_threshold);
 
-            // Advance the optical depth of every particle of the source species over one time
-            // step. This must happen *after* the emission above, not before, so that the
-            // sequencing matches what the pusher used to do: a particle emits on the strength
-            // of the optical depth accumulated during previous steps, and only then accumulates
-            // this step's contribution. Evolving first would let a particle be created (by
-            // Breit-Wheeler pair production, or by a preceding emission that resamples its
-            // optical depth) and radiate within the same step, which shifts emission one step
-            // earlier and breaks pair-production energy conservation in short runs.
-            //
-            // The fields are gathered here rather than reused from the pusher, so that neither
-            // the explicit nor the implicit momentum push has to carry a compile-time QED
-            // option, and so that the optical depth stays out of the nonlinear iteration.
-            {
-                auto& attribs = pti.GetAttribs();
-                const auto np = pti.numParticles();
-
-                auto EvolveOpticalDepth = QuantumSyncEvolveOpticalDepthFunc(
-                      m_shr_p_qs_engine->build_evolve_functor(),
-                      attribs[PIdx::ux].dataPtr(),
-                      attribs[PIdx::uy].dataPtr(),
-                      attribs[PIdx::uz].dataPtr(),
-                      pti.GetAttribs("opticalDepthQSR").dataPtr(),
-                      dt,
-                      pti, lev, Ex.nGrowVect(),
-                      Ex[pti], Ey[pti], Ez[pti],
-                      Bx[pti], By[pti], Bz[pti],
-                      phys_pc_ptr->m_E_external_particle,
-                      phys_pc_ptr->m_B_external_particle);
-
-                // The functor is passed directly rather than wrapped in a lambda: nvcc does
-                // not allow an extended __device__ lambda inside a protected member function.
-                amrex::ParallelFor(np, EvolveOpticalDepth);
-            }
-
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
                 wt = static_cast<amrex::Real>(amrex::second()) - wt;
                 amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
+        }
+    }
+}
+
+void MultiParticleContainer::doQedQuantumSyncEvolveOpticalDepth (int lev,
+                                                                 const MultiFab& Ex,
+                                                                 const MultiFab& Ey,
+                                                                 const MultiFab& Ez,
+                                                                 const MultiFab& Bx,
+                                                                 const MultiFab& By,
+                                                                 const MultiFab& Bz,
+                                                                 amrex::Real dt)
+{
+    ABLASTR_PROFILE("MultiParticleContainer::doQedQuantumSyncEvolveOpticalDepth()");
+
+    // Advance the optical depth of the quantum synchrotron process by one time step.
+    //
+    // This is called from the time loop *after* the particle push, and not from
+    // doQedQuantumSync() above, which runs before it. That ordering is not incidental: the
+    // optical depth must be advanced with the momentum the particle has at the *end* of the
+    // step, which is what the pusher used when this was still fused into it. Advancing it
+    // before the push instead uses the momentum from the end of the previous step, which
+    // changes the emission rate by tens of percent in a strong field and breaks the
+    // agreement with theory that Examples/Tests/qed/analysis_quantum_sync.py checks (that
+    // script computes its expected photon count from `boris(pm, dt)`, i.e. explicitly from
+    // the post-push momentum).
+    //
+    // The fields are gathered here rather than reused from the pusher, so that neither the
+    // explicit nor the implicit momentum push has to carry a compile-time QED option, and so
+    // that the optical depth is not part of the implicit solver's nonlinear iteration state.
+
+    for (auto& pc_source : allcontainers){
+        if(!pc_source->has_quantum_sync()){ continue; }
+
+        auto *phys_pc_ptr = static_cast<PhysicalParticleContainer*>(pc_source.get());
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+        for (WarpXParIter pti(*pc_source, lev); pti.isValid(); ++pti)
+        {
+            auto& attribs = pti.GetAttribs();
+            const auto np = pti.numParticles();
+            if (np == 0) { continue; }
+
+            auto EvolveOpticalDepth = QuantumSyncEvolveOpticalDepthFunc(
+                  m_shr_p_qs_engine->build_evolve_functor(),
+                  attribs[PIdx::ux].dataPtr(),
+                  attribs[PIdx::uy].dataPtr(),
+                  attribs[PIdx::uz].dataPtr(),
+                  pti.GetAttribs("opticalDepthQSR").dataPtr(),
+                  dt,
+                  pti, lev, Ex.nGrowVect(),
+                  Ex[pti], Ey[pti], Ez[pti],
+                  Bx[pti], By[pti], Bz[pti],
+                  phys_pc_ptr->m_E_external_particle,
+                  phys_pc_ptr->m_B_external_particle);
+
+            // The functor is passed directly rather than wrapped in a lambda: nvcc does not
+            // allow an extended __device__ lambda inside a protected member function.
+            amrex::ParallelFor(np, EvolveOpticalDepth);
         }
     }
 }
