@@ -3,31 +3,39 @@
 
 add_warpx_test(
     test_3d_radiation_transport_group_sampling_streaming
-    3 1
+    3
+    1
     inputs_test_3d_radiation_transport_group_sampling_streaming
     "analysis_group_sampling.py --streaming --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"
-    OFF OFF
+    OFF
+    OFF
 )
 add_warpx_test(
     test_3d_radiation_transport_group_sampling
-    3 1
-    inputs_test_3d_radiation_transport_group_sampling
+    3
+    1
+    inputs_base_3d_radiation_transport_group_sampling
     "analysis_group_sampling.py --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"
-    OFF OFF
+    OFF
+    OFF
 )
 add_warpx_test(
     test_3d_radiation_transport_group_sampling_mpi
-    3 2
-    "inputs_test_3d_radiation_transport_group_sampling amr.max_grid_size=2"
+    3
+    2
+    "inputs_base_3d_radiation_transport_group_sampling amr.max_grid_size=2"
     "analysis_group_sampling.py --reference ../test_3d_radiation_transport_group_sampling --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"
-    OFF test_3d_radiation_transport_group_sampling
+    OFF
+    test_3d_radiation_transport_group_sampling
 )
 add_warpx_test(
     test_3d_radiation_transport_group_sampling_cap
-    3 1
-    "inputs_test_3d_radiation_transport_group_sampling radiation_transport.particle_conversion_max_packets_per_cell=2"
+    3
+    1
+    "inputs_base_3d_radiation_transport_group_sampling radiation_transport.particle_conversion_max_packets_per_cell=2"
     "analysis_group_sampling.py --cap 2 --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"
-    OFF OFF
+    OFF
+    OFF
 )
 
 add_warpx_test(
@@ -302,17 +310,17 @@ add_radiation_failure_test(
 add_radiation_failure_test(
     test_3d_radiation_transport_group_budget_size_rejected
     3
-    "inputs_test_3d_radiation_transport_group_sampling radiation_transport.particle_conversion_group_target_packet_counts=256"
+    "inputs_base_3d_radiation_transport_group_sampling radiation_transport.particle_conversion_group_target_packet_counts=256"
     "group packet budget count must match energy groups")
 add_radiation_failure_test(
     test_3d_radiation_transport_group_budget_nonpositive_rejected
     3
-    "inputs_test_3d_radiation_transport_group_sampling radiation_transport.particle_conversion_group_target_packet_counts='256 0'"
+    "inputs_base_3d_radiation_transport_group_sampling radiation_transport.particle_conversion_group_target_packet_counts='256 0'"
     "group packet budgets must be positive")
 add_radiation_failure_test(
     test_3d_radiation_transport_group_budget_conflict_rejected
     3
-    "inputs_test_3d_radiation_transport_group_sampling radiation_transport.particle_conversion_target_packet_count=256"
+    "inputs_base_3d_radiation_transport_group_sampling radiation_transport.particle_conversion_target_packet_count=256"
     "global and group packet budgets cannot be combined")
 add_radiation_failure_test(
     test_3d_radiation_transport_packet_budget_zero_cap_rejected

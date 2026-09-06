@@ -1,4 +1,4 @@
-FILE = inputs_test_3d_radiation_transport_group_sampling
+FILE = inputs_base_3d_radiation_transport_group_sampling
 # The live weak-band inventory is twice its diffusion inventory, so its new
 # conversion allocation must halve (not ignore the existing streaming packet).
 photons.injection_style = SingleParticle

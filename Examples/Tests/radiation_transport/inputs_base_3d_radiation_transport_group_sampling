@@ -1,4 +1,4 @@
-# A million-to-one spectral contrast must not starve the weak group.
+# Shared deck: a million-to-one spectral contrast must not starve the weak group.
 max_step = 1
 amr.n_cell = 4 4 4
 amr.max_level = 0
