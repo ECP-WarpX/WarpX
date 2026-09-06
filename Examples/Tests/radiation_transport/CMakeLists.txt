@@ -164,24 +164,11 @@ add_warpx_test(
     OFF  # dependency
 )
 
-if(1 IN_LIST WarpX_DIMS AND WarpX_APP)
-    add_warpx_test(
-        test_1d_radiation_transport_kinetic_thermal_cold_rejected  # name
-        1  # dims
-        1  # nprocs
-        inputs_test_1d_radiation_transport_kinetic_thermal_cold_rejected  # inputs
-        OFF  # analysis
-        OFF  # checksum
-        OFF  # dependency
-    )
-    set_tests_properties(
-        test_1d_radiation_transport_kinetic_thermal_cold_rejected.run
-        PROPERTIES
-            WILL_FAIL TRUE
-            PASS_REGULAR_EXPRESSION
-                "heating requires at least two nondegenerate particles"
-    )
-endif()
+add_radiation_failure_test(
+    test_1d_radiation_transport_kinetic_thermal_cold_rejected
+    1
+    inputs_test_1d_radiation_transport_kinetic_thermal_cold_rejected
+    "nondegenerate particles in every affected NGP cell")
 
 add_warpx_test(
     test_1d_radiation_transport_kinetic_thermal_drift  # name
@@ -704,24 +691,11 @@ add_warpx_test(
     OFF  # dependency
 )
 
-if(1 IN_LIST WarpX_DIMS AND WarpX_APP)
-    add_warpx_test(
-        test_1d_radiation_transport_conversion_with_momentum_rejected  # name
-        1  # dims
-        1  # nprocs
-        inputs_test_1d_radiation_transport_conversion_with_momentum_rejected  # inputs
-        OFF  # analysis
-        OFF  # checksum
-        OFF  # dependency
-    )
-    set_tests_properties(
-        test_1d_radiation_transport_conversion_with_momentum_rejected.run
-        PROPERTIES
-            WILL_FAIL TRUE
-            PASS_REGULAR_EXPRESSION
-                "scalar diffusion field does not retain the converted packet momentum"
-    )
-endif()
+add_radiation_failure_test(
+    test_1d_radiation_transport_conversion_with_momentum_rejected
+    1
+    inputs_test_1d_radiation_transport_conversion_with_momentum_rejected
+    "does not retain the converted packet momentum")
 
 add_warpx_test(
     test_1d_radiation_transport_conversion_mpi  # name
@@ -1537,24 +1511,11 @@ if(WarpX_PRECISION STREQUAL "DOUBLE"
     )
 endif()
 
-if(RSPHERE IN_LIST WarpX_DIMS AND WarpX_APP)
-    add_warpx_test(
-        test_rsphere_radiation_transport_momentum_rejected  # name
-        RSPHERE  # dims
-        1  # nprocs
-        inputs_test_rsphere_radiation_transport_momentum_rejected  # inputs
-        OFF  # analysis
-        OFF  # checksum
-        OFF  # dependency
-    )
-    set_tests_properties(
-        test_rsphere_radiation_transport_momentum_rejected.run
-        PROPERTIES
-            WILL_FAIL TRUE
-            PASS_REGULAR_EXPRESSION
-                "component-wise radiation-momentum validation passes"
-    )
-endif()
+add_radiation_failure_test(
+    test_rsphere_radiation_transport_momentum_rejected
+    RSPHERE
+    inputs_test_rsphere_radiation_transport_momentum_rejected
+    "RSPHERE until Cartesian-to-spherical particle initialization")
 
 add_warpx_test(
     test_rz_radiation_transport_conversion  # name

@@ -4501,7 +4501,8 @@ ApplyMaterialImpulse (
             cell_integrated_impulse_carry.const_array(mfi);
         amrex::Array4<amrex::Real const> const momentum_scale_arr =
             cell_material_momentum_scale.const_array(mfi);
-        amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (
+        // Cells share validation counters; do not promise SIMD independence.
+        amrex::For(box, [=] AMREX_GPU_DEVICE (
             int i, int j, int k) noexcept
         {
             amrex::Real const material_mass = mass_arr(i, j, k);
@@ -4761,7 +4762,8 @@ ApplyMaterialImpulse (
             cell_material_mass.const_array(mfi);
         amrex::Array4<amrex::Real const> const momentum_scale_arr =
             cell_material_momentum_scale.const_array(mfi);
-        amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (
+        // Cells share validation counters; do not promise SIMD independence.
+        amrex::For(box, [=] AMREX_GPU_DEVICE (
             int i, int j, int k) noexcept
         {
             amrex::Real target_norm_squared = 0.0_rt;
