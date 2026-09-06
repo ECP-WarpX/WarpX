@@ -267,8 +267,17 @@ FlushFormatPlotfile::WriteWarpXHeader(
 
         // Keep radiation restart schema information on the version line so the
         // legacy header layout remains unchanged for all following records.
-        HeaderFile << "Checkpoint version: 2 radiation_momentum_carry_fields: "
-                   << warpx.GetRadiationTransport().usesMomentumCoupling() << "\n";
+        auto const& radiation = warpx.GetRadiationTransport();
+        bool const spectral_carry = radiation.usesMomentumCoupling()
+            && radiation.numEnergyGroups() > 1;
+        HeaderFile << "Checkpoint version: " << (spectral_carry ? 3 : 2)
+                   << " radiation_momentum_carry_fields: "
+                   << radiation.usesMomentumCoupling();
+        if (spectral_carry) {
+            HeaderFile << " radiation_diffusion_momentum_groups: "
+                       << radiation.numEnergyGroups();
+        }
+        HeaderFile << "\n";
 
         const int nlevels = warpx.finestLevel()+1;
         HeaderFile << nlevels << "\n";

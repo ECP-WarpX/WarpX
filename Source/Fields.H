@@ -76,6 +76,9 @@ namespace warpx::fields
         radiation_hybrid_lte_remap, /**< Ephemeral two-component nonlinear hybrid-LTE remap:
                                      * cell temperature increment [K] and represented material
                                      * energy increment [J/cell]. */
+        radiation_diffusion_group_momentum_carry, /**< Checkpointed group-specific pending
+                                                     * diffusion impulse [kg*m/s/cell], with
+                                                     * three components per energy group. */
         radiation_diffusion_energy,  /**< Cell-integrated radiation energy represented by the
                                       * optically thick transport field [J/cell]. Each component
                                       * stores one configured photon-energy group. */

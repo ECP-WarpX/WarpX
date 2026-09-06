@@ -185,5 +185,8 @@ transverse_tolerance = max(1.0e-20, 1.0e-14 * abs(material_impulse))
 np.testing.assert_allclose(momentum[:, [3, 4, 6, 7]], 0.0, atol=transverse_tolerance)
 np.testing.assert_allclose(momentum[:, 8:20], 0.0, atol=1.0e-24)
 np.testing.assert_allclose(momentum[:, 20:23], 0.0, atol=1.0e-24)
-np.testing.assert_allclose(momentum[:, [24, 25]], 0.0, atol=1.0e-24)
+# Check the exact transverse impulse contract, including representability carry.
+np.testing.assert_allclose(
+    momentum[:, [6, 7]] + momentum[:, [24, 25]], 0.0, atol=1.0e-24
+)
 assert_energy_balance(radiation_labels, radiation)

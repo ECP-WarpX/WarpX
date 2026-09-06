@@ -3733,6 +3733,10 @@ RadiationTransport::RadiationTransport (
         pp.query(
             "particle_conversion_packets_per_cell",
             m_particle_conversion_packets_per_cell);
+        pp.query("particle_conversion_target_packet_count",
+                 m_particle_conversion_target_packet_count);
+        pp.query("particle_conversion_max_packets_per_cell",
+                 m_particle_conversion_max_packets_per_cell);
     }
 
     // Resolve this for every radiation-enabled run so a checkpoint taken
@@ -3864,6 +3868,12 @@ RadiationTransport::RadiationTransport (
         m_particle_conversion_packets_per_cell > 0,
         "radiation_transport.particle_conversion_packets_per_cell must be "
         "positive.");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        m_particle_conversion_target_packet_count >= 0,
+        "Radiation conversion requires a nonnegative target packet count.");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        m_particle_conversion_max_packets_per_cell > 0,
+        "Radiation conversion requires a positive packet count cap.");
 
     bool const representative_energies_are_required =
         m_num_groups > 1 || group_photon_energies_are_set
@@ -4252,6 +4262,17 @@ RadiationTransport::AllocateLevelMFs (
             /*remake=*/true,
             /*redistribute_on_remake=*/true,
             /*checkpoint_restart=*/false);
+    }
+    if (m_enable_momentum_coupling && m_num_groups > 1) {
+        fields.alloc_init(
+            FieldType::radiation_diffusion_group_momentum_carry,
+            lev, ba, dm, 3 * m_num_groups,
+            amrex::IntVect::TheZeroVector(), 0.0_rt,
+            /*remake=*/true,
+            /*redistribute_on_remake=*/true,
+            /*checkpoint_restart=*/true,
+            /*restart_optional=*/m_is_restart
+                && m_restart_diffusion_momentum_groups == 0);
     }
     if (m_enable_lte_exchange || m_enable_diffusion) {
         fields.alloc_init(
@@ -4847,11 +4868,9 @@ ApplyMaterialImpulse (
  * The ledger is the completed net material-energy source for streaming recoil
  * and the diffusion-radiation energy for FLD recoil. Keeping both paths here
  * guarantees that the actual particle kinetic-energy change, including finite
- * particle-precision rounding, is paired with the energy update. For a
- * multigroup reservoir, the measured total work is distributed in proportion
- * to the surviving group energies. This closes total energy exactly, but is a
- * group-integrated work approximation rather than a frequency-resolved work
- * source. A streaming material-energy ledger may become negative when an old
+ * particle-precision rounding, is paired with the energy update. Each diffusion
+ * group supplies its own scalar reservoir and impulse carry. A streaming
+ * material-energy ledger may become negative when an old
  * carry is finally represented: the downstream material adapter then draws
  * that delayed work from internal energy credited by prior absorption.
  */
@@ -4868,8 +4887,8 @@ ApplyRadiationMomentumWork (
     char const* const invalid_energy_message)
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        !allow_signed_material_energy || energy_reservoir.nComp() == 1,
-        "Signed streaming material-energy work requires a scalar energy ledger.");
+        energy_reservoir.nComp() == 1,
+        "Radiation force work requires a scalar path/group energy ledger.");
     amrex::MultiFab applied_material_momentum(
         accumulated_material_momentum.boxArray(),
         accumulated_material_momentum.DistributionMap(), 3, 0);
@@ -4903,14 +4922,10 @@ ApplyRadiationMomentumWork (
             energy_reservoir.array(mfi);
         amrex::Array4<amrex::Real const> const work_arr =
             material_kinetic_energy_change.const_array(mfi);
-        int const num_energy_components = energy_reservoir.nComp();
         residual_reduce_ops.eval(box, residual_reduce_data,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) -> ResidualReduceTuple
         {
-            amrex::Real old_energy = 0.0_rt;
-            for (int group = 0; group < num_energy_components; ++group) {
-                old_energy += energy_arr(i, j, k, group);
-            }
+            amrex::Real const old_energy = energy_arr(i, j, k, 0);
             amrex::Real const work = work_arr(i, j, k);
             if (allow_signed_material_energy) {
                 amrex::Real const new_material_energy = old_energy - work;
@@ -4931,25 +4946,16 @@ ApplyRadiationMomentumWork (
             if (!update.valid) {
                 return {0.0_rt, 1};
             }
-            if (num_energy_components == 1 || !(old_energy > 0.0_rt)) {
-                energy_arr(i, j, k, 0) = update.stored_energy;
-                for (int group = 1; group < num_energy_components; ++group) {
-                    energy_arr(i, j, k, group) = 0.0_rt;
-                }
-                return {update.residual, 0};
-            }
-            amrex::Real const scale = amrex::max(
-                0.0_rt, update.stored_energy / old_energy);
-            for (int group = 0; group < num_energy_components; ++group) {
-                energy_arr(i, j, k, group) *= scale;
-            }
+            energy_arr(i, j, k, 0) = update.stored_energy;
             return {update.residual, 0};
         });
     }
     auto const reduction = residual_reduce_data.value();
     amrex::Real residual = amrex::get<0>(reduction);
-    int const invalid_work = amrex::get<1>(reduction);
+    int invalid_work = amrex::get<1>(reduction);
     amrex::ParallelDescriptor::ReduceRealSum(residual);
+    // Empty ranks retain ReduceOpMax's lowest-value identity, not zero.
+    amrex::ParallelDescriptor::ReduceIntMax(invalid_work);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         invalid_work == 0, invalid_energy_message);
     return residual;
@@ -6270,6 +6276,12 @@ RadiationTransport::Advance (
             , registered_material_opacity_evaluator
 #endif
         };
+        // Keep the large opacity/EOS context out of the CUDA kernel parameter
+        // list (Pascal targets allow only 4096 bytes). The allocation remains
+        // alive through the synchronous status reductions below.
+        amrex::Gpu::DeviceScalar<ImplicitLteCellContext<max_opacity_species>> const
+            device_lte_context(implicit_lte_context);
+        auto const* const implicit_lte_context_ptr = device_lte_context.dataPtr();
         auto const domain_hi = amrex::ubound(warpx.Geom(lev).Domain());
         amrex::GpuArray<int, 3> periodic{0, 0, 0};
         for (int d = 0; d < AMREX_SPACEDIM; ++d) {
@@ -6328,6 +6340,7 @@ RadiationTransport::Advance (
             amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (
                 int i, int j, int k) noexcept
             {
+                auto const& lte_context = *implicit_lte_context_ptr;
 #if defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RZ)
                 amrex::Real const r_lo =
                     plo[0] + (i - domain_lo.x) * dx[0];
@@ -6383,12 +6396,12 @@ RadiationTransport::Advance (
                     amrex::Real const z =
                         plo[0] + (i - domain_lo.x + 0.5_rt) * dx[0];
 #endif
-                    amrex::GpuArray<amrex::Real, max_opacity_species>
+                    amrex::GpuArray<amrex::Real, max_opacity_species> const
                         no_number_densities{};
                     for (int group = 0; group < num_groups; ++group) {
                         amrex::Real const group_energy =
                             energy_groups.representativeEnergy(group);
-                        amrex::Real const opacity = rosseland_evaluator(
+                        amrex::Real const opacity = lte_context.rosseland_evaluator(
                             no_number_densities, x, y, z, current_time,
                             group_energy, 0.0_rt, 0.0_rt);
                         if (opacity < 0.0_rt
@@ -6528,7 +6541,7 @@ RadiationTransport::Advance (
                         amrex::Real const group_energy =
                             energy_groups.representativeEnergy(group);
                         amrex::Real const opacity =
-                            implicit_lte_context.rosselandOpacity(
+                            lte_context.rosselandOpacity(
                                 opacity_number_density, x, y, z, group_energy,
                                 electron_density, electron_temperature);
                         if (opacity < 0.0_rt
@@ -6563,13 +6576,13 @@ RadiationTransport::Advance (
                             x, y, z, opacity_number_density,
                             radiation_arr, material_arr, nonlinear_remap_arr,
                             rosseland_arr, hybrid_thermodynamics,
-                            implicit_lte_context, lte_status_arr);
+                            lte_context, lte_status_arr);
                     } else {
                         ApplyImplicitLteCellExchange(
                             i, j, k, material_state, pending_material_energy,
                             cell_volume, x, y, z, opacity_number_density,
                             radiation_arr, material_arr, rosseland_arr,
-                            implicit_lte_context, lte_status_arr);
+                            lte_context, lte_status_arr);
                     }
                 } else {
                     amrex::Real const temperature_squared =
@@ -6583,23 +6596,23 @@ RadiationTransport::Advance (
                     // shared by all groups. Absorption in one group can fund
                     // emission in another within this local LTE operator.
                     for (int group = 0;
-                         group < implicit_lte_context.num_groups; ++group)
+                         group < lte_context.num_groups; ++group)
                     {
                         amrex::Real const group_energy =
-                            implicit_lte_context.energy_groups
+                            lte_context.energy_groups
                                 .representativeEnergy(group);
                         amrex::Real const planck_absorption =
-                            implicit_lte_context.planckAbsorption(
+                            lte_context.planckAbsorption(
                                 opacity_number_density, x, y, z, group_energy,
                                 electron_density, electron_temperature);
                         amrex::Real const planck_emission =
-                            implicit_lte_context.planckEmission(
+                            lte_context.planckEmission(
                                 opacity_number_density, x, y, z, group_energy,
                                 electron_density, electron_temperature);
                         amrex::Real rosseland_opacity_value = 0.0_rt;
-                        if (implicit_lte_context.enable_diffusion) {
+                        if (lte_context.enable_diffusion) {
                             rosseland_opacity_value =
-                                implicit_lte_context.rosselandOpacity(
+                                lte_context.rosselandOpacity(
                                 opacity_number_density, x, y, z, group_energy,
                                 electron_density, electron_temperature);
                         }
@@ -6607,13 +6620,13 @@ RadiationTransport::Advance (
                             radiation_arr(i, j, k, group);
                         amrex::Real const equilibrium_energy =
                             equilibrium_total_energy
-                            * implicit_lte_context.energy_groups.planckFraction(
+                            * lte_context.energy_groups.planckFraction(
                                 group, PhysConst::kb * electron_temperature);
                         PlanckExchangeResult const exchange =
                             EvaluatePlanckExchange(
                                 planck_absorption, planck_emission,
                                 old_radiation_energy, equilibrium_energy,
-                                implicit_lte_context.dt);
+                                lte_context.dt);
                         if (!exchange.valid || rosseland_opacity_value < 0.0_rt
                             || !amrex::Math::isfinite(rosseland_opacity_value)
                             || !amrex::Math::isfinite(
@@ -6622,7 +6635,7 @@ RadiationTransport::Advance (
                             lte_status_arr(i, j, k, 0) = 1;
                             return;
                         }
-                        if (implicit_lte_context.enable_diffusion) {
+                        if (lte_context.enable_diffusion) {
                             rosseland_arr(i, j, k, group) =
                                 rosseland_opacity_value;
                         }
@@ -6646,30 +6659,30 @@ RadiationTransport::Advance (
 
                     amrex::Real total_exchange = 0.0_rt;
                     for (int group = 0;
-                         group < implicit_lte_context.num_groups; ++group)
+                         group < lte_context.num_groups; ++group)
                     {
                         amrex::Real const group_energy =
-                            implicit_lte_context.energy_groups
+                            lte_context.energy_groups
                                 .representativeEnergy(group);
                         amrex::Real const planck_absorption =
-                            implicit_lte_context.planckAbsorption(
+                            lte_context.planckAbsorption(
                                 opacity_number_density, x, y, z, group_energy,
                                 electron_density, electron_temperature);
                         amrex::Real const planck_emission =
-                            implicit_lte_context.planckEmission(
+                            lte_context.planckEmission(
                                 opacity_number_density, x, y, z, group_energy,
                                 electron_density, electron_temperature);
                         amrex::Real const old_radiation_energy =
                             radiation_arr(i, j, k, group);
                         amrex::Real const equilibrium_energy =
                             equilibrium_total_energy
-                            * implicit_lte_context.energy_groups.planckFraction(
+                            * lte_context.energy_groups.planckFraction(
                                 group, PhysConst::kb * electron_temperature);
                         PlanckExchangeResult const exchange =
                             EvaluatePlanckExchange(
                                 planck_absorption, planck_emission,
                                 old_radiation_energy, equilibrium_energy,
-                                implicit_lte_context.dt);
+                                lte_context.dt);
                         if (!exchange.valid) {
                             lte_status_arr(i, j, k, 0) = 1;
                             return;
@@ -7079,8 +7092,10 @@ RadiationTransport::Advance (
                 amrex::get<0>(diffusion_reduction);
             amrex::ParallelDescriptor::ReduceRealSum(
                 diffusion_numerical_energy_residual);
+            int invalid_diffusion_energy = amrex::get<1>(diffusion_reduction);
+            amrex::ParallelDescriptor::ReduceIntMax(invalid_diffusion_energy);
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                amrex::get<1>(diffusion_reduction) == 0,
+                invalid_diffusion_energy == 0,
                 "Radiation diffusion produced a negative or non-finite cell energy. "
                 "Reduce radiation_transport.diffusion_cfl.");
             m_last_numerical_energy_residual +=
@@ -7129,6 +7144,22 @@ RadiationTransport::Advance (
             diffusion_energy.FillBoundary(warpx.Geom(lev).periodicity());
 
             if (m_enable_particle_conversion) {
+                // Normalize packet energy by the live radiation inventory so
+                // a decaying pulse does not lose sampling resolution at late
+                // times. This is a soft sampling budget, not a population cap.
+                amrex::Real const current_radiation_energy =
+                    m_particle_conversion_target_packet_count > 0
+                    ? TotalRadiationEnergy(photons, fields, lev, m_num_groups)
+                    : 0.0_rt;
+                double const target_packet_energy =
+                    m_particle_conversion_target_packet_count > 0
+                    ? static_cast<double>(current_radiation_energy)
+                        / m_particle_conversion_target_packet_count
+                    : 0.0;
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    std::isfinite(target_packet_energy)
+                        && (target_packet_energy > 0.0 || current_radiation_energy == 0.0_rt),
+                    "The radiation packet energy target is non-finite or underflows.");
                 amrex::MFInfo const host_info =
                     amrex::MFInfo().SetArena(amrex::The_Pinned_Arena());
                 amrex::MultiFab host_energy(
@@ -7149,8 +7180,6 @@ RadiationTransport::Advance (
                 amrex::Vector<amrex::ParticleReal> photon_uz;
                 amrex::Vector<amrex::ParticleReal> photon_weight;
                 int const conversion_step = warpx.getistep(lev);
-                int const packets_per_cell =
-                    m_particle_conversion_packets_per_cell;
                 std::uint64_t const conversion_seed =
                     m_particle_conversion_seed;
 
@@ -7182,6 +7211,20 @@ RadiationTransport::Advance (
                                     emission_photon_energy
                                     / (PhysConst::m_e * PhysConst::c));
                             amrex::Real remaining_cell_energy = cell_energy;
+                            int packets_per_cell = m_particle_conversion_packets_per_cell;
+                            if (target_packet_energy > 0.0) {
+                                // Allocate resolution by represented energy rather
+                                // than spending the same count on negligible tails
+                                // and bright cells. The cap bounds each allocation;
+                                // all cell energy is still represented conservatively.
+                                auto const requested = std::round(
+                                    static_cast<double>(cell_energy)
+                                    / target_packet_energy);
+                                packets_per_cell = static_cast<int>(std::max(
+                                    1.0, std::min(requested,
+                                        static_cast<double>(
+                                            m_particle_conversion_max_packets_per_cell))));
+                            }
                             for (int packet = 0; packet < packets_per_cell;
                                  ++packet)
                             {
@@ -7329,7 +7372,7 @@ RadiationTransport::Advance (
                                     * std::sin(direction_angle);
                                 amrex::ParticleReal const packet_uz =
                                     photon_momentum_magnitude * direction_mu;
-                                amrex::Real const packet_energy_per_weight =
+                                auto const packet_energy_per_weight =
                                     static_cast<amrex::Real>(
                                         Algorithms::KineticEnergyPhotons(
                                             packet_ux, packet_uy,
@@ -7346,7 +7389,7 @@ RadiationTransport::Advance (
                                     packets_per_cell - packet;
                                 amrex::Real const target_packet_energy =
                                     remaining_cell_energy / remaining_packets;
-                                amrex::ParticleReal packet_weight =
+                                auto packet_weight =
                                     static_cast<amrex::ParticleReal>(
                                         target_packet_energy
                                         / packet_energy_per_weight);
@@ -7401,7 +7444,57 @@ RadiationTransport::Advance (
                 diffusion_energy.FillBoundary(warpx.Geom(lev).periodicity());
             }
 
-            if (m_enable_momentum_coupling) {
+            if (m_enable_momentum_coupling && m_num_groups > 1) {
+                auto& group_carry = *fields.get(
+                    FieldType::radiation_diffusion_group_momentum_carry, lev);
+                if (!m_diffusion_group_carry_initialized) {
+                    // Old checkpoints retain only a summed impulse. A nonzero
+                    // old carry has no recoverable spectral attribution.
+                    if (m_is_restart && m_restart_diffusion_momentum_groups == 0) {
+                        for (int component = 0; component < 3; ++component) {
+                            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                                diffusion_momentum_carry->norm0(component) == 0.0_rt,
+                                "An older multigroup radiation checkpoint has pending "
+                                "diffusion impulse without spectral attribution. "
+                                "Restart from a checkpoint with zero pending diffusion "
+                                "impulse or continue it with the original executable.");
+                        }
+                    }
+                    m_diffusion_group_carry_initialized = true;
+                }
+
+                // Symmetric group kicks retain each force's own work, including
+                // opposing forces with zero net impulse. For fixed forces and
+                // nonrelativistic material this gives J_g dot v_mid exactly;
+                // the relativistic kicks retain exact represented kinetic work
+                // and a symmetric splitting error that vanishes on refinement.
+                // Each group owns its pending sub-ULP impulse across restarts.
+                diffusion_group_material_momentum.mult(0.5_rt, 0, 3 * m_num_groups, 0);
+                for (int sweep = 0; sweep < 2; ++sweep) {
+                    for (int index = 0; index < m_num_groups; ++index) {
+                        int const group = sweep == 0 ? index : m_num_groups - 1 - index;
+                        amrex::MultiFab request(
+                            diffusion_group_material_momentum, amrex::make_alias, 3 * group, 3);
+                        amrex::MultiFab pending(
+                            group_carry, amrex::make_alias, 3 * group, 3);
+                        amrex::MultiFab reservoir(
+                            diffusion_energy, amrex::make_alias, group, 1);
+                        m_last_numerical_energy_residual += ApplyRadiationMomentumWork(
+                            particles, m_momentum_species, request, pending,
+                            material_momentum, material_kinetic_energy, reservoir,
+                            /*allow_signed_material_energy=*/false,
+                            "A radiation group's diffusion recoil requires more work "
+                            "than that group's local energy supplies. Reduce the timestep.");
+                    }
+                }
+                // Preserve the existing aggregate diagnostic/checkpoint field.
+                diffusion_momentum_carry->setVal(0.0_rt);
+                for (int group = 0; group < m_num_groups; ++group) {
+                    amrex::MultiFab::Add(
+                        *diffusion_momentum_carry, group_carry, 3 * group, 0, 3, 0);
+                }
+                diffusion_energy.FillBoundary(warpx.Geom(lev).periodicity());
+            } else if (m_enable_momentum_coupling) {
                 m_last_numerical_energy_residual += ApplyRadiationMomentumWork(
                     particles, m_momentum_species, diffusion_material_momentum,
                     *diffusion_momentum_carry, material_momentum,

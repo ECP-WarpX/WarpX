@@ -129,7 +129,7 @@ WarpX::InitFromCheckpoint ()
                     >> version_label >> checkpoint_version)
                     && checkpoint_label == "Checkpoint"
                     && version_label == "version:"
-                    && (checkpoint_version == 1 || checkpoint_version == 2),
+                    && (checkpoint_version >= 1 && checkpoint_version <= 3),
                 "WarpX checkpoint header has an invalid version record.");
 
             bool momentum_carry_fields_present = false;
@@ -142,11 +142,25 @@ WarpX::InitFromCheckpoint ()
                         >> carry_fields)
                         && carry_label
                             == "radiation_momentum_carry_fields:"
-                        && (carry_fields == 0 || carry_fields == 1)
-                        && !(version_stream >> trailing_token),
+                        && (carry_fields == 0 || carry_fields == 1),
                     "WarpX checkpoint header has an invalid radiation momentum-"
                     "carry schema record.");
                 momentum_carry_fields_present = carry_fields == 1;
+                if (checkpoint_version == 3) {
+                    std::string group_label;
+                    int groups = 0;
+                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                        static_cast<bool>(version_stream >> group_label >> groups)
+                            && group_label == "radiation_diffusion_momentum_groups:"
+                            && carry_fields == 1 && groups > 1
+                            && groups == GetRadiationTransport().numEnergyGroups(),
+                        "Radiation spectral momentum-carry checkpoint groups do not "
+                        "match the configured radiation groups.");
+                    GetRadiationTransport().SetRestartDiffusionMomentumGroups(groups);
+                }
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    !(version_stream >> trailing_token),
+                    "WarpX checkpoint header has unexpected trailing schema data.");
             } else {
                 std::string trailing_token;
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(

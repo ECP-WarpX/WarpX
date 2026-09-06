@@ -21,6 +21,7 @@ parser.add_argument("--reference", type=Path)
 parser.add_argument("--expect-different", action="store_true")
 parser.add_argument("--uniform-domain", action="store_true")
 parser.add_argument("--domain-offset", type=float, default=0.0)
+parser.add_argument("--packets-per-cell", type=int, default=8)
 add_precision_arguments(parser)
 args = parser.parse_args()
 _, particle_dtype, cross_dtype = precision_dtypes(args)
@@ -42,7 +43,9 @@ def particles(plotfile: Path) -> np.ndarray:
 
 current = particles(Path("diags/diag1000001"))
 converted_cells = 64 if args.uniform_domain else 1
-assert current.shape == (8 * converted_cells, 7)
+packet_count = args.packets_per_cell
+assert packet_count > 0
+assert current.shape == (packet_count * converted_cells, 7)
 assert np.all(np.isfinite(current))
 position_upper = args.domain_offset + (1.0 if args.uniform_domain else 0.5)
 assert np.all(
@@ -59,16 +62,18 @@ np.testing.assert_allclose(momentum_norm, photon_energy / c, rtol=particle_rtol)
 
 # Exactly one direction lands in every equal-area cos(theta) stratum.
 mu = momentum[:, 2] / momentum_norm
-strata = np.floor(8.0 * (mu + 1.0) / 2.0).astype(int)
-np.testing.assert_array_equal(np.sort(strata), np.repeat(np.arange(8), converted_cells))
+strata = np.floor(packet_count * (mu + 1.0) / 2.0).astype(int)
+np.testing.assert_array_equal(
+    np.sort(strata), np.repeat(np.arange(packet_count), converted_cells)
+)
 if args.uniform_domain:
     cell_indices = np.floor(4.0 * (current[:, :3] - args.domain_offset)).astype(int)
     assert np.all((cell_indices >= 0) & (cell_indices < 4))
     cell_ids = np.ravel_multi_index(cell_indices.T, (4, 4, 4))
-    np.testing.assert_array_equal(np.bincount(cell_ids, minlength=64), 8)
+    np.testing.assert_array_equal(np.bincount(cell_ids, minlength=64), packet_count)
     for cell_id in range(64):
         np.testing.assert_array_equal(
-            np.sort(strata[cell_ids == cell_id]), np.arange(8)
+            np.sort(strata[cell_ids == cell_id]), np.arange(packet_count)
         )
 
 # The one-cell case converts 1e-13 J. The uniform 4^3 reference fills the

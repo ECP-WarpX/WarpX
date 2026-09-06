@@ -4978,7 +4978,7 @@ studies.
    :default: ``false``
    :optional:
 
-   Enable the first conservative grey radiation-force adapter. Streaming absorption
+   Enable the conservative grey/multigroup radiation-force adapter. Streaming absorption
    deposits the removed packet momentum, and flux-limited diffusion deposits
    :math:`\Delta t\,V\alpha_R\boldsymbol{F}/c`. The impulse is applied to the
    configured kinetic ions, and the measured relativistic ion kinetic-energy change
@@ -4998,12 +4998,17 @@ studies.
    carry fields were introduced may omit them; WarpX reports that compatibility path
    and initializes the absent inventories to zero.
 
-   In multigroup diffusion, each group's force contribution is accumulated
-   independently and then reduced in a fixed group order before the ion impulse is
-   applied. The measured total ion work is removed in proportion to the surviving
-   group energies. This preserves total energy and group positivity, but is a
-   group-integrated approximation: frequency-resolved material work is not yet
-   attributed to the group that supplied each part of the impulse.
+   In multigroup diffusion, each group applies half its impulse in ascending order,
+   followed by half in descending order. Its own radiation reservoir supplies the
+   represented kinetic work of those kicks; decelerating work returns energy to that
+   group. Thus opposing forces can transfer opposite amounts of energy even when
+   their net force vanishes. This symmetric splitting has the midpoint-work limit
+   for nonrelativistic material with fixed forces. Relativistic splitting error and
+   the transport/source splitting still require timestep refinement.
+   Per-group pending impulses are checkpointed separately. Schema-v3 checkpoints
+   require those fields and the same number of groups; an older multigroup checkpoint
+   with nonzero aggregate diffusion carry is rejected because its spectral origin
+   cannot be recovered. Each group must have enough energy to fund its own kick.
 
    Current component-wise regression coverage includes RCYLINDER, RZ and Cartesian
    3D. RSPHERE aborts during initialization when this option is enabled. That guard
@@ -5273,6 +5278,34 @@ studies.
    ``warpx.random_seed = random``, the resolved seed is stored in the checkpoint so
    a restart reproduces the uninterrupted packet sequence. The value must be
    positive.
+
+.. pp:param:: radiation_transport.particle_conversion_target_packet_count
+   :type: ``integer``
+   :default: ``0``
+   :optional:
+
+   Optional soft global packet budget for diffusion-to-streaming conversion.
+   Zero retains the fixed packet-count mode above. A positive value sets the
+   target macroparticle energy to the current global radiation energy divided
+   by this count, then creates
+   ``round(cell_group_energy / target_energy)`` packets, bounded below by one and
+   above by ``particle_conversion_max_packets_per_cell``. This allocates sampling
+   effort to energetic cells/groups instead of equally to nearly empty tails.
+   The full converted energy is retained even when the count cap is reached, so
+   the target is not a strict maximum packet energy or a hard global population
+   limit. It follows the current radiation inventory so late-time decaying
+   pulses retain sampling resolution. It does not change the
+   physical group photon energy, opacity, field estimator, or acceptance gates.
+   Packet-count and timestep convergence must still be demonstrated. Keep this
+   setting and its cap unchanged for reproducible restart comparisons.
+
+.. pp:param:: radiation_transport.particle_conversion_max_packets_per_cell
+   :type: ``integer``
+   :default: ``4096``
+   :optional:
+
+   Positive per-cell/group packet-count cap in energy-targeted conversion mode.
+   This is not a global memory limit. The fixed-count mode does not use this cap.
 
 
 Grid types (collocated, staggered, hybrid)

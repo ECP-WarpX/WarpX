@@ -112,6 +112,12 @@ public:
 
     [[nodiscard]] int numEnergyGroups () const noexcept { return m_num_groups; }
 
+    /** Number of spectral impulse carries declared by the restart header. */
+    void SetRestartDiffusionMomentumGroups (int const groups) noexcept
+    {
+        m_restart_diffusion_momentum_groups = groups;
+    }
+
     /** Whether implicit LTE supplies a nonlinear cell-to-node EOS remap. */
     [[nodiscard]] bool usesNonlinearHybridLteRemap () const noexcept
     {
@@ -200,6 +206,8 @@ private:
     bool m_track_energy_balance = false;
     bool m_is_restart = false;
     bool m_restart_momentum_carry_fields_present = false;
+    int m_restart_diffusion_momentum_groups = 0;
+    mutable bool m_diffusion_group_carry_initialized = false;
     bool m_has_initial_diffusion_energy_density = false;
     mutable bool m_initial_diffusion_energy_initialized = false;
     int m_num_groups = 1;
@@ -209,6 +217,8 @@ private:
     amrex::Real m_emission_photon_energy = 0.0;
     amrex::Real m_particle_conversion_energy_threshold = 0.0;
     int m_particle_conversion_packets_per_cell = 1;
+    int m_particle_conversion_target_packet_count = 0;
+    int m_particle_conversion_max_packets_per_cell = 4096;
     std::uint64_t m_particle_conversion_seed = 1;
     int m_max_transport_substeps = 10000;
     int m_max_diffusion_substeps = 10000;

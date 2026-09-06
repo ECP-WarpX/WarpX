@@ -21,6 +21,65 @@ add_warpx_test(
     test_1d_radiation_transport_material_profile
 )
 
+if(WarpX_PRECISION STREQUAL "DOUBLE" AND WarpX_PARTICLE_PRECISION STREQUAL "DOUBLE")
+    add_warpx_test(
+        test_1d_radiation_transport_opposing_group_work
+        1
+        1
+        inputs_test_1d_radiation_transport_opposing_group_work
+        "analysis_opposing_group_work.py"
+        OFF
+        OFF
+    )
+    add_warpx_test(
+        test_1d_radiation_transport_opposing_group_work_restart
+        1
+        2
+        "inputs_test_1d_radiation_transport_opposing_group_work_restart amr.restart='../test_1d_radiation_transport_opposing_group_work/diags/chk000001'"
+        "analysis_opposing_group_work.py --restart"
+        OFF
+        test_1d_radiation_transport_opposing_group_work
+    )
+endif()
+
+add_warpx_test(
+    test_3d_radiation_transport_energy_target_sampling
+    3
+    1
+    inputs_test_3d_radiation_transport_energy_target_sampling
+    "analysis_packet_sampling.py --packets-per-cell 4 --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"
+    OFF
+    OFF
+)
+add_warpx_test(
+    test_3d_radiation_transport_energy_target_sampling_cap
+    3
+    1
+    inputs_test_3d_radiation_transport_energy_target_sampling_cap
+    "analysis_packet_sampling.py --packets-per-cell 2 --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"
+    OFF
+    OFF
+)
+
+add_warpx_test(
+    test_3d_radiation_transport_energy_target_uniform
+    3
+    1
+    inputs_test_3d_radiation_transport_energy_target_uniform
+    "analysis_packet_sampling.py --packets-per-cell 4 --uniform-domain --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"
+    OFF
+    OFF
+)
+add_warpx_test(
+    test_3d_radiation_transport_energy_target_uniform_mpi
+    3
+    2
+    inputs_test_3d_radiation_transport_energy_target_uniform_mpi
+    "analysis_packet_sampling.py --packets-per-cell 4 --uniform-domain --reference ../test_3d_radiation_transport_energy_target_uniform --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"
+    OFF
+    test_3d_radiation_transport_energy_target_uniform
+)
+
 # Fixture commands below are registered outside add_warpx_test's function
 # scope. Resolve their interpreter here as well, including APP-only builds.
 if(WarpX_APP AND NOT Python_EXECUTABLE)
@@ -207,6 +266,17 @@ add_radiation_failure_test(
     "nondegenerate particles in every affected NGP cell")
 
 add_radiation_failure_test(
+    test_3d_radiation_transport_packet_budget_negative_rejected
+    3
+    "inputs_base_3d_radiation_transport_packet_sampling radiation_transport.particle_conversion_target_packet_count=-1"
+    "requires a nonnegative target packet count")
+add_radiation_failure_test(
+    test_3d_radiation_transport_packet_budget_zero_cap_rejected
+    3
+    "inputs_base_3d_radiation_transport_packet_sampling radiation_transport.particle_conversion_max_packets_per_cell=0"
+    "requires a positive packet count cap")
+
+add_radiation_failure_test(
     test_1d_radiation_transport_material_profile_negative_rejected
     1
     "inputs_base_1d_radiation_transport_material_profile_rejected hybrid_pic_model.initial_elec_temp(x,y,z)=-1.0"
@@ -217,6 +287,27 @@ add_radiation_failure_test(
     1
     "inputs_base_1d_radiation_transport_material_profile_rejected hybrid_pic_model.solve_electron_energy_equation=0"
     "hybrid_pic_model.solve_electron_energy_equation=1.")
+
+if(TEST test_1d_radiation_transport_opposing_group_work.analysis)
+    add_test(
+        NAME test_1d_radiation_transport_spectral_carry_fixture
+        COMMAND ${Python_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/prepare_spectral_carry_fixture.py
+            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test_1d_radiation_transport_opposing_group_work/diags/chk000001)
+    set_property(TEST test_1d_radiation_transport_spectral_carry_fixture
+        PROPERTY DEPENDS test_1d_radiation_transport_opposing_group_work.analysis)
+    add_radiation_failure_test(
+        test_1d_radiation_transport_missing_spectral_carry_rejected
+        1
+        "inputs_base_1d_radiation_transport_spectral_carry_rejected amr.restart='../test_1d_radiation_transport_opposing_group_work/diags/chk000001_missing_spectral_carry'"
+        "Checkpoint is missing the required MultiFab header")
+    set_property(TEST test_1d_radiation_transport_missing_spectral_carry_rejected.run
+        PROPERTY DEPENDS test_1d_radiation_transport_spectral_carry_fixture)
+    if(TEST test_1d_radiation_transport_opposing_group_work.cleanup)
+        set_property(TEST test_1d_radiation_transport_opposing_group_work.cleanup
+            APPEND PROPERTY DEPENDS test_1d_radiation_transport_missing_spectral_carry_rejected.run)
+    endif()
+endif()
 
 add_warpx_test(
     test_1d_radiation_transport_kinetic_thermal_drift  # name
