@@ -195,7 +195,7 @@ ClampParticleConversionPosition (
             static_cast<amrex::ParticleReal>(sampled)));
 }
 
-[[nodiscard]]
+[[maybe_unused, nodiscard]]
 amrex::ParticleReal
 ParticleConversionCoordinate (
     amrex::Real const cell_lo,
