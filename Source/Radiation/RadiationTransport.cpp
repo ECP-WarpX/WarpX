@@ -572,6 +572,18 @@ struct HybridCellMaterialState
     bool valid = true;
 };
 
+/** Read-only streaming opacity views, shared by all packet kernels in a step. */
+template <unsigned int N> struct StreamingOpacityContext
+{
+    OpacityEvaluator<N> absorption;
+    OpacityEvaluator<N> rosseland;
+#ifdef WARPX_USE_MATERIAL_OPACITY_HDF5
+    MaterialOpacityEvaluator<N> material;
+    RegisteredMaterialOpacityEvaluator<
+        N, warpx::materials::MaterialRegistry::max_materials> registered_material;
+#endif
+};
+
 struct SignedMaterialAvailability
 {
     amrex::Real remaining_energy = 0.0_rt;
@@ -5609,6 +5621,19 @@ RadiationTransport::Advance (
 #endif
     amrex::GpuArray<amrex::Real, 4> streaming_boundary_loss{};
 
+    StreamingOpacityContext<max_opacity_species> const streaming_opacity{
+        absorption_evaluator, rosseland_evaluator
+#ifdef WARPX_USE_MATERIAL_OPACITY_HDF5
+        , material_opacity_evaluator, registered_material_opacity_evaluator
+#endif
+    };
+    // Pascal's 4096-byte kernel-argument limit also applies to double precision.
+    // Share the read-only evaluator bundle by pointer, as for the LTE context.
+    // It outlives every packet kernel and the synchronous status reads below.
+    amrex::Gpu::DeviceScalar<StreamingOpacityContext<max_opacity_species>> const
+        device_streaming_opacity(streaming_opacity);
+    auto const* const streaming_opacity_ptr = device_streaming_opacity.dataPtr();
+
     // Advance photons in paths no longer than one cell. Cartesian paths are
     // split exactly at every crossed mesh face. In exact RCYLINDER mode, the
     // one-cell bound c*transport_dt <= dx[0] permits a finite local face
@@ -5670,9 +5695,9 @@ RadiationTransport::Advance (
                     opacity_number_densities[species]->const_array(mfi);
             }
 
-            // amrex::For is required: different photons can scatter-add to one cell.
-            amrex::For(np, [=] AMREX_GPU_DEVICE (long ip) noexcept
+            auto const transport_packet = [=] AMREX_GPU_DEVICE (long ip) noexcept
             {
+                auto const& opacity = *streaming_opacity_ptr;
                 auto const p = WarpXParticleContainer::ParticleType(ptd, ip);
                 auto const initial_cell = amrex::getParticleCell(p, plo, dxi);
                 auto const [initial_i, initial_j, initial_k] = initial_cell.dim3();
@@ -5949,15 +5974,15 @@ RadiationTransport::Advance (
                     warpx::radiation::MaterialOpacityCoefficients
                         material_opacity_coefficients;
                     bool const use_native_material_opacity =
-                        material_opacity_evaluator.enabled
-                        || registered_material_opacity_evaluator.enabled;
+                        opacity.material.enabled
+                        || opacity.registered_material.enabled;
                     if (absorb_here && use_native_material_opacity) {
                         material_opacity_coefficients =
-                            registered_material_opacity_evaluator.enabled
-                            ? registered_material_opacity_evaluator(
+                            opacity.registered_material.enabled
+                            ? opacity.registered_material(
                                 opacity_number_density, photon_energy,
                                 electron_temperature)
-                            : material_opacity_evaluator(
+                            : opacity.material(
                                 opacity_number_density, photon_energy,
                                 electron_temperature);
                     }
@@ -5971,7 +5996,7 @@ RadiationTransport::Advance (
                         } else
 #endif
                         {
-                            rosseland_opacity_value = rosseland_evaluator(
+                            rosseland_opacity_value = opacity.rosseland(
                                 opacity_number_density, sample_x, sample_y,
                                 sample_z, sample_time, photon_energy,
                                 electron_density, electron_temperature);
@@ -6009,7 +6034,7 @@ RadiationTransport::Advance (
                         } else
 #endif
                         {
-                            alpha = absorption_evaluator(
+                            alpha = opacity.absorption(
                                 opacity_number_density, sample_x, sample_y,
                                 sample_z, sample_time, photon_energy,
                                 electron_density, electron_temperature);
@@ -6217,7 +6242,13 @@ RadiationTransport::Advance (
                         remaining_transport_dt, 0.0_prt);
                 }
                 set_position(ip, x, y, z);
-            });
+            };
+            // Reserve 256 bytes for the AMReX launch wrapper under Pascal's
+            // 4096-byte parameter limit, including in newer-GPU/CPU builds.
+            static_assert(sizeof(transport_packet) <= 3840,
+                          "Streaming kernel captures exceed the portable launch budget.");
+            // amrex::For is required: different photons can scatter-add to one cell.
+            amrex::For(np, transport_packet);
         }
 
         photons.ApplyBoundaryConditions();
