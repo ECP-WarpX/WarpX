@@ -5213,7 +5213,7 @@ studies.
    Bath faces must be nonperiodic, and their adjacent cells must satisfy
    ``minimum_diffusion_optical_depth``. The current bath implementation requires
    ``amr.max_level=0``, diffusion enabled, and momentum coupling and particle
-   conversion disabled. It does not define an angular photon injector or qualify
+   conversion disabled. Embedded boundaries are rejected. It does not define an angular photon injector or qualify
    moving-material radiation force/work. A bath is applied only at a domain face,
    never at the radial thick/thin interface shortcut described below.
 

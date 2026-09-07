@@ -3914,6 +3914,8 @@ RadiationTransport::RadiationTransport (
             }
         }
         if (m_has_diffusion_bath) {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!EB::enabled(),
+                "marshak_bath is not supported with embedded boundaries.");
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 m_enable_diffusion && !m_enable_particle_conversion &&
                     !m_enable_momentum_coupling && configured_max_level == 0,

@@ -1894,6 +1894,11 @@ add_warpx_test(
 
 if(WarpX_EB)
     add_radiation_failure_test(
+        test_3d_radiation_transport_bath_eb_rejected
+        3
+        "inputs_base_3d_radiation_transport_bath eb2.geom_type=all_regular"
+        "marshak_bath is not supported with embedded boundaries")
+    add_radiation_failure_test(
         test_3d_radiation_transport_conversion_eb_rejected
         3
         "inputs_base_3d_radiation_transport_packet_sampling eb2.geom_type=all_regular"
