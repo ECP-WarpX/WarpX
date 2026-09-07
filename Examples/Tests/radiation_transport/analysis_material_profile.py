@@ -35,7 +35,9 @@ if not args.restart:
     # Initial pressure must already represent the prescribed temperature,
     # rather than becoming nonzero only in the first PIC bootstrap.
     np.testing.assert_allclose(
-        initial["Pe"], 1.0e20 * Boltzmann * initial["Te"], rtol=rtol
+        initial["Pe"],
+        initial["rho"] / elementary_charge * Boltzmann * initial["Te"],
+        rtol=rtol,
     )
     # Frozen ions, zero curl(B), and zero material exchange leave V_e = 0.
     # Repeated marker projection must not diffuse this stationary profile.
