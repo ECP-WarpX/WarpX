@@ -501,6 +501,14 @@ public:
      */
     void HybridPICInitializeRhoJandB ();
 
+    /** Derive electron pressure from freshly prepared density and the selected
+     * initial/evolved thermal closure without advancing time. */
+    void HybridPICInitializeElectronPressure ();
+
+    /** Prepare a meaningful initial/restart thermal diagnostic state while
+     * preserving the current's original time staggering. */
+    void HybridPICPrepareElectronStateForDiagnostics ();
+
     /**
      * \brief Hybrid-PIC deposition function.
      * Helper function to contain all the needed logic to deposit charge and

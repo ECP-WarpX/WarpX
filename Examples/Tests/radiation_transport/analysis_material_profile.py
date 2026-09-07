@@ -32,6 +32,11 @@ if not args.restart:
     )
     expected = 0.5 * (nodal_temperature[:-1] + nodal_temperature[1:])
     np.testing.assert_allclose(np.squeeze(initial["Te"]), expected, rtol=rtol)
+    # Initial pressure must already represent the prescribed temperature,
+    # rather than becoming nonzero only in the first PIC bootstrap.
+    np.testing.assert_allclose(
+        initial["Pe"], 1.0e20 * Boltzmann * initial["Te"], rtol=rtol
+    )
     # Frozen ions, zero curl(B), and zero material exchange leave V_e = 0.
     # Repeated marker projection must not diffuse this stationary profile.
     final = load(Path("diags/diag1000002"))

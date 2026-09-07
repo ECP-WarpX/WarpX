@@ -20,8 +20,9 @@
 #include <ablastr/profiler/ProfilerWrapper.H>
 #include <ablastr/utils/Communication.H>
 
+#include <array>
 #include <limits>
-
+#include <memory>
 
 using namespace amrex;
 
@@ -556,6 +557,59 @@ void WarpX::HybridPICDepositRhoAndJ (bool const deposit_energy_auxiliary)
     }
 }
 
+void
+WarpX::HybridPICInitializeElectronPressure ()
+{
+    using warpx::fields::FieldType;
+    bool const preserve_evolved_temperature =
+        m_hybrid_pic_model->m_solve_electron_energy_equation &&
+        (!restart_chkfile.empty() || m_hybrid_pic_model->m_has_initial_elec_temp ||
+         !m_hybrid_pic_model->electronThermodynamicsExecutor().isIdealGas());
+    if (preserve_evolved_temperature) {
+        for (int lev = 0; lev <= finest_level; ++lev) {
+            auto& Te = *m_fields.get(FieldType::hybrid_electron_temperature_fp, lev);
+            ablastr::utils::communication::FillBoundary(Te, Te.nGrowVect(), false,
+                                                        Geom(lev).periodicity(), true);
+            m_hybrid_pic_model->QDSMCFillElectronPressureFromTe(lev);
+            ApplyElectronPressureBoundary(lev, PatchType::fine);
+            ablastr::utils::communication::FillBoundary(
+                *m_fields.get(FieldType::hybrid_electron_pressure_fp, lev),
+                WarpX::do_single_precision_comms, Geom(lev).periodicity(), true);
+        }
+    } else {
+        m_hybrid_pic_model->CalculateElectronPressure(
+            m_hybrid_pic_model->m_solve_electron_energy_equation);
+    }
+}
+
+void
+WarpX::HybridPICPrepareElectronStateForDiagnostics ()
+{
+    using warpx::fields::FieldType;
+    // Use the native density/species/boundary preparation, but preserve the
+    // time staggering and any supplied/restored current. The normal PIC
+    // bootstrap will deposit its own half-time current after desynchronization.
+    auto current = m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level);
+    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3>> saved(finest_level + 1);
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        for (int d = 0; d < 3; ++d) {
+            auto const& source = *current[lev][d];
+            saved[lev][d] = std::make_unique<amrex::MultiFab>(
+                source.boxArray(), source.DistributionMap(), source.nComp(), source.nGrowVect());
+            amrex::MultiFab::Copy(*saved[lev][d], source, 0, 0, source.nComp(), source.nGrowVect());
+        }
+    }
+    HybridPICDepositRhoAndJ(/*deposit_energy_auxiliary=*/false);
+    HybridPICInitializeElectronPressure();
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        for (int d = 0; d < 3; ++d) {
+            auto& destination = *current[lev][d];
+            amrex::MultiFab::Copy(destination, *saved[lev][d], 0, 0, destination.nComp(),
+                                  destination.nGrowVect());
+        }
+    }
+}
+
 void WarpX::HybridPICInitializeRhoJandB ()
 {
     // The Ohm's law solver requires two timesteps' values for the charge
@@ -582,45 +636,18 @@ void WarpX::HybridPICInitializeRhoJandB ()
 
     // Fill the electron pressure using the freshly deposited rho. On a fresh
     // ideal/polytropic start this seeds Pe^0 and the corresponding T_e for the
-    // first step's B-substep E-solves (the iteration-0 diagnostics were already
-    // written at the end of InitData, before this runs). Any nonlinear caloric
-    // EOS must instead preserve the input T_e seeded by InitData and evaluate
-    // its own P(rho,T); running the legacy closure here would silently replace
-    // both quantities with ideal-polytropic values. An explicitly initialized
-    // temperature profile must likewise survive this bootstrap. On restart every evolved
-    // temperature is restored from its checkpoint and likewise must not be
-    // replaced by the algebraic closure. Pe is derived, so rebuild it from the
-    // preserved T_e and reconstructed rho. This also preserves radiation,
-    // Joule and collisional changes to the hybrid electron internal energy
-    // across a restart.
-    bool const preserve_evolved_temperature =
-        m_hybrid_pic_model->m_solve_electron_energy_equation
-        && (!restart_chkfile.empty()
-            || m_hybrid_pic_model->m_has_initial_elec_temp
-            || !m_hybrid_pic_model->electronThermodynamicsExecutor()
-                .isIdealGas());
-    if (preserve_evolved_temperature)
-    {
-        for (int lev = 0; lev <= finest_level; ++lev) {
-            auto& Te = *m_fields.get(
-                FieldType::hybrid_electron_temperature_fp, lev);
-            ablastr::utils::communication::FillBoundary(
-                Te, Te.nGrowVect(), false, Geom(lev).periodicity(), true);
-
-            m_hybrid_pic_model->QDSMCFillElectronPressureFromTe(lev);
-            ApplyElectronPressureBoundary(lev, PatchType::fine);
-            ablastr::utils::communication::FillBoundary(
-                *m_fields.get(FieldType::hybrid_electron_pressure_fp, lev),
-                WarpX::do_single_precision_comms,
-                Geom(lev).periodicity(),
-                true);
-        }
-    } else {
-        // The closure is evaluated on floored density when it initializes the
-        // QDSMC state, and on raw density for the algebraic closure path.
-        m_hybrid_pic_model->CalculateElectronPressure(
-            m_hybrid_pic_model->m_solve_electron_energy_equation);
-    }
+    // first step's B-substep E-solves. Initial energy-equation diagnostics
+    // prepare the same state independently before desynchronization. Any
+    // nonlinear caloric EOS must instead preserve the input T_e seeded by
+    // InitData and evaluate its own P(rho,T); running the legacy closure here
+    // would silently replace both quantities with ideal-polytropic values. An
+    // explicitly initialized temperature profile must likewise survive this
+    // bootstrap. On restart every evolved temperature is restored from its
+    // checkpoint and likewise must not be replaced by the algebraic closure. Pe
+    // is derived, so rebuild it from the preserved T_e and reconstructed rho.
+    // This also preserves radiation, Joule and collisional changes to the
+    // hybrid electron internal energy across a restart.
+    HybridPICInitializeElectronPressure();
 
     if (restart_chkfile.empty()) {
         // Handle field splitting for Hybrid field push
