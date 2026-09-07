@@ -43,6 +43,17 @@ RadiationEnergy::RadiationEnergy (std::string const& rd_name)
     auto& warpx = WarpX::GetInstance();
     m_num_groups = warpx.GetRadiationTransport().numEnergyGroups();
     m_has_boundary_injection = warpx.GetRadiationTransport().hasDiffusionBath();
+    if (amrex::ParallelDescriptor::IOProcessor() && !m_write_header) {
+        std::ifstream previous{m_path + m_rd_name + "." + m_extension};
+        std::string header;
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(static_cast<bool>(std::getline(previous, header)),
+            "RadiationEnergy could not read the existing diagnostic header on restart.");
+        bool const previous_has_injection =
+            header.find("cumulative_boundary_energy_injection(J)") != std::string::npos;
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(previous_has_injection == m_has_boundary_injection,
+            "RadiationEnergy bath column layout changed on restart. Use a new diagnostic "
+            "output path when adding baths; never append rows with a different schema.");
+    }
     std::string diagnostic_photon_species = m_photon_species;
     if (pp_diag.query("photon_species", diagnostic_photon_species)) {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(

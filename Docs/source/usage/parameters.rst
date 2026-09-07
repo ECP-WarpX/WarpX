@@ -5264,6 +5264,11 @@ studies.
    emitted angular intensities. Energy balance includes escape minus injection.
    The live cumulative injection ledger is preserved by a versioned checkpoint
    extension. Runs without baths retain their existing diagnostic columns.
+   A checkpoint containing this ledger must retain at least one ``marshak_bath``
+   face on restart: turn off the drive by setting its temperature or all its
+   group energy densities to zero, rather than removing the bath boundary.
+   If baths are added when restarting a non-bath run, use a new reduced-diagnostic
+   output path. Appending rows with a changed bath-column layout is rejected.
 
 .. pp:param:: radiation_transport.diffusion_bath_temperature_lo_<d>(x,y,z,t)
    :type: ``math expression``

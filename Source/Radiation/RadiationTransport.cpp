@@ -4312,6 +4312,10 @@ RadiationTransport::ReadCheckpointData (std::string const& dir)
                     m_cumulative_boundary_energy_injection >= 0.0_rt,
                 "RadiationTransport checkpoint bath injection ledger is "
                 "malformed.");
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_has_diffusion_bath,
+                "A restart with a bath injection ledger must retain a marshak_bath face. "
+                "To turn off the drive, retain the bath boundary and set its temperature "
+                "or all group energy densities to zero; this preserves injection accounting.");
         } else {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(checkpoint.eof(), "RadiationTransport checkpoint bath "
                                                                "injection ledger is unreadable.");

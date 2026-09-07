@@ -365,6 +365,16 @@ add_radiation_failure_test(
     "inputs_base_1d_radiation_transport_bath radiation_transport.enable_particle_conversion=1"
     "marshak_bath currently requires diffusion on a fixed grid")
 
+add_radiation_failure_test(
+    test_1d_radiation_transport_bath_removal_restart_rejected
+    1
+    "inputs_base_1d_radiation_transport_bath_common radiation_transport.diffusion_boundary_lo=marshak radiation_transport.diffusion_boundary_hi=marshak amr.restart='../test_1d_radiation_transport_bath/diags/chk000050'"
+    "A restart with a bath injection ledger")
+if(WarpX_APP AND "1" IN_LIST WarpX_DIMS)
+    set_tests_properties(test_1d_radiation_transport_bath_removal_restart_rejected.run
+        PROPERTIES DEPENDS test_1d_radiation_transport_bath.run)
+endif()
+
 add_warpx_test(
     test_1d_radiation_transport_beer_lambert  # name
     1  # dims
