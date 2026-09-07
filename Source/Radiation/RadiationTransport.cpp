@@ -225,12 +225,16 @@ ParseDiffusionBoundary (std::string const& name, std::string const& key)
     if (name == "marshak") {
         return static_cast<int>(RadiationTransport::DiffusionBoundary::Marshak);
     }
-    WARPX_ABORT_WITH_MESSAGE(
-        "Unknown " + key + "='" + name + "'. Valid values are reflecting "
-        "(zero normal flux), vacuum (free-streaming F=cE), and marshak "
-        "(P1 vacuum F=cE/2). A zero-energy Dirichlet face is not offered: "
-        "in the diffusion limit it implies a mesh- and opacity-dependent "
-        "flux that can exceed cE and destablize the explicit update.");
+    if (name == "marshak_bath") {
+        return static_cast<int>(RadiationTransport::DiffusionBoundary::MarshakBath);
+    }
+    WARPX_ABORT_WITH_MESSAGE("Unknown " + key + "='" + name +
+                             "'. Valid values are reflecting "
+                             "(zero normal flux), vacuum (free-streaming F=cE), marshak "
+                             "(P1 vacuum F=cE/2), and marshak_bath (driven Robin diffusion face). "
+                             "A zero-energy Dirichlet face is not offered: "
+                             "in the diffusion limit it implies a mesh- and opacity-dependent "
+                             "flux that can exceed cE and destablize the explicit update.");
     return static_cast<int>(RadiationTransport::DiffusionBoundary::Reflecting);
 }
 
@@ -3865,6 +3869,65 @@ RadiationTransport::RadiationTransport (
         pp, "diffusion_boundary_lo", m_diffusion_boundary_lo);
     ParseDiffusionBoundaryArray(
         pp, "diffusion_boundary_hi", m_diffusion_boundary_hi);
+    {
+        int const count = 2 * AMREX_SPACEDIM * m_num_groups;
+        m_diffusion_bath_parsers.reserve(count);
+        amrex::Vector<amrex::ParserExecutor<4>> executors(count);
+        for (int direction = 0; direction < AMREX_SPACEDIM; ++direction) {
+            for (int side = 0; side < 2; ++side) {
+                int const boundary = side == 0 ? m_diffusion_boundary_lo[direction]
+                                               : m_diffusion_boundary_hi[direction];
+                bool const bath = boundary == static_cast<int>(DiffusionBoundary::MarshakBath);
+                m_has_diffusion_bath = m_has_diffusion_bath || bath;
+                std::string const temperature_key = std::string("diffusion_bath_temperature_") +
+                                                    (side == 0 ? "lo_" : "hi_") +
+                                                    std::to_string(direction) + "(x,y,z,t)";
+                bool const temperature_is_set = pp.contains(temperature_key);
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!temperature_is_set || bath,
+                                                 "radiation_transport." + temperature_key +
+                                                     " requires a marshak_bath face.");
+                m_diffusion_bath_is_temperature[2 * direction + side] = temperature_is_set ? 1 : 0;
+                for (int group = 0; group < m_num_groups; ++group) {
+                    std::string const key = std::string("diffusion_bath_energy_density_") +
+                                            (side == 0 ? "lo_" : "hi_") +
+                                            std::to_string(direction) + "_g" +
+                                            std::to_string(group) + "(x,y,z,t)";
+                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                        pp.contains(key) == (bath && !temperature_is_set),
+                        "radiation_transport." + key +
+                            " must be specified for every marshak_bath group "
+                            "unless a "
+                            "bath temperature is given. Group energy and "
+                            "temperature "
+                            "expressions are mutually exclusive and require a "
+                            "bath face.");
+                    if (bath) {
+                        std::string expression;
+                        utils::parser::Store_parserString(
+                            pp, temperature_is_set ? temperature_key : key, expression);
+                        m_diffusion_bath_parsers.emplace_back(
+                            utils::parser::makeParser(expression, {"x", "y", "z", "t"}));
+                        executors[(2 * direction + side) * m_num_groups + group] =
+                            m_diffusion_bath_parsers.back().compile<4>();
+                    }
+                }
+            }
+        }
+        if (m_has_diffusion_bath) {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                m_enable_diffusion && !m_enable_particle_conversion &&
+                    !m_enable_momentum_coupling && configured_max_level == 0,
+                "marshak_bath currently requires diffusion on a fixed grid "
+                "with "
+                "particle conversion and momentum coupling disabled. Its "
+                "stationary energy-transport contract does not qualify "
+                "force/work.");
+            m_diffusion_bath_executors.resize(count);
+            amrex::Gpu::copy(amrex::Gpu::hostToDevice, executors.begin(), executors.end(),
+                             m_diffusion_bath_executors.begin());
+            m_track_energy_balance = true;
+        }
+    }
 #if defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RZ) \
     || defined(WARPX_DIM_RSPHERE)
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -4137,6 +4200,9 @@ RadiationTransport::WriteCheckpointData (std::string const& dir) const
     checkpoint << m_cumulative_boundary_energy_loss << "\n"
                << m_cumulative_numerical_energy_residual << "\n"
                << m_particle_conversion_seed << "\n";
+    if (m_has_diffusion_bath || m_cumulative_boundary_energy_injection > 0.0_rt) {
+        checkpoint << "bath_ledger_v1 " << m_cumulative_boundary_energy_injection << "\n";
+    }
 }
 
 void
@@ -4147,6 +4213,7 @@ RadiationTransport::ReadCheckpointData (std::string const& dir)
         dir + "/RadiationTransport_data.txt", std::ifstream::in};
     if (!checkpoint.good()) {
         m_cumulative_boundary_energy_loss = 0.0_rt;
+        m_cumulative_boundary_energy_injection = 0.0_rt;
         m_cumulative_numerical_energy_residual = 0.0_rt;
         m_last_numerical_energy_residual = 0.0_rt;
         ablastr::warn_manager::WMRecordWarning(
@@ -4233,6 +4300,21 @@ RadiationTransport::ReadCheckpointData (std::string const& dir)
                 "RadiationTransport checkpoint particle-conversion seed is "
                 "malformed.");
             m_particle_conversion_seed = particle_conversion_seed;
+        }
+        std::string extension_token;
+        if (checkpoint >> extension_token) {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                extension_token == "bath_ledger_v1" &&
+                    static_cast<bool>(checkpoint >> m_cumulative_boundary_energy_injection) &&
+                    amrex::Math::isfinite(m_cumulative_boundary_energy_injection) &&
+                    m_cumulative_boundary_energy_injection >= 0.0_rt,
+                "RadiationTransport checkpoint bath injection ledger is "
+                "malformed.");
+        } else {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(checkpoint.eof(), "RadiationTransport checkpoint bath "
+                                                               "injection ledger is unreadable.");
+            checkpoint.clear();
+            m_cumulative_boundary_energy_injection = 0.0_rt;
         }
         std::string trailing_token;
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -5191,6 +5273,7 @@ RadiationTransport::Advance (
 
     m_last_boundary_energy_loss = 0.0_rt;
     m_last_diffusion_boundary_energy_loss = 0.0_rt;
+    m_last_boundary_energy_injection = 0.0_rt;
     m_last_streaming_boundary_energy_loss = 0.0_rt;
     m_last_numerical_energy_residual = 0.0_rt;
     m_last_diffusion_boundary_momentum_loss = {0.0_rt, 0.0_rt, 0.0_rt};
@@ -6855,6 +6938,16 @@ RadiationTransport::Advance (
                         DiffusionEscapeFactor(m_diffusion_boundary_lo[direction]),
                         DiffusionEscapeFactor(
                             m_diffusion_boundary_hi[direction])));
+                bool const bath = m_diffusion_boundary_lo[direction] ==
+                                      static_cast<int>(DiffusionBoundary::MarshakBath) ||
+                                  m_diffusion_boundary_hi[direction] ==
+                                      static_cast<int>(DiffusionBoundary::MarshakBath);
+                if (bath) {
+                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                        periodic[direction] == 0, "A marshak_bath cannot be assigned to a periodic "
+                                                  "direction.");
+                    max_escape_factor = amrex::max(max_escape_factor, 0.5_rt);
+                }
             }
             if (max_escape_factor > 0.0_rt) {
                 // Vacuum/Marshak faces remove alpha*c*E*A. A/V <= 2/dx covers
@@ -6887,6 +6980,10 @@ RadiationTransport::Advance (
                 typename decltype(diffusion_residual_reduce_data)::Type;
             amrex::Gpu::DeviceScalar<amrex::Real> escaped_energy(0.0_rt);
             amrex::Real* const escaped_energy_ptr = escaped_energy.dataPtr();
+            amrex::Gpu::DeviceScalar<amrex::Real> injected_energy(0.0_rt);
+            amrex::Real* const injected_energy_ptr = injected_energy.dataPtr();
+            auto const* const bath_executors = m_diffusion_bath_executors.dataPtr();
+            auto const bath_is_temperature = m_diffusion_bath_is_temperature;
             amrex::Gpu::DeviceScalar<amrex::Real> escaped_momentum_0(0.0_rt);
             amrex::Gpu::DeviceScalar<amrex::Real> escaped_momentum_1(0.0_rt);
             amrex::Gpu::DeviceScalar<amrex::Real> escaped_momentum_2(0.0_rt);
@@ -6906,6 +7003,8 @@ RadiationTransport::Advance (
             for (int diffusion_step = 0;
                  diffusion_step < diffusion_substeps; ++diffusion_step)
             {
+                amrex::Real const bath_time =
+                    current_time + (diffusion_step + 0.5_rt) * diffusion_dt;
                 diffusion_energy.FillBoundary(warpx.Geom(lev).periodicity());
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -6955,6 +7054,10 @@ RadiationTransport::Advance (
                             AMREX_D_TERM(dx[0], * dx[1], * dx[2]);
 #endif
                         amrex::Real const old_energy = old_arr(i, j, k, group);
+                        // Failed boundary validation must not leave an
+                        // uninitialized value for a later substep before the
+                        // collective error check.
+                        new_arr(i, j, k, group) = old_energy;
                         amrex::Real const energy_density = old_energy / cell_volume;
                         amrex::Real energy_rate = 0.0_rt;
                         amrex::GpuArray<amrex::Real, 3> cell_flux{
@@ -7023,6 +7126,64 @@ RadiationTransport::Advance (
                                     (index < index_lo || index > index_hi)
                                     && periodic[direction] == 0;
                                 if (neighbor_outside) {
+                                    if (side_boundary ==
+                                        static_cast<int>(DiffusionBoundary::MarshakBath)) {
+                                        amrex::GpuArray<amrex::Real, 3> position{0.0_rt, 0.0_rt,
+                                                                                 0.0_rt};
+                                        amrex::GpuArray<int, AMREX_SPACEDIM> const indices{
+                                            AMREX_D_DECL(i, j, k)};
+                                        for (int axis = 0; axis < AMREX_SPACEDIM; ++axis) {
+                                            position[RadiationMomentumComponent(axis)] =
+                                                plo[axis] +
+                                                (indices[axis] - domain_lower[axis] + 0.5_rt +
+                                                 (axis == direction ? 0.5_rt * side : 0.0_rt)) *
+                                                    dx[axis];
+                                        }
+                                        int const parser_index =
+                                            (2 * direction + (side > 0 ? 1 : 0)) * num_groups +
+                                            group;
+                                        amrex::Real bath_density = bath_executors[parser_index](
+                                            position[0], position[1], position[2], bath_time);
+                                        amrex::Real const opacity = opacity_arr(i, j, k, group);
+                                        if (!(bath_density >= 0.0_rt) ||
+                                            !amrex::Math::isfinite(bath_density)) {
+                                            return DiffusionResidualReduceTuple{0.0_rt, 2};
+                                        }
+                                        if (bath_is_temperature[2 * direction +
+                                                                (side > 0 ? 1 : 0)] != 0) {
+                                            amrex::Real const temperature_squared =
+                                                bath_density * bath_density;
+                                            bath_density = radiation_constant *
+                                                           temperature_squared *
+                                                           temperature_squared *
+                                                           energy_groups.planckFraction(
+                                                               group, PhysConst::kb * bath_density);
+                                            if (!amrex::Math::isfinite(bath_density)) {
+                                                return DiffusionResidualReduceTuple{0.0_rt, 2};
+                                            }
+                                        }
+                                        if (!(opacity * min_cell_size >= minimum_optical_depth)) {
+                                            return DiffusionResidualReduceTuple{0.0_rt, 3};
+                                        }
+                                        // P1 half-cell diffusion resistance.
+                                        // Unlike the legacy cell-centred vacuum
+                                        // option, this is a Robin face value.
+                                        amrex::Real const conductance =
+                                            PhysConst::c /
+                                            (2.0_rt + 1.5_rt * opacity * dx[direction]);
+                                        amrex::Real const outward_power =
+                                            conductance * face_area *
+                                            (energy_density - bath_density);
+                                        energy_rate -= outward_power;
+                                        if (outward_power >= 0.0_rt) {
+                                            amrex::HostDevice::Atomic::Add(
+                                                escaped_energy_ptr, diffusion_dt * outward_power);
+                                        } else {
+                                            amrex::HostDevice::Atomic::Add(
+                                                injected_energy_ptr, -diffusion_dt * outward_power);
+                                        }
+                                        continue;
+                                    }
                                     cell_flux[direction] += 0.5_rt * side
                                         * DiffusionEscapeFactor(side_boundary)
                                         * PhysConst::c * energy_density;
@@ -7186,8 +7347,12 @@ RadiationTransport::Advance (
             amrex::ParallelDescriptor::ReduceIntMax(invalid_diffusion_energy);
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 invalid_diffusion_energy == 0,
-                "Radiation diffusion produced a negative or non-finite cell energy. "
-                "Reduce radiation_transport.diffusion_cfl.");
+                "Radiation diffusion failed validation (reason " +
+                    std::to_string(invalid_diffusion_energy) +
+                    ": 1=negative/nonfinite cell energy; reduce diffusion_cfl, "
+                    "2=negative/nonfinite bath energy density, "
+                    "3=bath face cell is below "
+                    "minimum_diffusion_optical_depth).");
             m_last_numerical_energy_residual +=
                 diffusion_numerical_energy_residual;
             if (enable_momentum_coupling) {
@@ -7221,6 +7386,9 @@ RadiationTransport::Advance (
             amrex::Real escaped = escaped_energy.dataValue();
             amrex::ParallelDescriptor::ReduceRealSum(escaped);
             m_last_diffusion_boundary_energy_loss += escaped;
+            amrex::Real injected = injected_energy.dataValue();
+            amrex::ParallelDescriptor::ReduceRealSum(injected);
+            m_last_boundary_energy_injection += injected;
             amrex::GpuArray<amrex::Real, 3> escaped_momentum{
                 escaped_momentum_0.dataValue(),
                 escaped_momentum_1.dataValue(),
@@ -7685,25 +7853,30 @@ RadiationTransport::Advance (
                 amrex::max(
                     std::abs(initial_radiation_energy),
                     std::abs(final_radiation_energy)));
-        amrex::Real const closure_error = residual_boundary_energy_loss
-            - m_last_boundary_energy_loss - m_last_numerical_energy_residual;
+        amrex::Real const closure_error =
+            residual_boundary_energy_loss - m_last_boundary_energy_loss +
+            m_last_boundary_energy_injection - m_last_numerical_energy_residual;
         if (!(std::abs(closure_error) <= roundoff_tolerance)) {
             std::ostringstream message;
             message.precision(std::numeric_limits<amrex::Real>::max_digits10);
-            message << "Explicit streaming-packet and diffusion-face boundary losses do "
-                "not close the radiation/material energy balance. This indicates "
-                "an untracked radiation representation change or boundary path. "
-                "Energy ledger (J): initial=" << initial_radiation_energy
-                << ", final=" << final_radiation_energy
-                << ", material=" << material_exchange
-                << ", streaming_escape=" << m_last_streaming_boundary_energy_loss
-                << ", diffusion_escape=" << m_last_diffusion_boundary_energy_loss
-                << ", numerical_residual=" << m_last_numerical_energy_residual
-                << ", closure_error=" << closure_error
-                << ", tolerance=" << roundoff_tolerance;
+            message << "Explicit streaming-packet and diffusion-face boundary "
+                       "losses do "
+                       "not close the radiation/material energy balance. This "
+                       "indicates "
+                       "an untracked radiation representation change or "
+                       "boundary path. "
+                       "Energy ledger (J): initial="
+                    << initial_radiation_energy << ", final=" << final_radiation_energy
+                    << ", material=" << material_exchange
+                    << ", streaming_escape=" << m_last_streaming_boundary_energy_loss
+                    << ", diffusion_escape=" << m_last_diffusion_boundary_energy_loss
+                    << ", bath_injection=" << m_last_boundary_energy_injection
+                    << ", numerical_residual=" << m_last_numerical_energy_residual
+                    << ", closure_error=" << closure_error << ", tolerance=" << roundoff_tolerance;
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false, message.str());
         }
         m_cumulative_boundary_energy_loss += m_last_boundary_energy_loss;
+        m_cumulative_boundary_energy_injection += m_last_boundary_energy_injection;
     }
     m_cumulative_numerical_energy_residual +=
         m_last_numerical_energy_residual;

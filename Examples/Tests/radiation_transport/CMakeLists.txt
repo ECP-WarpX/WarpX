@@ -2,6 +2,44 @@
 #
 
 add_warpx_test(
+    test_1d_radiation_transport_bath
+    1
+    1
+    inputs_base_1d_radiation_transport_bath
+    "analysis_bath.py --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"
+    OFF
+    OFF
+)
+add_warpx_test(
+    test_1d_radiation_transport_bath_restart
+    1
+    2
+    "inputs_base_1d_radiation_transport_bath amr.restart='../test_1d_radiation_transport_bath/diags/chk000050'"
+    "analysis_bath.py --reference ../test_1d_radiation_transport_bath --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"
+    OFF
+    test_1d_radiation_transport_bath
+)
+
+add_warpx_test(
+    test_1d_radiation_transport_bath_temperature
+    1
+    1
+    inputs_base_1d_radiation_transport_bath_temperature
+    "analysis_bath.py --temperature --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"
+    OFF
+    OFF
+)
+add_warpx_test(
+    test_3d_radiation_transport_bath
+    3
+    1
+    inputs_base_3d_radiation_transport_bath
+    "analysis_bath.py --dims 3 --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"
+    OFF
+    OFF
+)
+
+add_warpx_test(
     test_3d_radiation_transport_group_sampling
     3
     1
@@ -310,6 +348,22 @@ function(add_radiation_failure_test name dims inputs expected)
             "AMREX_INPUTS_FILE_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/"
             "OMP_NUM_THREADS=1")
 endfunction()
+
+add_radiation_failure_test(
+    test_1d_radiation_transport_bath_negative_rejected
+    1
+    "inputs_base_1d_radiation_transport_bath radiation_transport.diffusion_bath_energy_density_lo_0_g0(x,y,z,t)=-1.0"
+    "Radiation diffusion failed validation (reason 2")
+add_radiation_failure_test(
+    test_1d_radiation_transport_bath_thin_rejected
+    1
+    "inputs_base_1d_radiation_transport_bath radiation_transport.rosseland_transport_coefficient=0.5"
+    "Radiation diffusion failed validation (reason 3")
+add_radiation_failure_test(
+    test_1d_radiation_transport_bath_conversion_rejected
+    1
+    "inputs_base_1d_radiation_transport_bath radiation_transport.enable_particle_conversion=1"
+    "marshak_bath currently requires diffusion on a fixed grid")
 
 add_warpx_test(
     test_1d_radiation_transport_beer_lambert  # name

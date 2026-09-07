@@ -64,7 +64,8 @@ public:
     {
         Reflecting,
         Vacuum,
-        Marshak
+        Marshak,
+        MarshakBath
     };
 
     RadiationTransport (MultiParticleContainer& particles,
@@ -112,6 +113,12 @@ public:
 
     [[nodiscard]] int numEnergyGroups () const noexcept { return m_num_groups; }
 
+    [[nodiscard]] bool
+    hasDiffusionBath () const noexcept
+    {
+        return m_has_diffusion_bath;
+    }
+
     /** Number of spectral impulse carries declared by the restart header. */
     void SetRestartDiffusionMomentumGroups (int const groups) noexcept
     {
@@ -156,6 +163,19 @@ public:
     [[nodiscard]] amrex::Real cumulativeBoundaryEnergyLoss () const noexcept
     {
         return m_cumulative_boundary_energy_loss;
+    }
+
+    /** Net inward bath-face transfer, accumulated only where flux is inward. */
+    [[nodiscard]] amrex::Real
+    lastBoundaryEnergyInjection () const noexcept
+    {
+        return m_last_boundary_energy_injection;
+    }
+
+    [[nodiscard]] amrex::Real
+    cumulativeBoundaryEnergyInjection () const noexcept
+    {
+        return m_cumulative_boundary_energy_injection;
     }
 
     /** Signed numerical-energy residual introduced by accepted updates last step. */
@@ -326,6 +346,8 @@ private:
     mutable amrex::Real m_last_diffusion_boundary_energy_loss = 0.0;
     mutable amrex::Real m_last_streaming_boundary_energy_loss = 0.0;
     mutable amrex::Real m_cumulative_boundary_energy_loss = 0.0;
+    mutable amrex::Real m_last_boundary_energy_injection = 0.0;
+    mutable amrex::Real m_cumulative_boundary_energy_injection = 0.0;
     mutable amrex::Real m_last_numerical_energy_residual = 0.0;
     mutable amrex::Real m_cumulative_numerical_energy_residual = 0.0;
     mutable amrex::GpuArray<amrex::Real, 3>
@@ -334,6 +356,10 @@ private:
         m_last_streaming_boundary_momentum_loss{0.0, 0.0, 0.0};
     amrex::GpuArray<int, 3> m_diffusion_boundary_lo{0, 0, 0};
     amrex::GpuArray<int, 3> m_diffusion_boundary_hi{0, 0, 0};
+    bool m_has_diffusion_bath = false;
+    amrex::GpuArray<int, 6> m_diffusion_bath_is_temperature{0, 0, 0, 0, 0, 0};
+    std::vector<amrex::Parser> m_diffusion_bath_parsers;
+    amrex::Gpu::DeviceVector<amrex::ParserExecutor<4>> m_diffusion_bath_executors;
     MaterialCoupling m_material_coupling = MaterialCoupling::None;
     LteExchangeSolver m_lte_exchange_solver =
         LteExchangeSolver::FrozenTemperature;

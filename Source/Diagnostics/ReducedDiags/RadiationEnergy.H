@@ -27,6 +27,7 @@ public:
 private:
     std::string m_photon_species;
     int m_num_groups = 1;
+    bool m_has_boundary_injection = false;
     amrex::Real m_cumulative_material_exchange = 0.0;
     amrex::Real m_cumulative_boundary_energy_loss = 0.0;
     amrex::Real m_cumulative_streaming_boundary_energy_loss = 0.0;

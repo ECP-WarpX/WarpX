@@ -5191,7 +5191,7 @@ studies.
    Diffusion-face condition on the low side of each mesh dimension. One value
    applies to every low face; a per-dimension list is also accepted. Allowed
    values are ``reflecting``, ``zero_flux``, ``vacuum``, ``free_streaming`` and
-   ``marshak``.
+   ``marshak`` and ``marshak_bath``.
    ``reflecting`` / ``zero_flux`` is a homogeneous Neumann condition and is
    the default. ``vacuum`` removes the free-streaming flux :math:`F=cE` from
    the interior cell. ``marshak`` is the grey P1 / Eddington vacuum condition
@@ -5200,6 +5200,22 @@ studies.
    (per unit axial length) area in RCYLINDER. A zero-energy Dirichlet face is
    not provided: that condition is not a well-posed diffusion-limit vacuum
    boundary and can produce a superluminal, mesh-dependent flux.
+
+   ``marshak_bath`` is a distinct driven Robin condition for stationary-material
+   energy transport. It uses the P1 relation
+   :math:`F_{out}=c(E_{face}-E_{bath})/2` with a half-cell diffusion resistance:
+   :math:`F_{out}=c(E_{cell}-E_{bath})/(2+3\alpha_R\Delta x/2)`.
+   Here :math:`D=c/(3\alpha_R)` is the boundary P1 diffusion coefficient;
+   interior faces retain the flux limiter. This does not change the legacy
+   ``marshak`` cell-centred vacuum discretization. Setting a bath energy to zero
+   is a Robin vacuum, not a zero-energy Dirichlet condition.
+
+   Bath faces must be nonperiodic, and their adjacent cells must satisfy
+   ``minimum_diffusion_optical_depth``. The current bath implementation requires
+   ``amr.max_level=0``, diffusion enabled, and momentum coupling and particle
+   conversion disabled. It does not define an angular photon injector or qualify
+   moving-material radiation force/work. A bath is applied only at a domain face,
+   never at the radial thick/thin interface shortcut described below.
 
    In RCYLINDER, RZ and RSPHERE the radial low face is the axis or origin and
    must remain ``reflecting``. An open high-side condition also applies at the
@@ -5220,6 +5236,50 @@ studies.
    High-side counterpart of
    :pp:param:`radiation_transport.diffusion_boundary_lo`. Use ``marshak`` or
    ``vacuum`` at the physical outer radius of an RCYLINDER load.
+
+.. pp:param:: radiation_transport.diffusion_bath_energy_density_lo_<d>_g<g>(x,y,z,t)
+   :type: ``math expression``
+   :units: :math:`J/m^3`
+
+   Prescribed group-integrated bath radiation energy density at a ``marshak_bath``
+   low face. ``<d>`` is the zero-based mesh direction (0 is z in 1D; 0 and 1 are
+   x and z in 2D), and ``<g>`` is the zero-based energy group. Every group on
+   every bath face requires an expression, including ``g0`` in a grey run,
+   unless the temperature alternative below is selected for that face.
+   Expressions on non-bath faces are rejected. ``x,y,z`` are physical face-centre
+   coordinates in metres (x is r in radial geometries), and ``t`` is the radiation
+   diffusion substep midpoint in seconds. Values must be finite and nonnegative.
+   Specify zero explicitly for an undriven group. No Planck spectrum is inferred
+   from a group-energy expression.
+
+.. pp:param:: radiation_transport.diffusion_bath_energy_density_hi_<d>_g<g>(x,y,z,t)
+   :type: ``math expression``
+   :units: :math:`J/m^3`
+
+   High-face counterpart of the preceding bath expression. ``RadiationEnergy``
+   appends ``boundary_energy_injection`` and ``cumulative_boundary_energy_injection``
+   columns when bath faces are configured. Injection and the existing escape
+   columns accumulate the inward and outward parts of the **net** accepted face
+   flux separately; they are not a decomposition into microscopic incident and
+   emitted angular intensities. Energy balance includes escape minus injection.
+   The live cumulative injection ledger is preserved by a versioned checkpoint
+   extension. Runs without baths retain their existing diagnostic columns.
+
+.. pp:param:: radiation_transport.diffusion_bath_temperature_lo_<d>(x,y,z,t)
+   :type: ``math expression``
+   :units: :math:`K`
+
+   Alternative blackbody bath temperature for one low face. WarpX integrates
+   :math:`aT^4` over the configured energy groups, including the implicit spectral
+   tails. This expression is mutually exclusive with all group-energy expressions
+   on that face. The temperature must be finite and nonnegative; zero switches
+   off the incoming bath while retaining the Robin vacuum loss.
+
+.. pp:param:: radiation_transport.diffusion_bath_temperature_hi_<d>(x,y,z,t)
+   :type: ``math expression``
+   :units: :math:`K`
+
+   High-face counterpart of the preceding bath temperature expression.
 
 .. pp:param:: radiation_transport.enable_particle_conversion
    :type: ``bool``
@@ -5793,6 +5853,14 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Possible scalar fields: ``part_per_cell`` ``rho`` ``phi`` ``F`` ``part_per_grid`` ``proc_num`` ``divE`` ``divB`` ``eb_covered`` ``rho_<species_name>`` and ``T_<species_name>``, where ``<species_name>`` must match the name of one of the available particle species.
     ``T_<species_name>`` is the temperature in eV (only valid for non-relativistic plasmas, since the code relies on the equipartition theorem to extract the temperature).
     With the hybrid-PIC solver (:pp:param:`algo.maxwell_solver` = ``hybrid``), the scalar fields ``Te`` (electron temperature in K: implied by the electron-pressure closure, or the evolved state variable when :pp:param:`hybrid_pic_model.solve_electron_energy_equation` is on) and ``Pe`` (electron pressure in Pa, as used in the Ohm's-law E-field solve) are also available.
+
+    With the electron-energy equation enabled, the initial diagnostic thermal
+    state is prepared from the deposited material density and selected EOS,
+    including prescribed temperature profiles; a restart preserves the evolved
+    temperature. ``Pe`` includes the pressure boundary treatment required by the
+    Ohm solver. It is not an independently conserved caloric variable, so energy
+    audits should use the selected EOS with the primary temperature, density and
+    composition rather than assuming ``Pe/(gamma-1)`` is valid at every boundary.
     ``eb_covered`` is a number between 0 and 1 that indicates the fraction of the cell that is covered by the embedded boundary.
     Note that ``phi`` will only be written out when ``do_electrostatic==labframe``.
     Also, note that for :pp:param:`<diag_name>.diag_type = BackTransformed`, the only scalar field currently supported is ``rho``.

@@ -42,6 +42,7 @@ RadiationEnergy::RadiationEnergy (std::string const& rd_name)
     pp_radiation.get("photon_species", m_photon_species);
     auto& warpx = WarpX::GetInstance();
     m_num_groups = warpx.GetRadiationTransport().numEnergyGroups();
+    m_has_boundary_injection = warpx.GetRadiationTransport().hasDiffusionBath();
     std::string diagnostic_photon_species = m_photon_species;
     if (pp_diag.query("photon_species", diagnostic_photon_species)) {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -60,7 +61,7 @@ RadiationEnergy::RadiationEnergy (std::string const& rd_name)
     // Total radiation, streaming photons, thick-field radiation, signed
     // current/cumulative material exchange and current/cumulative escape loss.
     int const num_group_columns = m_num_groups > 1 ? m_num_groups : 0;
-    m_data.resize(15 + num_group_columns, 0.0_rt);
+    m_data.resize(15 + num_group_columns + (m_has_boundary_injection ? 2 : 0), 0.0_rt);
 
     if (amrex::ParallelDescriptor::IOProcessor() && m_write_header) {
         std::ofstream output{
@@ -98,6 +99,11 @@ RadiationEnergy::RadiationEnergy (std::string const& rd_name)
                << "]numerical_energy_residual(J)"
                << m_sep << "[" << material_column + 7
                << "]cumulative_numerical_energy_residual(J)";
+        if (m_has_boundary_injection) {
+            output << m_sep << "[" << material_column + 8 << "]boundary_energy_injection(J)"
+                   << m_sep << "[" << material_column + 9
+                   << "]cumulative_boundary_energy_injection(J)";
+        }
         output << "\n";
     }
 }
@@ -195,6 +201,10 @@ void RadiationEnergy::ComputeDiags (int const step)
         radiation_transport.lastNumericalEnergyResidual();
     m_data[material_column + 7] =
         m_cumulative_numerical_energy_residual;
+    if (m_has_boundary_injection) {
+        m_data[material_column + 8] = radiation_transport.lastBoundaryEnergyInjection();
+        m_data[material_column + 9] = radiation_transport.cumulativeBoundaryEnergyInjection();
+    }
 }
 
 void RadiationEnergy::WriteCheckpointData (std::string const& dir)
