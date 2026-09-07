@@ -371,8 +371,17 @@ add_radiation_failure_test(
     "inputs_base_1d_radiation_transport_bath_common radiation_transport.diffusion_boundary_lo=marshak radiation_transport.diffusion_boundary_hi=marshak amr.restart='../test_1d_radiation_transport_bath/diags/chk000050'"
     "A restart with a bath injection ledger")
 if(WarpX_APP AND "1" IN_LIST WarpX_DIMS)
-    set_tests_properties(test_1d_radiation_transport_bath_removal_restart_rejected.run
-        PROPERTIES DEPENDS test_1d_radiation_transport_bath.run)
+    # A run dependency alone does not keep the checkpoint alive until this
+    # rejection test: CI cleanup can otherwise remove it after the valid restart.
+    # A fixture also selects the producer when running only the rejection test.
+    set_property(TEST test_1d_radiation_transport_bath.run APPEND PROPERTY
+        FIXTURES_SETUP radiation_bath_checkpoint)
+    set_property(TEST test_1d_radiation_transport_bath_removal_restart_rejected.run
+        APPEND PROPERTY FIXTURES_REQUIRED radiation_bath_checkpoint)
+    if(TEST test_1d_radiation_transport_bath.cleanup)
+        set_property(TEST test_1d_radiation_transport_bath.cleanup APPEND PROPERTY
+            FIXTURES_CLEANUP radiation_bath_checkpoint)
+    endif()
 endif()
 
 add_warpx_test(
