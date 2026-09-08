@@ -258,6 +258,9 @@ public:
                     }
 #endif
 
+                    MultiFab phi_sb(ba, dm, 1, 1);
+                    MultiFab rho_sb(ba, dm, 1, 0);
+
                     // For single Box case, agg_grid_size does not matter
                     for (int mcl = 0; mcl <= mcl0; ++mcl) {
                         auto info = info0;
@@ -277,8 +280,9 @@ public:
                                     phi.setVal(0);
                                     Gpu::synchronize();
                                     auto t0 = amrex::second();
-                                    solve_doit(parms_tmp, ba, dm, geom, *tmp.first, ng, phi, rho,
-                                               relative_tolerance, absolute_tolerance);
+                                    solve_single_box(geom, *tmp.first, ng, phi, rho,
+                                                     phi_sb, rho_sb,
+                                                     relative_tolerance, absolute_tolerance);
                                     Gpu::synchronize();
                                     auto t1 = amrex::second();
                                     assert_no_nan(phi);
@@ -328,8 +332,8 @@ public:
                                     phi.setVal(0);
                                     Gpu::synchronize();
                                     auto t0 = amrex::second();
-                                    solve_doit(parms_tmp, ba, dm, geom, *tmp.first, ng, phi, rho,
-                                               relative_tolerance, absolute_tolerance);
+                                    tmp.first->solve({&phi}, {&rho},
+                                                     relative_tolerance, absolute_tolerance);
                                     Gpu::synchronize();
                                     auto t1 = amrex::second();
                                     assert_no_nan(phi);
@@ -392,6 +396,8 @@ public:
             m_ba = BoxArray(geom.Domain());
             m_ba.convert(rho.ixType());
             m_dm = DistributionMapping(Vector<int>{0});
+            m_phi_tmp.define(m_ba, m_dm, 1, 1);
+            m_rho_tmp.define(m_ba, m_dm, 1, 0);
 #if defined(AMREX_USE_EB)
             if (eb_enabled) {
                 eb_fac = amrex::makeEBFabFactory
@@ -421,8 +427,12 @@ public:
     void solve (amrex::MultiFab& phi, amrex::MultiFab const& rho,
                 amrex::Real relative_tolerance, amrex::Real absolute_tolerance)
     {
-        solve_doit(m_parms, m_ba, m_dm, m_geom, *m_mlmg,  m_ng, phi, rho,
-                   relative_tolerance, absolute_tolerance);
+        if (m_parms.single_box) {
+            solve_single_box(m_geom, *m_mlmg, m_ng, phi, rho, m_phi_tmp, m_rho_tmp,
+                             relative_tolerance, absolute_tolerance);
+        } else {
+            m_mlmg->solve({&phi}, {&rho}, relative_tolerance, absolute_tolerance);
+        }
     }
 
 private:
@@ -440,6 +450,9 @@ private:
     amrex::Geometry m_geom;
     amrex::BoxArray m_ba;
     amrex::DistributionMapping m_dm;
+    //! Temporaries of the single Box solve. See solve_single_box.
+    amrex::MultiFab m_phi_tmp;
+    amrex::MultiFab m_rho_tmp;
     std::unique_ptr<amrex::MLMG> m_mlmg;
     std::unique_ptr<amrex::MLNodeLinOp> m_linop;
     int m_ng;
@@ -524,25 +537,26 @@ private:
         }
     }
 
-    static void solve_doit (Parms const& parms, amrex::BoxArray const& ba,
-                            amrex::DistributionMapping const& dm,
-                            amrex::Geometry const& geom,
-                            amrex::MLMG& mlmg, int ng,
-                            amrex::MultiFab& phi, amrex::MultiFab const& rho,
-                            amrex::Real relative_tolerance, amrex::Real absolute_tolerance)
+    /** Solve on a single Box covering the whole domain.
+     *
+     * `phi_tmp` and `rho_tmp` are owned by the caller, because MLMG aliases
+     * the solution we pass to it. MLMG::getGradSolution, which the caller may
+     * use after the solve, reads that alias. So `phi_tmp` must not be a local
+     * variable here.
+     */
+    static void solve_single_box (amrex::Geometry const& geom,
+                                  amrex::MLMG& mlmg, int ng,
+                                  amrex::MultiFab& phi, amrex::MultiFab const& rho,
+                                  amrex::MultiFab& phi_tmp, amrex::MultiFab& rho_tmp,
+                                  amrex::Real relative_tolerance,
+                                  amrex::Real absolute_tolerance)
     {
-        if (parms.single_box) {
-            amrex::MultiFab phi_tmp(ba, dm, 1, 1);
-            amrex::MultiFab rho_tmp(ba, dm, 1, 0);
-            phi_tmp.ParallelCopy(phi, 0, 0, 1);
-            rho_tmp.ParallelCopy(rho, 0, 0, 1);
-            mlmg.solve({&phi_tmp}, {&rho_tmp}, relative_tolerance, absolute_tolerance);
-            int ngsrc = ng ? 1 : 0;
-            int ngdst = std::min(ngsrc, phi.nGrow());
-            phi.ParallelCopy(phi_tmp, 0, 0, 1, ngsrc, ngdst, geom.periodicity());
-        } else {
-            mlmg.solve({&phi}, {&rho}, relative_tolerance, absolute_tolerance);
-        }
+        phi_tmp.ParallelCopy(phi, 0, 0, 1);
+        rho_tmp.ParallelCopy(rho, 0, 0, 1);
+        mlmg.solve({&phi_tmp}, {&rho_tmp}, relative_tolerance, absolute_tolerance);
+        int ngsrc = ng ? 1 : 0;
+        int ngdst = std::min(ngsrc, phi.nGrow());
+        phi.ParallelCopy(phi_tmp, 0, 0, 1, ngsrc, ngdst, geom.periodicity());
     }
 };
 
