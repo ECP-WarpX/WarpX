@@ -148,6 +148,7 @@ def make_sim():
         particle_shape="quadratic",
         current_deposition_algo=None,
         dt=None,
+        evolve_scheme=None,
     ):
         if WARPX_DIMS not in GRID_CLASS:
             raise NotImplementedError(
@@ -191,6 +192,8 @@ def make_sim():
             verbose=0,
             particle_shape=particle_shape,
             warpx_current_deposition_algo=current_deposition_algo,
+            # None keeps WarpX's default, the explicit scheme
+            warpx_evolve_scheme=evolve_scheme,
         )
         # no particles are injected: the tests add them explicitly
         sim.add_species(electrons, layout=None)
