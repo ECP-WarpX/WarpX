@@ -149,11 +149,12 @@ def test_mass_matrices_match_push_and_deposit(
 
     # ApplyMassMatrices reads ``dE`` as far as the band of each (J, E) pair
     # reaches, and silently truncates the band at the guard cells of ``dE``.
-    # For a nodal J paired with a cell-centered E (Jx with Ez here), the band
-    # reaches nox + 1 cells, one more than the guard cells of J and, for the
-    # quadratic shape, also one more than ``Efield_fp`` has. Give ``dE`` enough
-    # guard cells for the full band, so that this test checks the mass
-    # matrices themselves and not the guard cells of ``Efield_fp``.
+    # Along a direction where J is nodal and E is cell-centered (or the other
+    # way round) the band is one component wider, so it reaches nox + 1 cells:
+    # one more than the guard cells of J and, for the quadratic shape, also one
+    # more than ``Efield_fp`` has. Give ``dE`` enough guard cells for the full
+    # band, so that this test checks the mass matrices themselves and not the
+    # guard cells of ``Efield_fp``.
     n_grow_j = fields.get("current_fp", "x", 0).n_grow_vect
     n_grow_e = fields.get("Efield_fp", "x", 0).n_grow_vect
     n_grow_extra = max(
