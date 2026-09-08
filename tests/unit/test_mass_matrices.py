@@ -24,12 +24,23 @@ from pywarpx import picmi
 
 constants = picmi.constants
 
-# RZ deposits with an inverse volume scaling and rotates the mass matrices
-# into cylindrical components; make_sim does not build that geometry yet.
-pytestmark = pytest.mark.skipif(
-    pywarpx.libwarpx.geometry_dim not in ("1d", "2d", "3d"),
-    reason="the mass matrices comparison is set up for Cartesian geometries",
-)
+pytestmark = [
+    # RZ deposits with an inverse volume scaling and rotates the mass matrices
+    # into cylindrical components; make_sim does not build that geometry yet.
+    pytest.mark.skipif(
+        pywarpx.libwarpx.geometry_dim not in ("1d", "2d", "3d"),
+        reason="the mass matrices comparison is set up for Cartesian geometries",
+    ),
+    # In 3D only the diagonal preconditioner mass matrices are deposited: the
+    # full_mass_matrices branch of doDirectJandSigmaDepositionKernel is empty
+    # there, and ImplicitSolver::InitializeMassMatrices asserts against
+    # use_mass_matrices_jacobian. Skip rather than trip that assert, which
+    # would abort the whole pytest process. Drop this once 3D is implemented.
+    pytest.mark.skipif(
+        pywarpx.libwarpx.geometry_dim == "3d",
+        reason="full mass matrices are not implemented in 3D",
+    ),
+]
 
 
 def _theta_implicit_with_mass_matrices():
