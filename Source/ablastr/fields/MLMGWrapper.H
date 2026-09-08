@@ -45,6 +45,7 @@ public:
 
         ParmParse pp("warpx");
         pp.query("verbose", m_verbose);
+        pp.query("tune_mlmg", m_tune_mlmg);
 
         LPInfo info0;
         if (!eb_enabled && !is_rz) {
@@ -178,12 +179,15 @@ public:
                 (std::move(l_mlmg), std::move(l_linop));
         };
 
+        // Tuning is expensive, because it performs a number of trial solves.
+        // So it is opt-in. Without it, the default parameters are used.
         auto key = std::make_pair(lev, rho.getBDKey());
-        if (auto it = m_parms_map.find(key); it != m_parms_map.end())
+        auto it = m_tune_mlmg ? m_parms_map.find(key) : m_parms_map.end();
+        if (it != m_parms_map.end())
         {
             m_parms = it->second;
         }
-        else
+        else if (m_tune_mlmg)
         {
             MultiFab phi(rho.boxArray(), rho.DistributionMap(), 1, 1, MFInfo{}, rho.Factory());
 
@@ -440,6 +444,8 @@ private:
     std::unique_ptr<amrex::MLNodeLinOp> m_linop;
     int m_ng;
     int m_verbose = 1;
+    //! Auto-tune the MLMG parameters? (warpx.tune_mlmg)
+    bool m_tune_mlmg = false;
 
     //! Elapsed time marking a setup that failed and must not be selected
     static constexpr double t_failed = std::numeric_limits<double>::max();

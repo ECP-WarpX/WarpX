@@ -538,6 +538,20 @@ Overall simulation parameters
 
     Must be greater than zero when specified.
 
+.. pp:param:: warpx.tune_mlmg
+    :type: ``bool``
+    :default: ``0``
+
+    Whether to auto-tune the AMReX MLMG parameters (grid agglomeration, maximum
+    coarsening level, and, on GPUs, stream synchronization) used by the
+    electrostatic Poisson solver.
+
+    When enabled, the first solve for a given grid layout times a number of trial
+    solves and keeps the fastest setup, which is then reused for all later solves
+    with that layout. This costs extra time up front and pays off for runs with
+    many solves. Setups that fail or produce NaNs are discarded; if none work,
+    the default parameters are used.
+
 .. pp:param:: warpx.magnetostatic_solver_required_precision
     :type: ``float``
     :default: value of ``self_fields_required_precision``
