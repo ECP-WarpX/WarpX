@@ -31,7 +31,7 @@ namespace ScatteringUtils {
 
         [[nodiscard]]
         AMREX_GPU_HOST_DEVICE AMREX_INLINE
-        bool isValid () const
+        bool hasValidData () const
         {
             return (m_energies != nullptr) && (m_coefficients != nullptr)
                 && (m_num_energies > 0) && (m_num_coefficients > 0);
@@ -58,6 +58,8 @@ namespace ScatteringUtils {
             amrex::ParticleReal const energy_MeV,
             int const coefficient_index) const
         {
+            AMREX_ASSERT(hasValidData());
+
             using namespace amrex::literals;
 
             if (energy_MeV <= m_energies[0]) {
