@@ -152,7 +152,7 @@ When a change removes or renames a user-facing input parameter, add a guard to t
 
 Make sure the PR description is concise.
 
-Put additional system details, corner-cases and rejected ideas in a collapsed block, so the summary stays short:
+If important, add system details, corner-cases and rejected ideas in a collapsed block, so the summary stays short:
 
 ```markdown
 <details>
