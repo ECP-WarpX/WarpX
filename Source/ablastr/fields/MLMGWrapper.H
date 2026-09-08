@@ -43,7 +43,7 @@ public:
         using namespace amrex;
         using namespace amrex::literals;
 
-        ParmParse pp("warpx");
+        ParmParse const pp("warpx");
         pp.query("verbose", m_verbose);
         pp.query("tune_mlmg", m_tune_mlmg);
 
@@ -69,7 +69,7 @@ public:
 
         auto make_mlmg_linop = [&] (LPInfo const& info, BoxArray const& ba,
                                     DistributionMapping const& dm,
-                                    FabFactory<FArrayBox> const* fac)
+                                    [[maybe_unused]] FabFactory<FArrayBox> const* fac)
         {
             std::unique_ptr<amrex::MLMG> l_mlmg;
             std::unique_ptr<amrex::MLNodeLinOp> l_linop;
@@ -174,15 +174,13 @@ public:
 
             l_mlmg->setThrowException(true);
 
-            return std::make_pair<std::unique_ptr<amrex::MLMG>,
-                                  std::unique_ptr<amrex::MLNodeLinOp>>
-                (std::move(l_mlmg), std::move(l_linop));
+            return std::make_pair(std::move(l_mlmg), std::move(l_linop));
         };
 
         // Tuning is expensive, because it performs a number of trial solves.
         // So it is opt-in. Without it, the default parameters are used.
-        auto key = std::make_pair(lev, rho.getBDKey());
-        auto it = m_tune_mlmg ? m_parms_map.find(key) : m_parms_map.end();
+        auto const key = std::make_pair(lev, rho.getBDKey());
+        auto const it = m_tune_mlmg ? m_parms_map.find(key) : m_parms_map.end();
         if (it != m_parms_map.end())
         {
             m_parms = it->second;
@@ -218,7 +216,9 @@ public:
                     auto t1 = amrex::second();
                     assert_no_nan(phi);
                     tsolve = t1-t0;
-                } catch (...) {}
+                } catch (...) {
+                    tsolve = t_failed; // discard this setup
+                }
                 tsolve = reduce_time(tsolve);
                 baseline_ok = (tsolve < t_failed);
                 if (baseline_ok) {
@@ -245,7 +245,7 @@ public:
                 {
                     BoxArray ba(geom.Domain());
                     ba.convert(rho.ixType());
-                    DistributionMapping dm(Vector<int>{0});
+                    DistributionMapping const dm(Vector<int>{0});
 
                     auto const* fac = factory;
 #if defined(AMREX_USE_EB)
@@ -267,7 +267,7 @@ public:
                         info.setMaxCoarseningLevel(mcl);
                         auto tmp = make_mlmg_linop(info, ba, dm, fac);
                         tmp.first->setMaxIter(std::min(max_iters, 2*niter0));
-                        for (bool nosync : no_gpu_sync_options) {
+                        for (bool const nosync : no_gpu_sync_options) {
                             tmp.first->setNoGpuSync(nosync);
                             double tsolve_tmp = t_failed;
                             Parms parms_tmp{};
@@ -287,7 +287,9 @@ public:
                                     auto t1 = amrex::second();
                                     assert_no_nan(phi);
                                     t_try = t1-t0;
-                                } catch (...) {}
+                                } catch (...) {
+                                    t_try = t_failed; // discard this setup
+                                }
                                 t_try = reduce_time(t_try);
                                 if (t_try == t_failed) {
                                     tsolve_tmp = t_failed;
@@ -313,12 +315,12 @@ public:
                     agg_grid_size.push_back(LPInfo::getDefaultAgglomerationGridSize() * 4);
                 }
                 for (int mcl = 0; mcl <= mcl0; ++mcl) {
-                    for (int ags : agg_grid_size) {
+                    for (int const ags : agg_grid_size) {
                         auto info = info0;
                         info.setMaxCoarseningLevel(mcl).setAgglomerationGridSize(ags);
                         auto tmp = make_mlmg_linop(info, ba, dm, factory);
                         tmp.first->setMaxIter(std::min(max_iters, 2*niter0));
-                        for (bool nosync : no_gpu_sync_options) {
+                        for (bool const nosync : no_gpu_sync_options) {
                             tmp.first->setNoGpuSync(nosync);
                             double tsolve_tmp = t_failed;
                             Parms parms_tmp{};
@@ -338,7 +340,9 @@ public:
                                     auto t1 = amrex::second();
                                     assert_no_nan(phi);
                                     t_try = t1-t0;
-                                } catch (...) {}
+                                } catch (...) {
+                                    t_try = t_failed; // discard this setup
+                                }
                                 t_try = reduce_time(t_try);
                                 if (t_try == t_failed) {
                                     tsolve_tmp = t_failed;
@@ -554,8 +558,8 @@ private:
         phi_tmp.ParallelCopy(phi, 0, 0, 1);
         rho_tmp.ParallelCopy(rho, 0, 0, 1);
         mlmg.solve({&phi_tmp}, {&rho_tmp}, relative_tolerance, absolute_tolerance);
-        int ngsrc = ng ? 1 : 0;
-        int ngdst = std::min(ngsrc, phi.nGrow());
+        int const ngsrc = ng ? 1 : 0;
+        int const ngdst = std::min(ngsrc, phi.nGrow());
         phi.ParallelCopy(phi_tmp, 0, 0, 1, ngsrc, ngdst, geom.periodicity());
     }
 };
