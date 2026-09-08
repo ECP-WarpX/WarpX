@@ -177,7 +177,7 @@ Prefix the PR title with `[WIP] ` until this list is complete.
 
 - [x] Drafted with LLM [optional model details]
 - [ ] Manually self-reviewed: checked and understand logic, improved wording, checked for outdated and unnecessarily historic documentation; ensured new features are tested with small, fast tests
-- [ ] Performed a separate, LLM-based review and fixed all findings
+- [ ] Performed a separate, LLM-based review loop: no new bugs and new stale docs remain
 - [ ] Finalized: documented in a way to ensure a human WarpX developer can understand
 ```
 
