@@ -19,6 +19,8 @@
 #include <cfenv>
 #include <limits>
 #include <map>
+#include <memory>
+#include <new>
 #include <utility>
 
 namespace ablastr::fields {
@@ -196,6 +198,32 @@ public:
             // chance to catch the failure.
             FPExceptGuard const fpe_guard{};
 
+            // Time one attempt at solving with the current setup. Returns the
+            // globally reduced time, or t_failed if the setup is to be
+            // discarded. Only failures that mean "this setup does not work"
+            // are caught here. Anything else, for instance an amrex::Abort
+            // turned into an exception by amrex.throw_exception, is a real
+            // error and must not be mistaken for a slow setup.
+            auto time_attempt = [&] (auto&& attempt)
+            {
+                auto t = t_failed;
+                try {
+                    phi.setVal(0);
+                    Gpu::synchronize();
+                    auto const t0 = amrex::second();
+                    attempt();
+                    Gpu::synchronize();
+                    auto const t1 = amrex::second();
+                    assert_no_nan(phi);
+                    t = t1-t0;
+                } catch (MLMG::error const&) {
+                    t = t_failed; // the solve failed
+                } catch (std::bad_alloc const&) {
+                    t = t_failed; // the setup does not fit in memory
+                }
+                return reduce_time(t);
+            };
+
             auto tsolve = t_failed;
             int mcl0, niter0;
             bool baseline_ok = false;
@@ -207,19 +235,10 @@ public:
                 // maximal value so that any setup that does work below will be
                 // chosen, and we use max_iters for the other setups.
                 niter0 = max_iters;
-                try {
-                    phi.setVal(0);
-                    Gpu::synchronize();
-                    auto t0 = amrex::second();
-                    tmp.first->solve({&phi}, {&rho}, relative_tolerance, absolute_tolerance);
-                    Gpu::synchronize();
-                    auto t1 = amrex::second();
-                    assert_no_nan(phi);
-                    tsolve = t1-t0;
-                } catch (...) {
-                    tsolve = t_failed; // discard this setup
-                }
-                tsolve = reduce_time(tsolve);
+                tsolve = time_attempt([&] {
+                    tmp.first->solve({&phi}, {&rho}, relative_tolerance,
+                                     absolute_tolerance);
+                });
                 baseline_ok = (tsolve < t_failed);
                 if (baseline_ok) {
                     niter0 = tmp.first->getNumIters();
@@ -258,14 +277,25 @@ public:
                     }
 #endif
 
-                    MultiFab phi_sb(ba, dm, 1, 1);
-                    MultiFab rho_sb(ba, dm, 1, 0);
+                    MultiFab phi_sb, rho_sb;
+                    bool sb_ok = true;
+                    try {
+                        phi_sb.define(ba, dm, 1, 1);
+                        rho_sb.define(ba, dm, 1, 0);
+                    } catch (std::bad_alloc const&) {
+                        sb_ok = false; // does not fit in memory
+                    }
 
                     // For single Box case, agg_grid_size does not matter
-                    for (int mcl = 0; mcl <= mcl0; ++mcl) {
+                    for (int mcl = 0; sb_ok && (mcl <= mcl0); ++mcl) {
                         auto info = info0;
                         info.setMaxCoarseningLevel(mcl);
-                        auto tmp = make_mlmg_linop(info, ba, dm, fac);
+                        LinOpPair tmp;
+                        try {
+                            tmp = make_mlmg_linop(info, ba, dm, fac);
+                        } catch (std::bad_alloc const&) {
+                            continue; // does not fit in memory
+                        }
                         tmp.first->setMaxIter(std::min(max_iters, 2*niter0));
                         for (bool const nosync : no_gpu_sync_options) {
                             tmp.first->setNoGpuSync(nosync);
@@ -275,22 +305,11 @@ public:
                             parms_tmp.mcl = mcl;
                             parms_tmp.no_gpu_sync = nosync;
                             for (int itry = 0; itry < 3; ++itry) {
-                                auto t_try = t_failed;
-                                try {
-                                    phi.setVal(0);
-                                    Gpu::synchronize();
-                                    auto t0 = amrex::second();
+                                auto const t_try = time_attempt([&] {
                                     solve_single_box(geom, *tmp.first, ng, phi, rho,
-                                                     phi_sb, rho_sb,
-                                                     relative_tolerance, absolute_tolerance);
-                                    Gpu::synchronize();
-                                    auto t1 = amrex::second();
-                                    assert_no_nan(phi);
-                                    t_try = t1-t0;
-                                } catch (...) {
-                                    t_try = t_failed; // discard this setup
-                                }
-                                t_try = reduce_time(t_try);
+                                                     phi_sb, rho_sb, relative_tolerance,
+                                                     absolute_tolerance);
+                                });
                                 if (t_try == t_failed) {
                                     tsolve_tmp = t_failed;
                                     break;
@@ -318,7 +337,12 @@ public:
                     for (int const ags : agg_grid_size) {
                         auto info = info0;
                         info.setMaxCoarseningLevel(mcl).setAgglomerationGridSize(ags);
-                        auto tmp = make_mlmg_linop(info, ba, dm, factory);
+                        LinOpPair tmp;
+                        try {
+                            tmp = make_mlmg_linop(info, ba, dm, factory);
+                        } catch (std::bad_alloc const&) {
+                            continue; // does not fit in memory
+                        }
                         tmp.first->setMaxIter(std::min(max_iters, 2*niter0));
                         for (bool const nosync : no_gpu_sync_options) {
                             tmp.first->setNoGpuSync(nosync);
@@ -329,21 +353,10 @@ public:
                             parms_tmp.ags = ags;
                             parms_tmp.no_gpu_sync = nosync;
                             for (int itry = 0; itry < 3; ++itry) {
-                                auto t_try = t_failed;
-                                try {
-                                    phi.setVal(0);
-                                    Gpu::synchronize();
-                                    auto t0 = amrex::second();
-                                    tmp.first->solve({&phi}, {&rho},
-                                                     relative_tolerance, absolute_tolerance);
-                                    Gpu::synchronize();
-                                    auto t1 = amrex::second();
-                                    assert_no_nan(phi);
-                                    t_try = t1-t0;
-                                } catch (...) {
-                                    t_try = t_failed; // discard this setup
-                                }
-                                t_try = reduce_time(t_try);
+                                auto const t_try = time_attempt([&] {
+                                    tmp.first->solve({&phi}, {&rho}, relative_tolerance,
+                                                     absolute_tolerance);
+                                });
                                 if (t_try == t_failed) {
                                     tsolve_tmp = t_failed;
                                     break;
@@ -441,6 +454,9 @@ public:
 
 private:
 
+    using LinOpPair = std::pair<std::unique_ptr<amrex::MLMG>,
+                                std::unique_ptr<amrex::MLNodeLinOp>>;
+
     struct Parms {
         bool single_box = false;
         int mcl = 30; // default in amrex
@@ -532,12 +548,14 @@ private:
      *
      * MLMG's convergence test is based on the max norm, which ignores NaNs.
      * Therefore MLMG may report success even though the solution is polluted
-     * by NaNs. So we must check the solution explicitly.
+     * by NaNs. So we must check the solution explicitly. We throw the same
+     * type as a failing MLMG solve, because that is what the tuning treats as
+     * a setup that does not work.
      */
     static void assert_no_nan (amrex::MultiFab const& phi)
     {
         if (phi.contains_nan(0, 1, 0)) {
-            throw amrex::RuntimeError("ablastr::fields::MLMGWrapper: solution contains NaNs");
+            throw amrex::MLMG::error("ablastr::fields::MLMGWrapper: solution contains NaNs");
         }
     }
 
