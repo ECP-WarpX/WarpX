@@ -280,6 +280,13 @@ class SNES_impl : public PETScSolver_impl
         //! Using SNES FD?
         bool m_fd_jac_comput = false;
 
+        /** Whether computeRHS() still has to run its first-call path.
+         *
+         * Scoped to a single solver, so each solver built in a process takes that
+         * path exactly once.
+         */
+        mutable bool m_rhs_first_call = true;
+
         //! Linear operator object
         std::unique_ptr<LinOpType> m_linop;
 

@@ -824,9 +824,8 @@ void SNES_impl::computeRHS(VecType& a_F, const VecType& a_U) const
     AMREX_ALWAYS_ASSERT(isDefined());
 
     if (m_fd_jac_comput) {
-        static bool first_call = true;
-        m_op->ComputeRHS( a_F, a_U, m_time, m_iter, !first_call);
-        first_call = false;
+        m_op->ComputeRHS( a_F, a_U, m_time, m_iter, !m_rhs_first_call);
+        m_rhs_first_call = false;
     } else {
         m_op->ComputeRHS( a_F, a_U, m_time, m_iter, false);
     }

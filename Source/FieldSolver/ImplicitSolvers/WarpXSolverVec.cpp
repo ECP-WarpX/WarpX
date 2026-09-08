@@ -29,11 +29,11 @@ void WarpXSolverVec::Define ( WarpX*  a_WarpX,
         !IsDefined(),
         "WarpXSolverVec::Define() called on already defined WarpXSolverVec");
 
-    // Define static member pointer to WarpX
-    if (!m_warpx_ptr_defined) {
-        m_WarpX = a_WarpX;
-        m_warpx_ptr_defined = true;
-    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        a_WarpX != nullptr,
+        "WarpXSolverVec::Define() called with a nullptr WarpX instance");
+
+    m_WarpX = a_WarpX;
 
     m_num_amr_levels = 1;
 
@@ -105,10 +105,17 @@ void WarpXSolverVec::Define ( WarpX*  a_WarpX,
     if (m_dofs == nullptr) {
         m_dofs = std::make_unique<WarpXSolverDOF>();
         m_dofs->Define(m_WarpX, m_num_amr_levels, m_vector_type_name, m_scalar_type_name);
+        // Backstop for an embedding that tears down AMReX without calling
+        // WarpX::Finalize(): frees the DOF MultiFabs while their Arena is alive
         amrex::ExecOnFinalize([p=&m_dofs] () { p->reset(); });
     }
 
     m_is_defined = true;
+}
+
+void WarpXSolverVec::Clear ()
+{
+    m_dofs.reset();
 }
 
 void WarpXSolverVec::Copy ( warpx::fields::FieldType  a_array_type,

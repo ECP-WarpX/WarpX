@@ -76,10 +76,18 @@ public:
     {
         assertIsDefined( a_solver_vec );
         m_num_amr_levels = a_solver_vec.m_num_amr_levels;
-        Define( WarpXSolverVec::m_WarpX,
+        Define( a_solver_vec.m_WarpX,
                 a_solver_vec.getVectorType(),
                 a_solver_vec.getScalarType() );
     }
+
+    /** \brief Release the DOF map shared by all solver vectors
+     *
+     * The map is built from the grids of a single WarpX instance and is scoped to
+     * its lifetime: WarpX::Finalize() calls this, and the next Define() rebuilds
+     * the map for the new instance.
+     */
+    static void Clear ();
 
     [[nodiscard]] RT dotProduct( const WarpXSolverVec&  a_X ) const;
 
@@ -122,6 +130,10 @@ public:
             m_scalar_vec = std::move(a_solver_vec.m_scalar_vec);
             m_array_type = a_solver_vec.m_array_type;
             m_scalar_type = a_solver_vec.m_scalar_type;
+            m_vector_type_name = a_solver_vec.m_vector_type_name;
+            m_scalar_type_name = a_solver_vec.m_scalar_type_name;
+            m_num_amr_levels = a_solver_vec.m_num_amr_levels;
+            m_WarpX = a_solver_vec.m_WarpX;
             m_is_defined = true;
         }
         return *this;
@@ -332,9 +344,14 @@ private:
     static constexpr int m_ncomp = 1;
     int m_num_amr_levels = 1;
 
-    inline static bool m_warpx_ptr_defined = false;
-    inline static WarpX* m_WarpX = nullptr;
+    /** The WarpX instance whose fields this vector mirrors.
+     *
+     * Set by Define() and scoped to a single vector, so that a process running
+     * several simulations one after another gets the instance it is solving for.
+     */
+    WarpX* m_WarpX = nullptr;
 
+    /** DOF map shared by all solver vectors, see Clear() for its lifetime. */
     static std::unique_ptr<WarpXSolverDOF> m_dofs;
 };
 
