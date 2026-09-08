@@ -102,10 +102,12 @@ void ThetaImplicitEM::SetupStep (amrex::Real /* start_time */)
     CopyVectorField(FieldType::B_old, FieldType::Bfield_fp);
 }
 
-int ThetaImplicitEM::DoSolve (const amrex::Real start_time, const int a_step)
+int ThetaImplicitEM::DoSolve (const amrex::Real start_time,
+                              const int a_step,
+                              const bool verbose_step)
 {
     // Particles will be advanced to t_{n+1/2}
-    m_nlsolver->Solve(m_E, m_Eold, start_time, m_dt, a_step);
+    m_nlsolver->Solve(m_E, m_Eold, start_time, m_dt, a_step, verbose_step);
     return m_nlsolver->GetExitStatus();
 }
 

@@ -92,11 +92,13 @@ void SemiImplicitEM::SetupStep (amrex::Real start_time)
     m_WarpX->FillBoundaryB(m_WarpX->getngEB(), true);
 }
 
-int SemiImplicitEM::DoSolve (const amrex::Real start_time, const int a_step)
+int SemiImplicitEM::DoSolve (const amrex::Real start_time,
+                             const int a_step,
+                             const bool verbose_step)
 {
     // Solve nonlinear system for Eg at t_{n+1/2}
     // Particles will be advanced to t_{n+1/2}
-    m_nlsolver->Solve(m_E, m_Eold, start_time, m_dt, a_step);
+    m_nlsolver->Solve(m_E, m_Eold, start_time, m_dt, a_step, verbose_step);
     return m_nlsolver->GetExitStatus();
 }
 

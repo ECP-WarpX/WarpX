@@ -192,7 +192,8 @@ Array<LinOpBCType,AMREX_SPACEDIM> ImplicitSolver::convertFieldBCToLinOpBC (const
 
 int ImplicitSolver::OneStep (const amrex::Real  start_time,
                              const amrex::Real  a_dt,
-                             const int          a_step)
+                             const int          a_step,
+                             const bool verbose_step)
 {
     BL_PROFILE("ImplicitSolver::OneStep()");
 
@@ -215,7 +216,7 @@ int ImplicitSolver::OneStep (const amrex::Real  start_time,
 
         while (true) {
             // Solve nonlinear system at t_{n+theta}
-            exit_status = DoSolve(substep_start_time, a_step);
+            exit_status = DoSolve(substep_start_time, a_step, verbose_step);
 
             if (exit_status >= 0) {
                 // The solve succeeded. Increment the step number and continue to the next.

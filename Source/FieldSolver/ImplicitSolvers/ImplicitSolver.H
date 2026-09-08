@@ -64,7 +64,7 @@ public:
 
     virtual void SetupStep(amrex::Real /* start_time */) {}
 
-    virtual int DoSolve(amrex::Real a_start_time, int a_step) = 0;
+    virtual int DoSolve(amrex::Real a_start_time, int a_step, bool verbose_step) = 0;
 
     virtual void ResetStep(amrex::Real /* start_time */) {}
 
@@ -75,7 +75,8 @@ public:
      */
     virtual int OneStep (amrex::Real  start_time,
                          amrex::Real  a_dt,
-                         int          a_step);
+                         int          a_step,
+                         bool verbose_step);
 
     //
     // the following routines are called by the linear and nonlinear solvers

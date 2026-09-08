@@ -70,7 +70,8 @@ public:
     void SetupStep (amrex::Real start_time) override;
 
     int DoSolve (amrex::Real  start_time,
-                 int          a_step) override;
+                 int          a_step,
+                 bool verbose_step) override;
 
     void ResetStep (amrex::Real /* start_time */) override;
 
