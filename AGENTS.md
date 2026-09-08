@@ -150,17 +150,12 @@ When a change removes or renames a user-facing input parameter, add a guard to t
 
 ## Pull Requests
 
-Focus the PR description on the new feature and the tests performed.
-Stay below one page on GitHub, i.e., less than 15 lines, and answer:
-
-- What was achieved?
-- What was tested?
-- Does this break user interfaces?
+Make sure the PR description is concise.
 
 Put additional system details, corner-cases and rejected ideas in a collapsed block, so the summary stays short:
 
 ```markdown
-<details><summary>Details</summary>
+<details>
 <summary>Short title</summary>
 
 ...
