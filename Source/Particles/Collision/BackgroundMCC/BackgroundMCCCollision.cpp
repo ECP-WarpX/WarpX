@@ -403,7 +403,10 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                                       u2x_out, u2y_out, u2z_out, M,
                                       -scattering_process.m_energy_penalty*PhysConst::q_e, // *released* energy (negative sign) converted from eV to Joules
                                       scattering_process.m_scattering_angle_model, // angular distribution of the products in the center-of-mass frame
-                                      ScatteringUtils::AnisotropicCoefficientTable{}, // FIXME
+                                      // DSMC/MCC scattering processes cannot request anisotropic
+                                      // scattering (enforced in parse_scattering_processes), so
+                                      // an empty (isotropic-only) coefficient table is always safe here.
+                                      ScatteringUtils::AnisotropicCoefficientTable{},
                                       engine);
 
                                   // update projectile velocity with new components in labframe
