@@ -229,9 +229,7 @@ void HybridPICModel::AllocateLevelMFs (
     // it is evolved state that cannot be reconstructed from the restored rho,
     // so without it a restart would silently discard the evolved electron
     // thermal structure. With the equation off the restored value is simply
-    // overwritten from rho by the closure on the first restarted step
-    // (WarpX::HybridPICInitializeRhoJandB), so reading it back is harmless
-    // and the restart path needs no per-mode flag.
+    // overwritten from rho by the closure on the first restarted step.
     fields.alloc_init(FieldType::hybrid_electron_temperature_fp,
         lev, amrex::convert(ba, rho_nodal_flag),
         dm, ncomps, ngRho, 0.0_rt,
@@ -654,8 +652,7 @@ void HybridPICModel::InitData (const ablastr::fields::MultiFabRegister& fields)
     // T_e is deliberately NOT seeded here. It keeps its zero alloc-init value
     // (so the iter-0 diagnostic dump shows T_e = 0) until the first
     // WarpX::HybridPICInitializeRhoJandB fills it from the closure on the
-    // deposited density; on a restart the checkpoint-restored T_e must not be
-    // overwritten by a uniform constant here either.
+    // deposited density.
 
     // QDSMC: lazy-construct the fictitious-particle container and lay one
     // particle per cell.
