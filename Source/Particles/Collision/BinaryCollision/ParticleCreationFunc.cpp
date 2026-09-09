@@ -226,17 +226,18 @@ ParticleCreationFunc::ParticleCreationFunc (const std::string& collision_name,
     {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             m_collision_type != CollisionType::ProtonBoronToAlphasFusion
-                || m_scattering_angle_model != ScatteringAngleModel::Anisotropic,
-            "scattering_angle_model = anisotropic is not supported for proton-boron fusion.");
+                || m_scattering_angle_model != ScatteringAngleModel::Anisotropic_Legendre,
+            "scattering_angle_model = anisotropic_legendre is not supported for proton-boron "
+            "fusion.");
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            m_scattering_angle_model != ScatteringAngleModel::Anisotropic
+            m_scattering_angle_model != ScatteringAngleModel::Anisotropic_Legendre
             || m_fusion_angular_distribution_num_energies > 0,
-            "<collision_name>.scattering_angle_model = anisotropic requires "
+            "<collision_name>.scattering_angle_model = anisotropic_legendre requires "
             "<collision_name>.fusion_angular_distribution_coefficients to be set "
             "to a valid table file.");
 
-        if (m_scattering_angle_model == ScatteringAngleModel::Anisotropic
+        if (m_scattering_angle_model == ScatteringAngleModel::Anisotropic_Legendre
             && BinaryCollisionUtils::is_two_product_fusion_type(m_collision_type))
         {
             amrex::Vector<std::string> product_species_names;
@@ -247,7 +248,7 @@ ParticleCreationFunc::ParticleCreationFunc (const std::string& collision_name,
                 mypc->GetParticleContainerFromName(product_species_names[1]);
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 first_product.getMass() > second_product.getMass(),
-                collision_name + ".scattering_angle_model = anisotropic requires the heavier "
+                collision_name + ".scattering_angle_model = anisotropic_legendre requires the heavier "
                 "fusion product to be listed first in " + collision_name +
                 ".product_species. The angular-distribution coefficients describe the lighter "
                 "second product.");

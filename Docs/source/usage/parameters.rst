@@ -3011,7 +3011,7 @@ Details about the collision models can be found in the :ref:`theory section <mul
     If using ``bremsstrahlung``, the product species must be of type photon.
     If using ``linear_compton``, these should be two species: first, a photon species, and second, a lepton species, in this exact order.
     If using ``pulsed_decay``, the sum of the product species charges and mass must equal those of the parent species.
-    If using two-product ``nuclearfusion`` with ``scattering_angle_model = anisotropic``,
+    If using two-product ``nuclearfusion`` with ``scattering_angle_model = anisotropic_legendre``,
     the heavier product must be listed first and the lighter product second. The angular
     distribution coefficient table describes the lighter, second product.
 
@@ -3110,11 +3110,13 @@ Details about the collision models can be found in the :ref:`theory section <mul
     :optional:
 
     Only for ``nuclearfusion``. The scattering angle for the products of the fusion reaction.
-    The possible values are ``isotropic``, ``forward``, ``backward``, and ``anisotropic``.
+    The possible values are ``isotropic``, ``forward``, ``backward``, and ``anisotropic_legendre``.
     With ``isotropic``, the scattering angle is drawn from an isotropic distribution.
     With ``forward``, the scattering angle is set to zero, i.e. the products are emitted in the same direction as the reactant (in the center of mass frame).
     With ``backward``, the scattering angle is set to :math:`\pi`, i.e. the products are emitted in the opposite direction of the reactant (in the center of mass frame).
-    With ``anisotropic``, the scattering angle is drawn from the anisotropic distribution as given by the differential cross section of the fusion reaction.
+    With ``anisotropic_legendre``, the scattering angle is drawn from the anisotropic
+    distribution represented by a Legendre expansion of the differential cross section of the
+    fusion reaction.
     For a two-product reaction, the coefficient table describes the lighter product; therefore,
     :pp:param:`<collision_name>.product_species` must list the heavier product first.
     The anisotropic distribution is sampled about the incident direction of the first reactant
@@ -3125,7 +3127,7 @@ Details about the collision models can be found in the :ref:`theory section <mul
     :optional:
 
     Only for ``nuclearfusion``. Path to an energy-dependent table of Legendre coefficients
-    used by the ``anisotropic`` scattering angle model. Each nonempty row contains a
+    used by the ``anisotropic_legendre`` scattering angle model. Each nonempty row contains a
     center-of-mass energy in MeV followed by all coefficients from order zero upward.
     At least two rows are required, and their energies must be strictly increasing.
     For two-product fusion, these coefficients describe the lighter product, which must be

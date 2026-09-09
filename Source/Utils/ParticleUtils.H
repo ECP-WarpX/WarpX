@@ -354,7 +354,7 @@ namespace ParticleUtils {
             // Isotropic scattering: the angle of emission of the products in the center of mass frame is random
             cos_theta = 2.0_prt * amrex::Random(engine) - 1.0_prt;  // opposite sign of that in Higginson's paper
         }
-        else if (scattering_angle_model == ScatteringAngleModel::Anisotropic) {
+        else if (scattering_angle_model == ScatteringAngleModel::Anisotropic_Legendre) {
             // The coefficient table describes the lighter, second fusion product, whereas
             // TwoProductComputeProductMomenta applies this vector to the heavier, first product.
             // The products are back-to-back in the center-of-mass frame, hence the minus sign.

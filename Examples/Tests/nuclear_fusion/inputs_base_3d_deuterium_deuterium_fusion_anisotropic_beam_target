@@ -15,7 +15,7 @@ DDNHeF.event_multiplier = 1.e10                          # variance reduction: b
 DDNHeF.fusion_angular_distribution_coefficients = ../../../../warpx-data/nuclear_fusion/D_d_n_He3/angular_distribution/endf/coefficients.txt
 DDNHeF.fusion_angular_distribution_coefficients_format = ENDF
 DDNHeF.product_species = helium3_1 neutron_1             # fusion products: He-3 + neutron
-DDNHeF.scattering_angle_model = anisotropic              # realistic data-driven emission angles
+DDNHeF.scattering_angle_model = anisotropic_legendre     # realistic data-driven emission angles
 DDNHeF.species = deuterium_beam deuterium_target         # reactants
 DDNHeF.type = nuclearfusion                              # D + D -> He-3 + n
 

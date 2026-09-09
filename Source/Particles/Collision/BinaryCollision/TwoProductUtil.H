@@ -242,7 +242,7 @@ namespace {
             // in the center of mass frame is random or determined by an anisotropic model.
             // If the incident direction is undefined, fall back to isotropic scattering.
             const auto local_scattering_angle_model =
-                (scattering_angle_model == ScatteringAngleModel::Anisotropic &&
+                (scattering_angle_model == ScatteringAngleModel::Anisotropic_Legendre &&
                  p1_star_in_d <= std::numeric_limits<double>::min())
                 ? ScatteringAngleModel::Isotropic : scattering_angle_model;
             ParticleUtils::RandomizeVelocity(
@@ -250,7 +250,7 @@ namespace {
                 static_cast<amrex::ParticleReal>(p_star_f_d),
                 engine, local_scattering_angle_model, anisotropic_coefficients, E_kin_star_MeV);
 
-            if (scattering_angle_model == ScatteringAngleModel::Anisotropic &&
+            if (scattering_angle_model == ScatteringAngleModel::Anisotropic_Legendre &&
                 p1_star_in_d > std::numeric_limits<double>::min())
             {
                 // RandomizeVelocity samples about the local +z axis. Rotate that axis onto

@@ -15,7 +15,7 @@ DTNHeF.event_multiplier = 1.e10                          # variance reduction: b
 DTNHeF.fusion_angular_distribution_coefficients = ../../../../warpx-data/nuclear_fusion/T_d_n_He4/angular_distribution/iaea/coefficients.txt
 DTNHeF.fusion_angular_distribution_coefficients_format = IAEA
 DTNHeF.product_species = helium4_1 neutron_1             # fusion products: He-4 + neutron
-DTNHeF.scattering_angle_model = anisotropic              # realistic data-driven emission angles
+DTNHeF.scattering_angle_model = anisotropic_legendre     # realistic data-driven emission angles
 DTNHeF.species = deuterium_beam tritium_target           # reactants
 DTNHeF.type = nuclearfusion                              # D + T -> He-4 + n
 

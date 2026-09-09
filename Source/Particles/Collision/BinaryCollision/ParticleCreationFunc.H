@@ -184,7 +184,7 @@ public:
             nullptr
         };
         bool const check_anisotropic_energy_range =
-            t_scattering_angle_model == ScatteringAngleModel::Anisotropic;
+            t_scattering_angle_model == ScatteringAngleModel::Anisotropic_Legendre;
         amrex::Gpu::DeviceVector<int> energy_range_status(
             check_anisotropic_energy_range ? n_total_pairs : 0);
         int* const p_energy_range_status = check_anisotropic_energy_range

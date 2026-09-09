@@ -155,9 +155,9 @@ namespace BinaryCollisionUtils{
             std::string scattering_angle_error_msg = collision_name;
             scattering_angle_error_msg += ".";
             scattering_angle_error_msg += scattering_process;
-            scattering_angle_error_msg += "_scattering_angle_model = anisotropic is not supported for DSMC/MCC collisions.";
+            scattering_angle_error_msg += "_scattering_angle_model = anisotropic_legendre is not supported for DSMC/MCC collisions.";
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                scattering_angle_model != ScatteringAngleModel::Anisotropic,
+                scattering_angle_model != ScatteringAngleModel::Anisotropic_Legendre,
                 scattering_angle_error_msg
             );
             scattering_processes.push_back(ScatteringProcess(
