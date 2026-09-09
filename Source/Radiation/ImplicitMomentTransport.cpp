@@ -1329,7 +1329,7 @@ namespace warpx::radiation
         }
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
         return false;
-#endif
+#else
         for (auto const* field : {&beta, &absorption, &scattering, &equilibrium,
                                   static_cast<amrex::MultiFab const*>(&increment)}) {
             if (field->boxArray() != radiation.boxArray() ||
@@ -1355,5 +1355,6 @@ namespace warpx::radiation
         amrex::MultiFab::Copy(increment, trial, 0, 0, 8, 0);
         increment.FillBoundary(geometry.periodicity());
         return true;
+#endif
     }
 } // namespace warpx::radiation
