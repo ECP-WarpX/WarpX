@@ -197,7 +197,7 @@ def check(directory, reference_directory=None):
     axes[0].plot(x, initial / dx, "--", label="Initial radiation")
     axes[0].plot(x, reference / dx, label="Independent thick-limit solution")
     axes[0].plot(x, final / dx, ":", linewidth=2, label="WarpX native PIC + coupled M1")
-    axes[0].set_ylabel("Radiation energy [J/m³]")
+    axes[0].set_ylabel("Radiation energy [J/m^3]")
     axes[0].legend(fontsize=8)
     axes[1].plot(x, (final - reference) / max(initial))
     axes[1].set_ylabel("Error / initial peak")
