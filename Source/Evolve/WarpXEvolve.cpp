@@ -219,11 +219,11 @@ WarpX::Evolve (int numsteps)
         // once per WarpX instance, not once per Evolve() call: repeating it can
         // re-add split external fields and, with the QDSMC electron equation,
         // replace the evolved electron temperature by its initial closure.
-        if (!m_hybrid_pic_evolve_initialized &&
-            electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC
+        if (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC &&
+            !m_hybrid_pic_model->m_evolve_initialized
         ) {
             HybridPICInitializeRhoJandB();
-            m_hybrid_pic_evolve_initialized = true;
+            m_hybrid_pic_model->m_evolve_initialized = true;
         }
 
         // multi-physics: field ionization

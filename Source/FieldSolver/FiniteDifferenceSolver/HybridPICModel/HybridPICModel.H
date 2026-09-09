@@ -366,6 +366,11 @@ public:
     /** Check if rkf45 should be used */
     [[nodiscard]] bool DoRKF45(int step) const { return m_rkf45_intervals.contains(step); }
 
+    /** True after HybridPICInitializeRhoJandB() completes for this model.
+     *  Preserve the initialized state across repeated Evolve() calls, while
+     *  allowing the first deposition on a newly constructed restart instance. */
+    bool m_evolve_initialized = false;
+
     // Declare variables to hold hybrid-PIC model parameters
     /** Number of substeps to take when evolving B (also used as initial substep
      *  count guess when RKF45 adaptive stepping is active). May increase under
