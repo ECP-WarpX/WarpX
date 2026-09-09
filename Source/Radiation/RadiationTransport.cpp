@@ -1021,11 +1021,12 @@ FillCoupledHybridCoefficients (
                 amrex::GpuArray<amrex::Real, 3> position{0, 0, 0};
                 for (int d = 0; d < AMREX_SPACEDIM; ++d)
                 {
-                    int component = d;
 #if defined(WARPX_DIM_1D_Z)
-                    component = 2;
+                    int const component = 2;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                    component = d == 1 ? 2 : 0;
+                    int const component = d == 1 ? 2 : 0;
+#else
+                    int const component = d;
 #endif
                     position[component] = lower[d] + (index[d] - lo[d] + 0.5_rt) * dx[d];
                 }
