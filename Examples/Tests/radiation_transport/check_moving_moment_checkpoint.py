@@ -26,7 +26,7 @@ def check(executable, checkpoint, missing):
         result = subprocess.run(
             [
                 str(executable.resolve(strict=True)),
-                "inputs_1d_moving_moment_pulse",
+                "inputs_base_1d_moving_moment_pulse",
                 "max_step=201",
                 "amr.n_cell=128",
                 "amr.max_grid_size=64",

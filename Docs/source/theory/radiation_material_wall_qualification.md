@@ -44,7 +44,7 @@ particle-carry and shaped-force periodic guards remain unchanged.
 
 ## Executed native control
 
-`inputs_1d_material_wall_control` starts uniform kinetic protons at 90 km/s,
+`inputs_base_1d_material_wall_control` starts uniform kinetic protons at 90 km/s,
 rho=100 kg/m^3 and native electrons at 100 eV, with the existing fixed-charge
 latent-energy EOS. It uses 128 cells, four particles/cell, fourth-order shapes,
 dt=1 ps and 3200 steps over a 1 mm interval. Integrals assume unit transverse
@@ -71,7 +71,7 @@ Reproduce the full control from an empty output directory under the build root:
 
 ```sh
 OMP_NUM_THREADS=1 AMREX_INPUTS_FILE_PREFIX=/path/to/worktree/Examples/Tests/radiation_transport/ \
-  ../bin/warpx.1d.MPI.OMP.DP.PDP inputs_1d_material_wall_control \
+  ../bin/warpx.1d.MPI.OMP.DP.PDP inputs_base_1d_material_wall_control \
   hybrid_pic_model.conservative_pressure_work_pec=1
 python ../../Examples/Tests/radiation_transport/analysis_material_wall_control.py . --plot
 ```

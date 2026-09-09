@@ -10,19 +10,28 @@ if(WarpX_PRECISION STREQUAL "DOUBLE")
         # Native material-wall prerequisite; radiation is deliberately disabled.
         add_warpx_test(
             test_1d_radiation_transport_material_wall_adjoint
-            1 1 "inputs_1d_material_wall_control hybrid_pic_model.conservative_pressure_work_pec=1"
-            "analysis_material_wall_control.py ." OFF OFF)
+            1
+            1
+            "inputs_base_1d_material_wall_control hybrid_pic_model.conservative_pressure_work_pec=1"
+            "analysis_material_wall_control.py ."
+            OFF
+            OFF
+        )
         add_warpx_test(
             test_1d_radiation_transport_material_wall_adjoint_restart
-            1 ${coupled_runtime_procs} "inputs_1d_material_wall_control hybrid_pic_model.conservative_pressure_work_pec=1 amr.restart='../test_1d_radiation_transport_material_wall_adjoint/diags/chk001600'"
+            1
+            ${coupled_runtime_procs}
+            "inputs_base_1d_material_wall_control hybrid_pic_model.conservative_pressure_work_pec=1 amr.restart='../test_1d_radiation_transport_material_wall_adjoint/diags/chk001600'"
             "analysis_material_wall_control.py . --reference ../test_1d_radiation_transport_material_wall_adjoint"
-            OFF test_1d_radiation_transport_material_wall_adjoint)
+            OFF
+            test_1d_radiation_transport_material_wall_adjoint
+        )
         if(TEST test_1d_radiation_transport_material_wall_adjoint.run)
             set(history_schema_dir "${CMAKE_CURRENT_BINARY_DIR}/hybrid_history_schema")
             file(MAKE_DIRECTORY ${history_schema_dir})
             add_test(NAME test_1d_hybrid_moment_history_schema COMMAND
                 ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/analysis_hybrid_history_schema.py
-                $<TARGET_FILE:app_1d> ${CMAKE_CURRENT_SOURCE_DIR}/inputs_1d_material_wall_control
+                $<TARGET_FILE:app_1d> ${CMAKE_CURRENT_SOURCE_DIR}/inputs_base_1d_material_wall_control
                 ${CMAKE_BINARY_DIR}/bin/test_1d_radiation_transport_material_wall_adjoint
                 --probe-executable $<TARGET_FILE:test_1d_particle_impulse>)
             set_tests_properties(test_1d_hybrid_moment_history_schema PROPERTIES
@@ -40,55 +49,105 @@ if(WarpX_PRECISION STREQUAL "DOUBLE")
         endif()
         add_warpx_test(
             test_1d_radiation_transport_moving_beam_ode
-            1 ${coupled_runtime_procs} "inputs_1d_moving_moment_beam"
-            "analysis_moving_moment_beam.py . --check-momentum-diagnostic" OFF OFF)
+            1
+            ${coupled_runtime_procs}
+            "inputs_base_1d_moving_moment_beam"
+            "analysis_moving_moment_beam.py . --check-momentum-diagnostic"
+            OFF
+            OFF
+        )
         add_warpx_test(
             test_1d_radiation_transport_moving_beam_restart
-            1 1 "inputs_1d_moving_moment_beam amr.restart='../test_1d_radiation_transport_moving_beam_ode/diags/chk000200'"
+            1
+            1
+            "inputs_base_1d_moving_moment_beam amr.restart='../test_1d_radiation_transport_moving_beam_ode/diags/chk000200'"
             "analysis_moving_moment_beam.py . --check-momentum-diagnostic --restart-reference ../test_1d_radiation_transport_moving_beam_ode"
-            OFF test_1d_radiation_transport_moving_beam_ode)
+            OFF
+            test_1d_radiation_transport_moving_beam_ode
+        )
         add_warpx_test(
             test_1d_radiation_transport_moving_moment_pulse
-            1 ${coupled_runtime_procs} "inputs_1d_moving_moment_pulse max_step=400 amr.n_cell=128 amr.max_grid_size=64 warpx.const_dt=8.333333333333333e-12 chk.intervals=200"
-            "analysis_moving_moment_pulse.py ." OFF OFF)
+            1
+            ${coupled_runtime_procs}
+            "inputs_base_1d_moving_moment_pulse max_step=400 amr.n_cell=128 amr.max_grid_size=64 warpx.const_dt=8.333333333333333e-12 chk.intervals=200"
+            "analysis_moving_moment_pulse.py ."
+            OFF
+            OFF
+        )
         add_warpx_test(
             test_1d_radiation_transport_moving_moment_restart
-            1 1 "inputs_1d_moving_moment_pulse max_step=400 amr.n_cell=128 amr.max_grid_size=64 warpx.const_dt=8.333333333333333e-12 chk.intervals=200 amr.restart='../test_1d_radiation_transport_moving_moment_pulse/diags/chk000200'"
+            1
+            1
+            "inputs_base_1d_moving_moment_pulse max_step=400 amr.n_cell=128 amr.max_grid_size=64 warpx.const_dt=8.333333333333333e-12 chk.intervals=200 amr.restart='../test_1d_radiation_transport_moving_moment_pulse/diags/chk000200'"
             "analysis_moving_moment_pulse.py . --reference ../test_1d_radiation_transport_moving_moment_pulse"
-            OFF test_1d_radiation_transport_moving_moment_pulse)
+            OFF
+            test_1d_radiation_transport_moving_moment_pulse
+        )
         # Wiring/transaction gates, not substitutes for the full oblique study.
         add_warpx_test(
             test_2d_radiation_transport_moving_moment_adapter
-            2 ${coupled_runtime_procs} "inputs_2d_moving_moment_oblique amr.n_cell=16 32 amr.max_grid_size=16 max_step=16 diag1.intervals=8 chk.intervals=8"
-            "analysis_moving_moment_oblique.py . --probe" OFF OFF)
+            2
+            ${coupled_runtime_procs}
+            "inputs_base_2d_moving_moment_oblique amr.n_cell=16 32 amr.max_grid_size=16 max_step=16 diag1.intervals=8 chk.intervals=8"
+            "analysis_moving_moment_oblique.py . --probe"
+            OFF
+            OFF
+        )
         add_warpx_test(
             test_2d_radiation_transport_moving_moment_adapter_restart
-            2 1 "inputs_2d_moving_moment_oblique amr.n_cell=16 32 amr.max_grid_size=16 max_step=16 diag1.intervals=8 chk.intervals=8 amr.restart='../test_2d_radiation_transport_moving_moment_adapter/diags/chk000008'"
+            2
+            1
+            "inputs_base_2d_moving_moment_oblique amr.n_cell=16 32 amr.max_grid_size=16 max_step=16 diag1.intervals=8 chk.intervals=8 amr.restart='../test_2d_radiation_transport_moving_moment_adapter/diags/chk000008'"
             "analysis_moving_moment_oblique.py . --probe --reference ../test_2d_radiation_transport_moving_moment_adapter"
-            OFF test_2d_radiation_transport_moving_moment_adapter)
+            OFF
+            test_2d_radiation_transport_moving_moment_adapter
+        )
     endif()
     add_warpx_test(
         test_3d_radiation_transport_coupled_implicit
-        3 1 inputs_base_3d_radiation_transport_coupled_implicit
-        "analysis_coupled_implicit.py" OFF OFF)
+        3
+        1
+        inputs_base_3d_radiation_transport_coupled_implicit
+        "analysis_coupled_implicit.py"
+        OFF
+        OFF
+    )
     add_warpx_test(
         test_1d_radiation_transport_coupled_implicit
-        1 1 inputs_base_1d_radiation_transport_coupled_implicit
-        "analysis_coupled_implicit.py" OFF OFF)
+        1
+        1
+        inputs_base_1d_radiation_transport_coupled_implicit
+        "analysis_coupled_implicit.py"
+        OFF
+        OFF
+    )
     add_warpx_test(
         test_1d_radiation_transport_coupled_implicit_restart
-        1 2 "inputs_base_1d_radiation_transport_coupled_implicit amr.restart='../test_1d_radiation_transport_coupled_implicit/diags/chk000010'"
+        1
+        2
+        "inputs_base_1d_radiation_transport_coupled_implicit amr.restart='../test_1d_radiation_transport_coupled_implicit/diags/chk000010'"
         "analysis_coupled_implicit.py --reference ../test_1d_radiation_transport_coupled_implicit"
-        OFF test_1d_radiation_transport_coupled_implicit)
+        OFF
+        test_1d_radiation_transport_coupled_implicit
+    )
     add_warpx_test(
         test_1d_radiation_transport_coupled_retry_details
-        1 ${coupled_runtime_procs} "inputs_base_1d_radiation_transport_coupled_implicit radiation_transport.coupled_max_subdivisions=6 radiation_transport.lte_exchange_max_iterations=4 radiation_energy.include_solver_details=1"
-        "analysis_coupled_implicit.py --solver-details" OFF OFF)
+        1
+        ${coupled_runtime_procs}
+        "inputs_base_1d_radiation_transport_coupled_implicit radiation_transport.coupled_max_subdivisions=6 radiation_transport.lte_exchange_max_iterations=4 radiation_energy.include_solver_details=1"
+        "analysis_coupled_implicit.py --solver-details"
+        OFF
+        OFF
+    )
     add_warpx_test(
         test_1d_radiation_transport_coupled_retry_details_restart
-        1 1 "inputs_base_1d_radiation_transport_coupled_implicit radiation_transport.coupled_max_subdivisions=6 radiation_transport.lte_exchange_max_iterations=4 radiation_energy.include_solver_details=1 amr.restart='../test_1d_radiation_transport_coupled_retry_details/diags/chk000010'"
+        1
+        1
+        "inputs_base_1d_radiation_transport_coupled_implicit radiation_transport.coupled_max_subdivisions=6 radiation_transport.lte_exchange_max_iterations=4 radiation_energy.include_solver_details=1 amr.restart='../test_1d_radiation_transport_coupled_retry_details/diags/chk000010'"
         "analysis_coupled_implicit.py --solver-details --reference ../test_1d_radiation_transport_coupled_retry_details"
-        OFF test_1d_radiation_transport_coupled_retry_details)
+        OFF
+        test_1d_radiation_transport_coupled_retry_details
+    )
 endif()
 
 add_warpx_test(
@@ -1095,19 +1154,19 @@ if(WarpX_PRECISION STREQUAL DOUBLE)
     if(WarpX_PARTICLE_PRECISION STREQUAL DOUBLE)
         add_radiation_failure_test(
             test_1d_radiation_transport_material_wall_requires_work
-            1 "inputs_1d_material_wall_control hybrid_pic_model.conservative_pressure_work_pec=1 hybrid_pic_model.conservative_pressure_work=0"
+            1 "inputs_base_1d_material_wall_control hybrid_pic_model.conservative_pressure_work_pec=1 hybrid_pic_model.conservative_pressure_work=0"
             "PEC pressure work requires conservative_pressure_work=1")
         add_radiation_failure_test(
             test_1d_radiation_transport_material_wall_rejects_particle_loss
-            1 "inputs_1d_material_wall_control hybrid_pic_model.conservative_pressure_work_pec=1 boundary.particle_hi=absorbing"
+            1 "inputs_base_1d_material_wall_control hybrid_pic_model.conservative_pressure_work_pec=1 boundary.particle_hi=absorbing"
             "conservative_pressure_work_pec requires stationary PEC fields")
         add_radiation_failure_test(
             test_1d_radiation_transport_moment_inventory_mode_rejected
-            1 "inputs_1d_moving_moment_beam radiation_transport.diffusion_solver=explicit"
+            1 "inputs_base_1d_moving_moment_beam radiation_transport.diffusion_solver=explicit"
             "include_moment_inventory requires coupled_moment")
         add_radiation_failure_test(
             test_1d_radiation_transport_moving_momentum_schema_rejected
-            1 "inputs_1d_moving_moment_beam amr.restart='../test_1d_radiation_transport_moving_beam_ode/diags/chk000200' radiation_momentum.include_moment_inventory=0"
+            1 "inputs_base_1d_moving_moment_beam amr.restart='../test_1d_radiation_transport_moving_beam_ode/diags/chk000200' radiation_momentum.include_moment_inventory=0"
             "RadiationMomentum restart must preserve include_moment_inventory")
         if(TEST test_1d_radiation_transport_moving_momentum_schema_rejected.run)
             set_property(TEST test_1d_radiation_transport_moving_beam_ode.run
@@ -1121,7 +1180,7 @@ if(WarpX_PRECISION STREQUAL DOUBLE)
         endif()
         add_radiation_failure_test(
             test_1d_radiation_transport_moving_moment_shape_restart_rejected
-            1 "inputs_1d_moving_moment_pulse max_step=400 amr.n_cell=128 amr.max_grid_size=64 warpx.const_dt=8.333333333333333e-12 chk.intervals=200 algo.particle_shape=3 amr.restart='../test_1d_radiation_transport_moving_moment_pulse/diags/chk000200'"
+            1 "inputs_base_1d_moving_moment_pulse max_step=400 amr.n_cell=128 amr.max_grid_size=64 warpx.const_dt=8.333333333333333e-12 chk.intervals=200 algo.particle_shape=3 amr.restart='../test_1d_radiation_transport_moving_moment_pulse/diags/chk000200'"
             "Moving radiation restart must preserve its particle shape order.")
         if(TEST test_1d_radiation_transport_moving_moment_shape_restart_rejected.run)
             set_property(TEST test_1d_radiation_transport_moving_moment_pulse.run
@@ -1929,35 +1988,47 @@ if(WarpX_PRECISION STREQUAL "DOUBLE" AND WarpX_PARTICLE_PRECISION STREQUAL "DOUB
 
     add_warpx_test(
         test_1d_radiation_particle_carry
-        1 1 inputs_1d_radiation_particle_carry
-        "analysis_particle_carry.py" OFF OFF
+        1
+        1
+        inputs_base_1d_radiation_particle_carry
+        "analysis_particle_carry.py"
+        OFF
+        OFF
     )
     add_warpx_test(
         test_1d_radiation_particle_carry_restart
-        1 2
-        "inputs_1d_radiation_particle_carry amr.restart='../test_1d_radiation_particle_carry/diags/chk000015'"
+        1
+        2
+        "inputs_base_1d_radiation_particle_carry amr.restart='../test_1d_radiation_particle_carry/diags/chk000015'"
         "analysis_particle_carry.py --reference ../test_1d_radiation_particle_carry"
-        OFF test_1d_radiation_particle_carry
+        OFF
+        test_1d_radiation_particle_carry
     )
     add_warpx_test(
         test_2d_radiation_particle_carry
-        2 1 inputs_2d_radiation_particle_carry
-        "analysis_particle_carry.py" OFF OFF
+        2
+        1
+        inputs_base_2d_radiation_particle_carry
+        "analysis_particle_carry.py"
+        OFF
+        OFF
     )
     add_warpx_test(
         test_2d_radiation_particle_carry_restart
-        2 2
-        "inputs_2d_radiation_particle_carry amr.restart='../test_2d_radiation_particle_carry/diags/chk000015'"
+        2
+        2
+        "inputs_base_2d_radiation_particle_carry amr.restart='../test_2d_radiation_particle_carry/diags/chk000015'"
         "analysis_particle_carry.py --reference ../test_2d_radiation_particle_carry"
-        OFF test_2d_radiation_particle_carry
+        OFF
+        test_2d_radiation_particle_carry
     )
     add_radiation_failure_test(
         test_1d_radiation_particle_carry_boundary_rejected 1
-        "inputs_1d_radiation_particle_carry boundary.field_lo=pec boundary.field_hi=pec boundary.particle_lo=absorbing boundary.particle_hi=absorbing"
+        "inputs_base_1d_radiation_particle_carry boundary.field_lo=pec boundary.field_hi=pec boundary.particle_lo=absorbing boundary.particle_hi=absorbing"
         "initially requires periodic")
     add_radiation_failure_test(
         test_1d_radiation_particle_carry_ownership_rejected 1
-        "inputs_1d_radiation_particle_carry radiation_transport.momentum_carry=cell amr.restart='../test_1d_radiation_particle_carry/diags/chk000015'"
+        "inputs_base_1d_radiation_particle_carry radiation_transport.momentum_carry=cell amr.restart='../test_1d_radiation_particle_carry/diags/chk000015'"
         "preserve radiation momentum_carry ownership")
     if(TEST test_1d_radiation_particle_carry_ownership_rejected.run)
         set_property(TEST test_1d_radiation_particle_carry_ownership_rejected.run
