@@ -33,6 +33,7 @@ namespace warpx::radiation
             int normal, amrex::Real kappa, amrex::Real spacing,
             amrex::GpuArray<amrex::Real, 3> const& transverse_gradient = {}) noexcept
         {
+            using namespace amrex::literals;
             MovingMomentFluxResult result;
             if (normal < 0 || normal > 2 || !(kappa >= 0) || !(spacing > 0) ||
                 !amrex::Math::isfinite(kappa) || !amrex::Math::isfinite(spacing)) {
@@ -51,7 +52,7 @@ namespace warpx::radiation
             }
             auto const gamma = 1 / std::sqrt(1 - b2);
             auto const bn = beta[normal];
-            auto const length = 1.5 * gamma * spacing / (1 - bn * bn);
+            auto const length = 1.5_rt * gamma * spacing / (1 - bn * bn);
             if (!amrex::Math::isfinite(length)) {
                 return result;
             }
@@ -71,13 +72,13 @@ namespace warpx::radiation
                 sr -= beta[d] * right_pressure[d + 1][normal + 1];
                 result.flux[d + 1] =
                     PhysConst::c *
-                    (0.5 * (left_pressure[d + 1][normal + 1] + right_pressure[d + 1][normal + 1]) -
-                     0.5 * alpha * (right[d + 1] - left[d + 1]));
+                    (0.5_rt * (left_pressure[d + 1][normal + 1] + right_pressure[d + 1][normal + 1]) -
+                     0.5_rt * alpha * (right[d + 1] - left[d + 1]));
             }
-            auto const average_r = 0.5 * (rl + rr);
+            auto const average_r = 0.5_rt * (rl + rr);
             auto const jump_r = rr - rl;
             auto nonequilibrium_flux =
-                PhysConst::c * alpha * (0.5 * (sl + sr) - bn * average_r - 0.5 * jump_r);
+                PhysConst::c * alpha * (0.5_rt * (sl + sr) - bn * average_r - 0.5_rt * jump_r);
             // Divide before the second blend multiplication to avoid underflow
             // of blend^2 at weak opacity and overflow of kappa*spacing at large tau.
             auto const transverse_coefficient =
@@ -89,7 +90,7 @@ namespace warpx::radiation
                 }
             }
             auto const slow_flux =
-                PhysConst::c * (bn * average_r - 0.5 * blend * std::abs(bn) * jump_r) +
+                PhysConst::c * (bn * average_r - 0.5_rt * blend * std::abs(bn) * jump_r) +
                 nonequilibrium_flux;
             result.projected_nonequilibrium_flux = nonequilibrium_flux;
             result.projected_flux = slow_flux;

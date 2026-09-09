@@ -856,6 +856,13 @@ if(WarpX_LIB)
                             FIXTURES_REQUIRED "particle_plot_immutable;particle_openpmd_immutable")
                     endif()
                 endif()
+                set(birth_carry_dir ${impulse_dir}/birth_carry)
+                file(MAKE_DIRECTORY ${birth_carry_dir})
+                add_test(NAME ${impulse_target}_birth_carry COMMAND ${impulse_target}
+                    inputs_base_${SD}_particle_impulse test.birth_carry=1)
+                set_tests_properties(${impulse_target}_birth_carry PROPERTIES
+                    WORKING_DIRECTORY ${birth_carry_dir}
+                    ENVIRONMENT "OMP_NUM_THREADS=1;AMREX_INPUTS_FILE_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/")
                 add_test(NAME ${impulse_target}_shape COMMAND ${impulse_target}
                     inputs_base_${SD}_particle_impulse test.shape=1)
                 set_tests_properties(${impulse_target}_shape PROPERTIES

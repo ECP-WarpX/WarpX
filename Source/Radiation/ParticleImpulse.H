@@ -33,6 +33,8 @@ namespace warpx::radiation
         ~ParticleImpulseMaterial ();
         ParticleImpulseMaterial (ParticleImpulseMaterial const&) = delete;
         ParticleImpulseMaterial& operator= (ParticleImpulseMaterial const&) = delete;
+        ParticleImpulseMaterial (ParticleImpulseMaterial&&) = delete;
+        ParticleImpulseMaterial& operator= (ParticleImpulseMaterial&&) = delete;
         bool Commit ();
 
     private:
@@ -67,6 +69,8 @@ namespace warpx::radiation
         ~ParticleImpulseTransaction ();
         ParticleImpulseTransaction (ParticleImpulseTransaction const&) = delete;
         ParticleImpulseTransaction& operator= (ParticleImpulseTransaction const&) = delete;
+        ParticleImpulseTransaction (ParticleImpulseTransaction&&) = delete;
+        ParticleImpulseTransaction& operator= (ParticleImpulseTransaction&&) = delete;
 
         bool Stage (MultiParticleContainer& particles,
                     std::vector<std::string> const& species_names, std::string const& path,

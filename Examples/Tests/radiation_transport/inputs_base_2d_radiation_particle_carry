@@ -1,5 +1,5 @@
 # CUDA-capable transverse layout for the carry integration mechanism.
-FILE = inputs_1d_radiation_particle_carry
+FILE = inputs_base_1d_radiation_particle_carry
 amrex.the_arena_init_size = 0
 amr.n_cell = 8 8
 geometry.dims = 2

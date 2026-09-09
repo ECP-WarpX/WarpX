@@ -148,10 +148,10 @@ namespace warpx::radiation
                                 auto left = right;
                                 --left[d];
                                 for (int e = 0; e < 3; ++e) {
-                                    p(right, e) = 0.5 * b(left, e) + 0.5 * b(right, e);
+                                    p(right, e) = 0.5_rt * b(left, e) + 0.5_rt * b(right, e);
                                 }
-                                p(right, 3) = 0.5 * c(left, 0) + 0.5 * c(left, 1) +
-                                              0.5 * c(right, 0) + 0.5 * c(right, 1);
+                                p(right, 3) = 0.5_rt * c(left, 0) + 0.5_rt * c(left, 1) +
+                                              0.5_rt * c(right, 0) + 0.5_rt * c(right, 1);
                             });
                     }
                 }
@@ -601,8 +601,8 @@ namespace warpx::radiation
                                                         {}, {}, {}, {}, v, PhysicalAxis(d),
                                                         p[d](face, 3), spacing[d])
                                                         .asymptotic_weight;
-                                q_diagonal += 0.5 * step * PhysConst::c * weight / spacing[d];
-                                advection += 0.5 * step * PhysConst::c * (1 - weight) *
+                                q_diagonal += 0.5_rt * step * PhysConst::c * weight / spacing[d];
+                                advection += 0.5_rt * step * PhysConst::c * (1 - weight) *
                                              std::abs(v[PhysicalAxis(d)]) / spacing[d];
                             }
                         }

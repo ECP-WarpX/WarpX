@@ -9,6 +9,7 @@
 #include "Fields.H"
 #include "Initialization/WarpXInit.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Particles/PhysicalParticleContainer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Radiation/ParticleImpulse.H"
 #include "Radiation/ParticleImpulseBoundary.H"
@@ -27,8 +28,10 @@
 #include <cmath>
 #include <cstring>
 #include <limits>
+#include <map>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 using namespace amrex::literals;
@@ -59,6 +62,64 @@ namespace
     {
         return a.size() == b.size() && (a.empty() ||
             std::memcmp(a.data(), b.data(), a.size() * sizeof(amrex::ParticleReal)) == 0);
+    }
+
+    void CheckBirthCarry (WarpXParticleContainer& ions)
+    {
+        std::vector<int> components;
+        for (auto const& path : warpx::radiation::RegisteredParticleImpulsePaths(ions)) {
+            for (auto const* suffix : {"_ux", "_uy", "_uz", "_work"}) {
+                components.push_back(ions.GetRealCompIndex("radiation_impulse_" + path + suffix));
+            }
+        }
+        AMREX_ALWAYS_ASSERT(components.size() == 8);
+        auto const initial_count = ions.TotalNumberOfParticles();
+        AMREX_ALWAYS_ASSERT(initial_count > 0);
+        std::map<std::pair<int, int>, amrex::Long> counts;
+        for (auto& [key, tile] : ions.GetParticles(0)) {
+            auto const count = static_cast<amrex::Long>(tile.numParticles());
+            counts.emplace(key, count);
+            // Check initial native births before deliberately filling retained
+            // capacity. No allocator-zeroing assumption is allowed below.
+            for (int component : components) {
+                auto const& values = tile.GetStructOfArrays().GetRealData(component);
+                amrex::Gpu::HostVector<amrex::ParticleReal> host(count);
+                amrex::Gpu::copy(amrex::Gpu::deviceToHost, values.begin(), values.begin() + count,
+                                 host.begin());
+                for (auto value : host) { AMREX_ALWAYS_ASSERT(value == 0); }
+            }
+            tile.resize(2 * count);
+            for (int component : components) {
+                auto* const values = tile.GetStructOfArrays().GetRealData(component).data();
+                auto const old_value = amrex::ParticleReal(17 + component);
+                auto const poison = amrex::ParticleReal(91 + component);
+                amrex::ParallelFor(2 * count, [=] AMREX_GPU_DEVICE(amrex::Long ip) {
+                    values[ip] = ip < count ? old_value : poison;
+                });
+            }
+            amrex::Gpu::streamSynchronize();
+            tile.resize(count);
+        }
+        // Reuse the pre-filled capacity through the actual bulk-plasma path.
+        // Existing particles must retain their accounts; only newborns start at zero.
+        dynamic_cast<PhysicalParticleContainer&>(ions).AddParticles(0);
+        AMREX_ALWAYS_ASSERT(ions.TotalNumberOfParticles() == 2 * initial_count);
+        for (auto const& [key, tile] : ions.GetParticles(0)) {
+            auto const old_count = counts.at(key);
+            AMREX_ALWAYS_ASSERT(tile.numParticles() == 2 * old_count);
+            for (int component : components) {
+                auto const& values = tile.GetStructOfArrays().GetRealData(component);
+                amrex::Gpu::HostVector<amrex::ParticleReal> host(2 * old_count);
+                amrex::Gpu::copy(amrex::Gpu::deviceToHost, values.begin(),
+                                 values.begin() + 2 * old_count, host.begin());
+                for (amrex::Long ip = 0; ip < 2 * old_count; ++ip) {
+                    auto const expected = ip < old_count ? amrex::ParticleReal(17 + component)
+                                                         : 0._prt;
+                    AMREX_ALWAYS_ASSERT(host[ip] == expected);
+                }
+            }
+        }
+        amrex::Print() << "Native births zero both carry owners and preserve existing accounts\n";
     }
 
     void CheckBoundaryCarry (WarpX& simulation, WarpXParticleContainer& ions)
@@ -765,13 +826,22 @@ main (int argc, char* argv[])
         auto& ions = particles.GetParticleContainerFromName("ions");
         bool hybrid_restore_probe = false;
         bool boundary_carry = false;
+        bool birth_carry = false;
         options.query("boundary_carry", boundary_carry);
+        options.query("birth_carry", birth_carry);
         options.query("hybrid_restore_probe", hybrid_restore_probe);
         if (!hybrid_restore_probe) {
             RegisterParticleImpulseState(ions, "test");
             if (boundary_carry) { RegisterParticleImpulseState(ions, "boundary_second"); }
+            if (birth_carry) { RegisterParticleImpulseState(ions, "birth_second"); }
         }
         simulation.InitData();
+        if (birth_carry) {
+            CheckBirthCarry(ions);
+            WarpX::Finalize();
+            warpx::initialization::finalize_external_libraries();
+            return 0;
+        }
         if (boundary_carry) {
             CheckBoundaryCarry(simulation, ions);
             WarpX::Finalize();

@@ -136,8 +136,8 @@ namespace warpx::radiation
         ImplicitMomentSourceResult result;
         result.radiation = initial_guess;
         auto const old_closure = EvaluateM1Closure(initial_guess);
-        if (!old_closure.valid || max_iterations < 1 || !(tolerance > 0 && tolerance < 1) ||
-            !amrex::Math::isfinite(tolerance) ||
+        if (!old_closure.valid || max_iterations < 1 ||
+            !amrex::Math::isfinite(tolerance) || tolerance <= 0 || tolerance >= 1 ||
             !EvaluateGreyFourForce(old_closure.tensor, beta, absorption_dt, scattering_dt,
                                    equilibrium)
                  .valid) {

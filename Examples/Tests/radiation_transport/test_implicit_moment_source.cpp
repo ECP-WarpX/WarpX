@@ -9,6 +9,7 @@
 #include <AMReX_Print.H>
 
 #include <cmath>
+#include <limits>
 
 using namespace amrex::literals;
 using namespace warpx::radiation;
@@ -199,6 +200,21 @@ main (int argc, char* argv[])
         AMREX_ALWAYS_ASSERT(failed.energy_projection_residual == 0);
         AMREX_ALWAYS_ASSERT(!TryImplicitGreyMomentSource(before, {1, 0, 0}, 1, 0, 1).valid);
         AMREX_ALWAYS_ASSERT(!TryImplicitGreyMomentSource(before, {}, -1, 0, 1).valid);
+        // Reject invalid tolerances without altering the caller's radiation
+        // guess or accepting an energy/momentum transfer, including for NaN.
+        for (amrex::Real const tolerance : {
+                 0._rt, 1._rt, -1._rt, std::numeric_limits<amrex::Real>::infinity(),
+                 std::numeric_limits<amrex::Real>::quiet_NaN()}) {
+            auto const rejected = TryDrivenImplicitGreyMomentSource(
+                before, before, {}, 1, 0, 1, 60, tolerance);
+            AMREX_ALWAYS_ASSERT(!rejected.valid);
+            for (int d = 0; d < 4; ++d) {
+                AMREX_ALWAYS_ASSERT(rejected.radiation[d] == before[d]);
+                AMREX_ALWAYS_ASSERT(rejected.material_transfer[d] == 0);
+            }
+            AMREX_ALWAYS_ASSERT(rejected.material_energy_minus_work == 0);
+            AMREX_ALWAYS_ASSERT(rejected.energy_projection_residual == 0);
+        }
         // A joint solve can have a non-realizable algebraic transport RHS
         // while its physical old state and accepted final state are valid.
         auto const driven_scattering = TryImplicitGreyMomentSourceWithTransport(

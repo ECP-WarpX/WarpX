@@ -926,6 +926,8 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector& plasma_injector, int lev, 
         auto const old_size = static_cast<amrex::Long>(particle_tile.size());
         auto const new_size = old_size + max_new_particles;
         particle_tile.resize(new_size);
+        ParticleCreation::InitializeRadiationImpulseAttributes(
+            particle_tile, *this, old_size, new_size);
 
         auto& soa = particle_tile.GetStructOfArrays();
         amrex::GpuArray<ParticleReal*,PIdx::nattribs> pa;
@@ -1748,6 +1750,16 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
     // (This eliminates invalid particles, and makes sure that particles
     // are in the right tile.)
     tmp_pc.Redistribute();
+
+    // Runtime components in the temporary flux container are not communicated.
+    // Initialize these newborn accounts after redistribution, including on receivers.
+    for (auto& entry : tmp_pc.GetParticles(0)) {
+        auto& tile = entry.second;
+        ParticleCreation::InitializeRadiationImpulseAttributes(
+            tile, tmp_pc, 0, tile.numParticles());
+    }
+    // addParticles may select other streams while copying the temporary tiles.
+    amrex::Gpu::streamSynchronize();
 
     // Add the particles to the current container
     this->addParticles(tmp_pc, true);

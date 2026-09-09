@@ -53,7 +53,7 @@ namespace warpx::radiation
             else { InitializeOrder<4>(); }
         }
 
-        AMREX_GPU_HOST_DEVICE
+        [[nodiscard]] AMREX_GPU_HOST_DEVICE
         amrex::GpuArray<int, 3>
         Cell (int entry) const noexcept
         {
@@ -65,7 +65,7 @@ namespace warpx::radiation
             return result;
         }
 
-        AMREX_GPU_HOST_DEVICE
+        [[nodiscard]] AMREX_GPU_HOST_DEVICE
         amrex::Real
         Weight (int entry) const noexcept
         {

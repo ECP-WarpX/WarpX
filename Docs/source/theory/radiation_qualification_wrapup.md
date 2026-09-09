@@ -54,6 +54,24 @@ requirements are complete.
 
 ### CI checksum follow-up
 
+The 2D CI matrix also exposed a real initialization defect: native bulk plasma
+injection does not call the generic runtime-attribute initializer, so newly
+registered radiation carries could contain allocator residue. Both bulk
+injection paths now explicitly zero newborn radiation accounts. The flux path
+does so after redistribution of its temporary container, whose runtime
+components are not communicated. Existing particle accounts are not reset.
+The new pre-filled-capacity birth test passes with the fix and fails when the
+initializer is removed. The affected 2D moment/particle-carry subset then
+passes 77/77 locally, including MPI, rollback and restart cases.
+The expanded 1D radiation/coupling subset also passes 329/329 checks
+(`build-ci-tools/birth-final-1d-tests.log`).
+
+Single-precision CI compilation additionally requires native-precision flux
+literals and explicit ownership/query declarations. Those changes retain the
+moving runtime's double-precision guard. Invalid-tolerance rejection now has
+explicit zero, negative, out-of-range, infinity and NaN coverage; no accepted
+tolerance range or physics assertion was relaxed.
+
 Azure build 6472 passed the RZ pinch simulation and its original physics
 analysis, but its existing `test_rz_theta_implicit_dynamic_pinch` checksum
 differed by up to 1.58e-6. A local PETSc/MPI A/B comparison changes only the
