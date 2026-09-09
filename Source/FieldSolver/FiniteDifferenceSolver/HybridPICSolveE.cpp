@@ -73,7 +73,14 @@ namespace
             off_lo[d] = (stag[d] == 1) ? -1 : 0;
             span[d] = 2;
         }
-        amrex::Real rmin = std::numeric_limits<amrex::Real>::max();
+        // Running minimum over the adjacent cells: max() is the identity
+        // element for min (no cell average can exceed it), not an overflow
+        // guard. The outer loops visit every cell that touches this E
+        // component (two per direction where the component is nodal, one
+        // where it is cell-centered); the inner loops form each cell's
+        // node-averaged rho (sum/cnt, cnt = 2^AMREX_SPACEDIM); the result is
+        // the minimum of those cell averages -- vacuum-favoring.
+        amrex::Real rho_cell_min = std::numeric_limits<amrex::Real>::max();
         for (int ok = off_lo[2]; ok <= 0; ++ok) {
         for (int oj = off_lo[1]; oj <= 0; ++oj) {
         for (int oi = off_lo[0]; oi <= 0; ++oi) {
@@ -85,9 +92,9 @@ namespace
                 sum += rho(ic[0]+oi+ii, ic[1]+oj+jj, ic[2]+ok+kk);
                 cnt += 1;
             }}}
-            rmin = amrex::min(rmin, sum/static_cast<amrex::Real>(cnt));
+            rho_cell_min = amrex::min(rho_cell_min, sum/static_cast<amrex::Real>(cnt));
         }}}
-        return rmin;
+        return rho_cell_min;
     }
 }
 #endif
@@ -1057,12 +1064,12 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
     const bool include_external_fields = hybrid_model->m_add_external_fields;
 
     const bool holmstrom_vacuum_region = hybrid_model->m_holmstrom_vacuum_region;
-    // Decision-density sampling for the vacuum seam: 0 = per-edge average
-    // (legacy), 1 = endpoint-min nodal, 2 = adjacent-cell min -- one decision
-    // field for all three E components at modes 1 and 2. The decision drives
-    // the holmstrom vacuum branch when that treatment is on and the
+    // Decision-density sampling for the vacuum seam (VacuumSeamSwitchMode):
+    // Edge is the legacy per-component average; Node and Cell give one
+    // decision field for all three E components. The decision drives the
+    // holmstrom vacuum branch when that treatment is on and the
     // density-floor selection of the guarded Hall term otherwise.
-    const int switch_mode = hybrid_model->m_vacuum_seam_switch_mode;
+    const VacuumSeamSwitchMode switch_mode = hybrid_model->m_vacuum_seam_switch_mode;
 
     auto & warpx = WarpX::GetInstance();
     const amrex::Real t_new = warpx.gett_new(lev);
@@ -1248,8 +1255,8 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
             // The physics keeps rho_val; only the vacuum-seam decision
             // (holmstrom branch or guarded-floor selection) resamples.
             const Real rho_dec =
-                (switch_mode == 1) ? NodalSwitchRho(rho, Ex_stag, i, j, k) :
-                (switch_mode == 2) ? CellSwitchRho(rho, Ex_stag, i, j, k) :
+                (switch_mode == VacuumSeamSwitchMode::Node) ? NodalSwitchRho(rho, Ex_stag, i, j, k) :
+                (switch_mode == VacuumSeamSwitchMode::Cell) ? CellSwitchRho(rho, Ex_stag, i, j, k) :
                 rho_val;
 
             if (rho_dec < rho_floor && holmstrom_vacuum_region) {
@@ -1323,8 +1330,8 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
             // The physics keeps rho_val; only the vacuum-seam decision
             // (holmstrom branch or guarded-floor selection) resamples.
             const Real rho_dec =
-                (switch_mode == 1) ? NodalSwitchRho(rho, Ey_stag, i, j, k) :
-                (switch_mode == 2) ? CellSwitchRho(rho, Ey_stag, i, j, k) :
+                (switch_mode == VacuumSeamSwitchMode::Node) ? NodalSwitchRho(rho, Ey_stag, i, j, k) :
+                (switch_mode == VacuumSeamSwitchMode::Cell) ? CellSwitchRho(rho, Ey_stag, i, j, k) :
                 rho_val;
 
             if (rho_dec < rho_floor && holmstrom_vacuum_region) {
@@ -1398,8 +1405,8 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
             // The physics keeps rho_val; only the vacuum-seam decision
             // (holmstrom branch or guarded-floor selection) resamples.
             const Real rho_dec =
-                (switch_mode == 1) ? NodalSwitchRho(rho, Ez_stag, i, j, k) :
-                (switch_mode == 2) ? CellSwitchRho(rho, Ez_stag, i, j, k) :
+                (switch_mode == VacuumSeamSwitchMode::Node) ? NodalSwitchRho(rho, Ez_stag, i, j, k) :
+                (switch_mode == VacuumSeamSwitchMode::Cell) ? CellSwitchRho(rho, Ez_stag, i, j, k) :
                 rho_val;
 
             if (rho_dec < rho_floor && holmstrom_vacuum_region) {
