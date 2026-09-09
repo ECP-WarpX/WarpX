@@ -902,9 +902,8 @@ void HybridPICModel::CalculateElectronFluidVelocity (const int lev) const
 
     // Apply the same binomial filter used on J (suppresses grid-scale noise
     // that would otherwise be injected into particles by the gather inside
-    // the drag operator). The filter only writes valid cells, so refresh the
-    // ghosts afterwards; a multi-pass filter also reads ghosts beyond the
-    // single computed layer and needs them communicated first.
+    // the drag operator). A multi-pass filter reads ghosts beyond the single
+    // computed layer and needs them communicated first.
     if (WarpX::use_filter) {
         if (WarpX::filter_npass_each_dir.max() > 1) {
             for (int idim = 0; idim < 3; ++idim) {
@@ -915,20 +914,15 @@ void HybridPICModel::CalculateElectronFluidVelocity (const int lev) const
         }
         warpx.ApplyFilterMF(
             warpx.m_fields.get_mr_levels_alldirs("Ve_fp", warpx.finestLevel()), lev);
-        for (int idim = 0; idim < 3; ++idim) {
-            ablastr::utils::communication::FillBoundary(
-                *Ve[idim], WarpX::do_single_precision_comms,
-                warpx.Geom(lev).periodicity(), true);
-        }
-    } else if (m_has_resistive_drag) {
-        // The drag operator gathers Ve at the particle shape order, whose
-        // stencil can reach beyond the single ghost layer computed above:
-        // make every allocated ghost layer neighbor-consistent.
-        for (int idim = 0; idim < 3; ++idim) {
-            ablastr::utils::communication::FillBoundary(
-                *Ve[idim], WarpX::do_single_precision_comms,
-                warpx.Geom(lev).periodicity(), true);
-        }
+    }
+    // Make every allocated ghost layer neighbor-consistent: the filter only
+    // writes valid cells, and the drag operator gathers Ve at the particle
+    // shape order, whose stencil can reach beyond the single ghost layer
+    // computed above.
+    for (int idim = 0; idim < 3; ++idim) {
+        ablastr::utils::communication::FillBoundary(
+            *Ve[idim], WarpX::do_single_precision_comms,
+            warpx.Geom(lev).periodicity(), true);
     }
 
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
@@ -1018,32 +1012,36 @@ void HybridPICModel::CalculateIonFluidVelocity (const int lev) const
         }
 
         // Same J-style binomial filter as in CalculateElectronFluidVelocity;
-        // the ghost cells were computed above, so only the post-filter
-        // refresh is needed (the filter writes valid cells only).
+        // the ghost cells were computed above, so no pre-filter exchange is
+        // needed.
         if (WarpX::use_filter) {
             warpx.ApplyFilterMF(
                 warpx.m_fields.get_mr_levels_alldirs("Vs_fp_" + spec, warpx.finestLevel()),
                 lev);
-            for (int idim = 0; idim < 3; ++idim) {
-                ablastr::utils::communication::FillBoundary(
-                    *Vs[idim], WarpX::do_single_precision_comms,
-                    warpx.Geom(lev).periodicity(), true);
-            }
-        } else if (m_has_resistive_drag) {
-            // As for Ve: the drag's particle gather at shape order >= 3 can
-            // reach beyond the ghost extent computed in place above; make
-            // every allocated ghost layer neighbor-consistent.
-            for (int idim = 0; idim < 3; ++idim) {
-                ablastr::utils::communication::FillBoundary(
-                    *Vs[idim], WarpX::do_single_precision_comms,
-                    warpx.Geom(lev).periodicity(), true);
-            }
+        }
+        // As for Ve: the filter writes valid cells only, and the drag's
+        // particle gather at shape order >= 3 can reach beyond the ghost
+        // extent computed in place above; make every allocated ghost layer
+        // neighbor-consistent.
+        for (int idim = 0; idim < 3; ++idim) {
+            ablastr::utils::communication::FillBoundary(
+                *Vs[idim], WarpX::do_single_precision_comms,
+                warpx.Geom(lev).periodicity(), true);
         }
 
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
         // Below-axis guard cells by parity reflection, as for Ve above.
         warpx.ApplyFieldBoundaryOnAxis(Vs[0], Vs[1], Vs[2], lev);
 #endif
+    }
+}
+
+void HybridPICModel::ComputeResistiveOverlay () const
+{
+    auto& warpx = WarpX::GetInstance();
+    for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
+    {
+        ComputeResistiveOverlay(lev);
     }
 }
 
@@ -1119,9 +1117,8 @@ void HybridPICModel::ComputeResistiveOverlay (int const lev) const
         auto & pc = mypc.GetParticleContainerFromName(spec_name);
         if (pc.getCharge() == 0._prt) { continue; }
 
-        auto eta_s_per_it = m_eta_per_species.find(spec_name);
-        if (eta_s_per_it == m_eta_per_species.end()) { continue; }
-        auto const eta_s_per = eta_s_per_it->second;
+        if (!m_eta_per_species.contains(spec_name)) { continue; }
+        auto const eta_s_per = m_eta_per_species.at(spec_name);
 
         amrex::MultiFab const & rho_s_mf =
             *warpx.m_fields.get("rho_fp_" + spec_name, lev);
@@ -1894,6 +1891,17 @@ void HybridPICModel::QDSMCApplyIonHeating (int const lev, amrex::Real const dt,
         // Per-cell drag-diffusion coefficients on the cc field grid:
         //   0 = nu_ei [1/s], 1-3 = u_i [m/s], 4 = T_e [K], 5 = redirected dTe [K].
         // Defaults (0) leave inactive / below-floor cells as no-ops.
+        // The Ornstein-Uhlenbeck update below relaxes each ion toward the
+        // center velocity in components 1-3. That center is this species'
+        // own bulk velocity u_i (not the electron fluid u_e): centered on
+        // u_e the update would also relax the ion bulk toward the electrons,
+        // i.e. apply an electron-ion bulk friction whose momentum and
+        // kinetic energy have no conjugate electron-side accounting here
+        // (the energy equation carries only the thermal exchange
+        // 3 n k_B nu_ei (T_e - T_i)), and which the hybrid_resistive_drag
+        // collision already applies when it is enabled. Centered on u_i,
+        // Q_ei is a pure thermal channel that leaves the ion bulk momentum
+        // unchanged.
         amrex::MultiFab coef(cc_ba, Te.DistributionMap(), 6, 0);
         coef.setVal(0.0_rt);
 

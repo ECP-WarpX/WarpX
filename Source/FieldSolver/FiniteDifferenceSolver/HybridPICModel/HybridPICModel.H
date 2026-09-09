@@ -434,6 +434,7 @@ public:
      *        half-step B-advance, so each half integrates about the most
      *        recent J_plasma linearization point.
      */
+    void ComputeResistiveOverlay () const;
     void ComputeResistiveOverlay (int lev) const;
 
     /** Check if rkf45 should be used */

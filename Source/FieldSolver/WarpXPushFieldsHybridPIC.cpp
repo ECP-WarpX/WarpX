@@ -83,9 +83,7 @@ void WarpX::HybridPICEvolveFields ()
     // T_e) are per-step quantities; the plasma-current response stays live
     // through the coefficient.
     if (m_hybrid_pic_model->m_has_per_species_eta) {
-        for (int lev = 0; lev <= finest_level; ++lev) {
-            m_hybrid_pic_model->ComputeResistiveOverlay(lev);
-        }
+        m_hybrid_pic_model->ComputeResistiveOverlay();
     }
 
     // Reference hybrid-PIC multifabs
@@ -158,9 +156,7 @@ void WarpX::HybridPICEvolveFields ()
         m_hybrid_pic_model->CalculatePlasmaCurrent(
             m_fields.get_mr_levels_alldirs(FieldType::Bfield_fp, finest_level),
             m_eb_update_E);
-        for (int lev = 0; lev <= finest_level; ++lev) {
-            m_hybrid_pic_model->ComputeResistiveOverlay(lev);
-        }
+        m_hybrid_pic_model->ComputeResistiveOverlay();
     }
 
     // Now push the B field from t=n+1/2 to t=n+1 using the n+1/2 quantities
