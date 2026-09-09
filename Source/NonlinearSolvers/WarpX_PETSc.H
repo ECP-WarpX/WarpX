@@ -231,7 +231,7 @@ class SNES_impl : public PETScSolver_impl
         void solve(VecType&, const VecType&, amrex::Real, amrex::Real, int) const;
 
         //! Evaluate the RHS
-        void computeRHS(VecType&, const VecType&) const;
+        void computeRHS(VecType&, const VecType&);
 
         //! Returns if a preconditioner is being used
         [[nodiscard]] bool usePC() const;
@@ -285,7 +285,7 @@ class SNES_impl : public PETScSolver_impl
          * Scoped to a single solver, so each solver built in a process takes that
          * path exactly once.
          */
-        mutable bool m_rhs_first_call = true;
+        bool m_rhs_first_call = true;
 
         //! Linear operator object
         std::unique_ptr<LinOpType> m_linop;

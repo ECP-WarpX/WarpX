@@ -818,7 +818,7 @@ void SNES_impl::solve (VecType& a_U,
     m_total_linsol_iters += m_niters_l;
 }
 
-void SNES_impl::computeRHS(VecType& a_F, const VecType& a_U) const
+void SNES_impl::computeRHS(VecType& a_F, const VecType& a_U)
 {
     BL_PROFILE("SNES_impl::computeRHS()");
     AMREX_ALWAYS_ASSERT(isDefined());
