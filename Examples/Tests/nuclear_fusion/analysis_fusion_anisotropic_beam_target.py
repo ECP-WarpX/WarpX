@@ -47,8 +47,8 @@ REACTION_CONFIG = {
     },
 }
 
-# Reference values may vary from run to run. The tolerances are intentionally
-# broad enough to account for random sampling, compute backends, and precision.
+# Reference values may vary from run to run. The tolerances account for random
+# sampling, compute backends, and precision while remaining regression-sensitive.
 REFERENCE_METRICS = {
     "DD": {
         1: {
@@ -269,7 +269,7 @@ def validate_neutron_spectrum(diag_dir, reaction):
     np.testing.assert_allclose(
         [metrics["mean_energy"], metrics["std_energy"]],
         [reference["mean_energy"], reference["std_energy"]],
-        rtol=0.05,
+        rtol=0.01,
         atol=0.0,
     )
     np.testing.assert_allclose(
