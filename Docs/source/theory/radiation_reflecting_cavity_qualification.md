@@ -80,7 +80,9 @@ The script preserves per-case logs, writes `reflecting_cavity_results.json`,
 and plots both refinement sequences in `reflecting_cavity_refinement.png`.
 The production-resolution run and visualization have been executed locally.
 
-![Measured cavity refinement](../../../build-production-cpu/reflecting-cavity-production/reflecting_cavity_refinement.png)
+The local measured-refinement plot is generated at
+`build-production-cpu/reflecting-cavity-production/reflecting_cavity_refinement.png`;
+it is a qualification artifact, not bundled with the source documentation.
 
 The same CI-sized refinement gate passes on Tesla P40 CUDA (103.97 seconds).
 The six reported cosine amplitudes agree with CPU at the executable's printed

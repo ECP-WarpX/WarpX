@@ -4862,8 +4862,10 @@ RadiationTransport::WriteCheckpointData (std::string const& dir) const
 void
 RadiationTransport::ReadCheckpointData (std::string const& dir)
 {
-    ReadParticleCarryWallCheckpoint(dir);
-    if (!m_enabled) { return; }
+    if (!m_enabled) {
+        ReadParticleCarryWallCheckpoint(dir);
+        return;
+    }
     std::ifstream model{dir + "/RadiationMomentModel_data.txt"};
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(model.good() == m_use_coupled_moment_transport,
         "Restart must preserve the radiation moment model; scalar/moment conversion "
@@ -4904,6 +4906,8 @@ RadiationTransport::ReadCheckpointData (std::string const& dir)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!(owner >> trailing),
             "Unexpected trailing radiation particle carry schema data.");
     }
+    // Validate the parent ownership contract before its per-owner wall history.
+    ReadParticleCarryWallCheckpoint(dir);
     std::ifstream checkpoint{
         dir + "/RadiationTransport_data.txt", std::ifstream::in};
     if (!checkpoint.good()) {

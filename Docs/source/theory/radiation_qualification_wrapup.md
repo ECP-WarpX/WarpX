@@ -48,13 +48,19 @@ requirements are complete.
 
 ## Detailed records
 
-- [Runtime scope](radiation_moving_runtime.md)
-- [Moving-material implementation plan](radiation_moving_material_plan.md)
-- [Moving-beam verification](radiation_moving_beam_verification.md)
-- [Particle shape exchange](radiation_particle_shape_exchange.md)
-- [Boundary contract and carry checkpoint tests](radiation_moment_boundary_plan.md)
-- [Material-wall qualification, including failed gates](radiation_material_wall_qualification.md)
-- [Oblique-interface qualification](radiation_oblique_interface_qualification.md)
+```{toctree}
+:maxdepth: 1
+
+radiation_moving_runtime
+radiation_moving_material_plan
+radiation_moving_moment_discretization
+radiation_moving_beam_verification
+radiation_particle_shape_exchange
+radiation_moment_boundary_plan
+radiation_material_wall_qualification
+radiation_oblique_interface_qualification
+radiation_reflecting_cavity_qualification
+```
 
 Build/test artifacts referenced in these records are local qualification logs,
 not bundled simulation data. No FLASH source or remote-machine credentials are

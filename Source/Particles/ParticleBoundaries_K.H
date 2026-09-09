@@ -120,6 +120,8 @@ namespace ApplyParticleBoundaries {
      *                    (u_r, u_theta, u_phi).
      * \param particle_lost: output, flags whether the particle was lost
      * \param boundaries: object with boundary condition settings
+     * \param engine: random engine used by stochastic or thermal boundaries
+     * \param event: optional output for reflection, thermalization and loss decisions
     */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void

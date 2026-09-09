@@ -65,7 +65,9 @@ pass in 11.28 seconds. Existing coupled-source cases also passed; one initial
 negative-test failure was a line-wrapped error-message match, corrected by
 shortening the error message without changing the rejected condition.
 
-![Native material-wall energy and phase space](../../../build-production-cpu/material-wall-even-pressure/material_wall_control.png)
+The local energy/phase-space plot is generated at
+`build-production-cpu/material-wall-even-pressure/material_wall_control.png`;
+it is a qualification artifact, not bundled with the source documentation.
 
 Reproduce the full control from an empty output directory under the build root:
 
