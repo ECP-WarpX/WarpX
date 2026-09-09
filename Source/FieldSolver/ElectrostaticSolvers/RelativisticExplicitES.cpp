@@ -34,7 +34,8 @@ void RelativisticExplicitES::ComputeSpaceChargeField (
     ablastr::fields::MultiFabRegister& fields,
     MultiParticleContainer& mpc,
     [[maybe_unused]] MultiFluidContainer* mfl,
-    int max_level)
+    int max_level,
+    bool verbose_step)
 {
     ABLASTR_PROFILE("RelativisticExplicitES::ComputeSpaceChargeField");
 
@@ -51,7 +52,8 @@ void RelativisticExplicitES::ComputeSpaceChargeField (
     // due to simulation boundary potentials
     for (auto const& species : mpc) {
         if (always_run_solve || (species->initialize_self_fields)) {
-            AddSpaceChargeField(*species, Efield_fp, Bfield_fp);
+            int const verbosity = verbose_step ? species->self_fields_verbosity : 0;
+            AddSpaceChargeField(*species, Efield_fp, Bfield_fp, verbosity);
         }
     }
 
@@ -65,7 +67,8 @@ void RelativisticExplicitES::ComputeSpaceChargeField (
 void RelativisticExplicitES::AddSpaceChargeField (
     WarpXParticleContainer& pc,
     ablastr::fields::MultiLevelVectorField& Efield_fp,
-    ablastr::fields::MultiLevelVectorField& Bfield_fp)
+    ablastr::fields::MultiLevelVectorField& Bfield_fp,
+    int const verbosity)
 {
     ABLASTR_PROFILE("RelativisticExplicitES::AddSpaceChargeField");
 
@@ -132,7 +135,7 @@ void RelativisticExplicitES::AddSpaceChargeField (
     species_mlmg_options.relative_tolerance = pc.self_fields_required_precision;
     species_mlmg_options.absolute_tolerance = pc.self_fields_absolute_tolerance;
     species_mlmg_options.max_iters = pc.self_fields_max_iters;
-    species_mlmg_options.verbosity = pc.self_fields_verbosity;
+    species_mlmg_options.verbosity = verbosity;
 
     // Compute the potential phi, by solving the Poisson equation
     computePhi( amrex::GetVecOfPtrs(rho), amrex::GetVecOfPtrs(phi),
