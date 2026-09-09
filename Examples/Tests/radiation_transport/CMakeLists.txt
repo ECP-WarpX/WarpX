@@ -1,6 +1,127 @@
 # Add tests (alphabetical order) ##############################################
 #
 
+if(WarpX_PRECISION STREQUAL "DOUBLE")
+    set(coupled_runtime_procs 1)
+    if(WarpX_MPI)
+        set(coupled_runtime_procs 2)
+    endif()
+    if(WarpX_PARTICLE_PRECISION STREQUAL "DOUBLE")
+        # Native material-wall prerequisite; radiation is deliberately disabled.
+        add_warpx_test(
+            test_1d_radiation_transport_material_wall_adjoint
+            1 1 "inputs_1d_material_wall_control hybrid_pic_model.conservative_pressure_work_pec=1"
+            "analysis_material_wall_control.py ." OFF OFF)
+        add_warpx_test(
+            test_1d_radiation_transport_material_wall_adjoint_restart
+            1 ${coupled_runtime_procs} "inputs_1d_material_wall_control hybrid_pic_model.conservative_pressure_work_pec=1 amr.restart='../test_1d_radiation_transport_material_wall_adjoint/diags/chk001600'"
+            "analysis_material_wall_control.py . --reference ../test_1d_radiation_transport_material_wall_adjoint"
+            OFF test_1d_radiation_transport_material_wall_adjoint)
+        if(TEST test_1d_radiation_transport_material_wall_adjoint.run)
+            set(history_schema_dir "${CMAKE_CURRENT_BINARY_DIR}/hybrid_history_schema")
+            file(MAKE_DIRECTORY ${history_schema_dir})
+            add_test(NAME test_1d_hybrid_moment_history_schema COMMAND
+                ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/analysis_hybrid_history_schema.py
+                $<TARGET_FILE:app_1d> ${CMAKE_CURRENT_SOURCE_DIR}/inputs_1d_material_wall_control
+                ${CMAKE_BINARY_DIR}/bin/test_1d_radiation_transport_material_wall_adjoint
+                --probe-executable $<TARGET_FILE:test_1d_particle_impulse>)
+            set_tests_properties(test_1d_hybrid_moment_history_schema PROPERTIES
+                WORKING_DIRECTORY ${history_schema_dir}
+                FIXTURES_REQUIRED native_pec_wall_checkpoint)
+            set_property(TEST test_1d_radiation_transport_material_wall_adjoint.run
+                APPEND PROPERTY FIXTURES_SETUP native_pec_wall_checkpoint)
+            set_property(TEST test_1d_radiation_transport_material_wall_adjoint_restart.run
+                test_1d_radiation_transport_material_wall_adjoint_restart.analysis
+                APPEND PROPERTY FIXTURES_REQUIRED native_pec_wall_checkpoint)
+            if(TEST test_1d_radiation_transport_material_wall_adjoint.cleanup)
+                set_property(TEST test_1d_radiation_transport_material_wall_adjoint.cleanup
+                    APPEND PROPERTY FIXTURES_CLEANUP native_pec_wall_checkpoint)
+            endif()
+        endif()
+        add_warpx_test(
+            test_1d_radiation_transport_moving_beam_ode
+            1 ${coupled_runtime_procs} "inputs_1d_moving_moment_beam"
+            "analysis_moving_moment_beam.py . --check-momentum-diagnostic" OFF OFF)
+        add_warpx_test(
+            test_1d_radiation_transport_moving_beam_restart
+            1 1 "inputs_1d_moving_moment_beam amr.restart='../test_1d_radiation_transport_moving_beam_ode/diags/chk000200'"
+            "analysis_moving_moment_beam.py . --check-momentum-diagnostic --restart-reference ../test_1d_radiation_transport_moving_beam_ode"
+            OFF test_1d_radiation_transport_moving_beam_ode)
+        add_warpx_test(
+            test_1d_radiation_transport_moving_moment_pulse
+            1 ${coupled_runtime_procs} "inputs_1d_moving_moment_pulse max_step=400 amr.n_cell=128 amr.max_grid_size=64 warpx.const_dt=8.333333333333333e-12 chk.intervals=200"
+            "analysis_moving_moment_pulse.py ." OFF OFF)
+        add_warpx_test(
+            test_1d_radiation_transport_moving_moment_restart
+            1 1 "inputs_1d_moving_moment_pulse max_step=400 amr.n_cell=128 amr.max_grid_size=64 warpx.const_dt=8.333333333333333e-12 chk.intervals=200 amr.restart='../test_1d_radiation_transport_moving_moment_pulse/diags/chk000200'"
+            "analysis_moving_moment_pulse.py . --reference ../test_1d_radiation_transport_moving_moment_pulse"
+            OFF test_1d_radiation_transport_moving_moment_pulse)
+        # Wiring/transaction gates, not substitutes for the full oblique study.
+        add_warpx_test(
+            test_2d_radiation_transport_moving_moment_adapter
+            2 ${coupled_runtime_procs} "inputs_2d_moving_moment_oblique amr.n_cell=16 32 amr.max_grid_size=16 max_step=16 diag1.intervals=8 chk.intervals=8"
+            "analysis_moving_moment_oblique.py . --probe" OFF OFF)
+        add_warpx_test(
+            test_2d_radiation_transport_moving_moment_adapter_restart
+            2 1 "inputs_2d_moving_moment_oblique amr.n_cell=16 32 amr.max_grid_size=16 max_step=16 diag1.intervals=8 chk.intervals=8 amr.restart='../test_2d_radiation_transport_moving_moment_adapter/diags/chk000008'"
+            "analysis_moving_moment_oblique.py . --probe --reference ../test_2d_radiation_transport_moving_moment_adapter"
+            OFF test_2d_radiation_transport_moving_moment_adapter)
+    endif()
+    add_warpx_test(
+        test_3d_radiation_transport_coupled_implicit
+        3 1 inputs_base_3d_radiation_transport_coupled_implicit
+        "analysis_coupled_implicit.py" OFF OFF)
+    add_warpx_test(
+        test_1d_radiation_transport_coupled_implicit
+        1 1 inputs_base_1d_radiation_transport_coupled_implicit
+        "analysis_coupled_implicit.py" OFF OFF)
+    add_warpx_test(
+        test_1d_radiation_transport_coupled_implicit_restart
+        1 2 "inputs_base_1d_radiation_transport_coupled_implicit amr.restart='../test_1d_radiation_transport_coupled_implicit/diags/chk000010'"
+        "analysis_coupled_implicit.py --reference ../test_1d_radiation_transport_coupled_implicit"
+        OFF test_1d_radiation_transport_coupled_implicit)
+    add_warpx_test(
+        test_1d_radiation_transport_coupled_retry_details
+        1 ${coupled_runtime_procs} "inputs_base_1d_radiation_transport_coupled_implicit radiation_transport.coupled_max_subdivisions=6 radiation_transport.lte_exchange_max_iterations=4 radiation_energy.include_solver_details=1"
+        "analysis_coupled_implicit.py --solver-details" OFF OFF)
+    add_warpx_test(
+        test_1d_radiation_transport_coupled_retry_details_restart
+        1 1 "inputs_base_1d_radiation_transport_coupled_implicit radiation_transport.coupled_max_subdivisions=6 radiation_transport.lte_exchange_max_iterations=4 radiation_energy.include_solver_details=1 amr.restart='../test_1d_radiation_transport_coupled_retry_details/diags/chk000010'"
+        "analysis_coupled_implicit.py --solver-details --reference ../test_1d_radiation_transport_coupled_retry_details"
+        OFF test_1d_radiation_transport_coupled_retry_details)
+endif()
+
+add_warpx_test(
+    test_1d_radiation_transport_initial_blackbody
+    1
+    1
+    inputs_base_1d_radiation_transport_initial_blackbody
+    "analysis_initial_blackbody.py --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"
+    OFF
+    OFF
+)
+
+if(WarpX_PRECISION STREQUAL DOUBLE)
+    add_warpx_test(
+        test_1d_radiation_transport_implicit_diffusion
+        1
+        2
+        inputs_base_1d_radiation_transport_implicit_diffusion
+        analysis_implicit_diffusion.py
+        OFF
+        OFF
+    )
+    add_warpx_test(
+        test_3d_radiation_transport_implicit_diffusion
+        3
+        2
+        inputs_base_3d_radiation_transport_implicit_diffusion
+        analysis_implicit_diffusion.py
+        OFF
+        OFF
+    )
+endif()
+
 add_warpx_test(
     test_1d_radiation_transport_bath
     1
@@ -207,6 +328,627 @@ if(WarpX_APP AND NOT Python_EXECUTABLE)
 endif()
 
 if(WarpX_LIB)
+    if("1" IN_LIST WarpX_DIMS AND WarpX_PRECISION STREQUAL "DOUBLE"
+       AND (WarpX_COMPUTE STREQUAL "OMP" OR WarpX_COMPUTE STREQUAL "NOACC"))
+        add_executable(radiation_stationary_restart_driver stationary_restart_driver.cpp)
+        target_link_libraries(radiation_stationary_restart_driver PRIVATE lib_1d)
+        target_compile_features(radiation_stationary_restart_driver PRIVATE cxx_std_20)
+        warpx_set_compile_warnings(radiation_stationary_restart_driver)
+    endif()
+    if(WarpX_SINGULARITY_EOS AND "1" IN_LIST WarpX_DIMS AND WarpX_PRECISION STREQUAL "DOUBLE")
+        add_executable(test_coupled_spiner test_coupled_spiner.cpp)
+        target_link_libraries(test_coupled_spiner PRIVATE lib_1d)
+        target_compile_features(test_coupled_spiner PRIVATE cxx_std_20)
+        warpx_set_compile_warnings(test_coupled_spiner)
+        set(coupled_spiner_table "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/radiation_coupled_spiner_fixture/electron.sp5")
+        add_test(NAME radiation_coupled_spiner_fixture COMMAND ${CMAKE_COMMAND} -E env
+            "WARPX_SPINER_FIXTURE_PATH=${coupled_spiner_table}"
+            "WARPX_SPINER_FIXTURE_ATOMIC_MASS=13.019" "WARPX_SPINER_FIXTURE_ATOMIC_NUMBER=2"
+            "WARPX_SPINER_FIXTURE_NUM_T=512" "WARPX_SPINER_FIXTURE_RHO_MAX=15"
+            $<TARGET_FILE:test_hybrid_electron_thermodynamics_spiner>)
+        set_tests_properties(radiation_coupled_spiner_fixture PROPERTIES FIXTURES_SETUP coupled_spiner_table
+            ENVIRONMENT "OMP_NUM_THREADS=1")
+        file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/coupled_spiner)
+        add_test(NAME test_coupled_spiner COMMAND test_coupled_spiner inputs_base_1d_coupled_spiner
+            hybrid_pic_model.electron_eos_ions_table_file=${coupled_spiner_table})
+        set_tests_properties(test_coupled_spiner PROPERTIES FIXTURES_REQUIRED coupled_spiner_table
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/coupled_spiner
+            ENVIRONMENT "OMP_NUM_THREADS=1;AMREX_INPUTS_FILE_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/")
+        if(WarpX_MPI)
+            file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/coupled_spiner_mpi)
+            add_test(NAME test_coupled_spiner_mpi COMMAND
+                ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
+                $<TARGET_FILE:test_coupled_spiner> inputs_base_1d_coupled_spiner
+                hybrid_pic_model.electron_eos_ions_table_file=${coupled_spiner_table}
+                ${MPIEXEC_POSTFLAGS})
+            set_tests_properties(test_coupled_spiner_mpi PROPERTIES FIXTURES_REQUIRED coupled_spiner_table
+                PROCESSORS 2 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/coupled_spiner_mpi
+                ENVIRONMENT "OMP_NUM_THREADS=1;AMREX_INPUTS_FILE_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/")
+        endif()
+    endif()
+    if(WarpX_PRECISION STREQUAL "DOUBLE")
+        list(GET WarpX_DIMS 0 frame_dimension)
+        warpx_set_suffix_dims(frame_suffix ${frame_dimension})
+        add_executable(test_radiation_frame test_radiation_frame.cpp)
+        target_link_libraries(test_radiation_frame PRIVATE lib_${frame_suffix})
+        if(WarpX_COMPUTE STREQUAL CUDA)
+            setup_target_for_cuda_compilation(test_radiation_frame)
+            target_compile_features(test_radiation_frame PRIVATE cuda_std_20)
+        else()
+            target_compile_features(test_radiation_frame PRIVATE cxx_std_20)
+        endif()
+        warpx_set_compile_warnings(test_radiation_frame)
+        add_test(NAME test_radiation_frame COMMAND test_radiation_frame amrex.the_arena_init_size=0)
+        set_tests_properties(test_radiation_frame PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
+        add_executable(test_material_kinetic_work test_material_kinetic_work.cpp)
+        target_link_libraries(test_material_kinetic_work PRIVATE lib_${frame_suffix})
+        if(WarpX_COMPUTE STREQUAL CUDA)
+            setup_target_for_cuda_compilation(test_material_kinetic_work)
+            target_compile_features(test_material_kinetic_work PRIVATE cuda_std_20)
+        else()
+            target_compile_features(test_material_kinetic_work PRIVATE cxx_std_20)
+        endif()
+        warpx_set_compile_warnings(test_material_kinetic_work)
+        add_test(NAME test_material_kinetic_work COMMAND test_material_kinetic_work
+            amrex.the_arena_init_size=0)
+        set_tests_properties(test_material_kinetic_work PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
+        add_executable(test_implicit_moment_source test_implicit_moment_source.cpp)
+        target_link_libraries(test_implicit_moment_source PRIVATE lib_${frame_suffix})
+        if(WarpX_COMPUTE STREQUAL CUDA)
+            setup_target_for_cuda_compilation(test_implicit_moment_source)
+            target_compile_features(test_implicit_moment_source PRIVATE cuda_std_20)
+        else()
+            target_compile_features(test_implicit_moment_source PRIVATE cxx_std_20)
+        endif()
+        warpx_set_compile_warnings(test_implicit_moment_source)
+        add_test(NAME test_implicit_moment_source COMMAND test_implicit_moment_source
+            amrex.the_arena_init_size=0)
+        set_tests_properties(test_implicit_moment_source PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
+        add_executable(test_moving_moment_flux test_moving_moment_flux.cpp)
+        target_link_libraries(test_moving_moment_flux PRIVATE lib_${frame_suffix})
+        if(WarpX_COMPUTE STREQUAL CUDA)
+            setup_target_for_cuda_compilation(test_moving_moment_flux)
+            target_compile_features(test_moving_moment_flux PRIVATE cuda_std_20)
+        else()
+            target_compile_features(test_moving_moment_flux PRIVATE cxx_std_20)
+        endif()
+        warpx_set_compile_warnings(test_moving_moment_flux)
+        add_test(NAME test_moving_moment_flux COMMAND test_moving_moment_flux
+            amrex.the_arena_init_size=0)
+        set_tests_properties(test_moving_moment_flux PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
+        add_executable(test_moment_boundary_flux test_moment_boundary_flux.cpp)
+        # These are layout/reduction unit tests, not repeated production cases.
+        foreach(boundary_dimension IN LISTS WarpX_DIMS)
+            if(NOT boundary_dimension MATCHES "^[123]$")
+                continue()
+            endif()
+            warpx_set_suffix_dims(boundary_suffix ${boundary_dimension})
+            set(boundary_target test_moment_boundary_exchange_${boundary_suffix})
+            add_executable(${boundary_target} test_moment_boundary_exchange.cpp)
+            target_link_libraries(${boundary_target} PRIVATE lib_${boundary_suffix})
+            if(WarpX_COMPUTE STREQUAL CUDA)
+                setup_target_for_cuda_compilation(${boundary_target})
+                target_compile_features(${boundary_target} PRIVATE cuda_std_20)
+            else()
+                target_compile_features(${boundary_target} PRIVATE cxx_std_20)
+            endif()
+            warpx_set_compile_warnings(${boundary_target})
+            add_test(NAME ${boundary_target} COMMAND ${boundary_target} amrex.the_arena_init_size=0)
+            set_tests_properties(${boundary_target} PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
+            if(WarpX_MPI)
+                add_test(NAME ${boundary_target}_mpi COMMAND ${MPIEXEC_EXECUTABLE}
+                    ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
+                    $<TARGET_FILE:${boundary_target}> ${MPIEXEC_POSTFLAGS} amrex.the_arena_init_size=0)
+                set_tests_properties(${boundary_target}_mpi PROPERTIES
+                    ENVIRONMENT "OMP_NUM_THREADS=1" PROCESSORS 2)
+            endif()
+        endforeach()
+        target_link_libraries(test_moment_boundary_flux PRIVATE lib_${frame_suffix})
+        if(WarpX_COMPUTE STREQUAL CUDA)
+            setup_target_for_cuda_compilation(test_moment_boundary_flux)
+            target_compile_features(test_moment_boundary_flux PRIVATE cuda_std_20)
+        else()
+            target_compile_features(test_moment_boundary_flux PRIVATE cxx_std_20)
+        endif()
+        warpx_set_compile_warnings(test_moment_boundary_flux)
+        set(boundary_dir ${CMAKE_CURRENT_BINARY_DIR}/moment_boundary)
+        file(MAKE_DIRECTORY ${boundary_dir})
+        add_test(NAME test_moment_boundary_flux COMMAND test_moment_boundary_flux
+            amrex.the_arena_init_size=0)
+        set_tests_properties(test_moment_boundary_flux PROPERTIES
+            WORKING_DIRECTORY ${boundary_dir} ENVIRONMENT "OMP_NUM_THREADS=1"
+            FIXTURES_SETUP moment_boundary_data)
+        if(NOT Python_EXECUTABLE)
+            find_package(Python COMPONENTS Interpreter REQUIRED)
+        endif()
+        add_test(NAME test_moment_boundary_flux_analysis COMMAND ${Python_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/reference_moment_boundary.py
+            --kernel-output ${boundary_dir}/boundary_flux.txt)
+        set_tests_properties(test_moment_boundary_flux_analysis PROPERTIES
+            FIXTURES_REQUIRED moment_boundary_data)
+        add_executable(test_implicit_moment_transport test_implicit_moment_transport.cpp)
+        if(frame_dimension MATCHES "^[123]$")
+            add_executable(test_particle_boundary_event test_particle_boundary_event.cpp)
+            target_link_libraries(test_particle_boundary_event PRIVATE lib_${frame_suffix})
+            if(WarpX_COMPUTE STREQUAL CUDA)
+                setup_target_for_cuda_compilation(test_particle_boundary_event)
+                target_compile_features(test_particle_boundary_event PRIVATE cuda_std_20)
+            else()
+                target_compile_features(test_particle_boundary_event PRIVATE cxx_std_20)
+            endif()
+            warpx_set_compile_warnings(test_particle_boundary_event)
+            add_test(NAME test_particle_boundary_event COMMAND test_particle_boundary_event
+                amrex.the_arena_init_size=0)
+            set_tests_properties(test_particle_boundary_event PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
+            add_executable(test_prescribed_moment_boundary test_prescribed_moment_boundary.cpp)
+            target_link_libraries(test_prescribed_moment_boundary PRIVATE lib_${frame_suffix})
+            if(WarpX_COMPUTE STREQUAL CUDA)
+                setup_target_for_cuda_compilation(test_prescribed_moment_boundary)
+                target_compile_features(test_prescribed_moment_boundary PRIVATE cuda_std_20)
+            else()
+                target_compile_features(test_prescribed_moment_boundary PRIVATE cxx_std_20)
+            endif()
+            warpx_set_compile_warnings(test_prescribed_moment_boundary)
+            add_test(NAME test_prescribed_moment_boundary COMMAND test_prescribed_moment_boundary
+                amrex.the_arena_init_size=0)
+            set_tests_properties(test_prescribed_moment_boundary PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
+            add_test(NAME test_prescribed_moment_boundary_outflow COMMAND test_prescribed_moment_boundary
+                test.injection=-0.1 amrex.the_arena_init_size=0)
+            set_tests_properties(test_prescribed_moment_boundary_outflow PROPERTIES
+                ENVIRONMENT "OMP_NUM_THREADS=1")
+            add_test(NAME test_reflecting_moment_boundary COMMAND test_prescribed_moment_boundary
+                test.reflecting=1 amrex.the_arena_init_size=0)
+            set_tests_properties(test_reflecting_moment_boundary PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
+            if(WarpX_MPI)
+                add_test(NAME test_prescribed_moment_boundary_mpi COMMAND ${MPIEXEC_EXECUTABLE}
+                    ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
+                    $<TARGET_FILE:test_prescribed_moment_boundary> ${MPIEXEC_POSTFLAGS}
+                    amrex.the_arena_init_size=0)
+                set_tests_properties(test_prescribed_moment_boundary_mpi PROPERTIES
+                    ENVIRONMENT "OMP_NUM_THREADS=1" PROCESSORS 2)
+                add_test(NAME test_reflecting_moment_boundary_mpi COMMAND ${MPIEXEC_EXECUTABLE}
+                    ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
+                    $<TARGET_FILE:test_prescribed_moment_boundary> ${MPIEXEC_POSTFLAGS}
+                    test.reflecting=1 amrex.the_arena_init_size=0)
+                set_tests_properties(test_reflecting_moment_boundary_mpi PROPERTIES
+                    ENVIRONMENT "OMP_NUM_THREADS=1" PROCESSORS 2)
+            endif()
+        endif()
+        target_link_libraries(test_implicit_moment_transport PRIVATE lib_${frame_suffix})
+        if(WarpX_COMPUTE STREQUAL CUDA)
+            setup_target_for_cuda_compilation(test_implicit_moment_transport)
+            target_compile_features(test_implicit_moment_transport PRIVATE cuda_std_20)
+        else()
+            target_compile_features(test_implicit_moment_transport PRIVATE cxx_std_20)
+        endif()
+        warpx_set_compile_warnings(test_implicit_moment_transport)
+        if(frame_dimension STREQUAL "1")
+            set(transport_refinement_dir "${CMAKE_CURRENT_BINARY_DIR}/moving_transport_refinement")
+            file(MAKE_DIRECTORY ${transport_refinement_dir})
+            add_test(NAME test_moving_transport_refinement COMMAND ${Python_EXECUTABLE}
+                ${CMAKE_CURRENT_SOURCE_DIR}/analysis_moving_transport_refinement.py
+                $<TARGET_FILE:test_implicit_moment_transport>)
+            set_tests_properties(test_moving_transport_refinement PROPERTIES
+                WORKING_DIRECTORY ${transport_refinement_dir} ENVIRONMENT "OMP_NUM_THREADS=1")
+            set(cavity_refinement_dir "${CMAKE_CURRENT_BINARY_DIR}/reflecting_cavity")
+            file(MAKE_DIRECTORY ${cavity_refinement_dir})
+            add_test(NAME test_reflecting_cavity_refinement COMMAND ${Python_EXECUTABLE}
+                ${CMAKE_CURRENT_SOURCE_DIR}/analysis_reflecting_cavity.py
+                $<TARGET_FILE:test_implicit_moment_transport>)
+            set_tests_properties(test_reflecting_cavity_refinement PROPERTIES
+                WORKING_DIRECTORY ${cavity_refinement_dir} ENVIRONMENT "OMP_NUM_THREADS=1")
+        endif()
+    endif()
+    foreach(D IN ITEMS 1 2 RZ)
+        if(D IN_LIST WarpX_DIMS AND WarpX_PRECISION STREQUAL "DOUBLE")
+            warpx_set_suffix_dims(SD ${D})
+            if(NOT D STREQUAL "RZ" AND WarpX_PARTICLE_PRECISION STREQUAL "DOUBLE")
+                set(impulse_target test_${SD}_particle_impulse)
+                add_executable(${impulse_target} test_particle_impulse.cpp)
+                target_link_libraries(${impulse_target} PRIVATE lib_${SD})
+                if(WarpX_COMPUTE STREQUAL CUDA)
+                    setup_target_for_cuda_compilation(${impulse_target})
+                    target_compile_features(${impulse_target} PRIVATE cuda_std_20)
+                else()
+                    target_compile_features(${impulse_target} PRIVATE cxx_std_20)
+                endif()
+                warpx_set_compile_warnings(${impulse_target})
+                set(moment_target test_${SD}_coupled_moment_source)
+                add_executable(${moment_target} test_coupled_moment_source.cpp)
+                target_link_libraries(${moment_target} PRIVATE lib_${SD})
+                if(WarpX_COMPUTE STREQUAL CUDA)
+                    setup_target_for_cuda_compilation(${moment_target})
+                    target_compile_features(${moment_target} PRIVATE cuda_std_20)
+                else()
+                    target_compile_features(${moment_target} PRIVATE cxx_std_20)
+                endif()
+                warpx_set_compile_warnings(${moment_target})
+                foreach(source_kind IN ITEMS drag thermal latent stiff cooling interval
+                                             interval_thermal
+                                             gradient gradient_latent gradient_stiff
+                                             spatial_drag spatial_thermal
+                                             gradient_spatial gradient_spatial_latent
+                                             gradient_spatial_stiff gradient_spatial_unit_rate interval_spatial
+                                             interval_thermal_spatial gradient_shape gradient_shape_spatial)
+                    if((source_kind STREQUAL "gradient_shape" AND NOT D STREQUAL "1") OR
+                       (source_kind STREQUAL "gradient_shape_spatial" AND NOT D STREQUAL "2"))
+                        continue()
+                    endif()
+                    set(moment_name ${moment_target}_${source_kind})
+                    set(analysis_arguments)
+                    set(source_arguments test.kind=${source_kind})
+                    if(source_kind STREQUAL "spatial_drag")
+                        set(source_arguments test.kind=drag)
+                    endif()
+                    if(source_kind STREQUAL "spatial_thermal")
+                        set(source_arguments test.kind=thermal)
+                    endif()
+                    if(source_kind STREQUAL "interval" OR source_kind STREQUAL "interval_spatial")
+                        set(source_arguments test.kind=drag test.interval=1)
+                    endif()
+                    if(source_kind MATCHES "^interval_thermal")
+                        set(source_arguments test.kind=thermal test.interval=1)
+                    endif()
+                    if(source_kind STREQUAL "stiff")
+                        set(source_arguments test.kind=thermal test.absorption_step=100)
+                    endif()
+                    if(source_kind STREQUAL "cooling")
+                        set(source_arguments test.kind=thermal test.absorption_step=100
+                            "hybrid_pic_model.initial_elec_temp(x,y,z)=10")
+                    endif()
+                    if(source_kind STREQUAL "latent" OR source_kind MATCHES "^gradient.*_latent$")
+                        set(source_arguments test.kind=thermal
+                            hybrid_pic_model.electron_thermodynamics=fixed_charge_latent_energy
+                            hybrid_pic_model.electron_latent_transition_temperature_eV=1.0
+                            hybrid_pic_model.electron_latent_energy_eV=2.0
+                            hybrid_pic_model.electron_latent_sharpness=4.0)
+                    endif()
+                    if(source_kind MATCHES "^gradient")
+                        if(NOT source_kind MATCHES "_latent$")
+                            set(source_arguments test.kind=thermal)
+                        endif()
+                        list(APPEND source_arguments test.nonuniform=1)
+                        if(source_kind MATCHES "_stiff$")
+                            list(APPEND source_arguments test.absorption_step=100)
+                        endif()
+                        if(source_kind MATCHES "_unit_rate$")
+                            list(APPEND source_arguments test.absorption_step=1)
+                        endif()
+                    endif()
+                    if(source_kind MATCHES "spatial")
+                        list(APPEND source_arguments test.spatial=1)
+                        if(WarpX_COMPUTE STREQUAL CUDA)
+                            list(APPEND source_arguments test.progress_interval=25)
+                        endif()
+                    endif()
+                    if(source_kind MATCHES "shape")
+                        list(APPEND source_arguments test.shape=1)
+                        list(APPEND analysis_arguments --shaped)
+                    endif()
+                    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${moment_name})
+                    add_test(NAME ${moment_name} COMMAND ${moment_target}
+                        inputs_${SD}_coupled_moment_source ${source_arguments})
+                    set_tests_properties(${moment_name} PROPERTIES
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${moment_name}
+                        ENVIRONMENT "OMP_NUM_THREADS=1;AMREX_INPUTS_FILE_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/")
+                    if(source_kind MATCHES "^gradient")
+                        set_tests_properties(${moment_name} PROPERTIES FIXTURES_SETUP ${moment_name})
+                        add_test(NAME ${moment_name}_analysis COMMAND ${Python_EXECUTABLE}
+                            ${CMAKE_CURRENT_SOURCE_DIR}/analysis_nonuniform_moment_source.py
+                            ${CMAKE_CURRENT_BINARY_DIR}/${moment_name}/nonuniform_state.txt
+                            ${analysis_arguments})
+                        set_tests_properties(${moment_name}_analysis PROPERTIES
+                            FIXTURES_REQUIRED ${moment_name})
+                    endif()
+                    if(WarpX_MPI)
+                        file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${moment_name}_mpi)
+                        add_test(NAME ${moment_name}_mpi COMMAND
+                            ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
+                            $<TARGET_FILE:${moment_target}> inputs_${SD}_coupled_moment_source
+                            ${source_arguments} ${MPIEXEC_POSTFLAGS})
+                        set_tests_properties(${moment_name}_mpi PROPERTIES PROCESSORS 2
+                            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${moment_name}_mpi
+                            ENVIRONMENT "OMP_NUM_THREADS=1;AMREX_INPUTS_FILE_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/")
+                        if(source_kind MATCHES "^gradient")
+                            set_tests_properties(${moment_name}_mpi PROPERTIES
+                                FIXTURES_SETUP ${moment_name}_mpi)
+                            add_test(NAME ${moment_name}_mpi_analysis COMMAND ${Python_EXECUTABLE}
+                                ${CMAKE_CURRENT_SOURCE_DIR}/analysis_nonuniform_moment_source.py
+                                ${CMAKE_CURRENT_BINARY_DIR}/${moment_name}_mpi/nonuniform_state.txt
+                                ${analysis_arguments})
+                            set_tests_properties(${moment_name}_mpi_analysis PROPERTIES
+                                FIXTURES_REQUIRED ${moment_name}_mpi)
+                        endif()
+                    endif()
+                endforeach()
+                set(impulse_dir "${CMAKE_CURRENT_BINARY_DIR}/particle_impulse_${SD}")
+                # Complementary sustained shaped-coupling cases, not every
+                # source variant repeated in every geometry.
+                set(shape_kind drag)
+                if(D STREQUAL "2")
+                    set(shape_kind thermal)
+                endif()
+                set(shape_name ${moment_target}_shape_spatial)
+                file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${shape_name})
+                add_test(NAME ${shape_name} COMMAND ${moment_target}
+                    inputs_${SD}_coupled_moment_source test.kind=${shape_kind}
+                    test.shape=1 test.spatial=1 test.progress_interval=25)
+                set_tests_properties(${shape_name} PROPERTIES
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${shape_name}
+                    ENVIRONMENT "OMP_NUM_THREADS=1;AMREX_INPUTS_FILE_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/")
+                file(MAKE_DIRECTORY ${impulse_dir})
+                if(D STREQUAL "1")
+                    foreach(carry_procs IN ITEMS 1 2)
+                        if(carry_procs EQUAL 2 AND NOT WarpX_MPI)
+                            continue()
+                        endif()
+                        set(carry_name ${impulse_target}_boundary_carry_${carry_procs})
+                        file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${carry_name})
+                        set(carry_launcher)
+                        set(carry_postflags)
+                        if(carry_procs EQUAL 2)
+                            set(carry_launcher ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+                                ${MPIEXEC_PREFLAGS})
+                            set(carry_postflags ${MPIEXEC_POSTFLAGS})
+                        endif()
+                        add_test(NAME ${carry_name} COMMAND ${carry_launcher}
+                            $<TARGET_FILE:${impulse_target}> inputs_base_1d_particle_impulse
+                            test.boundary_carry=1 boundary.field_lo=pec boundary.field_hi=pec
+                            boundary.particle_lo=reflecting boundary.particle_hi=reflecting
+                            ${carry_postflags})
+                        set_tests_properties(${carry_name} PROPERTIES
+                            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${carry_name}
+                            PROCESSORS ${carry_procs}
+                            ENVIRONMENT "OMP_NUM_THREADS=1;AMREX_INPUTS_FILE_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/")
+                    endforeach()
+                    if(WarpX_MPI)
+                        set(carry_restart_name ${impulse_target}_boundary_carry_restart)
+                        file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${carry_restart_name})
+                        add_test(NAME ${carry_restart_name} COMMAND
+                            ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
+                            $<TARGET_FILE:${impulse_target}> inputs_base_1d_particle_impulse
+                            test.boundary_carry=1
+                            test.boundary_carry_restart=${CMAKE_CURRENT_BINARY_DIR}/${impulse_target}_boundary_carry_1/compensated_carry_wall_checkpoint
+                            boundary.field_lo=pec boundary.field_hi=pec
+                            boundary.particle_lo=reflecting boundary.particle_hi=reflecting
+                            ${MPIEXEC_POSTFLAGS})
+                        set_tests_properties(${impulse_target}_boundary_carry_1 PROPERTIES
+                            FIXTURES_SETUP carry_wall_checkpoint)
+                        set_tests_properties(${carry_restart_name} PROPERTIES
+                            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${carry_restart_name}
+                            PROCESSORS 2 FIXTURES_REQUIRED carry_wall_checkpoint
+                            ENVIRONMENT "OMP_NUM_THREADS=1;AMREX_INPUTS_FILE_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/")
+                    endif()
+                    foreach(wall_order IN ITEMS 1 2 3 4)
+                        set(wall_variants normal)
+                        if(wall_order EQUAL 4)
+                            list(APPEND wall_variants tangent)
+                            if(WarpX_MPI)
+                                list(APPEND wall_variants mpi)
+                            endif()
+                        endif()
+                        foreach(wall_variant IN LISTS wall_variants)
+                            set(wall_name ${impulse_target}_reflecting_${wall_order}_${wall_variant})
+                            set(wall_dir ${CMAKE_CURRENT_BINARY_DIR}/${wall_name})
+                            file(MAKE_DIRECTORY ${wall_dir})
+                            set(wall_component 2)
+                            set(wall_launcher)
+                            set(wall_postflags)
+                            set(wall_procs 1)
+                            if(wall_variant STREQUAL tangent)
+                                set(wall_component 0)
+                            elseif(wall_variant STREQUAL mpi)
+                                set(wall_procs 2)
+                                set(wall_launcher ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+                                    ${MPIEXEC_PREFLAGS})
+                                set(wall_postflags ${MPIEXEC_POSTFLAGS})
+                            endif()
+                            add_test(NAME ${wall_name} COMMAND ${wall_launcher}
+                                $<TARGET_FILE:${impulse_target}> inputs_base_1d_particle_impulse
+                                test.shape=1 test.reflecting=1 test.component=${wall_component}
+                                algo.particle_shape=${wall_order}
+                                boundary.field_lo=pec boundary.field_hi=pec
+                                boundary.particle_lo=reflecting boundary.particle_hi=reflecting
+                                ${wall_postflags})
+                            set_tests_properties(${wall_name} PROPERTIES
+                                WORKING_DIRECTORY ${wall_dir} PROCESSORS ${wall_procs}
+                                ENVIRONMENT "OMP_NUM_THREADS=1;AMREX_INPUTS_FILE_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/")
+                        endforeach()
+                    endforeach()
+                    set(wall_rejection_dir ${CMAKE_CURRENT_BINARY_DIR}/reflecting_rejects_periodic)
+                    file(MAKE_DIRECTORY ${wall_rejection_dir})
+                    add_test(NAME ${impulse_target}_reflecting_rejects_periodic COMMAND
+                        ${Python_EXECUTABLE}
+                        ${WarpX_SOURCE_DIR}/Examples/Tests/implicit/check_command_output.py
+                        --expect-failure --expect "Reflecting nodal assignment requires 1D"
+                        -- $<TARGET_FILE:${impulse_target}> inputs_base_1d_particle_impulse
+                        test.shape=1 test.reflecting=1 amrex.throw_exception=1)
+                    set_tests_properties(${impulse_target}_reflecting_rejects_periodic PROPERTIES
+                        WORKING_DIRECTORY ${wall_rejection_dir}
+                        ENVIRONMENT "OMP_NUM_THREADS=1;AMREX_INPUTS_FILE_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/")
+                    set(immutable_dir "${CMAKE_CURRENT_BINARY_DIR}/particle_plot_immutable")
+                    file(MAKE_DIRECTORY ${immutable_dir})
+                    add_test(NAME ${impulse_target}_plot_immutable COMMAND ${impulse_target}
+                        inputs_base_1d_particle_impulse test.plot_immutable=1)
+                    set_tests_properties(${impulse_target}_plot_immutable PROPERTIES
+                        FIXTURES_SETUP particle_plot_immutable
+                        WORKING_DIRECTORY ${immutable_dir}
+                        ENVIRONMENT "OMP_NUM_THREADS=1;AMREX_INPUTS_FILE_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/")
+                    add_test(NAME ${impulse_target}_plot_immutable_analysis COMMAND
+                        ${Python_EXECUTABLE}
+                        ${CMAKE_CURRENT_SOURCE_DIR}/analysis_particle_plot_immutable.py ${immutable_dir})
+                    set_tests_properties(${impulse_target}_plot_immutable_analysis PROPERTIES
+                        FIXTURES_REQUIRED particle_plot_immutable)
+                    if(WarpX_OPENPMD)
+                        set(openpmd_immutable_dir "${CMAKE_CURRENT_BINARY_DIR}/particle_openpmd_immutable")
+                        file(MAKE_DIRECTORY ${openpmd_immutable_dir})
+                        add_test(NAME ${impulse_target}_openpmd_immutable COMMAND ${impulse_target}
+                            inputs_base_1d_particle_impulse test.plot_immutable=1 test.openpmd=1
+                            readonly.diag_type=Full readonly.openpmd_backend=json)
+                        set_tests_properties(${impulse_target}_openpmd_immutable PROPERTIES
+                            FIXTURES_SETUP particle_openpmd_immutable
+                            WORKING_DIRECTORY ${openpmd_immutable_dir}
+                            ENVIRONMENT "OMP_NUM_THREADS=1;AMREX_INPUTS_FILE_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/")
+                        add_test(NAME ${impulse_target}_openpmd_immutable_analysis COMMAND
+                            ${Python_EXECUTABLE}
+                            ${CMAKE_CURRENT_SOURCE_DIR}/analysis_particle_plot_immutable.py
+                            ${immutable_dir} --openpmd ${openpmd_immutable_dir})
+                        set_tests_properties(${impulse_target}_openpmd_immutable_analysis PROPERTIES
+                            FIXTURES_REQUIRED "particle_plot_immutable;particle_openpmd_immutable")
+                    endif()
+                endif()
+                add_test(NAME ${impulse_target}_shape COMMAND ${impulse_target}
+                    inputs_base_${SD}_particle_impulse test.shape=1)
+                set_tests_properties(${impulse_target}_shape PROPERTIES
+                    WORKING_DIRECTORY ${impulse_dir}
+                    ENVIRONMENT "OMP_NUM_THREADS=1;AMREX_INPUTS_FILE_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/")
+                foreach(shape_order IN ITEMS 2 3 4)
+                    add_test(NAME ${impulse_target}_shape${shape_order} COMMAND ${impulse_target}
+                        inputs_base_${SD}_particle_impulse test.shape=1 algo.particle_shape=${shape_order})
+                    set_tests_properties(${impulse_target}_shape${shape_order} PROPERTIES
+                        WORKING_DIRECTORY ${impulse_dir}
+                        ENVIRONMENT "OMP_NUM_THREADS=1;AMREX_INPUTS_FILE_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/")
+                    if(WarpX_MPI)
+                        add_test(NAME ${impulse_target}_shape${shape_order}_mpi COMMAND
+                            ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
+                            $<TARGET_FILE:${impulse_target}> inputs_base_${SD}_particle_impulse
+                            test.shape=1 algo.particle_shape=${shape_order} ${MPIEXEC_POSTFLAGS})
+                        set_tests_properties(${impulse_target}_shape${shape_order}_mpi PROPERTIES
+                            PROCESSORS 2 WORKING_DIRECTORY ${impulse_dir}
+                            ENVIRONMENT "OMP_NUM_THREADS=1;AMREX_INPUTS_FILE_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/")
+                    endif()
+                endforeach()
+                add_test(NAME ${impulse_target} COMMAND ${impulse_target}
+                    inputs_base_${SD}_particle_impulse test.checkpoint=${impulse_dir}/checkpoint)
+                set_tests_properties(${impulse_target} PROPERTIES
+                    FIXTURES_SETUP impulse_checkpoint_${SD} WORKING_DIRECTORY ${impulse_dir}
+                    ENVIRONMENT "OMP_NUM_THREADS=1;AMREX_INPUTS_FILE_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/")
+                if(D STREQUAL "2")
+                    add_test(NAME ${impulse_target}_shape_ownership COMMAND ${impulse_target}
+                        inputs_base_${SD}_particle_impulse test.shape_ownership=1
+                        test.checkpoint=${impulse_dir}/shape_checkpoint)
+                    set_tests_properties(${impulse_target}_shape_ownership PROPERTIES
+                        FIXTURES_SETUP shape_checkpoint_${SD} WORKING_DIRECTORY ${impulse_dir}
+                        ENVIRONMENT "OMP_NUM_THREADS=1;AMREX_INPUTS_FILE_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/")
+                    if(WarpX_MPI)
+                        add_test(NAME ${impulse_target}_shape_restart_mpi COMMAND
+                            ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
+                            $<TARGET_FILE:${impulse_target}> inputs_base_${SD}_particle_impulse
+                            test.shape_ownership=1 test.restart=${impulse_dir}/shape_checkpoint
+                            ${MPIEXEC_POSTFLAGS})
+                        set_tests_properties(${impulse_target}_shape_restart_mpi PROPERTIES
+                            FIXTURES_REQUIRED shape_checkpoint_${SD} PROCESSORS 2
+                            WORKING_DIRECTORY ${impulse_dir}
+                            ENVIRONMENT "OMP_NUM_THREADS=1;AMREX_INPUTS_FILE_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/")
+                    endif()
+                endif()
+                if(WarpX_MPI)
+                    add_test(NAME ${impulse_target}_shape_mpi COMMAND
+                        ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
+                        $<TARGET_FILE:${impulse_target}> inputs_base_${SD}_particle_impulse
+                        test.shape=1 ${MPIEXEC_POSTFLAGS})
+                    set_tests_properties(${impulse_target}_shape_mpi PROPERTIES
+                        PROCESSORS 2 WORKING_DIRECTORY ${impulse_dir}
+                        ENVIRONMENT "OMP_NUM_THREADS=1;AMREX_INPUTS_FILE_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/")
+                    add_test(NAME ${impulse_target}_restart_mpi COMMAND
+                        ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
+                        $<TARGET_FILE:${impulse_target}> inputs_base_${SD}_particle_impulse
+                        test.restart=${impulse_dir}/checkpoint ${MPIEXEC_POSTFLAGS})
+                    set_tests_properties(${impulse_target}_restart_mpi PROPERTIES
+                        FIXTURES_REQUIRED impulse_checkpoint_${SD} PROCESSORS 2
+                        WORKING_DIRECTORY ${impulse_dir}
+                        ENVIRONMENT "OMP_NUM_THREADS=1;AMREX_INPUTS_FILE_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/")
+                endif()
+            endif()
+            set(extension_target test_${SD}_coupled_material_extensions)
+            add_executable(${extension_target} test_coupled_material_extensions.cpp)
+            target_link_libraries(${extension_target} PRIVATE lib_${SD})
+            if(WarpX_COMPUTE STREQUAL CUDA)
+                setup_target_for_cuda_compilation(${extension_target})
+                target_compile_features(${extension_target} PRIVATE cuda_std_20)
+            else()
+                target_compile_features(${extension_target} PRIVATE cxx_std_20)
+            endif()
+            warpx_set_compile_warnings(${extension_target})
+            file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${extension_target})
+            add_test(NAME ${extension_target} COMMAND ${extension_target}
+                inputs_base_${SD}_coupled_material_extensions)
+            set_tests_properties(${extension_target} PROPERTIES
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${extension_target}
+                ENVIRONMENT "OMP_NUM_THREADS=1;AMREX_INPUTS_FILE_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/")
+            file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${extension_target}_tables)
+            add_test(NAME ${extension_target}_tables COMMAND ${extension_target}
+                inputs_base_${SD}_coupled_material_extensions
+                test.opacity_table_root=${CMAKE_CURRENT_SOURCE_DIR})
+            set_tests_properties(${extension_target}_tables PROPERTIES
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${extension_target}_tables
+                ENVIRONMENT "OMP_NUM_THREADS=1;AMREX_INPUTS_FILE_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/")
+            if(WarpX_MPI)
+                file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${extension_target}_mpi)
+                add_test(NAME ${extension_target}_mpi COMMAND
+                    ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
+                    $<TARGET_FILE:${extension_target}>
+                    inputs_base_${SD}_coupled_material_extensions ${MPIEXEC_POSTFLAGS})
+                set_tests_properties(${extension_target}_mpi PROPERTIES PROCESSORS 2
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${extension_target}_mpi
+                    ENVIRONMENT "OMP_NUM_THREADS=1;AMREX_INPUTS_FILE_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/")
+            endif()
+        endif()
+    endforeach()
+    if("3" IN_LIST WarpX_DIMS)
+        add_executable(test_radiation_diffusion_gradient test_diffusion_gradient.cpp)
+        target_include_directories(test_radiation_diffusion_gradient PRIVATE ${WarpX_SOURCE_DIR}/Source)
+        target_link_libraries(test_radiation_diffusion_gradient PRIVATE AMReX::amrex_3d)
+        if(WarpX_COMPUTE STREQUAL CUDA)
+            setup_target_for_cuda_compilation(test_radiation_diffusion_gradient)
+            target_compile_features(test_radiation_diffusion_gradient PRIVATE cuda_std_20)
+        else()
+            target_compile_features(test_radiation_diffusion_gradient PRIVATE cxx_std_20)
+        endif()
+        add_test(NAME test_radiation_diffusion_gradient
+            COMMAND test_radiation_diffusion_gradient amrex.the_arena_init_size=0)
+        set_tests_properties(test_radiation_diffusion_gradient PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
+    endif()
+    if("RZ" IN_LIST WarpX_DIMS AND NOT WarpX_COMPUTE STREQUAL CUDA)
+        add_executable(test_radiation_implicit_diffusion_rz
+            test_implicit_diffusion_rz.cpp)
+        target_link_libraries(test_radiation_implicit_diffusion_rz PRIVATE lib_rz)
+        target_compile_features(test_radiation_implicit_diffusion_rz PRIVATE cxx_std_20)
+        warpx_set_compile_warnings(test_radiation_implicit_diffusion_rz)
+        add_test(NAME test_radiation_implicit_diffusion_rz COMMAND test_radiation_implicit_diffusion_rz)
+        set_tests_properties(test_radiation_implicit_diffusion_rz PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
+    endif()
+    if("1" IN_LIST WarpX_DIMS AND NOT WarpX_COMPUTE STREQUAL CUDA)
+        if(WarpX_PRECISION STREQUAL "DOUBLE")
+            add_executable(test_hybrid_material_response test_hybrid_material_response.cpp)
+            target_link_libraries(test_hybrid_material_response PRIVATE lib_1d)
+            target_compile_features(test_hybrid_material_response PRIVATE cxx_std_20)
+            warpx_set_compile_warnings(test_hybrid_material_response)
+            add_test(NAME test_hybrid_material_response
+                COMMAND test_hybrid_material_response inputs_base_1d_hybrid_material_response)
+            file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/material_response)
+            set_tests_properties(test_hybrid_material_response PROPERTIES
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/material_response
+                ENVIRONMENT "OMP_NUM_THREADS=1;AMREX_INPUTS_FILE_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/")
+            if(WarpX_MPI)
+                file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/material_response_mpi)
+                add_test(NAME test_hybrid_material_response_mpi COMMAND
+                    ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
+                    $<TARGET_FILE:test_hybrid_material_response>
+                    inputs_base_1d_hybrid_material_response ${MPIEXEC_POSTFLAGS})
+                set_tests_properties(test_hybrid_material_response_mpi PROPERTIES
+                    PROCESSORS 2 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/material_response_mpi
+                    ENVIRONMENT "OMP_NUM_THREADS=1;AMREX_INPUTS_FILE_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/")
+            endif()
+        endif()
+        add_executable(test_radiation_implicit_diffusion
+            test_implicit_diffusion.cpp)
+        target_link_libraries(test_radiation_implicit_diffusion PRIVATE lib_1d)
+        target_compile_features(test_radiation_implicit_diffusion PRIVATE cxx_std_20)
+        warpx_set_compile_warnings(test_radiation_implicit_diffusion)
+        add_test(NAME test_radiation_implicit_diffusion COMMAND test_radiation_implicit_diffusion)
+        set_tests_properties(test_radiation_implicit_diffusion PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
+    endif()
     add_executable(
         test_radiation_energy_update
         test_radiation_energy_update.cpp)
@@ -349,6 +1091,103 @@ function(add_radiation_failure_test name dims inputs expected)
             "OMP_NUM_THREADS=1")
 endfunction()
 
+if(WarpX_PRECISION STREQUAL DOUBLE)
+    if(WarpX_PARTICLE_PRECISION STREQUAL DOUBLE)
+        add_radiation_failure_test(
+            test_1d_radiation_transport_material_wall_requires_work
+            1 "inputs_1d_material_wall_control hybrid_pic_model.conservative_pressure_work_pec=1 hybrid_pic_model.conservative_pressure_work=0"
+            "PEC pressure work requires conservative_pressure_work=1")
+        add_radiation_failure_test(
+            test_1d_radiation_transport_material_wall_rejects_particle_loss
+            1 "inputs_1d_material_wall_control hybrid_pic_model.conservative_pressure_work_pec=1 boundary.particle_hi=absorbing"
+            "conservative_pressure_work_pec requires stationary PEC fields")
+        add_radiation_failure_test(
+            test_1d_radiation_transport_moment_inventory_mode_rejected
+            1 "inputs_1d_moving_moment_beam radiation_transport.diffusion_solver=explicit"
+            "include_moment_inventory requires coupled_moment")
+        add_radiation_failure_test(
+            test_1d_radiation_transport_moving_momentum_schema_rejected
+            1 "inputs_1d_moving_moment_beam amr.restart='../test_1d_radiation_transport_moving_beam_ode/diags/chk000200' radiation_momentum.include_moment_inventory=0"
+            "RadiationMomentum restart must preserve include_moment_inventory")
+        if(TEST test_1d_radiation_transport_moving_momentum_schema_rejected.run)
+            set_property(TEST test_1d_radiation_transport_moving_beam_ode.run
+                APPEND PROPERTY FIXTURES_SETUP radiation_moving_momentum_checkpoint)
+            set_property(TEST test_1d_radiation_transport_moving_momentum_schema_rejected.run
+                APPEND PROPERTY FIXTURES_REQUIRED radiation_moving_momentum_checkpoint)
+            if(TEST test_1d_radiation_transport_moving_beam_ode.cleanup)
+                set_property(TEST test_1d_radiation_transport_moving_beam_ode.cleanup
+                    APPEND PROPERTY FIXTURES_CLEANUP radiation_moving_momentum_checkpoint)
+            endif()
+        endif()
+        add_radiation_failure_test(
+            test_1d_radiation_transport_moving_moment_shape_restart_rejected
+            1 "inputs_1d_moving_moment_pulse max_step=400 amr.n_cell=128 amr.max_grid_size=64 warpx.const_dt=8.333333333333333e-12 chk.intervals=200 algo.particle_shape=3 amr.restart='../test_1d_radiation_transport_moving_moment_pulse/diags/chk000200'"
+            "Moving radiation restart must preserve its particle shape order.")
+        if(TEST test_1d_radiation_transport_moving_moment_shape_restart_rejected.run)
+            set_property(TEST test_1d_radiation_transport_moving_moment_pulse.run
+                APPEND PROPERTY FIXTURES_SETUP radiation_moving_moment_checkpoint)
+            set_property(TEST test_1d_radiation_transport_moving_moment_shape_restart_rejected.run
+                APPEND PROPERTY FIXTURES_REQUIRED radiation_moving_moment_checkpoint)
+            if(TEST test_1d_radiation_transport_moving_moment_pulse.cleanup)
+                set_property(TEST test_1d_radiation_transport_moving_moment_pulse.cleanup
+                    APPEND PROPERTY FIXTURES_CLEANUP radiation_moving_moment_checkpoint)
+            endif()
+            foreach(missing IN ITEMS model x y z)
+                set(corrupt_name test_1d_radiation_transport_moving_moment_missing_${missing})
+                set(corrupt_dir ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${corrupt_name})
+                file(MAKE_DIRECTORY ${corrupt_dir})
+                add_test(NAME ${corrupt_name} COMMAND ${Python_EXECUTABLE}
+                    ${CMAKE_CURRENT_SOURCE_DIR}/check_moving_moment_checkpoint.py
+                    $<TARGET_FILE:app_1d>
+                    ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test_1d_radiation_transport_moving_moment_pulse/diags/chk000200
+                    ${missing})
+                set_tests_properties(${corrupt_name} PROPERTIES
+                    WORKING_DIRECTORY ${corrupt_dir}
+                    FIXTURES_REQUIRED radiation_moving_moment_checkpoint
+                    TIMEOUT 90
+                    ENVIRONMENT "OMP_NUM_THREADS=1;AMREX_INPUTS_FILE_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/")
+            endforeach()
+        endif()
+    endif()
+    add_radiation_failure_test(
+        test_1d_radiation_transport_coupled_moving_rejected
+        1 "inputs_base_1d_radiation_transport_coupled_implicit ions.do_not_push=0"
+        "coupled_implicit currently requires stationary")
+    add_radiation_failure_test(
+        test_1d_radiation_transport_coupled_packets_rejected
+        1 "inputs_base_1d_radiation_transport_coupled_implicit photons.injection_style=SingleParticle photons.single_particle_pos=0 0 0.42 photons.single_particle_u=0 0 1 photons.single_particle_weight=1"
+        "coupled_implicit currently requires no live")
+    add_radiation_failure_test(
+        test_1d_radiation_transport_coupled_budget_rejected
+        1 "inputs_base_1d_radiation_transport_coupled_implicit radiation_transport.lte_exchange_max_iterations=1"
+        "Coupled implicit radiation/material solve failed (reason 3)")
+    add_radiation_failure_test(
+        test_1d_radiation_transport_coupled_conversion_rejected
+        1 "inputs_base_1d_radiation_transport_coupled_implicit radiation_transport.enable_particle_conversion=1 radiation_transport.emission_photon_energy=1.e-17"
+        "Coupled implicit diffusion currently requires")
+    add_radiation_failure_test(
+        test_1d_radiation_transport_coupled_momentum_rejected
+        1 "inputs_base_1d_radiation_transport_coupled_implicit radiation_transport.enable_momentum_coupling=1 radiation_transport.momentum_species=ions"
+        "Coupled implicit diffusion currently requires")
+    add_radiation_failure_test(
+        test_1d_radiation_transport_implicit_periodic_bath_rejected
+        1
+        "inputs_base_1d_radiation_transport_bath radiation_transport.diffusion_solver=implicit boundary.field_lo=periodic boundary.field_hi=periodic boundary.particle_lo=periodic boundary.particle_hi=periodic"
+        "Implicit radiation bath faces must be nonperiodic")
+endif()
+
+add_radiation_failure_test(
+    test_1d_radiation_transport_initial_blackbody_negative_rejected
+    1
+    "inputs_base_1d_radiation_transport_initial_blackbody radiation_transport.initial_diffusion_temperature(x,y,z)=-1.0"
+    "negative or non-finite")
+
+add_radiation_failure_test(
+    test_1d_radiation_transport_implicit_lte_rejected
+    1
+    "inputs_base_1d_radiation_transport_bath radiation_transport.diffusion_solver=implicit radiation_transport.enable_lte_exchange=1 radiation_transport.planck_absorption_coefficient=0.0"
+    "transport-only feature")
+
 add_radiation_failure_test(
     test_1d_radiation_transport_bath_negative_rejected
     1
@@ -370,6 +1209,22 @@ add_radiation_failure_test(
     1
     "inputs_base_1d_radiation_transport_bath_common radiation_transport.diffusion_boundary_lo=marshak radiation_transport.diffusion_boundary_hi=marshak amr.restart='../test_1d_radiation_transport_bath/diags/chk000050'"
     "A restart with a bath injection ledger")
+if(WarpX_PRECISION STREQUAL "DOUBLE")
+    add_radiation_failure_test(
+        test_1d_radiation_transport_coupled_details_removal_rejected
+        1 "inputs_base_1d_radiation_transport_coupled_implicit amr.restart='../test_1d_radiation_transport_coupled_retry_details/diags/chk000010'"
+        "solver-details checkpoint configuration changed")
+    if(WarpX_APP AND "1" IN_LIST WarpX_DIMS)
+        set_property(TEST test_1d_radiation_transport_coupled_retry_details.run
+            APPEND PROPERTY FIXTURES_SETUP radiation_solver_details_checkpoint)
+        set_property(TEST test_1d_radiation_transport_coupled_details_removal_rejected.run
+            APPEND PROPERTY FIXTURES_REQUIRED radiation_solver_details_checkpoint)
+        if(TEST test_1d_radiation_transport_coupled_retry_details.cleanup)
+            set_property(TEST test_1d_radiation_transport_coupled_retry_details.cleanup
+                APPEND PROPERTY FIXTURES_CLEANUP radiation_solver_details_checkpoint)
+        endif()
+    endif()
+endif()
 if(WarpX_APP AND "1" IN_LIST WarpX_DIMS)
     # A run dependency alone does not keep the checkpoint alive until this
     # rejection test: CI cleanup can otherwise remove it after the valid restart.
@@ -1071,6 +1926,55 @@ if(WarpX_PRECISION STREQUAL "DOUBLE" AND WarpX_PARTICLE_PRECISION STREQUAL "DOUB
         OFF  # checksum (sub-ULP streaming recoil and signed work are checked)
         OFF  # dependency
     )
+
+    add_warpx_test(
+        test_1d_radiation_particle_carry
+        1 1 inputs_1d_radiation_particle_carry
+        "analysis_particle_carry.py" OFF OFF
+    )
+    add_warpx_test(
+        test_1d_radiation_particle_carry_restart
+        1 2
+        "inputs_1d_radiation_particle_carry amr.restart='../test_1d_radiation_particle_carry/diags/chk000015'"
+        "analysis_particle_carry.py --reference ../test_1d_radiation_particle_carry"
+        OFF test_1d_radiation_particle_carry
+    )
+    add_warpx_test(
+        test_2d_radiation_particle_carry
+        2 1 inputs_2d_radiation_particle_carry
+        "analysis_particle_carry.py" OFF OFF
+    )
+    add_warpx_test(
+        test_2d_radiation_particle_carry_restart
+        2 2
+        "inputs_2d_radiation_particle_carry amr.restart='../test_2d_radiation_particle_carry/diags/chk000015'"
+        "analysis_particle_carry.py --reference ../test_2d_radiation_particle_carry"
+        OFF test_2d_radiation_particle_carry
+    )
+    add_radiation_failure_test(
+        test_1d_radiation_particle_carry_boundary_rejected 1
+        "inputs_1d_radiation_particle_carry boundary.field_lo=pec boundary.field_hi=pec boundary.particle_lo=absorbing boundary.particle_hi=absorbing"
+        "initially requires periodic")
+    add_radiation_failure_test(
+        test_1d_radiation_particle_carry_ownership_rejected 1
+        "inputs_1d_radiation_particle_carry radiation_transport.momentum_carry=cell amr.restart='../test_1d_radiation_particle_carry/diags/chk000015'"
+        "preserve radiation momentum_carry ownership")
+    if(TEST test_1d_radiation_particle_carry_ownership_rejected.run)
+        set_property(TEST test_1d_radiation_particle_carry_ownership_rejected.run
+            APPEND PROPERTY DEPENDS test_1d_radiation_particle_carry.analysis)
+    endif()
+    foreach(carry_dimension IN ITEMS 1d 2d)
+        set(carry_restart test_${carry_dimension}_radiation_particle_carry_restart)
+        if(TEST ${carry_restart}.run)
+            add_test(NAME ${carry_restart}_prepare COMMAND ${Python_EXECUTABLE}
+                ${CMAKE_CURRENT_SOURCE_DIR}/prepare_particle_carry_restart.py
+                ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${carry_restart})
+            set_tests_properties(${carry_restart}_prepare PROPERTIES
+                FIXTURES_SETUP ${carry_restart}_fresh_output)
+            set_tests_properties(${carry_restart}.run PROPERTIES
+                FIXTURES_REQUIRED ${carry_restart}_fresh_output)
+        endif()
+    endforeach()
 
     add_warpx_test(
         test_1d_radiation_transport_streaming_momentum_carry_lte_frozen  # name

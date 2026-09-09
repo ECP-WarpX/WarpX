@@ -53,6 +53,13 @@ public:
     // member can destroy a forward-declared particle container.
     ~HybridPICModel ();
 
+    /** Preserve deposited solver history, including species-resolved charge.
+     * Legacy checkpoints without history reconstruct it from particles. */
+    void WriteMomentHistory (std::string const& directory) const;
+    void ReadMomentHistory (std::string const& directory);
+    bool m_moment_history_valid = false;
+    bool m_restored_moment_history_pending = false;
+
     HybridPICModel ( HybridPICModel const & )             = delete;
     HybridPICModel& operator= ( HybridPICModel const & )  = delete;
     HybridPICModel ( HybridPICModel && )                  = delete;
@@ -269,6 +276,10 @@ public:
      */
     void QDSMCUpdateThermodynamics (int lev, amrex::Real dt) const;
 
+    /** Transpose the isolated pressure-E PEC ghost extension before summing
+     * particle work-current deposits. No physical-current boundary rule is reused. */
+    void FoldPressureWorkBoundary (amrex::MultiFab& current, int component, int lev) const;
+
     /**
      * \brief Resistive electron-heating source (see Phys. Plasmas 31, 012902 (2024), Eq. 12).
      *        Adds, per cell and per charged ion species,
@@ -463,6 +474,31 @@ public:
         amrex::Real minimum_electron_density,
         amrex::MultiFab const* nonlinear_lte_remap = nullptr) const;
 
+    /** Evaluate the native conservative material response in caller-owned
+     * scratch storage. temperature enters as the old nodal state and exits as
+     * the candidate; source enters as requested and exits as realized J/cell.
+     * No live temperature, pressure, density or ledger is modified, including
+     * ghosts. Source weights are frozen at the supplied old state. A non-finite
+     * return denotes an inadmissible material candidate; scratch outputs must
+     * then be discarded. Invalid layouts remain fatal configuration errors.
+     * Optional prescribed_temperature evaluates that trial instead of inverting
+     * the EOS. In that case nodal_energy_residual is required, with components
+     * (signed energy-density residual, source scale, arithmetic bound). A finite
+     * return alone does not qualify that trial: the caller must test the nodal
+     * equation as well as actual global energy conservation. */
+    [[nodiscard]] amrex::Real EvaluateElectronEnergySource (
+        int lev,
+        amrex::MultiFab& temperature,
+        amrex::MultiFab& cell_integrated_energy,
+        amrex::Real minimum_electron_density,
+        amrex::MultiFab const* nonlinear_lte_remap = nullptr,
+        amrex::MultiFab const* prescribed_temperature = nullptr,
+        amrex::MultiFab* nodal_energy_residual = nullptr) const;
+
+    /** Commit an already validated native nodal material candidate and rebuild
+     * the boundary-adjusted pressure needed by Ohm's law. */
+    void CommitElectronTemperature (int lev, amrex::MultiFab const& candidate) const;
+
     /** Conservatively apply hybrid ionization after the ion charge density
      * changes. The old electron internal-energy density is evaluated at
      * \p old_charge_density and \p electron_temperature, the deposited
@@ -532,6 +568,8 @@ public:
      * electron internal-energy update. This experimental path is opt-in until
      * its application-level analytic validation matrix is complete. */
     bool m_conservative_pressure_work = false;
+    /** Experimental stationary PEC/reflecting material-wall pressure adjoint. */
+    bool m_conservative_pressure_work_pec = false;
 
     /** Resistive electron-heating source on T_e (see Phys. Plasmas 31, 012902 (2024), Eq. 12),
      * computed per cell as

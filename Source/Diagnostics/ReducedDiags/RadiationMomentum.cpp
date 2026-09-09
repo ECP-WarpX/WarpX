@@ -34,7 +34,13 @@ RadiationMomentum::RadiationMomentum (std::string const& rd_name)
         radiation_enabled,
         "RadiationMomentum requires radiation_transport.enabled=1.");
 
-    m_data.resize(24, 0.0_rt);
+    std::string diffusion_solver = "explicit";
+    pp_radiation.query("diffusion_solver", diffusion_solver);
+    amrex::ParmParse(rd_name).query("include_moment_inventory", m_include_moment_inventory);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!m_include_moment_inventory ||
+        diffusion_solver == "coupled_moment",
+        "RadiationMomentum.include_moment_inventory requires coupled_moment transport.");
+    m_data.resize(m_include_moment_inventory ? 27 : 24, 0.0_rt);
 
 #if defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RZ)
     std::array<std::string, 3> const labels{"r", "theta", "z"};
@@ -85,6 +91,12 @@ RadiationMomentum::RadiationMomentum (std::string const& rd_name)
                    << "]pending_diffusion_material_" << label
                    << "(kg*m/s)";
         }
+        if (m_include_moment_inventory) {
+            for (std::string const& label : labels) {
+                output << m_sep << "[" << column++ << "]moment_radiation_"
+                       << label << "(kg*m/s)";
+            }
+        }
         output << "\n";
     }
 }
@@ -131,6 +143,15 @@ void RadiationMomentum::ComputeDiags (int const step)
         }
     }
     auto const& radiation = warpx.GetRadiationTransport();
+    if (radiation.usesParticleMomentumCarry()) {
+        auto& particles = warpx.GetPartContainer();
+        auto const streaming = radiation.pendingMaterialImpulse(particles, true);
+        auto const diffusion = radiation.pendingMaterialImpulse(particles, false);
+        for (int d = 0; d < 3; ++d) {
+            pending_streaming_impulse[d] = streaming[d];
+            pending_diffusion_impulse[d] = diffusion[d];
+        }
+    }
     for (int component = 0; component < 3; ++component) {
         boundary_impulse[component] =
             radiation.lastDiffusionBoundaryMomentumLoss(component);
@@ -163,6 +184,12 @@ void RadiationMomentum::ComputeDiags (int const step)
         m_data[18 + component] = pending_streaming_impulse[component];
         m_data[21 + component] = pending_diffusion_impulse[component];
     }
+    if (m_include_moment_inventory) {
+        auto const inventory = radiation.momentMomentumInventory(warpx.m_fields);
+        for (int component = 0; component < 3; ++component) {
+            m_data[24 + component] = inventory[component];
+        }
+    }
 }
 
 void RadiationMomentum::WriteCheckpointData (std::string const& dir)
@@ -185,6 +212,9 @@ void RadiationMomentum::WriteCheckpointData (std::string const& dir)
                    << "\n";
     }
     checkpoint << m_last_accumulated_step << "\n";
+    if (m_include_moment_inventory) {
+        checkpoint << "moment_inventory_v1\n";
+    }
 }
 
 void RadiationMomentum::ReadCheckpointData (std::string const& dir)
@@ -212,4 +242,11 @@ void RadiationMomentum::ReadCheckpointData (std::string const& dir)
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         valid,
         "RadiationMomentum checkpoint state is truncated or invalid.");
+    std::string schema, trailing;
+    bool const has_inventory_schema = static_cast<bool>(checkpoint >> schema);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        has_inventory_schema == m_include_moment_inventory &&
+            (!has_inventory_schema || (schema == "moment_inventory_v1" &&
+                                       !(checkpoint >> trailing))),
+        "RadiationMomentum restart must preserve include_moment_inventory and its schema.");
 }

@@ -8,6 +8,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpXParticleContainer.H"
+
 #include "ParticleBatchInjection.H"
 
 #include "ablastr/particles/DepositCharge.H"
@@ -22,6 +23,8 @@
 #include "Pusher/GetAndSetPosition.H"
 #include "Pusher/UpdatePosition.H"
 #include "ParticleBoundaries_K.H"
+#include "Radiation/ParticleImpulseBoundary.H"
+#include "Radiation/RadiationTransport.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
@@ -3103,6 +3106,14 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
 
     // Periodic boundaries are handled in AMReX code
     if (m_boundary_conditions.CheckAll(ParticleBoundaryType::Periodic)) { return; }
+
+    if (!warpx::radiation::RegisteredParticleImpulsePaths(*this).empty()) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WarpX::GetInstance().GetRadiationTransport().ReflectParticleCarryBoundaries(
+                *this, m_boundary_conditions),
+            "Particle radiation carry boundary update rejected; loss and thermalization are unsupported.");
+        return;
+    }
 
     auto boundary_conditions = m_boundary_conditions.data;
 

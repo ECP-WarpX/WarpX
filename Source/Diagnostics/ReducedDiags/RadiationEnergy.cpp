@@ -43,6 +43,16 @@ RadiationEnergy::RadiationEnergy (std::string const& rd_name)
     auto& warpx = WarpX::GetInstance();
     m_num_groups = warpx.GetRadiationTransport().numEnergyGroups();
     m_has_boundary_injection = warpx.GetRadiationTransport().hasDiffusionBath();
+    m_has_implicit_diffusion = warpx.GetRadiationTransport().usesImplicitDiffusion();
+    m_has_particle_carry = warpx.GetRadiationTransport().usesParticleMomentumCarry();
+    pp_diag.query("include_solver_details", m_include_solver_details);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!m_include_solver_details ||
+                                         m_has_implicit_diffusion,
+                                     "RadiationEnergy.include_solver_details "
+                                     "requires an implicit radiation solver.");
+    if (m_include_solver_details) {
+        m_cumulative_group_transfers.resize(3 * m_num_groups, 0);
+    }
     if (amrex::ParallelDescriptor::IOProcessor() && !m_write_header) {
         std::ifstream previous{m_path + m_rd_name + "." + m_extension};
         std::string header;
@@ -53,6 +63,21 @@ RadiationEnergy::RadiationEnergy (std::string const& rd_name)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(previous_has_injection == m_has_boundary_injection,
             "RadiationEnergy bath column layout changed on restart. Use a new diagnostic "
             "output path when adding baths; never append rows with a different schema.");
+        bool const previous_has_solver_columns =
+            header.find("diffusion_nonlinear_iterations()") != std::string::npos;
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(previous_has_solver_columns == m_has_implicit_diffusion,
+            "RadiationEnergy solver column layout changed on restart. Use a new diagnostic "
+            "output path when switching explicit/implicit spatial solvers.");
+        bool const previous_has_details =
+            header.find("diffusion_group_0_out(J)") != std::string::npos;
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(previous_has_details ==
+                                             m_include_solver_details,
+                                         "RadiationEnergy detailed solver "
+                                         "column layout changed on restart.");
+        bool const previous_has_carry =
+            header.find("pending_material_carry_energy(J)") != std::string::npos;
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(previous_has_carry == m_has_particle_carry,
+            "RadiationEnergy particle-carry column layout changed on restart.");
     }
     std::string diagnostic_photon_species = m_photon_species;
     if (pp_diag.query("photon_species", diagnostic_photon_species)) {
@@ -72,7 +97,11 @@ RadiationEnergy::RadiationEnergy (std::string const& rd_name)
     // Total radiation, streaming photons, thick-field radiation, signed
     // current/cumulative material exchange and current/cumulative escape loss.
     int const num_group_columns = m_num_groups > 1 ? m_num_groups : 0;
-    m_data.resize(15 + num_group_columns + (m_has_boundary_injection ? 2 : 0), 0.0_rt);
+    m_data.resize(15 + num_group_columns + (m_has_boundary_injection ? 2 : 0) +
+                      (m_has_implicit_diffusion ? 3 : 0) +
+                      (m_include_solver_details ? 6 * m_num_groups + 8 : 0) +
+                      (m_has_particle_carry ? 2 : 0),
+                  0.0_rt);
 
     if (amrex::ParallelDescriptor::IOProcessor() && m_write_header) {
         std::ofstream output{
@@ -115,6 +144,38 @@ RadiationEnergy::RadiationEnergy (std::string const& rd_name)
                    << m_sep << "[" << material_column + 9
                    << "]cumulative_boundary_energy_injection(J)";
         }
+        if (m_has_implicit_diffusion) {
+            int const first = material_column + 8 + (m_has_boundary_injection ? 2 : 0);
+            output << m_sep << "[" << first << "]diffusion_nonlinear_iterations()"
+                   << m_sep << "[" << first + 1 << "]diffusion_linear_iterations()"
+                   << m_sep << "[" << first + 2 << "]diffusion_relative_residual()";
+        }
+        if (m_include_solver_details) {
+            int column =
+                material_column + 11 + (m_has_boundary_injection ? 2 : 0);
+            for (int g = 0; g < m_num_groups; ++g) {
+                for (auto const* quantity :
+                     {"out", "in", "material", "cumulative_out",
+                      "cumulative_in", "cumulative_material"}) {
+                    output << m_sep << "[" << column++ << "]diffusion_group_"
+                           << g << "_" << quantity << "(J)";
+                }
+            }
+            for (auto const* quantity :
+                 {"coupled_iterations()", "accepted_radiation_substeps()",
+                  "rejected_radiation_attempts()",
+                  "source_consistency_corrections()",
+                  "material_relative_residual()",
+                  "raw_stage_energy_relative_residual()",
+                  "minimum_group_cell_energy(J)",
+                  "minimum_material_temperature(K)"}) {
+                output << m_sep << "[" << column++ << "]" << quantity;
+            }
+        }
+        if (m_has_particle_carry) {
+            output << m_sep << '[' << m_data.size() << "]pending_material_carry_energy(J)"
+                   << m_sep << '[' << m_data.size() + 1 << "]material_carry_energy_change(J)";
+        }
         output << "\n";
     }
 }
@@ -139,7 +200,8 @@ void RadiationEnergy::ComputeDiags (int const step)
         }
     }
     amrex::Real const material_exchange =
-        material_internal_exchange + material_kinetic_exchange;
+        material_internal_exchange + material_kinetic_exchange
+        + warpx.GetRadiationTransport().lastMaterialCarryEnergyChange();
     auto const& radiation_transport = warpx.GetRadiationTransport();
     amrex::Real const boundary_energy_loss =
         radiation_transport.lastBoundaryEnergyLoss();
@@ -150,6 +212,20 @@ void RadiationEnergy::ComputeDiags (int const step)
     m_cumulative_numerical_energy_residual =
         radiation_transport.cumulativeNumericalEnergyResidual();
     if (step >= 0 && step != m_last_accumulated_step) {
+        if (m_include_solver_details) {
+            auto const& solve =
+                radiation_transport.lastImplicitDiffusionResult();
+            for (int g = 0; g < m_num_groups; ++g) {
+                if (!solve.group_escaped_energy.empty()) {
+                    m_cumulative_group_transfers[3 * g] +=
+                        solve.group_escaped_energy[g];
+                    m_cumulative_group_transfers[3 * g + 1] +=
+                        solve.group_injected_energy[g];
+                    m_cumulative_group_transfers[3 * g + 2] +=
+                        solve.group_material_energy[g];
+                }
+            }
+        }
         m_cumulative_material_exchange += material_exchange;
         m_cumulative_boundary_energy_loss =
             radiation_transport.cumulativeBoundaryEnergyLoss();
@@ -189,6 +265,13 @@ void RadiationEnergy::ComputeDiags (int const step)
     m_data[0] = streaming_energy + diffusion_energy;
     m_data[1] = streaming_energy;
     m_data[2] = diffusion_energy;
+    if (m_has_particle_carry) {
+        auto& particles = warpx.GetPartContainer();
+        auto const streaming = radiation_transport.pendingMaterialImpulse(particles, true);
+        auto const diffusion = radiation_transport.pendingMaterialImpulse(particles, false);
+        m_data[m_data.size() - 2] = streaming[3] + diffusion[3];
+        m_data[m_data.size() - 1] = radiation_transport.lastMaterialCarryEnergyChange();
+    }
     m_data[3] = material_exchange;
     m_data[4] = m_cumulative_material_exchange;
     m_data[5] = boundary_energy_loss;
@@ -216,6 +299,51 @@ void RadiationEnergy::ComputeDiags (int const step)
         m_data[material_column + 8] = radiation_transport.lastBoundaryEnergyInjection();
         m_data[material_column + 9] = radiation_transport.cumulativeBoundaryEnergyInjection();
     }
+    if (m_has_implicit_diffusion) {
+        int const first = material_column + 8 + (m_has_boundary_injection ? 2 : 0);
+        auto const& solve = radiation_transport.lastImplicitDiffusionResult();
+        m_data[first] = static_cast<amrex::Real>(solve.nonlinear_iterations);
+        m_data[first + 1] = static_cast<amrex::Real>(solve.linear_iterations);
+        m_data[first + 2] = solve.maximum_relative_residual;
+    }
+    if (m_include_solver_details) {
+        int column = material_column + 11 + (m_has_boundary_injection ? 2 : 0);
+        auto const& solve = radiation_transport.lastImplicitDiffusionResult();
+        for (int g = 0; g < m_num_groups; ++g) {
+            m_data[column++] = solve.group_escaped_energy.empty()
+                                   ? 0
+                                   : solve.group_escaped_energy[g];
+            m_data[column++] = solve.group_injected_energy.empty()
+                                   ? 0
+                                   : solve.group_injected_energy[g];
+            m_data[column++] = solve.group_material_energy.empty()
+                                   ? 0
+                                   : solve.group_material_energy[g];
+            for (int q = 0; q < 3; ++q) {
+                m_data[column++] = m_cumulative_group_transfers[3 * g + q];
+            }
+        }
+        auto const& coupled = radiation_transport.lastCoupledSolveDiagnostics();
+        m_data[column++] = coupled.iterations;
+        m_data[column++] = coupled.accepted_substeps;
+        m_data[column++] = coupled.rejected_attempts;
+        m_data[column++] = coupled.source_consistency_corrections;
+        m_data[column++] = coupled.material_residual;
+        m_data[column++] = coupled.raw_energy_residual;
+        auto const& energy =
+            *warpx.m_fields.get(FieldType::radiation_diffusion_energy, 0);
+        amrex::Real minimum = energy.min(0);
+        for (int g = 1; g < m_num_groups; ++g) {
+            minimum = amrex::min(minimum, energy.min(g));
+        }
+        m_data[column++] = minimum;
+        m_data[column] =
+            radiation_transport.commitsHybridMaterialState()
+                ? warpx.m_fields
+                      .get(FieldType::hybrid_electron_temperature_fp, 0)
+                      ->min(0)
+                : -1;
+    }
 }
 
 void RadiationEnergy::WriteCheckpointData (std::string const& dir)
@@ -233,6 +361,12 @@ void RadiationEnergy::WriteCheckpointData (std::string const& dir)
                << m_cumulative_diffusion_boundary_energy_loss << "\n"
                << m_last_accumulated_step << "\n"
                << m_cumulative_numerical_energy_residual << "\n";
+    if (m_include_solver_details) {
+        checkpoint << "solver_details_v1 " << m_num_groups << "\n";
+        for (auto value : m_cumulative_group_transfers) {
+            checkpoint << value << "\n";
+        }
+    }
 }
 
 void RadiationEnergy::ReadCheckpointData (std::string const& dir)
@@ -282,11 +416,35 @@ void RadiationEnergy::ReadCheckpointData (std::string const& dir)
             amrex::Math::isfinite(cumulative_numerical_energy_residual),
             "RadiationEnergy checkpoint numerical-energy residual is "
             "non-finite.");
-        std::string trailing_token;
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            !(checkpoint >> trailing_token),
-            "RadiationEnergy checkpoint state has unexpected trailing data.");
         m_cumulative_numerical_energy_residual =
             cumulative_numerical_energy_residual;
+    }
+    std::string tag;
+    bool const has_details = static_cast<bool>(checkpoint >> tag);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        has_details == m_include_solver_details,
+        "RadiationEnergy solver-details checkpoint configuration changed on "
+        "restart.");
+    if (has_details) {
+        int groups = 0;
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            tag == "solver_details_v1" &&
+                static_cast<bool>(checkpoint >> groups) &&
+                groups == m_num_groups,
+            "RadiationEnergy solver-details checkpoint version/group count is "
+            "invalid.");
+        int component = 0;
+        for (auto& value : m_cumulative_group_transfers) {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                static_cast<bool>(checkpoint >> value) &&
+                    amrex::Math::isfinite(value) &&
+                    (component % 3 == 2 || value >= 0),
+                "RadiationEnergy group ledger is truncated, non-finite or has "
+                "negative boundary transfer.");
+            ++component;
+        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            !(checkpoint >> tag),
+            "RadiationEnergy checkpoint state has unexpected trailing data.");
     }
 }

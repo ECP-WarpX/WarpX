@@ -156,6 +156,19 @@ void DefaultInitializeRuntimeAttributes (PTile& ptile,
         for (int j = PIdx::nattribs + n_external_attr_real; j < ptile.NumRealComps() ; ++j)
         {
             auto attr_ptr = ptile.GetStructOfArrays().GetRealData(j).data();
+            // Radiation's particle-owned rounding accounts start empty for a
+            // newly injected particle. Existing particles retain them through
+            // communicated runtime attributes and checkpoints.
+            if (particle_comps[j].rfind("radiation_impulse_", 0) == 0)
+            {
+                if (run_on_gpu) {
+                    amrex::ParallelFor(stop - start, [=] AMREX_GPU_DEVICE (int i) noexcept {
+                        attr_ptr[start + i] = 0.0_prt;
+                    });
+                } else {
+                    for (int ip = start; ip < stop; ++ip) { attr_ptr[ip] = 0.0_prt; }
+                }
+            }
 #ifdef WARPX_QED
             // Current runtime comp is quantum synchrotron optical depth
             auto const it_qsr = std::find(particle_comps.begin(), particle_comps.end(), "opticalDepthQSR");

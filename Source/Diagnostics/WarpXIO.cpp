@@ -21,6 +21,7 @@
 #include "EmbeddedBoundary/Enabled.H"
 #include "Fields.H"
 #include "FieldIO.H"
+#include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #include "FieldSolver/ImplicitSolvers/ImplicitSolver.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
@@ -486,6 +487,9 @@ WarpX::InitFromCheckpoint ()
     if (EB::enabled()) { InitializeEBGridData(maxLevel()); }
 
     GetRadiationTransport().ReadCheckpointData(restart_chkfile);
+    if (m_hybrid_pic_model) {
+        m_hybrid_pic_model->ReadMomentHistory(restart_chkfile);
+    }
     reduced_diags->ReadCheckpointData(restart_chkfile);
 
     // Initialize particles

@@ -3987,7 +3987,8 @@ Maxwell solver: kinetic-fluid hybrid
     This experimental option requires
     :pp:param:`hybrid_pic_model.solve_electron_energy_equation`, a nonlinear
     finite-volume electron-thermodynamics backend, double-precision fields,
-    one AMR level, periodic Cartesian field and particle boundaries, a
+    one AMR level, periodic Cartesian field and particle boundaries (or the
+    separately enabled PEC-wall extension below), a
     collocated grid, direct non-Galerkin field gather, particle shape order one
     through four, the Boris pusher, ``collisions.split_momentum_push = 0`` and
     ``warpx.synchronize_velocity_for_diagnostics = 0``. The conserved kinetic
@@ -3998,6 +3999,29 @@ Maxwell solver: kinetic-fluid hybrid
     gather, push or deposit are not yet supported. Rigid injected species are
     also rejected because their per-particle field scaling does not yet have a
     matching pressure-work adjoint.
+
+.. pp:param:: hybrid_pic_model.conservative_pressure_work_pec
+    :type: ``bool``
+    :default: ``false``
+    :optional:
+
+    Experimental 1D stationary-wall extension of
+    :pp:param:`hybrid_pic_model.conservative_pressure_work`. It requires that
+    option and all its other restrictions. Every nonperiodic direction must
+    have PEC field boundaries and reflecting particle boundaries on both
+    faces; periodic directions retain their existing behavior. The domain
+    must span the work-current ghost support. This does not enable radiation
+    transport at physical particle boundaries or support thermal reemission,
+    open particle loss, radial geometries, or moving walls.
+
+    For this extension only, physical wall-node pressure remains the local EOS
+    pressure. Even ghost reflection supplies the normal Neumann condition
+    without replacing the pressure of an evolving half-volume energy node
+    with its neighbor's value. The isolated pressure electric field uses the
+    same PEC mask and ghost parity as the gathered total electric field.
+    Work-current deposits use its transpose boundary map, and the electron
+    work debit includes the physical nodal control-volume weights. Existing
+    boundary behavior is unchanged when this option is false.
 
 .. pp:param:: hybrid_pic_model.electron_thermodynamics
     :type: ``string``
@@ -4777,6 +4801,18 @@ studies.
    cold-start restriction and restart behavior are otherwise identical to the
    grey form.
 
+.. pp:param:: radiation_transport.initial_diffusion_temperature(x,y,z)
+   :type: ``math expression``
+   :unit: :math:`K`
+   :optional:
+
+   Alternative blackbody radiation-temperature profile, integrated over all
+   configured groups (including spectral tails). It is mutually exclusive with
+   every initial energy-density expression. Values must be finite and nonnegative.
+   The coordinate mapping, cold-start-only behavior and cell-integrated storage
+   are the same as the initial energy-density profiles above. It does not set the
+   material temperature or enable material/radiation exchange.
+
 .. pp:param:: radiation_transport.absorption_coefficient
    :type: ``float`` or parser function
    :unit: :math:`\mathrm{m}^{-1}`
@@ -4985,7 +5021,8 @@ studies.
    is removed from absorbed packet energy or ``radiation_diffusion_energy``. Thus ion
    work is not also deposited as electron heat.
 
-   If an increment is smaller than the particle momentum representation can apply,
+   With the default ``momentum_carry = cell``, if an increment is smaller than
+   the particle momentum representation can apply,
    WarpX retains the unapplied impulse in separate, checkpointed streaming and
    diffusion cell fields. A later increment applies the accumulated value once it is
    representable; the energy update always uses the kinetic work actually realized by
@@ -5016,11 +5053,38 @@ studies.
    and a component-wise RSPHERE recoil test passes; a vector-magnitude comparison is
    not sufficient validation of radial momentum. Momentum coupling also requires
    double field and particle precision, ``enable_particle_conversion = 0``, and a
-   non-moving simulation window. The pending carries are Eulerian cell inventories:
+   non-moving simulation window. The default pending carries are Eulerian cell inventories:
    an old carry in a temporarily empty cell remains pending until eligible material is
    again present; it is not attached to or advected with an individual ion parcel. The
    operator does not yet advect trapped-radiation enthalpy or include all mixed-frame
    :math:`O(v/c)` terms, and must not be described as a complete radiation-MHD model.
+
+.. pp:param:: radiation_transport.momentum_carry
+   :type: ``string``
+   :default: ``cell``
+   :optional:
+
+   ``cell`` retains the legacy deferred-impulse behavior described above.
+   Experimental ``particle`` keeps each path/group's unrepresented impulse and
+   signed kinetic-work rounding account on the receiving ion. Work associated
+   with a newly assigned impulse is debited immediately; its unrepresented part
+   moves with that ion instead of drawing energy later from an unrelated cell.
+   ``RadiationEnergy`` adds pending-work and work-account-change columns and
+   includes that change in total material exchange. ``RadiationMomentum`` reads
+   the live particle-owned pending impulse, including after redistribution.
+
+   This integration currently requires native hybrid electrons, Cartesian geometry,
+   periodic particle boundaries, and no collisions, field/hybrid ionization or ion
+   resampling. It requires double field and particle precision. Restart must retain
+   the same ownership mode, momentum species and group count; migration between
+   old cell-owned and new particle-owned checkpoints is not automatic.
+
+   This option addresses impulse/work ownership, not velocity-dependent radiation
+   transport. It does not add Doppler opacity, trapped-radiation advection or
+   compression, enable momentum with conversion, or lift the stationary
+   ``coupled_implicit`` guard. Its candidate step validates particle and radiation
+   work before commit; a whole native-electron/radiation/particle retry is not yet
+   implemented. It is not a complete moving-radiation production mode.
 
 .. pp:param:: radiation_transport.momentum_species
    :type: ``list of strings``
@@ -5182,6 +5246,206 @@ studies.
    :optional:
 
    Maximum flux-limited diffusion substeps per PIC step.
+
+.. pp:param:: radiation_transport.diffusion_solver
+   :type: ``string``
+   :default: ``explicit``
+   :optional:
+
+   ``explicit`` retains the existing subcycled update. The opt-in ``implicit``
+   prototype uses backward Euler with an AMReX variable-coefficient multigrid
+   solve and nonlinear iteration of the face flux limiter. It currently requires
+   double precision, a fixed mesh without embedded boundaries, all cells at or above the diffusion optical-depth
+   threshold, and LTE exchange, conversion and momentum coupling disabled.
+   Opacity is fixed during the spatial solve. This is not a coupled implicit
+   material-temperature solver, IMC, DDMC or a moving-material model.
+
+   Each group must meet its own nonlinear equation-residual tolerance and remain
+   nonnegative before any group is committed. A failed solve aborts; automatic
+   whole-PIC-step rollback/retry is not provided. Boundary accounting is computed
+   from accepted face fluxes, and the signed iterative energy defect is reported
+   in the numerical-energy-residual ledger. Solver iteration counts and the
+   maximum relative group residual are appended to ``RadiationEnergy``.
+
+   Explicit diffusion subcycle limits do not constrain this path. Electromagnetic,
+   material-transport and accuracy timestep requirements still apply: stability
+   at a large timestep is not temporal convergence.
+
+   The private qualification prototype also accepts ``coupled_implicit``. This
+   is not yet production-qualified. It couples spatial transport and LTE to the
+   native nodal hybrid-electron caloric state, rather than replacing that state
+   with a cell-centered fluid temperature. Its current envelope is Cartesian or RZ,
+   double precision, fixed mesh, native ideal-gas or fixed-charge latent-energy
+   electrons, or a single-material host-only Singularity/Spiner electron EOS,
+   and analytic or electron-state tabulated opacity. The tabulated EOS uses
+   frozen native material-carrier density fields separately from total electron
+   charge density; its fixed ion charge is not inferred from a FLASH closure.
+   Multi-material Spiner coupling remains guarded. Grey and spectral
+   ``(ne,Te[,photon_energy])`` tables use their existing interpolation and clamped
+   endpoint policy. Species-composition and HDF5 material opacity adapters remain
+   guarded on this path; electron-state tables are not an evolving-mixture model.
+   All species must have ``do_not_push=1``; live streaming photons,
+   changing hybrid ion charge states, embedded boundaries, conversion and
+   momentum coupling are rejected. The older ``implicit`` option retains its
+   transport-only LTE guard.
+
+   A block-Picard iteration updates Planck/Rosseland opacity and equilibrium
+   group radiation from each material trial. The native conservative source
+   map freezes the initial nodal heat-capacity weights and evaluates the exact
+   caloric inverse in scratch storage. Acceptance re-evaluates the spatial
+   equation at the actual native material response, checks the material-map
+   residual relative to nodal heating (not background temperature). Nonlinear
+   EOS residuals use actual caloric energy differences rather than temperature
+   or pressure differences. Acceptance also requires
+   raw stage energy closure below ``1.e-10`` relative to radiation and exchange.
+   The numerical-defect ledger is not used to pass that raw gate.
+
+   ``lte_exchange_max_iterations`` bounds the outer iteration and
+   ``lte_exchange_tolerance`` controls its native-electron material residual.
+   Spatial tolerances below still apply separately to every group. Only accepted
+   radiation, temperature and realized material source are committed. Failure
+   aborts without committing those candidates unless optional stage retries
+   succeed. Whole-PIC rollback is not implemented. With nonzero solver verbosity, the
+   outer iteration count, material residual and raw energy residual are printed.
+   ``RadiationEnergy`` spatial iteration counts include all outer trials.
+
+   The inner spatial solve uses one tenth of the final equation tolerance to
+   leave room for material coefficient updates. If the radiation equation is
+   already converged but the discrete caloric inverse creates a material-map
+   rounding cycle, bounded source-consistency trials adjust a strong absorbing
+   group's radiation energy to reproduce the request that generated the actual
+   material state. Nonnegative radiation, the original per-group equation gate,
+   the original material-map gate and raw energy closure are all re-evaluated;
+   no tolerance is waived. Accepted stages that used these trials report their
+   count and residuals in standard output even at zero solver verbosity.
+
+.. pp:param:: radiation_transport.coupled_max_subdivisions
+   :type: ``integer``
+   :default: ``0``
+   :optional:
+
+   For the private stationary ``coupled_implicit`` prototype, retry a failed
+   radiation/material interval with 2, 4, ... uniform substeps, up to
+   ``2**coupled_max_subdivisions`` (allowed range 0--10). Zero disables retries.
+   Each substep uses its own old native nodal caloric state and coefficient
+   evaluation time. Every substep must meet the unchanged equation, material,
+   positivity and raw-energy gates; the full interval is also checked for raw
+   energy conservation. If any substep fails, the entire attempted interval is
+   discarded, including all candidate source and boundary transfers. Only a
+   complete accepted interval changes the live radiation/material state.
+   This does not roll back the preceding PIC advance or qualify a larger
+   timestep for accuracy. Standard output reports accepted substeps and rejected
+   attempts when solver verbosity is nonzero.
+
+.. pp:param:: radiation_transport.diffusion_incremental_solve
+   :type: ``bool``
+   :default: ``true`` for ``coupled_implicit``, ``false`` for ``implicit``
+   :optional:
+
+   Solve the frozen-coefficient linear system for a correction to the current
+   field. The correction right-hand side is the same cell-integrated face/source
+   residual used for acceptance and boundary accounting. This avoids cancellation
+   between large equilibrium matrix products. The correction solve also uses
+   ``diffusion_linear_tolerance`` times the current group energy-density scale
+   as an absolute budget, reduced by the smallest/largest cell-volume ratio in
+   radial geometry. Positivity, the original nonlinear equation residual and
+   raw energy gates still apply to the actual stored final field. This improves
+   linear accuracy but cannot remove a representability floor in that field at
+   extremely stiff timesteps. The legacy absolute-field solve remains available
+   for comparison.
+
+.. pp:param:: <radiation_energy_diag>.include_solver_details
+   :type: ``bool``
+   :default: ``false``
+   :optional:
+
+   For a ``RadiationEnergy`` diagnostic with an implicit solver, append per-group
+   outward, inward and radiation-to-material transfers (J), their independently
+   accumulated histories, coupled iteration/substep/rejection/correction counts,
+   material and raw-stage residuals, and minimum group cell energy and native
+   material temperature. Positive group material transfer removes radiation
+   energy. These are accepted equation transfers before native EOS realization;
+   the existing numerical residual ledger separately reports the discrepancy.
+   Rejected attempts contribute no group or boundary transfer. Cumulative group
+   ledgers advance every step even with sparse diagnostic output and are stored
+   in a versioned checkpoint record. Do not change this option across restart.
+   Coupled-only counts/residuals are zero for transport-only implicit solves,
+   whose minimum material temperature is reported as ``-1`` (not applicable).
+
+.. pp:param:: radiation_transport.diffusion_gradient
+   :type: ``string``
+   :default: ``face_normal`` (``vector`` for ``coupled_implicit``)
+   :optional:
+
+   ``face_normal`` preserves the legacy directional limiter, using only the
+   normal energy-density derivative at each face. This is not the isotropic
+   multidimensional FLD closure: limiting each component separately does not
+   impose a bound on the vector flux magnitude for oblique gradients.
+
+   The opt-in ``vector`` path uses the full gradient magnitude at each interior
+   face, including transverse derivatives of the face-averaged energy density.
+   Physical transverse boundaries use one-sided derivatives. Both explicit and
+   implicit spatial updates support this option; they agree in one dimension.
+   New multidimensional FLD comparisons should select ``vector`` explicitly.
+   Existing directional-mode qualifications are not automatically qualifications
+   of the full-gradient path.
+
+.. pp:param:: radiation_transport.diffusion_implicit_tolerance
+   :type: ``float``
+   :default: ``1.0e-9``
+   :optional:
+
+   Maximum cell energy-density equation residual, normalized by that group's
+   maximum initial/current energy density. Each group is checked separately.
+
+.. pp:param:: radiation_transport.diffusion_linear_tolerance
+   :type: ``float``
+   :default: ``1.0e-12``
+   :optional:
+
+   Relative multigrid solve tolerance. Must be positive and smaller than the
+   nonlinear tolerance.
+
+   The coupled prototype solves its inner spatial equation to one tenth of the
+   final radiation equation tolerance and caps this linear tolerance at half of
+   that inner tolerance. The requested value can therefore be made stricter,
+   but never bypasses the separately evaluated final radiation, native-material,
+   positivity, or raw-energy gates. On refined double-precision grids, an
+   unnecessarily small linear tolerance can lie below the attainable residual
+   floor; increasing its requested value within this cap does not relax those
+   physical acceptance checks.
+
+.. pp:param:: radiation_transport.diffusion_implicit_max_iterations
+   :type: ``integer``
+   :default: ``100``
+   :optional:
+
+   Positive maximum nonlinear iterations per group.
+
+.. pp:param:: radiation_transport.diffusion_linear_max_iterations
+   :type: ``integer``
+   :default: ``200``
+   :optional:
+
+   Positive maximum multigrid iterations per nonlinear trial.
+
+.. pp:param:: radiation_transport.diffusion_picard_relaxation
+   :type: ``float``
+   :default: ``0.8`` (``implicit``), ``1.0`` (``coupled_implicit``)
+   :optional:
+
+   Positive fraction, at most one, of the new spatial Picard iterate retained
+   before re-evaluating the limiter and discrete residual. The transport-only
+   default retains its steep-front damping. The coupled prototype defaults to
+   a full update to avoid repeatedly damping weak material-coupling corrections.
+   This changes iteration behavior, never the equation or acceptance tolerances.
+
+.. pp:param:: radiation_transport.diffusion_solver_verbosity
+   :type: ``integer``
+   :default: ``0``
+   :optional:
+
+   Nonnegative multigrid verbosity for the implicit spatial path.
 
 .. pp:param:: radiation_transport.diffusion_boundary_lo
    :type: ``string`` or list of strings
@@ -6367,6 +6631,14 @@ This shifts analysis from post-processing to runtime calculation of reduction op
         quantity has three components. Cartesian labels are :math:`x,y,z`;
         RCYLINDER and RZ use :math:`r,\theta,z`. Cumulative columns are updated every
         step and preserved through checkpoint/restart.
+
+        With ``radiation_transport.diffusion_solver=coupled_moment``, setting
+        ``<reduced_diags_name>.include_moment_inventory=1`` appends three
+        ``moment_radiation_*`` columns containing the instantaneous lab-frame
+        radiation-field momentum, :math:`\sum_{\mathrm{cells}} (F/c)/c`.
+        This is not the cumulative impulse transferred to material. The default
+        is zero, preserving the existing output layout. The option is rejected
+        for scalar diffusion/packet modes, and must remain unchanged at restart.
 
         For a diffusion vacuum face the outward normal impulse is
         :math:`\Delta E/c`; for the P1 Marshak condition it is

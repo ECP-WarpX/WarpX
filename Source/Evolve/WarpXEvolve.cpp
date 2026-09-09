@@ -438,7 +438,8 @@ void WarpX::OneStep (
     // explicit solver
     else {
         m_radiation_transport->Advance(*mypc, m_fields, a_cur_time, a_dt);
-        if (m_radiation_transport->couplesToHybridElectrons()) {
+        if (m_radiation_transport->couplesToHybridElectrons()
+            && !m_radiation_transport->commitsHybridMaterialState()) {
             // Apply the source to T_e^n immediately after transport. QDSMC
             // then advects this already radiation-updated electron energy,
             // keeping the LTE emission-capacity bound and its material state
@@ -1507,6 +1508,7 @@ WarpX::PushParticlesandDeposit (
             FieldType::hybrid_pressure_work_current_fp, lev);
         auto const& period = Geom(lev).periodicity();
         for (int idim = 0; idim < 3; ++idim) {
+            m_hybrid_pic_model->FoldPressureWorkBoundary(*work_current_aux[idim], idim, lev);
             // Particle shapes can straddle FAB and periodic boundaries. Fold
             // every scatter contribution into the valid owner in full
             // precision before reconstructing periodic/nodal aliases.

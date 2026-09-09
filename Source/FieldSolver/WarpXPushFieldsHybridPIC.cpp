@@ -620,11 +620,12 @@ void WarpX::HybridPICInitializeRhoJandB ()
     using warpx::fields::FieldType;
     using ablastr::fields::Direction;
 
-    // Deposit rho^n and J_i^{n-1/2} from the particles. This must also run on
-    // restart: the checkpoint does not contain rho_fp (and contains current_fp
-    // only when written synchronized), while the particles are restored at
-    // exactly (x^n, v^{n-1/2}) on both paths, so the deposit deterministically
-    // reconstructs both fields. Without it the first restarted step runs the
+    // Restore deposited rho^n and J_i^{n-1/2} history when available. Legacy
+    // checkpoints omit rho_fp and save current_fp only when synchronized;
+    // reconstruct those deposits from particles at (x^n, v^{n-1/2}). GPU
+    // scatter summation need not reproduce the original bits, hence the new
+    // checkpoint history. Without either restoration or reconstruction the
+    // first restarted step runs the
     // adaptive B integration with rho = 0 everywhere: every node falls into
     // the below-n_floor branch of the Ohm's-law E-solve on top of the full
     // mid-run curl(B), which is catastrophically stiff (or, with the vacuum
@@ -632,9 +633,13 @@ void WarpX::HybridPICInitializeRhoJandB ()
     // This initialization deposit reconstructs rho^n and J_i^(n-1/2), but
     // there is no n -> n+1 material trajectory yet.  The first evolved
     // deposit will initialize the auxiliary continuity flux consistently.
-    HybridPICDepositRhoAndJ(/*deposit_energy_auxiliary=*/false);
+    if (!m_hybrid_pic_model->m_restored_moment_history_pending) {
+        HybridPICDepositRhoAndJ(/*deposit_energy_auxiliary=*/false);
+    }
+    m_hybrid_pic_model->m_restored_moment_history_pending = false;
+    m_hybrid_pic_model->m_moment_history_valid = true;
 
-    // Fill the electron pressure using the freshly deposited rho. On a fresh
+    // Fill the electron pressure using deposited or restored rho. On a fresh
     // ideal/polytropic start this seeds Pe^0 and the corresponding T_e for the
     // first step's B-substep E-solves. Initial energy-equation diagnostics
     // prepare the same state independently before desynchronization. Any

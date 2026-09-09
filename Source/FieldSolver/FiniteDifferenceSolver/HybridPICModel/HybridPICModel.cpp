@@ -15,6 +15,7 @@
 #include <ablastr/utils/Communication.H>
 #include <ablastr/warn_manager/WarnManager.H>
 
+#include "BoundaryConditions/WarpX_PEC.H"
 #include "EmbeddedBoundary/Enabled.H"
 #include "Python/callbacks.H"
 #include "Fields.H"
@@ -1042,10 +1043,55 @@ namespace
         amrex::Array4<amrex::Real const> const& work_current_z,
         amrex::Array4<amrex::Real const> const& pressure_work_state,
         int const i, int const j, int const k,
-        amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const& inv_dx) noexcept
+        amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const& inv_dx,
+        bool const pec_adjoint, amrex::Dim3 const& domain_lo, amrex::Dim3 const& domain_hi,
+        amrex::GpuArray<int, 3> const& periodic) noexcept
     {
         amrex::ignore_unused(work_current_x, work_current_y);
         amrex::Real divergence = 0.0_rt;
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z)
+        if (pec_adjoint) {
+            // D = -W^-1 G^T C^T. C^T has already folded the electric-field
+            // ghost extension into work_current. Every pressure-E component
+            // vanishes at a PEC surface: normal G(P_even)=0, tangential PEC E=0.
+            amrex::GpuArray<int, 3> const lo{domain_lo.x, domain_lo.y, domain_lo.z};
+            amrex::GpuArray<int, 3> const hi{domain_hi.x, domain_hi.y, domain_hi.z};
+            amrex::GpuArray<int, 3> const cell{i, j, k};
+            amrex::GpuArray<amrex::Array4<amrex::Real const>, 3> const currents{
+                work_current_x, work_current_y, work_current_z};
+            auto const value = [=] AMREX_GPU_HOST_DEVICE (
+                amrex::GpuArray<int, 3> const& point, int const component) noexcept {
+                for (int d = 0; d < AMREX_SPACEDIM; ++d) {
+                    if (!periodic[d] && (point[d] <= lo[d] || point[d] >= hi[d])) {
+                        return 0.0_rt;
+                    }
+                }
+                return qdsmc_masked_pressure_work_velocity(currents[component],
+                    pressure_work_state, point[0], point[1], point[2]);
+            };
+            amrex::Real inverse_weight = 1;
+            for (int d = 0; d < AMREX_SPACEDIM; ++d) {
+                auto lower = cell, upper = cell;
+                --lower[d];
+                ++upper[d];
+#if defined(WARPX_DIM_1D_Z)
+                int const component = 2;
+#elif defined(WARPX_DIM_XZ)
+                int const component = d == 0 ? 0 : 2;
+#else
+                int const component = d;
+#endif
+                divergence += 0.5_rt * inv_dx[d] *
+                    (value(upper, component) - value(lower, component));
+                if (!periodic[d] && (cell[d] == lo[d] || cell[d] == hi[d])) {
+                    inverse_weight *= 2;
+                }
+            }
+            return inverse_weight * divergence;
+        }
+#else
+        amrex::ignore_unused(pec_adjoint, domain_lo, domain_hi, periodic);
+#endif
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ)
         divergence += 0.5_rt * inv_dx[0] * (
             qdsmc_masked_pressure_work_velocity(
@@ -1093,6 +1139,60 @@ HybridPICModel::HybridPICModel (
 }
 
 HybridPICModel::~HybridPICModel () = default;
+
+void HybridPICModel::FoldPressureWorkBoundary (
+    amrex::MultiFab& current, int component, int lev) const
+{
+    auto const& geometry = WarpX::GetInstance().Geom(lev);
+    if (!m_conservative_pressure_work_pec || geometry.isAllPeriodic()) {
+        return;
+    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(current.ixType().nodeCentered() && current.nComp() == 1,
+        "PEC pressure-work folding requires a scalar collocated nodal component.");
+    auto const domain = amrex::convert(geometry.Domain(), current.ixType());
+    amrex::GpuArray<int, AMREX_SPACEDIM> periodic{};
+    for (int d = 0; d < AMREX_SPACEDIM; ++d) {
+        periodic[d] = geometry.isPeriodic(d);
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(periodic[d] ||
+            current.nGrowVect()[d] <= geometry.Domain().length(d),
+            "PEC pressure-work folding requires the domain to span its ghost support.");
+    }
+    for (amrex::MFIter iterator(current); iterator.isValid(); ++iterator) {
+        auto const field = current.array(iterator);
+        // Physical ghost contributions can share an image node. For (not
+        // ParallelFor) plus atomics is required for portable scatter-add.
+        amrex::For(iterator.fabbox(), [=] AMREX_GPU_DEVICE(int i, int j, int k) {
+            amrex::ignore_unused(j, k);
+            amrex::IntVect const source(AMREX_D_DECL(i, j, k));
+            auto target = source;
+            amrex::Real parity = 1;
+            bool reflected = false;
+            for (int d = 0; d < AMREX_SPACEDIM; ++d) {
+                if (periodic[d]) {
+                    continue;
+                }
+                bool const low = source[d] < domain.smallEnd(d);
+                bool const high = source[d] > domain.bigEnd(d);
+                if (low || high) {
+                    target[d] = 2 * (low ? domain.smallEnd(d) : domain.bigEnd(d)) - source[d];
+#if defined(WARPX_DIM_1D_Z)
+                    int const normal = 2;
+#elif defined(WARPX_DIM_XZ)
+                    int const normal = d == 0 ? 0 : 2;
+#else
+                    int const normal = d;
+#endif
+                    parity *= component == normal ? 1 : -1;
+                    reflected = true;
+                }
+            }
+            if (reflected) {
+                amrex::Gpu::Atomic::Add(&field(target), parity * field(source));
+                field(source) = 0;
+            }
+        });
+    }
+}
 
 void HybridPICModel::ReadParameters (
     warpx::materials::MaterialRegistry const* const material_registry)
@@ -1159,6 +1259,14 @@ void HybridPICModel::ReadParameters (
         "hybrid_pic_model.solve_electron_energy_equation=1.");
     pp_hybrid.query("conservative_pressure_work",
                     m_conservative_pressure_work);
+    pp_hybrid.query("conservative_pressure_work_pec", m_conservative_pressure_work_pec);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !m_conservative_pressure_work_pec || m_conservative_pressure_work,
+        "PEC pressure work requires conservative_pressure_work=1.");
+#if !defined(WARPX_DIM_1D_Z)
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!m_conservative_pressure_work_pec,
+        "Experimental PEC pressure work currently supports 1D only.");
+#endif
 #if defined(WARPX_DIM_RSPHERE)
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !m_solve_electron_energy_equation,
@@ -1724,7 +1832,7 @@ void HybridPICModel::InitData (const ablastr::fields::MultiFabRegister& fields)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             !WarpX::galerkin_interpolation,
             "hybrid_pic_model.conservative_pressure_work initially requires "
-            "warpx.galerkin_interpolation=0. Galerkin's reduced longitudinal "
+            "interpolation.galerkin_scheme=0. Galerkin's reduced longitudinal "
             "particle shape needs its matching transpose deposition.");
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             WarpX::particle_pusher_algo == ParticlePusherAlgo::Boris,
@@ -1768,11 +1876,21 @@ void HybridPICModel::InitData (const ablastr::fields::MultiFabRegister& fields)
             "warpx.use_fdtd_nci_corr=0 until the identical filter is applied "
             "to the isolated pressure field.");
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            warpx.Geom(0).isAllPeriodic(),
+            warpx.Geom(0).isAllPeriodic() || m_conservative_pressure_work_pec,
             "hybrid_pic_model.conservative_pressure_work initially requires "
             "periodic field boundaries; reflecting and conducting boundaries "
             "need an even pressure-energy boundary adjoint.");
         for (int d = 0; d < AMREX_SPACEDIM; ++d) {
+            if (m_conservative_pressure_work_pec && !warpx.Geom(0).isPeriodic(d)) {
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    WarpX::field_boundary_lo[d] == FieldBoundaryType::PEC &&
+                    WarpX::field_boundary_hi[d] == FieldBoundaryType::PEC &&
+                    WarpX::particle_boundary_lo[d] == ParticleBoundaryType::Reflecting &&
+                    WarpX::particle_boundary_hi[d] == ParticleBoundaryType::Reflecting,
+                    "conservative_pressure_work_pec requires stationary PEC fields and "
+                    "reflecting particles on both nonperiodic faces.");
+                continue;
+            }
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 WarpX::particle_boundary_lo[d]
                         == ParticleBoundaryType::Periodic
@@ -2321,6 +2439,13 @@ void HybridPICModel::HybridPICSolveE (
     warpx.ApplyEfieldBoundary(lev, patch_type, time);
     if (m_conservative_pressure_work && !solve_for_Faraday) {
         auto const& period = warpx.Geom(lev).periodicity();
+        if (m_conservative_pressure_work_pec) {
+            // This must match the boundary operation on the total gathered E,
+            // including its wall-node mask, not just the scalar Pe extension.
+            PEC::ApplyPECtoEfield(pressure_Efield, WarpX::field_boundary_lo,
+                WarpX::field_boundary_hi, FieldBoundaryType::PEC,
+                warpx.get_ng_fieldgather(), warpx.Geom(lev), lev, patch_type, warpx.refRatio());
+        }
         for (auto* pressure_component : pressure_Efield) {
             ablastr::utils::communication::FillBoundary(
                 *pressure_component, pressure_component->nGrowVect(),
@@ -2819,6 +2944,7 @@ void HybridPICModel::QDSMCUpdateThermodynamics (
                                               : 1.0_rt / 4.0_rt;
 #endif
         bool const conservative_pressure_work = m_conservative_pressure_work;
+        bool const pec_pressure_work = m_conservative_pressure_work_pec;
 
         // The exact particle/electron pressure-work pair is evaluated from
         // the frozen old pressure state.  Apply the electron-side increment
@@ -2868,7 +2994,8 @@ void HybridPICModel::QDSMCUpdateThermodynamics (
                     amrex::Real const work_divergence =
                         qdsmc_pressure_work_velocity_divergence(
                             work_current_x, work_current_y, work_current_z,
-                            pressure_state, i, j, k, inv_dx);
+                            pressure_state, i, j, k, inv_dx, pec_pressure_work,
+                            nodal_lo, nodal_hi, periodic);
                     amrex::Real const source_loaded_energy =
                         old_energy(i, j, k) - dt
                             * pressure_state(i, j, k, 0)
@@ -4732,6 +4859,81 @@ amrex::Real HybridPICModel::ApplyElectronEnergySource (
 {
     ABLASTR_PROFILE("HybridPICModel::ApplyElectronEnergySource()");
 
+    auto& warpx = WarpX::GetInstance();
+    auto& temperature = *warpx.m_fields.get(FieldType::hybrid_electron_temperature_fp, lev);
+    amrex::MultiFab candidate(temperature.boxArray(), temperature.DistributionMap(),
+                             1, temperature.nGrowVect());
+    amrex::MultiFab::Copy(candidate, temperature, 0, 0, 1, temperature.nGrowVect());
+    amrex::MultiFab source(cell_integrated_energy.boxArray(),
+                          cell_integrated_energy.DistributionMap(), 1,
+                          cell_integrated_energy.nGrowVect());
+    amrex::MultiFab::Copy(source, cell_integrated_energy, 0, 0, 1,
+                         cell_integrated_energy.nGrowVect());
+    amrex::Real const residual = EvaluateElectronEnergySource(
+        lev, candidate, source, minimum_electron_density, nonlinear_lte_remap);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        amrex::Math::isfinite(residual),
+        "Hybrid electron energy coupling produced an invalid thermodynamic state "
+        "or material realization residual.");
+    CommitElectronTemperature(lev, candidate);
+    amrex::MultiFab::Copy(cell_integrated_energy, source, 0, 0, 1,
+                         cell_integrated_energy.nGrowVect());
+    return residual;
+}
+
+
+void HybridPICModel::CommitElectronTemperature (
+    int const lev, amrex::MultiFab const& candidate) const
+{
+    auto& warpx = WarpX::GetInstance();
+    auto& temperature = *warpx.m_fields.get(FieldType::hybrid_electron_temperature_fp, lev);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        candidate.boxArray() == temperature.boxArray()
+            && candidate.DistributionMap() == temperature.DistributionMap()
+            && candidate.nComp() == 1
+            && candidate.nGrowVect().allGE(temperature.nGrowVect())
+            && candidate.is_finite(0, 1, candidate.nGrowVect()),
+        "Invalid native electron-temperature commit candidate.");
+    amrex::MultiFab::Copy(temperature, candidate, 0, 0, 1, temperature.nGrowVect());
+    QDSMCFillElectronPressureFromTe(lev);
+    warpx.ApplyElectronPressureBoundary(lev, PatchType::fine);
+    ablastr::utils::communication::FillBoundary(
+        *warpx.m_fields.get(FieldType::hybrid_electron_pressure_fp, lev),
+        WarpX::do_single_precision_comms, warpx.Geom(lev).periodicity(), true);
+}
+
+
+amrex::Real HybridPICModel::EvaluateElectronEnergySource (
+    int const lev,
+    amrex::MultiFab& Te,
+    amrex::MultiFab& cell_integrated_energy,
+    amrex::Real const minimum_electron_density,
+    amrex::MultiFab const* const nonlinear_lte_remap,
+    amrex::MultiFab const* const prescribed_temperature,
+    amrex::MultiFab* const nodal_energy_residual) const
+{
+    ABLASTR_PROFILE("HybridPICModel::EvaluateElectronEnergySource()");
+
+    bool const prescribed = prescribed_temperature != nullptr;
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(prescribed == (nodal_energy_residual != nullptr),
+        "Prescribed native temperature requires a nodal residual output.");
+    if (prescribed) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(nonlinear_lte_remap == nullptr,
+            "Prescribed native temperature currently requires the frozen old-Cv source remap.");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            prescribed_temperature != &Te && prescribed_temperature->nComp() == 1 &&
+            prescribed_temperature->boxArray() == Te.boxArray() &&
+            prescribed_temperature->DistributionMap() == Te.DistributionMap() &&
+            nodal_energy_residual->nComp() == 3 &&
+            nodal_energy_residual->boxArray() == Te.boxArray() &&
+            nodal_energy_residual->DistributionMap() == Te.DistributionMap(),
+            "Prescribed native temperature and three-component residual must match the old state.");
+        nodal_energy_residual->setVal(0);
+        if (!prescribed_temperature->is_finite()) {
+            return std::numeric_limits<amrex::Real>::quiet_NaN();
+        }
+    }
+
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_solve_electron_energy_equation,
         "Hybrid electron energy sources require "
@@ -4769,9 +4971,10 @@ amrex::Real HybridPICModel::ApplyElectronEnergySource (
     }
 
     auto& warpx = WarpX::GetInstance();
-    amrex::MultiFab& Te =
-        *warpx.m_fields.get(FieldType::hybrid_electron_temperature_fp, lev);
-    amrex::MultiFab& rho = *warpx.m_fields.get(FieldType::rho_fp, lev);
+    auto const& live_rho = *warpx.m_fields.get(FieldType::rho_fp, lev);
+    amrex::MultiFab rho(live_rho.boxArray(), live_rho.DistributionMap(),
+                       live_rho.nComp(), live_rho.nGrowVect());
+    amrex::MultiFab::Copy(rho, live_rho, 0, 0, live_rho.nComp(), live_rho.nGrowVect());
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         amrex::convert(cell_integrated_energy.boxArray(), Te.ixType()) == Te.boxArray(),
@@ -4798,10 +5001,17 @@ amrex::Real HybridPICModel::ApplyElectronEnergySource (
     amrex::GpuArray<amrex::MultiFab const*,
                     ElectronThermodynamicsExecutor::max_materials>
         material_charge_density_fields{};
+    amrex::Vector<std::unique_ptr<amrex::MultiFab>> material_snapshots(num_materials);
     for (int material = 0; material < num_materials; ++material) {
-        auto& material_field = *warpx.m_fields.get(
+        auto const& live_material = *warpx.m_fields.get(
             "ni_charge_fp_"
             + m_electron_thermodynamics.materialSpeciesName(material), lev);
+        material_snapshots[material] = std::make_unique<amrex::MultiFab>(
+            live_material.boxArray(), live_material.DistributionMap(),
+            live_material.nComp(), live_material.nGrowVect());
+        auto& material_field = *material_snapshots[material];
+        amrex::MultiFab::Copy(material_field, live_material, 0, 0,
+                             live_material.nComp(), live_material.nGrowVect());
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             material_field.boxArray() == Te.boxArray()
                 && material_field.DistributionMap() == Te.DistributionMap()
@@ -4893,11 +5103,10 @@ amrex::Real HybridPICModel::ApplyElectronEnergySource (
             state_arr(i, j, k, 2) = minimum_state.internal_energy_density;
         });
     }
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        node_thermodynamic_state.is_finite(
-            0, 3, node_thermodynamic_state.nGrowVect()),
-        "Hybrid electron energy coupling encountered an invalid initial "
-        "thermodynamic state.");
+    if (!node_thermodynamic_state.is_finite(
+            0, 3, node_thermodynamic_state.nGrowVect())) {
+        return std::numeric_limits<amrex::Real>::quiet_NaN();
+    }
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -4911,6 +5120,12 @@ amrex::Real HybridPICModel::ApplyElectronEnergySource (
             cell_integrated_energy.const_array(mfi);
         amrex::Array4<amrex::Real const> const state_arr =
             node_thermodynamic_state.const_array(mfi);
+        amrex::Array4<amrex::Real const> prescribed_arr;
+        amrex::Array4<amrex::Real> residual_arr;
+        if (prescribed) {
+            prescribed_arr = prescribed_temperature->const_array(mfi);
+            residual_arr = nodal_energy_residual->array(mfi);
+        }
         amrex::Array4<amrex::Real const> nonlinear_remap_arr;
         if (use_nonlinear_lte_remap) {
             nonlinear_remap_arr = nonlinear_lte_remap->const_array(mfi);
@@ -4925,7 +5140,12 @@ amrex::Real HybridPICModel::ApplyElectronEnergySource (
         amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
         {
             amrex::Real const rho_node = rho_arr(i, j, k);
-            if (rho_node <= material_rho_threshold) { return; }
+            if (rho_node <= material_rho_threshold) {
+                if (prescribed && prescribed_arr(i, j, k) != Te_arr(i, j, k)) {
+                    Te_arr(i, j, k) = std::numeric_limits<amrex::Real>::quiet_NaN();
+                }
+                return;
+            }
 
             amrex::Real const node_volume = hybrid_node_volume(
                 i, j, k, problo, probhi, dx, domain_lo, domain_hi, periodic);
@@ -4999,7 +5219,7 @@ amrex::Real HybridPICModel::ApplyElectronEnergySource (
                     }
                 }
             }
-            if (node_energy == 0.0_rt) { return; }
+            if (!prescribed && node_energy == 0.0_rt) { return; }
             amrex::Real const energy_density_change = node_energy / node_volume;
             amrex::Real new_internal_energy_density =
                 old_internal_energy_density + energy_density_change;
@@ -5025,17 +5245,26 @@ amrex::Real HybridPICModel::ApplyElectronEnergySource (
                 new_internal_energy_density);
             // A sub-ULP source must preserve the bitwise thermodynamic state so
             // the realized material ledger rebases to exact zero.
-            if (new_internal_energy_density == old_internal_energy_density) {
+            if (!prescribed && new_internal_energy_density == old_internal_energy_density) {
                 return;
             }
             auto const material_mass_density = thermodynamics
                 .materialMassDensitiesFromChargeDensityArrays(
                     material_charge_density, i, j, k);
-            amrex::Real const new_temperature = thermodynamics
-                .temperatureFromMaterialMassDensitiesThermalEnergyDensity(
-                    thermodynamic_rho_node, material_mass_density,
-                    new_internal_energy_density);
+            // For a constant-C_V ideal gas, advance the small increment
+            // directly. Repeatedly evaluating U(T)/C_V rounds the large
+            // background on every source step and can accumulate a systematic
+            // drift even when each individual source is well resolved.
+            // Retain the same floor and authoritative old-to-new EOS ledger;
+            // nonlinear EOS models still use their configured caloric inverse.
+            amrex::Real const new_temperature = prescribed ? prescribed_arr(i, j, k)
+                : thermodynamics.isIdealGas()
+                ? amrex::max(thermodynamics.minimumTemperature(),
+                    Te_arr(i, j, k) + energy_density_change / state_arr(i, j, k, 1))
+                : thermodynamics.temperatureFromMaterialMassDensitiesThermalEnergyDensity(
+                    thermodynamic_rho_node, material_mass_density, new_internal_energy_density);
             if (new_temperature < thermodynamics.minimumTemperature()
+                || new_temperature > thermodynamics.maximumTemperature()
                 || !amrex::Math::isfinite(new_temperature))
             {
                 Te_arr(i, j, k) =
@@ -5043,14 +5272,24 @@ amrex::Real HybridPICModel::ApplyElectronEnergySource (
                 return;
             }
             Te_arr(i, j, k) = new_temperature;
+            if (prescribed) {
+                auto const final_state = thermodynamics.stateFromMaterialMassDensitiesTemperature(
+                    thermodynamic_rho_node, material_mass_density, new_temperature);
+                auto const realized =
+                    final_state.internal_energy_density - old_internal_energy_density;
+                residual_arr(i, j, k, 0) = realized - energy_density_change;
+                residual_arr(i, j, k, 1) =
+                    amrex::max(std::abs(realized), std::abs(energy_density_change));
+                residual_arr(i, j, k, 2) = 64 * std::numeric_limits<amrex::Real>::epsilon()
+                    * (std::abs(final_state.internal_energy_density)
+                       + std::abs(old_internal_energy_density));
+            }
         });
     }
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        Te.is_finite(0, 1, 0),
-        "Hybrid electron energy coupling produced an invalid thermodynamic "
-        "state or attempted to remove more electron internal energy than "
-        "the participating material nodes contain.");
+    if (!Te.is_finite(0, 1, 0)) {
+        return std::numeric_limits<amrex::Real>::quiet_NaN();
+    }
 
     // The next QDSMC step reconstructs entropy on a ghost-grown nodal box,
     // so radiation-updated temperatures must also be present in grid ghosts.
@@ -5178,25 +5417,12 @@ amrex::Real HybridPICModel::ApplyElectronEnergySource (
     int invalid_realization = amrex::get<1>(realization_reduction);
     amrex::ParallelDescriptor::ReduceRealSum(residual);
     amrex::ParallelDescriptor::ReduceIntMax(&invalid_realization, 1);
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        invalid_realization == 0,
-        "Hybrid electron radiation coupling produced a non-finite or "
-        "invalid thermodynamic EOS realization while rebasing the material "
-        "ledger.");
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        amrex::Math::isfinite(residual),
-        "Hybrid electron radiation coupling produced a non-finite material "
-        "realization residual.");
+    if (invalid_realization != 0 || !amrex::Math::isfinite(residual)) {
+        return std::numeric_limits<amrex::Real>::quiet_NaN();
+    }
 
     cell_integrated_energy.FillBoundary(geom.periodicity());
 
-    QDSMCFillElectronPressureFromTe(lev);
-    warpx.ApplyElectronPressureBoundary(lev, PatchType::fine);
-    ablastr::utils::communication::FillBoundary(
-        *warpx.m_fields.get(FieldType::hybrid_electron_pressure_fp, lev),
-        WarpX::do_single_precision_comms,
-        geom.periodicity(),
-        true);
     return residual;
 }
 

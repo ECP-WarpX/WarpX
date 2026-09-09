@@ -7,6 +7,7 @@
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "Fields.H"
+#include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Radiation/RadiationTransport.H"
 #include "Utils/TextMsg.H"
@@ -191,6 +192,9 @@ FlushFormatCheckpoint::WriteToFile (
 
     }
 
+    if (auto* hybrid = warpx.get_pointer_HybridPICModel()) {
+        hybrid->WriteMomentHistory(checkpointname);
+    }
     CheckpointParticles(checkpointname, particle_diags);
 
     WriteDMaps(checkpointname, nlev);

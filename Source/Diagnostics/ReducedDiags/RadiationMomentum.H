@@ -17,8 +17,10 @@
  * Components are Cartesian in Cartesian geometry and (r,theta,z) in RCYL/RZ.
  * The radial entry is an azimuthally integrated scalar impulse ledger, not the
  * globally conserved Cartesian momentum of a complete cylinder. Pending
- * streaming/diffusion entries are checkpointed cell impulses not yet
- * representable in the configured particle momentum precision.
+ * streaming/diffusion entries are cell- or particle-owned impulses not yet
+ * representable in the configured particle momentum precision. Coupled moment
+ * transport can additionally report the instantaneous radiation-field momentum;
+ * this is distinct from cumulative impulse transferred to material.
  */
 class RadiationMomentum : public ReducedDiags
 {
@@ -30,6 +32,7 @@ public:
     void ReadCheckpointData (std::string const& dir) final;
 
 private:
+    bool m_include_moment_inventory = false;
     amrex::GpuArray<amrex::Real, 3> m_cumulative_material_impulse{
         0.0, 0.0, 0.0};
     amrex::GpuArray<amrex::Real, 3> m_cumulative_boundary_impulse{

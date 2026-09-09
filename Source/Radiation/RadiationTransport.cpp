@@ -5,6 +5,11 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "RadiationTransport.H"
+#include "CoupledImplicitDiffusion.H"
+#include "CoupledMomentSource.H"
+#include "DiffusionGradient.H"
+#include "MaterialKineticWork.H"
+#include "ParticleImpulse.H"
 #include "PlanckExchange.H"
 
 #include "EmbeddedBoundary/Enabled.H"
@@ -79,6 +84,12 @@ using warpx::radiation::KineticPrecisionEpsilon;
 
 namespace
 {
+std::string
+MomentFieldName (int component)
+{
+    return std::string("radiation_moment_q") + "xyz"[component];
+}
+
 std::string
 ParserRealLiteral (amrex::Real const value)
 {
@@ -965,6 +976,166 @@ GatherHybridCellMaterialState (
             * minimum_available_energy_per_capacity;
     }
     return state;
+}
+
+/** File-local launch keeps NVCC extended lambdas out of a private member. */
+void
+FillCoupledHybridCoefficients (
+    amrex::MultiFab const& density, amrex::MultiFab const& trial, amrex::MultiFab& opacity,
+    amrex::MultiFab& absorption, amrex::MultiFab& emission, amrex::Geometry const& geometry,
+    ElectronThermodynamicsExecutor const eos, amrex::Real const minimum_density,
+    amrex::Real const thermodynamic_floor, OpacityEvaluator<1> const planck,
+    OpacityEvaluator<1> const rosseland, warpx::radiation::EnergyGroupsExecutor const groups,
+    amrex::Real const evaluation_time,
+    amrex::GpuArray<amrex::MultiFab const*, ElectronThermodynamicsExecutor::max_materials> const&
+        material_fields)
+{
+    auto const lower = geometry.ProbLoArray();
+    auto const dx = geometry.CellSizeArray();
+    auto const domain_lo = amrex::lbound(geometry.Domain());
+    int const num_groups = groups.m_num_groups;
+    opacity.setVal(0);
+    for (amrex::MFIter mfi(opacity); mfi.isValid(); ++mfi) {
+        auto const rho = density.const_array(mfi);
+        auto const te = trial.const_array(mfi);
+        auto const ar = opacity.array(mfi);
+        auto const ap = absorption.array(mfi);
+        auto const emit = emission.array(mfi);
+        ElectronThermodynamicsExecutor::MaterialChargeDensityArrays materials{};
+        for (int material = 0; material < eos.m_num_materials; ++material)
+        {
+            materials[material] = material_fields[material]->const_array(mfi);
+        }
+        amrex::ParallelFor(
+            mfi.validbox(),
+            [=] AMREX_GPU_DEVICE(int i, int j, int k)
+            {
+                auto const state =
+                    GatherHybridCellMaterialState(i, j, k, minimum_density, thermodynamic_floor,
+                                                  eos, rho, te, materials, lower, dx, domain_lo);
+                amrex::Real const t2 = state.electron_temperature * state.electron_temperature;
+                amrex::Real const blackbody = 7.565733250280007e-16_rt * t2 * t2;
+                amrex::GpuArray<int, AMREX_SPACEDIM> const index{AMREX_D_DECL(i, j, k)};
+                amrex::GpuArray<int, AMREX_SPACEDIM> const lo{
+                    AMREX_D_DECL(domain_lo.x, domain_lo.y, domain_lo.z)};
+                amrex::GpuArray<amrex::Real, 3> position{0, 0, 0};
+                for (int d = 0; d < AMREX_SPACEDIM; ++d)
+                {
+                    int component = d;
+#if defined(WARPX_DIM_1D_Z)
+                    component = 2;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                    component = d == 1 ? 2 : 0;
+#endif
+                    position[component] = lower[d] + (index[d] - lo[d] + 0.5_rt) * dx[d];
+                }
+                for (int g = 0; g < num_groups; ++g)
+                {
+                    auto const photon_energy = groups.representativeEnergy(g);
+                    auto const p =
+                        planck({}, position[0], position[1], position[2], evaluation_time,
+                               photon_energy, state.electron_density, state.electron_temperature);
+                    ar(i, j, k, g) =
+                        state.valid && state.electron_density > minimum_density
+                            ? rosseland({}, position[0], position[1], position[2], evaluation_time,
+                                        photon_energy, state.electron_density,
+                                        state.electron_temperature)
+                            : -1.0_rt;
+                    ap(i, j, k, g) = PhysConst::c * p;
+                    emit(i, j, k, g) =
+                        ap(i, j, k, g) * blackbody *
+                        groups.planckFraction(g, PhysConst::kb * state.electron_temperature);
+                }
+            });
+    }
+}
+
+/** Convert the gray coefficient adapter to physical inverse lengths and
+ * cell-integrated equilibrium energy. The selected gray model interprets the
+ * transport extinction as absorption plus isotropic coherent scattering.
+ * A truly empty cell has no material source; invalid nonempty material remains
+ * invalid instead of silently removing its opacity. */
+void
+ConvertGrayMomentCoefficients (amrex::MultiFab const& density, amrex::MultiFab& absorption,
+                              amrex::MultiFab& scattering, amrex::MultiFab& equilibrium,
+                              amrex::Geometry const& geometry)
+{
+    auto const dx = geometry.CellSizeArray();
+    amrex::Real const volume = AMREX_D_TERM(dx[0], * dx[1], * dx[2]);
+    for (amrex::MFIter iterator(absorption); iterator.isValid(); ++iterator) {
+        auto const rho = density.const_array(iterator);
+        auto const a = absorption.array(iterator);
+        auto const s = scattering.array(iterator);
+        auto const b = equilibrium.array(iterator);
+        amrex::ParallelFor(iterator.validbox(), [=] AMREX_GPU_DEVICE(int i, int j, int k) {
+            bool empty = true;
+            for (int corner = 0; corner < (1 << AMREX_SPACEDIM); ++corner) {
+                empty = empty && rho(i + (corner & 1), j + ((corner >> 1) & 1),
+                                     k + ((corner >> 2) & 1)) == 0;
+            }
+            if (empty) {
+                a(i, j, k) = 0;
+                s(i, j, k) = 0;
+                b(i, j, k) = 0;
+            } else {
+                b(i, j, k) = a(i, j, k) > 0 ? volume * b(i, j, k) / a(i, j, k) : 0;
+                a(i, j, k) /= PhysConst::c;
+                s(i, j, k) -= a(i, j, k);
+            }
+        });
+    }
+}
+
+/** Nonlinear material convergence is measured in native caloric energy, not
+ * pressure or temperature. All inputs are frozen-density scratch states. */
+amrex::GpuArray<amrex::Real, 2>
+CoupledCaloricResidual (
+    amrex::MultiFab const& density, amrex::MultiFab const& old, amrex::MultiFab const& candidate,
+    amrex::MultiFab const& check, ElectronThermodynamicsExecutor const eos,
+    amrex::Real minimum_density, amrex::Real thermodynamic_floor,
+    amrex::GpuArray<amrex::MultiFab const*, ElectronThermodynamicsExecutor::max_materials> const&
+        material_fields)
+{
+    amrex::ReduceOps<amrex::ReduceOpMax, amrex::ReduceOpMax, amrex::ReduceOpMax> ops;
+    amrex::ReduceData<amrex::Real, amrex::Real, int> data(ops);
+    using Tuple = typename decltype(data)::Type;
+    for (amrex::MFIter mfi(candidate); mfi.isValid(); ++mfi) {
+        auto const rho = density.const_array(mfi);
+        auto const t0 = old.const_array(mfi);
+        auto const t1 = candidate.const_array(mfi);
+        auto const t2 = check.const_array(mfi);
+        ElectronThermodynamicsExecutor::MaterialChargeDensityArrays materials{};
+        for (int material = 0; material < eos.m_num_materials; ++material)
+        {
+            materials[material] = material_fields[material]->const_array(mfi);
+        }
+        ops.eval(mfi.validbox(), data, [=] AMREX_GPU_DEVICE(int i, int j, int k) -> Tuple {
+            if (rho(i, j, k) <= PhysConst::q_e * minimum_density) { return {0, 0, 0}; }
+            auto const charge = amrex::max(rho(i, j, k), PhysConst::q_e * thermodynamic_floor);
+            auto const composition =
+                eos.materialMassDensitiesFromChargeDensityArrays(materials, i, j, k);
+            auto const u0 =
+                eos.stateFromMaterialMassDensitiesTemperature(charge, composition, t0(i, j, k))
+                    .internal_energy_density;
+            auto const u1 =
+                eos.stateFromMaterialMassDensitiesTemperature(charge, composition, t1(i, j, k))
+                    .internal_energy_density;
+            auto const u2 =
+                eos.stateFromMaterialMassDensitiesTemperature(charge, composition, t2(i, j, k))
+                    .internal_energy_density;
+            if (!amrex::Math::isfinite(u0) || !amrex::Math::isfinite(u1) ||
+                !amrex::Math::isfinite(u2)) { return {0, 0, 1}; }
+            return {std::abs(u2 - u1),
+                    amrex::max(std::abs(u1 - u0), std::abs(u2 - u0)), 0};
+        });
+    }
+    auto const values = data.value();
+    amrex::GpuArray<amrex::Real, 2> result{amrex::get<0>(values), amrex::get<1>(values)};
+    int invalid = amrex::get<2>(values);
+    amrex::ParallelDescriptor::ReduceRealMax(result.data(), 2);
+    amrex::ParallelDescriptor::ReduceIntMax(invalid);
+    if (invalid != 0) { result[0] = std::numeric_limits<amrex::Real>::quiet_NaN(); }
+    return result;
 }
 
 template <unsigned int N> struct ImplicitLteCellContext {
@@ -2967,6 +3138,8 @@ RadiationTransport::RadiationTransport (
     std::string const initial_energy_key =
         "initial_diffusion_energy_density(x,y,z)";
     bool const initial_energy_is_set = pp.contains(initial_energy_key);
+    std::string const initial_temperature_key = "initial_diffusion_temperature(x,y,z)";
+    bool const initial_temperature_is_set = pp.contains(initial_temperature_key);
     m_initial_diffusion_energy_density_parsers.reserve(m_num_groups);
     m_initial_diffusion_energy_density_executors.resize(m_num_groups);
     m_initial_diffusion_energy_density_is_set.resize(m_num_groups, 0);
@@ -2997,6 +3170,9 @@ RadiationTransport::RadiationTransport (
         "mutually exclusive with group-specific initial diffusion energy "
         "density expressions.");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !initial_temperature_is_set || !(initial_energy_is_set || any_group_initial_energy_is_set),
+        "initial_diffusion_temperature is mutually exclusive with initial group energy densities.");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_num_groups > 1 || !any_group_initial_energy_is_set,
         "A grey radiation calculation must use "
         "radiation_transport.initial_diffusion_energy_density(x,y,z), not "
@@ -3006,7 +3182,13 @@ RadiationTransport::RadiationTransport (
         "Multigroup radiation must initialize diffusion energy with "
         "radiation_transport.initial_diffusion_energy_density_g0(x,y,z), "
         "_g1(x,y,z), ...; the unsuffixed grey expression is not allowed.");
-    if (initial_energy_is_set) {
+    if (initial_temperature_is_set) {
+        for (int group = 0; group < m_num_groups; ++group) {
+            compile_initial_energy_parser(initial_temperature_key, group);
+            // 0=absent, 1=energy density, 2=blackbody temperature.
+            m_initial_diffusion_energy_density_is_set[group] = 2;
+        }
+    } else if (initial_energy_is_set) {
         compile_initial_energy_parser(initial_energy_key, 0);
     } else {
         for (int group = 0; group < m_num_groups; ++group) {
@@ -3706,6 +3888,13 @@ RadiationTransport::RadiationTransport (
     }
     pp.query("enable_particle_conversion", m_enable_particle_conversion);
     pp.query("enable_momentum_coupling", m_enable_momentum_coupling);
+    std::string momentum_carry = "cell";
+    pp.query("momentum_carry", momentum_carry);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(momentum_carry == "cell" || momentum_carry == "particle",
+        "radiation_transport.momentum_carry must be cell or particle.");
+    m_particle_momentum_carry = momentum_carry == "particle";
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!m_particle_momentum_carry || m_enable_momentum_coupling,
+        "Particle-owned radiation carry requires enable_momentum_coupling=1.");
 #if defined(WARPX_DIM_RSPHERE)
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !m_enable_momentum_coupling,
@@ -3972,6 +4161,83 @@ RadiationTransport::RadiationTransport (
         }
     }
 
+    std::string diffusion_solver = "explicit";
+    pp.query("diffusion_solver", diffusion_solver);
+    std::string diffusion_gradient =
+        diffusion_solver == "coupled_implicit" ? "vector" : "face_normal";
+    pp.query("diffusion_gradient", diffusion_gradient);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        diffusion_gradient == "face_normal" || diffusion_gradient == "vector",
+        "radiation_transport.diffusion_gradient must be face_normal or vector.");
+    m_implicit_diffusion_options.use_full_gradient = diffusion_gradient == "vector";
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !m_implicit_diffusion_options.use_full_gradient || !EB::enabled(),
+        "Vector-gradient radiation diffusion is not supported with embedded boundaries.");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        diffusion_solver == "explicit" || diffusion_solver == "implicit" ||
+            diffusion_solver == "coupled_implicit" || diffusion_solver == "coupled_moment",
+        "radiation_transport.diffusion_solver must be explicit, implicit, coupled_implicit "
+        "or coupled_moment.");
+    m_use_coupled_implicit_diffusion = diffusion_solver == "coupled_implicit";
+    m_use_coupled_moment_transport = diffusion_solver == "coupled_moment";
+    m_use_implicit_diffusion = diffusion_solver == "implicit" || m_use_coupled_implicit_diffusion;
+    if (m_use_implicit_diffusion) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            m_enable_diffusion && (!m_enable_lte_exchange || m_use_coupled_implicit_diffusion) &&
+                !m_enable_particle_conversion && !m_enable_momentum_coupling &&
+                configured_max_level == 0 && !EB::enabled() &&
+                sizeof(amrex::Real) == sizeof(double),
+            m_use_coupled_implicit_diffusion
+                ? "Coupled implicit diffusion currently requires double precision, a fixed "
+                  "grid without embedded boundaries, and disabled particle conversion and "
+                  "radiation momentum."
+                : "Implicit spatial diffusion is currently a double-precision, fixed-grid, "
+                  "transport-only feature. LTE exchange, particle conversion and radiation "
+                  "momentum must be disabled.");
+        if (m_use_coupled_implicit_diffusion) {
+            pp.query("coupled_max_subdivisions", m_coupled_max_subdivisions);
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                m_coupled_max_subdivisions >= 0 && m_coupled_max_subdivisions <= 10,
+                "coupled_max_subdivisions must be between zero and ten.");
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                m_enable_lte_exchange && !m_use_species_opacity &&
+                    !m_use_material_opacity_table,
+                "coupled_implicit requires native hybrid electrons, LTE and "
+                "electron-state opacities.");
+#if defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+            WARPX_ABORT_WITH_MESSAGE("coupled_implicit currently requires Cartesian or RZ geometry.");
+#endif
+        }
+        auto& options = m_implicit_diffusion_options;
+        options.use_incremental_form = m_use_coupled_implicit_diffusion;
+        pp.query("diffusion_incremental_solve", options.use_incremental_form);
+        options.tolerance = 1.0e-9_rt;
+        options.linear_tolerance = 1.0e-12_rt;
+        options.max_iterations = 100;
+        options.max_linear_iterations = 200;
+        options.verbosity = 0;
+        options.nonlinear_relaxation = m_use_coupled_implicit_diffusion ? 1.0_rt : 0.8_rt;
+        utils::parser::queryWithParser(pp, "diffusion_picard_relaxation", options.nonlinear_relaxation);
+        utils::parser::queryWithParser(pp, "diffusion_implicit_tolerance", options.tolerance);
+        utils::parser::queryWithParser(pp, "diffusion_linear_tolerance", options.linear_tolerance);
+        pp.query("diffusion_implicit_max_iterations", options.max_iterations);
+        pp.query("diffusion_linear_max_iterations", options.max_linear_iterations);
+        pp.query("diffusion_solver_verbosity", options.verbosity);
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            options.tolerance > 0 && amrex::Math::isfinite(options.tolerance)
+                && options.linear_tolerance > 0 && options.linear_tolerance < options.tolerance
+                && options.max_iterations > 0 && options.max_linear_iterations > 0
+                && options.verbosity >= 0
+                && options.nonlinear_relaxation > 0 && options.nonlinear_relaxation <= 1,
+            "Invalid implicit spatial-diffusion tolerances or iteration limits.");
+        options.minimum_optical_depth = m_minimum_diffusion_optical_depth;
+        options.boundary_lo = m_diffusion_boundary_lo;
+        options.boundary_hi = m_diffusion_boundary_hi;
+        options.bath_is_temperature = m_diffusion_bath_is_temperature;
+        options.bath_executors = m_diffusion_bath_executors.dataPtr();
+        m_track_energy_balance = true;
+    }
+
     bool const representative_energies_are_required =
         m_num_groups > 1 || group_photon_energies_are_set
         || m_enable_particle_conversion || m_use_spectral_planck_table
@@ -4018,6 +4284,7 @@ RadiationTransport::RadiationTransport (
     m_energy_groups.m_representative_energies =
         m_group_photon_energies_d.data();
 #endif
+    m_implicit_diffusion_options.energy_groups = m_energy_groups;
 
     auto const& photons = particles.GetParticleContainerFromName(m_photon_species);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -4073,6 +4340,9 @@ RadiationTransport::RadiationTransport (
         !m_enable_lte_exchange || m_material_coupling != MaterialCoupling::None,
         "radiation_transport.enable_lte_exchange requires hybrid_electrons or "
         "kinetic_electrons material coupling.");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !m_use_coupled_implicit_diffusion || couplesToHybridElectrons(),
+        "coupled_implicit requires native hybrid-electron material coupling.");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !m_use_material_opacity_table
             || m_material_coupling != MaterialCoupling::None,
@@ -4157,7 +4427,7 @@ RadiationTransport::RadiationTransport (
                         + static_cast<std::ptrdiff_t>(i),
                 "Duplicate species '" + species_name
                     + "' in radiation_transport.momentum_species.");
-            auto const& species =
+            auto& species =
                 particles.GetParticleContainerFromName(species_name);
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 !species.AmIA<PhysicalSpecies::photon>()
@@ -4165,9 +4435,114 @@ RadiationTransport::RadiationTransport (
                     && species.getCharge() > 0.0_prt,
                 "radiation_transport.momentum_species entry '" + species_name
                     + "' must be a massive, positively charged ion species.");
+            if (m_particle_momentum_carry) {
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    !species.DoResampling() && !species.DoFieldIonization(),
+                    "Particle-owned radiation carry requires resampling and field ionization "
+                    "disabled until its accounts have conservative species-change rules.");
+                warpx::radiation::RegisterParticleImpulseState(species, "streaming");
+                for (int group = 0; group < m_num_groups; ++group) {
+                    warpx::radiation::RegisterParticleImpulseState(
+                        species, "diffusion_" + std::to_string(group));
+                }
+            }
+        }
+        if (m_particle_momentum_carry) {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(couplesToHybridElectrons(),
+                "Particle-owned radiation carry currently requires native hybrid electrons.");
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+            amrex::Abort("Particle-owned radiation carry runtime is initially Cartesian only; "
+                         "radial boundary and diagnostic projection qualification is pending.");
+#endif
+            for (int direction = 0; direction < AMREX_SPACEDIM; ++direction) {
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    WarpX::particle_boundary_lo[direction] == ParticleBoundaryType::Periodic &&
+                    WarpX::particle_boundary_hi[direction] == ParticleBoundaryType::Periodic,
+                    "Particle-owned radiation carry initially requires periodic particle "
+                    "boundaries until exported/reflected residuals are accounted for.");
+            }
+            std::vector<std::string> collisions;
+            amrex::ParmParse("collisions").queryarr("collision_names", collisions);
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(collisions.empty() && !particles.hasHybridIonization(),
+                "Particle-owned radiation carry initially requires fixed species "
+                "without collisions.");
         }
         m_track_energy_balance = true;
     }
+    if (m_use_coupled_moment_transport) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            m_num_groups == 1 && m_enable_diffusion && m_enable_lte_exchange &&
+            m_enable_momentum_coupling && m_particle_momentum_carry &&
+            couplesToHybridElectrons() && m_momentum_species.size() == 1 &&
+            particles.nSpecies() == 2 && configured_max_level == 0 && !EB::enabled() &&
+            !m_enable_particle_conversion && !m_use_species_opacity &&
+            !m_use_material_opacity_table && !m_use_spectral_planck_table &&
+            !m_use_spectral_rosseland_table && !m_has_diffusion_bath &&
+            WarpX::nox >= 1 && WarpX::nox <= 4,
+            "coupled_moment currently requires one gray group, native hybrid electrons, "
+            "one ion species plus an empty photon species, diffusion/LTE/momentum enabled, "
+            "momentum_carry=particle, particle shapes 1-4 and a fixed Cartesian grid. "
+            "Conversion, spectral/species/material opacities and EB are unsupported.");
+#ifdef WARPX_USE_MATERIAL_OPACITY_HDF5
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!m_use_registered_material_opacity_tables,
+            "coupled_moment does not yet support registered material opacity tables.");
+#endif
+        auto const eos = m_hybrid_model->electronThermodynamicsExecutor();
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(eos.isIdealGas() || eos.isFixedChargeLatentEnergy(),
+            "coupled_moment initially supports native analytic electron caloric models.");
+        EvolveScheme scheme = EvolveScheme::Default;
+        amrex::ParmParse("algo").query_enum_case_insensitive("evolve_scheme", scheme);
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(scheme == EvolveScheme::Default ||
+            scheme == EvolveScheme::Explicit,
+            "coupled_moment is integrated only in the explicit native PIC evolution path.");
+        for (int d = 0; d < AMREX_SPACEDIM; ++d) {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                m_diffusion_boundary_lo[d] == static_cast<int>(DiffusionBoundary::Reflecting) &&
+                m_diffusion_boundary_hi[d] == static_cast<int>(DiffusionBoundary::Reflecting),
+                "coupled_moment uses periodic geometry; physical diffusion boundaries "
+                "are unsupported.");
+        }
+        if (!pp.contains("lte_exchange_tolerance")) { m_lte_exchange_tolerance = 1.e-11_rt; }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_lte_exchange_tolerance <= 1.e-11_rt,
+            "coupled_moment requires lte_exchange_tolerance <= 1.e-11.");
+        utils::parser::queryWithParser(pp, "moment_relaxation", m_moment_relaxation);
+        pp.query("diffusion_solver_verbosity", m_implicit_diffusion_options.verbosity);
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_moment_relaxation > 0 && m_moment_relaxation <= 1 &&
+            m_implicit_diffusion_options.verbosity >= 0,
+            "moment_relaxation must be in (0,1] and diffusion_solver_verbosity nonnegative.");
+        std::vector<amrex::Real> ratio{0, 0, 0};
+        utils::parser::queryArrWithParser(pp, "initial_moment_flux_ratio", ratio);
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(ratio.size() == 3,
+            "initial_moment_flux_ratio requires three Cartesian components of F/(c E).");
+        amrex::Real norm = 0;
+        for (int d = 0; d < 3; ++d) {
+            m_initial_moment_flux_ratio[d] = ratio[d];
+            norm += ratio[d] * ratio[d];
+        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(std::isfinite(norm) && norm <= 1,
+            "initial_moment_flux_ratio must be finite and realizable (norm <= 1).");
+        pp.query("coupled_max_subdivisions", m_coupled_max_subdivisions);
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_coupled_max_subdivisions >= 0 &&
+            m_coupled_max_subdivisions <= 10,
+            "coupled_max_subdivisions must be between zero and ten.");
+    }
+}
+
+amrex::GpuArray<amrex::Real, 4>
+RadiationTransport::pendingMaterialImpulse (MultiParticleContainer& particles, bool streaming) const
+{
+    amrex::GpuArray<amrex::Real, 4> total{};
+    if (!m_particle_momentum_carry) { return total; }
+    if (streaming) {
+        return warpx::radiation::ParticleImpulseInventory(
+            particles, m_momentum_species, "streaming");
+    }
+    for (int group = 0; group < m_num_groups; ++group) {
+        auto const values = warpx::radiation::ParticleImpulseInventory(
+            particles, m_momentum_species, "diffusion_" + std::to_string(group));
+        for (int d = 0; d < 4; ++d) { total[d] += values[d]; }
+    }
+    return total;
 }
 
 void
@@ -4186,10 +4561,287 @@ RadiationTransport::RecordMaterialEnergyRealizationResidual (
         "diagnostic ledger.");
 }
 
+amrex::GpuArray<amrex::Real, 3>
+RadiationTransport::momentMomentumInventory (
+    ablastr::fields::MultiFabRegister const& fields) const
+{
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_use_coupled_moment_transport,
+        "A radiation moment inventory requires coupled_moment transport.");
+    amrex::GpuArray<amrex::Real, 3> result{};
+    for (int d = 0; d < 3; ++d) {
+        result[d] = fields.get(MomentFieldName(d), 0)->sum(0) / PhysConst::c;
+    }
+    return result;
+}
+
+void
+RadiationTransport::AdvanceCoupledMoment (MultiParticleContainer& particles,
+                                         ablastr::fields::MultiFabRegister& fields,
+                                         amrex::Real current_time, amrex::Real dt) const
+{
+    auto& simulation = WarpX::GetInstance();
+    auto const& geometry = simulation.Geom(0);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(geometry.Coord() == 0 && geometry.isAllPeriodic(),
+        "coupled_moment currently requires periodic Cartesian geometry.");
+    auto const& live_temperature = *fields.get(FieldType::hybrid_electron_temperature_fp, 0);
+    auto const& live_density = *fields.get(FieldType::rho_fp, 0);
+    auto& energy = *fields.get(FieldType::radiation_diffusion_energy, 0);
+    auto& heat = *fields.get(FieldType::radiation_material_energy, 0);
+    amrex::MultiFab temperature(live_temperature.boxArray(), live_temperature.DistributionMap(),
+                                1, live_temperature.nGrowVect());
+    amrex::MultiFab density(live_density.boxArray(), live_density.DistributionMap(),
+                            live_density.nComp(), live_density.nGrowVect());
+    amrex::MultiFab radiation(energy.boxArray(), energy.DistributionMap(), 4, 1);
+    amrex::MultiFab::Copy(temperature, live_temperature, 0, 0, 1, temperature.nGrowVect());
+    amrex::MultiFab::Copy(density, live_density, 0, 0, density.nComp(), density.nGrowVect());
+    density.FillBoundary(geometry.periodicity());
+    temperature.FillBoundary(geometry.periodicity());
+    amrex::MultiFab::Copy(radiation, energy, 0, 0, 1, 0);
+    for (int d = 0; d < 3; ++d) {
+        amrex::MultiFab::Copy(radiation, *fields.get(MomentFieldName(d), 0), 0, d + 1, 1, 0);
+    }
+    radiation.FillBoundary(geometry.periodicity());
+    auto const initial_energy = radiation.sum(0);
+    auto const eos = m_hybrid_model->electronThermodynamicsExecutor();
+    auto const minimum_density = m_minimum_electron_density;
+    auto const thermodynamic_floor = m_hybrid_model->transportsElectronInternalEnergyAtRawDensity()
+        ? 0.0_rt : m_hybrid_model->electronDensityFloor();
+    OpacityEvaluator<1> const planck{false, 0, {}, {}, {}, {}, m_use_planck_table, false,
+        m_planck_table.executor(), m_spectral_planck_table.executor(),
+        m_planck_absorption_coefficient};
+    OpacityEvaluator<1> const transport{false, 0, {}, {}, {}, {}, m_use_rosseland_table, false,
+        m_rosseland_table.executor(), m_spectral_rosseland_table.executor(),
+        m_rosseland_transport_coefficient};
+    amrex::GpuArray<amrex::MultiFab const*, ElectronThermodynamicsExecutor::max_materials>
+        material_fields{};
+    warpx::radiation::CoupledMomentCallbacks callbacks;
+    callbacks.material_response = [&] (amrex::MultiFab& trial, amrex::MultiFab& source) {
+        return m_hybrid_model->EvaluateElectronEnergySource(0, trial, source, minimum_density);
+    };
+    callbacks.material_at_temperature = [&] (amrex::MultiFab& old, amrex::MultiFab& source,
+                                             amrex::MultiFab const& prescribed,
+                                             amrex::MultiFab& residual) {
+        return m_hybrid_model->EvaluateElectronEnergySource(0, old, source, minimum_density,
+                                                            nullptr, &prescribed, &residual);
+    };
+    callbacks.coefficients = [&] (amrex::MultiFab const& trial, amrex::MultiFab& absorption,
+                                  amrex::MultiFab& scattering, amrex::MultiFab& equilibrium,
+                                  amrex::Real evaluation_time) {
+        FillCoupledHybridCoefficients(density, trial, scattering, absorption, equilibrium,
+            geometry, eos, minimum_density, thermodynamic_floor, planck, transport,
+            m_energy_groups, evaluation_time, material_fields);
+        ConvertGrayMomentCoefficients(density, absorption, scattering, equilibrium, geometry);
+    };
+    warpx::radiation::CoupledMomentIntervalOptions options;
+    options.source.spatial_transport = true;
+    options.source.particle_assignment =
+        warpx::radiation::ParticleImpulseAssignment::NativeNodalCellAverage;
+    options.source.max_iterations = m_lte_exchange_max_iterations;
+    options.source.tolerance = m_lte_exchange_tolerance;
+    options.source.relaxation = m_moment_relaxation;
+    options.source.verbose = m_implicit_diffusion_options.verbosity > 1;
+    options.max_refinements = m_coupled_max_subdivisions;
+    warpx::radiation::CoupledMomentExchange exchange;
+    auto const result = warpx::radiation::TryAdvanceCoupledMomentInterval(particles,
+        m_momentum_species, "diffusion_0", radiation, temperature, heat, geometry,
+        current_time, dt, options, callbacks, &exchange);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(result.valid,
+        "Coupled moving radiation solve failed; no source candidate committed. Failure=" +
+        std::to_string(static_cast<int>(result.last_source.failure)));
+    amrex::MultiFab::Copy(energy, radiation, 0, 0, 1, 1);
+    for (int d = 0; d < 3; ++d) {
+        amrex::MultiFab::Copy(*fields.get(MomentFieldName(d), 0), radiation, d + 1, 0, 1, 1);
+    }
+    m_hybrid_model->CommitElectronTemperature(0, temperature);
+    auto& kinetic = *fields.get(FieldType::radiation_material_kinetic_energy, 0);
+    auto& momentum = *fields.get(FieldType::radiation_material_momentum, 0);
+    kinetic.setVal(0);
+    momentum.setVal(0);
+    amrex::MultiFab::Copy(kinetic, exchange.kinetic_work, 0, 0, 1, 0);
+    amrex::MultiFab::Copy(momentum, exchange.momentum, 0, 0, 3, 0);
+    m_last_material_carry_energy_change = result.carry_energy_change;
+    m_last_numerical_energy_residual = initial_energy - radiation.sum(0) - heat.sum(0)
+        - result.actual_kinetic_work - result.carry_energy_change;
+    m_cumulative_numerical_energy_residual += m_last_numerical_energy_residual;
+    m_last_coupled_solve = {result.last_source.iterations, result.substeps, result.attempts - 1,
+        0, result.last_source.material_residual, result.raw_energy_residual};
+    if (m_implicit_diffusion_options.verbosity > 0) {
+        amrex::Print() << "Moving radiation time=" << current_time + dt
+            << " accepted_substeps=" << result.substeps
+            << " rejected_attempts=" << result.attempts - 1
+            << " last_source_iterations=" << result.last_source.iterations
+            << " source_residual=" << result.last_source.source_residual
+            << " work_residual=" << result.last_source.work_residual
+            << " raw_energy_residual=" << result.raw_energy_residual << '\n';
+    }
+}
+
+void
+RadiationTransport::AdvanceCoupledImplicit (ablastr::fields::MultiFabRegister& fields,
+                                            amrex::Real const current_time,
+                                            amrex::Real const dt) const
+{
+    auto& warpx = WarpX::GetInstance();
+    auto const& geometry = warpx.Geom(0);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        m_hybrid_model != nullptr &&
+            (m_hybrid_model->electronThermodynamicsExecutor().isIdealGas() ||
+             m_hybrid_model->electronThermodynamicsExecutor().isFixedChargeLatentEnergy() ||
+             (m_hybrid_model->electronThermodynamicsExecutor().isSingularitySpiner() &&
+              m_hybrid_model->electronThermodynamicsNumMaterials() == 1)),
+        "coupled_implicit requires a native analytic or single-material electron EOS.");
+#ifdef WARPX_USE_MATERIAL_OPACITY_HDF5
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !m_use_registered_material_opacity_tables,
+        "coupled_implicit currently requires analytic opacity, not registered material tables.");
+#endif
+    auto const& live_temperature = *fields.get(FieldType::hybrid_electron_temperature_fp, 0);
+    auto const& live_density = *fields.get(FieldType::rho_fp, 0);
+    amrex::MultiFab temperature(live_temperature.boxArray(), live_temperature.DistributionMap(), 1,
+                                live_temperature.nGrowVect());
+    amrex::MultiFab density(live_density.boxArray(), live_density.DistributionMap(),
+                            live_density.nComp(), live_density.nGrowVect());
+    amrex::MultiFab::Copy(temperature, live_temperature, 0, 0, 1, temperature.nGrowVect());
+    amrex::MultiFab::Copy(density, live_density, 0, 0, live_density.nComp(), density.nGrowVect());
+    temperature.FillBoundary(geometry.periodicity());
+    density.FillBoundary(geometry.periodicity());
+    auto& radiation = *fields.get(FieldType::radiation_diffusion_energy, 0);
+    auto& material = *fields.get(FieldType::radiation_material_energy, 0);
+    warpx::radiation::CoupledImplicitOptions controls;
+    controls.diffusion = m_implicit_diffusion_options;
+    controls.max_iterations = m_lte_exchange_max_iterations;
+    controls.material_tolerance = m_lte_exchange_tolerance;
+    controls.relaxation = 1.0_rt;
+    controls.max_subdivisions = m_coupled_max_subdivisions;
+    auto const eos = m_hybrid_model->electronThermodynamicsExecutor();
+    amrex::GpuArray<amrex::MultiFab const*, ElectronThermodynamicsExecutor::max_materials>
+        material_fields{};
+    amrex::Vector<std::unique_ptr<amrex::MultiFab>> material_snapshots(eos.m_num_materials);
+    for (int index = 0; index < eos.m_num_materials; ++index)
+    {
+        auto const& live = *fields.get(
+            "ni_charge_fp_" + m_hybrid_model->electronThermodynamicsMaterialSpeciesName(index), 0);
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            live.boxArray() == temperature.boxArray() &&
+                live.DistributionMap() == temperature.DistributionMap() &&
+                live.nGrowVect().allGE(temperature.nGrowVect()),
+            "Coupled EOS material densities must share the native nodal temperature layout.");
+        auto& snapshot = material_snapshots[index];
+        snapshot = std::make_unique<amrex::MultiFab>(live.boxArray(), live.DistributionMap(),
+                                                     live.nComp(), live.nGrowVect());
+        amrex::MultiFab::Copy(*snapshot, live, 0, 0, live.nComp(), live.nGrowVect());
+        snapshot->FillBoundary(geometry.periodicity());
+        material_fields[index] = snapshot.get();
+    }
+    auto const minimum_density = m_minimum_electron_density;
+    auto const thermodynamic_floor = m_hybrid_model->transportsElectronInternalEnergyAtRawDensity()
+                                         ? 0.0_rt
+                                         : m_hybrid_model->electronDensityFloor();
+    // No species composition is implied by electron-state tables. These views
+    // reuse the existing interpolation and endpoint policy without allocating
+    // the unrelated maximum-species bundle in every coupled GPU kernel.
+    OpacityEvaluator<1> const planck{false,
+                                     0,
+                                     {},
+                                     {},
+                                     {},
+                                     {},
+                                     m_use_planck_table,
+                                     m_use_spectral_planck_table,
+                                     m_planck_table.executor(),
+                                     m_spectral_planck_table.executor(),
+                                     m_planck_absorption_coefficient};
+    OpacityEvaluator<1> const rosseland{false,
+                                        0,
+                                        {},
+                                        {},
+                                        {},
+                                        {},
+                                        m_use_rosseland_table,
+                                        m_use_spectral_rosseland_table,
+                                        m_rosseland_table.executor(),
+                                        m_spectral_rosseland_table.executor(),
+                                        m_rosseland_transport_coefficient};
+    auto const groups = m_energy_groups;
+    warpx::radiation::CoupledImplicitCallbacks callbacks;
+    callbacks.material_response = [&] (amrex::MultiFab& trial, amrex::MultiFab& source) {
+        return m_hybrid_model->EvaluateElectronEnergySource(0, trial, source, minimum_density);
+    };
+    if (!eos.isIdealGas()) {
+        callbacks.material_residual = [&] (amrex::MultiFab const& old,
+                                           amrex::MultiFab const& candidate,
+                                           amrex::MultiFab const& check)
+        {
+            return CoupledCaloricResidual(density, old, candidate, check, eos, minimum_density,
+                                          thermodynamic_floor, material_fields);
+        };
+    }
+    callbacks.coefficients = [&] (amrex::MultiFab const& trial, amrex::MultiFab& opacity,
+                                  amrex::MultiFab& absorption, amrex::MultiFab& emission,
+                                  amrex::Real evaluation_time)
+    {
+        FillCoupledHybridCoefficients(density, trial, opacity, absorption, emission, geometry, eos,
+                                      minimum_density, thermodynamic_floor, planck, rosseland,
+                                      groups, evaluation_time, material_fields);
+    };
+    auto const result = warpx::radiation::TryAdvanceCoupledImplicitSubcycled(
+        radiation, temperature, material, geometry, current_time, dt, controls, callbacks);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        result.failure == warpx::radiation::CoupledImplicitFailure::None,
+        "Coupled implicit radiation/material solve failed (reason " +
+            std::to_string(static_cast<int>(result.failure)) +
+            "). "
+            "No radiation or material candidate was committed; reduce the timestep.");
+    m_hybrid_model->CommitElectronTemperature(0, temperature);
+    fields.get(FieldType::radiation_material_kinetic_energy, 0)->setVal(0);
+    fields.get(FieldType::radiation_material_momentum, 0)->setVal(0);
+    m_last_implicit_diffusion = result.diffusion;
+    m_last_coupled_solve = {result.iterations,
+                            result.accepted_substeps,
+                            result.rejected_attempts,
+                            result.source_consistency_corrections,
+                            result.material_relative_residual,
+                            result.raw_energy_relative_residual};
+    m_last_diffusion_boundary_energy_loss = result.diffusion.escaped_energy;
+    m_last_boundary_energy_loss = result.diffusion.escaped_energy;
+    m_last_boundary_energy_injection = result.diffusion.injected_energy;
+    m_last_numerical_energy_residual =
+        result.diffusion.numerical_energy_residual + result.material_realization_residual;
+    if (m_track_energy_balance) {
+        m_cumulative_boundary_energy_loss += m_last_boundary_energy_loss;
+        m_cumulative_boundary_energy_injection += m_last_boundary_energy_injection;
+    }
+    m_cumulative_numerical_energy_residual += m_last_numerical_energy_residual;
+    if (m_implicit_diffusion_options.verbosity > 0 || result.source_consistency_corrections > 0) {
+        amrex::Print() << "Coupled radiation time=" << current_time + dt
+            << " accepted_substeps=" << result.accepted_substeps
+            << " rejected_attempts=" << result.rejected_attempts
+            << " iterations=" << result.iterations
+            << " source_consistency_corrections=" << result.source_consistency_corrections
+                       << " radiation_residual=" << result.diffusion.maximum_relative_residual
+                       << " material_residual=" << result.material_relative_residual
+                       << " raw_energy_residual=" << result.raw_energy_relative_residual << '\n';
+    }
+}
+
 void
 RadiationTransport::WriteCheckpointData (std::string const& dir) const
 {
+    WriteParticleCarryWallCheckpoint(dir);
     if (!m_enabled) { return; }
+    if (m_use_coupled_moment_transport) {
+        std::ofstream model{dir + "/RadiationMomentModel_data.txt"};
+        model << "gray_m1_low_beta_nodal_shape_v2 " << WarpX::nox << '\n';
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(model.good(),
+            "Could not checkpoint moving radiation model.");
+    }
+    if (m_particle_momentum_carry) {
+        std::ofstream owner{dir + "/RadiationParticleCarry_data.txt"};
+        owner << "particle_carry_v1 " << m_num_groups << ' ' << m_momentum_species.size() << '\n';
+        for (auto const& name : m_momentum_species) { owner << name << '\n'; }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            owner.good(), "Could not checkpoint radiation carry schema.");
+    }
     // These counters feed live diagnostics independently of output cadence.
     // The resolved conversion seed must also survive a restart when the input
     // requested warpx.random_seed=random.
@@ -4210,7 +4862,48 @@ RadiationTransport::WriteCheckpointData (std::string const& dir) const
 void
 RadiationTransport::ReadCheckpointData (std::string const& dir)
 {
+    ReadParticleCarryWallCheckpoint(dir);
     if (!m_enabled) { return; }
+    std::ifstream model{dir + "/RadiationMomentModel_data.txt"};
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(model.good() == m_use_coupled_moment_transport,
+        "Restart must preserve the radiation moment model; scalar/moment conversion "
+        "is not implicit.");
+    if (m_use_coupled_moment_transport) {
+        std::string version, trailing;
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(static_cast<bool>(model >> version),
+            "Invalid moving radiation model checkpoint schema.");
+        int order = 1;
+        if (version == "gray_m1_low_beta_nodal_shape_v2") {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(static_cast<bool>(model >> order),
+                "Moving radiation checkpoint is missing its particle shape order.");
+        } else {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(version == "gray_m1_low_beta_linear_shape_v1",
+                "Unknown moving radiation model checkpoint schema.");
+        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(order == WarpX::nox && !(model >> trailing),
+            "Moving radiation restart must preserve its particle shape order.");
+    }
+    std::ifstream owner{dir + "/RadiationParticleCarry_data.txt"};
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(owner.good() == m_particle_momentum_carry,
+        "Restart must preserve radiation momentum_carry ownership; cell/particle carry "
+        "migration is not implicit.");
+    if (m_particle_momentum_carry) {
+        std::string version;
+        int groups = 0;
+        std::size_t species_count = 0;
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            static_cast<bool>(owner >> version >> groups >> species_count) &&
+            version == "particle_carry_v1" && groups == m_num_groups &&
+            species_count == m_momentum_species.size(), "Invalid radiation particle carry schema.");
+        for (auto const& expected : m_momentum_species) {
+            std::string name;
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(static_cast<bool>(owner >> name) && name == expected,
+                "Restart changed radiation momentum species ownership.");
+        }
+        std::string trailing;
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!(owner >> trailing),
+            "Unexpected trailing radiation particle carry schema data.");
+    }
     std::ifstream checkpoint{
         dir + "/RadiationTransport_data.txt", std::ifstream::in};
     if (!checkpoint.good()) {
@@ -4425,6 +5118,9 @@ RadiationTransport::AllocateLevelMFs (
                 }
                 auto const parser =
                     m_initial_diffusion_energy_density_executors[group];
+                bool const temperature_profile =
+                    m_initial_diffusion_energy_density_is_set[group] == 2;
+                auto const initial_energy_groups = m_energy_groups;
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
@@ -4489,10 +5185,19 @@ RadiationTransport::AllocateLevelMFs (
                             amrex::Real const cell_volume = AMREX_D_TERM(
                                 cell_size[0], * cell_size[1], * cell_size[2]);
 #endif
-                            amrex::Real const energy_density = parser(x, y, z);
+                            amrex::Real const profile_value = parser(x, y, z);
+                            bool const profile_valid = profile_value >= 0.0_rt
+                                && amrex::Math::isfinite(profile_value);
+                            amrex::Real energy_density = profile_value;
+                            if (temperature_profile && profile_valid) {
+                                amrex::Real const t2 = profile_value * profile_value;
+                                energy_density = 7.565733250280007e-16_rt * t2 * t2
+                                    * initial_energy_groups.planckFraction(
+                                        group, PhysConst::kb * profile_value);
+                            }
                             amrex::Real const cell_energy =
                                 energy_density * cell_volume;
-                            bool const valid = energy_density >= 0.0_rt
+                            bool const valid = profile_valid && energy_density >= 0.0_rt
                                 && amrex::Math::isfinite(energy_density)
                                 && cell_energy >= 0.0_rt
                                 && amrex::Math::isfinite(cell_energy);
@@ -4513,6 +5218,19 @@ RadiationTransport::AllocateLevelMFs (
                 "evaluated to a negative or non-finite value, or produced "
                 "a non-finite cell-integrated energy.");
             m_initial_diffusion_energy_initialized = true;
+        }
+        if (m_use_coupled_moment_transport) {
+            auto const& energy = *fields.get(FieldType::radiation_diffusion_energy, lev);
+            for (int d = 0; d < 3; ++d) {
+                fields.alloc_init(MomentFieldName(d), lev, ba, dm, 1, amrex::IntVect(1),
+                    0.0_rt, true, true, true);
+                if (!m_is_restart) {
+                    auto& q = *fields.get(MomentFieldName(d), lev);
+                    amrex::MultiFab::Copy(q, energy, 0, 0, 1, 0);
+                    q.mult(m_initial_moment_flux_ratio[d]);
+                    q.FillBoundary(WarpX::GetInstance().Geom(lev).periodicity());
+                }
+            }
         }
     }
 }
@@ -4811,29 +5529,15 @@ ApplyMaterialImpulse (
                     static_cast<amrex::Real>(uyp[ip]) - old_uy;
                 amrex::Real const actual_delta_uz =
                     static_cast<amrex::Real>(uzp[ip]) - old_uz;
-                amrex::Real const gamma_old = std::sqrt(
-                    1.0_rt + (old_ux * old_ux + old_uy * old_uy
-                        + old_uz * old_uz) / PhysConst::c2);
                 amrex::Real const new_ux = old_ux + actual_delta_ux;
                 amrex::Real const new_uy = old_uy + actual_delta_uy;
                 amrex::Real const new_uz = old_uz + actual_delta_uz;
-                amrex::Real const gamma_new = std::sqrt(
-                    1.0_rt + (new_ux * new_ux + new_uy * new_uy
-                        + new_uz * new_uz) / PhysConst::c2);
-                amrex::Real const delta_u_squared =
-                    actual_delta_ux * actual_delta_ux
-                    + actual_delta_uy * actual_delta_uy
-                    + actual_delta_uz * actual_delta_uz;
-                amrex::Real const old_u_dot_delta =
-                    old_ux * actual_delta_ux + old_uy * actual_delta_uy
-                    + old_uz * actual_delta_uz;
                 auto const weighted_mass =
                     static_cast<amrex::Real>(wp[ip] * species_mass);
                 amrex::Gpu::Atomic::AddNoRet(
                     &kinetic_arr(i, j, k),
-                    weighted_mass
-                        * (2.0_rt * old_u_dot_delta + delta_u_squared)
-                        / (gamma_old + gamma_new));
+                    weighted_mass * warpx::radiation::MaterialSpecificKineticWork(
+                        {old_ux, old_uy, old_uz}, {new_ux, new_uy, new_uz}));
 
 #if defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RZ)
                 amrex::Real const actual_delta_u_r =
@@ -5004,11 +5708,67 @@ ApplyRadiationMomentumWork (
     amrex::MultiFab& accumulated_material_kinetic_energy,
     amrex::MultiFab& energy_reservoir,
     bool const allow_signed_material_energy,
-    char const* const invalid_energy_message)
+    char const* const invalid_energy_message,
+    std::string const& particle_path = {},
+    amrex::Real* const carry_energy_change = nullptr)
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         energy_reservoir.nComp() == 1,
         "Radiation force work requires a scalar path/group energy ledger.");
+    if (!particle_path.empty()) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(carry_energy_change != nullptr,
+            "Particle-owned radiation work requires its carry-energy ledger.");
+        warpx::radiation::ParticleImpulseTransaction transaction;
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            transaction.Stage(
+                particles, momentum_species, particle_path, requested_material_momentum),
+            "Radiation particle impulse candidate is invalid; no particle update was committed.");
+        amrex::MultiFab candidate_energy(energy_reservoir.boxArray(),
+                                        energy_reservoir.DistributionMap(), 1, 0);
+        amrex::ReduceOps<amrex::ReduceOpSum, amrex::ReduceOpMax> ops;
+        amrex::ReduceData<amrex::Real, int> data(ops);
+        using Tuple = typename decltype(data)::Type;
+        for (amrex::MFIter iterator(candidate_energy); iterator.isValid(); ++iterator) {
+            auto const old = energy_reservoir.const_array(iterator);
+            auto const work = transaction.RequestedWork().const_array(iterator);
+            auto const next = candidate_energy.array(iterator);
+            ops.eval(iterator.validbox(), data,
+                [=] AMREX_GPU_DEVICE (int i, int j, int k) -> Tuple {
+                    if (allow_signed_material_energy) {
+                        auto const value = old(i, j, k) - work(i, j, k);
+                        if (!amrex::Math::isfinite(value)) { return {0, 1}; }
+                        next(i, j, k) = value;
+                        return {old(i, j, k) - (value + work(i, j, k)), 0};
+                    }
+                    auto const update = ApplyRadiationEnergyUpdate(old(i, j, k), -work(i, j, k));
+                    if (!update.valid) { return {0, 1}; }
+                    next(i, j, k) = update.stored_energy;
+                    return {update.residual, 0};
+                });
+        }
+        auto const reduced = data.value();
+        int invalid = amrex::get<1>(reduced);
+        amrex::ParallelDescriptor::ReduceIntMax(invalid);
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(invalid == 0, invalid_energy_message);
+        amrex::Real residual = amrex::get<0>(reduced);
+        amrex::ParallelDescriptor::ReduceRealSum(residual);
+        residual += transaction.NumericalEnergyResidual().sum(0);
+        amrex::Real const next_carry_energy =
+            *carry_energy_change + transaction.EnergyCarryChange().sum(0);
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            amrex::Math::isfinite(residual) && amrex::Math::isfinite(next_carry_energy),
+            "Radiation particle work accounting overflowed before commit.");
+        // Debit the newly assigned work now. Its unrepresented part follows
+        // the receiving particle, not this cell's future radiation/thermal state.
+        transaction.Commit();
+        amrex::MultiFab::Copy(energy_reservoir, candidate_energy, 0, 0, 1, 0);
+        amrex::MultiFab::Add(
+            accumulated_material_momentum, transaction.ActualImpulse(), 0, 0, 3, 0);
+        amrex::MultiFab::Add(
+            accumulated_material_kinetic_energy, transaction.ActualWork(), 0, 0, 1, 0);
+        *carry_energy_change = next_carry_energy;
+        return residual;
+    }
     amrex::MultiFab applied_material_momentum(
         accumulated_material_momentum.boxArray(),
         accumulated_material_momentum.DistributionMap(), 3, 0);
@@ -5282,7 +6042,10 @@ RadiationTransport::Advance (
     m_last_boundary_energy_injection = 0.0_rt;
     m_last_streaming_boundary_energy_loss = 0.0_rt;
     m_last_numerical_energy_residual = 0.0_rt;
+    m_last_material_carry_energy_change = 0.0_rt;
     m_last_diffusion_boundary_momentum_loss = {0.0_rt, 0.0_rt, 0.0_rt};
+    m_last_implicit_diffusion = {};
+    m_last_coupled_solve = {};
     m_last_streaming_boundary_momentum_loss = {0.0_rt, 0.0_rt, 0.0_rt};
 
     auto* const photon_container =
@@ -5295,6 +6058,28 @@ RadiationTransport::Advance (
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         warpx.finestLevel() == 0 && photons.finestLevel() == 0,
         "Radiation transport does not yet support mesh refinement.");
+
+    if (m_use_coupled_moment_transport) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(photons.TotalNumberOfParticles() == 0 &&
+            !particles.hasHybridIonization(),
+            "coupled_moment requires no live/injected photons and fixed ion charge.");
+        AdvanceCoupledMoment(particles, fields, current_time, dt);
+        return;
+    }
+    if (m_use_coupled_implicit_diffusion) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!particles.hasHybridIonization(),
+            "coupled_implicit currently requires fixed ion charge states.");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            photons.TotalNumberOfParticles() == 0,
+            "coupled_implicit currently requires no live or injected streaming photons.");
+        for (int species = 0; species < particles.nSpecies(); ++species) {
+            auto const& container = particles.GetParticleContainer(species);
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(container.doNotPush(),
+                "coupled_implicit currently requires stationary do_not_push species.");
+        }
+        AdvanceCoupledImplicit(fields, current_time, dt);
+        return;
+    }
 
     amrex::Real initial_radiation_energy = 0.0_rt;
     if (m_track_energy_balance) {
@@ -6409,7 +7194,8 @@ RadiationTransport::Advance (
             material_kinetic_energy, material_energy,
             /*allow_signed_material_energy=*/true,
             "Streaming radiation recoil produced a non-finite signed material "
-            "internal-energy source.");
+            "internal-energy source.",
+            m_particle_momentum_carry ? "streaming" : "", &m_last_material_carry_energy_change);
     }
 
     if (m_enable_lte_exchange || m_enable_diffusion) {
@@ -6917,6 +7703,16 @@ RadiationTransport::Advance (
 
         if (enable_diffusion) {
             rosseland_opacity.FillBoundary(warpx.Geom(lev).periodicity());
+            amrex::Real const minimum_optical_depth = m_minimum_diffusion_optical_depth;
+            bool const use_full_gradient = m_implicit_diffusion_options.use_full_gradient;
+            if (m_use_implicit_diffusion) {
+                m_last_implicit_diffusion = warpx::radiation::AdvanceImplicitDiffusion(
+                    diffusion_energy, rosseland_opacity, warpx.Geom(lev), current_time, dt,
+                    m_implicit_diffusion_options);
+                m_last_diffusion_boundary_energy_loss += m_last_implicit_diffusion.escaped_energy;
+                m_last_boundary_energy_injection += m_last_implicit_diffusion.injected_energy;
+                m_last_numerical_energy_residual += m_last_implicit_diffusion.numerical_energy_residual;
+            } else {
             // Positivity bound for an explicit d-dimensional diffusion
             // stencil. At a thick/thin seam the arithmetic face opacity can
             // be half the threshold-cell opacity, doubling the largest D;
@@ -6973,8 +7769,6 @@ RadiationTransport::Advance (
             int const diffusion_substeps =
                 static_cast<int>(requested_diffusion_substeps);
             amrex::Real const diffusion_dt = dt / diffusion_substeps;
-            amrex::Real const minimum_optical_depth =
-                m_minimum_diffusion_optical_depth;
             amrex::MultiFab next_diffusion_energy(
                 diffusion_energy.boxArray(), diffusion_energy.DistributionMap(),
                 num_groups, 0);
@@ -7295,8 +8089,16 @@ RadiationTransport::Advance (
                                     0.0_rt,
                                     0.5_rt * (energy_density + neighbor_density));
                                 if (face_density == 0.0_rt) { continue; }
+                                amrex::Real gradient_magnitude = std::abs(gradient);
+                                if (use_full_gradient) {
+                                    warpx::radiation::DiffusionDensityView<true> const density{
+                                        old_arr,group,dx,plo,domain_lo};
+                                    gradient_magnitude = warpx::radiation::FaceGradientMagnitude(
+                                        density,i,j,k,direction,side,gradient,dx,periodic,
+                                        domain_lo,domain_hi);
+                                }
                                 amrex::Real const dimensionless_gradient =
-                                    std::abs(gradient)
+                                    gradient_magnitude
                                     / (face_opacity * face_density);
                                 amrex::Real const flux_limiter =
                                     (2.0_rt + dimensionless_gradient)
@@ -7404,6 +8206,7 @@ RadiationTransport::Advance (
             for (int component = 0; component < 3; ++component) {
                 m_last_diffusion_boundary_momentum_loss[component] +=
                     escaped_momentum[component];
+            }
             }
             diffusion_energy.FillBoundary(warpx.Geom(lev).periodicity());
 
@@ -7797,7 +8600,9 @@ RadiationTransport::Advance (
                             material_momentum, material_kinetic_energy, reservoir,
                             /*allow_signed_material_energy=*/false,
                             "A radiation group's diffusion recoil requires more work "
-                            "than that group's local energy supplies. Reduce the timestep.");
+                            "than that group's local energy supplies. Reduce the timestep.",
+                            m_particle_momentum_carry ? "diffusion_" + std::to_string(group) : "",
+                            &m_last_material_carry_energy_change);
                     }
                 }
                 // Preserve the existing aggregate diagnostic/checkpoint field.
@@ -7816,7 +8621,9 @@ RadiationTransport::Advance (
                     /*allow_signed_material_energy=*/false,
                     "Radiation diffusion recoil requires more bulk kinetic work "
                     "than the local diffusion energy supplies. Reduce the "
-                    "timestep or inspect the configured momentum species.");
+                    "timestep or inspect the configured momentum species.",
+                    m_particle_momentum_carry ? "diffusion_0" : "",
+                    &m_last_material_carry_energy_change);
                 diffusion_energy.FillBoundary(
                     warpx.Geom(lev).periodicity());
             }
@@ -7842,7 +8649,8 @@ RadiationTransport::Advance (
             TotalRadiationEnergy(photons, fields, lev, m_num_groups);
         amrex::Real const material_exchange =
             material_energy.sum(0, /*local=*/false)
-            + material_kinetic_energy.sum(0, /*local=*/false);
+            + material_kinetic_energy.sum(0, /*local=*/false)
+            + m_last_material_carry_energy_change;
         amrex::Real const residual_boundary_energy_loss =
             initial_radiation_energy
             - final_radiation_energy - material_exchange;

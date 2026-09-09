@@ -8,6 +8,7 @@
 #define WARPX_RADIATION_TRANSPORT_H_
 
 #include "EnergyGroups.H"
+#include "ImplicitDiffusion.H"
 #ifdef WARPX_USE_MATERIAL_OPACITY_HDF5
 #   include "MaterialOpacityTable.H"
 #   include "Utils/MaterialRegistry.H"
@@ -24,7 +25,9 @@
 
 #include <array>
 #include <cstdint>
+#include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace ablastr::fields
@@ -34,6 +37,8 @@ namespace ablastr::fields
 
 class MultiParticleContainer;
 class HybridPICModel;
+class WarpXParticleContainer;
+struct ParticleBoundaries;
 
 /** Hybrid streaming and multigroup transport of an existing WarpX photon species.
  *
@@ -46,6 +51,15 @@ class HybridPICModel;
 class RadiationTransport
 {
 public:
+  struct CoupledSolveDiagnostics {
+      int iterations = 0;
+      int accepted_substeps = 0;
+      int rejected_attempts = 0;
+      int source_consistency_corrections = 0;
+      amrex::Real material_residual = 0;
+      amrex::Real raw_energy_residual = 0;
+  };
+
     enum class MaterialCoupling
     {
         None,
@@ -104,6 +118,26 @@ public:
         return m_enable_momentum_coupling;
     }
 
+    [[nodiscard]] bool usesParticleMomentumCarry () const noexcept
+    { return m_particle_momentum_carry; }
+    /** Native boundary commit paired with its global pending-only wall ledger. */
+    bool ReflectParticleCarryBoundaries (WarpXParticleContainer& species,
+                                        ParticleBoundaries const& boundaries);
+    /** Already globally reduced; do not sum this value over MPI ranks again. */
+    [[nodiscard]] amrex::GpuArray<amrex::Real, 3> particleCarryWallMomentum (
+        std::string const& species, std::string const& path) const;
+    void WriteParticleCarryWallCheckpoint (std::string const& directory) const;
+    void ReadParticleCarryWallCheckpoint (std::string const& directory);
+    [[nodiscard]] bool usesMomentTransport () const noexcept
+    { return m_use_coupled_moment_transport; }
+    /** Instantaneous lab-frame field momentum, sum(F/c)/c, not a force ledger. */
+    [[nodiscard]] amrex::GpuArray<amrex::Real, 3> momentMomentumInventory (
+        ablastr::fields::MultiFabRegister const& fields) const;
+    [[nodiscard]] amrex::Real lastMaterialCarryEnergyChange () const noexcept
+    { return m_last_material_carry_energy_change; }
+    [[nodiscard]] amrex::GpuArray<amrex::Real, 4> pendingMaterialImpulse (
+        MultiParticleContainer& particles, bool streaming) const;
+
     /** Record whether a versioned restart checkpoint declares momentum-carry
      * fields. This is set from WarpXHeader before per-level fields allocate. */
     void SetRestartMomentumCarryFieldsPresent (bool const present) noexcept
@@ -117,6 +151,27 @@ public:
     hasDiffusionBath () const noexcept
     {
         return m_has_diffusion_bath;
+    }
+
+    [[nodiscard]] bool usesImplicitDiffusion () const noexcept
+    {
+        return m_use_implicit_diffusion;
+    }
+
+    [[nodiscard]] bool commitsHybridMaterialState () const noexcept
+    {
+        return m_use_coupled_implicit_diffusion || m_use_coupled_moment_transport;
+    }
+
+    [[nodiscard]] warpx::radiation::ImplicitDiffusionResult const&
+    lastImplicitDiffusionResult () const noexcept
+    {
+        return m_last_implicit_diffusion;
+    }
+
+    [[nodiscard]] CoupledSolveDiagnostics const&
+    lastCoupledSolveDiagnostics () const noexcept {
+        return m_last_coupled_solve;
     }
 
     /** Number of spectral impulse carries declared by the restart header. */
@@ -210,6 +265,17 @@ public:
     }
 
 private:
+    struct ParticleCarryWallSum {
+        amrex::GpuArray<amrex::Real, 3> sum{}, correction{};
+    };
+    // Global replicated histories; separate from represented ion-wall impulse.
+    std::map<std::pair<std::string, std::string>, ParticleCarryWallSum>
+        m_particle_carry_wall_momentum;
+    void AdvanceCoupledMoment (MultiParticleContainer& particles,
+                               ablastr::fields::MultiFabRegister& fields,
+                               amrex::Real current_time, amrex::Real dt) const;
+    void AdvanceCoupledImplicit (ablastr::fields::MultiFabRegister& fields,
+                                 amrex::Real current_time, amrex::Real dt) const;
     static constexpr int max_opacity_species = 8;
 #ifdef WARPX_USE_MATERIAL_OPACITY_HDF5
     static constexpr int max_opacity_materials =
@@ -221,6 +287,10 @@ private:
     bool m_enable_diffusion = false;
     bool m_enable_particle_conversion = false;
     bool m_enable_momentum_coupling = false;
+    bool m_particle_momentum_carry = false;
+    bool m_use_coupled_moment_transport = false;
+    amrex::Real m_moment_relaxation = 0.5;
+    amrex::GpuArray<amrex::Real, 3> m_initial_moment_flux_ratio{};
     bool m_require_cell_interface_exact_streaming = false;
     bool m_use_nonlinear_hybrid_lte_remap = false;
     bool m_track_energy_balance = false;
@@ -349,6 +419,7 @@ private:
     mutable amrex::Real m_last_boundary_energy_injection = 0.0;
     mutable amrex::Real m_cumulative_boundary_energy_injection = 0.0;
     mutable amrex::Real m_last_numerical_energy_residual = 0.0;
+    mutable amrex::Real m_last_material_carry_energy_change = 0.0;
     mutable amrex::Real m_cumulative_numerical_energy_residual = 0.0;
     mutable amrex::GpuArray<amrex::Real, 3>
         m_last_diffusion_boundary_momentum_loss{0.0, 0.0, 0.0};
@@ -363,6 +434,12 @@ private:
     MaterialCoupling m_material_coupling = MaterialCoupling::None;
     LteExchangeSolver m_lte_exchange_solver =
         LteExchangeSolver::FrozenTemperature;
+    bool m_use_implicit_diffusion = false;
+    bool m_use_coupled_implicit_diffusion = false;
+    int m_coupled_max_subdivisions = 0;
+    warpx::radiation::ImplicitDiffusionOptions m_implicit_diffusion_options{};
+    mutable warpx::radiation::ImplicitDiffusionResult m_last_implicit_diffusion{};
+    mutable CoupledSolveDiagnostics m_last_coupled_solve{};
 };
 
 #endif // WARPX_RADIATION_TRANSPORT_H_

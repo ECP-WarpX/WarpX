@@ -9,6 +9,8 @@
 
 #include "ReducedDiags.H"
 
+#include <AMReX_Vector.H>
+
 #include <string>
 
 /** Global energy accounting for hybrid multigroup radiation transport. */
@@ -28,6 +30,10 @@ private:
     std::string m_photon_species;
     int m_num_groups = 1;
     bool m_has_boundary_injection = false;
+    bool m_has_implicit_diffusion = false;
+    bool m_include_solver_details = false;
+    bool m_has_particle_carry = false;
+    amrex::Vector<amrex::Real> m_cumulative_group_transfers;
     amrex::Real m_cumulative_material_exchange = 0.0;
     amrex::Real m_cumulative_boundary_energy_loss = 0.0;
     amrex::Real m_cumulative_streaming_boundary_energy_loss = 0.0;

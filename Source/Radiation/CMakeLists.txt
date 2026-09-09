@@ -5,7 +5,14 @@ foreach(D IN LISTS WarpX_DIMS)
     endif()
     target_sources(lib_${SD}
       PRIVATE
+        CoupledImplicitDiffusion.cpp
+        CoupledMomentSource.cpp
+        ImplicitDiffusion.cpp
+        ImplicitMomentTransport.cpp
+        MomentBoundaryExchange.cpp
         OpacityTable.cpp
+        ParticleImpulse.cpp
+        ParticleImpulseBoundary.cpp
         RadiationTransport.cpp
     )
 endforeach()
