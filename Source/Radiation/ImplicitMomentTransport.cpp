@@ -202,7 +202,7 @@ namespace warpx::radiation
                     auto const out = m_pressure_jacobian.array(iterator);
                     ops.eval(iterator.validbox(), data,
                              [=] AMREX_GPU_DEVICE(int i, int j, int k) -> Tuple {
-                                 FourVector values{u(i, j, k, 0), u(i, j, k, 1), u(i, j, k, 2),
+                                 FourVector const values{u(i, j, k, 0), u(i, j, k, 1), u(i, j, k, 2),
                                                    u(i, j, k, 3)};
                                  auto const closure = EvaluateM1Closure(values);
                                  if (!closure.valid) {
@@ -858,7 +858,7 @@ namespace warpx::radiation
                 ops.eval(
                     iterator.validbox(), data, [=] AMREX_GPU_DEVICE(int i, int j, int k) -> Tuple {
                         auto const cell = Cell(i, j, k);
-                        amrex::GpuArray<amrex::Real, 3> beta{b(cell, 0), b(cell, 1), b(cell, 2)};
+                        amrex::GpuArray<amrex::Real, 3> const beta{b(cell, 0), b(cell, 1), b(cell, 2)};
                         auto const absorption = PhysConst::c * dt * c(cell, 0);
                         auto const scattering = PhysConst::c * dt * c(cell, 1);
                         if (absorption + scattering <= 1) {
@@ -1131,7 +1131,7 @@ namespace warpx::radiation
         amrex::MultiFab transport(radiation.boxArray(), radiation.DistributionMap(), 8, 0);
         auto rhs = op.makeVecRHS();
         auto linear_rhs = op.makeVecRHS();
-        op.assign(current, radiation);
+        MomentOperator::assign(current, radiation);
         // A realizable local-source solution is an initial guess, not a split
         // update. It is already the full solution for spatially uniform data,
         // avoiding a poorly conditioned solve of that constant mode. Retain
@@ -1144,7 +1144,7 @@ namespace warpx::radiation
             auto const output = current.array(iterator);
             amrex::ParallelFor(iterator.validbox(),[=] AMREX_GPU_DEVICE(int i,int j,int k) {
                 auto const cell = Cell(i,j,k);
-                amrex::GpuArray<amrex::Real,3> drift{
+                amrex::GpuArray<amrex::Real,3> const drift{
                     velocity(cell,0),velocity(cell,1),velocity(cell,2)};
                 auto const predicted = TryImplicitGreyMomentSource(State(original,cell),drift,
                     PhysConst::c*dt*coefficients(cell,0),PhysConst::c*dt*coefficients(cell,1),
@@ -1199,7 +1199,7 @@ namespace warpx::radiation
                                     op.m_boundary_exchange);
                 bool const keep_current = assigned <= 1 && std::isfinite(checked.energy_residual) &&
                                           std::isfinite(checked.momentum_residual);
-                op.assign(candidate, trial);
+                MomentOperator::assign(candidate, trial);
                 // Enforce the integral equations, including independently
                 // counted prescribed boundary exchange, in the state rather
                 // than allowing a small accepted zero-mode error to accumulate
@@ -1213,7 +1213,7 @@ namespace warpx::radiation
                 if (keep_current) {
                     if (!ProjectConservedTotals(current, radiation, stable_transfer, trial,
                                                 op.m_boundary_exchange)) {
-                        op.assign(trial, candidate);
+                        MomentOperator::assign(trial, candidate);
                     }
                 }
                 auto checked_merit =
@@ -1227,7 +1227,7 @@ namespace warpx::radiation
                     (!std::isfinite(checked_merit) || checked.equation_residual > 1 ||
                      assigned > 1 || checked.energy_residual > options.tolerance ||
                      checked.momentum_residual > options.tolerance)) {
-                    op.assign(trial, candidate);
+                    MomentOperator::assign(trial, candidate);
                     checked_merit =
                         EvaluateResidual(op, trial, radiation, transfer, options, checked);
                     op.writeTransportIncrement(transport);
@@ -1257,7 +1257,7 @@ namespace warpx::radiation
                 result.equation_residual = checked.equation_residual;
                 result.energy_residual = checked.energy_residual;
                 result.momentum_residual = checked.momentum_residual;
-                op.assign(current, trial);
+                MomentOperator::assign(current, trial);
                 continue;
             }
             op.buildPreconditioner();
@@ -1283,7 +1283,7 @@ namespace warpx::radiation
             }
             // A finite inexact Krylov step still has to reduce the independently
             // evaluated nonlinear residual and pass every final physical gate.
-            op.increment(candidate, current, 1);
+            MomentOperator::increment(candidate, current, 1);
             bool accepted = false;
             amrex::Real fraction = 1;
             for (int line = 0; line < 25; ++line) {
@@ -1301,7 +1301,7 @@ namespace warpx::radiation
                 auto const next_merit =
                     EvaluateResidual(op, trial, radiation, transfer, options, evaluation);
                 if (next_merit < merit || next_merit <= iteration_target) {
-                    op.assign(current, trial);
+                    MomentOperator::assign(current, trial);
                     accepted = true;
                     break;
                 }
@@ -1342,7 +1342,7 @@ namespace warpx::radiation
             return false;
         }
         auto state = op.makeVecLHS();
-        op.assign(state, radiation);
+        MomentOperator::assign(state, radiation);
         if (!op.updateClosure(state)) {
             return false;
         }

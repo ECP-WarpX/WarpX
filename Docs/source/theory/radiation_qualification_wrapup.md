@@ -26,6 +26,12 @@ building blocks do **not** enable the full moving radiation/material wall path.
 
 ## Evidence and unresolved gates
 
+The public-branch CPU regression subset passes 328/328 checks after restoring
+the existing parent carry-ownership validation ahead of its new wall ledger.
+This includes the legacy radiation cases and the new implicit/moving exchange,
+boundary, rejection, diagnostic and restart checks. The full-run log is
+`build-production-cpu/pr-owner-full-tests.log` in the PR qualification worktree.
+
 The latest carry-boundary tests passed on CPU with one rank, two ranks and a
 one-to-two-rank checkpoint continuation. They include exact live-state rejection,
 normal/reflect-all reflection, two carry owners, migration, overflow rejection,

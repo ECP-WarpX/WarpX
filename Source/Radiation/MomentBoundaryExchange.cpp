@@ -51,7 +51,7 @@ namespace warpx::radiation
                 using Tuple = typename decltype(data)::Type;
                 for (amrex::MFIter iterator(flux); iterator.isValid(); ++iterator) {
                     auto const values = flux.const_array(iterator);
-                    for (int side : {-1, 1}) {
+                    for (int const side : {-1, 1}) {
                         auto face = iterator.validbox();
                         int const index =
                             side < 0 ? domain.smallEnd(direction) : domain.bigEnd(direction) + 1;

@@ -4864,19 +4864,19 @@ amrex::Real HybridPICModel::ApplyElectronEnergySource (
     amrex::MultiFab candidate(temperature.boxArray(), temperature.DistributionMap(),
                              1, temperature.nGrowVect());
     amrex::MultiFab::Copy(candidate, temperature, 0, 0, 1, temperature.nGrowVect());
-    amrex::MultiFab source(cell_integrated_energy.boxArray(),
+    amrex::MultiFab energy_trial(cell_integrated_energy.boxArray(),
                           cell_integrated_energy.DistributionMap(), 1,
                           cell_integrated_energy.nGrowVect());
-    amrex::MultiFab::Copy(source, cell_integrated_energy, 0, 0, 1,
+    amrex::MultiFab::Copy(energy_trial, cell_integrated_energy, 0, 0, 1,
                          cell_integrated_energy.nGrowVect());
     amrex::Real const residual = EvaluateElectronEnergySource(
-        lev, candidate, source, minimum_electron_density, nonlinear_lte_remap);
+        lev, candidate, energy_trial, minimum_electron_density, nonlinear_lte_remap);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         amrex::Math::isfinite(residual),
         "Hybrid electron energy coupling produced an invalid thermodynamic state "
         "or material realization residual.");
     CommitElectronTemperature(lev, candidate);
-    amrex::MultiFab::Copy(cell_integrated_energy, source, 0, 0, 1,
+    amrex::MultiFab::Copy(cell_integrated_energy, energy_trial, 0, 0, 1,
                          cell_integrated_energy.nGrowVect());
     return residual;
 }
@@ -4915,8 +4915,10 @@ amrex::Real HybridPICModel::EvaluateElectronEnergySource (
     ABLASTR_PROFILE("HybridPICModel::EvaluateElectronEnergySource()");
 
     bool const prescribed = prescribed_temperature != nullptr;
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(prescribed == (nodal_energy_residual != nullptr),
-        "Prescribed native temperature requires a nodal residual output.");
+    if (prescribed != (nodal_energy_residual != nullptr)) {
+        WARPX_ABORT_WITH_MESSAGE("Prescribed native temperature requires a nodal residual output.");
+        return std::numeric_limits<amrex::Real>::quiet_NaN();
+    }
     if (prescribed) {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(nonlinear_lte_remap == nullptr,
             "Prescribed native temperature currently requires the frozen old-Cv source remap.");

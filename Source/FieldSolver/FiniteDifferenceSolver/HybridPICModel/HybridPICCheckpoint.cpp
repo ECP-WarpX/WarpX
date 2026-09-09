@@ -95,7 +95,7 @@ void HybridPICModel::WriteMomentHistory (std::string const &directory) const
     auto const fields = HistoryFields(*this);
     if (m_moment_history_valid) {
         for (auto const &[name, field] : fields) {
-            amrex::VisMF::Write(*field, directory + "/HybridMomentHistory_" + name);
+            amrex::VisMF::Write(*field, std::string(directory).append("/HybridMomentHistory_").append(name));
         }
     }
     if (amrex::ParallelDescriptor::IOProcessor()) {
@@ -123,7 +123,7 @@ void HybridPICModel::ReadMomentHistory (std::string const &directory)
         for (auto const &[name, field] : fields) {
             amrex::ignore_unused(field);
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                !Exists(directory + "/HybridMomentHistory_" + name + "_H"),
+                !Exists(std::string(directory).append("/HybridMomentHistory_").append(name).append("_H")),
                 "Hybrid moment history has data but no manifest.");
         }
         return; // Legacy checkpoints reconstruct all deposits at bootstrap.
@@ -149,7 +149,7 @@ void HybridPICModel::ReadMomentHistory (std::string const &directory)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE((input >> stored) && stored == name,
                                          "Hybrid moment history species or field layout changed.");
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            Exists(directory + "/HybridMomentHistory_" + name + "_H") == (valid == 1),
+            Exists(std::string(directory).append("/HybridMomentHistory_").append(name).append("_H")) == (valid == 1),
             "Incomplete or inconsistent hybrid moment history.");
     }
     input >> std::ws;
@@ -158,7 +158,7 @@ void HybridPICModel::ReadMomentHistory (std::string const &directory)
         return;
     } // A checkpoint before the first native bootstrap.
     for (auto const &[name, field] : fields) {
-        amrex::VisMF::Read(*field, directory + "/HybridMomentHistory_" + name);
+        amrex::VisMF::Read(*field, std::string(directory).append("/HybridMomentHistory_").append(name));
     }
     m_moment_history_valid = true;
     m_restored_moment_history_pending = true;

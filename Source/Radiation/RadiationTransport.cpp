@@ -3341,7 +3341,7 @@ RadiationTransport::RadiationTransport (
                 material_index >= 0,
                 "Internal registry opacity error: carrier species '"
                     + species_name + "' has no material index.");
-            m_opacity_species_material_indices[i] = material_index;
+            m_opacity_species_material_indices[static_cast<int>(i)] = material_index;
         }
 #endif
     }
