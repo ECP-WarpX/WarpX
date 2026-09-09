@@ -212,7 +212,6 @@ AMREX_ENUM(
               https://www.nndc.bnl.gov/endfdocs/ENDF-102-2023.pdf */
     IAEA,  /**< IAEA coefficients from https://www-nds.iaea.org/records/t5vy7-v2d27,
               used by https://doi.org/10.1016/j.jcp.2019.03.020 */
-    Default = ENDF
 );
 
 #endif // WARPX_UTILS_WARPXALGORITHMSELECTION_H_

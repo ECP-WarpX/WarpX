@@ -187,8 +187,10 @@ ParticleCreationFunc::ParticleCreationFunc (const std::string& collision_name,
             "fusion_angular_distribution_coefficients",
             fusion_angular_distribution_coefficients_file))
     {
+        // Initialize only to avoid a compiler warning; get_enum_case_insensitive requires and
+        // overwrites this parameter, so the initial value has no effect in practice.
         FusionAngularDistributionCoefficientsFormat coefficient_format =
-            FusionAngularDistributionCoefficientsFormat::Default;
+            FusionAngularDistributionCoefficientsFormat::ENDF;
         pp_collision_name.get_enum_case_insensitive(
             "fusion_angular_distribution_coefficients_format", coefficient_format);
 
