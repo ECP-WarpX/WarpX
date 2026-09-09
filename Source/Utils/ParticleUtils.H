@@ -30,14 +30,6 @@ namespace ScatteringUtils {
         int m_num_coefficients = 0;  ///< Number of coefficients per energy row
         int* m_energy_range_status = nullptr; ///< Per-event status: -1 below, 0 within, 1 above
 
-        [[nodiscard]]
-        AMREX_GPU_HOST_DEVICE AMREX_INLINE
-        bool hasValidData () const
-        {
-            return (m_energies != nullptr) && (m_coefficients != nullptr)
-                && (m_num_energies > 0) && (m_num_coefficients > 0);
-        }
-
         /**
          * \brief Return a linearly interpolated coefficient for the given energy.
          *
@@ -59,8 +51,6 @@ namespace ScatteringUtils {
             amrex::ParticleReal const energy_MeV,
             int const coefficient_index) const
         {
-            AMREX_ASSERT(hasValidData());
-
             using namespace amrex::literals;
 
             if (energy_MeV <= m_energies[0]) {
