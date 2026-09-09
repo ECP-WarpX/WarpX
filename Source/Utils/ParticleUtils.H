@@ -109,6 +109,7 @@ namespace ScatteringUtils {
     {
         using namespace amrex::literals;
 
+        // TODO: In single precision the tolerance might need to be adjusted.
         constexpr amrex::ParticleReal tol = 1.0e-8_prt;
         constexpr int iter_max = 100;
         int const l_max = a_Ll.m_num_coefficients - 1;
