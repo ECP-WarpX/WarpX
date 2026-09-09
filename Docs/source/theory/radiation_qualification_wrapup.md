@@ -52,6 +52,29 @@ conversion with moving material, and practical full 3D/RZ qualification.
 Green CI is a regression/build milestone, not evidence that these open physics
 requirements are complete.
 
+### CI checksum follow-up
+
+Azure build 6472 passed the RZ pinch simulation and its original physics
+analysis, but its existing `test_rz_theta_implicit_dynamic_pinch` checksum
+differed by up to 1.58e-6. A local PETSc/MPI A/B comparison changes only the
+diagnostic unit-conversion behavior: restoring the old live SI round trip
+changes checksums by up to 4.80e-6 relative to the corrected copy-only writer.
+Both variants pass the original 1e-12 energy and charge-conservation bounds
+and the solver-iteration limits. Corrected/legacy maximum relative energy
+errors are 1.97e-15 / 3.10e-14; charge RMS errors are 8.45e-14 / 8.00e-14.
+
+Neither local variant reproduces the exact CI checksum. This establishes
+sensitivity to diagnostic mutation, not unique attribution of the CI delta;
+the local PETSc/MPI environment differs from CI. No generated benchmark or
+physics tolerance was changed. Artifacts are under `build-rz-checksum/` and
+`build-ci-tools/rz-diagnostic-comparison.json` in the PR worktree. The temporary
+legacy writer was removed immediately after building the control executable.
+
+CodeQL also identified two reference-test products evaluated in `double`
+before conversion to `long double`. Promoting the operands before arithmetic
+fixes those intermediate-precision issues; the existing moving-flux test
+passes without changing its bound.
+
 ## Detailed records
 
 ```{toctree}

@@ -31,7 +31,8 @@ namespace
         long double const energy = radiation[0];
         long double q2 = 0;
         for (int d = 1; d < 4; ++d) {
-            q2 += radiation[d] * radiation[d];
+            long double const momentum = radiation[d];
+            q2 += momentum * momentum;
         }
         if (q2 == 0) {
             return i == j ? energy / 3 : 0;
@@ -150,7 +151,7 @@ main (int argc, char* argv[])
             }
             long double projected = measured.flux[0];
             for (int d = 0; d < 3; ++d) {
-                projected -= test.beta[d] * measured.flux[d + 1];
+                projected -= static_cast<long double>(test.beta[d]) * measured.flux[d + 1];
             }
             worst = std::max(worst, std::abs(projected - measured.projected_flux) / (3 * c));
         }
