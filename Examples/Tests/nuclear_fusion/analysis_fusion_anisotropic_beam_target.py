@@ -47,9 +47,8 @@ REACTION_CONFIG = {
     },
 }
 
-# Reference values obtained with the fixed random seed in the input files. These
-# are integral observables, with intentionally broad tolerances for portability
-# across compute backends and particle precisions.
+# Reference values may vary from run to run. The tolerances are intentionally
+# broad enough to account for random sampling, compute backends, and precision.
 REFERENCE_METRICS = {
     "DD": {
         1: {
