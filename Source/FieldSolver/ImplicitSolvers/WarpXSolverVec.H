@@ -81,14 +81,6 @@ public:
                 a_solver_vec.getScalarType() );
     }
 
-    /** \brief Release the DOF map shared by all solver vectors
-     *
-     * The map is built from the grids of a single WarpX instance and is scoped to
-     * its lifetime: WarpX::Finalize() calls this, and the next Define() rebuilds
-     * the map for the new instance.
-     */
-    static void Clear ();
-
     [[nodiscard]] RT dotProduct( const WarpXSolverVec&  a_X ) const;
 
     void Copy ( warpx::fields::FieldType  a_array_type,
@@ -351,7 +343,6 @@ private:
      */
     WarpX* m_WarpX = nullptr;
 
-    /** DOF map shared by all solver vectors, see Clear() for its lifetime. */
     static std::unique_ptr<WarpXSolverDOF> m_dofs;
 };
 

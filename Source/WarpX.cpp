@@ -50,7 +50,6 @@
 #include "Utils/WarpXUtil.H"
 
 #include "FieldSolver/ImplicitSolvers/ImplicitSolverLibrary.H"
-#include "FieldSolver/ImplicitSolvers/WarpXSolverVec.H"
 
 #include <ablastr/math/FiniteDifference.H>
 #include <ablastr/math/RandomSeed.H>
@@ -333,10 +332,6 @@ WarpX::Finalize()
 
     // Clear all of the warning messages
     ablastr::warn_manager::WMClear();
-
-    // Release the DOF map that the implicit solvers share: it is built from the
-    // grids of the instance destroyed above
-    WarpXSolverVec::Clear();
 }
 
 WarpX::WarpX ()
