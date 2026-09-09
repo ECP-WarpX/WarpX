@@ -225,6 +225,11 @@ ParticleCreationFunc::ParticleCreationFunc (const std::string& collision_name,
         || BinaryCollisionUtils::is_two_product_fusion_type(m_collision_type))
     {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            m_collision_type != CollisionType::ProtonBoronToAlphasFusion
+                || m_scattering_angle_model != ScatteringAngleModel::Anisotropic,
+            "scattering_angle_model = anisotropic is not supported for proton-boron fusion.");
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             m_scattering_angle_model != ScatteringAngleModel::Anisotropic
             || m_fusion_angular_distribution_num_energies > 0,
             "<collision_name>.scattering_angle_model = anisotropic requires "
