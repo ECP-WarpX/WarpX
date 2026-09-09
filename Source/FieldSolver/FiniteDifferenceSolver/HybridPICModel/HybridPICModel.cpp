@@ -67,6 +67,15 @@ void HybridPICModel::ReadParameters ()
 
     utils::parser::queryWithParser(pp_hybrid, "holmstrom_vacuum_region", m_holmstrom_vacuum_region);
 
+    // edge | node | cell (see VacuumSeamSwitchMode); an unknown value aborts
+    // naming the accepted values.
+    pp_hybrid.query_enum_case_insensitive("vacuum_seam_switch_mode", m_vacuum_seam_switch_mode);
+#if !defined(WARPX_DIM_3D) && !defined(WARPX_DIM_XZ)
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_vacuum_seam_switch_mode == VacuumSeamSwitchMode::Edge,
+        "hybrid_pic_model.vacuum_seam_switch_mode is only supported in 3D and "
+        "2D (XZ) Cartesian geometry");
+#endif
+
     // The hybrid model requires an electron temperature, reference density
     // and exponent to be given. These values will be used to calculate the
     // electron pressure according to p = n0 * Te * (n/n0)^gamma

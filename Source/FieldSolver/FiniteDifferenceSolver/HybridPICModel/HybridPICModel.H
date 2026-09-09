@@ -33,11 +33,23 @@
 #include <AMReX_BoxArray.H>
 #include <AMReX_IntVect.H>
 #include <AMReX_DistributionMapping.H>
+#include <AMReX_Enum.H>
 
 #include <map>
 #include <memory>
 #include <optional>
 #include <set>
+
+/** Sampling of the density that decides the vacuum-seam treatment of the
+ *  generalized Ohm's law: the holmstrom vacuum branch when
+ *  hybrid_pic_model.holmstrom_vacuum_region is on and the density-floor
+ *  selection of the guarded Hall term otherwise. Node and Cell are
+ *  vacuum-favoring and supported in Cartesian geometry only. */
+AMREX_ENUM(VacuumSeamSwitchMode,
+    Edge, /**< legacy per-component edge average; the E components of a cell can take inconsistent branches at the plasma/vacuum seam */
+    Node, /**< minimum over the component's edge-endpoint nodes */
+    Cell  /**< minimum over the component's adjacent cells of the node-averaged density: a single decision for all three components of an index */
+);
 
 /**
  * \brief This class contains the parameters needed to evaluate hybrid field
@@ -460,6 +472,9 @@ public:
     int m_max_substep_attempts = 250;
 
     bool m_holmstrom_vacuum_region = false;
+
+    /** Density sampling for the vacuum-seam decision, see VacuumSeamSwitchMode. */
+    VacuumSeamSwitchMode m_vacuum_seam_switch_mode = VacuumSeamSwitchMode::Edge;
 
     /** Electron temperature: read from the input in eV, converted to
      * k_B T_e in J at the end of ReadParameters. */
