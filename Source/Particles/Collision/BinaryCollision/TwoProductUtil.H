@@ -233,23 +233,49 @@ namespace {
         else {
             // Isotropic or anisotropic scattering: the angle of emission of the products
             // in the center of mass frame is random or determined by an anisotropic model.
-            if (scattering_angle_model == ScatteringAngleModel::Anisotropic)
-            {
-                const double p1_transverse_star_sq_d =
-                    p1x_star_in_d*p1x_star_in_d + p1y_star_in_d*p1y_star_in_d;
-                constexpr double alignment_tolerance_d =
-                    64.0 * std::numeric_limits<double>::epsilon();
-                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                    p1z_star_in_d > 0.0 &&
-                        p1_transverse_star_sq_d <=
-                            alignment_tolerance_d*p1_star_in_d*p1_star_in_d,
-                    "Anisotropic two-product fusion requires the first reactant's momentum "
-                    "in the center-of-mass frame to point along the global +z axis.");
-            }
+            // If the incident direction is undefined, fall back to isotropic scattering.
+            const auto local_scattering_angle_model =
+                (scattering_angle_model == ScatteringAngleModel::Anisotropic &&
+                 p1_star_in_d <= std::numeric_limits<double>::min())
+                ? ScatteringAngleModel::Isotropic : scattering_angle_model;
             ParticleUtils::RandomizeVelocity(
                 px_star_out, py_star_out, pz_star_out,
                 static_cast<amrex::ParticleReal>(p_star_f_d),
-                engine, scattering_angle_model, anisotropic_coefficients, E_kin_star_MeV);
+                engine, local_scattering_angle_model, anisotropic_coefficients, E_kin_star_MeV);
+
+            if (scattering_angle_model == ScatteringAngleModel::Anisotropic &&
+                p1_star_in_d > std::numeric_limits<double>::min())
+            {
+                // RandomizeVelocity samples about the local +z axis. Rotate that axis onto
+                // the incident direction of the first reactant in the center-of-mass frame.
+                const double ezx_d = p1x_star_in_d/p1_star_in_d;
+                const double ezy_d = p1y_star_in_d/p1_star_in_d;
+                const double ezz_d = p1z_star_in_d/p1_star_in_d;
+
+                // Select a Cartesian axis that is not nearly parallel to ez, then use its
+                // component perpendicular to ez to construct a stable right-handed basis.
+                const double ax_d = (std::abs(ezx_d) < 0.9) ? 1.0 : 0.0;
+                const double ay_d = (std::abs(ezx_d) < 0.9) ? 0.0 : 1.0;
+                const double a_dot_ez_d = ax_d*ezx_d + ay_d*ezy_d;
+                double exx_d = ax_d - a_dot_ez_d*ezx_d;
+                double exy_d = ay_d - a_dot_ez_d*ezy_d;
+                double exz_d = -a_dot_ez_d*ezz_d;
+                const double ex_norm_d = std::sqrt(exx_d*exx_d + exy_d*exy_d + exz_d*exz_d);
+                exx_d /= ex_norm_d;
+                exy_d /= ex_norm_d;
+                exz_d /= ex_norm_d;
+
+                const double eyx_d = ezy_d*exz_d - ezz_d*exy_d;
+                const double eyy_d = ezz_d*exx_d - ezx_d*exz_d;
+                const double eyz_d = ezx_d*exy_d - ezy_d*exx_d;
+
+                const double px_local_d = static_cast<double>(px_star_out);
+                const double py_local_d = static_cast<double>(py_star_out);
+                const double pz_local_d = static_cast<double>(pz_star_out);
+                px_star_out = static_cast<amrex::ParticleReal>(px_local_d*exx_d + py_local_d*eyx_d + pz_local_d*ezx_d);
+                py_star_out = static_cast<amrex::ParticleReal>(px_local_d*exy_d + py_local_d*eyy_d + pz_local_d*ezy_d);
+                pz_star_out = static_cast<amrex::ParticleReal>(px_local_d*exz_d + py_local_d*eyz_d + pz_local_d*ezz_d);
+            }
         }
 
         const auto px_star_out_d = static_cast<double>(px_star_out);
