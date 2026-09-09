@@ -81,8 +81,9 @@ namespace
     * \brief Check that face extensions conserved area and did not overdraft
     * any lending face to S_mod <= 0.  The global sum of original areas S must
     * equal sum of modified areas S_mod to within a round-off error tolerance.
-    * This routine must be called before BCK correction, which overwrites
-    * face_areas.
+    * This routine must be called (i) before BCK correction, which overwrites
+    * `face_areas`, and (ii) after any cross-box reduction of `area_mod` by
+    * `sync_lent_areas` in `ComputeFaceExtensions`.
     *
     * @param[in] tag Annotation for verbose/error print statements
     * @param[in] all_fields The field manager
@@ -123,6 +124,7 @@ namespace
                 amrex::ReduceData< amrex::Real,
                                    amrex::Real,
                                    amrex::Real > reduce_data(reduce_ops);
+                constexpr auto huge = std::numeric_limits<amrex::Real>::max();
 
                 for (amrex::MFIter mfi(*S_mf); mfi.isValid(); ++mfi) {
                     amrex::Box const &box   = mfi.validbox();
@@ -137,10 +139,10 @@ namespace
                             const amrex::Real d = S(i,j,k) - S_mod(i,j,k);
                             if (owner(i,j,k) == 0 || d == amrex::Real(0.)) {
                                 // skip non-owned faces on shared nodal planes
-                                // skip faces that neither lend nor borrow
+                                // skip faces that neither lend nor borrow (expect S == S_mod, d == 0 exactly)
                                 return { amrex::Real(0.),
                                          amrex::Real(0.),
-                                         std::numeric_limits<amrex::Real>::max() };
+                                         huge };
                             } else {
                                 return { d,
                                          std::max(S(i,j,k),S_mod(i,j,k)),
