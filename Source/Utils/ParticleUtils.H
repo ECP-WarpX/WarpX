@@ -8,6 +8,7 @@
 #define WARPX_PARTICLE_UTILS_H_
 
 #include "Particles/WarpXParticleContainer.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 
 #include <AMReX_DenseBins.H>
