@@ -568,17 +568,19 @@ WarpX::ComputeFaceExtensions ()
     ::init_borrowing(m_borrowing[maxLevel()], Bfield);
 
     // Cross-box bookkeeping: each fab decides borrowing only for the faces it
-    // owns, but its lenders can live in ghost entries or in non-owned copies
-    // of shared nodal planes. The area each lender gave away (lent_area) is
-    // therefore accumulated alongside the direct writes and reduced to the
-    // owners between the passes; a non-zero remote contribution is also what
-    // marks a lender as intruded on its owner, so the flag and the area
-    // ledger cannot disagree. Single-box non-periodic layouts skip every
-    // reduction and keep the historical communication-free behavior
-    // bit-identically.
-    const bool multi_box = (boxArray(maxLevel()).size() > 1)
-        || Geom(maxLevel()).isAnyPeriodic();
-    m_ect_needs_seam_sync = multi_box;
+    // owns, but lending faces may be ghosts or non-owned copies of shared
+    // nodal planes. The lent_area must be accumulated and then reduced to
+    // owners after the 1- and 8-way passes.  Single-box non-periodic layouts
+    // skip reductions.
+    //
+    // The layout is read off the field, not off AmrMesh::boxArray(): during
+    // init from scratch, AmrMesh::MakeNewGrids calls MakeNewLevelFromScratch
+    // (-> InitLevelData -> InitializeEBGridData -> here) BEFORE SetBoxArray
+    // publishes grids[lev], so boxArray(maxLevel()) is still empty at this
+    // point and would silently skip the sync. The field's own BoxArray is
+    // always the live one.
+    m_ect_needs_seam_sync = (Bfield[0]->boxArray().size() > 1
+                             ||  Geom(maxLevel()).isAnyPeriodic());
 
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > lent_area;
     for (int idim = 0; idim < 3; ++idim) {
@@ -602,7 +604,7 @@ WarpX::ComputeFaceExtensions ()
     // and FaceInfo::intruded are both lendable, so it changes no availability
     // decision in the pass that follows.
     auto const sync_lent_areas = [&] () {
-        if (!multi_box) { return; }
+        if (!m_ect_needs_seam_sync) { return; }
         const auto& period = Geom(maxLevel()).periodicity();
         for (int idim = 0; idim < 3; ++idim) {
             auto& lent = *lent_area[idim];
