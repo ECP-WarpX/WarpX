@@ -178,30 +178,37 @@ namespace {
         const double one_minus_beta_sq_d = amrex::max(1.0 - vc_sq_d*inv_c2_d, std::numeric_limits<double>::epsilon());
         const double gc_d = 1.0 / std::sqrt(one_minus_beta_sq_d);
 
+        const bool needs_incident_direction =
+            (scattering_angle_model != ScatteringAngleModel::Isotropic);
+
         // Compute the direction of the first incident particle in the center of mass frame.
-        double p1x_star_in_d;
-        double p1y_star_in_d;
-        double p1z_star_in_d;
-        if ( vc_sq_d > std::numeric_limits<double>::min() )
+        double p1x_star_in_d = 0.0;
+        double p1y_star_in_d = 0.0;
+        double p1z_star_in_d = 0.0;
+        double p1_star_in_d = 0.0;
+        if (needs_incident_direction)
         {
-            // Convert momentum of first incident particle to the COM frame, using equation (2)
-            // of F. Perez et al., Phys.Plasmas.19.083104 (2012)
-            const double vcDps_d = vcx_d*p1x_in_d + vcy_d*p1y_in_d + vcz_d*p1z_in_d;
-            const double factor0_d = (gc_d-1.0)/vc_sq_d;
-            const double factor_d = factor0_d*vcDps_d - p1t_in*gc_d/c_d;
-            p1x_star_in_d = p1x_in_d + vcx_d * factor_d;
-            p1y_star_in_d = p1y_in_d + vcy_d * factor_d;
-            p1z_star_in_d = p1z_in_d + vcz_d * factor_d;
+            if ( vc_sq_d > std::numeric_limits<double>::min() )
+            {
+                // Convert momentum of first incident particle to the COM frame, using equation (2)
+                // of F. Perez et al., Phys.Plasmas.19.083104 (2012)
+                const double vcDps_d = vcx_d*p1x_in_d + vcy_d*p1y_in_d + vcz_d*p1z_in_d;
+                const double factor0_d = (gc_d-1.0)/vc_sq_d;
+                const double factor_d = factor0_d*vcDps_d - p1t_in*gc_d/c_d;
+                p1x_star_in_d = p1x_in_d + vcx_d * factor_d;
+                p1y_star_in_d = p1y_in_d + vcy_d * factor_d;
+                p1z_star_in_d = p1z_in_d + vcz_d * factor_d;
+            }
+            else // If center of mass velocity is zero, we are already in the lab frame
+            {
+                p1x_star_in_d = p1x_in_d;
+                p1y_star_in_d = p1y_in_d;
+                p1z_star_in_d = p1z_in_d;
+            }
+            p1_star_in_d = std::sqrt(
+                p1x_star_in_d*p1x_star_in_d + p1y_star_in_d*p1y_star_in_d
+                + p1z_star_in_d*p1z_star_in_d);
         }
-        else // If center of mass velocity is zero, we are already in the lab frame
-        {
-            p1x_star_in_d = p1x_in_d;
-            p1y_star_in_d = p1y_in_d;
-            p1z_star_in_d = p1z_in_d;
-        }
-        const double p1_star_in_d = std::sqrt(
-            p1x_star_in_d*p1x_star_in_d + p1y_star_in_d*p1y_star_in_d
-            + p1z_star_in_d*p1z_star_in_d);
 
         // Compute momentum of first product in the center of mass frame
         amrex::ParticleReal px_star_out = 0.0_prt;
