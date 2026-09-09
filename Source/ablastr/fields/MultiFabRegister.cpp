@@ -326,13 +326,12 @@ namespace ablastr::fields
         }
     }
 
-    std::vector<std::string>
+    void
     MultiFabRegister::read_restarts (
         int level,
         const std::string & dir
     )
     {
-        std::vector<std::string> names_read;
         for (auto & element : m_mf_register )
         {
             MultiFabOwner & mf_owner = element.second;
@@ -349,10 +348,8 @@ namespace ablastr::fields
                     continue;
                 }
                 amrex::VisMF::Read(mf, dir + name);
-                names_read.push_back(name);
             }
         }
-        return names_read;
     }
 
     bool

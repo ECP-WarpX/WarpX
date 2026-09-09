@@ -18,6 +18,7 @@
 #include <ablastr/fields/MultiFabRegister.H>
 #include <ablastr/profiler/ProfilerWrapper.H>
 #include <ablastr/utils/Communication.H>
+#include <ablastr/warn_manager/WarnManager.H>
 
 
 using namespace amrex;
@@ -451,12 +452,42 @@ void WarpX::HybridPICInitializeRhoJandB ()
     // right after each deposition (via the closure, or via the QDSMC entropy
     // transport when solve_electron_energy_equation is on).
     // With the energy equation on the closure is evaluated on floored density.
-    if (m_hybrid_pic_model->m_te_restored_from_checkpoint) {
-        // Restart with the electron energy equation: T_e is evolved state and
-        // was restored by InitFromCheckpoint. Emit Pe from the RESTORED T_e
-        // (with the boundary treatment grad Pe needs) rather than re-running
-        // the adiabat seed, which would overwrite it and discard the evolved
-        // thermal structure. Only reachable with the energy equation on.
+    //
+    // Restart with the energy equation: T_e is evolved state and is
+    // checkpointed (HybridPICModel::AllocateLevelMFs), so the restored T_e is
+    // the truth and Pe is emitted from it. A checkpoint written before T_e
+    // was checkpointed lacks the file: MultiFabRegister::read_restarts skips
+    // it and T_e keeps its zero alloc-init value, which is detected here
+    // (a filled T_e is strictly positive) and falls back to the adiabat seed
+    // with a warning. norm0 without `local` performs the global reduction, so
+    // every rank takes the same branch.
+    const bool energy_eq = m_hybrid_pic_model->m_solve_electron_energy_equation;
+    const bool restarting = !restart_chkfile.empty();
+    bool te_restored = energy_eq && restarting;
+    if (te_restored) {
+        for (int lev = 0; lev <= finest_level; ++lev) {
+            amrex::Real const te_max = m_fields.get(
+                FieldType::hybrid_electron_temperature_fp, lev)->norm0(0, 0);
+            if (te_max <= 0._rt) { te_restored = false; }
+        }
+        if (te_restored) {
+            amrex::Print() << Utils::TextMsg::Info(
+                "restart: electron temperature restored from checkpoint "
+                "(adiabat seed suppressed)");
+        } else {
+            ablastr::warn_manager::WMRecordWarning(
+                "HybridPIC",
+                "Restarting with the electron energy equation from a checkpoint "
+                "that does not contain the electron temperature: T_e will be "
+                "re-seeded from the density adiabat, so evolved electron thermal "
+                "structure from before the checkpoint is not preserved.",
+                ablastr::warn_manager::WarnPriority::high);
+        }
+    }
+    if (te_restored) {
+        // Emit Pe from the RESTORED T_e (with the boundary treatment grad Pe
+        // needs) rather than re-running the adiabat seed, which would
+        // overwrite it and discard the evolved thermal structure.
         for (int lev = 0; lev <= finest_level; ++lev) {
             m_hybrid_pic_model->QDSMCFillElectronPressureFromTe(lev);
             ApplyElectronPressureBoundary(lev, PatchType::fine);
@@ -467,8 +498,7 @@ void WarpX::HybridPICInitializeRhoJandB ()
                 true);
         }
     } else {
-        m_hybrid_pic_model->CalculateElectronPressure(
-            m_hybrid_pic_model->m_solve_electron_energy_equation);
+        m_hybrid_pic_model->CalculateElectronPressure(energy_eq);
     }
 
     if (restart_chkfile.empty()) {

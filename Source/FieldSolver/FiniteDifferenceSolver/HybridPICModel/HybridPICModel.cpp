@@ -225,15 +225,17 @@ void HybridPICModel::AllocateLevelMFs (
     // the energy equation on it is the QDSMC state variable, otherwise it
     // mirrors the closure's implied temperature T_e = P_e / (n_e k_B),
     // filled alongside P_e in CalculateElectronPressure.
-    // With the energy equation on, T_e is flagged into the checkpoint: it is
-    // evolved state that cannot be reconstructed from the restored rho, so
-    // without it a restart would silently discard the evolved electron
-    // thermal structure. With the equation off it is a pure diagnostic
-    // mirror of the closure, refilled every step, and is not checkpointed.
+    // T_e is always flagged into the checkpoint. With the energy equation on
+    // it is evolved state that cannot be reconstructed from the restored rho,
+    // so without it a restart would silently discard the evolved electron
+    // thermal structure. With the equation off the restored value is simply
+    // overwritten from rho by the closure on the first restarted step
+    // (WarpX::HybridPICInitializeRhoJandB), so reading it back is harmless
+    // and the restart path needs no per-mode flag.
     fields.alloc_init(FieldType::hybrid_electron_temperature_fp,
         lev, amrex::convert(ba, rho_nodal_flag),
         dm, ncomps, ngRho, 0.0_rt,
-        true, true, m_solve_electron_energy_equation);
+        true, true, true);
 
     // QDSMC electron-energy-equation working fields, only touched (and
     // therefore only allocated) when the energy equation is solved:
@@ -649,25 +651,11 @@ void HybridPICModel::InitData (const ablastr::fields::MultiFabRegister& fields)
         m_external_vector_potential->InitData();
     }
 
-    // Seed T_e with the uniform value parsed from <hybrid>.elec_temp (in
-    // Joules after ReadParameters, so dividing by k_B gives Kelvin). The
-    // iter-0 diagnostic dump -- which WarpX::InitData() flushes BEFORE the
-    // first field-solve -- then sees a meaningful T_e rather than the
-    // zero-initialized allocation. This value does not survive into the
-    // solve: CalculateElectronPressure overwrites T_e from the closure, both
-    // each step on the algebraic path and once from HybridPICInitializeRhoJandB
-    // (on the floored density) to seed the energy-equation path.
-    //
-    // Skipped on a restart that restored T_e: this runs AFTER
-    // InitFromCheckpoint in WarpX::InitData, so an unconditional fill would
-    // overwrite the restored evolved temperature with the uniform constant.
-    if (!m_te_restored_from_checkpoint) {
-        for (int lev = 0; lev <= warpx.finestLevel(); ++lev) {
-            amrex::MultiFab & Te_mf = *warpx.m_fields.get(
-                FieldType::hybrid_electron_temperature_fp, lev);
-            Te_mf.setVal(m_elec_temp / PhysConst::kb);
-        }
-    }
+    // T_e is deliberately NOT seeded here. It keeps its zero alloc-init value
+    // (so the iter-0 diagnostic dump shows T_e = 0) until the first
+    // WarpX::HybridPICInitializeRhoJandB fills it from the closure on the
+    // deposited density; on a restart the checkpoint-restored T_e must not be
+    // overwritten by a uniform constant here either.
 
     // QDSMC: lazy-construct the fictitious-particle container and lay one
     // particle per cell.
