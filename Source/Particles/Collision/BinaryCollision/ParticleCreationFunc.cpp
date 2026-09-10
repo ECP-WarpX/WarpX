@@ -54,11 +54,12 @@ namespace {
                 continue; // skip blank lines (no parseable floats)
             }
 
-            // Each row must have: one energy column + at least one coefficient column.
+            // Each row must have: one energy column, L_0, and at least one
+            // higher-order coefficient that can represent anisotropy.
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                values.size() > 1u,
-                "Fusion cross-section data must contain one energy column and at least one "
-                "coefficient column.");
+                values.size() > 2u,
+                "Fusion angular-distribution data must contain one energy column, the "
+                "zeroth-order coefficient, and at least one higher-order coefficient.");
 
             int const row_num_coefficients = static_cast<int>(values.size()) - 1;
             if (num_coefficients == 0) {

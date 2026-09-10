@@ -3128,7 +3128,8 @@ Details about the collision models can be found in the :ref:`theory section <mul
 
     Only for ``nuclearfusion``. Path to an energy-dependent table of Legendre coefficients
     used by the ``anisotropic_legendre`` scattering angle model. Each nonempty row contains a
-    center-of-mass energy in MeV followed by all coefficients from order zero upward.
+    center-of-mass energy in MeV followed by all coefficients from order zero upward. The
+    zeroth-order coefficient and at least one higher-order coefficient are required.
     At least two rows are required, and their energies must be strictly increasing.
     For two-product fusion, these coefficients describe the lighter product, which must be
     listed second in :pp:param:`<collision_name>.product_species`.
