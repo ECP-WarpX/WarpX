@@ -276,9 +276,9 @@ namespace {
                 const double eyy_d = ezz_d*exx_d - ezx_d*exz_d;
                 const double eyz_d = ezx_d*exy_d - ezy_d*exx_d;
 
-                const double px_local_d = static_cast<double>(px_star_out);
-                const double py_local_d = static_cast<double>(py_star_out);
-                const double pz_local_d = static_cast<double>(pz_star_out);
+                const auto px_local_d = static_cast<double>(px_star_out);
+                const auto py_local_d = static_cast<double>(py_star_out);
+                const auto pz_local_d = static_cast<double>(pz_star_out);
                 px_star_out = static_cast<amrex::ParticleReal>(px_local_d*exx_d + py_local_d*eyx_d + pz_local_d*ezx_d);
                 py_star_out = static_cast<amrex::ParticleReal>(px_local_d*exy_d + py_local_d*eyy_d + pz_local_d*ezy_d);
                 pz_star_out = static_cast<amrex::ParticleReal>(px_local_d*exz_d + py_local_d*eyz_d + pz_local_d*ezz_d);
