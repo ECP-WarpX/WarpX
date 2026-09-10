@@ -32,30 +32,30 @@ add_warpx_test(
 )
 
 add_warpx_test(
-    test_3d_deuterium_deuterium_fusion_anisotropic_beam_target_1pc  # name
+    test_3d_deuterium_deuterium_fusion_anisotropic_beam_target_uz_1pct  # name
     3  # dims
     2  # nprocs
-    inputs_test_3d_deuterium_deuterium_fusion_anisotropic_beam_target_1pc  # inputs
+    inputs_test_3d_deuterium_deuterium_fusion_anisotropic_beam_target_uz_1pct  # inputs
     "analysis_fusion_anisotropic_beam_target.py"  # analysis
     "analysis_default_regression.py --path diags/diag1"  # checksum
     OFF  # dependency
 )
 
 add_warpx_test(
-    test_3d_deuterium_deuterium_fusion_anisotropic_beam_target_5pc  # name
+    test_3d_deuterium_deuterium_fusion_anisotropic_beam_target_uz_5pct  # name
     3  # dims
     2  # nprocs
-    inputs_test_3d_deuterium_deuterium_fusion_anisotropic_beam_target_5pc  # inputs
+    inputs_test_3d_deuterium_deuterium_fusion_anisotropic_beam_target_uz_5pct  # inputs
     "analysis_fusion_anisotropic_beam_target.py"  # analysis
     "analysis_default_regression.py --path diags/diag1"  # checksum
     OFF  # dependency
 )
 
 add_warpx_test(
-    test_3d_deuterium_deuterium_fusion_anisotropic_beam_target_10pc  # name
+    test_3d_deuterium_deuterium_fusion_anisotropic_beam_target_uz_10pct  # name
     3  # dims
     2  # nprocs
-    inputs_test_3d_deuterium_deuterium_fusion_anisotropic_beam_target_10pc  # inputs
+    inputs_test_3d_deuterium_deuterium_fusion_anisotropic_beam_target_uz_10pct  # inputs
     "analysis_fusion_anisotropic_beam_target.py"  # analysis
     "analysis_default_regression.py --path diags/diag1"  # checksum
     OFF  # dependency
@@ -82,30 +82,30 @@ add_warpx_test(
 )
 
 add_warpx_test(
-    test_3d_deuterium_tritium_fusion_anisotropic_beam_target_1pc  # name
+    test_3d_deuterium_tritium_fusion_anisotropic_beam_target_uz_1pct  # name
     3  # dims
     2  # nprocs
-    inputs_test_3d_deuterium_tritium_fusion_anisotropic_beam_target_1pc  # inputs
+    inputs_test_3d_deuterium_tritium_fusion_anisotropic_beam_target_uz_1pct  # inputs
     "analysis_fusion_anisotropic_beam_target.py"  # analysis
     "analysis_default_regression.py --path diags/diag1"  # checksum
     OFF  # dependency
 )
 
 add_warpx_test(
-    test_3d_deuterium_tritium_fusion_anisotropic_beam_target_5pc  # name
+    test_3d_deuterium_tritium_fusion_anisotropic_beam_target_uz_5pct  # name
     3  # dims
     2  # nprocs
-    inputs_test_3d_deuterium_tritium_fusion_anisotropic_beam_target_5pc  # inputs
+    inputs_test_3d_deuterium_tritium_fusion_anisotropic_beam_target_uz_5pct  # inputs
     "analysis_fusion_anisotropic_beam_target.py"  # analysis
     "analysis_default_regression.py --path diags/diag1"  # checksum
     OFF  # dependency
 )
 
 add_warpx_test(
-    test_3d_deuterium_tritium_fusion_anisotropic_beam_target_10pc  # name
+    test_3d_deuterium_tritium_fusion_anisotropic_beam_target_uz_10pct  # name
     3  # dims
     2  # nprocs
-    inputs_test_3d_deuterium_tritium_fusion_anisotropic_beam_target_10pc  # inputs
+    inputs_test_3d_deuterium_tritium_fusion_anisotropic_beam_target_uz_10pct  # inputs
     "analysis_fusion_anisotropic_beam_target.py"  # analysis
     "analysis_default_regression.py --path diags/diag1"  # checksum
     OFF  # dependency

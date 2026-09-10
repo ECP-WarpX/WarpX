@@ -22,7 +22,7 @@ analysis or cleanup tests:
 .. code-block:: bash
 
    ctest --test-dir build --output-on-failure \
-     -R "test_3d_deuterium_(deuterium|tritium)_fusion_anisotropic_beam_target_.*pc\\.run$"
+     -R "test_3d_deuterium_(deuterium|tritium)_fusion_anisotropic_beam_target_uz_.*\\.run$"
 
 Then, from the WarpX source directory, combine the three diagnostic outputs
 for each reaction:
@@ -31,15 +31,15 @@ for each reaction:
 
    python Examples/Tests/nuclear_fusion/analysis_fusion_anisotropic_beam_target.py \
      --plot \
-     build/bin/test_3d_deuterium_deuterium_fusion_anisotropic_beam_target_1pc/diags/diag1 \
-     build/bin/test_3d_deuterium_deuterium_fusion_anisotropic_beam_target_5pc/diags/diag1 \
-     build/bin/test_3d_deuterium_deuterium_fusion_anisotropic_beam_target_10pc/diags/diag1
+     build/bin/test_3d_deuterium_deuterium_fusion_anisotropic_beam_target_uz_1pct/diags/diag1 \
+     build/bin/test_3d_deuterium_deuterium_fusion_anisotropic_beam_target_uz_5pct/diags/diag1 \
+     build/bin/test_3d_deuterium_deuterium_fusion_anisotropic_beam_target_uz_10pct/diags/diag1
 
    python Examples/Tests/nuclear_fusion/analysis_fusion_anisotropic_beam_target.py \
      --plot \
-     build/bin/test_3d_deuterium_tritium_fusion_anisotropic_beam_target_1pc/diags/diag1 \
-     build/bin/test_3d_deuterium_tritium_fusion_anisotropic_beam_target_5pc/diags/diag1 \
-     build/bin/test_3d_deuterium_tritium_fusion_anisotropic_beam_target_10pc/diags/diag1
+     build/bin/test_3d_deuterium_tritium_fusion_anisotropic_beam_target_uz_1pct/diags/diag1 \
+     build/bin/test_3d_deuterium_tritium_fusion_anisotropic_beam_target_uz_5pct/diags/diag1 \
+     build/bin/test_3d_deuterium_tritium_fusion_anisotropic_beam_target_uz_10pct/diags/diag1
 
 The commands write ``deuterium_deuterium_fusion_anisotropic_beam_target_neutron_spectrum.png`` and
 ``deuterium_tritium_fusion_anisotropic_beam_target_neutron_spectrum.png`` in the current directory.  Solid
