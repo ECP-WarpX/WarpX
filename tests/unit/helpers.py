@@ -6,10 +6,6 @@
 # License: BSD-3-Clause-LBNL
 
 """Setup helpers for the WarpX unit tests.
-
-The test modules import from here, which relies on pytest's default ``prepend``
-import mode putting ``tests/unit`` on ``sys.path``. That is what
-``add_warpx_pytest()`` runs; ``--import-mode=importlib`` would not resolve it.
 """
 
 import numpy as np
