@@ -48,6 +48,8 @@
 
 NVIDIA-H100:
   extends: .install-dependencies
+  variables:
+    BLASPP_GPU_BACKEND: cuda
   tags: [nvidia-h100]
   image: nvcr.io/nvidia/cuda:12.8.0-devel-ubuntu24.04
   script:
@@ -100,6 +102,7 @@ AMD-MI300:
   variables:
     BLASPP_GPU_BACKEND: hip
     ROCM_PATH: /opt/rocm-6.4.3
+    CXX: /opt/rocm-6.4.3/llvm/bin/clang++
     HIP_PATH: ${ROCM_PATH}
     HIP_CLANG_PATH: ${ROCM_PATH}/llvm/bin
     CMAKE_PREFIX_PATH: "${ROCM_PATH}:${CMAKE_PREFIX_PATH}"
