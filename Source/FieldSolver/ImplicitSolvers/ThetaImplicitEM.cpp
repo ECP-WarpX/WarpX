@@ -52,6 +52,10 @@ void ThetaImplicitEM::Define (WarpX* const a_WarpX, bool a_from_restart)
         m_theta>=0.5 && m_theta<=1.0,
         "theta parameter for theta implicit time solver must be between 0.5 and 1.0");
 
+    // Initial guess for Eg^{n+theta} is Eg^{n-1+theta}
+    // (i.e. Eg used to advance the system from step n-1 to step n)
+    m_E.linComb(1.0_rt - m_theta, m_Eold, m_theta, m_E);
+
     // Parse nonlinear solver parameters
     parseNonlinearSolverParams( pp );
 
@@ -99,13 +103,9 @@ int ThetaImplicitEM::OneStep (const amrex::Real  start_time,
     // Save up and xp at the start of the time step
     m_WarpX->SaveParticlesAtImplicitStepStart();
 
-    // Initial guess for Eg^{n+theta} is Eg^{n-1+theta}
-    // (i.e., Eg used to advance the system from step n-1 to step n)
-    m_E.linComb(1.0_rt - m_theta, m_Eold, m_theta, m_E);
-
     // Save Eg at start of time step
-    SaveEoldMultifab();
-    m_Eold.Copy(FieldType::E_old, FieldType::None, true);
+    SaveEoldMultifab(); // Copy Efield_fp into E_old
+    m_Eold.Copy(FieldType::Efield_fp); // Copy Efield_fp into m_Eold
 
     // Save Bg at start of time step
     for (int lev = 0; lev < m_num_amr_levels; ++lev) {
@@ -118,6 +118,7 @@ int ThetaImplicitEM::OneStep (const amrex::Real  start_time,
 
     // Solve nonlinear system for Eg at t_{n+theta}
     // Particles will be advanced to t_{n+1/2}
+    // Note that initial guess for m_E is that from previous solve: E_g^{n-1+theta}
     m_nlsolver->Solve(m_E, m_Eold, start_time, m_dt, a_step, verbose_step);
 
     const int exit_status = m_nlsolver->GetExitStatus();
@@ -175,19 +176,21 @@ void ThetaImplicitEM::UpdateWarpXFields ( const WarpXSolverVec&  a_E,
 
 }
 
-void ThetaImplicitEM::FinishFieldUpdate ( amrex::Real end_time )
+void ThetaImplicitEM::FinishFieldUpdate (amrex::Real end_time)
 {
     BL_PROFILE("ThetaImplicitEM::FinishFieldUpdate()");
 
+    // Update the WarpX-owned fields, preserving m_E at E^{n+theta}
+    // as the initial guess for the next nonlinear solve. E_old retains E^n
+    // for checkpointing alongside Efield_fp at E^{n+1}.
     // Eg^{n+1} = (1/theta)*Eg^{n+theta} + (1-1/theta)*Eg^n
     // Bg^{n+1} = (1/theta)*Bg^{n+theta} + (1-1/theta)*Bg^n
 
-    const amrex::Real c0 = 1._rt/m_theta;
-    const amrex::Real c1 = 1._rt - c0;
-    m_E.linComb( c0, m_E, c1, m_Eold );
-    m_WarpX->SetElectricFieldAndApplyBCs( m_E, end_time );
+    ablastr::fields::MultiLevelVectorField const & E_old = m_WarpX->m_fields.get_mr_levels_alldirs(FieldType::E_old, 0);
+    m_WarpX->FinishElectricFieldAndApplyBCs(E_old, m_theta, end_time);
+
     ablastr::fields::MultiLevelVectorField const & B_old = m_WarpX->m_fields.get_mr_levels_alldirs(FieldType::B_old, 0);
-    m_WarpX->FinishMagneticFieldAndApplyBCs( B_old, m_theta, end_time );
+    m_WarpX->FinishMagneticFieldAndApplyBCs(B_old, m_theta, end_time);
 
 }
 

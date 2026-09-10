@@ -83,6 +83,14 @@ private:
      * centering of the data as the variable being solved for, which is E here.
      * For example, if using a Yee grid then a container for curlB could be a
      * WarpXSovlerVec, but magnetic field B should not be.
+     *
+     * m_E holds the midpoint iterate for the implicit substep. After the solve,
+     * it is retained as the initial guess for the next nonlinear solve.
+     * m_Eold holds the field after the first source-free half step, which is
+     * the reference state for the implicit solve. The separate E_old MultiFab
+     * holds the same field for field finishing, diagnostics, and checkpointing.
+     * Efield_fp reaches the full-step field E^{n+1} only after the second
+     * source-free half step; E_old is not the full-step field E^n.
      */
     WarpXSolverVec m_E, m_Eold;
 
@@ -95,16 +103,17 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_Bold;
 
     /**
-     * \brief Update the E and B fields owned by WarpX
+     * \brief Copy the implicit midpoint E into the WarpX-owned electric field and apply BCs
      */
     void UpdateWarpXFields ( WarpXSolverVec const&  a_E,
                              amrex::Real            half_time );
 
     /**
-     * \brief Nonlinear solver is for the time-centered values of E. After
-     * the solver, need to use m_E and m_Eold to compute E^{n+1}
+     * \brief Finish the implicit electric-field update using Efield_fp and E_old.
+     * Preserve m_E as the initial guess for the next nonlinear solve. The second
+     * source-free half step must still be applied to obtain the full-step fields.
      */
-    void FinishFieldUpdate ( amrex::Real  a_new_time );
+    void FinishFieldUpdate (amrex::Real end_time);
 
 };
 

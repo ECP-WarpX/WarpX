@@ -76,7 +76,13 @@ public:
 private:
 
     /**
-     * \brief Solver vectors for E and Eold
+     * \brief Electric-field vectors for the nonlinear solve from n to n+1.
+     * m_E holds the iterate for E^{n+1/2}, initialized from the previous
+     * midpoint E^{n-1/2} (E^0 on a fresh start). After the solve, E^{n+1/2}
+     * is retained as the initial guess for the next nonlinear solve.
+     * m_Eold holds E^n throughout the step as the nonlinear solver's reference
+     * state. The separate E_old MultiFab also holds E^n for field finishing,
+     * diagnostics, and checkpointing alongside Efield_fp at E^{n+1}.
      */
     WarpXSolverVec m_E, m_Eold;
 
