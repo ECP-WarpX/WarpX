@@ -67,6 +67,15 @@ void HybridPICModel::ReadParameters ()
 
     utils::parser::queryWithParser(pp_hybrid, "holmstrom_vacuum_region", m_holmstrom_vacuum_region);
 
+    // edge | node | cell (see VacuumSeamSwitchMode); an unknown value aborts
+    // naming the accepted values.
+    pp_hybrid.query_enum_case_insensitive("vacuum_seam_switch_mode", m_vacuum_seam_switch_mode);
+#if !defined(WARPX_DIM_3D) && !defined(WARPX_DIM_XZ)
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_vacuum_seam_switch_mode == VacuumSeamSwitchMode::Edge,
+        "hybrid_pic_model.vacuum_seam_switch_mode is only supported in 3D and "
+        "2D (XZ) Cartesian geometry");
+#endif
+
     // The hybrid model requires an electron temperature, reference density
     // and exponent to be given. These values will be used to calculate the
     // electron pressure according to p = n0 * Te * (n/n0)^gamma
@@ -225,9 +234,15 @@ void HybridPICModel::AllocateLevelMFs (
     // the energy equation on it is the QDSMC state variable, otherwise it
     // mirrors the closure's implied temperature T_e = P_e / (n_e k_B),
     // filled alongside P_e in CalculateElectronPressure.
+    // T_e is always flagged into the checkpoint. With the energy equation on
+    // it is evolved state that cannot be reconstructed from the restored rho,
+    // so without it a restart would silently discard the evolved electron
+    // thermal structure. With the equation off the restored value is simply
+    // overwritten from rho by the closure on the first restarted step.
     fields.alloc_init(FieldType::hybrid_electron_temperature_fp,
         lev, amrex::convert(ba, rho_nodal_flag),
-        dm, ncomps, ngRho, 0.0_rt);
+        dm, ncomps, ngRho, 0.0_rt,
+        true, true, true);
 
     // QDSMC electron-energy-equation working fields, only touched (and
     // therefore only allocated) when the energy equation is solved:
@@ -643,19 +658,10 @@ void HybridPICModel::InitData (const ablastr::fields::MultiFabRegister& fields)
         m_external_vector_potential->InitData();
     }
 
-    // Seed T_e with the uniform value parsed from <hybrid>.elec_temp (in
-    // Joules after ReadParameters, so dividing by k_B gives Kelvin). The
-    // iter-0 diagnostic dump -- which WarpX::InitData() flushes BEFORE the
-    // first field-solve -- then sees a meaningful T_e rather than the
-    // zero-initialized allocation. This value does not survive into the
-    // solve: CalculateElectronPressure overwrites T_e from the closure, both
-    // each step on the algebraic path and once from HybridPICInitializeRhoJandB
-    // (on the floored density) to seed the energy-equation path.
-    for (int lev = 0; lev <= warpx.finestLevel(); ++lev) {
-        amrex::MultiFab & Te_mf = *warpx.m_fields.get(
-            FieldType::hybrid_electron_temperature_fp, lev);
-        Te_mf.setVal(m_elec_temp / PhysConst::kb);
-    }
+    // T_e is deliberately NOT seeded here. It keeps its zero alloc-init value
+    // (so the iter-0 diagnostic dump shows T_e = 0) until the first
+    // WarpX::HybridPICInitializeRhoJandB fills it from the closure on the
+    // deposited density.
 
     // QDSMC: lazy-construct the fictitious-particle container and lay one
     // particle per cell.

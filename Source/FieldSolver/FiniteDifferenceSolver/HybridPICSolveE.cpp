@@ -29,6 +29,77 @@
 using namespace amrex;
 using warpx::fields::FieldType;
 
+#if !defined(WARPX_DIM_RZ) && !defined(WARPX_DIM_RCYLINDER) && !defined(WARPX_DIM_RSPHERE)
+namespace
+{
+    /** Endpoint-min nodal decision density for vacuum_seam_switch_mode =
+     *  "node": the minimum nodal rho over the staggered component's edge
+     *  endpoints (the same nodes the legacy edge average reads).
+     *  Vacuum-favoring: the unguarded Hall branch runs only where every
+     *  endpoint is above the floor. */
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    amrex::Real NodalSwitchRho (
+        amrex::Array4<amrex::Real const> const& rho,
+        amrex::GpuArray<int,3> const& stag,
+        int i, int j, int k)
+    {
+        const int ni = (stag[0] == 0) ? 2 : 1;
+        const int nj = (stag[1] == 0) ? 2 : 1;
+        const int nk = (stag[2] == 0) ? 2 : 1;
+        amrex::Real r = rho(i, j, k);
+        for (int kk = 0; kk < nk; ++kk) {
+        for (int jj = 0; jj < nj; ++jj) {
+        for (int ii = 0; ii < ni; ++ii) {
+            r = amrex::min(r, rho(i+ii, j+jj, k+kk));
+        }}}
+        return r;
+    }
+
+    /** Adjacent-cell decision density for vacuum_seam_switch_mode = "cell":
+     *  the minimum over the component's adjacent cells of the node-averaged
+     *  rho -- one piecewise-constant-per-cell decision for all three E
+     *  components, reflection- and C4-equivariant, vacuum-favoring like
+     *  "node". */
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    amrex::Real CellSwitchRho (
+        amrex::Array4<amrex::Real const> const& rho,
+        amrex::GpuArray<int,3> const& stag,
+        int i, int j, int k)
+    {
+        using namespace amrex::literals;
+        int off_lo[3] = {0, 0, 0};
+        int span[3] = {1, 1, 1};
+        int const ic[3] = {i, j, k};
+        for (int d = 0; d < AMREX_SPACEDIM; ++d) {
+            off_lo[d] = (stag[d] == 1) ? -1 : 0;
+            span[d] = 2;
+        }
+        // Running minimum over the adjacent cells: max() is the identity
+        // element for min (no cell average can exceed it), not an overflow
+        // guard. The outer loops visit every cell that touches this E
+        // component (two per direction where the component is nodal, one
+        // where it is cell-centered); the inner loops form each cell's
+        // node-averaged rho (sum/cnt, cnt = 2^AMREX_SPACEDIM); the result is
+        // the minimum of those cell averages -- vacuum-favoring.
+        amrex::Real rho_cell_min = std::numeric_limits<amrex::Real>::max();
+        for (int ok = off_lo[2]; ok <= 0; ++ok) {
+        for (int oj = off_lo[1]; oj <= 0; ++oj) {
+        for (int oi = off_lo[0]; oi <= 0; ++oi) {
+            amrex::Real sum = 0.0_rt;
+            int cnt = 0;
+            for (int kk = 0; kk < span[2]; ++kk) {
+            for (int jj = 0; jj < span[1]; ++jj) {
+            for (int ii = 0; ii < span[0]; ++ii) {
+                sum += rho(ic[0]+oi+ii, ic[1]+oj+jj, ic[2]+ok+kk);
+                cnt += 1;
+            }}}
+            rho_cell_min = amrex::min(rho_cell_min, sum/static_cast<amrex::Real>(cnt));
+        }}}
+        return rho_cell_min;
+    }
+}
+#endif
+
 void FiniteDifferenceSolver::CalculateCurrentAmpere (
     ablastr::fields::VectorField & Jfield,
     ablastr::fields::VectorField const& Bfield,
@@ -1051,6 +1122,12 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
     const bool include_external_fields = hybrid_model->m_add_external_fields;
 
     const bool holmstrom_vacuum_region = hybrid_model->m_holmstrom_vacuum_region;
+    // Decision-density sampling for the vacuum seam (VacuumSeamSwitchMode):
+    // Edge is the legacy per-component average; Node and Cell give one
+    // decision field for all three E components. The decision drives the
+    // holmstrom vacuum branch when that treatment is on and the
+    // density-floor selection of the guarded Hall term otherwise.
+    const VacuumSeamSwitchMode switch_mode = hybrid_model->m_vacuum_seam_switch_mode;
 
     auto & warpx = WarpX::GetInstance();
     const amrex::Real t_new = warpx.gett_new(lev);
@@ -1257,8 +1334,14 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
 
             // Interpolate to get the appropriate charge density in space
             const Real rho_val = Interp(rho, nodal, Ex_stag, coarsen, i, j, k, 0);
+            // The physics keeps rho_val; only the vacuum-seam decision
+            // (holmstrom branch or guarded-floor selection) resamples.
+            const Real rho_dec =
+                (switch_mode == VacuumSeamSwitchMode::Node) ? NodalSwitchRho(rho, Ex_stag, i, j, k) :
+                (switch_mode == VacuumSeamSwitchMode::Cell) ? CellSwitchRho(rho, Ex_stag, i, j, k) :
+                rho_val;
 
-            if (rho_val < rho_floor && holmstrom_vacuum_region) {
+            if (rho_dec < rho_floor && holmstrom_vacuum_region) {
                 Ex(i, j, k) = 0._rt;
             } else {
                 // Get the gradient of the electron pressure if the longitudinal part of
@@ -1270,8 +1353,13 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 // interpolate the nodal neE values to the Yee grid
                 const auto enE_x = Interp(enE, nodal, Ex_stag, coarsen, i, j, k, 0);
 
-                // safety condition since we divide by rho
-                const auto rho_val_limited = std::max(rho_val, rho_floor);
+                // Floor selection follows the vacuum-seam decision: a
+                // vacuum-decided component divides by the floor, a
+                // plasma-decided one by rho_val (still floored for division
+                // safety). At mode 0 rho_dec == rho_val and this reduces to
+                // the legacy max(rho_val, rho_floor).
+                const auto rho_val_limited = (rho_dec < rho_floor)
+                    ? rho_floor : std::max(rho_val, rho_floor);
 
                 Ex(i, j, k) = (enE_x - grad_Pe) / rho_val_limited;
             }
@@ -1327,8 +1415,14 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
 
             // Interpolate to get the appropriate charge density in space
             const Real rho_val = Interp(rho, nodal, Ey_stag, coarsen, i, j, k, 0);
+            // The physics keeps rho_val; only the vacuum-seam decision
+            // (holmstrom branch or guarded-floor selection) resamples.
+            const Real rho_dec =
+                (switch_mode == VacuumSeamSwitchMode::Node) ? NodalSwitchRho(rho, Ey_stag, i, j, k) :
+                (switch_mode == VacuumSeamSwitchMode::Cell) ? CellSwitchRho(rho, Ey_stag, i, j, k) :
+                rho_val;
 
-            if (rho_val < rho_floor && holmstrom_vacuum_region) {
+            if (rho_dec < rho_floor && holmstrom_vacuum_region) {
                 Ey(i, j, k) = 0._rt;
             } else {
                 // Get the gradient of the electron pressure if the longitudinal part of
@@ -1340,8 +1434,13 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 // interpolate the nodal neE values to the Yee grid
                 const auto enE_y = Interp(enE, nodal, Ey_stag, coarsen, i, j, k, 1);
 
-                // safety condition since we divide by rho
-                const auto rho_val_limited = std::max(rho_val, rho_floor);
+                // Floor selection follows the vacuum-seam decision: a
+                // vacuum-decided component divides by the floor, a
+                // plasma-decided one by rho_val (still floored for division
+                // safety). At mode 0 rho_dec == rho_val and this reduces to
+                // the legacy max(rho_val, rho_floor).
+                const auto rho_val_limited = (rho_dec < rho_floor)
+                    ? rho_floor : std::max(rho_val, rho_floor);
 
                 Ey(i, j, k) = (enE_y - grad_Pe) / rho_val_limited;
             }
@@ -1395,8 +1494,14 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
 
             // Interpolate to get the appropriate charge density in space
             const Real rho_val = Interp(rho, nodal, Ez_stag, coarsen, i, j, k, 0);
+            // The physics keeps rho_val; only the vacuum-seam decision
+            // (holmstrom branch or guarded-floor selection) resamples.
+            const Real rho_dec =
+                (switch_mode == VacuumSeamSwitchMode::Node) ? NodalSwitchRho(rho, Ez_stag, i, j, k) :
+                (switch_mode == VacuumSeamSwitchMode::Cell) ? CellSwitchRho(rho, Ez_stag, i, j, k) :
+                rho_val;
 
-            if (rho_val < rho_floor && holmstrom_vacuum_region) {
+            if (rho_dec < rho_floor && holmstrom_vacuum_region) {
                 Ez(i, j, k) = 0._rt;
             } else {
                 // Get the gradient of the electron pressure if the longitudinal part of
@@ -1408,8 +1513,13 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 // interpolate the nodal neE values to the Yee grid
                 const auto enE_z = Interp(enE, nodal, Ez_stag, coarsen, i, j, k, 2);
 
-                // safety condition since we divide by rho
-                const auto rho_val_limited = std::max(rho_val, rho_floor);
+                // Floor selection follows the vacuum-seam decision: a
+                // vacuum-decided component divides by the floor, a
+                // plasma-decided one by rho_val (still floored for division
+                // safety). At mode 0 rho_dec == rho_val and this reduces to
+                // the legacy max(rho_val, rho_floor).
+                const auto rho_val_limited = (rho_dec < rho_floor)
+                    ? rho_floor : std::max(rho_val, rho_floor);
 
                 Ez(i, j, k) = (enE_z - grad_Pe) / rho_val_limited;
             }
