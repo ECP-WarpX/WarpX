@@ -14,6 +14,7 @@ case = args.case.resolve()
 assert case.name in {
     "test_1d_radiation_particle_carry_restart",
     "test_2d_radiation_particle_carry_restart",
+    "test_1d_radiation_transport_moving_beam_restart",
 }
 output = case / "diags"
 assert not output.is_symlink()

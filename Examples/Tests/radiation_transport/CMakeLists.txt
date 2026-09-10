@@ -2040,9 +2040,16 @@ if(WarpX_PRECISION STREQUAL "DOUBLE" AND WarpX_PARTICLE_PRECISION STREQUAL "DOUB
     if(TEST test_1d_radiation_particle_carry_ownership_rejected.run)
         set_property(TEST test_1d_radiation_particle_carry_ownership_rejected.run
             APPEND PROPERTY DEPENDS test_1d_radiation_particle_carry.analysis)
+        if(TEST test_1d_radiation_particle_carry.cleanup)
+            set_property(TEST test_1d_radiation_particle_carry.cleanup
+                APPEND PROPERTY DEPENDS
+                    test_1d_radiation_particle_carry_ownership_rejected.run)
+        endif()
     endif()
-    foreach(carry_dimension IN ITEMS 1d 2d)
-        set(carry_restart test_${carry_dimension}_radiation_particle_carry_restart)
+    foreach(carry_restart IN ITEMS
+            test_1d_radiation_particle_carry_restart
+            test_2d_radiation_particle_carry_restart
+            test_1d_radiation_transport_moving_beam_restart)
         if(TEST ${carry_restart}.run)
             add_test(NAME ${carry_restart}_prepare COMMAND ${Python_EXECUTABLE}
                 ${CMAKE_CURRENT_SOURCE_DIR}/prepare_particle_carry_restart.py

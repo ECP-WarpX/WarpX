@@ -24,12 +24,12 @@ main (int argc, char* argv[])
         constexpr int cells = 32;
         constexpr int groups = 3;
         amrex::Box const domain(amrex::IntVect(0), amrex::IntVect(cells - 1));
-        amrex::RealBox const physical({0.0_rt}, {1.0_rt});
+        amrex::RealBox const physical(0.0_rt, 1.0_rt);
         int periodic[] = {1};
         amrex::Geometry const geometry(domain, &physical, 0, periodic);
         amrex::BoxArray boxes(domain);
         boxes.maxSize(8);
-        amrex::DistributionMapping distribution(boxes);
+        amrex::DistributionMapping const distribution(boxes);
         amrex::MultiFab energy(boxes, distribution, groups, 1);
         amrex::MultiFab opacity(boxes, distribution, groups, 1);
         amrex::Real const dx = 1.0_rt / cells;
@@ -47,7 +47,7 @@ main (int argc, char* argv[])
             {0, 0, 0, 0, 0, 0},
             nullptr,
             {nullptr, nullptr, groups}};
-        for (amrex::Real factor : {0.01_rt, 10.0_rt, 100.0_rt}) {
+        for (amrex::Real const factor : {0.01_rt, 10.0_rt, 100.0_rt}) {
             for (amrex::MFIter mfi(energy); mfi.isValid(); ++mfi) {
                 auto const e = energy.array(mfi);
                 auto const a = opacity.array(mfi);
@@ -87,8 +87,8 @@ main (int argc, char* argv[])
                 }
                 amrex::Real amplitude = amrex::get<0>(data.value());
                 amrex::ParallelDescriptor::ReduceRealSum(amplitude);
-                amrex::Real const eigenvalue =
-                    4.0_rt * std::pow(std::sin(MathConst::pi / cells), 2) / (dx * dx);
+                amrex::Real const sine = std::sin(MathConst::pi / cells);
+                amrex::Real const eigenvalue = 4.0_rt * sine * sine / (dx * dx);
                 amrex::Real const expected =
                     0.01_rt * background / (1.0_rt + dt * d0 / (group + 1) * eigenvalue);
                 // The LP limiter differs from 1/3 by O(R^2), below 1e-6 here.
@@ -195,8 +195,8 @@ main (int argc, char* argv[])
                                          initial_mean) < 10 * tolerance);
             AMREX_ALWAYS_ASSERT(reaction.group_escaped_energy[g] == 0 &&
                                 reaction.group_injected_energy[g] == 0);
-            amrex::Real const eigenvalue =
-                4.0_rt * std::pow(std::sin(MathConst::pi / cells), 2) / (dx * dx);
+            amrex::Real const sine = std::sin(MathConst::pi / cells);
+            amrex::Real const eigenvalue = 4.0_rt * sine * sine / (dx * dx);
             amrex::Real const expected_amplitude =
                 g == 2 ? 0.0_rt
                        : 0.01_rt / (g + 2 + reaction_dt * PhysConst::c / 300.0_rt * eigenvalue);

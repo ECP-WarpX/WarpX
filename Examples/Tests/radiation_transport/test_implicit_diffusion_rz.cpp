@@ -25,8 +25,8 @@ main (int argc, char* argv[])
         amrex::RealBox const physical({0.0_rt, 0.0_rt}, {1.0_rt, 1.0_rt});
         int periodic[] = {0, 0};
         amrex::Geometry const geometry(domain, &physical, 1, periodic);
-        amrex::BoxArray boxes(domain);
-        amrex::DistributionMapping distribution(boxes);
+        amrex::BoxArray const boxes(domain);
+        amrex::DistributionMapping const distribution(boxes);
         amrex::MultiFab energy(boxes, distribution, 1, 1);
         amrex::MultiFab opacity(boxes, distribution, 1, 1);
         amrex::Parser parser("1+z");
@@ -37,9 +37,9 @@ main (int argc, char* argv[])
         amrex::Real const tolerance =
             amrex::max(1.0e-10_rt, 64.0_rt * std::numeric_limits<amrex::Real>::epsilon());
         using Boundary = RadiationTransport::DiffusionBoundary;
-        for (bool bath : {false, true}) {
+        for (bool const bath : {false, true}) {
             int const code = static_cast<int>(bath ? Boundary::MarshakBath : Boundary::Marshak);
-            warpx::radiation::ImplicitDiffusionOptions options{
+            warpx::radiation::ImplicitDiffusionOptions const options{
                 tolerance,
                 amrex::max(1.0e-13_rt, 8.0_rt * std::numeric_limits<amrex::Real>::epsilon()),
                 1.0_rt,

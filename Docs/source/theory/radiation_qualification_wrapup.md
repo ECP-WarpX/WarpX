@@ -54,6 +54,31 @@ requirements are complete.
 
 ### CI checksum follow-up
 
+The September 10 stabilization pass merges upstream resistive-drag and
+vacuum-seam changes while retaining the conservative caloric source and
+cell-local ion moment projection. The latent-Qei source oracle remains
+unmagnetized; the upstream ideal-gas Qei case separately exercises force-free
+electron-ion drift.
+
+Local validation with test cleanup enabled passes 434/434 selected 1D
+radiation/coupling checks (`build-ci-tools/resume-cleanup-gates-fresh.log`).
+The carry-ownership negative test now holds its producer checkpoint until it
+finishes. Moving-beam restart preparation archives prior diagnostic output,
+preventing duplicate rows during repeated local runs. Single-precision
+analysis of the affected source/test translation units also catches and fixes
+the RZ implicit-diffusion test warnings hidden by the canceled CI matrix job.
+These are selected local gates, not a claim that the complete CI matrix or
+the remaining production qualification is green.
+
+An isolated control executable restores only the old live-particle diagnostic
+SI round trip. Both `test_1d_collision_z` and its modulus-shuffle variant then
+reproduce their existing checksums exactly (maximum relative error zero).
+The corrected executable instead reproduces CI's changed checksums, while
+both original collision physics analyses pass. This establishes the cause
+for these two cases, not for every failing reference. No failing checksum
+reference has been regenerated in this stabilization pass; incoming upstream
+references are retained as part of the merge.
+
 The 2D CI matrix also exposed a real initialization defect: native bulk plasma
 injection does not call the generic runtime-attribute initializer, so newly
 registered radiation carries could contain allocator residue. Both bulk
