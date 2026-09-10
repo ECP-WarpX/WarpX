@@ -14,17 +14,18 @@ For best results, this skill should be run in a *fresh* session (not the one tha
 If this session also wrote the code under review, say so up front and weigh your own prior choices skeptically.
 The author should commit their work and make sure their branch is up to date with `development`, so the diff the assistant reviews matches what reviewers will see.
 
-The review is a static reading of the diff: do not build the code or run tests here, since compilation and the test suite are covered by the CI checks that run on the open pull request.
-The procedure below says so explicitly because `AGENTS.md` documents how to build and test WarpX for development work, not for this review.
+This is a static review only. Do not build the code or run tests; CI covers both once the pull request is open.
 
 ## Review procedure
 
 Review the changes on the current branch relative to the `development` branch, as if you were a WarpX maintainer reviewing a pull request.
 Report your findings first and do not make any changes yet.
 
-This is a read-only review of the source.
-Do not configure or compile the code (no `cmake`, no `pip install`) and do not run the test suite (no `ctest`, no analysis scripts): compilation, tests, and checksums are covered by the CI checks that run once the pull request is open.
-The `Build Commands` and `Testing` sections of AGENTS.md describe development work in general and do not apply to this review: ignore them here.
+**Hard constraint:** perform only static inspection.
+Do not configure, build, install, or execute project code, and do not run tests, analysis scripts, examples, benchmarks, linters, or timing commands.
+In particular, do not use `cmake`, a compiler, `pip install`, `ctest`, or `pytest`, and do not use an existing build.
+Assess test coverage, portability, and likely runtime from the source alone.
+This constraint overrides the `Build Commands` and `Testing` sections of `AGENTS.md` for this review.
 
 Start by reading AGENTS.md for the project conventions (style, portability, dimensionality, backward compatibility), then identify the remote that points at github.com/BLAST-WarpX/warpx with `git remote -v` (the WarpX contributing guide names it `mainline`; it may also be `origin` or `upstream`).
 Call it <upstream>, then run `git fetch <upstream> development` followed by `git diff <upstream>/development...HEAD` to see the changes.
@@ -55,7 +56,9 @@ Check the following and report concrete issues with file and line references:
 5. AMReX usage: is this the right AMReX abstraction, or does it hand-roll something AMReX already provides?
    Flag misuse that would still compile, e.g., wrong ghost-cell or index-type conventions.
 6. Backward compatibility: if a user-facing input parameter was removed or renamed, is there a guard in the relevant BackwardCompatibility()?
-7. Testing: is there a test covering the new feature? Judging from the input file and analysis script alone (without running it), does it look fast enough for a 2-core CI runner and written portably?
+7. Testing: is there a test covering the new feature?
+   From static inspection alone, are its input size and apparent cost plausibly suitable for a 2-core CI runner?
+   Never run or time it to answer these questions.
 8. Style: does the diff follow the C++/Python style in AGENTS.md, and does it avoid reformatting unrelated code?
 9. Auto-generated files: flag any manual edits to `.pyi` stubs, `dependencies.json`, or `Regression/Checksum/benchmarks_json/*.json`.
 10. Documentation: are new user-facing parameters or features documented?

@@ -103,6 +103,7 @@ The skill will:
 #. Read ``AGENTS.md`` for the project conventions.
 #. Fetch the latest upstream ``development`` and diff your branch against it.
 #. Review the diff against a checklist (correctness, algorithmic scaling, dimensionality, GPU/CPU portability, AMReX usage, backward compatibility, testing, style, auto-generated files, documentation, scope).
+#. Use static inspection only: do not configure, build, install, or execute project code, and do not run tests, analysis scripts, examples, benchmarks, linters, or timing commands.
 #. Report concrete findings with file and line references, each with a severity and a suggested fix.
 
 To add new skills, create a directory under ``.claude/skills/<skill-name>/`` containing a ``SKILL.md`` file that describes the step-by-step procedure.
@@ -120,9 +121,12 @@ This does not replace your own critical review, but it makes that review more ef
 Before using the prompt below, commit your work and make sure your branch is up to date with ``development``, so that the diff the assistant reviews matches what reviewers will see.
 Run it in a *fresh* session (not the one that wrote the code). If this session also wrote the code under review, say so up front and weigh your own prior choices skeptically.
 
-The review is a static reading of the diff: the assistant is asked not to compile the code or run the test suite, since the CI checks do that once the pull request is open.
+The review is static inspection only.
+The assistant must not configure, build, install, or execute project code, and must not run tests, analysis scripts, examples, benchmarks, linters, or timing commands.
+In particular, it must not use ``cmake``, a compiler, ``pip install``, ``ctest``, or ``pytest``, or use an existing build.
+Test coverage, portability, and likely runtime must be assessed from the source alone, since the CI checks compile and run the code once the pull request is open.
+This constraint overrides the ``Build Commands`` and ``Testing`` sections of ``AGENTS.md`` for this review.
 This keeps the pass fast and avoids spending a long local build on something CI reports anyway.
-The prompt says so explicitly because ``AGENTS.md`` documents how to build and test WarpX for development work, and an assistant reading it for the project conventions would otherwise be inclined to do both.
 
 The prompt also asks the assistant to check AMReX behavior against real source, at the ``commit_amrex`` pinned in ``dependencies.json``, rather than recalling APIs from memory, which is a common source of confident but wrong review findings.
 Reading the pin costs nothing: a clone next to your WarpX checkout can show any file at that commit without touching your working tree or branches, and ``raw.githubusercontent.com`` serves it without a clone at all.
