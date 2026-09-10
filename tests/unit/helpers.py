@@ -90,8 +90,6 @@ def make_sim(
     #   can be attached
     pywarpx.amrex.throw_exception = 1
     pywarpx.amrex.signal_handling = 0
-    #   abort GPU runs on out-of-memory instead of swapping to host RAM
-    pywarpx.amrex.abort_on_out_of_gpu_memory = 1
     #   allocate GPU memory on demand instead of pre-allocating 3/4th, so
     #   that tests can share a GPU
     pywarpx.amrex.the_arena_init_size = 0
