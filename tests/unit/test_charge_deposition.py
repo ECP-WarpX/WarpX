@@ -7,10 +7,10 @@
 
 import numpy as np
 import pytest
-
-import pywarpx
 from conftest import rtol
 from helpers import make_sim, uniform_particles
+
+import pywarpx
 from pywarpx import picmi
 
 constants = picmi.constants
