@@ -50,7 +50,7 @@ diag1.dump_last_timestep = 1                             # always write final st
 diag1.fields_to_plot = rho                               # mesh field required by checksum
 diag1.format = openpmd                                   # openPMD output format
 diag1.intervals = 0                                      # no periodic dumps (only last step)
-diag1.neutron_1.variables = x y z ux uy uz w              # neutron phase-space data
+diag1.neutron_1.variables = x y z ux uy uz w             # neutron phase-space data
 diag1.species = neutron_1                                # output only fusion neutrons
 diagnostics.diags_names = diag1                          # active diagnostics
 
