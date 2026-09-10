@@ -1500,6 +1500,9 @@ void HybridPICModel::AllocateLevelMFs (
     // the energy equation on it is the QDSMC state variable, otherwise it
     // mirrors the closure's implied temperature T_e = P_e / (n_e k_B),
     // filled alongside P_e in CalculateElectronPressure.
+    // With the energy equation on T_e is required checkpoint state: silently
+    // rebuilding it from rho would discard evolved thermal structure. With
+    // the equation off it is derived from the closure and is not checkpointed.
     fields.alloc_init(FieldType::hybrid_electron_temperature_fp,
         lev, amrex::convert(ba, rho_nodal_flag),
         dm, ncomps, ngRho, 0.0_rt,

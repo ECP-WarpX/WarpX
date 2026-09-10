@@ -788,6 +788,12 @@ namespace ablastr::fields
 
         /** Read in any (i)MultiFabs that are flagged checkpoint_restart from the checkpoint files
          *
+         * Missing required fields are fatal. Fields explicitly registered as
+         * restart_optional may be absent from older checkpoints and are then
+         * initialized to zero with a warning. This distinction prevents a
+         * missing evolved material state or radiation ledger from silently
+         * changing a restarted simulation's energy or momentum.
+         *
          * @param level the MR level of the MF
          * @param dir the pathname to the checkpoint files
          */
