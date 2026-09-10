@@ -134,8 +134,7 @@ namespace {
         // total kinetic energy.
         const double E_rest_in_d = (m1_in_d + m2_in_d)*c2_d;
         const double E_rest_out_d = (m1_out_d + m2_out_d)*c2_d;
-        const double E_star_f_d = amrex::max(std::sqrt(E_star_sq_pos_d) - E_rest_in_d
-                                             + E_rest_out_d + E_reaction_d, 0.0);
+        const double E_star_f_d = amrex::max(std::sqrt(E_star_sq_pos_d) - E_rest_in_d + E_rest_out_d + E_reaction_d, 0.0);
         // Total kinetic energy in the COM frame and converted to MeV to look up
         // the energy-dependent coefficients when anisotropic scattering is used.
         // The kinetic energy is clamped to zero to avoid small negative numbers
@@ -181,8 +180,7 @@ namespace {
         const double one_minus_beta_sq_d = amrex::max(1.0 - vc_sq_d*inv_c2_d, std::numeric_limits<double>::epsilon());
         const double gc_d = 1.0 / std::sqrt(one_minus_beta_sq_d);
 
-        const bool needs_incident_direction =
-            (scattering_angle_model != ScatteringAngleModel::Isotropic);
+        const bool needs_incident_direction = (scattering_angle_model != ScatteringAngleModel::Isotropic);
 
         // Compute the direction of the first incident particle in the center of mass frame.
         double p1x_star_in_d = 0.0;
@@ -208,9 +206,7 @@ namespace {
                 p1y_star_in_d = p1y_in_d;
                 p1z_star_in_d = p1z_in_d;
             }
-            p1_star_in_d = std::sqrt(
-                p1x_star_in_d*p1x_star_in_d + p1y_star_in_d*p1y_star_in_d
-                + p1z_star_in_d*p1z_star_in_d);
+            p1_star_in_d = std::sqrt(p1x_star_in_d*p1x_star_in_d + p1y_star_in_d*p1y_star_in_d + p1z_star_in_d*p1z_star_in_d);
         }
 
         // Compute momentum of first product in the center of mass frame
