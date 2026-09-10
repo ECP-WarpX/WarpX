@@ -280,6 +280,10 @@ public:
     //! Maximum number of allowed grid crossings for particles
     static int particle_max_grid_crossings;
 
+    //! Maximum number of allowed grid crossings for particles when using mass matrices for Jacobian
+    //! The Villasenor deposition requires this value at compile time for arrays used in the routine
+    static constexpr int villasenor_mass_matrices_max_grid_crossings = 3;
+
     //! Order of finite centering of fields (from staggered grid to nodal grid), along x
     static int field_centering_nox;
     //! Order of finite centering of fields (from staggered grid to nodal grid), along y
@@ -810,7 +814,7 @@ public:
     [[nodiscard]] amrex::IntVect get_numprocs() const {return numprocs;}
 
     /** Electrostatic solve call */
-    void ComputeSpaceChargeField (bool reset_E_field, bool reset_B_field);
+    void ComputeSpaceChargeField (bool reset_E_field, bool reset_B_field, bool verbose_step);
 
     // Magnetostatic Solver Interface
     MagnetostaticSolver::VectorPoissonBoundaryHandler m_vector_poisson_boundary_handler;
@@ -1091,7 +1095,8 @@ private:
     void OneStep (
         amrex::Real a_cur_time,
         amrex::Real a_dt,
-        int a_step
+        int a_step,
+        bool verbose_step
     );
 
     void OneStep_nosub (
