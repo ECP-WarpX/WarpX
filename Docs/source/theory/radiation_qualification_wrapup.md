@@ -75,9 +75,10 @@ SI round trip. Both `test_1d_collision_z` and its modulus-shuffle variant then
 reproduce their existing checksums exactly (maximum relative error zero).
 The corrected executable instead reproduces CI's changed checksums, while
 both original collision physics analyses pass. This establishes the cause
-for these two cases, not for every failing reference. No failing checksum
-reference has been regenerated in this stabilization pass; incoming upstream
-references are retained as part of the merge.
+for these two cases, not yet for every failing reference. At that stage no
+failing reference was regenerated; incoming upstream references were retained
+as part of the merge. The completed attribution and approved refresh follow
+below.
 
 The 2D CI matrix also exposed a real initialization defect: native bulk plasma
 injection does not call the generic runtime-attribute initializer, so newly
@@ -106,10 +107,10 @@ Both variants pass the original 1e-12 energy and charge-conservation bounds
 and the solver-iteration limits. Corrected/legacy maximum relative energy
 errors are 1.97e-15 / 3.10e-14; charge RMS errors are 8.45e-14 / 8.00e-14.
 
-Neither local variant reproduces the exact CI checksum. This establishes
+Neither initial local variant reproduced the exact CI checksum. This established
 sensitivity to diagnostic mutation, not unique attribution of the CI delta;
-the local PETSc/MPI environment differs from CI. No generated benchmark or
-physics tolerance was changed. Artifacts are under `build-rz-checksum/` and
+that local PETSc/MPI environment differed from CI. No generated benchmark or
+physics tolerance was changed at that stage. Artifacts are under `build-rz-checksum/` and
 `build-ci-tools/rz-diagnostic-comparison.json` in the PR worktree. The temporary
 legacy writer was removed immediately after building the control executable.
 
@@ -117,6 +118,35 @@ CodeQL also identified two reference-test products evaluated in `double`
 before conversion to `long double`. Promoting the operands before arithmetic
 fixes those intermediate-precision issues; the existing moving-flux test
 passes without changing its bound.
+
+### Completed attribution and approved reference refresh
+
+Matching CI's PETSc 3.25.5/OpenMPI and Ubuntu BLAS/LAPACK/SuperLU setup
+resolved the earlier pinch-environment ambiguity. For all 21 diagnostic-related
+checksum differences, isolated legacy-writer controls reproduce the existing
+references exactly, while corrected local checksum dictionaries are identical
+to Azure build 6498. This covers the Cartesian, radial-1D and RZ cases,
+including Python/openPMD output. Every available original physics analysis
+passes; the legacy 3D PEC case has no separate analysis CTest.
+
+The additional Qei reference difference has a separate cause. Restoring only
+upstream's two thermal-exchange functions reproduces that reference exactly.
+Both implementations pass the original analysis; the conservative exchange
+reduces measured thermal-energy drift from 0.605% to 0.159% and normalized
+ion-current projection from 0.0534 to 0.0038. The original limits remain 2%
+and 0.08, respectively.
+
+A real RZ merge defect was fixed separately: applying the Cartesian reflective
+density operator after radial folding corrupted species density near the axis.
+Matching the native radial deposition convention reduces the tested density
+error from 0.32808 to zero. An isolated old-code control reproduces the failure;
+the unchanged RZ analysis passes in Azure 6498. That completed CI run has no
+simulation or physics-analysis failures, only the 22 reference comparisons.
+
+After explicit approval, those 22 references are regenerated from the verified
+Azure 6498 records using the checksum framework. No solver code, input or test
+tolerance is changed by this refresh. The fresh CI run remains a separate gate;
+these reference updates do not close the production-qualification gaps above.
 
 ## Detailed records
 
