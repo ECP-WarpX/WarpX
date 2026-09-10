@@ -33,7 +33,7 @@ hybrid_pic_model.elec_temp = 1.0
 hybrid_pic_model.n0_ref = 1e18
 hybrid_pic_model.gamma = 1.0
 hybrid_pic_model.n_floor = 1e14
-hybrid_pic_model.plasma_resistivity(rho,J) = 1e-4
+hybrid_pic_model.plasma_resistivity(rho,J,t) = 1e-4
 hybrid_pic_model.substeps = 4
 hybrid_pic_model.use_conformal_eb = 1
 
