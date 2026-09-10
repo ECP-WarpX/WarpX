@@ -43,7 +43,8 @@ STAGGER = {
 
 def read_vismf(prefix):
     """All FABs of a VisMF set -> list of ((ilo, jlo), data2d)."""
-    hdr = open(prefix + "_H").read().split("\n")
+    with open(prefix + "_H") as fh:
+        hdr = fh.read().split("\n")
     nfabs = int(hdr[4].split()[0].lstrip("("))
     fod = [line for line in hdr if line.startswith("FabOnDisk:")]
     fabs = []
