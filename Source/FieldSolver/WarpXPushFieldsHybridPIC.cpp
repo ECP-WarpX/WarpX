@@ -456,6 +456,10 @@ void WarpX::HybridPICDepositRhoAndJ (bool const deposit_energy_auxiliary)
                     *rho_spec[lev], 0, rho_spec[lev]->nComp(),
                     rho_spec[lev]->nGrowVect(), rho_spec[lev]->nGrowVect(),
                     WarpX::do_single_precision_comms, Geom(lev).periodicity());
+                // Match DepositCharge: radial deposits already fold the axis
+                // during inverse-volume scaling. The Cartesian reflective
+                // operator must not fold those contributions a second time.
+#if !defined(WARPX_DIM_RZ) && !defined(WARPX_DIM_RCYLINDER) && !defined(WARPX_DIM_RSPHERE)
                 // The total rho receives this physical boundary operator in
                 // SyncCurrentAndRho below. Apply the same linear operator to
                 // every material component before summing them, so table-EOS
@@ -463,6 +467,7 @@ void WarpX::HybridPICDepositRhoAndJ (bool const deposit_energy_auxiliary)
                 // or thermal particle boundaries as well as in the interior.
                 ApplyRhofieldBoundary(
                     lev, rho_spec[lev], PatchType::fine);
+#endif
                 if (is_eos_material) {
                     ablastr::utils::communication::SumBoundary(
                         *ion_count_charge[lev], 0,
@@ -471,8 +476,10 @@ void WarpX::HybridPICDepositRhoAndJ (bool const deposit_energy_auxiliary)
                         ion_count_charge[lev]->nGrowVect(),
                         WarpX::do_single_precision_comms,
                         Geom(lev).periodicity());
+#if !defined(WARPX_DIM_RZ) && !defined(WARPX_DIM_RCYLINDER) && !defined(WARPX_DIM_RSPHERE)
                     ApplyRhofieldBoundary(
                         lev, ion_count_charge[lev], PatchType::fine);
+#endif
                 }
                 for (int idim = 0; idim < 3; ++idim) {
                     ablastr::utils::communication::SumBoundary(
