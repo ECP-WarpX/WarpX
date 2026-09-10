@@ -98,6 +98,7 @@ def rtol():
         PRECISION_RTOL[Config.precision], PRECISION_RTOL[Config.precision_particles]
     )
 
+
 # autouse: pytest wraps every test_* function under tests/unit in this, once per
 # parametrized case, without the test having to ask for it. What is before the
 # yield runs as setup, what is after it as teardown, also when the test fails.

@@ -5,8 +5,7 @@
 # Authors: Axel Huebl
 # License: BSD-3-Clause-LBNL
 
-"""Setup helpers for the WarpX unit tests.
-"""
+"""Setup helpers for the WarpX unit tests."""
 
 import numpy as np
 
