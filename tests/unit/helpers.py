@@ -61,7 +61,6 @@ def make_sim(
     lower_bound = [-1.0e-3] * n_axes if lower_bound is None else list(lower_bound)
     upper_bound = [1.0e-3] * n_axes if upper_bound is None else list(upper_bound)
 
-    # dt=None lets WarpX pick the CFL-limited time step
     grid = GRID_CLASS[dims](
         number_of_cells=n_cell,
         lower_bound=lower_bound,
