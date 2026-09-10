@@ -38,7 +38,7 @@ def make_sim(
     """Build a minimal simulation of this process' dimensionality.
 
     The simulation carries no species and is not initialized yet: a test adds
-    the species it wants and then calls ``sim.initialize_inputs()`` and 
+    the species it wants and then calls ``sim.initialize_inputs()`` and
     ``sim.initialize_warpx()`` itself.
     """
     dims = pywarpx.libwarpx.geometry_dim
