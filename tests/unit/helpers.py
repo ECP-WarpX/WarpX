@@ -40,7 +40,11 @@ def make_sim(
     current_deposition_algo=None,
     dt=None,
 ):
-    """Build and initialize a minimal simulation of this process' dimensionality.
+    """Build a minimal simulation of this process' dimensionality.
+
+    The simulation carries no species and is not initialized yet: a test adds
+    the species it wants with ``add_uniform_particles`` and then calls
+    ``sim.initialize_inputs()`` and ``sim.initialize_warpx()`` itself.
 
     Only one simulation can live at a time. ``warpx_lifecycle`` in
     ``conftest.py`` tears it down after each test, which is what makes
@@ -80,7 +84,6 @@ def make_sim(
         warpx_max_grid_size=max_grid_size,
     )
     solver = picmi.ElectromagneticSolver(grid=grid, method="Yee", cfl=0.9)
-    electrons = picmi.Species(particle_type="electron", name="electrons")
 
     sim = picmi.Simulation(
         solver=solver,
@@ -90,10 +93,6 @@ def make_sim(
         particle_shape=particle_shape,
         warpx_current_deposition_algo=current_deposition_algo,
     )
-    # no particles are injected: the tests add them explicitly
-    sim.add_species(electrons, layout=None)
-
-    sim.initialize_inputs()
 
     # AMReX runtime parameters, mirroring the ones ImpactX and pyAMReX use
     # in their pytest suites
@@ -108,18 +107,32 @@ def make_sim(
     #   that tests can share a GPU
     pywarpx.amrex.the_arena_init_size = 0
 
-    sim.initialize_warpx()
-
     return sim
 
 
-def uniform_particles(sim, n_per_dim=4, weight=1.0e6, ux=0.0, uy=0.0, uz=0.0):
-    """Add a lattice of macro particles to the ``electrons`` species.
+def add_species(sim, species_name, species_type):
+    """Add an empty species to the simulation.
+
+    Call this before ``sim.initialize_inputs()``, which is what writes the
+    species into the input deck. The particles come later, with
+    ``add_uniform_particles``.
+    """
+    sim.add_species(
+        picmi.Species(particle_type=species_type, name=species_name), layout=None
+    )
+
+
+def add_uniform_particles(
+    sim, species_name, n_per_dim=4, weight=1.0e6, ux=0.0, uy=0.0, uz=0.0
+):
+    """Add a uniform lattice of macro particles to an existing species.
 
     ``n_per_dim`` positions per grid axis, so this yields ``n_per_dim``
-    particles in 1D and ``n_per_dim**3`` in 3D. Returns the particle container
-    together with the arrays it was built from, which the tests need to form
-    the expected values.
+    particles in 1D and ``n_per_dim**3`` in 3D. The particles are appended, so
+    calling this several times for one species mixes the batches.
+
+    Call this after ``sim.initialize_warpx()``, once the particle container
+    exists.
     """
     geom = sim.extension.warpx.Geom(0)
     lo = np.array(geom.ProbLo())
@@ -143,14 +156,13 @@ def uniform_particles(sim, n_per_dim=4, weight=1.0e6, ux=0.0, uy=0.0, uz=0.0):
     else:
         x, y, z = coords
 
-    w = np.full(n_part, weight)
-    uxp = np.full(n_part, ux)
-    uyp = np.full(n_part, uy)
-    uzp = np.full(n_part, uz)
-
-    electrons = sim.particles.get("electrons")
-    electrons.add_particles(
-        x=x, y=y, z=z, ux=uxp, uy=uyp, uz=uzp, w=w, unique_particles=False
+    sim.particles.get(species_name).add_particles(
+        x=x,
+        y=y,
+        z=z,
+        ux=np.full(n_part, ux),
+        uy=np.full(n_part, uy),
+        uz=np.full(n_part, uz),
+        w=np.full(n_part, weight),
+        unique_particles=False,
     )
-
-    return electrons, dict(x=x, y=y, z=z, ux=uxp, uy=uyp, uz=uzp, w=w)

@@ -8,7 +8,7 @@
 import numpy as np
 import pytest
 from conftest import rtol
-from helpers import make_sim, uniform_particles
+from helpers import N_AXES, add_species, add_uniform_particles, make_sim
 
 import pywarpx
 from pywarpx import picmi
@@ -39,9 +39,18 @@ def test_current_deposition_conserves_total_current(current_deposition_algo):
     # relativistic enough that the per-step displacement is a sizeable fraction
     # of a cell: Esirkepov forms differences of shape factors, which loses
     # precision when the displacement is vanishingly small
-    uz = 1.0e8
-    electrons, p = uniform_particles(sim, uz=uz)
+    add_species(sim, "electrons", "electron")
 
+    sim.initialize_inputs()
+    sim.initialize_warpx()
+
+    uz = 1.0e8
+    n_per_dim = 4
+    weight = 1.0e6
+    add_uniform_particles(sim, "electrons", n_per_dim=n_per_dim, weight=weight, uz=uz)
+
+    n_part = n_per_dim ** N_AXES[pywarpx.libwarpx.geometry_dim]
+    electrons = sim.particles.get("electrons")
     fields = sim.fields
     for direction in ("x", "y", "z"):
         fields.get("current_fp", direction, 0).set_val(0.0)
@@ -49,8 +58,8 @@ def test_current_deposition_conserves_total_current(current_deposition_algo):
     dt = sim.extension.warpx.getdt(0)
     electrons.deposit_current("current_fp", 0, dt, 0.0)
 
-    gamma = np.sqrt(1.0 + (p["ux"] ** 2 + p["uy"] ** 2 + p["uz"] ** 2) / constants.c**2)
-    expected_jz = -constants.q_e * np.sum(p["w"] * p["uz"] / gamma)
+    gamma = np.sqrt(1.0 + uz**2 / constants.c**2)
+    expected_jz = -constants.q_e * n_part * weight * uz / gamma
 
     # a current component is integrated over the domain by summing its unique nodes,
     # times the cell volume. Passing the periodicity matters, as J is nodal in at
@@ -89,11 +98,21 @@ def test_current_deposition_sums_mixed_weights():
     """
     sim = make_sim(current_deposition_algo="direct")
 
-    uz = 1.0e8
-    weight = 1.0e6
-    electrons, p = uniform_particles(sim, weight=weight, uz=uz)
-    uniform_particles(sim, weight=2.0 * weight, uz=uz)
+    add_species(sim, "electrons", "electron")
 
+    sim.initialize_inputs()
+    sim.initialize_warpx()
+
+    uz = 1.0e8
+    n_per_dim = 4
+    weight = 1.0e6
+    add_uniform_particles(sim, "electrons", n_per_dim=n_per_dim, weight=weight, uz=uz)
+    add_uniform_particles(
+        sim, "electrons", n_per_dim=n_per_dim, weight=2.0 * weight, uz=uz
+    )
+
+    n_part = n_per_dim ** N_AXES[pywarpx.libwarpx.geometry_dim]
+    electrons = sim.particles.get("electrons")
     fields = sim.fields
     for direction in ("x", "y", "z"):
         fields.get("current_fp", direction, 0).set_val(0.0)
@@ -102,7 +121,6 @@ def test_current_deposition_sums_mixed_weights():
     electrons.deposit_current("current_fp", 0, dt, 0.0)
 
     gamma = np.sqrt(1.0 + uz**2 / constants.c**2)
-    n_part = p["w"].size
     expected = -constants.q_e * n_part * (weight + 2.0 * weight) * uz / gamma
 
     # integrate Jz over the domain: sum its unique nodes (the periodicity keeps the
