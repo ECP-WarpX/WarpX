@@ -45,12 +45,20 @@ sys.path.insert(0, _ext_path)
 
 
 def download_with_headers(url, filename):
-    """Download a file with proper User-Agent header to avoid 403 errors."""
+    """Download a Doxygen tag file, with a User-Agent header to avoid 403 errors.
+
+    Web servers sometimes answer with an HTML error page instead of the file.
+    Writing that page to disk would make Doxygen abort reading tag files with a
+    cryptic XML parser error, thus we only keep payloads that start like XML.
+    """
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "WarpX-docs-builder"})
         with urllib.request.urlopen(req) as response:
-            with open(filename, "wb") as f:
-                f.write(response.read())
+            payload = response.read()
+        if not payload.lstrip().startswith(b"<?xml"):
+            raise RuntimeError("downloaded file is not XML")
+        with open(filename, "wb") as f:
+            f.write(payload)
     except Exception as e:
         print(f"Could not download {filename} from {url}: {e}")
         print("Continuing build without cross-reference file...")
