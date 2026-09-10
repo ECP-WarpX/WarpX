@@ -216,9 +216,7 @@ namespace ParticleUtils {
             // TwoProductComputeProductMomenta applies this vector to the heavier, first product.
             // The products are back-to-back in the center-of-mass frame, hence the minus sign.
             // ParticleCreationFunc validates this product ordering for anisotropic fusion.
-            cos_theta = -ScatteringUtils::sampleCosTheta(
-                anisotropic_coefficients, collision_energy_MeV, amrex::Random(engine),
-                energy_range_status);
+            cos_theta = -ScatteringUtils::sampleCosTheta(anisotropic_coefficients, collision_energy_MeV, amrex::Random(engine), energy_range_status);
         }
         return cos_theta;
     }
@@ -242,17 +240,14 @@ namespace ParticleUtils {
     void getRandomVector ( amrex::ParticleReal& x, amrex::ParticleReal& y,
                            amrex::ParticleReal& z, amrex::RandomEngine const& engine,
                            ScatteringAngleModel scattering_angle_model,
-                           ScatteringUtils::AnisotropicCoefficientTable const&
-                               anisotropic_coefficients,
+                           ScatteringUtils::AnisotropicCoefficientTable const& anisotropic_coefficients,
                            amrex::ParticleReal const collision_energy_MeV,
                            int* const energy_range_status)
     {
         using namespace amrex::literals;
 
         auto const phi = 2.0_prt * MathConst::pi * amrex::Random(engine);
-        auto const cos_theta = getRandomCosTheta(
-            engine, scattering_angle_model, anisotropic_coefficients, collision_energy_MeV,
-            energy_range_status);
+        auto const cos_theta = getRandomCosTheta(engine, scattering_angle_model, anisotropic_coefficients, collision_energy_MeV, energy_range_status);
         auto const sin_theta = std::sqrt(1.0_prt - cos_theta*cos_theta);
         x = sin_theta * std::cos(phi);
         y = sin_theta * std::sin(phi);
@@ -264,10 +259,7 @@ namespace ParticleUtils {
                            amrex::ParticleReal& z, amrex::RandomEngine const& engine,
                            ScatteringAngleModel scattering_angle_model)
     {
-        getRandomVector(
-            x, y, z, engine, scattering_angle_model,
-            ScatteringUtils::AnisotropicCoefficientTable{}, amrex::ParticleReal(0.0),
-            /*energy_range_status=*/nullptr);
+        getRandomVector(x, y, z, engine, scattering_angle_model, ScatteringUtils::AnisotropicCoefficientTable{}, amrex::ParticleReal(0.0), /*energy_range_status=*/nullptr);
     }
 
 
@@ -289,16 +281,13 @@ namespace ParticleUtils {
                              const amrex::ParticleReal vp,
                              amrex::RandomEngine const& engine,
                              ScatteringAngleModel scattering_angle_model,
-                             ScatteringUtils::AnisotropicCoefficientTable const&
-                                 anisotropic_coefficients,
+                             ScatteringUtils::AnisotropicCoefficientTable const& anisotropic_coefficients,
                              amrex::ParticleReal const collision_energy_MeV,
                              int* const energy_range_status)
     {
         amrex::ParticleReal x, y, z;
         // generate random unit vector for the new velocity direction
-        getRandomVector(
-            x, y, z, engine, scattering_angle_model, anisotropic_coefficients,
-            collision_energy_MeV, energy_range_status);
+        getRandomVector(x, y, z, engine, scattering_angle_model, anisotropic_coefficients, collision_energy_MeV, energy_range_status);
 
         // scale new vector to have the desired magnitude
         ux = x * vp;
@@ -313,10 +302,7 @@ namespace ParticleUtils {
                              amrex::RandomEngine const& engine,
                              ScatteringAngleModel scattering_angle_model)
     {
-        RandomizeVelocity(
-            ux, uy, uz, vp, engine, scattering_angle_model,
-            ScatteringUtils::AnisotropicCoefficientTable{}, amrex::ParticleReal(0.0),
-            /*energy_range_status=*/nullptr);
+        RandomizeVelocity(ux, uy, uz, vp, engine, scattering_angle_model, ScatteringUtils::AnisotropicCoefficientTable{}, amrex::ParticleReal(0.0), /*energy_range_status=*/nullptr);
     }
 
     /* \brief Determines whether the point is within the tilebox, inclusive of the boundaries.
