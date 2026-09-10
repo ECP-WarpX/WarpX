@@ -40,7 +40,7 @@ REACTION_CONFIG = {
         "e_max": 30.0,
         "output": "deuterium_tritium_fusion_anisotropic_beam_target_neutron_spectrum.png",
         "xticks": [10.0, 15.0, 20.0, 25.0, 30.0],
-        "scale": 2.6,
+        "scale": 2.6,  # scale factor to match the reference paper cited in README.rst
         "target_mass": MASS["triton"],
         "product_mass": MASS["alpha"],
         "species": "neutron_1",
