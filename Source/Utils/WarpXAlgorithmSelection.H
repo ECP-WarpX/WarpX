@@ -196,22 +196,19 @@ AMREX_ENUM(
 
 /** \brief For binary collision algorithms, the strategy to determine
  *  the scattering angle in the center of mass frame */
-AMREX_ENUM(
-    ScatteringAngleModel,
-    Forward,    /**< Scattering angle is zero, i.e., products have the same direction as the incident particle in the center of mass frame */
-    Backward,   /**< Scattering angle is pi, i.e., products have the opposite direction of the incident particle in the center of mass frame */
-    Isotropic,  /**< Scattering angle is random, i.e., products are scattered isotropically in the center of mass frame */
-    Anisotropic_Legendre, /**< Scattering angle is sampled from a Legendre expansion */
-    Default = Isotropic  /**< Isotropic */
+AMREX_ENUM(ScatteringAngleModel,
+           Forward,    /**< Scattering angle is zero, i.e., products have the same direction as the incident particle in the center of mass frame */
+           Backward,   /**< Scattering angle is pi, i.e., products have the opposite direction of the incident particle in the center of mass frame */
+           Isotropic,  /**< Scattering angle is random, i.e., products are scattered isotropically in the center of mass frame */
+           Anisotropic_Legendre, /**< Scattering angle is sampled from a Legendre expansion */
+           Default = Isotropic  /**< Isotropic */
 );
 
-/** \brief Format of the coefficients used for anisotropic fusion angular distributions */
+/** \brief Format of the Legendre coefficients used for anisotropic fusion angular distributions */
 AMREX_ENUM(
     FusionAngularDistributionCoefficientsFormat,
-    ENDF,  /**< ENDF-6 Legendre coefficients; see
-              https://www.nndc.bnl.gov/endfdocs/ENDF-102-2023.pdf */
-    IAEA,  /**< IAEA coefficients from https://www-nds.iaea.org/records/t5vy7-v2d27,
-              used by https://doi.org/10.1016/j.jcp.2019.03.020 */
+    ENDF,  /**< ENDF format defined in https://www.nndc.bnl.gov/endfdocs/ENDF-102-2023.pdf */
+    IAEA   /**< IAEA format defined in https://www-nds.iaea.org/records/t5vy7-v2d27 */
 );
 
 #endif // WARPX_UTILS_WARPXALGORITHMSELECTION_H_
