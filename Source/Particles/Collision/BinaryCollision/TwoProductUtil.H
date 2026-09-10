@@ -48,6 +48,7 @@ namespace {
      * @param[in] E_reaction energy liberated during the reaction
      * @param[in] scattering_angle_model the scattering angle distribution to use
      * @param[in] anisotropic_coefficients table of energy-dependent anisotropic coefficients
+     * @param[out] energy_range_status per-event status: -1 below, 0 within, 1 above
      * @param[in] engine the random engine (used to calculate the angle of emission of the products)
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
@@ -71,6 +72,7 @@ namespace {
                             const amrex::ParticleReal& E_reaction,
                             ScatteringAngleModel scattering_angle_model,
                             ScatteringUtils::AnisotropicCoefficientTable const& anisotropic_coefficients,
+                            int* const energy_range_status,
                             const amrex::RandomEngine& engine )
     {
         using namespace amrex::literals;
@@ -248,7 +250,8 @@ namespace {
             ParticleUtils::RandomizeVelocity(
                 px_star_out, py_star_out, pz_star_out,
                 static_cast<amrex::ParticleReal>(p_star_f_d),
-                engine, local_scattering_angle_model, anisotropic_coefficients, E_kin_star_MeV);
+                engine, local_scattering_angle_model, anisotropic_coefficients, E_kin_star_MeV,
+                energy_range_status);
 
             if (scattering_angle_model == ScatteringAngleModel::Anisotropic_Legendre &&
                 p1_star_in_d > std::numeric_limits<double>::min())

@@ -180,8 +180,7 @@ public:
             m_fusion_angular_distribution_energies.empty() ? nullptr : m_fusion_angular_distribution_energies.data(),
             m_fusion_angular_distribution_coefficients.empty() ? nullptr : m_fusion_angular_distribution_coefficients.data(),
             m_fusion_angular_distribution_num_energies,
-            m_fusion_angular_distribution_num_coefficients,
-            nullptr
+            m_fusion_angular_distribution_num_coefficients
         };
         bool const check_anisotropic_energy_range =
             t_scattering_angle_model == ScatteringAngleModel::Anisotropic_Legendre;
@@ -194,8 +193,6 @@ public:
         [=] AMREX_GPU_DEVICE (int i, amrex::RandomEngine const& engine) noexcept
         {
             int event_energy_range_status = 0;
-            auto event_anisotropic_coefficients = t_anisotropic_coefficients;
-            event_anisotropic_coefficients.m_energy_range_status = &event_energy_range_status;
             if (p_mask[i])
             {
                 for (int j = 0; j < t_num_product_species; j++)
@@ -252,7 +249,8 @@ public:
                                                         p_pair_indices_1[i], p_pair_indices_2[i],
                                                         product_start_index, m1, m2,
                                                         t_scattering_angle_model,
-                                                        event_anisotropic_coefficients, engine);
+                                                        t_anisotropic_coefficients,
+                                                        &event_energy_range_status, engine);
                 }
                 else if (BinaryCollisionUtils::is_two_product_fusion_type(t_collision_type))
                 {
@@ -265,7 +263,8 @@ public:
                         products_np_data[0] + 2*p_offsets[i]*p_num_products_device[0],
                         products_np_data[1] + 2*p_offsets[i]*p_num_products_device[1],
                         m1, m2, products_mass_data[0], products_mass_data[1], fusion_energy,
-                        t_scattering_angle_model, event_anisotropic_coefficients, engine);
+                        t_scattering_angle_model, t_anisotropic_coefficients,
+                        &event_energy_range_status, engine);
                 }
                 else if(t_collision_type == CollisionType::LinearBreitWheeler){
                     LinearBreitWheelerInitializeMomentum(soa_1, soa_2,

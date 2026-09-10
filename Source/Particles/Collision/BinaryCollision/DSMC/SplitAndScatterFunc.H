@@ -295,6 +295,7 @@ public:
                     // (enforced in parse_scattering_processes), so an empty
                     // (isotropic-only) coefficient table is always safe here.
                     ScatteringUtils::AnisotropicCoefficientTable{},
+                    /*energy_range_status=*/nullptr,
                     engine);
             }
 
@@ -363,6 +364,7 @@ public:
                     // (enforced in parse_scattering_processes), so an empty
                     // (isotropic-only) coefficient table is always safe here.
                     ScatteringUtils::AnisotropicCoefficientTable{},
+                    /*energy_range_status=*/nullptr,
                     engine);
             }
             else if (process_type == ScatteringProcessType::IONIZATION)

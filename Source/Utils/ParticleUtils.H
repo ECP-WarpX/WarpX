@@ -28,7 +28,6 @@ namespace ScatteringUtils {
         amrex::ParticleReal const* m_coefficients = nullptr; ///< Row-major coefficients: row i holds m_num_coefficients values for energy i
         int m_num_energies = 0;      ///< Number of rows (energy points) in the table
         int m_num_coefficients = 0;  ///< Number of coefficients per energy row
-        int* m_energy_range_status = nullptr; ///< Per-event status: -1 below, 0 within, 1 above
 
         /**
          * \brief Return a linearly interpolated coefficient for the given energy.
@@ -90,12 +89,14 @@ namespace ScatteringUtils {
      * @param[in] a_Ll table of anisotropic Legendre coefficients
      * @param[in] a_energy_MeV center-of-mass kinetic energy in MeV
      * @param[in] a_U uniform random number in [0,1]
+     * @param[out] a_energy_range_status per-event status: -1 below, 0 within, 1 above
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
     amrex::ParticleReal getRandomCosThetaAnisotropic (
         AnisotropicCoefficientTable const& a_Ll,
         amrex::ParticleReal const a_energy_MeV,
-        amrex::ParticleReal const a_U)
+        amrex::ParticleReal const a_U,
+        int* const a_energy_range_status)
     {
         using namespace amrex::literals;
 
@@ -106,11 +107,11 @@ namespace ScatteringUtils {
 
         // This status is private to the current collision event. Recording it here avoids
         // repeating the range check for every coefficient and every Newton iteration.
-        if (a_Ll.m_energy_range_status != nullptr) {
+        if (a_energy_range_status != nullptr) {
             if (a_energy_MeV < a_Ll.m_energies[0]) {
-                *a_Ll.m_energy_range_status = -1;
+                *a_energy_range_status = -1;
             } else if (a_energy_MeV > a_Ll.m_energies[a_Ll.m_num_energies - 1]) {
-                *a_Ll.m_energy_range_status = 1;
+                *a_energy_range_status = 1;
             }
         }
 
@@ -330,13 +331,15 @@ namespace ParticleUtils {
      * @param[in] scattering_angle_model the scattering angle distribution to use
      * @param[in] anisotropic_coefficients table of coefficients for anisotropic scattering
      * @param[in] collision_energy_MeV center-of-mass collision energy in MeV
+     * @param[out] energy_range_status per-event status: -1 below, 0 within, 1 above
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
     amrex::ParticleReal getRandomCosTheta (
         amrex::RandomEngine const& engine,
         ScatteringAngleModel scattering_angle_model,
         ScatteringUtils::AnisotropicCoefficientTable const& anisotropic_coefficients,
-        amrex::ParticleReal const collision_energy_MeV)
+        amrex::ParticleReal const collision_energy_MeV,
+        int* const energy_range_status)
     {
         using namespace amrex::literals;
         amrex::ParticleReal cos_theta = 1.0_prt;
@@ -350,7 +353,8 @@ namespace ParticleUtils {
             // The products are back-to-back in the center-of-mass frame, hence the minus sign.
             // ParticleCreationFunc validates this product ordering for anisotropic fusion.
             cos_theta = -ScatteringUtils::getRandomCosThetaAnisotropic(
-                anisotropic_coefficients, collision_energy_MeV, amrex::Random(engine));
+                anisotropic_coefficients, collision_energy_MeV, amrex::Random(engine),
+                energy_range_status);
         }
         return cos_theta;
     }
@@ -368,6 +372,7 @@ namespace ParticleUtils {
      * @param[in] scattering_angle_model the scattering angle distribution to use
      * @param[in] anisotropic_coefficients table of coefficients for anisotropic scattering
      * @param[in] collision_energy_MeV center-of-mass collision energy in MeV
+     * @param[out] energy_range_status per-event status: -1 below, 0 within, 1 above
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
     void getRandomVector ( amrex::ParticleReal& x, amrex::ParticleReal& y,
@@ -375,13 +380,15 @@ namespace ParticleUtils {
                            ScatteringAngleModel scattering_angle_model,
                            ScatteringUtils::AnisotropicCoefficientTable const&
                                anisotropic_coefficients,
-                           amrex::ParticleReal const collision_energy_MeV)
+                           amrex::ParticleReal const collision_energy_MeV,
+                           int* const energy_range_status)
     {
         using namespace amrex::literals;
 
         auto const phi = 2.0_prt * MathConst::pi * amrex::Random(engine);
         auto const cos_theta = getRandomCosTheta(
-            engine, scattering_angle_model, anisotropic_coefficients, collision_energy_MeV);
+            engine, scattering_angle_model, anisotropic_coefficients, collision_energy_MeV,
+            energy_range_status);
         auto const sin_theta = std::sqrt(1.0_prt - cos_theta*cos_theta);
         x = sin_theta * std::cos(phi);
         y = sin_theta * std::sin(phi);
@@ -395,7 +402,8 @@ namespace ParticleUtils {
     {
         getRandomVector(
             x, y, z, engine, scattering_angle_model,
-            ScatteringUtils::AnisotropicCoefficientTable{}, amrex::ParticleReal(0.0));
+            ScatteringUtils::AnisotropicCoefficientTable{}, amrex::ParticleReal(0.0),
+            /*energy_range_status=*/nullptr);
     }
 
 
@@ -409,6 +417,7 @@ namespace ParticleUtils {
      * @param[in] scattering_angle_model the scattering angle distribution to use
      * @param[in] anisotropic_coefficients table of coefficients for anisotropic scattering
      * @param[in] collision_energy_MeV center-of-mass collision energy in MeV
+     * @param[out] energy_range_status per-event status: -1 below, 0 within, 1 above
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
     void RandomizeVelocity ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
@@ -418,13 +427,14 @@ namespace ParticleUtils {
                              ScatteringAngleModel scattering_angle_model,
                              ScatteringUtils::AnisotropicCoefficientTable const&
                                  anisotropic_coefficients,
-                             amrex::ParticleReal const collision_energy_MeV)
+                             amrex::ParticleReal const collision_energy_MeV,
+                             int* const energy_range_status)
     {
         amrex::ParticleReal x, y, z;
         // generate random unit vector for the new velocity direction
         getRandomVector(
             x, y, z, engine, scattering_angle_model, anisotropic_coefficients,
-            collision_energy_MeV);
+            collision_energy_MeV, energy_range_status);
 
         // scale new vector to have the desired magnitude
         ux = x * vp;
@@ -441,7 +451,8 @@ namespace ParticleUtils {
     {
         RandomizeVelocity(
             ux, uy, uz, vp, engine, scattering_angle_model,
-            ScatteringUtils::AnisotropicCoefficientTable{}, amrex::ParticleReal(0.0));
+            ScatteringUtils::AnisotropicCoefficientTable{}, amrex::ParticleReal(0.0),
+            /*energy_range_status=*/nullptr);
     }
 
     /* \brief Determines whether the point is within the tilebox, inclusive of the boundaries.

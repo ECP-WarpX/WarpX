@@ -407,6 +407,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                                       // scattering (enforced in parse_scattering_processes), so
                                       // an empty (isotropic-only) coefficient table is always safe here.
                                       ScatteringUtils::AnisotropicCoefficientTable{},
+                                      /*energy_range_status=*/nullptr,
                                       engine);
 
                                   // update projectile velocity with new components in labframe
