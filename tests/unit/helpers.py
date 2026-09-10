@@ -38,12 +38,8 @@ def make_sim(
     """Build a minimal simulation of this process' dimensionality.
 
     The simulation carries no species and is not initialized yet: a test adds
-    the species it wants with ``add_uniform_particles`` and then calls
-    ``sim.initialize_inputs()`` and ``sim.initialize_warpx()`` itself.
-
-    Only one simulation can live at a time. ``warpx_lifecycle`` in
-    ``conftest.py`` tears it down after each test, which is what makes
-    parametrizing over e.g. the current deposition algorithm possible.
+    the species it wants and then calls ``sim.initialize_inputs()`` and 
+    ``sim.initialize_warpx()`` itself.
     """
     dims = pywarpx.libwarpx.geometry_dim
     if dims not in GRID_CLASS:
@@ -65,8 +61,7 @@ def make_sim(
     lower_bound = [-1.0e-3] * n_axes if lower_bound is None else list(lower_bound)
     upper_bound = [1.0e-3] * n_axes if upper_bound is None else list(upper_bound)
 
-    # dt=None lets WarpX pick the CFL-limited time step, which keeps the
-    # per-step particle displacement a sizeable fraction of a cell
+    # dt=None lets WarpX pick the CFL-limited time step
     grid = GRID_CLASS[dims](
         number_of_cells=n_cell,
         lower_bound=lower_bound,
