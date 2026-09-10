@@ -19,8 +19,8 @@
  *  algorithm where both the fields and particles are treated implicitly.
  *
  *  The time stencil is
- *  Eg^{n+1} = Eg^n + c^2*dt*( curlBg^{n+theta} - mu0*Jg^{n+1/2} )
- *  Bg^{n+1} = Bg^n - dt*curlEg^{n+theta}
+ *  E^{n+1} = E^n + c^2*dt*( curlB^{n+theta} - mu0*J^{n+1/2} )
+ *  B^{n+1} = B^n - dt*curlE^{n+theta}
  *  xp^{n+1} = xp^n + dt*up^{n+1/2}/(0.5*(gammap^n + gammap^{n+1}))
  *  up^{n+1} = up^n + dt*qp/mp*(Ep^{n+theta} + up^{n+1/2}/gammap^{n+1/2} x Bp^{n+theta})
  *  where f^{n+theta} = (1.0-theta)*f^{n} + theta*f^{n+1} with 0.5 <= theta <= 1.0

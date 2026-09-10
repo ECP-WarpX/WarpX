@@ -20,12 +20,12 @@
  *  algorithm where both the fields and particles are treated implicitly.
  *
  *  The time stencil is
- *    Advance (Eg^n, Bg^n) -> (Eg^{n+1/2}, Bg^{n+1/2}) source free // E transverse
+ *    Advance (E^n, B^n) -> (E^{n+1/2}, B^{n+1/2}) source free // E transverse
  *    Iterate:
- *      Eg^{n+1} = Eg^n + c^2*dt*( - mu0*Jg^{n+1/2} ) // E longitudinal
+ *      E^{n+1}  = E^n  + c^2*dt*( - mu0*J^{n+1/2} ) // E longitudinal
  *      xp^{n+1} = xp^n + dt*up^{n+1/2}/(0.5*(gammap^n + gammap^{n+1}))
  *      up^{n+1} = up^n + dt*qp/mp*(Ep^{n+1/2} + up^{n+1/2}/gammap^{n+1/2} x Bp^{n+1/2})
- *    Advance (Eg^n+1/2, Bg^n+1/2) -> (Eg^{n+1}, Bg^{n+1}) source free // E transverse
+ *    Advance (E^{n+1/2}, B^{n+1/2}) -> (E^{n+1}, B^{n+1}) source free // E transverse
  *
  *  The algorithm is exactly energy conserving only with a single box, periodic fft (psatd.periodic_single_box_fft = 1).
  *  With multiple boxes, energy is not conserved since the ffts in each box assumes periodic in the box which

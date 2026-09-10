@@ -71,13 +71,13 @@ int SemiImplicitEM::OneStep (amrex::Real  start_time,
     // Set the member time step
     m_dt = a_dt;
 
-    // Fields have Eg^{n}, Bg^{n}
+    // Fields have E^{n}, B^{n}
     // Particles have up^{n} and xp^{n}.
 
     // Save up and xp at the start of the time step
     m_WarpX->SaveParticlesAtImplicitStepStart();
 
-    // Save Eg at start of time step
+    // Save E at start of time step
     SaveEoldMultifab(); // Copy Efield_fp into E_old
     m_Eold.Copy(FieldType::Efield_fp); // Copy Efield_fp into m_Eold
 
@@ -87,7 +87,7 @@ int SemiImplicitEM::OneStep (amrex::Real  start_time,
 
     const amrex::Real half_time = start_time + 0.5_rt*m_dt;
 
-    // Solve nonlinear system for Eg at t_{n+1/2}
+    // Solve nonlinear system for E at t_{n+1/2}
     // Particles will be advanced to t_{n+1/2}
     m_nlsolver->Solve(m_E, m_Eold, start_time, m_dt, a_step, verbose_step);
 
@@ -106,7 +106,7 @@ int SemiImplicitEM::OneStep (amrex::Real  start_time,
     // Update the WarpX-owned Efield_fp, preserving m_E at E^{n+1/2}
     // as the initial guess for the next nonlinear solve. E_old retains E^n
     // for checkpointing alongside Efield_fp at E^{n+1}.
-    // Eg^{n+1} = 2*Eg^{n+1/2} - Eg^n
+    // E^{n+1} = 2*E^{n+1/2} - E^n
     m_WarpX->FinishElectricFieldAndApplyBCs(m_theta, end_time);
 
     // Advance WarpX owned Bfield_fp from t_{n+1/2} to t_{n+1}
@@ -124,15 +124,15 @@ void SemiImplicitEM::ComputeRHS ( WarpXSolverVec&  a_RHS,
 {
     BL_PROFILE("SemiImplicitEM::ComputeRHS()");
 
-    // Update WarpX-owned Efield_fp using current state of Eg from
+    // Update WarpX-owned Efield_fp using current state of E from
     // the nonlinear solver at time n+1/2
     const amrex::Real half_time = start_time + 0.5_rt*m_dt;
     m_WarpX->SetElectricFieldAndApplyBCs( a_E, half_time );
 
     // Update particle positions and velocities using the current state
-    // of Eg and Bg. Deposit current density at time n+1/2
+    // of E and B. Deposit current density at time n+1/2
     PreRHSOp( half_time, a_nl_iter, a_from_jacobian );
 
-    // RHS = cvac^2*0.5*dt*( curl(Bg^{n+1/2}) - mu0*Jg^{n+1/2} )
+    // RHS = cvac^2*0.5*dt*(curl(B^{n+1/2}) - mu0*J^{n+1/2})
     m_WarpX->ImplicitComputeRHSE(0.5_rt*m_dt, a_RHS);
 }

@@ -21,11 +21,11 @@
  *  is advanced in the standard explicit leap-frog manner (hence semi-implicit).
  *
  *  The time stencil is
- *  Eg^{n+1} = Eg^n + c^2*dt*( curlBg^{n+1/2} - mu0*Jg^{n+1/2} )
- *  Bg^{n+3/2} = Bg^{n+1/2} - dt*curlEg^{n+1}
+ *  E^{n+1}   = E^n + c^2*dt*(curlB^{n+1/2} - mu0*J^{n+1/2})
+ *  B^{n+3/2} = B^{n+1/2} - dt*curlE^{n+1}
  *  xp^{n+1} = xp^n + dt*up^{n+1/2}/(0.5(gammap^n + gammap^{n+1}))
  *  up^{n+1} = up^n + dt*qp/mp*(Ep^{n+1/2} + up^{n+1/2}/gammap^{n+1/2} x Bp^{n+1/2})
- *  where f^{n+1/2} = (f^{n+1} + f^n)/2.0, for all but Bg, which lives at half steps
+ *  where f^{n+1/2} = (f^{n+1} + f^n)/2.0, for all but B, which lives at half steps
  *
  *  This algorithm is approximately energy conserving. It is exactly energy conserving
  *  using a non-standard definition for the magnetic field energy. The advantage of

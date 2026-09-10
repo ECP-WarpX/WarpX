@@ -77,7 +77,7 @@ int StrangImplicitSpectralEM::OneStep (amrex::Real start_time,
     // Advance the fields to time n+1/2 source free
     m_WarpX->SpectralSourceFreeFieldAdvance(start_time);
 
-    // Save Eg at start of implicit substep, after the first source-free half step
+    // Save E at start of implicit substep, after the first source-free half step
     SaveEoldMultifab(); // Copy Efield_fp into E_old
     m_Eold.Copy(FieldType::Efield_fp); // Copy Efield_fp into m_Eold
 
