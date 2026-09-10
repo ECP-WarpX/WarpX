@@ -9,6 +9,7 @@
 #define WARPX_TWO_PRODUCT_UTIL_H
 
 #include "Utils/ParticleUtils.H"
+#include "Utils/ScatteringUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"

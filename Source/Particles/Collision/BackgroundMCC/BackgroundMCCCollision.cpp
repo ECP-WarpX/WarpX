@@ -14,6 +14,7 @@
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/ParticleUtils.H"
+#include "Utils/ScatteringUtils.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "WarpX.H"
 

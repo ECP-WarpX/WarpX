@@ -17,6 +17,7 @@
 #include "Particles/ParticleCreation/SmartCopy.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Utils/ScatteringUtils.H"
 
 #include <AMReX_DenseBins.H>
 #include <AMReX_GpuAtomic.H>

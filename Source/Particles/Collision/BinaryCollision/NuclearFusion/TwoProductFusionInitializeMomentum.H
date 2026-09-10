@@ -12,6 +12,7 @@
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/ParticleUtils.H"
+#include "Utils/ScatteringUtils.H"
 #include "Utils/WarpXConst.H"
 
 #include <AMReX_DenseBins.H>
