@@ -107,8 +107,7 @@ int SemiImplicitEM::OneStep (amrex::Real  start_time,
     // as the initial guess for the next nonlinear solve. E_old retains E^n
     // for checkpointing alongside Efield_fp at E^{n+1}.
     // Eg^{n+1} = 2*Eg^{n+1/2} - Eg^n
-    ablastr::fields::MultiLevelVectorField const & E_old = m_WarpX->m_fields.get_mr_levels_alldirs(FieldType::E_old, 0);
-    m_WarpX->FinishElectricFieldAndApplyBCs(E_old, m_theta, end_time);
+    m_WarpX->FinishElectricFieldAndApplyBCs(m_theta, end_time);
 
     // Advance WarpX owned Bfield_fp from t_{n+1/2} to t_{n+1}
     m_WarpX->EvolveB(0.5_rt*m_dt, SubcyclingHalf::SecondHalf, half_time);

@@ -147,7 +147,6 @@ void StrangImplicitSpectralEM::FinishFieldUpdate (amrex::Real end_time)
     // where E_before is saved in E_old after the first source-free half step.
     // Preserve m_E at the implicit midpoint for the next nonlinear solve.
     // The second source-free half step then advances Efield_fp to E^{n+1}.
-    ablastr::fields::MultiLevelVectorField const & E_old = m_WarpX->m_fields.get_mr_levels_alldirs(FieldType::E_old, 0);
-    m_WarpX->FinishElectricFieldAndApplyBCs(E_old, m_theta, end_time);
+    m_WarpX->FinishElectricFieldAndApplyBCs(m_theta, end_time);
 
 }

@@ -186,11 +186,8 @@ void ThetaImplicitEM::FinishFieldUpdate (amrex::Real end_time)
     // Eg^{n+1} = (1/theta)*Eg^{n+theta} + (1-1/theta)*Eg^n
     // Bg^{n+1} = (1/theta)*Bg^{n+theta} + (1-1/theta)*Bg^n
 
-    ablastr::fields::MultiLevelVectorField const & E_old = m_WarpX->m_fields.get_mr_levels_alldirs(FieldType::E_old, 0);
-    m_WarpX->FinishElectricFieldAndApplyBCs(E_old, m_theta, end_time);
-
-    ablastr::fields::MultiLevelVectorField const & B_old = m_WarpX->m_fields.get_mr_levels_alldirs(FieldType::B_old, 0);
-    m_WarpX->FinishMagneticFieldAndApplyBCs(B_old, m_theta, end_time);
+    m_WarpX->FinishElectricFieldAndApplyBCs(m_theta, end_time);
+    m_WarpX->FinishMagneticFieldAndApplyBCs(m_theta, end_time);
 
 }
 
