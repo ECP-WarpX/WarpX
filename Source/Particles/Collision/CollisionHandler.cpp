@@ -9,6 +9,7 @@
 #include "Particles/Collision/BackgroundMCC/BackgroundMCCCollision.H"
 #include "Particles/Collision/PulsedDecay/PulsedDecay.H"
 #include "Particles/Collision/BackgroundStopping/BackgroundStopping.H"
+#include "Particles/Collision/HybridResistiveDrag/HybridResistiveDrag.H"
 #include "Particles/Collision/BinaryCollision/BinaryCollision.H"
 #include "Particles/Collision/BinaryCollision/Bremsstrahlung/BremsstrahlungFunc.H"
 #include "Particles/Collision/BinaryCollision/Bremsstrahlung/PhotonCreationFunc.H"
@@ -69,6 +70,9 @@ CollisionHandler::CollisionHandler(MultiParticleContainer const * const mypc)
         else if (type == "background_stopping") {
             allcollisions[i] = std::make_unique<BackgroundStopping>(collision_names[i]);
         }
+        else if (type == "hybrid_resistive_drag") {
+            allcollisions[i] = std::make_unique<HybridResistiveDrag>(collision_names[i]);
+        }
         else if (type == "dsmc") {
             allcollisions[i] =
                 std::make_unique<BinaryCollision<DSMCFunc, SplitAndScatterFunc>>(
@@ -109,6 +113,14 @@ CollisionHandler::CollisionHandler(MultiParticleContainer const * const mypc)
 
     }
 
+}
+
+/* \brief Allocate any data needed for the collision */
+void CollisionHandler::AllocData ()
+{
+    for (auto& collision : allcollisions) {
+        collision->AllocData();
+    }
 }
 
 /** Perform all collisions
