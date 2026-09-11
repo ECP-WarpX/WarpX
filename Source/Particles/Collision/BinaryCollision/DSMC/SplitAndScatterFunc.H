@@ -292,10 +292,7 @@ public:
                     soa_products_data[1].m_rdata[PIdx::uz][slot1_idx], m1,
                     -scattering_process.m_energy_penalty*PhysConst::q_e, // *released* energy (negative sign) converted from eV to Joules
                     scattering_process.m_scattering_angle_model, // angular distribution of the products in the center-of-mass frame
-                    // DSMC scattering processes cannot request anisotropic scattering
-                    // (enforced in parse_scattering_processes), so an empty
-                    // (isotropic-only) coefficient table is always safe here.
-                    ScatteringUtils::AnisotropicCoefficientTable{},
+                    ScatteringUtils::AnisotropicCoefficientTable{}, // pass empty table because Legendre-based anisotropic scattering is unsupported for DSMC
                     /*energy_range_status=*/nullptr,
                     engine);
             }
@@ -361,10 +358,7 @@ public:
                     soa_products_data[3].m_rdata[PIdx::uz][slot3_idx], mass_slot3,
                     -scattering_process.m_energy_penalty*PhysConst::q_e, // *released* energy (negative sign) converted from eV to Joules
                     scattering_process.m_scattering_angle_model, // angular distribution of the products in the center-of-mass frame
-                    // DSMC scattering processes cannot request anisotropic scattering
-                    // (enforced in parse_scattering_processes), so an empty
-                    // (isotropic-only) coefficient table is always safe here.
-                    ScatteringUtils::AnisotropicCoefficientTable{},
+                    ScatteringUtils::AnisotropicCoefficientTable{}, // pass empty table because Legendre-based anisotropic scattering is unsupported for DSMC
                     /*energy_range_status=*/nullptr,
                     engine);
             }
