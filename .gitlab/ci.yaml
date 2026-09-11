@@ -79,7 +79,7 @@ NVIDIA-H100:
         test_3d_laser_acceleration_btd
         test_rcylinder_langmuir_multi
         test_rsphere_langmuir_multi
-        test_rz_embedded_boundary_diffraction
+        test_rz_electrostatic_sphere_eb
       )
       # Join the test names with "|" to form regex alternatives.
       GPU_TESTS_REGEX=""
@@ -138,7 +138,7 @@ AMD-MI300:
         test_3d_laser_acceleration_btd
         test_rcylinder_langmuir_multi
         test_rsphere_langmuir_multi
-        test_rz_embedded_boundary_diffraction
+        test_rz_electrostatic_sphere_eb
       )
       # Join the test names with "|" to form regex alternatives.
       GPU_TESTS_REGEX=""
